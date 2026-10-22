@@ -7,7 +7,7 @@ import type { TrainingId } from "./config.ts";
 import type { RunNotes } from "./run-notes.ts";
 import type { TournamentRun } from "./tournament/run.ts";
 import type { Volleys } from "./ranged.ts";
-import type { ChestOdds, Player, Tile } from "./entities.ts";
+import type { ChestOdds, DoorOdds, Player, Tile } from "./entities.ts";
 /** What a run holds in either mode. */
 export type RunCore = {
   outside?: boolean;
@@ -66,6 +66,10 @@ export type RunCore = {
    * Chest chance), fixed as the run went inside, so its floors' chests are
    * what they were generated as; none without. */
   chestOdds?: ChestOdds;
+  /** DOOR's tree's chances of remaking its floors' doors (`DoorOdds`),
+   * fixed as the run went inside, so its floors never change under it;
+   * none without. */
+  doorOdds?: DoorOdds;
   /** The card a Focus put ahead of the others, until it reaches its target
    * or has no path to one. */
   focused?: CardId;

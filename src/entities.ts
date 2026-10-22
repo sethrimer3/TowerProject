@@ -75,6 +75,11 @@ export type ChestKind = "plain" | "supply" | "equipment";
 /** A run's chances, in percent, of each treasure chest being a Supply or
  * an Equipment Chest, fixed as it goes inside. */
 export type ChestOdds = { supply: number; equipment: number };
+/** A run's chances, in percent, of DOOR's tree remaking the doors of its
+ * floors as they are generated: each colour door a Wooden Door instead
+ * (`skeleton`, Skeleton Key), and each door of two or three colours
+ * without its rarest lock (`locksmith`, Locksmith). */
+export type DoorOdds = { skeleton: number; locksmith: number };
 /** Declarative lock rules. `color` remains on Tile for legacy single-key
  * doors and keys; new doors use this rule so every gameplay system shares
  * the same requirements and consumption behavior. */

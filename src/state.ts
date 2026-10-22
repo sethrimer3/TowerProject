@@ -58,7 +58,7 @@ import type {
 } from "./entities.ts";
 import { World, LAYOUT_VERSION } from "./delve/world.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
-import { litTorches, type Board } from "./board.ts";
+import { chestKindAt, litTorches, type Board } from "./board.ts";
 import { healUpTo, instakill, type CritRule } from "./combat.ts";
 import { HEART_DOOR_HP, hpCeiling, isLethal, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardStat } from "./step-effects.ts";
 import { OUTSIDE_START_Y, OutsideWorld } from "./outside.ts";
@@ -168,6 +168,8 @@ type TakenStep = { tile: Tile; outcome: StepEffect; dest: { x: number; y: number
 export type CardStep = { scale?: number; floorSkip?: boolean; hold?: boolean };
 /** Tiles that stay on the board after being stepped on. */
 const PERMANENT_TILES = new Set<Tile["kind"]>(["floor", "stairs", "oneway", "openedChest"]);
+/** What DOOR's Master Key, Door Chest and the chest's kind roll a door by. */
+const MASTER_KEY_SALT = 0x3a57e, DOOR_CHEST_SALT = 0xd00c4, DOOR_CHEST_KIND_SALT = 0xd0c4d;
 /** The targets a Dash may end on, a tile of it left: items to take. */
 const DASH_ONTO = new Set<Tile["kind"]>(["key", "potion", "attack", "defense", "treasure", "reward"]);
 export class Game {
@@ -1022,6 +1024,9 @@ export class Game {
     const odds = this.chestOddsFor(this.run.hand, tree);
     if (odds) this.run.chestOdds = odds;
     else delete this.run.chestOdds;
+    // DOOR's Skeleton Key and Locksmith remake the run's doors as each floor is generated.
+    if (tree.skeletonKey || tree.locksmith) this.run.doorOdds = { skeleton: Math.min(100, tree.skeletonKey), locksmith: Math.min(100, tree.locksmith) };
+    else delete this.run.doorOdds;
     // The hero strikes the enemies each enemy card covers harder, and with
     // ENEMY's and TORCH's trees holds more DEF and shroud against theirs,
     // HEAL's more shroud against every enemy and a parry of its own
@@ -1119,6 +1124,7 @@ export class Game {
     const overheal = this.overheal;
     return { potionHeal, percentPotion: trainedAmount(this.trainingNow, "potion"), regen, ...(overheal > 1000 ? { overheal } : {}),
       heartToll: researched(this.save.archives, "heartToll"), keyCost: this.keyCost, ...keyFind, ...(this.doorOff ? { doorOff: this.doorOff } : {}),
+      ...(tree.doorHeal ? { doorHeal: tree.doorHeal } : {}),
       shardAttack: researched(this.save.archives, "shardAttackPercent") * boonFactor(this.run, "attack") * treeFactor(tree, "attackShard"),
       shardDefense: researched(this.save.archives, "shardDefensePercent") * treeFactor(tree, "defenseShard"),
       ...(tree.potionHeal ? { potionCard: tree.potionHeal } : {}),
@@ -1545,8 +1551,10 @@ export class Game {
     // wall, lock, impervious enemy, or (automation's) declined lethal fight
     // never touches history, damages the player, alters the enemy, or ends the run.
     const rules: StepRules = { ...this.stepRules, ...(regen ? {} : { regen: 0 }), ...(card.scale !== undefined && card.scale !== 1 ? { scale: card.scale } : {}) };
-    const outcome = resolveStep(p, t, rules);
-    if (outcome.blocked) return this.rejectStep(outcome, t, dest.x, dest.y);
+    const resolved = resolveStep(p, t, rules);
+    if (resolved.blocked) return this.rejectStep(resolved, t, dest.x, dest.y);
+    // DOOR's Master Key: a door the hero can open may open for nothing.
+    const outcome = t.kind === "door" && this.doorRolls(dest.x, dest.y, MASTER_KEY_SALT, this.treeBonus.masterKey) ? resolveStep(p, t, { ...rules, freeDoor: true }) as StepEffect : resolved;
     if (!force && isLethal(outcome)) {
       this.feedback("Lethal encounter. Inspect the enemy before proceeding.");
       return false;
@@ -1574,9 +1582,10 @@ export class Game {
     const before = this.snapshot();
     this.turnBefore ??= before;
     if (track) this.remember(quiet ? { ...before, quiet: true } : before);
-    const drained = snap(this.run.player.hp - outcome.player.hp);
+    // A door's Door Heal comes after its drain, which is shown as it was.
+    const drained = snap(this.run.player.hp - outcome.player.hp + (t.kind === "door" ? outcome.healed : 0));
     this.applyStats(outcome.player);
-    if (t.kind === "door") this.finds.door(t, outcome.keysSpent, drained, dest, outcome.keyAmount);
+    if (t.kind === "door") this.finds.door(t, outcome, drained, dest);
     if (t.kind !== "enemy") return true;
     const extra = outcome.extraDamage ?? 0, p = this.run.player;
     // Effective's added damage rises off the hero; Dampen's given back heals.
@@ -1607,6 +1616,7 @@ export class Game {
     }
     this.finds.pickup(t, x, y, outcome);
     this.consumeTile(t, x, y);
+    if (t.kind === "door") this.doorChest(x, y);
     if (t.kind !== "stairs") this.callGreaterBoss();
     this.afterStep(t, x, y, floorSkip);
   }
@@ -1850,6 +1860,24 @@ export class Game {
     this.dropHandPlan();
     this.feedback(this.rules.words.enter);
     this.gemFinder.step();
+  }
+  /** Whether the door at (x, y) on this floor rolls under `chance` percent
+   * (DOOR's Master Key and Door Chest): by its tile's fixed number, each
+   * roll its own `salt`, so undo can't roll a door again. */
+  private doorRolls(x: number, y: number, salt: number, chance: number) {
+    return !!chance && tileRandom(x, y, this.doorSeed ^ salt) * 100 < chance;
+  }
+  /** What the doors of this floor roll by: the run's seed, and in the Tower the floor's. */
+  private get doorSeed() {
+    return this.run.seed ^ Math.imul((this.world instanceof RoomWorld ? this.world.room : 0) + 1, 0x9e3779b1);
+  }
+  /** DOOR's Door Chest: the door just opened at (x, y) may leave an opened
+   * treasure chest where it stood, paid as a treasure chest is (a Supply or
+   * Equipment Chest at the run's odds). */
+  private doorChest(x: number, y: number) {
+    if (!this.doorRolls(x, y, DOOR_CHEST_SALT, this.treeBonus.doorChest)) return;
+    this.run.changes[`${x},${y}`] = { kind: "openedChest" };
+    this.finds.treasure(x, y, chestKindAt({ kind: "treasure" }, x, y, this.doorSeed ^ DOOR_CHEST_KIND_SALT, this.run.chestOdds));
   }
   /** Removes what the step used up: chests stay behind opened, fixtures stay. */
   private consumeTile(t: Tile, x: number, y: number) {

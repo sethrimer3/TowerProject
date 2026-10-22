@@ -45,7 +45,7 @@ function candidates(save: Pick<Save, "training" | "upgrades" | "goals">, run: Pi
  * caller's (`Game`). The chances are read before any level is applied, so
  * Free Utility raising a Free Upgrade row counts from the next floor.
  * `factors` (STAIRS' card tree) multiply each group's chance, and
- * `chances` (HEAL's, in hundredths of a percent) add to it, so a group may
+ * `chances` (HEAL's and DOOR's, in hundredths of a percent) add to it, so a group may
  * give a level with no ranks of its own. */
 export function rollFreeTraining(save: Pick<Save, "training" | "upgrades" | "goals">, run: Pick<RunCore, "seed" | "freeRolls" | "training" | "hand">, boonChance = 0, factors?: Record<FreeGroup, number>, chances?: Partial<Record<FreeGroup, number>>): TrainingId[] {
   const now = { upgrades: save.upgrades, training: ranksInRun(save, run) };

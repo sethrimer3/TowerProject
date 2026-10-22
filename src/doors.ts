@@ -1,6 +1,7 @@
 import { snap } from "./exact.ts";
+import { tileRandom } from "./random.ts";
 import { COLORS, KEY_GOLD, PICKUP_GOLD } from "./config.ts";
-import type { DoorRule, Player, Tile, KeyColor } from "./entities.ts";
+import type { DoorOdds, DoorRule, Player, Tile, KeyColor } from "./entities.ts";
 import { wholeChange } from "./whole.ts";
 
 export const KEY_ORDER: KeyColor[] = ["yellow", "blue", "red"];
@@ -60,17 +61,17 @@ export function isYellowDoor(tile: Tile) {
  * HP a door draining HP takes (HEART DOOR), and a Wooden Door's key and the
  * HP breaking it takes (WOODEN DOOR). */
 export type DoorKind = "yellow" | "heart" | "wood";
-/** The percent less each kind costs, and `all`, the percent less every door
- * costs (DOOR's tree: its keys and any HP it takes), which adds into a
- * kind's own as one card factor. */
+/** The percent less each kind costs, and `all`, the percent less of each
+ * key every door takes (DOOR's tree; it leaves HP alone), which adds into
+ * a kind's own as one card factor. */
 export type DoorDiscounts = Partial<Record<DoorKind | "all", number>>;
 /** What `off` multiplies the door `tile`'s keys and its HP toll by: 1 for
  * each it leaves alone. */
 export function doorDiscount(tile: Tile, off?: DoorDiscounts): { keys: number; toll: number } {
   if (!off) return { keys: 1, toll: 1 };
-  const rule = doorRule(tile), all = off.all ?? 0, less = (percent = 0) => (100 - percent - all) / 100;
-  if (rule.type === "wood") return { keys: less(off.wood), toll: less(off.wood) };
-  return { keys: less(isYellowDoor(tile) ? off.yellow : 0), toll: drainsHp(rule) ? less(off.heart) : 1 };
+  const rule = doorRule(tile), all = off.all ?? 0, less = (percent = 0, more = 0) => (100 - percent - more) / 100;
+  if (rule.type === "wood") return { keys: less(off.wood, all), toll: less(off.wood) };
+  return { keys: less(isYellowDoor(tile) ? off.yellow : 0, all), toll: drainsHp(rule) ? less(off.heart) : 1 };
 }
 
 export function doorId(tile: Tile): DoorId {
@@ -144,4 +145,32 @@ export function area1DoorRule(room: number): DoorRule {
     { type: "fullHp" },
   ];
   return rules[Math.max(0, room) % rules.length];
+}
+
+const SKELETON_SALT = 0x5c3e7, LOCKSMITH_SALT = 0x10c45;
+/** The generated tile `t` at (x, y) on a board generated from `seed`, as a
+ * run with `odds` sees it: a colour door (keyed, every colour needed)
+ * whose tile's fixed number falls under the Skeleton Key chance is a
+ * Wooden Door of `durability()` HP, the step's own; else one of two or
+ * three colours under the Locksmith chance loses its rarest colour (red,
+ * then blue), keeping any Heart Door's drain. Both by the tile's fixed
+ * number, so a higher chance only ever remakes more doors. */
+export function withDoorOdds(t: Tile, x: number, y: number, seed: number, odds: DoorOdds | undefined, durability: () => number): Tile {
+  const rule = t.door;
+  if (!odds || t.kind !== "door" || rule?.type !== "keys" || rule.mode !== "all") return t;
+  if (odds.skeleton && tileRandom(x, y, seed ^ SKELETON_SALT) * 100 < odds.skeleton) return { kind: "door", door: { type: "wood", durability: durability() } };
+  if (rule.keys.length < 2 || !odds.locksmith || tileRandom(x, y, seed ^ LOCKSMITH_SALT) * 100 >= odds.locksmith) return t;
+  const rarest = [...KEY_ORDER].reverse().find((key) => rule.keys.includes(key))!, keys = rule.keys.filter((key) => key !== rarest);
+  return { ...t, color: t.color && keys.includes(t.color) ? t.color : keys[0], door: { ...rule, keys } };
+}
+/** `cells` with DOOR's tree's `odds` remaking their doors (`withDoorOdds`),
+ * a Wooden Door made of `durability()` HP; the same map without odds. */
+export function withRunDoors(cells: Map<string, Tile>, seed: number, odds: DoorOdds | undefined, durability: (x: number, y: number) => number) {
+  if (!odds) return cells;
+  const out = new Map<string, Tile>();
+  for (const [k, t] of cells) {
+    const [x, y] = k.split(",").map(Number);
+    out.set(k, withDoorOdds(t, x, y, seed, odds, () => durability(x, y)));
+  }
+  return out;
 }

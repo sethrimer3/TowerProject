@@ -11,7 +11,8 @@ import { flyingCells } from "../flying.ts";
 import { tournamentStatFactor, tournamentTile } from "../tournament/run.ts";
 import { addEnemies, extraGround, extrasKey, extrasSeed, hasExtras, type ExtraEnemies } from "../more-enemies.ts";
 import { guardedTile, holdsShield, placeShield, walkDistances, type Shield } from "../shielded.ts";
-import { enemyStats } from "../enemy-curves.ts";
+import { enemyStats, woodDurability } from "../enemy-curves.ts";
+import { withRunDoors } from "../doors.ts";
 import { DELVE_ENEMY_NAMES, enemyTier } from "../scaling.ts";
 
 // v8 turns some pocket throats into forks: two parallel lanes of costs.
@@ -174,7 +175,7 @@ const upward = (dx: number, dy: number) => dx === 0 && dy === 1;
 
 /** What of a run the Delve board keeps: its map edits, the floor below
  * which the labyrinth is sealed, and the milestones crossed. */
-type WorldRun = Pick<DelveRun, "seed" | "changes" | "floor" | "milestone" | "percentPotions" | "chestOdds" | "tier" | "tournament">;
+type WorldRun = Pick<DelveRun, "seed" | "changes" | "floor" | "milestone" | "percentPotions" | "chestOdds" | "doorOdds" | "tier" | "tournament">;
 
 /** The endless Delve labyrinth of a run, generated chunk by chunk around
  * the player. It reads and writes the run's own changes, floor and
@@ -230,7 +231,9 @@ export class World implements Board {
     if (!chunk) {
       // Each enemy rolls Fast by its own equivalent floor.
       const floorAt = (x: number, y: number) => Math.floor(depthAt(this.seed, x, y, ownerAt(this.seed, x, y), this.tier) / 10) + 1;
-      const lifted = flyingCells(tierCells(this.generated(index), this.tier), this.tier, this.seed, floorAt);
+      // DOOR's tree remakes doors before the tier scales a Wooden Door's durability, as generated ones.
+      const doors = withRunDoors(this.generated(index), this.seed, this.run.doorOdds, (x, y) => woodDurability("delve", this.tier, depthAt(this.seed, x, y, ownerAt(this.seed, x, y), this.tier)));
+      const lifted = flyingCells(tierCells(doors, this.tier), this.tier, this.seed, floorAt);
       const cells = rangedCells(fastCells(lifted, "delve", this.tier, this.seed, floorAt), this.tier, this.seed, floorAt);
       chunk = this.run.tournament ? new Map([...cells].map(([k, t]) => [k, this.inLeague(t)])) : cells;
       this.chunks.set(index, chunk);

@@ -28,8 +28,8 @@ export type StepEffect = {
   combat: CombatPrediction | null;
   /** Doors only: the keys the door consumes (empty for Heart Doors). */
   keysSpent: KeyColor[];
-  /** Potions only: HP actually restored (capped at max HP, or above it
-   * by Overheal). */
+  /** Potions and doors: HP actually restored (a potion's capped at max
+   * HP, or above it by Overheal; a door's DOOR's Door Heal, at max HP). */
   healed: number;
   /** Doors and keys: how much of a key each key colour took or gave, when
    * a badge's scale or a held key card's bonus made it other than 1. */
@@ -40,6 +40,8 @@ export type StepEffect = {
   /** Enemies only: the scale the fight was taken under, which its Silver,
    * Gold and XP are multiplied by too. */
   scale?: number;
+  /** Doors only: DOOR's Master Key opened it for nothing. */
+  free?: true;
 };
 export type StepOutcome = StepBlocked | StepEffect;
 
@@ -75,6 +77,13 @@ export type StepRules = {
   /** The percent less each kind of door costs, from the door cards the
    * run's hand holds (`handBonus`), none when absent. */
   doorOff?: DoorDiscounts;
+  /** The percent of max HP each door opened heals (DOOR's Door Heal),
+   * after a Heart Door's drain, up to max HP; none when absent. */
+  doorHeal?: number;
+  /** The door stepped into opens for nothing: no keys, no HP (DOOR's
+   * Master Key, which `Game` rolls for the step it takes; previews and
+   * planners never count on it). */
+  freeDoor?: true;
   /** The percent more a key of each colour picked up is worth, from the
    * key cards the run's hand holds (`handBonus`), none when absent. */
   keyFind?: Partial<Record<KeyColor, number>>;
@@ -136,24 +145,30 @@ export function resolveStep(player: Player, tile: Tile, rules: StepRules = BASE_
       // Key Efficiency makes each key the door takes cost less, on top of
       // a badge's scale, and a door card held makes its doors cost less
       // again (each its own factor).
+      if (rules.freeDoor) effect.free = true;
       const off = doorDiscount(tile, rules.doorOff);
       const keyScale = snap((scale * (rules.keyCost ?? 1000) * off.keys) / 1000), tollScale = snap(scale * off.toll);
-      const cost = doorCost(tile, player, keyScale, tollScale);
+      const cost = rules.freeDoor ? [] : doorCost(tile, player, keyScale, tollScale);
       if (cost === null) return { blocked: "locked" };
       for (const color of cost) next.keys[color] = snap(next.keys[color] - keyScale);
       const rule = doorRule(tile);
       // A Wooden Door broken without a key takes its durability in HP,
       // under the badge's scale and WOODEN DOOR's; DEF doesn't reduce it.
-      if (rule.type === "wood" && !cost.length) next.hp = snap(next.hp - woodToll(rule, tollScale));
+      if (rule.type === "wood" && !cost.length && !rules.freeDoor) next.hp = snap(next.hp - woodToll(rule, tollScale));
       // A Heart Door's toll, all but 1 HP, shrinks under a weaker scale and
       // never grows past it; Heart Door Resilience and HEART DOOR shrink it
       // by their percents.
-      if (drainsHp(rule)) {
+      if (drainsHp(rule) && !rules.freeDoor) {
         const toll = snap((next.hp - HEART_DOOR_HP) * Math.min(1, scale) * off.toll * (rules.heartToll ?? 100) / 100);
         next.hp = Math.min(next.hp, snap(next.hp - toll));
       }
       effect.keysSpent = cost;
       if (keyScale !== 1 && cost.length) effect.keyAmount = keyScale;
+      // DOOR's Door Heal, after the drain, up to max HP.
+      if (rules.doorHeal && next.hp > 0 && next.hp < next.maxHp) {
+        effect.healed = snap(Math.min(next.maxHp, next.hp + (next.maxHp * rules.doorHeal) / 100) - next.hp);
+        next.hp = snap(next.hp + effect.healed);
+      }
       break;
     }
     case "key": {

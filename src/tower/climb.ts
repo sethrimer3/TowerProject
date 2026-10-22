@@ -13,7 +13,7 @@ export class TowerClimb {
 
   /** The floor the run stands on, as it stands now. */
   board() {
-    return new RoomWorld(this.run.seed, this.run.height, this.run.changes, this.run.percentPotions, this.run.tier, runExtras(this.run), this.run.shrine?.applied?.foes, this.run.chestOdds);
+    return new RoomWorld(this.run.seed, this.run.height, this.run.changes, this.run.percentPotions, this.run.tier, runExtras(this.run), this.run.shrine?.applied?.foes, this.run.chestOdds, this.run.doorOdds);
   }
 
   /** Climbs the stairs to the next floor's entrance; `sectionStart` when

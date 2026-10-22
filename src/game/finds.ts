@@ -120,7 +120,7 @@ export class Finds {
   /** A treasure chest: counted, and paid once per physical chest (undo and
    * reopening can't pay it again). It may be a Supply or Equipment Chest
    * (`kind`, fixed as its floor was generated under the run's `chestOdds`). */
-  private treasure(x: number, y: number, kind: ChestKind) {
+  treasure(x: number, y: number, kind: ChestKind) {
     this.host.run.treasures++;
     this.host.events.record("chests", 1, this.missionKey({ x, y }));
     const loot = this.host.purse.treasure(x, y, kind);
@@ -136,16 +136,27 @@ export class Finds {
   /** Each key the door took rises from it with a minus sign; a door that
    * takes HP (a Heart Door, down to 1, or a Wooden Door broken without a
    * key) raises a heart with the HP it took (a toll, not damage: it never
-   * costs an area's mastery). */
-  door(t: Tile, keysSpent: KeyColor[], drained: number, at: { x: number; y: number }, amount = 1) {
-    const host = this.host, n = keysSpent.length, rule = doorRule(t), notes = notesOf(host.run);
+   * costs an area's mastery), `drained` before DOOR's Door Heal, which
+   * rises after it. A door DOOR's Master Key opened takes nothing. */
+  door(t: Tile, outcome: StepEffect, drained: number, at: { x: number; y: number }) {
+    const host = this.host, keysSpent = outcome.keysSpent, amount = outcome.keyAmount ?? 1, n = keysSpent.length, rule = doorRule(t), notes = notesOf(host.run);
     if (notes) tallyIn(notes.doors, doorName(t));
     for (const color of keysSpent) host.gain(at.x, at.y, `−${keyCount(amount)} ${color} key`, { tile: { kind: "key", color }, spent: true }, undefined, "door");
-    if (!n || (drainsHp(rule) && drained > 0)) host.gain(at.x, at.y, `−${wholeChange(drained)} HP`, { heart: true }, undefined, "door");
-    // DOOR's tree raises a door's Gold.
-    this.pickupGold(t, at, 0, host.treeBonus.doorGold);
+    if (!outcome.free && (!n || (drainsHp(rule) && drained > 0))) host.gain(at.x, at.y, `−${wholeChange(drained)} HP`, { heart: true }, undefined, "door");
+    if (outcome.healed) {
+      host.gain(at.x, at.y, `+${wholeChange(outcome.healed)} HP`, { heart: true }, { row: 2, with: true });
+      host.recordHeal(outcome.healed);
+    }
+    // DOOR's tree raises a door's Gold, and finds Silver with it.
+    const tree = host.treeBonus;
+    this.pickupGold(t, at, 0, tree.doorGold);
+    if (tree.doorSilver) {
+      const silver = host.purse.silver(tree.doorSilver);
+      if (silver) host.gain(at.x, at.y, `+${wholeChange(silver)} Silver`, { coin: "silver" }, { row: 2, with: true });
+    }
     const spent = amount === 1 ? `${n} key${n === 1 ? "" : "s"} spent` : `${keyCount(snap(n * amount))} keys spent`;
-    if (rule.type === "wood" && !n) host.message = `${doorName(t)} broken down · −${wholeChange(drained)} HP`;
+    if (outcome.free) host.message = `${doorName(t)} opened · Master Key`;
+    else if (rule.type === "wood" && !n) host.message = `${doorName(t)} broken down · −${wholeChange(drained)} HP`;
     else host.message = `${doorName(t)} opened${n ? ` · ${spent}` : ""}${drainsHp(rule) ? (host.run.player.hp > HEART_DOOR_HP ? " · HP drained" : " · HP drained to 1") : ""}`;
   }
   /** Raises the Gold and Silver just found from `at`, each only when some
