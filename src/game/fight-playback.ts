@@ -29,6 +29,8 @@ export type FoughtStep = { outcome: StepEffect; dest: { x: number; y: number }; 
 const REVIVE_SALT = 0x7e51e;
 /** Seeds the critical rolls apart from the revival rolls. */
 const CRIT_SALT = 0x3c71c;
+/** What ENEMY's Surprise Attack multiplies the hero's first strike's ATK by. */
+const SURPRISE_FACTOR = 2;
 
 /** How a fight is played and shown: the Revive and critical rolls that
  * decide how it ends, the fight the board shows, an Encounter played out
@@ -55,14 +57,20 @@ export class FightPlayback<S extends FoughtStep> {
    * it (`defeatShownUntil`). */
   struckDown: number[] = [];
 
+  /** Whether the fight being played began with ENEMY's Surprise Attack,
+   * so Training bought as it plays replays it the same. */
+  private surprised = false;
+
   constructor(private readonly host: FightHost, private readonly take: (step: S, revived: number) => boolean) {}
 
   /** Steps into `enemy`. A strike that would fell the hero may revive it
    * instead (Revive), so a lost fight is played out strike by strike to see
    * how it ends, as is one with critical strikes that may land;
-   * a game that plays fights shows it on the board. */
-  fight(step: S, enemy: Enemy) {
+   * a game that plays fights shows it on the board. A `surprise` (ENEMY's
+   * Surprise Attack) doubles the hero's first strike's ATK. */
+  fight(step: S, enemy: Enemy, surprise = false) {
     const p = this.host.run.player, outcome = step.outcome;
+    this.surprised = surprise;
     const revive = isLethal(outcome) ? this.revival(step.dest) : undefined, crits = this.critRolls(step.dest);
     if (!this.playsFights && !revive && !crits) return this.take(step, 0);
     const fight = bout(p, enemy, revive, crits), start = performance.now(), rose = revivals(fight).length;
@@ -128,11 +136,11 @@ export class FightPlayback<S extends FoughtStep> {
    * of 100% or more lands that many applications of the factor for certain,
    * and the rest rolls for one more. */
   private critRolls(at: { x: number; y: number }): Crits | undefined {
-    const rule = this.host.crit, { run, mode } = this.host;
-    if (!rule) return undefined;
+    const rule = this.host.crit, { run, mode } = this.host, first = this.surprised ? { first: SURPRISE_FACTOR } : {};
+    if (!rule) return this.surprised ? { factor: 1, applications: () => 0, ...first } : undefined;
     const floor = mode === "tower" ? run.height + 1 : 0, seed = run.seed ^ CRIT_SALT ^ Math.imul(floor, 0x9e3779b1);
     const sure = guaranteedCrits(rule.chance), rest = snap(rule.chance - 100 * sure);
-    return { factor: rule.factor, applications: (strike) => sure + (tileRandom(at.x, at.y, (seed ^ Math.imul(strike + 1, 0x85ebca6b)) | 0) * 100 < rest ? 1 : 0) };
+    return { factor: rule.factor, applications: (strike) => sure + (tileRandom(at.x, at.y, (seed ^ Math.imul(strike + 1, 0x85ebca6b)) | 0) * 100 < rest ? 1 : 0), ...first };
   }
   /** Settles the fight being played out, as if it had played to the end.
    * Returns whether there was one. */

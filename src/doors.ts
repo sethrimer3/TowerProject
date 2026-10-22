@@ -150,19 +150,19 @@ export function area1DoorRule(room: number): DoorRule {
   return rules[Math.max(0, room) % rules.length];
 }
 
-const SKELETON_SALT = 0x5c3e7, LOCKSMITH_SALT = 0x10c45;
+const SKELETON_SALT = 0x5c3e7, LOCK_PICK_SALT = 0x10c45;
 /** The generated tile `t` at (x, y) on a board generated from `seed`, as a
  * run with `odds` sees it: a colour door (keyed, every colour needed)
  * whose tile's fixed number falls under the Skeleton Key chance is a
  * Wooden Door of `durability()` HP, the step's own; else one of two or
- * three colours under the Locksmith chance loses its rarest colour (red,
+ * three colours under the Lock Pick chance loses its rarest colour (red,
  * then blue), keeping any Heart Door's drain. Both by the tile's fixed
  * number, so a higher chance only ever remakes more doors. */
 export function withDoorOdds(t: Tile, x: number, y: number, seed: number, odds: DoorOdds | undefined, durability: () => number): Tile {
   const rule = t.door;
   if (!odds || t.kind !== "door" || rule?.type !== "keys" || rule.mode !== "all") return t;
   if (odds.skeleton && tileRandom(x, y, seed ^ SKELETON_SALT) * 100 < odds.skeleton) return { kind: "door", door: { type: "wood", durability: durability() } };
-  if (rule.keys.length < 2 || !odds.locksmith || tileRandom(x, y, seed ^ LOCKSMITH_SALT) * 100 >= odds.locksmith) return t;
+  if (rule.keys.length < 2 || !odds.lockPick || tileRandom(x, y, seed ^ LOCK_PICK_SALT) * 100 >= odds.lockPick) return t;
   const rarest = [...KEY_ORDER].reverse().find((key) => rule.keys.includes(key))!, keys = rule.keys.filter((key) => key !== rarest);
   return { ...t, color: t.color && keys.includes(t.color) ? t.color : keys[0], door: { ...rule, keys } };
 }

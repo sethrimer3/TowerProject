@@ -160,6 +160,11 @@ export function boonEffects(picked: readonly BoonId[], o: ShrineOwner): BoonEffe
   return e;
 }
 
+/** `foes` with every enemy's ATK cut by `cut` percent as well (ENEMY's
+ * Weaken, its own factor); `foes` as it is without a cut. */
+export const weakened = (foes: FoeRule | undefined, cut: number): FoeRule | undefined =>
+  cut ? { ...(foes ?? NO_FOES), attack: (foes?.attack ?? 1) * (100 - Math.min(100, cut)) / 100 } : foes;
+
 /** `foes` changes nothing. */
 export const sameFoes = (a: FoeRule, b: FoeRule) =>
   a.hp === b.hp && a.attack === b.attack && a.bossHp === b.bossHp && a.bossFirst === b.bossFirst && a.fastSecond === b.fastSecond && a.fastAttack === b.fastAttack;

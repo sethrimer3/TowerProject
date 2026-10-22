@@ -24,7 +24,7 @@ test("the rarities' chances: 60%, 32%, 6%, 1.5% and 0.5%", () => {
 });
 
 test("the buys left are every level the deck's trees can still open", () => {
-  assert.equal(buysLeft({}, ["stairs", "door", "key", "monster"]), 50 + 50 + 45 + 15);
+  assert.equal(buysLeft({}, ["stairs", "door", "key", "monster"]), 50 + 50 + 50 + 50);
   assert.equal(buysLeft({}, ["archer"]), 0, "a card without a tree takes none");
   assert.equal(buysLeft({ stairs: { floorGold: 5, overhealMax: 2 } }, ["stairs"]), 43);
 });
@@ -59,7 +59,7 @@ test("a buy picks among the deck's cards with room, leaving full ones out, until
   assert.equal(buyOne(m, ["atkUp", "monster"], numbers(0, 0, 0))!.card, "monster", "ATK UP is full");
   const all: CardBuysSave = { rng: null, opened: { atkUp: opened("atkUp", ["common"]) } };
   assert.equal(buyOne(all, ["atkUp"], numbers(0, 0, 0)), null);
-  const uncommon = buyOne(defaultCardBuys(), ["atkUp", "monster", "stairs"], numbers(0.7, 0, 0))!;
+  const uncommon = buyOne(defaultCardBuys(), ["atkUp", "torch", "stairs"], numbers(0.7, 0, 0))!;
   assert.deepEqual([uncommon.card, uncommon.rarity], ["stairs", "uncommon"], "the rarity drawn goes to a card with room in it");
   const bought: CardBuysSave = { rng: 5, opened: {} };
   assert.equal(buyCards(bought, ["atkUp"], 20, () => 0).length, 15, "no more than the tree holds");
@@ -131,10 +131,10 @@ test("the Game's desk buys for Gems, asks for them when short, refuses past what
   g.save.gems = 1e6;
   g.save.cardBuys.opened = { stairs: opened("stairs", ["common", "uncommon", "rare", "epic", "legendary"]), door: opened("door", ["common", "uncommon", "rare", "epic", "legendary"]), key: opened("key", ["common", "uncommon", "rare", "epic", "legendary"]) };
   assert.ok(left > 0);
-  assert.equal(g.cardBuys.left, 15, "ENEMY's alone");
+  assert.equal(g.cardBuys.left, 50, "ENEMY's alone");
   assert.equal(levelIn(g.save, "stairs").level, 12, "the XP gathered past the cap");
-  g.save.cardBuys.opened.monster = { attack: 3, defense: 3, gold: 3 };
-  assert.equal(g.cardBuys.left, 6);
+  g.save.cardBuys.opened.monster = opened("monster", ["common", "uncommon", "rare", "epic"]);
+  assert.equal(g.cardBuys.left, 5, "ENEMY's legendary node");
   assert.equal(g.cardBuys.refusal(10), "full");
   assert.equal(g.cardBuys.refusal(1), null);
 });

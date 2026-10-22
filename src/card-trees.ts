@@ -54,12 +54,13 @@ export type TreeStat =
   | "doorHeal"
   /** Flat: the percent chance each colour door on the run's floors is
    * generated a Wooden Door instead (Skeleton Key), and each door of two
-   * or three colours without its rarest lock (Locksmith). */
-  | "skeletonKey" | "locksmith"
+   * or three colours without its rarest lock (Lock Pick). */
+  | "skeletonKey" | "lockPick"
   /** Flat: the percent chance a door opens for nothing: no keys, no HP (Secret Knock). */
   | "secretKnock"
-  /** Flat: the percent chance an opened door leaves an opened treasure chest, its loot paid. */
-  | "doorChest"
+  /** Flat: the percent chance an opened door (Door Chest) or a key picked
+   * up (Key Chest) leaves an opened treasure chest, its loot paid. */
+  | "doorChest" | "keyChest"
   /** More each key of every colour is worth, and more each key's Pickup Gold. */
   | "keyFind" | "keyGold"
   /** Flat: the percent of max HP healed on picking up each key, up to max
@@ -74,8 +75,17 @@ export type TreeStat =
   /** Flat: the percent chance a key picked up is two (Locksmith), and that
    * one opens every door on its floor (Master Key). */
   | "doubleKey" | "masterKey"
-  /** ATK and DEF in fights with every enemy, and every kill's Gold. */
-  | "foeAttack" | "foeDefense" | "foeGold"
+  /** ATK and DEF in fights with every enemy, and every kill's Gold and Silver. */
+  | "foeAttack" | "foeDefense" | "foeGold" | "foeSilver"
+  /** Crit %'s chance and Crit x's factor, and the XP every kill gives. */
+  | "critChance" | "critFactor" | "killXp"
+  /** Flat: the percent chance the first strike of a fight right after a
+   * Dash strikes with twice the hero's ATK (Surprise Attack). */
+  | "surpriseAttack"
+  /** Flat: the percent every enemy's ATK is cut by (Weaken). */
+  | "foeAttackCut"
+  /** Flat: the percent of max HP Lifesteal may heal above it (Lifesteal Overheal). */
+  | "stealOverheal"
   /** More enemies generated on each floor, of every strength (as More Enemies adds them). */
   | "moreEnemies"
   /** What each ATK or DEF shard raises its stat by. */
@@ -93,7 +103,7 @@ export type TreeStat =
 
 /** The stats added as they are, not as percents of a factor. */
 export const FLAT_STATS: ReadonlySet<TreeStat> = new Set<TreeStat>(["floorHeal", "overhealMax", "stairSkip", "potionMaxHp", "potionSilver", "freeDefenseChance", "freeUtilityChance",
-  "doorSilver", "doorHeal", "skeletonKey", "locksmith", "secretKnock", "doorChest", "keyHeal", "keyOverheal", "keySilver", "doubleKey", "masterKey", "parry", "attackShardGold", "defenseShardGold", "bossCells", "supplyChance", "equipmentChance"]);
+  "doorSilver", "doorHeal", "skeletonKey", "lockPick", "secretKnock", "doorChest", "keyChest", "keyHeal", "keyOverheal", "keySilver", "doubleKey", "masterKey", "surpriseAttack", "foeAttackCut", "stealOverheal", "parry", "attackShardGold", "defenseShardGold", "bossCells", "supplyChance", "equipmentChance"]);
 
 /** One node of a card's tree: the stats each of its levels raises, its
  * rarity, how many levels it holds from the start (`levels`: 0 for a node
@@ -108,7 +118,7 @@ const common = (id: string, stats: CardTreeNode["stats"], levels: number, max: n
 
 /** Each card's tree, its nodes parents first. Every tree holds
  * `BASE_MAX_LEVEL` (10) levels from the start; card buys open the rest:
- * STAIRS', HEAL's and DOOR's up to 60 and KEY's up to 55, through every
+ * STAIRS', HEAL's, DOOR's, KEY's and ENEMY's up to 60, through every
  * rarity, and the other cards' (common only, until their trees are redone)
  * up to 25. */
 export const CARD_TREES: Partial<Record<CardId, readonly CardTreeNode[]>> = {
@@ -145,8 +155,8 @@ export const CARD_TREES: Partial<Record<CardId, readonly CardTreeNode[]>> = {
     common("doorCost", { doorCost: 1 }, 5, 10),
     { id: "doorHeal", stats: { doorHeal: 0.5 }, rarity: "uncommon", levels: 0, max: 5, after: "doorCost" },
     { id: "skeletonKey", stats: { skeletonKey: 1 }, rarity: "rare", levels: 0, max: 5, after: "doorHeal" },
-    { id: "locksmith", stats: { locksmith: 1 }, rarity: "epic", levels: 0, max: 5, after: "skeletonKey" },
-    { id: "secretKnock", stats: { secretKnock: 1 }, rarity: "legendary", levels: 0, max: 5, after: "locksmith" },
+    { id: "lockPick", stats: { lockPick: 1 }, rarity: "epic", levels: 0, max: 5, after: "skeletonKey" },
+    { id: "secretKnock", stats: { secretKnock: 1 }, rarity: "legendary", levels: 0, max: 5, after: "lockPick" },
   ],
   key: [
     common("keyHeal", { keyHeal: 1 }, 2, 5),
@@ -155,6 +165,7 @@ export const CARD_TREES: Partial<Record<CardId, readonly CardTreeNode[]>> = {
     { id: "keySilver", stats: { keySilver: 0.1 }, rarity: "uncommon", levels: 0, max: 5, after: "keyGold" },
     { id: "goldBonus", stats: { goldBonus: 1 }, rarity: "rare", levels: 0, max: 5, after: "keySilver" },
     { id: "freeUtility", stats: { freeUtilityChance: 0.5 }, rarity: "epic", levels: 0, max: 5, after: "goldBonus" },
+    { id: "keyChest", stats: { keyChest: 0.2 }, rarity: "legendary", levels: 0, max: 5, after: "freeUtility" },
     common("keyFind", { keyFind: 1 }, 4, 5),
     { id: "plainDoorCost", stats: { plainDoorCost: 1 }, rarity: "uncommon", levels: 0, max: 5, after: "keyFind" },
     { id: "heartDoorCost", stats: { heartDoorCost: 1 }, rarity: "rare", levels: 0, max: 5, after: "plainDoorCost" },
@@ -162,10 +173,18 @@ export const CARD_TREES: Partial<Record<CardId, readonly CardTreeNode[]>> = {
     { id: "masterKey", stats: { masterKey: 0.2 }, rarity: "legendary", levels: 0, max: 5, after: "locksmith" },
   ],
   monster: [
-    common("attack", { foeAttack: 1 }, 2, 5),
-    common("defense", { foeDefense: 1 }, 2, 5),
-    common("gold", { foeGold: 1 }, 2, 5),
-    common("moreEnemies", { moreEnemies: 1 }, 4, 10),
+    common("attack", { foeAttack: 2 }, 4, 5),
+    { id: "critChance", stats: { critChance: 1 }, rarity: "uncommon", levels: 0, max: 5, after: "attack" },
+    { id: "critFactor", stats: { critFactor: 2 }, rarity: "rare", levels: 0, max: 5, after: "critChance" },
+    { id: "killXp", stats: { killXp: 2 }, rarity: "epic", levels: 0, max: 5, after: "critFactor" },
+    { id: "surpriseAttack", stats: { surpriseAttack: 5 }, rarity: "legendary", levels: 0, max: 5, after: "killXp" },
+    common("defense", { foeDefense: 2 }, 3, 5),
+    { id: "shroud", stats: { shroud: 2 }, rarity: "uncommon", levels: 0, max: 5, after: "defense" },
+    { id: "weaken", stats: { foeAttackCut: 1 }, rarity: "rare", levels: 0, max: 5, after: "shroud" },
+    { id: "stealOverheal", stats: { stealOverheal: 5 }, rarity: "epic", levels: 0, max: 5, after: "weaken" },
+    common("gold", { foeGold: 1 }, 3, 5),
+    { id: "silver", stats: { foeSilver: 1 }, rarity: "uncommon", levels: 0, max: 5, after: "gold" },
+    { id: "spawnRate", stats: { moreEnemies: 2 }, rarity: "rare", levels: 0, max: 5, after: "silver" },
   ],
   atkUp: [
     common("shard", { attackShard: 1 }, 4, 10),
@@ -317,7 +336,7 @@ export function runCardTrees(levels: CardTreeLevels, hand: readonly CardId[]): C
 export type TreeBonus = Record<TreeStat, number>;
 const NO_BONUS = Object.freeze(Object.fromEntries(
   ["floorGold", "floorSilver", "goldBonus", "silverBonus", "freeOffense", "freeDefense", "freeUtility", "freeDefenseChance", "freeUtilityChance", "floorHeal", "overhealMax", "stairSkip", "percentPotions", "potionHeal", "potionMaxHp", "potionSilver", "regen", "shroud", "parry",
-    "doorCost", "doorGold", "doorSilver", "doorHeal", "skeletonKey", "locksmith", "secretKnock", "doorChest", "keyFind", "keyGold", "keyHeal", "keyOverheal", "keySilver", "plainDoorCost", "heartDoorCost", "doubleKey", "masterKey", "foeAttack", "foeDefense", "foeGold", "moreEnemies", "attackShard", "defenseShard", "attackShardGold", "defenseShardGold",
+    "doorCost", "doorGold", "doorSilver", "doorHeal", "skeletonKey", "lockPick", "secretKnock", "doorChest", "keyChest", "keyFind", "keyGold", "keyHeal", "keyOverheal", "keySilver", "plainDoorCost", "heartDoorCost", "doubleKey", "masterKey", "foeAttack", "foeDefense", "foeGold", "foeSilver", "critChance", "critFactor", "killXp", "surpriseAttack", "foeAttackCut", "stealOverheal", "moreEnemies", "attackShard", "defenseShard", "attackShardGold", "defenseShardGold",
     "bossAttack", "bossDefense", "bossShroud", "bossGold", "bossCells", "chestGold", "supplyChance", "equipmentChance"].map((s) => [s, 0]),
 )) as TreeBonus;
 /** What the trees in `levels` (a run's `cardTrees`) give, added up. */
@@ -336,6 +355,8 @@ export const treeFactor = (bonus: TreeBonus, stat: TreeStat) => (bonus[stat] ? s
 /** What `run`'s floors add (more-enemies.ts): its More Enemies badges'
  * and ENEMY's tree's, both fixed as it went inside. */
 export const runExtras = (run: Pick<RunCore, "badges" | "cardTrees">) => extraEnemies(run.badges, treeBonus(run.cardTrees).moreEnemies);
+/** The percent `run`'s enemies' ATK is cut by (ENEMY's Weaken), fixed as it went inside. */
+export const runFoeCut = (run: Pick<RunCore, "cardTrees">) => treeBonus(run.cardTrees).foeAttackCut;
 /** What each Free Upgrade group's chance a floor is multiplied by (STAIRS'
  * tree), as `rollFreeTraining` takes it. */
 export const freeUpFactors = (bonus: TreeBonus) =>

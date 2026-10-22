@@ -109,20 +109,32 @@ test("KEY's Locksmith makes a key two, by the key's own roll", () => {
   assert.equal(some.run.player.keys.yellow, first);
 });
 
-test("KEY's Master Key opens every door on a Tower floor as its key is picked up, paying nothing", () => {
+test("KEY's Master Key opens every door on a Tower floor as its key is picked up, each paying as a door opened for nothing", () => {
   const wood: Tile = { kind: "door", door: { type: "wood", durability: 20 } };
-  const g = beside({ key: { masterKey: 500 } }, [key, keyed(["red"]), wood]);
+  const g = beside({ key: { masterKey: 500 }, door: { doorHeal: 4, doorSilver: 5 } }, [key, keyed(["red"]), wood]);
   (g.world as RoomWorld).cells.set("0,1", keyed(["yellow", "blue"], true));
   const gold = g.save.gold;
   assert.ok(g.move(1, 0));
   const none = beside({}, [key, keyed(["red"])]), noneGold = none.save.gold;
   assert.ok(none.move(1, 0));
   assert.equal(none.world.tile(2, 0).kind, "door");
-  assert.equal(g.save.gold - gold, none.save.gold - noneGold, "Gold for the key alone");
   assert.deepEqual([g.world.tile(2, 0).kind, g.world.tile(3, 0).kind, g.world.tile(0, 1).kind], ["floor", "floor", "floor"]);
   assert.match(g.message, /Master Key · 3 doors opened/);
+  // Each door's Gold, Door Silver and Door Heal: 2% of max HP a door.
+  assert.ok(g.save.gold - gold > none.save.gold - noneGold, "the doors' Gold on top of the key's");
+  for (const at of [{ x: 2, y: 0 }, { x: 3, y: 0 }, { x: 0, y: 1 }]) assert.ok(g.gains.some((gain) => gain.x === at.x && gain.y === at.y && /Gold/.test(gain.text)), `Gold at ${at.x},${at.y}`);
+  assert.equal(g.gains.filter((gain) => /Silver/.test(gain.text)).length, 3);
+  assert.equal(g.run.player.hp, 56, "three Door Heals, no toll or drain");
+  // Undo takes it all back, and the doors' Gold can't pay twice.
+  const paid = g.save.gold;
+  assert.ok(g.undo());
+  assert.equal(g.run.player.hp, 50);
+  lay(g, key, keyed(["red"]), wood);
+  (g.world as RoomWorld).cells.set("0,1", keyed(["yellow", "blue"], true));
+  assert.ok(g.move(1, 0));
+  assert.equal(g.save.gold, paid);
+  assert.equal(g.run.player.hp, 56);
   assert.ok(g.move(1, 0) && g.move(1, 0), "the hero walks through");
-  assert.equal(g.run.player.hp, 50, "no toll");
 });
 
 test("KEY's Master Key opens the doors of a Delve area on the key's equivalent floor", () => {
@@ -152,4 +164,31 @@ test("DOOR's Master Key, renamed Secret Knock, keeps its levels in a saved tree 
   assert.equal(d.cardTrees.door?.secretKnock, 1);
   assert.equal(d.cardBuys.opened.door?.secretKnock, 2);
   assert.equal(d.cardTrees.door?.masterKey, undefined);
+  // DOOR's Locksmith is Lock Pick, in the tree, its buys and a run's door odds.
+  assert.equal(d.cardTrees.door?.lockPick, 1);
+  assert.equal(d.cardBuys.opened.door?.lockPick, 1);
+  assert.equal(d.cardTrees.door?.locksmith, undefined);
+  const g = new Game(d);
+  g.newRun({ seed: 3 });
+  const inside = JSON.parse(JSON.stringify(g.save));
+  inside.tower.run.doorOdds = { skeleton: 1, locksmith: 2 };
+  assert.deepEqual(decode(JSON.stringify(inside)).tower.run!.doorOdds, { skeleton: 1, lockPick: 2 });
+});
+
+test("KEY's Key Chest leaves an opened treasure chest where a key lay, paid, by the key's own roll", () => {
+  const g = beside({ key: { keyChest: 500 } }), treasures = g.run.treasures;
+  assert.ok(g.move(1, 0));
+  assert.equal(g.world.tile(1, 0).kind, "openedChest");
+  assert.equal(g.run.treasures, treasures + 1);
+  assert.equal(g.run.player.keys.yellow, 1, "the key is taken too");
+  const plain = beside({});
+  assert.ok(plain.move(1, 0));
+  assert.equal(plain.world.tile(1, 0).kind, "floor");
+  // Undo and the same key rolls the same, paying nothing again.
+  const some = beside({ key: { keyChest: 250 } }), first = (some.move(1, 0), some.world.tile(1, 0).kind), gold = some.save.gold;
+  assert.ok(some.undo());
+  lay(some, key);
+  assert.ok(some.move(1, 0));
+  assert.equal(some.world.tile(1, 0).kind, first);
+  assert.equal(some.save.gold, gold);
 });

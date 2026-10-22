@@ -87,8 +87,10 @@ export type CritRule = { chance: number; factor: number };
 /** What a strike with `applications` critical applications multiplies ATK by. */
 export const critMultiplier = (factor: number, applications: number) => (applications ? snap(1 + applications * (factor - 1)) : 1);
 /** The hero's critical rolls in one fight: the `factor` and how many
- * applications strike number `strike` (from 0, the hero's own) has. */
-export type Crits = { factor: number; applications: (strike: number) => number };
+ * applications strike number `strike` (from 0, the hero's own) has, and
+ * what the hero's first strike's ATK is multiplied by on top (`first`:
+ * ENEMY's Surprise Attack, ×2). */
+export type Crits = { factor: number; applications: (strike: number) => number; first?: number };
 /** How many applications of its critical factor `chance` percent always lands. */
 export const guaranteedCrits = (chance: number) => Math.floor(chance / 100);
 /** `player` striking with the applications `crit` is certain to land: its
@@ -180,6 +182,9 @@ export const netDamage = (player: Player, r: CombatPrediction) => (r.hpAfter !==
  * share of it in percent: the strike's whole damage, however little HP the
  * enemy had left. */
 export const lifestealHeal = (player: Player, dealt: number) => snap((dealt * (player.lifesteal ?? 0)) / 100);
+/** The most HP Lifesteal heals the hero up to: max HP, raised by ENEMY's
+ * Lifesteal Overheal percent of it. */
+export const stealCeiling = (player: Player) => (player.stealOverheal ? snap((player.maxHp * (100 + player.stealOverheal)) / 100) : player.maxHp);
 
 /** The hero's HP when a fight against `enemy` ends, the hero's strikes each
  * dealing `hit` and healing by its Lifesteal as they land (before the
@@ -203,7 +208,7 @@ function lifestealEnding(player: Player, enemy: Enemy, hit: number, played = Inf
   for (let round = 0; ; round++) {
     if (round >= played && enemyHp > hit) return lifestealEstimate(player, { hp, enemyHp, attack, shroud }, hit, cut);
     enemyHp = snap(Math.max(0, enemyHp - hit));
-    hp = healUpTo(hp, lifestealHeal(player, hit), player.maxHp);
+    hp = healUpTo(hp, lifestealHeal(player, hit), stealCeiling(player));
     if (!enemyHp) return hp;
     if (!reply()) return null;
     if (!enemyHp) return hp;
@@ -295,7 +300,7 @@ export function parriedEstimate(attack: number, defense: number, n: number, cut 
  * only falls. Null when it falls to 0 before the enemy does. */
 function lifestealEstimate(player: Player, at: { hp: number; enemyHp: number; attack: number; shroud: number }, hit: number, cut = 0) {
   // A strike cut by a parry takes f × (ATK − DEF), f the share of its damage left.
-  const f = (100 - cut) / 100, strikes = Math.ceil(at.enemyHp / hit), replies = strikes - 1, defense = player.defense;
+  const f = (100 - cut) / 100, strikes = Math.ceil(at.enemyHp / hit), replies = strikes - 1, defense = player.defense, top = stealCeiling(player);
   const heal = lifestealHeal(player, hit);
   const climbing = Math.min(replies, roundsUntilAbove(at.attack, defense + heal / f));
   let shroud = at.shroud;
@@ -305,10 +310,10 @@ function lifestealEstimate(player: Player, at: { hp: number; enemyHp: number; at
     return damage - taken;
   };
   const early = absorb(f * estimatedDamage(at.attack, defense, climbing));
-  const ceiling = player.maxHp - Math.max(0, f * (attackAfter(at.attack, climbing - 1) - defense));
+  const ceiling = top - Math.max(0, f * (attackAfter(at.attack, climbing - 1) - defense));
   let hp = climbing ? Math.min(Math.max(at.hp, ceiling), at.hp + climbing * heal - early) : at.hp;
   hp -= absorb(f * estimatedDamage(attackAfter(at.attack, climbing), defense, replies - climbing)) - (replies - climbing) * heal;
-  return hp <= 0 ? null : hp >= player.maxHp ? snap(hp) : snap(Math.min(player.maxHp, hp + heal));
+  return hp <= 0 ? null : hp >= top ? snap(hp) : snap(Math.min(top, hp + heal));
 }
 
 /** How long each strike of a fight played out round by round takes: the first
@@ -384,9 +389,10 @@ function play(strikes: Strike[], { player, enemy, revives, crits }: Fighters, st
   };
   for (;;) {
     if (!s.enemyNext) {
-      const applications = crits?.applications(s.heroStrikes) ?? 0, struck = applications ? heroHit(player, enemy, critMultiplier(crits!.factor, applications)) : hit;
+      const applications = crits?.applications(s.heroStrikes) ?? 0, first = !s.heroStrikes && crits?.first ? crits.first : 1;
+      const multiplier = snap(critMultiplier(crits?.factor ?? 1, applications) * first), struck = multiplier === 1 ? hit : heroHit(player, enemy, multiplier);
       s.heroStrikes++;
-      const healed = player.lifesteal ? healUpTo(s.heroHp, lifestealHeal(player, struck), player.maxHp) : s.heroHp;
+      const healed = player.lifesteal ? healUpTo(s.heroHp, lifestealHeal(player, struck), stealCeiling(player)) : s.heroHp;
       const heals = healed !== s.heroHp, gained = snap(healed - s.heroHp);
       s.heroHp = healed;
       s.enemyHp = snap(Math.max(0, s.enemyHp - struck));

@@ -139,6 +139,7 @@ const validPlayer = (p: any, width: number) =>
   (p.cardParry === undefined || (finite(p.cardParry) && p.cardParry >= 0 && p.cardParry <= 100)) &&
   (p.bossAttack === undefined || (finite(p.bossAttack) && p.bossAttack >= 0)) &&
   (p.pierce === undefined || (finite(p.pierce) && p.pierce >= 0 && p.pierce <= 100)) &&
+  (p.stealOverheal === undefined || (finite(p.stealOverheal) && p.stealOverheal >= 0)) &&
   [p.foeAttack, p.foeDefense, p.foeShroud].every((m) => m === undefined || (isRecord(m) && Object.entries(m).every(([id, v]) => isFoeKey(id) && finite(v) && (v as number) >= 0))) &&
   KEY_COLORS.every((k) => finite(p.keys?.[k]));
 /** Checks every run passes, whatever its mode; `width` is the mode's board. */
@@ -180,7 +181,7 @@ const RUN_FIELD_CHECKS = {
   // HEAL's tree raises the trained chance, up to every potion.
   percentPotions: (v: unknown) => wholeIn(v, 1, 10_000),
   chestOdds: (v: any) => isRecord(v) && Object.keys(v).length === 2 && [v.supply, v.equipment].every((n) => finite(n) && n >= 0 && n <= 100) && v.supply + v.equipment > 0,
-  doorOdds: (v: any) => isRecord(v) && Object.keys(v).length === 2 && [v.skeleton, v.locksmith].every((n) => finite(n) && n >= 0 && n <= 100) && v.skeleton + v.locksmith > 0,
+  doorOdds: (v: any) => isRecord(v) && Object.keys(v).length === 2 && [v.skeleton, v.lockPick].every((n) => finite(n) && n >= 0 && n <= 100) && v.skeleton + v.lockPick > 0,
   // The hand is checked first: every card holding a badge must be in it.
   badges: (v: unknown, r: any) => validRunBadges(v) && Object.keys(v as object).every((card) => r.hand?.includes(card)),
   // The hand is checked first: every card with a tree copied must be in it.
@@ -338,15 +339,24 @@ function renameRush(s: any) {
   }
 }
 /** DOOR's legendary Master Key became Secret Knock (KEY's tree took the
- * name): its levels spent and opened, and a run inside's, renamed in the
- * raw save before the trees decode it.
+ * name), and its epic Locksmith Lock Pick (KEY's has its own): their levels
+ * spent and opened, and a run inside's, with the run's door odds, renamed
+ * in the raw save before the trees decode it.
  * TODO: remove this conversion in a future save version. */
-function renameSecretKnock(s: any) {
+const DOOR_RENAMES = [["masterKey", "secretKnock"], ["locksmith", "lockPick"]] as const;
+function renameDoorNodes(s: any) {
   for (const trees of [s.cardTrees, s.cardBuys?.opened, s.tower?.run?.cardTrees, s.delve?.run?.cardTrees]) {
     const door = isRecord(trees) ? trees.door : undefined;
-    if (isRecord(door) && "masterKey" in door && !("secretKnock" in door)) {
-      door.secretKnock = door.masterKey;
-      delete door.masterKey;
+    if (isRecord(door)) for (const [old, now] of DOOR_RENAMES) if (old in door && !(now in door)) {
+      door[now] = door[old];
+      delete door[old];
+    }
+  }
+  for (const mode of ["tower", "delve"]) {
+    const odds = s[mode]?.run?.doorOdds;
+    if (isRecord(odds) && "locksmith" in odds && !("lockPick" in odds)) {
+      odds.lockPick = odds.locksmith;
+      delete odds.locksmith;
     }
   }
 }
@@ -525,7 +535,7 @@ export function decode(raw: string | null): Save {
     const s = JSON.parse(raw ?? "null") ?? {};
     if (isRecord(s)) renameRush(s);
     if (isRecord(s)) retireYellowKey(s);
-    if (isRecord(s)) renameSecretKnock(s);
+    if (isRecord(s)) renameDoorNodes(s);
     decodeUpgrades(s.upgrades, d);
     // Undo capacity counts Undo Count research, so the Archives come first.
     d.archives = decodeArchives(s.archives);

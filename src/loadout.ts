@@ -215,11 +215,12 @@ export function trainingWaiting(save: Save) {
 }
 
 /** A hero's critical strikes: what `save` gives (research included), or none:
- * Crit %'s chance, in percent, and Crit x's factor on the hero's ATK. */
-export function critRule(save: Pick<Save, "upgrades" | "training" | "archives">): CritRule | undefined {
-  const chance = snap(trainedAmount(save, "critChance") / 100 * researched(save.archives, "critChancePercent") / 100);
+ * Crit %'s chance, in percent, and Crit x's factor on the hero's ATK, each
+ * raised by the card trees' percents (`cards`, ENEMY's), a factor of their own. */
+export function critRule(save: Pick<Save, "upgrades" | "training" | "archives">, cards?: { chance: number; factor: number }): CritRule | undefined {
+  const chance = snap(trainedAmount(save, "critChance") / 100 * researched(save.archives, "critChancePercent") / 100 * (100 + (cards?.chance ?? 0)) / 100);
   if (chance <= 0) return undefined;
-  return { chance, factor: snap(trainedAmount(save, "critFactor") / 100 * researched(save.archives, "critFactorPercent") / 100) };
+  return { chance, factor: snap(trainedAmount(save, "critFactor") / 100 * researched(save.archives, "critFactorPercent") / 100 * (100 + (cards?.factor ?? 0)) / 100) };
 }
 
 /** The Free Upgrade row training each group's free levels. */

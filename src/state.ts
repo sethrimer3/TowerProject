@@ -3,7 +3,7 @@ import { buyTheme, canWear, grantAllThemes, type GameLook, type ThemeId, type Th
 import { chooseStep } from "./automation.ts";
 import { CARDS, cardText, deckCards, explainStuck, handBonus, keptLinks, planHand, planTarget, shootsWith, stillOpen, type CardId, type CardPlan, type HandBonus, type StuckReport } from "./cards.ts";
 import { addCardXp, PASSIVE_CARDS } from "./card-levels.ts";
-import { cardMaxLevel, freeUpChances, freeUpFactors, hasPointsToSpend, pointsLeft, runCardTrees, treeBonus, treeFactor, treeOverheal, type TreeBonus } from "./card-trees.ts";
+import { cardMaxLevel, freeUpChances, freeUpFactors, hasPointsToSpend, pointsLeft, runCardTrees, runFoeCut, treeBonus, treeFactor, treeOverheal, type TreeBonus } from "./card-trees.ts";
 import { aggroTurn } from "./flying.ts";
 import { foeOn } from "./ranged.ts";
 import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./badges.ts";
@@ -99,7 +99,7 @@ import { MissionDesk } from "./game/mission-desk.ts";
 import { EventDesk } from "./game/event-desk.ts";
 import { ShrineDesk } from "./game/shrine-desk.ts";
 import { NoticeDesk } from "./game/notice-desk.ts";
-import { boonFactor, runBoons } from "./shrines.ts";
+import { boonFactor, runBoons, weakened } from "./shrines.ts";
 import type { MissionType } from "./missions/catalog.ts";
 import type { EventMissionType } from "./events/catalog.ts";
 import { LEAGUE_INFO } from "./tournament/leagues.ts";
@@ -160,8 +160,9 @@ const TURN_MS = 220;
 const YELLOW_KEY_SALT = 0x6e11a;
 /** A step resolved and about to be taken: the tile stepped onto, what it
  * does, where it is, whether it goes in the undo history, and for a fight
- * the hero's critical strikes in it as played (`crits`). */
-type TakenStep = { tile: Tile; outcome: StepEffect; dest: { x: number; y: number }; track: boolean; quiet?: boolean; crits?: number; card: CardStep };
+ * the hero's critical strikes in it as played (`crits`) and whether it
+ * began with ENEMY's Surprise Attack (`surprise`). */
+type TakenStep = { tile: Tile; outcome: StepEffect; dest: { x: number; y: number }; track: boolean; quiet?: boolean; crits?: number; surprise?: true; card: CardStep };
 /** How the hand's turn takes a step: Effective or Dampen on a card's last
  * step (`scale`, what its target's effect is multiplied by; 1 on every
  * other step), Skip on STAIRS succeeding (`floorSkip`: the climb goes up
@@ -171,8 +172,10 @@ export type CardStep = { scale?: number; floorSkip?: boolean; hold?: boolean };
 /** Tiles that stay on the board after being stepped on. */
 const PERMANENT_TILES = new Set<Tile["kind"]>(["floor", "stairs", "oneway", "openedChest"]);
 /** What DOOR's Secret Knock, Door Chest and the chest's kind roll a door
- * by, and KEY's Locksmith and Master Key a key. */
-const SECRET_KNOCK_SALT = 0x3a57e, DOOR_CHEST_SALT = 0xd00c4, DOOR_CHEST_KIND_SALT = 0xd0c4d, DOUBLE_KEY_SALT = 0xd0b1e, MASTER_KEY_SALT = 0x3a5e7;
+ * by, KEY's Locksmith, Master Key, Key Chest and its kind a key, and
+ * ENEMY's Surprise Attack an enemy. */
+const SECRET_KNOCK_SALT = 0x3a57e, DOOR_CHEST_SALT = 0xd00c4, DOOR_CHEST_KIND_SALT = 0xd0c4d, DOUBLE_KEY_SALT = 0xd0b1e, MASTER_KEY_SALT = 0x3a5e7,
+  KEY_CHEST_SALT = 0x6c4e5, KEY_CHEST_KIND_SALT = 0x6c4d1, SURPRISE_SALT = 0x5a7c1;
 /** The targets a Dash may end on, a tile of it left: items to take. */
 const DASH_ONTO = new Set<Tile["kind"]>(["key", "potion", "attack", "defense", "treasure", "reward"]);
 export class Game {
@@ -256,6 +259,10 @@ export class Game {
   /** The latest dash: the tiles the hero dashed off, in order, and when
    * (performance.now()), for the board's fading echoes of the hero. */
   dash: Dash | null = null;
+  /** Where the latest Dash stopped, short of something, until the next
+   * step: a fight stepped into from there is a dash attack, which ENEMY's
+   * Surprise Attack may double the first strike of. */
+  private dashedTo: { x: number; y: number } | null = null;
   /** The last step the hero took (into a fight too): the way it faces,
    * for a board whose hero turns. Right until it first steps; undo leaves it. */
   facing: Facing = { dx: 1, dy: 0 };
@@ -553,6 +560,7 @@ export class Game {
     this.recordProgress();
     if (levelForXp(snapshot.xp) < levelForXp(this.save.xp)) this.levelUpAt = -Infinity;
     this.fights.forgetMarks();
+    this.dashedTo = null;
     this.areaBursts = [];
     this.warpLooted = null;
     this.summoned = null;
@@ -928,6 +936,7 @@ export class Game {
     this.cardPlan = plan.path.length ? plan : null;
     const last = tiles[tiles.length - 1], end = onItem ? undefined : { x: p.x, y: p.y, dx: last.dx, dy: last.dy };
     if (tiles.length > 1) this.dash = { tiles, end, at: performance.now() };
+    if (tiles.length > 1 && end) this.dashedTo = { x: end.x, y: end.y };
     return moved;
   }
   /** Tiles the hand's first step toward a new target may dash across: none
@@ -1030,8 +1039,8 @@ export class Game {
     const odds = this.chestOddsFor(this.run.hand, tree);
     if (odds) this.run.chestOdds = odds;
     else delete this.run.chestOdds;
-    // DOOR's Skeleton Key and Locksmith remake the run's doors as each floor is generated.
-    if (tree.skeletonKey || tree.locksmith) this.run.doorOdds = { skeleton: Math.min(100, tree.skeletonKey), locksmith: Math.min(100, tree.locksmith) };
+    // DOOR's Skeleton Key and Lock Pick remake the run's doors as each floor is generated.
+    if (tree.skeletonKey || tree.lockPick) this.run.doorOdds = { skeleton: Math.min(100, tree.skeletonKey), lockPick: Math.min(100, tree.lockPick) };
     else delete this.run.doorOdds;
     // The hero strikes the enemies each enemy card covers harder, and with
     // ENEMY's and TORCH's trees holds more DEF and shroud against theirs,
@@ -1048,6 +1057,8 @@ export class Game {
     }
     if (tree.parry) p.cardParry = tree.parry;
     else delete p.cardParry;
+    if (tree.stealOverheal) p.stealOverheal = tree.stealOverheal;
+    else delete p.stealOverheal;
     this.run.focusUsed = 0;
     for (const k of ["ignoreUsed", "targetUsed", "regain", "ignored", "targeted"] as const) delete this.run[k];
   }
@@ -1085,7 +1096,7 @@ export class Game {
   /** The run's boons changed its hero or enemies (`ShrineDesk.sync`): the
    * floor's enemies are read afresh and the hand plans again. */
   boonsChanged() {
-    if (this.world instanceof RoomWorld) this.world.foes = (this.run as TowerRun).shrine?.applied?.foes;
+    if (this.world instanceof RoomWorld) this.world.foes = weakened((this.run as TowerRun).shrine?.applied?.foes, runFoeCut(this.run));
     this.dropHandPlan();
   }
   /** Research completed: what it changes about the run's boons applies at
@@ -1155,7 +1166,12 @@ export class Game {
    * and research, the run's Silver ranks counting), read when a fight is
    * taken or shown; none in the forest. */
   get crit(): CritRule | undefined {
-    return this.run.outside ? undefined : critRule({ ...this.trainingNow, archives: this.save.archives });
+    return this.run.outside ? undefined : critRule({ ...this.trainingNow, archives: this.save.archives }, this.cardCrit);
+  }
+  /** ENEMY's tree's percents on Crit % and Crit x, for fights and arrows. */
+  private get cardCrit() {
+    const tree = this.treeBonus;
+    return { chance: tree.critChance, factor: tree.critFactor };
   }
   /** How much of a key each key a door takes costs, in tenths of a percent
    * (Key Efficiency research): what steps pay and the door cards plan by. */
@@ -1515,8 +1531,9 @@ export class Game {
   /** Pays the XP for beating `enemy` on equivalent floor `floor`, counting
    * it toward the run's total too. */
   gainXp(enemy: Enemy, floor: number, scale = 1) {
-    const xp = tierXp(this.tier, xpForKill(enemy.strength, floor)), gain = this.worn.xpGain;
-    const raisedXp = gain ? Math.round((xp * (100 + gain)) / 100) : xp;
+    // Worn Equipment's XP Gain and ENEMY's tree's, each its own factor.
+    const xp = tierXp(this.tier, xpForKill(enemy.strength, floor)), gain = this.worn.xpGain, tree = this.treeBonus.killXp;
+    const raisedXp = gain || tree ? Math.round((xp * (100 + gain) * (100 + tree)) / 10_000) : xp;
     this.addXp(scale === 1 ? raisedXp : Math.round(raisedXp * scale));
   }
   /** Adds `xp` to the hero's and the run's, raising the level-up burst
@@ -1617,7 +1634,12 @@ export class Game {
     }
     const step: TakenStep = { tile: t, outcome, dest, track, quiet: this.emptyAt(dest.x, dest.y), card };
     this.facing = { dx, dy };
-    return t.kind === "enemy" ? this.fights.fight(step, t.enemy!) : this.take(step);
+    // ENEMY's Surprise Attack: the fight a Dash stopped before, by the enemy tile's roll.
+    const dashed = this.dashedTo;
+    this.dashedTo = null;
+    const surprise = t.kind === "enemy" && !!dashed && dashed.x === p.x && dashed.y === p.y && this.tileRolls(dest.x, dest.y, SURPRISE_SALT, this.treeBonus.surpriseAttack);
+    if (surprise) step.surprise = true;
+    return t.kind === "enemy" ? this.fights.fight(step, t.enemy!, surprise) : this.take(step);
   }
   /** Takes a resolved step: in through its door or fight, then onto the tile. */
   private take(step: TakenStep, revived = 0) {
@@ -1634,7 +1656,7 @@ export class Game {
   }
   /** Commits a resolved step: undo history, stats, and the door or fight on
    * the way in. Returns false when the player fell. */
-  private enter({ tile: t, outcome, dest, track, quiet, crits }: TakenStep, revived: number) {
+  private enter({ tile: t, outcome, dest, track, quiet, crits, surprise }: TakenStep, revived: number) {
     const before = this.snapshot();
     this.turnBefore ??= before;
     if (track) this.remember(quiet ? { ...before, quiet: true } : before);
@@ -1647,7 +1669,7 @@ export class Game {
     // Effective's added damage rises off the hero; Dampen's given back heals.
     if (extra > 0 && p.hp > 0) this.gain(p.x, p.y, `−${wholeChange(extra)} HP`, { heart: true }, undefined, "hit");
     else if (extra < 0) this.recordHeal(-extra);
-    return this.winFight({ enemy: t.enemy!, damage: snap(outcome.combat!.damage + extra), at: dest, revived, scale: outcome.scale, instakill: instakill(outcome.combat!), crits }, before);
+    return this.winFight({ enemy: t.enemy!, damage: snap(outcome.combat!.damage + extra), at: dest, revived, scale: outcome.scale, instakill: instakill(outcome.combat!), crits, surprise }, before);
   }
   /** Moves the player onto the tile and applies what standing there does. */
   private land(t: Tile, x: number, y: number, outcome: StepEffect, floorSkip = false) {
@@ -1673,6 +1695,7 @@ export class Game {
     this.finds.pickup(t, x, y, outcome);
     this.consumeTile(t, x, y);
     if (t.kind === "door") this.doorChest(x, y);
+    if (t.kind === "key") this.keyChest(x, y);
     if (t.kind === "key") this.masterKey(x, y);
     if (t.kind !== "stairs") this.callGreaterBoss();
     this.afterStep(t, x, y, floorSkip);
@@ -1775,7 +1798,7 @@ export class Game {
     if ((this.tier < 3 && !archer) || !sameFloor) return;
     const v = this.run.volleys ?? { turn: 0 };
     const out = volleyTurn({ board: this.world, wrap: this.wrap, floorOf: (x, y) => this.floorOf(x, y), hero: p, from, seed: this.run.seed,
-      volleys: { ...v, turn: v.turn + 1 }, archer, ranks: { ...this.trainingNow, archives: this.save.archives }, handShot: this.handBonus.shot });
+      volleys: { ...v, turn: v.turn + 1 }, archer, ranks: { ...this.trainingNow, archives: this.save.archives }, cardCrit: this.cardCrit, handShot: this.handBonus.shot });
     this.run.volleys = out.volleys;
     p.hp = out.hp;
     if (out.hurt) {
@@ -1933,9 +1956,19 @@ export class Game {
    * treasure chest where it stood, paid as a treasure chest is (a Supply or
    * Equipment Chest at the run's odds). */
   private doorChest(x: number, y: number) {
-    if (!this.tileRolls(x, y, DOOR_CHEST_SALT, this.treeBonus.doorChest)) return;
+    this.leaveChest(x, y, DOOR_CHEST_SALT, DOOR_CHEST_KIND_SALT, this.treeBonus.doorChest);
+  }
+  /** KEY's Key Chest: the key just picked up at (x, y) may leave an opened
+   * treasure chest where it lay, as Door Chest leaves one. */
+  private keyChest(x: number, y: number) {
+    this.leaveChest(x, y, KEY_CHEST_SALT, KEY_CHEST_KIND_SALT, this.treeBonus.keyChest);
+  }
+  /** An opened treasure chest left at (x, y) when its tile rolls under
+   * `chance` by `salt`, its kind rolled by `kindSalt`, and paid. */
+  private leaveChest(x: number, y: number, salt: number, kindSalt: number, chance: number) {
+    if (!this.tileRolls(x, y, salt, chance)) return;
     this.run.changes[`${x},${y}`] = { kind: "openedChest" };
-    this.finds.treasure(x, y, chestKindAt({ kind: "treasure" }, x, y, this.floorSeed ^ DOOR_CHEST_KIND_SALT, this.run.chestOdds));
+    this.finds.treasure(x, y, chestKindAt({ kind: "treasure" }, x, y, this.floorSeed ^ kindSalt, this.run.chestOdds));
   }
   /** The rules a step's lucky roll adds, or null: DOOR's Secret Knock opens
    * a door for nothing, and KEY's Locksmith makes a key two. */
@@ -1946,11 +1979,20 @@ export class Game {
     return null;
   }
   /** KEY's Master Key: the key just picked up at (x, y) may open every door
-   * on its floor at once, for nothing and paying nothing. */
+   * on its floor at once, for nothing, each paying as a door Secret Knock
+   * opened does: its Gold, DOOR's Door Silver and Door Heal, and its Door
+   * Chest roll. */
   private masterKey(x: number, y: number) {
     if (!this.tileRolls(x, y, MASTER_KEY_SALT, this.treeBonus.masterKey)) return;
-    const doors = this.world.floorDoors?.(x, y) ?? [];
-    for (const d of doors) this.world.clear(d.x, d.y);
+    const doors = this.world.floorDoors?.(x, y) ?? [], rules: StepRules = { ...this.stepRules, regen: 0, freeDoor: true };
+    for (const d of doors) {
+      const t = this.world.tile(d.x, d.y), outcome = resolveStep(this.run.player, t, rules);
+      if (outcome.blocked) continue;
+      this.applyStats(outcome.player);
+      this.finds.door(t, outcome, 0, d);
+      this.world.clear(d.x, d.y);
+      this.doorChest(d.x, d.y);
+    }
     if (doors.length) this.message = `Master Key · ${doors.length} door${doors.length === 1 ? "" : "s"} opened`;
   }
   /** Removes what the step used up: chests stay behind opened, fixtures stay. */
@@ -2339,7 +2381,7 @@ export class Game {
 /** A fight the hero won: the enemy beaten at `at`, the HP it cost, and
  * how many times the hero revived in it. */
 /** A fight won: `instakill` when the hero's first strike ended it (Mug). */
-type FightEnd = { enemy: Enemy; damage: number; at: { x: number; y: number }; revived: number; scale?: number; instakill?: boolean; crits?: number };
+type FightEnd = { enemy: Enemy; damage: number; at: { x: number; y: number }; revived: number; scale?: number; instakill?: boolean; crits?: number; surprise?: true };
 
 /** How Skip's message names what vanished, by tile kind. */
 /** The screens that keep their own Buy Quantity, and the setting each saves it in. */
@@ -2348,7 +2390,10 @@ const QUANTITY_SETTINGS = { training: "buyQuantity", run: "runBuyQuantity", prov
 const SKIPPED_NAMES: Partial<Record<Tile["kind"], string>> = { door: "The door", key: "The key", potion: "The potion", attack: "The ATK shard", defense: "The DEF shard", treasure: "The chest", reward: "The chest" };
 
 /** How the status line opens on a fight won. */
-function fightText({ enemy, damage, revived }: FightEnd) {
+function fightText(fight: FightEnd): string {
+  return fight.surprise ? `Surprise Attack · ${wonText(fight)}` : wonText(fight);
+}
+function wonText({ enemy, damage, revived }: FightEnd) {
   if (revived) return `Revived · ${enemyTitle(enemy)} defeated`;
   return damage ? `−${wholeChange(damage)} HP · ${enemyTitle(enemy)} defeated` : "Unscathed victory";
 }

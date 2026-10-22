@@ -13,7 +13,7 @@
 import type { Board } from "./board.ts";
 import type { Enemy, Player } from "./entities.ts";
 import type { Save } from "./save-shape.ts";
-import { guaranteedCrits, isBoss, thornDamage } from "./combat.ts";
+import { guaranteedCrits, isBoss, stealCeiling, thornDamage } from "./combat.ts";
 import { critRule } from "./loadout.ts";
 import { trainedAmount } from "./config.ts";
 import { researched } from "./archives.ts";
@@ -57,7 +57,8 @@ export const volleyOver = (volley: Volley, now: number) => volley.shots.every((s
  * as the turn ends and the tile it began on (`from`; absent, it stood
  * still), the run's seed and volley state as the turn begins (`turn`
  * already counted), whether the hero is an Archer, the ranks and research
- * its arrows read, and the percent more Shot ATK and Attack Speed the
+ * its arrows read (and the card trees' percents on Crit % and Crit x,
+ * `cardCrit`), and the percent more Shot ATK and Attack Speed the
  * hand's cards give while held, and the percent more ATK their arrows
  * strike a boss or Greater Boss with (`handBonus` in cards.ts; none when
  * absent). */
@@ -71,6 +72,7 @@ export type VolleyTurn = {
   volleys: Volleys;
   archer: boolean;
   ranks: Pick<Save, "upgrades" | "training" | "archives">;
+  cardCrit?: { chance: number; factor: number };
   handShot?: { attack: number; speed: number; boss?: number };
 };
 /** An enemy an arrow felled, or the thorns of its own shot (`thorns`):
@@ -254,7 +256,7 @@ function arrows(turn: VolleyTurn, p: Player, v: Volleys, shots: Shot[], kills: V
     const chance = trainedAmount(ranks, "rapidFireChance");
     return chance > 0 && shotRoll(RAPID_FIRE_SALT, shot) * 10_000 < chance ? trainedAmount(ranks, "rapidFireDuration") : 0;
   };
-  const crit = critRule(ranks), clock = archerState({ charge: v.hero, rapid: v.rapid });
+  const crit = critRule(ranks, turn.cardCrit), clock = archerState({ charge: v.hero, rapid: v.rapid });
   let fired = 0;
   const shoot = (rapid: boolean, tick: number) => {
     const reach = inReach(tick), target = reach.find(hurts);
@@ -295,7 +297,7 @@ function arrow({ board, seed, volleys }: VolleyTurn, p: Player, from: { x: numbe
     applications = sure + (tileRandom(x, y, (seed ^ ARROW_SALT ^ Math.imul(volleys.turn, 0x85ebca6b) ^ Math.imul(shot, 0xc2b2ae35)) | 0) * 100 < rest ? 1 : 0);
   }
   const damage = arrowDamage(p, enemy, applications, crit?.factor ?? 1, boost, cards), left = snap(Math.max(0, enemy.hp - damage));
-  const healed = p.lifesteal ? snap(Math.min(p.maxHp - p.hp, (damage * p.lifesteal) / 100)) : 0;
+  const healed = p.lifesteal ? snap(Math.min(stealCeiling(p) - p.hp, (damage * p.lifesteal) / 100)) : 0;
   if (healed > 0) p.hp = snap(p.hp + healed);
   const landed: Shot = { by: "hero", from, to: { x, y }, damage, tick, ...(applications ? { crit: applications } : {}), ...(charge > 0 ? { charge } : {}), ...(healed > 0 ? { healed } : {}),
     before: enemy.hp, hp: left, full: snap(enemy.hp + (tile.wound ?? 0)) };

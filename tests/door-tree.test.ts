@@ -100,30 +100,30 @@ test("DOOR's Door Chest leaves an opened treasure chest where the door stood, it
   assert.equal(none.world.tile(1, 0).kind, "floor");
 });
 
-test("DOOR's Skeleton Key makes colour doors Wooden Doors, and Locksmith takes the rarest lock off a door of two or three colours", () => {
-  const wood = withDoorOdds(keyed(["yellow", "blue"], true), 3, 4, 9, { skeleton: 100, locksmith: 0 }, () => 12);
+test("DOOR's Skeleton Key makes colour doors Wooden Doors, and Lock Pick takes the rarest lock off a door of two or three colours", () => {
+  const wood = withDoorOdds(keyed(["yellow", "blue"], true), 3, 4, 9, { skeleton: 100, lockPick: 0 }, () => 12);
   assert.deepEqual(wood, { kind: "door", door: { type: "wood", durability: 12 } });
-  assert.deepEqual(withDoorOdds(keyed(["yellow", "blue"], true), 3, 4, 9, { skeleton: 0, locksmith: 100 }, () => 12), keyed(["yellow"], true), "a yellow-blue door becomes a yellow one");
-  assert.deepEqual(withDoorOdds(keyed(["yellow", "blue", "red"]), 3, 4, 9, { skeleton: 0, locksmith: 100 }, () => 12).door, { type: "keys", keys: ["yellow", "blue"], mode: "all" });
-  assert.deepEqual(withDoorOdds(keyed(["blue", "red"]), 3, 4, 9, { skeleton: 0, locksmith: 100 }, () => 12).door, { type: "keys", keys: ["blue"], mode: "all" });
-  assert.deepEqual(withDoorOdds(keyed(["red"]), 3, 4, 9, { skeleton: 0, locksmith: 100 }, () => 12), keyed(["red"]), "one colour keeps its lock");
+  assert.deepEqual(withDoorOdds(keyed(["yellow", "blue"], true), 3, 4, 9, { skeleton: 0, lockPick: 100 }, () => 12), keyed(["yellow"], true), "a yellow-blue door becomes a yellow one");
+  assert.deepEqual(withDoorOdds(keyed(["yellow", "blue", "red"]), 3, 4, 9, { skeleton: 0, lockPick: 100 }, () => 12).door, { type: "keys", keys: ["yellow", "blue"], mode: "all" });
+  assert.deepEqual(withDoorOdds(keyed(["blue", "red"]), 3, 4, 9, { skeleton: 0, lockPick: 100 }, () => 12).door, { type: "keys", keys: ["blue"], mode: "all" });
+  assert.deepEqual(withDoorOdds(keyed(["red"]), 3, 4, 9, { skeleton: 0, lockPick: 100 }, () => 12), keyed(["red"]), "one colour keeps its lock");
   const steel: Tile = { kind: "door", door: { type: "keys", keys: ["yellow", "blue", "red"], mode: "any" } }, heart: Tile = { kind: "door", door: { type: "fullHp" } };
-  for (const t of [steel, heart]) assert.equal(withDoorOdds(t, 3, 4, 9, { skeleton: 100, locksmith: 100 }, () => 12), t, "only colour doors");
+  for (const t of [steel, heart]) assert.equal(withDoorOdds(t, 3, 4, 9, { skeleton: 100, lockPick: 100 }, () => 12), t, "only colour doors");
   // On real floors (the second tower's, with doors of every colour): every colour door goes at 100%, a higher chance only remakes more, and the floor is the same each time.
-  const doors = (odds?: { skeleton: number; locksmith: number }) => {
+  const doors = (odds?: { skeleton: number; lockPick: number }) => {
     const out: Tile[] = [];
     for (let room = 0; room < 60; room++) for (const t of new RoomWorld(5, room, {}, 0, 2, undefined, undefined, undefined, odds).cells.values()) if (t.kind === "door") out.push(t);
     return out;
   };
-  const plain = doors(), all = doors({ skeleton: 100, locksmith: 0 }), some = doors({ skeleton: 30, locksmith: 0 }), more = doors({ skeleton: 60, locksmith: 0 });
+  const plain = doors(), all = doors({ skeleton: 100, lockPick: 0 }), some = doors({ skeleton: 30, lockPick: 0 }), more = doors({ skeleton: 60, lockPick: 0 });
   const colour = (t: Tile) => t.door?.type === "keys" && t.door.mode === "all";
   assert.ok(plain.some(colour));
   assert.equal(all.filter(colour).length, 0);
   assert.ok(all.every((t) => t.door?.type !== "wood" || t.door.durability > 0));
   assert.ok(some.filter(colour).length > more.filter(colour).length && more.filter(colour).length > 0);
   some.forEach((t, i) => colour(t) || assert.deepEqual(more[i], t, "a door remade at 30% is remade at 60%"));
-  assert.deepEqual(doors({ skeleton: 30, locksmith: 0 }), some);
-  assert.ok(doors({ skeleton: 0, locksmith: 100 }).every((t) => !colour(t) || t.door!.type === "keys" && t.door!.keys.length === 1));
+  assert.deepEqual(doors({ skeleton: 30, lockPick: 0 }), some);
+  assert.ok(doors({ skeleton: 0, lockPick: 100 }).every((t) => !colour(t) || t.door!.type === "keys" && t.door!.keys.length === 1));
 });
 
 test("a run fixes DOOR's door odds as it goes inside and saves them; its floors' doors are remade", () => {
@@ -133,8 +133,8 @@ test("a run fixes DOOR's door odds as it goes inside and saves them; its floors'
   s.cardBuys.opened = { door: { doorHeal: 1, skeletonKey: 1 } };
   const g = new Game(s);
   g.newRun({ seed: 3 });
-  assert.deepEqual(g.run.doorOdds, { skeleton: 1, locksmith: 0 });
-  assert.deepEqual(decode(JSON.stringify(g.save)).tower.run!.doorOdds, { skeleton: 1, locksmith: 0 });
+  assert.deepEqual(g.run.doorOdds, { skeleton: 1, lockPick: 0 });
+  assert.deepEqual(decode(JSON.stringify(g.save)).tower.run!.doorOdds, { skeleton: 1, lockPick: 0 });
   g.save.cardTrees = {};
   g.newRun({ seed: 3 });
   assert.equal(g.run.doorOdds, undefined);

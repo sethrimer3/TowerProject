@@ -38,16 +38,16 @@ function allOpened(card: CardId): CardOpened {
   return { [card]: Object.fromEntries(CARD_TREES[card]!.map((n) => [n.id, n.max - n.levels])) };
 }
 
-test("every card tree holds 10 levels from the start and opens to 60 (STAIRS, HEAL, DOOR), 55 (KEY) or 25 with card buys, each node after one of its own tree", () => {
+test("every card tree holds 10 levels from the start and opens to 60 (STAIRS, HEAL, DOOR, KEY, ENEMY) or 25 with card buys, each node after one of its own tree", () => {
   assert.deepEqual(Object.keys(CARD_TREES), ["stairs", "heal", "door", "key", "monster", "atkUp", "defUp", "torch", "chest"]);
   for (const [card, nodes] of Object.entries(CARD_TREES)) {
     assert.equal(nodes!.reduce((a, n) => a + n.levels, 0), BASE_MAX_LEVEL, `${card} starts at 10`);
-    assert.equal(nodes!.reduce((a, n) => a + n.max, 0), card === "stairs" || card === "heal" || card === "door" ? MAX_CARD_LEVEL : card === "key" ? 55 : 25, `${card}'s whole tree`);
+    assert.equal(nodes!.reduce((a, n) => a + n.max, 0), ["stairs", "heal", "door", "key", "monster"].includes(card) ? MAX_CARD_LEVEL : 25, `${card}'s whole tree`);
     const ids = nodes!.map((n) => n.id);
     assert.equal(new Set(ids).size, ids.length, `${card}'s node ids are its own`);
     nodes!.forEach((n, i) => n.after === undefined || assert.ok(ids.slice(0, i).includes(n.after), `${card}.${n.id} comes after its parent`));
     for (const n of nodes!) assert.equal(n.levels > 0, n.rarity === "common", `${card}.${n.id}: only common nodes hold levels from the start`);
-    if (card !== "stairs" && card !== "heal" && card !== "door" && card !== "key") assert.ok(nodes!.every((n) => n.rarity === "common"), `${card} is common for now`);
+    if (!["stairs", "heal", "door", "key", "monster"].includes(card)) assert.ok(nodes!.every((n) => n.rarity === "common"), `${card} is common for now`);
   }
   const stairs = CARD_TREES.stairs!;
   assert.deepEqual(stairs.map((n) => [n.id, n.rarity, n.after ?? null]), [
@@ -70,15 +70,23 @@ test("every card tree holds 10 levels from the start and opens to 60 (STAIRS, HE
     ["doorGold", "common", null, ["doorGold", 2], 5, 10], ["doorSilver", "uncommon", "doorGold", ["doorSilver", 0.1], 0, 5], ["goldBonus", "rare", "doorSilver", ["goldBonus", 1], 0, 5],
     ["freeUtility", "epic", "goldBonus", ["freeUtilityChance", 0.5], 0, 5], ["doorChest", "legendary", "freeUtility", ["doorChest", 0.2], 0, 5],
     ["doorCost", "common", null, ["doorCost", 1], 5, 10], ["doorHeal", "uncommon", "doorCost", ["doorHeal", 0.5], 0, 5], ["skeletonKey", "rare", "doorHeal", ["skeletonKey", 1], 0, 5],
-    ["locksmith", "epic", "skeletonKey", ["locksmith", 1], 0, 5], ["secretKnock", "legendary", "locksmith", ["secretKnock", 1], 0, 5],
+    ["lockPick", "epic", "skeletonKey", ["lockPick", 1], 0, 5], ["secretKnock", "legendary", "lockPick", ["secretKnock", 1], 0, 5],
   ]);
   const key = CARD_TREES.key!;
   assert.deepEqual(key.map((n) => [n.id, n.rarity, n.after ?? null, Object.entries(n.stats)[0], n.levels, n.max]), [
     ["keyHeal", "common", null, ["keyHeal", 1], 2, 5], ["keyOverheal", "uncommon", "keyHeal", ["keyOverheal", 1], 0, 5],
     ["keyGold", "common", null, ["keyGold", 2], 4, 5], ["keySilver", "uncommon", "keyGold", ["keySilver", 0.1], 0, 5], ["goldBonus", "rare", "keySilver", ["goldBonus", 1], 0, 5],
-    ["freeUtility", "epic", "goldBonus", ["freeUtilityChance", 0.5], 0, 5],
+    ["freeUtility", "epic", "goldBonus", ["freeUtilityChance", 0.5], 0, 5], ["keyChest", "legendary", "freeUtility", ["keyChest", 0.2], 0, 5],
     ["keyFind", "common", null, ["keyFind", 1], 4, 5], ["plainDoorCost", "uncommon", "keyFind", ["plainDoorCost", 1], 0, 5], ["heartDoorCost", "rare", "plainDoorCost", ["heartDoorCost", 1], 0, 5],
     ["locksmith", "epic", "heartDoorCost", ["doubleKey", 1], 0, 5], ["masterKey", "legendary", "locksmith", ["masterKey", 0.2], 0, 5],
+  ]);
+  const monster = CARD_TREES.monster!;
+  assert.deepEqual(monster.map((n) => [n.id, n.rarity, n.after ?? null, Object.entries(n.stats)[0], n.levels, n.max]), [
+    ["attack", "common", null, ["foeAttack", 2], 4, 5], ["critChance", "uncommon", "attack", ["critChance", 1], 0, 5], ["critFactor", "rare", "critChance", ["critFactor", 2], 0, 5],
+    ["killXp", "epic", "critFactor", ["killXp", 2], 0, 5], ["surpriseAttack", "legendary", "killXp", ["surpriseAttack", 5], 0, 5],
+    ["defense", "common", null, ["foeDefense", 2], 3, 5], ["shroud", "uncommon", "defense", ["shroud", 2], 0, 5], ["weaken", "rare", "shroud", ["foeAttackCut", 1], 0, 5],
+    ["stealOverheal", "epic", "weaken", ["stealOverheal", 5], 0, 5],
+    ["gold", "common", null, ["foeGold", 1], 3, 5], ["silver", "uncommon", "gold", ["foeSilver", 1], 0, 5], ["spawnRate", "rare", "silver", ["moreEnemies", 2], 0, 5],
   ]);
 });
 
@@ -89,7 +97,8 @@ test("a card's max level is every level its tree holds, and its look the rarest 
   assert.equal(cardMaxLevel(allOpened("stairs"), "stairs"), 60);
   assert.equal(cardMaxLevel(allOpened("heal"), "heal"), 60);
   assert.equal(cardMaxLevel(allOpened("door"), "door"), 60);
-  assert.equal(cardMaxLevel(allOpened("key"), "key"), 55);
+  assert.equal(cardMaxLevel(allOpened("key"), "key"), 60);
+  assert.equal(cardMaxLevel(allOpened("monster"), "monster"), 60);
   assert.equal(cardMaxLevel(allOpened("atkUp"), "atkUp"), 25);
   assert.deepEqual(cardLook({}, "stairs"), { rarity: "common", upgraded: false });
   assert.deepEqual(cardLook({ stairs: { floorGold: 1 } }, "stairs"), { rarity: "common", upgraded: true });
@@ -181,21 +190,24 @@ test("the trees' stats add up over the hand's cards: Silver Bonus from ATK UP, D
 test("a run copies the trees of its hand's cards as it goes inside, keeping its floors and bonuses for the run", () => {
   const s = saveWith({ stairs: MAX_CARD_XP, monster: MAX_CARD_XP, torch: MAX_CARD_XP, chest: MAX_CARD_XP });
   s.cardBuys.opened = { ...allOpened("monster"), ...allOpened("torch") };
-  s.cardTrees = { stairs: { floorGold: 5 }, monster: filled("monster", 25), torch: filled("torch", 25), chest: { gold: 2 } };
+  s.cardTrees = { stairs: { floorGold: 5 }, monster: filled("monster", 60), torch: filled("torch", 25), chest: { gold: 2 } };
   s.hand = ["stairs", "monster", "torch"];
   const g = new Game(s);
   g.newRun({ seed: 3 });
-  assert.deepEqual(g.run.cardTrees, { stairs: { floorGold: 5 }, monster: filled("monster", 25), torch: filled("torch", 25) }, "CHEST isn't in the hand");
-  assert.deepEqual(g.run.player.foeAttack, { monster: 5, torch: 5 });
-  assert.deepEqual(g.run.player.foeDefense, { monster: 5, torch: 5 });
-  assert.deepEqual(g.run.player.foeShroud, { torch: 10 });
+  assert.deepEqual(g.run.cardTrees, { stairs: { floorGold: 5 }, monster: filled("monster", 60), torch: filled("torch", 25) }, "CHEST isn't in the hand");
+  assert.deepEqual(g.run.player.foeAttack, { monster: 10, torch: 5 });
+  assert.deepEqual(g.run.player.foeDefense, { monster: 10, torch: 5 });
+  assert.deepEqual(g.run.player.foeShroud, { monster: 10, torch: 10 });
+  assert.equal(g.run.player.stealOverheal, 25, "ENEMY's Lifesteal Overheal");
   assert.deepEqual(runExtras(g.run), extraEnemies(undefined, 10), "ENEMY's 10% more of every strength");
   const saved = decode(JSON.stringify(g.save)).tower.run!;
   assert.deepEqual(saved.cardTrees, g.run.cardTrees, "and saves them");
-  assert.deepEqual(saved.player.foeShroud, { torch: 10 });
+  assert.deepEqual(saved.player.foeShroud, { monster: 10, torch: 10 });
+  assert.equal(saved.player.stealOverheal, 25);
   s.hand = ["stairs"];
   g.newRun({ seed: 3 });
   assert.equal(g.run.player.foeAttack, undefined);
+  assert.equal(g.run.player.stealOverheal, undefined);
   assert.equal(runExtras(g.run), undefined);
 });
 

@@ -167,7 +167,8 @@ export class RunPurse {
   /** A kill's Silver, by the enemy's strength and the equivalent floor
    * (none under the boon that trades it for Silver / Floor). */
   killSilver(enemy: Enemy, floor: number, scale = 1) {
-    const base = snap(silverForKill(enemy.strength, floor) * (this.boons?.killSilver ?? 1));
+    // ENEMY's tree raises it, its own factor beside the boons'.
+    const base = snap(silverForKill(enemy.strength, floor) * (this.boons?.killSilver ?? 1) * treeFactor(this.tree, "foeSilver"));
     return this.silver(scale === 1 ? base : snap(base * scale));
   }
 

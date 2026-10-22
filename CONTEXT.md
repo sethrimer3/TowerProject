@@ -297,7 +297,7 @@ HP held above max HP, which the Overheal skill allows: potions, YK TO HP and bad
 _Avoid_: overhealth, shield HP
 
 **Lifesteal**:
-The share of the damage each of the hero's strikes deals to an enemy that is restored to the hero as HP (up to max HP), as the strike lands and before the enemy's reply. It starts at 0% and Lifesteal training raises it by 0.1% for the first rank, each later rank adding 0.001% less, to 4.84% at 80 ranks. Fight forecasts and Damage Visual count it.
+The share of the damage each of the hero's strikes deals to an enemy that is restored to the hero as HP (up to max HP, or above it with ENEMY's Lifesteal Overheal), as the strike lands and before the enemy's reply. It starts at 0% and Lifesteal training raises it by 0.1% for the first rank, each later rank adding 0.001% less, to 4.84% at 80 ranks. Fight forecasts and Damage Visual count it.
 
 **Thorns**:
 What each enemy strike the hero lives through costs the enemy: a share of its max HP (1% a Thorn Damage rank, half against a boss or Greater Boss), which DEF doesn't reduce. A fight thorns end is no Instakill.
@@ -497,6 +497,9 @@ _Avoid_: Automove speed
 **Dash**:
 The hand's first step toward a new target carrying on along the path across empty floor in the same step, stopping on the tile before anything else. How many tiles it may cross comes from Dash research, once the Dash skill is owned, and adds up with End Rush research (on STAIRS only) and a Dash badge on the card.
 _Avoid_: rush (the Archives' Gem button that completes research at once), sprint, leap
+
+**Dash attack**:
+A fight the hero steps into from the tile a Dash stopped on, the turn after it. ENEMY's Surprise Attack may double the ATK of its first strike.
 
 **Deck**:
 All the player's cards: those in the hand and those waiting outside it. Also the page where the hand is ordered (with the Combat Stance skill) and its cards chosen from the deck (with Buildout).

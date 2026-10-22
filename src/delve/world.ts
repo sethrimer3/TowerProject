@@ -13,6 +13,7 @@ import { addEnemies, extraGround, extrasKey, extrasSeed, hasExtras, type ExtraEn
 import { guardedTile, holdsShield, placeShield, walkDistances, type Shield } from "../shielded.ts";
 import { enemyStats, woodDurability } from "../enemy-curves.ts";
 import { withRunDoors } from "../doors.ts";
+import { foeTile, type FoeRule } from "../shrines.ts";
 import { DELVE_ENEMY_NAMES, enemyTier } from "../scaling.ts";
 
 // v8 turns some pocket throats into forks: two parallel lanes of costs.
@@ -187,6 +188,9 @@ export class World implements Board {
     private run: WorldRun,
     /** The run's More Enemies badges' extras (more-enemies.ts); none without. */
     private extras?: ExtraEnemies,
+    /** What the run's card trees change about its enemies (ENEMY's Weaken,
+     * shrines.ts), every enemy tile read through it; none without. */
+    private foes?: FoeRule,
   ) {}
   get seed() {
     return this.run.seed;
@@ -211,7 +215,7 @@ export class World implements Board {
     const chunk = this.chunk(Math.floor(y / CHUNK));
     const k = point(x, y), changed = this.changes[k];
     const generated = chunk.get(k) ?? { kind: "wall" }, odds = this.run.chestOdds;
-    const t = changed ? wounded(withChest(changed, generated, x, y, this.seed, odds)) : withChest(withPotions(generated, x, y, this.seed, this.run.percentPotions ?? 0), generated, x, y, this.seed, odds);
+    const t = foeTile(changed ? wounded(withChest(changed, generated, x, y, this.seed, odds)) : withChest(withPotions(generated, x, y, this.seed, this.run.percentPotions ?? 0), generated, x, y, this.seed, odds), this.foes);
     return this.shieldList.length ? guardedTile(t, x, y, this.shieldList, (s) => this.holds(s), this.width) : t;
   }
   /** Whether the Shielded enemy `s` still stands; `loaded`: judged only
@@ -250,7 +254,7 @@ export class World implements Board {
    * stat factor as the chunks take it, then the run's league. */
   typicalEnemy(depth: number, strength: EnemyStrength = "normal"): Enemy {
     const enemy: Enemy = { name: DELVE_ENEMY_NAMES[0]!, tier: enemyTier(strength), strength, profile: "balanced", ...enemyStats("delve", this.tier, depth, strength, "balanced") };
-    return this.inLeague(tierTile({ kind: "enemy", enemy }, this.tier)).enemy!;
+    return foeTile(this.inLeague(tierTile({ kind: "enemy", enemy }, this.tier)), this.foes).enemy!;
   }
   /** Chunk `index` as generated, with More Enemies' extras, then each
    * area's Shielded enemies and theirs. */
