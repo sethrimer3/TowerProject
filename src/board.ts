@@ -28,6 +28,10 @@ export type Board = {
   /** The tiles holding a lit torch, by `point`, on boards that keep them
    * (`litTorches` works them out otherwise). */
   litTorches?(): ReadonlySet<string>;
+  /** The doors still standing on the floor (x, y) stands on (a Tower
+   * floor's, or in the Delve the tiles of its area at the same equivalent
+   * floor), on boards that hold doors: KEY's Master Key opens them. */
+  floorDoors?(x: number, y: number): { x: number; y: number }[];
   /** The Shielded enemies still standing (shielded.ts), whose bubbles the
    * board draws, on boards that hold them. */
   shields?(): readonly Shield[];

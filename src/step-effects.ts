@@ -28,8 +28,9 @@ export type StepEffect = {
   combat: CombatPrediction | null;
   /** Doors only: the keys the door consumes (empty for Heart Doors). */
   keysSpent: KeyColor[];
-  /** Potions and doors: HP actually restored (a potion's capped at max
-   * HP, or above it by Overheal; a door's DOOR's Door Heal, at max HP). */
+  /** Potions, doors and keys: HP actually restored (a potion's capped at
+   * max HP, or above it by Overheal; a door's DOOR's Door Heal, at max HP;
+   * a key's KEY's Key Heal and Key Overheal). */
   healed: number;
   /** Doors and keys: how much of a key each key colour took or gave, when
    * a badge's scale or a held key card's bonus made it other than 1. */
@@ -40,7 +41,7 @@ export type StepEffect = {
   /** Enemies only: the scale the fight was taken under, which its Silver,
    * Gold and XP are multiplied by too. */
   scale?: number;
-  /** Doors only: DOOR's Master Key opened it for nothing. */
+  /** Doors only: DOOR's Secret Knock opened it for nothing. */
   free?: true;
 };
 export type StepOutcome = StepBlocked | StepEffect;
@@ -81,9 +82,17 @@ export type StepRules = {
    * after a Heart Door's drain, up to max HP; none when absent. */
   doorHeal?: number;
   /** The door stepped into opens for nothing: no keys, no HP (DOOR's
-   * Master Key, which `Game` rolls for the step it takes; previews and
+   * Secret Knock, which `Game` rolls for the step it takes; previews and
    * planners never count on it). */
   freeDoor?: true;
+  /** The percent of max HP each key picked up heals, up to max HP (KEY's
+   * Key Heal), then the percent of the Overheal ceiling, up to it (Key
+   * Overheal); none when absent. */
+  keyHeal?: number;
+  keyOverheal?: number;
+  /** The key picked up is two (KEY's Locksmith, which `Game` rolls as
+   * Secret Knock is). */
+  doubleKey?: true;
   /** The percent more a key of each colour picked up is worth, from the
    * key cards the run's hand holds (`handBonus`), none when absent. */
   keyFind?: Partial<Record<KeyColor, number>>;
@@ -172,9 +181,18 @@ export function resolveStep(player: Player, tile: Tile, rules: StepRules = BASE_
       break;
     }
     case "key": {
-      const found = rules.keyFind?.[tile.color!] ?? 0, amount = found ? snap((scaled(1) * (100 + found)) / 100) : scaled(1);
+      const found = rules.keyFind?.[tile.color!] ?? 0, one = found ? snap((scaled(1) * (100 + found)) / 100) : scaled(1);
+      const amount = rules.doubleKey ? snap(2 * one) : one;
       next.keys[tile.color!] = snap(next.keys[tile.color!] + amount);
       if (amount !== 1) effect.keyAmount = amount;
+      // KEY's Key Heal up to max HP, then its Key Overheal up to the Overheal ceiling.
+      const hp = next.hp;
+      if (rules.keyHeal) next.hp = healUpTo(next.hp, snap((next.maxHp * rules.keyHeal) / 100), next.maxHp);
+      if (rules.keyOverheal) {
+        const ceiling = hpCeiling(next.maxHp, rules);
+        next.hp = healUpTo(next.hp, snap((ceiling * rules.keyOverheal) / 100), ceiling);
+      }
+      effect.healed = snap(next.hp - hp);
       break;
     }
     case "potion": {

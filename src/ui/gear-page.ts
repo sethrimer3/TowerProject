@@ -5,13 +5,13 @@ import { unlockAt } from "../goals.ts";
 import { tierNumeral } from "../tiers.ts";
 import type { AppContext } from "./app.ts";
 import { helpButton } from "./dialogs.ts";
-import { el, itemSprite, uiSprite } from "./dom.ts";
+import { bombIcon, el, itemSprite, uiSprite } from "./dom.ts";
 import { priceAmount } from "./hud.ts";
 import { bindBuyQuantity, buyQuantityHtml } from "./buy-quantity-select.ts";
 import { EquipmentPanel } from "./equipment-panel.ts";
 
 /** Each provision's picture. */
-const PROVISION_SPRITES = { heal: "potion_flat", guard: "upgrade_defense", edge: "upgrade_attack", yellowKey: "key_yellow" } as const satisfies Record<GoldItemId, string>;
+const PROVISION_SPRITES = { heal: "potion_flat", guard: "upgrade_defense", edge: "upgrade_attack", yellowKey: "key_yellow" } as const satisfies Record<Exclude<GoldItemId, "bomb">, string>;
 /** Short names for a provision's stats, in the total its owned copies give. */
 const TOTAL_WORDS: Record<Stat, string> = { attack: "ATK", defense: "DEF", maxHp: "MAX HP", shroud: "SHROUD", regen: "REGEN", lifesteal: "LIFESTEAL", thorns: "THORNS", parry: "PARRY %", yellow: "YELLOW KEYS", blue: "BLUE KEYS", red: "RED KEYS", undos: "UNDOS" };
 /** Pictures for the starting stats over the provisions; the rest go by their short name. */
@@ -127,7 +127,7 @@ export class GearPage {
 
   private provisionsHtml(): string {
     const game = this.ctx.game;
-    const provisionSprite = (id: GoldItemId) => itemSprite(PROVISION_SPRITES[id]);
+    const provisionSprite = (id: GoldItemId) => (id === "bomb" ? bombIcon("ui-sprite") : itemSprite(PROVISION_SPRITES[id]));
     const bought = this.bought, q = game.buyQuantityFor("provisions");
     this.bought = null;
     const open = GOLD_SHOP.filter((item) => provisionOpen(game.save, item.id));

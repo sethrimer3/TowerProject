@@ -73,7 +73,7 @@ With Buildout, the next lesson shows the X on ENEMY with a hand pointing at it, 
 ## Card levels
 
 Each card has a level of its own, from 0 up to its **max level**, raised by the XP it gains in runs.
-Every card's max level starts at 10; buying cards (see Card buys below) raises it, up to 25 for most cards and 60 for **Stairs**, **Heal** and **Door**, whose trees reach every rarity.
+Every card's max level starts at 10; buying cards (see Card buys below) raises it, up to 25 for most cards, 55 for **Key** and 60 for **Stairs**, **Heal** and **Door**, whose trees reach every rarity.
 A card gains 1 XP each time it activates: its path reaching its target (once any fight there is over), or a card that moves nowhere acting (the siphons and trades); **Flying Enemy** gains it each time it brings a Flying enemy within reach.
 **Archer**, which never activates, gains 1 XP for each floor completed for the first time in the run while it is in the run's hand, a floor the Skip badge climbs past included (in the Delve, each equivalent floor passed).
 
@@ -131,12 +131,17 @@ Points are spent in the forest; inside a run the tree only shows.
   The free Defense chance and Parry add to Free Defense's chance and Parry %, and count from zero without Free Defense trained or Parry owned (20% Parry and Heal's 5% parry 25%).
 - **Door** has two tracks, each rising one rarity an upgrade.
   Gold: +2% Gold from doors (common, 5 levels, up to 10), then +0.1 Silver from each door opened, before Silver Bonus (uncommon), +1% Gold Bonus (rare), +0.5% chance of a free Utility level each floor (epic), and **Door Chest**, +0.2% chance an opened door leaves an opened treasure chest where it stood (legendary), each up to 5 levels.
-  Cost: −1% of each key every door takes (common, 5 levels, up to 10; it leaves the HP a door takes alone), then **Door Heal**, a heal of 0.5% of max HP on opening each door, after a Heart Door's drain, up to max HP (uncommon), **Skeleton Key**, +1% chance each colour door on a floor is generated a Wooden Door instead (rare), **Locksmith**, +1% chance each door of two or three colours is generated without its rarest lock, red before blue, so a yellow-blue door is a yellow door (epic), and **Master Key**, +1% chance a door you can open opens for nothing: no keys, no HP drained and no toll (legendary), each up to 5 levels.
+  Cost: −1% of each key every door takes (common, 5 levels, up to 10; it leaves the HP a door takes alone), then **Door Heal**, a heal of 0.5% of max HP on opening each door, after a Heart Door's drain, up to max HP (uncommon), **Skeleton Key**, +1% chance each colour door on a floor is generated a Wooden Door instead (rare), **Locksmith**, +1% chance each door of two or three colours is generated without its rarest lock, red before blue, so a yellow-blue door is a yellow door (epic), and **Secret Knock**, +1% chance a door you can open opens for nothing: no keys, no HP drained and no toll (legendary), each up to 5 levels.
   The free Utility chance adds to Free Utility's and counts without it trained.
   A Door Chest pays as a treasure chest does (a Supply or Equipment Chest at the run's odds).
-  Skeleton Key and Locksmith remake a floor's doors as the floor is first made, Skeleton Key first; Master Key and Door Chest roll for each door once, so undo can't roll a door again, and a card heading for a door still counts on paying for it.
+  Skeleton Key and Locksmith remake a floor's doors as the floor is first made, Skeleton Key first; Secret Knock and Door Chest roll for each door once, so undo can't roll a door again, and a card heading for a door still counts on paying for it.
+- **Key** has three tracks, each rising one rarity an upgrade.
+  Heal: **Key Heal**, a heal of 1% of max HP with each key picked up, up to max HP (common, 2 levels, up to 5), then **Key Overheal**, a heal of 1% of the HP ceiling with each key, up to that ceiling (uncommon): the ceiling is max HP raised by Overheal, so with Overheal it heals above max HP.
+  Gold: +2% Gold from each key (common, 4 levels, up to 5), then +0.1 Silver from each key picked up, before Silver Bonus (uncommon), +1% Gold Bonus (rare), and +0.5% chance of a free Utility level each floor (epic, as Door's own).
+  Keys: +1% more each key of every colour (common, 4 levels, up to 5), then −1% of the key or HP each Wooden and Steel Door takes (uncommon), −1% of the keys and HP each Heart Door takes (rare), **Locksmith**, +1% chance a key picked up is two (epic), and **Master Key**, +0.2% chance a key picked up opens every door on its floor at once (legendary), each up to 5 levels.
+  Master Key's doors open for nothing and pay nothing; in the Delve, a key's floor is the doors of its area at the same equivalent floor.
+  Locksmith and Master Key roll for each key once, so undo can't roll a key again.
 - The other trees are common only for now, each upgrade holding its first levels from the start and opened to the rest by common card buys:
-- **Key**: +1% more each key of every colour (4 levels, up to 10), +1% Gold from each key (4, up to 10) and +2% Silver Bonus (2, up to 5).
 - **Enemy**: +1% ATK (2 levels, up to 5), +1% DEF (2, up to 5) and +1% Gold (2, up to 5) against every enemy, and 1% more enemies of every strength on each floor (4, up to 10).
 - **ATK Up** and **DEF Up**: +1% from each of their shards (4 levels, up to 10), +0.1 Gold from each (4, up to 10) and +1% Silver Bonus (2, up to 5).
 - **Torch**, against a Greater Boss: +1% ATK (2 levels, up to 5), +1% DEF, +1% Gold, +2% shroud and 1 Cell more (each 2, up to 5).

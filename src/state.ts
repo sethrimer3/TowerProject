@@ -128,6 +128,8 @@ export type RouteEffects = {
 /** The gains a Settings row can turn off: ATK, DEF and HP changed, keys
  * found, what a door takes, Gold and Silver found, what a fight costs
  * past its strikes, XP gained and the Gold combo. */
+/** What a board tap can be readied for: Ignore, Target or a Bomb. */
+export type Armed = "ignore" | "target" | "bomb";
 export type GainKind = "attack" | "defense" | "hp" | "key" | "door" | "hit" | "xp" | "combo" | Coin;
 const GAIN_SETTINGS = {
   attack: "attackGains", defense: "defenseGains", hp: "hpGains", key: "keyGains", door: "doorGains", hit: "hitNumbers",
@@ -168,8 +170,9 @@ type TakenStep = { tile: Tile; outcome: StepEffect; dest: { x: number; y: number
 export type CardStep = { scale?: number; floorSkip?: boolean; hold?: boolean };
 /** Tiles that stay on the board after being stepped on. */
 const PERMANENT_TILES = new Set<Tile["kind"]>(["floor", "stairs", "oneway", "openedChest"]);
-/** What DOOR's Master Key, Door Chest and the chest's kind roll a door by. */
-const MASTER_KEY_SALT = 0x3a57e, DOOR_CHEST_SALT = 0xd00c4, DOOR_CHEST_KIND_SALT = 0xd0c4d;
+/** What DOOR's Secret Knock, Door Chest and the chest's kind roll a door
+ * by, and KEY's Locksmith and Master Key a key. */
+const SECRET_KNOCK_SALT = 0x3a57e, DOOR_CHEST_SALT = 0xd00c4, DOOR_CHEST_KIND_SALT = 0xd0c4d, DOUBLE_KEY_SALT = 0xd0b1e, MASTER_KEY_SALT = 0x3a5e7;
 /** The targets a Dash may end on, a tile of it left: items to take. */
 const DASH_ONTO = new Set<Tile["kind"]>(["key", "potion", "attack", "defense", "treasure", "reward"]);
 export class Game {
@@ -245,6 +248,8 @@ export class Game {
   /** Where a Greater Boss last appeared, and when (performance.now()), for
    * the board's poof; cleared by undo. */
   summoned: { x: number; y: number; at: number } | null = null;
+  /** Where the last Bomb went off and when (performance time), for its explosion. */
+  bombed: { x: number; y: number; at: number } | null = null;
   /** Where Skip last made a card's target vanish, and when
    * (performance.now()), for the board's poof; cleared by undo. */
   vanished: { x: number; y: number; at: number } | null = null;
@@ -552,6 +557,7 @@ export class Game {
     this.warpLooted = null;
     this.summoned = null;
     this.vanished = null;
+    this.bombed = null;
     this.save.xp = snapshot.xp;
     // Card XP too: the activation or floor it paid for is undone.
     if (snapshot.cardXp) this.save.cardXp = { ...snapshot.cardXp };
@@ -1124,7 +1130,7 @@ export class Game {
     const overheal = this.overheal;
     return { potionHeal, percentPotion: trainedAmount(this.trainingNow, "potion"), regen, ...(overheal > 1000 ? { overheal } : {}),
       heartToll: researched(this.save.archives, "heartToll"), keyCost: this.keyCost, ...keyFind, ...(this.doorOff ? { doorOff: this.doorOff } : {}),
-      ...(tree.doorHeal ? { doorHeal: tree.doorHeal } : {}),
+      ...(tree.doorHeal ? { doorHeal: tree.doorHeal } : {}), ...(tree.keyHeal ? { keyHeal: tree.keyHeal } : {}), ...(tree.keyOverheal ? { keyOverheal: tree.keyOverheal } : {}),
       shardAttack: researched(this.save.archives, "shardAttackPercent") * boonFactor(this.run, "attack") * treeFactor(tree, "attackShard"),
       shardDefense: researched(this.save.archives, "shardDefensePercent") * treeFactor(tree, "defenseShard"),
       ...(tree.potionHeal ? { potionCard: tree.potionHeal } : {}),
@@ -1157,11 +1163,13 @@ export class Game {
     return researched(this.save.archives, "keyCost");
   }
   /** The percent less each kind of door costs, from the door cards the run's
-   * hand holds: what steps pay and the door cards plan by; undefined with
-   * none. */
+   * hand holds and the DOOR and KEY trees: what steps pay and the door cards
+   * plan by; undefined with none. */
   get doorOff() {
-    const doors = { ...this.handBonus.doors }, all = this.treeBonus.doorCost;
-    if (all) doors.all = all;
+    const doors = { ...this.handBonus.doors }, tree = this.treeBonus;
+    if (tree.doorCost) doors.all = tree.doorCost;
+    if (tree.plainDoorCost) doors.plain = tree.plainDoorCost;
+    if (tree.heartDoorCost) doors.hearts = tree.heartDoorCost;
     return Object.keys(doors).length ? doors : undefined;
   }
   /** Where the Training tab reads its rows' values: this mode's hero, and
@@ -1203,33 +1211,79 @@ export class Game {
   chargesLeft(c: Charge) {
     return this.run.outside ? chargesPerRun(this.save, c) : chargesLeft(this.save, this.run, c);
   }
-  /** Ignore or Target waiting for the board tap that says where. */
-  armed: "ignore" | "target" | null = null;
-  /** Readies Ignore or Target (or, armed already, puts it away): the next
-   * board tap marks or targets that tile. */
-  arm(c: "ignore" | "target"): "armed" | "disarmed" | "unavailable" | "spent" {
-    if (!this.save.upgrades[c] || this.run.outside || this.fallen) return "unavailable";
+  /** Bombs left: this run's (one for each Bomb provision owned, less
+   * those thrown), or in the forest what the next run will carry. */
+  get bombsLeft() {
+    const owned = this.save.provisions.bomb;
+    return this.run.outside ? owned : Math.max(0, owned - (this.run.bombsUsed ?? 0));
+  }
+  /** Whether the hero has `c` at all: Ignore's or Target's skill, or a Bomb provision. */
+  private owns(c: Armed) {
+    return c === "bomb" ? this.save.provisions.bomb > 0 : !!this.save.upgrades[c];
+  }
+  /** Uses of `c` left. */
+  private armedLeft(c: Armed) {
+    return c === "bomb" ? this.bombsLeft : this.chargesLeft(c);
+  }
+  /** Ignore, Target or a Bomb waiting for the board tap that says where. */
+  armed: Armed | null = null;
+  /** Readies Ignore, Target or a Bomb (or, armed already, puts it away):
+   * the next board tap marks, targets or bombs that tile. */
+  arm(c: Armed): "armed" | "disarmed" | "unavailable" | "spent" {
+    if (!this.owns(c) || this.run.outside || this.fallen) return "unavailable";
     if (this.armed === c) {
       this.armed = null;
       this.message = this.auto ? "The hand takes over." : "Paused · the hand waits.";
       return "disarmed";
     }
-    if (this.chargesLeft(c) < 1) return "spent";
+    if (this.armedLeft(c) < 1) return "spent";
     this.armed = c;
-    this.message = c === "ignore" ? "Ignore · tap a tile the hero won't step on." : "Target · tap a tile to send the hero there.";
+    this.message = c === "ignore" ? "Ignore · tap a tile the hero won't step on." : c === "target" ? "Target · tap a tile to send the hero there." : "Bomb · tap an enemy to bomb it.";
     return "armed";
   }
-  /** The board tap Ignore or Target was armed for, on (x, y): Ignore marks
-   * the tile for the rest of the floor, and Target sends the hero there.
-   * A tile it can't take (a wall, the hero's own, one already ignored, or
-   * for Target one out of reach) costs nothing and keeps it armed. */
+  /** The board tap Ignore, Target or a Bomb was armed for, on (x, y):
+   * Ignore marks the tile for the rest of the floor, Target sends the hero
+   * there, and a Bomb goes off on the enemy there. A tile it can't take (a
+   * wall, the hero's own, one already ignored, for Target one out of
+   * reach, for a Bomb one with no enemy) costs nothing and keeps it armed. */
   useArmed(x: number, y: number): "used" | "invalid" | "noPath" | "unavailable" {
     const c = this.armed;
-    if (!c || !this.save.upgrades[c] || this.run.outside || this.fallen || this.chargesLeft(c) < 1) {
+    if (!c || !this.owns(c) || this.run.outside || this.fallen || this.armedLeft(c) < 1) {
       this.armed = null;
       return "unavailable";
     }
-    return c === "ignore" ? this.ignoreTile(x, y) : this.targetTile(x, y);
+    return c === "ignore" ? this.ignoreTile(x, y) : c === "target" ? this.targetTile(x, y) : this.bombTile(x, y);
+  }
+  /** A Bomb going off on (x, y): the enemy there (or a Flying one over it)
+   * takes the hero's ATK, its DEF no help, and falls to it as to an arrow,
+   * paid as a kill. A tile with no enemy takes no Bomb. The throw is a turn
+   * of its own, so undo takes it back, and its kill's Gold can't be paid
+   * twice. A fight still playing out counts first. */
+  private bombTile(x: number, y: number): "used" | "invalid" | "unavailable" {
+    this.fights.finish();
+    if (this.fallen) {
+      this.armed = null;
+      return "unavailable";
+    }
+    const enemy = foeOn(this.world.tile(x, y));
+    if (!enemy) return "invalid";
+    this.remember(this.snapshot());
+    this.run.bombsUsed = (this.run.bombsUsed ?? 0) + 1;
+    this.armed = null;
+    this.bombed = { x, y, at: performance.now() };
+    const damage = this.run.player.attack;
+    this.gain(x, y, `−${wholeChange(Math.min(damage, enemy.hp))}`, null, undefined, "hit");
+    if (enemy.hp > damage) {
+      this.world.wound?.(x, y, damage);
+      this.message = `Bomb · ${enemyTitle(enemy)} −${wholeChange(damage)} HP`;
+    } else {
+      this.world.clear(x, y);
+      this.message = [`Bomb · ${enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, { x, y }, 1, false, 0)].join(" · ");
+    }
+    // The hand plans again, round what the Bomb left.
+    this.cardPlan = null;
+    this.afterPlayerAction();
+    return "used";
   }
   private ignoreTile(x: number, y: number): "used" | "invalid" {
     if (!this.handRules.ignore(x, y)) return "invalid";
@@ -1553,8 +1607,10 @@ export class Game {
     const rules: StepRules = { ...this.stepRules, ...(regen ? {} : { regen: 0 }), ...(card.scale !== undefined && card.scale !== 1 ? { scale: card.scale } : {}) };
     const resolved = resolveStep(p, t, rules);
     if (resolved.blocked) return this.rejectStep(resolved, t, dest.x, dest.y);
-    // DOOR's Master Key: a door the hero can open may open for nothing.
-    const outcome = t.kind === "door" && this.doorRolls(dest.x, dest.y, MASTER_KEY_SALT, this.treeBonus.masterKey) ? resolveStep(p, t, { ...rules, freeDoor: true }) as StepEffect : resolved;
+    // DOOR's Secret Knock: a door the hero can open may open for nothing;
+    // KEY's Locksmith: a key may be two.
+    const lucky = this.luckyStep(t, dest.x, dest.y);
+    const outcome = lucky ? resolveStep(p, t, { ...rules, ...lucky }) as StepEffect : resolved;
     if (!force && isLethal(outcome)) {
       this.feedback("Lethal encounter. Inspect the enemy before proceeding.");
       return false;
@@ -1617,6 +1673,7 @@ export class Game {
     this.finds.pickup(t, x, y, outcome);
     this.consumeTile(t, x, y);
     if (t.kind === "door") this.doorChest(x, y);
+    if (t.kind === "key") this.masterKey(x, y);
     if (t.kind !== "stairs") this.callGreaterBoss();
     this.afterStep(t, x, y, floorSkip);
   }
@@ -1861,23 +1918,40 @@ export class Game {
     this.feedback(this.rules.words.enter);
     this.gemFinder.step();
   }
-  /** Whether the door at (x, y) on this floor rolls under `chance` percent
-   * (DOOR's Master Key and Door Chest): by its tile's fixed number, each
-   * roll its own `salt`, so undo can't roll a door again. */
-  private doorRolls(x: number, y: number, salt: number, chance: number) {
-    return !!chance && tileRandom(x, y, this.doorSeed ^ salt) * 100 < chance;
+  /** Whether the door or key at (x, y) on this floor rolls under `chance`
+   * percent (DOOR's Secret Knock and Door Chest, KEY's Locksmith and Master
+   * Key): by its tile's fixed number, each roll its own `salt`, so undo
+   * can't roll it again. */
+  private tileRolls(x: number, y: number, salt: number, chance: number) {
+    return !!chance && tileRandom(x, y, this.floorSeed ^ salt) * 100 < chance;
   }
-  /** What the doors of this floor roll by: the run's seed, and in the Tower the floor's. */
-  private get doorSeed() {
+  /** What the doors and keys of this floor roll by: the run's seed, and in the Tower the floor's. */
+  private get floorSeed() {
     return this.run.seed ^ Math.imul((this.world instanceof RoomWorld ? this.world.room : 0) + 1, 0x9e3779b1);
   }
   /** DOOR's Door Chest: the door just opened at (x, y) may leave an opened
    * treasure chest where it stood, paid as a treasure chest is (a Supply or
    * Equipment Chest at the run's odds). */
   private doorChest(x: number, y: number) {
-    if (!this.doorRolls(x, y, DOOR_CHEST_SALT, this.treeBonus.doorChest)) return;
+    if (!this.tileRolls(x, y, DOOR_CHEST_SALT, this.treeBonus.doorChest)) return;
     this.run.changes[`${x},${y}`] = { kind: "openedChest" };
-    this.finds.treasure(x, y, chestKindAt({ kind: "treasure" }, x, y, this.doorSeed ^ DOOR_CHEST_KIND_SALT, this.run.chestOdds));
+    this.finds.treasure(x, y, chestKindAt({ kind: "treasure" }, x, y, this.floorSeed ^ DOOR_CHEST_KIND_SALT, this.run.chestOdds));
+  }
+  /** The rules a step's lucky roll adds, or null: DOOR's Secret Knock opens
+   * a door for nothing, and KEY's Locksmith makes a key two. */
+  private luckyStep(t: Tile, x: number, y: number): Partial<StepRules> | null {
+    const tree = this.treeBonus;
+    if (t.kind === "door" && this.tileRolls(x, y, SECRET_KNOCK_SALT, tree.secretKnock)) return { freeDoor: true };
+    if (t.kind === "key" && this.tileRolls(x, y, DOUBLE_KEY_SALT, tree.doubleKey)) return { doubleKey: true };
+    return null;
+  }
+  /** KEY's Master Key: the key just picked up at (x, y) may open every door
+   * on its floor at once, for nothing and paying nothing. */
+  private masterKey(x: number, y: number) {
+    if (!this.tileRolls(x, y, MASTER_KEY_SALT, this.treeBonus.masterKey)) return;
+    const doors = this.world.floorDoors?.(x, y) ?? [];
+    for (const d of doors) this.world.clear(d.x, d.y);
+    if (doors.length) this.message = `Master Key · ${doors.length} door${doors.length === 1 ? "" : "s"} opened`;
   }
   /** Removes what the step used up: chests stay behind opened, fixtures stay. */
   private consumeTile(t: Tile, x: number, y: number) {

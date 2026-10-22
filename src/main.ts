@@ -338,15 +338,15 @@ el("hand").addEventListener("wheel", (e) => {
   row.scrollLeft += e.deltaY;
   e.preventDefault();
 }, { passive: false });
-// Ignore and Target: readied by their button, used by the next board tap.
-for (const c of ["ignore", "target"] as const)
+// Ignore, Target and Bombs: readied by their button, used by the next board tap.
+for (const c of ["ignore", "target", "bomb"] as const)
   el(`${c}-stat`).onclick = () => {
     overlay.hide();
     if (game.arm(c) === "spent") flashRed(el(`${c}-stat`));
     update();
   };
 /** A board tap: in cinematic mode, a floating Gem's or one toward leaving
- * it; else where a readied Ignore or Target goes, else the overlay's. */
+ * it; else where a readied Ignore, Target or Bomb goes, else the overlay's. */
 function boardTap(x: number, y: number) {
   if (cinematic.active) {
     if (!game.gemFinder.collectAt(x, y)) cinematic.tap();

@@ -43,6 +43,9 @@ export type RunCore = {
   /** Ignore and Target uses spent this run, counted like Focus's. */
   ignoreUsed?: number;
   targetUsed?: number;
+  /** Bombs thrown this run: a run has one for each Bomb provision owned,
+   * so what is left is those less these. */
+  bombsUsed?: number;
   /** Undos spent this run. A run has as many as the loadout's undo
    * capacity, and one spent never comes back, so what is left is that
    * capacity less these (undo carries the count onto the run it restores). */

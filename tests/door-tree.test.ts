@@ -61,21 +61,21 @@ test("DOOR's Door Silver finds Silver with each door opened", () => {
   assert.ok(silverFrom(5) > 0);
 });
 
-test("DOOR's Master Key opens a door the hero can open for nothing: no keys, no HP", () => {
-  const free = beside(keyed(["yellow", "blue"], true), { door: { masterKey: 100 } });
+test("DOOR's Secret Knock opens a door the hero can open for nothing: no keys, no HP", () => {
+  const free = beside(keyed(["yellow", "blue"], true), { door: { secretKnock: 100 } });
   assert.ok(free.move(1, 0));
   assert.deepEqual([free.run.player.keys, free.run.player.hp], [{ yellow: 2, blue: 2, red: 2 }, 50]);
-  assert.match(free.message, /Master Key/);
-  const wood = beside({ kind: "door", door: { type: "wood", durability: 20 } }, { door: { masterKey: 100 } }, { keys: { yellow: 0, blue: 0, red: 0 } });
+  assert.match(free.message, /Secret Knock/);
+  const wood = beside({ kind: "door", door: { type: "wood", durability: 20 } }, { door: { secretKnock: 100 } }, { keys: { yellow: 0, blue: 0, red: 0 } });
   assert.ok(wood.move(1, 0));
   assert.equal(wood.run.player.hp, 50, "no toll");
-  const locked = beside(keyed(["red"]), { door: { masterKey: 100 } }, { keys: { yellow: 0, blue: 0, red: 0 } });
+  const locked = beside(keyed(["red"]), { door: { secretKnock: 100 } }, { keys: { yellow: 0, blue: 0, red: 0 } });
   assert.equal(locked.move(1, 0), false, "a door the hero can't open stays shut");
   const plain = beside(keyed(["yellow"]), {});
   assert.ok(plain.move(1, 0));
   assert.equal(plain.run.player.keys.yellow, 1, "without the node, the key is spent");
   // A door's roll is its tile's: undo and the same door rolls the same.
-  const some = beside(keyed(["yellow"]), { door: { masterKey: 50 } }), first = (some.move(1, 0), some.run.player.keys.yellow);
+  const some = beside(keyed(["yellow"]), { door: { secretKnock: 50 } }), first = (some.move(1, 0), some.run.player.keys.yellow);
   assert.ok(some.undo());
   lay(some, keyed(["yellow"]));
   assert.ok(some.move(1, 0));

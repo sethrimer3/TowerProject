@@ -177,8 +177,8 @@ export function upgradeText(id: UpgradeId) {
 
 /** A provision's description, written from its grants. */
 export function provisionText(id: GoldItemId) {
-  const item = GOLD_SHOP.find((g) => g.id === id)!;
-  return describeGrants(item.grants, item.words);
+  const item: { grants: Grants; words?: Partial<Record<Stat, string>>; description?: string } = GOLD_SHOP.find((g) => g.id === id)!;
+  return item.description ?? describeGrants(item.grants, item.words);
 }
 
 /** Whether provision `id` shows and sells: its upgrade, if it names one, is owned. */

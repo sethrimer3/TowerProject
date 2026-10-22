@@ -205,6 +205,7 @@ test("descriptions are written from the grants", () => {
   );
   assert.deepEqual(GOLD_SHOP.map((g) => provisionText(g.id)), [
     "+20 max HP", "+1 defense", "+1 attack", "+1 yellow key",
+    "One more Bomb every run: press it, then an enemy's tile, to deal that enemy your ATK",
   ]);
 });
 
@@ -305,7 +306,7 @@ test("provisions last for good: every run takes them, and one bought mid-run cou
   assert.deepEqual(g.run.loadout, { attack: 13, defense: 0, maxHp: 120, shroud: 1 });
   goInside(g);
   assert.deepEqual(hero(), ready, "the run takes its provisions inside");
-  assert.deepEqual(s.provisions, { heal: 1, edge: 1, guard: 0, yellowKey: 0 }, "and keeps them for every later run");
+  assert.deepEqual(s.provisions, { heal: 1, edge: 1, guard: 0, yellowKey: 0, bomb: 0 }, "and keeps them for every later run");
   assert.deepEqual(hero(s.delve.run!), ready, "the other forest run still has them");
   assert.ok(g.gear.buyProvision("guard"));
   assert.equal(g.run.player.defense, 1, "one bought inside a run counts at once");

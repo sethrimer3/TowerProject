@@ -1081,7 +1081,9 @@ export function trainedAmount(save: { upgrades: Partial<Record<UpgradeId, number
  * one bought adds its grants to every run. Each is priced by a schedule
  * like run training's (`schedulePrice`), from its `price.base` Gold; the
  * stat provisions' prices also compound by `PROVISION_COMPOUND` a buy. One
- * with `requires` shows, and sells, only once that upgrade is owned. */
+ * with `requires` shows, and sells, only once that upgrade is owned. A Bomb
+ * grants no stat: each one owned is a Bomb every run carries, to throw
+ * (`Game.arm`). */
 /** What each stat provision bought multiplies the next one's price by. */
 const PROVISION_COMPOUND = 1.05;
 export const GOLD_SHOP = [
@@ -1113,6 +1115,14 @@ export const GOLD_SHOP = [
     words: { yellow: "yellow key" },
     price: { base: 100, ratio: 4 },
     requires: "extraKey",
+  },
+  {
+    id: "bomb",
+    name: "Bomb",
+    grants: {},
+    words: {},
+    description: "One more Bomb every run: press it, then an enemy's tile, to deal that enemy your ATK",
+    price: { base: 100, ratio: 10 },
   },
 ] as const;
 export type GoldItemId = (typeof GOLD_SHOP)[number]["id"];

@@ -87,10 +87,16 @@ export class Finds {
       if (t.kind === "key") this.pickupGold(t, { x, y }, this.host.handBonus.keys[t.color!]?.gold, tree.keyGold);
       else this.pickupGold(t, { x, y }, t.kind === "attack" ? tree.attackShardGold : t.kind === "defense" ? tree.defenseShardGold : 0);
       if (t.kind === "potion") this.host.recordHeal(outcome.healed);
-      // HEAL's tree finds Silver with each potion.
-      if (t.kind === "potion" && tree.potionSilver) {
-        const silver = this.host.purse.silver(tree.potionSilver);
-        if (silver) this.host.gain(x, y, `+${wholeChange(silver)} Silver`, { coin: "silver" }, { row: 2, with: true });
+      // KEY's Key Heal and Key Overheal rise below the key.
+      if (t.kind === "key" && outcome.healed) {
+        this.host.gain(x, y, `+${wholeChange(outcome.healed)} HP`, { heart: true }, { row: 2, with: true });
+        this.host.recordHeal(outcome.healed);
+      }
+      // HEAL's tree finds Silver with each potion, and KEY's with each key.
+      const silverFound = t.kind === "potion" ? tree.potionSilver : t.kind === "key" ? tree.keySilver : 0;
+      if (silverFound) {
+        const silver = this.host.purse.silver(silverFound);
+        if (silver) this.host.gain(x, y, `+${wholeChange(silver)} Silver`, { coin: "silver" }, { row: outcome.healed && t.kind === "key" ? 3 : 2, with: true });
       }
       if (t.kind === "potion") missions.record("potions", 1, this.missionKey({ x, y }));
       if (t.kind === "potion") events.record("potions", 1, this.missionKey({ x, y }));
@@ -137,7 +143,7 @@ export class Finds {
    * takes HP (a Heart Door, down to 1, or a Wooden Door broken without a
    * key) raises a heart with the HP it took (a toll, not damage: it never
    * costs an area's mastery), `drained` before DOOR's Door Heal, which
-   * rises after it. A door DOOR's Master Key opened takes nothing. */
+   * rises after it. A door DOOR's Secret Knock opened takes nothing. */
   door(t: Tile, outcome: StepEffect, drained: number, at: { x: number; y: number }) {
     const host = this.host, keysSpent = outcome.keysSpent, amount = outcome.keyAmount ?? 1, n = keysSpent.length, rule = doorRule(t), notes = notesOf(host.run);
     if (notes) tallyIn(notes.doors, doorName(t));
@@ -155,7 +161,7 @@ export class Finds {
       if (silver) host.gain(at.x, at.y, `+${wholeChange(silver)} Silver`, { coin: "silver" }, { row: 2, with: true });
     }
     const spent = amount === 1 ? `${n} key${n === 1 ? "" : "s"} spent` : `${keyCount(snap(n * amount))} keys spent`;
-    if (outcome.free) host.message = `${doorName(t)} opened · Master Key`;
+    if (outcome.free) host.message = `${doorName(t)} opened · Secret Knock`;
     else if (rule.type === "wood" && !n) host.message = `${doorName(t)} broken down · −${wholeChange(drained)} HP`;
     else host.message = `${doorName(t)} opened${n ? ` · ${spent}` : ""}${drainsHp(rule) ? (host.run.player.hp > HEART_DOOR_HP ? " · HP drained" : " · HP drained to 1") : ""}`;
   }

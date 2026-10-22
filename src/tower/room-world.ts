@@ -199,6 +199,15 @@ export class RoomWorld implements Board {
   clear(x: number, y: number) {
     this.changes[point(x, y)] = { kind: "floor" };
   }
+  /** Every door still standing on the floor. */
+  floorDoors() {
+    const doors: { x: number; y: number }[] = [];
+    for (const k of this.cells.keys()) {
+      const [x, y] = k.split(",").map(Number) as [number, number];
+      if (this.tile(x, y).kind === "door") doors.push({ x, y });
+    }
+    return doors;
+  }
   /** The enemy as generated (or summoned), before the run's boons, keeps
    * its wound in the changes; `tile` scales it, then takes the wound off. */
   wound(x: number, y: number, damage: number) {

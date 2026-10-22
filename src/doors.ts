@@ -61,17 +61,20 @@ export function isYellowDoor(tile: Tile) {
  * HP a door draining HP takes (HEART DOOR), and a Wooden Door's key and the
  * HP breaking it takes (WOODEN DOOR). */
 export type DoorKind = "yellow" | "heart" | "wood";
-/** The percent less each kind costs, and `all`, the percent less of each
- * key every door takes (DOOR's tree; it leaves HP alone), which adds into
- * a kind's own as one card factor. */
-export type DoorDiscounts = Partial<Record<DoorKind | "all", number>>;
+/** The percent less each kind costs; `all`, the percent less of each key
+ * every door takes (DOOR's tree; it leaves HP alone); `plain`, the percent
+ * less of the key and the HP a Wooden or Steel Door takes, and `hearts`,
+ * of the keys and the drain a door draining HP takes (KEY's tree). Each
+ * adds into a kind's own as one card factor. */
+export type DoorDiscounts = Partial<Record<DoorKind | "all" | "plain" | "hearts", number>>;
 /** What `off` multiplies the door `tile`'s keys and its HP toll by: 1 for
  * each it leaves alone. */
 export function doorDiscount(tile: Tile, off?: DoorDiscounts): { keys: number; toll: number } {
   if (!off) return { keys: 1, toll: 1 };
-  const rule = doorRule(tile), all = off.all ?? 0, less = (percent = 0, more = 0) => (100 - percent - more) / 100;
-  if (rule.type === "wood") return { keys: less(off.wood, all), toll: less(off.wood) };
-  return { keys: less(isYellowDoor(tile) ? off.yellow : 0, all), toll: drainsHp(rule) ? less(off.heart) : 1 };
+  const rule = doorRule(tile), all = off.all ?? 0, less = (percent = 0, more = 0, also = 0) => (100 - percent - more - also) / 100;
+  if (rule.type === "wood") return { keys: less(off.wood, all, off.plain), toll: less(off.wood, off.plain) };
+  if (drainsHp(rule)) return { keys: less(isYellowDoor(tile) ? off.yellow : 0, all, off.hearts), toll: less(off.heart, off.hearts) };
+  return { keys: less(isYellowDoor(tile) ? off.yellow : 0, all, rule.type === "keys" && rule.mode === "any" ? off.plain : 0), toll: 1 };
 }
 
 export function doorId(tile: Tile): DoorId {

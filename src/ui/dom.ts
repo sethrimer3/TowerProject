@@ -43,6 +43,8 @@ export const redoIcon = (className = "redo-icon") =>
 export const adIcon = (className = "ad-icon") =>
   kitIcon("ad-screen", `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5" fill="#2b2f3a" stroke="#e9e1c8" stroke-width="1.6"/><path d="M10 9l5 3-5 3z" fill="#ffc94a"/></svg>`, className);
 /** A shopping cart: the Shop. */
+/** A Bomb: the kit's sprite, or a black ball with a lit fuse. */
+export const bombIcon = (className: string) => kitIcon("bomb", `<svg class="${className}" viewBox="0 0 14 14" aria-hidden="true"><circle cx="6" cy="8.4" r="4.6" fill="#2a2630" stroke="#0d0b10" stroke-width="0.8"/><circle cx="4.4" cy="6.8" r="1.2" fill="#8a8494"/><path d="M8.8 4.6l1.6-1.6" stroke="#b08850" stroke-width="1.3" stroke-linecap="round"/><circle cx="11.2" cy="2.4" r="1.4" fill="#ffd25a"/></svg>`, className);
 export const CART_ICON = kitIcon("cart", `<svg class="cart-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 3.5h3l2.6 11.2h11.4l2.3-8H6" fill="none" stroke="#e9e1c8" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.4 8.8h12.4l-1.4 4.4H8.4z" fill="#ffc94a"/><circle cx="9" cy="19" r="1.9" fill="#e9e1c8"/><circle cx="17" cy="19" r="1.9" fill="#e9e1c8"/></svg>`, "cart-icon");
 /** The Gold coin, sized to sit in a line of text. */
 export const goldIcon = () => uiSprite("gold", "ui-sprite gold-icon");

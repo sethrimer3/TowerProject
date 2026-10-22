@@ -167,6 +167,7 @@ const RUN_FIELD_CHECKS = {
   focusUsed: (v: unknown) => wholeIn(v, 0, 99),
   ignoreUsed: (v: unknown) => wholeIn(v, 0, 99),
   targetUsed: (v: unknown) => wholeIn(v, 0, 99),
+  bombsUsed: (v: unknown) => wholeIn(v, 0, 999),
   undosUsed: (v: unknown) => wholeIn(v, 0, 99),
   regain: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, n]) => ["focus", "ignore", "target"].includes(k) && wholeIn(n, 1, 1e6)),
   ignored: (v: any) => isRecord(v) && wholeIn(v.floor, 0, 1e6) && Array.isArray(v.tiles) && v.tiles.every((t: unknown) => typeof t === "string" && POINT_KEY.test(t)),
@@ -334,6 +335,19 @@ function renameRush(s: any) {
   for (const mode of ["tower", "delve"]) {
     const badges = s[mode]?.run?.badges;
     if (isRecord(badges)) for (const list of Object.values(badges)) if (Array.isArray(list)) for (const r of list) if (isRecord(r)) r.id = dash(r.id);
+  }
+}
+/** DOOR's legendary Master Key became Secret Knock (KEY's tree took the
+ * name): its levels spent and opened, and a run inside's, renamed in the
+ * raw save before the trees decode it.
+ * TODO: remove this conversion in a future save version. */
+function renameSecretKnock(s: any) {
+  for (const trees of [s.cardTrees, s.cardBuys?.opened, s.tower?.run?.cardTrees, s.delve?.run?.cardTrees]) {
+    const door = isRecord(trees) ? trees.door : undefined;
+    if (isRecord(door) && "masterKey" in door && !("secretKnock" in door)) {
+      door.secretKnock = door.masterKey;
+      delete door.masterKey;
+    }
   }
 }
 /** KEY took YELLOW KEY's place in the base hand, and YELLOW KEY became an
@@ -511,6 +525,7 @@ export function decode(raw: string | null): Save {
     const s = JSON.parse(raw ?? "null") ?? {};
     if (isRecord(s)) renameRush(s);
     if (isRecord(s)) retireYellowKey(s);
+    if (isRecord(s)) renameSecretKnock(s);
     decodeUpgrades(s.upgrades, d);
     // Undo capacity counts Undo Count research, so the Archives come first.
     d.archives = decodeArchives(s.archives);

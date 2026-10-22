@@ -629,16 +629,16 @@ function renderShrine(game: Game) {
   bar.setAttribute("aria-label", `Shrine: ${pick}, ${left}`);
 }
 
-/** Focus uses left, once the Focus skill is owned. */
+/** Focus uses left, once the Focus skill is owned; Ignore, Target and the Bombs likewise. */
 function renderFocus(game: Game) {
   renderShrine(game);
   const stat = el("focus-stat");
   stat.hidden = !game.save.upgrades.focus;
   text("focus-left", game.focusLeft);
   stat.setAttribute("aria-label", `Focus: ${game.focusLeft} left`);
-  for (const c of ["ignore", "target"] as const) {
-    const button = el(`${c}-stat`), left = game.chargesLeft(c), name = c === "ignore" ? "Ignore" : "Target";
-    button.hidden = !game.save.upgrades[c];
+  for (const c of ["ignore", "target", "bomb"] as const) {
+    const button = el(`${c}-stat`), left = c === "bomb" ? game.bombsLeft : game.chargesLeft(c), name = { ignore: "Ignore", target: "Target", bomb: "Bombs" }[c];
+    button.hidden = c === "bomb" ? !game.save.provisions.bomb : !game.save.upgrades[c];
     button.classList.toggle("armed", game.armed === c);
     text(`${c}-left`, left);
     button.setAttribute("aria-label", `${name}: ${left} left`);
