@@ -499,7 +499,7 @@ The hand's first step toward a new target carrying on along the path across empt
 _Avoid_: rush (the Archives' Gem button that completes research at once), sprint, leap
 
 **Dash attack**:
-A fight the hero steps into from the tile a Dash stopped on, the turn after it. ENEMY's Surprise Attack may double the ATK of its first strike.
+A fight the hero steps into from the tile a Dash stopped on, the turn after it. ENEMY's Surprise Attack may double the ATK of its first strike, and takes a Fast enemy's first strike away.
 
 **Deck**:
 All the player's cards: those in the hand and those waiting outside it. Also the page where the hand is ordered (with the Combat Stance skill) and its cards chosen from the deck (with Buildout).

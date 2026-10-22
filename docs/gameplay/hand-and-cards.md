@@ -149,6 +149,8 @@ Points are spent in the forest; inside a run the tree only shows.
   Crit % and Crit x are raised by their share, as their research raises them, so they need the Critical skill and Crit % trained.
   Weaken multiplies every enemy's ATK, as the enemies show it, fight it and shoot with it: 5 levels make it 95%.
   A Dash stops short of an enemy, and the fight you step into from there on the next turn is a surprise: Surprise Attack rolls once for each enemy's tile, so undo can't roll it again.
+  A Surprise Attack's first strike rises in a gold outline, as a fully charged arrow's does.
+  A Fast enemy caught by one loses its first strike: you strike first.
 - The other trees are common only for now, each upgrade holding its first levels from the start and opened to the rest by common card buys:
 - **ATK Up** and **DEF Up**: +1% from each of their shards (4 levels, up to 10), +0.1 Gold from each (4, up to 10) and +1% Silver Bonus (2, up to 5).
 - **Torch**, against a Greater Boss: +1% ATK (2 levels, up to 5), +1% DEF, +1% Gold, +2% shroud and 1 Cell more (each 2, up to 5).

@@ -67,10 +67,15 @@ export class FightPlayback<S extends FoughtStep> {
    * instead (Revive), so a lost fight is played out strike by strike to see
    * how it ends, as is one with critical strikes that may land;
    * a game that plays fights shows it on the board. A `surprise` (ENEMY's
-   * Surprise Attack) doubles the hero's first strike's ATK. */
+   * Surprise Attack) doubles the hero's first strike's ATK, and a Fast
+   * enemy loses its first strike: the hero strikes first. */
   fight(step: S, enemy: Enemy, surprise = false) {
     const p = this.host.run.player, outcome = step.outcome;
     this.surprised = surprise;
+    if (surprise && enemy.fast) {
+      const { fast: _, ...caught } = enemy;
+      enemy = caught;
+    }
     const revive = isLethal(outcome) ? this.revival(step.dest) : undefined, crits = this.critRolls(step.dest);
     if (!this.playsFights && !revive && !crits) return this.take(step, 0);
     const fight = bout(p, enemy, revive, crits), start = performance.now(), rose = revivals(fight).length;
@@ -200,8 +205,9 @@ export class FightPlayback<S extends FoughtStep> {
     if (o.scale) o.extraDamage = snap(damage * o.scale - damage);
     const rules = this.host.stepRules, fought = afterExtra(heroHpAfter(played, p.hp), o.extraDamage, p.maxHp);
     o.player.hp = regenerate(healAfterVictory(fought, p.maxHp, rules), p.maxHp, rules);
-    const { thornKill: _, ...combat } = o.combat!, last = played.strikes.at(-1);
-    o.combat = { ...combat, turns: played.strikes.filter((s) => s.by === "hero").length, damage, survivable: fought > 0, ...(last?.thornHp === 0 && fought > 0 ? { thornKill: true as const } : {}) };
+    // A Surprise Attack takes a Fast enemy's first strike away.
+    const { thornKill: _, fast, ...combat } = o.combat!, last = played.strikes.at(-1);
+    o.combat = { ...combat, ...(fast && !this.surprised ? { fast } : {}), turns: played.strikes.filter((s) => s.by === "hero").length, damage, survivable: fought > 0, ...(last?.thornHp === 0 && fought > 0 ? { thornKill: true as const } : {}) };
   }
   /** Stops a fight playing out, and the one shown, for a run restored,
    * loaded or begun. */

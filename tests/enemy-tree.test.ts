@@ -9,6 +9,7 @@ import { critRule } from "../src/loadout.ts";
 import { weakened, NO_FOES } from "../src/shrines.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { World } from "../src/delve/world.ts";
+import { BoardPopups } from "../src/board-popups.ts";
 import type { Enemy, Player } from "../src/entities.ts";
 
 const hero: Player = { x: 0, y: 0, hp: 100, maxHp: 100, attack: 10, defense: 0, keys: { yellow: 0, blue: 0, red: 0 } };
@@ -95,16 +96,22 @@ test("ENEMY's Lifesteal Overheal lets Lifesteal heal above max HP, up to its cei
 test("ENEMY's Surprise Attack doubles the first strike's ATK of a fight right after a Dash", () => {
   const first = bout(hero, foe(100), undefined, { factor: 1, applications: () => 0, first: 2 }).strikes.filter((s) => s.by === "hero").map((s) => s.damage);
   assert.deepEqual(first.slice(0, 3), [20, 10, 10]);
+  const marked = bout(hero, foe(100), undefined, { factor: 1, applications: () => 0, first: 2 }).strikes.filter((s) => s.by === "hero").map((s) => !!s.surprise);
+  assert.deepEqual(marked.slice(0, 2), [true, false], "only the first strike wears the gold ring");
+  const surprised = bout(hero, foe(100), undefined, { factor: 1, applications: () => 0, first: 2 }), popups = new BoardPopups();
+  popups.update({ run: { seed: 1 }, gains: [], fight: { from: { x: 0, y: 0 }, to: { x: 1, y: 0 }, bout: surprised, start: 0, hp: 100, summary: false }, lastHeal: null }, surprised.strikes[2].at);
+  const rings = (popups as unknown as { numbers: { x: number; text: string; ring?: { color: string } }[] }).numbers.filter((n) => n.x >= 1).map((n) => `${n.text}:${n.ring?.color ?? ""}`);
+  assert.deepEqual(rings, ["20:#ffd34d", "10:"], "its number rises in a Charged Shot's gold outline");
   /** A corridor: the hero at its west end, a rat of 20 HP on x = 5 that
-   * ENEMY targets, Dash owned with `trees` on the run. */
-  const corridor = (trees: CardTreeLevels) => {
+   * ENEMY targets (Fast when `fast`), Dash owned with `trees` on the run. */
+  const corridor = (trees: CardTreeLevels, fast = false) => {
     const g = new Game(defaults());
     g.save.upgrades.dash = 1;
     g.save.archives.levels.dash = 10;
     const w = g.world as RoomWorld;
     w.cells = new Map();
     for (let x = 0; x < 8; x++) w.cells.set(`${x},0`, { kind: "floor" });
-    w.cells.set("5,0", { kind: "enemy", enemy: foe(20) });
+    w.cells.set("5,0", { kind: "enemy", enemy: { ...foe(20), ...(fast ? { fast: true as const } : {}) } });
     w.torches = [];
     Object.assign(g.run.player, { x: 0, y: 0, attack: 12 });
     g.run.hand = ["monster"];
@@ -123,6 +130,16 @@ test("ENEMY's Surprise Attack doubles the first strike's ATK of a fight right af
   plain.autoTurn();
   assert.doesNotMatch(plain.message, /Surprise/);
   assert.ok(plain.run.player.hp < plain.run.player.maxHp, "two strikes, and one back");
+  // A Fast rat loses its first strike to a Surprise Attack.
+  const quick = corridor({ monster: { surpriseAttack: 100 } }, true);
+  quick.autoTurn();
+  quick.autoTurn();
+  assert.match(quick.message, /^Surprise Attack · /);
+  assert.equal(quick.run.player.hp, quick.run.player.maxHp, "the hero struck first, and the rat fell");
+  const quickPlain = corridor({}, true);
+  quickPlain.autoTurn();
+  quickPlain.autoTurn();
+  assert.ok(quickPlain.run.player.hp < plain.run.player.hp, "without it the Fast rat strikes first, then back");
   // A fight not right after a dash is no surprise.
   const walked = corridor({ monster: { surpriseAttack: 100 } });
   Object.assign(walked.run.player, { x: 4 });

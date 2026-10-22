@@ -345,7 +345,7 @@ export const REVIVE_PAUSE_MS = DEFEAT_MS + REVIVE_MS;
  * parried (`parried`, its damage cut) makes the hero give way a little as it
  * lands, and one the hero lives through costs the enemy its thorns
  * (`thorns`), leaving it `thornHp`. */
-export type Strike = { by: "hero" | "enemy"; damage: number; crit?: number; heroHp?: number; healed?: number; shrouded?: number; revived?: true; parried?: true; thorns?: number; thornHp?: number; start: number; at: number; end: number; hp: number };
+export type Strike = { by: "hero" | "enemy"; damage: number; crit?: number; surprise?: true; heroHp?: number; healed?: number; shrouded?: number; revived?: true; parried?: true; thorns?: number; thornHp?: number; start: number; at: number; end: number; hp: number };
 export type Bout = { strikes: Strike[]; duration: number };
 /** Whether the enemy's strike numbered `strike` (from 0) in a fight, which
  * would fell the hero, revives it instead (the Revive skill). */
@@ -396,7 +396,7 @@ function play(strikes: Strike[], { player, enemy, revives, crits }: Fighters, st
       const heals = healed !== s.heroHp, gained = snap(healed - s.heroHp);
       s.heroHp = healed;
       s.enemyHp = snap(Math.max(0, s.enemyHp - struck));
-      strike({ by: "hero", damage: struck, ...(applications ? { crit: applications } : {}), ...(heals ? { heroHp: healed, healed: gained } : {}), hp: s.enemyHp });
+      strike({ by: "hero", damage: struck, ...(applications ? { crit: applications } : {}), ...(first !== 1 ? { surprise: true as const } : {}), ...(heals ? { heroHp: healed, healed: gained } : {}), hp: s.enemyHp });
       if (!s.enemyHp) break;
     }
     s.enemyNext = false;

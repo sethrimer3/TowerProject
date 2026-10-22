@@ -248,13 +248,14 @@ export class BoardPopups {
    * through, and what the shroud blocked in silver beside it. A round the
    * hero came out ahead of raises only its blue gain. An arrow with a
    * `charge` (percent) above 0 wears a gold outline around its black one,
-   * a faint one under `FULL_CHARGE`. */
+   * a faint one under `FULL_CHARGE`, as does a Surprise Attack's first
+   * strike (a full one). */
   private raise(s: Strike, on: { x: number; y: number }, start: number, charge = 0) {
     if (!this.shown.hitNumbers || (s.by === "enemy" && s.healed && !s.damage && !s.shrouded)) return;
     const both = !!s.shrouded && s.damage > 0, y = on.y + DAMAGE_START;
     if (s.shrouded) this.numbers.push({ x: on.x - (both ? SHROUD_SPLIT : 0), y, start, text: popupAmount(s.shrouded), color: SHROUD_COLOR });
     if (s.shrouded && !s.damage) return;
-    this.numbers.push({ x: on.x + (both ? SHROUD_SPLIT : 0), y, start, text: popupAmount(s.damage), ...(s.crit ? { color: CRIT_COLOR, glow: CRIT_GLOW } : { color: s.by === "hero" ? DAMAGE_COLOR : HERO_DAMAGE_COLOR }), ...(charge > 0 ? { ring: charge < FULL_CHARGE ? FAINT_RING : CHARGED_RING } : {}) });
+    this.numbers.push({ x: on.x + (both ? SHROUD_SPLIT : 0), y, start, text: popupAmount(s.damage), ...(s.crit ? { color: CRIT_COLOR, glow: CRIT_GLOW } : { color: s.by === "hero" ? DAMAGE_COLOR : HERO_DAMAGE_COLOR }), ...(s.surprise ? { ring: CHARGED_RING } : charge > 0 ? { ring: charge < FULL_CHARGE ? FAINT_RING : CHARGED_RING } : {}) });
   }
   /** Nothing is rising or waiting to, and the enemy's HP bar is still. */
   idle(now: number) {
