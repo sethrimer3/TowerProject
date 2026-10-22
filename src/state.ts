@@ -3,7 +3,7 @@ import { buyTheme, canWear, grantAllThemes, type GameLook, type ThemeId, type Th
 import { chooseStep } from "./automation.ts";
 import { CARDS, cardText, deckCards, explainStuck, handBonus, keptLinks, planHand, planTarget, shootsWith, stillOpen, type CardId, type CardPlan, type HandBonus, type StuckReport } from "./cards.ts";
 import { addCardXp, PASSIVE_CARDS } from "./card-levels.ts";
-import { cardMaxLevel, freeUpChances, freeUpFactors, hasPointsToSpend, pointsLeft, runCardTrees, runFoeCut, treeBonus, treeFactor, treeOverheal, type TreeBonus } from "./card-trees.ts";
+import { cardMaxLevel, compounded, freeUpChances, freeUpFactors, hasPointsToSpend, pointsLeft, runCardTrees, runFoeCut, treeBonus, treeFactor, treeOverheal, type TreeBonus } from "./card-trees.ts";
 import { aggroTurn } from "./flying.ts";
 import { foeOn } from "./ranged.ts";
 import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./badges.ts";
@@ -176,7 +176,8 @@ const PERMANENT_TILES = new Set<Tile["kind"]>(["floor", "stairs", "oneway", "ope
  * ENEMY's Surprise Attack an enemy. */
 const SECRET_KNOCK_SALT = 0x3a57e, DOOR_CHEST_SALT = 0xd00c4, DOOR_CHEST_KIND_SALT = 0xd0c4d, DOUBLE_KEY_SALT = 0xd0b1e, MASTER_KEY_SALT = 0x3a5e7,
   KEY_CHEST_SALT = 0x6c4e5, KEY_CHEST_KIND_SALT = 0x6c4d1, SURPRISE_SALT = 0x5a7c1, POWER_STRIKE_SALT = 0x907e5,
-  CHEST_DOUBLE_SALT = 0xc4e02, CHEST_TRIPLE_SALT = 0xc4e03, CHEST_CELLS_SALT = 0xc4ec1;
+  CHEST_DOUBLE_SALT = 0xc4e02, CHEST_TRIPLE_SALT = 0xc4e03, CHEST_CELLS_SALT = 0xc4ec1,
+  YELLOW_DOUBLE_KEY_SALT = 0x7e11d, YELLOW_MASTER_KEY_SALT = 0x7e113;
 /** The targets a Dash may end on, a tile of it left: items to take. */
 const DASH_ONTO = new Set<Tile["kind"]>(["key", "potion", "attack", "defense", "treasure", "reward"]);
 export class Game {
@@ -1072,6 +1073,13 @@ export class Game {
     }
     // A Power Strike charged on an earlier run doesn't carry over.
     delete p.powerStrike;
+    // YELLOW KEY's Max HP raises the hero's for the run, as the Max HP badge's does (`heroFactor`).
+    const maxHp = treeFactor(tree, "maxHp");
+    if (maxHp !== 1) {
+      p.maxHp = snap(p.maxHp * maxHp);
+      p.hp = snap(p.hp * maxHp);
+      if (this.run.loadout) this.run.loadout.maxHp = snap(this.run.loadout.maxHp * maxHp);
+    }
     this.run.focusUsed = 0;
     for (const k of ["ignoreUsed", "targetUsed", "regain", "ignored", "targeted"] as const) delete this.run[k];
   }
@@ -1148,13 +1156,17 @@ export class Game {
       : snap((this.run.player.regen * researched(this.save.archives, "regenPercent") * treeFactor(tree, "regen")) / 100);
     const worn = this.worn, potionHeal = raised(researched(this.save.archives, "potionHeal"), worn.potionHeal);
     const crit = this.crit, keys = this.handBonus.keys;
-    // KEY's tree adds to every colour's percent, the key cards' adding to their own.
-    const found = KEY_ORDER.flatMap((color) => { const n = (keys[color]?.percent ?? 0) + tree.keyFind; return n ? [[color, n] as const] : []; });
+    // KEY's tree adds to every colour's percent, the key cards' adding to their own; YELLOW KEY's multiplies a yellow key's.
+    const found = KEY_ORDER.flatMap((color) => {
+      const n = compounded((keys[color]?.percent ?? 0) + tree.keyFind, color === "yellow" ? tree.yellowKeyFind : 0);
+      return n ? [[color, n] as const] : [];
+    });
     const keyFind = found.length ? { keyFind: Object.fromEntries(found) } : {};
     const overheal = this.overheal;
     return { potionHeal, percentPotion: trainedAmount(this.trainingNow, "potion"), regen, ...(overheal > 1000 ? { overheal } : {}),
       heartToll: researched(this.save.archives, "heartToll"), keyCost: this.keyCost, ...keyFind, ...(this.doorOff ? { doorOff: this.doorOff } : {}),
       ...(tree.doorHeal ? { doorHeal: tree.doorHeal } : {}), ...(tree.keyHeal ? { keyHeal: tree.keyHeal } : {}), ...(tree.keyOverheal ? { keyOverheal: tree.keyOverheal } : {}),
+      ...(tree.yellowKeyHeal ? { yellowKeyHeal: tree.yellowKeyHeal } : {}), ...(tree.yellowKeyOverheal ? { yellowKeyOverheal: tree.yellowKeyOverheal } : {}),
       shardAttack: researched(this.save.archives, "shardAttackPercent") * boonFactor(this.run, "attack") * treeFactor(tree, "attackShard"),
       shardDefense: researched(this.save.archives, "shardDefensePercent") * treeFactor(tree, "defenseShard"),
       ...(tree.potionHeal ? { potionCard: tree.potionHeal } : {}),
@@ -1200,6 +1212,7 @@ export class Game {
     if (tree.doorCost) doors.all = tree.doorCost;
     if (tree.plainDoorCost) doors.plain = tree.plainDoorCost;
     if (tree.heartDoorCost) doors.hearts = tree.heartDoorCost;
+    if (tree.yellowDoorCost) doors.yellowKey = tree.yellowDoorCost;
     return Object.keys(doors).length ? doors : undefined;
   }
   /** Where the Training tab reads its rows' values: this mode's hero, and
@@ -1712,8 +1725,8 @@ export class Game {
     this.consumeTile(t, x, y);
     if (t.kind === "attack") this.chargePowerStrike(x, y);
     if (t.kind === "door") this.doorChest(x, y);
-    if (t.kind === "key") this.keyChest(x, y);
-    if (t.kind === "key") this.masterKey(x, y);
+    if (t.kind === "key") this.keyChest(x, y, t.color === "yellow");
+    if (t.kind === "key") this.masterKey(x, y, t.color === "yellow");
     if (t.kind !== "stairs") this.callGreaterBoss();
     this.afterStep(t, x, y, floorSkip);
   }
@@ -1991,9 +2004,11 @@ export class Game {
     this.leaveChest(x, y, DOOR_CHEST_SALT, DOOR_CHEST_KIND_SALT, this.treeBonus.doorChest);
   }
   /** KEY's Key Chest: the key just picked up at (x, y) may leave an opened
-   * treasure chest where it lay, as Door Chest leaves one. */
-  private keyChest(x: number, y: number) {
-    this.leaveChest(x, y, KEY_CHEST_SALT, KEY_CHEST_KIND_SALT, this.treeBonus.keyChest);
+   * treasure chest where it lay, as Door Chest leaves one; a `yellow` one
+   * by YELLOW KEY's chance too, added to it. */
+  private keyChest(x: number, y: number, yellow: boolean) {
+    const tree = this.treeBonus;
+    this.leaveChest(x, y, KEY_CHEST_SALT, KEY_CHEST_KIND_SALT, snap(tree.keyChest + (yellow ? tree.yellowKeyChest : 0)));
   }
   /** An opened treasure chest left at (x, y) when its tile rolls under
    * `chance` by `salt`, its kind rolled by `kindSalt`, and paid. */
@@ -2008,15 +2023,21 @@ export class Game {
     const tree = this.treeBonus;
     if (t.kind === "door" && this.tileRolls(x, y, SECRET_KNOCK_SALT, tree.secretKnock)) return { freeDoor: true };
     if (t.kind === "key" && this.tileRolls(x, y, DOUBLE_KEY_SALT, tree.doubleKey)) return { doubleKey: true };
+    // YELLOW KEY's Locksmith Yellow rolls apart from KEY's: either makes a yellow key two.
+    if (t.kind === "key" && t.color === "yellow" && this.tileRolls(x, y, YELLOW_DOUBLE_KEY_SALT, tree.yellowDoubleKey)) return { doubleKey: true };
     return null;
   }
   /** KEY's Master Key: the key just picked up at (x, y) may open every door
    * on its floor at once, for nothing, each paying as a door Secret Knock
    * opened does: its Gold, DOOR's Door Silver and Door Heal, and its Door
    * Chest roll. */
-  private masterKey(x: number, y: number) {
-    if (!this.tileRolls(x, y, MASTER_KEY_SALT, this.treeBonus.masterKey)) return;
-    const doors = this.world.floorDoors?.(x, y) ?? [], rules: StepRules = { ...this.stepRules, regen: 0, freeDoor: true };
+  private masterKey(x: number, y: number, yellow: boolean) {
+    const tree = this.treeBonus, every = this.tileRolls(x, y, MASTER_KEY_SALT, tree.masterKey);
+    // YELLOW KEY's Master Yellow Key, its own roll, opens the doors with a yellow lock.
+    const yellows = !every && yellow && this.tileRolls(x, y, YELLOW_MASTER_KEY_SALT, tree.yellowMasterKey);
+    if (!every && !yellows) return;
+    const all = this.world.floorDoors?.(x, y) ?? [], rules: StepRules = { ...this.stepRules, regen: 0, freeDoor: true };
+    const doors = every ? all : all.filter((d) => yellowLocked(this.world.tile(d.x, d.y)));
     for (const d of doors) {
       const t = this.world.tile(d.x, d.y), outcome = resolveStep(this.run.player, t, rules);
       if (outcome.blocked) continue;
@@ -2025,7 +2046,7 @@ export class Game {
       this.world.clear(d.x, d.y);
       this.doorChest(d.x, d.y);
     }
-    if (doors.length) this.message = `Master Key · ${doors.length} door${doors.length === 1 ? "" : "s"} opened`;
+    if (doors.length) this.message = `${every ? "Master Key" : "Master Yellow Key"} · ${doors.length} door${doors.length === 1 ? "" : "s"} opened`;
   }
   /** Removes what the step used up: chests stay behind opened, fixtures stay. */
   private consumeTile(t: Tile, x: number, y: number) {
@@ -2420,6 +2441,12 @@ type FightEnd = { enemy: Enemy; damage: number; at: { x: number; y: number }; re
 export type QuantityScope = "training" | "run" | "provisions";
 const QUANTITY_SETTINGS = { training: "buyQuantity", run: "runBuyQuantity", provisions: "provisionBuyQuantity" } as const;
 const SKIPPED_NAMES: Partial<Record<Tile["kind"], string>> = { door: "The door", key: "The key", potion: "The potion", attack: "The ATK shard", defense: "The DEF shard", treasure: "The chest", reward: "The chest" };
+
+/** Whether the door `t` has a yellow lock among its locks. */
+function yellowLocked(t: Tile) {
+  const rule = doorRule(t);
+  return rule.type === "keys" && rule.keys.includes("yellow");
+}
 
 /** How the status line opens on a fight won. */
 function fightText(fight: FightEnd): string {

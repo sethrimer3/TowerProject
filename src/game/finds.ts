@@ -1,6 +1,6 @@
 import { doorName, doorRule, drainsHp, pickupGold } from "../doors.ts";
 import type { HandBonus } from "../cards.ts";
-import type { TreeBonus } from "../card-trees.ts";
+import { compounded, type TreeBonus } from "../card-trees.ts";
 import type { ChestKind, Enemy, Mode, Tile, KeyColor } from "../entities.ts";
 import { RARITY_TIERS } from "../equipment/balance.ts";
 import { EQUIP_MATERIALS, itemDef } from "../equipment/catalog.ts";
@@ -86,7 +86,7 @@ export class Finds {
       // A key card held pays its Gold on top of the key's own, and KEY's
       // tree raises it; ATK UP's and DEF UP's trees raise a shard's.
       const tree = this.host.treeBonus;
-      if (t.kind === "key") this.pickupGold(t, { x, y }, this.host.handBonus.keys[t.color!]?.gold, tree.keyGold);
+      if (t.kind === "key") this.pickupGold(t, { x, y }, this.host.handBonus.keys[t.color!]?.gold, compounded(tree.keyGold, t.color === "yellow" ? tree.yellowKeyGold : 0));
       else this.pickupGold(t, { x, y }, 0, t.kind === "attack" ? tree.attackShardGold : t.kind === "defense" ? tree.defenseShardGold : 0);
       if (t.kind === "potion") this.host.recordHeal(outcome.healed);
       // KEY's Key Heal and Key Overheal rise below the key.
@@ -95,7 +95,7 @@ export class Finds {
         this.host.recordHeal(outcome.healed);
       }
       // HEAL's tree finds Silver with each potion, KEY's with each key, and ATK UP's and DEF UP's with each shard.
-      const silverFound = t.kind === "potion" ? tree.potionSilver : t.kind === "key" ? tree.keySilver
+      const silverFound = t.kind === "potion" ? tree.potionSilver : t.kind === "key" ? snap(tree.keySilver + (t.color === "yellow" ? tree.yellowKeySilver : 0))
         : t.kind === "attack" ? tree.attackShardSilver : t.kind === "defense" ? tree.defenseShardSilver : 0;
       if (silverFound) {
         const silver = this.host.purse.silver(silverFound);

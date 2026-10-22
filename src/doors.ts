@@ -66,11 +66,16 @@ export type DoorKind = "yellow" | "heart" | "wood";
  * less of the key and the HP a Wooden or Steel Door takes, and `hearts`,
  * of the keys and the drain a door draining HP takes (KEY's tree). Each
  * adds into a kind's own as one card factor. */
-export type DoorDiscounts = Partial<Record<DoorKind | "all" | "plain" | "hearts", number>>;
+export type DoorDiscounts = Partial<Record<DoorKind | "all" | "plain" | "hearts" | "yellowKey", number>>;
 /** What `off` multiplies the door `tile`'s keys and its HP toll by: 1 for
- * each it leaves alone. */
+ * each it leaves alone. YELLOW KEY's tree's cut on a single yellow door's
+ * key (`yellowKey`) is its own factor on the rest. */
 export function doorDiscount(tile: Tile, off?: DoorDiscounts): { keys: number; toll: number } {
   if (!off) return { keys: 1, toll: 1 };
+  const cut = off.yellowKey && isYellowDoor(tile) ? (100 - Math.min(100, off.yellowKey)) / 100 : 1, plain = discountOf(tile, off);
+  return cut === 1 ? plain : { ...plain, keys: plain.keys * cut };
+}
+function discountOf(tile: Tile, off: DoorDiscounts): { keys: number; toll: number } {
   const rule = doorRule(tile), all = off.all ?? 0, less = (percent = 0, more = 0, also = 0) => (100 - percent - more - also) / 100;
   if (rule.type === "wood") return { keys: less(off.wood, all, off.plain), toll: less(off.wood, off.plain) };
   if (drainsHp(rule)) return { keys: less(isYellowDoor(tile) ? off.yellow : 0, all, off.hearts), toll: less(off.heart, off.hearts) };

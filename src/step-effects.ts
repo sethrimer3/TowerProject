@@ -90,6 +90,9 @@ export type StepRules = {
    * Overheal); none when absent. */
   keyHeal?: number;
   keyOverheal?: number;
+  /** YELLOW KEY's Key Heal and Key Overheal, added to KEY's for a yellow key. */
+  yellowKeyHeal?: number;
+  yellowKeyOverheal?: number;
   /** The key picked up is two (KEY's Locksmith, which `Game` rolls as
    * Secret Knock is). */
   doubleKey?: true;
@@ -185,12 +188,13 @@ export function resolveStep(player: Player, tile: Tile, rules: StepRules = BASE_
       const amount = rules.doubleKey ? snap(2 * one) : one;
       next.keys[tile.color!] = snap(next.keys[tile.color!] + amount);
       if (amount !== 1) effect.keyAmount = amount;
-      // KEY's Key Heal up to max HP, then its Key Overheal up to the Overheal ceiling.
-      const hp = next.hp;
-      if (rules.keyHeal) next.hp = healUpTo(next.hp, snap((next.maxHp * rules.keyHeal) / 100), next.maxHp);
-      if (rules.keyOverheal) {
+      // KEY's Key Heal up to max HP, then its Key Overheal up to the Overheal ceiling, YELLOW KEY's adding for a yellow key.
+      const hp = next.hp, yellow = tile.color === "yellow";
+      const heal = snap((rules.keyHeal ?? 0) + (yellow ? rules.yellowKeyHeal ?? 0 : 0)), overheal = snap((rules.keyOverheal ?? 0) + (yellow ? rules.yellowKeyOverheal ?? 0 : 0));
+      if (heal) next.hp = healUpTo(next.hp, snap((next.maxHp * heal) / 100), next.maxHp);
+      if (overheal) {
         const ceiling = hpCeiling(next.maxHp, rules);
-        next.hp = healUpTo(next.hp, snap((ceiling * rules.keyOverheal) / 100), ceiling);
+        next.hp = healUpTo(next.hp, snap((ceiling * overheal) / 100), ceiling);
       }
       effect.healed = snap(next.hp - hp);
       break;

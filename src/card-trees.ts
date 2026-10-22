@@ -71,6 +71,26 @@ export type TreeStat =
   | "keyHeal" | "keyOverheal"
   /** Flat: Silver found with each key picked up, before Silver Bonus. */
   | "keySilver"
+  /** Flat: YELLOW KEY's Key Heal and Key Overheal, for yellow keys only,
+   * added to KEY's. */
+  | "yellowKeyHeal" | "yellowKeyOverheal"
+  /** More each yellow key's Pickup Gold, and more each yellow key is worth,
+   * each its own factor on KEY's and the key cards'. */
+  | "yellowKeyGold" | "yellowKeyFind"
+  /** Flat: Silver found with each yellow key picked up, added to KEY's Key Silver. */
+  | "yellowKeySilver"
+  /** Flat: the percent chance a yellow key picked up leaves an opened
+   * treasure chest, added to KEY's Key Chest. */
+  | "yellowKeyChest"
+  /** The percent less of the key a single yellow door takes, its own factor
+   * on the other door discounts. */
+  | "yellowDoorCost"
+  /** Max HP for the run, its own factor beside the boons' and the Max HP badge's. */
+  | "maxHp"
+  /** Flat: the percent chance a yellow key picked up is two (Locksmith
+   * Yellow, rolled apart from KEY's Locksmith), and that it opens every
+   * door with a yellow lock on its floor (Master Yellow Key). */
+  | "yellowDoubleKey" | "yellowMasterKey"
   /** Less of the keys and HP a Wooden or Steel Door takes, and of the keys
    * and the drain a Heart Door takes. */
   | "plainDoorCost" | "heartDoorCost"
@@ -123,7 +143,7 @@ export type TreeStat =
 
 /** The stats added as they are, not as percents of a factor. */
 export const FLAT_STATS: ReadonlySet<TreeStat> = new Set<TreeStat>(["floorHeal", "overhealMax", "stairSkip", "potionMaxHp", "potionSilver", "freeOffenseChance", "freeDefenseChance", "freeUtilityChance",
-  "doorSilver", "doorHeal", "skeletonKey", "lockPick", "secretKnock", "doorChest", "keyChest", "keyHeal", "keyOverheal", "keySilver", "doubleKey", "masterKey", "surpriseAttack", "foeAttackCut", "stealOverheal", "parry", "reviveChance",
+  "doorSilver", "doorHeal", "skeletonKey", "lockPick", "secretKnock", "doorChest", "keyChest", "keyHeal", "keyOverheal", "keySilver", "doubleKey", "masterKey", "yellowKeyHeal", "yellowKeyOverheal", "yellowKeySilver", "yellowKeyChest", "yellowDoubleKey", "yellowMasterKey", "surpriseAttack", "foeAttackCut", "stealOverheal", "parry", "reviveChance",
   "attackShardSilver", "defenseShardSilver", "powerStrike", "takedown", "tangle", "greaterTakedown", "greaterTangle", "bossCells", "chestSilver", "chestCells", "supplyChance", "equipmentChance", "treasureFloor", "rarityUp", "chestDouble", "chestTriple"]);
 
 /** One node of a card's tree: the stats each of its levels raises, its
@@ -191,6 +211,20 @@ export const CARD_TREES: Partial<Record<CardId, readonly CardTreeNode[]>> = {
     { id: "heartDoorCost", stats: { heartDoorCost: 1 }, rarity: "rare", levels: 0, max: 5, after: "plainDoorCost" },
     { id: "locksmith", stats: { doubleKey: 1 }, rarity: "epic", levels: 0, max: 5, after: "heartDoorCost" },
     { id: "masterKey", stats: { masterKey: 0.2 }, rarity: "legendary", levels: 0, max: 5, after: "locksmith" },
+  ],
+  yellowKey: [
+    common("heal", { yellowKeyHeal: 1 }, 2, 5),
+    { id: "overheal", stats: { yellowKeyOverheal: 1 }, rarity: "uncommon", levels: 0, max: 5, after: "heal" },
+    common("gold", { yellowKeyGold: 2 }, 4, 5),
+    { id: "silver", stats: { yellowKeySilver: 0.1 }, rarity: "uncommon", levels: 0, max: 5, after: "gold" },
+    { id: "goldBonus", stats: { goldBonus: 1 }, rarity: "rare", levels: 0, max: 5, after: "silver" },
+    { id: "freeUtility", stats: { freeUtilityChance: 0.5 }, rarity: "epic", levels: 0, max: 5, after: "goldBonus" },
+    { id: "chest", stats: { yellowKeyChest: 0.2 }, rarity: "legendary", levels: 0, max: 5, after: "freeUtility" },
+    common("find", { yellowKeyFind: 1 }, 4, 5),
+    { id: "doorCost", stats: { yellowDoorCost: 1 }, rarity: "uncommon", levels: 0, max: 5, after: "find" },
+    { id: "maxHp", stats: { maxHp: 5 }, rarity: "rare", levels: 0, max: 5, after: "doorCost" },
+    { id: "locksmith", stats: { yellowDoubleKey: 1 }, rarity: "epic", levels: 0, max: 5, after: "maxHp" },
+    { id: "masterKey", stats: { yellowMasterKey: 2 }, rarity: "legendary", levels: 0, max: 5, after: "locksmith" },
   ],
   monster: [
     common("attack", { foeAttack: 2 }, 4, 5),
@@ -383,7 +417,8 @@ export function runCardTrees(levels: CardTreeLevels, hand: readonly CardId[]): C
 export type TreeBonus = Record<TreeStat, number>;
 const NO_BONUS = Object.freeze(Object.fromEntries(
   ["floorGold", "floorSilver", "goldBonus", "silverBonus", "freeOffense", "freeDefense", "freeUtility", "freeOffenseChance", "freeDefenseChance", "freeUtilityChance", "floorHeal", "overhealMax", "stairSkip", "percentPotions", "potionHeal", "potionMaxHp", "potionSilver", "regen", "shroud", "parry", "reviveChance",
-    "doorCost", "doorGold", "doorSilver", "doorHeal", "skeletonKey", "lockPick", "secretKnock", "doorChest", "keyChest", "keyFind", "keyGold", "keyHeal", "keyOverheal", "keySilver", "plainDoorCost", "heartDoorCost", "doubleKey", "masterKey", "foeAttack", "foeDefense", "foeGold", "foeSilver", "critChance", "critFactor", "killXp", "surpriseAttack", "foeAttackCut", "stealOverheal", "moreEnemies", "attackShard", "defenseShard", "attackShardGold", "defenseShardGold",
+    "doorCost", "doorGold", "doorSilver", "doorHeal", "skeletonKey", "lockPick", "secretKnock", "doorChest", "keyChest", "keyFind", "keyGold", "keyHeal", "keyOverheal", "keySilver", "plainDoorCost", "heartDoorCost", "doubleKey", "masterKey",
+    "yellowKeyHeal", "yellowKeyOverheal", "yellowKeyGold", "yellowKeyFind", "yellowKeySilver", "yellowKeyChest", "yellowDoorCost", "maxHp", "yellowDoubleKey", "yellowMasterKey", "foeAttack", "foeDefense", "foeGold", "foeSilver", "critChance", "critFactor", "killXp", "surpriseAttack", "foeAttackCut", "stealOverheal", "moreEnemies", "attackShard", "defenseShard", "attackShardGold", "defenseShardGold",
     "attackShardSilver", "defenseShardSilver", "powerStrike", "takedown", "tangle", "greaterTakedown", "greaterTangle",
     "bossAttack", "bossDefense", "bossShroud", "bossGold", "bossCells", "chestGold", "chestSilver", "chestCells", "supplyChance", "equipmentChance", "treasureFloor", "rarityUp", "chestDouble", "chestTriple"].map((s) => [s, 0]),
 )) as TreeBonus;
@@ -405,6 +440,10 @@ export const treeFactor = (bonus: TreeBonus, stat: TreeStat) => (bonus[stat] ? s
 export const runExtras = (run: Pick<RunCore, "badges" | "cardTrees">) => extraEnemies(run.badges, treeBonus(run.cardTrees).moreEnemies);
 /** The percent `run`'s enemies' ATK is cut by (ENEMY's Weaken), fixed as it went inside. */
 export const runFoeCut = (run: Pick<RunCore, "cardTrees">) => treeBonus(run.cardTrees).foeAttackCut;
+/** What `run`'s card trees multiply hero stat `stat` by: YELLOW KEY's Max HP. */
+export const treeHeroFactor = (run: Pick<RunCore, "cardTrees">, stat: string) => (stat === "maxHp" ? treeFactor(treeBonus(run.cardTrees), "maxHp") : 1);
+/** Two percents more of a thing as two factors, multiplied: as one percent. */
+export const compounded = (a: number, b: number) => (a && b ? snap(((100 + a) * (100 + b)) / 100 - 100) : snap(a + b));
 /** What each Free Upgrade group's chance a floor is multiplied by (STAIRS'
  * tree), as `rollFreeTraining` takes it. */
 export const freeUpFactors = (bonus: TreeBonus) =>

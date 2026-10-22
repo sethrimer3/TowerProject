@@ -3,6 +3,7 @@ import { snap } from "./exact.ts";
 import type { Loadout } from "./loadout.ts";
 import { boonFactor } from "./shrines.ts";
 import { badgeFactor } from "./badges.ts";
+import { treeHeroFactor } from "./card-trees.ts";
 
 /** The stats the loadout carries into a run's hero, which a change to the
  * loadout moves mid-run. */
@@ -23,7 +24,7 @@ export function loadoutShift(before: Loadout, after: Loadout): StatShift {
 
 /** What the run's boons and Max HP badge boosts multiply hero stat
  * `stat` by now. */
-export const heroFactor = (run: Run, stat: HeroStat) => boonFactor(run, stat) * badgeFactor(run, stat);
+export const heroFactor = (run: Run, stat: HeroStat) => boonFactor(run, stat) * badgeFactor(run, stat) * treeHeroFactor(run, stat);
 
 /** Moves `run`'s hero, and the loadout it keeps, by `shift`, each stat
  * times what the run's boons and Max HP badge boosts multiply it by (as

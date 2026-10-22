@@ -142,6 +142,13 @@ Points are spent in the forest; inside a run the tree only shows.
   Master Key's doors open for nothing, each paying as a door opened does: its Gold, Door's Door Silver and Door Heal, and a Door Chest roll.
   In the Delve, a key's floor is the doors of its area at the same equivalent floor.
   Locksmith, Key Chest and Master Key roll for each key once, so undo can't roll a key again.
+- **Yellow Key** has three tracks for yellow keys, each rising one rarity an upgrade, and opens to 60 levels.
+  Heal: 1% of max HP healed with each yellow key picked up (common, 2 levels, up to 5), then 1% of the HP ceiling, Overheal included (uncommon), each up to 5 levels.
+  Gold: +2% Gold from each yellow key (common, 4 levels, up to 5), then +0.1 Silver from each yellow key picked up (uncommon), +1% Gold Bonus (rare), +0.5% chance of a free Utility level each floor (epic), and +0.2% chance a yellow key picked up leaves an opened treasure chest (legendary), each up to 5 levels.
+  Keys: +1% more each yellow key (common, 4 levels, up to 5), then −1% of the key each yellow door takes (uncommon), +5% max HP for the run (rare), **Locksmith Yellow**, +1% chance a yellow key picked up is two (epic), and **Master Yellow Key**, +2% chance a yellow key picked up opens every door with a yellow lock on its floor (legendary), each up to 5 levels.
+  Its percents multiply Key's and the key cards' like ones: Key Gold, Key Find and a yellow door's cut each its own factor, and Max HP its own beside the boons' and the Max HP badge's, training bought in the run raised by it too.
+  Its heals, Silver and Key Chest chance add to Key's, as flat amounts do.
+  Locksmith Yellow and Master Yellow Key roll apart from Key's Locksmith and Master Key, each once a key: either Locksmith makes a yellow key two (both still two), and Master Key opening every door leaves Master Yellow Key nothing more to open.
 - **Enemy** has three tracks, each rising one rarity an upgrade, and opens to 60 levels.
   Attack: +2% ATK against every enemy (common, 4 levels, up to 5), then +1% Crit % chance (uncommon), +2% Crit x factor (rare), +2% XP from every kill (epic), and **Surprise Attack**, +5% chance the first strike of a fight right after a Dash deals twice your ATK (legendary), each up to 5 levels.
   Defense: +2% DEF against every enemy (common, 3 levels, up to 5), then +2% shroud against every enemy (uncommon), **Weaken**, −1% ATK for every enemy (rare), and **Lifesteal Overheal**, Lifesteal healing up to 5% above max HP (epic), each up to 5 levels.
