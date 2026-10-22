@@ -82,7 +82,7 @@ A card at its max level keeps gaining XP toward the levels above it, so when a c
 Each level gives the card 1 card point, to be spent on the card's own tree (see Card trees below).
 A card shows its level in small type at its top left, in the hand and on the Deck page, from level 1.
 On the Deck page the grey rule between a card's picture and its name is its XP bar, filling in white toward its next level (full at level 60; at its max level, with the XP it keeps gathering).
-A card's details show its level on the card, and under its name its rarity with its stars, then its level of its max level and its XP toward the next (*Level 4 / 10 · 340/1,800 XP*, or at the max, *… · buy cards to raise the max*); its card points equal its level, so they aren't repeated; the hand card's tooltip says the same line.
+A card's details show its level on the card and its XP toward the next level in white over the grey line above its name, as on the Deck page, and under its name its rarity with its stars, then its level of its max level and its XP toward the next (*Level 4 / 10 · 340/1,800 XP*, or at the max, *… · buy cards to raise the max*); its card points equal its level, so they aren't repeated; the hand card's tooltip says the same line.
 A card can level up during a run: if the card is in view in the hand, a golden glow covers it with the training point icon at its centre for a second, which then rises and fades over the next second, and the glow fades over a third.
 A card out of view (in a hand scrolled sideways) shows as a ghost at 75% transparency over the board's top left, a golden glow behind it, with the same icon, the ghost fading once the icon is gone.
 Several level-ups play one after another, and wait while a page covers the board.
@@ -140,7 +140,8 @@ Points are spent in the forest; inside a run the tree only shows.
 ## Card buys
 
 Above the Deck on the Deck page, **Buy ×1** (20 Gems) and **Buy ×10** (200 Gems) buy cards.
-Each card bought draws a rarity (common 69.95%, uncommon 25.5%, rare 4%, epic 0.5%, legendary 0.05%) and goes to a card of your deck chosen at random among those with an upgrade level left to open (a card fully opened leaves the draw).
+Each card bought draws a rarity (common 60%, uncommon 32%, rare 6%, epic 1.5%, legendary 0.5%) and goes to a card of your deck chosen at random among those with an upgrade level of that rarity left to open (a card fully opened leaves the draw).
+When no card of your deck has one, it goes to a card chosen at random among those with any level left to open.
 It opens one level of that rarity on the card's tree, raising the card's max level by 1: a sealed upgrade of that rarity first, at 1 level, and once all of them are open, one more level on one of them at random.
 When the card's upgrades of the rarity drawn are all fully opened, the buy goes to the next rarer rarity the card has room in (so once a Stairs card's common and uncommon upgrades are full, its buys are rare or better); with none rarer, to the rarest commoner one.
 The buttons buy only while the deck's cards have that many levels left to open; with none left, buying waits until a new card joins the deck, which then takes every buy.

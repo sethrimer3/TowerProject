@@ -36,10 +36,10 @@ function claimAll(g: Game, type: EventMissionType) {
   return paid;
 }
 
-test("Goals: Tower I's floors 60, 70 and 80 pay the Tournament, Events and 30 Gems; Tower II's 60 and 70 Equipment and 10,000 Gold", () => {
+test("Goals: Tower I's floors 60, 70 and 80 pay the Tournament, Events and 25 Gems; Tower II's 60 and 70 Equipment and 10,000 Gold", () => {
   assert.deepEqual(checkpoint(1, 60)!.reward, { kind: "unlock", unlock: "tournament" });
   assert.deepEqual(checkpoint(1, 70)!.reward, { kind: "unlock", unlock: "events" });
-  assert.deepEqual(checkpoint(1, 80)!.reward, { kind: "currency", currency: "gems", amount: 30 });
+  assert.deepEqual(checkpoint(1, 80)!.reward, { kind: "currency", currency: "gems", amount: 25 });
   assert.deepEqual(checkpoint(2, 60)!.reward, { kind: "unlock", unlock: "equipment" });
   assert.deepEqual(checkpoint(2, 70)!.reward, { kind: "currency", currency: "gold", amount: 10_000 });
   const save = defaults();

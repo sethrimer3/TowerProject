@@ -8,8 +8,8 @@ export type CardRarity = "common" | "uncommon" | "rare" | "epic" | "legendary";
 export const CARD_RARITIES: readonly CardRarity[] = ["common", "uncommon", "rare", "epic", "legendary"];
 
 /** How often a card buy draws each rarity, in hundredths of a percent
- * (69.95%, 25.5%, 4%, 0.5% and 0.05%: 10,000 in all). */
-export const CARD_RARITY_WEIGHTS: Record<CardRarity, number> = { common: 6995, uncommon: 2550, rare: 400, epic: 50, legendary: 5 };
+ * (60%, 32%, 6%, 1.5% and 0.5%: 10,000 in all). */
+export const CARD_RARITY_WEIGHTS: Record<CardRarity, number> = { common: 6000, uncommon: 3200, rare: 600, epic: 150, legendary: 50 };
 
 /** Each rarity's name, as the player reads it. */
 export const CARD_RARITY_NAMES: Record<CardRarity, string> = { common: "Common", uncommon: "Uncommon", rare: "Rare", epic: "Epic", legendary: "Legendary" };

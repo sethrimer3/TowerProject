@@ -1337,7 +1337,7 @@ nav:not(.in-run) .hand {
   box-shadow: 0 1px 3px #000c;
 }
 .card-reveal-card .card-level { top: 6px; left: 6px; min-width: 22px; height: 22px; border-radius: 6px; font-size: 13px; }
-/* On the Deck page, a card's XP toward its next level over the grey rule
+/* On the Deck page and in a card's details, its XP toward its next level over the grey rule
    between its art and its name (pixels 4 to 43 of row 44 of the 48 × 64
    face), filled in white. */
 .card-xp {

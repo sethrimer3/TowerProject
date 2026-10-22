@@ -18,8 +18,8 @@ function opened(card: CardId, rarities: string[]): Record<string, number> {
 }
 const xpTo = (n: number) => CARD_LEVEL_XP.slice(0, n).reduce((a, b) => a + b, 0);
 
-test("the rarities' chances: 69.95%, 25.5%, 4%, 0.5% and 0.05%", () => {
-  assert.deepEqual(CARD_RARITY_WEIGHTS, { common: 6995, uncommon: 2550, rare: 400, epic: 50, legendary: 5 });
+test("the rarities' chances: 60%, 32%, 6%, 1.5% and 0.5%", () => {
+  assert.deepEqual(CARD_RARITY_WEIGHTS, { common: 6000, uncommon: 3200, rare: 600, epic: 150, legendary: 50 });
   assert.deepEqual(CARD_BUY_GEMS, { 1: 20, 10: 200 });
 });
 
@@ -59,6 +59,8 @@ test("a buy picks among the deck's cards with room, leaving full ones out, until
   assert.equal(buyOne(m, ["door", "key"], numbers(0, 0, 0))!.card, "key", "DOOR is full");
   const all: CardBuysSave = { rng: null, opened: { door: opened("door", ["common"]) } };
   assert.equal(buyOne(all, ["door"], numbers(0, 0, 0)), null);
+  const uncommon = buyOne(defaultCardBuys(), ["door", "key", "stairs"], numbers(0.7, 0, 0))!;
+  assert.deepEqual([uncommon.card, uncommon.rarity], ["stairs", "uncommon"], "the rarity drawn goes to a card with room in it");
   const bought: CardBuysSave = { rng: 5, opened: {} };
   assert.equal(buyCards(bought, ["door"], 20, () => 0).length, 15, "no more than the tree holds");
   assert.equal(cardMaxLevel(bought.opened, "door"), 25);
@@ -92,9 +94,25 @@ test("ten thousand buys land near the rarities' chances", () => {
     const r = buyOne({ rng: null, opened: {} }, ["stairs"], rng)!.rarity;
     counts[r] = (counts[r] ?? 0) + 1;
   }
-  assert.ok(counts.common > 6700 && counts.common < 7300, `common ${counts.common}`);
-  assert.ok(counts.uncommon > 2300 && counts.uncommon < 2800, `uncommon ${counts.uncommon}`);
-  assert.ok(counts.rare > 300 && counts.rare < 500, `rare ${counts.rare}`);
+  assert.ok(counts.common > 5700 && counts.common < 6300, `common ${counts.common}`);
+  assert.ok(counts.uncommon > 2950 && counts.uncommon < 3450, `uncommon ${counts.uncommon}`);
+  assert.ok(counts.rare > 500 && counts.rare < 700, `rare ${counts.rare}`);
+});
+
+test("a deck of mostly common-only trees still draws the rarer rarities at their chances", () => {
+  const cards: CardId[] = ["stairs", "heal", "door", "key", "monster", "atkUp", "defUp", "chest", "torch"];
+  const counts: Record<string, number> = {}, seeds = random(7);
+  let allCommon = 0;
+  for (let p = 0; p < 500; p++) {
+    const m = defaultCardBuys(), seed = seeds();
+    const buys = Array.from({ length: 10 }, () => buyCards(m, cards, 1, () => seed)[0]!);
+    for (const buy of buys) counts[buy.rarity] = (counts[buy.rarity] ?? 0) + 1;
+    if (buys.every((b) => b.rarity === "common")) allCommon++;
+  }
+  assert.ok(counts.common > 2850 && counts.common < 3150, `common ${counts.common} of 5,000`);
+  assert.ok(counts.uncommon > 1450 && counts.uncommon < 1750, `uncommon ${counts.uncommon} of 5,000`);
+  assert.ok(counts.rare > 220 && counts.rare < 380, `rare ${counts.rare} of 5,000`);
+  assert.ok(allCommon < 15, `${allCommon} of 500 profiles' first ten buys all common`);
 });
 
 test("the Game's desk buys for Gems, asks for them when short, refuses past what the deck can take, and banked XP turns into levels", () => {

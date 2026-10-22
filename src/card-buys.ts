@@ -1,11 +1,12 @@
 /** Card buys: cards bought with Gems, each a draw that opens one more
  * level on a card's tree (card-trees.ts), so the card's max level rises by
  * one. A draw rolls a rarity (`CARD_RARITY_WEIGHTS`), then picks a card of
- * the deck with a level left to open, and opens a level of that rarity on
+ * the deck with room in that rarity, and opens a level of that rarity on
  * it: a node of that rarity no buy has opened yet first (at one level), and
- * once every one is open, one more level on one of them. A card whose
- * nodes of that rarity are all full takes the next rarer it has room in
- * (or, with none rarer, the rarest commoner). Draws carry on one stream
+ * once every one is open, one more level on one of them. With no card of
+ * the deck left with room in it, the draw picks any card with a level left
+ * to open, which takes the next rarer it has room in (or, with none rarer,
+ * the rarest commoner). Draws carry on one stream
  * saved with the profile, seeded once when the profile is made, never
  * rewound, so a purchase can't be redrawn by reloading. */
 import { CARD_IDS, type CardId } from "./cards.ts";
@@ -59,12 +60,14 @@ export function rarityOn(opened: CardOpened, card: CardId, rolled: CardRarity): 
 
 /** One card buy among `cards`, opening its level in `m`; null once no
  * card has a level left to open. `rng` gives three numbers: the rarity,
- * the card and the node. */
+ * the card (among those with room in the rarity, else among all with
+ * room) and the node. */
 export function buyOne(m: CardBuysSave, cards: readonly CardId[], rng: () => number): CardBuy | null {
   const pool = cards.filter((card) => roomIn(m.opened, card) > 0);
   if (!pool.length) return null;
   const rolled = rollRarity(rng);
-  const card = pool[Math.min(pool.length - 1, Math.floor(rng() * pool.length))];
+  const fits = pool.filter((card) => roomIn(m.opened, card, rolled) > 0), from = fits.length ? fits : pool;
+  const card = from[Math.min(from.length - 1, Math.floor(rng() * from.length))];
   const rarity = rarityOn(m.opened, card, rolled)!;
   const nodes = (CARD_TREES[card] ?? []).filter((n) => n.rarity === rarity);
   const sealed = nodes.filter((n) => !nodeCap(m.opened, card, n));
