@@ -4,12 +4,14 @@ import { mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { createServer } from "vite";
 import { chromium } from "@playwright/test";
+import { fixClock } from "./fixed-clock.mjs";
 const server = await createServer({ server: { host: "127.0.0.1", port: 5197 }, logLevel: "error" });
 await server.listen();
 const browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH || "/usr/bin/chromium" });
 mkdirSync("test-results/forest-sprites", { recursive: true });
 try {
   const page = await browser.newPage({ viewport: { width: 1100, height: 900 } });
+  await fixClock(page);
   const errors = []; page.on("pageerror", e => errors.push(e.message));
   await page.addInitScript(() => { globalThis.__handHeld = true; globalThis.__handStartsPaused = true; });
   let release; const pending = new Promise(resolve => { release = resolve; });
