@@ -3,6 +3,7 @@ import { popupAmount } from "./whole.ts";
 import { HEAL_COLOR } from "./damage-labels.ts";
 import type { Coin, Encounter, Gain, GainArt, Heal, ShownFight } from "./shown.ts";
 import { landsAt, type Volley } from "./volley.ts";
+import { OPENING_SHRINK_MS } from "./combat.ts";
 import { paintContents } from "./tile-painters.ts";
 import { materialImage } from "./material-sprites.ts";
 import { paintGem } from "./gem-art.ts";
@@ -36,6 +37,20 @@ const HERO_DAMAGE_COLOR = "#b3121f";
 /** A critical strike's number: a little brighter, in a glow. */
 const CRIT_COLOR = "#ff7a6a";
 const CRIT_GLOW = "#ffb04a";
+/** CHEST's Double and Triple flash: a large gold multiplier in a glow, as
+ * tall as this share of a tile. */
+const FLASH_SIZE = 0.9;
+const FLASH_COLOR = "#ffd34d";
+const FLASH_GLOW = "#ff9a2e";
+/** A boss's Takedown: two sword slashes in an X, glowing red, starting this
+ * many times its size and shrinking onto it; Tangle's arrow, glowing blue,
+ * behind it. Both fade this fast once the first strike swings (ms). */
+const SLASH_START = 2.4;
+const SLASH_COLOR = "#fff4e0";
+const SLASH_GLOW = "#ff3b2e";
+const TANGLE_COLOR = "#5cb8ff";
+const TANGLE_GLOW = "#2f7dff";
+const OPENING_FADE_MS = 150;
 /** A Charged Shot's number: a gold outline around its black one, as wide
  * as `width` times the black's; fainter and narrower while the charge is
  * under `FULL_CHARGE` percent. */
@@ -248,14 +263,14 @@ export class BoardPopups {
    * through, and what the shroud blocked in silver beside it. A round the
    * hero came out ahead of raises only its blue gain. An arrow with a
    * `charge` (percent) above 0 wears a gold outline around its black one,
-   * a faint one under `FULL_CHARGE`, as does a Surprise Attack's first
-   * strike (a full one). */
+   * a faint one under `FULL_CHARGE`, as does a `pronounced` strike (a
+   * full one: a Surprise Attack's first, a Power Strike's). */
   private raise(s: Strike, on: { x: number; y: number }, start: number, charge = 0) {
     if (!this.shown.hitNumbers || (s.by === "enemy" && s.healed && !s.damage && !s.shrouded)) return;
     const both = !!s.shrouded && s.damage > 0, y = on.y + DAMAGE_START;
     if (s.shrouded) this.numbers.push({ x: on.x - (both ? SHROUD_SPLIT : 0), y, start, text: popupAmount(s.shrouded), color: SHROUD_COLOR });
     if (s.shrouded && !s.damage) return;
-    this.numbers.push({ x: on.x + (both ? SHROUD_SPLIT : 0), y, start, text: popupAmount(s.damage), ...(s.crit ? { color: CRIT_COLOR, glow: CRIT_GLOW } : { color: s.by === "hero" ? DAMAGE_COLOR : HERO_DAMAGE_COLOR }), ...(s.surprise ? { ring: CHARGED_RING } : charge > 0 ? { ring: charge < FULL_CHARGE ? FAINT_RING : CHARGED_RING } : {}) });
+    this.numbers.push({ x: on.x + (both ? SHROUD_SPLIT : 0), y, start, text: popupAmount(s.damage), ...(s.crit ? { color: CRIT_COLOR, glow: CRIT_GLOW } : { color: s.by === "hero" ? DAMAGE_COLOR : HERO_DAMAGE_COLOR }), ...(s.pronounced ? { ring: CHARGED_RING } : charge > 0 ? { ring: charge < FULL_CHARGE ? FAINT_RING : CHARGED_RING } : {}) });
   }
   /** Nothing is rising or waiting to, and the enemy's HP bar is still. */
   idle(now: number) {
@@ -272,11 +287,33 @@ export class BoardPopups {
       for (const shown of this.fights) drawEnemyBar(f, shown.fight);
       for (const bar of this.arrowBars) drawArrowBar(f, bar);
     }
+    for (const shown of this.fights) drawOpening(f, shown.fight);
     const started = <T extends Popup>(popups: T[]) => popups.filter((p) => p.start <= f.now).sort((a, b) => a.start - b.start);
-    const rewards = started(this.rewards), reward = (p: (typeof rewards)[number]) => this.drawSprite(f, p) || this.drawText(f, p, p.gain.text, REWARD_TEXT);
+    const rewards = started(this.rewards), reward = (p: (typeof rewards)[number]) =>
+      p.gain.art && "multiplier" in p.gain.art ? this.drawFlash(f, p, p.gain.text) : this.drawSprite(f, p) || this.drawText(f, p, p.gain.text, REWARD_TEXT);
     for (const p of rewards) if (!p.gain.drop) reward(p);
     for (const p of started(this.numbers)) this.drawText(f, p, p.text, { color: p.color, rise: DAMAGE_RISE, size: 0.55, ...(p.glow ? { glow: p.glow } : {}), ...(p.ring ? { ring: p.ring } : {}) });
     for (const p of rewards) if (p.gain.drop) reward(p);
+  }
+  /** CHEST's Double and Triple: `text` (×2, ×3, ×6) flashed large over
+   * the chest, in gold, pulsing in place, fading as a popup does. */
+  private drawFlash(f: FrameContext, p: Popup, text: string) {
+    const c = f.c, { alpha } = this.phase(f, p, 0), at = tileCenter(f, p.x, p.y), age = f.now - p.start;
+    const pulse = f.look.reduceMotion ? 1 : 1 + 0.08 * Math.sin((age / POPUP_MS) * Math.PI * 6);
+    c.save();
+    c.globalAlpha = alpha;
+    c.font = boardFont(f.look.styledSprites, Math.max(16, f.s * FLASH_SIZE * pulse));
+    c.textAlign = "center";
+    c.textBaseline = "middle";
+    c.lineJoin = "round";
+    c.lineWidth = Math.max(3, f.s * 0.14);
+    c.strokeStyle = "#000";
+    c.strokeText(text, at.x, at.y);
+    c.shadowColor = FLASH_GLOW;
+    c.shadowBlur = Math.max(8, f.s * 0.5);
+    c.fillStyle = FLASH_COLOR;
+    c.fillText(text, at.x, at.y);
+    c.restore();
   }
   /** The popup's opacity and how far it has risen (in tiles) at `now`. */
   private phase(f: FrameContext, p: Popup, rise: number) {
@@ -343,12 +380,74 @@ type Strike = ShownFight["bout"]["strikes"][number];
 type Hit = { at: number; hp: number };
 function enemyHits(fight: ShownFight): Hit[] {
   let left = fight.hp;
-  return fight.bout.strikes.flatMap((s) => {
+  // A Takedown takes its share before the first strike.
+  const opening = fight.bout.opening ? [{ at: fight.bout.opening.at, hp: (left = Math.min(left, fight.bout.opening.hp)) }] : [];
+  return [...opening, ...fight.bout.strikes.flatMap((s) => {
     const hp = s.by === "hero" ? s.hp : s.thornHp;
     if (hp === undefined) return [];
     left = Math.min(left, hp);
     return [{ at: s.at, hp: left }];
-  });
+  })];
+}
+
+/** A fight's opening over the enemy (`fight.to`), until its first strike
+ * swings: Tangle's blue down arrow, held, behind Takedown's X, which shrinks
+ * onto the enemy, then holds. A summary shows none. */
+function drawOpening(f: FrameContext, fight: ShownFight) {
+  const o = fight.bout.opening, t = f.now - fight.start;
+  if (!o || fight.summary || t < 0 || t > o.at + OPENING_FADE_MS) return;
+  const c = f.c, at = tileCenter(f, fight.to.x, fight.to.y), held = o.takedown ? OPENING_SHRINK_MS : 0;
+  c.save();
+  c.globalAlpha = t > o.at ? 1 - (t - o.at) / OPENING_FADE_MS : 1;
+  c.lineCap = "round";
+  c.lineJoin = "round";
+  if (o.tangle && t >= held) paintTangle(c, at, f.s);
+  if (o.takedown) {
+    const k = f.look.reduceMotion ? 1 : Math.min(1, t / OPENING_SHRINK_MS), eased = 1 - (1 - k) * (1 - k);
+    paintTakedown(c, at, f.s * (SLASH_START - (SLASH_START - 1) * eased));
+  }
+  c.restore();
+}
+/** Tangle's arrow, pointing down, a tile tall, centred on `at`. */
+function paintTangle(c: CanvasRenderingContext2D, at: { x: number; y: number }, s: number) {
+  const w = s * 0.18, top = at.y - s * 0.42, tip = at.y + s * 0.42, head = at.y + s * 0.02;
+  const path = () => {
+    c.beginPath();
+    c.moveTo(at.x - w, top);
+    c.lineTo(at.x + w, top);
+    c.lineTo(at.x + w, head);
+    c.lineTo(at.x + s * 0.38, head);
+    c.lineTo(at.x, tip);
+    c.lineTo(at.x - s * 0.38, head);
+    c.lineTo(at.x - w, head);
+    c.closePath();
+  };
+  path();
+  c.lineWidth = Math.max(2, s * 0.08);
+  c.strokeStyle = "#071a33";
+  c.stroke();
+  c.shadowColor = TANGLE_GLOW;
+  c.shadowBlur = Math.max(8, s * 0.45);
+  c.fillStyle = TANGLE_COLOR;
+  path();
+  c.fill();
+  c.shadowBlur = 0;
+}
+/** Takedown's X: two sword slashes crossing at `at`, `size` px across. */
+function paintTakedown(c: CanvasRenderingContext2D, at: { x: number; y: number }, size: number) {
+  const r = size * 0.42;
+  for (const [width, color, glow] of [[0.2, "#2a0606", 0], [0.11, SLASH_COLOR, 1]] as const) {
+    c.lineWidth = Math.max(2, size * width);
+    c.strokeStyle = color;
+    c.shadowColor = SLASH_GLOW;
+    c.shadowBlur = glow ? Math.max(10, size * 0.4) : 0;
+    c.beginPath();
+    c.moveTo(at.x - r, at.y - r);
+    c.lineTo(at.x + r, at.y + r);
+    c.moveTo(at.x + r, at.y - r);
+    c.lineTo(at.x - r, at.y + r);
+    c.stroke();
+  }
 }
 
 /** How many of `hits`, in order, have landed by `t`. */
@@ -399,6 +498,8 @@ function artImage(art: GainArt): CanvasImageSource | null {
  * or an Equipment piece with its rarity's mark. */
 function paintArt(c: CanvasRenderingContext2D, f: FrameContext, p: Popup & { gain: Gain }, image: CanvasImageSource | null) {
   const art = p.gain.art!;
+  // A multiplier flashes on its own (`drawFlash`).
+  if ("multiplier" in art) return;
   if ("tile" in art) return paintSpentTile(c, f, p, art);
   if ("gem" in art) {
     if (!(f.look.styledSprites && drawKit(c, "gem"))) paintGem(c, f.now, true);

@@ -73,7 +73,7 @@ With Buildout, the next lesson shows the X on ENEMY with a hand pointing at it, 
 ## Card levels
 
 Each card has a level of its own, from 0 up to its **max level**, raised by the XP it gains in runs.
-Every card's max level starts at 10; buying cards (see Card buys below) raises it, up to 25 for most cards, 55 for **Key** and 60 for **Stairs**, **Heal** and **Door**, whose trees reach every rarity.
+Every card's max level starts at 10; buying cards (see Card buys below) raises it, up to 60 for every card with an upgrade tree, whose trees reach every rarity.
 A card gains 1 XP each time it activates: its path reaching its target (once any fight there is over), or a card that moves nowhere acting (the siphons and trades); **Flying Enemy** gains it each time it brings a Flying enemy within reach.
 **Archer**, which never activates, gains 1 XP for each floor completed for the first time in the run while it is in the run's hand, a floor the Skip badge climbs past included (in the Delve, each equivalent floor passed).
 
@@ -151,10 +151,26 @@ Points are spent in the forest; inside a run the tree only shows.
   A Dash stops short of an enemy, and the fight you step into from there on the next turn is a surprise: Surprise Attack rolls once for each enemy's tile, so undo can't roll it again.
   A Surprise Attack's first strike rises in a gold outline, as a fully charged arrow's does.
   A Fast enemy caught by one loses its first strike: you strike first.
-- The other trees are common only for now, each upgrade holding its first levels from the start and opened to the rest by common card buys:
-- **ATK Up** and **DEF Up**: +1% from each of their shards (4 levels, up to 10), +0.1 Gold from each (4, up to 10) and +1% Silver Bonus (2, up to 5).
-- **Torch**, against a Greater Boss: +1% ATK (2 levels, up to 5), +1% DEF, +1% Gold, +2% shroud and 1 Cell more (each 2, up to 5).
-- **Chest**: +2% Gold from treasure chests (2 levels, up to 5), +0.2% Supply Chest chance (4, up to 10, up to 3.5%) and +0.1% Equipment Chest chance (4, up to 10, up to 1.5%).
+- **ATK Up** has two tracks, each rising one rarity an upgrade, and opens to 60 levels.
+  Shards: +2% from each ATK shard (common, 5 levels, up to 10), then +3% more (uncommon), +2% Crit % chance (rare), +1% chance of a free Offense level each floor, trained or not (epic), and **Power Strike**, +1% chance an ATK shard taken charges your next fight with twice your ATK (legendary), each up to 5 levels.
+  Gold: +10% Gold from each ATK shard (common, 5 levels, up to 10), then +0.1 Silver from each ATK shard taken (uncommon), +1% Silver Bonus (rare), +2% Gold Bonus (epic), and **Takedown**, a boss losing 10% of its max HP as a fight with it begins (legendary), each up to 5 levels.
+  A charged Power Strike waits for the next fight, every strike of it rising in a gold outline, and the shard rolls it once, so undo can't roll it again.
+- **DEF Up** has the same two tracks for DEF, and opens to 60 levels.
+  Shards: +2% from each DEF shard (common, 5 levels, up to 10), then +3% more (uncommon), +10% Regen (rare), +1% chance of a free Defense level each floor, trained or not (epic), and +1% Parry, parried with Parry % or without it (legendary), each up to 5 levels.
+  Gold: +10% Gold from each DEF shard (common, 5 levels, up to 10), then +0.1 Silver from each DEF shard taken (uncommon), +1% Silver Bonus (rare), +2% Gold Bonus (epic), and **Tangle**, a boss losing 5% of its ATK as a fight with it begins (legendary), each up to 5 levels.
+- Takedown and Tangle open a fight with a boss before your first strike: a glowing X of two sword slashes shrinks onto it and holds for half a second, its HP bar dropping by the share of its max HP taken (it keeps at least 1 HP, and arrows that wounded it still count), and a glowing blue arrow points down behind the X while its ATK is cut.
+  They never touch a Greater Boss, which Torch's own cuts do.
+  The cuts count in every forecast: the damage labels, the inspect panel and the hand's choices.
+- **Torch** has two tracks against a Greater Boss, and opens to 60 levels.
+  Fight: +1% ATK against a Greater Boss (common, 5 levels, up to 10), then +1% DEF against it (uncommon, up to 10 levels, 5 of them before the next opens), +2% shroud against it (rare), **Greater Tangle**, a Greater Boss losing 5% of its ATK as a fight with it begins (epic), and +1% Revive chance, reviving with Revive trained or without it (legendary), each up to 5 levels unless said.
+  Cells: +2% Gold from a Greater Boss (common, 5 levels), then +1 Cell from each Greater Boss (uncommon), +2 Cells more (rare), **Greater Takedown**, a Greater Boss losing 6% of its max HP as a fight with it begins (epic), and **Chest Cells**, +1% chance a treasure chest also holds a Greater Boss's Cells (legendary), each up to 5 levels.
+  Greater Tangle and Greater Takedown show over a Greater Boss as Tangle and Takedown do over a boss.
+- **Chest** has one common upgrade that forks into two tracks once it holds 5 levels, and opens to 60 levels.
+  +2% Gold from treasure chests (common, all 10 of the card's first levels).
+  Gold: +3% Gold from treasure chests (uncommon), +1 Silver from each chest opened, before Silver Bonus (rare), **Treasure Floor**, +0.5% chance each floor is one whose ATK and DEF shards and potions are all treasure chests (epic), and **Rarity Up**, +1% chance an Equipment Chest's piece is a rarity higher (legendary), each up to 5 levels.
+  Chests: +0.2% Supply Chest chance (uncommon, 10 levels, up to 3.5% with the card's own), +0.1% Equipment Chest chance (rare, 10 levels, up to 1.5%), **Double**, +3% chance a chest pays twice over (epic), and **Triple**, +2% chance it pays three times over (legendary), each up to 5 levels unless said.
+  Double and Triple multiply a chest's Gold, Silver and a Supply Chest's materials, and an Equipment Chest gives that many pieces; a large ×2 or ×3 flashes over the chest, ×6 when both roll.
+  Each chest rolls Double, Triple and Chest Cells once, and each floor Treasure Floor once (in the Delve, each equivalent floor), so undo can't roll them again.
 
 ## Card buys
 

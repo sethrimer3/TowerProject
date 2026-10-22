@@ -13,7 +13,7 @@ import type { Drop, GainArt } from "../shown.ts";
 import { HEART_DOOR_HP, shardStat, type StepEffect, type StepRules } from "../step-effects.ts";
 import { enemyStat, keyCount, wholeChange } from "../whole.ts";
 import type { DeskHost } from "./desk.ts";
-import type { EquipmentLoot, RunPurse } from "./run-purse.ts";
+import type { ChestRoll, EquipmentLoot, RunPurse } from "./run-purse.ts";
 
 /** What the run's finds read from the game and report back to it: the
  * purse they are paid through, the step rules a shard's stat is read by,
@@ -29,6 +29,8 @@ export interface FindsHost extends DeskHost {
   /** What the card trees of the run's hand give: a key's, door's or
    * shard's Gold. */
   readonly treeBonus: TreeBonus;
+  /** A treasure chest's own rolls at (x, y): CHEST's Double and Triple, TORCH's Chest Cells. */
+  chestRoll(x: number, y: number): ChestRoll;
   readonly missions: { record(type: MissionType, amount?: number, key?: string): void };
   readonly events: { record(type: EventMissionType, amount?: number, key?: string): void };
   gain(x: number, y: number, text: string, art?: GainArt | null, drop?: Drop, kind?: "door"): void;
@@ -82,18 +84,19 @@ export class Finds {
     if (text) {
       this.host.gain(x, y, text, { tile: { ...t } });
       // A key card held pays its Gold on top of the key's own, and KEY's
-      // tree raises it; ATK UP's and DEF UP's trees add to a shard's.
+      // tree raises it; ATK UP's and DEF UP's trees raise a shard's.
       const tree = this.host.treeBonus;
       if (t.kind === "key") this.pickupGold(t, { x, y }, this.host.handBonus.keys[t.color!]?.gold, tree.keyGold);
-      else this.pickupGold(t, { x, y }, t.kind === "attack" ? tree.attackShardGold : t.kind === "defense" ? tree.defenseShardGold : 0);
+      else this.pickupGold(t, { x, y }, 0, t.kind === "attack" ? tree.attackShardGold : t.kind === "defense" ? tree.defenseShardGold : 0);
       if (t.kind === "potion") this.host.recordHeal(outcome.healed);
       // KEY's Key Heal and Key Overheal rise below the key.
       if (t.kind === "key" && outcome.healed) {
         this.host.gain(x, y, `+${wholeChange(outcome.healed)} HP`, { heart: true }, { row: 2, with: true });
         this.host.recordHeal(outcome.healed);
       }
-      // HEAL's tree finds Silver with each potion, and KEY's with each key.
-      const silverFound = t.kind === "potion" ? tree.potionSilver : t.kind === "key" ? tree.keySilver : 0;
+      // HEAL's tree finds Silver with each potion, KEY's with each key, and ATK UP's and DEF UP's with each shard.
+      const silverFound = t.kind === "potion" ? tree.potionSilver : t.kind === "key" ? tree.keySilver
+        : t.kind === "attack" ? tree.attackShardSilver : t.kind === "defense" ? tree.defenseShardSilver : 0;
       if (silverFound) {
         const silver = this.host.purse.silver(silverFound);
         if (silver) this.host.gain(x, y, `+${wholeChange(silver)} Silver`, { coin: "silver" }, { row: outcome.healed && t.kind === "key" ? 3 : 2, with: true });
@@ -127,17 +130,28 @@ export class Finds {
    * reopening can't pay it again). It may be a Supply or Equipment Chest
    * (`kind`, fixed as its floor was generated under the run's `chestOdds`). */
   treasure(x: number, y: number, kind: ChestKind) {
-    this.host.run.treasures++;
-    this.host.events.record("chests", 1, this.missionKey({ x, y }));
-    const loot = this.host.purse.treasure(x, y, kind);
-    if (!loot) return;
-    const found = equipmentGains(loot.equipment);
-    if (loot.equipment?.item || loot.equipment?.salvaged) this.host.events.record("equipment", 1, this.missionKey({ x, y }));
-    if (loot.equipment?.item) this.host.save[this.host.mode].runFinds.equipment++;
-    // The Gold at the tile, what a Supply or Equipment Chest holds below it, rising together.
-    this.drops({ x, y }, [{ text: `+${wholeChange(loot.gold)} Gold`, art: { coin: "gold" } }, ...found]);
+    const host = this.host, roll = host.chestRoll(x, y);
+    host.run.treasures++;
+    host.events.record("chests", 1, this.missionKey({ x, y }));
+    // CHEST's tree finds Silver with each chest, as HEAL's does with each potion (undo takes it back with the run).
+    const silverFound = host.treeBonus.chestSilver, silver = silverFound ? host.purse.silver(snap(silverFound * roll.multiplier)) : 0;
+    const loot = host.purse.treasure(x, y, kind, roll);
+    if (!loot) {
+      if (silver) host.gain(x, y, `+${wholeChange(silver)} Silver`, { coin: "silver" });
+      return;
+    }
+    const pieces = [loot.equipment, ...loot.more], found = pieces.flatMap(equipmentGains);
+    for (const piece of pieces) {
+      if (piece?.item || piece?.salvaged) host.events.record("equipment", 1, this.missionKey({ x, y }));
+      if (piece?.item) host.save[host.mode].runFinds.equipment++;
+    }
+    const cells = loot.cells ? [{ text: cellsText(loot.cells), art: { cell: true as const } }] : [];
+    // The Gold at the tile, its Silver, Cells and what a Supply or Equipment Chest holds below it, rising together.
+    this.drops({ x, y }, [{ text: `+${wholeChange(loot.gold)} Gold`, art: { coin: "gold" } }, ...(silver ? [{ text: `+${wholeChange(silver)} Silver`, art: { coin: "silver" as const } }] : []), ...cells, ...found]);
+    // Double and Triple flash their multiplier over the chest.
+    if (roll.multiplier > 1) host.gain(x, y, `×${roll.multiplier}`, { multiplier: roll.multiplier }, { row: 0, with: true });
     const named = loot.kind === "supply" ? ["Supply Chest"] : loot.kind === "equipment" ? ["Equipment Chest"] : [];
-    this.host.message = [...named, `+${wholeChange(loot.gold)} Gold`, ...found.map((g) => g.text)].join(" · ");
+    host.message = [...named, ...(roll.multiplier > 1 ? [`×${roll.multiplier}`] : []), `+${wholeChange(loot.gold)} Gold`, ...(silver ? [`+${wholeChange(silver)} Silver`] : []), ...cells.map((c) => c.text), ...found.map((g) => g.text)].join(" · ");
   }
   /** Each key the door took rises from it with a minus sign; a door that
    * takes HP (a Heart Door, down to 1, or a Wooden Door broken without a

@@ -138,6 +138,15 @@ export type Player = {
   /** The percent more ATK the hero strikes bosses with (equipment; none
    * when absent). */
   bossAttack?: number;
+  /** ATK UP's Power Strike, charged by an ATK shard: the hero's next fight
+   * strikes with twice its ATK; absent while not charged. */
+  powerStrike?: true;
+  /** The percent of a boss's or a Greater Boss's max HP (`takedown`: ATK
+   * UP's Takedown, TORCH's Greater Takedown) and ATK (`tangle`: DEF UP's
+   * Tangle, TORCH's Greater Tangle) taken off as a fight with it begins, by
+   * strength; absent without them. */
+  takedown?: Partial<Record<"boss" | "greaterBoss", number>>;
+  tangle?: Partial<Record<"boss" | "greaterBoss", number>>;
   /** The percent more ATK the hero strikes the enemies each enemy card of
    * the run's hand covers with (foe-cards.ts), by card, ENEMY's and TORCH's
    * from their card trees; absent without one. */

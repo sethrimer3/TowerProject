@@ -94,6 +94,24 @@ export function reachable(
 
 const PERCENT_POTION_SALT = 0x5eed7;
 const CHEST_KIND_SALT = 0xc4e57;
+const TREASURE_FLOOR_SALT = 0x7f10c;
+/** Whether equivalent floor `floor` of a run seeded `seed` is a Treasure
+ * Floor (CHEST's tree, at `chance` percent): the floor's own fixed number,
+ * so it is one from the moment it is generated. */
+export const isTreasureFloor = (seed: number, floor: number, chance: number) => chance > 0 && tileRandom(floor, 0, seed ^ TREASURE_FLOOR_SALT) * 100 < chance;
+/** `cells` with every ATK and DEF shard and potion on a Treasure Floor
+ * (each tile's equivalent floor by `floorAt`) made a treasure chest;
+ * `cells` itself at no chance. */
+export function withTreasureFloors(cells: Map<string, Tile>, seed: number, chance: number, floorAt: (x: number, y: number) => number) {
+  if (!(chance > 0)) return cells;
+  const out = new Map<string, Tile>();
+  for (const [k, t] of cells) {
+    const [x, y] = k.split(",").map(Number);
+    const turns = (t.kind === "attack" || t.kind === "defense" || t.kind === "potion") && isTreasureFloor(seed, floorAt(x, y), chance);
+    out.set(k, turns ? { kind: "treasure" } : t);
+  }
+  return out;
+}
 /** The kind of the treasure chest generated at (x, y) on a board generated
  * from `seed`, under a run's `odds`: its tile's fixed number, in percent,
  * under the Equipment Chest's chance makes one, then under both chances a

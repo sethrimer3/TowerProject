@@ -501,6 +501,15 @@ _Avoid_: rush (the Archives' Gem button that completes research at once), sprint
 **Dash attack**:
 A fight the hero steps into from the tile a Dash stopped on, the turn after it. ENEMY's Surprise Attack may double the ATK of its first strike, and takes a Fast enemy's first strike away.
 
+**Power Strike**:
+ATK Up's legendary upgrade: an ATK shard taken may charge the hero's next fight, every strike of it dealing twice its ATK.
+
+**Takedown** and **Tangle**:
+A share of a boss's max HP (Takedown) or ATK (Tangle) taken as a fight with it begins, before the hero's first strike; Greater Takedown and Greater Tangle take a Greater Boss's.
+
+**Treasure Floor**:
+A floor whose ATK and DEF shards and potions are all treasure chests, by Chest's upgrade, rolled once for each floor.
+
 **Deck**:
 All the player's cards: those in the hand and those waiting outside it. Also the page where the hand is ordered (with the Combat Stance skill) and its cards chosen from the deck (with Buildout).
 

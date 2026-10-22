@@ -15,6 +15,7 @@ import { wornEffects } from "../equipment/effects.ts";
 import { keepDrop, rollChestPiece, rollSupplies } from "../equipment/acquire.ts";
 import type { EquipItem } from "../equipment/inventory.ts";
 import { CATEGORIES, type EquipMaterialId } from "../equipment/catalog.ts";
+import { EQUIP_RARITIES, type EquipRarity } from "../equipment/balance.ts";
 import { runBoons } from "../shrines.ts";
 import { earn } from "../profile.ts";
 import { notesOf, tallyIn } from "../run-notes.ts";
@@ -32,6 +33,14 @@ export type EquipmentLoot = {
   /** A drop salvaged at once: by Auto-salvage (`auto`), or for want of room. */
   salvaged: { id: EquipMaterialId; quantity: number; auto: boolean } | null;
 };
+
+/** What a treasure chest's own rolls add (`RunPurse.treasure`): how many
+ * times over it pays (CHEST's Double and Triple), and whether it holds a
+ * Greater Boss's Cells (TORCH's Chest Cells). */
+export type ChestRoll = { multiplier: number; cells: boolean };
+export const PLAIN_ROLL: ChestRoll = { multiplier: 1, cells: false };
+/** The Equipment rarity a tier above `r` (a Rare stays Rare). */
+const rarityAbove = (r: EquipRarity): EquipRarity => EQUIP_RARITIES[Math.min(EQUIP_RARITIES.length - 1, EQUIP_RARITIES.indexOf(r) + 1)];
 
 /** What a run finds: Gold, banked in the save as it is found, and Silver,
  * which belongs to the run. Gold paid for a physical kill, chest or floor
@@ -245,26 +254,34 @@ export class RunPurse {
    * already paid; its Gold, the chest's own `PICKUP_GOLD` counted, is raised
    * by Gold Bonus and CHEST's tree. A Supply Chest (`kind`, fixed as its
    * floor was generated) adds upgrade materials, and an Equipment Chest a
-   * Standard piece, once Equipment is open. */
-  treasure(x: number, y: number, kind: ChestKind = "plain"): { gold: number; kind: ChestKind; equipment: EquipmentLoot | null } | null {
+   * Standard piece, once Equipment is open. CHEST's Double and Triple
+   * (`roll.multiplier`) multiply its Gold and materials, and give that many
+   * pieces (the first in `equipment`, the rest in `more`); TORCH's Chest
+   * Cells (`roll.cells`) add a Greater Boss's Cells. */
+  treasure(x: number, y: number, kind: ChestKind = "plain", roll: ChestRoll = PLAIN_ROLL): { gold: number; kind: ChestKind; equipment: EquipmentLoot | null; more: EquipmentLoot[]; cells: number } | null {
     if (!this.loot(this.lootKey(x, y))) return null;
-    const rules = this.rules, floor = rules.equivalentFloor(rules.progressAt(this.run, y));
-    const gold = this.gold(this.withCombo(this.chestGold(snap(rollGold(floor, this.rng) + PICKUP_GOLD))));
+    const rules = this.rules, floor = rules.equivalentFloor(rules.progressAt(this.run, y)), times = roll.multiplier;
+    const gold = this.gold(this.withCombo(snap(this.chestGold(snap(rollGold(floor, this.rng) + PICKUP_GOLD)) * times)));
     if (!this.save.equipment.unlocked) kind = "plain";
-    return { gold, kind, equipment: kind === "plain" ? null : this.chestEquipment(kind) };
+    const pieces = kind === "plain" ? [] : kind === "supply" ? [this.chestEquipment(kind, times)] : Array.from({ length: times }, () => this.chestEquipment(kind));
+    return { gold, kind, equipment: pieces[0] ?? null, more: pieces.slice(1), cells: roll.cells ? this.cells(1) : 0 };
   }
 
   /** What a Supply or Equipment Chest adds: upgrade materials, more in
-   * each tower after the first, or a Standard piece kept (or salvaged). */
-  private chestEquipment(kind: "supply" | "equipment"): EquipmentLoot {
+   * each tower after the first (`times` as many), or a Standard piece kept
+   * (or salvaged), a rarity higher by CHEST's Rarity Up chance. */
+  private chestEquipment(kind: "supply" | "equipment", times = 1): EquipmentLoot {
     const e = this.save.equipment;
     if (kind === "supply") {
-      const materials = rollSupplies(this.tier, this.worn.materialFind, this.equipmentRng);
+      const rolled = rollSupplies(this.tier, this.worn.materialFind, this.equipmentRng);
+      const materials = times === 1 ? rolled : { ...rolled, quantity: rolled.quantity * times };
       e.materials[materials.id] += materials.quantity;
       tallyIn(this.slice.runFinds.materials, materials.id, materials.quantity);
       return { materials, item: null, salvaged: null };
     }
-    const drop = rollChestPiece(this.equipmentRng), kept = keepDrop(e, drop), material = CATEGORIES[drop.category].material;
+    const rolled = rollChestPiece(this.equipmentRng), up = this.tree.rarityUp;
+    const drop = up && this.equipmentRng() * 100 < up ? { ...rolled, rarity: rarityAbove(rolled.rarity) } : rolled;
+    const kept = keepDrop(e, drop), material = CATEGORIES[drop.category].material;
     if (!kept.item) tallyIn(this.slice.runFinds.materials, material, kept.salvaged);
     return { materials: null, item: kept.item, salvaged: kept.item ? null : { id: material, quantity: kept.salvaged, auto: kept.auto } };
   }

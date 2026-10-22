@@ -73,6 +73,9 @@ export type RunCore = {
    * fixed as the run went inside, so its floors never change under it;
    * none without. */
   doorOdds?: DoorOdds;
+  /** CHEST's tree's percent chance each of its floors is a Treasure Floor,
+   * fixed as the run went inside; none without. */
+  treasureFloor?: number;
   /** The card a Focus put ahead of the others, until it reaches its target
    * or has no path to one. */
   focused?: CardId;

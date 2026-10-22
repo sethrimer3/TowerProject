@@ -96,7 +96,7 @@ test("ENEMY's Lifesteal Overheal lets Lifesteal heal above max HP, up to its cei
 test("ENEMY's Surprise Attack doubles the first strike's ATK of a fight right after a Dash", () => {
   const first = bout(hero, foe(100), undefined, { factor: 1, applications: () => 0, first: 2 }).strikes.filter((s) => s.by === "hero").map((s) => s.damage);
   assert.deepEqual(first.slice(0, 3), [20, 10, 10]);
-  const marked = bout(hero, foe(100), undefined, { factor: 1, applications: () => 0, first: 2 }).strikes.filter((s) => s.by === "hero").map((s) => !!s.surprise);
+  const marked = bout(hero, foe(100), undefined, { factor: 1, applications: () => 0, first: 2 }).strikes.filter((s) => s.by === "hero").map((s) => !!s.pronounced);
   assert.deepEqual(marked.slice(0, 2), [true, false], "only the first strike wears the gold ring");
   const surprised = bout(hero, foe(100), undefined, { factor: 1, applications: () => 0, first: 2 }), popups = new BoardPopups();
   popups.update({ run: { seed: 1 }, gains: [], fight: { from: { x: 0, y: 0 }, to: { x: 1, y: 0 }, bout: surprised, start: 0, hp: 100, summary: false }, lastHeal: null }, surprised.strikes[2].at);

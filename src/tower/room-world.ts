@@ -2,7 +2,7 @@ import { TOWER_WIDTH, TOWER_HEIGHT } from "../config.ts";
 import { point, type ChestOdds, type DoorOdds, type Enemy, type EnemyStrength, type Tile, type Torch } from "../entities.ts";
 import { withRunDoors } from "../doors.ts";
 import { woodDurability } from "../enemy-curves.ts";
-import { withChest, withPotions, type Board } from "../board.ts";
+import { withChest, withPotions, withTreasureFloors, type Board } from "../board.ts";
 import { breakTorch, placeTorches, torchesLeft } from "../torches.ts";
 import { generateTowerFloor } from "./index.ts";
 import { tierCells, tierTile } from "../tiers.ts";
@@ -146,8 +146,11 @@ export class RoomWorld implements Board {
     public chestOdds?: ChestOdds,
     /** DOOR's tree's chances of remaking the floor's doors (`doorOdds`); none without. */
     doorOdds?: DoorOdds,
+    /** CHEST's tree's percent chance the floor is a Treasure Floor (`treasureFloor`); none without. */
+    treasureFloor = 0,
   ) {
-    let cells = withRunDoors(generateTowerRoom(seed, room, tier), seed ^ Math.imul(room + 1, 0x9e3779b1), doorOdds, () => woodDurability("tower", tier, room));
+    const doors = withRunDoors(generateTowerRoom(seed, room, tier), seed ^ Math.imul(room + 1, 0x9e3779b1), doorOdds, () => woodDurability("tower", tier, room));
+    let cells = withTreasureFloors(doors, seed, treasureFloor, () => room + 1);
     const torches = torchesForRoom(seed, room, tier, cells);
     this.torches = torchesLeft(torches, changes);
     if (hasExtras(extras)) cells = withExtraEnemies(cells, seed, room, this.torches, extras);

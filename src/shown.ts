@@ -21,7 +21,9 @@ export type Gain = { x: number; y: number; text: string; art: GainArt | null; dr
  * the drop queued before it rather than after. */
 export type Drop = { row: number; with: boolean };
 export type GainArt = { tile: Tile; spent?: true } | { material: MaterialId; quantity: number } | { heart: true; raised?: true } | { gem: true } | { coin: Coin } | { cell: true }
-  | { equipMaterial: EquipMaterialId; quantity: number } | { equipPiece: string; rarity: EquipRarity };
+  | { equipMaterial: EquipMaterialId; quantity: number } | { equipPiece: string; rarity: EquipRarity }
+  /** CHEST's Double and Triple: the times over a chest paid, flashed over it. */
+  | { multiplier: number };
 /** The coin a Gold or Silver gain raises. */
 export type Coin = "gold" | "silver";
 /** A potion's heal: the HP from and to, where the hero stood, and its number. */

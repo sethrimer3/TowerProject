@@ -44,7 +44,7 @@ test("a buy opens a sealed node of its rarity first, at one level, then raises o
 });
 
 test("a card whose nodes of the rarity drawn are full takes the next rarer it has room in, else the rarest commoner", () => {
-  assert.equal(rarityOn({}, "atkUp", "uncommon"), "common", "ATK UP has only common nodes");
+  assert.equal(rarityOn({ atkUp: opened("atkUp", ["uncommon", "rare", "epic", "legendary"]) }, "atkUp", "uncommon"), "common", "ATK UP has room in its commons only");
   const full: CardOpened = { stairs: opened("stairs", ["common", "uncommon"]) };
   assert.equal(rarityOn(full, "stairs", "common"), "rare");
   assert.equal(rarityOn(full, "stairs", "uncommon"), "rare");
@@ -55,15 +55,16 @@ test("a card whose nodes of the rarity drawn are full takes the next rarer it ha
 });
 
 test("a buy picks among the deck's cards with room, leaving full ones out, until none has any", () => {
-  const m: CardBuysSave = { rng: null, opened: { atkUp: opened("atkUp", ["common"]) } };
+  const every = ["common", "uncommon", "rare", "epic", "legendary"];
+  const m: CardBuysSave = { rng: null, opened: { atkUp: opened("atkUp", every) } };
   assert.equal(buyOne(m, ["atkUp", "monster"], numbers(0, 0, 0))!.card, "monster", "ATK UP is full");
-  const all: CardBuysSave = { rng: null, opened: { atkUp: opened("atkUp", ["common"]) } };
+  const all: CardBuysSave = { rng: null, opened: { atkUp: opened("atkUp", every) } };
   assert.equal(buyOne(all, ["atkUp"], numbers(0, 0, 0)), null);
-  const uncommon = buyOne(defaultCardBuys(), ["atkUp", "torch", "stairs"], numbers(0.7, 0, 0))!;
-  assert.deepEqual([uncommon.card, uncommon.rarity], ["stairs", "uncommon"], "the rarity drawn goes to a card with room in it");
+  const uncommon = buyOne({ rng: null, opened: { atkUp: opened("atkUp", ["uncommon"]) } }, ["atkUp", "torch", "stairs"], numbers(0.7, 0, 0))!;
+  assert.deepEqual([uncommon.card, uncommon.rarity], ["torch", "uncommon"], "the rarity drawn goes to a card with room in it");
   const bought: CardBuysSave = { rng: 5, opened: {} };
-  assert.equal(buyCards(bought, ["atkUp"], 20, () => 0).length, 15, "no more than the tree holds");
-  assert.equal(cardMaxLevel(bought.opened, "atkUp"), 25);
+  assert.equal(buyCards(bought, ["atkUp"], 60, () => 0).length, 50, "no more than the tree holds");
+  assert.equal(cardMaxLevel(bought.opened, "atkUp"), 60);
   assert.equal(buysLeft(bought.opened, ["atkUp"]), 0);
 });
 

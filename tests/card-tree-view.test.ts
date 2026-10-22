@@ -63,21 +63,21 @@ test("every node has a name and says what its levels give", () => {
   assert.equal(nodeName("stairs", stairs.find((n) => n.id === "floorHealSilver")!), "Floor Heal II");
   assert.deepEqual(statText(stairs.find((n) => n.id === "floorGold")!, 3), ["+6% Spare Change Gold on each floor new to the run"]);
   assert.deepEqual(statText(stairs.find((n) => n.id === "stairSkip")!, 2), ["2% chance the Tower's stairs climb two floors"]);
-  assert.deepEqual(statText(CARD_TREES.chest!.find((n) => n.id === "supply")!, 3), ["+0.6% Supply Chest chance"]);
+  assert.deepEqual(statText(CARD_TREES.chest!.find((n) => n.id === "supplyChance")!, 3), ["+0.6% Supply Chest chance"]);
 });
 
 test("a node's card offers to buy a level with a point while it can, says why not otherwise, and the root's is behind the ? button", () => {
   const html = cardTreeCardHtml("atkUp", at(), "shard", 2, null);
   assert.match(html, /<span class="ug-card-action"><button type="button" class="ug-buy" data-ct-raise aria-label="Buy a level with a card point"[^>]*>Buy <small>2 left/, "Buy in the head, beside the name");
-  assert.match(html, /Common<\/span> · <span class="ct-state next">Available · Level 0 \/ 4/, "rarity, state and level on one line");
-  assert.match(html, /Holds 4 of up to 10 levels: a common card buy opens one more\./);
+  assert.match(html, /Common<\/span> · <span class="ct-state next">Available · Level 0 \/ 5/, "rarity, state and level on one line");
+  assert.match(html, /Holds 5 of up to 10 levels: a common card buy opens one more\./);
   const refused = cardTreeCardHtml("atkUp", at(), "shard", 0, "No card points left.");
   assert.match(refused, /data-ct-raise disabled[^>]*>Buy</);
   assert.match(refused, /No card points left\./);
-  assert.match(cardTreeCardHtml("atkUp", at({ atkUp: { shard: 4 } }), "shard", 0, null), /Full/);
+  assert.match(cardTreeCardHtml("atkUp", at({ atkUp: { shard: 5 } }), "shard", 0, null), /Full/);
   assert.equal(cardTreeCardHtml("stairs", at(), "stairSkip", 0, null), "", "a sealed node shows no details");
   assert.equal(cardTreeCardHtml("atkUp", at(), ROOT, 4, null), "");
-  assert.match(cardTreeHelpHtml("atkUp", 4), /<b>4<\/b> points to spend on 3 upgrades/);
+  assert.match(cardTreeHelpHtml("atkUp", 4), /<b>4<\/b> points to spend on 10 upgrades/);
 });
 
 test("the graph's layout stands every node apart, tracks above the card", () => {
@@ -101,7 +101,7 @@ test("the list shows every upgrade with its rarity and state in words, and Buy o
   assert.equal(html.match(/<b>Sealed upgrade<\/b>/g)!.length, 6, "the six still sealed show nothing of what they are");
   assert.doesNotMatch(html, /Overheal Max|Stair Skip|Legendary/);
   assert.doesNotMatch(html, /data-ct-raise="floorGold"/);
-  assert.match(nodeLabel("atkUp", at(), CARD_TREES.atkUp![0], "No points."), /level 0 of 4, available\. Gives nothing yet\. No points\./);
+  assert.match(nodeLabel("atkUp", at(), CARD_TREES.atkUp![0], "No points."), /level 0 of 5, available\. Gives nothing yet\. No points\./);
   assert.equal(levelPips(2, 3).match(/class="on"/g)!.length, 2);
   assert.match(levelPips(4, 25), /width:16%/);
 });

@@ -40,6 +40,37 @@ export function attackAgainst(player: Player, enemy: Enemy, cards = 0) {
   return card ? snap((geared * (100 + card)) / 100) : geared;
 }
 export const isBoss = (enemy: Enemy) => enemy.strength === "boss" || enemy.strength === "greaterBoss";
+/** The percents a fight's opening takes off a boss (ATK UP's Takedown and
+ * DEF UP's Tangle) or a Greater Boss (TORCH's Greater Takedown and Greater
+ * Tangle): of its max HP (`hp`) and its ATK (`attack`); null for none. */
+function bossCuts(player: Player, enemy: Enemy) {
+  const s = enemy.strength;
+  if (s !== "boss" && s !== "greaterBoss") return null;
+  const hp = Math.min(100, player.takedown?.[s] ?? 0), attack = Math.min(100, player.tangle?.[s] ?? 0);
+  return hp || attack ? { hp, attack } : null;
+}
+/** How a fight begins: the hero (`player`) with ATK UP's Power Strike
+ * charged strikes with twice its ATK (`powered`), and a boss Takedown or
+ * Tangle cut (`opening`) loses its share of max HP and ATK (`enemy`), at
+ * least 1 HP left, before the hero's first strike. The player comes back
+ * without the charge and cuts, so taking a fight through it twice changes
+ * nothing more. */
+export function squaredUp(player: Player, enemy: Enemy): { player: Player; enemy: Enemy; powered: boolean; opening: { takedown: boolean; tangle: boolean } | null } {
+  if (!player.powerStrike && !player.takedown && !player.tangle) return { player, enemy, powered: false, opening: null };
+  const { powerStrike, takedown: _, tangle: __, ...rest } = player, cut = bossCuts(player, enemy), full = enemy.fullHp ?? enemy.hp;
+  return {
+    player: powerStrike ? { ...rest, attack: snap(rest.attack * POWER_FACTOR) } : rest,
+    enemy: cut ? {
+      ...enemy,
+      ...(cut.hp ? { hp: Math.max(1, snap(enemy.hp - (full * cut.hp) / 100)), fullHp: full } : {}),
+      ...(cut.attack ? { attack: snap((enemy.attack * (100 - cut.attack)) / 100) } : {}),
+    } : enemy,
+    powered: !!powerStrike,
+    opening: cut ? { takedown: cut.hp > 0, tangle: cut.attack > 0 } : null,
+  };
+}
+/** Power Strike's ATK multiplier. */
+export const POWER_FACTOR = 2;
 /** `player` as it stands against `enemy`: its DEF and shroud raised by the
  * card trees' percents covering it (`foeDefense`, `foeShroud`), each added
  * into one card factor; itself when none does. Fights and enemy shots take
@@ -111,7 +142,10 @@ const heroHit = (player: Player, enemy: Enemy, multiplier = 1) => {
 };
 /** Whether the hero's strikes can't hurt `enemy` at all (`predict`'s
  * `impervious`), without working out the rest of the fight. */
-export const impervious = (player: Player, enemy: Enemy) => heroHit(player, enemy) <= 0;
+export const impervious = (player: Player, enemy: Enemy) => {
+  const ready = squaredUp(player, enemy);
+  return heroHit(ready.player, ready.enemy) <= 0;
+};
 
 /** Rounds a prediction plays out one by one before estimating the rest
  * (`predict`'s `played`): the Damage Visual labels, drawn every frame, play
@@ -122,6 +156,7 @@ export const PLAYED_ROUNDS = 50;
  * them unless given) the rest of the fight is estimated, not played out:
  * close, but not the exact ending a step resolves to. */
 export function predict(player: Player, enemy: Enemy, played = Infinity): CombatPrediction {
+  ({ player, enemy } = squaredUp(player, enemy));
   player = facing(player, enemy);
   const hit = heroHit(player, enemy);
   if (hit <= 0) {
@@ -345,8 +380,17 @@ export const REVIVE_PAUSE_MS = DEFEAT_MS + REVIVE_MS;
  * parried (`parried`, its damage cut) makes the hero give way a little as it
  * lands, and one the hero lives through costs the enemy its thorns
  * (`thorns`), leaving it `thornHp`. */
-export type Strike = { by: "hero" | "enemy"; damage: number; crit?: number; surprise?: true; heroHp?: number; healed?: number; shrouded?: number; revived?: true; parried?: true; thorns?: number; thornHp?: number; start: number; at: number; end: number; hp: number };
-export type Bout = { strikes: Strike[]; duration: number };
+export type Strike = { by: "hero" | "enemy"; damage: number; crit?: number; pronounced?: true; heroHp?: number; healed?: number; shrouded?: number; revived?: true; parried?: true; thorns?: number; thornHp?: number; start: number; at: number; end: number; hp: number };
+/** A fight's opening, before the hero's first strike: a boss's Takedown
+ * (`takedown`) and Tangle (`tangle`) shown over it, its HP left `hp` from
+ * `at` ms in. */
+export type Opening = { at: number; hp: number; takedown: boolean; tangle: boolean };
+export type Bout = { strikes: Strike[]; duration: number; opening?: Opening };
+/** How long a Takedown's X takes to shrink onto the boss, and how long it,
+ * and Tangle's arrow, then show before the first strike (ms). */
+export const OPENING_SHRINK_MS = 150;
+export const OPENING_HOLD_MS = 500;
+const openingMs = (o: { takedown: boolean }) => (o.takedown ? OPENING_SHRINK_MS : 0) + OPENING_HOLD_MS;
 /** Whether the enemy's strike numbered `strike` (from 0) in a fight, which
  * would fell the hero, revives it instead (the Revive skill). */
 export type Revival = (strike: number) => boolean;
@@ -362,9 +406,13 @@ export type Revival = (strike: number) => boolean;
  * and the revival's fire are over (`REVIVE_PAUSE_MS`). A hero with Parry %
  * parries every strike. */
 export function bout(player: Player, enemy: Enemy, revives?: Revival, crits?: Crits): Bout {
+  const ready = squaredUp(player, enemy), powered = ready.powered;
+  ({ player, enemy } = ready);
   if (heroHit(player, enemy) <= 0) return { strikes: [], duration: 0 };
   player = facing(player, enemy);
-  return play([], { player, enemy, revives, crits }, { enemyHp: enemy.hp, heroHp: player.hp, shroud: player.shroud ?? 0, attack: enemy.attack, t: 0, ms: FIRST_STRIKE_MS, enemyStrikes: 0, heroStrikes: 0, enemyNext: !!enemy.fast });
+  const t = ready.opening ? openingMs(ready.opening) : 0;
+  const fight = play([], { player, enemy, revives, crits, powered }, { enemyHp: enemy.hp, heroHp: player.hp, shroud: player.shroud ?? 0, attack: enemy.attack, t, ms: FIRST_STRIKE_MS, enemyStrikes: 0, heroStrikes: 0, enemyNext: !!enemy.fast });
+  return ready.opening ? { ...fight, opening: { at: t, hp: enemy.hp, ...ready.opening } } : fight;
 }
 
 /** Where a fight stands before its next strike: each side's HP, what is
@@ -376,11 +424,12 @@ type BoutState = { enemyHp: number; heroHp: number; shroud: number; attack: numb
 type Blow = Omit<Strike, "start" | "at" | "end">;
 
 /** The two sides of a fight, and whether a strike that would fell the
- * hero revives it instead, and the hero's critical strikes. */
-export type Fighters = { player: Player; enemy: Enemy; revives?: Revival; crits?: Crits };
+ * hero revives it instead, the hero's critical strikes, and whether Power
+ * Strike doubles them (`powered`, already in the hero's ATK; `bout` sets it). */
+export type Fighters = { player: Player; enemy: Enemy; revives?: Revival; crits?: Crits; powered?: boolean };
 
 /** Plays a fight on from `state`, after the strikes already in `strikes`. */
-function play(strikes: Strike[], { player, enemy, revives, crits }: Fighters, state: BoutState): Bout {
+function play(strikes: Strike[], { player, enemy, revives, crits, powered }: Fighters, state: BoutState): Bout {
   const hit = heroHit(player, enemy), thorn = thornDamage(player, enemy), s = { ...state };
   // Each strike keeps its fields in the same order: its blow, its timing, then the HP left.
   const strike = ({ hp, ...blow }: Blow) => {
@@ -396,7 +445,7 @@ function play(strikes: Strike[], { player, enemy, revives, crits }: Fighters, st
       const heals = healed !== s.heroHp, gained = snap(healed - s.heroHp);
       s.heroHp = healed;
       s.enemyHp = snap(Math.max(0, s.enemyHp - struck));
-      strike({ by: "hero", damage: struck, ...(applications ? { crit: applications } : {}), ...(first !== 1 ? { surprise: true as const } : {}), ...(heals ? { heroHp: healed, healed: gained } : {}), hp: s.enemyHp });
+      strike({ by: "hero", damage: struck, ...(applications ? { crit: applications } : {}), ...(first !== 1 || powered ? { pronounced: true as const } : {}), ...(heals ? { heroHp: healed, healed: gained } : {}), hp: s.enemyHp });
       if (!s.enemyHp) break;
     }
     s.enemyNext = false;
@@ -434,10 +483,11 @@ function enemyBlow(s: BoutState, player: Player, thorn: number, revives?: Reviva
 export function resume(fight: Bout, from: number, fighters: Fighters): Bout {
   // The shroud given is what is left of the one the fight began with
   // (already raised against this enemy), so only DEF is raised again.
-  const { enemy } = fighters, player = { ...fighters.player, defense: facing({ ...fighters.player, shroud: 0 }, enemy).defense };
-  fighters = { ...fighters, player };
+  const ready = squaredUp(fighters.player, fighters.enemy), enemy = ready.enemy, opening = fight.opening ? { opening: fight.opening } : {};
+  const player = { ...ready.player, defense: facing({ ...ready.player, shroud: 0 }, enemy).defense };
+  fighters = { ...fighters, player, enemy, powered: ready.powered };
   const kept = fight.strikes.slice(0, from), next = fight.strikes[from];
-  if (!next) return { strikes: kept, duration: fight.duration };
+  if (!next) return { strikes: kept, duration: fight.duration, ...opening };
   let enemyHp = enemy.hp, attack = enemy.attack, ms = FIRST_STRIKE_MS, enemyStrikes = 0, heroStrikes = 0;
   for (const s of kept) {
     if (s.by === "hero") {
@@ -451,7 +501,7 @@ export function resume(fight: Bout, from: number, fighters: Fighters): Bout {
     ms = Math.max(FASTEST_STRIKE_MS, ms * STRIKE_SPEEDUP);
   }
   const state = { enemyHp, heroHp: player.hp, shroud: player.shroud ?? 0, attack, t: next.start, ms, enemyStrikes, heroStrikes, enemyNext: next.by === "enemy" };
-  return play(kept, fighters, state);
+  return { ...play(kept, fighters, state), ...opening };
 }
 
 /** A fight settled at once (Animate fights off), shown as summary rounds:

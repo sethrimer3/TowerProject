@@ -140,6 +140,8 @@ const validPlayer = (p: any, width: number) =>
   (p.bossAttack === undefined || (finite(p.bossAttack) && p.bossAttack >= 0)) &&
   (p.pierce === undefined || (finite(p.pierce) && p.pierce >= 0 && p.pierce <= 100)) &&
   (p.stealOverheal === undefined || (finite(p.stealOverheal) && p.stealOverheal >= 0)) &&
+  (p.powerStrike === undefined || p.powerStrike === true) &&
+  [p.takedown, p.tangle].every((cuts) => cuts === undefined || (isRecord(cuts) && Object.entries(cuts).every(([k, n]) => (k === "boss" || k === "greaterBoss") && finite(n) && n >= 0))) &&
   [p.foeAttack, p.foeDefense, p.foeShroud].every((m) => m === undefined || (isRecord(m) && Object.entries(m).every(([id, v]) => isFoeKey(id) && finite(v) && (v as number) >= 0))) &&
   KEY_COLORS.every((k) => finite(p.keys?.[k]));
 /** Checks every run passes, whatever its mode; `width` is the mode's board. */
@@ -181,6 +183,7 @@ const RUN_FIELD_CHECKS = {
   // HEAL's tree raises the trained chance, up to every potion.
   percentPotions: (v: unknown) => wholeIn(v, 1, 10_000),
   chestOdds: (v: any) => isRecord(v) && Object.keys(v).length === 2 && [v.supply, v.equipment].every((n) => finite(n) && n >= 0 && n <= 100) && v.supply + v.equipment > 0,
+  treasureFloor: (v: unknown) => finite(v) && v > 0 && v <= 100,
   doorOdds: (v: any) => isRecord(v) && Object.keys(v).length === 2 && [v.skeleton, v.lockPick].every((n) => finite(n) && n >= 0 && n <= 100) && v.skeleton + v.lockPick > 0,
   // The hand is checked first: every card holding a badge must be in it.
   badges: (v: unknown, r: any) => validRunBadges(v) && Object.keys(v as object).every((card) => r.hand?.includes(card)),

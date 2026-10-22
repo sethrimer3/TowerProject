@@ -23,10 +23,10 @@ export type TreeStat =
   | "goldBonus" | "silverBonus"
   /** Each Free Upgrade group's chance a floor. */
   | "freeOffense" | "freeDefense" | "freeUtility"
-  /** Flat: a percent chance of a free Defense or Utility level each floor,
-   * added to Free Defense's or Free Utility's own, so it gives one without
-   * it trained. */
-  | "freeDefenseChance" | "freeUtilityChance"
+  /** Flat: a percent chance of a free Offense, Defense or Utility level
+   * each floor, added to that group's own, so it gives one without it
+   * trained. */
+  | "freeOffenseChance" | "freeDefenseChance" | "freeUtilityChance"
   /** Flat: the percent of max HP healed on each floor new to the run, up to the Overheal ceiling. */
   | "floorHeal"
   /** Flat: percent of max HP added to the Overheal ceiling, whether or not the skill is owned (so it opens one above max HP). */
@@ -46,6 +46,8 @@ export type TreeStat =
   /** Flat: a percent of every enemy strike parried, added to the hero's
    * Parry %, so it parries without Parry. */
   | "parry"
+  /** Flat: percent added to Revive's chance, so it revives without Revive trained. */
+  | "reviveChance"
   /** Less of each key every door takes, and more each door's Pickup Gold. */
   | "doorCost" | "doorGold"
   /** Flat: Silver found with each door opened, before Silver Bonus. */
@@ -88,39 +90,57 @@ export type TreeStat =
   | "stealOverheal"
   /** More enemies generated on each floor, of every strength (as More Enemies adds them). */
   | "moreEnemies"
-  /** What each ATK or DEF shard raises its stat by. */
-  | "attackShard" | "defenseShard"
-  /** Flat: Pickup Gold more for each ATK or DEF shard taken. */
-  | "attackShardGold" | "defenseShardGold"
+  /** What each ATK or DEF shard raises its stat by, and its Pickup Gold. */
+  | "attackShard" | "defenseShard" | "attackShardGold" | "defenseShardGold"
+  /** Flat: Silver found with each ATK or DEF shard taken, before Silver Bonus. */
+  | "attackShardSilver" | "defenseShardSilver"
+  /** Flat: the percent chance an ATK shard taken charges Power Strike:
+   * twice the hero's ATK in its next fight. */
+  | "powerStrike"
+  /** Flat: the percent of a boss's (Takedown) or a Greater Boss's (Greater
+   * Takedown) max HP taken off as a fight with it begins, and of its ATK
+   * (Tangle, Greater Tangle). */
+  | "takedown" | "tangle" | "greaterTakedown" | "greaterTangle"
   /** ATK, DEF and the shroud in fights with a Greater Boss, and its kill's Gold. */
   | "bossAttack" | "bossDefense" | "bossShroud" | "bossGold"
   /** Flat: Cells more from each Greater Boss, before a badge's scale. */
   | "bossCells"
   /** Each treasure chest's Gold. */
   | "chestGold"
+  /** Flat: Silver found with each treasure chest opened, before Silver Bonus. */
+  | "chestSilver"
+  /** Flat: the percent chance a treasure chest also holds a Greater Boss's Cells. */
+  | "chestCells"
   /** Flat: percentage points more chance of a Supply or an Equipment Chest. */
-  | "supplyChance" | "equipmentChance";
+  | "supplyChance" | "equipmentChance"
+  /** Flat: the percent chance each floor is a Treasure Floor, its ATK and
+   * DEF shards and potions made treasure chests. */
+  | "treasureFloor"
+  /** Flat: the percent chance an Equipment Chest's piece is a rarity higher. */
+  | "rarityUp"
+  /** Flat: the percent chance a treasure chest's rewards are doubled (Double), and tripled (Triple). */
+  | "chestDouble" | "chestTriple";
 
 /** The stats added as they are, not as percents of a factor. */
-export const FLAT_STATS: ReadonlySet<TreeStat> = new Set<TreeStat>(["floorHeal", "overhealMax", "stairSkip", "potionMaxHp", "potionSilver", "freeDefenseChance", "freeUtilityChance",
-  "doorSilver", "doorHeal", "skeletonKey", "lockPick", "secretKnock", "doorChest", "keyChest", "keyHeal", "keyOverheal", "keySilver", "doubleKey", "masterKey", "surpriseAttack", "foeAttackCut", "stealOverheal", "parry", "attackShardGold", "defenseShardGold", "bossCells", "supplyChance", "equipmentChance"]);
+export const FLAT_STATS: ReadonlySet<TreeStat> = new Set<TreeStat>(["floorHeal", "overhealMax", "stairSkip", "potionMaxHp", "potionSilver", "freeOffenseChance", "freeDefenseChance", "freeUtilityChance",
+  "doorSilver", "doorHeal", "skeletonKey", "lockPick", "secretKnock", "doorChest", "keyChest", "keyHeal", "keyOverheal", "keySilver", "doubleKey", "masterKey", "surpriseAttack", "foeAttackCut", "stealOverheal", "parry", "reviveChance",
+  "attackShardSilver", "defenseShardSilver", "powerStrike", "takedown", "tangle", "greaterTakedown", "greaterTangle", "bossCells", "chestSilver", "chestCells", "supplyChance", "equipmentChance", "treasureFloor", "rarityUp", "chestDouble", "chestTriple"]);
 
 /** One node of a card's tree: the stats each of its levels raises, its
  * rarity, how many levels it holds from the start (`levels`: 0 for a node
  * only a card buy of its rarity opens), the most levels card buys can open
- * on it (`max`), and the node whose levels must reach `opensAt` first
- * (`after`; none for a track's first node). */
-export type CardTreeNode = { id: string; stats: Partial<Record<TreeStat, number>>; rarity: CardRarity; levels: number; max: number; after?: string };
+ * on it (`max`), the node whose levels must reach `opensAt` first
+ * (`after`; none for a track's first node), and the levels the nodes after
+ * it wait for, where that isn't `opensAt`'s default (`unlocks`). */
+export type CardTreeNode = { id: string; stats: Partial<Record<TreeStat, number>>; rarity: CardRarity; levels: number; max: number; after?: string; unlocks?: number };
 
 /** A common node holding `levels` from the start, and up to `max` once
  * common card buys open the rest. */
 const common = (id: string, stats: CardTreeNode["stats"], levels: number, max: number): CardTreeNode => ({ id, stats, rarity: "common", levels, max });
 
 /** Each card's tree, its nodes parents first. Every tree holds
- * `BASE_MAX_LEVEL` (10) levels from the start; card buys open the rest:
- * STAIRS', HEAL's, DOOR's, KEY's and ENEMY's up to 60, through every
- * rarity, and the other cards' (common only, until their trees are redone)
- * up to 25. */
+ * `BASE_MAX_LEVEL` (10) levels from the start; card buys open the rest,
+ * up to 60, through every rarity. */
 export const CARD_TREES: Partial<Record<CardId, readonly CardTreeNode[]>> = {
   stairs: [
     common("floorGold", { floorGold: 2 }, 5, 10),
@@ -187,26 +207,52 @@ export const CARD_TREES: Partial<Record<CardId, readonly CardTreeNode[]>> = {
     { id: "spawnRate", stats: { moreEnemies: 2 }, rarity: "rare", levels: 0, max: 5, after: "silver" },
   ],
   atkUp: [
-    common("shard", { attackShard: 1 }, 4, 10),
-    common("gold", { attackShardGold: 0.1 }, 4, 10),
-    common("silverBonus", { silverBonus: 1 }, 2, 5),
+    common("shard", { attackShard: 2 }, 5, 10),
+    { id: "sharper", stats: { attackShard: 3 }, rarity: "uncommon", levels: 0, max: 5, after: "shard" },
+    { id: "critChance", stats: { critChance: 2 }, rarity: "rare", levels: 0, max: 5, after: "sharper" },
+    { id: "freeOffense", stats: { freeOffenseChance: 1 }, rarity: "epic", levels: 0, max: 5, after: "critChance" },
+    { id: "powerStrike", stats: { powerStrike: 1 }, rarity: "legendary", levels: 0, max: 5, after: "freeOffense" },
+    common("gold", { attackShardGold: 10 }, 5, 10),
+    { id: "shardSilver", stats: { attackShardSilver: 0.1 }, rarity: "uncommon", levels: 0, max: 5, after: "gold" },
+    { id: "silverBoost", stats: { silverBonus: 1 }, rarity: "rare", levels: 0, max: 5, after: "shardSilver" },
+    { id: "goldBonus", stats: { goldBonus: 2 }, rarity: "epic", levels: 0, max: 5, after: "silverBoost" },
+    { id: "takedown", stats: { takedown: 10 }, rarity: "legendary", levels: 0, max: 5, after: "goldBonus" },
   ],
   defUp: [
-    common("shard", { defenseShard: 1 }, 4, 10),
-    common("gold", { defenseShardGold: 0.1 }, 4, 10),
-    common("silverBonus", { silverBonus: 1 }, 2, 5),
+    common("shard", { defenseShard: 2 }, 5, 10),
+    { id: "sturdier", stats: { defenseShard: 3 }, rarity: "uncommon", levels: 0, max: 5, after: "shard" },
+    { id: "regen", stats: { regen: 10 }, rarity: "rare", levels: 0, max: 5, after: "sturdier" },
+    { id: "freeDefense", stats: { freeDefenseChance: 1 }, rarity: "epic", levels: 0, max: 5, after: "regen" },
+    { id: "parry", stats: { parry: 1 }, rarity: "legendary", levels: 0, max: 5, after: "freeDefense" },
+    common("gold", { defenseShardGold: 10 }, 5, 10),
+    { id: "shardSilver", stats: { defenseShardSilver: 0.1 }, rarity: "uncommon", levels: 0, max: 5, after: "gold" },
+    { id: "silverBoost", stats: { silverBonus: 1 }, rarity: "rare", levels: 0, max: 5, after: "shardSilver" },
+    { id: "goldBonus", stats: { goldBonus: 2 }, rarity: "epic", levels: 0, max: 5, after: "silverBoost" },
+    { id: "tangle", stats: { tangle: 5 }, rarity: "legendary", levels: 0, max: 5, after: "goldBonus" },
   ],
   torch: [
-    common("attack", { bossAttack: 1 }, 2, 5),
-    common("defense", { bossDefense: 1 }, 2, 5),
-    common("gold", { bossGold: 1 }, 2, 5),
-    common("shroud", { bossShroud: 2 }, 2, 5),
-    common("cells", { bossCells: 1 }, 2, 5),
+    common("attack", { bossAttack: 1 }, 5, 10),
+    { id: "bossDefense", stats: { bossDefense: 1 }, rarity: "uncommon", levels: 0, max: 10, after: "attack", unlocks: 5 },
+    { id: "bossShroud", stats: { bossShroud: 2 }, rarity: "rare", levels: 0, max: 5, after: "bossDefense" },
+    { id: "greaterTangle", stats: { greaterTangle: 5 }, rarity: "epic", levels: 0, max: 5, after: "bossShroud" },
+    { id: "revive", stats: { reviveChance: 1 }, rarity: "legendary", levels: 0, max: 5, after: "greaterTangle" },
+    common("gold", { bossGold: 2 }, 5, 5),
+    { id: "cellDrop", stats: { bossCells: 1 }, rarity: "uncommon", levels: 0, max: 5, after: "gold" },
+    { id: "cellHaul", stats: { bossCells: 2 }, rarity: "rare", levels: 0, max: 5, after: "cellDrop" },
+    { id: "greaterTakedown", stats: { greaterTakedown: 6 }, rarity: "epic", levels: 0, max: 5, after: "cellHaul" },
+    { id: "chestCells", stats: { chestCells: 1 }, rarity: "legendary", levels: 0, max: 5, after: "greaterTakedown" },
   ],
   chest: [
-    common("gold", { chestGold: 2 }, 2, 5),
-    common("supply", { supplyChance: 0.2 }, 4, 10),
-    common("equipment", { equipmentChance: 0.1 }, 4, 10),
+    // Its one common node holds all ten of the card's first levels, the nodes after it opening at five.
+    { ...common("gold", { chestGold: 2 }, 10, 10), unlocks: 5 },
+    { id: "goldUp", stats: { chestGold: 3 }, rarity: "uncommon", levels: 0, max: 5, after: "gold" },
+    { id: "silver", stats: { chestSilver: 1 }, rarity: "rare", levels: 0, max: 5, after: "goldUp" },
+    { id: "treasureFloor", stats: { treasureFloor: 0.5 }, rarity: "epic", levels: 0, max: 5, after: "silver" },
+    { id: "rarityUp", stats: { rarityUp: 1 }, rarity: "legendary", levels: 0, max: 5, after: "treasureFloor" },
+    { id: "supplyChance", stats: { supplyChance: 0.2 }, rarity: "uncommon", levels: 0, max: 10, after: "gold" },
+    { id: "equipmentChance", stats: { equipmentChance: 0.1 }, rarity: "rare", levels: 0, max: 10, after: "supplyChance" },
+    { id: "double", stats: { chestDouble: 3 }, rarity: "epic", levels: 0, max: 5, after: "equipmentChance" },
+    { id: "triple", stats: { chestTriple: 2 }, rarity: "legendary", levels: 0, max: 5, after: "double" },
   ],
 };
 
@@ -261,9 +307,10 @@ export const pointsOf = (save: Pick<TreeSave, "cardXp" | "cardBuys">, card: Card
 export const pointsLeft = (save: TreeSave, card: CardId) => Math.max(0, pointsOf(save, card) - pointsSpent(save.cardTrees, card));
 /** Whether `card` has a tree and card points left to spend on it. */
 export const hasPointsToSpend = (save: TreeSave, card: CardId) => !!CARD_TREES[card] && pointsLeft(save, card) > 0;
-/** The levels a node's parent must hold before the node takes any: all
- * it starts with (a common node's), or one for a node a buy opened. */
-export const opensAt = (parent: CardTreeNode) => Math.max(1, parent.levels);
+/** The levels a node's parent must hold before the node takes any: its
+ * `unlocks` where it names them, else all it starts with (a common
+ * node's), or one for a node a buy opened. */
+export const opensAt = (parent: CardTreeNode) => parent.unlocks ?? Math.max(1, parent.levels);
 /** Whether node `node` of `card` takes levels yet: a card buy has opened
  * it (a common node holds levels from the start), and it is a track's
  * first node or the node before it holds `opensAt` levels. */
@@ -335,9 +382,10 @@ export function runCardTrees(levels: CardTreeLevels, hand: readonly CardId[]): C
  * (0 for a stat none raises). */
 export type TreeBonus = Record<TreeStat, number>;
 const NO_BONUS = Object.freeze(Object.fromEntries(
-  ["floorGold", "floorSilver", "goldBonus", "silverBonus", "freeOffense", "freeDefense", "freeUtility", "freeDefenseChance", "freeUtilityChance", "floorHeal", "overhealMax", "stairSkip", "percentPotions", "potionHeal", "potionMaxHp", "potionSilver", "regen", "shroud", "parry",
+  ["floorGold", "floorSilver", "goldBonus", "silverBonus", "freeOffense", "freeDefense", "freeUtility", "freeOffenseChance", "freeDefenseChance", "freeUtilityChance", "floorHeal", "overhealMax", "stairSkip", "percentPotions", "potionHeal", "potionMaxHp", "potionSilver", "regen", "shroud", "parry", "reviveChance",
     "doorCost", "doorGold", "doorSilver", "doorHeal", "skeletonKey", "lockPick", "secretKnock", "doorChest", "keyChest", "keyFind", "keyGold", "keyHeal", "keyOverheal", "keySilver", "plainDoorCost", "heartDoorCost", "doubleKey", "masterKey", "foeAttack", "foeDefense", "foeGold", "foeSilver", "critChance", "critFactor", "killXp", "surpriseAttack", "foeAttackCut", "stealOverheal", "moreEnemies", "attackShard", "defenseShard", "attackShardGold", "defenseShardGold",
-    "bossAttack", "bossDefense", "bossShroud", "bossGold", "bossCells", "chestGold", "supplyChance", "equipmentChance"].map((s) => [s, 0]),
+    "attackShardSilver", "defenseShardSilver", "powerStrike", "takedown", "tangle", "greaterTakedown", "greaterTangle",
+    "bossAttack", "bossDefense", "bossShroud", "bossGold", "bossCells", "chestGold", "chestSilver", "chestCells", "supplyChance", "equipmentChance", "treasureFloor", "rarityUp", "chestDouble", "chestTriple"].map((s) => [s, 0]),
 )) as TreeBonus;
 /** What the trees in `levels` (a run's `cardTrees`) give, added up. */
 export function treeBonus(levels: CardTreeLevels | undefined): TreeBonus {
@@ -362,10 +410,11 @@ export const runFoeCut = (run: Pick<RunCore, "cardTrees">) => treeBonus(run.card
 export const freeUpFactors = (bonus: TreeBonus) =>
   ({ offense: treeFactor(bonus, "freeOffense"), defense: treeFactor(bonus, "freeDefense"), utility: treeFactor(bonus, "freeUtility") });
 /** The chances each Free Upgrade group also rolls a floor, in hundredths of
- * a percent (HEAL's tree's Free Defense, DOOR's and KEY's Free Utility), as
+ * a percent (ATK UP's Free Offense, HEAL's and DEF UP's Free Defense,
+ * DOOR's and KEY's Free Utility), as
  * `rollFreeTraining` takes them. */
 export function freeUpChances(bonus: TreeBonus) {
-  const chances = { ...(bonus.freeDefenseChance ? { defense: snap(bonus.freeDefenseChance * 100) } : {}), ...(bonus.freeUtilityChance ? { utility: snap(bonus.freeUtilityChance * 100) } : {}) };
+  const chances = { ...(bonus.freeOffenseChance ? { offense: snap(bonus.freeOffenseChance * 100) } : {}), ...(bonus.freeDefenseChance ? { defense: snap(bonus.freeDefenseChance * 100) } : {}), ...(bonus.freeUtilityChance ? { utility: snap(bonus.freeUtilityChance * 100) } : {}) };
   return Object.keys(chances).length ? chances : undefined;
 }
 /** The Overheal ceiling `overheal` (in thousandths of max HP, Overheal

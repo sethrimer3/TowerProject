@@ -59,7 +59,7 @@ import type {
 import { World, LAYOUT_VERSION } from "./delve/world.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import { chestKindAt, litTorches, type Board } from "./board.ts";
-import { healUpTo, instakill, type CritRule } from "./combat.ts";
+import { healUpTo, instakill, squaredUp, type CritRule } from "./combat.ts";
 import { HEART_DOOR_HP, hpCeiling, isLethal, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardStat } from "./step-effects.ts";
 import { OUTSIDE_START_Y, OutsideWorld } from "./outside.ts";
 import { AREA_BURST_MS, AreaLedger, chestReward, clearedInspiration, type AreaReward } from "./tower/area-ledger.ts";
@@ -175,7 +175,8 @@ const PERMANENT_TILES = new Set<Tile["kind"]>(["floor", "stairs", "oneway", "ope
  * by, KEY's Locksmith, Master Key, Key Chest and its kind a key, and
  * ENEMY's Surprise Attack an enemy. */
 const SECRET_KNOCK_SALT = 0x3a57e, DOOR_CHEST_SALT = 0xd00c4, DOOR_CHEST_KIND_SALT = 0xd0c4d, DOUBLE_KEY_SALT = 0xd0b1e, MASTER_KEY_SALT = 0x3a5e7,
-  KEY_CHEST_SALT = 0x6c4e5, KEY_CHEST_KIND_SALT = 0x6c4d1, SURPRISE_SALT = 0x5a7c1;
+  KEY_CHEST_SALT = 0x6c4e5, KEY_CHEST_KIND_SALT = 0x6c4d1, SURPRISE_SALT = 0x5a7c1, POWER_STRIKE_SALT = 0x907e5,
+  CHEST_DOUBLE_SALT = 0xc4e02, CHEST_TRIPLE_SALT = 0xc4e03, CHEST_CELLS_SALT = 0xc4ec1;
 /** The targets a Dash may end on, a tile of it left: items to take. */
 const DASH_ONTO = new Set<Tile["kind"]>(["key", "potion", "attack", "defense", "treasure", "reward"]);
 export class Game {
@@ -1042,6 +1043,9 @@ export class Game {
     // DOOR's Skeleton Key and Lock Pick remake the run's doors as each floor is generated.
     if (tree.skeletonKey || tree.lockPick) this.run.doorOdds = { skeleton: Math.min(100, tree.skeletonKey), lockPick: Math.min(100, tree.lockPick) };
     else delete this.run.doorOdds;
+    // CHEST's Treasure Floor makes a floor's shards and potions chests as it is generated.
+    if (tree.treasureFloor) this.run.treasureFloor = Math.min(100, tree.treasureFloor);
+    else delete this.run.treasureFloor;
     // The hero strikes the enemies each enemy card covers harder, and with
     // ENEMY's and TORCH's trees holds more DEF and shroud against theirs,
     // HEAL's more shroud against every enemy and a parry of its own
@@ -1059,6 +1063,15 @@ export class Game {
     else delete p.cardParry;
     if (tree.stealOverheal) p.stealOverheal = tree.stealOverheal;
     else delete p.stealOverheal;
+    // ATK UP's and DEF UP's Takedown and Tangle cut a boss as a fight with it
+    // begins, TORCH's a Greater Boss (combat.ts's `squaredUp`).
+    const cuts = (boss: number, greaterBoss: number) => ({ ...(boss ? { boss } : {}), ...(greaterBoss ? { greaterBoss } : {}) });
+    for (const [k, v] of [["takedown", cuts(tree.takedown, tree.greaterTakedown)], ["tangle", cuts(tree.tangle, tree.greaterTangle)]] as const) {
+      if (Object.keys(v).length) p[k] = v;
+      else delete p[k];
+    }
+    // A Power Strike charged on an earlier run doesn't carry over.
+    delete p.powerStrike;
     this.run.focusUsed = 0;
     for (const k of ["ignoreUsed", "targetUsed", "regain", "ignored", "targeted"] as const) delete this.run[k];
   }
@@ -1158,9 +1171,10 @@ export class Game {
   get hpCeiling() {
     return hpCeiling(this.run.player.maxHp, { overheal: this.overheal });
   }
-  /** Revive's chance now (its training, the run's Silver ranks counting). */
+  /** Revive's chance now (its training, the run's Silver ranks counting),
+   * in hundredths of a percent, TORCH's tree's percent added. */
   get reviveChance() {
-    return trainedAmount(this.trainingNow, "revive");
+    return snap(trainedAmount(this.trainingNow, "revive") + this.treeBonus.reviveChance * 100);
   }
   /** The hero's critical strikes now (Critical, Crit % and Crit x training
    * and research, the run's Silver ranks counting), read when a fight is
@@ -1665,11 +1679,13 @@ export class Game {
     this.applyStats(outcome.player);
     if (t.kind === "door") this.finds.door(t, outcome, drained, dest);
     if (t.kind !== "enemy") return true;
-    const extra = outcome.extraDamage ?? 0, p = this.run.player;
+    const extra = outcome.extraDamage ?? 0, p = this.run.player, openers = fightOpeners(p, t.enemy!, !!surprise);
+    // The fight used up ATK UP's Power Strike.
+    delete p.powerStrike;
     // Effective's added damage rises off the hero; Dampen's given back heals.
     if (extra > 0 && p.hp > 0) this.gain(p.x, p.y, `−${wholeChange(extra)} HP`, { heart: true }, undefined, "hit");
     else if (extra < 0) this.recordHeal(-extra);
-    return this.winFight({ enemy: t.enemy!, damage: snap(outcome.combat!.damage + extra), at: dest, revived, scale: outcome.scale, instakill: instakill(outcome.combat!), crits, surprise }, before);
+    return this.winFight({ enemy: t.enemy!, damage: snap(outcome.combat!.damage + extra), at: dest, revived, scale: outcome.scale, instakill: instakill(outcome.combat!), crits, openers }, before);
   }
   /** Moves the player onto the tile and applies what standing there does. */
   private land(t: Tile, x: number, y: number, outcome: StepEffect, floorSkip = false) {
@@ -1694,6 +1710,7 @@ export class Game {
     }
     this.finds.pickup(t, x, y, outcome);
     this.consumeTile(t, x, y);
+    if (t.kind === "attack") this.chargePowerStrike(x, y);
     if (t.kind === "door") this.doorChest(x, y);
     if (t.kind === "key") this.keyChest(x, y);
     if (t.kind === "key") this.masterKey(x, y);
@@ -1951,6 +1968,21 @@ export class Game {
   /** What the doors and keys of this floor roll by: the run's seed, and in the Tower the floor's. */
   private get floorSeed() {
     return this.run.seed ^ Math.imul((this.world instanceof RoomWorld ? this.world.room : 0) + 1, 0x9e3779b1);
+  }
+  /** ATK UP's Power Strike: the ATK shard just taken at (x, y) may charge
+   * the hero's next fight, by its tile's fixed number. */
+  private chargePowerStrike(x: number, y: number) {
+    const p = this.run.player;
+    if (p.powerStrike || !this.tileRolls(x, y, POWER_STRIKE_SALT, this.treeBonus.powerStrike)) return;
+    p.powerStrike = true;
+    this.message = `${this.message ? `${this.message} · ` : ""}Power Strike charged`;
+  }
+  /** A treasure chest's own rolls at (x, y), by its tile's fixed numbers:
+   * CHEST's Double and Triple (both: six times over), and TORCH's Chest Cells. */
+  chestRoll(x: number, y: number) {
+    const tree = this.treeBonus;
+    const multiplier = (this.tileRolls(x, y, CHEST_DOUBLE_SALT, tree.chestDouble) ? 2 : 1) * (this.tileRolls(x, y, CHEST_TRIPLE_SALT, tree.chestTriple) ? 3 : 1);
+    return { multiplier, cells: this.tileRolls(x, y, CHEST_CELLS_SALT, tree.chestCells) };
   }
   /** DOOR's Door Chest: the door just opened at (x, y) may leave an opened
    * treasure chest where it stood, paid as a treasure chest is (a Supply or
@@ -2381,7 +2413,7 @@ export class Game {
 /** A fight the hero won: the enemy beaten at `at`, the HP it cost, and
  * how many times the hero revived in it. */
 /** A fight won: `instakill` when the hero's first strike ended it (Mug). */
-type FightEnd = { enemy: Enemy; damage: number; at: { x: number; y: number }; revived: number; scale?: number; instakill?: boolean; crits?: number; surprise?: true };
+type FightEnd = { enemy: Enemy; damage: number; at: { x: number; y: number }; revived: number; scale?: number; instakill?: boolean; crits?: number; openers?: string[] };
 
 /** How Skip's message names what vanished, by tile kind. */
 /** The screens that keep their own Buy Quantity, and the setting each saves it in. */
@@ -2391,7 +2423,19 @@ const SKIPPED_NAMES: Partial<Record<Tile["kind"], string>> = { door: "The door",
 
 /** How the status line opens on a fight won. */
 function fightText(fight: FightEnd): string {
-  return fight.surprise ? `Surprise Attack · ${wonText(fight)}` : wonText(fight);
+  return [...(fight.openers ?? []), wonText(fight)].join(" · ");
+}
+/** What opened a fight of `player` against `enemy`, as the status line
+ * names it: ENEMY's Surprise Attack (`surprise`), ATK UP's Power Strike,
+ * and a boss's Takedown and Tangle (Greater, against a Greater Boss). */
+function fightOpeners(player: Player, enemy: Enemy, surprise: boolean) {
+  const cut = squaredUp(player, enemy).opening, greater = enemy.strength === "greaterBoss" ? "Greater " : "";
+  return [
+    ...(surprise ? ["Surprise Attack"] : []),
+    ...(player.powerStrike ? ["Power Strike"] : []),
+    ...(cut?.takedown ? [`${greater}Takedown`] : []),
+    ...(cut?.tangle ? [`${greater}Tangle`] : []),
+  ];
 }
 function wonText({ enemy, damage, revived }: FightEnd) {
   if (revived) return `Revived · ${enemyTitle(enemy)} defeated`;

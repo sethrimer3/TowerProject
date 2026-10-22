@@ -38,16 +38,15 @@ function allOpened(card: CardId): CardOpened {
   return { [card]: Object.fromEntries(CARD_TREES[card]!.map((n) => [n.id, n.max - n.levels])) };
 }
 
-test("every card tree holds 10 levels from the start and opens to 60 (STAIRS, HEAL, DOOR, KEY, ENEMY) or 25 with card buys, each node after one of its own tree", () => {
+test("every card tree holds 10 levels from the start and opens to 60 with card buys, each node after one of its own tree", () => {
   assert.deepEqual(Object.keys(CARD_TREES), ["stairs", "heal", "door", "key", "monster", "atkUp", "defUp", "torch", "chest"]);
   for (const [card, nodes] of Object.entries(CARD_TREES)) {
     assert.equal(nodes!.reduce((a, n) => a + n.levels, 0), BASE_MAX_LEVEL, `${card} starts at 10`);
-    assert.equal(nodes!.reduce((a, n) => a + n.max, 0), ["stairs", "heal", "door", "key", "monster"].includes(card) ? MAX_CARD_LEVEL : 25, `${card}'s whole tree`);
+    assert.equal(nodes!.reduce((a, n) => a + n.max, 0), MAX_CARD_LEVEL, `${card}'s whole tree`);
     const ids = nodes!.map((n) => n.id);
     assert.equal(new Set(ids).size, ids.length, `${card}'s node ids are its own`);
     nodes!.forEach((n, i) => n.after === undefined || assert.ok(ids.slice(0, i).includes(n.after), `${card}.${n.id} comes after its parent`));
     for (const n of nodes!) assert.equal(n.levels > 0, n.rarity === "common", `${card}.${n.id}: only common nodes hold levels from the start`);
-    if (!["stairs", "heal", "door", "key", "monster"].includes(card)) assert.ok(nodes!.every((n) => n.rarity === "common"), `${card} is common for now`);
   }
   const stairs = CARD_TREES.stairs!;
   assert.deepEqual(stairs.map((n) => [n.id, n.rarity, n.after ?? null]), [
@@ -99,7 +98,7 @@ test("a card's max level is every level its tree holds, and its look the rarest 
   assert.equal(cardMaxLevel(allOpened("door"), "door"), 60);
   assert.equal(cardMaxLevel(allOpened("key"), "key"), 60);
   assert.equal(cardMaxLevel(allOpened("monster"), "monster"), 60);
-  assert.equal(cardMaxLevel(allOpened("atkUp"), "atkUp"), 25);
+  for (const card of ["atkUp", "defUp", "torch", "chest"] as const) assert.equal(cardMaxLevel(allOpened(card), card), 60, card);
   assert.deepEqual(cardLook({}, "stairs"), { rarity: "common", upgraded: false });
   assert.deepEqual(cardLook({ stairs: { floorGold: 1 } }, "stairs"), { rarity: "common", upgraded: true });
   assert.deepEqual(cardLook({ stairs: { floorHealSilver: 1, goldBonus: 1 } }, "stairs"), { rarity: "rare", upgraded: true });
@@ -133,12 +132,13 @@ test("the Game's desk spends points in the forest only, and a respec gives them 
   const g = new Game(saveWith({ atkUp: MAX_CARD_XP }));
   g.save.cardBuys.opened = allOpened("atkUp");
   g.newRun({ outside: true, seed: 1 });
-  assert.equal(g.cardTrees.pointsLeft("atkUp"), 25);
+  assert.equal(g.cardTrees.pointsLeft("atkUp"), 60);
   for (let i = 0; i < 10; i++) assert.equal(g.cardTrees.raise("atkUp", "shard"), null);
   assert.equal(g.cardTrees.raise("atkUp", "shard"), "maxed");
-  assert.equal(g.cardTrees.raise("atkUp", "silverBonus"), null);
-  assert.deepEqual(g.save.cardTrees, { atkUp: { shard: 10, silverBonus: 1 } });
-  assert.equal(g.cardTrees.pointsLeft("atkUp"), 14);
+  assert.equal(g.cardTrees.raise("atkUp", "silverBoost"), "locked", "Shard Silver first");
+  assert.equal(g.cardTrees.raise("atkUp", "sharper"), null);
+  assert.deepEqual(g.save.cardTrees, { atkUp: { shard: 10, sharper: 1 } });
+  assert.equal(g.cardTrees.pointsLeft("atkUp"), 49);
   assert.equal(g.cardTrees.respecRefusal("atkUp"), "short", "no Gems");
   g.save.gems = RESPEC_GEMS;
   assert.equal(g.cardTrees.respecRefusal("door"), "none", "nothing spent on DOOR");
@@ -146,7 +146,7 @@ test("the Game's desk spends points in the forest only, and a respec gives them 
   assert.equal(g.save.gems, 0);
   assert.deepEqual(g.save.cardTrees, {});
   assert.deepEqual(g.save.cardBuys.opened, allOpened("atkUp"), "the levels card buys opened stay");
-  assert.equal(g.cardTrees.pointsLeft("atkUp"), 25);
+  assert.equal(g.cardTrees.pointsLeft("atkUp"), 60);
   g.cardTrees.raise("atkUp", "gold");
   g.newRun({ seed: 1 });
   assert.equal(g.cardTrees.raise("atkUp", "gold"), "inside");
@@ -158,30 +158,31 @@ test("a saved tree keeps known nodes, whole and in order, within what card buys 
   const xp = { stairs: CARD_LEVEL_XP[0] + CARD_LEVEL_XP[1] + CARD_LEVEL_XP[2], atkUp: MAX_CARD_XP };
   assert.deepEqual(decodeCardTrees({ stairs: { floorGold: 5 } }, xp, {}), { stairs: { floorGold: 3 } }, "three levels, three points");
   assert.deepEqual(decodeCardTrees({ atkUp: { shard: 4, gold: 1.5, nope: 2, silverBonus: 9 } }, xp, {}), { atkUp: { shard: 4 } });
-  assert.deepEqual(decodeCardTrees({ atkUp: { shard: 6 } }, xp, {}), {}, "more than the 4 levels it holds");
+  assert.deepEqual(decodeCardTrees({ atkUp: { shard: 6 } }, xp, {}), {}, "more than the 5 levels it holds");
   assert.deepEqual(decodeCardTrees({ atkUp: { shard: 6 } }, xp, { atkUp: { shard: 2 } }), { atkUp: { shard: 6 } }, "with two opened by card buys");
   assert.deepEqual(decodeCardTrees({ atkUp: { shard: 4 }, stairs: { floorHealGold: 1 }, heal: { goldBonus: 1 }, bogus: { a: 1 } }, xp, { stairs: { floorHealGold: 1 } }), { atkUp: { shard: 4 } }, "a child without its parent, and a card without points");
   assert.deepEqual(decodeCardTrees("x", xp, {}), {});
   const s = defaults();
   s.cardXp = { torch: MAX_CARD_XP };
   s.cardBuys.opened = { torch: { attack: 3 } };
-  s.cardTrees = { torch: { attack: 5, cells: 2 } };
-  assert.deepEqual(decode(JSON.stringify(s)).cardTrees, { torch: { attack: 5, cells: 2 } }, "it saves");
+  s.cardTrees = { torch: { attack: 5, gold: 2 } };
+  assert.deepEqual(decode(JSON.stringify(s)).cardTrees, { torch: { attack: 5, gold: 2 } }, "it saves");
 });
 
 test("the trees' stats add up over the hand's cards: Silver Bonus from ATK UP, DEF UP and STAIRS together", () => {
-  const levels: CardTreeLevels = { atkUp: { silverBonus: 5 }, defUp: { silverBonus: 3 }, stairs: { floorGold: 5, silverBonus: 1 } };
+  const levels: CardTreeLevels = { atkUp: { silverBoost: 5 }, defUp: { silverBoost: 3 }, stairs: { floorGold: 5, silverBonus: 1 } };
   const b = treeBonus(levels);
   assert.equal(b.silverBonus, 5 + 3 + 2);
   assert.equal(b.floorGold, 10);
   assert.equal(treeFactor(b, "silverBonus"), 1.1);
   assert.equal(treeFactor(b, "goldBonus"), 1, "none raised");
-  const full = treeBonus({ chest: filled("chest", 25), atkUp: filled("atkUp", 25), torch: filled("torch", 25), heal: filled("heal", 60) });
+  const full = treeBonus({ chest: filled("chest", 60), atkUp: filled("atkUp", 60), torch: filled("torch", 60) });
   assert.equal(full.supplyChance, 2, "1.5% with the card's base: 3.5%");
   assert.equal(full.equipmentChance, 1, "0.5% with the card's base: 1.5%");
-  assert.equal(full.attackShardGold, 1, "a Gold a shard at the top");
-  assert.equal(full.bossCells, 5);
-  assert.deepEqual([full.percentPotions, full.potionSilver, full.goldBonus, full.freeDefenseChance, full.parry, full.potionHeal, full.regen, full.shroud, full.potionMaxHp, full.overhealMax],
+  assert.equal(full.attackShardGold, 100, "a shard's Gold doubled at the top");
+  assert.equal(full.bossCells, 15, "1 a level, then 2");
+  const heal = treeBonus({ heal: filled("heal", 60) });
+  assert.deepEqual([heal.percentPotions, heal.potionSilver, heal.goldBonus, heal.freeDefenseChance, heal.parry, heal.potionHeal, heal.regen, heal.shroud, heal.potionMaxHp, heal.overhealMax],
     [20, 0.5, 10, 2.5, 5, 20, 10, 10, 0.05, 25]);
   const stairs = treeBonus({ stairs: filled("stairs", 60) });
   assert.deepEqual([stairs.floorGold, stairs.floorSilver, stairs.floorHeal, stairs.goldBonus, stairs.silverBonus, stairs.freeOffense, stairs.freeDefense, stairs.overhealMax, stairs.stairSkip], [20, 20, 30, 10, 10, 5, 5, 25, 5]);
@@ -190,19 +191,19 @@ test("the trees' stats add up over the hand's cards: Silver Bonus from ATK UP, D
 test("a run copies the trees of its hand's cards as it goes inside, keeping its floors and bonuses for the run", () => {
   const s = saveWith({ stairs: MAX_CARD_XP, monster: MAX_CARD_XP, torch: MAX_CARD_XP, chest: MAX_CARD_XP });
   s.cardBuys.opened = { ...allOpened("monster"), ...allOpened("torch") };
-  s.cardTrees = { stairs: { floorGold: 5 }, monster: filled("monster", 60), torch: filled("torch", 25), chest: { gold: 2 } };
+  s.cardTrees = { stairs: { floorGold: 5 }, monster: filled("monster", 60), torch: filled("torch", 15), chest: { gold: 2 } };
   s.hand = ["stairs", "monster", "torch"];
   const g = new Game(s);
   g.newRun({ seed: 3 });
-  assert.deepEqual(g.run.cardTrees, { stairs: { floorGold: 5 }, monster: filled("monster", 60), torch: filled("torch", 25) }, "CHEST isn't in the hand");
-  assert.deepEqual(g.run.player.foeAttack, { monster: 10, torch: 5 });
+  assert.deepEqual(g.run.cardTrees, { stairs: { floorGold: 5 }, monster: filled("monster", 60), torch: filled("torch", 15) }, "CHEST isn't in the hand");
+  assert.deepEqual(g.run.player.foeAttack, { monster: 10, torch: 10 });
   assert.deepEqual(g.run.player.foeDefense, { monster: 10, torch: 5 });
-  assert.deepEqual(g.run.player.foeShroud, { monster: 10, torch: 10 });
+  assert.deepEqual(g.run.player.foeShroud, { monster: 10 }, "TORCH's Boss Shroud not reached");
   assert.equal(g.run.player.stealOverheal, 25, "ENEMY's Lifesteal Overheal");
   assert.deepEqual(runExtras(g.run), extraEnemies(undefined, 10), "ENEMY's 10% more of every strength");
   const saved = decode(JSON.stringify(g.save)).tower.run!;
   assert.deepEqual(saved.cardTrees, g.run.cardTrees, "and saves them");
-  assert.deepEqual(saved.player.foeShroud, { monster: 10, torch: 10 });
+  assert.deepEqual(saved.player.foeShroud, { monster: 10 });
   assert.equal(saved.player.stealOverheal, 25);
   s.hand = ["stairs"];
   g.newRun({ seed: 3 });
@@ -321,7 +322,7 @@ test("the trees' Gold and Silver: Gold Bonus, Silver Bonus, a chest's Gold, ENEM
     if (trees) g.run.cardTrees = trees;
     return new RunPurse(g.save, g.mode, g.run, () => 0.5);
   };
-  const plain = purse(), raised = purse({ heal: { goldBonus: 5 }, stairs: { goldBonus: 20 }, chest: { gold: 5 }, monster: { gold: 5 }, torch: { cells: 3 }, atkUp: { silverBonus: 5 }, defUp: { silverBonus: 5 } });
+  const plain = purse(), raised = purse({ heal: { goldBonus: 5 }, stairs: { goldBonus: 20 }, chest: { gold: 5 }, monster: { gold: 5 }, torch: { cellDrop: 3 }, atkUp: { silverBoost: 5 }, defUp: { silverBoost: 5 } });
   assert.equal(raised.treasureGoldPreview(3, 3), snap(snap(plain.treasureGoldPreview(3, 3) * 1.5) * 1.1));
   assert.equal(raised.killGoldOf(foe("normal")), snap(snap(plain.killGoldOf(foe("normal")) * 1.5) * 1.05));
   assert.equal(raised.silver(10), snap(plain.silver(10) * 1.1));
