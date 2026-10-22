@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { mkdirSync } from "node:fs";
 import { createServer } from "vite";
 import { chromium } from "@playwright/test";
+import { fixClock } from "./fixed-clock.mjs";
 const server = await createServer({ server: { host: "127.0.0.1", port: 5191 }, logLevel: "error" });
 await server.listen();
 const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH
@@ -11,6 +12,7 @@ mkdirSync("test-results/combat-sprites", { recursive: true });
 try {
   for (const width of [390, 1100]) {
     const page = await browser.newPage({ viewport: { width, height: 900 } });
+    await fixClock(page);
     const errors = [];
     page.on("pageerror", e => errors.push(e.message));
     await page.addInitScript(() => { globalThis.__handStartsPaused = true; globalThis.__handHeld = true; });

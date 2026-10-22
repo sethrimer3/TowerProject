@@ -3,11 +3,13 @@ import assert from "node:assert/strict";
 import { createServer } from "vite";
 import { chromium } from "@playwright/test";
 import { resolve } from "node:path";
+import { fixClock } from "./fixed-clock.mjs";
 const server = await createServer({ server: { host: "127.0.0.1", port: 5194 }, logLevel: "error" });
 await server.listen();
 const browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH || "/usr/bin/chromium" });
 try {
   const page = await browser.newPage();
+  await fixClock(page);
   await page.addInitScript(() => { globalThis.__handHeld = true; globalThis.__handStartsPaused = true; });
   let release; const requested = new Promise(resolve => { release = resolve; });
   await page.route("**/assets/style/hero-up.png", route => release(route));

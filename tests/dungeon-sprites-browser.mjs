@@ -3,12 +3,14 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { createServer } from "vite";
 import { chromium } from "@playwright/test";
+import { fixClock } from "./fixed-clock.mjs";
 const server = await createServer({ server: { host: "127.0.0.1", port: 5198 }, logLevel: "error" });
 await server.listen();
 const browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH || "/usr/bin/chromium" });
 mkdirSync("test-results/dungeon-sprites", { recursive: true });
 try {
   const page = await browser.newPage({ viewport: { width: 1100, height: 1000 } });
+  await fixClock(page);
   const errors = []; page.on("pageerror", e => errors.push(e.message));
   await page.addInitScript(() => {
     globalThis.__handHeld = true; globalThis.__handStartsPaused = true;
@@ -267,6 +269,7 @@ try {
   await page.locator("#dungeon-art").screenshot({ path: "test-results/dungeon-sprites/native-atlases.png" });
   await page.locator("#dungeon-art").evaluate(e => e.remove());
   const failed = await browser.newPage();
+  await fixClock(failed);
   await failed.route("**/dungeon-masonry-0.png", route => route.abort());
   await failed.goto(server.resolvedUrls.local[0]);
   const fallback = await failed.evaluate(async () => {

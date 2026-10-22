@@ -7,6 +7,7 @@ import assert from "node:assert/strict";
 import { existsSync, mkdirSync } from "node:fs";
 import { createServer } from "vite";
 import { chromium } from "@playwright/test";
+import { fixClock } from "./fixed-clock.mjs";
 const server = await createServer({ server: { host: "127.0.0.1", port: 5199 }, logLevel: "error" });
 await server.listen();
 const executablePath = process.env.PLAYWRIGHT_EXECUTABLE_PATH || ["/usr/bin/chromium", "/opt/pw-browsers/chromium-1194/chrome-linux/chrome"].find(existsSync);
@@ -26,6 +27,7 @@ async function restage(page, edit) {
 try {
   for (const [name, viewport] of [["phone", { width: 390, height: 844 }], ["desktop", { width: 1280, height: 800 }]]) {
     const page = await browser.newPage({ viewport });
+    await fixClock(page);
     const errors = []; page.on("pageerror", (e) => errors.push(e.message));
     await page.addInitScript(() => {
       const fixture = sessionStorage.getItem("__buyFixture");

@@ -2,12 +2,14 @@ import assert from "node:assert/strict";
 import { mkdirSync } from "node:fs";
 import { createServer } from "vite";
 import { chromium } from "@playwright/test";
+import { fixClock } from "./fixed-clock.mjs";
 const server = await createServer({ server: { host: "127.0.0.1", port: 5202 }, logLevel: "error" });
 await server.listen();
 const browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH || "/usr/bin/chromium" });
 mkdirSync("test-results/sprite-animations", { recursive: true });
 try {
   const page = await browser.newPage({ viewport: { width: 1100, height: 1000 } });
+  await fixClock(page);
   const errors = []; page.on("pageerror", e => errors.push(e.message));
   await page.addInitScript(() => {
     globalThis.__handHeld = true; globalThis.__handStartsPaused = true;
@@ -131,7 +133,7 @@ try {
   });
   assert.ok(death.fallen && death.events); assert.equal(death.still, 0); assert.equal(death.animated, 48); assert.equal(death.off, 0);
   await page.locator("#death-board").screenshot({ path: "test-results/sprite-animations/death.png" });
-  const failed = await browser.newPage(); await failed.route("**/assets/style/ambient-*.png", route => route.abort()); await failed.goto(server.resolvedUrls.local[0]);
+  const failed = await browser.newPage(); await fixClock(failed); await failed.route("**/assets/style/ambient-*.png", route => route.abort()); await failed.goto(server.resolvedUrls.local[0]);
   const fallback = await failed.evaluate(async () => {
     const { kitImage } = await import("/src/sprite-kit.ts"), { paintHero, paintContents } = await import("/src/tile-painters.ts"), { drawStruckDown } = await import("/src/struck-down.ts");
     await new Promise(resolve => { const check = () => ["hero-down", "potion-red"].map(kitImage).every(Boolean) ? resolve() : requestAnimationFrame(check); check(); });

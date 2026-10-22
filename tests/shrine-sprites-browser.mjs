@@ -5,6 +5,7 @@ import { mkdirSync } from "node:fs";
 import { createServer } from "vite";
 import { chromium } from "@playwright/test";
 import { openMenu } from "./run-menu.mjs";
+import { fixClock } from "./fixed-clock.mjs";
 const server = await createServer({ server: { host: "127.0.0.1", port: 5188 }, logLevel: "error" });
 await server.listen();
 const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH
@@ -12,6 +13,7 @@ const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIG
 mkdirSync("test-results/shrine-sprites", { recursive: true });
 try {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await fixClock(page);
   const errors = [];
   page.on("pageerror", e => errors.push(e.message));
   page.on("response", r => { if (r.url().includes("/assets/style/") && r.status() >= 400) errors.push(`${r.status()} ${r.url()}`); });

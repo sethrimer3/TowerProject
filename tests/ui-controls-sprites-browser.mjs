@@ -4,6 +4,7 @@ import { mkdirSync } from "node:fs";
 import { createServer } from "vite";
 import { chromium } from "@playwright/test";
 import { openMenu } from "./run-menu.mjs";
+import { fixClock } from "./fixed-clock.mjs";
 const server = await createServer({ server: { host: "127.0.0.1", port: 5190 }, logLevel: "error" });
 await server.listen();
 const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH
@@ -11,6 +12,7 @@ const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIG
 mkdirSync("test-results/ui-controls-sprites", { recursive: true });
 try {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await fixClock(page);
   const errors = [];
   const loaded = new Set();
   page.on("pageerror", e => errors.push(e.message));

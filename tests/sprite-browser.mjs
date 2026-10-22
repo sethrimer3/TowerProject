@@ -4,10 +4,12 @@ import assert from "node:assert/strict";
 import { mkdirSync } from "node:fs";
 import { chromium } from "@playwright/test";
 import { openMenu } from "./run-menu.mjs";
+import { fixClock } from "./fixed-clock.mjs";
 
 const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH
   ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH } : { channel: process.env.PLAYWRIGHT_CHANNEL || "msedge" }) });
 const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+await fixClock(page);
 page.setDefaultTimeout(10000);
 const errors = [];
 page.on("pageerror", e => errors.push(e.message));

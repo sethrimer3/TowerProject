@@ -18,6 +18,7 @@ import { chromium } from "@playwright/test";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { bounded, startPreview } from "./snapshot-preview.mjs";
+import { fixClock } from "./fixed-clock.mjs";
 
 const UPDATE = process.env.UPDATE_GOLDEN === "1";
 const GOLDEN = new URL("./fixtures/render.golden.json", import.meta.url);
@@ -29,6 +30,7 @@ const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIG
 let exitCode = 1;
 try {
   const page = await browser.newPage({ viewport: { width: 600, height: 900 }, deviceScaleFactor: 1 });
+  await fixClock(page);
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   // Every image the app asks for, so a capture can wait until all of them have

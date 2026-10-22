@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { mkdirSync } from "node:fs";
 import { createServer } from "vite";
 import { chromium } from "@playwright/test";
+import { fixClock } from "./fixed-clock.mjs";
 
 const server = await createServer({ server: { host: "127.0.0.1", port: 5185 }, logLevel: "error" });
 await server.listen();
@@ -11,6 +12,7 @@ const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIG
   ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH } : { channel: process.env.PLAYWRIGHT_CHANNEL || "msedge" }) });
 try {
   const page = await browser.newPage({ viewport: { width: 1024, height: 900 } });
+  await fixClock(page);
   const errors = [];
   page.on("pageerror", e => errors.push(e.message));
   page.on("response", r => { if (r.url().includes("/assets/") && r.status() >= 400) errors.push(`${r.status()} ${r.url()}`); });

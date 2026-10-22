@@ -3,12 +3,14 @@ import { mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { createServer } from "vite";
 import { chromium } from "@playwright/test";
+import { fixClock } from "./fixed-clock.mjs";
 const server = await createServer({ server: { host: "127.0.0.1", port: 5199 }, logLevel: "error" });
 await server.listen();
 const browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH || "/usr/bin/chromium" });
 mkdirSync("test-results/dungeon-sprites", { recursive: true });
 try {
   const page = await browser.newPage({ viewport: { width: 1100, height: 1000 } });
+  await fixClock(page);
   const errors = []; page.on("pageerror", e => errors.push(e.message));
   let release; const pending = new Promise(resolve => { release = resolve; });
   await page.route("**/dungeon-details-masonry-0.png", route => release(route));
@@ -110,7 +112,7 @@ try {
     cv.style.cssText = "position:fixed;left:0;top:0;width:1100px;height:910px;z-index:100000"; document.body.append(cv);
   });
   await page.locator("#context-review").screenshot({ path: "test-results/dungeon-sprites/contextual-details.png" });
-  const failed = await browser.newPage(); let rejected = 0;
+  const failed = await browser.newPage(); await fixClock(failed); let rejected = 0;
   failed.on("pageerror", e => errors.push(e.message));
   await failed.route("**/dungeon-details-masonry-0.png", route => { rejected++; return route.abort(); });
   await failed.goto(server.resolvedUrls.local[0]); await failed.locator("#hp").waitFor();
