@@ -55,9 +55,9 @@ test("each enemy card's tree: two tracks of a common node then one of each rarit
     "spawnRate:epic:0/5:eliteEnemySpawnRate=2", "stealOverheal:legendary:0/5:eliteEnemyStealOverheal=20",
   ]);
   assert.deepEqual(shape("bossEnemy"), [
-    "gold:common:8/10:bossEnemyGold=10", "shroud:uncommon:0/5:bossEnemyShroud=5", "defense:rare:0/5:bossEnemyDefense=5",
+    "gold:common:5/10:bossEnemyGold=10", "shroud:uncommon:0/5:bossEnemyShroud=5", "defense:rare:0/5:bossEnemyDefense=5",
     "equipment:epic:0/5:bossEnemyEquipment=0.3", "tangle:legendary:0/5:bossEnemyTangle=3",
-    "attack:common:2/5:bossEnemyAttack=5", "critChance:uncommon:0/5:bossEnemyCritChance=3", "critFactor:rare:0/5:bossEnemyCritFactor=4",
+    "attack:common:5/10:bossEnemyAttack=5", "critChance:uncommon:0/5:bossEnemyCritChance=3", "critFactor:rare:0/5:bossEnemyCritFactor=4",
     "cells:epic:0/5:bossEnemyCells=1", "takedown:legendary:0/5:bossEnemyTakedown=5",
   ]);
   for (const card of FOE_TREE_CARDS) {

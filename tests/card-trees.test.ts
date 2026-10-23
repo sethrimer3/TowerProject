@@ -38,12 +38,11 @@ function allOpened(card: CardId): CardOpened {
   return { [card]: Object.fromEntries(CARD_TREES[card]!.map((n) => [n.id, n.max - n.levels])) };
 }
 
-test("every card tree holds 10 levels from the start and opens to 60 with card buys (BOSS ENEMY to 55), each node after one of its own tree", () => {
+test("every card tree holds 10 levels from the start and opens to 60 with card buys, each node after one of its own tree", () => {
   assert.deepEqual(Object.keys(CARD_TREES), ["stairs", "heal", "door", "key", "yellowKey", "blueKey", "redKey", "monster", "weakEnemy", "baseEnemy", "strongEnemy", "eliteEnemy", "bossEnemy", "nonBossEnemy", "atkUp", "defUp", "torch", "chest"]);
   for (const [card, nodes] of Object.entries(CARD_TREES)) {
     assert.equal(nodes!.reduce((a, n) => a + n.levels, 0), BASE_MAX_LEVEL, `${card} starts at 10`);
-    // BOSS ENEMY's tree opens to 55 for now.
-    assert.equal(nodes!.reduce((a, n) => a + n.max, 0), card === "bossEnemy" ? 55 : MAX_CARD_LEVEL, `${card}'s whole tree`);
+    assert.equal(nodes!.reduce((a, n) => a + n.max, 0), MAX_CARD_LEVEL, `${card}'s whole tree`);
     const ids = nodes!.map((n) => n.id);
     assert.equal(new Set(ids).size, ids.length, `${card}'s node ids are its own`);
     nodes!.forEach((n, i) => n.after === undefined || assert.ok(ids.slice(0, i).includes(n.after), `${card}.${n.id} comes after its parent`));

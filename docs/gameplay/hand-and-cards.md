@@ -180,9 +180,9 @@ Points are spent in the forest; inside a run the tree only shows.
   Gold: +8% Gold from each elite enemy killed (common, 4 levels, up to 10), then +0.3 Silver from each (uncommon), **Free Upgrade**, +0.5% chance of a free Offense, Defense and Utility level each floor (rare), **Equipment Drop**, +0.1% chance each drops a piece of equipment (epic), and **Surprise Attack**, +5% (legendary).
   Defense: +5% DEF against elite enemies (common, 4 levels, up to 5).
   Attack: +5% ATK against elite enemies (common, 2 levels, up to 5), then +2% Crit % chance against them (uncommon), +4% XP from each (rare), +2% more of them on each floor (epic), and Lifesteal healing up to 20% above max HP in fights with them (legendary).
-  Boss Enemy, to 55 levels:
-  Gold: +10% Gold from each boss or Greater Boss killed (common, 8 levels, up to 10), then +5% shroud against them (uncommon), +5% DEF against them (rare), **Equipment Drop**, +0.3% (epic), and **Tangle**, −3% of their ATK as a fight with one begins (legendary).
-  Attack: +5% ATK against bosses and Greater Bosses (common, 2 levels, up to 5), then +3% Crit % chance against them (uncommon), +4% Crit x factor against them (rare), +1 Cell from each killed (epic), and **Takedown**, −5% of their max HP as a fight with one begins (legendary).
+  Boss Enemy, to 60 levels:
+  Gold: +10% Gold from each boss or Greater Boss killed (common, 5 levels, up to 10), then +5% shroud against them (uncommon), +5% DEF against them (rare), **Equipment Drop**, +0.3% (epic), and **Tangle**, −3% of their ATK as a fight with one begins (legendary).
+  Attack: +5% ATK against bosses and Greater Bosses (common, 5 levels, up to 10), then +3% Crit % chance against them (uncommon), +4% Crit x factor against them (rare), +1 Cell from each killed (epic), and **Takedown**, −5% of their max HP as a fight with one begins (legendary).
   Non-Boss Enemy, to 60 levels, against every enemy but bosses and Greater Bosses:
   Gold: +5% Gold from each killed (common, 5 levels, up to 10), then +0.1 Silver from each (uncommon), **Free Upgrade**, +0.2% chance of a free Offense, Defense and Utility level each floor (rare), **Salvage**, +1% (epic), and **Surprise Attack**, +5% (legendary).
   Attack: +5% ATK against them (common, 5 levels, up to 10), then +3% Crit x factor against them (uncommon), +2% XP from each (rare), +3% more of them on each floor (epic), and Lifesteal healing up to 10% above max HP in fights with them (legendary).

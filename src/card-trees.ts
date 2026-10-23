@@ -331,8 +331,8 @@ export const CARD_TREES: Partial<Record<CardId, readonly CardTreeNode[]>> = {
     common("defense", elite("Defense", 5), 4, 5),
     { levels: 2, max: 5, nodes: [["attack", elite("Attack", 5)], ["critChance", elite("CritChance", 2)], ["killXp", elite("KillXp", 4)], ["spawnRate", elite("SpawnRate", 2)], ["stealOverheal", elite("StealOverheal", 20)]] }),
   bossEnemy: foeTree(
-    { levels: 8, max: 10, nodes: [["gold", boss("Gold", 10)], ["shroud", boss("Shroud", 5)], ["defense", boss("Defense", 5)], ["equipment", boss("Equipment", 0.3)], ["tangle", boss("Tangle", 3)]] },
-    { levels: 2, max: 5, nodes: [["attack", boss("Attack", 5)], ["critChance", boss("CritChance", 3)], ["critFactor", boss("CritFactor", 4)], ["cells", boss("Cells", 1)], ["takedown", boss("Takedown", 5)]] }),
+    { levels: 5, max: 10, nodes: [["gold", boss("Gold", 10)], ["shroud", boss("Shroud", 5)], ["defense", boss("Defense", 5)], ["equipment", boss("Equipment", 0.3)], ["tangle", boss("Tangle", 3)]] },
+    { levels: 5, max: 10, nodes: [["attack", boss("Attack", 5)], ["critChance", boss("CritChance", 3)], ["critFactor", boss("CritFactor", 4)], ["cells", boss("Cells", 1)], ["takedown", boss("Takedown", 5)]] }),
   nonBossEnemy: foeTree(
     { levels: 5, max: 10, nodes: [["gold", nonBoss("Gold", 5)], ["silver", nonBoss("Silver", 0.1)], ["freeUpgrade", freeAll(0.2)], ["material", nonBoss("Material", 1)], ["surpriseAttack", nonBoss("SurpriseAttack", 5)]] },
     { levels: 5, max: 10, nodes: [["attack", nonBoss("Attack", 5)], ["critFactor", nonBoss("CritFactor", 3)], ["killXp", nonBoss("KillXp", 2)], ["spawnRate", nonBoss("SpawnRate", 3)], ["stealOverheal", nonBoss("StealOverheal", 10)]] }),
