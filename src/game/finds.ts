@@ -1,10 +1,11 @@
 import { doorName, doorRule, drainsHp, keyWord, pickupGold } from "../doors.ts";
 import type { HandBonus } from "../cards.ts";
-import { compounded, keyStat, type TreeBonus } from "../card-trees.ts";
+import { compounded, foeStat, keyStat, type TreeBonus } from "../card-trees.ts";
 import type { ChestKind, Enemy, Mode, Tile, KeyColor } from "../entities.ts";
 import { RARITY_TIERS } from "../equipment/balance.ts";
 import { EQUIP_MATERIALS, itemDef } from "../equipment/catalog.ts";
 import { snap } from "../exact.ts";
+import { boostMaxHp } from "../hero-stats.ts";
 import type { EventMissionType } from "../events/catalog.ts";
 import type { MissionType } from "../missions/catalog.ts";
 import { MODES, type ModeProfile } from "../modes.ts";
@@ -47,8 +48,9 @@ export class Finds {
   constructor(private readonly host: FindsHost) {}
 
   /** Pays a kill at `at` (a fight won, or an arrow's): counted, its XP,
-   * Silver, Gold and a Greater Boss's Cells. Returns what it found, as the
-   * status line names it. */
+   * Silver, Gold, a Greater Boss's Cells, and what the enemy cards' trees
+   * find with it (Cells, drops toward Equipment, Instakill Vigor's max HP).
+   * Returns what it found, as the status line names it. */
   kill(enemy: Enemy, at: { x: number; y: number }, scale: number, instakill: boolean, crits?: number) {
     const { run, mode } = this.host, rules: ModeProfile = MODES[mode];
     run.kills++;
@@ -58,16 +60,27 @@ export class Finds {
     this.host.gainXp(enemy, floor, scale);
     // Silver belongs to the run, so it isn't gated like Gold: undo takes it back.
     const silver = purse.killSilver(enemy, floor, scale);
-    const { gold, cells } = purse.enemyLoot(enemy, at.x, at.y, scale, instakill);
-    const cellsFound = cells ? [cellsText(cells)] : [];
+    const { gold, cells, equipment } = purse.enemyLoot(enemy, at.x, at.y, scale, instakill);
+    const cellsFound = cells ? [cellsText(cells)] : [], found = equipment.flatMap(equipmentGains);
+    for (const piece of equipment) {
+      if (piece.item || piece.salvaged) this.host.events.record("equipment", 1, key);
+      if (piece.item) this.host.save[mode].runFinds.equipment++;
+    }
     // Gold over Silver at the tile, the rest below.
     this.drops(at, [
       ...(gold ? [{ text: `+${wholeChange(gold)} Gold`, art: { coin: "gold" as const } }] : []),
       { text: `+${wholeChange(silver)} Silver`, art: { coin: "silver" } },
       ...cellsFound.map((text) => ({ text, art: { cell: true as const } })),
+      ...found,
     ], gold ? 1 : 0);
+    // A weak enemy card's Instakill Vigor boosts max HP for the run, as HEAL's Potion Vigor does.
+    const vigor = instakill ? foeStat(this.host.treeBonus, enemy, "InstakillMaxHp") : 0;
+    if (vigor) {
+      boostMaxHp(run, vigor);
+      this.host.gain(at.x, at.y, `+${vigor}% max HP`, { heart: true, raised: true });
+    }
     if (crits) this.host.events.record("crits", crits, key);
-    return [...coinsText(gold, silver), ...cellsFound];
+    return [...coinsText(gold, silver), ...cellsFound, ...found.map((g) => g.text)];
   }
   /** A kill counts toward the missions and the Event for its strength, once
    * a `key` (the mode and the kill's loot key). */

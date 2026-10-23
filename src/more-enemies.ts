@@ -296,12 +296,17 @@ export const MORE_ENEMIES_CARDS = {
 } as const satisfies Partial<Record<CardId, readonly ExtraStrength[]>>;
 
 /** What a run's More Enemies badges add to each floor: each strength's
- * percents, summed over the cards that cover it, and `every` percent more
- * of every strength (ENEMY's card tree, `run.cardTrees`). None without
- * either. */
-export function extraEnemies(badges: RunBadges | undefined, every = 0): ExtraEnemies | undefined {
+ * percents, summed over the cards that cover it, `every` percent more
+ * of every strength (ENEMY's card tree, `run.cardTrees`), and `cards`
+ * percent more of the strengths each card covers (the enemy cards' trees'
+ * Spawn Rate). None without any. */
+export function extraEnemies(badges: RunBadges | undefined, every = 0, cards: Partial<Record<CardId, number>> = {}): ExtraEnemies | undefined {
   const out: ExtraEnemies = {};
   if (every) for (const s of EXTRA_ORDER) out[s] = every;
+  for (const [card, percent] of Object.entries(cards) as [CardId, number][]) {
+    const strengths = (MORE_ENEMIES_CARDS as Partial<Record<string, readonly ExtraStrength[]>>)[card];
+    if (strengths && percent) for (const s of strengths) out[s] = (out[s] ?? 0) + percent;
+  }
   for (const card of Object.keys(badges ?? {}) as CardId[]) {
     const strengths = (MORE_ENEMIES_CARDS as Partial<Record<string, readonly ExtraStrength[]>>)[card];
     const badge = badges?.[card]?.find((b) => b.id === "moreEnemies");

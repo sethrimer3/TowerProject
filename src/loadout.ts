@@ -221,7 +221,9 @@ export function trainingWaiting(save: Save) {
 export function critRule(save: Pick<Save, "upgrades" | "training" | "archives">, cards?: { chance: number; factor: number }): CritRule | undefined {
   const chance = snap(trainedAmount(save, "critChance") / 100 * researched(save.archives, "critChancePercent") / 100 * (100 + (cards?.chance ?? 0)) / 100);
   if (chance <= 0) return undefined;
-  return { chance, factor: snap(trainedAmount(save, "critFactor") / 100 * researched(save.archives, "critFactorPercent") / 100 * (100 + (cards?.factor ?? 0)) / 100) };
+  const factor = snap(trainedAmount(save, "critFactor") / 100 * researched(save.archives, "critFactorPercent") / 100 * (100 + (cards?.factor ?? 0)) / 100);
+  // The card percents ride along, so an enemy card's own add to them (`critAgainst`).
+  return cards?.chance || cards?.factor ? { chance, factor, cards: { chance: cards.chance, factor: cards.factor } } : { chance, factor };
 }
 
 /** The Free Upgrade row training each group's free levels. */

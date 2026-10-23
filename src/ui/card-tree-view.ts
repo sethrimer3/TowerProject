@@ -3,7 +3,7 @@
  * words (`nodeName`, `statText`), and the card of the node picked in it
  * (`cardTreeCardHtml`). The tree itself comes from `card-trees.ts`. */
 import { CARDS, type CardId } from "../cards.ts";
-import { CARD_TREES, cardLook, nodeCap, nodeLevel, nodeOpen, opensAt, treeNode, type CardOpened, type CardTreeLevels, type CardTreeNode, type ColorKeyPart, type ColorKeyStat, type TreeStat } from "../card-trees.ts";
+import { CARD_TREES, cardLook, nodeCap, nodeLevel, nodeOpen, opensAt, treeNode, type CardOpened, type CardTreeLevels, type CardTreeNode, type ColorKeyPart, type ColorKeyStat, type FoeCardStat, type FoePart, type FoeTreeCard, type TreeStat } from "../card-trees.ts";
 import type { KeyColor } from "../entities.ts";
 import { CARD_RARITY_NAMES, type CardRarity } from "../card-rarity.ts";
 import { rarityFrameHtml, rarityStarsHtml } from "./card-level-marks.ts";
@@ -22,6 +22,23 @@ function byKeyColor<T>(each: (color: KeyColor, word: string) => Record<ColorKeyP
     Object.entries(each(color, words[color])).map(([part, value]) => [`${color}${part}`, value]))) as Record<ColorKeyStat, T>;
 }
 
+/** How each enemy card's enemies are named in its stats' words: one with
+ * its article (`a`), one without (`one`), and many. */
+const FOE_WORDS: Record<FoeTreeCard, { a: string; one: string; many: string }> = {
+  weakEnemy: { a: "a weak enemy", one: "weak enemy", many: "weak enemies" },
+  baseEnemy: { a: "a base enemy", one: "base enemy", many: "base enemies" },
+  strongEnemy: { a: "a strong enemy", one: "strong enemy", many: "strong enemies" },
+  eliteEnemy: { a: "an elite enemy", one: "elite enemy", many: "elite enemies" },
+  bossEnemy: { a: "a boss or Greater Boss", one: "boss or Greater Boss", many: "bosses and Greater Bosses" },
+  nonBossEnemy: { a: "a non-boss enemy", one: "non-boss enemy", many: "non-boss enemies" },
+};
+/** One entry for each enemy card's own stats (`FoeCardStat`), `each`
+ * giving a card's, by part, from its enemies' words. */
+function byFoeCard<T>(each: (words: (typeof FOE_WORDS)[FoeTreeCard]) => Record<FoePart, T>) {
+  return Object.fromEntries((Object.keys(FOE_WORDS) as FoeTreeCard[]).flatMap((card) =>
+    Object.entries(each(FOE_WORDS[card])).map(([part, value]) => [`${card}${part}`, value]))) as Record<FoeCardStat, T>;
+}
+
 /** What each stat is called, as a node's name. */
 const STAT_NAMES: Record<TreeStat, string> = {
   floorGold: "Spare Change", floorSilver: "Wishing Well", goldBonus: "Gold Bonus", silverBonus: "Silver Bonus",
@@ -33,6 +50,9 @@ const STAT_NAMES: Record<TreeStat, string> = {
   keyHeal: "Key Heal", keyOverheal: "Key Overheal", keySilver: "Key Silver", plainDoorCost: "Plain Doors", heartDoorCost: "Heart Doors", doubleKey: "Locksmith", masterKey: "Master Key",
   ...byKeyColor((_, word) => ({ KeyHeal: `${word} Key Heal`, KeyOverheal: `${word} Key Overheal`, KeyGold: `${word} Key Gold`, KeyFind: `${word} Key Find`, KeySilver: `${word} Key Silver`,
     KeyChest: `${word} Key Chest`, DoorCost: `${word} Key Cost`, DoubleKey: `Locksmith ${word}`, MasterKey: `Master ${word} Key` })),
+  ...byFoeCard(() => ({ Gold: "Bounty", InstakillGold: "Instakill Bounty", Silver: "Spoils", Attack: "Attack", Defense: "Defense", Shroud: "Shroud", CritChance: "Crit Chance", CritFactor: "Crit Factor",
+    KillXp: "Kill XP", SpawnRate: "Spawn Rate", Material: "Salvage", InstakillMaterial: "Instakill Salvage", Equipment: "Equipment Drop", InstakillMaxHp: "Instakill Vigor",
+    StealOverheal: "Lifesteal Overheal", SurpriseAttack: "Surprise Attack", Cells: "Cells", Takedown: "Takedown", Tangle: "Tangle" })),
   maxHp: "Max HP",
   foeAttack: "Attack", foeDefense: "Defense", foeGold: "Bounty", foeSilver: "Spoils", moreEnemies: "Spawn Rate",
   critChance: "Crit Chance", critFactor: "Crit Factor", killXp: "Kill XP", surpriseAttack: "Surprise Attack", foeAttackCut: "Weaken", stealOverheal: "Lifesteal Overheal",
@@ -45,7 +65,7 @@ const STAT_NAMES: Record<TreeStat, string> = {
 };
 
 /** Names of nodes raising more than one stat, short enough to sit under them. */
-const NODE_NAMES: Record<string, string> = {};
+const NODE_NAMES: Record<string, string> = { "eliteEnemy.freeUpgrade": "Free Upgrade", "nonBossEnemy.freeUpgrade": "Free Upgrade" };
 
 /** What `n` of each stat does, a line. */
 const STAT_TEXT: Record<TreeStat, (n: string) => string> = {
@@ -87,7 +107,9 @@ const STAT_TEXT: Record<TreeStat, (n: string) => string> = {
   heartDoorCost: (n) => `−${n}% of the keys and HP each Heart Door takes`,
   doubleKey: (n) => `${n}% chance a key picked up is two`,
   masterKey: (n) => `${n}% chance a key picked up opens every door on its floor`,
-  ...byKeyColor((color): Record<ColorKeyPart, (n: string) => string> => ({
+  ...byKeyColor((_, word): Record<ColorKeyPart, (n: string) => string> => {
+    const color = word.toLowerCase();
+    return {
     KeyHeal: (n) => `Heals ${n}% of max HP on picking up each ${color} key`,
     KeyOverheal: (n) => `Heals ${n}% of the HP ceiling, Overheal included, on picking up each ${color} key`,
     KeyGold: (n) => `+${n}% Gold from each ${color} key`,
@@ -97,6 +119,28 @@ const STAT_TEXT: Record<TreeStat, (n: string) => string> = {
     DoorCost: (n) => `−${n}% of each ${color} key a door takes`,
     DoubleKey: (n) => `${n}% chance a ${color} key picked up is two`,
     MasterKey: (n) => `${n}% chance a ${color} key picked up opens every door with a ${color} lock on its floor`,
+    };
+  }),
+  ...byFoeCard(({ a, one, many }): Record<FoePart, (n: string) => string> => ({
+    Gold: (n) => `+${n}% Gold from each ${one} killed`,
+    InstakillGold: (n) => `+${n}% Gold from each Instakill of ${a}`,
+    Silver: (n) => `+${n} Silver from each ${one} killed`,
+    Attack: (n) => `+${n}% ATK against ${many}`,
+    Defense: (n) => `+${n}% DEF against ${many}`,
+    Shroud: (n) => `+${n}% shroud against ${many}`,
+    CritChance: (n) => `+${n}% Crit % chance against ${many}`,
+    CritFactor: (n) => `+${n}% Crit x factor against ${many}`,
+    KillXp: (n) => `+${n}% XP from each ${one} killed`,
+    SpawnRate: (n) => `+${n}% more ${many} on each floor`,
+    Material: (n) => `${n}% chance each ${one} killed drops upgrade materials`,
+    InstakillMaterial: (n) => `${n}% chance each Instakill of ${a} drops upgrade materials`,
+    Equipment: (n) => `${n}% chance each ${one} killed drops a piece of equipment`,
+    InstakillMaxHp: (n) => `+${n}% max HP for the run with each Instakill of ${a}`,
+    StealOverheal: (n) => `Lifesteal heals up to ${n}% above max HP against ${many}`,
+    SurpriseAttack: (n) => `${n}% chance the first strike of a fight with ${a} right after a Dash deals twice your ATK`,
+    Cells: (n) => `+${n} Cell${n === "1" ? "" : "s"} from each ${one} killed`,
+    Takedown: (n) => `${a[0]!.toUpperCase()}${a.slice(1)} loses ${n}% of its max HP as a fight with it begins`,
+    Tangle: (n) => `${a[0]!.toUpperCase()}${a.slice(1)} loses ${n}% of its ATK as a fight with it begins`,
   })),
   maxHp: (n) => `+${n}% max HP`,
   foeAttack: (n) => `+${n}% ATK against every enemy`,
@@ -153,6 +197,9 @@ const STAT_ICONS: Record<TreeStat, () => string> = {
     const key = () => itemSprite(`key_${color}`);
     return { KeyHeal: ui("health"), KeyOverheal: ui("health"), KeyGold: ui("gold"), KeyFind: key, KeySilver: silver, KeyChest: () => itemSprite("chest_treasure_open"), DoorCost: key, DoubleKey: key, MasterKey: key };
   }),
+  ...byFoeCard(() => ({ Gold: ui("gold"), InstakillGold: ui("gold"), Silver: silver, Attack: ui("attack"), Defense: ui("defense"), Shroud: ui("log"), CritChance: ui("attack"), CritFactor: ui("attack"),
+    KillXp: ui("arrow-up"), SpawnRate: ui("upgrades"), Material: () => itemSprite("chest_silver"), InstakillMaterial: () => itemSprite("chest_silver"), Equipment: () => itemSprite("chest_gold"),
+    InstakillMaxHp: ui("health"), StealOverheal: ui("health"), SurpriseAttack: ui("attack"), Cells: () => cellIcon(), Takedown: ui("attack"), Tangle: ui("defense") })),
   maxHp: ui("health"),
   foeAttack: ui("attack"), foeDefense: ui("defense"), foeGold: ui("gold"), foeSilver: silver, moreEnemies: ui("upgrades"),
   critChance: ui("attack"), critFactor: ui("attack"), killXp: ui("arrow-up"), surpriseAttack: ui("attack"), foeAttackCut: ui("defense"), stealOverheal: ui("health"),

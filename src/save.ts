@@ -142,7 +142,7 @@ const validPlayer = (p: any, width: number) =>
   (p.stealOverheal === undefined || (finite(p.stealOverheal) && p.stealOverheal >= 0)) &&
   (p.powerStrike === undefined || p.powerStrike === true) &&
   [p.takedown, p.tangle].every((cuts) => cuts === undefined || (isRecord(cuts) && Object.entries(cuts).every(([k, n]) => (k === "boss" || k === "greaterBoss") && finite(n) && n >= 0))) &&
-  [p.foeAttack, p.foeDefense, p.foeShroud].every((m) => m === undefined || (isRecord(m) && Object.entries(m).every(([id, v]) => isFoeKey(id) && finite(v) && (v as number) >= 0))) &&
+  [p.foeAttack, p.foeDefense, p.foeShroud, p.foeCritChance, p.foeCritFactor, p.foeStealOverheal].every((m) => m === undefined || (isRecord(m) && Object.entries(m).every(([id, v]) => isFoeKey(id) && finite(v) && (v as number) >= 0))) &&
   KEY_COLORS.every((k) => finite(p.keys?.[k]));
 /** Checks every run passes, whatever its mode; `width` is the mode's board. */
 const validCore = (r: any, width: number) =>

@@ -1,4 +1,4 @@
-import { bout, DEFEAT_MS, guaranteedCrits, heroHpAfter, heroHpDuring, resume, REVIVE_PAUSE_MS, revivals, summarize, type Bout, type CritRule, type Crits, type Revival } from "../combat.ts";
+import { bout, critAgainst, DEFEAT_MS, guaranteedCrits, heroHpAfter, heroHpDuring, resume, REVIVE_PAUSE_MS, revivals, summarize, type Bout, type CritRule, type Crits, type Revival } from "../combat.ts";
 import type { Enemy, Mode } from "../entities.ts";
 import type { Run } from "../runs.ts";
 import { snap } from "../exact.ts";
@@ -76,7 +76,7 @@ export class FightPlayback<S extends FoughtStep> {
       const { fast: _, ...caught } = enemy;
       enemy = caught;
     }
-    const revive = isLethal(outcome) ? this.revival(step.dest) : undefined, crits = this.critRolls(step.dest);
+    const revive = isLethal(outcome) ? this.revival(step.dest) : undefined, crits = this.critRolls(step.dest, enemy);
     if (!this.playsFights && !revive && !crits) return this.take(step, 0);
     const fight = bout(p, enemy, revive, crits), start = performance.now(), rose = revivals(fight).length;
     step.crits = critHits(fight);
@@ -140,8 +140,8 @@ export class FightPlayback<S extends FoughtStep> {
    * again lands the same crits, and more Crit % only ever adds some. Chance
    * of 100% or more lands that many applications of the factor for certain,
    * and the rest rolls for one more. */
-  private critRolls(at: { x: number; y: number }): Crits | undefined {
-    const rule = this.host.crit, { run, mode } = this.host, first = this.surprised ? { first: SURPRISE_FACTOR } : {};
+  private critRolls(at: { x: number; y: number }, enemy: Enemy): Crits | undefined {
+    const rule = critAgainst(this.host.crit, this.host.run.player, enemy), { run, mode } = this.host, first = this.surprised ? { first: SURPRISE_FACTOR } : {};
     if (!rule) return this.surprised ? { factor: 1, applications: () => 0, ...first } : undefined;
     const floor = mode === "tower" ? run.height + 1 : 0, seed = run.seed ^ CRIT_SALT ^ Math.imul(floor, 0x9e3779b1);
     const sure = guaranteedCrits(rule.chance), rest = snap(rule.chance - 100 * sure);
@@ -191,7 +191,7 @@ export class FightPlayback<S extends FoughtStep> {
       hp = s.hp;
       shroud = snap(Math.max(0, shroud - (s.shrouded ?? 0)));
     }
-    fight.bout = resume(fight.bout, from, { player: { ...p, hp, shroud }, enemy: fight.enemy, revives: this.revival(fight.to), crits: this.critRolls(fight.to) });
+    fight.bout = resume(fight.bout, from, { player: { ...p, hp, shroud }, enemy: fight.enemy, revives: this.revival(fight.to), crits: this.critRolls(fight.to, fight.enemy) });
     this.showRevivals(fight.start, revivals(fight.bout));
     this.restate(fight.outcome, fight.bout);
     Object.assign(fight.outcome.player, { attack: p.attack, defense: p.defense, maxHp: p.maxHp });

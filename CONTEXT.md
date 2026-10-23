@@ -297,7 +297,7 @@ HP held above max HP, which the Overheal skill allows: potions, GK TO HP and bad
 _Avoid_: overhealth, shield HP
 
 **Lifesteal**:
-The share of the damage each of the hero's strikes deals to an enemy that is restored to the hero as HP (up to max HP, or above it with ENEMY's Lifesteal Overheal), as the strike lands and before the enemy's reply. It starts at 0% and Lifesteal training raises it by 0.1% for the first rank, each later rank adding 0.001% less, to 4.84% at 80 ranks. Fight forecasts and Damage Visual count it.
+The share of the damage each of the hero's strikes deals to an enemy that is restored to the hero as HP (up to max HP, or above it with ENEMY's Lifesteal Overheal and, against their enemies, the enemy cards' trees'), as the strike lands and before the enemy's reply. It starts at 0% and Lifesteal training raises it by 0.1% for the first rank, each later rank adding 0.001% less, to 4.84% at 80 ranks. Fight forecasts and Damage Visual count it.
 
 **Thorns**:
 What each enemy strike the hero lives through costs the enemy: a share of its max HP (1% a Thorn Damage rank, half against a boss or Greater Boss), which DEF doesn't reduce. A fight thorns end is no Instakill.
@@ -499,13 +499,13 @@ The hand's first step toward a new target carrying on along the path across empt
 _Avoid_: rush (the Archives' Gem button that completes research at once), sprint, leap
 
 **Dash attack**:
-A fight the hero steps into from the tile a Dash stopped on, the turn after it. ENEMY's Surprise Attack may double the ATK of its first strike, and takes a Fast enemy's first strike away.
+A fight the hero steps into from the tile a Dash stopped on, the turn after it. ENEMY's Surprise Attack (and an enemy card's tree's, against its enemies) may double the ATK of its first strike, and takes a Fast enemy's first strike away.
 
 **Power Strike**:
 ATK Up's legendary upgrade: an ATK shard taken may charge the hero's next fight, every strike of it dealing twice its ATK.
 
 **Takedown** and **Tangle**:
-A share of a boss's max HP (Takedown) or ATK (Tangle) taken as a fight with it begins, before the hero's first strike; Greater Takedown and Greater Tangle take a Greater Boss's.
+A share of a boss's max HP (Takedown) or ATK (Tangle) taken as a fight with it begins, before the hero's first strike; Greater Takedown and Greater Tangle take a Greater Boss's, and Boss Enemy's tree's take both.
 
 **Treasure Floor**:
 A floor whose ATK and DEF shards and potions are all treasure chests, by Chest's upgrade, rolled once for each floor.

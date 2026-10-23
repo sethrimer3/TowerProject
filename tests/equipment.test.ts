@@ -193,7 +193,7 @@ test("Auto-salvage dismantles Common chest pieces and keeps the rest, and is sav
   assert.equal(keepDrop(e, { def: "knightsSword", rarity: "common", category: "weapon" }).item?.rarity, "common");
 });
 
-test("kills drop no Equipment, a boss or a Greater Boss neither, once Equipment is open", () => {
+test("kills drop no Equipment without an enemy card's tree, a boss or a Greater Boss neither, once Equipment is open", () => {
   const s = defaults();
   s.equipment.unlocked = true;
   const g = new Game(s, seq([0]));
@@ -201,7 +201,7 @@ test("kills drop no Equipment, a boss or a Greater Boss neither, once Equipment 
   const purse = (g as any).purse;
   for (const strength of ["weak", "elite", "boss", "greaterBoss"] as const) {
     const loot = purse.enemyLoot(enemy(strength), 4, strength.length);
-    assert.deepEqual(Object.keys(loot).sort(), ["cells", "gold"]);
+    assert.deepEqual(loot.equipment, []);
   }
   assert.equal(g.save.equipment.items.length, 0);
   assert.ok(Object.values(g.save.equipment.materials).every((n) => n === 0), "and no upgrade materials");

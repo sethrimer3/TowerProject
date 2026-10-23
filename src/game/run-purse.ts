@@ -20,7 +20,7 @@ import { runBoons } from "../shrines.ts";
 import { earn } from "../profile.ts";
 import { notesOf, tallyIn } from "../run-notes.ts";
 import { foeGold } from "../foe-cards.ts";
-import { treeBonus, treeFactor } from "../card-trees.ts";
+import { foeStat, treeBonus, treeFactor } from "../card-trees.ts";
 
 /** The tiles whose Pickup Gold a skipped floor counts, beside its lit torches. */
 const ITEMS: ReadonlySet<Tile["kind"]> = new Set(["key", "potion", "attack", "defense", "door"]);
@@ -173,11 +173,13 @@ export class RunPurse {
     if (notes && silver > 0) notes.silver = snap(notes.silver + silver);
   }
 
-  /** A kill's Silver, by the enemy's strength and the equivalent floor
-   * (none under the boon that trades it for Silver / Floor). */
+  /** A kill's Silver, by the enemy's strength and the equivalent floor, and
+   * the enemy cards' trees' Silver covering it added (none under the boon
+   * that trades it for Silver / Floor). */
   killSilver(enemy: Enemy, floor: number, scale = 1) {
     // ENEMY's tree raises it, its own factor beside the boons'.
-    const base = snap(silverForKill(enemy.strength, floor) * (this.boons?.killSilver ?? 1) * treeFactor(this.tree, "foeSilver"));
+    const tree = this.tree, found = snap(silverForKill(enemy.strength, floor) + foeStat(tree, enemy, "Silver"));
+    const base = snap(found * (this.boons?.killSilver ?? 1) * treeFactor(tree, "foeSilver"));
     return this.silver(scale === 1 ? base : snap(base * scale));
   }
 
@@ -199,34 +201,55 @@ export class RunPurse {
    * `instakill` (the hero's first strike ended it) by Mug research too; then
    * by 5% more for each enemy card the run's hand holds that covers it,
    * added into one factor with the card trees' (ENEMY's for every enemy,
-   * TORCH's for a Greater Boss: `foeGold`). */
+   * TORCH's for a Greater Boss, and the enemy cards' own covering it, their
+   * Instakill Bounty too for an `instakill`: `foeGold`). */
   private killGold(enemy: Enemy, instakill = false) {
     const raw = snap(((ENEMY_GOLD[enemy.strength] + (enemy.fast ? FAST_GOLD : 0) + (enemy.ranged || enemy.flying ? RANGED_GOLD : 0) + (enemy.shielded ? SHIELDED_GOLD : 0)) * this.goldBonus) / 10_000);
     const gold = instakill ? snap((raw * researched(this.save.archives, "instakillGold")) / 100) : raw;
-    const tree = this.tree, more = tree.foeGold + (enemy.strength === "greaterBoss" ? tree.bossGold : 0);
+    const tree = this.tree, own = foeStat(tree, enemy, "Gold") + (instakill ? foeStat(tree, enemy, "InstakillGold") : 0);
+    const more = snap(tree.foeGold + (enemy.strength === "greaterBoss" ? tree.bossGold : 0) + own);
     const foe = this.run.outside ? 1 : foeGold(this.run.hand ?? [], enemy, more);
     return foe === 1 ? gold : snap(gold * foe);
   }
 
-  /** An enemy's Gold (by its strength) and a Greater Boss's Cells, once
-   * per physical kill. Kills drop no Equipment: chests hold it (`treasure`). */
-  enemyLoot(enemy: Enemy, x: number, y: number, scale = 1, instakill = false): { gold: number; cells: number } {
-    if (!this.loot(this.killKey(enemy, x, y))) return { gold: 0, cells: 0 };
+  /** An enemy's Gold (by its strength), a Greater Boss's Cells and those the
+   * enemy cards' trees add, and what those trees' drops find toward
+   * Equipment, once per physical kill: a Supply Chest's upgrade materials
+   * by their Salvage chance (Instakill Salvage's too for an `instakill`),
+   * and an Equipment Chest's piece by their Equipment Drop chance, once
+   * Equipment is open. */
+  enemyLoot(enemy: Enemy, x: number, y: number, scale = 1, instakill = false): { gold: number; cells: number; equipment: EquipmentLoot[] } {
+    if (!this.loot(this.killKey(enemy, x, y))) return { gold: 0, cells: 0, equipment: [] };
     // Effective or Dampen on the card that took the fight scales it; `gold`
     // then adds the tier's bonus and the other Gold multipliers.
     const base = this.withCombo(this.killGold(enemy, instakill)), raised = scale === 1 ? base : snap(base * scale);
-    const gold = this.gold(raised);
-    const cells = enemy.strength === "greaterBoss" ? this.cells(scale) : 0;
-    return { gold, cells };
+    const gold = this.gold(raised), more = foeStat(this.tree, enemy, "Cells");
+    const cells = enemy.strength === "greaterBoss" ? this.cells(scale, more) : more ? this.bankCells(snap(more * scale)) : 0;
+    return { gold, cells, equipment: this.killDrops(enemy, instakill) };
+  }
+
+  /** What the enemy cards' trees' drops find from a kill of `enemy`: each
+   * chance rolled on Equipment's stream, only when there is one. */
+  private killDrops(enemy: Enemy, instakill: boolean): EquipmentLoot[] {
+    if (!this.save.equipment.unlocked) return [];
+    const tree = this.tree, found: EquipmentLoot[] = [];
+    const material = snap(foeStat(tree, enemy, "Material") + (instakill ? foeStat(tree, enemy, "InstakillMaterial") : 0)), piece = foeStat(tree, enemy, "Equipment");
+    if (material && this.equipmentRng() * 100 < material) found.push(this.chestEquipment("supply"));
+    if (piece && this.equipmentRng() * 100 < piece) found.push(this.chestEquipment("equipment"));
+    return found;
   }
 
   /** A Greater Boss's Cells, banked in the save: a whole number from 1 to
    * the tower's number, evenly (tower I's always 1, drawing nothing), and
-   * TORCH's tree's Cells more, then the scale of Effective or Dampen on the
-   * card that took the fight. */
-  private cells(scale: number) {
-    const found = (this.tier > 1 ? 1 + Math.floor(this.rng() * this.tier) : 1) + this.tree.bossCells;
-    const cells = scale === 1 ? found : snap(found * scale);
+   * TORCH's tree's Cells more and `more` (BOSS ENEMY's), then the scale of
+   * Effective or Dampen on the card that took the fight. */
+  private cells(scale: number, more = 0) {
+    const found = (this.tier > 1 ? 1 + Math.floor(this.rng() * this.tier) : 1) + this.tree.bossCells + more;
+    return this.bankCells(scale === 1 ? found : snap(found * scale));
+  }
+
+  /** Banks `cells` Cells in the save, counted toward the run's finds. */
+  private bankCells(cells: number) {
     this.save.cells = snap(this.save.cells + cells);
     earn(this.save, "cells", cells);
     this.slice.runFinds.cells = snap(this.slice.runFinds.cells + cells);

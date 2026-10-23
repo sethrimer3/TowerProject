@@ -33,12 +33,12 @@ test("ENEMY's Crit Chance and Crit Factor raise Crit % and Crit x by their perce
   s.training.critChance = 20;
   s.training.critFactor = 8;
   assert.deepEqual(critRule(s), { chance: 20, factor: 2 });
-  assert.deepEqual(critRule(s, { chance: 5, factor: 10 }), { chance: 21, factor: 2.2 });
+  assert.deepEqual(critRule(s, { chance: 5, factor: 10 }), { chance: 21, factor: 2.2, cards: { chance: 5, factor: 10 } }, "the card percents ride along, for an enemy card's to add to");
   assert.equal(critRule(defaults(), { chance: 5, factor: 10 }), undefined, "no crits without Crit %");
   const g = enemyRun({ attack: 4, critChance: 5, critFactor: 5 });
   Object.assign(g.save.upgrades, { critical: 1 });
   Object.assign(g.save.training, { critChance: 20, critFactor: 8 });
-  assert.deepEqual(g.crit, { chance: 21, factor: 2.2 });
+  assert.deepEqual(g.crit, { chance: 21, factor: 2.2, cards: { chance: 5, factor: 10 } });
   assert.deepEqual(g.crit, critRule({ ...g.save, archives: g.save.archives }, { chance: 5, factor: 10 }));
 });
 

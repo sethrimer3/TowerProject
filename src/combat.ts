@@ -73,15 +73,17 @@ export function squaredUp(player: Player, enemy: Enemy): { player: Player; enemy
 export const POWER_FACTOR = 2;
 /** `player` as it stands against `enemy`: its DEF and shroud raised by the
  * card trees' percents covering it (`foeDefense`, `foeShroud`), each added
- * into one card factor; itself when none does. Fights and enemy shots take
- * the hero through it. */
+ * into one card factor, and the enemy cards' trees' Lifesteal Overheal
+ * covering it added to ENEMY's (`foeStealOverheal`); itself when none
+ * does. Fights and enemy shots take the hero through it. */
 export function facing(player: Player, enemy: Enemy): Player {
-  const defense = foeAttack(player.foeDefense, enemy), shroud = foeAttack(player.foeShroud, enemy);
-  if (!defense && !(shroud && player.shroud)) return player;
+  const defense = foeAttack(player.foeDefense, enemy), shroud = foeAttack(player.foeShroud, enemy), steal = foeAttack(player.foeStealOverheal, enemy);
+  if (!defense && !(shroud && player.shroud) && !steal) return player;
   return {
     ...player,
     ...(defense ? { defense: snap((player.defense * (100 + defense)) / 100) } : {}),
     ...(shroud && player.shroud ? { shroud: snap((player.shroud * (100 + shroud)) / 100) } : {}),
+    ...(steal ? { stealOverheal: snap((player.stealOverheal ?? 0) + steal) } : {}),
   };
 }
 /** Thorns: what each of `enemy`'s strikes costs it, the hero's Thorn Damage
@@ -114,7 +116,20 @@ export function defenseAgainst(player: Player, enemy: Enemy) {
  * (100 or more: that many applications are certain, and the rest rolls for
  * one more), and every application adds `factor` − 1 times the hero's ATK to
  * the strike, so one application multiplies it by `factor`. */
-export type CritRule = { chance: number; factor: number };
+export type CritRule = { chance: number; factor: number; cards?: { chance: number; factor: number } };
+/** `crit` against `enemy`: the enemy cards' trees' percents covering it
+ * (`foeCritChance`, `foeCritFactor`) added to the card percents already in
+ * it (`cards`, ENEMY's), as one card factor; itself when none covers it. */
+export function critAgainst(crit: CritRule | undefined, player: Player, enemy: Enemy): CritRule | undefined {
+  const chance = foeAttack(player.foeCritChance, enemy), factor = foeAttack(player.foeCritFactor, enemy);
+  if (!crit || (!chance && !factor)) return crit;
+  const had = crit.cards ?? { chance: 0, factor: 0 }, cards = { chance: snap(had.chance + chance), factor: snap(had.factor + factor) };
+  return {
+    chance: chance ? snap((crit.chance * (100 + cards.chance)) / (100 + had.chance)) : crit.chance,
+    factor: factor ? snap((crit.factor * (100 + cards.factor)) / (100 + had.factor)) : crit.factor,
+    cards,
+  };
+}
 /** What a strike with `applications` critical applications multiplies ATK by. */
 export const critMultiplier = (factor: number, applications: number) => (applications ? snap(1 + applications * (factor - 1)) : 1);
 /** The hero's critical rolls in one fight: the `factor` and how many

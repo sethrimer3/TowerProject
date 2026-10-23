@@ -3,7 +3,7 @@ import { buyTheme, canWear, grantAllThemes, type GameLook, type ThemeId, type Th
 import { chooseStep } from "./automation.ts";
 import { CARDS, cardText, deckCards, explainStuck, handBonus, keptLinks, planHand, planTarget, shootsWith, stillOpen, type CardId, type CardPlan, type HandBonus, type StuckReport } from "./cards.ts";
 import { addCardXp, PASSIVE_CARDS } from "./card-levels.ts";
-import { cardMaxLevel, compounded, keyStat, freeUpChances, freeUpFactors, hasPointsToSpend, pointsLeft, runCardTrees, runFoeCut, treeBonus, treeFactor, treeOverheal, type TreeBonus } from "./card-trees.ts";
+import { cardMaxLevel, compounded, foeCardStat, foeStat, foeStats, keyStat, freeUpChances, freeUpFactors, hasPointsToSpend, pointsLeft, runCardTrees, runFoeCut, treeBonus, treeFactor, treeOverheal, type FoeTreeCard, type TreeBonus } from "./card-trees.ts";
 import { aggroTurn } from "./flying.ts";
 import { foeOn } from "./ranged.ts";
 import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./badges.ts";
@@ -1050,16 +1050,19 @@ export class Game {
     // CHEST's Treasure Floor makes a floor's shards and potions chests as it is generated.
     if (tree.treasureFloor) this.run.treasureFloor = Math.min(100, tree.treasureFloor);
     else delete this.run.treasureFloor;
-    // The hero strikes the enemies each enemy card covers harder, and with
-    // ENEMY's and TORCH's trees holds more DEF and shroud against theirs,
-    // HEAL's more shroud against every enemy and a parry of its own
-    // (combat.ts reads them).
+    // The hero strikes the enemies each enemy card covers harder (its tree
+    // harder still), and with the enemy cards', ENEMY's and TORCH's trees
+    // holds more DEF and shroud against theirs, HEAL's more shroud against
+    // every enemy and a parry of its own; the enemy cards' trees raise its
+    // crits and Lifesteal's ceiling against theirs (combat.ts reads them).
     const p = this.run.player, foes: NonNullable<Player["foeAttack"]> = Object.fromEntries(Object.entries(handBonus(this.run.hand).foe).map(([id, b]) => [id, b.attack]));
+    for (const [card, n] of Object.entries(foeStats(tree, "Attack")) as [FoeTreeCard, number][]) foes[card] = snap((foes[card] ?? 0) + n);
     if (tree.foeAttack) foes.monster = tree.foeAttack;
     if (tree.bossAttack) foes.torch = tree.bossAttack;
-    const defense = { ...(tree.foeDefense ? { monster: tree.foeDefense } : {}), ...(tree.bossDefense ? { torch: tree.bossDefense } : {}) };
-    const shroud = { ...(tree.shroud ? { monster: tree.shroud } : {}), ...(tree.bossShroud ? { torch: tree.bossShroud } : {}) };
-    for (const [k, v] of [["foeAttack", foes], ["foeDefense", defense], ["foeShroud", shroud]] as const) {
+    const defense = { ...foeStats(tree, "Defense"), ...(tree.foeDefense ? { monster: tree.foeDefense } : {}), ...(tree.bossDefense ? { torch: tree.bossDefense } : {}) };
+    const shroud = { ...foeStats(tree, "Shroud"), ...(tree.shroud ? { monster: tree.shroud } : {}), ...(tree.bossShroud ? { torch: tree.bossShroud } : {}) };
+    for (const [k, v] of [["foeAttack", foes], ["foeDefense", defense], ["foeShroud", shroud], ["foeCritChance", foeStats(tree, "CritChance")],
+      ["foeCritFactor", foeStats(tree, "CritFactor")], ["foeStealOverheal", foeStats(tree, "StealOverheal")]] as const) {
       if (Object.keys(v).length) (p as Record<string, unknown>)[k] = v;
       else delete p[k];
     }
@@ -1068,9 +1071,10 @@ export class Game {
     if (tree.stealOverheal) p.stealOverheal = tree.stealOverheal;
     else delete p.stealOverheal;
     // ATK UP's and DEF UP's Takedown and Tangle cut a boss as a fight with it
-    // begins, TORCH's a Greater Boss (combat.ts's `squaredUp`).
-    const cuts = (boss: number, greaterBoss: number) => ({ ...(boss ? { boss } : {}), ...(greaterBoss ? { greaterBoss } : {}) });
-    for (const [k, v] of [["takedown", cuts(tree.takedown, tree.greaterTakedown)], ["tangle", cuts(tree.tangle, tree.greaterTangle)]] as const) {
+    // begins, TORCH's a Greater Boss, and BOSS ENEMY's both (combat.ts's `squaredUp`).
+    const cuts = (boss: number, greaterBoss: number, both: number) => ({ ...(boss + both ? { boss: snap(boss + both) } : {}), ...(greaterBoss + both ? { greaterBoss: snap(greaterBoss + both) } : {}) });
+    for (const [k, v] of [["takedown", cuts(tree.takedown, tree.greaterTakedown, foeCardStat(tree, "bossEnemy", "Takedown"))],
+      ["tangle", cuts(tree.tangle, tree.greaterTangle, foeCardStat(tree, "bossEnemy", "Tangle"))]] as const) {
       if (Object.keys(v).length) p[k] = v;
       else delete p[k];
     }
@@ -1561,8 +1565,8 @@ export class Game {
   /** Pays the XP for beating `enemy` on equivalent floor `floor`, counting
    * it toward the run's total too. */
   gainXp(enemy: Enemy, floor: number, scale = 1) {
-    // Worn Equipment's XP Gain and ENEMY's tree's, each its own factor.
-    const xp = tierXp(this.tier, xpForKill(enemy.strength, floor)), gain = this.worn.xpGain, tree = this.treeBonus.killXp;
+    // Worn Equipment's XP Gain and the card trees' (ENEMY's, and the enemy cards' covering it, added up), each its own factor.
+    const bonus = this.treeBonus, xp = tierXp(this.tier, xpForKill(enemy.strength, floor)), gain = this.worn.xpGain, tree = snap(bonus.killXp + foeStat(bonus, enemy, "KillXp"));
     const raisedXp = gain || tree ? Math.round((xp * (100 + gain) * (100 + tree)) / 10_000) : xp;
     this.addXp(scale === 1 ? raisedXp : Math.round(raisedXp * scale));
   }
@@ -1664,10 +1668,12 @@ export class Game {
     }
     const step: TakenStep = { tile: t, outcome, dest, track, quiet: this.emptyAt(dest.x, dest.y), card };
     this.facing = { dx, dy };
-    // ENEMY's Surprise Attack: the fight a Dash stopped before, by the enemy tile's roll.
+    // ENEMY's Surprise Attack, and the enemy cards' covering the enemy, added
+    // into one chance: the fight a Dash stopped before, by the enemy tile's roll.
     const dashed = this.dashedTo;
     this.dashedTo = null;
-    const surprise = t.kind === "enemy" && !!dashed && dashed.x === p.x && dashed.y === p.y && this.tileRolls(dest.x, dest.y, SURPRISE_SALT, this.treeBonus.surpriseAttack);
+    const surprise = t.kind === "enemy" && !!dashed && dashed.x === p.x && dashed.y === p.y
+      && this.tileRolls(dest.x, dest.y, SURPRISE_SALT, snap(this.treeBonus.surpriseAttack + foeStat(this.treeBonus, t.enemy!, "SurpriseAttack")));
     if (surprise) step.surprise = true;
     return t.kind === "enemy" ? this.fights.fight(step, t.enemy!, surprise) : this.take(step);
   }

@@ -165,19 +165,45 @@ Points are spent in the forest; inside a run the tree only shows.
   A Dash stops short of an enemy, and the fight you step into from there on the next turn is a surprise: Surprise Attack rolls once for each enemy's tile, so undo can't roll it again.
   A Surprise Attack's first strike rises in a gold outline, as a fully charged arrow's does.
   A Fast enemy caught by one loses its first strike: you strike first.
+- **Weak Enemy**, **Base Enemy**, **Strong Enemy**, **Elite Enemy**, **Boss Enemy** and **Non-Boss Enemy** each have a tree whose upgrades work only against the enemies the card heads for (Boss Enemy's against bosses and Greater Bosses alike).
+  Each has two tracks, each rising one rarity an upgrade, every upgrade after a track's first up to 5 levels.
+  Weak Enemy, to 60 levels:
+  Gold: +5% Gold from each weak enemy killed (common, 5 levels, up to 10), then +0.1 Silver from each (uncommon), +5% Gold from each Instakill of one (rare), **Instakill Salvage**, +1% chance an Instakill of one drops upgrade materials (epic), and **Instakill Vigor**, +0.01% max HP for the run with each Instakill of one (legendary).
+  Attack: +5% ATK against weak enemies (common, 5 levels, up to 10), then +2% Crit x factor against them (uncommon), +2% XP from each (rare), +4% more of them on each floor (epic), and Lifesteal healing up to 10% above max HP in fights with them (legendary).
+  Base Enemy, to 60 levels:
+  Gold: +6% Gold from each base enemy killed (common, 5 levels, up to 10), then +0.1 Silver from each (uncommon), +0.5% chance of a free Defense level each floor (rare), **Salvage**, +1% chance each drops upgrade materials (epic), and **Surprise Attack**, +5% chance against them (legendary).
+  Attack: +5% ATK against base enemies (common, 5 levels, up to 10), then +2% Crit % chance against them (uncommon), +2% XP from each (rare), +3% more of them on each floor (epic), and Lifesteal healing up to 10% above max HP in fights with them (legendary).
+  Strong Enemy, to 60 levels:
+  Gold: +7% Gold from each strong enemy killed (common, 5 levels, up to 10), then +0.2 Silver from each (uncommon), +0.5% chance of a free Offense level each floor (rare), **Salvage**, +1% (epic), and **Surprise Attack**, +5% (legendary).
+  Attack: +5% ATK against strong enemies (common, 5 levels, up to 10), then +5% shroud against them (uncommon), +3% XP from each (rare), +2% more of them on each floor (epic), and Lifesteal healing up to 15% above max HP in fights with them (legendary).
+  Elite Enemy, to 60 levels:
+  Gold: +8% Gold from each elite enemy killed (common, 4 levels, up to 10), then +0.3 Silver from each (uncommon), **Free Upgrade**, +0.5% chance of a free Offense, Defense and Utility level each floor (rare), **Equipment Drop**, +0.1% chance each drops a piece of equipment (epic), and **Surprise Attack**, +5% (legendary).
+  Defense: +5% DEF against elite enemies (common, 4 levels, up to 5).
+  Attack: +5% ATK against elite enemies (common, 2 levels, up to 5), then +2% Crit % chance against them (uncommon), +4% XP from each (rare), +2% more of them on each floor (epic), and Lifesteal healing up to 20% above max HP in fights with them (legendary).
+  Boss Enemy, to 55 levels:
+  Gold: +10% Gold from each boss or Greater Boss killed (common, 8 levels, up to 10), then +5% shroud against them (uncommon), +5% DEF against them (rare), **Equipment Drop**, +0.3% (epic), and **Tangle**, −3% of their ATK as a fight with one begins (legendary).
+  Attack: +5% ATK against bosses and Greater Bosses (common, 2 levels, up to 5), then +3% Crit % chance against them (uncommon), +4% Crit x factor against them (rare), +1 Cell from each killed (epic), and **Takedown**, −5% of their max HP as a fight with one begins (legendary).
+  Non-Boss Enemy, to 60 levels, against every enemy but bosses and Greater Bosses:
+  Gold: +5% Gold from each killed (common, 5 levels, up to 10), then +0.1 Silver from each (uncommon), **Free Upgrade**, +0.2% chance of a free Offense, Defense and Utility level each floor (rare), **Salvage**, +1% (epic), and **Surprise Attack**, +5% (legendary).
+  Attack: +5% ATK against them (common, 5 levels, up to 10), then +3% Crit x factor against them (uncommon), +2% XP from each (rare), +3% more of them on each floor (epic), and Lifesteal healing up to 10% above max HP in fights with them (legendary).
+  Two cards covering one enemy add their upgrades: Weak Enemy's +20% more weak enemies and Non-Boss Enemy's +15% make 35% more, and their Gold, ATK and the rest add up the same way.
+  Their Gold, ATK, DEF, shroud, Crit and XP percents add to the card's own +5% and to Enemy's like ones, as one card factor.
+  Their Silver adds to each kill's before Silver Bonus, their Surprise Attack and Lifesteal Overheal to Enemy's, and their Free Upgrade chances to the other cards'.
+  Salvage drops a Supply Chest's upgrade materials, and Equipment Drop an Equipment Chest's piece, once Equipment is open; each kill rolls them once, so undo can't roll them again.
+  More enemies on each floor are added as More Enemies adds them, counted from those generated there.
 - **ATK Up** has two tracks, each rising one rarity an upgrade, and opens to 60 levels.
   Shards: +2% from each ATK shard (common, 5 levels, up to 10), then +3% more (uncommon), +2% Crit % chance (rare), +1% chance of a free Offense level each floor, trained or not (epic), and **Power Strike**, +1% chance an ATK shard taken charges your next fight with twice your ATK (legendary), each up to 5 levels.
-  Gold: +10% Gold from each ATK shard (common, 5 levels, up to 10), then +0.1 Silver from each ATK shard taken (uncommon), +1% Silver Bonus (rare), +2% Gold Bonus (epic), and **Takedown**, a boss losing 10% of its max HP as a fight with it begins (legendary), each up to 5 levels.
+  Gold: +10% Gold from each ATK shard (common, 5 levels, up to 10), then +0.1 Silver from each ATK shard taken (uncommon), +1% Silver Bonus (rare), +2% Gold Bonus (epic), and **Takedown**, a boss losing 5% of its max HP as a fight with it begins (legendary), each up to 5 levels.
   A charged Power Strike waits for the next fight, every strike of it rising in a gold outline, and the shard rolls it once, so undo can't roll it again.
 - **DEF Up** has the same two tracks for DEF, and opens to 60 levels.
   Shards: +2% from each DEF shard (common, 5 levels, up to 10), then +3% more (uncommon), +10% Regen (rare), +1% chance of a free Defense level each floor, trained or not (epic), and +1% Parry, parried with Parry % or without it (legendary), each up to 5 levels.
-  Gold: +10% Gold from each DEF shard (common, 5 levels, up to 10), then +0.1 Silver from each DEF shard taken (uncommon), +1% Silver Bonus (rare), +2% Gold Bonus (epic), and **Tangle**, a boss losing 5% of its ATK as a fight with it begins (legendary), each up to 5 levels.
+  Gold: +10% Gold from each DEF shard (common, 5 levels, up to 10), then +0.1 Silver from each DEF shard taken (uncommon), +1% Silver Bonus (rare), +2% Gold Bonus (epic), and **Tangle**, a boss losing 3% of its ATK as a fight with it begins (legendary), each up to 5 levels.
 - Takedown and Tangle open a fight with a boss before your first strike: a glowing X of two sword slashes shrinks onto it and holds for half a second, its HP bar dropping by the share of its max HP taken (it keeps at least 1 HP, and arrows that wounded it still count), and a glowing blue arrow points down behind the X while its ATK is cut.
-  They never touch a Greater Boss, which Torch's own cuts do.
+  ATK Up's and DEF Up's never touch a Greater Boss, which Torch's own cuts do; Boss Enemy's cut both, adding to the others'.
   The cuts count in every forecast: the damage labels, the inspect panel and the hand's choices.
 - **Torch** has two tracks against a Greater Boss, and opens to 60 levels.
-  Fight: +1% ATK against a Greater Boss (common, 5 levels, up to 10), then +1% DEF against it (uncommon, up to 10 levels, 5 of them before the next opens), +2% shroud against it (rare), **Greater Tangle**, a Greater Boss losing 5% of its ATK as a fight with it begins (epic), and +1% Revive chance, reviving with Revive trained or without it (legendary), each up to 5 levels unless said.
-  Cells: +2% Gold from a Greater Boss (common, 5 levels), then +1 Cell from each Greater Boss (uncommon), +2 Cells more (rare), **Greater Takedown**, a Greater Boss losing 6% of its max HP as a fight with it begins (epic), and **Chest Cells**, +1% chance a treasure chest also holds a Greater Boss's Cells (legendary), each up to 5 levels.
+  Fight: +1% ATK against a Greater Boss (common, 5 levels, up to 10), then +1% DEF against it (uncommon, up to 10 levels, 5 of them before the next opens), +2% shroud against it (rare), **Greater Tangle**, a Greater Boss losing 3% of its ATK as a fight with it begins (epic), and +1% Revive chance, reviving with Revive trained or without it (legendary), each up to 5 levels unless said.
+  Cells: +2% Gold from a Greater Boss (common, 5 levels), then +1 Cell from each Greater Boss (uncommon), +2 Cells more (rare), **Greater Takedown**, a Greater Boss losing 3% of its max HP as a fight with it begins (epic), and **Chest Cells**, +1% chance a treasure chest also holds a Greater Boss's Cells (legendary), each up to 5 levels.
   Greater Tangle and Greater Takedown show over a Greater Boss as Tangle and Takedown do over a boss.
 - **Chest** has one common upgrade that forks into two tracks once it holds 5 levels, and opens to 60 levels.
   +2% Gold from treasure chests (common, all 10 of the card's first levels).

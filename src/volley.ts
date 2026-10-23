@@ -13,7 +13,7 @@
 import type { Board } from "./board.ts";
 import type { Enemy, Player } from "./entities.ts";
 import type { Save } from "./save-shape.ts";
-import { guaranteedCrits, isBoss, stealCeiling, thornDamage } from "./combat.ts";
+import { critAgainst, facing, guaranteedCrits, isBoss, stealCeiling, thornDamage } from "./combat.ts";
 import { critRule } from "./loadout.ts";
 import { trainedAmount } from "./config.ts";
 import { researched } from "./archives.ts";
@@ -292,12 +292,13 @@ function arrows(turn: VolleyTurn, p: Player, v: Volleys, shots: Shot[], kills: V
 function arrow({ board, seed, volleys }: VolleyTurn, p: Player, from: { x: number; y: number }, tick: number, { x, y, tile }: InReach, crit: ReturnType<typeof critRule>, shot: number, boost: number, cards: number, charge: number, shots: Shot[]): VolleyKill | undefined {
   const enemy = tile.enemy;
   let applications = 0;
+  crit = critAgainst(crit, p, enemy);
   if (crit) {
     const sure = guaranteedCrits(crit.chance), rest = snap(crit.chance - 100 * sure);
     applications = sure + (tileRandom(x, y, (seed ^ ARROW_SALT ^ Math.imul(volleys.turn, 0x85ebca6b) ^ Math.imul(shot, 0xc2b2ae35)) | 0) * 100 < rest ? 1 : 0);
   }
   const damage = arrowDamage(p, enemy, applications, crit?.factor ?? 1, boost, cards), left = snap(Math.max(0, enemy.hp - damage));
-  const healed = p.lifesteal ? snap(Math.min(stealCeiling(p) - p.hp, (damage * p.lifesteal) / 100)) : 0;
+  const healed = p.lifesteal ? snap(Math.min(stealCeiling(facing(p, enemy)) - p.hp, (damage * p.lifesteal) / 100)) : 0;
   if (healed > 0) p.hp = snap(p.hp + healed);
   const landed: Shot = { by: "hero", from, to: { x, y }, damage, tick, ...(applications ? { crit: applications } : {}), ...(charge > 0 ? { charge } : {}), ...(healed > 0 ? { healed } : {}),
     before: enemy.hp, hp: left, full: snap(enemy.hp + (tile.wound ?? 0)) };

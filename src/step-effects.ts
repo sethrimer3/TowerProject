@@ -1,5 +1,5 @@
 import { snap } from "./exact.ts";
-import { atWorst, healUpTo, predict, type CombatPrediction, type CritRule } from "./combat.ts";
+import { atWorst, critAgainst, healUpTo, predict, type CombatPrediction, type CritRule } from "./combat.ts";
 import { doorCost, doorDiscount, doorKeyScale, doorRule, drainsHp, keyNeed, woodToll, type DoorDiscounts } from "./doors.ts";
 import type { Player, Tile, KeyColor } from "./entities.ts";
 
@@ -147,7 +147,7 @@ export function resolveStep(player: Player, tile: Tile, rules: StepRules = BASE_
   const effect: StepEffect = { player: next, combat: null, keysSpent: [], healed: 0 };
   switch (tile.kind) {
     case "enemy": {
-      const combat = predict(atWorst(player, rules.crit), tile.enemy!);
+      const combat = predict(atWorst(player, critAgainst(rules.crit, player, tile.enemy!)), tile.enemy!);
       if (combat.impervious) return { blocked: "impervious", combat };
       // The fight plays out as predicted; a scale adds to (or gives back)
       // its damage once it is over, which can fell the hero.

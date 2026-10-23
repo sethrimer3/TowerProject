@@ -10,7 +10,8 @@ import { BASE_MAX_LEVEL, cardLevel, cardLevelTotal, cardPoints } from "./card-le
 import { rarityRank, type CardRarity } from "./card-rarity.ts";
 import { isRecord, wholeIn } from "./decode.ts";
 import { snap } from "./exact.ts";
-import type { KeyColor } from "./entities.ts";
+import type { Enemy, KeyColor } from "./entities.ts";
+import { FOE_CARDS } from "./foe-cards.ts";
 import { extraEnemies } from "./more-enemies.ts";
 import type { RunCore } from "./runs.ts";
 
@@ -74,6 +75,8 @@ export type TreeStat =
   | "keySilver"
   /** A key colour's own stats (GOLD, BLUE and RED KEY's trees), for its keys only. */
   | ColorKeyStat
+  /** An enemy card's own stats (WEAK through NON-BOSS ENEMY's trees), against the enemies it covers only. */
+  | FoeCardStat
   /** Max HP for the run, its own factor beside the boons' and the Max HP badge's. */
   | "maxHp"
   /** Less of the keys and HP a Wooden or Steel Door takes, and of the keys
@@ -143,10 +146,48 @@ const colorKeyStats = (parts: readonly ColorKeyPart[]) => KEY_COLORS.flatMap((co
 /** Key colour `color`'s own stat `part` in `bonus`. */
 export const keyStat = (bonus: TreeBonus, color: KeyColor, part: ColorKeyPart) => bonus[`${color}${part}`];
 
+/** The enemy cards with trees of their own, each raising its own stats
+ * against the enemies it covers (`FOE_CARDS`). */
+export const FOE_TREE_CARDS = ["weakEnemy", "baseEnemy", "strongEnemy", "eliteEnemy", "bossEnemy", "nonBossEnemy"] as const;
+export type FoeTreeCard = (typeof FOE_TREE_CARDS)[number];
+/** What an enemy card's own stats raise, against the enemies it covers
+ * only, each named `${card}${part}`: kill Gold, and kill Gold more for an
+ * Instakill (percents added into one card factor with ENEMY's and the
+ * cards'); Silver more each kill (flat, before Silver Bonus); ATK, DEF and
+ * the shroud in fights with them, Crit %'s chance and Crit x's factor, and
+ * kill XP (percents added to ENEMY's); Spawn Rate (percent more of them on
+ * each floor); and the flat ones: the percent chance of a Supply Chest's
+ * upgrade materials from each kill (Material) or each Instakill (Instakill
+ * Material) and of an Equipment Chest's piece from each kill (Equipment),
+ * the percent of max HP each Instakill boosts it by for the run (Instakill
+ * Vigor), the percent of max HP Lifesteal may heal above it, Surprise
+ * Attack's chance, Cells from each kill, and the percents of its max HP
+ * (Takedown) and ATK (Tangle) a boss or Greater Boss loses as a fight with
+ * it begins. */
+export const FOE_PARTS = ["Gold", "InstakillGold", "Silver", "Attack", "Defense", "Shroud", "CritChance", "CritFactor", "KillXp", "SpawnRate",
+  "Material", "InstakillMaterial", "Equipment", "InstakillMaxHp", "StealOverheal", "SurpriseAttack", "Cells", "Takedown", "Tangle"] as const;
+export type FoePart = (typeof FOE_PARTS)[number];
+export type FoeCardStat = `${FoeTreeCard}${FoePart}`;
+const FLAT_FOE_PARTS: readonly FoePart[] = ["Silver", "Material", "InstakillMaterial", "Equipment", "InstakillMaxHp", "StealOverheal", "SurpriseAttack", "Cells", "Takedown", "Tangle"];
+const foeCardStats = (parts: readonly FoePart[]) => FOE_TREE_CARDS.flatMap((card) => parts.map((part): FoeCardStat => `${card}${part}`));
+/** Enemy card `card`'s own stat `part` in `bonus`. */
+export const foeCardStat = (bonus: TreeBonus, card: FoeTreeCard, part: FoePart) => bonus[`${card}${part}`];
+/** The enemy cards' own stat `part` in `bonus` against `enemy`: those of
+ * the cards covering it, added up. */
+export const foeStat = (bonus: TreeBonus, enemy: Enemy, part: FoePart) =>
+  FOE_TREE_CARDS.reduce((sum, card) => (FOE_CARDS[card](enemy) ? snap(sum + bonus[`${card}${part}`]) : sum), 0);
+/** The enemy cards' own stat `part` in `bonus`, by card, those without it
+ * left out: what the hero carries by card (`Player.foeAttack` and the rest). */
+export function foeStats(bonus: TreeBonus, part: FoePart): Partial<Record<FoeTreeCard, number>> {
+  const out: Partial<Record<FoeTreeCard, number>> = {};
+  for (const card of FOE_TREE_CARDS) if (bonus[`${card}${part}`]) out[card] = bonus[`${card}${part}`];
+  return out;
+}
+
 /** The stats added as they are, not as percents of a factor. */
 export const FLAT_STATS: ReadonlySet<TreeStat> = new Set<TreeStat>(["floorHeal", "overhealMax", "stairSkip", "potionMaxHp", "potionSilver", "freeOffenseChance", "freeDefenseChance", "freeUtilityChance",
   "doorSilver", "doorHeal", "skeletonKey", "lockPick", "secretKnock", "doorChest", "keyChest", "keyHeal", "keyOverheal", "keySilver", "doubleKey", "masterKey", "surpriseAttack", "foeAttackCut", "stealOverheal", "parry", "reviveChance",
-  "attackShardSilver", "defenseShardSilver", "powerStrike", "takedown", "tangle", "greaterTakedown", "greaterTangle", "bossCells", "chestSilver", "chestCells", "supplyChance", "equipmentChance", "treasureFloor", "rarityUp", "chestDouble", "chestTriple", ...colorKeyStats(FLAT_KEY_PARTS)]);
+  "attackShardSilver", "defenseShardSilver", "powerStrike", "takedown", "tangle", "greaterTakedown", "greaterTangle", "bossCells", "chestSilver", "chestCells", "supplyChance", "equipmentChance", "treasureFloor", "rarityUp", "chestDouble", "chestTriple", ...colorKeyStats(FLAT_KEY_PARTS), ...foeCardStats(FLAT_FOE_PARTS)]);
 
 /** One node of a card's tree: the stats each of its levels raises, its
  * rarity, how many levels it holds from the start (`levels`: 0 for a node
@@ -181,6 +222,29 @@ function keyTree(color: KeyColor, n: Record<"heal" | "gold" | "silver" | "goldBo
     { id: "masterKey", stats: own("MasterKey", n.masterKey), rarity: "legendary", levels: 0, max: 5, after: "locksmith" },
   ];
 }
+
+/** One track of an enemy card's tree: its first node, a common one
+ * holding `levels` levels from the start and up to `max`, then one node of
+ * each rarity after it, each after the one before and holding none until
+ * card buys open them, up to five; each node `[id, stats]`. */
+type FoeTrack = { levels: number; max: number; nodes: readonly (readonly [string, CardTreeNode["stats"]])[] };
+const RARITIES_AFTER_COMMON: readonly CardRarity[] = ["uncommon", "rare", "epic", "legendary"];
+/** An enemy card's tree (WEAK through NON-BOSS ENEMY's), from its tracks
+ * and any nodes standing alone. */
+function foeTree(...parts: (FoeTrack | CardTreeNode)[]): CardTreeNode[] {
+  return parts.flatMap((track) => {
+    if (!("nodes" in track)) return [track];
+    const [[id, stats], ...rest] = track.nodes;
+    const nodes = [common(id, stats, track.levels, track.max)];
+    rest.forEach(([id, stats], i) => nodes.push({ id, stats, rarity: RARITIES_AFTER_COMMON[i]!, levels: 0, max: 5, after: nodes[i]!.id }));
+    return nodes;
+  });
+}
+/** A node's stats: enemy card `card`'s own `part`, `each` a level. */
+const foe = (card: FoeTreeCard) => (part: FoePart, each: number) => ({ [`${card}${part}`]: each }) as CardTreeNode["stats"];
+/** Every Free Upgrade group's flat chance, `each` a level. */
+const freeAll = (each: number) => ({ freeOffenseChance: each, freeDefenseChance: each, freeUtilityChance: each });
+const weak = foe("weakEnemy"), base = foe("baseEnemy"), strong = foe("strongEnemy"), elite = foe("eliteEnemy"), boss = foe("bossEnemy"), nonBoss = foe("nonBossEnemy");
 
 /** Each card's tree, its nodes parents first. Every tree holds
  * `BASE_MAX_LEVEL` (10) levels from the start; card buys open the rest,
@@ -253,6 +317,25 @@ export const CARD_TREES: Partial<Record<CardId, readonly CardTreeNode[]>> = {
     { id: "silver", stats: { foeSilver: 1 }, rarity: "uncommon", levels: 0, max: 5, after: "gold" },
     { id: "spawnRate", stats: { moreEnemies: 2 }, rarity: "rare", levels: 0, max: 5, after: "silver" },
   ],
+  weakEnemy: foeTree(
+    { levels: 5, max: 10, nodes: [["gold", weak("Gold", 5)], ["silver", weak("Silver", 0.1)], ["instakillGold", weak("InstakillGold", 5)], ["instakillMaterial", weak("InstakillMaterial", 1)], ["instakillMaxHp", weak("InstakillMaxHp", 0.01)]] },
+    { levels: 5, max: 10, nodes: [["attack", weak("Attack", 5)], ["critFactor", weak("CritFactor", 2)], ["killXp", weak("KillXp", 2)], ["spawnRate", weak("SpawnRate", 4)], ["stealOverheal", weak("StealOverheal", 10)]] }),
+  baseEnemy: foeTree(
+    { levels: 5, max: 10, nodes: [["gold", base("Gold", 6)], ["silver", base("Silver", 0.1)], ["freeDefense", { freeDefenseChance: 0.5 }], ["material", base("Material", 1)], ["surpriseAttack", base("SurpriseAttack", 5)]] },
+    { levels: 5, max: 10, nodes: [["attack", base("Attack", 5)], ["critChance", base("CritChance", 2)], ["killXp", base("KillXp", 2)], ["spawnRate", base("SpawnRate", 3)], ["stealOverheal", base("StealOverheal", 10)]] }),
+  strongEnemy: foeTree(
+    { levels: 5, max: 10, nodes: [["gold", strong("Gold", 7)], ["silver", strong("Silver", 0.2)], ["freeOffense", { freeOffenseChance: 0.5 }], ["material", strong("Material", 1)], ["surpriseAttack", strong("SurpriseAttack", 5)]] },
+    { levels: 5, max: 10, nodes: [["attack", strong("Attack", 5)], ["shroud", strong("Shroud", 5)], ["killXp", strong("KillXp", 3)], ["spawnRate", strong("SpawnRate", 2)], ["stealOverheal", strong("StealOverheal", 15)]] }),
+  eliteEnemy: foeTree(
+    { levels: 4, max: 10, nodes: [["gold", elite("Gold", 8)], ["silver", elite("Silver", 0.3)], ["freeUpgrade", freeAll(0.5)], ["equipment", elite("Equipment", 0.1)], ["surpriseAttack", elite("SurpriseAttack", 5)]] },
+    common("defense", elite("Defense", 5), 4, 5),
+    { levels: 2, max: 5, nodes: [["attack", elite("Attack", 5)], ["critChance", elite("CritChance", 2)], ["killXp", elite("KillXp", 4)], ["spawnRate", elite("SpawnRate", 2)], ["stealOverheal", elite("StealOverheal", 20)]] }),
+  bossEnemy: foeTree(
+    { levels: 8, max: 10, nodes: [["gold", boss("Gold", 10)], ["shroud", boss("Shroud", 5)], ["defense", boss("Defense", 5)], ["equipment", boss("Equipment", 0.3)], ["tangle", boss("Tangle", 3)]] },
+    { levels: 2, max: 5, nodes: [["attack", boss("Attack", 5)], ["critChance", boss("CritChance", 3)], ["critFactor", boss("CritFactor", 4)], ["cells", boss("Cells", 1)], ["takedown", boss("Takedown", 5)]] }),
+  nonBossEnemy: foeTree(
+    { levels: 5, max: 10, nodes: [["gold", nonBoss("Gold", 5)], ["silver", nonBoss("Silver", 0.1)], ["freeUpgrade", freeAll(0.2)], ["material", nonBoss("Material", 1)], ["surpriseAttack", nonBoss("SurpriseAttack", 5)]] },
+    { levels: 5, max: 10, nodes: [["attack", nonBoss("Attack", 5)], ["critFactor", nonBoss("CritFactor", 3)], ["killXp", nonBoss("KillXp", 2)], ["spawnRate", nonBoss("SpawnRate", 3)], ["stealOverheal", nonBoss("StealOverheal", 10)]] }),
   atkUp: [
     common("shard", { attackShard: 2 }, 5, 10),
     { id: "sharper", stats: { attackShard: 3 }, rarity: "uncommon", levels: 0, max: 5, after: "shard" },
@@ -263,7 +346,7 @@ export const CARD_TREES: Partial<Record<CardId, readonly CardTreeNode[]>> = {
     { id: "shardSilver", stats: { attackShardSilver: 0.1 }, rarity: "uncommon", levels: 0, max: 5, after: "gold" },
     { id: "silverBoost", stats: { silverBonus: 1 }, rarity: "rare", levels: 0, max: 5, after: "shardSilver" },
     { id: "goldBonus", stats: { goldBonus: 2 }, rarity: "epic", levels: 0, max: 5, after: "silverBoost" },
-    { id: "takedown", stats: { takedown: 10 }, rarity: "legendary", levels: 0, max: 5, after: "goldBonus" },
+    { id: "takedown", stats: { takedown: 5 }, rarity: "legendary", levels: 0, max: 5, after: "goldBonus" },
   ],
   defUp: [
     common("shard", { defenseShard: 2 }, 5, 10),
@@ -275,18 +358,18 @@ export const CARD_TREES: Partial<Record<CardId, readonly CardTreeNode[]>> = {
     { id: "shardSilver", stats: { defenseShardSilver: 0.1 }, rarity: "uncommon", levels: 0, max: 5, after: "gold" },
     { id: "silverBoost", stats: { silverBonus: 1 }, rarity: "rare", levels: 0, max: 5, after: "shardSilver" },
     { id: "goldBonus", stats: { goldBonus: 2 }, rarity: "epic", levels: 0, max: 5, after: "silverBoost" },
-    { id: "tangle", stats: { tangle: 5 }, rarity: "legendary", levels: 0, max: 5, after: "goldBonus" },
+    { id: "tangle", stats: { tangle: 3 }, rarity: "legendary", levels: 0, max: 5, after: "goldBonus" },
   ],
   torch: [
     common("attack", { bossAttack: 1 }, 5, 10),
     { id: "bossDefense", stats: { bossDefense: 1 }, rarity: "uncommon", levels: 0, max: 10, after: "attack", unlocks: 5 },
     { id: "bossShroud", stats: { bossShroud: 2 }, rarity: "rare", levels: 0, max: 5, after: "bossDefense" },
-    { id: "greaterTangle", stats: { greaterTangle: 5 }, rarity: "epic", levels: 0, max: 5, after: "bossShroud" },
+    { id: "greaterTangle", stats: { greaterTangle: 3 }, rarity: "epic", levels: 0, max: 5, after: "bossShroud" },
     { id: "revive", stats: { reviveChance: 1 }, rarity: "legendary", levels: 0, max: 5, after: "greaterTangle" },
     common("gold", { bossGold: 2 }, 5, 5),
     { id: "cellDrop", stats: { bossCells: 1 }, rarity: "uncommon", levels: 0, max: 5, after: "gold" },
     { id: "cellHaul", stats: { bossCells: 2 }, rarity: "rare", levels: 0, max: 5, after: "cellDrop" },
-    { id: "greaterTakedown", stats: { greaterTakedown: 6 }, rarity: "epic", levels: 0, max: 5, after: "cellHaul" },
+    { id: "greaterTakedown", stats: { greaterTakedown: 3 }, rarity: "epic", levels: 0, max: 5, after: "cellHaul" },
     { id: "chestCells", stats: { chestCells: 1 }, rarity: "legendary", levels: 0, max: 5, after: "greaterTakedown" },
   ],
   chest: [
@@ -431,7 +514,7 @@ export type TreeBonus = Record<TreeStat, number>;
 const NO_BONUS = Object.freeze(Object.fromEntries(
   ["floorGold", "floorSilver", "goldBonus", "silverBonus", "freeOffense", "freeDefense", "freeUtility", "freeOffenseChance", "freeDefenseChance", "freeUtilityChance", "floorHeal", "overhealMax", "stairSkip", "percentPotions", "potionHeal", "potionMaxHp", "potionSilver", "regen", "shroud", "parry", "reviveChance",
     "doorCost", "doorGold", "doorSilver", "doorHeal", "skeletonKey", "lockPick", "secretKnock", "doorChest", "keyChest", "keyFind", "keyGold", "keyHeal", "keyOverheal", "keySilver", "plainDoorCost", "heartDoorCost", "doubleKey", "masterKey",
-    ...colorKeyStats(COLOR_KEY_PARTS), "maxHp", "foeAttack", "foeDefense", "foeGold", "foeSilver", "critChance", "critFactor", "killXp", "surpriseAttack", "foeAttackCut", "stealOverheal", "moreEnemies", "attackShard", "defenseShard", "attackShardGold", "defenseShardGold",
+    ...colorKeyStats(COLOR_KEY_PARTS), ...foeCardStats(FOE_PARTS), "maxHp", "foeAttack", "foeDefense", "foeGold", "foeSilver", "critChance", "critFactor", "killXp", "surpriseAttack", "foeAttackCut", "stealOverheal", "moreEnemies", "attackShard", "defenseShard", "attackShardGold", "defenseShardGold",
     "attackShardSilver", "defenseShardSilver", "powerStrike", "takedown", "tangle", "greaterTakedown", "greaterTangle",
     "bossAttack", "bossDefense", "bossShroud", "bossGold", "bossCells", "chestGold", "chestSilver", "chestCells", "supplyChance", "equipmentChance", "treasureFloor", "rarityUp", "chestDouble", "chestTriple"].map((s) => [s, 0]),
 )) as TreeBonus;
@@ -448,9 +531,13 @@ export function treeBonus(levels: CardTreeLevels | undefined): TreeBonus {
 }
 /** A percent stat's card factor: ×(100 + its percents) / 100. */
 export const treeFactor = (bonus: TreeBonus, stat: TreeStat) => (bonus[stat] ? snap((100 + bonus[stat]) / 100) : 1);
-/** What `run`'s floors add (more-enemies.ts): its More Enemies badges'
- * and ENEMY's tree's, both fixed as it went inside. */
-export const runExtras = (run: Pick<RunCore, "badges" | "cardTrees">) => extraEnemies(run.badges, treeBonus(run.cardTrees).moreEnemies);
+/** What `run`'s floors add (more-enemies.ts): its More Enemies badges',
+ * ENEMY's tree's and the enemy cards' trees' Spawn Rate, all fixed as it
+ * went inside. */
+export function runExtras(run: Pick<RunCore, "badges" | "cardTrees">) {
+  const bonus = treeBonus(run.cardTrees);
+  return extraEnemies(run.badges, bonus.moreEnemies, foeStats(bonus, "SpawnRate"));
+}
 /** The percent `run`'s enemies' ATK is cut by (ENEMY's Weaken), fixed as it went inside. */
 export const runFoeCut = (run: Pick<RunCore, "cardTrees">) => treeBonus(run.cardTrees).foeAttackCut;
 /** What `run`'s card trees multiply hero stat `stat` by: the key colour trees' Max HP, added into one factor. */

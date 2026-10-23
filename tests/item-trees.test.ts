@@ -122,7 +122,7 @@ test("Takedown and Tangle cut a boss as a fight with it begins, their Greater ki
   assert.equal(enemyBar(shown, fight.opening!.at + 1000)!.hp <= 70, true);
   // A run with the trees carries the cuts on the hero.
   const g = treeRun("atkUp", { shard: 5, gold: 5, shardSilver: 1, silverBoost: 1, goldBonus: 1, takedown: 2 });
-  assert.deepEqual(g.run.player.takedown, { boss: 20 });
+  assert.deepEqual(g.run.player.takedown, { boss: 10 }, "5% a level");
   assert.equal(g.run.player.tangle, undefined);
 });
 

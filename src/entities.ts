@@ -111,6 +111,9 @@ export type Torch = {
   active: boolean;
   visibilityPolygon?: Point[];
 };
+/** A percent the hero carries against some enemies, by the card (or card
+ * tree) covering them (foe-cards.ts's `FoeKey`). */
+export type ByFoe = Partial<Record<"weakEnemy" | "baseEnemy" | "strongEnemy" | "eliteEnemy" | "bossEnemy" | "nonBossEnemy" | "fastEnemy" | "flyingEnemy" | "monster" | "torch", number>>;
 export type Player = {
   x: number;
   y: number;
@@ -148,15 +151,22 @@ export type Player = {
   takedown?: Partial<Record<"boss" | "greaterBoss", number>>;
   tangle?: Partial<Record<"boss" | "greaterBoss", number>>;
   /** The percent more ATK the hero strikes the enemies each enemy card of
-   * the run's hand covers with (foe-cards.ts), by card, ENEMY's and TORCH's
-   * from their card trees; absent without one. */
-  foeAttack?: Partial<Record<"weakEnemy" | "baseEnemy" | "strongEnemy" | "eliteEnemy" | "bossEnemy" | "nonBossEnemy" | "fastEnemy" | "flyingEnemy" | "monster" | "torch", number>>;
+   * the run's hand covers with (foe-cards.ts), by card, its tree's and
+   * ENEMY's and TORCH's from their card trees; absent without one. */
+  foeAttack?: ByFoe;
   /** The percent more DEF and shroud the hero holds against the enemies a
-   * card tree covers (ENEMY's every enemy, TORCH's the Greater Boss), by
-   * card; absent without one. HEAL's tree's shroud, against every enemy,
-   * goes under ENEMY's key. */
-  foeDefense?: Partial<Record<"monster" | "torch", number>>;
-  foeShroud?: Partial<Record<"monster" | "torch", number>>;
+   * card tree covers (an enemy card's its own, ENEMY's every enemy, TORCH's
+   * the Greater Boss), by card; absent without one. HEAL's tree's shroud,
+   * against every enemy, goes under ENEMY's key. */
+  foeDefense?: ByFoe;
+  foeShroud?: ByFoe;
+  /** The percent more Crit % chance and Crit x factor the hero strikes the
+   * enemies an enemy card's tree covers with, and the percent of max HP
+   * Lifesteal may heal it above it in fights with them, by card; absent
+   * without one. */
+  foeCritChance?: ByFoe;
+  foeCritFactor?: ByFoe;
+  foeStealOverheal?: ByFoe;
   /** The percent of an enemy's DEF the hero's strikes ignore (equipment's
    * Piercing; none when absent). */
   pierce?: number;
