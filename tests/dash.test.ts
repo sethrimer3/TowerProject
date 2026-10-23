@@ -9,7 +9,7 @@ import { DashEchoes, DASH_ECHO_MS } from "../src/dash-echoes.ts";
 import type { FrameContext } from "../src/render-frame.ts";
 
 /** A Tower corridor along the bottom row: the hero at its west end, a
- * yellow key on x = 5 and the stairs at x = 7, with the Dash skill owned (or
+ * gold key on x = 5 and the stairs at x = 7, with the Dash skill owned (or
  * not) and
  * `levels` Dash research levels done. */
 function corridor(levels: number, skill = true) {
@@ -147,7 +147,7 @@ function toStairs(levels: number, end: number) {
   return g;
 }
 
-/** The corridor with the stairs gone, so YELLOW KEY leads to the key. */
+/** The corridor with the stairs gone, so GOLD KEY leads to the key. */
 function toKey(levels: number) {
   const g = corridor(levels);
   (g.world as RoomWorld).cells.set("7,0", { kind: "floor" });

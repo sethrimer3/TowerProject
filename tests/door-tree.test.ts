@@ -103,7 +103,7 @@ test("DOOR's Door Chest leaves an opened treasure chest where the door stood, it
 test("DOOR's Skeleton Key makes colour doors Wooden Doors, and Lock Pick takes the rarest lock off a door of two or three colours", () => {
   const wood = withDoorOdds(keyed(["yellow", "blue"], true), 3, 4, 9, { skeleton: 100, lockPick: 0 }, () => 12);
   assert.deepEqual(wood, { kind: "door", door: { type: "wood", durability: 12 } });
-  assert.deepEqual(withDoorOdds(keyed(["yellow", "blue"], true), 3, 4, 9, { skeleton: 0, lockPick: 100 }, () => 12), keyed(["yellow"], true), "a yellow-blue door becomes a yellow one");
+  assert.deepEqual(withDoorOdds(keyed(["yellow", "blue"], true), 3, 4, 9, { skeleton: 0, lockPick: 100 }, () => 12), keyed(["yellow"], true), "a yellow-blue door becomes a gold one");
   assert.deepEqual(withDoorOdds(keyed(["yellow", "blue", "red"]), 3, 4, 9, { skeleton: 0, lockPick: 100 }, () => 12).door, { type: "keys", keys: ["yellow", "blue"], mode: "all" });
   assert.deepEqual(withDoorOdds(keyed(["blue", "red"]), 3, 4, 9, { skeleton: 0, lockPick: 100 }, () => 12).door, { type: "keys", keys: ["blue"], mode: "all" });
   assert.deepEqual(withDoorOdds(keyed(["red"]), 3, 4, 9, { skeleton: 0, lockPick: 100 }, () => 12), keyed(["red"]), "one colour keeps its lock");

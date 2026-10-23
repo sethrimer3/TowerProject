@@ -35,7 +35,7 @@ import type {
  * Some gated edges then become forks of parallel lanes (forks.ts), the door
  * stage places the floor's quota of blue, red and Heart Doors
  * (door-quota.ts), and the resource planner applies soft key/door
- * coherence. Every table but the door stage's offers only yellow doors. */
+ * coherence. Every table but the door stage's offers only gold doors. */
 
 /** Tunable depth curves. */
 export const GRAPH_TUNING = {
@@ -45,7 +45,7 @@ export const GRAPH_TUNING = {
   mainRouteLength: (depth: number) => (depth < 3 ? 1 : depth < 10 ? 2 : 3),
   startPotionChance: (depth: number) => (depth === 0 ? 0.6 : 0.3),
   hubPotionChance: 0.3,
-  /** Of the stairs no enemy guards, the share with a yellow door in front. */
+  /** Of the stairs no enemy guards, the share with a gold door in front. */
   stairsDoorChance: 0.5,
   /** On the first tower's first floors (`earlyPotions`), the share of the
    * gates on the way to the stairs that are a potion instead of an enemy. */
@@ -151,7 +151,7 @@ function addMainRoute(b: GraphBuilder, profile: ArchetypeProfile, budget: number
 }
 
 /** The options for a gate on the way to the stairs (the tables hold only
- * yellow doors), and on the first tower's first floors potions in some
+ * gold doors), and on the first tower's first floors potions in some
  * enemies' place. */
 function mainGates(b: GraphBuilder, table: Weighted<Gate>) {
   const open = openOptions(table, b.colors);

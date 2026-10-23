@@ -14,14 +14,14 @@ import type { StrategicNode } from "../src/tower/types.ts";
 
 const node = (gate: StrategicNode["gate"]) => ({ gate }) as StrategicNode;
 
-test("a door run asks the key supply for each of its doors, but a yellow run for one key", () => {
+test("a door run asks the key supply for each of its doors, but a gold run for one key", () => {
   assert.deepEqual(lockColors(node({ kind: "door", color: "blue", run: 3 })), ["blue", "blue", "blue"]);
   assert.deepEqual(lockColors(node({ kind: "door", color: "yellow", run: 2 })), ["yellow"], "a key sink");
   assert.deepEqual(lockColors(node({ kind: "wood", run: 3 })), ["yellow"]);
   assert.deepEqual(lockColors(node({ kind: "heart", run: 2 })), []);
 });
 
-test("yellow runs wait for floor 6", () => {
+test("gold runs wait for floor 6", () => {
   assert.equal(YELLOW_RUNS.fromFloor, 6);
   assert.equal(yellowRun(4, () => { throw new Error("no draw below floor 6"); }), undefined);
   assert.equal(yellowRun(5, () => 0), 3);
@@ -50,7 +50,7 @@ function runAt(cells: Map<string, Tile>, x: number, y: number) {
   return seen.size;
 }
 
-test("a Tower run stands in a row through its doorway, mostly in full, yellow ones off the way to the stairs", () => {
+test("a Tower run stands in a row through its doorway, mostly in full, gold ones off the way to the stairs", () => {
   let planned = 0, laid = 0, yellow = 0;
   for (let seed = 1; seed <= 40; seed++)
     for (const room of [7, 60, 300, 700]) {
@@ -66,11 +66,11 @@ test("a Tower run stands in a row through its doorway, mostly in full, yellow on
         const yellowLock = n.gate.kind === "wood" || (n.gate.kind === "door" && n.gate.color === "yellow");
         if (yellowLock) {
           yellow++;
-          assert.ok(n.route !== "main" && room + 1 >= YELLOW_RUNS.fromFloor, `seed ${seed} floor ${room + 1}: a yellow run on the way to the stairs`);
+          assert.ok(n.route !== "main" && room + 1 >= YELLOW_RUNS.fromFloor, `seed ${seed} floor ${room + 1}: a gold run on the way to the stairs`);
         }
       }
     }
-  assert.ok(yellow > 0, "yellow runs appear");
+  assert.ok(yellow > 0, "gold runs appear");
   assert.ok(laid / planned > 0.85, `${laid} of ${planned} run doors laid`);
 });
 

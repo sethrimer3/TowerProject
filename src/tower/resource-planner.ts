@@ -58,8 +58,8 @@ function keysIn(node: StrategicNode, color: KeyColor): number {
 }
 
 /** The keys a region's way in asks the player to hold. A wooden lock eats
- * the cheapest key available, so it is yellow demand. A door run asks for
- * each of its doors, but a yellow run (Wooden or yellow) for one key: a key
+ * the cheapest key available, so it is gold demand. A door run asks for
+ * each of its doors, but a gold run (Wooden or yellow) for one key: a key
  * sink, spending the surplus. A forked region is planned for its single
  * gate, which stands whenever the fork doesn't fit, about three times in
  * four. */
@@ -91,7 +91,7 @@ function collectDoors(graph: StrategicGraph): Door[] {
   for (const n of graph.nodes)
     for (const color of lockColors(n))
       doors.push({ color, route: n.route, lockedNode: n.id, order: (n.route === "main" ? 0 : 100) + depthOf(n.id) });
-  // A yellow door in front of the stairs is the last door on the main route.
+  // A gold door in front of the stairs is the last door on the main route.
   for (const n of graph.nodes)
     if (n.stairsGuard === "door" || n.stairsGuard === "wood") doors.push({ color: "yellow", route: "main", lockedNode: null, order: 999 });
   for (const s of graph.shortcuts)
@@ -106,8 +106,8 @@ type Plan = { graph: StrategicGraph; b: GraphBuilder; rng: () => number };
 export function planResources(graph: StrategicGraph, b: GraphBuilder, rng: () => number) {
   const plan: Plan = { graph, b, rng };
   thinToAim(plan);
-  // Rarest first: adding a blue key "behind a yellow door" creates new
-  // yellow demand that the yellow pass then sees.
+  // Rarest first: adding a blue key "behind a gold door" creates new
+  // gold demand that the gold pass then sees.
   for (const color of ["red", "blue", "yellow"] as KeyColor[]) {
     let demand = 0;
     const doors = collectDoors(graph).filter((d) => d.color === color), aim = floorAim(plan, color, doors.length);
@@ -118,7 +118,7 @@ export function planResources(graph: StrategicGraph, b: GraphBuilder, rng: () =>
   if (keyedFloor(graph.depth)) keyEveryDoor(graph.nodes);
 }
 
-/** Floors 2 to 5: a yellow key in the open in the start hall, and behind
+/** Floors 2 to 5: a gold key in the open in the start hall, and behind
  * each door (in the region it opens) a key of every colour it takes, so
  * opening a door never leaves the hand short of the key the stairs' door
  * needs. */
@@ -168,7 +168,7 @@ function coverDoor(plan: Plan, door: Door, demand: number, aim: number) {
   const ratio = towerKeyRatio(door.color, graph.depth, plan.b.tower, door.route === "main") / 10000;
   for (let tries = 0; tries < MOST_SOURCES; tries++) {
     // Short of this door's share, but never past the floor's aim for the
-    // colour: most rooms stand behind a yellow lock, so a door's own supply
+    // colour: most rooms stand behind a gold lock, so a door's own supply
     // (keys not behind one) is small, and covering each alone would heap up
     // keys far past the aim.
     const floorKeys = graph.nodes.reduce((s, n) => s + keysIn(n, door.color), 0);
@@ -249,7 +249,7 @@ function addKeySource(plan: Plan, door: Door): boolean {
 }
 
 /** Open and package keys need no new region; the rest need room for one.
- * A key behind a lower door only ever stands behind a yellow one: blue and
+ * A key behind a lower door only ever stands behind a gold one: blue and
  * red doors come only from the door stage's quota (door-quota.ts). */
 const sourceFits = (kind: SourceKind, color: KeyColor, roomForNode: boolean) =>
   kind === "open" || kind === "package" || (roomForNode && (kind !== "lowerDoor" || LOWER[color] === "yellow"));

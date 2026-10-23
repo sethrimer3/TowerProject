@@ -72,7 +72,7 @@ export type TreeStat =
   | "keyHeal" | "keyOverheal"
   /** Flat: Silver found with each key picked up, before Silver Bonus. */
   | "keySilver"
-  /** A key colour's own stats (YELLOW, BLUE and RED KEY's trees), for its keys only. */
+  /** A key colour's own stats (GOLD, BLUE and RED KEY's trees), for its keys only. */
   | ColorKeyStat
   /** Max HP for the run, its own factor beside the boons' and the Max HP badge's. */
   | "maxHp"
@@ -126,7 +126,7 @@ export type TreeStat =
   /** Flat: the percent chance a treasure chest's rewards are doubled (Double), and tripled (Triple). */
   | "chestDouble" | "chestTriple";
 
-/** What a key colour's own stats (YELLOW, BLUE and RED KEY's trees) raise,
+/** What a key colour's own stats (GOLD, BLUE and RED KEY's trees) raise,
  * for keys of that colour only, each named `${colour}${part}`: Key Heal and
  * Key Overheal, Key Silver and Key Chest (flat, added to KEY's), Key Gold
  * and Key Find (each its own factor on KEY's and the key cards'), Door Cost
@@ -160,7 +160,7 @@ export type CardTreeNode = { id: string; stats: Partial<Record<TreeStat, number>
  * common card buys open the rest. */
 const common = (id: string, stats: CardTreeNode["stats"], levels: number, max: number): CardTreeNode => ({ id, stats, rarity: "common", levels, max });
 
-/** A key colour's card's tree (YELLOW, BLUE and RED KEY's), `n` its levels'
+/** A key colour's card's tree (GOLD, BLUE and RED KEY's), `n` its levels'
  * amounts: Key Heal then Key Overheal; Key Gold, Key Silver, Gold Bonus,
  * Free Utility and Key Chest; Key Find, Door Cost, Max HP, Locksmith (1%
  * a level) and Master Key. Its commons hold 10 levels from the start. */

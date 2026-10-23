@@ -57,7 +57,7 @@ test("gates merge: any closed one closes the card, and a focused card's path isn
   badge(run, "yellowKey", "hpGate");
   badge(run, "yellowKey", "yellowAtLeast");
   run.player.hp = 50;
-  assert.deepEqual(r.cardRules("yellowKey"), { closed: true }, "below full HP, but no yellow key held");
+  assert.deepEqual(r.cardRules("yellowKey"), { closed: true }, "below full HP, but no gold key held");
   assert.ok(r.gateShut("yellowKey"));
   run.player.keys.yellow = 1;
   assert.deepEqual(r.cardRules("yellowKey"), { closed: false });

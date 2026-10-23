@@ -141,7 +141,7 @@ test("every item taken off the floor pays Gold, a key or door by its colours, ra
     ["2,0", { kind: "door", door: { type: "keys", keys: ["yellow", "blue", "red"], mode: "all" } }], ["3,0", { kind: "floor" }], ["4,0", { kind: "potion" }]]);
   w.torches = [{ x: 3, y: 0, active: true }, { x: 0, y: 1, active: true }] as RoomWorld["torches"];
   Object.assign(g.run.player.keys, { yellow: 1, blue: 1 });
-  // ×1.3 training and ×1.3 research: a crimson key's 3, a Triune Door's
+  // ×1.3 training and ×1.3 research: a red key's 3, a Triune Door's
   // 1 + 2 + 3, a torch's 1 and a potion's 1.
   const paid = [3, 6, 1, 1].map((base) => base * 1.69);
   let gold = s.gold;

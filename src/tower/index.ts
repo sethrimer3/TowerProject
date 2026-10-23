@@ -62,7 +62,7 @@ function insideStairs([x, y]: XY): XY {
 
 /** Smallest possible floor: start hall → stairs. Always embeddable. It
  * keeps the first floors' rules: floor 1's stairs stand open, and floors 2
- * to 5 have a yellow door before them and its key in the start hall. */
+ * to 5 have a gold door before them and its key in the start hall. */
 function minimalGraph(depth: number, rng: () => number, tier: number): StrategicGraph {
   const b = new GraphBuilder(depth, rng, towerKeyColorsOn(depth, tier));
   const keyed = keyedFloor(depth);
@@ -112,7 +112,7 @@ export function generateTowerFloor(seed: number, room: number, tier = 1): TowerF
 
 /** Human-readable generation report for one floor (debugging/tuning). */
 /** The rare loot on one unguarded floor tile, or null (most rolls). */
-/** A key of a colour `colors` closes comes as a yellow key; a key the key
+/** A key of a colour `colors` closes comes as a gold key; a key the key
  * supply doesn't keep (`keep`, drawing from `rng`) leaves nothing. */
 export function rollUnguardedLoot(rng: () => number, colors: KeyColors = ALL_KEY_COLORS, keep: (color: KeyColor, rng: () => number) => boolean = () => true): Tile | null {
   if (rng() >= UNGUARDED_LOOT_CHANCE) return null;

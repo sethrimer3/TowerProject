@@ -46,7 +46,7 @@ export const UPGRADES = [
     max: 1,
     currency: "courage",
   },
-  { id: "findYellowKey", name: "Find Yellow Key", description: "Open Find Yellow Key research in the Archives: each new floor climbed may hand you a yellow key", base: 10, max: 1, currency: "courage" },
+  { id: "findYellowKey", name: "Find Gold Key", description: "Open Find Gold Key research in the Archives: each new floor climbed may hand you a gold key", base: 10, max: 1, currency: "courage" },
   { id: "keyEfficiency", name: "Key Efficiency", description: "Open Key Efficiency research in the Archives: each level makes a door take less of a key", base: 10, max: 1, currency: "courage" },
   { id: "interest", name: "Interest", description: "Open Interest % research in the Archives: each new floor climbed adds a share of the Silver you hold, up to a limit", base: 10, max: 1, currency: "courage" },
   { id: "maxInterest", name: "Max Interest", description: "Open Max Interest research in the Archives: each level raises the most Interest a floor pays", base: 10, max: 1, currency: "courage" },
@@ -78,7 +78,7 @@ export const UPGRADES = [
   },
   {
     id: "blue",
-    name: "Azure passage",
+    name: "Blue passage",
     grants: { blue: 1 },
     base: 5,
     max: 10,
@@ -86,7 +86,7 @@ export const UPGRADES = [
   },
   {
     id: "red",
-    name: "Crimson passage",
+    name: "Red passage",
     grants: { red: 1 },
     base: 7,
     max: 10,
@@ -137,7 +137,7 @@ export const UPGRADES = [
   {
     id: "extraKey",
     name: "Extra Key",
-    description: "Open the Yellow Key provision on the Gear page: a yellow key carried into every run",
+    description: "Open the Gold Key provision on the Gear page: a gold key carried into every run",
     base: 1,
     max: 1,
     currency: "courage",
@@ -226,8 +226,8 @@ export const UPGRADES = [
   },
   {
     id: "cardYellowKey",
-    name: "Yellow Key",
-    description: "Add the YELLOW KEY card to your deck: it moves you toward the closest yellow key, and while you hold it each yellow key is worth 5% more and pays 1 more Gold",
+    name: "Gold Key",
+    description: "Add the GOLD KEY card to your deck: it moves you toward the closest gold key, and while you hold it each gold key is worth 5% more and pays 1 more Gold",
     card: "yellowKey",
     base: 3,
     max: 1,
@@ -334,8 +334,8 @@ export const UPGRADES = [
   },
   {
     id: "keySiphon",
-    name: "YK Siphon",
-    description: "Add the YK SIPHON card to your deck: it trades Max HP training levels, for the rest of the run, for a yellow key, each use costing one level more than the last",
+    name: "GK Siphon",
+    description: "Add the GK SIPHON card to your deck: it trades Max HP training levels, for the rest of the run, for a gold key, each use costing one level more than the last",
     card: "keySiphon",
     base: 5,
     max: 1,
@@ -424,9 +424,9 @@ export const UPGRADES = [
   // The cards below Buy Quantity: the doors, the enemies by strength, then
   // chests, Heart Door Resilience, the key trades, Floor Skip Reward, torches
   // and Steel Doors.
-  { id: "cardYellowDoor", name: "Yellow Door", description: "Add the YELLOW DOOR card to your deck: it moves you toward the closest yellow door, while you hold a yellow key", card: "yellowDoor", base: 5, max: 1, currency: "inspiration" },
-  { id: "keyLessBadges", name: "Key < Badges", description: "Add the YK <, BK < and RK < badges to the badge draw: each lets its card act only while you hold fewer keys of its colour than it says", base: 50, max: 1, currency: "inspiration" },
-  { id: "keyAtLeastBadges", name: "Key ≥ Badges", description: "Add the YK ≥, BK ≥ and RK ≥ badges to the badge draw: each lets its card act only while you hold at least as many keys of its colour as it says", base: 50, max: 1, currency: "inspiration" },
+  { id: "cardYellowDoor", name: "Gold Door", description: "Add the GOLD DOOR card to your deck: it moves you toward the closest gold door, while you hold a gold key", card: "yellowDoor", base: 5, max: 1, currency: "inspiration" },
+  { id: "keyLessBadges", name: "Key < Badges", description: "Add the GK <, BK < and RK < badges to the badge draw: each lets its card act only while you hold fewer keys of its colour than it says", base: 50, max: 1, currency: "inspiration" },
+  { id: "keyAtLeastBadges", name: "Key ≥ Badges", description: "Add the GK ≥, BK ≥ and RK ≥ badges to the badge draw: each lets its card act only while you hold at least as many keys of its colour as it says", base: 50, max: 1, currency: "inspiration" },
   { id: "cardHeartDoor", name: "Heart Door", description: "Add the HEART DOOR card to your deck: it moves you toward the closest Heart Door", card: "heartDoor", base: 10, max: 1, currency: "inspiration" },
   { id: "cardWeakEnemy", name: "Weak Enemy", description: "Add the WEAK ENEMY card to your deck: it moves you toward the closest weak enemy", card: "weakEnemy", base: 20, max: 1, currency: "inspiration" },
   { id: "cardBaseEnemy", name: "Base Enemy", description: "Add the BASE ENEMY card to your deck: it moves you toward the closest enemy that is neither weak, strong, elite nor a boss", card: "baseEnemy", base: 20, max: 1, currency: "inspiration" },
@@ -438,8 +438,8 @@ export const UPGRADES = [
   { id: "cardChest", name: "Chest", description: "Add the CHEST card to your deck: it moves you toward the closest closed chest, treasure or area reward, and while you hold it each treasure chest has a 1.5% chance to be a Supply Chest and a 0.5% chance to be an Equipment Chest", card: "chest", base: 20, max: 1, currency: "inspiration" },
   { id: "heartDoorResilience", name: "Heart Door Resilience", description: "Open Heart Door Resilience research in the Archives: each level makes a Heart Door drain less HP", base: 20, max: 1, currency: "inspiration" },
   { id: "blueSiphon", name: "BK Siphon", description: "Add the BK SIPHON card to your deck: it trades DEF training levels, for the rest of the run, for a blue key, each use costing one level more than the last", card: "blueSiphon", base: 20, max: 1, currency: "inspiration" },
-  { id: "blueTrader", name: "BK Trader", description: "Add the BK TRADER card to your deck: it trades 3 yellow keys for a blue key, without moving", card: "blueTrader", base: 20, max: 1, currency: "inspiration" },
-  { id: "keyToHp", name: "YK to HP", description: "Add the YK TO HP card to your deck: it trades a yellow key for 10% of your max HP, without moving, while you are missing at least that much", card: "keyToHp", base: 20, max: 1, currency: "inspiration" },
+  { id: "blueTrader", name: "BK Trader", description: "Add the BK TRADER card to your deck: it trades 3 gold keys for a blue key, without moving", card: "blueTrader", base: 20, max: 1, currency: "inspiration" },
+  { id: "keyToHp", name: "GK to HP", description: "Add the GK TO HP card to your deck: it trades a gold key for 10% of your max HP, without moving, while you are missing at least that much", card: "keyToHp", base: 20, max: 1, currency: "inspiration" },
   { id: "cardRedKey", name: "Red Key", description: "Add the RED KEY card to your deck: it moves you toward the closest red key, and while you hold it each red key is worth 5% more and pays 3 more Gold", card: "redKey", base: 20, max: 1, currency: "inspiration" },
   { id: "redSiphon", name: "RK Siphon", description: "Add the RK SIPHON card to your deck: it trades ATK training levels, for the rest of the run, for a red key, each use costing one level more than the last", card: "redSiphon", base: 20, max: 1, currency: "inspiration" },
   { id: "floorSkipReward", name: "Floor Skip Reward", description: "Open Floor Skip Reward research in the Archives: each level pays a share of the Gold a skipped floor's chests and battles held", base: 20, max: 1, currency: "inspiration" },
@@ -1039,7 +1039,7 @@ export const TRAINING = [
   {
     id: "overheal", name: "Overheal", group: "utility", requires: "overheal", cost: 1, max: 500,
     curve: { per: 31 }, base: 1000, off: 1000, scale: 1000, unit: "×",
-    description: "Raises how far potions, YK to HP and badge heals can heal you above max HP.",
+    description: "Raises how far potions, GK to HP and badge heals can heal you above max HP.",
     silver: overhealPrices, gold: overhealPrices,
   },
 ] as const satisfies readonly TrainingDef[];
@@ -1110,9 +1110,9 @@ export const GOLD_SHOP = [
   },
   {
     id: "yellowKey",
-    name: "Yellow Key",
+    name: "Gold Key",
     grants: { yellow: 1 },
-    words: { yellow: "yellow key" },
+    words: { yellow: "gold key" },
     price: { base: 100, ratio: 4 },
     requires: "extraKey",
   },

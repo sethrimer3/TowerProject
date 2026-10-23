@@ -635,7 +635,7 @@ function growRun(lab: Lab, board: Board, s: Slot) {
 }
 
 const QUOTA_GATE: Record<QuotaDoor, Gate> = { blue: { kind: 'door', color: 'blue' }, red: { kind: 'door', color: 'red' }, heart: { kind: 'heart' } };
-/** A plain yellow door: one key, no other colour, no heart, no run. */
+/** A plain gold door: one key, no other colour, no heart, no run. */
 const plainYellow = (g: Gate) => g.kind === 'door' && g.color === 'yellow' && !g.also?.length && !g.heart && !g.run;
 /** One door of `door`, in hundredths, as the quota counts it. */
 const oneDoor = (door: QuotaDoor): Record<QuotaDoor, number> => ({ blue: 0, red: 0, heart: 0, [door]: 100 });
@@ -656,7 +656,7 @@ type Placing = { floor: number; place: () => Record<QuotaDoor, number> | null };
  * that fit, on its own floor if it can, else on any of the area's from the
  * door's first floor:
  *
- *   upgrade   a yellow door in a pocket's throat turns blue or red; any paid
+ *   upgrade   a gold door in a pocket's throat turns blue or red; any paid
  *             gate (an enemy, a yellow or Wooden Door), corridor guards on
  *             the way to the milestone gate among them, a Heart Door;
  *   combine   a door takes the colour as well, or for a Heart Door, a door
@@ -795,13 +795,13 @@ function bridgeEdges({ nodes, edges }: Lab): Edge[] {
   });
 }
 
-/** Makes `towerWoodPercent` of the area's yellow locks Wooden Doors, each
+/** Makes `towerWoodPercent` of the area's gold locks Wooden Doors, each
  * by its own equivalent floor: throats', corridors' and fork lanes' (a lane
  * offering a Wooden Door of its own rolls too, so the share decides every
  * one), rolled one by one (no roll when all or none are). */
 function placeWoodenDoors(lab: Lab, board: Board) {
-  // Yellow door runs first (`yellowRun`), a key sink: from equivalent floor
-  // 6, some plain yellow doors in pockets' throats grow along them.
+  // Gold door runs first (`yellowRun`), a key sink: from equivalent floor
+  // 6, some plain gold doors in pockets' throats grow along them.
   for (const s of lab.slots) {
     if (!s.pocket || !plainYellow(s.gate)) continue;
     const run = yellowRun(floorOf(s.depth), lab.rng) ?? 1;
@@ -849,7 +849,7 @@ function supplyKeys(lab: Lab, board: Board) {
 
 /** Each lock of each colour, its equivalent floor and how much it counts:
  * every door's keys, a Wooden Door as yellow; a door run each of its doors,
- * but a yellow run (Wooden or yellow) once, a key sink; a fork's lane doors
+ * but a gold run (Wooden or yellow) once, a key sink; a fork's lane doors
  * 1/k each, as the hero opens one lane of k. */
 function lockFloors(lab: Lab): Record<KeyColor, { floor: number; weight: number }[]> {
   const out: Record<KeyColor, { floor: number; weight: number }[]> = { yellow: [], blue: [], red: [] };

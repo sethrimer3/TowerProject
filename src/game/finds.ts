@@ -1,4 +1,4 @@
-import { doorName, doorRule, drainsHp, pickupGold } from "../doors.ts";
+import { doorName, doorRule, drainsHp, keyWord, pickupGold } from "../doors.ts";
 import type { HandBonus } from "../cards.ts";
 import { compounded, keyStat, type TreeBonus } from "../card-trees.ts";
 import type { ChestKind, Enemy, Mode, Tile, KeyColor } from "../entities.ts";
@@ -162,7 +162,7 @@ export class Finds {
     const host = this.host, keysSpent = outcome.keysSpent, amount = outcome.keyAmount ?? 1, n = keysSpent.length, rule = doorRule(t), notes = notesOf(host.run);
     if (notes) tallyIn(notes.doors, doorName(t));
     const each = (color: KeyColor) => outcome.keyAmounts?.[color] ?? amount;
-    for (const color of keysSpent) host.gain(at.x, at.y, `−${keyCount(each(color))} ${color} key`, { tile: { kind: "key", color }, spent: true }, undefined, "door");
+    for (const color of keysSpent) host.gain(at.x, at.y, `−${keyCount(each(color))} ${keyWord(color)}`, { tile: { kind: "key", color }, spent: true }, undefined, "door");
     if (!outcome.free && (!n || (drainsHp(rule) && drained > 0))) host.gain(at.x, at.y, `−${wholeChange(drained)} HP`, { heart: true }, undefined, "door");
     if (outcome.healed) {
       host.gain(at.x, at.y, `+${wholeChange(outcome.healed)} HP`, { heart: true }, { row: 2, with: true });
@@ -221,7 +221,7 @@ const coinsText = (gold: number, silver: number) => [...(gold ? [`+${wholeChange
  * shard's stat under `rules`; null for anything else. */
 function pickupText(t: Tile, outcome: StepEffect, rules: StepRules) {
   switch (t.kind) {
-    case "key": return `+${keyCount(outcome.keyAmount ?? 1)} ${t.color} key`;
+    case "key": return `+${keyCount(outcome.keyAmount ?? 1)} ${keyWord(t.color ?? "yellow")}`;
     case "potion": return `+${wholeChange(outcome.healed)} HP`;
     case "attack": return `+${enemyStat(shardStat(t, rules))} attack`;
     case "defense": return `+${enemyStat(shardStat(t, rules))} defense`;

@@ -59,7 +59,7 @@ test("the decoder keeps known cards' whole XP, level 60's at most, and drops the
 });
 
 /** A Tower corridor along the bottom row, the stairs at its east end, a
- * yellow key at (2, 0), and the hero at its west end holding `hand`. */
+ * gold key at (2, 0), and the hero at its west end holding `hand`. */
 function corridor(hand: CardId[], edit: (save: Save) => void = () => {}) {
   const save = defaults();
   save.upgrades.inspirationUndos = 1;

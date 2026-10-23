@@ -252,8 +252,8 @@ try {
         };
         s.medals = 75;
       }),
-      // Badge Slots researched once: STAIRS holds YK < over Max HP, with
-      // YK ≥ (in conflict with YK <) and Effective in the box, in the forest
+      // Badge Slots researched once: STAIRS holds GK < over Max HP, with
+      // GK ≥ (in conflict with GK <) and Effective in the box, in the forest
       // and in a run inside. Built after the rest, so none of theirs changes.
       badgeSlots: forest((s) => {
         rich(s);

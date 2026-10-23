@@ -14,7 +14,7 @@ export type FloorAnalysis = {
   depth: number;
   regions: { id: number; purpose: string; pattern: string; route: string; gate: string; contents: string }[];
   doors: Record<string, number>;
-  /** e.g. "yellow via weak enemy": 2, "yellow via blue door": 3 */
+  /** e.g. "gold via weak enemy": 2, "gold via blue door": 3 */
   keys: Record<string, number>;
   /** Forks built, by pattern. */
   forks: Record<string, number>;

@@ -6,7 +6,7 @@ import type { KeyColor } from "./entities.ts";
  * number by equivalent floor. */
 export type KeyColors = Readonly<Record<KeyColor, boolean>>;
 export const ALL_KEY_COLORS: KeyColors = { yellow: true, blue: true, red: true };
-/** Only yellow keys: what a first-tower floor's way to the stairs may ask
+/** Only gold keys: what a first-tower floor's way to the stairs may ask
  * for without another way round (`bypassesRareKeys`). */
 export const YELLOW_ONLY: KeyColors = { yellow: true, blue: false, red: false };
 /** Whether tier `tier`'s Tower floors keep every blue and red door off the
@@ -36,7 +36,7 @@ export function onlyOpenKeys(thing: unknown, colors: KeyColors): boolean {
  * each floor rolls how many of each it holds (`towerDoorRate`), and only
  * the door stage (`tower/door-quota.ts`; the Delve's, by equivalent floor,
  * in `delve/labyrinth.ts`) places them; every other table offers only
- * yellow doors (`withoutQuotaDoors`). */
+ * gold doors (`withoutQuotaDoors`). */
 export type QuotaDoor = "blue" | "red" | "heart";
 export const QUOTA_DOORS: readonly QuotaDoor[] = ["red", "blue", "heart"];
 
@@ -89,7 +89,7 @@ export function towerKeyColorsOn(depth: number, tower: number): KeyColors {
   return { yellow: true, blue: open("blue"), red: open("red") };
 }
 
-/** The share of a Tower floor's yellow locks made Wooden Doors, in
+/** The share of a Tower floor's gold locks made Wooden Doors, in
  * percent: all of them on Tower I's first floor, 10 points fewer each later
  * tower and one fewer every `everyFloors` floors, down to none. */
 export const TOWER_WOOD_SCHEDULE = { start: 100, lessEachTower: 10, everyFloors: 10 };
@@ -170,14 +170,14 @@ export function forkCredit(lanes: unknown[]): Record<QuotaDoor, number> {
  * drawing from `rng` only then. */
 export const owesDoor = (owed: number, rng: () => number) => owed >= 100 || (owed > 0 && rng() * 100 < owed);
 
-/** Yellow door runs (docs/DOOR_AND_KEY_SCHEDULE.md section 7): a key sink.
- * From floor `fromFloor` (counting from 1), each plain yellow door off the
+/** Gold door runs (docs/DOOR_AND_KEY_SCHEDULE.md section 7): a key sink.
+ * From floor `fromFloor` (counting from 1), each plain gold door off the
  * way to the stairs (in the Delve, in a pocket's throat) becomes a run at
  * `chance` percent, of three doors at `threeShare` percent of those, else
- * two. The key supply plans one key for a whole yellow run, so each one
+ * two. The key supply plans one key for a whole gold run, so each one
  * spends keys the surplus would otherwise keep. */
 export const YELLOW_RUNS = { fromFloor: 6, chance: 15, threeShare: 30 };
-/** The run a plain yellow door on floor `depth` (0 is the first) rolls:
+/** The run a plain gold door on floor `depth` (0 is the first) rolls:
  * none, or two or three doors. */
 export function yellowRun(depth: number, rng: () => number): 2 | 3 | undefined {
   if (depth + 1 < YELLOW_RUNS.fromFloor || rng() * 100 >= YELLOW_RUNS.chance) return undefined;

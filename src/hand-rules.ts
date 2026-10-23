@@ -59,7 +59,7 @@ export class HandRules implements HandAt {
   get shotReach() {
     return this.host.shotReach;
   }
-  /** The most HP YK to HP and badge heals may heal to: max HP, raised by Overheal. */
+  /** The most HP GK to HP and badge heals may heal to: max HP, raised by Overheal. */
   get hpCeiling() {
     return this.host.hpCeiling;
   }
@@ -119,7 +119,7 @@ export class HandRules implements HandAt {
     }
   }
   /** Whether card `id`'s committed path is dropped because its gate badge
-   * (HP <, YK ≥, …) no longer holds: walking on, Regen may have lifted HP
+   * (HP <, GK ≥, …) no longer holds: walking on, Regen may have lifted HP
    * past an HP < limit. A focused card ignores its gate. */
   gateShut(id: CardId) {
     if (id === this.run.focused || !badgesOn(this.run.badges, id).some((b) => BADGES[b.id].kind === "gate")) return false;
@@ -262,8 +262,8 @@ export class HandRules implements HandAt {
 
   /** Whether a card that acts in place can act now (`planHand` asks),
    * inside a run only: a siphon while enough of its training levels are
-   * left for its next use, BK TRADER while 3 yellow keys are held, and YK TO
-   * HP while a yellow key is held and its whole heal would land. */
+   * left for its next use, BK TRADER while 3 gold keys are held, and GK TO
+   * HP while a gold key is held and its whole heal would land. */
   canAct(card: CardId) {
     if (this.run.outside) return false;
     const p = this.run.player;
@@ -276,12 +276,12 @@ export class HandRules implements HandAt {
   cardUses(card: CardId) {
     return this.run.cardUses?.[card] ?? 0;
   }
-  /** YK TO HP's heal: 10% of max HP. */
+  /** GK TO HP's heal: 10% of max HP. */
   keyHeal() {
     return snap((this.run.player.maxHp * KEY_TO_HP_PERCENT) / 100);
   }
   /** The run's training level of the row siphon `card` drains (Max HP for
-   * YK SIPHON, DEF for BK SIPHON, ATK for RK SIPHON): the hero's own ranks
+   * GK SIPHON, DEF for BK SIPHON, ATK for RK SIPHON): the hero's own ranks
    * and those bought with Silver this run, less the levels it siphoned (1
    * for the first use, 2 for the second, and so on); 0 outside a run. */
   siphonLevel(card: SiphonCard) {

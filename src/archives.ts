@@ -100,8 +100,8 @@ export const RESEARCH_TARGETS = {
    * pays, from 100. */
   goldBonus: { name: "Gold Bonus", base: 100, shown: percent },
   /** The chance, in tenths of a percent, that a new floor climbed hands
-   * the hero a yellow key. */
-  yellowKeyChance: { name: "Yellow Key Chance", base: 0, shown: tenths },
+   * the hero a gold key. */
+  yellowKeyChance: { name: "Gold Key Chance", base: 0, shown: tenths },
   /** How much of a key each key colour a door takes costs, in tenths of a
    * percent, from 1,000 (a whole key). */
   keyCost: { name: "Key Cost", base: 1000, shown: tenths },
@@ -677,8 +677,8 @@ export const RESEARCH = {
     levels: countLevels("floorSkipGold", 11, 10),
   },
   findYellowKey: {
-    name: "Find Yellow Key",
-    description: "Learn where climbers drop things: each new floor climbed has a chance to hand you a yellow key.",
+    name: "Find Gold Key",
+    description: "Learn where climbers drop things: each new floor climbed has a chance to hand you a gold key.",
     categories: ["economy"],
     requires: [{ upgrade: "findYellowKey" }],
     levels: hundredLevels("yellowKeyChance", 4).slice(0, 50),
@@ -818,7 +818,7 @@ export const RESEARCH = {
   },
   badgeSlots: {
     name: "Badge Slots",
-    description: "Each card holds one more badge a level, arranged on the Deck page. A card's badges must not conflict: a key colour's < and ≥ gates (YK < and YK ≥), or Effective and Dampen, can't share one.",
+    description: "Each card holds one more badge a level, arranged on the Deck page. A card's badges must not conflict: a key colour's < and ≥ gates (GK < and GK ≥), or Effective and Dampen, can't share one.",
     categories: ["abilities"],
     requires: [{ upgrade: "archives" }, { upgrade: "cardBadges" }, { goalUnlock: "badgeSlots" }],
     // 1 billion Gold and 4 days, then 100 billion and 20 days.

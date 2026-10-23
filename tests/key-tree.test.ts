@@ -97,7 +97,7 @@ test("KEY's Locksmith makes a key two, by the key's own roll", () => {
   const g = beside({ key: { locksmith: 500 } });
   assert.ok(g.move(1, 0));
   assert.equal(g.run.player.keys.yellow, 2);
-  assert.match(g.gains[0].text, /\+2 yellow key/);
+  assert.match(g.gains[0].text, /\+2 gold key/);
   const plain = beside({});
   assert.ok(plain.move(1, 0));
   assert.equal(plain.run.player.keys.yellow, 1);

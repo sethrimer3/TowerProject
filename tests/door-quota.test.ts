@@ -79,7 +79,7 @@ test("in the first tower the stage keeps blue and red doors off the way to the s
   }
 });
 
-test("a share of yellow locks are Wooden Doors: all on Tower I's first floors, 10 points fewer a tower and one fewer every ten floors", () => {
+test("a share of gold locks are Wooden Doors: all on Tower I's first floors, 10 points fewer a tower and one fewer every ten floors", () => {
   assert.deepEqual([[0, 1], [9, 1], [10, 1], [990, 1], [1000, 1], [0, 9], [199, 9], [200, 9]].map(([d, t]) => towerWoodPercent(d, t)),
     [100, 100, 99, 1, 0, 20, 1, 0]);
   const locks = (tower: number, room: number) => {

@@ -15,7 +15,7 @@ test("area-one door sequence covers every sprite/rule identity", () => {
     ["a", "b", "c", "ab", "ac", "bc", "abc", "steel", "heart"]);
   assert.equal(doorId({ kind: "door", door: { type: "wood", durability: 20 } }), "wood");
   assert.equal(doorId({ kind: "door", door: { type: "keys", keys: ["blue", "yellow"], mode: "all", heart: true } }), "abh");
-  assert.equal(doorName({ kind: "door", door: { type: "keys", keys: ["blue"], mode: "all", heart: true } }), "Azure Heart Door");
+  assert.equal(doorName({ kind: "door", door: { type: "keys", keys: ["blue"], mode: "all", heart: true } }), "Blue Heart Door");
 });
 
 test("single and combination locks require and consume their exact key sets", () => {
@@ -26,7 +26,7 @@ test("single and combination locks require and consume their exact key sets", ()
   assert.deepEqual(doorCost(door(6), player(1, 1, 1)), ["yellow", "blue", "red"]);
 });
 
-test("steel consumes one key in explicit gold/azure/crimson priority", () => {
+test("steel consumes one key in explicit gold/blue/red priority", () => {
   assert.equal(doorCost(door(7), player()), null);
   assert.deepEqual(doorCost(door(7), player(1, 1, 1)), ["yellow"]);
   assert.deepEqual(doorCost(door(7), player(0, 1, 1)), ["blue"]);

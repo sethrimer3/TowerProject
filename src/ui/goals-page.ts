@@ -85,7 +85,7 @@ const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
   trainingDiscount: `<p>Training Discount opens in the Archives: research it, and every rank a trainer trains costs 0.5% less Gold a level, up to 49.5% at level 99.</p>` +
     `<p class="hint">Training points and a run's Silver cost the same as ever.</p>`,
   cardGroups: `<p>Card Groups opens on the Deck: tap a diamond under the hand, between two cards, to link them into a group. The cards of a group share one priority: of every target any of them can reach, the hand heads for the closest.</p>` +
-    `<p class="hint">Link Yellow Key and Blue Key, and the hero takes whichever key is nearer. Moving a card out of place breaks its links.</p>`,
+    `<p class="hint">Link Gold Key and Blue Key, and the hero takes whichever key is nearer. Moving a card out of place breaks its links.</p>`,
   archerCard: `<p>The Archer card joins your deck. It never moves you, but while it is in your hand your hero is an Archer: every 10 turns it fires an arrow at the closest enemy within 3 m, walls and doors no obstacle, dealing one strike's damage (critical hits and the enemy's DEF counted) before you ever touch it.</p>` +
     `<p>While it is in your hand, your arrows strike bosses with 5% more ATK, and your Archer training can be raised with Silver during the run. Training it between runs works with or without the card.</p>` +
     `<p class="hint">A ready shot waits for an enemy to come in range, and fires the turn one does. Ranged enemies reach five sixths as far as your arrows: strike first, then close in.</p>`,
@@ -124,7 +124,7 @@ const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
     `<p class="hint">The notes stay open while the run plays on, and copy to paste elsewhere. The run's summary opens them too.</p>`,
   researchSpeed: `<p>Research Speed opens in the Archives: train the archivists to read faster, and every research, those under way included, takes less time.</p>`,
   badgeSlots: `<p>Badge Slots opens in the Archives: research it, and each card holds one more badge a level. Drag a badge onto a card on the Deck page to fill its next slot; on a card with every slot full, it takes the bottom slot's place.</p>` +
-    `<p class="hint">Badges that can't work together can't share a card: a key colour's &lt; gate with its ≥ gate (YK &lt; with YK ≥), or Effective with Dampen.</p>`,
+    `<p class="hint">Badges that can't work together can't share a card: a key colour's &lt; gate with its ≥ gate (GK &lt; with GK ≥), or Effective with Dampen.</p>`,
   shardAttack: `<p>Shard ATK opens in the Archives: research it, and every ATK shard a run picks up raises ATK by more, from the next one on, in the Tower and the Delve alike.</p>`,
   parryPercent: `<p>Parry % opens in the Archives once Parry is yours: research it, and every strike you parry is cut by more, at once, in the Tower and the Delve alike.</p>` +
     `<p class="hint">However it is raised, a parry cuts a strike's damage by at most 98%.</p>`,

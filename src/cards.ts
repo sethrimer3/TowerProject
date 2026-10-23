@@ -53,13 +53,13 @@ export const CARDS = {
   heal: { name: "Heal", text: "Move toward the closest healing potion." },
   door: { name: "Door", text: "Move toward the closest door you hold the keys for, or a Wooden Door you can break down." },
   key: { name: "Key", text: "Move toward the closest key of any colour." },
-  yellowKey: { name: "Yellow Key", text: "Move toward the closest yellow key.", bonus: { key: { color: "yellow", percent: 5, gold: 1 } } },
+  yellowKey: { name: "Gold Key", text: "Move toward the closest gold key.", bonus: { key: { color: "yellow", percent: 5, gold: 1 } } },
   blueKey: { name: "Blue Key", text: "Move toward the closest blue key.", bonus: { key: { color: "blue", percent: 5, gold: 2 } } },
   monster: { name: "Enemy", text: "Move toward the closest enemy." },
   atkUp: { name: "ATK Up", text: "Move toward the closest ATK pickup." },
   defUp: { name: "DEF Up", text: "Move toward the closest DEF pickup." },
-  keySiphon: { name: "YK Siphon", text: "Trade Max HP training levels for a yellow key, without moving, for the rest of the run. The first use takes 1 level and each use after takes 1 more (2, then 3…). Skipped without enough levels left." },
-  yellowDoor: { name: "Yellow Door", text: "Move toward the closest yellow door, while you hold a yellow key.", bonus: { door: { kind: "yellow", percent: DOOR_CARD_DISCOUNT } } },
+  keySiphon: { name: "GK Siphon", text: "Trade Max HP training levels for a gold key, without moving, for the rest of the run. The first use takes 1 level and each use after takes 1 more (2, then 3…). Skipped without enough levels left." },
+  yellowDoor: { name: "Gold Door", text: "Move toward the closest gold door, while you hold a gold key.", bonus: { door: { kind: "yellow", percent: DOOR_CARD_DISCOUNT } } },
   heartDoor: { name: "Heart Door", text: "Move toward the closest Heart Door.", bonus: { door: { kind: "heart", percent: DOOR_CARD_DISCOUNT } } },
   weakEnemy: { name: "Weak Enemy", text: "Move toward the closest weak enemy.", bonus: FOE },
   baseEnemy: { name: "Base Enemy", text: "Move toward the closest enemy that is neither weak, strong, elite nor a boss.", bonus: FOE },
@@ -70,8 +70,8 @@ export const CARDS = {
   fastEnemy: { name: "Fast Enemy", text: "Move toward the closest Fast enemy.", bonus: FOE },
   chest: { name: "Chest", text: "Move toward the closest closed chest: a treasure chest or an area reward chest.", bonus: { chest: { supply: 1.5, equipment: 0.5 } } },
   blueSiphon: { name: "BK Siphon", text: "Trade DEF training levels for a blue key, without moving, for the rest of the run. The first use takes 1 level and each use after takes 1 more (2, then 3…). Skipped without enough levels left." },
-  blueTrader: { name: "BK Trader", text: "Trade 3 yellow keys for a blue key, without moving. Skipped with fewer than 3 yellow keys." },
-  keyToHp: { name: "YK to HP", text: "Trade a yellow key for 10% of your max HP, without moving. Skipped without a yellow key, or while you are missing less than 10% of your max HP." },
+  blueTrader: { name: "BK Trader", text: "Trade 3 gold keys for a blue key, without moving. Skipped with fewer than 3 gold keys." },
+  keyToHp: { name: "GK to HP", text: "Trade a gold key for 10% of your max HP, without moving. Skipped without a gold key, or while you are missing less than 10% of your max HP." },
   redKey: { name: "Red Key", text: "Move toward the closest red key.", bonus: { key: { color: "red", percent: 5, gold: 3 } } },
   redSiphon: { name: "RK Siphon", text: "Trade ATK training levels for a red key, without moving, for the rest of the run. The first use takes 1 level and each use after takes 1 more (2, then 3…). Skipped without enough levels left." },
   torch: { name: "Torch", text: "Move toward the closest lit torch, putting it out." },
@@ -90,9 +90,9 @@ export const SIPHONS = {
 } as const satisfies Partial<Record<CardId, { row: TrainingId; color: KeyColor }>>;
 export type SiphonCard = keyof typeof SIPHONS;
 export const isSiphon = (id: CardId): id is SiphonCard => id in SIPHONS;
-/** BK TRADER's price: the yellow keys it trades for one blue key. */
+/** BK TRADER's price: the gold keys it trades for one blue key. */
 export const TRADER_YELLOW_KEYS = 3;
-/** YK TO HP's heal: this percent of max HP for one yellow key. */
+/** GK TO HP's heal: this percent of max HP for one gold key. */
 export const KEY_TO_HP_PERCENT = 10;
 /** What card `id` does, as the player is told: STAIRS says how it climbs
  * in the Delve only once Into the depths is owned. */
@@ -172,7 +172,7 @@ export const handSlots = (save: { upgrades: Record<UpgradeId, number>; handSlots
 export const nextHandSlotGems = (save: { upgrades: Record<UpgradeId, number>; handSlots: number }) =>
   save.upgrades.largerHand ? HAND_SLOT_GEMS[save.handSlots] ?? null : null;
 /** The hand a new profile starts with, in priority order: its whole deck.
- * HEAL, YELLOW KEY, ATK UP, DEF UP and BLUE KEY are earned from the Inspiration tree. */
+ * HEAL, GOLD KEY, ATK UP, DEF UP and BLUE KEY are earned from the Inspiration tree. */
 export const BASE_HAND: readonly CardId[] = ["stairs", "door", "key", "monster"];
 /** The cards a Goal adds to the deck once claimed (goals.ts). */
 export const GOAL_CARDS: Partial<Record<GoalUnlock, CardId>> = { archerCard: "archer", flyingEnemyCard: "flyingEnemy" };
@@ -371,7 +371,7 @@ const WANTS: Record<CardId, (t: Tile, at: HandAt, rules: CardRules | undefined, 
   atkUp: (t) => t.kind === "attack",
   defUp: (t) => t.kind === "defense",
   keySiphon: never,
-  // A single yellow door only (a Wooden Door is DOOR's), one the yellow keys
+  // A single gold door only (a Wooden Door is DOOR's), one the gold keys
   // held pay for.
   yellowDoor: (t, at, rules, r) => t.kind === "door" && isYellowDoor(t) && paysRun(at, r, rules),
   // A Heart Door, or a keyed door that drains HP too while its keys are held.

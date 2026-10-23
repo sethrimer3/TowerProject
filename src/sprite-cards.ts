@@ -13,7 +13,7 @@ const trade = (from: string, to: string): CardSpriteLayer[] => [
 const doorKeys: CardSpriteLayer[] = ["yellow", "blue", "red"].map((color, i) => ({ sprite: `key-${color}`, x: 10 + i * 10, y: 34, size: 8 }));
 
 /** Explicit compositions avoid ambiguous substring matches (for example,
- * YK to HP depicts a trade, and a Heart Door still depicts a door). */
+ * GK to HP depicts a trade, and a Heart Door still depicts a door). */
 export const CARD_SPRITE_LAYERS = {
   stairs: [subject("stairs")],
   heal: [subject("potion-red"), mark("heart")],

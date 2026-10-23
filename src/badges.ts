@@ -70,9 +70,9 @@ export const BADGES = {
   dampen: { name: "Dampen", rarity: "common", kind: "scale", glyph: "▼", color: "#8ab4ff", values: PERCENTS, unit: "%", text: (v) => `When the card activates, its target's effect is ${v}% weaker: a potion heals less, a key or shard gives less, a door takes less of each key, a Heart Door takes ${v}% less HP, and a monster deals ${v}% less damage in all and pays ${v}% less Silver, Gold and XP.` },
   hpPercent: { name: "HP %", rarity: "rare", kind: "reward", glyph: "♥", color: "#ff4fa3", values: LEVELS, unit: "% of max HP", text: (v) => `Regain ${v}% of max HP each time the card activates.` },
   goldTouch: { name: "Gold Touch", rarity: "rare", kind: "reward", glyph: "◉", color: "#ffc93c", values: LEVELS, unit: "Gold", text: (v) => `Gain ${v} Gold each time the card activates (Gold bonuses apply).` },
-  yellowGate: { name: "YK <", rarity: "rare", kind: "gate", glyph: "⚿", color: "#f2d24b", values: KEY_LIMITS, unit: "yellow keys", unlock: "keyLessBadges", text: (v) => `The card acts only while you hold fewer than ${v} yellow keys.` },
+  yellowGate: { name: "GK <", rarity: "rare", kind: "gate", glyph: "⚿", color: "#f2d24b", values: KEY_LIMITS, unit: "gold keys", unlock: "keyLessBadges", text: (v) => `The card acts only while you hold fewer than ${v} gold keys.` },
   blueGate: { name: "BK <", rarity: "rare", kind: "gate", glyph: "⚿", color: "#5aa9ff", values: KEY_LIMITS, unit: "blue keys", unlock: "keyLessBadges", text: (v) => `The card acts only while you hold fewer than ${v} blue keys.` },
-  yellowAtLeast: { name: "YK ≥", rarity: "rare", kind: "gate", sign: "≥", glyph: "⚿", color: "#f2d24b", values: LEVELS, unit: "yellow keys", unlock: "keyAtLeastBadges", text: (v) => `The card acts only while you hold at least ${v} yellow key${v === 1 ? "" : "s"}.` },
+  yellowAtLeast: { name: "GK ≥", rarity: "rare", kind: "gate", sign: "≥", glyph: "⚿", color: "#f2d24b", values: LEVELS, unit: "gold keys", unlock: "keyAtLeastBadges", text: (v) => `The card acts only while you hold at least ${v} gold key${v === 1 ? "" : "s"}.` },
   blueAtLeast: { name: "BK ≥", rarity: "rare", kind: "gate", sign: "≥", glyph: "⚿", color: "#5aa9ff", values: LEVELS, unit: "blue keys", unlock: "keyAtLeastBadges", text: (v) => `The card acts only while you hold at least ${v} blue key${v === 1 ? "" : "s"}.` },
   deprioritize: { name: "Deprioritize", rarity: "rare", kind: "aim", glyph: "?", color: "#ffb347", values: LEVELS, unit: "marks a floor", text: (v) => `Passes over the first ${v} target${v === 1 ? "" : "s"} the card picks on each floor, marking each with a ?, then rests for the floor. Every card's path goes round a ? while it can. When no card can move, the nearest ? becomes ! and the card heads for it.` },
   skip: { name: "Skip", rarity: "rare", kind: "chance", glyph: "↷", color: "#c0f0ff", values: [7, 9, 11, 13, 15, 17, 19], unit: "%", text: (v) => `${v}% chance, when the card activates, that its target vanishes without effect (never a boss on MONSTER). On STAIRS in the Tower, you climb two floors instead of one.` },
@@ -203,7 +203,7 @@ export const fitsCard = (id: BadgeId, card: CardId) => {
 
 /** The pairs of badges that can't share a card, since they wouldn't work
  * together: a key colour's < and ≥ gates, and Effective and Dampen. Other
- * gates check different things (HP <, YK ≥), so they can. */
+ * gates check different things (HP <, GK ≥), so they can. */
 const CONFLICTS: readonly (readonly [BadgeId, BadgeId])[] = [
   ["yellowGate", "yellowAtLeast"], ["blueGate", "blueAtLeast"], ["redGate", "redAtLeast"], ["effective", "dampen"],
 ];

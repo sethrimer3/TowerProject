@@ -344,7 +344,7 @@ function playBoard(name: string, seed: number, canvas: HTMLCanvasElement, grab: 
       quiet(g); // Its feedback text is timed by the real clock.
       const p = g.run.player, at = { x: p.x, y: p.y + 1 };
       g.gains.push(
-        { ...at, text: "−1 yellow key", art: { tile: { kind: "key", color: "yellow" }, spent: true } },
+        { ...at, text: "−1 gold key", art: { tile: { kind: "key", color: "yellow" }, spent: true } },
         { ...at, text: "Full HP ✓", art: { heart: true } },
       );
     } else if (scene.fight) {

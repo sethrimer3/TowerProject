@@ -124,7 +124,7 @@ export type StrategicNode = {
   footprint: Footprint;
   tags: StrategicTag[];
   /** Stairs region only: what stands directly in front of the stairs, an
-   * enemy of this strength or a yellow door. */
+   * enemy of this strength or a gold door. */
   stairsGuard?: Strength | "door" | "wood";
 };
 

@@ -120,7 +120,7 @@ test("no Regen in the forest", () => {
   assert.equal(g.stepRules.regen, 0.5);
 });
 
-test("stat provisions compound 5% a buy on top of their schedule; the Yellow Key doesn't", () => {
+test("stat provisions compound 5% a buy on top of their schedule; the Gold Key doesn't", () => {
   const heal = GOLD_SHOP.find((g) => g.id === "heal")!;
   assert.deepEqual([0, 9, 19, 49].map((n) => schedulePrice(heal.price, n)), [5, 111, 746, 21046]);
   const save = defaults();

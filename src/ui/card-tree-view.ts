@@ -17,7 +17,7 @@ export const ROOT = "card";
 /** One entry for each key colour's own stats (`ColorKeyStat`), `each`
  * giving a colour's, by part, from the colour and its capitalized word. */
 function byKeyColor<T>(each: (color: KeyColor, word: string) => Record<ColorKeyPart, T>) {
-  const words: Record<KeyColor, string> = { yellow: "Yellow", blue: "Blue", red: "Red" };
+  const words: Record<KeyColor, string> = { yellow: "Gold", blue: "Blue", red: "Red" };
   return Object.fromEntries((Object.keys(words) as KeyColor[]).flatMap((color) =>
     Object.entries(each(color, words[color])).map(([part, value]) => [`${color}${part}`, value]))) as Record<ColorKeyStat, T>;
 }

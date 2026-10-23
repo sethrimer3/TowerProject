@@ -363,18 +363,18 @@ function renameDoorNodes(s: any) {
     }
   }
 }
-/** KEY took YELLOW KEY's place in the base hand, and YELLOW KEY became an
- * Inspiration skill: a save with no KEY card that hasn't earned YELLOW KEY
+/** KEY took GOLD KEY's place in the base hand, and GOLD KEY became an
+ * Inspiration skill: a save with no KEY card that hasn't earned GOLD KEY
  * holds KEY in its place, in the hand, its links and the badges on it (and
  * a run inside's), renamed in the raw save before it decodes. The skill
- * earns YELLOW KEY back.
+ * earns GOLD KEY back.
  * TODO: remove this conversion in a future save version. */
 function retireYellowKey(s: any) {
   if ((isRecord(s.upgrades) && s.upgrades.cardYellowKey) || !Array.isArray(s.hand) || s.hand.includes("key")) return;
   const card = (id: unknown) => (id === "yellowKey" ? "key" : id);
   const cards = (list: unknown) => (Array.isArray(list) ? list.map(card) : list);
   const pairs = (list: unknown) => (Array.isArray(list) ? list.map(cards) : list);
-  /** Moves the badges a map by card holds on YELLOW KEY onto KEY. */
+  /** Moves the badges a map by card holds on GOLD KEY onto KEY. */
   const badges = (byCard: unknown) => {
     if (!isRecord(byCard) || !("yellowKey" in byCard) || "key" in byCard) return;
     byCard.key = byCard.yellowKey;

@@ -12,7 +12,7 @@ test("each key colour aims for its own keys per lock: a surplus on its first flo
   assert.deepEqual([ratio("blue", 51, 1), ratio("blue", 61, 1), ratio("blue", 11, 9), ratio("blue", 9999, 9)], [1.2, 1.195, 0.4, 0.4]);
   assert.deepEqual([ratio("red", 101, 1), ratio("red", 21, 9), ratio("red", 9999, 1)], [1.1, 0.3, 0.3]);
   assert.equal(ratio("yellow", 1001, 1, true), 1.05, "half as fast on the way to the stairs");
-  // Tower I's first floors keep every yellow key without drawing.
+  // Tower I's first floors keep every gold key without drawing.
   assert.equal(keepsKey("yellow", 0, 1, () => { throw new Error("no draw"); }), true);
 });
 

@@ -256,10 +256,10 @@ test("a door raises each key it took, with a minus sign, and a Heart Door a chec
   Object.assign(keys.run.player.keys, { yellow: 1, blue: 1 });
   assert.ok(keys.move(1, 0));
   assert.deepEqual(keys.gains.map((g) => [g.text, g.art]), [
-    ["−1 yellow key", { tile: { kind: "key", color: "yellow" }, spent: true }],
+    ["−1 gold key", { tile: { kind: "key", color: "yellow" }, spent: true }],
     ["−1 blue key", { tile: { kind: "key", color: "blue" }, spent: true }],
     ["+3 Gold", { coin: "gold" }],
-  ], "a Gold + Azure Door pays its colours' 1 + 2 Gold");
+  ], "a Gold + Blue Door pays its colours' 1 + 2 Gold");
   assert.match(keys.message, /opened · 2 keys spent$/);
   assert.equal(keys.effect.until, 0, "no text flashes over the board");
 

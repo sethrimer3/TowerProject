@@ -5,7 +5,9 @@ import type { DoorOdds, DoorRule, Player, Tile, KeyColor } from "./entities.ts";
 import { wholeChange } from "./whole.ts";
 
 export const KEY_ORDER: KeyColor[] = ["yellow", "blue", "red"];
-export const KEY_NAMES: Record<KeyColor, string> = { yellow: "Gold", blue: "Azure", red: "Crimson" };
+export const KEY_NAMES: Record<KeyColor, string> = { yellow: "Gold", blue: "Blue", red: "Red" };
+/** A key of `color` in text: "gold key". */
+export const keyWord = (color: KeyColor) => `${KEY_NAMES[color].toLowerCase()} key`;
 type KeyId = "a" | "b" | "c" | "ab" | "ac" | "bc" | "abc";
 /** Each door's art: its keys' letters (a yellow, b blue, c red), with `h`
  * after them on a door that also drains HP to 1. */
@@ -22,14 +24,14 @@ export function doorRule(tile: Tile): DoorRule {
 export type KeyScale = number | Readonly<Record<KeyColor, number>>;
 /** The part of a key of `color` that `scale` makes a door take. */
 export const keyNeed = (scale: KeyScale, color: KeyColor) => snap(typeof scale === "number" ? scale : scale[color]);
-/** The cheapest key held, at its `scale` of a key: gold, then azure, then crimson. */
+/** The cheapest key held, at its `scale` of a key: gold, then blue, then red. */
 const cheapestKey = (keys: KeyColor[], player: Opener, scale: KeyScale) =>
   KEY_ORDER.find((color) => keys.includes(color) && player.keys[color] >= keyNeed(scale, color));
 /** The HP breaking a Wooden Door takes, under a badge's `scale`. */
 export const woodToll = (rule: { durability: number }, scale = 1) => snap(rule.durability * scale);
 
 /** Returns the exact keys that would be consumed, or null when the door won't
- * open. Any-key steel locks use a stable gold/azure/crimson priority so their
+ * open. Any-key steel locks use a stable gold/blue/red priority so their
  * behavior is predictable. A Heart Door takes no keys and always opens: it
  * drains HP instead (`resolveStep`). A Wooden Door takes the cheapest key
  * held, or none when the hero has none and would survive breaking it
@@ -60,10 +62,10 @@ export function singleLock(tile: Tile): KeyColor | undefined {
   const rule = doorRule(tile);
   return rule.type === "keys" && rule.mode === "all" && rule.keys.length === 1 ? rule.keys[0] : undefined;
 }
-/** A single yellow door, YELLOW DOOR's. */
+/** A single gold door, GOLD DOOR's. */
 export const isYellowDoor = (tile: Tile) => singleLock(tile) === "yellow";
 /** The doors the door cards make cheaper while held (`CardBonus.door`), and
- * the percent less each costs: a single yellow door's key (YELLOW DOOR), the
+ * the percent less each costs: a single gold door's key (GOLD DOOR), the
  * HP a door draining HP takes (HEART DOOR), and a Wooden Door's key and the
  * HP breaking it takes (WOODEN DOOR). */
 export type DoorKind = "yellow" | "heart" | "wood";
@@ -105,21 +107,21 @@ export function doorId(tile: Tile): DoorId {
   return rule.heart ? `${letters}h` : letters;
 }
 const KEY_DOOR_NAMES: Record<KeyId, string> = {
-  a: "Gold Door", b: "Azure Door", c: "Crimson Door", ab: "Gold + Azure Door", ac: "Gold + Crimson Door", bc: "Azure + Crimson Door", abc: "Triune Door",
+  a: "Gold Door", b: "Blue Door", c: "Red Door", ab: "Gold + Blue Door", ac: "Gold + Red Door", bc: "Blue + Red Door", abc: "Triune Door",
 };
 export function doorName(tile: Tile) {
   const id = doorId(tile);
   if (id === "steel") return "Steel Door";
   if (id === "heart") return "Heart Door";
   if (id === "wood") return "Wooden Door";
-  // A keyed door that also drains HP: "Azure Heart Door".
+  // A keyed door that also drains HP: "Blue Heart Door".
   return id.endsWith("h") ? KEY_DOOR_NAMES[id.slice(0, -1) as KeyId].replace(/ Door$/, " Heart Door") : KEY_DOOR_NAMES[id as KeyId];
 }
 export function doorDescription(tile: Tile) {
   const rule = doorRule(tile);
   if (rule.type === "fullHp") return "Opens freely, but drains your HP to 1.";
-  if (rule.type === "wood") return `Consumes one available key (gold, then azure, then crimson). With none, break it down for ${wholeChange(rule.durability)} HP; DEF doesn't help.`;
-  if (rule.mode === "any") return "Consumes one available key (gold, then azure, then crimson).";
+  if (rule.type === "wood") return `Consumes one available key (gold, then blue, then red). With none, break it down for ${wholeChange(rule.durability)} HP; DEF doesn't help.`;
+  if (rule.mode === "any") return "Consumes one available key (gold, then blue, then red).";
   const names = rule.keys.map((key) => KEY_NAMES[key].toLowerCase());
   const keys = `Requires ${names.join(" + ")} ${names.length === 1 ? "key" : "keys"}`;
   return rule.heart ? `${keys}, and drains your HP to 1.` : `${keys}.`;

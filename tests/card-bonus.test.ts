@@ -18,7 +18,7 @@ import { arrowDamage } from "../src/ranged.ts";
 import { foeGold } from "../src/foe-cards.ts";
 import { BASE_RULES, resolveStep, type StepRules } from "../src/step-effects.ts";
 
-test("only YELLOW, BLUE and RED KEY, YELLOW, HEART and WOODEN DOOR, CHEST, the enemy cards but ENEMY and ARCHER carry a bonus, and KEY none", () => {
+test("only GOLD, BLUE and RED KEY, GOLD, HEART and WOODEN DOOR, CHEST, the enemy cards but ENEMY and ARCHER carry a bonus, and KEY none", () => {
   assert.deepEqual(CARD_IDS.filter((id) => cardBonus(id)), [
     "yellowKey", "blueKey", "yellowDoor", "heartDoor", "weakEnemy", "baseEnemy", "strongEnemy", "eliteEnemy", "bossEnemy", "nonBossEnemy", "fastEnemy", "chest", "redKey", "woodenDoor", "flyingEnemy", "archer",
   ]);
@@ -41,7 +41,7 @@ test("a card's bonus reads as short lines, the chest's chances light blue and pu
   assert.deepEqual(cardBonusLines("chest"), [{ text: "1.5% Supplies", tone: "supply" }, { text: "0.5% Equipment", tone: "equipment" }]);
   assert.deepEqual(cardBonusLines("blueKey").map((l) => l.text), ["+5% Blue Keys", "+2 Gold a key"]);
   assert.deepEqual(cardBonusLines("door"), []);
-  assert.deepEqual(cardBonusLines("yellowDoor").map((l) => l.text), ["−5% Yellow Door cost"]);
+  assert.deepEqual(cardBonusLines("yellowDoor").map((l) => l.text), ["−5% Gold Door cost"]);
   assert.deepEqual(cardBonusLines("woodenDoor").map((l) => l.text), ["−5% Wooden Door cost"]);
   assert.deepEqual(cardBonusLines("nonBossEnemy").map((l) => l.text), ["+5% ATK vs Non-Boss Enemies", "+5% Gold from Non-Boss Enemies"]);
 });
@@ -79,26 +79,26 @@ function floor(rows: string[]) {
 }
 const turns = (g: Game, n: number) => { for (let i = 0; i < n; i++) g.autoTurn(); };
 
-test("YELLOW KEY held makes each yellow key worth 5% more and pay 1 more Gold, whichever card takes it", () => {
+test("GOLD KEY held makes each gold key worth 5% more and pay 1 more Gold, whichever card takes it", () => {
   const plain = floor(["@.K"]);
   plain.run.hand = ["key"];
   let gold = plain.save.gold;
   turns(plain, 2);
   assert.equal(plain.run.player.keys.yellow, 1);
   const pickup = plain.save.gold - gold;
-  assert.equal(pickup, 1, "a yellow key's own Pickup Gold");
+  assert.equal(pickup, 1, "a gold key's own Pickup Gold");
 
   const held = floor(["@.K"]);
   held.run.hand = ["key", "yellowKey"];
   gold = held.save.gold;
   turns(held, 2);
-  assert.equal(held.run.player.keys.yellow, 1.05, "KEY took it, but YELLOW KEY is held");
+  assert.equal(held.run.player.keys.yellow, 1.05, "KEY took it, but GOLD KEY is held");
   assert.equal(held.save.gold - gold, pickup + 1);
 
   const blue = floor(["@.B"]);
   blue.run.hand = ["key", "yellowKey"];
   turns(blue, 2);
-  assert.equal(blue.run.player.keys.blue, 1, "YELLOW KEY gives nothing for a blue key");
+  assert.equal(blue.run.player.keys.blue, 1, "GOLD KEY gives nothing for a blue key");
 });
 
 const heroAt = (hp: number, yellow = 0): Player =>
@@ -110,7 +110,7 @@ const BLUE_DOOR: Tile = { kind: "door", color: "blue" };
 const WOODEN_DOOR: Tile = { kind: "door", door: { type: "wood", durability: 20 } };
 const step = (player: Player, tile: Tile, rules: Partial<StepRules>) => resolveStep(player, tile, { ...BASE_RULES, ...rules }).player!;
 
-test("a door card held makes its doors cost 5% less: YELLOW DOOR a yellow door's key, HEART DOOR the HP drained, WOODEN DOOR its key or the HP breaking it takes", () => {
+test("a door card held makes its doors cost 5% less: GOLD DOOR a gold door's key, HEART DOOR the HP drained, WOODEN DOOR its key or the HP breaking it takes", () => {
   const doorOff = handBonus(["yellowDoor", "heartDoor", "woodenDoor"]).doors;
   assert.equal(step(heroAt(100, 1), YELLOW_DOOR, { doorOff }).keys.yellow, 0.05, "0.95 of a key");
   assert.equal(step(heroAt(100, 0.95), YELLOW_DOOR, { doorOff }).keys.yellow, 0, "0.95 of a key opens it");
@@ -124,7 +124,7 @@ test("a door card held makes its doors cost 5% less: YELLOW DOOR a yellow door's
   const blue = heroAt(100);
   blue.keys.blue = 1;
   assert.equal(step(blue, BLUE_DOOR, { doorOff }).keys.blue, 0);
-  // A Gold Heart Door is both: YELLOW DOOR's key and HEART DOOR's drain.
+  // A Gold Heart Door is both: GOLD DOOR's key and HEART DOOR's drain.
   const both = step(heroAt(101, 1), GOLD_HEART_DOOR, { doorOff });
   assert.deepEqual([both.keys.yellow, both.hp], [0.05, 6]);
   const keyOnly = step(heroAt(101, 1), GOLD_HEART_DOOR, { doorOff: { yellow: 5 } });
@@ -139,7 +139,7 @@ test("a door card's discount multiplies Key Efficiency, Heart Door Resilience an
   assert.equal(step(heroAt(100), WOODEN_DOOR, { doorOff, scale: 0.9 }).hp, snap(100 - 20 * 0.9 * 0.95));
 });
 
-test("YELLOW DOOR held makes a yellow door cost 0.95 of a key, whichever card opens it", () => {
+test("GOLD DOOR held makes a gold door cost 0.95 of a key, whichever card opens it", () => {
   const plain = floor(["@.D"]);
   plain.run.player.keys.yellow = 1;
   plain.run.hand = ["door"];
@@ -150,7 +150,7 @@ test("YELLOW DOOR held makes a yellow door cost 0.95 of a key, whichever card op
   held.run.player.keys.yellow = 1;
   held.run.hand = ["door", "yellowDoor"];
   turns(held, 2);
-  assert.equal(held.run.player.keys.yellow, 0.05, "DOOR opened it, but YELLOW DOOR is held");
+  assert.equal(held.run.player.keys.yellow, 0.05, "DOOR opened it, but GOLD DOOR is held");
 });
 
 test("a Supply or Equipment Chest pays its finds once Equipment is open, from Equipment's stream", () => {

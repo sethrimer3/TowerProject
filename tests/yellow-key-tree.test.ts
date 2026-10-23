@@ -27,14 +27,14 @@ function beside(trees: CardTreeLevels, tiles: Tile[]) {
   return g;
 }
 
-test("YELLOW KEY's tree: Key Heal, Key Gold and Key Find tracks through every rarity, 10 levels from the start", () => {
+test("GOLD KEY's tree: Key Heal, Key Gold and Key Find tracks through every rarity, 10 levels from the start", () => {
   const shape = CARD_TREES.yellowKey!.map((n) => `${n.id}:${n.rarity}:${n.levels}/${n.max}${n.after ? `<${n.after}` : ""}`);
   assert.deepEqual(shape, ["heal:common:2/5", "overheal:uncommon:0/5<heal",
     "gold:common:4/5", "silver:uncommon:0/5<gold", "goldBonus:rare:0/5<silver", "freeUtility:epic:0/5<goldBonus", "chest:legendary:0/5<freeUtility",
     "find:common:4/5", "doorCost:uncommon:0/5<find", "maxHp:rare:0/5<doorCost", "locksmith:epic:0/5<maxHp", "masterKey:legendary:0/5<locksmith"]);
 });
 
-test("YELLOW KEY's Key Heal and Key Overheal add to KEY's for a yellow key only", () => {
+test("GOLD KEY's Key Heal and Key Overheal add to KEY's for a gold key only", () => {
   const healed = (tile: Tile, rules: Partial<typeof BASE_RULES>, player: Partial<Player> = {}) => (resolveStep({ ...hero, ...player }, tile, { ...BASE_RULES, ...rules }) as StepEffect).player.hp;
   assert.equal(healed(yellow, { keyHeal: 2, yellowKeyHeal: 3 }), 55);
   assert.equal(healed(blue, { keyHeal: 2, yellowKeyHeal: 3 }), 52, "not a blue key");
@@ -44,7 +44,7 @@ test("YELLOW KEY's Key Heal and Key Overheal add to KEY's for a yellow key only"
   assert.equal(g.run.player.hp, 54);
 });
 
-test("YELLOW KEY's Key Gold and Key Find multiply KEY's and the key cards', its Key Silver and Key Chest add to KEY's", () => {
+test("GOLD KEY's Key Gold and Key Find multiply KEY's and the key cards', its Key Silver and Key Chest add to KEY's", () => {
   assert.equal(compounded(10, 10), 21);
   assert.equal(compounded(0, 5), 5);
   const take = (trees: CardTreeLevels, tile: Tile = yellow) => {
@@ -53,39 +53,39 @@ test("YELLOW KEY's Key Gold and Key Find multiply KEY's and the key cards', its 
     return { gold: g.save.gold - gold, silver: snap6((g.run.silver ?? 0) - silver), keys: g.run.player.keys[tile.color!] };
   };
   const plain = take({}), both = take({ key: { keyGold: 5, keySilver: 2 }, yellowKey: { gold: 5, silver: 3 } });
-  assert.equal(both.gold, snap6(plain.gold * 1.1 * 1.1), "KEY's +10% times YELLOW KEY's +10%");
+  assert.equal(both.gold, snap6(plain.gold * 1.1 * 1.1), "KEY's +10% times GOLD KEY's +10%");
   assert.equal(both.silver, 0.5, "0.2 and 0.3");
   assert.equal(take({ yellowKey: { gold: 5, silver: 3 } }, blue).silver, 0, "a blue key gets none");
-  // KEY's Key Find, 1% a level, times YELLOW KEY's.
+  // KEY's Key Find, 1% a level, times GOLD KEY's.
   assert.equal(take({ key: { keyFind: 10 }, yellowKey: { find: 10 } }).keys, 1.21);
   assert.equal(take({ key: { keyFind: 10 }, yellowKey: { find: 10 } }, blue).keys, 1.1);
-  // Key Chest: KEY's chance and YELLOW KEY's added, for a yellow key.
+  // Key Chest: KEY's chance and GOLD KEY's added, for a gold key.
   const chest = beside({ key: { keyChest: 250 }, yellowKey: { chest: 250 } }, [yellow]);
   assert.ok(chest.move(1, 0));
   assert.equal(chest.world.tile(1, 0).kind, "openedChest", "50% and 50%: certain");
 });
 
-test("YELLOW KEY's Yellow Key Cost cuts the yellow key any door takes, its own factor on DOOR's and YELLOW DOOR's cuts", () => {
+test("GOLD KEY's Gold Key Cost cuts the gold key any door takes, its own factor on DOOR's and GOLD DOOR's cuts", () => {
   assert.deepEqual(doorKeyScale(keyed(["yellow"]), 1, { yellowKey: 10, yellow: 20, all: 10 }), { yellow: 0.63, blue: 0.7, red: 0.7 });
   assert.equal(doorKeyScale(keyed(["blue"]), 1, { yellow: 20, all: 10 }), 0.9, "one amount with no key colour's cut");
   const g = beside({ yellowKey: { doorCost: 5 } }, [keyed(["yellow"])]);
   g.run.player.keys.yellow = 1;
   assert.ok(g.move(1, 0));
   assert.equal(g.run.player.keys.yellow, 0.05);
-  // A door of two colours: only its yellow key costs less.
+  // A door of two colours: only its gold key costs less.
   const two = beside({ yellowKey: { doorCost: 5 } }, [keyed(["yellow", "blue"])]);
   Object.assign(two.run.player.keys, { yellow: 1, blue: 1 });
   assert.ok(two.move(1, 0));
   assert.deepEqual([two.run.player.keys.yellow, two.run.player.keys.blue], [0.05, 0]);
   assert.match(two.message, /1\.95 keys spent/);
-  // A Steel Door taking a yellow key.
+  // A Steel Door taking a gold key.
   const steel = beside({ yellowKey: { doorCost: 5 } }, [{ kind: "door", door: { type: "keys", keys: ["yellow", "blue", "red"], mode: "any" } }]);
   steel.run.player.keys.yellow = 0.95;
   assert.ok(steel.move(1, 0));
   assert.equal(steel.run.player.keys.yellow, 0);
 });
 
-test("YELLOW KEY's Max HP raises the hero's for the run, its own factor, training bought inside raised too", () => {
+test("GOLD KEY's Max HP raises the hero's for the run, its own factor, training bought inside raised too", () => {
   const s = defaults();
   s.cardXp.yellowKey = MAX_CARD_XP;
   s.cardBuys.opened = { yellowKey: Object.fromEntries(CARD_TREES.yellowKey!.map((n) => [n.id, n.max - n.levels])) };
@@ -98,7 +98,7 @@ test("YELLOW KEY's Max HP raises the hero's for the run, its own factor, trainin
   assert.equal(g.run.player.hp, g.run.player.maxHp, "at full HP");
 });
 
-test("YELLOW KEY's Locksmith Yellow adds to KEY's Locksmith, one roll", () => {
+test("GOLD KEY's Locksmith Gold adds to KEY's Locksmith, one roll", () => {
   const walk = (trees: CardTreeLevels) => {
     const g = beside(trees, Array.from({ length: 12 }, () => yellow));
     return Array.from({ length: 12 }, () => {
@@ -113,7 +113,7 @@ test("YELLOW KEY's Locksmith Yellow adds to KEY's Locksmith, one roll", () => {
   assert.deepEqual(walk({ key: { locksmith: 50 }, yellowKey: { locksmith: 50 } }).filter((n) => n !== 2), [], "50% and 50%: certain");
 });
 
-test("YELLOW KEY's Locksmith Yellow makes a yellow key two; Master Yellow Key opens the floor's doors with a yellow lock", () => {
+test("GOLD KEY's Locksmith Gold makes a gold key two; Master Gold Key opens the floor's doors with a gold lock", () => {
   const two = beside({ yellowKey: { locksmith: 100 } }, [yellow]);
   assert.ok(two.move(1, 0));
   assert.equal(two.run.player.keys.yellow, 2);
@@ -122,11 +122,11 @@ test("YELLOW KEY's Locksmith Yellow makes a yellow key two; Master Yellow Key op
   assert.equal(notBlue.run.player.keys.blue, 1);
   const g = beside({ yellowKey: { masterKey: 50 } }, [yellow, keyed(["yellow"]), keyed(["red"]), keyed(["yellow", "blue"])]);
   assert.ok(g.move(1, 0));
-  assert.deepEqual([2, 3, 4].map((x) => g.world.tile(x, 0).kind), ["floor", "door", "floor"], "every door with a yellow lock, none without");
-  assert.match(g.message, /Master Yellow Key · 2 doors opened/);
+  assert.deepEqual([2, 3, 4].map((x) => g.world.tile(x, 0).kind), ["floor", "door", "floor"], "every door with a gold lock, none without");
+  assert.match(g.message, /Master Gold Key · 2 doors opened/);
   const blueKey = beside({ yellowKey: { masterKey: 50 } }, [blue, keyed(["yellow"])]);
   assert.ok(blueKey.move(1, 0));
-  assert.equal(blueKey.world.tile(2, 0).kind, "door", "only a yellow key");
+  assert.equal(blueKey.world.tile(2, 0).kind, "door", "only a gold key");
 });
 
 const snap6 = (n: number) => Math.round(n * 1e6) / 1e6;

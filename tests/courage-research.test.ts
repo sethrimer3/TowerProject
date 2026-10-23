@@ -8,7 +8,7 @@ import { resolveStep, type StepEffect } from "../src/step-effects.ts";
 import type { Enemy, Player } from "../src/entities.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 
-// The research the Courage tree's Find Yellow Key, Key Efficiency,
+// The research the Courage tree's Find Gold Key, Key Efficiency,
 // Interest, Max Interest and Mug skills open.
 
 /** A Tower run inside, the hero at (0, 0) beside the stairs at (1, 0). */
@@ -98,7 +98,7 @@ test("Interest adds its share of the Silver held on a new floor, up to Max Inter
   assert.equal(climb(100), afterWell + afterWell / 10);
 });
 
-test("Find Yellow Key: a fixed roll per run and floor, more research only adding keys", () => {
+test("Find Gold Key: a fixed roll per run and floor, more research only adding keys", () => {
   const found = (levels: number) => {
     const g = stairs(4242);
     g.save.archives.levels.findYellowKey = levels;

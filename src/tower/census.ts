@@ -149,7 +149,7 @@ export function averaged(sum: Counts, floors: number): Counts {
 }
 
 /** Keys found per lock of each colour, and overall. A wooden or steel door
- * counts as a yellow lock, since it eats the cheapest key first. */
+ * counts as a gold lock, since it eats the cheapest key first. */
 export function keysPerLock(c: Counts): Record<KeyColor | "all", number> {
   // A fork's lane doors count 1/k, as the hero opens one lane of k.
   const doors = (kind: string) => (c[`door:${kind}`] ?? 0) - (c[`forkTile:${kind}`] ?? 0) + (c[`forked:${kind}`] ?? 0);
@@ -161,7 +161,7 @@ export function keysPerLock(c: Counts): Record<KeyColor | "all", number> {
   return out;
 }
 
-/** The share of yellow locks that are wooden. */
+/** The share of gold locks that are wooden. */
 export const woodShare = (c: Counts) => {
   const wood = c["door:wood"] ?? 0, locks = wood + (c["door:yellow"] ?? 0);
   return locks ? wood / locks : NaN;

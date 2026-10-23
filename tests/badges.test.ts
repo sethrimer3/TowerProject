@@ -104,10 +104,10 @@ test("Key < Badges and Key ≥ Badges each add their three key gates to the draw
   assert.ok([...KEY_LESS, ...KEY_AT_LEAST].every((id) => both.has(id)));
 });
 
-test("Key < Badges sits beside Yellow Door and Key ≥ Badges beside it, 50 Inspiration each", () => {
+test("Key < Badges sits beside Gold Door and Key ≥ Badges beside it, 50 Inspiration each", () => {
   const g = new Game(defaults());
   g.save.tower.inspiration = 100;
-  assert.equal(g.buy("keyLessBadges"), false, "waits for Yellow Door");
+  assert.equal(g.buy("keyLessBadges"), false, "waits for Gold Door");
   g.save.upgrades.cardYellowDoor = 1;
   assert.equal(g.buy("keyAtLeastBadges"), false, "waits for Key < Badges");
   assert.ok(g.buy("keyLessBadges"));
@@ -238,7 +238,7 @@ test("the desk fills the slots Badge Slots opens and refuses a conflict", () => 
   g.save.archives.levels.badgeSlots = 2;
   assert.equal(g.badges.conflict("yellowAtLeast", "stairs"), "yellowGate");
   assert.equal(g.badges.attach("yellowAtLeast", "stairs"), false);
-  assert.ok(g.badges.attach("hpGate", "stairs"), "HP < sits beside YK <");
+  assert.ok(g.badges.attach("hpGate", "stairs"), "HP < sits beside GK <");
   assert.deepEqual(g.save.badges.cards.stairs, ["xp", "yellowGate", "hpGate"]);
   g.save.hand = ["stairs"];
   g.newRun();
@@ -288,7 +288,7 @@ test("a gate keeps its card from acting while its condition fails; a Focus overr
   g.run.player.hp = 100;
   badge(g, "key", "yellowGate", 1, 0);
   g.run.player.keys.yellow = 10;
-  assert.equal(planHand(g.handRules, g.run.hand, "tower"), null, "holding 10 yellow keys closes YK < 10");
+  assert.equal(planHand(g.handRules, g.run.hand, "tower"), null, "holding 10 gold keys closes GK < 10");
   g.save.upgrades.focus = 1;
   assert.equal(g.focus(0), "focused", "a Focus plans the card whatever its gate");
   turns(g, 2);

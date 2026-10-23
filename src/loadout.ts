@@ -78,8 +78,8 @@ const WORDS: Record<Stat, string> = {
   thorns: "% of an enemy's max HP each of its strikes costs it",
   parry: "% less damage from every enemy strike",
   yellow: "starting gold key",
-  blue: "starting azure key",
-  red: "starting crimson key",
+  blue: "starting blue key",
+  red: "starting red key",
   undos: "additional undo",
 };
 

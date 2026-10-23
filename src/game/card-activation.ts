@@ -11,6 +11,7 @@ import { noteKey } from "../run-notes.ts";
 import type { HandRules } from "../hand-rules.ts";
 import type { GainArt } from "../shown.ts";
 import { keyCount, wholeChange } from "../whole.ts";
+import { keyWord } from "../doors.ts";
 import type { RunPurse } from "./run-purse.ts";
 import type { DeskHost } from "./desk.ts";
 import type { Finds } from "./finds.ts";
@@ -118,13 +119,13 @@ export class CardActivation {
       p.keys.yellow = snap(p.keys.yellow - TRADER_YELLOW_KEYS);
       p.keys.blue = snap(p.keys.blue + scale);
       noteKey(run, "blue", scale);
-      host.gain(p.x, p.y, `−${TRADER_YELLOW_KEYS} yellow keys`, { tile: { kind: "key", color: "yellow" } });
+      host.gain(p.x, p.y, `−${TRADER_YELLOW_KEYS} gold keys`, { tile: { kind: "key", color: "yellow" } });
       host.gain(p.x, p.y, `+${keyCount(scale)} blue key`, { tile: { kind: "key", color: "blue" } });
     } else if (card === "keyToHp") {
       const healed = snap(healUpTo(p.hp, snap(host.handRules.keyHeal() * scale), host.handRules.hpCeiling) - p.hp);
       p.keys.yellow = snap(p.keys.yellow - 1);
       p.hp = snap(p.hp + healed);
-      host.gain(p.x, p.y, "−1 yellow key", { tile: { kind: "key", color: "yellow" } });
+      host.gain(p.x, p.y, "−1 gold key", { tile: { kind: "key", color: "yellow" } });
       host.recordHeal(healed);
     }
     (run.cardUses ??= {})[card] = host.handRules.cardUses(card) + 1;
@@ -144,6 +145,6 @@ export class CardActivation {
     noteKey(run, color, scale);
     const lost = stat === "maxHp" ? `−${wholeChange(loss)} max HP` : `−${wholeChange(loss)} ${stat === "attack" ? "ATK" : "DEF"}`;
     host.gain(p.x, p.y, lost, stat === "maxHp" ? { heart: true } : { tile: { kind: stat } });
-    host.gain(p.x, p.y, `+${keyCount(scale)} ${color} key`, { tile: { kind: "key", color } });
+    host.gain(p.x, p.y, `+${keyCount(scale)} ${keyWord(color)}`, { tile: { kind: "key", color } });
   }
 }

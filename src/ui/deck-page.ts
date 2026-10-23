@@ -711,7 +711,7 @@ export class DeckPage {
     modal.showModal();
   }
 
-  /** A gate's threshold as the slider shows it: "HP < 75%", "YK < 4", "YK ≥ 2". */
+  /** A gate's threshold as the slider shows it: "HP < 75%", "GK < 4", "GK ≥ 2". */
   private thresholdText(id: BadgeId, pick: number) {
     const v = badgeValue(id, BADGES[id].values.length, pick);
     return `${BADGES[id].name} ${v}${id === "hpGate" ? "%" : ""}`;

@@ -119,7 +119,7 @@ Two or three lanes side by side leading into the same place, each costing about 
 _Avoid_: split path, branch (a branch is an optional side room)
 
 **Stairs guard**:
-What stands on the one tile in front of a floor's stairs: an enemy, a yellow door, or nothing (a section's last floor puts its boss there).
+What stands on the one tile in front of a floor's stairs: an enemy, a gold door, or nothing (a section's last floor puts its boss there).
 _Avoid_: stairs gate (the gate is the stairs room's way in)
 
 **Nook**:
@@ -131,7 +131,7 @@ One way through a fork: one to three tiles of gates walked in order, sometimes w
 _Avoid_: corridor, path
 
 **Door run**:
-Two or three of the same door in a row in one gate, each paid in turn: blue, red or Heart Doors placed by the door quota, or yellow ones (Wooden or not) as a key sink, which the key supply plans one key for.
+Two or three of the same door in a row in one gate, each paid in turn: blue, red or Heart Doors placed by the door quota, or gold ones (Wooden or not) as a key sink, which the key supply plans one key for.
 _Avoid_: double door, door chain
 
 **Door quota**:
@@ -147,7 +147,7 @@ The HP breaking a Wooden Door down takes: twice the ATK of the floor's normal en
 _Avoid_: door HP, door strength
 
 **Combined door**:
-One door tile taking more than one thing: a key of each of two or three colours (Gold + Azure, Azure + Crimson, Triune), or a coloured door's keys and a Heart Door's drain to 1 HP (an Azure Heart Door). It counts toward the door quota of each colour, and of hearts, it takes.
+One door tile taking more than one thing: a key of each of two or three colours (Gold + Blue, Blue + Red, Triune), or a coloured door's keys and a Heart Door's drain to 1 HP (an Blue Heart Door). It counts toward the door quota of each colour, and of hearts, it takes.
 _Avoid_: double door, multi-lock
 
 **Enemy curve**:
@@ -293,7 +293,7 @@ _Avoid_: resurrection, second life
 The striped potion drawn blue (a regular potion is red): it restores a regular potion's HP plus a share of max HP (1% with the Recovery skill, more with Potion % training). With Recovery owned, each potion a run finds may be one, by a chance fixed when the run goes inside (2%, more with Find Potion training, up to 20%); otherwise each is a regular potion.
 
 **Overheal**:
-HP held above max HP, which the Overheal skill allows: potions, YK TO HP and badge heals may heal up to the **Overheal ceiling**, max HP times the Overheal training row's value (×1 to ×16.5); other heals stop at max HP and never lower HP above it. The HUD shows it as a blue bar over the full red HP bar.
+HP held above max HP, which the Overheal skill allows: potions, GK TO HP and badge heals may heal up to the **Overheal ceiling**, max HP times the Overheal training row's value (×1 to ×16.5); other heals stop at max HP and never lower HP above it. The HUD shows it as a blue bar over the full red HP bar.
 _Avoid_: overhealth, shield HP
 
 **Lifesteal**:
@@ -315,19 +315,19 @@ _Avoid_: penetration, armor break, sunder
 The damage a hero's shroud blocks in each fight: the enemy's strikes, after DEF, wear it away before any HP is lost, and it is whole again when the next fight starts. The Shroud skill gives the first point; Shroud training adds more.
 _Avoid_: shield (the equipment slot), barrier
 
-**YK Siphon**:
-A card that moves nowhere: its turn trades Max HP training levels, for the rest of the run only, for a yellow key, each use in a run taking one level more than the last (1, then 2, then 3 …). Skipped once the run has too few Max HP training levels left for the next use. **BK Siphon** and **RK Siphon** do the same with DEF and ATK training levels, for a blue and a red key, each counting its own uses; the three are the **siphons**.
+**GK Siphon**:
+A card that moves nowhere: its turn trades Max HP training levels, for the rest of the run only, for a gold key, each use in a run taking one level more than the last (1, then 2, then 3 …). Skipped once the run has too few Max HP training levels left for the next use. **BK Siphon** and **RK Siphon** do the same with DEF and ATK training levels, for a blue and a red key, each counting its own uses; the three are the **siphons**.
 _Avoid_: drain
 
 **Key trade**:
-A card that moves nowhere and trades keys it holds for something else: **BK Trader** (3 yellow keys for a blue key) and **YK to HP** (a yellow key for 10% of max HP, only while that much HP is missing). Skipped while it can't pay.
+A card that moves nowhere and trades keys it holds for something else: **BK Trader** (3 gold keys for a blue key) and **GK to HP** (a gold key for 10% of max HP, only while that much HP is missing). Skipped while it can't pay.
 
 **Regen**:
 The HP a hero regains with every step taken in a run, after whatever the step did, up to max HP. A Dash turn counts as one step, but for the first dashed tiles Dash Regen research lets regain HP too. The Regen skill opens Regen training, which gives it.
 _Avoid_: regeneration, healing (a potion's)
 
 **Provision**:
-A lasting boost bought with Gold on the Gear page: each one bought adds to the loadout of every run from then on (a stat, a yellow key, or a Bomb), and the next of its kind costs more.
+A lasting boost bought with Gold on the Gear page: each one bought adds to the loadout of every run from then on (a stat, a gold key, or a Bomb), and the next of its kind costs more.
 _Avoid_: consumable, buff
 
 ### Progress
@@ -601,7 +601,7 @@ A token bought with Gems (drawn by rarity: common, rare or epic) and attached to
 _Avoid_: rune, gem, charm, enchantment
 
 **Badge slot**:
-A place on a card for one card badge. Every card has one, and one more for each level of Badge Slots research. Badges that can't work together (a key colour's < and ≥ gates, such as YK < with YK ≥, or Effective with Dampen) can't share a card.
+A place on a card for one card badge. Every card has one, and one more for each level of Badge Slots research. Badges that can't work together (a key colour's < and ≥ gates, such as GK < with GK ≥, or Effective with Dampen) can't share a card.
 _Avoid_: socket
 
 **Extra enemy**:

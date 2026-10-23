@@ -21,7 +21,7 @@ import { guardedTile, holdsShield, placeShield, walkDistances, type Shield } fro
 // v5 adds forks: parallel lanes of gates between chambers.
 // v6 adds yellow-or-blue and blue-or-red door forks.
 // v7 generates the same floors in every JavaScript engine.
-// v8 trades a blue door for fewer yellow keys (mostly two).
+// v8 trades a blue door for fewer gold keys (mostly two).
 // v9 prices a blue key at two yellow and a red at five.
 // v10 puts a boss beside the stairs of every section's last floor.
 // v11 softens weak enemies and grows enemy DEF 1% every five floors.
@@ -35,7 +35,7 @@ import { guardedTile, holdsShield, placeShield, walkDistances, type Shield } fro
 // v17 places no Heart Door below floor 101 in the first tower.
 // v18 takes every enemy's stats from the tower's enemy curve (enemy-curves.ts).
 // v19 places blue, red and Heart Doors by the door stage's quota (door-quota.ts),
-// combines colours in one door, and makes a share of yellow locks Wooden Doors.
+// combines colours in one door, and makes a share of gold locks Wooden Doors.
 // v20 adds door runs (two or three of the same door in a row), counts a
 // fork's lane doors 1/k toward the door quota and keys, and caps key
 // coverage at the floor's aim.

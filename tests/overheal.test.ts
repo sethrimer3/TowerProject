@@ -122,7 +122,7 @@ test("the game reads Overheal at the step: a potion drunk at full HP rises above
   assert.equal(overhealGame(0).stepRules.overheal, undefined, "no ranks, nothing above max");
 });
 
-test("YK TO HP may heal above max HP by Overheal", () => {
+test("GK TO HP may heal above max HP by Overheal", () => {
   const g = overhealGame(10);
   g.run.hand = ["keyToHp", "stairs"];
   const p = g.run.player;

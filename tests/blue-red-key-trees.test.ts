@@ -26,7 +26,7 @@ function beside(trees: CardTreeLevels, tiles: Tile[]) {
   return g;
 }
 
-test("BLUE KEY's and RED KEY's trees: YELLOW KEY's shape, each level worth more", () => {
+test("BLUE KEY's and RED KEY's trees: GOLD KEY's shape, each level worth more", () => {
   const shape = (card: "yellowKey" | "blueKey" | "redKey") => CARD_TREES[card]!.map((n) => `${n.id}:${n.rarity}:${n.levels}/${n.max}${n.after ? `<${n.after}` : ""}`);
   assert.deepEqual(shape("blueKey"), shape("yellowKey"));
   assert.deepEqual(shape("redKey"), shape("yellowKey"));

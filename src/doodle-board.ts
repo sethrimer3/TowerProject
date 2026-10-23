@@ -385,7 +385,7 @@ const contents = contentsFrom({
 });
 /** A reward chest, shut or opened (`reward`, `openedChest`). */
 function paintChest(c: CanvasRenderingContext2D, t: Tile) {
-  // A brown chest with a yellow lock; its lid thrown back and nothing
+  // A brown chest with a gold lock; its lid thrown back and nothing
   // in it once emptied.
   if (t.kind === "openedChest") {
     shape(c, () => handPath(c, [[4, 4], [20, 4], [20, 10], [4, 10]], 130, true, 0.3), DOODLE.brown, 1.4);

@@ -11,7 +11,7 @@ import type { Save } from "../src/save-shape.ts";
 
 const hpRow = TRAINING.find((t) => t.id === "hp")! as StatTrainingRow;
 
-test("Rehearsed steps costs 5; Lifesteal (10) follows Into the depths, Buy Quantity (5) Lifesteal, Thorns (10) Buy Quantity, YK Siphon (5) Thorns, Regen Research (10) Shroud", () => {
+test("Rehearsed steps costs 5; Lifesteal (10) follows Into the depths, Buy Quantity (5) Lifesteal, Thorns (10) Buy Quantity, GK Siphon (5) Thorns, Regen Research (10) Shroud", () => {
   assert.equal(cost("inspirationUndos", 0), 5);
   const g = new Game(defaults());
   g.save.tower.inspiration = 1000;
@@ -50,7 +50,7 @@ test("Regen research: +3% Regen a level, priced and timed like Potion HP, needin
 });
 
 /** A Tower corridor along the bottom row, the stairs at its east end, the
- * hero at its west end holding YK SIPHON then STAIRS, with `ranks` of Max
+ * hero at its west end holding GK SIPHON then STAIRS, with `ranks` of Max
  * HP training. */
 function corridor(ranks: number, edit: (save: Save) => void = () => {}) {
   const save = defaults();
@@ -73,7 +73,7 @@ function corridor(ranks: number, edit: (save: Save) => void = () => {}) {
 
 const near = (a: number, b: number) => Math.abs(a - b) < 1e-6;
 
-test("YK SIPHON trades Max HP training levels for a yellow key without moving, one level more each use", () => {
+test("GK SIPHON trades Max HP training levels for a gold key without moving, one level more each use", () => {
   const g = corridor(3), p = g.run.player, maxHp = p.maxHp, keys = p.keys.yellow;
   // The top level goes first: the third rank's worth, then the first two's.
   const top = trained(hpRow, 3) - trained(hpRow, 2);

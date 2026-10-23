@@ -76,7 +76,7 @@ const scene = await page.evaluate(async () => {
     const enemy = cells.find(({ x, y, t }) => t.kind === "enemy" && inner(x, y, 2, 0));
     if (key && door && enemy) return { seed, key, door, enemy };
   }
-  throw Error("No seed has a yellow key, a yellow door and an enemy in its first chunk");
+  throw Error("No seed has a gold key, a gold door and an enemy in its first chunk");
 });
 const { key, door, enemy } = scene;
 /** A fresh run on the chosen seed with the player at (x, y) and `open` /

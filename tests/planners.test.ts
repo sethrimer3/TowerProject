@@ -35,7 +35,7 @@ test("routes are planned on a hand-built board", () => {
   assert.equal(routeTo(at, 3, 3), null);
 });
 
-test("of two equally long routes, one through a yellow door and one through a blue, the route spends the yellow key", () => {
+test("of two equally long routes, one through a gold door and one through a blue, the route spends the gold key", () => {
   // Two lanes up from (2, 0) round a pillar at (2, 1) to (2, 2), a door in each.
   for (const [left, right] of [["yellow", "blue"], ["blue", "yellow"]] as const) {
     const tiles = new Map<string, Tile>([

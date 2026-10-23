@@ -367,9 +367,9 @@ test("the hand decodes to its known cards in order, and a save without one, or w
   assert.equal(decode(JSON.stringify({ version: 3, upgrades: { largerHand: 1 }, handSlots: 99 })).handSlots, 0, "no more than there are to buy");
   assert.deepEqual(decode(JSON.stringify({ version: 3, hand: [] })).hand, [...BASE_HAND], "every hand holds STAIRS");
   assert.deepEqual(decode(JSON.stringify({ version: 3, hand: ["key"] })).hand, [...BASE_HAND]);
-  assert.deepEqual(decode(JSON.stringify({ version: 3, hand: ["stairs", "yellowKey", "monster"] })).hand, ["stairs", "key", "monster"], "YELLOW KEY held unearned, from the old base hand, becomes KEY");
+  assert.deepEqual(decode(JSON.stringify({ version: 3, hand: ["stairs", "yellowKey", "monster"] })).hand, ["stairs", "key", "monster"], "GOLD KEY held unearned, from the old base hand, becomes KEY");
 });
-test("a save with no KEY card that hasn't earned YELLOW KEY holds KEY in its place, badges and links with it", () => {
+test("a save with no KEY card that hasn't earned GOLD KEY holds KEY in its place, badges and links with it", () => {
   const old = JSON.parse(JSON.stringify(defaults()));
   old.upgrades.cardBadges = 1;
   old.hand = ["stairs", "yellowKey", "monster"];
@@ -380,7 +380,7 @@ test("a save with no KEY card that hasn't earned YELLOW KEY holds KEY in its pla
   assert.deepEqual(d.hand, ["stairs", "key", "monster"]);
   assert.deepEqual(d.cardLinks, [["stairs", "key"]]);
   assert.deepEqual(d.badges.cards, { key: ["hpGate"] }, "the badge stays on, now on KEY");
-  assert.ok(!deckCards(d.upgrades).includes("yellowKey"), "YELLOW KEY waits for its skill");
+  assert.ok(!deckCards(d.upgrades).includes("yellowKey"), "GOLD KEY waits for its skill");
   const earned = decode(JSON.stringify({ ...old, upgrades: { ...old.upgrades, cardYellowKey: 1 } }));
   assert.deepEqual(earned.hand, ["stairs", "yellowKey", "monster"], "earned, it stays");
   assert.deepEqual(earned.badges.cards, { yellowKey: ["hpGate"] });

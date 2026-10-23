@@ -156,7 +156,7 @@ const LESSON_SPEED = 3;
 /** How long a turn inside a run shows, at most (ms): the hero's step and
  * its shots leaving through it, shorter at higher speeds. */
 const TURN_MS = 220;
-/** Salts the run seed for Find Yellow Key's roll on each new floor. */
+/** Salts the run seed for Find Gold Key's roll on each new floor. */
 const YELLOW_KEY_SALT = 0x6e11a;
 /** A step resolved and about to be taken: the tile stepped onto, what it
  * does, where it is, whether it goes in the undo history, and for a fight
@@ -177,10 +177,10 @@ const PERMANENT_TILES = new Set<Tile["kind"]>(["floor", "stairs", "oneway", "ope
 const SECRET_KNOCK_SALT = 0x3a57e, DOOR_CHEST_SALT = 0xd00c4, DOOR_CHEST_KIND_SALT = 0xd0c4d, DOUBLE_KEY_SALT = 0xd0b1e, MASTER_KEY_SALT = 0x3a5e7,
   KEY_CHEST_SALT = 0x6c4e5, KEY_CHEST_KIND_SALT = 0x6c4d1, SURPRISE_SALT = 0x5a7c1, POWER_STRIKE_SALT = 0x907e5,
   CHEST_DOUBLE_SALT = 0xc4e02, CHEST_TRIPLE_SALT = 0xc4e03, CHEST_CELLS_SALT = 0xc4ec1;
-/** What each key colour's own Master Key (YELLOW, BLUE and RED KEY's trees) rolls a key of it by. */
+/** What each key colour's own Master Key (GOLD, BLUE and RED KEY's trees) rolls a key of it by. */
 const COLOR_MASTER_KEY_SALT: Record<KeyColor, number> = { yellow: 0x7e113, blue: 0xb1a57, red: 0x7ea57 };
 /** Each key colour as its Master Key's message names it. */
-const KEY_WORDS: Record<KeyColor, string> = { yellow: "Yellow", blue: "Blue", red: "Red" };
+const KEY_WORDS: Record<KeyColor, string> = { yellow: "Gold", blue: "Blue", red: "Red" };
 /** The targets a Dash may end on, a tile of it left: items to take. */
 const DASH_ONTO = new Set<Tile["kind"]>(["key", "potion", "attack", "defense", "treasure", "reward"]);
 export class Game {
@@ -1076,7 +1076,7 @@ export class Game {
     }
     // A Power Strike charged on an earlier run doesn't carry over.
     delete p.powerStrike;
-    // YELLOW KEY's Max HP raises the hero's for the run, as the Max HP badge's does (`heroFactor`).
+    // GOLD KEY's Max HP raises the hero's for the run, as the Max HP badge's does (`heroFactor`).
     const maxHp = treeFactor(tree, "maxHp");
     if (maxHp !== 1) {
       p.maxHp = snap(p.maxHp * maxHp);
@@ -1175,7 +1175,7 @@ export class Game {
       ...(tree.potionHeal ? { potionCard: tree.potionHeal } : {}),
       ...(worn.victoryHeal ? { victoryHeal: worn.victoryHeal } : {}), ...(crit ? { crit } : {}) };
   }
-  /** How far potions, YK to HP and badge heals may heal above max HP now,
+  /** How far potions, GK to HP and badge heals may heal above max HP now,
    * as a multiple of max HP in thousandths (Overheal training, the run's
    * Silver ranks counting, 1,000 until Overheal is owned), with the card
    * trees' Overheal Max added, skill or not. */
@@ -2035,7 +2035,7 @@ export class Game {
    * Chest roll. */
   private masterKey(x: number, y: number, color: KeyColor) {
     const tree = this.treeBonus, every = this.tileRolls(x, y, MASTER_KEY_SALT, tree.masterKey);
-    // The key's colour's own Master Key (Master Yellow Key…), its own roll, opens the doors with a lock of its colour.
+    // The key's colour's own Master Key (Master Gold Key…), its own roll, opens the doors with a lock of its colour.
     const mine = !every && this.tileRolls(x, y, COLOR_MASTER_KEY_SALT[color], keyStat(tree, color, "MasterKey"));
     if (!every && !mine) return;
     const all = this.world.floorDoors?.(x, y) ?? [], rules: StepRules = { ...this.stepRules, regen: 0, freeDoor: true };
@@ -2119,8 +2119,8 @@ export class Game {
     if (given.length) this.freeTrained = { lines: freeTrainingLines(given), at: performance.now() };
     this.events.record("freeUpgrades", given.length);
   }
-  /** Find Yellow Key: on floor `floor` climbed for the first time in the
-   * run, a yellow key under the research's chance. The roll is a fixed
+  /** Find Gold Key: on floor `floor` climbed for the first time in the
+   * run, a gold key under the research's chance. The roll is a fixed
    * number per run seed and floor, so undo and a replay find the same
    * keys, and more research only ever adds some. */
   private findYellowKey(floor: number, at: { x: number; y: number }) {
@@ -2129,7 +2129,7 @@ export class Game {
     const keys = this.run.player.keys;
     keys.yellow = snap(keys.yellow + 1);
     noteKey(this.run, "yellow", 1);
-    this.gain(at.x, at.y, "+1 yellow key", { tile: { kind: "key", color: "yellow" } });
+    this.gain(at.x, at.y, "+1 gold key", { tile: { kind: "key", color: "yellow" } });
   }
   /** The hero takes the stairs; `floorSkip` (Skip on STAIRS) climbs past
    * the next floor too. */

@@ -2,7 +2,7 @@
 
 ## Below the Archives
 
-Below the Archives in the Inspiration tree, which grows taller than the screen and scrolls (drag it, or turn the mouse wheel; Ctrl and the wheel, or a pinch, zooms), **Greater Heal** (3 Inspiration, after Into the depths) opens the Archives' **Potion HP** research,, **Recovery** (10 Inspiration, after Greater Heal) brings **percent potions** onto the floors (2% of potions), **Find Potion** (10 Inspiration, below Recovery) opens **Find Potion** training, which makes more of them percent potions, and **Shroud** (2 Inspiration, after Trainers, above Critical) wraps the hero in a **shroud** that blocks the first 1 damage of every fight and opens **Shroud** training and the Archives' **Shroud** research (+4% of the shroud a level, for 100 levels, up to ×5, priced and timed like Pocket Money), **Parry** (10 Inspiration, below Regen Research) lets the hero parry, **Revive** (10 Inspiration, below Parry) may raise a felled hero at full HP, and **Thorns** (10 Inspiration, on the middle path between Buy Quantity and YK Siphon) makes every monster pay for striking (see below).
+Below the Archives in the Inspiration tree, which grows taller than the screen and scrolls (drag it, or turn the mouse wheel; Ctrl and the wheel, or a pinch, zooms), **Greater Heal** (3 Inspiration, after Into the depths) opens the Archives' **Potion HP** research,, **Recovery** (10 Inspiration, after Greater Heal) brings **percent potions** onto the floors (2% of potions), **Find Potion** (10 Inspiration, below Recovery) opens **Find Potion** training, which makes more of them percent potions, and **Shroud** (2 Inspiration, after Trainers, above Critical) wraps the hero in a **shroud** that blocks the first 1 damage of every fight and opens **Shroud** training and the Archives' **Shroud** research (+4% of the shroud a level, for 100 levels, up to ×5, priced and timed like Pocket Money), **Parry** (10 Inspiration, below Regen Research) lets the hero parry, **Revive** (10 Inspiration, below Parry) may raise a felled hero at full HP, and **Thorns** (10 Inspiration, on the middle path between Buy Quantity and GK Siphon) makes every monster pay for striking (see below).
 
 ## Silver and Gold
 
@@ -29,7 +29,7 @@ A regular potion is drawn red, like the HP bar, and a percent potion blue, like 
 ## Overheal
 
 **Overheal** (20 Courage, below Max Interest in the Courage tree, with Refocus below it) lets HP rise above max HP, and opens Overheal training.
-Potions, regular and percent, YK TO HP and the badges' heals then heal past max HP, up to the Overheal ceiling: max HP times the Overheal training row's value (×1.00 until it has ranks).
+Potions, regular and percent, GK TO HP and the badges' heals then heal past max HP, up to the Overheal ceiling: max HP times the Overheal training row's value (×1.00 until it has ranks).
 Regen, Lifesteal, Dash Regen, equipment's victory and floor heals still stop at max HP, and none of them lowers HP held above it.
 The HP readout shows HP over max (1,240 / 1,000), and its tooltip the ceiling.
 The HP bar stays full red, and a blue bar over it shows the HP above max, full at the ceiling.
@@ -40,7 +40,7 @@ Max HP changing in a run (training, a Shrine boon, the Max HP badge, a siphon) k
 
 ## Buy Quantity
 
-**Buy Quantity** (5 Inspiration, below YK Siphon) adds a quantity dropdown to Training (drawn by the game, a short list that opens beside it, on phones too), at the right of the trainers' row on the Training tab and of the group buttons under the hand inside a run: one press of a training-points button, or of a run card's Silver price, buys that many ranks at once (fewer only at a row's most), showing their total price, and the Training tab shows the value they reach.
+**Buy Quantity** (5 Inspiration, below GK Siphon) adds a quantity dropdown to Training (drawn by the game, a short list that opens beside it, on phones too), at the right of the trainers' row on the Training tab and of the group buttons under the hand inside a run: one press of a training-points button, or of a run card's Silver price, buys that many ranks at once (fewer only at a row's most), showing their total price, and the Training tab shows the value they reach.
 It offers x1 at first; the Archives' **Buy Quantity** research opens x5, x10, x100 and Max, a level each (1,000, 5,000, 25,000 and 100,000 Gold; 4, 12, 24 and 48 hours).
 Max buys as many as the points or Silver held pay for, its count ("x12") shown on the button beside their price.
 Trainers still train one rank at a time.

@@ -68,7 +68,7 @@ Each line of an item is `(base + perLevel × (level − 1)) × rarity power`, ke
 |---|---|
 | ATK, DEF, max HP (flat, then percent of the total) | `loadout` (flat after training, percent of that, then provisions) |
 | Shroud, Regen | `loadout` |
-| Yellow / blue keys each run | `startingHero` (only as a run starts) |
+| Gold / blue keys each run | `startingHero` (only as a run starts) |
 | ATK against bosses | `attackAgainst` in `combat.ts` (bosses and Greater Bosses) |
 | HP from potions | `Game.stepRules` (raises the Potion HP percent) |
 | Max HP healed after each victory | `StepRules.victoryHeal` → `healAfterVictory` in `step-effects.ts` |
@@ -120,7 +120,7 @@ Each category has one **Standard** piece (from bosses) and three **Unique** piec
 |---|---|---|---|---|---|---|
 | Leather Gauntlets | Standard | Reliable ATK and DEF | +2 ATK | +2.5 ATK; +1.25 DEF | +3.2 ATK; +1.6 DEF; +3.2% ATK | 0.3 / 0.2 / 0.08 |
 | Brawler's Wraps | Unique | More ATK, and a little life back from every win | +3 ATK | +3.75 ATK; +3.75% ATK | +4.8 ATK; +4.8% ATK; 0.8% of max HP healed after each victory | 0.45 / 0.1 / 0.02 |
-| Locksmith's Gloves | Unique | Keys: starts every run with spare yellow keys | +1 yellow key each run | +1 yellow key each run; +1.25 DEF | +1 yellow key each run; +1.6 DEF; +1 blue key each run | 0.04 / 0.2 / fixed |
+| Locksmith's Gloves | Unique | Keys: starts every run with spare gold keys | +1 gold key each run | +1 gold key each run; +1.25 DEF | +1 gold key each run; +1.6 DEF; +1 blue key each run | 0.04 / 0.2 / fixed |
 | Alchemist's Gloves | Unique | Potions: every potion heals more | +10% HP from potions | +12.5% HP from potions; +12.5 max HP | +16% HP from potions; +16 max HP; +0.48 HP regained each step | 0.4 / 2 / 0.03 |
 
 ### Boots

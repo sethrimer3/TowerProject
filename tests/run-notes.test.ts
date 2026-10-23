@@ -56,7 +56,7 @@ test("a run's notes count steps, keys, doors and pickups, and undo takes them ba
   const notes = g.run.notes!;
   assert.equal(notes.steps, 5);
   assert.deepEqual(notes.keys, { red: 1 });
-  assert.deepEqual(notes.doors, { "Crimson Door": 1 });
+  assert.deepEqual(notes.doors, { "Red Door": 1 });
   assert.equal(notes.potions, 1);
   assert.equal(notes.attackShards, 1);
   g.undo();
@@ -94,13 +94,13 @@ test("the notes come grouped under headings, and copy as text", () => {
   assert.deepEqual(sections.map((s) => s.title), ["Run", "Exploration", "Combat", "Keys obtained", "Doors opened", "Currency", "Materials", "Other loot"]);
   const rows = Object.fromEntries(sections.flatMap((s) => s.rows));
   assert.equal(rows["Steps taken"], "2");
-  assert.equal(rows["Azure keys"], "1");
+  assert.equal(rows["Blue keys"], "1");
   assert.equal(rows["Whetstone"], "2");
   assert.equal(rows["None"], "—", "no door opened");
   assert.ok("Courage" in rows, "the mode's currency");
   const text = notesText("Descent Notes", sections);
   assert.match(text, /^Descent Notes\n\nRUN\nDelve: 1\n/);
-  assert.match(text, /\nKEYS OBTAINED\nGold keys: 0\nAzure keys: 1\n/);
+  assert.match(text, /\nKEYS OBTAINED\nGold keys: 0\nBlue keys: 1\n/);
   assert.equal(elapsed(3_725_000), "1h 02m 05s");
   assert.equal(elapsed(65_000), "1m 05s");
 });

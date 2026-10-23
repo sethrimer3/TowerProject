@@ -93,7 +93,7 @@ export type StepRules = {
    * Overheal); none when absent. */
   keyHeal?: number;
   keyOverheal?: number;
-  /** YELLOW, BLUE and RED KEY's Key Heal and Key Overheal, added to KEY's for a key of their colour. */
+  /** GOLD, BLUE and RED KEY's Key Heal and Key Overheal, added to KEY's for a key of their colour. */
   yellowKeyHeal?: number;
   yellowKeyOverheal?: number;
   blueKeyHeal?: number;
@@ -132,7 +132,7 @@ export const potionRestores = (tile: Tile, maxHp: number, rules: StepRules) => {
 };
 
 /** The most HP a hero of `maxHp` may hold under `rules`: its max HP, times
- * its Overheal once owned. Potions, YK to HP and badge heals heal up to
+ * its Overheal once owned. Potions, GK to HP and badge heals heal up to
  * it; every other heal stops at max HP. */
 export const hpCeiling = (maxHp: number, rules: Pick<StepRules, "overheal">) =>
   rules.overheal && rules.overheal > 1000 ? snap((maxHp * rules.overheal) / 1000) : maxHp;

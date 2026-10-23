@@ -13,7 +13,7 @@ export const TREES: SkillTree[] = [
   { id: "inspiration", name: "Inspiration", currency: "inspiration", description: "Earn Inspiration by beating your best Tower climb.", height: 534, unlocks: true, nodes: [
     // The hand's skills, down to the Archives: Buildout, Trainers (two rows
     // lower), Shroud, Critical (with Critical Prediction to its left). Gear and On the Job branch off
-    // Buildout, Yellow Key, ATK Up and DEF Up under Gear, and Regen, then Heal, below On the Job.
+    // Buildout, Gold Key, ATK Up and DEF Up under Gear, and Regen, then Heal, below On the Job.
     { id: "combatStance", icon: "▤", x: 50, y: 12, requires: [] },
     { id: "buildout", icon: "⚔", x: 50, y: 30, requires: ["combatStance"] },
     { id: "trainers", icon: "⚔", x: 50, y: 66, requires: ["buildout"] },
@@ -33,7 +33,7 @@ export const TREES: SkillTree[] = [
     // Blue Key and Faster Trainers either side of the Archives, Rehearsed steps
     // left of Into the depths, and Pocket Money (then Spare Change, Wishing
     // Well and Free Training below it) and Greater Heal after it,
-    // either side of the core path down the middle (Lifesteal, Buy Quantity, Thorns, then YK Siphon).
+    // either side of the core path down the middle (Lifesteal, Buy Quantity, Thorns, then GK Siphon).
     // Recovery and Regen Research (then Parry, then Revive) stand under Greater Heal.
     { id: "cardBlueKey", icon: "⚿", x: 20, y: 120, requires: ["archives"] },
     { id: "inspirationUndos", icon: "↺", x: 20, y: 142, requires: ["archives"] },
@@ -55,10 +55,10 @@ export const TREES: SkillTree[] = [
     { id: "regenResearch", icon: "♥", x: 90, y: 178, requires: ["greaterHeal"] },
     { id: "parry", icon: "⇋", x: 90, y: 196, requires: ["regenResearch"] },
     { id: "revive", icon: "☼", x: 90, y: 214, requires: ["parry"] },
-    // The cards down the middle, a row clear of YK Siphon: Yellow Door (Key < Badges,
+    // The cards down the middle, a row clear of GK Siphon: Gold Door (Key < Badges,
     // then Key ≥ Badges, to its right; Heart Door Resilience, then Heart Door, to its
     // left), Weak Enemy (Base, then Strong, to its left, Fast under Base; Elite, then Boss, to its
-    // right, Non-Boss under Boss), Chest, BK Siphon (BK Trader, then YK to HP, to its left; Red
+    // right, Non-Boss under Boss), Chest, BK Siphon (BK Trader, then GK to HP, to its left; Red
     // Key, then RK Siphon, to its right) and Floor Skip Reward (Torch to its
     // left, Steel Door to its right).
     { id: "cardYellowDoor", icon: "⚿", x: 50, y: 268, requires: ["keySiphon"] },
@@ -107,7 +107,7 @@ export const TREES: SkillTree[] = [
     { id: "dashBadge", icon: "◪", x: 90, y: 111, requires: ["dashRegen", "cardBadges"] },
     { id: "undos", icon: "↺", x: 23, y: 61, requires: ["pathfinder"] },
     { id: "cardBadges", icon: "◪", x: 56, y: 61, requires: ["focus"] },
-    // The research skills down the middle under Focus: Find Yellow Key, Key
+    // The research skills down the middle under Focus: Find Gold Key, Key
     // Efficiency, then Interest, with Max Interest to its left and Mug to its right.
     { id: "findYellowKey", icon: "⚿", x: 50, y: 87, requires: ["focus"] },
     { id: "keyEfficiency", icon: "⚿", x: 50, y: 111, requires: ["findYellowKey"] },

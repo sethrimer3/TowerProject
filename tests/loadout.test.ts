@@ -193,8 +193,8 @@ test("descriptions are written from the grants", () => {
       inspirationUndos: text.inspirationUndos, revive: text.revive },
     {
       yellow: "+1 starting gold key",
-      blue: "+1 starting azure key",
-      red: "+1 starting crimson key",
+      blue: "+1 starting blue key",
+      red: "+1 starting red key",
       quality: "+2 weapon attack and +1 armor defense",
       undos: "Open Undo Count research in the Archives, or 4 more levels of it once Rehearsed steps has opened it",
       combatStance: "Open the Deck, where you reorder the cards in your hand before a run",
@@ -204,7 +204,7 @@ test("descriptions are written from the grants", () => {
     },
   );
   assert.deepEqual(GOLD_SHOP.map((g) => provisionText(g.id)), [
-    "+20 max HP", "+1 defense", "+1 attack", "+1 yellow key",
+    "+20 max HP", "+1 defense", "+1 attack", "+1 gold key",
     "One more Bomb every run: press it, then an enemy's tile, to deal that enemy your ATK",
   ]);
 });
@@ -223,7 +223,7 @@ test("each provision bought costs more than the last, on run training's schedule
   assert.equal(s.provisions.heal, 2);
 });
 
-test("Extra Key opens the Yellow Key provision: 100 Gold, then four times the last", () => {
+test("Extra Key opens the Gold Key provision: 100 Gold, then four times the last", () => {
   const s = defaults(), g = new Game(s);
   g.newRun({ outside: true });
   assert.deepEqual(Array.from({ length: 6 }, (_, n) => provisionPrice({ provisions: { ...s.provisions, yellowKey: n } }, "yellowKey")), [100, 400, 1600, 6400, 25600, 102400]);
@@ -233,7 +233,7 @@ test("Extra Key opens the Yellow Key provision: 100 Gold, then four times the la
   const keys = loadout(s).keys.yellow;
   assert.ok(g.gear.buyProvision("yellowKey") && g.gear.buyProvision("yellowKey"));
   assert.equal(s.gold, 500);
-  assert.equal(loadout(s).keys.yellow, keys + 2, "a yellow key for each, every run");
+  assert.equal(loadout(s).keys.yellow, keys + 2, "a gold key for each, every run");
   assert.equal(g.run.player.keys.yellow, keys + 2, "the run in the forest takes them");
   assert.equal(g.gear.buyProvision("yellowKey"), false, "1,600 Gold, 500 held");
   goInside(g);

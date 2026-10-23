@@ -107,7 +107,7 @@ function shield(p) {
   rect(p, 17, 16, 14, 13, C.steel2);
   rect(p, 23, 16, 2, 19, C.blue);
 }
-/** A heart (YK SIPHON's, under its key): the curve
+/** A heart (GK SIPHON's, under its key): the curve
  * (x² + y² − 1)³ ≤ x²y³ over 28 × 26 pixels, dark red round its edge with a
  * light spot on its upper left lobe. */
 function heart(p) {
@@ -198,7 +198,7 @@ const ICONS = {
   atkUp: sword,
   defUp: shield,
   keySiphon(p) {
-    // Max HP traded for a yellow key: a small key laid over the heart,
+    // Max HP traded for a gold key: a small key laid over the heart,
     // reaching out past its edge.
     heart(p);
     smallKey(p, C.gold, C.gold2);
@@ -267,12 +267,12 @@ const ICONS = {
     smallKey(p, C.sky, C.blue);
   },
   blueTrader(p) {
-    // Yellow keys for a blue one.
+    // Gold keys for a blue one.
     smallKey(p, C.gold, C.gold2, 10);
     smallKey(p, C.sky, C.blue, 26);
   },
   keyToHp(p) {
-    // A yellow key traded for HP: a heart with a white cross on it.
+    // A gold key traded for HP: a heart with a white cross on it.
     heart(p);
     rect(p, 22, 17, 4, 12, C.white);
     rect(p, 18, 21, 12, 4, C.white);
@@ -302,9 +302,9 @@ const ICONS = {
   },
 };
 
-const CARDS = [["stairs", "STAIRS"], ["heal", "HEAL"], ["door", "DOOR"], ["key", "KEY"], ["yellowKey", "YELLOW KEY"], ["blueKey", "BLUE KEY"], ["monster", "ENEMY"], ["atkUp", "ATK UP"], ["defUp", "DEF UP"], ["keySiphon", "YK SIPHON"],
-  ["yellowDoor", "YELLOW DOOR"], ["heartDoor", "HEART DOOR"], ["weakEnemy", "WEAK ENEMY"], ["baseEnemy", "BASE ENEMY"], ["strongEnemy", "STRONG ENEMY"],
-  ["eliteEnemy", "ELITE ENEMY"], ["bossEnemy", "BOSS ENEMY"], ["nonBossEnemy", "NON-BOSS ENEMY"], ["fastEnemy", "FAST ENEMY"], ["chest", "CHEST"], ["blueSiphon", "BK SIPHON"], ["blueTrader", "BK TRADER"], ["keyToHp", "YK TO HP"],
+const CARDS = [["stairs", "STAIRS"], ["heal", "HEAL"], ["door", "DOOR"], ["key", "KEY"], ["yellowKey", "GOLD KEY"], ["blueKey", "BLUE KEY"], ["monster", "ENEMY"], ["atkUp", "ATK UP"], ["defUp", "DEF UP"], ["keySiphon", "GK SIPHON"],
+  ["yellowDoor", "GOLD DOOR"], ["heartDoor", "HEART DOOR"], ["weakEnemy", "WEAK ENEMY"], ["baseEnemy", "BASE ENEMY"], ["strongEnemy", "STRONG ENEMY"],
+  ["eliteEnemy", "ELITE ENEMY"], ["bossEnemy", "BOSS ENEMY"], ["nonBossEnemy", "NON-BOSS ENEMY"], ["fastEnemy", "FAST ENEMY"], ["chest", "CHEST"], ["blueSiphon", "BK SIPHON"], ["blueTrader", "BK TRADER"], ["keyToHp", "GK TO HP"],
   ["redKey", "RED KEY"], ["redSiphon", "RK SIPHON"], ["torch", "TORCH"], ["woodenDoor", "WOODEN DOOR"], ["flyingEnemy", "FLYING ENEMY"], ["archer", "ARCHER"]];
 mkdirSync(OUT, { recursive: true });
 for (const [id, name] of CARDS) {
