@@ -9,7 +9,16 @@
   "path": [
     "path_01.png",
     "path_02.png",
-    "path_03.png"
+    "path_03.png",
+    "path_04.png",
+    "path_05.png",
+    "path_06.png"
+  ],
+  "pathEdges": [
+    "path_edge_top.png",
+    "path_edge_right.png",
+    "path_edge_bottom.png",
+    "path_edge_left.png"
   ],
   "trees": [
     "tree_01.png",

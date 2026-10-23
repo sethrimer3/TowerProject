@@ -37,3 +37,5 @@ It sets `globalThis.__handStartsPaused` and `__handHeld` (read by `frame-loop.ts
 As with the render golden, regenerate it with `UPDATE_GOLDEN=1` on the unchanged code before a UI change (HTML goes to `test-results/ui*/`).
 `archives-ambient.ts` paints the Archives tab's backdrop on a canvas behind the archivists (`startArchivesAmbient`, started by `ArchivesPanel.bind`): dim dust motes, and, while an archivist is researching, parallel slanted sunrays fading toward the bottom that swell and dim like passing clouds, the motes twinkling as they cross one; it draws from the `effects` stream, stops when the canvas leaves the page (its motes, rays, clock and light kept at module level, `scene`, so the next backdrop, after any redraw of the tab, carries on where it was), and keeps one still frame under reduced motion.
 Potion % and Find Potion training sit in the Utility group, last, after the Free Up rows (`TRAINING` in `config.ts`), on the Training tab and the run's Utility cards alike.
+
+`proving-grounds-dialog.ts` owns the separate trial modal entered from the gold square in the Tower forest; see [proving-grounds.md](proving-grounds.md).

@@ -4,6 +4,8 @@ import { tileRandom } from "./random.ts";
 import { MODES } from "./modes.ts";
 
 export const OUTSIDE_SIZE = 20;
+/** The gold trial square sits on open grass beside the Tower path. */
+export const PROVING_GROUNDS = { dx: 2, y: 4 } as const;
 export const ENTRANCE_Y = 12;
 /** The row a run's hero starts the forest on: the crossroads partway up
  * the path, where it widens (`onPath`). */
@@ -16,9 +18,10 @@ export const outsideWeather = (seed: number) => weatherForRoll(tileRandom(81, 37
 const ASSET_BASE = (import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? "/";
 const outsideUrl = (name: string) => `${ASSET_BASE}assets/tilesets/outside/${name}`;
 export const OUTSIDE_SPRITE_URLS = {
-  grass: [1,2,3,4].map(n=>outsideUrl(`grass_0${n}.png`)), path: [1,2,3].map(n=>outsideUrl(`path_0${n}.png`)),
+  grass: [1,2,3,4].map(n=>outsideUrl(`grass_0${n}.png`)), path: [1,2,3,4,5,6].map(n=>outsideUrl(`path_0${n}.png`)),
   trees: [1,2,3].map(n=>outsideUrl(`tree_0${n}.png`)), boulders: [1,2].map(n=>outsideUrl(`boulder_0${n}.png`)),
 };
+export const OUTSIDE_PATH_EDGE_URLS = ["top", "right", "bottom", "left"].map(side => outsideUrl(`path_edge_${side}.png`));
 
 /** A tile of the forest clearing: its cell, the run seed, and the entrance
  * column the dirt path runs along. */
@@ -48,7 +51,14 @@ export function outsideSpriteKind(t: Tile, s: ForestSpot) {
     return { family: tree ? "trees" : "boulders", variant: Math.floor(tileRandom(x + 17, y - 9, seed) * (tree ? 3 : 2)) } as const;
   }
   const path = onPath(s);
-  return { family: path ? "path" : "grass", variant: Math.floor(tileRandom(x - 11, y + 23, seed) * (path ? 3 : 4)) } as const;
+  return { family: path ? "path" : "grass", variant: Math.floor(tileRandom(x - 11, y + 23, seed) * (path ? OUTSIDE_SPRITE_URLS.path.length : OUTSIDE_SPRITE_URLS.grass.length)) } as const;
+}
+
+/** Exposed road edges in screen order (top, right, bottom, left).
+ * World y increases up the screen; adjoining roads keep their shared edge bare. */
+export function outsidePathEdges(s: ForestSpot) {
+  return [[0, 1], [1, 0], [0, -1], [-1, 0]].flatMap(([dx, dy], edge) =>
+    onPath({ ...s, x: s.x + dx, y: s.y + dy }) ? [] : [edge]);
 }
 
 const outsideCache = new Map<string, HTMLImageElement>();
@@ -66,8 +76,11 @@ function outsideImage(url: string) {
 function drawOutsideSprite(c: CanvasRenderingContext2D, t: Tile, s: ForestSpot) {
   const id = outsideSpriteKind(t, s);
   const img = outsideImage(OUTSIDE_SPRITE_URLS[id.family][id.variant]);
-  if (!img?.complete || !img.naturalWidth) return false;
-  c.save(); c.imageSmoothingEnabled = false; c.drawImage(img, 0, 0, 24, 24); c.restore();
+  const edges = id.family === "path" ? outsidePathEdges(s).map(edge => outsideImage(OUTSIDE_PATH_EDGE_URLS[edge])) : [];
+  if (!img?.complete || !img.naturalWidth || edges.some(edge => !edge?.complete || !edge.naturalWidth)) return false;
+  c.save(); c.imageSmoothingEnabled = false; c.drawImage(img, 0, 0, 24, 24);
+  for (const edge of edges) c.drawImage(edge!, 0, 0, 24, 24);
+  c.restore();
   return true;
 }
 
@@ -114,6 +127,9 @@ export class OutsideWorld implements Board {
     if (this.blacksmith && within(YARD, this.entranceX, x, y)) return { kind: onBlacksmith(this.entranceX, x, y) ? "wall" : "floor" };
     if (this.hall && within(HALL_YARD, this.entranceX, x, y)) return { kind: onTournamentHall(this.entranceX, x, y) ? "wall" : "floor" };
     return this.wooded(x, y) ? { kind: "wall" } : { kind: "floor" };
+  }
+  isProvingGrounds(x: number, y: number) {
+    return this.mode === "tower" && x === this.entranceX + PROVING_GROUNDS.dx && y === PROVING_GROUNDS.y;
   }
   /** Whether (x, y) is the Blacksmith, which a tap opens. */
   isBlacksmith(x: number, y: number) {
@@ -376,4 +392,19 @@ function drawBreastplateBanner(c: CanvasRenderingContext2D, x: number, y: number
   c.lineTo(x + 5, y + 11); c.lineTo(x + 4, y + 16); c.lineTo(x - 4, y + 16); c.lineTo(x - 5, y + 11);
   c.closePath(); c.fill();
   c.fillStyle = "#9aa3ab"; c.fillRect(x - 0.5, y + 8, 1, 8); c.fillRect(x - 4, y + 15, 8, 1);
+}
+
+/** A gold square and a small sun rune, drawn in forest world space. */
+export function drawProvingGrounds(c: CanvasRenderingContext2D, center: number) {
+  const x = (center + PROVING_GROUNDS.dx) * 24, y = (OUTSIDE_SIZE - 1 - PROVING_GROUNDS.y) * 24;
+  c.save(); c.translate(x, y);
+  c.fillStyle = "#b88a2544"; c.fillRect(1, 1, 22, 22);
+  c.fillStyle = "#6c4a1d"; c.fillRect(1, 1, 22, 2); c.fillRect(1, 1, 2, 22);
+  c.fillStyle = "#e8bc57"; c.fillRect(2, 2, 20, 1); c.fillRect(2, 21, 20, 1); c.fillRect(2, 2, 1, 20); c.fillRect(21, 2, 1, 20);
+  c.fillStyle = "#fff0a1";
+  for (const [xx, yy] of [[2,2],[20,2],[2,20],[20,20]]) c.fillRect(xx, yy, 2, 2);
+  c.fillRect(10, 9, 4, 6); c.fillRect(9, 10, 6, 4);
+  c.fillStyle = "#d69b39";
+  for (const [xx, yy] of [[11,5],[11,17],[5,11],[17,11],[6,6],[16,6],[6,16],[16,16]]) c.fillRect(xx, yy, 2, 2);
+  c.restore();
 }

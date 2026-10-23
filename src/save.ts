@@ -1,3 +1,4 @@
+import { decodeTrial } from "./proving-grounds/trial.ts";
 import { TRAINER_GEMS, trainingSlots, type TrainingJob, type TrainingPaid } from "./training-jobs.ts";
 import { count, dropInvalid, finite, fraction, isRecord, wholeIn } from "./decode.ts";
 import { TIERS } from "./tiers.ts";
@@ -472,6 +473,8 @@ export function decode(raw: string | null): Save {
     d.relics = decodeRelics(s.relics);
     d.shrines = decodeShrines(s.shrines);
     d.themes = decodeThemes(s.themes);
+    const trial = decodeTrial(s.provingGrounds);
+    if (trial) d.provingGrounds = trial;
     // The boost runs for good only while a pack that grants it is owned.
     if (permanentBoost(d)) d.trainingBoostUntil = BOOST_FOREVER;
     else if (d.trainingBoostUntil === BOOST_FOREVER) d.trainingBoostUntil = 0;

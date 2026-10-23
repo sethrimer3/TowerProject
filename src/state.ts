@@ -190,6 +190,7 @@ const PERMANENT_TILES = new Set<Tile["kind"]>(["floor", "stairs", "oneway", "ope
 /** The targets a Dash may end on, a tile of it left: items to take. */
 const DASH_ONTO = new Set<Tile["kind"]>(["key", "potion", "attack", "defense", "treasure", "reward"]);
 export class Game {
+  provingGroundsRequested = false;
   mode: Mode = "tower";
   world!: Board;
   run!: Run;
@@ -1906,6 +1907,11 @@ export class Game {
     const torch = this.world.breakTorchAt?.(x, y);
     if (this.run.outside) {
       if (t.kind === "stairs") this.enterFromOutside();
+      else if (this.world instanceof OutsideWorld && this.world.isProvingGrounds(x, y)) {
+        this.auto = false;
+        this.cancelRoute();
+        this.provingGroundsRequested = true;
+      }
       else if (this.world instanceof OutsideWorld && this.world.atExit(x, y)) this.swapForest();
       return;
     }

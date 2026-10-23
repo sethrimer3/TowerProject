@@ -16,8 +16,17 @@ test("a groove lights its far wall and shadows its torch-side lip", () => {
   for (let y = 0; y < size; y++) h[y * size + 2] = 0;
   const m = bakeReliefMasks(h, 1, 0, size);
   const row = (a: Float32Array) => [...a.slice(size * 2, size * 3)];
-  assert.deepEqual(row(m.highlight), [0, 1, 0, 0, 1]); // west of the groove, plus the tile edge
-  assert.deepEqual(row(m.shadow), [0.5, 0, 1, 0.5, 0]); // groove under the east lip; away-facing block edges (incl. tile edge)
+  assert.deepEqual(row(m.highlight), [0, 1, 0, 0, 0]); // only the real groove, no invented tile-edge lip
+  assert.deepEqual(row(m.shadow), [0, 0, 1, 0.5, 0]);
+});
+
+test("a continuous flat floor has no relief at sprite boundaries in any light direction", () => {
+  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    for (const value of [0, 1]) {
+      const masks = bakeReliefMasks(new Uint8Array(25).fill(value), dx, dy, 5);
+      for (const layer of Object.values(masks)) assert.ok(layer.every(v => v === 0));
+    }
+  }
 });
 
 test("relief is flat directly under the torch and fades out past its radius", () => {

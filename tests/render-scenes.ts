@@ -1,3 +1,5 @@
+import { TrialRenderer } from "../src/proving-grounds/render.ts";
+import { startTrial, trialStep } from "../src/proving-grounds/trial.ts";
 // The fixed scenes behind both render goldens: tests/render-golden.mjs draws
 // them in a browser and hashes pixels, and tests/render-calls.test.ts draws
 // them in Node on a recording canvas and hashes the calls. Each scene is
@@ -423,6 +425,19 @@ function playIcons(_name: string, _seed: number, sheet: HTMLCanvasElement, grab:
   grab("sheet");
 }
 
+/** The trial's staging room, elemental, crossing beams and burned wall face. */
+function playProvingGrounds(_name: string, _seed: number, canvas: HTMLCanvasElement, grab: Grab) {
+  const state = startTrial(game("tower").run.player), renderer = new TrialRenderer(canvas);
+  renderer.draw(state, 1000, 0, true, false); grab("staging");
+  for (let i=0; i<4; i++) trialStep(state,0,1);
+  for (let i=0; i<20; i++) trialStep(state,0,0);
+  state.player.x=25; state.player.y=24;
+  renderer.draw(state, 1100, 1000, true, false); grab("beam");
+  renderer.draw(state, 5000, 1000, true, false); grab("glow");
+  state.player.y=45;
+  renderer.draw(state, 5000, 1000, true, false); grab("wallScars");
+}
+
 /** Which canvas a job draws on: the 408 px board, the Defend board (which
  * sizes itself), or a fresh sheet for the icons. */
 export type CanvasKind = "board" | "defend" | "icons";
@@ -434,4 +449,5 @@ export const JOBS: Job[] = [
   ...Object.keys(DEFEND_SCENES).map((name) => ({ name, canvas: "defend" as const, run: playDefend })),
   { name: "defendIcons", canvas: "icons" as const, run: playIcons },
   ...Object.keys(LATER_BOARD_SCENES).map((name) => ({ name, canvas: "board" as const, run: playBoard })),
+  { name: "provingGrounds", canvas: "board" as const, run: playProvingGrounds },
 ].map(({ name, canvas, run }, i) => ({ name, seed: i + 1, canvas, play: (cv: HTMLCanvasElement, grab: Grab) => run(name, i + 1, cv, grab) }));

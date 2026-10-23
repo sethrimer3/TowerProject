@@ -1,3 +1,4 @@
+import { ProvingGroundsDialog } from "./ui/proving-grounds-dialog.ts";
 import { deckCards } from "./cards.ts";
 import type { UpgradeId } from "./config.ts";
 import type { TreeId } from "./skill-trees.ts";
@@ -96,6 +97,7 @@ const runNotes = new RunNotesDialog(ctx);
 // The Tournament's server (a stand-in until it exists), and what waits on it.
 const tournament = new TournamentClient(game, stubTournament(() => game.save.tournament, () => game.clock()));
 const runEnd = new RunEndDialog(ctx, tournament, runNotes);
+const provingGrounds = new ProvingGroundsDialog(game, modal, save);
 const tournamentPage = new TournamentPage(ctx, tournament, refreshTournament);
 // Mail's server (a stand-in until it exists), and the popup the forest's Mail button opens.
 const mail = new MailClient(game.mail, stubMail(() => game.save, () => game.clock()));
@@ -179,6 +181,7 @@ function update() {
   researchToasts.add(finished);
   save();
   runEnd.check();
+  provingGrounds.check();
   // The run's end, a fall or a lesson takes cinematic mode away at once.
   if (cinematic.active) cinematic.tick();
 }

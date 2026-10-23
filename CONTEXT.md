@@ -614,3 +614,6 @@ _Avoid_: Delve tab, mode switch
 **Automove memory**:
 What Delve Automove has seen of the labyrinth during this run, and how often the player has stood on each tile. Undo leaves it as it is, since what was seen stays seen; it is forgotten when a run enters the labyrinth, when a milestone gate seals behind the player, and when the layout changes.
 _Avoid_: known tiles, visit map
+
+- **Proving Grounds**: trials entered through the golden square outside the Tower.
+- **Light Elemental**: the first Proving Grounds foe, which fires rotating opposing light beams.
