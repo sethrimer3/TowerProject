@@ -5198,6 +5198,12 @@ dialog.proving-grounds-dialog { width: min(96vw, 620px); max-width: 620px; max-h
 .trial-controls { display: grid; justify-items: center; gap: 3px; margin: 5px auto; }
 .trial-controls > div { display: flex; gap: 3px; }
 .trial-controls button { min-width: 48px; min-height: 36px; padding: 4px 10px; }
+.proving-grounds-dialog .trial-choice + .trial-choice { margin-top: 10px; }
+#trial-hand { display: flex; flex-wrap: wrap; gap: 8px; padding: 0; margin: 8px 0; list-style: none; }
+#trial-hand li { display: grid; justify-items: center; gap: 2px; width: 56px; font-size: 10px; text-align: center; }
+#trial-hand .card-art { display: block; width: 40px; height: 56px; object-fit: contain; }
+#trial-play { display: block; margin: 6px auto; }
+#trial-hand .sprite-card-label { display: none; }
 .proving-grounds-dialog > small { display: block; font-size: .7rem; opacity: .85; }
 /* The trial is a dark board even when the surrounding UI wears parchment. */
 html body dialog.proving-grounds-dialog { background: #101820; color: #e7ddc4; border: 1px solid #9a7a3c; padding: 12px; }
