@@ -3,7 +3,8 @@
  * words (`nodeName`, `statText`), and the card of the node picked in it
  * (`cardTreeCardHtml`). The tree itself comes from `card-trees.ts`. */
 import { CARDS, type CardId } from "../cards.ts";
-import { CARD_TREES, cardLook, nodeCap, nodeLevel, nodeOpen, opensAt, treeNode, type CardOpened, type CardTreeLevels, type CardTreeNode, type TreeStat } from "../card-trees.ts";
+import { CARD_TREES, cardLook, nodeCap, nodeLevel, nodeOpen, opensAt, treeNode, type CardOpened, type CardTreeLevels, type CardTreeNode, type ColorKeyPart, type ColorKeyStat, type TreeStat } from "../card-trees.ts";
+import type { KeyColor } from "../entities.ts";
 import { CARD_RARITY_NAMES, type CardRarity } from "../card-rarity.ts";
 import { rarityFrameHtml, rarityStarsHtml } from "./card-level-marks.ts";
 import { snap } from "../exact.ts";
@@ -12,6 +13,14 @@ import type { GraphNode } from "./upgrade-graph.ts";
 
 /** The id of a tree's root node: the card itself. */
 export const ROOT = "card";
+
+/** One entry for each key colour's own stats (`ColorKeyStat`), `each`
+ * giving a colour's, by part, from the colour and its capitalized word. */
+function byKeyColor<T>(each: (color: KeyColor, word: string) => Record<ColorKeyPart, T>) {
+  const words: Record<KeyColor, string> = { yellow: "Yellow", blue: "Blue", red: "Red" };
+  return Object.fromEntries((Object.keys(words) as KeyColor[]).flatMap((color) =>
+    Object.entries(each(color, words[color])).map(([part, value]) => [`${color}${part}`, value]))) as Record<ColorKeyStat, T>;
+}
 
 /** What each stat is called, as a node's name. */
 const STAT_NAMES: Record<TreeStat, string> = {
@@ -22,8 +31,9 @@ const STAT_NAMES: Record<TreeStat, string> = {
   doorCost: "Door Cost", doorGold: "Door Gold", doorSilver: "Door Silver", doorHeal: "Door Heal",
   skeletonKey: "Skeleton Key", lockPick: "Lock Pick", secretKnock: "Secret Knock", doorChest: "Door Chest", keyChest: "Key Chest", keyFind: "Key Find", keyGold: "Key Gold",
   keyHeal: "Key Heal", keyOverheal: "Key Overheal", keySilver: "Key Silver", plainDoorCost: "Plain Doors", heartDoorCost: "Heart Doors", doubleKey: "Locksmith", masterKey: "Master Key",
-  yellowKeyHeal: "Yellow Key Heal", yellowKeyOverheal: "Yellow Key Overheal", yellowKeyGold: "Yellow Key Gold", yellowKeyFind: "Yellow Key Find", yellowKeySilver: "Yellow Key Silver", yellowKeyChest: "Yellow Key Chest",
-  yellowDoorCost: "Yellow Doors", maxHp: "Max HP", yellowDoubleKey: "Locksmith Yellow", yellowMasterKey: "Master Yellow Key",
+  ...byKeyColor((_, word) => ({ KeyHeal: `${word} Key Heal`, KeyOverheal: `${word} Key Overheal`, KeyGold: `${word} Key Gold`, KeyFind: `${word} Key Find`, KeySilver: `${word} Key Silver`,
+    KeyChest: `${word} Key Chest`, DoorCost: `${word} Doors`, DoubleKey: `Locksmith ${word}`, MasterKey: `Master ${word} Key` })),
+  maxHp: "Max HP",
   foeAttack: "Attack", foeDefense: "Defense", foeGold: "Bounty", foeSilver: "Spoils", moreEnemies: "Spawn Rate",
   critChance: "Crit Chance", critFactor: "Crit Factor", killXp: "Kill XP", surpriseAttack: "Surprise Attack", foeAttackCut: "Weaken", stealOverheal: "Lifesteal Overheal",
   attackShard: "Sharper Shards", defenseShard: "Sturdier Shards", attackShardGold: "Shard Gold", defenseShardGold: "Shard Gold",
@@ -77,16 +87,18 @@ const STAT_TEXT: Record<TreeStat, (n: string) => string> = {
   heartDoorCost: (n) => `−${n}% of the keys and HP each Heart Door takes`,
   doubleKey: (n) => `${n}% chance a key picked up is two`,
   masterKey: (n) => `${n}% chance a key picked up opens every door on its floor`,
-  yellowKeyHeal: (n) => `Heals ${n}% of max HP on picking up each yellow key`,
-  yellowKeyOverheal: (n) => `Heals ${n}% of the HP ceiling, Overheal included, on picking up each yellow key`,
-  yellowKeyGold: (n) => `+${n}% Gold from each yellow key`,
-  yellowKeyFind: (n) => `+${n}% more each yellow key`,
-  yellowKeySilver: (n) => `+${n} Silver from each yellow key picked up`,
-  yellowKeyChest: (n) => `${n}% chance a yellow key picked up leaves a treasure chest`,
-  yellowDoorCost: (n) => `−${n}% of the key each yellow door takes`,
+  ...byKeyColor((color): Record<ColorKeyPart, (n: string) => string> => ({
+    KeyHeal: (n) => `Heals ${n}% of max HP on picking up each ${color} key`,
+    KeyOverheal: (n) => `Heals ${n}% of the HP ceiling, Overheal included, on picking up each ${color} key`,
+    KeyGold: (n) => `+${n}% Gold from each ${color} key`,
+    KeyFind: (n) => `+${n}% more each ${color} key`,
+    KeySilver: (n) => `+${n} Silver from each ${color} key picked up`,
+    KeyChest: (n) => `${n}% chance a ${color} key picked up leaves a treasure chest`,
+    DoorCost: (n) => `−${n}% of the key each ${color} door takes`,
+    DoubleKey: (n) => `${n}% chance a ${color} key picked up is two`,
+    MasterKey: (n) => `${n}% chance a ${color} key picked up opens every door with a ${color} lock on its floor`,
+  })),
   maxHp: (n) => `+${n}% max HP`,
-  yellowDoubleKey: (n) => `${n}% chance a yellow key picked up is two`,
-  yellowMasterKey: (n) => `${n}% chance a yellow key picked up opens every door with a yellow lock on its floor`,
   foeAttack: (n) => `+${n}% ATK against every enemy`,
   foeDefense: (n) => `+${n}% DEF against every enemy`,
   foeGold: (n) => `+${n}% Gold from every kill`,
@@ -137,8 +149,11 @@ const STAT_ICONS: Record<TreeStat, () => string> = {
   doorCost: () => itemSprite("key_red"), doorGold: ui("gold"), doorSilver: silver, doorHeal: ui("health"),
   skeletonKey: () => itemSprite("key_yellow"), lockPick: () => itemSprite("key_blue"), secretKnock: () => itemSprite("key_red"), doorChest: () => itemSprite("chest_treasure_open"), keyChest: () => itemSprite("chest_treasure_open"), keyFind: () => itemSprite("key_yellow"), keyGold: ui("gold"),
   keyHeal: ui("health"), keyOverheal: ui("health"), keySilver: silver, plainDoorCost: () => itemSprite("key_yellow"), heartDoorCost: ui("health"), doubleKey: () => itemSprite("key_blue"), masterKey: () => itemSprite("key_red"),
-  yellowKeyHeal: ui("health"), yellowKeyOverheal: ui("health"), yellowKeyGold: ui("gold"), yellowKeyFind: () => itemSprite("key_yellow"), yellowKeySilver: silver,
-  yellowKeyChest: () => itemSprite("chest_treasure_open"), yellowDoorCost: () => itemSprite("key_yellow"), maxHp: ui("health"), yellowDoubleKey: () => itemSprite("key_yellow"), yellowMasterKey: () => itemSprite("key_yellow"),
+  ...byKeyColor((color) => {
+    const key = () => itemSprite(`key_${color}`);
+    return { KeyHeal: ui("health"), KeyOverheal: ui("health"), KeyGold: ui("gold"), KeyFind: key, KeySilver: silver, KeyChest: () => itemSprite("chest_treasure_open"), DoorCost: key, DoubleKey: key, MasterKey: key };
+  }),
+  maxHp: ui("health"),
   foeAttack: ui("attack"), foeDefense: ui("defense"), foeGold: ui("gold"), foeSilver: silver, moreEnemies: ui("upgrades"),
   critChance: ui("attack"), critFactor: ui("attack"), killXp: ui("arrow-up"), surpriseAttack: ui("attack"), foeAttackCut: ui("defense"), stealOverheal: ui("health"),
   attackShard: () => itemSprite("upgrade_attack"), defenseShard: () => itemSprite("upgrade_defense"), attackShardGold: ui("gold"), defenseShardGold: ui("gold"),

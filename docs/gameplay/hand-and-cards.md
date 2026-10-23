@@ -149,6 +149,11 @@ Points are spent in the forest; inside a run the tree only shows.
   Its percents multiply Key's and the key cards' like ones: Key Gold, Key Find and a yellow door's cut each its own factor, and Max HP its own beside the boons' and the Max HP badge's, training bought in the run raised by it too.
   Its heals, Silver and Key Chest chance add to Key's, as flat amounts do.
   Locksmith Yellow and Master Yellow Key roll apart from Key's Locksmith and Master Key, each once a key: either Locksmith makes a yellow key two (both still two), and Master Key opening every door leaves Master Yellow Key nothing more to open.
+- **Blue Key** and **Red Key** have Yellow Key's tree for their own colour's keys, its upgrades in the same places and working the same way, each level worth more.
+  Blue Key: 2% of max HP healed, then 2% of the HP ceiling; +4% Gold, +0.2 Silver, +2% Gold Bonus, +1% chance of a free Utility level and +0.3% Key Chest chance; +2% more each blue key, −1% of the key each blue door takes, +10% max HP, **Locksmith Blue** +1% and **Master Blue Key** +2%.
+  Red Key: 3% of max HP healed, then 3% of the HP ceiling; +6% Gold, +0.3 Silver, +3% Gold Bonus, +1.5% chance of a free Utility level and +0.4% Key Chest chance; +3% more each red key, −1% of the key each red door takes, +15% max HP, **Locksmith Red** +1% and **Master Red Key** +1%.
+  A blue or red door is one with a single lock of that colour; Master Blue and Master Red Key open every door with a lock of their colour, as Master Yellow Key does.
+  The three trees' Max HP, Gold Bonus and Free Utility chances add up with each other's, as one card's bonus does with another's.
 - **Enemy** has three tracks, each rising one rarity an upgrade, and opens to 60 levels.
   Attack: +2% ATK against every enemy (common, 4 levels, up to 5), then +1% Crit % chance (uncommon), +2% Crit x factor (rare), +2% XP from every kill (epic), and **Surprise Attack**, +5% chance the first strike of a fight right after a Dash deals twice your ATK (legendary), each up to 5 levels.
   Defense: +2% DEF against every enemy (common, 3 levels, up to 5), then +2% shroud against every enemy (uncommon), **Weaken**, −1% ATK for every enemy (rare), and **Lifesteal Overheal**, Lifesteal healing up to 5% above max HP (epic), each up to 5 levels.

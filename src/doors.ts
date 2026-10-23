@@ -51,11 +51,13 @@ export function doorCost(tile: Tile, player: Opener, scale = 1, tollScale = scal
  * keyed door that is also one. */
 export const drainsHp = (rule: DoorRule) => rule.type === "fullHp" || (rule.type === "keys" && !!rule.heart);
 
-/** A single yellow door, YELLOW DOOR's: one yellow key, a Heart Door's drain or not. */
-export function isYellowDoor(tile: Tile) {
+/** The colour of a single-lock door: one key of one colour, a Heart Door's drain or not; undefined for any other door. */
+export function singleLock(tile: Tile): KeyColor | undefined {
   const rule = doorRule(tile);
-  return rule.type === "keys" && rule.mode === "all" && rule.keys.length === 1 && rule.keys[0] === "yellow";
+  return rule.type === "keys" && rule.mode === "all" && rule.keys.length === 1 ? rule.keys[0] : undefined;
 }
+/** A single yellow door, YELLOW DOOR's. */
+export const isYellowDoor = (tile: Tile) => singleLock(tile) === "yellow";
 /** The doors the door cards make cheaper while held (`CardBonus.door`), and
  * the percent less each costs: a single yellow door's key (YELLOW DOOR), the
  * HP a door draining HP takes (HEART DOOR), and a Wooden Door's key and the
@@ -66,13 +68,14 @@ export type DoorKind = "yellow" | "heart" | "wood";
  * less of the key and the HP a Wooden or Steel Door takes, and `hearts`,
  * of the keys and the drain a door draining HP takes (KEY's tree). Each
  * adds into a kind's own as one card factor. */
-export type DoorDiscounts = Partial<Record<DoorKind | "all" | "plain" | "hearts" | "yellowKey", number>>;
+export type DoorDiscounts = Partial<Record<DoorKind | "all" | "plain" | "hearts" | `${KeyColor}Key`, number>>;
 /** What `off` multiplies the door `tile`'s keys and its HP toll by: 1 for
- * each it leaves alone. YELLOW KEY's tree's cut on a single yellow door's
- * key (`yellowKey`) is its own factor on the rest. */
+ * each it leaves alone. A key colour's tree's cut on a single door of its
+ * colour's key (`yellowKey`, `blueKey`, `redKey`) is its own factor on the rest. */
 export function doorDiscount(tile: Tile, off?: DoorDiscounts): { keys: number; toll: number } {
   if (!off) return { keys: 1, toll: 1 };
-  const cut = off.yellowKey && isYellowDoor(tile) ? (100 - Math.min(100, off.yellowKey)) / 100 : 1, plain = discountOf(tile, off);
+  const color = singleLock(tile), mine = color ? off[`${color}Key`] ?? 0 : 0;
+  const cut = mine ? (100 - Math.min(100, mine)) / 100 : 1, plain = discountOf(tile, off);
   return cut === 1 ? plain : { ...plain, keys: plain.keys * cut };
 }
 function discountOf(tile: Tile, off: DoorDiscounts): { keys: number; toll: number } {
