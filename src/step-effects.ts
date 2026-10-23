@@ -1,6 +1,6 @@
 import { snap } from "./exact.ts";
 import { atWorst, healUpTo, predict, type CombatPrediction, type CritRule } from "./combat.ts";
-import { doorCost, doorDiscount, doorRule, drainsHp, woodToll, type DoorDiscounts } from "./doors.ts";
+import { doorCost, doorDiscount, doorKeyScale, doorRule, drainsHp, keyNeed, woodToll, type DoorDiscounts } from "./doors.ts";
 import type { Player, Tile, KeyColor } from "./entities.ts";
 
 /** What stepping onto each pickup grants. The single source for the move
@@ -35,6 +35,9 @@ export type StepEffect = {
   /** Doors and keys: how much of a key each key colour took or gave, when
    * a badge's scale or a held key card's bonus made it other than 1. */
   keyAmount?: number;
+  /** Doors only: how much of a key each colour took, when the colours a
+   * door took cost apart (a key colour's tree cutting its own key). */
+  keyAmounts?: Partial<Record<KeyColor, number>>;
   /** Enemies only, under a badge's scale: the damage added to the fight's
    * (or, below 0, given back) once it is over. */
   extraDamage?: number;
@@ -160,13 +163,13 @@ export function resolveStep(player: Player, tile: Tile, rules: StepRules = BASE_
     case "door": {
       // Key Efficiency makes each key the door takes cost less, on top of
       // a badge's scale, and a door card held makes its doors cost less
-      // again (each its own factor).
+      // again (each its own factor), a key colour's tree its colour's key.
       if (rules.freeDoor) effect.free = true;
       const off = doorDiscount(tile, rules.doorOff);
-      const keyScale = snap((scale * (rules.keyCost ?? 1000) * off.keys) / 1000), tollScale = snap(scale * off.toll);
+      const keyScale = doorKeyScale(tile, (scale * (rules.keyCost ?? 1000)) / 1000, rules.doorOff), tollScale = snap(scale * off.toll);
       const cost = rules.freeDoor ? [] : doorCost(tile, player, keyScale, tollScale);
       if (cost === null) return { blocked: "locked" };
-      for (const color of cost) next.keys[color] = snap(next.keys[color] - keyScale);
+      for (const color of cost) next.keys[color] = snap(next.keys[color] - keyNeed(keyScale, color));
       const rule = doorRule(tile);
       // A Wooden Door broken without a key takes its durability in HP,
       // under the badge's scale and WOODEN DOOR's; DEF doesn't reduce it.
@@ -179,7 +182,9 @@ export function resolveStep(player: Player, tile: Tile, rules: StepRules = BASE_
         next.hp = Math.min(next.hp, snap(next.hp - toll));
       }
       effect.keysSpent = cost;
-      if (keyScale !== 1 && cost.length) effect.keyAmount = keyScale;
+      const amounts = cost.map((color) => keyNeed(keyScale, color));
+      if (amounts.some((a) => a !== amounts[0])) effect.keyAmounts = Object.fromEntries(cost.map((color, i) => [color, amounts[i]]));
+      else if (amounts.length && amounts[0] !== 1) effect.keyAmount = amounts[0];
       // DOOR's Door Heal, after the drain, up to max HP.
       if (rules.doorHeal && next.hp > 0 && next.hp < next.maxHp) {
         effect.healed = snap(Math.min(next.maxHp, next.hp + (next.maxHp * rules.doorHeal) / 100) - next.hp);

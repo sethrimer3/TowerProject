@@ -1,7 +1,7 @@
 import { point, type Tile, type KeyColor } from "./entities.ts";
 import { litTorches, takesSomething, type Position } from "./board.ts";
 import type { Step } from "./pathfinding.ts";
-import { doorCost, doorDiscount, doorId, drainsHp, isYellowDoor, woodToll, doorRule, type DoorDiscounts, type DoorKind } from "./doors.ts";
+import { doorCost, doorDiscount, doorId, doorKeyScale, keyNeed, drainsHp, isYellowDoor, woodToll, doorRule, type DoorDiscounts, type DoorKind } from "./doors.ts";
 import { impervious } from "./combat.ts";
 import { snap } from "./exact.ts";
 import { UPGRADES, type TrainingId, type UpgradeId } from "./config.ts";
@@ -298,7 +298,7 @@ export type HandAt = Position & {
 /** What each key the door `tile` takes costs a card heading for it: Key
  * Efficiency times the card's Effective or Dampen times the door cards held. */
 const keyScale = (at: HandAt, tile: Tile, rules?: CardRules) =>
-  snap(((rules?.scale ?? 1) * (at.keyCost ?? 1000) * doorDiscount(tile, at.doorOff).keys) / 1000);
+  doorKeyScale(tile, ((rules?.scale ?? 1) * (at.keyCost ?? 1000)) / 1000, at.doorOff);
 /** What the HP breaking the Wooden Door `tile` takes is multiplied by: the
  * card's Effective or Dampen times WOODEN DOOR's, when held. */
 const tollScale = (at: HandAt, tile: Tile, rules?: CardRules) => snap((rules?.scale ?? 1) * doorDiscount(tile, at.doorOff).toll);
@@ -344,11 +344,10 @@ function paysRun(at: HandAt, r: Reached, rules?: CardRules): boolean {
   const player = { ...at.run.player, keys: { ...at.run.player.keys } };
   // The doors of a run are all one kind, so cost alike.
   const scale = keyScale(at, r.tile, rules), toll = tollScale(at, r.tile, rules);
-  const need = scale === 1 ? 1 : snap(scale);
   for (let x = r.x, y = r.y, tile = r.tile; ;) {
     const cost = doorCost(tile, player, scale, toll);
     if (cost === null) return false;
-    for (const c of cost) player.keys[c] = snap(player.keys[c] - need);
+    for (const c of cost) player.keys[c] = snap(player.keys[c] - keyNeed(scale, c));
     const rule = doorRule(tile);
     if (rule.type === "wood" && !cost.length && player.hp !== undefined) player.hp = snap(player.hp - woodToll(rule, toll));
     const next = DIRECTIONS.map(([dx, dy]) => at.world.step(x, y, dx, dy))

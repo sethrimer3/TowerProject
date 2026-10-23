@@ -17,9 +17,14 @@ type Opener = Pick<Player, "keys"> & { hp?: number };
 export function doorRule(tile: Tile): DoorRule {
   return tile.door ?? { type: "keys", keys: [tile.color ?? "yellow"], mode: "all" };
 }
-/** The cheapest key held, at `need` of a key: gold, then azure, then crimson. */
-const cheapestKey = (keys: KeyColor[], player: Opener, need: number) =>
-  KEY_ORDER.find((color) => keys.includes(color) && player.keys[color] >= need);
+/** What each key a door takes costs: one amount for every colour, or each
+ * colour's own (a key colour's tree cutting its colour's key, `doorKeyScale`). */
+export type KeyScale = number | Readonly<Record<KeyColor, number>>;
+/** The part of a key of `color` that `scale` makes a door take. */
+export const keyNeed = (scale: KeyScale, color: KeyColor) => snap(typeof scale === "number" ? scale : scale[color]);
+/** The cheapest key held, at its `scale` of a key: gold, then azure, then crimson. */
+const cheapestKey = (keys: KeyColor[], player: Opener, scale: KeyScale) =>
+  KEY_ORDER.find((color) => keys.includes(color) && player.keys[color] >= keyNeed(scale, color));
 /** The HP breaking a Wooden Door takes, under a badge's `scale`. */
 export const woodToll = (rule: { durability: number }, scale = 1) => snap(rule.durability * scale);
 
@@ -30,22 +35,21 @@ export const woodToll = (rule: { durability: number }, scale = 1) => snap(rule.d
  * held, or none when the hero has none and would survive breaking it
  * (`tollScale` scaling its durability); a caller that passes no HP (the
  * floor analyzer) counts it as breakable. */
-export function doorCost(tile: Tile, player: Opener, scale = 1, tollScale = scale): KeyColor[] | null {
+export function doorCost(tile: Tile, player: Opener, scale: KeyScale = 1, tollScale = typeof scale === "number" ? scale : 1): KeyColor[] | null {
   const rule = doorRule(tile);
   if (rule.type === "fullHp") return [];
   // Keys may be fractional (Effective, Dampen): each colour the door takes
-  // needs a whole key, or `scale` of one, held.
-  const need = scale === 1 ? 1 : snap(scale);
+  // needs a whole key, or its `scale` of one, held.
   if (rule.type === "wood") {
-    const key = cheapestKey(KEY_ORDER, player, need);
+    const key = cheapestKey(KEY_ORDER, player, scale);
     if (key) return [key];
     return player.hp === undefined || player.hp > woodToll(rule, tollScale) ? [] : null;
   }
   if (rule.mode === "any") {
-    const key = cheapestKey(rule.keys, player, need);
+    const key = cheapestKey(rule.keys, player, scale);
     return key ? [key] : null;
   }
-  return rule.keys.every((color) => player.keys[color] >= need) ? [...rule.keys] : null;
+  return rule.keys.every((color) => player.keys[color] >= keyNeed(scale, color)) ? [...rule.keys] : null;
 }
 /** Whether opening the door drains the hero's HP to 1: a Heart Door, or a
  * keyed door that is also one. */
@@ -70,13 +74,20 @@ export type DoorKind = "yellow" | "heart" | "wood";
  * adds into a kind's own as one card factor. */
 export type DoorDiscounts = Partial<Record<DoorKind | "all" | "plain" | "hearts" | `${KeyColor}Key`, number>>;
 /** What `off` multiplies the door `tile`'s keys and its HP toll by: 1 for
- * each it leaves alone. A key colour's tree's cut on a single door of its
- * colour's key (`yellowKey`, `blueKey`, `redKey`) is its own factor on the rest. */
+ * each it leaves alone. */
 export function doorDiscount(tile: Tile, off?: DoorDiscounts): { keys: number; toll: number } {
-  if (!off) return { keys: 1, toll: 1 };
-  const color = singleLock(tile), mine = color ? off[`${color}Key`] ?? 0 : 0;
-  const cut = mine ? (100 - Math.min(100, mine)) / 100 : 1, plain = discountOf(tile, off);
-  return cut === 1 ? plain : { ...plain, keys: plain.keys * cut };
+  return off ? discountOf(tile, off) : { keys: 1, toll: 1 };
+}
+/** What each key the door `tile` takes costs: `base` (a badge's scale times
+ * Key Efficiency, as a fraction of a key) times `off`'s cut, and a key
+ * colour's tree's cut (`yellowKey`, `blueKey`, `redKey`) its own factor on
+ * that colour's key, on any door that takes it. One amount when every
+ * colour costs alike. */
+export function doorKeyScale(tile: Tile, base: number, off?: DoorDiscounts): KeyScale {
+  const keys = base * doorDiscount(tile, off).keys;
+  if (!off || !KEY_ORDER.some((color) => off[`${color}Key`])) return snap(keys);
+  const cut = (color: KeyColor) => (100 - Math.min(100, off[`${color}Key`] ?? 0)) / 100;
+  return { yellow: snap(keys * cut("yellow")), blue: snap(keys * cut("blue")), red: snap(keys * cut("red")) };
 }
 function discountOf(tile: Tile, off: DoorDiscounts): { keys: number; toll: number } {
   const rule = doorRule(tile), all = off.all ?? 0, less = (percent = 0, more = 0, also = 0) => (100 - percent - more - also) / 100;

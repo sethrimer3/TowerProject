@@ -177,9 +177,8 @@ const PERMANENT_TILES = new Set<Tile["kind"]>(["floor", "stairs", "oneway", "ope
 const SECRET_KNOCK_SALT = 0x3a57e, DOOR_CHEST_SALT = 0xd00c4, DOOR_CHEST_KIND_SALT = 0xd0c4d, DOUBLE_KEY_SALT = 0xd0b1e, MASTER_KEY_SALT = 0x3a5e7,
   KEY_CHEST_SALT = 0x6c4e5, KEY_CHEST_KIND_SALT = 0x6c4d1, SURPRISE_SALT = 0x5a7c1, POWER_STRIKE_SALT = 0x907e5,
   CHEST_DOUBLE_SALT = 0xc4e02, CHEST_TRIPLE_SALT = 0xc4e03, CHEST_CELLS_SALT = 0xc4ec1;
-/** What each key colour's own Locksmith and Master Key (YELLOW, BLUE and RED KEY's trees) roll a key of it by. */
-const COLOR_DOUBLE_KEY_SALT: Record<KeyColor, number> = { yellow: 0x7e11d, blue: 0xb1d0b, red: 0x7edd0 },
-  COLOR_MASTER_KEY_SALT: Record<KeyColor, number> = { yellow: 0x7e113, blue: 0xb1a57, red: 0x7ea57 };
+/** What each key colour's own Master Key (YELLOW, BLUE and RED KEY's trees) rolls a key of it by. */
+const COLOR_MASTER_KEY_SALT: Record<KeyColor, number> = { yellow: 0x7e113, blue: 0xb1a57, red: 0x7ea57 };
 /** Each key colour as its Master Key's message names it. */
 const KEY_WORDS: Record<KeyColor, string> = { yellow: "Yellow", blue: "Blue", red: "Red" };
 /** The targets a Dash may end on, a tile of it left: items to take. */
@@ -2026,9 +2025,8 @@ export class Game {
   private luckyStep(t: Tile, x: number, y: number): Partial<StepRules> | null {
     const tree = this.treeBonus;
     if (t.kind === "door" && this.tileRolls(x, y, SECRET_KNOCK_SALT, tree.secretKnock)) return { freeDoor: true };
-    if (t.kind === "key" && this.tileRolls(x, y, DOUBLE_KEY_SALT, tree.doubleKey)) return { doubleKey: true };
-    // The key's colour's own Locksmith rolls apart from KEY's: either makes the key two.
-    if (t.kind === "key" && this.tileRolls(x, y, COLOR_DOUBLE_KEY_SALT[t.color!], keyStat(tree, t.color!, "DoubleKey"))) return { doubleKey: true };
+    // The key's colour's own Locksmith adds to KEY's, one roll.
+    if (t.kind === "key" && this.tileRolls(x, y, DOUBLE_KEY_SALT, snap(tree.doubleKey + keyStat(tree, t.color!, "DoubleKey")))) return { doubleKey: true };
     return null;
   }
   /** KEY's Master Key: the key just picked up at (x, y) may open every door

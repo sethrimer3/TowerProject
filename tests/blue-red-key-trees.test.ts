@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults } from "../src/save.ts";
 import { CARD_TREES, treeBonus, type CardTreeLevels } from "../src/card-trees.ts";
-import { doorDiscount } from "../src/doors.ts";
+import { doorKeyScale } from "../src/doors.ts";
 import { resolveStep, BASE_RULES, type StepEffect } from "../src/step-effects.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import type { KeyColor, Player, Tile } from "../src/entities.ts";
@@ -51,11 +51,9 @@ test("each key colour's tree heals, pays and finds for keys of its colour only",
   assert.deepEqual(take({ key: { keyFind: 10 }, redKey: { find: 10 } }, key("red")), { silver: 0, keys: 1.43 }, "KEY's +10% times RED KEY's +30%");
 });
 
-test("BLUE KEY's and RED KEY's door cuts take a single door of their colour, each its own factor", () => {
+test("BLUE KEY's and RED KEY's door cuts take their colour's key on any door, each its own factor", () => {
   const off = { yellowKey: 10, blueKey: 20, redKey: 30, all: 10 };
-  assert.deepEqual(doorDiscount(keyed(["blue"]), off), { keys: 0.9 * 0.8, toll: 1 });
-  assert.deepEqual(doorDiscount(keyed(["red"]), off), { keys: 0.9 * 0.7, toll: 1 });
-  assert.deepEqual(doorDiscount(keyed(["blue", "red"]), off), { keys: 0.9, toll: 1 }, "not a door of two colours");
+  assert.deepEqual(doorKeyScale(keyed(["blue", "red"]), 1, off), { yellow: 0.81, blue: 0.72, red: 0.63 });
   const g = beside({ redKey: { doorCost: 5 } }, [keyed(["red"])]);
   g.run.player.keys.red = 1;
   assert.ok(g.move(1, 0));

@@ -161,7 +161,8 @@ export class Finds {
   door(t: Tile, outcome: StepEffect, drained: number, at: { x: number; y: number }) {
     const host = this.host, keysSpent = outcome.keysSpent, amount = outcome.keyAmount ?? 1, n = keysSpent.length, rule = doorRule(t), notes = notesOf(host.run);
     if (notes) tallyIn(notes.doors, doorName(t));
-    for (const color of keysSpent) host.gain(at.x, at.y, `−${keyCount(amount)} ${color} key`, { tile: { kind: "key", color }, spent: true }, undefined, "door");
+    const each = (color: KeyColor) => outcome.keyAmounts?.[color] ?? amount;
+    for (const color of keysSpent) host.gain(at.x, at.y, `−${keyCount(each(color))} ${color} key`, { tile: { kind: "key", color }, spent: true }, undefined, "door");
     if (!outcome.free && (!n || (drainsHp(rule) && drained > 0))) host.gain(at.x, at.y, `−${wholeChange(drained)} HP`, { heart: true }, undefined, "door");
     if (outcome.healed) {
       host.gain(at.x, at.y, `+${wholeChange(outcome.healed)} HP`, { heart: true }, { row: 2, with: true });
@@ -174,7 +175,8 @@ export class Finds {
       const silver = host.purse.silver(tree.doorSilver);
       if (silver) host.gain(at.x, at.y, `+${wholeChange(silver)} Silver`, { coin: "silver" }, { row: 2, with: true });
     }
-    const spent = amount === 1 ? `${n} key${n === 1 ? "" : "s"} spent` : `${keyCount(snap(n * amount))} keys spent`;
+    const total = snap(keysSpent.reduce((sum, color) => sum + each(color), 0));
+    const spent = total === n ? `${n} key${n === 1 ? "" : "s"} spent` : `${keyCount(total)} keys spent`;
     if (outcome.free) host.message = `${doorName(t)} opened · Secret Knock`;
     else if (rule.type === "wood" && !n) host.message = `${doorName(t)} broken down · −${wholeChange(drained)} HP`;
     else host.message = `${doorName(t)} opened${n ? ` · ${spent}` : ""}${drainsHp(rule) ? (host.run.player.hp > HEART_DOOR_HP ? " · HP drained" : " · HP drained to 1") : ""}`;
