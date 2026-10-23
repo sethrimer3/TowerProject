@@ -200,17 +200,18 @@ test("legacy large-room attempts restart in staging; bad mode and slime data can
 
 test("a starting hero can complete the manual trial with potions and beam dodges", () => {
   const s=arena();
-  for(let i=0;i<400 && s.status==="active";i++) {
+  for(let i=0;i<1000 && s.status==="active";i++) {
     // Use ordinary planner paths as a test pilot, but submit manual input.
     const pilot={...s,mode:"cards" as const,hand:s.player.hp<s.player.maxHp*.6?["heal","monster"] as const:["bossEnemy"] as const};
-    const step=trialPlan({...pilot,hand:[...pilot.hand]})?.path[0];assert.ok(step);
+    const step=trialPlan({...pilot,hand:[...pilot.hand]})?.path[0] ?? {dx:0,dy:0};
+    assert.ok(step.dx || step.dy || s.elemental.incorporeal);
     const landing={x:s.player.x+step.dx,y:s.player.y+step.dy};
-    if(key(landing)===key(ELEMENTAL))Object.assign(landing,{x:s.player.x,y:s.player.y});
-    const danger=beamCells(nextBeamAxis(s));
+    if(!s.elemental.incorporeal && key(landing)===key(s.elemental))Object.assign(landing,{x:s.player.x,y:s.player.y});
+    const danger=beamCells(nextBeamAxis(s),s.elemental);
     if(s.steps%10===9 && danger.some(p=>key(p)===key(landing))) {
       const safe=[[1,0],[-1,0],[0,1],[0,-1]].find(([dx,dy])=> {
         const p={x:s.player.x+dx,y:s.player.y+dy};
-        return arenaFloor(p.x,p.y) && key(p)!==key(ELEMENTAL) && !danger.some(q=>key(q)===key(p));
+        return arenaFloor(p.x,p.y) && key(p)!==key(s.elemental) && !danger.some(q=>key(q)===key(p));
       });
       assert.ok(safe);trialStep(s,safe[0],safe[1]);
     } else trialStep(s,step.dx,step.dy);
@@ -231,4 +232,87 @@ test("a hopping slime that lands on the hero deals contact damage and dissipates
     }
   }
   assert.ok(hit,"some nearby random hops can land on the hero");
+});
+
+
+test("a hit teleports the elemental, makes it invincible and removes every boss target until its lasers", () => {
+  const s=arena();s.player.x=ELEMENTAL.x;s.player.y=ELEMENTAL.y-1;
+  const hp=s.bossHp;
+  assert.ok(trialStep(s,0,1).changed);
+  assert.equal(s.bossHp,hp-s.player.attack);assert.ok(s.elemental.incorporeal);
+  assert.notEqual(key(s.elemental),key(ELEMENTAL));
+  assert.deepEqual(s.elemental.teleport,{from:ELEMENTAL,step:1});
+  assert.ok(arenaFloor(s.elemental.x,s.elemental.y));
+  assert.ok(!s.slimes.some(p=>key(p)===key(s.elemental)));
+  for(const id of ["monster","bossEnemy","nonBossEnemy"] as const) {
+    assert.equal(trialPlan({...s,mode:"cards",hand:[id]}),null);
+  }
+  // The ghost is ordinary passable floor, and cannot be damaged even by waiting on it.
+  s.player.x=s.elemental.x;s.player.y=s.elemental.y;
+  assert.ok(trialStep(s,0,0).changed);assert.equal(s.bossHp,hp-s.player.attack);
+  assert.ok(decodeTrial(s));
+  while(s.steps<9)trialStep(s,0,0);
+  const position={x:s.elemental.x,y:s.elemental.y};
+  assert.ok(trialStep(s,0,0).fired);assert.equal(s.elemental.incorporeal,false);
+  assert.notEqual(key(s.elemental),key(s.player));
+  assert.ok(Math.abs(s.elemental.x-position.x)+Math.abs(s.elemental.y-position.y)<=1);
+  assert.ok(decodeTrial(s));
+  assert.ok(trialPlan({...s,mode:"cards",hand:["bossEnemy"]}));
+});
+
+test("autoplay waits through an untargetable phase rather than pausing the laser countdown", () => {
+  const s=arena();s.mode="cards";s.playing=true;s.hand=["bossEnemy"];
+  s.player.x=ELEMENTAL.x;s.player.y=ELEMENTAL.y-1;
+  autoplayTrial(s);
+  const hp=s.bossHp;
+  for(let i=0;i<8;i++) {
+    assert.ok(autoplayTrial(s).changed);assert.ok(s.playing);assert.equal(s.bossHp,hp);
+  }
+  assert.equal(s.steps,9);assert.ok(s.elemental.incorporeal);
+  assert.ok(autoplayTrial(s).fired);assert.equal(s.elemental.incorporeal,false);
+  // Other real enemies remain valid while the boss is a ghost.
+  s.elemental.incorporeal=true;s.hand=["monster"];
+  assert.ok(trialPlan(s));
+});
+
+test("lasers and new slimes originate at the teleported tile and previous beam flashes keep their origin", () => {
+  const s=arena();
+  for(let i=0;i<10;i++)trialStep(s,0,0);
+  const beam=structuredClone(s.beam);
+  s.player.x=ELEMENTAL.x;s.player.y=ELEMENTAL.y-1;
+  trialStep(s,0,1);
+  assert.deepEqual(s.beam,beam);
+  const target={x:s.elemental.x,y:s.elemental.y};
+  trialStep(s,0,0);
+  assert.deepEqual(s.slimes.find(p=>p.id===4)?.from,target);
+  while(s.steps<20)trialStep(s,0,0);
+  assert.deepEqual(s.beam,{origin:target,axis:1,step:20});
+  for(const p of beamCells(1,target))assert.equal(s.scorches[key(p)],20);
+  assert.deepEqual(decodeTrial(s),s);
+});
+
+test("teleport destinations and ghost state survive reload and older 25×25 attempts keep their progress", () => {
+  const s=arena();s.player.x=ELEMENTAL.x;s.player.y=ELEMENTAL.y-1;
+  const copy=structuredClone(s);
+  trialStep(s,0,1);trialStep(copy,0,1);assert.deepEqual(copy,s);
+  const save=defaults();save.provingGrounds=s;
+  assert.deepEqual(decode(JSON.stringify(save)).provingGrounds,s);
+  const old=arena();for(let i=0;i<12;i++)trialStep(old,0,0);
+  const legacy={...old,elemental:undefined,beam:undefined};
+  assert.deepEqual(decodeTrial(legacy),old);
+  for(const invalid of [
+    {...s,elemental:{...s.elemental,x:0}},
+    {...s,elemental:{...s.elemental,incorporeal:"yes"}},
+    {...s,elemental:{...s.elemental,teleport:{from:{x:0,y:0},step:1}}},
+    {...s,elemental:{...s.elemental,teleport:{from:ELEMENTAL,step:s.steps+1}}},
+    {...s,elemental:{...s.elemental,teleport:null}},
+    {...s,beam:{origin:ELEMENTAL,step:10,axis:0}},
+  ])assert.equal(decodeTrial(invalid),undefined);
+});
+
+test("a hit on a laser turn still resolves exactly one volley and restores vulnerability", () => {
+  const s=arena();s.steps=9;s.player.x=ELEMENTAL.x;s.player.y=ELEMENTAL.y-1;
+  assert.ok(trialStep(s,0,1).fired);
+  assert.equal(s.steps,10);assert.equal(s.elemental.incorporeal,false);
+  assert.deepEqual(s.beam?.origin,{x:s.elemental.x,y:s.elemental.y});
 });

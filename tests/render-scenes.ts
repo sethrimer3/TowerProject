@@ -565,6 +565,19 @@ function playProvingGrounds(_name: string, _seed: number, canvas: HTMLCanvasElem
   renderer.draw(state,6130,1000,false,false); grab("slimeHop");
   state.player.y=22;
   renderer.draw(state, 5000, 1000, true, false); grab("wallScars");
+  state.player.x=12;state.player.y=11;
+  renderer.draw(state,7000,0,false,false);
+  trialStep(state,0,1);
+  // Frame both ends of this deterministic flight, including the reformed ghost.
+  state.player.x=Math.round((12+state.elemental.x)/2);
+  state.player.y=Math.round((12+state.elemental.y)/2);
+  renderer.draw(state,7100,0,false,false); grab("dissolve");
+  renderer.draw(state,7550,0,false,false); grab("lightTrails");
+  renderer.draw(state,8080,0,false,false); grab("reform");
+  renderer.draw(state,8500,0,false,false); grab("ghost");
+  renderer.draw(state,8500,0,true,false); grab("ghostReducedMotion");
+  while(state.steps%10!==0) trialStep(state,0,0);
+  renderer.draw(state,9000,8900,true,false); grab("corporealLasers");
 }
 
 /** Which canvas a job draws on: the 408 px board, the Defend board (which

@@ -130,3 +130,5 @@ A save that claimed the floor before the card existed (the old Archer class) fin
 The `add-badge` skill lists the files of the badge mechanism: update it when they move.
 
 Proving Grounds Trial I reuses `planHand` through an isolated board/run adapter and a copied equipped hand; its input guard disallows manual steering, while Trial II has manual movement and no hand (see `proving-grounds.md`).
+
+A Proving Grounds elemental's incorporeal phase is passable floor to all cards; a card trial with no other target waits automatically until a laser volley restores the boss, keeping its turn clock live.

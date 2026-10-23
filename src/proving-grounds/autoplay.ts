@@ -2,7 +2,7 @@ import type { Board } from "../board.ts";
 import { CARDS, planHand } from "../cards.ts";
 import type { Tile } from "../entities.ts";
 import type { TowerRun } from "../runs.ts";
-import { ARENA_POTIONS, ARENA_SIZE, ELEMENTAL, floorAt, key, trialStep, type TrialState } from "./trial.ts";
+import { ARENA_POTIONS, ARENA_SIZE, floorAt, key, trialStep, type TrialState } from "./trial.ts";
 
 /** Expose the encounter to the normal Tower card planner. Replan each turn
  * because slime targets can move. The ordinary Game/run is never mutated. */
@@ -13,7 +13,7 @@ export function trialPlan(s: TrialState) {
     tile(x,y): Tile {
       if (!floorAt(s.room,x,y)) return {kind:"wall"};
       if (s.room === "staging") return {kind:x===4 && y===6 ? "stairs" : "floor"};
-      const boss = x===ELEMENTAL.x && y===ELEMENTAL.y;
+      const boss = !s.elemental.incorporeal && x===s.elemental.x && y===s.elemental.y;
       if (boss || s.slimes.some(p=>p.x===x && p.y===y)) return { kind:"enemy", enemy: {
         name:boss ? "Light Elemental" : "Light Slime", hp:boss ? s.bossHp : 1,
         attack:0,defense:0,tier:1,strength:boss ? "boss" : "weak",
@@ -32,6 +32,10 @@ export function trialPlan(s: TrialState) {
 export function autoplayTrial(s: TrialState) {
   if (s.mode !== "cards" || !s.playing || s.status !== "active") return { changed:false,message:"",fired:false };
   const plan = trialPlan(s), next = plan?.path[0];
+  if (!next && s.room==="arena" && s.elemental.incorporeal) {
+    const outcome=trialStep(s,0,0,"cards");
+    return {...outcome,message:outcome.message || "The elemental is incorporeal. Waiting for its next lasers."};
+  }
   if (!next) {
     s.playing = false;
     return {changed:true,message:"No card can act. Change your equipped hand in the forest, then retry this trial.",fired:false};

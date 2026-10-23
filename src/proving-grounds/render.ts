@@ -2,19 +2,12 @@ import { drawThemedTile } from "../themed-tilesets.ts";
 import { paintHero, paintTorch } from "../tile-painters.ts";
 import { drawArea1Item } from "../area1-tileset.ts";
 import { sprite } from "../pixel-sprite.ts";
-import { ARENA_POTIONS, ARENA_TORCHES, BEAM_AXES, ELEMENTAL, beamCells, floorAt, key, nextBeamAxis, type TrialState } from "./trial.ts";
+import { ARENA_POTIONS, ARENA_TORCHES, BEAM_AXES, beamCells, floorAt, key, nextBeamAxis, wallEdge, type TrialState } from "./trial.ts";
+
+import { drawLightElemental, drawElementalTransit, TELEPORT_MS } from "./elemental-art.ts";
+export { drawLightElemental } from "./elemental-art.ts";
 
 const N = 17, S = 24, SIZE = N * S;
-const ELEMENTAL_ART = [
-  ".........g.........", ".........h.........", ".....g...h...g.....", "......g.hhh.g......",
-  ".......ghhhg.......", "......gwhhhwg......", "......gwhhhwg......", ".......whhw........",
-  ".....ggwwwwwgg.....", "...ggbhwwwwwhbgg...", "..gbb.hwwwwwh.bbg..", ".gbb..ghwwwhg..bbg.",
-  "..b...gwhhhwg...b..", "......gwhhhwg......", ".......ghhhg.......", ".......ghhhg.......",
-  "......gg.h.gg......", ".....gg..g..gg.....", "....gg.......gg....", ".....g.......g.....",
-] as const;
-export function drawLightElemental(c: CanvasRenderingContext2D) {
-  sprite(c, ELEMENTAL_ART, { g: "#9c793d", h: "#ffe4a0", w: "#fffbe5", b: "#c6d7db" }, 1, 12, 11);
-}
 
 const SLIME_ART = [
   "......gggg......", "....gghhhhgg....", "...ghwwhhhhhg...", "..ghwwhhhhhhhg..",
@@ -31,6 +24,8 @@ export function drawLightSlime(c: CanvasRenderingContext2D, spritesOff: boolean)
 /** Pixel art stays sharp; only the lighting mask has soft falloff. */
 export class TrialRenderer {
   private lastState: TrialState | null = null;
+  private lastTeleport: TrialState["elemental"]["teleport"] = null;
+  private teleportAt = -Infinity;
   private lastStep = -1;
   private jumpedAt = -Infinity;
   private darkness = document.createElement("canvas");
@@ -42,7 +37,11 @@ export class TrialRenderer {
   }
   draw(s: TrialState, now: number, firedAt: number, reduceMotion: boolean, spritesOff: boolean) {
     // Animation is presentation only; saved turns own all positions.
-    if(this.lastState!==s) { this.lastState=s; this.lastStep=s.steps; this.jumpedAt=-Infinity; }
+    if(this.lastState!==s) { this.lastState=s; this.lastStep=s.steps; this.jumpedAt=-Infinity; this.lastTeleport=s.elemental.teleport; this.teleportAt=-Infinity; }
+    if(this.lastTeleport!==s.elemental.teleport) {
+      this.lastTeleport=s.elemental.teleport; this.teleportAt=now;
+    }
+    const transit=reduceMotion?1:Math.max(0,Math.min(1,(now-this.teleportAt)/TELEPORT_MS));
     if(this.lastStep!==s.steps) {
       this.lastStep=s.steps;
       if(s.slimes.some(p=>p.jumped===s.steps)) this.jumpedAt=now;
@@ -60,7 +59,7 @@ export class TrialRenderer {
     c.imageSmoothingEnabled = false; c.fillStyle = "#05080c"; c.fillRect(0,0,SIZE,SIZE);
     for (let y=bottom; y<bottom+N; y++) for (let x=left; x<left+N; x++) {
       const wall = !floorAt(s.room,x,y);
-      if (wall && ![[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy]) => floorAt(s.room,x+dx,y+dy))) continue;
+      if (wall && !(s.room==="arena" && wallEdge(x,y)) && ![[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy]) => floorAt(s.room,x+dx,y+dy))) continue;
       tile(x,y,() => {
         const neighbors = { northWall: !floorAt(s.room,x,y+1), eastWall: !floorAt(s.room,x+1,y), southWall: !floorAt(s.room,x,y-1), westWall: !floorAt(s.room,x-1,y) };
         if (spritesOff || !drawThemedTile(c,"tower",0,wall,x,y,7391,neighbors)) {
@@ -96,7 +95,13 @@ export class TrialRenderer {
       light(s.player.x,s.player.y,1.8,0.8);
       for(const p of ARENA_TORCHES) light(p.x,p.y,5.5,0.92);
       for(const p of slimes) light(p.x,p.y,1.7,0.65);
-      if(s.status!=="won") light(ELEMENTAL.x,ELEMENTAL.y,3,0.85);
+      if(s.status!=="won") {
+        light(s.elemental.x,s.elemental.y,s.elemental.incorporeal?2.4:3,s.elemental.incorporeal?0.48:0.85);
+        if(transit<1 && s.elemental.teleport) {
+          const from=s.elemental.teleport.from;
+          light(from.x+(s.elemental.x-from.x)*transit,from.y+(s.elemental.y-from.y)*transit,2.5,0.7);
+        }
+      }
       for(const [k,step] of Object.entries(s.scorches)) {
         const [x,y]=k.split(",").map(Number); const glow=Math.max(0,1-(s.steps-step)/30);
         if(glow>0) light(x,y,1.3,glow*0.45);
@@ -114,10 +119,10 @@ export class TrialRenderer {
         });
       }
       const flash = firedAt > 0 ? Math.max(0,1-(now-firedAt)/900) : 0;
-      if(flash>0 && s.steps>=10) {
+      if(flash>0 && s.beam) {
         c.save(); c.globalAlpha=flash;
-        const axis=((s.steps/10-1)|0)%4, [dx,dy]=BEAM_AXES[axis];
-        for(const p of beamCells(axis)) tile(p.x,p.y,()=> {
+        const {axis,origin}=s.beam, [dx,dy]=BEAM_AXES[axis];
+        for(const p of beamCells(axis,origin)) tile(p.x,p.y,()=> {
           c.fillStyle="#ffb74f66";
           if(dx===0)c.fillRect(7,0,10,24);
           else if(dy===0)c.fillRect(0,7,24,10);
@@ -129,11 +134,20 @@ export class TrialRenderer {
         });
         c.restore();
       }
-      if(s.status!=="won") tile(ELEMENTAL.x,ELEMENTAL.y,()=> {
-        drawLightElemental(c);
-        c.fillStyle="#3b2922"; c.fillRect(1,23,22,1);
-        c.fillStyle="#ffe4a0"; c.fillRect(1,23,22*s.bossHp/s.bossMaxHp,1);
-      });
+      if(s.status!=="won") {
+        const boss=s.elemental;
+        if(transit<1 && boss.teleport) {
+          drawElementalTransit(c,{x:px(boss.teleport.from.x),y:py(boss.teleport.from.y)},
+            {x:px(boss.x),y:py(boss.y)},transit,s.seed^boss.teleport.step);
+        }
+        if(transit>.78) tile(boss.x,boss.y,()=> {
+          c.save(); c.globalAlpha=transit<1?(transit-.78)/.22:1;
+          drawLightElemental(c,boss.incorporeal,now,reduceMotion);
+          c.fillStyle=boss.incorporeal?"#344651":"#3b2922"; c.fillRect(1,23,22,1);
+          c.fillStyle=boss.incorporeal?"#91d3ea":"#ffe4a0"; c.fillRect(1,23,22*s.bossHp/s.bossMaxHp,1);
+          c.restore();
+        });
+      }
       for(const p of slimes) tile(p.x,p.y,()=> {
         c.fillStyle="#9c793d66"; c.fillRect(5,21,14,2);
         c.translate(0,-p.lift); drawLightSlime(c,spritesOff);
@@ -142,7 +156,7 @@ export class TrialRenderer {
       if(s.status==="active" && s.steps%10>=8) {
         const [dx,dy]=[[0,1],[1,1],[1,0],[1,-1]][nextBeamAxis(s)];
         c.fillStyle="#ffeaa8";
-        for(const sign of [-1,1]) for(let i=1;i<=3;i++) tile(ELEMENTAL.x+dx*i*sign,ELEMENTAL.y+dy*i*sign,()=>c.fillRect(11,11,2,2));
+        for(const sign of [-1,1]) for(let i=1;i<=3;i++) tile(s.elemental.x+dx*i*sign,s.elemental.y+dy*i*sign,()=>c.fillRect(11,11,2,2));
       }
     }
   }

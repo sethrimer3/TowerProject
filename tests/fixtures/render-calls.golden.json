@@ -125,8 +125,14 @@
  "spriteAmbient.ripples": "e40b4578b8c12a5c",
  "spriteAmbient.later": "5fcd9218aba1b20a",
  "provingGrounds.staging": "5c2539eced6f8e10",
- "provingGrounds.beam": "5f2ac197afa558a9",
- "provingGrounds.glow": "3746db68d285fd73",
- "provingGrounds.slimeHop": "2ed037d29be140e9",
- "provingGrounds.wallScars": "e8e16e181383f43f"
+ "provingGrounds.beam": "fc254656007350e8",
+ "provingGrounds.glow": "367d3596978ee2a0",
+ "provingGrounds.slimeHop": "4790eaf408bd12f3",
+ "provingGrounds.wallScars": "5832db53027df65f",
+ "provingGrounds.dissolve": "30393f77198568ad",
+ "provingGrounds.lightTrails": "dc37bbd2a1c58e88",
+ "provingGrounds.reform": "1e14ffad432aa24f",
+ "provingGrounds.ghost": "143fd5bea027c0c0",
+ "provingGrounds.ghostReducedMotion": "3cecbc5150eb2fd7",
+ "provingGrounds.corporealLasers": "204fce5ee303ea8c"
 }
