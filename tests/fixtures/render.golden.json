@@ -125,8 +125,14 @@
   "spriteAmbient.ripples": "6fff5718fafb6fd2f71b0ffe",
   "spriteAmbient.later": "e3fdad300ec27d24d82d1ffa",
   "provingGrounds.staging": "7b496c99f1243e99c011cf4b",
-  "provingGrounds.beam": "694a26a6773bf16d4e135d1d",
-  "provingGrounds.glow": "84d25a091d60f7f522920633",
-  "provingGrounds.wallScars": "343dd175705eef5dd77e47e7",
-  "provingGrounds.slimeHop": "9d011d6a6249f5db51808bd4"
+  "provingGrounds.beam": "d51dbef2c66157041549be61",
+  "provingGrounds.glow": "9efada5518a376b8e23a8f4c",
+  "provingGrounds.wallScars": "577ebc44db19b43ec7d93a57",
+  "provingGrounds.slimeHop": "7d7e7900febf311a308a3a83",
+  "provingGrounds.dissolve": "fcd4bd4d64b0bb964296d193",
+  "provingGrounds.lightTrails": "f7565bae7a86c37c374457b6",
+  "provingGrounds.reform": "938ebe4725f693b198cd2f7b",
+  "provingGrounds.ghost": "5fc47796dc096b86bcd9008d",
+  "provingGrounds.ghostReducedMotion": "ce7c633461d2241bb02207e0",
+  "provingGrounds.corporealLasers": "c184d3c7664070dd4fab864e"
 }

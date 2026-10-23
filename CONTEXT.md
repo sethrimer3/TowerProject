@@ -753,3 +753,5 @@ _Avoid_: known tiles, visit map
 - **Proving Grounds**: trials entered through the golden square outside the Tower.
 - **Light Elemental**: the Proving Grounds foe, which fires rotating opposing light beams and creates light slimes.
 - **Light Slime**: a glowing creature released by the Light Elemental that hops to a random nearby tile every three player steps.
+
+- **Incorporeal**: the Light Elemental's invincible ghost phase after a hit and teleport, during which cards do not count it as an enemy, lasting until its next laser volley.

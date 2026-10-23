@@ -34,3 +34,6 @@ Their controls appear only while `uiSprites` is checked; non-default Game themes
 The optional `save.provingGrounds` holds an isolated trial attempt (layout version, control mode, copied hand and autoplay state, seed, room, hero stats, boss HP, turn count, jumping slimes, consumed potions and scorch timestamps), decoded defensively by `decodeTrial`; old saves omit it and ordinary mode runs remain separate.
 
 Unversioned Proving Grounds attempts from the 50×50 layout restart safely in the version 2 staging room with their copied stats; `decodeTrial` validates the new mode, hand and slime state.
+
+Proving Grounds version 2 also saves the elemental's position/ghost phase and teleport origin/turn, plus the most recent laser origin/axis/turn.
+Attempts predating those additive fields retain their progress with a corporeal center boss; a reload preserves an existing ghost phase but skips replaying its visual flight.

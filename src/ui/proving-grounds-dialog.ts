@@ -133,13 +133,14 @@ export class ProvingGroundsDialog {
     const s=this.game.save.provingGrounds!;
     const direction=["north–south","northeast–southwest","east–west","southeast–northwest"][nextBeamAxis(s)];
     const vitals=this.modal.querySelector<HTMLElement>("#trial-vitals")!;
-    vitals.textContent=`HP ${Math.ceil(s.player.hp)} / ${Math.ceil(s.player.maxHp)} · ${s.room==="staging"?"Staging room":`Elemental ${Math.ceil(s.bossHp)} / ${Math.ceil(s.bossMaxHp)} · Slimes ${s.slimes.length} · Beam ${direction} in ${BEAM_INTERVAL-s.steps%BEAM_INTERVAL} turns`}`;
+    vitals.textContent=`HP ${Math.ceil(s.player.hp)} / ${Math.ceil(s.player.maxHp)} · ${s.room==="staging"?"Staging room":`Elemental (${s.elemental.incorporeal?"incorporeal · invincible":"corporeal"}) ${Math.ceil(s.bossHp)} / ${Math.ceil(s.bossMaxHp)} · Slimes ${s.slimes.length} · Beam ${direction} in ${BEAM_INTERVAL-s.steps%BEAM_INTERVAL} turns`}`;
     this.modal.querySelector<HTMLElement>("#trial-status")!.textContent=s.status==="won"?"Trial complete — Light Elemental defeated!":s.status==="lost"?"Trial failed. Retry, or return safely to the forest.":this.message;
     this.modal.querySelectorAll<HTMLButtonElement>("[data-trial-move]").forEach(b=>b.disabled=s.status!=="active");
     this.modal.querySelector<HTMLButtonElement>("#trial-retry")!.hidden=s.status==="active";
     const play=this.modal.querySelector<HTMLButtonElement>("#trial-play");
     if(play) { play.textContent=s.playing?"Pause autoplay":"Resume autoplay"; play.disabled=s.status!=="active"; }
     this.modal.querySelector<HTMLCanvasElement>("#trial-board")!.dataset.mode=s.mode;
+    this.modal.querySelector<HTMLCanvasElement>("#trial-board")!.dataset.phase=s.elemental.incorporeal?"incorporeal":"corporeal";
     // Keep the controls' accessible description in step with the countdown.
     this.modal.querySelector<HTMLCanvasElement>("#trial-board")!.dataset.room=s.room;
     this.modal.querySelector<HTMLCanvasElement>("#trial-board")!.dataset.steps=String(s.steps);

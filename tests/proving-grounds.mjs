@@ -47,10 +47,38 @@ try {
   mkdirSync("test-results/proving-grounds",{recursive:true});
   await page.locator("dialog").screenshot({path:"test-results/proving-grounds/arena-mobile.png"});
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  // Hit once and inspect the animated transit, invulnerability and reload.
+  await page.evaluate(()=> {
+    const save=JSON.parse(localStorage.getItem("towerdelve.v1")),s=save.provingGrounds;
+    s.player.x=12;s.player.y=11;s.slimes=[];s.steps=21;s.player.hp=s.player.maxHp;
+    sessionStorage.setItem("trialFixture",JSON.stringify(save));
+  });
+  await page.reload({waitUntil:"domcontentloaded"});
+  await expect(page.locator("#trial-board")).toHaveAttribute("data-phase","corporeal");
+  await page.keyboard.press("ArrowUp");
+  await expect(page.locator("#trial-board")).toHaveAttribute("data-phase","incorporeal");
+  await expect(page.locator("#trial-vitals")).toContainText("incorporeal · invincible");
+  const ghost=await page.evaluate(()=>JSON.parse(localStorage.getItem("towerdelve.v1")).provingGrounds);
+  expect(ghost.bossHp).toBe(ghost.bossMaxHp-ghost.player.attack);
+  expect({x:ghost.elemental.x,y:ghost.elemental.y}).not.toEqual({x:12,y:12});
+  await page.waitForTimeout(450);
+  await page.locator("dialog").screenshot({path:"test-results/proving-grounds/teleport-mobile.png"});
+  await page.waitForTimeout(750);
+  await page.locator("dialog").screenshot({path:"test-results/proving-grounds/ghost-mobile.png"});
+  await page.keyboard.press("ArrowUp");
+  trial=await page.evaluate(()=>JSON.parse(localStorage.getItem("towerdelve.v1")).provingGrounds);
+  expect(trial.bossHp).toBe(ghost.bossHp);
+  await page.reload({waitUntil:"domcontentloaded"});
+  await expect(page.locator("#trial-board")).toHaveAttribute("data-phase","incorporeal");
+  for(let i=0;i<7;i++)await page.keyboard.press("Space");
+  await expect(page.locator("#trial-board")).toHaveAttribute("data-phase","corporeal");
+  trial=await page.evaluate(()=>JSON.parse(localStorage.getItem("towerdelve.v1")).provingGrounds);
+  expect(trial.beam.origin).toEqual({x:ghost.elemental.x,y:ghost.elemental.y});
+  expect(trial.bossHp).toBe(ghost.bossHp);
   // Bring a still-active saved attempt beside the boss and verify combat UI.
   await page.evaluate(()=> {
     const save=JSON.parse(localStorage.getItem("towerdelve.v1")),s=save.provingGrounds;
-    s.player.x=12;s.player.y=11;s.slimes=[];s.bossHp=s.player.attack;s.steps=20;s.player.hp=s.player.maxHp;
+    s.player.x=12;s.player.y=11;s.slimes=[];s.elemental={x:12,y:12,incorporeal:false,teleport:null};s.bossHp=s.player.attack;s.player.hp=s.player.maxHp;
     sessionStorage.setItem("trialFixture",JSON.stringify(save));
   });
   await page.reload({waitUntil:"domcontentloaded"});await expect(page.locator("#trial-board")).toHaveAttribute("data-room","arena");
@@ -105,7 +133,19 @@ try {
   }
   await page.evaluate(()=> {
     const save=JSON.parse(localStorage.getItem("towerdelve.v1")),s=save.provingGrounds;
-    s.player.x=12;s.player.y=11;s.slimes=[];s.bossHp=s.player.attack;s.player.hp=s.player.maxHp;s.playing=true;
+    s.player.x=12;s.player.y=11;s.slimes=[];s.elemental={x:12,y:12,incorporeal:false,teleport:null};
+    s.steps=21;s.hand=["bossEnemy"];s.player.hp=s.player.maxHp;s.playing=true;
+    sessionStorage.setItem("trialFixture",JSON.stringify(save));
+  });
+  await page.reload({waitUntil:"domcontentloaded"});
+  await expect(page.locator("#trial-board")).toHaveAttribute("data-phase","incorporeal",{timeout:10000});
+  trial=await readTrial();const ghostHp=trial.bossHp;
+  await expect(page.locator("#trial-board")).toHaveAttribute("data-phase","corporeal",{timeout:10000});
+  await page.locator("#trial-play").click();
+  trial=await readTrial();expect(trial.steps).toBeGreaterThanOrEqual(30);expect(trial.bossHp).toBe(ghostHp);
+  await page.evaluate(()=> {
+    const save=JSON.parse(localStorage.getItem("towerdelve.v1")),s=save.provingGrounds;
+    s.player.x=12;s.player.y=11;s.slimes=[];s.elemental={x:12,y:12,incorporeal:false,teleport:null};s.bossHp=s.player.attack;s.player.hp=s.player.maxHp;s.playing=true;
     sessionStorage.setItem("trialFixture",JSON.stringify(save));
   });
   await page.reload({waitUntil:"domcontentloaded"});
@@ -119,5 +159,5 @@ try {
   const returned=await page.evaluate(()=>JSON.parse(localStorage.getItem("towerdelve.v1")));
   expect(returned.tower.run).toEqual(tower);expect(returned.provingGrounds).toBeUndefined();
   expect(errors).toEqual([]);
-  console.log("Proving Grounds: both trial modes, automatic card movement, blocked manual card input, jumping slimes, beams, reload, victory, mobile layout and safe return passed.");
+  console.log("Proving Grounds: both trial modes, automatic card movement, blocked manual card input, jumping slimes, ghost invulnerability, light-pixel teleport, re-materialization, beams, reload, victory, mobile layout and safe return passed.");
 } finally { await browser.close(); }

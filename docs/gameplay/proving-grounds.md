@@ -10,7 +10,8 @@ Reloading resumes the attempt, while **Leave trial** or Escape returns to the fo
 **Trial I — Light Elemental · With cards** copies your equipped hand and its priority order when you enter.
 Your cards automatically move you to their targets using the same card planner as a Tower run, including the staging staircase, potions and enemies.
 You can pause or resume autoplay, but cannot steer with keys, taps, swipes or direction buttons.
-If no card can act, autoplay pauses; return to the forest to equip a hand suited to the trial, including Stairs and an enemy card, then enter again.
+While the elemental is incorporeal, cards ignore it and autoplay waits if no other card has a target, keeping the laser countdown moving.
+Otherwise, if no card can act, autoplay pauses; return to the forest to equip a hand suited to the trial, including Stairs and an enemy card, then enter again.
 The encounter copies your stats and uses its own combat rules; normal-run rewards, card activations, badges and supplies do not apply.
 
 **Trial II — Light Elemental · No cards** gives you full movement control and has no hand or autoplay.
@@ -19,15 +20,22 @@ Each move, strike or wait advances one turn, and walking into a wall does not.
 
 ## The Light Elemental
 
-The elemental waits at the center of the chamber, dark except for wall torches, glowing enemies and your immediate footing.
-Walk into the elemental to strike it; it answers with a small hit of radiant damage.
+The elemental starts at the center of the chamber, dark except for wall torches, glowing enemies and your immediate footing.
+Walk into the corporeal elemental to strike it; it answers with a small hit of radiant damage.
+After each nonlethal hit it dissolves into individual pixels of light, which fly with trailing sparks to a different free interior tile and reassemble into a translucent blue ghost.
+In this incorporeal phase it is invincible, does not count as an enemy to any card, and can be walked through.
+Its next laser volley makes it corporeal and vulnerable again.
+If you stand on its ghost when that volley is due, it reforms in the closest free tile before firing.
+A hit on the same turn as a laser volley still triggers the teleport, then the volley restores its body.
+Reduce motion skips the flight animation while retaining the translucent ghost appearance.
 
 Every three arena turns the elemental releases a light slime, up to six at once, and existing slimes jump to random nearby floor tiles within two tiles of their previous position.
-New slimes leap out from the elemental itself.
+New slimes leap out from the elemental's current position, including while it is incorporeal.
 Walk into a slime to disperse it; a slime landing on you deals 5% of your max HP and dissipates.
 Slimes cannot land in walls, on the elemental or on one another.
 
 Every ten turns the elemental fires two opposing beams: first north and south, then northeast and southwest, then east and west, then southeast and northwest, repeating.
+The lasers fire from the elemental's current tile.
 The countdown shows the next beam's direction; just before firing, small light marks near the elemental warn of its axis.
 Being caught by a beam costs 25% of your max HP.
 The beams leave lingering light and smoldering cracks along the floor and on the wall they strike; the cracks remain for the attempt, but do not deal additional damage.

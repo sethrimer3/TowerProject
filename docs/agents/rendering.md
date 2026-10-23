@@ -280,3 +280,6 @@ Glowing mushrooms keep their procedural caps and lighting; broken containers use
 **Potion colours.** Every board draws a regular potion red, like the HP bar it fills, and a percent potion blue (or its theme's nearest), like the Overheal bar, by asking `potionShade` (`entities.ts`).
 A percent potion's tile keeps the mark generation and saves use, `color: "red"`; only the drawing reads it as blue.
 The Classic sprites follow it: `potion_flat.png` is red and `potion_percent.png` blue (`tools/generate-area1-tiles.mjs`), and the style kit's `potion-red` and `potion-blue` swap places in `ITEM_KIT` and `paintKitContents`.
+
+Proving Grounds' `elemental-art.ts` turns the elemental's literal body pixels into curved light paths and fading trails during teleport, then crossfades to a translucent cyan ghost until the next volley.
+The trial renderer keeps a frame-based teleport clock independent of turn count, honors Reduce motion, and draws laser flashes from their saved origin even after a later teleport.
