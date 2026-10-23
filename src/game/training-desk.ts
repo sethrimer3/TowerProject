@@ -1,8 +1,8 @@
-import { TRAINING, type TrainingId } from "../config.ts";
+import { TRAINING, trainingDef, type TrainingId } from "../config.ts";
 import { snap } from "../exact.ts";
 import { TRAINING_RESET_GEMS } from "../gems.ts";
 import { batchSpeedup, bulkBuy, type BuyQuantity } from "../buy-quantity.ts";
-import { trainingBulk, trainingDiscount, trainingFull, trainingMaxed, trainingSpeed, trainingOpen } from "../loadout.ts";
+import { trainingBulk, trainingDiscount, trainingFull, trainingMaxed, trainingRowsFull, trainingSpeed, trainingOpen } from "../loadout.ts";
 import { BOOST_FOREVER, permanentBoost, trainingRate } from "../shop/entitlements.ts";
 import { batchWork, claimBoost, doneAt, finishGems, jobInvested, nextTrainerGems, ranksInTraining, trainerBatch, trainingGold, trainingJob, trainingSeconds, workLeft, trainingSlots, type TrainingJob } from "../training-jobs.ts";
 import { affordsGems, type DeskHost } from "./desk.ts";
@@ -53,7 +53,7 @@ export class TrainingDesk {
     if (!trainingOpen(rowOf(id), this.save) || trainingFull(this.save, id)) return false;
     const { count, cost, affordable } = trainingBulk(this.save, id, quantity);
     if (!affordable) return false;
-    this.host.missionDone?.("train", count);
+    this.host.missionDone("train", count);
     const bought = changeLoadout(this.save, () => {
       if (!free) this.save.trainingPaid[id].points += cost;
       this.save.training[id] += count;
@@ -72,17 +72,17 @@ export class TrainingDesk {
    * beyond its new base time goes back as the stat's credit. With no rank
    * left it stops, as `cancel` does. Its speedup stays. */
   private trimJob(id: TrainingId) {
-    const save = this.save, job = trainingJob(save.trainingJobs, id), row = rowOf(id);
+    const save = this.save, job = trainingJob(save.trainingJobs, id), row = rowOf(id), time = trainingDef(id).time;
     const keep = Math.max(0, row.max - save.training[id]);
     if (!job || keep >= job.ranks) return;
     if (keep === 0) return void this.cancel(id);
     const from = save.trainerRanks[id], done = jobInvested(job, this.left(id)) - job.used;
     let dropGold = 0, dropSeconds = 0, allSeconds = 0;
     for (let k = 0; k < job.ranks; k++) {
-      allSeconds += trainingSeconds(from + k);
+      allSeconds += trainingSeconds(from + k, time);
       if (k < keep) continue;
       dropGold += trainingGold(row, from + k, trainingDiscount(save));
-      dropSeconds += trainingSeconds(from + k);
+      dropSeconds += trainingSeconds(from + k, time);
     }
     const back = Math.min(job.gold, dropGold), ms = job.ms - Math.round((job.ms * dropSeconds) / allSeconds);
     save.gold = snap(save.gold + back);
@@ -123,7 +123,7 @@ export class TrainingDesk {
     const { count, gold, ms, speedup, affordable } = this.batch(id, quantity);
     if (!affordable) return false;
     if (this.host.free) {
-      this.host.missionDone?.("train", count);
+      this.host.missionDone("train", count);
       return changeLoadout(save, () => {
         save.training[id] += count;
         save.trainerRanks[id] += count;
@@ -219,12 +219,18 @@ export class TrainingDesk {
     return jobInvested(job, this.left(job.id));
   }
 
-  /** Finishes the rank of `id` in training now, for `finishGems` of the
-   * training time its timer shows (none with Dev free purchases). */
+  /** The Gems that finish the rank of `id` in training now: `finishGems`
+   * of the training time its timer shows, less 1.5% for each row at its
+   * most (none with Dev free purchases). */
+  finishGems(id: TrainingId) {
+    return this.host.free ? 0 : finishGems(this.left(id), trainingRowsFull(this.save));
+  }
+
+  /** Finishes the rank of `id` in training now, for `finishGems`. */
   finish(id: TrainingId) {
     const job = trainingJob(this.save.trainingJobs, id);
     if (!job) return false;
-    const gems = this.host.free ? 0 : finishGems(this.left(id));
+    const gems = this.finishGems(id);
     if (this.save.gems < gems) return false;
     this.save.gems -= gems;
     job.completesAt = Math.min(job.completesAt, this.host.clock());
@@ -322,7 +328,7 @@ export class TrainingDesk {
     paid.gold = snap(paid.gold + job.gold);
     paid.ms += jobInvested(job, 0);
     this.done.push({ id: job.id, level: save.training[job.id] });
-    this.host.missionDone?.("train", job.ranks);
+    this.host.missionDone("train", job.ranks);
   }
 
   /** Whether a Gem reset is open: only from the forest. */

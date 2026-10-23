@@ -1,7 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { TowerClimb } from "../src/tower/climb.ts";
-import { point, type TowerRun } from "../src/entities.ts";
+import { point } from "../src/entities.ts";
+import type { TowerRun } from "../src/runs.ts";
 import { TOWER_SECTION, TOWER_START_X } from "../src/config.ts";
 
 function run(height = 0): TowerRun {

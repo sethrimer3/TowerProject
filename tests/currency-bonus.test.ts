@@ -3,10 +3,10 @@ import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save.ts";
 import { trainingOpen } from "../src/loadout.ts";
-import { TRAINING, cost, type TrainingId, type UpgradeId } from "../src/config.ts";
+import { TRAINING, cost, type TrainingId, type UpgradeId, trainedAmount } from "../src/config.ts";
 import { TREES } from "../src/skill-trees.ts";
 import { RESEARCH, researched, type ResearchId } from "../src/archives.ts";
-import { floorSilver, goldBonus, silverBonus, trainingStep, trainingText, type TrainingView } from "../src/loadout.ts";
+import { trainingStep, trainingText, type TrainingView } from "../src/loadout.ts";
 import { addItem } from "../src/equipment/inventory.ts";
 import { boonEffects } from "../src/shrines.ts";
 import { runTrainingValue } from "../src/run-training.ts";
@@ -14,6 +14,11 @@ import type { RoomWorld } from "../src/tower/room-world.ts";
 import type { World } from "../src/delve/world.ts";
 import type { Tile } from "../src/entities.ts";
 import { random } from "../src/random.ts";
+import { silverFound } from "../src/gold-multipliers.ts";
+import { snap } from "../src/exact.ts";
+
+/** Silver Bonus training's multiplier on all Silver, in percent. */
+const silverBonus = (save: ReturnType<typeof defaults>) => snap(silverFound(save, "tower", save.training.silverBonus) * 100);
 
 /** Wealthy, Loot and Wishing Well (under Spare Change): each opens a
  * Utility Training row and Archives research of the same name. */
@@ -49,19 +54,19 @@ test("Wealthy, Loot and Wishing Well each open their Training row and research",
 
 test("Silver Bonus starts at ×1 and adds 1% a rank, Gold Bonus 3%; Silver / Floor starts at 0 and adds 4", () => {
   const save = defaults();
-  assert.deepEqual([silverBonus(save), goldBonus(save), floorSilver(save)], [100, 100, 0], "nothing without the skills");
+  assert.deepEqual([silverBonus(save), trainedAmount(save, "goldBonus"), trainedAmount(save, "floorSilver")], [100, 100, 0], "nothing without the skills");
   save.training.silverBonus = save.training.goldBonus = save.training.floorSilver = 10;
-  assert.deepEqual([silverBonus(save), goldBonus(save), floorSilver(save)], [100, 100, 0], "ranks count only with the skill");
+  assert.deepEqual([silverBonus(save), trainedAmount(save, "goldBonus"), trainedAmount(save, "floorSilver")], [100, 100, 0], "ranks count only with the skill");
   save.upgrades.wealthy = save.upgrades.loot = save.upgrades.wishingWell = 1;
-  assert.deepEqual([silverBonus(save), goldBonus(save), floorSilver(save)], [110, 130, 40]);
+  assert.deepEqual([silverBonus(save), trainedAmount(save, "goldBonus"), trainedAmount(save, "floorSilver")], [110, 130, 40]);
   const step = trainingStep(save, "silverBonus");
-  assert.deepEqual([step.unit, step.now, step.next, step.worth], ["×", 1.1, 1.11, 1]);
+  assert.deepEqual([step.unit, step.now, step.next, step.worth], ["×", 1.1, 1.11, 0.01]);
   assert.equal(trainingText(step.now, step.unit), "×1.10");
   assert.equal(trainingText(40, ""), "40");
   // Research adds 3% a level (5% for Silver / Floor), simply.
   save.archives.levels.silverBonus = 10;
   save.archives.levels.floorSilver = 10;
-  assert.deepEqual([researched(save.archives, "silverBonus", 100), researched(save.archives, "floorSilver", 100)], [130, 150]);
+  assert.deepEqual([researched(save.archives, "silverBonus"), researched(save.archives, "floorSilver")], [130, 150]);
 });
 
 test("the Training tab's values count research, equipment and Silver Bonus; a run's cards its own ranks and boons too, never a global Gold multiplier", () => {
@@ -70,7 +75,7 @@ test("the Training tab's values count research, equipment and Silver Bonus; a ru
   save.training.silverBonus = save.training.goldBonus = save.training.floorSilver = save.training.floorGold = 10;
   save.training.critChance = 5;
   Object.assign(save.archives.levels, { silverBonus: 10, goldBonus: 10, floorSilver: 10, floorGold: 10, critChance: 3 });
-  const crit = researched(save.archives, "critChancePercent", 100) / 100;
+  const crit = researched(save.archives, "critChancePercent") / 100;
   const step = (id: TrainingId, view?: TrainingView) => [trainingStep(save, id, 1, view).now, trainingStep(save, id, 1, view).next];
   assert.deepEqual(step("silverBonus"), [1.43, 1.443], "×1.10 → ×1.11, times 1.3");
   assert.deepEqual(step("goldBonus"), [1.69, 1.729], "×1.30 → ×1.33, times 1.3");
@@ -136,7 +141,7 @@ test("every item taken off the floor pays Gold, a key or door by its colours, ra
     ["2,0", { kind: "door", door: { type: "keys", keys: ["yellow", "blue", "red"], mode: "all" } }], ["3,0", { kind: "floor" }], ["4,0", { kind: "potion" }]]);
   w.torches = [{ x: 3, y: 0, active: true }, { x: 0, y: 1, active: true }] as RoomWorld["torches"];
   Object.assign(g.run.player.keys, { yellow: 1, blue: 1 });
-  // ×1.3 training and ×1.3 research: a crimson key's 3, a Triune Door's
+  // ×1.3 training and ×1.3 research: a red key's 3, a Triune Door's
   // 1 + 2 + 3, a torch's 1 and a potion's 1.
   const paid = [3, 6, 1, 1].map((base) => base * 1.69);
   let gold = s.gold;

@@ -92,9 +92,18 @@ test("seeded tournament runs match the recorded trace", () => {
 
 test("two players on the same seeds play the same run, whatever their game's own stream", () => {
   for (const league of LEAGUES_TRACED) assert.deepEqual(trace(league, 2), trace(league, 3), league);
-  // Guards the corpus: the Copper run lasts, fights and draws from its own streams.
+  // Guards the corpus: the Copper run lasts and fights.
   const g = entered("copper", 1);
   for (let i = 0; i < TURNS && !g.fallen && !g.handStuck; i++) g.autoTurn();
   assert.ok(g.delveRun.kills > 5, `only ${g.delveRun.kills} kills`);
-  assert.ok(g.delveRun.tournament!.drawn.game + g.delveRun.tournament!.drawn.equipment > 0, "no draws from the run's streams");
+  // Kills draw nothing, and the Delve's Supply Chests are rare, so the
+  // run's own streams are checked on one set beside the hero: its Gold
+  // draws from the run's game stream, its materials from its Equipment
+  // stream.
+  const p = g.run.player, before = { ...g.delveRun.tournament!.drawn };
+  const [dx, dy] = ([[1, 0], [-1, 0], [0, 1], [0, -1]] as const).find(([dx, dy]) => g.world.tile(p.x + dx, p.y + dy).kind === "floor")!;
+  g.run.changes[`${p.x + dx},${p.y + dy}`] = { kind: "treasure", chest: "supply" };
+  assert.ok(g.move(dx, dy));
+  const drawn = g.delveRun.tournament!.drawn;
+  assert.ok(drawn.game > before.game && drawn.equipment > before.equipment, "a chest draws from the run's streams");
 });

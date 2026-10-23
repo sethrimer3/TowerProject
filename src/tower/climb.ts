@@ -1,7 +1,8 @@
-import type { TowerRun } from "../entities.ts";
+import type { TowerRun } from "../runs.ts";
 import { TOWER_SECTION, TOWER_START_X } from "../config.ts";
 import { RoomWorld } from "./room-world.ts";
-import { extraEnemies } from "../more-enemies.ts";
+import { runExtras, runFoeCut } from "../card-trees.ts";
+import { weakened } from "../shrines.ts";
 
 /** A Tower run's climb: the floor it stands on and the stairs up from it.
  *
@@ -13,7 +14,7 @@ export class TowerClimb {
 
   /** The floor the run stands on, as it stands now. */
   board() {
-    return new RoomWorld(this.run.seed, this.run.height, this.run.changes, this.run.percentPotions, this.run.tier, extraEnemies(this.run.badges), this.run.shrine?.applied?.foes);
+    return new RoomWorld(this.run.seed, this.run.height, this.run.changes, this.run.percentPotions, this.run.tier, runExtras(this.run), weakened(this.run.shrine?.applied?.foes, runFoeCut(this.run)), this.run.chestOdds, this.run.doorOdds, this.run.treasureFloor);
   }
 
   /** Climbs the stairs to the next floor's entrance; `sectionStart` when

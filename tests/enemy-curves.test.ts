@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { DEFAULT_CURVE, ENEMY_CURVES, GREATER_BOSS_OVER_BOSS, STEPS_PER_FLOOR, curveAt, enemyStats, type CurveMode, type EnemyProfile } from "../src/enemy-curves.ts";
-import type { EnemyStrength } from "../src/entities.ts";
+import { DEFAULT_CURVE, ENEMY_CURVES, GREATER_BOSS_OVER_BOSS, STEPS_PER_FLOOR, curveAt, enemyStats, type CurveMode } from "../src/enemy-curves.ts";
+import type { EnemyStrength, EnemyProfile } from "../src/entities.ts";
 import { intPow, root } from "../src/exact.ts";
 import { getTowerGateEnemy } from "../src/scaling.ts";
 import { region } from "../src/delve/labyrinth.ts";

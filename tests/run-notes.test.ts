@@ -56,7 +56,7 @@ test("a run's notes count steps, keys, doors and pickups, and undo takes them ba
   const notes = g.run.notes!;
   assert.equal(notes.steps, 5);
   assert.deepEqual(notes.keys, { red: 1 });
-  assert.deepEqual(notes.doors, { "Crimson Door": 1 });
+  assert.deepEqual(notes.doors, { "Red Door": 1 });
   assert.equal(notes.potions, 1);
   assert.equal(notes.attackShards, 1);
   g.undo();
@@ -94,13 +94,13 @@ test("the notes come grouped under headings, and copy as text", () => {
   assert.deepEqual(sections.map((s) => s.title), ["Run", "Exploration", "Combat", "Keys obtained", "Doors opened", "Currency", "Materials", "Other loot"]);
   const rows = Object.fromEntries(sections.flatMap((s) => s.rows));
   assert.equal(rows["Steps taken"], "2");
-  assert.equal(rows["Azure keys"], "1");
+  assert.equal(rows["Blue keys"], "1");
   assert.equal(rows["Whetstone"], "2");
   assert.equal(rows["None"], "—", "no door opened");
   assert.ok("Courage" in rows, "the mode's currency");
   const text = notesText("Descent Notes", sections);
   assert.match(text, /^Descent Notes\n\nRUN\nDelve: 1\n/);
-  assert.match(text, /\nKEYS OBTAINED\nGold keys: 0\nAzure keys: 1\n/);
+  assert.match(text, /\nKEYS OBTAINED\nGold keys: 0\nBlue keys: 1\n/);
   assert.equal(elapsed(3_725_000), "1h 02m 05s");
   assert.equal(elapsed(65_000), "1m 05s");
 });
@@ -121,17 +121,17 @@ test("saved notes and finds come back, and malformed ones are dropped", () => {
   assert.deepEqual(bad.tower.runFinds, { materials: {}, cells: 0, gems: 3, equipment: 0 });
 });
 
-test("the purse notes the Silver found in the run, and a chest's metal bars beside it", () => {
+test("the purse notes the Silver found in the run, and a Supply Chest's materials beside it", () => {
   const g = new Game(defaults());
+  g.save.equipment.unlocked = true;
   g.newRun({ seed: 7 });
   const before = g.snapshot(), purse = new RunPurse(g.save, g.mode, g.run, () => 0);
   const silver = purse.silver(25);
   assert.equal(g.run.notes!.silver, silver);
-  // A roll of 0 always finds metal in the chest.
-  const loot = purse.treasure(3, 3)!;
-  assert.ok(loot.materials.length > 0);
-  for (const m of loot.materials) assert.equal(g.save.tower.runFinds.materials[m.id], m.quantity);
+  const loot = purse.treasure(3, 3, "supply")!;
+  const m = loot.equipment!.materials!;
+  assert.equal(g.save.tower.runFinds.materials[m.id], m.quantity);
   g.restore(before);
   assert.equal(g.run.notes!.silver, 0, "the Silver went with the run");
-  assert.ok(Object.keys(g.save.tower.runFinds.materials).length, "the bars stay found");
+  assert.ok(Object.keys(g.save.tower.runFinds.materials).length, "the materials stay found");
 });

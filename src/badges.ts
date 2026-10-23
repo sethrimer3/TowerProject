@@ -1,5 +1,6 @@
 import { CARD_IDS, deckCards, type CardId } from "./cards.ts";
 import type { UpgradeId } from "./config.ts";
+import type { Save } from "./save-shape.ts";
 import { isRecord, wholeIn } from "./decode.ts";
 import { random } from "./random.ts";
 import { MORE_ENEMIES_CARDS, MORE_ENEMIES_PERCENTS } from "./more-enemies.ts";
@@ -54,11 +55,13 @@ const PERCENTS = [5, 10, 15, 20, 25, 30, 35];
 const KEY_LIMITS = [10, 8, 6, 4, 3, 2, 1];
 const COOLDOWNS = [7, 6, 5, 4, 3, 2, 1];
 const COMBOS = [2, 3, 4, 5, 6, 7, 8];
+/** The Max HP badge's boost by level, in percent of max HP. */
+const HP_BOOSTS = [0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07];
 const every = (n: number) => (n === 1 ? "every floor" : `once every ${n} floors`);
 
 /** Every card badge, in the order the Badges box lists them. */
 export const BADGES = {
-  hp: { name: "Max HP", rarity: "common", kind: "reward", glyph: "♥", color: "#ff6b6b", values: SQUARES, unit: "Max HP", text: (v) => `Raise max HP by ${v} for the rest of the run each time the card activates, with the HP to fill it.` },
+  hp: { name: "Max HP", rarity: "common", kind: "reward", glyph: "♥", color: "#ff6b6b", values: HP_BOOSTS, unit: "% max HP", text: (v) => `Boost max HP by ${v}% each time the card activates. The boosts add up for the rest of the run into one multiplier on max HP, which also multiplies all max HP gained later in the run, and HP rises with it, keeping its share of max HP.` },
   silverTouch: { name: "Silver Touch", rarity: "common", kind: "reward", glyph: "◉", color: "#d6dde6", values: LEVELS, unit: "Silver", text: (v) => `Gain ${v} Silver each time the card activates (Silver bonuses apply).` },
   goldback: { name: "Goldback", rarity: "common", kind: "reward", glyph: "⇥", color: "#f5c542", values: COMBOS, unit: "× Gold", text: (v) => `On the last card in the hand, multiply the next Gold pickup by ${v}× each time it activates, stacking: the combo adds up until a Gold pickup uses it, then starts over.` },
   xp: { name: "XP", rarity: "common", kind: "reward", glyph: "✧", color: "#9be86f", values: SQUARES, unit: "XP", text: (v) => `Gain ${v} XP each time the card activates, rising with the floor like a kill's XP.` },
@@ -67,9 +70,9 @@ export const BADGES = {
   dampen: { name: "Dampen", rarity: "common", kind: "scale", glyph: "▼", color: "#8ab4ff", values: PERCENTS, unit: "%", text: (v) => `When the card activates, its target's effect is ${v}% weaker: a potion heals less, a key or shard gives less, a door takes less of each key, a Heart Door takes ${v}% less HP, and a monster deals ${v}% less damage in all and pays ${v}% less Silver, Gold and XP.` },
   hpPercent: { name: "HP %", rarity: "rare", kind: "reward", glyph: "♥", color: "#ff4fa3", values: LEVELS, unit: "% of max HP", text: (v) => `Regain ${v}% of max HP each time the card activates.` },
   goldTouch: { name: "Gold Touch", rarity: "rare", kind: "reward", glyph: "◉", color: "#ffc93c", values: LEVELS, unit: "Gold", text: (v) => `Gain ${v} Gold each time the card activates (Gold bonuses apply).` },
-  yellowGate: { name: "YK <", rarity: "rare", kind: "gate", glyph: "⚿", color: "#f2d24b", values: KEY_LIMITS, unit: "yellow keys", unlock: "keyLessBadges", text: (v) => `The card acts only while you hold fewer than ${v} yellow keys.` },
+  yellowGate: { name: "GK <", rarity: "rare", kind: "gate", glyph: "⚿", color: "#f2d24b", values: KEY_LIMITS, unit: "gold keys", unlock: "keyLessBadges", text: (v) => `The card acts only while you hold fewer than ${v} gold keys.` },
   blueGate: { name: "BK <", rarity: "rare", kind: "gate", glyph: "⚿", color: "#5aa9ff", values: KEY_LIMITS, unit: "blue keys", unlock: "keyLessBadges", text: (v) => `The card acts only while you hold fewer than ${v} blue keys.` },
-  yellowAtLeast: { name: "YK ≥", rarity: "rare", kind: "gate", sign: "≥", glyph: "⚿", color: "#f2d24b", values: LEVELS, unit: "yellow keys", unlock: "keyAtLeastBadges", text: (v) => `The card acts only while you hold at least ${v} yellow key${v === 1 ? "" : "s"}.` },
+  yellowAtLeast: { name: "GK ≥", rarity: "rare", kind: "gate", sign: "≥", glyph: "⚿", color: "#f2d24b", values: LEVELS, unit: "gold keys", unlock: "keyAtLeastBadges", text: (v) => `The card acts only while you hold at least ${v} gold key${v === 1 ? "" : "s"}.` },
   blueAtLeast: { name: "BK ≥", rarity: "rare", kind: "gate", sign: "≥", glyph: "⚿", color: "#5aa9ff", values: LEVELS, unit: "blue keys", unlock: "keyAtLeastBadges", text: (v) => `The card acts only while you hold at least ${v} blue key${v === 1 ? "" : "s"}.` },
   deprioritize: { name: "Deprioritize", rarity: "rare", kind: "aim", glyph: "?", color: "#ffb347", values: LEVELS, unit: "marks a floor", text: (v) => `Passes over the first ${v} target${v === 1 ? "" : "s"} the card picks on each floor, marking each with a ?, then rests for the floor. Every card's path goes round a ? while it can. When no card can move, the nearest ? becomes ! and the card heads for it.` },
   skip: { name: "Skip", rarity: "rare", kind: "chance", glyph: "↷", color: "#c0f0ff", values: [7, 9, 11, 13, 15, 17, 19], unit: "%", text: (v) => `${v}% chance, when the card activates, that its target vanishes without effect (never a boss on MONSTER). On STAIRS in the Tower, you climb two floors instead of one.` },
@@ -86,6 +89,11 @@ export const BADGE_IDS = Object.keys(BADGES) as BadgeId[];
 export const badgeDef = (id: BadgeId): BadgeDef => BADGES[id];
 /** A gate's sign: "<" unless it says otherwise. */
 export const gateSign = (id: BadgeId) => badgeDef(id).sign ?? "<";
+
+/** What the run's Max HP badge boosts (`maxHpBoost`, in percent, summed)
+ * multiply `stat` by now: 1 for any other stat. Whatever max HP the hero
+ * gains or loses mid-run is multiplied by it, as max HP already was. */
+export const badgeFactor = (run: { maxHpBoost?: number }, stat: string) => (stat === "maxHp" ? 1 + (run.maxHpBoost ?? 0) / 100 : 1);
 
 /** The copies each level past the first takes, levels 2 to 7. The copy that
  * opens level 1 counts toward level 2's. */
@@ -195,7 +203,7 @@ export const fitsCard = (id: BadgeId, card: CardId) => {
 
 /** The pairs of badges that can't share a card, since they wouldn't work
  * together: a key colour's < and ≥ gates, and Effective and Dampen. Other
- * gates check different things (HP <, YK ≥), so they can. */
+ * gates check different things (HP <, GK ≥), so they can. */
 const CONFLICTS: readonly (readonly [BadgeId, BadgeId])[] = [
   ["yellowGate", "yellowAtLeast"], ["blueGate", "blueAtLeast"], ["redGate", "redAtLeast"], ["effective", "dampen"],
 ];
@@ -284,7 +292,7 @@ export const validRunBadges = (v: unknown) =>
  * top level's) and a pick their level has opened; cards holding owned
  * badges, each on one card, among the cards the player owns, at most
  * `slots` on a card and none in conflict. */
-export function decodeBadges(raw: unknown, upgrades: Record<UpgradeId, number>, slots = 1): BadgesSave {
+export function decodeBadges(raw: unknown, upgrades: Record<UpgradeId, number>, slots = 1, goals?: Save["goals"]): BadgesSave {
   const m = defaultBadges();
   if (!isRecord(raw)) return m;
   if (isRecord(raw.owned)) for (const id of BADGE_IDS) {
@@ -293,7 +301,7 @@ export function decodeBadges(raw: unknown, upgrades: Record<UpgradeId, number>, 
     const level = badgeLevel(o.copies);
     m.owned[id] = { copies: o.copies, pick: wholeIn(o.pick, 0, level - 1) ? o.pick : 0 };
   }
-  const owned = deckCards(upgrades);
+  const owned = deckCards(upgrades, goals);
   if (isRecord(raw.cards)) for (const card of owned) {
     const saved: unknown = raw.cards[card], on: BadgeId[] = [];
     for (const id of Array.isArray(saved) ? saved : []) {

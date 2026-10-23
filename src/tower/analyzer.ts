@@ -1,7 +1,7 @@
-import { TOWER_HEIGHT, TOWER_START_X, TOWER_WIDTH, type KeyColor } from "../config.ts";
+import { TOWER_HEIGHT, TOWER_START_X, TOWER_WIDTH } from "../config.ts";
 import { doorCost } from "../doors.ts";
 import { doorKeys } from "../key-schedule.ts";
-import { point, type Tile } from "../entities.ts";
+import { point, type Tile, type KeyColor } from "../entities.ts";
 import type { Embedding } from "./embedder.ts";
 import type { Gate, LaneStep, Reward, StrategicNode } from "./types.ts";
 
@@ -14,7 +14,7 @@ export type FloorAnalysis = {
   depth: number;
   regions: { id: number; purpose: string; pattern: string; route: string; gate: string; contents: string }[];
   doors: Record<string, number>;
-  /** e.g. "yellow via weak enemy": 2, "yellow via blue door": 3 */
+  /** e.g. "gold via weak enemy": 2, "gold via blue door": 3 */
   keys: Record<string, number>;
   /** Forks built, by pattern. */
   forks: Record<string, number>;

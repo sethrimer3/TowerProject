@@ -1,4 +1,6 @@
 import { tileRandom } from "./random.ts";
+import { drawKit, kitImage, spriteRevision } from "./sprite-kit.ts";
+import { environmentPixels, FLOWER_SPRITES, GLOWCAP_SPRITES, MOSS_SPRITES, VINE_SPRITES, WATER_SPRITES, type SpritePixels } from "./sprite-environment.ts";
 import { FLOWER_COLORS, TILE_PX, tileKey, valueNoise, type DecorSource, type Flower, type Plant, type PlantKind, type TileDecor } from "./decor.ts";
 
 /** Bakes a tile's static decor (moss, water, vines, flowers, plants) into a
@@ -28,12 +30,15 @@ const WET_STONE: Rgba = [0, 0, 0, 0.22];
 /** Caches each tile's baked image (null when it has nothing to draw). */
 export class DecorBaker {
   private bakes = new Map<number, HTMLCanvasElement | null>();
+  private styleKey = "";
 
   clear() {
     this.bakes.clear();
   }
 
-  bake(src: DecorSource, x: number, y: number, d: TileDecor) {
+  bake(src: DecorSource, x: number, y: number, d: TileDecor, styled = false) {
+    const styleKey = styled ? `kit:${spriteRevision()}` : "original";
+    if (this.styleKey !== styleKey) { this.clear(); this.styleKey = styleKey; }
     const key = tileKey(x, y);
     if (this.bakes.has(key)) return this.bakes.get(key)!;
     if (typeof document === "undefined") return null;
@@ -42,11 +47,17 @@ export class DecorBaker {
     const ctx = cv.getContext("2d");
     if (!ctx) return null;
     const img = ctx.createImageData(TILE_PX, TILE_PX);
-    if (!paintTile(new TilePixels(img.data, src, x, y), d)) {
+    // Keep the procedural plant until its replacement really is ready.
+    // Image loads change the revision and invalidate both bake caches.
+    const replacements = new Set(styled ? d.plants.filter(p => kitImage(kitPlantId(p))) : []);
+    const flowers = new Set(styled ? d.flowers.filter(f => kitImage(FLOWER_SPRITES[f.color])) : []);
+    if (!paintTile(new TilePixels(img.data, src, x, y, styled), d, replacements, flowers)) {
       this.bakes.set(key, null);
       return null;
     }
     ctx.putImageData(img, 0, 0);
+    for (const f of flowers) paintKitFlower(ctx, f);
+    for (const p of replacements) paintKitPlant(ctx, p);
     if (this.bakes.size > 3000) this.bakes.clear();
     this.bakes.set(key, cv);
     return cv;
@@ -56,7 +67,28 @@ export class DecorBaker {
 /** One tile's RGBA pixels, with the tile's world position for the noise
  * that textures moss and water. */
 class TilePixels {
-  constructor(private px: Uint8ClampedArray, readonly src: DecorSource, private x: number, private y: number) {}
+  private textures = new Map<string, SpritePixels | null>();
+  constructor(private px: Uint8ClampedArray, readonly src: DecorSource, private x: number, private y: number, private styled: boolean) {}
+
+  texture(id: string) {
+    if (!this.styled) return null;
+    if (!this.textures.has(id)) this.textures.set(id, environmentPixels(id));
+    return this.textures.get(id)!;
+  }
+
+  sample(texture: SpritePixels, i: number, j: number, alpha = 1) {
+    const k = ((j % texture.height) * texture.width + i % texture.width) * 4;
+    this.blend(i, j, [texture.data[k], texture.data[k + 1], texture.data[k + 2], texture.data[k + 3] / 255], alpha);
+  }
+
+  /** Plants stay on the native grid and never spill from their planned tile into water. */
+  stamp(texture: SpritePixels, x: number, y: number, water: Uint8Array | null) {
+    for (let j = 0; j < texture.height; j++) for (let i = 0; i < texture.width; i++) {
+      const k = (j * texture.width + i) * 4, a = texture.data[k + 3];
+      if (!a || !inTile(x + i, y + j) || water?.[(y + j) * TILE_PX + x + i] === 1) continue;
+      this.blend(x + i, y + j, [texture.data[k], texture.data[k + 1], texture.data[k + 2], a / 255]);
+    }
+  }
 
   /** Source-over blend of color `c` into pixel (i, j); off-tile pixels are skipped. */
   blend(i: number, j: number, c: Rgba, alpha = 1) {
@@ -86,22 +118,60 @@ class TilePixels {
 const inTile = (i: number, j: number) => i >= 0 && j >= 0 && i < TILE_PX && j < TILE_PX;
 
 /** Paints every static layer; false when nothing was drawn. */
-function paintTile(tp: TilePixels, d: TileDecor) {
+function paintTile(tp: TilePixels, d: TileDecor, replacements: Set<Plant>, flowers: Set<Flower>) {
   const water = d.water ? paintWater(tp, d.water) : false;
   const moss = d.moss ? paintMoss(tp, d.moss) : false;
-  for (const p of d.vines) tp.blend(p.i, p.j, VINE[p.c]);
-  for (const f of d.flowers) paintFlower(tp, f);
-  for (const p of d.plants) PLANTS[p.kind](tp, p);
+  paintVines(tp, d);
+  for (const f of d.flowers) if (!flowers.has(f)) paintFlower(tp, f);
+  for (const p of d.plants) if (!replacements.has(p)) PLANTS[p.kind](tp, p);
   return water || moss || d.vines.length + d.flowers.length + d.plants.length > 0;
+}
+
+/** Twelve native pixels, painted 1:1 on the tile's existing 24-pixel grid. */
+export function paintKitPlant(c: CanvasRenderingContext2D, p: Plant) {
+  if (p.kind !== "web") return drawKit(c, kitPlantId(p), p.i - 6, p.j - 10, 12, 12);
+  c.save();
+  const corner = p.corner ?? 0;
+  c.translate(corner === 1 || corner === 2 ? TILE_PX : 0, corner >= 2 ? TILE_PX : 0);
+  c.rotate(corner * Math.PI / 2);
+  const drawn = drawKit(c, "web", 0, 0, 12, 12);
+  c.restore();
+  return drawn;
+}
+
+const kitPlantId = (p: Plant) => p.kind === "mushrooms" && p.glow ? GLOWCAP_SPRITES[p.variant] : p.kind;
+export const paintKitFlower = (c: CanvasRenderingContext2D, f: Flower) => drawKit(c, FLOWER_SPRITES[f.color], f.i - 4, f.j - 4, 8, 8);
+
+/** Keep the seeded climbing stems; attach small PNG leaves at their existing joints. */
+function paintVines(tp: TilePixels, d: TileDecor) {
+  if (!d.vines.length) return;
+  const leaves = VINE_SPRITES.map(id => tp.texture(id));
+  if (leaves.some(p => !p)) {
+    for (const p of d.vines) tp.blend(p.i, p.j, VINE[p.c]);
+    return;
+  }
+  const joints: { i: number; j: number }[] = [];
+  for (const p of d.vines) {
+    if (p.c < 2) { tp.blend(p.i, p.j, p.c ? [60, 88, 55, 1] : [40, 59, 44, 1]); continue; }
+    if (p.c !== 2 || joints.some(a => (a.i - p.i) ** 2 + (a.j - p.j) ** 2 < 16)) continue;
+    joints.push(p);
+    tp.stamp(leaves[(p.i + p.j) & 1]!, p.i - 4, p.j - 4, d.water);
+  }
 }
 
 // ---------------------------------------------------------------- water
 
 function paintWater(tp: TilePixels, water: Uint8Array) {
+  const textures = WATER_SPRITES.map(id => tp.texture(id));
+  const kit = textures.every(Boolean);
   let drew = false;
   for (let k = 0; k < water.length; k++) {
     const v = water[k], i = k % TILE_PX, j = (k - i) / TILE_PX;
-    if (v === 2) tp.blend(i, j, WET_STONE);
+    if (kit && v) {
+      const shade = waterShade(water, i, j);
+      const at = v === 2 || shade === WATER_BANK ? 3 : shade === WATER_SHORE ? 2 : shade === WATER_MID ? 1 : 0;
+      tp.sample(textures[at]!, i, j, v === 2 ? 0.3 : 1);
+    } else if (v === 2) tp.blend(i, j, WET_STONE);
     else if (v === 1) paintOpenWater(tp, water, i, j);
     if (v) drew = true;
   }
@@ -138,7 +208,9 @@ function paintMoss(tp: TilePixels, moss: Uint8Array) {
   for (let k = 0; k < moss.length; k++) {
     const m = moss[k], lv = m & 3, i = k % TILE_PX, j = (k - i) / TILE_PX;
     if (!lv) continue;
-    if (wall) tp.blend(i, j, WALL_MOSS[lv]);
+    const texture = tp.texture(MOSS_SPRITES[wall ? 2 : m >> 2 ? 1 : 0]);
+    if (texture) tp.sample(texture, i, j, wall ? 0.2 + lv * 0.16 : 0.35 + lv * 0.2);
+    else if (wall) tp.blend(i, j, WALL_MOSS[lv]);
     else paintFloorMoss(tp, i, j, m);
     drew = true;
   }

@@ -32,12 +32,12 @@ The player-facing rules, in full, one topic a page:
 | Page | What it covers |
 |---|---|
 | [First steps](docs/gameplay/first-steps.md) | The opening notes, the tab bar and its dots, the forest and its sign, moving by hand, Pathfinder |
-| [The hand and cards](docs/gameplay/hand-and-cards.md) | The hand and every card, the Deck page, Focus, Refocus, Ignore and Target, Badges |
+| [The hand and cards](docs/gameplay/hand-and-cards.md) | The hand and every card, card levels and trees, card buys, the Deck page, Focus, Refocus, Ignore and Target, Badges |
 | [Upgrades](docs/gameplay/upgrades.md) | The skill trees' tabs, prices and help, Critical |
 | [Gear and Equipment](docs/gameplay/gear-and-equipment.md) | Provisions, the Blacksmith and Equipment |
 | [The Archives](docs/gameplay/archives.md) | Archivists, Rush, Cells and Speed Up, the library, Focus Count |
 | [Skills and stats](docs/gameplay/skills-and-stats.md) | Shroud, potions, Silver and Gold skills, Free Training, Buy Quantity, Revive, Thorns, Parry |
-| [Fights](docs/gameplay/fights.md) | How a fight plays out, Fast and Ranged monsters, the Archer, kill pay, fractions |
+| [Fights](docs/gameplay/fights.md) | How a fight plays out, Fast, Ranged, Flying and Shielded monsters, the Archer, kill pay, fractions |
 | [Floors](docs/gameplay/floors.md) | Bosses and Greater Bosses, doors and keys, the early floors, world wrap |
 | [Training](docs/gameplay/training.md) | Silver, training for the run, XP and levels, the Training tab and trainers |
 | [Proving Grounds](docs/gameplay/proving-grounds.md) | The golden square, Light Elemental trial, beams and controls |
@@ -54,6 +54,9 @@ Three modes share one page: **Tower** (compact 17 × 17 puzzle floors, generated
 Code lives in `src/`, with the Tower generator and its floors in `src/tower/`, the Delve labyrinth and its board in `src/delve/`, Defend in `src/defend/`, the Shop's offers, entitlements and transactions in `src/shop/`, Equipment (its catalogue, balance, inventory, effect slots, drops and Gem pulls) in `src/equipment/`, the Tournament's schedule, leagues, prizes, Tickets and server in `src/tournament/`, Mail (messages the server pushes, with items to claim) in `src/mail/`, the daily and weekly missions (their catalogue, rewards and saved state) in `src/missions/`, Events (fortnightly missions paying Medals toward relics, their schedule and saved state) in `src/events/`, Shrines and their boons (the Tower run's schedule, offers and boon effects) in `src/shrines.ts`, and the pages, HUD and dialogs in `src/ui/`. Design documents are in `docs/`, and the gameplay rules in [docs/gameplay/](docs/gameplay/). Architecture notes, generation invariants, and development commands for contributors (human or AI) are in [AGENTS.md](AGENTS.md), with each area's details in [docs/agents/](docs/agents/).
 
 ## Browser verification
+
+The optional PNG sprite kit shares one palette across the interface, characters, items, cards and terrain; non-default UI and Game themes take precedence in their own areas.
+Its art guidelines and export tools are described in [UI sprites](docs/art/ui-sprites.md).
 
 Start `npm run dev` in another terminal, then run `npm run test:browser`. See [docs/agents/testing.md](docs/agents/testing.md) for browser-channel and screenshot details.
 

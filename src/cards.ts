@@ -1,40 +1,83 @@
-import { point, type Tile } from "./entities.ts";
+import { point, type Tile, type KeyColor } from "./entities.ts";
 import { litTorches, takesSomething, type Position } from "./board.ts";
 import type { Step } from "./pathfinding.ts";
-import { doorCost, doorId, doorRule, drainsHp, woodToll } from "./doors.ts";
+import { doorCost, doorDiscount, doorId, doorKeyScale, keyNeed, drainsHp, isYellowDoor, woodToll, doorRule, type DoorDiscounts, type DoorKind } from "./doors.ts";
 import { impervious } from "./combat.ts";
 import { snap } from "./exact.ts";
-import { UPGRADES, type KeyColor, type TrainingId, type UpgradeId } from "./config.ts";
-import type { DelveRun, EnemyStrength, Mode } from "./entities.ts";
+import { UPGRADES, type TrainingId, type UpgradeId } from "./config.ts";
+import type { DelveRun } from "./runs.ts";
+import type { EnemyStrength, Mode } from "./entities.ts";
+import type { Save } from "./save-shape.ts";
+import { goalUnlocked, type GoalUnlock } from "./goals.ts";
+import { arrowDamage, enemiesWithin } from "./ranged.ts";
+import { FOE_ATTACK, FOE_GOLD, isFoeCard, type FoeCard } from "./foe-cards.ts";
 
-/** Every card a hand can hold: its name and what it moves the hero toward. */
+/** What a card gives, on top of where it moves the hero, for as long as the
+ * run's hand holds it, whichever card leads the hero there. */
+export type CardBonus = {
+  /** Each key of `color` picked up off the floor is worth `percent` more,
+   * and pays `gold` more Pickup Gold (raised by Gold Bonus as its own is). */
+  key?: { color: KeyColor; percent: number; gold: number };
+  /** Each treasure chest opened has a `supply` percent chance of being a
+   * Supply Chest, and an `equipment` percent chance of being an Equipment
+   * Chest (one roll for both, once Equipment is open). */
+  chest?: { supply: number; equipment: number };
+  /** The Archer's arrows strike with `attack` percent more Shot ATK
+   * (multiplying each arrow's ATK) and charge `speed` percent faster
+   * (multiplying Attack Speed). */
+  shot?: { attack: number; speed: number };
+  /** The Archer's arrows strike bosses and Greater Bosses with `attack`
+   * percent more ATK, added to the Shot ATK (multiplying each such arrow's
+   * ATK); fights are untouched. */
+  boss?: { attack: number };
+  /** The hero strikes the enemies an enemy card covers (`FOE_CARDS`) with
+   * `attack` percent more ATK, and each one's kill drops `gold` percent more
+   * Gold, multiplying every other Gold bonus. */
+  foe?: { attack: number; gold: number };
+  /** Each door of `kind` costs `percent` less (`DoorDiscounts`): its keys,
+   * and the HP it drains or breaking it takes, each its own factor beside
+   * Key Efficiency, Heart Door Resilience and a badge's scale. */
+  door?: { kind: DoorKind; percent: number };
+};
+type CardDef = { name: string; text: string; bonus?: CardBonus };
+
+/** What each enemy card but ENEMY gives against the enemies it covers. */
+const FOE = { foe: { attack: FOE_ATTACK, gold: FOE_GOLD } } as const;
+/** The percent less each door card's doors cost. */
+export const DOOR_CARD_DISCOUNT = 5;
+
+/** Every card a hand can hold: its name, what it moves the hero toward,
+ * and any bonus it gives while held (`bonus`). */
 export const CARDS = {
   stairs: { name: "Stairs", text: "Move toward the stairs up (in the Delve, the highest open tile it can reach, above any row reached this run)." },
   heal: { name: "Heal", text: "Move toward the closest healing potion." },
   door: { name: "Door", text: "Move toward the closest door you hold the keys for, or a Wooden Door you can break down." },
-  yellowKey: { name: "Yellow Key", text: "Move toward the closest yellow key." },
-  blueKey: { name: "Blue Key", text: "Move toward the closest blue key." },
+  key: { name: "Key", text: "Move toward the closest key of any colour." },
+  yellowKey: { name: "Gold Key", text: "Move toward the closest gold key.", bonus: { key: { color: "yellow", percent: 5, gold: 1 } } },
+  blueKey: { name: "Blue Key", text: "Move toward the closest blue key.", bonus: { key: { color: "blue", percent: 5, gold: 2 } } },
   monster: { name: "Enemy", text: "Move toward the closest enemy." },
   atkUp: { name: "ATK Up", text: "Move toward the closest ATK pickup." },
   defUp: { name: "DEF Up", text: "Move toward the closest DEF pickup." },
-  keySiphon: { name: "Key Siphon", text: "Trade Max HP training levels for a yellow key, without moving, for the rest of the run. The first use takes 1 level and each use after takes 1 more (2, then 3…). Skipped without enough levels left." },
-  yellowDoor: { name: "Yellow Door", text: "Move toward the closest yellow door, while you hold a yellow key." },
-  heartDoor: { name: "Heart Door", text: "Move toward the closest Heart Door." },
-  weakEnemy: { name: "Weak Enemy", text: "Move toward the closest weak enemy." },
-  baseEnemy: { name: "Base Enemy", text: "Move toward the closest enemy that is neither weak, strong, elite nor a boss." },
-  strongEnemy: { name: "Strong Enemy", text: "Move toward the closest strong enemy." },
-  eliteEnemy: { name: "Elite Enemy", text: "Move toward the closest elite enemy." },
-  bossEnemy: { name: "Boss Enemy", text: "Move toward the closest boss or Greater Boss." },
-  nonBossEnemy: { name: "Non-Boss Enemy", text: "Move toward the closest enemy that is not a boss or Greater Boss." },
-  fastEnemy: { name: "Fast Enemy", text: "Move toward the closest Fast enemy." },
-  chest: { name: "Chest", text: "Move toward the closest closed chest: a treasure chest or an area reward chest." },
+  keySiphon: { name: "GK Siphon", text: "Trade Max HP training levels for a gold key, without moving, for the rest of the run. The first use takes 1 level and each use after takes 1 more (2, then 3…). Skipped without enough levels left." },
+  yellowDoor: { name: "Gold Door", text: "Move toward the closest gold door, while you hold a gold key.", bonus: { door: { kind: "yellow", percent: DOOR_CARD_DISCOUNT } } },
+  heartDoor: { name: "Heart Door", text: "Move toward the closest Heart Door.", bonus: { door: { kind: "heart", percent: DOOR_CARD_DISCOUNT } } },
+  weakEnemy: { name: "Weak Enemy", text: "Move toward the closest weak enemy.", bonus: FOE },
+  baseEnemy: { name: "Base Enemy", text: "Move toward the closest enemy that is neither weak, strong, elite nor a boss.", bonus: FOE },
+  strongEnemy: { name: "Strong Enemy", text: "Move toward the closest strong enemy.", bonus: FOE },
+  eliteEnemy: { name: "Elite Enemy", text: "Move toward the closest elite enemy.", bonus: FOE },
+  bossEnemy: { name: "Boss Enemy", text: "Move toward the closest boss or Greater Boss.", bonus: FOE },
+  nonBossEnemy: { name: "Non-Boss Enemy", text: "Move toward the closest enemy that is not a boss or Greater Boss.", bonus: FOE },
+  fastEnemy: { name: "Fast Enemy", text: "Move toward the closest Fast enemy.", bonus: FOE },
+  chest: { name: "Chest", text: "Move toward the closest closed chest: a treasure chest or an area reward chest.", bonus: { chest: { supply: 1.5, equipment: 0.5 } } },
   blueSiphon: { name: "BK Siphon", text: "Trade DEF training levels for a blue key, without moving, for the rest of the run. The first use takes 1 level and each use after takes 1 more (2, then 3…). Skipped without enough levels left." },
-  blueTrader: { name: "BK Trader", text: "Trade 3 yellow keys for a blue key, without moving. Skipped with fewer than 3 yellow keys." },
-  keyToHp: { name: "YK to HP", text: "Trade a yellow key for 10% of your max HP, without moving. Skipped without a yellow key, or while you are missing less than 10% of your max HP." },
-  redKey: { name: "Red Key", text: "Move toward the closest red key." },
+  blueTrader: { name: "BK Trader", text: "Trade 3 gold keys for a blue key, without moving. Skipped with fewer than 3 gold keys." },
+  keyToHp: { name: "GK to HP", text: "Trade a gold key for 10% of your max HP, without moving. Skipped without a gold key, or while you are missing less than 10% of your max HP." },
+  redKey: { name: "Red Key", text: "Move toward the closest red key.", bonus: { key: { color: "red", percent: 5, gold: 3 } } },
   redSiphon: { name: "RK Siphon", text: "Trade ATK training levels for a red key, without moving, for the rest of the run. The first use takes 1 level and each use after takes 1 more (2, then 3…). Skipped without enough levels left." },
   torch: { name: "Torch", text: "Move toward the closest lit torch, putting it out." },
-  woodenDoor: { name: "Wooden Door", text: "Move toward the closest Wooden Door you hold a key for, or can break down and survive." },
+  woodenDoor: { name: "Wooden Door", text: "Move toward the closest Wooden Door you hold a key for, or can break down and survive.", bonus: { door: { kind: "wood", percent: DOOR_CARD_DISCOUNT } } },
+  flyingEnemy: { name: "Flying Enemy", text: "Move toward the closest Flying enemy your arrows can hurt, stopping once one is within your Attack Range, and wait there while one is.", bonus: { shot: { attack: 5, speed: 5 }, ...FOE } },
+  archer: { name: "Archer", text: "Never moves you. While it is in your hand, you fire arrows at the closest enemy within your Attack Range, and your Archer training can be raised with Silver in the run.", bonus: { boss: { attack: 5 } } },
 } as const;
 export type CardId = keyof typeof CARDS;
 export const CARD_IDS = Object.keys(CARDS) as CardId[];
@@ -47,15 +90,69 @@ export const SIPHONS = {
 } as const satisfies Partial<Record<CardId, { row: TrainingId; color: KeyColor }>>;
 export type SiphonCard = keyof typeof SIPHONS;
 export const isSiphon = (id: CardId): id is SiphonCard => id in SIPHONS;
-/** BK TRADER's price: the yellow keys it trades for one blue key. */
+/** BK TRADER's price: the gold keys it trades for one blue key. */
 export const TRADER_YELLOW_KEYS = 3;
-/** YK TO HP's heal: this percent of max HP for one yellow key. */
+/** GK TO HP's heal: this percent of max HP for one gold key. */
 export const KEY_TO_HP_PERCENT = 10;
 /** What card `id` does, as the player is told: STAIRS says how it climbs
  * in the Delve only once Into the depths is owned. */
 export function cardText(id: CardId, upgrades: Record<UpgradeId, number>): string {
   return id === "stairs" && !upgrades.delve ? "Move toward the stairs up." : CARDS[id].text;
 }
+/** What card `id` gives while held, if anything (`CardBonus`). */
+export const cardBonus = (id: CardId): CardBonus | undefined => (CARDS[id] as CardDef).bonus;
+/** A card bonus's lines as the player reads them, each with its tone: a
+ * Supply Chest's chance light blue, an Equipment Chest's purple, the rarer. */
+export function cardBonusLines(id: CardId): { text: string; tone: "plain" | "supply" | "equipment" }[] {
+  const bonus = cardBonus(id), key = bonus?.key, chest = bonus?.chest, shot = bonus?.shot, boss = bonus?.boss, foe = bonus?.foe, door = bonus?.door;
+  // "Weak Enemy" covers Weak Enemies.
+  const foes = CARDS[id].name.replace(/Enemy$/, "Enemies");
+  return [
+    ...(boss ? [{ text: `+${boss.attack}% Shot ATK for Bosses`, tone: "plain" as const }] : []),
+    ...(shot ? [{ text: `+${shot.attack}% Shot ATK`, tone: "plain" as const }, { text: `+${shot.speed}% Attack Speed`, tone: "plain" as const }] : []),
+    ...(key ? [{ text: `+${key.percent}% ${CARDS[`${key.color}Key`].name}s`, tone: "plain" as const }, { text: `+${key.gold} Gold a key`, tone: "plain" as const }] : []),
+    ...(chest ? [{ text: `${chest.supply}% Supplies`, tone: "supply" as const }, { text: `${chest.equipment}% Equipment`, tone: "equipment" as const }] : []),
+    ...(foe ? [{ text: `+${foe.attack}% ATK vs ${foes}`, tone: "plain" as const }, { text: `+${foe.gold}% Gold from ${foes}`, tone: "plain" as const }] : []),
+    ...(door ? [{ text: `−${door.percent}% ${CARDS[id].name} cost`, tone: "plain" as const }] : []),
+  ];
+}
+/** A card bonus's lines as one line of plain text, for a tooltip ("" for none). */
+export const cardBonusText = (id: CardId) => cardBonusLines(id).map((l) => l.text).join(" · ");
+/** What the cards of `hand` give while held, added up: for each key colour
+ * the percent more each key is worth and the Gold it pays more, a
+ * treasure chest's chances, in percent, of being a Supply or Equipment
+ * Chest, the percent more Shot ATK and Attack Speed the arrows have, the
+ * percent more ATK the arrows strike bosses with, each enemy card's
+ * ATK and Gold percents against the enemies it covers (`foe`, by card), and
+ * the percent less each kind of door costs (`doors`). */
+export function handBonus(hand: readonly CardId[]) {
+  const keys: Partial<Record<KeyColor, { percent: number; gold: number }>> = {};
+  const chest = { supply: 0, equipment: 0 }, shot = { attack: 0, speed: 0 };
+  const foe: Partial<Record<FoeCard, { attack: number; gold: number }>> = {};
+  const doors: DoorDiscounts = {};
+  let boss = 0;
+  for (const id of new Set(hand)) {
+    const bonus = cardBonus(id);
+    if (bonus?.foe && isFoeCard(id)) foe[id] = { ...bonus.foe };
+    if (bonus?.door) doors[bonus.door.kind] = (doors[bonus.door.kind] ?? 0) + bonus.door.percent;
+    if (bonus?.boss) boss += bonus.boss.attack;
+    if (bonus?.shot) {
+      shot.attack += bonus.shot.attack;
+      shot.speed += bonus.shot.speed;
+    }
+    if (bonus?.key) {
+      const k = (keys[bonus.key.color] ??= { percent: 0, gold: 0 });
+      k.percent += bonus.key.percent;
+      k.gold += bonus.key.gold;
+    }
+    if (bonus?.chest) {
+      chest.supply = snap(chest.supply + bonus.chest.supply);
+      chest.equipment = snap(chest.equipment + bonus.chest.equipment);
+    }
+  }
+  return { keys, chest, shot: { ...shot, boss }, foe, doors };
+}
+export type HandBonus = ReturnType<typeof handBonus>;
 
 /** How many cards a hand holds before Larger Hand, and at most, with
  * Larger Hand's slot and every slot bought with Gems. */
@@ -75,12 +172,19 @@ export const handSlots = (save: { upgrades: Record<UpgradeId, number>; handSlots
 export const nextHandSlotGems = (save: { upgrades: Record<UpgradeId, number>; handSlots: number }) =>
   save.upgrades.largerHand ? HAND_SLOT_GEMS[save.handSlots] ?? null : null;
 /** The hand a new profile starts with, in priority order: its whole deck.
- * HEAL, ATK UP, DEF UP and BLUE KEY are earned from the Inspiration tree. */
-export const BASE_HAND: readonly CardId[] = ["stairs", "door", "yellowKey", "monster"];
-/** The cards the player owns, in `CARDS` order: the base hand's, and each
- * card whose upgrade is owned. A hand holds any of them, but always STAIRS. */
-export function deckCards(upgrades: Record<UpgradeId, number>): CardId[] {
+ * HEAL, GOLD KEY, ATK UP, DEF UP and BLUE KEY are earned from the Inspiration tree. */
+export const BASE_HAND: readonly CardId[] = ["stairs", "door", "key", "monster"];
+/** The cards a Goal adds to the deck once claimed (goals.ts). */
+export const GOAL_CARDS: Partial<Record<GoalUnlock, CardId>> = { archerCard: "archer", flyingEnemyCard: "flyingEnemy" };
+/** Whether `hand` makes the hero an Archer: it holds ARCHER, so its arrows
+ * fly and its Archer training rows can be raised in the run. */
+export const shootsWith = (hand: readonly CardId[]) => hand.includes("archer");
+/** The cards the player owns, in `CARDS` order: the base hand's, each card
+ * whose upgrade is owned, and each card whose Goal is claimed (`goals`;
+ * none without). A hand holds any of them, but always STAIRS. */
+export function deckCards(upgrades: Record<UpgradeId, number>, goals?: Pick<Save, "goals">["goals"]): CardId[] {
   const earned = UPGRADES.flatMap((u) => ("card" in u && upgrades[u.id] ? [u.card as CardId] : []));
+  if (goals) for (const [unlock, card] of Object.entries(GOAL_CARDS)) if (goalUnlocked({ goals }, unlock as GoalUnlock)) earned.push(card);
   return CARD_IDS.filter((id) => BASE_HAND.includes(id) || earned.includes(id));
 }
 /** The card an upgrade adds to the deck, if any. */
@@ -179,14 +283,25 @@ export type HandAt = Position & {
    * percent (Key Efficiency research), 1,000 when absent: the door cards
    * want a door the keys held pay for at that cost. */
   keyCost?: number;
+  /** The percent less each kind of door costs, from the door cards held
+   * (`handBonus`): the door cards want a door at that cost too. */
+  doorOff?: DoorDiscounts;
   /** For each card of the hand, whether it is linked to the next (Card
    * Groups, `linkedToNext`): the cards of a group share one priority. */
   links?: readonly boolean[];
+  /** How far the Archer's arrows reach, in hundredths of a tile, and the
+   * board's wrap (its width in the Delve, else 0): FLYING ENEMY plans by
+   * them. Absent while the hero can't shoot, when that card can't act. */
+  shotReach?: { range: number; wrap: number };
 };
 
-/** What each key a door takes costs a card heading for it: Key Efficiency
- * times the card's Effective or Dampen. */
-const keyScale = (at: HandAt, rules?: CardRules) => snap(((rules?.scale ?? 1) * (at.keyCost ?? 1000)) / 1000);
+/** What each key the door `tile` takes costs a card heading for it: Key
+ * Efficiency times the card's Effective or Dampen times the door cards held. */
+const keyScale = (at: HandAt, tile: Tile, rules?: CardRules) =>
+  doorKeyScale(tile, ((rules?.scale ?? 1) * (at.keyCost ?? 1000)) / 1000, at.doorOff);
+/** What the HP breaking the Wooden Door `tile` takes is multiplied by: the
+ * card's Effective or Dampen times WOODEN DOOR's, when held. */
+const tollScale = (at: HandAt, tile: Tile, rules?: CardRules) => snap((rules?.scale ?? 1) * doorDiscount(tile, at.doorOff).toll);
 
 /** Tiles a card's path may cross on the way to its target, taking what
  * lies there: open floor and every item. Walls, doors, monsters and stairs
@@ -220,20 +335,21 @@ const never = () => false;
 
 /** Whether the hero can pay for the whole door run that the door at `r`
  * begins: it and each door of the same kind beside the one before, in
- * turn, each key spent at `scale` of a key and a Wooden Door broken down
+ * turn, each key spent at `keyScale` of a key and a Wooden Door broken down
  * for its toll (`tollScale`) as it goes. A door alone is a run of one. So a
  * card heads for a run only when it can open every door of it, never
  * spending keys on a run it would stop partway through. */
-function paysRun(at: HandAt, r: Reached, scale: number, tollScale = scale): boolean {
+function paysRun(at: HandAt, r: Reached, rules?: CardRules): boolean {
   const id = doorId(r.tile), seen = new Set([point(r.x, r.y)]);
   const player = { ...at.run.player, keys: { ...at.run.player.keys } };
-  const need = scale === 1 ? 1 : snap(scale);
+  // The doors of a run are all one kind, so cost alike.
+  const scale = keyScale(at, r.tile, rules), toll = tollScale(at, r.tile, rules);
   for (let x = r.x, y = r.y, tile = r.tile; ;) {
-    const cost = doorCost(tile, player, scale, tollScale);
+    const cost = doorCost(tile, player, scale, toll);
     if (cost === null) return false;
-    for (const c of cost) player.keys[c] = snap(player.keys[c] - need);
+    for (const c of cost) player.keys[c] = snap(player.keys[c] - keyNeed(scale, c));
     const rule = doorRule(tile);
-    if (rule.type === "wood" && !cost.length && player.hp !== undefined) player.hp = snap(player.hp - woodToll(rule, tollScale));
+    if (rule.type === "wood" && !cost.length && player.hp !== undefined) player.hp = snap(player.hp - woodToll(rule, toll));
     const next = DIRECTIONS.map(([dx, dy]) => at.world.step(x, y, dx, dy))
       .find((p) => p && !seen.has(point(p.x, p.y)) && at.world.tile(p.x, p.y).kind === "door" && doorId(at.world.tile(p.x, p.y)) === id);
     if (!next) return true;
@@ -247,22 +363,19 @@ const WANTS: Record<CardId, (t: Tile, at: HandAt, rules: CardRules | undefined, 
   heal: (t) => t.kind === "potion",
   // A door that opens: the keys held pay for it, a Heart Door, or a Wooden
   // Door the hero can break down and survive.
-  door: (t, at, rules, r) => t.kind === "door" && paysRun(at, r, keyScale(at, rules), rules?.scale ?? 1),
+  door: (t, at, rules, r) => t.kind === "door" && paysRun(at, r, rules),
+  key: (t) => t.kind === "key",
   yellowKey: (t) => t.kind === "key" && t.color === "yellow",
   blueKey: (t) => t.kind === "key" && t.color === "blue",
   monster: fightable(),
   atkUp: (t) => t.kind === "attack",
   defUp: (t) => t.kind === "defense",
   keySiphon: never,
-  // A single yellow door only (a Wooden Door is DOOR's), one the yellow keys
+  // A single gold door only (a Wooden Door is DOOR's), one the gold keys
   // held pay for.
-  yellowDoor: (t, at, rules, r) => {
-    if (t.kind !== "door") return false;
-    const rule = doorRule(t);
-    return rule.type === "keys" && rule.mode === "all" && rule.keys.length === 1 && rule.keys[0] === "yellow" && paysRun(at, r, keyScale(at, rules));
-  },
+  yellowDoor: (t, at, rules, r) => t.kind === "door" && isYellowDoor(t) && paysRun(at, r, rules),
   // A Heart Door, or a keyed door that drains HP too while its keys are held.
-  heartDoor: (t, at, rules, r) => t.kind === "door" && drainsHp(doorRule(t)) && paysRun(at, r, keyScale(at, rules)),
+  heartDoor: (t, at, rules, r) => t.kind === "door" && drainsHp(doorRule(t)) && paysRun(at, r, rules),
   weakEnemy: fightable(["weak"]),
   baseEnemy: fightable(["normal"]),
   strongEnemy: fightable(["strong"]),
@@ -270,6 +383,10 @@ const WANTS: Record<CardId, (t: Tile, at: HandAt, rules: CardRules | undefined, 
   bossEnemy: fightable(["boss", "greaterBoss"]),
   nonBossEnemy: fightable(["weak", "normal", "strong", "elite"]),
   fastEnemy: (t, at) => fightable()(t, at) && !!t.enemy!.fast,
+  // Planned apart (`flyerPlan`): it stops once a Flying enemy is in reach.
+  flyingEnemy: never,
+  // Never moves the hero: it only makes it an Archer while held.
+  archer: never,
   chest: (t) => t.kind === "treasure" || t.kind === "reward",
   blueSiphon: never,
   blueTrader: never,
@@ -278,7 +395,7 @@ const WANTS: Record<CardId, (t: Tile, at: HandAt, rules: CardRules | undefined, 
   redSiphon: never,
   torch: (_t, at, _rules, r) => litTorches(at.world).has(point(r.x, r.y)),
   // A Wooden Door the keys held pay for, or one the hero can break down and survive.
-  woodenDoor: (t, at, rules, r) => t.kind === "door" && doorId(t) === "wood" && paysRun(at, r, keyScale(at, rules), rules?.scale ?? 1),
+  woodenDoor: (t, at, rules, r) => t.kind === "door" && doorId(t) === "wood" && paysRun(at, r, rules),
 };
 
 const NONE: ReadonlySet<string> = new Set();
@@ -307,6 +424,7 @@ export function planHand(at: HandAt, hand: readonly CardId[], mode: Mode, only?:
       return target ? { card, path: pathTo(target) } : null;
     }
     if (IN_PLACE.has(hand[card])) return at.canAct?.(hand[card]) ? { card, path: [] } : null;
+    if (hand[card] === "flyingEnemy") return flyerPlan(at, card, reached);
     const target = targetOf(at, hand[card], mode, rules?.charge ? chargeSearch(at, rules.charge, marked) : reached, reached, rules);
     if (target && rules?.deprioritize) {
       // Passed over and marked: the cards after it go round it too.
@@ -326,6 +444,24 @@ export function planHand(at: HandAt, hand: readonly CardId[], mode: Mode, only?:
     if (best && !at.links?.[card]) return best;
   }
   return best;
+}
+
+/** FLYING ENEMY's plan (card `card` of the hand): while a Flying enemy its
+ * arrows can hurt is within the Archer's reach, a turn waiting where the
+ * hero stands (no path); otherwise the way toward the closest such enemy
+ * the hero can walk under (`reached`, the plain search), cut short at the
+ * first tile from which one is within reach. Null while the hero can't
+ * shoot (`shotReach` absent) or no such enemy is in reach of its walk. */
+function flyerPlan(at: HandAt, card: number, reached: Reached[]): CardPlan | null {
+  const reach = at.shotReach;
+  if (!reach) return null;
+  const p = at.run.player, hurts = (t: Tile) => !!t.flyer && arrowDamage(p, t.flyer) > 0;
+  const inReach = (x: number, y: number) => enemiesWithin(at.world, { x, y }, reach.range, reach.wrap).some((e) => e.tile.enemy.flying && hurts({ kind: "floor", flyer: e.tile.enemy }));
+  if (inReach(p.x, p.y)) return { card, path: [] };
+  const target = reached.find((r) => hurts(r.tile));
+  if (!target) return null;
+  const path = pathTo(target), stop = path.findIndex((s) => inReach(s.x, s.y));
+  return { card, path: stop < 0 ? path : path.slice(0, stop + 1) };
 }
 
 /** Target's path to (x, y): the shortest over crossable tiles, round the
@@ -483,7 +619,7 @@ function search(at: Position, marked: ReadonlySet<string>): Reached[] {
  * (lethal or not) or a door the hero holds the keys for. */
 function chargeable(t: Tile, at: HandAt) {
   if (t.kind === "enemy") return !impervious(at.run.player, t.enemy!);
-  return t.kind === "door" && doorCost(t, at.run.player, keyScale(at)) !== null;
+  return t.kind === "door" && doorCost(t, at.run.player, keyScale(at, t), tollScale(at, t)) !== null;
 }
 
 /** The search as Charge makes it: breadth-first over crossable tiles and
@@ -568,8 +704,8 @@ function blockReason(at: HandAt, e: Omit<Blocker, "why">, hand: readonly CardId[
   const card = hand.find((id) => !IN_PLACE.has(id) && wants(id, r, at, at.cardRules?.(id)));
   if (card) return { why: at.cardRules?.(card)?.closed ? "held" : "passed", card };
   if (e.tile.kind === "door") {
-    if (doorCost(e.tile, player, keyScale(at)) === null) return { why: "keys" };
-    if (!paysRun(at, r, keyScale(at))) return { why: "doorRun" };
+    if (doorCost(e.tile, player, keyScale(at, e.tile), tollScale(at, e.tile)) === null) return { why: "keys" };
+    if (!paysRun(at, r)) return { why: "doorRun" };
   }
   if (e.tile.kind === "enemy" && impervious(player, e.tile.enemy!)) return { why: "impervious" };
   return { why: "noCard" };

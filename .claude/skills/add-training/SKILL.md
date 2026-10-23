@@ -5,15 +5,15 @@ description: Add a new Training row to Tower Delve (a rank the hero buys with tr
 
 # Add a Training row
 
-A Training row is one entry in `TRAINING` (`src/config.ts`) plus every place that row's ranks are priced, shown and read. One row is bought three ways, each with its own price curve, so a request ("add a Crit training") leaves most of them open. The work goes **read → spec → build**, with the user approving the spec before any code changes. Changing an existing row's cap or prices follows the same steps, with the spec listing only what changes.
+A Training row is one entry in `TRAINING` (`src/config.ts`, typed by `TrainingDef`): its value, unit, research and both price curves sit together, and generic code reads them, so a row is added by writing its entry plus the code where its effect acts. One row is bought three ways, each with its own price curve, so a request ("add a Crit training") leaves most of them open. The work goes **read → spec → build**, with the user approving the spec before any code changes. Changing an existing row's cap or prices follows the same steps, with the spec listing only what changes.
 
 ## 1. Read the Training system
 
 Read these as they are now; the numbers here are examples of the conventions, and the files win where they differ.
 
-- `src/config.ts`: `TRAINING` (each row's `id`, `name`, `group`, `stat`/`curve` for a stat row (its rank curve, `TrainingCurve`), `cost`, `max`, `requires`, `description`), `TRAINING_GROUPS`, `TRAINING_PER_LEVEL`, `trained`, `trainingWorth`, the per-rank constants (`FLOOR_GOLD_RANK`, `SILVER_BONUS_RANK` …), `RUN_TRAINING_PRICES` and its named schedules (`vital`, `cheap`, `opened`, `deep`), `schedulePrice`, and `TRAINER_GOLD_CURVES` with its named trainer curves (`gentleTrainers`, `mildTrainers`, `firmTrainers`, `steepTrainers`).
-- `src/training-jobs.ts`: the trainer's Gold (`trainingGold(row, ranks)`: `TRAINING_GOLD_PER_POINT` × `cost` × (ranks + 1) × (1 + ranks / `growth`), rounded up, `growth` from the row's `TRAINER_GOLD_CURVES` entry) and time (`trainingSeconds`, shared: 15 s, 1 min, 5 min, 10 min, then ten minutes more a rank, `TRAINING_STEP_SECONDS`).
-- `src/loadout.ts`: `Stat`/`Loadout` and `loadout()` (stat rows), `trainingStep`, `valueStep`, `percentRow`, `MULTIPLIER_ROWS`, `trainingText`, the value functions (`floorGold`, `potionPercent`, `reviveChance` …), `trainingMaxed`, `trainingBulk`.
+- `src/config.ts`: `TrainingDef` and `TRAINING` (each row's `id`, `name`, `group`, `requires`/`goal`, `cost`, `max`, `breaks`, `description`, its rank `curve` (`TrainingCurve`), a stat row's `stat`, a value row's `base`, `cap`, `scale`, `unit`, `needs` and `off`, its `research`, its Silver schedule `silver` and its trainers' Gold curve `gold`), `TRAINING_GROUPS`, `TRAINING_PER_LEVEL`, `trained`, `trainingWorth`, `amountAt`, `trainedAmount`, the named Silver schedules (`vital`, `cheap`, `opened`, `deep`, and the rows' own), `schedulePrice`, and the named trainer curves (`gentleTrainers`, `mildTrainers`, `firmTrainers`, `steepTrainers`, `critTrainers`).
+- `src/training-jobs.ts`: the trainer's Gold (`trainingGold(row, ranks)`: `TRAINING_GOLD_PER_POINT` × `cost` × (ranks + 1) × (1 + ranks / `growth`), rounded up, `growth` from the row's `gold` curve) and time (`trainingSeconds`, shared: 15 s, 1 min, 5 min, 10 min, then ten minutes more a rank, `TRAINING_STEP_SECONDS`).
+- `src/loadout.ts`: `Stat`/`Loadout` and `loadout()` (stat rows), `trainingStep`, `rowValue` (the tab's and the run cards' value, with its Silver / Floor, Silver Bonus and Free Upgrade branches), `rowWorth`, `rowResearchFactor`, `trainingText` (one format per `unit`), `critRule`, `trainingMaxed`, `trainingBulk`.
 - `src/run-training.ts`: `runTrainingOffer`, `runTrainingValue`, `ranksInRun`, `silverPrice`; `Game.trainingNow` and `Game.trainInRun` in `src/state.ts`.
 - Neighbouring rows in the same group: the defaults below are judged against them.
 - `docs/PROGRESSION_AND_DIFFICULTY.md` (the training paragraph and the run training prices) for what a hero earns and when.
@@ -47,7 +47,7 @@ Below it, list what the build touches (from Build) and ask for approval.
 - **Group:** where the effect belongs: hitting harder → Offense; surviving → Defense; currency, loot and potions-found → Utility.
 - **Cap:** stat rows 6,000; value rows that pay currency 150; Shroud 1,000; a percent that must stop below a ceiling (Find Potion's 20% chance, Revive's 50%) at the rank that reaches it. Every row has a `max`.
 - **Point cost:** 1, like every row so far; raise it only for a rank worth several of a neighbour's.
-- **Silver and trainer Gold are two curves, chosen apart.** Pick each from the row's base cost (its first Silver rank, which follows from how deep a skill opens it), never by copying one into the other: Silver is spent inside one run and resets, Gold is banked between runs. Each row has its own entry in both `RUN_TRAINING_PRICES` and `TRAINER_GOLD_CURVES`, so either can be changed for one row alone.
+- **Silver and trainer Gold are two curves, chosen apart.** Pick each from the row's base cost (its first Silver rank, which follows from how deep a skill opens it), never by copying one into the other: Silver is spent inside one run and resets, Gold is banked between runs. Each row has its own `silver` and `gold`, so either can be changed for one row alone.
 - **Trainer Gold:** by the row's first Silver rank, the dearer the steeper: 3 Silver (`vital`) → `gentleTrainers` (growth 60), 5 (`cheap`) → `mildTrainers` (40), 10 (`opened`) → `firmTrainers` (20), 20 (`deep`) → `steepTrainers` (10). A row at a new base cost gets its own growth placed between its neighbours' (the test in `tests/training-jobs.test.ts` checks a dearer Silver start never has a softer trainer curve).
 - **Trainer time:** the shared `trainingSeconds`, unless the user asks for a row that should be slower than its neighbours.
 - **Silver:** `vital` for Max HP-like rows, `cheap` for rows open from the start, `opened` for rows a skill opens, `deep` for rows a deeper skill opens.
@@ -61,16 +61,17 @@ Work in an isolated worktree, cherry-pick onto `main`, push and clean up, per th
 
 **A stat row** needs nothing more when its stat already exists. A new stat goes into `Stat` and `Loadout` in `loadout.ts`, the hero (`Player`, set in `newRun` and shifted by `changeLoadout`), `shownStat` if it isn't shown whole, and the code where it acts (the shroud in `combat.ts`; anything a step does goes through `resolveStep` in `step-effects.ts`, so previews and planners agree).
 
-**A value row** has no stat, so name it in every branch that turns ranks into a value:
-- `valueStep` in `loadout.ts`: its own branch, or an entry in `MULTIPLIER_ROWS` for a multiplier, or in `percentRow` for a percent. `percentRow` and `runTrainingValue` treat any id they don't name as Potion %, so a missing branch shows Potion %'s value instead of failing.
-- `runTrainingValue` in `run-training.ts`, for the run's training card.
-- A value function in `loadout.ts` taking `{ upgrades, training }`, called where the effect applies with `game.trainingNow` (the hero's ranks plus the run's Silver ranks, `ranksInRun`), never `save.training` alone, so ranks bought in the run count.
+**A value row** has no stat; its entry says what its ranks are worth:
+- `curve` (usually `{ per }`, a flat amount a rank), `base` (its amount at no ranks), `cap` if it must stop below a ceiling, all in whole units of its own (hundredths of a percent, of a tile …), `scale` of them to one shown `unit` (`TrainingUnit`; a new kind of unit adds a case to `trainingText`).
+- Its gate: the amount is `off` (default 0; 100 for a ×1 multiplier) until its `needs` upgrade (default its `requires`) is owned, and its ranks count once `requires` is.
+- `research`, if a research target multiplies it.
+- The Training tab, the run's card and what a rank adds then need nothing more. Read the amount with `trainedAmount(game.trainingNow, id)` where the effect applies (the hero's ranks plus the run's Silver ranks, `ranksInRun`), never `save.training` alone, so ranks bought in the run count.
 
 **Read it when it's used.** Undo and Revive restore copies of the run, so read the value at the moment it applies (as `game.stepRules` does for Potion %), not copied into the run when bought. A value fixed as the run goes inside (Find Potion's `run.percentPotions`) also needs `trainInRun` to update it when a Silver rank is bought mid-run.
 
-**Gold and time curves.** Add the row's trainer curve to `TRAINER_GOLD_CURVES` (a `Record<TrainingId, TrainerCurve>`, so the build fails without one); `trainingGold` reads it, and a new shape of Gold curve widens `TrainerCurve` and `trainingGold` alone. Every row shares `trainingSeconds`; a row with its own time curve makes `trainingMs` take the row, updating its callers (`trainingPrices` in `loadout.ts`; `start`, `continueAfter` and `toNextRank` in `game/training-desk.ts`). A refund returns what the job recorded as paid, so cancel and reset need no change.
+**Gold and time curves.** Give the row its `gold` curve (`TrainingDef` requires one, so the build fails without it); `trainingGold` reads it, and a new shape of Gold curve widens `TrainerCurve` and `trainingGold` alone. Every row shares `trainingSeconds`; a row with its own time curve makes `trainingMs` take the row, updating its callers (`trainingPrices` in `loadout.ts`; `start`, `continueAfter` and `toNextRank` in `game/training-desk.ts`). A refund returns what the job recorded as paid, so cancel and reset need no change.
 
-**Silver.** Add the row's schedule to `RUN_TRAINING_PRICES` (the `Record<TrainingId, …>` type fails the build without one).
+**Silver.** Give the row its `silver` schedule (required by `TrainingDef` too).
 
 **Tests.** Extend `tests/loadout.test.ts` (its value at several ranks; the evenly spread hero still wins at floors 10 and 50 and loses at 75 if it's a combat stat), `tests/run-training.test.ts` (bought with Silver, it counts in the run and stops at `max`) and `tests/training-jobs.test.ts` if it has its own Gold or time curve. Every row is checked to have a positive whole `max`.
 

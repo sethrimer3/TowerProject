@@ -1,16 +1,18 @@
-import { RUN_TRAINING_PRICES, schedulePrice, TRAINING, trainingCap, type TrainingId, type TrainingRow } from "./config.ts";
-import type { Mode, RunCore, Save } from "./entities.ts";
+import { schedulePrice, trainingDef, TRAINING, trainingCap, type TrainingId, type TrainingRow } from "./config.ts";
+import type { Mode } from "./entities.ts";
+import type { RunCore } from "./runs.ts";
+import type { Save } from "./save-shape.ts";
 import { bulkBuy, type BuyQuantity } from "./buy-quantity.ts";
-import { rowValue, trainingOpen } from "./loadout.ts";
+import { rowValue, runTrainingOpen } from "./loadout.ts";
 
 /** Run training: Training ranks bought with Silver inside a run, on top of
  * the hero's own, lasting only for that run (`run.training`, so undo takes
  * a purchase back with the rest of the run). */
 
-/** What the rank after `bought` ranks bought this run costs in Silver: the
- * schedule's base, and for the k-th rank after it `step + k` more than the
+/** What the rank after `bought` ranks bought this run costs in Silver, on
+ * the row's `silver` schedule: its base, and for the k-th rank after it `step + k` more than the
  * one before, `step` rising by `growth` every five, summed here at once. */
-export const silverPrice = (id: TrainingId, bought: number) => schedulePrice(RUN_TRAINING_PRICES[id], bought);
+export const silverPrice = (id: TrainingId, bought: number) => schedulePrice(trainingDef(id).silver, bought);
 
 /** The highest level `row` reaches in a run: its cap with the Limit Breaks
  * owned, as on the Training tab. */
@@ -35,16 +37,16 @@ export function ranksInRun(save: Pick<Save, "training">, run: Pick<RunCore, "tra
  * and is maxed. */
 export type RunTrainingOffer = ReturnType<typeof runTrainingOffer>;
 
-export function runTrainingOffer(save: Pick<Save, "training" | "upgrades" | "goals">, run: Pick<RunCore, "training">, id: TrainingId) {
+export function runTrainingOffer(save: Pick<Save, "training" | "upgrades" | "goals">, run: Pick<RunCore, "training" | "hand">, id: TrainingId) {
   const row = TRAINING.find((t) => t.id === id)!, bought = boughtInRun(run, id);
   const level = save.training[id] + bought, max = runTrainingMax(row, save);
-  return { row, bought, level, max, price: silverPrice(id, bought), open: trainingOpen(row, save), maxed: level >= max };
+  return { row, bought, level, max, price: silverPrice(id, bought), open: runTrainingOpen(row, save, run.hand ?? []), maxed: level >= max };
 }
 
 /** What one press of `id`'s price buys in `run` at Buy Quantity `q`: the
  * ranks (up to its most) and their Silver, and whether `silver` pays for
  * them. */
-export function runTrainingBulk(save: Pick<Save, "training" | "upgrades" | "goals">, run: Pick<RunCore, "training">, id: TrainingId, q: BuyQuantity, silver: number) {
+export function runTrainingBulk(save: Pick<Save, "training" | "upgrades" | "goals">, run: Pick<RunCore, "training" | "hand">, id: TrainingId, q: BuyQuantity, silver: number) {
   const offer = runTrainingOffer(save, run, id);
   return bulkBuy(q, Math.max(0, offer.max - offer.level), (k) => silverPrice(id, offer.bought + k), silver);
 }
@@ -53,6 +55,6 @@ export function runTrainingBulk(save: Pick<Save, "training" | "upgrades" | "goal
  * Training tab's value (`rowValue`) for the run, so its hero's stats, the
  * ranks it bought with Silver and its boons count, as do the equipment
  * worn in `mode` and research. */
-export function runTrainingValue(save: Save, run: Pick<RunCore, "training" | "player">, id: TrainingId, mode: Mode = "tower") {
+export function runTrainingValue(save: Save, run: Pick<RunCore, "training" | "player" | "maxHpBoost">, id: TrainingId, mode: Mode = "tower") {
   return rowValue(save, id, 0, { mode, run });
 }

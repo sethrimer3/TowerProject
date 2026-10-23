@@ -2,8 +2,9 @@ import { decodeTrial } from "./proving-grounds/trial.ts";
 import { TRAINER_GEMS, trainingSlots, type TrainingJob, type TrainingPaid } from "./training-jobs.ts";
 import { count, dropInvalid, finite, fraction, isRecord, wholeIn } from "./decode.ts";
 import { TIERS } from "./tiers.ts";
-import { FIND_POTION_MAX, GOLD_SHOP, OLD_SAVE_KEY, SAVE_KEY, TOWER_WIDTH, TRAINING, UPGRADES, WIDTH, trainingCeiling, type UpgradeId } from "./config.ts";
-import type { AutomoveMemory, DelveRun, ModeSave, Fall, MoveSnapshot, Run, Save, TowerRun } from "./entities.ts";
+import { GOLD_SHOP, OLD_SAVE_KEY, SAVE_KEY, TOWER_WIDTH, TRAINING, UPGRADES, WIDTH, amountAt, trainingCeiling, trainingDef, type UpgradeId } from "./config.ts";
+import type { AutomoveMemory, DelveRun, Fall, MoveSnapshot, Run, TowerRun } from "./runs.ts";
+import type { ModeSave, Save } from "./save-shape.ts";
 import { emptyMaterials, MATERIAL_IDS, type MaterialId } from "./materials.ts";
 import { decodeEquipment, defaultEquipment } from "./equipment/inventory.ts";
 import { decodeDefendSave, defaultDefendSave } from "./defend/progress.ts";
@@ -26,6 +27,10 @@ import { isTournamentRun } from "./tournament/run.ts";
 import { decodeBadges, defaultBadges, validRunBadges } from "./badges.ts";
 import { backfillProfile, decodeProfile, defaultProfile } from "./profile.ts";
 import { decodeFinds, defaultFinds, validNotes } from "./run-notes.ts";
+import { isFoeKey } from "./foe-cards.ts";
+import { decodeCardXp } from "./card-levels.ts";
+import { decodeCardBuys, defaultCardBuys } from "./card-buys.ts";
+import { totalCardLevels, treeNode, decodeCardTrees, pointsSpent } from "./card-trees.ts";
 export function defaults(): Save {
   return {
     version: 3,
@@ -60,11 +65,14 @@ export function defaults(): Save {
     equipment: defaultEquipment(),
     hand: [...BASE_HAND],
     cardLinks: [],
+    cardXp: {},
+    cardTrees: {},
+    cardBuys: defaultCardBuys(),
     handSlots: 0,
     badges: defaultBadges(),
-    tutorials: { deck: false, removeCard: false, addCard: false, upgrades: false, gear: false, onTheJob: false, speed: false, climb: false, enter: false, delve: false, chamber: false },
+    tutorials: { deck: false, removeCard: false, addCard: false, upgrades: false, gear: false, onTheJob: false, speed: false, climb: false, enter: false, delve: false, chamber: false, cardPoints: false },
     treeNotices: { inspiration: false, courage: false },
-    seen: { level: 0, training: 0, archives: 0, cards: [...BASE_HAND] },
+    seen: { level: 0, training: 0, archives: 0, cards: [...BASE_HAND], cardLevels: 0, met: [...BASE_HAND] },
     archives: defaultArchives(),
     defend: defaultDefendSave(),
     entitlements: [],
@@ -88,20 +96,24 @@ const pointMap = (m: any, valid: (v: any) => boolean) =>
   isRecord(m) && Object.entries(m).every(([k, v]) => POINT_KEY.test(k) && valid(v));
 
 // --- Runs ---
-/** The one enemy a run's changes may hold: a Greater Boss called onto the
- * floor (tower/greater-boss.ts). */
-const validGreaterBoss = (e: any) =>
-  isRecord(e) && e.strength === "greaterBoss" && typeof e.name === "string" &&
-  finite(e.hp) && e.hp > 0 && finite(e.attack) && e.attack >= 0 && finite(e.defense) && e.defense >= 0 && finite(e.tier);
-/** An enemy the hero's arrows have wounded (ranged.ts): the generated
- * enemy, kept with its wound. */
 const ENEMY_STRENGTHS = ["weak", "normal", "strong", "elite", "boss", "greaterBoss"];
-const validWounded = (v: any) =>
-  finite(v.wound) && v.wound > 0 && isRecord(v.enemy) && ENEMY_STRENGTHS.includes(v.enemy.strength) && typeof v.enemy.name === "string" &&
-  finite(v.enemy.hp) && v.enemy.hp > 0 && finite(v.enemy.attack) && finite(v.enemy.defense) && finite(v.enemy.tier);
+const validEnemy = (e: any) =>
+  isRecord(e) && ENEMY_STRENGTHS.includes(e.strength) && typeof e.name === "string" &&
+  finite(e.hp) && e.hp > 0 && finite(e.attack) && e.attack >= 0 && finite(e.defense) && e.defense >= 0 && finite(e.tier) &&
+  (e.spawn === undefined || wholeIn(e.spawn, 0, 1e9));
+/** An enemy spawned onto the floor during the run (`Game.spawnEnemy`),
+ * numbered among the run's spawns. TODO: drop the unnumbered Greater Boss
+ * once saves from before spawn numbers are gone. */
+const validSpawned = (e: any) => validEnemy(e) && (e.spawn !== undefined || e.strength === "greaterBoss");
+/** An enemy the hero's arrows have wounded (ranged.ts): the generated or
+ * spawned enemy, kept with its wound. */
+const validWounded = (v: any) => finite(v.wound) && v.wound > 0 && validEnemy(v.enemy);
+/** Open floor, maybe with a Flying enemy over it (flying.ts), generated
+ * or moved there, kept with its wound. */
+const validFloor = (v: any) => v.flyer === undefined ? v.wound === undefined : validEnemy(v.flyer) && (v.wound === undefined || (finite(v.wound) && v.wound > 0));
 const validChange = (v: any) =>
-  v?.kind === "floor" || v?.kind === "wall" ||
-  (v?.kind === "enemy" && (v.wound === undefined ? validGreaterBoss(v.enemy) : validWounded(v))) ||
+  (v?.kind === "floor" && validFloor(v)) || v?.kind === "wall" ||
+  (v?.kind === "enemy" && (v.wound === undefined ? validSpawned(v.enemy) : validWounded(v))) ||
   (v?.kind === "openedChest" && (v.tier === undefined || CHEST_TIERS.includes(v.tier))) ||
   (v?.kind === "reward" && CHEST_TIERS.includes(v.tier));
 const validChanges = (m: any) => pointMap(m, validChange);
@@ -112,18 +124,26 @@ const validOutside = (r: any) =>
 const validCounters = (r: any) =>
   Number.isInteger(r.seed) && finite(r.height) && finite(r.floor) && r.floor <= r.player?.y &&
   finite(r.kills) && finite(r.treasures);
+/** The most HP a hero may hold, as a multiple of its max HP: all of
+ * Overheal's ranks. */
+const OVERHEAL_MOST = amountAt(trainingDef("overheal"), trainingDef("overheal").max) / 1000;
 const validPlayer = (p: any, width: number) =>
   !!p &&
   Number.isInteger(p.x) && p.x >= 0 && p.x < width &&
   Number.isInteger(p.y) && finite(p.y) &&
-  finite(p.hp) && p.hp >= 0 && finite(p.maxHp) && p.hp <= p.maxHp &&
+  finite(p.hp) && p.hp >= 0 && finite(p.maxHp) && p.hp <= p.maxHp * OVERHEAL_MOST &&
   finite(p.attack) && finite(p.defense) && (p.shroud === undefined || (finite(p.shroud) && p.shroud >= 0)) &&
   (p.regen === undefined || (finite(p.regen) && p.regen >= 0)) &&
   (p.lifesteal === undefined || (finite(p.lifesteal) && p.lifesteal >= 0)) &&
   (p.thorns === undefined || (finite(p.thorns) && p.thorns >= 0)) &&
   (p.parry === undefined || (finite(p.parry) && p.parry >= 0 && p.parry <= 100)) &&
+  (p.cardParry === undefined || (finite(p.cardParry) && p.cardParry >= 0 && p.cardParry <= 100)) &&
   (p.bossAttack === undefined || (finite(p.bossAttack) && p.bossAttack >= 0)) &&
   (p.pierce === undefined || (finite(p.pierce) && p.pierce >= 0 && p.pierce <= 100)) &&
+  (p.stealOverheal === undefined || (finite(p.stealOverheal) && p.stealOverheal >= 0)) &&
+  (p.powerStrike === undefined || p.powerStrike === true) &&
+  [p.takedown, p.tangle].every((cuts) => cuts === undefined || (isRecord(cuts) && Object.entries(cuts).every(([k, n]) => (k === "boss" || k === "greaterBoss") && finite(n) && n >= 0))) &&
+  [p.foeAttack, p.foeDefense, p.foeShroud, p.foeCritChance, p.foeCritFactor, p.foeStealOverheal].every((m) => m === undefined || (isRecord(m) && Object.entries(m).every(([id, v]) => isFoeKey(id) && finite(v) && (v as number) >= 0))) &&
   KEY_COLORS.every((k) => finite(p.keys?.[k]));
 /** Checks every run passes, whatever its mode; `width` is the mode's board. */
 const validCore = (r: any, width: number) =>
@@ -151,6 +171,7 @@ const RUN_FIELD_CHECKS = {
   focusUsed: (v: unknown) => wholeIn(v, 0, 99),
   ignoreUsed: (v: unknown) => wholeIn(v, 0, 99),
   targetUsed: (v: unknown) => wholeIn(v, 0, 99),
+  bombsUsed: (v: unknown) => wholeIn(v, 0, 999),
   undosUsed: (v: unknown) => wholeIn(v, 0, 99),
   regain: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, n]) => ["focus", "ignore", "target"].includes(k) && wholeIn(n, 1, 1e6)),
   ignored: (v: any) => isRecord(v) && wholeIn(v.floor, 0, 1e6) && Array.isArray(v.tiles) && v.tiles.every((t: unknown) => typeof t === "string" && POINT_KEY.test(t)),
@@ -160,15 +181,24 @@ const RUN_FIELD_CHECKS = {
   training: validRunTraining,
   cardUses: (v: unknown) => isRecord(v) && Object.entries(v).every(([id, n]) => IN_PLACE.has(id as CardId) && wholeIn(n, 1, 1e6)),
   tier: (v: unknown) => wholeIn(v, 2, TIERS),
-  percentPotions: (v: unknown) => wholeIn(v, 1, FIND_POTION_MAX),
+  // HEAL's tree raises the trained chance, up to every potion.
+  percentPotions: (v: unknown) => wholeIn(v, 1, 10_000),
+  chestOdds: (v: any) => isRecord(v) && Object.keys(v).length === 2 && [v.supply, v.equipment].every((n) => finite(n) && n >= 0 && n <= 100) && v.supply + v.equipment > 0,
+  treasureFloor: (v: unknown) => finite(v) && v > 0 && v <= 100,
+  doorOdds: (v: any) => isRecord(v) && Object.keys(v).length === 2 && [v.skeleton, v.lockPick].every((n) => finite(n) && n >= 0 && n <= 100) && v.skeleton + v.lockPick > 0,
   // The hand is checked first: every card holding a badge must be in it.
   badges: (v: unknown, r: any) => validRunBadges(v) && Object.keys(v as object).every((card) => r.hand?.includes(card)),
+  // The hand is checked first: every card with a tree copied must be in it.
+  cardTrees: (v: unknown, r: any) => isRecord(v) && Object.entries(v).every(([card, nodes]) => !!r.hand?.includes(card) && isRecord(nodes) &&
+    Object.entries(nodes).every(([id, n]) => { const node = treeNode(card as CardId, id); return !!node && wholeIn(n, 1, node.max); })),
   // The hand is checked first: each link joins cards side by side in it.
   links: (v: unknown, r: any) => Array.isArray(v) && v.length > 0 && keptLinks(r.hand ?? [], links(v)).length === v.length,
   badgeFloors: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, n]) => (k === "stairward" || k === "skipOpen") && wholeIn(n, 0, 1e6)),
   skipRolls: (v: unknown) => wholeIn(v, 1, 1e9),
   freeRolls: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, n]) => ["offense", "defense", "utility"].includes(k) && wholeIn(n, 1, 1e9)),
   goldCombo: (v: unknown) => wholeIn(v, 1, 1e9),
+  maxHpBoost: (v: unknown) => finite(v) && v > 0 && v <= 1e9,
+  spawns: (v: unknown) => wholeIn(v, 1, 1e9),
   volleys: (v: any) => isRecord(v) && wholeIn(v.turn, 0, 1e12) && (v.hero === undefined || wholeIn(v.hero, 0, 1e6)) &&
     (v.waited === undefined || wholeIn(v.waited, 1, 1e12)) && (v.rapid === undefined || wholeIn(v.rapid, 1, 1e4)) &&
     (v.foes === undefined || pointMap(v.foes, (n) => wholeIn(n, 0, 1e6))),
@@ -210,7 +240,7 @@ const validSnapshot = (value: any) => !!value && finite(value.best) && finite(va
 function snapshot<R extends Run>(value: any, decodeRun: RunDecoder<R>): MoveSnapshot<R> | null {
   if (!validSnapshot(value)) return null;
   const run = decodeRun(value.run);
-  return run ? { run, best: value.best, xp: Math.floor(value.xp), ...(finite(value.silver) ? { silver: fraction(value.silver, 0) } : {}), ...(value.quiet === true ? { quiet: true as const } : {}) } : null;
+  return run ? { run, best: value.best, xp: Math.floor(value.xp), ...(finite(value.silver) ? { silver: fraction(value.silver, 0) } : {}), ...(isRecord(value.cardXp) ? { cardXp: decodeCardXp(value.cardXp) } : {}), ...(value.quiet === true ? { quiet: true as const } : {}) } : null;
 }
 /** Whether an undo snapshot belongs to `run`: its seed and layout. */
 const sameRun = <R extends Run>(item: MoveSnapshot<R> | null, run: Run): item is MoveSnapshot<R> =>
@@ -242,7 +272,7 @@ function decodeLootedTiles(raw: any): Record<string, true> {
   const lootedTiles: Record<string, true> = {};
   if (isRecord(raw))
     for (const key of Object.keys(raw))
-      if (/^-?\d+:(-?\d+:)?-?\d+,-?\d+$/.test(key)) lootedTiles[key] = true;
+      if (/^-?\d+:(-?\d+:)?-?\d+,-?\d+(:\w+)?$/.test(key)) lootedTiles[key] = true;
   return lootedTiles;
 }
 function decodeMode<R extends Run>(s: any, undoCapacity: number, decodeRun: RunDecoder<R>): DecodedMode<R> {
@@ -310,6 +340,56 @@ function renameRush(s: any) {
   for (const mode of ["tower", "delve"]) {
     const badges = s[mode]?.run?.badges;
     if (isRecord(badges)) for (const list of Object.values(badges)) if (Array.isArray(list)) for (const r of list) if (isRecord(r)) r.id = dash(r.id);
+  }
+}
+/** DOOR's legendary Master Key became Secret Knock (KEY's tree took the
+ * name), and its epic Locksmith Lock Pick (KEY's has its own): their levels
+ * spent and opened, and a run inside's, with the run's door odds, renamed
+ * in the raw save before the trees decode it.
+ * TODO: remove this conversion in a future save version. */
+const DOOR_RENAMES = [["masterKey", "secretKnock"], ["locksmith", "lockPick"]] as const;
+function renameDoorNodes(s: any) {
+  for (const trees of [s.cardTrees, s.cardBuys?.opened, s.tower?.run?.cardTrees, s.delve?.run?.cardTrees]) {
+    const door = isRecord(trees) ? trees.door : undefined;
+    if (isRecord(door)) for (const [old, now] of DOOR_RENAMES) if (old in door && !(now in door)) {
+      door[now] = door[old];
+      delete door[old];
+    }
+  }
+  for (const mode of ["tower", "delve"]) {
+    const odds = s[mode]?.run?.doorOdds;
+    if (isRecord(odds) && "locksmith" in odds && !("lockPick" in odds)) {
+      odds.lockPick = odds.locksmith;
+      delete odds.locksmith;
+    }
+  }
+}
+/** KEY took GOLD KEY's place in the base hand, and GOLD KEY became an
+ * Inspiration skill: a save with no KEY card that hasn't earned GOLD KEY
+ * holds KEY in its place, in the hand, its links and the badges on it (and
+ * a run inside's), renamed in the raw save before it decodes. The skill
+ * earns GOLD KEY back.
+ * TODO: remove this conversion in a future save version. */
+function retireYellowKey(s: any) {
+  if ((isRecord(s.upgrades) && s.upgrades.cardYellowKey) || !Array.isArray(s.hand) || s.hand.includes("key")) return;
+  const card = (id: unknown) => (id === "yellowKey" ? "key" : id);
+  const cards = (list: unknown) => (Array.isArray(list) ? list.map(card) : list);
+  const pairs = (list: unknown) => (Array.isArray(list) ? list.map(cards) : list);
+  /** Moves the badges a map by card holds on GOLD KEY onto KEY. */
+  const badges = (byCard: unknown) => {
+    if (!isRecord(byCard) || !("yellowKey" in byCard) || "key" in byCard) return;
+    byCard.key = byCard.yellowKey;
+    delete byCard.yellowKey;
+  };
+  s.hand = cards(s.hand);
+  s.cardLinks = pairs(s.cardLinks);
+  badges(s.badges?.cards);
+  for (const mode of ["tower", "delve"]) {
+    const run = s[mode]?.run;
+    if (!isRecord(run) || !Array.isArray(run.hand) || run.hand.includes("key")) continue;
+    run.hand = cards(run.hand);
+    run.links = pairs(run.links);
+    badges(run.badges);
   }
 }
 function decodeUpgrades(raw: any, d: Save) {
@@ -446,16 +526,20 @@ function decodeHand(raw: any, owned: CardId[], slots: number): CardId[] {
   const hand = [...new Set(raw.filter((id): id is CardId => owned.includes(id)))].slice(0, slots);
   return validHand(hand) ? hand : [...BASE_HAND];
 }
-/** The dots' dismissals; a save without them has seen the deck it holds. */
+/** The dots' dismissals; a save without them has seen, and met, the deck
+ * it holds and its cards' levels. */
 function decodeSeen(s: any, d: Save): Save["seen"] {
-  const cards = Array.isArray(s?.cards) ? CARD_IDS.filter((id) => s.cards.includes(id)) : deckCards(d.upgrades);
-  return { level: count(s?.level, 0), training: count(s?.training, 0), archives: count(s?.archives, 0), cards };
+  const held = deckCards(d.upgrades, d.goals), known = (raw: unknown) => Array.isArray(raw) ? CARD_IDS.filter((id) => raw.includes(id)) : held;
+  const cardLevels = s?.cardLevels === undefined ? totalCardLevels(d) : count(s.cardLevels, 0);
+  return { level: count(s?.level, 0), training: count(s?.training, 0), archives: count(s?.archives, 0), cards: known(s?.cards), cardLevels, met: known(s?.met) };
 }
 export function decode(raw: string | null): Save {
   const d = defaults();
   try {
     const s = JSON.parse(raw ?? "null") ?? {};
     if (isRecord(s)) renameRush(s);
+    if (isRecord(s)) retireYellowKey(s);
+    if (isRecord(s)) renameDoorNodes(s);
     decodeUpgrades(s.upgrades, d);
     // Undo capacity counts Undo Count research, so the Archives come first.
     d.archives = decodeArchives(s.archives);
@@ -486,10 +570,15 @@ export function decode(raw: string | null): Save {
     d.defend = decodeDefendSave(s.defend);
     // Slots bought with Gems count only with Larger Hand, which opens them.
     if (d.upgrades.largerHand) d.handSlots = count(s.handSlots, 0, HAND_SLOT_GEMS.length);
-    d.hand = decodeHand(s.hand, deckCards(d.upgrades), handSlots(d));
+    d.hand = decodeHand(s.hand, deckCards(d.upgrades, d.goals), handSlots(d));
     d.cardLinks = keptLinks(d.hand, links(s.cardLinks));
-    d.badges = decodeBadges(s.badges, d.upgrades, researched(d.archives, "badgeSlots", 1));
-    for (const k of ["deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob", "speed", "climb", "enter", "delve", "chamber"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
+    d.cardXp = decodeCardXp(s.cardXp);
+    d.cardBuys = decodeCardBuys(s.cardBuys);
+    d.cardTrees = decodeCardTrees(s.cardTrees, d.cardXp, d.cardBuys.opened);
+    d.badges = decodeBadges(s.badges, d.upgrades, researched(d.archives, "badgeSlots"), d.goals);
+    for (const k of ["deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob", "speed", "climb", "enter", "delve", "chamber", "cardPoints"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
+    // A player who has already spent a card point needs no lesson on it.
+    if (CARD_IDS.some((id) => pointsSpent(d.cardTrees, id) > 0)) d.tutorials.cardPoints = true;
     for (const k of ["inspiration", "courage"] as const) d.treeNotices[k] = s.treeNotices?.[k] === true;
     d.seen = decodeSeen(s.seen, d);
     d.profile = decodeProfile(s.profile);

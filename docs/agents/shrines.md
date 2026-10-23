@@ -16,6 +16,7 @@ Unspent = earned − picked (`ShrineDesk.unspent`).
 **Boons** (`BOONS`): standard boons (several copies each) and trade-offs (one copy each).
 A standard boon's total with n copies is `(1 + value × n) × (1 + SBB/100)` for a multiplier, `value × n × (1 + SBB/100)` for an addition, nothing with no copy (`standardTotal`; SBB is Standard Boon Bonus research).
 A trade-off's benefit is scaled by `t = 1 + Improve Trade-off Boons%` (`1 + 0.5t` for ×1.50 ATK, `1 − 0.5t` for −50% enemy HP), its cost never; Fast Enemies Strike Second is `fixed`.
+Copies of one standard boon add, but boons of different types multiply on purpose (an exception to the rule that a kind of source sums its bonuses, AGENTS.md): `boonEffects` multiplies each trade-off's benefit and cost onto the standard boons' totals and each other (5 ATK copies' ×1.75 with ×1.50 ATK make ×2.625; −70% and −60% max HP make ×0.12).
 `boonEffects(picked, owner)` folds them into one `BoonEffects`.
 Spell boons, Bounce Shot, Orbs, Unlock a Random Spell and the ranged enemies' trade-off wait for what they act on.
 
@@ -23,10 +24,11 @@ Spell boons, Bounce Shot, Orbs, Unlock a Random Spell and the ranged enemies' tr
 - Hero stats (ATK, max HP, shroud, Regen, Lifesteal, Parry %) are stored in the run, so `ShrineDesk.sync` rescales them from the factors the run last applied (`run.shrine.applied`) to the factors its boons give now (`rescaleHero`; HP keeps its share of max HP).
   Parry % is the hero's own times its factor (the Lifesteal trade-off's 0.3) plus the Parry % boon's `parryBonus`, up to `PARRY_CAP`.
   It runs on every pick and whenever research completes (`DeskHost.researchDone`, called by `ResearchDesk.settle`).
-  Anything the hero gains or loses mid-run is multiplied by the same factor (`boonFactor`): training and gear shifts (`hero-sync.ts`), run training and siphons, the Max HP badge, and ATK shards (`Game.stepRules.shardAttack`).
+  Anything the hero gains or loses mid-run is multiplied by the same factor (`boonFactor`): every loadout change, run training and siphons (`shiftHero` in `hero-stats.ts`, which also applies the Max HP badge's own multiplier, `badgeFactor`), and ATK shards (`Game.stepRules.shardAttack`).
 - Enemies: `RoomWorld.foes` (from `run.shrine.applied.foes`) passes every tile, changes included (a Greater Boss is summoned into `run.changes`), through `foeTile`: HP and ATK scaled, boss HP on top, a boss striking first (`fast`), and a Fast enemy striking second (`fast` dropped) with ATK ×2.5.
+  `RoomWorld.typicalEnemy`, the HUD's normal enemy, goes through it too (`withBoons`), so the HUD shows the floor's normal enemy as the boons leave it.
   `Game.boonsChanged` sets it on the board and drops the hand's plan.
-- Economy: `RunPurse` (Gold banked, Silver found, kill Silver, Silver / Floor, Interest's rate); the Gold bonus breakdown's Shrine Boons line (`goldBonuses`' `shrine`, `Game.shrineGold`); Free Up Chance (`rollFreeTraining`'s `boonChance`); Max Play Speed (`Game.maxSpeed`, scaled by SBB, so it may be fractional).
+- Economy: `RunPurse` (Gold banked, Silver found, kill Silver, Silver / Floor, Interest's rate); the Gold multipliers' Shrine Boons line (`GoldContext.shrine`, from `Game.goldContext` and `RunPurse`); Free Up Chance (`rollFreeTraining`'s `boonChance`); Max Play Speed (`Game.maxSpeed`, scaled by SBB, so it may be fractional).
 
 **Undo.**
 A pick (and the offer's draws) is copied into every undo snapshot of the run and a fall's (`ShrineDesk.share`), and `sync` rescales each, as Training bought mid-run is: undo takes back steps, never a boon.
@@ -49,8 +51,15 @@ Their tables are hard-coded (no `Math.pow` at load).
 Goals run every ten floors to 100, every 50 to 300, then 400 to 4,500 (`CHECKPOINT_FLOORS`).
 
 **UI.**
-The run's limited-use list holds the Shrine button (`#shrine-stat`, lit while boons wait) and the height column a line of floors to the next boon (`#shrine-next`), both from `renderShrine` in `ui/hud.ts`.
-The button opens `ui/shrine-dialog.ts`: the offer (again while more wait), or the boons taken in a scrolling table, and the Auto Pick toggle once researched.
+The Shrine bar (`#shrine-bar`, a button under the XP bar in the portrait, from `renderShrine` in `ui/hud.ts`) fills from the latest boon's floor to the next's (`ShrineDesk.progress`, from `lastBoonFloor` and `nextBoonFloor`), the floors left centred under it (`#shrine-next`, `floorsToNext`), and on its left end a diamond (`#shrine-diamond`) holds the boons waiting, lit while any wait and flashing (`.flash`) as the count rises.
+Its rules in `style.css` are written strong enough to beat the UI themes' blanket button and element rules; its track is an `.xp-track`, so it wears each theme's bar frame, its fill blue-purple (`--shrine-fill`) to stand apart from the XP bar, and each theme recolours the fill, the diamond and the count through the `--shrine-*` custom properties at the end of its stylesheet, keeping the fill apart from its own XP bar's.
+The bar opens `ui/shrine-dialog.ts`: the offer (again while more wait), or the boons taken in a scrolling table, and the Auto Pick toggle once researched.
 The forest's menu has Shrine Boons (`#shrines-button`) once Shrines are researched, opening `ui/shrines-page.ts` (`ShrinesPage`, tab `shrines`): First Boon Choice, bans and the ranking (dragged by its grips or moved by arrows, the rows counted lit, banned ones last in red), each shown once researched; the desk refuses changes inside a run.
+
+With the optional shared PNG kit active, `ui/boon-icon.ts` and `sprite-boons.ts` supply one native 24-pixel subject per boon in offers, taken rows, first-choice preview, bans and ranking.
+The twenty subjects and four control symbols are exported from `assets/game-sprites/shrines.png` by `tools/prepare-shrine-sprites.mjs`; choices and rows reuse the normal, danger and selected kit frames.
+The count diamond and bar fill use matching PNGs, retaining live counts and progress; other UI themes, Sprites off and failed symbol requests keep the text-only interface.
+`tests/shrine-sprites-browser.mjs` checks offers, picks, save/reload, first choice, bans, grip/arrow reordering and theme/fallback behavior in actual phone and desktop layouts without entering Defend.
+`tests/ui-golden.mjs` includes Shrine management, offers and taken-boon fixtures after the existing fixtures to preserve their seeds.
 
 **Tests.** `tests/shrines.test.ts`.

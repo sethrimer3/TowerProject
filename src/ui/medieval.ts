@@ -1,7 +1,9 @@
 import { soundEnabledBy, play } from "../sound.ts";
 import { flourishesEnabledBy, sparks } from "./flourish.ts";
-import type { Save } from "../entities.ts";
+import type { Save } from "../save-shape.ts";
 import { uiLook } from "../theme-collection.ts";
+import { usesUiSprites, usesGameSprites } from "../sprite-style.ts";
+import { loadSpriteFont } from "../sprite-font.ts";
 
 /** Whether the page wears the keep's look: `medieval.css` is scoped to this
  * class on the root, and `reduce-motion` mirrors the Reduce motion setting
@@ -58,6 +60,15 @@ export const ORBIT_CLASS = "orbit";
  * this class on the root. */
 export const PIXEL_CLASS = "pixel";
 
+/** Wobbly brush outlines and flat bright fills on white paper, as drawn in
+ * a simple paint program: `doodle.css` dresses this class on the root. */
+export const DOODLE_CLASS = "doodle";
+
+/** Doodle after dark: wobbly black outlines and muted fills on dusky
+ * violet paper under a scribbled moon: `murk.css` dresses this class on the
+ * root. */
+export const MURK_CLASS = "murk";
+
 /** Dresses the page in the UI theme worn (`uiLook`: Classic wears none of
  * their classes) and mirrors Reduce motion. */
 export function applyUiTheme(save: Pick<Save, "themes" | "settings">) {
@@ -76,7 +87,12 @@ export function applyUiTheme(save: Pick<Save, "themes" | "settings">) {
   root.toggle(SYSTEM_CLASS, look === "system");
   root.toggle(ORBIT_CLASS, look === "orbit");
   root.toggle(PIXEL_CLASS, look === "pixel");
+  root.toggle(DOODLE_CLASS, look === "doodle");
+  root.toggle(MURK_CLASS, look === "murk");
   root.toggle("reduce-motion", save.settings.reduceMotion);
+  root.toggle("ui-sprites", usesUiSprites(save));
+  root.toggle("game-sprites", usesGameSprites(save));
+  if (usesUiSprites(save) || usesGameSprites(save)) void loadSpriteFont();
 }
 
 /** Sounds, sparks and the button knock exist only while the Medieval UI

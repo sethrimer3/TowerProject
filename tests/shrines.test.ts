@@ -4,7 +4,8 @@ import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save.ts";
 import { RESEARCH, missing, type ResearchId } from "../src/archives.ts";
 import { checkpoint } from "../src/goals.ts";
-import type { Save, TowerRun } from "../src/entities.ts";
+import type { Save } from "../src/save-shape.ts";
+import type { TowerRun } from "../src/runs.ts";
 import {
   BOONS, BOON_IDS, appliedOf, autoChoice, boonEffects, rescaleHero, boonsEarned, floorsFor, foeTile, nextBoonFloor, rollOffer, standardTotal, type BoonId,
 } from "../src/shrines.ts";
@@ -213,6 +214,17 @@ test("a run picks an offered boon: the hero's stats change, and undo keeps the b
   assert.ok(g.undo());
   assert.deepEqual((g.run as TowerRun).shrine!.picked, [id]);
   assert.equal(g.run.player.attack, Math.round(attack * e.attack * 1e6) / 1e6);
+});
+
+test("the Shrine bar fills from the latest boon's floor to the next's", () => {
+  // Boons on floors 200, 400 and 600: on floor 550, 150 of 200 floors climbed.
+  const g = climbing(550);
+  assert.equal(g.shrine.unspent, 2);
+  assert.equal(g.shrine.floorsToNext, 50);
+  assert.equal(g.shrine.progress, 0.75);
+  // Before the first boon it fills from floor 0; on a boon's floor it starts over.
+  assert.equal(climbing(50).shrine.progress, 0.25);
+  assert.equal(climbing(400).shrine.progress, 0);
 });
 
 test("a boon changing enemies reaches the board at once", () => {

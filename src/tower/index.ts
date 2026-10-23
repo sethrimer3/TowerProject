@@ -1,6 +1,5 @@
 import { TOWER_SECTION, TOWER_START_X, UNGUARDED_LOOT_CHANCE } from "../config.ts";
-import type { KeyColor } from "../config.ts";
-import { point, type Tile } from "../entities.ts";
+import { point, type Tile, type KeyColor } from "../entities.ts";
 import { random } from "../random.ts";
 import { reachable } from "../board.ts";
 import { getTowerGateEnemy } from "../scaling.ts";
@@ -8,7 +7,8 @@ import type { XY } from "./grid.ts";
 import { analyzeFloor, formatFloorSummary, type FloorAnalysis } from "./analyzer.ts";
 import { embed, ENTRY, type Embedding } from "./embedder.ts";
 import { placeEnemies } from "./enemy-stage.ts";
-import { GraphBuilder, generateStrategicGraph } from "./strategic-graph.ts";
+import { GraphBuilder } from "./graph-builder.ts";
+import { generateStrategicGraph } from "./strategic-graph.ts";
 import { keyedFloor, openFirstFloor } from "./patterns.ts";
 import type { StrategicGraph } from "./types.ts";
 import { ALL_KEY_COLORS, keepsKey, towerKeyColorsOn, type KeyColors } from "../key-schedule.ts";
@@ -62,7 +62,7 @@ function insideStairs([x, y]: XY): XY {
 
 /** Smallest possible floor: start hall → stairs. Always embeddable. It
  * keeps the first floors' rules: floor 1's stairs stand open, and floors 2
- * to 5 have a yellow door before them and its key in the start hall. */
+ * to 5 have a gold door before them and its key in the start hall. */
 function minimalGraph(depth: number, rng: () => number, tier: number): StrategicGraph {
   const b = new GraphBuilder(depth, rng, towerKeyColorsOn(depth, tier));
   const keyed = keyedFloor(depth);
@@ -112,7 +112,7 @@ export function generateTowerFloor(seed: number, room: number, tier = 1): TowerF
 
 /** Human-readable generation report for one floor (debugging/tuning). */
 /** The rare loot on one unguarded floor tile, or null (most rolls). */
-/** A key of a colour `colors` closes comes as a yellow key; a key the key
+/** A key of a colour `colors` closes comes as a gold key; a key the key
  * supply doesn't keep (`keep`, drawing from `rng`) leaves nothing. */
 export function rollUnguardedLoot(rng: () => number, colors: KeyColors = ALL_KEY_COLORS, keep: (color: KeyColor, rng: () => number) => boolean = () => true): Tile | null {
   if (rng() >= UNGUARDED_LOOT_CHANCE) return null;

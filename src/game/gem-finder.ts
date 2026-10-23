@@ -1,12 +1,13 @@
 import type { Board } from "../board.ts";
 import { VIEWPORT_TILES } from "../config.ts";
-import type { Mode, Run } from "../entities.ts";
+import type { Mode } from "../entities.ts";
+import type { Run } from "../runs.ts";
 import { AD_COOLDOWN_MS, AD_GEMS, collectedGem, gemOn, gemSpot, reachFloor, type GemSpot } from "../gems.ts";
 import { MODES } from "../modes.ts";
 import { canClaimGoldBoost, claimGoldBoost, goldBoostLeft, GOLD_BOOST_FACTOR, GOLD_BOOST_MS, noteGoldBoost } from "../gold-boost.ts";
 import { random } from "../random.ts";
 import { adsOff } from "../shop/entitlements.ts";
-import type { GainArt } from "../state.ts";
+import type { GainArt } from "../shown.ts";
 import type { DeskHost } from "./desk.ts";
 import { earn } from "../profile.ts";
 
@@ -71,7 +72,7 @@ export class GemFinder {
     earn(save, "gems", 1);
     save[this.host.mode].runFinds.gems++;
     collectedGem(save.gemDrop, this.host.clock());
-    this.host.eventDone?.("floatingGems", 1);
+    this.host.eventDone("floatingGems", 1);
     this.sparkle = { x: gem.x, y: gem.y, at: performance.now() };
     this.host.gain(gem.x, gem.y, "+1 Gem", { gem: true });
   }
@@ -100,7 +101,7 @@ export class GemFinder {
     save.gems += AD_GEMS;
     earn(save, "gems", AD_GEMS);
     save.gemDrop.adReadyAt = this.host.clock() + AD_COOLDOWN_MS;
-    this.host.eventDone?.("adGems", 1);
+    this.host.eventDone("adGems", 1);
     this.host.message = `+${AD_GEMS} Gems`;
     return true;
   }

@@ -1,13 +1,20 @@
 import { region, depthAt, areasBetween, floorFor, ownerAt, type Region } from "./labyrinth.ts";
 import { CHUNK, WIDTH, START_X } from "../config.ts";
-import { point, type DelveRun, type Tile, type Torch } from "../entities.ts";
-import { withPotions, type Board } from "../board.ts";
+import { point, type Enemy, type EnemyStrength, type Point, type Tile, type Torch } from "../entities.ts";
+import type { DelveRun } from "../runs.ts";
+import { withChest, withPotions, withTreasureFloors, type Board } from "../board.ts";
 import { breakTorch, placeTorches, torchesLeft } from "../torches.ts";
-import { tierCells } from "../tiers.ts";
+import { tierCells, tierTile } from "../tiers.ts";
 import { fastCells } from "../fast-enemies.ts";
 import { rangedCells, wounded, woundMore } from "../ranged.ts";
-import { tournamentCells } from "../tournament/run.ts";
+import { flyingCells } from "../flying.ts";
+import { tournamentStatFactor, tournamentTile } from "../tournament/run.ts";
 import { addEnemies, extraGround, extrasKey, extrasSeed, hasExtras, type ExtraEnemies } from "../more-enemies.ts";
+import { guardedTile, holdsShield, placeShield, walkDistances, type Shield } from "../shielded.ts";
+import { enemyStats, woodDurability } from "../enemy-curves.ts";
+import { withRunDoors } from "../doors.ts";
+import { foeTile, type FoeRule } from "../shrines.ts";
+import { DELVE_ENEMY_NAMES, enemyTier } from "../scaling.ts";
 
 // v8 turns some pocket throats into forks: two parallel lanes of costs.
 // v9 adds yellow-or-blue and blue-or-red door forks.
@@ -32,7 +39,10 @@ import { addEnemies, extraGround, extrasKey, extrasSeed, hasExtras, type ExtraEn
 // v25 adds the enemy stage: each equivalent floor's enemy count and
 // strength shares from the enemy schedule.
 // v26 deals every enemy a profile by the enemy schedule.
-export const LAYOUT_VERSION = 26;
+// v27 gives a share of the fourth delve's equivalent floors and up a
+// Shielded enemy, and adds standard enemies in front of one alone in its bubble.
+// v28 puts a corridor guard's reward in a nook beside it.
+export const LAYOUT_VERSION = 28;
 
 /** The one 20-row chunk `index` of tier `tier`'s labyrinth, as generated. */
 export function generate(seed: number, index: number, tier = 1): Map<string, Tile> {
@@ -114,12 +124,59 @@ export function delveExtras(seed: number, area: number, tier: number, extras: Ex
   return placed;
 }
 
+const shieldCache = new Map<string, { placed: Map<string, Tile>; shields: Shield[] }>();
+/** Area `area`'s Shielded enemies and their extras (shielded.ts), by tile,
+ * with More Enemies' extras standing: each of its ten equivalent floors
+ * rolls for its own, the enemy deepest on it (then farthest walked) being
+ * the one nearest the way up, and extras standing on tiles walked to sooner
+ * from the area's shallowest tile. No extra stands round the way in, near
+ * the milestone gate and its boss, or on a torch. */
+export function delveShields(seed: number, area: number, tier: number, extras?: ExtraEnemies) {
+  if (tier < 4) return { placed: new Map<string, Tile>(), shields: [] };
+  const key = `${seed}:${area}:${tier}:${hasExtras(extras) ? extrasKey(extras) : ""}`;
+  const known = shieldCache.get(key);
+  if (known) return known;
+  const r = region(seed, area, tier), base = area * 100, cells = new Map(r.cells);
+  if (hasExtras(extras)) for (const [k, t] of delveExtras(seed, area, tier, extras)) cells.set(k, t);
+  const tiles = [...cells.keys()].map((k) => { const [x, y] = k.split(",").map(Number); return { x: x!, y: y!, depth: r.metadata.get(k)?.depth ?? base }; })
+    .sort((a, b) => a.y - b.y || a.x - b.x);
+  const open = tiles.filter((p) => cells.get(point(p.x, p.y))!.kind !== "wall");
+  const root = open.reduce<(typeof open)[number] | undefined>((best, p) => (!best || p.depth < best.depth ? p : best), undefined);
+  const placed = new Map<string, Tile>(), shields: Shield[] = [];
+  if (root) {
+    const boss = { x: r.gate.x, y: r.gate.y - 2 };
+    const avoid = new Set<string>();
+    for (const c of [r.gate, boss]) for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) avoid.add(point(c.x + dx, c.y + dy));
+    for (const [dx, dy] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]]) avoid.add(point(root.x + dx!, root.y + dy!));
+    for (const t of areaTorches(seed, area, tier)) avoid.add(point(t.x, t.y));
+    const walked = walkDistances(cells, WIDTH, [root], true);
+    const depth = (p: Point) => r.metadata.get(point(p.x, p.y))?.depth ?? base;
+    const toEntrance = (p: Point) => walked.get(point(p.x, p.y)) ?? Infinity;
+    for (let f = 0; f < 10; f++) {
+      const band = tiles.filter((p) => p.depth >= base + f * 10 && p.depth < base + f * 10 + 10);
+      const shield = placeShield({
+        cells, width: WIDTH, wraps: true, band, avoid, seed, tier, floor: area * 10 + f + 1, toEntrance,
+        toExit: (p) => (walked.has(point(p.x, p.y)) ? -(depth(p) * 100_000 + toEntrance(p)) : Infinity),
+        normal: (at) => {
+          const d = depth(at), name = (placed.get(point(at.x, at.y)) ?? cells.get(point(at.x, at.y)))!.enemy!.name;
+          return { name, tier: enemyTier("normal"), strength: "normal", profile: "balanced", ...enemyStats("delve", tier, d, "normal", "balanced") };
+        },
+      }, placed);
+      if (shield) shields.push(shield);
+    }
+  }
+  const out = { placed, shields };
+  shieldCache.set(key, out);
+  if (shieldCache.size > 8) shieldCache.delete(shieldCache.keys().next().value!);
+  return out;
+}
+
 /** A one-way gate only lets the player step up through it. */
 const upward = (dx: number, dy: number) => dx === 0 && dy === 1;
 
 /** What of a run the Delve board keeps: its map edits, the floor below
  * which the labyrinth is sealed, and the milestones crossed. */
-type WorldRun = Pick<DelveRun, "seed" | "changes" | "floor" | "milestone" | "percentPotions" | "tier" | "tournament">;
+type WorldRun = Pick<DelveRun, "seed" | "changes" | "floor" | "milestone" | "percentPotions" | "chestOdds" | "doorOdds" | "treasureFloor" | "tier" | "tournament">;
 
 /** The endless Delve labyrinth of a run, generated chunk by chunk around
  * the player. It reads and writes the run's own changes, floor and
@@ -131,6 +188,9 @@ export class World implements Board {
     private run: WorldRun,
     /** The run's More Enemies badges' extras (more-enemies.ts); none without. */
     private extras?: ExtraEnemies,
+    /** What the run's card trees change about its enemies (ENEMY's Weaken,
+     * shrines.ts), every enemy tile read through it; none without. */
+    private foes?: FoeRule,
   ) {}
   get seed() {
     return this.run.seed;
@@ -147,31 +207,68 @@ export class World implements Board {
   get tier() {
     return this.run.tier ?? 1;
   }
+  /** The Shielded enemies of every area generated so far (shielded.ts), by area. */
+  private areaShields = new Map<number, Shield[]>();
+  private shieldList: Shield[] = [];
   tile(x: number, y: number): Tile {
     if (!this.inside(x, y)) return { kind: "wall" };
-    const index = Math.floor(y / CHUNK);
+    const chunk = this.chunk(Math.floor(y / CHUNK));
+    const k = point(x, y), changed = this.changes[k];
+    const generated = chunk.get(k) ?? { kind: "wall" }, odds = this.run.chestOdds;
+    const t = foeTile(changed ? wounded(withChest(changed, generated, x, y, this.seed, odds)) : withChest(withPotions(generated, x, y, this.seed, this.run.percentPotions ?? 0), generated, x, y, this.seed, odds), this.foes);
+    return this.shieldList.length ? guardedTile(t, x, y, this.shieldList, (s) => this.holds(s), this.width) : t;
+  }
+  /** Whether the Shielded enemy `s` still stands; `loaded`: judged only
+   * in the chunks already built (else false), so drawing never builds one. */
+  private holds(s: Shield, loaded = false) {
+    if (!this.inside(s.x, s.y)) return false;
+    const k = point(s.x, s.y), index = Math.floor(s.y / CHUNK);
+    if (loaded && !this.chunks.has(index)) return false;
+    return holdsShield(this.changes[k] ?? this.chunk(index).get(k));
+  }
+  shields(): readonly Shield[] {
+    return this.shieldList.filter((s) => this.holds(s, true));
+  }
+  /** Chunk `index` as it stands in the run's tier, built once and kept. */
+  private chunk(index: number) {
     let chunk = this.chunks.get(index);
     if (!chunk) {
       // Each enemy rolls Fast by its own equivalent floor.
       const floorAt = (x: number, y: number) => Math.floor(depthAt(this.seed, x, y, ownerAt(this.seed, x, y), this.tier) / 10) + 1;
-      const cells = rangedCells(fastCells(tierCells(this.generated(index), this.tier), "delve", this.tier, this.seed, floorAt), this.tier, this.seed, floorAt);
-      // A tournament run's enemies stand as strong as the next cave's.
-      chunk = this.run.tournament ? tournamentCells(cells, this.run.tournament.league) : cells;
+      // DOOR's tree remakes doors before the tier scales a Wooden Door's durability, as generated ones.
+      const doors = withRunDoors(this.generated(index), this.seed, this.run.doorOdds, (x, y) => woodDurability("delve", this.tier, depthAt(this.seed, x, y, ownerAt(this.seed, x, y), this.tier)));
+      // CHEST's Treasure Floor rolls each equivalent floor once.
+      const lifted = flyingCells(tierCells(withTreasureFloors(doors, this.seed, this.run.treasureFloor ?? 0, floorAt), this.tier), this.tier, this.seed, floorAt);
+      const cells = rangedCells(fastCells(lifted, "delve", this.tier, this.seed, floorAt), this.tier, this.seed, floorAt);
+      chunk = this.run.tournament ? new Map([...cells].map(([k, t]) => [k, this.inLeague(t)])) : cells;
       this.chunks.set(index, chunk);
     }
-    const k = point(x, y), changed = this.changes[k];
-    return changed ? wounded(changed) : withPotions(chunk.get(k) ?? { kind: "wall" }, x, y, this.seed, this.run.percentPotions ?? 0);
+    return chunk;
   }
-  /** Chunk `index` as generated, with More Enemies' extras. */
+  /** `t` as the run's league makes it: in a tournament run, an enemy as
+   * strong as the next cave's. */
+  private inLeague(t: Tile) {
+    const league = this.run.tournament?.league;
+    return league ? tournamentTile(t, tournamentStatFactor(league)) : t;
+  }
+  /** The balanced enemy of `strength` at `depth`: the delve's curve, its
+   * stat factor as the chunks take it, then the run's league. */
+  typicalEnemy(depth: number, strength: EnemyStrength = "normal"): Enemy {
+    const enemy: Enemy = { name: DELVE_ENEMY_NAMES[0]!, tier: enemyTier(strength), strength, profile: "balanced", ...enemyStats("delve", this.tier, depth, strength, "balanced") };
+    return foeTile(this.inLeague(tierTile({ kind: "enemy", enemy }, this.tier)), this.foes).enemy!;
+  }
+  /** Chunk `index` as generated, with More Enemies' extras, then each
+   * area's Shielded enemies and theirs. */
   private generated(index: number) {
     const cells = generate(this.seed, index, this.tier);
-    if (!hasExtras(this.extras)) return cells;
     const min = index * CHUNK, max = min + CHUNK;
-    for (const a of areasBetween(min, max))
-      for (const [k, t] of delveExtras(this.seed, a, this.tier, this.extras)) {
-        const y = Number(k.split(",")[1]);
-        if (y >= min && y < max) cells.set(k, t);
-      }
+    const within = (k: string) => { const y = Number(k.split(",")[1]); return y >= min && y < max; };
+    for (const a of areasBetween(min, max)) {
+      if (hasExtras(this.extras)) for (const [k, t] of delveExtras(this.seed, a, this.tier, this.extras)) if (within(k)) cells.set(k, t);
+      const { placed, shields } = delveShields(this.seed, a, this.tier, this.extras);
+      for (const [k, t] of placed) if (within(k)) cells.set(k, t);
+      if (shields.length && !this.areaShields.has(a)) this.areaShields.set(a, shields), (this.shieldList = [...this.areaShields.values()].flat());
+    }
     return cells;
   }
   /** On the board and at or above the floor. */
@@ -206,11 +303,22 @@ export class World implements Board {
   clear(x: number, y: number) {
     this.changes[point(x, y)] = { kind: "floor" };
   }
+  /** The doors still standing in the area (x, y) stands in, on its equivalent floor. */
+  floorDoors(x: number, y: number) {
+    const area = ownerAt(this.seed, x, y), floorOf = (px: number, py: number) => Math.floor(depthAt(this.seed, px, py, area, this.tier) / 10);
+    const floor = floorOf(x, y), doors: { x: number; y: number }[] = [];
+    for (const k of region(this.seed, area, this.tier).metadata.keys()) {
+      const [px, py] = k.split(",").map(Number) as [number, number];
+      if (floorOf(px, py) === floor && this.tile(px, py).kind === "door") doors.push({ x: px, y: py });
+    }
+    return doors;
+  }
   /** The enemy as generated keeps its wound in the changes. */
   wound(x: number, y: number, damage: number) {
-    if (this.tile(x, y).kind !== "enemy") return;
+    const t = this.tile(x, y);
+    if (t.kind !== "enemy" && !t.flyer) return;
     const k = point(x, y), raw = this.changes[k] ?? this.chunks.get(Math.floor(y / CHUNK))?.get(k);
-    if (raw?.kind === "enemy") this.changes[k] = woundMore(raw, damage);
+    if (raw?.kind === "enemy" || raw?.flyer) this.changes[k] = woundMore(raw, damage);
   }
   private torchAreas = new Map<number, Torch[]>();
   /** The torch list and lit tiles last worked out: the list until the areas

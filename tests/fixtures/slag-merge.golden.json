@@ -1,0 +1,18 @@
+{
+  "swords": {
+    "hash": "05191e4ace309ab611c1e27e33993c1dd4ffa1cc7af13b19f6a1f5faf8b83315",
+    "frames": 270
+  },
+  "rings": {
+    "hash": "5a99904a6dce1f5fd8f4300b4718fb9bd7904853cdeafa9d0625e6e21b58937a",
+    "frames": 270
+  },
+  "swordIntoPlate": {
+    "hash": "81d51fa660a9c8eceb5f30e6dc104068f1d04c438a0043ed9c6d263815ec942e",
+    "frames": 270
+  },
+  "skipped": {
+    "hash": "57f37f49e3f484b767a60a9af39f0b3c6f3d51a0798f617d6fd12095e054705d",
+    "frames": 101
+  }
+}

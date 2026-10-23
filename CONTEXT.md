@@ -51,7 +51,7 @@ The pieces one mode's hero wears; the Tower and the Delve each have their own, d
 _Avoid_: build, set
 
 **Standard piece**:
-A category's plain piece, dropped by bosses on any floor once Equipment is open.
+A category's plain piece, held by Equipment Chests once Equipment is open.
 _Avoid_: common item (Common is a rarity)
 
 **Unique piece**:
@@ -59,7 +59,7 @@ One of a category's three named pieces with a specialised ability, from Gem pull
 _Avoid_: legendary, artifact
 
 **Upgrade material**:
-A category's leveling currency (Whetstone, Iron Rivets …), dropped by enemies and returned by dismantling.
+A category's leveling currency (Whetstone, Iron Rivets …), held by Supply Chests and returned by dismantling.
 _Avoid_: crafting material, monster part
 
 **Merge**:
@@ -68,7 +68,7 @@ _Avoid_: fuse, combine
 
 **Dismantle**:
 Breaking pieces into their upgrade material.
-_Avoid_: salvage (used only for the amount returned, and in **Auto-salvage**: the player's toggle that dismantles Common boss drops as they drop), destroy
+_Avoid_: salvage (used only for the amount returned, and in **Auto-salvage**: the player's toggle that dismantles Common chest pieces as they are found), destroy
 
 **Pity**:
 The count, per category, of Gem pulls since the last Rare; the 100th without one is a Rare.
@@ -119,15 +119,19 @@ Two or three lanes side by side leading into the same place, each costing about 
 _Avoid_: split path, branch (a branch is an optional side room)
 
 **Stairs guard**:
-What stands on the one tile in front of a floor's stairs: an enemy, a yellow door, or nothing (a section's last floor puts its boss there).
+What stands on the one tile in front of a floor's stairs: an enemy, a gold door, or nothing (a section's last floor puts its boss there).
 _Avoid_: stairs gate (the gate is the stairs room's way in)
+
+**Nook**:
+A single tile cut into the wall beside a Delve corridor guard, reached only from the guard's tile, holding the guard's reward, so the way on passes it by and only a card that wants the reward fetches it.
+_Avoid_: alcove, niche, side pocket (a pocket is a dead-end chamber)
 
 **Lane**:
 One way through a fork: one to three tiles of gates walked in order, sometimes with an item between them (a treasure, or a key that pays for the door after it).
 _Avoid_: corridor, path
 
 **Door run**:
-Two or three of the same door in a row in one gate, each paid in turn: blue, red or Heart Doors placed by the door quota, or yellow ones (Wooden or not) as a key sink, which the key supply plans one key for.
+Two or three of the same door in a row in one gate, each paid in turn: blue, red or Heart Doors placed by the door quota, or gold ones (Wooden or not) as a key sink, which the key supply plans one key for.
 _Avoid_: double door, door chain
 
 **Door quota**:
@@ -143,12 +147,16 @@ The HP breaking a Wooden Door down takes: twice the ATK of the floor's normal en
 _Avoid_: door HP, door strength
 
 **Combined door**:
-One door tile taking more than one thing: a key of each of two or three colours (Gold + Azure, Azure + Crimson, Triune), or a coloured door's keys and a Heart Door's drain to 1 HP (an Azure Heart Door). It counts toward the door quota of each colour, and of hearts, it takes.
+One door tile taking more than one thing: a key of each of two or three colours (Gold + Blue, Blue + Red, Triune), or a coloured door's keys and a Heart Door's drain to 1 HP (an Blue Heart Door). It counts toward the door quota of each colour, and of hearts, it takes.
 _Avoid_: double door, multi-lock
 
 **Enemy curve**:
 How strong a normal, balanced enemy is on each floor of a tower or delve: HP and ATK set at a few anchor floors and grown smoothly between them, and DEF a share of ATK. Every enemy is that floor's curve times its strength and profile, so a boss placed on any floor takes that floor's value.
 _Avoid_: power budget, enemy table, zone stats
+
+**Normal enemy**:
+The enemy a floor's or depth's enemy curve makes when it is neither weak, strong, elite nor a boss, and balanced, with every change the run makes to its enemies (the tower's or cave's factor, a tournament's raise, the Shrine boons). The HUD shows it under the floor; a Wooden Door's durability is measured against its ATK before the run's changes.
+_Avoid_: average enemy, typical enemy (Base Enemy is a card, heading for any enemy of normal strength)
 
 **Enemy strength**:
 How hard the floor asked an enemy to be: weak, normal, strong or elite. Each strength multiplies its floor's enemy curve: strong enemies are the floor's own made tougher, elite ones come from the next zone (the Tower's curve ten floors on). The board shows it round the enemy (a dark red rim for normal, the same with one chevron pointing down for weak, bright red with one chevron for strong, bright red inside a gold rim with two chevrons for elite) and the inspect title and fight messages name weak, strong and elite (and a boss or Greater Boss) before the enemy's name.
@@ -159,12 +167,40 @@ An enemy that strikes first in every fight, so it lands a blow even when the her
 _Avoid_: swift, quick, first strike enemy
 
 **Ranged enemy**:
-An enemy that shoots the hero from a distance, walls and doors no obstacle, without beginning a fight: once the hero ends a turn within its reach (five sixths of the hero's Attack Range), then again each time its cooldown (10 turns, shorter further up) is ready. From the third tower and delve up, a share of the non-boss enemies are Ranged (a point under the Fast share), rolled apart from Fast, paying 1 Gold more. Its name starts with "Ranged" and its tile wears an arrow.
+An enemy that shoots the hero from a distance, walls and doors no obstacle, without beginning a fight: the **tick** the hero comes within its reach (five sixths of the hero's Attack Range), then again each time its cooldown (10 turns, shorter further up) is ready. From the third tower and delve up, a share of the non-boss enemies are Ranged (a point under the Fast share), rolled apart from Fast, paying 1 Gold more. Its name starts with "Ranged" and its tile wears an arrow.
 _Avoid_: archer enemy, shooter, sniper
 
+**Flying enemy**:
+An enemy that hovers over open floor: the hero walks under it and can't fight it, only shoot it with the Archer's arrows, and it shoots the hero as a **Ranged enemy** does (and pays as one). From the fifth tower and delve up, a share of the non-boss enemies fly (the Ranged share), never Fast, Ranged or Shielded as well. Its name starts with "Flying" and its tile wears a wing.
+_Avoid_: flyer (in player-facing text), airborne enemy, bat
+
+**Aggroed**:
+Said of an enemy that closes in on the hero, a step along open floor each time it could shoot. A **Flying enemy** an arrow wounds becomes Aggroed.
+_Avoid_: enraged, hunting, chasing
+
+**Shielded enemy**:
+An enemy that casts a **bubble** round itself: while it stands, the hero's strikes and arrows on every enemy within the bubble, itself included, do 60% less after DEF. From the fourth tower and delve up, a share of floors hold one (4% at first, growing with the floor and the tower), the non-boss enemy nearest the way up; alone in its bubble, it may bring standard enemies in front of it. The bubble's radius grows from a tile to three by floor 4,000. It pays 1 Gold more. Its name starts with "Shielded" and its bubble is a glowing green ring.
+_Avoid_: shield enemy, guardian, aura
+
+**Bubble**:
+The circle round a Shielded enemy within which its guard cuts the hero's damage to enemies, measured from tile centre to tile centre.
+_Avoid_: aura, shield radius, field
+
 **Archer**:
-The hero's class once Tower III's floor 10 Goal is claimed: at the end of each turn its arrow is ready, it shoots the closest enemy within its **Attack Range** (3 tiles, more with training) for one strike's damage, wounding it before any fight. **Attack Speed** sets how often (1 shot every 10 turns, more with training). **ATK / Tile** (training, Tower III's floor 50) multiplies an arrow's ATK by more for each tile to its target, and **Charged Shot** (research, floor 60) raises it for each turn a ready arrow waits unfired; **Multishot** (training, floor 70) gives a shot a chance to fire at several enemies in range at once, and **Rapid Fire** (training, floor 80) a chance to make its arrows come four times as fast for a few turns. The class's name, shown under the portrait, is cosmetic before it (Wayfarer, then Pathfinder once Tower II is open).
+The hero's class while the run's hand holds the **Archer card** (Tower III's floor 10 Goal adds it to the deck): the **tick** its arrow is ready, it shoots the closest enemy within its **Attack Range** (3 m, more with training) for one strike's damage, wounding it before any fight. **Attack Speed** sets how often (1 shot every 10 turns, more with training). **ATK / m** (training, Tower III's floor 50) multiplies an arrow's ATK by more for each **meter** to its target, and **Charged Shot** (research, floor 60) raises it for each turn a ready arrow waits unfired; **Multishot** (training, floor 70) gives a shot a chance to fire at several enemies in range at once, and **Rapid Fire** (training, floor 80) a chance to make its arrows come four times as fast for a few turns. Without the card no arrow flies and the Archer's training can't be raised with Silver in a run, though it trains between runs. The class's name, shown under the portrait, is cosmetic otherwise (Wayfarer, then Pathfinder once Tower II is open).
 _Avoid_: ranger, bowman
+
+**Meter**:
+The unit distances are shown in on screen ("m"): one tile across. Attack Range and ATK / m are given in meters, as an arrow flies straight across; a Dash's and End Rush's reach stay in tiles, since they step along the grid.
+_Avoid_: tiles (as a shown unit)
+
+**Volley**:
+A turn's shots inside a run, played out over the turn a **tick** at a time as the hero walks its step: each ready **Ranged enemy** or **Flying enemy** shoots the hero the tick it is within reach, closest first, after the **Archer**'s arrows of that tick; a shot lands the tick it fires, so an enemy an arrow fells shoots no more, and a shot that fells the hero ends the turn. Then each **Aggroed** enemy may step closer.
+_Avoid_: barrage, salvo
+
+**Tick**:
+A hundredth of a turn, the moment within a turn a shot fires: cooldowns charge a tick at a time and start over from the tick their shot fired, and a shot fires the first tick its shooter is ready and its target in reach, partway through the hero's step perhaps.
+_Avoid_: frame (a display frame is the screen's, not the turn's), sub-turn
 
 **Wound**:
 The HP the Archer's arrows have taken off an enemy that still stands; the enemy keeps it, so its fight starts that much shorter.
@@ -222,12 +258,16 @@ How much XP the character has gathered from kills over every run. A kill pays mo
 _Avoid_: rank
 
 **Training point**:
-The currency each level earns (three a level), spent to buy ranks of training at once (a trainer can train them for Gold instead) in the character's stats (max HP, ATK, DEF, and the shroud once the Shroud skill is owned; Lifesteal once the Lifesteal skill is, Thorn Damage once Thorns is, Parry % once Parry is, Crit % and Crit x once Critical is, Attack Range, Attack Speed and ATK / Tile once Tower III's floor 20, 30 and 50 Goals are claimed, Multishot Chance and Multishot Targets once its floor 70 Goal is, Rapid Fire Chance and Rapid Fire Duration once its floor 80 Goal is) and, with Recovery, Find Potion, Revive, Spare Change, Wishing Well, Wealthy, Loot and Free Training, in Potion %, Find Potion, Revive, Gold / Floor, Silver / Floor, Silver Bonus, Gold Bonus and the Free Offense, Defense and Utility Up rows on the Training tab. A stat's ranks add up on its **rank curve**: each rank is worth more than the one before, whatever the character's level.
+The currency each level earns (three a level), spent to buy ranks of training at once (a trainer can train them for Gold instead) in the character's stats (max HP, ATK, DEF, and the shroud once the Shroud skill is owned; Lifesteal once the Lifesteal skill is, Thorn Damage once Thorns is, Parry % once Parry is, Crit % and Crit x once Critical is, Attack Range, Attack Speed and ATK / m once Tower III's floor 20, 30 and 50 Goals are claimed, Multishot Chance and Multishot Targets once its floor 70 Goal is, Rapid Fire Chance and Rapid Fire Duration once its floor 80 Goal is) and, with Recovery, Find Potion, Revive, Spare Change, Wishing Well, Wealthy, Loot, Free Training and Overheal, in Potion %, Find Potion, Revive, Gold / Floor, Silver / Floor, Silver Bonus, Gold Bonus, the Free Offense, Defense and Utility Up rows and, with Overheal, Overheal on the Training tab. A stat's ranks add up on its **rank curve**: each rank is worth more than the one before, whatever the character's level.
 _Avoid_: skill point, stat point
 
 **Trainer**:
 Who trains a rank for Gold, over time, instead of training points, on each stat's own schedule (only ranks trainers finished raise its Gold and time). The Trainers skill hires the first, and each bought with Gems lets one more rank train at the same time.
 _Avoid_: training slot, archivist (who does research)
+
+**Training row**:
+One thing training raises, bought by the rank with training points, a trainer's Gold, or a run's Silver. A **stat row** raises one of the character's stats (max HP, ATK, DEF …); a **value row** raises an amount of its own (a chance, a multiplier, a reach, the Gold a floor pays), from a base, and counts only once the skill it needs is owned.
+_Avoid_: stat (for a value row), upgrade
 
 **Time credit**:
 Training time given back to a stat when its trainer's rank is stopped (by hand, or by buying the rank with training points): that stat's next ranks trainers train start that far along, until it is used up. Each stat keeps its own.
@@ -250,10 +290,14 @@ The hero rising at full HP from a strike that would have felled it, by the Reviv
 _Avoid_: resurrection, second life
 
 **Percent potion**:
-The red, striped potion: it restores a regular potion's HP plus a share of max HP (1% with the Recovery skill, more with Potion % training). With Recovery owned, each potion a run finds may be one, by a chance fixed when the run goes inside (2%, more with Find Potion training, up to 20%); otherwise each is a regular potion.
+The striped potion drawn blue (a regular potion is red): it restores a regular potion's HP plus a share of max HP (1% with the Recovery skill, more with Potion % training). With Recovery owned, each potion a run finds may be one, by a chance fixed when the run goes inside (2%, more with Find Potion training, up to 20%); otherwise each is a regular potion.
+
+**Overheal**:
+HP held above max HP, which the Overheal skill allows: potions, GK TO HP and badge heals may heal up to the **Overheal ceiling**, max HP times the Overheal training row's value (×1 to ×16.5); other heals stop at max HP and never lower HP above it. The HUD shows it as a blue bar over the full red HP bar.
+_Avoid_: overhealth, shield HP
 
 **Lifesteal**:
-The share of the damage each of the hero's strikes deals to an enemy that is restored to the hero as HP (up to max HP), as the strike lands and before the enemy's reply. It starts at 0% and Lifesteal training raises it by 0.1% for the first rank, each later rank adding 0.001% less, to 4.84% at 80 ranks. Fight forecasts and Damage Visual count it.
+The share of the damage each of the hero's strikes deals to an enemy that is restored to the hero as HP (up to max HP, or above it with ENEMY's Lifesteal Overheal and, against their enemies, the enemy cards' trees'), as the strike lands and before the enemy's reply. It starts at 0% and Lifesteal training raises it by 0.1% for the first rank, each later rank adding 0.001% less, to 4.84% at 80 ranks. Fight forecasts and Damage Visual count it.
 
 **Thorns**:
 What each enemy strike the hero lives through costs the enemy: a share of its max HP (1% a Thorn Damage rank, half against a boss or Greater Boss), which DEF doesn't reduce. A fight thorns end is no Instakill.
@@ -271,19 +315,19 @@ _Avoid_: penetration, armor break, sunder
 The damage a hero's shroud blocks in each fight: the enemy's strikes, after DEF, wear it away before any HP is lost, and it is whole again when the next fight starts. The Shroud skill gives the first point; Shroud training adds more.
 _Avoid_: shield (the equipment slot), barrier
 
-**Key Siphon**:
-A card that moves nowhere: its turn trades Max HP training levels, for the rest of the run only, for a yellow key, each use in a run taking one level more than the last (1, then 2, then 3 …). Skipped once the run has too few Max HP training levels left for the next use. **BK Siphon** and **RK Siphon** do the same with DEF and ATK training levels, for a blue and a red key, each counting its own uses; the three are the **siphons**.
+**GK Siphon**:
+A card that moves nowhere: its turn trades Max HP training levels, for the rest of the run only, for a gold key, each use in a run taking one level more than the last (1, then 2, then 3 …). Skipped once the run has too few Max HP training levels left for the next use. **BK Siphon** and **RK Siphon** do the same with DEF and ATK training levels, for a blue and a red key, each counting its own uses; the three are the **siphons**.
 _Avoid_: drain
 
 **Key trade**:
-A card that moves nowhere and trades keys it holds for something else: **BK Trader** (3 yellow keys for a blue key) and **YK to HP** (a yellow key for 10% of max HP, only while that much HP is missing). Skipped while it can't pay.
+A card that moves nowhere and trades keys it holds for something else: **BK Trader** (3 gold keys for a blue key) and **GK to HP** (a gold key for 10% of max HP, only while that much HP is missing). Skipped while it can't pay.
 
 **Regen**:
 The HP a hero regains with every step taken in a run, after whatever the step did, up to max HP. A Dash turn counts as one step, but for the first dashed tiles Dash Regen research lets regain HP too. The Regen skill opens Regen training, which gives it.
 _Avoid_: regeneration, healing (a potion's)
 
 **Provision**:
-A lasting boost bought with Gold on the Gear page: each one bought adds to the loadout of every run from then on (a stat, or a yellow key), and the next of its kind costs more.
+A lasting boost bought with Gold on the Gear page: each one bought adds to the loadout of every run from then on (a stat, a gold key, or a Bomb), and the next of its kind costs more.
 _Avoid_: consumable, buff
 
 ### Progress
@@ -319,6 +363,14 @@ _Avoid_: area boss, guardian
 **Greater Boss**:
 The Tower floor's secret monster: once every torch on a floor is put out, it appears on the open floor nearest the stairs, once a floor each run. It has twice a boss's HP, ATK and DEF and pays twice a boss's rewards, but guards nothing.
 _Avoid_: super boss, secret boss
+
+**Spawned enemy**:
+A monster that appears on a floor during a run rather than being made with it, like the Greater Boss. It pays its own rewards even on a tile where a monster already fell.
+_Avoid_: summon, added enemy
+
+**Gold multiplier**:
+A factor on every Gold banked: the tower's, the Gold ad's boost or Ad-Disable (one slot), each coin pack, the themes owned, the equipment's Gold found and the run's Gold boons. The player sees them together as *All Gold Bonuses*; Gold Bonus training is none of them, since it raises only a kill's, a chest's and an item's Gold.
+_Avoid_: Gold bonus (the Training row)
 
 **Silver**:
 The currency of a single run: each monster beaten pays some, more on higher floors and for stronger monsters (and each new floor, with Wishing Well), and it is spent only inside that run, on run training. Undo takes it back with the kill, and it is gone when the run ends.
@@ -402,6 +454,10 @@ _Avoid_: tech, study
 One research slot: it works on one research level at a time, and optionally auto-continues to the next. Its research can be rushed: completed at once for Gems (not the hand's Dash).
 _Avoid_: lab slot, researcher
 
+**Rush efficiency**:
+How much cheaper rushing gets for good: 1.5% for each item maxed in its tab (a research project completed for the Archives' Rush, a Training stat at its most for finishing a rank), the Gems divided by 1 plus it and rounded up.
+_Avoid_: rush discount
+
 **Cell**:
 A lasting currency, shown as a yellow triangle, that only Greater Bosses drop (more on later towers); it buys Speed Ups. The Archives show it, and their Speed Up buttons, only once the player profile has earned some.
 _Avoid_: energy, research points
@@ -417,8 +473,18 @@ _Avoid_: lab page, training screen
 ### The hand
 
 **Card**:
-One way of moving the hero, toward one kind of target: the stairs, a potion, a door the hero holds the keys for, a key of one colour (yellow, or blue), a monster, an ATK pickup, or a DEF pickup. A card can act when the hero can reach such a target on the current floor over open floor and items.
+One way of moving the hero, toward one kind of target: the stairs, a potion, a door the hero holds the keys for, a key (of any colour, or of one), a monster, an ATK pickup, or a DEF pickup. A card can act when the hero can reach such a target on the current floor over open floor and items.
 _Avoid_: skill (a skill is something the player uses), ability
+
+**Card bonus**:
+What a card gives for as long as the run's hand holds it, beside where it moves the hero, whichever card leads there: a key card's keys worth more and paying more Gold, the Chest card's chance of a Supply or Equipment Chest, an enemy card's ATK against and Gold from the enemies it heads for, or a door card's doors costing less (their keys, and the HP they drain or breaking them takes).
+_Avoid_: perk, passive
+
+**Supply Chest**:
+A treasure chest that, through the Chest card's bonus, also holds Equipment upgrade materials (supplies) beside its Gold; marked by a light blue glow and one star, settled as its floor is made.
+
+**Equipment Chest**:
+A treasure chest that, through the Chest card's bonus, also holds a Standard piece of equipment, Common, Uncommon or Rare; marked by a purple glow and two stars, settled as its floor is made.
 
 **Hand**:
 The cards the player sets up before a run, in priority order, in four slots (five with Larger Hand, and more bought with Gems); it always holds the STAIRS card. Inside a run the hand moves the hero, and the player can't: the first card that can act (or Card Group, as one) picks its closest target, and the hero follows the shortest path there a step at a time before the hand chooses again. The player can pause it, and undo pauses it. Each run keeps the hand as ordered when it went inside.
@@ -431,6 +497,18 @@ _Avoid_: Automove speed
 **Dash**:
 The hand's first step toward a new target carrying on along the path across empty floor in the same step, stopping on the tile before anything else. How many tiles it may cross comes from Dash research, once the Dash skill is owned, and adds up with End Rush research (on STAIRS only) and a Dash badge on the card.
 _Avoid_: rush (the Archives' Gem button that completes research at once), sprint, leap
+
+**Dash attack**:
+A fight the hero steps into from the tile a Dash stopped on, the turn after it. ENEMY's Surprise Attack (and an enemy card's tree's, against its enemies) may double the ATK of its first strike, and takes a Fast enemy's first strike away.
+
+**Power Strike**:
+ATK Up's legendary upgrade: an ATK shard taken may charge the hero's next fight, every strike of it dealing twice its ATK.
+
+**Takedown** and **Tangle**:
+A share of a boss's max HP (Takedown) or ATK (Tangle) taken as a fight with it begins, before the hero's first strike; Greater Takedown and Greater Tangle take a Greater Boss's, and Boss Enemy's tree's take both.
+
+**Treasure Floor**:
+A floor whose ATK and DEF shards and potions are all treasure chests, by Chest's upgrade, rolled once for each floor.
 
 **Deck**:
 All the player's cards: those in the hand and those waiting outside it. Also the page where the hand is ordered (with the Combat Stance skill) and its cards chosen from the deck (with Buildout).
@@ -463,6 +541,14 @@ _Avoid_: token, mana
 Taking back the last move on the floor the hero stands on. A run has a limited number of undos (Rehearsed steps, Echoes of time and Undo Count research set how many), and one spent never comes back during that run.
 _Avoid_: rewind, history slot
 
+**Run timeline**:
+What undo can take a run back to: the moves held on the floor the hero stands on, and while the hero lies fallen, the run just before that fight.
+_Avoid_: undo stack, history (alone)
+
+**Hand rules**:
+What the hand's cards may do now: their badges' rules and marks, Ignore's tiles, and whether a card that acts in place can act. The hand plans from them; the hand's turn applies what they decide.
+_Avoid_: card logic, badge state
+
 **Ignore**:
 Marking a tile inside a run so the hero never steps on it for the rest of that floor.
 _Avoid_: block, ban
@@ -471,12 +557,51 @@ _Avoid_: block, ban
 Sending the hero inside a run to a tile the player taps, ahead of the hand, until it arrives.
 _Avoid_: waypoint, goto
 
+**Bomb**:
+A limited use a run carries, one for each Bomb provision owned: thrown at an enemy's tile the player taps, it deals that enemy the hero's ATK.
+_Avoid_: grenade, explosive
+
+**Card level**:
+How far a card has grown, from 0 up to its max level, by the card XP it gathers over every run; each level costs more than the one before and gives a card point. Shown on the card's top left from level 1. XP gathered at the max level waits for the levels a card buy opens.
+_Avoid_: card rank, card tier
+
+**Max level**:
+The highest level a card can reach now: every level its card tree holds, 10 at first, raised by one with each card buy that goes to it (up to 25, or 60 for STAIRS and HEAL).
+_Avoid_: level cap (in player-facing text), card limit
+
+**Card buy**:
+A card bought with Gems on the Deck page, one or ten at a time: each draws a card rarity and goes to a random card of the deck with room, opening one level of that rarity on its card tree and raising its max level by one. Its draws continue one random sequence the profile is given when it is made.
+_Avoid_: card draw (badges are drawn), card pack, booster
+
+**Card rarity**:
+How rare an upgrade on a card tree is, and the card buy that opens it: common, uncommon, rare, epic or legendary. A card wears the rarest rarity opened on its tree, in its frame and stars. Not a card badge's rarity.
+_Avoid_: card tier, card grade
+
+**Sealed upgrade**:
+An upgrade of a card tree no card buy of its rarity has opened yet; it takes no points until one does.
+_Avoid_: locked upgrade (locked means waiting on the upgrade before it)
+
+**Card XP**:
+What raises a card's level: one each time the card activates in a run, or, for a card that never activates (Archer), one for each floor completed for the first time in the run while the hand holds it. Undo takes it back with the move.
+
+**Card point**:
+What each card level gives the card, to spend on its own card tree. Not the character's training points.
+_Avoid_: training point, ability point, upgrade point
+
+**New card**:
+A card in the deck the player hasn't met on the Deck page yet (pressed for its details, moved, put in the hand or given a badge); it wears NEW there until then.
+_Avoid_: unseen card (a card the Deck page hasn't shown is what the Deck tab's dot counts, and it clears on opening the page)
+
+**Card tree**:
+A card's tree of nodes its card points buy, a level a point: tracks from the card itself, each node open once the node before it holds enough levels, its bonuses counting while the run's hand holds the card. Each node has a card rarity; card buys open its levels. A **respec** gives all of a card's points back for Gems.
+_Avoid_: card skill tree, talent tree, reward tree
+
 **Card badge**:
 A token bought with Gems (drawn by rarity: common, rare or epic) and attached to one card, changing what the card does when it activates: paying something (HP, Silver, Gold, XP), gating it (it acts only while a condition holds), changing its target (Stairward, Skip Open Nodes, Charge, Deprioritize), scaling its target's effect (Effective, Dampen), making it vanish (Skip), or adding enemies to the floors (More Enemies, only on a monster card). A card holds one in each of its badge slots, and a badge sits on one card at a time. More copies of a badge raise its level, up to 7.
 _Avoid_: rune, gem, charm, enchantment
 
 **Badge slot**:
-A place on a card for one card badge. Every card has one, and one more for each level of Badge Slots research. Badges that can't work together (a key colour's < and ≥ gates, such as YK < with YK ≥, or Effective with Dampen) can't share a card.
+A place on a card for one card badge. Every card has one, and one more for each level of Badge Slots research. Badges that can't work together (a key colour's < and ≥ gates, such as GK < with GK ≥, or Effective with Dampen) can't share a card.
 _Avoid_: socket
 
 **Extra enemy**:
@@ -488,6 +613,10 @@ A ? on a tile the Deprioritize badge passed over on this floor: no card's path c
 **Floor Skipped**:
 Skip on the STAIRS card in the Tower: the hero climbs two floors instead of one, never standing on the floor between.
 
+**Warp Loot**:
+The Silver a run starting above floor 1 (a Warp, or a Retry from one) goes inside with, beside Pocket Money: Warp Loot research's share of an estimate of what its skipped floors would have paid (their kills, Wishing Well and Interest).
+_Avoid_: warp bonus, skip silver
+
 **Interest**:
 Silver added on each floor climbed for the first time in a run: Interest % research's share of the Silver held, at most Max Interest's limit (50 at first).
 _Avoid_: dividend
@@ -496,7 +625,7 @@ _Avoid_: dividend
 Gold paid for a floor skipped: Floor Skip Reward research's percent of the Gold the floor's battles, chests and items still held (each closed chest counted at its average, each item at its Pickup Gold). What it counts pays no Gold if met later.
 
 **Activation**:
-A card of the hand doing what it is for: its path's last step reaching its target, or a card that acts in place acting. Card badges pay on activation.
+A card of the hand doing what it is for: its path's last step reaching its target, or a card that acts in place acting. Card badges pay on activation, and the card gains a card XP. Flying Enemy's arrival within reach of a flyer counts toward its level, though no badge pays then.
 _Avoid_: trigger, proc
 
 **Stuck hand**:
@@ -507,14 +636,20 @@ _Avoid_: deadlock
 What a stuck hand can't get past: a door, monster, stairs up or ignored tile at the edge of the ground the hero can walk, with more ground beyond it. The run's end dialog names each, where it stands and why no card gets past it.
 _Avoid_: obstacle, deadlock cause
 
+### Notices
+
+**Notice**:
+A dot on a tab or button saying something new waits there for the player: a skill to buy, a card new to the deck, a level-up's points, a reward to claim. Showing the player what it points at clears it until the next thing new.
+_Avoid_: badge (a card's), attention, alert, notification
+
 ### Themes
 
 **UI theme**:
-A look for the page around the board: its panels, buttons and sounds. Classic is always available; Medieval is owned from the start; Neon, Terminal, Desktop, Glyph, Ember, Yang, Yin, Shiro, Kuro, Arcade, System, Orbit and Pixel are bought (1 Gold each for now).
+A look for the page around the board: its panels, buttons and sounds. Classic is always available; Medieval is owned from the start; Neon, Terminal, Desktop, Glyph, Ember, Yang, Yin, Shiro, Kuro, Arcade, System, Orbit, Pixel, Doodle and Murk are bought (1 Gold each for now).
 _Avoid_: skin, style
 
 **Game theme**:
-A look for the board itself: its tiles, the hero, enemies and torches. Classic is always available; Neon, Terminal, Desktop, Glyph, Ember, Yang, Yin, Shiro, Kuro, Arcade, System, Kroz, Orbit and Pixel are bought (1 Gold each for now).
+A look for the board itself: its tiles, the hero, enemies and torches. Classic is always available; Neon, Terminal, Desktop, Glyph, Ember, Yang, Yin, Shiro, Kuro, Arcade, System, Kroz, Orbit, Pixel, Doodle and Murk are bought (1 Gold each for now).
 _Avoid_: tileset, board skin
 
 **Owned theme**:

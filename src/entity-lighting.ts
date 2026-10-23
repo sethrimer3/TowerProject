@@ -3,7 +3,8 @@ import { LIGHTING_CONFIG, getTorchFlicker, getTorchSway } from "./lighting.ts";
 import { torchReaches } from "./floor-relief.ts";
 import { lightFalloff } from "./torch-light.ts";
 import { drawGameSprite } from "./game-sprites.ts";
-import { paintContents, paintHeroFallback } from "./tile-painters.ts";
+import { paintContents, paintHero, paintHeroFallback } from "./tile-painters.ts";
+import { spriteRevision } from "./sprite-kit.ts";
 import { forEachViewTile, tileOrigin, toTileSpace, type FrameContext } from "./render-frame.ts";
 
 /** Tile kinds that stand up off the floor and so cast torch shadows. */
@@ -31,6 +32,7 @@ type ShadowLayer = { layer: CanvasRenderingContext2D | null; stamps: Stamp[] };
  * sprites. drawShadows runs first each frame; its lit casters and shadow
  * layer are then read by drawSpriteLighting and the lighting pass. */
 export class EntityLighting {
+  private spriteState = "";
   /** Black cut-outs of item/enemy/hero sprites used for torch-cast shadows.
    * Rebaked after a short while so sprites that finish loading are picked up. */
   private silhouettes = new Map<string, { canvas: HTMLCanvasElement; at: number }>();
@@ -58,6 +60,14 @@ export class EntityLighting {
    * longer the farther it stands from the flame and fainter as the light
    * falls off. Drawn to one layer so walls can be masked out cheaply. */
   drawShadows(f: FrameContext, wallMask: () => HTMLCanvasElement | null) {
+    // Swap masks immediately on a toggle or image arrival, keeping old
+    // revisions out of the caches rather than accumulating one per load.
+    const style = `${f.look.spritesOff}|${!!f.look.styledSprites}|${spriteRevision()}${f.look.squareDoors ? "|square" : ""}`;
+    if (style !== this.spriteState) {
+      this.spriteState = style;
+      this.silhouettes.clear();
+      this.spriteLightMasks.clear();
+    }
     this.lit = [];
     this.castAny = false;
     if (!f.torches.length || typeof document === "undefined") return;
@@ -134,20 +144,21 @@ export class EntityLighting {
 
   /** Items and enemies in view, then the hero. */
   private casters(f: FrameContext): Caster[] {
-    const { spritesOff, reduceMotion, area1 } = f.look;
+    const { spritesOff, reduceMotion, area1, styledSprites, squareDoors } = f.look;
     const casters: Caster[] = [];
     forEachViewTile(f, (x, y) => {
       const t = f.world.tile(x, y);
       if (!SHADOW_CASTERS.has(t.kind)) return;
       casters.push({
         x, y,
-        key: `${t.kind}|${t.color}|${t.tier}|${t.enemy?.name ?? ""}|${t.enemy?.tier}|${t.enemy?.strength}|${area1}`,
-        draw: (c) => paintContents(c, t, { x, y, time: f.now, spritesOff, reduceMotion, area1 }),
+        key: `${t.kind}|${t.color}|${t.tier}|${t.enemy?.name ?? ""}|${t.enemy?.tier}|${t.enemy?.strength}|${area1}${styledSprites ? `|kit|${t.enemy?.fast}|${t.enemy?.ranged}|${t.enemy?.flying}` : ""}`,
+        draw: (c) => paintContents(c, t, { x, y, time: f.now, spritesOff, reduceMotion, area1, styledSprites, squareDoors }),
       });
     });
     casters.push({
-      x: f.playerX, y: f.playerY, key: "hero",
+      x: f.playerX, y: f.playerY, key: `hero${styledSprites ? `|kit|${f.heroFacing.dx},${f.heroFacing.dy}` : ""}`,
       draw: (c) => {
+        if (styledSprites) return paintHero(c, spritesOff, true, f.heroFacing);
         if (!spritesOff && drawGameSprite(c, "player")) return;
         paintHeroFallback(c);
       },

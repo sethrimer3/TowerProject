@@ -13,15 +13,15 @@ import {
   CATEGORIES, CATEGORY_IDS, EQUIP_MATERIALS, EQUIP_MATERIAL_IDS, ITEMS, itemDef, materialOf, standardOf, uniquesOf,
 } from "../src/equipment/catalog.ts";
 import {
-  BOSS_DROPS, EQUIPMENT_CAPACITY, MATERIAL_DROPS, PITY, PULL_GEMS, PULL_RATES, pullGems, RARITY_TIERS,
+  EQUIPMENT_CAPACITY, PITY, PULL_GEMS, PULL_RATES, pullGems, RARITY_TIERS,
   upgradeGold, upgradeMaterial,
 } from "../src/equipment/balance.ts";
 import {
-  addItem, decodeEquipment, defaultEquipment, dismantle, equip, isProtected, levelUp, merge, mergeFodder, salvageTotals,
+  addItem, autoMerges, decodeEquipment, defaultEquipment, dismantle, equip, isProtected, levelUp, merge, mergeFodder, salvageTotals,
   setLocked, unequip, type EquipmentSave,
 } from "../src/equipment/inventory.ts";
 import { lineValue, effectText } from "../src/equipment/effects.ts";
-import { keepDrop, pull, pullOne, rollBossDrop, rollMaterials, rollRarity } from "../src/equipment/acquire.ts";
+import { keepDrop, pull, pullOne, rollRarity } from "../src/equipment/acquire.ts";
 import { ICON_ROWS, pieceRows } from "../src/ui/equipment-icons.ts";
 import type { Enemy } from "../src/entities.ts";
 
@@ -168,26 +168,11 @@ test("the Blacksmith stands in the forest only once Equipment is open, beside th
   for (let row = 0; row < 12; row++) assert.notEqual(forest.tile(MODES.tower.entranceX, row).kind, "wall");
 });
 
-// --- Boss drops and materials ---
+// --- Chest pieces and kills ---
 
 const enemy = (strength: Enemy["strength"]): Enemy => ({ name: "Test", hp: 10, attack: 1, defense: 0, strength });
 
-test("bosses drop only Standard pieces, on any floor", () => {
-  assert.equal(rollBossDrop("strong", 0, seq([0])), null, "only bosses");
-  const rng = random(42);
-  let drops = 0;
-  for (let i = 0; i < 2000; i++) {
-    const d = rollBossDrop("boss", 0, rng);
-    if (!d) continue;
-    drops++;
-    assert.equal(ITEMS.find((it) => it.id === d.def)!.class, "standard");
-    assert.notEqual(d.rarity, "rare", "a boss drops Common or Uncommon");
-  }
-  assert.ok(Math.abs(drops / 2000 - BOSS_DROPS.boss!.chance / 100) < 0.05, `${drops} of 2000`);
-  assert.ok(rollBossDrop("greaterBoss", 0, seq([0.99, 0, 0])), "a Greater Boss always drops one");
-});
-
-test("a full inventory salvages a boss drop at once", () => {
+test("a full inventory salvages a chest's piece at once", () => {
   const e = open();
   for (let i = 0; i < EQUIPMENT_CAPACITY; i++) addItem(e, "silverBand", "common");
   assert.equal(addItem(e, "silverBand", "common"), null);
@@ -195,7 +180,7 @@ test("a full inventory salvages a boss drop at once", () => {
   assert.deepEqual([kept.item, kept.salvaged, e.materials.whetstone], [null, RARITY_TIERS.uncommon.salvage, RARITY_TIERS.uncommon.salvage]);
 });
 
-test("Auto-salvage dismantles Common boss drops and keeps the rest, and is saved", () => {
+test("Auto-salvage dismantles Common chest pieces and keeps the rest, and is saved", () => {
   const e = open();
   e.autoSalvage = true;
   const common = keepDrop(e, { def: "knightsSword", rarity: "common", category: "weapon" });
@@ -208,25 +193,18 @@ test("Auto-salvage dismantles Common boss drops and keeps the rest, and is saved
   assert.equal(keepDrop(e, { def: "knightsSword", rarity: "common", category: "weapon" }).item?.rarity, "common");
 });
 
-test("material drops scale with the enemy and the floor, raised by Material Find", () => {
-  assert.equal(rollMaterials("weak", 0, 0, seq([0.99])), null);
-  assert.deepEqual(rollMaterials("boss", 0, 0, seq([0, 0]))?.quantity, MATERIAL_DROPS.boss.amount);
-  assert.equal(rollMaterials("boss", 100, 0, seq([0, 0]))!.quantity, MATERIAL_DROPS.boss.amount * 5);
-  assert.equal(rollMaterials("boss", 100, 50, seq([0, 0]))!.quantity, 60);
-});
-
-test("a boss beaten after Equipment opens pays its drop through the run, once per physical kill, on any floor", () => {
+test("kills drop no Equipment without an enemy card's tree, a boss or a Greater Boss neither, once Equipment is open", () => {
   const s = defaults();
   s.equipment.unlocked = true;
   const g = new Game(s, seq([0]));
   g.newRun({ seed: 3, height: 9 });
   const purse = (g as any).purse;
-  const first = purse.enemyLoot(enemy("boss"), 4, 4);
-  assert.ok(first.equipment.item, "a drop at the 0 roll");
-  assert.equal(g.save.equipment.items.length, 1);
-  const again = purse.enemyLoot(enemy("boss"), 4, 4);
-  assert.equal(again.equipment, null, "undo and fight it again: nothing more");
-  assert.equal(g.save.equipment.items.length, 1);
+  for (const strength of ["weak", "elite", "boss", "greaterBoss"] as const) {
+    const loot = purse.enemyLoot(enemy(strength), 4, strength.length);
+    assert.deepEqual(loot.equipment, []);
+  }
+  assert.equal(g.save.equipment.items.length, 0);
+  assert.ok(Object.values(g.save.equipment.materials).every((n) => n === 0), "and no upgrade materials");
 });
 
 // --- Gem pulls ---
@@ -375,6 +353,25 @@ test("merging takes exactly two other copies, raises the chosen target's rarity 
   assert.ok(!e.items.some((i) => i.id === b.id || i.id === d.id));
   const r = addItem(e, "ringOfWarding", "rare")!;
   assert.equal(merge(e, r.id, []), "unmergeable", "Rare is the top for now");
+});
+
+test("Auto-assemble offers every merge at once, none sharing a piece, leaving worn pieces out and locked ones only kept", () => {
+  const e = open();
+  const [worn, locked, a, b, c, d, f] = [0, 1, 2, 3, 4, 5, 6].map(() => addItem(e, "ringOfWarding", "uncommon")!);
+  equip(e, "tower", worn.id);
+  setLocked(e, locked.id, true);
+  [worn.level, locked.level, a.level, b.level, c.level, d.level, f.level] = [40, 3, 9, 1, 5, 2, 7];
+  addItem(e, "silverBand", "uncommon");
+  addItem(e, "silverBand", "uncommon");
+  [0, 1, 2].map(() => addItem(e, "knightsSword", "common"));
+  const merges = autoMerges(e);
+  assert.deepEqual(merges, [
+    { target: locked.id, fodder: [b.id, d.id] },
+    { target: a.id, fodder: [c.id, f.id] },
+  ], "the locked piece kept first, then the highest level; the lowest-level copies used up");
+  for (const m of merges) assert.ok(typeof merge(e, m.target, m.fodder) !== "string", "each merge still stands after those before it");
+  assert.deepEqual([worn, locked, a].map((i) => i.rarity), ["uncommon", "rare", "rare"]);
+  assert.deepEqual(autoMerges(e), [], "nothing left to assemble");
 });
 
 test("Common pieces never merge: they are only worn as they are or salvaged", () => {

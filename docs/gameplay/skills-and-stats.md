@@ -2,7 +2,7 @@
 
 ## Below the Archives
 
-Below the Archives in the Inspiration tree, which grows taller than the screen and scrolls (drag it, or turn the mouse wheel; Ctrl and the wheel, or a pinch, zooms), **Greater Heal** (3 Inspiration, after Into the depths) opens the Archives' **Potion HP** research,, **Recovery** (10 Inspiration, after Greater Heal) brings **percent potions** onto the floors (2% of potions), **Find Potion** (10 Inspiration, below Recovery) opens **Find Potion** training, which makes more of them percent potions, and **Shroud** (2 Inspiration, after Trainers, above Critical) wraps the hero in a **shroud** that blocks the first 1 damage of every fight and opens **Shroud** training and the Archives' **Shroud** research (+4% of the shroud a level, for 100 levels, up to ×5, priced and timed like Pocket Money), **Parry** (10 Inspiration, below Regen Research) lets the hero parry, **Revive** (10 Inspiration, below Parry) may raise a felled hero at full HP, and **Thorns** (10 Inspiration, on the middle path between Buy Quantity and Key Siphon) makes every monster pay for striking (see below).
+Below the Archives in the Inspiration tree, which grows taller than the screen and scrolls (drag it, or turn the mouse wheel; Ctrl and the wheel, or a pinch, zooms), **Greater Heal** (3 Inspiration, after Into the depths) opens the Archives' **Potion HP** research,, **Recovery** (10 Inspiration, after Greater Heal) brings **percent potions** onto the floors (2% of potions), **Find Potion** (10 Inspiration, below Recovery) opens **Find Potion** training, which makes more of them percent potions, and **Shroud** (2 Inspiration, after Trainers, above Critical) wraps the hero in a **shroud** that blocks the first 1 damage of every fight and opens **Shroud** training and the Archives' **Shroud** research (+4% of the shroud a level, for 100 levels, up to ×5, priced and timed like Pocket Money), **Parry** (10 Inspiration, below Regen Research) lets the hero parry, **Revive** (10 Inspiration, below Parry) may raise a felled hero at full HP, and **Thorns** (10 Inspiration, on the middle path between Buy Quantity and GK Siphon) makes every monster pay for striking (see below).
 
 ## Silver and Gold
 
@@ -23,19 +23,31 @@ Silver keeps its fractions, like Gold, and the purse shows it rounded down.
 
 The shroud is whole again at the start of each fight and takes the enemy's strikes until it is spent; only then does HP fall.
 What it blocks rises off the hero in silver, beside the red of any damage that got through, the HUD shows it beside DEF once owned, and every damage forecast (the inspect box, route totals, the hand and Automove) counts it.
-Without Recovery every potion is a regular one; with it, the red, striped potions the Tower's floors roll (half of them) and half of the Delve's corridor-guard potions become percent potions, from the next run on: each restores the regular 35 HP plus 1% of max HP, and 0.25% more for each rank of **Potion %** training.
+Without Recovery every potion is a regular one; with it, the striped potions the Tower's floors roll (half of them) and half of the Delve's corridor-guard potions become percent potions, from the next run on: each restores the regular 35 HP plus 1% of max HP, and 0.25% more for each rank of **Potion %** training.
+A regular potion is drawn red, like the HP bar, and a percent potion blue, like the Overheal bar.
+
+## Overheal
+
+**Overheal** (20 Courage, below Max Interest in the Courage tree, with Refocus below it) lets HP rise above max HP, and opens Overheal training.
+Potions, regular and percent, GK TO HP and the badges' heals then heal past max HP, up to the Overheal ceiling: max HP times the Overheal training row's value (×1.00 until it has ranks).
+Regen, Lifesteal, Dash Regen, equipment's victory and floor heals still stop at max HP, and none of them lowers HP held above it.
+The HP readout shows HP over max (1,240 / 1,000), and its tooltip the ceiling.
+The HP bar stays full red, and a blue bar over it shows the HP above max, full at the ceiling.
+While it shows, a fight's purple and a potion's growing heal are drawn on the blue bar instead of the red.
+Max HP changing in a run (training, a Shrine boon, the Max HP badge, a siphon) keeps HP above max, within the new ceiling; Revive still rises at max HP.
+
 **Regen** research (after **Regen Research**, 10 Inspiration, below Shroud, beside Recovery; listed after Potion HP) makes every step regain 3% more of what Regen training gives a level, for 100 levels, priced and timed exactly like Potion HP, and counting at once.
 
 ## Buy Quantity
 
-**Buy Quantity** (5 Inspiration, below Key Siphon) adds a quantity dropdown to Training, at the right of the trainers' row on the Training tab and of the group buttons under the hand inside a run: one press of a training-points button, or of a run card's Silver price, buys that many ranks at once (fewer only at a row's most), showing their total price, and the Training tab shows the value they reach.
+**Buy Quantity** (5 Inspiration, below GK Siphon) adds a quantity dropdown to Training (drawn by the game, a short list that opens beside it, on phones too), at the right of the trainers' row on the Training tab and of the group buttons under the hand inside a run: one press of a training-points button, or of a run card's Silver price, buys that many ranks at once (fewer only at a row's most), showing their total price, and the Training tab shows the value they reach.
 It offers x1 at first; the Archives' **Buy Quantity** research opens x5, x10, x100 and Max, a level each (1,000, 5,000, 25,000 and 100,000 Gold; 4, 12, 24 and 48 hours).
 Max buys as many as the points or Silver held pay for, its count ("x12") shown on the button beside their price.
 Trainers still train one rank at a time.
 
 ## Potion HP
 
-**Potion HP** (listed first in the Archives) makes every potion restore 3% more HP a level, for 100 levels (up to four times as much), the Cinder Tonic included but not the red potion; each level counts the moment it completes, even mid-run.
+**Potion HP** (listed first in the Archives) makes every potion restore 3% more HP a level, for 100 levels (up to four times as much), the Cinder Tonic included but not the percent potion; each level counts the moment it completes, even mid-run.
 The first four levels are quick (15 seconds for 10 Gold, 1 minute for 25, 5 minutes for 50, 10 minutes for 75); then the formula starts over, so the m-th level after those takes m/4 + m²/100 hours and costs 100 × m + m³ Gold (about 16 minutes and 101 Gold at level 5, up to about 4.8 days and 894,000 Gold at level 100).
 
 ## Revive
@@ -48,6 +60,8 @@ Forecasts, Automove and the hand still treat such a fight as lost.
 ## Thorns
 
 **Thorns** (10 Inspiration, below Buy Quantity) opens Thorn Damage training, 1% a rank up to 99%: every monster strike the hero lives through (parried or not, blocked by the shroud or not) costs the monster that share of its maximum HP, half against a boss or Greater Boss, whatever its DEF, so at 50% a monster falls to its second strike however much HP it has.
+Its maximum HP is what it had before the hero's arrows wounded it, so a wounded monster pays as much as a fresh one.
+A Ranged or Flying monster's shot the hero lives through costs it the same.
 The amount rises in yellow over the monster as the strike's damage rises over the hero, and a monster felled this way counts as any other kill (though never as an Instakill).
 Thorns are certain, so every forecast, Automove and the hand count them.
 

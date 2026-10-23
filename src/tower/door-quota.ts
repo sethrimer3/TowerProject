@@ -2,7 +2,7 @@ import { QUOTA_DOORS, doorKeys, owesDoor, quotaDoorsIn, towerDoorHundredths, tow
 import { forkFits, forksWorth, mayFork, stepValue } from "./forks.ts";
 import { TOWER_PATTERNS, patternWeight, pick, type TowerPattern, type Weighted } from "./patterns.ts";
 import { MAX_REGIONS } from "./resource-planner.ts";
-import { openOptions, placePattern, type GraphBuilder } from "./strategic-graph.ts";
+import { openOptions, placePattern, type GraphBuilder } from "./graph-builder.ts";
 import type { Archetype, Fork, Gate, StrategicGraph, StrategicNode } from "./types.ts";
 
 /** The door stage (docs/DOOR_AND_KEY_SCHEDULE.md): each floor rolls how many
@@ -11,7 +11,7 @@ import type { Archetype, Fork, Gate, StrategicGraph, StrategicNode } from "./typ
  * that fit, until what they count for meets it (in hundredths of a door; a
  * fraction left owed placed at its chance, `owesDoor`):
  *
- *   upgrade   an existing gate: a yellow door turns blue or red, any paid
+ *   upgrade   an existing gate: a gold door turns blue or red, any paid
  *             gate a Heart Door;
  *   combine   a door takes the colour as well: yellow becomes yellow + blue,
  *             blue becomes blue + red …, one tile dearer than either; for a
@@ -95,7 +95,7 @@ function placeOne(b: GraphBuilder, door: QuotaDoor, archetype: Archetype, left: 
   return null;
 }
 
-/** A plain yellow door: one key, no other colour, no heart, no run. */
+/** A plain gold door: one key, no other colour, no heart, no run. */
 const plainYellow = (g: Gate) => g.kind === "door" && g.color === "yellow" && !g.also?.length && !g.heart && !g.run;
 /** A gate that costs something to cross, and holds no quota door yet. */
 const paidGate = (g: Gate) => g.kind === "enemy" || g.kind === "wood" || plainYellow(g);
@@ -138,9 +138,9 @@ function combine(b: GraphBuilder, door: QuotaDoor): Tally | null {
   return hundredths(quotaDoorsIn(DOOR[door]));
 }
 
-/** Makes some plain yellow doors off the way to the stairs yellow door
+/** Makes some plain gold doors off the way to the stairs gold door
  * runs (`yellowRun`): a key sink, since the key supply plans one key for a
- * whole yellow run. Before the wooden share, which a run rolls once. */
+ * whole gold run. Before the wooden share, which a run rolls once. */
 export function placeYellowRuns(b: GraphBuilder) {
   for (const n of b.nodes) {
     if (n.parent === null || n.forks || n.route === "main" || !plainYellow(n.gate)) continue;
@@ -149,14 +149,14 @@ export function placeYellowRuns(b: GraphBuilder) {
   }
 }
 
-/** Turns `towerWoodPercent` of the floor's yellow locks into Wooden Doors:
+/** Turns `towerWoodPercent` of the floor's gold locks into Wooden Doors:
  * region gates, fork lanes, shortcuts and the stairs guard's door, each
  * rolled on its own (no roll when all or none are). A fork lane offering a
  * Wooden Door of its own rolls too, so the share decides every one. */
 export function placeWoodenDoors(b: GraphBuilder, shortcuts: StrategicGraph["shortcuts"], tower: number) {
   const share = towerWoodPercent(b.depth, tower);
   const wooden = () => share >= 100 || (share > 0 && b.rng() * 100 < share);
-  // A yellow run rolls once, so its doors are all Wooden or all yellow.
+  // A gold run rolls once, so its doors are all Wooden or all yellow.
   const yellowLock = (g: Gate) => g.kind === "wood" || (g.kind === "door" && g.color === "yellow" && !g.also?.length && !g.heart);
   const run = (g: Gate) => ("run" in g && g.run ? { run: g.run } : {});
   const wood = (g: Gate): Gate => (yellowLock(g) ? (wooden() ? { kind: "wood", ...run(g) } : { kind: "door", color: "yellow", ...run(g) }) : g);

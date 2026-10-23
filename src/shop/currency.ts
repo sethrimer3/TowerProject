@@ -1,5 +1,5 @@
 import { snap } from "../exact.ts";
-import type { Save } from "../entities.ts";
+import type { Save } from "../save-shape.ts";
 import { earn } from "../profile.ts";
 
 // The currencies the Shop prices offers in. Each is held in the save by its

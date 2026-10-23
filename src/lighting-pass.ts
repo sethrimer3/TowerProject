@@ -1,10 +1,13 @@
 import type { Torch } from "./entities.ts";
 import { LIGHTING_CONFIG, getTorchFlicker, getTorchSway } from "./lighting.ts";
 import { area1FloorSprite } from "./area1-tileset.ts";
-import { bakeTorchRelief, type BakedRelief } from "./floor-relief.ts";
+import { bakeTorchRelief, type BakedRelief, type ReliefSprite } from "./floor-relief.ts";
+import { dungeonFloorSprite, towerTileset } from "./sprite-dungeon.ts";
+import { spriteRevision } from "./sprite-kit.ts";
 import { bakeTorchLight, type BakedLight } from "./torch-light.ts";
 import { doorColor, doorId } from "./doors.ts";
 import type { Tile } from "./entities.ts";
+import { CHEST_LOOK } from "./chest-marks.ts";
 import {
   forEachViewTile, screenX, screenY, sized, tileCenter, type FrameContext, type GlowSource, type Rect,
 } from "./render-frame.ts";
@@ -57,6 +60,8 @@ function tileGlow(t: Tile, breathe: number): Omit<GlowSource, "x" | "y"> | null 
     const glow = og.enemy[t.enemy!.strength];
     return { rgb: glow.color, radius: glow.radius, strength: glow.strength * breathe };
   }
+  // A Supply or Equipment Chest, and the floor it leaves once opened, glow its colour.
+  if (t.chest) return { rgb: CHEST_LOOK[t.chest].rgb, radius: og.item.radius, strength: og.item.strength * breathe };
   if (GLOW_ITEMS.has(t.kind)) return { rgb: og.item.color, radius: og.item.radius, strength: og.item.strength * breathe };
   if (t.kind === "door") return { rgb: doorGlow(t), radius: og.door.radius, strength: og.door.strength, door: true };
   if (t.kind === "stairs")
@@ -140,6 +145,7 @@ export class LightingPass {
   private torchBakes = new WeakMap<Torch, { left: BakedLight; right: BakedLight } | null>();
   /** Each torch's relief baked with the light nudged left and right. */
   private reliefBakes = new WeakMap<Torch, { left: BakedRelief; right: BakedRelief } | null>();
+  private reliefStyle = "";
   /** Torch bakes cost a few ms each; spread them over frames on room entry. */
   private bakeBudget = 0;
 
@@ -180,10 +186,13 @@ export class LightingPass {
    * each torch's relief is baked once, then blitted with its flicker. */
   drawTorchRelief(f: FrameContext) {
     if (!f.look.area1) return;
+    const style = f.look.styledSprites ? `kit:${spriteRevision()}${towerTileset(f.look.mode, f.look.tier) ? `|tower:${f.look.tier}` : ""}` : "legacy";
+    if (style !== this.reliefStyle) { this.reliefStyle = style; this.reliefBakes = new WeakMap(); }
     const c = f.c;
     const cfg = LIGHTING_CONFIG.relief;
-    const floorSprite = (x: number, y: number) =>
-      f.world.tile(x, y)?.kind === "wall" ? null : area1FloorSprite(x, y, f.look.seed) ?? undefined;
+    const floorSprite = (x: number, y: number) => f.world.tile(x, y)?.kind === "wall" ? null
+      : f.look.styledSprites ? dungeonFloorSprite(f.look.mode, f.look.height, x, y, f.look.seed, f.look.tier)
+      : area1FloorSprite(x, y, f.look.seed) ?? undefined;
     c.save();
     c.imageSmoothingEnabled = false;
     for (const t of f.torches) {
@@ -201,7 +210,7 @@ export class LightingPass {
   }
   /** A torch's baked floor relief; null when it has none, undefined while
    * it can't be baked yet (budget spent or sprites still loading). */
-  private reliefBake(t: Torch, floorSprite: (x: number, y: number) => HTMLImageElement | null | undefined) {
+  private reliefBake(t: Torch, floorSprite: (x: number, y: number) => ReliefSprite | null | undefined) {
     const known = this.reliefBakes.get(t);
     if (known !== undefined) return known;
     if (this.bakeBudget <= 0) return undefined;

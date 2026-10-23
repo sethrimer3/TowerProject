@@ -76,14 +76,17 @@ html.yin body {
    colour swatch) still wins. Drawings (canvas, images, svg) and the bars'
    fills (`i`) keep theirs. Pseudo-elements, such as the red dots on what is
    new, are untouched. */
-html:is(.yang, .yin) body *:not(#_, canvas, img, svg, svg *, i, .eq-tile, .badge-token, [class*="rar"]) {
+html:is(.yang, .yin) body *:not(#_, canvas, img, svg, svg *, i, .eq-tile, .badge-token, .hand-badge-level, [class*="rar"]) {
   background-color: transparent;
   background-image: none;
   box-shadow: none;
   text-shadow: none;
   backdrop-filter: none;
 }
-html:is(.yang, .yin) body *:not(#_, svg, svg *) {
+/* A badge's symbol and the marks on the hand's cards keep their own
+   colours on their dark boxes, and a badge's level stays dark on its gold
+   star. */
+html:is(.yang, .yin) body *:not(#_, svg, svg *, .badge-glyph, .badge-mark, .hand-badge-level, .badge-level b) {
   color: var(--z-ink);
 }
 html:is(.yang, .yin) body *:not(#_, svg, svg *, .eq-tile, .badge-token, [class*="rar"]) {
@@ -115,7 +118,6 @@ html:is(.yang, .yin) .research:not(#_),
 html:is(.yang, .yin) .pull-box:not(#_),
 html:is(.yang, .yin) .eq-loadout:not(#_),
 html:is(.yang, .yin) .equip-materials:not(#_),
-html:is(.yang, .yin) .purse-big:not(#_),
 html:is(.yang, .yin) .starting-stats:not(#_),
 html:is(.yang, .yin) .training-boost:not(#_),
 html:is(.yang, .yin) .tournament-standing:not(#_),
@@ -134,6 +136,11 @@ html:is(.yang, .yin) dialog:not(#_) {
   border-radius: 6px;
   background: var(--z-panel);
 }
+/* The locked deck: its empty slots faint dashed outlines on the panel, with
+   no shade over them, so the notice reads on the page's own colours. */
+html:is(.yang, .yin) .deck-reserve-slots:not(#_) { filter: none; opacity: 0.45; }
+html:is(.yang, .yin) .deck-reserve-slots i:not(#_) { background: transparent; border: 1px dashed var(--z-line); }
+html:is(.yang, .yin) .deck-reserve:not(#_)::after { content: none; }
 html:is(.yang, .yin) .portrait-top:not(#_),
 html:is(.yang, .yin) .hp-readout:not(#_),
 html:is(.yang, .yin) .training-held:not(#_),
@@ -341,6 +348,20 @@ html:is(.yang, .yin) .safe:not(#_),
 html:is(.yang, .yin) .eq-result-title:not(#_) {
   color: var(--z-moss) !important;
 }
+/* An enemy's stat line keeps its colours, in quiet tones: what gets through
+   the seal's red, Lifesteal's heal blue, the Gold drop gold. */
+html:is(.yang, .yin) .inspect-box .hit-hurt:not(#_) { color: var(--z-seal); }
+html.yang .inspect-box .hit-heal:not(#_) { color: #3f6585; }
+html.yang .inspect-box .hit-gold:not(#_) { color: #a8811c; }
+html.yin .inspect-box .hit-heal:not(#_) { color: #7ea6c4; }
+html.yin .inspect-box .hit-gold:not(#_) { color: #d4b04a; }
+/* Goals' climb: the line up the tower in this theme's line colour, lit
+   up to the floor reached, and the floors completed lit with it.
+   Training's next value (and the Archives' next level) is green, a gain. */
+html:is(.yang, .yin) .goals-line:not(#_) { background: var(--z-line); }
+html:is(.yang, .yin) .goals-line.lit:not(#_) { background: var(--z-moss); }
+html:is(.yang, .yin) .goal-floor.completed:not(#_) { color: var(--z-moss); }
+html:is(.yang, .yin) .training-box.next:not(#_) { color: var(--z-moss); }
 /* Keys keep their colour, in quiet tones. */
 html.yang .keys .yellow:not(#_) { color: #a8811c; }
 html.yang .keys .blue:not(#_) { color: #3f6585; }
@@ -348,3 +369,17 @@ html.yang .keys .red:not(#_) { color: #b5402a; }
 html.yin .keys .yellow:not(#_) { color: #d4b04a; }
 html.yin .keys .blue:not(#_) { color: #7ea6c4; }
 html.yin .keys .red:not(#_) { color: #d0573f; }
+
+/* The Shrine bar (style.css): its fill indigo ink, apart from the black ink XP bar; its diamond an inked outline on the paper, stamped with the seal's red while boons wait. */
+html:is(.yang, .yin) {
+  --shrine-line: var(--z-ink);
+  --shrine-idle: var(--z-panel);
+  --shrine-lit: var(--z-seal);
+  --shrine-lit-line: var(--z-seal);
+  --shrine-lit-ink: var(--z-paper);
+  --shrine-edge: none;
+  --shrine-glow: none;
+  --shrine-ink: var(--z-ink);
+}
+html.yang { --shrine-fill: #4b5590; }
+html.yin { --shrine-fill: #8f98d0; }

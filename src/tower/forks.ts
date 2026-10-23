@@ -1,23 +1,23 @@
-import type { KeyColor } from "../config.ts";
+import type { KeyColor } from "../entities.ts";
 import type { TowerEnemyProfile } from "../scaling.ts";
 import { ARCHETYPES, keyedFloor, pick, type Weighted } from "./patterns.ts";
-import type { GraphBuilder } from "./strategic-graph.ts";
+import type { GraphBuilder } from "./graph-builder.ts";
 import type { Archetype, Fork, Gate, Lane, LaneStep, Reward, StrategicNode, StrategicTag, Strength } from "./types.ts";
 import { YELLOW_ONLY, doorKeys, onlyOpenKeys, withoutQuotaDoors } from "../key-schedule.ts";
 
 /** Forks: two or three parallel lanes from one region into the next, each
  * paying a different resource, so entering asks *what* to spend.
  *
- *   hub ─┬─ [yellow door] ──────────┬─ room
+ *   hub ─┬─ [gold door] ──────────┬─ room
  *        └─ [strong enemy] ─────────┘
  *
- * Every lane is priced on one scale (`GATE_VALUE`, roughly "yellow keys"),
+ * Every lane is priced on one scale (`GATE_VALUE`, roughly "gold keys"),
  * the lanes of a fork cost about the same, and none is cheaper than
  * another in every way. The exception is a fallback fork: a door beside a
  * door of the next rarity up, for a player without the cheaper key. A lane can be one to three tiles deep; deeper
  * lanes need room the embedder carves from one of the two chambers. */
 
-/** What paying each gate or taking each item is worth, in yellow keys. A
+/** What paying each gate or taking each item is worth, in gold keys. A
  * blue key is worth two yellow, a red about two and a half blue. */
 export const GATE_VALUE = {
   door: { yellow: 1, blue: 2, red: 5 } as Record<KeyColor, number>,
@@ -61,7 +61,7 @@ const noKeys = (): Keys => ({ yellow: 0, blue: 0, red: 0 });
 
 /** The keys a lane needs held on the way in (the deepest it runs short at
  * any point, since a key found inside pays only for doors after it) and
- * what it costs overall. A wooden lock is counted as the yellow key it eats
+ * what it costs overall. A wooden lock is counted as the gold key it eats
  * first. */
 export function laneKeys(lane: Lane): { upfront: Keys; net: Keys } {
   const held = noKeys(), upfront = noKeys();
@@ -181,7 +181,7 @@ export const FORK_PATTERNS: ForkPattern[] = [
     id: "fightThenHeal", weight: 2, minimumDepth: 2, tags: ["combatGate"],
     lanes: [one([foe("strong"), P]), one([Y])],
   },
-  // Pay a blue key and get a yellow back on the way through.
+  // Pay a blue key and get a gold back on the way through.
   {
     id: "blueForYellow", weight: 1.5, minimumDepth: 3, tags: ["doorGate", "resourceExchange"],
     lanes: [one([B, yKey]), one([foe("normal")])],

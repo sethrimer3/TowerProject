@@ -13,7 +13,9 @@ Read these as they are now. They change often, so trust the files over this list
 
 - `src/badges.ts`: `BADGES` (rarity, `kind`: `reward` / `gate` / `aim`, glyph, colour, `values` for levels 1–7, `text`, `unit`, `lead`, `unlock`, a gate's `sign`), `RARITY_WEIGHTS`, `COPIES_FOR_LEVEL`, `badgeValue`, `runBadges`, `decodeBadges`.
 - `src/cards.ts`: `CARDS` (each card's target), `CardRules` and how `planHand` reads it, `IN_PLACE` cards.
-- `src/state.ts`: `cardRules(card)` (planning), `activate(card, key)` (rewards when the card reaches its target), `badgeFloor`, `cooled` / `markUsed` (cooldowns by floor, in `run.badgeFloors`), the skipped-tile marks (`run.skipped`), and `setDevMode` (the Dev grant).
+- `src/hand-rules.ts` (`HandRules`): `cardRules(card)` (planning), `floor` (the floor badges count by), `cooled` / `markUsed` (cooldowns by floor, in `run.badgeFloors`), the skipped-tile marks (`run.skipped`), Deprioritize's marks, Skip's stream, `scaleOf`, and `canAct` for cards that act in place; `tests/hand-rules.test.ts` tests it without a `Game`.
+- `src/state.ts`: `handTurn` (the turn that asks `handRules`) and `setDevMode` (the Dev grant).
+- `src/game/card-activation.ts`: `CardActivation.activate(card, key)` / `payBadge` (rewards when the card reaches its target).
 - `src/step-effects.ts` (`resolveStep`, `StepRules`): any badge that changes what a step does to the hero goes here, so previews, the planners and Automove agree.
 - `src/ui/badge-token.ts`, `src/ui/deck-page.ts`, `src/ui/hud.ts` (the `unable` greying), and the renderer, if the badge marks tiles.
 - `tests/badges.test.ts`: one test per behaviour; copy its style.
@@ -32,7 +34,7 @@ Make a **card matrix**: one row per badge, one column per card in `CARDS`, and i
 - **Fractions in whole quantities.** A percentage applied to keys, door costs or counts makes them fractional everywhere they're read: saves, `snap`, display rounding (`whole.ts`), the "holds keys for" checks in pathing and previews. Spell out the case where it blocks (for example, 1 key held against a 1.05 cost).
 - **Lethality.** Can the extra damage kill? Do `isLethal`, the previews and the planners count it?
 - **Bosses and structure.** Bosses, the Greater Boss, boss floors (`isBossFloor`), sections, the `AreaLedger` judgement, tier gates. Default: a badge never bypasses something meant to block the way up.
-- **Per floor in the Delve.** Default: `badgeFloor` (the equivalent floor), as cooldowns already use.
+- **Per floor in the Delve.** Default: `HandRules.floor` (the equivalent floor), as cooldowns already use.
 - **Greying and recovery.** When the card greys out, what greys it (the HUD's `unable`), and whether `handStuck` brings it back.
 - **Chance and undo.** Default: a roll is a fixed `tileRandom` number per run seed, floor, tile and badge, so undo can't reroll it. Per-run state lives in the run (with a `dropInvalid` decoder) so undo rewinds it.
 - **Marks on the board.** Which symbol goes where, when it's removed, and whether it's saved.

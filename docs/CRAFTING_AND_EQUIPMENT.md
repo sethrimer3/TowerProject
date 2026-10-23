@@ -1,6 +1,6 @@
 # Crafting, Materials, Enemy Drops, and Equipment
 
-**Status:** Mostly retired. Only treasure chests' **Gold** and **metal bars** (sections on chests and metals) still apply: a chest always pays Gold and has a 28% chance of a stack of metal bars, which the Defend page spends. The monster parts enemies dropped, the gems and Empty Vials chests held, consumable crafting (Cinder Tonic) and the crafted equipment (sections 6 to 11) are gone. Equipment, and the upgrade materials every kill now drops toward it, are defined in **[EQUIPMENT.md](EQUIPMENT.md)**.
+**Status:** Retired. Only a treasure chest's **Gold** (`rollGold` in `loot.ts`) still applies; chests no longer hold metal bars, so the metal sections describe nothing the game finds, and the Defend page spends only bars already saved. The monster parts enemies dropped, the gems and Empty Vials chests held, consumable crafting (Cinder Tonic) and the crafted equipment (sections 6 to 11) are gone. Equipment, and the Supply and Equipment Chests the Chest card finds toward it, are defined in **[EQUIPMENT.md](EQUIPMENT.md)**.
 
 This document defines the first-pass economy for persistent crafting resources, enemy-specific materials, treasure chests, craftable equipment, enhancement materials, equipment inventory, and salvage.
 

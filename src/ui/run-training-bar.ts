@@ -1,10 +1,10 @@
 import type { Game } from "../state.ts";
 import { TRAINING, TRAINING_GROUPS, type TrainingId } from "../config.ts";
 import { runTrainingBulk, runTrainingOffer, runTrainingValue } from "../run-training.ts";
-import { buyQuantityHtml, readQuantity, runCount } from "./buy-quantity-select.ts";
-import { trainingText, trainingOpen } from "../loadout.ts";
+import { bindBuyQuantity, buyQuantityHtml, runCount } from "./buy-quantity-select.ts";
+import { trainingText, runTrainingOpen } from "../loadout.ts";
 import { el, itemSprite, POINTER_SVG, uiSprite } from "./dom.ts";
-import { sparkRed } from "./hud.ts";
+import { priceAmount, sparkRed } from "./hud.ts";
 
 type Group = keyof typeof TRAINING_GROUPS;
 /** Each group's button icon. */
@@ -15,8 +15,9 @@ const GROUP_ICONS: Record<Group, string> = {
 };
 const silverIcon = () => uiSprite("gold", "ui-sprite silver-sprite");
 
-/** The run's training bar under the hand: a wide button for each Training
- * group. Pressing one shows that group's rows in the hand's place, a card
+/** The run's training bar under the hand: a button for each Training
+ * group, only its icon while closed, so the bar fits a phone beside Buy
+ * Quantity, and its icon and name while open. Pressing one shows that group's rows in the hand's place, a card
  * each, scrolled sideways, to buy a rank for this run with Silver; pressing
  * it again brings the hand back. Pressing or hovering a card's face shows
  * what it trains and its level; pressing it again hides that. The bar shows once On the Job is owned;
@@ -43,15 +44,8 @@ export class RunTrainingBar {
   constructor(private game: Game, private changed: () => void) {
     const bar = el("training-bar");
     bar.innerHTML = (Object.entries(TRAINING_GROUPS) as [Group, string][])
-      .map(([group, name]) => `<button type="button" data-run-group="${group}" aria-pressed="false">${GROUP_ICONS[group]}<span>${name}</span></button>`)
+      .map(([group, name]) => `<button type="button" data-run-group="${group}" aria-pressed="false" aria-label="${name}">${GROUP_ICONS[group]}<span class="group-name">${name}</span></button>`)
       .join("") + `<span class="run-buy-quantity"></span>`;
-    // Buy Quantity, at the right of the group buttons once the skill is owned.
-    bar.onchange = (e) => {
-      const select = (e.target as HTMLElement).closest<HTMLSelectElement>("[data-buy-quantity]");
-      if (!select) return;
-      this.game.setBuyQuantity(readQuantity(select.value), "run");
-      this.changed();
-    };
     bar.onclick = (e) => {
       const button = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-run-group]");
       if (button && !button.disabled) this.toggleGroup(button.dataset.runGroup as Group);
@@ -140,6 +134,11 @@ export class RunTrainingBar {
     if (slot.dataset.html !== html) {
       slot.dataset.html = html;
       slot.innerHTML = html;
+      // Buy Quantity, at the right of the group buttons once the skill is owned.
+      bindBuyQuantity(slot, (q) => {
+        this.game.setBuyQuantity(q, "run");
+        this.changed();
+      });
     }
     slot.hidden = !html;
   }
@@ -187,8 +186,8 @@ export class RunTrainingBar {
     note.style.bottom = `${document.querySelector("nav")!.offsetHeight + 8}px`;
     const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-run-group]"));
     const at = buttons.find((b) => b.dataset.runGroup === this.open) ?? buttons.find((b) => !b.disabled) ?? buttons[0];
-    // The buttons share the bar's width, so a share of it stays right as the window resizes.
-    pointer.style.left = `${((buttons.indexOf(at) + 0.5) / buttons.length) * 100}%`;
+    // The open button is wider than the rest: point at its middle.
+    pointer.style.left = `${at.offsetLeft + at.offsetWidth / 2}px`;
   }
 
   /** The lesson's note and pointing hand, laid over the bar when it
@@ -212,9 +211,10 @@ export class RunTrainingBar {
       : `<b>Train on the Job</b><p>Spend the ${silverIcon()} Silver you find on upgrades that raise your stats for the rest of this run. Press any of the three menus below to open it, and press it again to close it.</p>`;
   }
 
-  /** The rows of `group` the hero can train. */
+  /** The rows of `group` the hero can train in this run (the shot rows
+   * only while the hand holds ARCHER). */
   private rows(group: Group): TrainingId[] {
-    return TRAINING.filter((t) => t.group === group && trainingOpen(t, this.game.save)).map((t) => t.id);
+    return TRAINING.filter((t) => t.group === group && runTrainingOpen(t, this.game.save, this.game.hand)).map((t) => t.id);
   }
 
   /** One card's value and price (for the ranks the Buy Quantity buys, past
@@ -227,10 +227,10 @@ export class RunTrainingBar {
     const short = !offer.maxed && !bulk.affordable;
     card.classList.toggle("short", short);
     card.classList.toggle("maxed", offer.maxed);
-    // Range, Speed, ATK / Tile and Targets without their units, which their tooltips give, so the value fits the card.
+    // Range, Speed, ATK / m and Targets without their units, which their tooltips give, so the value fits the card.
     card.querySelector(".drill-value")!.textContent = trainingText(value, unit, true);
     const buy = card.querySelector<HTMLButtonElement>(".drill-buy")!;
-    const label = offer.maxed ? "Max" : `${runCount(q, bulk.count)}${silverIcon()}<b>${bulk.cost.toLocaleString("en-US")}</b>`;
+    const label = offer.maxed ? "Max" : `${runCount(q, bulk.count)}${silverIcon()}<b>${priceAmount(bulk.cost, 10_000)}</b>`;
     if (buy.dataset.label !== label) {
       buy.dataset.label = label;
       buy.innerHTML = label;

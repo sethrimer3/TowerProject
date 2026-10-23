@@ -1,4 +1,4 @@
-import { atWorst, critMultiplier, guaranteedCrits, instakill as instakills, netDamage, parriedEstimate, parryCut, predict, raisedAttack, replies, struckDamage, thornDamage, type CombatPrediction, type CritRule } from "./combat.ts";
+import { atWorst, critAgainst, critMultiplier, guaranteedCrits, instakill as instakills, netDamage, parriedEstimate, parryCut, predict, raisedAttack, replies, squaredUp, struckDamage, thornDamage, type CombatPrediction, type CritRule } from "./combat.ts";
 import { snap } from "./exact.ts";
 import type { Enemy, Player } from "./entities.ts";
 
@@ -39,6 +39,10 @@ type Ending = [t: number, r: number, chance: number];
 /** Past `played` strikes (all of them unless given) a fight is estimated,
  * not played out (`predict`'s), and its odds are approximated. */
 export function forecast(player: Player, enemy: Enemy, crit: CritRule, played = Infinity): CritForecast {
+  // Power Strike and a boss's cuts, once, for the predictions and the odds alike.
+  ({ player, enemy } = squaredUp(player, enemy));
+  // The enemy cards' trees' Crit % and Crit x against it.
+  crit = critAgainst(crit, player, enemy)!;
   const k = guaranteedCrits(crit.chance), extra = snap((crit.chance - 100 * k) / 100);
   const worst = predict(atWorst(player, crit), enemy, played);
   const topMultiplier = critMultiplier(crit.factor, k + (extra > 0 ? 1 : 0));

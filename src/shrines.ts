@@ -97,12 +97,12 @@ export type BoonEffects = Record<HeroFactor, number> & {
 export type ShrineOwner = { archives: ArchivesSave };
 
 /** Whether Shrines are researched. */
-export const shrinesOpen = (o: ShrineOwner) => researched(o.archives, "shrines", 0) > 0;
+export const shrinesOpen = (o: ShrineOwner) => researched(o.archives, "shrines") > 0;
 /** Standard Boon Bonus, in percent. */
-const standardBonus = (o: ShrineOwner) => researched(o.archives, "standardBoonBonus", 0);
+const standardBonus = (o: ShrineOwner) => researched(o.archives, "standardBoonBonus");
 /** How strong a trade-off's benefit is: 1, and 1% more a level of Improve
  * Trade-off Boons. */
-const tradeoffStrength = (o: ShrineOwner) => 1 + researched(o.archives, "tradeoffBonus", 0) / 100;
+const tradeoffStrength = (o: ShrineOwner) => 1 + researched(o.archives, "tradeoffBonus") / 100;
 
 /** How many of each boon `picked` holds. */
 export function copies(picked: readonly BoonId[]) {
@@ -160,6 +160,11 @@ export function boonEffects(picked: readonly BoonId[], o: ShrineOwner): BoonEffe
   return e;
 }
 
+/** `foes` with every enemy's ATK cut by `cut` percent as well (ENEMY's
+ * Weaken, its own factor); `foes` as it is without a cut. */
+export const weakened = (foes: FoeRule | undefined, cut: number): FoeRule | undefined =>
+  cut ? { ...(foes ?? NO_FOES), attack: (foes?.attack ?? 1) * (100 - Math.min(100, cut)) / 100 } : foes;
+
 /** `foes` changes nothing. */
 export const sameFoes = (a: FoeRule, b: FoeRule) =>
   a.hp === b.hp && a.attack === b.attack && a.bossHp === b.bossHp && a.bossFirst === b.bossFirst && a.fastSecond === b.fastSecond && a.fastAttack === b.fastAttack;
@@ -168,7 +173,10 @@ export const sameFoes = (a: FoeRule, b: FoeRule) =>
  * its own factor too, a Fast enemy's ATK by its), a boss striking first,
  * and a Fast enemy, with Fast Enemies Strike Second, striking second. */
 export function foeTile(tile: Tile, foes: FoeRule | undefined): Tile {
-  if (!foes || tile.kind !== "enemy" || !tile.enemy || sameFoes(foes, NO_FOES)) return tile;
+  if (!foes || sameFoes(foes, NO_FOES)) return tile;
+  // A Flying enemy over open floor takes the boons as one on the ground does.
+  if (tile.flyer) return { ...tile, flyer: foeTile({ kind: "enemy", enemy: tile.flyer }, foes).enemy };
+  if (tile.kind !== "enemy" || !tile.enemy) return tile;
   const e = tile.enemy, boss = e.strength === "boss" || e.strength === "greaterBoss";
   const enemy: Enemy = {
     ...e,
@@ -198,7 +206,7 @@ export const baseFloors = (k: number) => (k <= 20 ? 200 : k <= 30 ? 250 : k <= 4
  * share, rounded down; at least 1. Whole numbers throughout (`floorReq` in
  * hundredths of a percent), so the schedule is exact. */
 export function floorsFor(k: number, o: ShrineOwner, floorReq: number) {
-  const base = Math.max(1, baseFloors(k) + researched(o.archives, "shrineFloors", 0));
+  const base = Math.max(1, baseFloors(k) + researched(o.archives, "shrineFloors"));
   return Math.max(1, Math.floor((base * (10_000 - floorReq)) / 10_000));
 }
 
@@ -229,6 +237,15 @@ export function nextBoonFloor(floor: number, picked: readonly BoonId[], o: Shrin
   return at;
 }
 
+/** The floor (its number) the run's latest boon was earned on: the sum of
+ * the intervals of the boons earned so far, 0 before the first. */
+export function lastBoonFloor(floor: number, picked: readonly BoonId[], o: ShrineOwner) {
+  const req = boonEffects(picked, o).floorReq, earned = boonsEarned(floor, picked, o);
+  let at = 0;
+  for (let k = 1; k <= earned; k++) at += floorsFor(k, o, req);
+  return at;
+}
+
 // --- Offers ---
 
 /** What the Shrine Boons page keeps between runs: Auto Pick on or off,
@@ -246,23 +263,23 @@ export type ShrineRun = { picked: BoonId[]; rolls: number; offer?: BoonId[]; app
 export type OfferOwner = ShrineOwner & { shrines: ShrinesSave };
 
 /** The boons banned now: the first as many as Ban Boons research allows. */
-export const bans = (o: OfferOwner) => o.shrines.banned.slice(0, researched(o.archives, "boonBans", 0));
+export const bans = (o: OfferOwner) => o.shrines.banned.slice(0, researched(o.archives, "boonBans"));
 /** The boons Auto Pick ranks now, best first: as many as Auto Pick Ranking
  * research allows, banned ones left out. */
 export function ranked(o: OfferOwner) {
   const banned = bans(o);
-  return o.shrines.ranking.filter((id) => !banned.includes(id)).slice(0, researched(o.archives, "boonRanks", 0));
+  return o.shrines.ranking.filter((id) => !banned.includes(id)).slice(0, researched(o.archives, "boonRanks"));
 }
 /** The First Boon Choice now: researched, chosen and not banned. */
 export function firstChoice(o: OfferOwner) {
   const id = o.shrines.firstChoice;
-  return id && researched(o.archives, "firstBoonChoice", 0) && !bans(o).includes(id) && boon(id).kind === "standard" ? id : undefined;
+  return id && researched(o.archives, "firstBoonChoice") && !bans(o).includes(id) && boon(id).kind === "standard" ? id : undefined;
 }
 /** How many boons an offer gives: 2, and one more a level of Boon Option
  * Quantity. */
-export const offerSize = (o: OfferOwner) => researched(o.archives, "boonOptions", 2);
+export const offerSize = (o: OfferOwner) => researched(o.archives, "boonOptions");
 /** Whether Auto Pick can be turned on. */
-export const autoPickOpen = (o: ShrineOwner) => researched(o.archives, "autoPickBoons", 0) > 0;
+export const autoPickOpen = (o: ShrineOwner) => researched(o.archives, "autoPickBoons") > 0;
 
 /** Mixed into the run seed to start the offers' stream. */
 const SHRINE_SALT = 0x5a1e7;
@@ -327,8 +344,13 @@ export function rescaleHero(stats: HeroStats, before: ShrineRun["applied"] & obj
   for (const stat of HERO_FACTORS) {
     const from = before[stat], to = after[stat];
     if (stat === "parry" || from === to || stats[stat] === undefined) continue;
-    stats[stat] = snap((stats[stat]! * to) / from);
-    if (stat === "maxHp" && stats.hp !== undefined && stats.hp > 0) stats.hp = Math.max(1, Math.min(stats.maxHp, snap((stats.hp * to) / from)));
+    const was = stats[stat]!;
+    stats[stat] = snap((was * to) / from);
+    // HP Overheal holds above max keeps its share too.
+    if (stat === "maxHp" && stats.hp !== undefined && stats.hp > 0) {
+      const hp = snap((stats.hp * to) / from);
+      stats.hp = Math.max(1, stats.hp > was ? hp : Math.min(stats.maxHp, hp));
+    }
   }
   if (after.parry !== before.parry || after.parryBonus !== before.parryBonus) {
     const own = Math.max(0, (stats.parry ?? 0) - before.parryBonus) / before.parry, parry = Math.min(PARRY_CAP, snap(own * after.parry + after.parryBonus));

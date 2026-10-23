@@ -1,5 +1,4 @@
 import { ProvingGroundsDialog } from "./ui/proving-grounds-dialog.ts";
-import { deckCards } from "./cards.ts";
 import type { UpgradeId } from "./config.ts";
 import type { TreeId } from "./skill-trees.ts";
 import "./style.css";
@@ -15,6 +14,14 @@ import "./arcade.css";
 import "./system.css";
 import "./orbit.css";
 import "./pixel.css";
+import "./doodle.css";
+import "./murk.css";
+import "./ui-sprites.css";
+import { bindSpriteImages, drawKit, onSpritesLoaded } from "./sprite-kit.ts";
+import { usesGameSprites } from "./sprite-style.ts";
+import { onSpriteFontLoaded } from "./sprite-font.ts";
+import { gameLook } from "./theme-collection.ts";
+import { themedBoardOf } from "./themed-boards.ts";
 import { load, persist } from "./save.ts";
 import { stampProfile } from "./profile.ts";
 import { Game } from "./state.ts";
@@ -28,9 +35,11 @@ import { isBoard, type AppContext, type Tab } from "./ui/app.ts";
 import { el, ticketIcon } from "./ui/dom.ts";
 import { buildShell } from "./ui/shell.ts";
 import { BoardOverlay } from "./ui/board-overlay.ts";
-import { boardHeadingStale, flashRed, renderAdButton, renderEventsButtons, renderMailButton, renderMissionsButton, renderShopDot, renderTournamentButton, renderBoardHeading, renderHud, renderVitals, purseFrame, togglePurseRates, gearWaiting, upgradesWaiting, dismissResearch } from "./ui/hud.ts";
+import { CardLevelUps } from "./ui/card-level-up.ts";
+import { boardHeadingStale, flashRed, renderAdButton, renderEventsButtons, renderMailButton, renderMissionsButton, renderShopDot, renderTournamentButton, renderBoardHeading, renderHud, renderVitals, purseFrame, togglePurseRates } from "./ui/hud.ts";
 import { ResearchPage } from "./ui/research-page.ts";
 import { confirmAction, RunEndDialog } from "./ui/dialogs.ts";
+import { showCurrencies } from "./ui/currencies-dialog.ts";
 import { RunNotesDialog } from "./ui/run-notes-dialog.ts";
 import { closeRunMenu, toggleRunMenu } from "./ui/run-menu.ts";
 import { Cinematic } from "./ui/cinematic.ts";
@@ -38,7 +47,6 @@ import { GoalsPage } from "./ui/goals-page.ts";
 import { SkillTreePage } from "./ui/skill-tree-page.ts";
 import { ResearchToasts, researchToast, trainingToast } from "./ui/research-toast.ts";
 import { GearPage } from "./ui/gear-page.ts";
-import { equipmentWaiting } from "./equipment/inventory.ts";
 import { DeckPage } from "./ui/deck-page.ts";
 import { RunTrainingBar } from "./ui/run-training-bar.ts";
 import { renderBoardLesson } from "./ui/board-lesson.ts";
@@ -52,6 +60,7 @@ import { stubTournament } from "./tournament/server.ts";
 import { TournamentPage } from "./ui/tournament-page.ts";
 import { revealReward } from "./ui/reward-reveal.ts";
 import { toggleGoldBonusBox } from "./ui/gold-bonus-box.ts";
+import { refreshEnemyOddsBox, toggleEnemyOddsBox } from "./ui/enemy-odds-box.ts";
 import { MailClient } from "./mail/client.ts";
 import { postStubMail, stubMail } from "./mail/server.ts";
 import { MailDialog } from "./ui/mail-dialog.ts";
@@ -66,6 +75,7 @@ import { themeToast } from "./ui/theme-menu.ts";
 // Wires the pages together: builds the shell, creates the game and renderer,
 // and routes navigation, HUD refreshes and input between the ui/ modules.
 
+bindSpriteImages();
 buildShell(document.querySelector<HTMLDivElement>("#app")!);
 const game = new Game(load());
 // A new profile (or one from before profiles kept the date) is made now.
@@ -73,14 +83,27 @@ stampProfile(game.save, game.clock());
 applyUiTheme(game.save);
 bindMedievalFeedback(() => uiLook(game.save) === "medieval", () => game.save.settings.reduceMotion);
 // The frame loop settles fights as they finish playing out.
-game.playsFights = true;
+game.fights.playsFights = true;
 const renderer = new Renderer(document.querySelector("#world")!, game);
-{
+onSpriteFontLoaded(() => renderVitals(game));
+window.addEventListener("resize", () => renderVitals(game));
+function renderPortrait() {
   const portraitCtx = (document.querySelector("#portrait-sprite") as HTMLCanvasElement).getContext("2d")!;
+  portraitCtx.clearRect(0, 0, 24, 24);
+  const themed = themedBoardOf(gameLook(game.save));
+  if (themed) {
+    portraitCtx.save();
+    themed.hero(portraitCtx, game.facing);
+    portraitCtx.restore();
+    return;
+  }
+  if (usesGameSprites(game.save) && drawKit(portraitCtx, "hero-down")) return;
   if (game.save.settings.spritesOff || !drawGameSprite(portraitCtx, "player")) {
     Renderer.drawHero(portraitCtx);
   }
 }
+renderPortrait();
+onSpritesLoaded(renderPortrait);
 let tab: Tab = "tower";
 const modal = el("modal") as HTMLDialogElement;
 const ctx: AppContext = {
@@ -103,6 +126,7 @@ const tournamentPage = new TournamentPage(ctx, tournament, refreshTournament);
 const mail = new MailClient(game.mail, stubMail(() => game.save, () => game.clock()));
 const mailDialog = new MailDialog(ctx, mail, refreshMail);
 // Tapping the forest's Blacksmith opens the Equipment screen, its Tournament Hall the Tournament page.
+const cardLevelUps = new CardLevelUps(game);
 const overlay = new BoardOverlay(game, renderer, openBlacksmith, () => navigate("tournament"), () => update());
 const skillTree = new SkillTreePage(ctx);
 const research = new ResearchPage(ctx);
@@ -155,6 +179,7 @@ const defendPage = new DefendPage(el("defend"), {
   persist: save,
   reduceMotion: () => game.save.settings.reduceMotion,
   devMode: () => game.save.settings.devMode,
+  sprites: () => usesGameSprites(game.save),
 });
 
 function save() {
@@ -163,16 +188,23 @@ function save() {
 }
 /** Refreshes the HUD from game state, saves, and asks a fallen hero's player what next. */
 function update() {
+  renderPortrait();
   followMode();
   if (boardHeadingStale(game)) renderBoardHeading(game, overlay);
   // Inside a run the tabs give way to an empty row, kept for the hand.
   document.querySelector("nav")!.classList.toggle("in-run", !game.run.outside);
-  // The Deck tutorial keeps the player on its page until they reorder the hand.
-  document.querySelectorAll<HTMLButtonElement>("[data-tab]").forEach((b) => (b.disabled = deck.teaching && b.dataset.tab !== "deck"));
+  // The Deck tutorials keep the player on its page until they reorder the
+  // hand, and the card points lesson leads them there and keeps them there
+  // until a point is spent: in the forest only the Deck tab can be pressed.
+  const deckOnly = deckLesson();
+  document.querySelectorAll<HTMLButtonElement>("[data-tab]").forEach((b) => (b.disabled = deckOnly && b.dataset.tab !== "deck"));
+  const forestHeld = isBoard(tab) && game.boardLesson === "cards";
+  document.querySelectorAll<HTMLElement>(".shell > :not(nav)").forEach((part) => (part.inert = forestHeld));
   renderHud(game, renderer, overlay);
   if (runNotes.open) runNotes.refresh();
+  refreshEnemyOddsBox(game);
   runTraining.render();
-  renderBoardLesson(game, tab === "tower", update);
+  renderBoardLesson(game, isBoard(tab), update);
   const themes = game.claimThemes();
   // A theme Dev mode grants while its look was chosen shows at once.
   if (themes.length) applyUiTheme(game.save);
@@ -226,20 +258,24 @@ const LOCKED_TABS = new Map<string, { skill: UpgradeId; tree: TreeId }>([
 ]);
 /** The pages topped by the currencies bar. */
 const CURRENCY_PAGES: string[] = ["upgrades", "research", "deck", "gear", "missions", "events"];
+/** Whether a lesson keeps the player on the Deck page, or leads them to it. */
+function deckLesson() {
+  return deck.teaching || game.boardLesson === "cards";
+}
 /** Opens page `requested`: `board` is the active mode's board. Leaving the
  * board inside a run pauses the hand, and coming back plays it on as it
  * was (`Game.pauseForPage`). */
 function navigate(requested: string) {
-  if (deck.teaching && requested !== "deck") return;
+  if (deckLesson() && requested !== "deck") return;
   const id = unlockTarget(requested === "board" ? game.mode : requested) as Tab;
   // Cinematic mode is the board's alone.
   if (!isBoard(id)) cinematic.exit();
   // Only the board plays a fight out: leaving it settles one still playing.
-  game.finishEncounter();
+  game.fights.finish();
   if (id !== "defend") defendPage.pause();
   const from = tab;
   tab = id;
-  clearDots(id);
+  if (id === "upgrades" || id === "gear" || id === "research" || id === "deck") game.notices.shown(id);
   deck.shown(id === "deck");
   // The Shop's Back returns to the page that opened it.
   if (id === "shop" && from !== "shop") shop.open(from);
@@ -250,7 +286,7 @@ function navigate(requested: string) {
   // And the Events and Relics screens'. A relic shown at full size goes with its screen.
   document.querySelector(".relic-pop")?.remove();
   // A newly opened Equipment screen greets the first visit to the Gear page.
-  if (id === "gear" && from !== "gear" && equipmentWaiting(game.save)) gear.openEquipment();
+  if (id === "gear" && from !== "gear" && game.notices.waiting("equipment")) gear.openEquipment();
   renderer.weather.silence();
   if (isBoard(id)) {
     game.switchMode(id);
@@ -269,15 +305,6 @@ function navigate(requested: string) {
   else if (id === "shrines" && from !== "shrines") shrines.open(from);
   else renderPage();
   update();
-}
-/** Opening the Upgrades page clears the dot the first Inspiration put on
- * it, the Gear page the dot the Gear skill put on it, the Research page
- * the run's Research dot, and the Deck page the dot new cards put on it. */
-function clearDots(id: Tab) {
-  if (id === "upgrades" && upgradesWaiting(game)) game.save.tutorials.upgrades = true;
-  if (id === "gear" && gearWaiting(game)) game.save.tutorials.gear = true;
-  if (id === "research") dismissResearch(game);
-  if (id === "deck") game.save.seen.cards = deckCards(game.save.upgrades);
 }
 /** Opens the Gear page on its Equipment screen. */
 function openBlacksmith() {
@@ -307,15 +334,22 @@ el("hand").onclick = (e) => {
   if (result === "noPath") flashRed(card);
   update();
 };
-// Ignore and Target: readied by their button, used by the next board tap.
-for (const c of ["ignore", "target"] as const)
+// With no scrollbar shown, a mouse wheel scrolls a hand wider than the screen sideways.
+el("hand").addEventListener("wheel", (e) => {
+  const row = el("hand");
+  if (!e.deltaY || row.scrollWidth <= row.clientWidth) return;
+  row.scrollLeft += e.deltaY;
+  e.preventDefault();
+}, { passive: false });
+// Ignore, Target and Bombs: readied by their button, used by the next board tap.
+for (const c of ["ignore", "target", "bomb"] as const)
   el(`${c}-stat`).onclick = () => {
     overlay.hide();
     if (game.arm(c) === "spent") flashRed(el(`${c}-stat`));
     update();
   };
 /** A board tap: in cinematic mode, a floating Gem's or one toward leaving
- * it; else where a readied Ignore or Target goes, else the overlay's. */
+ * it; else where a readied Ignore, Target or Bomb goes, else the overlay's. */
 function boardTap(x: number, y: number) {
   if (cinematic.active) {
     if (!game.gemFinder.collectAt(x, y)) cinematic.tap();
@@ -369,6 +403,8 @@ el("gold-ad").onclick = () => {
   update();
 };
 el("gold-bonus").onclick = () => toggleGoldBonusBox(game);
+el("base-enemy").onclick = () => toggleEnemyOddsBox(game);
+el("currencies-open").onclick = () => showCurrencies(modal, game);
 // The floor number (its tower and label with it) opens the run's notes, once Note Taking is researched.
 document.querySelector(".height")!.addEventListener("click", (e) => {
   if ((e.target as Element).closest("#height, #height-label, #height-tier")) runNotes.show();
@@ -420,8 +456,8 @@ el("shrines-button").onclick = () => {
   closeRunMenu();
   navigate("shrines");
 };
-// The run's Shrine button: the boons waiting to be picked, or those taken.
-el("shrine-stat").onclick = () => {
+// The run's Shrine bar: the boons waiting to be picked, or those taken.
+el("shrine-bar").onclick = () => {
   overlay.hide();
   showShrine(ctx);
 };
@@ -573,6 +609,7 @@ const loop = new FrameLoop({
     overlay.track();
     overlay.placeSign();
     overlay.showFreeTraining();
+    cardLevelUps.frame();
   },
   save,
 });

@@ -62,7 +62,7 @@ export const SLOT_EFFECTS: readonly SlotEffectDef[] = [
   fx("prospector", "Prospector", "fortune", "goldFind", 2, 0.08),
   fx("silverTongue", "Silver Tongue", "fortune", "silverFind", 2, 0.08),
   fx("scavenger", "Scavenger", "fortune", "materialFind", 3, 0.12),
-  fx("bounty", "Bounty", "fortune", "bossDrops", 1, 0.03),
+  fx("bounty", "Bounty", "fortune", "chestFind", 1, 0.03),
   fx("purseStrings", "Purse Strings", "fortune", "startSilver", 3, 0.3),
   fx("studious", "Studious", "lore", "xpGain", 2, 0.08),
   fx("spireScholar", "Spire Scholar", "lore", "xpGain", 3.5, 0.12, "tower"),

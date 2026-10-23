@@ -1,12 +1,11 @@
 // Where equipment comes from: Gem pulls (Unique pieces of a chosen
-// category, with pity), boss drops (Standard pieces) and upgrade materials
-// from kills. Each takes the randomness it draws from, so tests pass a
+// category, with pity), and the CHEST card's Equipment Chests (Standard
+// pieces) and Supply Chests (upgrade materials). Each takes the randomness it draws from, so tests pass a
 // seeded stream; the rates are in balance.ts.
-import type { EnemyStrength } from "../entities.ts";
 import { random } from "../random.ts";
 import { CATEGORY_IDS, materialOf, standardOf, uniquesOf, type CategoryId, type EquipMaterialId } from "./catalog.ts";
 import {
-  BOSS_DROPS, EQUIP_RARITIES, MATERIAL_DROPS, MATERIAL_FLOORS, PITY, PULL_RATES,
+  EQUIP_RARITIES, EQUIPMENT_CHEST_RARITY, PITY, PULL_RATES, SUPPLY_CHEST_MATERIALS,
   type EquipRarity,
 } from "./balance.ts";
 import { addItem, salvageOf, type EquipItem, type EquipmentSave } from "./inventory.ts";
@@ -56,21 +55,17 @@ export function pull(e: EquipmentSave, category: CategoryId | "all", count: numb
   });
 }
 
-/** A beaten boss's equipment: a Standard piece of a random category at a
- * rolled rarity, by its strength's chance raised by `bonus` percentage
- * points, on any floor. Null when it drops none. */
-export function rollBossDrop(strength: EnemyStrength, bonus: number, rng: () => number) {
-  const table = BOSS_DROPS[strength];
-  if (!table) return null;
-  if (rng() * 100 >= table.chance + bonus) return null;
-  const rarity = rollRarity(table.rarity, rng());
+/** An Equipment Chest's piece: a Standard piece of a random category at a
+ * rarity rolled by `EQUIPMENT_CHEST_RARITY`. */
+export function rollChestPiece(rng: () => number) {
+  const rarity = rollRarity(EQUIPMENT_CHEST_RARITY, rng());
   const category = pick(CATEGORY_IDS, rng());
   return { def: standardOf(category).id, rarity, category };
 }
 
-/** Takes a boss drop into the inventory, or salvages it at once into its
- * material: a Common one while the player has Auto-salvage on (`auto`),
- * any one when the inventory is full. */
+/** Takes an Equipment Chest's piece into the inventory, or salvages it at
+ * once into its material: a Common one while the player has Auto-salvage on
+ * (`auto`), any one when the inventory is full. */
 export function keepDrop(e: EquipmentSave, drop: { def: string; rarity: EquipRarity; category: CategoryId }) {
   const auto = e.autoSalvage && drop.rarity === "common";
   const item = auto ? null : addItem(e, drop.def, drop.rarity);
@@ -80,13 +75,11 @@ export function keepDrop(e: EquipmentSave, drop: { def: string; rarity: EquipRar
   return { item: null, salvaged, auto };
 }
 
-/** The upgrade materials a kill drops on equivalent floor `floor`: its
- * strength's chance, then its amount times 1 + ⌊floor / 25⌋, raised by
- * `find` percent (rounded down), of one category at random. */
-export function rollMaterials(strength: EnemyStrength, floor: number, find: number, rng: () => number): { id: EquipMaterialId; quantity: number } | null {
-  const d = MATERIAL_DROPS[strength];
-  if (rng() * 100 >= d.chance) return null;
-  const base = d.amount * (1 + Math.floor(Math.max(0, floor) / MATERIAL_FLOORS));
+/** A Supply Chest's upgrade materials in tower `tier`: 5 in tower I and 2
+ * more each tower after (`SUPPLY_CHEST_MATERIALS`), raised by `find`
+ * percent (rounded down), of one category at random. */
+export function rollSupplies(tier: number, find: number, rng: () => number): { id: EquipMaterialId; quantity: number } {
+  const base = SUPPLY_CHEST_MATERIALS.base + SUPPLY_CHEST_MATERIALS.perTower * (Math.max(1, tier) - 1);
   const quantity = Math.max(base, Math.floor((base * (100 + find)) / 100));
   return { id: materialOf(pick(CATEGORY_IDS, rng())), quantity };
 }

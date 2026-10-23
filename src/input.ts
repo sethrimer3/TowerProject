@@ -15,7 +15,10 @@ export function bindInput(
   cinematic: PinchTarget,
 ) {
   const active = () => isTower() && !document.querySelector("dialog[open]");
+  // Swipes and the keyboard step the hero only in Dev mode; otherwise the
+  // forest is walked by taps, and the hand moves the hero inside a run.
   const manual = (dx: number, dy: number) => {
+    if (!game.save.settings.devMode) return;
     game.stepManually(dx, dy);
     changed();
   };
@@ -98,12 +101,5 @@ export function bindInput(
       cinematic.pinch(e.deltaY > 0 ? "in" : "out");
     },
     { passive: false },
-  );
-  document.querySelectorAll<HTMLButtonElement>("[data-move]").forEach(
-    (b) =>
-      (b.onclick = () => {
-        const [dx, dy] = b.dataset.move!.split(",").map(Number);
-        manual(dx, dy);
-      }),
   );
 }

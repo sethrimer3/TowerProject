@@ -1,4 +1,5 @@
-import type { TowerRun, Tile } from "./entities.ts";
+import type { TowerRun } from "./runs.ts";
+import type { Tile } from "./entities.ts";
 import { predict } from "./combat.ts";
 import type { RoomWorld } from "./tower/room-world.ts";
 import { doorCost } from "./doors.ts";

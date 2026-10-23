@@ -22,6 +22,7 @@ import { fitLayout, type Layout } from "./layout.ts";
 import { generateCity, type CityMap } from "./citygen.ts";
 import { DefendSim } from "./sim.ts";
 import { DefendRenderer } from "./render.ts";
+import { spriteRevision } from "../sprite-kit.ts";
 import type { Overlay } from "./edit-overlay.ts";
 import { paintIcon, type IconItem } from "./structure-art.ts";
 import { BoardPointers, eventCell } from "./board-pointers.ts";
@@ -33,6 +34,7 @@ import { replay, sparksOver } from "../ui/flourish.ts";
 import { available, buyBomb, buyItem, buySpeed3, buyUpgrade, canAfford, type DefendSave, type Wallet } from "./progress.ts";
 
 export type DefendHost = {
+  sprites?(): boolean;
   save(): DefendSave;
   wallet(): Wallet;
   setWallet(w: Wallet): void;
@@ -71,6 +73,7 @@ export class DefendPage {
   private messageT = 0;
   private newRecord = 0;
   private built = false;
+  private iconRevision = "";
   private weather: Weather | null = null;
   /** How far night has fallen (0–1); it follows boss waves. */
   private night = 0;
@@ -290,7 +293,7 @@ export class DefendPage {
               <canvas width="48" height="48" data-icon="${e.icon}"></canvas><span>${e.name}</span><b>×${e.count}</b></button>`,
         )
         .join("");
-    el.querySelectorAll<HTMLCanvasElement>("canvas[data-icon]").forEach((c) => paintIcon(c, c.dataset.icon as IconItem));
+    el.querySelectorAll<HTMLCanvasElement>("canvas[data-icon]").forEach((c) => paintIcon(c, c.dataset.icon as IconItem, this.host.sprites?.() ?? false));
     el.querySelectorAll<HTMLButtonElement>("[data-item]").forEach((b) => {
       b.onpointerdown = (e) => this.pressPalette(b.dataset.item!, e);
     });
@@ -486,12 +489,19 @@ export class DefendPage {
   private draw() {
     if (!this.renderer || !this.renderer.canvas.width) return;
     const map = this.sim ? this.sim.map : this.currentMap();
+    const styledSprites = this.host.sprites?.() ?? false;
+    const iconRevision = `${styledSprites}:${spriteRevision()}`;
+    if (iconRevision !== this.iconRevision) {
+      this.iconRevision = iconRevision;
+      this.root.querySelectorAll<HTMLCanvasElement>("canvas[data-icon]").forEach(c => paintIcon(c, c.dataset.icon as IconItem, styledSprites));
+    }
     this.renderer.draw(map, this.sim, this.overlay(), {
       grid: this.phase === "build",
       weather: this.weather,
       night: this.night,
       now: performance.now(),
       reduceMotion: this.host.reduceMotion(),
+      styledSprites,
     });
   }
 
@@ -580,7 +590,7 @@ export class DefendPage {
       <h3 class="defend-section">Consumables</h3>${bomb}
       <h3 class="defend-section">Battle</h3>${speed}
       <h3 class="defend-section">Upgrades</h3><p class="hint">Upgrades apply to every building of that type.</p>${upgrades}`;
-    el.querySelectorAll<HTMLCanvasElement>("canvas[data-icon]").forEach((c) => paintIcon(c, c.dataset.icon as IconItem));
+    el.querySelectorAll<HTMLCanvasElement>("canvas[data-icon]").forEach((c) => paintIcon(c, c.dataset.icon as IconItem, this.host.sprites?.() ?? false));
     /** A purchase rings like coins and stamps its card once the list is redrawn. */
     const commit = (ok: boolean, card: string) => {
       if (!ok) return;

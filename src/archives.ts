@@ -1,6 +1,6 @@
 import { FOCUS_PER_RUN, IGNORE_PER_RUN, REGAIN_FLOORS, TARGET_PER_RUN, levelForXp, type UpgradeId } from "./config.ts";
 import type { Settings } from "./settings.ts";
-import type { Save } from "./entities.ts";
+import type { Save } from "./save-shape.ts";
 import type { Profile } from "./profile.ts";
 import { goalUnlocked, type GoalUnlock } from "./goals.ts";
 import { finite as finiteIn, isRecord, wholeIn } from "./decode.ts";
@@ -100,8 +100,8 @@ export const RESEARCH_TARGETS = {
    * pays, from 100. */
   goldBonus: { name: "Gold Bonus", base: 100, shown: percent },
   /** The chance, in tenths of a percent, that a new floor climbed hands
-   * the hero a yellow key. */
-  yellowKeyChance: { name: "Yellow Key Chance", base: 0, shown: tenths },
+   * the hero a gold key. */
+  yellowKeyChance: { name: "Gold Key Chance", base: 0, shown: tenths },
   /** How much of a key each key colour a door takes costs, in tenths of a
    * percent, from 1,000 (a whole key). */
   keyCost: { name: "Key Cost", base: 1000, shown: tenths },
@@ -114,6 +114,8 @@ export const RESEARCH_TARGETS = {
   instakillGold: { name: "Gold per Instakill", base: 100, shown: percent },
   /** Silver a run has in hand when it goes inside. */
   startingSilver: { name: "Starting Silver", base: 0, shown: count },
+  /** The percent of the Silver its skipped floors would have paid that a Warp run starts with (warp-loot.ts). */
+  warpLoot: { name: "Warp Loot", base: 0, shown: percent },
   /** How fast trainers work: a rank of `d` takes d / (1 + speed). */
   trainingSpeed: { name: "Training Speed", base: 0, shown: speed },
   /** What a trainer's Gold is cut by, in tenths of a percent. */
@@ -316,6 +318,23 @@ const dashRegenLevels = (): ResearchLevel[] => {
   const gold = share(goldTotal, 1.6).map(Math.round), hours = share(hoursTotal, 1.12);
   gold[n - 1]! += goldTotal - gold.reduce((a, b) => a + b, 0);
   return gold.map((g, i) => ({ gold: g, hours: hours[i]!, effect: { target: "dashRegenSteps", op: "add", value: 1 } }));
+};
+
+/** Warp Loot: +2% a level, for 50 levels. Gold is Dash's for the first 25
+ * levels (250 × n × 2^(n−1), 105 billion at 25), then 40% more each level
+ * (about 470 trillion at 50; 1.6 quadrillion in all). Time is Dash's in all
+ * (697 days), spread so level n weighs n × 1.095^(n−1): Dash's growth
+ * stretched over twice the levels (26 minutes at level 1, 9.7 hours at 10,
+ * 3.9 days at 25 and 76 days at 50). */
+const warpLootLevels = (): ResearchLevel[] => {
+  const n = 50, dash = dashLevels("dashTiles"), last = dash[dash.length - 1]!.gold;
+  const hoursTotal = dash.reduce((a, l) => a + l.hours, 0);
+  const weights = Array.from({ length: n }, (_, i) => (i + 1) * intPow(1.095, i)), sum = weights.reduce((a, b) => a + b, 0);
+  return weights.map((w, i): ResearchLevel => ({
+    gold: dash[i]?.gold ?? Math.round(last * intPow(1.4, i + 1 - dash.length)),
+    hours: (hoursTotal * w) / sum,
+    effect: { target: "warpLoot", op: "add", value: 2 },
+  }));
 };
 
 /** Max Interest's limits by level, up from 50 Silver a floor. */
@@ -658,8 +677,8 @@ export const RESEARCH = {
     levels: countLevels("floorSkipGold", 11, 10),
   },
   findYellowKey: {
-    name: "Find Yellow Key",
-    description: "Learn where climbers drop things: each new floor climbed has a chance to hand you a yellow key.",
+    name: "Find Gold Key",
+    description: "Learn where climbers drop things: each new floor climbed has a chance to hand you a gold key.",
     categories: ["economy"],
     requires: [{ upgrade: "findYellowKey" }],
     levels: hundredLevels("yellowKeyChance", 4).slice(0, 50),
@@ -673,7 +692,7 @@ export const RESEARCH = {
   },
   interest: {
     name: "Interest %",
-    description: (a) => `Put your Silver to work: each new floor climbed adds a share of the Silver you hold, after the floor's other Silver, up to Max Interest (now ${interestCap(a).toLocaleString("en-US")} Silver a floor).`,
+    description: (a) => `Put your Silver to work: each new floor climbed adds a share of the Silver you hold, after the floor's other Silver, up to Max Interest (now ${researched(a, "interestCap").toLocaleString("en-US")} Silver a floor).`,
     categories: ["economy"],
     requires: [{ upgrade: "interest" }],
     levels: hundredLevels("interestRate", 1),
@@ -684,6 +703,13 @@ export const RESEARCH = {
     categories: ["economy"],
     requires: [{ upgrade: "maxInterest" }],
     levels: maxInterestLevels(),
+  },
+  warpLoot: {
+    name: "Warp Loot",
+    description: "Pick the pockets of the climb you skip: a run that starts above floor 1 (a Warp, or a Retry from one) goes inside with a share of the Silver its skipped floors' kills, Wishing Well and Interest would have paid, estimated from your training and research.",
+    categories: ["economy"],
+    requires: [{ upgrade: "archives" }, { goalUnlock: "warpLoot" }],
+    levels: warpLootLevels(),
   },
   mug: {
     name: "Mug",
@@ -792,7 +818,7 @@ export const RESEARCH = {
   },
   badgeSlots: {
     name: "Badge Slots",
-    description: "Each card holds one more badge a level, arranged on the Deck page. A card's badges must not conflict: a key colour's < and ≥ gates (YK < and YK ≥), or Effective and Dampen, can't share one.",
+    description: "Each card holds one more badge a level, arranged on the Deck page. A card's badges must not conflict: a key colour's < and ≥ gates (GK < and GK ≥), or Effective and Dampen, can't share one.",
     categories: ["abilities"],
     requires: [{ upgrade: "archives" }, { upgrade: "cardBadges" }, { goalUnlock: "badgeSlots" }],
     // 1 billion Gold and 4 days, then 100 billion and 20 days.
@@ -873,10 +899,9 @@ export function maxLevel(id: ResearchId, upgrades?: Record<UpgradeId, number>) {
 export const nextLevel = (a: ArchivesSave, id: ResearchId, upgrades?: Record<UpgradeId, number>): ResearchLevel | undefined =>
   researchLevel(a, id) < maxLevel(id, upgrades) ? research(id).levels[researchLevel(a, id)] : undefined;
 
-/** The most Silver Interest pays a floor: Max Interest research, from its target's base. */
-export const interestCap = (a: ArchivesSave) => researched(a, "interestCap", RESEARCH_TARGETS.interestCap.base);
-/** `base` changed by every completed research level aimed at `target`. */
-export function researched(a: ArchivesSave, target: ResearchTarget, base: number) {
+/** `base` (the base `RESEARCH_TARGETS` declares for `target`, unless given)
+ * changed by every completed research level aimed at `target`. */
+export function researched(a: ArchivesSave, target: ResearchTarget, base: number = RESEARCH_TARGETS[target].base) {
   let add = 0, multiply = 1, set: number | undefined;
   for (const id of RESEARCH_IDS) {
     for (const { effect } of research(id).levels.slice(0, researchLevel(a, id))) {
@@ -896,14 +921,14 @@ export const withNextLevel = (a: ArchivesSave, id: ResearchId): ArchivesSave =>
 /** How long `level` takes with the research speed the Archives have now,
  * in ms. The definition keeps its own hours. */
 export const duration = (a: ArchivesSave, level: ResearchLevel) =>
-  Math.round((level.hours * 3_600_000) / (1 + researched(a, "researchSpeed", 0)));
+  Math.round((level.hours * 3_600_000) / (1 + researched(a, "researchSpeed")));
 
 /** The Gold `level` costs with the Research Cost Discount the Archives have
  * now. The definition keeps its own Gold. */
 export const price = (a: ArchivesSave, level: ResearchLevel) =>
-  Math.round((level.gold * researched(a, "researchCost", 1000)) / 1000);
+  Math.round((level.gold * researched(a, "researchCost")) / 1000);
 /** The research speed's factor: a level of `d` hours takes d / factor. */
-const speedFactor = (a: ArchivesSave) => 1 + researched(a, "researchSpeed", 0);
+const speedFactor = (a: ArchivesSave) => 1 + researched(a, "researchSpeed");
 
 const met = (o: ArchivesOwner, r: ResearchRequirement) =>
   "upgrade" in r ? o.upgrades[r.upgrade] > 0
@@ -923,6 +948,10 @@ export function status(o: ArchivesOwner, id: ResearchId): ResearchStatus {
   if (missing(o, id).length) return "locked";
   return nextLevel(o.archives, id, o.upgrades) ? "available" : "completed";
 }
+
+/** How many projects are completed (at their most levels open, each in a
+ * gold box), which makes Rush cheaper (`finishGems`). */
+export const researchCompleted = (o: ArchivesOwner) => RESEARCH_IDS.filter((id) => status(o, id) === "completed").length;
 
 /** A job's share done at `now`, 0–1 (a clock set back reads as no progress). */
 export const jobProgress = (job: ResearchJob, now: number) =>

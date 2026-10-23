@@ -1,6 +1,6 @@
-import { FOCUS_PER_RUN, IGNORE_PER_RUN, REGAIN_FLOORS, TARGET_PER_RUN, type UpgradeId } from "./config.ts";
+import type { UpgradeId } from "./config.ts";
 import { researched, type ArchivesSave, type ResearchTarget } from "./archives.ts";
-import type { Run } from "./entities.ts";
+import type { Run } from "./runs.ts";
 
 // A run's charges: the uses of Focus, Ignore and Target it has. Each opens
 // with its skill, starts every run with its research's count, and, once its
@@ -15,19 +15,18 @@ export const CHARGES: readonly Charge[] = ["focus", "ignore", "target"];
 type ChargeDef = {
   /** The skill that opens it. */
   skill: UpgradeId;
-  /** Uses a run starts with, and the research that adds more. */
+  /** The research that adds uses, from its target's base: the uses a run starts with. */
   perRun: ResearchTarget;
-  base: number;
-  /** The skill that regains it, and the research that shortens the wait. */
+  /** The skill that regains it, and the research that shortens the wait, from its target's base. */
   regain: UpgradeId;
   every: ResearchTarget;
   /** The run's count of uses spent. */
   used: "focusUsed" | "ignoreUsed" | "targetUsed";
 };
 const DEFS: Record<Charge, ChargeDef> = {
-  focus: { skill: "focus", perRun: "focusPerRun", base: FOCUS_PER_RUN, regain: "refocus", every: "refocusFloors", used: "focusUsed" },
-  ignore: { skill: "ignore", perRun: "ignorePerRun", base: IGNORE_PER_RUN, regain: "ignoreMore", every: "ignoreFloors", used: "ignoreUsed" },
-  target: { skill: "target", perRun: "targetPerRun", base: TARGET_PER_RUN, regain: "targetMore", every: "targetFloors", used: "targetUsed" },
+  focus: { skill: "focus", perRun: "focusPerRun", regain: "refocus", every: "refocusFloors", used: "focusUsed" },
+  ignore: { skill: "ignore", perRun: "ignorePerRun", regain: "ignoreMore", every: "ignoreFloors", used: "ignoreUsed" },
+  target: { skill: "target", perRun: "targetPerRun", regain: "targetMore", every: "targetFloors", used: "targetUsed" },
 };
 
 /** What the charges read from the profile. */
@@ -36,13 +35,13 @@ export type ChargeOwner = { upgrades: Record<UpgradeId, number>; archives: Archi
 /** Uses of `c` a run starts with: none without its skill. */
 export function chargesPerRun(o: ChargeOwner, c: Charge) {
   const d = DEFS[c];
-  return o.upgrades[d.skill] ? researched(o.archives, d.perRun, d.base) : 0;
+  return o.upgrades[d.skill] ? researched(o.archives, d.perRun) : 0;
 }
 /** New floors a run climbs to regain a use of `c`, or 0 without its regain
  * skill. */
 export function regainEvery(o: ChargeOwner, c: Charge) {
   const d = DEFS[c];
-  return o.upgrades[d.regain] ? Math.max(1, researched(o.archives, d.every, REGAIN_FLOORS)) : 0;
+  return o.upgrades[d.regain] ? Math.max(1, researched(o.archives, d.every)) : 0;
 }
 /** Uses of `c` the run has spent. */
 export const chargesUsed = (run: Run, c: Charge) => run[DEFS[c].used] ?? 0;

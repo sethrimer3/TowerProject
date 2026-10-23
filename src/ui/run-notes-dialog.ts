@@ -1,6 +1,10 @@
+import { controlIcon } from "./control-icon.ts";
+import { kitIcon } from "../sprite-kit.ts";
 import { researched } from "../archives.ts";
 import { KEY_NAMES } from "../doors.ts";
-import type { Mode, Run, Save } from "../entities.ts";
+import type { Mode } from "../entities.ts";
+import type { Run } from "../runs.ts";
+import type { Save } from "../save-shape.ts";
 import { EQUIP_MATERIALS, type EquipMaterialId } from "../equipment/catalog.ts";
 import { materialDef, type MaterialId } from "../materials.ts";
 import { MODES } from "../modes.ts";
@@ -13,7 +17,7 @@ import { capitalized, displayedProgress } from "./dom.ts";
 export type NotesSection = { title: string; rows: [string, string][] };
 
 /** Whether the run's notes can be read: Note Taking researched. */
-export const notesResearched = (save: Pick<Save, "archives">) => researched(save.archives, "runNotes", 0) > 0;
+export const notesResearched = (save: Pick<Save, "archives">) => researched(save.archives, "runNotes") > 0;
 
 const amount = (n: number) => whole(n).toLocaleString("en-US");
 /** A length of time as "1h 02m 05s" (minutes and seconds alone under an hour). */
@@ -67,7 +71,7 @@ export function notesText(title: string, sections: NotesSection[]) {
 }
 
 /** Two sheets, one over the other: the copy button's icon. */
-export const COPY_ICON = `<svg class="copy-icon" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.5a1.5 1.5 0 0 0-1.5-1.5H4A1.5 1.5 0 0 0 2.5 3v6.5A1.5 1.5 0 0 0 4 11h.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>`;
+export const COPY_ICON = kitIcon("ui-copy", `<svg class="copy-icon" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 3.5v-.5a1.5 1.5 0 0 0-1.5-1.5H4A1.5 1.5 0 0 0 2.5 3v6.5A1.5 1.5 0 0 0 4 11h.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>`, "copy-icon");
 /** The copy button, its id `id`. */
 export const copyButton = (id: string) => `<button id="${id}" class="copy-button" aria-label="Copy to clipboard" title="Copy to clipboard">${COPY_ICON}</button>`;
 
@@ -154,7 +158,7 @@ export class RunNotesDialog {
   /** The dialog's frame: the X, the copy button, the heading, and the body the tables fill. */
   private frame() {
     const { game } = this.ctx;
-    this.dialog.innerHTML = `<button id="run-notes-close" class="dialog-x" aria-label="Close" title="Close">✕</button>${copyButton("run-notes-copy")}<small>NOTE TAKING</small><h2 id="run-notes-title"></h2><div class="notes-body"></div>`;
+    this.dialog.innerHTML = `<button id="run-notes-close" class="dialog-x" aria-label="Close" title="Close">${controlIcon("close")}</button>${copyButton("run-notes-copy")}<small>NOTE TAKING</small><h2 id="run-notes-title"></h2><div class="notes-body"></div>`;
     this.dialog.querySelector<HTMLButtonElement>("#run-notes-close")!.onclick = () => this.dialog.close();
     const copy = this.dialog.querySelector<HTMLButtonElement>("#run-notes-copy")!;
     copy.onclick = () => copyText(copy, notesText(this.dialog.querySelector("#run-notes-title")!.textContent ?? "", notesSections(game.save, game.mode, game.run, game.clock())));

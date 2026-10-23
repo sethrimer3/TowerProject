@@ -1,5 +1,6 @@
-// The metal bars treasure chests hold, which the Defend page spends.
-// (Equipment's upgrade materials are its own, in equipment/catalog.ts.)
+// The metal bars the Defend page spends, which nothing finds any more:
+// treasure chests stopped holding them. (Equipment's upgrade materials are
+// its own, in equipment/catalog.ts.)
 
 export type MetalId =
   | "iron"
@@ -37,26 +38,6 @@ export const METALS: { id: MetalId; name: string; materialId: MaterialId; unlock
   { id: "starsteel", name: "Starsteel", materialId: "starsteelBar", unlockFloor: 75, power: 5.0 },
   { id: "voidsteel", name: "Voidsteel", materialId: "voidsteelBar", unlockFloor: 100, power: 7.0 },
 ];
-
-/** Weighting brackets applied once the base 28% chest metal roll succeeds. */
-const METAL_WEIGHT_BRACKETS: { min: number; max: number; weights: Partial<Record<MetalId, number>> }[] = [
-  { min: 0, max: 14, weights: { iron: 1.0 } },
-  { min: 15, max: 29, weights: { iron: 0.7, steel: 0.3 } },
-  { min: 30, max: 49, weights: { iron: 0.35, steel: 0.45, silversteel: 0.2 } },
-  { min: 50, max: 74, weights: { iron: 0.15, steel: 0.25, silversteel: 0.4, embersteel: 0.2 } },
-  { min: 75, max: 99, weights: { steel: 0.1, silversteel: 0.2, embersteel: 0.4, starsteel: 0.3 } },
-  { min: 100, max: Infinity, weights: { silversteel: 0.1, embersteel: 0.2, starsteel: 0.4, voidsteel: 0.3 } },
-];
-
-export function metalWeightsForFloor(E: number): Partial<Record<MetalId, number>> {
-  return (METAL_WEIGHT_BRACKETS.find((b) => E >= b.min && E <= b.max) ?? METAL_WEIGHT_BRACKETS[0]).weights;
-}
-
-/** Stack size 2-5, +1 to both bounds every 40 equivalent floors. */
-export function metalStackRange(E: number): { min: number; max: number } {
-  const bonus = Math.floor(E / 40);
-  return { min: 2 + bonus, max: 5 + bonus };
-}
 
 export function metalUnlocked(id: MetalId, E: number): boolean {
   return E >= METALS.find((m) => m.id === id)!.unlockFloor;

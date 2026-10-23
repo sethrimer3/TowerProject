@@ -1,5 +1,5 @@
-import type { Tile, Torch } from "./entities.ts";
-import type { Facing } from "./state.ts";
+import type { ThemedBoard } from "./themed-board.ts";
+import { drawFlyers } from "./flyer-art.ts";
 import type { GameLook } from "./theme-collection.ts";
 import { forEachViewTile, tileTransform, toTileSpace, type FrameContext } from "./render-frame.ts";
 import { NEON_BOARD } from "./neon-board.ts";
@@ -14,25 +14,8 @@ import { SYSTEM_BOARD } from "./system-board.ts";
 import { KROZ_BOARD } from "./kroz-board.ts";
 import { ORBIT_BOARD } from "./orbit-board.ts";
 import { PIXEL_BOARD } from "./pixel-board.ts";
-
-/** How a Game theme other than Classic draws the dungeon board in place of
- * its lit art: the ground, each tile's contents, torches and the hero, each
- * in tile space (24x24) but the ground. Lighting, glows and decor are off
- * while one is worn, until each has a version of its own. */
-export type ThemedBoard = {
-  /** The background, floor and walls over the whole board. */
-  ground(f: FrameContext): void;
-  /** One tile's contents (also as they rise off the board). */
-  contents(c: CanvasRenderingContext2D, t: Tile): void;
-  /** The Heart Door's heart on its own, as its toll rises off the door. */
-  heart(c: CanvasRenderingContext2D): void;
-  torch(c: CanvasRenderingContext2D, f: FrameContext, t: Torch): void;
-  /** The hero, facing `facing` (its last step), for a board whose hero turns. */
-  hero(c: CanvasRenderingContext2D, facing: Facing): void;
-  /** Drawn over the whole board after the hero, before the feedback
-   * overlays. */
-  over?(f: FrameContext): void;
-};
+import { DOODLE_BOARD } from "./doodle-board.ts";
+import { MURK_BOARD } from "./murk-board.ts";
 
 /** The Game theme looks that draw the board their own way. */
 export type ThemedLook = Exclude<GameLook, "classic">;
@@ -46,13 +29,15 @@ export const THEMED_BOARDS: Readonly<Record<ThemedLook, ThemedBoard>> = {
   kroz: KROZ_BOARD,
   orbit: ORBIT_BOARD,
   pixel: PIXEL_BOARD,
+  doodle: DOODLE_BOARD,
+  murk: MURK_BOARD,
 };
 /** How a Game theme look draws the board, or null for Classic's lit art. */
 export const themedBoardOf = (look: GameLook): ThemedBoard | null => (look === "classic" ? null : THEMED_BOARDS[look]);
 
 /** The dungeon board in a Game theme's own art: ground, contents (the enemy struck leaning
  * into its lunge), torches, then the route and the hero. */
-export function drawThemedBoard(f: FrameContext, board: ThemedBoard, lunge: { x: number; y: number; dx: number; dy: number }, drawRoute: () => void) {
+export function drawThemedBoard(f: FrameContext, board: ThemedBoard, lunge: { x: number; y: number; dx: number; dy: number }, drawRoute: () => void, hero: { x: number; y: number }, wrap: number) {
   const c = f.c;
   board.ground(f);
   forEachViewTile(f, (x, y) => {
@@ -75,5 +60,6 @@ export function drawThemedBoard(f: FrameContext, board: ThemedBoard, lunge: { x:
   c.setTransform(tileTransform(f, f.playerX, f.playerY));
   board.hero(c, f.heroFacing);
   c.restore();
+  drawFlyers(f, hero, wrap, (ctx, t) => board.contents(ctx, t), true);
   board.over?.(f);
 }

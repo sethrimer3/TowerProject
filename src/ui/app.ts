@@ -10,12 +10,12 @@ export const isBoard = (id: string): id is "tower" | "delve" => id === "tower" |
  * or a purchase in the save, never swap the save, run or mode), and the
  * commands that change the rest: its own, and those of its desks (Training,
  * the Archives, the Deck, Gear and Equipment). */
-export type PageGame = Readonly<Pick<Game, "mode" | "run" | "world" | "save" | "fallen" | "defeatShownUntil" | "handStuck" | "stepRules" | "enemyGold" | "free" | "maxSpeed" | "stepsPerSecond" | "treeWaiting" | "buyQuantity" | "buyQuantityFor" | "buyQuantities" | "canBeginTournament" | "undosLeft" | "canUndo" | "trainingView">> &
+export type PageGame = Readonly<Pick<Game, "mode" | "run" | "world" | "save" | "fallen" | "fights" | "handStuck" | "stepRules" | "enemyGold" | "free" | "maxSpeed" | "stepsPerSecond" | "buyQuantity" | "buyQuantityFor" | "buyQuantities" | "canBeginTournament" | "undosLeft" | "canUndo" | "trainingView" | "cardPointsLesson">> &
   Pick<
     Game,
     | "undo" | "acceptDefeat" | "stuckReport" | "retry" | "retryHeight" | "eraseAll" | "finish" | "setDevMode" | "wearTheme" | "buyTheme"
     | "claimGoal" | "warp" | "buy" | "setBuyQuantity" | "clock" | "buyOffer"
-    | "training" | "research" | "deck" | "badges" | "gear" | "equipment" | "tournament" | "mail" | "missions" | "events" | "shrine"
+    | "training" | "research" | "deck" | "cardTrees" | "cardBuys" | "badges" | "gear" | "equipment" | "tournament" | "mail" | "missions" | "events" | "shrine" | "notices"
   >;
 
 /** What pages and dialogs need from the app around them. */

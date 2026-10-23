@@ -4,11 +4,15 @@
  * uses for it. Code that needs a per-mode answer asks `MODES[mode]` rather
  * than branching on the mode; features only the Tower has still test for it. */
 import { START_X, TOWER_START_X, TOWER_WIDTH, WIDTH, goldReward } from "./config.ts";
-import type { DelveRun, Mode, Run, Save, TowerRun } from "./entities.ts";
+import type { DelveRun, Run, TowerRun } from "./runs.ts";
+import type { Mode } from "./entities.ts";
+import type { Save } from "./save-shape.ts";
 import { LAYOUT_VERSION, World } from "./delve/world.ts";
+import { depthAt } from "./delve/labyrinth.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import type { Board } from "./board.ts";
-import { extraEnemies } from "./more-enemies.ts";
+import { runExtras, runFoeCut } from "./card-trees.ts";
+import { weakened } from "./shrines.ts";
 import { earn } from "./profile.ts";
 
 export type ModeProfile<R extends Run = Run> = {
@@ -20,6 +24,9 @@ export type ModeProfile<R extends Run = Run> = {
   equivalentFloor(progress: number): number;
   /** The progress loot at row `y` of the run's board is measured at. */
   progressAt(run: R, y: number): number;
+  /** The equivalent floor the run's hero stands on, from the run alone
+   * (undo never leaves it: run-timeline.ts). */
+  floorOf(run: R): number;
   /** The board's width, and the column a run enters at from the forest. */
   width: number;
   entranceX: number;
@@ -86,16 +93,20 @@ export function milestones(profile: ModeProfile, from: number, to: number) {
   return milestonePoints(profile.equivalentFloor(to)) - milestonePoints(profile.equivalentFloor(from));
 }
 
+/** A Delve depth's equivalent floor: one for each ten depth. */
+const delveFloor = (depth: number) => Math.floor(depth / 10);
+
 export const MODES: { tower: ModeProfile<TowerRun>; delve: ModeProfile<DelveRun> } = {
   tower: {
     balance: (save) => save.tower.inspiration,
     credit: (save, amount) => { save.tower.inspiration += amount; earn(save, "inspiration", amount); },
     equivalentFloor: (height) => height,
     progressAt: (run) => run.height,
+    floorOf: (run) => run.height,
     width: TOWER_WIDTH,
     entranceX: TOWER_START_X,
     layoutVersion: TOWER_LAYOUT_VERSION,
-    board: (run) => new RoomWorld(run.seed, run.height, run.changes, run.percentPotions, run.tier, extraEnemies(run.badges), (run as TowerRun).shrine?.applied?.foes),
+    board: (run) => new RoomWorld(run.seed, run.height, run.changes, run.percentPotions, run.tier, runExtras(run), weakened((run as TowerRun).shrine?.applied?.foes, runFoeCut(run)), run.chestOdds, run.doorOdds, run.treasureFloor),
     endGold: () => 0,
     // Tower floors reuse the same x/y space, so the floor is part of the key.
     lootKey: (run, x, y) => `${run.seed}:${run.height}:${x},${y}`,
@@ -118,12 +129,13 @@ export const MODES: { tower: ModeProfile<TowerRun>; delve: ModeProfile<DelveRun>
   delve: {
     balance: (save) => save.delve.courage,
     credit: (save, amount) => { save.delve.courage += amount; earn(save, "courage", amount); },
-    equivalentFloor: (depth) => Math.floor(depth / 10),
+    equivalentFloor: delveFloor,
     progressAt: (_run, y) => y,
+    floorOf: (run) => delveFloor(depthAt(run.seed, run.player.x, run.player.y, run.milestone, run.tier ?? 1)),
     width: WIDTH,
     entranceX: START_X,
     layoutVersion: LAYOUT_VERSION,
-    board: (run) => new World(run, extraEnemies(run.badges)),
+    board: (run) => new World(run, runExtras(run), weakened(undefined, runFoeCut(run))),
     endGold: (run) => goldReward(run.treasures),
     lootKey: (run, x, y) => `${run.seed}:${x},${y}`,
     words: {

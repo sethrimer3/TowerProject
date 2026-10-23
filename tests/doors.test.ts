@@ -15,7 +15,7 @@ test("area-one door sequence covers every sprite/rule identity", () => {
     ["a", "b", "c", "ab", "ac", "bc", "abc", "steel", "heart"]);
   assert.equal(doorId({ kind: "door", door: { type: "wood", durability: 20 } }), "wood");
   assert.equal(doorId({ kind: "door", door: { type: "keys", keys: ["blue", "yellow"], mode: "all", heart: true } }), "abh");
-  assert.equal(doorName({ kind: "door", door: { type: "keys", keys: ["blue"], mode: "all", heart: true } }), "Azure Heart Door");
+  assert.equal(doorName({ kind: "door", door: { type: "keys", keys: ["blue"], mode: "all", heart: true } }), "Blue Heart Door");
 });
 
 test("single and combination locks require and consume their exact key sets", () => {
@@ -26,7 +26,7 @@ test("single and combination locks require and consume their exact key sets", ()
   assert.deepEqual(doorCost(door(6), player(1, 1, 1)), ["yellow", "blue", "red"]);
 });
 
-test("steel consumes one key in explicit gold/azure/crimson priority", () => {
+test("steel consumes one key in explicit gold/blue/red priority", () => {
   assert.equal(doorCost(door(7), player()), null);
   assert.deepEqual(doorCost(door(7), player(1, 1, 1)), ["yellow"]);
   assert.deepEqual(doorCost(door(7), player(0, 1, 1)), ["blue"]);
@@ -59,7 +59,7 @@ test("Heart Door Resilience research shrinks a Heart Door's toll 5% a level, for
   const g = new Game(defaults());
   assert.equal(g.stepRules.heartToll, 100);
   g.save.archives.levels.heartDoorResilience = 10;
-  assert.equal(researched(g.save.archives, "heartToll", 100), 50);
+  assert.equal(researched(g.save.archives, "heartToll"), 50);
   assert.equal(g.stepRules.heartToll, 50, "read at the moment of the step");
 });
 

@@ -5,4 +5,5 @@ A **?** beside the Inspiration and Courage trees' headings explains how a run ea
 **Critical** (2 Inspiration, after Trainers, before the Archives) opens **Crit %** and **Crit x** training and their research: each strike of the hero may be a critical hit (see Critical hits in [CONTEXT.md](../../CONTEXT.md)), its ATK multiplied by the critical factor before the enemy's DEF comes off.
 
 The Upgrades page shows a tab only once what unlocks it is owned: Inspiration from the start, then Training, Courage (with Into the depths), the Archives, and Legacy, Wisdom and Renown (Dev mode only for now).
+The Inspiration and Courage tabs read the points held under their names (over 9,999 shortened), as the Research page's Training tab reads its points, so the row of tabs shows even while Inspiration is the only one.
 What opens Wayfinding, the Delve Automove skills, is still to be decided, so for now only Dev mode shows it; Dev mode shows them all.

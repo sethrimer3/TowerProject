@@ -58,6 +58,7 @@ const PLANTS: Tile[] = [
   ...(["weak", "normal", "strong", "elite"] as const).map((strength, tier): Tile => ({ kind: "enemy", enemy: { name: `Planted ${tier}`, hp: 20, attack: 5, defense: 1, tier, strength } })),
   { kind: "enemy", enemy: { name: "Slime", hp: 20, attack: 5, defense: 1, tier: 0, strength: "elite" } },
   { kind: "stairs" }, { kind: "oneway" },
+  { kind: "floor", flyer: { name: "Bat", hp: 20, attack: 5, defense: 1, tier: 5, strength: "strong", flying: true } },
 ];
 /** Fills plain floor near the player, nearest first, with every plant. */
 function plantAll(g: Game) {
@@ -68,6 +69,8 @@ function plantAll(g: Game) {
   }
   spots.sort((a, b) => a[0] - b[0] || a[2] - b[2] || a[1] - b[1]);
   PLANTS.forEach((t, i) => { if (spots[i]) g.run.changes[`${spots[i][1]},${spots[i][2]}`] = structuredClone(t); });
+  // A Flying enemy over the hero, drawn half see-through.
+  if (g.world.tile(p.x, p.y).kind === "floor") g.run.changes[`${p.x},${p.y}`] = { kind: "floor", flyer: { name: "Bat", hp: 20, attack: 5, defense: 1, tier: 5, strength: "normal", flying: true } };
 }
 function game(mode: "tower" | "delve", settings: Record<string, unknown> = {}) {
   const save = defaults();
@@ -93,6 +96,36 @@ function neighbour(g: Game): Point {
  * Heart Door's checked heart rise on the new floor. */
 type BoardScene = { g: Game; to?: Point; fight?: boolean; climb?: boolean; check?: (decor: DecorLayer) => boolean };
 
+/** A readable combat-art arena, shared by the golden and browser review. */
+export function combatSpriteScene(settings: Record<string, unknown> = {}): BoardScene {
+  const g = game("tower", { uiSprites: true, brightness: 85, decorOff: true, ...settings });
+  const p = g.run.player;
+  p.x = 8; p.y = 3;
+  for (let y = 1; y < 16; y++) for (let x = 1; x < 16; x++) g.run.changes[`${x},${y}`] = { kind: "floor" };
+  const foes: Tile[] = [
+    { kind: "enemy", enemy: { name: "Goblin", tier: 0, strength: "weak", hp: 80, attack: 10, defense: 1, fast: true } },
+    { kind: "enemy", enemy: { name: "Skeleton", tier: 1, strength: "strong", hp: 80, attack: 10, defense: 1, ranged: true, fast: true } },
+    { kind: "enemy", enemy: { name: "Golem", tier: 3, strength: "elite", hp: 80, attack: 10, defense: 1, shielded: true } },
+    { kind: "floor", flyer: { name: "Bat", tier: 2, strength: "strong", hp: 80, attack: 10, defense: 1, flying: true } },
+  ];
+  foes.forEach((t, i) => { g.run.changes[`${5 + i * 2},10`] = t; });
+  (g.world as unknown as { shield: { x: number; y: number; floor: number } }).shield = { x: 9, y: 10, floor: 4000 };
+  g.run.changes["5,6"] = { kind: "treasure", chest: "supply" };
+  g.run.changes["7,6"] = { kind: "treasure", chest: "equipment" };
+  g.run.changes["9,6"] = { kind: "floor", chest: "supply" };
+  g.run.changes["11,6"] = { kind: "floor", chest: "equipment" };
+  g.run.targeted = "8,8";
+  g.run.ignored = { floor: g.handRules.floor, tiles: ["5,8"] };
+  g.run.skipped = { floor: g.handRules.floor, tiles: ["11,10"] };
+  g.volley = { at: 1400, ms: 800, shots: [
+    { by: "hero", from: { x: 8, y: 3 }, to: { x: 5, y: 10 }, damage: 0, tick: 1 },
+    { by: "hero", from: { x: 8, y: 3 }, to: { x: 11, y: 10 }, damage: 0, tick: 1, charge: 60 },
+    { by: "enemy", from: { x: 7, y: 10 }, to: { x: 8, y: 3 }, damage: 0, tick: 1 },
+    { by: "hero", from: { x: 8, y: 3 }, to: { x: 9, y: 10 }, damage: 0, tick: 40 },
+  ] };
+  return { g, to: { x: 8, y: 4 } };
+}
+
 /** A Tower game on the first floor where `want(plan)` holds for a floor
  * tile with a plain floor tile beside it: the hero starts beside it and
  * steps onto it. */
@@ -113,6 +146,28 @@ function decorScene(settings: Record<string, unknown>, want: (d: TileDecor) => b
     g.advanceTowerRoom();
   }
   throw Error("no floor has that decor");
+}
+
+/** A real overgrown, wet room: reusable environment review and animated golden. */
+export function environmentSpriteScene(settings: Record<string, unknown> = {}): BoardScene {
+  const g = game("tower", { uiSprites: true, brightness: 50, ...settings });
+  g.newRun({ seed: 7 });
+  for (let room = 0; room < 25; room++) g.advanceTowerRoom();
+  const src = decorSourceFor(g.world, g.run.seed)!, candidates: { x: number; y: number; water: number }[] = [];
+  for (let y = 1; y < 16; y++) for (let x = 1; x < 16; x++) {
+    const d = tileDecor(src, x, y);
+    if (g.world.tile(x, y).kind === "floor" && d.water?.[20 * 24 + 12] === 1 && d.waterCount > 150)
+      candidates.push({ x, y, water: d.waterCount });
+  }
+  candidates.sort((a, b) => b.water - a.water || a.y - b.y || a.x - b.x);
+  for (const to of candidates) {
+    const from = [[0, -1], [-1, 0], [1, 0], [0, 1]].map(([dx, dy]) => ({ x: to.x + dx, y: to.y + dy }))
+      .find(p => g.world.tile(p.x, p.y).kind === "floor" && !tileDecor(src, p.x, p.y).crates.length);
+    if (!from) continue;
+    Object.assign(g.run.player, from);
+    return { g, to: { x: to.x, y: to.y }, check: decor => decor.ripples.length > 0 };
+  }
+  throw Error("the environment scene has no walkable pool");
 }
 
 const BOARD_SCENES: Record<string, () => BoardScene> = {
@@ -201,7 +256,78 @@ const LATER_BOARD_SCENES: Record<string, () => BoardScene> = {
     if (!world.blacksmith || !world.hall) throw Error("the forest has no Blacksmith or Hall");
     return { g };
   },
+  /** A Shielded enemy's green bubble, three tiles round it, over another
+   * enemy it guards, the hero outside it. */
+  towerShield: () => {
+    const g = game("tower", { brightness: 70 });
+    const p = g.run.player, open = (x: number, y: number) => g.world.tile(x, y).kind === "floor";
+    let at: Point | null = null;
+    for (let dy = 3; dy <= 8 && !at; dy++) for (let dx = -2; dx <= 2 && !at; dx++) if (open(p.x + dx, p.y + dy) && open(p.x + dx + 1, p.y + dy)) at = { x: p.x + dx, y: p.y + dy };
+    if (!at) throw Error("no room for the shield");
+    g.run.changes[`${at.x},${at.y}`] = { kind: "enemy", enemy: { name: "Slime", hp: 40, attack: 9, defense: 1, tier: 0, strength: "strong", shielded: true } };
+    g.run.changes[`${at.x + 1},${at.y}`] = { kind: "enemy", enemy: { name: "Slime", hp: 40, attack: 9, defense: 1, tier: 0, strength: "normal" } };
+    (g.world as unknown as { shield: { x: number; y: number; floor: number } }).shield = { ...at, floor: 4000 };
+    return { g };
+  },
+  /** A Supply Chest (a blue glow, one star), an Equipment Chest (a purple
+   * glow, two stars) and the floor an opened Equipment Chest left, still
+   * marked, in a row above the hero. */
+  towerChests: () => {
+    const g = game("tower", { brightness: 70 });
+    const p = g.run.player, open = (x: number, y: number) => g.world.tile(x, y).kind === "floor";
+    let at: Point | null = null;
+    for (let dy = 2; dy <= 8 && !at; dy++) for (let dx = -3; dx <= 1 && !at; dx++) if ([0, 1, 2].every((i) => open(p.x + dx + i, p.y + dy))) at = { x: p.x + dx, y: p.y + dy };
+    if (!at) throw Error("no room for the chests");
+    g.run.changes[`${at.x},${at.y}`] = { kind: "treasure", chest: "supply" };
+    g.run.changes[`${at.x + 1},${at.y}`] = { kind: "treasure", chest: "equipment" };
+    g.run.changes[`${at.x + 2},${at.y}`] = { kind: "floor", chest: "equipment" };
+    return { g };
+  },
 };
+
+// Appended to keep all existing scene seeds unchanged.
+LATER_BOARD_SCENES.spriteCombat = () => combatSpriteScene();
+LATER_BOARD_SCENES.spriteEnvironment = () => environmentSpriteScene();
+LATER_BOARD_SCENES.spriteForestTower = () => forestSpriteScene("tower");
+LATER_BOARD_SCENES.spriteForestDelve = () => forestSpriteScene("delve");
+LATER_BOARD_SCENES.spriteDungeonMasonry = () => dungeonSpriteScene("tower");
+LATER_BOARD_SCENES.spriteDungeonCave = () => dungeonSpriteScene("delve");
+LATER_BOARD_SCENES.spriteOptions = () => dungeonSpriteScene("tower", { squareDoors: true, spriteAnimations: true, reduceMotion: false });
+LATER_BOARD_SCENES.spriteTowerTwo = () => towerTierSpriteScene(2);
+LATER_BOARD_SCENES.spriteTowerThree = () => towerTierSpriteScene(3);
+LATER_BOARD_SCENES.spriteAmbient = () => {
+  const { g } = dungeonSpriteScene("tower", { spriteAnimations: true, reduceMotion: false });
+  plantAll(g);
+  g.fights.struckDown = [1400];
+  return { g };
+};
+
+/** One fixed material identity for each later Tower, on real tier geometry. */
+export function towerTierSpriteScene(tier: 2 | 3): BoardScene {
+  const save = defaults();
+  Object.assign(save.settings, { uiSprites: true, brightness: 75, reduceMotion: true });
+  save.tower.tiersOpen = 3; save.tower.tier = tier;
+  const g = new Game(save); g.newRun({ seed: 1103 });
+  for (let i = 0; i < 3; i++) g.advanceTowerRoom();
+  return { g };
+}
+
+/** Real connected interior geometry, with native wall faces and material patches. */
+export function dungeonSpriteScene(mode: "tower" | "delve", settings: Record<string, unknown> = {}): BoardScene {
+  const g = game(mode, { uiSprites: true, brightness: 75, reduceMotion: true, ...settings });
+  g.newRun({ seed: mode === "tower" ? 1103 : 1107 });
+  if (mode === "tower") for (let i = 0; i < 3; i++) g.advanceTowerRoom();
+  return { g };
+}
+
+/** Both enormous entrance bases and the layered forest at the crossroads. */
+export function forestSpriteScene(mode: "tower" | "delve", settings: Record<string, unknown> = {}): BoardScene {
+  const g = game(mode, { uiSprites: true, reduceMotion: true, weatherSound: false, ...settings });
+  g.save.goals.claimed = { 1: [60, 70] };
+  g.save.equipment.unlocked = true;
+  g.newRun({ outside: true, seed: mode === "tower" ? 503 : 507 });
+  return { g };
+}
 
 /** One board scene on `canvas` (408×408 CSS pixels), fully synchronous so
  * no frame loop can interleave: a settled frame, a frame mid-step with
@@ -220,17 +346,17 @@ function playBoard(name: string, seed: number, canvas: HTMLCanvasElement, grab: 
       quiet(g); // Its feedback text is timed by the real clock.
       const p = g.run.player, at = { x: p.x, y: p.y + 1 };
       g.gains.push(
-        { ...at, text: "−1 yellow key", art: { tile: { kind: "key", color: "yellow" }, spent: true } },
+        { ...at, text: "−1 gold key", art: { tile: { kind: "key", color: "yellow" }, spent: true } },
         { ...at, text: "Full HP ✓", art: { heart: true } },
       );
     } else if (scene.fight) {
-      g.playsFights = true;
+      g.fights.playsFights = true;
       g.save.settings.fightAnimation = true;
       g.move(to.x - from.x, to.y - from.y);
-      g.encounter!.start = 1400;
+      g.fights.encounter!.start = 1400;
       // The skull over a hero struck down, as a revival's strike raises it,
       // and the heart with a plus of Max HP's badge.
-      g.struckDown = [1400];
+      g.fights.struckDown = [1400];
       g.gains.push({ ...from, text: "+16 max HP", art: { heart: true, raised: true } });
     } else {
       g.run.player.x = to.x;
@@ -246,7 +372,7 @@ function playBoard(name: string, seed: number, canvas: HTMLCanvasElement, grab: 
     grab("moving");
     for (let t = 1500; t <= 3300; t += 60) {
       // As the frame loop does: the fight counts once its last strike is done.
-      if (g.encounter && t >= g.encounter.start + g.encounter.bout.duration) g.finishEncounter();
+      if (g.fights.encounter && t >= g.fights.encounter.start + g.fights.encounter.bout.duration) g.fights.finish();
       r.draw(t);
       // Ripples spread past the hero's feet.
       if (t === 2100) grab("ripples");
@@ -256,7 +382,7 @@ function playBoard(name: string, seed: number, canvas: HTMLCanvasElement, grab: 
       // Guards the scene itself: the effect it exists for must be live.
       if (scene.check && !scene.check(r.decor)) throw Error(`${name}: its decor effect never started`);
     }
-    if (scene.fight && (g.encounter || g.run.player.x !== to.x || g.run.player.y !== to.y)) throw Error(`${name}: the fight never settled`);
+    if (scene.fight && (g.fights.encounter || g.run.player.x !== to.x || g.run.player.y !== to.y)) throw Error(`${name}: the fight never settled`);
     grab("later");
   });
 }
@@ -443,11 +569,17 @@ function playProvingGrounds(_name: string, _seed: number, canvas: HTMLCanvasElem
 export type CanvasKind = "board" | "defend" | "icons";
 export type Job = { name: string; seed: number; canvas: CanvasKind; play: (canvas: HTMLCanvasElement, grab: Grab) => void };
 
-/** Every scene, in order, each with its own seed. */
+/** Whether the Defend scenes are drawn: not while Defend isn't being tested
+ * (`npm run test:defend` runs its Node tests on demand). */
+const DEFEND = false;
+
+/** Every scene, in order, each with its own seed. The Defend scenes keep
+ * their places while off, so the later board scenes keep their seeds. */
 export const JOBS: Job[] = [
   ...Object.keys(BOARD_SCENES).map((name) => ({ name, canvas: "board" as const, run: playBoard })),
   ...Object.keys(DEFEND_SCENES).map((name) => ({ name, canvas: "defend" as const, run: playDefend })),
   { name: "defendIcons", canvas: "icons" as const, run: playIcons },
   ...Object.keys(LATER_BOARD_SCENES).map((name) => ({ name, canvas: "board" as const, run: playBoard })),
   { name: "provingGrounds", canvas: "board" as const, run: playProvingGrounds },
-].map(({ name, canvas, run }, i) => ({ name, seed: i + 1, canvas, play: (cv: HTMLCanvasElement, grab: Grab) => run(name, i + 1, cv, grab) }));
+].map(({ name, canvas, run }, i) => ({ name, seed: i + 1, canvas, play: (cv: HTMLCanvasElement, grab: Grab) => run(name, i + 1, cv, grab) }))
+  .filter((job) => DEFEND || job.canvas === "board");

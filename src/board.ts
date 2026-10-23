@@ -1,5 +1,7 @@
-import { point, type Kind, type Run, type Tile, type Torch } from "./entities.ts";
+import { point, type ChestKind, type ChestOdds, type Enemy, type EnemyStrength, type Kind, type Tile, type Torch } from "./entities.ts";
+import type { Run } from "./runs.ts";
 import { tileRandom } from "./random.ts";
+import type { Shield } from "./shielded.ts";
 
 /** A board the player walks: the Delve labyrinth, a Tower floor, or the
  * forest outside. */
@@ -26,6 +28,18 @@ export type Board = {
   /** The tiles holding a lit torch, by `point`, on boards that keep them
    * (`litTorches` works them out otherwise). */
   litTorches?(): ReadonlySet<string>;
+  /** The doors still standing on the floor (x, y) stands on (a Tower
+   * floor's, or in the Delve the tiles of its area at the same equivalent
+   * floor), on boards that hold doors: KEY's Master Key opens them. */
+  floorDoors?(x: number, y: number): { x: number; y: number }[];
+  /** The Shielded enemies still standing (shielded.ts), whose bubbles the
+   * board draws, on boards that hold them. */
+  shields?(): readonly Shield[];
+  /** The balanced enemy of `strength` (normal unless given) `depth` makes
+   * on boards that hold enemies, with every stat step the board applies to
+   * its real enemies: the HUD and the enemy stats box show it.
+   * A Tower floor has one floor, so it ignores `depth`. */
+  typicalEnemy?(depth: number, strength?: EnemyStrength): Enemy;
 };
 
 /** Tiles the hero takes something from by stepping on them: every pickup
@@ -79,6 +93,43 @@ export function reachable(
 }
 
 const PERCENT_POTION_SALT = 0x5eed7;
+const CHEST_KIND_SALT = 0xc4e57;
+const TREASURE_FLOOR_SALT = 0x7f10c;
+/** Whether equivalent floor `floor` of a run seeded `seed` is a Treasure
+ * Floor (CHEST's tree, at `chance` percent): the floor's own fixed number,
+ * so it is one from the moment it is generated. */
+export const isTreasureFloor = (seed: number, floor: number, chance: number) => chance > 0 && tileRandom(floor, 0, seed ^ TREASURE_FLOOR_SALT) * 100 < chance;
+/** `cells` with every ATK and DEF shard and potion on a Treasure Floor
+ * (each tile's equivalent floor by `floorAt`) made a treasure chest;
+ * `cells` itself at no chance. */
+export function withTreasureFloors(cells: Map<string, Tile>, seed: number, chance: number, floorAt: (x: number, y: number) => number) {
+  if (!(chance > 0)) return cells;
+  const out = new Map<string, Tile>();
+  for (const [k, t] of cells) {
+    const [x, y] = k.split(",").map(Number);
+    const turns = (t.kind === "attack" || t.kind === "defense" || t.kind === "potion") && isTreasureFloor(seed, floorAt(x, y), chance);
+    out.set(k, turns ? { kind: "treasure" } : t);
+  }
+  return out;
+}
+/** The kind of the treasure chest generated at (x, y) on a board generated
+ * from `seed`, under a run's `odds`: its tile's fixed number, in percent,
+ * under the Equipment Chest's chance makes one, then under both chances a
+ * Supply Chest; plain without odds. So a floor's chests are what they are
+ * from the moment it is generated, and higher odds only ever add more. */
+export function chestKindAt(t: Tile, x: number, y: number, seed: number, odds?: ChestOdds): ChestKind {
+  if (t.kind !== "treasure" || !odds) return "plain";
+  const roll = tileRandom(x, y, seed ^ CHEST_KIND_SALT) * 100;
+  return roll < odds.equipment ? "equipment" : roll < odds.equipment + odds.supply ? "supply" : "plain";
+}
+/** Tile `t` marked with the kind of the chest `generated` there (`chestKindAt`):
+ * a Supply or Equipment Chest, or the floor left once it opened, keeps its
+ * kind, which the board shows. */
+export function withChest(t: Tile, generated: Tile, x: number, y: number, seed: number, odds?: ChestOdds): Tile {
+  if (!odds || (t.kind !== "treasure" && t.kind !== "floor")) return t;
+  const kind = chestKindAt(generated, x, y, seed, odds);
+  return kind === "plain" ? t : { ...t, chest: kind };
+}
 /** A generated tile at (x, y) on a board generated from `seed`, as a run
  * with `chance` (hundredths of a percent) of percent potions sees it: each
  * potion that may be one (generated blue) is a percent (red) potion when its

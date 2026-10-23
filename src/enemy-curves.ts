@@ -4,10 +4,9 @@
  * Tune difficulty here: the anchors, the strength and profile tables, or a
  * tier's own curve in `ENEMY_CURVES`. The tier's factor (`tierStats`: ×5 in Tower II, ×4 more in III, ×3 after)
  * still applies on top, as the boards pass their cells through `tierCells`. */
-import type { EnemyStrength } from "./entities.ts";
+import type { EnemyProfile, EnemyStrength } from "./entities.ts";
 import { intPow, root } from "./exact.ts";
 
-export type EnemyProfile = "attackHeavy" | "balanced" | "defenseHeavy";
 export type EnemyStats = { hp: number; attack: number; defense: number };
 /** The modes whose enemies come from a curve. */
 export type CurveMode = "tower" | "delve";

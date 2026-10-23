@@ -19,8 +19,9 @@ const PLAIN_TILE_MS = 3000;
 const FEEDBACK = ["tile-highlight", "inspect-box", "route-box"];
 
 /** The board's tap feedback: a highlighted tile, its inspect box, and the
- * route totals box. A first tap on a tile previews it (and the route there);
- * tapping it again, or any tap with "Move with one tap" on, walks there. */
+ * route totals box. In the forest a tap walks straight there; inside a run a
+ * first tap on a tile previews it (and the route there), and tapping it
+ * again walks there (in Dev mode; otherwise the hand moves the hero). */
 export class BoardOverlay {
   private highlighted: { x: number; y: number } | null = null;
   /** The board the highlighted tile is on (`boardKey`). */
@@ -73,7 +74,7 @@ export class BoardOverlay {
       this.hall();
       return;
     }
-    if (this.game.save.settings.oneTapMove || this.isHighlighted({ x, y })) {
+    if (this.game.run.outside || this.isHighlighted({ x, y })) {
       this.hide();
       this.game.walkTo(x, y);
     } else this.preview(x, y);

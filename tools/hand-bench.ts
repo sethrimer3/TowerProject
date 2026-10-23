@@ -53,7 +53,7 @@ for (let seed = 1; seed <= seeds; seed++) {
   const g = delve(seed);
   for (let n = 0; n < turns && !g.handStuck && !g.fallen; n++) {
     let t = performance.now();
-    planHand(g, g.hand, g.mode);
+    planHand(g.handRules, g.hand, g.mode);
     planMs += performance.now() - t;
     plans++;
     t = performance.now();

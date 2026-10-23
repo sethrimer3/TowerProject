@@ -13,7 +13,7 @@ export const TREES: SkillTree[] = [
   { id: "inspiration", name: "Inspiration", currency: "inspiration", description: "Earn Inspiration by beating your best Tower climb.", height: 534, unlocks: true, nodes: [
     // The hand's skills, down to the Archives: Buildout, Trainers (two rows
     // lower), Shroud, Critical (with Critical Prediction to its left). Gear and On the Job branch off
-    // Buildout, ATK Up and DEF Up under Gear, and Regen, then Heal, below On the Job.
+    // Buildout, Gold Key, ATK Up and DEF Up under Gear, and Regen, then Heal, below On the Job.
     { id: "combatStance", icon: "▤", x: 50, y: 12, requires: [] },
     { id: "buildout", icon: "⚔", x: 50, y: 30, requires: ["combatStance"] },
     { id: "trainers", icon: "⚔", x: 50, y: 66, requires: ["buildout"] },
@@ -26,13 +26,14 @@ export const TREES: SkillTree[] = [
     { id: "regen", icon: "♥", x: 80, y: 48, requires: ["onTheJob"] },
     { id: "cardHeal", icon: "♥", x: 80, y: 66, requires: ["regen"] },
     { id: "archives", icon: "▥", x: 50, y: 120, requires: ["critical"] },
-    { id: "cardAtkUp", icon: "⚔", x: 20, y: 48, requires: ["gear"] },
-    { id: "cardDefUp", icon: "⛨", x: 20, y: 66, requires: ["cardAtkUp"] },
+    { id: "cardYellowKey", icon: "⚿", x: 20, y: 48, requires: ["gear"] },
+    { id: "cardAtkUp", icon: "⚔", x: 20, y: 66, requires: ["cardYellowKey"] },
+    { id: "cardDefUp", icon: "⛨", x: 20, y: 84, requires: ["cardAtkUp"] },
     // Research needs the Archives, so the skills that open it come after them:
     // Blue Key and Faster Trainers either side of the Archives, Rehearsed steps
     // left of Into the depths, and Pocket Money (then Spare Change, Wishing
     // Well and Free Training below it) and Greater Heal after it,
-    // either side of the core path down the middle (Lifesteal, Buy Quantity, Thorns, then Key Siphon).
+    // either side of the core path down the middle (Lifesteal, Buy Quantity, Thorns, then GK Siphon).
     // Recovery and Regen Research (then Parry, then Revive) stand under Greater Heal.
     { id: "cardBlueKey", icon: "⚿", x: 20, y: 120, requires: ["archives"] },
     { id: "inspirationUndos", icon: "↺", x: 20, y: 142, requires: ["archives"] },
@@ -54,10 +55,10 @@ export const TREES: SkillTree[] = [
     { id: "regenResearch", icon: "♥", x: 90, y: 178, requires: ["greaterHeal"] },
     { id: "parry", icon: "⇋", x: 90, y: 196, requires: ["regenResearch"] },
     { id: "revive", icon: "☼", x: 90, y: 214, requires: ["parry"] },
-    // The cards down the middle, a row clear of Key Siphon: Yellow Door (Key < Badges,
+    // The cards down the middle, a row clear of GK Siphon: Gold Door (Key < Badges,
     // then Key ≥ Badges, to its right; Heart Door Resilience, then Heart Door, to its
     // left), Weak Enemy (Base, then Strong, to its left, Fast under Base; Elite, then Boss, to its
-    // right, Non-Boss under Boss), Chest, BK Siphon (BK Trader, then YK to HP, to its left; Red
+    // right, Non-Boss under Boss), Chest, BK Siphon (BK Trader, then GK to HP, to its left; Red
     // Key, then RK Siphon, to its right) and Floor Skip Reward (Torch to its
     // left, Steel Door to its right).
     { id: "cardYellowDoor", icon: "⚿", x: 50, y: 268, requires: ["keySiphon"] },
@@ -106,16 +107,17 @@ export const TREES: SkillTree[] = [
     { id: "dashBadge", icon: "◪", x: 90, y: 111, requires: ["dashRegen", "cardBadges"] },
     { id: "undos", icon: "↺", x: 23, y: 61, requires: ["pathfinder"] },
     { id: "cardBadges", icon: "◪", x: 56, y: 61, requires: ["focus"] },
-    // The research skills down the middle under Focus: Find Yellow Key, Key
+    // The research skills down the middle under Focus: Find Gold Key, Key
     // Efficiency, then Interest, with Max Interest to its left and Mug to its right.
     { id: "findYellowKey", icon: "⚿", x: 50, y: 87, requires: ["focus"] },
     { id: "keyEfficiency", icon: "⚿", x: 50, y: 111, requires: ["findYellowKey"] },
     { id: "interest", icon: "¤", x: 50, y: 135, requires: ["keyEfficiency"] },
     { id: "maxInterest", icon: "¤", x: 22, y: 135, requires: ["interest"] },
     { id: "mug", icon: "☠", x: 78, y: 135, requires: ["interest"] },
-    // The run's charges under them: Refocus, Ignore and Target, each
-    // Ignore and Target with the skill that regains it below.
-    { id: "refocus", icon: "ϟ", x: 22, y: 161, requires: ["maxInterest"] },
+    // Overheal under Max Interest, then the run's charges: Refocus under
+    // Overheal, Ignore and Target, each with the skill that regains it below.
+    { id: "overheal", icon: "♥", x: 22, y: 161, requires: ["maxInterest"] },
+    { id: "refocus", icon: "ϟ", x: 22, y: 185, requires: ["overheal"] },
     { id: "ignore", icon: "⊘", x: 50, y: 161, requires: ["interest"] },
     { id: "target", icon: "⌖", x: 78, y: 161, requires: ["mug"] },
     { id: "ignoreMore", icon: "⊘", x: 50, y: 185, requires: ["ignore"] },

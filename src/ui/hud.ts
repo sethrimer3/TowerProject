@@ -1,6 +1,6 @@
-import { compactAmount, enemyStat, keyCount, whole, wholeHp } from "../whole.ts";
-import { enemyStats } from "../enemy-curves.ts";
-import { tierStats } from "../tiers.ts";
+import { kitIcon } from "../sprite-kit.ts";
+import { spriteFontRevision } from "../sprite-font.ts";
+import { amountUnit, enemyStat, keyCount, shortAmount, stepsIn, whole, wholeHp } from "../whole.ts";
 import type { Game } from "../state.ts";
 import type { Renderer } from "../rendering.ts";
 import { levelForXp, xpForLevel } from "../config.ts";
@@ -9,57 +9,46 @@ import { tierNumeral, tierRewardText } from "../tiers.ts";
 import { MODES, milestones } from "../modes.ts";
 import { capitalized, cardArt, CURRENCY_SPRITES, displayedProgress, el, POINTER_SVG, text, uiSprite } from "./dom.ts";
 import { notesResearched } from "./run-notes-dialog.ts";
-import { CARDS, IN_PLACE, cardText, deckCards, isSiphon, type CardId } from "../cards.ts";
-import { BADGES, badgeDef, badgesOn, badgeValue, type RunBadge } from "../badges.ts";
-import { badgeStyle } from "./badge-token.ts";
-import { trainingPoints, trainingWaiting } from "../loadout.ts";
-import { goalsWaiting, heroClass } from "../goals.ts";
+import { CARDS, IN_PLACE, cardBonusText, cardText, isSiphon, type CardId } from "../cards.ts";
+import { cardLevelHtml, cardLevelTitle } from "./card-level-marks.ts";
+import { badgeDef, badgesOn, badgeValue, type RunBadge } from "../badges.ts";
+import { badgeGlyph, badgeStyle } from "./badge-token.ts";
+import { heroClass } from "../goals.ts";
 import { shrinesOpen } from "../shrines.ts";
 import type { BoardOverlay } from "./board-overlay.ts";
 import { CountUp } from "./count-up.ts";
 import { PlayClock, RateTally } from "./purse-rate.ts";
-import { estimatedServerTime } from "../shop/clock.ts";
-import { OFFERS } from "../shop/offers.ts";
-import { refusal } from "../shop/transactions.ts";
+import { heldAmount } from "./currencies-dialog.ts";
 import { caveLabel } from "../tournament/leagues.ts";
 import { shortCountdown } from "../tournament/schedule.ts";
-import { equipmentWaiting } from "../equipment/inventory.ts";
 import { GOLD_BOOST_FACTOR, GOLD_BOOST_MS } from "../gold-boost.ts";
 import { adsOff } from "../shop/entitlements.ts";
 import { renderRunMenu } from "./run-menu.ts";
-import { factorText, goldBonuses, goldBonusTotal } from "../gold-bonuses.ts";
+import { factorText, goldMultipliers, goldMultiplierTotal } from "../gold-multipliers.ts";
 import { MISSION_CAPACITY } from "../missions/catalog.ts";
 
 /** The stats cluster, action buttons and status line around the board. */
 
 export const devAmount = (game: Pick<Game, "save">, value: number) => game.save.settings.devMode ? "∞" : currencyAmount(whole(value));
-const UNITS = ["M", "B", "T", "Qa", "Qi"];
 /** A currency held, bounded in width: in full with thousands separators
- * below a million, then in millions, billions … with two decimals, rounded
- * down (1.23M, 456.78B), and past the last unit in scientific notation. */
+ * below a million, then in millions, billions … decillions with two
+ * decimals, rounded down (1.23M, 456.78B, 7.00q), and past 999D in
+ * scientific notation. */
 export function currencyAmount(n: number) {
   if (n < 1e6) return n.toLocaleString("en-US");
-  let unit = 0, size = 1e6;
-  while (unit < UNITS.length - 1 && n >= size * 1000) [unit, size] = [unit + 1, size * 1000];
-  if (n >= size * 1000) return n.toExponential(2);
+  const found = amountUnit(n);
+  if (!found) return n.toExponential(2);
+  const [size, unit] = found;
   // Whole hundredths of the unit, so no rounding creeps in (1,150,000 is 1.15M).
-  return `${(Math.floor(n / (size / 100)) / 100).toFixed(2)}${UNITS[unit]}`;
+  return `${(stepsIn(n, size / 100) / 100).toFixed(2)}${unit}`;
 }
-/** An amount short enough for the HUD's narrow purse: in full below `from`
- * (10,000), then to three figures in thousands, millions or billions
- * (12.3K, 456M). */
-export function shortAmount(n: number, from = 10_000) {
-  if (n < from) return String(n);
-  const [size, unit] = n < 1e6 ? [1e3, "K"] : n < 1e9 ? [1e6, "M"] : [1e9, "B"];
-  // Whole steps of the last figure shown, so no rounding creeps in.
-  const v = n / size, digits = v < 10 ? 2 : v < 100 ? 1 : 0, step = size / 10 ** digits;
-  return `${Math.floor(n / step) / 10 ** digits}${unit}`;
-}
-/** A Gold price on a buy button (or beside one): in full to 99,999, then
- * shortened as the purse is (123K, 4.56M), so the button keeps its width. */
-export function goldPrice(gold: number) {
-  const n = whole(gold);
-  return n < 100_000 ? n.toLocaleString("en-US") : shortAmount(n);
+/** A price on a buy button (or beside one): in full below `from`, then
+ * shortened as the purse is (123K, 4.56M), so the button keeps its width.
+ * Gold prices shorten from 100,000; the run's narrow training cards price
+ * Silver from 10,000. */
+export function priceAmount(price: number, from = 100_000) {
+  const n = whole(price);
+  return n < from ? n.toLocaleString("en-US") : shortAmount(n, from);
 }
 /** The purse's and currencies bar's amounts kept at what they read, by id,
  * while what was just gained flies to them (`flyToPurse`). */
@@ -97,7 +86,7 @@ export function togglePurseRates(game: Game) {
  * hero (not paused or stuck) or a fight playing out, with nothing over the
  * board (`live`) and the tab in view. */
 function runPlays(game: Game, live: boolean) {
-  return live && !document.hidden && game.playing && !game.paused && ((game.auto && !game.handStuck) || !!game.encounter);
+  return live && !document.hidden && game.playing && !game.paused && ((game.auto && !game.handStuck) || !!game.fights.encounter);
 }
 
 /** Samples the run's Gold found (`runGold`) and Silver found (held and
@@ -117,10 +106,18 @@ function sampleRates(game: Game, time: number, live: boolean) {
 }
 
 /** Shows the rate `perMinute` in the purse's `id`, abbreviated from 1,000
- * (1.42K), a dash before it is known, with a tiny /min on a row under it. */
+ * (1.42K), a dash before it is known, with a tiny /min on a row under it.
+ * The amount's node is built once and only its text changed after, since a
+ * press whose node is replaced before it lifts (each frame of a count-up)
+ * makes no click, and the tap would not switch the purse back. */
 function purseRate(game: Game, id: string, perMinute: number | null, name: string) {
   const dev = game.save.settings.devMode, rate = perMinute === null ? null : whole(perMinute);
-  el(id).innerHTML = `<span class="rate-amount">${dev ? "∞" : rate === null ? "—" : shortAmount(rate, 1000)}</span><small class="per-minute">/min</small>`;
+  let amount = el(id).querySelector<HTMLElement>(".rate-amount");
+  if (!amount) {
+    el(id).innerHTML = `<span class="rate-amount"></span><small class="per-minute">/min</small>`;
+    amount = el(id).querySelector<HTMLElement>(".rate-amount")!;
+  }
+  amount.textContent = dev ? "∞" : rate === null ? "—" : shortAmount(rate, 1000);
   el(id).parentElement!.title = `${name} found a minute, over the last minute of play: ${dev ? "∞" : rate === null ? "—" : rate.toLocaleString("en-US")} (tap for ${name} held)`;
 }
 
@@ -136,7 +133,7 @@ function renderPurse(game: Game) {
   purse(game, "medals", game.save.medals, "Medals, kept between runs");
   el("medals").parentElement!.hidden = !game.run.outside || game.save.medals <= 0;
   el("shards").closest(".purse")!.classList.toggle("forest", !!game.run.outside);
-  purse(game, "gold", game.save.gold, "Gold, kept between runs", goldShown.show(game.save.gold, now, instant));
+  const gold = goldShown.show(game.save.gold, now, instant);
   const showRates = rates.shown && !game.run.outside;
   el("gold").closest(".purse")!.classList.toggle("rates", showRates);
   if (showRates) {
@@ -144,7 +141,10 @@ function renderPurse(game: Game) {
     el("run-silver").parentElement!.hidden = false;
     purseRate(game, "gold", rates.gold.perMinute, "Gold");
     purseRate(game, "run-silver", rates.silver.perMinute, "Silver");
-  } else if (game.run.outside) {
+    return;
+  }
+  purse(game, "gold", game.save.gold, "Gold, kept between runs", gold);
+  if (game.run.outside) {
     const start = game.startingSilver;
     purse(game, "run-silver", start, "Silver each run starts with");
     el("run-silver").parentElement!.hidden = start <= 0;
@@ -152,16 +152,6 @@ function renderPurse(game: Game) {
     purse(game, "run-silver", game.silver, "Silver, spent only inside this run", silverShown.show(game.silver, now, instant));
     el("run-silver").parentElement!.hidden = false;
   }
-}
-
-/** The currencies bar's Silver: the run's inside one, or in the forest
- * what the next run starts with, shown once that is any. */
-function renderSilverHeld(game: Game) {
-  const outside = !!game.run.outside, silver = outside ? game.startingSilver : game.silver;
-  const box = el("silver-held").parentElement!;
-  box.hidden = outside && silver <= 0;
-  box.title = outside ? "Silver each run starts with" : "Silver, spent only inside this run";
-  text("silver-held", currencyAmount(whole(silver)));
 }
 
 /** Shows `value` in the currencies bar's `id`, unless it is held. */
@@ -183,17 +173,7 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
   renderFocus(game);
   renderProgress(game);
   renderModeActions(game);
-  barAmount("gems-held", devAmount(game, game.save.gems));
-  barAmount("shards-held", devAmount(game, game.save.ascensionShards));
-  barAmount("medals-held", devAmount(game, game.save.medals));
-  el("medals-held").parentElement!.hidden = game.save.medals <= 0 && !game.save.settings.devMode;
-  barAmount("gold-held", devAmount(game, game.save.gold));
-  renderSilverHeld(game);
-  text("courage", devAmount(game, game.save.delve.courage));
-  text("inspiration", devAmount(game, game.save.tower.inspiration));
-  barAmount("training", currencyAmount(trainingPoints(game.save).left));
-  // Courage means nothing until the Delve, which pays it, is open.
-  (document.querySelector(".courage-currency") as HTMLElement).hidden = !game.save.upgrades.delve && !game.save.settings.devMode;
+  renderCurrencyBar(game);
   renderXp(game);
   renderStatus(game, overlay);
   // The status line sits over the board's bottom row: let the hero show through.
@@ -202,51 +182,53 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
   renderHand(game);
   text("density-label", `${renderer.density} × ${renderer.density}`);
   renderUndo(game);
-  (document.querySelector(".dpad") as HTMLElement).hidden = !game.save.settings.showArrows;
   renderModeTab(game);
   renderForestSign(game);
+  renderRunButtons(game);
+  renderTabs(game);
+}
+
+/** The currencies bar's Gold, Gems and Ascension Shards, in full to 9,999,
+ * then shortened; the rest are in the dialog its chevron opens. */
+function renderCurrencyBar(game: Game) {
+  barAmount("gold-held", heldAmount(game, game.save.gold));
+  barAmount("gems-held", heldAmount(game, game.save.gems));
+  barAmount("shards-held", heldAmount(game, game.save.ascensionShards));
+}
+
+/** The run's buttons beside the board: its menu, the online ones, the Shop, Research and the ad. */
+function renderRunButtons(game: Game) {
   renderRunMenu(game);
   renderTournamentButton(game);
   renderMailButton(game);
   renderMissionsButton(game);
   renderEventsButtons(game);
   el("run-shop").hidden = !!game.run.outside;
-  el("run-research").classList.toggle("notify", !game.run.outside && researchWaiting(game));
+  el("run-research").classList.toggle("notify", game.notices.waiting("run-research"));
   renderAdButton(game);
+}
+
+/** The tab bar: which tabs are open yet, and the dots on those with news. */
+function renderTabs(game: Game) {
   renderLockedTab("deck", !!game.save.upgrades.combatStance, "Deck", "Unlock Combat Stance in the Inspiration tree");
-  // A new Deck lesson waits behind the button until its tutorial is done.
-  const { deck, addCard } = game.save.tutorials;
-  document.querySelector(`[data-tab="deck"]`)?.classList.toggle("notify", !deck || (!!game.save.upgrades.buildout && !addCard) || deckWaiting(game));
-  document.querySelector(`[data-tab="upgrades"]`)?.classList.toggle("notify", upgradesWaiting(game) || game.treeWaiting("inspiration") || game.treeWaiting("courage"));
-  document.querySelector(`[data-tab="research"]`)?.classList.toggle("notify", trainingWaiting(game.save));
+  for (const tab of ["deck", "upgrades", "research"] as const)
+    document.querySelector(`[data-tab="${tab}"]`)?.classList.toggle("notify", game.notices.waiting(tab));
+  renderDeckCount(game);
   renderLockedTab("gear", !!game.save.upgrades.gear || game.save.equipment.unlocked, "Gear", "Unlock Gear in the Inspiration tree");
-  document.querySelector(`[data-tab="gear"]`)?.classList.toggle("notify", gearWaiting(game) || equipmentWaiting(game.save));
+  document.querySelector(`[data-tab="gear"]`)?.classList.toggle("notify", game.notices.waiting("gear"));
   renderShopDot(game);
   renderLockedTab("defend", !!game.save.upgrades.legacy, "Defend", "Not yet open");
 }
 
-/** Whether the Shop button shows its dot: a daily offer can be claimed, on
- * the server's time as estimated (the claim itself asks the server). */
-export const shopWaiting = (game: Game) => {
-  const now = estimatedServerTime(game.save.shop.clock, game.clock());
-  return OFFERS.some((o) => o.period === 1 && !refusal(game.save, o, now));
-};
-/** Puts the dot on the Shop tab and the run's Shop while `shopWaiting`,
- * and on the run's hamburger while a button folded in its menu wears one. */
+/** Puts the dot on the Shop tab and the run's Shop while a daily offer can
+ * be claimed, and on the run's hamburger while a button folded in its menu
+ * wears one (`game.notices`). */
 export const renderShopDot = (game: Game) => {
-  const waiting = shopWaiting(game);
+  const waiting = game.notices.waiting("shop");
   document.querySelector(`[data-tab="shop"]`)?.classList.toggle("notify", waiting);
   el("run-shop").classList.toggle("notify", waiting);
-  // The hamburger wears the dots of the buttons folded away in its menu:
-  // Missions always; inside a run Research, the Tournament's and Events';
-  // in the forest Mail.
-  el("run-menu-toggle").classList.toggle("notify", game.missions.waiting || (game.run.outside
-    ? game.mail.recent.length > 0 && game.mail.unread
-    : researchWaiting(game) || tournamentWaiting(game) || game.events.waiting));
+  el("run-menu-toggle").classList.toggle("notify", game.notices.waiting("run-menu"));
 };
-/** Whether the Tournament button wears its dot: a final prize waits to be
- * claimed. */
-const tournamentWaiting = (game: Game) => game.tournament.unlocked && game.tournament.phase === "results" && game.tournament.claimable;
 /** The Tournament button, once the Tournament is open to the player: its
  * trophy over the phase, `2d5h` until the next opens, `OPEN`, `ENDING`, or
  * `CLAIM` with a dot while a final prize waits. In the forest's actions
@@ -257,7 +239,7 @@ export function renderTournamentButton(game: Game) {
   const button = el("tournament-button"), desk = game.tournament, inside = !game.run.outside;
   button.hidden = !desk.unlocked || (inside && !desk.entered);
   if (button.hidden) return;
-  const phase = desk.phase, claim = tournamentWaiting(game);
+  const phase = desk.phase, claim = desk.waiting;
   text("tournament-state", phase === "open" ? "OPEN" : phase === "ending" ? "ENDING" : claim ? "CLAIM" : shortCountdown(desk.nextOpensAt - desk.now));
   button.classList.toggle("notify", claim);
   button.classList.toggle("live", phase === "open");
@@ -302,39 +284,11 @@ export function renderEventsButtons(game: Game) {
   button.title = label;
   button.setAttribute("aria-label", label);
 }
-/** Whether the Upgrades button shows its dot: the first Inspiration has
- * been earned (so the run that paid it has ended by the time the tabs show)
- * and the page hasn't been opened since. */
-export const upgradesWaiting = (game: Game) => !game.save.tutorials.upgrades && game.save.tower.inspiration > 0;
-/** Whether the Gear button shows its dot: the Gear skill is owned and the
- * page hasn't been opened since. */
-export const gearWaiting = (game: Game) => !game.save.tutorials.gear && !!game.save.upgrades.gear;
-
-/** Whether the run's Research button wears its dot: training points can
- * be spent and the hero has levelled up since the Research page was last
- * opened, or an archivist stands idle and research has completed (or an
- * archivist been hired) since. Opening the page dismisses it
- * (`dismissResearch`) until the next such event. */
-export const researchWaiting = (game: Game) => {
-  const seen = game.save.seen;
-  return (trainingWaiting(game.save) && levelForXp(game.save.xp) > seen.level) ||
-    (game.research.idle && game.research.events > seen.archives);
-};
-/** Dismisses the run's Research dot until the next level-up or idle archivist. */
-export function dismissResearch(game: Game) {
-  game.save.seen.level = levelForXp(game.save.xp);
-  game.save.seen.archives = game.research.events;
-}
-/** Whether the Deck tab wears its dot: the deck holds a card (from a skill,
- * a Goal or anywhere else) the Deck page hasn't shown since it was earned. */
-export const deckWaiting = (game: Game) =>
-  !!game.save.upgrades.combatStance && deckCards(game.save.upgrades).some((id) => !game.save.seen.cards.includes(id));
-
 /** The level at the front of the XP bar, which fills with this level's
  * progress; hovering shows the XP still needed. The hero's class names it
  * above (`heroClass`). */
 function renderXp(game: Game) {
-  text("hero-class", heroClass(game.save).toUpperCase());
+  text("hero-class", heroClass(game.save, game.isArcher).toUpperCase());
   const level = levelForXp(game.save.xp), from = xpForLevel(level),
     into = game.save.xp - from, need = xpForLevel(level + 1) - from;
   text("level", String(level));
@@ -414,7 +368,7 @@ function renderAutoButton(game: Game) {
   const label = game.auto ? "Pause the hand" : "Play the hand";
   const icon = game.auto ? HAND_ICON.pause : HAND_ICON.play,
     slot = button.querySelector<HTMLElement>(".mini-icon")!;
-  if (inside && slot.textContent !== icon) slot.textContent = icon;
+  if (inside && slot.textContent !== icon) slot.innerHTML = kitIcon(game.auto ? "pause" : "play", icon, "hand-control-icon");
   text("auto-state", game.auto ? "PLAYING" : "PAUSED");
   renderSpeed(game, inside);
   // The speed lesson waits on the › arrow, not on play; the first run's
@@ -442,7 +396,7 @@ function renderSpeed(game: Game, inside: boolean) {
   } else if (!lesson) pointer?.remove();
 }
 
-/** The hand (and its badges) the cards were last drawn for. */
+/** The hand (its badges and levels) the cards were last drawn for. */
 let shownHand = "";
 /** A badge's tooltip line with its value in effect, not its level: a gate
  * reads "HP < 100%", the rest "Skip 7%" (a unit already in the name is not
@@ -454,15 +408,19 @@ function badgeTitle(badge: RunBadge) {
   const unit = percent ? "%" : def.unit === def.name ? "" : ` ${def.unit}`;
   return `${def.name}: ${def.lead ? `${def.lead} ` : ""}${v}${unit}`;
 }
-/** A hand card's tooltip: its name and text, inside a run a line for each
- * badge it holds, top slot first, and a siphon's uses so far this run. */
+/** A hand card's tooltip: its name, level and text, inside a run a line
+ * for each badge it holds, top slot first, and a siphon's uses so far this
+ * run. */
 function handCardTitle(game: Game, id: CardId) {
-  let title = `${CARDS[id].name}: ${cardText(id, game.save.upgrades)}`;
+  let title = `${CARDS[id].name} (${cardLevelTitle(game.save, id)}): ${cardText(id, game.save.upgrades)}`;
+  const bonus = cardBonusText(id);
+  if (bonus) title += `
+${bonus}`;
   if (game.run.outside) return title;
   for (const badge of badgesOn(game.run.badges, id)) title += `
 Badge: ${badgeTitle(badge)}`;
   if (isSiphon(id)) {
-    const uses = game.cardUses(id), next = game.siphonCost(id);
+    const uses = game.handRules.cardUses(id), next = game.handRules.siphonCost(id);
     title += `
 Used ${uses} time${uses === 1 ? "" : "s"} this run; the next use takes ${next} level${next === 1 ? "" : "s"}.`;
   }
@@ -473,18 +431,19 @@ Used ${uses} time${uses === 1 ? "" : "s"} this run; the next use takes ${next} l
 function handBadgeHtml(game: Game, id: CardId) {
   const badges = game.run.outside ? [] : badgesOn(game.run.badges, id);
   if (!badges.length) return "";
-  return `<span class="hand-badges" aria-hidden="true">${badges.map((b) => `<span class="hand-badge-level" style="${badgeStyle(b.id)}">${BADGES[b.id].glyph}</span>`).join("")}</span>`;
+  return `<span class="hand-badges" aria-hidden="true">${badges.map((b) => `<span class="hand-badge-level rarity-${badgeDef(b.id).rarity}" style="${badgeStyle(b.id)}">${badgeGlyph(b.id)}</span>`).join("")}</span>`;
 }
 /** The active hand in the row under the board, the card that made the
  * latest step glowing (paused too); End Run lights up while no card can act. */
 function renderHand(game: Game) {
   const row = el("hand"), hand = game.hand;
-  const key = `${hand.join()}|${game.run.outside ? "" : JSON.stringify(game.run.badges ?? {})}`;
+  const levels = hand.map((id) => cardLevelHtml(game.save, id));
+  const key = `${hand.join()}|${game.run.outside ? "" : JSON.stringify(game.run.badges ?? {})}|${levels.join()}`;
   if (key !== shownHand) {
     shownHand = key;
-    // Room for five cards, and narrower cards for a bigger hand.
+    // Room for five cards; a bigger hand scrolls sideways.
     row.style.setProperty("--slots", String(Math.max(5, hand.length)));
-    row.innerHTML = hand.map((id, i) => `<div class="hand-card" role="listitem" data-card="${id}" data-hand-slot="${i}">${cardArt(id, CARDS[id].name)}${handBadgeHtml(game, id)}</div>`).join("");
+    row.innerHTML = hand.map((id, i) => `<div class="hand-card" role="listitem" data-card="${id}" data-hand-slot="${i}">${cardArt(id, CARDS[id].name)}${levels[i]}${handBadgeHtml(game, id)}</div>`).join("");
   }
   // Paused, the card that made the latest step still glows.
   const glowing = game.handStuck ? null : game.activeCard;
@@ -495,10 +454,10 @@ function renderHand(game: Game) {
     card.classList.toggle("focused", i === focused);
     const title = handCardTitle(game, hand[i]);
     if (card.title !== title) card.title = title;
-    // A card that acts in place greys out while it can't (KEY SIPHON
+    // A card that acts in place greys out while it can't (GK SIPHON
     // without the Max HP training levels its next use takes), and one
     // resting for the floor (Deprioritize with every mark made).
-    card.classList.toggle("unable", !game.run.outside && ((IN_PLACE.has(hand[i]) && !game.canAct(hand[i])) || game.cardResting(hand[i])));
+    card.classList.toggle("unable", !game.run.outside && ((IN_PLACE.has(hand[i]) && !game.handRules.canAct(hand[i])) || game.handRules.cardResting(hand[i])));
   });
 }
 
@@ -523,7 +482,10 @@ let combatFitted = "";
 function fitCombatStats() {
   const row = document.querySelector<HTMLElement>(".combat-stats");
   if (!row) return;
-  const key = `${row.textContent}|${el("shroud-stat").hidden}|${window.innerWidth}`;
+  const hp = el("hp"), pixel = document.documentElement.classList.contains("ui-sprites");
+  // Pixel digits are tabular: equal-length HP changes need no new measurement.
+  const hpShape = pixel ? hp.textContent?.replace(/\d/g, "0") : hp.textContent;
+  const key = `${row.textContent}|${el("shroud-stat").hidden}|${row.clientWidth}|${document.documentElement.className}|${spriteFontRevision()}|${hpShape}`;
   if (key === combatFitted) return;
   row.style.fontSize = "";
   // Hidden (another page showing): fitted once it shows again.
@@ -532,21 +494,38 @@ function fitCombatStats() {
   // The gaps between the stats (3px each at their narrowest) don't scale with the text.
   const gaps = 6, over = (row.scrollWidth - gaps) / (row.clientWidth - gaps);
   if (over > 1) row.style.fontSize = `${Math.max(7, Math.floor((parseFloat(getComputedStyle(row).fontSize) / over) * 10) / 10)}px`;
+  hp.style.removeProperty("font-size");
+  if (hp.clientWidth && hp.scrollWidth > hp.clientWidth + 1)
+    hp.style.fontSize = `${Math.max(7, Math.floor(parseFloat(getComputedStyle(hp).fontSize) * hp.clientWidth / hp.scrollWidth))}px`;
 }
 
 /** HP, ATK, DEF (and the shroud, once owned), the run's Gold and keys. During a fight being played out, HP counts down
  * strike by strike, the bar's red already at the HP the fight leaves and
- * the HP still to go in purple past it. */
+ * the HP still to go in purple past it. HP above max (Overheal) fills the
+ * red and shows in blue over it, full when it reaches the Overheal
+ * ceiling; while it shows, the fight's purple and a heal's growth are
+ * drawn on the blue. */
 export function renderVitals(game: Game) {
-  const p = game.run.player, hp = game.shownHp(performance.now());
+  const p = game.run.player, hp = game.fights.shownHp(performance.now());
   // Shortened from 10,000 like the purse, so the line stays one line on a
   // phone; the exact HP is in the tooltip.
   text("hp", `${shortAmount(wholeHp(hp))} / ${shortAmount(whole(p.maxHp))}`);
-  el("hp").parentElement!.title = `HP: ${wholeHp(hp).toLocaleString("en-US")} / ${whole(p.maxHp).toLocaleString("en-US")}`;
-  renderHealthGain(game);
-  const left = game.encounter ? Math.min(hp, game.fightEndHp()) : hp;
-  el("health").style.width = `${(100 * left) / p.maxHp}%`;
-  renderHealthLoss(hp - left, p.maxHp);
+  const ceiling = game.hpCeiling, upTo = ceiling > p.maxHp ? ` (Overheal up to ${whole(ceiling).toLocaleString("en-US")})` : "";
+  el("hp").parentElement!.title = `HP: ${wholeHp(hp).toLocaleString("en-US")} / ${whole(p.maxHp).toLocaleString("en-US")}${upTo}`;
+  const over = hp > p.maxHp, span = Math.max(ceiling, hp) - p.maxHp;
+  el("overheal").hidden = !over;
+  renderHealthGain(game, span);
+  const left = game.fights.encounter ? Math.min(hp, game.fights.endHp()) : hp;
+  if (over) {
+    el("health").style.width = "100%";
+    el("overheal-fill").style.width = `${(100 * (Math.max(left, p.maxHp) - p.maxHp)) / span}%`;
+    renderHealthLoss("health-loss", 0, p.maxHp);
+    renderHealthLoss("overheal-loss", hp - Math.max(left, p.maxHp), span);
+  } else {
+    el("health").style.width = `${(100 * left) / p.maxHp}%`;
+    renderHealthLoss("health-loss", hp - left, p.maxHp);
+    renderHealthLoss("overheal-loss", 0, 1);
+  }
   // ATK, DEF and the shroud shortened the same way, so the three fit on one
   // line on a phone; the exact amounts are in their tooltips.
   combatStat("attack", "ATK", whole(p.attack));
@@ -573,24 +552,30 @@ export function renderVitals(game: Game) {
 let shownHeal = 0;
 /** A potion just picked up or drunk: the red fill starts at the HP before it with the
  * HP it healed in blue beyond, and grows over the blue in a
- * second. A fight starting, or the next potion, stops it where it is. */
-function renderHealthGain(game: Game) {
-  const heal = game.lastHeal, fill = el("health"), gain = el("health-gain");
+ * second. A heal to above max HP does so on the Overheal bar instead
+ * (`span` HP across), from the Overheal before it, the red simply full.
+ * A fight starting, or the next potion, stops it where it is. */
+function renderHealthGain(game: Game, span: number) {
+  const heal = game.lastHeal, bars = [["health", "health-gain"], ["overheal-fill", "overheal-gain"]] as const;
   const settle = () => {
-    fill.classList.remove("healing");
-    gain.classList.remove("healing");
-    gain.style.width = "0%";
+    for (const [fill, gain] of bars) {
+      el(fill).classList.remove("healing");
+      el(gain).classList.remove("healing");
+      el(gain).style.width = "0%";
+    }
   };
-  if (game.encounter) settle();
+  if (game.fights.encounter) settle();
   if (!heal || heal.id === shownHeal) return;
   shownHeal = heal.id;
   // Only the heal the HUD is looking at now fills up; one from before a
   // reload, a new run or an undo is simply there.
-  if (heal.to !== game.run.player.hp || game.encounter) return;
-  const max = game.run.player.maxHp;
+  if (heal.to !== game.run.player.hp || game.fights.encounter) return;
+  const max = game.run.player.maxHp, over = heal.to > max;
+  const [from, healed, across] = over ? [Math.max(heal.from, max) - max, heal.to - Math.max(heal.from, max), span] : [heal.from, heal.to - heal.from, max];
+  const [fillId, gainId] = bars[over ? 1 : 0], fill = el(fillId), gain = el(gainId);
   settle();
-  fill.style.width = `${(100 * heal.from) / max}%`;
-  gain.style.width = `${(100 * (heal.to - heal.from)) / max}%`;
+  fill.style.width = `${(100 * from) / across}%`;
+  gain.style.width = `${(100 * healed) / across}%`;
   void fill.offsetWidth; // Lay out the starting widths before the transition.
   fill.classList.add("healing");
   gain.classList.add("healing");
@@ -599,43 +584,61 @@ function renderHealthGain(game: Game) {
 }
 
 /** The HP the fight being played out is still to cost, shown in purple just
- * past the HP it leaves, shrinking strike by strike; any left once the
- * fight settles shrinks away over a second. */
-function renderHealthLoss(lost: number, maxHp: number) {
-  const bar = el("health-loss");
+ * past the HP it leaves on bar `id` (`across` HP wide), shrinking strike
+ * by strike; any left once the fight settles shrinks away over a second. */
+function renderHealthLoss(id: "health-loss" | "overheal-loss", lost: number, across: number) {
+  const bar = el(id);
   if (lost > 0) {
     bar.classList.remove("settling");
-    bar.style.width = `${(100 * lost) / maxHp}%`;
+    bar.style.width = `${(100 * lost) / across}%`;
   } else if (bar.style.width && bar.style.width !== "0%") {
     bar.classList.add("settling");
     bar.style.width = "0%";
   }
 }
 
-/** Once Shrines are researched, inside a Tower run: the Shrine button,
- * its count the boons waiting (lit while any wait), and under the floor
- * the floors left to the next boon. */
+/** The boons waiting when the Shrine bar was last drawn, so the diamond
+ * flashes as another arrives (null before the first draw, so a reload
+ * with boons waiting doesn't flash). */
+let shrineWaiting: number | null = null;
+
+/** Once Shrines are researched, inside a Tower run: the Shrine bar under
+ * the XP bar, filling from the latest boon's floor to the next's, the
+ * floors left under it, and on its left end a diamond with the boons
+ * waiting to be picked (lit while any wait, flashing as one arrives). */
 function renderShrine(game: Game) {
-  const shrine = game.shrine, open = shrine.open, waiting = shrine.unspent, next = shrine.floorsToNext;
-  const button = el("shrine-stat");
-  button.hidden = !open;
-  button.classList.toggle("notify", waiting > 0);
-  text("shrine-left", waiting);
-  button.setAttribute("aria-label", waiting ? `Shrine: ${waiting} boon${waiting === 1 ? "" : "s"} to pick` : "Shrine: boons taken");
-  el("shrine-next").hidden = !open || next === null;
-  text("shrine-next-val", next ?? 0);
+  const shrine = game.shrine, open = shrine.open, bar = el("shrine-bar");
+  bar.hidden = !open;
+  if (!open) {
+    shrineWaiting = null;
+    return;
+  }
+  const waiting = shrine.unspent, next = shrine.floorsToNext, diamond = el("shrine-diamond");
+  el("shrine-fill").style.width = `${100 * shrine.progress}%`;
+  diamond.classList.toggle("lit", waiting > 0);
+  if (shrineWaiting !== null && waiting > shrineWaiting) {
+    diamond.classList.remove("flash");
+    void diamond.offsetWidth;
+    diamond.classList.add("flash");
+  }
+  shrineWaiting = waiting;
+  text("shrine-left", waiting || "");
+  text("shrine-next", next ?? "");
+  const pick = waiting ? `${waiting} boon${waiting === 1 ? "" : "s"} to pick` : "no boons to pick";
+  const left = next === null ? "every boon earned" : `next boon in ${next} floor${next === 1 ? "" : "s"}`;
+  bar.setAttribute("aria-label", `Shrine: ${pick}, ${left}`);
 }
 
-/** Focus uses left, once the Focus skill is owned. */
+/** Focus uses left, once the Focus skill is owned; Ignore, Target and the Bombs likewise. */
 function renderFocus(game: Game) {
   renderShrine(game);
   const stat = el("focus-stat");
   stat.hidden = !game.save.upgrades.focus;
   text("focus-left", game.focusLeft);
   stat.setAttribute("aria-label", `Focus: ${game.focusLeft} left`);
-  for (const c of ["ignore", "target"] as const) {
-    const button = el(`${c}-stat`), left = game.chargesLeft(c), name = c === "ignore" ? "Ignore" : "Target";
-    button.hidden = !game.save.upgrades[c];
+  for (const c of ["ignore", "target", "bomb"] as const) {
+    const button = el(`${c}-stat`), left = c === "bomb" ? game.bombsLeft : game.chargesLeft(c), name = { ignore: "Ignore", target: "Target", bomb: "Bombs" }[c];
+    button.hidden = c === "bomb" ? !game.save.provisions.bomb : !game.save.upgrades[c];
     button.classList.toggle("armed", game.armed === c);
     text(`${c}-left`, left);
     button.setAttribute("aria-label", `${name}: ${left} left`);
@@ -676,7 +679,7 @@ function renderProgress(game: Game) {
   const tier = el("height-tier");
   tier.hidden = outside;
   // A tournament run's cave wears its +, for the stronger enemies.
-  const t = game.mode === "delve" ? game.delveRun.tournament : undefined;
+  const t = game.tournamentRun;
   text("height-tier", (t ? caveLabel(t.league) : `${rules.words.tierName} ${game.save[game.mode].tier}`).toUpperCase());
   text("height-label", (outside ? rules.words.tierName : rules.words.progress).toUpperCase());
   const rawRunBest = game.run.maxHeight ?? game.run.height;
@@ -705,22 +708,22 @@ function renderGoldBonus(game: Game) {
   const button = el("gold-bonus"), inside = !game.run.outside;
   button.hidden = el("gold-bonus-divider").hidden = !inside;
   if (!inside) return;
-  text("gold-bonus-val", factorText(goldBonusTotal(goldBonuses(game.save, game.tier, game.clock(), game.shrineGold))));
+  text("gold-bonus-val", factorText(goldMultiplierTotal(goldMultipliers(game.goldContext))));
 }
 
 /** A stat in a few characters: two decimals below 1,000 when not whole,
- * then 1.2K, 12M … */
-const shortStat = (n: number) => (n < 1000 ? enemyStat(n) : compactAmount(Math.floor(n)));
+ * then to three figures, 1.21K, 12.3M … */
+export const shortStat = (n: number) => (n < 1000 ? enemyStat(n) : shortAmount(Math.floor(n), 1000));
 /** Under the floor inside a run, below a dividing line: the ATK, DEF and HP
- * of a normal, balanced enemy there, as the tier's factor makes them. */
+ * of the normal enemy at the run's deepest point, as the board makes it. */
 function renderBaseEnemy(game: Game) {
-  const box = el("base-enemy"), divider = el("base-enemy-divider"), inside = !game.run.outside;
-  box.hidden = divider.hidden = !inside;
-  if (!inside) return;
-  const s = enemyStats(game.mode, game.tier, game.run.height, "normal", "balanced"), f = tierStats(game.tier);
-  text("base-enemy-atk", shortStat(s.attack * f));
-  text("base-enemy-def", shortStat(s.defense * f));
-  text("base-enemy-hp", shortStat(s.hp * f));
+  const box = el("base-enemy"), divider = el("base-enemy-divider");
+  const s = game.run.outside ? undefined : game.world.typicalEnemy?.(game.run.height);
+  box.hidden = divider.hidden = !s;
+  if (!s) return;
+  text("base-enemy-atk", shortStat(s.attack));
+  text("base-enemy-def", shortStat(s.defense));
+  text("base-enemy-hp", shortStat(s.hp));
 }
 
 /** The run's Inspiration (Courage in the Delve) last shown under the
@@ -792,7 +795,7 @@ function renderModeActions(game: Game) {
   floorsButton.title = tower ? "Goals" : "Future Delve action 2";
   floorsButton.classList.toggle("placeholder-action", !tower);
   // A dot while a Goals reward waits to be claimed.
-  floorsButton.classList.toggle("notify", tower && goalsWaiting(game.save));
+  floorsButton.classList.toggle("notify", tower && game.notices.waiting("goals"));
 }
 
 function renderStatus(game: Game, overlay: BoardOverlay) {
@@ -836,6 +839,18 @@ function renderForestSign(game: Game) {
   const label = other === "delve" ? "Down the path to the Delve" : "Down the path to the Tower";
   sign.title = label;
   sign.setAttribute("aria-label", label);
+}
+
+/** The number on the Deck tab's dot, while it shows: the new cards and
+ * those with card points to spend (none, a plain dot, for a lesson alone). */
+function renderDeckCount(game: Game) {
+  const tab = document.querySelector<HTMLButtonElement>(`[data-tab="deck"]`);
+  if (!tab) return;
+  const count = !tab.hidden && tab.classList.contains("notify") ? game.notices.deckCount() : 0;
+  if (count) {
+    tab.dataset.count = count > 99 ? "99+" : String(count);
+    tab.setAttribute("aria-label", `Deck, ${count} to look at`);
+  } else delete tab.dataset.count;
 }
 
 function renderLockedTab(id: string, unlocked: boolean, name: string, hint: string) {

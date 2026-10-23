@@ -1,4 +1,4 @@
-import type { KeyColor } from "./config.ts";
+import type { KeyColor } from "./entities.ts";
 import { isRecord } from "./decode.ts";
 import { snap } from "./exact.ts";
 
@@ -47,6 +47,13 @@ export const defaultFinds = (): RunFinds => ({ materials: {}, cells: 0, gems: 0,
 export function notesOf(run: { outside?: boolean; notes?: RunNotes }): RunNotes | null {
   if (run.outside) return null;
   return (run.notes ??= newNotes(0));
+}
+
+/** A key obtained (picked up, traded or siphoned), counted in the run's
+ * notes (none in the forest). */
+export function noteKey(run: { outside?: boolean; notes?: RunNotes }, color: KeyColor, amount: number) {
+  const notes = notesOf(run);
+  if (notes) tallyIn(notes.keys, color, amount);
 }
 
 /** Adds `amount` to `record[key]`. */

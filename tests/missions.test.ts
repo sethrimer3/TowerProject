@@ -13,7 +13,8 @@ import { keyFirstFloor } from "../src/key-schedule.ts";
 import { DAY_MS } from "../src/shop/clock.ts";
 import { CURRENCIES } from "../src/shop/currency.ts";
 import { trainingPoints } from "../src/loadout.ts";
-import type { Enemy, Save, Tile } from "../src/entities.ts";
+import type { Enemy, Tile } from "../src/entities.ts";
+import type { Save } from "../src/save-shape.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 
 /** Monday 5 October 2026, 00:00 GMT. */

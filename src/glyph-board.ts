@@ -1,9 +1,9 @@
-import type { KeyColor } from "./config.ts";
-import type { EnemyStrength, Tile, Torch } from "./entities.ts";
+import { potionShade, type EnemyStrength, type Tile, type Torch, type KeyColor } from "./entities.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
-import type { ThemedBoard } from "./themed-boards.ts";
+import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
 import { rankChevrons } from "./rank-chevrons.ts";
 import { askAsciiFont, asciiGlyph as glyph, letterField } from "./ascii-glyphs.ts";
+import { vignette } from "./themed-art.ts";
 
 /** The Glyph Game theme's dungeon board: an ASCII dungeon in many neon
  * colours on purple, every wall, tile content, torch and the hero a
@@ -68,80 +68,76 @@ function cardFrame(c: CanvasRenderingContext2D, color: string, inset = 2) {
 }
 
 /** One tile's contents in tile space (24x24). */
-function paintGlyphContents(c: CanvasRenderingContext2D, t: Tile) {
-  switch (t.kind) {
-    case "enemy": {
-      // Its name's first letter in its strength's colour, a capital from
-      // strong up; a boss's framed like a card.
-      const e = t.enemy;
-      const strength = e?.strength ?? "normal";
-      const color = ENEMY_GLYPH[strength] ?? GLYPH.cyan;
-      const letter = (e?.name.trim()[0] ?? "e").toLowerCase();
-      const big = strength !== "weak" && strength !== "normal";
-      if (strength === "boss" || strength === "greaterBoss") cardFrame(c, color, 1);
-      glyph(c, big ? letter.toUpperCase() : letter, color, 24, 12, 12.5, 10);
-      rankChevrons(c, strength, color, GLYPH.ground, 1, 1, 4);
-      // A Ranged enemy's > at the top right, and a Fast enemy's » there, or
-      // below it when it has both.
-      if (e?.ranged) glyph(c, ">", GLYPH.yellow, 12, 20, 4, 4);
-      if (e?.fast) glyph(c, "»", GLYPH.cyan, 12, 20, e.ranged ? 11 : 4, 4);
+const paintGlyphContents = contentsFrom({
+  enemy(c, t) {
+    // Its name's first letter in its strength's colour, a capital from
+    // strong up; a boss's framed like a card.
+    const e = t.enemy;
+    const strength = e?.strength ?? "normal";
+    const color = ENEMY_GLYPH[strength] ?? GLYPH.cyan;
+    const letter = (e?.name.trim()[0] ?? "e").toLowerCase();
+    const big = strength !== "weak" && strength !== "normal";
+    if (strength === "boss" || strength === "greaterBoss") cardFrame(c, color, 1);
+    glyph(c, big ? letter.toUpperCase() : letter, color, 24, 12, 12.5, 10);
+    rankChevrons(c, strength, color, GLYPH.ground, 1, 1, 4);
+    // A Ranged enemy's > at the top right, and a Fast enemy's » there, or
+    // below it when it has both.
+    if (e?.ranged) glyph(c, ">", GLYPH.yellow, 12, 20, 4, 4);
+    if (e?.fast) glyph(c, "»", GLYPH.cyan, 12, 20, e.ranged ? 11 : 4, 4);
+  },
+  key(c, t) {
+    glyph(c, "o-", keyColor(t.color), 16, 12, 12.5, 8);
+  },
+  door(c, t) {
+    const rule = t.door;
+    if (rule?.type === "fullHp") {
+      paintGlyphHeart(c);
       return;
     }
-    case "key":
-      glyph(c, "o-", keyColor(t.color), 16, 12, 12.5, 8);
-      return;
-    case "door": {
-      const rule = t.door;
-      if (rule?.type === "fullHp") {
-        paintGlyphHeart(c);
-        return;
-      }
-      if (rule?.type === "wood") {
-        // Boarded up: any key opens it, or the hero breaks it down.
-        glyph(c, "=", GLYPH.orange, 28, 12, 8, 6);
-        glyph(c, "=", GLYPH.orange, 28, 12, 16, 6);
-        return;
-      }
-      const keys = rule?.type === "keys" ? rule.keys : t.color ? [t.color] : [];
-      cardFrame(c, keyColor(keys[0]));
-      glyph(c, "+", keyColor(keys[0]), 20, 12, 10.5, 8);
-      // A dot per key the door takes, in that key's colour.
-      keys.forEach((k, i) => {
-        c.fillStyle = keyColor(k);
-        c.fillRect(12 - keys.length * 2 + i * 4, 17, 2.5, 2.5);
-      });
-      if (rule?.type === "keys" && rule.heart) glyph(c, "<3", GLYPH.heart, 10, 19, 4, 4);
+    if (rule?.type === "wood") {
+      // Boarded up: any key opens it, or the hero breaks it down.
+      glyph(c, "=", GLYPH.orange, 28, 12, 8, 6);
+      glyph(c, "=", GLYPH.orange, 28, 12, 16, 6);
       return;
     }
-    case "potion":
-      glyph(c, "!", GLYPH.red, 24, 12, 12.5, 10);
-      // The red potion heals a share of HP: its % beside it.
-      if (t.color === "red") glyph(c, "%", GLYPH.magenta, 12, 19, 5, 4);
-      return;
-    case "attack":
-      glyph(c, ")", GLYPH.orange, 24, 12, 12.5, 10);
-      return;
-    case "defense":
-      glyph(c, "]", GLYPH.blue, 24, 12, 12.5, 10);
-      return;
-    case "reward":
-      cardFrame(c, GLYPH.yellow, 3);
-      glyph(c, "$", GLYPH.yellow, 20, 12, 12.5, 10);
-      return;
-    case "openedChest":
-      glyph(c, "_", GLYPH.dim, 24, 12, 10, 0);
-      return;
-    case "treasure":
-      glyph(c, "*", GLYPH.yellow, 24, 12, 14, 10);
-      return;
-    case "stairs":
-      glyph(c, "<", GLYPH.cyan, 26, 12, 12.5, 10);
-      return;
-    case "oneway":
-      glyph(c, "^", GLYPH.green, 24, 12, 14, 10);
-      return;
-  }
-}
+    const keys = rule?.type === "keys" ? rule.keys : t.color ? [t.color] : [];
+    cardFrame(c, keyColor(keys[0]));
+    glyph(c, "+", keyColor(keys[0]), 20, 12, 10.5, 8);
+    // A dot per key the door takes, in that key's colour.
+    keys.forEach((k, i) => {
+      c.fillStyle = keyColor(k);
+      c.fillRect(12 - keys.length * 2 + i * 4, 17, 2.5, 2.5);
+    });
+    if (rule?.type === "keys" && rule.heart) glyph(c, "<3", GLYPH.heart, 10, 19, 4, 4);
+  },
+  potion(c, t) {
+    // Red, and the percent potion, which heals a share of HP, blue with its % beside it.
+    glyph(c, "!", potionShade(t) === "red" ? GLYPH.red : GLYPH.blue, 24, 12, 12.5, 10);
+    if (t.color === "red") glyph(c, "%", GLYPH.magenta, 12, 19, 5, 4);
+  },
+  attack(c) {
+    glyph(c, ")", GLYPH.orange, 24, 12, 12.5, 10);
+  },
+  defense(c) {
+    glyph(c, "]", GLYPH.blue, 24, 12, 12.5, 10);
+  },
+  reward(c) {
+    cardFrame(c, GLYPH.yellow, 3);
+    glyph(c, "$", GLYPH.yellow, 20, 12, 12.5, 10);
+  },
+  openedChest(c) {
+    glyph(c, "_", GLYPH.dim, 24, 12, 10, 0);
+  },
+  treasure(c) {
+    glyph(c, "*", GLYPH.yellow, 24, 12, 14, 10);
+  },
+  stairs(c) {
+    glyph(c, "<", GLYPH.cyan, 26, 12, 12.5, 10);
+  },
+  oneway(c) {
+    glyph(c, "^", GLYPH.green, 24, 12, 14, 10);
+  },
+});
 /** The Heart Door's heart, typed. */
 function paintGlyphHeart(c: CanvasRenderingContext2D) {
   glyph(c, "<3", GLYPH.heart, 20, 12, 12.5, 10);
@@ -167,12 +163,7 @@ function paintGlyphHero(c: CanvasRenderingContext2D) {
 
 /** A soft dark rim round the board. */
 function drawGlyphVignette(f: FrameContext) {
-  const c = f.c, w = f.width;
-  const g = c.createRadialGradient(w / 2, w / 2, w * 0.35, w / 2, w / 2, w * 0.75);
-  g.addColorStop(0, "rgba(20, 0, 40, 0)");
-  g.addColorStop(1, "rgba(10, 0, 20, 0.55)");
-  c.fillStyle = g;
-  c.fillRect(0, 0, w, w);
+  vignette(f, 0.35, "rgba(20, 0, 40, 0)", "rgba(10, 0, 20, 0.55)");
 }
 
 export const GLYPH_BOARD: ThemedBoard = {

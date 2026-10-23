@@ -1,4 +1,4 @@
-import type { Save } from "../entities.ts";
+import type { Save } from "../save-shape.ts";
 import { enemyFirstFloor } from "../enemy-schedule.ts";
 import { reached } from "../missions/catalog.ts";
 import { DAY_MS, gmtDay } from "../shop/clock.ts";

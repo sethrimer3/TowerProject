@@ -12,6 +12,7 @@ A step onto empty floor is seldom worth resuming at, so undoing one goes on back
 It cancels any queued route.
 Undos are a limited resource, like Focus: each run has a number of them to spend, shown on the Undo button, and one spent never comes back, whatever the run does after it.
 The history holds no more moves than the run has undos left.
+A game update that reshapes the floors forgets the history, in the Tower as in the Delve, since the moves it held were made on the old layout.
 A new profile has no undo, and the button stays hidden until **Rehearsed steps** (5 Inspiration, after the Archives) gives the first undo a run (or Echoes of time and a level of Undo Count do); each level of **Undo Count** research in the Archives adds one a run: Rehearsed steps opens four levels of it and **Echoes of time** (Courage) four more, either opening it first, up to 9 a run.
 Each counts the moment it's bought or completed, in a run already under way too; a new run starts with them all.
 History persists across refreshes.
@@ -32,6 +33,13 @@ Gold is banked the moment it is found and kept however the run ends: the stats s
 
 Tower I's floor 250 Goal opens the Archives' **Note Taking** (one level, 100,000 Gold and 2 days).
 Once it is researched, tapping the floor number during a run opens the run's notes, and the run plays on beneath them.
+Below the floor number during a run, under a line, stand the ATK, DEF and HP of a normal enemy at the run's deepest floor or depth, as strong as the real ones there: the tower's or cave's factor, a tournament's raise and the Shrine boons that change enemies all count.
+Large stats are shortened to three figures (1.21K, 12.3K, 123K).
+Pressing them opens a box of every enemy the floor the hero stands on can roll, while the run plays on behind it; its X, or a press anywhere outside it, closes it, and it follows the hero onto each new floor.
+Its first table lists each strength the floor can roll, weakest first, with its **Chance** (its share of the floor's enemies), and a balanced one's HP, ATK, DEF and the Gold its kill pays now (every Gold bonus and the hand's enemy cards counted).
+The Boss row is always there, at 100% on a floor a boss guards (every tenth) and 0% on the rest; once a Greater Boss has appeared on the floor, a Greater Boss row follows it at 100%.
+Its second table lists the attributes enemies there may carry, those that can't appear left out: Fast, Ranged and Flying with the chance an enemy has each (a Flying roll comes first, so Fast and Ranged are of the rest), Shielded with the chance the floor holds one, and Aggroed at 0% wherever Flying enemies stand, since only an arrow's wound makes one.
+Its Attack Speed (Ranged and Flying) and Move Speed (Aggroed) are shots and steps every 10 turns, as the Archer's Attack Speed counts.
 They list the tower, the floor reached and the current floor, the real time since the run went inside, the steps taken, chests opened, enemies defeated and XP earned, the keys obtained by colour and the doors opened by kind, the Gold, Silver and Inspiration (or Courage) found, the materials found, and the potions, ATK and DEF shards, Gems, Cells and equipment picked up, each group under its heading.
 They refresh as the run goes, and the X at their top right closes them.
 The copy button beside the X puts them in the clipboard as text, to paste elsewhere.
@@ -64,7 +72,9 @@ It costs the same in all as Dash, about 201 billion Gold and 697 days, spread mo
 ## More controls
 
 Instant Combat likewise adds **Animate fights** (see [Fights](fights.md#how-a-fight-plays-out)).
-**Item pickup animations**, **Door payment animations**, **Gold pickup animations** and **Silver pickup animations** each turn off one kind of gain rising off the board: an item's sprite rising as it is picked up, the keys and HP a door takes, and the Gold and Silver found (what each pays is paid all the same).
+The **Toggles** button opens a menu of what the board shows during a run, each turned off on its own (what each pays is paid all the same):
+**ATK changes**, **DEF changes** and **HP changes** (a shard or potion picked up, a siphon, max HP raised, a heal), **Keys found**, **Door payments** (the keys and HP a door takes), **Gold found**, **Silver found**, **XP gained** (a badge's XP), **Gold combo** (Goldback's "×N Gold" as it grows), **Damage on enemies** and **Item amounts** (once Damage Visual is claimed; see [Towers](towers-areas-goals.md)), **Fight damage numbers** (the damage, shroud, thorns and Lifesteal numbers each strike raises) and **Enemy HP bars** (the bar over an enemy as it is struck).
+Materials, Cells, Gems and Free Training's levels always show.
 Beside Dev mode, **Dev: free purchases** is a lighter tool for testing: it unlocks nothing, but every purchase (skills, Training, provisions, research and archivists, Defend) goes through whatever you have and costs nothing, and research completes the moment it starts.
 In the forest **Enter**, an arrow going into an arch, stands under Goals beside the tower's number: one press goes straight in through the entrance and starts the run.
 Inside a run the button under Settings plays and pauses the hand.

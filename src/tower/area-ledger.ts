@@ -12,7 +12,9 @@
  * reloads and later runs never pay it twice. A chest for each then stands
  * in front of the hero on the new floor; it is a `reward` tile in the
  * floor's changes, and opening it pays nothing more, only shows the reward. */
-import type { ChestTier, Save, Tile, TowerRun } from "../entities.ts";
+import type { ChestTier, Tile } from "../entities.ts";
+import type { Save } from "../save-shape.ts";
+import type { TowerRun } from "../runs.ts";
 import { TOWER_SECTION } from "../config.ts";
 import { checkpoint } from "../goals.ts";
 import { milestonePoints } from "../modes.ts";

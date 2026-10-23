@@ -1,6 +1,7 @@
-import { TRAINING, TRAINING_GROUPS, type TrainingId } from "./config.ts";
-import type { RunCore, Save } from "./entities.ts";
-import { freeTrainingChance, trainingOpen } from "./loadout.ts";
+import { TRAINING, TRAINING_GROUPS, trainedAmount, type TrainingId } from "./config.ts";
+import type { RunCore } from "./runs.ts";
+import type { Save } from "./save-shape.ts";
+import { FREE_TRAINING_ROWS, runTrainingOpen } from "./loadout.ts";
 import { drawAt } from "./random.ts";
 import { ranksInRun, runTrainingMax } from "./run-training.ts";
 
@@ -30,11 +31,11 @@ function draw(run: Pick<RunCore, "seed" | "freeRolls">, group: FreeGroup) {
   return drawAt(freeTrainingSeed(run.seed, group), n);
 }
 
-/** The rows of `group` a free level can go to in `run`: open, and below
- * their most counting the run's ranks. */
-function candidates(save: Pick<Save, "training" | "upgrades" | "goals">, run: Pick<RunCore, "training">, group: FreeGroup): TrainingId[] {
+/** The rows of `group` a free level can go to in `run`: open for its hand
+ * (`runTrainingOpen`), and below their most counting the run's ranks. */
+function candidates(save: Pick<Save, "training" | "upgrades" | "goals">, run: Pick<RunCore, "training" | "hand">, group: FreeGroup): TrainingId[] {
   const ranks = ranksInRun(save, run);
-  return TRAINING.filter((row) => row.group === group && trainingOpen(row, save) && ranks[row.id] < runTrainingMax(row, save)).map((row) => row.id);
+  return TRAINING.filter((row) => row.group === group && runTrainingOpen(row, save, run.hand ?? []) && ranks[row.id] < runTrainingMax(row, save)).map((row) => row.id);
 }
 
 /** One floor passed: each group, in turn, rolls its Free Upgrade chance on
@@ -42,13 +43,16 @@ function candidates(save: Pick<Save, "training" | "upgrades" | "goals">, run: Pi
  * again to pick which of its rows gains the level. Returns the rows picked,
  * in order; `run.freeRolls` moves on, and applying the levels is the
  * caller's (`Game`). The chances are read before any level is applied, so
- * Free Utility raising a Free Upgrade row counts from the next floor. */
-export function rollFreeTraining(save: Pick<Save, "training" | "upgrades" | "goals">, run: Pick<RunCore, "seed" | "freeRolls" | "training">, boonChance = 0): TrainingId[] {
+ * Free Utility raising a Free Upgrade row counts from the next floor.
+ * `factors` (STAIRS' card tree) multiply each group's chance, and
+ * `chances` (HEAL's and DOOR's, in hundredths of a percent) add to it, so a group may
+ * give a level with no ranks of its own. */
+export function rollFreeTraining(save: Pick<Save, "training" | "upgrades" | "goals">, run: Pick<RunCore, "seed" | "freeRolls" | "training" | "hand">, boonChance = 0, factors?: Record<FreeGroup, number>, chances?: Partial<Record<FreeGroup, number>>): TrainingId[] {
   const now = { upgrades: save.upgrades, training: ranksInRun(save, run) };
   const picked: TrainingId[] = [];
   for (const group of FREE_GROUPS) {
     // A run's Free Up Chance boons add to every group's chance, in hundredths of a percent.
-    const chance = freeTrainingChance(now, group) + boonChance;
+    const chance = (trainedAmount(now, FREE_TRAINING_ROWS[group]) + boonChance) * (factors?.[group] ?? 1) + (chances?.[group] ?? 0);
     if (!chance || draw(run, group) * 10_000 >= chance) continue;
     const rows = candidates(save, run, group);
     if (!rows.length) continue;

@@ -1,4 +1,5 @@
-import type { Mode, Save } from "../entities.ts";
+import type { Mode } from "../entities.ts";
+import type { Save } from "../save-shape.ts";
 import { MODES } from "../modes.ts";
 import { enemyFirstFloor } from "../enemy-schedule.ts";
 import { keyFirstFloor } from "../key-schedule.ts";

@@ -1,6 +1,6 @@
 import type { Game } from "./state.ts";
 import type { Tile, Torch } from "./entities.ts";
-import type { Facing } from "./state.ts";
+import type { Facing } from "./shown.ts";
 import type { BoardLook } from "./tile-painters.ts";
 
 /** A glowing object this frame: tile position, color, reach (tiles), and strength. */
@@ -31,6 +31,8 @@ export type FrameContext = BoardView & {
   playerY: number;
   /** Which way the hero faces: its last step. */
   heroFacing: Facing;
+  /** Native idle frame, zero during motion, combat or with animations off. */
+  heroIdleFrame?: number;
   /** The board's tiles: the same object for as long as the board is. */
   world: BoardTiles;
   /** How the board looks: its art set and the player's settings. */

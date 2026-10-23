@@ -1,3 +1,4 @@
+import { boardFont } from "./sprite-font.ts";
 import { netDamage, PLAYED_ROUNDS, predict, type CritRule } from "./combat.ts";
 import { forecast } from "./crit-forecast.ts";
 import type { Enemy, Player, Tile } from "./entities.ts";
@@ -46,11 +47,12 @@ export class DamagePredictions {
     // even at full HP; HP is part of the key only with Lifesteal, since a
     // fight that fells the hero first heals nothing.
     const steal = player.lifesteal ? `${player.lifesteal}|${player.hp}` : "";
-    const guard = `${player.thorns ?? 0}|${player.parry ?? 0}`;
+    const guard = `${player.thorns ?? 0}|${player.parry ?? 0}|${player.cardParry ?? 0}|${player.bossAttack ?? 0}|${player.pierce ?? 0}|${JSON.stringify(player.foeAttack ?? {})}|${JSON.stringify(player.foeDefense ?? {})}|${JSON.stringify(player.foeShroud ?? {})}|${JSON.stringify(player.foeCritChance ?? {})}|${JSON.stringify(player.foeCritFactor ?? {})}|${JSON.stringify(player.foeStealOverheal ?? {})}`;
     const hero = `${player.attack}|${player.defense}|${player.shroud ?? 0}|${steal}|${crit ? `${crit.chance}|${crit.factor}` : ""}|${guard}`;
     if (hero !== this.hero) [this.hero, this.costs] = [hero, new Map()];
-    // A boss's strength sets its thorns and the hero's boss ATK; a Fast enemy strikes first.
-    const key = `${enemy.hp}|${enemy.attack}|${enemy.defense}|${enemy.strength}|${enemy.fast ? "fast" : ""}`;
+    // A boss's strength sets its thorns and the hero's boss ATK; a Fast enemy strikes first;
+    // a bubble's guard cuts the hero's strikes; a wounded enemy's full HP sets its thorns.
+    const key = `${enemy.hp}|${enemy.fullHp ?? ""}|${enemy.attack}|${enemy.defense}|${enemy.strength}|${enemy.fast ? "fast" : ""}|${enemy.flying ? "flying" : ""}|${enemy.guard ?? 0}`;
     let cost = this.costs.get(key);
     if (!cost) {
       // A fight of more than PLAYED_ROUNDS rounds is estimated past them, so
@@ -107,7 +109,8 @@ export function damageLabel(cost: Cost, hp: number, relative = false) {
   return { text: compactAmount(shown), color };
 }
 
-/** The fight on the board (its enemy's tile), whose HP bar tells its story. */
+/** The fight being played out on the board (its enemy's tile), whose HP
+ * bar tells its story. */
 type Fighting = { to: { x: number; y: number } } | null;
 
 /** What breaking a Wooden Door costs, as a fight's cost: never an Instakill. */
@@ -131,13 +134,13 @@ export function itemLabel(t: Tile, x: number, y: number, player: Player, items: 
   return null;
 }
 
-/** Draws each enemy's label in view, each Wooden Door's while the hero
- * holds no key, and with `items` each item's, over the darkness so it
- * always reads. */
-export function drawDamageLabels(f: FrameContext, predictions: DamagePredictions, player: Player, fight: Fighting, relative = false, crit?: CritRule, items?: ItemValues) {
+/** Draws, unless `enemies` is false, each enemy's label in view and each
+ * Wooden Door's while the hero holds no key, and with `items` each item's,
+ * over the darkness so it always reads. */
+export function drawDamageLabels(f: FrameContext, predictions: DamagePredictions, player: Player, fight: Fighting, relative = false, crit?: CritRule, items?: ItemValues, enemies = true) {
   const c = f.c, s = f.s, pad = s * 0.06;
   c.save();
-  c.font = `bold ${Math.max(8, Math.round(s * 0.3))}px Cinzel, serif`;
+  c.font = boardFont(f.look.styledSprites, Math.max(8, Math.round(s * 0.3)), "bold", "Cinzel, serif");
   c.textAlign = "left";
   c.textBaseline = "bottom";
   c.lineJoin = "round";
@@ -146,8 +149,8 @@ export function drawDamageLabels(f: FrameContext, predictions: DamagePredictions
   forEachViewTile(f, (x, y) => {
     const t = f.world.tile(x, y);
     const item = items && itemLabel(t, x, y, player, items);
-    const wood = t.kind === "door" && t.door?.type === "wood" && !holdsKey(player) ? t.door.durability : null;
-    if (!item && wood === null && (t.kind !== "enemy" || !t.enemy || (fight && fight.to.x === x && fight.to.y === y))) return;
+    const wood = enemies && t.kind === "door" && t.door?.type === "wood" && !holdsKey(player) ? t.door.durability : null;
+    if (!item && wood === null && (!enemies || t.kind !== "enemy" || !t.enemy || (fight && fight.to.x === x && fight.to.y === y))) return;
     const { text, color } = item ?? damageLabel(wood !== null ? breakCost(wood) : predictions.cost(player, t.enemy!, crit), player.hp, relative);
     const left = (x - f.left) * s + pad, bottom = (f.n - (y - f.bottom)) * s - pad;
     c.strokeText(text, left, bottom);

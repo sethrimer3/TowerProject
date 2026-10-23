@@ -57,7 +57,7 @@ export type EquipmentSave = {
   nextId: number;
   /** Where the Gem pulls' stream stands (null until the first pull). */
   rng: number | null;
-  /** The player's choice to salvage Common boss drops into their material
+  /** The player's choice to salvage Common chest pieces into their material
    * as they drop, instead of keeping them (the Salvage section's toggle). */
   autoSalvage: boolean;
 };
@@ -151,6 +151,38 @@ export function mergeFodder(e: EquipmentSave, target: EquipItem) {
   return e.items
     .filter((i) => i.id !== target.id && i.def === target.def && i.rarity === target.rarity && !isProtected(e, i))
     .sort((a, b) => a.level - b.level || a.id.localeCompare(b.id, "en", { numeric: true }));
+}
+/** One merge Auto-assemble offers: the piece kept and the copies used up. */
+export interface AutoMerge { target: string; fodder: string[] }
+/** Every merge the inventory makes at once, none sharing a piece, for
+ * Auto-assemble. Worn pieces take no part. A locked piece may be kept but
+ * never used up. Each merge keeps the best piece left (locked first, then
+ * the highest level, then the oldest) and uses up the lowest-level copies
+ * (`mergeFodder`'s order). Best rarity first, then the order the pieces were
+ * found. */
+export function autoMerges(e: EquipmentSave): AutoMerge[] {
+  const byId = (a: EquipItem, b: EquipItem) => a.id.localeCompare(b.id, "en", { numeric: true });
+  const groups = new Map<string, EquipItem[]>();
+  for (const i of e.items) {
+    if (!RARITY_TIERS[i.rarity].next || isEquipped(e, i.id)) continue;
+    const key = `${i.def}|${i.rarity}`;
+    groups.set(key, [...(groups.get(key) ?? []), i]);
+  }
+  const merges: { merge: AutoMerge; item: EquipItem }[] = [];
+  for (const group of groups.values()) {
+    const need = RARITY_TIERS[group[0].rarity].merge - 1;
+    const keepers = [...group].sort((a, b) => Number(!!b.locked) - Number(!!a.locked) || b.level - a.level || byId(a, b));
+    const copies = group.filter((i) => !i.locked).sort((a, b) => a.level - b.level || byId(a, b));
+    const used = new Set<string>();
+    for (const keeper of keepers) {
+      if (used.has(keeper.id)) continue;
+      const fodder = copies.filter((i) => i.id !== keeper.id && !used.has(i.id)).slice(0, need);
+      if (fodder.length < need) break;
+      for (const i of [keeper, ...fodder]) used.add(i.id);
+      merges.push({ merge: { target: keeper.id, fodder: fodder.map((i) => i.id) }, item: keeper });
+    }
+  }
+  return merges.sort((a, b) => rarityRank(b.item.rarity) - rarityRank(a.item.rarity) || byId(a.item, b.item)).map((m) => m.merge);
 }
 /** Why a merge was refused. */
 export type MergeRefusal = "missing" | "unmergeable" | "count" | "mismatch" | "protected";

@@ -1,6 +1,6 @@
 # Door and key schedule
 
-How often each kind of door, and the keys to open them, appear on a Tower floor, by tower and floor. The goal is one steady difficulty ramp: every floor a little harder than the one below, every tower a little harder than the one before, so the player needs to keep investing in progress upgrades (Key Efficiency, the Find Key research, Key Siphon, badges) to keep up.
+How often each kind of door, and the keys to open them, appear on a Tower floor, by tower and floor. The goal is one steady difficulty ramp: every floor a little harder than the one below, every tower a little harder than the one before, so the player needs to keep investing in progress upgrades (Key Efficiency, the Find Key research, GK Siphon, badges) to keep up.
 
 The Delve follows the same schedules by equivalent floor, each delve the tower of its number's (section 6).
 
@@ -10,7 +10,7 @@ Notation: `t` is the tower number (1–9), `f` the floor counted from 1, and `�
 
 | Door | First floor | How often | Limit |
 |---|---|---|---|
-| **Wooden** (replaces Steel) | 1 | Share of yellow locks made wooden: `100% − 10%·(t−1) − 1%·⌊(f−1)/10⌋`, never below 0 | Gone from floor 1001 in Tower I, 901 in II, … 201 in IX |
+| **Wooden** (replaces Steel) | 1 | Share of gold locks made wooden: `100% − 10%·(t−1) − 1%·⌊(f−1)/10⌋`, never below 0 | Gone from floor 1001 in Tower I, 901 in II, … 201 in IX |
 | **Blue** | `51 − 5(t−1)`: 51 in Tower I … 11 in IX | Expected doors per floor: `0.10 + 0.01·⌊(min(f, 1000) − first)/5⌋` | Stops rising at floor 1000 (1.99 in Tower I) |
 | **Red** | `101 − 10(t−1)`: 101 … 21 | `0.10 + 0.01·⌊(min(f, 1000) − first)/10⌋`: half blue's growth, so red stays the rarer door and guards greater rewards | Stops rising at floor 1000 (0.99 in Tower I) |
 | **Heart** | `201 − 10(t−1)`: 201 … 121 | `0.10 + 0.01·⌊(f − first)/10⌋` | Stops rising at 1 per floor (floor 1101 in Tower I, 1021 in IX) |
@@ -25,11 +25,11 @@ Example values:
 
 Starting at 0.10 a floor, about two times in three a colour's first ten floors hold at least one of its doors (1 − 0.9¹⁰). Once a rate reaches 1, every floor holds at least that many: blue from floor 501 in Tower I. Tower I's red tops out at 0.99, so about one floor in a hundred past floor 1000 has no red door.
 
-Key colours follow their doors: a blue or red key appears only from that colour's first floor (`towerKeyColorsOn`). A key of a colour not yet open still comes as a yellow key, as now.
+Key colours follow their doors: a blue or red key appears only from that colour's first floor (`towerKeyColorsOn`). A key of a colour not yet open still comes as a gold key, as now.
 
 These rules stay as they are:
 - Floor 1's way to the stairs stands open.
-- Floors 2–5 keep their yellow stairs door (now usually wooden) and a key behind every door.
+- Floors 2–5 keep their gold stairs door (now usually wooden) and a key behind every door.
 - Tower I's potion gates on floors 1–10 stay.
 - In Tower I, a blue or red door never stands alone on the way to the stairs (`bypassesRareKeys`).
 
@@ -40,18 +40,18 @@ All schedule numbers live in one module, `src/key-schedule.ts`, as named constan
 Today blue, red and Heart Doors come from about six weighted tables (main gate, stairs gate, patterns, forks, shortcuts, the resource planner's key rooms). How many a floor gets falls out of all of them together, and no single number controls it. The new stage sets the count directly.
 
 1. **The tables stop offering them.** The main and stairs gate tables, shortcuts and forks no longer choose blue, red or Heart Doors. Patterns built around one, listed below, are placed only by this stage:
-   - blue door → yellow keys
+   - blue door → gold keys
    - red door → blue keys
    - blue door stat vault
-   - blue key behind yellow door
+   - blue key behind gold door
    - key chain
    - temptation's blue and red gates
 
    The same goes for fork patterns with a blue, red or Heart lane: ordinary fork planning no longer picks them, and only the door stage places them (step 3c).
 2. **The stage rolls a quota per colour.** It runs after the branches, shortcuts and ordinary forks are planned, before the resource planner. For each of blue, red and heart it places the whole part of the rate, plus one more with the leftover fraction as a chance, drawn from the floor's own random stream. Generation stays the same for a seed in every engine.
 3. **Each quota door is placed by one of these, with a seeded choice among the ones that fit:**
-   - a. **Upgrade a gate:** an existing plain yellow-door gate becomes blue or red, or any paid gate (an enemy, a steel door or a plain yellow door) becomes a Heart Door.
-   - a2. **Combine:** a door that doesn't take the colour yet takes it as well, in the same tile: yellow becomes *Gold + Azure* (yellow + blue), blue becomes *Azure + Crimson*, and so on up to the *Triune Door*. A combined door counts toward the quota of each colour it adds and costs every key it lists. A door run is never combined: each of its doors would take the colour while it counted for one. The door rules, names and art already exist (`door_ab.png` … `door_abc.png`). A Heart Door with a colour (keys *and* the drain to 1 HP) needs a new door rule, so it comes with the wooden door's rule work in phase 3.
+   - a. **Upgrade a gate:** an existing plain gold-door gate becomes blue or red, or any paid gate (an enemy, a steel door or a plain gold door) becomes a Heart Door.
+   - a2. **Combine:** a door that doesn't take the colour yet takes it as well, in the same tile: gold becomes *Gold + Blue* (gold + blue), blue becomes *Blue + Red*, and so on up to the *Triune Door*. A combined door counts toward the quota of each colour it adds and costs every key it lists. A door run is never combined: each of its doors would take the colour while it counted for one. The door rules, names and art already exist (`door_ab.png` … `door_abc.png`). A Heart Door with a colour (keys *and* the drain to 1 HP) needs a new door rule, so it comes with the wooden door's rule work in phase 3.
    - b. **Add a pattern** built around that door, if the region budget has room.
    - c. **Place a fork built around it.** A gate with no fork yet takes a fork pattern holding that door, priced near the gate it replaces like any fork:
      - *blueDoorOrStrongMonster*
@@ -71,14 +71,14 @@ Today blue, red and Heart Doors come from about six weighted tables (main gate, 
    - d. **Lengthen into a run:** a single blue, red or Heart Door becomes a door run of two, or a run of two one of three (section 7).
 
    The quota is kept in hundredths of a door. The stage places doors until what they count for meets the rate, and a fraction left owed is placed at its chance. A single door counts 1, each door of a run 1, and a fork's lane doors 1/k (section 7). A door that fits nowhere stays owed, and the census shows it (section 5).
-4. **Wooden doors:** every yellow lock left (gates, the stairs door, shortcuts, fork lanes, and a fork lane that offers a Wooden Door of its own) rolls the wooden share (`placeWoodenDoors`), so the share decides every Wooden Door in the Tower.
+4. **Wooden doors:** every gold lock left (gates, the stairs door, shortcuts, fork lanes, and a fork lane that offers a Wooden Door of its own) rolls the wooden share (`placeWoodenDoors`), so the share decides every Wooden Door in the Tower.
 5. **Keys:** the resource planner then plans keys for whatever doors the floor has, as now, under the key-supply curve (section 4).
 
 In Tower I, a blue or red quota door goes only on a branch or in a fork beside a lane that needs no blue or red key. From Tower II on, the way to the stairs is open to them too.
 
 ## 3. Wooden doors (replace Steel Doors)
 
-A wooden door opens with any one key: the cheapest held, yellow before blue before red, as a Steel Door does today. **A hero with no key can break it**, at a cost in HP:
+A wooden door opens with any one key: the cheapest held, gold before blue before red, as a Steel Door does today. **A hero with no key can break it**, at a cost in HP:
 
 | Rule | Value |
 |---|---|
@@ -96,7 +96,7 @@ Possible later change (to decide after the census): `HP cost = max(0, durability
 
 ### Heart Door with a colour
 
-A door that takes its keys **and** drains the hero to 1 HP, as a Heart Door does (Heart Door Resilience applies to the drain). For the heart quota, the door stage's combine way gives an existing blue, red or combined door the heart (a gate's `heart`), counting toward the heart quota. The door rule has a heart flag (`{ type: "keys", …, heart: true }`, `drainsHp`), `resolveStep` applies both costs, and it is named after its keys (*Azure Heart Door*). The hand-drawn art is a placeholder: the keys' door with a heart crest above (`door_bh.png`, `door_abch.png` …, from `npm run tiles:area1`); the procedural and neon doors draw the heart over the coloured door. HEART DOOR heads for one while its keys are held.
+A door that takes its keys **and** drains the hero to 1 HP, as a Heart Door does (Heart Door Resilience applies to the drain). For the heart quota, the door stage's combine way gives an existing blue, red or combined door the heart (a gate's `heart`), counting toward the heart quota. The door rule has a heart flag (`{ type: "keys", …, heart: true }`, `drainsHp`), `resolveStep` applies both costs, and it is named after its keys (*Blue Heart Door*). The hand-drawn art is a placeholder: the keys' door with a heart crest above (`door_bh.png`, `door_abch.png` …, from `npm run tiles:area1`); the procedural and neon doors draw the heart over the coloured door. HEART DOOR heads for one while its keys are held.
 
 What changes in the code:
 - **Door rule** (`entities.ts`, `doors.ts`): a new `{ type: "wood"; durability: number }` takes the steel rule's place in generation (the steel rule, `keys: all three, mode: "any"`, still works but nothing places it). `doorCost` returns the key, or none when the hero would survive breaking it (a caller passing no HP, like the floor analyzer, counts it as breakable). `resolveStep` (`step-effects.ts`) takes the HP. Every other caller reads it from there.
@@ -109,11 +109,11 @@ What changes in the code:
 
 Keys get scarcer per door as the floors and towers rise, each colour on its own curve. Progress upgrades are meant to close the gap.
 
-Each colour aims for a number of **keys per lock**, counted from its own first floor (yellow's floor 1; blue's and red's are their doors' first floors), so each colour arrives with a surplus and tightens from there (`TOWER_KEY_RATIO` and `towerKeyRatio` in `src/key-schedule.ts`, in ten-thousandths so every engine rolls alike):
+Each colour aims for a number of **keys per lock**, counted from its own first floor (gold's floor 1; blue's and red's are their doors' first floors), so each colour arrives with a surplus and tightens from there (`TOWER_KEY_RATIO` and `towerKeyRatio` in `src/key-schedule.ts`, in ten-thousandths so every engine rolls alike):
 
 | Colour | On its first floor | Falls | Lowest |
 |---|---|---|---|
-| Yellow | 1.3 | 0.005 every 10 floors, 0.1 each later tower | 0.5 |
+| Gold | 1.3 | 0.005 every 10 floors, 0.1 each later tower | 0.5 |
 | Blue | 1.2 | the same | 0.4 |
 | Red | 1.1 | the same | 0.3 |
 
@@ -121,8 +121,8 @@ On the way to the stairs, each falls half as fast, so the main route is the last
 
 Nothing places keys by count. The resource planner works toward each aim by chance:
 - **Thinning** (`thinToAim`): each pattern key of a colour is kept at the chance that leaves the aim's worth of keys for the floor's locks of that colour. For blue and red, it plans for at least the schedule's doors a floor, so keys stock up on floors without their doors. The start hall's keys stay. A room whose only item is a thinned key holds a potion instead, so no room is left empty.
-- **Coverage** (`coverDoor`): for each door, while the keys reachable without it fall short of the aim's worth for the doors of its colour so far, the planner rolls to add a key source, at the chance of how short it is. It never adds past the floor's aim for the colour (the ratio's worth for all its locks): most rooms stand behind a yellow lock, so a door's own supply is small, and covering each door alone heaped up keys well past the aim. Below 1 key per lock, that leaves some doors without a key on purpose. Above 1, the surplus is rolled for at its fraction: at 1.3, a 30% chance of a second key.
-- **Locks counted:** a forked region counts as its single gate, which stands whenever its fork doesn't fit (about three times in four). After layout, each fork that fits settles the difference (`settleKeys`): 1/k of each lane's locks, less the gate, at the aim's ratio, adds or removes keys by chance. A door run counts each of its doors, but a yellow run counts once: a key sink (section 7).
+- **Coverage** (`coverDoor`): for each door, while the keys reachable without it fall short of the aim's worth for the doors of its colour so far, the planner rolls to add a key source, at the chance of how short it is. It never adds past the floor's aim for the colour (the ratio's worth for all its locks): most rooms stand behind a gold lock, so a door's own supply is small, and covering each door alone heaped up keys well past the aim. Below 1 key per lock, that leaves some doors without a key on purpose. Above 1, the surplus is rolled for at its fraction: at 1.3, a 30% chance of a second key.
+- **Locks counted:** a forked region counts as its single gate, which stands whenever its fork doesn't fit (about three times in four). After layout, each fork that fits settles the difference (`settleKeys`): 1/k of each lane's locks, less the gate, at the aim's ratio, adds or removes keys by chance. A door run counts each of its doors, but a gold run counts once: a key sink (section 7).
 - **Unguarded loot:** a key there is kept at the colour's aim while it is below 1.
 
 **A key at the entrance:** the first floor a blue or red key can appear on in a tower lays one in the start hall: blue on Tower I's floor 51 (Tower IX's 11), red on floor 101 (IX's 21).
@@ -131,17 +131,17 @@ Floors 2–5's keys behind every door aren't thinned. The census prints each col
 
 First measurement (`--towers 1,5,9 --floors 1-1200 --band 200 --seeds 10 --stride 3`), measured against aim:
 
-| Floors | Tower I: yellow, blue, red | Tower V | Tower IX |
+| Floors | Tower I: gold, blue, red | Tower V | Tower IX |
 |---|---|---|---|
 | 1–200 | 1.67/1.55, 1.55/1.46, 1.15/1.28 | 1.33/1.15, 1.19/1.06, 0.91/0.87 | 0.97/0.75, 0.80/0.65, 0.39/0.46 |
 | 401–600 | 1.56/1.35, 1.11/1.28, 0.86/1.10 | 1.16/0.95, 0.82/0.87, 0.55/0.68 | 0.74/0.55, 0.52/0.46, 0.29/0.30 |
 | 801–1000 | 1.42/1.15, 0.81/1.08, 0.67/0.90 | 1.02/0.75, 0.61/0.67, 0.45/0.48 | 0.72/0.50, 0.42/0.40, 0.30/0.30 |
 
-Yellow runs 0.1–0.3 above its aim: keys in guarded niches and keyed floors' keys aren't thinned. (Measured with yellow at 1.6, blue at 1.5 and red at 1.3; since lowered to 1.3, 1.2 and 1.1.)
+Gold keys run 0.1–0.3 above their aim: keys in guarded niches and keyed floors' keys aren't thinned. (Measured with gold at 1.6, blue at 1.5 and red at 1.3; since lowered to 1.3, 1.2 and 1.1.)
 
-**Spare keys build up while a ratio is above 1:** each lock leaves the ratio less one key spare, and Tower I has about three yellow locks a floor. A player who opens every door and takes every key in Tower I ends with about this many spare yellow keys (40 seeds; floors 2–5's key behind every door adds about 24 over floors 1–10 whatever the ratio):
+**Spare keys build up while a ratio is above 1:** each lock leaves the ratio less one key spare, and Tower I has about three gold locks a floor. A player who opens every door and takes every key in Tower I ends with about this many spare gold keys (40 seeds; floors 2–5's key behind every door adds about 24 over floors 1–10 whatever the ratio):
 
-| Yellow start | After floor 20 | After floor 40 | After floor 100 |
+| Gold start | After floor 20 | After floor 40 | After floor 100 |
 |---|---|---|---|
 | 1.6 (before) | 37 | 78 | 207 |
 | 1.5 | 36 | 72 | 186 |
@@ -152,12 +152,12 @@ Yellow runs 0.1–0.3 above its aim: keys in guarded niches and keyed floors' ke
 A surplus is intended: it dwindles as the ratio falls below 1 higher up, and a run warping to a later floor starts without it. Blue and red fall up to 0.25 under theirs at depth, where the planner can't always find room for a key source. Thinned keys made potions commoner: about 6 a floor, from 5.
 
 What helps the player keep up:
-- **Already in the game:** Key Efficiency, Find Yellow Key, Key Siphon, the Effective badge, breaking wooden doors.
+- **Already in the game:** Key Efficiency, Find Gold Key, GK Siphon, the Effective badge, breaking wooden doors.
 - **Proposed, each as its own spec later:** Find Blue Key and Find Red Key research, research or a Training row cutting wooden-door durability, a badge for door cards that lowers a door's cost or gives a key back.
 
 ## 5. Census tool
 
-The census measures what Tower floors actually hold, averaged over many seeds, by tower and band of floors. Use it to check a schedule change, see a change's side effects (fewer yellow doors, more keys asked for), and tune numbers before and after a phase. The code is `src/tower/census.ts`, run from `tools/tower-report.ts`; the Delve's is `src/delve/census.ts`, run from `tools/delve-report.ts` (section 6).
+The census measures what Tower floors actually hold, averaged over many seeds, by tower and band of floors. Use it to check a schedule change, see a change's side effects (fewer gold doors, more keys asked for), and tune numbers before and after a phase. The code is `src/tower/census.ts`, run from `tools/tower-report.ts`; the Delve's is `src/delve/census.ts`, run from `tools/delve-report.ts` (section 6).
 
 ```sh
 npm run tower:report -- --census                                   # Tower I, floors 1-200 in bands of 10, 20 seeds
@@ -179,8 +179,8 @@ Every figure is an average per floor over the band's floors and seeds. Three tab
 
 | Column | Meaning |
 |---|---|
-| Y door | Doors taking a yellow key (combined ones too) |
-| wood, wood% | Wooden Doors, and their share of yellow locks (`wood ÷ (Y door + wood)`) |
+| Y door | Doors taking a gold key (combined ones too) |
+| wood, wood% | Wooden Doors, and their share of gold locks (`wood ÷ (Y door + wood)`) |
 | W want | The wooden share the schedule asks for (section 1) |
 | combined | Doors taking more than one colour. Each also counts in the column of every colour it takes |
 | B / R / H want | The schedule's rate for that door on those floors (section 1) |
@@ -188,7 +188,7 @@ Every figure is an average per floor over the band's floors and seeds. Three tab
 | B / R / H fork | That door in a fork lane the floor built, each counting 1/k in a fork of k lanes (the hero opens one) |
 | dropped | Quota doors still owed, all kinds together: those that found no place, and run doors that found no tile. Below 0, the floor holds more than its rate. *want ≈ alone + fork + dropped*; a gap there means doors are lost after placement (a bug) |
 | Y / B / R key | Keys lying on the floor, by colour |
-| Y/lock, B/lock, R/lock, all/lock | Keys found per lock of that colour (a Wooden Door counts as a yellow lock, a fork's lane doors 1/k). Each door of a yellow run counts, so yellow runs, the key sink, read below the aim. Below 1, the floor doesn't hold enough keys for all its doors of that colour; `-` when there are no such doors |
+| Y/lock, B/lock, R/lock, all/lock | Keys found per lock of that colour (a Wooden Door counts as a gold lock, a fork's lane doors 1/k). Each door of a gold run counts, so gold runs, the key sink, read below the aim. Below 1, the floor doesn't hold enough keys for all its doors of that colour; `-` when there are no such doors |
 | Y / B / R aim | The keys per lock that colour aims for (section 4), averaged over the floors it is open on |
 
 **Enemies:** enemies by strength against the enemy schedule's shares and count, and their weight (`docs/ENEMY_SCHEDULE.md` section 5).
@@ -198,7 +198,7 @@ Every figure is an average per floor over the band's floors and seeds. Three tab
 What to watch:
 - **Schedule:** *alone + fork + dropped* should match *want* in each band. A test checks the stage keeps every door it places, and the quota's average against the schedule (`tests/door-quota.test.ts`).
 - **Keys per lock:** the key economy as floors and towers rise, the figure phase 4's key-supply curve tunes.
-- **Side effects:** a change to one table moves others, such as yellow doors as more become blue, or enemies as Heart Doors replace them.
+- **Side effects:** a change to one table moves others, such as gold doors as more become blue, or enemies as Heart Doors replace them.
 
 To compare against an older generator, run the same command in a worktree checked out at the older commit (`git worktree add --detach <dir> <commit>`) and compare the two outputs. The baseline before the door stage: Tower I had about 1.05 blue doors, 0.25 red doors and 0.18 Heart Doors a floor at every height from floor 21 (101 for hearts) up, Tower II from floor 1.
 
@@ -208,7 +208,7 @@ Each delve follows the schedules of the tower of the same number, by equivalent 
 
 - **Key colours** open on the same floors (`towerKeyColorsOn`): blue from floor 51 of the first delve, red from 101. No ordinary pattern or fork offers a blue, red or Heart Door (`withoutQuotaDoors`).
 - **The door stage** (`placeQuotaDoors`): each of an area's ten floors rolls its quota from `towerDoorHundredths`, and each door goes on its own floor if it can, else on any of the area's floors from its first. The ways, chosen at random among those that fit:
-  - **upgrade**: a yellow door in a pocket's throat turns blue or red. A Heart Door can replace any paid gate, including a corridor guard.
+  - **upgrade**: a gold door in a pocket's throat turns blue or red. A Heart Door can replace any paid gate, including a corridor guard.
   - **combine**: a door takes the colour as well, or a coloured door takes the heart (never a run's).
   - **corridor**: a door on a corridor off the way to the milestone gate, one that no other way round passes.
   - **pattern** (blue only): a pocket takes *RareKeyCommonReward* or *RareKeyCommonBundle*.
@@ -216,10 +216,10 @@ Each delve follows the schedules of the tower of the same number, by equivalent 
   - **lengthen**: a single blue, red or Heart Door, or a run of two, grows a door along its throat or corridor (section 7).
 
   Blue and red doors never stand on the way to the milestone gate, in any delve, since the Delve plans no key to be reachable before a door. A region records what it rolled and dropped in `doorQuota`.
-- **Wooden Doors** (`placeWoodenDoors`): first, yellow runs grow in pockets' throats (section 7). Then every yellow lock left (throats, corridors, fork lanes) rolls the wooden share for its floor, a run once.
-- **Keys** (`supplyKeys`): for each colour the area aims for the keys-per-lock ratio's worth for its locks. A fork's lane doors count 1/k, runs each door, and a yellow run once. For blue and red, the aim is at least the scheduled doors' worth. Keys in pockets are kept at the chance that leaves the aim (a pocket left empty gets a potion); while short, junctions roll for keys at the chance of how short. This replaces the old 32% junction key. On the floor a blue or red key first appears, the cell nearest the entrance from that floor holds one.
+- **Wooden Doors** (`placeWoodenDoors`): first, gold runs grow in pockets' throats (section 7). Then every gold lock left (throats, corridors, fork lanes) rolls the wooden share for its floor, a run once.
+- **Keys** (`supplyKeys`): for each colour the area aims for the keys-per-lock ratio's worth for its locks. A fork's lane doors count 1/k, runs each door, and a gold run once. For blue and red, the aim is at least the scheduled doors' worth. Keys in pockets are kept at the chance that leaves the aim (a pocket left empty gets a potion); while short, junctions roll for keys at the chance of how short. This replaces the old 32% junction key. On the floor a blue or red key first appears, the cell nearest the entrance from that floor holds one.
 
-At shallow depths this matches the Delve's old mix, about 1–2 blue doors an area. The schedule then grows as in the Tower. Areas hold far fewer yellow keys than before: about 5.5 in the first areas, from about 14.
+At shallow depths this matches the Delve's old mix, about 1–2 blue doors an area. The schedule then grows as in the Tower. Areas hold far fewer gold keys than before: about 5.5 in the first areas, from about 14.
 
 ```sh
 npm run delve:report -- --census                                       # the first delve, floors 1-200 in bands of 50, 20 seeds
@@ -230,7 +230,7 @@ The options and columns are the Tower census's (section 5), with `--tiers` for `
 
 First measurement (`--tiers 1,5,9 --floors 1-1000 --band 100 --seeds 10`), measured against wanted or aimed:
 
-| Floors | Delve 1: blue doors, red, heart · yellow, blue keys per lock | Delve 5 | Delve 9 |
+| Floors | Delve 1: blue doors, red, heart · gold, blue keys per lock | Delve 5 | Delve 9 |
 |---|---|---|---|
 | 1–100 | 0.05/0.07, 0/0, 0/0 · 1.30/1.28, 2.00/1.19 | 0.12/0.12, 0.05/0.05, 0/0 · 0.89/0.88, 1.07/0.78 | 0.20/0.17, 0.11/0.11, 0/0 · 0.50/0.50, 0.51/0.40 |
 | 401–500 | 0.94/0.90, 0.43/0.45, 0.34/0.34 · 1.15/1.08, 1.04/1.00 | 0.97/0.94, 0.47/0.48, 0.39/0.39 · 0.73/0.68, 0.60/0.59 | 0.99/0.97, 0.51/0.53, 0.41/0.42 · 0.51/0.50, 0.41/0.40 |
@@ -250,7 +250,7 @@ Doors placed (alone plus in forks) track the schedule. About 0.2 a floor is drop
 
 **Door runs** are two or three of the same door in a row in one gate, each paid in turn:
 - **Blue, red and Heart Door runs** come from the door stage's *lengthen* way and from settling, and count every door toward the quota. A Heart Door run compounds its drain: with Heart Door Resilience each door drains its share of the HP above 1, so 101 HP at 50% goes to 51, then 26.
-- **Yellow runs are a key sink.** From floor 6, a plain yellow door off the way to the stairs becomes a run 15% of the time (`YELLOW_RUNS`: of three 30% of those, else two). In the Delve this applies to doors in a pocket's throat. The run rolls the wooden share once, so its doors are all Wooden or all yellow. The key supply plans one key for the whole run, so each run spends keys the surplus would otherwise keep.
+- **Gold runs are a key sink.** From floor 6, a plain gold door off the way to the stairs becomes a run 15% of the time (`YELLOW_RUNS`: of three 30% of those, else two). In the Delve this applies to doors in a pocket's throat. The run rolls the wooden share once, so its doors are all Wooden or all yellow. The key supply plans one key for the whole run, so each run spends keys the surplus would otherwise keep.
 - **Where they stand:**
   - **Tower:** the doorway, then the tile just inside the region it opens, then (a run of three) the tile just outside in the parent's chamber. The doorway is the only way between those two tiles, so neither can be walked round. They're laid after the chambers are furnished (`layRuns`), only on open floor that keeps its chamber in one piece and stands by no other doorway, the entrance or the stairs. A door that finds no place stays owed. About 9 run doors in 10 find their tile.
   - **Delve:** the next single-width tiles of the same throat or corridor.
@@ -258,13 +258,13 @@ Doors placed (alone plus in forks) track the schedule. About 0.2 a floor is drop
 
 Measured (`--towers 1,9 --floors 1-1000 --band 200 --seeds 4 --stride 7`), wanted against standing (alone plus fork):
 
-| Floors | Tower I: blue, red, heart doors · yellow, blue keys per lock (aim) | Tower IX |
+| Floors | Tower I: blue, red, heart doors · gold, blue keys per lock (aim) | Tower IX |
 |---|---|---|
 | 1–200 | 0.18/0.19, 0.07/0.05, 0/0 · 1.22 (1.25), 1.33 (1.16) | 0.27/0.24, 0.16/0.16, 0.05/0.06 · 0.61 (0.50), 0.64 (0.40) |
 | 401–600 | 0.99/0.94, 0.49/0.52, 0.39/0.38 · 1.16 (1.05), 1.04 (0.98) | 1.07/1.05, 0.57/0.60, 0.47/0.43 · 0.65 (0.50), 0.54 (0.40) |
 | 801–1000 | 1.79/1.74, 0.89/0.82, 0.79/0.80 · 1.00 (0.85), 0.85 (0.78) | 1.87/1.84, 0.97/0.91, 0.87/0.87 · 0.67 (0.50), 0.49 (0.40) |
 
-Tower keys per lock now sit near their aims; before the coverage cap, yellow ran 0.1–0.3 above it. As a result Tower I's floors 1–200 hold about 0.5 fewer yellow keys a floor than before (3.6, from 4.1). Raise the yellow ratio if the old surplus is wanted back.
+Tower keys per lock now sit near their aims; before the coverage cap, gold ran 0.1–0.3 above it. As a result Tower I's floors 1–200 hold about 0.5 fewer gold keys a floor than before (3.6, from 4.1). Raise the yellow ratio if the old surplus is wanted back.
 
 ## 8. Build order
 

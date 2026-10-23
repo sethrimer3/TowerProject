@@ -1,3 +1,5 @@
+import { controlIcon } from "./control-icon.ts";
+import { kitIcon } from "../sprite-kit.ts";
 import { EVENT_MISSION_COUNT, EVENT_MISSIONS, TIER_MEDALS, TIERS, type RelicMilestone } from "../events/catalog.ts";
 import { isFinished, milestoneReached, unclaimedTiers, type EventMission } from "../events/progress.ts";
 import { offer } from "../shop/offers.ts";
@@ -6,7 +8,8 @@ import { shortCountdown } from "../tournament/schedule.ts";
 import type { AppContext } from "./app.ts";
 import { checkIcon, el, eventIcon, medalIcon, relicIcon } from "./dom.ts";
 import { flyToPurse } from "./flourish.ts";
-import { currencyAmount, holdAmount } from "./hud.ts";
+import { currencyAmount } from "./hud.ts";
+import { heldAmount } from "./currencies-dialog.ts";
 import { offerShown, revealReward } from "./reward-reveal.ts";
 
 /** How long a mission whose last tier is claimed stays where it is before it
@@ -14,7 +17,7 @@ import { offerShown, revealReward } from "./reward-reveal.ts";
 const MOVE_AFTER_MS = 2000;
 /** A countdown on the page: *9d 4h*, *7h 12m*, *12m*. */
 const countdown = (ms: number) => shortCountdown(ms).replace(/([dh])(?=\d)/g, "$1 ");
-const LOCK = `<svg class="relic-lock" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7.5" rx="1.5" fill="#3a3f4b" stroke="#c9ced8" stroke-width="1.1"/><path d="M5.2 7V5.2a2.8 2.8 0 0 1 5.6 0V7" fill="none" stroke="#c9ced8" stroke-width="1.4"/></svg>`;
+const LOCK = kitIcon("lock", `<svg class="relic-lock" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7.5" rx="1.5" fill="#3a3f4b" stroke="#c9ced8" stroke-width="1.1"/><path d="M5.2 7V5.2a2.8 2.8 0 0 1 5.6 0V7" fill="none" stroke="#c9ced8" stroke-width="1.4"/></svg>`, "relic-lock");
 
 /** The Events screen (docs/EVENTS.md): the running event's name and banner
  * and the time it has left; its relic track, a bar filling with the Medals
@@ -84,9 +87,9 @@ export class EventsPage {
     // Completed missions move under the rest only once the page has shown them done for a moment.
     const order = [...events.missions].sort((a, b) => Number(e.moved.includes(a.id)) - Number(e.moved.includes(b.id)) || a.id - b.id);
     el("events").innerHTML =
-      `<button class="missions-close" id="events-close" aria-label="Close" title="Close">✕</button>` +
+      `<button class="missions-close" id="events-close" aria-label="Close" title="Close">${controlIcon("close")}</button>` +
       `<header class="event-banner"><span class="event-banner-art" aria-hidden="true">${eventIcon("event-icon event-banner-icon")}</span>` +
-      `<div class="page-title"><small>EVENT</small><h2>${info.name}</h2></div><p class="event-ends" id="event-ends">${this.endsText()}</p></header>` +
+      `<div class="page-title"><small>EVENT</small><h2>${info.name}</h2></div><div class="event-banner-foot"><p class="event-ends" id="event-ends">${this.endsText()}</p>${this.heldHtml()}</div></header>` +
       this.track(info.milestones) +
       this.boost() +
       `<p class="missions-next" id="event-next">${this.nextText()}</p>` +
@@ -94,6 +97,13 @@ export class EventsPage {
     this.bind();
     if (before) this.slide(before);
     this.scheduleMove();
+  }
+
+  /** The Medals held, in the banner beside the time left: the currency the
+   * event's missions pay, which the pages' currencies bar leaves to its dialog. */
+  private heldHtml() {
+    const medals = this.ctx.game.save.medals, exact = medals.toLocaleString("en-US");
+    return `<span class="event-held" title="Medals held: ${exact}" aria-label="${exact} Medals held">${medalIcon()}<b id="event-medals-held">${heldAmount(this.ctx.game, medals)}</b></span>`;
   }
 
   private endsText() {
@@ -107,9 +117,11 @@ export class EventsPage {
     return next === null ? `${n} missions · all released` : `${n}/${EVENT_MISSION_COUNT} missions · 2 more in <b>${countdown(next - events.now)}</b>`;
   }
 
-  /** The relic track: a bar filling to the last milestone with the Medals
-   * the event has paid toward its relics, the relics for all above it and
-   * the premium ones below, each lit once reached. */
+  /** The relic track: a bar across the track's whole width filling to the
+   * last milestone with the Medals the event has paid toward its relics, and
+   * reading how many, the free relics above it and the Event Booster's
+   * below, each row named at its left, under the relics' line, and each
+   * relic lit once reached. */
   private track(milestones: readonly RelicMilestone[]) {
     const game = this.ctx.game, events = game.events, e = game.save.events, medals = events.medals;
     const top = Math.max(...milestones.map((m) => m.medals));
@@ -120,11 +132,11 @@ export class EventsPage {
       return `<span class="event-relic ${m.rarity}${reached ? " reached" : ""}${locked ? " locked" : ""}" style="--at:${(100 * m.medals) / top}%" title="${label}" aria-label="${label}" role="img">` +
         `<span class="event-relic-art">${relicIcon(m.rarity)}${reached ? checkIcon() : locked ? LOCK : ""}</span><small>${m.medals.toLocaleString("en-US")}</small></span>`;
     };
-    const row = (premium: boolean) => `<div class="event-relics ${premium ? "premium" : "standard"}">${milestones.filter((m) => m.premium === premium).map(relic).join("")}</div>`;
-    const next = milestones.filter((m) => !milestoneReached(e, m) && (!m.premium || events.boosted)).sort((a, b) => a.medals - b.medals)[0];
-    return `<section class="weekly event-track" aria-label="Relics"><div class="weekly-head"><b>Relics</b><small>${medalIcon()} <b>${medals.toLocaleString("en-US")}</b> Medals${events.boosted ? " · ×2" : ""}</small></div>` +
-      `<div class="event-track-body">${row(false)}<div class="weekly-bar event-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${top}" aria-valuenow="${Math.min(medals, top)}"><i style="width:${Math.min(100, (100 * medals) / top)}%"></i></div>${row(true)}</div>` +
-      `<small class="weekly-count">${next ? `${(next.medals - medals).toLocaleString("en-US")} Medals to the next relic` : "Every relic won"} · premium relics below</small></section>`;
+    const row = (premium: boolean) => `<b class="event-row-name${premium ? " premium" : ""}">${premium ? "Event Boost Relics" : "Free Relics"}</b>` +
+      `<div class="event-relics ${premium ? "premium" : "standard"}">${milestones.filter((m) => m.premium === premium).map(relic).join("")}</div>`;
+    const count = `<span class="event-bar-count"><b>${medals.toLocaleString("en-US")}</b>${medalIcon()}${events.boosted ? " ×2" : ""}</span>`;
+    return `<section class="weekly event-track" aria-label="Relics"><div class="weekly-head"><b>Relics</b></div>` +
+      `<div class="event-track-body">${row(false)}<div class="weekly-bar event-bar" role="progressbar" aria-label="Medals" aria-valuemin="0" aria-valuemax="${top}" aria-valuenow="${Math.min(medals, top)}"><i style="width:${Math.min(100, (100 * medals) / top)}%"></i>${count}</div>${row(true)}</div></section>`;
   }
 
   /** The Event Booster's offer, or that it is active. */
@@ -165,14 +177,15 @@ export class EventsPage {
 
   /** Claims mission `id`'s next tier: saved, redrawn (showing the next
    * tier, Claim again while it too is done), and its Medals flown from the
-   * Claim bar to the currencies bar, whose Medals count them as they land. */
+   * Claim bar to the Medals held in the banner, which count them as they land. */
   private claim(id: number) {
-    const game = this.ctx.game, from = el("events").querySelector(`[data-claim="${id}"]`)?.getBoundingClientRect(), medals = game.events.claim(id);
+    const game = this.ctx.game, from = el("events").querySelector(`[data-claim="${id}"]`)?.getBoundingClientRect(), before = game.save.medals, medals = game.events.claim(id);
     if (!from || medals === null) return;
-    const release = holdAmount("medals-held");
     this.ctx.update();
     this.render();
-    flyToPurse(from, [{ html: `${medalIcon()}<b>+${currencyAmount(medals)}</b>`, to: document.querySelector(".currencies .medal-currency"), landed: () => (release(), this.ctx.update()) }]);
+    const held = (n: number) => { const b = document.getElementById("event-medals-held"); if (b) b.textContent = heldAmount(game, n); };
+    held(before);
+    flyToPurse(from, [{ html: `${medalIcon()}<b>+${currencyAmount(medals)}</b>`, to: document.querySelector("#events .event-held"), landed: () => held(game.save.medals) }]);
   }
 
   /** Each mission's place on the screen, by id. */

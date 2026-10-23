@@ -1,5 +1,13 @@
 # Defend
 
+With the shared Sprites option active under the Classic Game theme, `DefendHost.sprites` passes effective art through `DrawOptions.styledSprites` to the city, palette and units.
+Structures, troops, houses, trees, wall pieces, rubble, rebuilding frames, pond plants, lantern brackets and the city-tile palette icon draw shared PNGs; health, damage flashes, marks, torches, simulation, building footprints and pointer rules stay in their existing passes.
+The city and palette include `spriteRevision()` in their invalidation keys so art arriving after the first frame repaints.
+Defend structures use overhead PNGs separate from the forest art, with twelve native pixels per simulation cell and matching palette-icon aspect ratios.
+`city-sprites.ts` repeats roof centers at one pixel scale, retaining the exact generated house footprints and upper-left lighting without rotating textures.
+Wall breaches and rebuild progress still use standing-cell adjacency and simulation state, and unavailable PNGs retain the original painters.
+Other Game themes override this optional kit, and an absent host callback preserves the original renderer.
+
 Defend's battle simulation, units, drawing, board pointers, city building, fences and save; read with `docs/DEFEND.md`.
 
 Its battle simulation, `DefendSim` (`defend/sim.ts`), owns the world state and what happens to it (damage, rebuilding, blasts, movement), and steps the units in a fixed order.
@@ -7,6 +15,7 @@ Each unit type's decisions live in its own module: `enemies.ts`, `troops.ts` (ba
 `pathing.ts` holds the pure grid A*, the enemies' flow field and the collision test.
 `DefendRenderer` (`defend/render.ts`) owns the camera and the order of the drawing passes: `city-layer.ts` paints the cached static city, `lighting.ts` the torchlight and shadows, `battle-art.ts` each frame's damage, scorches, units and effects, `edit-overlay.ts` the building grid and drag overlay, and `structure-art.ts` the building art, banner and palette icons.
 All units draw from one seeded random stream, so the step order and each unit's draws decide a replay.
+Defend's tests are on hold: `npm test` and CI skip `tests/defend*.test.ts` (run them with `npm run test:defend`), the browser goldens leave out the Defend page and board scenes (`DEFEND` in `tests/render-scenes.ts` switches the board scenes back on; re-record `render` and `render-calls` when it does), and `mode-tabs.mjs` checks only that the Defend tab appears.
 `tests/defend-replay.test.ts` steps fixed cities, upgrade levels, seeds, bombs and demolitions through `update()` and hashes the whole sim state every 5 s against `tests/fixtures/defend-replay.golden.json`, reporting when a run first diverges.
 Regenerate it with `UPDATE_GOLDEN=1` only for an intended gameplay change.
 On the page (`defend/ui.ts`, `DefendPage`), board pointers go through `board-pointers.ts` (`BoardPointers`), a small state machine: idle, viewing (one pointer pans, two pinch-zoom), or dragging a palette item, structure, keep, city tile or bomb under a ghost icon.

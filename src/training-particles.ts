@@ -1,4 +1,5 @@
 import { stream } from "./random.ts";
+import { sampleField } from "./tree-particles.ts";
 
 const fx = stream("effects");
 
@@ -117,19 +118,10 @@ export class TrainingParticles {
     s.blue += ((busy ? 1 : 0) - s.blue) * ease;
     s.heat += (heatAt(s.y * h, lanes) - s.heat) * Math.min(1, dt * 4);
     const t = this.clock * 0.35 + s.phase, drift = 7;
-    const vx = this.sample(this.u, s.x * 39, s.y * 39) + (Math.cos(t) * drift) / w;
-    const vy = this.sample(this.v, s.x * 39, s.y * 39) + (Math.sin(t * 1.3) * drift) / h;
+    const vx = sampleField(this.u, this.n, s.x * 39, s.y * 39) + (Math.cos(t) * drift) / w;
+    const vy = sampleField(this.v, this.n, s.x * 39, s.y * 39) + (Math.sin(t * 1.3) * drift) / h;
     s.x = (s.x + vx * dt + 1) % 1;
     s.y = (s.y + vy * dt + 1) % 1;
-  }
-
-  private sample(field: Float32Array, x: number, y: number) {
-    const n = this.n;
-    x = Math.max(0, Math.min(n - 1.001, x));
-    y = Math.max(0, Math.min(n - 1.001, y));
-    const ix = Math.floor(x), iy = Math.floor(y), a = x - ix, b = y - iy;
-    return (field[iy * n + ix] * (1 - a) + field[iy * n + ix + 1] * a) * (1 - b)
-      + (field[(iy + 1) * n + ix] * (1 - a) + field[(iy + 1) * n + ix + 1] * a) * b;
   }
 
   /** Advects the velocity, relaxes it toward the stream along each lane and
@@ -142,8 +134,8 @@ export class TrainingParticles {
       let push = 0;
       lanes.forEach((lane, k) => { push += STREAM * rateOf(speeds[k] ?? 1) * Math.exp(-((py - lane) ** 2) / (2 * REACH * REACH)); });
       const bx = x - this.u[i] * dt * (n - 1), by = y - this.v[i] * dt * (n - 1);
-      nextU[i] = this.sample(this.u, bx, by) * (1 - blend) + (push / w) * blend;
-      nextV[i] = this.sample(this.v, bx, by) * (1 - blend);
+      nextU[i] = sampleField(this.u, this.n, bx, by) * (1 - blend) + (push / w) * blend;
+      nextV[i] = sampleField(this.v, this.n, bx, by) * (1 - blend);
     }
     this.project(nextU, nextV, w, h);
     this.u = nextU;

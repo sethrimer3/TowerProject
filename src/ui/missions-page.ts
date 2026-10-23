@@ -1,3 +1,4 @@
+import { controlIcon } from "./control-icon.ts";
 import { EQUIP_MATERIALS, type EquipMaterialId } from "../equipment/catalog.ts";
 import type { MissionPayout } from "../game/mission-desk.ts";
 import { MISSION_CAPACITY, MISSIONS, missionReward, WEEKLY_MAX, WEEKLY_REWARDS, weeklyReward } from "../missions/catalog.ts";
@@ -17,8 +18,9 @@ const amount = (icon: string, n: number, title: string) =>
 
 /** What a daily mission's claim paid, each currency by its icon and amount,
  * flown to its place in the currencies bar, which keeps its amount until it
- * lands, then shows the new one (`update`); a material, with no place there,
- * rises where it was claimed. Called before the HUD shows the claim. */
+ * lands, then shows the new one (`update`); Medals and Training Points fly
+ * to the bar's chevron, which opens them; a material rises where it was
+ * claimed. Called before the HUD shows the claim. */
 function payoutFlights(p: MissionPayout, update: () => void): Flight[] {
   const m = p.material, material = m?.id as EquipMaterialId | undefined;
   const bar = (n: number, icon: string, currency: string, id: string): Flight | null => {
@@ -26,9 +28,11 @@ function payoutFlights(p: MissionPayout, update: () => void): Flight[] {
     const release = holdAmount(id);
     return { html: `${icon}<b>+${currencyAmount(n)}</b>`, to: document.querySelector(`.currencies .${currency}-currency`), landed: () => (release(), update()) };
   };
+  const chevron = (n: number, icon: string): Flight | null =>
+    n > 0 ? { html: `${icon}<b>+${currencyAmount(n)}</b>`, to: document.getElementById("currencies-open") } : null;
   return [
-    bar(p.gold, goldIcon(), "gold", "gold-held"), bar(p.gems, gemIcon(), "gem", "gems-held"), bar(p.medals, medalIcon(), "medal", "medals-held"),
-    bar(p.shards, shardIcon(), "shard", "shards-held"), bar(p.training, pointsIcon(), "training", "training"),
+    bar(p.gold, goldIcon(), "gold", "gold-held"), bar(p.gems, gemIcon(), "gem", "gems-held"), chevron(p.medals, medalIcon()),
+    bar(p.shards, shardIcon(), "shard", "shards-held"), chevron(p.training, pointsIcon()),
     m && material ? { html: `${materialIcon(material)}<b>+${currencyAmount(m.amount)}</b>`, to: null } : null,
   ].filter((f): f is Flight => !!f);
 }
@@ -86,7 +90,7 @@ export class MissionsPage {
     this.shown = this.state();
     const list = missions.list;
     el("missions").innerHTML =
-      `<button class="missions-close" id="missions-close" aria-label="Close" title="Close">✕</button>` +
+      `<button class="missions-close" id="missions-close" aria-label="Close" title="Close">${controlIcon("close")}</button>` +
       `<div class="page-title"><small>NEW MISSIONS EVERY 8 HOURS</small><h2>Missions</h2></div>` +
       this.weekly() +
       `<p class="missions-next" id="missions-next">${this.nextText()}</p>` +

@@ -125,9 +125,14 @@ test("Shroud blocks 1 damage a fight and opens Shroud training", () => {
   assert.equal(trainingPoints(g.save).spent, 2, "a point a rank");
 });
 
-test("each level costs the cube of its number in XP, and levels are found exactly", () => {
-  assert.deepEqual([1, 5, 10, 20, 50].map(xpForLevel), [48, 1200, 6600, 42000, 561000]);
-  for (const level of [0, 1, 2, 7, 49, 300]) {
+test("each level costs the cube of its number in XP, more in each band of 25 levels, and levels are found exactly", () => {
+  assert.deepEqual([1, 5, 10, 20, 25, 26, 50, 51, 76, 101, 126].map(xpForLevel), [48, 1200, 6600, 42000, 78000, 89310, 681750, 743715, 3286283, 11811128, 38492691]);
+  // Each band raises a level's cost over the base curve's 12 × level × (level + 3) by 25%, 50%, 75%, 100%, then 25% each, more than the band below.
+  for (const [level, factor] of [[25, 1], [26, 1.25], [51, 1.875], [76, 3.28125], [101, 6.5625], [126, 8.203125], [151, 10.25390625]]) {
+    const cost = xpForLevel(level) - xpForLevel(level - 1);
+    assert.ok(Math.abs(cost - 12 * level * (level + 3) * factor) <= 1, `level ${level} costs ${cost}`);
+  }
+  for (const level of [0, 1, 2, 7, 25, 26, 49, 51, 76, 101, 126, 300]) {
     assert.equal(levelForXp(xpForLevel(level)), level);
     if (level) assert.equal(levelForXp(xpForLevel(level) - 1), level - 1);
   }
@@ -188,8 +193,8 @@ test("descriptions are written from the grants", () => {
       inspirationUndos: text.inspirationUndos, revive: text.revive },
     {
       yellow: "+1 starting gold key",
-      blue: "+1 starting azure key",
-      red: "+1 starting crimson key",
+      blue: "+1 starting blue key",
+      red: "+1 starting red key",
       quality: "+2 weapon attack and +1 armor defense",
       undos: "Open Undo Count research in the Archives, or 4 more levels of it once Rehearsed steps has opened it",
       combatStance: "Open the Deck, where you reorder the cards in your hand before a run",
@@ -199,7 +204,8 @@ test("descriptions are written from the grants", () => {
     },
   );
   assert.deepEqual(GOLD_SHOP.map((g) => provisionText(g.id)), [
-    "+20 max HP", "+1 defense", "+1 attack", "+1 yellow key",
+    "+20 max HP", "+1 defense", "+1 attack", "+1 gold key",
+    "One more Bomb every run: press it, then an enemy's tile, to deal that enemy your ATK",
   ]);
 });
 
@@ -217,7 +223,7 @@ test("each provision bought costs more than the last, on run training's schedule
   assert.equal(s.provisions.heal, 2);
 });
 
-test("Extra Key opens the Yellow Key provision: 100 Gold, then four times the last", () => {
+test("Extra Key opens the Gold Key provision: 100 Gold, then four times the last", () => {
   const s = defaults(), g = new Game(s);
   g.newRun({ outside: true });
   assert.deepEqual(Array.from({ length: 6 }, (_, n) => provisionPrice({ provisions: { ...s.provisions, yellowKey: n } }, "yellowKey")), [100, 400, 1600, 6400, 25600, 102400]);
@@ -227,7 +233,7 @@ test("Extra Key opens the Yellow Key provision: 100 Gold, then four times the la
   const keys = loadout(s).keys.yellow;
   assert.ok(g.gear.buyProvision("yellowKey") && g.gear.buyProvision("yellowKey"));
   assert.equal(s.gold, 500);
-  assert.equal(loadout(s).keys.yellow, keys + 2, "a yellow key for each, every run");
+  assert.equal(loadout(s).keys.yellow, keys + 2, "a gold key for each, every run");
   assert.equal(g.run.player.keys.yellow, keys + 2, "the run in the forest takes them");
   assert.equal(g.gear.buyProvision("yellowKey"), false, "1,600 Gold, 500 held");
   goInside(g);
@@ -300,7 +306,7 @@ test("provisions last for good: every run takes them, and one bought mid-run cou
   assert.deepEqual(g.run.loadout, { attack: 13, defense: 0, maxHp: 120, shroud: 1 });
   goInside(g);
   assert.deepEqual(hero(), ready, "the run takes its provisions inside");
-  assert.deepEqual(s.provisions, { heal: 1, edge: 1, guard: 0, yellowKey: 0 }, "and keeps them for every later run");
+  assert.deepEqual(s.provisions, { heal: 1, edge: 1, guard: 0, yellowKey: 0, bomb: 0 }, "and keeps them for every later run");
   assert.deepEqual(hero(s.delve.run!), ready, "the other forest run still has them");
   assert.ok(g.gear.buyProvision("guard"));
   assert.equal(g.run.player.defense, 1, "one bought inside a run counts at once");

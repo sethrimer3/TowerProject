@@ -20,7 +20,6 @@ await page.goto(process.env.TEST_URL || "http://127.0.0.1:5173/");
 // Inside a run the tabs are hidden: end the first Tower run to reach the forest.
 await openMenu(page); await page.locator("#end-run").click();
 await page.locator("#confirm").click();
-await expect(page.locator(".dpad")).toBeHidden();
 
 const saved = () =>
   page.evaluate(() => JSON.parse(localStorage.getItem("towerdelve.v1")));
@@ -38,7 +37,8 @@ async function fixture(edit, arg = null) {
   await page.reload();
   await expect(page.locator("#world")).toBeVisible();
 }
-/** Taps a tile, mapped through the Delve camera: a 17-tile view on a
+/** Walks to a tile by tapping it twice (inside a run the first tap
+ * previews it), mapped through the Delve camera: a 17-tile view on a
  * 30-wide world, centred on the player and clamped to the edges. */
 async function tap(x, y) {
   await page.waitForTimeout(250);
@@ -47,10 +47,11 @@ async function tap(x, y) {
     left = Math.max(0, Math.min(30 - n, p.x - Math.floor(n / 2))),
     bottom = Math.max(0, p.y - Math.floor(n / 2));
   const box = await page.locator("#world").boundingBox();
-  await page.mouse.click(
-    box.x + ((x - left + 0.5) * box.width) / n,
-    box.y + ((n - 0.5 - y + bottom) * box.width) / n,
-  );
+  for (let i = 0; i < 2; i++)
+    await page.mouse.click(
+      box.x + ((x - left + 0.5) * box.width) / n,
+      box.y + ((n - 0.5 - y + bottom) * box.width) / n,
+    );
 }
 async function swipe(dx, dy) {
   const b = await page.locator("#world").boundingBox(),
@@ -75,7 +76,7 @@ const scene = await page.evaluate(async () => {
     const enemy = cells.find(({ x, y, t }) => t.kind === "enemy" && inner(x, y, 2, 0));
     if (key && door && enemy) return { seed, key, door, enemy };
   }
-  throw Error("No seed has a yellow key, a yellow door and an enemy in its first chunk");
+  throw Error("No seed has a gold key, a gold door and an enemy in its first chunk");
 });
 const { key, door, enemy } = scene;
 /** A fresh run on the chosen seed with the player at (x, y) and `open` /
@@ -83,9 +84,8 @@ const { key, door, enemy } = scene;
 const place = (s, { seed, x, y, open = [], closed = [], stats = {}, undo = false }) => {
   s.upgrades.delve = 1;
   if (undo) s.upgrades.inspirationUndos = 1;
-  // A settled camera and single-tap moves keep tap positions deterministic.
+  // A settled camera keeps tap positions deterministic.
   s.settings.transition = "instant";
-  s.settings.oneTapMove = true;
   const r = s.delve.run;
   r.seed = seed;
   r.outside = false;

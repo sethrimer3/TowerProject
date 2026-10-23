@@ -53,7 +53,7 @@ html.ember ::-webkit-scrollbar-thumb {
    class rules; a style written on an element (a colour swatch) still wins,
    and drawings, the bars' fills (`i`), rarity colours and badge tokens keep
    theirs. */
-html.ember body *:not(#_, canvas, img, svg, svg *, i, button, select, input, dialog, .stats, .card, .upgrade, .setting, .range-setting, .inspect-box, .shop, .skill-tree, .currencies, .theme-card, .board, .board-tip, .xp-track, .health-track, .badge-token, .eq-tile, [class*="rar"]) {
+html.ember body *:not(#_, canvas, img, svg, svg *, i, button, select, input, dialog, .stats, .card, .upgrade, .setting, .range-setting, .inspect-box, .shop, .skill-tree, .currencies, .theme-card, .board, .board-tip, .xp-track, .health-track, .badge-token, .hand-badge-level, .eq-tile, [class*="rar"]) {
   background-color: transparent;
   background-image: none;
   border-color: var(--e-faint);
@@ -203,6 +203,10 @@ html.ember .danger {
   color: #ff5a3a;
   text-shadow: 0 0 6px var(--e-red);
 }
+/* Goals' climb: the line up the tower in this theme's line colour, lit
+   up to the floor reached. */
+html.ember .goals-line:not(#_) { background: var(--e-faint); }
+html.ember .goals-line.lit:not(#_) { background: var(--e-amber); }
 
 /* Dialogs: an amber-ruled pane over a darkened field. */
 html.ember dialog {
@@ -226,4 +230,17 @@ html.ember dialog::backdrop {
 }
 html.ember:not(.reduce-motion) .page-title h2 {
   animation: ember-breathe 3s ease-in-out infinite;
+}
+
+/* The Shrine bar (style.css): its fill a violet flame, apart from the orange XP bar; its diamond a cold coal, glowing amber while boons wait. */
+html.ember {
+  --shrine-fill: linear-gradient(to right, #5a2aff, #b86bff);
+  --shrine-fill-glow: 0 0 8px #8a4aff;
+  --shrine-line: var(--e-faint);
+  --shrine-idle: #1a0507;
+  --shrine-lit: var(--e-amber);
+  --shrine-lit-line: var(--e-cream);
+  --shrine-lit-ink: var(--e-black);
+  --shrine-glow: 0 0 8px #ff6a1a;
+  --shrine-ink: var(--e-amber);
 }

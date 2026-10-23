@@ -1,4 +1,4 @@
-import { compactAmount, keyCount, whole, wholeChange, wholeHp } from "../whole.ts";
+import { keyCount, whole, wholeChange, wholeHp } from "../whole.ts";
 import { GOLD_BOOST_FACTOR } from "../gold-boost.ts";
 import { MODES } from "../modes.ts";
 import { loadout } from "../loadout.ts";
@@ -8,8 +8,8 @@ import { doorBlockedMessage, doorRule, KEY_NAMES, KEY_ORDER } from "../doors.ts"
 import { tileInfo } from "./tile-info.ts";
 import type { AppContext, PageGame } from "./app.ts";
 import { capitalized, CURRENCY_SPRITES, displayedProgress, el, uiSprite } from "./dom.ts";
-import { boardTitle } from "./hud.ts";
-import type { DelveRun } from "../entities.ts";
+import { boardTitle, shortStat } from "./hud.ts";
+import type { DelveRun } from "../runs.ts";
 import type { TournamentClient } from "../tournament/client.ts";
 import { LEAGUE_INFO } from "../tournament/leagues.ts";
 import { placeText } from "../tournament/prizes.ts";
@@ -93,7 +93,7 @@ function blockWhy(game: PageGame, b: Blocker) {
       return `${doorBlockedMessage(t)} You hold ${held}${rule.type === "wood" ? ` and ${wholeHp(p.hp)} HP` : ""}.`;
     }
     case "doorRun": return "It begins a run of doors, and the keys you hold run out partway through.";
-    case "impervious": return `Your ATK ${compactAmount(attackAgainst(p, t.enemy!))} can't get past its DEF ${compactAmount(defenseAgainst(p, t.enemy!))}.`;
+    case "impervious": return `Your ATK ${shortStat(attackAgainst(p, t.enemy!))} can't get past its DEF ${shortStat(defenseAgainst(p, t.enemy!))}.`;
     case "noCard":
       if (t.kind === "door") return "You can open it, but no card in your hand heads for this door.";
       if (t.kind === "enemy") return "No card in your hand fights this enemy.";
@@ -135,7 +135,7 @@ export class RunEndDialog {
   check() {
     const game = this.ctx.game;
     if (!game.fallen || this.ctx.modal.open || this.waiting) return;
-    const wait = game.defeatShownUntil - performance.now();
+    const wait = game.fights.defeatShownUntil - performance.now();
     if (wait > 0) this.waiting = setTimeout(() => ((this.waiting = null), this.check()), wait);
     else this.show("fallen");
   }

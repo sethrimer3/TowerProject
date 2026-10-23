@@ -53,7 +53,7 @@ export function installDebugHooks(game: Game, defendPage: DefendPage, beginTourn
   w.defendDebug = (s, weather) => defendPage.fastForward(s, weather);
   w.tournamentDebug = beginTournament;
   w.mailDebug = { send: (draft = {}) => sendMail({ ...OUTAGE_MAIL, ...draft }) };
-  w.boardBusy = () => game.route.length > 0 || !!game.encounter;
+  w.boardBusy = () => game.route.length > 0 || !!game.fights.encounter;
 }
 
 function delveReport(game: Game) {

@@ -5,11 +5,11 @@ import { defaults } from "../src/save.ts";
 import { point, type Enemy, type Player, type Tile } from "../src/entities.ts";
 import { bout, heroHpAfter, predict, summarize, type Crits } from "../src/combat.ts";
 import { forecast } from "../src/crit-forecast.ts";
-import { critChance, critFactor, critRule, trainingStep } from "../src/loadout.ts";
+import { critRule, trainingStep } from "../src/loadout.ts";
 import { trainingGold } from "../src/training-jobs.ts";
 import { runTrainingValue, silverPrice } from "../src/run-training.ts";
 import { RESEARCH } from "../src/archives.ts";
-import { TRAINING, UPGRADES } from "../src/config.ts";
+import { TRAINING, UPGRADES, trainedAmount } from "../src/config.ts";
 import { TREES } from "../src/skill-trees.ts";
 import { DamagePredictions, damageLabel } from "../src/damage-labels.ts";
 
@@ -39,11 +39,11 @@ test("Critical is a 2 Inspiration skill under Shroud that opens Crit % and Crit 
 
 test("Crit %: 1% a rank to 80%; Crit x: x1.2, and 0.1 more a rank to x16.2", () => {
   const s = defaults();
-  assert.equal(critChance(s), 0, "nothing without the skill");
+  assert.equal(trainedAmount(s, "critChance") / 100, 0, "nothing without the skill");
   assert.equal(critRule(s), undefined);
   s.upgrades.critical = 1;
   assert.equal(critRule(s), undefined, "no chance, no crits");
-  assert.equal(critFactor(s), 1.2);
+  assert.equal(trainedAmount(s, "critFactor") / 100, 1.2);
   s.training.critChance = 10;
   s.training.critFactor = 10;
   assert.deepEqual(critRule(s), { chance: 10, factor: 2.2 });
@@ -204,12 +204,12 @@ test("in play, crits land by a fixed roll per run, tile and strike: the same fig
 
 test("a played fight shows its crits, and the step ends as the shown fight does", () => {
   const g = arena(3, 100);
-  g.playsFights = true;
+  g.fights.playsFights = true;
   g.move(0, 1);
-  const fight = g.encounter!;
+  const fight = g.fights.encounter!;
   assert.ok(fight);
   assert.deepEqual(fight.bout.strikes.filter((s) => s.by === "hero").map((s) => s.crit), [1, 1]);
-  g.finishEncounter();
+  g.fights.finish();
   assert.ok(!g.fallen && g.run.player.hp === 70);
   assert.equal(g.run.kills, 1);
   assert.equal(heroHpAfter(fight.bout, 100), 70);

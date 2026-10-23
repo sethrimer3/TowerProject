@@ -18,6 +18,7 @@ import { chromium } from "@playwright/test";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { bounded, startPreview } from "./snapshot-preview.mjs";
+import { fixClock } from "./fixed-clock.mjs";
 
 const UPDATE = process.env.UPDATE_GOLDEN === "1";
 const GOLDEN = new URL("./fixtures/render.golden.json", import.meta.url);
@@ -25,10 +26,11 @@ const BASELINE_DIR = "test-results/render-golden";
 const OUT_DIR = "test-results/render";
 
 const server = await startPreview(4180);
-const browser = await chromium.launch({ headless: true, channel: process.env.PLAYWRIGHT_CHANNEL || "msedge" });
+const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH } : { channel: process.env.PLAYWRIGHT_CHANNEL || "msedge" }) });
 let exitCode = 1;
 try {
   const page = await browser.newPage({ viewport: { width: 600, height: 900 }, deviceScaleFactor: 1 });
+  await fixClock(page);
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   // Every image the app asks for, so a capture can wait until all of them have
@@ -54,7 +56,10 @@ try {
     };
   });
   await page.goto(server.url);
-  await page.evaluate(() => document.fonts.ready);
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    await document.fonts.load('16px "Tower Pixel"');
+  });
 
   // The recorded hashes, so the page encodes PNGs and redraws scenes only
   // where they are needed; none when recording.

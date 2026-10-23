@@ -1,28 +1,5 @@
-import type { TrainingJob, TrainingPaid } from "./training-jobs.ts";
-import type { TierRecord } from "./tiers.ts";
-import type { ThemeId } from "./theme-collection.ts";
-import type { ArchivesSave } from "./archives.ts";
-import type { ShrineRun, ShrinesSave } from "./shrines.ts";
-import type { CardId, CardLink } from "./cards.ts";
-import type { BadgesSave, RunBadges } from "./badges.ts";
-import type { GoldItemId, KeyColor, TrainingId, UpgradeId } from "./config.ts";
-import type { MaterialId } from "./materials.ts";
-import type { EquipmentSave } from "./equipment/inventory.ts";
-import type { DefendSave } from "./defend/progress.ts";
-import type { GemDrop } from "./gems.ts";
-import type { RunFinds, RunNotes } from "./run-notes.ts";
-import type { EnemyProfile } from "./enemy-curves.ts";
-import type { Settings } from "./settings.ts";
-import type { EntitlementId } from "./shop/entitlements.ts";
-import type { ShopSave } from "./shop/ledger.ts";
-import type { GoalsSave } from "./goals.ts";
-import type { TournamentSave } from "./tournament/progress.ts";
-import type { MailSave } from "./mail/progress.ts";
-import type { MissionsSave } from "./missions/progress.ts";
-import type { EventsSave } from "./events/progress.ts";
-import type { TournamentRun } from "./tournament/run.ts";
-import type { Profile } from "./profile.ts";
-import type { Volleys } from "./ranged.ts";
+/** The board's pieces: its tiles, the enemies, torches and hero on them, and where they stand. This module imports nothing, so anything can use it. */
+export type KeyColor = "yellow" | "blue" | "red";
 export type Kind =
   | "wall"
   | "floor"
@@ -43,6 +20,8 @@ export type Kind =
  * boss guards the way up at the end of every ten floors, and a Greater
  * Boss appears on a Tower floor whose every torch is put out. */
 export type EnemyStrength = "weak" | "normal" | "strong" | "elite" | "boss" | "greaterBoss";
+/** Which of an enemy's stats lead (enemy-curves.ts scales each). */
+export type EnemyProfile = "attackHeavy" | "balanced" | "defenseHeavy";
 export type Enemy = {
   name: string;
   hp: number;
@@ -57,10 +36,50 @@ export type Enemy = {
   fast?: true;
   /** A Ranged enemy (ranged.ts) shoots the hero from a distance. */
   ranged?: true;
+  /** A Flying enemy (flying.ts) hovers over a floor tile (`Tile.flyer`):
+   * it shoots the hero as a Ranged one does, and the hero can only shoot
+   * it, walking under it as over open floor. */
+  flying?: true;
+  /** An Aggroed enemy (flying.ts) closes on the hero, a step each time its
+   * `stride` charge (whole charge units, as a Ranged enemy's cooldown) is
+   * full; a Flying enemy becomes one once an arrow wounds it. */
+  aggro?: true;
+  stride?: number;
+  /** Where an enemy that has moved (an Aggroed one) stood as the board made
+   * it, by `point`: its loot is keyed there (`RunPurse.killKey`), wherever
+   * it falls. */
+  home?: string;
+  /** A Shielded enemy (shielded.ts) casts a bubble that cuts the hero's
+   * damage to every enemy within it. */
+  shielded?: true;
+  /** The percent a Shielded enemy's bubble cuts the hero's damage to this
+   * one by, after DEF; set by the board as it reads the tile, never saved. */
+  guard?: number;
+  /** The HP an enemy the hero's arrows have wounded had before them (its
+   * HP plus the tile's wound), which its thorns are a share of; set by the
+   * board as it reads the tile (`wounded` in ranged.ts), never saved. */
+  fullHp?: number;
+  /** An enemy spawned onto the floor during the run (`Game.spawnEnemy`):
+   * its number among the run's spawns, which keys its loot apart from the
+   * tile's (`RunPurse.killKey`); absent on enemies the floor was made with. */
+  spawn?: number;
 };
 /** An area reward chest's metal: gold for an area mastered, silver for one
  * cleared (tower/area-ledger.ts). */
 export type ChestTier = "silver" | "gold";
+/** A treasure chest's kind: a plain one pays only Gold; a Supply Chest adds
+ * upgrade materials and an Equipment Chest a Standard piece, both only ever
+ * from the CHEST card held. Fixed as the floor is generated (board.ts
+ * `withChest`). */
+export type ChestKind = "plain" | "supply" | "equipment";
+/** A run's chances, in percent, of each treasure chest being a Supply or
+ * an Equipment Chest, fixed as it goes inside. */
+export type ChestOdds = { supply: number; equipment: number };
+/** A run's chances, in percent, of DOOR's tree remaking the doors of its
+ * floors as they are generated: each colour door a Wooden Door instead
+ * (`skeleton`, Skeleton Key), and each door of two or three colours
+ * without its rarest lock (`lockPick`, Lock Pick). */
+export type DoorOdds = { skeleton: number; lockPick: number };
 /** Declarative lock rules. `color` remains on Tile for legacy single-key
  * doors and keys; new doors use this rule so every gameplay system shares
  * the same requirements and consumption behavior. */
@@ -72,8 +91,14 @@ export type DoorRule =
    * for `durability` HP, which DEF doesn't reduce (doors.ts). */
   | { type: "wood"; durability: number };
 /** `wound`: the HP the hero's arrows have taken off the enemy standing
- * here (ranged.ts); the board reads its HP that much lower. */
-export type Tile = { kind: Kind; amount?: number; color?: KeyColor; door?: DoorRule; enemy?: Enemy; tier?: ChestTier; wound?: number };
+ * here (ranged.ts); the board reads its HP that much lower. `flyer`: the
+ * Flying enemy hovering over this open floor tile (flying.ts), which the
+ * hero walks under; its wound is the tile's `wound`. */
+/** The colour a potion is drawn in: a regular potion red, like the HP bar
+ * it fills, and a percent potion (whose tile is marked `color: "red"`, the
+ * mark generation and saves keep) blue, like the Overheal bar. */
+export const potionShade = (t: Pick<Tile, "color">): "red" | "blue" => (t.color === "red" ? "blue" : "red");
+export type Tile = { kind: Kind; amount?: number; color?: KeyColor; door?: DoorRule; enemy?: Enemy; flyer?: Enemy; tier?: ChestTier; wound?: number; chest?: Exclude<ChestKind, "plain"> };
 export type Point = { x: number; y: number };
 /** A stationary wall-mounted light source, anchored to a walkable floor
  * tile adjacent to a wall. Its visibility polygon is computed once (on
@@ -86,6 +111,9 @@ export type Torch = {
   active: boolean;
   visibilityPolygon?: Point[];
 };
+/** A percent the hero carries against some enemies, by the card (or card
+ * tree) covering them (foe-cards.ts's `FoeKey`). */
+export type ByFoe = Partial<Record<"weakEnemy" | "baseEnemy" | "strongEnemy" | "eliteEnemy" | "bossEnemy" | "nonBossEnemy" | "fastEnemy" | "flyingEnemy" | "monster" | "torch", number>>;
 export type Player = {
   x: number;
   y: number;
@@ -107,338 +135,48 @@ export type Player = {
   /** The percent every enemy strike's damage is cut by, parried (Parry %);
    * none when absent. */
   parry?: number;
+  /** The percent of every enemy strike HEAL's card tree parries, added to
+   * Parry %; absent without it. */
+  cardParry?: number;
   /** The percent more ATK the hero strikes bosses with (equipment; none
    * when absent). */
   bossAttack?: number;
+  /** ATK UP's Power Strike, charged by an ATK shard: the hero's next fight
+   * strikes with twice its ATK; absent while not charged. */
+  powerStrike?: true;
+  /** The percent of a boss's or a Greater Boss's max HP (`takedown`: ATK
+   * UP's Takedown, TORCH's Greater Takedown) and ATK (`tangle`: DEF UP's
+   * Tangle, TORCH's Greater Tangle) taken off as a fight with it begins, by
+   * strength; absent without them. */
+  takedown?: Partial<Record<"boss" | "greaterBoss", number>>;
+  tangle?: Partial<Record<"boss" | "greaterBoss", number>>;
+  /** The percent more ATK the hero strikes the enemies each enemy card of
+   * the run's hand covers with (foe-cards.ts), by card, its tree's and
+   * ENEMY's and TORCH's from their card trees; absent without one. */
+  foeAttack?: ByFoe;
+  /** The percent more DEF and shroud the hero holds against the enemies a
+   * card tree covers (an enemy card's its own, ENEMY's every enemy, TORCH's
+   * the Greater Boss), by card; absent without one. HEAL's tree's shroud,
+   * against every enemy, goes under ENEMY's key. */
+  foeDefense?: ByFoe;
+  foeShroud?: ByFoe;
+  /** The percent more Crit % chance and Crit x factor the hero strikes the
+   * enemies an enemy card's tree covers with, and the percent of max HP
+   * Lifesteal may heal it above it in fights with them, by card; absent
+   * without one. */
+  foeCritChance?: ByFoe;
+  foeCritFactor?: ByFoe;
+  foeStealOverheal?: ByFoe;
   /** The percent of an enemy's DEF the hero's strikes ignore (equipment's
    * Piercing; none when absent). */
   pierce?: number;
+  /** The percent of max HP Lifesteal may heal the hero above it (ENEMY's
+   * Lifesteal Overheal; none when absent). */
+  stealOverheal?: number;
   keys: Record<KeyColor, number>;
   /** Optional secret inventory counters stay absent from legacy saves until
    * the corresponding item has actually been found. */
   skeletonKeys?: number;
 };
-/** What a run holds in either mode. */
-export type RunCore = {
-  outside?: boolean;
-  layoutVersion?: number;
-  seed: number;
-  player: Player;
-  height: number;
-  maxHeight?: number;
-  kills: number;
-  treasures: number;
-  changes: Record<string, Tile>;
-  floor: number;
-  /** The ATK/DEF/max HP the run started with (its loadout), shifted by any
-   * gear change since. */
-  loadout?: { attack: number; defense: number; maxHp: number; shroud?: number; regen?: number; lifesteal?: number; thorns?: number; parry?: number; bossAttack?: number; pierce?: number };
-  /** The hand as it was ordered when the run went inside: the cards that
-   * move the hero for the rest of the run. */
-  hand?: CardId[];
-  /** The hand's links (Card Groups) as they were when the run went inside. */
-  links?: CardLink[];
-  /** Silver held: earned from enemies and spent inside this run only, so
-   * undo takes it back with the rest of the run. */
-  silver?: number;
-  /** XP earned from kills this run, for the run's end dialog; undo takes
-   * it back with the rest of the run, as it does the hero's XP. */
-  xp?: number;
-  /** The run's notes (run-notes.ts): its start, steps, keys, doors,
-   * pickups and Silver found; undo takes them back with the run. */
-  notes?: RunNotes;
-  /** Focus uses spent this run. What is left is what a run gets now less
-   * these, so a Focus Count level completed mid-run counts at once. */
-  focusUsed?: number;
-  /** Ignore and Target uses spent this run, counted like Focus's. */
-  ignoreUsed?: number;
-  targetUsed?: number;
-  /** Undos spent this run. A run has as many as the loadout's undo
-   * capacity, and one spent never comes back, so what is left is that
-   * capacity less these (undo carries the count onto the run it restores). */
-  undosUsed?: number;
-  /** New floors counted toward each charge's next regained use (Refocus,
-   * Ignore More, Target More; run-charges.ts), while it is below full. */
-  regain?: Partial<Record<"focus" | "ignore" | "target", number>>;
-  /** The tiles Ignore marked on floor `floor` (points): no card's path, or
-   * Target's, steps on them for the rest of that floor. */
-  ignored?: { floor: number; tiles: string[] };
-  /** The tile (a point) Target sends the hero to, until it gets there or
-   * has no path left. */
-  targeted?: string;
-  /** The chance each potion on this run's floors is a percent potion, in
-   * hundredths of a percent, from Recovery and Find Potion training when it
-   * went inside (none without). Fixed for the run, so its floors never
-   * change under it. */
-  percentPotions?: number;
-  /** The card a Focus put ahead of the others, until it reaches its target
-   * or has no path to one. */
-  focused?: CardId;
-  /** Training ranks bought with Silver this run, on top of the hero's own:
-   * they last only for this run. */
-  training?: Partial<Record<TrainingId, number>>;
-  /** Times each card that acts in place (cards.ts `IN_PLACE`) has acted this
-   * run: a siphon's nth use took n training levels, lost only for this run. */
-  cardUses?: Partial<Record<CardId, number>>;
-  /** Which numbered tower (or delve) the run climbs, from 2 up (tiers.ts);
-   * absent for the first. */
-  tier?: number;
-  /** Ranged enemies' and the Archer's cooldowns, and the turns taken
-   * inside (ranged.ts); absent until the first shot is due. */
-  volleys?: Volleys;
-  /** The card badges on the hand's cards as the run went inside
-   * (badges.ts), each card's top slot first, fixed for the run. */
-  badges?: RunBadges;
-  /** The floor each cooling-down badge (Stairward, Skip Open Nodes) last
-   * worked on: it works again on that floor, or once enough floors pass. */
-  badgeFloors?: Partial<Record<"stairward" | "skipOpen", number>>;
-  /** The doors and monsters Skip Open Nodes passed over on floor `floor`
-   * (points), skipped and marked for the rest of that floor. */
-  skipped?: { floor: number; tiles: string[] };
-  /** Deprioritize on floor `floor`: how many targets it has marked there,
-   * and the tiles still marked with a ? or, once the hand was stuck, a !
-   * (points); stepping on one clears its mark. */
-  marks?: { floor: number; made: number; tiles: string[]; bangs: string[] };
-  /** How many of Skip's rolls this run has drawn from its stream, which
-   * starts from the run seed. */
-  skipRolls?: number;
-  /** How many of each Free Upgrade group's rolls this run has drawn from
-   * its stream, which starts from the run seed (free-training.ts). */
-  freeRolls?: Partial<Record<"offense" | "defense" | "utility", number>>;
-  /** Goldback's combo: the multiplier its activations have tallied for the
-   * next Gold the run finds (each adds its value), used up by that Gold;
-   * absent with none. */
-  goldCombo?: number;
-};
-/** A Tower ascent. */
-export type TowerRun = RunCore & {
-  /** Whether the hero has taken fight damage in this area (the ten floors
-   * from the current section's first): whether it can still be mastered. */
-  damaged: boolean;
-  /** Whether the hero has climbed past a floor of this area with an enemy
-   * still on it: whether the area can still be cleared (absent: none). */
-  enemiesLeft?: boolean;
-  /** The heights of the floors where a Greater Boss has appeared this run
-   * (tower/greater-boss.ts), each once. */
-  summoned?: number[];
-  /** The height the run began on, when a Warp began it above the first
-   * floor (absent: floor 1); Retry starts the next run there. */
-  start?: number;
-  /** The run's boons (shrines.ts): absent until Shrines are researched and
-   * the first is earned. */
-  shrine?: ShrineRun;
-};
-/** A Delve descent. */
-export type DelveRun = RunCore & {
-  /** Milestone gates crossed: the area the labyrinth is sealed below. */
-  milestone: number;
-  /** The highest row the hero has stood on this run (absent: the row it
-   * stands on). The STAIRS card climbs only to rows above it. */
-  top?: number;
-  /** A tournament run's tournament, seeds and chance streams
-   * (tournament/run.ts); absent for every other run. */
-  tournament?: TournamentRun;
-};
-/** What Delve Automove has seen of the descent in the labyrinth, and how
- * often the player has stood on each tile. It is kept beside the run, not
- * in it, so undo never copies or rewinds it. */
-export type AutomoveMemory = { known: Record<string, true>; visited: Record<string, number> };
-export type Run = TowerRun | DelveRun;
-/** The run and lifetime XP just before a move, so undo takes back the XP
- * (and any level) a kill paid; `quiet` when the move was a step onto empty
- * floor, which undo goes on back past. */
-/** An undo point: the run, the best and XP then, and the lifetime Silver
- * then (`silver`, absent in a snapshot older than the profile), since undo
- * takes back the Silver found after it. */
-export type MoveSnapshot<R extends Run = Run> = { run: R; best: number; xp: number; silver?: number; quiet?: true };
-/** A hero fallen in a fight, waiting for the player to undo it or accept
- * defeat: the run just before that fight, and the enemy that won it. */
-export type Fall<R extends Run = Run> = { snapshot: MoveSnapshot<R>; by: string };
 export type Mode = "tower" | "delve";
-export type ModeSave<R extends Run = Run> = {
-  history: MoveSnapshot<R>[];
-  /** Set while the run's hero lies fallen (a run inside at 0 HP). */
-  fall: Fall<R> | null;
-  best: number;
-  reached: number;
-  run: R | null;
-  /** Keys of `${seed}:${x},${y}` (delve) or `${seed}:${height}:${x},${y}`
-   * (tower) for every enemy kill / treasure chest that has already paid out
-   * persistent rewards, kept outside `run` so it survives movement undo and
-   * blocks the same physical kill/chest from paying out twice. */
-  lootedTiles: Record<string, true>;
-  /** Gold picked up during the current run, kept outside `run` like
-   * `lootedTiles`, since undo never takes Gold back. */
-  runGold: number;
-  /** The Gold the current run found while the Gold ad's boost lasted,
-   * before the boost (it banked `GOLD_BOOST_FACTOR` times this), or null
-   * while the boost hasn't run during the run; for the run's end dialog. */
-  runBoostGold: number | null;
-  /** The mode's currency (Inspiration or Courage) earned during the current
-   * run, from milestones and areas cleared, kept beside `runGold`. */
-  runCurrency: number;
-  /** What the current run found that undo never takes back (materials,
-   * Cells, Gems, equipment), for its notes (run-notes.ts), kept beside
-   * `runGold`. */
-  runFinds: RunFinds;
-  /** Whether the current run has climbed past the tier's record (`reached`
-   * as the run began), for the run's end dialog. */
-  runRecord: boolean;
-  /** The numbered tower (or delve) selected: the slice's records (`best`,
-   * and `reached`) are this tier's. */
-  tier: number;
-  /** The highest tier opened, from 1 to `TIERS`: the Tower's, which the
-   * Delve's caves follow. */
-  tiersOpen: number;
-  /** The other tiers' records, by tier, while another is selected. */
-  tierRecords: Record<string, TierRecord>;
-};
-/** The skill trees a run's currency calls the player back to. */
-export type NoticeTree = "inspiration" | "courage";
-export type Save = {
-  /** A separate encounter; ordinary mode runs remain untouched. */
-  provingGrounds?: import("./proving-grounds/trial.ts").TrialState;
-  version: 3;
-  tower: ModeSave<TowerRun> & {
-    inspiration: number;
-  };
-  delve: ModeSave<DelveRun> & { courage: number; memory: AutomoveMemory };
-  /** The premium currency, kept between runs like Gold (gems.ts). */
-  gems: number;
-  /** Ascension Shards: a limited currency, kept between runs, bought only
-   * in the Shop's limited packs for now. */
-  ascensionShards: number;
-  /** Medals: a limited currency, kept between runs, paid by the weekly
-   * mission rewards (missions/catalog.ts) and Events' missions
-   * (events/catalog.ts); nothing spends them yet. */
-  medals: number;
-  /** Cells: dropped by Greater Bosses, kept between runs with their
-   * fractions (a badge's scale can change a drop), spent on the Archives'
-   * Speed Ups (speed-ups.ts). */
-  cells: number;
-  /** Where the Gems found on floors and the ad button's stand: never part
-   * of a run, so undo can't touch them. */
-  gemDrop: GemDrop;
-  /** When the Gold ad's boost (Gold found ×1.5) runs out, as a wall-clock
-   * timestamp (ms): `gold-boost.ts`. */
-  goldBoostUntil: number;
-  gold: number;
-  provisions: Record<GoldItemId, number>;
-  xp: number;
-  /** Training points earned beyond the hero's levels: one for each weekly
-   * mission reward claimed (missions/catalog.ts). */
-  bonusTrainingPoints: number;
-  /** Ranks of each stat trained, with training points (earned per level)
-   * or by a trainer for Gold. */
-  training: Record<TrainingId, number>;
-  /** What each stat's ranks were paid with, which a reset returns: the
-   * training points spent, the Gold, and the trainers' time (ms). Ranks
-   * bought with Dev free purchases paid nothing. */
-  trainingPaid: Record<TrainingId, TrainingPaid>;
-  /** Ranks of each stat trainers have finished: the trainers' own schedule
-   * (Gold and time), apart from ranks bought with training points. */
-  trainerRanks: Record<TrainingId, number>;
-  /** Ranks being trained by a trainer now (their Gold is paid), each done
-   * when the wall clock reaches it. */
-  trainingJobs: TrainingJob[];
-  /** Stats whose trainer starts the next rank as soon as one is done, when
-   * the Gold is there (the Training tab's auto-continue boxes). */
-  trainingAuto: TrainingId[];
-  /** Each stat's time credit: training time (ms) given back when its rank
-   * in training was stopped (by hand, or bought with points) or the stat
-   * reset, taken off that stat's next ranks until it is used up. */
-  trainingCredit: Record<TrainingId, number>;
-  /** The time bank: training time (ms) a Gem reset returned, taken off any
-   * stat's next ranks (after that stat's own time credit) until used up. */
-  trainingBank: number;
-  /** When the training boost (ranks in training go twice as fast) runs
-   * out, as a wall-clock timestamp (ms). */
-  trainingBoostUntil: number;
-  /** Trainers bought with Gems: each lets one more stat train at once. */
-  trainers: number;
-  upgrades: Record<UpgradeId, number>;
-  settings: Settings;
-  /** Persistent crafting-material inventory. Never part of `Run` — must
-   * survive movement undo, death, and new runs. */
-  materials: Record<MaterialId, number>;
-  /** Equipment, opened by Tower II's floor 60 Goal: the pieces owned, what each mode's
-   * hero wears, the upgrade materials, and the Gem pulls' pity
-   * (equipment/inventory.ts). */
-  equipment: EquipmentSave;
-  /** The active hand: the cards that move the hero inside a run, in
-   * priority order. Set up before a run; a new profile starts with the
-   * base hand. */
-  hand: CardId[];
-  /** The hand's Card Groups: links between cards side by side in it, each
-   * dropped once either card moves out of place (cards.ts). */
-  cardLinks: CardLink[];
-  /** Hand slots bought with Gems (after Larger Hand's). */
-  handSlots: number;
-  /** The card badges owned, which card holds each, and where their
-   * draws' stream stands (badges.ts). */
-  badges: BadgesSave;
-  /** Tutorials the player has finished: on the Deck page `deck`,
-   * reordering the hand; `removeCard`, taking a card out of it; `addCard`,
-   * the note on adding cards from the deck; `upgrades`, opening the
-   * Upgrades page once the first Inspiration is earned; `gear`, opening
-   * the Gear page once the Gear skill is owned; `onTheJob`, opening and
-   * closing a Training group under the hand in the first run after On the
-   * Job; `speed`, speeding the hand up on the second floor; `climb`, the
-   * first run's note, dismissed; and in the forest `enter`, the note to try
-   * again, dismissed (or a run entered), `delve`, opening the Delve
-   * once Into the depths is owned, and `chamber`, the first Tower run
-   * ended, after which a new floor's "A new chamber opens." no longer
-   * rises over the board. */
-  tutorials: { deck: boolean; removeCard: boolean; addCard: boolean; upgrades: boolean; gear: boolean; onTheJob: boolean; speed: boolean; climb: boolean; enter: boolean; delve: boolean; chamber: boolean };
-  /** Per tree: a run that earned its currency (Inspiration in the Tower,
-   * Courage in the Delve) has ended since the tree was last shown, so its
-   * tab (and the Upgrades tab) wear a dot in the forest while a skill there
-   * can be bought. */
-  treeNotices: Record<NoticeTree, boolean>;
-  /** What the HUD's dots were last dismissed at: the hero's `level` and the
-   * Archives' `archives` events (levels completed plus archivists hired)
-   * when the Research page was last opened, which the run's Research
-   * button compares; the hero's `training` level when the Research page's
-   * Training tab last showed, which that tab's dot compares; and the deck's
-   * `cards` when the Deck page was last opened, which the Deck tab compares. */
-  seen: { level: number; training: number; archives: number; cards: CardId[] };
-  /** The Archives' archivists, completed research and its history
-   * (archives.ts). */
-  archives: ArchivesSave;
-  /** DEFEND mini-game: city layout, purchases, upgrades and best wave. A
-   * defense run itself is never saved. */
-  defend: DefendSave;
-  /** Permanent perks bought in the Shop (shop/entitlements.ts). Erasing
-   * progress keeps them: they were paid for. */
-  entitlements: EntitlementId[];
-  /** The Shop's purchase counts, transaction history and last confirmed
-   * server time (shop/ledger.ts); what was bought lives with its owner. */
-  shop: ShopSave;
-  /** The Goals screen's checkpoint rewards claimed in each tower, and the
-   * premium ones (goals.ts). */
-  goals: GoalsSave;
-  /** The Tournament's Tickets, league, and what the player last heard of
-   * each tournament entered (tournament/progress.ts). */
-  tournament: TournamentSave;
-  /** Mail the server pushed: the inbox it last reported, what was read,
-   * removed and claimed here (mail/progress.ts). */
-  mail: MailSave;
-  /** The daily missions given, the week's tally and rewards claimed, and
-   * what has counted toward them (missions/progress.ts). */
-  missions: MissionsSave;
-  /** The running Event's missions and what has counted toward them, and
-   * the events boosted (events/progress.ts). */
-  events: EventsSave;
-  /** The relics owned, by id (relics.ts), each once, kept between runs. */
-  relics: string[];
-  /** The Shrine Boons page's choices, kept between runs (shrines.ts). */
-  shrines: ShrinesSave;
-  /** The UI and Game themes owned (theme-collection.ts), each once, in
-   * catalog order: Medieval from the start, the rest earned. Each pays
-   * Gold for good. */
-  themes: ThemeId[];
-  /** The player profile: when it was made and its lifetime tallies, the
-   * currencies earned and Training and research done (profile.ts). */
-  profile: Profile;
-};
 export const point = (x: number, y: number) => `${x},${y}`;

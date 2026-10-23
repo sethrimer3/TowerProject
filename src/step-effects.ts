@@ -1,8 +1,7 @@
 import { snap } from "./exact.ts";
-import { atWorst, predict, type CombatPrediction, type CritRule } from "./combat.ts";
-import { doorCost, doorRule, drainsHp, woodToll } from "./doors.ts";
-import type { KeyColor } from "./config.ts";
-import type { Player, Tile } from "./entities.ts";
+import { atWorst, critAgainst, healUpTo, predict, type CombatPrediction, type CritRule } from "./combat.ts";
+import { doorCost, doorDiscount, doorKeyScale, doorRule, drainsHp, keyNeed, woodToll, type DoorDiscounts } from "./doors.ts";
+import type { Player, Tile, KeyColor } from "./entities.ts";
 
 /** What stepping onto each pickup grants. The single source for the move
  * itself, route previews, the inspect panel, and Automove's planning. */
@@ -29,17 +28,24 @@ export type StepEffect = {
   combat: CombatPrediction | null;
   /** Doors only: the keys the door consumes (empty for Heart Doors). */
   keysSpent: KeyColor[];
-  /** Potions only: HP actually restored (capped at max HP). */
+  /** Potions, doors and keys: HP actually restored (a potion's capped at
+   * max HP, or above it by Overheal; a door's DOOR's Door Heal, at max HP;
+   * a key's KEY's Key Heal and Key Overheal). */
   healed: number;
   /** Doors and keys: how much of a key each key colour took or gave, when
-   * a badge's scale made it other than 1. */
+   * a badge's scale or a held key card's bonus made it other than 1. */
   keyAmount?: number;
+  /** Doors only: how much of a key each colour took, when the colours a
+   * door took cost apart (a key colour's tree cutting its own key). */
+  keyAmounts?: Partial<Record<KeyColor, number>>;
   /** Enemies only, under a badge's scale: the damage added to the fight's
    * (or, below 0, given back) once it is over. */
   extraDamage?: number;
   /** Enemies only: the scale the fight was taken under, which its Silver,
    * Gold and XP are multiplied by too. */
   scale?: number;
+  /** Doors only: DOOR's Secret Knock opened it for nothing. */
+  free?: true;
 };
 export type StepOutcome = StepBlocked | StepEffect;
 
@@ -52,10 +58,17 @@ export type StepOutcome = StepBlocked | StepEffect;
 export type StepRules = {
   potionHeal: number;
   percentPotion: number;
+  /** The percent more HP every potion restores, from HEAL's tree (a card
+   * factor on top of Potion HP and a percent potion's share); none when
+   * absent. */
+  potionCard?: number;
   regen: number;
   /** Effective and Dampen, on the step that activates their card: what the
    * target's effect is multiplied by (1.05 is 5% stronger). */
   scale?: number;
+  /** How far potions may heal above max HP (Overheal training), as a
+   * multiple of max HP in thousandths: 1,000 (none above) when absent. */
+  overheal?: number;
   /** The percent of max HP the hero regains after each fight it wins
    * (equipment), before the step's Regen. */
   victoryHeal?: number;
@@ -65,6 +78,34 @@ export type StepRules = {
   /** How much of a key each key colour a door takes costs, in tenths of a
    * percent (Key Efficiency research), 1,000 when absent. */
   keyCost?: number;
+  /** The percent less each kind of door costs, from the door cards the
+   * run's hand holds (`handBonus`), none when absent. */
+  doorOff?: DoorDiscounts;
+  /** The percent of max HP each door opened heals (DOOR's Door Heal),
+   * after a Heart Door's drain, up to max HP; none when absent. */
+  doorHeal?: number;
+  /** The door stepped into opens for nothing: no keys, no HP (DOOR's
+   * Secret Knock, which `Game` rolls for the step it takes; previews and
+   * planners never count on it). */
+  freeDoor?: true;
+  /** The percent of max HP each key picked up heals, up to max HP (KEY's
+   * Key Heal), then the percent of the Overheal ceiling, up to it (Key
+   * Overheal); none when absent. */
+  keyHeal?: number;
+  keyOverheal?: number;
+  /** GOLD, BLUE and RED KEY's Key Heal and Key Overheal, added to KEY's for a key of their colour. */
+  yellowKeyHeal?: number;
+  yellowKeyOverheal?: number;
+  blueKeyHeal?: number;
+  blueKeyOverheal?: number;
+  redKeyHeal?: number;
+  redKeyOverheal?: number;
+  /** The key picked up is two (KEY's Locksmith, which `Game` rolls as
+   * Secret Knock is). */
+  doubleKey?: true;
+  /** The percent more a key of each colour picked up is worth, from the
+   * key cards the run's hand holds (`handBonus`), none when absent. */
+  keyFind?: Partial<Record<KeyColor, number>>;
   /** The percent of its stat an ATK or DEF shard gives (Shard ATK and
    * Shard DEF research), 100 when absent. */
   shardAttack?: number;
@@ -83,11 +124,18 @@ export const potionHeal = (amount: number, rules: StepRules) => snap((amount * r
 /** The HP the potion `tile` restores to a hero of `maxHp` under `rules`
  * (before a badge's scale, and before the HP the hero lacks caps it): a
  * percent (red) potion its HP, which Potion HP leaves alone, and a share of
- * max HP. */
+ * max HP; then HEAL's tree raises either (`potionCard`). */
 export const potionRestores = (tile: Tile, maxHp: number, rules: StepRules) => {
   const amount = tile.amount ?? POTION_HEAL;
-  return tile.color === "red" ? snap(amount + (maxHp * rules.percentPotion) / 10000) : potionHeal(amount, rules);
+  const heal = tile.color === "red" ? snap(amount + (maxHp * rules.percentPotion) / 10000) : potionHeal(amount, rules);
+  return rules.potionCard ? snap((heal * (100 + rules.potionCard)) / 100) : heal;
 };
+
+/** The most HP a hero of `maxHp` may hold under `rules`: its max HP, times
+ * its Overheal once owned. Potions, GK to HP and badge heals heal up to
+ * it; every other heal stops at max HP. */
+export const hpCeiling = (maxHp: number, rules: Pick<StepRules, "overheal">) =>
+  rules.overheal && rules.overheal > 1000 ? snap((maxHp * rules.overheal) / 1000) : maxHp;
 
 /** Resolves stepping onto `tile` with stats `player`: whether the step is
  * possible, and the player's stats afterwards. Pure: movement, previews, and
@@ -99,7 +147,7 @@ export function resolveStep(player: Player, tile: Tile, rules: StepRules = BASE_
   const effect: StepEffect = { player: next, combat: null, keysSpent: [], healed: 0 };
   switch (tile.kind) {
     case "enemy": {
-      const combat = predict(atWorst(player, rules.crit), tile.enemy!);
+      const combat = predict(atWorst(player, critAgainst(rules.crit, player, tile.enemy!)), tile.enemy!);
       if (combat.impervious) return { blocked: "impervious", combat };
       // The fight plays out as predicted; a scale adds to (or gives back)
       // its damage once it is over, which can fell the hero.
@@ -114,32 +162,55 @@ export function resolveStep(player: Player, tile: Tile, rules: StepRules = BASE_
     }
     case "door": {
       // Key Efficiency makes each key the door takes cost less, on top of
-      // a badge's scale.
-      const keyScale = snap((scale * (rules.keyCost ?? 1000)) / 1000);
-      const cost = doorCost(tile, player, keyScale, scale);
+      // a badge's scale, and a door card held makes its doors cost less
+      // again (each its own factor), a key colour's tree its colour's key.
+      if (rules.freeDoor) effect.free = true;
+      const off = doorDiscount(tile, rules.doorOff);
+      const keyScale = doorKeyScale(tile, (scale * (rules.keyCost ?? 1000)) / 1000, rules.doorOff), tollScale = snap(scale * off.toll);
+      const cost = rules.freeDoor ? [] : doorCost(tile, player, keyScale, tollScale);
       if (cost === null) return { blocked: "locked" };
-      for (const color of cost) next.keys[color] = snap(next.keys[color] - keyScale);
+      for (const color of cost) next.keys[color] = snap(next.keys[color] - keyNeed(keyScale, color));
       const rule = doorRule(tile);
       // A Wooden Door broken without a key takes its durability in HP,
-      // under the badge's scale; DEF doesn't reduce it.
-      if (rule.type === "wood" && !cost.length) next.hp = snap(next.hp - woodToll(rule, scale));
+      // under the badge's scale and WOODEN DOOR's; DEF doesn't reduce it.
+      if (rule.type === "wood" && !cost.length && !rules.freeDoor) next.hp = snap(next.hp - woodToll(rule, tollScale));
       // A Heart Door's toll, all but 1 HP, shrinks under a weaker scale and
-      // never grows past it; Heart Door Resilience shrinks it by its percent.
-      if (drainsHp(rule)) {
-        const toll = snap((next.hp - HEART_DOOR_HP) * Math.min(1, scale) * (rules.heartToll ?? 100) / 100);
+      // never grows past it; Heart Door Resilience and HEART DOOR shrink it
+      // by their percents.
+      if (drainsHp(rule) && !rules.freeDoor) {
+        const toll = snap((next.hp - HEART_DOOR_HP) * Math.min(1, scale) * off.toll * (rules.heartToll ?? 100) / 100);
         next.hp = Math.min(next.hp, snap(next.hp - toll));
       }
       effect.keysSpent = cost;
-      if (keyScale !== 1 && cost.length) effect.keyAmount = keyScale;
+      const amounts = cost.map((color) => keyNeed(keyScale, color));
+      if (amounts.some((a) => a !== amounts[0])) effect.keyAmounts = Object.fromEntries(cost.map((color, i) => [color, amounts[i]]));
+      else if (amounts.length && amounts[0] !== 1) effect.keyAmount = amounts[0];
+      // DOOR's Door Heal, after the drain, up to max HP.
+      if (rules.doorHeal && next.hp > 0 && next.hp < next.maxHp) {
+        effect.healed = snap(Math.min(next.maxHp, next.hp + (next.maxHp * rules.doorHeal) / 100) - next.hp);
+        next.hp = snap(next.hp + effect.healed);
+      }
       break;
     }
-    case "key":
-      next.keys[tile.color!] = snap(next.keys[tile.color!] + scaled(1));
-      if (scale !== 1) effect.keyAmount = scaled(1);
+    case "key": {
+      const found = rules.keyFind?.[tile.color!] ?? 0, one = found ? snap((scaled(1) * (100 + found)) / 100) : scaled(1);
+      const amount = rules.doubleKey ? snap(2 * one) : one;
+      next.keys[tile.color!] = snap(next.keys[tile.color!] + amount);
+      if (amount !== 1) effect.keyAmount = amount;
+      // KEY's Key Heal up to max HP, then its Key Overheal up to the Overheal ceiling, the key's colour's tree's adding.
+      const hp = next.hp, color = tile.color!;
+      const heal = snap((rules.keyHeal ?? 0) + (rules[`${color}KeyHeal`] ?? 0)), overheal = snap((rules.keyOverheal ?? 0) + (rules[`${color}KeyOverheal`] ?? 0));
+      if (heal) next.hp = healUpTo(next.hp, snap((next.maxHp * heal) / 100), next.maxHp);
+      if (overheal) {
+        const ceiling = hpCeiling(next.maxHp, rules);
+        next.hp = healUpTo(next.hp, snap((ceiling * overheal) / 100), ceiling);
+      }
+      effect.healed = snap(next.hp - hp);
       break;
+    }
     case "potion": {
       const heal = scaled(potionRestores(tile, next.maxHp, rules));
-      effect.healed = snap(Math.min(next.maxHp - next.hp, heal));
+      effect.healed = snap(healUpTo(next.hp, heal, hpCeiling(next.maxHp, rules)) - next.hp);
       next.hp = snap(next.hp + effect.healed);
       break;
     }

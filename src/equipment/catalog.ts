@@ -45,13 +45,13 @@ export const materialOf = (category: CategoryId) => CATEGORIES[category].materia
 
 /** What an item can do, each read in one place: the loadout (stats, shroud,
  * Regen, starting keys), combat (`bossAttack`, `pierce`), the step rules (healing),
- * the run's purse (Gold, Silver, materials, boss drops), the hero's XP, and
+ * the run's chests (`chestFind`, as it goes inside), the run's purse (Gold, Silver, materials), the hero's XP, and
  * movement. Percent kinds are in percent (5 is +5%). */
 export type EffectKind =
   | "attack" | "defense" | "maxHp" | "attackPct" | "defensePct" | "maxHpPct"
   | "shroud" | "regen" | "yellowKeys" | "blueKeys" | "bossAttack" | "pierce"
   | "potionHeal" | "victoryHeal" | "floorHeal"
-  | "goldFind" | "silverFind" | "xpGain" | "materialFind" | "bossDrops" | "startSilver"
+  | "goldFind" | "silverFind" | "xpGain" | "materialFind" | "chestFind" | "startSilver"
   | "moveSpeed" | "dashTiles";
 
 /** How an effect reads: its words after the number, whether the number is a
@@ -67,7 +67,7 @@ export const EFFECTS: Record<EffectKind, EffectText> = {
   maxHpPct: { words: "max HP", percent: true },
   shroud: { words: "shroud (damage blocked each fight)" },
   regen: { words: "HP regained each step" },
-  yellowKeys: { words: "yellow key each run", plural: "yellow keys each run", whole: true },
+  yellowKeys: { words: "gold key each run", plural: "gold keys each run", whole: true },
   blueKeys: { words: "blue key each run", plural: "blue keys each run", whole: true },
   bossAttack: { words: "ATK against bosses", percent: true },
   pierce: { words: "of enemy DEF ignored", percent: true, lead: "" },
@@ -77,8 +77,8 @@ export const EFFECTS: Record<EffectKind, EffectText> = {
   goldFind: { words: "Gold found", percent: true },
   silverFind: { words: "Silver found", percent: true },
   xpGain: { words: "XP from kills", percent: true },
-  materialFind: { words: "upgrade materials from kills", percent: true },
-  bossDrops: { words: "boss equipment drop chance", percent: true },
+  materialFind: { words: "upgrade materials from Supply Chests", percent: true },
+  chestFind: { words: "Supply and Equipment Chest chance", percent: true },
   startSilver: { words: "Silver at the start of each run" },
   moveSpeed: { words: "movement speed", percent: true },
   dashTiles: { words: "tile a Dash crosses", plural: "tiles a Dash crosses", whole: true },
@@ -90,7 +90,7 @@ export const EFFECTS: Record<EffectKind, EffectText> = {
  * rarity. With `mode`, it counts only in that mode's loadout. */
 export type EffectLine = { kind: EffectKind; base: number; perLevel?: number; from?: EquipRarity; mode?: Mode; fixed?: true };
 
-/** Standard pieces drop from bosses; Unique pieces come from Gem pulls and
+/** Standard pieces come from Equipment Chests; Unique pieces come from Gem pulls and
  * each carries a specialised ability. Both level, merge and salvage alike. */
 export type ItemClass = "standard" | "unique";
 export type ItemDef = { id: string; name: string; category: CategoryId; class: ItemClass; identity: string; effects: EffectLine[] };
@@ -106,8 +106,8 @@ export const ITEMS: readonly ItemDef[] = [
   // Weapons
   { id: "knightsSword", name: "Knight's Sword", category: "weapon", class: "standard", identity: "Reliable raw ATK",
     effects: [line("attack", 3, 0.5), line("attackPct", 2, 0.1, U), line("defense", 1, 0.25, R)] },
-  { id: "kingsbane", name: "Kingsbane", category: "weapon", class: "unique", identity: "Boss slayer: hits bosses harder and shakes loose more equipment",
-    effects: [line("attack", 2, 0.3), line("bossAttack", 10, 0.25), line("attackPct", 1.5, 0.08, U), line("bossDrops", 5, 0.1, R)] },
+  { id: "kingsbane", name: "Kingsbane", category: "weapon", class: "unique", identity: "Boss slayer: hits bosses harder, and finds more Supply and Equipment Chests",
+    effects: [line("attack", 2, 0.3), line("bossAttack", 10, 0.25), line("attackPct", 1.5, 0.08, U), line("chestFind", 5, 0.1, R)] },
   { id: "reapersScythe", name: "Reaper's Scythe", category: "weapon", class: "unique", identity: "Clears floors for profit: more XP and Silver from every kill",
     effects: [line("attack", 2, 0.3), line("xpGain", 5, 0.2), line("silverFind", 5, 0.2, U), line("victoryHeal", 0.5, 0.01, R)] },
   { id: "bloodpriceBlade", name: "Bloodprice Blade", category: "weapon", class: "unique", identity: "High risk: the most ATK of any weapon, paid for in max HP",
@@ -135,7 +135,7 @@ export const ITEMS: readonly ItemDef[] = [
     effects: [line("attack", 2, 0.3), line("defense", 1, 0.2, U), line("attackPct", 2, 0.08, R)] },
   { id: "brawlersWraps", name: "Brawler's Wraps", category: "gloves", class: "unique", identity: "More ATK, and a little life back from every win",
     effects: [line("attack", 3, 0.45), line("attackPct", 3, 0.1, U), line("victoryHeal", 0.5, 0.02, R)] },
-  { id: "locksmithsGloves", name: "Locksmith's Gloves", category: "gloves", class: "unique", identity: "Keys: starts every run with spare yellow keys",
+  { id: "locksmithsGloves", name: "Locksmith's Gloves", category: "gloves", class: "unique", identity: "Keys: starts every run with spare gold keys",
     effects: [line("yellowKeys", 1, 0.04), line("defense", 1, 0.2, U), line("blueKeys", 1, 0, { ...R, fixed: true })] },
   { id: "alchemistsGloves", name: "Alchemist's Gloves", category: "gloves", class: "unique", identity: "Potions: every potion heals more",
     effects: [line("potionHeal", 10, 0.4), line("maxHp", 10, 2, U), line("regen", 0.3, 0.03, R)] },
@@ -153,8 +153,8 @@ export const ITEMS: readonly ItemDef[] = [
     effects: [line("maxHp", 10, 2), line("defense", 1, 0.2, U), line("goldFind", 3, 0.1, R)] },
   { id: "magpieMantle", name: "Magpie's Mantle", category: "cape", class: "unique", identity: "Wealth: more Gold, then Silver, from everything found",
     effects: [line("goldFind", 8, 0.3), line("silverFind", 5, 0.2, U), line("startSilver", 10, 1, R)] },
-  { id: "gatherersShroud", name: "Gatherer's Shroud", category: "cape", class: "unique", identity: "Materials: more upgrade materials, and more boss drops",
-    effects: [line("materialFind", 10, 0.4), line("bossDrops", 2, 0.05, U), line("goldFind", 4, 0.1, R)] },
+  { id: "gatherersShroud", name: "Gatherer's Shroud", category: "cape", class: "unique", identity: "Materials: more upgrade materials, and more Supply and Equipment Chests",
+    effects: [line("materialFind", 10, 0.4), line("chestFind", 2, 0.05, U), line("goldFind", 4, 0.1, R)] },
   { id: "pilgrimsCape", name: "Pilgrim's Cape", category: "cape", class: "unique", identity: "A steady climb: heals on every new floor",
     effects: [line("floorHeal", 3, 0.08), line("potionHeal", 5, 0.2, U), line("maxHpPct", 3, 0.08, R)] },
   // Belts
@@ -173,8 +173,8 @@ export const ITEMS: readonly ItemDef[] = [
     effects: [line("attackPct", 3, 0.1), line("bossAttack", 4, 0.15, U), line("victoryHeal", 0.5, 0.01, R)] },
   { id: "ringOfWarding", name: "Ring of Warding", category: "ring", class: "unique", identity: "Defense in percent: scales with every point of DEF",
     effects: [line("defensePct", 3, 0.1), line("shroud", 3, 0.6, U), line("maxHpPct", 2, 0.06, R)] },
-  { id: "spireSignet", name: "Spire Signet", category: "ring", class: "unique", identity: "Made for the Tower: ATK and DEF there, and more boss drops",
-    effects: [line("attackPct", 2.5, 0.08, TOWER), line("defensePct", 2.5, 0.08, TOWER), line("goldFind", 5, 0.2, { ...U, ...TOWER }), line("bossDrops", 3, 0.05, { ...R, ...TOWER })] },
+  { id: "spireSignet", name: "Spire Signet", category: "ring", class: "unique", identity: "Made for the Tower: ATK and DEF there, and more Supply and Equipment Chests",
+    effects: [line("attackPct", 2.5, 0.08, TOWER), line("defensePct", 2.5, 0.08, TOWER), line("goldFind", 5, 0.2, { ...U, ...TOWER }), line("chestFind", 3, 0.05, { ...R, ...TOWER })] },
   // Amulets
   { id: "amberPendant", name: "Amber Pendant", category: "amulet", class: "standard", identity: "Max HP in percent, and a little Regen",
     effects: [line("maxHpPct", 1.5, 0.06), line("regen", 0.2, 0.02, U), line("xpGain", 3, 0.1, R)] },
@@ -190,7 +190,7 @@ export type ItemId = string;
 const BY_ID = new Map(ITEMS.map((d) => [d.id, d]));
 /** The definition `id` names, or undefined for one the catalogue no longer has. */
 export const itemDef = (id: string): ItemDef | undefined => BY_ID.get(id);
-/** The Standard piece of each category, which bosses drop. */
+/** The Standard piece of each category, which Equipment Chests hold. */
 export const standardOf = (category: CategoryId) => ITEMS.find((d) => d.category === category && d.class === "standard")!;
 /** The Unique pieces of a category, which its Gem pulls choose among. */
 export const uniquesOf = (category: CategoryId) => ITEMS.filter((d) => d.category === category && d.class === "unique");

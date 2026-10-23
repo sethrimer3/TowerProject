@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import { BASE_HAND, planHand } from "../src/cards.ts";
 import { predict } from "../src/combat.ts";
 import { doorCost } from "../src/doors.ts";
-import { point, type Player, type Run, type Tile } from "../src/entities.ts";
+import { point, type Player, type Tile } from "../src/entities.ts";
+import type { Run } from "../src/runs.ts";
 import { loadout } from "../src/loadout.ts";
 import { defaults } from "../src/save.ts";
 import { reachable } from "../src/board.ts";
@@ -42,11 +43,11 @@ test("floor 1's stairs are the STAIRS card's target from the entrance, with no f
   }
 });
 
-/** A door a yellow key opens: a yellow door, or a Wooden Door. */
+/** A door a gold key opens: a gold door, or a Wooden Door. */
 const yellowLock = (t: { kind: string; color?: string; door?: { type: string } }) =>
   t.kind === "door" && (t.door?.type === "wood" || t.color === "yellow");
 
-test("floors 2 to 5 have a yellow lock before the stairs and a yellow key reachable from the entrance without a fight or a door", () => {
+test("floors 2 to 5 have a gold lock before the stairs and a gold key reachable from the entrance without a fight or a door", () => {
   for (let room = 1; room <= 4; room++)
     for (const seed of seeds) {
       const floor = generateTowerFloor(seed, room), { cells } = floor;
@@ -57,7 +58,7 @@ test("floors 2 to 5 have a yellow lock before the stairs and a yellow key reacha
         const t = cells.get(k)!;
         return t.kind === "key" && t.color === "yellow";
       });
-      assert.ok(free.length, `floor ${room + 1}, seed ${seed}: no free yellow key`);
+      assert.ok(free.length, `floor ${room + 1}, seed ${seed}: no free gold key`);
     }
 });
 
@@ -112,7 +113,7 @@ test("no enemy on floors 1 to 10 beats a new hero in one fight, but floor 10's b
   assert.ok(worst >= 30, `the hardest still hurts: ${worst}`);
 });
 
-test("past floor 5, unguarded stairs sometimes have a yellow lock in front instead", () => {
+test("past floor 5, unguarded stairs sometimes have a gold lock in front instead", () => {
   const seen: Record<string, number> = {};
   for (let room = 5; room < 30; room++) {
     if (isBossFloor(room)) continue;

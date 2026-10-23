@@ -19,7 +19,7 @@ const GOLDEN = new URL("./fixtures/ui.golden.json", import.meta.url);
 const BASELINE_DIR = "test-results/ui-golden";
 const OUT_DIR = "test-results/ui";
 const server = await startPreview(4190);
-const browser = await chromium.launch({ headless: true, channel: process.env.PLAYWRIGHT_CHANNEL || "msedge" });
+const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH } : { channel: process.env.PLAYWRIGHT_CHANNEL || "msedge" }) });
 let exitCode = 1;
 try {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
@@ -155,7 +155,6 @@ try {
         rich(s);
         s.settings.devMode = true;
         s.settings.infoDisplay = "status";
-        s.settings.showArrows = true;
       }, 25),
       // Built last, so the fixtures above keep their run seeds.
       fallenUndo: fallen((s) => { s.upgrades.inspirationUndos = 1; }),
@@ -253,8 +252,8 @@ try {
         };
         s.medals = 75;
       }),
-      // Badge Slots researched once: STAIRS holds YK < over Max HP, with
-      // YK ≥ (in conflict with YK <) and Effective in the box, in the forest
+      // Badge Slots researched once: STAIRS holds GK < over Max HP, with
+      // GK ≥ (in conflict with GK <) and Effective in the box, in the forest
       // and in a run inside. Built after the rest, so none of theirs changes.
       badgeSlots: forest((s) => {
         rich(s);
@@ -276,6 +275,25 @@ try {
         s.upgrades.archives = 1;
         s.archives.levels.noteTaking = 1;
       }),
+      // Shrine art fixtures are last so every existing run keeps its seed.
+      shrinesForest: forest((s) => {
+        quiet(s);
+        Object.keys(s.tutorials).forEach(k => s.tutorials[k] = true);
+        s.upgrades.archives = 1;
+        Object.assign(s.archives.levels, { unlockShrines: 1, firstBoonChoice: 1, banBoons: 2, autoPickRanking: 4, autoPickBoons: 1 });
+        s.shrines.firstChoice = "attack";
+        s.shrines.ranking = ["maxHp", "attack", "gold"];
+      }),
+      shrinesRun: (() => {
+        const s = defaults(); quiet(s);
+        Object.keys(s.tutorials).forEach(k => s.tutorials[k] = true);
+        s.upgrades.archives = 1;
+        Object.assign(s.archives.levels, { unlockShrines: 1, autoPickBoons: 1 });
+        const g = new Game(s); g.newRun({ seed: 7 });
+        g.run.height = g.run.maxHeight = 199;
+        g.run.shrine = { picked: [], rolls: 0, offer: ["attack", "goldMaxHp"] };
+        return { save: JSON.stringify(g.save), targets: [] };
+      })(),
     };
   });
 
@@ -405,7 +423,7 @@ try {
     await click("#card-reveal-card");
     await click('[data-add="heal"]');
     await shot(`${prefix}.deck.deckCard`);
-    await click("#card-reveal-action");
+    await click(".card-reveal-actions .card-reveal-action:last-child");
     await shot(`${prefix}.deck.added`);
     // A deck card dragged onto a slot goes there, the cards after it sliding on.
     await dragFromDeck("door", 1);
@@ -458,8 +476,8 @@ try {
   async function cardRevealTour(prefix) {
     await tab("upgrades");
     await click('[data-tree="inspiration"]');
-    await click('[data-skill="cardAtkUp"]');
-    await click('[data-skill="cardAtkUp"]');
+    await click('[data-skill="cardYellowKey"]');
+    await click('[data-skill="cardYellowKey"]');
     await shot(`${prefix}.cardReveal`);
     await click("#card-reveal-card");
     await shot(`${prefix}.cardRevealed`);
@@ -590,15 +608,18 @@ try {
     await click("#game-themes");
     await shot(`${prefix}.themes.game`);
     await click("#themes-back");
+    // The Toggles menu: what the board shows in a run.
+    await click("#toggles-open");
+    await shot(`${prefix}.toggles`);
+    await click("#toggles-back");
     await page.locator("#info-display").selectOption("status");
     await click("#settings-back");
     await tapTile(8, 3);
     await shot(`${prefix}.statusInfo`);
     await menuClick("#auto-settings");
     await page.locator("#info-display").selectOption("popup");
-    await page.locator("#arrows").setChecked(true);
     await click("#settings-back");
-    await shot(`${prefix}.popupArrows`);
+    await shot(`${prefix}.popup`);
     await menuClick("#auto-settings");
     await page.locator("#dev-mode").setChecked(true);
     await shot(`${prefix}.settings.dev`);
@@ -636,6 +657,11 @@ try {
   // In the forest Enter, under Goals, goes straight in.
   await click("#enter-run");
   await shot("fresh.entered");
+  // The enemy stats under the floor open every enemy the floor can roll; the X closes it.
+  await click("#base-enemy");
+  await shot("fresh.enemyOdds");
+  await click(".enemy-odds-x");
+  if (await page.locator(".enemy-odds-layer").count()) throw Error("the enemy stats box stayed open");
 
   // A fallen hero: the defeat dialog, with an undo or without.
   await load("fallenUndo");
@@ -655,7 +681,7 @@ try {
   await boardTour("rich", "rich");
   await dialogsTour("rich");
   // Focus: a card with no target flashes red for free; one with a target takes the lead.
-  for (const card of ["door", "yellowKey", "monster"]) {
+  for (const card of ["door", "key", "monster"]) {
     await click(`#hand .hand-card[data-card="${card}"]`);
     await shot(`rich.focus.${card}`);
   }
@@ -688,8 +714,6 @@ try {
   await click("#goals-back");
   await deckTour("rich");
   await cardRevealTour("rich");
-  await tab("defend");
-  await shot("rich.defend");
   await upgradesTour("rich");
   await researchTour("rich");
   await gearTour("rich");
@@ -904,6 +928,25 @@ try {
   await click(".reward-reveal");
   await click("#tournament-back");
   await shot("tournament.forestAfter");
+
+  // Shrine management and a waiting offer, including both boon kinds.
+  await load("shrinesForest");
+  await menuClick("#shrines-button");
+  await shot("shrines.forest");
+  await page.locator("#first-boon").selectOption("regen");
+  await shot("shrines.firstChoice");
+  await page.locator('[data-ban="goldMaxHp"]').check();
+  await shot("shrines.banned");
+  await click('[data-rank="attack"] [data-up]');
+  await shot("shrines.ranked");
+  await load("shrinesRun");
+  await click("#shrine-bar");
+  await shot("shrines.offer");
+  await click('[data-boon="attack"]');
+  await click("#shrine-bar");
+  await shot("shrines.taken");
+  await page.locator("#boon-autopick").check();
+  await shot("shrines.auto");
 
   // --- Compare ---
   const hashes = Object.fromEntries(Object.entries(shots).map(([k, html]) => [k, createHash("sha256").update(html).digest("hex").slice(0, 16)]));

@@ -70,7 +70,7 @@ html.arcade body::after {
    rules (and the ones below over these); a style written on an element (a
    colour swatch) still wins. Drawings (canvas, images, svg), the bars'
    fills (`i`), rarity colours and badge tokens keep theirs. */
-html.arcade body *:not(#_, canvas, img, svg, svg *, i, .eq-tile, .badge-token, [class*="rar"]) {
+html.arcade body *:not(#_, canvas, img, svg, svg *, i, .eq-tile, .badge-token, .hand-badge-level, [class*="rar"]) {
   background-color: transparent;
   background-image: none;
   border-color: transparent;
@@ -79,7 +79,10 @@ html.arcade body *:not(#_, canvas, img, svg, svg *, i, .eq-tile, .badge-token, [
   backdrop-filter: none;
   outline-color: transparent;
 }
-html.arcade body *:not(#_, svg, svg *) {
+/* A badge's symbol and the marks on the hand's cards keep their own
+   colours on their dark boxes, and a badge's level stays dark on its gold
+   star. */
+html.arcade body *:not(#_, svg, svg *, .badge-glyph, .badge-mark, .hand-badge-level, .badge-level b) {
   color: var(--a-ink);
 }
 html.arcade main.shell:not(#_) {
@@ -157,7 +160,6 @@ html.arcade .research:not(#_),
 html.arcade .pull-box:not(#_),
 html.arcade .eq-loadout:not(#_),
 html.arcade .equip-materials:not(#_),
-html.arcade .purse-big:not(#_),
 html.arcade .starting-stats:not(#_),
 html.arcade .training-boost:not(#_),
 html.arcade .tournament-standing:not(#_),
@@ -362,6 +364,18 @@ html.arcade .safe:not(#_),
 html.arcade .eq-result-title:not(#_) {
   color: var(--a-green) !important;
 }
+/* An enemy's stat line keeps its colours: what gets through red, Lifesteal's
+   heal blue, the Gold drop yellow. */
+html.arcade .inspect-box .hit-hurt:not(#_) { color: var(--a-red); }
+html.arcade .inspect-box .hit-heal:not(#_) { color: #3fa8ff; }
+html.arcade .inspect-box .hit-gold:not(#_) { color: var(--a-yellow); }
+/* Goals' climb: the line up the tower in this theme's line colour, lit
+   up to the floor reached, and the floors completed lit with it.
+   Training's next value (and the Archives' next level) is green, a gain. */
+html.arcade .goals-line:not(#_) { background: var(--a-blue); }
+html.arcade .goals-line.lit:not(#_) { background: var(--a-yellow); }
+html.arcade .goal-floor.completed:not(#_) { color: var(--a-yellow); }
+html.arcade .training-box.next:not(#_) { color: var(--a-green); }
 /* Keys keep their colour. */
 html.arcade .keys .yellow:not(#_) { color: #ffe600; }
 html.arcade .keys .blue:not(#_) { color: #3fa8ff; }
@@ -374,4 +388,16 @@ html.arcade .keys .red:not(#_) { color: #ff2020; }
 }
 html.arcade:not(.reduce-motion) .page-title h2::after {
   animation: arcade-blink 2s steps(1) infinite;
+}
+
+/* The Shrine bar (style.css): its fill pink segments, apart from the cyan XP bar; its diamond a blue-framed box, lit yellow while boons wait. */
+html.arcade {
+  --shrine-fill: repeating-linear-gradient(to right, var(--a-pink) 0 6px, transparent 6px 8px);
+  --shrine-line: var(--a-blue);
+  --shrine-idle: var(--a-black);
+  --shrine-lit: var(--a-yellow);
+  --shrine-lit-line: var(--a-ink);
+  --shrine-lit-ink: var(--a-black);
+  --shrine-glow: none;
+  --shrine-ink: var(--a-ink);
 }

@@ -38,14 +38,14 @@ export class BadgeDesk {
     if (!this.canDraw(count) || !affordsGems(this.host, price)) return null;
     if (!this.host.free) this.save.gems -= price;
     const draws = drawBadges(this.save.badges, this.save.upgrades, count, stream("badges"));
-    this.host.missionDone?.("badge", draws.length);
+    this.host.missionDone("badge", draws.length);
     return draws;
   }
 
   /** The badges each card can hold: one, and one more for each Badge
    * Slots level researched. */
   get slots() {
-    return researched(this.save.archives, "badgeSlots", 1);
+    return researched(this.save.archives, "badgeSlots");
   }
 
   /** Whether tokens can move between cards now: the skill owned, in the forest. */
@@ -61,7 +61,7 @@ export class BadgeDesk {
 
   /** Attaches owned badge `id` to deck card `card` (`attachBadge`). */
   attach(id: BadgeId, card: CardId) {
-    if (!this.canArrange || !ownedLevel(this.save.badges, id) || !deckCards(this.save.upgrades).includes(card)) return false;
+    if (!this.canArrange || !ownedLevel(this.save.badges, id) || !deckCards(this.save.upgrades, this.save.goals).includes(card)) return false;
     return attachBadge(this.save.badges, id, card, this.slots);
   }
 

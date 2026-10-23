@@ -1,9 +1,11 @@
-import type { Mode, TowerRun } from "../entities.ts";
+import type { Mode } from "../entities.ts";
+import type { TowerRun } from "../runs.ts";
 import {
-  appliedNow, appliedOf, autoChoice, autoPickOpen, boonEffects, boonsEarned, nextBoonFloor, ranked, rescaleHero, rollOffer, sameFoes, shrinesOpen,
+  appliedNow, appliedOf, autoChoice, autoPickOpen, boonEffects, boonsEarned, lastBoonFloor, nextBoonFloor, ranked, rescaleHero, rollOffer, sameFoes, shrinesOpen,
   type BoonId, type ShrineRun,
 } from "../shrines.ts";
 import type { DeskHost } from "./desk.ts";
+import { RunTimeline } from "../run-timeline.ts";
 
 /** What the Shrine desk needs from the game beyond any desk's: the mode,
  * and word that the run's boons changed its enemies or hero, so the board
@@ -55,6 +57,16 @@ export class ShrineDesk {
   get floorsToNext() {
     const at = this.open ? nextBoonFloor(this.floor, this.picked, this.save) : null;
     return at === null ? null : at - this.floor;
+  }
+
+  /** How far the run has climbed from its latest boon's floor toward the
+   * next's, from 0 to 1 (1 with none left to earn). */
+  get progress() {
+    if (!this.open) return 0;
+    const next = nextBoonFloor(this.floor, this.picked, this.save);
+    if (next === null) return 1;
+    const last = lastBoonFloor(this.floor, this.picked, this.save);
+    return (this.floor - last) / (next - last);
   }
 
   /** The boons offered now: the offer waiting, or a new one rolled while a
@@ -112,8 +124,7 @@ export class ShrineDesk {
 
   /** The live Tower run and every copy of it undo or a fall may restore. */
   private runs(): TowerRun[] {
-    const slice = this.save.tower;
-    return [this.run, ...slice.history.map((s) => s.run), ...(slice.fall ? [slice.fall.snapshot.run] : [])];
+    return new RunTimeline<TowerRun>(this.save, "tower").runs();
   }
 
   /** Moves the run's hero (and each undo snapshot's) to what its boons

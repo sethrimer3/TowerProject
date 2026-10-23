@@ -1,4 +1,4 @@
-import type { KeyColor } from "../config.ts";
+import type { KeyColor } from "../entities.ts";
 import type {
   Archetype,
   Footprint,
@@ -58,7 +58,7 @@ const DEF: Reward = { kind: "defense" };
 const T: Reward = { kind: "treasure" };
 function one<V>(v: V): Weighted<V> { return [{ w: 1, v }]; }
 const times = (n: number, r: Reward) => Array.from({ length: n }, () => r);
-/** What a blue door trades for in yellow keys: mostly two, sometimes three,
+/** What a blue door trades for in gold keys: mostly two, sometimes three,
  * now and then just one, so the trade rooms don't flood a section. */
 const BLUE_FOR_YELLOWS: Weighted<Reward[]> = [{ w: 85, v: times(2, Y) }, { w: 10, v: times(3, Y) }, { w: 5, v: [Y] }];
 
@@ -315,7 +315,7 @@ export const ARCHETYPES: Record<Archetype, ArchetypeProfile> = {
 /** The first floor: every gate on the way to its stairs stands open, so the
  * hand a first run starts with (STAIRS first) climbs it without a fight. */
 export const openFirstFloor = (depth: number) => depth === 0;
-/** Floors 2 to 5: a yellow door stands in front of the stairs, a yellow key
+/** Floors 2 to 5: a gold door stands in front of the stairs, a gold key
  * lies in the open in the start hall, and behind every door lies a key for
  * each it takes, so whichever doors the hand opens, a key is left for the
  * stairs. */

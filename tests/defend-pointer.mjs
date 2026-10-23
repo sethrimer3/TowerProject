@@ -9,6 +9,7 @@
 import { chromium } from "@playwright/test";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { fixClock } from "./fixed-clock.mjs";
 
 const UPDATE = process.env.UPDATE_GOLDEN === "1";
 const GOLDEN = new URL("./fixtures/defend-pointer.golden.json", import.meta.url);
@@ -17,6 +18,7 @@ const URL_ROOT = process.env.TEST_URL || "http://127.0.0.1:5173/";
 const browser = await chromium.launch({ headless: true, channel: process.env.PLAYWRIGHT_CHANNEL || "msedge" });
 const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, hasTouch: true });
 const page = await context.newPage();
+await fixClock(page);
 page.setDefaultTimeout(10000);
 const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));

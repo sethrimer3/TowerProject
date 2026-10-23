@@ -45,7 +45,7 @@ Projects first priced linearly keep their early levels and add a gentle power te
 
 | Project | Gold | Hours |
 |---|---|---|
-| Potion HP's schedule (Potion HP, Regen, Pocket Money, Find Yellow Key, Interest %, Mug, Shard ATK, Shard DEF); m = level − 4, after four hand-set quick levels | 100m + m³ | m/4 + m²/100 |
+| Potion HP's schedule (Potion HP, Regen, Pocket Money, Find Gold Key, Interest %, Mug, Shard ATK, Shard DEF); m = level − 4, after four hand-set quick levels | 100m + m³ | m/4 + m²/100 |
 | Gold / Floor, Silver / Floor, Silver Bonus, Gold Bonus; Key Efficiency | Potion HP's schedule plus q(m)·m², q(m) = Q·B/(m+B): Q 200, B 100; Key Efficiency Q 400, B 50. Levels 1–4 rise by an even ratio to level 5: 10, 25, 55, 130 (Key Efficiency 10, 25, 70, 185) | as Potion HP's |
 | Faster Trainers | 250n + 2n³ | the shorter of Research Speed's minutes and 1.75n + n²/20 (Research Speed's to level 27) |
 | Refocus | 500(1 + n(n−1)/2) + 8n³ | n²/10 |

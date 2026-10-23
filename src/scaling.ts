@@ -1,5 +1,5 @@
-import type { EnemyStrength } from "./entities.ts";
-import { enemyStats, floorsAhead, type EnemyProfile } from "./enemy-curves.ts";
+import type { EnemyStrength, EnemyProfile } from "./entities.ts";
+import { enemyStats, floorsAhead } from "./enemy-curves.ts";
 import { enemyFirstFloor } from "./enemy-schedule.ts";
 
 export { GREATER_BOSS_OVER_BOSS } from "./enemy-curves.ts";
@@ -108,8 +108,10 @@ export function strengthOnFloor(asked: EnemyStrength, floor: number, tower = 1):
 /** Weak, strong and elite enemies and bosses say so before their name. */
 const RANK: Record<EnemyStrength, string> = { weak: "Weak ", normal: "", strong: "Strong ", elite: "Elite ", boss: "Boss ", greaterBoss: "Greater Boss " };
 /** What the game calls an enemy: its name, after its strength unless it
- * is a normal one, and after "Fast" when it is Fast. */
-export const enemyTitle = (e: { name: string; strength?: EnemyStrength; fast?: true; ranged?: true }) => (e.fast ? "Fast " : "") + (e.ranged ? "Ranged " : "") + (e.strength ? RANK[e.strength] : "") + e.name;
+ * is a normal one, and after "Flying", "Fast", "Ranged" and "Shielded"
+ * when it is. */
+export const enemyTitle = (e: { name: string; strength?: EnemyStrength; flying?: true; fast?: true; ranged?: true; shielded?: true }) =>
+  (e.flying ? "Flying " : "") + (e.fast ? "Fast " : "") + (e.ranged ? "Ranged " : "") + (e.shielded ? "Shielded " : "") + (e.strength ? RANK[e.strength] : "") + e.name;
 
 /** The tier an enemy of each strength carries, in both modes. */
 export const enemyTier = (strength: EnemyStrength) => STRENGTH_TIER[strength];

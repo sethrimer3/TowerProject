@@ -43,7 +43,7 @@ The rest are drawn among (`DRAWN_MISSIONS`):
 | Tap X floating Gems | 12, 24, 50 | each floor Gem collected, tapped or stepped on |
 | Complete X Training upgrades | 50, 150, 400 | each rank bought with training points or finished by a trainer |
 | Take no damage for X floors in a row | 100, 250, 500 | the run's floors climbed without fight damage in a row (`best`) |
-| Obtain X Equipment pieces | 40, 80, 150 | boss drops (auto-salvaged included) and Gem pulls; merging doesn't count |
+| Obtain X Equipment pieces | 40, 80, 150 | Equipment Chests' pieces (auto-salvaged included) and Gem pulls; merging doesn't count |
 | Obtain X Equipment by merging | 10, 20, 40 | each merge |
 | Claim ad Gems X times | 10, 25, 60 | each ad Gems claim, with Ad-Disable too |
 | Obtain X potions | 2k, 10k, 30k | once a tile |
@@ -99,9 +99,9 @@ The events boosted are kept by Erase All (`save.events.boosted`), since they wer
 
 - **Events button** (`#events-button`, a pennant, `eventIcon` in `ui/dom.ts`): the time the event has left (*7d20h*), with a dot while a mission is new to the Events screen, has a tier to claim, or is finished and hasn't been seen moved under the rest (`EventDesk.waiting`).
   In the forest it stands in the actions column under the Tournament's; inside a run, in the run's menu.
-- **Events screen** (`ui/events-page.ts`): an X back to the page that opened it; the currencies bar over it, as over the Upgrades page; the banner (the event's name over a placeholder pennant) and the days and hours left; the relic track (a bar filling with the Medals toward the relics, to the last milestone, its relics above and its premium relics below, each lit and checked once won, a premium one locked without the booster); the booster's offer, or that it is active; how many missions are out and when the next come; then the missions.
+- **Events screen** (`ui/events-page.ts`): an X back to the page that opened it; the currencies bar over it, as over the Upgrades page; the banner (the event's name over a placeholder pennant) and the days and hours left; the relic track (a bar filling with the Medals toward the relics, to the last milestone, and reading the Medals won, its free relics above and its Event Boost relics below, each row named on its left, each relic lit and checked once won, a premium one locked without the booster); the booster's offer, or that it is active; how many missions are out and when the next come; then the missions.
   Each mission shows what its next tier to claim asks, *X/3* (the tiers claimed) and the Medals that tier pays (doubled once boosted) at the right of its name, and its bar; new ones wear *NEW*.
-  Once a tier is done, the mission's border and bar turn gold and the bar reads *Claim* followed by that tier's Medals and the Medal icon (shown there instead of beside the tier count); pressing it pays them, flying from the bar to the Medals on the currencies bar, which count them as they land (`flyToPurse`), nothing to press away, and the mission already shows its next tier, *Claim* again if that one is done too.
+  Once a tier is done, the mission's border and bar turn gold and the bar reads *Claim* followed by that tier's Medals and the Medal icon (shown there instead of beside the tier count); pressing it pays them, flying from the bar to the Medals in the banner, which count them as they land (`flyToPurse`), nothing to press away, and the mission already shows its next tier, *Claim* again if that one is done too.
   A mission whose third tier is claimed stays where it is for 2 seconds, then slides under the rest (`save.events.moved`).
 - **Relics button** (`#relics-button`) in the forest's menu, once Events are open, opens the **Relics screen** (`ui/relics-page.ts`): every relic won, small, in a grid.
   Pressing one, or a mouse resting on it, raises it to the middle of the screen at full size with golden rays and sparkles, its rarity and bonus written under it.

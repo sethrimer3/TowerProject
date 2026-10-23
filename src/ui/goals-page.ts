@@ -1,3 +1,6 @@
+import { controlIcon } from "./control-icon.ts";
+import { kitIcon } from "../sprite-kit.ts";
+import { GOAL_SPRITES } from "../sprite-ui-details.ts";
 import { CHECKPOINT_EVERY, CHECKPOINT_FLOORS, CHECKPOINTS, UNLOCK_NAMES, areaCleared, checkpoint, areaMastered, canWarp, floorsCompleted, goalState, unmasteredBelow, passFor, passTotals, unlockAt, unlockFloor, warpUnlocked, type Checkpoint, type GoalReward, type GoalState, type GoalUnlock, type Pass } from "../goals.ts";
 import { CURRENCIES, type CurrencyId } from "../shop/currency.ts";
 import { owns } from "../shop/entitlements.ts";
@@ -29,14 +32,17 @@ const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon("
  * under a hammer, the Tournament a trophy, Events a pennant, Research Speed an hourglass, Shard ATK and Shard DEF a red or
  * blue shard under a rising arrow, Badge
  * Slots a card wearing two badges, one above the other, Note Taking an open notebook under a quill,
- * the Archer Class a drawn bow and arrow, Attack Range an arrow flying past
+ * the Archer Card a card wearing a plain wooden bow, Attack Range an arrow flying past
  * a range ring, Attack Speed two arrows in a row, Training Discount a Gold
  * coin under a falling arrow, Card Groups two cards linked by a bracket and
- * a diamond, and every Shrine research a shrine's gate (`shrineIcon`). */
-const UNLOCK_ICONS: Record<GoalUnlock, string> = {
+ * a diamond, the Flying Enemy Card a card wearing a wing, and every Shrine
+ * research a shrine's gate (`shrineIcon`). */
+const LEGACY_UNLOCK_ICONS: Record<GoalUnlock, string> = {
+  flyingEnemyCard: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="2" width="15" height="20" rx="2" fill="#2a3346" stroke="#c9ced8" stroke-width="1.3"/><path d="M6.5 15c2-4.5 6-7.5 11-8.5-1 1.2-1.6 2.2-2 3.2 1-.2 1.8-.2 2.6 0-1 .9-1.8 1.8-2.4 2.8.8 0 1.5.2 2.1.5-2.6 1.6-6.4 2.4-11.3 2z" fill="#e8f2ff" stroke="#7fb6ff" stroke-width="1" stroke-linejoin="round"/></svg>`,
+  warpLoot: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="9" cy="11" rx="6" ry="8" fill="#2a1d4a" stroke="#c9a6ff" stroke-width="1.5"/><path d="M9 6.8c2.2 0 3.4 1.8 3 3.6-.5 1.7-2.6 2.5-3.9 1.5-1.1-.8-.9-2.4.3-2.7" fill="none" stroke="#f0e2ff" stroke-width="1.3" stroke-linecap="round"/><circle cx="16.5" cy="16.5" r="5" fill="#5d6673" stroke="#e6ebf2" stroke-width="1.4"/><circle cx="16.5" cy="16.5" r="2.8" fill="none" stroke="#ffffff" stroke-width="1"/></svg>`,
   trainingDiscount: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="13" r="7.5" fill="#6b4a0e" stroke="#ffd34d" stroke-width="1.5"/><circle cx="10" cy="13" r="4.6" fill="none" stroke="#ffe58a" stroke-width="1"/><path d="M19.5 2.5v9M16.6 8.6l2.9 2.9 2.9-2.9" fill="none" stroke="#8ff0a8" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
   cardGroups: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2.5" width="8.5" height="12" rx="1.3" fill="#2a3346" stroke="#c9ced8" stroke-width="1.2"/><rect x="13.5" y="2.5" width="8.5" height="12" rx="1.3" fill="#2a3346" stroke="#c9ced8" stroke-width="1.2"/><path d="M6.25 17v3h11.5v-3" fill="none" stroke="#fff" stroke-width="1.3" stroke-linejoin="round"/><path d="M12 17.2l2.3 2.8-2.3 2.8-2.3-2.8z" fill="#fff" stroke="#1d2230" stroke-width=".8"/></svg>`,
-  archer: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2.5c6 2.5 6 16.5 0 19" fill="none" stroke="#b07a42" stroke-width="2" stroke-linecap="round"/><path d="M7 2.5v19" stroke="#e6ebf2" stroke-width=".9"/><path d="M4 12h16" stroke="#c9ced8" stroke-width="1.5" stroke-linecap="round"/><path d="M17.5 9.5L21 12l-3.5 2.5z" fill="#ffd34d"/><path d="M4 12l-1.5-2M4 12l-1.5 2" stroke="#e86d7a" stroke-width="1.2" stroke-linecap="round"/></svg>`,
+  archerCard: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="2" width="15" height="20" rx="2" fill="#2a3346" stroke="#c9ced8" stroke-width="1.3"/><path d="M10 5.5c5 2 5 11 0 13" fill="none" stroke="#b07a42" stroke-width="1.8" stroke-linecap="round"/><path d="M10 5.5v13" stroke="#e6ebf2" stroke-width=".8"/></svg>`,
   attackRange: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="14" r="7.5" fill="#1c2a44" stroke="#8fc4ff" stroke-width="1.3" stroke-dasharray="2.4 1.6"/><circle cx="9" cy="14" r="1.6" fill="#8fc4ff"/><path d="M9 14L20 3" stroke="#c9ced8" stroke-width="1.5" stroke-linecap="round"/><path d="M21.5 1.5l-1.2 4.4-3.2-3.2z" fill="#ffd34d"/></svg>`,
   attackSpeed: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 8h14M2.5 16h14" stroke="#c9ced8" stroke-width="1.5" stroke-linecap="round"/><path d="M15.5 5.2L20.5 8l-5 2.8zM15.5 13.2L20.5 16l-5 2.8z" fill="#ffd34d"/><path d="M2.5 8L1 6.4M2.5 8L1 9.6M2.5 16L1 14.4M2.5 16L1 17.6" stroke="#e86d7a" stroke-width="1.1" stroke-linecap="round"/></svg>`,
   attackPerTile: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21.5h3v-3H3zM9 21.5h3v-6H9zM15 21.5h3v-9h-3z" fill="#6b3a44" stroke="#df797e" stroke-width="1.1" stroke-linejoin="round"/><path d="M2.5 13L19 3" stroke="#c9ced8" stroke-width="1.5" stroke-linecap="round"/><path d="M21.5 1.5l-4.4.6 2.2 3.4z" fill="#ffd34d"/></svg>`,
@@ -61,25 +67,36 @@ const UNLOCK_ICONS: Record<GoalUnlock, string> = {
   damageVisual: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="2.5" fill="#1d2230" stroke="#8d97a8" stroke-width="1.3"/><path d="M8 15.5c0-4.5 1.8-8 4.5-8s4.5 3.5 4.5 8l-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1z" fill="#6b3a44" stroke="#df797e" stroke-width="1.2" stroke-linejoin="round"/><circle cx="11" cy="11" r="0.9" fill="#ffd0d5"/><circle cx="14" cy="11" r="0.9" fill="#ffd0d5"/><path d="M4.5 20.5v-5h2.6a1.6 1.6 0 0 1 0 3.2H4.5" fill="none" stroke="#000" stroke-width="2.6" stroke-linejoin="round"/><path d="M4.5 20.5v-5h2.6a1.6 1.6 0 0 1 0 3.2H4.5" fill="none" stroke="#ff5a5a" stroke-width="1.4" stroke-linejoin="round"/></svg>`,
   relativeDamageColor: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="goal-spectrum"><stop offset="0" stop-color="#4dff6a"/><stop offset=".35" stop-color="#ffe14d"/><stop offset=".65" stop-color="#ff9a3d"/><stop offset="1" stop-color="#ff5a5a"/></linearGradient></defs><rect x="2.5" y="2.5" width="19" height="14" rx="2.5" fill="#1d2230" stroke="#8d97a8" stroke-width="1.3"/><path d="M8.5 13.5c0-3.6 1.5-6.5 3.5-6.5s3.5 2.9 3.5 6.5l-1.2-.8-1.2.8-1.1-.8-1.1.8-1.2-.8z" fill="#6b3a44" stroke="#df797e" stroke-width="1.1" stroke-linejoin="round"/><rect x="2.5" y="18" width="19" height="3.5" rx="1.75" fill="url(#goal-spectrum)" stroke="#000" stroke-width=".8"/></svg>`,
 };
+/** Loaded PNGs replace only the default presentation; other themes and
+ * failed requests retain the original reward art. */
+const UNLOCK_ICONS = Object.fromEntries((Object.keys(LEGACY_UNLOCK_ICONS) as GoalUnlock[]).map(id => [id,
+  LEGACY_UNLOCK_ICONS[id].startsWith("<svg") ? kitIcon(GOAL_SPRITES[id], LEGACY_UNLOCK_ICONS[id], "goal-icon") : LEGACY_UNLOCK_ICONS[id],
+])) as Record<GoalUnlock, string>;
+
 /** The next tower's reward: a tower's silhouette with its door lit. */
-const TOWER_ICON = `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21.5V8.5H4.5v-5h3v2h2.2v-2h4.6v2h2.2v-2h3v5H18v13z" fill="#3a3f4b" stroke="#c9ced8" stroke-width="1.3" stroke-linejoin="round"/><path d="M10 21.5v-4a2 2 0 0 1 4 0v4z" fill="#ffd34d"/><rect x="11" y="10" width="2" height="3" rx=".5" fill="#ffd34d"/></svg>`;
+const TOWER_ICON = kitIcon("tower", `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21.5V8.5H4.5v-5h3v2h2.2v-2h4.6v2h2.2v-2h3v5H18v13z" fill="#3a3f4b" stroke="#c9ced8" stroke-width="1.3" stroke-linejoin="round"/><path d="M10 21.5v-4a2 2 0 0 1 4 0v4z" fill="#ffd34d"/><rect x="11" y="10" width="2" height="3" rx=".5" fill="#ffd34d"/></svg>`, "goal-icon");
 /** What each unlock does, shown once it is claimed and again whenever its claimed reward is pressed. */
 const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
+  flyingEnemyCard: `<p>The Flying Enemy card joins your deck: it moves you toward the closest Flying enemy your arrows can hurt, stops once one is within your Attack Range, and waits there while your arrows fly.</p>` +
+    `<p>While it is in your hand, your arrows strike with 5% more ATK and charge 5% faster.</p>` +
+    `<p class="hint">Flying enemies hover out of reach of your sword: walk under them freely, but only arrows can bring them down. A Flying enemy an arrow wounds comes after you.</p>`,
+  warpLoot: `<p>Warp Loot opens in the Archives: research it, and a run that starts above floor 1 (a Warp, or a Retry from one) goes inside with a share of the Silver its skipped floors would have paid, 2% a level, up to all of it at level 50.</p>` +
+    `<p class="hint">The skipped floors' kills, Wishing Well and Interest are estimated from your training and research as the run begins.</p>`,
   trainingDiscount: `<p>Training Discount opens in the Archives: research it, and every rank a trainer trains costs 0.5% less Gold a level, up to 49.5% at level 99.</p>` +
     `<p class="hint">Training points and a run's Silver cost the same as ever.</p>`,
   cardGroups: `<p>Card Groups opens on the Deck: tap a diamond under the hand, between two cards, to link them into a group. The cards of a group share one priority: of every target any of them can reach, the hand heads for the closest.</p>` +
-    `<p class="hint">Link Yellow Key and Blue Key, and the hero takes whichever key is nearer. Moving a card out of place breaks its links.</p>`,
-  archer: `<p>Your hero is now an Archer: every 10 turns it fires an arrow at the closest enemy within 3 tiles, walls and doors no obstacle, dealing one strike's damage (critical hits and the enemy's DEF counted) before you ever touch it.</p>` +
-    `<p>A ready shot waits for an enemy to come in range, and fires the turn one does. Only Ranged enemies can shoot back; the rest strike only when you fight them.</p>` +
-    `<p class="hint">Ranged enemies reach five sixths as far as your arrows: strike first, then close in.</p>`,
-  attackRange: `<p>Attack Range joins Offense training: each rank lets your arrows reach 0.05 tiles further, from 3 tiles up to 7.</p>` +
+    `<p class="hint">Link Gold Key and Blue Key, and the hero takes whichever key is nearer. Moving a card out of place breaks its links.</p>`,
+  archerCard: `<p>The Archer card joins your deck. It never moves you, but while it is in your hand your hero is an Archer: every 10 turns it fires an arrow at the closest enemy within 3 m, walls and doors no obstacle, dealing one strike's damage (critical hits and the enemy's DEF counted) before you ever touch it.</p>` +
+    `<p>While it is in your hand, your arrows strike bosses with 5% more ATK, and your Archer training can be raised with Silver during the run. Training it between runs works with or without the card.</p>` +
+    `<p class="hint">A ready shot waits for an enemy to come in range, and fires the turn one does. Ranged enemies reach five sixths as far as your arrows: strike first, then close in.</p>`,
+  attackRange: `<p>Attack Range joins Offense training: each rank lets your arrows reach 0.05 m further, from 3 m up to 7 m.</p>` +
     `<p class="hint">Ranged enemies always reach five sixths as far as you do.</p>`,
-  attackPerTile: `<p>ATK / Tile joins Offense training: each arrow's ATK is multiplied by more for every tile its target stands away, counted straight across. The first rank adds ×0.01 a tile, and 200 ranks ×1.204 a tile.</p>` +
+  attackPerTile: `<p>ATK / m joins Offense training: each arrow's ATK is multiplied by more for every meter (a tile) its target stands away, counted straight across. The first rank makes it ×1.01 a meter, and 200 ranks ×2.204 a meter.</p>` +
     `<p class="hint">A far enemy your arrows can't hurt up close may fall to a shot from further off. Critical hits multiply on top.</p>`,
   chargedShot: `<p>Charged Shot opens in the Archives: once your arrow is ready, every turn it waits without firing adds to the next arrow's ATK, by 1% a turn for each level researched.</p>` +
-    `<p class="hint">A charged arrow flies in a blue glow, and its number wears a gold outline. Its bonus multiplies with ATK / Tile and critical hits, and resets once it fires.</p>`,
+    `<p class="hint">A charged arrow flies in a blue glow, and its number wears a gold outline. Its bonus multiplies with ATK / m and critical hits, and resets once it fires.</p>`,
   multishot: `<p>Multishot Chance and Multishot Targets join Offense training: each rank of Chance gives every shot 0.5% more chance, up to 49.5%, to fire at several enemies in range at once, 2 of them and one more for each rank of Targets, up to 9.</p>` +
-    `<p class="hint">Every arrow of a multishot carries the first's Charged Shot, rolls its own critical hit, and has its own ATK / Tile for its distance. With fewer enemies in range, it fires one at each.</p>`,
+    `<p class="hint">Every arrow of a multishot carries the first's Charged Shot, rolls its own critical hit, and has its own ATK / m for its distance. With fewer enemies in range, it fires one at each.</p>`,
   rapidFire: `<p>Rapid Fire Chance and Rapid Fire Duration join Offense training: each rank of Chance gives every shot 0.4% more chance, up to 34%, to start Rapid Fire, and your arrows come four times as fast from that moment for 1 turn, and 0.05 turns more for each rank of Duration, up to 5.95.</p>` +
     `<p class="hint">A shot fired during Rapid Fire can't start another. Time left toward a shot when it ends carries on toward the next one at the usual pace.</p>`,
   attackSpeed: `<p>Attack Speed joins Offense training: each rank adds 0.05 shots every 10 turns, from 1 up to 6.</p>` +
@@ -102,12 +119,12 @@ const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
     `<p>Items show what they give: a potion's HP in blue, a shard's ATK or DEF in white, and a chest's Gold in yellow.</p>` +
     `<p class="hint">Turn it off in Settings if the board feels crowded.</p>`,
   equipment: `<p>A Blacksmith opens in the forest: tap it, or the Gear tab, to wear weapons, armour and trinkets, level them up with Gold and materials, and merge them.</p>` +
-    `<p class="hint">Every boss now has a chance to drop equipment, on any floor, and every enemy drops upgrade materials.</p>`,
+    `<p class="hint">With the Chest card in your hand, a treasure chest may now be a Supply Chest, holding upgrade materials, or an Equipment Chest, holding a piece of equipment.</p>`,
   noteTaking: `<p>Note Taking opens in the Archives: research it, and tap the floor number during a run to read the run's notes, kept as you play: its time, steps, kills, keys, doors, chests and loot.</p>` +
     `<p class="hint">The notes stay open while the run plays on, and copy to paste elsewhere. The run's summary opens them too.</p>`,
   researchSpeed: `<p>Research Speed opens in the Archives: train the archivists to read faster, and every research, those under way included, takes less time.</p>`,
   badgeSlots: `<p>Badge Slots opens in the Archives: research it, and each card holds one more badge a level. Drag a badge onto a card on the Deck page to fill its next slot; on a card with every slot full, it takes the bottom slot's place.</p>` +
-    `<p class="hint">Badges that can't work together can't share a card: a key colour's &lt; gate with its ≥ gate (YK &lt; with YK ≥), or Effective with Dampen.</p>`,
+    `<p class="hint">Badges that can't work together can't share a card: a key colour's &lt; gate with its ≥ gate (GK &lt; with GK ≥), or Effective with Dampen.</p>`,
   shardAttack: `<p>Shard ATK opens in the Archives: research it, and every ATK shard a run picks up raises ATK by more, from the next one on, in the Tower and the Delve alike.</p>`,
   parryPercent: `<p>Parry % opens in the Archives once Parry is yours: research it, and every strike you parry is cut by more, at once, in the Tower and the Delve alike.</p>` +
     `<p class="hint">However it is raised, a parry cuts a strike's damage by at most 98%.</p>`,
@@ -122,11 +139,11 @@ const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
   banBoons: `<p>Ban Boons opens in the Archives once Shrines are yours: research it, and ban boons from ever being offered, on the forest's Shrine Boons page.</p>`,
   autoPickRanking: `<p>Auto Pick Ranking opens in the Archives once Auto Pick Boons is yours: research it, and rank the boons Auto Pick takes first, on the forest's Shrine Boons page.</p>`,
 };
-const LOCK_ICON = `<svg class="goal-badge" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7.5" rx="1.5" fill="#3a3f4b" stroke="#c9ced8" stroke-width="1.1"/><path d="M5.2 7V5.2a2.8 2.8 0 0 1 5.6 0V7" fill="none" stroke="#c9ced8" stroke-width="1.4"/></svg>`;
+const LOCK_ICON = kitIcon("lock", `<svg class="goal-badge" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7.5" rx="1.5" fill="#3a3f4b" stroke="#c9ced8" stroke-width="1.1"/><path d="M5.2 7V5.2a2.8 2.8 0 0 1 5.6 0V7" fill="none" stroke="#c9ced8" stroke-width="1.4"/></svg>`, "goal-badge");
 /** Beside a checkpoint's floor: its area mastered (a golden swirl, shown once Warp is owned) and cleared (a green check). */
-const SWIRL_MARK = `<svg class="goal-mark" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#3a2a08" stroke="#ffd34d" stroke-width="1.6"/><path d="M12 5.5c3.6 0 6 2.7 5.4 5.9-.6 3-3.8 4.5-6.3 3.3-2.1-1-2.1-3.9-.1-4.6 1.4-.5 2.7.5 2.3 1.7" fill="none" stroke="#fff1b0" stroke-width="1.8" stroke-linecap="round"/></svg>`;
-const CLEARED_MARK = `<svg class="goal-mark" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#1f6a34" stroke="#8ff0a8" stroke-width="1.6"/><path d="M7 12.5l3.4 3.4L17.2 8.4" fill="none" stroke="#f0fff4" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-const CHECK_ICON = `<svg class="goal-badge" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#1f5a34" stroke="#9fe0b0" stroke-width="1.1"/><path d="M4.6 8.3l2.3 2.3 4.6-5" fill="none" stroke="#e8fff0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const SWIRL_MARK = kitIcon("ui-mastered", `<svg class="goal-mark" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#3a2a08" stroke="#ffd34d" stroke-width="1.6"/><path d="M12 5.5c3.6 0 6 2.7 5.4 5.9-.6 3-3.8 4.5-6.3 3.3-2.1-1-2.1-3.9-.1-4.6 1.4-.5 2.7.5 2.3 1.7" fill="none" stroke="#fff1b0" stroke-width="1.8" stroke-linecap="round"/></svg>`, "goal-mark");
+const CLEARED_MARK = kitIcon("check", `<svg class="goal-mark" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#1f6a34" stroke="#8ff0a8" stroke-width="1.6"/><path d="M7 12.5l3.4 3.4L17.2 8.4" fill="none" stroke="#f0fff4" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`, "goal-mark");
+const CHECK_ICON = kitIcon("check", `<svg class="goal-badge" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#1f5a34" stroke="#9fe0b0" stroke-width="1.1"/><path d="M4.6 8.3l2.3 2.3 4.6-5" fill="none" stroke="#e8fff0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`, "goal-badge");
 
 const rewardIcon = (r: GoalReward) => (r.kind === "unlock" ? UNLOCK_ICONS[r.unlock] : r.kind === "tower" ? TOWER_ICON : CURRENCY_ICONS[r.currency]());
 /** An unlock's name with "Unlock" before it, once: Unlock Shrines is already named so. */
@@ -186,7 +203,7 @@ export class GoalsPage {
     document.querySelectorAll<HTMLElement>("#goals [data-scroll]").forEach((s) => (this.scrolled[Number(s.dataset.scroll)] = s.scrollTop));
     const panels = Array.from({ length: this.towers }, (_, i) => this.towerPanel(i + 1)).join("");
     el("goals").innerHTML =
-      `<div class="goals-head"><button class="back" id="goals-back">← Back</button><div class="page-title"><small>THE ASCENT'S MILESTONES</small><h2>Goals</h2></div><button id="goals-pass" class="goals-pass"></button></div>` +
+      `<div class="goals-head"><button class="back" id="goals-back">${controlIcon("back")} Back</button><div class="page-title"><small>THE ASCENT'S MILESTONES</small><h2>Goals</h2></div><button id="goals-pass" class="goals-pass"></button></div>` +
       `<p class="goals-message" id="goals-message" aria-live="polite">${this.message}</p>` +
       `<div class="goals-stage"><div class="goals-strip" id="goals-strip">${panels}</div><div class="goals-floor" id="goals-floor"></div></div>` +
       (this.towers > 1

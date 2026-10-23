@@ -92,12 +92,14 @@ test("XP is earned from kills in both modes and grants a level", () => {
 test("XP comes from strength and equivalent floor, and each floor is a smaller share of a level", () => {
   assert.deepEqual((["weak", "normal", "strong", "elite", "boss"] as const).map((s) => xpForKill(s, 0)), [6, 9, 15, 24, 36]);
   assert.deepEqual([0, 30, 100, 1000].map((f) => xpForKill("normal", f)), [9, 18, 30, 90]);
-  // A floor of ten normal kills, as a share of the level it reaches.
+  // A floor of ten normal kills, as a share of the level it reaches, every
+  // 100 floors (the dearer band past level 25 holds the hero near one level
+  // long enough that 50 floors can see the share tick up).
   let xp = 0, last = Infinity;
   for (let f = 0; f < 1000; f++) {
     const gained = 10 * xpForKill("normal", f), level = levelForXp(xp);
     const share = gained / (xpForLevel(level + 1) - xpForLevel(level));
-    if (f % 50 === 49) { assert.ok(share < last, `floor ${f + 1}`); last = share; }
+    if (f % 100 === 99) { assert.ok(share < last, `floor ${f + 1}`); last = share; }
     xp += gained;
   }
 });

@@ -1,5 +1,46 @@
 # First steps
 
+## Interface sprites
+
+Open Settings from the HUD menu and turn **Sprites** on to use matching pixel-art controls, icons, cards, heroes, enemies, pickups, terrain, buildings and small dungeon decorations and Defend city details throughout Tower, Delve and Defend.
+This option starts off, applies immediately and is remembered when you reload.
+While Sprites is checked, **Animations** and **Square doors** appear directly below it; both start off and remember your choices.
+Animations enables matching torch frames, subtle potion bubbles, occasional key shines and a small idle motion after the hero stops.
+The skull and crossbones shown when the hero falls also uses matching PNG art, with a short animation while Animations is on.
+Reduce motion keeps these frames still; movement and combat stop the hero's idle motion.
+Square doors uses tile-filling rectangular doors with the same key and HP requirements as before.
+Tower I sprite floors mix large slabs and smaller bricks with connected joints across neighboring tiles.
+Tower II has warm limestone walls and rectangular paving; Tower III has cool basalt walls and octagonal paving with small square insets.
+Each of these two towers keeps its own single floor-and-wall tileset throughout the climb while Sprites is on and the Classic Game theme is selected.
+Turn it off to return to your selected UI theme's usual controls.
+The default Medieval and Classic interface looks use the sprites; other UI themes override them.
+Other Game themes override world sprites independently, and returning to Classic restores them while the option is on.
+The separate **Turn off board sprites** option controls the dungeon artwork, including the optional shared sprite kit.
+With Sprites on, small navigation and close marks, slider tracks and handles, reward stars, and the Gold-bonus and enemy-odds popup frames share the pixel-art look.
+Sliders still work with pointer or keyboard input and show their values as live text.
+The active interface kit uses custom pixel lettering, with button frames that leave room for text and icons. On phones, ad controls stack and Training values sit above their purchase buttons.
+The Classic board kit also uses pixel lettering for damage, rewards and other annotations, plus matching Target, Ignore, skipped and blocked tile marks. Torch lighting follows the active sprite shapes.
+With environmental decoration enabled, the Classic sprite kit also gives moss, pools, vine leaves, flowers and glowing mushrooms matching PNG artwork, preserving their locations, water movement and interactions.
+In the forest, the Classic sprite kit shows the enormous lower bases of the Tower and Delve mountain extending beyond the top of the view.
+Oak, birch and pine crowns span several tiles above smaller trees, bushes, ferns, rocks, logs, stumps, flowers and mushrooms, with paths, entrances, building yards and the mode sign kept clear.
+Grass still moves around the hero; turning environmental decoration off hides that grass and extra floor plants while keeping the forest's trees and rocks.
+Inside the Tower, the Classic sprite kit uses fitted stone floors and joined masonry walls with visible tops and south-facing wall faces.
+In the Delve, rough stone and packed earth form adjoining patches of floors and walls, with stepped soil edges and matching biome colors.
+Walls have six variations of their tops and south-facing faces, with fitted masonry, broad fractured bedrock or packed earth, plus matching diagonal corner pieces.
+Earth and stone interlock at their edges and diagonal joins on both floors and exposed walls.
+Walls keep a broad textured edge and recede through connected shades of stone or earth into the shared black interior.
+The shading follows room boundaries continuously across tiles and around corners, while south-facing wall faces keep their visible height.
+Occasional chipped joints, rock fractures and embedded roots or earth layers span adjoining wall tiles, chosen to fit the surrounding edges while leaving most surfaces quiet.
+Tower masonry also has repaired mortar joints, shallow spalled flakes and worn chisel marks that fit broad edges, thin strips and sheltered faces.
+These interior tiles remain with environmental decoration off; torchlight follows the selected floor's seams, and movement, doors and map layouts stay the same.
+
+## The HUD
+
+Health, combat stats and keys fill the upper part of the player panel.
+The portrait sits below them beside the limited-use inventory, with your level and XP bar underneath the hero.
+Once Shrines are researched, the separate Shrine progress bar appears below XP and still opens your boon choices or collected boons.
+On narrow phones, inventory controls wrap and the Menu, Shop and play/pause buttons keep room for their labels.
+
 ## The first runs
 
 A new game starts inside its first Tower run, with a note over the board, *Climb the Tower to gain Inspiration, XP and resources*, and the hand paused (play and the speed arrows closed) until the note is tapped; it then plays at 2 steps a second.
@@ -16,14 +57,13 @@ Reloading mid-Delve-run opens the Delve where it was.
 
 ## Moving by hand
 
-In the forest before a run, tap an open tile to walk to it, fighting monsters and collecting items along the route.
-Swipes move one tile in any cardinal direction.
-Keyboard arrows / WASD also work; on-screen arrows are off by default and can be enabled in Settings.
+In the forest before a run, a tap on an open tile walks straight to it.
+With Dev mode on, swipes and the keyboard arrows / WASD also step the hero one tile in any cardinal direction, in the forest or inside a run.
 Monsters on manual routes are fought even when lethal.
 Missing keys stop movement at the necessary door, with a fading red X; unreachable wall targets get the same feedback at the tapped spot.
 Routing prefers an available detour over a door for which no key is held.
-A first tap on a tile highlights it and shows what's there (a monster's stats, an item, a door's keys); once **Pathfinder** (1 Courage, after Movement Speed in the Courage tree, left of Focus) is owned, it also draws the route there on the board and adds a Route totals box of what happens along it (the HP lost, the keys spent, what's picked up).
-A second tap walks there either way.
+Inside a run, where the hand moves the hero, a tap on a tile highlights it and shows what's there (a monster's stats, an item, a door's keys); once **Pathfinder** (1 Courage, after Movement Speed in the Courage tree, left of Focus) is owned, it also draws the route there on the board and adds a Route totals box of what happens along it (the HP lost, the keys spent, what's picked up).
+With Dev mode on, the hero can also walk by hand inside a run: a second tap on the highlighted tile walks there, fighting monsters and collecting items along the route.
 A pickup's box shows what it gives with every bonus counted, as its icon and +N (a key's keys, a potion's full heal, a shard's ATK or DEF), and a lit torch's says Torch.
 With Pathfinder, tapping a tile inside a run pauses the hand while the highlight shows; once it goes (and no other tile is highlighted in its place), a hand it paused plays on.
 Pressing play clears the highlight and the route.
@@ -33,4 +73,5 @@ A potion's box also says how much HP it restores (a percent potion its share of 
 ## Tab dots
 
 While a Deck lesson is waiting, its tab carries a red dot.
+After a card levels up or joins the deck, the Deck tab carries one with a number until you open it: the new cards and the cards with card points to spend (see Card levels in hand-and-cards.md).
 The Upgrades tab carries one too, once the first run that earns Inspiration is over, until you open it; and whenever a run that earned Inspiration ends, the Upgrades tab and the Inspiration tab on that page carry one in the forest while you hold enough Inspiration to buy a skill there, until you look at the Inspiration tree (likewise a Delve run that earned Courage, once the Courage tree is open, for the Courage tab); and so does the Gear tab once the Gear skill is bought, until you open it.

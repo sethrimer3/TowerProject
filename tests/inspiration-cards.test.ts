@@ -6,7 +6,8 @@ import { TRAINING, cost, trained, type StatTrainingRow, type UpgradeId } from ".
 import { deckCards, planHand, upgradeCard, type CardId } from "../src/cards.ts";
 import { TREES } from "../src/skill-trees.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
-import type { EnemyStrength, Save, Tile } from "../src/entities.ts";
+import type { EnemyStrength, Tile } from "../src/entities.ts";
+import type { Save } from "../src/save-shape.ts";
 
 /** The new Inspiration card nodes, in the order they can be bought, with
  * their price, the node each needs and its card (null for a node that opens
@@ -61,7 +62,7 @@ test("a card node can't be bought before the one above it", () => {
   assert.equal(g.buy("cardHeartDoor"), false);
   assert.ok(g.buy("heartDoorResilience"));
   assert.ok(g.buy("cardHeartDoor"));
-  assert.ok(g.buy("cardWeakEnemy"), "Weak Enemy hangs straight off Yellow Door");
+  assert.ok(g.buy("cardWeakEnemy"), "Weak Enemy hangs straight off Gold Door");
 });
 
 const enemy = (strength: EnemyStrength): Tile => ({ kind: "enemy", enemy: { name: "rat", hp: 1, attack: 0, defense: 0, tier: 0, strength } });
@@ -84,7 +85,7 @@ function floor(side: Record<number, Tile>, edit: (save: Save) => void = () => {}
 }
 /** Where card `card` alone heads on `g`'s floor: its path's last tile. */
 function target(g: Game, card: CardId) {
-  const plan = planHand(g, [card], "tower");
+  const plan = planHand(g.handRules, [card], "tower");
   const last = plan?.path.at(-1);
   return last ? [last.x, last.y] : null;
 }
@@ -120,7 +121,7 @@ test("an enemy card passes over one it can't hurt", () => {
   assert.deepEqual(target(g, "weakEnemy"), [9, 1]);
 });
 
-test("YELLOW DOOR heads for a single yellow door, while a yellow key is held", () => {
+test("GOLD DOOR heads for a single gold door, while a gold key is held", () => {
   const wood: Tile = { kind: "door", door: { type: "wood", durability: 30 } };
   const yellow: Tile = { kind: "door", color: "yellow" };
   const g = floor({ 5: wood, 4: { kind: "door", color: "blue" }, 9: yellow, 3: { kind: "door", door: { type: "fullHp" } } });
@@ -139,7 +140,7 @@ test("WOODEN DOOR heads for a Wooden Door a key opens or the hero can break down
   g.run.player.hp = 30;
   assert.equal(target(g, "woodenDoor"), null, "no key, and breaking it would fell the hero");
   g.run.player.hp = 31;
-  assert.deepEqual(target(g, "woodenDoor"), [9, 1], "it can be broken down; not the yellow door or the Heart Door");
+  assert.deepEqual(target(g, "woodenDoor"), [9, 1], "it can be broken down; not the gold door or the Heart Door");
   const wooden = floor({ 9: wood });
   wooden.run.player.keys.yellow = 0;
   wooden.run.player.hp = 31;
@@ -190,24 +191,24 @@ for (const [card, id, color] of [["blueSiphon", "defense", "blue"], ["redSiphon"
     const p = g.run.player, stat = p[id], keys = p.keys[color];
     // The top level goes first: the third rank's worth, then the first two's.
     const top = trained(row(id), 3) - trained(row(id), 2);
-    assert.equal(g.canAct(card), true);
+    assert.equal(g.handRules.canAct(card), true);
     g.autoTurn();
     assert.deepEqual([p.x, p.y], [6, 0], "no step");
     assert.equal(p.keys[color], keys + 1);
     assert.ok(near(p[id], stat - top), "the first use takes one level");
     assert.equal(g.run.loadout![id], p[id]);
-    assert.deepEqual([g.cardUses(card), g.siphonLevel(card), g.siphonCost(card)], [1, 2, 2]);
-    assert.equal(g.cardUses("keySiphon"), 0, "counted apart from KEY SIPHON");
+    assert.deepEqual([g.handRules.cardUses(card), g.handRules.siphonLevel(card), g.handRules.siphonCost(card)], [1, 2, 2]);
+    assert.equal(g.handRules.cardUses("keySiphon"), 0, "counted apart from GK SIPHON");
     g.autoTurn();
     assert.ok(near(p[id], stat - trained(row(id), 3)), "the second takes two");
-    assert.equal(g.canAct(card), false, "none left for a third");
+    assert.equal(g.handRules.canAct(card), false, "none left for a third");
     assert.ok(g.undo());
-    assert.equal(g.cardUses(card), 1, "undo takes a use back");
+    assert.equal(g.handRules.cardUses(card), 1, "undo takes a use back");
     assert.equal(g.save.training[id], 3, "the hero's own training is untouched");
   });
 }
 
-test("BK TRADER trades 3 yellow keys for a blue key, while 3 are held", () => {
+test("BK TRADER trades 3 gold keys for a blue key, while 3 are held", () => {
   const g = floor({});
   g.run.hand = ["blueTrader", "stairs"];
   const p = g.run.player;
@@ -216,31 +217,31 @@ test("BK TRADER trades 3 yellow keys for a blue key, while 3 are held", () => {
   assert.deepEqual([p.x, p.keys.yellow, p.keys.blue], [6, 4, 1]);
   g.autoTurn();
   assert.deepEqual([p.keys.yellow, p.keys.blue], [1, 2]);
-  assert.equal(g.canAct("blueTrader"), false);
+  assert.equal(g.handRules.canAct("blueTrader"), false);
   assert.ok(g.undo());
   assert.deepEqual([g.run.player.keys.yellow, g.run.player.keys.blue], [4, 1], "undo takes a trade back");
 });
 
-test("YK TO HP trades a yellow key for 10% of max HP, only while that much is missing", () => {
+test("GK TO HP trades a gold key for 10% of max HP, only while that much is missing", () => {
   const g = floor({});
   g.run.hand = ["keyToHp", "stairs"];
   const p = g.run.player;
   p.keys.yellow = 2;
   p.hp = p.maxHp;
-  assert.equal(g.canAct("keyToHp"), false, "full HP");
+  assert.equal(g.handRules.canAct("keyToHp"), false, "full HP");
   p.hp = p.maxHp * 0.95;
-  assert.equal(g.canAct("keyToHp"), false, "missing only 5%");
+  assert.equal(g.handRules.canAct("keyToHp"), false, "missing only 5%");
   p.hp = p.maxHp * 0.5;
   g.autoTurn();
   assert.deepEqual([p.x, p.keys.yellow], [6, 1]);
   assert.ok(near(p.hp, p.maxHp * 0.6));
   p.keys.yellow = 0;
-  assert.equal(g.canAct("keyToHp"), false, "no key");
+  assert.equal(g.handRules.canAct("keyToHp"), false, "no key");
 });
 
 test("no card acts in place in the forest", () => {
   const g = floor({}, (s) => Object.assign(s.training, { attack: 3, defense: 3 }));
   g.run.player.keys.yellow = 5;
   g.newRun({ outside: true, seed: 9 });
-  for (const card of ["blueSiphon", "redSiphon", "blueTrader", "keyToHp"] as const) assert.equal(g.canAct(card), false, card);
+  for (const card of ["blueSiphon", "redSiphon", "blueTrader", "keyToHp"] as const) assert.equal(g.handRules.canAct(card), false, card);
 });

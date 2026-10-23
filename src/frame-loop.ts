@@ -9,7 +9,7 @@ export type FrameLoopHost = {
   tab(): Tab;
   /** Redraws the skill tree's particles while the Upgrades page shows. */
   upgradesFrame(time: number): void;
-  /** Moves the Archives' countdowns on as each shows another second, or
+  /** Moves the tab's countdowns on as each shows another second, and
    * redraws the Training tab's particles, while the Research page shows. */
   researchFrame(time: number): void;
   /** Advances the Defend battle while its page shows. */
@@ -106,7 +106,7 @@ export class FrameLoop {
       this.host.renderer.draw(time);
       this.lastBoardDraw = time;
     }
-    if (game.encounter) this.playFight(time);
+    if (game.fights.encounter) this.playFight(time);
     if (game.route.length && this.due(time, this.lastRoute, ROUTE_STEP_MS)) {
       this.lastRoute = time;
       game.routeStep();
@@ -122,9 +122,9 @@ export class FrameLoop {
   /** Shows the HP the fight's strikes have left, and settles the fight once
    * its last strike is done. */
   private playFight(time: number) {
-    const fight = this.host.game.encounter!;
+    const fight = this.host.game.fights.encounter!;
     if (time < fight.start + fight.bout.duration) return this.host.vitals();
-    this.host.game.finishEncounter();
+    this.host.game.fights.finish();
     this.host.update();
   }
 
@@ -143,6 +143,6 @@ export class FrameLoop {
    * fight still playing out, or behind a dialog. */
   private canAct() {
     const { game, modal } = this.host;
-    return !game.paused && !game.fallen && !game.encounter && !modal.open;
+    return !game.paused && !game.fallen && !game.fights.encounter && !modal.open;
   }
 }

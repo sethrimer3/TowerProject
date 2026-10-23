@@ -1,4 +1,4 @@
-import type { Save } from "./entities.ts";
+import type { Save } from "./save-shape.ts";
 import { CURRENCIES, type CurrencyId } from "./shop/currency.ts";
 import { owns, type EntitlementId } from "./shop/entitlements.ts";
 import { TIERS } from "./tiers.ts";
@@ -30,23 +30,28 @@ import { TIERS } from "./tiers.ts";
  * Ban Boons (Tower V floor 40) and Auto Pick Ranking (Tower VI floor 10),
  * Badge Slots (Tower VI floor 50: the Archives' project that lets each
  * card hold more badges), Note Taking (Tower I floor 250: the Archives'
- * project that opens the run's notes), and Tower III's Archer (floor 10:
- * the hero fires at the nearest enemy in range, ranged.ts), Attack Range
+ * project that opens the run's notes), and Tower III's Archer Card (floor
+ * 10: the ARCHER card joins the deck, `GOAL_CARDS` in cards.ts; while the
+ * hand holds it the hero fires at the nearest enemy in range, ranged.ts), Attack Range
  * and Attack Speed (floors 20 and 30: the Training rows that improve it),
- * ATK / Tile (floor 50: the Training row that strikes harder from further
+ * ATK / m (floor 50: the Training row that strikes harder from further
  * off), Charged Shot (floor 60: the Archives' project that strengthens
  * an arrow that waits), Multishot (floor 70: the Training rows that let
  * a shot fire at several enemies) and Rapid Fire (floor 80: the Training
- * rows that may make the Archer fire four times as fast for a while), and Tower II's Training Discount (floor
+ * rows that may make the Archer fire four times as fast for a while) and
+ * Warp Loot (floor 150: the Archives' project that starts a Warp run with
+ * a share of the skipped floors' Silver, warp-loot.ts), and Tower II's Training Discount (floor
  * 80: the Archives' project that cuts a trainer's Gold) and Card Groups
  * (floor 90: the Deck links neighbouring cards of the hand into a group
- * whose cards share one priority, cards.ts). */
+ * whose cards share one priority, cards.ts), and Tower V's Flying Enemy
+ * Card (floor 10: the FLYING ENEMY card joins the deck, `GOAL_CARDS` in
+ * cards.ts). */
 export type GoalUnlock =
   | "damagePrediction" | "combatForecast" | "attackLore" | "warp" | "damageVisual" | "relativeDamageColor" | "equipment" | "tournament" | "events" | "researchSpeed"
   | "shardAttack" | "shardDefense" | "parryPercent"
   | "shrines" | "firstBoonChoice" | "improveTradeoffs" | "autoPickBoons" | "boonOptions" | "banBoons" | "autoPickRanking"
-  | "badgeSlots" | "noteTaking" | "archer" | "attackRange" | "attackSpeed" | "attackPerTile" | "chargedShot" | "multishot" | "rapidFire"
-  | "trainingDiscount" | "cardGroups";
+  | "badgeSlots" | "noteTaking" | "archerCard" | "attackRange" | "attackSpeed" | "attackPerTile" | "chargedShot" | "multishot" | "rapidFire"
+  | "trainingDiscount" | "cardGroups" | "flyingEnemyCard" | "warpLoot";
 export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   damagePrediction: "Damage Prediction", combatForecast: "Combat Forecast", attackLore: "Attack Lore", warp: "Warp", damageVisual: "Damage Visual",
   relativeDamageColor: "Relative Damage Color", equipment: "Equipment", tournament: "Tournament", events: "Events",
@@ -55,8 +60,9 @@ export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   shrines: "Unlock Shrines", firstBoonChoice: "First Boon Choice", improveTradeoffs: "Improve Trade-off Boons",
   autoPickBoons: "Auto Pick Boons", boonOptions: "Boon Option Quantity", banBoons: "Ban Boons", autoPickRanking: "Auto Pick Ranking",
   badgeSlots: "Badge Slots", noteTaking: "Note Taking",
-  archer: "Archer Class", attackRange: "Attack Range", attackSpeed: "Attack Speed", attackPerTile: "ATK / Tile", chargedShot: "Charged Shot", multishot: "Multishot", rapidFire: "Rapid Fire",
-  trainingDiscount: "Training Discount", cardGroups: "Card Groups",
+  archerCard: "Archer Card", attackRange: "Attack Range", attackSpeed: "Attack Speed", attackPerTile: "ATK / m", chargedShot: "Charged Shot", multishot: "Multishot", rapidFire: "Rapid Fire",
+  trainingDiscount: "Training Discount", cardGroups: "Card Groups", flyingEnemyCard: "Flying Enemy Card",
+  warpLoot: "Warp Loot",
 };
 /** What a checkpoint pays: an unlock, the next tower opened, or an amount of a currency. */
 export type GoalReward =
@@ -88,10 +94,10 @@ const TOWER_ONE: Record<number, CheckpointSet> = {
   50: { reward: unlock("damageVisual"), premium: gems(15) },
   60: { reward: unlock("tournament"), premium: gems(20) },
   70: { reward: unlock("events"), premium: gold(600) },
-  80: { reward: gems(30) },
-  90: { reward: gold(2000), premium: gems(20) },
+  80: { reward: gems(25), premium: gems(30) },
+  90: { reward: gold(2000), premium: gems(30) },
   150: { reward: unlock("researchSpeed"), premium: gold(15_000) },
-  200: { reward: gems(40), premium: gems(25) },
+  200: { reward: gems(30), premium: gems(35) },
   250: { reward: unlock("noteTaking"), premium: gold(30_000) },
   300: { premium: gems(25) },
   400: { premium: gold(100_000) },
@@ -122,7 +128,7 @@ const TOWER_TWO: Record<number, CheckpointSet> = {
 };
 /** Tower III's checkpoints that differ from the stub. */
 const TOWER_THREE: Record<number, CheckpointSet> = {
-  10: { reward: unlock("archer") },
+  10: { reward: unlock("archerCard") },
   20: { reward: unlock("attackRange") },
   30: { reward: unlock("attackSpeed") },
   50: { reward: unlock("attackPerTile") },
@@ -130,6 +136,7 @@ const TOWER_THREE: Record<number, CheckpointSet> = {
   70: { reward: unlock("multishot") },
   80: { reward: unlock("rapidFire") },
   90: { reward: gems(30) },
+  150: { reward: unlock("warpLoot") },
 };
 /** Tower IV's checkpoints that differ from the stub. */
 const TOWER_FOUR: Record<number, CheckpointSet> = {
@@ -138,6 +145,7 @@ const TOWER_FOUR: Record<number, CheckpointSet> = {
 };
 /** Tower V's checkpoints that differ from the stub. */
 const TOWER_FIVE: Record<number, CheckpointSet> = {
+  10: { reward: unlock("flyingEnemyCard") },
   30: { reward: unlock("parryPercent") },
   40: { reward: unlock("banBoons") },
 };
@@ -258,13 +266,12 @@ export function unlockAt(what: GoalUnlock) {
 }
 /** The checkpoint floor whose reward unlocks `what`. */
 export const unlockFloor = (what: GoalUnlock) => unlockAt(what).floor;
-/** Whether the hero is an Archer: Tower III's floor 10 Goal claimed. */
-export const isArcher = (save: Pick<Save, "goals">) => goalUnlocked(save, "archer");
-/** The hero's class, as the HUD names it under its portrait: a Wayfarer,
- * a Pathfinder once Tower II is open, an Archer once Tower III's floor 10
- * Goal is claimed. Cosmetic. */
-export const heroClass = (save: Pick<Save, "goals" | "tower">) =>
-  isArcher(save) ? "Archer" : save.tower.tiersOpen >= 2 ? "Pathfinder" : "Wayfarer";
+/** The hero's class, as the HUD names it under its portrait: an Archer
+ * while the hand holds the ARCHER card (`archer`, `shootsWith` in
+ * cards.ts), else a Wayfarer, or a Pathfinder once Tower II is open.
+ * Cosmetic. */
+export const heroClass = (save: Pick<Save, "tower">, archer: boolean) =>
+  archer ? "Archer" : save.tower.tiersOpen >= 2 ? "Pathfinder" : "Wayfarer";
 /** Whether Warp is owned. */
 export const warpUnlocked = (save: Save) => goalUnlocked(save, "warp");
 

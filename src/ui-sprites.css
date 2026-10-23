@@ -1,0 +1,691 @@
+@font-face {
+  font-family: "Tower Pixel";
+  src: url("../assets/fonts/TowerPixel/TowerPixel-Regular.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+}
+
+/* Actual PNG components, opt-in independently of UI/game themes.
+   Native frames are 48 × 24; reserve the displayed edge in each control. The center is
+   quiet so it can stretch behind live labels without distorting artwork.
+   Keep kit-specific frame metrics here; shared layout belongs to style.css. */
+html.ui-sprites {
+  --ui-button: url("../public/assets/ui/frames/button.png");
+  --ui-hover: url("../public/assets/ui/frames/button-hover.png");
+  --ui-pressed: url("../public/assets/ui/frames/button-pressed.png");
+  --ui-selected: url("../public/assets/ui/frames/button-selected.png");
+  --ui-disabled: url("../public/assets/ui/frames/button-disabled.png");
+  --ui-danger: url("../public/assets/ui/frames/button-danger.png");
+  --ui-panel: url("../public/assets/ui/frames/panel.png");
+  --ui-dialog: url("../public/assets/ui/frames/dialog.png");
+  --ui-field: url("../public/assets/ui/frames/field.png");
+  --ui-slider-thumb: url("../public/assets/style/ui-slider-thumb.png");
+  --ui-slider-thumb-active: url("../public/assets/style/ui-slider-thumb-active.png");
+  --ui-slider-track: url("../public/assets/style/ui-slider-track.png");
+  --ui-face: var(--ui-button);
+  --gold: #e1bb78;
+  --muted: #8b9a9d;
+}
+
+/* Keep labels as live text, including inputs and headings with their own font.
+   Badge glyphs and the paused Defend page retain their existing typography. */
+html.ui-sprites:not(#_),
+html.ui-sprites :not(:where(svg, svg *, .badge-glyph, .badge-glyph *, #defend, #defend *)):not(#_) {
+  font-family: "Tower Pixel", monospace;
+}
+html.ui-sprites #defend { font-family: Cinzel, Georgia, serif; }
+
+html.ui-sprites body:not(#_) {
+  background: #10151c url("../public/assets/ui/frames/surface.png") repeat;
+  background-size: 96px 48px;
+}
+html.ui-sprites .shell:not(#_) {
+  background: #10151c;
+  color: #eee0b7;
+  box-shadow: none;
+}
+
+html.ui-sprites :is(.stats, .card, .upgrade, .shop, .theme-card, .weekly,
+  .mission, .event-boost, .archivist, .research, .pull-box, .eq-loadout,
+  .equip-materials, .starting-stats, .training-boost,
+  .tournament-standing, .tournament-tickets, .badge-box, .deck-reserve,
+  .defend-palette, .card-reveal, .badge-reveal, .skill-tree, .goals-stage,
+  .training-box, label.setting, .inspect-box, .run-menu-frame, .inspection):not(#_) {
+  border-color: transparent;
+  border-style: solid;
+  border-image: var(--ui-panel) 6 fill / 12px / 0 stretch;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  image-rendering: pixelated;
+  color: #eee0b7;
+  text-shadow: none;
+}
+html.ui-sprites label.setting:not(#_) {
+  padding-inline: 14px;
+  margin-block: 4px;
+}
+html.ui-sprites .inspection:empty:not(#_) { border-image: none; }
+html.ui-sprites .inspection:not(:empty):not(#_) {
+  border-image-width: 6px;
+  padding: 8px 10px;
+}
+
+html.ui-sprites :is(dialog, .theme-card.worn):not(#_) {
+  border-color: transparent;
+  border-image: var(--ui-dialog) 6 fill / 12px / 0 stretch;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  image-rendering: pixelated;
+  color: #eee0b7;
+}
+html.ui-sprites dialog::backdrop { background: #10151cd9; backdrop-filter: none; }
+html.ui-sprites dialog :is(h2, h3):not(#_) { color: #e1bb78; text-shadow: none; }
+html.ui-sprites :is(.hint, .item-meta, .item-identity, .level-cost):not(#_) { color: #8b9a9d; }
+
+/* Keep picture buttons (cards, map markers and skill nodes) intact. */
+html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-tile, .deck-add, .deck-card, .deck-entry-art,
+  .card-reveal-card, .forest-sign, .forest-building, .mission-bar, #shrine-bar, #forest-sign, .ug-node, .ct-row-main,
+  #currencies-open, #auto-speed .speed-arrow)):not(#_) {
+  border-color: transparent;
+  border-image: var(--ui-face) 6 fill / 12px / 0 stretch;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #eee0b7;
+  text-shadow: none;
+  image-rendering: pixelated;
+  transition: none;
+}
+html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-tile, .deck-add, .deck-card, .deck-entry-art,
+  .card-reveal-card, .forest-sign, .forest-building, .mission-bar, .badge-pick, .deck-link-toggle,
+  #shrine-bar, #forest-sign, #defend *, .ug-node, .ct-row-main, #currencies-open, #auto-speed .speed-arrow)):not(#_) {
+  border-width: 6px;
+  border-style: solid;
+  border-image-width: 6px;
+  padding: 4px 6px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+html.ui-sprites button:hover:not(:disabled):not(#_) { --ui-face: var(--ui-hover); }
+html.ui-sprites button:is(.selected, .active, [aria-pressed="true"], [aria-expanded="true"]):not(#_) {
+  --ui-face: var(--ui-selected);
+}
+html.ui-sprites button.danger:not(#_) { --ui-face: var(--ui-danger); }
+html.ui-sprites button:active:not(:disabled):not(#_) {
+  --ui-face: var(--ui-pressed);
+  translate: none;
+  scale: none;
+}
+html.ui-sprites button:disabled:not(#_) {
+  --ui-face: var(--ui-disabled);
+  color: #8b9a9d;
+  filter: none;
+  opacity: 0.65;
+}
+html.ui-sprites :is(.mini-action, .training-reset):not(#_) {
+  border-width: 3px;
+  border-image-width: 3px;
+  padding: 1px;
+}
+
+/* Compact frames reserve their full edge, so neither text nor PNGs sit on trim. */
+html.ui-sprites :is(.gold-bonus, .base-enemy, .gem-ad, .height-actions button,
+  .run-consumables button, .dialog-x, .enemy-odds-x, .gold-bonus-x,
+  .training-cost, .training-timer, .training-box, .deck-remove, .back-btn,
+  .badge-detach, .deck-check, .tree-help, .research-about,
+  .eq-filter, .eq-level, .buy-quantity, .tier-arrow):not(#_) {
+  border-width: 3px;
+  border-image-width: 3px;
+  padding: 2px 3px;
+}
+html.ui-sprites :is(.gold-bonus, .base-enemy):not(#_) {
+  max-width: 100%;
+  min-width: 0;
+  min-height: 26px;
+  font-size: 10px;
+  line-height: 1.2;
+  gap: 3px;
+}
+html.ui-sprites .gold-bonus:not(#_) { flex-wrap: wrap; }
+html.ui-sprites .base-enemy > span { gap: 2px; }
+html.ui-sprites .hud-controls .gem-ad:not(#_) {
+  width: 100%;
+  min-height: 36px;
+  gap: 2px;
+  padding: 2px;
+}
+html.ui-sprites .gem-ad-amount:not(#_) { font-size: 12px; gap: 3px; }
+html.ui-sprites .gem-ad small:not(#_) { font-size: 10px; letter-spacing: 0; }
+html.ui-sprites :is(.run-consumables button, .training-reset):not(#_) { padding: 0; }
+html.ui-sprites :is(.deck-remove, .badge-detach, .deck-check, .tree-help, .research-about):not(#_) { padding: 0; }
+html.ui-sprites .mini-action { height: auto; min-height: 36px; }
+html.ui-sprites .mini-action small { font-size: 7px; letter-spacing: 0; }
+html.ui-sprites .run-menu-items { grid-auto-columns: max(48px, var(--cell)); }
+/* The open menu's hamburger shows the kit's X (other looks morph the bars). */
+.mini-icon > .menu-close-icon { display: none; }
+html.ui-sprites [aria-expanded="true"] > .mini-icon > .menu-close-icon.sprite-ready:not(#_) { display: inline-block; }
+html.ui-sprites [aria-expanded="true"] > .mini-icon:has(> .menu-close-icon.sprite-ready) > .menu-icon:not(.menu-close-icon) { display: none; }
+html.ui-sprites :is(button, .gem-ad-amount) > .sprite-icon { flex-shrink: 0; }
+/* A Gem shortage is actionable: preserve the bright face and red price. */
+html.ui-sprites button.short:not(#_) { opacity: 1; filter: none; }
+html.ui-sprites :is(button, select, input):focus-visible:not(#_) {
+  outline: 2px solid #e1bb78;
+  outline-offset: 3px;
+}
+
+html.ui-sprites :is(select, input[type="text"], input[type="search"],
+  input[type="number"], .portrait-top, .hp-readout, .training-held):not(#_) {
+  border-color: transparent;
+  border-image: var(--ui-field) 6 fill / 10px / 0 stretch;
+  border-radius: 0;
+  background: transparent;
+  color: #eee0b7;
+  box-shadow: none;
+  image-rendering: pixelated;
+}
+html.ui-sprites select option { background: #1b2430; color: #eee0b7; }
+html.ui-sprites :is(select, input[type="text"], input[type="search"], input[type="number"]):not(:where(#defend *)):not(#_) {
+  border-width: 6px;
+  border-style: solid;
+  border-image-width: 6px;
+  padding: 4px 6px;
+  min-width: 0;
+  max-width: 100%;
+}
+html.ui-sprites .hp-readout:not(#_) { border-image-width: 4px; }
+/* The HUD's frame is 6px; its columns sit inside it, so neither the rail's
+   own background nor the actions column covers an edge. */
+html.ui-sprites #stats.stats:not(#_) { border-image-width: 6px; padding: 5px; }
+/* The actions column's framed labels need more room than the bare look's;
+   the rail and the height column give it up. */
+html.ui-sprites #stats.stats:not(#_) { grid-template-columns: 90px minmax(150px, 1fr) 84px 72px; }
+@media (max-width: 480px) {
+  html.ui-sprites #stats.stats:not(#_) { grid-template-columns: 66px minmax(0, 1fr) 60px 64px; }
+}
+@media (max-width: 360px) {
+  /* The columns may overlap the frame's inner shading, to keep two items abreast. */
+  html.ui-sprites #stats.stats:not(#_) { grid-template-columns: 60px minmax(0, 1fr) 53px 55px; padding-inline: 3px; }
+  html.ui-sprites .gold-ad .gem-ad-amount { white-space: nowrap; }
+}
+html.ui-sprites .stats .portrait-top:not(#_) {
+  border-width: 3px;
+  border-style: solid;
+  border-image-width: 3px;
+  padding: 4px 2px;
+  min-width: 0;
+}
+html.ui-sprites .portrait-top small { font-size: 7px; letter-spacing: 0; }
+html.ui-sprites .portrait-top canvas { max-width: 100%; height: auto; }
+html.ui-sprites .xp-row { min-width: 0; margin-inline: 0; }
+html.ui-sprites .xp-row #level { flex-shrink: 0; }
+html.ui-sprites .stats .hp-readout:not(#_) {
+  border: 4px solid transparent;
+  border-image-width: 4px;
+  padding: 1px 3px;
+}
+html.ui-sprites .hp-readout .heart { flex-shrink: 0; margin-right: 0; }
+html.ui-sprites .keys { flex-wrap: wrap; }
+@media (max-width: 480px) {
+  html.ui-sprites .portrait-top small { font-size: 6px; }
+  /* Long current/next values get their own line above the purchase controls. */
+  html.ui-sprites .training-row:not(.maxed) {
+    grid-template-columns: minmax(0, 1fr) 12px minmax(0, 1fr) 28px;
+    row-gap: 3px;
+  }
+  html.ui-sprites .training-row:not(.maxed) .training-label { grid-column: 1 / -1; grid-row: 1; }
+  html.ui-sprites .training-row > span.training-box { grid-column: 1; grid-row: 2; min-width: 0; overflow-wrap: anywhere; }
+  html.ui-sprites .training-row > .training-arrow { grid-column: 2; grid-row: 2; }
+  html.ui-sprites .training-row > span.training-box.next { grid-column: 3; }
+  html.ui-sprites .training-row > .training-speedup { grid-column: 4; grid-row: 2; }
+  html.ui-sprites .training-row:not(.maxed) > :is(.training-gold, .training-job) { grid-column: 1 / 3; grid-row: 3; }
+  html.ui-sprites .training-row:not(.maxed) > .training-now { grid-column: 3; grid-row: 3; }
+  html.ui-sprites .training-row:not(.maxed) > :is(.training-reset, .training-finish) { grid-column: 4; grid-row: 3; }
+}
+@media (max-width: 360px) {
+  html.ui-sprites .hud-controls .gem-ad small:not(#_) { font-size: 8px; white-space: nowrap; }
+  html.ui-sprites .vitals { padding-inline: 4px; }
+}
+html.ui-sprites :is(.deck-slot, .node-icon):not(#_) {
+  border: 2px solid transparent;
+  border-image: url("../public/assets/ui/frames/slot.png") 6 fill / 12px / 0 stretch;
+  border-radius: 0;
+  background: transparent;
+  image-rendering: pixelated;
+}
+/* Card faces include their own frame. Only empty/purchasable slots need
+   the inset slot frame; occupied controls let the art fill the whole card. */
+html.ui-sprites :is(.deck-card, .deck-entry-art, .deck-add):not(#_) {
+  border: 0;
+  border-image: none;
+  border-radius: 0;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+}
+html.ui-sprites .deck-slot:has(> .deck-card):not(#_) {
+  border: 0;
+  border-image: none;
+  background: none;
+}
+html.ui-sprites input[type="checkbox"]:not(#_) {
+  appearance: none;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: url("../public/assets/ui/frames/field.png") center / 24px 24px no-repeat;
+  box-shadow: none;
+  image-rendering: pixelated;
+  cursor: pointer;
+}
+html.ui-sprites input[type="checkbox"]:checked:not(#_) {
+  background-image: url("../public/assets/ui/frames/button-selected.png");
+}
+html.ui-sprites input[type="checkbox"]:checked::after {
+  content: "";
+  display: block;
+  width: 12px;
+  height: 10px;
+  margin: 6px;
+  background: #eee0b7;
+  clip-path: polygon(0 40%, 33% 40%, 33% 60%, 50% 60%, 50% 40%, 66% 40%, 66% 20%, 83% 20%, 83% 0, 100% 0, 100% 40%, 83% 40%, 83% 60%, 66% 60%, 66% 80%, 50% 80%, 50% 100%, 33% 100%, 33% 80%, 16% 80%, 16% 60%, 0 60%);
+}
+html.ui-sprites input[type="range"]:not(#_) { accent-color: #e1bb78; }
+
+html.ui-sprites :is(.xp-track, .health-track, .weekly-bar, .mission-bar,
+  .research-bar, .refine-bar):not(#_) {
+  background: #10151c;
+  border-color: transparent;
+  border-image: url("../public/assets/ui/frames/track.png") 6 fill / 4px / 0 stretch;
+  border-radius: 0;
+  box-shadow: none;
+  image-rendering: pixelated;
+}
+html.ui-sprites :is(.xp-track i, .weekly-bar i, .mission-bar i,
+  .research-bar i, .refine-bar span, .event-bar i):not(#_) {
+  background: url("../public/assets/ui/frames/fill-green.png") left top / 32px 100% repeat-x;
+  border-radius: 0;
+  box-shadow: none;
+  image-rendering: pixelated;
+}
+html.ui-sprites .xp-track i:not(#_) {
+  background-image: url("../public/assets/ui/frames/fill-blue.png");
+}
+html.ui-sprites #health:not(#_) {
+  background: url("../public/assets/ui/frames/fill-red.png") left top / 32px 100% repeat-x;
+}
+html.ui-sprites #health-gain:not(#_) {
+  background: url("../public/assets/ui/frames/fill-blue.png") left top / 32px 100% repeat-x;
+}
+/* The pending-damage segment retains its distinct purple semantics. */
+html.ui-sprites #health-loss:not(#_) { background: #80608e; }
+
+html.ui-sprites .page-title:not(#_) {
+  background: transparent;
+  border: 2px solid transparent;
+  border-image: url("../public/assets/ui/frames/banner.png") 6 fill / 12px / 0 stretch;
+  image-rendering: pixelated;
+  padding-block: 14px;
+  color: #10151c;
+}
+html.ui-sprites .page-title :is(h2, small):not(#_) { color: #10151c; text-shadow: none; }
+
+/* Sprite pairs preserve each theme's original icon. Only loaded PNGs
+   replace it, and only under the effective default sprite presentation. */
+.sprite-icon { position: relative; display: inline-block; vertical-align: middle; }
+.sprite-fallback { display: contents; }
+.tutorial-pointer-art { width: 100%; }
+.sprite-replacement, .sprite-card-label { display: none !important; }
+html.ui-sprites .sprite-ready > .sprite-fallback { visibility: hidden; }
+html.ui-sprites .sprite-ready > .sprite-replacement:not(#_) {
+  display: block !important;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: none;
+  transform: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+html.ui-sprites .sprite-card.sprite-ready + .sprite-card-label:not(#_) {
+  display: block !important;
+  position: absolute;
+  bottom: 8%;
+  inset-inline: 4%;
+  color: #eee0b7;
+  font-size: 7px;
+  line-height: 1.15;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* The original star still fills its corner when sprites are off. */
+.badge-star { position: absolute; inset: 0; width: 100%; height: 100%; }
+.badge-condition { display: none; }
+.badge-mark > .badge-glyph, .hand-badge-level > .badge-glyph { font-size: inherit; }
+html.ui-sprites :is(.badge-token, .badge-mark, .hand-badge-level) {
+  --badge-frame: url("../public/assets/style/badge-frame-common.png");
+  border-image: var(--badge-frame) 6 fill / 6px / 0 stretch;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  image-rendering: pixelated;
+}
+html.ui-sprites :is(.badge-token, .badge-mark, .hand-badge-level).rarity-rare {
+  --badge-frame: url("../public/assets/style/badge-frame-rare.png");
+}
+html.ui-sprites :is(.badge-token, .badge-mark, .hand-badge-level).rarity-epic {
+  --badge-frame: url("../public/assets/style/badge-frame-epic.png");
+}
+html.ui-sprites .badge-token > .badge-glyph { width: 24px; height: 24px; text-shadow: none; }
+html.ui-sprites .badge-token.big { border-image-width: 12px; }
+html.ui-sprites .badge-token.big > .badge-glyph { width: 48px; height: 48px; }
+html.ui-sprites :is(.badge-mark, .hand-badge-level) { border-image-width: 3px; padding: 0; }
+html.ui-sprites .badge-mark > .badge-glyph { width: 14px; height: 14px; }
+html.ui-sprites .hand-badge-level > .badge-glyph { width: 12px; height: 12px; }
+html.ui-sprites .badge-glyph.sprite-ready > .badge-condition {
+  display: block;
+  position: absolute;
+  right: -3px;
+  bottom: -1px;
+  padding: 0 1px;
+  background: #10151c;
+  color: #eee0b7;
+  font-family: inherit;
+  font-size: 10px;
+  line-height: 1;
+  text-shadow: none;
+}
+html.ui-sprites .badge-token.big .badge-condition { font-size: 16px; }
+html.ui-sprites :is(.badge-mark, .hand-badge-level) .badge-condition { right: -2px; font-size: 8px; }
+html.ui-sprites .badge-level b { color: #10151c; }
+
+/* A token supplies its own rarity frame inside the transparent pick button. */
+html.ui-sprites button.badge-pick:not(#_) { border-image: none; background: none; box-shadow: none; }
+html.ui-sprites .badge-entry.attached .badge-token { box-shadow: none; }
+
+/* The PNG dialog has a dark slate center rather than parchment. */
+html.ui-sprites dialog p:not(#_) { color: #b8c2bb; }
+
+/* PNG pairs occupy the same boxes as the original compact SVG controls. */
+.charge-icon { width: 13px; height: 18px; }
+.charge-stat .charge-icon { width: 15px; height: 15px; }
+.deck-control-icon { width: 10px; height: 10px; }
+.hand-control-icon { width: 1em; height: 1em; }
+html.ui-sprites .silver-sprite.sprite-ready { filter: none; }
+html.ui-sprites :is(.goal-mark, .goal-badge, .relic-lock).sprite-ready { filter: none; }
+html.ui-sprites .goal-marks > .inactive .goal-mark.sprite-ready { opacity: 0.45; }
+html.ui-sprites.medieval dialog::before {
+  background: url("../public/assets/style/ui-seal.png") center / contain no-repeat;
+  width: 48px;
+  height: 48px;
+  transform: translateX(-50%);
+  filter: none;
+  image-rendering: pixelated;
+}
+html.ui-sprites .forest-sign:not(#_) {
+  border-image: url("../public/assets/style/ui-sign.png") 6 fill / 12px / 0 stretch;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  image-rendering: pixelated;
+}
+html.ui-sprites #deck-hand .deck-link-toggle:not(#_) { border-image: none; background: none; box-shadow: none; }
+html.ui-sprites #deck-hand .deck-link-toggle::before {
+  width: 16px;
+  height: 16px;
+  border: 0;
+  background: url("../public/assets/style/ui-link.png") center / contain no-repeat;
+  transform: translate(-50%, -50%);
+  image-rendering: pixelated;
+  box-shadow: none;
+  opacity: 0.5;
+}
+html.ui-sprites #deck-hand .deck-link-toggle:is(.on, :hover, :focus-visible)::before { opacity: 1; box-shadow: none; }
+html.ui-sprites .badge-coin.sprite-ready { border: 0; border-radius: 0; background: none; box-shadow: none; }
+.sprite-icon.goal-badge, .sprite-icon.badge-coin { position: absolute; }
+/* Text-symbol fallbacks retain their intrinsic size outside sprite mode. */
+html.ui-sprites :is(.stat-icon, .key-icon) { width: 1em; height: 1em; }
+
+/* Node state frames and their backdrop share the same quiet PNG materials. */
+html.ui-sprites .tree-viewport:not(#_) { background: #10151c; }
+html.ui-sprites .skill-node .node-icon:not(#_) {
+  border: 1px solid transparent;
+  border-image: var(--ui-field) 6 fill / 6px / 0 stretch;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  image-rendering: pixelated;
+}
+html.ui-sprites .skill-node.owned .node-icon:not(#_) { border-image-source: var(--ui-selected); }
+html.ui-sprites .skill-node.locked .node-icon:not(#_) { border-image-source: var(--ui-disabled); }
+html.ui-sprites .skill-node.chosen .node-icon:not(#_) { outline: 2px solid #e1bb78; outline-offset: 2px; }
+html.ui-sprites :is(.training-group, .page-title h2, .tree-heading h3)::before,
+html.ui-sprites :is(.training-group, .page-title h2, .tree-heading h3)::after {
+  background: url("../public/assets/style/ui-link.png") right center / auto 12px no-repeat;
+  image-rendering: pixelated;
+}
+/* Notes and stat tables also sit on slate when the PNG dialog is active. */
+html.ui-sprites dialog > small:not(#_) { color: #8b9a9d; }
+html.ui-sprites dialog .stats-table th:not(#_) { color: #b8c2bb; border-bottom-color: #3e4c59; }
+html.ui-sprites dialog .stats-table td:not(#_) { color: #eee0b7; border-bottom-color: #3e4c59; }
+html.ui-sprites dialog .notes-table caption:not(#_) { color: #e1bb78; }
+
+/* Shrine subjects supplement the live descriptions; other themes keep
+   the text-only layout, including while a PNG is unavailable. */
+.boon-icon, .shrine-control-icon, .boon-first-preview { display: none; }
+.boon-choice-text { display: grid; gap: 2px; }
+.shrine-grip-icon { width: 16px; height: 18px; }
+.rank-arrow-icon, .shrine-close-icon { width: 12px; height: 12px; }
+html.ui-sprites :is(.boon-icon, .shrine-control-icon).sprite-ready {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+html.ui-sprites .boon-choice:has(> .boon-icon.sprite-ready) { grid-template-columns: 32px minmax(0, 1fr); align-items: center; gap: 10px; }
+html.ui-sprites :is(.boon-choice, .boon-ban, .boon-rank):not(#_) {
+  border: 1px solid transparent;
+  border-image: var(--ui-button) 6 fill / 8px / 0 stretch;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  image-rendering: pixelated;
+  padding: 10px 12px;
+}
+html.ui-sprites :is(.boon-choice, .boon-ban, .boon-rank).tradeoff:not(#_) {
+  border-image-source: var(--ui-danger);
+}
+html.ui-sprites :is(.boon-ban, .boon-rank).banned:not(#_) { border-image-source: var(--ui-danger); }
+html.ui-sprites .boon-rank.ranked:not(#_) { border-image-source: var(--ui-selected); }
+html.ui-sprites .boon-choice-text :is(small, b) { display: block; }
+html.ui-sprites .boon-ban-name { flex: 1; min-width: 0; }
+html.ui-sprites .boon-rank .rank-grip { flex-shrink: 0; }
+html.ui-sprites .boon-table .boon-icon { margin-inline-end: 8px; }
+html.ui-sprites .boon-first-choice { display: flex; align-items: center; gap: 10px; }
+html.ui-sprites .boon-first-choice select { min-width: 0; flex: 1; }
+html.ui-sprites .boon-first-preview:has(.sprite-ready) { display: inline-flex; }
+html.ui-sprites .boon-rank .rank-name, html.ui-sprites .boon-choice-text { overflow-wrap: anywhere; }
+html.ui-sprites .stats .shrine-diamond:not(#_) {
+  width: 18px;
+  height: 18px;
+  top: -5px;
+  left: -4px;
+  border: 0;
+  background: url("../public/assets/style/shrine-count.png") center / contain no-repeat;
+  transform: none;
+  box-shadow: none;
+  image-rendering: pixelated;
+  opacity: 0.65;
+}
+html.ui-sprites .stats .shrine-diamond.lit:not(#_) { opacity: 1; }
+html.ui-sprites .stats .shrine-diamond b:not(#_) { transform: none; color: #eee0b7; }
+html.ui-sprites #shrine-fill:not(#_) { background: url("../public/assets/style/shrine-fill.png") left top / 32px 100% repeat-x; box-shadow: none; }
+html.ui-sprites #overheal-fill:not(#_) { background: url("../public/assets/ui/frames/fill-blue.png") left top / 32px 100% repeat-x; }
+
+/* Equipment keeps its live rarity letters and levels over reusable frames. */
+.sprite-icon.eq-tile-worn, .sprite-icon.eq-tile-unique { position: absolute; }
+.eq-salvage-icon { display: none; }
+html.ui-sprites :is(.eq-tile, .equip-icon-frame):not(#_) {
+  --equipment-frame: url("../public/assets/style/ui-equip-frame-common.png");
+  border: 1px solid transparent;
+  border-image: var(--equipment-frame) 6 fill / 6px / 0 stretch;
+  border-radius: 0;
+  background: #1b2430;
+  box-shadow: none;
+  image-rendering: pixelated;
+}
+html.ui-sprites :is(.eq-tile, .equip-icon-frame).rar-uncommon:not(#_) { --equipment-frame: url("../public/assets/style/ui-equip-frame-uncommon.png"); }
+html.ui-sprites :is(.eq-tile, .equip-icon-frame).rar-rare:not(#_) { --equipment-frame: url("../public/assets/style/ui-equip-frame-rare.png"); }
+html.ui-sprites .eq-tile.eq-ghost:not(#_) { --equipment-frame: url("../public/assets/style/ui-equip-frame-empty.png"); background: #10151c; }
+html.ui-sprites .eq-tile.selected:not(#_) { outline: none; }
+html.ui-sprites .eq-tile.selected:focus-visible:not(#_) { outline: 2px solid #e1bb78; outline-offset: 3px; }
+html.ui-sprites .eq-tile.selected::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border: 1px solid transparent;
+  border-image: url("../public/assets/style/ui-equip-frame-selection.png") 6 / 6px / 0 stretch;
+  pointer-events: none;
+}
+html.ui-sprites :is(.eq-tile-mark, .eq-tile-level, .eq-tile-worn, .eq-tile-unique):not(#_) { text-shadow: none; }
+html.ui-sprites :is(.eq-tile-worn, .eq-tile-unique).sprite-ready { width: 12px; height: 12px; }
+html.ui-sprites .eq-tile-worn.sprite-ready { bottom: 2px; left: 2px; }
+html.ui-sprites .eq-tile-unique.sprite-ready { top: 2px; left: 2px; }
+html.ui-sprites .eq-tile-lock + .eq-tile-unique.sprite-ready { left: auto; right: 15px; }
+html.ui-sprites .eq-tile .eq-tile-icon { width: 24px; height: 24px; }
+html.ui-sprites .equip-icon-frame .equip-icon { width: 24px; height: 24px; }
+html.ui-sprites .eq-check:not(#_) {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 0;
+  background: url("../public/assets/ui/frames/field.png") center / 24px 24px no-repeat;
+  image-rendering: pixelated;
+  flex-shrink: 0;
+}
+html.ui-sprites .eq-check-icon { width: 12px; height: 12px; }
+html.ui-sprites .eq-salvage-icon.sprite-ready { display: inline-block; width: 12px; height: 12px; flex-shrink: 0; }
+html.ui-sprites :is(.eq-slots, .eq-inputs, .eq-assemble, .equip-selection, .eq-salvage):not(#_) {
+  border: 1px solid transparent;
+  border-image: var(--ui-panel) 6 fill / 6px / 0 stretch;
+  border-radius: 0;
+  background: #10151c;
+  box-shadow: none;
+  image-rendering: pixelated;
+}
+html.ui-sprites :is(.rarity-tag, .rarity-mark, .eq-input-n):not(#_) { border-radius: 0; background: #1b2430; box-shadow: none; text-shadow: none; }
+html.ui-sprites .rar-common { --rar: #b8c2bb; }
+html.ui-sprites .rar-uncommon { --rar: #a7bd75; }
+html.ui-sprites .rar-rare { --rar: #88c5db; }
+html.ui-sprites .eq-ghost .eq-tile-icon.sprite-ready { filter: none; }
+html.ui-sprites .eq-totals li:not(#_) {
+  border: 1px solid transparent;
+  border-image: var(--ui-field) 6 fill / 3px / 0 stretch;
+  border-radius: 0;
+  background: #1b2430;
+  color: #b8c2bb;
+}
+html.ui-sprites .eq-arrow:not(#_) {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  font-size: 26px;
+  background: none;
+  image-rendering: pixelated;
+  text-shadow: none;
+}
+
+/* Small controls have their own native grid, rather than shrinking large art. */
+html.ui-sprites .ui-control-icon.sprite-ready { width: 12px; height: 12px; vertical-align: middle; }
+html.ui-sprites .eq-arrow > .ui-control-icon.sprite-ready { width: 24px; height: 24px; }
+html.ui-sprites .ui-control-icon.reward-reveal-star.sprite-ready { width: 72px; height: 72px; text-shadow: none; }
+html.ui-sprites .reward-reveal .card-reveal-text :is(p, span):not(#_) { color: #b8c2bb; text-shadow: none; }
+html.ui-sprites .reward-reveal .card-reveal-text b:not(#_) { color: #eee0b7; text-shadow: none; }
+html.ui-sprites .reward-reveal .card-reveal-text small:not(#_) { color: #e1bb78; text-shadow: none; }
+html.ui-sprites :is(.gold-bonus-box, .enemy-odds-box):not(#_) {
+  border: 1px solid transparent;
+  border-image: var(--ui-dialog) 6 fill / 12px / 0 stretch;
+  border-radius: 0;
+  background: #1b2430;
+  box-shadow: none;
+  image-rendering: pixelated;
+  color: #eee0b7;
+}
+html.ui-sprites :is(.gold-bonus-box, .enemy-odds-box) :is(h2, th):not(#_) { color: #e1bb78; }
+html.ui-sprites :is(.gold-bonus-box, .enemy-odds-box) :is(td, li, p):not(#_) { color: #b8c2bb; }
+html.ui-sprites .gold-bonus-box li.inactive:not(#_) { color: #8b9a9d; }
+html.ui-sprites :is(#health-gain, #overheal-gain):not(#_) { background: url("../public/assets/style/ui-fill-gain.png") left top / 32px 100% repeat-x; }
+html.ui-sprites :is(#health-loss, #overheal-loss):not(#_) { background: url("../public/assets/style/shrine-fill.png") left top / 32px 100% repeat-x; image-rendering: pixelated; }
+
+/* The native input retains its value, keyboard behavior and accessible label. */
+html.ui-sprites input[type="range"]:not(#_) {
+  appearance: none;
+  height: 24px;
+  background: transparent;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  image-rendering: pixelated;
+}
+html.ui-sprites input[type="range"]::-webkit-slider-runnable-track {
+  height: 12px;
+  border: 1px solid transparent;
+  border-image: var(--ui-slider-track) 6 fill / 6px / 0 stretch;
+  background: #10151c;
+}
+html.ui-sprites input[type="range"]::-moz-range-track {
+  height: 12px;
+  border: 1px solid transparent;
+  border-image: var(--ui-slider-track) 6 fill / 6px / 0 stretch;
+  background: #10151c;
+}
+html.ui-sprites input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  margin-top: -7px;
+  border: 0;
+  border-radius: 0;
+  background: var(--ui-slider-thumb) center / 24px 24px no-repeat;
+  box-shadow: none;
+  cursor: pointer;
+}
+html.ui-sprites input[type="range"]::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 0;
+  background: var(--ui-slider-thumb) center / 24px 24px no-repeat;
+  box-shadow: none;
+  cursor: pointer;
+}
+html.ui-sprites input[type="range"]:active::-webkit-slider-thumb { background-image: var(--ui-slider-thumb-active); }
+html.ui-sprites input[type="range"]:active::-moz-range-thumb { background-image: var(--ui-slider-thumb-active); }
+
+/* Bare glyph controls: the purse's chevron and the speed arrows have no frame,
+   and the card in its details is framed by its own face. */
+html.ui-sprites #currencies-open:not(#_),
+html.ui-sprites #auto-speed .speed-arrow:not(#_) {
+  border: 0;
+  border-image: none;
+  background: none;
+  box-shadow: none;
+  padding: 0;
+}
+html.ui-sprites #auto-speed .speed-arrow:not(#_) { color: #c9b48a; }
+html.ui-sprites #auto-speed .speed-arrow:hover:not(:disabled):not(#_) { color: #f1d69b; }
+html.ui-sprites #currencies-open:not(#_) { color: #e1bb78; }
+html.ui-sprites .card-reveal-card:not(#_),
+html.ui-sprites .card-reveal-card:hover:not(#_) { border-radius: 0; box-shadow: none; }

@@ -6,7 +6,10 @@ import { RoomWorld } from "../src/tower/room-world.ts";
 import { bout, heroHpDuring, predict, raisedAttack, REVIVE_MS, summarize } from "../src/combat.ts";
 import { BoardPopups, enemyBar, lunges } from "../src/board-popups.ts";
 import { HEAL_COLOR } from "../src/damage-labels.ts";
+import { Renderer } from "../src/rendering.ts";
+import { unlockAt } from "../src/goals.ts";
 import type { Enemy, Player, Tile } from "../src/entities.ts";
+import type { FrameContext } from "../src/render-frame.ts";
 
 /** The damage and heal numbers rising off the board. */
 const numbers = (popups: BoardPopups) =>
@@ -20,7 +23,7 @@ const foe = (over: Partial<Enemy> = {}): Enemy => ({ name: "Slime", hp: 30, atta
 function arena(east: Tile, animate = true) {
   const g = new Game(defaults());
   g.save.upgrades.inspirationUndos = 1; // undo needs Rehearsed steps
-  g.playsFights = true;
+  g.fights.playsFights = true;
   g.save.settings.fightAnimation = animate;
   // Only Instant Combat lets fights settle at once.
   if (!animate) g.save.upgrades.instantCombat = 1;
@@ -80,6 +83,20 @@ test("the shroud takes the enemy's first damage, then the hero's HP takes the re
     ["0:5:#c9d3e0", "-0.22:3:#c9d3e0", "0.22:3:#b3121f"], "what the shroud blocks rises in silver, beside what got through");
 });
 
+test("a fight's numbers stay off the board while their setting is off, and a heal's while HP's is", () => {
+  const fight = bout(hero(), foe()), shown = { from: { x: 0, y: 0 }, to: { x: 1, y: 0 }, bout: fight, start: 0, hp: 30, summary: false };
+  const raised = (settings: { hitNumbers: boolean; hpGains: boolean }) => {
+    const popups = new BoardPopups();
+    popups.update({ run: { seed: 1 }, gains: [], fight: shown, lastHeal: { from: 1, to: 5, x: 0, y: 0, id: 1 }, save: { settings } }, fight.duration);
+    return numbers(popups).map((d) => d.text);
+  };
+  const all = raised({ hitNumbers: true, hpGains: true });
+  assert.ok(all.includes("+4") && all.length > 1);
+  assert.deepEqual(raised({ hitNumbers: false, hpGains: true }), ["+4"]);
+  assert.ok(!raised({ hitNumbers: true, hpGains: false }).includes("+4"));
+  assert.deepEqual(raised({ hitNumbers: false, hpGains: false }), []);
+});
+
 test("the shroud is whole again for every fight", () => {
   const g = arena({ kind: "enemy", enemy: foe() }, false);
   g.world.cells.set("0,1", { kind: "enemy", enemy: foe() });
@@ -116,17 +133,17 @@ test("a fight played out waits beside the enemy, then counts exactly like one se
   played.run.notes = structuredClone(instant.run.notes);
   const hp = played.run.player.hp;
   assert.ok(played.move(1, 0));
-  assert.ok(played.encounter, "the fight is playing out");
+  assert.ok(played.fights.encounter, "the fight is playing out");
   assert.deepEqual([played.run.player.x, played.run.player.hp], [0, hp], "nothing counts yet");
   assert.equal(played.world.tile(1, 0).kind, "enemy");
   assert.ok(!played.stepManually(0, 1) && !played.move(0, 1), "steps wait for the fight");
   played.walkTo(2, 2);
   assert.equal(played.route.length, 0);
-  assert.ok(played.shownHp(played.encounter.start + played.encounter.bout.duration) < hp);
+  assert.ok(played.fights.shownHp(played.fights.encounter.start + played.fights.encounter.bout.duration) < hp);
 
-  assert.ok(played.finishEncounter());
+  assert.ok(played.fights.finish());
   assert.ok(instant.move(1, 0));
-  assert.equal(played.encounter, null);
+  assert.equal(played.fights.encounter, null);
   assert.deepEqual(played.run, instant.run);
   assert.equal(played.message, instant.message);
   assert.deepEqual([played.run.player.x, played.world.tile(1, 0).kind], [1, "floor"]);
@@ -136,7 +153,7 @@ test("undo during a fight takes the whole fight back", () => {
   const g = arena({ kind: "enemy", enemy: foe() }), hp = g.run.player.hp;
   g.move(1, 0);
   assert.ok(g.undo());
-  assert.equal(g.encounter, null);
+  assert.equal(g.fights.encounter, null);
   assert.deepEqual([g.run.player.x, g.run.player.hp, g.run.kills], [0, hp, 0]);
 });
 
@@ -144,7 +161,7 @@ test("a fight the hero loses leaves it fallen only once it has played out", () =
   const g = arena({ kind: "enemy", enemy: foe({ hp: 600, attack: 30 }) });
   assert.ok(g.move(1, 0, true));
   assert.equal(g.fallen, false);
-  g.finishEncounter();
+  g.fights.finish();
   assert.ok(g.fallen);
 });
 
@@ -173,6 +190,19 @@ test("every victory, a weak enemy's too, raises both its Gold and its Silver as 
   assert.match(g.gains[0].text, /^\+\d+ Gold$/);
   assert.match(g.gains[1].text, /^\+\d+ Silver$/);
   assert.ok(g.save.gold > 0 && g.silver > 0);
+});
+
+test("a kill's or a chest's drops draw over the damage and heal numbers, which draw over the other rewards", () => {
+  const popups = new BoardPopups();
+  const gains = [{ x: 1, y: 0, text: "+1 blue key", art: null }, { x: 1, y: 0, text: "+2 Gold", art: null, drop: { row: 1, with: true } }];
+  popups.update({ run: { seed: 1 }, gains, fight: null, lastHeal: { from: 50, to: 60, x: 1, y: 0, id: 1 } }, 1000);
+  const filled: string[] = [];
+  const c = new Proxy({} as Record<string, unknown>, {
+    get: (t, k) => (k === "fillText" ? (text: string) => filled.push(text) : k in t ? t[k as string] : () => ({ addColorStop() {} })),
+    set: (t, k, v) => ((t[k as string] = v), true),
+  });
+  popups.draw({ c, s: 40, now: 1010, left: 0, bottom: 0, n: 9, look: { reduceMotion: true, themed: null } } as never);
+  assert.deepEqual(filled, ["+1 blue key", "+10", "+2 Gold"]);
 });
 
 test("the board shows rewards that came together one after another, and each strike's damage as it lands", () => {
@@ -226,10 +256,10 @@ test("a door raises each key it took, with a minus sign, and a Heart Door a chec
   Object.assign(keys.run.player.keys, { yellow: 1, blue: 1 });
   assert.ok(keys.move(1, 0));
   assert.deepEqual(keys.gains.map((g) => [g.text, g.art]), [
-    ["−1 yellow key", { tile: { kind: "key", color: "yellow" }, spent: true }],
+    ["−1 gold key", { tile: { kind: "key", color: "yellow" }, spent: true }],
     ["−1 blue key", { tile: { kind: "key", color: "blue" }, spent: true }],
     ["+3 Gold", { coin: "gold" }],
-  ], "a Gold + Azure Door pays its colours' 1 + 2 Gold");
+  ], "a Gold + Blue Door pays its colours' 1 + 2 Gold");
   assert.match(keys.message, /opened · 2 keys spent$/);
   assert.equal(keys.effect.until, 0, "no text flashes over the board");
 
@@ -239,7 +269,7 @@ test("a door raises each key it took, with a minus sign, and a Heart Door a chec
 });
 
 test("each kind of gain stays off the board while its setting is off, what it pays paid all the same", () => {
-  const shown = (setting: "itemGains" | "doorGains" | "goldGains", east: Tile) => {
+  const shown = (setting: "attackGains" | "defenseGains" | "hpGains" | "keyGains" | "doorGains" | "goldGains", east: Tile) => {
     const g = arena(east);
     g.save.settings[setting] = false;
     Object.assign(g.run.player.keys, { yellow: 1 });
@@ -248,7 +278,10 @@ test("each kind of gain stays off the board while its setting is off, what it pa
     assert.ok(g.save.gold > gold, "the Gold is paid");
     return g.gains.map((gain) => gain.text);
   };
-  assert.deepEqual(shown("itemGains", { kind: "attack", amount: 1 }), ["+1 Gold"]);
+  assert.deepEqual(shown("attackGains", { kind: "attack", amount: 1 }), ["+1 Gold"]);
+  assert.deepEqual(shown("defenseGains", { kind: "attack", amount: 1 }), ["+1 attack", "+1 Gold"], "each stat has its own row");
+  assert.deepEqual(shown("defenseGains", { kind: "defense", amount: 1 }), ["+1 Gold"]);
+  assert.deepEqual(shown("keyGains", { kind: "key", color: "blue" }), ["+2 Gold"]);
   assert.deepEqual(shown("goldGains", { kind: "attack", amount: 1 }), ["+1 attack"]);
   assert.deepEqual(shown("doorGains", { kind: "door", door: { type: "keys", keys: ["yellow"], mode: "all" } }), ["+1 Gold"]);
   const kill = arena({ kind: "enemy", enemy: foe({ hp: 1, attack: 0, strength: "weak" }) }, false);
@@ -325,7 +358,7 @@ test("Animate fights stays on until Instant Combat opens the setting", () => {
   g.save.settings.fightAnimation = false;
   assert.ok(g.animatesFights, "the setting is hidden, so fights still play out");
   g.move(1, 0);
-  assert.ok(g.encounter);
+  assert.ok(g.fights.encounter);
   g.save.upgrades.instantCombat = 1;
   assert.equal(g.animatesFights, false);
 });
@@ -333,25 +366,59 @@ test("Animate fights stays on until Instant Combat opens the setting", () => {
 test("a fight won at once raises only what the hero took, over the hero, and no bar", () => {
   const g = arena({ kind: "enemy", enemy: foe() }, false);
   assert.ok(g.move(1, 0));
-  assert.equal(g.encounter, null, "it counts at once");
-  assert.deepEqual([g.run.player.x, g.fight!.summary], [1, true]);
-  const popups = new BoardPopups(), now = g.fight!.start, taken = g.fight!.bout.strikes[1].damage;
-  popups.update({ ...g, gains: [] }, now);
+  assert.equal(g.fights.encounter, null, "it counts at once");
+  assert.deepEqual([g.run.player.x, g.fights.shown!.summary], [1, true]);
+  const popups = new BoardPopups(), now = g.fights.shown!.start, taken = g.fights.shown!.bout.strikes[1].damage;
+  popups.update({ ...g, gains: [], fight: g.fights.shown }, now);
   assert.equal(taken, 100 - g.run.player.hp);
   assert.deepEqual(numbers(popups).map((d) => `${d.x}:${d.text}`), [`1:${taken}`], "no number over the felled enemy");
-  assert.equal(enemyBar(g.fight!, now + 1000), null);
+  assert.equal(enemyBar(g.fights.shown!, now + 1000), null);
 });
 
 test("a fight lost at once raises a summary over both, and the enemy's bar shows its HP left", () => {
   const g = arena({ kind: "enemy", enemy: foe({ hp: 600, attack: 30 }) }, false);
   assert.ok(!g.move(1, 0, true));
-  assert.ok(g.fallen && !g.encounter);
-  const popups = new BoardPopups(), now = g.fight!.start;
-  popups.update({ ...g, gains: [] }, now);
-  const [dealt, taken] = g.fight!.bout.strikes.map((s) => s.damage);
+  assert.ok(g.fallen && !g.fights.encounter);
+  const popups = new BoardPopups(), now = g.fights.shown!.start;
+  popups.update({ ...g, gains: [], fight: g.fights.shown }, now);
+  const [dealt, taken] = g.fights.shown!.bout.strikes.map((s) => s.damage);
   assert.ok(taken >= 100, "every strike it took, the last one in full");
   assert.deepEqual(numbers(popups).map((d) => `${d.x}:${d.text}`), [`1:${dealt}`, `0:${taken}`]);
-  assert.deepEqual(enemyBar(g.fight!, now + 60_000), { hp: 600 - dealt, alpha: 1 });
+  assert.deepEqual(enemyBar(g.fights.shown!, now + 60_000), { hp: 600 - dealt, alpha: 1 });
   assert.ok(g.undo());
-  assert.equal(g.fight, null, "undo takes the bar away");
+  assert.equal(g.fights.shown, null, "undo takes the bar away");
+});
+
+test("the enemy's HP bar stays off the board while its Toggle is off", () => {
+  const fight = bout(hero(), foe()), shown = { from: { x: 0, y: 0 }, to: { x: 1, y: 0 }, bout: fight, start: 0, hp: 30, summary: false };
+  const at = fight.strikes.find((s) => s.by === "hero")!.at;
+  const bars = (enemyBars: boolean) => {
+    let rects = 0;
+    const c = new Proxy({} as CanvasRenderingContext2D, { get: (_t, k) => (k === "fillRect" ? () => rects++ : () => {}), set: () => true });
+    const popups = new BoardPopups();
+    popups.update({ run: { seed: 1 }, gains: [], fight: shown, lastHeal: null, save: { settings: { hitNumbers: false, hpGains: true, enemyBars } } }, at);
+    popups.draw({ c, s: 20, n: 5, left: 0, bottom: 0, now: at, look: {} } as unknown as FrameContext);
+    return rects;
+  };
+  assert.ok(bars(true) > 0);
+  assert.equal(bars(false), 0);
+});
+
+test("an enemy that appears where the latest fight ended wears its damage label, as a Greater Boss on a kill's tile does", () => {
+  const g = arena({ kind: "enemy", enemy: foe({ hp: 1, attack: 0 }) }, false);
+  const at = unlockAt("damageVisual");
+  g.save.goals.claimed[at.tower] = [at.floor];
+  assert.ok(g.move(1, 0));
+  assert.deepEqual(g.fights.shown?.to, { x: 1, y: 0 }, "the fight won is still the latest shown");
+  g.move(-1, 0);
+  g.run.changes["1,0"] = { kind: "enemy", enemy: foe({ strength: "greaterBoss" }) };
+  const labelled: string[] = [];
+  const c = new Proxy({} as Record<string, unknown>, {
+    get: (t, k) => (k === "fillText" ? (_text: string, x: number, y: number) => labelled.push(`${x},${y}`) : k in t ? t[k as string] : () => {}),
+    set: (t, k, v) => ((t[k as string] = v), true),
+  });
+  const renderer = new Renderer({ getContext: () => ({}), getBoundingClientRect: () => ({ width: 400 }) } as unknown as HTMLCanvasElement, g);
+  (renderer as unknown as { drawDamageLabels(f: FrameContext): void }).drawDamageLabels({ c, s: 20, n: 3, left: 0, bottom: 0, world: g.world, look: { styledSprites: false } } as unknown as FrameContext);
+  // Tile (1, 0)'s bottom edge is 3 rows down a 3-tile view of 20px tiles.
+  assert.ok(labelled.includes(`${20 + 1.2},${60 - 1.2}`), `labels at ${labelled}`);
 });

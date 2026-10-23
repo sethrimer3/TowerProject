@@ -23,7 +23,7 @@ test("each delve's quota doors track the schedule of the tower of its number", (
   }
 });
 
-test("the Delve's keys per lock track each colour's aim, and its yellow locks the wooden share", () => {
+test("the Delve's keys per lock track each colour's aim, and its gold locks the wooden share", () => {
   for (const [tier, from, to] of [[1, 1, 100], [1, 401, 500], [9, 201, 300]]) {
     const c = band(tier, from, to), found = keysPerLock(c);
     // Floors 1-100 hold the first blue doors and floor 51's entrance key, a surplus by design.

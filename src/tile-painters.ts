@@ -1,17 +1,27 @@
-import type { ThemedBoard } from "./themed-boards.ts";
+import type { ThemedBoard } from "./themed-board.ts";
+import { wingMark } from "./flyer-art.ts";
 import { CHUNK, COLORS } from "./config.ts";
 import { drawCornerBricks, drawTerrain, themeAt, type Corner } from "./themes.ts";
 import { tileRandom } from "./random.ts";
-import type { Enemy, EnemyStrength, Mode, Tile, Torch } from "./entities.ts";
+import { potionShade, type Enemy, type EnemyStrength, type Mode, type Tile, type Torch } from "./entities.ts";
 import { drawForestTile, type Roads } from "./outside.ts";
 import { getTorchFlicker, getTorchSway } from "./lighting.ts";
 import { drawArea1Door, drawArea1Item, drawArea1Quoins, wallAdjacencyMask } from "./area1-tileset.ts";
 import { drawThemedTile } from "./themed-tilesets.ts";
 import { doorColor, doorRule, drainsHp } from "./doors.ts";
 import { drawEnemySprite, enemySpriteReady } from "./enemy-sprites.ts";
-import { rankChevrons } from "./rank-chevrons.ts";
+import { rankChevrons, RANK_CHEVRONS } from "./rank-chevrons.ts";
 import { DELVE_ENEMY_NAMES } from "./scaling.ts";
 import { drawGameSprite, drawGameSpriteFrame, gameSprite, torchAnimationFrame, TORCH_FRAME_COUNT } from "./game-sprites.ts";
+import { drawKit, kitEnemy, kitImage, onSpritesLoaded } from "./sprite-kit.ts";
+import { COMBAT_MARKS } from "./sprite-combat.ts";
+import { drawKitTerrain } from "./sprite-terrain.ts";
+import { themedTileUrl } from "./themed-tilesets.ts";
+import { drawDungeonGround, dungeonDiagonals, dungeonMaterial, towerTileset } from "./sprite-dungeon.ts";
+import { dungeonWallProfile } from "./wall-depth.ts";
+import { dungeonDetail } from "./dungeon-details.ts";
+import { drawAnimatedTorch, drawSquareDoor } from "./sprite-options.ts";
+import { drawPickupAnimation, drawSpriteFrame } from "./sprite-animations.ts";
 
 // Everything here paints in 24x24 tile space: the caller translates and
 // scales the context to the tile first.
@@ -29,6 +39,7 @@ const OUTLINE_THICKNESS = 2;
 /** How the board looks: which art set applies, and the player's settings. */
 export type BoardLook = {
   mode: Mode;
+  tier?: number;
   height: number;
   seed: number;
   outside: boolean;
@@ -37,6 +48,9 @@ export type BoardLook = {
   /** The roads laid to the clearing's buildings (outside only). */
   roads?: Roads;
   spritesOff: boolean;
+  styledSprites?: boolean;
+  spriteAnimations?: boolean;
+  squareDoors?: boolean;
   reduceMotion: boolean;
   /** Whether the first Tower section's hand-drawn art is showing: its own
    * doors, chests, floor, and the torch relief on that floor. Never with
@@ -52,7 +66,7 @@ type TileWorld = { tile(x: number, y: number): Tile | undefined };
  * per-tile variation), the time (for sparkles), and which art to use.
  * `lifted` items are off the ground (a reward rising from its tile), so they
  * cast no ground shadow. */
-export type TileArt = { x: number; y: number; time: number; spritesOff: boolean; reduceMotion: boolean; area1: boolean; lifted?: boolean };
+export type TileArt = { x: number; y: number; time: number; spritesOff: boolean; reduceMotion: boolean; area1: boolean; lifted?: boolean; styledSprites?: boolean; squareDoors?: boolean; spriteAnimations?: boolean; seed?: number };
 
 /** The first Tower section has its own hand-drawn doors, chests, and floor. */
 export const isArea1 = (mode: Mode, height: number) => mode === "tower" && height >= 0 && height < 10;
@@ -61,10 +75,10 @@ export const isArea1 = (mode: Mode, height: number) => mode === "tower" && heigh
  * on it (items, doors, enemies...). Returns false while ground art is still
  * loading, so cached layers know to repaint it. */
 export function paintTile(c: CanvasRenderingContext2D, world: TileWorld, t: Tile, x: number, y: number, time: number, layer: 0 | 1, look: BoardLook) {
-  if (look.outside) return layer !== 0 || drawForestTile(c, t, { x, y, seed: look.seed, center: look.entranceX, roads: look.roads }, !look.spritesOff);
+  if (look.outside) return layer !== 0 || drawForestTile(c, t, { x, y, seed: look.seed, center: look.entranceX, roads: look.roads }, !look.spritesOff, look.styledSprites);
   if (layer === 0) return paintGround(c, world, t, x, y, look);
   if (t.kind === "wall" || t.kind === "floor") return true;
-  paintContents(c, t, { x, y, time, spritesOff: look.spritesOff, reduceMotion: look.reduceMotion, area1: look.area1 });
+  paintContents(c, t, { x, y, time, spritesOff: look.spritesOff, reduceMotion: look.reduceMotion, area1: look.area1, styledSprites: look.styledSprites, squareDoors: look.squareDoors, spriteAnimations: look.spriteAnimations, seed: look.seed });
   return true;
 }
 
@@ -77,11 +91,17 @@ function paintGround(c: CanvasRenderingContext2D, world: TileWorld, t: Tile, x: 
     eastWall: wallAt(1, 0),
   };
   const wall = t.kind === "wall";
-  const terrain = { mode: look.mode, height: look.height, seed: look.seed, x, y, wall, empty: t.kind === "floor", neighbors };
+  const terrain = { mode: look.mode, tier: look.tier, height: look.height, seed: look.seed, x, y, wall, empty: t.kind === "floor", neighbors };
+  if (look.styledSprites && !look.spritesOff) {
+    const profile = wall ? dungeonWallProfile(world, x, y) : undefined;
+    const detail = wall && profile?.depth === 0 && !towerTileset(look.mode, look.tier) ? dungeonDetail(world, x, y, look.seed,
+      (xx, yy) => dungeonMaterial(look.mode, xx, yy, look.seed)) : undefined;
+    if (drawDungeonGround(c, terrain, dungeonDiagonals(world, look.mode, x, y, look.seed), profile, detail)) return true;
+  }
   // Every biome has a PNG floor/wall set. Images load asynchronously; until
   // ready (or if an asset fails), the procedural renderer remains a complete
   // fallback and the Sprites setting can still opt out of bitmap art.
-  const drewSprite = !look.spritesOff && drawThemedTile(c, look.mode, look.height, wall, x, y, look.seed, neighbors);
+  const drewSprite = !look.spritesOff && ((look.styledSprites && drawKitTerrain(c, themedTileUrl(look.mode, look.height, wall, x, y, look.seed, neighbors))) || drawThemedTile(c, look.mode, look.height, wall, x, y, look.seed, neighbors));
   if (!drewSprite) drawTerrain(c, terrain);
   if (wall) {
     const decor = themeAt(look.mode, look.height, x, y, look.seed).decor;
@@ -128,7 +148,34 @@ const PAINTERS: Partial<Record<Tile["kind"], Painter>> = {
 };
 /** Doors, stairs, items, chests, and enemies. */
 export function paintContents(c: CanvasRenderingContext2D, t: Tile, art: TileArt) {
+  if (art.styledSprites && !art.spritesOff) {
+    if (art.squareDoors && t.kind === "door" && drawSquareDoor(c, t)) return;
+    if (paintKitContents(c, t)) {
+      if (art.spriteAnimations && !art.reduceMotion && !art.lifted) drawPickupAnimation(c, t, art.x, art.y, art.time, art.seed);
+      return;
+    }
+  }
   PAINTERS[t.kind]?.(c, t, art);
+}
+
+function paintKitContents(c: CanvasRenderingContext2D, t: Tile) {
+  const id = t.kind === "key" ? `key-${t.color ?? "yellow"}`
+    : t.kind === "potion" ? `potion-${potionShade(t)}`
+    : t.kind === "attack" ? "sword" : t.kind === "defense" ? "shield"
+    : t.kind === "stairs" ? "stairs" : t.kind === "oneway" ? "arrow-up" : t.kind === "treasure" ? "chest-wood"
+    : t.kind === "reward" ? `chest-${t.tier === "gold" ? "gold" : "silver"}`
+    : t.kind === "openedChest" ? "chest-open" : null;
+  if (id) return drawKit(c, id);
+  if (t.kind !== "door") return false;
+  const rule = doorRule(t);
+  if (!drawKit(c, rule.type === "keys" && rule.mode === "any" ? "door-steel" : "door-wood")) return false;
+  if (drainsHp(rule)) drawKit(c, "heart", 8, 7, 8);
+  // Keep every colored-key requirement visible on mixed doors.
+  if (rule.type !== "wood" && "keys" in rule) {
+    const colors = rule.keys;
+    colors.forEach((color, i) => drawKit(c, `key-${color}`, 3 + i * 6, 14, 7));
+  }
+  return true;
 }
 
 function paintOneway(c: CanvasRenderingContext2D) {
@@ -233,7 +280,7 @@ function paintPotion(c: CanvasRenderingContext2D, t: Tile, art: TileArt) {
     c.fillStyle = "#bbc4ca";
     c.fillRect(9, 4, 6, 5);
     c.fillRect(6, 10, 12, 11);
-    c.fillStyle = COLORS[t.color ?? "blue"];
+    c.fillStyle = COLORS[potionShade(t)];
     c.fillRect(8, 12, 8, 7);
     if (isPercent) {
       // Diagonal stripes distinguish the percent potion by shape, not just color.
@@ -412,16 +459,19 @@ const ENEMY_LOOK: Record<EnemyStrength, { rings: Ring[] }> = {
 const ENEMY_OUTLINE: Ring = { r: 1, color: "#0b0a0e", alpha: 1 };
 /** Room round a baked enemy for its outermost ring. */
 const ENEMY_MARGIN = 3;
-/** Baked enemies by name, tier, strength, whether it is Fast or Ranged, and whether the sprite art drew. */
+/** Baked enemies by name, tier, strength, whether it is Fast, Ranged or Flying, and whether the sprite art drew. */
 const bakedEnemies = new Map<string, HTMLCanvasElement>();
+// A body may arrive before its small marks. Re-bake when either loads.
+onSpritesLoaded(() => bakedEnemies.clear());
 
 function paintEnemy(c: CanvasRenderingContext2D, t: Tile, art: TileArt) {
   const e = t.enemy!;
   groundShadow(c, 12, 21, 8, 2.6, 0.4);
+  const styled = !!art.styledSprites && !art.spritesOff && !!kitImage(kitEnemy(e.name));
   const sprite = !art.spritesOff && enemySpriteReady(e.name);
-  const key = `${e.name}|${e.tier}|${e.strength}|${e.fast ? "fast" : ""}|${sprite}${e.ranged ? "|ranged" : ""}`;
+  const key = `${e.name}|${e.tier}|${e.strength}|${e.fast ? "fast" : ""}|${sprite}${styled ? "|kit" : ""}${e.ranged ? "|ranged" : ""}${e.flying ? "|flying" : ""}`;
   let baked = bakedEnemies.get(key);
-  if (!baked) bakedEnemies.set(key, (baked = bakeEnemy(e, sprite)));
+  if (!baked) bakedEnemies.set(key, (baked = bakeEnemy(e, sprite, styled)));
   c.drawImage(baked, -ENEMY_MARGIN, -ENEMY_MARGIN);
 }
 
@@ -429,9 +479,9 @@ function paintEnemy(c: CanvasRenderingContext2D, t: Tile, art: TileArt) {
  * wider than the tile on every side. The rings go on from the outside in,
  * each cutting out what lies inside it first, so every band keeps exactly
  * its own opacity; the sprite goes on last. */
-function bakeEnemy(e: Enemy, sprite: boolean) {
+function bakeEnemy(e: Enemy, sprite: boolean, styled = false) {
   const m = ENEMY_MARGIN, body = square(24), bc = body.getContext("2d")!;
-  if (!(sprite && drawEnemySprite(bc, e.name))) paintEnemyBody(bc, e);
+  if (!(styled && drawKit(bc, kitEnemy(e.name))) && !(sprite && drawEnemySprite(bc, e.name))) paintEnemyBody(bc, e);
   const out = square(24 + 2 * m), oc = out.getContext("2d")!;
   const look = ENEMY_LOOK[e.strength];
   for (const ring of [...look.rings, ENEMY_OUTLINE]) {
@@ -445,10 +495,19 @@ function bakeEnemy(e: Enemy, sprite: boolean) {
   }
   oc.globalAlpha = 1;
   oc.drawImage(body, m, m);
-  rankChevrons(oc, e.strength, CHEVRON, "#0b0a0e", m + 1, m + 1);
-  // A Ranged enemy's arrow takes the top right, the Fast mark moving below it.
-  if (e.ranged) rangedMark(oc, m + 16, m + 1);
-  if (e.fast) fastMark(oc, m + 16, m + (e.ranged ? 8 : 1));
+  const rank = RANK_CHEVRONS[e.strength];
+  const rankId = rank.down ? COMBAT_MARKS.rankDown : COMBAT_MARKS.rankUp;
+  if (styled && kitImage(rankId)) {
+    for (let i = 0; i < rank.count; i++) drawKit(oc, rankId, m, m + i * 4, 7, 6);
+  } else rankChevrons(oc, e.strength, CHEVRON, "#0b0a0e", m + 1, m + 1);
+  // A Ranged enemy's arrow takes the top right (a Flying enemy's wing in
+  // its place), the Fast mark moving below it.
+  if (e.flying && !(styled && drawKit(oc, COMBAT_MARKS.flying, m + 15, m, 9, 8))) wingMark(oc, m + 16, m + 1);
+  if (e.ranged && !(styled && drawKit(oc, COMBAT_MARKS.ranged, m + 15, m, 9, 8))) rangedMark(oc, m + 16, m + 1);
+  if (e.fast) {
+    const y = m + (e.ranged ? 8 : 0);
+    if (!(styled && drawKit(oc, COMBAT_MARKS.fast, m + 12, y, 12, 8))) fastMark(oc, m + 16, m + (e.ranged ? 8 : 1));
+  }
   return out;
 }
 
@@ -501,7 +560,10 @@ function square(size: number) {
 }
 
 /** The hero with its grounding shadow and outline. */
-export function paintHero(c: CanvasRenderingContext2D, spritesOff: boolean) {
+export function paintHero(c: CanvasRenderingContext2D, spritesOff: boolean, styled = false, facing = { dx: 0, dy: -1 }, idleFrame = 0) {
+  const direction = facing.dx > 0 ? "right" : facing.dx < 0 ? "left" : facing.dy > 0 ? "up" : "down";
+  if (!spritesOff && styled && idleFrame && drawSpriteFrame(c, `ambient-hero-${direction}`, idleFrame)) return;
+  if (!spritesOff && styled && drawKit(c, `hero-${direction}`)) return;
   groundShadow(c, 12, 22, 8, 2.6, 0.4);
   withOutline(c, DARK_BLUE, (c) => {
     if (!spritesOff && drawGameSprite(c, "player")) return;
@@ -541,7 +603,9 @@ export function paintHeroFallback(c: CanvasRenderingContext2D) {
 /** Torch + a living flame: the flame stretches, shrinks, and leans side
  * to side from its base (in step with the light's sway), and its core
  * pulses with the light's flicker. The handle stays put. */
-export function paintTorch(c: CanvasRenderingContext2D, t: Torch, now: number, reduceMotion: boolean, spritesOff: boolean) {
+export function paintTorch(c: CanvasRenderingContext2D, t: Torch, now: number, reduceMotion: boolean, spritesOff: boolean, styled = false, animated = false) {
+  if (!spritesOff && styled && animated && drawAnimatedTorch(c, t.x, t.y, now, reduceMotion)) return;
+  if (!spritesOff && styled && drawKit(c, "torch")) return;
   const sway = getTorchSway(t, now, reduceMotion);
   const flicker = getTorchFlicker(t, now, reduceMotion);
   // Small deterministic per-torch variation (flame height/width) so a room

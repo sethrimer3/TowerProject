@@ -88,7 +88,7 @@ html.pixel body {
    rules (and the ones below over these); a style written on an element (a
    colour swatch) still wins. Drawings (canvas, images, svg), the bars'
    fills (`i`), rarity colours and badge tokens keep theirs. */
-html.pixel body *:not(#_, canvas, img, svg, svg *, i, .eq-tile, .badge-token, [class*="rar"]) {
+html.pixel body *:not(#_, canvas, img, svg, svg *, i, .eq-tile, .badge-token, .hand-badge-level, [class*="rar"]) {
   background-color: transparent;
   background-image: none;
   border-color: transparent;
@@ -98,7 +98,10 @@ html.pixel body *:not(#_, canvas, img, svg, svg *, i, .eq-tile, .badge-token, [c
   backdrop-filter: none;
   outline-color: transparent;
 }
-html.pixel body *:not(#_, svg, svg *) {
+/* A badge's symbol and the marks on the hand's cards keep their own
+   colours on their dark boxes, and a badge's level stays dark on its gold
+   star. */
+html.pixel body *:not(#_, svg, svg *, .badge-glyph, .badge-mark, .hand-badge-level, .badge-level b) {
   color: var(--p-text);
 }
 html.pixel main.shell:not(#_) {
@@ -193,7 +196,6 @@ html.pixel .research:not(#_),
 html.pixel .pull-box:not(#_),
 html.pixel .eq-loadout:not(#_),
 html.pixel .equip-materials:not(#_),
-html.pixel .purse-big:not(#_),
 html.pixel .starting-stats:not(#_),
 html.pixel .training-boost:not(#_),
 html.pixel .tournament-standing:not(#_),
@@ -404,6 +406,18 @@ html.pixel .safe:not(#_),
 html.pixel .eq-result-title:not(#_) {
   color: var(--p-green) !important;
 }
+/* An enemy's stat line keeps its colours: what gets through red, Lifesteal's
+   heal blue, the Gold drop gold. */
+html.pixel .inspect-box .hit-hurt:not(#_) { color: var(--p-red); }
+html.pixel .inspect-box .hit-heal:not(#_) { color: var(--p-blue); }
+html.pixel .inspect-box .hit-gold:not(#_) { color: #ffd23d; }
+/* Goals' climb: the line up the tower in this theme's line colour, lit
+   up to the floor reached, and the floors completed lit with it.
+   Training's next value (and the Archives' next level) is green, a gain. */
+html.pixel .goals-line:not(#_) { background: var(--p-ink); }
+html.pixel .goals-line.lit:not(#_) { background: var(--p-gold-light); }
+html.pixel .goal-floor.completed:not(#_) { color: var(--p-gold-light); }
+html.pixel .training-box.next:not(#_) { color: var(--p-green); }
 /* Keys keep their colour. */
 html.pixel .keys .yellow:not(#_) { color: #ffd23d; }
 html.pixel .keys .blue:not(#_) { color: #6fb6ff; }
@@ -418,4 +432,17 @@ html.pixel .keys .red:not(#_) { color: #ff6b5c; }
 html.pixel:not(.reduce-motion) .page-title h2::before,
 html.pixel:not(.reduce-motion) .page-title h2::after {
   animation: pixel-twinkle 3s steps(1) infinite;
+}
+
+/* The Shrine bar (style.css): its fill pixel violet, apart from the blue XP bar; its diamond a dark field, lit gold while boons wait. */
+html.pixel {
+  --shrine-fill: #a46ae0;
+  --shrine-line: var(--p-dim);
+  --shrine-idle: var(--p-ink);
+  --shrine-lit: var(--p-gold-light);
+  --shrine-lit-line: var(--p-ink);
+  --shrine-lit-ink: var(--p-ink);
+  --shrine-edge: none;
+  --shrine-glow: none;
+  --shrine-ink: var(--p-text);
 }

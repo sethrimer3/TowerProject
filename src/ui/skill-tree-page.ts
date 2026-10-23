@@ -11,6 +11,7 @@ import type { AppContext } from "./app.ts";
 import { clamp, el, skillSprite, uiSprite, type UiSprite } from "./dom.ts";
 import { bindPanZoom, type View } from "./pan-zoom.ts";
 import { currencyHelp } from "./currency-help.ts";
+import { heldAmount } from "./currencies-dialog.ts";
 
 type Tree = (typeof TREES)[number];
 
@@ -50,15 +51,10 @@ export class SkillTreePage {
 
   render() {
     if (!this.shown(this.tree)) this.tree = "inspiration";
-    // One tree alone needs no tab row.
-    const shown = TREES.filter(t => this.shown(t.id)).length;
-    this.renderTree(shown > 1 ? `<div class="tree-tabs" role="group" aria-label="Skill trees">${this.tabsHtml()}</div>` : "");
+    // The tab row shows even for Inspiration alone, since its tab reads the points held.
+    this.renderTree(`<div class="tree-tabs page-tabs" role="group" aria-label="Skill trees">${this.tabsHtml()}</div>`);
     // Showing the Inspiration or Courage tree clears the dot a run's currency put on it.
-    const notices = this.ctx.game.save.treeNotices;
-    if ((this.tree === "inspiration" || this.tree === "courage") && notices[this.tree]) {
-      notices[this.tree] = false;
-      this.ctx.update();
-    }
+    if ((this.tree === "inspiration" || this.tree === "courage") && this.ctx.game.notices.shown(this.tree)) this.ctx.update();
   }
 
   /** A tree's tab shows once the tree is open; Dev mode shows them all. */
@@ -67,11 +63,16 @@ export class SkillTreePage {
     return save.settings.devMode || treeOpen(TREES.find(t => t.id === tab)!, save.upgrades);
   }
 
-  /** The tab buttons, one a tree: Inspiration's and Courage's wearing a dot
+  /** The tab buttons, one a tree: Inspiration's and Courage's reading the
+   * points held under their name, as Training's tab does, and wearing a dot
    * while a run's currency waits to be spent there. */
   private tabsHtml() {
-    return TREES.filter(t => this.shown(t.id)).map(t =>
-      `<button data-tree="${t.id}" aria-pressed="${t.id === this.tree}"${(t.id === "inspiration" || t.id === "courage") && this.tree !== t.id && this.ctx.game.treeWaiting(t.id) ? ` class="notify"` : ""}><span>${uiSprite(TREE_ICONS[t.id] ?? "defend")}</span>${t.name}</button>`).join("");
+    const game = this.ctx.game, held = { inspiration: game.save.tower.inspiration, courage: game.save.delve.courage };
+    return TREES.filter(t => this.shown(t.id)).map(t => {
+      const priced = t.id === "inspiration" || t.id === "courage";
+      const points = priced ? `<small>${heldAmount(game, held[t.id as "inspiration" | "courage"])} POINTS</small>` : "";
+      return `<button data-tree="${t.id}" aria-pressed="${t.id === this.tree}"${priced && this.tree !== t.id && game.notices.waiting(t.id as "inspiration" | "courage") ? ` class="notify"` : ""}><span>${uiSprite(TREE_ICONS[t.id] ?? "defend")}</span>${t.name}${points}</button>`;
+    }).join("");
   }
 
   private bindTabs() {

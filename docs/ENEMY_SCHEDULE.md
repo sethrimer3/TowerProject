@@ -137,7 +137,7 @@ A hero strong enough for that boss fells the next tower's first enemies in one s
 Raising every early enemy's ATK would not reach the first of those, and raising their HP too would make the whole early tower harder; a Fast enemy strikes first, so it lands a blow even when the hero fells it in one strike, and it alone carries a raised ATK.
 
 - **Who:** from Tower II and Delve II up, any enemy but a boss or Greater Boss, More Enemies' extras among them.
-- **Share** (`fastShare`, thousandths of a percent): 8% on Tower II's floor 1, growing 1% every 200 floors (a little each floor) to 20% on floor 2,401; each tower after starts and stops half a point higher (8.5% to 20.5% in Tower III, 11.5% to 23.5% in Tower IX). The Delve counts its equivalent floor.
+- **Share** (`fastShare`, thousandths of a percent): 12% on Tower II's floor 1, growing 1.5% every 200 floors (a little each floor) without end (30% on floor 2,401); each tower after starts three quarters of a point higher (12.75% in Tower III, 17.25% in Tower IX). The Delve counts its equivalent floor.
 - **Roll:** one `tileRandom` number per run seed, floor and tile (`FAST_SALT`), drawn after the tier's factor (`fastCells`, beside `tierCells` in `RoomWorld` and the Delve's `World`), so nothing else in generation draws differently.
 - **ATK:** at least the **carry** (`fastCarry`): `FAST_CARRY` (1.75) times the tier below's floor-100 normal, balanced enemy's ATK, in the tier's own units: 700 in Tower II (the Tower I floor-100 boss's ATK); Towers III, IV and V carry set values instead (`FAST_CARRY_AT`): 1,000, 2,000 and 4,000 rather than 3,500, 14,000 and 42,000. The Delve's caves carry the same. Every Fast enemy below it strikes with it, whatever its strength or profile; past the floor where the curve outgrows it (about 73 in Tower II), Fast changes no stats. HP and DEF are untouched.
 - **Fights:** it strikes first, then the fight goes on as ever; its ATK rises after its own strikes. Thorns answer its opening strike, the shroud takes it first, Revive may catch it, and Lifesteal heals only from the hero's strikes. A fight against it is never an Instakill, so Mug pays nothing more.
@@ -152,13 +152,43 @@ Tune it with `FAST_CARRY`, `FAST_CARRY_AT` and `fastShare`.
 A Ranged enemy (`src/ranged.ts`) shoots the hero from a distance, so a hero who outclasses its fight still pays to walk past it, and the Archer (Tower III's floor 10 Goal) gets to shoot first.
 
 - **Who:** any enemy but a boss or Greater Boss, from Tower III and Delve III up, on its own roll, so an enemy may be both Fast and Ranged.
-- **Share** (`rangedShare`): a point under Fast's, growing as it does: 7.5% on Tower III's floor 1, 19.5% from floor 2,401.
+- **Share** (`rangedShare`): a point and a half under Fast's, growing as it does: 11.25% on Tower III's floor 1, 29.25% on floor 2,401.
 - **Roll:** one `tileRandom` number per run seed, floor and tile (`RANGED_SALT`), after the Fast roll (`rangedCells`); it changes no stats.
-- **Shots:** from five sixths of the hero's Attack Range (2.5 tiles to its 3), Euclidean, walls and doors no obstacle, every 10 turns (`foeShotCost`: a turn less every 500 floors, at least 1), its ATK less DEF, cut by parries, less the whole shroud.
+- **Shots:** from five sixths of the hero's Attack Range (2.5 tiles to its 3), Euclidean, walls and doors no obstacle, every 10 turns (`foeShotCost`: a turn less every 500 floors, at least 1; a Fast one charges twice as fast, `foeGain`, so every 5), its ATK less DEF, cut by parries, less the whole shroud.
 - **Pay:** 1 Gold more (`RANGED_GOLD`), 2 more for one both Fast and Ranged.
 - **Look:** "Ranged" after "Fast" and before its strength (*Fast Ranged Elite Goblin*), and an arrow at the tile's top right, the Fast mark moving below it.
 
 `tests/ranged.test.ts` covers it.
+
+### Flying (built)
+
+A Flying enemy (`src/flying.ts`) hovers over the floor: it can't be fought, only shot, so the Archer's arrows, and the FLYING ENEMY card (Tower V's floor 10 Goal) that stands the hero in reach of one, earn their keep.
+
+- **Who:** any enemy but a boss, Greater Boss or Shielded enemy, from Tower V and Delve V up, on its own roll.
+- **Share** (`flyingShare`): the Ranged share (12.75% on Tower V's floor 1).
+- **Roll:** one `tileRandom` number per run seed, floor and tile (`FLYING_SALT`), after the tier's factor and before the Fast and Ranged rolls (`flyingCells`), which then pass it by; its tile becomes open floor carrying it (`Tile.flyer`). It changes no stats.
+- **Shots:** as a Ranged enemy's.
+- **Aggroed:** an arrow that wounds it makes it Aggroed: it steps toward the hero along open floor each time a shot's worth of turns has charged (`aggroTurn`, `stride`), every Aggroed enemy by one shared walk to the hero (`walkToHero`).
+- **Pay:** as a Ranged enemy (`RANGED_GOLD`), its loot keyed to the tile it was made on (`home`) however far it moves.
+- **Look:** "Flying" before the rest of its name (*Flying Elite Goblin*), a wing at the tile's top right, drawn over the board a little above its tile, half see-through over the hero.
+
+`tests/flying.test.ts` covers it.
+
+### Shielded (built)
+
+A Shielded enemy (`src/shielded.ts`) guards the enemies round it, so the way up asks the hero either to fight through a bubble at a cut or to fell the Shielded enemy first.
+
+- **Who:** from Tower IV and Delve IV up, at most one a floor: when the floor rolls one, the enemy but a boss or Greater Boss nearest the way up by walking (the Tower's stairs; in the Delve the deepest on the equivalent floor, then the farthest walked), ties to the lowest row and column.
+- **Share** (`shieldShare`, thousandths of a percent, per floor rather than per enemy): 1% a tier (4% in Tower IV), and 1% more every 250 floors (a little each floor) to floor 4,000: 20% on Tower IV's floor 4,000, 21% on Tower V's.
+- **Bubble:** a radius of a tile, half a tile more every 1,000 floors, 3 from floor 4,000 (`bubbleReach`, `inBubble`, whole numbers: (dx² + dy²) × 4,000,000 against (2,000 + floor)²), Euclidean from tile centre to tile centre. The orthogonal neighbours are in from floor 1, the diagonals from 829, two tiles straight out from 2,000, a knight's move from 2,473, two diagonally from 3,657, three straight out from 4,000.
+- **Guard:** while the Shielded enemy stands, the hero's strikes and arrows on every enemy in its bubble, itself and any boss included, do `SHIELD_CUT` (60%) less after DEF, as a parry cuts the enemy's (`guarded` in `combat.ts`). DEF is untouched, so an enemy the hero's ATK gets past stays one it can hurt. Thorns are not cut. The board sets the `guard` as it reads the tile (`guardedTile`), so felling the Shielded enemy ends the bubble at once, and undo brings it back.
+- **Extras:** when no other enemy stands in the bubble, the floor adds standard enemies in front of it (`extraShare`, thousandths of a percent: none on Tower IV's floor 1, 5% more a tier after, 0.05% more a floor, without end; each whole 100% is one certain extra, the rest the chance of one more). Each is a copy of the floor's normal enemy nearest the Shielded one (else a normal, balanced enemy from the floor's curve), on the bubble's open floor tile nearer the way in with the lowest roll, else the nearest open floor tile behind it on the way back to the way in. They stand before the Fast and Ranged rolls, so they may be either.
+- **Rolls:** `tileRandom` numbers of the run seed and floor (`SHIELD_SALT`, `EXTRA_SALT`) and, for where an extra stands, the tile (`PLACE_SALT`), so nothing else in generation draws differently; but extras move what stands where, so this bumped `TOWER_LAYOUT_VERSION` to 25 and the Delve's `LAYOUT_VERSION` to 27.
+- **Pay:** 1 Gold more (`SHIELDED_GOLD`), beside Fast's and Ranged's.
+- **Look:** "Shielded" after "Fast" and "Ranged" and before its strength (*Shielded Elite Goblin*), and its bubble: a glowing green ring of its radius round its tile, drawn over every board and above the dark (`shield-art.ts`). No mark on the tile. The inspect panel notes the guard on each enemy in a bubble.
+
+Tune it with `shieldShare`, `extraShare`, `bubbleReach` and `SHIELD_CUT`.
+`tests/shielded.test.ts` covers it.
 
 ## 7. Build order
 
@@ -166,4 +196,4 @@ A Ranged enemy (`src/ranged.ts`) shoots the hero from a distance, so a hero who 
 2. **The enemy stage, Tower** (done): count, then re-rank, and strong and elite first floors by tower. `TOWER_LAYOUT_VERSION` 22.
 3. **The enemy stage, Delve** (done), by equivalent floor, replacing `guardStrengths`' fixed mix. `LAYOUT_VERSION` 25.
 4. **Profiles** (done): every strength may wear every profile, with scheduled shares, and rosters by tower. `TOWER_LAYOUT_VERSION` 23, `LAYOUT_VERSION` 26.
-5. **Traits** (section 6), one at a time. Fast (done): no layout bump, since nothing moves. Ranged (done): the same.
+5. **Traits** (section 6), one at a time. Fast (done): no layout bump, since nothing moves. Ranged (done): the same. Shielded (done): `TOWER_LAYOUT_VERSION` 25, `LAYOUT_VERSION` 27, since its extras move what stands where.

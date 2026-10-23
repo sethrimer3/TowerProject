@@ -51,7 +51,7 @@ html.desktop body {
    written on an element (a colour swatch) still wins. Drawings (canvas,
    images, svg) and the bars' fills (`i`) keep theirs. Pseudo-elements, such
    as the red dots on what is new, are untouched. */
-html.desktop body *:not(#_, canvas, img, svg, svg *, i) {
+html.desktop body *:not(#_, canvas, img, svg, svg *, i, .badge-mark, .hand-badge-level) {
   background-color: transparent;
   background-image: none;
   border-radius: 0;
@@ -59,7 +59,9 @@ html.desktop body *:not(#_, canvas, img, svg, svg *, i) {
   text-shadow: none;
   backdrop-filter: none;
 }
-html.desktop body *:not(#_, svg, svg *) {
+/* The badge marks on the hand's cards keep their dark box and colours,
+   and a badge's level stays dark on its gold star. */
+html.desktop body *:not(#_, svg, svg *, .badge-mark, .hand-badge-level, .badge-level b) {
   color: #000;
 }
 html.desktop body *:not(#_, svg, svg *, .eq-tile, .badge-token, [class*="rar"]) {
@@ -104,7 +106,6 @@ html.desktop .research:not(#_),
 html.desktop .pull-box:not(#_),
 html.desktop .eq-loadout:not(#_),
 html.desktop .equip-materials:not(#_),
-html.desktop .purse-big:not(#_),
 html.desktop .starting-stats:not(#_),
 html.desktop .training-boost:not(#_),
 html.desktop .tournament-standing:not(#_),
@@ -121,6 +122,11 @@ html.desktop dialog:not(#_) {
   background: var(--face);
   box-shadow: var(--raised);
 }
+/* The locked deck: its empty slots faint dashed outlines on the panel, with
+   no shade over them, so the notice reads on the page's own colours. */
+html.desktop .deck-reserve-slots:not(#_) { filter: none; opacity: 0.45; }
+html.desktop .deck-reserve-slots i:not(#_) { background: transparent; border: 1px dashed var(--shade); }
+html.desktop .deck-reserve:not(#_)::after { content: none; }
 /* Wells: white and sunken, for what is entered, shown or filled. */
 html.desktop .portrait-top:not(#_),
 html.desktop .hp-readout:not(#_),
@@ -356,4 +362,29 @@ html.desktop .eq-result-title:not(#_) {
 }
 html.desktop .safe:not(#_) {
   color: #006000 !important;
+}
+/* An enemy's stat line keeps its colours, dark enough for the tooltip:
+   what gets through red, Lifesteal's heal blue, the Gold drop gold. */
+html.desktop .inspect-box .hit-hurt:not(#_) { color: #c00000; }
+html.desktop .inspect-box .hit-heal:not(#_) { color: #0000c0; }
+html.desktop .inspect-box .hit-gold:not(#_) { color: #806000; }
+/* Goals' climb: the line up the tower in this theme's line colour, lit
+   up to the floor reached, and the floors completed lit with it.
+   Training's next value (and the Archives' next level) is green, a gain. */
+html.desktop .goals-line:not(#_) { background: var(--shade); }
+html.desktop .goals-line.lit:not(#_) { background: var(--title); }
+html.desktop .goal-floor.completed:not(#_) { color: var(--title); }
+html.desktop .training-box.next:not(#_) { color: #006000; }
+
+/* The Shrine bar (style.css): its fill purple blocks, apart from the navy XP bar; its diamond a white field in a dark line, filled title navy while boons wait. */
+html.desktop {
+  --shrine-fill: repeating-linear-gradient(90deg, #800080 0 7px, transparent 7px 9px);
+  --shrine-line: var(--dark);
+  --shrine-idle: var(--field);
+  --shrine-lit: var(--title);
+  --shrine-lit-line: var(--dark);
+  --shrine-lit-ink: var(--hilite);
+  --shrine-edge: none;
+  --shrine-glow: none;
+  --shrine-ink: #000;
 }

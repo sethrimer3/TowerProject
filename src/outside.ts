@@ -1,7 +1,11 @@
+import { boardFont } from "./sprite-font.ts";
 import type { Mode, Tile } from "./entities.ts";
 import type { Board } from "./board.ts";
 import { tileRandom } from "./random.ts";
 import { MODES } from "./modes.ts";
+import { drawKit } from "./sprite-kit.ts";
+import { drawKitTerrain } from "./sprite-terrain.ts";
+import { drawForestLandmark, drawForestSprite, forestSpritesReady } from "./sprite-forest.ts";
 
 export const OUTSIDE_SIZE = 20;
 /** The gold trial square sits on open grass beside the Tower path. */
@@ -36,7 +40,7 @@ export type Roads = { blacksmith: boolean; hall: boolean; prev: boolean; next: b
 /** The dirt path up to the entrance, widening every fifth row; its
  * crossroads (the row the hero starts on) goes on to a building's door
  * once the building stands, or on out of the clearing (`roads`). */
-const onPath = ({ x, y, center, roads }: ForestSpot) => {
+export const onPath = ({ x, y, center, roads }: ForestSpot) => {
   if (Math.abs(x - center) <= (y % 5 === 2 ? 1 : 0)) return true;
   if (!roads || y !== OUTSIDE_START_Y) return false;
   // Each door is in the middle column of its building, on the row in front.
@@ -162,7 +166,17 @@ export class OutsideWorld implements Board {
 
 /** Returns false when it drew the plain fallback because the sprite art
  * hasn't loaded yet. */
-export function drawForestTile(c: CanvasRenderingContext2D, t: Tile, s: ForestSpot, useSprites = true) {
+export function drawForestTile(c: CanvasRenderingContext2D, t: Tile, s: ForestSpot, useSprites = true, styled = false) {
+  if (useSprites && styled) {
+    if (forestSpritesReady() && t.kind !== "wall" && onPath(s)) {
+      if (drawOutsideSprite(c, t, s)) return true;
+      drawForestSprite(c, "forest-path", 0, 0);
+      return false; // retry the tile cache when the dirt variants and fringes load
+    }
+    if (forestSpritesReady()) return drawForestSprite(c, onPath(s) ? "forest-path" : t.kind === "wall" ? "forest-litter" : "forest-grass", 0, 0);
+    const id = outsideSpriteKind(t, s);
+    if (drawKitTerrain(c, OUTSIDE_SPRITE_URLS[id.family][id.variant])) return true;
+  }
   if (useSprites && drawOutsideSprite(c, t, s)) return true;
   drawForestFallback(c, t, s);
   return !useSprites;
@@ -212,24 +226,29 @@ function paintPebbles(c: CanvasRenderingContext2D) {
 // the path leads into.
 // `bonus` (the tier's Gold multiplier, "×3.1", and the Gold coin once loaded)
 // stands in a line under the numeral, which rises to make room for it.
-export function drawEntrance(c: CanvasRenderingContext2D, mode: Mode, center: number, numeral = "", bonus?: { text: string; coin: CanvasImageSource | null }) {
+// The PNG tower's arch stands taller than the drawn gate's, so over it both
+// sit up by the board's top edge instead, clear of the arch.
+export function drawEntrance(c: CanvasRenderingContext2D, mode: Mode, center: number, numeral = "", bonus?: { text: string; coin: CanvasImageSource | null }, styled = false) {
   const x = center * 24 + 12, base = (OUTSIDE_SIZE - 1 - ENTRANCE_Y) * 24;
   c.save();
-  if (mode === "tower") drawTowerGate(c, x, base);
-  else drawCaveMouth(c, x, base);
-  const y = base - (mode === "tower" ? 66 : 76);
+  const landmark = styled && drawForestLandmark(c, mode === "tower", x, base + 24);
+  if (!landmark) {
+    if (mode === "tower") drawTowerGate(c, x, base);
+    else drawCaveMouth(c, x, base);
+  }
+  const y = landmark && mode === "tower" ? (bonus ? 46 : 22) : base - (mode === "tower" ? 66 : 76);
   if (numeral) {
-    drawTierNumeral(c, numeral, x, bonus ? y - 24 : y);
-    if (bonus) drawGoldBonus(c, bonus.text, bonus.coin, x, y);
+    drawTierNumeral(c, numeral, x, bonus ? y - 24 : y, styled);
+    if (bonus) drawGoldBonus(c, bonus.text, bonus.coin, x, y, styled);
   }
   c.restore();
 }
 
 /** The Gold coin, ×, and the multiplier, centred on (x, y), in gold. */
-function drawGoldBonus(c: CanvasRenderingContext2D, text: string, coin: CanvasImageSource | null, x: number, y: number) {
+function drawGoldBonus(c: CanvasRenderingContext2D, text: string, coin: CanvasImageSource | null, x: number, y: number, styled = false) {
   const size = 14, gap = 3, width = size + gap + text.length * 8, left = x - width / 2;
   if (coin) { c.save(); c.imageSmoothingEnabled = false; c.drawImage(coin, left, y - size / 2, size, size); c.restore(); }
-  c.font = "700 14px Cinzel";
+  c.font = boardFont(styled, 14);
   c.textAlign = "left";
   c.textBaseline = "middle";
   c.shadowColor = "#ffc94a";
@@ -239,8 +258,8 @@ function drawGoldBonus(c: CanvasRenderingContext2D, text: string, coin: CanvasIm
 }
 
 /** The tier's number, glowing gold. */
-function drawTierNumeral(c: CanvasRenderingContext2D, numeral: string, x: number, y: number) {
-  c.font = "700 22px Cinzel";
+function drawTierNumeral(c: CanvasRenderingContext2D, numeral: string, x: number, y: number, styled = false) {
+  c.font = boardFont(styled, 22);
   c.textAlign = "center";
   c.textBaseline = "middle";
   c.shadowColor = "#ffc94a";
@@ -285,9 +304,10 @@ function drawCaveMouth(c: CanvasRenderingContext2D, x: number, base: number) {
  * forge under a slate roof, its door facing the path's side of the
  * clearing, a forge-lit window, a chimney, and on the roof's gable a banner
  * with a breastplate, so its purpose reads even when small. */
-export function drawBlacksmith(c: CanvasRenderingContext2D, center: number) {
+export function drawBlacksmith(c: CanvasRenderingContext2D, center: number, styled = false) {
   const left = (center + BLACKSMITH.dx) * 24, w = BLACKSMITH.width * 24;
   const top = (OUTSIDE_SIZE - BLACKSMITH.y - BLACKSMITH.height) * 24, base = (OUTSIDE_SIZE - BLACKSMITH.y) * 24;
+  if (styled && drawKit(c, "blacksmith", left, top, w, w)) return;
   const wallTop = top + 26;
   c.save();
   // Shadow on the grass, then the stone walls.
@@ -326,9 +346,10 @@ export function drawBlacksmith(c: CanvasRenderingContext2D, center: number) {
  * stone hall under a blue roof with gilded edges, columns either side of
  * its open doorway, toward the path, lit from inside, and on the gable a
  * blue pennant bearing a golden trophy. */
-export function drawTournamentHall(c: CanvasRenderingContext2D, center: number) {
+export function drawTournamentHall(c: CanvasRenderingContext2D, center: number, styled = false) {
   const left = (center + TOURNAMENT_HALL.dx) * 24, w = TOURNAMENT_HALL.width * 24;
   const top = (OUTSIDE_SIZE - TOURNAMENT_HALL.y - TOURNAMENT_HALL.height) * 24, base = (OUTSIDE_SIZE - TOURNAMENT_HALL.y) * 24;
+  if (styled && drawKit(c, "hall", left, top, w, w)) return;
   const wallTop = top + 26;
   c.save();
   // Shadow on the grass, then the pale stone walls.

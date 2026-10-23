@@ -1,10 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { BASE_HAND, BASE_HAND_SLOTS, CARDS, CARD_IDS, cardText, explainStuck, HAND_SLOT_GEMS, MAX_HAND_SLOTS, deckCards, handSlots, nextHandSlotGems, moveCard, placeCard, planHand, upgradeCard, type CardId } from "../src/cards.ts";
+import { BASE_HAND, BASE_HAND_SLOTS, CARDS, CARD_IDS, cardText, explainStuck, GOAL_CARDS, HAND_SLOT_GEMS, MAX_HAND_SLOTS, deckCards, handSlots, nextHandSlotGems, moveCard, placeCard, planHand, upgradeCard, type CardId } from "../src/cards.ts";
 import { defaults } from "../src/save.ts";
 import { UPGRADES } from "../src/config.ts";
 import type { Board, Position } from "../src/board.ts";
-import type { DelveRun, Enemy, Run, Tile } from "../src/entities.ts";
+import type { DelveRun, Run } from "../src/runs.ts";
+import type { Enemy, Tile } from "../src/entities.ts";
 
 const WEAK: Enemy = { name: "Weak", hp: 1, attack: 1, defense: 0, tier: 0, strength: "normal" };
 /** Hits hard enough to kill the hero, but can be fought. */
@@ -66,7 +67,8 @@ test("the first card in the hand that can reach a target moves the hero", () => 
 });
 
 test("each card heads for its own kind of target", () => {
-  const only = (tile: string, hero = {}) => play(board([`@.${tile}`], hero), CARD_IDS)?.card ?? null;
+  // KEY takes every colour, so it is left out to see the cards of one colour.
+  const only = (tile: string, hero = {}) => play(board([`@.${tile}`], hero), CARD_IDS.filter((id) => id !== "key"))?.card ?? null;
   assert.equal(only("S"), "stairs");
   assert.equal(only("P"), "heal");
   assert.equal(only("K"), "yellowKey");
@@ -158,16 +160,26 @@ test("each key card heads for its own colour of key only", () => {
   assert.deepEqual(play(board(["@.B.K"]), ["yellowKey"]), { card: "yellowKey", to: [4, 0], steps: 4 });
   assert.deepEqual(play(board(["@.K.B"]), ["blueKey"]), { card: "blueKey", to: [4, 0], steps: 4 });
   assert.equal(play(board(["@.K"]), ["blueKey"]), null);
+  assert.deepEqual(play(board(["@.B.K"]), ["key"]), { card: "key", to: [2, 0], steps: 2 }, "KEY heads for the closest key of any colour");
+  assert.deepEqual(play(board(["@.K.B"]), ["key"]), { card: "key", to: [2, 0], steps: 2 });
 });
 
-test("the deck starts as the base hand, and HEAL, EQUIPMENT, BLUE KEY and KEY SIPHON join it with their skills", () => {
+test("the deck starts as the base hand, and HEAL, GOLD KEY, EQUIPMENT, BLUE KEY and GK SIPHON join it with their skills", () => {
   const none = defaults().upgrades;
-  assert.deepEqual(BASE_HAND, ["stairs", "door", "yellowKey", "monster"]);
+  assert.deepEqual(BASE_HAND, ["stairs", "door", "key", "monster"]);
   assert.equal(BASE_HAND.length, BASE_HAND_SLOTS, "the base hand fills the base slots");
-  assert.deepEqual(deckCards(none), ["stairs", "door", "yellowKey", "monster"]);
-  assert.deepEqual(deckCards({ ...none, cardHeal: 1 }), ["stairs", "heal", "door", "yellowKey", "monster"]);
-  assert.deepEqual(deckCards({ ...none, cardBlueKey: 1 }), ["stairs", "door", "yellowKey", "blueKey", "monster"]);
-  assert.deepEqual(deckCards({ ...none, ...Object.fromEntries(UPGRADES.filter((u) => "card" in u).map((u) => [u.id, 1])) }), CARD_IDS);
+  assert.deepEqual(deckCards(none), ["stairs", "door", "key", "monster"]);
+  assert.deepEqual(deckCards({ ...none, cardHeal: 1 }), ["stairs", "heal", "door", "key", "monster"]);
+  assert.deepEqual(deckCards({ ...none, cardYellowKey: 1 }), ["stairs", "door", "key", "yellowKey", "monster"]);
+  assert.deepEqual(deckCards({ ...none, cardBlueKey: 1 }), ["stairs", "door", "key", "blueKey", "monster"]);
+  const everyUpgrade = { ...none, ...Object.fromEntries(UPGRADES.filter((u) => "card" in u).map((u) => [u.id, 1])) };
+  assert.deepEqual(deckCards(everyUpgrade), CARD_IDS.filter((id) => !Object.values(GOAL_CARDS).includes(id)), "every card but a Goal's comes from an upgrade");
+  const goals = defaults().goals;
+  goals.claimed[5] = [10];
+  assert.deepEqual(deckCards(everyUpgrade, goals), CARD_IDS.filter((id) => id !== "archer"), "Tower V's floor 10 Goal adds FLYING ENEMY");
+  goals.claimed[3] = [10];
+  assert.deepEqual(deckCards(everyUpgrade, goals), CARD_IDS, "and Tower III's floor 10 Goal ARCHER");
+  assert.equal(upgradeCard("cardYellowKey"), "yellowKey");
   assert.equal(upgradeCard("cardAtkUp"), "atkUp");
   assert.equal(upgradeCard("cardDefUp"), "defUp");
   assert.equal(upgradeCard("cardBlueKey"), "blueKey");
@@ -223,6 +235,18 @@ test("the Stairs card mentions the Delve only once Into the depths is owned", ()
   assert.match(cardText("stairs", s.upgrades), /Delve/);
 });
 
+test("a reward in a nook beside a corridor guard is taken only by a card that wants it", () => {
+  // Before the fight the nook is reached only through the guard's tile, so
+  // HEAL can't plan for it and the hand's next card fights the guard.
+  assert.equal(play(board(["##P###", "@.M..S"]), ["heal", "monster", "stairs"], "delve")?.card, "monster");
+  // Once it's beaten, HEAL steps aside for the potion; without HEAL the hero
+  // walks on past it.
+  assert.deepEqual(play(board(["#####.", "##P##.", "..@..."]), ["heal", "stairs"], "delve"), { card: "heal", to: [2, 1], steps: 1 });
+  const on = planHand(board(["#####.", "##P##.", "..@..."]), ["stairs"], "delve")!;
+  assert.deepEqual([on.path.at(-1)!.x, on.path.at(-1)!.y], [5, 2]);
+  assert.ok(!on.path.some((s) => s.x === 2 && s.y === 1), "past the nook, not into it");
+});
+
 test("the hand's paths go round items and lit torches when an equally short way does", () => {
   const rows = [
     "..S",
@@ -256,6 +280,19 @@ test("the door cards plan by Key Efficiency: less than a whole key opens a door 
   // A card's Dampen multiplies with it: 94% of 95% is under 0.9.
   assert.equal(planHand(at(940), ["door"], "tower"), null);
   assert.ok(planHand({ ...at(940), cardRules: () => ({ scale: 0.95 }) }, ["door"], "tower"));
+});
+
+test("the door cards plan by the door cards held: GOLD DOOR's 5% makes 0.95 of a key open a gold door", () => {
+  const at = (doorOff?: { yellow?: number; wood?: number }, rows = ["@.D"]) => ({ ...board(rows, { keys: { yellow: 0.95, blue: 0, red: 0 } }), doorOff });
+  for (const card of ["door", "yellowDoor"] as const) {
+    assert.equal(planHand(at(), [card], "tower"), null, `${card}: not without the discount`);
+    assert.ok(planHand(at({ yellow: 5 }), [card], "tower"), `${card}: with it`);
+  }
+  // WOODEN DOOR's cheapens the key a Wooden Door takes, and the HP breaking it does.
+  assert.ok(planHand(at({ wood: 5 }, ["@.W"]), ["door"], "tower"));
+  const breaks = (hp: number, doorOff?: { wood: number }) => planHand({ ...board(["@.W"], { hp }), doorOff }, ["woodenDoor"], "tower");
+  assert.equal(breaks(480), null, "500 HP to break it down fells a hero of 480");
+  assert.ok(breaks(480, { wood: 5 }), "475 doesn't");
 });
 
 /** What `explainStuck` finds blocking `hand`: each blocker's tile, place,

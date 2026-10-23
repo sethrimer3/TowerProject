@@ -2,19 +2,36 @@ import { whole } from "./whole.ts";
 import { bulkBuy, type BuyQuantity } from "./buy-quantity.ts";
 import { snap } from "./exact.ts";
 import { PARRY_CAP, type CritRule } from "./combat.ts";
-import type { Mode, RunCore, Save } from "./entities.ts";
+import type { Mode } from "./entities.ts";
+import type { RunCore } from "./runs.ts";
+import type { Save } from "./save-shape.ts";
 import { boonFactor, runBoons } from "./shrines.ts";
-import { CRIT_CHANCE_RANK, CRIT_FACTOR_BASE, CRIT_FACTOR_RANK, FIND_POTION_BASE, FIND_POTION_MAX, FLOOR_GOLD_BASE, FLOOR_GOLD_RANK, FLOOR_SILVER_BASE, FLOOR_SILVER_RANK, FIND_POTION_RANK, FREE_TRAINING_RANK, RAPID_FIRE_CHANCE_RANK, RAPID_FIRE_DURATION_BASE, RAPID_FIRE_DURATION_RANK, TRAINING_GROUPS, REVIVE_BASE, REVIVE_MAX, REVIVE_RANK, GOLD_SHOP, GOLD_BONUS_RANK, SILVER_BONUS_RANK, schedulePrice, POTION_PERCENT_BASE, POTION_PERCENT_RANK, TRAINING, TRAINING_PER_LEVEL, UPGRADES, trainingCap, isStatRow, levelForXp, trained, trainingWorth, ATTACK_RANGE_BASE, ATTACK_RANGE_RANK, ATTACK_SPEED_BASE, ATTACK_SPEED_RANK, ATK_PER_TILE_FIRST, ATK_PER_TILE_FALL, MULTISHOT_CHANCE_RANK, MULTISHOT_TARGETS_BASE, MULTISHOT_TARGETS_RANK, type GoldItemId, type StatTrainingRow, type TrainingId, type TrainingRow, type UpgradeId } from "./config.ts";
-import { raised, wornEffects } from "./equipment/effects.ts";
+import { badgeFactor } from "./badges.ts";
+import { treeHeroFactor } from "./card-trees.ts";
+import { TRAINING_GROUPS, GOLD_SHOP, schedulePrice, TRAINING, TRAINING_PER_LEVEL, UPGRADES, trainingCap, isStatRow, levelForXp, trained, trainingWorth, amountAt, trainedAmount, trainingDef, type GoldItemId, type StatTrainingRow, type TrainingDef, type TrainingId, type TrainingRow, type UpgradeId } from "./config.ts";
+import { wornEffects } from "./equipment/effects.ts";
+import { silverFound } from "./gold-multipliers.ts";
 import { PIERCE_CAP } from "./equipment/balance.ts";
-import { RESEARCH, researched, type ResearchTarget } from "./archives.ts";
+import { RESEARCH, researched } from "./archives.ts";
 import { ranksInTraining, trainingGold } from "./training-jobs.ts";
-import { goalUnlocked } from "./goals.ts";
+import { goalUnlocked, type GoalUnlock } from "./goals.ts";
+import type { CardId } from "./cards.ts";
 
 /** Whether `row` can be seen and trained: its upgrade owned, or the Goals
  * checkpoint that unlocks it claimed (Attack Range, Attack Speed). */
 export const trainingOpen = (row: TrainingRow, save: Pick<Save, "upgrades" | "goals">) =>
   ("requires" in row ? save.upgrades[row.requires] > 0 : true) && ("goal" in row ? goalUnlocked(save, row.goal) : true);
+
+/** The Goals whose Training rows only the Archer's arrows read. */
+const SHOT_GOALS: ReadonlySet<GoalUnlock> = new Set(["attackRange", "attackSpeed", "attackPerTile", "multishot", "rapidFire"]);
+/** Whether `row` is one only the Archer's arrows read (Attack Range,
+ * Attack Speed, ATK / m, Multishot, Rapid Fire). */
+export const shotRow = (row: TrainingRow) => "goal" in row && SHOT_GOALS.has(row.goal);
+/** Whether `row` can be raised inside a run whose hand is `hand` (Silver,
+ * Free Training): open (`trainingOpen`), and a shot row only while the
+ * hand holds ARCHER. Outside a run every open row trains, ARCHER or not. */
+export const runTrainingOpen = (row: TrainingRow, save: Pick<Save, "upgrades" | "goals">, hand: readonly CardId[]) =>
+  trainingOpen(row, save) && (!shotRow(row) || hand.includes("archer"));
 
 /** What one rank of an upgrade, or one provision, adds to a character. */
 export type Grants = Partial<Record<Stat, number>>;
@@ -61,8 +78,8 @@ const WORDS: Record<Stat, string> = {
   thorns: "% of an enemy's max HP each of its strikes costs it",
   parry: "% less damage from every enemy strike",
   yellow: "starting gold key",
-  blue: "starting azure key",
-  red: "starting crimson key",
+  blue: "starting blue key",
+  red: "starting red key",
   undos: "additional undo",
 };
 
@@ -90,9 +107,9 @@ function add(total: Record<Stat, number>, rows: readonly (Granting & { id: strin
  * and the research target each reads. */
 const STAT_RESEARCH = { attack: "attackPercent", defense: "defensePercent", maxHp: "maxHpPercent", shroud: "shroudPercent" } as const;
 /** What `stat` is multiplied by, the whole of it a run starts with and
- * each rank a run trains or siphons: its research's percent (1 without). */
+ * so each change to it mid-run (hero-stats.ts): its research's percent (1 without). */
 export const statFactor = (save: Pick<Save, "archives">, stat: Stat) =>
-  stat in STAT_RESEARCH ? researched(save.archives, STAT_RESEARCH[stat as keyof typeof STAT_RESEARCH], 100) / 100 : 1;
+  stat in STAT_RESEARCH ? researched(save.archives, STAT_RESEARCH[stat as keyof typeof STAT_RESEARCH]) / 100 : 1;
 
 /** The character a run in `mode` would start with now: the baseline,
  * permanent upgrades and training, then the equipment that mode's hero
@@ -122,7 +139,7 @@ export function loadout(save: Save, mode: Mode = "tower"): Loadout {
     lifesteal: own.lifesteal,
     thorns: own.thorns,
     // Parry % research is kept in tenths of a percent.
-    parry: Math.min(PARRY_CAP, snap(own.parry + researched(save.archives, "parryPercent", 0) / 10)),
+    parry: Math.min(PARRY_CAP, snap(own.parry + researched(save.archives, "parryPercent") / 10)),
     bossAttack: eq.bossAttack,
     pierce: Math.min(eq.pierce, PIERCE_CAP),
     keys: { yellow: own.yellow + prov.yellow, blue: own.blue + prov.blue, red: own.red + prov.red },
@@ -131,6 +148,14 @@ export function loadout(save: Save, mode: Mode = "tower"): Loadout {
     // Count research, which either opens, stores the rest.
     undoCapacity: save.upgrades.inspirationUndos || save.upgrades.undos ? researched(save.archives, "undoCapacity", own.undos) : 0,
   };
+}
+
+/** What stat row `row` standing at `to` ranks rather than `from` moves
+ * `mode`'s loadout by: the ranks' worth on its curve, raised as the loadout
+ * raises them (equipment's percent, then the stat's research). */
+export function rankShift(save: Save, mode: Mode, row: StatTrainingRow, from: number, to: number) {
+  const at = (ranks: number) => loadout({ ...save, training: { ...save.training, [row.id]: ranks } }, mode)[row.stat];
+  return snap(at(to) - at(from));
 }
 
 /** Text for a row's grants: "+2 starting attack", joined by "and". A row
@@ -153,8 +178,8 @@ export function upgradeText(id: UpgradeId) {
 
 /** A provision's description, written from its grants. */
 export function provisionText(id: GoldItemId) {
-  const item = GOLD_SHOP.find((g) => g.id === id)!;
-  return describeGrants(item.grants, item.words);
+  const item: { grants: Grants; words?: Partial<Record<Stat, string>>; description?: string } = GOLD_SHOP.find((g) => g.id === id)!;
+  return item.description ?? describeGrants(item.grants, item.words);
 }
 
 /** Whether provision `id` shows and sells: its upgrade, if it names one, is owned. */
@@ -190,121 +215,38 @@ export function trainingWaiting(save: Save) {
   return left > 0 && TRAINING.some((t) => t.cost <= left && trainingOpen(t, save) && !trainingFull(save, t.id));
 }
 
-/** What a percent potion restores beyond its HP, in hundredths of a
- * percent of max HP: none without Recovery. */
-export const potionPercent = (save: Pick<Save, "upgrades" | "training">) =>
-  save.upgrades.recovery ? POTION_PERCENT_BASE + POTION_PERCENT_RANK * save.training.potion : 0;
-
-/** The chance each potion that may be one is a percent potion, in
- * hundredths of a percent: none without Recovery, and Find Potion training
- * raises it. */
-export const percentPotionChance = (save: Pick<Save, "upgrades" | "training">) =>
-  save.upgrades.recovery ? findPotionChance(save.upgrades.findPotion ? save.training.findPotion : 0) : 0;
-const findPotionChance = (ranks: number) => Math.min(FIND_POTION_MAX, FIND_POTION_BASE + FIND_POTION_RANK * ranks);
-
-/** The chance each strike that would fell the hero revives it, in
- * hundredths of a percent: none without Revive, and Revive training raises
- * it. */
-export const reviveChance = (save: Pick<Save, "upgrades" | "training">) =>
-  save.upgrades.revive ? reviveChanceAt(save.training.revive) : 0;
-const reviveChanceAt = (ranks: number) => Math.min(REVIVE_MAX, REVIVE_BASE + REVIVE_RANK * ranks);
-
-/** The chance each of the hero's strikes is critical, in percent, before
- * research: none without Critical. */
-export const critChance = (save: Pick<Save, "upgrades" | "training">) =>
-  save.upgrades.critical ? critChanceAt(save.training.critChance) / 100 : 0;
-const critChanceAt = (ranks: number) => CRIT_CHANCE_RANK * ranks;
-/** What a critical strike multiplies the hero's ATK by, before research:
- * ×1.2 with Critical, and ×0.1 more a Crit x rank. */
-export const critFactor = (save: Pick<Save, "upgrades" | "training">) =>
-  save.upgrades.critical ? critFactorAt(save.training.critFactor) / 100 : 1;
-const critFactorAt = (ranks: number) => CRIT_FACTOR_BASE + CRIT_FACTOR_RANK * ranks;
-/** A hero's critical strikes: what `save` gives (research included), or none. */
-export function critRule(save: Pick<Save, "upgrades" | "training" | "archives">): CritRule | undefined {
-  const chance = snap(critChance(save) * researched(save.archives, "critChancePercent", 100) / 100);
+/** A hero's critical strikes: what `save` gives (research included), or none:
+ * Crit %'s chance, in percent, and Crit x's factor on the hero's ATK, each
+ * raised by the card trees' percents (`cards`, ENEMY's), a factor of their own. */
+export function critRule(save: Pick<Save, "upgrades" | "training" | "archives">, cards?: { chance: number; factor: number }): CritRule | undefined {
+  const chance = snap(trainedAmount(save, "critChance") / 100 * researched(save.archives, "critChancePercent") / 100 * (100 + (cards?.chance ?? 0)) / 100);
   if (chance <= 0) return undefined;
-  return { chance, factor: snap(critFactor(save) * researched(save.archives, "critFactorPercent", 100) / 100) };
+  const factor = snap(trainedAmount(save, "critFactor") / 100 * researched(save.archives, "critFactorPercent") / 100 * (100 + (cards?.factor ?? 0)) / 100);
+  // The card percents ride along, so an enemy card's own add to them (`critAgainst`).
+  return cards?.chance || cards?.factor ? { chance, factor, cards: { chance: cards.chance, factor: cards.factor } } : { chance, factor };
 }
 
-/** The Archer's reach, in hundredths of a tile (Attack Range), and its
- * rate of fire, in twentieths of a shot every 10 turns (Attack Speed),
- * from the ranks `save` holds (a run's `trainingNow`). */
-export const attackRange = (save: Pick<Save, "training">) => attackRangeAt(save.training.attackRange);
-const attackRangeAt = (ranks: number) => ATTACK_RANGE_BASE + ATTACK_RANGE_RANK * ranks;
-export const attackSpeed = (save: Pick<Save, "training">) => attackSpeedAt(save.training.attackSpeed);
-const attackSpeedAt = (ranks: number) => ATTACK_SPEED_BASE + ATTACK_SPEED_RANK * ranks;
-/** What ATK / Tile adds to an arrow's ATK multiplier for each tile to its
- * target, in hundred-thousandths, from the ranks `save` holds (a run's
- * `trainingNow`): 0.01 for the first rank, each later one 0.00004 less. */
-export const attackPerTile = (save: Pick<Save, "training">) => attackPerTileAt(save.training.attackPerTile);
-const attackPerTileAt = (ranks: number) => ATK_PER_TILE_FIRST * ranks - (ATK_PER_TILE_FALL * ranks * (ranks - 1)) / 2;
-/** The chance each of the Archer's shots is a multishot, in hundredths of
- * a percent (Multishot Chance), and how many enemies a multishot fires at
- * (Multishot Targets), from the ranks `save` holds (a run's `trainingNow`). */
-export const multishotChance = (save: Pick<Save, "training">) => multishotChanceAt(save.training.multishotChance);
-const multishotChanceAt = (ranks: number) => MULTISHOT_CHANCE_RANK * ranks;
-export const multishotTargets = (save: Pick<Save, "training">) => multishotTargetsAt(save.training.multishotTargets);
-const multishotTargetsAt = (ranks: number) => MULTISHOT_TARGETS_BASE + MULTISHOT_TARGETS_RANK * ranks;
-/** The chance a shot starts Rapid Fire, in hundredths of a percent (Rapid
- * Fire Chance), and how long it lasts, in hundredths of a turn (Rapid Fire
- * Duration), from the ranks `save` holds (a run's `trainingNow`). */
-export const rapidFireChance = (save: Pick<Save, "training">) => rapidFireChanceAt(save.training.rapidFireChance);
-const rapidFireChanceAt = (ranks: number) => RAPID_FIRE_CHANCE_RANK * ranks;
-export const rapidFireDuration = (save: Pick<Save, "training">) => rapidFireDurationAt(save.training.rapidFireDuration);
-const rapidFireDurationAt = (ranks: number) => RAPID_FIRE_DURATION_BASE + RAPID_FIRE_DURATION_RANK * ranks;
-
-/** The Gold each floor climbed for the first time in a run pays, before
- * the tier's bonus and research: none without Spare Change. */
-export const floorGold = (save: Pick<Save, "upgrades" | "training">) =>
-  save.upgrades.spareChange ? floorGoldAt(save.training.floorGold) : 0;
-const floorGoldAt = (ranks: number) => FLOOR_GOLD_BASE + FLOOR_GOLD_RANK * ranks;
-
-/** The Silver each floor climbed for the first time in a run pays, before
- * research and Silver Bonus: none without Wishing Well. */
-export const floorSilver = (save: Pick<Save, "upgrades" | "training">) =>
-  save.upgrades.wishingWell ? floorSilverAt(save.training.floorSilver) : 0;
-const floorSilverAt = (ranks: number) => FLOOR_SILVER_BASE + FLOOR_SILVER_RANK * ranks;
-
-/** Silver Bonus training's multiplier on all Silver a run finds, in
- * percent: 100 without Wealthy. */
-export const silverBonus = (save: Pick<Save, "upgrades" | "training">) =>
-  bonusAt(save.upgrades.wealthy ? save.training.silverBonus : 0, SILVER_BONUS_RANK);
-/** Gold Bonus training's multiplier on the Gold a kill, or an item picked up
- * or door opened in a run, pays, in percent:
- * 100 without Loot. */
-export const goldBonus = (save: Pick<Save, "upgrades" | "training">) =>
-  bonusAt(save.upgrades.loot ? save.training.goldBonus : 0, GOLD_BONUS_RANK);
-const bonusAt = (ranks: number, rank: number) => 100 + rank * ranks;
 /** The Free Upgrade row training each group's free levels. */
 export const FREE_TRAINING_ROWS = { offense: "freeOffense", defense: "freeDefense", utility: "freeUtility" } as const satisfies Record<keyof typeof TRAINING_GROUPS, TrainingId>;
 const FREE_ROWS: ReadonlySet<TrainingId> = new Set(Object.values(FREE_TRAINING_ROWS));
-/** The chance each floor passed in a run trains a stat of `group` a level
- * for free, in hundredths of a percent: none without Free Training. */
-export const freeTrainingChance = (save: Pick<Save, "upgrades" | "training">, group: keyof typeof TRAINING_GROUPS) =>
-  save.upgrades.freeTraining ? freeTrainingAt(save.training[FREE_TRAINING_ROWS[group]]) : 0;
-const freeTrainingAt = (ranks: number) => FREE_TRAINING_RANK * ranks;
-/** The training rows shown as a multiplier (×1.30), their value in percent,
- * and what a rank adds. */
-const MULTIPLIER_ROWS: ReadonlyMap<TrainingId, number> = new Map([["silverBonus", SILVER_BONUS_RANK], ["goldBonus", GOLD_BONUS_RANK]]);
 
 /** How a Training row's value reads: a multiplier as ×1.30, Attack Range
- * as 3.00 tiles, Attack Speed as 1.00/10 turns, ATK / Tile as
- * +0.010×/tile, Multishot Targets as 2 targets, Rapid Fire Duration as
- * 1.00 turns, the others with their unit after. `bare` leaves out the units
- * of Attack Range, Attack Speed, ATK / Tile, Multishot Targets and Rapid
- * Fire Duration (3.00, 1.00, +0.010, 2, 1.00), for the run's
- * training cards, whose tooltips say what they count. */
+ * as 3.00 m (a tile is a meter), Attack Speed as 1.00/10 turns, ATK / m
+ * as the multiplier it gives an arrow for each meter, ×1.010/m, Multishot
+ * Targets as a bare 2, Rapid Fire Duration as 1.00 turns, the others with
+ * their unit after. `bare` leaves out the units of Attack Range, Attack
+ * Speed, ATK / m and Rapid Fire Duration (3.00, 1.00, ×1.010, 1.00),
+ * for the run's training cards, whose tooltips say what they count. */
 export const trainingText = (value: number, unit: string, bare = false) =>
-  unit === "×" ? `×${value.toFixed(2)}` : unit === "tiles" ? `${value.toFixed(2)}${bare ? "" : " tiles"}` : unit === "shots" ? `${value.toFixed(2)}${bare ? "" : "/10 turns"}`
-    : unit === "perTile" ? `+${value.toFixed(3)}${bare ? "" : "×/tile"}` : unit === "targets" ? `${value}${bare ? "" : " targets"}`
+  unit === "×" ? `×${value.toFixed(2)}` : unit === "m" ? `${value.toFixed(2)}${bare ? "" : " m"}` : unit === "shots" ? `${value.toFixed(2)}${bare ? "" : "/10 turns"}`
+    : unit === "perMeter" ? `×${(1 + value).toFixed(3)}${bare ? "" : "/m"}` : unit === "count" ? String(value)
     : unit === "turns" ? `${value.toFixed(2)}${bare ? "" : " turns"}` : `${value}${unit}`;
 
-/** Whether `id` has as many ranks as it can take. */
 /** How much faster trainers train than at first (Faster Trainers research:
  * 0.02 a level); a rank takes its time / (1 + this). */
-export const trainingSpeed = (save: Pick<Save, "archives">) => researched(save.archives, "trainingSpeed", 0);
+export const trainingSpeed = (save: Pick<Save, "archives">) => researched(save.archives, "trainingSpeed");
 /** What Training Discount takes off a trainer's Gold, in tenths of a percent. */
-export const trainingDiscount = (save: Pick<Save, "archives">) => researched(save.archives, "trainingDiscount", 0);
+export const trainingDiscount = (save: Pick<Save, "archives">) => researched(save.archives, "trainingDiscount");
 
 /** Whether `id` can take no more ranks: at its most, counting a rank a
  * trainer is training. */
@@ -318,21 +260,20 @@ export const trainingMaxed = (save: Pick<Save, "training" | "upgrades"> & Partia
  * points bought past it take its room and the trainer trains fewer
  * (`TrainingDesk.train`). */
 export const trainingFull = (save: Pick<Save, "training" | "upgrades">, id: TrainingId) => save.training[id] >= trainingCap(TRAINING.find((t) => t.id === id)!, save.upgrades);
+/** How many open rows are at their most (each in a gold box), which makes
+ * finishing a rank cheaper (`finishGems`). A reset or a Limit Break can
+ * take one out again. */
+export const trainingRowsFull = (save: Pick<Save, "training" | "upgrades" | "goals">) =>
+  TRAINING.filter((t) => trainingOpen(t, save) && trainingFull(save, t.id)).length;
 
-/** The research multiplying what each Training row's value does (the
- * stats `loadout` multiplies itself, `statFactor`, aside): Regen's HP a
- * step, the crits, the Gold and Silver a floor pays, and the Gold and
- * Silver Bonus. A global Gold multiplier (the tower's, the Shop's, themes,
- * Gold found) is no row's: it shows only in the HUD's Gold bonus total. */
-const ROW_RESEARCH: Partial<Record<TrainingId, ResearchTarget>> = {
-  regen: "regenPercent", critChance: "critChancePercent", critFactor: "critFactorPercent",
-  floorGold: "floorGold", floorSilver: "floorSilver", silverBonus: "silverBonus", goldBonus: "goldBonus",
-};
-/** What row `id`'s value is multiplied by in play: its research's percent
- * (1 without), which the Training tab and the run's cards show it with. */
+/** What row `id`'s value is multiplied by in play: its `research`'s percent
+ * (1 without), which the Training tab and the run's cards show it with.
+ * The stats `loadout` multiplies itself (`statFactor`) aside. A global Gold
+ * multiplier (the tower's, the Shop's, themes, Gold found) is no row's: it
+ * shows only in the HUD's Gold bonus total. */
 export const rowResearchFactor = (save: Pick<Save, "archives">, id: TrainingId) => {
-  const target = ROW_RESEARCH[id];
-  return target ? researched(save.archives, target, 100) / 100 : 1;
+  const target = trainingDef(id).research;
+  return target ? researched(save.archives, target) / 100 : 1;
 };
 /** A Gold or Silver amount as the Training rows show it: to the hundredth. */
 export const shownAmount = (value: number) => Math.round(value * 100) / 100;
@@ -340,11 +281,12 @@ export const shownAmount = (value: number) => Math.round(value * 100) / 100;
 /** Where a Training row's value is read: the mode whose hero's equipment
  * counts, and a run inside, if any, whose hero's stats, ranks bought with
  * Silver and boons count too. */
-export type TrainingView = { mode: Mode; run?: Pick<RunCore, "training" | "player"> };
+export type TrainingView = { mode: Mode; run?: Pick<RunCore, "training" | "player" | "maxHpBoost" | "cardTrees"> };
 
 /** What one more rank of `id` costs (in training points, or a trainer's
  * Gold) and does: its value now and with `count` more ranks (`rowValue`),
- * what a rank adds, and its prices. A row at its most ranks
+ * what the next rank adds before research and boons (`rowWorth`), and its
+ * prices. A row at its most ranks
  * (`trainingFull`) has no next rank to buy; one whose rank in training
  * reaches it has none for a trainer. */
 export function trainingStep(save: Save, id: TrainingId, count = 1, view: TrainingView = { mode: "tower" }) {
@@ -386,44 +328,35 @@ function trainingPrices(save: Save, row: TrainingRow, maxed: boolean, trainerMax
  * multiply it (Silver / Floor counting Silver Bonus). */
 export function rowValue(save: Save, id: TrainingId, extra: number, view: TrainingView): { unit: string; value: number } {
   const row = TRAINING.find((t) => t.id === id)!, f = rowResearchFactor(save, id), run = view.run;
-  const more = (ranks: number) => ({ ...save, training: { ...save.training, [id]: save.training[id] + ranks } });
   if (isStatRow(row)) {
-    const stat = row.stat, base = loadout(save, view.mode)[stat], gain = extra ? loadout(more(extra), view.mode)[stat] - base : 0;
-    const value = run ? (run.player[stat] ?? 0) + gain * boonFactor(run, stat) : base + gain;
+    // What `extra` ranks change, from the ranks the hero has (a run's own
+    // too), as a run would gain them (`rankShift`).
+    const stat = row.stat, ranks = save.training[id] + (run?.training?.[id] ?? 0);
+    const gain = extra ? rankShift(save, view.mode, row, ranks, ranks + extra) : 0;
+    const value = run ? (run.player[stat] ?? 0) + gain * boonFactor(run, stat) * badgeFactor(run, stat) * treeHeroFactor(run, stat) : loadout(save, view.mode)[stat] + gain;
     return { unit: statUnit(stat), value: shownStat(stat, snap(value * f)) };
   }
   const ranks = save.training[id] + (run?.training?.[id] ?? 0) + extra, boons = run ? runBoons(run, save) : null;
-  if (id === "floorGold") return { unit: "", value: shownAmount(floorGoldAt(ranks) * f) };
+  const def = trainingDef(id), unit = def.unit ?? "";
   if (id === "floorSilver" || id === "silverBonus") {
-    // Silver / Floor is raised by Silver Bonus, once Wealthy opens it.
+    // Silver / Floor is raised by Silver found, as the run pays it.
     const bonusRanks = id === "silverBonus" ? ranks : save.training.silverBonus + (run?.training?.silverBonus ?? 0);
-    const bonus = id === "silverBonus" || save.upgrades.wealthy ? bonusAt(bonusRanks, SILVER_BONUS_RANK) : 100;
-    const found = raised((bonus / 100) * rowResearchFactor(save, "silverBonus") * (boons?.silverFound ?? 1), wornEffects(save, view.mode).silverFind);
-    if (id === "silverBonus") return { unit: "×", value: snap(found) };
-    return { unit: "", value: shownAmount(floorSilverAt(ranks) * f * (boons?.floorSilver ?? 1) * found) };
+    const found = silverFound(save, view.mode, bonusRanks, boons?.silverFound);
+    if (id === "silverBonus") return { unit, value: snap(found) };
+    return { unit, value: shownAmount(amountAt(def, ranks) * f * (boons?.floorSilver ?? 1) * found) };
   }
-  const step = valueAt(id, ranks);
-  if (FREE_ROWS.has(id) && boons) return { unit: step.unit, value: snap(step.value + boons.freeUp / 100) };
-  return { unit: step.unit, value: snap(step.value * f) };
+  const value = amountAt(def, ranks) / (def.scale ?? 1);
+  if (FREE_ROWS.has(id) && boons) return { unit, value: snap(value + boons.freeUp / 100) };
+  return { unit, value: unit === "" ? shownAmount(value * f) : snap(value * f) };
 }
 
-/** What one more rank of `row` adds, past `ranks`, in its own terms. */
-function rowWorth(row: TrainingRow, ranks: number) {
+/** What the rank after `ranks` adds to `row`: to its stat, or to its
+ * amount in the units it shows. */
+const rowWorth = (row: TrainingRow, ranks: number) => {
   if (isStatRow(row)) return trainingWorth(row, ranks);
-  const id = row.id;
-  if (id === "critChance") return CRIT_CHANCE_RANK / 100;
-  if (id === "critFactor") return CRIT_FACTOR_RANK;
-  if (id === "attackRange") return ATTACK_RANGE_RANK / 100;
-  if (id === "attackSpeed") return ATTACK_SPEED_RANK / 20;
-  if (id === "attackPerTile") return (ATK_PER_TILE_FIRST - ATK_PER_TILE_FALL * ranks) / 100_000;
-  if (id === "multishotTargets") return MULTISHOT_TARGETS_RANK;
-  if (id === "rapidFireDuration") return RAPID_FIRE_DURATION_RANK / 100;
-  if (id === "floorGold") return FLOOR_GOLD_RANK;
-  if (id === "floorSilver") return FLOOR_SILVER_RANK;
-  const bonus = MULTIPLIER_ROWS.get(id);
-  if (bonus !== undefined) return bonus;
-  return percentRow(id)[1] / 100;
-}
+  const def: TrainingDef = row;
+  return (amountAt(def, ranks + 1) - amountAt(def, ranks)) / (def.scale ?? 1);
+};
 
 /** The stats kept in percent: Lifesteal, Thorn Damage and the parry rows. */
 const PERCENT_STATS: ReadonlySet<Stat> = new Set(["lifesteal", "thorns", "parry"]);
@@ -436,30 +369,3 @@ export const shownStat = (stat: StatTrainingRow["stat"], value: number) =>
   stat === "regen" ? Math.floor(Math.round(value * 1e6) / 1e4) / 100
     : stat === "parry" ? Math.floor(Math.round(value * 1e6) / 1e5) / 10
     : stat === "lifesteal" ? Math.floor(Math.round(value * 1e6) / 1e3) / 1000 : whole(value);
-
-/** Any other row's value at `ranks`, before research and boons: a
- * multiplier (unit "×"), Attack Range in tiles, Attack Speed in shots,
- * ATK / Tile, Multishot Targets, Rapid Fire Duration in turns, or a
- * percentage. */
-function valueAt(id: TrainingId, ranks: number): { unit: string; value: number } {
-  if (id === "critChance") return { unit: "%", value: critChanceAt(ranks) / 100 };
-  if (id === "critFactor") return { unit: "×", value: critFactorAt(ranks) / 100 };
-  if (id === "attackRange") return { unit: "tiles", value: attackRangeAt(ranks) / 100 };
-  if (id === "attackSpeed") return { unit: "shots", value: attackSpeedAt(ranks) / 20 };
-  if (id === "attackPerTile") return { unit: "perTile", value: attackPerTileAt(ranks) / 100_000 };
-  if (id === "multishotTargets") return { unit: "targets", value: multishotTargetsAt(ranks) };
-  if (id === "rapidFireDuration") return { unit: "turns", value: rapidFireDurationAt(ranks) / 100 };
-  const bonus = MULTIPLIER_ROWS.get(id);
-  if (bonus !== undefined) return { unit: "×", value: bonusAt(ranks, bonus) / 100 };
-  return { unit: "%", value: percentRow(id)[0](ranks) / 100 };
-}
-
-/** A percentage row's value at a number of ranks, and what a rank adds. */
-function percentRow(id: TrainingId): [(ranks: number) => number, number] {
-  if (id === "findPotion") return [findPotionChance, FIND_POTION_RANK];
-  if (id === "revive") return [reviveChanceAt, REVIVE_RANK];
-  if (id === "multishotChance") return [multishotChanceAt, MULTISHOT_CHANCE_RANK];
-  if (id === "rapidFireChance") return [rapidFireChanceAt, RAPID_FIRE_CHANCE_RANK];
-  if (FREE_ROWS.has(id)) return [freeTrainingAt, FREE_TRAINING_RANK];
-  return [(r: number) => POTION_PERCENT_BASE + POTION_PERCENT_RANK * r, POTION_PERCENT_RANK];
-}

@@ -5,9 +5,9 @@ import { decode, defaults } from "../src/save.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { chargesLeft, chargesPerRun, climbFloor, floorsToRegain, regainEvery } from "../src/run-charges.ts";
 import { RESEARCH, researched } from "../src/archives.ts";
-import { cost, REGAIN_FLOORS } from "../src/config.ts";
+import { cost } from "../src/config.ts";
 import { skillAvailable } from "../src/skill-trees.ts";
-import type { Run } from "../src/entities.ts";
+import type { Run } from "../src/runs.ts";
 
 /** A Tower floor of open tiles, `size` a side, the hero in the corner and
  * the stairs opposite, with the skills `owned`. */
@@ -41,15 +41,15 @@ test("the charges' research: counts to 10 and 5 uses, and regains down to every 
   for (const [id, target, growth, cubic] of [["refocus", "refocusFloors", 1, 8], ["ignoreMore", "ignoreFloors", 1.05, 0], ["targetMore", "targetFloors", 1.1, 0]] as const) {
     const levels = RESEARCH[id].levels;
     assert.equal(levels.length, 90, id);
-    assert.equal(researched({ ...defaults().archives, levels: { [id]: 90 } }, target, REGAIN_FLOORS), 10, `${id} reaches every 10 floors`);
+    assert.equal(researched({ ...defaults().archives, levels: { [id]: 90 } }, target), 10, `${id} reaches every 10 floors`);
     assert.ok(Math.abs(years(id) - 2.82) < 0.01, `${id} takes about 2.8 years`);
     assert.deepEqual([levels[0].hours, levels[89].hours], [0.1, 810], `${id}: n² / 10 hours`);
     assert.equal(levels[0].gold, 500);
     assert.equal(levels[2].gold, Math.round(((2000 + cubic * 27) * growth * growth) / 100) * 100, `${id} grows ${growth} a level`);
   }
   assert.deepEqual(RESEARCH.targetCount.levels.map((l) => l.gold), [10_000_000, 100_000_000, 1_000_000_000, 10_000_000_000]);
-  assert.equal(researched({ ...defaults().archives, levels: { targetCount: 4 } }, "targetPerRun", 1), 5);
-  assert.equal(researched({ ...defaults().archives, levels: { ignoreCount: 9 } }, "ignorePerRun", 1), 10);
+  assert.equal(researched({ ...defaults().archives, levels: { targetCount: 4 } }, "targetPerRun"), 5);
+  assert.equal(researched({ ...defaults().archives, levels: { ignoreCount: 9 } }, "ignorePerRun"), 10);
   const ignore = RESEARCH.ignoreCount.levels.map((l) => l.gold), focus = RESEARCH.focusCount.levels.map((l) => l.gold);
   for (let i = 1; i < ignore.length; i++) {
     assert.ok(ignore[i] / ignore[i - 1] > focus[i] / focus[i - 1], "steeper than Focus Count");
@@ -95,13 +95,13 @@ test("Ignore marks a tile no card steps on for the rest of the floor, for one us
   assert.equal(g.armed, null);
   assert.equal(g.arm("ignore"), "spent");
   const loaded = new Game(decode(JSON.stringify(g.save)));
-  assert.deepEqual([...loaded.ignored], ["1,0"], "the mark is saved with the run");
+  assert.deepEqual([...loaded.handRules.ignored], ["1,0"], "the mark is saved with the run");
   for (let i = 0; i < 6 && g.run.height === 0; i++) {
     g.autoTurn();
     assert.notDeepEqual([g.run.player.x, g.run.player.y], [1, 0]);
   }
   assert.equal(g.run.height, 1, "STAIRS goes round it");
-  assert.equal(g.ignored.size, 0, "the mark stays on its floor");
+  assert.equal(g.handRules.ignored.size, 0, "the mark stays on its floor");
 });
 
 test("Target sends the hero to the tile tapped, then the hand leads again", () => {

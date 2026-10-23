@@ -21,7 +21,7 @@ import { createHash } from "node:crypto";
 import { readFileSync, readdirSync } from "node:fs";
 import { generateTowerFloor } from "../src/tower/index.ts";
 import { region } from "../src/delve/labyrinth.ts";
-import { RoomWorld, withExtraEnemies } from "../src/tower/room-world.ts";
+import { RoomWorld, withExtraEnemies, withShield } from "../src/tower/room-world.ts";
 import { generate as delveChunk } from "../src/delve/world.ts";
 import { chooseTorchSpots } from "../src/torches.ts";
 import { getTowerGateEnemy, type TowerEnemyProfile, type TowerEnemyStrength } from "../src/scaling.ts";
@@ -44,6 +44,9 @@ function outputs(): Record<string, string> {
       out[`tower torches ${seed}/${room}`] = digest(chooseTorchSpots(f.cells, { xMin: 1, xMax: 15, yMin: 1, yMax: 15, seed: seed + room }));
       out[`tower fast ${seed}/${room}`] = digest(new RoomWorld(seed * 7919, room, {}, 0, 3).cells);
     }
+  // Shielded enemies and their extras, on floors far enough up to hold them.
+  for (let seed = 1; seed <= 12; seed++)
+    for (const room of [1999, 3999]) out[`tower shielded ${seed}/${room}`] = digest(withShield(generateTowerFloor(seed, room, 4).cells, seed, room, 4, []));
   for (const seed of [11, 12])
     for (let area = 0; area < 5; area++) {
       const r = region(seed, area);
@@ -119,7 +122,7 @@ test("saved and played-by generation calls no inexact Math function", () => {
 const GENERATION = [
   ...readdirSync(new URL("../src/tower/", import.meta.url)).map((f) => `tower/${f}`),
   "delve/labyrinth.ts", "delve/patterns.ts", "delve/world.ts", "more-enemies.ts", "torches.ts", "board.ts", "random.ts", "exact.ts",
-  "scaling.ts", "enemy-curves.ts", "fast-enemies.ts", "tiers.ts", "config.ts", "defend/citygen.ts", "defend/layout.ts", "defend/grid.ts",
+  "scaling.ts", "enemy-curves.ts", "fast-enemies.ts", "shielded.ts", "tiers.ts", "config.ts", "defend/citygen.ts", "defend/layout.ts", "defend/grid.ts",
 ];
 
 test("generation modules use no ** (intPow or sqrt instead)", () => {

@@ -4,7 +4,6 @@
 // starting value (docs/EQUIPMENT.md explains each). Costs and rates are
 // whole numbers or exact sums, never `Math.pow`, so they are the same in
 // every engine.
-import type { EnemyStrength } from "../entities.ts";
 import { RARITIES as SHOP_RARITIES } from "../shop/rarity.ts";
 
 /** The rarities equipment comes in, lowest first. Adding one is a row here
@@ -64,26 +63,13 @@ export const UNIQUE_SALVAGE = 2;
 export const upgradeGold = (level: number) => 5 * level * (level + 9);
 export const upgradeMaterial = (level: number) => Math.ceil((level * (level + 10)) / 20);
 
-/** Boss drops (Standard pieces only), from every boss once Equipment is
- * open: the chance in percent a boss drops one, then its rarity's weights.
- * A Greater Boss always drops one. Unique pieces never drop. */
-export const BOSS_DROPS: Partial<Record<EnemyStrength, { chance: number; rarity: Partial<Record<EquipRarity, number>> }>> = {
-  boss: { chance: 60, rarity: { common: 78, uncommon: 22 } },
-  greaterBoss: { chance: 100, rarity: { common: 55, uncommon: 45 } },
-};
-
-/** Upgrade materials from kills, once Equipment is open: the chance in
- * percent each enemy strength drops some (of one category, at random), and
- * how many, times one more for every `MATERIAL_FLOORS` equivalent floors. */
-export const MATERIAL_DROPS: Record<EnemyStrength, { chance: number; amount: number }> = {
-  weak: { chance: 10, amount: 1 },
-  normal: { chance: 15, amount: 1 },
-  strong: { chance: 30, amount: 2 },
-  elite: { chance: 50, amount: 3 },
-  boss: { chance: 100, amount: 8 },
-  greaterBoss: { chance: 100, amount: 20 },
-};
-export const MATERIAL_FLOORS = 25;
+/** What the CHEST card's special chests hold, once Equipment is open: a
+ * Supply Chest's upgrade materials (of one category at random, `base` in
+ * tower I and `perTower` more in each tower after),
+ * and an Equipment Chest's Standard piece, of a random category at these
+ * rarity weights. */
+export const SUPPLY_CHEST_MATERIALS = { base: 5, perTower: 2 };
+export const EQUIPMENT_CHEST_RARITY: Record<EquipRarity, number> = { common: 67, uncommon: 30, rare: 3 };
 
 /** The Gem pull: its price for one and for ten (ten resolve one by one),
  * the rarity weights in percent, and pity: the pull that would make

@@ -1,4 +1,4 @@
-import { point, type Point, type Tile } from '../entities.ts';
+import { point, type Point, type Tile, type KeyColor } from '../entities.ts';
 import type { Fork, Gate, LaneStep } from '../tower/types.ts';
 import { isRanked, type RankedStrength } from '../enemy-schedule.ts';
 import { dealProfiles, drawStrength, extraEnemies, profilesOn, rankStrengths, sharesOn } from '../enemy-stage.ts';
@@ -9,7 +9,6 @@ import { pick } from '../tower/patterns.ts';
 import { runsWith } from '../tower/door-quota.ts';
 import { choosePattern, FALSE_ASCENTS, quotaPatterns, type Pattern } from './patterns.ts';
 import { tileRandom } from '../random.ts';
-import type { KeyColor } from '../config.ts';
 import {
   QUOTA_DOORS, doorKeys, forkCredit, onlyOpenKeys, owesDoor, quotaDoorsIn, towerDoorFirstFloor, towerDoorHundredths, towerDoorRate,
   towerKeyColorsOn, towerKeyRatio, towerWoodPercent, withoutQuotaDoors, yellowRun, type QuotaDoor,
@@ -545,7 +544,7 @@ const GUARD_REWARDS = Object.entries(DELVE_TUNING.guardRewards) as ['potion' | '
 /** Guards the labyrinth's corridors: each corridor that doesn't lead into a
  * pocket may get one enemy on its middle corridor tile, outside any chamber,
  * asked as normal (the enemy stage deals its strength) with a random
- * profile, and often a potion or shard on the corridor tile beside it. */
+ * profile, and often a potion or shard in a nook beside it. */
 function placeGuards(lab: Lab, board: Board) {
   const { nodes, rng } = lab, pockets = new Set(nodes.filter(n => n.pattern).map(n => n.id));
   const intoPocket = (e: Lab['edges'][number]) => pockets.has(e.a) || pockets.has(e.b);
@@ -565,17 +564,39 @@ function rollGuard(rng: () => number): GuardRoll {
 }
 
 /** The guard on the middle of the corridor's `open` tiles, and its reward
- * on the tile after it. A guard's potion may be a percent potion, as the
- * run decides (`withPotions`). */
+ * in a nook beside it (`nookBeside`), or on the corridor tile after it when
+ * no nook fits. A guard's potion may be a percent potion, as the run
+ * decides (`withPotions`). */
 function placeGuard(lab: Lab, board: Board, open: Point[], { profile, reward }: GuardRoll, from: Node, edge: Edge) {
   const middle = Math.floor(open.length / 2), at = open[middle], depth = board.metadata.get(point(at.x, at.y))!.depth;
   const gate: Gate = { kind: 'enemy', strength: 'normal', profile };
   board.put(at, gateTile(lab, gate, { ...from, depth }), depth);
   lab.slots.push({ at, run: [], path: open, gate, n: from, depth, main: onMain(lab, edge), edge });
-  const beside = open[middle + 1];
-  if (!reward || !beside) return;
+  if (!reward) return;
   const tile: Tile = reward === 'potion' ? { kind: 'potion', color: 'blue' } : { kind: reward };
-  board.put(beside, tile, board.metadata.get(point(beside.x, beside.y))!.depth);
+  const nook = nookBeside(lab, board, at);
+  if (nook) { board.put(nook, tile, depth); return; }
+  const beside = open[middle + 1];
+  if (beside) board.put(beside, tile, board.metadata.get(point(beside.x, beside.y))!.depth);
+}
+
+const SIDES: Point[] = [{ x: 0, y: 1 }, { x: 1, y: 0 }, { x: 0, y: -1 }, { x: -1, y: 0 }];
+/** A rock tile beside the guard at `at` that can be cut into a nook: its
+ * only open neighbour would be the guard's tile, so the nook is a dead end
+ * that joins nothing and leaves no way round the guard, and it stays in
+ * this area's cells. The reward there is off the corridor, so only a card
+ * that wants it (or Target) steps aside for it, once the guard is beaten.
+ * Which side is tried first is a fixed number per tile, not the region's
+ * stream. Null when neither side fits. */
+function nookBeside({ seed, area }: Lab, board: Board, at: Point): Point | null {
+  const rock = (p: Point) => !board.cells.has(point(p.x, p.y));
+  const first = Math.floor(tileRandom(at.x, at.y, seed ^ 0x6e6f6f6b) * SIDES.length);
+  for (let i = 0; i < SIDES.length; i++) {
+    const side = SIDES[(first + i) % SIDES.length], nook = shift(at, side);
+    const walls = SIDES.filter(d => d.x !== -side.x || d.y !== -side.y).map(d => shift(nook, d));
+    if (rock(nook) && walls.every(rock) && ownerAt(seed, nook.x, nook.y) === area) return nook;
+  }
+  return null;
 }
 
 /** One gate standing on a single tile: where, what, the cell it was placed
@@ -614,7 +635,7 @@ function growRun(lab: Lab, board: Board, s: Slot) {
 }
 
 const QUOTA_GATE: Record<QuotaDoor, Gate> = { blue: { kind: 'door', color: 'blue' }, red: { kind: 'door', color: 'red' }, heart: { kind: 'heart' } };
-/** A plain yellow door: one key, no other colour, no heart, no run. */
+/** A plain gold door: one key, no other colour, no heart, no run. */
 const plainYellow = (g: Gate) => g.kind === 'door' && g.color === 'yellow' && !g.also?.length && !g.heart && !g.run;
 /** One door of `door`, in hundredths, as the quota counts it. */
 const oneDoor = (door: QuotaDoor): Record<QuotaDoor, number> => ({ blue: 0, red: 0, heart: 0, [door]: 100 });
@@ -635,7 +656,7 @@ type Placing = { floor: number; place: () => Record<QuotaDoor, number> | null };
  * that fit, on its own floor if it can, else on any of the area's from the
  * door's first floor:
  *
- *   upgrade   a yellow door in a pocket's throat turns blue or red; any paid
+ *   upgrade   a gold door in a pocket's throat turns blue or red; any paid
  *             gate (an enemy, a yellow or Wooden Door), corridor guards on
  *             the way to the milestone gate among them, a Heart Door;
  *   combine   a door takes the colour as well, or for a Heart Door, a door
@@ -774,13 +795,13 @@ function bridgeEdges({ nodes, edges }: Lab): Edge[] {
   });
 }
 
-/** Makes `towerWoodPercent` of the area's yellow locks Wooden Doors, each
+/** Makes `towerWoodPercent` of the area's gold locks Wooden Doors, each
  * by its own equivalent floor: throats', corridors' and fork lanes' (a lane
  * offering a Wooden Door of its own rolls too, so the share decides every
  * one), rolled one by one (no roll when all or none are). */
 function placeWoodenDoors(lab: Lab, board: Board) {
-  // Yellow door runs first (`yellowRun`), a key sink: from equivalent floor
-  // 6, some plain yellow doors in pockets' throats grow along them.
+  // Gold door runs first (`yellowRun`), a key sink: from equivalent floor
+  // 6, some plain gold doors in pockets' throats grow along them.
   for (const s of lab.slots) {
     if (!s.pocket || !plainYellow(s.gate)) continue;
     const run = yellowRun(floorOf(s.depth), lab.rng) ?? 1;
@@ -828,7 +849,7 @@ function supplyKeys(lab: Lab, board: Board) {
 
 /** Each lock of each colour, its equivalent floor and how much it counts:
  * every door's keys, a Wooden Door as yellow; a door run each of its doors,
- * but a yellow run (Wooden or yellow) once, a key sink; a fork's lane doors
+ * but a gold run (Wooden or yellow) once, a key sink; a fork's lane doors
  * 1/k each, as the hero opens one lane of k. */
 function lockFloors(lab: Lab): Record<KeyColor, { floor: number; weight: number }[]> {
   const out: Record<KeyColor, { floor: number; weight: number }[]> = { yellow: [], blue: [], red: [] };

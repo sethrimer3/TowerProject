@@ -1,17 +1,19 @@
+import { controlIcon } from "./control-icon.ts";
 import {
   RESEARCH, RESEARCH_CATEGORIES, RESEARCH_IDS, RESEARCH_TARGETS, activeSlot, cannotSwitch, describe, duration, jobProgress, price as researchPrice,
-  maxLevel, missing, nextArchivistPrice, nextLevel, research, researchLevel, researched, status, withNextLevel,
+  maxLevel, missing, nextArchivistPrice, nextLevel, research, researchCompleted, researchLevel, researched, status, withNextLevel,
   type ArchivesSave, type ArchivistSlot, type ResearchCategory, type ResearchId, type ResearchRequirement, type ResearchTarget,
 } from "../archives.ts";
 import { UPGRADES } from "../config.ts";
-import type { Save } from "../entities.ts";
+import type { Save } from "../save-shape.ts";
 import { loadout } from "../loadout.ts";
 import { unlockAt } from "../goals.ts";
 import { tierNumeral } from "../tiers.ts";
 import type { AppContext } from "./app.ts";
-import { currencyAmount, goldPrice, shortAmount } from "./hud.ts";
+import { currencyAmount, priceAmount } from "./hud.ts";
 import { cellIcon, el, gemCount, gemIcon, redoIcon, uiSprite } from "./dom.ts";
-import { whole } from "../whole.ts";
+import { shortAmount, whole } from "../whole.ts";
+import { RUSH_EFFICIENCY_TENTHS, rushEfficiencyText } from "../training-jobs.ts";
 import { SPEED_UP_FACTORS, SPEED_UP_HOURS, jobAt, type SpeedUpFactor, type SpeedUpHours } from "../speed-ups.ts";
 import { askForGems, helpButton, showHelp } from "./dialogs.ts";
 import { startArchivesAmbient } from "./archives-ambient.ts";
@@ -37,11 +39,15 @@ export function formatCountdown(ms: number) {
 export function nextCountdownIn(slot: ArchivistSlot, now: number) {
   const job = jobAt(slot, now);
   if (!job) return undefined;
-  const left = job.completesAt - now, factor = slot.speedUp && now < slot.speedUp.endsAt ? slot.speedUp.factor : 1;
-  // The research time until `left` falls past its next whole second.
-  const toNext = left > 0 ? left - (Math.ceil(left / 1000) - 1) * 1000 : 1000;
-  return toNext / factor;
+  const factor = slot.speedUp && now < slot.speedUp.endsAt ? slot.speedUp.factor : 1;
+  return toNextSecond(job.completesAt - now) / factor;
 }
+/** The time until a countdown with `left` ms to go falls past its next
+ * whole second (a second once it is done), at the normal rate. */
+export const toNextSecond = (left: number) => left > 0 ? left - (Math.ceil(left / 1000) - 1) * 1000 : 1000;
+/** Countdowns move on at most this often (ms): ten times a second, a move
+ * showing more than a second gone when time runs faster than that. */
+export const COUNTDOWN_MIN_MS = 100;
 /** A timestamp as local "YYYY-MM-DD HH:MM". */
 const formatDate = (at: number) => {
   const d = new Date(at), two = (n: number) => String(n).padStart(2, "0");
@@ -50,13 +56,22 @@ const formatDate = (at: number) => {
 /** `target`'s total with the Archives as `archives`, as the game reads it:
  * Undo Count from the loadout's own undos, the rest from their base. */
 const targetValue = (save: Save, target: ResearchTarget, archives: ArchivesSave) =>
-  target === "undoCapacity" ? loadout({ ...save, archives }).undoCapacity : researched(archives, target, RESEARCH_TARGETS[target].base);
+  target === "undoCapacity" ? loadout({ ...save, archives }).undoCapacity : researched(archives, target);
 const requirementText =(r: ResearchRequirement) =>
   "upgrade" in r ? UPGRADES.find((u) => u.id === r.upgrade)!.name
   : "anyUpgrade" in r ? r.anyUpgrade.map((id) => UPGRADES.find((u) => u.id === id)!.name).join(" or ")
   : "research" in r ? `${RESEARCH[r.research as ResearchId].name} level ${r.level}`
   : "goalUnlock" in r ? `Tower ${tierNumeral(unlockAt(r.goalUnlock).tower)}'s floor ${unlockAt(r.goalUnlock).floor} Goal`
   : `Hero level ${r.playerLevel}`;
+
+/** A tab's rush efficiency at its heading's top-left corner: "+1.5% to
+ * Rush" for each of its `maxed` items maxed, which take that much off the
+ * Gems of `rushing`; nothing before any is. */
+export function rushEfficiencyHtml(maxed: number, rushing: string) {
+  if (maxed <= 0) return "";
+  const title = `${maxed} maxed: the Gems for ${rushing} are divided by ${(1000 + RUSH_EFFICIENCY_TENTHS * maxed) / 1000}`;
+  return `<span class="rush-efficiency" title="${title}">${rushEfficiencyText(maxed)}</span>`;
+}
 
 /** The Upgrades page's Archives tab: the archivists, one a row, each busy
  * one with what it is researching, and a History button opening the
@@ -94,7 +109,7 @@ export class ArchivesPanel {
     if (job && job.research !== this.pickedFrom) this.picking = null;
     // The currencies bar above shows the Gold research costs.
     if (this.picking !== null) return this.pickHtml(this.picking);
-    return `<section class="archives"><canvas class="archives-ambient" aria-hidden="true"></canvas><header class="tree-heading"><h3>Archives${helpButton("How the Archives work", "research-help")}</h3><div class="research-corner">${this.cellsHtml()}<button id="research-history-open" class="research-history-open">History</button></div></header>
+    return `<section class="archives"><canvas class="archives-ambient" aria-hidden="true"></canvas><header class="tree-heading">${rushEfficiencyHtml(researchCompleted(save), "rushing research")}<h3>Archives${helpButton("How the Archives work", "research-help")}</h3><div class="research-corner">${this.cellsHtml()}<button id="research-history-open" class="research-history-open">History</button></div></header>
       <div class="archivists" role="list" aria-label="Archivists">${this.archivistsHtml()}</div></section>`;
   }
 
@@ -104,7 +119,7 @@ export class ArchivesPanel {
     const options = <T extends string>(entries: [T, string][], chosen: T) =>
       entries.map(([id, name]) => `<option value="${id}" ${id === chosen ? "selected" : ""}>${name}</option>`).join("");
     const categories: ["all" | ResearchCategory, string][] = [["all", "All categories"], ...Object.entries(RESEARCH_CATEGORIES) as [ResearchCategory, string][]];
-    return `<section class="archives picking"><header class="tree-heading"><h3>Select Research</h3><small class="research-pick-for">ARCHIVIST ${slot + 1}</small><button id="research-pick-close" class="research-pick-close" aria-label="Back to the archivists without choosing" title="Back">✕</button></header>
+    return `<section class="archives picking"><header class="tree-heading"><h3>Select Research</h3><small class="research-pick-for">ARCHIVIST ${slot + 1}</small><button id="research-pick-close" class="research-pick-close" aria-label="Back to the archivists without choosing" title="Back">${controlIcon("close")}</button></header>
       <div class="research-filters">
         <input type="search" id="research-search" placeholder="Search research" aria-label="Search research" value="${this.search.replace(/"/g, "&quot;")}">
         <select id="research-category" aria-label="Category">${options(categories, this.category)}</select>${this.anyCompleted() ? `<label class="research-hide-done"><input type="checkbox" id="research-hide-done" ${this.hideCompleted ? "checked" : ""}> Hide Completed</label>` : ""}
@@ -283,7 +298,7 @@ export class ArchivesPanel {
       const confirm = queuing
         ? `<button id="speed-up-confirm" ${unchanged ? "disabled" : ""} aria-label="Next Speed Up: ${choice.factor}x for ${choice.hours} hours, ${cells.toLocaleString("en-US")} Cells as this one ends">Next Speed Up · ${cellIcon()} <b>${shortAmount(cells, 1000)}</b></button>`
         : `<button id="speed-up-confirm" ${active || short ? "disabled" : ""} aria-label="Speed Up for ${cells.toLocaleString("en-US")} Cells">Speed Up · ${cellIcon()} <b>${shortAmount(cells, 1000)}</b></button>`;
-      modal.innerHTML = `<div class="speed-up"><button id="speed-up-close" class="dialog-x" aria-label="Close" title="Close">✕</button>
+      modal.innerHTML = `<div class="speed-up"><button id="speed-up-close" class="dialog-x" aria-label="Close" title="Close">${controlIcon("close")}</button>
         <h2>Speed Up</h2><p class="speed-up-what">${RESEARCH[job.research].name} · level ${job.level}</p><p>Use cells to speed up research</p>
         <div class="speed-up-options" role="group" aria-label="How long">${SPEED_UP_HOURS.map((h) => option("hours", h, `${h}h`)).join("")}</div>
         <div class="speed-up-options" role="group" aria-label="How fast">${SPEED_UP_FACTORS.map((f) => option("factor", f, `${f}x`)).join("")}</div>
@@ -442,7 +457,7 @@ export class ArchivesPanel {
       const ms = duration(a, next), share = a.progress[id] ?? 0;
       const target = next.effect.target, shown = (archives: ArchivesSave) => RESEARCH_TARGETS[target].shown(targetValue(save, target, archives));
       // The Research button shows the Gold; without it, the price does.
-      const gold = state === "available" ? "" : `${uiSprite("gold", "stat-sprite")} ${goldPrice(researchPrice(a, next))} · `;
+      const gold = state === "available" ? "" : `${uiSprite("gold", "stat-sprite")} ${priceAmount(researchPrice(a, next))} · `;
       detail = `<span class="research-target">${RESEARCH_TARGETS[target].name}:</span><span class="training-box">${shown(a)}</span><span class="training-arrow" aria-hidden="true">→</span><span class="training-box next">${shown(withNextLevel(a, id))}</span>`;
       const time = share
         ? `<span class="research-time kept" title="Progress kept: ${formatDuration(share * ms)} of ${formatDuration(ms)} done">${formatDuration((1 - share) * ms)}</span>`
@@ -454,7 +469,7 @@ export class ArchivesPanel {
     else if (state === "locked") action = `<span class="research-state">Requires ${missing(save, id).map(requirementText).join(" + ")}</span>`;
     else {
       const why = this.picking === null ? "Choose an archivist first." : cannotSwitch(save, this.picking, id);
-      action = `<button data-research="${id}" aria-label="Research ${def.name} for ${currencyAmount(researchPrice(a, next!))} Gold" ${why ? `disabled title="${why}"` : ""}><span class="research-gold">${uiSprite("gold", "stat-sprite")} ${goldPrice(researchPrice(a, next!))}</span></button>`;
+      action = `<button data-research="${id}" aria-label="Research ${def.name} for ${currencyAmount(researchPrice(a, next!))} Gold" ${why ? `disabled title="${why}"` : ""}><span class="research-gold">${uiSprite("gold", "stat-sprite")} ${priceAmount(researchPrice(a, next!))}</span></button>`;
     }
     return `<article class="research ${state}" role="listitem"><div class="research-head"><b>${def.name}</b><button class="tree-help research-about" data-about="${id}" aria-label="About ${def.name}" title="About ${def.name}">?</button><small>LEVEL ${level} / ${maxLevel(id, save.upgrades)}</small></div>
       <div class="research-next">${detail}<span class="research-action">${price}${action}</span></div></article>`;

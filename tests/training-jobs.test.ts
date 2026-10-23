@@ -2,9 +2,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults, decode } from "../src/save.ts";
-import { RUN_TRAINING_PRICES, TRAINER_GOLD_CURVES, TRAINING, trainingCeiling, xpForLevel } from "../src/config.ts";
-import { loadout, trainingPoints, trainingStep } from "../src/loadout.ts";
-import { BOOST_MAX_MS, claimBoost, doneAt, finishGems, trainingGold, trainingMs, trainingSeconds, workLeft } from "../src/training-jobs.ts";
+import { TRAINING, trainingCap, trainingCeiling, xpForLevel, trainingDef } from "../src/config.ts";
+import { loadout, trainingOpen, trainingPoints, trainingRowsFull, trainingStep } from "../src/loadout.ts";
+import { BOOST_MAX_MS, claimBoost, doneAt, finishGems, rushEfficiencyText, trainingGold, trainingMs, trainingSeconds, workLeft } from "../src/training-jobs.ts";
 import { RESEARCH } from "../src/archives.ts";
 import { silverPrice } from "../src/run-training.ts";
 
@@ -22,11 +22,20 @@ const game = (level = 10) => {
 };
 
 test("a stat's first ranks are quick, then each takes ten minutes more", () => {
-  assert.deepEqual([0, 1, 2, 3, 4, 5, 6, 99].map(trainingSeconds), [15, 60, 300, 600, 600, 1200, 1800, 57600]);
+  assert.deepEqual([0, 1, 2, 3, 4, 5, 6, 99].map((r) => trainingSeconds(r)), [15, 60, 300, 600, 600, 1200, 1800, 57600]);
+});
+
+test("ATK / m and Multishot Chance trainers start at a minute and rise from there; Multishot Targets' n-th rank takes n hours", () => {
+  const time = (id: (typeof TRAINING)[number]["id"], ranks: number[]) => ranks.map((r) => trainingSeconds(r, trainingDef(id).time));
+  assert.deepEqual(time("attackPerTile", [0, 1, 2, 3, 4]), [60, 300, 600, 600, 1200]);
+  assert.deepEqual(time("multishotChance", [0, 1, 2, 3, 4]), time("attackPerTile", [0, 1, 2, 3, 4]));
+  assert.deepEqual(time("multishotTargets", [0, 1, 6]), [3600, 7200, 25_200]);
+  assert.deepEqual(time("attack", [0, 1]), [15, 60], "other rows as ever");
+  assert.equal(trainingMs(0, 0, trainingDef("multishotTargets").time), 3_600_000);
 });
 
 test("a trainer's Gold: 20 a point, times the rank's number, times 1 + ranks / the row's growth", () => {
-  const at = (id: (typeof TRAINING)[number]["id"], ranks: number[], cost = 1) => ranks.map((r) => trainingGold({ id, cost }, r));
+  const at = (id: (typeof TRAINING)[number]["id"], ranks: number[], cost = 1) => ranks.map((r) => trainingGold({ ...trainingDef(id), cost }, r));
   assert.deepEqual(at("potion", [0, 1, 2, 3, 4, 9]), [20, 44, 72, 104, 140, 380], "20 Silver rows: growth 10");
   assert.deepEqual(at("floorGold", [0, 1, 2, 3, 9]), [20, 42, 66, 92, 291], "10 Silver rows: growth 20");
   assert.deepEqual(at("attack", [0, 1, 2, 3, 9]), [20, 41, 63, 86, 245], "5 Silver rows: growth 40");
@@ -35,12 +44,12 @@ test("a trainer's Gold: 20 a point, times the rank's number, times 1 + ranks / t
   assert.deepEqual(at("attack", [0], 3), [60], "times the row's point cost");
   // The dearer a row's first Silver rank, the steeper its trainers, and rows
   // that start alike in Silver share a trainer curve.
-  const silverBase = (id: keyof typeof RUN_TRAINING_PRICES) => RUN_TRAINING_PRICES[id].base;
+  const silverBase = (id: TrainingId) => trainingDef(id).silver.base;
   // (The crit rows' growth is on a cubic curve of its own, and the Free
   // Upgrade rows start from their own price, so neither compares.)
-  const linear = TRAINING.filter((t) => !("prices" in TRAINER_GOLD_CURVES[t.id]) && !TRAINER_GOLD_CURVES[t.id].power && !TRAINER_GOLD_CURVES[t.id].start);
+  const linear = TRAINING.filter((t) => !("prices" in t.gold) && !t.gold.power && !t.gold.start);
   for (const a of linear) for (const b of linear) {
-    const [ga, gb] = [TRAINER_GOLD_CURVES[a.id].growth, TRAINER_GOLD_CURVES[b.id].growth];
+    const [ga, gb] = [a.gold.growth, b.gold.growth];
     if (silverBase(a.id) < silverBase(b.id)) assert.ok(ga > gb, `${a.id} softer than ${b.id}`);
     if (silverBase(a.id) === silverBase(b.id)) assert.equal(ga, gb, `${a.id} and ${b.id} alike`);
   }
@@ -210,7 +219,7 @@ test("one stat trains at a time, and each trainer bought with Gems adds one", ()
 });
 
 test("Gems finish a rank at once: one per ten minutes left, rounded up", () => {
-  assert.deepEqual([0, -5, 1, 600_000, 600_001, 1_800_000].map(finishGems), [0, 0, 1, 1, 2, 3]);
+  assert.deepEqual([0, -5, 1, 600_000, 600_001, 1_800_000].map((ms) => finishGems(ms)), [0, 0, 1, 1, 2, 3]);
   const { g, wait } = game();
   g.save.training.hp = g.save.trainerRanks.hp = 6; // its next rank takes 30 minutes
   assert.ok(g.training.trainWithGold("hp"));
@@ -222,6 +231,35 @@ test("Gems finish a rank at once: one per ten minutes left, rounded up", () => {
   assert.equal(g.save.training.hp, 7);
   assert.deepEqual(g.save.trainingJobs, []);
   assert.equal(g.training.finish("hp"), false, "nothing in training");
+});
+
+test("each item maxed takes 1.5% off a rush: its Gems divided by 1 + 1.5% each, rounded up", () => {
+  assert.equal(finishGems(100 * 600_000, 10), 87, "100 Gems over 1.15");
+  assert.equal(finishGems(115 * 600_000, 10), 100, "an exact quotient stays whole");
+  assert.equal(finishGems(600_000, 200), 1, "a Gem's worth still costs one");
+  assert.equal(finishGems(0, 10), 0);
+  assert.deepEqual([1, 3, 10].map(rushEfficiencyText), ["+1.5% to Rush", "+4.5% to Rush", "+15% to Rush"]);
+});
+
+test("each Training row at its most makes finishing a rank cheaper, and a reset takes that back", () => {
+  const { g, wait } = game();
+  g.save.training.hp = g.save.trainerRanks.hp = 60;
+  assert.ok(g.training.trainWithGold("hp"));
+  wait(60);
+  const base = finishGems(g.training.left("hp"));
+  assert.ok(base > 20);
+  assert.equal(g.training.finishGems("hp"), base, "no row at its most");
+  const rows = TRAINING.filter((t) => t.id !== "hp" && trainingOpen(t, g.save));
+  for (const t of rows) g.save.training[t.id] = trainingCap(t, g.save.upgrades);
+  assert.ok(rows.length >= 2);
+  assert.equal(trainingRowsFull(g.save), rows.length);
+  assert.equal(g.training.finishGems("hp"), Math.ceil((base * 1000) / (1000 + 15 * rows.length)));
+  g.save.training[rows[0].id]--;
+  assert.equal(trainingRowsFull(g.save), rows.length - 1, "a rank taken back leaves its row short of its most");
+  assert.equal(g.training.finishGems("hp"), Math.ceil((base * 1000) / (1000 + 15 * (rows.length - 1))));
+  g.save.gems = g.training.finishGems("hp");
+  assert.ok(g.training.finish("hp"));
+  assert.equal(g.save.gems, 0);
 });
 
 test("stopping a rank gives its Gold back and its time spent as credit, which the next rank uses up", () => {
@@ -401,8 +439,8 @@ test("the time bank serves any stat, after that stat's own time credit", () => {
 
 test("a cubic scale adds (ranks / cubic)^3 to a trainer's Gold: never below the linear price, far above it at the cap", () => {
   for (const t of TRAINING) {
-    const c = TRAINER_GOLD_CURVES[t.id];
-    // (ATK / Tile's trainers ask a rising ratio more each rank instead, and Multishot Targets' a price a rank.)
+    const c = t.gold;
+    // (ATK / m's trainers ask a rising ratio more each rank instead, and Multishot Targets' a price a rank.)
     if ("ratio" in c || "prices" in c || c.power) continue;
     assert.ok(c.cubic, `${t.id} has a cubic scale`);
     const linear = (r: number) => Math.ceil((c.start ?? 20) * t.cost * (r + 1) * (c.growth + r) / c.growth);
@@ -415,7 +453,7 @@ test("a cubic scale adds (ranks / cubic)^3 to a trainer's Gold: never below the 
 
 test("the Free Upgrade rows: 75 Gold for the first rank, 1,582 for the 11th, 9,771 for the 32nd, 92,815 for the 87th, 136,855 for the 100th, the same in Silver", () => {
   for (const id of ["freeOffense", "freeDefense", "freeUtility"] as const) {
-    const gold = (n: number) => trainingGold({ id, cost: 1 }, n - 1);
+    const gold = (n: number) => trainingGold(trainingDef(id), n - 1);
     assert.deepEqual([1, 10, 11, 32, 87, 100].map(gold), [75, 1368, 1582, 9771, 92815, 136855]);
     for (let n = 1; n <= 100; n++) assert.equal(silverPrice(id, n - 1), gold(n), `${id} rank ${n} costs as much Silver as Gold`);
     assert.equal(TRAINING.find((t) => t.id === id)!.max, 100);
@@ -436,4 +474,17 @@ test("Training Discount takes its share off every rank a trainer trains, and onl
   g.training.cancel("attack");
   assert.equal(g.save.gold, gold, "a stop gives back what was paid");
   assert.equal(trainingGold(row, 30, 495), Math.ceil((trainingGold(row, 30) * 505) / 1000), "49.5% off at level 99, rounded up");
+});
+
+test("a training timer's next second comes sooner as training goes faster", async () => {
+  const { nextTrainingCountdownIn } = await import("../src/ui/research-page.ts");
+  const now = 1_000_000, job = { id: "attack", startedAt: now, completesAt: now + 10_400, gold: 0, ms: 10_400, ranks: 1, speed: 1, used: 0 } as const;
+  // 10.4s left shows 11s; it shows 10s 400ms of training on.
+  assert.equal(nextTrainingCountdownIn(job, 0, now, 1), 400);
+  // The Coin Packs' ×3: 10.4s × 3 = 31.2s of training left, 200ms to its next second, a third of that real time.
+  assert.ok(Math.abs(nextTrainingCountdownIn(job, 0, now, 3) - 200 / 3) < 1e-9);
+  // The boost doubles it while it lasts.
+  assert.equal(nextTrainingCountdownIn(job, now + 60_000, now, 1), 800 / 2);
+  // Done: a second.
+  assert.equal(nextTrainingCountdownIn(job, 0, now + 20_000, 1), 1000);
 });

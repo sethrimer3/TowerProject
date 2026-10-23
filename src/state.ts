@@ -1,76 +1,84 @@
 import { entrance, floorFor } from "./delve/labyrinth.ts";
 import { buyTheme, canWear, grantAllThemes, type GameLook, type ThemeId, type ThemeKind, type UiLook } from "./theme-collection.ts";
 import { chooseStep } from "./automation.ts";
-import { CARDS, KEY_TO_HP_PERCENT, SIPHONS, TRADER_YELLOW_KEYS, cardText, explainStuck, isSiphon, keptLinks, linkedToNext, planHand, planTarget, stillOpen, walkAll, type CardId, type CardPlan, type CardRules, type SiphonCard, type StuckReport } from "./cards.ts";
-import { BADGE_IDS, BADGES, MAX_COPIES, badgeOn, badgesOn, badgeValue, runBadges, type BadgeId, type RunBadge } from "./badges.ts";
+import { CARDS, cardText, deckCards, explainStuck, handBonus, keptLinks, planHand, planTarget, shootsWith, stillOpen, type CardId, type CardPlan, type HandBonus, type StuckReport } from "./cards.ts";
+import { addCardXp, PASSIVE_CARDS } from "./card-levels.ts";
+import { cardMaxLevel, compounded, foeCardStat, foeStat, foeStats, keyStat, freeUpChances, freeUpFactors, hasPointsToSpend, pointsLeft, runCardTrees, runFoeCut, treeBonus, treeFactor, treeOverheal, type FoeTreeCard, type TreeBonus } from "./card-trees.ts";
+import { aggroTurn } from "./flying.ts";
+import { foeOn } from "./ranged.ts";
+import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./badges.ts";
 import { adsOff, BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
 import { noteGoldBoost } from "./gold-boost.ts";
 import { offer, type OfferId } from "./shop/offers.ts";
 import { purchase, type Refusal } from "./shop/transactions.ts";
 import { confirmServerTime } from "./shop/clock.ts";
-import { canWarp, claimGoal, goalUnlocked, isArcher } from "./goals.ts";
-import { ARCHER_TICKS, archerTurn, arrowBoost, arrowDamage, charged, enemiesWithin, FOE_GAIN, foeRange, foeShotCost, held, ready, shotDamage, spent, type InReach, type Volleys } from "./ranged.ts";
+import { canWarp, claimGoal, goalUnlocked } from "./goals.ts";
+import { volleyTurn, type Shot, type Volley } from "./volley.ts";
 import { missGem } from "./gems.ts";
 import { DelvePlan } from "./delve/automove.ts";
 import { defaults } from "./save.ts";
 import { stampProfile } from "./profile.ts";
-import { defaultFinds, newNotes, notesOf, tallyIn } from "./run-notes.ts";
-import { drawAt, stream, tileRandom } from "./random.ts";
+import { defaultFinds, newNotes, noteKey, notesOf } from "./run-notes.ts";
+import { stream, tileRandom } from "./random.ts";
 import { freeTrainingLines, rollFreeTraining } from "./free-training.ts";
-import { doorBlockedMessage, doorName, doorRule, drainsHp, KEY_ORDER, pickupGold } from "./doors.ts";
+import { doorBlockedMessage, doorName, doorRule, drainsHp, KEY_ORDER, pickupGold, type DoorDiscounts } from "./doors.ts";
 import type { SettingKey } from "./settings.ts";
-import { TREES, skillAvailable } from "./skill-trees.ts";
+import { skillAvailable } from "./skill-trees.ts";
 import { routeTo, type Step } from "./pathfinding.ts";
 import {
   TOWER_START_X,
   TOWER_SECTION,
   xpForKill,
-  xpBase,
   levelForXp,
   TRAINING_PER_LEVEL,
   isStatRow,
-  trained,
   cost,
   UPGRADES,
-  TRAINING,
+  trainedAmount,
   type UpgradeId,
   type TrainingId,
-  type KeyColor,
   type StatTrainingRow,
 } from "./config.ts";
-import {
-  type Save,
-  type Run,
-  type RunCore,
-  type TowerRun,
-  type DelveRun,
-  type ModeSave,
-  type Tile,
-  type Enemy,
-  type Mode,
-  type MoveSnapshot,
-  type Player,
-  type ChestTier,
-  type NoticeTree,
+import type { Save, ModeSave } from "./save-shape.ts";
+import type {
+  Run,
+  RunCore,
+  TowerRun,
+  DelveRun,
+  MoveSnapshot,
+} from "./runs.ts";
+import type {
+  Tile,
+  Enemy,
+  Mode,
+  Player,
+  ChestTier,
+  ChestOdds,
+  KeyColor,
 } from "./entities.ts";
 import { World, LAYOUT_VERSION } from "./delve/world.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
-import type { Board } from "./board.ts";
-import { bout, DEFEAT_MS, guaranteedCrits, heroHpAfter, heroHpDuring, instakill, resume, REVIVE_PAUSE_MS, revivals, summarize, type Bout, type CritRule, type Crits, type Revival } from "./combat.ts";
-import { HEART_DOOR_HP, healAfterVictory, isLethal, regenerate, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardStat } from "./step-effects.ts";
+import { chestKindAt, litTorches, type Board } from "./board.ts";
+import { healUpTo, instakill, squaredUp, type CritRule } from "./combat.ts";
+import { HEART_DOOR_HP, hpCeiling, isLethal, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardStat } from "./step-effects.ts";
 import { OUTSIDE_START_Y, OutsideWorld } from "./outside.ts";
 import { AREA_BURST_MS, AreaLedger, chestReward, clearedInspiration, type AreaReward } from "./tower/area-ledger.ts";
 import { TowerClimb } from "./tower/climb.ts";
 import { callsGreaterBoss, greaterBoss, greaterBossSpot } from "./tower/greater-boss.ts";
+import { strengthOdds, traitOdds, type OddsSource } from "./enemy-odds.ts";
+import { STEPS_PER_FLOOR } from "./enemy-curves.ts";
 import { materialDef, MATERIALS } from "./materials.ts";
-import { switchTier, tierGold, tierNumeral, tierRewardText, tierXp } from "./tiers.ts";
+import { switchTier, tierNumeral, tierRewardText, tierXp } from "./tiers.ts";
+import type { GoldContext } from "./gold-multipliers.ts";
+import { RunTimeline } from "./run-timeline.ts";
+import { shiftHero } from "./hero-stats.ts";
 import { enemyTitle } from "./scaling.ts";
 import { snap } from "./exact.ts";
 import { enemyStat, keyCount, whole, wholeChange } from "./whole.ts";
 import { MODES, milestones, type ModeProfile } from "./modes.ts";
-import { boughtInRun, ranksInRun, runTrainingBulk, runTrainingOffer, type RunTrainingOffer } from "./run-training.ts";
+import { ranksInRun, runTrainingBulk, runTrainingOffer, type RunTrainingOffer } from "./run-training.ts";
 import { openQuantities, type BuyQuantity } from "./buy-quantity.ts";
-import { attackPerTile, attackRange, attackSpeed, multishotChance, multishotTargets, rapidFireChance, rapidFireDuration, critRule, keepUndos, loadout, percentPotionChance, potionPercent, reviveChance, statFactor, type TrainingView } from "./loadout.ts";
+import { critRule, loadout, rankShift, type TrainingView } from "./loadout.ts";
 import { researched } from "./archives.ts";
 import { chargesLeft, chargesPerRun, climbFloor, spendCharge, type Charge } from "./run-charges.ts";
 import type { MaterialId, MaterialStack } from "./materials.ts";
@@ -80,6 +88,9 @@ import { DeckEditor } from "./game/deck-editor.ts";
 import { GearDesk } from "./game/gear-desk.ts";
 import { GemFinder } from "./game/gem-finder.ts";
 import { BadgeDesk } from "./game/badge-desk.ts";
+import { CardTreeDesk } from "./game/card-tree-desk.ts";
+import { CardBuyDesk } from "./game/card-buy-desk.ts";
+import { HandRules } from "./hand-rules.ts";
 import { RunPurse, type EquipmentLoot } from "./game/run-purse.ts";
 import { EquipmentDesk } from "./game/equipment-desk.ts";
 import { TournamentDesk } from "./game/tournament-desk.ts";
@@ -87,7 +98,8 @@ import { MailDesk } from "./game/mail-desk.ts";
 import { MissionDesk } from "./game/mission-desk.ts";
 import { EventDesk } from "./game/event-desk.ts";
 import { ShrineDesk } from "./game/shrine-desk.ts";
-import { boonFactor, runBoons } from "./shrines.ts";
+import { NoticeDesk } from "./game/notice-desk.ts";
+import { boonFactor, runBoons, weakened } from "./shrines.ts";
 import type { MissionType } from "./missions/catalog.ts";
 import type { EventMissionType } from "./events/catalog.ts";
 import { LEAGUE_INFO } from "./tournament/leagues.ts";
@@ -97,46 +109,42 @@ import { raised, wornEffects } from "./equipment/effects.ts";
 import { RARITY_TIERS, type EquipRarity } from "./equipment/balance.ts";
 import { EQUIP_MATERIALS, EQUIP_MATERIAL_IDS, itemDef, type EquipMaterialId } from "./equipment/catalog.ts";
 import { readyForestRuns, startingHero } from "./game/hero-sync.ts";
+import { warpLootSilver } from "./warp-loot.ts";
+import { CardActivation } from "./game/card-activation.ts";
+import { Finds } from "./game/finds.ts";
+import { FightPlayback } from "./game/fight-playback.ts";
+import type { Coin, Dash, Drop, Facing, Gain, GainArt, Heal, ShownTurn } from "./shown.ts";
 /** How a new run starts: out in the forest or at the entrance, and from
  * which seed (rolled from the game's randomness when left out). */
 export type RunStart = { outside?: boolean; seed?: number; height?: number };
-/** A lesson shown on the Tower's board (`Game.boardLesson`). */
-export type BoardLesson = "climb" | "enter" | "delve";
+/** A lesson shown on the board (`Game.boardLesson`). */
+export type BoardLesson = "climb" | "enter" | "cards" | "delve";
 export type RouteEffects = {
   hp: [number, number];
   attack: [number, number];
   defense: [number, number];
   keys: Partial<Record<KeyColor, [number, number]>>;
 };
-/** A reward just picked up, or what a door took, to rise from the tile it
- * came from: drawn as its sprite (a tile's contents, marked `spent` for a
- * key a door used, a material, or the heart a Heart Door checked, or with
- * a plus, `raised`, the max HP Max HP's badge added), or as `text` where it
- * has none. A kill's drops carry their `drop` place, so they rise together. */
-export type Gain = { x: number; y: number; text: string; art: GainArt | null; drop?: Drop };
-/** Where one of a kill's or a chest's drops rises: `row` rows above its tile (below,
- * negative), Gold over Silver over the rest, and whether it starts `with`
- * the drop queued before it rather than after. */
-export type Drop = { row: number; with: boolean };
-export type GainArt = { tile: Tile; spent?: true } | { material: MaterialId; quantity: number } | { heart: true; raised?: true } | { gem: true } | { coin: Coin } | { cell: true }
-  | { equipMaterial: EquipMaterialId; quantity: number } | { equipPiece: string; rarity: EquipRarity };
-/** The coin a Gold or Silver gain raises. */
-export type Coin = "gold" | "silver";
-/** The gains a Settings row can turn off: items picked up, what a door
- * takes, and Gold and Silver found. */
-export type GainKind = "item" | "door" | Coin;
-const GAIN_SETTINGS = { item: "itemGains", door: "doorGains", gold: "goldGains", silver: "silverGains" } as const satisfies Record<GainKind, SettingKey>;
-/** The coin `art` raises, if it is one. */
-const coinOf = (art: GainArt | null): Coin | null => (art && "coin" in art ? art.coin : null);
-/** A potion's heal: the HP from and to, where the hero stood, and its number. */
-export type Heal = { from: number; to: number; x: number; y: number; id: number };
-/** Which way the hero faces: the last step it took, (dx, dy) one tile
- * across or up (world y grows upward). */
-export type Facing = { dx: number; dy: number };
-/** A dash: the tiles the hero dashed off in one step, in order, each with
- * the step it took off it, the empty tile it landed on (none when it ended
- * on its target item), with the step onto it, and when (performance time). */
-export type Dash = { tiles: ({ x: number; y: number } & Facing)[]; end?: { x: number; y: number } & Facing; at: number };
+/** The gains a Settings row can turn off: ATK, DEF and HP changed, keys
+ * found, what a door takes, Gold and Silver found, what a fight costs
+ * past its strikes, XP gained and the Gold combo. */
+/** What a board tap can be readied for: Ignore, Target or a Bomb. */
+export type Armed = "ignore" | "target" | "bomb";
+export type GainKind = "attack" | "defense" | "hp" | "key" | "door" | "hit" | "xp" | "combo" | Coin;
+const GAIN_SETTINGS = {
+  attack: "attackGains", defense: "defenseGains", hp: "hpGains", key: "keyGains", door: "doorGains", hit: "hitNumbers",
+  xp: "xpGains", combo: "comboGains", gold: "goldGains", silver: "silverGains",
+} as const satisfies Record<GainKind, SettingKey>;
+/** The kind of gain `art` raises, if a Settings row covers it: a coin, a
+ * heart, or an ATK or DEF shard, potion or key's sprite. */
+function kindOf(art: GainArt | null): GainKind | null {
+  if (!art) return null;
+  if ("coin" in art) return art.coin;
+  if ("heart" in art) return "hp";
+  if (!("tile" in art)) return null;
+  const kind = art.tile.kind;
+  return kind === "attack" || kind === "defense" || kind === "key" ? kind : kind === "potion" ? "hp" : null;
+}
 /** Rewards kept for the board to show; older ones are dropped unseen. */
 const MAX_GAINS = 12;
 /** The forest's Automove walks at least this many steps a second, however
@@ -145,48 +153,34 @@ const FOREST_SPEED = 3;
 /** The speed the second floor's lesson teaches: one press of › from a new
  * hero's 2. */
 const LESSON_SPEED = 3;
-/** Salts the run seed for Revive's rolls, apart from the world's own. */
-const REVIVE_SALT = 0x7e51e;
-/** Seeds the critical rolls apart from the revival rolls. */
-const CRIT_SALT = 0x3c71c;
-/** Salts the run seed for the Archer's critical rolls apart from a fight's. */
-const ARROW_SALT = 0xa770e;
-const MULTISHOT_SALT = 0x3a17c;
-const RAPID_FIRE_SALT = 0x5f1d3;
-/** How long a shot or arrow flies, at most (ms): it lands as the hero's
- * step ends, sooner at higher speeds. */
-const FLIGHT_MS = 220;
-/** Salts the run seed for Find Yellow Key's roll on each new floor. */
+/** How long a turn inside a run shows, at most (ms): the hero's step and
+ * its shots leaving through it, shorter at higher speeds. */
+const TURN_MS = 220;
+/** Salts the run seed for Find Gold Key's roll on each new floor. */
 const YELLOW_KEY_SALT = 0x6e11a;
-/** Mixed into the run seed to start Skip's stream of rolls. */
-const SKIP_SALT = 0x5c1b7;
 /** A step resolved and about to be taken: the tile stepped onto, what it
  * does, where it is, whether it goes in the undo history, and for a fight
- * the hero's critical strikes in it as played (`crits`). */
-type TakenStep = { tile: Tile; outcome: StepEffect; dest: { x: number; y: number }; track: boolean; quiet?: boolean; crits?: number };
-/** The latest fight as the board shows it: the hero struck from `from`,
- * the enemy (`hp` at the start) stood at `to`, and its strikes land from
- * `start` (performance time). Played out, they are the fight's own; settled
- * at once (`summary`), they are its summary rounds (`summarize`). */
-export type ShownFight = { from: { x: number; y: number }; to: { x: number; y: number }; bout: Bout; start: number; hp: number; summary: boolean };
-/** A fight being shown before it counts: the hero waits at `from`, the
- * enemy stands at `to`, and nothing changes until `finishEncounter` settles
- * it (at `start + bout.duration`). */
-export type Encounter = ShownFight & { enemy: Enemy; outcome: StepEffect; settle: () => void };
-/** One shot of a turn's volley (ranged.ts), as the board shows it: a
- * Ranged enemy's at the hero, or the Archer's arrow at an enemy, flying
- * `from` → `to`, and what it did when it landed: the damage that got through
- * (and the shroud's share, a critical arrow's applications, the HP an
- * arrow's Lifesteal restored), and for an arrow the enemy's HP before and
- * after it out of its full HP. When the Archer fires more than once in a
- * turn (Rapid Fire), each of its arrows has a `lead`, how far into the
- * turn it fired (0 to 1), and flies half the flight from that share of its
- * first half, so they leave one after another. */
-export type Shot = { by: "hero" | "enemy"; from: { x: number; y: number }; to: { x: number; y: number }; damage: number; shrouded?: number; crit?: number; charged?: boolean; healed?: number; before?: number; hp?: number; full?: number; lead?: number };
-/** A turn's shots, flying from `at` (performance time) for `flight` ms. */
-export type Volley = { at: number; flight: number; shots: Shot[] };
+ * the hero's critical strikes in it as played (`crits`) and whether it
+ * began with ENEMY's Surprise Attack (`surprise`). */
+type TakenStep = { tile: Tile; outcome: StepEffect; dest: { x: number; y: number }; track: boolean; quiet?: boolean; crits?: number; surprise?: true; card: CardStep };
+/** How the hand's turn takes a step: Effective or Dampen on a card's last
+ * step (`scale`, what its target's effect is multiplied by; 1 on every
+ * other step), Skip on STAIRS succeeding (`floorSkip`: the climb goes up
+ * two floors), and a Dash holding the turn open across its tiles (`hold`,
+ * so its shots come once it stops). */
+export type CardStep = { scale?: number; floorSkip?: boolean; hold?: boolean };
 /** Tiles that stay on the board after being stepped on. */
 const PERMANENT_TILES = new Set<Tile["kind"]>(["floor", "stairs", "oneway", "openedChest"]);
+/** What DOOR's Secret Knock, Door Chest and the chest's kind roll a door
+ * by, KEY's Locksmith, Master Key, Key Chest and its kind a key, and
+ * ENEMY's Surprise Attack an enemy. */
+const SECRET_KNOCK_SALT = 0x3a57e, DOOR_CHEST_SALT = 0xd00c4, DOOR_CHEST_KIND_SALT = 0xd0c4d, DOUBLE_KEY_SALT = 0xd0b1e, MASTER_KEY_SALT = 0x3a5e7,
+  KEY_CHEST_SALT = 0x6c4e5, KEY_CHEST_KIND_SALT = 0x6c4d1, SURPRISE_SALT = 0x5a7c1, POWER_STRIKE_SALT = 0x907e5,
+  CHEST_DOUBLE_SALT = 0xc4e02, CHEST_TRIPLE_SALT = 0xc4e03, CHEST_CELLS_SALT = 0xc4ec1;
+/** What each key colour's own Master Key (GOLD, BLUE and RED KEY's trees) rolls a key of it by. */
+const COLOR_MASTER_KEY_SALT: Record<KeyColor, number> = { yellow: 0x7e113, blue: 0xb1a57, red: 0x7ea57 };
+/** Each key colour as its Master Key's message names it. */
+const KEY_WORDS: Record<KeyColor, string> = { yellow: "Gold", blue: "Blue", red: "Red" };
 /** The targets a Dash may end on, a tile of it left: items to take. */
 const DASH_ONTO = new Set<Tile["kind"]>(["key", "potion", "attack", "defense", "treasure", "reward"]);
 export class Game {
@@ -205,6 +199,12 @@ export class Game {
   /** The rest of the path Target committed to, until the hero arrives or
    * the path can't be followed (`stillOpen`); never saved. */
   private targetPath: Step[] | null = null;
+  /** The steps the hero is about to take, nearest first: a walk tapped,
+   * Target's path, or the hand's card's; empty with none planned. The
+   * Delve's camera looks along it. */
+  get pathAhead(): readonly Step[] {
+    return this.route.length ? this.route : this.targetPath ?? this.cardPlan?.path ?? [];
+  }
   /** The hand's card that made the latest step, to show it glowing. */
   activeCard: number | null = null;
   /** No card in the hand can act: the hand pauses, and the run ends only
@@ -222,23 +222,18 @@ export class Game {
   /** The free levels Free Training gave last, as the board announces them
    * ("+1 ATK"), and when (`performance.now()`). */
   freeTrained: { lines: string[]; at: number } | null = null;
-  /** Whether something settles fights played out (the app's frame loop).
-   * A game without one (tests, tools) settles every fight at once, whatever
-   * the Animate fights setting says. */
-  playsFights = false;
-  /** The fight being played out, if any; steps wait until it settles. */
-  encounter: Encounter | null = null;
-  /** The latest fight, for the board's damage numbers and the enemy's HP
-   * bar; cleared by undo and when the run or mode changes. Only a game that
-   * plays fights (`playsFights`) shows them. */
-  fight: ShownFight | null = null;
+  /** Each card level reached since the board last took them, oldest
+   * first, for the hand's level-up animation; emptied by undo. */
+  cardLevelUps: { card: CardId; level: number }[] = [];
   /** The latest turn's shots (ranged.ts), for the board to fly and land;
    * undo, a new run or a mode switch clears it. */
   volley: Volley | null = null;
+  /** The latest turn's step inside a run, for the board to walk the hero
+   * along as its shots leave; null when it came no single step. */
+  turnShown: ShownTurn | null = null;
   /** The snapshot from before the turn being taken, for a shot that fells
-   * the hero, and whether a Dash holds the turn open across its tiles. */
+   * the hero. */
   private turnBefore: MoveSnapshot | null = null;
-  private holdTurn = false;
   /** The last potion that healed, picked up or crafted: the HP it healed
    * from and to, where the hero stood, and a number that grows with each, so
    * the HP bar can fill up to it and the board raise the HP healed. */
@@ -249,34 +244,31 @@ export class Game {
   /** The training points the latest level-up earned, which the board
    * raises over the hero once its burst is over. */
   levelUpPoints = 0;
-  /** When each of the latest fight's revivals begins (performance.now()),
-   * for the board's golden fire, once its skull is over; emptied by undo. */
-  revivedAt: number[] = [];
-  /** When the hero was last struck down (performance.now()): each strike
-   * of the latest fight that revived it, and the fall that ended a run,
-   * for the board's skull; emptied by undo. The defeat dialog waits for
-   * it (`defeatShownUntil`). */
-  struckDown: number[] = [];
   /** The area rewards whose chests were opened, each with when its golden
    * burst starts (performance.now()): a chest opened while another's burst
    * plays waits for it to end. Emptied by undo. */
   areaBursts: { reward: AreaReward; inspiration: number; at: number }[] = [];
+  /** The Silver Warp Loot added to the run as it went inside, and when
+   * (performance.now()), for the board's burst over the hero; null when
+   * it added under 1. Cleared by undo and a new run. */
+  warpLooted: { silver: number; at: number } | null = null;
   /** When Equipment opened (performance.now()), for the
    * board's burst. */
   /** Where a Greater Boss last appeared, and when (performance.now()), for
    * the board's poof; cleared by undo. */
   summoned: { x: number; y: number; at: number } | null = null;
+  /** Where the last Bomb went off and when (performance time), for its explosion. */
+  bombed: { x: number; y: number; at: number } | null = null;
   /** Where Skip last made a card's target vanish, and when
    * (performance.now()), for the board's poof; cleared by undo. */
   vanished: { x: number; y: number; at: number } | null = null;
-  /** Effective or Dampen on the step being taken: what the card's target's
-   * effect is multiplied by; 1 on every other step. */
-  private stepScale = 1;
-  /** Skip on STAIRS succeeded: the climb goes up two floors. */
-  private floorSkip = false;
   /** The latest dash: the tiles the hero dashed off, in order, and when
    * (performance.now()), for the board's fading echoes of the hero. */
   dash: Dash | null = null;
+  /** Where the latest Dash stopped, short of something, until the next
+   * step: a fight stepped into from there is a dash attack, which ENEMY's
+   * Surprise Attack may double the first strike of. */
+  private dashedTo: { x: number; y: number } | null = null;
   /** The last step the hero took (into a fight too): the way it faces,
    * for a board whose hero turns. Right until it first steps; undo leaves it. */
   facing: Facing = { dx: 1, dy: 0 };
@@ -288,7 +280,7 @@ export class Game {
   readonly research = new ResearchDesk(this);
   /** The Deck page's commands over the next run's hand. */
   readonly deck = new DeckEditor(this);
-  /** The Gear page's commands: provisions, crafting and equipment. */
+  /** The Gear page's commands: buying provisions. */
   readonly gear = new GearDesk(this);
   /** The Gem on the board, collecting it, and the ad's Gems. */
   readonly gemFinder = new GemFinder(this);
@@ -309,9 +301,27 @@ export class Game {
   /** The Deck page's card badges: drawing them with Gems and attaching
    * them to cards. */
   readonly badges = new BadgeDesk(this);
+  readonly cardTrees = new CardTreeDesk(this);
+  /** The Deck page's card buys: Gems for levels opened on the deck's trees. */
+  readonly cardBuys = new CardBuyDesk(this);
+  /** What the hand's cards may do now: their badges' rules and marks,
+   * Ignore's tiles and the cards that act in place; where the hand plans
+   * from. */
+  readonly handRules = new HandRules(this);
+  /** What a card does as it activates, and what its badges pay. */
+  /** What the run finds: kills, items, chests and doors, paid, raised and
+   * counted. */
+  readonly finds = new Finds(this);
+  readonly activation = new CardActivation(this);
+  /** How fights are played and shown: the Revive and critical rolls, the
+   * fight the board shows and an Encounter playing out. */
+  readonly fights = new FightPlayback<TakenStep>(this, (step, revived) => this.take(step, revived));
   /** The Shrines' commands: a Tower run's boons and the Shrine Boons page's
    * choices. */
   readonly shrine = new ShrineDesk(this);
+  /** The Notices: which tabs and buttons wear a dot, and what the player
+   * has been shown. */
+  readonly notices = new NoticeDesk(this);
   /** `rng` is the game's randomness: new run seeds, enemy drops and
    * treasure loot all draw from it (the `game` stream unless given), so a
    * seeded stream replays a game and no visual effect can shift it. */
@@ -332,13 +342,17 @@ export class Game {
   get undoCapacity() {
     return loadout(this.save, this.mode).undoCapacity;
   }
+  /** What undo can take this mode's run back to (run-timeline.ts). */
+  private get timeline() {
+    return new RunTimeline(this.save, this.mode, () => this.undoCapacity);
+  }
   /** Undos the run has left to spend. */
   get undosLeft() {
-    return Math.max(0, this.undoCapacity - (this.run.undosUsed ?? 0));
+    return this.timeline.undosLeft;
   }
   /** Whether undo can take a move back: one is left and a move is held. */
   get canUndo() {
-    return this.undosLeft > 0 && this.slice.history.length > 0;
+    return this.timeline.canUndo;
   }
   /** Grants unlimited currency, the first 250 floors, and every game mode.
    * Reversible: turning Dev Mode back off leaves the grants in place, since
@@ -394,7 +408,7 @@ export class Game {
    * tournament run plays there). */
   private enterMode(next: Mode, outside: boolean) {
     if (next === this.mode) return;
-    this.finishEncounter();
+    this.fights.finish();
     this.armed = null;
     this.mode = next;
     if (next === "delve" && this.save.upgrades.delve) this.save.tutorials.delve = true;
@@ -423,16 +437,31 @@ export class Game {
     p.x = this.rules.entranceX;
     p.y = OUTSIDE_START_Y;
   }
-  /** The lesson waiting on the Tower's board: in a new game's first run,
-   * `climb`, which holds the hand paused until dismissed; in the forest,
-   * `enter`, until dismissed or a run goes inside from the forest; then,
-   * once Into the depths is owned, `delve`, until the Delve is opened. */
+  /** The lesson waiting on the board: in a new game's first run,
+   * `climb`, which holds the hand paused until dismissed; in the Tower's
+   * forest, `enter`, until dismissed or a run goes inside from the forest;
+   * then, in either forest, `cards`, which leads to the Deck to spend the
+   * first card point (`cardPointsLesson`); then, in the Tower's forest once
+   * Into the depths is owned, `delve`, until the Delve is opened. */
   get boardLesson(): BoardLesson | null {
-    if (this.mode !== "tower") return null;
-    const { climb, enter, delve } = this.save.tutorials;
-    if (!this.run.outside) return climb || this.fallen ? null : "climb";
-    if (!enter) return "enter";
-    return this.save.upgrades.delve && !delve ? "delve" : null;
+    const tower = this.mode === "tower", { climb, enter, delve } = this.save.tutorials;
+    if (!this.run.outside) return !tower || climb || this.fallen ? null : "climb";
+    if (tower && !enter) return "enter";
+    if (this.cardPointsLesson) return "cards";
+    return tower && this.save.upgrades.delve && !delve ? "delve" : null;
+  }
+  /** The card the card points lesson points at, while it waits: in the
+   * forest after a run once a card has a point to spend on its tree, the
+   * Deck open (Combat Stance) and its own lessons on the hand done. Of the
+   * cards the Deck page shows (the hand's, and with Buildout the deck's),
+   * the one with the most points left, the hand's first. */
+  get cardPointsLesson(): CardId | null {
+    const save = this.save, t = save.tutorials;
+    if (t.cardPoints || !this.run.outside || !save.upgrades.combatStance || !t.deck || (save.upgrades.buildout && !t.removeCard)) return null;
+    const shown = save.upgrades.buildout ? [...new Set([...save.hand, ...deckCards(save.upgrades, save.goals)])] : save.hand;
+    let best: CardId | null = null;
+    for (const id of shown) if (hasPointsToSpend(save, id) && (!best || pointsLeft(save, id) > pointsLeft(save, best))) best = id;
+    return best;
   }
   /** Dismisses the `climb` or `enter` lesson (the `delve` lesson waits on
    * the Delve tab); dismissing `climb` sets the hand playing. */
@@ -457,13 +486,20 @@ export class Game {
       this.adoptRun(run);
     }
     this.recordProgress();
-    this.route = [];
     if (!this.run.outside && this.handStartsPlaying && !this.fallen) this.playHand();
     else this.auto = false;
-    this.dropHandPlan();
-    this.encounter = null;
-    this.fight = null;
+    this.stopPlay();
+  }
+  /** Stops the play under way, for a run restored, loaded or begun: the
+   * route walked, a fight or volley playing out, the hand's plan and a
+   * refused step's mark (which would stand on the wrong tile of a new
+   * board). */
+  private stopPlay() {
+    this.route = [];
+    this.fights.clear();
     this.volley = null;
+    this.turnShown = null;
+    this.dropHandPlan();
     this.blocked = { x: 0, y: 0, until: 0 };
   }
   /** Makes `run` the live run of this mode and rebuilds its board. */
@@ -493,8 +529,7 @@ export class Game {
   }
   /** Returns the player to their section's entrance on the new labyrinth. */
   private reshapeDelve(run: DelveRun) {
-    this.save.delve.history = [];
-    this.save.delve.fall = null;
+    this.timeline.reset();
     run.layoutVersion = LAYOUT_VERSION;
     run.changes = {};
     run.milestone = Math.floor(run.height / 100);
@@ -506,6 +541,7 @@ export class Game {
   }
   /** The floor's geometry changed: stand at its entrance. */
   private reshapeTower(run: TowerRun) {
+    this.timeline.reset();
     run.layoutVersion = TOWER_LAYOUT_VERSION;
     run.changes = {};
     run.player.x = TOWER_START_X;
@@ -515,11 +551,11 @@ export class Game {
   private payout(): boolean {
     const record = this.run.height > this.slice.reached;
     this.recordProgress();
-    this.purse.gold(tierGold(this.tier, this.rules.endGold(this.run)));
+    this.purse.gold(this.rules.endGold(this.run));
     return record;
   }
   snapshot(): MoveSnapshot {
-    return { run: structuredClone(this.run), best: this.slice.best, xp: this.save.xp, silver: this.save.profile.earned.silver };
+    return this.timeline.snapshot();
   }
   restore(snapshot: MoveSnapshot) {
     // The snapshot's board brings back any chest it had; area rewards are
@@ -529,23 +565,23 @@ export class Game {
     // (and any level it reached) is: the kill it paid for is undone.
     this.recordProgress();
     if (levelForXp(snapshot.xp) < levelForXp(this.save.xp)) this.levelUpAt = -Infinity;
-    this.revivedAt = [];
-    this.struckDown = [];
+    this.fights.forgetMarks();
+    this.dashedTo = null;
     this.areaBursts = [];
+    this.warpLooted = null;
     this.summoned = null;
     this.vanished = null;
+    this.bombed = null;
     this.save.xp = snapshot.xp;
+    // Card XP too: the activation or floor it paid for is undone.
+    if (snapshot.cardXp) this.save.cardXp = { ...snapshot.cardXp };
+    this.cardLevelUps = [];
     // The Silver found since is taken back with the run, so it was never earned.
     if (snapshot.silver !== undefined) this.save.profile.earned.silver = Math.min(this.save.profile.earned.silver, snapshot.silver);
-    this.route = [];
     // Undo pauses the hand, so the player can act before it carries on.
     this.auto = false;
-    this.dropHandPlan();
-    this.encounter = null;
-    this.fight = null;
-    this.volley = null;
+    this.stopPlay();
     this.paused = false;
-    this.blocked.until = 0;
   }
   /** A copy of an earlier state of the run, on the same floor (a Tower
    * floor's climb forgets the history). Damage taken in this area stays on
@@ -557,24 +593,12 @@ export class Game {
   }
   undo() {
     // A fight still playing out counts first, so undo takes it back.
-    this.finishEncounter();
+    this.fights.finish();
     this.armed = null;
-    const slice = this.slice;
-    if (!this.undosLeft) return false;
     // Fallen, undo spends one and takes back the fight the hero fell in.
-    const fall = this.fallen ? slice.fall : null;
-    let snapshot = slice.history.pop();
-    if (!snapshot) return false;
-    // A step onto empty floor is seldom worth resuming at: undo goes on
-    // back past a run of them to before the last turn that did something.
-    while (!fall && snapshot.quiet && slice.history.length) snapshot = slice.history.pop()!;
-    slice.fall = null;
-    // An undo spent is gone for the run: the count rides onto the run restored.
-    const used = (this.run.undosUsed ?? 0) + 1;
-    this.restore(fall?.snapshot ?? snapshot);
-    this.run.undosUsed = used;
-    slice.history = keepUndos(slice.history, this.undosLeft);
-    this.feedback(fall ? "Fatal fight undone · the hand waits" : "Move undone");
+    const undone = this.timeline.undo(this.fallen, (snapshot) => this.restore(snapshot));
+    if (!undone) return false;
+    this.feedback(undone === "fall" ? "Fatal fight undone · the hand waits" : "Move undone");
     return true;
   }
   /** Accepts the hero's defeat: the run ends and pays out, and the next one
@@ -634,7 +658,7 @@ export class Game {
   }
   /** Whether play waits: paused, fallen, or a fight playing out. */
   private get busy() {
-    return this.paused || this.fallen || !!this.encounter;
+    return this.paused || this.fallen || !!this.fights.encounter;
   }
   walkTo(x: number, y: number) {
     if (this.busy) return;
@@ -666,7 +690,7 @@ export class Game {
   }
   /** A step the player takes themselves: it drops any queued route and Automove. */
   stepManually(dx: number, dy: number) {
-    if (this.encounter) return false;
+    if (this.fights.encounter) return false;
     if (!this.manualMoves) return this.handMovesNote();
     this.route = [];
     this.auto = false;
@@ -808,21 +832,22 @@ export class Game {
     const next = this.nextHandPlan(), lost = next.lost;
     let plan = next.plan;
     // Stuck with tiles marked ?: the nearest becomes ! for Deprioritize's card.
-    while (!plan && this.raiseBang()) plan = planHand(this, this.hand, this.mode);
+    while (!plan && this.handRules.raiseBang()) plan = planHand(this.handRules, this.hand, this.mode);
     this.handStuck = !plan;
     if (!plan) return this.handWaits();
     this.activeCard = plan.card;
     const id = this.hand[plan.card];
     this.message = lost ? `Focus lost · ${CARDS[lost].name} has no path to a target · ${CARDS[id].name} leads.`
       : target === "lost" ? `Target lost · no path to the tile · ${CARDS[id].name} leads.` : this.cardMessage(id);
-    if (fresh) this.coolDown(id);
+    if (fresh) this.handRules.coolDown(id);
     // A card that acts in place takes the turn without a step.
     if (!plan.path.length) {
       this.cardPlan = null;
-      const p = this.run.player, key = `${this.rules.lootKey(this.run, p.x, p.y)}:${id}${this.cardUses(id)}`;
-      this.actInPlace(id, this.scaleOf(id));
+      if (id === "flyingEnemy") return this.holdTurn();
+      const p = this.run.player, key = `${this.rules.lootKey(this.run, p.x, p.y)}:${id}${this.handRules.cardUses(id)}`;
+      this.activation.actInPlace(id, this.handRules.scaleOf(id));
       if (id === this.run.focused) this.run.focused = undefined;
-      this.activate(plan.card, key);
+      this.activation.activate(plan.card, key);
       return;
     }
     const goal = plan.path[plan.path.length - 1], key = this.rules.lootKey(this.run, goal.x, goal.y);
@@ -831,338 +856,53 @@ export class Game {
     const dash = this.dashFor(id), dashes = fresh && dash > 0 && this.dashable(step.x, step.y);
     // The card's last step onto its target: Skip may make it vanish (or, on
     // the Tower's stairs, climb two floors), and Effective or Dampen scale it.
-    const last = !this.cardPlan, rolls = last && this.rollsSkip(id, step.x, step.y), skips = rolls && this.skipRoll() < this.skipChance(id);
+    const last = !this.cardPlan, rolls = last && this.handRules.rollsSkip(id, step.x, step.y), skips = rolls && this.handRules.skipHits(id);
     if (skips && this.world.tile(step.x, step.y).kind !== "stairs") {
       this.vanish(step.x, step.y);
       if (id === this.run.focused) this.run.focused = undefined;
       return;
     }
-    this.floorSkip = skips;
-    this.stepScale = last ? this.scaleOf(id) : 1;
+    // A dash is one turn: its shots come once it stops.
+    const moved = this.move(step.dx, step.dy, true, true, true, { scale: last ? this.handRules.scaleOf(id) : 1, floorSkip: skips, hold: dashes });
     // The board changes only as the hero moves, so a refused step means the
     // plan is stale: drop it and let the next turn choose again.
-    // A dash is one turn: its shots come once it stops.
-    this.holdTurn = dashes;
-    const moved = this.move(step.dx, step.dy, true);
-    this.stepScale = 1;
-    this.floorSkip = false;
     if (!moved) {
-      this.holdTurn = false;
       this.turnBefore = null;
       return void (this.cardPlan = null);
     }
     const dashed = dashes ? this.dashOn(plan, id, { ...from, dx: step.dx, dy: step.dy }, dash) : true;
-    if (dashes) {
-      this.holdTurn = false;
-      this.endTurn();
-    }
+    if (dashes) this.endTurn();
     if (!dashed) return;
     if (this.cardPlan) return;
     // The card's last step reaches its target: a focus on it is spent, and
-    // it activates (once a fight into its target has played out).
+    // it activates (once a fight into its target has played out). FLYING
+    // ENEMY's last step only brings an enemy in reach: nothing activates.
     if (id === this.run.focused) this.run.focused = undefined;
-    const fight = this.encounter;
+    // Its arrival counts as its activation toward its level.
+    if (id === "flyingEnemy") return this.gainCardXp(id, 1);
+    const fight = this.fights.encounter;
     // A roll counts once the step is in the undo history (after a fight,
     // once it settles), so undo takes it back with the step.
     if (!fight) {
-      if (rolls) this.skipRolled();
-      return this.activate(plan.card, key);
+      if (rolls) this.handRules.skipRolled();
+      return this.activation.activate(plan.card, key);
     }
     const settle = fight.settle;
     fight.settle = () => {
       settle();
-      if (rolls) this.skipRolled();
-      this.activate(plan.card, key);
+      if (rolls) this.handRules.skipRolled();
+      this.activation.activate(plan.card, key);
     };
-  }
-  /** What card `card`'s badges change about planning it (`planHand`
-   * asks), each badge's rules together: a gate closes it while its
-   * condition fails (any one closed closes it), and Stairward and Skip Open
-   * Nodes count only on floors they aren't cooling down on. */
-  cardRules(card: CardId): CardRules | undefined {
-    if (this.run.outside) return undefined;
-    let rules: CardRules | undefined;
-    for (const badge of badgesOn(this.run.badges, card)) {
-      const r = this.badgeRules(card, badge);
-      if (!r) continue;
-      const closed = rules?.closed || r.closed;
-      rules = { ...rules, ...r };
-      if (closed) rules.closed = true;
-    }
-    return rules;
-  }
-  /** What one of card `card`'s badges changes about planning it. */
-  private badgeRules(card: CardId, badge: RunBadge): CardRules | undefined {
-    const v = badgeValue(badge.id, badge.level, badge.pick), p = this.run.player;
-    switch (badge.id) {
-      case "hpGate": return { closed: !(p.hp < snap((p.maxHp * v) / 100)) };
-      case "yellowGate": return { closed: !(p.keys.yellow < v) };
-      case "blueGate": return { closed: !(p.keys.blue < v) };
-      case "redGate": return { closed: !(p.keys.red < v) };
-      case "yellowAtLeast": return { closed: !(p.keys.yellow >= v) };
-      case "blueAtLeast": return { closed: !(p.keys.blue >= v) };
-      case "redAtLeast": return { closed: !(p.keys.red >= v) };
-      case "stairward": return this.cooled("stairward", v) ? { stairward: true } : undefined;
-      case "skipOpen": return this.cooled("skipOpen", v) ? { skipOpen: { skipped: new Set(this.skipMarks), skip: (x, y) => this.skipTile(x, y) } } : undefined;
-      case "charge": return { charge: v };
-      case "effective": case "dampen": return { scale: this.scaleOf(card) };
-      case "deprioritize": {
-        const m = this.floorMarks;
-        if (m.bangs.length) return { bang: new Set(m.bangs) };
-        return m.made < v ? { deprioritize: (x, y) => this.markTile(x, y) } : { closed: true };
-      }
-      default: return undefined;
-    }
-  }
-  /** What card `card`'s Effective or Dampen multiplies its target's effect
-   * by when it activates: 1 with neither. */
-  private scaleOf(card: CardId) {
-    const badge = badgesOn(this.run.badges, card).find((b) => BADGES[b.id].kind === "scale");
-    if (!badge || this.run.outside) return 1;
-    const v = badgeValue(badge.id, badge.level, badge.pick);
-    return (100 + (badge.id === "effective" ? v : -v)) / 100;
-  }
-  /** Whether Skip on card `card` rolls for its target at (x, y): never for
-   * a boss, the Delve's STAIRS card's climb (no stairs), or a torch (no tile
-   * to vanish). */
-  private rollsSkip(card: CardId, x: number, y: number) {
-    if (!badgeOn(this.run.badges, card, "skip") || this.run.outside || card === "torch") return false;
-    const t = this.world.tile(x, y);
-    if (t.kind === "enemy" && (t.enemy!.strength === "boss" || t.enemy!.strength === "greaterBoss")) return false;
-    return card !== "stairs" || t.kind === "stairs";
-  }
-  /** Skip's chance on card `card`, as a fraction. */
-  private skipChance(card: CardId) {
-    const badge = badgeOn(this.run.badges, card, "skip")!;
-    return badgeValue(badge.id, badge.level, badge.pick) / 100;
-  }
-  /** Skip's next roll: the next number of its own stream, started from the
-   * run seed (the floors' seed), so a run of the same seed played the same
-   * way skips the same targets. `run.skipRolls` counts those drawn. */
-  private skipRoll() {
-    const n = this.run.skipRolls ?? 0;
-    return drawAt(this.run.seed ^ SKIP_SALT, n);
-  }
-  /** Skip's roll is spent: the stream moves on. */
-  private skipRolled() {
-    this.run.skipRolls = (this.run.skipRolls ?? 0) + 1;
   }
   /** Skip: the card's target at (x, y) vanishes in a puff, without effect.
    * A turn of its own, so undo brings it back. */
   private vanish(x: number, y: number) {
     const t = this.world.tile(x, y);
     this.remember(this.snapshot());
-    this.skipRolled();
+    this.handRules.skipRolled();
     this.world.clear(x, y);
     this.vanished = { x, y, at: performance.now() };
     this.message = `Skip · ${t.kind === "enemy" ? enemyTitle(t.enemy!) : SKIPPED_NAMES[t.kind] ?? "the target"} vanished`;
-  }
-  /** Deprioritize's marks on this floor: none yet on a floor it hasn't
-   * marked. */
-  private get floorMarks() {
-    const m = this.run.marks, floor = this.badgeFloor;
-    return m && !this.run.outside && m.floor === floor ? m : { floor, made: 0, tiles: [] as string[], bangs: [] as string[] };
-  }
-  /** Deprioritize passes over (x, y): marked ? for the rest of the floor. */
-  private markTile(x: number, y: number) {
-    const m = (this.run.marks = this.floorMarks), k = `${x},${y}`;
-    if (!m.tiles.includes(k)) m.tiles.push(k);
-    m.made++;
-  }
-  /** The tiles marked ? on this floor, which no card's path crosses
-   * (`planHand` reads it). */
-  get marked(): ReadonlySet<string> {
-    return new Set(this.floorMarks.tiles);
-  }
-  /** The ? and ! marks on this floor, for the board. */
-  get badgeMarks() {
-    const m = this.floorMarks;
-    return { asked: m.tiles, bangs: m.bangs };
-  }
-  /** The hand is stuck: the ? nearest the hero by walk becomes !, which
-   * Deprioritize's card heads for. False with none left to raise. */
-  private raiseBang() {
-    const m = this.floorMarks;
-    if (!m.tiles.length) return false;
-    const away = walkAll(this, this.run.player, m.tiles);
-    const far = (t: string) => away.get(t) ?? Infinity;
-    const k = m.tiles.reduce((best, t) => (far(t) < far(best) ? t : best));
-    this.run.marks = { ...m, tiles: m.tiles.filter((t) => t !== k), bangs: [...m.bangs, k] };
-    return true;
-  }
-  /** Stepping on a marked tile clears its mark. */
-  private unmark(x: number, y: number) {
-    const m = this.run.marks, k = `${x},${y}`;
-    if (!m || (!m.tiles.includes(k) && !m.bangs.includes(k))) return;
-    this.run.marks = { ...m, tiles: m.tiles.filter((t) => t !== k), bangs: m.bangs.filter((t) => t !== k) };
-  }
-  /** Whether card `id` rests greyed out for the rest of the floor:
-   * Deprioritize with every mark made and no ! to head for. */
-  cardResting(id: CardId) {
-    const badge = badgeOn(this.run.badges, id, "deprioritize");
-    if (!badge || this.run.outside) return false;
-    const m = this.floorMarks;
-    return !m.bangs.length && m.made >= badgeValue(badge.id, badge.level, badge.pick);
-  }
-  /** The floor card badges count by: the Tower floor, or the Delve's
-   * equivalent floor where the hero stands. */
-  private get badgeFloor() {
-    return this.rules.equivalentFloor(this.rules.progressAt(this.run, this.run.player.y));
-  }
-  /** Whether a cooling-down badge works on this floor: never used, used
-   * on this floor already, or `every` floors on from the last it worked on. */
-  private cooled(kind: "stairward" | "skipOpen", every: number) {
-    const last = this.run.badgeFloors?.[kind], floor = this.badgeFloor;
-    return last === undefined || last === floor || floor - last >= every;
-  }
-  /** A cooling-down badge works on this floor: it rests from here. */
-  private markUsed(kind: "stairward" | "skipOpen") {
-    (this.run.badgeFloors ??= {})[kind] = this.badgeFloor;
-  }
-  /** A new plan for card `id` under Stairward counts as its use. */
-  private coolDown(id: CardId) {
-    if (badgeOn(this.run.badges, id, "stairward") && this.cardRules(id)?.stairward) this.markUsed("stairward");
-  }
-  /** The doors and monsters Skip Open Nodes passed over on this floor, as
-   * points, for the planner and the board's marks. */
-  get skipMarks(): string[] {
-    const skipped = this.run.skipped;
-    return skipped && !this.run.outside && skipped.floor === this.badgeFloor ? skipped.tiles : [];
-  }
-  /** Skip Open Nodes passes over (x, y) for the rest of the floor. */
-  private skipTile(x: number, y: number) {
-    const floor = this.badgeFloor;
-    if (this.run.skipped?.floor !== floor) this.run.skipped = { floor, tiles: [] };
-    const k = `${x},${y}`;
-    if (!this.run.skipped.tiles.includes(k)) this.run.skipped.tiles.push(k);
-    this.markUsed("skipOpen");
-  }
-  /** Card `card` of the hand activates: each of its badges pays what it
-   * gives, top slot first. Gold is paid once per target (`key`, gated by
-   * lootedTiles like a kill's), since undo can't take it back; HP, Silver
-   * and XP are the run's or in its undo snapshot. */
-  private activate(card: number, key: string) {
-    const id = this.hand[card], badges = id ? badgesOn(this.run.badges, id) : [];
-    if (!badges.length || !this.playing) return;
-    // Paying out makes the step it ends a turn undo stops at.
-    delete this.slice.history.at(-1)?.quiet;
-    for (const badge of badges) this.payBadge(card, key, badge);
-  }
-  /** One of hand card `card`'s badges pays what it gives on activation. */
-  private payBadge(card: number, key: string, badge: RunBadge) {
-    const id = this.hand[card], v = badgeValue(badge.id, badge.level, badge.pick), p = this.run.player;
-    switch (badge.id) {
-      case "hp": return this.raiseMaxHp(v, badge.id);
-      case "hpPercent": return this.badgeHeal(snap((p.maxHp * v) / 100), badge.id);
-      case "silverTouch": return this.gainCoins(p, 0, this.purse.silver(v));
-      case "goldTouch": return this.gainCoins(p, this.purse.badgeGold(`badge:${id}:${key}`, v), 0, false);
-      case "goldback":
-        if (card !== this.hand.length - 1) return;
-        // The combo is the run's, so undo takes an activation back; the
-        // next Gold found spends it (RunPurse).
-        this.run.goldCombo = (this.run.goldCombo ?? 0) + v;
-        // Drawn as "×2" and the Gold coin.
-        return this.gain(p.x, p.y, `×${this.run.goldCombo} Gold`, { coin: "gold" }, undefined, null);
-      case "xp": {
-        const xp = Math.round((v * xpBase(this.badgeFloor)) / xpBase(0));
-        this.addXp(xp);
-        return this.gain(p.x, p.y, `+${xp} XP`);
-      }
-    }
-  }
-  /** Max HP's badge: the hero's max HP (and the run's loadout, as a rank
-   * of training bought for the run) rises by `n`, with the HP to fill it. */
-  private raiseMaxHp(n: number, id: BadgeId) {
-    const p = this.run.player, kept = this.run.loadout;
-    n = snap(n * boonFactor(this.run, "maxHp"));
-    p.maxHp = snap(p.maxHp + n);
-    p.hp = snap(p.hp + n);
-    if (kept) kept.maxHp = snap(kept.maxHp + n);
-    this.gain(p.x, p.y, `+${wholeChange(n)} max HP`, { heart: true, raised: true });
-    this.message = `${BADGES[id].name} · +${wholeChange(n)} max HP`;
-  }
-  /** Heals up to `n` HP for badge `id`, as a potion's heal shows. */
-  private badgeHeal(n: number, id: BadgeId) {
-    const p = this.run.player, healed = snap(Math.min(p.maxHp - p.hp, n));
-    if (healed <= 0) return;
-    p.hp = snap(p.hp + healed);
-    this.recordHeal(healed);
-    this.message = `${BADGES[id].name} · +${wholeChange(healed)} HP`;
-  }
-  /** Whether a card that acts in place can act now (`planHand` asks),
-   * inside a run only: a siphon while enough of its training levels are
-   * left for its next use, BK TRADER while 3 yellow keys are held, and YK TO
-   * HP while a yellow key is held and its whole heal would land. */
-  canAct(card: CardId) {
-    if (this.run.outside) return false;
-    const p = this.run.player;
-    if (isSiphon(card)) return this.siphonLevel(card) >= this.siphonCost(card);
-    if (card === "blueTrader") return p.keys.yellow >= TRADER_YELLOW_KEYS;
-    if (card === "keyToHp") return p.keys.yellow >= 1 && snap(p.maxHp - p.hp) >= this.keyHeal();
-    return false;
-  }
-  /** Times card `card`, one that acts in place, has acted this run. */
-  cardUses(card: CardId) {
-    return this.run.cardUses?.[card] ?? 0;
-  }
-  /** YK TO HP's heal: 10% of max HP. */
-  private keyHeal() {
-    return snap((this.run.player.maxHp * KEY_TO_HP_PERCENT) / 100);
-  }
-  /** The run's training level of the row siphon `card` drains (Max HP for
-   * KEY SIPHON, DEF for BK SIPHON, ATK for RK SIPHON): the hero's own ranks
-   * and those bought with Silver this run, less the levels it siphoned (1
-   * for the first use, 2 for the second, and so on); 0 outside a run. */
-  siphonLevel(card: SiphonCard) {
-    if (this.run.outside) return 0;
-    const uses = this.cardUses(card), row = SIPHONS[card].row;
-    return this.save.training[row] + boughtInRun(this.run, row) - (uses * (uses + 1)) / 2;
-  }
-  /** The training levels siphon `card`'s next use takes: one more than the
-   * last. */
-  siphonCost(card: SiphonCard) {
-    return this.cardUses(card) + 1;
-  }
-  /** A card that acts in place takes its turn, with no step: a turn of its
-   * own, so undo takes it back. Effective and Dampen scale what it gives
-   * (`scale`), never what it costs. */
-  private actInPlace(card: CardId, scale = 1) {
-    const p = this.run.player;
-    this.remember(this.snapshot());
-    if (isSiphon(card)) this.siphon(card, scale);
-    else if (card === "blueTrader") {
-      p.keys.yellow = snap(p.keys.yellow - TRADER_YELLOW_KEYS);
-      p.keys.blue = snap(p.keys.blue + scale);
-      this.noteKey("blue", scale);
-      this.gain(p.x, p.y, `−${TRADER_YELLOW_KEYS} yellow keys`, { tile: { kind: "key", color: "yellow" } });
-      this.gain(p.x, p.y, `+${keyCount(scale)} blue key`, { tile: { kind: "key", color: "blue" } });
-    } else if (card === "keyToHp") {
-      const healed = snap(Math.min(p.maxHp - p.hp, snap(this.keyHeal() * scale)));
-      p.keys.yellow = snap(p.keys.yellow - 1);
-      p.hp = snap(p.hp + healed);
-      this.gain(p.x, p.y, "−1 yellow key", { tile: { kind: "key", color: "yellow" } });
-      this.recordHeal(healed);
-    }
-    (this.run.cardUses ??= {})[card] = this.cardUses(card) + 1;
-  }
-  /** A siphon's turn: the run's top levels of its training row (its
-   * `siphonCost`) traded for a key of its colour. The hero and the run's
-   * loadout lose what those levels add (times the stat's research), for the rest of
-   * the run only (max HP: HP falls only as far as the new max). */
-  private siphon(card: SiphonCard, scale: number) {
-    const { row: id, color } = SIPHONS[card], level = this.siphonLevel(card), levels = this.siphonCost(card);
-    const p = this.run.player;
-    const row = TRAINING.find((t) => t.id === id) as StatTrainingRow;
-    const stat = row.stat as "maxHp" | "attack" | "defense";
-    const loss = snap((trained(row, level) - trained(row, level - levels)) * statFactor(this.save, stat) * boonFactor(this.run, stat));
-    p[stat] = snap(p[stat] - loss);
-    if (stat === "maxHp") p.hp = Math.min(p.hp, p.maxHp);
-    if (this.run.loadout) this.run.loadout[stat] = snap(this.run.loadout[stat] - loss);
-    p.keys[color] = snap(p.keys[color] + scale);
-    this.noteKey(color, scale);
-    const lost = stat === "maxHp" ? `−${wholeChange(loss)} max HP` : `−${wholeChange(loss)} ${stat === "attack" ? "ATK" : "DEF"}`;
-    this.gain(p.x, p.y, lost, stat === "maxHp" ? { heart: true } : { tile: { kind: stat } });
-    this.gain(p.x, p.y, `+${keyCount(scale)} ${color} key`, { tile: { kind: "key", color } });
   }
   /** Dash: the first step toward a new target, onto an empty tile, goes on
    * along the path in the same step across up to `tiles` more empty tiles
@@ -1179,7 +919,7 @@ export class Game {
     const regenerating = this.dashRegenSteps, regen = () => dash - left < regenerating;
     for (; left > 0 && plan.path.length && this.dashable(plan.path[0].x, plan.path[0].y); left--) {
       const at = { x: p.x, y: p.y }, next = plan.path.shift()!;
-      if (!this.move(next.dx, next.dy, true, false, regen())) {
+      if (!this.move(next.dx, next.dy, true, false, regen(), { hold: true })) {
         plan.path = [];
         moved = false;
         break;
@@ -1188,39 +928,38 @@ export class Game {
     }
     const target = plan.path.length === 1 ? plan.path[0] : null;
     let onItem = false;
-    if (moved && left > 0 && target && DASH_ONTO.has(this.world.tile(target.x, target.y).kind) && !this.rollsSkip(id, target.x, target.y)) {
+    if (moved && left > 0 && target && DASH_ONTO.has(this.world.tile(target.x, target.y).kind) && !this.handRules.rollsSkip(id, target.x, target.y)) {
       const at = { x: p.x, y: p.y };
       plan.path.shift();
-      this.stepScale = this.scaleOf(id);
-      moved = this.move(target.dx, target.dy, true, false, regen());
-      this.stepScale = 1;
+      moved = this.move(target.dx, target.dy, true, false, regen(), { scale: this.handRules.scaleOf(id), hold: true });
       if (moved) {
         tiles.push({ ...at, dx: target.dx, dy: target.dy });
         onItem = true;
         // Taking the item makes the dash a turn undo stops at.
-        delete this.slice.history.at(-1)?.quiet;
+        this.timeline.eventful();
       }
     }
     this.cardPlan = plan.path.length ? plan : null;
     const last = tiles[tiles.length - 1], end = onItem ? undefined : { x: p.x, y: p.y, dx: last.dx, dy: last.dy };
     if (tiles.length > 1) this.dash = { tiles, end, at: performance.now() };
+    if (tiles.length > 1 && end) this.dashedTo = { x: end.x, y: end.y };
     return moved;
   }
   /** Tiles the hand's first step toward a new target may dash across: none
    * without the Dash skill, and one more a Dash research level. */
   get dashTiles() {
-    return (this.save.upgrades.dash ? researched(this.save.archives, "dashTiles", 0) : 0) + this.worn.dashTiles;
+    return (this.save.upgrades.dash ? researched(this.save.archives, "dashTiles") : 0) + this.worn.dashTiles;
   }
   /** How many of a Dash's dashed steps regain HP by Regen: none without the
    * Dash Regen skill, and one more a Dash Regen research level. */
   get dashRegenSteps() {
-    return this.save.upgrades.dashRegen ? researched(this.save.archives, "dashRegenSteps", 0) : 0;
+    return this.save.upgrades.dashRegen ? researched(this.save.archives, "dashRegenSteps") : 0;
   }
   /** Tiles card `id`'s first step toward a new target may dash across:
    * `dashTiles`, End Rush's research on STAIRS (toward the stairs, or the
    * Delve's climb), and its Dash badge's value. They add up. */
   dashFor(id: CardId) {
-    const end = id === "stairs" && this.save.upgrades.endRush ? researched(this.save.archives, "endRushTiles", 0) : 0;
+    const end = id === "stairs" && this.save.upgrades.endRush ? researched(this.save.archives, "endRushTiles") : 0;
     const badge = badgeOn(this.run.badges, id, "dash");
     return this.dashTiles + end + (badge ? badgeValue("dash", badge.level) : 0);
   }
@@ -1236,15 +975,11 @@ export class Game {
     return (anyKind || this.world.tile(x, y).kind === "floor") && !(gem && gem.x === x && gem.y === y) &&
       !this.world.torches?.some((t) => t.active && t.x === x && t.y === y);
   }
-  /** Drops the committed path when its card's gate badge (HP <, YK ≥, …)
-   * no longer holds, so the hand chooses a card again: walking on, Regen
-   * may have lifted HP past an HP < limit. A focused card ignores its gate. */
+  /** Drops the committed path when its card's gate badge no longer holds
+   * (`HandRules.gateShut`), so the hand chooses a card again. */
   private dropGatedPlan() {
     const plan = this.cardPlan;
-    if (!plan) return;
-    const id = this.hand[plan.card];
-    if (!badgesOn(this.run.badges, id).some((b) => BADGES[b.id].kind === "gate") || id === this.run.focused) return;
-    if (this.cardRules(id)?.closed) this.cardPlan = null;
+    if (plan && this.handRules.gateShut(this.hand[plan.card])) this.cardPlan = null;
   }
   /** The path the hand follows this turn: the one committed, else the
    * focused card's while it has a path to a target (`lost` once it has
@@ -1252,11 +987,11 @@ export class Game {
   private nextHandPlan(): { plan: CardPlan | null; lost: CardId | null } {
     if (this.cardPlan) return { plan: this.cardPlan, lost: null };
     const focused = this.run.focused;
-    if (!focused) return { plan: planHand(this, this.hand, this.mode), lost: null };
-    const plan = planHand(this, this.hand, this.mode, this.hand.indexOf(focused));
+    if (!focused) return { plan: planHand(this.handRules, this.hand, this.mode), lost: null };
+    const plan = planHand(this.handRules, this.hand, this.mode, this.hand.indexOf(focused));
     if (plan) return { plan, lost: null };
     this.run.focused = undefined;
-    return { plan: planHand(this, this.hand, this.mode), lost: focused };
+    return { plan: planHand(this.handRules, this.hand, this.mode), lost: focused };
   }
   /** No card can act: the hand pauses and End Run lights up. */
   private handWaits() {
@@ -1268,7 +1003,7 @@ export class Game {
   /** What stops the hand while no card can act (`explainStuck`): the run's
    * end dialog shows it. */
   stuckReport(): StuckReport {
-    return explainStuck(this, this.hand);
+    return explainStuck(this.handRules, this.hand);
   }
   /** The status line for card `id` leading the hand. */
   private cardMessage(id: CardId) {
@@ -1278,15 +1013,15 @@ export class Game {
    * a stuck hand checks its cards again and plays on if one can act. */
   private afterPlayerAction() {
     if (!this.handStuck || !this.playing) return;
-    const plan = planHand(this, this.hand, this.mode);
+    const plan = planHand(this.handRules, this.hand, this.mode);
     if (!plan) return;
     this.handStuck = false;
     this.cardPlan = plan;
     this.playHand();
   }
   /** A run going inside keeps the hand as it was ordered on the way in,
-   * gets its Focus uses and its Pocket Money Silver, and fixes its chance
-   * of percent potions. */
+   * gets its Focus uses, its Pocket Money Silver and, above floor 1, its
+   * Warp Loot Silver, and fixes its chance of percent potions. */
   private dealHand() {
     noteGoldBoost(this.save, this.slice, this.clock());
     this.run.hand = [...this.save.hand];
@@ -1295,33 +1030,102 @@ export class Game {
     else delete this.run.links;
     const badges = this.save.upgrades.cardBadges ? runBadges(this.save.badges, this.run.hand, this.badges.slots) : {};
     if (Object.keys(badges).length) this.run.badges = badges;
-    const pocket = this.startingSilver;
-    if (pocket) this.run.silver = pocket;
-    const chance = percentPotionChance(this.save);
+    const trees = runCardTrees(this.save.cardTrees, this.run.hand);
+    if (Object.keys(trees).length) this.run.cardTrees = trees;
+    else delete this.run.cardTrees;
+    const tree = treeBonus(this.run.cardTrees);
+    const pocket = this.startingSilver, loot = this.warpLoot(pocket);
+    if (pocket || loot) this.run.silver = snap(pocket + loot);
+    this.warpLooted = loot >= 1 ? { silver: loot, at: performance.now() } : null;
+    // HEAL's tree raises the chance, up to every potion; whole hundredths
+    // of a percent, so the floors come out the same in every engine.
+    const chance = Math.min(10_000, Math.floor(trainedAmount(this.save, "findPotion") * treeFactor(tree, "percentPotions")));
     if (chance) this.run.percentPotions = chance;
     else delete this.run.percentPotions;
+    const odds = this.chestOddsFor(this.run.hand, tree);
+    if (odds) this.run.chestOdds = odds;
+    else delete this.run.chestOdds;
+    // DOOR's Skeleton Key and Lock Pick remake the run's doors as each floor is generated.
+    if (tree.skeletonKey || tree.lockPick) this.run.doorOdds = { skeleton: Math.min(100, tree.skeletonKey), lockPick: Math.min(100, tree.lockPick) };
+    else delete this.run.doorOdds;
+    // CHEST's Treasure Floor makes a floor's shards and potions chests as it is generated.
+    if (tree.treasureFloor) this.run.treasureFloor = Math.min(100, tree.treasureFloor);
+    else delete this.run.treasureFloor;
+    // The hero strikes the enemies each enemy card covers harder (its tree
+    // harder still), and with the enemy cards', ENEMY's and TORCH's trees
+    // holds more DEF and shroud against theirs, HEAL's more shroud against
+    // every enemy and a parry of its own; the enemy cards' trees raise its
+    // crits and Lifesteal's ceiling against theirs (combat.ts reads them).
+    const p = this.run.player, foes: NonNullable<Player["foeAttack"]> = Object.fromEntries(Object.entries(handBonus(this.run.hand).foe).map(([id, b]) => [id, b.attack]));
+    for (const [card, n] of Object.entries(foeStats(tree, "Attack")) as [FoeTreeCard, number][]) foes[card] = snap((foes[card] ?? 0) + n);
+    if (tree.foeAttack) foes.monster = tree.foeAttack;
+    if (tree.bossAttack) foes.torch = tree.bossAttack;
+    const defense = { ...foeStats(tree, "Defense"), ...(tree.foeDefense ? { monster: tree.foeDefense } : {}), ...(tree.bossDefense ? { torch: tree.bossDefense } : {}) };
+    const shroud = { ...foeStats(tree, "Shroud"), ...(tree.shroud ? { monster: tree.shroud } : {}), ...(tree.bossShroud ? { torch: tree.bossShroud } : {}) };
+    for (const [k, v] of [["foeAttack", foes], ["foeDefense", defense], ["foeShroud", shroud], ["foeCritChance", foeStats(tree, "CritChance")],
+      ["foeCritFactor", foeStats(tree, "CritFactor")], ["foeStealOverheal", foeStats(tree, "StealOverheal")]] as const) {
+      if (Object.keys(v).length) (p as Record<string, unknown>)[k] = v;
+      else delete p[k];
+    }
+    if (tree.parry) p.cardParry = tree.parry;
+    else delete p.cardParry;
+    if (tree.stealOverheal) p.stealOverheal = tree.stealOverheal;
+    else delete p.stealOverheal;
+    // ATK UP's and DEF UP's Takedown and Tangle cut a boss as a fight with it
+    // begins, TORCH's a Greater Boss, and BOSS ENEMY's both (combat.ts's `squaredUp`).
+    const cuts = (boss: number, greaterBoss: number, both: number) => ({ ...(boss + both ? { boss: snap(boss + both) } : {}), ...(greaterBoss + both ? { greaterBoss: snap(greaterBoss + both) } : {}) });
+    for (const [k, v] of [["takedown", cuts(tree.takedown, tree.greaterTakedown, foeCardStat(tree, "bossEnemy", "Takedown"))],
+      ["tangle", cuts(tree.tangle, tree.greaterTangle, foeCardStat(tree, "bossEnemy", "Tangle"))]] as const) {
+      if (Object.keys(v).length) p[k] = v;
+      else delete p[k];
+    }
+    // A Power Strike charged on an earlier run doesn't carry over.
+    delete p.powerStrike;
+    // GOLD KEY's Max HP raises the hero's for the run, as the Max HP badge's does (`heroFactor`).
+    const maxHp = treeFactor(tree, "maxHp");
+    if (maxHp !== 1) {
+      p.maxHp = snap(p.maxHp * maxHp);
+      p.hp = snap(p.hp * maxHp);
+      if (this.run.loadout) this.run.loadout.maxHp = snap(this.run.loadout.maxHp * maxHp);
+    }
     this.run.focusUsed = 0;
     for (const k of ["ignoreUsed", "targetUsed", "regain", "ignored", "targeted"] as const) delete this.run[k];
+  }
+  /** A run's chances of Supply and Equipment Chests with `hand`: the
+   * hand's (the CHEST card's, and the points its tree adds, `tree`), raised
+   * by the worn Supply and Equipment Chest chance; none before Equipment
+   * opens or without a card that gives one. */
+  private chestOddsFor(hand: readonly CardId[], tree: TreeBonus): ChestOdds | undefined {
+    const { chest } = handBonus(hand);
+    if (!this.save.equipment.unlocked || !(chest.supply + chest.equipment)) return undefined;
+    const find = wornEffects(this.save, this.mode).chestFind;
+    return { supply: raised(snap(chest.supply + tree.supplyChance), find), equipment: raised(snap(chest.equipment + tree.equipmentChance), find) };
+  }
+  /** What the card trees of the run's hand give (`treeBonus`): none in the
+   * forest. */
+  get treeBonus(): TreeBonus {
+    return treeBonus(this.run.outside ? undefined : this.run.cardTrees);
   }
   /** The fastest speed the run's arrows reach: 3 steps a second, and one
    * more a Movement Speed research level. */
   get maxSpeed() {
-    return 3 + researched(this.save.archives, "moveSpeed", 0) + (this.boons?.playSpeed ?? 0);
+    return researched(this.save.archives, "moveSpeed") + (this.boons?.playSpeed ?? 0);
   }
   /** What the Tower run's boons change now, or null (none picked, or the
    * Delve). */
   get boons() {
     return this.mode === "tower" && !this.run.outside ? runBoons(this.run as TowerRun, this.save) : null;
   }
-  /** The Gold bonus breakdown's Shrine Boons line: the boons' Gold factor
-   * inside a Tower run once Shrines are open (1 with none), else none. */
-  get shrineGold() {
-    return this.shrine.open ? this.boons?.gold ?? 1 : undefined;
+  /** What the Gold multipliers read now (`gold-multipliers.ts`): the
+   * Shrine Boons line is the boons' Gold factor inside a Tower run once
+   * Shrines are open (1 with none), else none. */
+  get goldContext(): GoldContext {
+    return { save: this.save, mode: this.mode, tier: this.tier, now: this.clock(), shrine: this.shrine.open ? this.boons?.gold ?? 1 : undefined };
   }
   /** The run's boons changed its hero or enemies (`ShrineDesk.sync`): the
    * floor's enemies are read afresh and the hand plans again. */
   boonsChanged() {
-    if (this.world instanceof RoomWorld) this.world.foes = (this.run as TowerRun).shrine?.applied?.foes;
+    if (this.world instanceof RoomWorld) this.world.foes = weakened((this.run as TowerRun).shrine?.applied?.foes, runFoeCut(this.run));
     this.dropHandPlan();
   }
   /** Research completed: what it changes about the run's boons applies at
@@ -1354,26 +1158,70 @@ export class Game {
   /** What research changes about stepping now: the step rules every move,
    * preview, inspect box and planner resolves with. */
   get stepRules(): StepRules {
-    // Regen research raises the HP each step regains by its percent.
+    // Regen research raises the HP each step regains by its percent, and HEAL's tree by its own.
+    const tree = this.treeBonus;
     const regen = this.run.outside || !this.run.player.regen ? 0
-      : snap((this.run.player.regen * researched(this.save.archives, "regenPercent", 100)) / 100);
-    const worn = this.worn, potionHeal = raised(researched(this.save.archives, "potionHeal", 100), worn.potionHeal);
-    const crit = this.crit;
-    return { potionHeal, percentPotion: potionPercent(this.trainingNow), regen,
-      heartToll: researched(this.save.archives, "heartToll", 100), keyCost: this.keyCost,
-      shardAttack: researched(this.save.archives, "shardAttackPercent", 100) * boonFactor(this.run, "attack"), shardDefense: researched(this.save.archives, "shardDefensePercent", 100),
+      : snap((this.run.player.regen * researched(this.save.archives, "regenPercent") * treeFactor(tree, "regen")) / 100);
+    const worn = this.worn, potionHeal = raised(researched(this.save.archives, "potionHeal"), worn.potionHeal);
+    const crit = this.crit, keys = this.handBonus.keys;
+    // KEY's tree adds to every colour's percent, the key cards' adding to their own; each colour's own tree multiplies its keys'.
+    const found = KEY_ORDER.flatMap((color) => {
+      const n = compounded((keys[color]?.percent ?? 0) + tree.keyFind, keyStat(tree, color, "KeyFind"));
+      return n ? [[color, n] as const] : [];
+    });
+    const keyFind = found.length ? { keyFind: Object.fromEntries(found) } : {};
+    const overheal = this.overheal;
+    return { potionHeal, percentPotion: trainedAmount(this.trainingNow, "potion"), regen, ...(overheal > 1000 ? { overheal } : {}),
+      heartToll: researched(this.save.archives, "heartToll"), keyCost: this.keyCost, ...keyFind, ...(this.doorOff ? { doorOff: this.doorOff } : {}),
+      ...(tree.doorHeal ? { doorHeal: tree.doorHeal } : {}), ...(tree.keyHeal ? { keyHeal: tree.keyHeal } : {}), ...(tree.keyOverheal ? { keyOverheal: tree.keyOverheal } : {}),
+      ...Object.fromEntries(KEY_ORDER.flatMap((color) => (["KeyHeal", "KeyOverheal"] as const).flatMap((part) => (keyStat(tree, color, part) ? [[`${color}${part}`, keyStat(tree, color, part)]] : [])))),
+      shardAttack: researched(this.save.archives, "shardAttackPercent") * boonFactor(this.run, "attack") * treeFactor(tree, "attackShard"),
+      shardDefense: researched(this.save.archives, "shardDefensePercent") * treeFactor(tree, "defenseShard"),
+      ...(tree.potionHeal ? { potionCard: tree.potionHeal } : {}),
       ...(worn.victoryHeal ? { victoryHeal: worn.victoryHeal } : {}), ...(crit ? { crit } : {}) };
+  }
+  /** How far potions, GK to HP and badge heals may heal above max HP now,
+   * as a multiple of max HP in thousandths (Overheal training, the run's
+   * Silver ranks counting, 1,000 until Overheal is owned), with the card
+   * trees' Overheal Max added, skill or not. */
+  get overheal() {
+    return treeOverheal(trainedAmount(this.trainingNow, "overheal"), this.treeBonus);
+  }
+  /** The most HP the hero may hold now: max HP, raised by Overheal. */
+  get hpCeiling() {
+    return hpCeiling(this.run.player.maxHp, { overheal: this.overheal });
+  }
+  /** Revive's chance now (its training, the run's Silver ranks counting),
+   * in hundredths of a percent, TORCH's tree's percent added. */
+  get reviveChance() {
+    return snap(trainedAmount(this.trainingNow, "revive") + this.treeBonus.reviveChance * 100);
   }
   /** The hero's critical strikes now (Critical, Crit % and Crit x training
    * and research, the run's Silver ranks counting), read when a fight is
    * taken or shown; none in the forest. */
   get crit(): CritRule | undefined {
-    return this.run.outside ? undefined : critRule({ ...this.trainingNow, archives: this.save.archives });
+    return this.run.outside ? undefined : critRule({ ...this.trainingNow, archives: this.save.archives }, this.cardCrit);
+  }
+  /** ENEMY's tree's percents on Crit % and Crit x, for fights and arrows. */
+  private get cardCrit() {
+    const tree = this.treeBonus;
+    return { chance: tree.critChance, factor: tree.critFactor };
   }
   /** How much of a key each key a door takes costs, in tenths of a percent
    * (Key Efficiency research): what steps pay and the door cards plan by. */
   get keyCost() {
-    return researched(this.save.archives, "keyCost", 1000);
+    return researched(this.save.archives, "keyCost");
+  }
+  /** The percent less each kind of door costs, from the door cards the run's
+   * hand holds and the DOOR and KEY trees: what steps pay and the door cards
+   * plan by; undefined with none. */
+  get doorOff() {
+    const doors: DoorDiscounts = { ...this.handBonus.doors }, tree = this.treeBonus;
+    if (tree.doorCost) doors.all = tree.doorCost;
+    if (tree.plainDoorCost) doors.plain = tree.plainDoorCost;
+    if (tree.heartDoorCost) doors.hearts = tree.heartDoorCost;
+    for (const color of KEY_ORDER) if (keyStat(tree, color, "DoorCost")) doors[`${color}Key`] = keyStat(tree, color, "DoorCost");
+    return Object.keys(doors).length ? doors : undefined;
   }
   /** Where the Training tab reads its rows' values: this mode's hero, and
    * the run while one is inside (`TrainingView`). */
@@ -1392,10 +1240,17 @@ export class Game {
   get silver() {
     return this.run.silver ?? 0;
   }
+  /** The Silver Warp Loot research adds to a Tower run going inside above
+   * floor 1 (a Warp, or a Retry from one), holding `pocket` Silver: its
+   * percent of the Silver the floors below would have paid (warp-loot.ts). */
+  private warpLoot(pocket: number) {
+    const start = this.mode === "tower" ? this.towerRun.start ?? 0 : 0;
+    return start ? warpLootSilver(this.save, this.run.tier ?? 1, start, pocket) : 0;
+  }
   /** The Silver a run starts with as it goes inside: Pocket Money research
    * and worn Equipment's. */
   get startingSilver() {
-    return snap(researched(this.save.archives, "startingSilver", 0) + this.worn.startSilver);
+    return snap(researched(this.save.archives, "startingSilver") + this.worn.startSilver);
   }
   /** Focus uses left: this run's inside one, or in the forest what the
    * next run will start with. */
@@ -1407,46 +1262,82 @@ export class Game {
   chargesLeft(c: Charge) {
     return this.run.outside ? chargesPerRun(this.save, c) : chargesLeft(this.save, this.run, c);
   }
-  /** Ignore or Target waiting for the board tap that says where. */
-  armed: "ignore" | "target" | null = null;
-  /** Readies Ignore or Target (or, armed already, puts it away): the next
-   * board tap marks or targets that tile. */
-  arm(c: "ignore" | "target"): "armed" | "disarmed" | "unavailable" | "spent" {
-    if (!this.save.upgrades[c] || this.run.outside || this.fallen) return "unavailable";
+  /** Bombs left: this run's (one for each Bomb provision owned, less
+   * those thrown), or in the forest what the next run will carry. */
+  get bombsLeft() {
+    const owned = this.save.provisions.bomb;
+    return this.run.outside ? owned : Math.max(0, owned - (this.run.bombsUsed ?? 0));
+  }
+  /** Whether the hero has `c` at all: Ignore's or Target's skill, or a Bomb provision. */
+  private owns(c: Armed) {
+    return c === "bomb" ? this.save.provisions.bomb > 0 : !!this.save.upgrades[c];
+  }
+  /** Uses of `c` left. */
+  private armedLeft(c: Armed) {
+    return c === "bomb" ? this.bombsLeft : this.chargesLeft(c);
+  }
+  /** Ignore, Target or a Bomb waiting for the board tap that says where. */
+  armed: Armed | null = null;
+  /** Readies Ignore, Target or a Bomb (or, armed already, puts it away):
+   * the next board tap marks, targets or bombs that tile. */
+  arm(c: Armed): "armed" | "disarmed" | "unavailable" | "spent" {
+    if (!this.owns(c) || this.run.outside || this.fallen) return "unavailable";
     if (this.armed === c) {
       this.armed = null;
       this.message = this.auto ? "The hand takes over." : "Paused · the hand waits.";
       return "disarmed";
     }
-    if (this.chargesLeft(c) < 1) return "spent";
+    if (this.armedLeft(c) < 1) return "spent";
     this.armed = c;
-    this.message = c === "ignore" ? "Ignore · tap a tile the hero won't step on." : "Target · tap a tile to send the hero there.";
+    this.message = c === "ignore" ? "Ignore · tap a tile the hero won't step on." : c === "target" ? "Target · tap a tile to send the hero there." : "Bomb · tap an enemy to bomb it.";
     return "armed";
   }
-  /** The board tap Ignore or Target was armed for, on (x, y): Ignore marks
-   * the tile for the rest of the floor, and Target sends the hero there.
-   * A tile it can't take (a wall, the hero's own, one already ignored, or
-   * for Target one out of reach) costs nothing and keeps it armed. */
+  /** The board tap Ignore, Target or a Bomb was armed for, on (x, y):
+   * Ignore marks the tile for the rest of the floor, Target sends the hero
+   * there, and a Bomb goes off on the enemy there. A tile it can't take (a
+   * wall, the hero's own, one already ignored, for Target one out of
+   * reach, for a Bomb one with no enemy) costs nothing and keeps it armed. */
   useArmed(x: number, y: number): "used" | "invalid" | "noPath" | "unavailable" {
     const c = this.armed;
-    if (!c || !this.save.upgrades[c] || this.run.outside || this.fallen || this.chargesLeft(c) < 1) {
+    if (!c || !this.owns(c) || this.run.outside || this.fallen || this.armedLeft(c) < 1) {
       this.armed = null;
       return "unavailable";
     }
-    return c === "ignore" ? this.ignoreTile(x, y) : this.targetTile(x, y);
+    return c === "ignore" ? this.ignoreTile(x, y) : c === "target" ? this.targetTile(x, y) : this.bombTile(x, y);
   }
-  /** The tiles Ignore marked on this floor, which no card's path nor
-   * Target's crosses (`planHand` reads it). */
-  get ignored(): ReadonlySet<string> {
-    const m = this.run.ignored;
-    return new Set(m && !this.run.outside && m.floor === this.badgeFloor ? m.tiles : []);
+  /** A Bomb going off on (x, y): the enemy there (or a Flying one over it)
+   * takes the hero's ATK, its DEF no help, and falls to it as to an arrow,
+   * paid as a kill. A tile with no enemy takes no Bomb. The throw is a turn
+   * of its own, so undo takes it back, and its kill's Gold can't be paid
+   * twice. A fight still playing out counts first. */
+  private bombTile(x: number, y: number): "used" | "invalid" | "unavailable" {
+    this.fights.finish();
+    if (this.fallen) {
+      this.armed = null;
+      return "unavailable";
+    }
+    const enemy = foeOn(this.world.tile(x, y));
+    if (!enemy) return "invalid";
+    this.remember(this.snapshot());
+    this.run.bombsUsed = (this.run.bombsUsed ?? 0) + 1;
+    this.armed = null;
+    this.bombed = { x, y, at: performance.now() };
+    const damage = this.run.player.attack;
+    this.gain(x, y, `−${wholeChange(Math.min(damage, enemy.hp))}`, null, undefined, "hit");
+    if (enemy.hp > damage) {
+      this.world.wound?.(x, y, damage);
+      this.message = `Bomb · ${enemyTitle(enemy)} −${wholeChange(damage)} HP`;
+    } else {
+      this.world.clear(x, y);
+      this.message = [`Bomb · ${enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, { x, y }, 1, false, 0)].join(" · ");
+    }
+    // The hand plans again, round what the Bomb left.
+    this.cardPlan = null;
+    this.afterPlayerAction();
+    return "used";
   }
   private ignoreTile(x: number, y: number): "used" | "invalid" {
-    const p = this.run.player, k = `${x},${y}`;
-    if (this.world.tile(x, y).kind === "wall" || (p.x === x && p.y === y) || this.ignored.has(k)) return "invalid";
-    const floor = this.badgeFloor;
-    if (this.run.ignored?.floor !== floor) this.run.ignored = { floor, tiles: [] };
-    this.run.ignored.tiles.push(k);
+    if (!this.handRules.ignore(x, y)) return "invalid";
     spendCharge(this.run, "ignore");
     this.armed = null;
     // The hand plans again, round the tile, and a stuck hand looks again.
@@ -1457,7 +1348,7 @@ export class Game {
     return "used";
   }
   private targetTile(x: number, y: number): "used" | "noPath" {
-    const path = planTarget(this, x, y);
+    const path = planTarget(this.handRules, x, y);
     if (!path) return "noPath";
     this.targetPath = path;
     spendCharge(this.run, "target");
@@ -1479,7 +1370,7 @@ export class Game {
     const k = this.run.targeted;
     if (!k) return false;
     const [x, y] = k.split(",").map(Number);
-    const path = this.targetPath?.length && stillOpen(this, this.targetPath) ? this.targetPath : planTarget(this, x, y);
+    const path = this.targetPath?.length && stillOpen(this.handRules, this.targetPath) ? this.targetPath : planTarget(this.handRules, x, y);
     this.targetPath = null;
     if (!path) {
       this.run.targeted = undefined;
@@ -1511,14 +1402,14 @@ export class Game {
     if (!this.save.upgrades.focus || this.run.outside || this.fallen || !id) return "unavailable";
     if (this.run.focused === id || (card === this.activeCard && !this.handStuck)) return "active";
     if (this.focusLeft < 1) return "spent";
-    const plan = planHand(this, this.hand, this.mode, card);
+    const plan = planHand(this.handRules, this.hand, this.mode, card);
     if (!plan) return "noPath";
     this.run.focusUsed = (this.run.focusUsed ?? 0) + 1;
     this.missions.mark("focus", this.mode, this.run.seed, this.run.focusUsed);
     this.run.focused = id;
     this.route = [];
     // During a fight, the path is found again once the hero has stepped in.
-    this.cardPlan = this.encounter ? null : plan;
+    this.cardPlan = this.fights.encounter ? null : plan;
     this.activeCard = card;
     this.handStuck = false;
     this.playHand();
@@ -1531,27 +1422,6 @@ export class Game {
     this.targetPath = null;
     this.activeCard = null;
     this.handStuck = false;
-  }
-  /** Settles the fight being played out, as if it had played to the end.
-   * Returns whether there was one. */
-  finishEncounter() {
-    const fight = this.encounter;
-    if (!fight) return false;
-    this.encounter = null;
-    fight.settle();
-    return true;
-  }
-  /** The hero's HP as the HUD shows it at `now` (performance time): during
-   * a fight being played out, what the strikes so far have left. */
-  shownHp(now: number) {
-    const fight = this.encounter, hp = this.run.player.hp;
-    return fight ? heroHpDuring(fight.bout, hp, now - fight.start) : hp;
-  }
-  /** The HP the fight being played out leaves the hero with once its last
-   * strike lands (the HP now while there is none). */
-  fightEndHp() {
-    const fight = this.encounter, hp = this.run.player.hp;
-    return fight ? heroHpDuring(fight.bout, hp, Infinity) : hp;
   }
   /** Erases all progress and starts again outside the Tower. */
   eraseAll() {
@@ -1580,17 +1450,14 @@ export class Game {
     if (this.save.gemDrop.out?.mode === this.mode) missGem(this.save.gemDrop);
     this.armed = null;
     this.heldPlay = null;
-    this.slice.fall = null;
-    this.slice.history = [];
+    this.timeline.reset();
     this.slice.runGold = 0;
     this.slice.runBoostGold = null;
     this.slice.runCurrency = 0;
     this.slice.runRecord = false;
     this.slice.runFinds = defaultFinds();
-    this.route = [];
-    this.encounter = null;
-    this.fight = null;
-    this.volley = null;
+    this.warpLooted = null;
+    this.stopPlay();
     const { player, loadout } = startingHero(this.save, this.mode);
     const core: RunCore = {
       layoutVersion: this.rules.layoutVersion,
@@ -1689,14 +1556,9 @@ export class Game {
       until: performance.now() + ms,
     };
   }
-  /** Queues `drops` (a kill's or a chest's) to rise from `at` together,
-   * stacked a row apart from row `top` down. */
-  private gainDrops(at: { x: number; y: number }, drops: { text: string; art: GainArt }[], top = 0) {
-    drops.forEach(({ text, art }, i) => this.gain(at.x, at.y, text, art, { row: top - i, with: i > 0 }));
-  }
   /** Queues a reward to rise from (x, y), unless the Settings turn off
-   * gains of its `kind` (by default, a coin's Gold or Silver). */
-  gain(x: number, y: number, text: string, art: GainArt | null = null, drop?: Drop, kind: GainKind | null = coinOf(art)) {
+   * gains of its `kind` (by default, the kind its art raises). */
+  gain(x: number, y: number, text: string, art: GainArt | null = null, drop?: Drop, kind: GainKind | null = kindOf(art)) {
     if (kind && !this.save.settings[GAIN_SETTINGS[kind]]) return;
     this.gains.push({ x, y, text, art, ...(drop ? { drop } : {}) });
     if (this.gains.length > MAX_GAINS) this.gains.shift();
@@ -1704,13 +1566,14 @@ export class Game {
   /** Pays the XP for beating `enemy` on equivalent floor `floor`, counting
    * it toward the run's total too. */
   gainXp(enemy: Enemy, floor: number, scale = 1) {
-    const xp = tierXp(this.tier, xpForKill(enemy.strength, floor)), gain = this.worn.xpGain;
-    const raisedXp = gain ? Math.round((xp * (100 + gain)) / 100) : xp;
+    // Worn Equipment's XP Gain and the card trees' (ENEMY's, and the enemy cards' covering it, added up), each its own factor.
+    const bonus = this.treeBonus, xp = tierXp(this.tier, xpForKill(enemy.strength, floor)), gain = this.worn.xpGain, tree = snap(bonus.killXp + foeStat(bonus, enemy, "KillXp"));
+    const raisedXp = gain || tree ? Math.round((xp * (100 + gain) * (100 + tree)) / 10_000) : xp;
     this.addXp(scale === 1 ? raisedXp : Math.round(raisedXp * scale));
   }
   /** Adds `xp` to the hero's and the run's, raising the level-up burst
    * when it reaches a new level. */
-  private addXp(xp: number) {
+  addXp(xp: number) {
     const level = levelForXp(this.save.xp);
     this.save.xp += xp;
     this.run.xp = (this.run.xp ?? 0) + xp;
@@ -1719,6 +1582,17 @@ export class Game {
       this.levelUpAt = performance.now();
       this.levelUpPoints = TRAINING_PER_LEVEL * (reached - level);
     }
+  }
+  /** Card `id` gains `xp` toward its levels, each level it reaches queued
+   * for the hand's animation. Undo takes it back with the move. */
+  gainCardXp(id: CardId, xp: number) {
+    for (const level of addCardXp(this.save.cardXp, id, xp, cardMaxLevel(this.save.cardBuys.opened, id))) this.cardLevelUps.push({ card: id, level });
+  }
+  /** `floors` new floors completed: each card of the hand that never
+   * activates (`PASSIVE_CARDS`) gains one XP a floor. */
+  private passiveCardXp(floors: number) {
+    if (floors <= 0) return;
+    for (const id of this.hand) if (PASSIVE_CARDS.has(id)) this.gainCardXp(id, floors);
   }
   /** The single path that ends the current run, whether the player
    * accepts defeat or ends it: pays out exactly once and starts the next run
@@ -1730,9 +1604,8 @@ export class Game {
     this.forestSeeds.clear();
     // A run that earned its currency sends the player to spend it.
     if (this.slice.runCurrency > 0) this.save.treeNotices[this.rules === MODES.tower ? "inspiration" : "courage"] = true;
-    this.slice.history = [];
     this.route = [];
-    const tournament = this.mode === "delve" ? this.delveRun.tournament : undefined;
+    const tournament = this.tournamentRun;
     if (tournament) this.tournament.recordScore(tournament.id, tournamentScore(this.run));
     // A tournament run's cave gives way to the tier the player had selected.
     if (tournament && tournament.back.tier !== this.slice.tier) switchTier(this.slice, tournament.back.tier);
@@ -1746,8 +1619,8 @@ export class Game {
    * the player to undo the fight or accept defeat. */
   private fallIn(before: MoveSnapshot, enemy: Enemy) {
     this.run.player.hp = 0;
-    this.struckDown = [...this.struckDown, performance.now()];
-    this.slice.fall = { snapshot: before, by: enemyTitle(enemy) };
+    this.fights.strikeDown();
+    this.timeline.fall(before, enemyTitle(enemy));
     this.route = [];
     this.auto = false;
     this.dropHandPlan();
@@ -1769,8 +1642,9 @@ export class Game {
   }
   /** One step by (dx, dy); `regen` false for the tiles a Dash crosses after
    * its first step (past its first `dashRegenSteps`), so a dashed turn
-   * regains HP once (and once more for each of those). */
-  move(dx: number, dy: number, force = true, track = true, regen = true) {
+   * regains HP once (and once more for each of those). The hand's turn says
+   * how a card takes it (`card`). */
+  move(dx: number, dy: number, force = true, track = true, regen = true, card: CardStep = {}) {
     if (!this.canStep(dx, dy)) return false;
     const p = this.run.player,
       dest = this.world.step(p.x, p.y, dx, dy);
@@ -1782,89 +1656,27 @@ export class Game {
     // The step is resolved once, before any snapshot/undo bookkeeping, so a
     // wall, lock, impervious enemy, or (automation's) declined lethal fight
     // never touches history, damages the player, alters the enemy, or ends the run.
-    const rules: StepRules = { ...this.stepRules, ...(regen ? {} : { regen: 0 }), ...(this.stepScale !== 1 ? { scale: this.stepScale } : {}) };
-    const outcome = resolveStep(p, t, rules);
-    if (outcome.blocked) return this.rejectStep(outcome, t, dest.x, dest.y);
+    const rules: StepRules = { ...this.stepRules, ...(regen ? {} : { regen: 0 }), ...(card.scale !== undefined && card.scale !== 1 ? { scale: card.scale } : {}) };
+    const resolved = resolveStep(p, t, rules);
+    if (resolved.blocked) return this.rejectStep(resolved, t, dest.x, dest.y);
+    // DOOR's Secret Knock: a door the hero can open may open for nothing;
+    // KEY's Locksmith: a key may be two.
+    const lucky = this.luckyStep(t, dest.x, dest.y);
+    const outcome = lucky ? resolveStep(p, t, { ...rules, ...lucky }) as StepEffect : resolved;
     if (!force && isLethal(outcome)) {
       this.feedback("Lethal encounter. Inspect the enemy before proceeding.");
       return false;
     }
-    const step: TakenStep = { tile: t, outcome, dest, track, quiet: this.emptyAt(dest.x, dest.y) };
+    const step: TakenStep = { tile: t, outcome, dest, track, quiet: this.emptyAt(dest.x, dest.y), card };
     this.facing = { dx, dy };
-    return t.kind === "enemy" ? this.fightStep(step, t.enemy!) : this.take(step);
-  }
-  /** Steps into `enemy`. A strike that would fell the hero may revive it
-   * instead (Revive), so a lost fight is played out strike by strike to see
-   * how it ends, as is one with critical strikes that may land;
-   * a game that plays fights shows it on the board. */
-  private fightStep(step: TakenStep, enemy: Enemy) {
-    const p = this.run.player, outcome = step.outcome;
-    const revive = isLethal(outcome) ? this.revival(step.dest) : undefined, crits = this.critRolls(step.dest);
-    if (!this.playsFights && !revive && !crits) return this.take(step);
-    const fight = bout(p, enemy, revive, crits), start = performance.now(), rose = revivals(fight).length;
-    step.crits = critHits(fight);
-    // Critical strikes change how long the fight lasts, so it ends as it was played.
-    if (crits) this.restate(outcome, fight);
-    else if (rose) {
-      const rules = this.stepRules;
-      outcome.player.hp = regenerate(healAfterVictory(afterExtra(heroHpAfter(fight, p.hp), outcome.extraDamage, p.maxHp), p.maxHp, rules), p.maxHp, rules);
-      outcome.combat = { ...outcome.combat!, survivable: outcome.player.hp > 0 };
-    }
-    if (this.playsFights) return this.showFight(step, enemy, fight, start);
-    if (rose) this.showRevivals(start, revivals(fight));
-    return this.take(step, rose);
-  }
-  /** Shows `fight` on the board. Animate fights plays it out strike by
-   * strike before it counts; otherwise it shows in summary rounds, and only
-   * one with a revival waits, for each round after the revival's fire. */
-  private showFight(step: TakenStep, enemy: Enemy, fight: Bout, start: number) {
-    const p = this.run.player, animate = this.animatesFights, rose = revivals(fight).length;
-    const shown = animate ? fight : summarize(fight, REVIVE_PAUSE_MS);
-    this.fight = { from: { x: p.x, y: p.y }, to: step.dest, bout: shown, start, hp: enemy.hp, summary: !animate };
-    this.showRevivals(start, revivals(shown));
-    if (!animate && !rose) return this.take(step, rose);
-    // The same fight, so the board shows it as it plays out.
-    const encounter: Encounter = Object.assign(this.fight, { enemy, outcome: step.outcome, settle: () => {
-      // Training bought as it plays out replays the rest: count the crits as played.
-      if (!encounter.summary) step.crits = critHits(encounter.bout);
-      this.take(step, revivals(encounter.bout).length);
-    } });
-    this.encounter = encounter;
-    return true;
-  }
-  /** The board shows each revival (`at`, ms into a fight that began at
-   * `start`): the skull as the strike lands, then, once it is over, the fire. */
-  private showRevivals(start: number, at: number[]) {
-    this.struckDown = at.map((t) => start + t);
-    this.revivedAt = this.struckDown.map((t) => t + DEFEAT_MS);
-  }
-  /** When the skull over the hero last struck down is over, so the defeat
-   * dialog may open (performance time; -Infinity when there was none). */
-  get defeatShownUntil() {
-    return Math.max(-Infinity, ...this.struckDown) + DEFEAT_MS;
-  }
-  /** Whether each strike at (x, y) that would fell the hero revives it: a
-   * fixed number per run, floor, tile and strike, under the Revive chance,
-   * so taking the fight back and fighting it again ends the same way, and
-   * more Revive training only ever adds revivals. */
-  private revival(at: { x: number; y: number }): Revival | undefined {
-    const chance = reviveChance(this.trainingNow);
-    if (!chance || this.run.outside) return undefined;
-    const floor = this.mode === "tower" ? this.run.height + 1 : 0,
-      seed = this.run.seed ^ REVIVE_SALT ^ Math.imul(floor, 0x9e3779b1);
-    return (strike) => tileRandom(at.x, at.y, (seed ^ Math.imul(strike + 1, 0x85ebca6b)) | 0) * 10000 < chance;
-  }
-  /** The hero's critical rolls for the fight at (x, y): a fixed number per
-   * run, floor, tile and strike, so taking the fight back and fighting it
-   * again lands the same crits, and more Crit % only ever adds some. Chance
-   * of 100% or more lands that many applications of the factor for certain,
-   * and the rest rolls for one more. */
-  private critRolls(at: { x: number; y: number }): Crits | undefined {
-    const rule = this.crit;
-    if (!rule) return undefined;
-    const floor = this.mode === "tower" ? this.run.height + 1 : 0, seed = this.run.seed ^ CRIT_SALT ^ Math.imul(floor, 0x9e3779b1);
-    const sure = guaranteedCrits(rule.chance), rest = snap(rule.chance - 100 * sure);
-    return { factor: rule.factor, applications: (strike) => sure + (tileRandom(at.x, at.y, (seed ^ Math.imul(strike + 1, 0x85ebca6b)) | 0) * 100 < rest ? 1 : 0) };
+    // ENEMY's Surprise Attack, and the enemy cards' covering the enemy, added
+    // into one chance: the fight a Dash stopped before, by the enemy tile's roll.
+    const dashed = this.dashedTo;
+    this.dashedTo = null;
+    const surprise = t.kind === "enemy" && !!dashed && dashed.x === p.x && dashed.y === p.y
+      && this.tileRolls(dest.x, dest.y, SURPRISE_SALT, snap(this.treeBonus.surpriseAttack + foeStat(this.treeBonus, t.enemy!, "SurpriseAttack")));
+    if (surprise) step.surprise = true;
+    return t.kind === "enemy" ? this.fights.fight(step, t.enemy!, surprise) : this.take(step);
   }
   /** Takes a resolved step: in through its door or fight, then onto the tile. */
   private take(step: TakenStep, revived = 0) {
@@ -1874,33 +1686,36 @@ export class Game {
     }
     const notes = notesOf(this.run);
     if (notes) notes.steps++;
-    this.land(step.tile, step.dest.x, step.dest.y, step.outcome);
+    this.land(step.tile, step.dest.x, step.dest.y, step.outcome, step.card.floorSkip);
     this.gemFinder.step();
-    if (!this.holdTurn) this.endTurn();
+    if (!step.card.hold) this.endTurn();
     return true;
   }
   /** Commits a resolved step: undo history, stats, and the door or fight on
    * the way in. Returns false when the player fell. */
-  private enter({ tile: t, outcome, dest, track, quiet, crits }: TakenStep, revived: number) {
+  private enter({ tile: t, outcome, dest, track, quiet, crits, surprise }: TakenStep, revived: number) {
     const before = this.snapshot();
     this.turnBefore ??= before;
     if (track) this.remember(quiet ? { ...before, quiet: true } : before);
-    const drained = snap(this.run.player.hp - outcome.player.hp);
+    // A door's Door Heal comes after its drain, which is shown as it was.
+    const drained = snap(this.run.player.hp - outcome.player.hp + (t.kind === "door" ? outcome.healed : 0));
     this.applyStats(outcome.player);
-    if (t.kind === "door") this.openDoor(t, outcome.keysSpent, drained, dest, outcome.keyAmount);
+    if (t.kind === "door") this.finds.door(t, outcome, drained, dest);
     if (t.kind !== "enemy") return true;
-    const extra = outcome.extraDamage ?? 0, p = this.run.player;
+    const extra = outcome.extraDamage ?? 0, p = this.run.player, openers = fightOpeners(p, t.enemy!, !!surprise);
+    // The fight used up ATK UP's Power Strike.
+    delete p.powerStrike;
     // Effective's added damage rises off the hero; Dampen's given back heals.
-    if (extra > 0 && p.hp > 0) this.gain(p.x, p.y, `−${wholeChange(extra)} HP`, { heart: true });
+    if (extra > 0 && p.hp > 0) this.gain(p.x, p.y, `−${wholeChange(extra)} HP`, { heart: true }, undefined, "hit");
     else if (extra < 0) this.recordHeal(-extra);
-    return this.winFight({ enemy: t.enemy!, damage: snap(outcome.combat!.damage + extra), at: dest, revived, scale: outcome.scale, instakill: instakill(outcome.combat!), crits }, before);
+    return this.winFight({ enemy: t.enemy!, damage: snap(outcome.combat!.damage + extra), at: dest, revived, scale: outcome.scale, instakill: instakill(outcome.combat!), crits, openers }, before);
   }
   /** Moves the player onto the tile and applies what standing there does. */
-  private land(t: Tile, x: number, y: number, outcome: StepEffect) {
-    const p = this.run.player, from = { x: p.x, y: p.y };
+  private land(t: Tile, x: number, y: number, outcome: StepEffect, floorSkip = false) {
+    const p = this.run.player;
     p.x = x;
     p.y = y;
-    this.unmark(x, y);
+    this.handRules.unmark(x, y);
     // Walking into a torch destroys it immediately: light, collision and
     // sprite all disappear the same frame since rendering only ever draws
     // active torches from this same list.
@@ -1915,16 +1730,20 @@ export class Game {
       else if (this.world instanceof OutsideWorld && this.world.atExit(x, y)) this.swapForest();
       return;
     }
-    if (torch) this.payPickup(null, { x, y });
+    if (torch) this.finds.pickupGold(null, { x, y });
     if (t.kind === "reward") {
       this.run.changes[`${x},${y}`] = { kind: "openedChest", tier: t.tier };
       this.openAreaChest(t.tier);
       return;
     }
-    this.collect(t, x, y, outcome);
+    this.finds.pickup(t, x, y, outcome);
     this.consumeTile(t, x, y);
+    if (t.kind === "attack") this.chargePowerStrike(x, y);
+    if (t.kind === "door") this.doorChest(x, y);
+    if (t.kind === "key") this.keyChest(x, y, t.color!);
+    if (t.kind === "key") this.masterKey(x, y, t.color!);
     if (t.kind !== "stairs") this.callGreaterBoss();
-    this.afterStep(t, x, y, from);
+    this.afterStep(t, x, y, floorSkip);
   }
   /** A Tower floor's secret: with every torch on it out, a Greater Boss
    * appears on the open floor nearest the stairs, once a floor a run. It is
@@ -1937,14 +1756,27 @@ export class Game {
     const gem = this.gemFinder.gem, at = greaterBossSpot(world, gem ? [run.player, gem] : [run.player]);
     if (!at) return;
     run.summoned = [...(run.summoned ?? []), world.room];
-    run.changes[`${at.x},${at.y}`] = greaterBoss(world);
+    this.spawnEnemy(at, greaterBoss(world));
     this.summoned = { ...at, at: performance.now() };
   }
+  /** Puts `tile`'s enemy on the floor at `at` mid-run, numbered among the
+   * run's spawns (`run.spawns`), so its kill pays its own loot and counts
+   * toward missions even where an enemy already fell (`RunPurse.killKey`).
+   * Every enemy made during a run, rather than with its floor, comes here. */
+  private spawnEnemy(at: { x: number; y: number }, tile: Tile) {
+    const spawn = this.run.spawns ?? 0;
+    this.run.spawns = spawn + 1;
+    this.run.changes[`${at.x},${at.y}`] = { ...tile, enemy: { ...tile.enemy!, spawn } };
+  }
   /** Mode-specific progress once the player stands on the new tile,
-   * stepped onto from `from`. */
-  private afterStep(t: Tile, x: number, y: number, from: { x: number; y: number }) {
-    if (this.mode === "delve") this.afterDelveStep(t, x, y, from);
-    else if (t.kind === "stairs") this.advanceTowerRoom();
+   * stepped onto from `from`; `floorSkip` as `advanceTowerRoom` takes it. */
+  private afterStep(t: Tile, x: number, y: number, floorSkip = false) {
+    if (this.mode === "delve") this.afterDelveStep(t, x, y);
+    else if (t.kind === "stairs") this.advanceTowerRoom(floorSkip);
+    // Undo stays on the floor it was taken on: a step onto another (a
+    // Tower's stairs, a Delve floor line or milestone gate either way)
+    // forgets the history.
+    this.timeline.standOn();
   }
   private rejectStep(outcome: StepBlocked, t: Tile, x: number, y: number): false {
     if (outcome.blocked === "wall") this.reject(x, y, "A wall blocks the way.");
@@ -1955,9 +1787,17 @@ export class Game {
     return false;
   }
   private remember(snapshot: MoveSnapshot) {
-    const slice = this.slice;
-    slice.history.push(snapshot);
-    slice.history = keepUndos(slice.history, this.undosLeft);
+    this.timeline.remember(snapshot);
+  }
+  /** A turn of its own begins (a card acting in place): undo can take it
+   * back. */
+  rememberTurn() {
+    this.remember(this.snapshot());
+  }
+  /** The step being taken pays out (a card activating), so it is a turn
+   * undo stops at. */
+  eventful() {
+    this.timeline.eventful();
   }
   /** Copies resolved stats onto the live player, keeping its object identity. */
   private applyStats(next: Player) {
@@ -1971,20 +1811,6 @@ export class Game {
   private markDamaged() {
     if (this.mode === "tower") this.towerRun.damaged = true;
   }
-  /** Each key the door took rises from it with a minus sign; a door that
-   * takes HP (a Heart Door, down to 1, or a Wooden Door broken without a
-   * key) raises a heart with the HP it took (a toll, not damage: it never
-   * costs an area's mastery). */
-  private openDoor(t: Tile, keysSpent: KeyColor[], drained: number, at: { x: number; y: number }, amount = 1) {
-    const n = keysSpent.length, rule = doorRule(t), notes = notesOf(this.run);
-    if (notes) tallyIn(notes.doors, doorName(t));
-    for (const color of keysSpent) this.gain(at.x, at.y, `−${keyCount(amount)} ${color} key`, { tile: { kind: "key", color }, spent: true }, undefined, "door");
-    if (!n || (drainsHp(rule) && drained > 0)) this.gain(at.x, at.y, `−${wholeChange(drained)} HP`, { heart: true }, undefined, "door");
-    this.payPickup(t, at);
-    const spent = amount === 1 ? `${n} key${n === 1 ? "" : "s"} spent` : `${keyCount(snap(n * amount))} keys spent`;
-    if (rule.type === "wood" && !n) this.message = `${doorName(t)} broken down · −${wholeChange(drained)} HP`;
-    else this.message = `${doorName(t)} opened${n ? ` · ${spent}` : ""}${drainsHp(rule) ? (this.run.player.hp > HEART_DOOR_HP ? " · HP drained" : " · HP drained to 1") : ""}`;
-  }
   /** Settles a fight whose damage is already applied. Returns false when
    * the player fell. */
   private winFight(fight: FightEnd, before: MoveSnapshot) {
@@ -1995,58 +1821,67 @@ export class Game {
       this.fallIn(before, enemy);
       return false;
     }
-    this.message = [fightText(fight), ...this.payKill(enemy, at, fight.scale ?? 1, !!fight.instakill, fight.crits)].join(" · ");
+    this.message = [fightText(fight), ...this.finds.kill(enemy, at, fight.scale ?? 1, !!fight.instakill, fight.crits)].join(" · ");
     return true;
   }
-  /** Pays a kill at `at` (a fight won, or an arrow's): counted, its XP,
-   * Silver, Gold and loot. Returns what it found, as the status line names it. */
-  private payKill(enemy: Enemy, at: { x: number; y: number }, scale: number, instakill: boolean, crits?: number) {
-    this.run.kills++;
-    this.countKill(enemy, at);
-    const floor = this.rules.equivalentFloor(this.rules.progressAt(this.run, at.y));
-    this.gainXp(enemy, floor, scale);
-    // Silver belongs to the run, so it isn't gated like Gold: undo takes it back.
-    const purse = this.purse, silver = purse.killSilver(enemy, floor, scale);
-    const { gold, cells, equipment } = purse.enemyLoot(enemy, at.x, at.y, scale, instakill);
-    const cellsFound = cells ? [cellsText(cells)] : [];
-    const found = equipmentGains(equipment);
-    // Gold over Silver at the tile, the rest below.
-    this.gainDrops(at, [
-      ...(gold ? [{ text: `+${wholeChange(gold)} Gold`, art: { coin: "gold" as const } }] : []),
-      { text: `+${wholeChange(silver)} Silver`, art: { coin: "silver" } },
-      ...cellsFound.map((text) => ({ text, art: { cell: true as const } })),
-      ...found,
-    ], gold ? 1 : 0);
-    if (equipment?.item || equipment?.salvaged) this.events.record("equipment", 1, this.missionKey(at));
-    if (equipment?.item) this.slice.runFinds.equipment++;
-    if (crits) this.events.record("crits", crits, this.missionKey(at));
-    return [...coinsText(gold, silver), ...cellsFound, ...found.map((g) => g.text)];
-  }
-  /** The end of a turn inside a run (a step, or a whole dash): each Ranged
-   * enemy within reach whose cooldown is ready shoots the hero where it now
-   * stands, then the Archer, its arrow ready, shoots the closest enemy in
-   * its range (ranged.ts). Nothing before the third tier unless the hero is
-   * an Archer; a turn that climbs to another floor leaves its shooters behind. */
+  /** The end of a turn inside a run (a step, or a whole dash): its shots
+   * play out over it as the hero walks its step (volley.ts): the Archer,
+   * its arrow ready, shoots the closest enemy in its range, and each Ranged
+   * enemy whose cooldown is ready shoots the hero once it is within reach,
+   * in the order they fire. Nothing before the third tier unless the hero
+   * is an Archer; a turn that climbs to another floor leaves its shooters
+   * behind. */
   private endTurn() {
     const before = this.turnBefore;
     this.turnBefore = null;
-    const archer = isArcher(this.save);
-    if (!before || this.run.outside || this.fallen || (this.tier < 3 && !archer)) return;
-    if (this.mode === "tower" && before.run.height !== this.run.height) return;
-    const v: Volleys = { ...(this.run.volleys ?? { turn: 0 }) };
-    v.turn++;
-    const shots: Shot[] = [], range = attackRange(this.trainingNow);
-    const fell = this.foesShoot(v, shots, range);
-    if (fell) {
-      this.run.volleys = v;
-      this.showVolley(shots);
-      this.fallIn(before, fell);
-      this.message = `Shot down by ${enemyTitle(fell)}.`;
+    const archer = this.isArcher;
+    if (!before || this.run.outside || this.fallen) return;
+    const p = this.run.player, from = before.run.player, sameFloor = this.mode !== "tower" || before.run.height === this.run.height;
+    const at = performance.now(), ms = Math.min(TURN_MS, 800 / Math.max(1, this.stepsPerSecond));
+    // The board walks a single step at an even pace; anything else it snaps.
+    this.turnShown = sameFloor && Math.abs(p.x - from.x) + Math.abs(p.y - from.y) === 1 ? { at, ms, from: { x: from.x, y: from.y }, to: { x: p.x, y: p.y } } : null;
+    if ((this.tier < 3 && !archer) || !sameFloor) return;
+    const v = this.run.volleys ?? { turn: 0 };
+    const out = volleyTurn({ board: this.world, wrap: this.wrap, floorOf: (x, y) => this.floorOf(x, y), hero: p, from, seed: this.run.seed,
+      volleys: { ...v, turn: v.turn + 1 }, archer, ranks: { ...this.trainingNow, archives: this.save.archives }, cardCrit: this.cardCrit, handShot: this.handBonus.shot });
+    this.run.volleys = out.volleys;
+    p.hp = out.hp;
+    if (out.hurt) {
+      this.markDamaged();
+      this.events.hurt(this.mode, this.run.seed);
+      const taken = out.shots.reduce((sum, s) => (s.by === "enemy" ? snap(sum + s.damage) : sum), 0);
+      if (!out.fell) this.message = `Shot · −${wholeChange(taken)} HP`;
+    }
+    for (const { enemy, at, instakill, crits, thorns } of out.kills)
+      this.message = [`${thorns ? "Thorns" : "Arrow"} · ${enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, at, 1, instakill, crits ? 1 : 0)].join(" · ");
+    this.showVolley(out.shots, at, ms);
+    if (out.fell) {
+      this.fallIn(before, out.fell);
+      this.message = `Shot down by ${enemyTitle(out.fell)}.`;
       return;
     }
-    if (archer) this.loose(v, shots, range);
-    this.run.volleys = v;
-    this.showVolley(shots);
+    // Then the Aggroed enemies close in (flying.ts), their cooldowns with them.
+    const moved = aggroTurn({ board: this.world, changes: this.run.changes, hero: p, floorOf: (x, y) => this.floorOf(x, y), lit: litTorches(this.world), foes: this.run.volleys.foes });
+    if (moved.steps.length) {
+      if (moved.foes && Object.keys(moved.foes).length) this.run.volleys.foes = moved.foes;
+      else delete this.run.volleys.foes;
+    }
+  }
+  /** A turn the hero holds its ground (FLYING ENEMY with a Flying enemy in
+   * reach): no step, so no Regen, but a turn all the same, which the undo
+   * history keeps quietly and the volley ends. */
+  private holdTurn() {
+    const before = this.snapshot();
+    this.turnBefore = before;
+    this.remember({ ...before, quiet: true });
+    this.message = `${CARDS.flyingEnemy.name} · holding ground`;
+    this.endTurn();
+  }
+  /** How far the Archer's arrows reach and the board's wrap, which FLYING
+   * ENEMY plans by (`HandAt.shotReach`); undefined while the hero can't
+   * shoot (not an Archer, or in the forest). */
+  get shotReach() {
+    return this.isArcher && !this.run.outside ? { range: trainedAmount(this.trainingNow, "attackRange"), wrap: this.wrap } : undefined;
   }
   /** Board columns wrap in the Delve. */
   private get wrap() {
@@ -2057,140 +1892,11 @@ export class Game {
     const world = this.world;
     return world instanceof World ? Math.floor(world.depth(x, y) / 10) + 1 : this.run.height + 1;
   }
-  /** Each Ranged enemy's cooldown runs a turn, and those within reach that
-   * are ready shoot the hero. Returns the enemy whose shot felled it, if one did. */
-  private foesShoot(v: Volleys, shots: Shot[], range: number): Enemy | null {
-    const p = this.run.player, foes = { ...v.foes }, costs = new Map<string, number>();
-    for (const k of Object.keys(foes)) {
-      const [x, y] = k.split(",").map(Number) as [number, number];
-      if (this.world.tile(x, y).enemy?.ranged) foes[k] = charged(foes[k], FOE_GAIN)!;
-      else delete foes[k];
-    }
-    let fell: Enemy | null = null, hurt = false;
-    for (const { x, y, tile } of enemiesWithin(this.world, p, foeRange(range), this.wrap)) {
-      if (!tile.enemy.ranged) continue;
-      const k = `${x},${y}`, cost = foeShotCost(this.floorOf(x, y));
-      costs.set(k, cost);
-      if (!ready(foes[k], cost)) continue;
-      const { damage, shrouded } = shotDamage(p, tile.enemy);
-      foes[k] = spent(foes[k], cost);
-      p.hp = snap(Math.max(0, p.hp - damage));
-      shots.push({ by: "enemy", from: { x, y }, to: { x: p.x, y: p.y }, damage, ...(shrouded ? { shrouded } : {}) });
-      if (damage > 0) hurt = true;
-      if (!p.hp) {
-        fell = tile.enemy;
-        break;
-      }
-    }
-    // A shooter that didn't shoot waits full once it is ready.
-    for (const k of Object.keys(foes)) {
-      const [x, y] = k.split(",").map(Number) as [number, number];
-      const kept = held(foes[k], costs.get(k) ?? foeShotCost(this.floorOf(x, y)));
-      if (kept === undefined) delete foes[k];
-      else foes[k] = kept;
-    }
-    if (Object.keys(foes).length) v.foes = foes;
-    else delete v.foes;
-    if (hurt) {
-      this.markDamaged();
-      this.events.hurt(this.mode, this.run.seed);
-      const taken = shots.reduce((sum, s) => snap(sum + s.damage), 0);
-      if (!fell) this.message = `Shot · −${wholeChange(taken)} HP`;
-    }
-    return fell;
-  }
-  /** The Archer's cooldown runs a turn (`archerTurn`), and each time it is
-   * ready it shoots the closest enemy within its range that an arrow can
-   * hurt, its ATK raised by ATK / Tile for the distance and by Charged Shot
-   * for the turns it waited (`arrowBoost`). A multishot (`multishot`) fires
-   * the same charge at up to Multishot Targets of the closest enemies it can
-   * hurt, each arrow with the first's Charged Shot, its own ATK / Tile and
-   * its own critical roll. A shot fired while Rapid Fire isn't may start it
-   * (`rapidFire`), for Rapid Fire Duration from that moment, so the turn
-   * may fire more than once. A ready arrow with no target waits for one,
-   * counting the turn toward Charged Shot once that is researched. */
-  private loose(v: Volleys, shots: Shot[], range: number) {
-    const p = this.run.player, perTile = attackPerTile(this.trainingNow), percent = researched(this.save.archives, "chargedShotPercent", 0);
-    const boost = (d2: number) => arrowBoost(perTile, d2, percent, v.waited ?? 0);
-    const hurts = (e: InReach) => arrowDamage(p, e.tile.enemy, 0, 1, boost(e.d2)) > 0;
-    const first = shots.length;
-    let fired = 0;
-    const { clock, idle } = archerTurn({ charge: v.hero, rapid: v.rapid }, attackSpeed(this.trainingNow), (rapid, tick) => {
-      const inReach = enemiesWithin(this.world, p, range, this.wrap), target = inReach.find(hurts);
-      if (!target) return false;
-      const shot = fired++, from = shots.length;
-      const targets = this.multishot(v.turn, shot) ? inReach.filter(hurts).slice(0, multishotTargets(this.trainingNow)) : [target];
-      for (const t of targets) this.shoot(t, v.turn, shots, boost(t.d2), !!(percent && v.waited), shot);
-      for (let i = from; i < shots.length; i++) shots[i]!.lead = tick / ARCHER_TICKS;
-      delete v.waited;
-      return rapid ? 0 : this.rapidFire(v.turn, shot);
-    });
-    // A turn of one shot flies as ever.
-    if (fired < 2) for (let i = first; i < shots.length; i++) delete shots[i]!.lead;
-    if (clock.charge === undefined) delete v.hero;
-    else v.hero = clock.charge;
-    if (clock.rapid === undefined) delete v.rapid;
-    else v.rapid = clock.rapid;
-    if (idle && percent > 0) v.waited = (v.waited ?? 0) + 1;
-  }
-  /** A fixed number per run, turn, shot of the turn (`shot`, the first
-   * keeping the turn's own roll) and the hero's tile, for `salt`. */
-  private shotRoll(salt: number, turn: number, shot: number) {
-    const p = this.run.player;
-    return tileRandom(p.x, p.y, (this.run.seed ^ salt ^ Math.imul(turn, 0x85ebca6b) ^ Math.imul(shot, 0xc2b2ae35)) | 0);
-  }
-  /** Whether the Archer's shot `shot` of turn `turn` is a multishot, under
-   * Multishot Chance. */
-  private multishot(turn: number, shot = 0) {
-    const chance = multishotChance(this.trainingNow);
-    return chance > 0 && this.shotRoll(MULTISHOT_SALT, turn, shot) * 10_000 < chance;
-  }
-  /** The hundredths of a turn of Rapid Fire the Archer's shot `shot` of
-   * turn `turn` starts: Rapid Fire Duration under Rapid Fire Chance, or 0. */
-  private rapidFire(turn: number, shot: number) {
-    const chance = rapidFireChance(this.trainingNow);
-    return chance > 0 && this.shotRoll(RAPID_FIRE_SALT, turn, shot) * 10_000 < chance ? rapidFireDuration(this.trainingNow) : 0;
-  }
-  /** The Archer's arrow lands on `target`: one strike's damage, its ATK
-   * multiplied by `boost` and critical rolls counted, healing by
-   * Lifesteal; it wounds the enemy, or fells it and pays the kill. A
-   * `charged` arrow's number wears a gold outline. */
-  private shoot({ x, y, tile }: InReach, turn: number, shots: Shot[], boost = 1, chargedShot = false, shot = 0) {
-    const p = this.run.player, enemy = tile.enemy, rule = this.crit;
-    let applications = 0;
-    if (rule) {
-      const sure = guaranteedCrits(rule.chance), rest = snap(rule.chance - 100 * sure);
-      applications = sure + (tileRandom(x, y, (this.run.seed ^ ARROW_SALT ^ Math.imul(turn, 0x85ebca6b) ^ Math.imul(shot, 0xc2b2ae35)) | 0) * 100 < rest ? 1 : 0);
-    }
-    const damage = arrowDamage(p, enemy, applications, rule?.factor ?? 1, boost), left = snap(Math.max(0, enemy.hp - damage));
-    const healed = p.lifesteal ? snap(Math.min(p.maxHp - p.hp, (damage * p.lifesteal) / 100)) : 0;
-    if (healed > 0) p.hp = snap(p.hp + healed);
-    shots.push({ by: "hero", from: { x: p.x, y: p.y }, to: { x, y }, damage, ...(applications ? { crit: applications } : {}), ...(chargedShot ? { charged: true } : {}), ...(healed > 0 ? { healed } : {}),
-      before: enemy.hp, hp: left, full: snap(enemy.hp + (tile.wound ?? 0)) });
-    if (left > 0) {
-      this.world.wound?.(x, y, damage);
-      return;
-    }
-    // One arrow felling an unwounded enemy is an instakill, as Mug pays it.
-    this.world.clear(x, y);
-    this.message = [`Arrow · ${enemyTitle(enemy)} defeated`, ...this.payKill(enemy, { x, y }, 1, !tile.wound, applications ? 1 : 0)].join(" · ");
-  }
-  /** The board flies the turn's shots, landing as the step ends. */
-  private showVolley(shots: Shot[]) {
+  /** The board flies the turn's shots, each leaving as far into the turn
+   * shown from `at` for `ms` as it fired. */
+  private showVolley(shots: Shot[], at: number, ms: number) {
     if (!shots.length) return;
-    this.volley = { at: performance.now(), flight: Math.min(FLIGHT_MS, 800 / Math.max(1, this.stepsPerSecond)), shots };
-  }
-  /** A kill counts toward the missions and the Event for its strength, once a tile. */
-  private countKill(enemy: Enemy, at: { x: number; y: number }) {
-    const s = enemy.strength;
-    const type: MissionType & EventMissionType = s === "boss" || s === "greaterBoss" ? "bosses" : s === "strong" ? "strong" : s === "elite" ? "elite" : "basic";
-    this.missions.record(type, 1, this.missionKey(at));
-    this.events.record(type, 1, this.missionKey(at));
-  }
-  /** What a kill or pickup at `at` counts as for the missions: the mode
-   * and its loot key, so undo bringing the tile back can't count it again. */
-  private missionKey(at: { x: number; y: number }) {
-    return `${this.mode}:${this.rules.lootKey(this.run, at.x, at.y)}`;
+    this.volley = { at, ms, shots };
   }
   /** A desk's command counted toward the missions (Training, badges), and
    * the Event's alike. */
@@ -2204,27 +1910,34 @@ export class Game {
   eventDone(type: EventMissionType, amount: number) {
     this.events.record(type, amount);
   }
-  /** Raises the Gold and Silver just found from `at`, each only when some
-   * was; a kill always shows its Silver. */
-  private gainCoins(at: { x: number; y: number }, gold: number, silver: number, alwaysSilver = true) {
-    if (gold) this.gain(at.x, at.y, `+${wholeChange(gold)} Gold`, { coin: "gold" });
-    if (silver || alwaysSilver) this.gain(at.x, at.y, `+${wholeChange(silver)} Silver`, { coin: "silver" });
-  }
   /** The Gold killing the enemy at (x, y) would bank now (`instakill`:
    * the hero's first strike ending it), or 0 once its tile is looted. */
   enemyGold(x: number, y: number, instakill = false) {
-    const t = this.world.tile(x, y);
-    return t.kind === "enemy" ? this.purse.killGoldPreview(t.enemy!, x, y, instakill) : 0;
+    const e = foeOn(this.world.tile(x, y));
+    return e ? this.purse.killGoldPreview(e, x, y, instakill) : 0;
+  }
+  /** What the floor the hero stands on can roll (`enemy-odds.ts`): each
+   * strength's chance, stats and Gold, and each trait's chance, for the
+   * enemy stats box; null in the forest. */
+  get enemyOdds() {
+    const world = this.world, p = this.run.player;
+    if (this.run.outside || !world.typicalEnemy) return null;
+    const floor = this.floorOf(p.x, p.y) - 1, depth = floor * STEPS_PER_FLOOR[this.mode], purse = this.purse;
+    const greaterBoss = this.mode === "tower" && !!this.towerRun.summoned?.includes(this.run.height);
+    const source: OddsSource = { tier: this.tier, floor, enemy: (s) => world.typicalEnemy!(depth, s), gold: (e) => purse.killGoldOf(e), greaterBoss };
+    return { floor, strengths: strengthOdds(source), traits: traitOdds(this.tier, floor) };
   }
   /** The Gold opening the treasure chest at (x, y) would bank now, on
    * average, or 0 once its tile is looted. */
   chestGold(x: number, y: number) {
     return this.world.tile(x, y).kind === "treasure" ? this.purse.treasureGoldPreview(x, y) : 0;
   }
-  /** What the run finds is paid through its purse. */
-  private get purse() {
+  /** What the run finds is paid through its purse. It is built afresh on
+   * each use, so it always pays into the save, mode and run of now: an erase,
+   * a mode switch and a new run each replace one. */
+  get purse() {
     // A tournament run's chances come from the seeds its league shares.
-    const t = this.mode === "delve" ? this.delveRun.tournament : undefined;
+    const t = this.tournamentRun;
     return t
       ? new RunPurse(this.save, this.mode, this.run, runStream(t, "game"), this.clock(), runStream(t, "equipment"))
       : new RunPurse(this.save, this.mode, this.run, this.rng, this.clock());
@@ -2273,6 +1986,82 @@ export class Game {
     this.feedback(this.rules.words.enter);
     this.gemFinder.step();
   }
+  /** Whether the door or key at (x, y) on this floor rolls under `chance`
+   * percent (DOOR's Secret Knock and Door Chest, KEY's Locksmith and Master
+   * Key): by its tile's fixed number, each roll its own `salt`, so undo
+   * can't roll it again. */
+  private tileRolls(x: number, y: number, salt: number, chance: number) {
+    return !!chance && tileRandom(x, y, this.floorSeed ^ salt) * 100 < chance;
+  }
+  /** What the doors and keys of this floor roll by: the run's seed, and in the Tower the floor's. */
+  private get floorSeed() {
+    return this.run.seed ^ Math.imul((this.world instanceof RoomWorld ? this.world.room : 0) + 1, 0x9e3779b1);
+  }
+  /** ATK UP's Power Strike: the ATK shard just taken at (x, y) may charge
+   * the hero's next fight, by its tile's fixed number. */
+  private chargePowerStrike(x: number, y: number) {
+    const p = this.run.player;
+    if (p.powerStrike || !this.tileRolls(x, y, POWER_STRIKE_SALT, this.treeBonus.powerStrike)) return;
+    p.powerStrike = true;
+    this.message = `${this.message ? `${this.message} · ` : ""}Power Strike charged`;
+  }
+  /** A treasure chest's own rolls at (x, y), by its tile's fixed numbers:
+   * CHEST's Double and Triple (both: six times over), and TORCH's Chest Cells. */
+  chestRoll(x: number, y: number) {
+    const tree = this.treeBonus;
+    const multiplier = (this.tileRolls(x, y, CHEST_DOUBLE_SALT, tree.chestDouble) ? 2 : 1) * (this.tileRolls(x, y, CHEST_TRIPLE_SALT, tree.chestTriple) ? 3 : 1);
+    return { multiplier, cells: this.tileRolls(x, y, CHEST_CELLS_SALT, tree.chestCells) };
+  }
+  /** DOOR's Door Chest: the door just opened at (x, y) may leave an opened
+   * treasure chest where it stood, paid as a treasure chest is (a Supply or
+   * Equipment Chest at the run's odds). */
+  private doorChest(x: number, y: number) {
+    this.leaveChest(x, y, DOOR_CHEST_SALT, DOOR_CHEST_KIND_SALT, this.treeBonus.doorChest);
+  }
+  /** KEY's Key Chest: the key just picked up at (x, y) may leave an opened
+   * treasure chest where it lay, as Door Chest leaves one, by its `color`'s
+   * own tree's chance too, added to it. */
+  private keyChest(x: number, y: number, color: KeyColor) {
+    const tree = this.treeBonus;
+    this.leaveChest(x, y, KEY_CHEST_SALT, KEY_CHEST_KIND_SALT, snap(tree.keyChest + keyStat(tree, color, "KeyChest")));
+  }
+  /** An opened treasure chest left at (x, y) when its tile rolls under
+   * `chance` by `salt`, its kind rolled by `kindSalt`, and paid. */
+  private leaveChest(x: number, y: number, salt: number, kindSalt: number, chance: number) {
+    if (!this.tileRolls(x, y, salt, chance)) return;
+    this.run.changes[`${x},${y}`] = { kind: "openedChest" };
+    this.finds.treasure(x, y, chestKindAt({ kind: "treasure" }, x, y, this.floorSeed ^ kindSalt, this.run.chestOdds));
+  }
+  /** The rules a step's lucky roll adds, or null: DOOR's Secret Knock opens
+   * a door for nothing, and KEY's Locksmith makes a key two. */
+  private luckyStep(t: Tile, x: number, y: number): Partial<StepRules> | null {
+    const tree = this.treeBonus;
+    if (t.kind === "door" && this.tileRolls(x, y, SECRET_KNOCK_SALT, tree.secretKnock)) return { freeDoor: true };
+    // The key's colour's own Locksmith adds to KEY's, one roll.
+    if (t.kind === "key" && this.tileRolls(x, y, DOUBLE_KEY_SALT, snap(tree.doubleKey + keyStat(tree, t.color!, "DoubleKey")))) return { doubleKey: true };
+    return null;
+  }
+  /** KEY's Master Key: the key just picked up at (x, y) may open every door
+   * on its floor at once, for nothing, each paying as a door Secret Knock
+   * opened does: its Gold, DOOR's Door Silver and Door Heal, and its Door
+   * Chest roll. */
+  private masterKey(x: number, y: number, color: KeyColor) {
+    const tree = this.treeBonus, every = this.tileRolls(x, y, MASTER_KEY_SALT, tree.masterKey);
+    // The key's colour's own Master Key (Master Gold Key…), its own roll, opens the doors with a lock of its colour.
+    const mine = !every && this.tileRolls(x, y, COLOR_MASTER_KEY_SALT[color], keyStat(tree, color, "MasterKey"));
+    if (!every && !mine) return;
+    const all = this.world.floorDoors?.(x, y) ?? [], rules: StepRules = { ...this.stepRules, regen: 0, freeDoor: true };
+    const doors = every ? all : all.filter((d) => lockedBy(this.world.tile(d.x, d.y), color));
+    for (const d of doors) {
+      const t = this.world.tile(d.x, d.y), outcome = resolveStep(this.run.player, t, rules);
+      if (outcome.blocked) continue;
+      this.applyStats(outcome.player);
+      this.finds.door(t, outcome, 0, d);
+      this.world.clear(d.x, d.y);
+      this.doorChest(d.x, d.y);
+    }
+    if (doors.length) this.message = `${every ? "Master Key" : `Master ${KEY_WORDS[color]} Key`} · ${doors.length} door${doors.length === 1 ? "" : "s"} opened`;
+  }
   /** Removes what the step used up: chests stay behind opened, fixtures stay. */
   private consumeTile(t: Tile, x: number, y: number) {
     if (t.kind === "treasure") this.run.changes[`${x},${y}`] = { kind: "openedChest" };
@@ -2284,17 +2073,13 @@ export class Game {
   private forgetLabyrinth() {
     if (this.mode === "delve") this.save.delve.memory = { known: {}, visited: {} };
   }
-  private afterDelveStep(t: Tile, x: number, y: number, from: { x: number; y: number }) {
+  private afterDelveStep(t: Tile, x: number, y: number) {
     const world = this.world;
     if (!(world instanceof World)) return;
-    // Undo stays on the floor it was taken on: crossing a floor line (each
-    // ten depth, either way) forgets the history.
-    const floorAt = (at: { x: number; y: number }) => this.rules.equivalentFloor(world.depth(at.x, at.y));
-    if (floorAt(from) !== floorAt({ x, y })) this.save.delve.history = [];
-    // The world keeps the run's milestone and floor itself.
+    // The world keeps the run's milestone and floor itself; the gate's
+    // new floor puts the passage out of undo's reach (`afterStep`).
     if (t.kind === "oneway" && world.cross(x, y)) {
       this.forgetLabyrinth();
-      this.save.delve.history = []; // Milestone passages cannot be reversed with undo.
       this.route = [];
       this.feedback(`Depth ${world.milestone * 100} · the passage seals behind you.`);
     }
@@ -2327,7 +2112,8 @@ export class Game {
       this.floorHeal();
     }
     this.freeTrain(last - floorBefore);
-    this.gainCoins(at, gold, silver, false);
+    this.passiveCardXp(last - floorBefore);
+    this.finds.coins(at, gold, silver, false);
   }
   /** Free Training for `floors` floors passed, one after another: the
    * levels each floor's rolls give (`rollFreeTraining`) join the run's
@@ -2336,7 +2122,7 @@ export class Game {
   private freeTrain(floors: number) {
     const given: TrainingId[] = [];
     for (let f = 0; f < floors; f++)
-      for (const id of rollFreeTraining(this.save, this.run, this.boons?.freeUp ?? 0)) {
+      for (const id of rollFreeTraining(this.save, this.run, this.boons?.freeUp ?? 0, freeUpFactors(this.treeBonus), freeUpChances(this.treeBonus))) {
         const offer = runTrainingOffer(this.save, this.run, id);
         this.run.training = { ...this.run.training, [id]: offer.bought + 1 };
         this.applyRunTraining(offer);
@@ -2345,28 +2131,28 @@ export class Game {
     if (given.length) this.freeTrained = { lines: freeTrainingLines(given), at: performance.now() };
     this.events.record("freeUpgrades", given.length);
   }
-  /** Find Yellow Key: on floor `floor` climbed for the first time in the
-   * run, a yellow key under the research's chance. The roll is a fixed
+  /** Find Gold Key: on floor `floor` climbed for the first time in the
+   * run, a gold key under the research's chance. The roll is a fixed
    * number per run seed and floor, so undo and a replay find the same
    * keys, and more research only ever adds some. */
   private findYellowKey(floor: number, at: { x: number; y: number }) {
-    const chance = researched(this.save.archives, "yellowKeyChance", 0);
+    const chance = researched(this.save.archives, "yellowKeyChance");
     if (!chance || tileRandom(-1, floor, (this.run.seed ^ YELLOW_KEY_SALT) | 0) * 1000 >= chance) return;
     const keys = this.run.player.keys;
     keys.yellow = snap(keys.yellow + 1);
-    this.noteKey("yellow", 1);
-    this.gain(at.x, at.y, "+1 yellow key", { tile: { kind: "key", color: "yellow" } });
+    noteKey(this.run, "yellow", 1);
+    this.gain(at.x, at.y, "+1 gold key", { tile: { kind: "key", color: "yellow" } });
   }
-  advanceTowerRoom() {
-    // Undo stays on the floor it was taken on: climbing forgets the history.
-    this.slice.history = [];
+  /** The hero takes the stairs; `floorSkip` (Skip on STAIRS) climbs past
+   * the next floor too. */
+  advanceTowerRoom(floorSkip = false) {
     const purse = this.purse, p = this.run.player;
     // Keyed by the stairs taken, so it pays once a run.
     const gold = purse.floorGold(purse.floorKey(p.x, p.y));
     const highest = this.run.maxHeight ?? this.run.height;
     // Skip on STAIRS climbs past the next floor, which pays nothing; an area
     // climbed past is still judged as its section ends.
-    const skipped = this.floorSkip ? this.climb.up() : null;
+    const skipped = floorSkip ? this.climb.up() : null;
     // Floor Skip Reward pays a share of the Gold the floor passed held.
     const skipGold = skipped ? purse.skippedFloorGold(skipped.board) : 0;
     const passed = skipped?.sectionStart ? new AreaLedger(this.save).enter(this.towerRun, skipped.board) : [];
@@ -2389,6 +2175,7 @@ export class Game {
       this.findYellowKey(this.run.height, p);
       this.floorHeal();
       this.freeTrain(this.run.height - highest);
+      this.passiveCardXp(this.run.height - highest);
     }
     this.enterTowerFloor(board);
     // A new floor may earn a boon, which Auto Pick takes at once.
@@ -2400,7 +2187,7 @@ export class Game {
     // After the first Tower run a plain new floor only says so on the status line.
     else if (this.save.tutorials.chamber) this.message = "A new chamber opens.";
     else this.feedback("A new chamber opens.");
-    this.gainCoins(p, snap(gold + skipGold), silver, false);
+    this.finds.coins(p, snap(gold + skipGold), silver, false);
   }
   /** Stands on the floor the climb just reached. */
   private enterTowerFloor(board: RoomWorld) {
@@ -2433,14 +2220,20 @@ export class Game {
   atTournamentHall(x: number, y: number) {
     return this.run.outside && this.world instanceof OutsideWorld && this.world.isTournamentHall(x, y);
   }
-  /** Equipment's heal on a floor reached for the first time in the run (a
-   * share of max HP, by `floorHeal`), shown like a potion's. */
+  /** The heals on a floor reached for the first time in the run, each a
+   * share of max HP and shown like a potion's: equipment's (`floorHeal`, up
+   * to max HP), then STAIRS' tree's (up to the Overheal ceiling). */
   private floorHeal() {
-    const pct = this.worn.floorHeal, p = this.run.player;
-    if (!pct || p.hp <= 0) return;
-    const n = snap(Math.min(p.maxHp - p.hp, (p.maxHp * pct) / 100));
-    p.hp = snap(p.hp + n);
-    this.recordHeal(n);
+    const p = this.run.player;
+    const heal = (pct: number, ceiling: number) => {
+      if (!pct || p.hp <= 0) return;
+      const n = snap(healUpTo(p.hp, (p.maxHp * pct) / 100, ceiling) - p.hp);
+      if (!n) return;
+      p.hp = snap(p.hp + n);
+      this.recordHeal(n);
+    };
+    heal(this.worn.floorHeal, p.maxHp);
+    heal(this.treeBonus.floorHeal, this.hpCeiling);
   }
   /** How the current mode differs from the other. */
   private get rules(): ModeProfile {
@@ -2460,6 +2253,11 @@ export class Game {
     if (this.mode !== "delve") throw new Error("Not a Delve run");
     return this.run as DelveRun;
   }
+  /** The live run's tournament, when it is a tournament run (only a Delve
+   * run can be). */
+  get tournamentRun(): TournamentRun | undefined {
+    return this.mode === "delve" ? this.delveRun.tournament : undefined;
+  }
   /** An area reward chest opened: its reward was paid when earned, so it
    * only shows it, with the board's golden burst. The chest stands on the
    * floor after the area's last, whose height is that last floor. */
@@ -2470,60 +2268,9 @@ export class Game {
     this.areaBursts = [...playing, { reward, inspiration, at: last ? Math.max(now, last.at + AREA_BURST_MS) : now }];
     this.message = reward === "mastered" ? "Area mastered · checkpoint warp unlocked" : `Enemies cleared · +${inspiration} Inspiration`;
   }
-  /** Pickup rewards and treasure payouts; stats were already applied. */
-  private collect(t: Tile, x: number, y: number, outcome: StepEffect) {
-    const text = pickupText(t, outcome, this.stepRules);
-    this.notePickup(t, outcome);
-    if (text) {
-      this.gain(x, y, text, { tile: { ...t } }, undefined, "item");
-      this.payPickup(t, { x, y });
-      if (t.kind === "potion") this.recordHeal(outcome.healed);
-      if (t.kind === "potion") this.missions.record("potions", 1, this.missionKey({ x, y }));
-      if (t.kind === "potion") this.events.record("potions", 1, this.missionKey({ x, y }));
-      if (t.kind === "key" && t.color !== "yellow") this.missions.record(t.color === "blue" ? "blueKeys" : "redKeys", 1, this.missionKey({ x, y }));
-      this.message = text;
-    }
-    if (t.kind === "treasure") this.openTreasure(x, y);
-  }
-  /** Gold Bonus's Gold for taking `t` (a torch when null) off the floor at
-   * `at`, or opening it (a door), rising a row up at the same time as the
-   * item's own gain (a door's last key or HP) where it has one. */
-  private payPickup(t: Tile | null, at: { x: number; y: number }) {
-    const gold = this.purse.pickupGold(at.x, at.y, pickupGold(t));
-    if (gold) this.gain(at.x, at.y, `+${wholeChange(gold)} Gold`, { coin: "gold" }, { row: 1, with: !!t });
-  }
-  /** A pickup counted in the run's notes: a key (by colour, under a
-   * badge's scale), a potion, or an ATK or DEF shard. */
-  private notePickup(t: Tile, outcome: StepEffect) {
-    const notes = notesOf(this.run);
-    if (!notes) return;
-    if (t.kind === "key") this.noteKey(t.color!, outcome.keyAmount ?? 1);
-    else if (t.kind === "potion") notes.potions++;
-    else if (t.kind === "attack") notes.attackShards++;
-    else if (t.kind === "defense") notes.defenseShards++;
-  }
-  /** A key obtained (picked up, traded or siphoned), counted in the run's notes. */
-  private noteKey(color: KeyColor, amount: number) {
-    const notes = notesOf(this.run);
-    if (notes) tallyIn(notes.keys, color, amount);
-  }
-  /** A treasure chest: counted, and paid once per physical chest (undo and
-   * reopening can't pay it again). */
-  private openTreasure(x: number, y: number) {
-    this.run.treasures++;
-    this.events.record("chests", 1, this.missionKey({ x, y }));
-    const loot = this.purse.treasure(x, y);
-    if (!loot) return;
-    // The Gold at the tile, the materials below it, rising together.
-    this.gainDrops({ x, y }, [
-      { text: `+${wholeChange(loot.gold)} Gold`, art: { coin: "gold" } },
-      ...loot.materials.map((m) => ({ text: materialText(m), art: { material: m.id, quantity: m.quantity } })),
-    ]);
-    this.message = [`+${wholeChange(loot.gold)} Gold`, ...loot.materials.map(materialText)].join(" · ");
-  }
   /** Ends the run (the End Run button), or, fallen, accepts defeat. */
   finish(reason: string) {
-    this.finishEncounter();
+    this.fights.finish();
     if (this.fallen) this.acceptDefeat();
     else this.finalizeRun(reason);
   }
@@ -2532,10 +2279,16 @@ export class Game {
   get hand(): readonly CardId[] {
     return this.run.hand ?? this.save.hand;
   }
-  /** For each card of the hand, whether it is linked to the next (Card
-   * Groups): the run's links, or in the forest the saved ones. */
-  get links(): readonly boolean[] {
-    return linkedToNext(this.hand, this.run.hand ? this.run.links ?? [] : this.save.cardLinks);
+  /** Whether the hero is an Archer: the hand (in the forest, the next
+   * run's) holds the ARCHER card (`shootsWith`). Its arrows fly only inside
+   * a run. */
+  get isArcher() {
+    return shootsWith(this.hand);
+  }
+  /** What the cards of the run's hand give while held (`handBonus`): none
+   * in the forest. */
+  get handBonus(): HandBonus {
+    return handBonus(this.run.outside ? [] : this.hand);
   }
   /** Whether a tapped tile shows the route there and its totals: the
    * Courage skill Pathfinder owned, or Dev mode. */
@@ -2579,7 +2332,7 @@ export class Game {
    * many as Buy Quantity `quantity` takes (`runTrainingBulk`): they count
    * from the next turn on, until the run ends. Each purchase is a turn of
    * its own, so undo takes it back. Bought while a fight plays out, they
-   * count in that fight from its next strike (`retrainFight`). Refused
+   * count in that fight from its next strike (`fights.retrain`). Refused
    * before On the Job is owned, during a fight shown in summary rounds, for
    * a row whose upgrade isn't owned or at its highest, or without the
    * Silver for them all. */
@@ -2601,7 +2354,7 @@ export class Game {
       hpGain = snap(hpGain + this.applyRunTraining(offer));
     }
     // A fight playing out goes on with the stats (or Revive) bought.
-    if (this.encounter && (isStatRow(first.row) || id === "revive")) this.retrainFight(this.encounter, hpGain);
+    if (isStatRow(first.row) || id === "revive") this.fights.retrain(hpGain);
     this.message = `${first.row.name} trained for this run · level ${first.level + bulk.count}`;
     // Undo takes the ranks back, so only the run's most bought counts.
     const bought = Object.values(this.run.training ?? {}).reduce((n, k) => n + (k ?? 0), 0);
@@ -2612,7 +2365,7 @@ export class Game {
   /** The Buy Quantity choices open: x1 once the Buy Quantity skill is owned
    * (or in Dev mode), and one more per level of its research; none before. */
   get buyQuantities(): readonly BuyQuantity[] {
-    return this.save.upgrades.buyQuantity || this.save.settings.devMode ? openQuantities(researched(this.save.archives, "buyQuantity", 0)) : [];
+    return this.save.upgrades.buyQuantity || this.save.settings.devMode ? openQuantities(researched(this.save.archives, "buyQuantity")) : [];
   }
   /** How many ranks a press buys on `scope`'s screen (the Training tab,
    * the run's training bar, or the Gear page's provisions, each its own
@@ -2641,64 +2394,20 @@ export class Game {
   /** Whether Training can be bought for the run now: On the Job owned,
    * inside a run, and no fight shown in summary rounds. */
   private get mayTrainInRun() {
-    return this.trainsOnTheJob && this.playing && !this.encounter?.summary;
+    return this.trainsOnTheJob && this.playing && !this.fights.encounter?.summary;
   }
   /** A stat row's rank bought for the run: the hero and the run's loadout
-   * gain what the rank from `level` adds, times the stat's research. Returns the
-   * max HP it added. */
+   * gain what the rank from `level` adds (`rankShift`). Returns the max HP
+   * it added. */
   private raiseRunStat(row: StatTrainingRow, level: number) {
-    const stat = row.stat, p = this.run.player,
-      gain = snap((trained(row, level + 1) - trained(row, level)) * statFactor(this.save, stat) * boonFactor(this.run, stat));
-    p[stat] = snap((p[stat] ?? 0) + gain);
-    const kept = this.run.loadout;
-    if (kept) kept[stat] = snap((kept[stat] ?? 0) + gain);
-    // More maximum HP comes with the HP to fill it.
-    if (stat === "maxHp") p.hp = snap(p.hp + gain);
-    return stat === "maxHp" ? gain : 0;
+    return shiftHero(this.run, { [row.stat]: rankShift(this.save, this.mode, row, level, level + 1) }, this.overheal).maxHp ?? 0;
   }
   /** Find Potion bought for the run: its chance of percent potions rises,
    * and the floor stood on shows its new percent potions at once. */
   private raisePercentPotions() {
-    const chance = percentPotionChance(this.trainingNow);
+    const chance = trainedAmount(this.trainingNow, "findPotion");
     this.run.percentPotions = chance;
     if (this.world instanceof RoomWorld) this.world.percentPotions = chance;
-  }
-  /** Training bought while a fight plays out counts in it from the first
-   * strike not yet swinging: the fight plays on from there with the hero's
-   * stats as they are now (more max HP raising the HP left by `hpGain`),
-   * and the step commits the new ending once it is over. */
-  private retrainFight(fight: Encounter, hpGain: number) {
-    const p = this.run.player, strikes = fight.bout.strikes, elapsed = performance.now() - fight.start;
-    let from = strikes.findIndex((s) => s.start > elapsed);
-    if (from < 0) from = strikes.length;
-    let hp = p.hp, shroud = p.shroud ?? 0;
-    for (const s of strikes.slice(0, from)) {
-      if (s.by === "hero") {
-        // Lifesteal's heal, and the HP shown with it, rise with the max HP bought.
-        if (s.heroHp !== undefined) hp = s.heroHp = snap(s.heroHp + hpGain);
-        continue;
-      }
-      // The HP shown so far rises with the max HP bought.
-      if (s.hp) s.hp = snap(s.hp + hpGain);
-      hp = s.hp;
-      shroud = snap(Math.max(0, shroud - (s.shrouded ?? 0)));
-    }
-    fight.bout = resume(fight.bout, from, { player: { ...p, hp, shroud }, enemy: fight.enemy, revives: this.revival(fight.to), crits: this.critRolls(fight.to) });
-    this.showRevivals(fight.start, revivals(fight.bout));
-    this.restate(fight.outcome, fight.bout);
-    Object.assign(fight.outcome.player, { attack: p.attack, defense: p.defense, maxHp: p.maxHp });
-  }
-  /** Makes `o`, a fight's resolved step, end as the fight `played` does: the
-   * damage taken, the HP left and whether the hero lives, and whether the
-   * first strike won (or the enemy's thorns felled it). */
-  private restate(o: StepEffect, played: Bout) {
-    const p = this.run.player, damage = snap(played.strikes.reduce((sum, s) => (s.by === "enemy" ? sum + s.damage : sum), 0));
-    // A badge's scale adds to (or gives back) the new fight's damage.
-    if (o.scale) o.extraDamage = snap(damage * o.scale - damage);
-    const rules = this.stepRules, fought = afterExtra(heroHpAfter(played, p.hp), o.extraDamage, p.maxHp);
-    o.player.hp = regenerate(healAfterVictory(fought, p.maxHp, rules), p.maxHp, rules);
-    const { thornKill: _, ...combat } = o.combat!, last = played.strikes.at(-1);
-    o.combat = { ...combat, turns: played.strikes.filter((s) => s.by === "hero").length, damage, survivable: fought > 0, ...(last?.thornHp === 0 && fought > 0 ? { thornKill: true as const } : {}) };
   }
   /** Whether skill `id` can be bought now: open, below its last rank, and
    * paid for by the currency held (anything, with Dev free purchases). */
@@ -2707,15 +2416,6 @@ export class Game {
     const u = UPGRADES.find((u) => u.id === id)!, n = this.save.upgrades[id];
     const held = u.currency === "courage" ? this.save.delve.courage : this.save.tower.inspiration;
     return n < u.max && (this.free || cost(id, n) <= held);
-  }
-  /** Whether `tree`'s tab (and the Upgrades button leading to it) wears a
-   * dot: in the forest, after a run that earned the tree's currency
-   * (Inspiration from the Tower, Courage from the Delve), while a skill in
-   * it can be bought (so never while the tree is locked). Showing that tree
-   * clears it. */
-  treeWaiting(tree: NoticeTree) {
-    return this.save.treeNotices[tree] && !!this.run.outside &&
-      TREES.find((t) => t.id === tree)!.nodes.some((n) => this.canBuySkill(n.id));
   }
   buy(id: UpgradeId) {
     if (!this.canBuySkill(id)) return false;
@@ -2738,7 +2438,7 @@ export class Game {
   /** The wall clock the Archives' research runs on (ms); tests set it. */
   clock: () => number = () => Date.now();
   /** Records a potion's heal of `n` HP, already applied, where the hero stands. */
-  private recordHeal(n: number) {
+  recordHeal(n: number) {
     if (n <= 0) return;
     const p = this.run.player;
     this.lastHeal = { from: p.hp - n, to: p.hp, x: p.x, y: p.y, id: (this.lastHeal?.id ?? 0) + 1 };
@@ -2748,53 +2448,38 @@ export class Game {
 /** A fight the hero won: the enemy beaten at `at`, the HP it cost, and
  * how many times the hero revived in it. */
 /** A fight won: `instakill` when the hero's first strike ended it (Mug). */
-type FightEnd = { enemy: Enemy; damage: number; at: { x: number; y: number }; revived: number; scale?: number; instakill?: boolean; crits?: number };
-/** How many of a fight's strikes were the hero's critical ones. */
-const critHits = (fight: Bout) => fight.strikes.filter((s) => s.by === "hero" && s.crit).length;
+type FightEnd = { enemy: Enemy; damage: number; at: { x: number; y: number }; revived: number; scale?: number; instakill?: boolean; crits?: number; openers?: string[] };
 
-/** HP left after a fight's own damage, `hp`, once a badge's scale has
- * added `extra` (or, below 0, given it back, up to `maxHp`). */
-const afterExtra = (hp: number, extra = 0, maxHp = Infinity) => (extra ? snap(Math.min(maxHp, Math.max(0, hp - extra))) : hp);
 /** How Skip's message names what vanished, by tile kind. */
 /** The screens that keep their own Buy Quantity, and the setting each saves it in. */
 export type QuantityScope = "training" | "run" | "provisions";
 const QUANTITY_SETTINGS = { training: "buyQuantity", run: "runBuyQuantity", provisions: "provisionBuyQuantity" } as const;
 const SKIPPED_NAMES: Partial<Record<Tile["kind"], string>> = { door: "The door", key: "The key", potion: "The potion", attack: "The ATK shard", defense: "The DEF shard", treasure: "The chest", reward: "The chest" };
 
+/** Whether the door `t` has a lock of `color` among its locks. */
+function lockedBy(t: Tile, color: KeyColor) {
+  const rule = doorRule(t);
+  return rule.type === "keys" && rule.keys.includes(color);
+}
+
 /** How the status line opens on a fight won. */
-/** Cells found, as "+3 Cells" (to two decimals when a badge's scale left
- * a fraction). */
-const cellsText = (cells: number) => `+${keyCount(cells)} ${keyCount(cells) === "1" ? "Cell" : "Cells"}`;
-function fightText({ enemy, damage, revived }: FightEnd) {
+function fightText(fight: FightEnd): string {
+  return [...(fight.openers ?? []), wonText(fight)].join(" · ");
+}
+/** What opened a fight of `player` against `enemy`, as the status line
+ * names it: ENEMY's Surprise Attack (`surprise`), ATK UP's Power Strike,
+ * and a boss's Takedown and Tangle (Greater, against a Greater Boss). */
+function fightOpeners(player: Player, enemy: Enemy, surprise: boolean) {
+  const cut = squaredUp(player, enemy).opening, greater = enemy.strength === "greaterBoss" ? "Greater " : "";
+  return [
+    ...(surprise ? ["Surprise Attack"] : []),
+    ...(player.powerStrike ? ["Power Strike"] : []),
+    ...(cut?.takedown ? [`${greater}Takedown`] : []),
+    ...(cut?.tangle ? [`${greater}Tangle`] : []),
+  ];
+}
+function wonText({ enemy, damage, revived }: FightEnd) {
   if (revived) return `Revived · ${enemyTitle(enemy)} defeated`;
   return damage ? `−${wholeChange(damage)} HP · ${enemyTitle(enemy)} defeated` : "Unscathed victory";
 }
 
-/** What a kill gave toward Equipment: the status line's words for each, and
- * the icon that rises off the board for it (a material with its count, or
- * the piece itself). */
-function equipmentGains(loot: EquipmentLoot | null): { text: string; art: GainArt }[] {
-  if (!loot) return [];
-  const gains: { text: string; art: GainArt }[] = [];
-  if (loot.materials) gains.push({ text: `+${loot.materials.quantity} ${EQUIP_MATERIALS[loot.materials.id].name}`, art: { equipMaterial: loot.materials.id, quantity: loot.materials.quantity } });
-  if (loot.item) gains.push({ text: `${RARITY_TIERS[loot.item.rarity].name} ${itemDef(loot.item.def)!.name}!`, art: { equipPiece: loot.item.def, rarity: loot.item.rarity } });
-  if (loot.salvaged) gains.push({ text: `${loot.salvaged.auto ? "Auto-salvaged" : "Inventory full"} · +${loot.salvaged.quantity} ${EQUIP_MATERIALS[loot.salvaged.id].name}`, art: { equipMaterial: loot.salvaged.id, quantity: loot.salvaged.quantity } });
-  return gains;
-}
-/** A kill's Gold (when it paid any) and Silver, as the status line names them. */
-const coinsText = (gold: number, silver: number) => [...(gold ? [`+${wholeChange(gold)} Gold`] : []), `+${wholeChange(silver)} Silver`];
-
-/** What picking up `t` shows: the key, the HP a potion healed, or the
- * shard's stat under `rules`; null for anything else. */
-function pickupText(t: Tile, outcome: StepEffect, rules: StepRules) {
-  switch (t.kind) {
-    case "key": return `+${keyCount(outcome.keyAmount ?? 1)} ${t.color} key`;
-    case "potion": return `+${wholeChange(outcome.healed)} HP`;
-    case "attack": return `+${enemyStat(shardStat(t, rules))} attack`;
-    case "defense": return `+${enemyStat(shardStat(t, rules))} defense`;
-    default: return null;
-  }
-}
-
-/** "+2 Slime Gels": a material reward as the board and status line name it. */
-const materialText = (m: MaterialStack) => `+${m.quantity} ${materialDef(m.id).name}${m.quantity > 1 ? "s" : ""}`;

@@ -1,3 +1,4 @@
+import { controlIcon } from "./control-icon.ts";
 import { PREVIEW_RELICS, RELICS, type RelicDef } from "../relics.ts";
 import type { AppContext } from "./app.ts";
 import { el, relicIcon } from "./dom.ts";
@@ -34,7 +35,7 @@ export class RelicsPage {
   render() {
     const relics = this.relics();
     el("relics").innerHTML =
-      `<button class="missions-close" id="relics-close" aria-label="Close" title="Close">✕</button>` +
+      `<button class="missions-close" id="relics-close" aria-label="Close" title="Close">${controlIcon("close")}</button>` +
       `<div class="page-title"><small>KEEPSAKES OF EVENTS</small><h2>Relics</h2></div>` +
       (relics.length
         ? `<div class="relic-grid">${relics.map(([id, r]) => `<button class="relic-cell ${r.rarity}" data-relic="${id}" aria-label="${r.name}: ${r.effect}">${relicIcon(r.rarity)}<small>${r.name}</small></button>`).join("")}</div>`

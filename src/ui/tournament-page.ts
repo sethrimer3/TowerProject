@@ -1,3 +1,4 @@
+import { controlIcon } from "./control-icon.ts";
 import { adsOff } from "../shop/entitlements.ts";
 import type { BeginRefusal, TournamentClient } from "../tournament/client.ts";
 import { caveLabel, LEAGUE_INFO, LEAGUES, type League } from "../tournament/leagues.ts";
@@ -91,7 +92,7 @@ export class TournamentPage {
     const game = this.ctx.game, league = game.save.tournament.league;
     this.shown = this.state();
     el("tournament").innerHTML =
-      `<button class="back" id="tournament-back">← Back</button><div class="page-title"><small>WEDNESDAYS AND SATURDAYS · GMT</small><h2>Tournament</h2></div>` +
+      `<button class="back" id="tournament-back">${controlIcon("back")} Back</button><div class="page-title"><small>WEDNESDAYS AND SATURDAYS · GMT</small><h2>Tournament</h2></div>` +
       `<div class="tournament-league">${leagueTrophy(league)}<div><b>${LEAGUE_INFO[league].name} League</b><small>${caveLabel(league)} · enemies ×${tournamentStatFactor(league)}</small></div></div>` +
       `<p class="tournament-phase" id="tournament-phase">${this.phaseText()}</p>` +
       `<div class="tournament-tickets" title="Tickets: each enters the tournament once">${ticketIcon()}<b>${game.save.tournament.tickets}</b><small>${game.save.tournament.tickets === 1 ? "TICKET" : "TICKETS"}</small></div>` +

@@ -5,7 +5,7 @@ import { defaults } from "../src/save.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { World } from "../src/delve/world.ts";
 import { START_X, TOWER_START_X, goldReward } from "../src/config.ts";
-import type { Run } from "../src/entities.ts";
+import type { Run } from "../src/runs.ts";
 
 const { tower, delve } = MODES;
 const run = (over: Partial<Run> = {}) =>

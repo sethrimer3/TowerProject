@@ -1,9 +1,9 @@
-import type { KeyColor } from "./config.ts";
-import type { EnemyStrength, Tile, Torch } from "./entities.ts";
+import type { EnemyStrength, Tile, Torch, KeyColor } from "./entities.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
-import type { ThemedBoard } from "./themed-boards.ts";
+import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
 import { rankChevrons } from "./rank-chevrons.ts";
 import { askAsciiFont, asciiGlyph as glyph, letterField, tileHash } from "./ascii-glyphs.ts";
+import { vignette } from "./themed-art.ts";
 
 /** The Ember Game theme's dungeon board: warm cream and amber ASCII glowing
  * on a dark maroon field of dim letters, open ground left black, enemies a
@@ -75,79 +75,75 @@ function eyes(c: CanvasRenderingContext2D, r: number, y = 14) {
 }
 
 /** One tile's contents in tile space (24x24). */
-function paintEmberContents(c: CanvasRenderingContext2D, t: Tile) {
-  switch (t.kind) {
-    case "enemy": {
-      // Red eyes, wider the stronger it is, under its name's first letters
-      // in glowing cream (more of them from strong up).
-      const e = t.enemy;
-      const strength = e?.strength ?? "normal";
-      const name = (e?.name.trim().toLowerCase() ?? "e").replace(/[^a-z]/g, "");
-      const letters = name.slice(0, strength === "weak" || strength === "normal" ? 2 : 4);
-      glyph(c, letters, EMBER.cream, letters.length > 2 ? 9 : 10, 12, 4.5, 5, EMBER.amber);
-      eyes(c, EYE_SIZE[strength] ?? 3);
-      if (strength === "boss" || strength === "greaterBoss") glyph(c, "^", EMBER.pupil, 10, 12, 20, 4, EMBER.red);
-      // Its rank chevrons down the left edge, under the letters.
-      rankChevrons(c, strength, EMBER.pupil, EMBER.ground, 1, 8, 4);
-      // A Ranged enemy's > at the top right, and a Fast enemy's » at its
-      // bottom right.
-      if (e?.ranged) glyph(c, ">", EMBER.cream, 10, 22, 4, 4, EMBER.amber);
-      if (e?.fast) glyph(c, "»", EMBER.cream, 10, 21, 21, 4, EMBER.amber);
+const paintEmberContents = contentsFrom({
+  enemy(c, t) {
+    // Red eyes, wider the stronger it is, under its name's first letters
+    // in glowing cream (more of them from strong up).
+    const e = t.enemy;
+    const strength = e?.strength ?? "normal";
+    const name = (e?.name.trim().toLowerCase() ?? "e").replace(/[^a-z]/g, "");
+    const letters = name.slice(0, strength === "weak" || strength === "normal" ? 2 : 4);
+    glyph(c, letters, EMBER.cream, letters.length > 2 ? 9 : 10, 12, 4.5, 5, EMBER.amber);
+    eyes(c, EYE_SIZE[strength] ?? 3);
+    if (strength === "boss" || strength === "greaterBoss") glyph(c, "^", EMBER.pupil, 10, 12, 20, 4, EMBER.red);
+    // Its rank chevrons down the left edge, under the letters.
+    rankChevrons(c, strength, EMBER.pupil, EMBER.ground, 1, 8, 4);
+    // A Ranged enemy's > at the top right, and a Fast enemy's » at its
+    // bottom right.
+    if (e?.ranged) glyph(c, ">", EMBER.cream, 10, 22, 4, 4, EMBER.amber);
+    if (e?.fast) glyph(c, "»", EMBER.cream, 10, 21, 21, 4, EMBER.amber);
+  },
+  key(c, t) {
+    glyph(c, "o-", EMBER.cream, 16, 12, 12.5, 8, keyColor(t.color));
+  },
+  door(c, t) {
+    const rule = t.door;
+    if (rule?.type === "fullHp") {
+      paintEmberHeart(c);
       return;
     }
-    case "key":
-      glyph(c, "o-", EMBER.cream, 16, 12, 12.5, 8, keyColor(t.color));
-      return;
-    case "door": {
-      const rule = t.door;
-      if (rule?.type === "fullHp") {
-        paintEmberHeart(c);
-        return;
-      }
-      if (rule?.type === "wood") {
-        // Boarded up: any key opens it, or the hero breaks it down.
-        glyph(c, "=", EMBER.amber, 26, 12, 8, 5);
-        glyph(c, "=", EMBER.amber, 26, 12, 16, 5);
-        return;
-      }
-      const keys = rule?.type === "keys" ? rule.keys : t.color ? [t.color] : [];
-      glyph(c, "[+]", EMBER.cream, 18, 12, 11, 8, keyColor(keys[0]));
-      // A dot per key the door takes, in that key's colour.
-      keys.forEach((k, i) => {
-        c.fillStyle = keyColor(k);
-        c.fillRect(12 - keys.length * 2 + i * 4, 19, 2.5, 2.5);
-      });
-      if (rule?.type === "keys" && rule.heart) glyph(c, "<3", EMBER.heart, 9, 20, 3, 4);
+    if (rule?.type === "wood") {
+      // Boarded up: any key opens it, or the hero breaks it down.
+      glyph(c, "=", EMBER.amber, 26, 12, 8, 5);
+      glyph(c, "=", EMBER.amber, 26, 12, 16, 5);
       return;
     }
-    case "potion":
-      glyph(c, "!", EMBER.cream, 24, 12, 12.5, 8, EMBER.red);
-      // The red potion heals a share of HP: its % beside it.
-      if (t.color === "red") glyph(c, "%", EMBER.amber, 12, 19, 5, 4);
-      return;
-    case "attack":
-      glyph(c, ")", EMBER.amber, 24, 12, 12.5, 8);
-      return;
-    case "defense":
-      glyph(c, "]", EMBER.cream, 24, 12, 12.5, 8, EMBER.amber);
-      return;
-    case "reward":
-      glyph(c, "{$}", EMBER.amber, 18, 12, 12.5, 8);
-      return;
-    case "openedChest":
-      glyph(c, "{_}", EMBER.dim, 18, 12, 12.5, 0);
-      return;
-    case "treasure":
-      glyph(c, "*", EMBER.pupil, 24, 12, 14, 8, EMBER.amber);
-      return;
-    case "stairs":
-      glyph(c, "<", EMBER.cream, 26, 12, 12.5, 8, EMBER.amber);
-      return;
-    case "oneway":
-      glyph(c, "^", EMBER.cream, 24, 12, 14, 8, EMBER.amber);
-      return;
-  }
-}
+    const keys = rule?.type === "keys" ? rule.keys : t.color ? [t.color] : [];
+    glyph(c, "[+]", EMBER.cream, 18, 12, 11, 8, keyColor(keys[0]));
+    // A dot per key the door takes, in that key's colour.
+    keys.forEach((k, i) => {
+      c.fillStyle = keyColor(k);
+      c.fillRect(12 - keys.length * 2 + i * 4, 19, 2.5, 2.5);
+    });
+    if (rule?.type === "keys" && rule.heart) glyph(c, "<3", EMBER.heart, 9, 20, 3, 4);
+  },
+  potion(c, t) {
+    glyph(c, "!", EMBER.cream, 24, 12, 12.5, 8, EMBER.red);
+    // The percent potion heals a share of HP: its % beside it.
+    if (t.color === "red") glyph(c, "%", EMBER.amber, 12, 19, 5, 4);
+  },
+  attack(c) {
+    glyph(c, ")", EMBER.amber, 24, 12, 12.5, 8);
+  },
+  defense(c) {
+    glyph(c, "]", EMBER.cream, 24, 12, 12.5, 8, EMBER.amber);
+  },
+  reward(c) {
+    glyph(c, "{$}", EMBER.amber, 18, 12, 12.5, 8);
+  },
+  openedChest(c) {
+    glyph(c, "{_}", EMBER.dim, 18, 12, 12.5, 0);
+  },
+  treasure(c) {
+    glyph(c, "*", EMBER.pupil, 24, 12, 14, 8, EMBER.amber);
+  },
+  stairs(c) {
+    glyph(c, "<", EMBER.cream, 26, 12, 12.5, 8, EMBER.amber);
+  },
+  oneway(c) {
+    glyph(c, "^", EMBER.cream, 24, 12, 14, 8, EMBER.amber);
+  },
+});
 /** The Heart Door's heart, typed. */
 function paintEmberHeart(c: CanvasRenderingContext2D) {
   glyph(c, "<3", EMBER.heart, 20, 12, 12.5, 10);
@@ -174,12 +170,7 @@ function paintEmberHero(c: CanvasRenderingContext2D) {
 
 /** A warm dark rim round the board. */
 function drawEmberVignette(f: FrameContext) {
-  const c = f.c, w = f.width;
-  const g = c.createRadialGradient(w / 2, w / 2, w * 0.3, w / 2, w / 2, w * 0.75);
-  g.addColorStop(0, "rgba(30, 0, 0, 0)");
-  g.addColorStop(1, "rgba(12, 0, 0, 0.6)");
-  c.fillStyle = g;
-  c.fillRect(0, 0, w, w);
+  vignette(f, 0.3, "rgba(30, 0, 0, 0)", "rgba(12, 0, 0, 0.6)");
 }
 
 export const EMBER_BOARD: ThemedBoard = {

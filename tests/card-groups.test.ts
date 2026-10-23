@@ -5,7 +5,8 @@ import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save.ts";
 import { unlockAt } from "../src/goals.ts";
 import type { Board } from "../src/board.ts";
-import type { Run, Tile } from "../src/entities.ts";
+import type { Run } from "../src/runs.ts";
+import type { Tile } from "../src/entities.ts";
 
 // Card Groups (Tower II floor 80's Goal): cards linked side by side in the
 // hand share one priority, the closest target of any of them taken first.
@@ -93,13 +94,13 @@ test("the Deck links cards once Card Groups is claimed, and a move or a removal 
 test("a run keeps the groups it went in with", () => {
   const g = forest();
   assert.ok(g.deck.link(0));
-  assert.deepEqual(g.links.slice(0, 2), [true, false], "in the forest, the saved links");
+  assert.deepEqual(g.handRules.links.slice(0, 2), [true, false], "in the forest, the saved links");
   g.enterRun();
   assert.equal(g.run.outside, false);
   assert.deepEqual(g.run.links, g.save.cardLinks);
   assert.equal(g.deck.link(1), false, "not inside a run");
   g.save.cardLinks = [];
-  assert.deepEqual(g.links.slice(0, 2), [true, false], "a later change waits for the next run");
+  assert.deepEqual(g.handRules.links.slice(0, 2), [true, false], "a later change waits for the next run");
   const loaded = new Game(decode(JSON.stringify(g.save)));
   assert.deepEqual(loaded.run.links, g.run.links, "and survives a reload");
 });

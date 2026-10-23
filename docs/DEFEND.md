@@ -3,6 +3,9 @@
 A tower-defense-style simulation where the player lays out a walled city and
 holds it against endless waves. Code lives in `src/defend/`.
 
+With Settings → **Sprites** on under the Classic Game theme, overhead structures, city roofs, trees, wall pieces, rubble, scaffolding, pond plants, lantern brackets and the city-tile icon use the shared PNG palette.
+The option starts off, and other Game themes override this art.
+
 ## Board
 
 - 9 × 13 **tiles**, each subdivided into 7 × 7 **cells** (63 × 91 cells).
@@ -165,13 +168,15 @@ from its seed; `tests/defend-replay.test.ts` pins it.
   space (`weather.ts`).
 - `structure-art.ts` holds the keep, barracks and tower art (shared by the
   city layer and the palette icons), the banner, and the palette colours.
-- `npm run test:render` draws seeded Defend scenes (building mode, a rainy
-  battle, the night boss wave, a stormy night zoomed in) and the palette
-  icons, and compares their pixels to the recorded golden.
+- `tests/render-scenes.ts` holds seeded Defend scenes (building mode, a
+  rainy battle, the night boss wave, a stormy night zoomed in) and the
+  palette icons for `npm run test:render`; they are switched off (`DEFEND`)
+  while Defend's tests are on hold.
 
 ## Economy (`progress.ts`, Armory tab)
 
 - Everything is bought with main-game gold, iron bars and steel bars.
+  Nothing finds metal bars any more (treasure chests stopped holding them), so only bars already saved can be spent.
 - City elements get more expensive with each one owned. Upgrades are
   universal (they apply to every building of that type) and take effect from
   the next run.

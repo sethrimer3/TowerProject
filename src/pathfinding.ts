@@ -1,12 +1,11 @@
 import { CHUNK } from "./config.ts";
-import { point } from "./entities.ts";
+import { point, type KeyColor } from "./entities.ts";
 import { litTorches, takesSomething, type Position } from "./board.ts";
-import type { KeyColor } from "./config.ts";
 import { doorCost } from "./doors.ts";
 export type Step = { dx: number; dy: number; x: number; y: number };
 /** A sliver of route cost per key a door eats, by rarity: never enough to
  * lengthen a route, only to pick the cheaper of two equally long ones (a
- * yellow door beside a blue one). */
+ * gold door beside a blue one). */
 const KEY_TIE_BREAK: Record<KeyColor, number> = { yellow: 1e-4, blue: 3e-4, red: 8e-4 };
 /** Route cost for crossing a tile that holds something (`takesSomething`):
  * below one step, so a route never lengthens to go round it, but above the

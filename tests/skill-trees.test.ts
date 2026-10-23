@@ -75,15 +75,16 @@ test("Shroud follows Trainers, ahead of Critical; Greater Heal, then Recovery, R
   assert.deepEqual([at("revive").x, at("revive").y, at("revive").requires], [90, 214, ["parry"]], "Revive sits below Parry");
   assert.deepEqual([at("findPotion").x, at("findPotion").y, at("findPotion").requires], [70, 196, ["recovery"]], "Find Potion sits below Recovery");
   assert.deepEqual([at("buyQuantity").x, at("buyQuantity").y, at("buyQuantity").requires], [50, 178, ["lifesteal"]], "Buy Quantity sits under Lifesteal");
-  assert.deepEqual([at("lifesteal").x, at("lifesteal").y, at("lifesteal").requires], [50, 160, ["delve"]], "Lifesteal sits where Key Siphon did, under Into the depths");
+  assert.deepEqual([at("lifesteal").x, at("lifesteal").y, at("lifesteal").requires], [50, 160, ["delve"]], "Lifesteal sits where GK Siphon did, under Into the depths");
   assert.deepEqual([at("thorns").x, at("thorns").y, at("thorns").requires], [50, 196, ["buyQuantity"]], "Thorns sits under Buy Quantity");
-  assert.deepEqual([at("keySiphon").x, at("keySiphon").y, at("keySiphon").requires], [50, 214, ["thorns"]], "Key Siphon sits under Thorns");
-  assert.deepEqual([at("cardYellowDoor").y, at("cardYellowDoor").requires], [268, ["keySiphon"]], "the cards hang from Key Siphon, a row clear of it and Revive");
+  assert.deepEqual([at("keySiphon").x, at("keySiphon").y, at("keySiphon").requires], [50, 214, ["thorns"]], "GK Siphon sits under Thorns");
+  assert.deepEqual([at("cardYellowDoor").y, at("cardYellowDoor").requires], [268, ["keySiphon"]], "the cards hang from GK Siphon, a row clear of it and Revive");
 });
-test("the hand's skills run Buildout, Trainers, Shroud, Critical to the Archives, Gear and On the Job off Buildout, ATK Up then DEF Up after Gear, Regen then Heal below On the Job, Larger Hand sits by itself to Shroud's right, and Buildout, Trainers, On the Job and Gear cost 1 (Critical 2)", () => {
+test("the hand's skills run Buildout, Trainers, Shroud, Critical to the Archives, Gear and On the Job off Buildout, Gold Key, ATK Up then DEF Up after Gear, Regen then Heal below On the Job, Larger Hand sits by itself to Shroud's right, and Buildout, Trainers, On the Job and Gear cost 1 (Critical 2)", () => {
   const at = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;
-  assert.deepEqual(["buildout", "trainers", "shroud", "critical", "archives", "onTheJob", "regen", "cardHeal", "gear", "cardAtkUp", "cardDefUp"].map((id) => at(id).requires),
-    [["combatStance"], ["buildout"], ["trainers"], ["shroud"], ["critical"], ["buildout"], ["onTheJob"], ["regen"], ["buildout"], ["gear"], ["cardAtkUp"]]);
+  assert.deepEqual(["buildout", "trainers", "shroud", "critical", "archives", "onTheJob", "regen", "cardHeal", "gear", "cardYellowKey", "cardAtkUp", "cardDefUp"].map((id) => at(id).requires),
+    [["combatStance"], ["buildout"], ["trainers"], ["shroud"], ["critical"], ["buildout"], ["onTheJob"], ["regen"], ["buildout"], ["gear"], ["cardYellowKey"], ["cardAtkUp"]]);
+  assert.deepEqual(["gear", "cardYellowKey", "cardAtkUp", "cardDefUp"].map((id) => [at(id).x, at(id).y]), [[20, 30], [20, 48], [20, 66], [20, 84]], "Gold Key, ATK Up and DEF Up straight down under Gear");
   assert.deepEqual(["buildout", "trainers", "shroud", "critical", "archives"].map((id) => [at(id).x, at(id).y]), [[50, 30], [50, 66], [50, 84], [50, 102], [50, 120]], "down the middle, Shroud between Trainers and Critical");
   assert.deepEqual([at("largerHand").x, at("largerHand").y, at("largerHand").requires], [80, 84, ["trainers"]], "Larger Hand stands right of Shroud, alone");
   assert.deepEqual([at("critPrediction").x, at("critPrediction").y, at("critPrediction").requires], [30, 102, ["critical"]], "Critical Prediction stands left of Critical");
@@ -94,7 +95,7 @@ test("the hand's skills run Buildout, Trainers, Shroud, Critical to the Archives
   assert.ok(at("gear").x < at("buildout").x && at("gear").y === at("buildout").y, "Gear sits left of Buildout");
   assert.ok(at("cardAtkUp").x === at("gear").x && at("cardAtkUp").y > at("gear").y, "ATK Up sits under Gear");
   assert.ok(at("cardDefUp").x === at("cardAtkUp").x && at("cardDefUp").y > at("cardAtkUp").y, "DEF Up sits under ATK Up");
-  assert.deepEqual(["cardAtkUp", "cardDefUp"].map((id) => cost(id as UpgradeId, 0)), [5, 5]);
+  assert.deepEqual(["cardYellowKey", "cardAtkUp", "cardDefUp"].map((id) => cost(id as UpgradeId, 0)), [3, 5, 5]);
   assert.deepEqual(["combatStance", "buildout", "trainers", "onTheJob", "largerHand", "gear", "critical", "archives"].map((id) => cost(id as UpgradeId, 0)), [1, 1, 1, 1, 1, 1, 2, 5]);
   assert.deepEqual(["gear", "cardAtkUp", "cardDefUp", "onTheJob"].map((id) => UPGRADES.find((u) => u.id === id)!.name), ["Gear", "ATK Up", "DEF Up", "On the Job"]);
   const g = new Game(defaults());
@@ -107,7 +108,8 @@ test("the hand's skills run Buildout, Trainers, Shroud, Critical to the Archives
   assert.equal(g.buy("archives"), false, "the Archives wait for Critical");
   assert.equal(g.buy("cardAtkUp"), false, "ATK Up waits for Gear");
   assert.equal(g.buy("cardDefUp"), false, "DEF Up waits for ATK Up");
-  assert.ok(g.buy("gear") && g.buy("cardAtkUp") && g.buy("cardDefUp"));
+  assert.equal(g.buy("cardAtkUp"), false, "ATK Up waits for Gold Key");
+  assert.ok(g.buy("gear") && g.buy("cardYellowKey") && g.buy("cardAtkUp") && g.buy("cardDefUp"));
   assert.ok(g.buy("trainers") && g.buy("shroud") && g.buy("critical") && g.buy("archives") && g.buy("largerHand"));
 });
 test("Trainers (1) follows Buildout, Blue Key (2) the Archives, and Extra Key (1) Movement Speed", () => {
@@ -223,15 +225,15 @@ test("a run that earned Inspiration puts a dot on the Inspiration tab in the for
   assert.ok(g.enterRun());
   g.save.tower.runCurrency = 1;
   g.save.tower.inspiration = 1;
-  assert.equal(g.treeWaiting("inspiration"), false, "not inside a run");
+  assert.equal(g.notices.waiting("inspiration"), false, "not inside a run");
   g.finish("Ascent ended");
   assert.deepEqual(g.save.treeNotices, { inspiration: true, courage: false });
-  assert.ok(g.run.outside && g.treeWaiting("inspiration"), "Combat Stance costs 1");
+  assert.ok(g.run.outside && g.notices.waiting("inspiration"), "Combat Stance costs 1");
   g.save.tower.inspiration = 0;
-  assert.equal(g.treeWaiting("inspiration"), false, "nothing affordable");
+  assert.equal(g.notices.waiting("inspiration"), false, "nothing affordable");
   g.save.tower.inspiration = 1;
   assert.ok(g.buy("combatStance"));
-  assert.equal(g.treeWaiting("inspiration"), false, "spent");
+  assert.equal(g.notices.waiting("inspiration"), false, "spent");
   assert.ok(decode(JSON.stringify(g.save)).treeNotices.inspiration, "kept until the tree is shown");
 });
 test("a Delve run that earned Courage puts a dot on the Courage tab in the forest once the tree is open and a skill there can be bought", () => {
@@ -242,18 +244,18 @@ test("a Delve run that earned Courage puts a dot on the Courage tab in the fores
   assert.ok(g.enterRun());
   g.save.delve.runCurrency = 3;
   g.save.delve.courage = 1;
-  assert.equal(g.treeWaiting("courage"), false, "not inside a run");
+  assert.equal(g.notices.waiting("courage"), false, "not inside a run");
   g.finish("Delve run ended");
   assert.deepEqual(g.save.treeNotices, { inspiration: false, courage: true });
-  assert.ok(g.run.outside && g.treeWaiting("courage"), "Movement Speed costs 1");
+  assert.ok(g.run.outside && g.notices.waiting("courage"), "Movement Speed costs 1");
   g.save.delve.courage = 0;
-  assert.equal(g.treeWaiting("courage"), false, "nothing affordable");
+  assert.equal(g.notices.waiting("courage"), false, "nothing affordable");
   g.save.delve.courage = 1;
   g.save.upgrades.delve = 0;
-  assert.equal(g.treeWaiting("courage"), false, "the tree is locked");
+  assert.equal(g.notices.waiting("courage"), false, "the tree is locked");
   g.save.upgrades.delve = 1;
   assert.ok(g.buy("moveSpeed"));
-  assert.equal(g.treeWaiting("courage"), false, "spent");
+  assert.equal(g.notices.waiting("courage"), false, "spent");
   assert.ok(decode(JSON.stringify(g.save)).treeNotices.courage, "kept until the tree is shown");
 });
 

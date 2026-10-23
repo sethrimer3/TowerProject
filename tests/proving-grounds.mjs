@@ -1,23 +1,30 @@
 import { chromium, expect } from "@playwright/test";
 import { mkdirSync } from "node:fs";
+import { fixClock } from "./fixed-clock.mjs";
 const browser=await chromium.launch({headless:true,channel:process.env.PLAYWRIGHT_CHANNEL||"msedge"});
 try {
   const page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1});
+  await fixClock(page);
+  page.setDefaultNavigationTimeout(120_000);
   const errors=[];page.on("pageerror",e=>errors.push(e.message));
   await page.addInitScript(()=> {
     const fixture=sessionStorage.getItem("trialFixture");
     if(fixture) {localStorage.setItem("towerdelve.v1",fixture);sessionStorage.removeItem("trialFixture");}
   });
-  await page.goto(process.env.TEST_URL||"http://127.0.0.1:5173/");
+  await page.goto(process.env.TEST_URL||"http://127.0.0.1:5173/",{waitUntil:"domcontentloaded"});
   await page.evaluate(async()=> {
     const {Game}=await import("/src/state.ts"),{defaults}=await import("/src/save.ts");
     const g=new Game(defaults());g.newRun({outside:true,seed:12});
-    g.run.player.x=9;g.run.player.y=4;
+    g.run.player.x=9;g.run.player.y=4;g.save.settings.oneTapMove=true;
     for(const k of Object.keys(g.save.tutorials))g.save.tutorials[k]=true;
     sessionStorage.setItem("trialFixture",JSON.stringify(g.save));
   });
-  await page.reload();await page.evaluate(()=>document.activeElement?.blur());
-  await page.keyboard.press("ArrowRight");
+  await page.reload({waitUntil:"domcontentloaded"});
+  const board=page.locator("#world");
+  await expect(page.locator("#enter-run")).toBeVisible();
+  const bounds=await board.boundingBox();
+  // The current game walks the forest by taps; keyboard movement is Dev-only.
+  await board.click({position:{x:bounds.width*10.5/20,y:bounds.height*15.5/20}});
   await expect(page.locator("#trial-heading")).toHaveText("Proving Grounds Trials");
   const tower=await page.evaluate(()=>JSON.parse(localStorage.getItem("towerdelve.v1")).tower.run);
   await page.locator("#trial-light-elemental").click();
@@ -29,7 +36,7 @@ try {
   expect(trial.steps).toBe(10);expect(trial.player.hp).toBeLessThan(trial.player.maxHp);
   expect(Object.keys(trial.scorches).length).toBeGreaterThan(30);
   await expect(page.locator("#trial-vitals")).toContainText("northeast–southwest");
-  await page.reload();await expect(page.locator("#trial-board")).toHaveAttribute("data-steps","10");
+  await page.reload({waitUntil:"domcontentloaded"});await expect(page.locator("#trial-board")).toHaveAttribute("data-steps","10");
   for(let i=0;i<10;i++)await page.keyboard.press("Space");
   await expect(page.locator("#trial-board")).toHaveAttribute("data-steps","20");
   await expect(page.locator("#trial-vitals")).toContainText("east–west");
@@ -42,7 +49,7 @@ try {
     s.player.x=25;s.player.y=24;s.bossHp=s.player.attack;s.steps=20;s.player.hp=s.player.maxHp;
     sessionStorage.setItem("trialFixture",JSON.stringify(save));
   });
-  await page.reload();await expect(page.locator("#trial-board")).toHaveAttribute("data-room","arena");
+  await page.reload({waitUntil:"domcontentloaded"});await expect(page.locator("#trial-board")).toHaveAttribute("data-room","arena");
   await page.keyboard.press("ArrowUp");
   await expect(page.locator("#trial-status")).toContainText("Trial complete");
   await page.locator("#trial-retry").click();

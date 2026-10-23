@@ -13,13 +13,14 @@ import { TREES } from "../src/skill-trees.ts";
 import { BoardPopups, enemyBar, lunges } from "../src/board-popups.ts";
 import { checkpoint, UNLOCK_NAMES } from "../src/goals.ts";
 import { DamagePredictions, damageLabel } from "../src/damage-labels.ts";
+import { wounded, woundMore } from "../src/ranged.ts";
 
 const hero = (over: Partial<Player> = {}): Player => ({ x: 0, y: 0, hp: 100, maxHp: 100, attack: 12, defense: 0, keys: { yellow: 0, blue: 0, red: 0 }, ...over }) as Player;
 const brute: Enemy = { name: "Brute", hp: 60, attack: 30, defense: 0, tier: 0, strength: "normal" };
 const row = (id: TrainingId) => TRAINING.find((t) => t.id === id)!;
 const node = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;
 
-test("Thorns sits between Buy Quantity and Key Siphon, Parry between Regen Research and Revive, 10 Inspiration each", () => {
+test("Thorns sits between Buy Quantity and GK Siphon, Parry between Regen Research and Revive, 10 Inspiration each", () => {
   for (const id of ["thorns", "parry"] as const) {
     const u = UPGRADES.find((u) => u.id === id)!;
     assert.deepEqual([u.currency, u.base, u.max], ["inspiration", 10, 1], id);
@@ -77,6 +78,21 @@ test("thorns take a share of the enemy's max HP each strike it lands, half from 
   assert.equal(thornDamage(p, { ...brute, strength: "boss" }), 15);
   assert.equal(thornDamage(p, { ...brute, strength: "greaterBoss" }), 15);
   assert.equal(thornDamage(hero(), brute), 0, "none without Thorn Damage");
+});
+
+test("an enemy the arrows wounded takes thorns of its full HP, however often wounded: the fight, the prediction and the label agree", () => {
+  const p = hero({ hp: 1e9, maxHp: 1e9, attack: 1, thorns: 50 });
+  const once = woundMore({ kind: "enemy", enemy: brute }, 20), twice = woundMore(once, 10);
+  for (const [raw, hp, strikes] of [[once, 40, 2], [twice, 30, 1]] as const) {
+    const e = wounded(raw).enemy!;
+    assert.deepEqual([e.hp, e.fullHp, thornDamage(p, e)], [hp, 60, 30]);
+    const fight = bout(p, e), r = predict(p, e);
+    // Each of its strikes costs it 30, half its full HP, not half of what is left.
+    assert.equal(fight.strikes.filter((s) => s.by === "enemy").length, strikes);
+    assert.deepEqual([fight.strikes.at(-1)!.thorns, r.turns, r.thornKill], [30, strikes, true]);
+  }
+  const labels = new DamagePredictions();
+  assert.notDeepEqual(labels.cost(p, { ...brute, hp: 30 }), labels.cost(p, wounded(twice).enemy!), "a label keys by the full HP");
 });
 
 test("the played fight and the prediction end the same with thorns and parries, whatever the stats", () => {
