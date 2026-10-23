@@ -185,7 +185,8 @@ const RUN_FIELD_CHECKS = {
   percentPotions: (v: unknown) => wholeIn(v, 1, 10_000),
   chestOdds: (v: any) => isRecord(v) && Object.keys(v).length === 2 && [v.supply, v.equipment].every((n) => finite(n) && n >= 0 && n <= 100) && v.supply + v.equipment > 0,
   treasureFloor: (v: unknown) => finite(v) && v > 0 && v <= 100,
-  doorOdds: (v: any) => isRecord(v) && Object.keys(v).length === 2 && [v.skeleton, v.lockPick].every((n) => finite(n) && n >= 0 && n <= 100) && v.skeleton + v.lockPick > 0,
+  doorOdds: (v: any) => isRecord(v) && Object.keys(v).length === ("transmute" in v ? 3 : 2) && [v.skeleton, v.lockPick, v.transmute ?? 0].every((n) => finite(n) && n >= 0 && n <= 100)
+    && v.skeleton + v.lockPick + (v.transmute ?? 0) > 0,
   // The hand is checked first: every card holding a badge must be in it.
   badges: (v: unknown, r: any) => validRunBadges(v) && Object.keys(v as object).every((card) => r.hand?.includes(card)),
   // The hand is checked first: every card with a tree copied must be in it.

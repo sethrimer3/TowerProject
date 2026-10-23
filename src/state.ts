@@ -21,7 +21,7 @@ import { stampProfile } from "./profile.ts";
 import { defaultFinds, newNotes, noteKey, notesOf } from "./run-notes.ts";
 import { stream, tileRandom } from "./random.ts";
 import { freeTrainingLines, rollFreeTraining } from "./free-training.ts";
-import { doorBlockedMessage, doorName, doorRule, drainsHp, KEY_ORDER, pickupGold, type DoorDiscounts } from "./doors.ts";
+import { doorBlockedMessage, doorName, doorRule, drainsHp, goldLocked, KEY_ORDER, pickupGold, type DoorDiscounts } from "./doors.ts";
 import type { SettingKey } from "./settings.ts";
 import { skillAvailable } from "./skill-trees.ts";
 import { routeTo, type Step } from "./pathfinding.ts";
@@ -1046,8 +1046,9 @@ export class Game {
     const odds = this.chestOddsFor(this.run.hand, tree);
     if (odds) this.run.chestOdds = odds;
     else delete this.run.chestOdds;
-    // DOOR's Skeleton Key and Lock Pick remake the run's doors as each floor is generated.
-    if (tree.skeletonKey || tree.lockPick) this.run.doorOdds = { skeleton: Math.min(100, tree.skeletonKey), lockPick: Math.min(100, tree.lockPick) };
+    // DOOR's Skeleton Key and Lock Pick, and GOLD DOOR's Transmute, remake the run's doors as each floor is generated.
+    if (tree.skeletonKey || tree.lockPick || tree.yellowTransmute)
+      this.run.doorOdds = { skeleton: Math.min(100, tree.skeletonKey), lockPick: Math.min(100, tree.lockPick), ...(tree.yellowTransmute ? { transmute: Math.min(100, tree.yellowTransmute) } : {}) };
     else delete this.run.doorOdds;
     // CHEST's Treasure Floor makes a floor's shards and potions chests as it is generated.
     if (tree.treasureFloor) this.run.treasureFloor = Math.min(100, tree.treasureFloor);
@@ -1174,7 +1175,7 @@ export class Game {
     const overheal = this.overheal;
     return { potionHeal, percentPotion: trainedAmount(this.trainingNow, "potion"), regen, ...(overheal > 1000 ? { overheal } : {}),
       heartToll: researched(this.save.archives, "heartToll"), keyCost: this.keyCost, ...keyFind, ...(this.doorOff ? { doorOff: this.doorOff } : {}),
-      ...(tree.doorHeal ? { doorHeal: tree.doorHeal } : {}), ...(tree.keyHeal ? { keyHeal: tree.keyHeal } : {}), ...(tree.keyOverheal ? { keyOverheal: tree.keyOverheal } : {}),
+      ...(tree.doorHeal ? { doorHeal: tree.doorHeal } : {}), ...(tree.yellowLockHeal ? { yellowLockHeal: tree.yellowLockHeal } : {}), ...(tree.keyHeal ? { keyHeal: tree.keyHeal } : {}), ...(tree.keyOverheal ? { keyOverheal: tree.keyOverheal } : {}),
       ...Object.fromEntries(KEY_ORDER.flatMap((color) => (["KeyHeal", "KeyOverheal"] as const).flatMap((part) => (keyStat(tree, color, part) ? [[`${color}${part}`, keyStat(tree, color, part)]] : [])))),
       shardAttack: researched(this.save.archives, "shardAttackPercent") * boonFactor(this.run, "attack") * treeFactor(tree, "attackShard"),
       shardDefense: researched(this.save.archives, "shardDefensePercent") * treeFactor(tree, "defenseShard"),
@@ -1745,7 +1746,7 @@ export class Game {
     this.finds.pickup(t, x, y, outcome);
     this.consumeTile(t, x, y);
     if (t.kind === "attack") this.chargePowerStrike(x, y);
-    if (t.kind === "door") this.doorChest(x, y);
+    if (t.kind === "door") this.doorChest(x, y, t);
     if (t.kind === "key") this.keyChest(x, y, t.color!);
     if (t.kind === "key") this.masterKey(x, y, t.color!);
     if (t.kind !== "stairs") this.callGreaterBoss();
@@ -2027,11 +2028,13 @@ export class Game {
     const multiplier = (this.tileRolls(x, y, CHEST_DOUBLE_SALT, tree.chestDouble) ? 2 : 1) * (this.tileRolls(x, y, CHEST_TRIPLE_SALT, tree.chestTriple) ? 3 : 1);
     return { multiplier, cells: this.tileRolls(x, y, CHEST_CELLS_SALT, tree.chestCells) };
   }
-  /** DOOR's Door Chest: the door just opened at (x, y) may leave an opened
-   * treasure chest where it stood, paid as a treasure chest is (a Supply or
-   * Equipment Chest at the run's odds). */
-  private doorChest(x: number, y: number) {
-    this.leaveChest(x, y, DOOR_CHEST_SALT, DOOR_CHEST_KIND_SALT, this.treeBonus.doorChest);
+  /** DOOR's Door Chest: the door `t` just opened at (x, y) may leave an
+   * opened treasure chest where it stood, paid as a treasure chest is (a
+   * Supply or Equipment Chest at the run's odds), GOLD DOOR's chance added
+   * for a door with a gold lock. */
+  private doorChest(x: number, y: number, t: Tile) {
+    const tree = this.treeBonus;
+    this.leaveChest(x, y, DOOR_CHEST_SALT, DOOR_CHEST_KIND_SALT, goldLocked(t) ? snap(tree.doorChest + tree.yellowLockChest) : tree.doorChest);
   }
   /** KEY's Key Chest: the key just picked up at (x, y) may leave an opened
    * treasure chest where it lay, as Door Chest leaves one, by its `color`'s
@@ -2047,11 +2050,12 @@ export class Game {
     this.run.changes[`${x},${y}`] = { kind: "openedChest" };
     this.finds.treasure(x, y, chestKindAt({ kind: "treasure" }, x, y, this.floorSeed ^ kindSalt, this.run.chestOdds));
   }
-  /** The rules a step's lucky roll adds, or null: DOOR's Secret Knock opens
-   * a door for nothing, and KEY's Locksmith makes a key two. */
+  /** The rules a step's lucky roll adds, or null: DOOR's Secret Knock
+   * (GOLD DOOR's Gold Knock added, for a door with a gold lock) opens a door
+   * for nothing, and KEY's Locksmith makes a key two. */
   private luckyStep(t: Tile, x: number, y: number): Partial<StepRules> | null {
     const tree = this.treeBonus;
-    if (t.kind === "door" && this.tileRolls(x, y, SECRET_KNOCK_SALT, tree.secretKnock)) return { freeDoor: true };
+    if (t.kind === "door" && this.tileRolls(x, y, SECRET_KNOCK_SALT, goldLocked(t) ? snap(tree.secretKnock + tree.yellowLockKnock) : tree.secretKnock)) return { freeDoor: true };
     // The key's colour's own Locksmith adds to KEY's, one roll.
     if (t.kind === "key" && this.tileRolls(x, y, DOUBLE_KEY_SALT, snap(tree.doubleKey + keyStat(tree, t.color!, "DoubleKey")))) return { doubleKey: true };
     return null;
@@ -2073,7 +2077,7 @@ export class Game {
       this.applyStats(outcome.player);
       this.finds.door(t, outcome, 0, d);
       this.world.clear(d.x, d.y);
-      this.doorChest(d.x, d.y);
+      this.doorChest(d.x, d.y, t);
     }
     if (doors.length) this.message = `${every ? "Master Key" : `Master ${KEY_WORDS[color]} Key`} · ${doors.length} door${doors.length === 1 ? "" : "s"} opened`;
   }

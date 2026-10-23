@@ -62,6 +62,15 @@ export type TreeStat =
   | "skeletonKey" | "lockPick"
   /** Flat: the percent chance a door opens for nothing: no keys, no HP (Secret Knock). */
   | "secretKnock"
+  /** GOLD DOOR's, for doors with a gold lock only: more each one's Pickup
+   * Gold (added to Door Gold), and flat, Silver found with each opened,
+   * the percent of max HP healed on opening each (both added to DOOR's),
+   * and the percent chances one leaves a treasure chest (Gold Door Chest)
+   * and opens for nothing (Gold Knock), each added to DOOR's. */
+  | "yellowLockGold" | "yellowLockSilver" | "yellowLockHeal" | "yellowLockChest" | "yellowLockKnock"
+  /** Flat: the percent chance each Wooden or Steel Door on the run's floors
+   * is generated a Gold Door instead (GOLD DOOR's Gold Door Transmute). */
+  | "yellowTransmute"
   /** Flat: the percent chance an opened door (Door Chest) or a key picked
    * up (Key Chest) leaves an opened treasure chest, its loot paid. */
   | "doorChest" | "keyChest"
@@ -194,7 +203,7 @@ export function foeStats(bonus: TreeBonus, part: FoePart): Partial<Record<FoeTre
 
 /** The stats added as they are, not as percents of a factor. */
 export const FLAT_STATS: ReadonlySet<TreeStat> = new Set<TreeStat>(["floorHeal", "overhealMax", "stairSkip", "potionMaxHp", "potionSilver", "freeOffenseChance", "freeDefenseChance", "freeUtilityChance",
-  "doorSilver", "doorHeal", "skeletonKey", "lockPick", "secretKnock", "doorChest", "keyChest", "keyHeal", "keyOverheal", "keySilver", "doubleKey", "masterKey", "surpriseAttack", "foeAttackCut", "stealOverheal", "parry", "reviveChance",
+  "doorSilver", "doorHeal", "skeletonKey", "lockPick", "secretKnock", "doorChest", "yellowLockSilver", "yellowLockHeal", "yellowLockChest", "yellowLockKnock", "yellowTransmute", "keyChest", "keyHeal", "keyOverheal", "keySilver", "doubleKey", "masterKey", "surpriseAttack", "foeAttackCut", "stealOverheal", "parry", "reviveChance",
   "attackShardSilver", "defenseShardSilver", "powerStrike", "takedown", "tangle", "greaterTakedown", "greaterTangle", "bossCells", "chestSilver", "chestCells", "supplyChance", "equipmentChance", "treasureFloor", "rarityUp", "chestDouble", "chestTriple", ...colorKeyStats(FLAT_KEY_PARTS), ...foeCardStats(FLAT_FOE_PARTS)]);
 
 /** One node of a card's tree: the stats each of its levels raises, its
@@ -308,6 +317,19 @@ export const CARD_TREES: Partial<Record<CardId, readonly CardTreeNode[]>> = {
     { id: "heartDoorCost", stats: { heartDoorCost: 1 }, rarity: "rare", levels: 0, max: 5, after: "plainDoorCost" },
     { id: "locksmith", stats: { doubleKey: 1 }, rarity: "epic", levels: 0, max: 5, after: "heartDoorCost" },
     { id: "masterKey", stats: { masterKey: 0.2 }, rarity: "legendary", levels: 0, max: 5, after: "locksmith" },
+  ],
+  // GOLD DOOR's work on doors with a gold lock only; its Gold Key Cost is GOLD KEY's, on any door, and its Gold Lock Pick DOOR's.
+  yellowDoor: [
+    common("doorGold", { yellowLockGold: 2 }, 5, 10),
+    { id: "doorSilver", stats: { yellowLockSilver: 0.1 }, rarity: "uncommon", levels: 0, max: 5, after: "doorGold" },
+    { id: "goldBonus", stats: { goldBonus: 1 }, rarity: "rare", levels: 0, max: 5, after: "doorSilver" },
+    { id: "freeUtility", stats: { freeUtilityChance: 0.5 }, rarity: "epic", levels: 0, max: 5, after: "goldBonus" },
+    { id: "doorChest", stats: { yellowLockChest: 0.2 }, rarity: "legendary", levels: 0, max: 5, after: "freeUtility" },
+    common("doorCost", { yellowDoorCost: 1 }, 5, 10),
+    { id: "doorHeal", stats: { yellowLockHeal: 0.5 }, rarity: "uncommon", levels: 0, max: 5, after: "doorCost" },
+    { id: "transmute", stats: { yellowTransmute: 4 }, rarity: "rare", levels: 0, max: 5, after: "doorHeal" },
+    { id: "lockPick", stats: { lockPick: 1 }, rarity: "epic", levels: 0, max: 5, after: "transmute" },
+    { id: "knock", stats: { yellowLockKnock: 1 }, rarity: "legendary", levels: 0, max: 5, after: "lockPick" },
   ],
   yellowKey: keyTree("yellow", { heal: 1, gold: 2, silver: 0.1, goldBonus: 1, freeUtility: 0.5, chest: 0.2, find: 1, maxHp: 5, masterKey: 2 }),
   blueKey: keyTree("blue", { heal: 2, gold: 4, silver: 0.2, goldBonus: 2, freeUtility: 1, chest: 0.3, find: 2, maxHp: 10, masterKey: 2 }),
@@ -533,7 +555,7 @@ export function runCardTrees(levels: CardTreeLevels, hand: readonly CardId[]): C
 export type TreeBonus = Record<TreeStat, number>;
 const NO_BONUS = Object.freeze(Object.fromEntries(
   ["floorGold", "floorSilver", "goldBonus", "silverBonus", "freeOffense", "freeDefense", "freeUtility", "freeOffenseChance", "freeDefenseChance", "freeUtilityChance", "floorHeal", "overhealMax", "stairSkip", "percentPotions", "potionHeal", "potionMaxHp", "potionSilver", "regen", "shroud", "parry", "reviveChance",
-    "doorCost", "doorGold", "doorSilver", "doorHeal", "skeletonKey", "lockPick", "secretKnock", "doorChest", "keyChest", "keyFind", "keyGold", "keyHeal", "keyOverheal", "keySilver", "plainDoorCost", "heartDoorCost", "doubleKey", "masterKey",
+    "doorCost", "doorGold", "doorSilver", "doorHeal", "skeletonKey", "lockPick", "secretKnock", "doorChest", "yellowLockGold", "yellowLockSilver", "yellowLockHeal", "yellowLockChest", "yellowLockKnock", "yellowTransmute", "keyChest", "keyFind", "keyGold", "keyHeal", "keyOverheal", "keySilver", "plainDoorCost", "heartDoorCost", "doubleKey", "masterKey",
     ...colorKeyStats(COLOR_KEY_PARTS), ...foeCardStats(FOE_PARTS), "maxHp", "foeAttack", "foeDefense", "foeGold", "foeSilver", "critChance", "critFactor", "killXp", "surpriseAttack", "foeAttackCut", "stealOverheal", "moreEnemies", "attackShard", "defenseShard", "attackShardGold", "defenseShardGold",
     "attackShardSilver", "defenseShardSilver", "powerStrike", "takedown", "tangle", "greaterTakedown", "greaterTangle",
     "bossAttack", "bossDefense", "bossShroud", "bossGold", "bossCells", "chestGold", "chestSilver", "chestCells", "supplyChance", "equipmentChance", "treasureFloor", "rarityUp", "chestDouble", "chestTriple",

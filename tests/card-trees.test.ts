@@ -39,7 +39,7 @@ function allOpened(card: CardId): CardOpened {
 }
 
 test("every card tree holds 10 levels from the start and opens to 60 with card buys, each node after one of its own tree", () => {
-  assert.deepEqual(Object.keys(CARD_TREES), ["stairs", "heal", "door", "key", "yellowKey", "blueKey", "redKey", "monster", "weakEnemy", "baseEnemy", "strongEnemy", "eliteEnemy", "bossEnemy", "nonBossEnemy", "fastEnemy", "flyingEnemy", "archer", "atkUp", "defUp", "torch", "chest"]);
+  assert.deepEqual(Object.keys(CARD_TREES), ["stairs", "heal", "door", "key", "yellowDoor", "yellowKey", "blueKey", "redKey", "monster", "weakEnemy", "baseEnemy", "strongEnemy", "eliteEnemy", "bossEnemy", "nonBossEnemy", "fastEnemy", "flyingEnemy", "archer", "atkUp", "defUp", "torch", "chest"]);
   for (const [card, nodes] of Object.entries(CARD_TREES)) {
     assert.equal(nodes!.reduce((a, n) => a + n.levels, 0), BASE_MAX_LEVEL, `${card} starts at 10`);
     assert.equal(nodes!.reduce((a, n) => a + n.max, 0), MAX_CARD_LEVEL, `${card}'s whole tree`);

@@ -1,6 +1,6 @@
 import { snap } from "./exact.ts";
 import { atWorst, critAgainst, healUpTo, predict, type CombatPrediction, type CritRule } from "./combat.ts";
-import { doorCost, doorDiscount, doorKeyScale, doorRule, drainsHp, keyNeed, woodToll, type DoorDiscounts } from "./doors.ts";
+import { doorCost, doorDiscount, doorKeyScale, doorRule, drainsHp, goldLocked, keyNeed, woodToll, type DoorDiscounts } from "./doors.ts";
 import type { Player, Tile, KeyColor } from "./entities.ts";
 
 /** What stepping onto each pickup grants. The single source for the move
@@ -84,6 +84,8 @@ export type StepRules = {
   /** The percent of max HP each door opened heals (DOOR's Door Heal),
    * after a Heart Door's drain, up to max HP; none when absent. */
   doorHeal?: number;
+  /** GOLD DOOR's Gold Door Heal, added to DOOR's for a door with a gold lock. */
+  yellowLockHeal?: number;
   /** The door stepped into opens for nothing: no keys, no HP (DOOR's
    * Secret Knock, which `Game` rolls for the step it takes; previews and
    * planners never count on it). */
@@ -185,9 +187,10 @@ export function resolveStep(player: Player, tile: Tile, rules: StepRules = BASE_
       const amounts = cost.map((color) => keyNeed(keyScale, color));
       if (amounts.some((a) => a !== amounts[0])) effect.keyAmounts = Object.fromEntries(cost.map((color, i) => [color, amounts[i]]));
       else if (amounts.length && amounts[0] !== 1) effect.keyAmount = amounts[0];
-      // DOOR's Door Heal, after the drain, up to max HP.
-      if (rules.doorHeal && next.hp > 0 && next.hp < next.maxHp) {
-        effect.healed = snap(Math.min(next.maxHp, next.hp + (next.maxHp * rules.doorHeal) / 100) - next.hp);
+      // DOOR's Door Heal, GOLD DOOR's added for a door with a gold lock, after the drain, up to max HP.
+      const heal = snap((rules.doorHeal ?? 0) + (rules.yellowLockHeal && goldLocked(tile) ? rules.yellowLockHeal : 0));
+      if (heal && next.hp > 0 && next.hp < next.maxHp) {
+        effect.healed = snap(Math.min(next.maxHp, next.hp + (next.maxHp * heal) / 100) - next.hp);
         next.hp = snap(next.hp + effect.healed);
       }
       break;

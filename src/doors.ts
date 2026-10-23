@@ -62,6 +62,12 @@ export function singleLock(tile: Tile): KeyColor | undefined {
   const rule = doorRule(tile);
   return rule.type === "keys" && rule.mode === "all" && rule.keys.length === 1 ? rule.keys[0] : undefined;
 }
+/** Whether the door `t` has a gold lock among the colours it needs (not a
+ * Steel Door, which takes any key): GOLD DOOR's tree's doors. */
+export function goldLocked(t: Tile) {
+  const rule = doorRule(t);
+  return rule.type === "keys" && rule.mode === "all" && rule.keys.includes("yellow");
+}
 /** A single gold door, GOLD DOOR's. */
 export const isYellowDoor = (tile: Tile) => singleLock(tile) === "yellow";
 /** The doors the door cards make cheaper while held (`CardBonus.door`), and
@@ -171,9 +177,11 @@ export function area1DoorRule(room: number): DoorRule {
   return rules[Math.max(0, room) % rules.length];
 }
 
-const SKELETON_SALT = 0x5c3e7, LOCK_PICK_SALT = 0x10c45;
+const SKELETON_SALT = 0x5c3e7, LOCK_PICK_SALT = 0x10c45, TRANSMUTE_SALT = 0x7a2e5;
 /** The generated tile `t` at (x, y) on a board generated from `seed`, as a
- * run with `odds` sees it: a colour door (keyed, every colour needed)
+ * run with `odds` sees it: a Wooden or Steel Door whose tile's fixed number
+ * falls under the Gold Door Transmute chance is a Gold Door, keeping any
+ * Heart Door's drain; a colour door (keyed, every colour needed)
  * whose tile's fixed number falls under the Skeleton Key chance is a
  * Wooden Door of `durability()` HP, the step's own; else one of two or
  * three colours under the Lock Pick chance loses its rarest colour (red,
@@ -181,13 +189,16 @@ const SKELETON_SALT = 0x5c3e7, LOCK_PICK_SALT = 0x10c45;
  * number, so a higher chance only ever remakes more doors. */
 export function withDoorOdds(t: Tile, x: number, y: number, seed: number, odds: DoorOdds | undefined, durability: () => number): Tile {
   const rule = t.door;
-  if (!odds || t.kind !== "door" || rule?.type !== "keys" || rule.mode !== "all") return t;
+  if (!odds || t.kind !== "door") return t;
+  if (odds.transmute && (rule?.type === "wood" || (rule?.type === "keys" && rule.mode === "any")) && tileRandom(x, y, seed ^ TRANSMUTE_SALT) * 100 < odds.transmute)
+    return { kind: "door", color: "yellow", door: { type: "keys", keys: ["yellow"], mode: "all", ...(rule.type === "keys" && rule.heart ? { heart: true } : {}) } };
+  if (rule?.type !== "keys" || rule.mode !== "all") return t;
   if (odds.skeleton && tileRandom(x, y, seed ^ SKELETON_SALT) * 100 < odds.skeleton) return { kind: "door", door: { type: "wood", durability: durability() } };
   if (rule.keys.length < 2 || !odds.lockPick || tileRandom(x, y, seed ^ LOCK_PICK_SALT) * 100 >= odds.lockPick) return t;
   const rarest = [...KEY_ORDER].reverse().find((key) => rule.keys.includes(key))!, keys = rule.keys.filter((key) => key !== rarest);
   return { ...t, color: t.color && keys.includes(t.color) ? t.color : keys[0], door: { ...rule, keys } };
 }
-/** `cells` with DOOR's tree's `odds` remaking their doors (`withDoorOdds`),
+/** `cells` with DOOR's and GOLD DOOR's trees' `odds` remaking their doors (`withDoorOdds`),
  * a Wooden Door made of `durability()` HP; the same map without odds. */
 export function withRunDoors(cells: Map<string, Tile>, seed: number, odds: DoorOdds | undefined, durability: (x: number, y: number) => number) {
   if (!odds) return cells;
