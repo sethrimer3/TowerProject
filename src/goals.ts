@@ -229,11 +229,18 @@ export const goalsWaiting = (save: Save) =>
   Array.from({ length: save.tower.tiersOpen }, (_, i) => i + 1).some((tower) =>
     CHECKPOINTS[tower]!.some((c) => goalState(save, tower, c.floor, false) === "ready" || goalState(save, tower, c.floor, true) === "ready"));
 
-/** Claims a reward that is ready, paying it to its owner; returns it, or
- * null when it isn't ready. */
+/** Whether a reward can be claimed now: ready, or with Dev free purchases
+ * on, its floor not completed yet. */
+function canClaimGoal(save: Save, tower: number, floor: number, premium: boolean) {
+  const state = goalState(save, tower, floor, premium);
+  return state === "ready" || (state === "locked" && save.settings.freePurchases);
+}
+
+/** Claims a reward that can be claimed (`canClaimGoal`), paying it to its
+ * owner; returns it, or null when it can't be. */
 export function claimGoal(save: Save, tower: number, floor: number, premium: boolean): GoalReward | null {
   const c = checkpoint(tower, floor);
-  if (!c || goalState(save, tower, floor, premium) !== "ready") return null;
+  if (!c || !canClaimGoal(save, tower, floor, premium)) return null;
   const reward = premium ? c.premium : c.reward;
   if (reward.kind === "currency") CURRENCIES[reward.currency].credit(save, reward.amount);
   if (reward.kind === "tower") openTower(save, reward.tower);

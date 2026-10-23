@@ -24,6 +24,7 @@ Undo never takes an area's reward back.
 In the forest, the Tower's **Goals** button (with a red dot while a reward in an open tower waits to be claimed) opens the Goals screen: the tower drawn as a stone column rising from the ground, a line up its middle lit to the highest floor completed in it (shown at the bottom, *Floor 35*; a floor counts as completed once its stairs are climbed, so a tower not yet climbed shows *Floor 0*), and a checkpoint every ten floors to 100, every 50 floors to 300, then at 400, 500, 750, 1,000, 1,250, 1,500, 2,000, 2,500 and 4,500.
 Each checkpoint has a reward on the left, claimed by tapping it once its floor is completed (floor 10's once floor 11 is reached), and a premium reward on the right, claimed the same way with that set's **Premium Pass**: Pass 1 opens Towers I–III ($9.99), Pass 2 IV–VI ($19.99), Pass 3 VII–IX ($29.99); the pass button at the top right, or a premium reward tapped without it, offers the pass with the Gems and other rewards it opens.
 A reward whose floor isn't completed yet shows faded with a lock, a claimed one faded with a check, one ready to claim bright.
+With **Dev: free purchases** on, tapping a locked reward claims it anyway (a premium one still needs its pass).
 
 ## Checkpoint unlocks
 

@@ -74,8 +74,8 @@ const NODE_NAMES: Record<string, string> = { "yellowDoor.lockPick": "Gold Lock P
 
 /** What `n` of each stat does, a line. */
 const STAT_TEXT: Record<TreeStat, (n: string) => string> = {
-  floorGold: (n) => `+${n}% Spare Change Gold on each floor new to the run`,
-  floorSilver: (n) => `+${n}% Wishing Well Silver on each floor new to the run`,
+  floorGold: (n) => `+${n}% Spare Change Gold on each floor`,
+  floorSilver: (n) => `+${n}% Wishing Well Silver on each floor`,
   goldBonus: (n) => `+${n}% Gold Bonus`,
   silverBonus: (n) => `+${n}% Silver Bonus`,
   freeOffense: (n) => `+${n}% Free Offense Upgrade chance`,
@@ -84,7 +84,7 @@ const STAT_TEXT: Record<TreeStat, (n: string) => string> = {
   freeOffenseChance: (n) => `+${n}% Free Offense Upgrade chance, trained or not`,
   freeDefenseChance: (n) => `+${n}% Free Defense Upgrade chance, trained or not`,
   freeUtilityChance: (n) => `+${n}% Free Utility Upgrade chance, trained or not`,
-  floorHeal: (n) => `Heals ${n}% of max HP on each floor new to the run`,
+  floorHeal: (n) => `Heals ${n}% of max HP on each floor`,
   overhealMax: (n) => `+${n}% of max HP on the Overheal ceiling, Overheal owned or not`,
   stairSkip: (n) => `${n}% chance the Tower's stairs climb two floors`,
   percentPotions: (n) => `+${n}% chance each potion is a percent potion`,

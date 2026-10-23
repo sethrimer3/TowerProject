@@ -3211,6 +3211,14 @@ nav button.notify[data-count]::after {
 .skill-sprite.card-sprite { image-rendering: pixelated; object-fit: contain; }
 .deck-page { display: flex; flex-direction: column; gap: 14px; min-height: 100%; padding: 10px 2px 4px; }
 .deck-label { font-size: 13px; letter-spacing: 2px; color: #e9d4ac; text-transform: uppercase; margin: 0 0 8px; }
+/* The Hand heading's row: its chevron collapses the hand to make room below. */
+.deck-hand-head { display: flex; align-items: center; gap: 6px; margin: 0 0 8px; }
+.deck-hand-head .deck-label { margin: 0; }
+.deck-hand-toggle { display: grid; place-items: center; width: 24px; height: 24px; min-height: 0; padding: 0; border: 0; background: none; color: #e9d4ac; cursor: pointer; }
+.deck-hand-toggle svg { width: 14px; height: 14px; transition: transform 0.15s; }
+.deck-hand-toggle:hover, .deck-hand-toggle:focus-visible { color: #fff; }
+.deck-hand-area.collapsed .deck-hand-toggle svg { transform: rotate(180deg); }
+.deck-hand-area.collapsed .deck-hand, .deck-hand-area.collapsed .deck-tip { display: none; }
 /* The hand's slots: as many to a row as fill the width. */
 .deck-hand {
   display: grid;

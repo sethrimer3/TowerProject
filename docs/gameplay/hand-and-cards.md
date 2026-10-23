@@ -62,6 +62,7 @@ Each run keeps the hand as it was ordered when the run went inside, however the 
 The Inspiration tree's first skill, **Combat Stance** (1 Inspiration), adds a **Deck** tab after Tower and Delve.
 With Sprites on, occupied cards use one full-size card frame, while empty slots keep their own frames.
 The Deck page shows the hand's slots along the top: four, five with **Larger Hand** (1 Inspiration, beside the Archives), and one more for each slot bought with Gems after that (50, 100, 200, 300, 400, 500, 600, 750, 1,000, 1,200, 1,400, 1,600, 1,800, 2,500, 3,500, 4,500, 5,500, 6,500, 7,500, 8,500 and 10,000 Gems, up to 26), the next for sale standing after them; dragging a card to another slot (or moving a focused card with the arrow keys) shifts each card in between over one, and the new order is saved at once.
+The chevron beside the **Hand** heading hides the hand, making room for the deck and badges below, and shows it again; the hand shows once more each time you come back to the page.
 Below the hand sits the deck, locked until **Buildout** (1 Inspiration, after Combat Stance): then the deck's cards are laid out on a grid, those in the hand greyed out with a check that returns them to the deck, and pressing any other card adds it to the hand's first empty slot.
 Dragging one onto a hand slot puts it there instead: with room in the hand, the cards from that slot on slide one slot later; with the hand full, the card in that slot goes back to the deck (never STAIRS).
 A hand card shows an X in its corner while hovered (always, on touch screens) that also returns it to the deck, as does dragging it onto the deck (which lights up while it is held there).
@@ -121,7 +122,7 @@ With a keyboard, the arrow keys move through the tree (up the track, down toward
 Points are spent in the forest; inside a run the tree only shows.
 
 - **Stairs** has two tracks, each rising one rarity an upgrade.
-  Gold: +2% Spare Change Gold a floor (common, 5 levels, up to 10), then a heal of 3% of max HP on each floor new to the run, up to the Overheal ceiling (uncommon), +2% Gold Bonus (rare), +1% Free Offense chance (epic), and +5% Overheal Max (legendary), each up to 5 levels.
+  Gold: +2% Spare Change Gold a floor (common, 5 levels, up to 10), then a heal of 3% of max HP on each floor, up to the Overheal ceiling (uncommon), +2% Gold Bonus (rare), +1% Free Offense chance (epic), and +5% Overheal Max (legendary), each up to 5 levels.
   Silver: +2% Wishing Well Silver a floor (common, 5 levels, up to 10), then the same 3% heal (uncommon), +2% Silver Bonus (rare), +1% Free Defense chance (epic), and +1% Stair Skip (legendary), each up to 5 levels.
   Overheal Max adds 5% of max HP a level to the Overheal ceiling whether or not Overheal is owned, so on its own it lets potions and heals rise above max HP.
   Stair Skip is a chance that the Tower's stairs, reached by Stairs, climb two floors, as the Skip badge on Stairs does (added to that badge's chance when both are held).

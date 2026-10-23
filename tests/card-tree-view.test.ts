@@ -61,7 +61,7 @@ test("every node has a name and says what its levels give", () => {
     }
   const stairs = CARD_TREES.stairs!;
   assert.equal(nodeName("stairs", stairs.find((n) => n.id === "floorHealSilver")!), "Floor Heal II");
-  assert.deepEqual(statText(stairs.find((n) => n.id === "floorGold")!, 3), ["+6% Spare Change Gold on each floor new to the run"]);
+  assert.deepEqual(statText(stairs.find((n) => n.id === "floorGold")!, 3), ["+6% Spare Change Gold on each floor"]);
   assert.deepEqual(statText(stairs.find((n) => n.id === "stairSkip")!, 2), ["2% chance the Tower's stairs climb two floors"]);
   assert.deepEqual(statText(CARD_TREES.chest!.find((n) => n.id === "supplyChance")!, 3), ["+0.6% Supply Chest chance"]);
 });

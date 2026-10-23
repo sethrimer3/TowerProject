@@ -37,6 +37,9 @@ const CHECK_SVG = kitIcon("check", `<svg viewBox="0 0 10 10" aria-hidden="true">
 /** The rising arrow on a card with card points to spend. */
 const POINTS_ARROW_SVG = `<svg viewBox="0 0 10 12" aria-hidden="true"><path d="M5 1L9 6H6.4V11H3.6V6H1Z" fill="currentColor" stroke="#2a1c06" stroke-width="0.8" stroke-linejoin="round"/></svg>`;
 
+/** The chevron beside the Hand heading: pointing up while the hand shows (to collapse it), down while it is collapsed. */
+const CHEVRON_SVG = `<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2 6.5L5 3.5L8 6.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
 const ARROW_STEPS = new Map([["ArrowLeft", -1], ["ArrowRight", 1]]);
 
 /** Whether a drag's pointer is the one pressed and, until it lifts, has
@@ -91,6 +94,9 @@ export class DeckPage {
   private badgeDrag: BadgeDrag | null = null;
   private showing = false;
   private tree: CardTreePanel | null = null;
+  /** Whether the hand is collapsed under its heading, making room for the
+   * deck and badges; until the page is left. */
+  private handCollapsed = false;
 
   constructor(private ctx: AppContext) {}
 
@@ -124,6 +130,7 @@ export class DeckPage {
     this.showing = open;
     if (open) return;
     this.cancelDrag();
+    this.handCollapsed = false;
     // Leaving the page puts a card's tree away: the Deck shows again next time.
     this.tree?.close(true);
     this.tree = null;
@@ -180,9 +187,12 @@ export class DeckPage {
         : lesson === "points"
           ? `<div class="deck-tip" role="status"><b>Spend card points</b><p>Select ${CARDS[this.pointsTarget!].name.toUpperCase()} and spend its card points on its upgrade tree to unlock bonuses.</p></div>`
           : "";
+    // A lesson waiting on the player needs the hand in view.
+    const collapsed = this.handCollapsed && !this.waitsOnPlayer;
+    const toggle = this.waitsOnPlayer ? "" : `<button type="button" class="deck-hand-toggle" id="deck-hand-toggle" aria-expanded="${!collapsed}" aria-controls="deck-hand" title="${collapsed ? "Show" : "Hide"} the hand" aria-label="${collapsed ? "Show" : "Hide"} the hand">${CHEVRON_SVG}</button>`;
     el("deck").innerHTML = `<div class="deck-page${this.showsBadges ? " with-badges" : ""}">
-      <section class="deck-hand-area" aria-labelledby="deck-hand-label">
-        <h3 id="deck-hand-label" class="deck-label">Hand</h3>
+      <section class="deck-hand-area${collapsed ? " collapsed" : ""}" aria-labelledby="deck-hand-label">
+        <div class="deck-hand-head"><h3 id="deck-hand-label" class="deck-label">Hand</h3>${toggle}</div>
         <div class="deck-hand${this.showsLinks ? " with-links" : ""}" id="deck-hand" role="list" aria-label="Hand, in the order its cards are tried">${this.slotsHtml(save.hand)}</div>
         ${tip}
       </section>
@@ -375,6 +385,11 @@ export class DeckPage {
   }
 
   private bindHand() {
+    const toggle = document.getElementById("deck-hand-toggle");
+    if (toggle) toggle.onclick = () => {
+      this.handCollapsed = !this.handCollapsed;
+      this.render();
+    };
     const row = el("deck-hand");
     row.onclick = (e) => {
       const x = (e.target as HTMLElement).closest<HTMLButtonElement>(".deck-remove");

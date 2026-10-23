@@ -66,6 +66,17 @@ test("claiming floor 100's goal opens the next tower and its cave; an older towe
   assert.deepEqual([g.save.tower.tiersOpen, g.save.delve.tiersOpen], [4, 4], "Tower III was open already");
 });
 
+test("Dev free purchases claim a goal before its floor is completed, but never twice or without its pass", () => {
+  const g = new Game(defaults());
+  g.newRun({ outside: true });
+  assert.equal(g.claimGoal(1, 40, false), null, "locked without free purchases");
+  g.save.settings.freePurchases = true;
+  assert.deepEqual(g.claimGoal(1, 40, false), { kind: "currency", currency: "gems", amount: 20 });
+  assert.equal(goalState(g.save, 1, 40, false), "claimed");
+  assert.equal(g.claimGoal(1, 40, false), null, "already claimed");
+  assert.equal(g.claimGoal(1, 40, true), null, "the premium one still needs its pass");
+});
+
 test("Relative Damage Color is owned once Tower II's floor 10 is claimed", () => {
   const g = new Game(defaults());
   g.save.tower.tiersOpen = 2;

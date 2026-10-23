@@ -315,11 +315,12 @@ export class GoalsPage {
     return `Floors ${from}–${floor} mastered. Claim Unlock Warp at Tower ${tierNumeral(unlockAt("warp").tower)}'s floor ${unlockFloor("warp")} to start runs here.${cleared}`;
   }
 
-  /** A reward pressed: claimed when ready, the pass offered when it needs one. */
+  /** A reward pressed: claimed when ready (or, with Dev free purchases, before
+   * its floor is completed), the pass offered when it needs one. */
   private choose(tower: number, floor: number, premium: boolean) {
     const game = this.ctx.game, state: GoalState = goalState(game.save, tower, floor, premium);
     if (state === "needsPass") return this.showPass(passFor(tower));
-    if (state === "locked") return this.say(`Complete floor ${floor} in Tower ${tierNumeral(tower)} to claim it.`);
+    if (state === "locked" && !game.save.settings.freePurchases) return this.say(`Complete floor ${floor} in Tower ${tierNumeral(tower)} to claim it.`);
     if (state === "claimed") {
       // An unlock pressed again shows what it does once more.
       const r = checkpoint(tower, floor)![premium ? "premium" : "reward"];
