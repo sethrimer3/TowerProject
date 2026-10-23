@@ -85,9 +85,9 @@ html.ui-sprites dialog::backdrop { background: #10151cd9; backdrop-filter: none;
 html.ui-sprites dialog :is(h2, h3):not(#_) { color: #e1bb78; text-shadow: none; }
 html.ui-sprites :is(.hint, .item-meta, .item-identity, .level-cost):not(#_) { color: #8b9a9d; }
 
-/* Keep picture buttons (cards, map markers and skill nodes) intact. */
+/* Keep picture buttons (cards, map markers and skill nodes) intact, and small icon buttons bare: a frame on them looks busy. */
 html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-tile, .deck-add, .deck-card, .deck-entry-art,
-  .card-reveal-card, .forest-sign, .forest-building, .mission-bar, #shrine-bar, #forest-sign, .ug-node, .ct-row-main,
+  .card-reveal-card, .forest-sign, .forest-building, .mission-bar, .deck-hand-toggle, #shrine-bar, #forest-sign, .ug-node, .ct-row-main,
   #currencies-open, #auto-speed .speed-arrow)):not(#_) {
   border-color: transparent;
   border-image: var(--ui-face) 6 fill / 12px / 0 stretch;
@@ -100,7 +100,7 @@ html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-til
   transition: none;
 }
 html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-tile, .deck-add, .deck-card, .deck-entry-art,
-  .card-reveal-card, .forest-sign, .forest-building, .mission-bar, .badge-pick, .deck-link-toggle,
+  .card-reveal-card, .forest-sign, .forest-building, .mission-bar, .badge-pick, .deck-link-toggle, .deck-hand-toggle,
   #shrine-bar, #forest-sign, #defend *, .ug-node, .ct-row-main, #currencies-open, #auto-speed .speed-arrow)):not(#_) {
   border-width: 6px;
   border-style: solid;
