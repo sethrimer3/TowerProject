@@ -7,10 +7,11 @@ import { CARD_TREES, FOE_TREE_CARDS, foeStat, runExtras, treeBonus, type CardTre
 import type { CardId } from "../src/cards.ts";
 import { attackAgainst, bout, critAgainst, facing, heroHpAfter, predict } from "../src/combat.ts";
 import { critRule } from "../src/loadout.ts";
+import { volleyTurn, type VolleyTurn } from "../src/volley.ts";
 import { RunPurse } from "../src/game/run-purse.ts";
 import { snap } from "../src/exact.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
-import type { Enemy, Player } from "../src/entities.ts";
+import type { Enemy, Player, Tile } from "../src/entities.ts";
 
 const hero: Player = { x: 0, y: 0, hp: 100, maxHp: 100, attack: 10, defense: 0, keys: { yellow: 0, blue: 0, red: 0 } };
 const foe = (strength: Enemy["strength"], hp = 50, attack = 1): Enemy => ({ name: "rat", hp, attack, defense: 0, tier: 0, strength });
@@ -59,6 +60,24 @@ test("each enemy card's tree: two tracks of a common node then one of each rarit
     "equipment:epic:0/5:bossEnemyEquipment=0.3", "tangle:legendary:0/5:bossEnemyTangle=3",
     "attack:common:5/10:bossEnemyAttack=5", "critChance:uncommon:0/5:bossEnemyCritChance=3", "critFactor:rare:0/5:bossEnemyCritFactor=4",
     "cells:epic:0/5:bossEnemyCells=1", "takedown:legendary:0/5:bossEnemyTakedown=5",
+  ]);
+  assert.deepEqual(shape("fastEnemy"), [
+    "gold:common:5/10:fastEnemyGold=5", "silver:uncommon:0/5:fastEnemySilver=0.1", "freeDefense:rare:0/5:freeDefenseChance=0.5",
+    "material:epic:0/5:fastEnemyMaterial=1", "surpriseAttack:legendary:0/5:fastEnemySurpriseAttack=5",
+    "attack:common:5/10:fastEnemyAttack=5", "critChance:uncommon:0/5:critChance=2", "critFactor:rare:0/5:critFactor=2",
+    "firstStrike:epic:0/5:fastEnemyFirstStrike=5", "regen:legendary:0/5:regen=10",
+  ]);
+  assert.deepEqual(shape("flyingEnemy"), [
+    "gold:common:5/10:flyingEnemyGold=5", "silver:uncommon:0/5:flyingEnemySilver=0.1", "freeOffense:rare:0/5:freeOffenseChance=0.5",
+    "material:epic:0/5:flyingEnemyMaterial=1", "chargeShot:legendary:0/5:flyingEnemyChargeShot=10",
+    "attack:common:5/10:flyingEnemyAttack=5", "critChance:uncommon:0/5:flyingEnemyCritChance=2", "critFactor:rare:0/5:flyingEnemyCritFactor=4",
+    "shotSpeed:epic:0/5:shotSpeed=4", "range:legendary:0/5:shotRange=4",
+  ]);
+  assert.deepEqual(shape("archer"), [
+    "instakillGold:common:5/10:archerInstakillGold=5", "silver:uncommon:0/5:archerSilver=0.1", "bossShot:rare:0/5:bossShotAttack=5",
+    "material:epic:0/5:archerMaterial=1", "chargeShot:legendary:0/5:chargeShot=10",
+    "shotAttack:common:5/10:shotAttack=5", "critChance:uncommon:0/5:critChance=2", "critFactor:rare:0/5:critFactor=5",
+    "shotSpeed:epic:0/5:shotSpeed=6", "range:legendary:0/5:shotRange=6",
   ]);
   for (const card of FOE_TREE_CARDS) {
     const nodes = CARD_TREES[card]!;
@@ -198,4 +217,61 @@ test("an enemy card's Surprise Attack adds to ENEMY's chance against its enemies
   other.autoTurn();
   other.autoTurn();
   assert.doesNotMatch(other.message, /Surprise/, "BASE's chance is against base enemies only");
+});
+
+test("FAST and FLYING ENEMY's trees raise theirs against Fast and Flying enemies, ARCHER's against every enemy", () => {
+  const bonus = treeBonus({ fastEnemy: { gold: 2 }, flyingEnemy: { gold: 4 }, archer: { instakillGold: 1, silver: 3, material: 2 } });
+  const fast = { ...foe("normal"), fast: true as const }, flying = { ...foe("strong"), flying: true as const };
+  assert.deepEqual([foeStat(bonus, fast, "Gold"), foeStat(bonus, flying, "Gold"), foeStat(bonus, foe("normal"), "Gold")], [10, 20, 0]);
+  for (const e of [foe("weak"), fast, flying, foe("greaterBoss")])
+    assert.deepEqual([foeStat(bonus, e, "InstakillGold"), foeStat(bonus, e, "Silver"), foeStat(bonus, e, "Material")], [5, 0.3, 2], e.strength);
+});
+
+test("FAST ENEMY's First Strike: a Fast enemy may lose its first strike, so the hero strikes first", () => {
+  /** A Tower run with the hero at (0, 0) and a Fast rat it fells in one strike at (1, 0). */
+  const facingFast = (trees: CardTreeLevels) => {
+    const g = new Game(defaults());
+    const w = g.world as RoomWorld;
+    w.cells = new Map([["0,0", { kind: "floor" }], ["1,0", { kind: "enemy", enemy: { ...foe("normal", 10, 5), fast: true } }]]);
+    w.torches = [];
+    Object.assign(g.run.player, { x: 0, y: 0, attack: 12, defense: 0, hp: 100, maxHp: 100 });
+    g.run.hand = ["fastEnemy"];
+    g.run.cardTrees = trees;
+    return g;
+  };
+  const struck = facingFast({});
+  struck.move(1, 0);
+  assert.ok(struck.run.player.hp < 100, "the Fast rat strikes first");
+  const first = facingFast({ fastEnemy: { firstStrike: 20 } });
+  first.move(1, 0);
+  assert.equal(first.run.player.hp, 100, "felled before it strikes");
+  assert.match(first.message, /^First Strike · /);
+});
+
+test("FLYING ENEMY's and ARCHER's trees raise the arrows: Shot ATK, Attack Speed, the boss bonus, Range and Charge Shot", () => {
+  const s = defaults();
+  for (const card of ["archer", "flyingEnemy"] as const) s.cardXp[card] = MAX_CARD_XP;
+  s.hand = ["archer", "flyingEnemy", ...s.hand].slice(0, s.hand.length);
+  s.cardTrees = { archer: { shotAttack: 2, bossShot: 1, chargeShot: 1, shotSpeed: 1, range: 1 }, flyingEnemy: { chargeShot: 1, shotSpeed: 1, range: 1 } };
+  const g = new Game(s);
+  g.newRun({ seed: 7 });
+  assert.deepEqual((g as unknown as { handShot: VolleyTurn["handShot"] }).handShot, { attack: 15, speed: 15, boss: 10, range: 10, charge: 10, foeCharge: { flyingEnemy: 10 } },
+    "the cards' 5% Shot ATK, Attack Speed and boss bonus with the trees' added");
+  assert.equal(g.shotReach?.range, 330, "3 m and 10% more");
+});
+
+test("the trees' Range lengthens the arrows' reach, and Charge Shot raises Charged Shot's percent, the enemy cards' against theirs", () => {
+  const brute: Enemy = { ...foe("normal", 50_000), name: "Brute" };
+  const at = (x: number, y: number, enemy = brute) => new Map<string, Tile>([[`${x},${y}`, { kind: "enemy", enemy }]]);
+  const ranks = defaults();
+  ranks.archives.levels.chargedShot = 10;
+  const shoot = (tiles: Map<string, Tile>, handShot?: VolleyTurn["handShot"]) => volleyTurn({ board: { tile: (x, y) => tiles.get(`${x},${y}`) ?? { kind: "floor" }, clear: () => {}, wound: () => {} },
+    wrap: 0, floorOf: () => 1, hero: { ...hero, attack: 1000 }, seed: 7, volleys: { turn: 1, waited: 2 }, archer: true, ranks, handShot }).shots.filter((s) => s.by === "hero");
+  assert.equal(shoot(at(0, 4)).length, 0, "4 m is past Attack Range's 3");
+  assert.equal(shoot(at(0, 4), { attack: 0, speed: 0, range: 34 }).length, 1, "but not 3 m and 34% more");
+  const charge = (handShot?: VolleyTurn["handShot"], enemy = brute) => shoot(at(0, 1, enemy), handShot)[0]!.charge;
+  assert.equal(charge(), 20, "two turns waited at 10% a turn");
+  assert.equal(charge({ attack: 0, speed: 0, charge: 10 }), 22, "ARCHER's 10% more of it");
+  assert.equal(charge({ attack: 0, speed: 0, charge: 10, foeCharge: { flyingEnemy: 10 } }), 22, "FLYING's isn't for a grounded enemy");
+  assert.equal(charge({ attack: 0, speed: 0, charge: 10, foeCharge: { flyingEnemy: 10 } }, { ...brute, flying: true }), 24, "but adds to ARCHER's against a Flying one");
 });

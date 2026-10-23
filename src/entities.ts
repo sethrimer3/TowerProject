@@ -113,7 +113,7 @@ export type Torch = {
 };
 /** A percent the hero carries against some enemies, by the card (or card
  * tree) covering them (foe-cards.ts's `FoeKey`). */
-export type ByFoe = Partial<Record<"weakEnemy" | "baseEnemy" | "strongEnemy" | "eliteEnemy" | "bossEnemy" | "nonBossEnemy" | "fastEnemy" | "flyingEnemy" | "monster" | "torch", number>>;
+export type ByFoe = Partial<Record<"weakEnemy" | "baseEnemy" | "strongEnemy" | "eliteEnemy" | "bossEnemy" | "nonBossEnemy" | "fastEnemy" | "flyingEnemy" | "monster" | "torch" | "archer", number>>;
 export type Player = {
   x: number;
   y: number;

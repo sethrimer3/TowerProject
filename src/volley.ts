@@ -11,13 +11,14 @@
  * the board, and says what happened. `Game` decides whether a turn has a
  * volley at all and applies the outcome (the hero's HP, kill pay, a fall). */
 import type { Board } from "./board.ts";
-import type { Enemy, Player } from "./entities.ts";
+import type { ByFoe, Enemy, Player } from "./entities.ts";
 import type { Save } from "./save-shape.ts";
 import { critAgainst, facing, guaranteedCrits, isBoss, stealCeiling, thornDamage } from "./combat.ts";
 import { critRule } from "./loadout.ts";
+import { foeAttack } from "./foe-cards.ts";
 import { trainedAmount } from "./config.ts";
 import { researched } from "./archives.ts";
-import { archerClock, archerState, archerTick, arrowBoost, arrowDamage, charged, enemiesWithin, FOE_REACH, foeGain, foeOn, foeShotCost, foeTickGain, held, reachTicks, shoots, shotDamage, spent, TURN_TICKS, type InReach, type Volleys } from "./ranged.ts";
+import { archerClock, archerState, archerTick, arrowBoost, arrowDamage, arrowRange, charged, enemiesWithin, FOE_REACH, foeGain, foeOn, foeShotCost, foeTickGain, held, reachTicks, shoots, shotDamage, spent, TURN_TICKS, type InReach, type Volleys } from "./ranged.ts";
 import { tileRandom } from "./random.ts";
 import { snap } from "./exact.ts";
 
@@ -60,8 +61,10 @@ export const volleyOver = (volley: Volley, now: number) => volley.shots.every((s
  * its arrows read (and the card trees' percents on Crit % and Crit x,
  * `cardCrit`), and the percent more Shot ATK and Attack Speed the
  * hand's cards give while held, and the percent more ATK their arrows
- * strike a boss or Greater Boss with (`handBonus` in cards.ts; none when
- * absent). */
+ * strike a boss or Greater Boss with (`handBonus` in cards.ts), each with
+ * the card trees' added, and the trees' percent more Attack Range for the
+ * arrows (`range`) and Charged Shot (`charge`, and the enemy cards' by
+ * card against theirs, `foeCharge`); none when absent. */
 export type VolleyTurn = {
   board: Pick<Board, "tile" | "clear" | "wound">;
   wrap: number;
@@ -73,7 +76,7 @@ export type VolleyTurn = {
   archer: boolean;
   ranks: Pick<Save, "upgrades" | "training" | "archives">;
   cardCrit?: { chance: number; factor: number };
-  handShot?: { attack: number; speed: number; boss?: number };
+  handShot?: { attack: number; speed: number; boss?: number; range?: number; charge?: number; foeCharge?: ByFoe };
 };
 /** An enemy an arrow felled, or the thorns of its own shot (`thorns`):
  * where, whether it fell to its first wound (an instakill), and the
@@ -117,16 +120,16 @@ function walkOf({ hero, from, wrap }: VolleyTurn): Walk {
  * else it is given. */
 export function volleyTurn(turn: VolleyTurn): VolleyOutcome {
   const { board, wrap, floorOf } = turn, hero = { ...turn.hero }, v: Volleys = { ...turn.volleys }, shots: Shot[] = [], kills: VolleyKill[] = [];
-  const range = trainedAmount(turn.ranks, "attackRange"), walk = walkOf(turn);
+  const range = trainedAmount(turn.ranks, "attackRange"), reach = arrowRange(range, turn.handShot?.range), walk = walkOf(turn);
   /** The hero's squared distance to `n` at `tick`, in hundredths of a tile. */
   const distance = (n: Near, tick: number) => {
     const x = 100 * n.dx + walk.ux * tick, y = 100 * n.dy + walk.uy * tick;
     return x * x + y * y;
   };
   // Everything the turn's shots may reach, from anywhere along the step, found once.
-  const near: Near[] = enemiesWithin(board, walk, range + (walk.ux || walk.uy ? 150 : 0), wrap).map(({ x, y }) => {
+  const near: Near[] = enemiesWithin(board, walk, reach + (walk.ux || walk.uy ? 150 : 0), wrap).map(({ x, y }) => {
     const dx = shortWay(walk.x - x, wrap), dy = walk.y - y;
-    const arrows = reachTicks(dx, dy, walk.ux, walk.uy, range * range), shots = reachTicks(dx, dy, walk.ux, walk.uy, FOE_REACH.limit(range), FOE_REACH.scale);
+    const arrows = reachTicks(dx, dy, walk.ux, walk.uy, reach * reach), shots = reachTicks(dx, dy, walk.ux, walk.uy, FOE_REACH.limit(range), FOE_REACH.scale);
     return { x, y, dx, dy, ...(arrows ? { arrows } : {}), ...(shots ? { shots } : {}) };
   });
   /** `n` as it stands at `tick`, if an enemy is still there. */
@@ -229,8 +232,9 @@ function heroAt(w: Walk, tick: number, wrap: number) {
  * arrow is ready it shoots the closest enemy within its range (`inReach`,
  * as it stands that tick) that an arrow can hurt, from where the hero
  * stands then (`at`), its ATK raised by ATK / m for the distance and by
- * Charged Shot for the turns it waited (`arrowBoost`), and by the hand's
- * Shot ATK, and its boss bonus when it aims at a boss. A multishot fires
+ * Charged Shot for the turns it waited (`arrowBoost`; the trees' Charge
+ * Shot raising its percent, theirs against the enemy aimed at), and by the
+ * hand's Shot ATK, and its boss bonus when it aims at a boss. A multishot fires
  * the same charge at up to Multishot Targets of the closest enemies it can
  * hurt, each arrow with the first's Charged Shot, its own ATK / m and its
  * own critical roll. A shot fired while Rapid Fire isn't may start it, for
@@ -241,7 +245,13 @@ function arrows(turn: VolleyTurn, p: Player, v: Volleys, shots: Shot[], kills: V
   const { ranks } = turn, perTile = trainedAmount(ranks, "attackPerTile"), percent = researched(ranks.archives, "chargedShotPercent");
   const shotAtk = turn.handShot?.attack ?? 0, bossAtk = turn.handShot?.boss ?? 0, base = trainedAmount(ranks, "attackSpeed");
   const speed = turn.handShot?.speed ? snap(base * (1 + turn.handShot.speed / 100)) : base;
-  const boost = ({ d2 }: InReach) => arrowBoost(perTile, d2, percent, v.waited ?? 0);
+  const charge = turn.handShot?.charge ?? 0, foeCharge = turn.handShot?.foeCharge;
+  // The trees' Charge Shot, ARCHER's and the enemy cards' covering the target, one card factor.
+  const charging = ({ tile }: InReach) => {
+    const more = snap(charge + foeAttack(foeCharge, tile.enemy));
+    return more ? snap((percent * (100 + more)) / 100) : percent;
+  };
+  const boost = (e: InReach) => arrowBoost(perTile, e.d2, charging(e), v.waited ?? 0);
   // The cards' Shot ATK adds to the enemy cards' ATK, one factor for the hand.
   const cards = ({ tile }: InReach) => shotAtk + (isBoss(tile.enemy) ? bossAtk : 0);
   const hurts = (e: InReach) => arrowDamage(p, e.tile.enemy, 0, 1, boost(e), cards(e)) > 0;
@@ -264,7 +274,7 @@ function arrows(turn: VolleyTurn, p: Player, v: Volleys, shots: Shot[], kills: V
     const shot = fired++, from = at(tick);
     const targets = multishot(shot) ? reach.filter(hurts).slice(0, trainedAmount(ranks, "multishotTargets")) : [target];
     for (const t of targets) {
-      const kill = arrow(turn, p, from, tick, t, crit, shot, boost(t), cards(t), percent * (v.waited ?? 0), shots);
+      const kill = arrow(turn, p, from, tick, t, crit, shot, boost(t), cards(t), snap(charging(t) * (v.waited ?? 0)), shots);
       if (kill) kills.push(kill);
     }
     delete v.waited;

@@ -5,7 +5,7 @@ import { CARDS, cardText, deckCards, explainStuck, handBonus, keptLinks, planHan
 import { addCardXp, PASSIVE_CARDS } from "./card-levels.ts";
 import { cardMaxLevel, compounded, foeCardStat, foeStat, foeStats, keyStat, freeUpChances, freeUpFactors, hasPointsToSpend, pointsLeft, runCardTrees, runFoeCut, treeBonus, treeFactor, treeOverheal, type FoeTreeCard, type TreeBonus } from "./card-trees.ts";
 import { aggroTurn } from "./flying.ts";
-import { foeOn } from "./ranged.ts";
+import { arrowRange, foeOn } from "./ranged.ts";
 import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./badges.ts";
 import { adsOff, BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
 import { noteGoldBoost } from "./gold-boost.ts";
@@ -13,7 +13,7 @@ import { offer, type OfferId } from "./shop/offers.ts";
 import { purchase, type Refusal } from "./shop/transactions.ts";
 import { confirmServerTime } from "./shop/clock.ts";
 import { canWarp, claimGoal, goalUnlocked } from "./goals.ts";
-import { volleyTurn, type Shot, type Volley } from "./volley.ts";
+import { volleyTurn, type Shot, type Volley, type VolleyTurn } from "./volley.ts";
 import { missGem } from "./gems.ts";
 import { DelvePlan } from "./delve/automove.ts";
 import { defaults } from "./save.ts";
@@ -161,8 +161,9 @@ const YELLOW_KEY_SALT = 0x6e11a;
 /** A step resolved and about to be taken: the tile stepped onto, what it
  * does, where it is, whether it goes in the undo history, and for a fight
  * the hero's critical strikes in it as played (`crits`) and whether it
- * began with ENEMY's Surprise Attack (`surprise`). */
-type TakenStep = { tile: Tile; outcome: StepEffect; dest: { x: number; y: number }; track: boolean; quiet?: boolean; crits?: number; surprise?: true; card: CardStep };
+ * began with ENEMY's Surprise Attack (`surprise`) or a Fast enemy lost its
+ * first strike to FAST ENEMY's First Strike (`firstStrike`). */
+type TakenStep = { tile: Tile; outcome: StepEffect; dest: { x: number; y: number }; track: boolean; quiet?: boolean; crits?: number; surprise?: true; firstStrike?: true; card: CardStep };
 /** How the hand's turn takes a step: Effective or Dampen on a card's last
  * step (`scale`, what its target's effect is multiplied by; 1 on every
  * other step), Skip on STAIRS succeeding (`floorSkip`: the climb goes up
@@ -173,9 +174,9 @@ export type CardStep = { scale?: number; floorSkip?: boolean; hold?: boolean };
 const PERMANENT_TILES = new Set<Tile["kind"]>(["floor", "stairs", "oneway", "openedChest"]);
 /** What DOOR's Secret Knock, Door Chest and the chest's kind roll a door
  * by, KEY's Locksmith, Master Key, Key Chest and its kind a key, and
- * ENEMY's Surprise Attack an enemy. */
+ * ENEMY's Surprise Attack and FAST ENEMY's First Strike an enemy. */
 const SECRET_KNOCK_SALT = 0x3a57e, DOOR_CHEST_SALT = 0xd00c4, DOOR_CHEST_KIND_SALT = 0xd0c4d, DOUBLE_KEY_SALT = 0xd0b1e, MASTER_KEY_SALT = 0x3a5e7,
-  KEY_CHEST_SALT = 0x6c4e5, KEY_CHEST_KIND_SALT = 0x6c4d1, SURPRISE_SALT = 0x5a7c1, POWER_STRIKE_SALT = 0x907e5,
+  KEY_CHEST_SALT = 0x6c4e5, KEY_CHEST_KIND_SALT = 0x6c4d1, SURPRISE_SALT = 0x5a7c1, FIRST_STRIKE_SALT = 0xf1257, POWER_STRIKE_SALT = 0x907e5,
   CHEST_DOUBLE_SALT = 0xc4e02, CHEST_TRIPLE_SALT = 0xc4e03, CHEST_CELLS_SALT = 0xc4ec1;
 /** What each key colour's own Master Key (GOLD, BLUE and RED KEY's trees) rolls a key of it by. */
 const COLOR_MASTER_KEY_SALT: Record<KeyColor, number> = { yellow: 0x7e113, blue: 0xb1a57, red: 0x7ea57 };
@@ -1653,16 +1654,20 @@ export class Game {
       return false;
     }
     const t = this.world.tile(dest.x, dest.y);
+    // FAST ENEMY's First Strike: a Fast enemy may lose its first strike, by
+    // the enemy tile's roll, so the hero strikes first (`met` fights it so).
+    const firstStrike = t.kind === "enemy" && !!t.enemy!.fast && this.tileRolls(dest.x, dest.y, FIRST_STRIKE_SALT, foeStat(this.treeBonus, t.enemy!, "FirstStrike"));
+    const met: Tile = firstStrike ? { ...t, enemy: (({ fast: _, ...caught }) => caught)(t.enemy!) } : t;
     // The step is resolved once, before any snapshot/undo bookkeeping, so a
     // wall, lock, impervious enemy, or (automation's) declined lethal fight
     // never touches history, damages the player, alters the enemy, or ends the run.
     const rules: StepRules = { ...this.stepRules, ...(regen ? {} : { regen: 0 }), ...(card.scale !== undefined && card.scale !== 1 ? { scale: card.scale } : {}) };
-    const resolved = resolveStep(p, t, rules);
+    const resolved = resolveStep(p, met, rules);
     if (resolved.blocked) return this.rejectStep(resolved, t, dest.x, dest.y);
     // DOOR's Secret Knock: a door the hero can open may open for nothing;
     // KEY's Locksmith: a key may be two.
     const lucky = this.luckyStep(t, dest.x, dest.y);
-    const outcome = lucky ? resolveStep(p, t, { ...rules, ...lucky }) as StepEffect : resolved;
+    const outcome = lucky ? resolveStep(p, met, { ...rules, ...lucky }) as StepEffect : resolved;
     if (!force && isLethal(outcome)) {
       this.feedback("Lethal encounter. Inspect the enemy before proceeding.");
       return false;
@@ -1676,7 +1681,8 @@ export class Game {
     const surprise = t.kind === "enemy" && !!dashed && dashed.x === p.x && dashed.y === p.y
       && this.tileRolls(dest.x, dest.y, SURPRISE_SALT, snap(this.treeBonus.surpriseAttack + foeStat(this.treeBonus, t.enemy!, "SurpriseAttack")));
     if (surprise) step.surprise = true;
-    return t.kind === "enemy" ? this.fights.fight(step, t.enemy!, surprise) : this.take(step);
+    if (firstStrike) step.firstStrike = true;
+    return t.kind === "enemy" ? this.fights.fight(step, met.enemy!, surprise) : this.take(step);
   }
   /** Takes a resolved step: in through its door or fight, then onto the tile. */
   private take(step: TakenStep, revived = 0) {
@@ -1693,7 +1699,7 @@ export class Game {
   }
   /** Commits a resolved step: undo history, stats, and the door or fight on
    * the way in. Returns false when the player fell. */
-  private enter({ tile: t, outcome, dest, track, quiet, crits, surprise }: TakenStep, revived: number) {
+  private enter({ tile: t, outcome, dest, track, quiet, crits, surprise, firstStrike }: TakenStep, revived: number) {
     const before = this.snapshot();
     this.turnBefore ??= before;
     if (track) this.remember(quiet ? { ...before, quiet: true } : before);
@@ -1702,7 +1708,7 @@ export class Game {
     this.applyStats(outcome.player);
     if (t.kind === "door") this.finds.door(t, outcome, drained, dest);
     if (t.kind !== "enemy") return true;
-    const extra = outcome.extraDamage ?? 0, p = this.run.player, openers = fightOpeners(p, t.enemy!, !!surprise);
+    const extra = outcome.extraDamage ?? 0, p = this.run.player, openers = fightOpeners(p, t.enemy!, !!surprise, !!firstStrike);
     // The fight used up ATK UP's Power Strike.
     delete p.powerStrike;
     // Effective's added damage rises off the hero; Dampen's given back heals.
@@ -1843,7 +1849,7 @@ export class Game {
     if ((this.tier < 3 && !archer) || !sameFloor) return;
     const v = this.run.volleys ?? { turn: 0 };
     const out = volleyTurn({ board: this.world, wrap: this.wrap, floorOf: (x, y) => this.floorOf(x, y), hero: p, from, seed: this.run.seed,
-      volleys: { ...v, turn: v.turn + 1 }, archer, ranks: { ...this.trainingNow, archives: this.save.archives }, cardCrit: this.cardCrit, handShot: this.handBonus.shot });
+      volleys: { ...v, turn: v.turn + 1 }, archer, ranks: { ...this.trainingNow, archives: this.save.archives }, cardCrit: this.cardCrit, handShot: this.handShot });
     this.run.volleys = out.volleys;
     p.hp = out.hp;
     if (out.hurt) {
@@ -1881,7 +1887,16 @@ export class Game {
    * ENEMY plans by (`HandAt.shotReach`); undefined while the hero can't
    * shoot (not an Archer, or in the forest). */
   get shotReach() {
-    return this.isArcher && !this.run.outside ? { range: trainedAmount(this.trainingNow, "attackRange"), wrap: this.wrap } : undefined;
+    return this.isArcher && !this.run.outside ? { range: arrowRange(trainedAmount(this.trainingNow, "attackRange"), this.handShot.range), wrap: this.wrap } : undefined;
+  }
+  /** What the hand gives the Archer's arrows (`VolleyTurn.handShot`): the
+   * cards' Shot ATK, Attack Speed and boss bonus (`handBonus`), each with
+   * the card trees' added, and the trees' Range and Charge Shot, the enemy
+   * cards' Charge Shot by card. */
+  private get handShot(): NonNullable<VolleyTurn["handShot"]> {
+    const shot = this.handBonus.shot, tree = this.treeBonus, foeCharge = foeStats(tree, "ChargeShot");
+    return { attack: snap(shot.attack + tree.shotAttack), speed: snap(shot.speed + tree.shotSpeed), boss: snap(shot.boss + tree.bossShotAttack),
+      ...(tree.shotRange ? { range: tree.shotRange } : {}), ...(tree.chargeShot ? { charge: tree.chargeShot } : {}), ...(Object.keys(foeCharge).length ? { foeCharge } : {}) };
   }
   /** Board columns wrap in the Delve. */
   private get wrap() {
@@ -2467,12 +2482,14 @@ function fightText(fight: FightEnd): string {
   return [...(fight.openers ?? []), wonText(fight)].join(" · ");
 }
 /** What opened a fight of `player` against `enemy`, as the status line
- * names it: ENEMY's Surprise Attack (`surprise`), ATK UP's Power Strike,
+ * names it: ENEMY's Surprise Attack (`surprise`), FAST ENEMY's First
+ * Strike (`firstStrike`), ATK UP's Power Strike,
  * and a boss's Takedown and Tangle (Greater, against a Greater Boss). */
-function fightOpeners(player: Player, enemy: Enemy, surprise: boolean) {
+function fightOpeners(player: Player, enemy: Enemy, surprise: boolean, firstStrike: boolean) {
   const cut = squaredUp(player, enemy).opening, greater = enemy.strength === "greaterBoss" ? "Greater " : "";
   return [
     ...(surprise ? ["Surprise Attack"] : []),
+    ...(firstStrike ? ["First Strike"] : []),
     ...(player.powerStrike ? ["Power Strike"] : []),
     ...(cut?.takedown ? [`${greater}Takedown`] : []),
     ...(cut?.tangle ? [`${greater}Tangle`] : []),

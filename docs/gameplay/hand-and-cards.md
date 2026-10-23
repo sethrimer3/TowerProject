@@ -165,7 +165,7 @@ Points are spent in the forest; inside a run the tree only shows.
   A Dash stops short of an enemy, and the fight you step into from there on the next turn is a surprise: Surprise Attack rolls once for each enemy's tile, so undo can't roll it again.
   A Surprise Attack's first strike rises in a gold outline, as a fully charged arrow's does.
   A Fast enemy caught by one loses its first strike: you strike first.
-- **Weak Enemy**, **Base Enemy**, **Strong Enemy**, **Elite Enemy**, **Boss Enemy** and **Non-Boss Enemy** each have a tree whose upgrades work only against the enemies the card heads for (Boss Enemy's against bosses and Greater Bosses alike).
+- **Weak Enemy**, **Base Enemy**, **Strong Enemy**, **Elite Enemy**, **Boss Enemy**, **Non-Boss Enemy**, **Fast Enemy** and **Flying Enemy** each have a tree whose upgrades work only against the enemies the card heads for (Boss Enemy's against bosses and Greater Bosses alike), but where an upgrade says every enemy; **Archer**'s tree works against every enemy.
   Each has two tracks, each rising one rarity an upgrade, every upgrade after a track's first up to 5 levels.
   Weak Enemy, to 60 levels:
   Gold: +5% Gold from each weak enemy killed (common, 5 levels, up to 10), then +0.1 Silver from each (uncommon), +5% Gold from each Instakill of one (rare), **Instakill Salvage**, +1% chance an Instakill of one drops upgrade materials (epic), and **Instakill Vigor**, +0.01% max HP for the run with each Instakill of one (legendary).
@@ -186,11 +186,24 @@ Points are spent in the forest; inside a run the tree only shows.
   Non-Boss Enemy, to 60 levels, against every enemy but bosses and Greater Bosses:
   Gold: +5% Gold from each killed (common, 5 levels, up to 10), then +0.1 Silver from each (uncommon), **Free Upgrade**, +0.2% chance of a free Offense, Defense and Utility level each floor (rare), **Salvage**, +1% (epic), and **Surprise Attack**, +5% (legendary).
   Attack: +5% ATK against them (common, 5 levels, up to 10), then +3% Crit x factor against them (uncommon), +2% XP from each (rare), +3% more of them on each floor (epic), and Lifesteal healing up to 10% above max HP in fights with them (legendary).
+  Fast Enemy, to 60 levels:
+  Gold: +5% Gold from each Fast enemy killed (common, 5 levels, up to 10), then +0.1 Silver from each (uncommon), +0.5% chance of a free Defense level each floor (rare), **Salvage**, +1% (epic), and **Surprise Attack**, +5% (legendary).
+  Attack: +5% ATK against Fast enemies (common, 5 levels, up to 10), then +2% Crit % chance (uncommon) and +2% Crit x factor (rare) against every enemy, **First Strike**, +5% chance a Fast enemy loses its first strike, so you strike first (epic), and +10% Regen (legendary).
+  Flying Enemy, to 60 levels:
+  Gold: +5% Gold from each Flying enemy killed (common, 5 levels, up to 10), then +0.1 Silver from each (uncommon), +0.5% chance of a free Offense level each floor (rare), **Salvage**, +1% (epic), and **Charge Shot**, +10% Charged Shot against Flying enemies (legendary).
+  Attack: +5% ATK against Flying enemies (common, 5 levels, up to 10), then +2% Crit % chance (uncommon) and +4% Crit x factor (rare) against them, and against every enemy +4% Attack Speed (**Shot Speed**, epic) and +4% Attack Range (**Range**, legendary).
+  Archer, to 60 levels, against every enemy:
+  Gold: +5% Gold from each Instakill (common, 5 levels, up to 10), then +0.1 Silver from each kill (uncommon), +5% Shot ATK against bosses and Greater Bosses (rare), **Salvage**, +1% (epic), and **Charge Shot**, +10% Charged Shot (legendary).
+  Shots: +5% Shot ATK (common, 5 levels, up to 10), then +2% Crit % chance (uncommon), +5% Crit x factor (rare), +6% Attack Speed (**Shot Speed**, epic) and +6% Attack Range (**Range**, legendary).
   Two cards covering one enemy add their upgrades: Weak Enemy's +20% more weak enemies and Non-Boss Enemy's +15% make 35% more, and their Gold, ATK and the rest add up the same way.
   Their Gold, ATK, DEF, shroud, Crit and XP percents add to the card's own +5% and to Enemy's like ones, as one card factor.
   Their Silver adds to each kill's before Silver Bonus, their Surprise Attack and Lifesteal Overheal to Enemy's, and their Free Upgrade chances to the other cards'.
   Salvage drops a Supply Chest's upgrade materials, and Equipment Drop an Equipment Chest's piece, once Equipment is open; each kill rolls them once, so undo can't roll them again.
   More enemies on each floor are added as More Enemies adds them, counted from those generated there.
+  Shot ATK and Shot Speed add to the cards' own Shot ATK and Attack Speed, and the boss Shot ATK to Archer's +5% for bosses.
+  Range lengthens only your arrows' reach: a Ranged enemy's stays five sixths of your Attack Range without it.
+  Charge Shot raises Charged Shot's percent for each turn an arrow waits, so it does nothing until Charged Shot is researched; Archer's and Flying Enemy's add up against a Flying enemy.
+  First Strike rolls once for each Fast enemy's tile, so undo can't roll it again.
 - **ATK Up** has two tracks, each rising one rarity an upgrade, and opens to 60 levels.
   Shards: +2% from each ATK shard (common, 5 levels, up to 10), then +3% more (uncommon), +2% Crit % chance (rare), +1% chance of a free Offense level each floor, trained or not (epic), and **Power Strike**, +1% chance an ATK shard taken charges your next fight with twice your ATK (legendary), each up to 5 levels.
   Gold: +10% Gold from each ATK shard (common, 5 levels, up to 10), then +0.1 Silver from each ATK shard taken (uncommon), +1% Silver Bonus (rare), +2% Gold Bonus (epic), and **Takedown**, a boss losing 5% of its max HP as a fight with it begins (legendary), each up to 5 levels.

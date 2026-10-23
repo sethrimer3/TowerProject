@@ -17,18 +17,20 @@ export const FOE_CARDS = {
 export type FoeCard = keyof typeof FOE_CARDS;
 export const isFoeCard = (id: string): id is FoeCard => Object.hasOwn(FOE_CARDS, id);
 /** The cards whose trees (card-trees.ts) raise the hero against some
- * enemies, and the enemies each covers: ENEMY every one, TORCH the Greater
- * Boss. They give nothing of `FOE_CARDS`' own bonus. */
+ * enemies, and the enemies each covers: ENEMY and ARCHER every one, TORCH
+ * the Greater Boss. They give nothing of `FOE_CARDS`' own bonus. */
 export const TREE_FOES = {
   monster: (_: Enemy) => true,
   torch: (e: Enemy) => e.strength === "greaterBoss",
+  archer: (_: Enemy) => true,
 } as const;
 export type TreeFoe = keyof typeof TREE_FOES;
 /** What the hero's per-enemy percents are keyed by (`Player.foeAttack`,
  * `foeDefense`, `foeShroud`): an enemy card, or a card tree covering enemies. */
 export type FoeKey = NonNullable<keyof NonNullable<Player["foeAttack"]>>;
 export const isFoeKey = (id: string): id is FoeKey => isFoeCard(id) || Object.hasOwn(TREE_FOES, id);
-const covers = (id: FoeKey, enemy: Enemy) => (isFoeCard(id) ? FOE_CARDS[id](enemy) : TREE_FOES[id as TreeFoe]?.(enemy) ?? false);
+/** Whether enemy card or card tree `id` covers `enemy`. */
+export const covers = (id: FoeKey, enemy: Enemy) => (isFoeCard(id) ? FOE_CARDS[id](enemy) : TREE_FOES[id as TreeFoe]?.(enemy) ?? false);
 
 /** The percent more ATK an enemy card gives against the enemies it covers. */
 export const FOE_ATTACK = 5;

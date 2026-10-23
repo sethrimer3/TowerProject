@@ -163,7 +163,7 @@ How hard the floor asked an enemy to be: weak, normal, strong or elite. Each str
 _Avoid_: tier, rank, level
 
 **Fast enemy**:
-An enemy that strikes first in every fight, so it lands a blow even when the hero fells it in one strike. From the second tower and delve up, a share of the non-boss enemies are Fast (8% at first, growing with the floor and the tower), each striking with at least a share of the last tower's floor-100 enemy's ATK and paying 1 Gold more. Its name starts with "Fast" and its tile wears a fast-forward mark.
+An enemy that strikes first in every fight, so it lands a blow even when the hero fells it in one strike. From the second tower and delve up, a share of the non-boss enemies are Fast (8% at first, growing with the floor and the tower), each striking with at least a share of the last tower's floor-100 enemy's ATK and paying 1 Gold more. Its name starts with "Fast" and its tile wears a fast-forward mark. FAST ENEMY's tree's First Strike may take its first strike away, so the hero strikes first.
 _Avoid_: swift, quick, first strike enemy
 
 **Ranged enemy**:
@@ -187,7 +187,7 @@ The circle round a Shielded enemy within which its guard cuts the hero's damage 
 _Avoid_: aura, shield radius, field
 
 **Archer**:
-The hero's class while the run's hand holds the **Archer card** (Tower III's floor 10 Goal adds it to the deck): the **tick** its arrow is ready, it shoots the closest enemy within its **Attack Range** (3 m, more with training) for one strike's damage, wounding it before any fight. **Attack Speed** sets how often (1 shot every 10 turns, more with training). **ATK / m** (training, Tower III's floor 50) multiplies an arrow's ATK by more for each **meter** to its target, and **Charged Shot** (research, floor 60) raises it for each turn a ready arrow waits unfired; **Multishot** (training, floor 70) gives a shot a chance to fire at several enemies in range at once, and **Rapid Fire** (training, floor 80) a chance to make its arrows come four times as fast for a few turns. Without the card no arrow flies and the Archer's training can't be raised with Silver in a run, though it trains between runs. The class's name, shown under the portrait, is cosmetic otherwise (Wayfarer, then Pathfinder once Tower II is open).
+The hero's class while the run's hand holds the **Archer card** (Tower III's floor 10 Goal adds it to the deck): the **tick** its arrow is ready, it shoots the closest enemy within its **Attack Range** (3 m, more with training) for one strike's damage, wounding it before any fight. **Attack Speed** sets how often (1 shot every 10 turns, more with training). **ATK / m** (training, Tower III's floor 50) multiplies an arrow's ATK by more for each **meter** to its target, and **Charged Shot** (research, floor 60) raises it for each turn a ready arrow waits unfired (ARCHER's and FLYING ENEMY's trees' Charge Shot raise its percent, as their Shot Speed and Range raise Attack Speed and the arrows' Attack Range); **Multishot** (training, floor 70) gives a shot a chance to fire at several enemies in range at once, and **Rapid Fire** (training, floor 80) a chance to make its arrows come four times as fast for a few turns. Without the card no arrow flies and the Archer's training can't be raised with Silver in a run, though it trains between runs. The class's name, shown under the portrait, is cosmetic otherwise (Wayfarer, then Pathfinder once Tower II is open).
 _Avoid_: ranger, bowman
 
 **Meter**:

@@ -189,6 +189,10 @@ export const within = (dx: number, dy: number, range: number) => (dx * dx + dy *
  * the hero's reach (`range`), 2.5 tiles to its 3, so the hero always gets
  * the first shot. `reachTicks` takes it as `FOE_REACH`, in whole numbers:
  * 36 times the squared distance against 25 times `range`². */
+/** The Archer's reach with the card trees' Range, `percent` more of
+ * Attack Range's (in hundredths of a tile, whole): a Ranged enemy's reach
+ * stays `foeRange` of Attack Range's own. */
+export const arrowRange = (range: number, percent = 0) => (percent ? Math.floor((range * (100 + percent)) / 100) : range);
 export const foeRange = (range: number) => (range * 5) / 6;
 export const FOE_REACH = { scale: 36, limit: (range: number) => 25 * range * range };
 

@@ -31,6 +31,9 @@ const FOE_WORDS: Record<FoeTreeCard, { a: string; one: string; many: string }> =
   eliteEnemy: { a: "an elite enemy", one: "elite enemy", many: "elite enemies" },
   bossEnemy: { a: "a boss or Greater Boss", one: "boss or Greater Boss", many: "bosses and Greater Bosses" },
   nonBossEnemy: { a: "a non-boss enemy", one: "non-boss enemy", many: "non-boss enemies" },
+  fastEnemy: { a: "a Fast enemy", one: "Fast enemy", many: "Fast enemies" },
+  flyingEnemy: { a: "a Flying enemy", one: "Flying enemy", many: "Flying enemies" },
+  archer: { a: "an enemy", one: "enemy", many: "enemies" },
 };
 /** One entry for each enemy card's own stats (`FoeCardStat`), `each`
  * giving a card's, by part, from its enemies' words. */
@@ -52,7 +55,7 @@ const STAT_NAMES: Record<TreeStat, string> = {
     KeyChest: `${word} Key Chest`, DoorCost: `${word} Key Cost`, DoubleKey: `Locksmith ${word}`, MasterKey: `Master ${word} Key` })),
   ...byFoeCard(() => ({ Gold: "Bounty", InstakillGold: "Instakill Bounty", Silver: "Spoils", Attack: "Attack", Defense: "Defense", Shroud: "Shroud", CritChance: "Crit Chance", CritFactor: "Crit Factor",
     KillXp: "Kill XP", SpawnRate: "Spawn Rate", Material: "Salvage", InstakillMaterial: "Instakill Salvage", Equipment: "Equipment Drop", InstakillMaxHp: "Instakill Vigor",
-    StealOverheal: "Lifesteal Overheal", SurpriseAttack: "Surprise Attack", Cells: "Cells", Takedown: "Takedown", Tangle: "Tangle" })),
+    StealOverheal: "Lifesteal Overheal", SurpriseAttack: "Surprise Attack", Cells: "Cells", Takedown: "Takedown", Tangle: "Tangle", FirstStrike: "First Strike", ChargeShot: "Charge Shot" })),
   maxHp: "Max HP",
   foeAttack: "Attack", foeDefense: "Defense", foeGold: "Bounty", foeSilver: "Spoils", moreEnemies: "Spawn Rate",
   critChance: "Crit Chance", critFactor: "Crit Factor", killXp: "Kill XP", surpriseAttack: "Surprise Attack", foeAttackCut: "Weaken", stealOverheal: "Lifesteal Overheal",
@@ -62,6 +65,7 @@ const STAT_NAMES: Record<TreeStat, string> = {
   bossAttack: "Boss Attack", bossDefense: "Boss Defense", bossShroud: "Boss Shroud", bossGold: "Boss Bounty", bossCells: "Boss Cells",
   chestGold: "Chest Gold", chestSilver: "Chest Silver", chestCells: "Chest Cells", supplyChance: "Supply Chests", equipmentChance: "Equipment Chests",
   treasureFloor: "Treasure Floor", rarityUp: "Rarity Up", chestDouble: "Double", chestTriple: "Triple",
+  shotAttack: "Shot ATK", bossShotAttack: "Boss Shot", shotSpeed: "Shot Speed", shotRange: "Range", chargeShot: "Charge Shot",
 };
 
 /** Names of nodes raising more than one stat, short enough to sit under them. */
@@ -141,6 +145,8 @@ const STAT_TEXT: Record<TreeStat, (n: string) => string> = {
     Cells: (n) => `+${n} Cell${n === "1" ? "" : "s"} from each ${one} killed`,
     Takedown: (n) => `${a[0]!.toUpperCase()}${a.slice(1)} loses ${n}% of its max HP as a fight with it begins`,
     Tangle: (n) => `${a[0]!.toUpperCase()}${a.slice(1)} loses ${n}% of its ATK as a fight with it begins`,
+    FirstStrike: (n) => `${n}% chance ${a} loses its first strike: you strike first`,
+    ChargeShot: (n) => `+${n}% Charged Shot against ${many}`,
   })),
   maxHp: (n) => `+${n}% max HP`,
   foeAttack: (n) => `+${n}% ATK against every enemy`,
@@ -180,6 +186,11 @@ const STAT_TEXT: Record<TreeStat, (n: string) => string> = {
   chestTriple: (n) => `${n}% chance a treasure chest pays three times over`,
   supplyChance: (n) => `+${n}% Supply Chest chance`,
   equipmentChance: (n) => `+${n}% Equipment Chest chance`,
+  shotAttack: (n) => `+${n}% Shot ATK`,
+  bossShotAttack: (n) => `+${n}% Shot ATK against bosses and Greater Bosses`,
+  shotSpeed: (n) => `+${n}% Attack Speed`,
+  shotRange: (n) => `+${n}% Attack Range for your arrows`,
+  chargeShot: (n) => `+${n}% Charged Shot`,
 };
 
 /** Each stat's icon on its node. */
@@ -199,7 +210,8 @@ const STAT_ICONS: Record<TreeStat, () => string> = {
   }),
   ...byFoeCard(() => ({ Gold: ui("gold"), InstakillGold: ui("gold"), Silver: silver, Attack: ui("attack"), Defense: ui("defense"), Shroud: ui("log"), CritChance: ui("attack"), CritFactor: ui("attack"),
     KillXp: ui("arrow-up"), SpawnRate: ui("upgrades"), Material: () => itemSprite("chest_silver"), InstakillMaterial: () => itemSprite("chest_silver"), Equipment: () => itemSprite("chest_gold"),
-    InstakillMaxHp: ui("health"), StealOverheal: ui("health"), SurpriseAttack: ui("attack"), Cells: () => cellIcon(), Takedown: ui("attack"), Tangle: ui("defense") })),
+    InstakillMaxHp: ui("health"), StealOverheal: ui("health"), SurpriseAttack: ui("attack"), Cells: () => cellIcon(), Takedown: ui("attack"), Tangle: ui("defense"),
+    FirstStrike: ui("attack"), ChargeShot: ui("attack") })),
   maxHp: ui("health"),
   foeAttack: ui("attack"), foeDefense: ui("defense"), foeGold: ui("gold"), foeSilver: silver, moreEnemies: ui("upgrades"),
   critChance: ui("attack"), critFactor: ui("attack"), killXp: ui("arrow-up"), surpriseAttack: ui("attack"), foeAttackCut: ui("defense"), stealOverheal: ui("health"),
@@ -210,6 +222,7 @@ const STAT_ICONS: Record<TreeStat, () => string> = {
   chestGold: () => itemSprite("chest_treasure"), supplyChance: () => itemSprite("chest_silver"), equipmentChance: () => itemSprite("chest_gold"),
   chestSilver: silver, chestCells: () => cellIcon(), treasureFloor: () => itemSprite("chest_treasure"), rarityUp: () => itemSprite("chest_gold"),
   chestDouble: () => itemSprite("chest_treasure_open"), chestTriple: () => itemSprite("chest_treasure_open"),
+  shotAttack: ui("attack"), bossShotAttack: ui("attack"), shotSpeed: ui("arrow-right"), shotRange: ui("arrow-right"), chargeShot: ui("attack"),
 };
 
 const ROMAN = ["", "", " II", " III", " IV", " V"];
