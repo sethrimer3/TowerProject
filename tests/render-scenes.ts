@@ -557,10 +557,13 @@ function playProvingGrounds(_name: string, _seed: number, canvas: HTMLCanvasElem
   renderer.draw(state, 1000, 0, true, false); grab("staging");
   for (let i=0; i<4; i++) trialStep(state,0,1);
   for (let i=0; i<20; i++) trialStep(state,0,0);
-  state.player.x=25; state.player.y=24;
+  state.player.x=12; state.player.y=11;
   renderer.draw(state, 1100, 1000, true, false); grab("beam");
   renderer.draw(state, 5000, 1000, true, false); grab("glow");
-  state.player.y=45;
+  trialStep(state,0,0);
+  renderer.draw(state,6000,1000,false,false);
+  renderer.draw(state,6130,1000,false,false); grab("slimeHop");
+  state.player.y=22;
   renderer.draw(state, 5000, 1000, true, false); grab("wallScars");
 }
 

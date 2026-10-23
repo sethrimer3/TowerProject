@@ -751,4 +751,5 @@ What Delve Automove has seen of the labyrinth during this run, and how often the
 _Avoid_: known tiles, visit map
 
 - **Proving Grounds**: trials entered through the golden square outside the Tower.
-- **Light Elemental**: the first Proving Grounds foe, which fires rotating opposing light beams.
+- **Light Elemental**: the Proving Grounds foe, which fires rotating opposing light beams and creates light slimes.
+- **Light Slime**: a glowing creature released by the Light Elemental that hops to a random nearby tile every three player steps.

@@ -16,8 +16,23 @@ export function drawLightElemental(c: CanvasRenderingContext2D) {
   sprite(c, ELEMENTAL_ART, { g: "#9c793d", h: "#ffe4a0", w: "#fffbe5", b: "#c6d7db" }, 1, 12, 11);
 }
 
+const SLIME_ART = [
+  "......gggg......", "....gghhhhgg....", "...ghwwhhhhhg...", "..ghwwhhhhhhhg..",
+  "..ghhhhhhhhhhg..", ".ghhhbhhhhbhhhg.", ".ghhhbhhhhbhhhg.", ".ghhhhhhhhhhhhg.",
+  "..ghhhgggghhhg..", "..gghhhhhhhhgg..", "...gggggggggg...", "....gg....gg....",
+] as const;
+export function drawLightSlime(c: CanvasRenderingContext2D, spritesOff: boolean) {
+  if (spritesOff) {
+    c.fillStyle="#ffe4a0"; c.fillRect(5,10,14,10);
+    c.fillStyle="#53453b"; c.fillRect(8,13,2,2); c.fillRect(15,13,2,2);
+  } else sprite(c,SLIME_ART,{g:"#9c793d",h:"#ffe4a0",w:"#fffbe5",b:"#53453b"},1,12,15);
+}
+
 /** Pixel art stays sharp; only the lighting mask has soft falloff. */
 export class TrialRenderer {
+  private lastState: TrialState | null = null;
+  private lastStep = -1;
+  private jumpedAt = -Infinity;
   private darkness = document.createElement("canvas");
   constructor(private canvas: HTMLCanvasElement) {
     canvas.width = canvas.height = this.darkness.width = this.darkness.height = SIZE;
@@ -26,10 +41,21 @@ export class TrialRenderer {
     return { left: s.player.x - 8, bottom: s.player.y - 8 };
   }
   draw(s: TrialState, now: number, firedAt: number, reduceMotion: boolean, spritesOff: boolean) {
+    // Animation is presentation only; saved turns own all positions.
+    if(this.lastState!==s) { this.lastState=s; this.lastStep=s.steps; this.jumpedAt=-Infinity; }
+    if(this.lastStep!==s.steps) {
+      this.lastStep=s.steps;
+      if(s.slimes.some(p=>p.jumped===s.steps)) this.jumpedAt=now;
+    }
+    const progress=reduceMotion?1:Math.min(1,Math.max(0,(now-this.jumpedAt)/260));
+    const slimes=s.slimes.map(p=> {
+      const t=p.jumped===s.steps?progress:1;
+      return {x:p.from.x+(p.x-p.from.x)*t,y:p.from.y+(p.y-p.from.y)*t,lift:Math.round(Math.sin(t*Math.PI)*7)};
+    });
     const c = this.canvas.getContext("2d")!, { left, bottom } = this.view(s);
     const px = (x: number) => (x - left) * S, py = (y: number) => (N - 1 - y + bottom) * S;
     const tile = (x: number, y: number, draw: () => void) => {
-      c.save(); c.translate(px(x), py(y)); draw(); c.restore();
+      c.save(); c.translate(Math.round(px(x)), Math.round(py(y))); draw(); c.restore();
     };
     c.imageSmoothingEnabled = false; c.fillStyle = "#05080c"; c.fillRect(0,0,SIZE,SIZE);
     for (let y=bottom; y<bottom+N; y++) for (let x=left; x<left+N; x++) {
@@ -69,6 +95,7 @@ export class TrialRenderer {
       // No ambient floor light. The hero has just enough light to find their footing.
       light(s.player.x,s.player.y,1.8,0.8);
       for(const p of ARENA_TORCHES) light(p.x,p.y,5.5,0.92);
+      for(const p of slimes) light(p.x,p.y,1.7,0.65);
       if(s.status!=="won") light(ELEMENTAL.x,ELEMENTAL.y,3,0.85);
       for(const [k,step] of Object.entries(s.scorches)) {
         const [x,y]=k.split(",").map(Number); const glow=Math.max(0,1-(s.steps-step)/30);
@@ -106,6 +133,10 @@ export class TrialRenderer {
         drawLightElemental(c);
         c.fillStyle="#3b2922"; c.fillRect(1,23,22,1);
         c.fillStyle="#ffe4a0"; c.fillRect(1,23,22*s.bossHp/s.bossMaxHp,1);
+      });
+      for(const p of slimes) tile(p.x,p.y,()=> {
+        c.fillStyle="#9c793d66"; c.fillRect(5,21,14,2);
+        c.translate(0,-p.lift); drawLightSlime(c,spritesOff);
       });
       // Telegraph only near the elemental, without revealing the unlit room.
       if(s.status==="active" && s.steps%10>=8) {
