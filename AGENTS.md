@@ -21,6 +21,7 @@ npm run test:browser   # Playwright suites (tests/*.mjs); needs `npm run dev` ru
 npm run test:render    # board screenshot hashes vs tests/fixtures/render.golden.json (builds and serves its own copy; no dev server)
 npm run test:ui        # page/HUD/dialog HTML hashes vs tests/fixtures/ui.golden.json (builds and serves its own copy; no dev server)
 npm run test:snapshots # both of the above side by side on one build (tests/snapshot-suites.mjs): the wall time of the slower one
+npm run test:proving   # Proving Grounds browser flow (needs npm run dev)
 npm run test:pointer   # Defend board pointer gestures vs tests/fixtures/defend-pointer.golden.json (also needs `npm run dev`; on demand only, like test:defend)
 npm run tiles:area1 / tiles:outside     # regenerate tile PNGs
 npm run cards:stubs                     # regenerate the placeholder card faces in public/assets/cards/
@@ -97,6 +98,7 @@ Read the area's doc before changing code there or answering questions about it; 
 - `economy-and-online.md`: Gems, the Shop, Gold bonuses, Spare Change and Wishing Well, the Tournament, Mail, Missions, Events and relics.
 - `rendering.md`: board drawing, lighting, decor, popups, the forest and weather, the render goldens, the Medieval and Neon themes.
 - `ui.md`: `main.ts`, pages, the HUD, dialogs, the desks and `Game`'s UI commands, board lessons, the frame loop, the UI golden.
+- `proving-grounds.md`: the forest trial entrance, tactical Light Elemental encounter, rendering and persistence.
 - `saves.md`: loading and decoding the save, adding save state, settings rows.
 - `shrines.md`: Shrines and boons (`src/shrines.ts`): the schedule, offers, boon math, where effects apply, their research and UI.
 - `defend.md`: Defend (`src/defend/`).

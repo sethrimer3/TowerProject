@@ -185,13 +185,14 @@ export const LIGHTING_CONFIG = {
     falloffPower: 1.3,
     /** Flame height above the floor, in tiles. Larger = flatter look near the torch. */
     torchHeight: 1.1,
-    /** Overall relief amount before per-layer strengths. */
-    strength: 1.4,
-    highlightStrength: 0.55,
-    shadowStrength: 0.6,
+    /** Shallow surface texture, not deep steps between floor tiles.
+     * The diffuse sprite already contains its own mortar shading. */
+    strength: 0.45,
+    highlightStrength: 0.35,
+    shadowStrength: 0.3,
     /** Grazing factor (0-1) at which the second shadow pixel starts to appear. */
     longShadowStart: 0.85,
-    longShadowStrength: 0.6,
+    longShadowStrength: 0.2,
     /** Relief brightness at a steady flame, and how strongly it follows the
      * torch flicker (the flicker itself is only a few percent). */
     flickerBase: 0.78,

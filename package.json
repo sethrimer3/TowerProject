@@ -18,6 +18,7 @@
     "test:render": "vite build --mode snapshot && node tests/render-golden.mjs",
     "test:ui": "vite build --mode snapshot && node tests/ui-golden.mjs",
     "test:snapshots": "vite build --mode snapshot && node tests/snapshot-suites.mjs",
+    "test:proving": "node tests/proving-grounds.mjs",
     "test:pointer": "node tests/defend-pointer.mjs",
     "test:browser": "node tests/browser.mjs && node tests/interactions.mjs && node tests/camera.mjs && node tests/skill-trees.mjs && node tests/outside.mjs && node tests/progression.mjs && node tests/mode-tabs.mjs && node tests/cinematic.mjs"
   },

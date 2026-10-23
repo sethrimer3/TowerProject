@@ -36,6 +36,7 @@ test("seeded forest layers keep roads, signs, entrances and building yards clear
           assert.equal(onPath({ x, y, center: world.entranceX, seed, roads: roadsOf(world) }), false, "full canopy clears every road");
           assert.equal(world.isBlacksmith(x, y) || world.isTournamentHall(x, y), false, "buildings retain visible hitboxes");
           assert.equal(world.atExit(x, y), false, "mode-swap sign remains clear");
+          assert.equal(world.isProvingGrounds(x, y), false, "trial square remains visible");
           assert.ok(x !== world.entranceX || y !== ENTRANCE_Y, "entrance remains clear");
         }
     }

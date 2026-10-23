@@ -51,56 +51,56 @@
     "entranceX": 8,
     "tiles": "5aac861385e4",
     "steps": "301939357744",
-    "drawn": "82c6fa791148",
+    "drawn": "bbfeef7121b2",
     "canvas": "f527c0171ab0"
   },
   "forest 1 delve": {
     "entranceX": 15,
     "tiles": "554d64c166b4",
     "steps": "f5ceb0807f3f",
-    "drawn": "f3439c6d7ff9",
+    "drawn": "84cda49d9c45",
     "canvas": "381bfb356124"
   },
   "forest 7 tower": {
     "entranceX": 8,
     "tiles": "69b67d9a7c51",
     "steps": "301939357744",
-    "drawn": "863933d7f215",
+    "drawn": "6efbc1b91830",
     "canvas": "5b0d74cac9e9"
   },
   "forest 7 delve": {
     "entranceX": 15,
     "tiles": "b1ea67ea3603",
     "steps": "f5ceb0807f3f",
-    "drawn": "2dd27edf09b8",
+    "drawn": "f2782f6c13f7",
     "canvas": "219a30c1d39f"
   },
   "forest 42 tower": {
     "entranceX": 8,
     "tiles": "b94c601ff11a",
     "steps": "301939357744",
-    "drawn": "4a8aea566a21",
+    "drawn": "7a2100200478",
     "canvas": "c5886fb7d6d3"
   },
   "forest 42 delve": {
     "entranceX": 15,
     "tiles": "cfc089ada5b0",
     "steps": "f5ceb0807f3f",
-    "drawn": "663098004c5b",
+    "drawn": "08564573516d",
     "canvas": "ec6839b65672"
   },
   "forest 1234 tower": {
     "entranceX": 8,
     "tiles": "20d2b6968106",
     "steps": "301939357744",
-    "drawn": "bc6be55dfef6",
+    "drawn": "76c836ca0c65",
     "canvas": "d1a190811e54"
   },
   "forest 1234 delve": {
     "entranceX": 15,
     "tiles": "3e8f4e567a7b",
     "steps": "f5ceb0807f3f",
-    "drawn": "eb6599db9985",
+    "drawn": "cbda0c5f5695",
     "canvas": "cb566e00d62c"
   },
   "torch 1": "1706a0c9d3f9",
@@ -122,19 +122,19 @@
   ],
   "sprites 1 tower": {
     "drawn": "8e554c94b0bf",
-    "canvas": "a2c9cfcca815"
+    "canvas": "7dad3fbffa1d"
   },
   "sprites 1 delve": {
     "drawn": "b228dcfdc837",
-    "canvas": "7968f5416940"
+    "canvas": "85f9fb847205"
   },
   "sprites 42 tower": {
     "drawn": "8e554c94b0bf",
-    "canvas": "5c8fa1eb255c"
+    "canvas": "25e86b8a2e27"
   },
   "sprites 42 delve": {
     "drawn": "b228dcfdc837",
-    "canvas": "41f918dcc7bc"
+    "canvas": "61d718179d76"
   },
   "glow": "9b85ba92f4e7"
 }

@@ -5187,6 +5187,25 @@ html.cinematic-dimmed #board-frame {
   opacity: 0.85;
 }
 
+/* A trial owns its board while the ordinary run waits behind the dialog. */
+dialog.proving-grounds-dialog { width: min(96vw, 620px); max-width: 620px; max-height: 96dvh; overflow-y: auto; padding: 14px; }
+.proving-grounds-dialog h2 { margin: 0 0 8px; font-size: 1.1rem; }
+.trial-choice { display: grid; gap: 8px; width: 100%; padding: 18px; border-color: #d6ac50; text-align: left; }
+.trial-choice small { display: block; }
+#trial-board { display: block; width: min(100%, 54dvh); height: auto; margin: 8px auto; image-rendering: pixelated; touch-action: none; background: #000; border: 1px solid #8c7548; }
+#trial-vitals { font-size: .8rem; color: #f3dc9c; }
+#trial-status { min-height: 2.4em; margin: 5px 0; font-size: .8rem; }
+.trial-controls { display: grid; justify-items: center; gap: 3px; margin: 5px auto; }
+.trial-controls > div { display: flex; gap: 3px; }
+.trial-controls button { min-width: 48px; min-height: 36px; padding: 4px 10px; }
+.proving-grounds-dialog > small { display: block; font-size: .7rem; opacity: .85; }
+/* The trial is a dark board even when the surrounding UI wears parchment. */
+html body dialog.proving-grounds-dialog { background: #101820; color: #e7ddc4; border: 1px solid #9a7a3c; padding: 12px; }
+html body dialog.proving-grounds-dialog::before { display: none; }
+html body dialog.proving-grounds-dialog h2,
+html body dialog.proving-grounds-dialog p,
+html body dialog.proving-grounds-dialog > small { color: inherit; letter-spacing: normal; }
+html body dialog.proving-grounds-dialog h2 { font-size: 1.05rem; margin: 0 0 8px; }
 /* --- Cards bought (ui/card-buy-reveal.ts) --- */
 /* The Deck section and the card buy buttons over it, in one column. */
 .deck-stack { display: flex; flex-direction: column; gap: 8px; flex: 1; min-height: 0; }

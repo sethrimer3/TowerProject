@@ -65,6 +65,8 @@ export type ModeSave<R extends Run = Run> = {
 /** The skill trees a run's currency calls the player back to. */
 export type NoticeTree = "inspiration" | "courage";
 export type Save = {
+  /** A separate encounter; ordinary mode runs remain untouched. */
+  provingGrounds?: import("./proving-grounds/trial.ts").TrialState;
   version: 3;
   tower: ModeSave<TowerRun> & {
     inspiration: number;

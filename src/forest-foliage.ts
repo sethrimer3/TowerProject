@@ -12,6 +12,7 @@ export type ForestObject = {
  * footprint. Canopies may overhang ordinary woodland floor, never roads. */
 export function forestProtected(world: OutsideWorld, x: number, y: number) {
   const center = world.entranceX;
+  if (world.isProvingGrounds(x, y)) return true;
   if (onPath({ x, y, center, seed: world.seed, roads: roadsOf(world) })) return true;
   if (Math.abs(x - center) <= (y <= 1 ? 2 : 1) && y <= ENTRANCE_Y) return true;
   if (y >= ENTRANCE_Y && Math.abs(x - center) <= (world.mode === "tower" ? 4 : 7)) return true;

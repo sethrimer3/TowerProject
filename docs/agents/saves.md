@@ -30,3 +30,5 @@ Rows are in saved key order; the page lists its own order.
 Their controls appear only while `uiSprites` is checked; non-default Game themes and the board-art opt-out still override their rendering.
 `tests/settings.test.ts` checks every row round-trips and defaults bad values.
 `tests/save.test.ts` pins `decode()` behaviour with a corpus of mutated saves hashed against `tests/fixtures/save-decode.golden.json`; if a decode change is intended, regenerate it with `UPDATE_GOLDEN=1 node --experimental-transform-types --import ./tests/pin-random.ts --test tests/save.test.ts` and review which cases changed.
+
+The optional `save.provingGrounds` holds an isolated trial attempt (room, copied hero stats, boss HP, turn count, consumed potions and scorch timestamps), decoded defensively by `decodeTrial`; old saves omit it and ordinary mode runs remain separate.

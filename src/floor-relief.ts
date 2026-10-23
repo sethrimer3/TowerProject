@@ -40,10 +40,11 @@ export function heightMap(rgba: Uint8ClampedArray, size = RELIEF_SIZE, threshold
   return h;
 }
 
-/** Bakes the per-direction relief masks. Pixels beyond the tile edge count as
- * grooves, matching the grout ring every floor sprite is framed by. */
+/** Bakes the per-direction relief masks from the texture's actual grooves.
+ * Extend boundary pixels rather than inventing a drop beyond every sprite:
+ * the image's bounds are not a bevel in the floor. */
 export function bakeReliefMasks(h: Uint8Array, dx: number, dy: number, size = RELIEF_SIZE): ReliefMasks {
-  const at = (x: number, y: number) => (x < 0 || y < 0 || x >= size || y >= size ? 0 : h[y * size + x]);
+  const at = (x: number, y: number) => h[Math.max(0, Math.min(size - 1, y)) * size + Math.max(0, Math.min(size - 1, x))];
   const highlight = new Float32Array(size * size);
   const shadow = new Float32Array(size * size);
   const shadowFar = new Float32Array(size * size);

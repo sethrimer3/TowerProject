@@ -52,6 +52,7 @@ Once Into the depths is owned, the forest's next note says to follow the path do
 The tab bar along the bottom is one strip of icons, the open page's lit: the board (its icon the Tower's or the Delve's, whichever is active), Upgrades, Deck, Gear, Research, Defend and Shop.
 Tower and Delve share the one board button: from the Delve's opening on, a large sign stands at the foot of each forest's path, the other place's icon over a down arrow, and tapping it or walking the hero down onto the path's last tile goes to the other forest.
 A forest run's hero starts partway up the path.
+The dirt path has patches of packed earth, gravel, pebbles, cracks, scuffs and fallen leaves, with grass along its edges; these details do not change where the hero can walk.
 Reloading mid-Delve-run opens the Delve where it was.
 
 ## Moving by hand
