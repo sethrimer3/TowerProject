@@ -73,8 +73,8 @@ try {
     return DETAIL_SPRITES.slice(8).map(id => kitImage(id)).every(Boolean);
   });
   await page.evaluate(async () => {
-    const { paintKitPlant } = await import("/src/decor-bake.ts");
-    const { drawCrates } = await import("/src/decor-sprites.ts");
+    const { paintKitPlant } = await import("/src/render/decor/decor-bake.ts");
+    const { drawCrates } = await import("/src/render/decor/decor-sprites.ts");
     const cv = document.createElement("canvas");
     cv.id = "dressing-review"; cv.width = 192; cv.height = 48;
     cv.style.cssText = "display:block;width:384px;height:96px;image-rendering:pixelated;background:#1b2430";

@@ -1,9 +1,9 @@
-import { potionShade, type EnemyStrength, type Tile, type Torch, type KeyColor } from "./entities.ts";
-import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
-import type { Facing } from "./shown.ts";
+import { potionShade, type EnemyStrength, type Tile, type Torch, type KeyColor } from "../../entities.ts";
+import { forEachViewTile, toTileSpace, type FrameContext } from "../../render-frame.ts";
+import type { Facing } from "../../shown.ts";
 import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
-import { sprite, type Sprite } from "./pixel-sprite.ts";
-import { rankChevrons } from "./rank-chevrons.ts";
+import { sprite, type Sprite } from "../../pixel-sprite.ts";
+import { rankChevrons } from "../../rank-chevrons.ts";
 import { tileHash } from "./ascii-glyphs.ts";
 
 /** The Pixel Game theme's dungeon board: a dungeon in shaded, outlined pixel

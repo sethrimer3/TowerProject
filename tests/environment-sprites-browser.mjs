@@ -18,7 +18,7 @@ try {
   await page.route("**/env-water-deep.png", route => release(route));
   await page.goto(server.resolvedUrls.local[0]); await page.locator("#hp").waitFor();
   await page.evaluate(async () => {
-    const { DecorBaker } = await import("/src/decor-bake.ts");
+    const { DecorBaker } = await import("/src/render/decor/decor-bake.ts");
     const water = new Uint8Array(576);
     for (let y = 1; y < 23; y++) for (let x = 1; x < 23; x++) water[y * 24 + x] = x === 1 || x === 22 || y === 1 || y === 22 ? 2 : 1;
     const d = { water, moss: null, vines: [], flowers: [], plants: [] };
@@ -49,7 +49,7 @@ try {
     return ENVIRONMENT_SPRITES.every(id => !!kitImage(id));
   });
   const pixels = await page.evaluate(async () => {
-    const { DecorBaker } = await import("/src/decor-bake.ts");
+    const { DecorBaker } = await import("/src/render/decor/decor-bake.ts");
     const { environmentPixels, MOSS_SPRITES } = await import("/src/sprite-environment.ts");
     const { src, d, baker, read, off } = window.__environmentReview;
     const on = read(baker.bake(src, 0, 0, d, true));
@@ -109,7 +109,7 @@ try {
       const { loadSpriteFont } = await import("/src/sprite-font.ts"), { THEME_IDS } = await import("/src/theme-collection.ts");
       await loadSpriteFont();
       const { g } = environmentSpriteScene(); g.save.themes = [...THEME_IDS];
-      const { DecorLayer } = await import("/src/decor-render.ts");
+      const { DecorLayer } = await import("/src/render/decor/decor-render.ts");
       const layer = new DecorLayer(); layer.planBudget = 1000; layer.sync(g.world, g.run.seed);
       const view = { left: 0, bottom: 0, n: 17, s: 24 };
       const oldLights = layer.glows(view), kitLights = layer.glows(view, true), oldAgain = layer.glows(view);

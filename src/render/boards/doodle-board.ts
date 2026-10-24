@@ -1,9 +1,9 @@
-import { potionShade, type EnemyStrength, type Tile, type Torch, type KeyColor } from "./entities.ts";
-import type { Facing } from "./shown.ts";
-import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
+import { potionShade, type EnemyStrength, type Tile, type Torch, type KeyColor } from "../../entities.ts";
+import type { Facing } from "../../shown.ts";
+import { forEachViewTile, toTileSpace, type FrameContext } from "../../render-frame.ts";
 import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
 import { tileHash } from "./ascii-glyphs.ts";
-import { rankChevrons } from "./rank-chevrons.ts";
+import { rankChevrons } from "../../rank-chevrons.ts";
 
 /** The Doodle Game theme's dungeon board: a dungeon drawn with a mouse in a
  * simple paint program. White paper underfoot with a pencil mark here and

@@ -1,7 +1,7 @@
 import type { ThemedBoard } from "./themed-board.ts";
-import { drawFlyers } from "./flyer-art.ts";
-import type { GameLook } from "./theme-collection.ts";
-import { forEachViewTile, tileTransform, toTileSpace, type FrameContext } from "./render-frame.ts";
+import { drawFlyers } from "../../flyer-art.ts";
+import type { GameLook } from "../../theme-collection.ts";
+import { forEachViewTile, tileTransform, toTileSpace, type FrameContext } from "../../render-frame.ts";
 import { NEON_BOARD } from "./neon-board.ts";
 import { TERMINAL_BOARD } from "./terminal-board.ts";
 import { DESKTOP_BOARD } from "./desktop-board.ts";

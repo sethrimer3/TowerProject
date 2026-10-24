@@ -1,13 +1,13 @@
-import type { Board } from "./board.ts";
-import type { BoardView } from "./render-frame.ts";
-import { tileRandom } from "./random.ts";
+import type { Board } from "../../board.ts";
+import type { BoardView } from "../../render-frame.ts";
+import { tileRandom } from "../../random.ts";
 import { decorSourceFor, FLOWER_COLORS, TILE_PX, tileDecor, tileKey, waterAt, type DecorSource, type Flower, type Plant, type TileDecor } from "./decor.ts";
 import { DecorBaker, paintKitFlower, paintKitPlant } from "./decor-bake.ts";
 import { DecorEffects, type EffectFrame, type TileAt } from "./decor-effects.ts";
 import { WaterReflections, type MirroredSprites, type ReflectionScene, type Wave } from "./decor-reflections.ts";
-import { kitImage, spriteRevision } from "./sprite-kit.ts";
-import { dungeonWallDepth } from "./wall-depth.ts";
-import { FLOWER_LIGHTS, FLOWER_SPRITES, GLOWCAP_LIGHT, GLOWCAP_SPRITES } from "./sprite-environment.ts";
+import { kitImage, spriteRevision } from "../../sprite-kit.ts";
+import { dungeonWallDepth } from "../../wall-depth.ts";
+import { FLOWER_LIGHTS, FLOWER_SPRITES, GLOWCAP_LIGHT, GLOWCAP_SPRITES } from "../../sprite-environment.ts";
 import { drawBlades, drawCrates, DRIP_FALL, dripNow, dripRings, PixelBatch, ring, type DripNow, type Sway } from "./decor-sprites.ts";
 
 export type { MirroredSprites } from "./decor-reflections.ts";

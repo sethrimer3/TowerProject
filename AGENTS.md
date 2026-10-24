@@ -80,7 +80,7 @@ Changing generation output breaks existing saves' map state, so bump the mode's 
   Use `+ - * /`, `Math.sqrt` (exact everywhere) and `intPow` from `src/exact.ts`.
   Drawing may use `Math` freely.
   `tests/engine-independence.test.ts` rebuilds all of it under a different stable sort and requires identical output, requires that it calls none of those `Math` functions, and scans the generation modules for `**`.
-- Decor (`decor.ts`) is planned per tile from board + seed and is presentation only: it must never alter tiles.
+- Decor (`render/decor/decor.ts`) is planned per tile from board + seed and is presentation only: it must never alter tiles.
   `planTile` runs one planner per layer (moss, water, vines, standing things) in a fixed order, since later layers read earlier ones.
   `tests/decor-plan.test.ts` hashes every tile's plan over real Tower floors and Delve chunks against `tests/fixtures/decor-plan.golden.json`, so a refactor that reorders the planners' random draws fails it; regenerate with `UPDATE_GOLDEN=1` only for an intended decor change.
 

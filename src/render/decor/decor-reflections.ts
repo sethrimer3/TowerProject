@@ -1,4 +1,4 @@
-import type { Tile } from "./entities.ts";
+import type { Tile } from "../../entities.ts";
 import { TILE_PX, type TileDecor } from "./decor.ts";
 import { WATER_MID } from "./decor-bake.ts";
 

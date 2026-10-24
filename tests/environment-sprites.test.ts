@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { paintKitFlower, paintKitPlant } from "../src/decor-bake.ts";
+import { paintKitFlower, paintKitPlant } from "../src/render/decor/decor-bake.ts";
 import { ENVIRONMENT_SPRITES, FLOWER_SPRITES, GLOWCAP_SPRITES, MOSS_SPRITES, VINE_SPRITES, WATER_SPRITES } from "../src/sprite-environment.ts";
 
 test("environment PNGs retain native density and distinct material/plant variants", () => {

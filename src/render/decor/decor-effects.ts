@@ -1,5 +1,5 @@
-import type { Tile } from "./entities.ts";
-import { random } from "./random.ts";
+import type { Tile } from "../../entities.ts";
+import { random } from "../../random.ts";
 import { TILE_PX, waterAt, type Crate, type DecorSource, type TileDecor } from "./decor.ts";
 import { GRASS, PixelBatch, withAlpha, WOOD } from "./decor-sprites.ts";
 

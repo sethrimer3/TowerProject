@@ -1,4 +1,4 @@
-import type { ThemedBoard } from "./themed-board.ts";
+import type { ThemedBoard } from "./render/boards/themed-board.ts";
 import { wingMark } from "./flyer-art.ts";
 import { CHUNK, COLORS } from "./config.ts";
 import { drawCornerBricks, drawTerrain, themeAt, type Corner } from "./themes.ts";

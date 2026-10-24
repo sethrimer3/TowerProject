@@ -1,7 +1,7 @@
-import type { Board } from "./board.ts";
-import type { BoardView } from "./render-frame.ts";
-import { outsideSpriteKind, roadsOf, type Weather } from "./outside.ts";
-import { tileRandom } from "./random.ts";
+import type { Board } from "../../board.ts";
+import type { BoardView } from "../../render-frame.ts";
+import { outsideSpriteKind, roadsOf, type Weather } from "../../outside.ts";
+import { tileRandom } from "../../random.ts";
 
 /** Wind-blown grass for the forest outside the Tower and Delve. Each grass
  * tile carries a handful of pixel blades that sway in the wind, bow under

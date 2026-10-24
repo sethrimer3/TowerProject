@@ -70,7 +70,7 @@ class FakeCanvas {
   fonts: { load: () => Promise.resolve([]), check: () => true },
 };
 // The boards read the DOM as their modules load, so they load after it.
-const { THEMED_BOARDS } = await import("../src/themed-boards.ts");
+const { THEMED_BOARDS } = await import("../src/render/boards/themed-boards.ts");
 
 const STRENGTHS: EnemyStrength[] = ["weak", "normal", "strong", "elite", "boss", "greaterBoss"];
 const enemy = (strength: EnemyStrength, more: Partial<Enemy> = {}): Tile => ({

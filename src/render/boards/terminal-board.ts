@@ -1,7 +1,7 @@
-import type { Tile, Torch, KeyColor } from "./entities.ts";
-import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
+import type { Tile, Torch, KeyColor } from "../../entities.ts";
+import { forEachViewTile, toTileSpace, type FrameContext } from "../../render-frame.ts";
 import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
-import { rankChevrons } from "./rank-chevrons.ts";
+import { rankChevrons } from "../../rank-chevrons.ts";
 
 /** The Terminal Game theme's dungeon board, as an old green-phosphor
  * monitor shows a text dungeon: every wall, tile content, torch and the

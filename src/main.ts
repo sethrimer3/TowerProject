@@ -21,7 +21,7 @@ import { bindSpriteImages, drawKit, onSpritesLoaded } from "./sprite-kit.ts";
 import { usesGameSprites } from "./sprite-style.ts";
 import { onSpriteFontLoaded } from "./sprite-font.ts";
 import { gameLook } from "./theme-collection.ts";
-import { themedBoardOf } from "./themed-boards.ts";
+import { themedBoardOf } from "./render/boards/themed-boards.ts";
 import { load, persist } from "./save.ts";
 import { stampProfile } from "./profile.ts";
 import { Game } from "./state.ts";

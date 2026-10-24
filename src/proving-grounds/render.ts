@@ -2,7 +2,7 @@ import { drawThemedTile } from "../themed-tilesets.ts";
 import { paintContents, paintHero, paintTile, paintTorch, type BoardLook } from "../tile-painters.ts";
 import { drawArea1Item } from "../area1-tileset.ts";
 import { sprite } from "../pixel-sprite.ts";
-import { drawCrates } from "../decor-sprites.ts";
+import { drawCrates } from "../render/decor/decor-sprites.ts";
 import { drawKit } from "../sprite-kit.ts";
 import { HeroIdleAnimation } from "../sprite-animations.ts";
 import type { Tile } from "../entities.ts";

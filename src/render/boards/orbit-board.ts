@@ -1,9 +1,9 @@
-import { potionShade, type EnemyStrength, type Tile, type Torch, type KeyColor } from "./entities.ts";
-import type { Facing } from "./shown.ts";
-import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
+import { potionShade, type EnemyStrength, type Tile, type Torch, type KeyColor } from "../../entities.ts";
+import type { Facing } from "../../shown.ts";
+import { forEachViewTile, toTileSpace, type FrameContext } from "../../render-frame.ts";
 import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
 import { tileHash } from "./ascii-glyphs.ts";
-import { rankChevrons } from "./rank-chevrons.ts";
+import { rankChevrons } from "../../rank-chevrons.ts";
 import { roundRect, vignette } from "./themed-art.ts";
 
 /** The Orbit Game theme's dungeon board: a space station adrift among the

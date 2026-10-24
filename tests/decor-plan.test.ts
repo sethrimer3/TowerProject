@@ -5,7 +5,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { World } from "../src/delve/world.ts";
 import type { Board } from "../src/board.ts";
-import { clearDecorCache, decorSourceFor, tileDecor, type TileDecor } from "../src/decor.ts";
+import { clearDecorCache, decorSourceFor, tileDecor, type TileDecor } from "../src/render/decor/decor.ts";
 
 // Characterization hash of the decor planner: every tile of a spread of real
 // Tower floors and Delve chunks is planned and hashed per board against a

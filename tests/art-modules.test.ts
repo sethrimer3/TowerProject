@@ -8,9 +8,9 @@ import type { Board } from "../src/board.ts";
 import { area1ItemId, floorVariant, wallAdjacencyMask } from "../src/area1-tileset.ts";
 import { TreeParticles } from "../src/tree-particles.ts";
 import { withStream } from "../src/random.ts";
-import { DecorLayer, type DecorFrame, type MirroredSprites } from "../src/decor-render.ts";
+import { DecorLayer, type DecorFrame, type MirroredSprites } from "../src/render/decor/decor-render.ts";
 import type { BoardView } from "../src/render-frame.ts";
-import { decorSourceFor, tileDecor, type TileDecor } from "../src/decor.ts";
+import { decorSourceFor, tileDecor, type TileDecor } from "../src/render/decor/decor.ts";
 import { TREES, type SkillNode } from "../src/skill-trees.ts";
 import type { KeyColor, Tile } from "../src/entities.ts";
 

@@ -4,8 +4,8 @@ import test from "node:test";
 import { DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS, DUNGEON_BLEND_ATLAS, DUNGEON_INFILL_ATLAS, DUNGEON_CORNER_FRAME, drawDungeonGround, dungeonAtlasId, dungeonDiagonals, dungeonFloorFrame, dungeonMaterial, dungeonMaterialJoins, dungeonWallVariant } from "../src/sprite-dungeon.ts";
 import { dungeonWallBands, dungeonWallDepth, dungeonWallProfile } from "../src/wall-depth.ts";
 import { paintTile, type BoardLook } from "../src/tile-painters.ts";
-import { WaterReflections, type ReflectionScene } from "../src/decor-reflections.ts";
-import type { TileDecor } from "../src/decor.ts";
+import { WaterReflections, type ReflectionScene } from "../src/render/decor/decor-reflections.ts";
+import type { TileDecor } from "../src/render/decor/decor.ts";
 import { towerFloorAtlasId, towerFloorFrame } from "../src/sprite-dungeon.ts";
 
 test("Tower paving crosses positive and negative tile boundaries in screen order without rotating its light", () => {

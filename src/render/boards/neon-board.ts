@@ -1,9 +1,9 @@
-import { COLORS } from "./config.ts";
-import type { EnemyStrength, Tile, Torch, KeyColor } from "./entities.ts";
-import { WOOD_COLOR } from "./doors.ts";
-import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
+import { COLORS } from "../../config.ts";
+import type { EnemyStrength, Tile, Torch, KeyColor } from "../../entities.ts";
+import { WOOD_COLOR } from "../../doors.ts";
+import { forEachViewTile, toTileSpace, type FrameContext } from "../../render-frame.ts";
 import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
-import { rankChevrons } from "./rank-chevrons.ts";
+import { rankChevrons } from "../../rank-chevrons.ts";
 
 /** The Neon theme's dungeon board: every wall, tile content, torch and the
  * hero drawn as glowing laser lines on black. It replaces the dungeon's

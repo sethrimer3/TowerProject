@@ -98,6 +98,7 @@ The shared core and stepped blend masks come from `assets/game-sprites/dungeon-m
 The older `assets/game-sprites/dungeon-wall-shading.png` remains an art reference; repeated directional cutout stamps are no longer deployed.
 
 Board drawing (`Renderer`, frames, lighting, decor, popups, tile caches, the forest outside, weather), the render goldens, and the Medieval and Neon themes.
+Board drawing is moving into `src/render/`: the Game themes' boards (`*-board.ts`, `themed-board.ts`, `themed-boards.ts`, `themed-art.ts`, `ascii-glyphs.ts`) are in `src/render/boards/`, and decor (`decor*.ts`, `forest-foliage.ts`, `outside-grass.ts`) in `src/render/decor/`; the rest is still at the root of `src/`.
 
 **Rendering layers.** `rendering.ts` (`Renderer`) owns the camera and smooth player interpolation: the camera, and the hero outside a run's turns, ease after their targets, while through a turn's single step inside a run (`Game.turnShown`) the hero walks at an even pace over the turn's `ms`, so it stands where that turn's shots leave from (a turn stamped after the first frame showing it walks from that frame).
 Inside the Delve the camera is `FollowCamera` (`src/camera.ts`, no drawing), which trails where the hero is drawn rather than its tile.

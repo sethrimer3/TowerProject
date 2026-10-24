@@ -1,9 +1,9 @@
-import { CHUNK } from "./config.ts";
-import { point, type Tile } from "./entities.ts";
-import type { Board } from "./board.ts";
-import type { RoomWorld } from "./tower/room-world.ts";
-import type { World } from "./delve/world.ts";
-import { random, tileRandom } from "./random.ts";
+import { CHUNK } from "../../config.ts";
+import { point, type Tile } from "../../entities.ts";
+import type { Board } from "../../board.ts";
+import type { RoomWorld } from "../../tower/room-world.ts";
+import type { World } from "../../delve/world.ts";
+import { random, tileRandom } from "../../random.ts";
 
 /** Procedural dungeon dressing — moss, vines, glowing flowers, plants,
  * crates, pools — planned purely from the board and seed. Presentation only:

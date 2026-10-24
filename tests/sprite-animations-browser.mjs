@@ -67,7 +67,7 @@ try {
   assert.ok(new Set(native.movingSkulls).size > 1); assert.equal(new Set(native.staticSkulls).size, 1); assert.equal(new Set(native.stillSkulls).size, 1);
   await page.locator("#ambient-art").screenshot({ path: "test-results/sprite-animations/native-art.png" }); await page.locator("#ambient-art").evaluate(e => e.remove());
   const caches = await page.evaluate(async () => {
-    const { WaterReflections } = await import("/src/decor-reflections.ts");
+    const { WaterReflections } = await import("/src/render/decor/decor-reflections.ts");
     const c = document.createElement("canvas").getContext("2d"); c.canvas.width = c.canvas.height = 96;
     const pool = { water: new Uint8Array(576).fill(1), waterCount: 576, crates: [] };
     let hero = 0, contents = 0, frame = 0;
