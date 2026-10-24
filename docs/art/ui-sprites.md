@@ -37,6 +37,7 @@ These share the 24-pixel grid, palette and transparency contract; range and char
 Goal status marks, small HUD controls, Deck remove/check buttons and Event locks use the same PNG pairs as the larger controls.
 Silver uses its own palette-correct PNG instead of a recolored Gold image, and skill nodes use specific symbols where those previously fell back to generic upgrade art.
 Skill-node states use PNG frames over a quiet slate backdrop, and heading dividers use the same linked-diamond ornament.
+A node that unlocks a card shows the card alone, with no node frame, since the card art carries its own frame.
 The [Shrine atlas](../../assets/game-sprites/shrines.png) adds a distinct 24-pixel symbol for all twenty boons, plus the pending-count diamond, drag grip, Auto Pick and ban marks.
 `ui/boon-icon.ts` shares those symbols between offers, the taken-boons table, First Boon Choice, bans and ranking; icons stay hidden until loaded and while another UI theme is worn.
 Standard and trade-off choices reuse the existing normal and danger PNG frames, while ranked and banned rows use the kit's selected and danger states.
