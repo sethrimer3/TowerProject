@@ -9,7 +9,7 @@ import { random } from "../random.ts";
 import { adsOff } from "../shop/entitlements.ts";
 import type { GainArt } from "../shown.ts";
 import type { DeskHost } from "./desk.ts";
-import { earn } from "../profile.ts";
+import { earn } from "../save/profile.ts";
 
 /** What the Gem finder reads from the game: the board the hero stands on
  * and the gains queue the board raises a collected Gem from. */

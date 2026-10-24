@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { decode, defaults } from "../src/save.ts";
+import { decode, defaults } from "../src/save/save.ts";
 import { TRAINING, type TrainingId, trainedAmount } from "../src/config.ts";
 import { FREE_TRAINING_ROWS, trainingStep } from "../src/progression/loadout.ts";
 import { freeTrainingLines, freeTrainingSeed, rollFreeTraining } from "../src/progression/free-training.ts";

@@ -41,7 +41,7 @@ await page.addInitScript(() => {
 // a ring of city tiles around the keep with a barracks and an archer tower.
 await page.goto(URL_ROOT);
 const fixture = await page.evaluate(async () => {
-  const { defaults } = await import("/src/save.ts");
+  const { defaults } = await import("/src/save/save.ts");
   const { placeCityTile, placeStructure } = await import("/src/defend/layout.ts");
   const s = defaults();
   s.upgrades.legacy = 1;

@@ -118,7 +118,7 @@ try {
     await page.locator("#ambient-board").screenshot({ path: `test-results/sprite-animations/tower-${width}.png` }); await page.locator("#ambient-board").evaluate(e => e.remove());
   }
   const death = await page.evaluate(async () => {
-    const { defaults } = await import("/src/save.ts"), { Game } = await import("/src/state.ts"), { Renderer } = await import("/src/rendering.ts");
+    const { defaults } = await import("/src/save/save.ts"), { Game } = await import("/src/state.ts"), { Renderer } = await import("/src/rendering.ts");
     const g = new Game(defaults()); Object.assign(g.save.settings, { uiSprites: true, spriteAnimations: true, reduceMotion: true });
     g.newRun({ seed: 7 }); const p = g.run.player; p.hp = 1; p.attack = 1; p.defense = 0;
     g.run.changes[`${p.x + 1},${p.y}`] = { kind: "enemy", enemy: { name: "Slime", tier: 0, strength: "normal", hp: 100, attack: 100, defense: 0 } };

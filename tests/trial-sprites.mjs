@@ -27,7 +27,7 @@ try {
   }
   async function scene(settings={},room="staging") {
     await page.evaluate(async({settings,room})=> {
-      const {Game}=await import("/src/state.ts"),{defaults}=await import("/src/save.ts");
+      const {Game}=await import("/src/state.ts"),{defaults}=await import("/src/save/save.ts");
       const {startTrial}=await import("/src/proving-grounds/trial.ts");
       const g=new Game(defaults());g.newRun({outside:true,seed:12});
       Object.assign(g.save.settings,{uiSprites:true,reduceMotion:true},settings);

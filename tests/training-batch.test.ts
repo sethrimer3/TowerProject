@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults, decode } from "../src/save.ts";
+import { defaults, decode } from "../src/save/save.ts";
 import { TRAINING, xpForLevel } from "../src/config.ts";
 import { batchSpeedup } from "../src/progression/buy-quantity.ts";
 import { trainerBatch, trainingMs } from "../src/progression/training-jobs.ts";

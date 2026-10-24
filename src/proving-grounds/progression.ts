@@ -1,5 +1,5 @@
-import type {Save} from "../save-shape.ts";
-import {earn} from "../profile.ts";
+import type {Save} from "../save/shape.ts";
+import {earn} from "../save/profile.ts";
 import {MAX_TRIAL_LEVEL,TRIALS,type TrialId} from "./catalog.ts";
 import type {TrialState} from "./trial.ts";
 

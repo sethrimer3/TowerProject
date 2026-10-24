@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults, decode } from "../src/save.ts";
+import { defaults, decode } from "../src/save/save.ts";
 import { TRAINING, trainingCap, trainingCeiling, xpForLevel, trainingDef } from "../src/config.ts";
 import { loadout, trainingOpen, trainingPoints, trainingRowsFull, trainingStep } from "../src/progression/loadout.ts";
 import { BOOST_MAX_MS, claimBoost, doneAt, finishGems, rushEfficiencyText, trainingGold, trainingMs, trainingSeconds, workLeft } from "../src/progression/training-jobs.ts";

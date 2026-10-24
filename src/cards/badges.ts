@@ -1,7 +1,7 @@
 import { CARD_IDS, deckCards, type CardId } from "./cards.ts";
 import type { UpgradeId } from "../config.ts";
-import type { Save } from "../save-shape.ts";
-import { isRecord, wholeIn } from "../decode.ts";
+import type { Save } from "../save/shape.ts";
+import { isRecord, wholeIn } from "../save/decode.ts";
 import { random } from "../random.ts";
 import { MORE_ENEMIES_CARDS, MORE_ENEMIES_PERCENTS } from "../enemies/more-enemies.ts";
 

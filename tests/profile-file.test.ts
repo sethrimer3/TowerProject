@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { decode, defaults } from "../src/save.ts";
+import { decode, defaults } from "../src/save/save.ts";
 import { KEPT_SLICE, PROFILE_FORMAT, PROFILE_SECTIONS, UNSECTIONED, exportProfile, importProfile } from "../src/profile-file.ts";
 
 const NOW = Date.UTC(2026, 9, 24);

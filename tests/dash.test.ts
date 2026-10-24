@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { decode, defaults } from "../src/save.ts";
+import { decode, defaults } from "../src/save/save.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { RESEARCH, missing, research } from "../src/progression/archives.ts";
 import { BADGES, drawable, defaultBadges } from "../src/cards/badges.ts";

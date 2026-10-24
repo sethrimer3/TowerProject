@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import type { Enemy, Player, Tile } from "../src/entities.ts";
 import { bout, heroHpAfter, heroHpDuring, predict, summarize } from "../src/combat.ts";
 import { resolveStep } from "../src/step-effects.ts";

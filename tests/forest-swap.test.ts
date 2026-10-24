@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { decode, defaults } from "../src/save.ts";
+import { decode, defaults } from "../src/save/save.ts";
 import { OUTSIDE_START_Y, OutsideWorld } from "../src/outside.ts";
 import { MODES } from "../src/modes.ts";
 import { xpForLevel } from "../src/config.ts";

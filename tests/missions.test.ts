@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults, load } from "../src/save.ts";
+import { defaults, load } from "../src/save/save.ts";
 import { SAVE_KEY } from "../src/config.ts";
 import {
   MISSION_CAPACITY, MISSION_EVERY_MS, MISSION_GOLD, MISSION_MATERIALS, MISSION_TYPES, MISSIONS,
@@ -14,7 +14,7 @@ import { DAY_MS } from "../src/shop/clock.ts";
 import { CURRENCIES } from "../src/shop/currency.ts";
 import { trainingPoints } from "../src/progression/loadout.ts";
 import type { Enemy, Tile } from "../src/entities.ts";
-import type { Save } from "../src/save-shape.ts";
+import type { Save } from "../src/save/shape.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 
 /** Monday 5 October 2026, 00:00 GMT. */

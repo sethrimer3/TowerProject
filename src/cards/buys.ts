@@ -12,7 +12,7 @@
 import { CARD_IDS, type CardId } from "./cards.ts";
 import { CARD_RARITIES, CARD_RARITY_WEIGHTS, rarityRank, type CardRarity } from "./rarity.ts";
 import { CARD_TREES, cardLook, cardMaxLevel, nodeCap, type CardOpened, type CardTreeNode } from "./trees.ts";
-import { isRecord, wholeIn } from "../decode.ts";
+import { isRecord, wholeIn } from "../save/decode.ts";
 import { random } from "../random.ts";
 
 /** Where the card buys' stream stands (null until the profile seeds it),

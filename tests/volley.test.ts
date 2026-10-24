@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { trainedAmount } from "../src/config.ts";
 import { landsAt, leavesAt, volleyTurn, type VolleyTurn } from "../src/volley.ts";
 import { ShotsInFlight, shotFlight } from "../src/volley-art.ts";

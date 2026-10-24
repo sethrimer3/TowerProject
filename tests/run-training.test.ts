@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { decode, defaults } from "../src/save.ts";
+import { decode, defaults } from "../src/save/save.ts";
 import { LIMIT_BREAKS, TRAINING, trained, xpForLevel, levelForXp, trainedAmount, trainingDef } from "../src/config.ts";
 
 import { ranksInRun, runTrainingOffer, runTrainingValue, silverPrice } from "../src/progression/run-training.ts";

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { decode, defaults } from "../src/save.ts";
+import { decode, defaults } from "../src/save/save.ts";
 import { ENEMY_GOLD, xpForKill } from "../src/config.ts";
 import { MODES } from "../src/modes.ts";
 import { snap } from "../src/exact.ts";

@@ -3,7 +3,7 @@ import { MAIL_IDS_KEPT, type MailSave } from "../mail/progress.ts";
 import { confirmServerTime, estimatedServerTime } from "../shop/clock.ts";
 import { CURRENCIES } from "../shop/currency.ts";
 import type { DeskHost } from "./desk.ts";
-import { earn } from "../profile.ts";
+import { earn } from "../save/profile.ts";
 
 /** Mail's commands (the game's `mail`): taking in the inbox the server
  * reports, reading, removing, and granting what a claim brought. The

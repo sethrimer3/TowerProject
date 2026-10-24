@@ -6,14 +6,14 @@
 import { START_X, TOWER_START_X, TOWER_WIDTH, WIDTH, goldReward } from "./config.ts";
 import type { DelveRun, Run, TowerRun } from "./runs.ts";
 import type { Mode } from "./entities.ts";
-import type { Save } from "./save-shape.ts";
+import type { Save } from "./save/shape.ts";
 import { LAYOUT_VERSION, World } from "./delve/world.ts";
 import { depthAt } from "./delve/labyrinth.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import type { Board } from "./board.ts";
 import { runExtras, runFoeCut } from "./cards/trees.ts";
 import { weakened } from "./shrines.ts";
-import { earn } from "./profile.ts";
+import { earn } from "./save/profile.ts";
 
 export type ModeProfile<R extends Run = Run> = {
   /** The balance of the currency this mode pays, and paying it. */

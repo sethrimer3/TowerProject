@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { usesGameSprites, usesUiSprites } from "../src/sprite-style.ts";
 import { THEME_IDS } from "../src/theme-collection.ts";
-import { SETTINGS } from "../src/settings.ts";
+import { SETTINGS } from "../src/save/settings.ts";
 
 test("the shared sprite kit stays off by default", () => {
   const save = defaults();

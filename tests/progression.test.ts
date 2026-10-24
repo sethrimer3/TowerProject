@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Game } from '../src/state.ts';
-import { defaults, decode } from '../src/save.ts';
+import { defaults, decode } from '../src/save/save.ts';
 import { RoomWorld } from '../src/tower/room-world.ts';
 function arena() {
   const g = new Game(defaults());

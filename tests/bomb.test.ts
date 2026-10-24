@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { decode, defaults } from "../src/save.ts";
+import { decode, defaults } from "../src/save/save.ts";
 import { provisionPrice } from "../src/progression/loadout.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import type { Enemy, Tile } from "../src/entities.ts";

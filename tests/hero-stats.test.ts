@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
 import { addItem, equip } from "../src/equipment/inventory.ts";
 import { changeLoadout } from "../src/game/hero-sync.ts";

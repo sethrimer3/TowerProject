@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { OUTSIDE_START_Y } from "../src/outside.ts";
-import { defaults, decode } from "../src/save.ts";
+import { defaults, decode } from "../src/save/save.ts";
 import { point, type Tile } from "../src/entities.ts";
 import { generate } from "../src/delve/world.ts";
 import { generateDelveMap } from "./delve-map.ts";

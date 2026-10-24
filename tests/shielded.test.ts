@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { ENEMY_GOLD, SHIELDED_GOLD } from "../src/config.ts";
 import { attackForFewerHits, bout, predict } from "../src/combat.ts";
 import { arrowDamage } from "../src/enemies/ranged.ts";

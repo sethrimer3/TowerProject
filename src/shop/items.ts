@@ -1,4 +1,4 @@
-import type { Save } from "../save-shape.ts";
+import type { Save } from "../save/shape.ts";
 import { CURRENCIES, type CurrencyId } from "./currency.ts";
 import { ENTITLEMENTS, owns, type EntitlementId } from "./entitlements.ts";
 import { boostEvent, boostRefusal } from "../events/progress.ts";

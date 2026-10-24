@@ -4,7 +4,7 @@
 // stream. Pure functions over the save, so tests drive them directly; the
 // game's EquipmentDesk wraps them with the loadout sync and the Gems.
 import type { Mode } from "../entities.ts";
-import { isRecord, wholeIn } from "../decode.ts";
+import { isRecord, wholeIn } from "../save/decode.ts";
 import { snap } from "../exact.ts";
 import { CATEGORY_IDS, EQUIP_MATERIAL_IDS, itemDef, materialOf, type CategoryId, type EquipMaterialId } from "./catalog.ts";
 import {

@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { StatTrainingRow } from "../src/config.ts";
 import { loadout, trainingBulk, trainingFull, trainingPoints, trainingStep, upgradeText, provisionPrice, provisionText } from "../src/progression/loadout.ts";
-import { decode, defaults } from "../src/save.ts";
+import { decode, defaults } from "../src/save/save.ts";
 import { GOLD_SHOP, LIMIT_BREAKS, TRAINING, UPGRADES, isStatRow, levelForXp, trained, trainingCap, trainingCeiling, trainingWorth, xpForLevel } from "../src/config.ts";
 import { addItem } from "../src/equipment/inventory.ts";
 import { Game } from "../src/state.ts";

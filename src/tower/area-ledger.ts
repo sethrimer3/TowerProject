@@ -13,12 +13,12 @@
  * in front of the hero on the new floor; it is a `reward` tile in the
  * floor's changes, and opening it pays nothing more, only shows the reward. */
 import type { ChestTier, Tile } from "../entities.ts";
-import type { Save } from "../save-shape.ts";
+import type { Save } from "../save/shape.ts";
 import type { TowerRun } from "../runs.ts";
 import { TOWER_SECTION } from "../config.ts";
 import { checkpoint } from "../goals.ts";
 import { milestonePoints } from "../modes.ts";
-import { earn } from "../profile.ts";
+import { earn } from "../save/profile.ts";
 import { ENTRY } from "./embedder.ts";
 import type { RoomWorld } from "./room-world.ts";
 

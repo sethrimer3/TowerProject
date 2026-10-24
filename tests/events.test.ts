@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { checkpoint, goalUnlocked } from "../src/goals.ts";
 import {
   DRAWN_MISSIONS, EVENT_DAYS, EVENT_MISSION_COUNT, EVENT_MISSIONS, FIXED_MISSIONS, STUB_MILESTONES, TIER_MEDALS,
@@ -12,7 +12,7 @@ import { decodeRelics } from "../src/economy/relics.ts";
 import { BADGE_IDS, MAX_COPIES } from "../src/cards/badges.ts";
 import { DAY_MS } from "../src/shop/clock.ts";
 import type { Enemy, Tile } from "../src/entities.ts";
-import type { Save } from "../src/save-shape.ts";
+import type { Save } from "../src/save/shape.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 
 const HOUR = 3_600_000;

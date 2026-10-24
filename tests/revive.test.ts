@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { point, type Enemy, type Tile } from "../src/entities.ts";
 import { bout, DEFEAT_MS, heroHpAfter, heroHpDuring, REVIVE_PAUSE_MS, revivals } from "../src/combat.ts";
 import { trainingStep } from "../src/progression/loadout.ts";

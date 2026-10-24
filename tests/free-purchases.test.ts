@@ -5,7 +5,7 @@ import { GOLD_SHOP, TRAINING, xpForLevel } from "../src/config.ts";
 import { addItem } from "../src/equipment/inventory.ts";
 import { buyBomb, buyItem, buyUpgrade, defaultDefendSave } from "../src/defend/progress.ts";
 import { trainingPoints, trainingStep } from "../src/progression/loadout.ts";
-import { decode, defaults } from "../src/save.ts";
+import { decode, defaults } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
 
 const T0 = Date.UTC(2026, 8, 30, 12);

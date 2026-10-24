@@ -12,7 +12,7 @@
  * volley at all and applies the outcome (the hero's HP, kill pay, a fall). */
 import type { Board } from "./board.ts";
 import type { ByFoe, Enemy, Player } from "./entities.ts";
-import type { Save } from "./save-shape.ts";
+import type { Save } from "./save/shape.ts";
 import { critAgainst, facing, guaranteedCrits, isBoss, stealCeiling, thornDamage } from "./combat.ts";
 import { critRule } from "./progression/loadout.ts";
 import { foeAttack } from "./cards/foe-cards.ts";

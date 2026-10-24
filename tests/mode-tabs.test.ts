@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
 import { UPGRADES } from "../src/config.ts";
 import { TREES, skillAvailable } from "../src/progression/skill-trees.ts";

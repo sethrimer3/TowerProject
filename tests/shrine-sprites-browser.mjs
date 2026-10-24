@@ -26,7 +26,7 @@ try {
   await page.locator("#hp").waitFor();
   assert.equal(await page.locator("html").evaluate(e => e.classList.contains("ui-sprites")), false);
   await page.evaluate(async () => {
-    const { defaults } = await import("/src/save.ts");
+    const { defaults } = await import("/src/save/save.ts");
     const { Game } = await import("/src/state.ts");
     const { BOON_IDS } = await import("/src/shrines.ts");
     const s = defaults();
@@ -77,7 +77,7 @@ try {
   // themes override independently, so they don't hide interface subjects.
   for (const [uiTheme, gameTheme, sprites, shown] of [["medieval", "classic", true, true], ["neon", "classic", true, false], ["medieval", "pixel", true, true], ["medieval", "classic", false, false]]) {
     await page.evaluate(async ({ uiTheme, gameTheme, sprites }) => {
-      const { defaults } = await import("/src/save.ts"); const { applyUiTheme } = await import("/src/ui/medieval.ts");
+      const { defaults } = await import("/src/save/save.ts"); const { applyUiTheme } = await import("/src/ui/medieval.ts");
       const s = defaults(); s.themes.push("neonUi", "pixelGame"); Object.assign(s.settings, { uiSprites: sprites, uiTheme, gameTheme }); applyUiTheme(s);
     }, { uiTheme, gameTheme, sprites });
     assert.equal(await page.locator(".boon-ban .boon-icon").first().isVisible(), shown);

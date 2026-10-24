@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { decode, defaults } from "../src/save.ts";
+import { decode, defaults } from "../src/save/save.ts";
 import { xpForLevel } from "../src/config.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 import { workLeft } from "../src/progression/training-jobs.ts";

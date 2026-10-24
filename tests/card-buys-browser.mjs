@@ -35,7 +35,7 @@ try {
     });
     await page.goto(server.resolvedUrls.local[0]); await page.locator("#hp").waitFor();
     await page.evaluate(async () => {
-      const { defaults } = await import("/src/save.ts"); const { Game } = await import("/src/state.ts");
+      const { defaults } = await import("/src/save/save.ts"); const { Game } = await import("/src/state.ts");
       const s = defaults(); Object.keys(s.tutorials).forEach((k) => s.tutorials[k] = true);
       s.upgrades.combatStance = 1; s.upgrades.buildout = 1; s.upgrades.cardBadges = 1;
       s.cardXp.stairs = 50_000; s.gems = 10;

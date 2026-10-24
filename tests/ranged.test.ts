@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { ENEMY_GOLD, RANGED_GOLD, TRAINING, trainedAmount } from "../src/config.ts";
 import { fastShare } from "../src/enemies/fast.ts";
 import { TURN_TICKS, archerTurn, type ArcherClock, ARROW_COST, arrowBoost, arrowDamage, charged, enemiesWithin, FOE_GAIN, foeRange, foeShotCost, held, rangedShare, ready, shotDamage, spent, within, wounded } from "../src/enemies/ranged.ts";
@@ -10,7 +10,7 @@ import { tierCells, tierGold } from "../src/tiers.ts";
 import { generateTowerRoom, RoomWorld } from "../src/tower/room-world.ts";
 import { checkpoint, goalUnlocked, heroClass } from "../src/goals.ts";
 import { deckCards, handBonus } from "../src/cards/cards.ts";
-import { decode } from "../src/save.ts";
+import { decode } from "../src/save/save.ts";
 import { runTrainingOpen, trainingOpen, trainingStep, trainingText } from "../src/progression/loadout.ts";
 import { runTrainingOffer } from "../src/progression/run-training.ts";
 import { runTrainingValue, silverPrice } from "../src/progression/run-training.ts";

@@ -2,7 +2,7 @@ import { test } from "node:test";
 import { snap } from "../src/exact.ts";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { TRAINING, cost, levelForXp, trained, trainingWorth, type StatTrainingRow, trainingDef } from "../src/config.ts";
 import { loadout, trainingStep } from "../src/progression/loadout.ts";
 import { resolveStep, BASE_RULES } from "../src/step-effects.ts";

@@ -21,7 +21,7 @@ try {
   await page.goto(server.resolvedUrls.local[0]); await page.locator("#hp").waitFor();
   const seed = async (settings = {}, large = false, outside = false, packed = false) => {
     await page.evaluate(async ({ settings, large, outside, packed }) => {
-      const { defaults } = await import("/src/save.ts"); const { Game } = await import("/src/state.ts");
+      const { defaults } = await import("/src/save/save.ts"); const { Game } = await import("/src/state.ts");
       const { THEME_IDS } = await import("/src/theme-collection.ts");
       const s = defaults(); Object.keys(s.tutorials).forEach(k => s.tutorials[k] = true);
       s.upgrades.combatStance = 1;

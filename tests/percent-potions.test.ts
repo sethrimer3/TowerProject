@@ -1,7 +1,7 @@
 import { trainNow } from "./train-now.ts";
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
 import { ENTRANCE_Y } from "../src/outside.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";

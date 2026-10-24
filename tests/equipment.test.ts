@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { defaults, decode } from "../src/save.ts";
+import { defaults, decode } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
 import { OutsideWorld, BLACKSMITH } from "../src/outside.ts";
 import { MODES } from "../src/modes.ts";

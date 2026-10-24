@@ -1,5 +1,5 @@
 import type { Mode } from "./entities.ts";
-import type { ModeSave, Save } from "./save-shape.ts";
+import type { ModeSave, Save } from "./save/shape.ts";
 import type { MoveSnapshot, Run } from "./runs.ts";
 import { keepUndos } from "./progression/loadout.ts";
 import { MODES } from "./modes.ts";

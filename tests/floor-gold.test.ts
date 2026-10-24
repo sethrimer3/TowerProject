@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { trainingOpen } from "../src/progression/loadout.ts";
 import { TRAINING, trainedAmount } from "../src/config.ts";
 import { RESEARCH, researched } from "../src/progression/archives.ts";

@@ -82,7 +82,7 @@ try {
     const result = await page.evaluate(async ({ tier, width }) => {
       const { towerTierSpriteScene } = await import("/tests/render-scenes.ts"), { Renderer } = await import("/src/rendering.ts");
       const { loadSpriteFont } = await import("/src/sprite-font.ts"), { THEME_IDS } = await import("/src/theme-collection.ts");
-      const { decode } = await import("/src/save.ts"), { Game } = await import("/src/state.ts");
+      const { decode } = await import("/src/save/save.ts"), { Game } = await import("/src/state.ts");
       await loadSpriteFont(); const { g } = towerTierSpriteScene(tier); g.save.themes = [...THEME_IDS];
       g.effect = { text: "", x: 0, y: 0, until: 0 }; g.blocked = { x: 0, y: 0, until: 0 };
       const before = JSON.stringify(g.save), size = width < 500 ? 360 : 510;

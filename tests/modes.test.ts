@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { MODES, milestonePoints, milestones } from "../src/modes.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { World } from "../src/delve/world.ts";
 import { START_X, TOWER_START_X, goldReward } from "../src/config.ts";

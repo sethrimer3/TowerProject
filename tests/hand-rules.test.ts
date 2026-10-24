@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { HandRules } from "../src/cards/hand-rules.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import type { BadgeId } from "../src/cards/badges.ts";
 import type { Board } from "../src/board.ts";
 import type { CardId } from "../src/cards/cards.ts";

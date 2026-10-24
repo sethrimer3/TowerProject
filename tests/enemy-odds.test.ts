@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { strengthOdds, traitOdds, type OddsSource } from "../src/enemies/odds.ts";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import type { Enemy, EnemyStrength } from "../src/entities.ts";
 import type { TowerRun } from "../src/runs.ts";
 

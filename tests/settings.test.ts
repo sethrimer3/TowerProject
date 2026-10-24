@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { decode, defaults } from "../src/save.ts";
-import { SETTINGS, settingValue, type Setting, type SettingKey } from "../src/settings.ts";
+import { decode, defaults } from "../src/save/save.ts";
+import { SETTINGS, settingValue, type Setting, type SettingKey } from "../src/save/settings.ts";
 
 const rows = Object.entries(SETTINGS) as [SettingKey, Setting][];
 const decoded = (settings: unknown) => decode(JSON.stringify({ version: 3, settings })).settings;

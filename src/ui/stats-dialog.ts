@@ -1,5 +1,5 @@
 import { controlIcon } from "./control-icon.ts";
-import type { LifetimeCurrency, Profile } from "../profile.ts";
+import type { LifetimeCurrency, Profile } from "../save/profile.ts";
 import type { AppContext } from "./app.ts";
 import { el } from "./dom.ts";
 import { currencyAmount } from "./hud.ts";

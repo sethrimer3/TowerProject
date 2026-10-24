@@ -1,4 +1,4 @@
-import { finite, isRecord, time } from "../decode.ts";
+import { finite, isRecord, time } from "../save/decode.ts";
 import { DAY_MS } from "../shop/clock.ts";
 import type { CurrencyId } from "../shop/currency.ts";
 

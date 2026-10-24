@@ -1,6 +1,6 @@
 import { point, type Player, type Tile, type KeyColor } from '../entities.ts';
 import type { AutomoveMemory, Run } from '../runs.ts';
-import type { Save } from '../save-shape.ts';
+import type { Save } from '../save/shape.ts';
 import type { Board, Position } from '../board.ts';
 import { BASE_RULES, isLethal, resolveStep, type StepEffect, type StepRules } from '../step-effects.ts';
 

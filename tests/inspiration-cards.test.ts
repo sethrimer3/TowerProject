@@ -1,13 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { TRAINING, cost, trained, type StatTrainingRow, type UpgradeId } from "../src/config.ts";
 import { deckCards, planHand, upgradeCard, type CardId } from "../src/cards/cards.ts";
 import { TREES } from "../src/progression/skill-trees.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import type { EnemyStrength, Tile } from "../src/entities.ts";
-import type { Save } from "../src/save-shape.ts";
+import type { Save } from "../src/save/shape.ts";
 
 /** The new Inspiration card nodes, in the order they can be bought, with
  * their price, the node each needs and its card (null for a node that opens

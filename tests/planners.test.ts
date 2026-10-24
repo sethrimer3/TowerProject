@@ -5,7 +5,7 @@ import type { AutomoveMemory, DelveRun } from "../src/runs.ts";
 import type { Tile } from "../src/entities.ts";
 import { routeTo } from "../src/pathfinding.ts";
 import { capabilities, chooseDelveStep, DelvePlan } from "../src/delve/automove.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 
 // The planners work from a Position (a board and the run standing on it), so
 // they can be driven on a hand-built board with no Game.

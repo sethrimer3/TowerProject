@@ -2,7 +2,7 @@ import { trainNow } from "./train-now.ts";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { decode, defaults } from "../src/save.ts";
+import { decode, defaults } from "../src/save/save.ts";
 import { random } from "../src/random.ts";
 import { trainingPoints } from "../src/progression/loadout.ts";
 import { xpForLevel } from "../src/config.ts";

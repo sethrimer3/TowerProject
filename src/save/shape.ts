@@ -1,29 +1,29 @@
-/** The shape of the save: each mode's slice (`ModeSave`) and everything kept between runs (`Save`). save.ts loads and decodes it. */
-import type { TrainingJob, TrainingPaid } from "./progression/training-jobs.ts";
-import type { TierRecord } from "./tiers.ts";
-import type { ThemeId } from "./theme-collection.ts";
-import type { ArchivesSave } from "./progression/archives.ts";
-import type { ShrinesSave } from "./shrines.ts";
-import type { CardId, CardLink } from "./cards/cards.ts";
-import type { BadgesSave } from "./cards/badges.ts";
-import type { CardBuysSave } from "./cards/buys.ts";
-import type { CardTreeLevels } from "./cards/trees.ts";
-import type { GoldItemId, TrainingId, UpgradeId } from "./config.ts";
-import type { MaterialId } from "./economy/materials.ts";
-import type { EquipmentSave } from "./equipment/inventory.ts";
-import type { DefendSave } from "./defend/progress.ts";
-import type { GemDrop } from "./economy/gems.ts";
-import type { RunFinds } from "./run-notes.ts";
+/** The shape of the save: each mode's slice (`ModeSave`) and everything kept between runs (`Save`). save/save.ts loads and decodes it. */
+import type { TrainingJob, TrainingPaid } from "../progression/training-jobs.ts";
+import type { TierRecord } from "../tiers.ts";
+import type { ThemeId } from "../theme-collection.ts";
+import type { ArchivesSave } from "../progression/archives.ts";
+import type { ShrinesSave } from "../shrines.ts";
+import type { CardId, CardLink } from "../cards/cards.ts";
+import type { BadgesSave } from "../cards/badges.ts";
+import type { CardBuysSave } from "../cards/buys.ts";
+import type { CardTreeLevels } from "../cards/trees.ts";
+import type { GoldItemId, TrainingId, UpgradeId } from "../config.ts";
+import type { MaterialId } from "../economy/materials.ts";
+import type { EquipmentSave } from "../equipment/inventory.ts";
+import type { DefendSave } from "../defend/progress.ts";
+import type { GemDrop } from "../economy/gems.ts";
+import type { RunFinds } from "../run-notes.ts";
 import type { Settings } from "./settings.ts";
-import type { EntitlementId } from "./shop/entitlements.ts";
-import type { ShopSave } from "./shop/ledger.ts";
-import type { GoalsSave } from "./goals.ts";
-import type { TournamentSave } from "./tournament/progress.ts";
-import type { MailSave } from "./mail/progress.ts";
-import type { MissionsSave } from "./missions/progress.ts";
-import type { EventsSave } from "./events/progress.ts";
+import type { EntitlementId } from "../shop/entitlements.ts";
+import type { ShopSave } from "../shop/ledger.ts";
+import type { GoalsSave } from "../goals.ts";
+import type { TournamentSave } from "../tournament/progress.ts";
+import type { MailSave } from "../mail/progress.ts";
+import type { MissionsSave } from "../missions/progress.ts";
+import type { EventsSave } from "../events/progress.ts";
 import type { Profile } from "./profile.ts";
-import type { TowerRun, DelveRun, AutomoveMemory, Run, MoveSnapshot, Fall } from "./runs.ts";
+import type { TowerRun, DelveRun, AutomoveMemory, Run, MoveSnapshot, Fall } from "../runs.ts";
 export type ModeSave<R extends Run = Run> = {
   history: MoveSnapshot<R>[];
   /** Set while the run's hero lies fallen (a run inside at 0 HP). */
@@ -65,9 +65,9 @@ export type ModeSave<R extends Run = Run> = {
 /** The skill trees a run's currency calls the player back to. */
 export type NoticeTree = "inspiration" | "courage";
 export type Save = {
-  trialAccess: import("./proving-grounds/access.ts").TrialAccess;
+  trialAccess: import("../proving-grounds/access.ts").TrialAccess;
   /** A separate encounter; ordinary mode runs remain untouched. */
-  provingGrounds?: import("./proving-grounds/trial.ts").TrialState;
+  provingGrounds?: import("../proving-grounds/trial.ts").TrialState;
   version: 4;
   tower: ModeSave<TowerRun> & {
     inspiration: number;
@@ -221,6 +221,6 @@ export type Save = {
    * Gold for good. */
   themes: ThemeId[];
   /** The player profile: when it was made and its lifetime tallies, the
-   * currencies earned and Training and research done (profile.ts). */
+   * currencies earned and Training and research done (save/profile.ts). */
   profile: Profile;
 };

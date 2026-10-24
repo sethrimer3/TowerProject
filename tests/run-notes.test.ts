@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { decode, defaults } from "../src/save.ts";
+import { decode, defaults } from "../src/save/save.ts";
 import { point } from "../src/entities.ts";
 import { missing, RESEARCH, status } from "../src/progression/archives.ts";
 import { checkpoint, claimGoal, unlockAt } from "../src/goals.ts";

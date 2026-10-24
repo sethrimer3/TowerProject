@@ -1,5 +1,5 @@
 import { Game } from '../src/state.ts';
-import { defaults } from '../src/save.ts';
+import { defaults } from '../src/save/save.ts';
 import { chooseStep } from '../src/automation.ts';
 import { region } from '../src/delve/labyrinth.ts';
 import { point } from '../src/entities.ts';

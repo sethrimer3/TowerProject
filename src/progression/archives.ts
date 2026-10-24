@@ -1,12 +1,12 @@
 import { FOCUS_PER_RUN, IGNORE_PER_RUN, REGAIN_FLOORS, TARGET_PER_RUN, levelForXp, type UpgradeId } from "../config.ts";
-import type { Settings } from "../settings.ts";
-import type { Save } from "../save-shape.ts";
-import type { Profile } from "../profile.ts";
+import type { Settings } from "../save/settings.ts";
+import type { Save } from "../save/shape.ts";
+import type { Profile } from "../save/profile.ts";
 import { goalUnlocked, type GoalUnlock } from "../goals.ts";
-import { finite as finiteIn, isRecord, wholeIn } from "../decode.ts";
+import { finite as finiteIn, isRecord, wholeIn } from "../save/decode.ts";
 import { intPow } from "../exact.ts";
 import { BUY_QUANTITIES, quantityLabel } from "./buy-quantity.ts";
-import { tally } from "../profile.ts";
+import { tally } from "../save/profile.ts";
 import { carrySpeedUp, completionAt, decodeSpeedUp, endSpeedUp, type SpeedUp } from "./speed-ups.ts";
 
 // The Archives: research that lasts between runs. An archivist takes one

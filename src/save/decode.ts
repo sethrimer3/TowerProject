@@ -1,4 +1,4 @@
-import { snap } from "./exact.ts";
+import { snap } from "../exact.ts";
 
 // Readers for untrusted saved data, shared by every part of the save's
 // decoder: each checks one field's shape, or reads it with a fallback.

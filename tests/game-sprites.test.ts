@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { GAME_SPRITE_URLS, torchAnimationFrame, TORCH_FRAME_COUNT, TORCH_FRAME_MS } from "../src/game-sprites.ts";
-import { decode, defaults } from "../src/save.ts";
+import { decode, defaults } from "../src/save/save.ts";
 
 test("player, torch, and both stairs use deploy-safe sprite assets", () => {
   assert.deepEqual(Object.keys(GAME_SPRITE_URLS), ["player", "torch", "torchFrames", "stairsUp"]);

@@ -7,7 +7,7 @@ import { snap } from "../exact.ts";
 import { UPGRADES, type TrainingId, type UpgradeId } from "../config.ts";
 import type { DelveRun } from "../runs.ts";
 import type { EnemyStrength, Mode } from "../entities.ts";
-import type { Save } from "../save-shape.ts";
+import type { Save } from "../save/shape.ts";
 import { goalUnlocked, type GoalUnlock } from "../goals.ts";
 import { arrowDamage, enemiesWithin } from "../enemies/ranged.ts";
 import { FOE_ATTACK, FOE_GOLD, isFoeCard, type FoeCard } from "./foe-cards.ts";

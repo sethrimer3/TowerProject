@@ -4,7 +4,7 @@ import { generateTowerRoom, RoomWorld } from "../src/tower/room-world.ts";
 import { reachable } from "../src/board.ts";
 import { point } from "../src/entities.ts";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { TOWER_WIDTH, TOWER_HEIGHT, TOWER_START_X, levelForXp, xpForKill, xpForLevel } from "../src/config.ts";
 test("tower rooms are fully generated and reachable from entrance to exit", () => {
   for (let seed = 0; seed < 40; seed++)

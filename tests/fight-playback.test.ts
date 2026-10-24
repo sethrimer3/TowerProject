@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { bout, heroHpDuring, predict, raisedAttack, REVIVE_MS, summarize } from "../src/combat.ts";
 import { BoardPopups, enemyBar, lunges } from "../src/board-popups.ts";

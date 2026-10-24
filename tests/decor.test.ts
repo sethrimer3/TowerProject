@@ -6,7 +6,7 @@ import { clearDecorCache, decorSourceFor, TILE_PX, tileDecor, waterAt, type Deco
 import { DecorLayer } from "../src/render/decor/decor-render.ts";
 import { OutsideGrass } from "../src/render/decor/outside-grass.ts";
 import { OutsideWorld } from "../src/outside.ts";
-import { decode, defaults } from "../src/save.ts";
+import { decode, defaults } from "../src/save/save.ts";
 
 /** A 17x17 room board shaped like a Tower RoomWorld: two chambers split by
  * a wall with a door, pillars, a torch, and a few items. */

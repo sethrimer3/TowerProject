@@ -1,5 +1,5 @@
 import { CARD_IDS, type CardId } from "./cards.ts";
-import { count, isRecord } from "../decode.ts";
+import { count, isRecord } from "../save/decode.ts";
 
 /** The XP each card level costs, from level 1 to 60: five levels at each
  * step of the schedule to level 20, then each level's step 250 XP more

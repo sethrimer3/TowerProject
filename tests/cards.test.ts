@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { BASE_HAND, BASE_HAND_SLOTS, CARDS, CARD_IDS, cardText, explainStuck, GOAL_CARDS, HAND_SLOT_GEMS, MAX_HAND_SLOTS, deckCards, handSlots, nextHandSlotGems, moveCard, placeCard, planHand, upgradeCard, type CardId } from "../src/cards/cards.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { UPGRADES } from "../src/config.ts";
 import type { Board, Position } from "../src/board.ts";
 import type { DelveRun, Run } from "../src/runs.ts";

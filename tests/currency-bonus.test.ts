@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { decode, defaults } from "../src/save.ts";
+import { decode, defaults } from "../src/save/save.ts";
 import { trainingOpen } from "../src/progression/loadout.ts";
 import { TRAINING, cost, type TrainingId, type UpgradeId, trainedAmount } from "../src/config.ts";
 import { TREES } from "../src/progression/skill-trees.ts";

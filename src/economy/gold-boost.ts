@@ -1,4 +1,4 @@
-import type { ModeSave, Save } from "../save-shape.ts";
+import type { ModeSave, Save } from "../save/shape.ts";
 
 /** The Gold ad: each one watched (no ad plays yet) stores real time in
  * which all Gold a run finds is multiplied, up to a cap. */

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults, decode } from "../src/save.ts";
+import { defaults, decode } from "../src/save/save.ts";
 import { MailClient } from "../src/mail/client.ts";
 import { decodeMessage, MAIL_DAYS, MAIL_KEEP_DAYS, type MailItem } from "../src/mail/message.ts";
 import { decodeMail } from "../src/mail/progress.ts";

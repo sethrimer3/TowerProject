@@ -13,7 +13,7 @@ import {
 } from "../events/progress.ts";
 import { postStubMail } from "../mail/server.ts";
 import type { DeskHost } from "./desk.ts";
-import { earn } from "../profile.ts";
+import { earn } from "../save/profile.ts";
 
 /** mulberry32's step: each draw moves the state on by this much. */
 const STEP = 0x6d2b79f5;

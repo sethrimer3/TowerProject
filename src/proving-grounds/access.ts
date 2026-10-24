@@ -1,5 +1,5 @@
-import { isRecord, wholeIn } from "../decode.ts";
-import type { Save } from "../save-shape.ts";
+import { isRecord, wholeIn } from "../save/decode.ts";
+import type { Save } from "../save/shape.ts";
 import { MAX_TRIAL_LEVEL, TRIAL_IDS, type TrialId } from "./catalog.ts";
 export {MAX_TRIAL_LEVEL} from "./catalog.ts";
 

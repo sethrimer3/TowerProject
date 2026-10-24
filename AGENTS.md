@@ -48,7 +48,7 @@ A `Game` built on a save whose Delve run is inside and Tower run isn't opens in 
 Tower and Delve share one `Game` (`src/state.ts`: movement, pickups, doors, run lifecycle, purchases) and `Renderer` (`src/rendering.ts`).
 `game.mode` selects which `save[mode]` slice (run, undo history, revival, bests, looted tiles) is active.
 Each slice holds its own mode's run type (`runs.ts`), both built on `RunCore`: a `TowerRun` adds whether the hero has taken fight damage in the current area (`damaged`) and whether it has climbed past an enemy left in it (`enemiesLeft`), and a `DelveRun` adds the milestone gates crossed (`milestone`).
-The board's pieces (`Tile`, `Enemy`, `Player`, `point`) live in `entities.ts`, which imports nothing, and the save's shape (`Save`, `ModeSave`) in `save-shape.ts`.
+The board's pieces (`Tile`, `Enemy`, `Player`, `point`) live in `entities.ts`, which imports nothing, and the save's shape (`Save`, `ModeSave`) in `save/shape.ts`.
 Automove's memory (`known`, `visited`) sits beside the Delve run in `save.delve.memory`, so undo snapshots never copy or rewind it.
 `Game.run` is either one; Tower-only and Delve-only code reads `game.towerRun` or `game.delveRun`, which throw in the other mode.
 A run may also be `outside` (`src/outside.ts`), the forest clearing before entering.

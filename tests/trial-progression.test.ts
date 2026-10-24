@@ -1,6 +1,6 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {defaults,decode} from "../src/save.ts";
+import {defaults,decode} from "../src/save/save.ts";
 import {decodeTrialAccess} from "../src/proving-grounds/access.ts";
 import {FIRST_TRIAL,MAX_TRIAL_LEVEL} from "../src/proving-grounds/catalog.ts";
 import {nextDifficulty,rewardClaimed,settleTrialVictory} from "../src/proving-grounds/progression.ts";

@@ -1,4 +1,4 @@
-import type { Save } from "../save-shape.ts";
+import type { Save } from "../save/shape.ts";
 import type { Mode } from "../entities.ts";
 import { tierNumeral } from "../tiers.ts";
 import { PASSES } from "../goals.ts";

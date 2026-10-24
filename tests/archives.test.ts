@@ -7,7 +7,7 @@ import {
 } from "../src/progression/archives.ts";
 import { loadout } from "../src/progression/loadout.ts";
 import { UPGRADES } from "../src/config.ts";
-import { decode, defaults } from "../src/save.ts";
+import { decode, defaults } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
 import { ENTRANCE_Y } from "../src/outside.ts";
 import { formatDuration } from "../src/ui/archives-page.ts";

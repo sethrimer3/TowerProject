@@ -1,6 +1,6 @@
 import { snap } from "../exact.ts";
-import type { Save } from "../save-shape.ts";
-import { earn } from "../profile.ts";
+import type { Save } from "../save/shape.ts";
+import { earn } from "../save/profile.ts";
 
 // The currencies the Shop prices offers in. Each is held in the save by its
 // own system (Gems in economy/gems.ts, Gold banked by Game); this table only reads,

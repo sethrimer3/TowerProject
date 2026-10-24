@@ -8,7 +8,7 @@ import {advanceKeymasterEffects} from "../src/proving-grounds/keymaster.ts";
 // captured frame, and the caller decides what to record there.
 import { Renderer } from "../src/rendering.ts";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { decorSourceFor, tileDecor, type TileDecor } from "../src/render/decor/decor.ts";
 import type { DecorLayer } from "../src/render/decor/decor-render.ts";
 import type { Tile } from "../src/entities.ts";

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { decode, defaults } from "../src/save.ts";
+import { decode, defaults } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
 import { CARD_LEVEL_XP } from "../src/cards/levels.ts";
 import { raiseNode } from "../src/cards/trees.ts";

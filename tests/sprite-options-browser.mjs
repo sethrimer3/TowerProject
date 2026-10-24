@@ -23,7 +23,7 @@ try {
   });
   await page.goto(server.resolvedUrls.local[0]); await page.locator("#hp").waitFor();
   await page.evaluate(async () => {
-    const { defaults } = await import("/src/save.ts"), { Game } = await import("/src/state.ts");
+    const { defaults } = await import("/src/save/save.ts"), { Game } = await import("/src/state.ts");
     const save = defaults(); Object.keys(save.tutorials).forEach(k => save.tutorials[k] = true);
     const g = new Game(save); g.newRun({ outside: true, seed: 7 });
     sessionStorage.setItem("__optionsFixture", JSON.stringify(g.save));

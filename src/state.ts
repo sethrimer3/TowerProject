@@ -16,13 +16,13 @@ import { canWarp, claimGoal, goalUnlocked } from "./goals.ts";
 import { volleyTurn, type Shot, type Volley, type VolleyTurn } from "./volley.ts";
 import { missGem } from "./economy/gems.ts";
 import { DelvePlan } from "./delve/automove.ts";
-import { defaults } from "./save.ts";
-import { stampProfile } from "./profile.ts";
+import { defaults } from "./save/save.ts";
+import { stampProfile } from "./save/profile.ts";
 import { defaultFinds, newNotes, noteKey, notesOf } from "./run-notes.ts";
 import { stream, tileRandom } from "./random.ts";
 import { freeTrainingLines, rollFreeTraining } from "./progression/free-training.ts";
 import { doorBlockedMessage, doorName, doorRule, drainsHp, KEY_ORDER, pickupGold, type DoorDiscounts } from "./doors.ts";
-import type { SettingKey } from "./settings.ts";
+import type { SettingKey } from "./save/settings.ts";
 import { skillAvailable } from "./progression/skill-trees.ts";
 import { routeTo, type Step } from "./pathfinding.ts";
 import {
@@ -44,7 +44,7 @@ import {
   type StatTrainingRow,
   type UsedProvision,
 } from "./config.ts";
-import type { Save, ModeSave } from "./save-shape.ts";
+import type { Save, ModeSave } from "./save/shape.ts";
 import type {
   Boosted,
   Run,

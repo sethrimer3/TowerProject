@@ -1,9 +1,9 @@
 /** The profile file: everything the save keeps between runs, with no run in
  * progress, as readable JSON in named sections. The Settings page's dev
  * buttons write it (Export) and read it back over the whole save (Import). */
-import { isRecord } from "./decode.ts";
-import { decodableVersion, decode } from "./save.ts";
-import type { ModeSave, Save } from "./save-shape.ts";
+import { isRecord } from "./save/decode.ts";
+import { decodableVersion, decode } from "./save/save.ts";
+import type { ModeSave, Save } from "./save/shape.ts";
 
 export const PROFILE_FORMAT = "tower-delve-profile";
 

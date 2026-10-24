@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { defaults, decode } from "../src/save.ts";
+import { defaults, decode } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
 import { TREES, columnGap, mapNodes, treeHeight } from "../src/progression/skill-trees.ts";
 import { LIMIT_BREAKS, TRAINING, UPGRADES, cost, type UpgradeId } from "../src/config.ts";

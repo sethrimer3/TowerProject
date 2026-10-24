@@ -1,13 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { TRAINING, cost, trained, type StatTrainingRow } from "../src/config.ts";
 import { deckCards, planHand } from "../src/cards/cards.ts";
 import { RESEARCH } from "../src/progression/archives.ts";
 import { loadout } from "../src/progression/loadout.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
-import type { Save } from "../src/save-shape.ts";
+import type { Save } from "../src/save/shape.ts";
 
 const hpRow = TRAINING.find((t) => t.id === "hp")! as StatTrainingRow;
 

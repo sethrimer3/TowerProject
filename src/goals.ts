@@ -1,4 +1,4 @@
-import type { Save } from "./save-shape.ts";
+import type { Save } from "./save/shape.ts";
 import { CURRENCIES, type CurrencyId } from "./shop/currency.ts";
 import { owns, type EntitlementId } from "./shop/entitlements.ts";
 import { TIERS } from "./tiers.ts";

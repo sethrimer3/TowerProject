@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { point, type Enemy, type Player, type Tile } from "../src/entities.ts";
 import { bout, heroHpAfter, predict, summarize, type Crits } from "../src/combat.ts";
 import { forecast } from "../src/crit-forecast.ts";

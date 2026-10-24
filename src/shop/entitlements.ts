@@ -1,4 +1,4 @@
-import type { Save } from "../save-shape.ts";
+import type { Save } from "../save/shape.ts";
 
 // Entitlements: permanent perks bought once (today, with real money). The
 // save owns them (`save.entitlements`); the Shop only grants them, and the

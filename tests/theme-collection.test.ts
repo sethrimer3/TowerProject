@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { decode, defaults } from "../src/save.ts";
-import { decodeSettings } from "../src/settings.ts";
+import { decode, defaults } from "../src/save/save.ts";
+import { decodeSettings } from "../src/save/settings.ts";
 import { goldMultipliers, goldMultiplierTotal } from "../src/economy/gold-multipliers.ts";
 import { THEME_IDS, THEME_PRICE, canBuyTheme, gameLook, themeGoldFactor, themesOf, uiLook } from "../src/theme-collection.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";

@@ -43,7 +43,7 @@ test("Heart Door Resilience research shrinks a Heart Door's toll 5% a level, for
   const { resolveStep, BASE_RULES } = await import("../src/step-effects.ts");
   const { RESEARCH, researched } = await import("../src/progression/archives.ts");
   const { Game } = await import("../src/state.ts");
-  const { defaults } = await import("../src/save.ts");
+  const { defaults } = await import("../src/save/save.ts");
   const heart: Tile = { kind: "door", door: { type: "fullHp" } };
   const hpAfter = (heartToll?: number, scale?: number) => {
     const out = resolveStep(player(0, 0, 0, 101, 101), heart, { ...BASE_RULES, heartToll, scale });

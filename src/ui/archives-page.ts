@@ -5,7 +5,7 @@ import {
   type ArchivesSave, type ArchivistSlot, type ResearchCategory, type ResearchId, type ResearchRequirement, type ResearchTarget,
 } from "../progression/archives.ts";
 import { UPGRADES } from "../config.ts";
-import type { Save } from "../save-shape.ts";
+import type { Save } from "../save/shape.ts";
 import { loadout } from "../progression/loadout.ts";
 import { unlockAt } from "../goals.ts";
 import { tierNumeral } from "../tiers.ts";

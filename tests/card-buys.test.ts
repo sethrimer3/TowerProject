@@ -1,12 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { decode, defaults } from "../src/save.ts";
+import { decode, defaults } from "../src/save/save.ts";
 import { CARD_RARITY_WEIGHTS } from "../src/cards/rarity.ts";
 import { buyCards, buyOne, buysLeft, CARD_BUY_GEMS, decodeCardBuys, defaultCardBuys, rarityOn, type CardBuysSave } from "../src/cards/buys.ts";
 import { CARD_LEVEL_XP } from "../src/cards/levels.ts";
 import { CARD_TREES, cardMaxLevel, levelIn, type CardOpened } from "../src/cards/trees.ts";
-import { stampProfile } from "../src/profile.ts";
+import { stampProfile } from "../src/save/profile.ts";
 import { random } from "../src/random.ts";
 import type { CardId } from "../src/cards/cards.ts";
 

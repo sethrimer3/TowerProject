@@ -1,4 +1,4 @@
-import { count, isRecord, whole } from "../decode.ts";
+import { count, isRecord, whole } from "../save/decode.ts";
 import { isLeague, type League } from "./leagues.ts";
 
 // The Tournament's saved state (`save.tournament`): Tickets, the league the

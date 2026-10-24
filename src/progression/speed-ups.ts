@@ -1,5 +1,5 @@
 import type { ArchivistSlot, ResearchJob } from "./archives.ts";
-import { finite, isRecord } from "../decode.ts";
+import { finite, isRecord } from "../save/decode.ts";
 
 /** How much faster a Speed Up makes an archivist research. */
 export const SPEED_UP_FACTORS = [1.5, 2, 3, 4] as const;

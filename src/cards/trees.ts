@@ -8,7 +8,7 @@
 import { CARD_IDS, type CardId } from "./cards.ts";
 import { BASE_MAX_LEVEL, cardLevel, cardLevelTotal, cardPoints } from "./levels.ts";
 import { rarityRank, type CardRarity } from "./rarity.ts";
-import { isRecord, wholeIn } from "../decode.ts";
+import { isRecord, wholeIn } from "../save/decode.ts";
 import { snap } from "../exact.ts";
 import { hasLock, type DoorKind } from "../doors.ts";
 import type { Enemy, KeyColor, Tile } from "../entities.ts";

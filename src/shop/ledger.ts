@@ -1,6 +1,6 @@
 import { OFFERS, type OfferId } from "./offers.ts";
 import type { ShopClock } from "./clock.ts";
-import { time, whole, wholeIn } from "../decode.ts";
+import { time, whole, wholeIn } from "../save/decode.ts";
 
 // The Shop's own saved state (`save.shop`): how often each offer has been
 // bought, the transactions made, and the last server time confirmed. What

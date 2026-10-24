@@ -4,7 +4,7 @@ import { newKeymaster, keymasterStep, enterKeymaster, keymasterDoorAt, decodeKey
 import { TRAINING, type TrainingId } from "../config.ts";
 import type { Player } from "../entities.ts";
 import { CARDS, type CardId } from "../cards/cards.ts";
-import { finite, isRecord, wholeIn } from "../decode.ts";
+import { finite, isRecord, wholeIn } from "../save/decode.ts";
 import { tileRandom } from "../random.ts";
 import { MAX_TRIAL_LEVEL } from "./access.ts";
 import { FIRST_TRIAL, TRIALS, difficultyMultiplier, type TrialId } from "./catalog.ts";

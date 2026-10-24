@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { ATMOSPHERE_CONFIG, Renderer } from "../src/rendering.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
 
 test("atmospheric configuration has restrained, tunable defaults", () => {

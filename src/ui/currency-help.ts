@@ -1,4 +1,4 @@
-import type { NoticeTree, Save } from "../save-shape.ts";
+import type { NoticeTree, Save } from "../save/shape.ts";
 import { MODES } from "../modes.ts";
 
 // The Inspiration and Courage trees' help (their heading's ? button): how

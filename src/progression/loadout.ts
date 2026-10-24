@@ -4,7 +4,7 @@ import { snap } from "../exact.ts";
 import { PARRY_CAP, type CritRule } from "../combat.ts";
 import type { Mode } from "../entities.ts";
 import type { RunCore } from "../runs.ts";
-import type { Save } from "../save-shape.ts";
+import type { Save } from "../save/shape.ts";
 import { boonFactor, runBoons } from "../shrines.ts";
 import { badgeFactor } from "../cards/badges.ts";
 import { treeHeroFactor } from "../cards/trees.ts";

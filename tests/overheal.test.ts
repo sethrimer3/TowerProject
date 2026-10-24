@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { decode, defaults } from "../src/save.ts";
+import { decode, defaults } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
 import { cost, schedulePrice, trainedAmount, trainingDef, UPGRADES } from "../src/config.ts";
 import { trainingGold } from "../src/progression/training-jobs.ts";
@@ -9,7 +9,7 @@ import { healAfterVictory, hpCeiling, regenerate, resolveStep, POTION_HEAL, type
 import { boostMaxHp, shiftHero } from "../src/progression/hero-stats.ts";
 import { potionShade, type Player, type Tile } from "../src/entities.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
-import type { Save } from "../src/save-shape.ts";
+import type { Save } from "../src/save/shape.ts";
 
 const hero = (hp: number, extra: Partial<Player> = {}): Player =>
   ({ x: 0, y: 0, hp, maxHp: 1000, attack: 50, defense: 0, keys: { yellow: 0, blue: 0, red: 0 }, ...extra });

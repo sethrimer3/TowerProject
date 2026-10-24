@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { decode, defaults } from "../src/save.ts";
+import { decode, defaults } from "../src/save/save.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { chargesLeft, chargesPerRun, climbFloor, floorsToRegain, regainEvery } from "../src/run-charges.ts";
 import { RESEARCH, researched } from "../src/progression/archives.ts";

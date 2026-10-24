@@ -25,7 +25,7 @@ try {
   await page.locator("#hp").waitFor();
   assert.equal(await page.locator("html").evaluate(e => e.classList.contains("ui-sprites")), false);
   await page.evaluate(async () => {
-    const { defaults } = await import("/src/save.ts");
+    const { defaults } = await import("/src/save/save.ts");
     const { Game } = await import("/src/state.ts");
     const { UPGRADES } = await import("/src/config.ts");
     const s = defaults();
@@ -83,7 +83,7 @@ try {
   // Each theme controls its own art without changing the saved preference.
   for (const [uiTheme, gameTheme, shown] of [["medieval", "classic", true], ["neon", "classic", false], ["medieval", "pixel", true], ["neon", "pixel", false]]) {
     await page.evaluate(async ({ uiTheme, gameTheme }) => {
-      const { defaults } = await import("/src/save.ts");
+      const { defaults } = await import("/src/save/save.ts");
       const { applyUiTheme } = await import("/src/ui/medieval.ts");
       const s = defaults(); s.themes.push("neonUi", "pixelGame");
       Object.assign(s.settings, { uiSprites: true, uiTheme, gameTheme }); applyUiTheme(s);
@@ -91,7 +91,7 @@ try {
     assert.equal(await page.locator('.goal-art .sprite-replacement[src$="goal-damage-prediction.png"]').first().isVisible(), shown);
   }
   await page.evaluate(async () => {
-    const { defaults } = await import("/src/save.ts");
+    const { defaults } = await import("/src/save/save.ts");
     const { applyUiTheme } = await import("/src/ui/medieval.ts"); applyUiTheme(defaults());
   });
   assert.equal(await page.locator('.goal-art .sprite-replacement[src$="goal-damage-prediction.png"]').first().isVisible(), false);

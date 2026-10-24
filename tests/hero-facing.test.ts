@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { THEMED_BOARDS } from "../src/render/boards/themed-boards.ts";
 import { ARCADE } from "../src/render/boards/arcade-board.ts";

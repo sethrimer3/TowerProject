@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { MODES } from "../src/modes.ts";
 import { BLACKSMITH, OutsideWorld, TOURNAMENT_HALL } from "../src/outside.ts";
 import { TournamentClient } from "../src/tournament/client.ts";

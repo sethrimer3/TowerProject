@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { attackForFewerHits, predict } from "../src/combat.ts";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { tileInfo } from "../src/ui/tile-info.ts";
 import type { Enemy, Player } from "../src/entities.ts";
 import { enemyTitle } from "../src/enemies/scaling.ts";

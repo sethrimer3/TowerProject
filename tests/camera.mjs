@@ -13,7 +13,7 @@ await page.goto(process.env.TEST_URL || "http://127.0.0.1:5173/");
 const results = await page.evaluate(async () => {
   const { Renderer } = await import("/src/rendering.ts");
   const { Game } = await import("/src/state.ts");
-  const { defaults, decode } = await import("/src/save.ts");
+  const { defaults, decode } = await import("/src/save/save.ts");
   const canvas = document.createElement("canvas");
   canvas.style.cssText = "position:fixed;left:-9999px;width:400px;height:400px";
   document.body.append(canvas);

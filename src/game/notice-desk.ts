@@ -1,5 +1,5 @@
 import { levelForXp, type UpgradeId } from "../config.ts";
-import type { NoticeTree } from "../save-shape.ts";
+import type { NoticeTree } from "../save/shape.ts";
 import { deckCards, type CardId } from "../cards/cards.ts";
 import { hasPointsToSpend, totalCardLevels } from "../cards/trees.ts";
 import { equipmentWaiting } from "../equipment/inventory.ts";

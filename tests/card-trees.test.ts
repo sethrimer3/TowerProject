@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { decode, defaults } from "../src/save.ts";
+import { decode, defaults } from "../src/save/save.ts";
 import { BASE_MAX_LEVEL, CARD_LEVEL_XP, MAX_CARD_LEVEL, MAX_CARD_XP } from "../src/cards/levels.ts";
 import { CARD_TREES, RESPEC_GEMS, cardLook, cardMaxLevel, decodeCardTrees, pointsLeft, raiseRefusal, runExtras, freeUpChances, treeBonus, treeFactor, treeOverheal, type CardOpened, type CardTreeLevels } from "../src/cards/trees.ts";
 import { RunPurse } from "../src/game/run-purse.ts";

@@ -6,7 +6,7 @@ import { point, type EnemyStrength, type Tile, type EnemyProfile } from "../src/
 import { region } from "../src/delve/labyrinth.ts";
 import { generateTowerFloor, isBossFloor } from "../src/tower/index.ts";
 import { getTowerGateEnemy } from "../src/enemies/scaling.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { loadout } from "../src/progression/loadout.ts";
 import { predict } from "../src/combat.ts";
 

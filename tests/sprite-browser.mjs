@@ -25,7 +25,7 @@ try {
     if (fixture) { localStorage.setItem("towerdelve.v1", fixture); sessionStorage.removeItem("__spriteFixture"); }
   });
   await page.evaluate(async () => {
-    const { defaults } = await import("/src/save.ts");
+    const { defaults } = await import("/src/save/save.ts");
     const { Game } = await import("/src/state.ts");
     const s = defaults();
     Object.keys(s.tutorials).forEach(k => s.tutorials[k] = true);
@@ -96,7 +96,7 @@ try {
     ["medieval", "pixel", true, false], ["neon", "pixel", false, false],
   ]) {
     const actual = await page.evaluate(async ({ uiTheme, gameTheme }) => {
-      const { defaults } = await import("/src/save.ts");
+      const { defaults } = await import("/src/save/save.ts");
       const { applyUiTheme } = await import("/src/ui/medieval.ts");
       const s = defaults();
       s.themes.push("neonUi", "pixelGame");

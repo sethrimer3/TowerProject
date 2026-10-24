@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { ENEMY_GOLD, FAST_GOLD, WIDTH } from "../src/config.ts";
 import { bout, heroHpAfter, instakill, predict, replies, summarize } from "../src/combat.ts";
 import { forecast } from "../src/crit-forecast.ts";

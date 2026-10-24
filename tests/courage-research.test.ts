@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { ENEMY_GOLD } from "../src/config.ts";
 import { RESEARCH, describe, researched, status } from "../src/progression/archives.ts";
 import { resolveStep, type StepEffect } from "../src/step-effects.ts";

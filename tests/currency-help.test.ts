@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { currencyHelp } from "../src/ui/currency-help.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 
 test("the currency help tells the slower rates only once the player has climbed past them", () => {
   const save = defaults();

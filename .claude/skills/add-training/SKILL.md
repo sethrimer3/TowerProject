@@ -57,7 +57,7 @@ Below it, list what the build touches (from Build) and ask for approval.
 
 Work in an isolated worktree, cherry-pick onto `main`, push and clean up, per the user's memory notes.
 
-**The row.** Add it to `TRAINING` in the order the tab should list it within its group. `defaults()` and the decoders in `save.ts` build `training`, `trainingPaid`, `trainerRanks` and `trainingCredit` from `TRAINING`, and the decoder clamps ranks to `max`, so saves need nothing else. Reset, auto-continue, Buy Quantity, the Training dot (`trainingWaiting`) and the run's training bar come for free.
+**The row.** Add it to `TRAINING` in the order the tab should list it within its group. `defaults()` and the decoders in `save/save.ts` build `training`, `trainingPaid`, `trainerRanks` and `trainingCredit` from `TRAINING`, and the decoder clamps ranks to `max`, so saves need nothing else. Reset, auto-continue, Buy Quantity, the Training dot (`trainingWaiting`) and the run's training bar come for free.
 
 **A stat row** needs nothing more when its stat already exists. A new stat goes into `Stat` and `Loadout` in `progression/loadout.ts`, the hero (`Player`, set in `newRun` and shifted by `changeLoadout`), `shownStat` if it isn't shown whole, and the code where it acts (the shroud in `combat.ts`; anything a step does goes through `resolveStep` in `step-effects.ts`, so previews and planners agree).
 

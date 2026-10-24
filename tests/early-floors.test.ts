@@ -6,7 +6,7 @@ import { doorCost } from "../src/doors.ts";
 import { point, type Player, type Tile } from "../src/entities.ts";
 import type { Run } from "../src/runs.ts";
 import { loadout } from "../src/progression/loadout.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { reachable } from "../src/board.ts";
 import { TOWER_START_X } from "../src/config.ts";
 import { generateTowerFloor, isBossFloor, type TowerFloor } from "../src/tower/index.ts";

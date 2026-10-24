@@ -5,7 +5,7 @@ import {KEYMASTER_DOORS,DOOR_FLIGHT_MS,advanceKeymasterEffects,mimicInterval,MAX
 import {trialBoard,trialPlan,autoplayTrial} from "../src/proving-grounds/autoplay.ts";
 import {TrialNavigation} from "../src/proving-grounds/navigation.ts";
 import {nextDifficulty,settleTrialVictory} from "../src/proving-grounds/progression.ts";
-import {defaults,decode} from "../src/save.ts";
+import {defaults,decode} from "../src/save/save.ts";
 import {Game} from "../src/state.ts";
 import {TrialSession} from "../src/proving-grounds/session.ts";
 

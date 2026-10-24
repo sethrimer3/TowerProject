@@ -4,7 +4,7 @@ import { analyzeDelve, flood } from '../src/delve/analyzer.ts';
 import { region, depthAt } from '../src/delve/labyrinth.ts';
 import { World, generate } from '../src/delve/world.ts';
 import { Game } from '../src/state.ts';
-import { defaults, decode } from '../src/save.ts';
+import { defaults, decode } from '../src/save/save.ts';
 import { point } from '../src/entities.ts';
 import { FULL } from './test-size.ts';
 

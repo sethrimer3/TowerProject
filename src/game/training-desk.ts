@@ -7,7 +7,7 @@ import { BOOST_FOREVER, permanentBoost, trainingRate } from "../shop/entitlement
 import { batchWork, claimBoost, doneAt, finishGems, jobInvested, nextTrainerGems, ranksInTraining, trainerBatch, trainingGold, trainingJob, trainingSeconds, workLeft, trainingSlots, type TrainingJob } from "../progression/training-jobs.ts";
 import { affordsGems, type DeskHost } from "./desk.ts";
 import { changeLoadout } from "./hero-sync.ts";
-import { tally } from "../profile.ts";
+import { tally } from "../save/profile.ts";
 
 const rowOf = (id: TrainingId) => TRAINING.find((t) => t.id === id)!;
 /** The fixed quantities, largest first: a batch continues at the largest one its ranks reach. */

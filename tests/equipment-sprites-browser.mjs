@@ -23,7 +23,7 @@ try {
   await page.goto(server.resolvedUrls.local[0]); await page.locator("#hp").waitFor();
   assert.equal(await page.locator("html").evaluate(e => e.classList.contains("ui-sprites")), false);
   await page.evaluate(async () => {
-    const { defaults } = await import("/src/save.ts"); const { Game } = await import("/src/state.ts");
+    const { defaults } = await import("/src/save/save.ts"); const { Game } = await import("/src/state.ts");
     const s = defaults(); Object.keys(s.tutorials).forEach(k => s.tutorials[k] = true);
     Object.assign(s.upgrades, { gear: 1, delve: 1, combatStance: 1, buildout: 1 });
     Object.assign(s.settings, { uiSprites: true, reduceMotion: true, transition: "instant", weatherSound: false });
@@ -78,7 +78,7 @@ try {
   await ready("#gear");
   for (const [uiTheme, gameTheme, sprites, shown] of [["medieval", "classic", true, true], ["neon", "classic", true, false], ["medieval", "pixel", true, true], ["medieval", "classic", false, false]]) {
     await page.evaluate(async ({ uiTheme, gameTheme, sprites }) => {
-      const { defaults } = await import("/src/save.ts"); const { applyUiTheme } = await import("/src/ui/medieval.ts");
+      const { defaults } = await import("/src/save/save.ts"); const { applyUiTheme } = await import("/src/ui/medieval.ts");
       const s = defaults(); s.themes.push("neonUi", "pixelGame"); Object.assign(s.settings, { uiSprites: sprites, uiTheme, gameTheme }); applyUiTheme(s);
     }, { uiTheme, gameTheme, sprites });
     assert.equal((await border(".eq-grid .rar-common")).includes("ui-equip-frame-common"), shown);

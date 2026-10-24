@@ -173,7 +173,7 @@ A score that couldn't be sent is kept (`save.tournament.pending`) and sent when 
 
 ## Save
 
-`save.tournament` (in `defaults()`, the `Save` type and `decodeTournament`, read through `src/decode.ts`'s readers):
+`save.tournament` (in `defaults()`, the `Save` type and `decodeTournament`, read through `src/save/decode.ts`'s readers):
 
 | Field | Holds |
 |---|---|

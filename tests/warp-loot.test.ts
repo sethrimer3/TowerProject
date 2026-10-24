@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { RESEARCH, researched, status } from "../src/progression/archives.ts";
 import { checkpoint } from "../src/goals.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
 import { enemiesOnFloor, floorKillSilver, skippedSilver, warpLootSilver } from "../src/economy/warp-loot.ts";
 

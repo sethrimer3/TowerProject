@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { defaults, decode } from "../src/save.ts";
+import { defaults, decode } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { greaterBossSpot } from "../src/tower/greater-boss.ts";

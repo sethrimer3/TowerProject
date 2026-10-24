@@ -26,7 +26,7 @@ try {
   await page.locator("#hp").waitFor();
   assert.equal(await page.locator("html").evaluate(e => e.classList.contains("ui-sprites")), false);
   await page.evaluate(async () => {
-    const { defaults } = await import("/src/save.ts");
+    const { defaults } = await import("/src/save/save.ts");
     const { Game } = await import("/src/state.ts");
     const { UPGRADES } = await import("/src/config.ts");
     const { BADGE_IDS } = await import("/src/cards/badges.ts");
@@ -95,7 +95,7 @@ try {
   // The same saved preference follows independent UI and Game overrides.
   for (const [uiTheme, gameTheme, shown] of [["medieval", "classic", true], ["neon", "classic", false], ["medieval", "pixel", true], ["neon", "pixel", false]]) {
     await page.evaluate(async ({ uiTheme, gameTheme }) => {
-      const { defaults } = await import("/src/save.ts");
+      const { defaults } = await import("/src/save/save.ts");
       const { applyUiTheme } = await import("/src/ui/medieval.ts");
       const s = defaults(); s.themes.push("neonUi", "pixelGame");
       Object.assign(s.settings, { uiSprites: true, uiTheme, gameTheme }); applyUiTheme(s);
@@ -104,7 +104,7 @@ try {
     assert.equal(await page.locator(".sprite-card-label").first().isVisible(), shown);
   }
   await page.evaluate(async () => {
-    const { defaults } = await import("/src/save.ts");
+    const { defaults } = await import("/src/save/save.ts");
     const { applyUiTheme } = await import("/src/ui/medieval.ts");
     applyUiTheme(defaults());
   });

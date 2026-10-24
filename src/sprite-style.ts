@@ -1,4 +1,4 @@
-import type { Save } from "./save-shape.ts";
+import type { Save } from "./save/shape.ts";
 import { gameLook, uiLook } from "./theme-collection.ts";
 
 /** The starting Medieval interface and the free Classic look share the

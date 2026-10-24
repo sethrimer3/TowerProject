@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { tileInfo, tileInfoLine } from "../src/ui/tile-info.ts";
 import { MODES } from "../src/modes.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";

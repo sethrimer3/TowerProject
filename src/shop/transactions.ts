@@ -1,4 +1,4 @@
-import type { Save } from "../save-shape.ts";
+import type { Save } from "../save/shape.ts";
 import { CURRENCIES } from "./currency.ts";
 import { DAY_MS, gmtDay } from "./clock.ts";
 import { grant, grantRefusal, itemName } from "./items.ts";

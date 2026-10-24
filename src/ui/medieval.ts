@@ -1,6 +1,6 @@
 import { soundEnabledBy, play } from "../sound.ts";
 import { flourishesEnabledBy, sparks } from "./flourish.ts";
-import type { Save } from "../save-shape.ts";
+import type { Save } from "../save/shape.ts";
 import { uiLook } from "../theme-collection.ts";
 import { usesUiSprites, usesGameSprites } from "../sprite-style.ts";
 import { loadSpriteFont } from "../sprite-font.ts";

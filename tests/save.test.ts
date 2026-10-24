@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { decode, defaults } from "../src/save.ts";
+import { decode, defaults } from "../src/save/save.ts";
 import { BASE_HAND, deckCards } from "../src/cards/cards.ts";
 import { defaultEquipment } from "../src/equipment/inventory.ts";
 

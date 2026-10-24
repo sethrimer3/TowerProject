@@ -1,6 +1,6 @@
 import { performance } from "node:perf_hooks";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { random } from "../src/random.ts";
 import { planHand, walkAll } from "../src/cards/cards.ts";
 

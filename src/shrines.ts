@@ -3,7 +3,7 @@ import type { Enemy, Tile } from "./entities.ts";
 import { snap } from "./exact.ts";
 import { PARRY_CAP } from "./combat.ts";
 import { drawAt } from "./random.ts";
-import { isRecord, whole } from "./decode.ts";
+import { isRecord, whole } from "./save/decode.ts";
 
 // Shrines (docs/agents/shrines.md): once Unlock Shrines is researched, a
 // Tower run earns a boon every so many floors, and the player picks each

@@ -13,7 +13,7 @@ try {
   await fixClock(page);
   await page.goto(process.env.TEST_URL || "http://127.0.0.1:5173/");
   await page.evaluate(async () => {
-    const { Game } = await import("/src/state.ts"), { defaults } = await import("/src/save.ts");
+    const { Game } = await import("/src/state.ts"), { defaults } = await import("/src/save/save.ts");
     const g = new Game(defaults()); g.newRun({ outside: true }); g.save.upgrades.delve = 1;
     g.switchMode("delve"); g.newRun({ outside: true });
     sessionStorage.setItem("outsideFixture", JSON.stringify(g.save));
@@ -41,7 +41,7 @@ try {
   await expect(page.locator("#height")).toHaveText("1");
   const result = await page.evaluate(async () => {
     const { Game } = await import("/src/state.ts");
-    const { defaults } = await import("/src/save.ts");
+    const { defaults } = await import("/src/save/save.ts");
     const { Renderer } = await import("/src/rendering.ts");
     const { outsideWeather } = await import("/src/outside.ts");
     document.head.querySelectorAll('style,link[rel="stylesheet"]').forEach(e => e.remove());

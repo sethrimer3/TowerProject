@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { decode, defaults } from "../src/save.ts";
+import { decode, defaults } from "../src/save/save.ts";
 import { checkpoint, goalUnlocked } from "../src/goals.ts";
 import { DAY_MS } from "../src/shop/clock.ts";
 import { LEAGUES, LEAGUE_INFO, caveLabel, nextLeague } from "../src/tournament/leagues.ts";

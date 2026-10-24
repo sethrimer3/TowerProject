@@ -1,6 +1,6 @@
 import type { Mode, Player } from "../entities.ts";
 import type { Run } from "../runs.ts";
-import type { Save } from "../save-shape.ts";
+import type { Save } from "../save/shape.ts";
 import { loadout } from "../progression/loadout.ts";
 import { MODES } from "../modes.ts";
 import { loadoutShift, shiftHero } from "../progression/hero-stats.ts";

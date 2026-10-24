@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { applyUiTheme } from "../src/ui/medieval.ts";
 
 test("UI sprites apply, turn off and reset without losing the selected theme", () => {
