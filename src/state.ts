@@ -3,7 +3,7 @@ import { chooseStep } from "./automation.ts";
 import { cost } from "./progression/upgrades.ts";
 import { CARDS, cardText, dealCard, deckCards, explainStuck, handSlots, handBonus, keptLinks, planHand, planTarget, shootsWith, stillOpen, type CardId, type CardPlan, type HandBonus, type StuckReport } from "./cards/cards.ts";
 import { addCardXp, PASSIVE_CARDS } from "./cards/levels.ts";
-import { cardMaxLevel, compounded, doorStat, foeCardStat, foeStat, foeStats, keyStat, freeUpChances, freeUpFactors, hasPointsToSpend, pointsLeft, runCardTrees, runFoeCut, treeBonus, treeFactor, treeOverheal, type FoeTreeCard, type TreeBonus } from "./cards/trees.ts";
+import { TRADE_COLORS, cardMaxLevel, compounded, doorStat, foeCardStat, foeStat, foeStats, keyStat, freeUpChances, freeUpFactors, hasPointsToSpend, pointsLeft, runCardTrees, runFoeCut, tradeStat, treeBonus, treeFactor, treeOverheal, type FoeTreeCard, type TradeColor, type TreeBonus } from "./cards/trees.ts";
 import { aggroTurn } from "./enemies/flying.ts";
 import { arrowRange, foeOn } from "./enemies/ranged.ts";
 import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./cards/badges.ts";
@@ -17,8 +17,8 @@ import { defaults } from "./save/save.ts";
 import { stampProfile } from "./save/profile.ts";
 import { defaultFinds, newNotes, noteKey, notesOf } from "./run-notes.ts";
 import { stream, tileRandom } from "./random.ts";
-import { freeTrainingLines, rollFreeTraining } from "./progression/free-training.ts";
-import { doorBlockedMessage, doorName, doorRule, drainsHp, KEY_ORDER, pickupGold, type DoorDiscounts } from "./doors.ts";
+import { freeLevelRow, freeTrainingLines, rollFreeTraining, type FreeGroup } from "./progression/free-training.ts";
+import { doorBlockedMessage, doorName, doorRule, drainsHp, KEY_ORDER, keyWord, pickupGold, type DoorDiscounts } from "./doors.ts";
 import type { SettingKey } from "./save/settings.ts";
 import { routeTo, type Step } from "./pathfinding.ts";
 import { TOWER_START_X, TOWER_SECTION } from "./config.ts";
@@ -152,6 +152,8 @@ const LESSON_STEPS = 10;
 const TURN_MS = 220;
 /** Salts the run seed for Find Gold Key's roll on each new floor. */
 const YELLOW_KEY_SALT = 0x6e11a;
+/** Salt the run seed for GK -> BK's and BK -> RK's Floor Key rolls on each new floor. */
+const FLOOR_KEY_SALT: Record<TradeColor, number> = { blue: 0xb1f10, red: 0x4ef10 };
 /** A step resolved and about to be taken: the tile stepped onto, what it
  * does, where it is, whether it goes in the undo history, and for a fight
  * the hero's critical strikes in it as played (`crits`) and whether it
@@ -2321,6 +2323,7 @@ export class Game {
       silver += interest;
       this.events.climbed(this.mode, this.run.seed, interest > 0 && interest >= purse.interestCap);
       this.findYellowKey(f, at);
+      this.findTradeKeys(f, at);
       this.provisionKeys(f);
       this.regainCharges(at);
       this.floorHeal();
@@ -2337,13 +2340,27 @@ export class Game {
     const given: TrainingId[] = [];
     for (let f = 0; f < floors; f++)
       for (const id of rollFreeTraining(this.save, this.run, this.boons?.freeUp ?? 0, freeUpFactors(this.treeBonus), freeUpChances(this.treeBonus))) {
-        const offer = runTrainingOffer(this.save, this.run, id);
-        this.run.training = { ...this.run.training, [id]: offer.bought + 1 };
-        this.applyRunTraining(offer);
+        this.giveFreeLevel(id);
         given.push(id);
       }
     if (given.length) this.freeTrained = { lines: freeTrainingLines(given), at: performance.now() };
     this.events.record("freeUpgrades", given.length);
+  }
+  /** A free level of `group` from a trade (GK -> BK's and BK -> RK's Free
+   * Utility), `pick` choosing its row (`freeLevelRow`): it joins the run's
+   * training as a floor's do, announced the same way. A trade can be undone,
+   * so it counts toward no Event. */
+  trainFree(group: FreeGroup, pick: number) {
+    const id = freeLevelRow(this.save, this.run, group, pick);
+    if (!id) return;
+    this.giveFreeLevel(id);
+    this.freeTrained = { lines: freeTrainingLines([id]), at: performance.now() };
+  }
+  /** Training row `id` gains a free level for the run, as a Silver rank would, costing nothing. */
+  private giveFreeLevel(id: TrainingId) {
+    const offer = runTrainingOffer(this.save, this.run, id);
+    this.run.training = { ...this.run.training, [id]: offer.bought + 1 };
+    this.applyRunTraining(offer);
   }
   /** Find Gold Key: on floor `floor` climbed for the first time in the
    * run, a gold key under the research's chance. The roll is a fixed
@@ -2356,6 +2373,20 @@ export class Game {
     keys.yellow = snap(keys.yellow + 1);
     noteKey(this.run, "yellow", 1);
     this.gain(at.x, at.y, "+1 gold key", { tile: { kind: "key", color: "yellow" } });
+  }
+  /** GK -> BK's and BK -> RK's Floor Key: on floor `floor` climbed for the
+   * first time in the run, a key of the colour each trades for under its
+   * chance, a fixed number per run seed, floor and colour, as Find Gold
+   * Key's. */
+  private findTradeKeys(floor: number, at: { x: number; y: number }) {
+    for (const color of TRADE_COLORS) {
+      const chance = tradeStat(this.treeBonus, color, "FloorKey");
+      if (!chance || tileRandom(-1, floor, (this.run.seed ^ FLOOR_KEY_SALT[color]) | 0) * 100 >= chance) continue;
+      const keys = this.run.player.keys;
+      keys[color] = snap(keys[color] + 1);
+      noteKey(this.run, color, 1);
+      this.gain(at.x, at.y, `+1 ${keyWord(color)}`, { tile: { kind: "key", color } });
+    }
   }
   /** The hero takes the stairs; `floorSkip` (Skip on STAIRS) climbs past
    * the next floor too. */
@@ -2387,6 +2418,7 @@ export class Game {
       for (let f = highest; f < this.run.height; f++) this.events.climbed(this.mode, this.run.seed, interest > 0 && interest >= purse.interestCap);
       this.events.best("floor", this.run.height + 1);
       this.findYellowKey(this.run.height, p);
+      this.findTradeKeys(this.run.height, p);
       this.provisionKeys(this.run.height);
       this.floorHeal();
       this.freeTrain(this.run.height - highest);

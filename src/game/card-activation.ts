@@ -1,18 +1,20 @@
-import { SIPHONS, SMELTS, TRADERS, isSiphon, isSmelt, isTrader, type CardId, type SiphonCard } from "../cards/cards.ts";
+import { SIPHONS, SMELTS, TRADERS, isSiphon, isSmelt, isTrader, type CardId, type SiphonCard, type TraderCard } from "../cards/cards.ts";
 import { BADGES, badgesOn, badgeValue, type BadgeId, type RunBadge } from "../cards/badges.ts";
 import { TRAINING, type StatTrainingRow } from "../progression/training.ts";
 import { xpBase } from "../progression/xp.ts";
+import type { FreeGroup } from "../progression/free-training.ts";
+import { drawAt } from "../random.ts";
 import type { Mode, KeyColor } from "../entities.ts";
 import { snap } from "../exact.ts";
 import { healUpTo } from "../combat.ts";
 import { boostMaxHp, shiftHero } from "../progression/hero-stats.ts";
-import { treeBonus } from "../cards/trees.ts";
+import { tradeStat, treeBonus } from "../cards/trees.ts";
 import { rankShift } from "../progression/loadout.ts";
 import { noteKey } from "../run-notes.ts";
 import type { HandRules } from "../cards/hand-rules.ts";
 import type { GainArt } from "../shown.ts";
 import { keyCount, wholeChange } from "../whole.ts";
-import { keyWord } from "../doors.ts";
+import { KEY_NAMES, keyWord } from "../doors.ts";
 import type { RunPurse } from "./run-purse.ts";
 import type { DeskHost } from "./desk.ts";
 import type { Finds } from "./finds.ts";
@@ -37,11 +39,18 @@ export interface ActivationHost extends DeskHost {
   recordHeal(n: number): void;
   /** Card `id` gains `xp` toward its levels. */
   gainCardXp(id: CardId, xp: number): void;
+  /** A free level of `group` for the run, `pick` (in [0, 1)) choosing its
+   * row (`Game.trainFree`). */
+  trainFree(group: FreeGroup, pick: number): void;
   /** A turn of its own begins: undo can take it back. */
   rememberTurn(): void;
   /** The step being taken pays out, so it is a turn undo stops at. */
   eventful(): void;
 }
+
+/** Salt the run seed for a trader's rolls on each trade: its Forge, its
+ * Smelter, its free Utility level and the row that level goes to. */
+const FORGE_SALT = 0xf0e6e, SMELTER_SALT = 0x5e17e, TRADE_FREE_SALT = 0x7f4ee, TRADE_PICK_SALT = 0x7f1c4;
 
 /** A card of the hand activating: a card that acts in place doing what it
  * does (a siphon, a trader, a smelt), and every card's badges paying
@@ -120,14 +129,8 @@ export class CardActivation {
     const host = this.host, run = host.run, p = run.player;
     host.rememberTurn();
     if (isSiphon(card)) this.siphon(card, scale);
-    else if (isTrader(card)) {
-      const { from, keys, to } = TRADERS[card];
-      p.keys[from] = snap(p.keys[from] - keys);
-      p.keys[to] = snap(p.keys[to] + scale);
-      noteKey(run, to, scale);
-      host.gain(p.x, p.y, `−${keys} ${keyWord(from)}s`, { tile: { kind: "key", color: from } });
-      host.gain(p.x, p.y, `+${keyCount(scale)} ${keyWord(to)}`, { tile: { kind: "key", color: to } });
-    } else if (isSmelt(card)) {
+    else if (isTrader(card)) this.trade(card, scale);
+    else if (isSmelt(card)) {
       const color = SMELTS[card].color;
       const healed = snap(healUpTo(p.hp, snap(host.handRules.smeltHeal(card) * scale), host.handRules.hpCeiling) - p.hp);
       p.keys[color] = snap(p.keys[color] - 1);
@@ -136,6 +139,27 @@ export class CardActivation {
       host.recordHeal(healed);
     }
     (run.cardUses ??= {})[card] = host.handRules.cardUses(card) + 1;
+  }
+  /** A trader's turn: its keys (`tradeCost`) traded for a key of the next
+   * colour, a second under its tree's Forge chance and, when the Forge
+   * gives one, a third under its Smelter's; and under its Free Utility
+   * chance, a free Utility level. Each rolls a fixed number per run seed
+   * and use, so undo can't roll a trade again. */
+  private trade(card: TraderCard, scale: number) {
+    const host = this.host, run = host.run, p = run.player, tree = treeBonus(run.cardTrees);
+    const { from, to } = TRADERS[card], keys = host.handRules.tradeCost(card), use = host.handRules.cardUses(card);
+    const roll = (salt: number) => drawAt((run.seed ^ salt) >>> 0, use);
+    const rolls = (salt: number, chance: number) => !!chance && roll(salt) * 100 < chance;
+    const forged = rolls(FORGE_SALT, tradeStat(tree, to, "Forge")), smelted = forged && rolls(SMELTER_SALT, tradeStat(tree, to, "Smelter"));
+    const got = snap(scale * (1 + +forged + +smelted));
+    p.keys[from] = snap(p.keys[from] - keys);
+    p.keys[to] = snap(p.keys[to] + got);
+    noteKey(run, to, got);
+    host.gain(p.x, p.y, `−${keyCount(keys)} ${keyWord(from)}s`, { tile: { kind: "key", color: from } });
+    const gained = `+${keyCount(got)} ${keyWord(to)}${got > 1 ? "s" : ""}`;
+    host.gain(p.x, p.y, gained, { tile: { kind: "key", color: to } });
+    if (forged) host.message = `${smelted ? `Master ${KEY_NAMES[to]} Smelter` : `${KEY_NAMES[to]} Forge`} · ${gained}`;
+    if (rolls(TRADE_FREE_SALT, tradeStat(tree, to, "TradeFreeUtility"))) host.trainFree("utility", roll(TRADE_PICK_SALT));
   }
   /** A siphon's turn: the run's top levels of its training row (its
    * `siphonCost`) traded for a key of its colour. The hero and the run's

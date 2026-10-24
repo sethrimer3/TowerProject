@@ -3,7 +3,7 @@
  * words (`nodeName`, `statText`), and the card of the node picked in it
  * (`cardTreeCardHtml`). The tree itself comes from `cards/trees.ts`. */
 import { CARDS, type CardId } from "../cards/cards.ts";
-import { CARD_TREES, cardLook, nodeCap, nodeLevel, nodeOpen, opensAt, treeNode, type CardOpened, type CardTreeLevels, type CardTreeNode, type ColorKeyPart, type ColorKeyStat, type DoorLockPart, type DoorLockStat, type FoeCardStat, type FoePart, type FoeTreeCard, type TreeStat } from "../cards/trees.ts";
+import { CARD_TREES, cardLook, nodeCap, nodeLevel, nodeOpen, opensAt, treeNode, type CardOpened, type CardTreeLevels, type CardTreeNode, type ColorKeyPart, type ColorKeyStat, type DoorLockPart, type DoorLockStat, type FoeCardStat, type FoePart, type FoeTreeCard, type TradeColor, type TradePart, type TradeStat, type TreeStat } from "../cards/trees.ts";
 import type { DoorKind } from "../doors.ts";
 import type { KeyColor } from "../entities.ts";
 import { CARD_RARITY_NAMES, type CardRarity } from "../cards/rarity.ts";
@@ -21,6 +21,15 @@ function byKeyColor<T>(each: (color: KeyColor, word: string) => Record<ColorKeyP
   const words: Record<KeyColor, string> = { yellow: "Gold", blue: "Blue", red: "Red" };
   return Object.fromEntries((Object.keys(words) as KeyColor[]).flatMap((color) =>
     Object.entries(each(color, words[color])).map(([part, value]) => [`${color}${part}`, value]))) as Record<ColorKeyStat, T>;
+}
+
+/** One entry for each key trader's own stats (`TradeStat`), `each` giving
+ * a trader's, by part, from the colour it trades for and that colour's
+ * capitalized word. */
+function byTrade<T>(each: (color: TradeColor, word: string) => Record<TradePart, T>) {
+  const words: Record<TradeColor, string> = { blue: "Blue", red: "Red" };
+  return Object.fromEntries((Object.keys(words) as TradeColor[]).flatMap((color) =>
+    Object.entries(each(color, words[color])).map(([part, value]) => [`${color}${part}`, value]))) as Record<TradeStat, T>;
 }
 
 /** How each door card's doors are named in its stats' words: one, many,
@@ -71,6 +80,7 @@ const STAT_NAMES: Record<TreeStat, string> = {
   keyHeal: "Key Heal", keyOverheal: "Key Overheal", keySilver: "Key Silver", plainDoorCost: "Plain Doors", heartDoorCost: "Heart Doors", doubleKey: "Locksmith", masterKey: "Master Key",
   ...byKeyColor((_, word) => ({ KeyHeal: `${word} Key Heal`, KeyOverheal: `${word} Key Overheal`, KeyGold: `${word} Key Gold`, KeyFind: `${word} Key Find`, KeySilver: `${word} Key Silver`,
     KeyChest: `${word} Key Chest`, DoorCost: `${word} Key Cost`, DoubleKey: `Locksmith ${word}`, MasterKey: `Master ${word} Key` })),
+  ...byTrade((_, word) => ({ TradeCost: "Efficiency", TradeFreeUtility: "Free Utility", FloorKey: `Extra ${word} Key`, Forge: `${word} Forge`, Smelter: `Master ${word} Smelter` })),
   ...byFoeCard(() => ({ Gold: "Bounty", InstakillGold: "Instakill Bounty", Silver: "Spoils", Attack: "Attack", Defense: "Defense", Shroud: "Shroud", CritChance: "Crit Chance", CritFactor: "Crit Factor",
     KillXp: "Kill XP", SpawnRate: "Spawn Rate", Material: "Salvage", InstakillMaterial: "Instakill Salvage", Equipment: "Equipment Drop", InstakillMaxHp: "Instakill Vigor",
     StealOverheal: "Lifesteal Overheal", SurpriseAttack: "Surprise Attack", Cells: "Cells", Takedown: "Takedown", Tangle: "Tangle", FirstStrike: "First Strike", ChargeShot: "Charge Shot" })),
@@ -158,6 +168,13 @@ const STAT_TEXT: Record<TreeStat, (n: string) => string> = {
     MasterKey: (n) => `${n}% chance a ${color} key picked up opens every door with a ${color} lock on its floor`,
     };
   }),
+  ...byTrade((color, word): Record<TradePart, (n: string) => string> => ({
+    TradeCost: (n) => `−${n}% of the keys each trade for a ${color} key takes`,
+    TradeFreeUtility: (n) => `${n}% chance of a free Utility level with each trade for a ${color} key, trained or not`,
+    FloorKey: (n) => `${n}% chance of a ${color} key on each floor new to the run`,
+    Forge: (n) => `${n}% chance a trade for a ${color} key gives a second`,
+    Smelter: (n) => `${n}% chance a ${word} Forge gives a third ${color} key`,
+  })),
   ...byFoeCard(({ a, one, many }): Record<FoePart, (n: string) => string> => ({
     Gold: (n) => `+${n}% Gold from each ${one} killed`,
     InstakillGold: (n) => `+${n}% Gold from each Instakill of ${a}`,
@@ -255,6 +272,10 @@ const STAT_LINES: Record<TreeStat, [string, Unit]> = {
     KeySilver: [`Silver per ${word.toLowerCase()} key`, "+"], KeyChest: [`${word} Key Chest chance`, "%"], DoorCost: [`${word} key cost`, "−%"],
     DoubleKey: [`Locksmith ${word} chance`, "%"], MasterKey: [`Master ${word} Key chance`, "%"],
   })),
+  ...byTrade((color, word): Record<TradePart, [string, Unit]> => ({
+    TradeCost: ["Keys per trade", "−%"], TradeFreeUtility: ["Free Utility chance per trade", "%"], FloorKey: [`Extra ${color} key chance`, "%"],
+    Forge: [`${word} Forge chance`, "%"], Smelter: [`Master ${word} Smelter chance`, "%"],
+  })),
   ...byFoeCard(({ one, many }): Record<FoePart, [string, Unit]> => ({
     Gold: [`Gold from ${many}`, "+%"], InstakillGold: ["Instakill Gold", "+%"], Silver: [`Silver per ${one}`, "+"],
     Attack: [`ATK vs ${many}`, "+%"], Defense: [`DEF vs ${many}`, "+%"], Shroud: [`Shroud vs ${many}`, "+%"], CritChance: [`Crit % vs ${many}`, "+%"], CritFactor: [`Crit x vs ${many}`, "+%"],
@@ -291,6 +312,10 @@ const STAT_ICONS: Record<TreeStat, () => string> = {
   ...byKeyColor((color) => {
     const key = () => itemSprite(`key_${color}`);
     return { KeyHeal: ui("health"), KeyOverheal: ui("health"), KeyGold: ui("gold"), KeyFind: key, KeySilver: silver, KeyChest: () => itemSprite("chest_treasure_open"), DoorCost: key, DoubleKey: key, MasterKey: key };
+  }),
+  ...byTrade((color) => {
+    const key = () => itemSprite(`key_${color}`);
+    return { TradeCost: key, TradeFreeUtility: ui("arrow-up"), FloorKey: key, Forge: key, Smelter: key };
   }),
   ...byFoeCard(() => ({ Gold: ui("gold"), InstakillGold: ui("gold"), Silver: silver, Attack: ui("attack"), Defense: ui("defense"), Shroud: ui("log"), CritChance: ui("attack"), CritFactor: ui("attack"),
     KillXp: ui("arrow-up"), SpawnRate: ui("upgrades"), Material: () => itemSprite("chest_silver"), InstakillMaterial: () => itemSprite("chest_silver"), Equipment: () => itemSprite("chest_gold"),

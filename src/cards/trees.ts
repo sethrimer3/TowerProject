@@ -5,7 +5,7 @@
  * levels raise the stats it names (`TreeStat`) for as long as the run's hand
  * holds the card, summed with every other card in the hand that raises the
  * same stat into one card factor. */
-import { CARD_IDS, type CardId } from "./cards.ts";
+import { CARD_IDS, TRADERS, type CardId, type TraderCard } from "./cards.ts";
 import { BASE_MAX_LEVEL, cardLevel, cardLevelTotal, cardPoints } from "./levels.ts";
 import { rarityRank, type CardRarity } from "./rarity.ts";
 import { isRecord, wholeIn } from "../save/decode.ts";
@@ -97,6 +97,8 @@ export type TreeStat =
   | "keySilver"
   /** A key colour's own stats (GOLD, BLUE and RED KEY's trees), for its keys only. */
   | ColorKeyStat
+  /** A key trader's own stats (GK -> BK's and BK -> RK's trees), for its trades only. */
+  | TradeStat
   /** An enemy card's own stats (WEAK through NON-BOSS ENEMY's trees), against the enemies it covers only. */
   | FoeCardStat
   /** Max HP for the run, its own factor beside the boons' and the Max HP badge's. */
@@ -173,6 +175,22 @@ const colorKeyStats = (parts: readonly ColorKeyPart[]) => KEY_COLORS.flatMap((co
 /** Key colour `color`'s own stat `part` in `bonus`. */
 export const keyStat = (bonus: TreeBonus, color: KeyColor, part: ColorKeyPart) => bonus[`${color}${part}`];
 
+/** What a key trader's own stats (GK -> BK's and BK -> RK's trees) raise,
+ * each named `${colour}${part}` by the colour it trades for: Trade Cost
+ * (the percent less of the keys each trade takes, its Efficiency), and the
+ * flat chances of a free Utility level on each trade (Trade Free Utility),
+ * of a key of the colour on each floor new to the run (Floor Key), of a
+ * second key from a trade (Forge), and of a third when the Forge gives one
+ * (Smelter). */
+export const TRADE_PARTS = ["TradeCost", "TradeFreeUtility", "FloorKey", "Forge", "Smelter"] as const;
+export type TradePart = (typeof TRADE_PARTS)[number];
+export type TradeColor = (typeof TRADERS)[TraderCard]["to"];
+export type TradeStat = `${TradeColor}${TradePart}`;
+export const TRADE_COLORS: readonly TradeColor[] = ["blue", "red"];
+const tradeStats = (parts: readonly TradePart[]) => TRADE_COLORS.flatMap((color) => parts.map((part): TradeStat => `${color}${part}`));
+/** The trader for key colour `color`'s own stat `part` in `bonus`. */
+export const tradeStat = (bonus: TreeBonus, color: TradeColor, part: TradePart) => bonus[`${color}${part}`];
+
 /** What a door card's own stats (GOLD, HEART and WOODEN DOOR's trees)
  * raise, for its doors only (`hasLock`: a door with a gold lock, one
  * draining HP, a Wooden Door), each named `${kind}Lock${part}` and added to
@@ -232,7 +250,7 @@ export function foeStats(bonus: TreeBonus, part: FoePart): Partial<Record<FoeTre
 /** The stats added as they are, not as percents of a factor. */
 export const FLAT_STATS: ReadonlySet<TreeStat> = new Set<TreeStat>(["floorHeal", "overhealMax", "stairSkip", "potionMaxHp", "potionSilver", "freeOffenseChance", "freeDefenseChance", "freeUtilityChance",
   "doorSilver", "doorHeal", "skeletonKey", "lockPick", "secretKnock", "doorChest", "yellowLockHeal", "yellowTransmute", "woodTransmute", "heartLockPick", "heartShroud", "druidKey", ...doorLockStats(["Silver", "Chest", "Knock"]), "keyChest", "keyHeal", "keyOverheal", "keySilver", "doubleKey", "masterKey", "surpriseAttack", "foeAttackCut", "stealOverheal", "parry", "reviveChance",
-  "attackShardSilver", "defenseShardSilver", "powerStrike", "takedown", "tangle", "greaterTakedown", "greaterTangle", "bossCells", "chestSilver", "chestCells", "supplyChance", "equipmentChance", "treasureFloor", "rarityUp", "chestDouble", "chestTriple", ...colorKeyStats(FLAT_KEY_PARTS), ...foeCardStats(FLAT_FOE_PARTS)]);
+  "attackShardSilver", "defenseShardSilver", "powerStrike", "takedown", "tangle", "greaterTakedown", "greaterTangle", "bossCells", "chestSilver", "chestCells", "supplyChance", "equipmentChance", "treasureFloor", "rarityUp", "chestDouble", "chestTriple", ...colorKeyStats(FLAT_KEY_PARTS), ...tradeStats(["TradeFreeUtility", "FloorKey", "Forge", "Smelter"]), ...foeCardStats(FLAT_FOE_PARTS)]);
 
 /** One node of a card's tree: the stats each of its levels raises, its
  * rarity, how many levels it holds from the start (`levels`: 0 for a node
@@ -265,6 +283,28 @@ function keyTree(color: KeyColor, n: Record<"heal" | "gold" | "silver" | "goldBo
     { id: "maxHp", stats: { maxHp: n.maxHp }, rarity: "rare", levels: 0, max: 5, after: "doorCost" },
     { id: "locksmith", stats: own("DoubleKey", 1), rarity: "epic", levels: 0, max: 5, after: "maxHp" },
     { id: "masterKey", stats: own("MasterKey", n.masterKey), rarity: "legendary", levels: 0, max: 5, after: "locksmith" },
+  ];
+}
+
+/** A key trader's tree (GK -> BK's and BK -> RK's), for the colour `to`
+ * it trades for, `n` its levels' amounts: Key Find, then Key Gold, Key
+ * Silver, Gold Bonus and Trade Free Utility; Efficiency (Trade Cost, 1% a
+ * level), then Door Cost (1%), Floor Key (1%), Forge and Smelter. Its
+ * commons hold 10 levels from the start. */
+function traderTree(to: TradeColor, n: Record<"gold" | "silver" | "goldBonus" | "freeUtility" | "forge" | "smelter", number>): CardTreeNode[] {
+  const own = (part: ColorKeyPart, each: number) => ({ [`${to}${part}`]: each }) as CardTreeNode["stats"];
+  const trade = (part: TradePart, each: number) => ({ [`${to}${part}`]: each }) as CardTreeNode["stats"];
+  return [
+    common("find", own("KeyFind", 1), 5, 10),
+    { id: "gold", stats: own("KeyGold", n.gold), rarity: "uncommon", levels: 0, max: 5, after: "find" },
+    { id: "silver", stats: own("KeySilver", n.silver), rarity: "rare", levels: 0, max: 5, after: "gold" },
+    { id: "goldBonus", stats: { goldBonus: n.goldBonus }, rarity: "epic", levels: 0, max: 5, after: "silver" },
+    { id: "freeUtility", stats: trade("TradeFreeUtility", n.freeUtility), rarity: "legendary", levels: 0, max: 5, after: "goldBonus" },
+    common("efficiency", trade("TradeCost", 1), 5, 10),
+    { id: "doorCost", stats: own("DoorCost", 1), rarity: "uncommon", levels: 0, max: 5, after: "efficiency" },
+    { id: "floorKey", stats: trade("FloorKey", 1), rarity: "rare", levels: 0, max: 5, after: "doorCost" },
+    { id: "forge", stats: trade("Forge", n.forge), rarity: "epic", levels: 0, max: 5, after: "floorKey" },
+    { id: "smelter", stats: trade("Smelter", n.smelter), rarity: "legendary", levels: 0, max: 5, after: "forge" },
   ];
 }
 
@@ -387,6 +427,9 @@ export const CARD_TREES: Partial<Record<CardId, readonly CardTreeNode[]>> = {
   yellowKey: keyTree("yellow", { heal: 1, gold: 2, silver: 0.1, goldBonus: 1, freeUtility: 0.5, chest: 0.2, find: 1, maxHp: 5, masterKey: 2 }),
   blueKey: keyTree("blue", { heal: 2, gold: 4, silver: 0.2, goldBonus: 2, freeUtility: 1, chest: 0.3, find: 2, maxHp: 10, masterKey: 2 }),
   redKey: keyTree("red", { heal: 3, gold: 6, silver: 0.3, goldBonus: 3, freeUtility: 1.5, chest: 0.4, find: 3, maxHp: 15, masterKey: 1 }),
+  // GK -> BK's and BK -> RK's Key Find, Key Gold, Key Silver and Door Cost are BLUE and RED KEY's own, added to theirs.
+  blueTrader: traderTree("blue", { gold: 2, silver: 0.1, goldBonus: 1, freeUtility: 1, forge: 2, smelter: 2 }),
+  redTrader: traderTree("red", { gold: 3, silver: 0.2, goldBonus: 2, freeUtility: 2, forge: 2, smelter: 2 }),
   monster: [
     common("attack", { foeAttack: 2 }, 4, 5),
     { id: "critChance", stats: { critChance: 1 }, rarity: "uncommon", levels: 0, max: 5, after: "attack" },
@@ -609,7 +652,7 @@ export type TreeBonus = Record<TreeStat, number>;
 const NO_BONUS = Object.freeze(Object.fromEntries(
   ["floorGold", "floorSilver", "goldBonus", "silverBonus", "freeOffense", "freeDefense", "freeUtility", "freeOffenseChance", "freeDefenseChance", "freeUtilityChance", "floorHeal", "overhealMax", "stairSkip", "percentPotions", "potionHeal", "potionMaxHp", "potionSilver", "regen", "shroud", "parry", "reviveChance",
     "doorCost", "doorGold", "doorSilver", "doorHeal", "skeletonKey", "lockPick", "secretKnock", "doorChest", ...doorLockStats(DOOR_LOCK_PARTS), "yellowLockHeal", "yellowTransmute", "woodTransmute", "heartLockCost", "heartLockPick", "heartShroud", "woodKeyCost", "woodDurability", "druidKey", "keyChest", "keyFind", "keyGold", "keyHeal", "keyOverheal", "keySilver", "plainDoorCost", "heartDoorCost", "doubleKey", "masterKey",
-    ...colorKeyStats(COLOR_KEY_PARTS), ...foeCardStats(FOE_PARTS), "maxHp", "foeAttack", "foeDefense", "foeGold", "foeSilver", "critChance", "critFactor", "killXp", "surpriseAttack", "foeAttackCut", "stealOverheal", "moreEnemies", "attackShard", "defenseShard", "attackShardGold", "defenseShardGold",
+    ...colorKeyStats(COLOR_KEY_PARTS), ...tradeStats(TRADE_PARTS), ...foeCardStats(FOE_PARTS), "maxHp", "foeAttack", "foeDefense", "foeGold", "foeSilver", "critChance", "critFactor", "killXp", "surpriseAttack", "foeAttackCut", "stealOverheal", "moreEnemies", "attackShard", "defenseShard", "attackShardGold", "defenseShardGold",
     "attackShardSilver", "defenseShardSilver", "powerStrike", "takedown", "tangle", "greaterTakedown", "greaterTangle",
     "bossAttack", "bossDefense", "bossShroud", "bossGold", "bossCells", "chestGold", "chestSilver", "chestCells", "supplyChance", "equipmentChance", "treasureFloor", "rarityUp", "chestDouble", "chestTriple",
     "shotAttack", "bossShotAttack", "shotSpeed", "shotRange", "chargeShot"].map((s) => [s, 0]),

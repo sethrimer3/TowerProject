@@ -61,6 +61,14 @@ export function rollFreeTraining(save: Pick<Save, "training" | "upgrades" | "goa
   return picked;
 }
 
+/** The row a free level of `group` given apart from a floor's rolls goes to
+ * in `run` (GK -> BK's and BK -> RK's Free Utility, on a trade), `pick` (in
+ * [0, 1)) choosing among the rows it can; none when no row can take it. */
+export function freeLevelRow(save: Pick<Save, "training" | "upgrades" | "goals">, run: Pick<RunCore, "training" | "hand">, group: FreeGroup, pick: number): TrainingId | undefined {
+  const rows = candidates(save, run, group);
+  return rows.length ? rows[Math.floor(pick * rows.length)] : undefined;
+}
+
 /** The lines announcing free levels: "+N name" for each row, in the order
  * first given. */
 export function freeTrainingLines(ids: readonly TrainingId[]) {

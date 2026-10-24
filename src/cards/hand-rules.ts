@@ -1,14 +1,14 @@
 import { BADGES, badgeOn, badgesOn, badgeValue, type RunBadge } from "./badges.ts";
 import type { Board } from "../board.ts";
 import type { DoorDiscounts } from "../doors.ts";
-import { SIPHONS, SMELTS, TRADERS, isSiphon, isSmelt, isTrader, linkedToNext, walkAll, type CardId, type CardRules, type HandAt, type SiphonCard, type SmeltCard } from "./cards.ts";
+import { SIPHONS, SMELTS, TRADERS, isSiphon, isSmelt, isTrader, linkedToNext, walkAll, type CardId, type CardRules, type HandAt, type SiphonCard, type SmeltCard, type TraderCard } from "./cards.ts";
 import type { Mode } from "../entities.ts";
 import type { Run } from "../runs.ts";
 import type { Save } from "../save/shape.ts";
 import { snap } from "../exact.ts";
 import { MODES, type ModeProfile } from "../modes.ts";
 import { drawAt } from "../random.ts";
-import { treeBonus } from "./trees.ts";
+import { tradeStat, treeBonus } from "./trees.ts";
 import { boughtInRun } from "../progression/run-training.ts";
 
 /** Mixed into the run seed to start Skip's stream of rolls. */
@@ -262,20 +262,25 @@ export class HandRules implements HandAt {
 
   /** Whether a card that acts in place can act now (`planHand` asks),
    * inside a run only: a siphon while enough of its training levels are
-   * left for its next use, a trader (GK -> BK, BK -> RK) while the 3 keys
-   * it trades are held, and a smelt (Smelt GK, BK, RK) while its key is held
+   * left for its next use, a trader (GK -> BK, BK -> RK) while the keys
+   * it trades are held (`tradeCost`), and a smelt (Smelt GK, BK, RK) while its key is held
    * and its whole heal would land under the Overheal ceiling. */
   canAct(card: CardId) {
     if (this.run.outside) return false;
     const p = this.run.player;
     if (isSiphon(card)) return this.siphonLevel(card) >= this.siphonCost(card);
-    if (isTrader(card)) return p.keys[TRADERS[card].from] >= TRADERS[card].keys;
+    if (isTrader(card)) return p.keys[TRADERS[card].from] >= this.tradeCost(card);
     if (isSmelt(card)) return p.keys[SMELTS[card].color] >= 1 && snap(this.hpCeiling - p.hp) >= this.smeltHeal(card);
     return false;
   }
   /** Times card `card`, one that acts in place, has acted this run. */
   cardUses(card: CardId) {
     return this.run.cardUses?.[card] ?? 0;
+  }
+  /** The keys trader `card` takes a trade: its 3, less its tree's Efficiency. */
+  tradeCost(card: TraderCard) {
+    const { keys, to } = TRADERS[card], off = Math.min(100, tradeStat(treeBonus(this.run.cardTrees), to, "TradeCost"));
+    return snap((keys * (100 - off)) / 100);
   }
   /** Smelt `card`'s heal: its percent of max HP (10%, 30% or 90%). */
   smeltHeal(card: SmeltCard) {
