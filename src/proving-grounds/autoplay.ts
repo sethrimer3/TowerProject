@@ -6,9 +6,8 @@ import { ARENA_POTIONS, ARENA_SIZE, floorAt, key, trialStep, type TrialState } f
 
 /** Expose the encounter to the normal Tower card planner. Replan each turn
  * because slime targets can move. The ordinary Game/run is never mutated. */
-export function trialPlan(s: TrialState) {
-  if (s.mode !== "cards" || s.status !== "active") return null;
-  const world: Board = {
+export function trialBoard(s: TrialState): Board {
+  return {
     width: s.room === "staging" ? 9 : ARENA_SIZE, floor: 1,
     tile(x,y): Tile {
       if (!floorAt(s.room,x,y)) return {kind:"wall"};
@@ -23,7 +22,13 @@ export function trialPlan(s: TrialState) {
     },
     step(x,y,dx,dy) { return floorAt(s.room,x+dx,y+dy) ? {x:x+dx,y:y+dy} : null; },
     clear() {},
+    typicalEnemy() { return {name:"Light Elemental",hp:s.bossHp,attack:Math.max(1,Math.ceil(s.player.maxHp*.04)),defense:0,tier:1,strength:"boss"}; },
   };
+}
+
+export function trialPlan(s: TrialState) {
+  if (s.mode !== "cards" || s.status !== "active") return null;
+  const world=trialBoard(s);
   const run: TowerRun = { seed:s.seed, player:{...s.player, keys:{yellow:0,blue:0,red:0}},
     height:1,kills:0,treasures:0,changes:{},floor:1,damaged:false };
   return planHand({world,run},s.hand,"tower");

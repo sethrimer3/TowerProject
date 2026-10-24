@@ -106,3 +106,5 @@ Tests (e.g. `tests/progression.test.ts`) assert numbers taken from them, so keep
 
 The `add-upgrade` skill's `references/panels.md` describes each panel's rows, prices, effects and unlocks (skill trees, the Archives, the Defend Armory): update it when those mechanisms change.
 The `add-training` skill lists the files behind Training's pricing and value functions: update it when they move.
+
+Proving Grounds reuses `Game.trainInRun` and `RunTrainingBar` through an isolated trial `Game` for ATK, DEF and Max HP, preserving normal Silver prices and unlocks while keeping the ordinary run and permanent training unchanged (see `proving-grounds.md`).

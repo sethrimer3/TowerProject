@@ -85,8 +85,8 @@ bindMedievalFeedback(() => uiLook(game.save) === "medieval", () => game.save.set
 // The frame loop settles fights as they finish playing out.
 game.fights.playsFights = true;
 const renderer = new Renderer(document.querySelector("#world")!, game);
-onSpriteFontLoaded(() => renderVitals(game));
-window.addEventListener("resize", () => renderVitals(game));
+onSpriteFontLoaded(() => renderVitals(shownGame()));
+window.addEventListener("resize", () => renderVitals(shownGame()));
 function renderPortrait() {
   const portraitCtx = (document.querySelector("#portrait-sprite") as HTMLCanvasElement).getContext("2d")!;
   portraitCtx.clearRect(0, 0, 24, 24);
@@ -120,7 +120,8 @@ const runNotes = new RunNotesDialog(ctx);
 // The Tournament's server (a stand-in until it exists), and what waits on it.
 const tournament = new TournamentClient(game, stubTournament(() => game.save.tournament, () => game.clock()));
 const runEnd = new RunEndDialog(ctx, tournament, runNotes);
-const provingGrounds = new ProvingGroundsDialog(game, modal, save);
+const provingGrounds = new ProvingGroundsDialog(game, modal, save, update, () => isBoard(tab));
+const shownGame = () => provingGrounds.viewGame ?? game;
 const tournamentPage = new TournamentPage(ctx, tournament, refreshTournament);
 // Mail's server (a stand-in until it exists), and the popup the forest's Mail button opens.
 const mail = new MailClient(game.mail, stubMail(() => game.save, () => game.clock()));
@@ -143,7 +144,7 @@ const shrines = new ShrinesPage(ctx);
 const cinematic = new Cinematic({
   settings: () => game.save.settings,
   allowed: () =>
-    isBoard(tab) && !game.run.outside && !game.fallen && !deck.teaching && !game.boardLesson && !game.teachesSpeed && !document.querySelector("dialog[open]"),
+    isBoard(tab) && !provingGrounds.active && !game.run.outside && !game.fallen && !deck.teaching && !game.boardLesson && !game.teachesSpeed && !document.querySelector("dialog[open]"),
   playing: () => game.auto,
   now: () => game.clock(),
   show: (look) => {
@@ -163,10 +164,10 @@ function renderCinematicGems() {
   el("cinematic-gems").hidden = !(cinematic.active && game.save.settings.cinematicGems && game.gemFinder.adReady);
 }
 // A run training purchase changes the hero, so the highlighted enemy's forecast too.
-const runTraining = new RunTrainingBar(game, () => {
-  overlay.refresh(true);
-  update();
-});
+const runTraining = new RunTrainingBar(shownGame, () => {
+  if(provingGrounds.active)provingGrounds.purchasesChanged();
+  else {overlay.refresh(true);update();}
+}, id => !provingGrounds.active || provingGrounds.allowsTraining(id));
 const researchToasts = new ResearchToasts(() => game.save.settings.reduceMotion);
 const defendPage = new DefendPage(el("defend"), {
   save: () => game.save.defend,
@@ -188,23 +189,26 @@ function save() {
 }
 /** Refreshes the HUD from game state, saves, and asks a fallen hero's player what next. */
 function update() {
+  provingGrounds.check();
+  const shown=shownGame();
   renderPortrait();
   followMode();
   if (boardHeadingStale(game)) renderBoardHeading(game, overlay);
   // Inside a run the tabs give way to an empty row, kept for the hand.
-  document.querySelector("nav")!.classList.toggle("in-run", !game.run.outside);
+  document.querySelector("nav")!.classList.toggle("in-run", !shown.run.outside);
   // The Deck tutorials keep the player on its page until they reorder the
   // hand, and the card points lesson leads them there and keeps them there
   // until a point is spent: in the forest only the Deck tab can be pressed.
-  const deckOnly = deckLesson();
+  const deckOnly = !provingGrounds.active && deckLesson();
   document.querySelectorAll<HTMLButtonElement>("[data-tab]").forEach((b) => (b.disabled = deckOnly && b.dataset.tab !== "deck"));
-  const forestHeld = isBoard(tab) && game.boardLesson === "cards";
+  const forestHeld = !provingGrounds.active && isBoard(tab) && game.boardLesson === "cards";
   document.querySelectorAll<HTMLElement>(".shell > :not(nav)").forEach((part) => (part.inert = forestHeld));
-  renderHud(game, renderer, overlay);
+  renderHud(shown, renderer, overlay, {hand:provingGrounds.displayHand});
   if (runNotes.open) runNotes.refresh();
   refreshEnemyOddsBox(game);
   runTraining.render();
-  renderBoardLesson(game, isBoard(tab), update);
+  if(!provingGrounds.active)renderBoardLesson(game, isBoard(tab), update);
+  provingGrounds.decorate();
   const themes = game.claimThemes();
   // A theme Dev mode grants while its look was chosen shows at once.
   if (themes.length) applyUiTheme(game.save);
@@ -213,7 +217,6 @@ function update() {
   researchToasts.add(finished);
   save();
   runEnd.check();
-  provingGrounds.check();
   // The run's end, a fall or a lesson takes cinematic mode away at once.
   if (cinematic.active) cinematic.tick();
 }
@@ -328,7 +331,7 @@ function showPage(id: Tab) {
 // Focus: pressing a hand card inside a run puts it ahead of the others.
 el("hand").onclick = (e) => {
   const card = (e.target as HTMLElement).closest<HTMLElement>(".hand-card");
-  if (!card || !game.save.upgrades.focus) return;
+  if (provingGrounds.active || !card || !game.save.upgrades.focus) return;
   const result = game.focus(Number(card.dataset.handSlot));
   if (result === "spent") flashRed(el("focus-stat"));
   if (result === "noPath") flashRed(card);
@@ -344,6 +347,7 @@ el("hand").addEventListener("wheel", (e) => {
 // Ignore, Target and Bombs: readied by their button, used by the next board tap.
 for (const c of ["ignore", "target", "bomb"] as const)
   el(`${c}-stat`).onclick = () => {
+    if(provingGrounds.active)return;
     overlay.hide();
     if (game.arm(c) === "spent") flashRed(el(`${c}-stat`));
     update();
@@ -365,7 +369,7 @@ function boardTap(x: number, y: number) {
 // The left rail, tapped anywhere but its buttons inside a run: the purse's
 // Gold and Silver show the rates they are found at.
 (document.querySelector(".portrait-actions") as HTMLElement).onclick = (e) => {
-  if (!(e.target as Element).closest("button")) togglePurseRates(game);
+  if (!(e.target as Element).closest("button")) togglePurseRates(shownGame());
 };
 el("section-pick").onclick = () => {
   if (game.mode === "tower") navigate("goals");
@@ -411,10 +415,11 @@ document.querySelector(".height")!.addEventListener("click", (e) => {
 });
 el("end-run").onclick = () => {
   closeRunMenu();
-  runEnd.ask();
+  if(provingGrounds.active)provingGrounds.leave();
+  else runEnd.ask();
 };
 // Shown at the foot of the height column while no card can act.
-el("stuck-end-run").onclick = () => runEnd.ask();
+el("stuck-end-run").onclick = () => {if(provingGrounds.active)provingGrounds.leave();else runEnd.ask();};
 // Inside a run, the hamburger opens and closes the menu over the stats.
 el("run-menu-toggle").onclick = () => toggleRunMenu(game.save.settings.reduceMotion);
 modal.addEventListener("cancel", (e) => {
@@ -480,6 +485,7 @@ el("forest-sign").onclick = () => {
 // Inside a run the button plays and pauses the hand; playing clears a
 // tapped tile's highlight and route.
 el("auto").onclick = () => {
+  if(provingGrounds.active)return provingGrounds.toggleAuto();
   if (!game.run.outside) game.toggleAuto();
   if (game.auto) overlay.dismiss();
   update();
@@ -493,14 +499,17 @@ el("enter-run").onclick = () => {
 };
 // The speed arrows beside play/pause, inside a run.
 el("speed-down").onclick = () => {
+  if(provingGrounds.active)return provingGrounds.changeSpeed(-1);
   game.changeSpeed(-1);
   update();
 };
 el("speed-up").onclick = () => {
+  if(provingGrounds.active)return provingGrounds.changeSpeed(1);
   game.changeSpeed(1);
   update();
 };
 el("undo").onclick = () => {
+  if(provingGrounds.active)return;
   overlay.hide();
   game.undo();
   update();
@@ -516,7 +525,7 @@ bindInput(
     overlay.refresh();
     update();
   },
-  () => isBoard(tab),
+  () => isBoard(tab) && !provingGrounds.active,
   cinematic,
 );
 
@@ -532,13 +541,13 @@ function archivesTick() {
   if (done) update();
   // The ad button comes back on the wall clock too, and the Shop's daily Gems.
   else {
-    renderAdButton(game);
+    renderAdButton(shownGame());
     renderCinematicGems();
-    renderShopDot(game);
-    renderTournamentButton(game);
-    renderMailButton(game);
-    renderMissionsButton(game);
-    renderEventsButtons(game);
+    renderShopDot(shownGame());
+    renderTournamentButton(shownGame());
+    renderMailButton(shownGame());
+    renderMissionsButton(shownGame());
+    renderEventsButtons(shownGame());
   }
   tournament.tick();
   // Cinematic mode's idle clock, and the gear a tap showed.
@@ -597,15 +606,17 @@ const loop = new FrameLoop({
   game,
   renderer,
   modal,
+  boardFrame: (time) => provingGrounds.frame(time),
   tab: () => tab,
   upgradesFrame: (time) => skillTree.drawParticles(time),
   researchFrame: (time) => research.frame(time),
   archivesTick,
   defendFrame: (time) => defendPage.frame(time),
   update,
-  vitals: () => renderVitals(game),
-  purse: (time) => purseFrame(game, time, !modal.open),
+  vitals: () => renderVitals(shownGame()),
+  purse: (time) => purseFrame(shownGame(), time, !modal.open),
   highlight: () => {
+    if(provingGrounds.active)return;
     overlay.track();
     overlay.placeSign();
     overlay.showFreeTraining();

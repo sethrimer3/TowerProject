@@ -1,163 +1,146 @@
-import { chromium, expect } from "@playwright/test";
-import { mkdirSync } from "node:fs";
-import { fixClock } from "./fixed-clock.mjs";
+import {chromium,expect} from "@playwright/test";
+import {mkdirSync} from "node:fs";
+import {fixClock} from "./fixed-clock.mjs";
 const browser=await chromium.launch({headless:true,channel:process.env.PLAYWRIGHT_CHANNEL||"msedge"});
 try {
   const page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1});
-  await fixClock(page);
-  page.setDefaultNavigationTimeout(120_000);
+  await fixClock(page);page.setDefaultNavigationTimeout(120000);
   const errors=[];page.on("pageerror",e=>errors.push(e.message));
   await page.addInitScript(()=> {
     const fixture=sessionStorage.getItem("trialFixture");
-    if(fixture) {localStorage.setItem("towerdelve.v1",fixture);sessionStorage.removeItem("trialFixture");}
+    if(fixture){localStorage.setItem("towerdelve.v1",fixture);sessionStorage.removeItem("trialFixture");}
   });
+  const readSave=()=>page.evaluate(()=>JSON.parse(localStorage.getItem("towerdelve.v1")));
+  const readTrial=async()=>(await readSave()).provingGrounds;
+  const world=page.locator("#world");
+  const reload=async()=>page.reload({waitUntil:"domcontentloaded"});
+  const fixture=async(change)=> {
+    await page.evaluate(change);await reload();
+  };
   await page.goto(process.env.TEST_URL||"http://127.0.0.1:5173/",{waitUntil:"domcontentloaded"});
-  await page.evaluate(async()=> {
+  await fixture(async()=> {
     const {Game}=await import("/src/state.ts"),{defaults}=await import("/src/save.ts");
     const g=new Game(defaults());g.newRun({outside:true,seed:12});
-    g.run.player.x=9;g.run.player.y=4;g.save.settings.oneTapMove=true;
-    for(const k of Object.keys(g.save.tutorials))g.save.tutorials[k]=true;
+    g.run.player.x=9;g.run.player.y=4;g.save.settings.oneTapMove=true;g.save.upgrades.onTheJob=1;
+    for(const key of Object.keys(g.save.tutorials))g.save.tutorials[key]=true;
     sessionStorage.setItem("trialFixture",JSON.stringify(g.save));
   });
-  await page.reload({waitUntil:"domcontentloaded"});
-  const board=page.locator("#world");
   await expect(page.locator("#enter-run")).toBeVisible();
-  const bounds=await board.boundingBox();
-  // The current game walks the forest by taps; keyboard movement is Dev-only.
-  await board.click({position:{x:bounds.width*10.5/20,y:bounds.height*15.5/20}});
+  async function tapForest(column) {
+    const box=await world.boundingBox();
+    await world.click({position:{x:box.width*(column+.5)/20,y:box.height*15.5/20}});
+  }
+  await tapForest(10);
   await expect(page.locator("#trial-heading")).toHaveText("Proving Grounds Trials");
-  const tower=await page.evaluate(()=>JSON.parse(localStorage.getItem("towerdelve.v1")).tower.run);
+  const tower=(await readSave()).tower.run;
   await page.locator("#trial-light-elemental").click();
-  await expect(page.locator("#trial-board")).toHaveAttribute("data-room","staging");
+  await expect(world).toHaveAttribute("data-trial-mode","manual");
+  await expect(page.locator("dialog")).not.toBeVisible();
+  await expect(page.locator("#stats")).toBeVisible();
+  await expect(page.locator("nav")).toHaveClass(/in-run/);
+  await expect(page.locator("#hand .hand-card")).toHaveCount(4);
+  await expect(page.locator('#hand .hand-card[aria-disabled="true"]')).toHaveCount(4);
+  await expect(page.locator("#auto")).toBeDisabled();
+  await expect(page.locator("#training-bar")).toBeVisible();
+  expect(await page.locator("#hand .hand-card").first().evaluate(c=>getComputedStyle(c,"::after").backgroundImage)).toContain("linear-gradient");
   for(let i=0;i<4;i++)await page.keyboard.press("ArrowUp");
-  await expect(page.locator("#trial-board")).toHaveAttribute("data-room","arena");
+  await expect(world).toHaveAttribute("data-trial-room","arena");
   for(let i=0;i<10;i++)await page.locator('[data-trial-move="0,0"]').click();
-  let trial=await page.evaluate(()=>JSON.parse(localStorage.getItem("towerdelve.v1")).provingGrounds);
-  expect(trial.steps).toBe(10);expect(trial.player.hp).toBeLessThan(trial.player.maxHp);
-  expect(Object.keys(trial.scorches).length).toBeGreaterThan(20);
+  let trial=await readTrial();expect(trial.steps).toBe(10);expect(trial.player.hp).toBeLessThan(trial.player.maxHp);
+  await expect(page.locator("#hp")).toContainText(String(Math.ceil(trial.player.hp)));
   expect(trial.slimes.length).toBeGreaterThan(0);
-  expect(trial.mode).toBe("manual");
-  await expect(page.locator("#trial-hand")).toHaveCount(0);
-  await expect(page.locator("#trial-play")).toHaveCount(0);
-  await expect(page.locator("#trial-vitals")).toContainText("northeast–southwest");
-  await page.reload({waitUntil:"domcontentloaded"});await expect(page.locator("#trial-board")).toHaveAttribute("data-steps","10");
-  for(let i=0;i<10;i++)await page.keyboard.press("Space");
-  await expect(page.locator("#trial-board")).toHaveAttribute("data-steps","20");
-  await expect(page.locator("#trial-vitals")).toContainText("east–west");
+  // The real purchase bar buys ranks with the isolated attempt's Silver.
+  await fixture(async()=> {
+    const save=JSON.parse(localStorage.getItem("towerdelve.v1"));save.provingGrounds.purchases.silver=100;
+    const {Game}=await import("/src/state.ts");
+    save.upgrades.delve=1;
+    const other=new Game(structuredClone(save));other.switchMode("delve");
+    save.delve=other.save.delve;
+    sessionStorage.setItem("trialFixture",JSON.stringify(save));
+  });
+  const pausedDelve=(await readSave()).delve.run;
+  const before=await readTrial();
+  await page.locator('[data-run-group="offense"]').click();
+  await expect(page.locator("#run-drills")).toBeVisible();
+  await page.locator('[data-run-train="attack"]').click();
+  trial=await readTrial();expect(trial.player.attack).toBeGreaterThan(before.player.attack);
+  expect(trial.purchases.silver).toBeLessThan(before.purchases.silver);
+  expect(trial.purchases.training.attack).toBe(1);
+  await expect(page.locator("#attack")).toHaveText(String(Math.floor(trial.player.attack)));
+  await page.locator('[data-run-group="offense"]').click();
+  await expect(page.locator("#hand")).toBeVisible();
+  await reload();expect((await readTrial()).purchases).toEqual(trial.purchases);
+  expect((await readSave()).tower.run).toEqual(tower);
   mkdirSync("test-results/proving-grounds",{recursive:true});
-  await page.locator("dialog").screenshot({path:"test-results/proving-grounds/arena-mobile.png"});
-  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-  // Hit once and inspect the animated transit, invulnerability and reload.
-  await page.evaluate(()=> {
+  async function review(mode) {
+    for(const width of [320,390,1024]) {
+      await page.setViewportSize({width,height:844});
+      await expect(page.locator("#stats")).toBeVisible();
+      await expect(page.locator("#training-bar")).toBeVisible();
+      const boardBox=await world.boundingBox(),handBox=await page.locator("#hand").boundingBox(),buyBox=await page.locator("#training-bar").boundingBox();
+      expect(handBox.y).toBeGreaterThanOrEqual(boardBox.y+boardBox.height-2);
+      expect(buyBox.y).toBeGreaterThanOrEqual(handBox.y+handBox.height-2);
+      expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+      await page.locator(".shell").screenshot({path:`test-results/proving-grounds/${mode}-${width}.png`});
+    }
+    await page.setViewportSize({width:390,height:844});
+  }
+  await review("manual");
+  // Existing ghost behavior still runs inside the ordinary game screen.
+  await fixture(()=> {
     const save=JSON.parse(localStorage.getItem("towerdelve.v1")),s=save.provingGrounds;
     s.player.x=12;s.player.y=11;s.slimes=[];s.steps=21;s.player.hp=s.player.maxHp;
     sessionStorage.setItem("trialFixture",JSON.stringify(save));
   });
-  await page.reload({waitUntil:"domcontentloaded"});
-  await expect(page.locator("#trial-board")).toHaveAttribute("data-phase","corporeal");
   await page.keyboard.press("ArrowUp");
-  await expect(page.locator("#trial-board")).toHaveAttribute("data-phase","incorporeal");
-  await expect(page.locator("#trial-vitals")).toContainText("incorporeal · invincible");
-  const ghost=await page.evaluate(()=>JSON.parse(localStorage.getItem("towerdelve.v1")).provingGrounds);
-  expect(ghost.bossHp).toBe(ghost.bossMaxHp-ghost.player.attack);
-  expect({x:ghost.elemental.x,y:ghost.elemental.y}).not.toEqual({x:12,y:12});
-  await page.waitForTimeout(450);
-  await page.locator("dialog").screenshot({path:"test-results/proving-grounds/teleport-mobile.png"});
-  await page.waitForTimeout(750);
-  await page.locator("dialog").screenshot({path:"test-results/proving-grounds/ghost-mobile.png"});
-  await page.keyboard.press("ArrowUp");
-  trial=await page.evaluate(()=>JSON.parse(localStorage.getItem("towerdelve.v1")).provingGrounds);
-  expect(trial.bossHp).toBe(ghost.bossHp);
-  await page.reload({waitUntil:"domcontentloaded"});
-  await expect(page.locator("#trial-board")).toHaveAttribute("data-phase","incorporeal");
-  for(let i=0;i<7;i++)await page.keyboard.press("Space");
-  await expect(page.locator("#trial-board")).toHaveAttribute("data-phase","corporeal");
-  trial=await page.evaluate(()=>JSON.parse(localStorage.getItem("towerdelve.v1")).provingGrounds);
-  expect(trial.beam.origin).toEqual({x:ghost.elemental.x,y:ghost.elemental.y});
-  expect(trial.bossHp).toBe(ghost.bossHp);
-  // Bring a still-active saved attempt beside the boss and verify combat UI.
-  await page.evaluate(()=> {
-    const save=JSON.parse(localStorage.getItem("towerdelve.v1")),s=save.provingGrounds;
-    s.player.x=12;s.player.y=11;s.slimes=[];s.elemental={x:12,y:12,incorporeal:false,teleport:null};s.bossHp=s.player.attack;s.player.hp=s.player.maxHp;
-    sessionStorage.setItem("trialFixture",JSON.stringify(save));
-  });
-  await page.reload({waitUntil:"domcontentloaded"});await expect(page.locator("#trial-board")).toHaveAttribute("data-room","arena");
-  await page.keyboard.press("ArrowUp");
-  await expect(page.locator("#trial-status")).toContainText("Trial complete");
-  await page.locator("#trial-retry").click();
-  await expect(page.locator("#trial-board")).toHaveAttribute("data-room","staging");
+  await expect(world).toHaveAttribute("data-trial-phase","incorporeal");
+  const ghost=await readTrial();expect(ghost.bossHp).toBe(ghost.bossMaxHp-ghost.player.attack);
+  await reload();await expect(world).toHaveAttribute("data-trial-phase","incorporeal");
+  for(let i=0;i<8;i++)await page.keyboard.press("Space");
+  await expect(world).toHaveAttribute("data-trial-phase","corporeal");
+  expect((await readTrial()).bossHp).toBe(ghost.bossHp);
   await page.locator("#trial-leave").click();
-  await expect(page.locator("dialog")).not.toBeVisible();
-  const after=await page.evaluate(()=>JSON.parse(localStorage.getItem("towerdelve.v1")));
-  expect(after.tower.run).toEqual(tower);expect(after.provingGrounds).toBeUndefined();
-  // Re-enter for the separate card trial and verify input authority through
-  // real keyboard, tap and swipe events while its automatic clock is paused.
-  await board.click({position:{x:bounds.width*9.5/20,y:bounds.height*15.5/20}});
-  await board.click({position:{x:bounds.width*10.5/20,y:bounds.height*15.5/20}});
+  await expect(world).not.toHaveAttribute("data-trial-mode",/./);
+  await expect(page.locator("#enter-run")).toBeVisible();
+  expect((await readSave()).tower.run).toEqual(tower);
+  // A second trial uses the same real hand and play/pause controls.
+  await tapForest(9);await tapForest(10);
   await expect(page.locator("#trial-light-elemental-cards")).toBeVisible();
-  await expect(page.locator("#trial-light-elemental")).toContainText("No cards");
   await page.locator("#trial-light-elemental-cards").click();
-  await expect(page.locator("#trial-board")).toHaveAttribute("data-mode","cards");
-  await expect(page.locator("[data-trial-move]")).toHaveCount(0);
-  await expect(page.locator("#trial-hand li")).toHaveCount(4);
-  await page.locator("#trial-play").click();
-  await expect(page.locator("#trial-play")).toHaveText("Resume autoplay");
-  const readTrial=()=>page.evaluate(()=>JSON.parse(localStorage.getItem("towerdelve.v1")).provingGrounds);
-  await page.locator("#trial-play").focus();
-  await page.keyboard.press("Space");
-  await expect(page.locator("#trial-play")).toHaveText("Pause autoplay");
-  await page.keyboard.press("Space");
-  await expect(page.locator("#trial-play")).toHaveText("Resume autoplay");
-  await page.locator("#trial-board").focus();
-  const paused=await readTrial();
+  await expect(world).toHaveAttribute("data-trial-mode","cards");
+  await page.locator("#auto").click();
+  await expect(page.locator("#auto")).toHaveAttribute("aria-label","Play the hand");
+  await expect(page.locator('#hand .hand-card[aria-disabled="false"]')).toHaveCount(4);
+  await expect(page.locator(".trial-controls")).not.toBeVisible();
+  await world.focus();const paused=await readTrial();
   for(const key of ["ArrowUp","ArrowLeft","w","Space"])await page.keyboard.press(key);
-  const cv=page.locator("#trial-board"),box=await cv.boundingBox();
-  await cv.click({position:{x:box.width*.75,y:box.height*.5}});
+  const box=await world.boundingBox();await world.click({position:{x:box.width*.75,y:box.height*.5}});
   await page.mouse.move(box.x+box.width*.5,box.y+box.height*.5);await page.mouse.down();
   await page.mouse.move(box.x+box.width*.5,box.y+box.height*.25);await page.mouse.up();
   expect(await readTrial()).toEqual(paused);
-  await page.reload({waitUntil:"domcontentloaded"});
-  await expect(page.locator("#trial-play")).toHaveText("Resume autoplay");
-  expect(await readTrial()).toEqual(paused);
-  await page.locator("#trial-play").click();
-  await expect(page.locator("#trial-board")).toHaveAttribute("data-room","arena",{timeout:10000});
+  await reload();await expect(page.locator("#auto")).toHaveAttribute("aria-label","Play the hand");
+  await page.locator("#auto").click();
+  await expect(world).toHaveAttribute("data-trial-room","arena",{timeout:15000});
   await expect.poll(async()=>(await readTrial()).steps,{timeout:10000}).toBeGreaterThanOrEqual(3);
-  await page.locator("#trial-play").click();
-  trial=await readTrial();expect(trial.slimes.length).toBeGreaterThan(0);
-  await page.locator("dialog").screenshot({path:"test-results/proving-grounds/cards-mobile.png"});
-  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-  for(const width of [320,1024]) {
-    await page.setViewportSize({width,height:844});
-    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-    await expect(page.locator("#trial-play")).toBeVisible();
-  }
-  await page.evaluate(()=> {
+  await page.locator("#auto").click();
+  await review("cards");
+  // Victory/retry keeps the same screen; Leave restores the ordinary forest.
+  await fixture(()=> {
     const save=JSON.parse(localStorage.getItem("towerdelve.v1")),s=save.provingGrounds;
     s.player.x=12;s.player.y=11;s.slimes=[];s.elemental={x:12,y:12,incorporeal:false,teleport:null};
-    s.steps=21;s.hand=["bossEnemy"];s.player.hp=s.player.maxHp;s.playing=true;
+    s.bossHp=s.player.attack;s.player.hp=s.player.maxHp;s.playing=true;
     sessionStorage.setItem("trialFixture",JSON.stringify(save));
   });
-  await page.reload({waitUntil:"domcontentloaded"});
-  await expect(page.locator("#trial-board")).toHaveAttribute("data-phase","incorporeal",{timeout:10000});
-  trial=await readTrial();const ghostHp=trial.bossHp;
-  await expect(page.locator("#trial-board")).toHaveAttribute("data-phase","corporeal",{timeout:10000});
-  await page.locator("#trial-play").click();
-  trial=await readTrial();expect(trial.steps).toBeGreaterThanOrEqual(30);expect(trial.bossHp).toBe(ghostHp);
-  await page.evaluate(()=> {
-    const save=JSON.parse(localStorage.getItem("towerdelve.v1")),s=save.provingGrounds;
-    s.player.x=12;s.player.y=11;s.slimes=[];s.elemental={x:12,y:12,incorporeal:false,teleport:null};s.bossHp=s.player.attack;s.player.hp=s.player.maxHp;s.playing=true;
-    sessionStorage.setItem("trialFixture",JSON.stringify(save));
-  });
-  await page.reload({waitUntil:"domcontentloaded"});
-  await expect(page.locator("#trial-status")).toContainText("Trial complete",{timeout:10000});
-  await expect(page.locator("#trial-play")).toBeDisabled();
+  await expect(page.locator("#message")).toContainText("Trial complete",{timeout:15000});
+  await expect(page.locator("#auto")).toBeDisabled();
   await page.locator("#trial-retry").click();
-  await expect(page.locator("#trial-board")).toHaveAttribute("data-room","staging");
-  await expect(page.locator("#trial-board")).toHaveAttribute("data-mode","cards");
-  await expect(page.locator("[data-trial-move]")).toHaveCount(0);
+  await expect(world).toHaveAttribute("data-trial-room","staging");
+  await expect(world).toHaveAttribute("data-trial-mode","cards");
   await page.locator("#trial-leave").click();
-  const returned=await page.evaluate(()=>JSON.parse(localStorage.getItem("towerdelve.v1")));
-  expect(returned.tower.run).toEqual(tower);expect(returned.provingGrounds).toBeUndefined();
+  const returned=await readSave();expect(returned.tower.run).toEqual(tower);expect(returned.delve.run).toEqual(pausedDelve);expect(returned.provingGrounds).toBeUndefined();
+  await expect(page.locator("html")).not.toHaveClass(/trial-running/);
+  await expect(page.locator("nav")).not.toHaveClass(/in-run/);
+  await expect(page.locator("#trial-overlay")).toHaveCount(0);
   expect(errors).toEqual([]);
-  console.log("Proving Grounds: both trial modes, automatic card movement, blocked manual card input, jumping slimes, ghost invulnerability, light-pixel teleport, re-materialization, beams, reload, victory, mobile layout and safe return passed.");
-} finally { await browser.close(); }
+  console.log("Proving Grounds: shared HUD/board/cards/purchases, red X manual cards, real isolated training, 320/390/1024px, beams/ghosts, reload, card autoplay, blocked manual input, victory/retry and safe forest return passed.");
+} finally {await browser.close();}

@@ -7,6 +7,8 @@ export type FrameLoopHost = {
   renderer: Renderer;
   modal: HTMLDialogElement;
   tab(): Tab;
+  /** A separate encounter may own the shared board for this frame. */
+  boardFrame?(time: number): boolean;
   /** Redraws the skill tree's particles while the Upgrades page shows. */
   upgradesFrame(time: number): void;
   /** Moves the tab's countdowns on as each shows another second, and
@@ -101,6 +103,7 @@ export class FrameLoop {
   };
 
   private boardFrame(time: number) {
+    if(this.host.boardFrame?.(time))return;
     const game = this.host.game;
     if (!this.batterySaverSkips(time)) {
       this.host.renderer.draw(time);

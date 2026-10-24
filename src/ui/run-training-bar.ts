@@ -41,7 +41,10 @@ export class RunTrainingBar {
    * sets it playing again. */
   private pausedForLesson = false;
 
-  constructor(private game: Game, private changed: () => void) {
+  private gameSource: () => Game;
+  private get game() { return this.gameSource(); }
+  constructor(game: Game | (() => Game), private changed: () => void, private available: (id: TrainingId) => boolean = () => true) {
+    this.gameSource=typeof game==="function"?game:()=>game;
     const bar = el("training-bar");
     bar.innerHTML = (Object.entries(TRAINING_GROUPS) as [Group, string][])
       .map(([group, name]) => `<button type="button" data-run-group="${group}" aria-pressed="false" aria-label="${name}">${GROUP_ICONS[group]}<span class="group-name">${name}</span></button>`)
@@ -214,7 +217,7 @@ export class RunTrainingBar {
   /** The rows of `group` the hero can train in this run (the shot rows
    * only while the hand holds ARCHER). */
   private rows(group: Group): TrainingId[] {
-    return TRAINING.filter((t) => t.group === group && runTrainingOpen(t, this.game.save, this.game.hand)).map((t) => t.id);
+    return TRAINING.filter((t) => t.group === group && this.available(t.id) && runTrainingOpen(t, this.game.save, this.game.hand)).map((t) => t.id);
   }
 
   /** One card's value and price (for the ranks the Buy Quantity buys, past

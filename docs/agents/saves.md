@@ -37,3 +37,6 @@ Unversioned Proving Grounds attempts from the 50×50 layout restart safely in th
 
 Proving Grounds version 2 also saves the elemental's position/ghost phase and teleport origin/turn, plus the most recent laser origin/axis/turn.
 Attempts predating those additive fields retain their progress with a corporeal center boss; a reload preserves an existing ghost phase but skips replaying its visual flight.
+
+Trial `displayHand` stores the equipped faces shown in the normal hand bar, including disabled cards in manual mode.
+Trial `purchases` stores bounded Silver and known integer training ranks; their effects are already included in the saved trial hero, so resume restores ranks without applying them twice.
