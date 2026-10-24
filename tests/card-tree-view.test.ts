@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { CARD_IDS } from "../src/cards.ts";
 import { CARD_TREES, type CardOpened, type CardTreeLevels } from "../src/card-trees.ts";
-import { cardTreeCardHtml, cardTreeGraph, cardTreeHelpHtml, cardTreeListHtml, levelPips, nodeLabel, nodeName, ROOT, statText, type TreeLevels } from "../src/ui/card-tree-view.ts";
+import { cardTreeCardHtml, cardTreeGraph, cardTreeHelpHtml, cardTreeListHtml, cardTreeNodeHelpHtml, levelPips, nodeLabel, nodeName, ROOT, statChange, statText, type TreeLevels } from "../src/ui/card-tree-view.ts";
 import { layout, trailAim } from "../src/ui/upgrade-graph.ts";
 
 const TREES = CARD_IDS.filter((id) => CARD_TREES[id]);
@@ -68,16 +68,39 @@ test("every node has a name and says what its levels give", () => {
 
 test("a node's card offers to buy a level with a point while it can, says why not otherwise, and the root's is behind the ? button", () => {
   const html = cardTreeCardHtml("atkUp", at(), "shard", 2, null);
-  assert.match(html, /<span class="ug-card-action"><button type="button" class="ug-buy" data-ct-raise aria-label="Buy a level with a card point"[^>]*>Buy <small>2 left/, "Buy in the head, beside the name");
+  assert.match(html, /<span class="ug-card-action"><button type="button" class="ug-buy" data-ct-raise aria-label="Buy a level with a card point"[^>]*>Buy <small>2 left<\/small><\/button><button [^>]*data-ct-info/, "Buy in the head, beside the name, then the ?");
   assert.match(html, /Common<\/span> · <span class="ct-state next">Available · Level 0 \/ 5/, "rarity, state and level on one line");
-  assert.match(html, /Holds 5 of up to 10 levels: a common card buy opens one more\./);
-  const refused = cardTreeCardHtml("atkUp", at(), "shard", 0, "No card points left.");
-  assert.match(refused, /data-ct-raise disabled[^>]*>Buy</);
-  assert.match(refused, /No card points left\./);
+  assert.doesNotMatch(html, /Holds|Each level|ct-pips|ct-bar/, "the rest is behind the ?");
+  const none = cardTreeCardHtml("atkUp", at(), "shard", 0, null);
+  assert.match(none, /data-ct-raise disabled[^>]*>Buy</, "no points left: Buy greys, without saying why");
+  assert.doesNotMatch(none, /ug-locked/);
+  assert.match(cardTreeCardHtml("atkUp", at(), "shard", 3, "Points are spent in the forest."), /data-ct-raise disabled[\s\S]*<p class="ug-locked">Points are spent in the forest\./);
   assert.match(cardTreeCardHtml("atkUp", at({ atkUp: { shard: 5 } }), "shard", 0, null), /Full/);
   assert.equal(cardTreeCardHtml("stairs", at(), "stairSkip", 0, null), "", "a sealed node shows no details");
   assert.equal(cardTreeCardHtml("atkUp", at(), ROOT, 4, null), "");
   assert.match(cardTreeHelpHtml("atkUp", 4), /<b>4<\/b> points to spend on 10 upgrades/);
+  const help = cardTreeNodeHelpHtml("stairs", at(), "floorSilver", "No card points left.");
+  assert.match(help, /^<p class="ug-locked">No card points left\.<\/p><p>Each level: \+2% Wishing Well Silver on each floor\.<\/p><p>Holds 5 of up to 10 levels: a common card buy opens one more\.<\/p>$/);
+  assert.doesNotMatch(cardTreeNodeHelpHtml("stairs", at(), "floorSilver", null), /ug-locked/);
+  assert.equal(cardTreeNodeHelpHtml("stairs", at(), "stairSkip", null), "", "a sealed node keeps what it is hidden");
+});
+
+test("a node's details give each stat in a few words, its amount now → with the next level", () => {
+  const box = (text: string, next = false) => `<span class="training-box${next ? " next" : ""}">${text}</span>`;
+  const arrow = `<span class="training-arrow" aria-hidden="true">→</span>`;
+  const stairs = CARD_TREES.stairs!, silver = stairs.find((n) => n.id === "floorSilver")!;
+  assert.equal(statChange(silver, 0, 5), `<p class="ct-change"><span class="ct-target">Wishing Well:</span>${box("0%")}${arrow}${box("+2%", true)}</p>`);
+  assert.equal(statChange(silver, 2, 5), `<p class="ct-change"><span class="ct-target">Wishing Well:</span>${box("+4%")}${arrow}${box("+6%", true)}</p>`);
+  assert.equal(statChange(silver, 5, 5), `<p class="ct-change"><span class="ct-target">Wishing Well:</span>${box("+10%")}</p>`, "full: no next level");
+  assert.match(statChange(stairs.find((n) => n.id === "stairSkip")!, 1, 2), /Stair Skip chance:<\/span><span class="training-box">1%</, "a chance unsigned");
+  assert.match(cardTreeCardHtml("stairs", at({ stairs: { floorGold: 2 } }), "floorGold", 4, null), /Spare Change:<\/span><span class="training-box">\+4%<\/span>.*\+6%/);
+  // Every stat of every node has its words and reads its amount.
+  for (const card of TREES)
+    for (const node of CARD_TREES[card]!) {
+      const line = statChange(node, 1, 2);
+      assert.equal(line.match(/class="ct-change"/g)!.length, Object.keys(node.stats).length, `${card}.${node.id}`);
+      assert.doesNotMatch(line, /undefined|NaN|>:/, `${card}.${node.id}`);
+    }
 });
 
 test("the graph's layout stands every node apart, tracks above the card", () => {

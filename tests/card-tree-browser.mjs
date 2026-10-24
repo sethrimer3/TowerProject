@@ -121,8 +121,13 @@ try {
       await page.keyboard.press("ArrowRight");
       assert.equal(await page.evaluate(() => document.activeElement?.dataset.node), "floorSilver");
       assert.match(await tree.locator(".ug-card").innerText(), /Wishing Well/);
-      // Its Buy sits in the details' head, beside the name.
+      // Its Buy sits in the details' head, beside the name, and its ? says the rest.
       assert.equal(await tree.locator(".ug-card-head [data-ct-raise]").count(), 1);
+      assert.match(await tree.locator(".ug-card").innerText(), /Wishing Well:\s*0%\s*→\s*\+2%/);
+      await tree.locator("[data-ct-info]").click();
+      assert.match(await page.locator("dialog[open]").innerText(), /Each level: \+2% Wishing Well Silver on each floor[\s\S]*Holds 5 of up to 10 levels/);
+      await page.locator("#tree-help-ok").click();
+      await tree.locator('[data-node="floorSilver"]').focus();
       // A press on the tree away from every upgrade lets go of it.
       const box = await tree.locator(".ug-host").boundingBox();
       await page.mouse.click(box.x + 12, box.y + box.height - 12);

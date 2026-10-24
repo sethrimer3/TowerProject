@@ -226,6 +226,54 @@ const STAT_TEXT: Record<TreeStat, (n: string) => string> = {
   chargeShot: (n) => `+${n}% Charged Shot`,
 };
 
+/** How a stat's amount reads: a bonus added (`+%`, or `+` for a count),
+ * a cut (`−%`), or a chance or share (`%`). */
+type Unit = "+%" | "−%" | "%" | "+";
+/** What each stat raises, in a few words, and how its amount reads: the
+ * one line a node's details give it (how and when it works is behind the
+ * details' ? button, in `STAT_TEXT`'s words). */
+const STAT_LINES: Record<TreeStat, [string, Unit]> = {
+  floorGold: ["Spare Change", "+%"], floorSilver: ["Wishing Well", "+%"], goldBonus: ["Gold Bonus", "+%"], silverBonus: ["Silver Bonus", "+%"],
+  freeOffense: ["Free Offense Upgrade chance", "+%"], freeDefense: ["Free Defense Upgrade chance", "+%"], freeUtility: ["Free Utility Upgrade chance", "+%"],
+  freeOffenseChance: ["Free Offense Upgrade chance", "+%"], freeDefenseChance: ["Free Defense Upgrade chance", "+%"], freeUtilityChance: ["Free Utility Upgrade chance", "+%"],
+  floorHeal: ["Floor Heal", "%"], overhealMax: ["Overheal ceiling", "+%"], stairSkip: ["Stair Skip chance", "%"], percentPotions: ["Percent potion chance", "+%"],
+  potionHeal: ["Potion healing", "+%"], potionMaxHp: ["Max HP per potion", "+%"], potionSilver: ["Silver per potion", "+"],
+  regen: ["Regen", "+%"], shroud: ["Shroud", "+%"], parry: ["Parry", "+%"], reviveChance: ["Revive chance", "+%"],
+  doorCost: ["Door key cost", "−%"], doorGold: ["Door Gold", "+%"], doorSilver: ["Silver per door", "+"], doorHeal: ["Door Heal", "%"],
+  skeletonKey: ["Skeleton Key chance", "%"], lockPick: ["Lock Pick chance", "%"], secretKnock: ["Secret Knock chance", "%"], doorChest: ["Door Chest chance", "%"],
+  ...byDoorLock((kind, { one, word }): Record<DoorLockPart, [string, Unit]> => ({
+    Gold: [`${word} Door Gold`, "+%"], Silver: [`Silver per ${one}`, "+"], Chest: [`${word} Door Chest chance`, "%"],
+    Knock: [`${{ yellow: "Gold Knock", heart: "Heart Knock", wood: "Wooden Lock Pick" }[kind]} chance`, "%"],
+  })),
+  yellowLockHeal: ["Gold Door Heal", "%"], yellowTransmute: ["Gold Door Transmute chance", "%"], woodTransmute: ["Wooden Door Transmute chance", "%"],
+  heartLockCost: ["Heart Door drain", "−%"], heartLockPick: ["Heart Lock Pick chance", "%"], heartShroud: ["Shroud per Heart Door", "+%"],
+  woodKeyCost: ["Wooden Door key cost", "−%"], woodDurability: ["Wooden Door durability", "−%"], druidKey: ["Druidic Talent chance", "%"],
+  keyChest: ["Key Chest chance", "%"], keyFind: ["Keys found", "+%"], keyGold: ["Key Gold", "+%"], keyHeal: ["Key Heal", "%"], keyOverheal: ["Key Overheal", "%"], keySilver: ["Silver per key", "+"],
+  plainDoorCost: ["Wooden and Steel Door cost", "−%"], heartDoorCost: ["Heart Door cost", "−%"], doubleKey: ["Locksmith chance", "%"], masterKey: ["Master Key chance", "%"],
+  ...byKeyColor((_, word): Record<ColorKeyPart, [string, Unit]> => ({
+    KeyHeal: [`${word} Key Heal`, "%"], KeyOverheal: [`${word} Key Overheal`, "%"], KeyGold: [`${word} Key Gold`, "+%"], KeyFind: [`${word} keys found`, "+%"],
+    KeySilver: [`Silver per ${word.toLowerCase()} key`, "+"], KeyChest: [`${word} Key Chest chance`, "%"], DoorCost: [`${word} key cost`, "−%"],
+    DoubleKey: [`Locksmith ${word} chance`, "%"], MasterKey: [`Master ${word} Key chance`, "%"],
+  })),
+  ...byFoeCard(({ one, many }): Record<FoePart, [string, Unit]> => ({
+    Gold: [`Gold from ${many}`, "+%"], InstakillGold: ["Instakill Gold", "+%"], Silver: [`Silver per ${one}`, "+"],
+    Attack: [`ATK vs ${many}`, "+%"], Defense: [`DEF vs ${many}`, "+%"], Shroud: [`Shroud vs ${many}`, "+%"], CritChance: [`Crit % vs ${many}`, "+%"], CritFactor: [`Crit x vs ${many}`, "+%"],
+    KillXp: [`XP from ${many}`, "+%"], SpawnRate: [`${many[0]!.toUpperCase()}${many.slice(1)} per floor`, "+%"], Material: ["Salvage chance", "%"], InstakillMaterial: ["Instakill Salvage chance", "%"],
+    Equipment: ["Equipment drop chance", "%"], InstakillMaxHp: ["Max HP per Instakill", "+%"], StealOverheal: ["Lifesteal Overheal", "%"], SurpriseAttack: ["Surprise Attack chance", "%"],
+    Cells: [`Cells per ${one}`, "+"], Takedown: ["Takedown", "%"], Tangle: ["Tangle", "%"], FirstStrike: ["First Strike chance", "%"], ChargeShot: [`Charged Shot vs ${many}`, "+%"],
+  })),
+  maxHp: ["Max HP", "+%"],
+  foeAttack: ["ATK vs enemies", "+%"], foeDefense: ["DEF vs enemies", "+%"], foeGold: ["Kill Gold", "+%"], foeSilver: ["Kill Silver", "+%"], moreEnemies: ["Enemies per floor", "+%"],
+  critChance: ["Crit %", "+%"], critFactor: ["Crit x", "+%"], killXp: ["Kill XP", "+%"], surpriseAttack: ["Surprise Attack chance", "%"], foeAttackCut: ["Enemy ATK", "−%"], stealOverheal: ["Lifesteal Overheal", "%"],
+  attackShard: ["ATK shards", "+%"], defenseShard: ["DEF shards", "+%"], attackShardGold: ["ATK shard Gold", "+%"], defenseShardGold: ["DEF shard Gold", "+%"],
+  attackShardSilver: ["Silver per ATK shard", "+"], defenseShardSilver: ["Silver per DEF shard", "+"], powerStrike: ["Power Strike chance", "%"],
+  takedown: ["Boss Takedown", "%"], tangle: ["Boss Tangle", "%"], greaterTakedown: ["Greater Boss Takedown", "%"], greaterTangle: ["Greater Boss Tangle", "%"],
+  bossAttack: ["ATK vs Greater Bosses", "+%"], bossDefense: ["DEF vs Greater Bosses", "+%"], bossShroud: ["Shroud vs Greater Bosses", "+%"], bossGold: ["Greater Boss Gold", "+%"], bossCells: ["Greater Boss Cells", "+"],
+  chestGold: ["Chest Gold", "+%"], chestSilver: ["Silver per chest", "+"], chestCells: ["Chest Cells chance", "%"], supplyChance: ["Supply Chest chance", "+%"], equipmentChance: ["Equipment Chest chance", "+%"],
+  treasureFloor: ["Treasure Floor chance", "%"], rarityUp: ["Rarity Up chance", "%"], chestDouble: ["Double chance", "%"], chestTriple: ["Triple chance", "%"],
+  shotAttack: ["Shot ATK", "+%"], bossShotAttack: ["Shot ATK vs bosses", "+%"], shotSpeed: ["Attack Speed", "+%"], shotRange: ["Attack Range", "+%"], chargeShot: ["Charged Shot", "+%"],
+};
+
 /** Each stat's icon on its node. */
 const ui = (name: UiSprite) => () => uiSprite(name);
 const silver = () => uiSprite("gold", "ui-sprite silver-sprite");
@@ -280,6 +328,19 @@ export function nodeName(card: CardId, node: CardTreeNode) {
 /** What `level` levels of `node` give, a line a stat. */
 export function statText(node: CardTreeNode, level: number) {
   return statsOf(node).map(([stat, each]) => STAT_TEXT[stat](amount(each * level)));
+}
+
+/** Amount `n` as unit `unit` reads it (0 unsigned). */
+const shownIn = (unit: Unit, n: number) => `${n && unit[0] !== "%" ? unit[0] : ""}${amount(n)}${unit.endsWith("%") ? "%" : ""}`;
+
+/** What `level` levels of `node` give and, below its `cap`, the next
+ * level: a line a stat, its few words then the amount now → next. */
+export function statChange(node: CardTreeNode, level: number, cap: number) {
+  return statsOf(node).map(([stat, each]) => {
+    const [words, unit] = STAT_LINES[stat];
+    const next = level < cap ? `<span class="training-arrow" aria-hidden="true">→</span><span class="training-box next">${shownIn(unit, each * (level + 1))}</span>` : "";
+    return `<p class="ct-change"><span class="ct-target">${words}:</span><span class="training-box">${shownIn(unit, each * level)}</span>${next}</p>`;
+  }).join("");
 }
 
 /** What a card's tree reads: the levels spent on it, and those card buys
@@ -372,32 +433,45 @@ export function cardTreeHelpHtml(card: CardId, left: number) {
     + `<p>Buying cards on the Deck page raises a card's max level and the levels its upgrades hold, and opens its sealed upgrades: uncommon, rare, epic and legendary, each opened by a card buy of its rarity.</p>`;
 }
 
-/** The details for node `id` of `card`'s tree: a head with its icon, its
- * name, one line of its rarity, state and level, and at its right the
- * button that buys a level with a card point (or Full); then why it can't
- * (`refusal`, in words), its levels, what each gives, now and with the
- * next, and how many card buys can still open. Nothing for the root (how
- * the tree works is behind the ? button) or a sealed node. */
+/** The details for node `id` of `card`'s tree, kept to what buying a
+ * level does: a head with its icon, its name, one line of its rarity,
+ * state and level, and at its right the button that buys a level with a
+ * card point (or Full) beside the ? button opening the rest
+ * (`cardTreeNodeHelpHtml`); then why it can't (`refusal`, in words; with
+ * no points left, Buy just greys), and what it gives now → with the next
+ * level. Nothing for the root (how the tree works is behind the tree's ?
+ * button) or a sealed node. */
 export function cardTreeCardHtml(card: CardId, tree: TreeLevels, id: string, left: number, refusal: string | null): string {
   const node = treeNode(card, id);
   if (id === ROOT || !node || sealed(tree, card, node)) return "";
   const level = nodeLevel(tree.levels, card, id), cap = nodeCap(tree.opened, card, node), state = nodeState(tree, card, node), { rarity, upgraded } = lookOf(tree.opened, card, node);
-  const now = level ? statText(node, level) : ["Nothing yet"];
-  const next = level < cap ? statText(node, level + 1) : null;
   const parent = node.after ? treeNode(card, node.after) : undefined;
+  const opens = parent && state === "locked" ? `<p class="ug-locked">Opens once ${nodeName(card, parent)} holds ${opensAt(parent)} level${opensAt(parent) === 1 ? "" : "s"}.</p>` : "";
+  const blocked = !!refusal || !left;
   const action = state === "owned"
     ? `<b class="ug-owned">Full</b>`
-    : `<button type="button" class="ug-buy" data-ct-raise${refusal ? " disabled" : ""} aria-label="Buy a level with a card point" title="${refusal ? "" : "Or choose the upgrade again"}">Buy${refusal ? "" : ` <small>${left} left</small>`}</button>`;
-  const room = `Holds ${cap} of up to ${node.max} levels${cap < node.max ? `: ${article(rarity)} ${CARD_RARITY_NAMES[rarity].toLowerCase()} card buy opens one more` : ""}.`;
+    : `<button type="button" class="ug-buy" data-ct-raise${blocked ? " disabled" : ""} aria-label="Buy a level with a card point" title="${blocked ? "" : "Or choose the upgrade again"}">Buy${blocked ? "" : ` <small>${left} left</small>`}</button>`;
+  const info = `<button type="button" class="ct-help" data-ct-info aria-label="More about ${nodeName(card, node)}" title="More about this upgrade">?</button>`;
   return `<div class="ug-card-head"><span class="ct-detail-icon r-${rarity}">${nodeIcon(node)}</span>`
     + `<div><b>${nodeName(card, node)}</b><small class="ct-meta"><span class="ct-rarity r-${rarity}">${rarityStarsHtml(rarity, upgraded)}${CARD_RARITY_NAMES[rarity]}</span> · <span class="ct-state ${state}">${capital(STATE_WORDS[state])} · Level ${level} / ${cap}</span></small></div>`
-    + `<span class="ug-card-action">${action}</span></div>`
-    + (refusal && state !== "owned" ? `<p class="ug-locked">${refusal}</p>` : "")
-    + (parent && state === "locked" ? `<p class="ug-locked">Opens once ${nodeName(card, parent)} holds ${opensAt(parent)} level${opensAt(parent) === 1 ? "" : "s"}.</p>` : "")
-    + levelPips(level, cap)
-    + `<p class="ct-each">Each level: ${statText(node, 1).join("; ")}.</p>`
-    + `<dl class="ct-compare"><dt>Now</dt><dd>${now.join("<br>")}</dd>${next ? `<dt>Next level</dt><dd class="ct-next">${next.join("<br>")}</dd>` : ""}</dl>`
-    + `<p class="ct-room">${room}</p>`;
+    + `<span class="ug-card-action">${action}${info}</span></div>`
+    // A locked node's own line already says what opens it.
+    + (refusal && state !== "owned" && !opens ? `<p class="ug-locked">${refusal}</p>` : "")
+    + opens
+    + statChange(node, level, cap);
+}
+
+/** The rest of node `id` of `card`'s tree, behind its details' ? button:
+ * `note` first (that the card has no points left, when so), what each
+ * level gives in full, and the levels it holds of its most, with the card
+ * buy that opens one more. */
+export function cardTreeNodeHelpHtml(card: CardId, tree: TreeLevels, id: string, note: string | null) {
+  const node = treeNode(card, id);
+  if (id === ROOT || !node || sealed(tree, card, node)) return "";
+  const cap = nodeCap(tree.opened, card, node), { rarity } = lookOf(tree.opened, card, node);
+  return (note ? `<p class="ug-locked">${note}</p>` : "")
+    + `<p>Each level: ${statText(node, 1).join("; ")}.</p>`
+    + `<p>Holds ${cap} of up to ${node.max} levels${cap < node.max ? `: ${article(rarity)} ${CARD_RARITY_NAMES[rarity].toLowerCase()} card buy opens one more` : ""}.</p>`;
 }
 
 const capital = (w: string) => w[0].toUpperCase() + w.slice(1);

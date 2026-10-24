@@ -3814,10 +3814,11 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .ug-card p { margin: 6px 0 0; }
 .ug-card-head { display: flex; gap: 10px; align-items: center; border-bottom: 1px solid #57d6e040; padding-bottom: 6px; }
 .ug-card-head > div { flex: 1; min-width: 0; }
-/* Buy (or Full) at the head's right, never scrolled out of reach. */
-.ug-card-action { flex: none; margin-left: auto; }
+/* Buy (or Full) and the ? at the head's right, never scrolled out of reach. */
+.ug-card-action { flex: none; margin-left: auto; display: flex; align-items: center; gap: 6px; }
 .ug-card-head small.ct-meta { display: block; }
 .ct-meta > span { display: inline; }
+.ct-meta > .ct-state { white-space: nowrap; }
 .ug-card-head b { display: block; color: #ffe39a; font-size: 16px; line-height: 1.2; }
 .ug-card-head small { display: block; color: #a9dfe4; font-size: 12px; }
 .ct-detail-icon { flex: none; display: grid; place-items: center; width: 34px; height: 34px; border: 2px solid #000; border-radius: 4px; background: #0c1214; }
@@ -3831,10 +3832,10 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .ct-pips i.on { background: linear-gradient(#fff1b8, #f2c95a); }
 .ct-bar { display: block; height: 8px; margin-top: 7px; border: 1px solid #000; border-radius: 4px; background: #1c2a2d; overflow: hidden; }
 .ct-bar i { display: block; height: 100%; background: linear-gradient(#fff1b8, #f2c95a); }
-.ct-each { color: #c7d9dc; }
-.ct-compare { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; margin: 8px 0 0; padding: 7px 9px; border-radius: 3px; background: #0f1d21; }
-.ct-compare dt { color: #8fe3ea; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; padding-top: 2px; }
-.ct-compare dd { margin: 0; }
+/* What a level does, one line a stat: its words, then now → next, as the Archives show research. */
+.ug-card p.ct-change { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin: 8px 0 0; }
+.ct-target { color: #c7d9dc; }
+.ct-change .training-box { min-height: 22px; padding: 1px 7px; font-size: 12px; }
 .ct-next { color: #9ff3fa; }
 .ug-card-foot { margin-top: 10px; display: flex; justify-content: flex-end; align-items: center; gap: 10px; flex-wrap: wrap; }
 .ug-owned { color: #f2c95a; }

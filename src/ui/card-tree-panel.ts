@@ -3,7 +3,8 @@
  * respec for Gems; the tree, either the living graph of its upgrades
  * (`upgrade-graph.ts`) or a list of them, with a ? button saying how it
  * works; and, once an upgrade is chosen, its details, whose Buy button
- * spends a point on it (as does choosing it again).
+ * spends a point on it (as does choosing it again) and whose ? button
+ * says the rest of it.
  * Spending happens through the game's `cardTrees` desk, in the forest only.
  * Arrow keys move between the graph's upgrades (up the tree, down toward
  * the card, and across to its neighbours), and each change is announced.
@@ -17,7 +18,7 @@ import type { AppContext } from "./app.ts";
 import { askForGems, showHelp } from "./dialogs.ts";
 import { cardArt, gemIcon, POINTER_SVG } from "./dom.ts";
 import { replay, sparksOver } from "./flourish.ts";
-import { cardTreeCardHtml, cardTreeGraph, cardTreeHelpHtml, cardTreeListHtml, nodeName, ROOT, type TreeLevels } from "./card-tree-view.ts";
+import { cardTreeCardHtml, cardTreeGraph, cardTreeHelpHtml, cardTreeListHtml, cardTreeNodeHelpHtml, nodeName, ROOT, type TreeLevels } from "./card-tree-view.ts";
 import { UpgradeGraph } from "./upgrade-graph.ts";
 
 /** How the tree is shown: the graph or the list (kept while the game is
@@ -109,6 +110,7 @@ export class CardTreePanel {
     if (t.closest("[data-ct-close]")) return this.teach ? undefined : this.close();
     if (t.closest("[data-ct-respec]")) return this.respec();
     if (t.closest("[data-ct-help]")) return showHelp(this.ctx, "UPGRADE TREE", CARDS[this.card].name, cardTreeHelpHtml(this.card, this.ctx.game.cardTrees.pointsLeft(this.card)));
+    if (t.closest("[data-ct-info]")) return this.info();
     if (t.closest("[data-ct-switch]")) return this.show(this.view === "tree" ? "list" : "tree");
     const raise = t.closest<HTMLElement>("[data-ct-raise]");
     if (raise) return this.raise(raise.dataset.ctRaise || this.picked);
@@ -159,6 +161,15 @@ export class CardTreePanel {
     if (id === this.picked && id !== ROOT && this.view === "tree") return this.raise(id);
     this.picked = id;
     this.render();
+  }
+
+  /** The rest of the upgrade chosen, behind its details' ? button: with no
+   * card points left (and room for a level), that first. */
+  private info() {
+    const desk = this.ctx.game.cardTrees, node = treeNode(this.card, this.picked);
+    if (!node) return;
+    const none = !desk.pointsLeft(this.card) && desk.raiseRefusal(this.card, this.picked) !== "maxed";
+    showHelp(this.ctx, "UPGRADE", nodeName(this.card, node), cardTreeNodeHelpHtml(this.card, this.levels, this.picked, none ? refusalText(this.card, this.picked, "points") : null));
   }
 
   private say(text: string) {
@@ -267,7 +278,9 @@ export class CardTreePanel {
     this.el.querySelector("[data-ct-switch]")!.setAttribute("aria-checked", String(this.view === "list"));
     this.el.classList.toggle("list-view", this.view === "list");
     this.el.querySelector(".ct-legend")!.toggleAttribute("hidden", this.view === "list");
-    const refusal = this.picked === ROOT ? null : this.why(this.picked), tree = this.levels;
+    // No points left is said behind the details' ? button, not in them.
+    const raw = this.picked === ROOT ? null : desk.raiseRefusal(this.card, this.picked), tree = this.levels;
+    const refusal = raw && raw !== "maxed" && raw !== "points" ? refusalText(this.card, this.picked, raw) : null;
     // The details show only once an upgrade is chosen: the root's are behind the ? button.
     const details = this.el.querySelector<HTMLElement>(".ug-card")!;
     details.innerHTML = cardTreeCardHtml(this.card, tree, this.picked, left, refusal);

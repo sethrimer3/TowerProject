@@ -367,6 +367,8 @@ html.ui-sprites .sprite-card.sprite-ready + .sprite-card-label:not(#_) {
   text-align: center;
   pointer-events: none;
 }
+/* The upgrade tree names its card in its header: its cards there go unlabelled. */
+html.ui-sprites :is(#deck .ug-node.root, .ct-card) .sprite-card-label:not(#_) { display: none !important; }
 
 /* The original star still fills its corner when sprites are off. */
 .badge-star { position: absolute; inset: 0; width: 100%; height: 100%; }
