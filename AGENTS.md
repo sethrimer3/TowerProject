@@ -21,6 +21,7 @@ npm run test:browser   # Playwright suites (tests/*.mjs); needs `npm run dev` ru
 npm run test:render    # board screenshot hashes vs tests/fixtures/render.golden.json (builds and serves its own copy; no dev server)
 npm run test:ui        # page/HUD/dialog HTML hashes vs tests/fixtures/ui.golden.json (builds and serves its own copy; no dev server)
 npm run test:snapshots # both of the above side by side on one build (tests/snapshot-suites.mjs): the wall time of the slower one
+ONLY=rich.goals,floor. npm run test:ui  # only those key prefixes; ONLY=failed reruns last failures; with UPDATE_GOLDEN=1 records just them (docs/agents/goldens.md)
 npm run test:proving   # Proving Grounds browser flow (needs npm run dev)
 npm run test:pointer   # Defend board pointer gestures vs tests/fixtures/defend-pointer.golden.json (also needs `npm run dev`; on demand only, like test:defend)
 npm run tiles:area1 / tiles:outside     # regenerate tile PNGs
