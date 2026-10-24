@@ -1,6 +1,7 @@
 import {chromium,expect} from "@playwright/test";
 import {mkdirSync} from "node:fs";
 import {fixClock} from "./fixed-clock.mjs";
+
 const browser=await chromium.launch({headless:true,channel:process.env.PLAYWRIGHT_CHANNEL||"msedge"});
 try {
   const page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1});
@@ -10,188 +11,155 @@ try {
     const fixture=sessionStorage.getItem("trialFixture");
     if(fixture){localStorage.setItem("towerdelve.v1",fixture);sessionStorage.removeItem("trialFixture");}
   });
-  const readSave=()=>page.evaluate(()=>JSON.parse(localStorage.getItem("towerdelve.v1")));
-  const readTrial=async()=>(await readSave()).provingGrounds;
-  const world=page.locator("#world");
+  const world=page.locator("#world"),read=()=>page.evaluate(()=>JSON.parse(localStorage.getItem("towerdelve.v1")));
+  const trial=async()=>(await read()).provingGrounds;
   const reload=async()=>page.reload({waitUntil:"domcontentloaded"});
-  const fixture=async(change)=> {
-    await page.evaluate(change);await reload();
-  };
+  async function fixture(patch) {
+    await page.evaluate(async patch=> {
+      const save=JSON.parse(localStorage.getItem("towerdelve.v1"));
+      if(patch.trial)Object.assign(save.provingGrounds,patch.trial);
+      if(patch.access)Object.assign(save.trialAccess,patch.access);
+      if(patch.profilePoints!==undefined)save.profile.earned.trialPoints=patch.profilePoints;
+      if(patch.delve) {
+        const {Game}=await import("/src/state.ts");save.upgrades.delve=1;
+        const other=new Game(structuredClone(save));other.switchMode("delve");save.delve=other.save.delve;
+      }
+      sessionStorage.setItem("trialFixture",JSON.stringify(save));
+    },patch);await reload();
+  }
+  async function clickTile(x,y) {
+    const s=await trial(),box=await world.boundingBox();
+    await world.click({position:{x:box.width*(x-s.player.x+8.5)/17,y:box.height*(s.player.y-y+8.5)/17}});
+  }
+  async function oneHit(mode,level,playing=mode!=="manual",extra={}) {
+    const s=await trial();
+    await fixture({...extra,trial:{mode,level,room:"arena",status:"active",playing,
+      hand:mode==="manual"?[]:[...(s.displayHand??["stairs","monster"])],
+      player:{...s.player,x:12,y:11,hp:s.player.maxHp},elemental:{x:12,y:12,incorporeal:false,teleport:null},
+      bossHp:s.player.attack,steps:1,slimes:[],beam:null,scorches:{},destroyed:{},consumed:[]}});
+    await expect(world).toHaveAttribute("data-trial-level",String(level));
+  }
+  mkdirSync("test-results/proving-grounds",{recursive:true});
   await page.goto(process.env.TEST_URL||"http://127.0.0.1:5173/",{waitUntil:"domcontentloaded"});
-  await fixture(async()=> {
+  await page.evaluate(async()=> {
     const {Game}=await import("/src/state.ts"),{defaults}=await import("/src/save.ts");
     const g=new Game(defaults());g.newRun({outside:true,seed:12});
-    g.run.player.x=9;g.run.player.y=4;g.save.settings.oneTapMove=true;g.save.upgrades.onTheJob=1;
+    g.run.player.x=10;g.run.player.y=5;g.save.settings.oneTapMove=true;g.save.settings.uiSprites=true;
+    g.save.settings.reduceMotion=true;g.save.upgrades.onTheJob=1;
     for(const key of Object.keys(g.save.tutorials))g.save.tutorials[key]=true;
     sessionStorage.setItem("trialFixture",JSON.stringify(g.save));
-  });
+  });await reload();
   await expect(page.locator("#enter-run")).toBeVisible();
-  async function tapForest(column) {
-    const box=await world.boundingBox();
-    await world.click({position:{x:box.width*(column+.5)/20,y:box.height*15.5/20}});
-  }
-  await tapForest(10);
+  // Walk south across the gold square from above; the forest's help text
+  // overlays the square itself at this phone width.
+  const forest=await world.boundingBox();await world.click({position:{x:forest.width*10.5/20,y:forest.height*18.5/20}});
   await expect(page.locator("#trial-heading")).toHaveText("Proving Grounds Trials");
+  await expect(page.locator("dialog .trial-choice")).toHaveCount(1);
+  await expect(page.locator("#trial-level")).toHaveCount(0);
   await expect(page.locator("#trial-key-balance")).toHaveText("Trial keys: 2 / 2");
-  await page.locator("#trial-level").fill("10");
-  await expect(page.locator("#trial-level-preview")).toContainText("2 beam(s) every 10 turns · Slime every 16 turns");
-  const tower=(await readSave()).tower.run;
+  const tower=(await read()).tower.run;
   await page.locator("#trial-light-elemental").click();
+  await expect(page.locator("#trial-difficulty")).toHaveText("Difficulty 1 · Difficulty multiplier ×1.0");
+  await expect(page.locator("#trial-reward")).toContainText("1 Trial Point");
+  await expect(page.locator("[data-trial-attempt]")).toHaveCount(3);
+  for(const width of [320,390,1024]) {
+    await page.setViewportSize({width,height:844});
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+    await page.locator("dialog").screenshot({path:`test-results/proving-grounds/control-picker-${width}.png`});
+  }
+  await page.setViewportSize({width:390,height:844});
+  await page.locator("#trial-mode-manual").click();
   await expect(world).toHaveAttribute("data-trial-mode","manual");
-  await expect(world).toHaveAttribute("data-trial-level","10");
-  expect((await readSave()).trialAccess.spent).toBe(1);
+  expect((await read()).trialAccess.spent).toBe(1);
   await expect(page.locator("dialog")).not.toBeVisible();
-  await expect(page.locator("#stats")).toBeVisible();
-  await expect(page.locator("nav")).toHaveClass(/in-run/);
-  await expect(page.locator("#hand .hand-card")).toHaveCount(4);
+  await expect(page.locator("#stats")).toBeVisible();await expect(page.locator("#training-bar")).toBeVisible();
   await expect(page.locator('#hand .hand-card[aria-disabled="true"]')).toHaveCount(4);
+  await expect(page.locator("[data-trial-move], #trial-overlay .trial-controls")).toHaveCount(0);
+  await expect(page.locator("#trial-wait")).toBeVisible();
   await expect(page.locator("#auto")).toBeDisabled();
-  await expect(page.locator("#training-bar")).toBeVisible();
-  expect(await page.locator("#hand .hand-card").first().evaluate(c=>getComputedStyle(c,"::after").backgroundImage)).toContain("linear-gradient");
-  for(let i=0;i<4;i++)await page.keyboard.press("ArrowUp");
-  await expect(world).toHaveAttribute("data-trial-room","arena");
-  for(let i=0;i<20;i++)await page.locator('[data-trial-move="0,0"]').click();
-  let trial=await readTrial();expect(trial.steps).toBe(20);expect(trial.player.hp).toBeLessThan(trial.player.maxHp);
-  await expect(page.locator("#hp")).toContainText(String(Math.ceil(trial.player.hp)));
-  expect(trial.slimes.length).toBeGreaterThan(0);
-  // The real purchase bar buys ranks with the isolated attempt's Silver.
-  await fixture(async()=> {
-    const save=JSON.parse(localStorage.getItem("towerdelve.v1"));save.provingGrounds.purchases.silver=100;
-    const {Game}=await import("/src/state.ts");
-    save.upgrades.delve=1;
-    const other=new Game(structuredClone(save));other.switchMode("delve");
-    save.delve=other.save.delve;
-    sessionStorage.setItem("trialFixture",JSON.stringify(save));
-  });
-  const pausedDelve=(await readSave()).delve.run;
-  const before=await readTrial();
-  await page.locator('[data-run-group="offense"]').click();
-  await expect(page.locator("#run-drills")).toBeVisible();
-  await page.locator('[data-run-train="attack"]').click();
-  trial=await readTrial();expect(trial.player.attack).toBeGreaterThan(before.player.attack);
-  expect(trial.purchases.silver).toBeLessThan(before.purchases.silver);
-  expect(trial.purchases.training.attack).toBe(1);
-  await expect(page.locator("#attack")).toHaveText(String(Math.floor(trial.player.attack)));
+  // A distant tile click walks four real moves through staging, then clears its route.
+  await clickTile(4,6);await expect(world).toHaveAttribute("data-trial-room","arena");
+  expect((await trial()).steps).toBe(0);
+  await clickTile(13,2);await expect.poll(async()=>(await trial()).player.x).toBe(13);
+  await clickTile(14,3);await expect.poll(async()=>(await trial()).player.y).toBe(3);
+  expect((await trial()).steps).toBe(3);
+  await page.locator("#trial-wait").click();expect((await trial()).steps).toBe(4);
+  // Purchases and resume still use the isolated trial Game, preserving a paused Delve too.
+  const s=await trial();await fixture({trial:{purchases:{silver:100,training:{}}},delve:true});
+  const delve=(await read()).delve.run;
+  await page.locator('[data-run-group="offense"]').click();await page.locator('[data-run-train="attack"]').click();
+  expect((await trial()).player.attack).toBeGreaterThan(s.player.attack);
   await page.locator('[data-run-tab="hand"]').click();
-  await expect(page.locator("#hand")).toBeVisible();
-  await reload();expect((await readTrial()).purchases).toEqual(trial.purchases);
-  expect((await readSave()).trialAccess.spent).toBe(1);expect((await readTrial()).level).toBe(10);
-  expect((await readSave()).tower.run).toEqual(tower);
-  mkdirSync("test-results/proving-grounds",{recursive:true});
-  async function review(mode) {
-    for(const width of [320,390,1024]) {
-      await page.setViewportSize({width,height:844});
-      await expect(page.locator("#stats")).toBeVisible();
-      await expect(page.locator("#training-bar")).toBeVisible();
-      const boardBox=await world.boundingBox(),handBox=await page.locator("#hand").boundingBox(),buyBox=await page.locator("#training-bar").boundingBox();
-      expect(handBox.y).toBeGreaterThanOrEqual(boardBox.y+boardBox.height-2);
-      expect(buyBox.y).toBeGreaterThanOrEqual(handBox.y+handBox.height-2);
-      expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-      await page.locator(".shell").screenshot({path:`test-results/proving-grounds/${mode}-${width}.png`});
-    }
-    await page.setViewportSize({width:390,height:844});
-  }
-  await review("manual");
-  // Existing ghost behavior still runs inside the ordinary game screen.
-  await fixture(()=> {
-    const save=JSON.parse(localStorage.getItem("towerdelve.v1")),s=save.provingGrounds;
-    s.player.x=12;s.player.y=11;s.slimes=[];s.steps=21;s.player.hp=s.player.maxHp;
-    sessionStorage.setItem("trialFixture",JSON.stringify(save));
-  });
-  await page.keyboard.press("ArrowUp");
-  await expect(world).toHaveAttribute("data-trial-phase","incorporeal");
-  const ghost=await readTrial();expect(ghost.bossHp).toBe(ghost.bossMaxHp-ghost.player.attack);
-  await reload();await expect(world).toHaveAttribute("data-trial-phase","incorporeal");
-  for(let i=0;i<8;i++)await page.keyboard.press("Space");
-  await expect(world).toHaveAttribute("data-trial-phase","corporeal");
-  expect((await readTrial()).bossHp).toBe(ghost.bossHp);
-  await page.locator("#trial-leave").click();
-  await expect(world).not.toHaveAttribute("data-trial-mode",/./);
-  await expect(page.locator("#enter-run")).toBeVisible();
-  expect((await readSave()).tower.run).toEqual(tower);
-  // A second trial uses the same real hand and play/pause controls.
-  await tapForest(9);await tapForest(10);
-  await expect(page.locator("#trial-light-elemental-cards")).toBeVisible();
-  await expect(page.locator("#trial-key-balance")).toHaveText("Trial keys: 1 / 2");
-  await page.locator("#trial-level").fill("1");
-  await page.locator("#trial-light-elemental-cards").click();
-  await expect(world).toHaveAttribute("data-trial-mode","cards");
-  await page.locator("#auto").click();
-  await expect(page.locator("#auto")).toHaveAttribute("aria-label","Play the hand");
-  await expect(page.locator('#hand .hand-card[aria-disabled="false"]')).toHaveCount(4);
-  await expect(page.locator(".trial-controls")).not.toBeVisible();
-  await world.focus();const paused=await readTrial();
-  for(const key of ["ArrowUp","ArrowLeft","w","Space"])await page.keyboard.press(key);
-  const box=await world.boundingBox();await world.click({position:{x:box.width*.75,y:box.height*.5}});
-  await page.mouse.move(box.x+box.width*.5,box.y+box.height*.5);await page.mouse.down();
-  await page.mouse.move(box.x+box.width*.5,box.y+box.height*.25);await page.mouse.up();
-  expect(await readTrial()).toEqual(paused);
-  await reload();await expect(page.locator("#auto")).toHaveAttribute("aria-label","Play the hand");
-  await page.locator("#auto").click();
-  await expect(world).toHaveAttribute("data-trial-room","arena",{timeout:15000});
-  await expect.poll(async()=>(await readTrial()).steps,{timeout:10000}).toBeGreaterThanOrEqual(3);
-  await page.locator("#auto").click();
-  await review("cards");
-  // Victory/retry keeps the same screen; Leave restores the ordinary forest.
-  await fixture(()=> {
-    const save=JSON.parse(localStorage.getItem("towerdelve.v1")),s=save.provingGrounds;
-    s.player.x=12;s.player.y=11;s.slimes=[];s.elemental={x:12,y:12,incorporeal:false,teleport:null};
-    s.bossHp=s.player.attack;s.player.hp=s.player.maxHp;s.playing=true;
-    sessionStorage.setItem("trialFixture",JSON.stringify(save));
-  });
-  await expect(page.locator("#message")).toContainText("Trial complete",{timeout:15000});
-  await expect(page.locator("#auto")).toBeDisabled();
-  expect((await readSave()).trialAccess.spent).toBe(2);
-  await expect(page.locator("#trial-retry")).toBeDisabled();
-  await reload();await expect(page.locator("#trial-retry")).toBeDisabled();
-  // The daily refill updates an already-open encounter without a reload.
-  await page.clock.setFixedTime(new Date("2026-10-06T00:00:00Z"));
-  await expect(page.locator("#trial-retry")).toBeEnabled({timeout:5000});
+  const purchases=(await trial()).purchases;await reload();expect((await trial()).purchases).toEqual(purchases);
+  expect((await read()).trialAccess.spent).toBe(1);
+  await page.locator(".shell").screenshot({path:"test-results/proving-grounds/manual-tile-movement.png"});
+  await oneHit("manual",1);await clickTile(12,12);
+  await expect(page.locator("#message")).toContainText("+1 Trial Point");
+  expect((await read()).trialAccess.points).toBe(1);expect((await read()).trialAccess.progress["light-elemental"].cleared).toBe(1);
+  await reload();expect((await read()).trialAccess.points).toBe(1);
+  await expect(page.locator("#message")).toContainText("already claimed");
   await page.locator("#trial-retry").click();
-  await expect(world).toHaveAttribute("data-trial-room","staging");
-  await expect(world).toHaveAttribute("data-trial-mode","cards");
-  await expect(world).toHaveAttribute("data-trial-level","1");
-  expect((await readSave()).trialAccess.spent).toBe(1);
-  await page.locator("#trial-leave").click();
-  const returned=await readSave();expect(returned.tower.run).toEqual(tower);expect(returned.delve.run).toEqual(pausedDelve);expect(returned.provingGrounds).toBeUndefined();
-  await expect(page.locator("html")).not.toHaveClass(/trial-running/);
-  await expect(page.locator("nav")).not.toHaveClass(/in-run/);
-  await expect(page.locator("#trial-overlay")).toHaveCount(0);
-  // Spend the final key in the other mode, then enforce the shared list lock.
-  await tapForest(9);await tapForest(10);
-  await page.locator("#trial-light-elemental").click();
-  await expect(world).toHaveAttribute("data-trial-mode","manual");
-  await page.locator("#trial-leave").click();
-  await tapForest(9);await tapForest(10);
-  await expect(page.locator("#trial-key-balance")).toHaveText("Trial keys: 0 / 2");
-  await expect(page.locator("#trial-light-elemental-cards")).toBeDisabled();
-  await expect(page.locator("#trial-light-elemental")).toBeDisabled();
-  // An open menu also refills on UTC midnight, without granting banked days.
-  await page.clock.setFixedTime(new Date("2026-10-07T00:00:00Z"));
+  await expect(page.locator("#trial-difficulty")).toHaveText("Difficulty 2 · Difficulty multiplier ×1.1");
+  await page.locator("#trial-mode-cards").click();await expect(world).toHaveAttribute("data-trial-mode","cards");
+  await page.locator("#auto").click();await expect(page.locator("#auto")).toHaveAttribute("aria-label","Play the hand");
+  await expect(page.locator("#trial-wait")).not.toBeVisible();
+  const paused=await trial();await clickTile(4,6);await page.keyboard.press("ArrowUp");
+  expect(await trial()).toEqual(paused);await reload();expect((await trial()).playing).toBe(false);
+  await page.locator("#auto").click();await expect(world).toHaveAttribute("data-trial-room","arena",{timeout:15000});
+  await expect.poll(async()=>(await trial()).steps,{timeout:15000}).toBeGreaterThan(0);
+  await page.locator("#auto").click();
+  await oneHit("cards",2,true);await expect(page.locator("#message")).toContainText("+2 Trial Points",{timeout:10000});
+  expect((await read()).trialAccess.points).toBe(3);expect((await read()).trialAccess.spent).toBe(2);
+  await page.locator("#trial-retry").click();
+  await expect(page.locator("#trial-difficulty")).toContainText("Difficulty 3");
+  for(const mode of ["manual","cards","hybrid"])await expect(page.locator(`#trial-mode-${mode}`)).toBeDisabled();
+  await page.locator("#trial-mode-hybrid").dispatchEvent("click");
+  expect((await read()).trialAccess.spent).toBe(2);expect((await trial()).level).toBe(2);
+  // Already-open pickers refill at UTC midnight and can enter the same trial in a new mode.
+  await page.clock.setFixedTime(new Date("2026-10-06T00:00:00Z"));
   await expect(page.locator("#trial-key-balance")).toHaveText("Trial keys: 2 / 2",{timeout:5000});
-  await page.locator("#trial-level").fill("70");
-  await expect(page.locator("#trial-level-preview")).toContainText("8 beam(s) every 10 turns · Slime every 2 turns");
-  await page.setViewportSize({width:320,height:844});
-  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-  await page.locator("dialog").screenshot({path:"test-results/proving-grounds/level-menu-320.png"});
-  await page.locator("#trial-light-elemental").click();
-  await expect(world).toHaveAttribute("data-trial-level","70");
-  await page.locator("#trial-leave").click();
-  await fixture(()=> {
-    const save=JSON.parse(localStorage.getItem("towerdelve.v1"));save.settings.devMode=true;
-    save.delve.run=null; // This fixture tests Dev entries from the Tower forest.
-    save.trialAccess.spent=2;sessionStorage.setItem("trialFixture",JSON.stringify(save));
+  await page.locator("#trial-mode-hybrid").click();await expect(world).toHaveAttribute("data-trial-mode","hybrid");
+  await expect(page.locator('#hand .hand-card[aria-disabled="false"]')).toHaveCount(4);
+  await expect(page.locator("#trial-wait")).toBeVisible();
+  await page.locator("#auto").click();
+  await clickTile(6,2);await expect.poll(async()=>(await trial()).player.x).toBe(6);
+  expect((await trial()).player.y).toBe(2);expect((await trial()).playing).toBe(false);
+  // Queue an override while cards are playing, then pause them in the same
+  // task. Autoplay must not race the coordinate assertion after arrival.
+  await page.evaluate(()=> {
+    document.querySelector("#auto").click();
+    const canvas=document.querySelector("#world"),box=canvas.getBoundingClientRect();
+    const s=JSON.parse(localStorage.getItem("towerdelve.v1")).provingGrounds;
+    const init={bubbles:true,pointerId:1,pointerType:"mouse",clientX:box.left+box.width*(7-s.player.x+8.5)/17,clientY:box.top+box.height*(s.player.y-2+8.5)/17};
+    canvas.dispatchEvent(new PointerEvent("pointerdown",init));canvas.dispatchEvent(new PointerEvent("pointerup",init));
+    document.querySelector("#auto").click();
   });
-  // Dev mode also opens the Tournament and its ordinary free-ticket reveal.
-  await page.locator(".reward-reveal").click();
-  for(let i=0;i<3;i++) {
-    await page.keyboard.press("ArrowLeft");await page.keyboard.press("ArrowRight");
-    await expect(page.locator("#trial-key-balance")).toHaveText("Trial keys: Unlimited (Developer mode)");
-    await page.locator("#trial-light-elemental-cards").click();
-    await expect(world).toHaveAttribute("data-trial-level","70");
-    await page.locator("#trial-leave").click();
-    expect((await readSave()).trialAccess.spent).toBe(2);
-  }
+  await expect.poll(async()=>(await trial()).player.x).toBe(7);
+  expect((await trial()).player.y).toBe(2);
+  await clickTile(4,6);await expect(world).toHaveAttribute("data-trial-room","arena");
+  await page.locator("#trial-wait").click();expect((await trial()).steps).toBe(1);
+  await page.locator("#auto").click();await expect.poll(async()=>(await trial()).steps,{timeout:10000}).toBeGreaterThan(1);
+  await page.locator("#auto").click();
+  await oneHit("hybrid",3,false);await clickTile(12,12);
+  await expect(page.locator("#message")).toContainText("+3 Trial Points");
+  expect((await read()).trialAccess.points).toBe(6);expect((await read()).profile.earned.trialPoints).toBe(6);
+  // Replaying a previously completed saved result in another mode cannot pay or regress progress.
+  await fixture({trial:{level:2,mode:"cards",playing:false}});
+  expect((await read()).trialAccess.points).toBe(6);expect((await read()).trialAccess.progress["light-elemental"].cleared).toBe(3);
+  // The requested difficulty-five example pays exactly five points, not a flat reward or five Gems.
+  await oneHit("manual",5,false,{access:{points:10,progress:{"light-elemental":{cleared:4,claimed:[1,2,3,4]}}},profilePoints:10});
+  await clickTile(12,12);await expect(page.locator("#message")).toContainText("+5 Trial Points");
+  expect((await read()).trialAccess.points).toBe(15);expect((await read()).gems).toBe(0);
+  await reload();expect((await read()).trialAccess.points).toBe(15);
+  await page.locator("#trial-retry").click();
+  await expect(page.locator("#trial-difficulty")).toHaveText("Difficulty 6 · Difficulty multiplier ×1.5");
+  await expect(page.locator("#trial-reward")).toContainText("6 Trial Points");
+  await page.locator("#trial-list-back").click();await expect(page.locator("dialog .trial-choice")).toHaveCount(1);
+  await expect(page.locator("#trial-light-elemental")).toContainText("Next: Difficulty 6");
+  await page.locator("#trial-menu-leave").click();
+  const returned=await read();expect(returned.tower.run).toEqual(tower);expect(returned.delve.run).toEqual(delve);
+  expect(returned.provingGrounds).toBeUndefined();expect(returned.trialAccess.points).toBe(15);
+  await expect(page.locator("#enter-run")).toBeVisible();await expect(page.locator("#trial-overlay")).toHaveCount(0);
   expect(errors).toEqual([]);
-  console.log("Proving Grounds: selectable levels, daily keys across both modes, paid retries, midnight refills, unlimited Dev entries, shared HUD/cards/purchases, 320/390/1024px, ghost reload, autoplay and safe forest return passed.");
+  console.log("Trials: one boss entry, three controls, tile routes without arrows, cards-only input guard, hybrid overrides/resume, automatic shared difficulty, one-time weighted Trial Points, midnight keys, isolated purchases/runs and 320/390/1024px passed.");
 } finally {await browser.close();}

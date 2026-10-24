@@ -11,7 +11,8 @@ import { ARENA_CRATES, ARENA_POTIONS, ARENA_TORCHES, beamCount, beamDirections, 
 import { drawLightElemental, drawElementalTransit, TELEPORT_MS } from "./elemental-art.ts";
 export { drawLightElemental } from "./elemental-art.ts";
 
-const N = 17, S = 24, SIZE = N * S;
+export const TRIAL_VIEW_TILES = 17;
+const N = TRIAL_VIEW_TILES, S = 24, SIZE = N * S;
 
 const SLIME_ART = [
   "......gggg......", "....gghhhhgg....", "...ghwwhhhhhg...", "..ghwwhhhhhhhg..",
@@ -43,7 +44,7 @@ export class TrialRenderer {
     return { left: s.player.x - 8, bottom: s.player.y - 8 };
   }
   draw(s: TrialState, now: number, firedAt: number, reduceMotion: boolean, spritesOff: boolean,
-    options: {styledSprites?:boolean;spriteAnimations?:boolean} = {}) {
+    options: {styledSprites?:boolean;spriteAnimations?:boolean;destination?:{x:number;y:number}|null} = {}) {
     const styled=!!options.styledSprites && !spritesOff,animated=styled && !!options.spriteAnimations;
     // Animation is presentation only; saved turns own all positions.
     if(this.lastState!==s) { this.lastState=s; this.lastStep=s.steps; this.jumpedAt=-Infinity; this.lastTeleport=s.elemental.teleport; this.teleportAt=-Infinity;this.heroAt=null;this.facing={dx:0,dy:-1}; }
@@ -194,6 +195,10 @@ export class TrialRenderer {
         c.fillStyle="#ffeaa8";
         for(const [dx,dy] of beamDirections(nextBeamAxis(s),beamCount(s.level))) for(let i=1;i<=3;i++) tile(s.elemental.x+dx*i,s.elemental.y+dy*i,()=>c.fillRect(11,11,2,2));
       }
+    }
+    if(options.destination && s.status==="active") {
+      c.save();c.strokeStyle="#f3dc9c";c.lineWidth=1;
+      c.strokeRect(px(options.destination.x)+2,py(options.destination.y)+2,S-4,S-4);c.restore();
     }
   }
 }

@@ -6,7 +6,7 @@ import { seedCardBuys } from "./card-buys.ts";
 import { stream } from "./random.ts";
 
 /** The currencies whose lifetime earnings the player profile tallies. */
-export const LIFETIME_CURRENCIES = ["gold", "silver", "gems", "ascensionShards", "cells", "medals", "inspiration", "courage", "tickets"] as const;
+export const LIFETIME_CURRENCIES = ["gold", "silver", "gems", "ascensionShards", "cells", "medals", "inspiration", "courage", "tickets", "trialPoints"] as const;
 export type LifetimeCurrency = (typeof LIFETIME_CURRENCIES)[number];
 
 /** The lifetime tallies the Settings page's Stats dialog shows: kept as
@@ -88,6 +88,7 @@ export function backfillProfile(save: Save) {
   at("inspiration", save.tower.inspiration);
   at("courage", save.delve.courage);
   at("tickets", save.tournament.tickets);
+  at("trialPoints", save.trialAccess.points);
   const ranks = TRAINING.reduce((n, t) => n + save.training[t.id], 0);
   const gold = TRAINING.reduce((n, t) => snap(n + save.trainingPaid[t.id].gold), 0);
   const levels = Object.values(save.archives.levels).reduce<number>((n, l) => n + (l ?? 0), 0);

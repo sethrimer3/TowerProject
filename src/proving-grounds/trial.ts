@@ -4,6 +4,7 @@ import { CARDS, type CardId } from "../cards.ts";
 import { finite, isRecord, wholeIn } from "../decode.ts";
 import { tileRandom } from "../random.ts";
 import { MAX_TRIAL_LEVEL } from "./access.ts";
+import { FIRST_TRIAL, TRIALS, difficultyMultiplier, type TrialId } from "./catalog.ts";
 
 export const ARENA_SIZE = 25;
 export const ELEMENTAL = { x: 12, y: 12 };
@@ -14,14 +15,16 @@ export const BEAM_AXES = [[0, 1], [1, 1], [1, 0], [1, -1]] as const;
 export const BEAM_DIRECTIONS = [...BEAM_AXES,[0,-1],[-1,-1],[-1,0],[-1,1]] as const;
 export const beamCount = (level: number) => Math.min(8,1+Math.floor(level/10));
 export const slimeSpawnInterval = (level: number) => Math.max(2,20-2*Math.floor(level/5));
-export const bossHpFactor = (level: number) => 1+(level-1)/10;
+export const bossHpFactor = difficultyMultiplier;
 export type Spot = { x: number; y: number };
-export type TrialMode = "cards" | "manual";
+export type TrialMode = "cards" | "manual" | "hybrid";
+export type TrialInput = "cards" | "manual";
 export type Elemental = Spot & { incorporeal: boolean; teleport: { from: Spot; step: number } | null };
 export type Beam = { origin: Spot; axis: number; step: number; count?: number };
 export type LightSlime = Spot & { id: number; from: Spot; jumped: number };
 export type TrialState = {
   version: 2;
+  trialId:TrialId;
   level: number;
   mode: TrialMode;
   hand: CardId[];
@@ -74,10 +77,10 @@ function breakProp(s: TrialState, p: Spot) {
   if(breakable.has(k) && !propDestroyed(s,p))s.destroyed[k]=s.steps;
 }
 
-export function startTrial(player: Pick<Player, "maxHp" | "attack" | "defense">, mode: TrialMode = "manual", hand: readonly CardId[] = [], seed = 7391, level = 1): TrialState {
+export function startTrial(player: Pick<Player, "maxHp" | "attack" | "defense">, mode: TrialMode = "manual", hand: readonly CardId[] = [], seed = 7391, level = 1, trialId:TrialId=FIRST_TRIAL): TrialState {
   if(!wholeIn(level,1,MAX_TRIAL_LEVEL))throw new RangeError("Invalid trial level");
   const bossMaxHp = Math.ceil(Math.max(240, player.attack * 24)*bossHpFactor(level));
-  return { version: 2, level, mode, displayHand:[...hand], hand: mode === "cards" ? [...hand] : [], playing: mode === "cards", seed: seed >>> 0,
+  return { version: 2, trialId, level, mode, displayHand:[...hand], hand: mode !== "manual" ? [...hand] : [], playing: mode !== "manual", seed: seed >>> 0,
     room: "staging", status: "active", player: { x: 4, y: 2, hp: player.maxHp, maxHp: player.maxHp, attack: player.attack, defense: player.defense },
     elemental: {...ELEMENTAL,incorporeal:false,teleport:null}, beam:null,
     bossHp: bossMaxHp, bossMaxHp, steps: 0, slimes: [], consumed: [], scorches: {}, destroyed: {} };
@@ -162,9 +165,9 @@ function materialize(s: TrialState) {
 }
 
 /** Only the matching input source may spend a turn. Walls cost no turns. */
-export function trialStep(s: TrialState, dx: number, dy: number, source: TrialMode = "manual"): { changed: boolean; message: string; fired: boolean } {
+export function trialStep(s: TrialState, dx: number, dy: number, source: TrialInput = "manual"): { changed: boolean; message: string; fired: boolean } {
   const unchanged = { changed: false, message: "", fired: false };
-  if (s.mode !== source || (source === "cards" && !s.playing) || s.status !== "active"
+  if ((source!=="cards" && source!=="manual") || (s.mode!=="hybrid" && s.mode !== source) || (source === "cards" && !s.playing) || s.status !== "active"
     || !Number.isInteger(dx) || !Number.isInteger(dy) || Math.abs(dx) + Math.abs(dy) > 1) return unchanged;
   const x = s.player.x + dx, y = s.player.y + dy;
   if (!floorAt(s.room, x, y)) return unchanged;
@@ -234,6 +237,8 @@ export function decodeTrial(raw: unknown): TrialState | undefined {
   if (raw.version === undefined) return startTrial({maxHp:p.maxHp,attack:p.attack,defense:p.defense});
   const level=raw.level===undefined?1:raw.level;
   if(!wholeIn(level,1,MAX_TRIAL_LEVEL))return;
+  const trialId=raw.trialId??FIRST_TRIAL;
+  if(typeof trialId!=="string" || !Object.hasOwn(TRIALS,trialId))return;
   const position = {x:p.x,y:p.y};
   const e=raw.elemental;
   let elemental: Elemental={...ELEMENTAL,incorporeal:false,teleport:null};
@@ -260,7 +265,7 @@ export function decodeTrial(raw: unknown): TrialState | undefined {
     const step=Math.floor(raw.steps/BEAM_INTERVAL)*BEAM_INTERVAL;
     beam={origin:{...ELEMENTAL},axis:(step/BEAM_INTERVAL-1)%8,step,...(raw.level===undefined?{}:{count:beamCount(level)})};
   }
-  if (raw.version !== 2 || !["cards","manual"].includes(raw.mode) || typeof raw.playing !== "boolean"
+  if (raw.version !== 2 || !["cards","manual","hybrid"].includes(raw.mode) || typeof raw.playing !== "boolean"
     || !wholeIn(raw.seed,0,0xffffffff) || !Array.isArray(raw.hand) || raw.hand.length > 64
     || raw.hand.some((id: unknown) => typeof id !== "string" || !Object.hasOwn(CARDS,id))
     || (raw.mode === "manual" && (raw.hand.length > 0 || raw.playing))
@@ -313,7 +318,7 @@ export function decodeTrial(raw: unknown): TrialState | undefined {
     slimes.push({id:slime.id,x:slime.x,y:slime.y,from:{x:slime.from.x,y:slime.from.y},jumped:slime.jumped});
     occupied.add(key(position)); ids.add(slime.id);
   }
-  return { version:2,level,...(displayHand?{displayHand}:{}),...(purchases?{purchases}:{}),elemental,beam,mode:raw.mode,hand:[...raw.hand],playing:raw.playing,seed:raw.seed,
+  return { version:2,trialId:trialId as TrialId,level,...(displayHand?{displayHand}:{}),...(purchases?{purchases}:{}),elemental,beam,mode:raw.mode,hand:[...raw.hand],playing:raw.playing,seed:raw.seed,
     room: raw.room, status: raw.status, player: { x:p.x,y:p.y,hp:p.hp,maxHp:p.maxHp,attack:p.attack,defense:p.defense },
     bossHp:raw.bossHp,bossMaxHp:raw.bossMaxHp,steps:raw.steps,slimes,consumed:[...new Set<string>(consumed)],scorches,destroyed };
 }

@@ -85,5 +85,8 @@ Potion % and Find Potion training sit in the Utility group, last, after the Free
 
 `proving-grounds-dialog.ts` opens the entrance menu from the gold square, then takes over the main `#world` board with the shared HUD, hand and run-training bar; manual trials show the same card faces with red X overlays.
 `main.ts` supplies an isolated trial `Game` for HUD/training reads, and `FrameLoopHost.boardFrame` bypasses ordinary drawing and movement while it owns the board; see [proving-grounds.md](proving-grounds.md).
-The trial entrance menu previews its numeric difficulty selection and shared daily key balance; `archivesTick` calls its `tick` to refresh midnight refills without closing the menu or restarting an encounter.
+The trial entrance lists one entry per boss, then shows three control buttons for its next unbeaten difficulty, multiplier, Trial Points reward and shared daily key balance; no numeric difficulty input remains.
+`archivesTick` calls its `tick` to refresh midnight refills without closing the menu or restarting an encounter.
+Manual and hybrid trials map canvas taps to actual world tiles and queue `TrialNavigation`; a destination marker shows the pending tile, and the only movement overlay button is Wait.
+The Stats dialog includes Trial Points earned after the profile has earned some, keeping the existing empty-profile layout.
 **The Overheal bar.** `.health-track` holds `#overheal`, a bar laid over the red one and shown only while the shown HP is above max HP (`renderVitals`): its fill is the HP above max over the room Overheal gives (`game.hpCeiling − maxHp`), the red bar stays full, and while it shows the fight's purple (`#overheal-loss`) and a heal's growth (`#overheal-gain`, pale blue) are drawn on it rather than on the red; `renderHealthLoss` and `renderHealthGain` take the bar they draw on.

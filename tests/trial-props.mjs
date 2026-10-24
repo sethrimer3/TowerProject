@@ -12,7 +12,7 @@ try {
     if(fixture){localStorage.setItem("towerdelve.v1",fixture);sessionStorage.removeItem("trialPropsFixture");}
   });
   await page.goto(process.env.TEST_URL||"http://127.0.0.1:5173/",{waitUntil:"domcontentloaded"});
-  const world=page.locator("#world"),wait=page.locator('[data-trial-move="0,0"]');
+  const world=page.locator("#world"),wait=page.locator("#trial-wait");
   const read=()=>page.evaluate(()=>JSON.parse(localStorage.getItem("towerdelve.v1")));
   async function scene(kind) {
     await page.evaluate(async(kind)=> {

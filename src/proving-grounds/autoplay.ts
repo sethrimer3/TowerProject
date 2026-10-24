@@ -27,16 +27,18 @@ export function trialBoard(s: TrialState): Board {
 }
 
 export function trialPlan(s: TrialState) {
-  if (s.mode !== "cards" || s.status !== "active") return null;
-  const world=trialBoard(s);
+  if (s.mode === "manual" || s.status !== "active") return null;
+  return planHand(trialPosition(s),s.hand,"tower");
+}
+export function trialPosition(s:TrialState) {
   const run: TowerRun = { seed:s.seed, player:{...s.player, keys:{yellow:0,blue:0,red:0}},
     height:1,kills:0,treasures:0,changes:{},floor:1,damaged:false };
-  return planHand({world,run},s.hand,"tower");
+  return {world:trialBoard(s),run};
 }
 
-export function autoplayTrial(s: TrialState) {
-  if (s.mode !== "cards" || !s.playing || s.status !== "active") return { changed:false,message:"",fired:false };
-  const plan = trialPlan(s), next = plan?.path[0];
+export function autoplayTrial(s: TrialState, plan=trialPlan(s)) {
+  if (s.mode === "manual" || !s.playing || s.status !== "active") return { changed:false,message:"",fired:false };
+  const next = plan?.path[0];
   if (!next && s.room==="arena" && s.elemental.incorporeal) {
     const outcome=trialStep(s,0,0,"cards");
     return {...outcome,message:outcome.message || "The elemental is incorporeal. Waiting for its next lasers."};

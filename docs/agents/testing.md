@@ -11,6 +11,9 @@ They pin the streams' start-up seeds (`__pinnedSeeds`) like the Node preload, wa
 `test:snapshots` runs both at once, each output line tagged with its suite, and fails if either does; the UI suite takes each snapshot as soon as nothing is moving (no route being walked or fight playing out, from the app's `boardBusy()` debug hook; no finite CSS animation or transition running; no tile highlight fading out) and the HTML is the same on two checks in a row, each after two real animation frames (a busy machine can delay a frame, and the next frame may still change the HTML, such as a canvas it sizes), instead of waiting a fixed time after every step.
 The render suite encodes PNGs only for frames that changed (every frame when recording), and draws a scene a second time, to catch nondeterminism, only when recording or when one of its frames no longer matches.
 
+`npm run test:proving` uses the dev server to exercise one boss entry, the three-control picker, actual tile routes without arrow buttons, hybrid overrides and resume, automatic shared difficulty and one-time Trial Points equal to the cleared difficulty.
+It also checks cards-only input authority, reloads, daily key exhaustion/refill, isolated purchases and protection of paused ordinary runs, with picker previews at 320/390/1024 pixels in `test-results/proving-grounds/`.
+
 The UI and render snapshot suites also accept `PLAYWRIGHT_EXECUTABLE_PATH` for an installed Chromium binary.
 `node tests/trial-props.mjs` uses the dev server (or `TEST_URL`) for trial floor-edge props at 320/1024 pixels, an actual canvas-light measurement before/after a torch goes out, beam and slime destruction, reload persistence and isolation from the ordinary Tower run.
 It loads seeded saved attempts and steps them with the real manual Wait button; screenshots go to `test-results/proving-grounds-props/`.

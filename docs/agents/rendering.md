@@ -289,3 +289,5 @@ Destroyed torch stands paint only charred fragments and contribute no darkness-m
 The trial render scenes include intact edge props, beam damage to torch stands and crates, and darkness after the remaining beam glow fades.
 `TrialRenderer` also receives the live `usesGameSprites` gate and Animations setting; the shared tile, item, hero and torch painters supply current PNG terrain, props and facing/idle art when enabled, with the existing trial art retained as loading/off fallbacks.
 Native crate and wreck pieces use 24 and 12 pixels respectively, and every-frame painting lets asynchronously loaded PNGs replace fallbacks immediately.
+
+Trial manual/hybrid clicks add a native one-pixel gold outline inside the destination tile; the `manualDestination` scene appends coverage without changing existing render frames.

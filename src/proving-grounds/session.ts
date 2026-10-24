@@ -16,7 +16,7 @@ export class TrialSession {
     delete save.provingGrounds;
     save.delve.run=null;
     const game=this.game=new Game(save,random(state.seed));
-    state.displayHand ??= [...(state.mode==="cards"?state.hand:base.hand)];
+    state.displayHand ??= [...(state.mode!=="manual"?state.hand:base.hand)];
     state.purchases ??= {silver:base.startingSilver,training:{}};
     game.save.settings=base.save.settings;
     // Trials use their own turn controls and do not repeat Tower lessons.
@@ -39,7 +39,7 @@ export class TrialSession {
     Object.assign(game.run.player,state.player);
     game.run.silver=state.purchases!.silver;
     game.run.training={...state.purchases!.training};
-    game.auto=state.mode==="cards" && state.playing && state.status==="active";
+    game.auto=state.mode!=="manual" && state.playing && state.status==="active";
     game.handStuck=false;game.world=trialBoard(state);
     game.save.gemDrop={...this.base.save.gemDrop};game.save.goldBoostUntil=this.base.save.goldBoostUntil;
     for(const key of ["gold","gems","ascensionShards","medals"] as const) game.save[key]=this.base.save[key];

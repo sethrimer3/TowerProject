@@ -3,11 +3,13 @@
 The gold square two columns right of the Tower forest's path on row 4 opens **Proving Grounds Trials** when entered.
 `OutsideWorld.isProvingGrounds` identifies it, `Game.land` stops the route and asks for its menu, and `ProvingGroundsDialog` owns the entrance menu, trial controls and main-board presentation.
 Only the selection menu uses the shared modal; the encounter itself uses `#world`, the normal HUD, `#hand` and `RunTrainingBar`.
-Its numeric level selector (1–10,000) previews the encounter rules and remembers the selection in `save.trialAccess.level`.
+`catalog.ts` defines one entry per boss, its trial number, difficulty multiplier and first-clear reward.
+Selecting Trial 1 — Light Elemental opens a picker for Without cards, Only with cards or With both; there is no difficulty selector.
+`progression.ts` selects the highest cleared difficulty plus one (up to 10,000), shared by all three controls for that boss.
 `access.ts` owns the shared two-key daily allowance (`day`, the UTC day index, and `spent`); `trialKeys` refills on a strictly later day, and `spendTrialKey` guards both entry and retry before replacing an attempt.
 Unused keys do not bank; reload/resume does not charge, and Dev mode bypasses spending without changing the ordinary allowance.
 The controller's once-a-second `tick` refreshes an open list or finished encounter across midnight, so disabled entries/retries become available without a reload.
-The two trials are separate encounters: `save.provingGrounds` stores the current attempt, while ordinary Tower and Delve runs, equipment, currencies and supplies remain untouched.
+The three control options share one encounter and progression: `save.provingGrounds` stores the current attempt, while ordinary Tower and Delve runs, equipment, currencies and supplies remain untouched.
 The player's current max HP, ATK and DEF are copied into the attempt, which starts at full HP; other normal-run combat systems do not apply.
 `session.ts` creates an isolated `Game` over a cloned profile and the live `trialBoard` so the shared HUD and run-training bar use their existing code.
 Only trial stats, run-training ranks and trial Silver are copied back into the attempt; permanent currencies and the ordinary mode runs remain separate.
@@ -16,22 +18,40 @@ Leaving the trial or pressing Escape on its board discards the attempt and retur
 
 ## Controls and cards
 
-Trial I snapshots the equipped hand and plays automatically; Trial II has manual movement and no cards.
+`TrialMode` is `cards`, `manual` or `hybrid`.
+Cards-only snapshots the equipped hand and plays automatically; manual has no active cards, while hybrid retains autoplay and accepts player commands.
 `autoplay.ts` adapts the staging room and arena into a `Board` and isolated `TowerRun` for the existing `planHand` planner, preserving card priority and enemy categories.
 It replans each turn because slime targets and the elemental move; a corporeal elemental is a boss enemy, an incorporeal elemental is passable floor, and slimes are weak enemies.
-There are no normal-run card activations, badges, supplies or rewards in either encounter.
+There are no normal-run card activations, badges, supplies or rewards in these encounters.
 The existing On the Job unlock and Silver prices govern ATK, DEF and Max HP purchases; unsupported training rows are filtered rather than accepting purchases with no encounter effect.
 Trial Silver starts at `Game.startingSilver`, and purchases do not advance arena movement/hazard turns.
 The normal HUD shows the trial hero and play/pause/speed controls, and the normal hand displays the copied equipped cards.
 Manual trials retain those card faces with red X overlays and `aria-disabled`, while their actual planning hand remains empty.
-The manual direction/wait buttons and boss countdown sit over the shared canvas; the main HUD and purchase bar keep their normal layout.
+Manual and hybrid players click a destination tile; `navigation.ts` uses `routeTo(trialPosition(state), x, y)` and replans each step, spending one turn per tile.
+A route ends on arrival, a strike on the clicked enemy, a room transition or an ended attempt; routes are transient and reloads clear them.
+The canvas maps clicks through the renderer's 17×17 view and draws a gold destination outline.
+There are no movement-arrow buttons; Wait, the boss countdown and leave/retry actions sit over the shared canvas.
+Arrow/WASD keyboard shortcuts remain available, and clicking the current tile or pressing Space waits.
 Card autoplay follows the normal Movement Speed setting and advances at most one turn per visible frame, without catching up missed turns.
+`advanceTrial` plans cards first, then overrides their proposed turn with a pending player route in hybrid mode; only one turn is spent.
+Routes run at least four steps per second and work while hybrid cards are paused; autoplay resumes after the route if it was playing.
 `FrameLoopHost.boardFrame` lets the trial own board drawing and turns before ordinary routes/automove run; normal board input is suppressed while the trial owns it.
 While the elemental is incorporeal, a hand with no reachable target spends a wait turn instead of pausing, so the lasers can restore its body.
 Otherwise a hand with no reachable target pauses with an explanation; a retry or new entry copies the equipped hand again.
-All manual event handlers go through `trialStep`, whose source/mode guard also rejects manual actions in card trials and card actions in manual trials.
-Paused card attempts remain paused across reloads.
+All manual event handlers go through `trialStep`, whose `TrialInput` source/mode guard rejects manual actions in card trials and card actions in manual trials, while allowing both sources in hybrid mode.
+Paused card and hybrid attempts remain paused across reloads.
 Resume explicitly selects the saved Tower forest before attaching the encounter, so an older paused Delve cannot take over the trial or its exit.
+
+## Progression and rewards
+
+`save.trialAccess` stores `points` and a per-boss `progress` map alongside daily key usage.
+Each progress record holds the highest `cleared` difficulty and sorted `claimed` difficulty receipts.
+`settleTrialVictory` advances the shared record on any mode's victory and awards exactly N Trial Points for difficulty N if its receipt is absent.
+The wallet, receipt and lifetime `earn(save, "trialPoints", N)` tally persist together; reloading or settling an old result pays nothing again and never lowers progress.
+No Gold or Gems are paid; Trial Points have no spending use yet.
+The list and picker show the boss's next difficulty, multiplier and reward; the HUD shows the current difficulty and multiplier.
+A victory's Next difficulty or a defeat's Try again opens the control picker without spending a key; choosing a control starts and charges the attempt.
+The highest cleared difficulty is never manually selectable, and finishing difficulty 10,000 disables further entries.
 
 ## Turns and persistence
 
@@ -67,7 +87,8 @@ The additive `destroyed` map contains only known crate/torch floor coordinates w
 Older attempts infer the displayed hand and start their isolated purchase balance on resume.
 Attempts without a level resume at level 1, retain their saved HP and slimes, and keep a previously fired two-ray flash when its saved beam has no count.
 Legacy four-axis beams normalize to the equivalent eight-heading axis on decode, so migrated attempts round-trip again after saving.
-Old saves without an attempt remain unchanged.
+Attempts without `trialId` default to `light-elemental`; unknown IDs are rejected, and `hybrid` decodes with the same hand rules as `cards`.
+The old selected `trialAccess.level` is ignored and cannot manufacture completed difficulties.
 
 ## Rendering and tests
 
@@ -92,6 +113,10 @@ Beam flashes last 900 ms, while visible cracks and their turn-based glow survive
 `node tests/trial-props.mjs` uses the dev server to check 320/1024-pixel edge layouts, actual torch-light loss, beam/slime destruction of both types, reloads and protection of the ordinary Tower run.
 Its review fixtures enable Sprites, matching the current game art instead of silently capturing the older fallback.
 `node tests/trial-sprites.mjs` checks actual trial PNG draws, native hero/stair texels, delayed-image recovery, exact live off/on restoration, board opt-out, hero facing, independent UI/Game theme gates, 320/390/1024-pixel previews and destroyed-prop PNGs.
-`npm run test:proving` exercises both modes in the main shell, red X cards, actual training purchases, manual-input rejection, reload, autoplay, victory/retry and 320/390/1024-pixel layouts with the dev server running.
+`tests/trial-navigation.test.ts` covers real routes, per-step hazards, staging transitions, clicked enemy strikes, hybrid priority/resume and paused-card input.
+`tests/trial-progression.test.ts` covers shared automatic difficulty, difficulty-weighted Trial Points, receipts across reloads/modes, cap, losses and legacy access decoding.
+`npm run test:proving` exercises the three-control picker, arrow-free tile movement, hybrid priority/resume, cards-only input rejection, shared progression, one-time weighted Trial Points, keys/refill, purchases and isolated runs at 320/390/1024 pixels.
 The render goldens include staging, elemental, beam, glow, wall-scar, slime-hop, dissolution, light trails, reformation, ghost/reduced-motion and restored-corporeal laser frames.
 Five appended sprite-kit frames cover staging, intact edge props, beam damage, extinguished torches and the board-art opt-out; the earlier legacy trial frames remain unchanged.
+
+The appended `manualDestination` render frame covers the gold tile-click marker without changing earlier trial frames.
