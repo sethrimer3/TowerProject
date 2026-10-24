@@ -33,7 +33,7 @@ The player's lifetime record, shown in the Settings page's Stats: when the profi
 _Avoid_: account, statistics save
 
 **Profile file**:
-A text file of everything the player keeps between runs (no run in progress), in named sections, which Dev mode exports and imports to replace the whole profile.
+A text file of everything the player keeps between runs (no run in progress), in named sections, which the Settings page's Dev Mode section exports and imports to replace the whole profile.
 _Avoid_: backup, save file (the stored save also holds the runs)
 
 **Run Notes**:

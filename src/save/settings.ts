@@ -79,8 +79,12 @@ export const SETTINGS = {
    * ghosts, bats, cobwebs and candles, its hero a glum stick figure in a
    * scarf) once owned. Chosen on the Game Themes menu. */
   gameTheme: { kind: "choice", default: "classic", choices: [["classic", "Classic"], ["neon", "Neon"], ["terminal", "Terminal"], ["desktop", "Desktop"], ["glyph", "Glyph"], ["ember", "Ember"], ["yang", "Yang"], ["yin", "Yin"], ["shiro", "Shiro"], ["kuro", "Kuro"], ["arcade", "Arcade"], ["system", "System"], ["kroz", "Kroz"], ["orbit", "Orbit"], ["pixel", "Pixel"], ["doodle", "Doodle"], ["murk", "Murk"]] },
+  /** Dev Mode: shows the Settings page's dev section (Dev mode, free
+   * purchases, the profile file's export and import). Unlocks and grants
+   * nothing itself. */
+  devTools: { kind: "toggle", default: false, page: { id: "dev-tools", label: "Dev Mode" } },
   /** Unlimited currency, every floor section and game mode unlocked. */
-  devMode: { kind: "toggle", default: false, page: { id: "dev-mode", label: "Dev mode (unlimited currency, all floors &amp; modes unlocked)" } },
+  devMode: { kind: "toggle", default: false, page: { id: "dev-mode", label: "Unlimited currency (all floors &amp; modes unlocked)" } },
   /** Play each fight out strike by strike, damage rising off whoever was
    * struck, instead of settling it at once and showing it in summary. Only
    * Instant Combat shows it, so fights play out until then
@@ -88,7 +92,7 @@ export const SETTINGS = {
   fightAnimation: { kind: "toggle", default: true, page: { id: "fight-animation", label: "Animate fights" } },
   /** Dev: every purchase is allowed and costs nothing, and research
    * completes the moment it starts. Unlocks and grants nothing itself. */
-  freePurchases: { kind: "toggle", default: false, page: { id: "free-purchases", label: "Dev: free purchases (instant research)" } },
+  freePurchases: { kind: "toggle", default: false, page: { id: "free-purchases", label: "Free purchases (instant research)" } },
   /** How many Training ranks one press buys (`progression/buy-quantity.ts`): chosen
    * on the Training tab or the run's training bar once Buy Quantity is
    * owned, not on the Settings page. */
@@ -164,5 +168,7 @@ export function settingValue(setting: Setting, v: unknown): boolean | string | n
 export function decodeSettings(raw: any): Settings {
   const s = raw ?? {}, out = defaultSettings() as Record<SettingKey, unknown>;
   for (const k of KEYS) out[k] = settingValue(SETTINGS[k], s[k]) ?? out[k];
+  // The dev section's settings are on only under Dev Mode.
+  if (out.devMode || out.freePurchases) out.devTools = true;
   return out as Settings;
 }

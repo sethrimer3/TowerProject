@@ -16,15 +16,17 @@ import { exportProfile, importProfile } from "../profile-file.ts";
  * SETTINGS. */
 const PAGE = [
   "uiSprites", "spriteAnimations", "squareDoors", "transition", "fightAnimation", "brightness", "spritesOff", "decorOff", "batterySaver", "reduceMotion", "weatherSound",
-  "infoDisplay", "cinematic", "cinematicIdle", "cinematicGems", "devMode", "freePurchases",
+  "infoDisplay", "cinematic", "cinematicIdle", "cinematicGems",
 ] as const satisfies readonly SettingKey[];
+/** The dev section's settings, shown under Dev Mode while it is on. */
+const DEV = ["devMode", "freePurchases"] as const satisfies readonly SettingKey[];
 /** The settings on the Toggles menu, in order: the values the board shows
  * in a run. */
 const TOGGLES = [
   "attackGains", "defenseGains", "hpGains", "keyGains", "doorGains", "goldGains", "silverGains", "xpGains", "comboGains",
   "damageVisual", "itemLabels", "hitNumbers", "enemyBars",
 ] as const satisfies readonly SettingKey[];
-type PageKey = (typeof PAGE)[number] | (typeof TOGGLES)[number];
+type PageKey = (typeof PAGE)[number] | (typeof TOGGLES)[number] | (typeof DEV)[number] | "devTools";
 
 /** Settings that stay off the page until the upgrade (or the setting)
  * behind them is on. */
@@ -64,6 +66,17 @@ const AFTER: Partial<Record<PageKey, (ctx: AppContext, overlay: BoardOverlay, s:
   // Its two options show only while it is on.
   cinematic: (ctx) => {
     ctx.save();
+    ctx.renderPage();
+  },
+  // Its section shows only while it is on, and turning it off turns off
+  // what is in it.
+  devTools: (ctx, _, s) => {
+    if (!s.devTools) {
+      ctx.game.setDevMode(false);
+      s.freePurchases = false;
+    }
+    ctx.save();
+    ctx.update();
     ctx.renderPage();
   },
   // Turning it on also grants everything it unlocks.
@@ -135,12 +148,15 @@ export function renderSettingsPage(ctx: AppContext, overlay: BoardOverlay) {
     themeButtons(game) +
     `<button class="setting menu-open" id="toggles-open">Toggles<b>${controlIcon("forward")}</b></button>` +
     shownOf(PAGE, game.save).map((key) => control(key, game) + (key === (game.save.settings.uiSprites ? "squareDoors" : "uiSprites") ? `<p class="hint">Sprites apply to the default interface and board. Other UI and Game themes use their own art.</p>` : "")).join("") +
-    `<p class="hint">Automation pauses outside the board tabs and while the browser is hidden. Progress saves after each action.</p>${game.save.settings.devMode ? profileButtons : ""}<button class="wide danger" id="erase">Erase all progress</button><p class="seed">RUN SEED · ${game.run.seed}</p>`;
+    `<p class="hint">Automation pauses outside the board tabs and while the browser is hidden. Progress saves after each action.</p>` +
+    control("devTools", game) +
+    (game.save.settings.devTools ? `<div class="dev-section">${DEV.map((key) => control(key, game)).join("")}${profileButtons}</div>` : "") +
+    `<button class="wide danger" id="erase">Erase all progress</button><p class="seed">RUN SEED · ${game.run.seed}</p>`;
   bindSettings(ctx, overlay);
 }
 
-/** Dev mode's profile file buttons: download everything kept between runs,
- * or load such a file over the whole save. */
+/** The dev section's profile file buttons: download everything kept
+ * between runs, or load such a file over the whole save. */
 const profileButtons =
   `<button class="wide" id="profile-export">Export profile</button><button class="wide" id="profile-import">Import profile</button><input type="file" id="profile-file" accept=".json,application/json,text/plain" hidden><p class="hint">A text file of everything kept between runs; a run in progress isn't in it. Importing replaces this profile and its runs.</p>`;
 
@@ -196,8 +212,11 @@ function bindSettings(ctx: AppContext, overlay: BoardOverlay) {
     menu = "toggles";
     ctx.renderPage();
   };
-  bindControls(ctx, overlay, shownOf(PAGE, game.save));
-  if (game.save.settings.devMode) bindProfileButtons(ctx);
+  bindControls(ctx, overlay, [...shownOf(PAGE, game.save), "devTools"]);
+  if (game.save.settings.devTools) {
+    bindControls(ctx, overlay, DEV);
+    bindProfileButtons(ctx);
+  }
   el("erase").onclick = () =>
     ctx.confirm(
       {

@@ -621,6 +621,8 @@ try {
     await click("#settings-back");
     await shot(`${prefix}.popup`);
     await menuClick("#auto-settings");
+    // Dev Mode shows the dev section, where Dev mode itself is turned on.
+    await page.locator("#dev-tools").setChecked(true);
     await page.locator("#dev-mode").setChecked(true);
     await shot(`${prefix}.settings.dev`);
     // Dev mode owns every theme; one is worn from its menu.

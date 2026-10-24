@@ -61,3 +61,10 @@ test("no setting's control shares an id with the page shell's", async () => {
     for (const id of [row.page.id, `${row.page.id}-value`]) assert.ok(!shellIds.has(id), `${key}: #${id}`);
   }
 });
+
+test("a save with a dev section setting on opens with Dev Mode on, which grants nothing", () => {
+  assert.equal(decoded({}).devTools, false);
+  assert.equal(decoded({ devMode: true }).devTools, true);
+  assert.equal(decoded({ freePurchases: true }).devTools, true);
+  assert.equal(decoded({ devTools: true }).devMode, false);
+});
