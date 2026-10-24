@@ -5,7 +5,7 @@ import { deckCards, type CardId } from "../cards/cards.ts";
 import { hasPointsToSpend, totalCardLevels } from "../cards/trees.ts";
 import { equipmentWaiting } from "../equipment/inventory.ts";
 import { goalsWaiting } from "../goals.ts";
-import { trainingWaiting } from "../progression/loadout.ts";
+import { provisionsOpen, trainingWaiting } from "../progression/loadout.ts";
 import { estimatedServerTime } from "../shop/clock.ts";
 import { OFFERS } from "../shop/offers.ts";
 import { refusal } from "../shop/transactions.ts";
@@ -155,9 +155,9 @@ export class NoticeDesk {
     return !this.save.tutorials.upgrades && this.save.tower.inspiration > 0;
   }
 
-  /** The Gear skill is owned and the Gear page hasn't been opened since. */
+  /** A provision is open and the Gear page hasn't been opened since. */
   private get firstGear() {
-    return !this.save.tutorials.gear && !!this.save.upgrades.gear;
+    return !this.save.tutorials.gear && provisionsOpen(this.save);
   }
 
   /** In the forest, after a run that earned `tree`'s currency (Inspiration

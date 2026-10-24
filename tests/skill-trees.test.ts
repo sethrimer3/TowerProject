@@ -83,25 +83,24 @@ test("Shroud follows Trainers, ahead of Critical; Greater Heal, then Recovery, R
   assert.deepEqual([at("keySiphon").x, at("keySiphon").y, at("keySiphon").requires], [50, 268, ["thorns"]], "GK Siphon sits under Thorns");
   assert.deepEqual([at("cardYellowDoor").y, at("cardYellowDoor").requires], [322, ["keySiphon"]], "the cards hang from GK Siphon, a row clear of it and Revive");
 });
-test("the hand's skills run Buildout, Trainers, Shroud, Critical to the Archives, Gear and On the Job off Buildout, Gold Key, ATK Up then DEF Up after Gear, Regen then Heal below On the Job, Larger Hand sits by itself to Shroud's right, and Buildout, Trainers, On the Job and Gear cost 1 (Critical 2)", () => {
+test("the hand's skills run Buildout, Trainers, Shroud, Critical to the Archives, Gold Key and On the Job off Buildout, ATK Up then DEF Up after Gold Key with their provisions to their right, Regen below On the Job with Heal and the elixir under it, Larger Hand sits by itself to Shroud's right, and Buildout, Trainers and On the Job cost 1 (Critical 2)", () => {
   const at = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;
-  assert.deepEqual(["buildout", "trainers", "shroud", "critical", "archives", "onTheJob", "regen", "cardHeal", "gear", "cardYellowKey", "cardAtkUp", "cardDefUp"].map((id) => at(id).requires),
-    [["combatStance"], ["buildout"], ["trainers"], ["shroud"], ["critical"], ["buildout"], ["onTheJob"], ["regen"], ["buildout"], ["gear"], ["cardYellowKey"], ["cardAtkUp"]]);
-  assert.deepEqual(["gear", "cardYellowKey", "cardAtkUp", "cardDefUp"].map((id) => [at(id).x, at(id).y]), [[20, 84], [20, 102], [20, 120], [20, 138]], "Gold Key, ATK Up and DEF Up straight down under Gear");
+  assert.deepEqual(["buildout", "trainers", "shroud", "critical", "archives", "onTheJob", "regen", "cardHeal", "elixirProvision", "cardYellowKey", "cardAtkUp", "whetstoneProvision", "cardDefUp", "aegisProvision"].map((id) => at(id).requires),
+    [["combatStance"], ["buildout"], ["trainers"], ["shroud"], ["critical"], ["buildout"], ["onTheJob"], ["regen"], ["regen"], ["buildout"], ["cardYellowKey"], ["cardAtkUp"], ["cardAtkUp"], ["cardDefUp"]]);
+  assert.deepEqual(["cardYellowKey", "cardAtkUp", "whetstoneProvision", "cardDefUp", "aegisProvision"].map((id) => [at(id).x, at(id).y]), [[20, 84], [10, 102], [30, 102], [10, 120], [30, 120]], "Gold Key left of Buildout, ATK Up and DEF Up under it, each provision to its right");
+  assert.deepEqual(["cardHeal", "elixirProvision"].map((id) => [at(id).x, at(id).y]), [[70, 120], [90, 120]], "Heal and the elixir either side under Regen");
   assert.deepEqual(["buildout", "trainers", "shroud", "critical", "archives"].map((id) => [at(id).x, at(id).y]), [[50, 84], [50, 120], [50, 138], [50, 156], [50, 174]], "down the middle, Shroud between Trainers and Critical");
   assert.deepEqual([at("largerHand").x, at("largerHand").y, at("largerHand").requires], [80, 138, ["trainers"]], "Larger Hand stands right of Shroud, alone");
   assert.deepEqual([at("critPrediction").x, at("critPrediction").y, at("critPrediction").requires], [30, 156, ["critical"]], "Critical Prediction stands left of Critical");
   assert.ok(!TREES[0].nodes.some((n) => n.requires.includes("largerHand")), "nothing waits for Larger Hand");
   assert.ok(at("onTheJob").x > at("buildout").x && at("onTheJob").y === at("buildout").y, "On the Job sits right of Buildout");
   assert.ok(at("regen").x === at("onTheJob").x && at("regen").y > at("onTheJob").y, "Regen sits below On the Job");
-  assert.ok(at("cardHeal").x === at("regen").x && at("cardHeal").y > at("regen").y, "Heal sits below Regen");
-  assert.ok(at("gear").x < at("buildout").x && at("gear").y === at("buildout").y, "Gear sits left of Buildout");
-  assert.ok(at("cardAtkUp").x === at("gear").x && at("cardAtkUp").y > at("gear").y, "ATK Up sits under Gear");
+  assert.ok(at("cardYellowKey").x < at("buildout").x && at("cardYellowKey").y === at("buildout").y, "Gold Key sits left of Buildout");
   assert.ok(at("cardDefUp").x === at("cardAtkUp").x && at("cardDefUp").y > at("cardAtkUp").y, "DEF Up sits under ATK Up");
   assert.deepEqual(["cardYellowKey", "cardAtkUp", "cardDefUp"].map((id) => cost(id as UpgradeId, 0)), [3, 5, 5]);
   assert.deepEqual(at("combatStance").requires, ["autoClimb"], "Combat Stance follows the first skills");
-  assert.deepEqual(["combatStance", "buildout", "trainers", "onTheJob", "largerHand", "gear", "critical", "archives"].map((id) => cost(id as UpgradeId, 0)), [1, 1, 1, 1, 1, 1, 2, 5]);
-  assert.deepEqual(["gear", "cardAtkUp", "cardDefUp", "onTheJob"].map((id) => UPGRADES.find((u) => u.id === id)!.name), ["Gear", "ATK Up", "DEF Up", "On the Job"]);
+  assert.deepEqual(["combatStance", "buildout", "trainers", "onTheJob", "largerHand", "critical", "archives"].map((id) => cost(id as UpgradeId, 0)), [1, 1, 1, 1, 1, 2, 5]);
+  assert.deepEqual(["cardAtkUp", "cardDefUp", "onTheJob"].map((id) => UPGRADES.find((u) => u.id === id)!.name), ["ATK Up", "DEF Up", "On the Job"]);
   const g = new Game(defaults());
   g.save.tower.inspiration = 100;
   for (const id of ["cardDoorKey", "cardEnemy", "autoClimb"] as const) assert.ok(g.skills.buy(id));
@@ -111,10 +110,11 @@ test("the hand's skills run Buildout, Trainers, Shroud, Critical to the Archives
   assert.equal(g.skills.buy("cardHeal"), false, "Heal waits for Regen");
   assert.ok(g.skills.buy("onTheJob") && g.skills.buy("regen") && g.skills.buy("cardHeal"), "On the Job needs only Buildout");
   assert.equal(g.skills.buy("archives"), false, "the Archives wait for Critical");
-  assert.equal(g.skills.buy("cardAtkUp"), false, "ATK Up waits for Gear");
   assert.equal(g.skills.buy("cardDefUp"), false, "DEF Up waits for ATK Up");
   assert.equal(g.skills.buy("cardAtkUp"), false, "ATK Up waits for Gold Key");
-  assert.ok(g.skills.buy("gear") && g.skills.buy("cardYellowKey") && g.skills.buy("cardAtkUp") && g.skills.buy("cardDefUp"));
+  assert.equal(g.skills.buy("whetstoneProvision"), false, "the Whetstone waits for ATK Up");
+  assert.ok(g.skills.buy("cardYellowKey") && g.skills.buy("cardAtkUp") && g.skills.buy("cardDefUp"));
+  assert.ok(g.skills.buy("elixirProvision") && g.skills.buy("whetstoneProvision") && g.skills.buy("aegisProvision"));
   assert.ok(g.skills.buy("trainers") && g.skills.buy("shroud") && g.skills.buy("critical") && g.skills.buy("archives") && g.skills.buy("largerHand"));
 });
 test("Trainers (1) follows Buildout, Blue Key (2) the Archives, and Extra Key (1) Movement Speed", () => {

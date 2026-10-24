@@ -5,6 +5,7 @@ import { enemyFirstFloor } from "../enemies/schedule.ts";
 import { keyFirstFloor } from "../key-schedule.ts";
 import { copiesLeft } from "../cards/badges.ts";
 import { EQUIP_MATERIAL_IDS, type EquipMaterialId } from "../equipment/catalog.ts";
+import { USED_PROVISIONS } from "../economy/provisions.ts";
 
 // The daily missions (docs/MISSIONS.md): what each asks, how much of it, what
 // it takes to be offered one, and what completing them pays, daily and
@@ -12,7 +13,7 @@ import { EQUIP_MATERIAL_IDS, type EquipMaterialId } from "../equipment/catalog.t
 
 export type MissionType =
   | "floors" | "bosses" | "train" | "basic" | "strong" | "elite" | "potions" | "badge"
-  | "runTraining" | "blueKeys" | "redKeys";
+  | "runTraining" | "blueKeys" | "redKeys" | "provisions";
 
 export type MissionDef = {
   /** What the mission asks, with the target in it. */
@@ -38,6 +39,8 @@ export function reached(save: Save, first: (tower: number) => number) {
 }
 
 const always = () => true;
+/** The provisions a run uses by hand (not the Gold Key, which uses itself). */
+const USED_IN_RUN = [...USED_PROVISIONS, "bomb"] as const;
 
 export const MISSIONS: Record<MissionType, MissionDef> = {
   floors: { text: "Advance 10 floors", target: 10, offered: always },
@@ -53,6 +56,8 @@ export const MISSIONS: Record<MissionType, MissionDef> = {
   runTraining: { text: "Buy 10 run training upgrades", target: 10, offered: (s) => !!s.upgrades.onTheJob },
   blueKeys: { text: "Pick up 10 blue keys", target: 10, offered: (s) => reached(s, (t) => keyFirstFloor("blue", t)) },
   redKeys: { text: "Pick up 5 red keys", target: 5, offered: (s) => reached(s, (t) => keyFirstFloor("red", t)) },
+  // A provision pressed or thrown in a run (an elixir, Whetstone, Aegis charm or Bomb), once one is owned.
+  provisions: { text: "Use 1 provision in a run", target: 1, offered: (s) => USED_IN_RUN.some((id) => s.provisions[id] > 0) },
 };
 export const MISSION_TYPES = Object.keys(MISSIONS) as MissionType[];
 

@@ -116,7 +116,7 @@ try {
     };
     const rich = (s) => {
       quiet(s);
-      Object.assign(s.upgrades, { delve: 1, moveSpeed: 1, legacy: 1, revive: 1, combatStance: 1, buildout: 1, largerHand: 1, cardHeal: 1, bombs: 1, archives: 1, inspirationUndos: 1, greaterHeal: 1, recovery: 1, findPotion: 1, shroud: 1, undos: 1, extraKey: 1, gear: 1, trainers: 1, cardBlueKey: 1, pathfinder: 1 });
+      Object.assign(s.upgrades, { delve: 1, moveSpeed: 1, legacy: 1, revive: 1, combatStance: 1, buildout: 1, largerHand: 1, cardHeal: 1, bombs: 1, archives: 1, inspirationUndos: 1, greaterHeal: 1, recovery: 1, findPotion: 1, shroud: 1, undos: 1, extraKey: 1, elixirProvision: 1, whetstoneProvision: 1, aegisProvision: 1, trainers: 1, cardBlueKey: 1, pathfinder: 1 });
       s.delve.courage = 37;
       s.tower.inspiration = 21;
       s.gold = 480;
@@ -595,7 +595,7 @@ try {
     }
   }
   /** The Gear page opens on Provisions;
-   * opening it clears the dot the Gear skill put on its button. */
+   * opening it clears the dot a first provision opened put on its button. */
   async function gearTour(prefix) {
     await shot(`${prefix}.gear.waiting`);
     await tab("gear");

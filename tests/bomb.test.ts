@@ -87,7 +87,6 @@ test("a Bomb that fells its enemy clears it and pays the kill, once though undo 
 
 test("a Bomb bought inside a run is thrown in it at once", () => {
   const g = withBombs(0);
-  g.save.upgrades.gear = 1;
   g.save.gold = 100;
   assert.ok(g.gear.buyProvision("bomb"));
   assert.equal(g.save.gold, 0);

@@ -331,7 +331,7 @@ The HP a hero regains with every step taken in a run, after whatever the step di
 _Avoid_: regeneration, healing (a potion's)
 
 **Provision**:
-An item bought with Gold on the Gear page and kept for good: each one owned is a use every run carries (a heal, a boost, a Bomb) or, for the Gold Key, a gold key every 100 floors of a run; the next of its kind costs more.
+An item bought with Gold on the Gear page and kept for good: each one owned is a use every run carries (a heal, a boost, a Bomb) or, for the Gold Key, a gold key every 100 floors of a run; the next of its kind costs more. Each is opened by its own skill, none from the start.
 _Avoid_: consumable, buff
 
 ### Progress

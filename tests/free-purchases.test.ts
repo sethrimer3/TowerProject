@@ -38,6 +38,9 @@ test("free purchases: skills, Training and provisions are bought with nothing an
   assert.equal(g.save.training.hp, 3, "at once");
   assert.equal(g.save.trainingJobs.length, 0);
 
+  // Free purchases unlock nothing: a provision still waits for its skill.
+  assert.equal(g.gear.buyProvision(GOLD_SHOP[0].id), false);
+  g.save.upgrades[GOLD_SHOP[0].requires] = 1;
   assert.ok(g.gear.buyProvision(GOLD_SHOP[0].id));
   assert.equal(g.save.provisions[GOLD_SHOP[0].id], 1);
   assert.equal(g.save.gold, 0);

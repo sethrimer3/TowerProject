@@ -27,6 +27,7 @@ Missions are small tasks the game gives the player, each paying a reward when cl
 | Buy 10 run training upgrades | 10 | On the Job owned |
 | Pick up 10 blue keys | 10 | once blue keys' first floor has been reached (`keyFirstFloor`) |
 | Pick up 5 red keys | 5 | once red keys' first floor has been reached |
+| Use 1 provision in a run | 1 | once an elixir, Whetstone, Aegis charm or Bomb is owned |
 
 "Reached" means any open tower's record (`best`, the selected tower's or one kept in `tierRecords`) is at or past that tower's first floor for it, or the Delve's equivalent floor in the delve of the same number.
 Strong and elite enemies and Buy 1 badge are offered only once possible, so no new player is handed a mission they can't work on.
@@ -38,6 +39,7 @@ Strong and elite enemies and Buy 1 badge are offered only once possible, so no n
 - **Training:** each rank bought with training points, or finished by a trainer (`TrainingDesk`).
 - **Badges:** each badge drawn (`BadgeDesk.draw`).
 - **Run training:** what undo can take back counts only past the most the run has had (`save.missions.marks`, by mode and run seed).
+- **Provisions:** each elixir, Whetstone or Aegis charm pressed and each Bomb thrown, counted like run training (`Game.countProvisionsUsed`), since undo takes a throw back; the Gold Key, which uses itself, never counts.
 - Tournament runs count like any other.
 
 ### Reward

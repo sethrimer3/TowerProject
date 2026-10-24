@@ -65,7 +65,7 @@ import { enemyStat, keyCount, whole, wholeChange } from "./whole.ts";
 import { MODES, milestones, type ModeProfile } from "./modes.ts";
 import { ranksInRun, runTrainingBulk, runTrainingOffer, type RunTrainingOffer } from "./progression/run-training.ts";
 import type { BuyQuantity } from "./progression/buy-quantity.ts";
-import { critRule, loadout, rankShift, type TrainingView } from "./progression/loadout.ts";
+import { critRule, loadout, provisionsOpen, rankShift, type TrainingView } from "./progression/loadout.ts";
 import { researched } from "./progression/archives.ts";
 import { chargesLeft, chargesPerRun, climbFloor, spendCharge, type Charge } from "./run-charges.ts";
 import type { MaterialId, MaterialStack } from "./economy/materials.ts";
@@ -108,7 +108,7 @@ import type { Coin, Dash, Drop, Facing, Gain, GainArt, Heal, ShownTurn } from ".
  * which seed (rolled from the game's randomness when left out). */
 export type RunStart = { outside?: boolean; seed?: number; height?: number };
 /** A lesson shown on the board (`Game.boardLesson`). */
-export type BoardLesson = "climb" | "keys" | "stuck" | "enemy" | "upgrades" | "enter" | "cards" | "delve";
+export type BoardLesson = "climb" | "keys" | "stuck" | "enemy" | "upgrades" | "enter" | "cards" | "delve" | "provisions";
 /** The first skills the lessons lead to on the Inspiration tree, in order. */
 export type IntroSkill = "cardDoorKey" | "cardEnemy";
 export type RouteEffects = {
@@ -437,7 +437,7 @@ export class Game {
    * lesson); then, in either forest, `cards`, which leads to the Deck to
    * spend the first card point (`cardPointsLesson`); then, in the Tower's
    * forest once Into the depths is owned, `delve`, until the Delve is
-   * opened. */
+   * opened; and in either forest, `provisions` (`provisionsLesson`). */
   get boardLesson(): BoardLesson | null {
     const tower = this.mode === "tower", t = this.save.tutorials, owned = this.save.upgrades;
     if (!this.run.outside) {
@@ -450,7 +450,14 @@ export class Game {
     if (tower && this.introSkill) return "upgrades";
     if (tower && ((!t.enter && owned.cardDoorKey) || (t.enemy && owned.cardEnemy))) return "enter";
     if (this.cardPointsLesson) return "cards";
-    return tower && owned.delve && !t.delve ? "delve" : null;
+    if (tower && owned.delve && !t.delve) return "delve";
+    return this.provisionsLesson ? "provisions" : null;
+  }
+  /** Whether the provisions lesson waits: in the forest, once a first
+   * provision is open, a hand on the Gear tab until it is pressed (which
+   * sets `save.tutorials.gear`, `notices.shown("gear")`). */
+  get provisionsLesson() {
+    return this.run.outside && !this.save.tutorials.gear && provisionsOpen(this.save);
   }
   /** The first skill the lessons lead to on the Inspiration tree while it
    * can be bought: Door & Key, and once the `enemy` lesson has sent the
@@ -1364,10 +1371,17 @@ export class Game {
       this.message = `${id === "edge" ? "Whetstone" : "Aegis charm"} · +${PROVISION_BOOST_PERCENT}% ${word} for ${PROVISION_BOOST_TURNS} turns`;
     }
     for (const run of copies) run.provisionsUsed = { ...run.provisionsUsed, [id]: (run.provisionsUsed?.[id] ?? 0) + 1 };
+    this.countProvisionsUsed();
     // The hand plans again, with the hero as it is now.
     this.cardPlan = null;
     this.afterPlayerAction();
     return "used";
+  }
+  /** Counts the provisions the run has used, Bombs thrown too, toward the
+   * missions: undo takes a throw back, so only the run's most counts. */
+  private countProvisionsUsed() {
+    const run = this.run, used = Object.values(run.provisionsUsed ?? {}).reduce((n, k) => n + (k ?? 0), 0);
+    this.missions.mark("provisions", this.mode, run.seed, used + (run.bombsUsed ?? 0));
   }
   /** A turn taken counts down the boosts going on; one run out takes the
    * ATK or DEF it added back off the hero, on every copy of the run undo
@@ -1451,6 +1465,7 @@ export class Game {
     if (!enemy) return "invalid";
     this.remember(this.snapshot());
     this.run.bombsUsed = (this.run.bombsUsed ?? 0) + 1;
+    this.countProvisionsUsed();
     this.armed = null;
     this.bombed = { x, y, at: performance.now() };
     const damage = this.run.player.attack;

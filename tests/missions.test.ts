@@ -104,7 +104,12 @@ test("no two incomplete missions share a type, and none asks for what isn't unlo
 
 test("each locked mission is offered once what it needs is unlocked", () => {
   const save = defaults(), offered = (t: MissionType) => MISSIONS[t].offered(save);
-  for (const t of ["strong", "elite", "badge", "runTraining", "blueKeys", "redKeys"] as const) assert.equal(offered(t), false, t);
+  for (const t of ["strong", "elite", "badge", "runTraining", "blueKeys", "redKeys", "provisions"] as const) assert.equal(offered(t), false, t);
+  // A provision owned, but not the Gold Key, which uses itself.
+  save.provisions.yellowKey = 1;
+  assert.equal(offered("provisions"), false, "a Gold Key uses itself");
+  save.provisions.edge = 1;
+  assert.ok(offered("provisions"));
   save.upgrades.onTheJob = 1;
   save.upgrades.cardBadges = 1;
   assert.ok(offered("runTraining") && offered("badge"));
@@ -179,6 +184,18 @@ test("run training counts only past the most the run has had, so undo can't farm
   g.missions.mark("runTraining", "tower", 1, 1);
   g.missions.mark("runTraining", "tower", 1, 1);
   assert.equal(g.save.missions.marks["runTraining:tower:1"], 1);
+});
+
+test("a provision used in a run completes Use 1 provision, a refusal never", () => {
+  const g = gameAt(MONDAY);
+  g.save.provisions.edge = 1;
+  g.save.provisions.heal = 1;
+  withMissions(g, "provisions");
+  g.run.player.hp = g.run.player.maxHp;
+  assert.equal(g.useProvision("heal"), "full");
+  assert.equal(progress(g, "provisions"), 0, "an elixir refused at full HP counts nothing");
+  assert.equal(g.useProvision("edge"), "used");
+  assert.equal(progress(g, "provisions"), 1);
 });
 
 test("Training ranks and badges drawn count through the desks", () => {
@@ -282,6 +299,6 @@ test("missions save and load, and malformed state is dropped", () => {
 });
 
 test("every mission type is listed with a target", () => {
-  assert.deepEqual(MISSION_TYPES, ["floors", "bosses", "train", "basic", "strong", "elite", "potions", "badge", "runTraining", "blueKeys", "redKeys"]);
-  assert.deepEqual(MISSION_TYPES.map((t) => MISSIONS[t].target), [10, 3, 1, 50, 30, 10, 20, 1, 10, 10, 5]);
+  assert.deepEqual(MISSION_TYPES, ["floors", "bosses", "train", "basic", "strong", "elite", "potions", "badge", "runTraining", "blueKeys", "redKeys", "provisions"]);
+  assert.deepEqual(MISSION_TYPES.map((t) => MISSIONS[t].target), [10, 3, 1, 50, 30, 10, 20, 1, 10, 10, 5, 1]);
 });

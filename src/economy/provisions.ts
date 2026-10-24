@@ -2,30 +2,34 @@
  * one owned is one use every run carries, never a stat at its start. The
  * Traveler's elixir fills HP (`Game.useProvision`), the Whetstone and
  * Aegis charm raise ATK or DEF by `PROVISION_BOOST_PERCENT` for
- * `PROVISION_BOOST_TURNS` turns, a Bomb is thrown at an enemy (`Game.arm`,
- * sold once the Courage skill Bombs is owned),
+ * `PROVISION_BOOST_TURNS` turns, a Bomb is thrown at an enemy (`Game.arm`),
  * and each Gold Key hands the run a gold key every `PROVISION_KEY_FLOORS`
  * floors. Each costs `price.base` Gold (100), and each one after `ratio` (100) times
- * the last (`schedulePrice`). One with `requires` shows, and sells, only
- * once that upgrade is owned. */
+ * the last (`schedulePrice`). None is sold from the start: each `requires`
+ * its skill (the elixir, Whetstone and Aegis charm on the Inspiration
+ * tree, the Gold Key and Bomb on the Courage tree), and shows, and sells,
+ * only once that is owned. */
 export const GOLD_SHOP = [
   {
     id: "heal",
     name: "Traveler's elixir",
     description: "One more elixir every run: press it to fill HP to max HP",
     price: { base: 100, ratio: 100 },
+    requires: "elixirProvision",
   },
   {
     id: "guard",
     name: "Aegis charm",
     description: "One more Aegis charm every run: press it for +20% DEF for 100 turns",
     price: { base: 100, ratio: 100 },
+    requires: "aegisProvision",
   },
   {
     id: "edge",
     name: "Whetstone",
     description: "One more Whetstone every run: press it for +20% ATK for 100 turns",
     price: { base: 100, ratio: 100 },
+    requires: "whetstoneProvision",
   },
   {
     id: "yellowKey",

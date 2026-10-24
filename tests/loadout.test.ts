@@ -2,11 +2,12 @@ import { trainNow } from "./train-now.ts";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { StatTrainingRow } from "../src/progression/training.ts";
-import { loadout, trainingBulk, trainingFull, trainingPoints, trainingStep, upgradeText, provisionPrice, provisionText } from "../src/progression/loadout.ts";
+import { loadout, trainingBulk, trainingFull, trainingPoints, trainingStep, upgradeText, provisionOpen, provisionPrice, provisionsOpen, provisionText } from "../src/progression/loadout.ts";
 import { decode, defaults } from "../src/save/save.ts";
 import { GOLD_SHOP } from "../src/economy/provisions.ts";
 import { LIMIT_BREAKS, TRAINING, isStatRow, trained, trainingCap, trainingCeiling, trainingWorth } from "../src/progression/training.ts";
-import { UPGRADES } from "../src/progression/upgrades.ts";
+import { UPGRADES, cost, type UpgradeId } from "../src/progression/upgrades.ts";
+import { TREES } from "../src/progression/skill-trees.ts";
 import { levelForXp, xpForLevel } from "../src/progression/xp.ts";
 import { addItem } from "../src/equipment/inventory.ts";
 import { Game } from "../src/state.ts";
@@ -220,10 +221,30 @@ test("every provision costs 100 Gold, and each one after a hundred times the las
     assert.deepEqual(Array.from({ length: 4 }, (_, n) => provisionPrice({ provisions: { ...s.provisions, [id]: n } }, id)), [100, 10_000, 1_000_000, 100_000_000], id);
   const g = new Game(s);
   s.gold = 10_500;
+  s.upgrades.elixirProvision = 1;
   assert.ok(g.gear.buyProvision("heal") && g.gear.buyProvision("heal"));
   assert.equal(s.gold, 10_500 - 100 - 10_000);
   assert.equal(g.gear.buyProvision("heal"), false, "1,000,000 Gold, 400 held");
   assert.equal(s.provisions.heal, 2);
+});
+
+test("no provision is open from the start: each opens with its skill, in the Inspiration or Courage tree", () => {
+  const s = defaults(), g = new Game(s);
+  s.gold = 1000;
+  assert.equal(provisionsOpen(s), false);
+  for (const { id } of GOLD_SHOP) assert.equal(g.gear.buyProvision(id), false, id);
+  const skills = { heal: "elixirProvision", edge: "whetstoneProvision", guard: "aegisProvision", yellowKey: "extraKey", bomb: "bombs" } as const;
+  for (const { id } of GOLD_SHOP) {
+    const skill = UPGRADES.find((u) => u.id === skills[id])!;
+    assert.ok(skill.currency === "inspiration" || skill.currency === "courage", id);
+    s.upgrades[skill.id] = 1;
+    assert.ok(provisionOpen(s, id) && provisionsOpen(s), id);
+    s.upgrades[skill.id] = 0;
+  }
+  // The Inspiration tree's three follow Regen, ATK Up and DEF Up, 5 Inspiration each.
+  const at = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;
+  assert.deepEqual(["elixirProvision", "whetstoneProvision", "aegisProvision"].map((id) => [at(id).requires, cost(id as UpgradeId, 0)]),
+    [[["regen"], 5], [["cardAtkUp"], 5], [["cardDefUp"], 5]]);
 });
 
 test("Extra Key opens the Gold Key provision, which adds no key to the loadout", () => {

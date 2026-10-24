@@ -9,7 +9,7 @@
 - Equipment opens by claiming Tower II's **floor 60** checkpoint reward on the Goals screen (the `equipment` unlock in `goals.ts`; `claimGoal` sets `save.equipment.unlocked`). The claim's dialog offers *Visit the Blacksmith*. Reaching a floor opens nothing by itself.
 - The moment it opens inside a run, a golden burst reads *EQUIPMENT UNLOCKED · A Blacksmith opens in the forest*, and the status line says so. Back in the forest, a dialog explains it once and offers to visit the Blacksmith.
 - From then on the **Blacksmith** stands in the forest clearing, up and left of the path (a stone forge with a red banner bearing a breastplate). Tapping it opens the Equipment screen. Before the unlock it isn't there at all.
-- The Gear tab opens with Equipment even without the Gear skill (only its Equipment tab then), and wears a dot until the Equipment screen is first seen.
+- The Gear tab opens with Equipment even with no provision open (only its Equipment tab then), and wears a dot until the Equipment screen is first seen.
 - Once Equipment is open, the Chest card's Equipment Chests and Supply Chests hold Standard pieces and upgrade materials (sections 11 and 12); kills drop neither.
 
 ## 2. Loadouts

@@ -12,6 +12,7 @@ import { clamp, el, POINTER_SVG, skillSprite, uiSprite, type UiSprite } from "./
 import { bindPanZoom, type View } from "./pan-zoom.ts";
 import { currencyHelp } from "./currency-help.ts";
 import { heldAmount } from "./currencies-dialog.ts";
+import { PROVISIONS_NOTE } from "./board-lesson.ts";
 
 type Tree = (typeof TREES)[number];
 
@@ -30,13 +31,16 @@ function tooltipHint(p: { locked: boolean; maxed: boolean; available: boolean; a
 /** The Inspiration tree's lessons on a new game's first skills: the note
  * while one waits to be bought (`Game.introSkill`, a hand on its node), and
  * once bought (`Game.introBought`), what its cards do and the way back to
- * the entrance (the hand on the Tower tab is `board-lesson.ts`'s). */
-function introNote(game: AppContext["game"]) {
-  const buy = game.introSkill, bought = game.introBought;
+ * the entrance (the hand on the Tower tab is `board-lesson.ts`'s); then, on
+ * the Inspiration and Courage trees (where provisions are opened), once a
+ * first provision is open, the way to the Gear tab (its hand too). */
+function introNote(game: AppContext["game"], tree: TreeId) {
+  const intro = tree === "inspiration", buy = intro ? game.introSkill : null, bought = intro ? game.introBought : null;
   const lesson = buy === "cardDoorKey" ? { title: "Unlock Door & Key.", text: `Press Door & Key, then press it again to unlock it for ${cost(buy, 0)} Inspiration.` }
     : buy === "cardEnemy" ? { title: "Unlock Enemy.", text: `Press Enemy, then press it again to unlock it for ${cost(buy, 0)} Inspiration.` }
     : bought === "cardDoorKey" ? { title: "Door and Key join your hand.", text: "In a run, press them to collect keys and open doors. With no key, some HP can break down a Wooden Door. Press the Tower button to return to the entrance." }
     : bought === "cardEnemy" ? { title: "Enemy joins your hand.", text: "In a run, press it to fight the closest enemy. Press the Tower button to return to the entrance." }
+    : game.provisionsLesson && !game.introBought && PRICED_TREES.includes(tree) ? PROVISIONS_NOTE
     : null;
   return lesson ? `<div class="tree-lesson" role="status"><b>${lesson.title}</b><p>${lesson.text}</p></div>` : "";
 }
@@ -107,7 +111,7 @@ export class SkillTreePage {
     const tall = treeHeight(tree) !== 100;
     el("upgrades").innerHTML = `${tabs}
       <section class="skill-tree ${tree.id}"><header class="tree-heading"><h3>${tree.name} skill tree${this.helpButton(tree)}</h3></header>
-      ${this.lockHtml(tree)}${tree.id === "inspiration" ? introNote(this.ctx.game) : ""}
+      ${this.lockHtml(tree)}${introNote(this.ctx.game, tree.id)}
       <div class="tree-viewport" id="tree-viewport" style="--column-gap:${columnGap(tree)}"><div class="tree-map${tall ? " tall" : ""}" id="tree-map" style="${tall ? `--tree-height:${treeHeight(tree)}%;--tree-rows:${treeHeight(tree)};` : ""}transform:translate(${view.x}px,${view.y}px) scale(${view.scale})"><div class="tree-layer"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${this.linesHtml(nodes)}</svg>
       <canvas class="tree-particles" aria-hidden="true"></canvas>
       ${nodes.map(n => this.nodeHtml(n)).join("")}</div></div><div class="inspect-box tree-tooltip" id="tree-tooltip" hidden></div></div></section>`;

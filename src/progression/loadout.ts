@@ -182,11 +182,12 @@ export function upgradeText(id: UpgradeId) {
 /** A provision's description. */
 export const provisionText = (id: GoldItemId) => GOLD_SHOP.find((g) => g.id === id)!.description;
 
-/** Whether provision `id` shows and sells: its upgrade, if it names one, is owned. */
+/** Whether provision `id` shows and sells: the skill it `requires` is owned. */
 export function provisionOpen(save: Pick<Save, "upgrades">, id: GoldItemId) {
-  const item = GOLD_SHOP.find((g) => g.id === id)!;
-  return !("requires" in item) || save.upgrades[item.requires] > 0;
+  return save.upgrades[GOLD_SHOP.find((g) => g.id === id)!.requires] > 0;
 }
+/** Whether any provision is open, which shows the Gear page's Provisions. */
+export const provisionsOpen = (save: Pick<Save, "upgrades">) => GOLD_SHOP.some((g) => provisionOpen(save, g.id));
 /** The Gold the next `id` provision costs, after those already bought. */
 export const provisionPrice = (save: Pick<Save, "provisions">, id: GoldItemId) =>
   schedulePrice(GOLD_SHOP.find((g) => g.id === id)!.price, save.provisions[id]);

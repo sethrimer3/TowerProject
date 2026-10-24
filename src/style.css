@@ -1017,11 +1017,13 @@ canvas {
   animation: forest-point-down 1s ease-in-out infinite;
 }
 /* The card points lesson's hand points down at the Deck tab from above,
-   the Inspiration lesson's at the Upgrades tab, and on the Upgrades page,
-   once a first skill is bought, at the Tower tab. */
+   the Inspiration lesson's at the Upgrades tab, on the Upgrades page,
+   once a first skill is bought, at the Tower tab, and the provisions
+   lesson's at the Gear tab. */
 .forest-pointer.cards,
 .forest-pointer.upgrades,
-.forest-pointer.back {
+.forest-pointer.back,
+.forest-pointer.provisions {
   bottom: calc(100% + 2px);
   left: 50%;
   margin-left: -13px;

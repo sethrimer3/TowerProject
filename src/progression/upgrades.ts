@@ -257,6 +257,33 @@ export const UPGRADES = [
     max: 1,
     currency: "inspiration",
   },
+  // The provisions the Inspiration tree opens, each beside the skill it
+  // follows: the elixir after Regen, the Whetstone after ATK Up and the
+  // Aegis charm after DEF Up.
+  {
+    id: "elixirProvision",
+    name: "Traveler's Elixir",
+    description: "Open the Traveler's elixir provision on the Gear page: an elixir every run, pressed to fill HP to max HP",
+    base: 5,
+    max: 1,
+    currency: "inspiration",
+  },
+  {
+    id: "whetstoneProvision",
+    name: "Whetstone",
+    description: "Open the Whetstone provision on the Gear page: a Whetstone every run, pressed for +20% ATK for 100 turns",
+    base: 5,
+    max: 1,
+    currency: "inspiration",
+  },
+  {
+    id: "aegisProvision",
+    name: "Aegis Charm",
+    description: "Open the Aegis charm provision on the Gear page: an Aegis charm every run, pressed for +20% DEF for 100 turns",
+    base: 5,
+    max: 1,
+    currency: "inspiration",
+  },
   {
     id: "trainers",
     name: "Trainers",
@@ -271,14 +298,6 @@ export const UPGRADES = [
     description: "Add the BLUE KEY card to your deck: it moves you toward the closest blue key, and while you hold it each blue key is worth 5% more and pays 2 more Gold",
     card: "blueKey",
     base: 2,
-    max: 1,
-    currency: "inspiration",
-  },
-  {
-    id: "gear",
-    name: "Gear",
-    description: "Open the Gear page: provisions bought with Gold, used during every run",
-    base: 1,
     max: 1,
     currency: "inspiration",
   },

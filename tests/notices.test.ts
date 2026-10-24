@@ -22,10 +22,10 @@ test("the first Inspiration puts a dot on the Upgrades tab until the page is sho
   assert.equal(g.notices.shown("upgrades"), false, "nothing new the second time");
 });
 
-test("the Gear skill dots the Gear tab until shown, and Equipment opened dots it until that tab shows", () => {
+test("a first provision opened dots the Gear tab until shown, and Equipment opened dots it until that tab shows", () => {
   const g = forest();
-  assert.equal(g.notices.shown("gear"), false, "nothing to see before the skill");
-  g.save.upgrades.gear = 1;
+  assert.equal(g.notices.shown("gear"), false, "nothing to see before a provision opens");
+  g.save.upgrades.whetstoneProvision = 1;
   assert.equal(g.notices.waiting("gear"), true);
   g.notices.shown("gear");
   assert.equal(g.notices.waiting("gear"), false);
@@ -35,6 +35,18 @@ test("the Gear skill dots the Gear tab until shown, and Equipment opened dots it
   assert.ok(g.notices.waiting("gear"), "opening the page on Provisions leaves Equipment unseen");
   assert.equal(g.notices.shown("equipment"), true);
   assert.ok(!g.notices.waiting("gear") && !g.notices.waiting("equipment"));
+});
+
+test("a first provision opened shows the provisions lesson in the forest, its hand on the Gear tab, until the Gear tab is pressed", () => {
+  const g = forest();
+  Object.assign(g.save.tutorials, { enter: true, delve: true, cardPoints: true });
+  assert.equal(g.provisionsLesson, false, "none open");
+  g.save.upgrades.elixirProvision = 1;
+  assert.ok(g.provisionsLesson);
+  assert.equal(g.boardLesson, "provisions");
+  g.notices.shown("gear");
+  assert.equal(g.provisionsLesson, false);
+  assert.equal(g.boardLesson, null);
 });
 
 test("a level-up with points to spend dots the run's Research button and hamburger until the page shows, and the next brings it back", () => {

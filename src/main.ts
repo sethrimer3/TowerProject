@@ -248,8 +248,6 @@ function renderPage() {
 function unlockTarget(id: string): string {
   const lock = LOCKED_TABS.get(id);
   if (!lock || game.save.upgrades[lock.skill]) return id;
-  // Equipment opens the Gear page too, Gear skill or not.
-  if (id === "gear" && game.save.equipment.unlocked) return id;
   skillTree.focus(lock.tree, lock.skill);
   return "upgrades";
 }
@@ -257,7 +255,6 @@ function unlockTarget(id: string): string {
  * page on that skill instead. */
 const LOCKED_TABS = new Map<string, { skill: UpgradeId; tree: TreeId }>([
   ["deck", { skill: "combatStance", tree: "inspiration" }],
-  ["gear", { skill: "gear", tree: "inspiration" }],
   ["defend", { skill: "legacy", tree: "courage" }],
 ]);
 /** The pages topped by the currencies bar. */
