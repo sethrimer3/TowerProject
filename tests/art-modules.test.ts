@@ -6,7 +6,7 @@ import { RoomWorld } from "../src/tower/room-world.ts";
 import { World } from "../src/delve/world.ts";
 import type { Board } from "../src/board.ts";
 import { area1ItemId, floorVariant, wallAdjacencyMask } from "../src/area1-tileset.ts";
-import { TreeParticles } from "../src/tree-particles.ts";
+import { TreeParticles } from "../src/render/effects/tree-particles.ts";
 import { withStream } from "../src/random.ts";
 import { DecorLayer, type DecorFrame, type MirroredSprites } from "../src/render/decor/decor-render.ts";
 import type { BoardView } from "../src/render-frame.ts";

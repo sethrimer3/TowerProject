@@ -11,7 +11,7 @@ import { runTrainingValue, silverPrice } from "../src/progression/run-training.t
 import { RESEARCH } from "../src/progression/archives.ts";
 import { TRAINING, UPGRADES, trainedAmount } from "../src/config.ts";
 import { TREES } from "../src/progression/skill-trees.ts";
-import { DamagePredictions, damageLabel } from "../src/damage-labels.ts";
+import { DamagePredictions, damageLabel } from "../src/render/effects/damage-labels.ts";
 
 const hero = (over: Partial<Player> = {}): Player => ({ hp: 100, maxHp: 100, attack: 12, defense: 0, keys: { yellow: 0, blue: 0, red: 0 }, ...over }) as Player;
 const brute: Enemy = { name: "Brute", hp: 60, attack: 30, defense: 0, tier: 0, strength: "normal" };

@@ -1,4 +1,4 @@
-import { stream } from "./random.ts";
+import { stream } from "../../random.ts";
 import { sampleField } from "./tree-particles.ts";
 
 const fx = stream("effects");

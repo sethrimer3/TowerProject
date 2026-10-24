@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { DamagePredictions, damageLabel, drawDamageLabels, GOLD_COLOR, HEAL_COLOR, itemLabel, relativeColor } from "../src/damage-labels.ts";
+import { DamagePredictions, damageLabel, drawDamageLabels, GOLD_COLOR, HEAL_COLOR, itemLabel, relativeColor } from "../src/render/effects/damage-labels.ts";
 import { BASE_RULES, shardStat } from "../src/step-effects.ts";
 import { predict } from "../src/combat.ts";
 import { forecast } from "../src/crit-forecast.ts";

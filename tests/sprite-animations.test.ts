@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { HeroIdleAnimation, keyShineFrame, potionBubbleFrame, deathSkullFrame, HERO_FACINGS } from "../src/sprites/animations.ts";
 import { paintContents, paintHero } from "../src/tile-painters.ts";
-import { drawStruckDown, DEFEAT_MS } from "../src/struck-down.ts";
+import { drawStruckDown, DEFEAT_MS } from "../src/render/effects/struck-down.ts";
 import type { FrameContext } from "../src/render-frame.ts";
 
 test("ambient strips use native frames and every required facing ships", () => {

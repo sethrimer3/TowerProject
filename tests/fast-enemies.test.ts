@@ -5,7 +5,7 @@ import { defaults } from "../src/save/save.ts";
 import { ENEMY_GOLD, FAST_GOLD, WIDTH } from "../src/config.ts";
 import { bout, heroHpAfter, instakill, predict, replies, summarize } from "../src/combat.ts";
 import { forecast } from "../src/crit-forecast.ts";
-import { DamagePredictions, damageLabel } from "../src/damage-labels.ts";
+import { DamagePredictions, damageLabel } from "../src/render/effects/damage-labels.ts";
 import { FAST_CARRY, fastCarry, fastCells, fastShare } from "../src/enemies/fast.ts";
 import { enemyStats } from "../src/enemies/curves.ts";
 import { enemyTitle } from "../src/enemies/scaling.ts";

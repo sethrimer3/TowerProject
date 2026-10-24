@@ -1,4 +1,4 @@
-import { forEachViewTile, type FrameContext } from "./render-frame.ts";
+import { forEachViewTile, type FrameContext } from "../../render-frame.ts";
 
 // A boss flashes briefly the first time it comes into view in a run (on
 // arriving on its Tower floor, or as the Delve's climb brings its gate into

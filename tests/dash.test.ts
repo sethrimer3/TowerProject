@@ -5,7 +5,7 @@ import { decode, defaults } from "../src/save/save.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { RESEARCH, missing, research } from "../src/progression/archives.ts";
 import { BADGES, drawable, defaultBadges } from "../src/cards/badges.ts";
-import { DashEchoes, DASH_ECHO_MS } from "../src/dash-echoes.ts";
+import { DashEchoes, DASH_ECHO_MS } from "../src/render/effects/dash-echoes.ts";
 import type { FrameContext } from "../src/render-frame.ts";
 
 /** A Tower corridor along the bottom row: the hero at its west end, a

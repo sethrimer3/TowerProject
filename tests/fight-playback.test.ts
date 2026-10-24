@@ -5,7 +5,7 @@ import { defaults } from "../src/save/save.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { bout, heroHpDuring, predict, raisedAttack, REVIVE_MS, summarize } from "../src/combat.ts";
 import { BoardPopups, enemyBar, lunges } from "../src/board-popups.ts";
-import { HEAL_COLOR } from "../src/damage-labels.ts";
+import { HEAL_COLOR } from "../src/render/effects/damage-labels.ts";
 import { Renderer } from "../src/rendering.ts";
 import { unlockAt } from "../src/goals.ts";
 import type { Enemy, Player, Tile } from "../src/entities.ts";

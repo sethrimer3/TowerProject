@@ -1,12 +1,12 @@
 import { boardFont } from "./sprites/font.ts";
 import { popupAmount } from "./whole.ts";
-import { HEAL_COLOR } from "./damage-labels.ts";
+import { HEAL_COLOR } from "./render/effects/damage-labels.ts";
 import type { Coin, Encounter, Gain, GainArt, Heal, ShownFight } from "./shown.ts";
 import { landsAt, type Volley } from "./volley.ts";
 import { OPENING_SHRINK_MS } from "./combat.ts";
 import { paintContents } from "./tile-painters.ts";
 import { materialImage } from "./sprites/material-sprites.ts";
-import { paintGem } from "./gem-art.ts";
+import { paintGem } from "./render/effects/gem-art.ts";
 import { RARITY_TIERS } from "./equipment/balance.ts";
 import { iconPixels, materialPixels, pieceSpriteId } from "./ui/equipment-icons.ts";
 import { drawKit } from "./sprites/kit.ts";

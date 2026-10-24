@@ -12,7 +12,7 @@ import { TRAINING, UPGRADES, isStatRow, trained, type TrainingId } from "../src/
 import { TREES } from "../src/progression/skill-trees.ts";
 import { BoardPopups, enemyBar, lunges } from "../src/board-popups.ts";
 import { checkpoint, UNLOCK_NAMES } from "../src/goals.ts";
-import { DamagePredictions, damageLabel } from "../src/damage-labels.ts";
+import { DamagePredictions, damageLabel } from "../src/render/effects/damage-labels.ts";
 import { wounded, woundMore } from "../src/enemies/ranged.ts";
 
 const hero = (over: Partial<Player> = {}): Player => ({ x: 0, y: 0, hp: 100, maxHp: 100, attack: 12, defense: 0, keys: { yellow: 0, blue: 0, red: 0 }, ...over }) as Player;

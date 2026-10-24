@@ -11,7 +11,7 @@ import { trainingGold } from "../src/progression/training-jobs.ts";
 import { silverPrice } from "../src/progression/run-training.ts";
 import { TRAINING, UPGRADES, isStatRow, trained } from "../src/config.ts";
 import { TREES } from "../src/progression/skill-trees.ts";
-import { DamagePredictions, HEAL_COLOR } from "../src/damage-labels.ts";
+import { DamagePredictions, HEAL_COLOR } from "../src/render/effects/damage-labels.ts";
 import { snap } from "../src/exact.ts";
 
 const hero = (over: Partial<Player> = {}): Player => ({ hp: 100, maxHp: 100, attack: 12, defense: 0, keys: { yellow: 0, blue: 0, red: 0 }, ...over }) as Player;

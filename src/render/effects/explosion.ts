@@ -1,4 +1,4 @@
-import { tileTransform, type FrameContext } from "./render-frame.ts";
+import { tileTransform, type FrameContext } from "../../render-frame.ts";
 
 /** How long a Bomb's explosion lasts. */
 export const EXPLOSION_MS = 700;

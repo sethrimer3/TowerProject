@@ -7,7 +7,7 @@ import { trainingBulk, trainingPoints, trainingRowsFull, trainingStep, trainingT
 import { whole } from "../whole.ts";
 import type { BuyQuantity } from "../progression/buy-quantity.ts";
 import { bindBuyQuantity, buyQuantityHtml, maxCount } from "./buy-quantity-select.ts";
-import { TrainingParticles } from "../training-particles.ts";
+import { TrainingParticles } from "../render/effects/training-particles.ts";
 import { BOOST_CLAIM_MARGIN_MS, BOOST_MAX_MS, BOOST_RATE, boostLeft, claimBoost, nextTrainerGems, ranksInTraining, trainingJob, trainingSlots, workLeft, type TrainingJob } from "../progression/training-jobs.ts";
 import type { AppContext } from "./app.ts";
 import { adIcon, clockIcon, el, gemCount, gemIcon, goldIcon, pointsIcon, redoIcon, riseFrom, uiSprite } from "./dom.ts";

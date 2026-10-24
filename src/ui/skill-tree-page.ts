@@ -6,7 +6,7 @@ import { UPGRADES, cost, type UpgradeId } from "../config.ts";
 import { TREES, columnGap, mapNodes, skillAvailable, treeHeight, treeOpen, type TreeId } from "../progression/skill-trees.ts";
 import { upgradeText } from "../progression/loadout.ts";
 import { goalUnlocked, UNLOCK_NAMES } from "../goals.ts";
-import { TreeParticles } from "../tree-particles.ts";
+import { TreeParticles } from "../render/effects/tree-particles.ts";
 import type { AppContext } from "./app.ts";
 import { clamp, el, skillSprite, uiSprite, type UiSprite } from "./dom.ts";
 import { bindPanZoom, type View } from "./pan-zoom.ts";

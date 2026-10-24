@@ -105,7 +105,7 @@ export const SETTINGS = {
     kind: "choice", default: 1, choices: [[1, "x1"], [5, "x5"], [10, "x10"], [25, "x25"], [100, "x100"], ["max", "Max"]],
   },
   /** Draw on each enemy the HP its fight would cost, and on a Wooden Door
-   * what breaking it would (`damage-labels.ts`). Only Damage Visual, Tower
+   * what breaking it would (`render/effects/damage-labels.ts`). Only Damage Visual, Tower
    * I's floor 50 goal, shows it. */
   damageVisual: { kind: "toggle", default: true, page: { id: "damage-visual", label: "Damage on enemies" } },
   /** The values rising off the board in a run, each kind turned off on its

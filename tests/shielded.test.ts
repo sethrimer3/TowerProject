@@ -5,7 +5,7 @@ import { defaults } from "../src/save/save.ts";
 import { ENEMY_GOLD, SHIELDED_GOLD } from "../src/config.ts";
 import { attackForFewerHits, bout, predict } from "../src/combat.ts";
 import { arrowDamage } from "../src/enemies/ranged.ts";
-import { DamagePredictions } from "../src/damage-labels.ts";
+import { DamagePredictions } from "../src/render/effects/damage-labels.ts";
 import { bubbleRadius, extraShare, inBubble, placeShield, SHIELD_CUT, shieldShare, walkDistances, type ShieldFloor } from "../src/enemies/shielded.ts";
 import { enemyTitle } from "../src/enemies/scaling.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";

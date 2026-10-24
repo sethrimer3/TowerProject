@@ -1,10 +1,10 @@
-import { boardFont } from "./sprites/font.ts";
-import { netDamage, PLAYED_ROUNDS, predict, type CritRule } from "./combat.ts";
-import { forecast } from "./crit-forecast.ts";
-import type { Enemy, Player, Tile } from "./entities.ts";
-import { forEachViewTile, type FrameContext } from "./render-frame.ts";
-import { potionRestores, shardStat, type StepRules } from "./step-effects.ts";
-import { compactAmount, whole, wholeChange } from "./whole.ts";
+import { boardFont } from "../../sprites/font.ts";
+import { netDamage, PLAYED_ROUNDS, predict, type CritRule } from "../../combat.ts";
+import { forecast } from "../../crit-forecast.ts";
+import type { Enemy, Player, Tile } from "../../entities.ts";
+import { forEachViewTile, type FrameContext } from "../../render-frame.ts";
+import { potionRestores, shardStat, type StepRules } from "../../step-effects.ts";
+import { compactAmount, whole, wholeChange } from "../../whole.ts";
 
 // Damage Visual (Tower I's floor 50 goal): each enemy in view wears, in its
 // lower-left corner, the HP its fight would cost the hero, as Damage
