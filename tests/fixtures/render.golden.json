@@ -140,5 +140,10 @@
   "provingGrounds.edgeProps": "30276ae3a18c88fe99f5c0d0",
   "provingGrounds.edgeBeamDamage": "a52b61b94b1aee87349ac496",
   "provingGrounds.edgeCrateDamage": "6408bee6c70361560a722770",
-  "provingGrounds.extinguishedTorches": "f011236bafc14500cbbbc1c2"
+  "provingGrounds.extinguishedTorches": "f011236bafc14500cbbbc1c2",
+  "provingGrounds.spritesStaging": "e62d40831c90539848fb3598",
+  "provingGrounds.spritesEdge": "1160965bd44919412724fb29",
+  "provingGrounds.spritesBeamDamage": "e8547e8a615a7b23b6860452",
+  "provingGrounds.spritesTorchOut": "52098562265431841b0b3a45",
+  "provingGrounds.spritesOptOut": "9c7964ad145487b4179af85b"
 }

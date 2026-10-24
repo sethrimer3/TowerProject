@@ -596,6 +596,17 @@ function playProvingGrounds(_name: string, _seed: number, canvas: HTMLCanvasElem
   renderer.draw(edge,14000,13900,true,false);grab("edgeCrateDamage");
   edge.steps=90;
   renderer.draw(edge,16000,0,true,false);grab("extinguishedTorches");
+  // The modern kit is opt-in, matching the normal board's Sprites setting.
+  const kit=startTrial(state.player,"manual",[],7391,30),options={styledSprites:true};
+  renderer.draw(kit,17000,0,true,false,options);grab("spritesStaging");
+  for(let i=0;i<4;i++)trialStep(kit,0,1);
+  kit.player.y=4;kit.elemental.x=12;kit.elemental.y=7;kit.steps=9;
+  renderer.draw(kit,18000,0,true,false,options);grab("spritesEdge");
+  trialStep(kit,0,0);
+  renderer.draw(kit,19000,18900,true,false,options);grab("spritesBeamDamage");
+  kit.steps=50;
+  renderer.draw(kit,20000,0,true,false,options);grab("spritesTorchOut");
+  renderer.draw(kit,20000,0,true,true,options);grab("spritesOptOut");
 }
 
 /** Which canvas a job draws on: the 408 px board, the Defend board (which
