@@ -32,7 +32,7 @@ try {
     const s = defaults();
     Object.keys(s.tutorials).forEach(k => s.tutorials[k] = true);
     Object.assign(s.upgrades, { archives: 1, combatStance: 1, buildout: 1 });
-    Object.assign(s.settings, { uiSprites: true, reduceMotion: true, transition: "instant", weatherSound: false });
+    Object.assign(s.settings, { reduceMotion: true, transition: "instant", weatherSound: false });
     Object.assign(s.archives.levels, { unlockShrines: 1, firstBoonChoice: 1, banBoons: 2, autoPickRanking: 4, autoPickBoons: 1 });
     s.shrines.firstChoice = "attack"; s.shrines.ranking = [...BOON_IDS];
     const g = new Game(s); g.newRun({ outside: true, seed: 7 });
@@ -78,7 +78,7 @@ try {
   for (const [uiTheme, gameTheme, sprites, shown] of [["medieval", "classic", true, true], ["neon", "classic", true, false], ["medieval", "pixel", true, true], ["medieval", "classic", false, false]]) {
     await page.evaluate(async ({ uiTheme, gameTheme, sprites }) => {
       const { defaults } = await import("/src/save/save.ts"); const { applyUiTheme } = await import("/src/ui/medieval.ts");
-      const s = defaults(); s.themes.push("neonUi", "pixelGame"); Object.assign(s.settings, { uiSprites: sprites, uiTheme, gameTheme }); applyUiTheme(s);
+      const s = defaults(); s.themes.push("neonUi", "pixelGame"); Object.assign(s.settings, { uiTheme: sprites ? uiTheme : "neon", gameTheme }); applyUiTheme(s);
     }, { uiTheme, gameTheme, sprites });
     assert.equal(await page.locator(".boon-ban .boon-icon").first().isVisible(), shown);
   }

@@ -2,7 +2,7 @@ import type { Mode, Tile } from "../entities.ts";
 import { tileRandom } from "../random.ts";
 import { themeAt, type TerrainTile } from "../render/themes.ts";
 import { kitImage } from "./kit.ts";
-import { wallAdjacencyMask } from "../render/area1-tileset.ts";
+import { wallAdjacencyMask } from "../render/themes.ts";
 import { dungeonWallBands, type DungeonWallProfile } from "../render/wall-depth.ts";
 import { dungeonDetailId, type DungeonDetail } from "../render/dungeon-details.ts";
 

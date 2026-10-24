@@ -1,9 +1,9 @@
 # Rendering
 
-**Optional shared PNG kit.** `sprites/style.ts` enables it only with Sprites on, board sprites allowed and the Classic Game theme worn.
+**Default shared PNG kit.** `sprites/style.ts` selects the native kit for Classic; alternate Game themes retain their own renderers.
 `BoardLook.styledSprites` passes this choice to tiles, pickups, all named enemies, four-direction heroes, torches, rising rewards and forest buildings.
-`sprites/options.ts` provides six full-tile square door PNGs and a four-frame torch strip, controlled by the saved `squareDoors` and `spriteAnimations` child settings only while the effective Game kit is active.
-Square doors retain live key and HP requirement marks, including mixed locks; missing PNGs fall back to the existing door or torch.
+`sprites/options.ts` provides six full-tile square door PNGs and a four-frame torch strip, controlled by the saved `squareDoors` and `spriteAnimations` settings only while the effective Game kit is active.
+Square doors retain live key and HP requirement marks, including mixed locks; startup preloading prevents gameplay from starting with missing PNGs.
 Torch frames share the original stationary hardware, advance at 130 milliseconds with spatial phase, and freeze when Reduce motion is on.
 The water reflection style key includes both options so warmed snapshots refresh immediately on a toggle.
 `sprites/animations.ts` adds native PNG potion bubbles, rare key glints, four-direction hero idle frames and the skull-and-crossbones death strip.
@@ -13,10 +13,10 @@ Coordinate-phased potion windows last 900 milliseconds every 4.2 seconds; key gl
 The original helmet, equipment, feet and alpha silhouette remain exact in every exported idle frame, so cached shadows and directional light masks still match; dash echoes keep their static pose.
 `FrameContext.heroIdleFrame` keeps the visible hero and its water image on the same frame, while pickup and hero frame keys refresh only the affected reflection bakes and snapshots.
 `drawStruckDown` uses a palette-matched six-frame PNG strip in the active kit, or its first frame with Animations off or Reduce motion on, preserving the existing death timing and opacity envelope.
-The death PNG stays at native scale without the old procedural bob, pulsing glow or resizing; Sprites off, other Game themes and missing images retain the original renderer.
+The death PNG stays at native scale without the old procedural bob, pulsing glow or resizing; other Game themes retain their own death mark.
 `tools/prepare-ambient-sprites.mjs` exports the original effect, hero-idle and skull source sheets, registers torso changes against the existing hero and restores its original alpha before packing.
-The normalized terrain atlas (`sprites/terrain.ts`, generated `sprites/terrain-index.ts`) remains a loading fallback for the dedicated native dungeon materials and the forest kit.
-`spriteRevision()` participates in ground cache keys so asynchronous image arrivals repaint fallbacks.
+The small retained `sprites/terrain.ts` atlas contains only four unchanged Defend floor frames; Tower and Delve have no legacy tileset or procedural Classic fallback.
+`spriteRevision()` participates in ground cache keys so isolated renderers can invalidate warmed drawing caches.
 `src/sprites/combat.ts` names native projectile, rank/trait, chest-star and shield pieces, exported by `tools/prepare-combat-sprites.mjs` from the combat atlases.
 Enemy bakes clear on kit image arrival so small marks loaded after the body replace their procedural fallbacks.
 `render/volley-art.ts` selects one of eight PNG arrow facings without changing flight positions; enemy shots use an eight-pixel orb.
@@ -24,7 +24,7 @@ Enemy bakes clear on kit image arrival so small marks loaded after the body repl
 `render/chest-marks.ts` keeps one blue Supply star and two purple Equipment stars over both closed and opened chest tiles.
 Each effect keeps its original renderer until its PNG is ready and when the effective Game kit is disabled.
 `sprites/board-marks.ts` supplies native Target/Ignore (16 pixels) and skipped/blocked X (12 pixels) PNGs inside the same 24-pixel tile grid, preserving blocked-mark fading.
-`boardFont` in `sprites/font.ts` selects the original bundled Tower Pixel face for Classic kit annotations, damage/reward numbers, level-up text and forest signs; other Game themes and Sprites off preserve the original font strings.
+`boardFont` in `sprites/font.ts` selects the original bundled Tower Pixel face for Classic kit annotations, damage/reward numbers, level-up text and forest signs; other Game themes preserve the original font strings.
 `EntityLighting` paints silhouettes from the active PNG contents and hero facing; both shadow and highlight caches clear immediately when the effective style or image revision changes.
 Other Game themes keep their own drawing and portrait art; changing UI themes affects only the interface kit.
 `sprites/environment.ts` names sixteen native environmental components: seven 24-pixel material tiles, four 8-pixel flowers, two 8-pixel vine modules and three 12-pixel glowing mushroom clusters.
@@ -35,13 +35,13 @@ The light-color cache includes effective style and image revision, while source 
 `sprites/forest.ts` defines twenty native forest components and two dedicated entrance bases, exported from the forest source atlases by `tools/prepare-forest-sprites.mjs`.
 The Tower base is 216 × 216 (nine tiles wide), the mountain base 360 × 240 (fifteen tiles wide); their bottom centers meet the existing stairs tile, and their cropped tops continue beyond the northern view without a complete roof or peak.
 `drawEntrance` uses these bases at native density, retaining the large original procedural entrance while a PNG loads or fails; the small building icons remain for interface uses.
-Once every forest material/object PNG is ready, `drawForestTile` switches atomically from the old tiles with baked trees to quiet ground-only grass, litter and path PNGs; the image revision invalidates cached ground.
+The startup barrier warms every forest material/object PNG; `drawForestTile` draws quiet ground-only grass, litter and path PNGs, with canopies placed separately.
 `forest-foliage.ts` plans coordinate-hashed understory and mature oak, elder, birch and pine crowns at 48–96 native pixels across multiple tiles, without consuming a game RNG or changing tiles.
 The full rectangular extent of every object clears all roads, the mode sign, entrance footprint and both building yards; crowns may overhang ordinary woodland floor.
 Plans cache by seed, mode, entrance column and road/building flags, with north-to-south ordering inside each layer and every large crown above smaller foliage.
 The active forest draws dynamic back grass, small foliage, crowns, buildings, route and hero, then the existing grass at the hero's feet and weather; dynamic grass retains its original planning, motion and interaction.
 Wall foliage remains with decoration off, while optional floor plants and dynamic grass follow that setting.
-Sprites off, board sprites off and other Game themes retain their original forest; UI themes gate the interface independently, and Defend is excluded from this forest extension.
+The forest always uses the native kit; alternate Game themes keep their own hero art, and UI themes gate the interface independently.
 `sprites/dungeon.ts` supplies dedicated interior PNG materials: fitted Tower masonry and contiguous Delve stone/earth patches, selected with coordinate hashes independent of generation.
 Twenty-one 96 × 720 atlases contain four 24-pixel floors, six versions of all sixteen wall-neighbor masks, four native six-pixel corners, six full tops, six dark tops and four reserved core frames: ten biome ramps for masonry, ten for rough stone and one brown earth set.
 Tower floors instead use ten dedicated 96 × 96 `dungeon-floor-masonry-*` PNG panels that mix large slabs and smaller bricks across a connected 4 × 4 tile field.
@@ -49,7 +49,7 @@ Tower floors instead use ten dedicated 96 × 96 `dungeon-floor-masonry-*` PNG pa
 The complete panel loads with its material group, and floor relief samples the same selected PNG texels; Delve retains its existing material floor variants.
 `tools/prepare-tower-floors.mjs` exports the generated `assets/game-sprites/tower-floor.png` into four quiet shared-palette colors per biome, preserving the full field instead of independently sampling tile textures.
 Towers II and III instead each use one fixed floor-and-wall material set at every height: warm limestone ashlar and rectangular paving for II, cool blue-violet basalt and octagonal paving with small square insets for III.
-`towerTileset` selects only these two numbered Tower tiers; Tower I, later tiers, Delve, forests, Sprites off and non-Classic Game themes keep their existing art.
+`towerTileset` selects only these two numbered Tower tiers; Tower I, later tiers, Delve, forests, non-Classic Game themes keep their existing art.
 Each set has one 96 × 96 connected floor PNG and one 96 × 720 wall PNG with the existing six variants, sixteen neighbor masks, native corners and shade frames.
 `tools/prepare-tower-tier-sprites.mjs` extracts the original `assets/game-sprites/tower-2-materials.png` and `tower-3-materials.png` into the shared palette with fixed upper-left lighting.
 The wall-corner alpha footprints are shared, while visible corner texels come from the new material; these tiers omit the older biome-specific wall motifs.
@@ -85,17 +85,16 @@ Details compose inside native wall bakes after each surface pass, clipped to the
 Optional detail images load independently: a missing image preserves the complete existing native wall, and a late image changes the bake key and sprite revision so warmed caches repaint.
 `tools/prepare-dungeon-details.mjs` exports the original `assets/game-sprites/dungeon-details.png` and Tower extension `assets/game-sprites/tower-masonry-details.png`; both dungeon exporters use `tools/dungeon-palette.mjs` for identical biome colors.
 `dungeon-infill.png` retains the common core and earlier sparse reference pieces (96 × 96); the deep core stays flat and is never biome-tinted.
-The styled decor bake skips core walls so moss cannot repaint their flat interiors; Sprites off and other Game themes retain their original decor.
+The styled decor bake skips core walls so moss cannot repaint their flat interiors; alternate Game themes keep their own environment.
 `paintGround` returns after drawing these native tiles, so old procedural quoins cannot add off-palette corners over the new walls.
-Each material group loads completely before replacing the fallback, and `spriteRevision` refreshes the ground cache as its PNGs arrive.
+Startup preloads every material group, and `spriteRevision` also refreshes ground caches in isolated renderer tests.
 `dungeonFloorSprite` extracts each selected native floor frame once for first-section torch relief; `render/floor-relief.ts` accepts image or canvas sources, and `LightingPass` invalidates its torch bakes when kit style or image revision changes.
-Changing Sprites or Game themes on a live renderer therefore restores matching terrain and floor relief; all other lighting and decor retain their existing placement and behavior.
+Changing Game themes on a live renderer therefore restores matching terrain and floor relief; all other lighting and decor retain their existing placement and behavior.
 The water mirror receives the effective board-art key too, refreshing cached walls, hero and torch snapshots immediately when sprites or board art change.
 `tools/prepare-dungeon-sprites.mjs` extracts the material components, assembles connected walls and edge masks, and maps all twenty biome variations into the existing palette, without changing the older atlas or Defend.
 Its corner components come from `assets/game-sprites/dungeon-corners.png`, sharing the existing native grid, upper-left light and restricted material ramps.
 Its six top/facade pairs per material come from `assets/game-sprites/dungeon-wall-variations.png`; floor, coping and corner components retain their existing sources.
 The shared core and stepped blend masks come from `assets/game-sprites/dungeon-material-blends.png`.
-The older `assets/game-sprites/dungeon-wall-shading.png` remains an art reference; repeated directional cutout stamps are no longer deployed.
 
 Board drawing (`Renderer`, frames, lighting, decor, popups, tile caches, the forest outside, weather), the render goldens, and the Medieval and Neon themes.
 Board drawing lives in `src/render/`: the Renderer, its frame, camera, tile cache, terrain painters, tilesets and lighting at its root; the Game themes' boards (`*-board.ts`, `themed-board.ts`, `themed-boards.ts`, `themed-art.ts`, `ascii-glyphs.ts`) in `src/render/boards/`; decor (`decor*.ts`, `forest-foliage.ts`, `outside-grass.ts`) in `src/render/decor/`; and the passing effects (poofs, explosions, flashes, glows, damage labels, particles) in `src/render/effects/`.
@@ -123,8 +122,8 @@ The passes live in their own modules.
 A wall tile gets a corner brick (`drawCornerBricks`) in each inner room corner only where its art runs a mortar edge for the brick to meet: the area1 sprites and the procedural walls; the other biomes' wall sprites go without, and only the area1 sprites wrap a quoin round their outer corners (`drawArea1Quoins`).
 Items, the torch and the hero wear a coloured outline (`withOutline`); an enemy is baked once per name, tier, `strength` and whether it is Fast or Ranged (`bakeEnemy`, an arrow at the top right for Ranged, the Fast mark below it when both: a one-pixel black outline, then `ENEMY_LOOK`'s bands outside it and rank chevrons over it (`rankChevrons` in `render/rank-chevrons.ts`, `RANK_CHEVRONS`: a weak enemy's one pointing down, one for strong, two for elite, three for a boss, four for a Greater Boss), and a Fast enemy's cyan fast-forward mark at the top right, `fastMark`; the Neon enemy draws one too), and its dark-room glow in `render/lighting.ts` is keyed by strength too.
 Only opaque bands cast torch shadows.
-Ground uses the PNG tilesets (`render/themed-tilesets.ts`) and falls back to `drawTerrain` in `render/themes.ts`, the procedural art (wall faces per theme, floor contact shadows, and a small library of details) shown when sprites are off or still loading.
-`tests/terrain-paint.test.ts` runs `drawTerrain` on a recording canvas over every Tower theme and several Delve areas and hashes the calls against `tests/fixtures/terrain-paint.golden.json`; regenerate it with `UPDATE_GOLDEN=1` only for an intended art change.
+Ground uses the dedicated native dungeon PNGs through `render/tile-painters.ts`.
+`render/themes.ts` retains biome palette selection and neighbor metadata; the procedural Classic terrain renderer and old area-one/themed tileset loaders are removed.
 `DungeonLight` (two methods: `glows(f)` starts a frame, `draw(f, board)` runs it) is the renderer's only entry point to the lighting, and owns the hand-offs between its two passes (the shadow layer, the sprite darkness, the clip regions around contents, hero and foreground): `render/lighting-pass.ts` (`LightingPass`) handles the Brightness darkness, object glows, torch lightmap and haze, floor relief, and vignette, and `render/entity-lighting.ts` (`EntityLighting`) handles torch-cast sprite shadows and directional light on sprites.
 `render/lighting.ts` holds the lighting settings and torch flicker and sway; each torch's visibility polygon comes from `torches.ts`.
 `tests/lighting-passes.test.ts` drives `DungeonLight` over seeded Tower and Delve frames (with a board that paints tile contents, the hero and assorted foregrounds) on a fake DOM whose canvases record every call (and read back pixels made up from what was drawn), runs the darkening pass alone over odd clip regions, and hashes the calls along with visibility polygons, flicker and sway against `tests/fixtures/lighting-passes.golden.json`.
@@ -154,14 +153,12 @@ Battery saver drops to 30 fps while nothing moves.
 `decor-render.ts` (`DecorLayer`, the renderer's only decor entry point) budgets tile planning per frame and runs decor's passes: `decor-bake.ts` bakes each tile's static pixels for the tile cache, `decor-effects.ts` owns the live state and particle physics (splintering crates, stirred grass, spores, splashes and ripples), `decor-reflections.ts` mirrors crates, walls, tile contents, torch flames and the hero into pools (the renderer hands `drawGround` a `MirroredSprites` that paints each in tile space; the mirror lines, snapshots and reuse live in decor), and `decor-sprites.ts` paints crates, parting grass, ripple rings and drips.
 Glowing blooms and fireflies scale with the Brightness setting.
 Its draw passes take one `DecorFrame` (view, time, tile lookup, reduced motion).
-`tests/art-modules.test.ts` walks `DecorLayer` through seeded Tower rooms and Delve areas (crates broken, pools waded, reflections painted and reused or refreshed, a tight planning budget) on a fake DOM whose canvases record every call, and hashes that along with the area-one sprite lookups and draws (`render/area1-tileset.ts`: pickups, chests and doors, loaded or not) and the Upgrades page's particle fluid (`render/effects/tree-particles.ts`, over seeded frames with resizes, purchases, the shimmering rays around a node just unlocked (`unlock`, its first rank) and reduced motion) against `tests/fixtures/art-modules.golden.json`; regenerate it with `UPDATE_GOLDEN=1` only for an intended change to that art.
+`tests/art-modules.test.ts` walks `DecorLayer` through seeded Tower rooms and Delve areas (crates broken, pools waded, reflections painted and reused or refreshed, a tight planning budget) on a fake DOM whose canvases record every call, and hashes that along with the Upgrades page's particle fluid (`render/effects/tree-particles.ts`, over seeded frames with resizes, purchases, the shimmering rays around a node just unlocked (`unlock`, its first rank) and reduced motion) against `tests/fixtures/art-modules.golden.json`; regenerate it with `UPDATE_GOLDEN=1` only for an intended change to that art.
 The render golden includes decor scenes (a crate stepped on, a pool waded into, tall grass walked through) that check the effect is live before hashing; its Defend scenes (building mode, a rainy battle, the night boss wave, a stormy night zoomed in, the palette icons) are switched off while Defend is on hold (`DEFEND` in `tests/render-scenes.ts`; see defend.md).
 Lighting, weather, torch light, outside grass, and tree particles are separate modules.
-Outside the entrance, `outside.ts` holds the forest clearing (`OutsideWorld`, where a forest run's hero starts on the crossroads partway up the path, `OUTSIDE_START_Y`, and whose path's foot, `atExit`, leads to the other forest; its sprite choice, fallback tile art and the tower and cave entrances; tiles are addressed by a `ForestSpot`), the crossroads' road (the row of `OUTSIDE_START_Y`) which continues to the Blacksmith's and the Hall's doors once each stands, and on through the trees to the left or right edge while a tier before or after the selected one is open, as the tier arrows lead (`Roads`, `roadsOf`, on `ForestSpot` and `BoardLook`; `Game.forestWorld` lays them), `render/weather.ts` (`OutdoorWeather`) times thunder and paints sun, cloud, rain and lightning from one `WeatherFrame` of settings, and `render/torch-light.ts` bakes each torch's glow from a walking-distance search and a wall-aware box blur.
+Outside the entrance, `outside.ts` holds the forest clearing (`OutsideWorld`, where a forest run's hero starts on the crossroads partway up the path, `OUTSIDE_START_Y`, and whose path's foot, `atExit`, leads to the other forest; its native ground tiles and the tower and cave entrances; tiles are addressed by a `ForestSpot`), the crossroads' road (the row of `OUTSIDE_START_Y`) which continues to the Blacksmith's and the Hall's doors once each stands, and on through the trees to the left or right edge while a tier before or after the selected one is open, as the tier arrows lead (`Roads`, `roadsOf`, on `ForestSpot` and `BoardLook`; `Game.forestWorld` lays them), `render/weather.ts` (`OutdoorWeather`) times thunder and paints sun, cloud, rain and lightning from one `WeatherFrame` of settings, and `render/torch-light.ts` bakes each torch's glow from a walking-distance search and a wall-aware box blur.
 `tests/outdoor-art.test.ts` hashes seeded weather runs (thunder timing, sound calls, and the drawing on a recording canvas), the clearing's tiles, steps and art, and torch light fields over seeded wall maps against `tests/fixtures/outdoor-art.golden.json`; regenerate it with `UPDATE_GOLDEN=1` only for an intended change to them.
-The dirt road uses six seeded 24-pixel sprites (packed earth, pebbles, gravel, cracks, scuffs and leaf litter), generated by `tools/generate-outside-tiles.mjs` with the rest of the outside tiles.
-Four transparent grass fringes overlay only the road's exposed edges (`outsidePathEdges`, screen top/right/bottom/left), leaving adjoining path tiles and crossroads joined; their images participate in the tile cache's normal loading retry.
-The sprites-off fallback and the clearing's walkable tiles are unchanged by these surface variations.
+The dirt road uses the shared native forest ground kit, keeping its existing walkable geometry.
 
 **Themes** come in two kinds (`src/theme-collection.ts`, `THEMES`): a UI theme dresses the page around the board (setting `uiTheme`: `classic`, `medieval`, `neon`, `terminal`, `desktop`, `glyph`, `ember`, `yang`, `yin`, `shiro`, `kuro`, `arcade`, `system`, `orbit`, `pixel`, `doodle` or `murk`), a Game theme redraws the board itself, its tiles, hero, enemies and torches (setting `gameTheme`: `classic`, `neon`, `terminal`, `desktop`, `glyph`, `ember`, `yang`, `yin`, `shiro`, `kuro`, `arcade`, `system`, `kroz`, `orbit`, `pixel`, `doodle` or `murk`).
 Classic is each kind's free look; every other theme is owned once bought (`save.themes`, `decodeThemes`): Medieval (UI) from the start (`starting`), every other for `THEME_PRICE`, 1 Gold, the one price for all in one currency (`CurrencyId`, spent through `CURRENCIES`), so moving themes to another currency is that line.
@@ -282,15 +279,15 @@ Both the tile bake and ground cache include effective sprite style and image rev
 Glowing mushrooms keep their procedural caps and lighting; broken containers use matching PNG wrecks.
 **Potion colours.** Every board draws a regular potion red, like the HP bar it fills, and a percent potion blue (or its theme's nearest), like the Overheal bar, by asking `potionShade` (`entities.ts`).
 A percent potion's tile keeps the mark generation and saves use, `color: "red"`; only the drawing reads it as blue.
-The Classic sprites follow it: `potion_flat.png` is red and `potion_percent.png` blue (`tools/generate-area1-tiles.mjs`), and the style kit's `potion-red` and `potion-blue` swap places in `ITEM_KIT` and `paintKitContents`.
+The native kit follows it: `potion-red` and `potion-blue` swap places in `ITEM_KIT` and `paintKitContents`.
 
 Proving Grounds' `elemental-art.ts` turns the elemental's literal body pixels into curved light paths and fading trails during teleport, then crossfades to a translucent cyan ghost until the next volley.
 The trial renderer keeps a frame-based teleport clock independent of turn count, honors Reduce motion, and draws laser flashes from their saved origin even after a later teleport.
 Trial floor-edge torches, wooden crates and potions use separate tiles; crates reuse the shared `drawCrates` painter, including its broken-board form.
 Destroyed torch stands paint only charred fragments and contribute no darkness-mask light; both passes read the persisted `destroyed` map.
 The trial render scenes include intact edge props, beam damage to torch stands and crates, and darkness after the remaining beam glow fades.
-`TrialRenderer` also receives the live `usesGameSprites` gate and Animations setting; the shared tile, item, hero and torch painters supply current PNG terrain, props and facing/idle art when enabled, with the existing trial art retained as loading/off fallbacks.
-Native crate and wreck pieces use 24 and 12 pixels respectively, and every-frame painting lets asynchronously loaded PNGs replace fallbacks immediately.
+`TrialRenderer` receives the Animations setting; shared tile, item, hero and torch painters always supply native PNG terrain, props and facing/idle art.
+Native crate and wreck pieces use 24 and 12 pixels respectively and are preloaded with the rest of the kit.
 
 Trial manual/hybrid clicks add a native one-pixel gold outline inside the destination tile; the `manualDestination` scene appends coverage without changing existing render frames.
 

@@ -43,7 +43,7 @@ function recorder() {
 function drawn(art: GainArt, look: ThemedLook | null) {
   const r = recorder(), popups = new BoardPopups();
   popups.update({ run: { seed: 1 }, gains: [{ x: 1, y: 1, text: "+1", art }], fight: null, lastHeal: null } as never, 0);
-  const boardLook = { mode: "tower", height: 30, seed: 1, outside: false, entranceX: 8, spritesOff: true, reduceMotion: true, area1: false, themed: look && THEMED_BOARDS[look] };
+  const boardLook = { mode: "tower", height: 30, seed: 1, outside: false, entranceX: 8, reduceMotion: true, themed: look && THEMED_BOARDS[look] };
   popups.draw({ c: r.c, now: 100, left: 0, bottom: 0, n: 17, s: 24, look: boardLook } as unknown as FrameContext);
   return r;
 }

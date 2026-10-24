@@ -151,7 +151,7 @@ export class ProvingGroundsDialog {
       this.nextAutoAt=now+1000/Math.max(manual?4:1,g.stepsPerSecond);g.activeCard=turn.card;
       this.apply(turn.outcome);
     }
-    this.renderer!.draw(s,now,this.firedAt,this.base.save.settings.reduceMotion,this.base.save.settings.spritesOff,
+    this.renderer!.draw(s,now,this.firedAt,this.base.save.settings.reduceMotion,
       {styledSprites:usesGameSprites(this.base.save),spriteAnimations:this.base.save.settings.spriteAnimations,destination:this.navigation.target});
     return true;
   }

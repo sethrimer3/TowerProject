@@ -21,15 +21,13 @@ test("every setting defaults to a value its own row allows", () => {
   for (const [key, row] of rows) assert.equal(settingValue(row, d[key]), d[key], key);
 });
 
-test("UI sprites are opt-in for new and older saves, independent of board sprites", () => {
-  assert.equal(defaults().settings.uiSprites, false);
-  assert.equal(decoded({}).uiSprites, false);
-  assert.equal(decoded({ uiSprites: "true" }).uiSprites, false);
-  for (const spritesOff of [true, false]) {
-    const s = decoded({ uiSprites: true, spritesOff });
-    assert.equal(s.uiSprites, true);
-    assert.equal(s.spritesOff, spritesOff);
-    assert.equal(decoded({ ...s, uiSprites: false }).uiSprites, false);
+test("retired sprite switches are discarded without losing animation or door preferences", () => {
+  for (const uiSprites of [false, true]) for (const spritesOff of [false, true]) {
+    const s = decoded({ uiSprites, spritesOff, spriteAnimations: true, squareDoors: true });
+    assert.equal("uiSprites" in s, false);
+    assert.equal("spritesOff" in s, false);
+    assert.equal(s.spriteAnimations, true);
+    assert.equal(s.squareDoors, true);
   }
 });
 

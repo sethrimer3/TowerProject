@@ -110,7 +110,7 @@ Common pieces never merge (their tier's `next` is null): only Uncommon and above
 Auto-assemble, beside *Choose the piece to keep*, lists every merge the inventory makes at once (`autoMerges` in `inventory.ts`: none sharing a piece, worn pieces left out, a locked piece only ever kept; each keeps the best piece left and uses up the lowest-level copies), each checked by default; its Assemble makes those checked, one `EquipmentDesk.merge` each, without the melt, then shows them all on `showResult`.
 Its ✕ or a press on the backdrop cancels.
 `tests/equipment.test.ts` and `tests/equipment-slots.test.ts` cover it, and `tests/slag-merge.test.ts` hashes the melt's every canvas call, frame by frame, against `tests/fixtures/slag-merge.golden.json`.
-The optional PNG presentation uses `sprites/equipment.ts` and `assets/game-sprites/equipment-ui.png`, exported by `tools/prepare-equipment-ui.mjs`, for rarity/empty/selection frames and small worn, Unique and salvage marks.
+The default PNG presentation uses `sprites/equipment.ts` and `assets/game-sprites/equipment-ui.png`, exported by `tools/prepare-equipment-ui.mjs`, for rarity/empty/selection frames and small worn, Unique and salvage marks.
 `ui-sprites.css` applies the same frames to inventory tiles, loadouts, detail icons, Auto-assemble and pull/merge results, retaining live rarity letters and levels and the original presentation outside the effective UI sprite look.
 `tests/equipment-sprites-browser.mjs` exercises those components and real commands at phone and desktop widths, including independent themes, fallback and saved Auto-salvage.
 `docs/EQUIPMENT.md`, `docs/CRAFTING_AND_EQUIPMENT.md` (only its chest Gold still applies) and `docs/PROGRESSION_AND_DIFFICULTY.md` are the design source of truth.

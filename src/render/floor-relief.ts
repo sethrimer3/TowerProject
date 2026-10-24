@@ -188,11 +188,13 @@ export function bakeTorchRelief(
   const make = () => {
     const cv = document.createElement("canvas");
     cv.width = cv.height = size;
-    const ctx = cv.getContext("2d")!;
+    const ctx = cv.getContext("2d");
+    if (!ctx) return null;
     ctx.imageSmoothingEnabled = false;
     return { cv, ctx };
   };
   const sh = make(), hi = make();
+  if (!sh || !hi) return null;
   hi.ctx.globalCompositeOperation = "lighter";
   let any = false;
   for (let y = bottom; y < top; y++)

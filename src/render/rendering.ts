@@ -13,9 +13,9 @@ import { ForestFoliage } from "./decor/forest-foliage.ts";
 import { forestSpritesReady } from "../sprites/forest.ts";
 import { TileLayerCache } from "./tile-cache.ts";
 import { OutdoorWeather } from "./weather.ts";
-import { torchAnimationFrame } from "../sprites/game-sprites.ts";
+import { torchAnimationFrame } from "../sprites/options.ts";
 import { towerTileset } from "../sprites/dungeon.ts";
-import { isArea1, paintHero, paintHeroFallback, paintTile, paintTorch, type BoardLook } from "./tile-painters.ts";
+import { paintHero, paintTile, paintTorch, type BoardLook } from "./tile-painters.ts";
 import type { AtmosphereConfig } from "./lighting-pass.ts";
 import { DungeonLight, type LitBoard } from "./dungeon-light.ts";
 import { drawThemedBoard, themedBoardOf } from "./boards/themed-boards.ts";
@@ -179,7 +179,7 @@ export class Renderer {
         drawFlyers(f, this.game.run.player, this.game.mode === "delve" ? this.game.world.width : 0, (c, t, x, y) => this.tile(c, f, t, x, y, 1), false);
       }
     }
-    this.echoes.draw(f, themed ? (c, facing) => themed.hero(c, facing) : (c) => paintHero(c, f.look.spritesOff, f.look.styledSprites, f.heroFacing));
+    this.echoes.draw(f, themed ? (c, facing) => themed.hero(c, facing) : (c) => paintHero(c, f.heroFacing));
     if (!f.look.outside) drawBoostGlow(f, this.boosts);
     this.drawOverlays(f);
   }
@@ -240,7 +240,7 @@ export class Renderer {
       route: () => this.drawRoute(f),
       // Only while the hero has just reached a new floor.
       halo: f.now - this.arrived < ARRIVAL_GLOW_MS ? (ctx) => this.drawArrivalGlow(ctx, f.now) : undefined,
-      hero: (ctx) => paintHero(ctx, f.look.spritesOff, f.look.styledSprites, f.heroFacing, f.heroIdleFrame),
+      hero: (ctx) => paintHero(ctx, f.heroFacing, f.heroIdleFrame),
       foreground: () => {
         const bounds = decor && this.decor.foregroundBounds(decor);
         return bounds ? { bounds, draw: (ctx) => this.decor.drawForeground(ctx, decor!) } : null;
@@ -379,7 +379,6 @@ export class Renderer {
     const groundKey = [
       this.worldIds.get(g.world), g.run.seed, g.mode, g.run.height, g.run.outside ? 1 : 0, g.world.floor, anyWorld.milestone ?? 0,
       // Without sprite art, floor under items is drawn differently, so edits matter.
-      g.save.settings.spritesOff ? `off:${Object.keys(g.run.changes).length}` : "",
       f.look.styledSprites ? `kit:${spriteRevision()}` : "",
       ...(f.look.styledSprites && towerTileset(f.look.mode, f.look.tier) ? [`tower:${f.look.tier}`] : []),
     ].join("|");
@@ -399,7 +398,7 @@ export class Renderer {
     const s = f.s, n = f.n;
     const animated = !!f.look.spriteAnimations && !f.look.reduceMotion;
     return {
-      style: `${f.look.spritesOff}|${!!f.look.styledSprites}|${f.look.styledSprites ? spriteRevision() : 0}${f.look.squareDoors ? "|square" : ""}${f.look.spriteAnimations ? "|animated" : ""}${f.look.styledSprites && towerTileset(f.look.mode, f.look.tier) ? `|tower:${f.look.tier}` : ""}`,
+      style: `${!!f.look.styledSprites}|${f.look.styledSprites ? spriteRevision() : 0}${f.look.squareDoors ? "|square" : ""}${f.look.spriteAnimations ? "|animated" : ""}${f.look.styledSprites && towerTileset(f.look.mode, f.look.tier) ? `|tower:${f.look.tier}` : ""}`,
       tile: (ctx, t, x, y, layer) => this.tile(ctx, f, t, x, y, layer),
       contentFrame: animated ? (t, x, y) => pickupAnimationFrame(t, x, y, f.now, f.look.seed) : undefined,
       torches: f.torches.map((t) => ({
@@ -411,7 +410,7 @@ export class Renderer {
         },
       })),
       hero: { x: this.playerX, y: this.playerY, frame: animated ? `${f.heroFacing.dx},${f.heroFacing.dy}:${f.heroIdleFrame}` : undefined,
-        paint: (c) => paintHero(c, f.look.spritesOff, f.look.styledSprites, f.heroFacing, f.heroIdleFrame) },
+        paint: (c) => paintHero(c, f.heroFacing, f.heroIdleFrame) },
     };
   }
   /** Doors, stairs, items, and enemies, drawn onto `ctx`. */
@@ -456,7 +455,7 @@ export class Renderer {
     if (this.decorOn && !grassBehindFoliage) this.drawForestGrass(f, "back");
     c.save();
     c.setTransform(m);
-    paintHero(c, f.look.spritesOff, f.look.styledSprites, f.heroFacing, f.heroIdleFrame);
+    paintHero(c, f.heroFacing, f.heroIdleFrame);
     c.restore();
     if (this.decorOn) this.drawForestGrass(f, "front");
   }
@@ -644,8 +643,8 @@ export class Renderer {
     return {
       mode: g.mode, tier: g.run.tier ?? 1, height: g.run.height, seed: g.run.seed, outside: !!g.run.outside, entranceX: Math.floor(g.world.width / 2),
       roads: g.run.outside ? roadsOf(g.world) : undefined,
-      spritesOff: g.save.settings.spritesOff, reduceMotion: g.save.settings.reduceMotion, area1: !g.save.settings.spritesOff && isArea1(g.mode, g.run.height),
-      styledSprites: usesGameSprites(g.save),
+      reduceMotion: g.save.settings.reduceMotion,
+      styledSprites: !!g.run.outside || usesGameSprites(g.save),
       spriteAnimations: usesGameSprites(g.save) && g.save.settings.spriteAnimations,
       squareDoors: usesGameSprites(g.save) && g.save.settings.squareDoors,
       themed: g.run.outside ? null : this.themed,
@@ -659,7 +658,7 @@ export class Renderer {
   private drawTorchSprite(c: CanvasRenderingContext2D, f: FrameContext, t: Torch) {
     c.save();
     toTileSpace(c, f, t.x, t.y);
-    paintTorch(c, t, f.now, f.look.reduceMotion, f.look.spritesOff, f.look.styledSprites, f.look.spriteAnimations);
+    paintTorch(c, t, f.now, f.look.reduceMotion, f.look.spriteAnimations);
     c.restore();
   }
 
@@ -721,7 +720,7 @@ export class Renderer {
     return walls;
   }
   static drawHero(c: CanvasRenderingContext2D) {
-    paintHeroFallback(c);
+    paintHero(c);
   }
   position(clientX: number, clientY: number) {
     const r = this.canvas.getBoundingClientRect();

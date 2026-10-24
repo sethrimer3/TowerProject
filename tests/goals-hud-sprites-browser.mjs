@@ -31,7 +31,7 @@ try {
     const s = defaults();
     for (const id of Object.keys(s.tutorials)) s.tutorials[id] = true;
     for (const u of UPGRADES) s.upgrades[u.id] = 1;
-    Object.assign(s.settings, { uiSprites: true, reduceMotion: true, transition: "instant", weatherSound: false });
+    Object.assign(s.settings, { reduceMotion: true, transition: "instant", weatherSound: false });
     s.archives.levels.noteTaking = 1;
     s.tower.tiersOpen = 9;
     s.tower.best = s.tower.reached = 30;
@@ -86,7 +86,7 @@ try {
       const { defaults } = await import("/src/save/save.ts");
       const { applyUiTheme } = await import("/src/ui/medieval.ts");
       const s = defaults(); s.themes.push("neonUi", "pixelGame");
-      Object.assign(s.settings, { uiSprites: true, uiTheme, gameTheme }); applyUiTheme(s);
+      Object.assign(s.settings, { uiTheme, gameTheme }); applyUiTheme(s);
     }, { uiTheme, gameTheme });
     assert.equal(await page.locator('.goal-art .sprite-replacement[src$="goal-damage-prediction.png"]').first().isVisible(), shown);
   }
@@ -134,7 +134,7 @@ try {
   await page.locator(".badge-reveal-go").click();
   // A failed replacement retains its original SVG and all live counts.
   await page.locator("#focus-stat .sprite-icon").evaluate(e => { e.classList.remove("sprite-ready"); e.querySelector("img").removeAttribute("src"); });
-  assert.equal(await page.locator("#focus-stat .sprite-fallback").evaluate(e => getComputedStyle(e).visibility), "visible");
+  assert.equal(await page.locator("#focus-stat .theme-art").evaluate(e => getComputedStyle(e).visibility), "visible");
   assert.deepEqual(errors, []);
   console.log("Goals, utility icons, updated skill/Silver art, live HUD controls, PNG seal, theme overrides and missing-image fallback passed at phone/desktop sizes.");
 } finally { await browser.close(); await server.close(); }

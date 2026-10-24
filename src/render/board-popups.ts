@@ -9,7 +9,7 @@ import { materialImage } from "../sprites/material-sprites.ts";
 import { paintGem } from "./effects/gem-art.ts";
 import { RARITY_TIERS } from "../equipment/balance.ts";
 import { iconPixels, materialPixels, pieceSpriteId } from "../ui/equipment-icons.ts";
-import { drawKit } from "../sprites/kit.ts";
+import { drawKit, kitImage } from "../sprites/kit.ts";
 import { tileCenter, toTileSpace, type FrameContext } from "./render-frame.ts";
 
 /** How long each popup shows, and the fade that ends it (ms). */
@@ -73,22 +73,14 @@ const SILVER_COLOR = "#d6dde6";
 const SPENT_COLOR = "#ff6b6b";
 /** The HUD's heart, raised with a check when a Heart Door opens. */
 const BASE_URL = (import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? "/";
-const HEART_URL = `${BASE_URL}assets/ui/health.png`;
+const HEART_URL = `${BASE_URL}assets/style/heart.png`;
 /** The HUD's Gold coin, raised beside the Gold or Silver found. */
-const GOLD_URL = `${BASE_URL}assets/ui/gold.png`;
+const GOLD_URL = `${BASE_URL}assets/style/gold.png`;
 /** The HUD's Inspiration icon. */
-export const INSPIRATION_URL = `${BASE_URL}assets/ui/upgrades.png`;
-const images = new Map<string, HTMLImageElement>();
-/** The UI sprite at `url`, or null while it loads. */
+export const INSPIRATION_URL = `${BASE_URL}assets/style/shard.png`;
+/** Rewards use the startup-decoded shared cache too. */
 export function sprite(url: string) {
-  if (typeof Image === "undefined") return null;
-  let image = images.get(url);
-  if (!image) {
-    image = new Image();
-    image.src = url;
-    images.set(url, image);
-  }
-  return image.complete && image.naturalWidth ? image : null;
+  return kitImage(url.split("/").at(-1)!.replace(/\.png$/, ""));
 }
 const heart = () => sprite(HEART_URL);
 /** The Gold coin, or null while it loads. */
@@ -568,7 +560,7 @@ function paintSpentTile(c: CanvasRenderingContext2D, f: FrameContext, p: Popup, 
   const look = f.look;
   if (art.spent) c.translate(4, 0);
   if (look.themed) look.themed.contents(c, art.tile);
-  else paintContents(c, art.tile, { x: p.x, y: p.y, time: f.now, spritesOff: look.spritesOff, reduceMotion: look.reduceMotion, area1: look.area1, lifted: true, styledSprites: look.styledSprites });
+  else paintContents(c, art.tile, { x: p.x, y: p.y, time: f.now, reduceMotion: look.reduceMotion, lifted: true, styledSprites: look.styledSprites });
   if (!art.spent) return;
   c.translate(-4, 0);
   mark(c, "−", { x: 3, y: 12 }, { color: SPENT_COLOR, size: 14, styled: look.styledSprites });

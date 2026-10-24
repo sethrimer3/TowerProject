@@ -11,10 +11,7 @@ test("sprite sub-options are opt-in and preserve independent preferences through
     assert.equal(defaults().settings[key], false);
     assert.equal(decode(JSON.stringify({ version: 3, settings: { [key]: "true" } })).settings[key], false);
     const save = defaults(); save.settings[key] = true;
-    for (const uiSprites of [false, true]) {
-      save.settings.uiSprites = uiSprites;
-      assert.equal(decode(JSON.stringify(save)).settings[key], true);
-    }
+    assert.equal(decode(JSON.stringify(save)).settings[key], true);
   }
 });
 
@@ -40,13 +37,13 @@ test("square-door toggles retain every lock mark and torch animations freeze for
     ? (image: ReadyImage, ...args: number[]) => calls.push([image.src.split("/").at(-1)!, ...args]) : () => {} }) as CanvasRenderingContext2D;
   try {
     const tile: Tile = { kind: "door", door: { type: "keys", keys: ["yellow", "blue", "red"], mode: "all", heart: true } };
-    const art = { x: 0, y: 0, time: 0, spritesOff: false, reduceMotion: false, area1: false, styledSprites: true };
+    const art = { x: 0, y: 0, time: 0, reduceMotion: false, styledSprites: true };
     paintContents(c, tile, { ...art, squareDoors: true });
     assert.deepEqual(calls.map(c => c[0]), ["square-door-steel.png", "heart.png", "key-yellow.png", "key-blue.png", "key-red.png"]);
     calls.length = 0; paintContents(c, tile, art); assert.equal(calls[0][0], "door-wood.png");
     const torch = { x: 2, y: 4 } as Torch;
     const frame = (now: number, reduced: boolean, animated: boolean) => {
-      calls.length = 0; paintTorch(c, torch, now, reduced, false, true, animated); return [...calls[0]];
+      calls.length = 0; paintTorch(c, torch, now, reduced, animated); return [...calls[0]];
     };
     assert.equal(frame(0, false, false)[0], "torch.png");
     assert.equal(frame(0, false, true)[0], "torch-animation.png");

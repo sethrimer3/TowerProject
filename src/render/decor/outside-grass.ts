@@ -1,6 +1,6 @@
 import type { Board } from "../../board.ts";
 import type { BoardView } from "../render-frame.ts";
-import { outsideSpriteKind, roadsOf, type Weather } from "../../outside.ts";
+import { onPath, roadsOf, type Weather } from "../../outside.ts";
 import { tileRandom } from "../../random.ts";
 
 /** Wind-blown grass for the forest outside the Tower and Delve. Each grass
@@ -41,7 +41,7 @@ export class OutsideGrass {
     if (b) return b;
     b = [];
     const t = world.tile(x, y);
-    if (t.kind === "floor" && outsideSpriteKind(t, { x, y, seed, center, roads: roadsOf(world) }).family === "grass") {
+    if (t.kind === "floor" && !onPath({ x, y, seed, center, roads: roadsOf(world) })) {
       const r = (k: number) => tileRandom(x * 41 + k * 7, y * 29 - k * 13, seed ^ 0x6a55);
       // Clumps of two to four blades fanning out from one root.
       const clumps = 6 + Math.floor(r(0) * 4);

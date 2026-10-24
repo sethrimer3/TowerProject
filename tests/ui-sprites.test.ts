@@ -4,7 +4,7 @@ import test from "node:test";
 import { defaults } from "../src/save/save.ts";
 import { applyUiTheme } from "../src/ui/medieval.ts";
 
-test("UI sprites apply, turn off and reset without losing the selected theme", () => {
+test("UI sprites follow the selected theme and are restored by reset", () => {
   const previous = Object.getOwnPropertyDescriptor(globalThis, "document");
   const classes = new Set<string>();
   Object.defineProperty(globalThis, "document", {
@@ -17,21 +17,20 @@ test("UI sprites apply, turn off and reset without losing the selected theme", (
     const save = defaults();
     applyUiTheme(save);
     assert.ok(classes.has("medieval"));
-    assert.ok(!classes.has("ui-sprites"));
-    save.settings.uiSprites = true;
+    assert.ok(classes.has("ui-sprites"));
     save.settings.reduceMotion = true;
     applyUiTheme(save);
     assert.ok(classes.has("ui-sprites"));
     assert.ok(classes.has("medieval"));
     assert.ok(classes.has("reduce-motion"));
-    save.settings.uiSprites = false;
+    save.themes.push("neonUi");
+    save.settings.uiTheme = "neon";
     applyUiTheme(save);
     assert.ok(!classes.has("ui-sprites"));
-    assert.ok(classes.has("medieval"));
-    save.settings.uiSprites = true;
+    assert.ok(classes.has("neon"));
     applyUiTheme(save);
     applyUiTheme(defaults());
-    assert.ok(!classes.has("ui-sprites"), "reset removes the optional skin");
+    assert.ok(classes.has("ui-sprites"), "reset restores the default pixel art");
   } finally {
     if (previous) Object.defineProperty(globalThis, "document", previous);
     else Reflect.deleteProperty(globalThis, "document");

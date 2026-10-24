@@ -51,57 +51,57 @@
     "entranceX": 8,
     "tiles": "5aac861385e4",
     "steps": "301939357744",
-    "drawn": "bbfeef7121b2",
-    "canvas": "f527c0171ab0"
+    "drawn": "cf3ab1f571da",
+    "canvas": "67940f187586"
   },
   "forest 1 delve": {
     "entranceX": 15,
     "tiles": "554d64c166b4",
     "steps": "f5ceb0807f3f",
-    "drawn": "84cda49d9c45",
-    "canvas": "381bfb356124"
+    "drawn": "90fc90d356b8",
+    "canvas": "9bc34c16a131"
   },
   "forest 7 tower": {
     "entranceX": 8,
     "tiles": "69b67d9a7c51",
     "steps": "301939357744",
-    "drawn": "6efbc1b91830",
-    "canvas": "5b0d74cac9e9"
+    "drawn": "cf3ab1f571da",
+    "canvas": "139f17eee418"
   },
   "forest 7 delve": {
     "entranceX": 15,
     "tiles": "b1ea67ea3603",
     "steps": "f5ceb0807f3f",
-    "drawn": "f2782f6c13f7",
-    "canvas": "219a30c1d39f"
+    "drawn": "90fc90d356b8",
+    "canvas": "478159eb8ea6"
   },
   "forest 42 tower": {
     "entranceX": 8,
     "tiles": "b94c601ff11a",
     "steps": "301939357744",
-    "drawn": "7a2100200478",
-    "canvas": "c5886fb7d6d3"
+    "drawn": "cf3ab1f571da",
+    "canvas": "69ec53569a49"
   },
   "forest 42 delve": {
     "entranceX": 15,
     "tiles": "cfc089ada5b0",
     "steps": "f5ceb0807f3f",
-    "drawn": "08564573516d",
-    "canvas": "ec6839b65672"
+    "drawn": "90fc90d356b8",
+    "canvas": "9b325bc82ec9"
   },
   "forest 1234 tower": {
     "entranceX": 8,
     "tiles": "20d2b6968106",
     "steps": "301939357744",
-    "drawn": "76c836ca0c65",
-    "canvas": "d1a190811e54"
+    "drawn": "cf3ab1f571da",
+    "canvas": "b68a53b8d6d7"
   },
   "forest 1234 delve": {
     "entranceX": 15,
     "tiles": "3e8f4e567a7b",
     "steps": "f5ceb0807f3f",
-    "drawn": "cbda0c5f5695",
-    "canvas": "cb566e00d62c"
+    "drawn": "90fc90d356b8",
+    "canvas": "2b972f1cc03c"
   },
   "torch 1": "1706a0c9d3f9",
   "torch 2": "eb034d056522",
@@ -122,19 +122,19 @@
   ],
   "sprites 1 tower": {
     "drawn": "8e554c94b0bf",
-    "canvas": "7dad3fbffa1d"
+    "canvas": "95c3d8b2cf4e"
   },
   "sprites 1 delve": {
     "drawn": "b228dcfdc837",
-    "canvas": "85f9fb847205"
+    "canvas": "98865d38ae32"
   },
   "sprites 42 tower": {
     "drawn": "8e554c94b0bf",
-    "canvas": "25e86b8a2e27"
+    "canvas": "b23c6da0743e"
   },
   "sprites 42 delve": {
     "drawn": "b228dcfdc837",
-    "canvas": "61d718179d76"
+    "canvas": "c961dfcb6094"
   },
   "glow": "9b85ba92f4e7"
 }

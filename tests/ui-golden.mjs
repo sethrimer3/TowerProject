@@ -59,7 +59,7 @@ try {
 
   /** Waits for the page's HTML and the HUD (filled in as the app starts), not
    * the load event, which also waits on every image. */
-  const ready = () => page.locator("#hp").waitFor();
+  const ready = () => page.locator("#hp").waitFor({ timeout: 30000 });
 
   // A fixed clock (a Monday noon, GMT), so the Tournament button's countdown
   // and anything else that reads the time shows the same every run; timers

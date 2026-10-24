@@ -5,16 +5,15 @@ import { usesGameSprites, usesUiSprites } from "../src/sprites/style.ts";
 import { THEME_IDS } from "../src/theme-collection.ts";
 import { SETTINGS } from "../src/save/settings.ts";
 
-test("the shared sprite kit stays off by default", () => {
+test("the shared sprite kit is the default for new saves", () => {
   const save = defaults();
-  assert.equal(usesUiSprites(save), false);
-  assert.equal(usesGameSprites(save), false);
+  assert.equal(usesUiSprites(save), true);
+  assert.equal(usesGameSprites(save), true);
 });
 
 test("every non-default owned theme overrides sprites in its own area", () => {
   const save = defaults();
   save.themes = [...THEME_IDS];
-  save.settings.uiSprites = true;
   for (const [look] of SETTINGS.uiTheme.choices) {
     save.settings.uiTheme = look;
     assert.equal(usesUiSprites(save), look === "classic" || look === "medieval", look);
@@ -26,9 +25,4 @@ test("every non-default owned theme overrides sprites in its own area", () => {
     assert.equal(usesGameSprites(save), look === "classic", look);
     assert.equal(usesUiSprites(save), true, "a Game theme does not change UI art");
   }
-  assert.equal(save.settings.uiSprites, true, "theme changes preserve the preference");
-  save.settings.gameTheme = "classic";
-  save.settings.spritesOff = true;
-  assert.equal(usesGameSprites(save), false);
-  assert.equal(usesUiSprites(save), true);
 });

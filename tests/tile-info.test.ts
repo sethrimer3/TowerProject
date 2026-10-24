@@ -19,11 +19,11 @@ test("a pickup's box shows its icon and what it gives, not the stat before and a
   const { g } = board([[1, { kind: "key", color: "yellow" }], [2, { kind: "potion", amount: 35 }], [3, { kind: "attack" }]]);
   Object.assign(g.run.player, { hp: 50, maxHp: 60 });
   const key = tileInfo(g, 1, 0).body, potion = tileInfo(g, 2, 0).body, shard = tileInfo(g, 3, 0);
-  assert.match(key, /<img[^>]*key_yellow[^>]*>(?:<[^>]+>)* \+1</);
+  assert.match(key, /<img[^>]*key-yellow[^>]*>(?:<[^>]+>)* \+1</);
   assert.doesNotMatch(key, /→/);
-  assert.match(potion, /potion_flat[^>]*>(?:<[^>]+>)* \+35 HP/, "the full heal, not what max HP leaves room for");
+  assert.match(potion, /potion-red[^>]*>(?:<[^>]+>)* \+35 HP/, "the full heal, not what max HP leaves room for");
   assert.doesNotMatch(potion, /→/);
-  assert.match(shard.body, /upgrade_attack[^>]*>(?:<[^>]+>)* \+\d+(\.\d+)? ATK/);
+  assert.match(shard.body, /sword[^>]*>(?:<[^>]+>)* \+\d+(\.\d+)? ATK/);
 });
 
 test("a floor tile holding a lit torch is named Torch", () => {

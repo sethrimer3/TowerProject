@@ -108,12 +108,12 @@ for (const mode of ["fast", "instant", "smooth"]) {
   await openMenu(page); await page.locator("#auto-settings").click();
   await expect(page.locator("#transition")).toHaveValue(mode);
 }
-await expect(page.locator("#sprites-off")).not.toBeChecked();
-await page.locator("#sprites-off").check();
+await expect(page.locator("#sprite-animations")).not.toBeChecked();
+await page.locator("#sprite-animations").check();
 await page.reload();
 await openMenu(page); await page.locator("#auto-settings").click();
-await expect(page.locator("#sprites-off")).toBeChecked();
-await page.locator("#sprites-off").uncheck();
+await expect(page.locator("#sprite-animations")).toBeChecked();
+await page.locator("#sprite-animations").uncheck();
 await page.screenshot({
   path: "test-results/transition-settings.png",
   fullPage: true,

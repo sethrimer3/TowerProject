@@ -1,7 +1,13 @@
 import type { Tile } from "../entities.ts";
 import { doorRule, drainsHp } from "../doors.ts";
 import { drawKit, kitImage } from "./kit.ts";
-import { torchAnimationFrame, TORCH_FRAME_COUNT } from "./game-sprites.ts";
+import { tileRandom } from "../random.ts";
+export const TORCH_FRAME_COUNT = 4;
+export const TORCH_FRAME_MS = 130;
+export function torchAnimationFrame(x: number, y: number, now: number, reduceMotion: boolean) {
+  const offset = Math.floor(tileRandom(x, y, 0x19fa) * TORCH_FRAME_COUNT);
+  return reduceMotion ? offset : (Math.floor(now / TORCH_FRAME_MS) + offset) % TORCH_FRAME_COUNT;
+}
 
 export const SQUARE_DOORS = ["yellow", "blue", "red", "steel", "wood", "heart"] as const;
 export function squareDoorSprite(tile: Tile) {

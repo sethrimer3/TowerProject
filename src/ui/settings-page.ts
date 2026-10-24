@@ -15,7 +15,7 @@ import { exportProfile, importProfile } from "../profile-file.ts";
 /** The settings on the page, in order; each control comes from its row in
  * SETTINGS. */
 const PAGE = [
-  "uiSprites", "spriteAnimations", "squareDoors", "transition", "fightAnimation", "brightness", "spritesOff", "decorOff", "batterySaver", "reduceMotion", "weatherSound",
+  "spriteAnimations", "squareDoors", "transition", "fightAnimation", "brightness", "decorOff", "batterySaver", "reduceMotion", "weatherSound",
   "infoDisplay", "cinematic", "cinematicIdle", "cinematicGems",
 ] as const satisfies readonly SettingKey[];
 /** The dev section's settings, shown under Dev Mode while it is on. */
@@ -31,8 +31,6 @@ type PageKey = (typeof PAGE)[number] | (typeof TOGGLES)[number] | (typeof DEV)[n
 /** Settings that stay off the page until the upgrade (or the setting)
  * behind them is on. */
 const SHOWN: Partial<Record<PageKey, (save: Save) => boolean>> = {
-  spriteAnimations: (save) => save.settings.uiSprites,
-  squareDoors: (save) => save.settings.uiSprites,
   fightAnimation: (save) => !!save.upgrades.instantCombat,
   damageVisual: (save) => goalUnlocked(save, "damageVisual"),
   itemLabels: (save) => goalUnlocked(save, "damageVisual"),
@@ -43,18 +41,6 @@ const shownOf = (keys: readonly PageKey[], save: Save) => keys.filter((key) => S
 
 /** What a change does once written, beyond saving. */
 const AFTER: Partial<Record<PageKey, (ctx: AppContext, overlay: BoardOverlay, s: Settings) => void>> = {
-  uiSprites: (ctx) => {
-    applyUiTheme(ctx.game.save);
-    ctx.save();
-    ctx.update();
-    ctx.renderPage();
-    el("ui-sprites")?.focus();
-  },
-  spritesOff: (ctx) => {
-    applyUiTheme(ctx.game.save);
-    ctx.save();
-    ctx.update();
-  },
   reduceMotion: (ctx) => applyUiTheme(ctx.game.save),
   // The board silences the weather itself once sound is off.
   weatherSound: (ctx) => ctx.update(),
@@ -97,7 +83,7 @@ function control(key: PageKey, game: PageGame): string {
   switch (row.kind) {
     case "toggle": {
       const checked = "invert" in row.page ? !value : value;
-      return `<label class="setting${key === "spriteAnimations" || key === "squareDoors" ? " sprite-option" : ""}">${row.page.label}<input type="checkbox" id="${row.page.id}" ${checked ? "checked" : ""}></label>`;
+      return `<label class="setting">${row.page.label}<input type="checkbox" id="${row.page.id}" ${checked ? "checked" : ""}></label>`;
     }
     case "choice":
       return `<label class="setting">${row.page.label}<select id="${row.page.id}">${options(row.choices, value as string | number)}</select></label>`;
@@ -147,7 +133,7 @@ export function renderSettingsPage(ctx: AppContext, overlay: BoardOverlay) {
     `<button class="back" id="settings-back">${controlIcon("back")} Back</button><div class="page-title"><h2>Settings</h2></div><button class="wide" id="stats-open">Stats</button>` +
     themeButtons(game) +
     `<button class="setting menu-open" id="toggles-open">Toggles<b>${controlIcon("forward")}</b></button>` +
-    shownOf(PAGE, game.save).map((key) => control(key, game) + (key === (game.save.settings.uiSprites ? "squareDoors" : "uiSprites") ? `<p class="hint">Sprites apply to the default interface and board. Other UI and Game themes use their own art.</p>` : "")).join("") +
+    shownOf(PAGE, game.save).map((key) => control(key, game) + (key === "squareDoors" ? `<p class="hint">Pixel art is the default. Other UI and Game themes use their own art.</p>` : "")).join("") +
     `<p class="hint">Automation pauses outside the board tabs and while the browser is hidden. Progress saves after each action.</p>` +
     control("devTools", game) +
     (game.save.settings.devTools ? `<div class="dev-section">${DEV.map((key) => control(key, game)).join("")}${profileButtons}</div>` : "") +

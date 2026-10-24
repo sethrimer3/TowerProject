@@ -12,7 +12,7 @@ import { ATMOSPHERE_CONFIG, LightingPass } from "../src/render/lighting-pass.ts"
 import { EntityLighting } from "../src/render/entity-lighting.ts";
 import { DungeonLight, type Foreground, type LitBoard } from "../src/render/dungeon-light.ts";
 import { forEachViewTile, toTileSpace, type BoardTiles, type FrameContext, type Rect } from "../src/render/render-frame.ts";
-import { isArea1, paintContents, paintHeroFallback, type BoardLook } from "../src/render/tile-painters.ts";
+import { paintContents, paintHero, type BoardLook } from "../src/render/tile-painters.ts";
 import type { Mode } from "../src/entities.ts";
 import type { Torch } from "../src/entities.ts";
 
@@ -142,7 +142,7 @@ type Scene = { world: BoardTiles; look: BoardLook; torches: () => Torch[]; cente
 
 /** How a dungeon board at `height` looks, sprites on and motion full. */
 const lookOf = (mode: Mode, height: number, seed: number): BoardLook => ({
-  mode, height, seed, outside: false, entranceX: 15, spritesOff: false, reduceMotion: false, area1: isArea1(mode, height),
+  mode, height, seed, outside: false, entranceX: 15, reduceMotion: false, styledSprites: true,
 });
 
 function towerScene(seed: number, room: number): Scene {
@@ -168,10 +168,10 @@ function board(f: FrameContext, foreground: Foreground | null): LitBoard {
         if (t.kind === "wall" || t.kind === "floor") return;
         ctx.save();
         toTileSpace(ctx, f, x, y);
-        paintContents(ctx, t, { x, y, time: f.now, spritesOff: f.look.spritesOff, reduceMotion: f.look.reduceMotion, area1: f.look.area1 });
+        paintContents(ctx, t, { x, y, time: f.now, reduceMotion: f.look.reduceMotion, styledSprites: true });
         ctx.restore();
       }),
-    hero: paintHeroFallback,
+    hero: paintHero,
     foreground: () => foreground,
   };
 }
@@ -186,7 +186,7 @@ function drawFrame(f: FrameContext, light: DungeonLight, b: LitBoard) {
 /** Things in front of the hero, in world pixels: none, over its feet, a
  * wide swathe, and a box off the board. */
 const FOREGROUNDS = (f: Pick<FrameContext, "playerX" | "playerY">): (Foreground | null)[] => {
-  const x = f.playerX * 24, y = -f.playerY * 24, draw = paintHeroFallback;
+  const x = f.playerX * 24, y = -f.playerY * 24, draw = paintHero;
   return [
     null,
     { bounds: { x0: x - 4, y0: y, x1: x + 28, y1: y + 25 }, draw },
@@ -233,8 +233,8 @@ function sceneRun(scene: Scene, seed: number) {
     const torches = scene.torches().filter((t) => t.active && Math.abs(t.x - left - n / 2) < n / 2 + 8 && Math.abs(t.y - bottom - n / 2) < n / 2 + 8);
     const reduceMotion = rnd() < 0.2, spritesOff = rnd() < 0.25;
     const f: FrameContext = {
-      c, now, dt: 0.016, dpr, width, n, s, left, bottom, playerX, playerY, world: scene.world,
-      look: { ...scene.look, reduceMotion, spritesOff, area1: scene.look.area1 && !spritesOff }, darkness, torches, walls, glows: [],
+      c, now, dt: 0.016, dpr, width, n, s, left, bottom, playerX, playerY, heroFacing: { dx: 0, dy: -1 }, heroIdleFrame: 0, world: scene.world,
+      look: { ...scene.look, reduceMotion, spritesOff, styledSprites: true }, darkness, torches, walls, glows: [],
     };
     const foregrounds = FOREGROUNDS(f);
     const out = drawFrame(f, light, board(f, foregrounds[Math.floor(rnd() * foregrounds.length)]));
@@ -252,7 +252,7 @@ function degraded() {
   main.width = main.height = 408;
   const c = main.getContext()!;
   const frame = (darkness: number): FrameContext => ({
-    c, now: 5000, dt: 0.016, dpr: 1, width: 408, n: 17, s: 24, left: 7, bottom: 2, playerX: 15, playerY: 10,
+    c, now: 5000, dt: 0.016, dpr: 1, width: 408, n: 17, s: 24, left: 7, bottom: 2, playerX: 15, playerY: 10, heroFacing: { dx: 0, dy: -1 }, heroIdleFrame: 0,
     world: scene.world, look: scene.look, darkness,
     torches: scene.torches(), walls: [[0, 0], [1, 0]], glows: [],
   });
@@ -274,7 +274,7 @@ function degraded() {
   warm.drawShadows(later, () => null);
   out.push(!!warm.shadows);
   new LightingPass().drawDarkened(later, main as unknown as HTMLCanvasElement, {
-    amount: 0.5, draw: paintHeroFallback, region: { x: 5, y: 5, w: 90, h: 90 },
+    amount: 0.5, draw: paintHero, region: { x: 5, y: 5, w: 90, h: 90 },
   });
   noContexts = false;
   warm.drawSpriteLighting(later, c);
@@ -301,7 +301,7 @@ function darkenedRegions() {
     const main = new FakeCanvas();
     main.width = main.height = Math.round(width * dpr);
     const n = 17, f: FrameContext = {
-      c: main.getContext()!, now: 3000, dt: 0.016, dpr, width, n, s: width / n, left: 7, bottom: 22, playerX: 15, playerY: 30,
+      c: main.getContext()!, now: 3000, dt: 0.016, dpr, width, n, s: width / n, left: 7, bottom: 22, playerX: 15, playerY: 30, heroFacing: { dx: 0, dy: -1 }, heroIdleFrame: 0,
       world: scene.world, look: scene.look, darkness: 0.6,
       torches: scene.torches(), walls: [], glows: [],
     };
