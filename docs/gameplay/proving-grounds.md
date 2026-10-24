@@ -2,6 +2,7 @@
 
 Step onto the golden square on the grass to the right of the Tower forest's path to open **Proving Grounds Trials**.
 Choosing either trial enters the main game screen with the same top HUD, board, bottom card bar and run-training controls as a Tower run.
+Trials follow the same **Sprites**, **Turn off board sprites**, **Animations** and **Reduce motion** settings as the Tower, including the current hero, dungeon, stairs, potion, torch and crate artwork when Sprites is enabled.
 Choose a whole **Trial level** before entering either mode; the menu previews boss HP, beam count and slime timing.
 Any level from 1 to 10,000 is selectable, and the last selected level is remembered.
 Both Light Elemental trials begin in a small staging room whose staircase leads to a dark, hexagonal chamber inside a 25×25 tile square.

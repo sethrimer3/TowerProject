@@ -7,6 +7,7 @@ import { TrialSession, TRIAL_TRAINING } from "../proving-grounds/session.ts";
 import { TrialRenderer } from "../proving-grounds/render.ts";
 import { CARDS } from "../cards.ts";
 import { el } from "./dom.ts";
+import { usesGameSprites } from "../sprite-style.ts";
 
 /** The entrance menu is a dialog; the encounter owns the ordinary game board,
  * HUD and hand instead of creating a second game screen inside a popup. */
@@ -144,7 +145,8 @@ export class ProvingGroundsDialog {
       g.activeCard=trialPlan(s)?.card??null;
       this.apply(autoplayTrial(s));
     }
-    this.renderer!.draw(s,now,this.firedAt,this.base.save.settings.reduceMotion,this.base.save.settings.spritesOff);
+    this.renderer!.draw(s,now,this.firedAt,this.base.save.settings.reduceMotion,this.base.save.settings.spritesOff,
+      {styledSprites:usesGameSprites(this.base.save),spriteAnimations:this.base.save.settings.spriteAnimations});
     return true;
   }
   toggleAuto() {

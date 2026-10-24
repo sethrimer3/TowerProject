@@ -14,6 +14,8 @@ The render suite encodes PNGs only for frames that changed (every frame when rec
 The UI and render snapshot suites also accept `PLAYWRIGHT_EXECUTABLE_PATH` for an installed Chromium binary.
 `node tests/trial-props.mjs` uses the dev server (or `TEST_URL`) for trial floor-edge props at 320/1024 pixels, an actual canvas-light measurement before/after a torch goes out, beam and slime destruction, reload persistence and isolation from the ordinary Tower run.
 It loads seeded saved attempts and steps them with the real manual Wait button; screenshots go to `test-results/proving-grounds-props/`.
+`node tests/trial-sprites.mjs` also uses the dev server and verifies real trial PNG draws, literal hero/stairs texels, a deliberately delayed hero image, live Settings toggles with exact pixel restoration, independent theme gates and destruction with the kit enabled.
+It captures Sprites-enabled 320/390/1024-pixel previews in `test-results/trial-sprites/`; trial prop review fixtures enable Sprites too.
 `tests/sprite-browser.mjs` uses the dev server to check the real Sprites toggle, save/reload, mobile/desktop layouts, PNG loading and independent UI/Game theme overrides.
 `tests/sprite-options-browser.mjs` starts its own server for the Sprites child controls, focus, save/reload, mobile/desktop layout, full-tile square doors, four torch frames with stationary hardware, Reduce motion, live Renderer toggles, theme gates and failed-image fallback.
 The appended `spriteOptions` render scene captures square doors and animated torches without changing the existing scene seeds.

@@ -72,6 +72,11 @@ Old saves without an attempt remain unchanged.
 ## Rendering and tests
 
 `elemental-art.ts` owns the elemental body, ghost palette and teleport particles; `render.ts` reuses Classic stone, hero, potion and torch art, adds pixel Light Elemental and light slime sprites, and follows the player over 17×17 tiles.
+The controller passes `usesGameSprites(save)` and Animations into every trial frame, so the live Sprites setting, board-art opt-out and independent Game theme gate agree with the normal Tower renderer.
+With the kit enabled, shared `paintTile` draws connected native paving and wall contours over the trial geometry, `paintContents` draws stairs and potions, and `paintHero`/`paintTorch` select the same PNGs and ambient animation options as the main board.
+Kit crates draw at their native 24-pixel size, and broken crates retain their native 12-pixel pieces; legacy procedural crates and other old art remain complete off/loading/failure fallbacks.
+Hero facing follows trial movement; its optional idle cycle uses `HeroIdleAnimation` and honors Reduce motion.
+The trial repaints every frame, so late images and settings changes do not need a separate cache invalidation path.
 Edge crates reuse `drawCrates` and its splintered-board wreckage; floor torches have small iron stands and leave charred fragments when broken.
 Both torch painting and its darkness-mask light source read the same persisted destruction state, so an extinguished torch cannot keep illuminating the room or return on reload.
 The arena has no ambient floor light: only torches, glowing enemies, smoldering cracks and the hero's small foothold light reveal it.
@@ -85,5 +90,8 @@ Beam flashes last 900 ms, while visible cracks and their turn-based glow survive
 `tests/trial-levels.test.ts` covers HP scaling, every beam/spawn breakpoint and cap, ray damage, independent hopping, deterministic reloads, UTC refill, clock rollback and Dev bypass.
 `tests/trial-props.test.ts` checks floor-edge placement, unique prop tiles, every breakable's laser contact, deterministic slime landings (including on the hero), persistence, fresh retries and defensive decoding.
 `node tests/trial-props.mjs` uses the dev server to check 320/1024-pixel edge layouts, actual torch-light loss, beam/slime destruction of both types, reloads and protection of the ordinary Tower run.
+Its review fixtures enable Sprites, matching the current game art instead of silently capturing the older fallback.
+`node tests/trial-sprites.mjs` checks actual trial PNG draws, native hero/stair texels, delayed-image recovery, exact live off/on restoration, board opt-out, hero facing, independent UI/Game theme gates, 320/390/1024-pixel previews and destroyed-prop PNGs.
 `npm run test:proving` exercises both modes in the main shell, red X cards, actual training purchases, manual-input rejection, reload, autoplay, victory/retry and 320/390/1024-pixel layouts with the dev server running.
 The render goldens include staging, elemental, beam, glow, wall-scar, slime-hop, dissolution, light trails, reformation, ghost/reduced-motion and restored-corporeal laser frames.
+Five appended sprite-kit frames cover staging, intact edge props, beam damage, extinguished torches and the board-art opt-out; the earlier legacy trial frames remain unchanged.

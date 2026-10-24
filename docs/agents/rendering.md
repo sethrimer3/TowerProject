@@ -287,3 +287,5 @@ The trial renderer keeps a frame-based teleport clock independent of turn count,
 Trial floor-edge torches, wooden crates and potions use separate tiles; crates reuse the shared `drawCrates` painter, including its broken-board form.
 Destroyed torch stands paint only charred fragments and contribute no darkness-mask light; both passes read the persisted `destroyed` map.
 The trial render scenes include intact edge props, beam damage to torch stands and crates, and darkness after the remaining beam glow fades.
+`TrialRenderer` also receives the live `usesGameSprites` gate and Animations setting; the shared tile, item, hero and torch painters supply current PNG terrain, props and facing/idle art when enabled, with the existing trial art retained as loading/off fallbacks.
+Native crate and wreck pieces use 24 and 12 pixels respectively, and every-frame painting lets asynchronously loaded PNGs replace fallbacks immediately.

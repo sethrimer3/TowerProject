@@ -1,8 +1,11 @@
 import { drawThemedTile } from "../themed-tilesets.ts";
-import { paintHero, paintTorch } from "../tile-painters.ts";
+import { paintContents, paintHero, paintTile, paintTorch, type BoardLook } from "../tile-painters.ts";
 import { drawArea1Item } from "../area1-tileset.ts";
 import { sprite } from "../pixel-sprite.ts";
 import { drawCrates } from "../decor-sprites.ts";
+import { drawKit } from "../sprite-kit.ts";
+import { HeroIdleAnimation } from "../sprite-animations.ts";
+import type { Tile } from "../entities.ts";
 import { ARENA_CRATES, ARENA_POTIONS, ARENA_TORCHES, beamCount, beamDirections, rayCells, floorAt, key, nextBeamAxis, propDestroyed, wallEdge, type TrialState } from "./trial.ts";
 
 import { drawLightElemental, drawElementalTransit, TELEPORT_MS } from "./elemental-art.ts";
@@ -29,6 +32,9 @@ export class TrialRenderer {
   private teleportAt = -Infinity;
   private lastStep = -1;
   private jumpedAt = -Infinity;
+  private heroAt: {x:number;y:number;room:TrialState["room"]}|null=null;
+  private facing={dx:0,dy:-1};
+  private heroIdle=new HeroIdleAnimation();
   private darkness = document.createElement("canvas");
   constructor(private canvas: HTMLCanvasElement) {
     canvas.width = canvas.height = this.darkness.width = this.darkness.height = SIZE;
@@ -36,9 +42,22 @@ export class TrialRenderer {
   view(s: TrialState) {
     return { left: s.player.x - 8, bottom: s.player.y - 8 };
   }
-  draw(s: TrialState, now: number, firedAt: number, reduceMotion: boolean, spritesOff: boolean) {
+  draw(s: TrialState, now: number, firedAt: number, reduceMotion: boolean, spritesOff: boolean,
+    options: {styledSprites?:boolean;spriteAnimations?:boolean} = {}) {
+    const styled=!!options.styledSprites && !spritesOff,animated=styled && !!options.spriteAnimations;
     // Animation is presentation only; saved turns own all positions.
-    if(this.lastState!==s) { this.lastState=s; this.lastStep=s.steps; this.jumpedAt=-Infinity; this.lastTeleport=s.elemental.teleport; this.teleportAt=-Infinity; }
+    if(this.lastState!==s) { this.lastState=s; this.lastStep=s.steps; this.jumpedAt=-Infinity; this.lastTeleport=s.elemental.teleport; this.teleportAt=-Infinity;this.heroAt=null;this.facing={dx:0,dy:-1}; }
+    if(this.heroAt) {
+      const dx=s.player.x-this.heroAt.x,dy=s.player.y-this.heroAt.y;
+      if(this.heroAt.room!==s.room)this.facing={dx:0,dy:1};
+      else if(Math.abs(dx)+Math.abs(dy)===1)this.facing={dx,dy};
+    }
+    this.heroAt={x:s.player.x,y:s.player.y,room:s.room};
+    const idle=this.heroIdle.frame(now,animated && !reduceMotion && s.player.hp>0,
+      `${s.seed}:${s.room}:${s.player.x},${s.player.y}:${this.facing.dx},${this.facing.dy}`);
+    const world={tile:(x:number,y:number):Tile=>({kind:floorAt(s.room,x,y)?"floor":"wall"})};
+    const look:BoardLook={mode:"tower",tier:1,height:1,seed:s.seed,outside:false,entranceX:0,
+      spritesOff,reduceMotion,area1:!spritesOff,themed:null,styledSprites:styled,spriteAnimations:animated};
     if(this.lastTeleport!==s.elemental.teleport) {
       this.lastTeleport=s.elemental.teleport; this.teleportAt=now;
     }
@@ -60,37 +79,43 @@ export class TrialRenderer {
     c.imageSmoothingEnabled = false; c.fillStyle = "#05080c"; c.fillRect(0,0,SIZE,SIZE);
     for (let y=bottom; y<bottom+N; y++) for (let x=left; x<left+N; x++) {
       const wall = !floorAt(s.room,x,y);
-      if (wall && !(s.room==="arena" && wallEdge(x,y)) && ![[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy]) => floorAt(s.room,x+dx,y+dy))) continue;
+      if (!styled && wall && !(s.room==="arena" && wallEdge(x,y)) && ![[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy]) => floorAt(s.room,x+dx,y+dy))) continue;
       tile(x,y,() => {
         const neighbors = { northWall: !floorAt(s.room,x,y+1), eastWall: !floorAt(s.room,x+1,y), southWall: !floorAt(s.room,x,y-1), westWall: !floorAt(s.room,x-1,y) };
-        if (spritesOff || !drawThemedTile(c,"tower",0,wall,x,y,7391,neighbors)) {
+        if(styled)paintTile(c,world,world.tile(x,y),x,y,now,0,look);
+        else if (spritesOff || !drawThemedTile(c,"tower",0,wall,x,y,7391,neighbors)) {
           c.fillStyle=wall?"#52616b":"#263442"; c.fillRect(0,0,S,S);
           c.fillStyle=wall?"#8d999d":"#34424d"; c.fillRect(1,1,22,1);
         }
         if (s.room === "staging" && x===4 && y===6) {
-          c.fillStyle="#aab1a0"; for(let i=0;i<4;i++) c.fillRect(4+i,5+i*4,16-i*2,2);
+          if(styled)paintContents(c,{kind:"stairs"},{x,y,time:now,spritesOff,reduceMotion,area1:true,styledSprites:styled});
+          else {c.fillStyle="#aab1a0"; for(let i=0;i<4;i++) c.fillRect(4+i,5+i*4,16-i*2,2);}
         }
       });
     }
     if (s.room === "arena") {
-      for(const p of ARENA_CRATES)tile(p.x,p.y,()=>drawCrates(c,0,0,
-        [{x:4,y:6,w:16,h:16,lift:0,kind:"crate",tone:(p.x+p.y)%3}],propDestroyed(s,p)));
+      for(const p of ARENA_CRATES)tile(p.x,p.y,()=> {
+        const broken=propDestroyed(s,p);
+        if(styled && (broken?drawKit(c,"crate-broken",6,12,12,12):drawKit(c,"crate")))return;
+        drawCrates(c,0,0,[{x:4,y:6,w:16,h:16,lift:0,kind:"crate",tone:(p.x+p.y)%3}],broken);
+      });
       for (const p of ARENA_TORCHES) tile(p.x,p.y,()=> {
         if(propDestroyed(s,p)) {
           c.fillStyle="#302a23";c.fillRect(8,21,9,2);c.fillRect(11,18,2,4);
         } else {
           // A floor stand anchors the torch inside the room, clear of the wall.
           c.fillStyle="#222a30";c.fillRect(7,21,10,2);c.fillRect(9,20,2,2);c.fillRect(14,20,2,2);
-          paintTorch(c,{...p,active:true,baseIntensity:0.5,lightRadius:5},now,reduceMotion,spritesOff);
+          paintTorch(c,{...p,active:true,baseIntensity:0.5,lightRadius:5},now,reduceMotion,spritesOff,styled,animated);
         }
       });
       for (const p of ARENA_POTIONS) if (!s.consumed.includes(key(p))) tile(p.x,p.y,()=> {
-        if (spritesOff || !drawArea1Item(c,{kind:"potion",color:"red"})) {
+        if(styled)paintContents(c,{kind:"potion",color:"red"},{...p,time:now,spritesOff,reduceMotion,area1:true,styledSprites:styled,spriteAnimations:animated,seed:s.seed});
+        else if (spritesOff || !drawArea1Item(c,{kind:"potion",color:"red"})) {
           c.fillStyle="#633040"; c.fillRect(8,9,8,11); c.fillStyle="#e7adac"; c.fillRect(10,6,4,3);
         }
       });
     }
-    tile(s.player.x,s.player.y,()=>paintHero(c,spritesOff));
+    tile(s.player.x,s.player.y,()=>paintHero(c,spritesOff,styled,this.facing,idle));
     if (s.room === "arena") {
       const d=this.darkness.getContext("2d")!;
       d.globalCompositeOperation="source-over"; d.fillStyle="#000"; d.fillRect(0,0,SIZE,SIZE);
