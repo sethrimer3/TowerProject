@@ -3,7 +3,8 @@
 ## Movement transitions
 
 Movement transitions can be set to **Smooth** (default), **Fast**, or **Off (instant)** in Settings.
-This controls camera and player interpolation on both axes; Reduce motion overrides it with instant movement.
+This controls camera and player interpolation on both axes, including Proving Grounds boss trials; Reduce motion overrides it with instant movement.
+Trials use the Delve's follow camera with a dead zone and path look-ahead by default, keeping their view bounded around the arena with room for its controls.
 
 ## Undo
 

@@ -7,6 +7,10 @@ import {trialFloor,trialStep,type Spot,type TrialState} from "./trial.ts";
 export class TrialNavigation {
   target:(Spot & {room:TrialState["room"]})|null=null;
   clear(){this.target=null;}
+  path(s:TrialState) {
+    const t=this.target;
+    return t && t.room===s.room && s.status==="active"?routeTo(trialPosition(s),t.x,t.y)??[]:[];
+  }
   select(s:TrialState,x:number,y:number) {
     if(s.mode==="cards" || s.status!=="active" || !trialFloor(s,x,y))return false;
     if(!routeTo(trialPosition(s),x,y))return false;

@@ -28,8 +28,11 @@ try {
     },patch);await reload();
   }
   async function clickTile(x,y) {
-    const s=await trial(),box=await world.boundingBox();
-    await world.click({position:{x:box.width*(x-s.player.x+8.5)/17,y:box.height*(s.player.y-y+8.5)/17}});
+    await expect(world).toHaveAttribute("data-trial-view-room",(await trial()).room);
+    await expect(world).toHaveAttribute("data-trial-camera-moving","false",{timeout:10000});
+    const view=await world.evaluate(c=>({left:Number(c.dataset.trialViewLeft),bottom:Number(c.dataset.trialViewBottom)}));
+    const box=await world.boundingBox();
+    await world.click({position:{x:box.width*(x-view.left+.5)/17,y:box.height*(view.bottom+17-y-.5)/17}});
   }
   async function oneHit(mode,level,playing=mode!=="manual",extra={}) {
     const s=await trial();

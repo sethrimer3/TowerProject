@@ -9,8 +9,9 @@
  * No drawing: the renderer reads `left` and `bottom`. */
 
 type Point = { x: number; y: number };
-/** The view's size in tiles and the board's width, which the view stays within. */
-export type CameraView = { n: number; width: number };
+/** View and board dimensions; optional height and padding bound finite
+ * rooms while leaving a safe border for overlaid controls. */
+export type CameraView = { n: number; width: number; height?: number; padding?: number };
 
 /** How far the hero's centre may stray from the camera's goal before it
  * pans, in tiles each way: a box 5 tiles across in a 17-tile view. */
@@ -165,9 +166,10 @@ export class FollowCamera {
   restingLeft(view: CameraView) { return this.goal.x - view.n / 2; }
   restingBottom(view: CameraView) { return this.goal.y - view.n / 2; }
 
-  /** Keeps the view's centre where the whole view stays on the board:
-   * within its width and never below its first row. */
-  private within(p: Point, { n, width }: CameraView): Point {
-    return { x: clamp(p.x, n / 2, width - n / 2), y: Math.max(n / 2, p.y) };
+  /** Keeps the view within the board and its optional border. Rooms
+   * smaller than the viewport stay centered. */
+  private within(p: Point, { n, width, height, padding=0 }: CameraView): Point {
+    const fit = (at: number, size: number) => size < n ? size / 2 : clamp(at, n / 2-padding, size - n / 2+padding);
+    return { x: fit(p.x, width), y: height === undefined ? Math.max(n / 2, p.y) : fit(p.y, height) };
   }
 }

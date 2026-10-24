@@ -7,7 +7,8 @@ import {advanceTrial,TrialNavigation} from "../proving-grounds/navigation.ts";
 import {advanceKeymasterEffects,mimicInterval,KEYMASTER_REFORM_INTERVAL} from "../proving-grounds/keymaster.ts";
 import type {TrainingId} from "../progression/training.ts";
 import {TrialSession,TRIAL_TRAINING} from "../proving-grounds/session.ts";
-import {TrialRenderer,TRIAL_VIEW_TILES} from "../proving-grounds/render.ts";
+import {TrialRenderer} from "../proving-grounds/render.ts";
+import {trialPlan} from "../proving-grounds/autoplay.ts";
 import {CARDS} from "../cards/cards.ts";
 import {el} from "./dom.ts";
 import {usesGameSprites} from "../sprites/style.ts";
@@ -27,6 +28,8 @@ export class ProvingGroundsDialog {
   private nextAutoAt=0;
   private firedAt=0;
   private lastFrame=0;
+  private cameraPathKey="";
+  private cameraPath:readonly {dx:number;dy:number}[]=[];
   private message="Climb the staircase to enter the trial.";
   private settled:TrialState|null=null;
   private award=0;
@@ -55,10 +58,9 @@ export class ProvingGroundsDialog {
       if(this.canvas.hasPointerCapture(e.pointerId))this.canvas.releasePointerCapture(e.pointerId);
       if(!start || start.id!==e.pointerId || this.modal.open || Math.max(Math.abs(e.clientX-start.x),Math.abs(e.clientY-start.y))>10)return;
       const s=this.session!.state;if(s.mode==="cards")return;
-      const box=this.canvas.getBoundingClientRect(),view=this.renderer!.view(s);
-      const col=Math.floor((e.clientX-box.left)/box.width*TRIAL_VIEW_TILES),row=Math.floor((e.clientY-box.top)/box.height*TRIAL_VIEW_TILES);
-      if(col<0 || col>=TRIAL_VIEW_TILES || row<0 || row>=TRIAL_VIEW_TILES)return;
-      if(this.navigation.select(s,view.left+col,view.bottom+TRIAL_VIEW_TILES-1-row)) {
+      const box=this.canvas.getBoundingClientRect();
+      const point=this.renderer!.tileAt(s,(e.clientX-box.left)/box.width,(e.clientY-box.top)/box.height);
+      if(point && this.navigation.select(s,point.x,point.y)) {
         this.session!.game.activeCard=null;this.nextAutoAt=0;
         this.message="Moving to the selected tile.";this.changed();
       }
@@ -130,7 +132,7 @@ export class ProvingGroundsDialog {
     this.session=new TrialSession(this.base,this.base.save.provingGrounds!);
     const s=this.session.state;
     this.message=s.room==="staging"?"Click the staircase to enter the trial.":s.keymaster?(s.elemental.incorporeal?"The Keymaster is incorporeal and invincible until his next reformation.":"Strike the Keymaster for golden keys. Open the four doors to release red spirits."):s.elemental.incorporeal?"The elemental is invincible until its next lasers.":"Click a tile to move. Click the corporeal elemental to strike.";
-    this.renderer=new TrialRenderer(this.canvas);this.canvas.tabIndex=0;
+    this.renderer=new TrialRenderer(this.canvas);this.cameraPathKey="";this.cameraPath=[];this.canvas.tabIndex=0;
     this.canvas.setAttribute("aria-label","Proving Grounds. Click a floor tile to walk to it in manual or combined mode. Click your tile or press Space to wait.");
     document.documentElement.classList.add("trial-running");document.documentElement.classList.toggle("trial-manual",s.mode==="manual");
     el("board-frame").querySelector("#trial-overlay")?.remove();
@@ -151,8 +153,17 @@ export class ProvingGroundsDialog {
       this.nextAutoAt=now+1000/Math.max(manual?4:1,g.stepsPerSecond);g.activeCard=turn.card;
       this.apply(turn.outcome);
     }
+    const target=this.navigation.target;
+    const pathKey=`${s.room}:${s.status}:${s.steps}:${s.player.x},${s.player.y}:${s.player.hp}:${s.player.attack}:${s.player.defense}:${s.mode}:${s.playing}:${target?.x},${target?.y}:${s.elemental.x},${s.elemental.y}:${s.elemental.incorporeal}`;
+    if(pathKey!==this.cameraPathKey) {
+      this.cameraPathKey=pathKey;
+      this.cameraPath=target?this.navigation.path(s):s.mode!=="manual" && s.playing?trialPlan(s)?.path??[]:[];
+    }
     this.renderer!.draw(s,now,this.firedAt,this.base.save.settings.reduceMotion,
-      {styledSprites:usesGameSprites(this.base.save),spriteAnimations:this.base.save.settings.spriteAnimations,destination:this.navigation.target});
+      {styledSprites:usesGameSprites(this.base.save),spriteAnimations:this.base.save.settings.spriteAnimations,destination:target,
+        transition:this.base.save.settings.transition,pathAhead:this.cameraPath});
+    const view=this.renderer!.view(s),hero=this.renderer!.hero(s);
+    Object.assign(this.canvas.dataset,{trialViewLeft:String(view.left),trialViewBottom:String(view.bottom),trialViewRoom:s.room,trialHeroX:String(hero.x),trialHeroY:String(hero.y),trialCameraMoving:String(!this.renderer!.settled)});
     return true;
   }
   toggleAuto() {
@@ -204,7 +215,7 @@ export class ProvingGroundsDialog {
   leave(){if(!this.active)return;delete this.base.save.provingGrounds;this.detach();this.save();this.changed();}
   private detach() {
     this.session=null;this.renderer=null;this.navigation.clear();document.documentElement.classList.remove("trial-running","trial-manual");el("trial-overlay")?.remove();
-    for(const key of ["trialMode","trialLevel","trialRoom","trialSteps","trialPhase"])delete this.canvas.dataset[key];
+    for(const key of ["trialMode","trialLevel","trialRoom","trialSteps","trialPhase","trialViewLeft","trialViewBottom","trialViewRoom","trialHeroX","trialHeroY","trialCameraMoving"])delete this.canvas.dataset[key];
     this.canvas.setAttribute("aria-label",this.originalLabel);this.canvas.tabIndex=this.originalTabIndex;el("hand").querySelectorAll("[aria-disabled]").forEach(c=>c.removeAttribute("aria-disabled"));
     (el("base-enemy") as HTMLButtonElement).disabled=false;el("end-run").textContent="End Run";delete el("board").dataset.heading;
   }

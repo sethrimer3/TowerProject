@@ -29,7 +29,8 @@ The normal HUD shows the trial hero and play/pause/speed controls, and the norma
 Manual trials retain those card faces with red X overlays and `aria-disabled`, while their actual planning hand remains empty.
 Manual and hybrid players click a destination tile; `navigation.ts` uses `routeTo(trialPosition(state), x, y)` and replans each step, spending one turn per tile.
 A route ends on arrival, a strike on the clicked enemy, a room transition or an ended attempt; routes are transient and reloads clear them.
-The canvas maps clicks through the renderer's 17×17 view and draws a gold destination outline.
+The canvas maps clicks through `TrialRenderer.tileAt`, using the currently painted fractional 17×17 view, and draws a gold destination outline.
+The controller caches camera look-ahead from the current manual route or card plan, invalidating on a turn, command, phase or play/pause change rather than replanning on every draw frame.
 There are no movement-arrow buttons; Wait, the boss countdown and leave/retry actions sit over the shared canvas.
 Arrow/WASD keyboard shortcuts remain available, and clicking the current tile or pressing Space waits.
 Card autoplay follows the normal Movement Speed setting and advances at most one turn per visible frame, without catching up missed turns.
@@ -129,7 +130,11 @@ Progress and reward receipts remain independent per trial ID while sharing the s
 
 ## Rendering and tests
 
-`elemental-art.ts` owns the elemental body, ghost palette and teleport particles; `render.ts` reuses Classic stone, hero, potion and torch art, adds pixel Light Elemental and light slime sprites, and follows the player over 17×17 tiles.
+`elemental-art.ts` owns the elemental body, ghost palette and teleport particles; `render.ts` reuses Classic stone, hero, potion and torch art, adds pixel Light Elemental and light slime sprites, and follows the drawn player over 17×17 tiles through `camera.ts`'s `TrialCamera`.
+The same Movement transition setting as Delve enables Smooth by default, with Fast, Off and Reduce motion honored live.
+Smooth/Fast reuse the Delve's dead zone, critically damped spring, edge margin and eight-step look-ahead; arena bounds allow a four-tile border around 25×25 to keep the player clear of overlaid controls, and staging is centered because it fits entirely inside the view.
+Off and Reduce motion retain instant centered movement.
+`TrialCamera` changes no logical turn, hero stats or enemy state; room changes and reloads reset its transient position.
 The controller passes `usesGameSprites(save)` and Animations into every trial frame, so the live Sprites setting, board-art opt-out and independent Game theme gate agree with the normal Tower renderer.
 With the kit enabled, shared `paintTile` draws connected native paving and wall contours over the trial geometry, `paintContents` draws stairs and potions, and `paintHero`/`paintTorch` select the same PNGs and ambient animation options as the main board.
 Kit crates draw at their native 24-pixel size, and broken crates retain their native 12-pixel pieces; legacy procedural crates and other old art remain complete off/loading/failure fallbacks.
@@ -167,3 +172,6 @@ The Light Elemental and other render jobs remain unchanged.
 `node tests/keymaster.mjs` checks the real Trial 2 picker, all three controls, actual movement/combat/door damage, reloads, rewards, run isolation and native 320/390/1024-pixel previews.
 
 `tests/keymaster-movement.test.ts` covers teleport immunity and saved ghosts, ten-turn reformation, every-two-turn retreat/pursuit, contact combat, obstacle reservations, wall limits, moving key-drop origins across every floor tile, queued door impacts and crowded-room reformation.
+
+`tests/trial-camera.test.ts` covers default smoothing, dead-zone behavior, native-pixel/room bounds, Fast versus Instant/Reduce motion, room resets, fractional click coordinates and path framing without game-state mutation.
+`node tests/trial-camera.mjs` exercises real interpolated movement and clicks during a glide, live Settings controls and saved preferences, card autoplay and 320/390/1024-pixel layouts.

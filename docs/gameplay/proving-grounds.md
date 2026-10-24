@@ -3,7 +3,10 @@
 Step onto the golden square on the grass to the right of the Tower forest's path to open **Proving Grounds Trials**.
 Choose a trial, then choose **Without cards**, **Only with cards**, or **With both**.
 Each choice enters the main game screen with the same top HUD, board, bottom card bar and run-training controls as a Tower run.
-Trials follow the same **Sprites**, **Turn off board sprites**, **Animations** and **Reduce motion** settings as the Tower, including the current hero, dungeon, stairs, potion, torch and crate artwork when Sprites is enabled.
+Trials use the current hero, dungeon, stairs, potion, torch and crate artwork, with the same **Animations** and **Reduce motion** settings as the Tower.
+Their camera follows with the Delve's cinematic glide and path look-ahead, using **Settings → Movement transition**: **Smooth** is on by default, **Fast** catches up sooner, and **Off (instant)** disables the glide.
+The camera leaves a small border around the arena to keep your character clear of the controls and holds the small staging room centered; tile clicks remain accurate while the view moves.
+Reduce motion also makes trial camera and player movement instant.
 Each trial automatically offers the next difficulty after the highest one you defeated, starting at difficulty 1.
 You cannot select a difficulty manually.
 The menu shows that trial's number, next difficulty, difficulty multiplier, beam count, slime timing and one-time reward.

@@ -645,6 +645,25 @@ function playKeymaster(_name:string,_seed:number,canvas:HTMLCanvasElement,grab:G
   renderer.draw(ghost,9500,0,true,options);grab("reformed");
 }
 
+function playTrialCamera(_name:string,_seed:number,canvas:HTMLCanvasElement,grab:Grab) {
+  const s=startTrial({maxHp:1000,attack:10,defense:0}),renderer=new TrialRenderer(canvas);
+  renderer.draw(s,1000,0,false);grab("smallRoom");
+  s.room="arena";s.player.x=10;s.player.y=8;
+  const ahead=Array.from({length:6},()=>({dx:0,dy:1}));
+  renderer.draw(s,2000,0,false,{pathAhead:ahead});grab("arenaStart");
+  trialStep(s,0,1);renderer.draw(s,2016,0,false,{pathAhead:ahead.slice(1)});grab("heroGlide");
+  for(let i=1;i<=60;i++) {
+    if(i%15===0 && s.player.y<14)trialStep(s,0,1);
+    renderer.draw(s,2016+i*1000/60,0,false,{pathAhead:ahead.slice(s.steps)});
+  }
+  grab("cameraGlide");
+  for(let i=1;i<=180;i++)renderer.draw(s,3016+i*1000/60,0,false);
+  grab("settled");
+  trialStep(s,1,0);renderer.draw(s,6033,0,false,{transition:"fast"});grab("fast");
+  renderer.draw(s,6050,0,false,{transition:"instant"});grab("instant");
+  renderer.draw(s,6066,0,true);grab("reducedMotion");
+}
+
 /** Every scene, in order, each with its own seed. The Defend scenes keep
  * their places while off, so the later board scenes keep their seeds. */
 export const JOBS: Job[] = [
@@ -654,6 +673,7 @@ export const JOBS: Job[] = [
   ...Object.keys(LATER_BOARD_SCENES).map((name) => ({ name, canvas: "board" as const, run: playBoard })),
   { name: "provingGrounds", canvas: "board" as const, run: playProvingGrounds },
   { name: "keymaster", canvas: "board" as const, run: playKeymaster },
+  { name: "trialCamera", canvas: "board" as const, run: playTrialCamera },
 ].map(({ name, canvas, run }, i) => {
   // Keep the fourth seed reserved for the retired sprite-opt-out scene.
   const seed = i + 1 + (i >= 3 ? 1 : 0);

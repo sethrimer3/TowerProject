@@ -4,6 +4,17 @@ import { AHEAD_MARGIN, DEAD_ZONE, EDGE_MARGIN, FollowCamera, GLIDE_SECONDS, LOOK
 
 const view = { n: 17, width: 30 }, dt = 1 / 60;
 
+test("finite rooms clamp both axes and rooms smaller than the viewport stay centered",()=> {
+  const c=new FollowCamera(),room={n:17,width:25,height:25};
+  c.reset({x:24.5,y:24.5},room);assert.equal(c.left(room),8);assert.equal(c.bottom(room),8);
+  c.update({x:0.5,y:0.5},room,1,GLIDE_SECONDS,true);assert.equal(c.left(room),0);assert.equal(c.bottom(room),0);
+  const small={n:17,width:9,height:9};c.reset({x:4.5,y:2.5},small);
+  assert.equal(c.left(small),-4);assert.equal(c.bottom(small),-4);
+  c.update({x:7.5,y:7.5},small,1,GLIDE_SECONDS,false);assert.equal(c.left(small),-4);assert.equal(c.bottom(small),-4);
+  const padded={...room,padding:4};c.reset({x:.5,y:.5},padded);
+  assert.equal(c.left(padded),-4);assert.equal(c.bottom(padded),-4);
+});
+
 /** Walks the hero's drawn centre the way the renderer does: each step at an
  * even pace over 80% of the time between steps, standing still the rest. */
 function walk(camera: FollowCamera, from: { x: number; y: number }, steps: [number, number][], perSecond: number, onFrame?: (hero: { x: number; y: number }) => void) {

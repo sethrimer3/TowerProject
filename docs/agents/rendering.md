@@ -109,6 +109,8 @@ A trip out and back that fits never pans, and nearing a path's end the camera st
 A dash puts the hero there at once, so the renderer calls `FollowCamera.leap` (and any move of more than `LEAP_TILES`, 1.5, in a frame counts as one): until the hero is back within `EDGE_MARGIN`, the camera only glides, ignoring the leap's speed and holding the hero nowhere, so however long or often the hero dashes it never jumps, and the hero may stand near or past the view's edge for a moment.
 Reduce Motion and Instant transitions stand it at its goal at once; `Renderer.target` reports the goal, and `isIdle` waits for it to settle.
 `tests/camera.test.ts` covers it.
+`CameraView.height` optionally bounds the vertical axis for finite rooms, with optional `padding` for overlaid controls; without it the Delve retains its open-ended northward view.
+Rooms smaller than the viewport center within it on either bounded axis.
 The turns' shots (`render/volley-art.ts`): `ShotsInFlight` keeps every volley still flying (a turn's last shots land as the next's leave), and `drawVolley` starts each on the display frame nearest its tick (`shotFlight`: up to half a frame early, a tie going to the later frame), an arrow from where the hero stood as it fired, an enemy's shot homing on the hero as drawn.
 An enemy an arrow felled is cleared from the board at once, but `ShotsInFlight.board` (the frame's `f.world`, one object per board) keeps it standing on its tile until that arrow lands, for every pass that reads the frame's tiles.
 Each `draw()` builds one `FrameContext` (`render/render-frame.ts`: the camera's `BoardView`, the canvas, the board's tiles as a narrow `BoardTiles` rather than the `Game`, the `BoardLook`, and the torches, walls and glows in view).
@@ -298,3 +300,10 @@ Reduce motion draws fewer particles along straight paths while preserving impact
 The `keymaster` render job covers fifteen frames, including pixel teleport, ghost/reduced-motion, queued spirits, pursuit and reformation; other jobs stay unchanged.
 `drawElementalTransit` accepts optional body texels so Keymaster teleports dissolve its own sprite through the exact same curved flight and trails as the Light Elemental.
 The Keymaster ghost uses the translucent cyan palette and drifting specks until its ten-turn reformation; the existing teleport clock runs independently of player turns.
+
+Proving Grounds reuses `FollowCamera` through `proving-grounds/camera.ts` (`TrialCamera`), with a 17-tile view bounded around its 25-tile arena (a four-tile border keeps controls clear) or centered around its 9-tile staging room.
+Smooth is the existing default Movement transition; Fast uses the same shorter spring and player catch-up as the normal renderer, while Off and Reduce motion use the instant centered trial view.
+The drawn hero and camera are presentation state only, reset at room/attempt changes; ordinary moves interpolate and larger jumps stand the hero on its tile while the camera glides.
+The camera is rounded to native pixels on the 24-pixel tile grid, and tile loops include partially visible edge tiles so there are no seams or missing rows during a pan.
+Hero painting and its foothold light use the drawn position together.
+The appended `trialCamera` render job captures staging, arena start, hero/camera glide, settled, Fast, Instant and Reduce motion; existing non-trial jobs stay pinned.
