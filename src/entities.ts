@@ -79,9 +79,11 @@ export type ChestOdds = { supply: number; equipment: number };
  * the doors of its floors as they are generated: each colour door a Wooden
  * Door instead (`skeleton`, Skeleton Key), each door of two or three
  * colours without its rarest lock (`lockPick`, Lock Pick), and each Wooden
- * or Steel Door a Gold Door (`transmute`, Gold Door Transmute; none when
- * absent). */
-export type DoorOdds = { skeleton: number; lockPick: number; transmute?: number };
+ * or Steel Door a Gold Door (`transmute`, Gold Door Transmute), each Heart
+ * Door taking no keys a Wooden Door (`wood`, Wooden Door Transmute), and
+ * each door taking keys and draining HP without its drain (`heartPick`,
+ * Heart Lock Pick); each of the last three none when absent. */
+export type DoorOdds = { skeleton: number; lockPick: number; transmute?: number; wood?: number; heartPick?: number };
 /** Declarative lock rules. `color` remains on Tile for legacy single-key
  * doors and keys; new doors use this rule so every gameplay system shares
  * the same requirements and consumption behavior. */
@@ -175,6 +177,10 @@ export type Player = {
   /** The percent of max HP Lifesteal may heal the hero above it (ENEMY's
    * Lifesteal Overheal; none when absent). */
   stealOverheal?: number;
+  /** The percent more shroud the hero holds against every enemy for the
+   * rest of the run, grown by each Heart Door's drain paid (HEART DOOR's
+   * Shroud Growth); absent without it. */
+  doorShroud?: number;
   keys: Record<KeyColor, number>;
   /** Optional secret inventory counters stay absent from legacy saves until
    * the corresponding item has actually been found. */

@@ -72,12 +72,12 @@ export function squaredUp(player: Player, enemy: Enemy): { player: Player; enemy
 /** Power Strike's ATK multiplier. */
 export const POWER_FACTOR = 2;
 /** `player` as it stands against `enemy`: its DEF and shroud raised by the
- * card trees' percents covering it (`foeDefense`, `foeShroud`), each added
- * into one card factor, and the enemy cards' trees' Lifesteal Overheal
+ * card trees' percents covering it (`foeDefense`, `foeShroud`, and HEART
+ * DOOR's Shroud Growth, `doorShroud`), each added into one card factor, and the enemy cards' trees' Lifesteal Overheal
  * covering it added to ENEMY's (`foeStealOverheal`); itself when none
  * does. Fights and enemy shots take the hero through it. */
 export function facing(player: Player, enemy: Enemy): Player {
-  const defense = foeAttack(player.foeDefense, enemy), shroud = foeAttack(player.foeShroud, enemy), steal = foeAttack(player.foeStealOverheal, enemy);
+  const defense = foeAttack(player.foeDefense, enemy), shroud = snap(foeAttack(player.foeShroud, enemy) + (player.doorShroud ?? 0)), steal = foeAttack(player.foeStealOverheal, enemy);
   if (!defense && !(shroud && player.shroud) && !steal) return player;
   return {
     ...player,

@@ -68,6 +68,13 @@ export function goldLocked(t: Tile) {
   const rule = doorRule(t);
   return rule.type === "keys" && rule.mode === "all" && rule.keys.includes("yellow");
 }
+/** Whether the door `t` is one of a door card's `kind` (its tree's doors):
+ * a door with a gold lock (GOLD DOOR), one draining HP (HEART DOOR), a
+ * Wooden Door (WOODEN DOOR). */
+export function hasLock(t: Tile, kind: DoorKind) {
+  const rule = doorRule(t);
+  return kind === "yellow" ? goldLocked(t) : kind === "heart" ? drainsHp(rule) : rule.type === "wood";
+}
 /** A single gold door, GOLD DOOR's. */
 export const isYellowDoor = (tile: Tile) => singleLock(tile) === "yellow";
 /** The doors the door cards make cheaper while held (`CardBonus.door`), and
@@ -78,9 +85,11 @@ export type DoorKind = "yellow" | "heart" | "wood";
 /** The percent less each kind costs; `all`, the percent less of each key
  * every door takes (DOOR's tree; it leaves HP alone); `plain`, the percent
  * less of the key and the HP a Wooden or Steel Door takes, and `hearts`,
- * of the keys and the drain a door draining HP takes (KEY's tree). Each
- * adds into a kind's own as one card factor. */
-export type DoorDiscounts = Partial<Record<DoorKind | "all" | "plain" | "hearts" | `${KeyColor}Key`, number>>;
+ * of the keys and the drain a door draining HP takes (KEY's tree);
+ * `woodKeys` and `woodToll`, of a Wooden Door's key and of the HP breaking
+ * it takes (WOODEN DOOR's tree). Each adds into a kind's own as one card
+ * factor. */
+export type DoorDiscounts = Partial<Record<DoorKind | "all" | "plain" | "hearts" | "woodKeys" | "woodToll" | `${KeyColor}Key`, number>>;
 /** What `off` multiplies the door `tile`'s keys and its HP toll by: 1 for
  * each it leaves alone. */
 export function doorDiscount(tile: Tile, off?: DoorDiscounts): { keys: number; toll: number } {
@@ -98,8 +107,8 @@ export function doorKeyScale(tile: Tile, base: number, off?: DoorDiscounts): Key
   return { yellow: snap(keys * cut("yellow")), blue: snap(keys * cut("blue")), red: snap(keys * cut("red")) };
 }
 function discountOf(tile: Tile, off: DoorDiscounts): { keys: number; toll: number } {
-  const rule = doorRule(tile), all = off.all ?? 0, less = (percent = 0, more = 0, also = 0) => (100 - percent - more - also) / 100;
-  if (rule.type === "wood") return { keys: less(off.wood, all, off.plain), toll: less(off.wood, off.plain) };
+  const rule = doorRule(tile), all = off.all ?? 0, less = (...percents: (number | undefined)[]) => (100 - percents.reduce<number>((sum, n) => sum + (n ?? 0), 0)) / 100;
+  if (rule.type === "wood") return { keys: less(off.wood, all, off.plain, off.woodKeys), toll: less(off.wood, off.plain, off.woodToll) };
   if (drainsHp(rule)) return { keys: less(isYellowDoor(tile) ? off.yellow : 0, all, off.hearts), toll: less(off.heart, off.hearts) };
   return { keys: less(isYellowDoor(tile) ? off.yellow : 0, all, rule.type === "keys" && rule.mode === "any" ? off.plain : 0), toll: 1 };
 }
@@ -177,9 +186,12 @@ export function area1DoorRule(room: number): DoorRule {
   return rules[Math.max(0, room) % rules.length];
 }
 
-const SKELETON_SALT = 0x5c3e7, LOCK_PICK_SALT = 0x10c45, TRANSMUTE_SALT = 0x7a2e5;
+const SKELETON_SALT = 0x5c3e7, LOCK_PICK_SALT = 0x10c45, TRANSMUTE_SALT = 0x7a2e5, WOOD_TRANSMUTE_SALT = 0x3d0e1, HEART_PICK_SALT = 0x4ea27;
 /** The generated tile `t` at (x, y) on a board generated from `seed`, as a
- * run with `odds` sees it: a Wooden or Steel Door whose tile's fixed number
+ * run with `odds` sees it: a Heart Door taking no keys whose tile's fixed
+ * number falls under the Wooden Door Transmute chance is a Wooden Door of
+ * `durability()` HP; a door taking keys and draining HP under the Heart
+ * Lock Pick chance loses its drain, and is remade as below; a Wooden or Steel Door whose tile's fixed number
  * falls under the Gold Door Transmute chance is a Gold Door, keeping any
  * Heart Door's drain; a colour door (keyed, every colour needed)
  * whose tile's fixed number falls under the Skeleton Key chance is a
@@ -188,8 +200,11 @@ const SKELETON_SALT = 0x5c3e7, LOCK_PICK_SALT = 0x10c45, TRANSMUTE_SALT = 0x7a2e
  * then blue), keeping any Heart Door's drain. Both by the tile's fixed
  * number, so a higher chance only ever remakes more doors. */
 export function withDoorOdds(t: Tile, x: number, y: number, seed: number, odds: DoorOdds | undefined, durability: () => number): Tile {
-  const rule = t.door;
   if (!odds || t.kind !== "door") return t;
+  const rolls = (salt: number, chance = 0) => !!chance && tileRandom(x, y, seed ^ salt) * 100 < chance;
+  if (t.door?.type === "fullHp" && rolls(WOOD_TRANSMUTE_SALT, odds.wood)) return { kind: "door", door: { type: "wood", durability: durability() } };
+  if (t.door?.type === "keys" && t.door.heart && rolls(HEART_PICK_SALT, odds.heartPick)) t = { ...t, door: { type: "keys", keys: t.door.keys, mode: t.door.mode } };
+  const rule = t.door;
   if (odds.transmute && (rule?.type === "wood" || (rule?.type === "keys" && rule.mode === "any")) && tileRandom(x, y, seed ^ TRANSMUTE_SALT) * 100 < odds.transmute)
     return { kind: "door", color: "yellow", door: { type: "keys", keys: ["yellow"], mode: "all", ...(rule.type === "keys" && rule.heart ? { heart: true } : {}) } };
   if (rule?.type !== "keys" || rule.mode !== "all") return t;

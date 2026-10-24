@@ -1,6 +1,6 @@
-import { doorName, doorRule, drainsHp, goldLocked, keyWord, pickupGold } from "../doors.ts";
+import { doorName, doorRule, drainsHp, keyWord, pickupGold } from "../doors.ts";
 import type { HandBonus } from "../cards.ts";
-import { compounded, foeStat, keyStat, type TreeBonus } from "../card-trees.ts";
+import { compounded, doorStat, foeStat, keyStat, type TreeBonus } from "../card-trees.ts";
 import type { ChestKind, Enemy, Mode, Tile, KeyColor } from "../entities.ts";
 import { RARITY_TIERS } from "../equipment/balance.ts";
 import { EQUIP_MATERIALS, itemDef } from "../equipment/catalog.ts";
@@ -181,10 +181,10 @@ export class Finds {
       host.gain(at.x, at.y, `+${wholeChange(outcome.healed)} HP`, { heart: true }, { row: 2, with: true });
       host.recordHeal(outcome.healed);
     }
-    // DOOR's tree raises a door's Gold, and finds Silver with it; GOLD DOOR's adds to both for a door with a gold lock.
-    const tree = host.treeBonus, gold = goldLocked(t);
-    this.pickupGold(t, at, 0, gold ? snap(tree.doorGold + tree.yellowLockGold) : tree.doorGold);
-    const doorSilver = gold ? snap(tree.doorSilver + tree.yellowLockSilver) : tree.doorSilver;
+    // DOOR's tree raises a door's Gold, and finds Silver with it; the door cards' add to both for their doors.
+    const tree = host.treeBonus;
+    this.pickupGold(t, at, 0, doorStat(tree, t, "Gold"));
+    const doorSilver = doorStat(tree, t, "Silver");
     if (doorSilver) {
       const silver = host.purse.silver(doorSilver);
       if (silver) host.gain(at.x, at.y, `+${wholeChange(silver)} Silver`, { coin: "silver" }, { row: 2, with: true });

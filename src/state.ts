@@ -3,7 +3,7 @@ import { buyTheme, canWear, grantAllThemes, type GameLook, type ThemeId, type Th
 import { chooseStep } from "./automation.ts";
 import { CARDS, cardText, deckCards, explainStuck, handBonus, keptLinks, planHand, planTarget, shootsWith, stillOpen, type CardId, type CardPlan, type HandBonus, type StuckReport } from "./cards.ts";
 import { addCardXp, PASSIVE_CARDS } from "./card-levels.ts";
-import { cardMaxLevel, compounded, foeCardStat, foeStat, foeStats, keyStat, freeUpChances, freeUpFactors, hasPointsToSpend, pointsLeft, runCardTrees, runFoeCut, treeBonus, treeFactor, treeOverheal, type FoeTreeCard, type TreeBonus } from "./card-trees.ts";
+import { cardMaxLevel, compounded, doorStat, foeCardStat, foeStat, foeStats, keyStat, freeUpChances, freeUpFactors, hasPointsToSpend, pointsLeft, runCardTrees, runFoeCut, treeBonus, treeFactor, treeOverheal, type FoeTreeCard, type TreeBonus } from "./card-trees.ts";
 import { aggroTurn } from "./flying.ts";
 import { arrowRange, foeOn } from "./ranged.ts";
 import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./badges.ts";
@@ -21,7 +21,7 @@ import { stampProfile } from "./profile.ts";
 import { defaultFinds, newNotes, noteKey, notesOf } from "./run-notes.ts";
 import { stream, tileRandom } from "./random.ts";
 import { freeTrainingLines, rollFreeTraining } from "./free-training.ts";
-import { doorBlockedMessage, doorName, doorRule, drainsHp, goldLocked, KEY_ORDER, pickupGold, type DoorDiscounts } from "./doors.ts";
+import { doorBlockedMessage, doorName, doorRule, drainsHp, KEY_ORDER, pickupGold, type DoorDiscounts } from "./doors.ts";
 import type { SettingKey } from "./settings.ts";
 import { skillAvailable } from "./skill-trees.ts";
 import { routeTo, type Step } from "./pathfinding.ts";
@@ -177,7 +177,7 @@ const PERMANENT_TILES = new Set<Tile["kind"]>(["floor", "stairs", "oneway", "ope
  * ENEMY's Surprise Attack and FAST ENEMY's First Strike an enemy. */
 const SECRET_KNOCK_SALT = 0x3a57e, DOOR_CHEST_SALT = 0xd00c4, DOOR_CHEST_KIND_SALT = 0xd0c4d, DOUBLE_KEY_SALT = 0xd0b1e, MASTER_KEY_SALT = 0x3a5e7,
   KEY_CHEST_SALT = 0x6c4e5, KEY_CHEST_KIND_SALT = 0x6c4d1, SURPRISE_SALT = 0x5a7c1, FIRST_STRIKE_SALT = 0xf1257, POWER_STRIKE_SALT = 0x907e5,
-  CHEST_DOUBLE_SALT = 0xc4e02, CHEST_TRIPLE_SALT = 0xc4e03, CHEST_CELLS_SALT = 0xc4ec1;
+  CHEST_DOUBLE_SALT = 0xc4e02, CHEST_TRIPLE_SALT = 0xc4e03, CHEST_CELLS_SALT = 0xc4ec1, DRUID_KEY_SALT = 0xd401d;
 /** What each key colour's own Master Key (GOLD, BLUE and RED KEY's trees) rolls a key of it by. */
 const COLOR_MASTER_KEY_SALT: Record<KeyColor, number> = { yellow: 0x7e113, blue: 0xb1a57, red: 0x7ea57 };
 /** Each key colour as its Master Key's message names it. */
@@ -1046,9 +1046,11 @@ export class Game {
     const odds = this.chestOddsFor(this.run.hand, tree);
     if (odds) this.run.chestOdds = odds;
     else delete this.run.chestOdds;
-    // DOOR's Skeleton Key and Lock Pick, and GOLD DOOR's Transmute, remake the run's doors as each floor is generated.
-    if (tree.skeletonKey || tree.lockPick || tree.yellowTransmute)
-      this.run.doorOdds = { skeleton: Math.min(100, tree.skeletonKey), lockPick: Math.min(100, tree.lockPick), ...(tree.yellowTransmute ? { transmute: Math.min(100, tree.yellowTransmute) } : {}) };
+    // DOOR's Skeleton Key and Lock Pick, GOLD DOOR's Transmute, HEART and WOODEN DOOR's
+    // Wooden Door Transmute and HEART DOOR's Heart Lock Pick remake the run's doors as each floor is generated.
+    if (tree.skeletonKey || tree.lockPick || tree.yellowTransmute || tree.woodTransmute || tree.heartLockPick)
+      this.run.doorOdds = { skeleton: Math.min(100, tree.skeletonKey), lockPick: Math.min(100, tree.lockPick), ...(tree.yellowTransmute ? { transmute: Math.min(100, tree.yellowTransmute) } : {}),
+        ...(tree.woodTransmute ? { wood: Math.min(100, tree.woodTransmute) } : {}), ...(tree.heartLockPick ? { heartPick: Math.min(100, tree.heartLockPick) } : {}) };
     else delete this.run.doorOdds;
     // CHEST's Treasure Floor makes a floor's shards and potions chests as it is generated.
     if (tree.treasureFloor) this.run.treasureFloor = Math.min(100, tree.treasureFloor);
@@ -1215,10 +1217,13 @@ export class Game {
     return researched(this.save.archives, "keyCost");
   }
   /** The percent less each kind of door costs, from the door cards the run's
-   * hand holds and the DOOR and KEY trees: what steps pay and the door cards
-   * plan by; undefined with none. */
+   * hand holds and the DOOR, KEY, HEART DOOR and WOODEN DOOR trees: what
+   * steps pay and the door cards plan by; undefined with none. */
   get doorOff() {
     const doors: DoorDiscounts = { ...this.handBonus.doors }, tree = this.treeBonus;
+    if (tree.heartLockCost) doors.heart = snap((doors.heart ?? 0) + tree.heartLockCost);
+    if (tree.woodKeyCost) doors.woodKeys = tree.woodKeyCost;
+    if (tree.woodDurability) doors.woodToll = tree.woodDurability;
     if (tree.doorCost) doors.all = tree.doorCost;
     if (tree.plainDoorCost) doors.plain = tree.plainDoorCost;
     if (tree.heartDoorCost) doors.hearts = tree.heartDoorCost;
@@ -1746,7 +1751,7 @@ export class Game {
     this.finds.pickup(t, x, y, outcome);
     this.consumeTile(t, x, y);
     if (t.kind === "attack") this.chargePowerStrike(x, y);
-    if (t.kind === "door") this.doorChest(x, y, t);
+    if (t.kind === "door") this.doorOpened(x, y, t, !!outcome.free);
     if (t.kind === "key") this.keyChest(x, y, t.color!);
     if (t.kind === "key") this.masterKey(x, y, t.color!);
     if (t.kind !== "stairs") this.callGreaterBoss();
@@ -2028,13 +2033,21 @@ export class Game {
     const multiplier = (this.tileRolls(x, y, CHEST_DOUBLE_SALT, tree.chestDouble) ? 2 : 1) * (this.tileRolls(x, y, CHEST_TRIPLE_SALT, tree.chestTriple) ? 3 : 1);
     return { multiplier, cells: this.tileRolls(x, y, CHEST_CELLS_SALT, tree.chestCells) };
   }
-  /** DOOR's Door Chest: the door `t` just opened at (x, y) may leave an
-   * opened treasure chest where it stood, paid as a treasure chest is (a
-   * Supply or Equipment Chest at the run's odds), GOLD DOOR's chance added
-   * for a door with a gold lock. */
-  private doorChest(x: number, y: number, t: Tile) {
-    const tree = this.treeBonus;
-    this.leaveChest(x, y, DOOR_CHEST_SALT, DOOR_CHEST_KIND_SALT, goldLocked(t) ? snap(tree.doorChest + tree.yellowLockChest) : tree.doorChest);
+  /** What the door `t` just opened at (x, y) may leave: DOOR's Door Chest
+   * an opened treasure chest where it stood, paid as a treasure chest is (a
+   * Supply or Equipment Chest at the run's odds), the door cards' chances
+   * added for their doors; WOODEN DOOR's Druidic Talent a gold key from a
+   * Wooden Door; and, for a drain paid (not on a door opened for nothing,
+   * `free`), HEART DOOR's Shroud Growth more shroud for the run. */
+  private doorOpened(x: number, y: number, t: Tile, free: boolean) {
+    const tree = this.treeBonus, p = this.run.player, rule = doorRule(t);
+    this.leaveChest(x, y, DOOR_CHEST_SALT, DOOR_CHEST_KIND_SALT, doorStat(tree, t, "Chest"));
+    if (rule.type === "wood" && this.tileRolls(x, y, DRUID_KEY_SALT, tree.druidKey)) {
+      p.keys.yellow = snap(p.keys.yellow + 1);
+      this.gain(x, y, "+1 gold key", { tile: { kind: "key", color: "yellow" } }, { row: 2, with: true });
+      this.message = `${this.message ? `${this.message} · ` : ""}Druidic Talent`;
+    }
+    if (tree.heartShroud && !free && drainsHp(rule)) p.doorShroud = snap((p.doorShroud ?? 0) + tree.heartShroud);
   }
   /** KEY's Key Chest: the key just picked up at (x, y) may leave an opened
    * treasure chest where it lay, as Door Chest leaves one, by its `color`'s
@@ -2050,12 +2063,12 @@ export class Game {
     this.run.changes[`${x},${y}`] = { kind: "openedChest" };
     this.finds.treasure(x, y, chestKindAt({ kind: "treasure" }, x, y, this.floorSeed ^ kindSalt, this.run.chestOdds));
   }
-  /** The rules a step's lucky roll adds, or null: DOOR's Secret Knock
-   * (GOLD DOOR's Gold Knock added, for a door with a gold lock) opens a door
-   * for nothing, and KEY's Locksmith makes a key two. */
+  /** The rules a step's lucky roll adds, or null: DOOR's Secret Knock (the
+   * door cards' Gold Knock, Heart Knock and Wooden Lock Pick added, for
+   * their doors) opens a door for nothing, and KEY's Locksmith makes a key two. */
   private luckyStep(t: Tile, x: number, y: number): Partial<StepRules> | null {
     const tree = this.treeBonus;
-    if (t.kind === "door" && this.tileRolls(x, y, SECRET_KNOCK_SALT, goldLocked(t) ? snap(tree.secretKnock + tree.yellowLockKnock) : tree.secretKnock)) return { freeDoor: true };
+    if (t.kind === "door" && this.tileRolls(x, y, SECRET_KNOCK_SALT, doorStat(tree, t, "Knock"))) return { freeDoor: true };
     // The key's colour's own Locksmith adds to KEY's, one roll.
     if (t.kind === "key" && this.tileRolls(x, y, DOUBLE_KEY_SALT, snap(tree.doubleKey + keyStat(tree, t.color!, "DoubleKey")))) return { doubleKey: true };
     return null;
@@ -2063,7 +2076,7 @@ export class Game {
   /** KEY's Master Key: the key just picked up at (x, y) may open every door
    * on its floor at once, for nothing, each paying as a door Secret Knock
    * opened does: its Gold, DOOR's Door Silver and Door Heal, and its Door
-   * Chest roll. */
+   * Chest and Druidic Talent rolls. */
   private masterKey(x: number, y: number, color: KeyColor) {
     const tree = this.treeBonus, every = this.tileRolls(x, y, MASTER_KEY_SALT, tree.masterKey);
     // The key's colour's own Master Key (Master Gold Key…), its own roll, opens the doors with a lock of its colour.
@@ -2077,7 +2090,7 @@ export class Game {
       this.applyStats(outcome.player);
       this.finds.door(t, outcome, 0, d);
       this.world.clear(d.x, d.y);
-      this.doorChest(d.x, d.y, t);
+      this.doorOpened(d.x, d.y, t, true);
     }
     if (doors.length) this.message = `${every ? "Master Key" : `Master ${KEY_WORDS[color]} Key`} · ${doors.length} door${doors.length === 1 ? "" : "s"} opened`;
   }

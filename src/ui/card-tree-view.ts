@@ -3,7 +3,8 @@
  * words (`nodeName`, `statText`), and the card of the node picked in it
  * (`cardTreeCardHtml`). The tree itself comes from `card-trees.ts`. */
 import { CARDS, type CardId } from "../cards.ts";
-import { CARD_TREES, cardLook, nodeCap, nodeLevel, nodeOpen, opensAt, treeNode, type CardOpened, type CardTreeLevels, type CardTreeNode, type ColorKeyPart, type ColorKeyStat, type FoeCardStat, type FoePart, type FoeTreeCard, type TreeStat } from "../card-trees.ts";
+import { CARD_TREES, cardLook, nodeCap, nodeLevel, nodeOpen, opensAt, treeNode, type CardOpened, type CardTreeLevels, type CardTreeNode, type ColorKeyPart, type ColorKeyStat, type DoorLockPart, type DoorLockStat, type FoeCardStat, type FoePart, type FoeTreeCard, type TreeStat } from "../card-trees.ts";
+import type { DoorKind } from "../doors.ts";
 import type { KeyColor } from "../entities.ts";
 import { CARD_RARITY_NAMES, type CardRarity } from "../card-rarity.ts";
 import { rarityFrameHtml, rarityStarsHtml } from "./card-level-marks.ts";
@@ -20,6 +21,20 @@ function byKeyColor<T>(each: (color: KeyColor, word: string) => Record<ColorKeyP
   const words: Record<KeyColor, string> = { yellow: "Gold", blue: "Blue", red: "Red" };
   return Object.fromEntries((Object.keys(words) as KeyColor[]).flatMap((color) =>
     Object.entries(each(color, words[color])).map(([part, value]) => [`${color}${part}`, value]))) as Record<ColorKeyStat, T>;
+}
+
+/** How each door card's doors are named in its stats' words: one, many,
+ * and the word its nodes' names start with. */
+const DOOR_WORDS: Record<DoorKind, { one: string; many: string; word: string }> = {
+  yellow: { one: "door with a gold lock", many: "doors with a gold lock", word: "Gold" },
+  heart: { one: "Heart Door", many: "Heart Doors", word: "Heart" },
+  wood: { one: "Wooden Door", many: "Wooden Doors", word: "Wooden" },
+};
+/** One entry for each door card's own stats (`DoorLockStat`), `each`
+ * giving a card's, by part, from its kind and its doors' words. */
+function byDoorLock<T>(each: (kind: DoorKind, words: (typeof DOOR_WORDS)[DoorKind]) => Record<DoorLockPart, T>) {
+  return Object.fromEntries((Object.keys(DOOR_WORDS) as DoorKind[]).flatMap((kind) =>
+    Object.entries(each(kind, DOOR_WORDS[kind])).map(([part, value]) => [`${kind}Lock${part}`, value]))) as Record<DoorLockStat, T>;
 }
 
 /** How each enemy card's enemies are named in its stats' words: one with
@@ -50,7 +65,9 @@ const STAT_NAMES: Record<TreeStat, string> = {
   potionSilver: "Potion Silver", regen: "Regen", shroud: "Shroud", parry: "Parry", reviveChance: "Revive",
   doorCost: "Door Cost", doorGold: "Door Gold", doorSilver: "Door Silver", doorHeal: "Door Heal",
   skeletonKey: "Skeleton Key", lockPick: "Lock Pick", secretKnock: "Secret Knock", doorChest: "Door Chest",
-  yellowLockGold: "Gold Door Gold", yellowLockSilver: "Gold Door Silver", yellowLockHeal: "Gold Door Heal", yellowLockChest: "Gold Door Chest", yellowLockKnock: "Gold Knock", yellowTransmute: "Gold Door Transmute", keyChest: "Key Chest", keyFind: "Key Find", keyGold: "Key Gold",
+  ...byDoorLock((kind, { word }) => ({ Gold: `${word} Door Gold`, Silver: `${word} Door Silver`, Chest: `${word} Door Chest`, Knock: { yellow: "Gold Knock", heart: "Heart Knock", wood: "Wooden Lock Pick" }[kind] })),
+  yellowLockHeal: "Gold Door Heal", yellowTransmute: "Gold Door Transmute", woodTransmute: "Wooden Door Transmute",
+  heartLockCost: "Heart Door Cost", heartLockPick: "Heart Lock Pick", heartShroud: "Shroud Growth", woodKeyCost: "Wooden Key Cost", woodDurability: "Durability", druidKey: "Druidic Talent", keyChest: "Key Chest", keyFind: "Key Find", keyGold: "Key Gold",
   keyHeal: "Key Heal", keyOverheal: "Key Overheal", keySilver: "Key Silver", plainDoorCost: "Plain Doors", heartDoorCost: "Heart Doors", doubleKey: "Locksmith", masterKey: "Master Key",
   ...byKeyColor((_, word) => ({ KeyHeal: `${word} Key Heal`, KeyOverheal: `${word} Key Overheal`, KeyGold: `${word} Key Gold`, KeyFind: `${word} Key Find`, KeySilver: `${word} Key Silver`,
     KeyChest: `${word} Key Chest`, DoorCost: `${word} Key Cost`, DoubleKey: `Locksmith ${word}`, MasterKey: `Master ${word} Key` })),
@@ -102,12 +119,21 @@ const STAT_TEXT: Record<TreeStat, (n: string) => string> = {
   lockPick: (n) => `${n}% chance each door of two or three colours loses its rarest lock`,
   secretKnock: (n) => `${n}% chance a door opens for nothing: no keys, no HP`,
   doorChest: (n) => `${n}% chance an opened door leaves a treasure chest`,
-  yellowLockGold: (n) => `+${n}% Gold from doors with a gold lock`,
-  yellowLockSilver: (n) => `+${n} Silver from each door with a gold lock opened`,
+  ...byDoorLock((_, { one, many }): Record<DoorLockPart, (n: string) => string> => ({
+    Gold: (n) => `+${n}% Gold from ${many}`,
+    Silver: (n) => `+${n} Silver from each ${one} opened`,
+    Chest: (n) => `${n}% chance an opened ${one} leaves a treasure chest`,
+    Knock: (n) => `${n}% chance a ${one} opens for nothing: no keys, no HP`,
+  })),
   yellowLockHeal: (n) => `Heals ${n}% of max HP on opening each door with a gold lock`,
-  yellowLockChest: (n) => `${n}% chance an opened door with a gold lock leaves a treasure chest`,
-  yellowLockKnock: (n) => `${n}% chance a door with a gold lock opens for nothing: no keys, no HP`,
   yellowTransmute: (n) => `${n}% chance each Wooden and Steel Door on a floor is a Gold Door`,
+  woodTransmute: (n) => `${n}% chance each Heart Door taking no keys on a floor is a Wooden Door`,
+  heartLockCost: (n) => `−${n}% of the HP each Heart Door drains`,
+  heartLockPick: (n) => `${n}% chance each Heart Door taking keys on a floor loses its drain`,
+  heartShroud: (n) => `+${n}% shroud against every enemy for the run, each Heart Door's drain paid`,
+  woodKeyCost: (n) => `−${n}% of the key each Wooden Door takes`,
+  woodDurability: (n) => `−${n}% of the HP breaking down each Wooden Door takes`,
+  druidKey: (n) => `${n}% chance an opened Wooden Door gives a gold key`,
   keyChest: (n) => `${n}% chance a key picked up leaves a treasure chest`,
   keyFind: (n) => `+${n}% more each key of every colour`,
   keyGold: (n) => `+${n}% Gold from each key`,
@@ -210,7 +236,9 @@ const STAT_ICONS: Record<TreeStat, () => string> = {
   floorHeal: ui("health"), overhealMax: ui("health"), stairSkip: ui("arrow-up"), percentPotions: () => itemSprite("potion_percent"), potionHeal: () => itemSprite("potion_flat"), potionMaxHp: ui("health"),
   doorCost: () => itemSprite("key_red"), doorGold: ui("gold"), doorSilver: silver, doorHeal: ui("health"),
   skeletonKey: () => itemSprite("key_yellow"), lockPick: () => itemSprite("key_blue"), secretKnock: () => itemSprite("key_red"), doorChest: () => itemSprite("chest_treasure_open"),
-  yellowLockGold: ui("gold"), yellowLockSilver: silver, yellowLockHeal: ui("health"), yellowLockChest: () => itemSprite("chest_treasure_open"), yellowLockKnock: () => itemSprite("key_yellow"), yellowTransmute: () => itemSprite("key_yellow"), keyChest: () => itemSprite("chest_treasure_open"), keyFind: () => itemSprite("key_yellow"), keyGold: ui("gold"),
+  ...byDoorLock((kind) => ({ Gold: ui("gold"), Silver: silver, Chest: () => itemSprite("chest_treasure_open"), Knock: kind === "heart" ? ui("health") : () => itemSprite(kind === "yellow" ? "key_yellow" : "key_red") })),
+  yellowLockHeal: ui("health"), yellowTransmute: () => itemSprite("key_yellow"), woodTransmute: () => itemSprite("key_blue"),
+  heartLockCost: ui("health"), heartLockPick: ui("health"), heartShroud: ui("log"), woodKeyCost: () => itemSprite("key_yellow"), woodDurability: ui("defense"), druidKey: () => itemSprite("key_yellow"), keyChest: () => itemSprite("chest_treasure_open"), keyFind: () => itemSprite("key_yellow"), keyGold: ui("gold"),
   keyHeal: ui("health"), keyOverheal: ui("health"), keySilver: silver, plainDoorCost: () => itemSprite("key_yellow"), heartDoorCost: ui("health"), doubleKey: () => itemSprite("key_blue"), masterKey: () => itemSprite("key_red"),
   ...byKeyColor((color) => {
     const key = () => itemSprite(`key_${color}`);
