@@ -4998,13 +4998,17 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
 .weekly-head small, .weekly-count { font-size: 10px; letter-spacing: 0.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .weekly-count { display: block; margin-top: 6px; text-align: center; }
 /* The boxes stand over the bar, each at its count's place along it. */
-.weekly-track { position: relative; padding: 0 16px; }
-.weekly-boxes { position: relative; height: 52px; }
-.weekly-box { position: absolute; bottom: 0; left: var(--at); transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 1px; width: 34px; padding: 0; border: 0; background: none; }
+.weekly-track { position: relative; padding: 0 18px; }
+.weekly-boxes { position: relative; height: 54px; }
+.weekly-box { position: absolute; bottom: 0; left: var(--at); transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 2px; width: 34px; padding: 0; border: 0; background: none; }
+/* A reward is a bare picture in every theme: a themed frame squeezes the gift and covers its number. */
+.weekly .weekly-box:not(#_) { min-width: 0; min-height: 0; margin: 0; padding: 0; border: 0; border-image: none; border-radius: 0; background: none; box-shadow: none; translate: none; }
 .weekly-prize { position: relative; display: block; width: 30px; height: 30px; border-radius: 6px; }
 .weekly-prize .gift-icon { display: block; width: 30px; height: 30px; }
-.weekly-prize .check-icon { position: absolute; right: -4px; bottom: -4px; width: 18px; height: 18px; border-radius: 50%; background: #10161f; box-shadow: 0 0 0 1px #8ff0a4; }
-.weekly-box small { font-size: 10px; color: #b9c2cf; font-variant-numeric: tabular-nums; }
+/* Claimed: a small check on the gift's top corner, clear of its number. (`>`: the icon's PNG fallback holds a second `.check-icon`.) */
+.weekly-prize > .check-icon { position: absolute; right: -2px; top: -5px; display: block; width: 14px; height: 14px; border-radius: 50%; background: #10161f; box-shadow: 0 0 0 1px #8ff0a4; }
+.weekly-prize > .check-icon svg { display: block; width: 100%; height: 100%; }
+.weekly-box small { font-size: 11px; line-height: 1.2; color: #b9c2cf; font-variant-numeric: tabular-nums; white-space: nowrap; text-shadow: none; }
 .weekly-box.dim .weekly-prize { opacity: 0.35; filter: grayscale(0.7); }
 .weekly-box.dim small { color: #5d6878; }
 .weekly-box.ready .weekly-prize { box-shadow: 0 0 10px 3px #ffd34d99; animation: weekly-glow 1.4s ease-in-out infinite alternate; }
@@ -5067,8 +5071,10 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
 .event-relics.premium .event-relic { top: 0; flex-direction: column-reverse; }
 .event-relic-art { position: relative; display: block; width: 30px; height: 30px; border-radius: 50%; }
 .event-relic-art .relic-icon { display: block; width: 30px; height: 30px; }
-.event-relic-art .check-icon, .event-relic-art .relic-lock { position: absolute; right: -4px; bottom: -4px; width: 15px; height: 15px; border-radius: 50%; background: #10161f; }
-.event-relic-art .check-icon { box-shadow: 0 0 0 1px #8ff0a4; }
+/* `>`: each icon's PNG fallback holds a second copy of its class. */
+.event-relic-art > :is(.check-icon, .relic-lock) { position: absolute; right: -4px; bottom: -4px; display: block; width: 15px; height: 15px; border-radius: 50%; background: #10161f; }
+.event-relic-art > :is(.check-icon, .relic-lock) svg { display: block; width: 100%; height: 100%; }
+.event-relic-art > .check-icon { box-shadow: 0 0 0 1px #8ff0a4; }
 .event-relic small { font-size: 9px; color: #b9c2cf; font-variant-numeric: tabular-nums; }
 .event-relic:not(.reached) .event-relic-art .relic-icon { opacity: 0.45; filter: grayscale(0.6); }
 .event-relic.reached .event-relic-art { box-shadow: 0 0 10px 3px #ffd34d88; }

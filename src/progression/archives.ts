@@ -1032,7 +1032,8 @@ function hastenAll(a: ArchivesSave, ratio: number, at: number) {
  * as it goes. An archivist set to auto-continue starts the project's next
  * level the moment the last completed, paying for it, so research done
  * while the game was closed carries on; without the Gold (or with nothing
- * left to research), it waits idle. Returns what completed. */
+ * left to research, or with Dev free purchases), it waits idle. Returns
+ * what completed. */
 export function settleArchives(o: ArchivesOwner, now: number): ResearchRecord[] {
   const a = o.archives, done: ResearchRecord[] = [];
   for (let event = nextEvent(a, now); event; event = nextEvent(a, now)) {
@@ -1052,7 +1053,9 @@ export function settleArchives(o: ArchivesOwner, now: number): ResearchRecord[] 
     a.history.push(record);
     tally(o, "researchLevels", 1);
     done.push(record);
-    if (a.slots[i].autoContinue && !cannotStart(o, i, job.research)) begin(o, i, job.research, at);
+    // Free purchases' research takes no time, so auto-continue would run
+    // through every level at once: each press buys one.
+    if (a.slots[i].autoContinue && !o.settings.freePurchases && !cannotStart(o, i, job.research)) begin(o, i, job.research, at);
   }
   for (const s of a.slots) carrySpeedUp(s, now);
   if (a.history.length > HISTORY_LIMIT) a.history.splice(0, a.history.length - HISTORY_LIMIT);

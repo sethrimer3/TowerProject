@@ -91,7 +91,7 @@ export class MissionsPage {
     const list = missions.list;
     el("missions").innerHTML =
       `<button class="missions-close" id="missions-close" aria-label="Close" title="Close">${controlIcon("close")}</button>` +
-      `<div class="page-title"><small>NEW MISSIONS EVERY 8 HOURS</small><h2>Missions</h2></div>` +
+      `<div class="page-title"><h2>Missions</h2></div>` +
       this.weekly() +
       `<p class="missions-next" id="missions-next">${this.nextText()}</p>` +
       (list.length

@@ -74,8 +74,9 @@ Each weekly reward's **Training Point** adds to those the hero's levels earn (`s
 
 - **Missions button:** a check mark over *X/8*, the missions in the list out of 8, complete or not (at 8 no more come), with a dot while a mission or weekly reward waits to be claimed.
   It waits in the HUD's menu beside Settings, in the forest and inside a run, and the hamburger wears its dot.
-- **Missions screen** (`ui/missions-page.ts`): an X at the top right returns to the page that opened it.
-  Near the top, the weekly bar fills from 0 to 35 with the week's count, a prize box over each multiple of 5: dim until reached, glowing while it can be claimed, checked once claimed; pressing a glowing box claims it.
+- **Missions screen** (`ui/missions-page.ts`): titled *Missions* alone; an X at the top right returns to the page that opened it.
+  Near the top, the weekly bar fills from 0 to 35 with the week's count, a prize box over each multiple of 5: dim until reached, glowing while it can be claimed, checked once claimed (a small check on the box's top corner, clear of its number); pressing a glowing box claims it.
+  Each box is a bare picture in every UI theme, never a framed button.
   Below, how many missions the list holds out of 8 and when the next two come (or, at 8, to claim or complete one to make room), then each mission: what it asks, what it pays, its bar, and once complete a Claim button.
   The currencies bar tops the screen, as it does the Upgrades page.
   What a daily mission pays flies from its Claim button to the bar, nothing to press away (`flyToPurse` in `ui/flourish.ts`): each currency's icon and amount, one a moment after the other, fading as it lands on its currency, which shows its new amount only then and swells a moment; a material, with no place on the bar, rises and fades where it was claimed; with Reduce motion on, each shows still over its currency and fades.

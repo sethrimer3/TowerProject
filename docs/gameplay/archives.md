@@ -20,6 +20,7 @@ Pressing a busy archivist opens Select Research too, its own research marked Res
 Each project completed (in a gold box) makes Rush 1.5% more efficient for good: with 10 completed, Rush's Gems are divided by 1.15 and rounded up, so 100 Gems become 87.
 Once any project is completed, the Archives heading shows it at its left, opposite History: *+1.5% to Rush* for one.
 With **Auto-continue** ticked (the box with the looping arrow, as on the Training tab), an archivist starts the project's next level as soon as one completes, if you have the Gold; otherwise it waits idle.
+With Dev **free purchases** on, research completes the moment it starts, so auto-continue waits instead: each press researches one level.
 
 ## Cells and Speed Up
 

@@ -44,7 +44,9 @@ import { guardedTile, holdsShield, placeShield, walkDistances, type Shield } fro
 // v24 leaves every floor's entrance open floor: no stairs lead back down.
 // v25 gives a share of the fourth tower's floors and up a Shielded enemy,
 // and adds standard enemies in front of one alone in its bubble.
-export const TOWER_LAYOUT_VERSION = 25;
+// v26 gives Tower I's floor 1 a free key and a door it opens, and floor 2 a
+// way to the stairs without a fight (Wooden Doors in its enemies' place).
+export const TOWER_LAYOUT_VERSION = 26;
 
 /** A self-contained 17x17 Tower floor. Generation is strategy-first (see
  * src/tower/index.ts): an abstract graph of gates, keys and rewards is

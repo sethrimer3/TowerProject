@@ -402,6 +402,19 @@ test("Rush completes an archivist's research for a Gem per ten minutes left, rou
   assert.equal(g.research.rushGems(0), 0);
 });
 
+test("with Dev free purchases each press researches one level, even with auto-continue on", () => {
+  const g = new Game(owner());
+  g.clock = () => T0;
+  g.save.settings.freePurchases = true;
+  g.save.archives.slots[0].autoContinue = true;
+  const id = RESEARCH_IDS.find((id) => status(g.save, id) === "available" && maxLevel(id) >= 3)!;
+  assert.ok(g.research.start(0, id));
+  assert.equal(researchLevel(g.save.archives, id), 1);
+  assert.equal(g.save.archives.slots[0].job, undefined, "the archivist waits for the next press");
+  assert.ok(g.research.start(0, id));
+  assert.equal(researchLevel(g.save.archives, id), 2);
+});
+
 test("each project completed takes 1.5% off Rush", () => {
   const g = new Game(owner());
   g.clock = () => T0;

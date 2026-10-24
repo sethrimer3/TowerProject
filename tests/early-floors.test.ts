@@ -62,6 +62,31 @@ test("floors 2 to 5 have a gold lock before the stairs and a gold key reachable 
     }
 });
 
+/** Where the hero walks from the entrance without a fight or opening a door. */
+const freeArea = (cells: Map<string, Tile>) =>
+  reachable(cells, point(TOWER_START_X, 0), new Set([...cells].filter(([, t]) => t.kind === "enemy" || t.kind === "door").map(([k]) => k)));
+
+test("Tower I's floor 1 has a gold key and a door it opens within reach, with no fight on the way, for the Door & Key lesson", () => {
+  for (const seed of seeds) {
+    const { cells } = generateTowerFloor(seed, 0), area = freeArea(cells);
+    assert.ok([...area].some((k) => cells.get(k)!.kind === "key"), `seed ${seed}: no free key`);
+    const besideArea = (k: string) => {
+      const [x, y] = k.split(",").map(Number);
+      return [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => area.has(point(x + dx, y + dy)));
+    };
+    assert.ok([...cells].some(([k, t]) => yellowLock(t) && besideArea(k)), `seed ${seed}: no door in reach`);
+  }
+});
+
+test("Tower I's floor 2 has a way to the stairs without a fight", () => {
+  for (const seed of seeds) {
+    const { cells } = generateTowerFloor(seed, 1);
+    const enemies = new Set([...cells].filter(([, t]) => t.kind === "enemy").map(([k]) => k));
+    const way = reachable(cells, point(TOWER_START_X, 0), enemies);
+    assert.ok([...way].some((k) => cells.get(k)!.kind === "stairs"), `seed ${seed}: every way to the stairs crosses an enemy`);
+  }
+});
+
 /** Plays the first skills' hand (STAIRS, DOOR, KEY and ENEMY) on a floor
  * with a hero no fight can hurt, taking
  * what each step lands on, until it reaches the stairs; returns the steps
