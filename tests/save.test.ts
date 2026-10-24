@@ -58,7 +58,7 @@ const settings = {
   infoDisplay: "popup", devMode: true,
 };
 const v3 = () => ({
-  version: 3,
+  version: 4,
   gold: 120.7, xp: 44, provisions: { ...defaults().provisions },
   upgrades: { ...defaults().upgrades, undos: 1, inspirationUndos: 1, delve: 1 },
   archives: { ...defaults().archives, levels: { undoCount: 3 } },
@@ -388,3 +388,12 @@ test("a save with no KEY card that hasn't earned GOLD KEY holds KEY in its place
   assert.deepEqual(both.hand, ["stairs", "key"], "a save that has KEY already isn't converted");
 });
 
+
+test("a version 3 save, from before provisions became uses, keeps nothing of its provisions; a version 4 save keeps them", () => {
+  const provisions = { heal: 40, guard: 3, edge: 7, yellowKey: 2, bomb: 1 };
+  const old = decode(JSON.stringify({ version: 3, gold: 50, provisions }));
+  assert.deepEqual(old.provisions, { heal: 0, guard: 0, edge: 0, yellowKey: 0, bomb: 0 });
+  assert.equal(old.gold, 50, "the rest of the save decodes as before");
+  assert.deepEqual(decode(JSON.stringify({ version: 4, provisions })).provisions, provisions);
+  assert.equal(defaults().version, 4);
+});

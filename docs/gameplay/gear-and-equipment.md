@@ -11,6 +11,7 @@ Undo never gives a use back and never takes an effect away: a heal stays healed,
 Uses come back only with the next run.
 The tab has a **?** at the top that explains provisions (your Gold shows in the currencies bar above); each provision's icon carries the number owned in a circle at its bottom right, which bounces as you buy one, and its **Buy** button stands at the row's right.
 Every provision costs 100 Gold, and each one after a hundred times the last (10,000, 1,000,000, 100,000,000 …).
+Provisions bought before they became uses (when they gave starting stats) were reset to none.
 Once **Extra Key** (1 Courage, after Movement Speed in the Courage tree) is owned, Provisions also sell a **Gold Key**, which uses itself: each owned gives a run one gold key on the floor it starts on, and again on the first floor 100 or more floors past the last that gave them (floor 1, then 101, 201 …; a floor Skip climbs past still counts, so the next floor gives them).
 In the Delve, floors are its equivalent floors.
 The keys come as a floor begins, so undo can't take them back.

@@ -68,7 +68,7 @@ export type Save = {
   trialAccess: import("./proving-grounds/access.ts").TrialAccess;
   /** A separate encounter; ordinary mode runs remain untouched. */
   provingGrounds?: import("./proving-grounds/trial.ts").TrialState;
-  version: 3;
+  version: 4;
   tower: ModeSave<TowerRun> & {
     inspiration: number;
   };

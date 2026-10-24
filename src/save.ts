@@ -34,7 +34,7 @@ import { decodeCardBuys, defaultCardBuys } from "./card-buys.ts";
 import { totalCardLevels, treeNode, decodeCardTrees, pointsSpent } from "./card-trees.ts";
 export function defaults(): Save {
   return {
-    version: 3,
+    version: 4,
     tower: { run: null, history: [], fall: null, best: 0, reached: 0, inspiration: 0, lootedTiles: {}, runGold: 0, runFinds: defaultFinds(), runBoostGold: null, runCurrency: 0, runRecord: false, tier: 1, tiersOpen: 1, tierRecords: {} },
     delve: { run: null, history: [], fall: null, best: 0, reached: 0, courage: 0, lootedTiles: {}, runGold: 0, runFinds: defaultFinds(), runBoostGold: null, runCurrency: 0, runRecord: false, memory: { known: {}, visited: {} }, tier: 1, tiersOpen: 1, tierRecords: {} },
     gems: 0,
@@ -513,13 +513,21 @@ function migratePreSkillTrees(upgrades: any, d: Save) {
   if (["quality", "yellow", "blue", "red"].some((id) => upgrades[id] > 0)) d.upgrades.legacy = 1;
 }
 
+/** Provisions became uses a run carries, at a hundred times the price, in
+ * version 4: a version 3 save's provisions, bought cheaply as starting
+ * stats, are dropped (the Gold they cost isn't returned).
+ * TODO: remove this reset in a future save version. */
+function resetProvisions(_s: any, d: Save) {
+  for (const g of GOLD_SHOP) d.provisions[g.id] = 0;
+}
 type VersionStep = (s: any, d: Save, undoCapacity: number) => void;
 /** What each save version carries beyond upgrades and settings. A Map, so
  * lookups match versions strictly (no "3" or prototype keys). */
 const VERSION_STEPS = new Map<unknown, VersionStep[]>([
   [1, [migrateV1]],
   [2, [decodeProgress]],
-  [3, [decodeProgress, decodeInventory]],
+  [3, [decodeProgress, decodeInventory, resetProvisions]],
+  [4, [decodeProgress, decodeInventory]],
 ]);
 /** The saved hand's cards the player owns, in order, each once and no
  * more than the hand holds (`slots`), or the base hand when the save has
