@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { decode, defaults } from "../src/save/save.ts";
-import { BASE_HAND, deckCards } from "../src/cards/cards.ts";
+import { BASE_HAND } from "../src/cards/cards.ts";
 import { defaultEquipment } from "../src/equipment/inventory.ts";
 
 // Characterization corpus for decode(): every field path of several base saves
@@ -361,33 +361,10 @@ test("the hand decodes to its known cards in order, and a save without one, or w
   assert.equal(decode(JSON.stringify({ version: 3, upgrades: { largerHand: 1 }, handSlots: 99 })).handSlots, 0, "no more than there are to buy");
   assert.deepEqual(decode(JSON.stringify({ version: 3, hand: [] })).hand, [...BASE_HAND], "every hand holds STAIRS");
   assert.deepEqual(decode(JSON.stringify({ version: 3, hand: ["key"] })).hand, [...BASE_HAND]);
-  assert.deepEqual(decode(JSON.stringify({ version: 3, hand: ["stairs", "yellowKey", "monster"] })).hand, ["stairs", "key", "monster"], "GOLD KEY held unearned, from the old base hand, becomes KEY");
-});
-test("a save with no KEY card that hasn't earned GOLD KEY holds KEY in its place, badges and links with it", () => {
-  const old = JSON.parse(JSON.stringify(defaults()));
-  old.upgrades.cardBadges = 1;
-  old.hand = ["stairs", "yellowKey", "monster"];
-  old.cardLinks = [["stairs", "yellowKey"]];
-  old.badges.owned.hpGate = { copies: 1, pick: 0 };
-  old.badges.cards = { yellowKey: ["hpGate"] };
-  const d = decode(JSON.stringify(old));
-  assert.deepEqual(d.hand, ["stairs", "key", "monster"]);
-  assert.deepEqual(d.cardLinks, [["stairs", "key"]]);
-  assert.deepEqual(d.badges.cards, { key: ["hpGate"] }, "the badge stays on, now on KEY");
-  assert.ok(!deckCards(d.upgrades).includes("yellowKey"), "GOLD KEY waits for its skill");
-  const earned = decode(JSON.stringify({ ...old, upgrades: { ...old.upgrades, cardYellowKey: 1 } }));
-  assert.deepEqual(earned.hand, ["stairs", "yellowKey", "monster"], "earned, it stays");
-  assert.deepEqual(earned.badges.cards, { yellowKey: ["hpGate"] });
-  const both = decode(JSON.stringify({ ...old, hand: ["stairs", "key", "yellowKey"] }));
-  assert.deepEqual(both.hand, ["stairs", "key"], "a save that has KEY already isn't converted");
 });
 
-
-test("a version 3 save, from before provisions became uses, keeps nothing of its provisions; a version 4 save keeps them", () => {
+test("a save keeps its provisions", () => {
   const provisions = { heal: 40, guard: 3, edge: 7, yellowKey: 2, bomb: 1 };
-  const old = decode(JSON.stringify({ version: 3, gold: 50, provisions }));
-  assert.deepEqual(old.provisions, { heal: 0, guard: 0, edge: 0, yellowKey: 0, bomb: 0 });
-  assert.equal(old.gold, 50, "the rest of the save decodes as before");
-  assert.deepEqual(decode(JSON.stringify({ version: 4, provisions })).provisions, provisions);
+  for (const version of [3, 4]) assert.deepEqual(decode(JSON.stringify({ version, provisions })).provisions, provisions);
   assert.equal(defaults().version, 4);
 });

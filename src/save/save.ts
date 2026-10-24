@@ -324,56 +324,6 @@ function decodeInventory(s: any, d: Save) {
 }
 
 // --- Settings, currencies and records ---
-/** DOOR's legendary Master Key became Secret Knock (KEY's tree took the
- * name), and its epic Locksmith Lock Pick (KEY's has its own): their levels
- * spent and opened, and a run inside's, with the run's door odds, renamed
- * in the raw save before the trees decode it.
- * TODO: remove this conversion in a future save version. */
-const DOOR_RENAMES = [["masterKey", "secretKnock"], ["locksmith", "lockPick"]] as const;
-function renameDoorNodes(s: any) {
-  for (const trees of [s.cardTrees, s.cardBuys?.opened, s.tower?.run?.cardTrees, s.delve?.run?.cardTrees]) {
-    const door = isRecord(trees) ? trees.door : undefined;
-    if (isRecord(door)) for (const [old, now] of DOOR_RENAMES) if (old in door && !(now in door)) {
-      door[now] = door[old];
-      delete door[old];
-    }
-  }
-  for (const mode of ["tower", "delve"]) {
-    const odds = s[mode]?.run?.doorOdds;
-    if (isRecord(odds) && "locksmith" in odds && !("lockPick" in odds)) {
-      odds.lockPick = odds.locksmith;
-      delete odds.locksmith;
-    }
-  }
-}
-/** KEY took GOLD KEY's place in the base hand, and GOLD KEY became an
- * Inspiration skill: a save with no KEY card that hasn't earned GOLD KEY
- * holds KEY in its place, in the hand, its links and the badges on it (and
- * a run inside's), renamed in the raw save before it decodes. The skill
- * earns GOLD KEY back.
- * TODO: remove this conversion in a future save version. */
-function retireYellowKey(s: any) {
-  if ((isRecord(s.upgrades) && s.upgrades.cardYellowKey) || !Array.isArray(s.hand) || s.hand.includes("key")) return;
-  const card = (id: unknown) => (id === "yellowKey" ? "key" : id);
-  const cards = (list: unknown) => (Array.isArray(list) ? list.map(card) : list);
-  const pairs = (list: unknown) => (Array.isArray(list) ? list.map(cards) : list);
-  /** Moves the badges a map by card holds on GOLD KEY onto KEY. */
-  const badges = (byCard: unknown) => {
-    if (!isRecord(byCard) || !("yellowKey" in byCard) || "key" in byCard) return;
-    byCard.key = byCard.yellowKey;
-    delete byCard.yellowKey;
-  };
-  s.hand = cards(s.hand);
-  s.cardLinks = pairs(s.cardLinks);
-  badges(s.badges?.cards);
-  for (const mode of ["tower", "delve"]) {
-    const run = s[mode]?.run;
-    if (!isRecord(run) || !Array.isArray(run.hand) || run.hand.includes("key")) continue;
-    run.hand = cards(run.hand);
-    run.links = pairs(run.links);
-    badges(run.badges);
-  }
-}
 function decodeUpgrades(raw: any, d: Save) {
   for (const u of UPGRADES) d.upgrades[u.id] = count(raw?.[u.id], d.upgrades[u.id], u.max);
 }
@@ -487,20 +437,13 @@ function migratePreSkillTrees(upgrades: any, d: Save) {
   if (["quality", "yellow", "blue", "red"].some((id) => upgrades[id] > 0)) d.upgrades.legacy = 1;
 }
 
-/** Provisions became uses a run carries, at a hundred times the price, in
- * version 4: a version 3 save's provisions, bought cheaply as starting
- * stats, are dropped (the Gold they cost isn't returned).
- * TODO: remove this reset in a future save version. */
-function resetProvisions(_s: any, d: Save) {
-  for (const g of GOLD_SHOP) d.provisions[g.id] = 0;
-}
 type VersionStep = (s: any, d: Save, undoCapacity: number) => void;
 /** What each save version carries beyond upgrades and settings. A Map, so
  * lookups match versions strictly (no "3" or prototype keys). */
 const VERSION_STEPS = new Map<unknown, VersionStep[]>([
   [1, [migrateV1]],
   [2, [decodeProgress]],
-  [3, [decodeProgress, decodeInventory, resetProvisions]],
+  [3, [decodeProgress, decodeInventory]],
   [4, [decodeProgress, decodeInventory]],
 ]);
 /** Whether `decode` reads saves of `version`. */
@@ -529,8 +472,6 @@ export function decode(raw: string | null): Save {
   const d = defaults();
   try {
     const s = JSON.parse(raw ?? "null") ?? {};
-    if (isRecord(s)) retireYellowKey(s);
-    if (isRecord(s)) renameDoorNodes(s);
     decodeUpgrades(s.upgrades, d);
     // Undo capacity counts Undo Count research, so the Archives come first.
     d.archives = decodeArchives(s.archives);

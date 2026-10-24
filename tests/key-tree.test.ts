@@ -1,8 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { decode, defaults } from "../src/save/save.ts";
-import { MAX_CARD_XP } from "../src/cards/levels.ts";
+import { defaults } from "../src/save/save.ts";
 import { freeUpChances, treeBonus, type CardTreeLevels } from "../src/cards/trees.ts";
 import { doorDiscount } from "../src/doors.ts";
 import { resolveStep, BASE_RULES, type StepEffect } from "../src/step-effects.ts";
@@ -151,28 +150,6 @@ test("KEY's Master Key opens the doors of a Delve area on the key's equivalent f
   assert.ok(opened.some((d) => d.x === x && d.y === y));
   assert.ok(opened.every((d) => world.tile(d.x, d.y).kind === "door" && floorOf(d.x, d.y) === floorOf(x, y)));
   assert.equal(opened.length, doors.filter(([dx, dy]) => floorOf(dx, dy) === floorOf(x, y)).length);
-});
-
-test("DOOR's Master Key, renamed Secret Knock, keeps its levels in a saved tree and its buys", () => {
-  const s = defaults();
-  s.cardXp.door = MAX_CARD_XP;
-  s.hand = [...s.hand.filter((c) => c !== "door"), "door"];
-  const raw = JSON.parse(JSON.stringify(s));
-  raw.cardTrees = { door: { doorCost: 5, doorHeal: 1, skeletonKey: 1, locksmith: 1, masterKey: 1 } };
-  raw.cardBuys.opened = { door: { doorHeal: 1, skeletonKey: 1, locksmith: 1, masterKey: 2 } };
-  const d = decode(JSON.stringify(raw));
-  assert.equal(d.cardTrees.door?.secretKnock, 1);
-  assert.equal(d.cardBuys.opened.door?.secretKnock, 2);
-  assert.equal(d.cardTrees.door?.masterKey, undefined);
-  // DOOR's Locksmith is Lock Pick, in the tree, its buys and a run's door odds.
-  assert.equal(d.cardTrees.door?.lockPick, 1);
-  assert.equal(d.cardBuys.opened.door?.lockPick, 1);
-  assert.equal(d.cardTrees.door?.locksmith, undefined);
-  const g = new Game(d);
-  g.newRun({ seed: 3 });
-  const inside = JSON.parse(JSON.stringify(g.save));
-  inside.tower.run.doorOdds = { skeleton: 1, locksmith: 2 };
-  assert.deepEqual(decode(JSON.stringify(inside)).tower.run!.doorOdds, { skeleton: 1, lockPick: 2 });
 });
 
 test("KEY's Key Chest leaves an opened treasure chest where a key lay, paid, by the key's own roll", () => {
