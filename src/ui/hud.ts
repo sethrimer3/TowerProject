@@ -166,7 +166,7 @@ export function purseFrame(game: Game, now: number, live = true) {
 }
 
 /** Refreshes every HUD readout from game state. */
-export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay) {
+export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay, options: {hand?: readonly CardId[]} = {}) {
   overlay.clearIfAt(game.run.player);
   overlay.followHero();
   renderVitals(game);
@@ -179,7 +179,7 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay)
   // The status line sits over the board's bottom row: let the hero show through.
   el("status-row").classList.toggle("see-through", game.run.player.y === renderer.target(renderer.density).bottom);
   renderAutoButton(game);
-  renderHand(game);
+  renderHand(game,options.hand);
   text("density-label", `${renderer.density} × ${renderer.density}`);
   renderUndo(game);
   renderModeTab(game);
@@ -435,8 +435,8 @@ function handBadgeHtml(game: Game, id: CardId) {
 }
 /** The active hand in the row under the board, the card that made the
  * latest step glowing (paused too); End Run lights up while no card can act. */
-function renderHand(game: Game) {
-  const row = el("hand"), hand = game.hand;
+function renderHand(game: Game, hand: readonly CardId[] = game.hand) {
+  const row = el("hand");
   const levels = hand.map((id) => cardLevelHtml(game.save, id));
   const key = `${hand.join()}|${game.run.outside ? "" : JSON.stringify(game.run.badges ?? {})}|${levels.join()}`;
   if (key !== shownHand) {

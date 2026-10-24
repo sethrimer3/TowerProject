@@ -1,3 +1,4 @@
+import { TRAINING, type TrainingId } from "../config.ts";
 import type { Player } from "../entities.ts";
 import { CARDS, type CardId } from "../cards.ts";
 import { finite, isRecord, wholeIn } from "../decode.ts";
@@ -18,6 +19,8 @@ export type TrialState = {
   version: 2;
   mode: TrialMode;
   hand: CardId[];
+  displayHand?: CardId[];
+  purchases?: { silver: number; training: Partial<Record<TrainingId,number>> };
   playing: boolean;
   seed: number;
   room: "staging" | "arena";
@@ -57,7 +60,7 @@ for (let y = 0; y < ARENA_SIZE; y++) for (let x = 0; x < ARENA_SIZE; x++) {
 
 export function startTrial(player: Pick<Player, "maxHp" | "attack" | "defense">, mode: TrialMode = "manual", hand: readonly CardId[] = [], seed = 7391): TrialState {
   const bossMaxHp = Math.max(240, player.attack * 24);
-  return { version: 2, mode, hand: mode === "cards" ? [...hand] : [], playing: mode === "cards", seed: seed >>> 0,
+  return { version: 2, mode, displayHand:[...hand], hand: mode === "cards" ? [...hand] : [], playing: mode === "cards", seed: seed >>> 0,
     room: "staging", status: "active", player: { x: 4, y: 2, hp: player.maxHp, maxHp: player.maxHp, attack: player.attack, defense: player.defense },
     elemental: {...ELEMENTAL,incorporeal:false,teleport:null}, beam:null,
     bossHp: bossMaxHp, bossMaxHp, steps: 0, slimes: [], consumed: [], scorches: {} };
@@ -237,6 +240,22 @@ export function decodeTrial(raw: unknown): TrialState | undefined {
     || (raw.status === "active" && (p.hp === 0 || raw.bossHp === 0))
     || (raw.status === "won" && raw.bossHp !== 0) || (raw.status === "lost" && p.hp !== 0)
     || (raw.status !== "active" && raw.playing)) return;
+  let displayHand: CardId[] | undefined;
+  if(raw.displayHand!==undefined) {
+    if(!Array.isArray(raw.displayHand) || raw.displayHand.length>64 || raw.displayHand.some((id:unknown)=>typeof id!=="string" || !Object.hasOwn(CARDS,id))) return;
+    displayHand=[...raw.displayHand];
+  }
+  let purchases: TrialState["purchases"];
+  if(raw.purchases!==undefined) {
+    const bought=raw.purchases;
+    if(!isRecord(bought) || !finite(bought.silver,1e100) || !isRecord(bought.training) || Object.keys(bought.training).length>TRAINING.length) return;
+    const training: Partial<Record<TrainingId,number>>={};
+    for(const [id,n] of Object.entries(bought.training)) {
+      if(!TRAINING.some(row=>row.id===id) || !wholeIn(n,0,1e9)) return;
+      training[id as TrainingId]=n;
+    }
+    purchases={silver:bought.silver,training};
+  }
   const validKey = (k: string) => {
     if (!/^\d{1,2},\d{1,2}$/.test(k)) return false;
     const [x,y] = k.split(",").map(Number);
@@ -260,7 +279,7 @@ export function decodeTrial(raw: unknown): TrialState | undefined {
     slimes.push({id:slime.id,x:slime.x,y:slime.y,from:{x:slime.from.x,y:slime.from.y},jumped:slime.jumped});
     occupied.add(key(position)); ids.add(slime.id);
   }
-  return { version:2,elemental,beam,mode:raw.mode,hand:[...raw.hand],playing:raw.playing,seed:raw.seed,
+  return { version:2,...(displayHand?{displayHand}:{}),...(purchases?{purchases}:{}),elemental,beam,mode:raw.mode,hand:[...raw.hand],playing:raw.playing,seed:raw.seed,
     room: raw.room, status: raw.status, player: { x:p.x,y:p.y,hp:p.hp,maxHp:p.maxHp,attack:p.attack,defense:p.defense },
     bossHp:raw.bossHp,bossMaxHp:raw.bossMaxHp,steps:raw.steps,slimes,consumed:[...new Set<string>(consumed)],scorches };
 }

@@ -33,3 +33,16 @@ test("an error in one part of a frame never stops the loop, research or saving",
   assert.equal(saves, 1, "and the game autosaves");
   assert.ok(errors.length > 0, "errors are reported");
 });
+
+test("an encounter can own the shared board without ordinary drawing or automove",()=> {
+  const frames:((time:number)=>void)[]=[];
+  const g=globalThis as any;
+  g.requestAnimationFrame=(f:(time:number)=>void)=>frames.push(f);g.document={hidden:false};
+  let trial=0,ordinary=0;
+  const host={tab:()=>"tower",boardFrame:()=>{trial++;return true;},
+    renderer:{draw:()=>ordinary++},game:{auto:true,autoTurn:()=>ordinary++},
+    purse:()=>{},highlight:()=>{},archivesTick:()=>{},save:()=>{}} as unknown as FrameLoopHost;
+  new FrameLoop(host).start();
+  for(const time of [100,200,300])frames.shift()!(time);
+  assert.equal(trial,3);assert.equal(ordinary,0);
+});
