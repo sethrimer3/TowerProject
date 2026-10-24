@@ -105,16 +105,16 @@ export class ResearchPage {
     const training = this.ctx.game.training;
     this.onEach("data-train", (id) => {
       let spent = false;
-      this.withRefund(() => (spent = training.train(id, this.ctx.game.buyQuantity)));
+      this.withRefund(() => (spent = training.train(id, this.ctx.game.training.buyQuantity)));
       if (spent) glow(document.querySelector<HTMLElement>(`[data-train="${id}"]`));
     });
     bindBuyQuantity(el("research"), (q) => {
-      this.ctx.game.setBuyQuantity(q);
+      this.ctx.game.training.setBuyQuantity(q);
       this.ctx.save();
       this.render();
     });
     this.onEach("data-train-gold", (id) => {
-      if (training.trainWithGold(id, this.ctx.game.buyQuantity)) {
+      if (training.trainWithGold(id, this.ctx.game.training.buyQuantity)) {
         this.ctx.update();
         play("coin");
       }
@@ -226,7 +226,7 @@ export class ResearchPage {
     const game = this.ctx.game, save = game.save, points = trainingPoints(save), slots = trainingSlots(save), hired = game.training.hired;
     const row = (t: TrainingRow) => this.trainingRowHtml(t);
     // Buy Quantity sits at the right of the points' row, or before the points at the end of the trainers' row.
-    const quantity = buyQuantityHtml(game.buyQuantities, game.buyQuantity);
+    const quantity = buyQuantityHtml(game.training.buyQuantities, game.training.buyQuantity);
     // A stat a trainer is training moves up under the trainers, in the
     // order they started, until its training ends.
     const training = (t: TrainingRow) => !!trainingJob(save.trainingJobs, t.id);
@@ -262,7 +262,7 @@ export class ResearchPage {
     const game = this.ctx.game, save = game.save, view = game.trainingView, step = trainingStep(save, t.id, 1, view), hired = game.training.hired;
     // A Buy Quantity above x1 shows its price for the ranks it buys and
     // the value they reach.
-    const q = game.buyQuantity, bulk = trainingBulk(save, t.id, q), count = step.maxed ? 1 : Math.max(1, bulk.count);
+    const q = game.training.buyQuantity, bulk = trainingBulk(save, t.id, q), count = step.maxed ? 1 : Math.max(1, bulk.count);
     const { now, unit } = step, next = count === 1 ? step.next : trainingStep(save, t.id, count, view).next;
     // Attack Range and Attack Speed show the bare value; the row's name says what it counts.
     const shown = (v: number) => trainingText(v, unit, unit === "tiles" || unit === "shots");
@@ -323,7 +323,7 @@ export class ResearchPage {
     const game = this.ctx.game, save = game.save;
     if (trainingJob(save.trainingJobs, t.id))
       return `<span class="training-job"><button class="training-box training-timer" data-cancel="${t.id}" aria-label="Training ${t.name}: tap to stop and get the Gold back" title="Tap to stop and get the Gold back"><span data-training-timer="${t.id}">${formatCountdown(game.training.left(t.id))}</span></button></span>`;
-    const q = game.buyQuantity, batch = game.training.batch(t.id, q), full = save.trainingJobs.length >= trainingSlots(save), gold = whole(batch.gold);
+    const q = game.training.buyQuantity, batch = game.training.batch(t.id, q), full = save.trainingJobs.length >= trainingSlots(save), gold = whole(batch.gold);
     const takes = formatDuration(game.training.toNextRank(t.id, q)), ranks = batch.count === 1 ? `to ${trainingText(step.next, step.unit)}` : `${batch.count} ranks`;
     return `<button class="training-box training-cost training-gold" data-train-gold="${t.id}" ${batch.affordable && !full ? "" : "disabled"} aria-label="Pay ${gold} Gold to a trainer to train ${t.name} ${ranks}, taking ${takes}" title="${full ? "Every trainer is busy" : `${batch.count === 1 ? "" : `${ranks}: `}Takes ${takes}`}">${maxCount(q, batch.count)}${goldIcon()}<span>${priceAmount(gold)}</span></button>`;
   }

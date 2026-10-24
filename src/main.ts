@@ -210,7 +210,7 @@ function update() {
   runTraining.render();
   if(!provingGrounds.active)renderBoardLesson(game, isBoard(tab), update);
   provingGrounds.decorate();
-  const themes = game.claimThemes();
+  const themes = game.themes.claim();
   // A theme Dev mode grants while its look was chosen shows at once.
   if (themes.length) applyUiTheme(game.save);
   const finished = [...game.research.done.splice(0).map(researchToast), ...game.training.done.splice(0).map(trainingToast), ...themes.map(themeToast)];

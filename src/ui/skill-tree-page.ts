@@ -206,7 +206,7 @@ export class SkillTreePage {
     const { canBuy, level } = this.purchase(id);
     if (!canBuy) return;
     const game = this.ctx.game;
-    game.buy(id);
+    game.skills.buy(id);
     const bought = game.save.upgrades[id] > level, card = upgradeCard(id);
     if (bought) this.celebrate(id, level);
     this.ctx.update();

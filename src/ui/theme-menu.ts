@@ -61,12 +61,12 @@ export function renderThemeMenu(root: HTMLElement, game: PageGame, kind: ThemeKi
   el("themes-back").onclick = back;
   root.querySelectorAll<HTMLButtonElement>(".theme-wear").forEach((b) => {
     b.onclick = () => {
-      if (game.wearTheme(kind, b.dataset.look!)) changed();
+      if (game.themes.wear(kind, b.dataset.look!)) changed();
     };
   });
   root.querySelectorAll<HTMLButtonElement>(".theme-buy").forEach((b) => {
     b.onclick = () => {
-      if (game.buyTheme(b.dataset.id as ThemeId)) changed();
+      if (game.themes.buy(b.dataset.id as ThemeId)) changed();
     };
   });
 }

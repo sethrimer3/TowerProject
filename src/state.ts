@@ -1,5 +1,4 @@
 import { entrance, floorFor } from "./delve/labyrinth.ts";
-import { buyTheme, canWear, grantAllThemes, type GameLook, type ThemeId, type ThemeKind, type UiLook } from "./theme-collection.ts";
 import { chooseStep } from "./automation.ts";
 import { CARDS, cardText, deckCards, explainStuck, handBonus, keptLinks, planHand, planTarget, shootsWith, stillOpen, type CardId, type CardPlan, type HandBonus, type StuckReport } from "./cards/cards.ts";
 import { addCardXp, PASSIVE_CARDS } from "./cards/levels.ts";
@@ -7,11 +6,8 @@ import { cardMaxLevel, compounded, doorStat, foeCardStat, foeStat, foeStats, key
 import { aggroTurn } from "./enemies/flying.ts";
 import { arrowRange, foeOn } from "./enemies/ranged.ts";
 import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./cards/badges.ts";
-import { adsOff, BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
+import { BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
 import { noteGoldBoost } from "./economy/gold-boost.ts";
-import { offer, type OfferId } from "./shop/offers.ts";
-import { purchase, type Refusal } from "./shop/transactions.ts";
-import { confirmServerTime } from "./shop/clock.ts";
 import { canWarp, claimGoal, goalUnlocked } from "./goals.ts";
 import { volleyTurn, type Shot, type Volley, type VolleyTurn } from "./volley.ts";
 import { missGem } from "./economy/gems.ts";
@@ -23,12 +19,10 @@ import { stream, tileRandom } from "./random.ts";
 import { freeTrainingLines, rollFreeTraining } from "./progression/free-training.ts";
 import { doorBlockedMessage, doorName, doorRule, drainsHp, KEY_ORDER, pickupGold, type DoorDiscounts } from "./doors.ts";
 import type { SettingKey } from "./save/settings.ts";
-import { skillAvailable } from "./progression/skill-trees.ts";
 import { routeTo, type Step } from "./pathfinding.ts";
 import { TOWER_START_X, TOWER_SECTION } from "./config.ts";
 import { xpForKill, levelForXp } from "./progression/xp.ts";
 import { TRAINING_PER_LEVEL, isStatRow, trainedAmount, type TrainingId, type StatTrainingRow } from "./progression/training.ts";
-import { cost, UPGRADES, type UpgradeId } from "./progression/upgrades.ts";
 import { PROVISION_BOOSTS, PROVISION_BOOST_PERCENT, PROVISION_BOOST_TURNS, PROVISION_KEY_FLOORS, type UsedProvision } from "./economy/provisions.ts";
 import type { Save, ModeSave } from "./save/shape.ts";
 import type {
@@ -69,12 +63,15 @@ import { snap } from "./exact.ts";
 import { enemyStat, keyCount, whole, wholeChange } from "./whole.ts";
 import { MODES, milestones, type ModeProfile } from "./modes.ts";
 import { ranksInRun, runTrainingBulk, runTrainingOffer, type RunTrainingOffer } from "./progression/run-training.ts";
-import { openQuantities, type BuyQuantity } from "./progression/buy-quantity.ts";
+import type { BuyQuantity } from "./progression/buy-quantity.ts";
 import { critRule, loadout, rankShift, type TrainingView } from "./progression/loadout.ts";
 import { researched } from "./progression/archives.ts";
 import { chargesLeft, chargesPerRun, climbFloor, spendCharge, type Charge } from "./run-charges.ts";
 import type { MaterialId, MaterialStack } from "./economy/materials.ts";
 import { TrainingDesk } from "./game/training-desk.ts";
+import { ShopDesk } from "./game/shop-desk.ts";
+import { SkillDesk } from "./game/skill-desk.ts";
+import { ThemeDesk } from "./game/theme-desk.ts";
 import { ResearchDesk } from "./game/research-desk.ts";
 import { DeckEditor } from "./game/deck-editor.ts";
 import { GearDesk } from "./game/gear-desk.ts";
@@ -291,6 +288,12 @@ export class Game {
   /** Events: the fortnight's missions, counting toward them and paying
    * their Medals. */
   readonly events = new EventDesk(this);
+  /** The Shop's command: buying an offer. */
+  readonly shop = new ShopDesk(this, this.training, this.events);
+  /** The skill trees' command: buying a skill. */
+  readonly skills = new SkillDesk(this);
+  /** The Themes page's commands. */
+  readonly themes = new ThemeDesk(this);
   /** The Deck page's card badges: drawing them with Gems and attaching
    * them to cards. */
   readonly badges = new BadgeDesk(this);
@@ -374,22 +377,6 @@ export class Game {
     this.save.delve.best = Math.max(this.save.delve.best, this.save.delve.reached);
     // Events open with Dev mode: the running Event's first missions come at once.
     this.events.refresh();
-  }
-  /** In Dev mode, gives every theme not owned yet and returns them, for
-   * the player to hear about; otherwise none. */
-  claimThemes(): ThemeId[] {
-    return this.save.settings.devMode ? grantAllThemes(this.save) : [];
-  }
-  /** Buys a theme not owned yet (`THEME_PRICE`); false when it can't. */
-  buyTheme(id: ThemeId) {
-    return buyTheme(this.save, id);
-  }
-  /** Equips an owned theme's look, or Classic; false while it isn't owned. */
-  wearTheme(kind: ThemeKind, look: string) {
-    if (!canWear(this.save, kind, look)) return false;
-    if (kind === "ui") this.save.settings.uiTheme = look as UiLook;
-    else this.save.settings.gameTheme = look as GameLook;
-    return true;
   }
   /** Makes `next` the active mode. A mode with no run yet starts one inside
    * (a new game's first), or in its forest when `outside`. */
@@ -2415,34 +2402,6 @@ export class Game {
   get trainsOnTheJob() {
     return !!this.save.upgrades.onTheJob || this.save.settings.devMode;
   }
-  /** Buys the Shop's offer `id` at `serverNow`, a server time confirmed
-   * for this purchase (the Shop's clock records it): with its price, or,
-   * for a real-money offer, once the store confirms it was paid (`paid`);
-   * Dev free purchases pay nothing. Returns why it was refused, or null
-   * once bought. */
-  buyOffer(id: OfferId, serverNow: number, paid = false): Refusal | null {
-    const o = offer(id);
-    if (!o) return "locked";
-    confirmServerTime(this.save.shop.clock, serverNow, this.clock());
-    // The Event Booster is the running event's.
-    if (o.item?.kind === "eventBoost") this.events.refresh();
-    this.training.settle();
-    const pace = this.training.pace;
-    const t = purchase(this.save, o, serverNow, this.payment(paid));
-    if (typeof t === "string") return t;
-    // A pack's training speed starts from now.
-    this.training.repace(pace);
-    // Ad-Disable's ×1.5 Gold is for good: the Gold ad's stored time goes.
-    if (adsOff(this.save)) this.save.goldBoostUntil = 0;
-    if (id === "dailyGems") this.events.record("freeGems");
-    this.message = o.item?.kind === "entitlement" ? `${t.item}: yours for good` : `+${t.item}`;
-    return null;
-  }
-  /** How a Shop purchase is paid: for nothing (Dev), by the store, or with its price. */
-  private payment(paid: boolean) {
-    if (this.free) return "free";
-    return paid ? "store" : "price";
-  }
   /** Buys ranks of Training `id` for this run with its Silver, one or as
    * many as Buy Quantity `quantity` takes (`runTrainingBulk`): they count
    * from the next turn on, until the run ends. Each purchase is a turn of
@@ -2477,28 +2436,6 @@ export class Game {
     this.afterPlayerAction();
     return true;
   }
-  /** The Buy Quantity choices open: x1 once the Buy Quantity skill is owned
-   * (or in Dev mode), and one more per level of its research; none before. */
-  get buyQuantities(): readonly BuyQuantity[] {
-    return this.save.upgrades.buyQuantity || this.save.settings.devMode ? openQuantities(researched(this.save.archives, "buyQuantity")) : [];
-  }
-  /** How many ranks a press buys on `scope`'s screen (the Training tab,
-   * or the run's training bar, each its own saved choice): the quantity
-   * chosen, while it is open, else one. */
-  buyQuantityFor(scope: QuantityScope): BuyQuantity {
-    const chosen = this.save.settings[QUANTITY_SETTINGS[scope]];
-    return this.buyQuantities.includes(chosen) ? chosen : 1;
-  }
-  /** How many ranks a Training tab press buys. */
-  get buyQuantity(): BuyQuantity {
-    return this.buyQuantityFor("training");
-  }
-  /** Chooses `scope`'s Buy Quantity (the Training tab's by default), if it is open. */
-  setBuyQuantity(q: BuyQuantity, scope: QuantityScope = "training") {
-    if (!this.buyQuantities.includes(q)) return false;
-    this.save.settings[QUANTITY_SETTINGS[scope]] = q;
-    return true;
-  }
   /** What a rank bought for the run changes now: a stat, or the chance of
    * percent potions. Returns the max HP it added. */
   private applyRunTraining({ row, level }: RunTrainingOffer) {
@@ -2524,32 +2461,6 @@ export class Game {
     this.run.percentPotions = chance;
     if (this.world instanceof RoomWorld) this.world.percentPotions = chance;
   }
-  /** Whether skill `id` can be bought now: open, below its last rank, and
-   * paid for by the currency held (anything, with Dev free purchases). */
-  canBuySkill(id: UpgradeId) {
-    if (!skillAvailable(id, this.save.upgrades)) return false;
-    const u = UPGRADES.find((u) => u.id === id)!, n = this.save.upgrades[id];
-    const held = u.currency === "courage" ? this.save.delve.courage : this.save.tower.inspiration;
-    return n < u.max && (this.free || cost(id, n) <= held);
-  }
-  buy(id: UpgradeId) {
-    if (!this.canBuySkill(id)) return false;
-    const u = UPGRADES.find((u) => u.id === id)!, n = this.save.upgrades[id];
-    if (!this.spendTreeCurrency(u.currency === "courage", cost(id, n))) return false;
-    this.save.upgrades[id]++;
-    readyForestRuns(this.save);
-    return true;
-  }
-  /** Pays `price` in Courage, or else Inspiration (nothing with Dev free
-   * purchases); false when short. */
-  private spendTreeCurrency(courage: boolean, price: number) {
-    if (this.free) return true;
-    const save = this.save;
-    if (price > (courage ? save.delve.courage : save.tower.inspiration)) return false;
-    if (courage) save.delve.courage -= price;
-    else save.tower.inspiration -= price;
-    return true;
-  }
   /** The wall clock the Archives' research runs on (ms); tests set it. */
   clock: () => number = () => Date.now();
   /** Records a potion's heal of `n` HP, already applied, where the hero stands. */
@@ -2566,9 +2477,6 @@ export class Game {
 type FightEnd = { enemy: Enemy; damage: number; at: { x: number; y: number }; revived: number; scale?: number; instakill?: boolean; crits?: number; openers?: string[] };
 
 /** How Skip's message names what vanished, by tile kind. */
-/** The screens that keep their own Buy Quantity, and the setting each saves it in. */
-export type QuantityScope = "training" | "run";
-const QUANTITY_SETTINGS = { training: "buyQuantity", run: "runBuyQuantity" } as const;
 const SKIPPED_NAMES: Partial<Record<Tile["kind"], string>> = { door: "The door", key: "The key", potion: "The potion", attack: "The ATK shard", defense: "The DEF shard", treasure: "The chest", reward: "The chest" };
 
 /** Whether the door `t` has a lock of `color` among its locks. */

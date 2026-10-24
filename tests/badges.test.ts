@@ -25,9 +25,9 @@ test("Badges costs 2 Courage and follows Focus in the Courage tree", () => {
   g.save.upgrades.delve = 1;
   g.save.upgrades.moveSpeed = 1;
   g.save.delve.courage = 10;
-  assert.equal(g.buy("cardBadges"), false, "waits for Focus");
+  assert.equal(g.skills.buy("cardBadges"), false, "waits for Focus");
   g.save.upgrades.focus = 1;
-  assert.ok(g.buy("cardBadges"));
+  assert.ok(g.skills.buy("cardBadges"));
   assert.equal(g.save.delve.courage, 8);
 });
 
@@ -107,11 +107,11 @@ test("Key < Badges and Key ≥ Badges each add their three key gates to the draw
 test("Key < Badges sits beside Gold Door and Key ≥ Badges beside it, 50 Inspiration each", () => {
   const g = new Game(defaults());
   g.save.tower.inspiration = 100;
-  assert.equal(g.buy("keyLessBadges"), false, "waits for Gold Door");
+  assert.equal(g.skills.buy("keyLessBadges"), false, "waits for Gold Door");
   g.save.upgrades.cardYellowDoor = 1;
-  assert.equal(g.buy("keyAtLeastBadges"), false, "waits for Key < Badges");
-  assert.ok(g.buy("keyLessBadges"));
-  assert.ok(g.buy("keyAtLeastBadges"));
+  assert.equal(g.skills.buy("keyAtLeastBadges"), false, "waits for Key < Badges");
+  assert.ok(g.skills.buy("keyLessBadges"));
+  assert.ok(g.skills.buy("keyAtLeastBadges"));
   assert.equal(g.save.tower.inspiration, 0);
 });
 

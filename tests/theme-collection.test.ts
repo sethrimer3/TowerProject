@@ -22,21 +22,21 @@ test("Neon, Terminal, Desktop, Glyph, Ember, Yang, Yin, Shiro, Kuro, Arcade, Sys
   save.tower.reached = 1000;
   save.delve.reached = 1000;
   const g = new Game(save);
-  assert.deepEqual(g.claimThemes(), [], "climbing earns none");
+  assert.deepEqual(g.themes.claim(), [], "climbing earns none");
   save.gold = 0;
   assert.equal(canBuyTheme(save, "neonUi"), false, "no Gold");
-  assert.equal(g.buyTheme("neonUi"), false);
+  assert.equal(g.themes.buy("neonUi"), false);
   save.gold = 2.5;
-  assert.ok(g.buyTheme("systemGame"));
+  assert.ok(g.themes.buy("systemGame"));
   assert.equal(save.gold, 1.5, "1 Gold paid");
-  assert.ok(g.buyTheme("neonUi"));
+  assert.ok(g.themes.buy("neonUi"));
   assert.deepEqual(save.themes, ["medievalUi", "neonUi", "systemGame"], "kept in catalog order");
-  assert.equal(g.buyTheme("neonUi"), false, "each is bought once");
-  assert.equal(g.buyTheme("medievalUi"), false, "Medieval is owned from the start");
+  assert.equal(g.themes.buy("neonUi"), false, "each is bought once");
+  assert.equal(g.themes.buy("medievalUi"), false, "Medieval is owned from the start");
   assert.equal(save.gold, 0.5);
-  assert.equal(g.buyTheme("terminalUi"), false, "short of 1 Gold");
+  assert.equal(g.themes.buy("terminalUi"), false, "short of 1 Gold");
   save.settings.freePurchases = true;
-  assert.ok(g.buyTheme("terminalUi"), "free purchases pay nothing");
+  assert.ok(g.themes.buy("terminalUi"), "free purchases pay nothing");
   assert.equal(save.gold, 0.5);
 });
 
@@ -44,20 +44,20 @@ test("Dev mode owns every theme", () => {
   const save = defaults();
   const g = new Game(save);
   g.setDevMode(true);
-  const fresh = g.claimThemes();
+  const fresh = g.themes.claim();
   assert.deepEqual(fresh, THEME_IDS.filter((id) => id !== "medievalUi"), "each announced once");
   assert.deepEqual(save.themes, THEME_IDS);
-  assert.deepEqual(g.claimThemes(), []);
-  assert.equal(new Game(defaults()).claimThemes().length, 0, "none without Dev mode");
+  assert.deepEqual(g.themes.claim(), []);
+  assert.equal(new Game(defaults()).themes.claim().length, 0, "none without Dev mode");
 });
 
 test("the Terminal UI theme is worn once owned", () => {
   const save = defaults();
   const g = new Game(save);
-  assert.equal(g.wearTheme("ui", "terminal"), false, "not owned yet");
+  assert.equal(g.themes.wear("ui", "terminal"), false, "not owned yet");
   assert.equal(uiLook(save), "medieval");
   save.themes.push("terminalUi");
-  assert.ok(g.wearTheme("ui", "terminal"));
+  assert.ok(g.themes.wear("ui", "terminal"));
   assert.equal(uiLook(save), "terminal");
   assert.equal(decodeSettings({ uiTheme: "terminal" }).uiTheme, "terminal", "the choice is saved");
 });
@@ -65,9 +65,9 @@ test("the Terminal UI theme is worn once owned", () => {
 test("the Desktop UI theme is worn once owned", () => {
   const save = defaults();
   const g = new Game(save);
-  assert.equal(g.wearTheme("ui", "desktop"), false, "not owned yet");
+  assert.equal(g.themes.wear("ui", "desktop"), false, "not owned yet");
   save.themes.push("desktopUi");
-  assert.ok(g.wearTheme("ui", "desktop"));
+  assert.ok(g.themes.wear("ui", "desktop"));
   assert.equal(uiLook(save), "desktop");
   assert.equal(decodeSettings({ uiTheme: "desktop" }).uiTheme, "desktop", "the choice is saved");
 });
@@ -76,9 +76,9 @@ test("the Glyph, Ember, Yang, Yin, Shiro, Kuro, Arcade, System, Orbit, Pixel, Do
   const save = defaults();
   const g = new Game(save);
   for (const [look, id] of [["glyph", "glyphUi"], ["ember", "emberUi"], ["yang", "yangUi"], ["yin", "yinUi"], ["shiro", "shiroUi"], ["kuro", "kuroUi"], ["arcade", "arcadeUi"], ["system", "systemUi"], ["orbit", "orbitUi"], ["pixel", "pixelUi"], ["doodle", "doodleUi"], ["murk", "murkUi"]] as const) {
-    assert.equal(g.wearTheme("ui", look), false, `${look} not owned yet`);
+    assert.equal(g.themes.wear("ui", look), false, `${look} not owned yet`);
     save.themes.push(id);
-    assert.ok(g.wearTheme("ui", look));
+    assert.ok(g.themes.wear("ui", look));
     assert.equal(uiLook(save), look);
     assert.equal(decodeSettings({ uiTheme: look }).uiTheme, look, "the choice is saved");
   }
@@ -88,9 +88,9 @@ test("the Terminal, Desktop, Glyph, Ember, Yang, Yin, Shiro, Kuro, Arcade, Syste
   const save = defaults();
   const g = new Game(save);
   for (const [look, id] of [["terminal", "terminalGame"], ["desktop", "desktopGame"], ["glyph", "glyphGame"], ["ember", "emberGame"], ["yang", "yangGame"], ["yin", "yinGame"], ["shiro", "shiroGame"], ["kuro", "kuroGame"], ["arcade", "arcadeGame"], ["system", "systemGame"], ["kroz", "krozGame"], ["orbit", "orbitGame"], ["pixel", "pixelGame"], ["doodle", "doodleGame"], ["murk", "murkGame"]] as const) {
-    assert.equal(g.wearTheme("game", look), false, `${look} not owned yet`);
+    assert.equal(g.themes.wear("game", look), false, `${look} not owned yet`);
     save.themes.push(id);
-    assert.ok(g.wearTheme("game", look));
+    assert.ok(g.themes.wear("game", look));
     assert.equal(gameLook(save), look);
     assert.equal(decodeSettings({ gameTheme: look }).gameTheme, look, "the choice is saved");
   }
@@ -103,10 +103,10 @@ test("a theme chosen but not owned shows Classic until it is bought", () => {
   assert.equal(uiLook(save), "classic");
   assert.equal(gameLook(save), "classic");
   const g = new Game(save);
-  assert.equal(g.wearTheme("game", "neon"), false, "an unowned theme can't be worn");
-  assert.ok(g.wearTheme("ui", "classic"), "Classic always can");
+  assert.equal(g.themes.wear("game", "neon"), false, "an unowned theme can't be worn");
+  assert.ok(g.themes.wear("ui", "classic"), "Classic always can");
   save.themes.push("neonGame");
-  assert.ok(g.wearTheme("game", "neon"));
+  assert.ok(g.themes.wear("game", "neon"));
   assert.equal(gameLook(save), "neon");
 });
 

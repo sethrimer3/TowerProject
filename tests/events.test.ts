@@ -170,15 +170,15 @@ test("the Event Booster doubles the event's Medals, retroactively, and opens its
   g.events.record("freeGems", 13);
   claimAll(g, "freeGems");
   assert.equal(g.save.medals, 45);
-  assert.equal(g.buyOffer("eventBoost", START + HOUR), "unpaid", "real money, until the store confirms it");
-  assert.equal(g.buyOffer("eventBoost", START + HOUR, true), null);
+  assert.equal(g.shop.buy("eventBoost", START + HOUR), "unpaid", "real money, until the store confirms it");
+  assert.equal(g.shop.buy("eventBoost", START + HOUR, true), null);
   assert.ok(g.events.boosted);
   assert.equal(g.save.medals, 90, "those already earned doubled");
   g.events.record("tournaments", 1, "1");
   g.events.claim(mission(g, "tournaments")!.id);
   assert.equal(g.save.medals, 110, "and new ones doubled");
   assert.equal(relicMedals(g.save.events), 110);
-  assert.equal(g.buyOffer("eventBoost", START + 2 * HOUR, true), "owned", "once an event");
+  assert.equal(g.shop.buy("eventBoost", START + 2 * HOUR, true), "owned", "once an event");
   // Medals from elsewhere never count toward relics.
   g.save.medals += 1000;
   assert.equal(relicMedals(g.save.events), 110);
@@ -194,7 +194,7 @@ test("the Event Booster doubles the event's Medals, retroactively, and opens its
 test("a new event starts over, keeping the boosters bought and mailing the Medals left unclaimed", () => {
   const g = gameAt(START + HOUR);
   g.events.refresh();
-  assert.equal(g.buyOffer("eventBoost", START + HOUR, true), null);
+  assert.equal(g.shop.buy("eventBoost", START + HOUR, true), null);
   g.events.record("freeGems", 13);
   g.events.record("tournaments", 1, "1");
   g.events.claim(mission(g, "tournaments")!.id);

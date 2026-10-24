@@ -28,19 +28,19 @@ test("bulkBuy: a fixed quantity buys all its ranks or none; Max buys what the bu
 });
 
 test("the skill shows x1; each research level opens the next quantity, x5, x10, x25, x100, then Max", () => {
-  assert.deepEqual(new Game(defaults()).buyQuantities, [], "nothing before the skill");
-  assert.deepEqual([0, 1, 2, 3, 4, 5].map((n) => withQuantity(n).buyQuantities), [[1], [1, 5], [1, 5, 10], [1, 5, 10, 25], [1, 5, 10, 25, 100], [1, 5, 10, 25, 100, "max"]]);
+  assert.deepEqual(new Game(defaults()).training.buyQuantities, [], "nothing before the skill");
+  assert.deepEqual([0, 1, 2, 3, 4, 5].map((n) => withQuantity(n).training.buyQuantities), [[1], [1, 5], [1, 5, 10], [1, 5, 10, 25], [1, 5, 10, 25, 100], [1, 5, 10, 25, 100, "max"]]);
   assert.deepEqual(openQuantities(5), [1, 5, 10, 25, 100, "max"]);
   assert.deepEqual(openQuantities(9), [1, 5, 10, 25, 100, "max"]);
   assert.deepEqual(RESEARCH.buyQuantity.levels.map((l) => [l.gold, l.hours]), [[1000, 4], [5000, 12], [25000, 24], [50000, 36], [100000, 48]]);
   assert.deepEqual(RESEARCH.buyQuantity.requires, [{ upgrade: "buyQuantity" }]);
   const g = withQuantity(1);
-  assert.equal(g.setBuyQuantity(10), false, "a closed quantity is refused");
-  assert.ok(g.setBuyQuantity(5));
-  assert.equal(g.buyQuantity, 5);
+  assert.equal(g.training.setBuyQuantity(10), false, "a closed quantity is refused");
+  assert.ok(g.training.setBuyQuantity(5));
+  assert.equal(g.training.buyQuantity, 5);
   assert.equal(decode(JSON.stringify(g.save)).settings.buyQuantity, 5, "the choice is saved");
   g.save.upgrades.buyQuantity = 0;
-  assert.equal(g.buyQuantity, 1, "without the skill a press buys one");
+  assert.equal(g.training.buyQuantity, 1, "without the skill a press buys one");
 });
 
 test("training points buy the chosen quantity at once, showing the value they reach", () => {

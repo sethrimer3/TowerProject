@@ -1,7 +1,8 @@
 import { TRAINING, trainingDef, type TrainingId } from "../progression/training.ts";
 import { snap } from "../exact.ts";
 import { TRAINING_RESET_GEMS } from "../economy/gems.ts";
-import { batchSpeedup, bulkBuy, type BuyQuantity } from "../progression/buy-quantity.ts";
+import { batchSpeedup, bulkBuy, openQuantities, type BuyQuantity } from "../progression/buy-quantity.ts";
+import { researched } from "../progression/archives.ts";
 import { trainingBulk, trainingDiscount, trainingFull, trainingMaxed, trainingRowsFull, trainingSpeed, trainingOpen } from "../progression/loadout.ts";
 import { BOOST_FOREVER, permanentBoost, trainingRate } from "../shop/entitlements.ts";
 import { batchWork, claimBoost, doneAt, finishGems, jobInvested, nextTrainerGems, ranksInTraining, trainerBatch, trainingGold, trainingJob, trainingSeconds, workLeft, trainingSlots, type TrainingJob } from "../progression/training-jobs.ts";
@@ -12,6 +13,9 @@ import { tally } from "../save/profile.ts";
 const rowOf = (id: TrainingId) => TRAINING.find((t) => t.id === id)!;
 /** The fixed quantities, largest first: a batch continues at the largest one its ranks reach. */
 const BATCH_QUANTITIES = [100, 25, 10, 5, 1] as const;
+/** The screens that keep their own Buy Quantity, and the setting each saves it in. */
+export type QuantityScope = "training" | "run";
+const QUANTITY_SETTINGS = { training: "buyQuantity", run: "runBuyQuantity" } as const;
 
 /** The Training tab's commands: ranks bought with training points, or
  * trained by a trainer paid in Gold over the wall clock, the trainers and
@@ -378,5 +382,27 @@ export class TrainingDesk {
       save.trainerRanks[id] = 0;
       save.trainingJobs = save.trainingJobs.filter((j) => j.id !== id);
     });
+  }
+  /** The Buy Quantity choices open: x1 once the Buy Quantity skill is owned
+   * (or in Dev mode), and one more per level of its research; none before. */
+  get buyQuantities(): readonly BuyQuantity[] {
+    return this.save.upgrades.buyQuantity || this.save.settings.devMode ? openQuantities(researched(this.save.archives, "buyQuantity")) : [];
+  }
+  /** How many ranks a press buys on `scope`'s screen (the Training tab,
+   * or the run's training bar, each its own saved choice): the quantity
+   * chosen, while it is open, else one. */
+  buyQuantityFor(scope: QuantityScope): BuyQuantity {
+    const chosen = this.save.settings[QUANTITY_SETTINGS[scope]];
+    return this.buyQuantities.includes(chosen) ? chosen : 1;
+  }
+  /** How many ranks a Training tab press buys. */
+  get buyQuantity(): BuyQuantity {
+    return this.buyQuantityFor("training");
+  }
+  /** Chooses `scope`'s Buy Quantity (the Training tab's by default), if it is open. */
+  setBuyQuantity(q: BuyQuantity, scope: QuantityScope = "training") {
+    if (!this.buyQuantities.includes(q)) return false;
+    this.save.settings[QUANTITY_SETTINGS[scope]] = q;
+    return true;
   }
 }

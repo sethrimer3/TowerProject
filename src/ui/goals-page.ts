@@ -402,7 +402,7 @@ export class GoalsPage {
       const paid = dev || (await this.server.purchase(pass.sku));
       if (!paid) return void (el("pass-message").textContent = "The store isn't open yet.");
       const now = (await this.server.time()) ?? game.clock();
-      const refused = game.buyOffer(pass.id as Parameters<typeof game.buyOffer>[0], now, true);
+      const refused = game.shop.buy(pass.id as Parameters<typeof game.shop.buy>[0], now, true);
       if (refused) return void (el("pass-message").textContent = "Already yours.");
       this.ctx.modal.close();
       this.message = `Premium Pass ${pass.n} unlocked!`;

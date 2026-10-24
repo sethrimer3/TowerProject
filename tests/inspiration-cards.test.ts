@@ -38,7 +38,7 @@ const NODES: [UpgradeId, number, UpgradeId, CardId | null][] = [
 test("each card node costs its price, waits for the node above it and adds its card to the deck", () => {
   const g = new Game(defaults());
   g.save.tower.inspiration = 10_000;
-  for (const id of ["combatStance", "buildout", "trainers", "shroud", "critical", "archives", "delve", "lifesteal", "buyQuantity", "thorns", "keySiphon"] as const) assert.ok(g.buy(id));
+  for (const id of ["combatStance", "buildout", "trainers", "shroud", "critical", "archives", "delve", "lifesteal", "buyQuantity", "thorns", "keySiphon"] as const) assert.ok(g.skills.buy(id));
   const nodes = TREES.find((t) => t.id === "inspiration")!.nodes;
   for (const [id, price, requires, card] of NODES) {
     assert.deepEqual(nodes.find((n) => n.id === id)!.requires, [requires], id);
@@ -46,24 +46,24 @@ test("each card node costs its price, waits for the node above it and adds its c
     assert.equal(upgradeCard(id) ?? null, card);
     if (card) assert.ok(!deckCards(g.save.upgrades).includes(card));
     const before = g.save.tower.inspiration;
-    assert.ok(g.buy(id), id);
+    assert.ok(g.skills.buy(id), id);
     assert.equal(before - g.save.tower.inspiration, price);
     if (card) assert.ok(deckCards(g.save.upgrades).includes(card), `${card} joins the deck`);
   }
-  assert.equal(g.buy("cardTorch"), false, "bought once");
+  assert.equal(g.skills.buy("cardTorch"), false, "bought once");
 });
 
 test("a card node can't be bought before the one above it", () => {
   const g = new Game(defaults());
   g.save.tower.inspiration = 10_000;
-  assert.equal(g.buy("cardYellowDoor"), false);
+  assert.equal(g.skills.buy("cardYellowDoor"), false);
   g.save.upgrades.keySiphon = 1;
-  assert.equal(g.buy("cardHeartDoor"), false);
-  assert.ok(g.buy("cardYellowDoor"));
-  assert.equal(g.buy("cardHeartDoor"), false);
-  assert.ok(g.buy("heartDoorResilience"));
-  assert.ok(g.buy("cardHeartDoor"));
-  assert.ok(g.buy("cardWeakEnemy"), "Weak Enemy hangs straight off Gold Door");
+  assert.equal(g.skills.buy("cardHeartDoor"), false);
+  assert.ok(g.skills.buy("cardYellowDoor"));
+  assert.equal(g.skills.buy("cardHeartDoor"), false);
+  assert.ok(g.skills.buy("heartDoorResilience"));
+  assert.ok(g.skills.buy("cardHeartDoor"));
+  assert.ok(g.skills.buy("cardWeakEnemy"), "Weak Enemy hangs straight off Gold Door");
 });
 
 const enemy = (strength: EnemyStrength): Tile => ({ kind: "enemy", enemy: { name: "rat", hp: 1, attack: 0, defense: 0, tier: 0, strength } });

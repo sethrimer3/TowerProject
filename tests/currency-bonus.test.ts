@@ -31,10 +31,10 @@ test("Wealthy, Loot and Wishing Well cost 2 Inspiration each, after Spare Change
   for (const [skill] of SKILLS) {
     assert.deepEqual(TREES[0].nodes.find((n) => n.id === skill)!.requires, ["spareChange"]);
     assert.equal(cost(skill, 0), 2);
-    assert.equal(g.buy(skill), false, `${skill} waits for Spare Change`);
+    assert.equal(g.skills.buy(skill), false, `${skill} waits for Spare Change`);
   }
-  for (const id of ["combatStance", "buildout", "trainers", "shroud", "critical", "archives", "delve", "pocketMoney", "spareChange"] as const) assert.ok(g.buy(id));
-  for (const [skill] of SKILLS) assert.ok(g.buy(skill), skill);
+  for (const id of ["combatStance", "buildout", "trainers", "shroud", "critical", "archives", "delve", "pocketMoney", "spareChange"] as const) assert.ok(g.skills.buy(id));
+  for (const [skill] of SKILLS) assert.ok(g.skills.buy(skill), skill);
 });
 
 test("Wealthy, Loot and Wishing Well each open their Training row and research", () => {

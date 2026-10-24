@@ -17,12 +17,12 @@ test("Regen costs 1 Inspiration between On the Job and Heal, and opens a Defense
   const g = new Game(defaults());
   g.save.tower.inspiration = 1000;
   assert.equal(cost("regen", 0), 1);
-  for (const id of ["combatStance", "buildout", "trainers"] as const) assert.ok(g.buy(id));
-  assert.equal(g.buy("regen"), false, "waits for On the Job");
-  assert.equal(g.buy("cardHeal"), false, "Heal waits for Regen");
-  assert.ok(g.buy("onTheJob"));
-  assert.ok(g.buy("regen"));
-  assert.ok(g.buy("cardHeal"));
+  for (const id of ["combatStance", "buildout", "trainers"] as const) assert.ok(g.skills.buy(id));
+  assert.equal(g.skills.buy("regen"), false, "waits for On the Job");
+  assert.equal(g.skills.buy("cardHeal"), false, "Heal waits for Regen");
+  assert.ok(g.skills.buy("onTheJob"));
+  assert.ok(g.skills.buy("regen"));
+  assert.ok(g.skills.buy("cardHeal"));
   const regen = row("regen"), def = row("defense");
   assert.equal(regen.group, "defense");
   assert.equal(regen.cost, def.cost, "a rank costs DEF's points, and so a trainer DEF's Gold and time");

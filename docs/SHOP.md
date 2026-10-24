@@ -67,7 +67,7 @@ Offers, items, currencies, entitlements, the ledger and the Shop's clock are sep
 
 ### A purchase
 
-`Game.buyOffer(id, serverNow, paid)` records the confirmed server time, then calls `purchase`, which:
+`game.shop.buy(id, serverNow, paid)` (`ShopDesk`) records the confirmed server time, then calls `purchase`, which:
 
 1. checks the offer: its category's and its own requirements, start and end times, whether it only opens the store, its purchase limit, whether its item can be granted (an entitlement not already owned), and its payment (a real-money offer only once the store confirmed it; a currency price only if it can be afforded);
 2. pays the price;

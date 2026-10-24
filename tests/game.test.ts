@@ -116,7 +116,7 @@ test("automation avoids lethal fights; a manual death waits on the player, and a
   g.save.delve.courage = 100;
   g.save.upgrades.legacy = 1;
   const defense = g.run.player.defense;
-  assert.ok(g.buy("quality"));
+  assert.ok(g.skills.buy("quality"));
   g.newRun();
   assert.equal(g.run.player.defense, defense + 1);
 });

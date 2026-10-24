@@ -227,7 +227,7 @@ export class EventsPage {
       const message = () => document.getElementById("event-boost-message");
       if (!paid) return void (message() && (message()!.textContent = "The store isn't open yet."));
       const now = (await this.server.time()) ?? game.clock();
-      if (game.buyOffer("eventBoost", now, true)) return void (message() && (message()!.textContent = "Already active."));
+      if (game.shop.buy("eventBoost", now, true)) return void (message() && (message()!.textContent = "Already active."));
       this.ctx.update();
       this.render();
       const shown = offerShown(o);

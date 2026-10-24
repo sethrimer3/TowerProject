@@ -1,5 +1,5 @@
 import { levelForXp } from "../progression/xp.ts";
-import type { UpgradeId } from "../progression/upgrades.ts";
+import type { SkillDesk } from "./skill-desk.ts";
 import type { NoticeTree } from "../save/shape.ts";
 import { deckCards, type CardId } from "../cards/cards.ts";
 import { hasPointsToSpend, totalCardLevels } from "../cards/trees.ts";
@@ -38,7 +38,7 @@ export interface NoticeHost extends DeskHost {
   readonly events: Pick<EventDesk, "waiting">;
   readonly tournament: Pick<TournamentDesk, "waiting">;
   readonly mail: Pick<MailDesk, "recent" | "unread">;
-  canBuySkill(id: UpgradeId): boolean;
+  readonly skills: Pick<SkillDesk, "canBuy">;
 }
 
 /** The Notices (the game's `notices`): whether each tab and button wears
@@ -165,7 +165,7 @@ export class NoticeDesk {
    * bought (so never while the tree is locked), until that tree shows. */
   private tree(tree: NoticeTree) {
     return this.save.treeNotices[tree] && !!this.host.run.outside &&
-      TREES.find((t) => t.id === tree)!.nodes.some((n) => this.host.canBuySkill(n.id));
+      TREES.find((t) => t.id === tree)!.nodes.some((n) => this.host.skills.canBuy(n.id));
   }
 
   /** The deck holds a card (from a skill, a Goal or anywhere else) the

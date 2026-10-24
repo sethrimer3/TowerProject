@@ -92,7 +92,7 @@ test("Ad-Disable clears the Gold ad's stored time and takes no more", () => {
   g.clock = () => now;
   assert.ok(g.gemFinder.claimGoldAd());
   assert.equal(g.gemFinder.goldBoostLeft, GOLD_BOOST_MS);
-  assert.equal(g.buyOffer("adFree", now, true), null);
+  assert.equal(g.shop.buy("adFree", now, true), null);
   assert.equal(g.gemFinder.goldBoostLeft, 0, "the countdown is gone");
   assert.equal(g.gemFinder.goldAdReady, false);
   assert.equal(g.gemFinder.claimGoldAd(), false, "no Gold ad to claim");

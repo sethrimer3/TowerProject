@@ -9,10 +9,10 @@ test("Pocket Money costs 1 Inspiration after Into the depths, and opens research
   const g = new Game(defaults());
   g.save.tower.inspiration = 1000;
   assert.equal(cost("pocketMoney", 0), 1);
-  for (const id of ["combatStance", "buildout", "trainers", "shroud", "critical", "archives"] as const) assert.ok(g.buy(id));
-  assert.equal(g.buy("pocketMoney"), false, "waits for Into the depths");
-  assert.ok(g.buy("delve"));
-  assert.ok(g.buy("pocketMoney"));
+  for (const id of ["combatStance", "buildout", "trainers", "shroud", "critical", "archives"] as const) assert.ok(g.skills.buy(id));
+  assert.equal(g.skills.buy("pocketMoney"), false, "waits for Into the depths");
+  assert.ok(g.skills.buy("delve"));
+  assert.ok(g.skills.buy("pocketMoney"));
   assert.deepEqual(RESEARCH.pocketMoney.requires, [{ upgrade: "pocketMoney" }]);
   const ours = RESEARCH.pocketMoney.levels, theirs = RESEARCH.potionHp.levels;
   assert.deepEqual(ours.map((l) => [l.gold, l.hours]), theirs.map((l) => [l.gold, l.hours]));

@@ -30,12 +30,12 @@ test("Thorns sits between Buy Quantity and GK Siphon, Parry between Regen Resear
   assert.deepEqual([node("parry").requires, node("revive").requires], [["regenResearch"], ["parry"]]);
   const g = new Game(defaults());
   g.save.tower.inspiration = 1000;
-  for (const id of ["combatStance", "buildout", "trainers", "shroud", "critical", "archives", "delve", "greaterHeal"] as const) assert.ok(g.buy(id));
-  assert.equal(g.buy("parry"), false, "waits for Regen Research");
-  assert.ok(g.buy("regenResearch"));
-  assert.equal(g.buy("revive"), false, "waits for Parry");
-  assert.ok(g.buy("parry"));
-  assert.ok(g.buy("revive"));
+  for (const id of ["combatStance", "buildout", "trainers", "shroud", "critical", "archives", "delve", "greaterHeal"] as const) assert.ok(g.skills.buy(id));
+  assert.equal(g.skills.buy("parry"), false, "waits for Regen Research");
+  assert.ok(g.skills.buy("regenResearch"));
+  assert.equal(g.skills.buy("revive"), false, "waits for Parry");
+  assert.ok(g.skills.buy("parry"));
+  assert.ok(g.skills.buy("revive"));
 });
 
 test("Thorn Damage adds 1% a rank to 99 and Parry % 0.5% a rank to 100, Defense rows the skills open; no Parry Chance row", () => {

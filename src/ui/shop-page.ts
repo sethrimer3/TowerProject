@@ -245,7 +245,7 @@ export class ShopPage {
       // A store payment is granted even offline: the store has the money.
       const now = (await this.server.time()) ?? (paid ? this.now : null);
       if (now === null) return this.say("Can't reach the server. Try again when you're online.");
-      const refused = this.ctx.game.buyOffer(o.id, now, paid);
+      const refused = this.ctx.game.shop.buy(o.id, now, paid);
       this.say(refused ? REFUSALS[refused] : `${o.name}: ${o.price.kind === "free" ? "claimed" : "purchased"}!`);
       this.ctx.update();
       const shown = refused ? null : offerShown(o);

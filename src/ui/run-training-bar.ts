@@ -105,7 +105,7 @@ export class RunTrainingBar {
   }
 
   private buy(button: HTMLButtonElement) {
-    if (!this.game.trainInRun(button.dataset.runTrain as TrainingId, this.game.buyQuantityFor("run"))) sparkRed(button, this.game.save.settings.reduceMotion);
+    if (!this.game.trainInRun(button.dataset.runTrain as TrainingId, this.game.training.buyQuantityFor("run"))) sparkRed(button, this.game.save.settings.reduceMotion);
     this.changed();
     this.refreshTip();
   }
@@ -144,13 +144,13 @@ export class RunTrainingBar {
   /** The Buy Quantity dropdown, built again only when its choices change. */
   private renderQuantity() {
     const slot = el("training-bar").querySelector<HTMLElement>(".run-buy-quantity")!;
-    const html = buyQuantityHtml(this.game.buyQuantities, this.game.buyQuantityFor("run"));
+    const html = buyQuantityHtml(this.game.training.buyQuantities, this.game.training.buyQuantityFor("run"));
     if (slot.dataset.html !== html) {
       slot.dataset.html = html;
       slot.innerHTML = html;
       // Buy Quantity, at the right of the group buttons once the skill is owned.
       bindBuyQuantity(slot, (q) => {
-        this.game.setBuyQuantity(q, "run");
+        this.game.training.setBuyQuantity(q, "run");
         this.changed();
       });
     }
@@ -238,7 +238,7 @@ export class RunTrainingBar {
   private fill(id: TrainingId) {
     const game = this.game, card = document.querySelector<HTMLElement>(`[data-drill="${id}"]`)!;
     const offer = runTrainingOffer(game.save, game.run, id), { value, unit } = runTrainingValue(game.save, game.run, id, game.mode);
-    const q = game.buyQuantityFor("run"), bulk = runTrainingBulk(game.save, game.run, id, q, game.free ? Infinity : game.silver);
+    const q = game.training.buyQuantityFor("run"), bulk = runTrainingBulk(game.save, game.run, id, q, game.free ? Infinity : game.silver);
     const short = !offer.maxed && !bulk.affordable;
     card.classList.toggle("short", short);
     card.classList.toggle("maxed", offer.maxed);
