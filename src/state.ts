@@ -1247,7 +1247,7 @@ export class Game {
       ...(tree.potionHeal ? { potionCard: tree.potionHeal } : {}),
       ...(worn.victoryHeal ? { victoryHeal: worn.victoryHeal } : {}), ...(crit ? { crit } : {}) };
   }
-  /** How far potions, GK to HP and badge heals may heal above max HP now,
+  /** How far potions, the smelt cards and badge heals may heal above max HP now,
    * as a multiple of max HP in thousandths (Overheal training, the run's
    * Silver ranks counting, 1,000 until Overheal is owned), with the card
    * trees' Overheal Max added, skill or not. */
@@ -1333,7 +1333,7 @@ export class Game {
     const owned = this.save.provisions.bomb;
     return this.run.outside ? owned : Math.max(0, owned - (this.run.bombsUsed ?? 0));
   }
-  /** Uses of provision `id` (Traveler's elixir, Whetstone, Aegis charm)
+  /** Uses of provision `id` (Traveler's elixir, Vanguard Banner, Aegis charm)
    * left: this run's (one for each owned, less those used), or in the
    * forest what the next run will carry. */
   provisionsLeft(id: UsedProvision) {
@@ -1347,7 +1347,7 @@ export class Game {
   }
   /** Uses provision `id` at once, after any fight still playing out: the
    * Traveler's elixir fills HP to max HP (`full`, and kept, when HP is
-   * there already), and a Whetstone or Aegis charm raises ATK or DEF by
+   * there already), and a Vanguard Banner or Aegis charm raises ATK or DEF by
    * `PROVISION_BOOST_PERCENT` for `PROVISION_BOOST_TURNS` turns (`active`,
    * and kept, while one is going on). It is no turn of its own, and undo
    * never takes it back: the heal and the boost reach every copy of the
@@ -1374,7 +1374,7 @@ export class Game {
         run.boosts = { ...run.boosts, [stat]: { amount, turns: PROVISION_BOOST_TURNS } };
       }
       this.gain(p.x, p.y, `+${wholeChange(amount)} ${word}`, { tile: { kind: stat } });
-      this.message = `${id === "edge" ? "Whetstone" : "Aegis charm"} · +${PROVISION_BOOST_PERCENT}% ${word} for ${PROVISION_BOOST_TURNS} turns`;
+      this.message = `${id === "edge" ? "Vanguard Banner" : "Aegis charm"} · +${PROVISION_BOOST_PERCENT}% ${word} for ${PROVISION_BOOST_TURNS} turns`;
     }
     for (const run of copies) run.provisionsUsed = { ...run.provisionsUsed, [id]: (run.provisionsUsed?.[id] ?? 0) + 1 };
     this.countProvisionsUsed();

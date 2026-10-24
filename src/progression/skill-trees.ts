@@ -19,25 +19,25 @@ export const TREES: SkillTree[] = [
     // The hand's skills, down to the Archives: Buildout, Trainers (two rows
     // lower), Shroud, Critical (with Critical Prediction to its left). Gold Key and On the Job branch off
     // Buildout: ATK Up, then DEF Up, under Gold Key, each with its provision
-    // (Whetstone, Aegis Charm) to its right, and Regen below On the Job, with
-    // Heal and the Traveler's Elixir under it.
+    // (Vanguard Banner, Aegis Charm) to its left, and Regen below On the Job, with
+    // Heal and the Traveler's Elixir under it, and Larger Hand under Heal.
     { id: "combatStance", icon: "▤", x: 50, y: 66, requires: ["autoClimb"] },
     { id: "buildout", icon: "⚔", x: 50, y: 84, requires: ["combatStance"] },
     { id: "trainers", icon: "⚔", x: 50, y: 120, requires: ["buildout"] },
     { id: "shroud", icon: "◈", x: 50, y: 138, requires: ["trainers"] },
     { id: "critical", icon: "✸", x: 50, y: 156, requires: ["shroud"] },
     { id: "critPrediction", icon: "✸", x: 30, y: 156, requires: ["critical"] },
-    { id: "largerHand", icon: "▦", x: 80, y: 138, requires: ["trainers"] },
+    { id: "largerHand", icon: "▦", x: 70, y: 138, requires: ["trainers"] },
     { id: "onTheJob", icon: "¤", x: 80, y: 84, requires: ["buildout"] },
     { id: "regen", icon: "♥", x: 80, y: 102, requires: ["onTheJob"] },
     { id: "cardHeal", icon: "♥", x: 70, y: 120, requires: ["regen"] },
     { id: "elixirProvision", icon: "⚗", x: 90, y: 120, requires: ["regen"] },
     { id: "archives", icon: "▥", x: 50, y: 174, requires: ["critical"] },
-    { id: "cardYellowKey", icon: "⚿", x: 20, y: 84, requires: ["buildout"] },
-    { id: "cardAtkUp", icon: "⚔", x: 10, y: 102, requires: ["cardYellowKey"] },
-    { id: "whetstoneProvision", icon: "⚔", x: 30, y: 102, requires: ["cardAtkUp"] },
-    { id: "cardDefUp", icon: "⛨", x: 10, y: 120, requires: ["cardAtkUp"] },
-    { id: "aegisProvision", icon: "⛨", x: 30, y: 120, requires: ["cardDefUp"] },
+    { id: "cardYellowKey", icon: "⚿", x: 30, y: 84, requires: ["buildout"] },
+    { id: "cardAtkUp", icon: "⚔", x: 30, y: 102, requires: ["cardYellowKey"] },
+    { id: "whetstoneProvision", icon: "⚑", x: 10, y: 102, requires: ["cardAtkUp"] },
+    { id: "cardDefUp", icon: "⛨", x: 30, y: 120, requires: ["cardAtkUp"] },
+    { id: "aegisProvision", icon: "⛨", x: 10, y: 120, requires: ["cardDefUp"] },
     // Research needs the Archives, so the skills that open it come after them:
     // Blue Key and Faster Trainers either side of the Archives, Rehearsed steps
     // left of Into the depths, and Pocket Money (then Spare Change, Wishing
@@ -68,7 +68,8 @@ export const TREES: SkillTree[] = [
     // Manual Hand under GK Siphon, then the cards down the middle: Gold Door (Key < Badges,
     // then Key ≥ Badges, to its right; Heart Door Resilience, then Heart Door, to its
     // left), Weak Enemy (Base, then Strong, to its left, Fast under Base; Elite, then Boss, to its
-    // right, Non-Boss under Boss), Chest, BK Siphon (BK Trader, then GK to HP, to its left; Red
+    // right, Non-Boss under Boss), Chest, BK Siphon (Smelt Gold Key, then GK -> BK, to its left,
+    // and under GK -> BK Smelt Blue Key, BK -> RK and Smelt Red Key; Red
     // Key, then RK Siphon, to its right) and Floor Skip Reward (Torch to its
     // left, Steel Door to its right).
     { id: "cardYellowDoor", icon: "⚿", x: 50, y: 322, requires: ["manualHand"] },
@@ -85,8 +86,11 @@ export const TREES: SkillTree[] = [
     { id: "cardFastEnemy", icon: "☠", x: 30, y: 358, requires: ["cardBaseEnemy"] },
     { id: "cardChest", icon: "▣", x: 50, y: 358, requires: ["cardWeakEnemy"] },
     { id: "blueSiphon", icon: "⚿", x: 50, y: 376, requires: ["cardChest"] },
-    { id: "blueTrader", icon: "⚿", x: 30, y: 376, requires: ["blueSiphon"] },
-    { id: "keyToHp", icon: "♥", x: 10, y: 376, requires: ["blueTrader"] },
+    { id: "keyToHp", icon: "♥", x: 30, y: 376, requires: ["blueSiphon"] },
+    { id: "blueTrader", icon: "⚿", x: 10, y: 376, requires: ["keyToHp"] },
+    { id: "smeltBlue", icon: "♥", x: 10, y: 394, requires: ["blueTrader"] },
+    { id: "redTrader", icon: "⚿", x: 10, y: 412, requires: ["smeltBlue"] },
+    { id: "smeltRed", icon: "♥", x: 10, y: 430, requires: ["redTrader"] },
     { id: "cardRedKey", icon: "⚿", x: 70, y: 376, requires: ["blueSiphon"] },
     { id: "redSiphon", icon: "⚿", x: 90, y: 376, requires: ["cardRedKey"] },
     { id: "floorSkipReward", icon: "↷", x: 50, y: 394, requires: ["blueSiphon"] },

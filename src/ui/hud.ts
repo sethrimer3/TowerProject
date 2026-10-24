@@ -659,7 +659,7 @@ function renderCharges(game: Game) {
   // lit in its stat's colour, with the turns it has left.
   for (const id of USED_PROVISIONS) {
     const button = el(`${id}-stat`), left = game.provisionsLeft(id), boost = game.boostOf(id);
-    const name = { heal: "Traveler's elixir", edge: "Whetstone", guard: "Aegis charm" }[id];
+    const name = { heal: "Traveler's elixir", edge: "Vanguard Banner", guard: "Aegis charm" }[id];
     button.hidden = !game.save.provisions[id];
     button.classList.toggle("boosting", !!boost);
     text(`${id}-left`, left);

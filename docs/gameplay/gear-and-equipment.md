@@ -3,12 +3,12 @@
 ## Provisions
 
 **Provisions** are limited-use items for a run, bought with Gold on the **Gear** tab and kept for good: each one owned is a use that every run carries, a run already inside included.
-None is sold from the start: each opens with its own skill, 5 Inspiration each in the Inspiration tree for the three below (the **Traveler's Elixir** skill after Regen, **Whetstone** after ATK Up, right of it, and **Aegis Charm** after DEF Up, right of it), and in the Courage tree for the Gold Key and Bombs.
+None is sold from the start: each opens with its own skill, 5 Inspiration each in the Inspiration tree for the three below (the **Traveler's Elixir** skill after Regen, **Vanguard Banner** after ATK Up, left of it, and **Aegis Charm** after DEF Up, left of it), and in the Courage tree for the Gold Key and Bombs.
 The Gear tab, and its Provisions tab, show only once one is open.
 The first time one opens, a note says to press the Gear tab to buy provisions, and a hand points at the tab, on the forest's board and on the Inspiration and Courage trees, until it is pressed.
 None of them adds anything as a run starts: inside a run, each shows as a button beside Ignore and Target with its uses left, and a press uses one at once (it is no turn of its own).
 A **Traveler's elixir** fills HP to max HP, the HP bar filling up to it; with HP at max (or above it), it does nothing and isn't spent.
-A **Whetstone** raises ATK by 20% for the next 100 turns, and an **Aegis charm** raises DEF by 20% for the next 100 turns; while one is on, the hero glows red (the Whetstone) or blue (the Aegis charm), its button is lit, and another of the same kind can't be used until it runs out.
+A **Vanguard Banner** raises ATK by 20% for the next 100 turns, and an **Aegis charm** raises DEF by 20% for the next 100 turns; while one is on, the hero glows red (the Vanguard Banner) or blue (the Aegis charm), its button is lit, and another of the same kind can't be used until it runs out.
 A boost adds 20% of the stat as it was when pressed, and takes that much back off when it runs out.
 Undo never gives a use back and never takes an effect away: a heal stays healed, and a boost keeps counting down, as if no turn had been undone.
 Uses come back only with the next run.

@@ -1,12 +1,12 @@
 /** Provisions, bought with Gold on the Gear page and kept for good: each
  * one owned is one use every run carries, never a stat at its start. The
- * Traveler's elixir fills HP (`Game.useProvision`), the Whetstone and
+ * Traveler's elixir fills HP (`Game.useProvision`), the Vanguard Banner and
  * Aegis charm raise ATK or DEF by `PROVISION_BOOST_PERCENT` for
  * `PROVISION_BOOST_TURNS` turns, a Bomb is thrown at an enemy (`Game.arm`),
  * and each Gold Key hands the run a gold key every `PROVISION_KEY_FLOORS`
  * floors. Each costs `price.base` Gold (100), and each one after `ratio` (100) times
  * the last (`schedulePrice`). None is sold from the start: each `requires`
- * its skill (the elixir, Whetstone and Aegis charm on the Inspiration
+ * its skill (the elixir, Vanguard Banner and Aegis charm on the Inspiration
  * tree, the Gold Key and Bomb on the Courage tree), and shows, and sells,
  * only once that is owned. */
 export const GOLD_SHOP = [
@@ -26,8 +26,8 @@ export const GOLD_SHOP = [
   },
   {
     id: "edge",
-    name: "Whetstone",
-    description: "One more Whetstone every run: press it for +20% ATK for 100 turns",
+    name: "Vanguard Banner",
+    description: "One more Vanguard Banner every run: press it for +20% ATK for 100 turns",
     price: { base: 100, ratio: 100 },
     requires: "whetstoneProvision",
   },
@@ -52,7 +52,7 @@ export const USED_PROVISIONS = ["heal", "edge", "guard"] as const;
 export type UsedProvision = (typeof USED_PROVISIONS)[number];
 /** The stat each boosting provision raises while it lasts. */
 export const PROVISION_BOOSTS = { edge: "attack", guard: "defense" } as const satisfies Partial<Record<UsedProvision, string>>;
-/** How much a Whetstone or Aegis charm raises its stat, in percent, and
+/** How much a Vanguard Banner or Aegis charm raises its stat, in percent, and
  * for how many turns. */
 export const PROVISION_BOOST_PERCENT = 20;
 export const PROVISION_BOOST_TURNS = 100;

@@ -1,4 +1,4 @@
-import { SIPHONS, TRADER_YELLOW_KEYS, isSiphon, type CardId, type SiphonCard } from "../cards/cards.ts";
+import { SIPHONS, SMELTS, TRADERS, isSiphon, isSmelt, isTrader, type CardId, type SiphonCard } from "../cards/cards.ts";
 import { BADGES, badgesOn, badgeValue, type BadgeId, type RunBadge } from "../cards/badges.ts";
 import { TRAINING, type StatTrainingRow } from "../progression/training.ts";
 import { xpBase } from "../progression/xp.ts";
@@ -44,7 +44,7 @@ export interface ActivationHost extends DeskHost {
 }
 
 /** A card of the hand activating: a card that acts in place doing what it
- * does (a siphon, Blue Trader, Key to HP), and every card's badges paying
+ * does (a siphon, a trader, a smelt), and every card's badges paying
  * what they give. The hand's turn (`Game.handTurn`) decides when. */
 export class CardActivation {
   constructor(private readonly host: ActivationHost) {}
@@ -120,17 +120,19 @@ export class CardActivation {
     const host = this.host, run = host.run, p = run.player;
     host.rememberTurn();
     if (isSiphon(card)) this.siphon(card, scale);
-    else if (card === "blueTrader") {
-      p.keys.yellow = snap(p.keys.yellow - TRADER_YELLOW_KEYS);
-      p.keys.blue = snap(p.keys.blue + scale);
-      noteKey(run, "blue", scale);
-      host.gain(p.x, p.y, `−${TRADER_YELLOW_KEYS} gold keys`, { tile: { kind: "key", color: "yellow" } });
-      host.gain(p.x, p.y, `+${keyCount(scale)} blue key`, { tile: { kind: "key", color: "blue" } });
-    } else if (card === "keyToHp") {
-      const healed = snap(healUpTo(p.hp, snap(host.handRules.keyHeal() * scale), host.handRules.hpCeiling) - p.hp);
-      p.keys.yellow = snap(p.keys.yellow - 1);
+    else if (isTrader(card)) {
+      const { from, keys, to } = TRADERS[card];
+      p.keys[from] = snap(p.keys[from] - keys);
+      p.keys[to] = snap(p.keys[to] + scale);
+      noteKey(run, to, scale);
+      host.gain(p.x, p.y, `−${keys} ${keyWord(from)}s`, { tile: { kind: "key", color: from } });
+      host.gain(p.x, p.y, `+${keyCount(scale)} ${keyWord(to)}`, { tile: { kind: "key", color: to } });
+    } else if (isSmelt(card)) {
+      const color = SMELTS[card].color;
+      const healed = snap(healUpTo(p.hp, snap(host.handRules.smeltHeal(card) * scale), host.handRules.hpCeiling) - p.hp);
+      p.keys[color] = snap(p.keys[color] - 1);
       p.hp = snap(p.hp + healed);
-      host.gain(p.x, p.y, "−1 gold key", { tile: { kind: "key", color: "yellow" } });
+      host.gain(p.x, p.y, `−1 ${keyWord(color)}`, { tile: { kind: "key", color } });
       host.recordHeal(healed);
     }
     (run.cardUses ??= {})[card] = host.handRules.cardUses(card) + 1;

@@ -123,7 +123,7 @@ const SKILL_SILVER = new Set<UpgradeId>(["wealthy", "wishingWell", "onTheJob", "
 /** Skills about the hand show a card face. */
 const SKILL_CARDS: Partial<Record<UpgradeId, CardId>> = { cardDoorKey: "door", cardEnemy: "monster", combatStance: "stairs", buildout: "monster", cardHeal: "heal", cardAtkUp: "atkUp", cardDefUp: "defUp", cardBlueKey: "blueKey", keySiphon: "keySiphon",
   cardYellowDoor: "yellowDoor", cardHeartDoor: "heartDoor", cardWeakEnemy: "weakEnemy", cardBaseEnemy: "baseEnemy", cardStrongEnemy: "strongEnemy",
-  cardEliteEnemy: "eliteEnemy", cardBossEnemy: "bossEnemy", cardNonBossEnemy: "nonBossEnemy", cardFastEnemy: "fastEnemy", cardChest: "chest", blueSiphon: "blueSiphon", blueTrader: "blueTrader", keyToHp: "keyToHp",
+  cardEliteEnemy: "eliteEnemy", cardBossEnemy: "bossEnemy", cardNonBossEnemy: "nonBossEnemy", cardFastEnemy: "fastEnemy", cardChest: "chest", blueSiphon: "blueSiphon", blueTrader: "blueTrader", keyToHp: "keyToHp", smeltBlue: "smeltBlue", redTrader: "redTrader", smeltRed: "smeltRed",
   cardRedKey: "redKey", redSiphon: "redSiphon", cardTorch: "torch", cardWoodenDoor: "woodenDoor", heartDoorResilience: "heartDoor" };
 const SKILL_DETAIL_SPRITES: Partial<Record<UpgradeId, string>> = {
   shroud: "ui-ward", critical: "goal-damage-prediction", critPrediction: "goal-damage-prediction",

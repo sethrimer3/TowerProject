@@ -258,7 +258,7 @@ export const UPGRADES = [
     currency: "inspiration",
   },
   // The provisions the Inspiration tree opens, each beside the skill it
-  // follows: the elixir after Regen, the Whetstone after ATK Up and the
+  // follows: the elixir after Regen, the Vanguard Banner after ATK Up and the
   // Aegis charm after DEF Up.
   {
     id: "elixirProvision",
@@ -270,8 +270,8 @@ export const UPGRADES = [
   },
   {
     id: "whetstoneProvision",
-    name: "Whetstone",
-    description: "Open the Whetstone provision on the Gear page: a Whetstone every run, pressed for +20% ATK for 100 turns",
+    name: "Vanguard Banner",
+    description: "Open the Vanguard Banner provision on the Gear page: a Vanguard Banner every run, pressed for +20% ATK for 100 turns",
     base: 5,
     max: 1,
     currency: "inspiration",
@@ -471,8 +471,11 @@ export const UPGRADES = [
   { id: "cardChest", name: "Chest", description: "Add the CHEST card to your deck: it moves you toward the closest closed chest, treasure or area reward, and while you hold it each treasure chest has a 1.5% chance to be a Supply Chest and a 0.5% chance to be an Equipment Chest", card: "chest", base: 20, max: 1, currency: "inspiration" },
   { id: "heartDoorResilience", name: "Heart Door Resilience", description: "Open Heart Door Resilience research in the Archives: each level makes a Heart Door drain less HP", base: 20, max: 1, currency: "inspiration" },
   { id: "blueSiphon", name: "BK Siphon", description: "Add the BK SIPHON card to your deck: it trades DEF training levels, for the rest of the run, for a blue key, each use costing one level more than the last", card: "blueSiphon", base: 20, max: 1, currency: "inspiration" },
-  { id: "blueTrader", name: "BK Trader", description: "Add the BK TRADER card to your deck: it trades 3 gold keys for a blue key, without moving", card: "blueTrader", base: 20, max: 1, currency: "inspiration" },
-  { id: "keyToHp", name: "GK to HP", description: "Add the GK TO HP card to your deck: it trades a gold key for 10% of your max HP, without moving, while you are missing at least that much", card: "keyToHp", base: 20, max: 1, currency: "inspiration" },
+  { id: "keyToHp", name: "Smelt Gold Key", description: "Add the SMELT GK card to your deck: it trades a gold key for 10% of your max HP, without moving, while that much HP fits under your Overheal ceiling", card: "keyToHp", base: 20, max: 1, currency: "inspiration" },
+  { id: "blueTrader", name: "GK -> BK", description: "Add the GK -> BK card to your deck: it trades 3 gold keys for a blue key, without moving", card: "blueTrader", base: 20, max: 1, currency: "inspiration" },
+  { id: "smeltBlue", name: "Smelt Blue Key", description: "Add the SMELT BK card to your deck: it trades a blue key for 30% of your max HP, without moving, while that much HP fits under your Overheal ceiling", card: "smeltBlue", base: 20, max: 1, currency: "inspiration" },
+  { id: "redTrader", name: "BK -> RK", description: "Add the BK -> RK card to your deck: it trades 3 blue keys for a red key, without moving", card: "redTrader", base: 30, max: 1, currency: "inspiration" },
+  { id: "smeltRed", name: "Smelt Red Key", description: "Add the SMELT RK card to your deck: it trades a red key for 90% of your max HP, without moving, while that much HP fits under your Overheal ceiling", card: "smeltRed", base: 30, max: 1, currency: "inspiration" },
   { id: "cardRedKey", name: "Red Key", description: "Add the RED KEY card to your deck: it moves you toward the closest red key, and while you hold it each red key is worth 5% more and pays 3 more Gold", card: "redKey", base: 20, max: 1, currency: "inspiration" },
   { id: "redSiphon", name: "RK Siphon", description: "Add the RK SIPHON card to your deck: it trades ATK training levels, for the rest of the run, for a red key, each use costing one level more than the last", card: "redSiphon", base: 20, max: 1, currency: "inspiration" },
   { id: "floorSkipReward", name: "Floor Skip Reward", description: "Open Floor Skip Reward research in the Archives: each level pays a share of the Gold a skipped floor's chests and battles held", base: 20, max: 1, currency: "inspiration" },

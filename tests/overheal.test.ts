@@ -124,7 +124,7 @@ test("the game reads Overheal at the step: a potion drunk at full HP rises above
   assert.equal(overhealGame(0).stepRules.overheal, undefined, "no ranks, nothing above max");
 });
 
-test("GK TO HP may heal above max HP by Overheal", () => {
+test("the smelts may heal above max HP by Overheal", () => {
   const g = overhealGame(10);
   g.run.hand = ["keyToHp", "stairs"];
   const p = g.run.player;
@@ -137,6 +137,13 @@ test("GK TO HP may heal above max HP by Overheal", () => {
   none.run.hand = ["keyToHp", "stairs"];
   none.run.player.keys.yellow = 1;
   assert.equal(none.handRules.canAct("keyToHp"), false, "full HP, no Overheal");
+  const red = overhealGame(500);
+  red.run.hand = ["smeltRed", "stairs"];
+  red.run.player.keys.red = 1;
+  red.run.player.hp = red.run.player.maxHp;
+  assert.ok(red.handRules.canAct("smeltRed"), "room above max for 90% of it");
+  red.autoTurn();
+  assert.ok(Math.abs(red.run.player.hp - red.run.player.maxHp * 1.9) < 1e-6);
 });
 
 test("a regular potion is drawn red, like the HP bar, and a percent potion blue, like the Overheal bar", () => {

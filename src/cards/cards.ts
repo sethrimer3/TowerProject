@@ -71,8 +71,11 @@ export const CARDS = {
   fastEnemy: { name: "Fast Enemy", text: "Move toward the closest Fast enemy.", bonus: FOE },
   chest: { name: "Chest", text: "Move toward the closest closed chest: a treasure chest or an area reward chest.", bonus: { chest: { supply: 1.5, equipment: 0.5 } } },
   blueSiphon: { name: "BK Siphon", text: "Trade DEF training levels for a blue key, without moving, for the rest of the run. The first use takes 1 level and each use after takes 1 more (2, then 3…). Skipped without enough levels left." },
-  blueTrader: { name: "BK Trader", text: "Trade 3 gold keys for a blue key, without moving. Skipped with fewer than 3 gold keys." },
-  keyToHp: { name: "GK to HP", text: "Trade a gold key for 10% of your max HP, without moving. Skipped without a gold key, or while you are missing less than 10% of your max HP." },
+  keyToHp: { name: "Smelt GK", text: "Trade a gold key for 10% of your max HP, without moving, healing past max HP up to your Overheal ceiling. Skipped without a gold key, or while the whole heal wouldn't fit under that ceiling." },
+  blueTrader: { name: "GK -> BK", text: "Trade 3 gold keys for a blue key, without moving. Skipped with fewer than 3 gold keys." },
+  smeltBlue: { name: "Smelt BK", text: "Trade a blue key for 30% of your max HP, without moving, healing past max HP up to your Overheal ceiling. Skipped without a blue key, or while the whole heal wouldn't fit under that ceiling." },
+  redTrader: { name: "BK -> RK", text: "Trade 3 blue keys for a red key, without moving. Skipped with fewer than 3 blue keys." },
+  smeltRed: { name: "Smelt RK", text: "Trade a red key for 90% of your max HP, without moving, healing past max HP up to your Overheal ceiling. Skipped without a red key, or while the whole heal wouldn't fit under that ceiling." },
   redKey: { name: "Red Key", text: "Move toward the closest red key.", bonus: { key: { color: "red", percent: 5, gold: 3 } } },
   redSiphon: { name: "RK Siphon", text: "Trade ATK training levels for a red key, without moving, for the rest of the run. The first use takes 1 level and each use after takes 1 more (2, then 3…). Skipped without enough levels left." },
   torch: { name: "Torch", text: "Move toward the closest lit torch, putting it out." },
@@ -91,10 +94,23 @@ export const SIPHONS = {
 } as const satisfies Partial<Record<CardId, { row: TrainingId; color: KeyColor }>>;
 export type SiphonCard = keyof typeof SIPHONS;
 export const isSiphon = (id: CardId): id is SiphonCard => id in SIPHONS;
-/** BK TRADER's price: the gold keys it trades for one blue key. */
-export const TRADER_YELLOW_KEYS = 3;
-/** GK TO HP's heal: this percent of max HP for one gold key. */
-export const KEY_TO_HP_PERCENT = 10;
+/** The key traders: the keys of one colour each trades, how many, for
+ * one key of the next colour up. */
+export const TRADERS = {
+  blueTrader: { from: "yellow", keys: 3, to: "blue" },
+  redTrader: { from: "blue", keys: 3, to: "red" },
+} as const satisfies Partial<Record<CardId, { from: KeyColor; keys: number; to: KeyColor }>>;
+export type TraderCard = keyof typeof TRADERS;
+export const isTrader = (id: CardId): id is TraderCard => id in TRADERS;
+/** The smelts: the key each trades, and the percent of max HP it heals
+ * for it (up to the Overheal ceiling). */
+export const SMELTS = {
+  keyToHp: { color: "yellow", percent: 10 },
+  smeltBlue: { color: "blue", percent: 30 },
+  smeltRed: { color: "red", percent: 90 },
+} as const satisfies Partial<Record<CardId, { color: KeyColor; percent: number }>>;
+export type SmeltCard = keyof typeof SMELTS;
+export const isSmelt = (id: CardId): id is SmeltCard => id in SMELTS;
 /** What card `id` does, as the player is told: STAIRS says how it climbs
  * in the Delve only once Into the depths is owned. */
 export function cardText(id: CardId, upgrades: Record<UpgradeId, number>): string {
@@ -273,7 +289,7 @@ export function placeCard(hand: readonly CardId[], id: CardId, slot: number, slo
 export type CardPlan = { card: number; path: Step[] };
 /** Cards that act where the hero stands, a turn with no step, rather than
  * moving toward a target: the siphons and the key trades. */
-export const IN_PLACE = new Set<CardId>(["keySiphon", "blueSiphon", "redSiphon", "blueTrader", "keyToHp"]);
+export const IN_PLACE = new Set<CardId>(["keySiphon", "blueSiphon", "redSiphon", "blueTrader", "redTrader", "keyToHp", "smeltBlue", "smeltRed"]);
 /** What a card's badge changes about planning it (cards/badges.ts), as
  * `HandAt.cardRules` gives it: nothing when absent. */
 export type CardRules = {
@@ -422,6 +438,9 @@ const WANTS: Record<CardId, (t: Tile, at: HandAt, rules: CardRules | undefined, 
   blueSiphon: never,
   blueTrader: never,
   keyToHp: never,
+  smeltBlue: never,
+  redTrader: never,
+  smeltRed: never,
   redKey: (t) => t.kind === "key" && t.color === "red",
   redSiphon: never,
   torch: (_t, at, _rules, r) => litTorches(at.world).has(point(r.x, r.y)),

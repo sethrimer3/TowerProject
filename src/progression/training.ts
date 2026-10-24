@@ -391,7 +391,7 @@ export const TRAINING = [
   {
     id: "overheal", name: "Overheal", group: "utility", requires: "overheal", cost: 1, max: 500,
     curve: { per: 31 }, base: 1000, off: 1000, scale: 1000, unit: "×",
-    description: "Raises how far potions, GK to HP and badge heals can heal you above max HP.",
+    description: "Raises how far potions, the smelt cards and badge heals can heal you above max HP.",
     silver: overhealPrices, gold: overhealPrices,
   },
 ] as const satisfies readonly TrainingDef[];

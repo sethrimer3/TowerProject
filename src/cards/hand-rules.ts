@@ -1,7 +1,7 @@
 import { BADGES, badgeOn, badgesOn, badgeValue, type RunBadge } from "./badges.ts";
 import type { Board } from "../board.ts";
 import type { DoorDiscounts } from "../doors.ts";
-import { KEY_TO_HP_PERCENT, SIPHONS, TRADER_YELLOW_KEYS, isSiphon, linkedToNext, walkAll, type CardId, type CardRules, type HandAt, type SiphonCard } from "./cards.ts";
+import { SIPHONS, SMELTS, TRADERS, isSiphon, isSmelt, isTrader, linkedToNext, walkAll, type CardId, type CardRules, type HandAt, type SiphonCard, type SmeltCard } from "./cards.ts";
 import type { Mode } from "../entities.ts";
 import type { Run } from "../runs.ts";
 import type { Save } from "../save/shape.ts";
@@ -59,7 +59,7 @@ export class HandRules implements HandAt {
   get shotReach() {
     return this.host.shotReach;
   }
-  /** The most HP GK to HP and badge heals may heal to: max HP, raised by Overheal. */
+  /** The most HP the smelts and badge heals may heal to: max HP, raised by Overheal. */
   get hpCeiling() {
     return this.host.hpCeiling;
   }
@@ -262,23 +262,24 @@ export class HandRules implements HandAt {
 
   /** Whether a card that acts in place can act now (`planHand` asks),
    * inside a run only: a siphon while enough of its training levels are
-   * left for its next use, BK TRADER while 3 gold keys are held, and GK TO
-   * HP while a gold key is held and its whole heal would land. */
+   * left for its next use, a trader (GK -> BK, BK -> RK) while the 3 keys
+   * it trades are held, and a smelt (Smelt GK, BK, RK) while its key is held
+   * and its whole heal would land under the Overheal ceiling. */
   canAct(card: CardId) {
     if (this.run.outside) return false;
     const p = this.run.player;
     if (isSiphon(card)) return this.siphonLevel(card) >= this.siphonCost(card);
-    if (card === "blueTrader") return p.keys.yellow >= TRADER_YELLOW_KEYS;
-    if (card === "keyToHp") return p.keys.yellow >= 1 && snap(this.hpCeiling - p.hp) >= this.keyHeal();
+    if (isTrader(card)) return p.keys[TRADERS[card].from] >= TRADERS[card].keys;
+    if (isSmelt(card)) return p.keys[SMELTS[card].color] >= 1 && snap(this.hpCeiling - p.hp) >= this.smeltHeal(card);
     return false;
   }
   /** Times card `card`, one that acts in place, has acted this run. */
   cardUses(card: CardId) {
     return this.run.cardUses?.[card] ?? 0;
   }
-  /** GK TO HP's heal: 10% of max HP. */
-  keyHeal() {
-    return snap((this.run.player.maxHp * KEY_TO_HP_PERCENT) / 100);
+  /** Smelt `card`'s heal: its percent of max HP (10%, 30% or 90%). */
+  smeltHeal(card: SmeltCard) {
+    return snap((this.run.player.maxHp * SMELTS[card].percent) / 100);
   }
   /** The run's training level of the row siphon `card` drains (Max HP for
    * GK SIPHON, DEF for BK SIPHON, ATK for RK SIPHON): the hero's own ranks

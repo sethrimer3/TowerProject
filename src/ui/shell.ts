@@ -39,11 +39,11 @@ const NAV = `<nav aria-label="Main navigation">${NAV_TABS
 /** Inside a run, under the hand: a button for each Training group, to train for the run with Silver (`RunTrainingBar`). */
 const TRAINING_BAR = `<div id="training-bar" class="training-bar" role="group" aria-label="Training for this run" hidden></div><div id="drill-tip" class="drill-tip" role="tooltip" hidden></div>`;
 /** Focus uses left, before the potions: a lightning bolt and the count. */
-/** The Traveler's elixir, Whetstone and Aegis charm uses left: each a
+/** The Traveler's elixir, Vanguard Banner and Aegis charm uses left: each a
  * button that uses one at once. */
 const PROVISION_BUTTONS = [
   ["heal", "potion_flat", "Traveler's elixir: press to fill HP to max HP"],
-  ["edge", "upgrade_attack", `Whetstone: press for +${PROVISION_BOOST_PERCENT}% ATK for ${PROVISION_BOOST_TURNS} turns`],
+  ["edge", "upgrade_attack", `Vanguard Banner: press for +${PROVISION_BOOST_PERCENT}% ATK for ${PROVISION_BOOST_TURNS} turns`],
   ["guard", "upgrade_defense", `Aegis charm: press for +${PROVISION_BOOST_PERCENT}% DEF for ${PROVISION_BOOST_TURNS} turns`],
 ] as const satisfies readonly (readonly [UsedProvision, ...string[]])[];
 const PROVISION_BUTTONS_HTML = PROVISION_BUTTONS.map(([id, sprite, title]) =>

@@ -56,7 +56,7 @@ export const MISSIONS: Record<MissionType, MissionDef> = {
   runTraining: { text: "Buy 10 run training upgrades", target: 10, offered: (s) => !!s.upgrades.onTheJob },
   blueKeys: { text: "Pick up 10 blue keys", target: 10, offered: (s) => reached(s, (t) => keyFirstFloor("blue", t)) },
   redKeys: { text: "Pick up 5 red keys", target: 5, offered: (s) => reached(s, (t) => keyFirstFloor("red", t)) },
-  // A provision pressed or thrown in a run (an elixir, Whetstone, Aegis charm or Bomb), once one is owned.
+  // A provision pressed or thrown in a run (an elixir, Vanguard Banner, Aegis charm or Bomb), once one is owned.
   provisions: { text: "Use 1 provision in a run", target: 1, offered: (s) => USED_IN_RUN.some((id) => s.provisions[id] > 0) },
 };
 export const MISSION_TYPES = Object.keys(MISSIONS) as MissionType[];

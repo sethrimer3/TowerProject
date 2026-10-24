@@ -84,14 +84,14 @@ test("Shroud follows Trainers, ahead of Critical; Greater Heal, then Recovery, R
   assert.deepEqual([at("manualHand").x, at("manualHand").y, at("manualHand").requires], [50, 295, ["keySiphon"]], "Manual Hand sits under GK Siphon");
   assert.deepEqual([at("cardYellowDoor").y, at("cardYellowDoor").requires], [322, ["manualHand"]], "the cards hang from Manual Hand, a row clear of it and Revive");
 });
-test("the hand's skills run Buildout, Trainers, Shroud, Critical to the Archives, Gold Key and On the Job off Buildout, ATK Up then DEF Up after Gold Key with their provisions to their right, Regen below On the Job with Heal and the elixir under it, Larger Hand sits by itself to Shroud's right, and Buildout, Trainers and On the Job cost 1 (Critical 2)", () => {
+test("the hand's skills run Buildout, Trainers, Shroud, Critical to the Archives, Gold Key and On the Job off Buildout, ATK Up then DEF Up under Gold Key with their provisions to their left, Regen below On the Job with Heal and the elixir under it, Larger Hand sits by itself under Heal, and Buildout, Trainers and On the Job cost 1 (Critical 2)", () => {
   const at = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;
   assert.deepEqual(["buildout", "trainers", "shroud", "critical", "archives", "onTheJob", "regen", "cardHeal", "elixirProvision", "cardYellowKey", "cardAtkUp", "whetstoneProvision", "cardDefUp", "aegisProvision"].map((id) => at(id).requires),
     [["combatStance"], ["buildout"], ["trainers"], ["shroud"], ["critical"], ["buildout"], ["onTheJob"], ["regen"], ["regen"], ["buildout"], ["cardYellowKey"], ["cardAtkUp"], ["cardAtkUp"], ["cardDefUp"]]);
-  assert.deepEqual(["cardYellowKey", "cardAtkUp", "whetstoneProvision", "cardDefUp", "aegisProvision"].map((id) => [at(id).x, at(id).y]), [[20, 84], [10, 102], [30, 102], [10, 120], [30, 120]], "Gold Key left of Buildout, ATK Up and DEF Up under it, each provision to its right");
+  assert.deepEqual(["cardYellowKey", "cardAtkUp", "whetstoneProvision", "cardDefUp", "aegisProvision"].map((id) => [at(id).x, at(id).y]), [[30, 84], [30, 102], [10, 102], [30, 120], [10, 120]], "Gold Key left of Buildout, ATK Up and DEF Up under it, each provision to its left");
   assert.deepEqual(["cardHeal", "elixirProvision"].map((id) => [at(id).x, at(id).y]), [[70, 120], [90, 120]], "Heal and the elixir either side under Regen");
   assert.deepEqual(["buildout", "trainers", "shroud", "critical", "archives"].map((id) => [at(id).x, at(id).y]), [[50, 84], [50, 120], [50, 138], [50, 156], [50, 174]], "down the middle, Shroud between Trainers and Critical");
-  assert.deepEqual([at("largerHand").x, at("largerHand").y, at("largerHand").requires], [80, 138, ["trainers"]], "Larger Hand stands right of Shroud, alone");
+  assert.deepEqual([at("largerHand").x, at("largerHand").y, at("largerHand").requires], [70, 138, ["trainers"]], "Larger Hand stands under Heal, alone");
   assert.deepEqual([at("critPrediction").x, at("critPrediction").y, at("critPrediction").requires], [30, 156, ["critical"]], "Critical Prediction stands left of Critical");
   assert.ok(!TREES[0].nodes.some((n) => n.requires.includes("largerHand")), "nothing waits for Larger Hand");
   assert.ok(at("onTheJob").x > at("buildout").x && at("onTheJob").y === at("buildout").y, "On the Job sits right of Buildout");

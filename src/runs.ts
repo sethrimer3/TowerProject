@@ -52,12 +52,12 @@ export type RunCore = {
   /** Bombs thrown this run: a run has one for each Bomb provision owned,
    * so what is left is those less these. */
   bombsUsed?: number;
-  /** Provisions used this run (Traveler's elixir, Whetstone, Aegis charm):
+  /** Provisions used this run (Traveler's elixir, Vanguard Banner, Aegis charm):
    * a run has one use for each owned, so what is left is those less
    * these. Undo never gives one back: the count rides onto the run it
    * restores. */
   provisionsUsed?: Partial<Record<UsedProvision, number>>;
-  /** The Whetstone's and Aegis charm's boosts going on: the ATK or DEF
+  /** The Vanguard Banner's and Aegis charm's boosts going on: the ATK or DEF
    * each added to the hero (on every copy of the run undo holds, so undo
    * never takes it away) and the turns it has left. Undo carries these
    * onto the run it restores, so a boost keeps counting down. */

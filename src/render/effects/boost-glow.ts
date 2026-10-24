@@ -6,7 +6,7 @@ const PULSE_MS = 1400;
 /** Each boost's glow colour: ATK red, DEF blue. */
 const GLOW: Record<Boosted, string> = { attack: "255, 74, 52", defense: "70, 150, 255" };
 
-/** The boosts going on (a Whetstone's ATK, an Aegis charm's DEF), each a
+/** The boosts going on (a Vanguard Banner's ATK, an Aegis charm's DEF), each a
  * glow round the hero, in its tile space: a soft ring of its colour that
  * swells and fades, the two out of step when both go on; with reduced
  * motion, the ring holds still. */

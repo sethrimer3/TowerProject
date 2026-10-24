@@ -1047,6 +1047,21 @@
       "width": 48,
       "height": 64
     },
+    "card-smeltBlue": {
+      "file": "card-smeltBlue.png",
+      "width": 48,
+      "height": 64
+    },
+    "card-redTrader": {
+      "file": "card-redTrader.png",
+      "width": 48,
+      "height": 64
+    },
+    "card-smeltRed": {
+      "file": "card-smeltRed.png",
+      "width": 48,
+      "height": 64
+    },
     "card-redKey": {
       "file": "card-redKey.png",
       "width": 48,

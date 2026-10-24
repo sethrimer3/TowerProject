@@ -297,7 +297,7 @@ _Avoid_: resurrection, second life
 The striped potion drawn blue (a regular potion is red): it restores a regular potion's HP plus a share of max HP (1% with the Recovery skill, more with Potion % training). With Recovery owned, each potion a run finds may be one, by a chance fixed when the run goes inside (2%, more with Find Potion training, up to 20%); otherwise each is a regular potion.
 
 **Overheal**:
-HP held above max HP, which the Overheal skill allows: potions, GK TO HP and badge heals may heal up to the **Overheal ceiling**, max HP times the Overheal training row's value (×1 to ×16.5); other heals stop at max HP and never lower HP above it. The HUD shows it as a blue bar over the full red HP bar.
+HP held above max HP, which the Overheal skill allows: potions, the smelts and badge heals may heal up to the **Overheal ceiling**, max HP times the Overheal training row's value (×1 to ×16.5); other heals stop at max HP and never lower HP above it. The HUD shows it as a blue bar over the full red HP bar.
 _Avoid_: overhealth, shield HP
 
 **Lifesteal**:
@@ -324,7 +324,7 @@ A card that moves nowhere: its turn trades Max HP training levels, for the rest 
 _Avoid_: drain
 
 **Key trade**:
-A card that moves nowhere and trades keys it holds for something else: **BK Trader** (3 gold keys for a blue key) and **GK to HP** (a gold key for 10% of max HP, only while that much HP is missing). Skipped while it can't pay.
+A card that moves nowhere and trades keys it holds for something else: the traders **GK -> BK** (3 gold keys for a blue key) and **BK -> RK** (3 blue keys for a red key), and the **smelts**, **Smelt GK**, **Smelt BK** and **Smelt RK** (a gold, blue or red key for 10%, 30% or 90% of max HP, healing past max HP up to the Overheal ceiling, only while the whole heal fits under it). Skipped while it can't pay.
 
 **Regen**:
 The HP a hero regains with every step taken in a run, after whatever the step did, up to max HP. A Dash turn counts as one step, but for the first dashed tiles Dash Regen research lets regain HP too. The Regen skill opens Regen training, which gives it.
@@ -573,7 +573,7 @@ Sending the hero inside a run to a tile the player taps, ahead of the hand, unti
 _Avoid_: waypoint, goto
 
 **Boost**:
-A Whetstone's or Aegis charm's raise of ATK or DEF by 20% for 100 turns of a run, the hero glowing red or blue while it lasts; undo never takes it away.
+A Vanguard Banner's or Aegis charm's raise of ATK or DEF by 20% for 100 turns of a run, the hero glowing red or blue while it lasts; undo never takes it away.
 _Avoid_: buff
 
 **Bomb**:

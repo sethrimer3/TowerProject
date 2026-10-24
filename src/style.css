@@ -4071,7 +4071,7 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .charge-stat svg { width: 15px; height: 15px; }
 .charge-stat.armed { border-color: #ffe27a; box-shadow: 0 0 6px #ffe27a; }
 .provision-stat .charge-icon { width: 17px; height: 17px; image-rendering: pixelated; }
-/* A Whetstone's or Aegis charm's boost going on: its button lit like the hero's glow. */
+/* A Vanguard Banner's or Aegis charm's boost going on: its button lit like the hero's glow. */
 #edge-stat.boosting { border-color: #ff6a5a; box-shadow: 0 0 6px #ff6a5a; }
 #guard-stat.boosting { border-color: #6ab4ff; box-shadow: 0 0 6px #6ab4ff; }
 .focus-stat b {

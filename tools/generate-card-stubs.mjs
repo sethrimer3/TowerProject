@@ -62,7 +62,7 @@ const FONT = {
   R: ["110", "101", "110", "101", "101"], S: ["011", "100", "010", "001", "110"], T: ["111", "010", "010", "010", "010"],
   U: ["101", "101", "101", "101", "111"], Y: ["101", "101", "010", "010", "010"],
   B: ["110", "101", "110", "101", "110"], C: ["011", "100", "100", "100", "011"], F: ["111", "100", "110", "100", "100"], W:["101", "101", "111", "111", "101"], " ": ["000", "000", "000", "000", "000"],
-  G: ["011", "100", "101", "101", "011"], "-": ["000", "000", "111", "000", "000"],
+  G: ["011", "100", "101", "101", "011"], "-": ["000", "000", "111", "000", "000"], ">": ["100", "010", "001", "010", "100"],
 };
 /** The card's name under its icon: on two lines when one is too wide. */
 function nameLabel(p, text) {
@@ -153,6 +153,14 @@ function monster(p, body = C.green, shade = C.green2, chevrons = 0) {
   }
 }
 /** A small key laid across the icon (the siphons'), in `color` with `rim`. */
+/** A smelt's icon: a heart with a white cross on it, `color` (its key's)
+ * at the cross's centre. */
+function smelt(p, color) {
+  heart(p);
+  rect(p, 22, 17, 4, 12, C.white);
+  rect(p, 18, 21, 12, 4, C.white);
+  rect(p, 22, 21, 4, 4, color);
+}
 function smallKey(p, color, rim, y = 18) {
   rect(p, 11, y, 9, 9, rim);
   rect(p, 12, y + 1, 7, 7, color);
@@ -271,12 +279,16 @@ const ICONS = {
     smallKey(p, C.gold, C.gold2, 10);
     smallKey(p, C.sky, C.blue, 26);
   },
-  keyToHp(p) {
-    // A gold key traded for HP: a heart with a white cross on it.
-    heart(p);
-    rect(p, 22, 17, 4, 12, C.white);
-    rect(p, 18, 21, 12, 4, C.white);
+  redTrader(p) {
+    // Blue keys for a red one.
+    smallKey(p, C.sky, C.blue, 10);
+    smallKey(p, C.red, C.red2, 26);
   },
+  // A key smelted into HP: a heart with a white cross on it, and the key's
+  // colour on the cross's centre.
+  keyToHp: (p) => smelt(p, C.gold),
+  smeltBlue: (p) => smelt(p, C.sky),
+  smeltRed: (p) => smelt(p, C.red2),
   redKey: (p) => key(p, C.red, C.red2),
   redSiphon(p) {
     // ATK traded for a red key.
@@ -304,7 +316,7 @@ const ICONS = {
 
 const CARDS = [["stairs", "STAIRS"], ["heal", "HEAL"], ["door", "DOOR"], ["key", "KEY"], ["yellowKey", "GOLD KEY"], ["blueKey", "BLUE KEY"], ["monster", "ENEMY"], ["atkUp", "ATK UP"], ["defUp", "DEF UP"], ["keySiphon", "GK SIPHON"],
   ["yellowDoor", "GOLD DOOR"], ["heartDoor", "HEART DOOR"], ["weakEnemy", "WEAK ENEMY"], ["baseEnemy", "BASE ENEMY"], ["strongEnemy", "STRONG ENEMY"],
-  ["eliteEnemy", "ELITE ENEMY"], ["bossEnemy", "BOSS ENEMY"], ["nonBossEnemy", "NON-BOSS ENEMY"], ["fastEnemy", "FAST ENEMY"], ["chest", "CHEST"], ["blueSiphon", "BK SIPHON"], ["blueTrader", "BK TRADER"], ["keyToHp", "GK TO HP"],
+  ["eliteEnemy", "ELITE ENEMY"], ["bossEnemy", "BOSS ENEMY"], ["nonBossEnemy", "NON-BOSS ENEMY"], ["fastEnemy", "FAST ENEMY"], ["chest", "CHEST"], ["blueSiphon", "BK SIPHON"], ["keyToHp", "SMELT GK"], ["blueTrader", "GK -> BK"], ["smeltBlue", "SMELT BK"], ["redTrader", "BK -> RK"], ["smeltRed", "SMELT RK"],
   ["redKey", "RED KEY"], ["redSiphon", "RK SIPHON"], ["torch", "TORCH"], ["woodenDoor", "WOODEN DOOR"], ["flyingEnemy", "FLYING ENEMY"], ["archer", "ARCHER"]];
 mkdirSync(OUT, { recursive: true });
 for (const [id, name] of CARDS) {
