@@ -2,23 +2,22 @@
 
 ## Interface sprites
 
-Open Settings from the HUD menu and turn **Sprites** on to use matching pixel-art controls, icons, cards, heroes, enemies, pickups, terrain, buildings and small dungeon decorations and Defend city details throughout Tower, Delve and Defend.
-This option starts off, applies immediately and is remembered when you reload.
-While Sprites is checked, **Animations** and **Square doors** appear directly below it; both start off and remember your choices.
+The game uses matching pixel-art controls, icons, cards, heroes, enemies, pickups, terrain, buildings and dungeon decorations by default.
+A loading screen waits for the artwork and fonts before the game appears; if loading fails, use Retry after checking your connection.
+Settings offers **Animations** and **Square doors** as independent checkboxes; both start off and remember your choices.
 Animations enables matching torch frames, subtle potion bubbles, occasional key shines and a small idle motion after the hero stops.
 The skull and crossbones shown when the hero falls also uses matching PNG art, with a short animation while Animations is on.
 Reduce motion keeps these frames still; movement and combat stop the hero's idle motion.
 Square doors uses tile-filling rectangular doors with the same key and HP requirements as before.
 Tower I sprite floors mix large slabs and smaller bricks with connected joints across neighboring tiles.
 Tower II has warm limestone walls and rectangular paving; Tower III has cool basalt walls and octagonal paving with small square insets.
-Each of these two towers keeps its own single floor-and-wall tileset throughout the climb while Sprites is on and the Classic Game theme is selected.
-Turn it off to return to your selected UI theme's usual controls.
+Each of these two towers keeps its own single floor-and-wall tileset throughout the climb while the Classic Game theme is selected.
+Choose another owned UI or Game theme in Settings to change its appearance.
 The default Medieval and Classic interface looks use the sprites; other UI themes override them.
-Other Game themes override world sprites independently, and returning to Classic restores them while the option is on.
-The separate **Turn off board sprites** option controls the dungeon artwork, including the optional shared sprite kit.
-With Sprites on, small navigation and close marks, slider tracks and handles, reward stars, and the Gold-bonus and enemy-odds popup frames share the pixel-art look.
+Other Game themes override world sprites independently, and returning to Classic restores them.
+small navigation and close marks, slider tracks and handles, reward stars, and the Gold-bonus and enemy-odds popup frames share the pixel-art look.
 Sliders still work with pointer or keyboard input and show their values as live text.
-The active interface kit uses custom pixel lettering, with button frames that leave room for text and icons. On phones, ad controls stack and Training values sit above their purchase buttons.
+The default interface uses custom pixel lettering, with button frames that leave room for text and icons. On phones, ad controls stack and Training values sit above their purchase buttons.
 The Classic board kit also uses pixel lettering for damage, rewards and other annotations, plus matching Target, Ignore, skipped and blocked tile marks. Torch lighting follows the active sprite shapes.
 With environmental decoration enabled, the Classic sprite kit also gives moss, pools, vine leaves, flowers and glowing mushrooms matching PNG artwork, preserving their locations, water movement and interactions.
 In the forest, the Classic sprite kit shows the enormous lower bases of the Tower and Delve mountain extending beyond the top of the view.

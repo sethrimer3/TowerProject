@@ -12,7 +12,7 @@ import { doorColor, doorDescription, doorName, doorRule, drainsHp, KEY_NAMES } f
 import { MODES } from "../modes.ts";
 import { litTorches } from "../board.ts";
 import { point } from "../entities.ts";
-import { area1ItemId } from "../render/area1-tileset.ts";
+import { itemSpriteId } from "../sprites/items.ts";
 import { snap } from "../exact.ts";
 import { goldIcon, itemSprite, uiSprite } from "./dom.ts";
 
@@ -86,7 +86,7 @@ function critPrediction(c: CritForecast) {
  * the amount a step onto it adds now, with every bonus counted, rather than
  * the stat before and after, which Regen and the rest soon outdate. */
 const gain = (t: Tile, amount: string, label = "") =>
-  `<span class="tile-gain">${itemSprite(area1ItemId(t)!, "stat-sprite")} +${amount}${label}</span>`;
+  `<span class="tile-gain">${itemSprite(itemSpriteId(t)!, "stat-sprite")} +${amount}${label}</span>`;
 
 const hits = (n: number) => (n === 1 ? "Instakill" : `${n.toLocaleString("en-US")} hits to defeat`);
 

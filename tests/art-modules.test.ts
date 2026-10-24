@@ -5,7 +5,6 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { World } from "../src/delve/world.ts";
 import type { Board } from "../src/board.ts";
-import { area1ItemId, floorVariant, wallAdjacencyMask } from "../src/render/area1-tileset.ts";
 import { TreeParticles } from "../src/render/effects/tree-particles.ts";
 import { withStream } from "../src/random.ts";
 import { DecorLayer, type DecorFrame, type MirroredSprites } from "../src/render/decor/decor-render.ts";
@@ -89,45 +88,6 @@ const digest = () => {
   hash = createHash("sha256");
   return out;
 };
-
-// ------------------------------------------------------------------ area one
-
-const KINDS: Tile["kind"][] = ["wall", "floor", "enemy", "key", "door", "potion", "attack", "defense", "reward", "treasure", "openedChest", "stairs", "oneway"];
-const COLORS: (KeyColor | undefined)[] = [undefined, "yellow", "blue", "red"];
-const TIERS: Tile["tier"][] = [undefined, "silver", "gold"];
-
-function tiles(): Tile[] {
-  const out: Tile[] = [];
-  for (const kind of KINDS) for (const color of COLORS) for (const tier of TIERS) out.push({ kind, color, tier });
-  const keys: KeyColor[][] = [["yellow"], ["blue"], ["red"], ["yellow", "blue"], ["red", "yellow"], ["blue", "red"], ["red", "blue", "yellow"], []];
-  for (const k of keys) for (const mode of ["all", "any"] as const) out.push({ kind: "door", door: { type: "keys", keys: k, mode } });
-  out.push({ kind: "door", door: { type: "fullHp" } });
-  return out;
-}
-
-function area1(): Record<string, string> {
-  const out: Record<string, string> = {};
-  out.ids = createHash("sha256").update(JSON.stringify(tiles().map(area1ItemId))).digest("hex").slice(0, 16);
-  const masks = [];
-  for (let m = 0; m < 16; m++) masks.push(wallAdjacencyMask({ northWall: !!(m & 1), eastWall: !!(m & 2), southWall: !!(m & 4), westWall: !!(m & 8) }));
-  const variants = [];
-  for (const seed of [0, 7, 99, 123456]) for (let y = -3; y < 20; y++) for (let x = -3; x < 20; x++) variants.push(floorVariant(x, y, seed));
-  out.variants = createHash("sha256").update(JSON.stringify([masks, variants])).digest("hex").slice(0, 16);
-  return out;
-}
-
-async function area1Draws(state: "loaded" | "loading" | "broken") {
-  imageState = state;
-  // Each state gets its own module copy, since the image cache keeps the first.
-  const mod = (await import(`../src/render/area1-tileset.ts?${state}`)) as typeof import("../src/render/area1-tileset.ts");
-  const c = recorder("tile");
-  for (const t of tiles()) {
-    note(`door ${JSON.stringify(t)} ${mod.drawArea1Door(c, t)}`);
-    note(`item ${JSON.stringify(t)} ${mod.drawArea1Item(c, t)}`);
-  }
-  for (const seed of [3, 99]) for (let y = 0; y < 6; y++) for (let x = 0; x < 6; x++) note(`floor ${String(mod.area1FloorSprite(x, y, seed))}`);
-  return digest();
-}
 
 // ------------------------------------------------------------ tree particles
 
@@ -366,8 +326,7 @@ function budgeted(): string {
 }
 
 async function record() {
-  const out: Record<string, string> = { ...area1() };
-  for (const state of ["loaded", "loading", "broken"] as const) out[`draw ${state}`] = await area1Draws(state);
+  const out: Record<string, string> = {};
   for (const seed of [1, 2, 3, 7]) out[`tree ${seed}`] = treeRun(seed);
   out["tree steady"] = treeSteady();
   out["fluid steps"] = fluidSteps();
@@ -384,7 +343,7 @@ async function record() {
   return out;
 }
 
-test("area-one sprites, skill-tree particles and decor draw the same as the recorded golden", async () => {
+test("skill-tree particles and decor draw the same as the recorded golden", async () => {
   const actual = await record();
   if (process.env.UPDATE_GOLDEN || !existsSync(GOLDEN)) {
     writeFileSync(GOLDEN, JSON.stringify(actual, null, 1) + "\n");

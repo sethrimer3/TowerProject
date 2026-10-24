@@ -14,7 +14,6 @@ import { ICON_SPRITES, WORLD_SPRITES, CONTROL_SPRITES, DETAIL_SPRITES, CITY_SPRI
 import { GOAL_SPRITES, UI_DETAIL_SPRITES, UI_ORNAMENT_SPRITES } from "../src/sprites/ui-details.ts";
 import { CARDS } from "../src/cards/cards.ts";
 import { ICON_ROWS } from "../src/ui/equipment-icons.ts";
-import { THEMED_TILESET_URLS } from "../src/render/themed-tilesets.ts";
 import { SPRITE_TERRAIN } from "../src/sprites/terrain-index.ts";
 import { paintContents, paintHero } from "../src/render/tile-painters.ts";
 
@@ -29,12 +28,7 @@ test("every world, UI, Equipment and card sprite ships as a real native-sized PN
     assert.equal(png.readUInt32BE(16), asset.width, id);
     assert.equal(png.readUInt32BE(20), asset.height, id);
   }
-  for (const set of THEMED_TILESET_URLS) for (const url of [...set.floors, ...set.walls]) {
-    const frame = SPRITE_TERRAIN[url.split("assets/")[1]];
-    assert.ok(frame, url);
-    assert.equal(frame.x % 24, 0);
-    assert.equal(frame.y % 24, 0);
-  }
+
 });
 
 test("world sprites preserve facing and all colored-key door requirements", () => {
@@ -45,11 +39,11 @@ test("world sprites preserve facing and all colored-key door requirements", () =
   const c = { save() {}, restore() {}, drawImage(image: ReadyImage) { paths.push(image.src); } } as unknown as CanvasRenderingContext2D;
   try {
     for (const [dx, dy, direction] of [[1, 0, "right"], [-1, 0, "left"], [0, 1, "up"], [0, -1, "down"]] as const) {
-      paintHero(c, false, true, { dx, dy });
+      paintHero(c, { dx, dy });
       assert.ok(paths.at(-1)?.endsWith(`/hero-${direction}.png`));
     }
     paintContents(c, { kind: "door", door: { type: "keys", keys: ["yellow", "blue", "red"], mode: "all", heart: true } }, {
-      x: 0, y: 0, time: 0, spritesOff: false, reduceMotion: false, area1: false, styledSprites: true,
+      x: 0, y: 0, time: 0, reduceMotion: false, styledSprites: true,
     });
     for (const id of ["door-wood", "heart", "key-yellow", "key-blue", "key-red"])
       assert.ok(paths.some(path => path.endsWith(`/${id}.png`)), id);

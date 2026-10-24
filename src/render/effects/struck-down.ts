@@ -17,7 +17,7 @@ export function drawStruckDown(f: FrameContext, age: number) {
   if (age < 0 || age >= DEFEAT_MS) return;
   const c = f.c, still = f.look.reduceMotion;
   const appear = Math.min(1, age / 200), alpha = appear * Math.min(1, (DEFEAT_MS - age) / 400);
-  if (f.look.styledSprites && !f.look.spritesOff && kitImage("ambient-death-skull")) {
+  if (f.look.styledSprites && kitImage("ambient-death-skull")) {
     c.save(); c.setTransform(tileTransform(f, f.playerX, f.playerY)); c.globalAlpha = alpha;
     drawSpriteFrame(c, "ambient-death-skull", deathSkullFrame(age, !!f.look.spriteAnimations && !still), 0, -22);
     c.restore(); return;

@@ -31,6 +31,10 @@ export const DEFEND_STRUCTURE_SPRITES = ["defend-keep", "defend-barracks", "defe
 export const NAMED_ENEMY_SPRITES = ["amethyst-golem", "armored-knight", "assassin", "bat", "berserker", "blackstone-colossus", "celestial-guardian", "coral-knight", "crystal-savant", "cultist", "demon", "dragon-whelp", "drowned-marauder", "gargoyle", "goblin", "golem", "mage", "obsidian-revenant", "ogre", "orc", "shadow-stalker", "skeleton", "slime", "spore-colossus", "sporeling", "starfire-adept", "stone-warden", "temple-wraith", "thief", "troll"] as const;
 export type KitSprite = typeof ICON_SPRITES[number] | typeof WORLD_SPRITES[number] | typeof CONTROL_SPRITES[number] | typeof DETAIL_SPRITES[number] | typeof CITY_SPRITES[number] | typeof DEFEND_STRUCTURE_SPRITES[number];
 export const kitUrl = (id: string) => `${BASE}assets/style/${id}.png`;
+/** Native PNG controls have one art source across UI themes. */
+export function pngIcon(id: string, className: string, alt = "") {
+  return `<span class="sprite-icon sprite-ready ${className}" aria-hidden="true"><img class="sprite-native" src="${kitUrl(id)}" alt="${alt}"></span>`;
+}
 const images = new Map<string, HTMLImageElement>();
 let revision = 0;
 const listeners = new Set<() => void>();
@@ -47,6 +51,14 @@ export function kitImage(id: string) {
   }
   return image.complete && image.naturalWidth ? image : null;
 }
+
+/** Startup shares the exact decoded images used by canvas drawing. */
+export async function preloadKitImage(id: string) {
+  kitImage(id);
+  const image = images.get(id);
+  if (!image) throw new Error(`Cannot load sprite: ${id}`);
+  await image.decode();
+}
 export function drawKit(c: CanvasRenderingContext2D, id: string, x = 0, y = 0, w = 24, h = w) {
   const image = kitImage(id);
   if (!image) return false;
@@ -57,20 +69,11 @@ export function drawKit(c: CanvasRenderingContext2D, id: string, x = 0, y = 0, w
   return true;
 }
 
-/** The existing icon remains visible until the PNG loads. The root class
- * switches both copies together, including dialogs and newly built pages. */
-export function kitIcon(id: string, fallback: string, className: string, overlay = "") {
-  return `<span class="sprite-icon ${className}" aria-hidden="true"><span class="sprite-fallback">${fallback}</span><img class="sprite-replacement" src="${kitUrl(id)}" alt="">${overlay}</span>`;
-}
-
-/** Capturing load handles icons created later by any page, and keeps their
- * original art visible when a PNG is unavailable. */
-export function bindSpriteImages() {
-  document.addEventListener("load", event => {
-    const target = event.target;
-    if (target instanceof HTMLImageElement && target.classList.contains("sprite-replacement"))
-      target.parentElement?.classList.toggle("sprite-ready", target.naturalWidth > 0);
-  }, true);
+/** Theme-specific vector/text art is kept for non-default UI themes.
+ * The default interface uses the PNGs decoded by bootstrap, without a
+ * second loading/fallback state for each newly created control. */
+export function kitIcon(id: string, themeArt: string, className: string, overlay = "") {
+  return `<span class="sprite-icon sprite-ready ${className}" aria-hidden="true"><span class="theme-art">${themeArt}</span><img class="sprite-replacement" src="${kitUrl(id)}" alt="">${overlay}</span>`;
 }
 
 /** A themed enemy keeps its roster identity while sharing material ramps.

@@ -23,7 +23,7 @@ try {
     let left = -100; while (dungeonDetail(world, left, 0, seed, () => "masonry")?.half !== 0) left++;
     const canvas = document.createElement("canvas"); canvas.width = 48; canvas.height = 24;
     const c = canvas.getContext("2d"), look = { mode: "tower", height: 0, seed, outside: false, entranceX: 8,
-      styledSprites: true, spritesOff: false, reduceMotion: true, area1: false, themed: null };
+      styledSprites: true, reduceMotion: true, themed: null };
     const paint = () => {
       c.clearRect(0, 0, 48, 24);
       for (let half = 0; half < 2; half++) { c.save(); c.translate(half * 24, 0); paintTile(c, world, world.tile(left + half, 0), left + half, 0, 0, 0, look); c.restore(); }
@@ -102,7 +102,7 @@ try {
     });
     for (const [i, mode] of ["tower", "delve"].entries()) {
       const world = { tile: (x, y) => ({ kind: x >= -8 && x <= 7 && y >= 3 && y <= 12 && !(x >= -1 && x <= 0 && y >= 6 && y <= 9) ? "floor" : "wall" }) };
-      const look = { mode, height: 0, seed: 1107, outside: false, entranceX: 8, styledSprites: true, spritesOff: false, reduceMotion: true, area1: false, themed: null };
+      const look = { mode, height: 0, seed: 1107, outside: false, entranceX: 8, styledSprites: true, reduceMotion: true, themed: null };
       c.fillStyle = "#eee0b7"; c.fillText(`${mode}: contextual wall details, native tiles`, i * 550 + 10, 450);
       for (let y = 0; y < 17; y++) for (let x = -11; x < 11; x++) {
         c.save(); c.translate(i * 550 + 10 + (x + 11) * 24, 470 + (16 - y) * 24);
@@ -122,7 +122,7 @@ try {
     const world = { tile: (_x, y) => ({ kind: y <= 0 ? "wall" : "floor" }) }, seed = 1107;
     let x = -100; while (dungeonDetail(world, x, 0, seed, () => "masonry")?.half !== 0) x++;
     const cv = document.createElement("canvas"); cv.width = 48; cv.height = 24;
-    const c = cv.getContext("2d"), look = { mode: "tower", height: 0, seed, outside: false, entranceX: 8, styledSprites: true, spritesOff: false, reduceMotion: true, area1: false, themed: null };
+    const c = cv.getContext("2d"), look = { mode: "tower", height: 0, seed, outside: false, entranceX: 8, styledSprites: true, reduceMotion: true, themed: null };
     paintTile(c, world, world.tile(x, 0), x, 0, 0, 0, look);
     c.save(); c.translate(24, 0);
     const ready = drawDungeonGround(c, { mode: "tower", height: 0, seed, x, y: 0, wall: true, empty: false,

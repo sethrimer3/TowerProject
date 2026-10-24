@@ -105,10 +105,10 @@ try {
       g.save.settings.gameTheme = "neon"; draw(); await settle(); const theme = hash();
       g.run.tier = tier === 2 ? 3 : 2; draw(); const themedOther = hash();
       g.run.tier = tier; g.save.settings.gameTheme = "classic"; draw(); await settle(); const themedBack = hash();
-      g.save.settings.uiSprites = false; draw(); await settle(); const off = hash();
-      g.save.settings.uiSprites = true; draw(); await settle(); const onAgain = hash();
-      g.save.settings.uiSprites = false; draw(); const offAgain = hash();
-      g.save.settings.uiSprites = true; draw();
+      g.save.themes = [...new Set([...g.save.themes, "neonGame"])]; g.save.settings.gameTheme = "neon"; draw(); await settle(); const off = hash();
+      g.save.settings.gameTheme = "classic"; draw(); await settle(); const onAgain = hash();
+      g.save.themes = [...new Set([...g.save.themes, "neonGame"])]; g.save.settings.gameTheme = "neon"; draw(); const offAgain = hash();
+      g.save.settings.gameTheme = "classic"; draw();
       const loaded = new Game(decode(JSON.stringify(g.save)));
       const reloadedTier = new Renderer(document.createElement("canvas"), loaded).look().tier;
       window.Image = RealImage;
@@ -119,7 +119,7 @@ try {
     assert.equal(result.original, result.restored); assert.equal(result.original, result.ui);
     assert.notEqual(result.original, result.theme); assert.equal(result.theme, result.themedOther, "other Game themes override the material identity");
     assert.equal(result.original, result.themedBack); assert.equal(result.original, result.onAgain);
-    assert.equal(result.off, result.offAgain, "sprites off restores exact legacy pixels");
+    assert.equal(result.off, result.offAgain, "returning to the alternate theme restores its exact pixels");
     await page.locator("#tier-board").screenshot({ path: `test-results/tower-tiers/tower-${tier}-${width}.png` });
     await page.locator("#tier-board").evaluate(e => e.remove());
   }
@@ -149,10 +149,10 @@ try {
     const tile = { mode: "tower", tier: 3, height: 0, seed: 0, x: 0, y: 0, wall: true, empty: false };
     const ready = drawDungeonGround(c, tile);
     paintTile(c, { tile: () => ({ kind: "wall" }) }, { kind: "wall" }, 0, 0, 0, 0,
-      { ...tile, outside: false, entranceX: 8, spritesOff: false, styledSprites: true, reduceMotion: true, area1: true, themed: null });
+      { ...tile, outside: false, entranceX: 8, styledSprites: true, reduceMotion: true, themed: null });
     return { ready, opaque: [...c.getImageData(0, 0, 24, 24).data].filter((v, i) => i % 4 === 3 && v === 255).length };
   });
   assert.equal(fallback.ready, false); assert.equal(fallback.opaque, 576); await failed.close();
   assert.deepEqual(errors, []);
-  console.log("Tower II/III literal floor panels, relief, corner footprints, black cores, late/failed loads, phone/desktop scenes, live tier caches, themes, reload and legacy restoration pass.");
+  console.log("Tower II/III literal floor panels, relief, corner footprints, black cores, late/failed loads, phone/desktop scenes, live tier caches, themes, reload and theme restoration pass.");
 } finally { await browser.close(); await server.close(); }

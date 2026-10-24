@@ -3,12 +3,13 @@
 Proving Grounds' Keymaster and chest mimics use native 24-pixel silhouettes with the shared slate, brass and dark-outline ramps, upper-left highlights and crisp one-pixel clusters.
 Encounter keys and locked doors use the existing world painters; red door spirits retain native pixel heads and fading tails on smooth curved paths.
 
-Settings → **Sprites** opts into the shared PNG interface and world kit and defaults to off, including saves from before this option existed.
-The separate **Turn off board sprites** option also opts out of the new world art.
-UI themes and Game themes retain their saved selections.
-The default Medieval interface and free Classic interface use the kit; every other owned UI theme overrides its interface frames, icons and cards.
-Every non-Classic Game theme overrides world sprites independently of the UI theme, including the portrait and Defend's optional sprites.
-Switching back to the default look restores the kit without changing the saved Sprites preference.
+The shared PNG interface and world kit is the default artwork, including for saves whose former Sprites checkbox was off.
+Settings offers independent Animations and Square doors checkboxes, both initially unchecked.
+The default Medieval and Classic interface looks use the kit; alternate UI themes retain their own controls, typography and vector/text art.
+Alternate Game themes keep their own dungeon and portrait art, while forest ground and landmarks use the new native PNGs.
+Bootstrap decodes the deployed art, UI stylesheet images and fonts before revealing the first painted game frame.
+Failed loads show Retry instead of exposing missing sprites or legacy substitutes.
+The former Sprites and Turn off board sprites settings, old PNG directories and Classic fallback loaders are removed.
 
 ## Art contract
 
@@ -65,8 +66,8 @@ Use a steep top-down angle showing crown tops and a short south-facing trunk, up
 The [forest landmark atlas](../../assets/game-sprites/forest-landmarks.png) supplies a 216 × 216 Tower base and a 360 × 240 mountain base, each cropped across the top with no roof, crown or peak.
 Show only the monumental lower entrance facade: the tower's stepped threshold and mountain's south-facing cave meet the existing path, with live tier text above them.
 Nature objects use binary-alpha silhouettes and quiet green ramps; ground tiles use two-color green or brown ramps, and the tower/mountain use the shared slate ramp.
-The forest loads its materials and foliage together before removing the older baked tile trees, and the larger crowns render above smaller foliage while paths, buildings and the sign stay clear.
-The old SVG and PNG artwork stays available for unloaded images, Sprites off and theme overrides.
+The forest uses preloaded native materials and foliage; larger crowns render above smaller foliage while paths, buildings and the sign stay clear.
+Alternate themes keep their own vector/text artwork; the retired Tower/Delve bitmap sets are not shipped.
 Tower interiors use native fitted masonry floors and connected walls; Delve uses rough bedrock and compact earth for both floors and walls, with coordinate-hashed contiguous material patches.
 The [dungeon material source](../../assets/game-sprites/dungeon-materials.png) supplies four floor variations, wall-top variations, south-facing facade strips and coping for each material, plus stepped soil/contact strips.
 Twenty-one 96 × 720 deployed PNG atlases hold four floors, six variations of sixteen wall-neighbor frames, four corners, six full tops, six dark tops and four reserved core frames each.
@@ -81,7 +82,7 @@ Ten palette ramps retain each masonry and rock biome's identity, while earth kee
 Use axis-aligned 24-pixel tiles seen at a steep top-down angle, visible wall tops, shallow three-pixel north/side lips and eight-pixel south-facing wall facades; no isometric diamonds or vanishing points.
 Connected walls hide shared edges, and floor centers remain quiet and flat beneath items; soil borders have stepped binary transparency and contact shadows stay inside the floor tile.
 The [material blend source](../../assets/game-sprites/dungeon-material-blends.png) supplies the original infill references and four stepped transition silhouettes.
-The [wall shading source](../../assets/game-sprites/dungeon-wall-shading.png) is retained as reference; its repeated directional cutout stamps are replaced by continuous contours cut from the original wall textures.
+Continuous contours cut from the original wall textures replace the retired directional cutout stamps.
 Shade boundaries follow distance to real open tiles in world space, using two-pixel clusters and small variations over 48-pixel cells; neighboring tiles must never restart the shadow pattern.
 Full PNG top textures recede through three hard palette levels at approximately 14, 28 and 42 pixels from air, then meet the flat black core; preserve broad walls without repeating holes, isolated fragments or illuminated whole edges from one diagonal opening.
 Coping and facades remain independent of inward shading, and every shade level uses literal PNG texels through binary clipping, without blur or interpolated colors.
@@ -98,7 +99,7 @@ The [Celeste tileset format reference](https://github.com/EverestAPI/Resources/w
 Our application uses original static marks on the 24-pixel angled grid: choose details by edge context, share one motif across two tiles, leave most wall tiles unmarked and never rotate authored lighting.
 Use small chips on thin strips and longer joints on compatible broad surfaces; reject material boundaries, missing terrain and incompatible corners rather than cutting a feature in half.
 Clip marks to exposed and body shades before coping/facades, and leave the deepest shaded band and core untextured.
-The older palette-normalized terrain atlas remains a complete loading fallback; Sprites off and other Game themes keep their original artwork.
+The palette-normalized terrain atlas retains only four pixel-identical Defend floor cells; Tower and Delve use the dedicated native atlases.
 Equipment's existing Unique silhouettes and the named enemy roster are preserved during normalization.
 Small dressing (plants, cobwebs, pebbles and broken containers) uses 12-pixel PNGs drawn 1:1 inside the same 24-pixel tile grid.
 Defend’s [city atlas](../../assets/game-sprites/city.png) adds six roof materials, oak and pine canopies, wall cap and face pieces, rubble, scaffolding, lilies, reeds, lanterns and the city-tile tool icon.
@@ -154,14 +155,14 @@ Run `node --experimental-transform-types tools/prepare-dungeon-sprites.mjs` for 
 Run `node --experimental-transform-types tools/prepare-dungeon-details.mjs` for the sparse paired wall motifs in matching biome ramps; the two dungeon exporters share `tools/dungeon-palette.mjs`.
 Regenerate the original font with `python tools/prepare-pixel-font.py` using FontTools with WOFF2 support (`fonttools[woff]`); no font-building dependency is needed at runtime.
 The full game exporter preserves ambient-animation, dungeon, forest, environment, combat, badge, Shrine, Equipment UI and UI-detail assets; rerun their own exporter when a source atlas changes.
-That exporter also packs the terrain atlas and produces `src/sprites/terrain-index.ts`.
-PNG load failures keep the original icon or procedural renderer visible; loaded images invalidate cached terrain and city layers through a shared revision.
+The retained terrain atlas and `src/sprites/terrain-index.ts` contain only Defend's four unchanged floors.
+PNG load failures keep the startup loading screen visible with Retry; isolated drawing caches still use the shared image revision.
 
 Before accepting a replacement, inspect the native-size pieces and compare normal, hover, selected, pressed and disabled states together.
-Check phone and desktop layouts, keyboard focus, save/reload, toggling off, erase-progress reset, and short-of-Gems controls remaining actionable.
+Check phone and desktop layouts, keyboard focus, save/reload, theme overrides, erase-progress reset, and short-of-Gems controls remaining actionable.
 
 `tests/sprite-details.test.ts` decodes every shared object/card PNG and checks the palette, binary alpha and transparent padding for isolated objects.
-With the dev server running, `PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node tests/sprite-browser.mjs` checks real PNG loading, mobile/desktop layouts, save/reload and independent theme overrides, and captures review screenshots under `test-results/sprites/`.
+`PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node tests/default-art-browser.mjs` starts its own server and checks the startup barrier, Settings, migration and theme overrides, with screenshots under `test-results/default-art/`.
 
 `PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node tests/city-sprites-browser.mjs` starts its own server and captures Defend at both scales, including damage and rebuilding, then checks identical pixels after switching sprites off.
 
@@ -175,7 +176,7 @@ With the dev server running, `PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node 
 
 `PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node tests/ui-controls-sprites-browser.mjs` checks actual PNG navigation and popup closes, range input keyboard/pointer interaction and persistence, focused controls, Overheal textures, reward art, fallback and independent themes at phone/desktop widths.
 
-`PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node tests/combat-sprites-browser.mjs` checks native/enlarged art and real combat frames at phone/desktop sizes, complete PNG loading, independent theme overrides and exact restoration after switching Sprites off.
+`PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node tests/combat-sprites-browser.mjs` checks native/enlarged art and real combat frames at phone/desktop sizes, complete PNG loading, independent theme overrides and exact restoration after switching alternate Game themes.
 
 `PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node tests/sprite-layout-browser.mjs` checks that live lettering and PNG icons stay inside button trim, including narrow HUDs, menu buttons, large stats, Training, Settings, Deck and Shop.
 
@@ -197,11 +198,12 @@ The [Tower II material source](../../assets/game-sprites/tower-2-materials.png) 
 The [Tower III material source](../../assets/game-sprites/tower-3-materials.png) supplies vertical basalt masonry, octagonal paving with square insets, facades and coping.
 Run `node tools/prepare-tower-tier-sprites.mjs` to export one 96 × 96 floor panel and one 96 × 720 connected-wall atlas for each tower, with one fixed palette per set rather than biome recolors.
 Both use the shared native corner silhouettes, original upper-left light, three wall shade levels and flat black interior cores; visible texels come from the new sources.
-`tests/sprite-options-browser.mjs` starts its own server to check real Settings visibility, focus, persistence, phone/desktop layout, door coverage, stationary torch hardware, frame animation, reduced motion, live renderer restoration, theme gates and failed-image fallback.
+`tests/default-art-browser.mjs` starts its own server to check the startup barrier, delayed and failed downloads, Retry, first-frame painting, Settings persistence, old-save migration and independent theme overrides.
+`tests/sprite-options.test.ts` checks full-tile door coverage and stationary torch hardware, timing and reduced motion.
 
 ## Remaining sprite work
 
 Excluding Defend and custom themes, live water ripples/glints, falling drops, wet-foot overlays, moving tall grass and some wall-corner overlays still use procedural pixels.
 Reveal rays, celebration/skill particles and the Equipment melt still use procedural or older icon art.
 The board route and badge annotations also retain procedural marks; letters should remain live text.
-These are separate from the older PNGs and SVGs deliberately retained for Sprites off and theme fallbacks.
+Alternate Game themes retain their own vector/text art; retired Classic PNG directories and their loaders have been removed.

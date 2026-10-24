@@ -9,8 +9,8 @@ test("every metal has a deployable bar sprite", () => {
   assert.equal(Object.keys(METAL_BAR_URLS).length, METALS.length);
   for (const metal of METALS) {
     const url = METAL_BAR_URLS[metal.id];
-    assert.match(url, new RegExp(`/assets/materials/${metal.id}-bar\\.png$`));
-    const path = fileURLToPath(new URL(`../public/assets/materials/${metal.id}-bar.png`, import.meta.url));
+    assert.match(url, new RegExp(`/assets/style/metal-${metal.id}-bar\\.png$`));
+    const path = fileURLToPath(new URL(`../public/assets/style/metal-${metal.id}-bar.png`, import.meta.url));
     assert.ok(existsSync(path), `missing bar sprite for ${metal.name}`);
     assert.match(metalBarSprite(metal.id), /aria-hidden="true"/);
   }

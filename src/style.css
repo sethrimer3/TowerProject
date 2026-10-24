@@ -1653,12 +1653,7 @@ dialog > small {
   border-bottom: 1px solid #2c3746;
   font-size: 12px;
 }
-.setting.sprite-option {
-  margin-left: 16px;
-  padding-left: 12px;
-  border-left: 2px solid #3e4c59;
-  min-height: 52px;
-}
+
 /* The Settings page's dev section, under Dev Mode while it is on. */
 .dev-section {
   margin-left: 16px;

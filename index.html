@@ -17,9 +17,27 @@
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <title>Tower Delve</title>
+    <style>
+      body { margin: 0; background: #10151c; }
+      #app[hidden], #boot-loading [hidden] { display: none !important; }
+      #boot-loading { position: fixed; inset: 0; z-index: 10000; display: grid; place-content: center; justify-items: center; gap: 18px; padding: 24px; background: #10151c; color: #eee0b7; font: 15px monospace; text-align: center; }
+      #boot-loading h1 { margin: 0; color: #e1bb78; font: bold 25px monospace; letter-spacing: 3px; }
+      #boot-loading p { max-width: 32ch; margin: 0; line-height: 1.6; }
+      #boot-progress { appearance: none; width: min(240px, 75vw); height: 12px; border: 2px solid #756448; background: #1b2430; }
+      #boot-progress::-webkit-progress-bar { background: #1b2430; }
+      #boot-progress::-webkit-progress-value { background: #e1bb78; }
+      #boot-progress::-moz-progress-bar { background: #e1bb78; }
+      #boot-retry { padding: 9px 22px; border: 2px solid #e1bb78; background: #1b2430; color: #eee0b7; font: inherit; cursor: pointer; }
+    </style>
   </head>
   <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.ts"></script>
+    <section id="boot-loading" role="status" aria-live="polite" aria-label="Loading Tower Delve">
+      <h1>TOWER DELVE</h1>
+      <p id="boot-message">Loading artwork…</p>
+      <progress id="boot-progress" max="1" value="0" aria-label="Artwork loaded"></progress>
+      <button type="button" id="boot-retry" hidden>Retry</button>
+    </section>
+    <div id="app" hidden aria-busy="true"></div>
+    <script type="module" src="/src/bootstrap.ts"></script>
   </body>
 </html>

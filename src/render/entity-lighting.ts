@@ -2,8 +2,7 @@ import type { Tile, Torch } from "../entities.ts";
 import { LIGHTING_CONFIG, getTorchFlicker, getTorchSway } from "./lighting.ts";
 import { torchReaches } from "./floor-relief.ts";
 import { lightFalloff } from "./torch-light.ts";
-import { drawGameSprite } from "../sprites/game-sprites.ts";
-import { paintContents, paintHero, paintHeroFallback } from "./tile-painters.ts";
+import { paintContents, paintHero } from "./tile-painters.ts";
 import { spriteRevision } from "../sprites/kit.ts";
 import { forEachViewTile, tileOrigin, toTileSpace, type FrameContext } from "./render-frame.ts";
 
@@ -62,7 +61,7 @@ export class EntityLighting {
   drawShadows(f: FrameContext, wallMask: () => HTMLCanvasElement | null) {
     // Swap masks immediately on a toggle or image arrival, keeping old
     // revisions out of the caches rather than accumulating one per load.
-    const style = `${f.look.spritesOff}|${!!f.look.styledSprites}|${spriteRevision()}${f.look.squareDoors ? "|square" : ""}`;
+    const style = `${!!f.look.styledSprites}|${spriteRevision()}${f.look.squareDoors ? "|square" : ""}`;
     if (style !== this.spriteState) {
       this.spriteState = style;
       this.silhouettes.clear();
@@ -144,24 +143,20 @@ export class EntityLighting {
 
   /** Items and enemies in view, then the hero. */
   private casters(f: FrameContext): Caster[] {
-    const { spritesOff, reduceMotion, area1, styledSprites, squareDoors } = f.look;
+    const { reduceMotion, styledSprites, squareDoors } = f.look;
     const casters: Caster[] = [];
     forEachViewTile(f, (x, y) => {
       const t = f.world.tile(x, y);
       if (!SHADOW_CASTERS.has(t.kind)) return;
       casters.push({
         x, y,
-        key: `${t.kind}|${t.color}|${t.tier}|${t.enemy?.name ?? ""}|${t.enemy?.tier}|${t.enemy?.strength}|${area1}${styledSprites ? `|kit|${t.enemy?.fast}|${t.enemy?.ranged}|${t.enemy?.flying}` : ""}`,
-        draw: (c) => paintContents(c, t, { x, y, time: f.now, spritesOff, reduceMotion, area1, styledSprites, squareDoors }),
+        key: `${t.kind}|${t.color}|${t.tier}|${t.enemy?.name ?? ""}|${t.enemy?.tier}|${t.enemy?.strength}|${styledSprites ? `|kit|${t.enemy?.fast}|${t.enemy?.ranged}|${t.enemy?.flying}` : ""}`,
+        draw: (c) => paintContents(c, t, { x, y, time: f.now, reduceMotion, styledSprites, squareDoors }),
       });
     });
     casters.push({
       x: f.playerX, y: f.playerY, key: `hero${styledSprites ? `|kit|${f.heroFacing.dx},${f.heroFacing.dy}` : ""}`,
-      draw: (c) => {
-        if (styledSprites) return paintHero(c, spritesOff, true, f.heroFacing);
-        if (!spritesOff && drawGameSprite(c, "player")) return;
-        paintHeroFallback(c);
-      },
+      draw: (c) => paintHero(c, f.heroFacing),
       hero: true,
     });
     return casters;

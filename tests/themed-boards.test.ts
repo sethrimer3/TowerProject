@@ -114,7 +114,7 @@ const TORCHES: Torch[] = [
 ];
 
 function frame(c: CanvasRenderingContext2D, reduceMotion: boolean, now: number): FrameContext {
-  const look = { mode: "tower", height: 12, seed: 7, outside: false, entranceX: 3, spritesOff: false, reduceMotion, area1: false, themed: null };
+  const look = { mode: "tower", height: 12, seed: 7, outside: false, entranceX: 3, reduceMotion, themed: null };
   return {
     left: 0, bottom: 0, n: SIZE, s: 24, c, now, dt: 0.016, dpr: 1, width: SIZE * 24, playerX: 2, playerY: 2,
     heroFacing: { dx: 1, dy: 0 }, world, look, darkness: 0, torches: TORCHES, walls, glows: [],

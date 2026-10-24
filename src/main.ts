@@ -18,7 +18,7 @@ import "./pixel.css";
 import "./doodle.css";
 import "./murk.css";
 import "./ui-sprites.css";
-import { bindSpriteImages, drawKit, onSpritesLoaded } from "./sprites/kit.ts";
+import { drawKit, onSpritesLoaded } from "./sprites/kit.ts";
 import { usesGameSprites } from "./sprites/style.ts";
 import { onSpriteFontLoaded } from "./sprites/font.ts";
 import { gameLook } from "./theme-collection.ts";
@@ -29,7 +29,6 @@ import { Game } from "./state.ts";
 import { Renderer } from "./render/rendering.ts";
 import { bindInput } from "./input.ts";
 import { DefendPage } from "./defend/ui.ts";
-import { drawGameSprite } from "./sprites/game-sprites.ts";
 import { FrameLoop } from "./frame-loop.ts";
 import { installDebugHooks } from "./debug-hooks.ts";
 import { isBoard, type AppContext, type Tab } from "./ui/app.ts";
@@ -76,7 +75,6 @@ import { themeToast } from "./ui/theme-menu.ts";
 // Wires the pages together: builds the shell, creates the game and renderer,
 // and routes navigation, HUD refreshes and input between the ui/ modules.
 
-bindSpriteImages();
 buildShell(document.querySelector<HTMLDivElement>("#app")!);
 const game = new Game(load());
 // A new profile (or one from before profiles kept the date) is made now.
@@ -98,10 +96,7 @@ function renderPortrait() {
     portraitCtx.restore();
     return;
   }
-  if (usesGameSprites(game.save) && drawKit(portraitCtx, "hero-down")) return;
-  if (game.save.settings.spritesOff || !drawGameSprite(portraitCtx, "player")) {
-    Renderer.drawHero(portraitCtx);
-  }
+  drawKit(portraitCtx, "hero-down");
 }
 renderPortrait();
 onSpritesLoaded(renderPortrait);
@@ -662,7 +657,12 @@ renderBoardHeading(game, overlay);
 game.missions.refresh();
 game.events.refresh();
 update();
-loop.start();
-// The live tournament: its free Ticket, and any score still to send.
-void refreshTournament();
-void refreshMail();
+/** Start gameplay only after bootstrap has decoded artwork and revealed the UI. */
+export function startGame() {
+  renderVitals(game);
+  renderHandMore();
+  renderer.draw(performance.now());
+  loop.start();
+  void refreshTournament();
+  void refreshMail();
+}

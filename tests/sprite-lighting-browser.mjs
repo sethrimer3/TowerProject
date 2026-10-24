@@ -20,7 +20,7 @@ try {
     const f = {
       c: canvas.getContext("2d"), s: 24, width: 72, n: 3, left: 0, bottom: 0, now: 1000, darkness: 0.5,
       playerX: 1, playerY: 1, heroFacing: { dx: 0, dy: 1 },
-      look: { spritesOff: false, styledSprites: true, reduceMotion: true, area1: false },
+      look: { styledSprites: true, reduceMotion: true, area1: false },
       world: { tile: () => ({ kind: "floor" }) },
       torches: [{ x: 0, y: 1, active: true, lightRadius: 8, baseIntensity: 1,
         visibilityPolygon: [{ x: -5, y: -5 }, { x: 8, y: -5 }, { x: 8, y: 8 }, { x: -5, y: 8 }] }],

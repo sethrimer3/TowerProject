@@ -30,7 +30,7 @@ try {
       const {Game}=await import("/src/state.ts"),{defaults}=await import("/src/save/save.ts");
       const {startTrial}=await import("/src/proving-grounds/trial.ts");
       const g=new Game(defaults());g.newRun({outside:true,seed:12});
-      Object.assign(g.save.settings,{uiSprites:true,reduceMotion:true},settings);
+      Object.assign(g.save.settings,{reduceMotion:true},settings);
       g.save.themes.push("neonUi","neonGame");
       for(const key of Object.keys(g.save.tutorials))g.save.tutorials[key]=true;
       const s=startTrial({maxHp:1000,attack:10,defense:0},"manual",g.hand,12,30);

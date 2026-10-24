@@ -155,7 +155,7 @@ try {
     const connected = ["tower", "delve"].every(mode => {
       const cv = document.createElement("canvas"); cv.width = 192; cv.height = 72;
       const ctx = cv.getContext("2d"), look = { mode, height: 0, seed: 1107, outside: false, entranceX: 8,
-        styledSprites: true, spritesOff: false, reduceMotion: true, area1: false, themed: null };
+        styledSprites: true, reduceMotion: true, themed: null };
       for (let y = 0; y < 3; y++) for (let x = -4; x < 4; x++) {
         ctx.save(); ctx.translate((x + 4) * 24, (2 - y) * 24);
         paintTile(ctx, world, world.tile(x, y), x, y, 0, 0, look); ctx.restore();
@@ -230,15 +230,15 @@ try {
       const hash = async () => [...new Uint8Array(await crypto.subtle.digest("SHA-256", canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height).data))].join(",");
       const tiles = () => Array.from({ length: 17 * 17 }, (_, i) => g.world.tile(i % 17, Math.floor(i / 17)));
       const before = JSON.stringify(tiles());
-      g.save.settings.uiSprites = false; draw(); await settle(); const off = await hash(), offPng = canvas.toDataURL();
-      g.save.settings.uiSprites = true; draw(); await settle(); const on = await hash();
+      g.save.themes = [...new Set([...g.save.themes, "neonGame"])]; g.save.settings.gameTheme = "neon"; draw(); await settle(); const off = await hash(), offPng = canvas.toDataURL();
+      g.save.settings.gameTheme = "classic"; draw(); await settle(); const on = await hash();
       g.save.settings.uiTheme = "neon"; draw(); const uiTheme = await hash();
       g.save.settings.gameTheme = "neon"; draw(); await settle(); const theme = await hash();
       g.save.settings.gameTheme = "classic"; draw(); await settle(); const restored = await hash();
-      g.save.settings.spritesOff = true; draw(); await settle(); const boardOff = await hash();
-      g.save.settings.spritesOff = false; g.save.settings.decorOff = true; draw(); await settle(); const decorOff = await hash();
-      g.save.settings.decorOff = false; g.save.settings.uiSprites = false; draw(); await settle(); const offAgain = await hash(), offAgainPng = canvas.toDataURL();
-      g.save.settings.uiSprites = true; draw(); await settle();
+      g.save.settings.gameTheme = "neon"; draw(); await settle(); const boardOff = await hash();
+      g.save.settings.gameTheme = "classic"; g.save.settings.decorOff = true; draw(); await settle(); const decorOff = await hash();
+      g.save.settings.decorOff = false; g.save.themes = [...new Set([...g.save.themes, "neonGame"])]; g.save.settings.gameTheme = "neon"; draw(); await settle(); const offAgain = await hash(), offAgainPng = canvas.toDataURL();
+      g.save.settings.gameTheme = "classic"; draw(); await settle();
       window.Image = RealImage;
       return { off, on, uiTheme, theme, restored, boardOff, decorOff, offAgain, offPng, offAgainPng, unchanged: before === JSON.stringify(tiles()) };
     }, { width, mode });
@@ -249,7 +249,7 @@ try {
       writeFileSync(`test-results/dungeon-sprites/${mode}-off-before.png`, Buffer.from(result.offPng.split(",")[1], "base64"));
       writeFileSync(`test-results/dungeon-sprites/${mode}-off-after.png`, Buffer.from(result.offAgainPng.split(",")[1], "base64"));
     }
-    assert.equal(result.off, result.offAgain, "a reused Renderer restores the exact legacy pixels and relief");
+    assert.equal(result.off, result.offAgain, "a reused Renderer restores the exact alternate-theme pixels and relief");
     assert.ok(result.unchanged);
     await page.locator("#dungeon-review").screenshot({ path: `test-results/dungeon-sprites/${mode}-${width}.png` });
     await page.locator("#dungeon-review").evaluate(e => e.remove());
@@ -279,10 +279,10 @@ try {
     const tile = { mode: "tower", height: 0, seed: 1, x: 8, y: 5, wall: true, empty: false };
     const ready = drawDungeonGround(c, tile);
     paintTile(c, { tile: () => ({ kind: "wall" }) }, { kind: "wall" }, 8, 5, 0, 0,
-      { ...tile, outside: false, entranceX: 8, spritesOff: false, styledSprites: true, reduceMotion: true, area1: true, themed: null });
+      { ...tile, outside: false, entranceX: 8, styledSprites: true, reduceMotion: true, themed: null });
     return { ready, visible: [...c.getImageData(0, 0, 24, 24).data].filter((v, i) => i % 4 === 3 && v).length };
   });
-  assert.equal(fallback.ready, false); assert.equal(fallback.visible, 576, "failed PNGs retain a complete legacy ground tile");
+  assert.equal(fallback.ready, false); assert.equal(fallback.visible, 0, "isolated missing PNGs never substitute retired ground art");
   await failed.close();
   assert.deepEqual(errors, []);
   console.log("Native PNG floors, material joins, continuous wall contours, seam and cutout regressions, black cores, relief, late/failed loads, phone/desktop scenes and theme/toggle restoration pass.");

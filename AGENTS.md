@@ -24,8 +24,6 @@ npm run test:snapshots # both of the above side by side on one build (tests/snap
 ONLY=rich.goals,floor. npm run test:ui  # only those key prefixes; ONLY=failed reruns last failures; with UPDATE_GOLDEN=1 records just them (docs/agents/goldens.md)
 npm run test:proving   # Proving Grounds browser flow (needs npm run dev)
 npm run test:pointer   # Defend board pointer gestures vs tests/fixtures/defend-pointer.golden.json (also needs `npm run dev`; on demand only, like test:defend)
-npm run tiles:area1 / tiles:outside     # regenerate tile PNGs
-npm run cards:stubs                     # regenerate the placeholder card faces in public/assets/cards/
 ```
 
 - `npm test` runs the broad property checks on a smaller sample and skips the slowest (`tests/test-size.ts`: `FULL`, `ciOnly`); CI sets `CI`, so it runs them in full.
@@ -41,6 +39,8 @@ npm run cards:stubs                     # regenerate the placeholder card faces 
 - CI (`.github/workflows/static.yml`) runs `npm test` and `npm run build` on push to `main`, then deploys `dist/` to GitHub Pages. Vite `base: "./"` keeps asset paths relative — asset URLs must not be root-absolute (a test enforces this).
 
 ## Architecture
+
+`src/bootstrap.ts` waits for decoded artwork and fonts behind the loading screen before `main.ts` paints and starts gameplay; failures offer Retry, and `npm run sprites:manifest` maintains the complete preload inventory.
 
 **Modes.** The modes are `tower`, `delve` (unlocked by upgrade) and `defend` (a tab, unlocked by the `legacy` upgrade).
 Tower and Delve share the tab bar's one board button (`data-tab="board"`, wearing the active mode's art); the only way between them is the **forest sign** (`Game.swapForest`: in either forest once the Delve is open, tapped, `#forest-sign`, which `BoardOverlay.placeSign` keeps over the path, or walked onto, the path's foot, `OutsideWorld.atExit`), which leaves the hero at the forest's start tile and arrives at the other's (`switchMode(next, outside)` starts a mode with no run in its forest).
@@ -125,7 +125,7 @@ Read the area's doc before changing code there or answering questions about it; 
   A button short of Gems gets the `short` class, which turns only its price red, and a press while short opens `askForGems` (`ui/dialogs.ts`), offering the Shop (on the Shop page itself, a Gem-priced offer short of Gems points to the Gem packs instead).
   Only a purchase that can't happen at all (sold out, all hired, locked) may look unavailable.
 - A confirmation that spends a currency shows the price on its button as the currency's icon and the amount (`· ${gemIcon()} <b>2</b>`, likewise `goldIcon()` and the rest), not the currency's name in text; the button's `aria-label` names the currency, for screen readers.
-- The active optional PNG kit uses the original bundled Tower Pixel (`assets/fonts/TowerPixel/`, editable matrices in `tools/prepare-pixel-font.py`) for interface text and Classic board annotations, gated independently by UI/Game theme; Defend keeps its existing text. Otherwise all text uses the bundled Cinzel font (`assets/fonts/Cinzel/`), except under the Terminal, Glyph and Ember UI themes, which use the bundled VT323 (`assets/fonts/VT323/`), the Desktop UI theme, which uses the bundled W95FA (`assets/fonts/W95FA/`), and the Yang and Yin UI themes, which use the bundled Cormorant Garamond (`assets/fonts/CormorantGaramond/`), the Shiro and Kuro UI themes, which use the bundled Inter (`assets/fonts/Inter/`), the Arcade UI theme, which uses the bundled VT323 with Press Start 2P (`assets/fonts/PressStart2P/`) for titles, the System UI theme, which uses the bundled Pixelify Sans (`assets/fonts/PixelifySans/`), the Orbit UI theme, which uses the bundled Exo 2 (`assets/fonts/Exo2/`) with Orbitron (`assets/fonts/Orbitron/`) for titles, the Pixel UI theme, which uses the bundled Tiny5 (`assets/fonts/Tiny5/`) with Silkscreen (`assets/fonts/Silkscreen/`) for titles, the Doodle UI theme, which uses the bundled Comic Neue (`assets/fonts/ComicNeue/`), and the Murk UI theme, which uses the bundled Patrick Hand (`assets/fonts/PatrickHand/`); no remote fonts (browser test checks this).
+- The default PNG kit uses the original bundled Tower Pixel (`assets/fonts/TowerPixel/`, editable matrices in `tools/prepare-pixel-font.py`) for interface text and Classic board annotations, gated independently by UI/Game theme; Defend keeps its existing text. Otherwise all text uses the bundled Cinzel font (`assets/fonts/Cinzel/`), except under the Terminal, Glyph and Ember UI themes, which use the bundled VT323 (`assets/fonts/VT323/`), the Desktop UI theme, which uses the bundled W95FA (`assets/fonts/W95FA/`), and the Yang and Yin UI themes, which use the bundled Cormorant Garamond (`assets/fonts/CormorantGaramond/`), the Shiro and Kuro UI themes, which use the bundled Inter (`assets/fonts/Inter/`), the Arcade UI theme, which uses the bundled VT323 with Press Start 2P (`assets/fonts/PressStart2P/`) for titles, the System UI theme, which uses the bundled Pixelify Sans (`assets/fonts/PixelifySans/`), the Orbit UI theme, which uses the bundled Exo 2 (`assets/fonts/Exo2/`) with Orbitron (`assets/fonts/Orbitron/`) for titles, the Pixel UI theme, which uses the bundled Tiny5 (`assets/fonts/Tiny5/`) with Silkscreen (`assets/fonts/Silkscreen/`) for titles, the Doodle UI theme, which uses the bundled Comic Neue (`assets/fonts/ComicNeue/`), and the Murk UI theme, which uses the bundled Patrick Hand (`assets/fonts/PatrickHand/`); no remote fonts (browser test checks this).
 - Undo has subtle invariants (it can't duplicate rewards; undo cancels queued routes; history persists across refreshes; it never leaves the floor: a snapshot is always of the floor the hero stands on).
   `RunTimeline` (`src/run-timeline.ts`) is the only writer of the history and the fall, and keeps these rules; see `docs/agents/tiers-goals-areas.md`.
   `docs/gameplay/runs.md` is the spec for this player-facing behavior.
@@ -149,7 +149,7 @@ While iterating, run only the tests for the area you touched, then `npm test` on
 | Goals, Missions and Events (`goals.ts`, `src/missions/`, `src/events/`) | `tests/goals.test.ts tests/missions.test.ts tests/events.test.ts tests/shop.test.ts` |
 | Shrines (`shrines.ts`, `game/shrine-desk.ts`) | `tests/shrines.test.ts tests/goals.test.ts tests/archives.test.ts tests/save.test.ts` |
 | Saves and settings | `tests/save.test.ts tests/settings.test.ts` |
-| Board drawing, camera, lighting, decor art | `tests/render-calls.test.ts tests/camera.test.ts tests/lighting-passes.test.ts tests/art-modules.test.ts tests/terrain-paint.test.ts tests/decor.test.ts tests/themed-boards.test.ts` |
+| Board drawing, camera, lighting, decor art | `tests/render-calls.test.ts tests/camera.test.ts tests/lighting-passes.test.ts tests/art-modules.test.ts tests/decor.test.ts tests/themed-boards.test.ts` |
 | Outside and weather | `tests/outside*.test.ts tests/outdoor-art.test.ts tests/torch-light.test.ts` |
 | Defend (`src/defend/`), on hold | `npm run test:defend` (and `npm run test:pointer`), only when changing Defend |
 

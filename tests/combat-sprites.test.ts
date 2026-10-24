@@ -70,7 +70,7 @@ test("combat PNGs preserve flight, wrapped reach, opened-chest marks and late-lo
     ], "an opened chest keeps the same semantic mark");
 
     const tile = { kind: "enemy" as const, enemy: { name: "Goblin", tier: 0, strength: "elite" as const, hp: 10, attack: 1, defense: 0, fast: true, ranged: true } };
-    const art = { x: 0, y: 0, time: 0, spritesOff: false, reduceMotion: true, area1: false, styledSprites: true };
+    const art = { x: 0, y: 0, time: 0, reduceMotion: true, styledSprites: true };
     paintContents(c, tile, art); images.forEach(i => { if (i.src.endsWith("/enemy-goblin.png")) i.load(); });
     paintContents(c, tile, art);
     const before = canvases; paintContents(c, tile, art); assert.equal(canvases, before, "unchanged enemies reuse their bake");

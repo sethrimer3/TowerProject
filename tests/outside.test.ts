@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults, decode } from "../src/save/save.ts";
-import { OutsideWorld, ENTRANCE_Y, OUTSIDE_SIZE, OUTSIDE_START_Y, weatherForRoll, outsideWeather, outsideSpriteKind, roadsOf, BLACKSMITH, TOURNAMENT_HALL } from "../src/outside.ts";
+import { OutsideWorld, ENTRANCE_Y, OUTSIDE_SIZE, OUTSIDE_START_Y, weatherForRoll, outsideWeather, onPath, roadsOf, BLACKSMITH, TOURNAMENT_HALL } from "../src/outside.ts";
 import { lightningOpacity } from "../src/render/weather.ts";
 import { chooseStep } from "../src/automation.ts";
 import { TOWER_UNLOCK_FLOOR } from "../src/goals.ts";
@@ -84,7 +84,7 @@ test("weather uses exact 40/30/20/10 intervals; lightning is slow and faint", ()
 test("the crossroads' road goes on to each building's door once that building stands", () => {
   const world = new OutsideWorld(7, "tower", true, true), center = world.entranceX, row = OUTSIDE_START_Y;
   const roadAt = (x: number, roads?: { blacksmith: boolean; hall: boolean }) =>
-    outsideSpriteKind({ kind: "floor" }, { x, y: row, seed: 7, center, roads }).family === "path";
+    onPath({ x, y: row, seed: 7, center, roads });
   const door = { blacksmith: center + BLACKSMITH.dx + 1, hall: center + TOURNAMENT_HALL.dx + 1 };
   for (let x = door.blacksmith; x <= door.hall; x++) {
     const near = Math.abs(x - center) <= 1;
@@ -108,7 +108,7 @@ for (const mode of ["tower", "delve"] as const)
       // Out to the view's edge: the forest shows OUTSIDE_SIZE columns, past the Tower board's right edge.
       const last = Math.max(world.width, OUTSIDE_SIZE) - 1;
       const xs = edge < center ? Array.from({ length: center }, (_, x) => x) : Array.from({ length: last - center }, (_, i) => center + 1 + i);
-      return xs.every(x => world.tile(x, row).kind === "floor" && outsideSpriteKind({ kind: "floor" }, { x, y: row, seed: world.seed, center, roads }).family === "path");
+      return xs.every(x => world.tile(x, row).kind === "floor" && onPath({ x, y: row, seed: world.seed, center, roads }));
     };
     const right = g.world.width - 1;
     g.newRun({ outside: true });

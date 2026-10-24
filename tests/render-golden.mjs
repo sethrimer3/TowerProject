@@ -1,5 +1,5 @@
 // Characterization screenshots for the board renderer. The fixed scenes of
-// tests/render-scenes.ts (Tower, dim Tower, Delve, sprites off, outside,
+// tests/render-scenes.ts (Tower, dim Tower, Delve, outside,
 // reduced motion, and decor: a crate stepped on, a pool waded into, tall grass
 // walked through; plus the Defend board in building mode, a rainy battle, a
 // night boss wave and a stormy night zoomed in, and its palette icons) are

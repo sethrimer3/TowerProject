@@ -1,12 +1,12 @@
-// Production PNGs from the generated atlases plus palette-normalized terrain
-// and Equipment's existing deliberately drawn silhouettes. ImageMagick is
+// Production PNGs from the generated atlases and Equipment's deliberately
+// drawn silhouettes. ImageMagick is
 // required only for authoring; the shipped game loads PNGs directly.
 import { spawn } from "node:child_process";
-import { mkdirSync, readdirSync, writeFileSync, readFileSync } from "node:fs";
+import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { deflateSync } from "node:zlib";
-import { ICON_SPRITES, WORLD_SPRITES, CONTROL_SPRITES, DETAIL_SPRITES, CITY_SPRITES, DEFEND_STRUCTURE_SPRITES, NAMED_ENEMY_SPRITES } from "../src/sprites/kit.ts";
+import { ICON_SPRITES, WORLD_SPRITES, CONTROL_SPRITES, DETAIL_SPRITES, CITY_SPRITES, DEFEND_STRUCTURE_SPRITES } from "../src/sprites/kit.ts";
 import { ICON_ROWS, ICON_PALETTE } from "../src/ui/equipment-icons.ts";
 import { CARD_SPRITE_LAYERS } from "../src/sprites/cards.ts";
 const root = fileURLToPath(new URL("../", import.meta.url));
@@ -26,8 +26,9 @@ const cityOnly = process.argv.includes("--city-only");
 const structuresOnly = process.argv.includes("--structures-only");
 const cardsOnly = detailsOnly || cityOnly || structuresOnly || process.argv.includes("--cards-only");
 const previousManifest = JSON.parse(readFileSync(join(out,"manifest.json"),"utf8"));
-const extensionAssets = Object.fromEntries(Object.entries(previousManifest.assets).filter(([id]) => id.startsWith("ambient-") || id.startsWith("square-door-") || id === "torch-animation" || id.startsWith("dungeon-") || id.startsWith("forest-") || id.startsWith("env-") || id.startsWith("combat-") || id.startsWith("boon-") || id.startsWith("shrine-") || id.startsWith("badge-") || id.startsWith("goal-") || id.startsWith("ui-") || id === "card-exchange"));
-const manifest = cardsOnly ? previousManifest : { palette: "../ui/frames/manifest.json", nativeSize: 24, assets: extensionAssets, terrain: {} };
+// Named enemy and metal PNGs are native master assets now, not conversions
+// from a second legacy runtime directory. Preserve them and extension atlases.
+const manifest = { ...previousManifest, assets: { ...previousManifest.assets } };
 if (!cardsOnly) for (const [file, ids] of [["icons.png", ICON_SPRITES], ["world.png", WORLD_SPRITES], ["controls.png", CONTROL_SPRITES]]) {
   const image = join(source, file), header = readFileSync(image);
   const w = header.readUInt32BE(16), h = header.readUInt32BE(20);
@@ -48,14 +49,6 @@ if (!cardsOnly) for (const [file, ids] of [["icons.png", ICON_SPRITES], ["world.
       "-gravity", file === "world.png" && !building ? "south" : "center", "-extent", `${n}x${n}`,
       "-write", "mpr:original", "+dither", "-remap", palette, "mpr:original", "-compose", "CopyAlpha", "-composite", "-strip", `PNG32:${join(out, `${id}.png`)}`]);
     manifest.assets[id] = { file: `${id}.png`, width: n, height: n };
-  }
-}
-
-if (!cardsOnly) for (const [folder, names, prefix] of [["enemies", NAMED_ENEMY_SPRITES, "enemy"], ["materials", ["iron-bar", "steel-bar", "silversteel-bar", "embersteel-bar", "starsteel-bar", "voidsteel-bar"], "metal"]]) {
-  for (const name of names) {
-    const id = `${prefix}-${name}`;
-    await run([join(root,`public/assets/${folder}/${name}.png`),"-channel","A","-threshold","50%","+channel","-filter","point","-resize","24x24!","-write","mpr:original","+dither","-remap",palette,"mpr:original","-compose","CopyAlpha","-composite","-strip",`PNG32:${join(out,`${id}.png`)}`]);
-    manifest.assets[id]={file:`${id}.png`,width:24,height:24};
   }
 }
 
@@ -128,23 +121,7 @@ if (!cardsOnly) for (const [id, rows] of Object.entries(ICON_ROWS)) {
   manifest.assets[`equip-${id}`]={file:`equip-${id}.png`,width:24,height:24};
 }
 
-// Pack all biome and forest textures into a single 24-pixel atlas. Existing
-// adjacency and biome choices stay intact; no gameplay generation changes.
-const walk = dir => readdirSync(dir,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(join(dir,e.name)):[join(dir,e.name)]);
-const terrain = [...walk(join(root,"public/assets/tilesets")), ...walk(join(root,"public/assets/defend")).filter(p=>/floor-\d\.png$/.test(p))].filter(p=>p.endsWith(".png") && !/\/(items|doors)\//.test(p)).sort();
-const tiles=[];
-if (!cardsOnly) for(const [i,path]of terrain.entries()){
-  const tile=join(temp,`terrain-${i}.png`);
-  await run([path,"-filter","point","-resize","24x24!","-channel","A","-threshold","50%","+channel","-write","mpr:original","+dither","-remap",palette,"mpr:original","-compose","CopyAlpha","-composite","-strip",`PNG32:${tile}`]);
-  tiles.push(tile);manifest.terrain[path.slice(join(root,"public/assets/").length)]={x:i%16*24,y:Math.floor(i/16)*24};
-}
-// montage is a subcommand, so it precedes the shared thread limit.
-if (!cardsOnly) await new Promise((resolve,reject)=>{
-  const p=spawn("magick",["montage","-limit","thread","1",...tiles,"-tile","16x","-geometry","24x24+0+0","-background","none",`PNG32:${join(out,"terrain.png")}`],{stdio:"inherit",timeout:60000});
-  p.on("error",reject);p.on("exit",code=>code===0?resolve():reject(new Error(`montage exit ${code}`)));
-});
-writeFileSync(join(out,"manifest.json"),JSON.stringify(manifest,null,2)+"\n");
-if (!cardsOnly) writeFileSync(join(root,"src/sprites/terrain-index.ts"),"// Generated by tools/prepare-game-sprites.mjs.\nexport const SPRITE_TERRAIN: Record<string, { x: number; y: number }> = "+JSON.stringify(manifest.terrain,null,2)+";\n");
+// Defend's independent four-floor atlas is retained unchanged by this exporter.
 if (!detailsOnly && !cityOnly && !structuresOnly) for (const [id, layers] of Object.entries(CARD_SPRITE_LAYERS)) {
   const frame = join(root,"public/assets/ui/frames/slot.png");
   await run(["-size","48x64","xc:none","-filter","point",
@@ -156,4 +133,4 @@ if (!detailsOnly && !cityOnly && !structuresOnly) for (const [id, layers] of Obj
   manifest.assets[`card-${id}`]={file:`card-${id}.png`,width:48,height:64};
 }
 writeFileSync(join(out,"manifest.json"),JSON.stringify(manifest,null,2)+"\n");
-console.log(`Prepared ${Object.keys(manifest.assets).length} object/card sprites and ${terrain.length} terrain tiles.`);
+console.log(`Prepared ${Object.keys(manifest.assets).length} object/card sprites.`);

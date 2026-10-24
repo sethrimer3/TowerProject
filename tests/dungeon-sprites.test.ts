@@ -106,7 +106,7 @@ test("all wall connections, material floors and live tile contents use the corre
     }
     const world = { tile: () => ({ kind: "floor" as const }) };
     const look: BoardLook = { mode: "delve", height: 0, seed: 1107, outside: false, entranceX: 8,
-      styledSprites: true, spritesOff: false, reduceMotion: true, area1: false, themed: null };
+      styledSprites: true, reduceMotion: true, themed: null };
     const materialSeen = new Set<string>();
     for (let x = 0; x < 20; x++) for (const tile of [{ kind: "floor" }, { kind: "attack" }, { kind: "door", color: "blue" }] as const) {
       draws.length = 0;
