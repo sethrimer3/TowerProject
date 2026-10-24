@@ -4,8 +4,8 @@ import { Game } from "../src/state.ts";
 import { defaults } from "../src/save.ts";
 import { TRAINING, cost, trained, type StatTrainingRow } from "../src/config.ts";
 import { deckCards, planHand } from "../src/cards/cards.ts";
-import { RESEARCH } from "../src/archives.ts";
-import { loadout } from "../src/loadout.ts";
+import { RESEARCH } from "../src/progression/archives.ts";
+import { loadout } from "../src/progression/loadout.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import type { Save } from "../src/save-shape.ts";
 

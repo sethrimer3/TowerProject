@@ -1,5 +1,5 @@
 import type { UpgradeId } from "./config.ts";
-import { researched, type ArchivesSave, type ResearchTarget } from "./archives.ts";
+import { researched, type ArchivesSave, type ResearchTarget } from "./progression/archives.ts";
 import type { Run } from "./runs.ts";
 
 // A run's charges: the uses of Focus, Ignore and Target it has. Each opens

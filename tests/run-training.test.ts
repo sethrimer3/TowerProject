@@ -4,7 +4,7 @@ import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save.ts";
 import { LIMIT_BREAKS, TRAINING, trained, xpForLevel, levelForXp, trainedAmount, trainingDef } from "../src/config.ts";
 
-import { ranksInRun, runTrainingOffer, runTrainingValue, silverPrice } from "../src/run-training.ts";
+import { ranksInRun, runTrainingOffer, runTrainingValue, silverPrice } from "../src/progression/run-training.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 
 /** A Tower run inside on an open 5×5 floor, with undo, On the Job and `silver` to spend. */

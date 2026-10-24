@@ -1,8 +1,8 @@
-import { TRAINING, TRAINING_GROUPS, trainedAmount, type TrainingId } from "./config.ts";
-import type { RunCore } from "./runs.ts";
-import type { Save } from "./save-shape.ts";
+import { TRAINING, TRAINING_GROUPS, trainedAmount, type TrainingId } from "../config.ts";
+import type { RunCore } from "../runs.ts";
+import type { Save } from "../save-shape.ts";
 import { FREE_TRAINING_ROWS, runTrainingOpen } from "./loadout.ts";
-import { drawAt } from "./random.ts";
+import { drawAt } from "../random.ts";
 import { ranksInRun, runTrainingMax } from "./run-training.ts";
 
 /** Free Training: each floor passed in a run (a floor new to the run,

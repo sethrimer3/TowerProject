@@ -1,5 +1,5 @@
-import { curvePrice, risingPrice, type TrainerCurve, type TrainerTime, type TrainingId } from "./config.ts";
-import { halfPow } from "./exact.ts";
+import { curvePrice, risingPrice, type TrainerCurve, type TrainerTime, type TrainingId } from "../config.ts";
+import { halfPow } from "../exact.ts";
 
 // A Training rank is bought one of two ways: with training points, which
 // count at once, or with Gold paid to a trainer, which takes time on the

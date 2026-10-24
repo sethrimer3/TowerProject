@@ -12,7 +12,7 @@ import { enemyFirstFloor } from "../src/enemies/schedule.ts";
 import { keyFirstFloor } from "../src/key-schedule.ts";
 import { DAY_MS } from "../src/shop/clock.ts";
 import { CURRENCIES } from "../src/shop/currency.ts";
-import { trainingPoints } from "../src/loadout.ts";
+import { trainingPoints } from "../src/progression/loadout.ts";
 import type { Enemy, Tile } from "../src/entities.ts";
 import type { Save } from "../src/save-shape.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";

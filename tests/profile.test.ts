@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save.ts";
 import { xpForLevel } from "../src/config.ts";
-import { cancelResearch, settleArchives, startResearch } from "../src/archives.ts";
+import { cancelResearch, settleArchives, startResearch } from "../src/progression/archives.ts";
 import { CURRENCIES } from "../src/shop/currency.ts";
 import { MODES } from "../src/modes.ts";
 import { RunPurse } from "../src/game/run-purse.ts";

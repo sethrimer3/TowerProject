@@ -4,9 +4,9 @@ import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { chargesLeft, chargesPerRun, climbFloor, floorsToRegain, regainEvery } from "../src/run-charges.ts";
-import { RESEARCH, researched } from "../src/archives.ts";
+import { RESEARCH, researched } from "../src/progression/archives.ts";
 import { cost } from "../src/config.ts";
-import { skillAvailable } from "../src/skill-trees.ts";
+import { skillAvailable } from "../src/progression/skill-trees.ts";
 import type { Run } from "../src/runs.ts";
 
 /** A Tower floor of open tiles, `size` a side, the hero in the corner and

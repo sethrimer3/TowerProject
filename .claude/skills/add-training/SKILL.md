@@ -12,9 +12,9 @@ A Training row is one entry in `TRAINING` (`src/config.ts`, typed by `TrainingDe
 Read these as they are now; the numbers here are examples of the conventions, and the files win where they differ.
 
 - `src/config.ts`: `TrainingDef` and `TRAINING` (each row's `id`, `name`, `group`, `requires`/`goal`, `cost`, `max`, `breaks`, `description`, its rank `curve` (`TrainingCurve`), a stat row's `stat`, a value row's `base`, `cap`, `scale`, `unit`, `needs` and `off`, its `research`, its Silver schedule `silver` and its trainers' Gold curve `gold`), `TRAINING_GROUPS`, `TRAINING_PER_LEVEL`, `trained`, `trainingWorth`, `amountAt`, `trainedAmount`, the named Silver schedules (`vital`, `cheap`, `opened`, `deep`, and the rows' own), `schedulePrice`, and the named trainer curves (`gentleTrainers`, `mildTrainers`, `firmTrainers`, `steepTrainers`, `critTrainers`).
-- `src/training-jobs.ts`: the trainer's Gold (`trainingGold(row, ranks)`: `TRAINING_GOLD_PER_POINT` × `cost` × (ranks + 1) × (1 + ranks / `growth`), rounded up, `growth` from the row's `gold` curve) and time (`trainingSeconds`, shared: 15 s, 1 min, 5 min, 10 min, then ten minutes more a rank, `TRAINING_STEP_SECONDS`).
-- `src/loadout.ts`: `Stat`/`Loadout` and `loadout()` (stat rows), `trainingStep`, `rowValue` (the tab's and the run cards' value, with its Silver / Floor, Silver Bonus and Free Upgrade branches), `rowWorth`, `rowResearchFactor`, `trainingText` (one format per `unit`), `critRule`, `trainingMaxed`, `trainingBulk`.
-- `src/run-training.ts`: `runTrainingOffer`, `runTrainingValue`, `ranksInRun`, `silverPrice`; `Game.trainingNow` and `Game.trainInRun` in `src/state.ts`.
+- `src/progression/training-jobs.ts`: the trainer's Gold (`trainingGold(row, ranks)`: `TRAINING_GOLD_PER_POINT` × `cost` × (ranks + 1) × (1 + ranks / `growth`), rounded up, `growth` from the row's `gold` curve) and time (`trainingSeconds`, shared: 15 s, 1 min, 5 min, 10 min, then ten minutes more a rank, `TRAINING_STEP_SECONDS`).
+- `src/progression/loadout.ts`: `Stat`/`Loadout` and `loadout()` (stat rows), `trainingStep`, `rowValue` (the tab's and the run cards' value, with its Silver / Floor, Silver Bonus and Free Upgrade branches), `rowWorth`, `rowResearchFactor`, `trainingText` (one format per `unit`), `critRule`, `trainingMaxed`, `trainingBulk`.
+- `src/progression/run-training.ts`: `runTrainingOffer`, `runTrainingValue`, `ranksInRun`, `silverPrice`; `Game.trainingNow` and `Game.trainInRun` in `src/state.ts`.
 - Neighbouring rows in the same group: the defaults below are judged against them.
 - `docs/PROGRESSION_AND_DIFFICULTY.md` (the training paragraph and the run training prices) for what a hero earns and when.
 
@@ -59,7 +59,7 @@ Work in an isolated worktree, cherry-pick onto `main`, push and clean up, per th
 
 **The row.** Add it to `TRAINING` in the order the tab should list it within its group. `defaults()` and the decoders in `save.ts` build `training`, `trainingPaid`, `trainerRanks` and `trainingCredit` from `TRAINING`, and the decoder clamps ranks to `max`, so saves need nothing else. Reset, auto-continue, Buy Quantity, the Training dot (`trainingWaiting`) and the run's training bar come for free.
 
-**A stat row** needs nothing more when its stat already exists. A new stat goes into `Stat` and `Loadout` in `loadout.ts`, the hero (`Player`, set in `newRun` and shifted by `changeLoadout`), `shownStat` if it isn't shown whole, and the code where it acts (the shroud in `combat.ts`; anything a step does goes through `resolveStep` in `step-effects.ts`, so previews and planners agree).
+**A stat row** needs nothing more when its stat already exists. A new stat goes into `Stat` and `Loadout` in `progression/loadout.ts`, the hero (`Player`, set in `newRun` and shifted by `changeLoadout`), `shownStat` if it isn't shown whole, and the code where it acts (the shroud in `combat.ts`; anything a step does goes through `resolveStep` in `step-effects.ts`, so previews and planners agree).
 
 **A value row** has no stat; its entry says what its ranks are worth:
 - `curve` (usually `{ per }`, a flat amount a rank), `base` (its amount at no ranks), `cap` if it must stop below a ceiling, all in whole units of its own (hundredths of a percent, of a tile …), `scale` of them to one shown `unit` (`TrainingUnit`; a new kind of unit adds a case to `trainingText`).
@@ -69,7 +69,7 @@ Work in an isolated worktree, cherry-pick onto `main`, push and clean up, per th
 
 **Read it when it's used.** Undo and Revive restore copies of the run, so read the value at the moment it applies (as `game.stepRules` does for Potion %), not copied into the run when bought. A value fixed as the run goes inside (Find Potion's `run.percentPotions`) also needs `trainInRun` to update it when a Silver rank is bought mid-run.
 
-**Gold and time curves.** Give the row its `gold` curve (`TrainingDef` requires one, so the build fails without it); `trainingGold` reads it, and a new shape of Gold curve widens `TrainerCurve` and `trainingGold` alone. Every row shares `trainingSeconds`; a row with its own time curve makes `trainingMs` take the row, updating its callers (`trainingPrices` in `loadout.ts`; `start`, `continueAfter` and `toNextRank` in `game/training-desk.ts`). A refund returns what the job recorded as paid, so cancel and reset need no change.
+**Gold and time curves.** Give the row its `gold` curve (`TrainingDef` requires one, so the build fails without it); `trainingGold` reads it, and a new shape of Gold curve widens `TrainerCurve` and `trainingGold` alone. Every row shares `trainingSeconds`; a row with its own time curve makes `trainingMs` take the row, updating its callers (`trainingPrices` in `progression/loadout.ts`; `start`, `continueAfter` and `toNextRank` in `game/training-desk.ts`). A refund returns what the job recorded as paid, so cancel and reset need no change.
 
 **Silver.** Give the row its `silver` schedule (required by `TrainingDef` too).
 

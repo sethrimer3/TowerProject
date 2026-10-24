@@ -1,8 +1,8 @@
 /** The shape of the save: each mode's slice (`ModeSave`) and everything kept between runs (`Save`). save.ts loads and decodes it. */
-import type { TrainingJob, TrainingPaid } from "./training-jobs.ts";
+import type { TrainingJob, TrainingPaid } from "./progression/training-jobs.ts";
 import type { TierRecord } from "./tiers.ts";
 import type { ThemeId } from "./theme-collection.ts";
-import type { ArchivesSave } from "./archives.ts";
+import type { ArchivesSave } from "./progression/archives.ts";
 import type { ShrinesSave } from "./shrines.ts";
 import type { CardId, CardLink } from "./cards/cards.ts";
 import type { BadgesSave } from "./cards/badges.ts";
@@ -84,7 +84,7 @@ export type Save = {
   medals: number;
   /** Cells: dropped by Greater Bosses, kept between runs with their
    * fractions (a badge's scale can change a drop), spent on the Archives'
-   * Speed Ups (speed-ups.ts). */
+   * Speed Ups (progression/speed-ups.ts). */
   cells: number;
   /** Where the Gems found on floors and the ad button's stand: never part
    * of a run, so undo can't touch them. */
@@ -186,7 +186,7 @@ export type Save = {
    * added to the hand or given a badge), the rest wearing NEW there. */
   seen: { level: number; training: number; archives: number; cards: CardId[]; cardLevels: number; met: CardId[] };
   /** The Archives' archivists, completed research and its history
-   * (archives.ts). */
+   * (progression/archives.ts). */
   archives: ArchivesSave;
   /** DEFEND mini-game: city layout, purchases, upgrades and best wave. A
    * defense run itself is never saved. */

@@ -1,6 +1,6 @@
 import type { EnemyStrength, KeyColor } from "./entities.ts";
 import type { GoalUnlock } from "./goals.ts";
-import type { ResearchTarget } from "./archives.ts";
+import type { ResearchTarget } from "./progression/archives.ts";
 import { halfPow, intPow, snap } from "./exact.ts";
 export const UNGUARDED_LOOT_CHANCE = 1 / 1000;
 export const WIDTH = 30;
@@ -18,7 +18,7 @@ export const OLD_SAVE_KEY = "towerincramental.v1";
 export const COLORS: Record<KeyColor, string> = { yellow: "#eac16b", blue: "#6dbdf1", red: "#df797e" };
 export type Currency = "courage" | "inspiration";
 /** Upgrades that make the character stronger say so in `grants` (what one
- * rank adds; see loadout.ts), which also writes their description. */
+ * rank adds; see progression/loadout.ts), which also writes their description. */
 /** Focus uses a run starts with, once the Focus skill is owned. */
 export const FOCUS_PER_RUN = 1;
 /** Ignore and Target uses a run starts with, once each skill is owned. */

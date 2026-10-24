@@ -3,10 +3,10 @@ import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults, decode } from "../src/save.ts";
 import { TRAINING, trainingCap, trainingCeiling, xpForLevel, trainingDef } from "../src/config.ts";
-import { loadout, trainingOpen, trainingPoints, trainingRowsFull, trainingStep } from "../src/loadout.ts";
-import { BOOST_MAX_MS, claimBoost, doneAt, finishGems, rushEfficiencyText, trainingGold, trainingMs, trainingSeconds, workLeft } from "../src/training-jobs.ts";
-import { RESEARCH } from "../src/archives.ts";
-import { silverPrice } from "../src/run-training.ts";
+import { loadout, trainingOpen, trainingPoints, trainingRowsFull, trainingStep } from "../src/progression/loadout.ts";
+import { BOOST_MAX_MS, claimBoost, doneAt, finishGems, rushEfficiencyText, trainingGold, trainingMs, trainingSeconds, workLeft } from "../src/progression/training-jobs.ts";
+import { RESEARCH } from "../src/progression/archives.ts";
+import { silverPrice } from "../src/progression/run-training.ts";
 
 const HOUR = 3_600_000;
 const game = (level = 10) => {

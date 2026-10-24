@@ -1,9 +1,9 @@
-import type { Run } from "./runs.ts";
-import { snap } from "./exact.ts";
+import type { Run } from "../runs.ts";
+import { snap } from "../exact.ts";
 import type { Loadout } from "./loadout.ts";
-import { boonFactor } from "./shrines.ts";
-import { badgeFactor } from "./cards/badges.ts";
-import { treeHeroFactor } from "./cards/trees.ts";
+import { boonFactor } from "../shrines.ts";
+import { badgeFactor } from "../cards/badges.ts";
+import { treeHeroFactor } from "../cards/trees.ts";
 
 /** The stats the loadout carries into a run's hero, which a change to the
  * loadout moves mid-run. */

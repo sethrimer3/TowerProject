@@ -8,7 +8,7 @@ import { RoomWorld } from "../src/tower/room-world.ts";
 import { World } from "../src/delve/world.ts";
 import { withPotions } from "../src/board.ts";
 import { resolveStep, POTION_HEAL, type StepEffect } from "../src/step-effects.ts";
-import { trainingPoints, trainingStep } from "../src/loadout.ts";
+import { trainingPoints, trainingStep } from "../src/progression/loadout.ts";
 import { xpForLevel, trainedAmount } from "../src/config.ts";
 import type { Player, Tile } from "../src/entities.ts";
 

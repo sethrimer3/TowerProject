@@ -5,12 +5,12 @@ import type { Enemy, Player, Tile } from "../src/entities.ts";
 import { bout, heroHpAfter, heroHpDuring, predict, summarize } from "../src/combat.ts";
 import { resolveStep } from "../src/step-effects.ts";
 import { forecast } from "../src/crit-forecast.ts";
-import { loadout, trainingStep } from "../src/loadout.ts";
+import { loadout, trainingStep } from "../src/progression/loadout.ts";
 import { startingHero } from "../src/game/hero-sync.ts";
-import { trainingGold } from "../src/training-jobs.ts";
-import { silverPrice } from "../src/run-training.ts";
+import { trainingGold } from "../src/progression/training-jobs.ts";
+import { silverPrice } from "../src/progression/run-training.ts";
 import { TRAINING, UPGRADES, isStatRow, trained } from "../src/config.ts";
-import { TREES } from "../src/skill-trees.ts";
+import { TREES } from "../src/progression/skill-trees.ts";
 import { DamagePredictions, HEAL_COLOR } from "../src/damage-labels.ts";
 import { snap } from "../src/exact.ts";
 

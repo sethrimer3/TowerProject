@@ -1,10 +1,10 @@
 import { TRAINING, trainingDef, type TrainingId } from "../config.ts";
 import { snap } from "../exact.ts";
 import { TRAINING_RESET_GEMS } from "../gems.ts";
-import { batchSpeedup, bulkBuy, type BuyQuantity } from "../buy-quantity.ts";
-import { trainingBulk, trainingDiscount, trainingFull, trainingMaxed, trainingRowsFull, trainingSpeed, trainingOpen } from "../loadout.ts";
+import { batchSpeedup, bulkBuy, type BuyQuantity } from "../progression/buy-quantity.ts";
+import { trainingBulk, trainingDiscount, trainingFull, trainingMaxed, trainingRowsFull, trainingSpeed, trainingOpen } from "../progression/loadout.ts";
 import { BOOST_FOREVER, permanentBoost, trainingRate } from "../shop/entitlements.ts";
-import { batchWork, claimBoost, doneAt, finishGems, jobInvested, nextTrainerGems, ranksInTraining, trainerBatch, trainingGold, trainingJob, trainingSeconds, workLeft, trainingSlots, type TrainingJob } from "../training-jobs.ts";
+import { batchWork, claimBoost, doneAt, finishGems, jobInvested, nextTrainerGems, ranksInTraining, trainerBatch, trainingGold, trainingJob, trainingSeconds, workLeft, trainingSlots, type TrainingJob } from "../progression/training-jobs.ts";
 import { affordsGems, type DeskHost } from "./desk.ts";
 import { changeLoadout } from "./hero-sync.ts";
 import { tally } from "../profile.ts";

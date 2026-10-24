@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { cancelResearch, jobProgress, settleArchives, startResearch, decodeArchives } from "../src/archives.ts";
-import { CELLS_PER_HOUR, SPEED_UP_FACTORS, jobAt, queueNextSpeedUp, speedUpCells, startSpeedUp } from "../src/speed-ups.ts";
+import { cancelResearch, jobProgress, settleArchives, startResearch, decodeArchives } from "../src/progression/archives.ts";
+import { CELLS_PER_HOUR, SPEED_UP_FACTORS, jobAt, queueNextSpeedUp, speedUpCells, startSpeedUp } from "../src/progression/speed-ups.ts";
 import { decode, defaults } from "../src/save.ts";
 import { Game } from "../src/state.ts";
 import { RunPurse } from "../src/game/run-purse.ts";

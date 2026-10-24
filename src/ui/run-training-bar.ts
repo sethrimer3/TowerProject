@@ -1,8 +1,8 @@
 import type { Game } from "../state.ts";
 import { TRAINING, TRAINING_GROUPS, type TrainingId } from "../config.ts";
-import { runTrainingBulk, runTrainingOffer, runTrainingValue } from "../run-training.ts";
+import { runTrainingBulk, runTrainingOffer, runTrainingValue } from "../progression/run-training.ts";
 import { bindBuyQuantity, buyQuantityHtml, runCount } from "./buy-quantity-select.ts";
-import { trainingText, runTrainingOpen } from "../loadout.ts";
+import { trainingText, runTrainingOpen } from "../progression/loadout.ts";
 import { DECK_ICON, el, itemSprite, POINTER_SVG, uiSprite } from "./dom.ts";
 import { priceAmount, sparkRed } from "./hud.ts";
 

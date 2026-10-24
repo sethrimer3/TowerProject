@@ -5,7 +5,7 @@ import type { ChestKind, Enemy, Mode, Tile, KeyColor } from "../entities.ts";
 import { RARITY_TIERS } from "../equipment/balance.ts";
 import { EQUIP_MATERIALS, itemDef } from "../equipment/catalog.ts";
 import { snap } from "../exact.ts";
-import { boostMaxHp } from "../hero-stats.ts";
+import { boostMaxHp } from "../progression/hero-stats.ts";
 import type { EventMissionType } from "../events/catalog.ts";
 import type { MissionType } from "../missions/catalog.ts";
 import { MODES, type ModeProfile } from "../modes.ts";

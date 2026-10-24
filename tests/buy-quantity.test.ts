@@ -3,10 +3,10 @@ import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save.ts";
 import { xpForLevel } from "../src/config.ts";
-import { RESEARCH } from "../src/archives.ts";
-import { bulkBuy, openQuantities } from "../src/buy-quantity.ts";
-import { trainingBulk, trainingPoints, trainingStep } from "../src/loadout.ts";
-import { runTrainingBulk, silverPrice } from "../src/run-training.ts";
+import { RESEARCH } from "../src/progression/archives.ts";
+import { bulkBuy, openQuantities } from "../src/progression/buy-quantity.ts";
+import { trainingBulk, trainingPoints, trainingStep } from "../src/progression/loadout.ts";
+import { runTrainingBulk, silverPrice } from "../src/progression/run-training.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 
 /** A game with Buy Quantity owned and `levels` levels of its research. */

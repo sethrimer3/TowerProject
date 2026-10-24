@@ -3,18 +3,18 @@ import {
   RESEARCH, RESEARCH_CATEGORIES, RESEARCH_IDS, RESEARCH_TARGETS, activeSlot, cannotSwitch, describe, duration, jobProgress, price as researchPrice,
   maxLevel, missing, nextArchivistPrice, nextLevel, research, researchCompleted, researchLevel, researched, status, withNextLevel,
   type ArchivesSave, type ArchivistSlot, type ResearchCategory, type ResearchId, type ResearchRequirement, type ResearchTarget,
-} from "../archives.ts";
+} from "../progression/archives.ts";
 import { UPGRADES } from "../config.ts";
 import type { Save } from "../save-shape.ts";
-import { loadout } from "../loadout.ts";
+import { loadout } from "../progression/loadout.ts";
 import { unlockAt } from "../goals.ts";
 import { tierNumeral } from "../tiers.ts";
 import type { AppContext } from "./app.ts";
 import { currencyAmount, priceAmount } from "./hud.ts";
 import { cellIcon, el, gemCount, gemIcon, redoIcon, uiSprite } from "./dom.ts";
 import { shortAmount, whole } from "../whole.ts";
-import { RUSH_EFFICIENCY_TENTHS, rushEfficiencyText } from "../training-jobs.ts";
-import { SPEED_UP_FACTORS, SPEED_UP_HOURS, jobAt, type SpeedUpFactor, type SpeedUpHours } from "../speed-ups.ts";
+import { RUSH_EFFICIENCY_TENTHS, rushEfficiencyText } from "../progression/training-jobs.ts";
+import { SPEED_UP_FACTORS, SPEED_UP_HOURS, jobAt, type SpeedUpFactor, type SpeedUpHours } from "../progression/speed-ups.ts";
 import { askForGems, helpButton, showHelp } from "./dialogs.ts";
 import { startArchivesAmbient } from "./archives-ambient.ts";
 

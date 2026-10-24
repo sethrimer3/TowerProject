@@ -7,7 +7,7 @@ import { CARD_TREES, RESPEC_GEMS, cardLook, cardMaxLevel, decodeCardTrees, point
 import { RunPurse } from "../src/game/run-purse.ts";
 import { facing, parryCut, predict } from "../src/combat.ts";
 import { extraEnemies } from "../src/enemies/more-enemies.ts";
-import { rollFreeTraining } from "../src/free-training.ts";
+import { rollFreeTraining } from "../src/progression/free-training.ts";
 import { BASE_RULES, potionRestores } from "../src/step-effects.ts";
 import { snap } from "../src/exact.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";

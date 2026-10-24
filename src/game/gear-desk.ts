@@ -1,5 +1,5 @@
 import type { GoldItemId } from "../config.ts";
-import { provisionOpen, provisionPrice } from "../loadout.ts";
+import { provisionOpen, provisionPrice } from "../progression/loadout.ts";
 import type { DeskHost } from "./desk.ts";
 
 /** The Gear page's commands: provisions (Equipment has its own

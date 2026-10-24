@@ -4,7 +4,7 @@ import {Game} from "../src/state.ts";
 import {defaults,decode} from "../src/save.ts";
 import {TrialSession} from "../src/proving-grounds/session.ts";
 import {decodeTrial,startTrial} from "../src/proving-grounds/trial.ts";
-import {silverPrice} from "../src/run-training.ts";
+import {silverPrice} from "../src/progression/run-training.ts";
 
 function setup() {
   const base=new Game(defaults());base.newRun({outside:true,seed:12});

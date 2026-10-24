@@ -1,12 +1,12 @@
 import type { Mode, Player } from "../entities.ts";
 import type { Run } from "../runs.ts";
 import type { Save } from "../save-shape.ts";
-import { loadout } from "../loadout.ts";
+import { loadout } from "../progression/loadout.ts";
 import { MODES } from "../modes.ts";
-import { loadoutShift, shiftHero } from "../hero-stats.ts";
+import { loadoutShift, shiftHero } from "../progression/hero-stats.ts";
 import { RunTimeline } from "../run-timeline.ts";
 import { trainedAmount } from "../config.ts";
-import { ranksInRun } from "../run-training.ts";
+import { ranksInRun } from "../progression/run-training.ts";
 import { treeBonus, treeOverheal } from "../cards/trees.ts";
 
 const BOTH_MODES = ["tower", "delve"] as const;

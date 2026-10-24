@@ -89,7 +89,7 @@ export const SETTINGS = {
   /** Dev: every purchase is allowed and costs nothing, and research
    * completes the moment it starts. Unlocks and grants nothing itself. */
   freePurchases: { kind: "toggle", default: false, page: { id: "free-purchases", label: "Dev: free purchases (instant research)" } },
-  /** How many Training ranks one press buys (`buy-quantity.ts`): chosen
+  /** How many Training ranks one press buys (`progression/buy-quantity.ts`): chosen
    * on the Training tab or the run's training bar once Buy Quantity is
    * owned, not on the Settings page. */
   buyQuantity: {

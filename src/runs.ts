@@ -128,7 +128,7 @@ export type RunCore = {
    * starts from the run seed. */
   skipRolls?: number;
   /** How many of each Free Upgrade group's rolls this run has drawn from
-   * its stream, which starts from the run seed (free-training.ts). */
+   * its stream, which starts from the run seed (progression/free-training.ts). */
   freeRolls?: Partial<Record<"offense" | "defense" | "utility", number>>;
   /** How many enemies the run has spawned onto its floors
    * (`Game.spawnEnemy`), each numbered by the count before it; absent with

@@ -1,7 +1,7 @@
 import type { Mode } from "./entities.ts";
 import type { ModeSave, Save } from "./save-shape.ts";
 import type { MoveSnapshot, Run } from "./runs.ts";
-import { keepUndos } from "./loadout.ts";
+import { keepUndos } from "./progression/loadout.ts";
 import { MODES } from "./modes.ts";
 
 /** What undo can take a run back to, kept in the mode's slice of the save:

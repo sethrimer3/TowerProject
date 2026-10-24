@@ -20,7 +20,7 @@ The Upgrades page's trees: Inspiration (Tower currency), Courage, Wayfinding, Le
 
 **Price:** `cost(id, rank) = ceil(base × 1.65^rank)`, the same curve for every node, paid in `currency`. Existing bases run from 1 (roots) to about 12 (deep one-offs). Total for all ranks = Σ over rank 0…max−1.
 
-**Node** (`TREES` in `src/skill-trees.ts`): `{ id, icon, x, y, requires }`.
+**Node** (`TREES` in `src/progression/skill-trees.ts`): `{ id, icon, x, y, requires }`.
 - `x`, `y` are percentages of one view (0–100). Roots sit near the top (y ≈ 10–20), each tier about 18 lower. Keep nodes about 20+ apart horizontally on a shared row and 15+ apart vertically so their labels don't collide; check the neighbours' positions. A tree that needs more room gets a `height` (in the same units, e.g. 136) and scrolls; nodes may then sit below y = 100. Leave about 12 below the lowest node.
 - A skill that only matters once another is owned (one that opens Archives research, say) goes below that one in the tree, even when that takes more height.
 - `requires` lists `UpgradeId`s that must each have a rank; they may be in another tree (`auto` requires `delve`).
@@ -29,7 +29,7 @@ The Upgrades page's trees: Inspiration (Tower currency), Courage, Wayfinding, Le
 
 **Buying:** `Game.buy` checks `skillAvailable` (gate + requires), `max` and the balance. No other code is needed to make a node buyable.
 
-**Touches:** `config.ts` (row), `skill-trees.ts` (node), `ui/dom.ts` (sprite, optional), wherever the effect is read. Tests: `tests/skill-trees.test.ts` (it asserts the tree list and currencies), plus a test of the effect in its area's file. Docs: `docs/PROGRESSION_AND_DIFFICULTY.md` lists the Inspiration path's costs. Goldens: `save-decode` (the saved `upgrades` record gains a key), `ui.golden.json` (the tree).
+**Touches:** `config.ts` (row), `progression/skill-trees.ts` (node), `ui/dom.ts` (sprite, optional), wherever the effect is read. Tests: `tests/skill-trees.test.ts` (it asserts the tree list and currencies), plus a test of the effect in its area's file. Docs: `docs/PROGRESSION_AND_DIFFICULTY.md` lists the Inspiration path's costs. Goldens: `save-decode` (the saved `upgrades` record gains a key), `ui.golden.json` (the tree).
 
 ---
 
@@ -37,7 +37,7 @@ The Upgrades page's trees: Inspiration (Tower currency), Courage, Wayfinding, Le
 
 Research that lasts, paid in Gold and real (wall-clock) time, run by archivists. Unlocked by the `archives` skill.
 
-**Row** (`RESEARCH` in `src/archives.ts`, listed in this order within its category's group on the page): `{ name, description, categories, requires, levels }`.
+**Row** (`RESEARCH` in `src/progression/archives.ts`, listed in this order within its category's group on the page): `{ name, description, categories, requires, levels }`.
 - `categories`: keys of `RESEARCH_CATEGORIES` (qualityOfLife, progression, abilities, offense, defense, economy, equipment, special, in the order the library lists its groups), used by the library's filters and headings: a project is listed under its first category.
 - `requires`: any of `{ upgrade: UpgradeId }`, `{ anyUpgrade: UpgradeId[] }` (one of them owned), `{ research: id, level }`, `{ playerLevel: n }`.
 - `levelsPer` (optional): `{ upgrades, levels }` opens only `levels` of the project for each of `upgrades` owned (Undo Count: four each for Rehearsed steps and Echoes of time); `maxLevel` reads it. The library lists a project only once these are met (Dev mode lists all).
@@ -48,7 +48,7 @@ Research that lasts, paid in Gold and real (wall-clock) time, run by archivists.
 
 **Time:** say both per-level hours and the total, and compare with existing projects: players plan around real time. Research Speed shortens research under way the moment a level completes (`hastenAll`), keeping each job's share done.
 
-**Touches:** `archives.ts` (row, maybe target), the reading site, `tests/archives.test.ts`. Docs: the Archives section in `docs/PROGRESSION_AND_DIFFICULTY.md` if it lists projects; `CONTEXT.md` for new terms. Goldens: `ui.golden.json` if the UI suite opens the Archives. The save keeps `levels` as a partial record, so `save-decode` normally doesn't change.
+**Touches:** `progression/archives.ts` (row, maybe target), the reading site, `tests/archives.test.ts`. Docs: the Archives section in `docs/PROGRESSION_AND_DIFFICULTY.md` if it lists projects; `CONTEXT.md` for new terms. Goldens: `ui.golden.json` if the UI suite opens the Archives. The save keeps `levels` as a partial record, so `save-decode` normally doesn't change.
 
 ---
 

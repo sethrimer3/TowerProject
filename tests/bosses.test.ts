@@ -7,7 +7,7 @@ import { region } from "../src/delve/labyrinth.ts";
 import { generateTowerFloor, isBossFloor } from "../src/tower/index.ts";
 import { getTowerGateEnemy } from "../src/enemies/scaling.ts";
 import { defaults } from "../src/save.ts";
-import { loadout } from "../src/loadout.ts";
+import { loadout } from "../src/progression/loadout.ts";
 import { predict } from "../src/combat.ts";
 
 // A boss guards the way up at the end of every ten floors: beside the stairs

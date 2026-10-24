@@ -1,4 +1,4 @@
-import type { UpgradeId, Currency } from "./config.ts";
+import type { UpgradeId, Currency } from "../config.ts";
 export type TreeId = "wayfinding" | "inspiration" | "courage" | "legacy" | "wisdom" | "renown";
 export type SkillNode = { id: UpgradeId; icon: string; x: number; y: number; requires: UpgradeId[] };
 /** A skill tree. Node positions are percentages of the tree's view: x of

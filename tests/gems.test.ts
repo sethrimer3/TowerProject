@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save.ts";
 import { random } from "../src/random.ts";
-import { trainingPoints } from "../src/loadout.ts";
+import { trainingPoints } from "../src/progression/loadout.ts";
 import { xpForLevel } from "../src/config.ts";
 import type { Board } from "../src/board.ts";
 import type { Tile } from "../src/entities.ts";

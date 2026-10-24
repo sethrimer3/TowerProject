@@ -24,7 +24,7 @@ Spell boons, Bounce Shot, Orbs, Unlock a Random Spell and the ranged enemies' tr
 - Hero stats (ATK, max HP, shroud, Regen, Lifesteal, Parry %) are stored in the run, so `ShrineDesk.sync` rescales them from the factors the run last applied (`run.shrine.applied`) to the factors its boons give now (`rescaleHero`; HP keeps its share of max HP).
   Parry % is the hero's own times its factor (the Lifesteal trade-off's 0.3) plus the Parry % boon's `parryBonus`, up to `PARRY_CAP`.
   It runs on every pick and whenever research completes (`DeskHost.researchDone`, called by `ResearchDesk.settle`).
-  Anything the hero gains or loses mid-run is multiplied by the same factor (`boonFactor`): every loadout change, run training and siphons (`shiftHero` in `hero-stats.ts`, which also applies the Max HP badge's own multiplier, `badgeFactor`), and ATK shards (`Game.stepRules.shardAttack`).
+  Anything the hero gains or loses mid-run is multiplied by the same factor (`boonFactor`): every loadout change, run training and siphons (`shiftHero` in `progression/hero-stats.ts`, which also applies the Max HP badge's own multiplier, `badgeFactor`), and ATK shards (`Game.stepRules.shardAttack`).
 - Enemies: `RoomWorld.foes` (from `run.shrine.applied.foes`) passes every tile, changes included (a Greater Boss is summoned into `run.changes`), through `foeTile`: HP and ATK scaled, boss HP on top, a boss striking first (`fast`), and a Fast enemy striking second (`fast` dropped) with ATK ×2.5.
   `RoomWorld.typicalEnemy`, the HUD's normal enemy, goes through it too (`withBoons`), so the HUD shows the floor's normal enemy as the boons leave it.
   `Game.boonsChanged` sets it on the board and drops the hand's plan.
@@ -45,7 +45,7 @@ Auto Pick (`ShrineDesk.autoPick`, on after a pick, a new Tower floor, research c
 `save.shrines` (`ShrinesSave`, `decodeShrines`): Auto Pick on or off, the First Boon Choice, the banned boons (only the first `boonBans` count, `bans`) and the ranking.
 `TowerRun.shrine` (`ShrineRun`) is kept whole or dropped (`validShrineRun`), since a part left out would leave the hero scaled by boons it no longer has.
 
-**Research** (`archives.ts`, category `shrines`; each needs Unlock Shrines, and its Goal):
+**Research** (`progression/archives.ts`, category `shrines`; each needs Unlock Shrines, and its Goal):
 Unlock Shrines (Tower II F150, 1.5M Gold, 4,999 min), Floors Required (−1 floor a level, 100 levels), Standard Boon Bonus (+1% a level, 25 levels, hand-set Gold table), First Boon Choice (Tower II F250), Improve Trade-off Boons (Tower II F400, +1% a level, 10 levels), Auto Pick Boons (Tower IV F50), Boon Option Quantity (Tower IV F80, 2 levels), Ban Boons (Tower V F40, 8 levels), Auto Pick Ranking (Tower VI F10, after Auto Pick Boons, 32 levels).
 Their tables are hard-coded (no `Math.pow` at load).
 Goals run every ten floors to 100, every 50 to 300, then 400 to 4,500 (`CHECKPOINT_FLOORS`).

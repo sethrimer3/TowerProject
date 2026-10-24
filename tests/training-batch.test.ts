@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults, decode } from "../src/save.ts";
 import { TRAINING, xpForLevel } from "../src/config.ts";
-import { batchSpeedup } from "../src/buy-quantity.ts";
-import { trainerBatch, trainingMs } from "../src/training-jobs.ts";
+import { batchSpeedup } from "../src/progression/buy-quantity.ts";
+import { trainerBatch, trainingMs } from "../src/progression/training-jobs.ts";
 
 const atk = TRAINING.find((t) => t.id === "attack")!;
 const game = () => {

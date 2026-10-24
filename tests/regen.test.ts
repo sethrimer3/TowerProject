@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults } from "../src/save.ts";
 import { TRAINING, cost, levelForXp, trained, trainingWorth, type StatTrainingRow, trainingDef } from "../src/config.ts";
-import { loadout, trainingStep } from "../src/loadout.ts";
+import { loadout, trainingStep } from "../src/progression/loadout.ts";
 import { resolveStep, BASE_RULES } from "../src/step-effects.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import type { Player } from "../src/entities.ts";

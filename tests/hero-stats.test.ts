@@ -4,8 +4,8 @@ import { defaults } from "../src/save.ts";
 import { Game } from "../src/state.ts";
 import { addItem, equip } from "../src/equipment/inventory.ts";
 import { changeLoadout } from "../src/game/hero-sync.ts";
-import { boostMaxHp, shiftHero } from "../src/hero-stats.ts";
-import { rowValue } from "../src/loadout.ts";
+import { boostMaxHp, shiftHero } from "../src/progression/hero-stats.ts";
+import { rowValue } from "../src/progression/loadout.ts";
 import { snap } from "../src/exact.ts";
 
 /** A Tower run inside, its hero wearing the Bloodprice Blade (+8% ATK,

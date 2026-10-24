@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save.ts";
 import { point } from "../src/entities.ts";
-import { missing, RESEARCH, status } from "../src/archives.ts";
+import { missing, RESEARCH, status } from "../src/progression/archives.ts";
 import { checkpoint, claimGoal, unlockAt } from "../src/goals.ts";
 import { RunPurse } from "../src/game/run-purse.ts";
 import { elapsed, notesResearched, notesSections, notesText } from "../src/ui/run-notes-dialog.ts";

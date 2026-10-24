@@ -1,6 +1,6 @@
-import { RESEARCH, RESEARCH_IDS, cancelResearch, researchCompleted, status, hastenResearch, hireArchivist, settleArchives, startResearch, switchResearch, type ResearchId, type ResearchRecord } from "../archives.ts";
-import { finishGems } from "../training-jobs.ts";
-import { queueNextSpeedUp, speedUpCells, startSpeedUp, type SpeedUpFactor, type SpeedUpHours } from "../speed-ups.ts";
+import { RESEARCH, RESEARCH_IDS, cancelResearch, researchCompleted, status, hastenResearch, hireArchivist, settleArchives, startResearch, switchResearch, type ResearchId, type ResearchRecord } from "../progression/archives.ts";
+import { finishGems } from "../progression/training-jobs.ts";
+import { queueNextSpeedUp, speedUpCells, startSpeedUp, type SpeedUpFactor, type SpeedUpHours } from "../progression/speed-ups.ts";
 import { changeLoadout } from "./hero-sync.ts";
 import { affordsGems, type DeskHost } from "./desk.ts";
 

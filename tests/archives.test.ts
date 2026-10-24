@@ -4,8 +4,8 @@ import {
   ARCHIVISTS, HISTORY_LIMIT, RESEARCH, RESEARCH_CATEGORIES, RESEARCH_IDS, RESEARCH_TARGETS, cancelResearch, cannotStart, decodeArchives,
   cannotSwitch, defaultArchives, duration, price, hireArchivist, jobProgress, maxLevel, researchCompleted, researchLevel, researched, settleArchives, startResearch, status, switchResearch, withNextLevel,
   type ResearchId,
-} from "../src/archives.ts";
-import { loadout } from "../src/loadout.ts";
+} from "../src/progression/archives.ts";
+import { loadout } from "../src/progression/loadout.ts";
 import { UPGRADES } from "../src/config.ts";
 import { decode, defaults } from "../src/save.ts";
 import { Game } from "../src/state.ts";

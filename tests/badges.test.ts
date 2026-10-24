@@ -12,7 +12,7 @@ import {
   attachBadge, attachConflict, badgeConflict, COPIES_FOR_LEVEL, copiesLeft, decodeBadges, defaultBadges, detachBadge, drawBadges, levelProgress, MAX_COPIES,
   BADGE_IDS, BADGES, badgeLevel, badgeValue, RARITY_WEIGHTS, runBadges, validRunBadges, type BadgeId, type BadgesSave,
 } from "../src/cards/badges.ts";
-import { RESEARCH, status } from "../src/archives.ts";
+import { RESEARCH, status } from "../src/progression/archives.ts";
 import { checkpoint } from "../src/goals.ts";
 import { DRAW_GEMS } from "../src/game/badge-desk.ts";
 import { doorCost } from "../src/doors.ts";
@@ -710,7 +710,7 @@ test("Skip on STAIRS climbs two floors, with Floor Skipped", () => {
 test("Floor Skip Reward pays its percent of the Gold the floor skipped held, once", async () => {
   const { ENEMY_GOLD } = await import("../src/config.ts");
   const { averageGold } = await import("../src/loot.ts");
-  const { RESEARCH } = await import("../src/archives.ts");
+  const { RESEARCH } = await import("../src/progression/archives.ts");
   const { pickupGold } = await import("../src/doors.ts");
   const { litTorches } = await import("../src/board.ts");
   assert.deepEqual(RESEARCH.floorSkipReward.levels.map((l) => l.effect.value), Array(11).fill(10), "11 levels of 10%");

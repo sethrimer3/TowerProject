@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { defaults } from "../src/save.ts";
 import { Game } from "../src/state.ts";
 import { UPGRADES } from "../src/config.ts";
-import { TREES, skillAvailable } from "../src/skill-trees.ts";
+import { TREES, skillAvailable } from "../src/progression/skill-trees.ts";
 
 test("legacy upgrade description mentions unlocking the legacy skill tree and Defend", () => {
   const legacy = UPGRADES.find((u) => u.id === "legacy");

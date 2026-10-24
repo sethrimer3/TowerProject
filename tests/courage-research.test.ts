@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults } from "../src/save.ts";
 import { ENEMY_GOLD } from "../src/config.ts";
-import { RESEARCH, describe, researched, status } from "../src/archives.ts";
+import { RESEARCH, describe, researched, status } from "../src/progression/archives.ts";
 import { resolveStep, type StepEffect } from "../src/step-effects.ts";
 import type { Enemy, Player } from "../src/entities.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";

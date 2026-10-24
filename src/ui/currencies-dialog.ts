@@ -2,7 +2,7 @@ import { controlIcon } from "./control-icon.ts";
 import { cellIcon, el, gemIcon, goldIcon, medalIcon, pointsIcon, shardIcon, ticketIcon, uiSprite } from "./dom.ts";
 import { materialIcon } from "./equipment-icons.ts";
 import { EQUIP_MATERIALS, EQUIP_MATERIAL_IDS } from "../equipment/catalog.ts";
-import { trainingPoints } from "../loadout.ts";
+import { trainingPoints } from "../progression/loadout.ts";
 import { shortAmount, whole } from "../whole.ts";
 import type { Game } from "../state.ts";
 

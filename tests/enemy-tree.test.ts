@@ -5,7 +5,7 @@ import { defaults } from "../src/save.ts";
 import { MAX_CARD_XP } from "../src/cards/levels.ts";
 import { CARD_TREES, type CardTreeLevels } from "../src/cards/trees.ts";
 import { bout, heroHpAfter, predict } from "../src/combat.ts";
-import { critRule } from "../src/loadout.ts";
+import { critRule } from "../src/progression/loadout.ts";
 import { weakened, NO_FOES } from "../src/shrines.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { World } from "../src/delve/world.ts";

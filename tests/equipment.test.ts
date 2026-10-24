@@ -6,7 +6,7 @@ import { OutsideWorld, BLACKSMITH } from "../src/outside.ts";
 import { MODES } from "../src/modes.ts";
 import { unlockAt } from "../src/goals.ts";
 import { random } from "../src/random.ts";
-import { loadout } from "../src/loadout.ts";
+import { loadout } from "../src/progression/loadout.ts";
 import { predict } from "../src/combat.ts";
 import { resolveStep } from "../src/step-effects.ts";
 import {

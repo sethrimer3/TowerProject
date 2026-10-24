@@ -1,21 +1,21 @@
-import { whole } from "./whole.ts";
+import { whole } from "../whole.ts";
 import { bulkBuy, type BuyQuantity } from "./buy-quantity.ts";
-import { snap } from "./exact.ts";
-import { PARRY_CAP, type CritRule } from "./combat.ts";
-import type { Mode } from "./entities.ts";
-import type { RunCore } from "./runs.ts";
-import type { Save } from "./save-shape.ts";
-import { boonFactor, runBoons } from "./shrines.ts";
-import { badgeFactor } from "./cards/badges.ts";
-import { treeHeroFactor } from "./cards/trees.ts";
-import { TRAINING_GROUPS, GOLD_SHOP, schedulePrice, TRAINING, TRAINING_PER_LEVEL, UPGRADES, trainingCap, isStatRow, levelForXp, trained, trainingWorth, amountAt, trainedAmount, trainingDef, type GoldItemId, type StatTrainingRow, type TrainingDef, type TrainingId, type TrainingRow, type UpgradeId } from "./config.ts";
-import { wornEffects } from "./equipment/effects.ts";
-import { silverFound } from "./gold-multipliers.ts";
-import { PIERCE_CAP } from "./equipment/balance.ts";
+import { snap } from "../exact.ts";
+import { PARRY_CAP, type CritRule } from "../combat.ts";
+import type { Mode } from "../entities.ts";
+import type { RunCore } from "../runs.ts";
+import type { Save } from "../save-shape.ts";
+import { boonFactor, runBoons } from "../shrines.ts";
+import { badgeFactor } from "../cards/badges.ts";
+import { treeHeroFactor } from "../cards/trees.ts";
+import { TRAINING_GROUPS, GOLD_SHOP, schedulePrice, TRAINING, TRAINING_PER_LEVEL, UPGRADES, trainingCap, isStatRow, levelForXp, trained, trainingWorth, amountAt, trainedAmount, trainingDef, type GoldItemId, type StatTrainingRow, type TrainingDef, type TrainingId, type TrainingRow, type UpgradeId } from "../config.ts";
+import { wornEffects } from "../equipment/effects.ts";
+import { silverFound } from "../gold-multipliers.ts";
+import { PIERCE_CAP } from "../equipment/balance.ts";
 import { RESEARCH, researched } from "./archives.ts";
 import { ranksInTraining, trainingGold } from "./training-jobs.ts";
-import { goalUnlocked, type GoalUnlock } from "./goals.ts";
-import type { CardId } from "./cards/cards.ts";
+import { goalUnlocked, type GoalUnlock } from "../goals.ts";
+import type { CardId } from "../cards/cards.ts";
 
 /** Whether `row` can be seen and trained: its upgrade owned, or the Goals
  * checkpoint that unlocks it claimed (Attack Range, Attack Speed). */
@@ -107,7 +107,7 @@ function add(total: Record<Stat, number>, rows: readonly (Granting & { id: strin
  * and the research target each reads. */
 const STAT_RESEARCH = { attack: "attackPercent", defense: "defensePercent", maxHp: "maxHpPercent", shroud: "shroudPercent" } as const;
 /** What `stat` is multiplied by, the whole of it a run starts with and
- * so each change to it mid-run (hero-stats.ts): its research's percent (1 without). */
+ * so each change to it mid-run (progression/hero-stats.ts): its research's percent (1 without). */
 export const statFactor = (save: Pick<Save, "archives">, stat: Stat) =>
   stat in STAT_RESEARCH ? researched(save.archives, STAT_RESEARCH[stat as keyof typeof STAT_RESEARCH]) / 100 : 1;
 

@@ -1,4 +1,4 @@
-import { researched } from "./archives.ts";
+import { researched } from "./progression/archives.ts";
 import { trainedAmount } from "./config.ts";
 import type { Mode } from "./entities.ts";
 import type { Save } from "./save-shape.ts";

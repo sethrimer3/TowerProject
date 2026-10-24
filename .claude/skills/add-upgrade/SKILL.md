@@ -16,8 +16,8 @@ Don't start editing code before the user has approved the spec. A wrong price or
 
 The numbers in this skill are examples of the conventions, not the live values. Before proposing anything, read what the game has now, because neighbouring upgrades are what your defaults should be judged against:
 
-- Skill trees: `UPGRADES` and `cost()` in `src/config.ts`; `TREES` in `src/skill-trees.ts`.
-- Archives: `RESEARCH`, `RESEARCH_TARGETS`, `ResearchRequirement` in `src/archives.ts`.
+- Skill trees: `UPGRADES` and `cost()` in `src/config.ts`; `TREES` in `src/progression/skill-trees.ts`.
+- Archives: `RESEARCH`, `RESEARCH_TARGETS`, `ResearchRequirement` in `src/progression/archives.ts`.
 - Defend Armory: `UPGRADES`, `upgradePrice`, `UpgradeDef` in `src/defend/catalog.ts`.
 - Income, to judge when something becomes affordable: `docs/PROGRESSION_AND_DIFFICULTY.md` (Inspiration ≈ 1 per new best Tower floor plus 10 per area cleared, slowing past floor 100; Courage ≈ 1 per new best equivalent floor, likewise; Gold from kills, treasure and run ends).
 

@@ -1,4 +1,4 @@
-import { RESEARCH, type ResearchRecord } from "../archives.ts";
+import { RESEARCH, type ResearchRecord } from "../progression/archives.ts";
 import { TRAINING, type TrainingId } from "../config.ts";
 
 /** One notification: its heading and the line under it. */

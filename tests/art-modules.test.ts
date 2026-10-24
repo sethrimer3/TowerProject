@@ -11,7 +11,7 @@ import { withStream } from "../src/random.ts";
 import { DecorLayer, type DecorFrame, type MirroredSprites } from "../src/render/decor/decor-render.ts";
 import type { BoardView } from "../src/render-frame.ts";
 import { decorSourceFor, tileDecor, type TileDecor } from "../src/render/decor/decor.ts";
-import { TREES, type SkillNode } from "../src/skill-trees.ts";
+import { TREES, type SkillNode } from "../src/progression/skill-trees.ts";
 import type { KeyColor, Tile } from "../src/entities.ts";
 
 // Characterization hashes of three small art modules: the area-one sprite

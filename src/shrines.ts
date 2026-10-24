@@ -1,4 +1,4 @@
-import { researched, type ArchivesSave } from "./archives.ts";
+import { researched, type ArchivesSave } from "./progression/archives.ts";
 import type { Enemy, Tile } from "./entities.ts";
 import { snap } from "./exact.ts";
 import { PARRY_CAP } from "./combat.ts";

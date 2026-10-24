@@ -1,4 +1,4 @@
-import { BUY_QUANTITIES, quantityLabel, type BuyQuantity } from "../buy-quantity.ts";
+import { BUY_QUANTITIES, quantityLabel, type BuyQuantity } from "../progression/buy-quantity.ts";
 
 /** The Buy Quantity dropdown ("x1", "x5", … "Max") among the quantities
  * open, the one in use shown; nothing until there is more than x1 to

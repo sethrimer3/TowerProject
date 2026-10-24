@@ -9,7 +9,7 @@ import { snap } from "../exact.ts";
 import { MODES, type ModeProfile } from "../modes.ts";
 import { drawAt } from "../random.ts";
 import { treeBonus } from "./trees.ts";
-import { boughtInRun } from "../run-training.ts";
+import { boughtInRun } from "../progression/run-training.ts";
 
 /** Mixed into the run seed to start Skip's stream of rolls. */
 const SKIP_SALT = 0x5c1b7;

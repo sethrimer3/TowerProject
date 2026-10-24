@@ -1,12 +1,12 @@
-import { FOCUS_PER_RUN, IGNORE_PER_RUN, REGAIN_FLOORS, TARGET_PER_RUN, levelForXp, type UpgradeId } from "./config.ts";
-import type { Settings } from "./settings.ts";
-import type { Save } from "./save-shape.ts";
-import type { Profile } from "./profile.ts";
-import { goalUnlocked, type GoalUnlock } from "./goals.ts";
-import { finite as finiteIn, isRecord, wholeIn } from "./decode.ts";
-import { intPow } from "./exact.ts";
+import { FOCUS_PER_RUN, IGNORE_PER_RUN, REGAIN_FLOORS, TARGET_PER_RUN, levelForXp, type UpgradeId } from "../config.ts";
+import type { Settings } from "../settings.ts";
+import type { Save } from "../save-shape.ts";
+import type { Profile } from "../profile.ts";
+import { goalUnlocked, type GoalUnlock } from "../goals.ts";
+import { finite as finiteIn, isRecord, wholeIn } from "../decode.ts";
+import { intPow } from "../exact.ts";
 import { BUY_QUANTITIES, quantityLabel } from "./buy-quantity.ts";
-import { tally } from "./profile.ts";
+import { tally } from "../profile.ts";
 import { carrySpeedUp, completionAt, decodeSpeedUp, endSpeedUp, type SpeedUp } from "./speed-ups.ts";
 
 // The Archives: research that lasts between runs. An archivist takes one
@@ -845,7 +845,7 @@ export const HISTORY_LIMIT = 200;
 export type ResearchJob = { research: ResearchId; level: number; startedAt: number; completesAt: number; paid: number };
 /** One archivist: its job, if any, whether it starts the project's next
  * level on its own when this one completes, and its Speed Up, if one is
- * in progress (speed-ups.ts). */
+ * in progress (progression/speed-ups.ts). */
 export type ArchivistSlot = { job?: ResearchJob; autoContinue: boolean; speedUp?: SpeedUp };
 export type ResearchRecord = { at: number; research: ResearchId; level: number };
 export type ArchivesSave = {

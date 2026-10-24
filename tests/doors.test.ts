@@ -41,7 +41,7 @@ test("heart always opens without keys and legacy doors remain compatible", () =>
 
 test("Heart Door Resilience research shrinks a Heart Door's toll 5% a level, for ten levels, on Focus Count's curve", async () => {
   const { resolveStep, BASE_RULES } = await import("../src/step-effects.ts");
-  const { RESEARCH, researched } = await import("../src/archives.ts");
+  const { RESEARCH, researched } = await import("../src/progression/archives.ts");
   const { Game } = await import("../src/state.ts");
   const { defaults } = await import("../src/save.ts");
   const heart: Tile = { kind: "door", door: { type: "fullHp" } };

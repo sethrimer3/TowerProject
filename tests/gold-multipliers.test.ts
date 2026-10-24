@@ -8,7 +8,7 @@ import { addItem, equip } from "../src/equipment/inventory.ts";
 import { wornEffects } from "../src/equipment/effects.ts";
 import { snap } from "../src/exact.ts";
 import { THEME_IDS } from "../src/theme-collection.ts";
-import { rowValue } from "../src/loadout.ts";
+import { rowValue } from "../src/progression/loadout.ts";
 import type { Enemy } from "../src/entities.ts";
 import type { TowerRun } from "../src/runs.ts";
 

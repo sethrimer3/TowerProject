@@ -16,7 +16,7 @@ The coefficient C need not be constant. It may rise slowly (monotonically) acros
 
 Quote `hours` before Research Speed. `duration` divides them by the speed when a level starts, and `price` takes the Research Cost Discount off the Gold, so a definition holds the undiscounted numbers. A late level's quoted time is therefore longer than what a player who has researched Research Speed actually waits. Research Speed's own level 100 is quoted at 100 days but takes about 34 at the 298% speed its first 99 levels give.
 
-## Building one: `curve` in `src/archives.ts`
+## Building one: `curve` in `src/progression/archives.ts`
 
 ```ts
 curve(first, power, length, end, bend)

@@ -4,7 +4,7 @@ import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save.ts";
 import { xpForLevel } from "../src/config.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
-import { workLeft } from "../src/training-jobs.ts";
+import { workLeft } from "../src/progression/training-jobs.ts";
 import { DAY_MS, confirmServerTime, estimatedServerTime, gmtDay, untilNextDay } from "../src/shop/clock.ts";
 import { BOOST_FOREVER, goldFactor, permanentBoost, trainingRate } from "../src/shop/entitlements.ts";
 import { HISTORY_KEPT } from "../src/shop/ledger.ts";

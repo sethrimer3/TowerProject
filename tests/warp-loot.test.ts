@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { RESEARCH, researched, status } from "../src/archives.ts";
+import { RESEARCH, researched, status } from "../src/progression/archives.ts";
 import { checkpoint } from "../src/goals.ts";
 import { defaults } from "../src/save.ts";
 import { Game } from "../src/state.ts";

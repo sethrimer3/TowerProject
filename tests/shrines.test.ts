@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save.ts";
-import { RESEARCH, missing, type ResearchId } from "../src/archives.ts";
+import { RESEARCH, missing, type ResearchId } from "../src/progression/archives.ts";
 import { checkpoint } from "../src/goals.ts";
 import type { Save } from "../src/save-shape.ts";
 import type { TowerRun } from "../src/runs.ts";

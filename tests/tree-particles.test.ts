@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { TreeParticles } from '../src/tree-particles.ts';
-import type { SkillNode } from '../src/skill-trees.ts';
+import type { SkillNode } from '../src/progression/skill-trees.ts';
 
 const node: SkillNode = { id: 'combatStance', x: 50, y: 50, requires: [], icon: '' };
 

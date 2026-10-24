@@ -2,9 +2,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { defaults, decode } from "../src/save.ts";
 import { Game } from "../src/state.ts";
-import { TREES, columnGap, mapNodes, treeHeight } from "../src/skill-trees.ts";
+import { TREES, columnGap, mapNodes, treeHeight } from "../src/progression/skill-trees.ts";
 import { LIMIT_BREAKS, TRAINING, UPGRADES, cost, type UpgradeId } from "../src/config.ts";
-import { RESEARCH } from "../src/archives.ts";
+import { RESEARCH } from "../src/progression/archives.ts";
 test("fresh progression gates Delve, currencies, Courage root, and Legacy", () => {
   const g = new Game(defaults());
   g.save.tower.inspiration = 100;

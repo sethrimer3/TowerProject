@@ -1,4 +1,4 @@
-import type { SkillNode } from './skill-trees.ts';
+import type { SkillNode } from './progression/skill-trees.ts';
 import { stream } from './random.ts';
 
 const fx = stream('effects');

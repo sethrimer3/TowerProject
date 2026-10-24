@@ -6,7 +6,7 @@ import { MAX_CARD_XP } from "../src/cards/levels.ts";
 import { CARD_TREES, FOE_TREE_CARDS, foeStat, runExtras, treeBonus, type CardTreeLevels } from "../src/cards/trees.ts";
 import type { CardId } from "../src/cards/cards.ts";
 import { attackAgainst, bout, critAgainst, facing, heroHpAfter, predict } from "../src/combat.ts";
-import { critRule } from "../src/loadout.ts";
+import { critRule } from "../src/progression/loadout.ts";
 import { volleyTurn, type VolleyTurn } from "../src/volley.ts";
 import { RunPurse } from "../src/game/run-purse.ts";
 import { snap } from "../src/exact.ts";
