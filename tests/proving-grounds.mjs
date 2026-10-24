@@ -67,7 +67,7 @@ try {
   expect(trial.purchases.silver).toBeLessThan(before.purchases.silver);
   expect(trial.purchases.training.attack).toBe(1);
   await expect(page.locator("#attack")).toHaveText(String(Math.floor(trial.player.attack)));
-  await page.locator('[data-run-group="offense"]').click();
+  await page.locator('[data-run-tab="hand"]').click();
   await expect(page.locator("#hand")).toBeVisible();
   await reload();expect((await readTrial()).purchases).toEqual(trial.purchases);
   expect((await readSave()).tower.run).toEqual(tower);

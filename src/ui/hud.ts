@@ -444,6 +444,7 @@ function renderHand(game: Game, hand: readonly CardId[] = game.hand) {
     // Room for five cards; a bigger hand scrolls sideways.
     row.style.setProperty("--slots", String(Math.max(5, hand.length)));
     row.innerHTML = hand.map((id, i) => `<div class="hand-card" role="listitem" data-card="${id}" data-hand-slot="${i}">${cardArt(id, CARDS[id].name)}${levels[i]}${handBadgeHtml(game, id)}</div>`).join("");
+    renderHandMore();
   }
   // Paused, the card that made the latest step still glows.
   const glowing = game.handStuck ? null : game.activeCard;
@@ -459,6 +460,15 @@ function renderHand(game: Game, hand: readonly CardId[] = game.hand) {
     // resting for the floor (Deprioritize with every mark made).
     card.classList.toggle("unable", !game.run.outside && ((IN_PLACE.has(hand[i]) && !game.handRules.canAct(hand[i])) || game.handRules.cardResting(hand[i])));
   });
+}
+
+/** A hand wider than the screen: an arrow at each side it scrolls further
+ * to, none at an end it has reached. Called as the hand is built, scrolled
+ * or resized (shown again, too, from a training group). */
+export function renderHandMore() {
+  const row = el("hand"), end = row.scrollWidth - row.clientWidth;
+  el("hand-more-left").hidden = row.scrollLeft <= 1;
+  el("hand-more-right").hidden = row.scrollLeft >= end - 1;
 }
 
 /** True when the heading still shows the other side of the forest entrance. */

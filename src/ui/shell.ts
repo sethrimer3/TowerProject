@@ -30,10 +30,11 @@ const BOARD = `<section id="board" class="page active"><div class="tower-heading
  * (`showCurrencies` in `currencies-dialog.ts`). */
 const CURRENCIES = `<div id="currencies" class="currencies" hidden><div class="currency gold-currency" title="Gold">¤ <b id="gold-held">0</b></div><div class="currency gem-currency" title="Gems">${gemIcon()} <b id="gems-held">0</b></div><div class="currency shard-currency" title="Ascension Shards">${shardIcon()} <b id="shards-held">0</b></div><button type="button" id="currencies-open" class="currencies-open" aria-label="All currencies" title="All currencies"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 6l4.5 4.5L12.5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>`;
 /** The tab bar: one solid row of icons, the open page's lit; inside a run
- * the hand takes its place. */
+ * the hand takes its place, with an arrow at each side it scrolls further to. */
+const HAND_MORE = (side: "left" | "right") => `<span id="hand-more-${side}" class="hand-more ${side}" aria-hidden="true" hidden><svg viewBox="0 0 8 14"><path d="${side === "left" ? "M6 2L2 7l4 5" : "M2 2l4 5-4 5"}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`;
 const NAV = `<nav aria-label="Main navigation">${NAV_TABS
   .map(({ id, name, icon }) => `<button data-tab="${id}" class="${id === "board" ? "selected" : ""}" aria-label="${name}" title="${name}"><span${id === "board" ? ` id="mode-icon" data-mode="tower"` : ""}>${icon}</span></button>`)
-  .join("")}<div id="hand" class="hand" role="list" aria-label="Card hand"></div><div id="run-drills" class="run-drills" role="list" aria-label="Training for this run"></div></nav>`;
+  .join("")}<div id="hand" class="hand" role="list" aria-label="Card hand"></div>${HAND_MORE("left")}${HAND_MORE("right")}<div id="run-drills" class="run-drills" role="list" aria-label="Training for this run"></div></nav>`;
 /** Inside a run, under the hand: a button for each Training group, to train for the run with Silver (`RunTrainingBar`). */
 const TRAINING_BAR = `<div id="training-bar" class="training-bar" role="group" aria-label="Training for this run" hidden></div><div id="drill-tip" class="drill-tip" role="tooltip" hidden></div>`;
 /** Focus uses left, before the potions: a lightning bolt and the count. */

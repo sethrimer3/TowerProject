@@ -136,7 +136,7 @@ const SKILL_DETAIL_SPRITES: Partial<Record<UpgradeId, string>> = {
 /** The forest's Enter button: an arrow going up into an arched doorway. */
 export const ENTER_ICON = kitIcon("tower", `<svg class="enter-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 22.5V11a8.5 8.5 0 0 1 17 0v11.5z" fill="#1b1410"/><path d="M3.5 22.5V11a8.5 8.5 0 0 1 17 0v11.5" fill="none" stroke="#c9b48a" stroke-width="2" stroke-linejoin="round"/><path d="M12 21V11.5M8 15.2l4-4 4 4" fill="none" stroke="#ffe27a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`, "enter-icon");
 /** Two cards fanned out: the Deck's icon, made from the card faces. */
-const DECK_ICON = kitIcon("deck", `<span class="deck-icon" aria-hidden="true"><img src="${UI_ASSET_BASE}assets/cards/heal.png" alt=""><img src="${UI_ASSET_BASE}assets/cards/stairs.png" alt=""></span>`, "deck-icon");
+export const DECK_ICON = kitIcon("deck", `<span class="deck-icon" aria-hidden="true"><img src="${UI_ASSET_BASE}assets/cards/heal.png" alt=""><img src="${UI_ASSET_BASE}assets/cards/stairs.png" alt=""></span>`, "deck-icon");
 export const skillSprite = (id: UpgradeId) => {
   const card = SKILL_CARDS[id];
   if (card) return kitIcon(`card-${card}`, `<img class="skill-sprite card-sprite" src="${UI_ASSET_BASE}assets/cards/${card}.png" alt="" aria-hidden="true">`, "skill-sprite card-sprite");

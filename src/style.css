@@ -1265,6 +1265,27 @@ nav:not(.in-run) .hand {
   scrollbar-width: none;
 }
 .hand::-webkit-scrollbar { display: none; }
+/* A small arrow over each side of the hand it scrolls further to. */
+.hand-more {
+  position: absolute;
+  top: 50%;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 30px;
+  margin-top: -15px;
+  border-radius: 4px;
+  background: #0c1018cc;
+  color: #ebc77f;
+  pointer-events: none;
+}
+.hand-more.left { left: 0; }
+.hand-more.right { right: 0; }
+.hand-more svg { width: 8px; height: 14px; }
+.hand-more[hidden],
+nav:not(.in-run) .hand-more,
+nav.drilling .hand-more { display: none; }
 .hand-card {
   position: relative;
   aspect-ratio: 3 / 4;
@@ -2219,8 +2240,10 @@ canvas {
   width: 100%;
   height: 100%;
 }
+/* In place, stacked as before, but holding the hand's arrows (.hand-more). */
 nav {
-  position: static;
+  position: relative;
+  z-index: auto;
 }
 .page:not(#board) {
   flex: 1;
@@ -4220,7 +4243,7 @@ nav.in-run.drilling .run-drills {
 }
 /* A closed group's button is its icon alone; the open one adds its name,
    on one line, so the bar fits a phone beside Buy Quantity. */
-.training-bar button[data-run-group] {
+.training-bar button:is([data-run-group], [data-run-tab]) {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
@@ -4237,7 +4260,12 @@ nav.in-run.drilling .run-drills {
   border-color: #333c49;
 }
 .training-bar .group-sprite { width: 22px; height: 22px; }
-.training-bar button[data-run-group]:not(.selected) .group-name { display: none; }
+.training-bar button:is([data-run-group], [data-run-tab]):not(.selected) .group-name { display: none; }
+/* Hand's icon: the Deck tab's two cards, at the group icons' size. */
+.training-bar .deck-icon { width: 22px; height: 22px; flex: none; }
+.training-bar .deck-icon img { top: 2px; width: 12px; height: 16px; }
+.training-bar .deck-icon img:first-child { left: 1px; }
+.training-bar .deck-icon img:last-child { left: 8px; }
 .training-bar button.selected { border-color: #d6ae68; color: #efd496; box-shadow: inset 0 -2px #d9ac5a; }
 .training-bar button:disabled { opacity: 0.4; }
 /* Buy Quantity: how many ranks a Training press buys, at the bar's right. */

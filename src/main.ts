@@ -36,7 +36,7 @@ import { el, ticketIcon } from "./ui/dom.ts";
 import { buildShell } from "./ui/shell.ts";
 import { BoardOverlay } from "./ui/board-overlay.ts";
 import { CardLevelUps } from "./ui/card-level-up.ts";
-import { boardHeadingStale, flashRed, renderAdButton, renderEventsButtons, renderMailButton, renderMissionsButton, renderShopDot, renderTournamentButton, renderBoardHeading, renderHud, renderVitals, purseFrame, togglePurseRates } from "./ui/hud.ts";
+import { boardHeadingStale, flashRed, renderAdButton, renderEventsButtons, renderMailButton, renderMissionsButton, renderShopDot, renderTournamentButton, renderBoardHeading, renderHud, renderHandMore, renderVitals, purseFrame, togglePurseRates } from "./ui/hud.ts";
 import { ResearchPage } from "./ui/research-page.ts";
 import { confirmAction, RunEndDialog } from "./ui/dialogs.ts";
 import { showCurrencies } from "./ui/currencies-dialog.ts";
@@ -344,6 +344,8 @@ el("hand").addEventListener("wheel", (e) => {
   row.scrollLeft += e.deltaY;
   e.preventDefault();
 }, { passive: false });
+el("hand").addEventListener("scroll", renderHandMore, { passive: true });
+new ResizeObserver(renderHandMore).observe(el("hand"));
 // Ignore, Target and Bombs: readied by their button, used by the next board tap.
 for (const c of ["ignore", "target", "bomb"] as const)
   el(`${c}-stat`).onclick = () => {
