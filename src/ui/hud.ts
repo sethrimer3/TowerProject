@@ -21,10 +21,10 @@ import { PlayClock, RateTally } from "./purse-rate.ts";
 import { heldAmount } from "./currencies-dialog.ts";
 import { caveLabel } from "../tournament/leagues.ts";
 import { shortCountdown } from "../tournament/schedule.ts";
-import { GOLD_BOOST_FACTOR, GOLD_BOOST_MS } from "../gold-boost.ts";
+import { GOLD_BOOST_FACTOR, GOLD_BOOST_MS } from "../economy/gold-boost.ts";
 import { adsOff } from "../shop/entitlements.ts";
 import { renderRunMenu } from "./run-menu.ts";
-import { factorText, goldMultipliers, goldMultiplierTotal } from "../gold-multipliers.ts";
+import { factorText, goldMultipliers, goldMultiplierTotal } from "../economy/gold-multipliers.ts";
 import { MISSION_CAPACITY } from "../missions/catalog.ts";
 
 /** The stats cluster, action buttons and status line around the board. */

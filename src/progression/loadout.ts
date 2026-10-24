@@ -10,7 +10,7 @@ import { badgeFactor } from "../cards/badges.ts";
 import { treeHeroFactor } from "../cards/trees.ts";
 import { TRAINING_GROUPS, GOLD_SHOP, schedulePrice, TRAINING, TRAINING_PER_LEVEL, UPGRADES, trainingCap, isStatRow, levelForXp, trained, trainingWorth, amountAt, trainedAmount, trainingDef, type GoldItemId, type StatTrainingRow, type TrainingDef, type TrainingId, type TrainingRow, type UpgradeId } from "../config.ts";
 import { wornEffects } from "../equipment/effects.ts";
-import { silverFound } from "../gold-multipliers.ts";
+import { silverFound } from "../economy/gold-multipliers.ts";
 import { PIERCE_CAP } from "../equipment/balance.ts";
 import { RESEARCH, researched } from "./archives.ts";
 import { ranksInTraining, trainingGold } from "./training-jobs.ts";

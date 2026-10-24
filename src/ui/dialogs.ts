@@ -1,5 +1,5 @@
 import { keyCount, whole, wholeChange, wholeHp } from "../whole.ts";
-import { GOLD_BOOST_FACTOR } from "../gold-boost.ts";
+import { GOLD_BOOST_FACTOR } from "../economy/gold-boost.ts";
 import { MODES } from "../modes.ts";
 import { loadout } from "../progression/loadout.ts";
 import { CARDS, type Blocker } from "../cards/cards.ts";

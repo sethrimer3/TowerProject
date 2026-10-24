@@ -1,6 +1,6 @@
 # Events
 
-Status: **built, on a stand-in server** (`src/events/`, `src/relics.ts`, `game/event-desk.ts`, `ui/events-page.ts`, `ui/relics-page.ts`, `tests/events.test.ts`).
+Status: **built, on a stand-in server** (`src/events/`, `src/economy/relics.ts`, `game/event-desk.ts`, `ui/events-page.ts`, `ui/relics-page.ts`, `tests/events.test.ts`).
 Events are fortnightly sets of challenges whose missions pay **Medals**; the Medals an event pays count toward its **relics**, unique keepsakes that each give a permanent bonus.
 Events open by claiming Tower I's floor 70 Goal (the `events` `GoalUnlock`); nothing counts before then.
 
@@ -81,7 +81,7 @@ Reaching a milestone wins its relic at once, without spending anything:
 | 700 Medals | Relic 2 (epic) |
 | 1,100 Medals | Premium relic 2 (epic), Event Booster only |
 
-Relics won are kept for good in `save.relics` (`relics.ts`: `RELICS`, each a name, rarity and bonus; each owned at most once).
+Relics won are kept for good in `save.relics` (`economy/relics.ts`: `RELICS`, each a name, rarity and bonus; each owned at most once).
 **TODO:** no relic is defined yet; relics, their bonuses (such as +2% ATK or +5% Max HP) and their sprites come in a later task, and `grantRelics` will hand them out from the server's milestones.
 
 ## The Event Booster

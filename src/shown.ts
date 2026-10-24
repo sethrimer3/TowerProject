@@ -1,5 +1,5 @@
 import type { Enemy, Tile } from "./entities.ts";
-import type { MaterialId } from "./materials.ts";
+import type { MaterialId } from "./economy/materials.ts";
 import type { EquipMaterialId } from "./equipment/catalog.ts";
 import type { EquipRarity } from "./equipment/balance.ts";
 import type { Bout } from "./combat.ts";

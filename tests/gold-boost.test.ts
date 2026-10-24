@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save.ts";
-import { GOLD_BOOST_MAX_MS, GOLD_BOOST_MS, claimGoldBoost, goldBoostFactor, goldBoostLeft } from "../src/gold-boost.ts";
+import { GOLD_BOOST_MAX_MS, GOLD_BOOST_MS, claimGoldBoost, goldBoostFactor, goldBoostLeft } from "../src/economy/gold-boost.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 
 const MIN = 60_000;

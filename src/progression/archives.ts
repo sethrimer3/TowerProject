@@ -114,7 +114,7 @@ export const RESEARCH_TARGETS = {
   instakillGold: { name: "Gold per Instakill", base: 100, shown: percent },
   /** Silver a run has in hand when it goes inside. */
   startingSilver: { name: "Starting Silver", base: 0, shown: count },
-  /** The percent of the Silver its skipped floors would have paid that a Warp run starts with (warp-loot.ts). */
+  /** The percent of the Silver its skipped floors would have paid that a Warp run starts with (economy/warp-loot.ts). */
   warpLoot: { name: "Warp Loot", base: 0, shown: percent },
   /** How fast trainers work: a rank of `d` takes d / (1 + speed). */
   trainingSpeed: { name: "Training Speed", base: 0, shown: speed },

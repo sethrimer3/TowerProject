@@ -1,4 +1,4 @@
-import type { RelicRarity } from "./events/catalog.ts";
+import type { RelicRarity } from "../events/catalog.ts";
 
 // Relics (docs/EVENTS.md): unique keepsakes from Events, each giving a
 // permanent bonus, each owned at most once (`save.relics`).

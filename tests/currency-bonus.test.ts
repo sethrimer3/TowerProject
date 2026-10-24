@@ -14,7 +14,7 @@ import type { RoomWorld } from "../src/tower/room-world.ts";
 import type { World } from "../src/delve/world.ts";
 import type { Tile } from "../src/entities.ts";
 import { random } from "../src/random.ts";
-import { silverFound } from "../src/gold-multipliers.ts";
+import { silverFound } from "../src/economy/gold-multipliers.ts";
 import { snap } from "../src/exact.ts";
 
 /** Silver Bonus training's multiplier on all Silver, in percent. */

@@ -3,7 +3,7 @@ import type { Save } from "../save-shape.ts";
 import { earn } from "../profile.ts";
 
 // The currencies the Shop prices offers in. Each is held in the save by its
-// own system (Gems in gems.ts, Gold banked by Game); this table only reads,
+// own system (Gems in economy/gems.ts, Gold banked by Game); this table only reads,
 // spends and credits them, so an offer never knows where a currency lives.
 
 export type CurrencyId = "gems" | "shards" | "gold" | "medals";

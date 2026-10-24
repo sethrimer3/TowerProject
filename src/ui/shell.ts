@@ -1,7 +1,7 @@
 import { kitIcon } from "../sprite-kit.ts";
 import { bombIcon, CART_ICON, ENTER_ICON, eventIcon, relicIcon, shrineIcon, gemIcon, goldIcon, shardIcon, itemSprite, mailIcon, medalIcon, missionIcon, NAV_TABS, RESEARCH_ICON, trophyIcon, uiSprite } from "./dom.ts";
-import { AD_GEMS } from "../gems.ts";
-import { GOLD_BOOST_FACTOR } from "../gold-boost.ts";
+import { AD_GEMS } from "../economy/gems.ts";
+import { GOLD_BOOST_FACTOR } from "../economy/gold-boost.ts";
 import { PROVISION_BOOST_PERCENT, PROVISION_BOOST_TURNS, type UsedProvision } from "../config.ts";
 
 /** The currencies held, down the left rail above the ad's Gems: Gems, then

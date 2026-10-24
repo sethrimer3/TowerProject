@@ -8,13 +8,13 @@ import { aggroTurn } from "./enemies/flying.ts";
 import { arrowRange, foeOn } from "./enemies/ranged.ts";
 import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./cards/badges.ts";
 import { adsOff, BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
-import { noteGoldBoost } from "./gold-boost.ts";
+import { noteGoldBoost } from "./economy/gold-boost.ts";
 import { offer, type OfferId } from "./shop/offers.ts";
 import { purchase, type Refusal } from "./shop/transactions.ts";
 import { confirmServerTime } from "./shop/clock.ts";
 import { canWarp, claimGoal, goalUnlocked } from "./goals.ts";
 import { volleyTurn, type Shot, type Volley, type VolleyTurn } from "./volley.ts";
-import { missGem } from "./gems.ts";
+import { missGem } from "./economy/gems.ts";
 import { DelvePlan } from "./delve/automove.ts";
 import { defaults } from "./save.ts";
 import { stampProfile } from "./profile.ts";
@@ -73,9 +73,9 @@ import { TowerClimb } from "./tower/climb.ts";
 import { callsGreaterBoss, greaterBoss, greaterBossSpot } from "./tower/greater-boss.ts";
 import { strengthOdds, traitOdds, type OddsSource } from "./enemies/odds.ts";
 import { STEPS_PER_FLOOR } from "./enemies/curves.ts";
-import { materialDef, MATERIALS } from "./materials.ts";
+import { materialDef, MATERIALS } from "./economy/materials.ts";
 import { switchTier, tierNumeral, tierRewardText, tierXp } from "./tiers.ts";
-import type { GoldContext } from "./gold-multipliers.ts";
+import type { GoldContext } from "./economy/gold-multipliers.ts";
 import { RunTimeline } from "./run-timeline.ts";
 import { shiftHero } from "./progression/hero-stats.ts";
 import { enemyTitle } from "./enemies/scaling.ts";
@@ -87,7 +87,7 @@ import { openQuantities, type BuyQuantity } from "./progression/buy-quantity.ts"
 import { critRule, loadout, rankShift, type TrainingView } from "./progression/loadout.ts";
 import { researched } from "./progression/archives.ts";
 import { chargesLeft, chargesPerRun, climbFloor, spendCharge, type Charge } from "./run-charges.ts";
-import type { MaterialId, MaterialStack } from "./materials.ts";
+import type { MaterialId, MaterialStack } from "./economy/materials.ts";
 import { TrainingDesk } from "./game/training-desk.ts";
 import { ResearchDesk } from "./game/research-desk.ts";
 import { DeckEditor } from "./game/deck-editor.ts";
@@ -115,7 +115,7 @@ import { raised, wornEffects } from "./equipment/effects.ts";
 import { RARITY_TIERS, type EquipRarity } from "./equipment/balance.ts";
 import { EQUIP_MATERIALS, EQUIP_MATERIAL_IDS, itemDef, type EquipMaterialId } from "./equipment/catalog.ts";
 import { readyForestRuns, startingHero } from "./game/hero-sync.ts";
-import { warpLootSilver } from "./warp-loot.ts";
+import { warpLootSilver } from "./economy/warp-loot.ts";
 import { CardActivation } from "./game/card-activation.ts";
 import { Finds } from "./game/finds.ts";
 import { FightPlayback } from "./game/fight-playback.ts";
@@ -1126,7 +1126,7 @@ export class Game {
   get boons() {
     return this.mode === "tower" && !this.run.outside ? runBoons(this.run as TowerRun, this.save) : null;
   }
-  /** What the Gold multipliers read now (`gold-multipliers.ts`): the
+  /** What the Gold multipliers read now (`economy/gold-multipliers.ts`): the
    * Shrine Boons line is the boons' Gold factor inside a Tower run once
    * Shrines are open (1 with none), else none. */
   get goldContext(): GoldContext {
@@ -1255,7 +1255,7 @@ export class Game {
   }
   /** The Silver Warp Loot research adds to a Tower run going inside above
    * floor 1 (a Warp, or a Retry from one), holding `pocket` Silver: its
-   * percent of the Silver the floors below would have paid (warp-loot.ts). */
+   * percent of the Silver the floors below would have paid (economy/warp-loot.ts). */
   private warpLoot(pocket: number) {
     const start = this.mode === "tower" ? this.towerRun.start ?? 0 : 0;
     return start ? warpLootSilver(this.save, this.run.tier ?? 1, start, pocket) : 0;

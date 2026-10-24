@@ -12,7 +12,7 @@ import type { RoomWorld } from "../src/tower/room-world.ts";
 import {
   AD_COOLDOWN_MS, AD_GEMS, GEM_COOLDOWN_MS, GEM_MISSED_FLOORS, TRAINING_RESET_GEMS,
   collectedGem, decodeGemDrop, defaultGemDrop, gemSpot, reachFloor,
-} from "../src/gems.ts";
+} from "../src/economy/gems.ts";
 
 const MINUTE = 60 * 1000;
 

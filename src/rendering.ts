@@ -5,7 +5,7 @@ import { drawFlyers } from "./flyer-art.ts";
 import type { Game } from "./state.ts";
 import type { Tile, Torch } from "./entities.ts";
 import { TIER_BONUS_TENTHS, tierNumeral } from "./tiers.ts";
-import { factorText } from "./gold-multipliers.ts";
+import { factorText } from "./economy/gold-multipliers.ts";
 import { drawProvingGrounds, drawBlacksmith, drawEntrance, drawTournamentHall, OutsideWorld, OUTSIDE_SIZE, outsideWeather, roadsOf } from "./outside.ts";
 import { DecorLayer, type DecorFrame, type MirroredSprites } from "./render/decor/decor-render.ts";
 import { OutsideGrass } from "./render/decor/outside-grass.ts";

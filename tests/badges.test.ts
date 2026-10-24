@@ -709,7 +709,7 @@ test("Skip on STAIRS climbs two floors, with Floor Skipped", () => {
 
 test("Floor Skip Reward pays its percent of the Gold the floor skipped held, once", async () => {
   const { ENEMY_GOLD } = await import("../src/config.ts");
-  const { averageGold } = await import("../src/loot.ts");
+  const { averageGold } = await import("../src/economy/loot.ts");
   const { RESEARCH } = await import("../src/progression/archives.ts");
   const { pickupGold } = await import("../src/doors.ts");
   const { litTorches } = await import("../src/board.ts");

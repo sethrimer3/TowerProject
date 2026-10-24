@@ -4,7 +4,7 @@ import { RESEARCH, researched, status } from "../src/progression/archives.ts";
 import { checkpoint } from "../src/goals.ts";
 import { defaults } from "../src/save.ts";
 import { Game } from "../src/state.ts";
-import { enemiesOnFloor, floorKillSilver, skippedSilver, warpLootSilver } from "../src/warp-loot.ts";
+import { enemiesOnFloor, floorKillSilver, skippedSilver, warpLootSilver } from "../src/economy/warp-loot.ts";
 
 /** A Game in Tower III's forest, Warp claimed and its first 150 floors' areas mastered. */
 function warper() {

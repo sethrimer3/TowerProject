@@ -2,7 +2,7 @@ import { researched } from "../progression/archives.ts";
 import { ENEMY_GOLD, FAST_GOLD, PICKUP_GOLD, RANGED_GOLD, SHIELDED_GOLD, silverForKill, trainedAmount } from "../config.ts";
 import type { RoomWorld } from "../tower/room-world.ts";
 import { snap } from "../exact.ts";
-import { averageGold, rollGold } from "../loot.ts";
+import { averageGold, rollGold } from "../economy/loot.ts";
 import { pickupGold } from "../doors.ts";
 import { litTorches } from "../board.ts";
 import { point, type ChestKind, type Enemy, type Mode, type Tile } from "../entities.ts";
@@ -10,7 +10,7 @@ import type { Run } from "../runs.ts";
 import type { Save } from "../save-shape.ts";
 import { MODES, type ModeProfile } from "../modes.ts";
 import { ranksInRun } from "../progression/run-training.ts";
-import { goldBanked, silverFound, type GoldContext } from "../gold-multipliers.ts";
+import { goldBanked, silverFound, type GoldContext } from "../economy/gold-multipliers.ts";
 import { wornEffects } from "../equipment/effects.ts";
 import { keepDrop, rollChestPiece, rollSupplies } from "../equipment/acquire.ts";
 import type { EquipItem } from "../equipment/inventory.ts";
@@ -120,7 +120,7 @@ export class RunPurse {
     return wornEffects(this.save, this.mode);
   }
 
-  /** What the Gold multipliers read for this run (`gold-multipliers.ts`). */
+  /** What the Gold multipliers read for this run (`economy/gold-multipliers.ts`). */
   private get goldContext(): GoldContext {
     return { save: this.save, mode: this.mode, tier: this.tier, now: this.now, shrine: this.boons?.gold };
   }

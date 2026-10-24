@@ -1,6 +1,6 @@
-import type { Board } from "./board.ts";
-import type { Mode, Tile } from "./entities.ts";
-import { time, whole, wholeIn } from "./decode.ts";
+import type { Board } from "../board.ts";
+import type { Mode, Tile } from "../entities.ts";
+import { time, whole, wholeIn } from "../decode.ts";
 
 /** Gems: the premium currency, kept between runs like Gold. A Gem turns up
  * on a run's floors now and then, the ad button pays some, and they buy

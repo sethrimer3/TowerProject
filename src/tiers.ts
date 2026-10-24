@@ -3,7 +3,7 @@
  * `TIER_STEP_FACTORS[tier]` times the stats of the tier below (×5 in Tower II,
  * ×4 in III, ×3 after), so a hero needs about that many times its ATK, DEF and
  * HP to go as far; each pays more
- * Gold (the first Gold multiplier, `gold-multipliers.ts`), and XP by the same factor as the stats (`tierXp`);
+ * Gold (the first Gold multiplier, `economy/gold-multipliers.ts`), and XP by the same factor as the stats (`tierXp`);
  * Silver stays the same. The layouts are
  * the same in every tier: only the enemies differ. */
 import type { Enemy, Tile } from "./entities.ts";

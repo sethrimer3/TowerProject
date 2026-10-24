@@ -8,7 +8,7 @@ import {
   eventAt, eventEndsAt, eventStartsAt, nextReleaseAt, releasedBy, stubEvent, type EventMissionType,
 } from "../src/events/catalog.ts";
 import { baseMedals, decodeEvents, defaultEvents, isComplete, isFinished, milestoneReached, relicMedals, unclaimedMedals } from "../src/events/progress.ts";
-import { decodeRelics } from "../src/relics.ts";
+import { decodeRelics } from "../src/economy/relics.ts";
 import { BADGE_IDS, MAX_COPIES } from "../src/cards/badges.ts";
 import { DAY_MS } from "../src/shop/clock.ts";
 import type { Enemy, Tile } from "../src/entities.ts";

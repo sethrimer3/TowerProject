@@ -9,10 +9,10 @@ import type { BadgesSave } from "./cards/badges.ts";
 import type { CardBuysSave } from "./cards/buys.ts";
 import type { CardTreeLevels } from "./cards/trees.ts";
 import type { GoldItemId, TrainingId, UpgradeId } from "./config.ts";
-import type { MaterialId } from "./materials.ts";
+import type { MaterialId } from "./economy/materials.ts";
 import type { EquipmentSave } from "./equipment/inventory.ts";
 import type { DefendSave } from "./defend/progress.ts";
-import type { GemDrop } from "./gems.ts";
+import type { GemDrop } from "./economy/gems.ts";
 import type { RunFinds } from "./run-notes.ts";
 import type { Settings } from "./settings.ts";
 import type { EntitlementId } from "./shop/entitlements.ts";
@@ -73,7 +73,7 @@ export type Save = {
     inspiration: number;
   };
   delve: ModeSave<DelveRun> & { courage: number; memory: AutomoveMemory };
-  /** The premium currency, kept between runs like Gold (gems.ts). */
+  /** The premium currency, kept between runs like Gold (economy/gems.ts). */
   gems: number;
   /** Ascension Shards: a limited currency, kept between runs, bought only
    * in the Shop's limited packs for now. */
@@ -90,7 +90,7 @@ export type Save = {
    * of a run, so undo can't touch them. */
   gemDrop: GemDrop;
   /** When the Gold ad's boost (Gold found ×1.5) runs out, as a wall-clock
-   * timestamp (ms): `gold-boost.ts`. */
+   * timestamp (ms): `economy/gold-boost.ts`. */
   goldBoostUntil: number;
   gold: number;
   provisions: Record<GoldItemId, number>;
@@ -212,7 +212,7 @@ export type Save = {
   /** The running Event's missions and what has counted toward them, and
    * the events boosted (events/progress.ts). */
   events: EventsSave;
-  /** The relics owned, by id (relics.ts), each once, kept between runs. */
+  /** The relics owned, by id (economy/relics.ts), each once, kept between runs. */
   relics: string[];
   /** The Shrine Boons page's choices, kept between runs (shrines.ts). */
   shrines: ShrinesSave;

@@ -1,13 +1,13 @@
-import { researched } from "./progression/archives.ts";
-import { trainedAmount } from "./config.ts";
-import type { Mode } from "./entities.ts";
-import type { Save } from "./save-shape.ts";
-import { wornEffects } from "./equipment/effects.ts";
-import { snap } from "./exact.ts";
+import { researched } from "../progression/archives.ts";
+import { trainedAmount } from "../config.ts";
+import type { Mode } from "../entities.ts";
+import type { Save } from "../save-shape.ts";
+import { wornEffects } from "../equipment/effects.ts";
+import { snap } from "../exact.ts";
 import { GOLD_BOOST_FACTOR, goldBoostFactor } from "./gold-boost.ts";
-import { ENTITLEMENT_IDS, ENTITLEMENTS, owns, type EntitlementId } from "./shop/entitlements.ts";
-import { TIER_BONUS_TENTHS } from "./tiers.ts";
-import { themeGoldFactor } from "./theme-collection.ts";
+import { ENTITLEMENT_IDS, ENTITLEMENTS, owns, type EntitlementId } from "../shop/entitlements.ts";
+import { TIER_BONUS_TENTHS } from "../tiers.ts";
+import { themeGoldFactor } from "../theme-collection.ts";
 
 /** One Gold multiplier: a factor on every Gold banked, its name as the
  * player sees it, and its factor, or null while it isn't applied (the

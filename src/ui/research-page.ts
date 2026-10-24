@@ -11,7 +11,7 @@ import { TrainingParticles } from "../training-particles.ts";
 import { BOOST_CLAIM_MARGIN_MS, BOOST_MAX_MS, BOOST_RATE, boostLeft, claimBoost, nextTrainerGems, ranksInTraining, trainingJob, trainingSlots, workLeft, type TrainingJob } from "../progression/training-jobs.ts";
 import type { AppContext } from "./app.ts";
 import { adIcon, clockIcon, el, gemCount, gemIcon, goldIcon, pointsIcon, redoIcon, riseFrom, uiSprite } from "./dom.ts";
-import { TRAINING_RESET_GEMS } from "../gems.ts";
+import { TRAINING_RESET_GEMS } from "../economy/gems.ts";
 import { ArchivesPanel, COUNTDOWN_MIN_MS, formatCountdown, formatDuration, rushEfficiencyHtml, toNextSecond } from "./archives-page.ts";
 import { priceAmount } from "./hud.ts";
 

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { defaults } from "../src/save.ts";
 import { Game } from "../src/state.ts";
 import { RunPurse } from "../src/game/run-purse.ts";
-import { goldMultipliers, goldMultiplierTotal, silverFound } from "../src/gold-multipliers.ts";
+import { goldMultipliers, goldMultiplierTotal, silverFound } from "../src/economy/gold-multipliers.ts";
 import { addItem, equip } from "../src/equipment/inventory.ts";
 import { wornEffects } from "../src/equipment/effects.ts";
 import { snap } from "../src/exact.ts";

@@ -1,7 +1,7 @@
 import { isRecord, whole, wholeIn } from "../decode.ts";
 import type { Save } from "../save-shape.ts";
 import { earn } from "../profile.ts";
-import { RELICS } from "../relics.ts";
+import { RELICS } from "../economy/relics.ts";
 import { EVENT_MISSION_COUNT, EVENT_MISSION_TYPES, EVENT_MISSIONS, TIERS, stubEvent, tierMedals, type EventMissionType, type RelicMilestone } from "./catalog.ts";
 
 // The Events' saved state (`save.events`): the running event's missions and

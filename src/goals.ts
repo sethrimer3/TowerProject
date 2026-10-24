@@ -40,7 +40,7 @@ import { TIERS } from "./tiers.ts";
  * a shot fire at several enemies) and Rapid Fire (floor 80: the Training
  * rows that may make the Archer fire four times as fast for a while) and
  * Warp Loot (floor 150: the Archives' project that starts a Warp run with
- * a share of the skipped floors' Silver, warp-loot.ts), and Tower II's Training Discount (floor
+ * a share of the skipped floors' Silver, economy/warp-loot.ts), and Tower II's Training Discount (floor
  * 80: the Archives' project that cuts a trainer's Gold) and Card Groups
  * (floor 90: the Deck links neighbouring cards of the hand into a group
  * whose cards share one priority, cards/cards.ts), and Tower V's Flying Enemy
