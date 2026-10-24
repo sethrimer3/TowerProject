@@ -3,6 +3,7 @@ import type { Player } from "../entities.ts";
 import { CARDS, type CardId } from "../cards.ts";
 import { finite, isRecord, wholeIn } from "../decode.ts";
 import { tileRandom } from "../random.ts";
+import { MAX_TRIAL_LEVEL } from "./access.ts";
 
 export const ARENA_SIZE = 25;
 export const ELEMENTAL = { x: 12, y: 12 };
@@ -10,13 +11,18 @@ export const BEAM_INTERVAL = 10;
 export const SLIME_INTERVAL = 3;
 export const MAX_SLIMES = 6;
 export const BEAM_AXES = [[0, 1], [1, 1], [1, 0], [1, -1]] as const;
+export const BEAM_DIRECTIONS = [...BEAM_AXES,[0,-1],[-1,-1],[-1,0],[-1,1]] as const;
+export const beamCount = (level: number) => Math.min(8,1+Math.floor(level/10));
+export const slimeSpawnInterval = (level: number) => Math.max(2,20-2*Math.floor(level/5));
+export const bossHpFactor = (level: number) => 1+(level-1)/10;
 export type Spot = { x: number; y: number };
 export type TrialMode = "cards" | "manual";
 export type Elemental = Spot & { incorporeal: boolean; teleport: { from: Spot; step: number } | null };
-export type Beam = { origin: Spot; axis: number; step: number };
+export type Beam = { origin: Spot; axis: number; step: number; count?: number };
 export type LightSlime = Spot & { id: number; from: Spot; jumped: number };
 export type TrialState = {
   version: 2;
+  level: number;
   mode: TrialMode;
   hand: CardId[];
   displayHand?: CardId[];
@@ -58,30 +64,34 @@ for (let y = 0; y < ARENA_SIZE; y++) for (let x = 0; x < ARENA_SIZE; x++) {
     && directions.some(([dx,dy]) => !arenaFloor(x+dx,y+dy))) ARENA_POTIONS.push({ x, y });
 }
 
-export function startTrial(player: Pick<Player, "maxHp" | "attack" | "defense">, mode: TrialMode = "manual", hand: readonly CardId[] = [], seed = 7391): TrialState {
-  const bossMaxHp = Math.max(240, player.attack * 24);
-  return { version: 2, mode, displayHand:[...hand], hand: mode === "cards" ? [...hand] : [], playing: mode === "cards", seed: seed >>> 0,
+export function startTrial(player: Pick<Player, "maxHp" | "attack" | "defense">, mode: TrialMode = "manual", hand: readonly CardId[] = [], seed = 7391, level = 1): TrialState {
+  if(!wholeIn(level,1,MAX_TRIAL_LEVEL))throw new RangeError("Invalid trial level");
+  const bossMaxHp = Math.ceil(Math.max(240, player.attack * 24)*bossHpFactor(level));
+  return { version: 2, level, mode, displayHand:[...hand], hand: mode === "cards" ? [...hand] : [], playing: mode === "cards", seed: seed >>> 0,
     room: "staging", status: "active", player: { x: 4, y: 2, hp: player.maxHp, maxHp: player.maxHp, attack: player.attack, defense: player.defense },
     elemental: {...ELEMENTAL,incorporeal:false,teleport:null}, beam:null,
     bossHp: bossMaxHp, bossMaxHp, steps: 0, slimes: [], consumed: [], scorches: {} };
 }
 
 /** Rays include the first wall they strike, so the wall keeps a burn too. */
-export function beamCells(axis: number, origin: Spot = ELEMENTAL): Spot[] {
-  const [dx, dy] = BEAM_AXES[axis % BEAM_AXES.length];
+export const beamHeadings = (axis: number, count: number) => Array.from({length:count},(_,i)=>(axis+Math.floor(i*8/count))%8);
+export const beamDirections = (axis: number, count: number) => beamHeadings(axis,count).map(i=>BEAM_DIRECTIONS[i]);
+export function rayCells([dx,dy]: readonly number[], origin: Spot): Spot[] {
   const cells: Spot[] = [];
-  for (const sign of [-1, 1]) for (let d = 1; d < ARENA_SIZE; d++) {
-    const x = origin.x + dx * d * sign, y = origin.y + dy * d * sign;
+  for (let d = 1; d < ARENA_SIZE; d++) {
+    const x = origin.x + dx * d, y = origin.y + dy * d;
     cells.push({ x, y });
     if (!arenaFloor(x, y)) break;
   }
   return cells;
 }
-export const nextBeamAxis = (s: TrialState) => Math.floor(s.steps / BEAM_INTERVAL) % BEAM_AXES.length;
+export function beamCells(axis: number, origin: Spot = ELEMENTAL, count = 2): Spot[] {
+  return beamDirections(axis,count).flatMap(direction=>rayCells(direction,origin));
+}
+export const nextBeamAxis = (s: TrialState) => Math.floor(s.steps / BEAM_INTERVAL) % 8;
 
-/** Every third arena turn, hop existing slimes and release another from the
- * elemental. Coordinate hashes make the random destinations survive reloads. */
-function hopSlimes(s: TrialState) {
+/** Hops and releases have independent schedules. Destinations survive reloads. */
+function hopSlimes(s: TrialState, hopExisting: boolean, spawn: boolean) {
   const occupied = new Set(s.slimes.map(key));
   const next: LightSlime[] = [];
   let hits = 0;
@@ -101,8 +111,10 @@ function hopSlimes(s: TrialState) {
       occupied.add(key(target));
     }
   };
-  for (const slime of s.slimes) hop(slime);
-  if (next.length < MAX_SLIMES) hop({ id: s.steps / SLIME_INTERVAL, x:s.elemental.x,y:s.elemental.y, from: {x:s.elemental.x,y:s.elemental.y}, jumped: s.steps });
+  for (const slime of s.slimes) {
+    if(hopExisting)hop(slime);else next.push(slime);
+  }
+  if (spawn && next.length < MAX_SLIMES) hop({ id: s.steps, x:s.elemental.x,y:s.elemental.y, from: {x:s.elemental.x,y:s.elemental.y}, jumped: s.steps });
   s.slimes = next;
   return hits;
 }
@@ -148,7 +160,7 @@ export function trialStep(s: TrialState, dx: number, dy: number, source: TrialMo
     s.player.x = x; s.player.y = y;
     if (x === 4 && y === 6) {
       s.room = "arena"; s.player.x = ELEMENTAL.x; s.player.y = 2;
-      return { changed: true, message: "The Light Elemental waits in the dark. First beam: north–south in 10 turns.", fired: false };
+      return { changed: true, message: `Level ${s.level} Light Elemental. First volley: ${beamCount(s.level)} beam(s) in 10 turns.`, fired: false };
     }
     return { changed: true, message: "Climb the staircase to enter the trial.", fired: false };
   }
@@ -175,8 +187,9 @@ export function trialStep(s: TrialState, dx: number, dy: number, source: TrialMo
     }
   }
   s.steps++;
-  if (s.player.hp > 0 && s.steps % SLIME_INTERVAL === 0) {
-    const hits = hopSlimes(s);
+  const hop=s.steps%SLIME_INTERVAL===0,spawn=s.steps%slimeSpawnInterval(s.level)===0;
+  if (s.player.hp > 0 && (hop || spawn)) {
+    const hits = hopSlimes(s,hop,spawn);
     if (hits) message = `A light slime lands on you! ${hits * Math.max(1,Math.ceil(s.player.maxHp*.05))} damage.`;
     else message ||= "Light slimes leap through the dark.";
   }
@@ -184,15 +197,15 @@ export function trialStep(s: TrialState, dx: number, dy: number, source: TrialMo
   if (fired) {
     const wasGhost=s.elemental.incorporeal;
     materialize(s);
-    s.beam={origin:{x:s.elemental.x,y:s.elemental.y},axis:(s.steps/BEAM_INTERVAL-1)%4,step:s.steps};
-    const cells = beamCells(s.beam.axis,s.beam.origin);
+    s.beam={origin:{x:s.elemental.x,y:s.elemental.y},axis:(s.steps/BEAM_INTERVAL-1)%8,step:s.steps,count:beamCount(s.level)};
+    const cells = beamCells(s.beam.axis,s.beam.origin,s.beam.count);
     if(wasGhost) message="The elemental fires its lasers and becomes corporeal — it can be struck again.";
     for (const p of cells) s.scorches[key(p)] = s.steps;
     if (cells.some(p => same(p,s.player))) {
       const damage = Math.max(1, Math.ceil(s.player.maxHp * 0.25));
       s.player.hp = Math.max(0, s.player.hp - damage);
       message = `The light beam hits you for ${damage} damage!`;
-    } else message ||= "Twin beams sear the stone. The next pair turns 45° clockwise.";
+    } else message ||= `${s.beam.count} beam(s) sear the stone. The next volley turns 45° clockwise.`;
   }
   if (s.player.hp === 0) { s.status = "lost"; s.playing = false; message = "The trial ends in defeat. Your Tower progress is safe."; }
   return { changed: true, message, fired };
@@ -207,6 +220,8 @@ export function decodeTrial(raw: unknown): TrialState | undefined {
     || p.maxHp <= 0 || p.hp > p.maxHp || raw.bossMaxHp <= 0 || raw.bossHp > raw.bossMaxHp
     || !wholeIn(raw.steps, 0, 1e9)) return;
   if (raw.version === undefined) return startTrial({maxHp:p.maxHp,attack:p.attack,defense:p.defense});
+  const level=raw.level===undefined?1:raw.level;
+  if(!wholeIn(level,1,MAX_TRIAL_LEVEL))return;
   const position = {x:p.x,y:p.y};
   const e=raw.elemental;
   let elemental: Elemental={...ELEMENTAL,incorporeal:false,teleport:null};
@@ -226,11 +241,12 @@ export function decodeTrial(raw: unknown): TrialState | undefined {
     const b=raw.beam;
     if(!isRecord(b) || !isRecord(b.origin) || !arenaFloor(b.origin.x,b.origin.y)
       || !wholeIn(b.step,BEAM_INTERVAL,raw.steps) || b.step%BEAM_INTERVAL!==0
-      || !wholeIn(b.axis,0,BEAM_AXES.length-1) || b.axis!==(b.step/BEAM_INTERVAL-1)%4) return;
-    beam={origin:{x:b.origin.x,y:b.origin.y},axis:b.axis,step:b.step};
+      || !wholeIn(b.axis,0,7) || b.axis!==(b.step/BEAM_INTERVAL-1)%(raw.level===undefined?4:8)
+      || (b.count!==undefined && !wholeIn(b.count,1,8))) return;
+    beam={origin:{x:b.origin.x,y:b.origin.y},axis:(b.step/BEAM_INTERVAL-1)%8,step:b.step,...(b.count===undefined?{}:{count:b.count})};
   } else if(raw.elemental===undefined && raw.steps>=BEAM_INTERVAL) {
     const step=Math.floor(raw.steps/BEAM_INTERVAL)*BEAM_INTERVAL;
-    beam={origin:{...ELEMENTAL},axis:(step/BEAM_INTERVAL-1)%4,step};
+    beam={origin:{...ELEMENTAL},axis:(step/BEAM_INTERVAL-1)%8,step,...(raw.level===undefined?{}:{count:beamCount(level)})};
   }
   if (raw.version !== 2 || !["cards","manual"].includes(raw.mode) || typeof raw.playing !== "boolean"
     || !wholeIn(raw.seed,0,0xffffffff) || !Array.isArray(raw.hand) || raw.hand.length > 64
@@ -271,15 +287,15 @@ export function decodeTrial(raw: unknown): TrialState | undefined {
   for (const slime of raw.slimes) {
     if (!isRecord(slime) || !isRecord(slime.from)) return;
     const position = {x:slime.x,y:slime.y};
-    if (!wholeIn(slime.id,1,Math.floor(raw.steps/SLIME_INTERVAL))
+    if (!wholeIn(slime.id,1,raw.steps)
       || ids.has(slime.id) || !arenaFloor(slime.x,slime.y) || same(position,elemental) || same(position,{x:p.x,y:p.y})
       || occupied.has(key(position)) || !arenaFloor(slime.from.x,slime.from.y)
-      || !wholeIn(slime.jumped,SLIME_INTERVAL,raw.steps) || slime.jumped % SLIME_INTERVAL !== 0
+      || !wholeIn(slime.jumped,2,raw.steps) || (slime.jumped % SLIME_INTERVAL !== 0 && slime.jumped % slimeSpawnInterval(level) !== 0)
       || Math.abs(slime.x-slime.from.x)>2 || Math.abs(slime.y-slime.from.y)>2) return;
     slimes.push({id:slime.id,x:slime.x,y:slime.y,from:{x:slime.from.x,y:slime.from.y},jumped:slime.jumped});
     occupied.add(key(position)); ids.add(slime.id);
   }
-  return { version:2,...(displayHand?{displayHand}:{}),...(purchases?{purchases}:{}),elemental,beam,mode:raw.mode,hand:[...raw.hand],playing:raw.playing,seed:raw.seed,
+  return { version:2,level,...(displayHand?{displayHand}:{}),...(purchases?{purchases}:{}),elemental,beam,mode:raw.mode,hand:[...raw.hand],playing:raw.playing,seed:raw.seed,
     room: raw.room, status: raw.status, player: { x:p.x,y:p.y,hp:p.hp,maxHp:p.maxHp,attack:p.attack,defense:p.defense },
     bossHp:raw.bossHp,bossMaxHp:raw.bossMaxHp,steps:raw.steps,slimes,consumed:[...new Set<string>(consumed)],scorches };
 }

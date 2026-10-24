@@ -2,7 +2,7 @@ import { drawThemedTile } from "../themed-tilesets.ts";
 import { paintHero, paintTorch } from "../tile-painters.ts";
 import { drawArea1Item } from "../area1-tileset.ts";
 import { sprite } from "../pixel-sprite.ts";
-import { ARENA_POTIONS, ARENA_TORCHES, BEAM_AXES, beamCells, floorAt, key, nextBeamAxis, wallEdge, type TrialState } from "./trial.ts";
+import { ARENA_POTIONS, ARENA_TORCHES, beamCount, beamDirections, rayCells, floorAt, key, nextBeamAxis, wallEdge, type TrialState } from "./trial.ts";
 
 import { drawLightElemental, drawElementalTransit, TELEPORT_MS } from "./elemental-art.ts";
 export { drawLightElemental } from "./elemental-art.ts";
@@ -121,16 +121,17 @@ export class TrialRenderer {
       const flash = firedAt > 0 ? Math.max(0,1-(now-firedAt)/900) : 0;
       if(flash>0 && s.beam) {
         c.save(); c.globalAlpha=flash;
-        const {axis,origin}=s.beam, [dx,dy]=BEAM_AXES[axis];
-        for(const p of beamCells(axis,origin)) tile(p.x,p.y,()=> {
+        const {axis,origin,count=2}=s.beam;
+        for(const direction of beamDirections(axis,count)) for(const p of rayCells(direction,origin)) tile(p.x,p.y,()=> {
+          const [dx,dy]=direction;
           c.fillStyle="#ffb74f66";
           if(dx===0)c.fillRect(7,0,10,24);
           else if(dy===0)c.fillRect(0,7,24,10);
-          else for(let i=0;i<24;i++)c.fillRect(i,(dy>0?23-i:i)-3,1,7);
+          else for(let i=0;i<24;i++)c.fillRect(i,(dx*dy>0?23-i:i)-3,1,7);
           c.fillStyle="#fff5cf";
           if(dx===0)c.fillRect(11,0,2,24);
           else if(dy===0)c.fillRect(0,11,24,2);
-          else for(let i=0;i<24;i++)c.fillRect(i,dy>0?23-i:i,1,2);
+          else for(let i=0;i<24;i++)c.fillRect(i,dx*dy>0?23-i:i,1,2);
         });
         c.restore();
       }
@@ -154,9 +155,8 @@ export class TrialRenderer {
       });
       // Telegraph only near the elemental, without revealing the unlit room.
       if(s.status==="active" && s.steps%10>=8) {
-        const [dx,dy]=[[0,1],[1,1],[1,0],[1,-1]][nextBeamAxis(s)];
         c.fillStyle="#ffeaa8";
-        for(const sign of [-1,1]) for(let i=1;i<=3;i++) tile(s.elemental.x+dx*i*sign,s.elemental.y+dy*i*sign,()=>c.fillRect(11,11,2,2));
+        for(const [dx,dy] of beamDirections(nextBeamAxis(s),beamCount(s.level))) for(let i=1;i<=3;i++) tile(s.elemental.x+dx*i,s.elemental.y+dy*i,()=>c.fillRect(11,11,2,2));
       }
     }
   }

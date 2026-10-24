@@ -2,6 +2,8 @@
 
 Step onto the golden square on the grass to the right of the Tower forest's path to open **Proving Grounds Trials**.
 Choosing either trial enters the main game screen with the same top HUD, board, bottom card bar and run-training controls as a Tower run.
+Choose a whole **Trial level** before entering either mode; the menu previews boss HP, beam count and slime timing.
+Any level from 1 to 10,000 is selectable, and the last selected level is remembered.
 Both Light Elemental trials begin in a small staging room whose staircase leads to a dark, hexagonal chamber inside a 25×25 tile square.
 The attempt uses your current max HP, ATK and DEF and starts at full health; your Tower run, currencies and supplies stay safe.
 Reloading resumes the attempt, including its training purchases.
@@ -21,6 +23,20 @@ Your equipped cards stay visible at the bottom with red X overlays, and cannot a
 Move with arrows or WASD, swipe or tap the board, or use the direction buttons; Space or **Wait** spends a turn without moving.
 Each move, strike or wait advances one turn, and walking into a wall does not.
 
+## Trial keys and levels
+
+You have **two trial keys per UTC day**, shared across every trial and control mode in the list.
+Entering or retrying costs one key; resuming a saved attempt after a reload costs none.
+Keys refill to two at midnight UTC; unused keys do not carry over or accumulate for missed days.
+Leaving, winning or losing does not refund the entry key.
+Developer mode gives unlimited entries and retries without spending your normal keys.
+The free-purchases setting alone does not bypass trial keys.
+
+Each level adds 10% of the level-1 boss HP, starting from at least 240 HP or 24 times your copied ATK, whichever is higher.
+Level 1 fires one beam per volley; levels 10, 20, 30, 40, 50, 60 and 70 add one each, reaching the maximum of eight.
+Slimes spawn every 20 turns at levels 1–4; each multiple of five reduces that interval by two, reaching two turns at level 45.
+The selected level stays fixed through an attempt, reload and retry.
+
 ## Purchases
 
 The same training bar appears beneath the cards when **On the Job** is unlocked, using the usual unlocks, prices and Buy Quantity.
@@ -39,14 +55,16 @@ If you stand on its ghost when that volley is due, it reforms in the closest fre
 A hit on the same turn as a laser volley still triggers the teleport, then the volley restores its body.
 Reduce motion skips the flight animation while retaining the translucent ghost appearance.
 
-Every three arena turns the elemental releases a light slime, up to six at once, and existing slimes jump to random nearby floor tiles within two tiles of their previous position.
+The elemental releases a light slime on its level's spawn interval, up to six at once.
+Existing slimes jump every three arena turns to random nearby floor tiles within two tiles of their previous position, independently of new spawns.
 New slimes leap out from the elemental's current position, including while it is incorporeal.
 Walk into a slime to disperse it; a slime landing on you deals 5% of your max HP and dissipates.
 Slimes cannot land in walls, on the elemental or on one another.
 
-Every ten turns the elemental fires two opposing beams: first north and south, then northeast and southwest, then east and west, then southeast and northwest, repeating.
+Every ten turns the elemental fires its level's number of beams, spread around eight tile directions.
+The pattern rotates 45° clockwise each volley, starting north; two beams oppose each other, and eight cover every direction.
 The lasers fire from the elemental's current tile.
-The countdown shows the next beam's direction; just before firing, small light marks near the elemental warn of its axis.
+The countdown shows every direction in the next volley; just before firing, small light marks near the elemental warn of each ray.
 Being caught by a beam costs 25% of your max HP.
 The beams leave lingering light and smoldering cracks along the floor and on the wall they strike; the cracks remain for the attempt, but do not deal additional damage.
 Potions along the walls restore 35% of your max HP and can each be used once.

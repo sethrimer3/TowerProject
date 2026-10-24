@@ -5318,3 +5318,7 @@ html.trial-manual #trial-overlay .trial-actions { bottom: 86px; }
 html.trial-manual #hand .hand-card { position: relative; cursor: default; }
 html.trial-manual #hand .hand-card::after { content: ""; position: absolute; inset: 4px; z-index: 8; pointer-events: none; background: linear-gradient(48deg, transparent 46%, #ed4539 47% 53%, transparent 54%), linear-gradient(-48deg, transparent 46%, #ed4539 47% 53%, transparent 54%); filter: drop-shadow(0 1px 1px #000); }
 html.trial-running :is(#focus-stat, #ignore-stat, #target-stat, #bomb-stat, #undo, #forest-sign, .tier-arrow) { display: none !important; }
+.proving-grounds-dialog .trial-level-label { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 14px; }
+.proving-grounds-dialog #trial-level { width: 100px; padding: 6px; }
+.proving-grounds-dialog #trial-level-preview { font-size: .8rem; line-height: 1.5; }
+.proving-grounds-dialog .trial-choice > span { display: block; margin-top: 6px; color: #f3dc9c; font-size: .8rem; }
