@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { CARD_IDS } from "../src/cards.ts";
-import { CARD_TREES, type CardOpened, type CardTreeLevels } from "../src/card-trees.ts";
+import { CARD_IDS } from "../src/cards/cards.ts";
+import { CARD_TREES, type CardOpened, type CardTreeLevels } from "../src/cards/trees.ts";
 import { cardTreeCardHtml, cardTreeGraph, cardTreeHelpHtml, cardTreeListHtml, cardTreeNodeHelpHtml, nodeLabel, nodeName, ROOT, statChange, statText, type TreeLevels } from "../src/ui/card-tree-view.ts";
 import { layout, trailAim } from "../src/ui/upgrade-graph.ts";
 

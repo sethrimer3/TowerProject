@@ -3,8 +3,8 @@
  * key schedule (`key-schedule.ts`) sets its doors and keys. Every number is a
  * whole percent, so every engine rolls the same. The Delve follows the tower
  * of its number by equivalent floor. Stats themselves come from the enemy
- * curves (`enemy-curves.ts`); this decides only who stands on a floor. */
-import type { EnemyStrength, EnemyProfile } from "./entities.ts";
+ * curves (`enemies/curves.ts`); this decides only who stands on a floor. */
+import type { EnemyStrength, EnemyProfile } from "../entities.ts";
 
 /** The strengths the schedule shares out: every enemy but the bosses, which
  * stand where their floors put them. */

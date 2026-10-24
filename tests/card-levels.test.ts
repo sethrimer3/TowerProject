@@ -2,9 +2,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save.ts";
-import { addCardXp, BASE_MAX_LEVEL, CARD_LEVEL_XP, cardLevel, cardPoints, decodeCardXp, MAX_CARD_LEVEL, MAX_CARD_XP } from "../src/card-levels.ts";
+import { addCardXp, BASE_MAX_LEVEL, CARD_LEVEL_XP, cardLevel, cardPoints, decodeCardXp, MAX_CARD_LEVEL, MAX_CARD_XP } from "../src/cards/levels.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
-import type { CardId } from "../src/cards.ts";
+import type { CardId } from "../src/cards/cards.ts";
 import type { Save } from "../src/save-shape.ts";
 
 /** The XP that reaches level `n`. */

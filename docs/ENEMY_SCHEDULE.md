@@ -2,7 +2,7 @@
 
 How many enemies a Tower floor holds and how strong they are, by tower and floor. It is the counterpart of the door and key schedule (`docs/DOOR_AND_KEY_SCHEDULE.md`): one steady ramp, every floor a little harder than the one below and every tower harder than the one before.
 
-Enemy stats are already scheduled: the enemy curves (`src/enemy-curves.ts`) give each strength and profile its HP, ATK and DEF on every floor, and the tier multiplies them. This schedule decides only who stands on a floor: how many enemies, which strengths, and which profiles.
+Enemy stats are already scheduled: the enemy curves (`src/enemies/curves.ts`) give each strength and profile its HP, ATK and DEF on every floor, and the tier multiplies them. This schedule decides only who stands on a floor: how many enemies, which strengths, and which profiles.
 
 The Delve follows the same schedule by equivalent floor, each delve following the tower of its number.
 
@@ -16,7 +16,7 @@ The census (section 5) showed the result was flat. From floor 1 to floor 1,200, 
 
 ## 2. The schedules
 
-All the numbers live in `src/enemy-schedule.ts` (`ENEMY_SCHEDULE`), as whole percents, one function per schedule, so every engine rolls the same and a change is a one-line edit.
+All the numbers live in `src/enemies/schedule.ts` (`ENEMY_SCHEDULE`), as whole percents, one function per schedule, so every engine rolls the same and a change is a one-line edit.
 
 **First floors.** These come earlier each tower. Tower I keeps today's floors, so its early-floor promise holds: no enemy on floors 1 to 10 but the boss beats a new hero in one fight. `STRENGTH_FROM_FLOOR` reads Tower I's values from here.
 
@@ -68,7 +68,7 @@ These rules stay as they are:
 
 ## 3. The enemy stage
 
-The last step of a Tower floor's generation (`src/tower/enemy-stage.ts`, `placeEnemies`), after embedding and the boss, before the rare unguarded loot. It draws from its own random stream, seeded from the floor's, so nothing before it draws differently. It doesn't replace the tables: they keep asking for "weak" or "strong" as relative roles, so a key room's guard is still among the weakest enemies on its floor. The rules shared with the Delve live in `src/enemy-stage.ts`.
+The last step of a Tower floor's generation (`src/tower/enemy-stage.ts`, `placeEnemies`), after embedding and the boss, before the rare unguarded loot. It draws from its own random stream, seeded from the floor's, so nothing before it draws differently. It doesn't replace the tables: they keep asking for "weak" or "strong" as relative roles, so a key room's guard is still among the weakest enemies on its floor. The rules shared with the Delve live in `src/enemies/stage.ts`.
 
 1. **Count.** The floor's **baseline** is the enemies it holds outside fork lanes and bosses. The stage adds `baseline × (count − 100%)` more, the fraction placed at its chance (`extraEnemies`). Extras stand where the floor's own enemies do, not out of the way: on any plain floor tile, drawn at random, so on and around the main paths and in the rooms. Never on the way in, the tile just inside, the tile beside the stairs (the stairs guard's or the boss's) or a fork's lane. Where no tile is left, the enemy is owed. The graph records what the stage found, added and owed as `enemyCount`.
 2. **Re-rank.** Take the floor's enemies, extras among them, in order of the strength they asked for (an extra asks for one drawn from the shares, `drawStrength`), ties broken by a random key drawn for each first (never inside a sort). Deal the shares' strengths out from weakest to strongest (`rankStrengths`): the enemy at rank `i` of `n` takes the strength whose share covers `(i + offset)/n` of the floor, one offset drawn per floor. Each strength's count is then within one of its share and right on average. The profiles are dealt the same way over the same enemies, in a random order (`dealProfiles`), so each profile's count is within one of its share, whatever the strengths. Every enemy is then made anew for the floor at its strength and profile (`enemyTile`).
@@ -132,7 +132,7 @@ Each would go through `combat.ts` and `resolveStep`, so previews, the planners, 
 
 ### Fast (built)
 
-The first trait, the old candidate **Swift**, built to give a hero fresh from a tower's floor-100 boss something to feel on the next tower's first floors (`src/fast-enemies.ts`).
+The first trait, the old candidate **Swift**, built to give a hero fresh from a tower's floor-100 boss something to feel on the next tower's first floors (`src/enemies/fast.ts`).
 A hero strong enough for that boss fells the next tower's first enemies in one strike, before they swing, so their ATK doesn't matter; past them, until about floor 60, their ATK stays below the hero's DEF.
 Raising every early enemy's ATK would not reach the first of those, and raising their HP too would make the whole early tower harder; a Fast enemy strikes first, so it lands a blow even when the hero fells it in one strike, and it alone carries a raised ATK.
 
@@ -149,7 +149,7 @@ Tune it with `FAST_CARRY`, `FAST_CARRY_AT` and `fastShare`.
 
 ### Ranged (built)
 
-A Ranged enemy (`src/ranged.ts`) shoots the hero from a distance, so a hero who outclasses its fight still pays to walk past it, and the Archer (Tower III's floor 10 Goal) gets to shoot first.
+A Ranged enemy (`src/enemies/ranged.ts`) shoots the hero from a distance, so a hero who outclasses its fight still pays to walk past it, and the Archer (Tower III's floor 10 Goal) gets to shoot first.
 
 - **Who:** any enemy but a boss or Greater Boss, from Tower III and Delve III up, on its own roll, so an enemy may be both Fast and Ranged.
 - **Share** (`rangedShare`): a point and a half under Fast's, growing as it does: 11.25% on Tower III's floor 1, 29.25% on floor 2,401.
@@ -162,7 +162,7 @@ A Ranged enemy (`src/ranged.ts`) shoots the hero from a distance, so a hero who 
 
 ### Flying (built)
 
-A Flying enemy (`src/flying.ts`) hovers over the floor: it can't be fought, only shot, so the Archer's arrows, and the FLYING ENEMY card (Tower V's floor 10 Goal) that stands the hero in reach of one, earn their keep.
+A Flying enemy (`src/enemies/flying.ts`) hovers over the floor: it can't be fought, only shot, so the Archer's arrows, and the FLYING ENEMY card (Tower V's floor 10 Goal) that stands the hero in reach of one, earn their keep.
 
 - **Who:** any enemy but a boss, Greater Boss or Shielded enemy, from Tower V and Delve V up, on its own roll.
 - **Share** (`flyingShare`): the Ranged share (12.75% on Tower V's floor 1).
@@ -176,7 +176,7 @@ A Flying enemy (`src/flying.ts`) hovers over the floor: it can't be fought, only
 
 ### Shielded (built)
 
-A Shielded enemy (`src/shielded.ts`) guards the enemies round it, so the way up asks the hero either to fight through a bubble at a cut or to fell the Shielded enemy first.
+A Shielded enemy (`src/enemies/shielded.ts`) guards the enemies round it, so the way up asks the hero either to fight through a bubble at a cut or to fell the Shielded enemy first.
 
 - **Who:** from Tower IV and Delve IV up, at most one a floor: when the floor rolls one, the enemy but a boss or Greater Boss nearest the way up by walking (the Tower's stairs; in the Delve the deepest on the equivalent floor, then the farthest walked), ties to the lowest row and column.
 - **Share** (`shieldShare`, thousandths of a percent, per floor rather than per enemy): 1% a tier (4% in Tower IV), and 1% more every 250 floors (a little each floor) to floor 4,000: 20% on Tower IV's floor 4,000, 21% on Tower V's.
@@ -192,7 +192,7 @@ Tune it with `shieldShare`, `extraShare`, `bubbleReach` and `SHIELD_CUT`.
 
 ## 7. Build order
 
-1. **Schedule and census** (done): `src/enemy-schedule.ts`, this document, the census's Enemies table. No floor changes.
+1. **Schedule and census** (done): `src/enemies/schedule.ts`, this document, the census's Enemies table. No floor changes.
 2. **The enemy stage, Tower** (done): count, then re-rank, and strong and elite first floors by tower. `TOWER_LAYOUT_VERSION` 22.
 3. **The enemy stage, Delve** (done), by equivalent floor, replacing `guardStrengths`' fixed mix. `LAYOUT_VERSION` 25.
 4. **Profiles** (done): every strength may wear every profile, with scheduled shares, and rosters by tower. `TOWER_LAYOUT_VERSION` 23, `LAYOUT_VERSION` 26.

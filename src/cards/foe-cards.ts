@@ -1,8 +1,8 @@
-import type { Enemy, Player } from "./entities.ts";
-import { snap } from "./exact.ts";
+import type { Enemy, Player } from "../entities.ts";
+import { snap } from "../exact.ts";
 
 /** The enemy cards beyond ENEMY, each with the enemies it covers: the
- * ones it gives its bonus against while the run's hand holds it (cards.ts
+ * ones it gives its bonus against while the run's hand holds it (cards/cards.ts
  * moves the hero toward the same strengths). */
 export const FOE_CARDS = {
   weakEnemy: (e: Enemy) => e.strength === "weak",
@@ -16,7 +16,7 @@ export const FOE_CARDS = {
 } as const satisfies Record<Exclude<FoeKey, TreeFoe>, (e: Enemy) => boolean>;
 export type FoeCard = keyof typeof FOE_CARDS;
 export const isFoeCard = (id: string): id is FoeCard => Object.hasOwn(FOE_CARDS, id);
-/** The cards whose trees (card-trees.ts) raise the hero against some
+/** The cards whose trees (cards/trees.ts) raise the hero against some
  * enemies, and the enemies each covers: ENEMY and ARCHER every one, TORCH
  * the Greater Boss. They give nothing of `FOE_CARDS`' own bonus. */
 export const TREE_FOES = {

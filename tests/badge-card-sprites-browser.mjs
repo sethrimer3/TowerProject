@@ -29,7 +29,7 @@ try {
     const { defaults } = await import("/src/save.ts");
     const { Game } = await import("/src/state.ts");
     const { UPGRADES } = await import("/src/config.ts");
-    const { BADGE_IDS } = await import("/src/badges.ts");
+    const { BADGE_IDS } = await import("/src/cards/badges.ts");
     const s = defaults();
     for (const id of Object.keys(s.tutorials)) s.tutorials[id] = true;
     for (const u of UPGRADES) s.upgrades[u.id] = 1;

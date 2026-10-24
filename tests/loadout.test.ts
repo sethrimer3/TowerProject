@@ -8,8 +8,8 @@ import { GOLD_SHOP, LIMIT_BREAKS, TRAINING, UPGRADES, isStatRow, levelForXp, tra
 import { addItem } from "../src/equipment/inventory.ts";
 import { Game } from "../src/state.ts";
 import { predict } from "../src/combat.ts";
-import { getTowerGateEnemy } from "../src/scaling.ts";
-import { enemyStats } from "../src/enemy-curves.ts";
+import { getTowerGateEnemy } from "../src/enemies/scaling.ts";
+import { enemyStats } from "../src/enemies/curves.ts";
 
 test("a new character starts at 12 ATK, 0 DEF, 100 HP, no shroud, no Regen, no keys and no undo", () => {
   assert.deepEqual(loadout(defaults()), {

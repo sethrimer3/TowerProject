@@ -1,5 +1,5 @@
 import { point, type Point, type Tile } from "../entities.ts";
-import { getTowerGateEnemy } from "../scaling.ts";
+import { getTowerGateEnemy } from "../enemies/scaling.ts";
 import { tierTile } from "../tiers.ts";
 import type { RoomWorld } from "./room-world.ts";
 

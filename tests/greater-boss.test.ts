@@ -4,7 +4,7 @@ import { defaults, decode } from "../src/save.ts";
 import { Game } from "../src/state.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { greaterBossSpot } from "../src/tower/greater-boss.ts";
-import { GREATER_BOSS_OVER_BOSS, enemyTitle, getTowerGateEnemy } from "../src/scaling.ts";
+import { GREATER_BOSS_OVER_BOSS, enemyTitle, getTowerGateEnemy } from "../src/enemies/scaling.ts";
 import { ENEMY_GOLD, SILVER_MULTIPLIER, XP_MULTIPLIER } from "../src/config.ts";
 import type { Tile } from "../src/entities.ts";
 import type { RunPurse } from "../src/game/run-purse.ts";

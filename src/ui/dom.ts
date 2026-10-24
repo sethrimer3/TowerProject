@@ -1,6 +1,6 @@
 import { kitIcon } from "../sprite-kit.ts";
-import { CARDS } from "../cards.ts";
-import type { CardId } from "../cards.ts";
+import { CARDS } from "../cards/cards.ts";
+import type { CardId } from "../cards/cards.ts";
 import { LIMIT_BREAKS, type UpgradeId } from "../config.ts";
 import { AREA1_ITEM_URLS } from "../area1-tileset.ts";
 

@@ -1,17 +1,17 @@
 import { kitIcon } from "../sprite-kit.ts";
 import { askForGems, showHelp } from "./dialogs.ts";
-import { CARDS, cardBonusText, cardText, deckCards, handSlots, linkedToNext, moveCard, nextHandSlotGems, placeCard, type CardId } from "../cards.ts";
+import { CARDS, cardBonusText, cardText, deckCards, handSlots, linkedToNext, moveCard, nextHandSlotGems, placeCard, type CardId } from "../cards/cards.ts";
 import type { AppContext } from "./app.ts";
 import { cardArt, el, escapeHtml, gemIcon, POINTER_SVG } from "./dom.ts";
 import { DRAW_GEMS, type DrawCount } from "../game/badge-desk.ts";
-import { cardWith, fitsCard, BADGE_IDS, BADGES, badgeLevel, badgeValue, type BadgeId } from "../badges.ts";
+import { cardWith, fitsCard, BADGE_IDS, BADGES, badgeLevel, badgeValue, type BadgeId } from "../cards/badges.ts";
 import { RARITIES } from "../shop/rarity.ts";
 import { revealDraws } from "./badge-reveal.ts";
 import { revealBuys } from "./card-buy-reveal.ts";
-import { CARD_BUY_GEMS, type CardBuyCount } from "../card-buys.ts";
+import { CARD_BUY_GEMS, type CardBuyCount } from "../cards/buys.ts";
 import { showCard, type CardAction, type CardDetails } from "./card-reveal.ts";
 import { CardTreePanel } from "./card-tree-panel.ts";
-import { CARD_TREES, hasPointsToSpend } from "../card-trees.ts";
+import { CARD_TREES, hasPointsToSpend } from "../cards/trees.ts";
 import { cardLevelHtml, cardXpBarHtml } from "./card-level-marks.ts";
 import { badgeLevelsHtml, cardBadgeHtml, badgeText, progressText, tokenHtml } from "./badge-token.ts";
 

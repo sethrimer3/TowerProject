@@ -7,11 +7,11 @@
  * floor where the curve outgrows the carry, Fast changes no stats. Each
  * tile's roll is a fixed number of the run seed, the floor and the tile
  * (`FAST_SALT`), so no other part of generation draws differently. */
-import type { Enemy, Tile } from "./entities.ts";
-import { enemyStats, STEPS_PER_FLOOR, type CurveMode } from "./enemy-curves.ts";
-import { snap } from "./exact.ts";
-import { tileRandom } from "./random.ts";
-import { tierStats } from "./tiers.ts";
+import type { Enemy, Tile } from "../entities.ts";
+import { enemyStats, STEPS_PER_FLOOR, type CurveMode } from "./curves.ts";
+import { snap } from "../exact.ts";
+import { tileRandom } from "../random.ts";
+import { tierStats } from "../tiers.ts";
 
 /** How many times the last tier's floor-100 normal, balanced enemy's ATK a
  * Fast enemy strikes with at least. */

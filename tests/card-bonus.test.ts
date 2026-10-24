@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
-import { CARD_IDS, cardBonus, cardBonusLines, handBonus } from "../src/cards.ts";
+import { CARD_IDS, cardBonus, cardBonusLines, handBonus } from "../src/cards/cards.ts";
 import { RunPurse } from "../src/game/run-purse.ts";
 import { rollChestPiece, rollSupplies } from "../src/equipment/acquire.ts";
 import { EQUIPMENT_CHEST_RARITY, SUPPLY_CHEST_MATERIALS } from "../src/equipment/balance.ts";
@@ -14,8 +14,8 @@ import { chestKindAt } from "../src/board.ts";
 import { snap } from "../src/exact.ts";
 import type { Enemy, Player, Tile } from "../src/entities.ts";
 import { attackAgainst } from "../src/combat.ts";
-import { arrowDamage } from "../src/ranged.ts";
-import { foeGold } from "../src/foe-cards.ts";
+import { arrowDamage } from "../src/enemies/ranged.ts";
+import { foeGold } from "../src/cards/foe-cards.ts";
 import { BASE_RULES, resolveStep, type StepRules } from "../src/step-effects.ts";
 
 test("only GOLD, BLUE and RED KEY, GOLD, HEART and WOODEN DOOR, CHEST, the enemy cards but ENEMY and ARCHER carry a bonus, and KEY none", () => {

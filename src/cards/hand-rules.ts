@@ -1,15 +1,15 @@
 import { BADGES, badgeOn, badgesOn, badgeValue, type RunBadge } from "./badges.ts";
-import type { Board } from "./board.ts";
-import type { DoorDiscounts } from "./doors.ts";
+import type { Board } from "../board.ts";
+import type { DoorDiscounts } from "../doors.ts";
 import { KEY_TO_HP_PERCENT, SIPHONS, TRADER_YELLOW_KEYS, isSiphon, linkedToNext, walkAll, type CardId, type CardRules, type HandAt, type SiphonCard } from "./cards.ts";
-import type { Mode } from "./entities.ts";
-import type { Run } from "./runs.ts";
-import type { Save } from "./save-shape.ts";
-import { snap } from "./exact.ts";
-import { MODES, type ModeProfile } from "./modes.ts";
-import { drawAt } from "./random.ts";
-import { treeBonus } from "./card-trees.ts";
-import { boughtInRun } from "./run-training.ts";
+import type { Mode } from "../entities.ts";
+import type { Run } from "../runs.ts";
+import type { Save } from "../save-shape.ts";
+import { snap } from "../exact.ts";
+import { MODES, type ModeProfile } from "../modes.ts";
+import { drawAt } from "../random.ts";
+import { treeBonus } from "./trees.ts";
+import { boughtInRun } from "../run-training.ts";
 
 /** Mixed into the run seed to start Skip's stream of rolls. */
 const SKIP_SALT = 0x5c1b7;

@@ -5,7 +5,7 @@ import { TOWER_START_X, WIDTH, xpForLevel } from "../src/config.ts";
 import { point, type EnemyStrength, type Tile, type EnemyProfile } from "../src/entities.ts";
 import { region } from "../src/delve/labyrinth.ts";
 import { generateTowerFloor, isBossFloor } from "../src/tower/index.ts";
-import { getTowerGateEnemy } from "../src/scaling.ts";
+import { getTowerGateEnemy } from "../src/enemies/scaling.ts";
 import { defaults } from "../src/save.ts";
 import { loadout } from "../src/loadout.ts";
 import { predict } from "../src/combat.ts";

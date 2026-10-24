@@ -1,15 +1,15 @@
-import { point, type Tile, type KeyColor } from "./entities.ts";
-import { litTorches, takesSomething, type Position } from "./board.ts";
-import type { Step } from "./pathfinding.ts";
-import { doorCost, doorDiscount, doorId, doorKeyScale, keyNeed, drainsHp, isYellowDoor, woodToll, doorRule, type DoorDiscounts, type DoorKind } from "./doors.ts";
-import { impervious } from "./combat.ts";
-import { snap } from "./exact.ts";
-import { UPGRADES, type TrainingId, type UpgradeId } from "./config.ts";
-import type { DelveRun } from "./runs.ts";
-import type { EnemyStrength, Mode } from "./entities.ts";
-import type { Save } from "./save-shape.ts";
-import { goalUnlocked, type GoalUnlock } from "./goals.ts";
-import { arrowDamage, enemiesWithin } from "./ranged.ts";
+import { point, type Tile, type KeyColor } from "../entities.ts";
+import { litTorches, takesSomething, type Position } from "../board.ts";
+import type { Step } from "../pathfinding.ts";
+import { doorCost, doorDiscount, doorId, doorKeyScale, keyNeed, drainsHp, isYellowDoor, woodToll, doorRule, type DoorDiscounts, type DoorKind } from "../doors.ts";
+import { impervious } from "../combat.ts";
+import { snap } from "../exact.ts";
+import { UPGRADES, type TrainingId, type UpgradeId } from "../config.ts";
+import type { DelveRun } from "../runs.ts";
+import type { EnemyStrength, Mode } from "../entities.ts";
+import type { Save } from "../save-shape.ts";
+import { goalUnlocked, type GoalUnlock } from "../goals.ts";
+import { arrowDamage, enemiesWithin } from "../enemies/ranged.ts";
 import { FOE_ATTACK, FOE_GOLD, isFoeCard, type FoeCard } from "./foe-cards.ts";
 
 /** What a card gives, on top of where it moves the hero, for as long as the
@@ -243,7 +243,7 @@ export type CardPlan = { card: number; path: Step[] };
 /** Cards that act where the hero stands, a turn with no step, rather than
  * moving toward a target: the siphons and the key trades. */
 export const IN_PLACE = new Set<CardId>(["keySiphon", "blueSiphon", "redSiphon", "blueTrader", "keyToHp"]);
-/** What a card's badge changes about planning it (badges.ts), as
+/** What a card's badge changes about planning it (cards/badges.ts), as
  * `HandAt.cardRules` gives it: nothing when absent. */
 export type CardRules = {
   /** A gate whose condition doesn't hold: the card can't act. A Focus

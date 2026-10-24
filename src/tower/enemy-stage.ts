@@ -1,7 +1,7 @@
 import { TOWER_START_X } from "../config.ts";
 import { point, type Tile } from "../entities.ts";
-import { isRanked, type RankedStrength } from "../enemy-schedule.ts";
-import { dealProfiles, drawStrength, extraEnemies, profilesOn, rankStrengths, sharesOn } from "../enemy-stage.ts";
+import { isRanked, type RankedStrength } from "../enemies/schedule.ts";
+import { dealProfiles, drawStrength, extraEnemies, profilesOn, rankStrengths, sharesOn } from "../enemies/stage.ts";
 import { ENTRY, type Embedding } from "./embedder.ts";
 import { enemyTile } from "./furnisher.ts";
 import type { XY } from "./grid.ts";

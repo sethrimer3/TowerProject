@@ -10,8 +10,8 @@
  * Every roll is a fixed number of the run seed, the floor and (for where an
  * extra stands) the tile, so no other part of generation draws differently,
  * and everything stays whole numbers, the same in every engine. */
-import { point, type Enemy, type Point, type Tile } from "./entities.ts";
-import { tileRandom } from "./random.ts";
+import { point, type Enemy, type Point, type Tile } from "../entities.ts";
+import { tileRandom } from "../random.ts";
 
 /** The percent a bubble cuts what the hero's strikes do, after DEF. */
 export const SHIELD_CUT = 60;

@@ -2,15 +2,15 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults } from "../src/save.ts";
-import { MAX_CARD_XP } from "../src/card-levels.ts";
-import { CARD_TREES, freeUpChances, nodeOpen, treeBonus, type CardTreeLevels } from "../src/card-trees.ts";
+import { MAX_CARD_XP } from "../src/cards/levels.ts";
+import { CARD_TREES, freeUpChances, nodeOpen, treeBonus, type CardTreeLevels } from "../src/cards/trees.ts";
 import { bout, OPENING_HOLD_MS, OPENING_SHRINK_MS, predict, squaredUp } from "../src/combat.ts";
 import { enemyBar } from "../src/board-popups.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { World } from "../src/delve/world.ts";
 import { isTreasureFloor } from "../src/board.ts";
 import { RunPurse } from "../src/game/run-purse.ts";
-import type { CardId } from "../src/cards.ts";
+import type { CardId } from "../src/cards/cards.ts";
 import type { Enemy, Player, Tile } from "../src/entities.ts";
 
 const hero: Player = { x: 0, y: 0, hp: 100, maxHp: 100, attack: 10, defense: 0, keys: { yellow: 0, blue: 0, red: 0 } };

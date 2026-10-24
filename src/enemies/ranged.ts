@@ -1,7 +1,7 @@
 /** Ranged enemies and the Archer (docs/agents/movement-and-combat.md).
  *
  * From the third tower and delve up, any enemy but a boss or Greater Boss
- * may be Ranged, as it may be Fast (fast-enemies.ts), on a roll of its own:
+ * may be Ranged, as it may be Fast (enemies/fast.ts), on a roll of its own:
  * it shoots the hero from a distance, walls and doors no obstacle, once its
  * cooldown is ready, without beginning a fight. Once Tower III's floor 10
  * Goal is claimed the hero is an Archer and shoots back: each turn its
@@ -19,11 +19,11 @@
  * cooldown starts over from that tick; Rapid Fire too starts and ends
  * mid-turn. Each tile's roll is a fixed number of the run seed, the floor
  * and the tile (`RANGED_SALT`). */
-import type { Enemy, Player, Tile } from "./entities.ts";
-import { attackAgainst, critMultiplier, defenseAgainst, facing, guarded, parryCut, struckDamage } from "./combat.ts";
-import { fastShare, mayBeFast } from "./fast-enemies.ts";
-import { snap } from "./exact.ts";
-import { tileRandom } from "./random.ts";
+import type { Enemy, Player, Tile } from "../entities.ts";
+import { attackAgainst, critMultiplier, defenseAgainst, facing, guarded, parryCut, struckDamage } from "../combat.ts";
+import { fastShare, mayBeFast } from "./fast.ts";
+import { snap } from "../exact.ts";
+import { tileRandom } from "../random.ts";
 
 const RANGED_SALT = 0x4a2c3;
 
@@ -77,7 +77,7 @@ export const wounded = (t: Tile): Tile => {
   return t.enemy ? { ...t, enemy: less(t.enemy) } : t.flyer ? { ...t, flyer: less(t.flyer) } : t;
 };
 /** `raw` (a tile as generated) with `damage` more wound. A Flying enemy
- * wounded becomes Aggroed (flying.ts). */
+ * wounded becomes Aggroed (enemies/flying.ts). */
 export const woundMore = (raw: Tile, damage: number): Tile => ({
   ...raw,
   ...(raw.flyer && !raw.flyer.aggro ? { flyer: { ...raw.flyer, aggro: true as const } } : {}),

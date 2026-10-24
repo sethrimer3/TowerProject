@@ -1,10 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { HandRules } from "../src/hand-rules.ts";
+import { HandRules } from "../src/cards/hand-rules.ts";
 import { defaults } from "../src/save.ts";
-import type { BadgeId } from "../src/badges.ts";
+import type { BadgeId } from "../src/cards/badges.ts";
 import type { Board } from "../src/board.ts";
-import type { CardId } from "../src/cards.ts";
+import type { CardId } from "../src/cards/cards.ts";
 import type { Enemy, Tile } from "../src/entities.ts";
 import type { Run } from "../src/runs.ts";
 

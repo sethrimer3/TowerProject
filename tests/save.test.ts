@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { decode, defaults } from "../src/save.ts";
-import { BASE_HAND, deckCards } from "../src/cards.ts";
+import { BASE_HAND, deckCards } from "../src/cards/cards.ts";
 import { defaultEquipment } from "../src/equipment/inventory.ts";
 
 // Characterization corpus for decode(): every field path of several base saves

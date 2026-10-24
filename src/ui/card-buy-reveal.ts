@@ -1,7 +1,7 @@
-import { CARDS } from "../cards.ts";
-import type { CardBuy } from "../card-buys.ts";
-import { CARD_RARITY_NAMES } from "../card-rarity.ts";
-import { treeNode } from "../card-trees.ts";
+import { CARDS } from "../cards/cards.ts";
+import type { CardBuy } from "../cards/buys.ts";
+import { CARD_RARITY_NAMES } from "../cards/rarity.ts";
+import { treeNode } from "../cards/trees.ts";
 import type { DrawAgain } from "./badge-reveal.ts";
 import { rarityFrameHtml, rarityStarsHtml } from "./card-level-marks.ts";
 import { nodeName } from "./card-tree-view.ts";

@@ -1,8 +1,8 @@
-import type { EnemyStrength, EnemyProfile } from "./entities.ts";
-import { enemyStats, floorsAhead } from "./enemy-curves.ts";
-import { enemyFirstFloor } from "./enemy-schedule.ts";
+import type { EnemyStrength, EnemyProfile } from "../entities.ts";
+import { enemyStats, floorsAhead } from "./curves.ts";
+import { enemyFirstFloor } from "./schedule.ts";
 
-export { GREATER_BOSS_OVER_BOSS } from "./enemy-curves.ts";
+export { GREATER_BOSS_OVER_BOSS } from "./curves.ts";
 export type TowerEnemyProfile = EnemyProfile;
 
 export type TowerEnemyDefinition = {
@@ -14,7 +14,7 @@ export type TowerEnemyDefinition = {
 export const TOWER_ZONE_FLOORS = 10;
 
 /** Ten-room Tower zones: who stands on a floor, by profile. Their stats come
- * from the Tower's enemy curve (enemy-curves.ts); the roster repeats every
+ * from the Tower's enemy curve (enemies/curves.ts); the roster repeats every
  * `TOWER_CYCLE_FLOORS` rooms, each tower starting one zone further along
  * (`towerZoneIndex`). */
 export const TOWER_ZONE_ENEMIES: readonly (readonly TowerEnemyDefinition[])[] = [

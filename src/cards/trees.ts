@@ -1,20 +1,20 @@
 /** Card trees: each card's upgrade tree, which its card points
- * (card-levels.ts) are spent on, one level of a node a point, on the
+ * (cards/levels.ts) are spent on, one level of a node a point, on the
  * levels its nodes hold (those they start with and those card buys opened,
- * card-buys.ts, which also set the card's max level). A node's
+ * cards/buys.ts, which also set the card's max level). A node's
  * levels raise the stats it names (`TreeStat`) for as long as the run's hand
  * holds the card, summed with every other card in the hand that raises the
  * same stat into one card factor. */
 import { CARD_IDS, type CardId } from "./cards.ts";
-import { BASE_MAX_LEVEL, cardLevel, cardLevelTotal, cardPoints } from "./card-levels.ts";
-import { rarityRank, type CardRarity } from "./card-rarity.ts";
-import { isRecord, wholeIn } from "./decode.ts";
-import { snap } from "./exact.ts";
-import { hasLock, type DoorKind } from "./doors.ts";
-import type { Enemy, KeyColor, Tile } from "./entities.ts";
+import { BASE_MAX_LEVEL, cardLevel, cardLevelTotal, cardPoints } from "./levels.ts";
+import { rarityRank, type CardRarity } from "./rarity.ts";
+import { isRecord, wholeIn } from "../decode.ts";
+import { snap } from "../exact.ts";
+import { hasLock, type DoorKind } from "../doors.ts";
+import type { Enemy, KeyColor, Tile } from "../entities.ts";
 import { covers } from "./foe-cards.ts";
-import { extraEnemies } from "./more-enemies.ts";
-import type { RunCore } from "./runs.ts";
+import { extraEnemies } from "../enemies/more-enemies.ts";
+import type { RunCore } from "../runs.ts";
 
 /** What a node's levels raise, a level's worth each. Most are percents
  * that add into one card factor (×(100 + sum) / 100) on their stat; the
@@ -491,7 +491,7 @@ export type CardTreeLevels = Partial<Record<CardId, Record<string, number>>>;
 
 /** The levels card buys have opened on each card's tree, by node, on top
  * of those each node holds from the start; a card or node with none left
- * out. The save's (`save.cardBuys.opened`, card-buys.ts). */
+ * out. The save's (`save.cardBuys.opened`, cards/buys.ts). */
 export type CardOpened = Partial<Record<CardId, Record<string, number>>>;
 /** What a card's tree reads from the save: each card's XP, the points
  * spent on its tree, and the levels card buys opened on it. */
@@ -627,7 +627,7 @@ export function treeBonus(levels: CardTreeLevels | undefined): TreeBonus {
 }
 /** A percent stat's card factor: ×(100 + its percents) / 100. */
 export const treeFactor = (bonus: TreeBonus, stat: TreeStat) => (bonus[stat] ? snap((100 + bonus[stat]) / 100) : 1);
-/** What `run`'s floors add (more-enemies.ts): its More Enemies badges',
+/** What `run`'s floors add (enemies/more-enemies.ts): its More Enemies badges',
  * ENEMY's tree's and the enemy cards' trees' Spawn Rate, all fixed as it
  * went inside. */
 export function runExtras(run: Pick<RunCore, "badges" | "cardTrees">) {

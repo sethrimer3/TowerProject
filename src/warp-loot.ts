@@ -1,5 +1,5 @@
 import { TOWER_SECTION, silverForKill, trainedAmount } from "./config.ts";
-import { enemyCountPercent, enemyShare, RANKED_STRENGTHS } from "./enemy-schedule.ts";
+import { enemyCountPercent, enemyShare, RANKED_STRENGTHS } from "./enemies/schedule.ts";
 import { researched } from "./archives.ts";
 import { silverFound } from "./gold-multipliers.ts";
 import { snap } from "./exact.ts";

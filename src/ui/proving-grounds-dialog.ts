@@ -8,7 +8,7 @@ import {advanceKeymasterEffects,mimicInterval} from "../proving-grounds/keymaste
 import type {TrainingId} from "../config.ts";
 import {TrialSession,TRIAL_TRAINING} from "../proving-grounds/session.ts";
 import {TrialRenderer,TRIAL_VIEW_TILES} from "../proving-grounds/render.ts";
-import {CARDS} from "../cards.ts";
+import {CARDS} from "../cards/cards.ts";
 import {el} from "./dom.ts";
 import {usesGameSprites} from "../sprite-style.ts";
 

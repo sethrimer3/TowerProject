@@ -1,12 +1,12 @@
 import { entrance, floorFor } from "./delve/labyrinth.ts";
 import { buyTheme, canWear, grantAllThemes, type GameLook, type ThemeId, type ThemeKind, type UiLook } from "./theme-collection.ts";
 import { chooseStep } from "./automation.ts";
-import { CARDS, cardText, deckCards, explainStuck, handBonus, keptLinks, planHand, planTarget, shootsWith, stillOpen, type CardId, type CardPlan, type HandBonus, type StuckReport } from "./cards.ts";
-import { addCardXp, PASSIVE_CARDS } from "./card-levels.ts";
-import { cardMaxLevel, compounded, doorStat, foeCardStat, foeStat, foeStats, keyStat, freeUpChances, freeUpFactors, hasPointsToSpend, pointsLeft, runCardTrees, runFoeCut, treeBonus, treeFactor, treeOverheal, type FoeTreeCard, type TreeBonus } from "./card-trees.ts";
-import { aggroTurn } from "./flying.ts";
-import { arrowRange, foeOn } from "./ranged.ts";
-import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./badges.ts";
+import { CARDS, cardText, deckCards, explainStuck, handBonus, keptLinks, planHand, planTarget, shootsWith, stillOpen, type CardId, type CardPlan, type HandBonus, type StuckReport } from "./cards/cards.ts";
+import { addCardXp, PASSIVE_CARDS } from "./cards/levels.ts";
+import { cardMaxLevel, compounded, doorStat, foeCardStat, foeStat, foeStats, keyStat, freeUpChances, freeUpFactors, hasPointsToSpend, pointsLeft, runCardTrees, runFoeCut, treeBonus, treeFactor, treeOverheal, type FoeTreeCard, type TreeBonus } from "./cards/trees.ts";
+import { aggroTurn } from "./enemies/flying.ts";
+import { arrowRange, foeOn } from "./enemies/ranged.ts";
+import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./cards/badges.ts";
 import { adsOff, BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
 import { noteGoldBoost } from "./gold-boost.ts";
 import { offer, type OfferId } from "./shop/offers.ts";
@@ -71,14 +71,14 @@ import { OUTSIDE_START_Y, OutsideWorld } from "./outside.ts";
 import { AREA_BURST_MS, AreaLedger, chestReward, clearedInspiration, type AreaReward } from "./tower/area-ledger.ts";
 import { TowerClimb } from "./tower/climb.ts";
 import { callsGreaterBoss, greaterBoss, greaterBossSpot } from "./tower/greater-boss.ts";
-import { strengthOdds, traitOdds, type OddsSource } from "./enemy-odds.ts";
-import { STEPS_PER_FLOOR } from "./enemy-curves.ts";
+import { strengthOdds, traitOdds, type OddsSource } from "./enemies/odds.ts";
+import { STEPS_PER_FLOOR } from "./enemies/curves.ts";
 import { materialDef, MATERIALS } from "./materials.ts";
 import { switchTier, tierNumeral, tierRewardText, tierXp } from "./tiers.ts";
 import type { GoldContext } from "./gold-multipliers.ts";
 import { RunTimeline } from "./run-timeline.ts";
 import { shiftHero } from "./hero-stats.ts";
-import { enemyTitle } from "./scaling.ts";
+import { enemyTitle } from "./enemies/scaling.ts";
 import { snap } from "./exact.ts";
 import { enemyStat, keyCount, whole, wholeChange } from "./whole.ts";
 import { MODES, milestones, type ModeProfile } from "./modes.ts";
@@ -96,7 +96,7 @@ import { GemFinder } from "./game/gem-finder.ts";
 import { BadgeDesk } from "./game/badge-desk.ts";
 import { CardTreeDesk } from "./game/card-tree-desk.ts";
 import { CardBuyDesk } from "./game/card-buy-desk.ts";
-import { HandRules } from "./hand-rules.ts";
+import { HandRules } from "./cards/hand-rules.ts";
 import { RunPurse, type EquipmentLoot } from "./game/run-purse.ts";
 import { EquipmentDesk } from "./game/equipment-desk.ts";
 import { TournamentDesk } from "./game/tournament-desk.ts";
@@ -232,7 +232,7 @@ export class Game {
   /** Each card level reached since the board last took them, oldest
    * first, for the hand's level-up animation; emptied by undo. */
   cardLevelUps: { card: CardId; level: number }[] = [];
-  /** The latest turn's shots (ranged.ts), for the board to fly and land;
+  /** The latest turn's shots (enemies/ranged.ts), for the board to fly and land;
    * undo, a new run or a mode switch clears it. */
   volley: Volley | null = null;
   /** The latest turn's step inside a run, for the board to walk the hero
@@ -1966,7 +1966,7 @@ export class Game {
       this.message = `Shot down by ${enemyTitle(out.fell)}.`;
       return;
     }
-    // Then the Aggroed enemies close in (flying.ts), their cooldowns with them.
+    // Then the Aggroed enemies close in (enemies/flying.ts), their cooldowns with them.
     const moved = aggroTurn({ board: this.world, changes: this.run.changes, hero: p, floorOf: (x, y) => this.floorOf(x, y), lit: litTorches(this.world), foes: this.run.volleys.foes });
     if (moved.steps.length) {
       if (moved.foes && Object.keys(moved.foes).length) this.run.volleys.foes = moved.foes;
@@ -2031,7 +2031,7 @@ export class Game {
     const e = foeOn(this.world.tile(x, y));
     return e ? this.purse.killGoldPreview(e, x, y, instakill) : 0;
   }
-  /** What the floor the hero stands on can roll (`enemy-odds.ts`): each
+  /** What the floor the hero stands on can roll (`enemies/odds.ts`): each
    * strength's chance, stats and Gold, and each trait's chance, for the
    * enemy stats box; null in the forest. */
   get enemyOdds() {

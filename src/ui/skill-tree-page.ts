@@ -1,6 +1,6 @@
 import { helpButton, showHelp } from "./dialogs.ts";
 import { play } from "../sound.ts";
-import { upgradeCard } from "../cards.ts";
+import { upgradeCard } from "../cards/cards.ts";
 import { revealCard } from "./card-reveal.ts";
 import { UPGRADES, cost, type UpgradeId } from "../config.ts";
 import { TREES, columnGap, mapNodes, skillAvailable, treeHeight, treeOpen, type TreeId } from "../skill-trees.ts";

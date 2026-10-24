@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { keptLinks, linkedToNext, planHand, toggleLink, type CardId, type HandAt } from "../src/cards.ts";
+import { keptLinks, linkedToNext, planHand, toggleLink, type CardId, type HandAt } from "../src/cards/cards.ts";
 import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save.ts";
 import { unlockAt } from "../src/goals.ts";

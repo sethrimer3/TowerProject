@@ -10,9 +10,9 @@
  * the card, and across to its neighbours), and each change is announced.
  * Opened by the card points lesson, it chooses an upgrade that can take a
  * point, points at its Spend button, and holds Back until a point is spent. */
-import { CARDS, type CardId } from "../cards.ts";
-import { MAX_CARD_LEVEL } from "../card-levels.ts";
-import { CARD_TREES, cardMaxLevel, levelIn, nodeCap, nodeLevel, pointsOf, RESPEC_GEMS, treeNode } from "../card-trees.ts";
+import { CARDS, type CardId } from "../cards/cards.ts";
+import { MAX_CARD_LEVEL } from "../cards/levels.ts";
+import { CARD_TREES, cardMaxLevel, levelIn, nodeCap, nodeLevel, pointsOf, RESPEC_GEMS, treeNode } from "../cards/trees.ts";
 import type { TreeRefusal } from "../game/card-tree-desk.ts";
 import type { AppContext } from "./app.ts";
 import { askForGems, showHelp } from "./dialogs.ts";

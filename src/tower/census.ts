@@ -1,5 +1,5 @@
 import { QUOTA_DOORS, keyFirstFloor, towerDoorRate, towerKeyRatio, towerWoodPercent } from "../key-schedule.ts";
-import { PROFILES, RANKED_STRENGTHS, enemyCountPercent, enemyShare, isRanked, profileShare } from "../enemy-schedule.ts";
+import { PROFILES, RANKED_STRENGTHS, enemyCountPercent, enemyShare, isRanked, profileShare } from "../enemies/schedule.ts";
 import { GATE_VALUE } from "./forks.ts";
 import { doorRule } from "../doors.ts";
 import type { Tile, KeyColor } from "../entities.ts";

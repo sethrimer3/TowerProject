@@ -31,8 +31,8 @@ import { TIERS } from "./tiers.ts";
  * Badge Slots (Tower VI floor 50: the Archives' project that lets each
  * card hold more badges), Note Taking (Tower I floor 250: the Archives'
  * project that opens the run's notes), and Tower III's Archer Card (floor
- * 10: the ARCHER card joins the deck, `GOAL_CARDS` in cards.ts; while the
- * hand holds it the hero fires at the nearest enemy in range, ranged.ts), Attack Range
+ * 10: the ARCHER card joins the deck, `GOAL_CARDS` in cards/cards.ts; while the
+ * hand holds it the hero fires at the nearest enemy in range, enemies/ranged.ts), Attack Range
  * and Attack Speed (floors 20 and 30: the Training rows that improve it),
  * ATK / m (floor 50: the Training row that strikes harder from further
  * off), Charged Shot (floor 60: the Archives' project that strengthens
@@ -43,9 +43,9 @@ import { TIERS } from "./tiers.ts";
  * a share of the skipped floors' Silver, warp-loot.ts), and Tower II's Training Discount (floor
  * 80: the Archives' project that cuts a trainer's Gold) and Card Groups
  * (floor 90: the Deck links neighbouring cards of the hand into a group
- * whose cards share one priority, cards.ts), and Tower V's Flying Enemy
+ * whose cards share one priority, cards/cards.ts), and Tower V's Flying Enemy
  * Card (floor 10: the FLYING ENEMY card joins the deck, `GOAL_CARDS` in
- * cards.ts). */
+ * cards/cards.ts). */
 export type GoalUnlock =
   | "damagePrediction" | "combatForecast" | "attackLore" | "warp" | "damageVisual" | "relativeDamageColor" | "equipment" | "tournament" | "events" | "researchSpeed"
   | "shardAttack" | "shardDefense" | "parryPercent"
@@ -275,7 +275,7 @@ export function unlockAt(what: GoalUnlock) {
 export const unlockFloor = (what: GoalUnlock) => unlockAt(what).floor;
 /** The hero's class, as the HUD names it under its portrait: an Archer
  * while the hand holds the ARCHER card (`archer`, `shootsWith` in
- * cards.ts), else a Wayfarer, or a Pathfinder once Tower II is open.
+ * cards/cards.ts), else a Wayfarer, or a Pathfinder once Tower II is open.
  * Cosmetic. */
 export const heroClass = (save: Pick<Save, "tower">, archer: boolean) =>
   archer ? "Archer" : save.tower.tiersOpen >= 2 ? "Pathfinder" : "Wayfarer";

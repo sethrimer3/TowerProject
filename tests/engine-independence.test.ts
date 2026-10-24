@@ -24,7 +24,7 @@ import { region } from "../src/delve/labyrinth.ts";
 import { RoomWorld, withExtraEnemies, withShield } from "../src/tower/room-world.ts";
 import { generate as delveChunk } from "../src/delve/world.ts";
 import { chooseTorchSpots } from "../src/torches.ts";
-import { getTowerGateEnemy, type TowerEnemyProfile, type TowerEnemyStrength } from "../src/scaling.ts";
+import { getTowerGateEnemy, type TowerEnemyProfile, type TowerEnemyStrength } from "../src/enemies/scaling.ts";
 import { cost, UPGRADES } from "../src/config.ts";
 import { WIDTH } from "../src/config.ts";
 import { defaultLayout, fitLayout } from "../src/defend/layout.ts";
@@ -121,8 +121,8 @@ test("saved and played-by generation calls no inexact Math function", () => {
 /** The modules Tower, Delve and Defend generation run through. */
 const GENERATION = [
   ...readdirSync(new URL("../src/tower/", import.meta.url)).map((f) => `tower/${f}`),
-  "delve/labyrinth.ts", "delve/patterns.ts", "delve/world.ts", "more-enemies.ts", "torches.ts", "board.ts", "random.ts", "exact.ts",
-  "scaling.ts", "enemy-curves.ts", "fast-enemies.ts", "shielded.ts", "tiers.ts", "config.ts", "defend/citygen.ts", "defend/layout.ts", "defend/grid.ts",
+  "delve/labyrinth.ts", "delve/patterns.ts", "delve/world.ts", "enemies/more-enemies.ts", "torches.ts", "board.ts", "random.ts", "exact.ts",
+  "enemies/scaling.ts", "enemies/curves.ts", "enemies/fast.ts", "enemies/shielded.ts", "tiers.ts", "config.ts", "defend/citygen.ts", "defend/layout.ts", "defend/grid.ts",
 ];
 
 test("generation modules use no ** (intPow or sqrt instead)", () => {

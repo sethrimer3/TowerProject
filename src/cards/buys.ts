@@ -1,5 +1,5 @@
 /** Card buys: cards bought with Gems, each a draw that opens one more
- * level on a card's tree (card-trees.ts), so the card's max level rises by
+ * level on a card's tree (cards/trees.ts), so the card's max level rises by
  * one. A draw rolls a rarity (`CARD_RARITY_WEIGHTS`), then picks a card of
  * the deck with room in that rarity, and opens a level of that rarity on
  * it: a node of that rarity no buy has opened yet first (at one level), and
@@ -10,10 +10,10 @@
  * saved with the profile, seeded once when the profile is made, never
  * rewound, so a purchase can't be redrawn by reloading. */
 import { CARD_IDS, type CardId } from "./cards.ts";
-import { CARD_RARITIES, CARD_RARITY_WEIGHTS, rarityRank, type CardRarity } from "./card-rarity.ts";
-import { CARD_TREES, cardLook, cardMaxLevel, nodeCap, type CardOpened, type CardTreeNode } from "./card-trees.ts";
-import { isRecord, wholeIn } from "./decode.ts";
-import { random } from "./random.ts";
+import { CARD_RARITIES, CARD_RARITY_WEIGHTS, rarityRank, type CardRarity } from "./rarity.ts";
+import { CARD_TREES, cardLook, cardMaxLevel, nodeCap, type CardOpened, type CardTreeNode } from "./trees.ts";
+import { isRecord, wholeIn } from "../decode.ts";
+import { random } from "../random.ts";
 
 /** Where the card buys' stream stands (null until the profile seeds it),
  * and the levels they opened on each card's tree. */

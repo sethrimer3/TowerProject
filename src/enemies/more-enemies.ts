@@ -1,9 +1,9 @@
-import { point, type Enemy, type EnemyStrength, type Kind, type Point, type Tile } from "./entities.ts";
-import type { CardId } from "./cards.ts";
-import type { RunBadges } from "./badges.ts";
-import { random } from "./random.ts";
+import { point, type Enemy, type EnemyStrength, type Kind, type Point, type Tile } from "../entities.ts";
+import type { CardId } from "../cards/cards.ts";
+import type { RunBadges } from "../cards/badges.ts";
+import { random } from "../random.ts";
 
-// More Enemies (a card badge, badges.ts): a last stage after a floor is
+// More Enemies (a card badge, cards/badges.ts): a last stage after a floor is
 // generated that adds copies of its enemies, so the hero has more to fight
 // and more loot to win. Runs without the badge never come here, so their
 // floors, saved maps and goldens are unchanged. Everything it decides comes

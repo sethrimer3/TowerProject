@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { PROFILES, RANKED_STRENGTHS, enemyCountPercent, enemyFirstFloor, enemyShare, profileShare } from "../src/enemy-schedule.ts";
-import { STRENGTH_FROM_FLOOR } from "../src/scaling.ts";
+import { PROFILES, RANKED_STRENGTHS, enemyCountPercent, enemyFirstFloor, enemyShare, profileShare } from "../src/enemies/schedule.ts";
+import { STRENGTH_FROM_FLOOR } from "../src/enemies/scaling.ts";
 import { addSchedule, averaged, enemyWeight, rankedEnemies, strengthShare, type Counts } from "../src/tower/census.ts";
 
 /** The shares at floor `f` (counting from 1) of tower `t`: weak, normal, strong, elite. */

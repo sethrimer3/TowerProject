@@ -2,7 +2,7 @@ import { TOWER_SECTION, TOWER_START_X, UNGUARDED_LOOT_CHANCE } from "../config.t
 import { point, type Tile, type KeyColor } from "../entities.ts";
 import { random } from "../random.ts";
 import { reachable } from "../board.ts";
-import { getTowerGateEnemy } from "../scaling.ts";
+import { getTowerGateEnemy } from "../enemies/scaling.ts";
 import type { XY } from "./grid.ts";
 import { analyzeFloor, formatFloorSummary, type FloorAnalysis } from "./analyzer.ts";
 import { embed, ENTRY, type Embedding } from "./embedder.ts";
@@ -19,7 +19,7 @@ import { ALL_KEY_COLORS, keepsKey, towerKeyColorsOn, type KeyColors } from "../k
  *     → forks (parallel lanes of gates)          forks.ts
  *     → resource planning (key/door economy)     resource-planner.ts
  *     → spatial embedding (chambers + doorways)  embedder.ts
- *     → enemies: the schedule's count and mix    enemy-stage.ts
+ *     → enemies: the schedule's count and mix    enemies/stage.ts
  *     → geometry checks (never economy checks)   below
  *     → analysis for tuning/debugging            analyzer.ts
  *

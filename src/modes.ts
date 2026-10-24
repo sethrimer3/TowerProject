@@ -11,7 +11,7 @@ import { LAYOUT_VERSION, World } from "./delve/world.ts";
 import { depthAt } from "./delve/labyrinth.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import type { Board } from "./board.ts";
-import { runExtras, runFoeCut } from "./card-trees.ts";
+import { runExtras, runFoeCut } from "./cards/trees.ts";
 import { weakened } from "./shrines.ts";
 import { earn } from "./profile.ts";
 

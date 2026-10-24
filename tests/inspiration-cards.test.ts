@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults } from "../src/save.ts";
 import { TRAINING, cost, trained, type StatTrainingRow, type UpgradeId } from "../src/config.ts";
-import { deckCards, planHand, upgradeCard, type CardId } from "../src/cards.ts";
+import { deckCards, planHand, upgradeCard, type CardId } from "../src/cards/cards.ts";
 import { TREES } from "../src/skill-trees.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import type { EnemyStrength, Tile } from "../src/entities.ts";

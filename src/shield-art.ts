@@ -1,9 +1,9 @@
-import { bubbleRadius, type Shield } from "./shielded.ts";
+import { bubbleRadius, type Shield } from "./enemies/shielded.ts";
 import { tileCenter, type FrameContext } from "./render-frame.ts";
 import { drawKit } from "./sprite-kit.ts";
 import { shieldSprite } from "./sprite-combat.ts";
 
-/** A Shielded enemy's bubble (shielded.ts): a hollow green ring of its
+/** A Shielded enemy's bubble (enemies/shielded.ts): a hollow green ring of its
  * radius, glowing, centred on the enemy's tile. */
 const BUBBLE_LINE = "rgba(110, 255, 150, 0.85)";
 const BUBBLE_GLOW = "#2bff6a";

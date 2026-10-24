@@ -32,11 +32,11 @@ export function tileRandom(x: number, y: number, seed: number) {
  * itself (new run seeds, enemy drops, treasure loot), `effects` for what
  * only shows (particles and the like), `badges` for the card badges
  * a Gem purchase draws (seeding the stream saved with the profile, which
- * draws carry on from: badges.ts), `equipment` for Gem equipment pulls
+ * draws carry on from: cards/badges.ts), `equipment` for Gem equipment pulls
  * (seeding their saved stream the same way: equipment/acquire.ts), `missions` for
  * the daily missions given (seeding theirs: game/mission-desk.ts), `events`
  * for the missions the Events' stand-in draws (game/event-desk.ts), `cardBuys`
- * for the seed of each profile's card buys' saved stream (card-buys.ts, seeded as the profile is made). Worlds don't use these: each board
+ * for the seed of each profile's card buys' saved stream (cards/buys.ts, seeded as the profile is made). Worlds don't use these: each board
  * is a pure function of its run seed (`random`, `tileRandom`). A new purpose,
  * such as a chance-based effect or a minigame, gets its own name here. */
 export type StreamName = "game" | "effects" | "badges" | "equipment" | "missions" | "events" | "cardBuys";

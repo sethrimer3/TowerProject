@@ -1,5 +1,5 @@
 import { CARD_IDS, type CardId } from "./cards.ts";
-import { count, isRecord } from "./decode.ts";
+import { count, isRecord } from "../decode.ts";
 
 /** The XP each card level costs, from level 1 to 60: five levels at each
  * step of the schedule to level 20, then each level's step 250 XP more
@@ -30,7 +30,7 @@ export const POINTS_PER_CARD_LEVEL = 1;
  * past too). */
 export const PASSIVE_CARDS: ReadonlySet<CardId> = new Set<CardId>(["archer"]);
 
-/** Where a card with `xp` stands under its max level `cap` (card-trees.ts'
+/** Where a card with `xp` stands under its max level `cap` (cards/trees.ts'
  * `cardMaxLevel`): its level, no higher than the cap; the XP gathered
  * toward the next (`into`, which past the cap keeps gathering, so a cap
  * raised later turns it into levels at once) and what that level costs
@@ -48,7 +48,7 @@ export const cardLevelTotal = (cardXp: Partial<Record<CardId, number>>, capOf: (
   CARD_IDS.reduce((sum, id) => sum + cardLevel(cardXp[id] ?? 0, capOf(id)).level, 0);
 
 /** A card's points under its max level `cap`: one a level, spent on its
- * tree (card-trees.ts, `pointsLeft` counting those not yet spent). */
+ * tree (cards/trees.ts, `pointsLeft` counting those not yet spent). */
 export const cardPoints = (xp: number, cap = MAX_CARD_LEVEL) => cardLevel(xp, cap).level * POINTS_PER_CARD_LEVEL;
 
 /** A saved `cardXp`: known cards only, each a whole XP (more

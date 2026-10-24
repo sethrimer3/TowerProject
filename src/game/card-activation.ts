@@ -1,14 +1,14 @@
-import { SIPHONS, TRADER_YELLOW_KEYS, isSiphon, type CardId, type SiphonCard } from "../cards.ts";
-import { BADGES, badgesOn, badgeValue, type BadgeId, type RunBadge } from "../badges.ts";
+import { SIPHONS, TRADER_YELLOW_KEYS, isSiphon, type CardId, type SiphonCard } from "../cards/cards.ts";
+import { BADGES, badgesOn, badgeValue, type BadgeId, type RunBadge } from "../cards/badges.ts";
 import { TRAINING, xpBase, type StatTrainingRow } from "../config.ts";
 import type { Mode, KeyColor } from "../entities.ts";
 import { snap } from "../exact.ts";
 import { healUpTo } from "../combat.ts";
 import { boostMaxHp, shiftHero } from "../hero-stats.ts";
-import { treeBonus } from "../card-trees.ts";
+import { treeBonus } from "../cards/trees.ts";
 import { rankShift } from "../loadout.ts";
 import { noteKey } from "../run-notes.ts";
-import type { HandRules } from "../hand-rules.ts";
+import type { HandRules } from "../cards/hand-rules.ts";
 import type { GainArt } from "../shown.ts";
 import { keyCount, wholeChange } from "../whole.ts";
 import { keyWord } from "../doors.ts";

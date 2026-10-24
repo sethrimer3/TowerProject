@@ -1,4 +1,4 @@
-import { deckCards, handSlots, keptLinks, moveCard, nextHandSlotGems, placeCard, toggleLink, type CardId } from "../cards.ts";
+import { deckCards, handSlots, keptLinks, moveCard, nextHandSlotGems, placeCard, toggleLink, type CardId } from "../cards/cards.ts";
 import type { Run } from "../runs.ts";
 import { goalUnlocked } from "../goals.ts";
 import { affordsGems, type DeskHost } from "./desk.ts";

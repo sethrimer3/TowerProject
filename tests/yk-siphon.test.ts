@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults } from "../src/save.ts";
 import { TRAINING, cost, trained, type StatTrainingRow } from "../src/config.ts";
-import { deckCards, planHand } from "../src/cards.ts";
+import { deckCards, planHand } from "../src/cards/cards.ts";
 import { RESEARCH } from "../src/archives.ts";
 import { loadout } from "../src/loadout.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";

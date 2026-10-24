@@ -1,4 +1,4 @@
-import type { CardId } from "./cards.ts";
+import type { CardId } from "./cards/cards.ts";
 
 /** All faces share a 48 × 64 frame and leave the lower band for live names.
  * Large subjects use 24 pixels; secondary subjects use 12 or 16 pixels. */

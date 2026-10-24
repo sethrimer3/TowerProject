@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { enemySpriteId, enemySpriteUrl } from "../src/enemy-sprites.ts";
-import { TOWER_ZONE_ENEMIES } from "../src/scaling.ts";
+import { TOWER_ZONE_ENEMIES } from "../src/enemies/scaling.ts";
 
 test("every Tower enemy has one distinct deployable sprite", () => {
   const names = TOWER_ZONE_ENEMIES.flatMap((zone) => zone.map((enemy) => enemy.name));

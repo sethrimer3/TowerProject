@@ -9,7 +9,7 @@ import {
 } from "../src/events/catalog.ts";
 import { baseMedals, decodeEvents, defaultEvents, isComplete, isFinished, milestoneReached, relicMedals, unclaimedMedals } from "../src/events/progress.ts";
 import { decodeRelics } from "../src/relics.ts";
-import { BADGE_IDS, MAX_COPIES } from "../src/badges.ts";
+import { BADGE_IDS, MAX_COPIES } from "../src/cards/badges.ts";
 import { DAY_MS } from "../src/shop/clock.ts";
 import type { Enemy, Tile } from "../src/entities.ts";
 import type { Save } from "../src/save-shape.ts";

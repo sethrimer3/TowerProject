@@ -1,6 +1,6 @@
 import { doorName, doorRule, drainsHp, keyWord, pickupGold } from "../doors.ts";
-import type { HandBonus } from "../cards.ts";
-import { compounded, doorStat, foeStat, keyStat, type TreeBonus } from "../card-trees.ts";
+import type { HandBonus } from "../cards/cards.ts";
+import { compounded, doorStat, foeStat, keyStat, type TreeBonus } from "../cards/trees.ts";
 import type { ChestKind, Enemy, Mode, Tile, KeyColor } from "../entities.ts";
 import { RARITY_TIERS } from "../equipment/balance.ts";
 import { EQUIP_MATERIALS, itemDef } from "../equipment/catalog.ts";

@@ -6,8 +6,8 @@ import { UPGRADES } from "../src/config.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { World, delveExtras } from "../src/delve/world.ts";
 import { region } from "../src/delve/labyrinth.ts";
-import { attachBadge, BADGES, decodeBadges, fitsCard, MAX_COPIES, validRunBadges, type BadgesSave } from "../src/badges.ts";
-import { addEnemies, extraEnemies, extrasSeed, type ExtraEnemies, type ExtraFloor } from "../src/more-enemies.ts";
+import { attachBadge, BADGES, decodeBadges, fitsCard, MAX_COPIES, validRunBadges, type BadgesSave } from "../src/cards/badges.ts";
+import { addEnemies, extraEnemies, extrasSeed, type ExtraEnemies, type ExtraFloor } from "../src/enemies/more-enemies.ts";
 import { point, type Enemy, type Tile } from "../src/entities.ts";
 
 const enemy = (strength: Enemy["strength"]): Enemy => ({ name: strength, hp: 10, attack: 2, defense: 1, tier: 0, strength });

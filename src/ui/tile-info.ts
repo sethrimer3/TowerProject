@@ -1,11 +1,11 @@
 import { enemyStat, keyCount, whole, wholeChange, wholeHp } from "../whole.ts";
 import type { Enemy, Kind, Player, Tile } from "../entities.ts";
-import { enemyTitle } from "../scaling.ts";
+import { enemyTitle } from "../enemies/scaling.ts";
 import type { Game, RouteEffects } from "../state.ts";
 import { POTION_HEAL, potionRestores, resolveStep, shardStat } from "../step-effects.ts";
 import { attackForFewerHits, instakill, lifestealHeal, netDamage, parryCut, predict, struckDamage, type CombatPrediction } from "../combat.ts";
 import { forecast as critForecast, type CritForecast } from "../crit-forecast.ts";
-import { arrowDamage, shotDamage } from "../ranged.ts";
+import { arrowDamage, shotDamage } from "../enemies/ranged.ts";
 import { goalUnlocked } from "../goals.ts";
 import { chestReward, clearedInspiration } from "../tower/area-ledger.ts";
 import { doorColor, doorDescription, doorName, doorRule, drainsHp, KEY_NAMES } from "../doors.ts";
@@ -129,7 +129,7 @@ function enemyStats(e: Enemy, p: Player, r: CombatPrediction, gold: number) {
     + ` · ${stat(itemSprite("upgrade_defense", "stat-sprite"), "DEF", enemyStat(e.defense), ` (<span class="hit-hurt">-${enemyStat(r.hit)}</span>)`)}${coins}</span>`;
 }
 
-/** A Flying enemy's panel (flying.ts): its HP, its ATK with what each of
+/** A Flying enemy's panel (enemies/flying.ts): its HP, its ATK with what each of
  * its shots does to the hero, its DEF with what one of the hero's arrows
  * takes off it before ATK / m and critical hits, and the Gold killing it
  * would bank; then that only arrows reach it, and whether it is Aggroed. */
@@ -143,7 +143,7 @@ function flyerInfo(e: Enemy, p: Player, gold: number) {
   return `${line}<br><small>Flying: it shoots you from the air; only your arrows reach it, and you walk under it freely</small>${aggro}`;
 }
 
-/** What a Shielded enemy's bubble does to an enemy standing in it (shielded.ts). */
+/** What a Shielded enemy's bubble does to an enemy standing in it (enemies/shielded.ts). */
 const guardLine = (e: Enemy) => (e.guard ? `<br><small>Shielded: your strikes do ${e.guard}% less</small>` : "");
 
 const DESCRIBE: Partial<Record<Kind, Describe>> = {

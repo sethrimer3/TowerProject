@@ -2,14 +2,14 @@
  * (`ui/enemy-odds-box.ts`): each strength's chance and a balanced one's
  * stats and Gold, and each trait's chance with its speeds. Read from the
  * same schedules generation rolls by (docs/ENEMY_SCHEDULE.md). */
-import type { Enemy, EnemyStrength } from "./entities.ts";
-import { enemyShare, RANKED_STRENGTHS } from "./enemy-schedule.ts";
-import { fastShare } from "./fast-enemies.ts";
+import type { Enemy, EnemyStrength } from "../entities.ts";
+import { enemyShare, RANKED_STRENGTHS } from "./schedule.ts";
+import { fastShare } from "./fast.ts";
 import { FOE_GAIN, foeShotCost, rangedShare } from "./ranged.ts";
 import { flyingShare } from "./flying.ts";
 import { shieldShare } from "./shielded.ts";
-import { isBossFloor } from "./tower/index.ts";
-import { snap } from "./exact.ts";
+import { isBossFloor } from "../tower/index.ts";
+import { snap } from "../exact.ts";
 
 /** A strength's row: its chance in percent (for the shared-out strengths,
  * its share of the floor's enemies; a boss's, whether the floor is one a

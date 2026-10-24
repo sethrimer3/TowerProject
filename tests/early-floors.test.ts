@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { BASE_HAND, planHand } from "../src/cards.ts";
+import { BASE_HAND, planHand } from "../src/cards/cards.ts";
 import { predict } from "../src/combat.ts";
 import { doorCost } from "../src/doors.ts";
 import { point, type Player, type Tile } from "../src/entities.ts";

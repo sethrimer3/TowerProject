@@ -1,16 +1,16 @@
 import { CARD_IDS, deckCards, type CardId } from "./cards.ts";
-import type { UpgradeId } from "./config.ts";
-import type { Save } from "./save-shape.ts";
-import { isRecord, wholeIn } from "./decode.ts";
-import { random } from "./random.ts";
-import { MORE_ENEMIES_CARDS, MORE_ENEMIES_PERCENTS } from "./more-enemies.ts";
+import type { UpgradeId } from "../config.ts";
+import type { Save } from "../save-shape.ts";
+import { isRecord, wholeIn } from "../decode.ts";
+import { random } from "../random.ts";
+import { MORE_ENEMIES_CARDS, MORE_ENEMIES_PERCENTS } from "../enemies/more-enemies.ts";
 
 // Card badges: tokens bought with Gems and attached to cards, each
 // changing what its card does when it activates (reaches its target, or
 // acts where the hero stands). This module holds what is data and pure
 // rule: the stock, the levels copies reach, the draw, and which card holds
 // which token. The game reads them in `state.ts` (activation) and
-// `cards.ts` (gates and targeting).
+// `cards/cards.ts` (gates and targeting).
 
 export type BadgeRarity = "common" | "rare" | "epic";
 /** How each rarity is drawn, against the others with a badge left to draw. */

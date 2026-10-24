@@ -11,7 +11,7 @@ import { decodeEquipment, defaultEquipment } from "./equipment/inventory.ts";
 import { decodeDefendSave, defaultDefendSave } from "./defend/progress.ts";
 import { decodeSettings, defaultSettings } from "./settings.ts";
 import { keepUndos, loadout } from "./loadout.ts";
-import { BASE_HAND, CARD_IDS, HAND_SLOT_GEMS, IN_PLACE, MAX_HAND_SLOTS, deckCards, handSlots, keptLinks, type CardId, type CardLink } from "./cards.ts";
+import { BASE_HAND, CARD_IDS, HAND_SLOT_GEMS, IN_PLACE, MAX_HAND_SLOTS, deckCards, handSlots, keptLinks, type CardId, type CardLink } from "./cards/cards.ts";
 import { decodeGemDrop, defaultGemDrop } from "./gems.ts";
 import { decodeArchives, defaultArchives, researched } from "./archives.ts";
 import { adsOff, BOOST_FOREVER, decodeEntitlements, permanentBoost } from "./shop/entitlements.ts";
@@ -25,13 +25,13 @@ import { decodeRelics } from "./relics.ts";
 import { decodeShrines, defaultShrines, validShrineRun } from "./shrines.ts";
 import { decodeThemes, defaultThemes } from "./theme-collection.ts";
 import { isTournamentRun } from "./tournament/run.ts";
-import { decodeBadges, defaultBadges, validRunBadges } from "./badges.ts";
+import { decodeBadges, defaultBadges, validRunBadges } from "./cards/badges.ts";
 import { backfillProfile, decodeProfile, defaultProfile } from "./profile.ts";
 import { decodeFinds, defaultFinds, validNotes } from "./run-notes.ts";
-import { isFoeKey } from "./foe-cards.ts";
-import { decodeCardXp } from "./card-levels.ts";
-import { decodeCardBuys, defaultCardBuys } from "./card-buys.ts";
-import { totalCardLevels, treeNode, decodeCardTrees, pointsSpent } from "./card-trees.ts";
+import { isFoeKey } from "./cards/foe-cards.ts";
+import { decodeCardXp } from "./cards/levels.ts";
+import { decodeCardBuys, defaultCardBuys } from "./cards/buys.ts";
+import { totalCardLevels, treeNode, decodeCardTrees, pointsSpent } from "./cards/trees.ts";
 export function defaults(): Save {
   return {
     version: 4,
@@ -107,10 +107,10 @@ const validEnemy = (e: any) =>
  * numbered among the run's spawns. TODO: drop the unnumbered Greater Boss
  * once saves from before spawn numbers are gone. */
 const validSpawned = (e: any) => validEnemy(e) && (e.spawn !== undefined || e.strength === "greaterBoss");
-/** An enemy the hero's arrows have wounded (ranged.ts): the generated or
+/** An enemy the hero's arrows have wounded (enemies/ranged.ts): the generated or
  * spawned enemy, kept with its wound. */
 const validWounded = (v: any) => finite(v.wound) && v.wound > 0 && validEnemy(v.enemy);
-/** Open floor, maybe with a Flying enemy over it (flying.ts), generated
+/** Open floor, maybe with a Flying enemy over it (enemies/flying.ts), generated
  * or moved there, kept with its wound. */
 const validFloor = (v: any) => v.flyer === undefined ? v.wound === undefined : validEnemy(v.flyer) && (v.wound === undefined || (finite(v.wound) && v.wound > 0));
 const validChange = (v: any) =>

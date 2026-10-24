@@ -6,8 +6,8 @@ import type { Mode } from "./entities.ts";
 import type { RunCore } from "./runs.ts";
 import type { Save } from "./save-shape.ts";
 import { boonFactor, runBoons } from "./shrines.ts";
-import { badgeFactor } from "./badges.ts";
-import { treeHeroFactor } from "./card-trees.ts";
+import { badgeFactor } from "./cards/badges.ts";
+import { treeHeroFactor } from "./cards/trees.ts";
 import { TRAINING_GROUPS, GOLD_SHOP, schedulePrice, TRAINING, TRAINING_PER_LEVEL, UPGRADES, trainingCap, isStatRow, levelForXp, trained, trainingWorth, amountAt, trainedAmount, trainingDef, type GoldItemId, type StatTrainingRow, type TrainingDef, type TrainingId, type TrainingRow, type UpgradeId } from "./config.ts";
 import { wornEffects } from "./equipment/effects.ts";
 import { silverFound } from "./gold-multipliers.ts";
@@ -15,7 +15,7 @@ import { PIERCE_CAP } from "./equipment/balance.ts";
 import { RESEARCH, researched } from "./archives.ts";
 import { ranksInTraining, trainingGold } from "./training-jobs.ts";
 import { goalUnlocked, type GoalUnlock } from "./goals.ts";
-import type { CardId } from "./cards.ts";
+import type { CardId } from "./cards/cards.ts";
 
 /** Whether `row` can be seen and trained: its upgrade owned, or the Goals
  * checkpoint that unlocks it claimed (Attack Range, Attack Speed). */

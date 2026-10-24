@@ -1,9 +1,9 @@
 import type { Mode } from "../entities.ts";
 import type { Save } from "../save-shape.ts";
 import { MODES } from "../modes.ts";
-import { enemyFirstFloor } from "../enemy-schedule.ts";
+import { enemyFirstFloor } from "../enemies/schedule.ts";
 import { keyFirstFloor } from "../key-schedule.ts";
-import { copiesLeft } from "../badges.ts";
+import { copiesLeft } from "../cards/badges.ts";
 import { EQUIP_MATERIAL_IDS, type EquipMaterialId } from "../equipment/catalog.ts";
 
 // The daily missions (docs/MISSIONS.md): what each asks, how much of it, what

@@ -165,7 +165,7 @@ export class BoardPopups {
   private seed = NaN;
   /** Which of the numbers the Settings show. */
   private shown: Shown = ALL_SHOWN;
-  /** The last turn's shots taken (ranged.ts), and the enemies' HP bars the
+  /** The last turn's shots taken (enemies/ranged.ts), and the enemies' HP bars the
    * Archer's arrows raised: drained from `from` to `hp` out of `full` as
    * the arrow lands at `start`, held a while, then faded. */
   private volley: Volley | null = null;

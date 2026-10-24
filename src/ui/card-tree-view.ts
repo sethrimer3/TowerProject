@@ -1,12 +1,12 @@
 /** A card's tree as the player meets it: its nodes for the living graph
  * (`cardTreeGraph`, drawn by `upgrade-graph.ts`), what each node does in
  * words (`nodeName`, `statText`), and the card of the node picked in it
- * (`cardTreeCardHtml`). The tree itself comes from `card-trees.ts`. */
-import { CARDS, type CardId } from "../cards.ts";
-import { CARD_TREES, cardLook, nodeCap, nodeLevel, nodeOpen, opensAt, treeNode, type CardOpened, type CardTreeLevels, type CardTreeNode, type ColorKeyPart, type ColorKeyStat, type DoorLockPart, type DoorLockStat, type FoeCardStat, type FoePart, type FoeTreeCard, type TreeStat } from "../card-trees.ts";
+ * (`cardTreeCardHtml`). The tree itself comes from `cards/trees.ts`. */
+import { CARDS, type CardId } from "../cards/cards.ts";
+import { CARD_TREES, cardLook, nodeCap, nodeLevel, nodeOpen, opensAt, treeNode, type CardOpened, type CardTreeLevels, type CardTreeNode, type ColorKeyPart, type ColorKeyStat, type DoorLockPart, type DoorLockStat, type FoeCardStat, type FoePart, type FoeTreeCard, type TreeStat } from "../cards/trees.ts";
 import type { DoorKind } from "../doors.ts";
 import type { KeyColor } from "../entities.ts";
-import { CARD_RARITY_NAMES, type CardRarity } from "../card-rarity.ts";
+import { CARD_RARITY_NAMES, type CardRarity } from "../cards/rarity.ts";
 import { rarityFrameHtml, rarityStarsHtml } from "./card-level-marks.ts";
 import { snap } from "../exact.ts";
 import { cardArt, cellIcon, itemSprite, uiSprite, type UiSprite } from "./dom.ts";

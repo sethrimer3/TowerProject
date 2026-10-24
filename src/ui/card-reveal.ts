@@ -1,8 +1,8 @@
-import { CARDS, cardBonusLines, cardText, type CardId } from "../cards.ts";
+import { CARDS, cardBonusLines, cardText, type CardId } from "../cards/cards.ts";
 import type { UpgradeId } from "../config.ts";
 import { cardArt } from "./dom.ts";
 import { cardLevelHtml, cardLevelLines, cardXpBarHtml } from "./card-level-marks.ts";
-import type { TreeSave } from "../card-trees.ts";
+import type { TreeSave } from "../cards/trees.ts";
 
 /** What a card's reveal says over and under it: the line above its name,
  * the hint at the foot, and the card button's label. */

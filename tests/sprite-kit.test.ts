@@ -8,11 +8,11 @@ import { EQUIPMENT_FRAME_SPRITES, EQUIPMENT_MARK_SPRITES } from "../src/sprite-e
 import { COMBAT_SPRITES } from "../src/sprite-combat.ts";
 import { BOARD_MARK_SPRITES } from "../src/sprite-board-marks.ts";
 import { SMALL_CONTROL_SPRITES, SLIDER_SPRITES } from "../src/sprite-controls.ts";
-import { BADGE_IDS } from "../src/badges.ts";
+import { BADGE_IDS } from "../src/cards/badges.ts";
 import { CARD_SPRITE_LAYERS } from "../src/sprite-cards.ts";
 import { ICON_SPRITES, WORLD_SPRITES, CONTROL_SPRITES, DETAIL_SPRITES, CITY_SPRITES, DEFEND_STRUCTURE_SPRITES, NAMED_ENEMY_SPRITES, drawKit, kitEnemy, spriteRevision } from "../src/sprite-kit.ts";
 import { GOAL_SPRITES, UI_DETAIL_SPRITES, UI_ORNAMENT_SPRITES } from "../src/sprite-ui-details.ts";
-import { CARDS } from "../src/cards.ts";
+import { CARDS } from "../src/cards/cards.ts";
 import { ICON_ROWS } from "../src/ui/equipment-icons.ts";
 import { THEMED_TILESET_URLS } from "../src/themed-tilesets.ts";
 import { SPRITE_TERRAIN } from "../src/sprite-terrain-index.ts";

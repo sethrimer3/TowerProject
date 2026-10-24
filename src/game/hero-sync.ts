@@ -7,7 +7,7 @@ import { loadoutShift, shiftHero } from "../hero-stats.ts";
 import { RunTimeline } from "../run-timeline.ts";
 import { trainedAmount } from "../config.ts";
 import { ranksInRun } from "../run-training.ts";
-import { treeBonus, treeOverheal } from "../card-trees.ts";
+import { treeBonus, treeOverheal } from "../cards/trees.ts";
 
 const BOTH_MODES = ["tower", "delve"] as const;
 const KEY_COLORS = ["yellow", "blue", "red"] as const;

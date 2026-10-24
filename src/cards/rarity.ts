@@ -1,5 +1,5 @@
-/** Card rarities: how rare a card buy's draw is (card-buys.ts), which
- * rarity of a card tree's nodes it opens (card-trees.ts), and how a card
+/** Card rarities: how rare a card buy's draw is (cards/buys.ts), which
+ * rarity of a card tree's nodes it opens (cards/trees.ts), and how a card
  * looks once it holds a node of that rarity. Common is the base every new
  * card starts with; legendary is the rarest and strongest. */
 export type CardRarity = "common" | "uncommon" | "rare" | "epic" | "legendary";

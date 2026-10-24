@@ -1,19 +1,19 @@
 import { TOWER_WIDTH, TOWER_HEIGHT } from "../config.ts";
 import { point, type ChestOdds, type DoorOdds, type Enemy, type EnemyStrength, type Tile, type Torch } from "../entities.ts";
 import { withRunDoors } from "../doors.ts";
-import { woodDurability } from "../enemy-curves.ts";
+import { woodDurability } from "../enemies/curves.ts";
 import { withChest, withPotions, withTreasureFloors, type Board } from "../board.ts";
 import { breakTorch, placeTorches, torchesLeft } from "../torches.ts";
 import { generateTowerFloor } from "./index.ts";
 import { tierCells, tierTile } from "../tiers.ts";
 import { foeTile, type FoeRule } from "../shrines.ts";
-import { fastCells } from "../fast-enemies.ts";
-import { rangedCells, wounded, woundMore } from "../ranged.ts";
-import { flyingCells } from "../flying.ts";
-import { addEnemies, extrasSeed, hasExtras, type ExtraEnemies } from "../more-enemies.ts";
+import { fastCells } from "../enemies/fast.ts";
+import { rangedCells, wounded, woundMore } from "../enemies/ranged.ts";
+import { flyingCells } from "../enemies/flying.ts";
+import { addEnemies, extrasSeed, hasExtras, type ExtraEnemies } from "../enemies/more-enemies.ts";
 import { ENTRY } from "./embedder.ts";
-import { getTowerGateEnemy } from "../scaling.ts";
-import { guardedTile, holdsShield, placeShield, walkDistances, type Shield } from "../shielded.ts";
+import { getTowerGateEnemy } from "../enemies/scaling.ts";
+import { guardedTile, holdsShield, placeShield, walkDistances, type Shield } from "../enemies/shielded.ts";
 
 // v3 adds declarative multi-key/condition doors and places their prerequisite
 // keys differently; old per-room coordinate mutations must not overlay it.
@@ -33,7 +33,7 @@ import { guardedTile, holdsShield, placeShield, walkDistances, type Shield } fro
 // v16 lays a potion in about 35% of the doorways on the way to the stairs of
 // the first tower's first ten floors, in place of enemies.
 // v17 places no Heart Door below floor 101 in the first tower.
-// v18 takes every enemy's stats from the tower's enemy curve (enemy-curves.ts).
+// v18 takes every enemy's stats from the tower's enemy curve (enemies/curves.ts).
 // v19 places blue, red and Heart Doors by the door stage's quota (door-quota.ts),
 // combines colours in one door, and makes a share of gold locks Wooden Doors.
 // v20 adds door runs (two or three of the same door in a row), counts a
@@ -74,7 +74,7 @@ function torchesForRoom(seed: number, room: number, tier: number, cells: Map<str
   }
   return t;
 }
-/** `cells` with More Enemies' extras added (more-enemies.ts): the way in is
+/** `cells` with More Enemies' extras added (enemies/more-enemies.ts): the way in is
  * the tile just inside, the target the stairs; neither the tiles round the
  * way in, those beside the stairs, nor a torch's take one. */
 export function withExtraEnemies(cells: Map<string, Tile>, seed: number, room: number, torches: readonly Torch[], extras: ExtraEnemies) {
@@ -93,7 +93,7 @@ export function withExtraEnemies(cells: Map<string, Tile>, seed: number, room: n
   return out;
 }
 /** `cells` with the floor's Shielded enemy marked and its extras added
- * (shielded.ts), and its shield (null for none): the way in is the tile
+ * (enemies/shielded.ts), and its shield (null for none): the way in is the tile
  * just inside, the way up the stairs; no extra stands round the way in,
  * beside the stairs or on a torch. */
 export function withShield(cells: Map<string, Tile>, seed: number, room: number, tier: number, torches: readonly Torch[]) {
@@ -125,7 +125,7 @@ export class RoomWorld implements Board {
   floor = 0;
   cells: Map<string, Tile>;
   torches: Torch[];
-  /** The floor's Shielded enemy as generated (shielded.ts), if any. */
+  /** The floor's Shielded enemy as generated (enemies/shielded.ts), if any. */
   private shield: Shield | null;
   constructor(
     public seed: number,
@@ -136,7 +136,7 @@ export class RoomWorld implements Board {
     public percentPotions = 0,
     /** The numbered tower the floor stands in, whose enemies it scales. */
     public tier = 1,
-    /** The run's More Enemies badges' extras (more-enemies.ts); none without. */
+    /** The run's More Enemies badges' extras (enemies/more-enemies.ts); none without. */
     extras?: ExtraEnemies,
     /** What the run's boons change about its enemies (shrines.ts), every
      * enemy tile read through it, a Greater Boss summoned too; none without.

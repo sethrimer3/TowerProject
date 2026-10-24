@@ -522,11 +522,11 @@ export const cost = (id: UpgradeId, level: number) =>
  * pays some, beside its Silver. A Greater Boss pays twice a boss's Gold,
  * Silver and XP. */
 export const ENEMY_GOLD: Record<EnemyStrength, number> = { weak: 1, normal: 1, strong: 2, elite: 4, boss: 5, greaterBoss: 10 };
-/** The Gold a Fast enemy pays more than its strength's (fast-enemies.ts). */
+/** The Gold a Fast enemy pays more than its strength's (enemies/fast.ts). */
 export const FAST_GOLD = 1;
-/** The Gold a Ranged enemy pays more than its strength's (ranged.ts). */
+/** The Gold a Ranged enemy pays more than its strength's (enemies/ranged.ts). */
 export const RANGED_GOLD = 1;
-/** The Gold a Shielded enemy pays more than its strength's (shielded.ts). */
+/** The Gold a Shielded enemy pays more than its strength's (enemies/shielded.ts). */
 export const SHIELDED_GOLD = 1;
 /** Gold every item a run takes off the floor pays, before Gold Bonus and
  * the tier's bonus: a potion, a shard, a torch put out, a treasure chest
@@ -853,7 +853,7 @@ export const TRAINING = [
     silver: { base: 12, step: 2, growth: 3 }, gold: critTrainers,
   },
   // The Archer's reach, in hundredths of a tile (a meter): 3 tiles, and 0.05 more a
-  // rank, 7 at its 80 (ranged.ts).
+  // rank, 7 at its 80 (enemies/ranged.ts).
   {
     id: "attackRange", name: "Attack Range", short: "Range", group: "offense", goal: "attackRange", cost: 1, max: 80,
     curve: { per: 5 }, base: 300, scale: 100, unit: "m",
@@ -861,7 +861,7 @@ export const TRAINING = [
     silver: rangePrices, gold: { growth: rangePrices.growth, start: rangePrices.base, cubic: rangePrices.cubic },
   },
   // The Archer's rate of fire, in twentieths of a shot every 10 turns: 1
-  // shot, and 0.05 more a rank, 6 at its 100 (ranged.ts).
+  // shot, and 0.05 more a rank, 6 at its 100 (enemies/ranged.ts).
   {
     id: "attackSpeed", name: "Attack Speed", short: "Speed", group: "offense", goal: "attackSpeed", cost: 1, max: 100,
     curve: { per: 1 }, base: 20, scale: 20, unit: "shots",
@@ -872,7 +872,7 @@ export const TRAINING = [
   // target, in hundred-thousandths of ×1: 0.01 for the first rank, and each
   // later rank 0.00004 less (0.00204 for the 200th), 1.204 a tile in all.
   // An arrow's ATK is multiplied by 1 + this × the Euclidean distance to
-  // its target (ranged.ts). Its trainers start at a minute a rank.
+  // its target (enemies/ranged.ts). Its trainers start at a minute a rank.
   {
     id: "attackPerTile", name: "ATK / m", short: "ATK/m", group: "offense", goal: "attackPerTile", cost: 1, max: 200,
     curve: { per: 1002, square: -2 }, scale: 100_000, unit: "perMeter",
@@ -880,7 +880,7 @@ export const TRAINING = [
     silver: perTilePrices, gold: { start: perTilePrices.base, ratio: perTilePrices.ratio, rise: perTilePrices.rise }, time: { skip: 1 },
   },
   // The chance each of the Archer's shots is a multishot, in hundredths of
-  // a percent: 0.5% a rank, 49.5% at its 99 (ranged.ts). Its trainers
+  // a percent: 0.5% a rank, 49.5% at its 99 (enemies/ranged.ts). Its trainers
   // start at a minute a rank. Its trainers
   // start at a minute a rank.
   {
@@ -900,7 +900,7 @@ export const TRAINING = [
   // The chance each of the Archer's shots, fired while Rapid Fire isn't,
   // starts it, in hundredths of a percent: 0.4% a rank, 34% at its 85.
   // While it lasts the Archer's arrows charge `RAPID_FIRE_SPEED` times as
-  // fast (ranged.ts).
+  // fast (enemies/ranged.ts).
   {
     id: "rapidFireChance", name: "Rapid Fire Chance", short: "Rapid %", group: "offense", goal: "rapidFire", cost: 1, max: 85,
     curve: { per: 40 }, scale: 100, unit: "%",

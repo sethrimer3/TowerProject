@@ -4,7 +4,7 @@ import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { RESEARCH, missing, research } from "../src/archives.ts";
-import { BADGES, drawable, defaultBadges } from "../src/badges.ts";
+import { BADGES, drawable, defaultBadges } from "../src/cards/badges.ts";
 import { DashEchoes, DASH_ECHO_MS } from "../src/dash-echoes.ts";
 import type { FrameContext } from "../src/render-frame.ts";
 

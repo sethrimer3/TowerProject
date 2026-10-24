@@ -4,10 +4,10 @@ import type { TierRecord } from "./tiers.ts";
 import type { ThemeId } from "./theme-collection.ts";
 import type { ArchivesSave } from "./archives.ts";
 import type { ShrinesSave } from "./shrines.ts";
-import type { CardId, CardLink } from "./cards.ts";
-import type { BadgesSave } from "./badges.ts";
-import type { CardBuysSave } from "./card-buys.ts";
-import type { CardTreeLevels } from "./card-trees.ts";
+import type { CardId, CardLink } from "./cards/cards.ts";
+import type { BadgesSave } from "./cards/badges.ts";
+import type { CardBuysSave } from "./cards/buys.ts";
+import type { CardTreeLevels } from "./cards/trees.ts";
 import type { GoldItemId, TrainingId, UpgradeId } from "./config.ts";
 import type { MaterialId } from "./materials.ts";
 import type { EquipmentSave } from "./equipment/inventory.ts";
@@ -140,21 +140,21 @@ export type Save = {
    * base hand. */
   hand: CardId[];
   /** The hand's Card Groups: links between cards side by side in it, each
-   * dropped once either card moves out of place (cards.ts). */
+   * dropped once either card moves out of place (cards/cards.ts). */
   cardLinks: CardLink[];
-  /** Each card's XP toward its levels (card-levels.ts), gained in runs;
+  /** Each card's XP toward its levels (cards/levels.ts), gained in runs;
    * a card with none is left out. Undo takes back what a move gained. */
   cardXp: Partial<Record<CardId, number>>;
-  /** The card points spent on each card's tree, by node (card-trees.ts);
+  /** The card points spent on each card's tree, by node (cards/trees.ts);
    * a card with none is left out. Spent and respecced in the forest only. */
   cardTrees: CardTreeLevels;
   /** The levels card buys opened on each card's tree, and where their
-   * stream stands (card-buys.ts). */
+   * stream stands (cards/buys.ts). */
   cardBuys: CardBuysSave;
   /** Hand slots bought with Gems (after Larger Hand's). */
   handSlots: number;
   /** The card badges owned, which card holds each, and where their
-   * draws' stream stands (badges.ts). */
+   * draws' stream stands (cards/badges.ts). */
   badges: BadgesSave;
   /** Tutorials the player has finished: on the Deck page `deck`,
    * reordering the hand; `removeCard`, taking a card out of it; `addCard`,

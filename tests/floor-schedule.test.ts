@@ -4,7 +4,7 @@ import { generateTowerFloor } from "../src/tower/index.ts";
 import { generateStrategicGraph } from "../src/tower/strategic-graph.ts";
 import { gateTile } from "../src/tower/furnisher.ts";
 import { region } from "../src/delve/labyrinth.ts";
-import { STRENGTH_FROM_FLOOR, strengthOnFloor } from "../src/scaling.ts";
+import { STRENGTH_FROM_FLOOR, strengthOnFloor } from "../src/enemies/scaling.ts";
 import { towerDoorFirstFloor } from "../src/key-schedule.ts";
 import type { Tile } from "../src/entities.ts";
 

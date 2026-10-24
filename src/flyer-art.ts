@@ -1,4 +1,4 @@
-/** How Flying enemies (flying.ts) show on the board: each drawn over the
+/** How Flying enemies (enemies/flying.ts) show on the board: each drawn over the
  * board after the hero, a little above its tile, at half opacity while the
  * hero stands under it so the hero still shows, with a wing at its top
  * right (`wingMark`). Every board draws them through `drawFlyers`, Classic

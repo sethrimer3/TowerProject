@@ -1,4 +1,4 @@
-import { levelProgress, MAX_BADGE_LEVEL, badgeDef, badgeLevel, badgeValue, gateSign, type BadgeId } from "../badges.ts";
+import { levelProgress, MAX_BADGE_LEVEL, badgeDef, badgeLevel, badgeValue, gateSign, type BadgeId } from "../cards/badges.ts";
 import { kitIcon } from "../sprite-kit.ts";
 import { RARITIES } from "../shop/rarity.ts";
 

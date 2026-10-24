@@ -2,7 +2,7 @@ import { TRAINING } from "./config.ts";
 import { fraction, isRecord, time } from "./decode.ts";
 import type { Save } from "./save-shape.ts";
 import { snap } from "./exact.ts";
-import { seedCardBuys } from "./card-buys.ts";
+import { seedCardBuys } from "./cards/buys.ts";
 import { stream } from "./random.ts";
 
 /** The currencies whose lifetime earnings the player profile tallies. */

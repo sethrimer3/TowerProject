@@ -3,7 +3,7 @@ export { ARENA_SIZE, ELEMENTAL, ARENA_TORCHES, ARENA_POTIONS, ARENA_CRATES, aren
 import { newKeymaster, keymasterStep, enterKeymaster, keymasterDoorAt, decodeKeymaster, type KeymasterState } from "./keymaster.ts";
 import { TRAINING, type TrainingId } from "../config.ts";
 import type { Player } from "../entities.ts";
-import { CARDS, type CardId } from "../cards.ts";
+import { CARDS, type CardId } from "../cards/cards.ts";
 import { finite, isRecord, wholeIn } from "../decode.ts";
 import { tileRandom } from "../random.ts";
 import { MAX_TRIAL_LEVEL } from "./access.ts";

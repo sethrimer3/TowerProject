@@ -10,15 +10,15 @@
  * does, and only the Archer's arrows can hurt it.
  *
  * An arrow that wounds a Flying enemy makes it Aggroed (`woundMore` in
- * ranged.ts): each turn its `stride` charge gains what a Ranged enemy's
+ * enemies/ranged.ts): each turn its `stride` charge gains what a Ranged enemy's
  * cooldown does, and each time it is full the enemy takes a step toward the
  * hero along open floor (`aggroTurn`), so it closes in at the rate it
  * fires. Every Aggroed enemy steps by one shared map of the walk to the
  * hero (`walkToHero`), made once a turn. A Flying enemy may hover over the
  * hero; one on the ground stops beside it. */
-import type { Board } from "./board.ts";
-import { point, type Enemy, type Point, type Tile } from "./entities.ts";
-import { tileRandom } from "./random.ts";
+import type { Board } from "../board.ts";
+import { point, type Enemy, type Point, type Tile } from "../entities.ts";
+import { tileRandom } from "../random.ts";
 import { FOE_GAIN, foeShotCost, rangedShare, type Volleys } from "./ranged.ts";
 
 const FLYING_SALT = 0xf1e5;

@@ -1,5 +1,5 @@
 import type { Mode } from "../entities.ts";
-import { copiesLeft } from "../badges.ts";
+import { copiesLeft } from "../cards/badges.ts";
 import { goalUnlocked } from "../goals.ts";
 import { random, stream } from "../random.ts";
 import { estimatedServerTime, gmtDay } from "../shop/clock.ts";

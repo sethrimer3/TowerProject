@@ -20,7 +20,7 @@ export type Kind =
  * boss guards the way up at the end of every ten floors, and a Greater
  * Boss appears on a Tower floor whose every torch is put out. */
 export type EnemyStrength = "weak" | "normal" | "strong" | "elite" | "boss" | "greaterBoss";
-/** Which of an enemy's stats lead (enemy-curves.ts scales each). */
+/** Which of an enemy's stats lead (enemies/curves.ts scales each). */
 export type EnemyProfile = "attackHeavy" | "balanced" | "defenseHeavy";
 export type Enemy = {
   name: string;
@@ -29,18 +29,18 @@ export type Enemy = {
   defense: number;
   tier: number;
   strength: EnemyStrength;
-  /** Which of its stats lead (`enemy-curves.ts`), as generation made it;
+  /** Which of its stats lead (`enemies/curves.ts`), as generation made it;
    * absent on enemies made outside generation. */
   profile?: EnemyProfile;
-  /** A Fast enemy (fast-enemies.ts) strikes first in every fight. */
+  /** A Fast enemy (enemies/fast.ts) strikes first in every fight. */
   fast?: true;
-  /** A Ranged enemy (ranged.ts) shoots the hero from a distance. */
+  /** A Ranged enemy (enemies/ranged.ts) shoots the hero from a distance. */
   ranged?: true;
-  /** A Flying enemy (flying.ts) hovers over a floor tile (`Tile.flyer`):
+  /** A Flying enemy (enemies/flying.ts) hovers over a floor tile (`Tile.flyer`):
    * it shoots the hero as a Ranged one does, and the hero can only shoot
    * it, walking under it as over open floor. */
   flying?: true;
-  /** An Aggroed enemy (flying.ts) closes on the hero, a step each time its
+  /** An Aggroed enemy (enemies/flying.ts) closes on the hero, a step each time its
    * `stride` charge (whole charge units, as a Ranged enemy's cooldown) is
    * full; a Flying enemy becomes one once an arrow wounds it. */
   aggro?: true;
@@ -49,7 +49,7 @@ export type Enemy = {
    * it, by `point`: its loot is keyed there (`RunPurse.killKey`), wherever
    * it falls. */
   home?: string;
-  /** A Shielded enemy (shielded.ts) casts a bubble that cuts the hero's
+  /** A Shielded enemy (enemies/shielded.ts) casts a bubble that cuts the hero's
    * damage to every enemy within it. */
   shielded?: true;
   /** The percent a Shielded enemy's bubble cuts the hero's damage to this
@@ -57,7 +57,7 @@ export type Enemy = {
   guard?: number;
   /** The HP an enemy the hero's arrows have wounded had before them (its
    * HP plus the tile's wound), which its thorns are a share of; set by the
-   * board as it reads the tile (`wounded` in ranged.ts), never saved. */
+   * board as it reads the tile (`wounded` in enemies/ranged.ts), never saved. */
   fullHp?: number;
   /** An enemy spawned onto the floor during the run (`Game.spawnEnemy`):
    * its number among the run's spawns, which keys its loot apart from the
@@ -95,8 +95,8 @@ export type DoorRule =
    * for `durability` HP, which DEF doesn't reduce (doors.ts). */
   | { type: "wood"; durability: number };
 /** `wound`: the HP the hero's arrows have taken off the enemy standing
- * here (ranged.ts); the board reads its HP that much lower. `flyer`: the
- * Flying enemy hovering over this open floor tile (flying.ts), which the
+ * here (enemies/ranged.ts); the board reads its HP that much lower. `flyer`: the
+ * Flying enemy hovering over this open floor tile (enemies/flying.ts), which the
  * hero walks under; its wound is the tile's `wound`. */
 /** The colour a potion is drawn in: a regular potion red, like the HP bar
  * it fills, and a percent potion (whose tile is marked `color: "red"`, the
@@ -116,7 +116,7 @@ export type Torch = {
   visibilityPolygon?: Point[];
 };
 /** A percent the hero carries against some enemies, by the card (or card
- * tree) covering them (foe-cards.ts's `FoeKey`). */
+ * tree) covering them (cards/foe-cards.ts's `FoeKey`). */
 export type ByFoe = Partial<Record<"weakEnemy" | "baseEnemy" | "strongEnemy" | "eliteEnemy" | "bossEnemy" | "nonBossEnemy" | "fastEnemy" | "flyingEnemy" | "monster" | "torch" | "archer", number>>;
 export type Player = {
   x: number;
@@ -155,7 +155,7 @@ export type Player = {
   takedown?: Partial<Record<"boss" | "greaterBoss", number>>;
   tangle?: Partial<Record<"boss" | "greaterBoss", number>>;
   /** The percent more ATK the hero strikes the enemies each enemy card of
-   * the run's hand covers with (foe-cards.ts), by card, its tree's and
+   * the run's hand covers with (cards/foe-cards.ts), by card, its tree's and
    * ENEMY's and TORCH's from their card trees; absent without one. */
   foeAttack?: ByFoe;
   /** The percent more DEF and shroud the hero holds against the enemies a

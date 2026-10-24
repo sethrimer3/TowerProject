@@ -8,7 +8,7 @@ import {
   WEEKLY_MAX, WEEKLY_REWARDS, weeklyReward, type MissionType,
 } from "../src/missions/catalog.ts";
 import { decodeMissions, defaultMissions, isComplete, missionPeriod, missionWeek, weekEndsAt } from "../src/missions/progress.ts";
-import { enemyFirstFloor } from "../src/enemy-schedule.ts";
+import { enemyFirstFloor } from "../src/enemies/schedule.ts";
 import { keyFirstFloor } from "../src/key-schedule.ts";
 import { DAY_MS } from "../src/shop/clock.ts";
 import { CURRENCIES } from "../src/shop/currency.ts";

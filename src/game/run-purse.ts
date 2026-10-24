@@ -19,8 +19,8 @@ import { EQUIP_RARITIES, type EquipRarity } from "../equipment/balance.ts";
 import { runBoons } from "../shrines.ts";
 import { earn } from "../profile.ts";
 import { notesOf, tallyIn } from "../run-notes.ts";
-import { foeGold } from "../foe-cards.ts";
-import { foeStat, treeBonus, treeFactor } from "../card-trees.ts";
+import { foeGold } from "../cards/foe-cards.ts";
+import { foeStat, treeBonus, treeFactor } from "../cards/trees.ts";
 
 /** The tiles whose Pickup Gold a skipped floor counts, beside its lit torches. */
 const ITEMS: ReadonlySet<Tile["kind"]> = new Set(["key", "potion", "attack", "defense", "door"]);

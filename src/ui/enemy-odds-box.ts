@@ -1,7 +1,7 @@
 import { controlIcon } from "./control-icon.ts";
 import type { Game } from "../state.ts";
 import type { EnemyStrength } from "../entities.ts";
-import type { StrengthOdds, Trait, TraitOdds } from "../enemy-odds.ts";
+import type { StrengthOdds, Trait, TraitOdds } from "../enemies/odds.ts";
 import { enemyStat } from "../whole.ts";
 import { shortStat } from "./hud.ts";
 

@@ -11,7 +11,7 @@ import { drawThemedTile } from "./themed-tilesets.ts";
 import { doorColor, doorRule, drainsHp } from "./doors.ts";
 import { drawEnemySprite, enemySpriteReady } from "./enemy-sprites.ts";
 import { rankChevrons, RANK_CHEVRONS } from "./rank-chevrons.ts";
-import { DELVE_ENEMY_NAMES } from "./scaling.ts";
+import { DELVE_ENEMY_NAMES } from "./enemies/scaling.ts";
 import { drawGameSprite, drawGameSpriteFrame, gameSprite, torchAnimationFrame, TORCH_FRAME_COUNT } from "./game-sprites.ts";
 import { drawKit, kitEnemy, kitImage, onSpritesLoaded } from "./sprite-kit.ts";
 import { COMBAT_MARKS } from "./sprite-combat.ts";

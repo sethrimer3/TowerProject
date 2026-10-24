@@ -1,12 +1,12 @@
 /** A run in either mode (`RunCore`, `TowerRun`, `DelveRun`), Automove's memory beside it, and undo's snapshots and the fall. */
 import type { ShrineRun } from "./shrines.ts";
-import type { CardId, CardLink } from "./cards.ts";
-import type { RunBadges } from "./badges.ts";
-import type { CardTreeLevels } from "./card-trees.ts";
+import type { CardId, CardLink } from "./cards/cards.ts";
+import type { RunBadges } from "./cards/badges.ts";
+import type { CardTreeLevels } from "./cards/trees.ts";
 import type { PROVISION_BOOSTS, TrainingId, UsedProvision } from "./config.ts";
 import type { RunNotes } from "./run-notes.ts";
 import type { TournamentRun } from "./tournament/run.ts";
-import type { Volleys } from "./ranged.ts";
+import type { Volleys } from "./enemies/ranged.ts";
 import type { ChestOdds, DoorOdds, Player, Tile } from "./entities.ts";
 /** A stat a provision boosts for a while. */
 export type Boosted = (typeof PROVISION_BOOSTS)[keyof typeof PROVISION_BOOSTS];
@@ -98,20 +98,20 @@ export type RunCore = {
   /** Training ranks bought with Silver this run, on top of the hero's own:
    * they last only for this run. */
   training?: Partial<Record<TrainingId, number>>;
-  /** Times each card that acts in place (cards.ts `IN_PLACE`) has acted this
+  /** Times each card that acts in place (cards/cards.ts `IN_PLACE`) has acted this
    * run: a siphon's nth use took n training levels, lost only for this run. */
   cardUses?: Partial<Record<CardId, number>>;
   /** Which numbered tower (or delve) the run climbs, from 2 up (tiers.ts);
    * absent for the first. */
   tier?: number;
   /** Ranged enemies' and the Archer's cooldowns, and the turns taken
-   * inside (ranged.ts); absent until the first shot is due. */
+   * inside (enemies/ranged.ts); absent until the first shot is due. */
   volleys?: Volleys;
   /** The card badges on the hand's cards as the run went inside
-   * (badges.ts), each card's top slot first, fixed for the run. */
+   * (cards/badges.ts), each card's top slot first, fixed for the run. */
   badges?: RunBadges;
   /** The card points spent on the trees of the hand's cards as the run went
-   * inside (card-trees.ts, `runCardTrees`), fixed for the run, so its floors
+   * inside (cards/trees.ts, `runCardTrees`), fixed for the run, so its floors
    * (More Enemies' extras) and bonuses never change under it. */
   cardTrees?: CardTreeLevels;
   /** The floor each cooling-down badge (Stairward, Skip Open Nodes) last

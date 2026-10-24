@@ -18,7 +18,7 @@ const CHARGED_GLOW = "#4da6ff";
 /** Volleys kept in flight at once; at high speed older ones are dropped. */
 const MAX_IN_FLIGHT = 8;
 
-/** The shots in flight at `f.now` (ranged.ts): each leaves on the frame
+/** The shots in flight at `f.now` (enemies/ranged.ts): each leaves on the frame
  * nearest its tick of the turn (`shotFlight`) and flies `SHOT_FLIGHT` of a
  * turn, an arrow from where the hero stood as it fired to its target, an
  * enemy's shot from its tile to the hero as drawn, so it lands on the hero

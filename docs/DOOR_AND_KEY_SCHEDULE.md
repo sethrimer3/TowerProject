@@ -254,7 +254,7 @@ Doors placed (alone plus in forks) track the schedule. About 0.2 a floor is drop
 - **Where they stand:**
   - **Tower:** the doorway, then the tile just inside the region it opens, then (a run of three) the tile just outside in the parent's chamber. The doorway is the only way between those two tiles, so neither can be walked round. They're laid after the chambers are furnished (`layRuns`), only on open floor that keeps its chamber in one piece and stands by no other doorway, the entrance or the stairs. A door that finds no place stays owed. About 9 run doors in 10 find their tile.
   - **Delve:** the next single-width tiles of the same throat or corridor.
-- **The hand:** the door cards head for a run only while the hero can pay for every door of it (`paysRun` in `cards.ts`), so a hand never spends keys on a run it would stop partway through.
+- **The hand:** the door cards head for a run only while the hero can pay for every door of it (`paysRun` in `cards/cards.ts`), so a hand never spends keys on a run it would stop partway through.
 
 Measured (`--towers 1,9 --floors 1-1000 --band 200 --seeds 4 --stride 7`), wanted against standing (alone plus fork):
 

@@ -7,7 +7,7 @@ Gems, the Shop, Gold bonuses, Spare Change and Wishing Well, and the server-back
 Stepping on it or tapping it (`gemFinder.collectAt`, from `BoardOverlay.tap`) pays one and sets `gemFinder.sparkle`; the renderer draws the Gem and its sparkle over the darkness (`gem-art.ts`), and the gain popup paints it.
 Tapped outside cinematic mode, a Gem and *+1* also fly from its tile to the purse's Gems (`flyToPurse` in `ui/flourish.ts`), which keep their old amount until it lands (`holdAmount` in `ui/hud.ts`).
 The ad button (`gemFinder.claimAd`, `AD_GEMS` every `AD_COOLDOWN_MS`, on `game.clock()`; no ad plays yet) stands under the purse in the forest and inside a run, in both modes, and bursts into blue glints when claimed (`gemSparkle` in `ui/flourish.ts`).
-Gems buy hand slots (`deck.buySlot`: `HAND_SLOT_GEMS` in `cards.ts`, once Larger Hand is owned; `handSlots(save)` is the hand's size, 4, 5 with Larger Hand, plus `save.handSlots`) and Training resets (`training.reset`, `TRAINING_RESET_GEMS`, through `changeLoadout` like training).
+Gems buy hand slots (`deck.buySlot`: `HAND_SLOT_GEMS` in `cards/cards.ts`, once Larger Hand is owned; `handSlots(save)` is the hand's size, 4, 5 with Larger Hand, plus `save.handSlots`) and Training resets (`training.reset`, `TRAINING_RESET_GEMS`, through `changeLoadout` like training).
 `tests/gems.test.ts` covers them.
 **Trial Points** are an independent currency in `save.trialAccess.points`, awarded only by the first clear of a trial difficulty, in an amount equal to that difficulty.
 `proving-grounds/progression.ts` saves the payment receipt per trial/difficulty and calls `earn(save,"trialPoints",amount)`; manual, cards and hybrid victories share the same receipt and highest-clear record.

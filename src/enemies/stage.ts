@@ -3,8 +3,8 @@
  * schedule's count, and which strength and profile each enemy stands at for
  * its shares.
  * Every draw comes from the stream the caller passes. */
-import type { EnemyProfile } from "./entities.ts";
-import { PROFILES, RANKED_STRENGTHS, enemyCountPercent, enemyShare, profileShare, type RankedStrength } from "./enemy-schedule.ts";
+import type { EnemyProfile } from "../entities.ts";
+import { PROFILES, RANKED_STRENGTHS, enemyCountPercent, enemyShare, profileShare, type RankedStrength } from "./schedule.ts";
 
 /** Floor `depth`'s (0 is the first) shares of tower `tower`, in
  * `RANKED_STRENGTHS` order. */
