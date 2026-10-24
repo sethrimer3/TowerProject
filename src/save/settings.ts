@@ -171,8 +171,5 @@ export function decodeSettings(raw: any): Settings {
   if (typeof s.medievalTheme === "boolean" && settingValue(SETTINGS.uiTheme, s.uiTheme) === undefined)
     out.uiTheme = s.neonTheme === true ? "neon" : s.medievalTheme ? "medieval" : "classic";
   if (s.neonTheme === true && settingValue(SETTINGS.gameTheme, s.gameTheme) === undefined) out.gameTheme = "neon";
-  // TODO: remove in a future save version. Item pickups had one toggle,
-  // now one each for ATK, DEF, HP and keys.
-  if (s.itemGains === false) for (const k of ["attackGains", "defenseGains", "hpGains", "keyGains"] as const) if (s[k] === undefined) out[k] = false;
   return out as Settings;
 }
