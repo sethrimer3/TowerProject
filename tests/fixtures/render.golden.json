@@ -146,5 +146,14 @@
   "provingGrounds.spritesBeamDamage": "e8547e8a615a7b23b6860452",
   "provingGrounds.spritesTorchOut": "52098562265431841b0b3a45",
   "provingGrounds.spritesOptOut": "9c7964ad145487b4179af85b",
-  "provingGrounds.manualDestination": "cc13e2bc2a79a1730b1db834"
+  "provingGrounds.manualDestination": "cc13e2bc2a79a1730b1db834",
+  "keymaster.staging": "a0abf619012aa0b306e740fd",
+  "keymaster.bossAndMimics": "a40b67f7a8e477926078a93e",
+  "keymaster.scatteredKeys": "ba4f957425e2b0a1915ef4ee",
+  "keymaster.northDoor": "9ba59c7eedd2fb08b7301d26",
+  "keymaster.doorFlood": "19daf5a1deaf80fecf35c675",
+  "keymaster.redTrails": "63a96dbcd4d2417859a2b5e5",
+  "keymaster.reducedMotion": "d0dee0053a601cdf469dc0b1",
+  "keymaster.impact": "d65c4088f9e8c2a24c1fd63f",
+  "keymaster.boardOptOut": "4c854471c1fe3fb88547a822"
 }

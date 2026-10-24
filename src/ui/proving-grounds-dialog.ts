@@ -4,6 +4,7 @@ import {spendTrialKey,trialKeys} from "../proving-grounds/access.ts";
 import {TRIAL_IDS,TRIALS,type TrialId} from "../proving-grounds/catalog.ts";
 import {clearedDifficulty,nextDifficulty,settleTrialVictory} from "../proving-grounds/progression.ts";
 import {advanceTrial,TrialNavigation} from "../proving-grounds/navigation.ts";
+import {advanceKeymasterEffects,mimicInterval} from "../proving-grounds/keymaster.ts";
 import type {TrainingId} from "../config.ts";
 import {TrialSession,TRIAL_TRAINING} from "../proving-grounds/session.ts";
 import {TrialRenderer,TRIAL_VIEW_TILES} from "../proving-grounds/render.ts";
@@ -25,6 +26,7 @@ export class ProvingGroundsDialog {
   private navigation=new TrialNavigation();
   private nextAutoAt=0;
   private firedAt=0;
+  private lastFrame=0;
   private message="Climb the staircase to enter the trial.";
   private settled:TrialState|null=null;
   private award=0;
@@ -101,7 +103,7 @@ export class ProvingGroundsDialog {
     this.show(`<h2 id="trial-heading">Trial ${trial.number} — ${trial.name}</h2>${this.header()}
       <p id="trial-difficulty">${level===null?"All difficulties cleared":`Difficulty ${level} · Difficulty multiplier ×${trial.multiplier(level).toFixed(1)}`}</p>
       <p id="trial-reward">${level===null?"All first-clear rewards claimed.":`First-clear reward: ${trial.rewardPoints(level)} Trial ${level===1?"Point":"Points"}. One reward per difficulty, shared across all control modes.`}</p>
-      ${level===null?"":`<small>${beamCount(level)} beam${beamCount(level)===1?"":"s"} every 10 turns · Slime every ${slimeSpawnInterval(level)} turns.</small>`}
+      ${level===null?"":`<small>${id==="keymaster"?`Hits scatter three keys · Tough mimic every ${mimicInterval(level)} turns · Four doors deal 20% max HP each.`:`${beamCount(level)} beam${beamCount(level)===1?"":"s"} every 10 turns · Slime every ${slimeSpawnInterval(level)} turns.`}</small>`}
       ${MODES.map(([mode,label,help])=>`<button id="trial-mode-${mode}" data-trial-attempt="${id}" class="trial-choice"><b>${label}</b><small>${help}</small><span></span></button>`).join("")}
       <p>Your stats carry in at full health. Trial training has its own Silver.</p><button id="trial-list-back">Back to trials</button>`);
     for(const [mode] of MODES)el(`trial-mode-${mode}`).onclick=()=>{if(this.begin(id,mode)){this.modal.close();this.openTrial();}else this.refreshAccess();};
@@ -127,20 +129,23 @@ export class ProvingGroundsDialog {
     this.base.auto=false;this.base.cancelRoute();this.navigation.clear();
     this.session=new TrialSession(this.base,this.base.save.provingGrounds!);
     const s=this.session.state;
-    this.message=s.room==="staging"?"Click the staircase to enter the trial.":s.elemental.incorporeal?"The elemental is invincible until its next lasers.":"Click a tile to move. Click the corporeal elemental to strike.";
+    this.message=s.room==="staging"?"Click the staircase to enter the trial.":s.keymaster?"Strike the Keymaster for golden keys. Open the four doors to release red spirits.":s.elemental.incorporeal?"The elemental is invincible until its next lasers.":"Click a tile to move. Click the corporeal elemental to strike.";
     this.renderer=new TrialRenderer(this.canvas);this.canvas.tabIndex=0;
     this.canvas.setAttribute("aria-label","Proving Grounds. Click a floor tile to walk to it in manual or combined mode. Click your tile or press Space to wait.");
     document.documentElement.classList.add("trial-running");document.documentElement.classList.toggle("trial-manual",s.mode==="manual");
     el("board-frame").querySelector("#trial-overlay")?.remove();
-    el("board-frame").insertAdjacentHTML("beforeend",`<div id="trial-overlay"><div id="trial-vitals" aria-live="polite"></div><div class="trial-actions"><button id="trial-wait">Wait</button><button id="trial-retry" hidden>Try again</button><button id="trial-leave">Leave trial</button></div></div>`);
+    el("board-frame").insertAdjacentHTML("beforeend",`<div id="trial-overlay"><div id="trial-vitals" aria-live="polite"></div><div class="trial-actions"><button id="trial-wait">Wait</button><button id="trial-key-use" hidden>Use keys on mimics</button><button id="trial-retry" hidden>Try again</button><button id="trial-leave">Leave trial</button></div></div>`);
     el("trial-leave").onclick=()=>this.leave();el("trial-wait").onclick=()=>this.step(0,0);
+    el("trial-key-use").onclick=()=>{if(s.keymaster){s.keymaster.useKeys=!s.keymaster.useKeys;this.save();this.changed();}};
     el("trial-retry").onclick=()=>this.openDetails(this.session!.state.trialId);
     if(s.mode!=="manual" && s.playing && this.base.save.settings.speed===0)this.base.save.settings.speed=1;
-    this.nextAutoAt=performance.now()+450;this.save();this.changed();this.canvas.focus();
+    this.lastFrame=performance.now();this.nextAutoAt=this.lastFrame+450;this.save();this.changed();this.canvas.focus();
   }
   frame(now:number) {
     if(!this.session)return false;
     const s=this.session.state,g=this.session.game;
+    if(!this.modal.open)this.apply(advanceKeymasterEffects(s,Math.min(100,Math.max(0,now-this.lastFrame))));
+    this.lastFrame=now;
     if(!this.modal.open && s.status==="active" && now>=this.nextAutoAt && (this.navigation.target || (s.mode!=="manual" && s.playing))) {
       const manual=!!this.navigation.target,turn=advanceTrial(s,this.navigation);
       this.nextAutoAt=now+1000/Math.max(manual?4:1,g.stepsPerSecond);g.activeCard=turn.card;
@@ -167,7 +172,7 @@ export class ProvingGroundsDialog {
     this.nextAutoAt=performance.now()+250;this.apply(trialStep(this.session.state,dx,dy));
   }
   private apply(outcome:ReturnType<typeof trialStep>) {
-    if(!outcome.changed)return;
+    if(!outcome.changed){if(outcome.message){this.message=outcome.message;this.changed();}return;}
     if(outcome.message)this.message=outcome.message;if(outcome.fired)this.firedAt=performance.now();
     this.check();this.save();this.changed();
   }
@@ -184,7 +189,9 @@ export class ProvingGroundsDialog {
     if(manual){el("auto-state").textContent="MANUAL";el("auto").setAttribute("aria-label","Manual movement — cards disabled");}
     (el("speed-down") as HTMLButtonElement).disabled ||= manual;(el("speed-up") as HTMLButtonElement).disabled ||= manual;
     const names=["N","NE","E","SE","S","SW","W","NW"],direction=beamHeadings(nextBeamAxis(s),beamCount(s.level)).map(i=>names[i]).join("/");
-    el("trial-vitals").textContent=s.room==="staging"?`Trial ${trial.number} · Difficulty ${s.level} · ×${trial.multiplier(s.level).toFixed(1)} · Staging room`:`Difficulty ${s.level} · ×${trial.multiplier(s.level).toFixed(1)} · Elemental ${Math.ceil(s.bossHp)}/${Math.ceil(s.bossMaxHp)} · ${s.elemental.incorporeal?"Incorporeal · invincible":"Corporeal"} · Beam ${direction} in ${BEAM_INTERVAL-s.steps%BEAM_INTERVAL}`;
+    el("trial-vitals").textContent=s.keymaster && s.room==="arena"?`Difficulty ${s.level} · ×${trial.multiplier(s.level).toFixed(1)} · Keymaster ${Math.ceil(s.bossHp)}/${Math.ceil(s.bossMaxHp)} · Golden keys ${s.keymaster.keys} · Doors ${s.keymaster.doors.length}/4 · Mimics ${s.keymaster.mimics.length}`:s.room==="staging"?`Trial ${trial.number} · Difficulty ${s.level} · ×${trial.multiplier(s.level).toFixed(1)} · Staging room`:`Difficulty ${s.level} · ×${trial.multiplier(s.level).toFixed(1)} · Elemental ${Math.ceil(s.bossHp)}/${Math.ceil(s.bossMaxHp)} · ${s.elemental.incorporeal?"Incorporeal · invincible":"Corporeal"} · Beam ${direction} in ${BEAM_INTERVAL-s.steps%BEAM_INTERVAL}`;
+    const keyUse=el("trial-key-use") as HTMLButtonElement;keyUse.hidden=!s.keymaster || s.status!=="active";
+    if(s.keymaster){keyUse.textContent=s.keymaster.useKeys?"Mimics: use keys":"Mimics: save keys";keyUse.setAttribute("aria-pressed",String(s.keymaster.useKeys));keyUse.title="Use one golden key to defeat a mimic for free, or save keys for doors and fight mimics normally.";}
     const retry=el("trial-retry") as HTMLButtonElement;retry.hidden=s.status==="active";retry.disabled=s.status==="won" && next===null;retry.textContent=s.status==="won"?(next===null?"All difficulties cleared":"Next difficulty"):"Try again";
     (el("trial-wait") as HTMLButtonElement).hidden=s.mode==="cards" || s.status!=="active";
     const utility=document.querySelector<HTMLButtonElement>('[data-run-group="utility"]');if(utility)utility.title="Utility training does not apply to this boss trial.";

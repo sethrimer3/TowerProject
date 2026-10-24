@@ -51,3 +51,9 @@ Trials save a fixed `level` (legacy attempts default to 1), and each beam may in
 Slime hop times validate against either the three-turn hop cadence or the level's release cadence; old IDs remain valid while new releases use their arena turn as ID.
 Trial `destroyed` maps known edge crate/torch coordinates to their first destruction turn, bounded by the attempt's current turn; unknown positions and invalid turns are dropped, malformed containers rejected, and older attempts receive an empty map.
 Destruction stays inside the optional attempt; decoding a save without a trial never creates an attempt.
+
+Keymaster attempts add `keymaster`: an encounter-only golden key inventory, Use keys preference, hit/spawn counters, up to eight counted key piles, up to six unique mimics with current/max HP, and up to four door flights with elapsed milliseconds and impact receipts.
+`decodeKeymaster` rejects malformed counts, collisions, invalid landing positions and contradictory flight/impact flags; `decodeTrial` also rejects elemental teleports, lasers, slimes and scars on this boss.
+An opened cardinal door is a valid saved hero position, including row or column 0; closed wall cells remain invalid.
+Light Elemental attempts retain their old shape, and save-decode golden hashes remain unchanged.
+Both known trial IDs decode independent clear/reward records under `trialAccess.progress`.

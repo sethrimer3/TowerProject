@@ -138,3 +138,7 @@ Each Proving Grounds boss has three control modes: cards-only reuses `planHand` 
 `TrialNavigation` uses `routeTo` over the trial board for real click-to-tile paths, replanned per step; routes stop on reaching their destination, striking the clicked boss or changing rooms, and are not saved.
 
 A Proving Grounds elemental's incorporeal phase is passable floor to all cards; a card trial with no other target waits automatically until a laser volley restores the boss, keeping its turn clock live.
+
+The Keymaster adapter exposes golden key piles and locked cardinal doors to Key/Gold Key and Door/Gold Door, and tough mimics as strong enemies.
+Its actual golden key count is copied to the planner and trial HUD; when Use keys is enabled, a held key makes a mimic a free enemy fight.
+A floor bound of 0 allows normal card routes to target the south door.

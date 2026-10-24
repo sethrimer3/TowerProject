@@ -11,7 +11,7 @@ They pin the streams' start-up seeds (`__pinnedSeeds`) like the Node preload, wa
 `test:snapshots` runs both at once, each output line tagged with its suite, and fails if either does; the UI suite takes each snapshot as soon as nothing is moving (no route being walked or fight playing out, from the app's `boardBusy()` debug hook; no finite CSS animation or transition running; no tile highlight fading out) and the HTML is the same on two checks in a row, each after two real animation frames (a busy machine can delay a frame, and the next frame may still change the HTML, such as a canvas it sizes), instead of waiting a fixed time after every step.
 The render suite encodes PNGs only for frames that changed (every frame when recording), and draws a scene a second time, to catch nondeterminism, only when recording or when one of its frames no longer matches.
 
-`npm run test:proving` uses the dev server to exercise one boss entry, the three-control picker, actual tile routes without arrow buttons, hybrid overrides and resume, automatic shared difficulty and one-time Trial Points equal to the cleared difficulty.
+`npm run test:proving` uses the dev server to exercise both boss entries, the three-control picker, actual tile routes without arrow buttons, hybrid overrides and resume, automatic shared difficulty and one-time Trial Points equal to the cleared difficulty.
 It also checks cards-only input authority, reloads, daily key exhaustion/refill, isolated purchases and protection of paused ordinary runs, with picker previews at 320/390/1024 pixels in `test-results/proving-grounds/`.
 
 The UI and render snapshot suites also accept `PLAYWRIGHT_EXECUTABLE_PATH` for an installed Chromium binary.
@@ -81,3 +81,7 @@ The appended `spriteDungeonMasonry` and `spriteDungeonCave` golden scenes cover 
 `tests/dungeon-details.test.ts` checks the different Tower/Delve detail atlas sizes, shared two-tile selections at negative coordinates, sparse spacing, all seven masonry variants by broad/thin/sheltered edge masks, and exclusions at missing cells, material joins, corners and deep solids.
 `tests/dungeon-details-browser.mjs` starts its own Vite server to check literal detail PNG texels in both halves, clipped shade levels, protected coping, late-image refresh of warmed bakes and exact native-wall fallback after a detail image fails.
 It reads each atlas's actual width to validate sparse alpha coverage, clear native gutters and matching shade silhouettes across every motif and biome, and captures `test-results/dungeon-sprites/contextual-details.png` for native/enlarged art and connected-room review.
+
+`node tests/keymaster.mjs` uses the dev server for the second trial's three-control picker, dropped and collected golden keys, free/paid mimic fights, saved key reservation, four delayed door impacts and impact receipts across reloads.
+It also verifies independent first-clear progression/rewards in all controls and ordinary-run inventory protection, with 320/390/1024-pixel previews in `test-results/keymaster/`.
+The appended `keymaster` render job adds nine browser and drawing-call frames without moving existing scene seeds.

@@ -762,3 +762,7 @@ _Avoid_: known tiles, visit map
 - **Light Slime**: a glowing creature released by the Light Elemental that hops to a random nearby tile every three player steps.
 
 - **Incorporeal**: the Light Elemental's invincible ghost phase after a hit and teleport, during which cards do not count it as an enemy, lasting until its next laser volley.
+
+- **Keymaster**: the second Proving Grounds boss, which drops golden keys when struck and summons tough chest mimics.
+- **Trial golden key**: a Keymaster encounter pickup spent on a mimic or cardinal door, separate from a daily trial entry key.
+- **Door spirits**: red particles released once from a Keymaster door that converge on the boss and remove 20% of its maximum HP on arrival.
