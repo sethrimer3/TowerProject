@@ -1,225 +1,204 @@
-import type { Game } from "../state.ts";
-import { BEAM_INTERVAL, beamCount, beamHeadings, bossHpFactor, nextBeamAxis, slimeSpawnInterval, startTrial, trialStep, type TrialMode } from "../proving-grounds/trial.ts";
-import { MAX_TRIAL_LEVEL, spendTrialKey, trialKeys } from "../proving-grounds/access.ts";
-import { autoplayTrial, trialPlan } from "../proving-grounds/autoplay.ts";
+import type {Game} from "../state.ts";
+import {BEAM_INTERVAL,beamCount,beamHeadings,nextBeamAxis,slimeSpawnInterval,startTrial,trialStep,type TrialMode,type TrialState} from "../proving-grounds/trial.ts";
+import {spendTrialKey,trialKeys} from "../proving-grounds/access.ts";
+import {TRIAL_IDS,TRIALS,type TrialId} from "../proving-grounds/catalog.ts";
+import {clearedDifficulty,nextDifficulty,settleTrialVictory} from "../proving-grounds/progression.ts";
+import {advanceTrial,TrialNavigation} from "../proving-grounds/navigation.ts";
 import type {TrainingId} from "../config.ts";
-import { TrialSession, TRIAL_TRAINING } from "../proving-grounds/session.ts";
-import { TrialRenderer } from "../proving-grounds/render.ts";
-import { CARDS } from "../cards.ts";
-import { el } from "./dom.ts";
-import { usesGameSprites } from "../sprite-style.ts";
+import {TrialSession,TRIAL_TRAINING} from "../proving-grounds/session.ts";
+import {TrialRenderer,TRIAL_VIEW_TILES} from "../proving-grounds/render.ts";
+import {CARDS} from "../cards.ts";
+import {el} from "./dom.ts";
+import {usesGameSprites} from "../sprite-style.ts";
 
-/** The entrance menu is a dialog; the encounter owns the ordinary game board,
- * HUD and hand instead of creating a second game screen inside a popup. */
+const MODES=[
+  ["manual","Without cards","Click a tile to walk to it. Cards stay disabled."],
+  ["cards","Only with cards","Your hand controls movement. Player movement is disabled."],
+  ["hybrid","With both","Cards play automatically; your tile commands take priority until you arrive."],
+] as const;
+
+/** One list entry per boss, followed by its control picker. Encounters use
+ * the normal board/HUD, with shared progress and rewards across all controls. */
 export class ProvingGroundsDialog {
-  private session: TrialSession | null=null;
-  private renderer: TrialRenderer | null=null;
+  private session:TrialSession|null=null;
+  private renderer:TrialRenderer|null=null;
+  private navigation=new TrialNavigation();
   private nextAutoAt=0;
   private firedAt=0;
   private message="Climb the staircase to enter the trial.";
+  private settled:TrialState|null=null;
+  private award=0;
   private canvas=el("world") as HTMLCanvasElement;
   private originalTabIndex=this.canvas.tabIndex;
   private originalLabel=this.canvas.getAttribute("aria-label")!;
-  constructor(private base: Game, private modal: HTMLDialogElement, private save: () => void, private changed: () => void = () => {}, private visible: () => boolean = () => true) {
+  constructor(private base:Game,private modal:HTMLDialogElement,private save:()=>void,private changed:()=>void=()=>{},private visible:()=>boolean=()=>true) {
     window.addEventListener("keydown",e=> {
       if(!this.active || !this.visible() || this.modal.open || /INPUT|SELECT|TEXTAREA/.test((e.target as HTMLElement).tagName))return;
-      if(e.key==="Escape") {e.preventDefault();e.stopImmediatePropagation();this.leave();return;}
+      if(e.key==="Escape"){e.preventDefault();e.stopImmediatePropagation();this.leave();return;}
       if(e.key===" " && (e.target as HTMLElement).closest("button"))return;
-      const dirs: Record<string,[number,number]>={ArrowUp:[0,1],w:[0,1],ArrowDown:[0,-1],s:[0,-1],ArrowLeft:[-1,0],a:[-1,0],ArrowRight:[1,0],d:[1,0]," ":[0,0],".":[0,0]};
-      const move=dirs[e.key];
-      if(move) {e.preventDefault();e.stopImmediatePropagation();this.step(...move);}
+      const moves:Record<string,[number,number]>={ArrowUp:[0,1],w:[0,1],ArrowDown:[0,-1],s:[0,-1],ArrowLeft:[-1,0],a:[-1,0],ArrowRight:[1,0],d:[1,0]," ":[0,0],".":[0,0]};
+      const move=moves[e.key];if(move){e.preventDefault();e.stopImmediatePropagation();this.step(...move);}
     },true);
     let down:{x:number;y:number;id:number}|null=null;
     this.canvas.addEventListener("pointerdown",e=> {
       if(!this.active || this.modal.open)return;
       e.preventDefault();e.stopImmediatePropagation();down={x:e.clientX,y:e.clientY,id:e.pointerId};this.canvas.setPointerCapture(e.pointerId);
     },true);
-    this.canvas.addEventListener("pointermove",e=> {if(this.active)e.stopImmediatePropagation();},true);
+    this.canvas.addEventListener("pointermove",e=>{if(this.active)e.stopImmediatePropagation();},true);
     this.canvas.addEventListener("pointercancel",()=>{down=null;},true);
     this.canvas.addEventListener("pointerup",e=> {
       if(!this.active)return;
       e.preventDefault();e.stopImmediatePropagation();
-      if(!down || down.id!==e.pointerId)return;
-      const dx=e.clientX-down.x,dy=e.clientY-down.y;down=null;
+      const start=down;down=null;
       if(this.canvas.hasPointerCapture(e.pointerId))this.canvas.releasePointerCapture(e.pointerId);
-      if(Math.max(Math.abs(dx),Math.abs(dy))>=15)this.step(Math.abs(dx)>Math.abs(dy)?Math.sign(dx):0,Math.abs(dy)>=Math.abs(dx)?-Math.sign(dy):0);
-      else {
-        const r=this.canvas.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=.5-(e.clientY-r.top)/r.height;
-        if(Math.max(Math.abs(x),Math.abs(y))<.03)this.step(0,0);
-        else this.step(Math.abs(x)>Math.abs(y)?Math.sign(x):0,Math.abs(y)>=Math.abs(x)?Math.sign(y):0);
+      if(!start || start.id!==e.pointerId || this.modal.open || Math.max(Math.abs(e.clientX-start.x),Math.abs(e.clientY-start.y))>10)return;
+      const s=this.session!.state;if(s.mode==="cards")return;
+      const box=this.canvas.getBoundingClientRect(),view=this.renderer!.view(s);
+      const col=Math.floor((e.clientX-box.left)/box.width*TRIAL_VIEW_TILES),row=Math.floor((e.clientY-box.top)/box.height*TRIAL_VIEW_TILES);
+      if(col<0 || col>=TRIAL_VIEW_TILES || row<0 || row>=TRIAL_VIEW_TILES)return;
+      if(this.navigation.select(s,view.left+col,view.bottom+TRIAL_VIEW_TILES-1-row)) {
+        this.session!.game.activeCard=null;this.nextAutoAt=0;
+        this.message="Moving to the selected tile.";this.changed();
       }
     },true);
-    modal.addEventListener("close",()=> {this.modal.classList.remove("proving-grounds-dialog");if(this.modal.getAttribute("aria-labelledby")==="trial-heading")this.modal.removeAttribute("aria-labelledby");});
+    modal.addEventListener("close",()=>{this.modal.classList.remove("proving-grounds-dialog");if(this.modal.getAttribute("aria-labelledby")==="trial-heading")this.modal.removeAttribute("aria-labelledby");});
   }
-  get active() { return !!this.session; }
-  get viewGame() { this.session?.sync();return this.session?.game; }
-  allowsTraining(id: TrainingId) {return TRIAL_TRAINING.has(id);}
-  get displayHand() { return this.session?.state.displayHand; }
-  tick() {
-    if(this.modal.open && this.modal.querySelector("#trial-level"))this.refreshAccess();
-    else if(this.session && this.session.state.status!=="active")this.decorate();
-  }
+  get active(){return !!this.session;}
+  get viewGame(){this.session?.sync();return this.session?.game;}
+  get displayHand(){return this.session?.state.displayHand;}
+  allowsTraining(id:TrainingId){return TRIAL_TRAINING.has(id);}
+  tick(){if(this.modal.open && this.modal.querySelector("#trial-key-balance"))this.refreshAccess();else if(this.session && this.session.state.status!=="active")this.decorate();}
   check() {
     if(this.session && this.session.state!==this.base.save.provingGrounds)this.detach();
-    if(this.modal.open && this.modal.querySelector("#trial-level"))this.refreshAccess();
+    const state=this.base.save.provingGrounds;
+    if(state?.status==="won" && this.settled!==state) {
+      const result=settleTrialVictory(this.base.save,state);
+      this.settled=state;this.award=result.points;if(result.changed)this.save();
+    }
+    if(this.modal.open && this.modal.querySelector("#trial-key-balance"))this.refreshAccess();
     if(this.active || this.modal.open)return;
-    if(this.base.provingGroundsRequested) {this.base.provingGroundsRequested=false;this.openMenu();}
-    else if(this.base.save.provingGrounds)this.openTrial();
+    if(this.base.provingGroundsRequested){this.base.provingGroundsRequested=false;this.openMenu();}
+    else if(state)this.openTrial();
   }
+  private show(html:string) {
+    this.modal.classList.add("proving-grounds-dialog");this.modal.innerHTML=html;
+    this.modal.setAttribute("aria-labelledby","trial-heading");if(!this.modal.open)this.modal.showModal();
+    this.refreshAccess();
+  }
+  private header(){return `<p id="trial-key-balance" role="status"></p><p class="trial-points">Trial Points: <b>${this.base.save.trialAccess.points.toLocaleString("en-US")}</b></p>`;}
   private openMenu() {
     this.base.auto=false;this.base.cancelRoute();
-    this.modal.classList.add("proving-grounds-dialog");
-    this.modal.innerHTML=`<h2 id="trial-heading">Proving Grounds Trials</h2>
-      <p id="trial-key-balance" role="status"></p><small>Two keys daily, shared by all trials. Refills at midnight UTC. Entries and retries cost one key.</small>
-      <label class="trial-level-label" for="trial-level">Trial level <input id="trial-level" type="number" min="1" max="${MAX_TRIAL_LEVEL}" step="1" required value="${this.base.save.trialAccess.level}"></label>
-      <p id="trial-level-preview" aria-live="polite"></p>
-      <button id="trial-light-elemental-cards" class="trial-choice"><b>Trial I — Light Elemental · With cards</b><small>Your equipped hand controls movement automatically. No manual movement.</small><span>Enter · 1 trial key</span></button>
-      <button id="trial-light-elemental" class="trial-choice"><b>Trial II — Light Elemental · No cards</b><small>Control every move yourself. Your cards are crossed out and disabled.</small><span>Enter · 1 trial key</span></button>
-      <p>Your stats carry into a separate attempt at full health. Trial training uses its own Silver; your Tower run stays safe.</p><button id="trial-menu-leave">Return to the forest</button>`;
-    this.modal.setAttribute("aria-labelledby","trial-heading");
-    this.modal.showModal();
-    const input=el("trial-level") as HTMLInputElement;
-    const preview=()=> {
-      if(!input.validity.valid) {el("trial-level-preview").textContent=`Choose a whole level from 1 to ${MAX_TRIAL_LEVEL}.`;return;}
-      const level=input.valueAsNumber;
-      this.base.save.trialAccess.level=level;
-      el("trial-level-preview").textContent=`Level ${level} · Boss HP ×${bossHpFactor(level).toFixed(1)} · ${beamCount(level)} beam(s) every 10 turns · Slime every ${slimeSpawnInterval(level)} turns. Slimes hop every 3 turns.`;
-      this.save();
-    };
-    input.oninput=preview;preview();this.refreshAccess();
-    for(const [id,mode] of [["trial-light-elemental-cards","cards"],["trial-light-elemental","manual"]] as const) {
-      el(id).onclick=()=> {
-        if(!input.reportValidity())return;
-        if(!this.begin(mode,input.valueAsNumber)){this.refreshAccess();return;}
-        this.modal.close();this.openTrial();
-      };
-    }
-    el("trial-menu-leave").onclick=()=>this.modal.close();
+    this.show(`<h2 id="trial-heading">Proving Grounds Trials</h2>${this.header()}<small>Two keys daily, shared by all trials. Refills at midnight UTC. An attempt costs one key.</small>
+      ${TRIAL_IDS.map(id=> {
+        const trial=TRIALS[id],level=nextDifficulty(this.base.save,id);
+        return `<button id="trial-${id}" class="trial-choice"><b>Trial ${trial.number} — ${trial.name}</b><small>${level===null?"All difficulties cleared":`Next: Difficulty ${level} · Multiplier ×${trial.multiplier(level).toFixed(1)}`}</small><span>${clearedDifficulty(this.base.save,id)} difficulties cleared</span></button>`;
+      }).join("")}<button id="trial-menu-leave">Return to the forest</button>`);
+    for(const id of TRIAL_IDS)el(`trial-${id}`).onclick=()=>this.openDetails(id);
+    el("trial-menu-leave").onclick=()=>{if(this.active)this.leave();this.modal.close();};
+  }
+  private openDetails(id:TrialId) {
+    const trial=TRIALS[id],level=nextDifficulty(this.base.save,id);
+    this.show(`<h2 id="trial-heading">Trial ${trial.number} — ${trial.name}</h2>${this.header()}
+      <p id="trial-difficulty">${level===null?"All difficulties cleared":`Difficulty ${level} · Difficulty multiplier ×${trial.multiplier(level).toFixed(1)}`}</p>
+      <p id="trial-reward">${level===null?"All first-clear rewards claimed.":`First-clear reward: ${trial.rewardPoints(level)} Trial ${level===1?"Point":"Points"}. One reward per difficulty, shared across all control modes.`}</p>
+      ${level===null?"":`<small>${beamCount(level)} beam${beamCount(level)===1?"":"s"} every 10 turns · Slime every ${slimeSpawnInterval(level)} turns.</small>`}
+      ${MODES.map(([mode,label,help])=>`<button id="trial-mode-${mode}" data-trial-attempt="${id}" class="trial-choice"><b>${label}</b><small>${help}</small><span></span></button>`).join("")}
+      <p>Your stats carry in at full health. Trial training has its own Silver.</p><button id="trial-list-back">Back to trials</button>`);
+    for(const [mode] of MODES)el(`trial-mode-${mode}`).onclick=()=>{if(this.begin(id,mode)){this.modal.close();this.openTrial();}else this.refreshAccess();};
+    el("trial-list-back").onclick=()=>this.openMenu();
   }
   private refreshAccess() {
     const day=this.base.save.trialAccess.day,keys=trialKeys(this.base.save,this.base.clock());
     el("trial-key-balance").textContent=keys===Infinity?"Trial keys: Unlimited (Developer mode)":`Trial keys: ${keys} / 2`;
-    for(const id of ["trial-light-elemental-cards","trial-light-elemental"]) {
-      const choice=el(id) as HTMLButtonElement;
-      choice.disabled=keys===0;
-      choice.querySelector("span")!.textContent=keys===Infinity?"Enter · Free":"Enter · 1 trial key";
-    }
+    this.modal.querySelectorAll<HTMLButtonElement>("[data-trial-attempt]").forEach(button=> {
+      button.disabled=keys===0 || nextDifficulty(this.base.save,button.dataset.trialAttempt as TrialId)===null;
+      button.querySelector("span")!.textContent=keys===Infinity?"Attempt · Free":"Attempt · 1 trial key";
+    });
     if(day!==this.base.save.trialAccess.day)this.save();
   }
-  private begin(mode: TrialMode, level: number) {
-    if(!spendTrialKey(this.base.save,this.base.clock()))return false;
-    this.base.save.trialAccess.level=level;
-    this.base.save.provingGrounds=startTrial(this.base.run.player,mode,this.base.hand,this.base.run.seed,level);
-    this.firedAt=0;this.message="Climb the staircase to enter the trial.";
-    this.save();return true;
+  private begin(id:TrialId,mode:TrialMode) {
+    const level=nextDifficulty(this.base.save,id);
+    if(level===null || !spendTrialKey(this.base.save,this.base.clock()))return false;
+    this.base.save.provingGrounds=startTrial(this.base.run.player,mode,this.base.hand,this.base.run.seed,level,id);
+    this.firedAt=0;this.award=0;this.message="Climb the staircase to enter the trial.";this.save();return true;
   }
   private openTrial() {
-    // An older paused Delve must not steal the Tower trial on reload.
     if(this.base.mode!=="tower" && this.base.save.tower.run?.outside)this.base.switchMode("tower");
-    this.base.auto=false;this.base.cancelRoute();
+    this.base.auto=false;this.base.cancelRoute();this.navigation.clear();
     this.session=new TrialSession(this.base,this.base.save.provingGrounds!);
-    const state=this.session.state;
-    this.message=state.room==="staging"?"Climb the staircase to enter the trial.":state.elemental.incorporeal?"The elemental is invincible until its next lasers.":"Dodge beams. Walk into the corporeal elemental to strike.";
-    this.renderer=new TrialRenderer(this.canvas);
-    this.canvas.tabIndex=0;
-    this.canvas.setAttribute("aria-label","Proving Grounds trial. Arrows, WASD, tap or swipe to move in manual mode. Space waits.");
-    document.documentElement.classList.add("trial-running");
-    document.documentElement.classList.toggle("trial-manual",this.session.state.mode==="manual");
+    const s=this.session.state;
+    this.message=s.room==="staging"?"Click the staircase to enter the trial.":s.elemental.incorporeal?"The elemental is invincible until its next lasers.":"Click a tile to move. Click the corporeal elemental to strike.";
+    this.renderer=new TrialRenderer(this.canvas);this.canvas.tabIndex=0;
+    this.canvas.setAttribute("aria-label","Proving Grounds. Click a floor tile to walk to it in manual or combined mode. Click your tile or press Space to wait.");
+    document.documentElement.classList.add("trial-running");document.documentElement.classList.toggle("trial-manual",s.mode==="manual");
     el("board-frame").querySelector("#trial-overlay")?.remove();
-    el("board-frame").insertAdjacentHTML("beforeend",`<div id="trial-overlay"><div id="trial-vitals" aria-live="polite"></div>
-      <div class="trial-actions"><button id="trial-retry" hidden>Retry trial</button><button id="trial-leave">Leave trial</button></div>
-      <div class="trial-controls"><button data-trial-move="-1,0" aria-label="Move west">◀</button><button data-trial-move="0,1" aria-label="Move north">▲</button><button data-trial-move="0,0" aria-label="Wait one turn">Wait</button><button data-trial-move="0,-1" aria-label="Move south">▼</button><button data-trial-move="1,0" aria-label="Move east">▶</button></div></div>`);
-    el("trial-leave").onclick=()=>this.leave();
-    el("trial-retry").onclick=()=> {const {mode,level}=this.session!.state;if(this.begin(mode,level))this.openTrial();else this.changed();};
-    document.querySelectorAll<HTMLButtonElement>("[data-trial-move]").forEach(b=>b.onclick=()=> {const [dx,dy]=b.dataset.trialMove!.split(",").map(Number);this.step(dx,dy);});
-    if(this.session.state.mode==="cards" && this.session.state.playing && this.base.save.settings.speed===0)this.base.save.settings.speed=1;
-    this.nextAutoAt=performance.now()+450;
-    this.save();this.changed();this.canvas.focus();
+    el("board-frame").insertAdjacentHTML("beforeend",`<div id="trial-overlay"><div id="trial-vitals" aria-live="polite"></div><div class="trial-actions"><button id="trial-wait">Wait</button><button id="trial-retry" hidden>Try again</button><button id="trial-leave">Leave trial</button></div></div>`);
+    el("trial-leave").onclick=()=>this.leave();el("trial-wait").onclick=()=>this.step(0,0);
+    el("trial-retry").onclick=()=>this.openDetails(this.session!.state.trialId);
+    if(s.mode!=="manual" && s.playing && this.base.save.settings.speed===0)this.base.save.settings.speed=1;
+    this.nextAutoAt=performance.now()+450;this.save();this.changed();this.canvas.focus();
   }
-  /** The main frame loop calls this in place of ordinary board/route turns. */
   frame(now:number) {
     if(!this.session)return false;
     const s=this.session.state,g=this.session.game;
-    if(!this.modal.open && s.mode==="cards" && s.playing && s.status==="active" && now>=this.nextAutoAt) {
-      this.nextAutoAt=now+1000/Math.max(1,g.stepsPerSecond);
-      g.activeCard=trialPlan(s)?.card??null;
-      this.apply(autoplayTrial(s));
+    if(!this.modal.open && s.status==="active" && now>=this.nextAutoAt && (this.navigation.target || (s.mode!=="manual" && s.playing))) {
+      const manual=!!this.navigation.target,turn=advanceTrial(s,this.navigation);
+      this.nextAutoAt=now+1000/Math.max(manual?4:1,g.stepsPerSecond);g.activeCard=turn.card;
+      this.apply(turn.outcome);
     }
     this.renderer!.draw(s,now,this.firedAt,this.base.save.settings.reduceMotion,this.base.save.settings.spritesOff,
-      {styledSprites:usesGameSprites(this.base.save),spriteAnimations:this.base.save.settings.spriteAnimations});
+      {styledSprites:usesGameSprites(this.base.save),spriteAnimations:this.base.save.settings.spriteAnimations,destination:this.navigation.target});
     return true;
   }
   toggleAuto() {
-    const s=this.session?.state;
-    if(!s || s.mode!=="cards" || s.status!=="active")return;
-    s.playing=!s.playing;
-    if(s.playing && this.base.save.settings.speed===0)this.base.save.settings.speed=1;
-    this.nextAutoAt=performance.now()+450;
-    this.message=s.playing?"Your cards lead the way.":"Autoplay paused.";this.save();this.changed();
+    const s=this.session?.state;if(!s || s.mode==="manual" || s.status!=="active")return;
+    s.playing=!s.playing;if(s.playing && this.base.save.settings.speed===0)this.base.save.settings.speed=1;
+    this.nextAutoAt=performance.now()+450;this.message=s.playing?"Your cards lead the way.":"Cards paused. Player movement is still available in combined mode.";this.save();this.changed();
   }
-  changeSpeed(delta: -1 | 1) {
-    if(!this.session || this.session.state.mode!=="cards")return;
+  changeSpeed(delta:-1|1) {
+    if(!this.session || this.session.state.mode==="manual")return;
     this.session.sync();this.session.game.changeSpeed(delta);this.session.state.playing=this.session.game.auto;
     this.nextAutoAt=performance.now()+450;this.save();this.changed();
   }
-  purchasesChanged() {if(this.session){this.message=this.session.game.message;this.save();this.changed();}}
+  purchasesChanged(){if(this.session){this.message=this.session.game.message;this.save();this.changed();}}
   private step(dx:number,dy:number) {
-    if(this.session?.state.mode==="manual")this.apply(trialStep(this.session.state,dx,dy));
+    if(!this.session || this.session.state.mode==="cards")return;
+    this.navigation.clear();this.session.game.activeCard=null;
+    this.nextAutoAt=performance.now()+250;this.apply(trialStep(this.session.state,dx,dy));
   }
-  private apply(outcome: ReturnType<typeof trialStep>) {
+  private apply(outcome:ReturnType<typeof trialStep>) {
     if(!outcome.changed)return;
-    if(outcome.message)this.message=outcome.message;
-    if(outcome.fired)this.firedAt=performance.now();
-    this.save();this.changed();
+    if(outcome.message)this.message=outcome.message;if(outcome.fired)this.firedAt=performance.now();
+    this.check();this.save();this.changed();
   }
-  /** Keep the shared HUD in its in-run presentation after its ordinary refresh. */
   decorate() {
     if(!this.session)return;
-    const s=this.session.state,g=this.session.game,manual=s.mode==="manual";
-    g.message=s.status==="won"?"Trial complete — Light Elemental defeated!":s.status==="lost"?"Trial failed. Retry, or return safely to the forest.":this.message;
-    el("message").textContent=g.message;
-    el("inspect").textContent="";
-    el("height-label").textContent="TRIAL";el("height").textContent=manual?"II":"I";
-    el("height-tier").textContent="PROVING";
-    el("height-tier").hidden=false;
+    const s=this.session.state,g=this.session.game,manual=s.mode==="manual",trial=TRIALS[s.trialId];
+    const next=nextDifficulty(this.base.save,s.trialId);
+    g.message=s.status==="won"?`Difficulty ${s.level} cleared! ${this.award?`+${this.award} Trial ${this.award===1?"Point":"Points"}.`:"First-clear reward already claimed."}`:s.status==="lost"?"Trial failed. Try again or return to the forest.":this.message;
+    el("message").textContent=g.message;el("inspect").textContent="";
+    el("height-label").textContent="TRIAL";el("height").textContent=String(trial.number);el("height-tier").textContent=`×${trial.multiplier(s.level).toFixed(1)}`;el("height-tier").hidden=false;
     for(const id of ["section-pick","enter-run","stuck-end-run","run-earned","best-reward","gold-bonus","gold-bonus-divider"])el(id).hidden=true;
-    el("end-run").textContent="Leave trial";
-    (el("base-enemy") as HTMLButtonElement).disabled=true;
-    el("base-enemy").title="Light Elemental";
+    el("end-run").textContent="Leave trial";(el("base-enemy") as HTMLButtonElement).disabled=true;el("base-enemy").title=trial.name;
     (el("auto") as HTMLButtonElement).disabled=manual || s.status!=="active";
-    if(manual) {el("auto-state").textContent="MANUAL";el("auto").setAttribute("aria-label","Manual movement — cards disabled");}
-    (el("speed-down") as HTMLButtonElement).disabled ||= manual;
-    (el("speed-up") as HTMLButtonElement).disabled ||= manual;
-    const names=["N","NE","E","SE","S","SW","W","NW"];
-    const direction=beamHeadings(nextBeamAxis(s),beamCount(s.level)).map(i=>names[i]).join("/");
-    el("trial-vitals").textContent=s.room==="staging"?`Light Elemental · Level ${s.level} · Staging room`:`Lv ${s.level} · Elemental ${Math.ceil(s.bossHp)}/${Math.ceil(s.bossMaxHp)} · ${s.elemental.incorporeal?"Incorporeal · invincible":"Corporeal"} · Beam ${direction} in ${BEAM_INTERVAL-s.steps%BEAM_INTERVAL}`;
-    const retry=el("trial-retry") as HTMLButtonElement,keys=trialKeys(this.base.save,this.base.clock());
-    retry.hidden=s.status==="active";retry.disabled=keys===0;
-    retry.textContent=keys===Infinity?"Retry trial · Free":keys===0?"No keys · midnight UTC":"Retry trial · 1 key";
-    const controls=document.querySelector<HTMLElement>("#trial-overlay .trial-controls")!;controls.hidden=!manual;
-    controls.querySelectorAll<HTMLButtonElement>("button").forEach(b=>b.disabled=s.status!=="active");
-    const utility=document.querySelector<HTMLButtonElement>('[data-run-group="utility"]');
-    if(utility)utility.title="Utility training does not apply to this boss trial.";
-    el("hand").classList.remove("can-focus");
-    el("hand").querySelectorAll<HTMLElement>(".hand-card").forEach(card=> {
-      card.setAttribute("aria-disabled",String(manual));
-      card.title=`${CARDS[card.dataset.card as keyof typeof CARDS].name}${manual?" — disabled in manual trials":" — trial card"}`;
+    if(manual){el("auto-state").textContent="MANUAL";el("auto").setAttribute("aria-label","Manual movement — cards disabled");}
+    (el("speed-down") as HTMLButtonElement).disabled ||= manual;(el("speed-up") as HTMLButtonElement).disabled ||= manual;
+    const names=["N","NE","E","SE","S","SW","W","NW"],direction=beamHeadings(nextBeamAxis(s),beamCount(s.level)).map(i=>names[i]).join("/");
+    el("trial-vitals").textContent=s.room==="staging"?`Trial ${trial.number} · Difficulty ${s.level} · ×${trial.multiplier(s.level).toFixed(1)} · Staging room`:`Difficulty ${s.level} · ×${trial.multiplier(s.level).toFixed(1)} · Elemental ${Math.ceil(s.bossHp)}/${Math.ceil(s.bossMaxHp)} · ${s.elemental.incorporeal?"Incorporeal · invincible":"Corporeal"} · Beam ${direction} in ${BEAM_INTERVAL-s.steps%BEAM_INTERVAL}`;
+    const retry=el("trial-retry") as HTMLButtonElement;retry.hidden=s.status==="active";retry.disabled=s.status==="won" && next===null;retry.textContent=s.status==="won"?(next===null?"All difficulties cleared":"Next difficulty"):"Try again";
+    (el("trial-wait") as HTMLButtonElement).hidden=s.mode==="cards" || s.status!=="active";
+    const utility=document.querySelector<HTMLButtonElement>('[data-run-group="utility"]');if(utility)utility.title="Utility training does not apply to this boss trial.";
+    el("hand").classList.remove("can-focus");el("hand").querySelectorAll<HTMLElement>(".hand-card").forEach(card=> {
+      card.setAttribute("aria-disabled",String(manual));card.title=`${CARDS[card.dataset.card as keyof typeof CARDS].name}${manual?" — disabled in manual trials":" — trial card"}`;
       if(manual)card.classList.remove("active","focused");
     });
     Object.assign(this.canvas.dataset,{trialMode:s.mode,trialLevel:String(s.level),trialRoom:s.room,trialSteps:String(s.steps),trialPhase:s.elemental.incorporeal?"incorporeal":"corporeal"});
   }
-  leave() {
-    if(!this.active)return;
-    delete this.base.save.provingGrounds;this.detach();this.save();this.changed();
-  }
+  leave(){if(!this.active)return;delete this.base.save.provingGrounds;this.detach();this.save();this.changed();}
   private detach() {
-    this.session=null;this.renderer=null;
-    document.documentElement.classList.remove("trial-running","trial-manual");
-    el("trial-overlay")?.remove();
+    this.session=null;this.renderer=null;this.navigation.clear();document.documentElement.classList.remove("trial-running","trial-manual");el("trial-overlay")?.remove();
     for(const key of ["trialMode","trialLevel","trialRoom","trialSteps","trialPhase"])delete this.canvas.dataset[key];
-    this.canvas.setAttribute("aria-label",this.originalLabel);this.canvas.tabIndex=this.originalTabIndex;
-    el("hand").querySelectorAll("[aria-disabled]").forEach(c=>c.removeAttribute("aria-disabled"));
-    (el("base-enemy") as HTMLButtonElement).disabled=false;el("end-run").textContent="End Run";
-    delete el("board").dataset.heading;
+    this.canvas.setAttribute("aria-label",this.originalLabel);this.canvas.tabIndex=this.originalTabIndex;el("hand").querySelectorAll("[aria-disabled]").forEach(c=>c.removeAttribute("aria-disabled"));
+    (el("base-enemy") as HTMLButtonElement).disabled=false;el("end-run").textContent="End Run";delete el("board").dataset.heading;
   }
 }

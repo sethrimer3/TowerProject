@@ -13,8 +13,8 @@ Old saves needn't convert while the game is a prototype, but a simple rename get
 `renameDoorNodes` renames DOOR's legendary node `masterKey` to `secretKnock` (KEY's tree took the name) and its epic `locksmith` to `lockPick` (KEY's keeps its own) in the raw save's spent and opened levels and a run inside's trees, and a run's `doorOdds.locksmith` to `lockPick`.
 `retireYellowKey` does the same for KEY taking GOLD KEY's place in the base hand: a save with no KEY card that hasn't earned GOLD KEY (the `cardYellowKey` skill) holds KEY where it held GOLD KEY, in the hand, its links and the badges on it, and in a run inside's.
 Each conversion carries a `TODO` to remove it in a future save version; add a rename to the same map (or one like it beside the decoder it belongs to) rather than writing a migration.
-**The player profile** (`src/profile.ts`, `save.profile`) keeps lifetime tallies as they happen: `createdAt` (0 in `defaults()`; `stampProfile` sets it from the clock in `main.ts` on start-up and in `Game.eraseAll`, so `decode` stays deterministic), `earned` per currency in `LIFETIME_CURRENCIES` (Gold, Silver, Gems, Ascension Shards, Cells, Medals, Inspiration, Courage, Tickets), and the counts `trainingLevels`, `researchLevels`, `trainingGold` and `researchGold`.
-Every gain calls `earn` where the currency is credited: `RunPurse` (Gold, Silver, Interest, Cells), `CURRENCIES[…].credit` (the Shop, Mail, Goals, the Tournament's prizes), the mission and event desks and `boostEvent` (Medals), `GemFinder`, `MODES[mode].credit` and the area ledger (Inspiration, Courage), and the Tickets' grants (Mail, `TournamentDesk`); a new way to gain a currency must call it too.
+**The player profile** (`src/profile.ts`, `save.profile`) keeps lifetime tallies as they happen: `createdAt` (0 in `defaults()`; `stampProfile` sets it from the clock in `main.ts` on start-up and in `Game.eraseAll`, so `decode` stays deterministic), `earned` per currency in `LIFETIME_CURRENCIES` (Gold, Silver, Gems, Ascension Shards, Cells, Medals, Inspiration, Courage, Tickets, Trial Points), and the counts `trainingLevels`, `researchLevels`, `trainingGold` and `researchGold`.
+Every gain calls `earn` where the currency is credited: `RunPurse` (Gold, Silver, Interest, Cells), `CURRENCIES[…].credit` (the Shop, Mail, Goals, the Tournament's prizes), the mission and event desks and `boostEvent` (Medals), `GemFinder`, `MODES[mode].credit` and the area ledger (Inspiration, Courage), the Tickets' grants (Mail, `TournamentDesk`), and `settleTrialVictory` (Trial Points); a new way to gain a currency must call it too.
 Silver belongs to the run, so each `MoveSnapshot` keeps the lifetime Silver then (`silver`) and `Game.restore` sets it back, as it does XP.
 `decodeProfile` reads it, and `backfillProfile` raises each tally to at least what the save proves (currencies held, Training ranks and their Gold, research levels), so a save from before the profile starts from there.
 `tests/profile.test.ts` covers it.
@@ -40,9 +40,14 @@ Attempts predating those additive fields retain their progress with a corporeal 
 
 Trial `displayHand` stores the equipped faces shown in the normal hand bar, including disabled cards in manual mode.
 Trial `purchases` stores bounded Silver and known integer training ranks; their effects are already included in the saved trial hero, so resume restores ranks without applying them twice.
-`save.trialAccess` defaults to `{day:0,spent:0,level:1}` and decodes UTC day index, 0–2 spent daily keys and selected level 1–10,000 without consulting the clock.
+`save.trialAccess` defaults to `{day:0,spent:0,points:0,progress:{}}` and decodes UTC day index, 0–2 spent daily keys, a bounded integer Trial Points balance and per-boss progress without consulting the clock.
+Known trial IDs only are accepted; each progress record has `cleared` in 0–10,000 and deduplicated, sorted `claimed` difficulty receipts in 1–10,000.
+Valid receipts raise `cleared` to at least their highest difficulty; a legacy selected `level` is ignored rather than treated as a victory.
+The Trial Points lifetime tally backfills to at least the held wallet, and first-clear settlement updates both tally and wallet.
+These default/profile fields intentionally change the save-decode corpus.
 Only runtime entry/menu checks refill the allowance on a later UTC day; it is outside the attempt and cannot be reset by retry, leaving or reloading.
-Trials now save a fixed `level` (legacy attempts default to 1), and each beam may include its fired ray `count` (absent means the legacy two rays).
+Attempts also save a known `trialId` (legacy attempts default to `light-elemental`); `hybrid` accepts both input sources and keeps its hand and autoplay state.
+Trials save a fixed `level` (legacy attempts default to 1), and each beam may include its fired ray `count` (absent means the legacy two rays).
 Slime hop times validate against either the three-turn hop cadence or the level's release cadence; old IDs remain valid while new releases use their arena turn as ID.
 Trial `destroyed` maps known edge crate/torch coordinates to their first destruction turn, bounded by the attempt's current turn; unknown positions and invalid turns are dropped, malformed containers rejected, and older attempts receive an empty map.
-The field belongs to the optional attempt, so saves without a trial and their decode golden remain unchanged.
+Destruction stays inside the optional attempt; decoding a save without a trial never creates an attempt.

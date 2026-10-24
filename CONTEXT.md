@@ -755,7 +755,8 @@ What Delve Automove has seen of the labyrinth during this run, and how often the
 _Avoid_: known tiles, visit map
 
 - **Proving Grounds**: trials entered through the golden square outside the Tower.
-- **Trial level**: the difficulty chosen before entering a Proving Grounds trial.
+- **Trial level (difficulty)**: a Proving Grounds trial's difficulty, automatically the next after its highest completed difficulty, shared across control modes.
+- **Trial Points**: a currency awarded once per trial difficulty, in an amount equal to that difficulty.
 - **Trial key**: one entry or retry in any Proving Grounds trial; two are available each UTC day, unlimited in Dev mode.
 - **Light Elemental**: the Proving Grounds foe, which fires rotating light beams and creates light slimes more often at higher trial levels.
 - **Light Slime**: a glowing creature released by the Light Elemental that hops to a random nearby tile every three player steps.

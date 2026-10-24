@@ -27,6 +27,7 @@ export function statsRows(p: Profile): [string, string][] {
   return [
     ["Profile created", created(p.createdAt)],
     ...EARNED.map(([c, label]): [string, string] => [label, amount(p.earned[c])]),
+    ...(p.earned.trialPoints>0?[["Trial Points earned",amount(p.earned.trialPoints)] as [string,string]]:[]),
     ["Training levels gained", amount(p.trainingLevels)],
     ["Research levels completed", amount(p.researchLevels)],
     ["Gold spent on Training", amount(p.trainingGold)],

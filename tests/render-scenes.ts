@@ -607,6 +607,7 @@ function playProvingGrounds(_name: string, _seed: number, canvas: HTMLCanvasElem
   kit.steps=50;
   renderer.draw(kit,20000,0,true,false,options);grab("spritesTorchOut");
   renderer.draw(kit,20000,0,true,true,options);grab("spritesOptOut");
+  renderer.draw(kit,21000,0,true,false,{...options,destination:{x:13,y:4}});grab("manualDestination");
 }
 
 /** Which canvas a job draws on: the 408 px board, the Defend board (which

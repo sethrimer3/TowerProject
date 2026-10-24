@@ -145,5 +145,6 @@
  "provingGrounds.spritesEdge": "631890e5ed555f5f",
  "provingGrounds.spritesBeamDamage": "7e2a6a16bb81c311",
  "provingGrounds.spritesTorchOut": "e4e2c5b6279115ae",
- "provingGrounds.spritesOptOut": "51ae764d4062687b"
+ "provingGrounds.spritesOptOut": "51ae764d4062687b",
+ "provingGrounds.manualDestination": "996ad097ac6c574a"
 }

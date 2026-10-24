@@ -1,28 +1,37 @@
 # Proving Grounds Trials
 
 Step onto the golden square on the grass to the right of the Tower forest's path to open **Proving Grounds Trials**.
-Choosing either trial enters the main game screen with the same top HUD, board, bottom card bar and run-training controls as a Tower run.
+Choose a trial, then choose **Without cards**, **Only with cards**, or **With both**.
+Each choice enters the main game screen with the same top HUD, board, bottom card bar and run-training controls as a Tower run.
 Trials follow the same **Sprites**, **Turn off board sprites**, **Animations** and **Reduce motion** settings as the Tower, including the current hero, dungeon, stairs, potion, torch and crate artwork when Sprites is enabled.
-Choose a whole **Trial level** before entering either mode; the menu previews boss HP, beam count and slime timing.
-Any level from 1 to 10,000 is selectable, and the last selected level is remembered.
-Both Light Elemental trials begin in a small staging room whose staircase leads to a dark, hexagonal chamber inside a 25×25 tile square.
+Each trial automatically offers the next difficulty after the highest one you defeated, starting at difficulty 1.
+You cannot select a difficulty manually.
+The menu shows that trial's number, next difficulty, difficulty multiplier, beam count, slime timing and one-time reward.
+**Trial 1 — Light Elemental** begins in a small staging room whose staircase leads to a dark, hexagonal chamber inside a 25×25 tile square.
 The attempt uses your current max HP, ATK and DEF and starts at full health; your Tower run, currencies and supplies stay safe.
 Reloading resumes the attempt, including its training purchases.
 **Leave trial**, the HUD menu's **Leave trial**, or Escape from the board returns to the forest and discards the attempt.
 
 ## Choose your controls
 
-**Trial I — Light Elemental · With cards** copies your equipped hand and its priority order when you enter.
+**Only with cards** copies your equipped hand and its priority order when you enter.
 Your cards automatically move you to their targets using the same card planner as a Tower run, including the staging staircase, potions and enemies.
 The ordinary HUD play/pause button and speed arrows control autoplay; you cannot steer with keys, taps, swipes or direction buttons.
 While the elemental is incorporeal, cards ignore it and autoplay waits if no other card has a target, keeping the laser countdown moving.
 Otherwise, if no card can act, autoplay pauses; return to the forest to equip a hand suited to the trial, including Stairs and an enemy card, then enter again.
 The encounter copies your stats and uses its own combat rules; normal-run rewards, card activations, badges and supplies do not apply.
 
-**Trial II — Light Elemental · No cards** gives you full movement control and has no autoplay.
+**Without cards** gives you full movement control and has no card autoplay.
 Your equipped cards stay visible at the bottom with red X overlays, and cannot activate or affect movement.
-Move with arrows or WASD, swipe or tap the board, or use the direction buttons; Space or **Wait** spends a turn without moving.
+Click or tap a floor tile to walk to it along a real route, one tile at a time; click the staircase to enter the chamber, or click the elemental to approach and strike it.
+There are no on-screen movement arrows.
+Click your current tile, press Space, or use **Wait** to spend a turn without moving; arrows and WASD remain keyboard shortcuts.
 Each move, strike or wait advances one turn, and walking into a wall does not.
+
+**With both** keeps your cards playing automatically and also accepts your tile commands.
+A player command overrides the card's planned move; your route takes priority until you arrive or choose another destination, then cards resume.
+Pausing cards still lets you move manually in this mode.
+Every accepted move spends one turn, even when both cards and a player command are available.
 
 ## Trial keys and levels
 
@@ -36,7 +45,17 @@ The free-purchases setting alone does not bypass trial keys.
 Each level adds 10% of the level-1 boss HP, starting from at least 240 HP or 24 times your copied ATK, whichever is higher.
 Level 1 fires one beam per volley; levels 10, 20, 30, 40, 50, 60 and 70 add one each, reaching the maximum of eight.
 Slimes spawn every 20 turns at levels 1–4; each multiple of five reduces that interval by two, reaching two turns at level 45.
-The selected level stays fixed through an attempt, reload and retry.
+The difficulty stays fixed through an attempt and reload.
+Any victory counts toward that trial's progression, regardless of the control mode.
+After a defeat, **Try again** offers the same next unbeaten difficulty; after a victory, **Next difficulty** offers the next one and lets you choose controls again.
+
+## Trial Points
+
+The first victory at each difficulty awards **Trial Points equal to that difficulty**: difficulty 1 pays 1 point, and difficulty 5 pays 5 points.
+Clearing difficulties 1 through 5 earns 15 points in total.
+Your point balance appears in the trial menu, and points earned also appear in the profile's Stats after your first reward.
+The reward is shared across all three control modes and is paid only once per trial and difficulty; repeated results and reloads never pay it again.
+Trial Points are kept between attempts and currently have no spending options.
 
 ## Purchases
 
@@ -77,5 +96,5 @@ The beams leave lingering light and smoldering cracks along the floor and on the
 Potions along the walls restore 35% of your max HP and can each be used once.
 
 Defeat the elemental to complete the trial and disperse its remaining slimes.
-After victory or defeat, return to the forest or retry the same trial from the staging room.
+After victory or defeat, return to the forest or choose controls for the trial's next unbeaten difficulty from its staging room.
 Attempts saved in the older, larger chamber restart in the new staging room with their copied stats.

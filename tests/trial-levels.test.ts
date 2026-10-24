@@ -95,7 +95,7 @@ test("level, allowance and legacy attempt decoding are bounded and deterministic
   for(const level of [0,-1,1.5,Infinity,10001]) {
     assert.throws(()=>startTrial(hero,"manual",[],12,level),RangeError);
     assert.equal(decodeTrial({...arena(1),level}),undefined);
-    assert.equal(decodeTrialAccess({day:2,spent:1,level}).level,1);
+    assert.deepEqual(decodeTrialAccess({day:2,spent:1,level}).progress,{});
   }
   assert.deepEqual(decodeTrialAccess(null),defaultTrialAccess());
   for(const spent of [-1,3,1.5,Infinity])assert.equal(decodeTrialAccess({day:2,spent}).spent,0);

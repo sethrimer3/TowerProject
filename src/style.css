@@ -5316,14 +5316,10 @@ html body dialog.proving-grounds-dialog h2 { font-size: 1.05rem; margin: 0 0 8px
 #trial-overlay #trial-vitals { position: absolute; top: 4px; left: 4px; right: 4px; padding: 5px; text-align: center; background: #060c13d9; font-size: 10px; line-height: 1.35; color: #f3dc9c; }
 #trial-overlay .trial-actions { position: absolute; right: 5px; bottom: 52px; display: flex; gap: 4px; pointer-events: auto; }
 #trial-overlay .trial-actions button { padding: 4px 7px; min-height: 28px; font-size: 10px; }
-#trial-overlay .trial-controls { position: absolute; bottom: 52px; left: 5px; display: flex; gap: 2px; margin: 0; pointer-events: auto; }
-#trial-overlay .trial-controls button { min-width: 25px; min-height: 28px; padding: 3px 4px; font-size: 11px; }
-#trial-overlay .trial-controls[hidden] { display: none; }
-html.trial-manual #trial-overlay .trial-actions { bottom: 86px; }
 html.trial-manual #hand .hand-card { position: relative; cursor: default; }
 html.trial-manual #hand .hand-card::after { content: ""; position: absolute; inset: 4px; z-index: 8; pointer-events: none; background: linear-gradient(48deg, transparent 46%, #ed4539 47% 53%, transparent 54%), linear-gradient(-48deg, transparent 46%, #ed4539 47% 53%, transparent 54%); filter: drop-shadow(0 1px 1px #000); }
 html.trial-running :is(#focus-stat, #ignore-stat, #target-stat, #bomb-stat, #heal-stat, #edge-stat, #guard-stat, #undo, #forest-sign, .tier-arrow) { display: none !important; }
-.proving-grounds-dialog .trial-level-label { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 14px; }
-.proving-grounds-dialog #trial-level { width: 100px; padding: 6px; }
-.proving-grounds-dialog #trial-level-preview { font-size: .8rem; line-height: 1.5; }
+.proving-grounds-dialog #trial-difficulty { color: #f3dc9c; font-size: .95rem; }
+.proving-grounds-dialog #trial-reward { font-size: .8rem; line-height: 1.5; }
+.proving-grounds-dialog .trial-points { color: #b9d6e4; }
 .proving-grounds-dialog .trial-choice > span { display: block; margin-top: 6px; color: #f3dc9c; font-size: .8rem; }

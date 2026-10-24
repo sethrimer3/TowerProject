@@ -85,14 +85,14 @@ try {
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
     await page.locator(".shell").screenshot({path:`test-results/trial-sprites/enabled-${width}.png`});
   }
-  await page.locator('[data-trial-move="0,0"]').click();
+  await page.locator("#trial-wait").click();
   expect((await read()).provingGrounds.destroyed["12,1"]).toBe(10);
   await page.evaluate(()=> {
     const save=JSON.parse(localStorage.getItem("towerdelve.v1"));save.provingGrounds.steps=49;save.provingGrounds.elemental.x=11;
     sessionStorage.setItem("trialSpritesFixture",JSON.stringify(save));
   });
   await page.reload({waitUntil:"domcontentloaded"});await attach();
-  await page.locator('[data-trial-move="0,0"]').click();await image("crate-broken");
+  await page.locator("#trial-wait").click();await image("crate-broken");
   expect((await read()).provingGrounds.destroyed["11,1"]).toBe(50);
   expect(errors).toEqual([]);
   console.log("Trial sprites: actual PNG hero/stairs/terrain/props, literal native texels, delayed loading, live settings and exact restoration, hero facing, independent themes, 320/390/1024px and destroyed-prop sprites passed.");
