@@ -35,12 +35,18 @@ import {
   cost,
   UPGRADES,
   trainedAmount,
+  PROVISION_BOOSTS,
+  PROVISION_BOOST_PERCENT,
+  PROVISION_BOOST_TURNS,
+  PROVISION_KEY_FLOORS,
   type UpgradeId,
   type TrainingId,
   type StatTrainingRow,
+  type UsedProvision,
 } from "./config.ts";
 import type { Save, ModeSave } from "./save-shape.ts";
 import type {
+  Boosted,
   Run,
   RunCore,
   TowerRun,
@@ -1275,6 +1281,85 @@ export class Game {
     const owned = this.save.provisions.bomb;
     return this.run.outside ? owned : Math.max(0, owned - (this.run.bombsUsed ?? 0));
   }
+  /** Uses of provision `id` (Traveler's elixir, Whetstone, Aegis charm)
+   * left: this run's (one for each owned, less those used), or in the
+   * forest what the next run will carry. */
+  provisionsLeft(id: UsedProvision) {
+    const owned = this.save.provisions[id];
+    return this.run.outside ? owned : Math.max(0, owned - (this.run.provisionsUsed?.[id] ?? 0));
+  }
+  /** The boost provision `id` has going on (what it added, the turns it
+   * has left); none for the elixir, or with none going on. */
+  boostOf(id: UsedProvision) {
+    return id === "heal" ? undefined : this.run.boosts?.[PROVISION_BOOSTS[id]];
+  }
+  /** Uses provision `id` at once, after any fight still playing out: the
+   * Traveler's elixir fills HP to max HP (`full`, and kept, when HP is
+   * there already), and a Whetstone or Aegis charm raises ATK or DEF by
+   * `PROVISION_BOOST_PERCENT` for `PROVISION_BOOST_TURNS` turns (`active`,
+   * and kept, while one is going on). It is no turn of its own, and undo
+   * never takes it back: the heal and the boost reach every copy of the
+   * run undo holds, and the use spent rides onto the run undo restores
+   * (`RunTimeline.undo`). */
+  useProvision(id: UsedProvision): "used" | "full" | "active" | "spent" | "unavailable" {
+    if (!this.save.provisions[id] || this.run.outside || this.fallen) return "unavailable";
+    if (this.provisionsLeft(id) < 1) return "spent";
+    this.fights.finish();
+    if (this.fallen) return "unavailable";
+    const p = this.run.player, copies = this.timeline.runs();
+    if (id === "heal") {
+      if (p.hp >= p.maxHp) return "full";
+      const healed = snap(p.maxHp - p.hp);
+      for (const run of copies) if (run.player.hp > 0) run.player.hp = Math.max(run.player.hp, run.player.maxHp);
+      this.recordHeal(healed);
+      this.message = "Traveler's elixir · HP full";
+    } else {
+      const stat = PROVISION_BOOSTS[id];
+      if (this.run.boosts?.[stat]) return "active";
+      const amount = snap((p[stat] * PROVISION_BOOST_PERCENT) / 100), word = stat === "attack" ? "ATK" : "DEF";
+      for (const run of copies) {
+        run.player[stat] = snap(run.player[stat] + amount);
+        run.boosts = { ...run.boosts, [stat]: { amount, turns: PROVISION_BOOST_TURNS } };
+      }
+      this.gain(p.x, p.y, `+${wholeChange(amount)} ${word}`, { tile: { kind: stat } });
+      this.message = `${id === "edge" ? "Whetstone" : "Aegis charm"} · +${PROVISION_BOOST_PERCENT}% ${word} for ${PROVISION_BOOST_TURNS} turns`;
+    }
+    for (const run of copies) run.provisionsUsed = { ...run.provisionsUsed, [id]: (run.provisionsUsed?.[id] ?? 0) + 1 };
+    // The hand plans again, with the hero as it is now.
+    this.cardPlan = null;
+    this.afterPlayerAction();
+    return "used";
+  }
+  /** A turn taken counts down the boosts going on; one run out takes the
+   * ATK or DEF it added back off the hero, on every copy of the run undo
+   * holds, as it went on. */
+  private tickBoosts() {
+    const boosts = this.run.boosts;
+    if (!boosts) return;
+    for (const stat of Object.keys(boosts) as Boosted[]) {
+      const boost = boosts[stat]!;
+      if (--boost.turns > 0) continue;
+      for (const run of this.timeline.runs()) {
+        run.player[stat] = snap(Math.max(0, run.player[stat] - boost.amount));
+        delete run.boosts?.[stat];
+        if (run.boosts && !Object.keys(run.boosts).length) delete run.boosts;
+      }
+    }
+  }
+  /** The Gold Key provisions on floor `floor` (from 0, `MODES[mode].floorOf`)
+   * reached: a gold key for each owned, on the floor the run goes inside
+   * on and then on the first floor `PROVISION_KEY_FLOORS` or more past the
+   * last that gave them, so a floor climbed past still counts. They come
+   * as a floor begins, which undo never goes back past. */
+  private provisionKeys(floor: number) {
+    const owned = this.save.provisions.yellowKey, run = this.run;
+    if (!owned || (run.keyFloor !== undefined && floor < run.keyFloor + PROVISION_KEY_FLOORS)) return;
+    run.keyFloor = floor;
+    const p = run.player;
+    p.keys.yellow = snap(p.keys.yellow + owned);
+    noteKey(run, "yellow", owned);
+    this.gain(p.x, p.y, `+${owned} gold key${owned === 1 ? "" : "s"}`, { tile: { kind: "key", color: "yellow" } });
+  }
   /** Whether the hero has `c` at all: Ignore's or Target's skill, or a Bomb provision. */
   private owns(c: Armed) {
     return c === "bomb" ? this.save.provisions.bomb > 0 : !!this.save.upgrades[c];
@@ -1848,6 +1933,7 @@ export class Game {
     this.turnBefore = null;
     const archer = this.isArcher;
     if (!before || this.run.outside || this.fallen) return;
+    this.tickBoosts();
     const p = this.run.player, from = before.run.player, sameFloor = this.mode !== "tower" || before.run.height === this.run.height;
     const at = performance.now(), ms = Math.min(TURN_MS, 800 / Math.max(1, this.stepsPerSecond));
     // The board walks a single step at an even pace; anything else it snaps.
@@ -1999,6 +2085,7 @@ export class Game {
     p.y = 0;
     this.world = this.rules.board(this.run);
     this.forgetLabyrinth();
+    this.provisionKeys(this.rules.equivalentFloor(this.run.height));
     this.route = [];
     // Inside, the hand takes over from the player (or Automove).
     if (this.handStartsPlaying) this.playHand();
@@ -2140,6 +2227,7 @@ export class Game {
       silver += interest;
       this.events.climbed(this.mode, this.run.seed, interest > 0 && interest >= purse.interestCap);
       this.findYellowKey(f, at);
+      this.provisionKeys(f);
       this.regainCharges(at);
       this.floorHeal();
     }
@@ -2205,6 +2293,7 @@ export class Game {
       for (let f = highest; f < this.run.height; f++) this.events.climbed(this.mode, this.run.seed, interest > 0 && interest >= purse.interestCap);
       this.events.best("floor", this.run.height + 1);
       this.findYellowKey(this.run.height, p);
+      this.provisionKeys(this.run.height);
       this.floorHeal();
       this.freeTrain(this.run.height - highest);
       this.passiveCardXp(this.run.height - highest);
@@ -2400,8 +2489,8 @@ export class Game {
     return this.save.upgrades.buyQuantity || this.save.settings.devMode ? openQuantities(researched(this.save.archives, "buyQuantity")) : [];
   }
   /** How many ranks a press buys on `scope`'s screen (the Training tab,
-   * the run's training bar, or the Gear page's provisions, each its own
-   * saved choice): the quantity chosen, while it is open, else one. */
+   * or the run's training bar, each its own saved choice): the quantity
+   * chosen, while it is open, else one. */
   buyQuantityFor(scope: QuantityScope): BuyQuantity {
     const chosen = this.save.settings[QUANTITY_SETTINGS[scope]];
     return this.buyQuantities.includes(chosen) ? chosen : 1;
@@ -2484,8 +2573,8 @@ type FightEnd = { enemy: Enemy; damage: number; at: { x: number; y: number }; re
 
 /** How Skip's message names what vanished, by tile kind. */
 /** The screens that keep their own Buy Quantity, and the setting each saves it in. */
-export type QuantityScope = "training" | "run" | "provisions";
-const QUANTITY_SETTINGS = { training: "buyQuantity", run: "runBuyQuantity", provisions: "provisionBuyQuantity" } as const;
+export type QuantityScope = "training" | "run";
+const QUANTITY_SETTINGS = { training: "buyQuantity", run: "runBuyQuantity" } as const;
 const SKIPPED_NAMES: Partial<Record<Tile["kind"], string>> = { door: "The door", key: "The key", potion: "The potion", attack: "The ATK shard", defense: "The DEF shard", treasure: "The chest", reward: "The chest" };
 
 /** Whether the door `t` has a lock of `color` among its locks. */

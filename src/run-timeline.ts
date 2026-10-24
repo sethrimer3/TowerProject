@@ -11,7 +11,7 @@ import { MODES } from "./modes.ts";
  * rules live here: it never leaves the floor the hero stands on (a snapshot
  * of another floor is never restored, and stepping onto another floor
  * forgets them), a run of quiet steps is taken back as one, and each undo
- * spent is gone for the run. Live play (the board, the hand) is the
+ * spent is gone for the run, as is each provision used. Live play (the board, the hand) is the
  * caller's: `undo` hands it the snapshot to restore. */
 export class RunTimeline<R extends Run = Run> {
   constructor(
@@ -88,10 +88,13 @@ export class RunTimeline<R extends Run = Run> {
     // back past a run of them to before the last turn that did something.
     while (!fall && snapshot.quiet && slice.history.length) snapshot = slice.history.pop()!;
     slice.fall = null;
-    // An undo spent is gone for the run: the count rides onto the run restored.
-    const used = (this.run.undosUsed ?? 0) + 1;
+    // An undo spent is gone for the run: the count rides onto the run
+    // restored, and so do the provisions used and the boosts going on.
+    const used = (this.run.undosUsed ?? 0) + 1, { provisionsUsed, boosts } = this.run;
     restore(fall?.snapshot ?? snapshot);
     this.run.undosUsed = used;
+    carry(this.run, "provisionsUsed", provisionsUsed);
+    carry(this.run, "boosts", boosts);
     slice.history = keepUndos(slice.history, this.undosLeft);
     return fall ? "fall" : "move";
   }
@@ -110,4 +113,10 @@ export class RunTimeline<R extends Run = Run> {
     this.slice.history = [];
     this.slice.fall = null;
   }
+}
+
+/** Sets `run`'s optional `key` to `value`, or drops it for none. */
+function carry<K extends "provisionsUsed" | "boosts">(run: Run, key: K, value: Run[K]) {
+  if (value) run[key] = structuredClone(value);
+  else delete run[key];
 }

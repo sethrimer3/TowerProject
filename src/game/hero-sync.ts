@@ -40,7 +40,7 @@ export function readyForestRuns(save: Save) {
 
 /** A gear change or training applies at once to the runs of both modes: a
  * run inside gains or loses exactly what `change` did to the loadout, so
- * ATK/DEF gathered from items and the provisions it started with are kept,
+ * ATK/DEF gathered from items and boosts going on are kept,
  * and a run still in the forest takes everything owned now. More max HP
  * comes with the HP to fill it (`shiftHero`). Each mode's run
  * follows its own loadout (its hero's equipment). The run's undo history
@@ -56,7 +56,7 @@ export function changeLoadout(save: Save, change: () => boolean | void) {
     const after = loadout(save, mode), shift = loadoutShift(before[i], after);
     for (const copy of new RunTimeline(save, mode).runs()) {
       shiftHero(copy, shift, treeOverheal(trainedAmount({ upgrades: save.upgrades, training: ranksInRun(save, copy) }, "overheal"), treeBonus(copy.cardTrees)));
-      // Keys a provision adds come into the hand at once.
+      // Keys the loadout adds come into the hand at once.
       const keys = copy.player.keys;
       for (const color of KEY_COLORS) keys[color] = Math.max(0, keys[color] + after.keys[color] - before[i].keys[color]);
     }

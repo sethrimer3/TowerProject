@@ -2,14 +2,22 @@
 
 ## Provisions
 
-**Gear** (1 Inspiration, after Buildout, left of it) adds the **Gear** tab, which opens on **Provisions**: Gold buys a Traveler's elixir (+20 max HP), an Aegis charm (+1 DEF) or a Whetstone (+1 ATK), each kept for good and added to every run from then on, a run already inside included.
-The tab shows the starting stats the provisions on sale raise (max HP, ATK, DEF, keys …), as the next run starts with them, the one just raised glowing as you buy, with a **?** left of them that explains provisions (your Gold shows in the currencies bar above); each provision says how many you own and, when one gives more than 1 of a stat (the elixir), the total they add; and a provision's icon glows when you buy one.
-Each one bought costs more than the last, on the same kind of schedule as Training bought with Silver inside a run (the elixir from 5 Gold, the charm from 10, the whetstone from 15), and that price compounds 5% more for each one already bought (the elixir: 5, 8, 12, 17, 24 … 111 for the 10th, 746 for the 20th, about 21,000 for the 50th).
-Once **Extra Key** (1 Courage, after Movement Speed in the Courage tree) is owned, Provisions also sell a **Gold Key**, a gold key carried into every run: the first costs 100 Gold and each after four times the last (400, 1,600, 6,400, 25,600 …).
-Provisions also sell **Bombs**: each one owned is a Bomb every run carries, the first costing 100 Gold and each after ten times the last (1,000, 10,000, 100,000 …).
-Inside a run, the Bombs left show as a button beside Ignore and Target: press it, then tap an enemy, and the Bomb explodes on its tile, dealing that enemy your ATK (its DEF doesn't reduce it).
+**Gear** (1 Inspiration, after Buildout, left of it) adds the **Gear** tab, which opens on **Provisions**: Gold buys items kept for good, each one owned a use that every run carries, a run already inside included.
+None of them adds anything as a run starts: inside a run, each shows as a button beside Ignore and Target with its uses left, and a press uses one at once (it is no turn of its own).
+A **Traveler's elixir** fills HP to max HP, the HP bar filling up to it; with HP at max (or above it), it does nothing and isn't spent.
+A **Whetstone** raises ATK by 20% for the next 100 turns, and an **Aegis charm** raises DEF by 20% for the next 100 turns; while one is on, the hero glows red (the Whetstone) or blue (the Aegis charm), its button is lit, and another of the same kind can't be used until it runs out.
+A boost adds 20% of the stat as it was when pressed, and takes that much back off when it runs out.
+Undo never gives a use back and never takes an effect away: a heal stays healed, and a boost keeps counting down, as if no turn had been undone.
+Uses come back only with the next run.
+The tab has a **?** at the top that explains provisions (your Gold shows in the currencies bar above); each provision's icon carries the number owned in a circle at its bottom right, which bounces as you buy one, and its **Buy** button stands at the row's right.
+Every provision costs 100 Gold, and each one after a hundred times the last (10,000, 1,000,000, 100,000,000 …).
+Once **Extra Key** (1 Courage, after Movement Speed in the Courage tree) is owned, Provisions also sell a **Gold Key**, which uses itself: each owned gives a run one gold key on the floor it starts on, and again on the first floor 100 or more floors past the last that gave them (floor 1, then 101, 201 …; a floor Skip climbs past still counts, so the next floor gives them).
+In the Delve, floors are its equivalent floors.
+The keys come as a floor begins, so undo can't take them back.
+Provisions also sell **Bombs**: each one owned is a Bomb every run carries.
+Its button shows the Bombs left: press it, then tap an enemy, and the Bomb explodes on its tile, dealing that enemy your ATK (its DEF doesn't reduce it).
 An enemy the Bomb fells is cleared and pays out as if you had beaten it; a tap on a tile with no enemy uses no Bomb, and pressing the button again puts the Bomb away.
-Throwing a Bomb is a turn of its own, so undo takes it back, Bomb included, without paying the kill twice.
+Unlike the other provisions, throwing a Bomb is a turn of its own, so undo takes it back, Bomb included, without paying the kill twice.
 Bombs used come back only with the next run.
 
 ## Equipment

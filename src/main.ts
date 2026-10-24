@@ -1,5 +1,5 @@
 import { ProvingGroundsDialog } from "./ui/proving-grounds-dialog.ts";
-import type { UpgradeId } from "./config.ts";
+import { USED_PROVISIONS, type UpgradeId } from "./config.ts";
 import type { TreeId } from "./skill-trees.ts";
 import "./style.css";
 import "./medieval.css";
@@ -352,6 +352,17 @@ for (const c of ["ignore", "target", "bomb"] as const)
     if(provingGrounds.active)return;
     overlay.hide();
     if (game.arm(c) === "spent") flashRed(el(`${c}-stat`));
+    update();
+  };
+// The provisions used at a press: a refusal (HP full, a boost already
+// going on, none left) flashes red.
+for (const id of USED_PROVISIONS)
+  el(`${id}-stat`).onclick = () => {
+    if (provingGrounds.active) return;
+    overlay.hide();
+    const result = game.useProvision(id);
+    if (result !== "used" && result !== "unavailable") flashRed(el(`${id}-stat`));
+    save();
     update();
   };
 /** A board tap: in cinematic mode, a floating Gem's or one toward leaving

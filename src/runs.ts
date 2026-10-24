@@ -3,11 +3,13 @@ import type { ShrineRun } from "./shrines.ts";
 import type { CardId, CardLink } from "./cards.ts";
 import type { RunBadges } from "./badges.ts";
 import type { CardTreeLevels } from "./card-trees.ts";
-import type { TrainingId } from "./config.ts";
+import type { PROVISION_BOOSTS, TrainingId, UsedProvision } from "./config.ts";
 import type { RunNotes } from "./run-notes.ts";
 import type { TournamentRun } from "./tournament/run.ts";
 import type { Volleys } from "./ranged.ts";
 import type { ChestOdds, DoorOdds, Player, Tile } from "./entities.ts";
+/** A stat a provision boosts for a while. */
+export type Boosted = (typeof PROVISION_BOOSTS)[keyof typeof PROVISION_BOOSTS];
 /** What a run holds in either mode. */
 export type RunCore = {
   outside?: boolean;
@@ -46,6 +48,20 @@ export type RunCore = {
   /** Bombs thrown this run: a run has one for each Bomb provision owned,
    * so what is left is those less these. */
   bombsUsed?: number;
+  /** Provisions used this run (Traveler's elixir, Whetstone, Aegis charm):
+   * a run has one use for each owned, so what is left is those less
+   * these. Undo never gives one back: the count rides onto the run it
+   * restores. */
+  provisionsUsed?: Partial<Record<UsedProvision, number>>;
+  /** The Whetstone's and Aegis charm's boosts going on: the ATK or DEF
+   * each added to the hero (on every copy of the run undo holds, so undo
+   * never takes it away) and the turns it has left. Undo carries these
+   * onto the run it restores, so a boost keeps counting down. */
+  boosts?: Partial<Record<Boosted, { amount: number; turns: number }>>;
+  /** The floor (`MODES[mode].floorOf`, from 0) the Gold Key provisions
+   * last handed the run their keys on: the next come `PROVISION_KEY_FLOORS`
+   * floors on. */
+  keyFloor?: number;
   /** Undos spent this run. A run has as many as the loadout's undo
    * capacity, and one spent never comes back, so what is left is that
    * capacity less these (undo carries the count onto the run it restores). */

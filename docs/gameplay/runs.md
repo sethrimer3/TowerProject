@@ -44,6 +44,7 @@ They list the tower, the floor reached and the current floor, the real time sinc
 They refresh as the run goes, and the X at their top right closes them.
 The copy button beside the X puts them in the clipboard as text, to paste elsewhere.
 Undo takes back what it takes back from the run (steps, keys, doors, pickups and Silver), never what was found for good (Gold, materials, Cells, Gems and equipment).
+Nor does it take back a provision used (an elixir, a Whetstone, an Aegis charm): the use stays spent, the heal stays, and a boost keeps counting down its turns.
 The run's end dialog has a Run Notes button at the end of its totals, which opens them over it.
 The Settings page's Stats dialog has the same copy button.
 Its tallies are rounded down, and shortened from a million (1.23M).

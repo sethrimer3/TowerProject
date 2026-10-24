@@ -2,6 +2,7 @@ import { kitIcon } from "../sprite-kit.ts";
 import { bombIcon, CART_ICON, ENTER_ICON, eventIcon, relicIcon, shrineIcon, gemIcon, goldIcon, shardIcon, itemSprite, mailIcon, medalIcon, missionIcon, NAV_TABS, RESEARCH_ICON, trophyIcon, uiSprite } from "./dom.ts";
 import { AD_GEMS } from "../gems.ts";
 import { GOLD_BOOST_FACTOR } from "../gold-boost.ts";
+import { PROVISION_BOOST_PERCENT, PROVISION_BOOST_TURNS, type UsedProvision } from "../config.ts";
 
 /** The currencies held, down the left rail above the ad's Gems: Gems, then
  * (in the forest) Ascension Shards and Medals, then Gold, then the run's Silver. */
@@ -39,12 +40,23 @@ const NAV = `<nav aria-label="Main navigation">${NAV_TABS
 const TRAINING_BAR = `<div id="training-bar" class="training-bar" role="group" aria-label="Training for this run" hidden></div><div id="drill-tip" class="drill-tip" role="tooltip" hidden></div>`;
 /** Focus uses left, before the potions: a lightning bolt and the count. */
 const FOCUS_STAT = `<span id="focus-stat" class="focus-stat" hidden title="Focus: press a card in your hand to put it first">${kitIcon("focus", `<svg viewBox="0 0 10 14" aria-hidden="true"><path d="M6.2 0.5L1 8h3.6L3.4 13.5 9 5.8H5.4L6.2 0.5z" fill="#ffe27a" stroke="#6b4a10" stroke-width="0.7" stroke-linejoin="round"/></svg>`, "charge-icon")}<b id="focus-left">0</b></span>`;
+/** The Traveler's elixir, Whetstone and Aegis charm uses left: each a
+ * button that uses one at once. */
+const PROVISION_BUTTONS = [
+  ["heal", "potion_flat", "Traveler's elixir: press to fill HP to max HP"],
+  ["edge", "upgrade_attack", `Whetstone: press for +${PROVISION_BOOST_PERCENT}% ATK for ${PROVISION_BOOST_TURNS} turns`],
+  ["guard", "upgrade_defense", `Aegis charm: press for +${PROVISION_BOOST_PERCENT}% DEF for ${PROVISION_BOOST_TURNS} turns`],
+] as const satisfies readonly (readonly [UsedProvision, ...string[]])[];
+const PROVISION_BUTTONS_HTML = PROVISION_BUTTONS.map(([id, sprite, title]) =>
+  `<button type="button" id="${id}-stat" class="focus-stat charge-stat provision-stat" hidden title="${title}">${itemSprite(sprite, "charge-icon")}<b id="${id}-left">0</b></button>`).join("");
 /** Ignore and Target uses left, after Focus, and the Bombs left: each a
- * button that readies it for the next board tap; then Undo, a button that
- * takes the last turn back, with the undos the run has left. */
+ * button that readies it for the next board tap; then the provisions used
+ * at a press (`PROVISION_BUTTONS`); then Undo, a button that takes the
+ * last turn back, with the undos the run has left. */
 const CHARGE_BUTTONS = `<button type="button" id="ignore-stat" class="focus-stat charge-stat" hidden title="Ignore: press, then tap a tile the hero won't step on this floor">${kitIcon("ignore", `<svg viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.3" fill="none" stroke="#ff6a5a" stroke-width="1.6"/><path d="M3.3 10.7L10.7 3.3" stroke="#ff6a5a" stroke-width="1.6"/></svg>`, "charge-icon")}<b id="ignore-left">0</b></button>` +
   `<button type="button" id="target-stat" class="focus-stat charge-stat" hidden title="Target: press, then tap a tile to send the hero there">${kitIcon("target", `<svg viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="4.6" fill="none" stroke="#7ad8ff" stroke-width="1.4"/><circle cx="7" cy="7" r="1.3" fill="#7ad8ff"/><path d="M7 0.5V3.5M7 10.5V13.5M0.5 7H3.5M10.5 7H13.5" stroke="#7ad8ff" stroke-width="1.4"/></svg>`, "charge-icon")}<b id="target-left">0</b></button>` +
   `<button type="button" id="bomb-stat" class="focus-stat charge-stat" hidden title="Bomb: press, then tap an enemy to deal it your ATK">${bombIcon("charge-icon")}<b id="bomb-left">0</b></button>` +
+  PROVISION_BUTTONS_HTML +
   `<button type="button" id="undo" class="focus-stat charge-stat" hidden title="Undo: take back the last turn">${kitIcon("undo", `<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M4.5 3L1.8 5.7 4.5 8.4" fill="none" stroke="#b9e08a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.3 5.7h6a3.3 3.3 0 0 1 0 6.6H5" fill="none" stroke="#b9e08a" stroke-width="1.6" stroke-linecap="round"/></svg>`, "charge-icon")}<b id="undo-state">0</b></button>`;
 /** Cinematic mode's own buttons (`cinematic.ts`), all else hidden: the gear
  * a tap shows, which leaves it for Settings, and with its option on the

@@ -1,13 +1,12 @@
 import { trainNow } from "./train-now.ts";
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import type { GoldItemId, StatTrainingRow } from "../src/config.ts";
+import type { StatTrainingRow } from "../src/config.ts";
 import { loadout, trainingBulk, trainingFull, trainingPoints, trainingStep, upgradeText, provisionPrice, provisionText } from "../src/loadout.ts";
 import { decode, defaults } from "../src/save.ts";
 import { GOLD_SHOP, LIMIT_BREAKS, TRAINING, UPGRADES, isStatRow, levelForXp, trained, trainingCap, trainingCeiling, trainingWorth, xpForLevel } from "../src/config.ts";
 import { addItem } from "../src/equipment/inventory.ts";
 import { Game } from "../src/state.ts";
-import { ENTRANCE_Y } from "../src/outside.ts";
 import { predict } from "../src/combat.ts";
 import { getTowerGateEnemy } from "../src/scaling.ts";
 import { enemyStats } from "../src/enemy-curves.ts";
@@ -170,7 +169,7 @@ test("evenly spread training alone still beats both modes' normal enemies at flo
   assert.deepEqual(wins(50, 100), [true, true]);
 });
 
-test("gear adds flat bonuses, then its percentages of the total, fractions kept; provisions come last", () => {
+test("gear adds flat bonuses, then its percentages of the total, fractions kept; provisions add nothing", () => {
   const s = defaults();
   s.equipment.unlocked = true;
   // Uncommon (×1.25): +3.75 ATK and +2.5% ATK; +37.5 max HP and +5% max HP.
@@ -178,11 +177,11 @@ test("gear adds flat bonuses, then its percentages of the total, fractions kept;
   s.equipment.equipped.tower.chestplate = addItem(s.equipment, "giantsHauberk", "uncommon")!.id;
   Object.assign(s.provisions, { edge: 1, guard: 2, heal: 1 });
   const l = loadout(s);
-  assert.equal(l.attack, 17.14375, "(12 + 3.75) × 1.025 + 1");
-  assert.equal(l.defense, 2);
-  assert.equal(l.maxHp, 164.375, "137.5 × 1.05 + 20");
+  assert.equal(l.attack, 16.14375, "(12 + 3.75) × 1.025");
+  assert.equal(l.defense, 0);
+  assert.equal(l.maxHp, 144.375, "137.5 × 1.05");
   // The Delve's hero wears nothing yet.
-  assert.equal(loadout(s, "delve").attack, 13);
+  assert.equal(loadout(s, "delve").attack, 12);
 });
 
 test("descriptions are written from the grants", () => {
@@ -204,43 +203,36 @@ test("descriptions are written from the grants", () => {
     },
   );
   assert.deepEqual(GOLD_SHOP.map((g) => provisionText(g.id)), [
-    "+20 max HP", "+1 defense", "+1 attack", "+1 gold key",
+    "One more elixir every run: press it to fill HP to max HP",
+    "One more Aegis charm every run: press it for +20% DEF for 100 turns",
+    "One more Whetstone every run: press it for +20% ATK for 100 turns",
+    "One more gold key every 100 floors of a run, from the floor it starts on",
     "One more Bomb every run: press it, then an enemy's tile, to deal that enemy your ATK",
   ]);
 });
 
-test("each provision bought costs more than the last, on run training's schedule compounding 5% a buy", () => {
+test("every provision costs 100 Gold, and each one after a hundred times the last", () => {
   const s = defaults();
-  const prices = (id: GoldItemId) => Array.from({ length: 7 }, (_, n) => provisionPrice({ provisions: { ...s.provisions, [id]: n } }, id));
-  assert.deepEqual(prices("heal"), [5, 8, 12, 17, 24, 32, 47]);
-  assert.deepEqual(prices("guard"), [10, 14, 19, 26, 35, 45, 62]);
-  assert.deepEqual(prices("edge"), [15, 19, 25, 32, 41, 52, 69]);
+  for (const { id } of GOLD_SHOP)
+    assert.deepEqual(Array.from({ length: 4 }, (_, n) => provisionPrice({ provisions: { ...s.provisions, [id]: n } }, id)), [100, 10_000, 1_000_000, 100_000_000], id);
   const g = new Game(s);
-  s.gold = 20;
+  s.gold = 10_500;
   assert.ok(g.gear.buyProvision("heal") && g.gear.buyProvision("heal"));
-  assert.equal(s.gold, 20 - 5 - 8);
-  assert.equal(g.gear.buyProvision("guard"), false, "10 Gold, 7 left");
+  assert.equal(s.gold, 10_500 - 100 - 10_000);
+  assert.equal(g.gear.buyProvision("heal"), false, "1,000,000 Gold, 400 held");
   assert.equal(s.provisions.heal, 2);
 });
 
-test("Extra Key opens the Gold Key provision: 100 Gold, then four times the last", () => {
+test("Extra Key opens the Gold Key provision, which adds no key to the loadout", () => {
   const s = defaults(), g = new Game(s);
   g.newRun({ outside: true });
-  assert.deepEqual(Array.from({ length: 6 }, (_, n) => provisionPrice({ provisions: { ...s.provisions, yellowKey: n } }, "yellowKey")), [100, 400, 1600, 6400, 25600, 102400]);
   s.gold = 1000;
   assert.equal(g.gear.buyProvision("yellowKey"), false, "closed without Extra Key");
   s.upgrades.extraKey = 1;
   const keys = loadout(s).keys.yellow;
-  assert.ok(g.gear.buyProvision("yellowKey") && g.gear.buyProvision("yellowKey"));
-  assert.equal(s.gold, 500);
-  assert.equal(loadout(s).keys.yellow, keys + 2, "a gold key for each, every run");
-  assert.equal(g.run.player.keys.yellow, keys + 2, "the run in the forest takes them");
-  assert.equal(g.gear.buyProvision("yellowKey"), false, "1,600 Gold, 500 held");
-  goInside(g);
-  const held = g.run.player.keys.yellow;
-  s.gold = 1600;
   assert.ok(g.gear.buyProvision("yellowKey"));
-  assert.equal(g.run.player.keys.yellow, held + 1, "one bought inside a run comes at once");
+  assert.equal(s.gold, 900);
+  assert.equal(loadout(s).keys.yellow, keys, "its keys come during a run");
 });
 
 /** Opens Equipment and adds a Common Knight's Sword (+3 ATK at level 1). */
@@ -251,19 +243,18 @@ function armoury(g: Game) {
   return sword.id;
 }
 
-test("changing gear mid-run keeps the ATK gathered and the provisions owned", () => {
-  const g = new Game(defaults()), s = g.save;
-  s.provisions.edge = 1;
+test("changing gear mid-run keeps the ATK gathered", () => {
+  const g = new Game(defaults());
   g.newRun();
-  assert.equal(g.run.player.attack, 13);
+  assert.equal(g.run.player.attack, 12);
   g.run.player.attack += 2; // an attack shard picked up
   const sword = armoury(g);
   assert.ok(g.equipment.equip("tower", sword));
-  assert.equal(g.run.player.attack, 18);
-  assert.deepEqual(g.run.loadout, { attack: 16, defense: 0, maxHp: 100 });
+  assert.equal(g.run.player.attack, 17);
+  assert.deepEqual(g.run.loadout, { attack: 15, defense: 0, maxHp: 100 });
   g.equipment.unequip("tower", "weapon");
-  assert.equal(g.run.player.attack, 15);
-  assert.deepEqual(g.run.loadout, { attack: 13, defense: 0, maxHp: 100 });
+  assert.equal(g.run.player.attack, 14);
+  assert.deepEqual(g.run.loadout, { attack: 12, defense: 0, maxHp: 100 });
   assert.equal(g.run.player.hp, 100);
 });
 
@@ -275,42 +266,6 @@ test("a gear change reaches a run still outside, which starts at its new full HP
   g.equipment.equip("tower", addItem(e, "knightsSword", "common")!.id);
   g.equipment.equip("tower", addItem(e, "giantsHauberk", "common")!.id);
   assert.deepEqual([g.run.player.attack, g.run.player.maxHp, g.run.player.hp], [15, 130, 130]);
-});
-
-/** Walks the hero from the forest in through the entrance. */
-function goInside(g: Game) {
-  g.walkTo(g.run.player.x, ENTRANCE_Y);
-  for (let i = 0; i < 40 && g.route.length; i++) g.routeStep();
-  assert.equal(g.run.outside, false);
-}
-
-test("provisions last for good: every run takes them, and one bought mid-run counts at once", () => {
-  const g = new Game(defaults()), s = g.save;
-  s.upgrades.delve = 1;
-  g.switchMode("delve");
-  g.newRun({ outside: true, seed: 5 });
-  g.switchMode("tower");
-  g.newRun({ outside: true, seed: 5 });
-  s.tower.inspiration = 100;
-  s.gold = 100;
-  s.upgrades.delve = 1;
-  s.upgrades.trainers = 1;
-  s.upgrades.regenResearch = 1;
-  assert.ok(g.buy("shroud"));
-  assert.ok(g.gear.buyProvision("edge") && g.gear.buyProvision("heal"));
-  assert.equal(s.gold, 100 - 15 - 5);
-  const ready = { attack: 13, maxHp: 120, hp: 120, shroud: 1 };
-  const hero = (run = g.run) => ({ attack: run.player.attack, maxHp: run.player.maxHp, hp: run.player.hp, shroud: run.player.shroud });
-  assert.deepEqual(hero(), ready, "the Tower's run in the forest");
-  assert.deepEqual(hero(s.delve.run!), ready, "and the Delve's");
-  assert.deepEqual(g.run.loadout, { attack: 13, defense: 0, maxHp: 120, shroud: 1 });
-  goInside(g);
-  assert.deepEqual(hero(), ready, "the run takes its provisions inside");
-  assert.deepEqual(s.provisions, { heal: 1, edge: 1, guard: 0, yellowKey: 0, bomb: 0 }, "and keeps them for every later run");
-  assert.deepEqual(hero(s.delve.run!), ready, "the other forest run still has them");
-  assert.ok(g.gear.buyProvision("guard"));
-  assert.equal(g.run.player.defense, 1, "one bought inside a run counts at once");
-  assert.equal(s.delve.run!.player.defense, 1, "and in the Delve's forest run");
 });
 
 test("ATK, DEF, Max HP, Regen and Shroud train to 1,000 levels, and each Limit Break owned raises that by 500, Shroud's but by the first eight", () => {

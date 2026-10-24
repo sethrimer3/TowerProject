@@ -3,7 +3,7 @@ import { defaultTrialAccess, decodeTrialAccess } from "./proving-grounds/access.
 import { TRAINER_GEMS, trainingSlots, type TrainingJob, type TrainingPaid } from "./training-jobs.ts";
 import { count, dropInvalid, finite, fraction, isRecord, wholeIn } from "./decode.ts";
 import { TIERS } from "./tiers.ts";
-import { GOLD_SHOP, OLD_SAVE_KEY, SAVE_KEY, TOWER_WIDTH, TRAINING, UPGRADES, WIDTH, amountAt, trainingCeiling, trainingDef, type UpgradeId } from "./config.ts";
+import { GOLD_SHOP, PROVISION_BOOST_TURNS, USED_PROVISIONS, OLD_SAVE_KEY, SAVE_KEY, TOWER_WIDTH, TRAINING, UPGRADES, WIDTH, amountAt, trainingCeiling, trainingDef, type UpgradeId } from "./config.ts";
 import type { AutomoveMemory, DelveRun, Fall, MoveSnapshot, Run, TowerRun } from "./runs.ts";
 import type { ModeSave, Save } from "./save-shape.ts";
 import { emptyMaterials, MATERIAL_IDS, type MaterialId } from "./materials.ts";
@@ -175,6 +175,9 @@ const RUN_FIELD_CHECKS = {
   ignoreUsed: (v: unknown) => wholeIn(v, 0, 99),
   targetUsed: (v: unknown) => wholeIn(v, 0, 99),
   bombsUsed: (v: unknown) => wholeIn(v, 0, 999),
+  provisionsUsed: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, n]) => (USED_PROVISIONS as readonly string[]).includes(k) && wholeIn(n, 1, 999)),
+  boosts: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, b]: [string, any]) => (k === "attack" || k === "defense") && isRecord(b) && finite(b.amount) && b.amount >= 0 && wholeIn(b.turns, 1, PROVISION_BOOST_TURNS)),
+  keyFloor: (v: unknown) => wholeIn(v, 0, 1e9),
   undosUsed: (v: unknown) => wholeIn(v, 0, 99),
   regain: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, n]) => ["focus", "ignore", "target"].includes(k) && wholeIn(n, 1, 1e6)),
   ignored: (v: any) => isRecord(v) && wholeIn(v.floor, 0, 1e6) && Array.isArray(v.tiles) && v.tiles.every((t: unknown) => typeof t === "string" && POINT_KEY.test(t)),

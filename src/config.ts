@@ -137,7 +137,7 @@ export const UPGRADES = [
   {
     id: "extraKey",
     name: "Extra Key",
-    description: "Open the Gold Key provision on the Gear page: a gold key carried into every run",
+    description: "Open the Gold Key provision on the Gear page: a gold key every 100 floors of a run",
     base: 1,
     max: 1,
     currency: "courage",
@@ -271,7 +271,7 @@ export const UPGRADES = [
   {
     id: "gear",
     name: "Gear",
-    description: "Open the Gear page: provisions bought with Gold, carried into every run",
+    description: "Open the Gear page: provisions bought with Gold, used during every run",
     base: 1,
     max: 1,
     currency: "inspiration",
@@ -1078,51 +1078,57 @@ export function trainedAmount(save: { upgrades: Partial<Record<UpgradeId, number
   return amountAt(row, row.requires && !save.upgrades[row.requires] ? 0 : ranks);
 }
 /** Provisions, bought with Gold on the Gear page and kept for good: each
- * one bought adds its grants to every run. Each is priced by a schedule
- * like run training's (`schedulePrice`), from its `price.base` Gold; the
- * stat provisions' prices also compound by `PROVISION_COMPOUND` a buy. One
- * with `requires` shows, and sells, only once that upgrade is owned. A Bomb
- * grants no stat: each one owned is a Bomb every run carries, to throw
- * (`Game.arm`). */
-/** What each stat provision bought multiplies the next one's price by. */
-const PROVISION_COMPOUND = 1.05;
+ * one owned is one use every run carries, never a stat at its start. The
+ * Traveler's elixir fills HP (`Game.useProvision`), the Whetstone and
+ * Aegis charm raise ATK or DEF by `PROVISION_BOOST_PERCENT` for
+ * `PROVISION_BOOST_TURNS` turns, a Bomb is thrown at an enemy (`Game.arm`),
+ * and each Gold Key hands the run a gold key every `PROVISION_KEY_FLOORS`
+ * floors. Each costs `price.base` Gold (100), and each one after `ratio` (100) times
+ * the last (`schedulePrice`). One with `requires` shows, and sells, only
+ * once that upgrade is owned. */
 export const GOLD_SHOP = [
   {
     id: "heal",
     name: "Traveler's elixir",
-    grants: { maxHp: 20 },
-    words: { maxHp: "max HP" },
-    price: { base: 5, step: 1, growth: 3, compound: PROVISION_COMPOUND },
+    description: "One more elixir every run: press it to fill HP to max HP",
+    price: { base: 100, ratio: 100 },
   },
   {
     id: "guard",
     name: "Aegis charm",
-    grants: { defense: 1 },
-    words: { defense: "defense" },
-    price: { base: 10, step: 2, growth: 3, compound: PROVISION_COMPOUND },
+    description: "One more Aegis charm every run: press it for +20% DEF for 100 turns",
+    price: { base: 100, ratio: 100 },
   },
   {
     id: "edge",
     name: "Whetstone",
-    grants: { attack: 1 },
-    words: { attack: "attack" },
-    price: { base: 15, step: 2, growth: 3, compound: PROVISION_COMPOUND },
+    description: "One more Whetstone every run: press it for +20% ATK for 100 turns",
+    price: { base: 100, ratio: 100 },
   },
   {
     id: "yellowKey",
     name: "Gold Key",
-    grants: { yellow: 1 },
-    words: { yellow: "gold key" },
-    price: { base: 100, ratio: 4 },
+    description: "One more gold key every 100 floors of a run, from the floor it starts on",
+    price: { base: 100, ratio: 100 },
     requires: "extraKey",
   },
   {
     id: "bomb",
     name: "Bomb",
-    grants: {},
-    words: {},
     description: "One more Bomb every run: press it, then an enemy's tile, to deal that enemy your ATK",
-    price: { base: 100, ratio: 10 },
+    price: { base: 100, ratio: 100 },
   },
 ] as const;
+/** The provisions pressed from the HUD to use at once (not a Bomb, armed
+ * for a board tap, nor the Gold Key, which uses itself). */
+export const USED_PROVISIONS = ["heal", "edge", "guard"] as const;
+export type UsedProvision = (typeof USED_PROVISIONS)[number];
+/** The stat each boosting provision raises while it lasts. */
+export const PROVISION_BOOSTS = { edge: "attack", guard: "defense" } as const satisfies Partial<Record<UsedProvision, string>>;
+/** How much a Whetstone or Aegis charm raises its stat, in percent, and
+ * for how many turns. */
+export const PROVISION_BOOST_PERCENT = 20;
+export const PROVISION_BOOST_TURNS = 100;
+/** The floors between a Gold Key provision's keys. */
+export const PROVISION_KEY_FLOORS = 100;
 export type GoldItemId = (typeof GOLD_SHOP)[number]["id"];

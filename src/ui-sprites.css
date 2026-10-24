@@ -48,7 +48,7 @@ html.ui-sprites .shell:not(#_) {
 
 html.ui-sprites :is(.stats, .card, .upgrade, .shop, .theme-card, .weekly,
   .mission, .event-boost, .archivist, .research, .pull-box, .eq-loadout,
-  .equip-materials, .starting-stats, .training-boost,
+  .equip-materials, .training-boost,
   .tournament-standing, .tournament-tickets, .badge-box, .deck-reserve,
   .defend-palette, .card-reveal, .badge-reveal, .skill-tree, .goals-stage,
   .training-box, label.setting, .inspect-box, .run-menu-frame, .inspection):not(#_) {

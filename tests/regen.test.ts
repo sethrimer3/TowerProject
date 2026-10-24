@@ -3,8 +3,8 @@ import { snap } from "../src/exact.ts";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults } from "../src/save.ts";
-import { GOLD_SHOP, TRAINING, cost, levelForXp, schedulePrice, trained, trainingWorth, type StatTrainingRow, trainingDef } from "../src/config.ts";
-import { loadout, provisionPrice, trainingStep } from "../src/loadout.ts";
+import { TRAINING, cost, levelForXp, trained, trainingWorth, type StatTrainingRow, trainingDef } from "../src/config.ts";
+import { loadout, trainingStep } from "../src/loadout.ts";
 import { resolveStep, BASE_RULES } from "../src/step-effects.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import type { Player } from "../src/entities.ts";
@@ -120,12 +120,3 @@ test("no Regen in the forest", () => {
   assert.equal(g.stepRules.regen, 0.5);
 });
 
-test("stat provisions compound 5% a buy on top of their schedule; the Gold Key doesn't", () => {
-  const heal = GOLD_SHOP.find((g) => g.id === "heal")!;
-  assert.deepEqual([0, 9, 19, 49].map((n) => schedulePrice(heal.price, n)), [5, 111, 746, 21046]);
-  const save = defaults();
-  save.provisions.guard = 9;
-  assert.equal(provisionPrice(save, "guard"), 132);
-  save.provisions.yellowKey = 2;
-  assert.equal(provisionPrice(save, "yellowKey"), 1600);
-});

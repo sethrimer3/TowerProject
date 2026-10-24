@@ -27,9 +27,9 @@ function withBombs(bombs: number, foe: Tile = slime(30)) {
   return g;
 }
 
-test("a Bomb costs 100 Gold, and each one after ten times the last", () => {
+test("a Bomb costs 100 Gold, and each one after a hundred times the last", () => {
   const s = defaults();
-  assert.deepEqual([0, 1, 2, 3].map((n) => provisionPrice({ provisions: { ...s.provisions, bomb: n } }, "bomb")), [100, 1000, 10000, 100000]);
+  assert.deepEqual([0, 1, 2, 3].map((n) => provisionPrice({ provisions: { ...s.provisions, bomb: n } }, "bomb")), [100, 10_000, 1_000_000, 100_000_000]);
 });
 
 test("a run carries a Bomb for each one owned; none owned, there is none to arm", () => {

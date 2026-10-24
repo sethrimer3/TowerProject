@@ -3,7 +3,7 @@ import { spriteFontRevision } from "../sprite-font.ts";
 import { amountUnit, enemyStat, keyCount, shortAmount, stepsIn, whole, wholeHp } from "../whole.ts";
 import type { Game } from "../state.ts";
 import type { Renderer } from "../rendering.ts";
-import { levelForXp, xpForLevel } from "../config.ts";
+import { levelForXp, USED_PROVISIONS, xpForLevel } from "../config.ts";
 import { outsideWeather } from "../outside.ts";
 import { tierNumeral, tierRewardText } from "../tiers.ts";
 import { MODES, milestones } from "../modes.ts";
@@ -639,7 +639,7 @@ function renderShrine(game: Game) {
   bar.setAttribute("aria-label", `Shrine: ${pick}, ${left}`);
 }
 
-/** Focus uses left, once the Focus skill is owned; Ignore, Target and the Bombs likewise. */
+/** Focus uses left, once the Focus skill is owned; Ignore, Target, the Bombs and the provisions used at a press likewise. */
 function renderFocus(game: Game) {
   renderShrine(game);
   const stat = el("focus-stat");
@@ -653,6 +653,16 @@ function renderFocus(game: Game) {
     text(`${c}-left`, left);
     button.setAttribute("aria-label", `${name}: ${left} left`);
     button.setAttribute("aria-pressed", String(game.armed === c));
+  }
+  // The provisions used at a press: the uses left, and a boost going on
+  // lit in its stat's colour, with the turns it has left.
+  for (const id of USED_PROVISIONS) {
+    const button = el(`${id}-stat`), left = game.provisionsLeft(id), boost = game.boostOf(id);
+    const name = { heal: "Traveler's elixir", edge: "Whetstone", guard: "Aegis charm" }[id];
+    button.hidden = !game.save.provisions[id];
+    button.classList.toggle("boosting", !!boost);
+    text(`${id}-left`, left);
+    button.setAttribute("aria-label", `${name}: ${left} left${boost ? `, active for ${boost.turns} more turn${boost.turns === 1 ? "" : "s"}` : ""}`);
   }
 }
 

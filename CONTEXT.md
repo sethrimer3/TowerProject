@@ -250,7 +250,7 @@ _Avoid_: item Gold, floor Gold (that is Gold / Floor)
 ### The character
 
 **Loadout**:
-What the character starts a run with: ATK, DEF, max HP, shroud, Regen, keys and how many undos each run has. It comes from the baseline, the upgrades bought, the training bought, the equipped gear and the provisions bought.
+What the character starts a run with: ATK, DEF, max HP, shroud, Regen, keys and how many undos each run has. It comes from the baseline, the upgrades bought, the training bought and the equipped gear.
 _Avoid_: base stats, starting stats
 
 **Level**:
@@ -327,7 +327,7 @@ The HP a hero regains with every step taken in a run, after whatever the step di
 _Avoid_: regeneration, healing (a potion's)
 
 **Provision**:
-A lasting boost bought with Gold on the Gear page: each one bought adds to the loadout of every run from then on (a stat, a gold key, or a Bomb), and the next of its kind costs more.
+An item bought with Gold on the Gear page and kept for good: each one owned is a use every run carries (a heal, a boost, a Bomb) or, for the Gold Key, a gold key every 100 floors of a run; the next of its kind costs more.
 _Avoid_: consumable, buff
 
 ### Progress
@@ -556,6 +556,10 @@ _Avoid_: block, ban
 **Target**:
 Sending the hero inside a run to a tile the player taps, ahead of the hand, until it arrives.
 _Avoid_: waypoint, goto
+
+**Boost**:
+A Whetstone's or Aegis charm's raise of ATK or DEF by 20% for 100 turns of a run, the hero glowing red or blue while it lasts; undo never takes it away.
+_Avoid_: buff
 
 **Bomb**:
 A limited use a run carries, one for each Bomb provision owned: thrown at an enemy's tile the player taps, it deals that enemy the hero's ATK.

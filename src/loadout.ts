@@ -33,7 +33,7 @@ export const shotRow = (row: TrainingRow) => "goal" in row && SHOT_GOALS.has(row
 export const runTrainingOpen = (row: TrainingRow, save: Pick<Save, "upgrades" | "goals">, hand: readonly CardId[]) =>
   trainingOpen(row, save) && (!shotRow(row) || hand.includes("archer"));
 
-/** What one rank of an upgrade, or one provision, adds to a character. */
+/** What one rank of an upgrade adds to a character. */
 export type Grants = Partial<Record<Stat, number>>;
 export type Stat = "attack" | "defense" | "maxHp" | "shroud" | "regen" | "lifesteal" | "thorns" | "parry" | "yellow" | "blue" | "red" | "undos";
 
@@ -114,14 +114,13 @@ export const statFactor = (save: Pick<Save, "archives">, stat: Stat) =>
 /** The character a run in `mode` would start with now: the baseline,
  * permanent upgrades and training, then the equipment that mode's hero
  * wears (flat bonuses, then percentages of the total, fractions kept),
- * then the provisions bought, which last for good, the whole of ATK, DEF,
- * max HP and shroud then multiplied by their research (`statFactor`). */
+ * the whole of ATK, DEF, max HP and shroud then multiplied by their
+ * research (`statFactor`). Provisions add nothing here: each is a use the
+ * run carries (`Game.useProvision`). */
 export function loadout(save: Save, mode: Mode = "tower"): Loadout {
   const own = { ...BASE, yellow: 0, blue: 0, red: 0 };
   add(own, UPGRADES, save.upgrades);
   for (const row of TRAINING) if (isStatRow(row)) own[row.stat] += trained(row, save.training[row.id]);
-  const prov = { attack: 0, defense: 0, maxHp: 0, shroud: 0, regen: 0, lifesteal: 0, thorns: 0, parry: 0, yellow: 0, blue: 0, red: 0, undos: 0 };
-  add(prov, GOLD_SHOP, save.provisions);
   const eq = wornEffects(save, mode);
   // A drawback (Bloodprice Blade's max HP) never takes a stat below zero, or max HP below 1.
   const percent = (base: number, pct: number) => (pct ? snap(Math.max(0, (base * (100 + pct)) / 100)) : base);
@@ -131,9 +130,9 @@ export function loadout(save: Save, mode: Mode = "tower"): Loadout {
     return factor === 1 ? value : snap(value * factor);
   };
   return {
-    attack: researchedStat("attack", snap(percent(plus(own.attack, eq.attack), eq.attackPct) + prov.attack)),
-    defense: researchedStat("defense", snap(percent(plus(own.defense, eq.defense), eq.defensePct) + prov.defense)),
-    maxHp: Math.max(1, researchedStat("maxHp", snap(percent(plus(own.maxHp, eq.maxHp), eq.maxHpPct) + prov.maxHp))),
+    attack: researchedStat("attack", percent(plus(own.attack, eq.attack), eq.attackPct)),
+    defense: researchedStat("defense", percent(plus(own.defense, eq.defense), eq.defensePct)),
+    maxHp: Math.max(1, researchedStat("maxHp", percent(plus(own.maxHp, eq.maxHp), eq.maxHpPct))),
     shroud: researchedStat("shroud", plus(own.shroud, eq.shroud)),
     regen: plus(own.regen, eq.regen),
     lifesteal: own.lifesteal,
@@ -142,7 +141,7 @@ export function loadout(save: Save, mode: Mode = "tower"): Loadout {
     parry: Math.min(PARRY_CAP, snap(own.parry + researched(save.archives, "parryPercent") / 10)),
     bossAttack: eq.bossAttack,
     pierce: Math.min(eq.pierce, PIERCE_CAP),
-    keys: { yellow: own.yellow + prov.yellow, blue: own.blue + prov.blue, red: own.red + prov.red },
+    keys: { yellow: own.yellow, blue: own.blue, red: own.red },
     startKeys: { yellow: eq.yellowKeys, blue: eq.blueKeys },
     // Undo needs Rehearsed steps (its first undo) or Echoes of time: Undo
     // Count research, which either opens, stores the rest.
@@ -176,11 +175,8 @@ export function upgradeText(id: UpgradeId) {
   return u.description ?? describeGrants(u.grants!, u.words);
 }
 
-/** A provision's description, written from its grants. */
-export function provisionText(id: GoldItemId) {
-  const item: { grants: Grants; words?: Partial<Record<Stat, string>>; description?: string } = GOLD_SHOP.find((g) => g.id === id)!;
-  return item.description ?? describeGrants(item.grants, item.words);
-}
+/** A provision's description. */
+export const provisionText = (id: GoldItemId) => GOLD_SHOP.find((g) => g.id === id)!.description;
 
 /** Whether provision `id` shows and sells: its upgrade, if it names one, is owned. */
 export function provisionOpen(save: Pick<Save, "upgrades">, id: GoldItemId) {
@@ -190,13 +186,6 @@ export function provisionOpen(save: Pick<Save, "upgrades">, id: GoldItemId) {
 /** The Gold the next `id` provision costs, after those already bought. */
 export const provisionPrice = (save: Pick<Save, "provisions">, id: GoldItemId) =>
   schedulePrice(GOLD_SHOP.find((g) => g.id === id)!.price, save.provisions[id]);
-
-/** What a press of provision `id`'s button buys at quantity `q` out of
- * `gold`: the ranks, each dearer than the last, and their summed price. */
-export function provisionBulk(save: Pick<Save, "provisions">, id: GoldItemId, q: BuyQuantity, gold: number) {
-  const price = GOLD_SHOP.find((g) => g.id === id)!.price, owned = save.provisions[id];
-  return bulkBuy(q, Infinity, (k) => schedulePrice(price, owned + k), gold);
-}
 
 /** Training points: earned per level and by the weekly mission rewards
  * (`bonusTrainingPoints`), spent on ranks of training bought with them

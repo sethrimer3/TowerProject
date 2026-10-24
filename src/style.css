@@ -2577,32 +2577,40 @@ dialog.eq-result #eq-ok { flex: 0 1 220px; padding: 14px; font-size: 20px; }
 .warning { color: #f0a868; font-size: 11px; }
 .salvage-total { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-size: 11px; }
 .link-button { display: inline; padding: 0; border: none; background: none; color: var(--gold); text-decoration: underline; font-size: inherit; min-height: 0; }
-/* Provisions: the Gold to spend in its own column, left of the explanation. */
-.provision-head { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; }
+/* Provisions: the ? button and a word on how they are used, over the rows. */
+.provision-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
 .provision-head > .tree-help { flex-shrink: 0; margin-left: 0; }
 .provision-head .hint { margin: 0; }
-/* Beside the Gold: the starting stats the provisions on sale raise. */
-.starting-stats { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; border: 1px solid #3a4658; border-radius: 5px; background: #141c27; }
-.starting-stats > small { font-size: 8px; letter-spacing: 2px; color: #8f9bac; }
-.starting-stat-row { display: flex; flex-wrap: wrap; gap: 6px 14px; }
-.starting-stat { display: inline-flex; align-items: center; gap: 4px; font-size: 16px; color: #e9e1c8; }
-.starting-stat img { width: 20px; height: 20px; image-rendering: pixelated; vertical-align: middle; }
-.starting-stat i { font-style: normal; font-size: 9px; letter-spacing: 1px; color: #a8afbc; }
-.starting-stat.raised b { animation: stat-raised 0.9s ease-out; }
-@keyframes stat-raised {
-  0% { color: #fff; text-shadow: none; }
-  25% { color: #fff3b8; text-shadow: 0 0 8px #ffd77a; }
-  100% { color: inherit; text-shadow: none; }
+/* A provision's row: its words take the room between the icon and the Buy
+   button, which stands at the right with the row's small margin. */
+.card.provision { gap: 14px; }
+.provision-text { flex: 1; min-width: 0; }
+.card.provision > button { flex-shrink: 0; margin-left: auto; }
+/* The count owned: a number in a circle at the icon's bottom right. */
+.card.provision .item-icon { position: relative; flex-shrink: 0; }
+.owned-count {
+  position: absolute; right: -4px; bottom: -4px;
+  min-width: 20px; height: 20px; padding: 0 4px; box-sizing: border-box;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 10px; border: 1px solid #f3dca0; background: #5b4314; color: #fff3cf;
+  font-size: 11px; line-height: 1; font-weight: bold; box-shadow: 0 1px 3px #000a;
 }
-@media (prefers-reduced-motion: reduce) { .starting-stat.raised b { animation: none; } }
-/* A provision's icon glows once when one is bought. */
+/* A provision's icon glows once when one is bought, and its count bounces. */
 .item-icon.bought { border-radius: 50%; animation: provision-glow 0.9s ease-out; }
+.owned-count.bought { animation: owned-bounce 0.6s cubic-bezier(.3, 1.6, .5, 1); }
 @keyframes provision-glow {
   0% { box-shadow: 0 0 0 0 #ffd77a00; filter: brightness(1); }
   25% { box-shadow: 0 0 22px 10px #ffd77acc; filter: brightness(1.6) drop-shadow(0 0 6px #fff3b8); }
   100% { box-shadow: 0 0 0 0 #ffd77a00; filter: brightness(1); }
 }
-@media (prefers-reduced-motion: reduce) { .item-icon.bought { animation: none; } }
+@keyframes owned-bounce {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.6) translateY(-4px); }
+  65% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) { .item-icon.bought, .owned-count.bought { animation: none; } }
+html.reduce-motion :is(.item-icon.bought, .owned-count.bought) { animation: none; }
 #gear h3:first-of-type { margin-top: 4px; }
 #modal { max-height: 90dvh; overflow-y: auto; }
 /* Tower starting-section picker */
@@ -3942,6 +3950,10 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .charge-stat { padding: 0; cursor: pointer; font: inherit; }
 .charge-stat svg { width: 15px; height: 15px; }
 .charge-stat.armed { border-color: #ffe27a; box-shadow: 0 0 6px #ffe27a; }
+.provision-stat .charge-icon { width: 17px; height: 17px; image-rendering: pixelated; }
+/* A Whetstone's or Aegis charm's boost going on: its button lit like the hero's glow. */
+#edge-stat.boosting { border-color: #ff6a5a; box-shadow: 0 0 6px #ff6a5a; }
+#guard-stat.boosting { border-color: #6ab4ff; box-shadow: 0 0 6px #6ab4ff; }
 .focus-stat b {
   position: absolute;
   right: -3px;
@@ -5310,7 +5322,7 @@ html body dialog.proving-grounds-dialog h2 { font-size: 1.05rem; margin: 0 0 8px
 html.trial-manual #trial-overlay .trial-actions { bottom: 86px; }
 html.trial-manual #hand .hand-card { position: relative; cursor: default; }
 html.trial-manual #hand .hand-card::after { content: ""; position: absolute; inset: 4px; z-index: 8; pointer-events: none; background: linear-gradient(48deg, transparent 46%, #ed4539 47% 53%, transparent 54%), linear-gradient(-48deg, transparent 46%, #ed4539 47% 53%, transparent 54%); filter: drop-shadow(0 1px 1px #000); }
-html.trial-running :is(#focus-stat, #ignore-stat, #target-stat, #bomb-stat, #undo, #forest-sign, .tier-arrow) { display: none !important; }
+html.trial-running :is(#focus-stat, #ignore-stat, #target-stat, #bomb-stat, #heal-stat, #edge-stat, #guard-stat, #undo, #forest-sign, .tier-arrow) { display: none !important; }
 .proving-grounds-dialog .trial-level-label { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 14px; }
 .proving-grounds-dialog #trial-level { width: 100px; padding: 6px; }
 .proving-grounds-dialog #trial-level-preview { font-size: .8rem; line-height: 1.5; }

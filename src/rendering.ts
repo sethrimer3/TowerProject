@@ -28,6 +28,8 @@ import { DEFEAT_MS, drawStruckDown } from "./struck-down.ts";
 import { AREA_BURST_MS, drawAreaBurst, preloadAreaBurst, drawLevelUp, drawRevive, drawWarpLoot, LEVEL_UP_MS, POINTS_MS, REVIVE_MS, WARP_LOOT_MS } from "./level-up.ts";
 import { drawPoof, POOF_MS } from "./poof.ts";
 import { drawExplosion, EXPLOSION_MS } from "./explosion.ts";
+import { drawBoostGlow } from "./boost-glow.ts";
+import type { Boosted } from "./runs.ts";
 import { drawGem, drawGemSparkle, GEM_SPARKLE_MS } from "./gem-art.ts";
 import { DashEchoes } from "./dash-echoes.ts";
 import { drawVolley, ShotsInFlight } from "./volley-art.ts";
@@ -178,6 +180,7 @@ export class Renderer {
       }
     }
     this.echoes.draw(f, themed ? (c, facing) => themed.hero(c, facing) : (c) => paintHero(c, f.look.spritesOff, f.look.styledSprites, f.heroFacing));
+    if (!f.look.outside) drawBoostGlow(f, this.boosts);
     this.drawOverlays(f);
   }
   /** Gameplay feedback drawn over every board. */
@@ -673,17 +676,22 @@ export class Renderer {
     const p = this.game.run.player, t = this.target(this.density), near = (a: number, b: number) => Math.abs(a - b) < 0.01;
     return near(this.playerX, p.x) && near(this.playerY, p.y) && near(this.left, t.left) && near(this.bottom, t.bottom) && (!this.followsHero || this.camera.settled());
   }
+  /** The boosts going on in the run, which glow round the hero. */
+  private get boosts() {
+    return Object.keys(this.game.run.boosts ?? {}) as Boosted[];
+  }
   /** Every timed effect has played out: the arrival glow, a dash's echoes,
    * a blocked step, the feedback text, the level-up, skulls, revivals, an area
    * reward's burst, Warp Loot's, a Greater Boss's poof, a Bomb's explosion, a Gem's
-   * sparkle and the turn's shots in flight. */
+   * sparkle, the turn's shots in flight, and a boost's glow pulsing. */
   private effectsOver(now: number) {
     const g = this.game, sparkle = g.gemFinder.sparkle;
     return now - this.arrived > ARRIVAL_GLOW_MS && this.echoes.over(now) && g.blocked.until <= now && g.effect.until <= now &&
       now - g.levelUpAt >= LEVEL_UP_MS + POINTS_MS && g.fights.revivedAt.every((at) => now - at >= REVIVE_MS) && g.fights.struckDown.every((at) => now - at >= DEFEAT_MS) &&
       g.areaBursts.every((b) => now - b.at >= AREA_BURST_MS) && (!g.warpLooted || now - g.warpLooted.at >= WARP_LOOT_MS) &&
       (!g.summoned || now - g.summoned.at >= POOF_MS) && (!g.vanished || now - g.vanished.at >= POOF_MS) && (!g.bombed || now - g.bombed.at >= EXPLOSION_MS) &&
-      (!sparkle || now - sparkle.at >= GEM_SPARKLE_MS) && (!g.volley || volleyOver(g.volley, now)) && this.inFlight.over(now);
+      (!sparkle || now - sparkle.at >= GEM_SPARKLE_MS) && (!g.volley || volleyOver(g.volley, now)) && this.inFlight.over(now) &&
+      (g.save.settings.reduceMotion || !this.boosts.length);
   }
   /** Active torches roughly within the camera viewport, padded so a torch
    * whose center is just offscreen can still light visible ground. Cheap
