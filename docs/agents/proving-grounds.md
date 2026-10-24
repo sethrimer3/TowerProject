@@ -3,6 +3,10 @@
 The gold square two columns right of the Tower forest's path on row 4 opens **Proving Grounds Trials** when entered.
 `OutsideWorld.isProvingGrounds` identifies it, `Game.land` stops the route and asks for its menu, and `ProvingGroundsDialog` owns the entrance menu, trial controls and main-board presentation.
 Only the selection menu uses the shared modal; the encounter itself uses `#world`, the normal HUD, `#hand` and `RunTrainingBar`.
+Its numeric level selector (1–10,000) previews the encounter rules and remembers the selection in `save.trialAccess.level`.
+`access.ts` owns the shared two-key daily allowance (`day`, the UTC day index, and `spent`); `trialKeys` refills on a strictly later day, and `spendTrialKey` guards both entry and retry before replacing an attempt.
+Unused keys do not bank; reload/resume does not charge, and Dev mode bypasses spending without changing the ordinary allowance.
+The controller's once-a-second `tick` refreshes an open list or finished encounter across midnight, so disabled entries/retries become available without a reload.
 The two trials are separate encounters: `save.provingGrounds` stores the current attempt, while ordinary Tower and Delve runs, equipment, currencies and supplies remain untouched.
 The player's current max HP, ATK and DEF are copied into the attempt, which starts at full HP; other normal-run combat systems do not apply.
 `session.ts` creates an isolated `Game` over a cloned profile and the live `trialBoard` so the shared HUD and run-training bar use their existing code.
@@ -38,21 +42,26 @@ Its saved `elemental` holds its position, `incorporeal` flag and last teleport o
 The next laser volley restores corporeality, including when a hit and volley fall on the same turn.
 If the hero occupies the ghost's tile then, `materialize` moves the boss into the nearest free tile before casting, preventing a solid overlap without moving the hero.
 Every accepted move, strike or wait counts as one turn; blocked moves cost none, and staging moves do not advance arena hazards.
-Every third arena turn existing light slimes hop within a two-tile square radius and the elemental releases one more, up to six at once.
+Every third arena turn existing light slimes hop within a two-tile square radius.
+Independent releases happen every `max(2,20-2*floor(level/5))` arena turns, up to six slimes at once; spawned IDs are the turn of release, and a new slime immediately hops out from the elemental.
 Hops and elemental teleports use the saved seed and turn through `tileRandom` (plus the slime ID or teleport origin), so reloads preserve their future destinations without consuming another system's RNG.
 Slimes reserve their occupied tiles during a pulse, cannot land on walls, the boss or one another, and a landing on the hero deals 5% max HP before the slime disappears.
 Walking into a slime disperses it and moves onto its tile.
-Every tenth arena turn fires two rays from the elemental's current tile along the next axis: north–south, northeast–southwest, east–west, southeast–northwest, then repeat.
-The saved `beam` records its origin, axis and turn, keeping a recent flash anchored even if the boss teleports again.
+Every tenth arena turn fires `min(8,1+floor(level/10))` rays from the elemental's current tile.
+`beamHeadings` spreads them over eight compass headings via `floor(i*8/count)` offsets, then rotates the pattern one heading per volley.
+The saved `beam` records its origin, first heading (`axis`), count and turn, keeping a recent flash anchored even if the boss teleports again.
+Rendering, telegraphs, HUD directions, damage and scars use the same headings and ray cells.
 Rays stop on the first wall and mark its surface as well as every floor tile crossed; a hit costs 25% max HP, while each wall-side potion restores 35% once.
 Cracks persist for the attempt, their glow fading over 30 turns; victory removes the slimes and prevents further attacks, and defeat offers a fresh attempt or a safe exit.
-Boss HP is at least 240 and otherwise 24 times the copied ATK.
+Boss HP is `ceil(max(240,24*ATK)*(1+(level-1)/10))`; each level adds 10% of base HP while existing damage fractions remain unchanged.
 
 `decodeTrial` bounds the hand, seed, elemental phase/position, teleport origin/turn, beam origin/axis/turn, slime positions/IDs/hop origins, potion keys and scorch timestamps, and rejects invalid mode/input state.
 Trial layout version 2 restarts unversioned 50×50 attempts in manual staging with their copied stats, avoiding invalid positions after the shrink.
 Existing version 2 attempts without the additive elemental/beam fields keep their progress and gain a corporeal boss at the original center plus their last center-origin volley.
 The additive `displayHand` preserves visible cards even for manual attempts, while `purchases` holds trial Silver and known training ranks.
 Older attempts infer the displayed hand and start their isolated purchase balance on resume.
+Attempts without a level resume at level 1, retain their saved HP and slimes, and keep a previously fired two-ray flash when its saved beam has no count.
+Legacy four-axis beams normalize to the equivalent eight-heading axis on decode, so migrated attempts round-trip again after saving.
 Old saves without an attempt remain unchanged.
 
 ## Rendering and tests
@@ -66,5 +75,6 @@ Its animation clock is independent of player turns, and subsequent turns do not 
 Beam flashes last 900 ms, while visible cracks and their turn-based glow survive reloads.
 `tests/proving-grounds.test.ts` covers topology, entry, timing, slime collisions and deterministic reloads, mode input authority, real card priorities, combat, migration and separation from ordinary runs.
 `tests/trial-session.test.ts` covers the isolated HUD/training Game, real stat purchases, persistence, unsupported rows and protection of the original run.
+`tests/trial-levels.test.ts` covers HP scaling, every beam/spawn breakpoint and cap, ray damage, independent hopping, deterministic reloads, UTC refill, clock rollback and Dev bypass.
 `npm run test:proving` exercises both modes in the main shell, red X cards, actual training purchases, manual-input rejection, reload, autoplay, victory/retry and 320/390/1024-pixel layouts with the dev server running.
 The render goldens include staging, elemental, beam, glow, wall-scar, slime-hop, dissolution, light trails, reformation, ghost/reduced-motion and restored-corporeal laser frames.

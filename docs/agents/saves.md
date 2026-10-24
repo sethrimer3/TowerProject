@@ -40,3 +40,7 @@ Attempts predating those additive fields retain their progress with a corporeal 
 
 Trial `displayHand` stores the equipped faces shown in the normal hand bar, including disabled cards in manual mode.
 Trial `purchases` stores bounded Silver and known integer training ranks; their effects are already included in the saved trial hero, so resume restores ranks without applying them twice.
+`save.trialAccess` defaults to `{day:0,spent:0,level:1}` and decodes UTC day index, 0–2 spent daily keys and selected level 1–10,000 without consulting the clock.
+Only runtime entry/menu checks refill the allowance on a later UTC day; it is outside the attempt and cannot be reset by retry, leaving or reloading.
+Trials now save a fixed `level` (legacy attempts default to 1), and each beam may include its fired ray `count` (absent means the legacy two rays).
+Slime hop times validate against either the three-turn hop cadence or the level's release cadence; old IDs remain valid while new releases use their arena turn as ID.

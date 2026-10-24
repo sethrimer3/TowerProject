@@ -3,13 +3,13 @@ import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults, decode } from "../src/save.ts";
 import { OutsideWorld, PROVING_GROUNDS } from "../src/outside.ts";
-import { ARENA_POTIONS, ARENA_TORCHES, ARENA_SIZE, MAX_SLIMES, BEAM_AXES, ELEMENTAL, arenaFloor, beamCells, decodeTrial, floorAt, key, nextBeamAxis, startTrial, trialStep } from "../src/proving-grounds/trial.ts";
+import { ARENA_POTIONS, ARENA_TORCHES, ARENA_SIZE, MAX_SLIMES, BEAM_AXES, ELEMENTAL, arenaFloor, beamCells, beamCount, decodeTrial, floorAt, key, nextBeamAxis, startTrial, trialStep } from "../src/proving-grounds/trial.ts";
 
 import { autoplayTrial, trialPlan } from "../src/proving-grounds/autoplay.ts";
 
 const hero = () => new Game(defaults()).run.player;
-const arena = () => {
-  const s=startTrial(hero());
+const arena = (level = 1) => {
+  const s=startTrial(hero(),"manual",[],7391,level);
   for(let i=0;i<4;i++) assert.ok(trialStep(s,0,1).changed);
   assert.equal(s.room,"arena");
   return s;
@@ -48,13 +48,13 @@ test("staging stairs enter a connected 25×25 hexagon with border torches and po
 });
 
 test("opposing rays rotate 45 degrees every ten accepted turns, stop at walls and persist scars", () => {
-  const s=arena();
+  const s=arena(10);
   for(let shot=0;shot<8;shot++) {
-    const axis=shot%4;
+    const axis=shot%8;
     assert.equal(nextBeamAxis(s),axis);
     for(let i=0;i<9;i++)assert.equal(trialStep(s,0,0).fired,false);
     assert.ok(trialStep(s,0,0).fired);
-    const cells=beamCells(axis), [dx,dy]=BEAM_AXES[axis];
+    const cells=beamCells(axis), [dx,dy]=BEAM_AXES[axis%4];
     assert.ok(cells.some(p=>p.x===ELEMENTAL.x+dx&&p.y===ELEMENTAL.y+dy));
     assert.ok(cells.some(p=>p.x===ELEMENTAL.x-dx&&p.y===ELEMENTAL.y-dy));
     assert.equal(cells.filter(p=>!arenaFloor(p.x,p.y)).length,2);
@@ -69,6 +69,7 @@ test("blocked input costs no turn; beams damage only the actual ray and potions 
   const s=arena();s.player.x=ELEMENTAL.x;s.player.y=1;
   assert.equal(trialStep(s,0,-1).changed,false); assert.equal(s.steps,0);
   assert.equal(trialStep(s,1,1).changed,false);
+  s.player.y=22;
   s.steps=9;trialStep(s,0,0);
   assert.equal(s.player.hp,s.player.maxHp-Math.ceil(s.player.maxHp*.25));
   s.player.hp=Math.floor(s.player.maxHp/2);
@@ -83,7 +84,7 @@ test("boss strikes, victory and defeat resolve without touching the Tower run", 
   const s=arena();s.player.x=ELEMENTAL.x;s.player.y=ELEMENTAL.y-1;s.bossHp=s.player.attack;
   trialStep(s,0,1);assert.equal(s.status,"won");assert.equal(s.bossHp,0);
   assert.equal(trialStep(s,0,1).changed,false);
-  const lost=arena();lost.player.hp=1;lost.steps=9;
+  const lost=arena();lost.player.hp=1;lost.player.y=22;lost.steps=9;
   assert.ok(trialStep(lost,0,0).fired);assert.equal(lost.status,"lost");
   assert.equal(JSON.stringify(g.save),original);
 });
@@ -101,14 +102,14 @@ test("reload preserves room, countdown, potions, scars and boss health; malforme
   assert.equal(floorAt("staging",0,0),false);
 });
 
-test("slimes emerge from the elemental and hop to legal nearby random tiles every three steps", () => {
+test("slimes emerge every twenty turns and hop to legal nearby random tiles every three steps", () => {
   const s=arena();
-  trialStep(s,0,0); trialStep(s,0,0); assert.deepEqual(s.slimes,[]);
+  for(let i=0;i<19;i++)trialStep(s,0,0);
+  assert.deepEqual(s.slimes,[]);
   trialStep(s,0,0); assert.equal(s.slimes.length,1);
   assert.deepEqual(s.slimes[0].from,ELEMENTAL);
   const previous=structuredClone(s.slimes);
-  trialStep(s,0,0); trialStep(s,0,0); assert.deepEqual(s.slimes,previous);
-  trialStep(s,0,0); assert.equal(s.slimes.length,2);
+  trialStep(s,0,0); assert.equal(s.slimes.length,1);
   assert.deepEqual(s.slimes[0].from,{x:previous[0].x,y:previous[0].y});
   assert.notEqual(key(s.slimes[0]),key(previous[0]));
   for(let i=0;i<180;i++) {
@@ -123,7 +124,7 @@ test("slimes emerge from the elemental and hop to legal nearby random tiles ever
   }
   // Different seeds produce different destinations; neither draws from the game RNG.
   const other=arena();other.seed=s.seed+1;
-  for(let i=0;i<3;i++)trialStep(other,0,0);
+  for(let i=0;i<20;i++)trialStep(other,0,0);
   assert.notEqual(key(other.slimes[0]),key(previous[0]));
 });
 
@@ -156,8 +157,9 @@ test("card trials autoplay through staging using the equipped hand and reject ma
   assert.equal(trialStep(s,1,0).changed,false); assert.deepEqual(s,before);
   for(let i=0;i<4;i++)assert.ok(autoplayTrial(s).changed);
   assert.equal(s.room,"arena");assert.equal(s.steps,0);
-  for(let i=0;i<18;i++)autoplayTrial(s);
-  assert.ok(s.steps>0);assert.ok(s.slimes.length>0);assert.ok(s.bossHp<s.bossMaxHp);
+  let sawSlime=false;
+  for(let i=0;i<40;i++){s.player.hp=s.player.maxHp;autoplayTrial(s);sawSlime ||= s.slimes.length>0;}
+  assert.ok(s.steps>0);assert.ok(sawSlime);assert.ok(s.bossHp<s.bossMaxHp);
   s.playing=false;const paused=structuredClone(s);
   assert.equal(autoplayTrial(s).changed,false);assert.deepEqual(s,paused);
   assert.equal(trialStep(s,0,1).changed,false);
@@ -168,7 +170,7 @@ test("card targeting honors hand priority, enemy categories, and pauses when no 
   const s=arena();s.mode="cards";s.playing=true;s.hand=["heal","bossEnemy"];
   let plan=trialPlan(s)!;assert.equal(s.hand[plan.card],"heal");
   s.hand=["bossEnemy","heal"];plan=trialPlan(s)!;assert.equal(s.hand[plan.card],"bossEnemy");
-  for(let i=0;i<3;i++)autoplayTrial(s);
+  s.slimes=[{id:1,x:11,y:10,from:{x:11,y:10},jumped:3}];
   s.hand=["weakEnemy","bossEnemy"];plan=trialPlan(s)!;assert.equal(s.hand[plan.card],"weakEnemy");
   s.hand=["yellowKey"];const steps=s.steps;
   assert.match(autoplayTrial(s).message,/No card can act/);assert.equal(s.playing,false);assert.equal(s.steps,steps);
@@ -207,7 +209,7 @@ test("a starting hero can complete the manual trial with potions and beam dodges
     assert.ok(step.dx || step.dy || s.elemental.incorporeal);
     const landing={x:s.player.x+step.dx,y:s.player.y+step.dy};
     if(!s.elemental.incorporeal && key(landing)===key(s.elemental))Object.assign(landing,{x:s.player.x,y:s.player.y});
-    const danger=beamCells(nextBeamAxis(s),s.elemental);
+    const danger=beamCells(nextBeamAxis(s),s.elemental,beamCount(s.level));
     if(s.steps%10===9 && danger.some(p=>key(p)===key(landing))) {
       const safe=[[1,0],[-1,0],[0,1],[0,-1]].find(([dx,dy])=> {
         const p={x:s.player.x+dx,y:s.player.y+dy};
@@ -272,6 +274,7 @@ test("autoplay waits through an untargetable phase rather than pausing the laser
   assert.ok(autoplayTrial(s).fired);assert.equal(s.elemental.incorporeal,false);
   // Other real enemies remain valid while the boss is a ghost.
   s.elemental.incorporeal=true;s.hand=["monster"];
+  s.slimes=[{id:1,x:11,y:10,from:{x:11,y:10},jumped:9}];
   assert.ok(trialPlan(s));
 });
 
@@ -283,11 +286,10 @@ test("lasers and new slimes originate at the teleported tile and previous beam f
   trialStep(s,0,1);
   assert.deepEqual(s.beam,beam);
   const target={x:s.elemental.x,y:s.elemental.y};
-  trialStep(s,0,0);
-  assert.deepEqual(s.slimes.find(p=>p.id===4)?.from,target);
   while(s.steps<20)trialStep(s,0,0);
-  assert.deepEqual(s.beam,{origin:target,axis:1,step:20});
-  for(const p of beamCells(1,target))assert.equal(s.scorches[key(p)],20);
+  assert.deepEqual(s.slimes.find(p=>p.id===20)?.from,target);
+  assert.deepEqual(s.beam,{origin:target,axis:1,step:20,count:1});
+  for(const p of beamCells(1,target,1))assert.equal(s.scorches[key(p)],20);
   assert.deepEqual(decodeTrial(s),s);
 });
 

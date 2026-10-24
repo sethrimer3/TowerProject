@@ -533,6 +533,7 @@ bindInput(
 
 /** Research completes on the wall clock, whatever page shows. */
 function archivesTick() {
+  provingGrounds.tick();
   const researched = game.research.settle().length > 0, trained = game.training.settle() > 0;
   // New missions come every 8 hours on the clock, and the Event's daily.
   const given = game.missions.refresh(), released = game.events.refresh();

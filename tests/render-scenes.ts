@@ -578,6 +578,13 @@ function playProvingGrounds(_name: string, _seed: number, canvas: HTMLCanvasElem
   renderer.draw(state,8500,0,true,false); grab("ghostReducedMotion");
   while(state.steps%10!==0) trialStep(state,0,0);
   renderer.draw(state,9000,8900,true,false); grab("corporealLasers");
+  const high=startTrial(state.player,"manual",[],7391,70);
+  for(let i=0;i<4;i++)trialStep(high,0,1);
+  high.player.y=11;
+  for(let i=0;i<8;i++)trialStep(high,0,0);
+  renderer.draw(high,10000,0,true,false);grab("eightBeamWarning");
+  trialStep(high,0,0);trialStep(high,0,0);
+  renderer.draw(high,11000,10900,true,false);grab("eightBeams");
 }
 
 /** Which canvas a job draws on: the 408 px board, the Defend board (which

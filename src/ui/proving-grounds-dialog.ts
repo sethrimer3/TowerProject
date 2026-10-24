@@ -1,5 +1,6 @@
 import type { Game } from "../state.ts";
-import { BEAM_INTERVAL, nextBeamAxis, startTrial, trialStep, type TrialMode } from "../proving-grounds/trial.ts";
+import { BEAM_INTERVAL, beamCount, beamHeadings, bossHpFactor, nextBeamAxis, slimeSpawnInterval, startTrial, trialStep, type TrialMode } from "../proving-grounds/trial.ts";
+import { MAX_TRIAL_LEVEL, spendTrialKey, trialKeys } from "../proving-grounds/access.ts";
 import { autoplayTrial, trialPlan } from "../proving-grounds/autoplay.ts";
 import type {TrainingId} from "../config.ts";
 import { TrialSession, TRIAL_TRAINING } from "../proving-grounds/session.ts";
@@ -53,8 +54,13 @@ export class ProvingGroundsDialog {
   get viewGame() { this.session?.sync();return this.session?.game; }
   allowsTraining(id: TrainingId) {return TRIAL_TRAINING.has(id);}
   get displayHand() { return this.session?.state.displayHand; }
+  tick() {
+    if(this.modal.open && this.modal.querySelector("#trial-level"))this.refreshAccess();
+    else if(this.session && this.session.state.status!=="active")this.decorate();
+  }
   check() {
     if(this.session && this.session.state!==this.base.save.provingGrounds)this.detach();
+    if(this.modal.open && this.modal.querySelector("#trial-level"))this.refreshAccess();
     if(this.active || this.modal.open)return;
     if(this.base.provingGroundsRequested) {this.base.provingGroundsRequested=false;this.openMenu();}
     else if(this.base.save.provingGrounds)this.openTrial();
@@ -62,20 +68,49 @@ export class ProvingGroundsDialog {
   private openMenu() {
     this.base.auto=false;this.base.cancelRoute();
     this.modal.classList.add("proving-grounds-dialog");
-    this.modal.innerHTML=`<h2 id="trial-heading">Proving Grounds Trials</h2><p>A 25×25 dark hexagonal chamber. Rotating beams every ten steps; jumping light slimes every three.</p>
-      <button id="trial-light-elemental-cards" class="trial-choice"><b>Trial I — Light Elemental · With cards</b><small>Your equipped hand controls movement automatically. No manual movement.</small></button>
-      <button id="trial-light-elemental" class="trial-choice"><b>Trial II — Light Elemental · No cards</b><small>Control every move yourself. Your cards are crossed out and disabled.</small></button>
+    this.modal.innerHTML=`<h2 id="trial-heading">Proving Grounds Trials</h2>
+      <p id="trial-key-balance" role="status"></p><small>Two keys daily, shared by all trials. Refills at midnight UTC. Entries and retries cost one key.</small>
+      <label class="trial-level-label" for="trial-level">Trial level <input id="trial-level" type="number" min="1" max="${MAX_TRIAL_LEVEL}" step="1" required value="${this.base.save.trialAccess.level}"></label>
+      <p id="trial-level-preview" aria-live="polite"></p>
+      <button id="trial-light-elemental-cards" class="trial-choice"><b>Trial I — Light Elemental · With cards</b><small>Your equipped hand controls movement automatically. No manual movement.</small><span>Enter · 1 trial key</span></button>
+      <button id="trial-light-elemental" class="trial-choice"><b>Trial II — Light Elemental · No cards</b><small>Control every move yourself. Your cards are crossed out and disabled.</small><span>Enter · 1 trial key</span></button>
       <p>Your stats carry into a separate attempt at full health. Trial training uses its own Silver; your Tower run stays safe.</p><button id="trial-menu-leave">Return to the forest</button>`;
     this.modal.setAttribute("aria-labelledby","trial-heading");
     this.modal.showModal();
+    const input=el("trial-level") as HTMLInputElement;
+    const preview=()=> {
+      if(!input.validity.valid) {el("trial-level-preview").textContent=`Choose a whole level from 1 to ${MAX_TRIAL_LEVEL}.`;return;}
+      const level=input.valueAsNumber;
+      this.base.save.trialAccess.level=level;
+      el("trial-level-preview").textContent=`Level ${level} · Boss HP ×${bossHpFactor(level).toFixed(1)} · ${beamCount(level)} beam(s) every 10 turns · Slime every ${slimeSpawnInterval(level)} turns. Slimes hop every 3 turns.`;
+      this.save();
+    };
+    input.oninput=preview;preview();this.refreshAccess();
     for(const [id,mode] of [["trial-light-elemental-cards","cards"],["trial-light-elemental","manual"]] as const) {
-      el(id).onclick=()=> {this.begin(mode);this.modal.close();this.openTrial();};
+      el(id).onclick=()=> {
+        if(!input.reportValidity())return;
+        if(!this.begin(mode,input.valueAsNumber)){this.refreshAccess();return;}
+        this.modal.close();this.openTrial();
+      };
     }
     el("trial-menu-leave").onclick=()=>this.modal.close();
   }
-  private begin(mode: TrialMode) {
-    this.base.save.provingGrounds=startTrial(this.base.run.player,mode,this.base.hand,this.base.run.seed);
+  private refreshAccess() {
+    const day=this.base.save.trialAccess.day,keys=trialKeys(this.base.save,this.base.clock());
+    el("trial-key-balance").textContent=keys===Infinity?"Trial keys: Unlimited (Developer mode)":`Trial keys: ${keys} / 2`;
+    for(const id of ["trial-light-elemental-cards","trial-light-elemental"]) {
+      const choice=el(id) as HTMLButtonElement;
+      choice.disabled=keys===0;
+      choice.querySelector("span")!.textContent=keys===Infinity?"Enter · Free":"Enter · 1 trial key";
+    }
+    if(day!==this.base.save.trialAccess.day)this.save();
+  }
+  private begin(mode: TrialMode, level: number) {
+    if(!spendTrialKey(this.base.save,this.base.clock()))return false;
+    this.base.save.trialAccess.level=level;
+    this.base.save.provingGrounds=startTrial(this.base.run.player,mode,this.base.hand,this.base.run.seed,level);
     this.firedAt=0;this.message="Climb the staircase to enter the trial.";
+    this.save();return true;
   }
   private openTrial() {
     // An older paused Delve must not steal the Tower trial on reload.
@@ -94,7 +129,7 @@ export class ProvingGroundsDialog {
       <div class="trial-actions"><button id="trial-retry" hidden>Retry trial</button><button id="trial-leave">Leave trial</button></div>
       <div class="trial-controls"><button data-trial-move="-1,0" aria-label="Move west">◀</button><button data-trial-move="0,1" aria-label="Move north">▲</button><button data-trial-move="0,0" aria-label="Wait one turn">Wait</button><button data-trial-move="0,-1" aria-label="Move south">▼</button><button data-trial-move="1,0" aria-label="Move east">▶</button></div></div>`);
     el("trial-leave").onclick=()=>this.leave();
-    el("trial-retry").onclick=()=> {const mode=this.session!.state.mode;this.begin(mode);this.openTrial();};
+    el("trial-retry").onclick=()=> {const {mode,level}=this.session!.state;if(this.begin(mode,level))this.openTrial();else this.changed();};
     document.querySelectorAll<HTMLButtonElement>("[data-trial-move]").forEach(b=>b.onclick=()=> {const [dx,dy]=b.dataset.trialMove!.split(",").map(Number);this.step(dx,dy);});
     if(this.session.state.mode==="cards" && this.session.state.playing && this.base.save.settings.speed===0)this.base.save.settings.speed=1;
     this.nextAutoAt=performance.now()+450;
@@ -153,9 +188,12 @@ export class ProvingGroundsDialog {
     if(manual) {el("auto-state").textContent="MANUAL";el("auto").setAttribute("aria-label","Manual movement — cards disabled");}
     (el("speed-down") as HTMLButtonElement).disabled ||= manual;
     (el("speed-up") as HTMLButtonElement).disabled ||= manual;
-    const direction=["N–S","NE–SW","E–W","SE–NW"][nextBeamAxis(s)];
-    el("trial-vitals").textContent=s.room==="staging"?"Light Elemental · Staging room":`Elemental ${Math.ceil(s.bossHp)}/${Math.ceil(s.bossMaxHp)} · ${s.elemental.incorporeal?"Incorporeal · invincible":"Corporeal"} · Beam ${direction} in ${BEAM_INTERVAL-s.steps%BEAM_INTERVAL}`;
-    (el("trial-retry") as HTMLButtonElement).hidden=s.status==="active";
+    const names=["N","NE","E","SE","S","SW","W","NW"];
+    const direction=beamHeadings(nextBeamAxis(s),beamCount(s.level)).map(i=>names[i]).join("/");
+    el("trial-vitals").textContent=s.room==="staging"?`Light Elemental · Level ${s.level} · Staging room`:`Lv ${s.level} · Elemental ${Math.ceil(s.bossHp)}/${Math.ceil(s.bossMaxHp)} · ${s.elemental.incorporeal?"Incorporeal · invincible":"Corporeal"} · Beam ${direction} in ${BEAM_INTERVAL-s.steps%BEAM_INTERVAL}`;
+    const retry=el("trial-retry") as HTMLButtonElement,keys=trialKeys(this.base.save,this.base.clock());
+    retry.hidden=s.status==="active";retry.disabled=keys===0;
+    retry.textContent=keys===Infinity?"Retry trial · Free":keys===0?"No keys · midnight UTC":"Retry trial · 1 key";
     const controls=document.querySelector<HTMLElement>("#trial-overlay .trial-controls")!;controls.hidden=!manual;
     controls.querySelectorAll<HTMLButtonElement>("button").forEach(b=>b.disabled=s.status!=="active");
     const utility=document.querySelector<HTMLButtonElement>('[data-run-group="utility"]');
@@ -166,7 +204,7 @@ export class ProvingGroundsDialog {
       card.title=`${CARDS[card.dataset.card as keyof typeof CARDS].name}${manual?" — disabled in manual trials":" — trial card"}`;
       if(manual)card.classList.remove("active","focused");
     });
-    Object.assign(this.canvas.dataset,{trialMode:s.mode,trialRoom:s.room,trialSteps:String(s.steps),trialPhase:s.elemental.incorporeal?"incorporeal":"corporeal"});
+    Object.assign(this.canvas.dataset,{trialMode:s.mode,trialLevel:String(s.level),trialRoom:s.room,trialSteps:String(s.steps),trialPhase:s.elemental.incorporeal?"incorporeal":"corporeal"});
   }
   leave() {
     if(!this.active)return;
@@ -176,7 +214,7 @@ export class ProvingGroundsDialog {
     this.session=null;this.renderer=null;
     document.documentElement.classList.remove("trial-running","trial-manual");
     el("trial-overlay")?.remove();
-    for(const key of ["trialMode","trialRoom","trialSteps","trialPhase"])delete this.canvas.dataset[key];
+    for(const key of ["trialMode","trialLevel","trialRoom","trialSteps","trialPhase"])delete this.canvas.dataset[key];
     this.canvas.setAttribute("aria-label",this.originalLabel);this.canvas.tabIndex=this.originalTabIndex;
     el("hand").querySelectorAll("[aria-disabled]").forEach(c=>c.removeAttribute("aria-disabled"));
     (el("base-enemy") as HTMLButtonElement).disabled=false;el("end-run").textContent="End Run";
