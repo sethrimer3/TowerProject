@@ -13,8 +13,6 @@ export const TOWER_START_X = 8;
 /** Tower floors come in isolated sections of this many rooms. */
 export const TOWER_SECTION = 10;
 export const SAVE_KEY = "towerdelve.v1";
-/** Where saves were kept before the game was named Tower Delve; `load` reads it when nothing is under `SAVE_KEY`. */
-export const OLD_SAVE_KEY = "towerincramental.v1";
 export const COLORS: Record<KeyColor, string> = { yellow: "#eac16b", blue: "#6dbdf1", red: "#df797e" };
 export type Currency = "courage" | "inspiration";
 /** Upgrades that make the character stronger say so in `grants` (what one

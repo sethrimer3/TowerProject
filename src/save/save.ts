@@ -3,7 +3,7 @@ import { defaultTrialAccess, decodeTrialAccess } from "../proving-grounds/access
 import { TRAINER_GEMS, trainingSlots, type TrainingJob, type TrainingPaid } from "../progression/training-jobs.ts";
 import { count, dropInvalid, finite, fraction, isRecord, wholeIn } from "./decode.ts";
 import { TIERS } from "../tiers.ts";
-import { GOLD_SHOP, PROVISION_BOOST_TURNS, USED_PROVISIONS, OLD_SAVE_KEY, SAVE_KEY, TOWER_WIDTH, TRAINING, UPGRADES, WIDTH, amountAt, trainingCeiling, trainingDef, type UpgradeId } from "../config.ts";
+import { GOLD_SHOP, PROVISION_BOOST_TURNS, USED_PROVISIONS, SAVE_KEY, TOWER_WIDTH, TRAINING, UPGRADES, WIDTH, amountAt, trainingCeiling, trainingDef, type UpgradeId } from "../config.ts";
 import type { AutomoveMemory, DelveRun, Fall, MoveSnapshot, Run, TowerRun } from "../runs.ts";
 import type { ModeSave, Save } from "./shape.ts";
 import { emptyMaterials, MATERIAL_IDS, type MaterialId } from "../economy/materials.ts";
@@ -389,10 +389,10 @@ const decodeJob = (j: any): TrainingJob => ({
   gold: count(j.gold, 0, Number.MAX_SAFE_INTEGER), ms: count(j.ms, j.completesAt - j.startedAt, Number.MAX_SAFE_INTEGER),
   ranks: Math.max(1, count(j.ranks, 1, 1000)), speed: Math.max(1, count(j.speed, 1, 10)), used: count(j.used, 0, Number.MAX_SAFE_INTEGER),
 });
-/** Existing records are already rewarded; preserve old balances without double-paying. */
+/** Each mode's floor reached, never above its best. */
 function decodeReached(s: any, d: Save) {
   for (const mode of ["tower", "delve"] as const) {
-    d[mode].reached = count(s?.[mode]?.reached, d[mode].best);
+    d[mode].reached = count(s?.[mode]?.reached, d[mode].reached);
     d[mode].best = Math.max(d[mode].best, d[mode].reached);
   }
 }
@@ -501,7 +501,7 @@ export function decode(raw: string | null): Save {
 }
 export function load(): Save {
   try {
-    return decode(localStorage.getItem(SAVE_KEY) ?? localStorage.getItem(OLD_SAVE_KEY));
+    return decode(localStorage.getItem(SAVE_KEY));
   } catch {
     return defaults();
   }
