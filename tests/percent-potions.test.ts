@@ -1,7 +1,6 @@
 import { trainNow } from "./train-now.ts";
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { defaults } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
 import { ENTRANCE_Y } from "../src/outside.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
@@ -12,6 +11,7 @@ import { trainingPoints, trainingStep } from "../src/progression/loadout.ts";
 import { xpForLevel } from "../src/progression/xp.ts";
 import { trainedAmount } from "../src/progression/training.ts";
 import type { Player, Tile } from "../src/entities.ts";
+import { playedSave } from "./first-skills.ts";
 
 const redPotions = (tiles: Iterable<Tile>) => [...tiles].filter((t) => t.kind === "potion" && t.color === "red").length;
 const boardTiles = (b: { tile(x: number, y: number): Tile }, w: number, y0: number, y1: number) => {
@@ -31,7 +31,7 @@ test("a percent potion restores its HP and a share of max HP, which Potion HP le
 });
 
 test("Recovery opens percent potions at 1%, and Potion % training adds 0.25% a rank", () => {
-  const s = defaults();
+  const s = playedSave();
   s.xp = xpForLevel(2);
   assert.equal(trainedAmount(s, "potion"), 0);
   const g = new Game(s);
@@ -78,7 +78,7 @@ test("the Delve's guard potions are percent potions by the run's chance", () => 
 });
 
 test("percent potions come at 2% with Recovery; Find Potion training adds 0.25% a rank, up to 20%", () => {
-  const s = defaults();
+  const s = playedSave();
   s.xp = xpForLevel(40);
   const g = new Game(s);
   assert.equal(trainedAmount(s, "findPotion"), 0);
@@ -102,7 +102,7 @@ test("percent potions come at 2% with Recovery; Find Potion training adds 0.25% 
 });
 
 test("a run fixes its chance of percent potions when it goes inside, from what was bought in the forest", () => {
-  const g = new Game(defaults());
+  const g = new Game(playedSave());
   g.save.xp = xpForLevel(5);
   g.newRun({ outside: true, seed: 3 });
   g.save.tower.inspiration = 100;
@@ -114,7 +114,7 @@ test("a run fixes its chance of percent potions when it goes inside, from what w
   assert.equal(g.run.percentPotions, 250);
   assert.ok(trainNow(g, "findPotion"));
   assert.equal(g.run.percentPotions, 250, "training inside waits for the next run");
-  const without = new Game(defaults());
+  const without = new Game(playedSave());
   without.newRun({ seed: 3 });
   assert.equal(without.run.percentPotions, undefined);
 });

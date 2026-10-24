@@ -4,6 +4,7 @@ import { area1DoorRule, doorCost, doorId, doorName } from "../src/doors.ts";
 import { resolveStep } from "../src/step-effects.ts";
 import { tierTile } from "../src/tiers.ts";
 import type { Player, Tile } from "../src/entities.ts";
+import { playedSave } from "./first-skills.ts";
 
 const player = (yellow = 0, blue = 0, red = 0, hp = 10, maxHp = 10): Player => ({
   x: 0, y: 0, attack: 1, defense: 0, hp, maxHp, keys: { yellow, blue, red },
@@ -39,11 +40,10 @@ test("heart always opens without keys and legacy doors remain compatible", () =>
   assert.deepEqual(doorCost({ kind: "door", color: "red" }, player(0, 0, 1)), ["red"]);
 });
 
-test("Heart Door Resilience research shrinks a Heart Door's toll 5% a level, for ten levels, on Focus Count's curve", async () => {
+test("Heart Door Resilience research shrinks a Heart Door's toll 5% a level, for ten levels, on Undo Count's curve", async () => {
   const { resolveStep, BASE_RULES } = await import("../src/step-effects.ts");
   const { RESEARCH, researched } = await import("../src/progression/archives.ts");
   const { Game } = await import("../src/state.ts");
-  const { defaults } = await import("../src/save/save.ts");
   const heart: Tile = { kind: "door", door: { type: "fullHp" } };
   const hpAfter = (heartToll?: number, scale?: number) => {
     const out = resolveStep(player(0, 0, 0, 101, 101), heart, { ...BASE_RULES, heartToll, scale });
@@ -53,10 +53,10 @@ test("Heart Door Resilience research shrinks a Heart Door's toll 5% a level, for
   assert.equal(hpAfter(50), 51, "half the toll at level 10");
   assert.equal(hpAfter(50, 0.8), 61, "after Dampen's scale");
   const levels = RESEARCH.heartDoorResilience.levels;
-  assert.deepEqual(levels.map((l) => l.gold), RESEARCH.focusCount.levels.concat({ gold: 23_000 } as never).map((l) => l.gold));
+  assert.deepEqual(levels.map((l) => l.gold), RESEARCH.undoCount.levels.concat({ gold: 18_500 } as never, { gold: 23_000 } as never).map((l) => l.gold));
   assert.deepEqual(levels.map((l) => l.hours), Array.from({ length: 10 }, (_, i) => 8 * (i + 1)));
   assert.deepEqual(RESEARCH.heartDoorResilience.requires, [{ upgrade: "heartDoorResilience" }]);
-  const g = new Game(defaults());
+  const g = new Game(playedSave());
   assert.equal(g.stepRules.heartToll, 100);
   g.save.archives.levels.heartDoorResilience = 10;
   assert.equal(researched(g.save.archives, "heartToll"), 50);

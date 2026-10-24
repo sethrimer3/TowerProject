@@ -74,7 +74,7 @@ export function defaults(): Save {
     cardBuys: defaultCardBuys(),
     handSlots: 0,
     badges: defaultBadges(),
-    tutorials: { deck: false, removeCard: false, addCard: false, upgrades: false, gear: false, onTheJob: false, speed: false, climb: false, enter: false, delve: false, chamber: false, cardPoints: false },
+    tutorials: { deck: false, removeCard: false, addCard: false, upgrades: false, gear: false, onTheJob: false, speed: false, climb: false, keys: false, stuck: false, enemy: false, enter: false, delve: false, chamber: false, cardPoints: false },
     treeNotices: { inspiration: false, courage: false },
     seen: { level: 0, training: 0, archives: 0, cards: [...BASE_HAND], cardLevels: 0, met: [...BASE_HAND] },
     archives: defaultArchives(),
@@ -174,7 +174,6 @@ const RUN_FIELD_CHECKS = {
   hand: validHand,
   silver: (v: unknown) => finite(v),
   xp: (v: unknown) => wholeIn(v, 0, 1e9),
-  focusUsed: (v: unknown) => wholeIn(v, 0, 99),
   ignoreUsed: (v: unknown) => wholeIn(v, 0, 99),
   targetUsed: (v: unknown) => wholeIn(v, 0, 99),
   bombsUsed: (v: unknown) => wholeIn(v, 0, 999),
@@ -182,10 +181,10 @@ const RUN_FIELD_CHECKS = {
   boosts: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, b]: [string, any]) => (k === "attack" || k === "defense") && isRecord(b) && finite(b.amount) && b.amount >= 0 && wholeIn(b.turns, 1, PROVISION_BOOST_TURNS)),
   keyFloor: (v: unknown) => wholeIn(v, 0, 1e9),
   undosUsed: (v: unknown) => wholeIn(v, 0, 99),
-  regain: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, n]) => ["focus", "ignore", "target"].includes(k) && wholeIn(n, 1, 1e6)),
+  regain: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, n]) => ["ignore", "target"].includes(k) && wholeIn(n, 1, 1e6)),
   ignored: (v: any) => isRecord(v) && wholeIn(v.floor, 0, 1e6) && Array.isArray(v.tiles) && v.tiles.every((t: unknown) => typeof t === "string" && POINT_KEY.test(t)),
   targeted: (v: unknown) => typeof v === "string" && POINT_KEY.test(v),
-  // The hand is checked first: a focused card must be in it.
+  // The hand is checked first: a pressed card must be in it.
   focused: (v: unknown, r: any) => !!r.hand?.includes(v),
   training: validRunTraining,
   cardUses: (v: unknown) => isRecord(v) && Object.entries(v).every(([id, n]) => IN_PLACE.has(id as CardId) && wholeIn(n, 1, 1e6)),
@@ -223,7 +222,7 @@ const RUN_FIELD_CHECKS = {
  * `changes` now, and the memory beside the run), and malformed optional
  * fields. */
 function without<R>(r: any, fields: string[]): R {
-  for (const k of ["rewards", "known", "visited", "focus", ...fields]) delete r[k];
+  for (const k of ["rewards", "known", "visited", "focus", "focusUsed", ...fields]) delete r[k];
   dropInvalid(r, RUN_FIELD_CHECKS);
   return r;
 }
@@ -328,6 +327,10 @@ function decodeInventory(s: any, d: Save) {
 // --- Settings, currencies and records ---
 function decodeUpgrades(raw: any, d: Save) {
   for (const u of UPGRADES) d.upgrades[u.id] = count(raw?.[u.id], d.upgrades[u.id], u.max);
+  // A save from before the first skills (Door & Key, Enemy, Auto-Climb) that
+  // owns Combat Stance, which now follows them, owns them too, so its hand
+  // keeps DOOR, KEY and ENEMY and plays by itself. TODO: drop in a later save version.
+  if (d.upgrades.combatStance) for (const id of ["cardDoorKey", "cardEnemy", "autoClimb"] as const) d.upgrades[id] = Math.max(1, d.upgrades[id]);
 }
 function decodeProgress(s: any, d: Save, undoCapacity: number) {
   d.gold = fraction(s.gold, d.gold);
@@ -492,7 +495,7 @@ export function decode(raw: string | null): Save {
     d.cardBuys = decodeCardBuys(s.cardBuys);
     d.cardTrees = decodeCardTrees(s.cardTrees, d.cardXp, d.cardBuys.opened);
     d.badges = decodeBadges(s.badges, d.upgrades, researched(d.archives, "badgeSlots"), d.goals);
-    for (const k of ["deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob", "speed", "climb", "enter", "delve", "chamber", "cardPoints"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
+    for (const k of ["deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob", "speed", "climb", "keys", "stuck", "enemy", "enter", "delve", "chamber", "cardPoints"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
     // A player who has already spent a card point needs no lesson on it.
     if (CARD_IDS.some((id) => pointsSpent(d.cardTrees, id) > 0)) d.tutorials.cardPoints = true;
     for (const k of ["inspiration", "courage"] as const) d.treeNotices[k] = s.treeNotices?.[k] === true;

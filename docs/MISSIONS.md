@@ -27,7 +27,6 @@ Missions are small tasks the game gives the player, each paying a reward when cl
 | Buy 10 run training upgrades | 10 | On the Job owned |
 | Pick up 10 blue keys | 10 | once blue keys' first floor has been reached (`keyFirstFloor`) |
 | Pick up 5 red keys | 5 | once red keys' first floor has been reached |
-| Focus on 2 cards | 2 | the Focus skill owned |
 
 "Reached" means any open tower's record (`best`, the selected tower's or one kept in `tierRecords`) is at or past that tower's first floor for it, or the Delve's equivalent floor in the delve of the same number.
 Strong and elite enemies and Buy 1 badge are offered only once possible, so no new player is handed a mission they can't work on.
@@ -38,7 +37,7 @@ Strong and elite enemies and Buy 1 badge are offered only once possible, so no n
 - **Kills** by strength, **potions** and **blue and red keys** picked up: each tile once (`save.missions.counted`, keyed by mode and the mode's loot key), so undo bringing a tile back never counts it twice.
 - **Training:** each rank bought with training points, or finished by a trainer (`TrainingDesk`).
 - **Badges:** each badge drawn (`BadgeDesk.draw`).
-- **Run training** and **Focus:** what undo can take back counts only past the most the run has had (`save.missions.marks`, by mode and run seed).
+- **Run training:** what undo can take back counts only past the most the run has had (`save.missions.marks`, by mode and run seed).
 - Tournament runs count like any other.
 
 ### Reward

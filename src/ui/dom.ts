@@ -111,7 +111,7 @@ const SKILL_ITEM_SPRITES: Partial<Record<UpgradeId, keyof typeof AREA1_ITEM_URLS
 };
 const SKILL_UI_SPRITES: Partial<Record<UpgradeId, UiSprite>> = {
   inspirationUndos: "undo", undos: "undo", archives: "log",
-  delve: "delve", gear: "gear", moveSpeed: "automove", dash: "automove", instantCombat: "attack", trainers: "arrow-up", fasterTrainers: "automove", freeTraining: "arrow-up", buyQuantity: "arrow-up",
+  delve: "delve", gear: "gear", autoClimb: "automove", moveSpeed: "automove", dash: "automove", instantCombat: "attack", trainers: "arrow-up", fasterTrainers: "automove", freeTraining: "arrow-up", buyQuantity: "arrow-up",
   revive: "revive", overheal: "health", spareChange: "gold", loot: "gold", floorSkipReward: "gold", mug: "gold", legacy: "tower", quality: "tower",
   wisdomFocus: "settings", wisdomMemory: "undo", wisdomSight: "upgrades",
   renownBanner: "tower", renownOath: "defense", renownCrown: "gear",
@@ -120,13 +120,13 @@ const SKILL_UI_SPRITES: Partial<Record<UpgradeId, UiSprite>> = {
 /** Skills about Silver show the Gold coin drained of colour, as the purse does. */
 const SKILL_SILVER = new Set<UpgradeId>(["wealthy", "wishingWell", "onTheJob", "pocketMoney", "interest", "maxInterest"]);
 /** Skills about the hand show a card face. */
-const SKILL_CARDS: Partial<Record<UpgradeId, CardId>> = { combatStance: "stairs", buildout: "monster", cardHeal: "heal", cardAtkUp: "atkUp", cardDefUp: "defUp", cardBlueKey: "blueKey", keySiphon: "keySiphon",
+const SKILL_CARDS: Partial<Record<UpgradeId, CardId>> = { cardDoorKey: "door", cardEnemy: "monster", combatStance: "stairs", buildout: "monster", cardHeal: "heal", cardAtkUp: "atkUp", cardDefUp: "defUp", cardBlueKey: "blueKey", keySiphon: "keySiphon",
   cardYellowDoor: "yellowDoor", cardHeartDoor: "heartDoor", cardWeakEnemy: "weakEnemy", cardBaseEnemy: "baseEnemy", cardStrongEnemy: "strongEnemy",
   cardEliteEnemy: "eliteEnemy", cardBossEnemy: "bossEnemy", cardNonBossEnemy: "nonBossEnemy", cardFastEnemy: "fastEnemy", cardChest: "chest", blueSiphon: "blueSiphon", blueTrader: "blueTrader", keyToHp: "keyToHp",
   cardRedKey: "redKey", redSiphon: "redSiphon", cardTorch: "torch", cardWoodenDoor: "woodenDoor", heartDoorResilience: "heartDoor" };
 const SKILL_DETAIL_SPRITES: Partial<Record<UpgradeId, string>> = {
   shroud: "ui-ward", critical: "goal-damage-prediction", critPrediction: "goal-damage-prediction",
-  thorns: "sword", lifesteal: "badge-hpPercent", parry: "goal-parry", focus: "focus", refocus: "focus",
+  thorns: "sword", lifesteal: "badge-hpPercent", parry: "goal-parry",
   ignore: "ignore", ignoreMore: "ignore", target: "target", targetMore: "target",
   cardBadges: "goal-badge-slots", dashBadge: "badge-dash", dash: "badge-dash", endRush: "badge-dash", dashRegen: "badge-dash",
   keyLessBadges: "badge-yellowGate", keyAtLeastBadges: "badge-yellowAtLeast", largerHand: "goal-card-groups",
@@ -139,6 +139,7 @@ export const ENTER_ICON = kitIcon("tower", `<svg class="enter-icon" viewBox="0 0
 /** Two cards fanned out: the Deck's icon, made from the card faces. */
 export const DECK_ICON = kitIcon("deck", `<span class="deck-icon" aria-hidden="true"><img src="${UI_ASSET_BASE}assets/cards/heal.png" alt=""><img src="${UI_ASSET_BASE}assets/cards/stairs.png" alt=""></span>`, "deck-icon");
 export const skillSprite = (id: UpgradeId) => {
+  if (id === "bombs") return bombIcon("skill-sprite");
   const card = SKILL_CARDS[id];
   if (card) return kitIcon(`card-${card}`, `<img class="skill-sprite card-sprite" src="${UI_ASSET_BASE}assets/cards/${card}.png" alt="" aria-hidden="true">`, "skill-sprite card-sprite");
   const detail = SKILL_DETAIL_SPRITES[id];

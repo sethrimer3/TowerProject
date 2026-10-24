@@ -12,7 +12,7 @@ import { EQUIP_MATERIAL_IDS, type EquipMaterialId } from "../equipment/catalog.t
 
 export type MissionType =
   | "floors" | "bosses" | "train" | "basic" | "strong" | "elite" | "potions" | "badge"
-  | "runTraining" | "blueKeys" | "redKeys" | "focus";
+  | "runTraining" | "blueKeys" | "redKeys";
 
 export type MissionDef = {
   /** What the mission asks, with the target in it. */
@@ -53,7 +53,6 @@ export const MISSIONS: Record<MissionType, MissionDef> = {
   runTraining: { text: "Buy 10 run training upgrades", target: 10, offered: (s) => !!s.upgrades.onTheJob },
   blueKeys: { text: "Pick up 10 blue keys", target: 10, offered: (s) => reached(s, (t) => keyFirstFloor("blue", t)) },
   redKeys: { text: "Pick up 5 red keys", target: 5, offered: (s) => reached(s, (t) => keyFirstFloor("red", t)) },
-  focus: { text: "Focus on 2 cards", target: 2, offered: (s) => !!s.upgrades.focus },
 };
 export const MISSION_TYPES = Object.keys(MISSIONS) as MissionType[];
 

@@ -40,10 +40,9 @@ export type RunCore = {
   /** The run's notes (run-notes.ts): its start, steps, keys, doors,
    * pickups and Silver found; undo takes them back with the run. */
   notes?: RunNotes;
-  /** Focus uses spent this run. What is left is what a run gets now less
-   * these, so a Focus Count level completed mid-run counts at once. */
-  focusUsed?: number;
-  /** Ignore and Target uses spent this run, counted like Focus's. */
+  /** Ignore and Target uses spent this run. What is left is what a run
+   * gets now less these, so a count research level completed mid-run counts
+   * at once. */
   ignoreUsed?: number;
   targetUsed?: number;
   /** Bombs thrown this run: a run has one for each Bomb provision owned,
@@ -67,9 +66,9 @@ export type RunCore = {
    * capacity, and one spent never comes back, so what is left is that
    * capacity less these (undo carries the count onto the run it restores). */
   undosUsed?: number;
-  /** New floors counted toward each charge's next regained use (Refocus,
-   * Ignore More, Target More; run-charges.ts), while it is below full. */
-  regain?: Partial<Record<"focus" | "ignore" | "target", number>>;
+  /** New floors counted toward each charge's next regained use (Ignore
+   * More, Target More; run-charges.ts), while it is below full. */
+  regain?: Partial<Record<"ignore" | "target", number>>;
   /** The tiles Ignore marked on floor `floor` (points): no card's path, or
    * Target's, steps on them for the rest of that floor. */
   ignored?: { floor: number; tiles: string[] };
@@ -93,8 +92,9 @@ export type RunCore = {
   /** CHEST's tree's percent chance each of its floors is a Treasure Floor,
    * fixed as the run went inside; none without. */
   treasureFloor?: number;
-  /** The card a Focus put ahead of the others, until it reaches its target
-   * or has no path to one. */
+  /** The card the player pressed, ahead of the others, until it reaches
+   * its target or has no path to one; no other card can be pressed
+   * meanwhile. */
   focused?: CardId;
   /** Training ranks bought with Silver this run, on top of the hero's own:
    * they last only for this run. */

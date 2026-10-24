@@ -1,11 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { decode, defaults } from "../src/save/save.ts";
+import { decode } from "../src/save/save.ts";
+import { playedSave } from "./first-skills.ts";
 
 /** A new hero inside a run on floor 1, the hand playing. */
 function inside() {
-  const s = defaults();
+  const s = playedSave();
   s.tutorials.climb = true;
   const g = new Game(s);
   if (g.run.outside) g.enterRun();

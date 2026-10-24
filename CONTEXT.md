@@ -533,12 +533,19 @@ _Avoid_: shard (alone: an ATK or DEF shard is a pickup)
 A limited currency, kept between runs, earned from the weekly mission rewards and Events' missions. Nothing spends Medals yet. Shown as a gold disc on a red ribbon.
 _Avoid_: badge (a card's token), trophy (the Tournament's)
 
-**Focus**:
-Putting one card of the hand ahead of the others inside a run, until the hero reaches its target or the card has no path to one. A run has a limited number of Focus uses.
-_Avoid_: priority, override
+**Press** (a card):
+The player pressing one card of the hand inside a run, which puts it ahead of the others until the hero reaches its target or the card has no path to one; no other card can be pressed meanwhile. It costs nothing, and before Auto-Climb it is the only way the hand moves. In code it reuses the old Focus's names (`Game.focus`, `run.focused`).
+_Avoid_: focus (the limited-use skill it replaced), priority, override
+
+**Auto-Climb**:
+The Inspiration skill after which the hand plays by itself, the first card in priority order that can act leading whenever no pressed card does. Before it, the hand waits for a press each time a card reaches its target.
+_Avoid_: automove (the forest's walking), autoplay
+
+**First skills**:
+Door & Key, Enemy and Auto-Climb, the three 1-Inspiration skills at the top of the Inspiration tree that a new game's lessons lead to; Door & Key and Enemy deal their cards into the hand as well as the deck.
 
 **Charge**:
-One of a run's limited uses of Focus, Ignore or Target. Each regains a use every so many new floors climbed once its regain skill (Refocus, Ignore More, Target More) is owned.
+One of a run's limited uses of Ignore or Target. Each regains a use every so many new floors climbed once its regain skill (Ignore More, Target More) is owned.
 _Avoid_: token, mana
 
 **Undo**:

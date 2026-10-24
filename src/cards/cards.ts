@@ -172,9 +172,13 @@ export const handSlots = (save: { upgrades: Record<UpgradeId, number>; handSlots
  * (Larger Hand not owned, or every slot bought). */
 export const nextHandSlotGems = (save: { upgrades: Record<UpgradeId, number>; handSlots: number }) =>
   save.upgrades.largerHand ? HAND_SLOT_GEMS[save.handSlots] ?? null : null;
-/** The hand a new profile starts with, in priority order: its whole deck.
- * HEAL, GOLD KEY, ATK UP, DEF UP and BLUE KEY are earned from the Inspiration tree. */
-export const BASE_HAND: readonly CardId[] = ["stairs", "door", "key", "monster"];
+/** The hand a new profile starts with: its whole deck, STAIRS alone. DOOR
+ * and KEY, ENEMY, HEAL and the rest are earned from the Inspiration tree. */
+export const BASE_HAND: readonly CardId[] = ["stairs"];
+/** The order the first cards earned (`toHand` upgrades) take in the hand:
+ * each goes in after the last card before it in this list that the hand
+ * holds. */
+const FIRST_CARDS: readonly CardId[] = ["stairs", "door", "key", "monster"];
 /** The cards a Goal adds to the deck once claimed (goals.ts). */
 export const GOAL_CARDS: Partial<Record<GoalUnlock, CardId>> = { archerCard: "archer", flyingEnemyCard: "flyingEnemy" };
 /** Whether `hand` makes the hero an Archer: it holds ARCHER, so its arrows
@@ -184,15 +188,27 @@ export const shootsWith = (hand: readonly CardId[]) => hand.includes("archer");
  * whose upgrade is owned, and each card whose Goal is claimed (`goals`;
  * none without). A hand holds any of them, but always STAIRS. */
 export function deckCards(upgrades: Record<UpgradeId, number>, goals?: Pick<Save, "goals">["goals"]): CardId[] {
-  const earned = UPGRADES.flatMap((u) => ("card" in u && upgrades[u.id] ? [u.card as CardId] : []));
+  const earned = UPGRADES.flatMap((u) => (upgrades[u.id] ? upgradeCards(u.id) : []));
   if (goals) for (const [unlock, card] of Object.entries(GOAL_CARDS)) if (goalUnlocked({ goals }, unlock as GoalUnlock)) earned.push(card);
   return CARD_IDS.filter((id) => BASE_HAND.includes(id) || earned.includes(id));
 }
-/** The card an upgrade adds to the deck, if any. */
-export const upgradeCard = (id: UpgradeId): CardId | undefined => {
+/** The cards an upgrade adds to the deck, if any. */
+export const upgradeCards = (id: UpgradeId): CardId[] => {
   const u = UPGRADES.find((u) => u.id === id);
-  return u && "card" in u ? (u.card as CardId) : undefined;
+  return !u ? [] : "cards" in u ? [...u.cards] : "card" in u ? [u.card as CardId] : [];
 };
+/** Whether buying upgrade `id` deals its cards into the hand too. */
+export const dealsToHand = (id: UpgradeId) => UPGRADES.some((u) => u.id === id && "toHand" in u && u.toHand);
+/** `hand` with `card` dealt in, after the last card before it in
+ * `FIRST_CARDS` that the hand holds (after STAIRS for any other), while
+ * the hand has room among its `slots` and doesn't hold it already. */
+export function dealCard(hand: readonly CardId[], card: CardId, slots: number): CardId[] {
+  if (hand.includes(card) || hand.length >= slots) return [...hand];
+  const before = FIRST_CARDS.slice(0, Math.max(1, FIRST_CARDS.indexOf(card)));
+  let at = 0;
+  hand.forEach((id, i) => { if (before.includes(id)) at = i + 1; });
+  return [...hand.slice(0, at), card, ...hand.slice(at)];
+}
 
 /** `hand` with the card at `from` moved to slot `to`, each card between
  * the two shifting one slot over to make room. */

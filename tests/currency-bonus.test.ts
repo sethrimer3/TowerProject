@@ -17,6 +17,7 @@ import type { Tile } from "../src/entities.ts";
 import { random } from "../src/random.ts";
 import { silverFound } from "../src/economy/gold-multipliers.ts";
 import { snap } from "../src/exact.ts";
+import { playedSave } from "./first-skills.ts";
 
 /** Silver Bonus training's multiplier on all Silver, in percent. */
 const silverBonus = (save: ReturnType<typeof defaults>) => snap(silverFound(save, "tower", save.training.silverBonus) * 100);
@@ -26,7 +27,7 @@ const silverBonus = (save: ReturnType<typeof defaults>) => snap(silverFound(save
 const SKILLS: [UpgradeId, TrainingId & ResearchId][] = [["wealthy", "silverBonus"], ["loot", "goldBonus"], ["wishingWell", "floorSilver"]];
 
 test("Wealthy, Loot and Wishing Well cost 2 Inspiration each, after Spare Change", () => {
-  const g = new Game(defaults());
+  const g = new Game(playedSave());
   g.save.tower.inspiration = 1000;
   for (const [skill] of SKILLS) {
     assert.deepEqual(TREES[0].nodes.find((n) => n.id === skill)!.requires, ["spareChange"]);
@@ -38,7 +39,7 @@ test("Wealthy, Loot and Wishing Well cost 2 Inspiration each, after Spare Change
 });
 
 test("Wealthy, Loot and Wishing Well each open their Training row and research", () => {
-  const save = defaults();
+  const save = playedSave();
   for (const [skill, id] of SKILLS) {
     const row = TRAINING.find((t) => t.id === id)!;
     assert.equal(row.group, "utility");
@@ -54,7 +55,7 @@ test("Wealthy, Loot and Wishing Well each open their Training row and research",
 });
 
 test("Silver Bonus starts at ×1 and adds 1% a rank, Gold Bonus 3%; Silver / Floor starts at 0 and adds 4", () => {
-  const save = defaults();
+  const save = playedSave();
   assert.deepEqual([silverBonus(save), trainedAmount(save, "goldBonus"), trainedAmount(save, "floorSilver")], [100, 100, 0], "nothing without the skills");
   save.training.silverBonus = save.training.goldBonus = save.training.floorSilver = 10;
   assert.deepEqual([silverBonus(save), trainedAmount(save, "goldBonus"), trainedAmount(save, "floorSilver")], [100, 100, 0], "ranks count only with the skill");
@@ -71,7 +72,7 @@ test("Silver Bonus starts at ×1 and adds 1% a rank, Gold Bonus 3%; Silver / Flo
 });
 
 test("the Training tab's values count research, equipment and Silver Bonus; a run's cards its own ranks and boons too, never a global Gold multiplier", () => {
-  const save = defaults();
+  const save = playedSave();
   Object.assign(save.upgrades, { wealthy: 1, loot: 1, wishingWell: 1, spareChange: 1, critical: 1, freeTraining: 1 });
   save.training.silverBonus = save.training.goldBonus = save.training.floorSilver = save.training.floorGold = 10;
   save.training.critChance = 5;
@@ -109,7 +110,7 @@ test("the Training tab's values count research, equipment and Silver Bonus; a ru
 
 /** A Tower run inside on floor 11, the hero at (0, 0) facing a strong enemy at (1, 0). */
 function facingEnemy() {
-  const g = new Game(defaults());
+  const g = new Game(playedSave());
   // No theme's Gold, so these figures are the mechanic's alone (theme-collection.test.ts covers it).
   g.save.themes = [];
   g.save.settings.devMode = true;
@@ -160,7 +161,7 @@ test("every item taken off the floor pays Gold, a key or door by its colours, ra
 test("a treasure chest's Gold, its 1 for opening counted, takes Gold Bonus; an area chest pays no Gold", () => {
   /** The Gold a chest at (1, 0) pays with `ranks` of Gold Bonus, its loot rolled the same each time. */
   const chest = (ranks: number, tile: Tile = { kind: "treasure" }) => {
-    const save = defaults();
+    const save = playedSave();
     save.themes = [];
     save.settings.devMode = true;
     save.upgrades.loot = 1;
@@ -181,7 +182,7 @@ test("a treasure chest's Gold, its 1 for opening counted, takes Gold Bonus; an a
 
 /** A Tower run inside on floor 4, the hero at (0, 0) beside the stairs at (1, 0). */
 function stairs(tier = 1) {
-  const save = defaults();
+  const save = playedSave();
   // No theme's Gold, so these figures are the mechanic's alone (theme-collection.test.ts covers it).
   save.themes = [];
   save.tower.tiersOpen = save.tower.tier = tier;
@@ -229,7 +230,7 @@ test("a floor already reached this run pays no Silver; Silver training raises it
 });
 
 test("the Delve pays Silver / Floor for each new equivalent floor (ten depth)", () => {
-  const g = new Game(defaults());
+  const g = new Game(playedSave());
   g.save.upgrades.delve = g.save.upgrades.wishingWell = 1;
   g.save.training.floorSilver = 1;
   g.switchMode("delve");

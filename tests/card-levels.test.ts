@@ -1,11 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { decode, defaults } from "../src/save/save.ts";
+import { decode } from "../src/save/save.ts";
 import { addCardXp, BASE_MAX_LEVEL, CARD_LEVEL_XP, cardLevel, cardPoints, decodeCardXp, MAX_CARD_LEVEL, MAX_CARD_XP } from "../src/cards/levels.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import type { CardId } from "../src/cards/cards.ts";
 import type { Save } from "../src/save/shape.ts";
+import { playedSave } from "./first-skills.ts";
 
 /** The XP that reaches level `n`. */
 const xpTo = (n: number) => CARD_LEVEL_XP.slice(0, n).reduce((a, b) => a + b, 0);
@@ -52,16 +53,16 @@ test("XP added reports each level crossed under the cap, and keeps counting past
 test("the decoder keeps known cards' whole XP, level 60's at most, and drops the rest", () => {
   assert.deepEqual(decodeCardXp({ door: 12.7, key: 0, nope: 5, stairs: -3, monster: MAX_CARD_XP + 9, heal: "7" }), { door: 12, monster: MAX_CARD_XP });
   assert.deepEqual(decodeCardXp(null), {});
-  const save = defaults();
+  const save = playedSave();
   save.cardXp = { stairs: 450 };
   assert.deepEqual(decode(JSON.stringify(save)).cardXp, { stairs: 450 });
-  assert.deepEqual(defaults().cardXp, {});
+  assert.deepEqual(playedSave().cardXp, {});
 });
 
 /** A Tower corridor along the bottom row, the stairs at its east end, a
  * gold key at (2, 0), and the hero at its west end holding `hand`. */
 function corridor(hand: CardId[], edit: (save: Save) => void = () => {}) {
-  const save = defaults();
+  const save = playedSave();
   save.upgrades.inspirationUndos = 1;
   save.upgrades.keySiphon = 1;
   save.training.hp = 3;
@@ -118,7 +119,7 @@ test("ARCHER, which never activates, gains an XP a new floor: two for a floor Sk
 });
 
 test("ARCHER gains an XP for each of the Delve's equivalent floors passed", () => {
-  const save = defaults();
+  const save = playedSave();
   save.upgrades.delve = 1;
   const g = new Game(save);
   g.switchMode("delve");

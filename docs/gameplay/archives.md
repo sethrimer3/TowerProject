@@ -36,7 +36,3 @@ Each level completed pops up at the top of the screen, over everything, as "Rese
 The library lists only research whose requirements are met (Dev mode lists it all), and can be searched and filtered by category and status, and its History button opens a list of the levels completed lately.
 Research at its most levels stays in the list in a gold box, marked Complete; once any is, a **Hide Completed** box at the top leaves those out.
 Each project's box is kept short: its name, categories and level on one line, its description, then what its next level changes, how long it takes and its Research button, which shows only its Gold price, on one line.
-
-## Focus Count
-
-The first project, **Focus Count** (after the Focus skill), adds one Focus use to every run for each of its nine levels: level 1 takes 8 hours and costs 500 Gold, each level after takes 8 hours more, and costs 500 Gold times the level before it more (500, 1000, 2000, 3500, … 18,500).

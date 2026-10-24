@@ -1,14 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save/save.ts";
 import { TRAINING, trained, type StatTrainingRow } from "../src/progression/training.ts";
 import { cost, type UpgradeId } from "../src/progression/upgrades.ts";
-import { deckCards, planHand, upgradeCard, type CardId } from "../src/cards/cards.ts";
+import { deckCards, planHand, upgradeCards, type CardId } from "../src/cards/cards.ts";
 import { TREES } from "../src/progression/skill-trees.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import type { EnemyStrength, Tile } from "../src/entities.ts";
 import type { Save } from "../src/save/shape.ts";
+import { playedSave } from "./first-skills.ts";
 
 /** The new Inspiration card nodes, in the order they can be bought, with
  * their price, the node each needs and its card (null for a node that opens
@@ -36,14 +36,14 @@ const NODES: [UpgradeId, number, UpgradeId, CardId | null][] = [
 ];
 
 test("each card node costs its price, waits for the node above it and adds its card to the deck", () => {
-  const g = new Game(defaults());
+  const g = new Game(playedSave());
   g.save.tower.inspiration = 10_000;
   for (const id of ["combatStance", "buildout", "trainers", "shroud", "critical", "archives", "delve", "lifesteal", "buyQuantity", "thorns", "keySiphon"] as const) assert.ok(g.skills.buy(id));
   const nodes = TREES.find((t) => t.id === "inspiration")!.nodes;
   for (const [id, price, requires, card] of NODES) {
     assert.deepEqual(nodes.find((n) => n.id === id)!.requires, [requires], id);
     assert.equal(cost(id, 0), price, id);
-    assert.equal(upgradeCard(id) ?? null, card);
+    assert.equal(upgradeCards(id)[0] ?? null, card);
     if (card) assert.ok(!deckCards(g.save.upgrades).includes(card));
     const before = g.save.tower.inspiration;
     assert.ok(g.skills.buy(id), id);
@@ -54,7 +54,7 @@ test("each card node costs its price, waits for the node above it and adds its c
 });
 
 test("a card node can't be bought before the one above it", () => {
-  const g = new Game(defaults());
+  const g = new Game(playedSave());
   g.save.tower.inspiration = 10_000;
   assert.equal(g.skills.buy("cardYellowDoor"), false);
   g.save.upgrades.keySiphon = 1;
@@ -71,7 +71,7 @@ const enemy = (strength: EnemyStrength): Tile => ({ kind: "enemy", enemy: { name
 /** A Tower floor: a corridor along row 0, from x = 0 to 12, with the hero
  * at x = 6 and `side` tiles in the pockets above it (row 1). */
 function floor(side: Record<number, Tile>, edit: (save: Save) => void = () => {}) {
-  const save = defaults();
+  const save = playedSave();
   save.upgrades.inspirationUndos = 1;
   edit(save);
   const g = new Game(save);

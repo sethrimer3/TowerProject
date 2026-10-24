@@ -171,7 +171,7 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay,
   overlay.clearIfAt(game.run.player);
   overlay.followHero();
   renderVitals(game);
-  renderFocus(game);
+  renderCharges(game);
   renderProgress(game);
   renderModeActions(game);
   renderCurrencyBar(game);
@@ -450,7 +450,7 @@ function renderHand(game: Game, hand: readonly CardId[] = game.hand) {
   // Paused, the card that made the latest step still glows.
   const glowing = game.handStuck ? null : game.activeCard;
   const focused = game.run.focused ? hand.indexOf(game.run.focused) : -1;
-  row.classList.toggle("can-focus", !!game.save.upgrades.focus);
+  row.classList.toggle("can-focus", !game.run.outside);
   row.querySelectorAll<HTMLElement>(".hand-card").forEach((card, i) => {
     card.classList.toggle("active", i === glowing);
     card.classList.toggle("focused", i === focused);
@@ -640,13 +640,9 @@ function renderShrine(game: Game) {
   bar.setAttribute("aria-label", `Shrine: ${pick}, ${left}`);
 }
 
-/** Focus uses left, once the Focus skill is owned; Ignore, Target, the Bombs and the provisions used at a press likewise. */
-function renderFocus(game: Game) {
+/** Ignore's and Target's uses left, once each skill is owned; the Bombs and the provisions used at a press likewise. */
+function renderCharges(game: Game) {
   renderShrine(game);
-  const stat = el("focus-stat");
-  stat.hidden = !game.save.upgrades.focus;
-  text("focus-left", game.focusLeft);
-  stat.setAttribute("aria-label", `Focus: ${game.focusLeft} left`);
   for (const c of ["ignore", "target", "bomb"] as const) {
     const button = el(`${c}-stat`), left = c === "bomb" ? game.bombsLeft : game.chargesLeft(c), name = { ignore: "Ignore", target: "Target", bomb: "Bombs" }[c];
     button.hidden = c === "bomb" ? !game.save.provisions.bomb : !game.save.upgrades[c];

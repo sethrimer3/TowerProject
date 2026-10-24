@@ -6,11 +6,13 @@ import { ENTRANCE_Y } from "../src/outside.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { chooseStep } from "../src/automation.ts";
 import { silverForKill } from "../src/economy/kill-pay.ts";
+import { withFirstSkills } from "./first-skills.ts";
+import type { Tile } from "../src/entities.ts";
 
-/** A new game's save, its first run's note already dismissed, so the hand
- * plays as a run starts. */
+/** A save past a new game's first skills (`withFirstSkills`), its first
+ * run's lesson done, so the hand plays as a run starts. */
 function taught() {
-  const s = defaults();
+  const s = withFirstSkills(defaults());
   s.tutorials.climb = true;
   return s;
 }
@@ -237,46 +239,33 @@ test("Buildout moves cards between the deck and the hand in the forest, and STAI
 
 /** An arena with the Focus skill and `uses` Focus uses left this run (of
  * the one a run gets). */
-function focusArena(uses = 1) {
+test("a card pressed leads the hero to its target ahead of the others, and no other card can be pressed until it arrives", () => {
   const g = arena();
-  g.save.upgrades.focus = 1;
-  g.run.focusUsed = 1 - uses;
-  return g;
-}
-
-test("Focus puts a hand card first, spending a use, until it reaches its target", () => {
-  const g = focusArena();
   (g.world as RoomWorld).cells.set("2,0", { kind: "key", color: "yellow" });
   const key = g.hand.indexOf("key");
   g.autoTurn();
-  assert.equal(g.activeCard, 0, "STAIRS leads before the focus");
+  assert.equal(g.activeCard, 0, "STAIRS leads before the press");
   assert.equal(g.focus(key), "focused");
-  assert.equal(g.focusLeft, 0);
   assert.equal(g.run.focused, "key");
+  assert.equal(g.focus(0), "busy", "no other card while the key is still ahead");
   for (let i = 0; i < 6 && g.run.focused; i++) g.autoTurn();
-  assert.equal(g.run.focused, undefined, "the focus ends at the key");
+  assert.equal(g.run.focused, undefined, "the press ends at the key");
   assert.equal(g.run.player.keys.yellow, 1);
   g.autoTurn();
-  assert.equal(g.activeCard, 0, "then the hand's order leads again");
-  const loaded = new Game(decode(JSON.stringify(g.save)));
-  assert.equal(loaded.focusLeft, 0, "the uses left are saved with the run");
+  assert.equal(g.activeCard, 0, "then, with Auto-Climb, the hand's order leads again");
+  assert.equal(g.focus(0), "focused", "and a card can be pressed again");
 });
 
-test("Focus is refused without the skill, with no uses left, for the card already leading, or with no path, which costs nothing", () => {
-  const locked = arena();
-  assert.equal(locked.focus(2), "unavailable");
-  const g = focusArena();
-  g.autoTurn();
-  assert.equal(g.focus(0), "active", "STAIRS is already moving the hero");
+test("a press is refused for a card with no path, costing nothing, and outside a run", () => {
+  const g = arena();
   assert.equal(g.focus(g.hand.indexOf("key")), "noPath", "there is no key on the floor");
-  assert.equal(g.focusLeft, 1, "a failed focus costs nothing");
-  const spent = focusArena(0);
-  (spent.world as RoomWorld).cells.set("2,0", { kind: "key", color: "yellow" });
-  assert.equal(spent.focus(spent.hand.indexOf("key")), "spent");
+  assert.equal(g.run.focused, undefined);
+  g.newRun({ outside: true, seed: 1 });
+  assert.equal(g.focus(0), "unavailable", "only inside a run");
 });
 
-test("a focused card that loses its path hands the lead back", () => {
-  const g = focusArena();
+test("a pressed card that loses its path hands the lead back", () => {
+  const g = arena();
   const w = g.world as RoomWorld;
   w.cells.set("0,4", { kind: "key", color: "yellow" });
   assert.equal(g.focus(g.hand.indexOf("key")), "focused");
@@ -285,23 +274,45 @@ test("a focused card that loses its path hands the lead back", () => {
   g.cardPlan = null;
   g.autoTurn();
   assert.equal(g.run.focused, undefined);
-  assert.match(g.message, /Focus lost/);
+  assert.match(g.message, /^Key has no path to a target/);
   assert.equal(g.hand[g.activeCard!], "stairs");
 });
 
-test("a run going inside gets its Focus uses once the skill is owned", () => {
-  const g = new Game(taught());
-  g.newRun({ outside: true, seed: 1 });
-  assert.equal(g.focusLeft, 0);
-  g.save.upgrades.focus = 1;
-  assert.equal(g.focusLeft, 1, "the forest shows what the next run gets");
-  g.walkTo(g.run.player.x, ENTRANCE_Y);
-  for (let i = 0; i < 20 && g.route.length; i++) g.routeStep();
-  assert.equal(g.run.outside, false);
-  assert.equal(g.run.focusUsed, 0);
-  assert.equal(g.focusLeft, 1);
+test("before Auto-Climb the hand waits for a card to be pressed, and waits again once it arrives", () => {
+  const g = arena();
+  g.save.upgrades.autoClimb = 0;
+  g.autoTurn();
+  assert.ok(!g.auto && !g.handStuck && g.activeCard === null, "it waits, not stuck");
+  assert.deepEqual([g.run.player.x, g.run.player.y], [0, 0]);
+  assert.match(g.message, /^Press a card/);
+  (g.world as RoomWorld).cells.set("1,0", { kind: "key", color: "yellow" });
+  assert.equal(g.focus(g.hand.indexOf("key")), "focused");
+  assert.ok(g.auto);
+  g.autoTurn();
+  assert.equal(g.run.player.keys.yellow, 1);
+  assert.equal(g.run.focused, undefined);
+  g.autoTurn();
+  assert.ok(!g.auto && !g.handStuck, "the next move waits for the next press");
+  assert.deepEqual([g.run.player.x, g.run.player.y], [1, 0]);
+  // With nothing any card can reach, it is stuck instead.
+  const w = g.world as RoomWorld;
+  w.cells = new Map([["0,0", { kind: "floor" }], ["1,0", { kind: "floor" }]]);
+  g.autoTurn();
+  assert.ok(g.handStuck);
 });
 
+test("buying Door & Key, then Enemy, deals their cards into the hand after STAIRS", () => {
+  const g = new Game(defaults());
+  assert.deepEqual(g.save.hand, ["stairs"]);
+  g.save.tower.inspiration = 3;
+  g.newRun({ outside: true, seed: 1 });
+  assert.ok(g.skills.buy("cardDoorKey"));
+  assert.deepEqual(g.save.hand, ["stairs", "door", "key"]);
+  assert.ok(g.skills.buy("cardEnemy"));
+  assert.deepEqual(g.save.hand, ["stairs", "door", "key", "monster"]);
+  assert.ok(g.skills.buy("autoClimb"));
+  assert.ok(g.autoClimbs);
+});
 test("a beaten enemy pays Gold by its strength, once, whatever undo does", () => {
   for (const [strength, gold] of [["weak", 1], ["normal", 1], ["strong", 2], ["elite", 4]] as const) {
     const g = arena();
@@ -380,21 +391,78 @@ test("undo stays on the floor it was taken on: climbing forgets the history", ()
   assert.equal(g.run.height, 4);
 });
 
-test("a new game's first run holds the hand paused until its note is dismissed, then plays at 2x", () => {
+test("a new game's first run holds a hand of STAIRS alone until STAIRS is pressed, then walks at 2x", () => {
   const g = new Game(defaults());
+  assert.deepEqual(g.hand, ["stairs"]);
   assert.equal(g.boardLesson, "climb");
   assert.equal(g.auto, false);
   g.toggleAuto();
-  assert.equal(g.auto, false, "play waits on the note");
+  assert.equal(g.auto, false, "play waits on the card");
   assert.equal(g.changeSpeed(1), false, "so do the arrows");
-  assert.ok(g.dismissLesson());
+  assert.equal(g.dismissLesson(), false, "a tap on the note doesn't end it");
+  assert.equal(g.focus(0), "focused");
   assert.equal(g.boardLesson, null);
   assert.ok(g.auto);
   assert.equal(g.stepsPerSecond, 2);
-  assert.equal(new Game(decode(JSON.stringify(g.save))).boardLesson, null, "dismissed for good");
+  assert.equal(new Game(decode(JSON.stringify(g.save))).boardLesson, null, "done for good");
 });
 
-test("the forest's lessons: try again until dismissed or a run goes inside, then the Delve tab once Into the depths is owned", () => {
+/** A first run's floor where the hero, at (0, 0), can't get past (1, 0) to the stairs. */
+function blocked(g: Game, wall: Tile) {
+  (g.world as RoomWorld).cells = new Map<string, Tile>([["0,0", { kind: "floor" }], ["1,0", wall], ["2,0", { kind: "stairs" }]]);
+  Object.assign(g.run.player, { x: 0, y: 0 });
+}
+const SLIME: Tile = { kind: "enemy", enemy: { name: "Cinder slime", hp: 1, attack: 0, defense: 0, tier: 1, strength: "weak" } };
+
+test("a first stuck run's lesson waits on End Run; the forest's then lead to Door & Key, then Enter, then KEY and DOOR in the run", () => {
+  const g = new Game(defaults());
+  g.save.tutorials.climb = true;
+  blocked(g, { kind: "wall" });
+  g.autoTurn();
+  assert.ok(g.handStuck);
+  assert.equal(g.boardLesson, "stuck");
+  g.endRunPressed();
+  assert.ok(g.save.tutorials.stuck);
+  assert.equal(g.boardLesson, null);
+  g.save.tower.inspiration = 1;
+  g.finish("Ascent ended");
+  assert.ok(g.run.outside);
+  assert.equal(g.introSkill, "cardDoorKey");
+  assert.equal(g.boardLesson, "upgrades");
+  assert.ok(g.skills.buy("cardDoorKey"));
+  assert.deepEqual([g.introSkill, g.introBought, g.boardLesson], [null, "cardDoorKey", "enter"]);
+  assert.ok(g.enterRun());
+  assert.equal(g.introBought, null);
+  assert.equal(g.boardLesson, "keys");
+  (g.world as RoomWorld).cells.set(`${g.run.player.x + 1},${g.run.player.y}`, { kind: "key", color: "yellow" });
+  assert.equal(g.focus(g.hand.indexOf("key")), "focused");
+  assert.equal(g.boardLesson, null, "pressing KEY ends it");
+  assert.ok(decode(JSON.stringify(g.save)).tutorials.keys);
+});
+
+test("stuck behind an enemy without Enemy, with its Inspiration held, the lesson sends the player to buy it", () => {
+  const g = new Game(taught());
+  g.save.tutorials.stuck = true;
+  g.save.upgrades.cardEnemy = 0;
+  g.save.hand = g.run.hand = ["stairs", "door", "key"];
+  blocked(g, SLIME);
+  g.autoTurn();
+  assert.ok(g.handStuck);
+  assert.equal(g.boardLesson, null, "not without the Inspiration Enemy costs");
+  g.save.tower.inspiration = 1;
+  assert.equal(g.boardLesson, "enemy");
+  g.endRunPressed();
+  g.finish("Ascent ended");
+  assert.equal(g.introSkill, "cardEnemy");
+  assert.equal(g.boardLesson, "upgrades");
+  assert.ok(g.skills.buy("cardEnemy"));
+  assert.deepEqual(g.save.hand, ["stairs", "door", "key", "monster"]);
+  assert.deepEqual([g.introBought, g.boardLesson], ["cardEnemy", "enter"]);
+  assert.ok(g.enterRun());
+  assert.deepEqual([g.introBought, g.save.tutorials.enemy], [null, false]);
+});
+
+test("the forest's lessons: Enter once Door & Key is owned, until dismissed or a run goes inside, then the Delve tab once Into the depths is owned", () => {
   const g = new Game(taught());
   assert.equal(g.boardLesson, null);
   g.newRun({ outside: true });

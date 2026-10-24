@@ -6,13 +6,15 @@ Inside a Tower or Delve run, your **hand** of cards moves the hero instead; taps
 
 ## Cards
 
-A new profile's hand is its whole deck, in priority order: **Stairs** (the stairs up; in the Delve, the highest open tile it can reach above any row reached this run, however far off screen, which its card text mentions only once Into the depths is owned), **Door** (a door you hold the keys for, or a Wooden Door you can break down), **Key** (the closest key of any colour), and **Enemy** (any enemy that can be fought, even a lethal one).
+A new profile's hand is its whole deck, one card: **Stairs** (the stairs up; in the Delve, the highest open tile it can reach above any row reached this run, however far off screen, which its card text mentions only once Into the depths is owned).
+The Inspiration tree opens with three skills down its middle, 1 Inspiration each, every other skill hanging below them: **Door & Key** adds **Door** (a door you hold the keys for, or a Wooden Door you can break down) and **Key** (the closest key of any colour) to the deck and to the hand, after Stairs; **Enemy**, below it, adds **Enemy** (any enemy that can be fought, even a lethal one) to the deck and the hand, after Door and Key; and **Auto-Climb**, below Enemy, lets the hand play by itself (see How the hand plays).
+A card those skills add goes into the hand only while it has room; Door & Key's two cards rise onto the screen one after the other, Door first.
 Six more cards join the deck from the Inspiration tree: **Heal** (a potion; the Heal skill, 3 Inspiration, below Regen), **Gold Key** (a gold key, never a blue or red one; the Gold Key skill, 3 Inspiration, under Gear), **ATK Up** (an ATK pickup; the ATK Up skill, 5 Inspiration, under Gold Key), **DEF Up** (a DEF pickup; the DEF Up skill, 5 Inspiration, under ATK Up) and **Blue Key** (a blue key; the Blue Key skill, 2 Inspiration, after the Archives, below DEF Up), and **GK Siphon** (the GK Siphon skill, 5 Inspiration, below Thorns in the tree's middle path), which moves nowhere: when its turn comes it trades Max HP training levels, for the rest of the run only, for a gold key, the hero losing the max HP those levels give and standing still for the turn (undo takes it back).
 The first use in a run takes 1 level, the second 2, the third 3, and so on, and its card's tooltip in the run says how many times it has been used.
 Its levels are the hero's own Max HP ranks and any bought with Silver that run; without enough left for its next use it greys out in the hand and is skipped, so where it sits in the hand decides when it fires.
 Below Buy Quantity, the middle path adds seventeen more (20 Inspiration each unless said): **Gold Door** (5; a single gold door, while you hold a gold key; a Wooden Door is DOOR's), **Heart Door** (10, left of Heart Door Resilience, which stands left of Gold Door; a Heart Door), **Weak Enemy** (below Gold Door), with **Base Enemy** (neither weak, strong, elite nor a boss) then **Strong Enemy** to its left, **Fast Enemy** (a Fast enemy, of any strength) below Base Enemy, and **Elite Enemy** then **Boss Enemy** (a boss or a Greater Boss) to its right, **Non-Boss Enemy** (40; any enemy but a boss or a Greater Boss) below Boss Enemy, each heading for the closest enemy of its strength that can be fought, **Chest** (a closed treasure chest or area reward chest), **BK Siphon** and **RK Siphon** (GK Siphon's twins: DEF or ATK training levels for a blue or red key, each counting its own uses), **BK Trader** (3 gold keys for a blue key, while 3 are held), **GK to HP** (a gold key for 10% of max HP, only while that much is missing), **Red Key** (a red key), **Torch** (the closest lit torch, putting it out) and **Wooden Door** (a Wooden Door you hold a key for, or can break down and survive).
 Below Torch, straight down, **Limit Break 1** to **10** (50 Inspiration each, each after the one before) raise how far ATK, DEF, Max HP, Regen and Shroud train, 500 levels each (see [Training](training.md)).
-Two skills on that path open research instead: **Heart Door Resilience** (left of Gold Door, with Heart Door to its left) opens research making every Heart Door drain 5% less of your HP a level, for ten levels, and **Floor Skip Reward** (below BK Siphon, between Torch and Wooden Door) opens research that, when the Skip badge on STAIRS climbs past a Tower floor, pays 10% a level (up to 110%) of the Gold that floor's battles and chests held; both are priced and timed like Focus Count, with one and two more levels.
+Two skills on that path open research instead: **Heart Door Resilience** (left of Gold Door, with Heart Door to its left) opens research making every Heart Door drain 5% less of your HP a level, for ten levels, and **Floor Skip Reward** (below BK Siphon, between Torch and Wooden Door) opens research that, when the Skip badge on STAIRS climbs past a Tower floor, pays 10% a level (up to 110%) of the Gold that floor's battles and chests held; both are priced and timed like Undo Count (500 Gold and 8 hours, each level 8 hours more and 500 × n Gold more than the one before), with two and three more levels.
 The siphons and trades move nowhere, like GK Siphon, and grey out while they can't act.
 Tower V's floor 10 Goal adds **Flying Enemy** to the deck: it heads for the closest Flying monster the Archer's arrows can hurt, stops as soon as one is within the Attack Range, and holds its ground there, a turn at a time, while one is, the arrows doing the work; once none is in reach, the hand moves on.
 It can't act unless the hand holds Archer too.
@@ -40,18 +42,19 @@ A profile from before the Key card holds Key in Gold Key's place, with any badge
 ## How the hand plays
 
 Each new card rises from the bottom of the screen to its middle, green rays turning behind it and what it does written below, until you press it.
-Whenever the hero has no path to follow, the first card that can reach a target over open floor and items picks its closest one, and the hero walks the shortest path there, one step per tick of the movement speed (2 steps a second for a new hero); of equally short paths it takes the one stepping on the fewest items (keys, potions, ATK and DEF shards, treasure chests) and lit torches, so it walks round them unless they lie on the only shortest way, leaving them to the cards that aim at them (an area reward chest is no item here).
+Until **Auto-Climb** is owned, the hand moves only for a card you press (see Pressing a card): once the hero reaches that card's target, the hand pauses and waits for the next press, its status line saying so, or, when no card can reach anything, is stuck (below).
+Once Auto-Climb is owned, whenever the hero has no path to follow, the first card that can reach a target over open floor and items picks its closest one, and the hero walks the shortest path there, one step per tick of the movement speed (2 steps a second for a new hero); of equally short paths it takes the one stepping on the fewest items (keys, potions, ATK and DEF shards, treasure chests) and lit torches, so it walks round them unless they lie on the only shortest way, leaving them to the cards that aim at them (an area reward chest is no item here).
 Tapped routes do the same; the card glows as it moves, and keeps glowing while the hand is paused; playing on carries on along the same path.
 When no card can act, the hand pauses and End Run shows in red at the foot of the floor column (and in the run's menu): the run ends only when you end it.
 Its dialog lists what blocks the way, closest first: each door, enemy, stairs or ignored tile at the edge of the ground the hero can reach, how far up or down it stands, and why no card gets past it (the keys or ATK you hold that fall short, a badge holding its card back, or no card in the hand for it).
 The hand searches all the ground the hero can reach, however far off screen.
-Whatever you do next (training for the run, Ignore, and later skills) checks the hand again, and it plays on by itself once a card can act.
+Whatever you do next (training for the run, Ignore, and later skills) checks the hand again, and once a card can act it plays on by itself with Auto-Climb, or waits for a press without it.
 
 ## Play, pause and speed
 
 The play/pause button (where Automove was, showing ▶ while paused and ❚❚ while playing, with the hero's movement speed under it, *3x* for 3 steps a second) pauses the hand to look around, and undo pauses it too.
 The ‹ and › arrows either side of the speed (a press anywhere on its side of the row counts) slow and speed the hero a step a second at a time, from 0 to 3 (more with research; › closes at the most allowed): slowing to 0 pauses the hand, and playing it again starts at 1.
-A new hero walks at 2; on the second floor the game pauses once, a pointing hand under ›, until the player speeds up to 3, then plays on.
+A new hero walks at 2; once Auto-Climb is owned, on a run's second floor the game pauses once, a pointing hand under ›, until the player speeds up to 3, then plays on.
 The forest's Automove keeps the speed last set in a run, but never walks slower than 3.
 The cards sit in the row under the board.
 They keep their size however many the hand holds; a hand wider than the screen scrolls sideways, swiped or wheel-scrolled, with a small arrow at each side it can scroll further to (none at an end it has reached).
@@ -59,7 +62,7 @@ Each run keeps the hand as it was ordered when the run went inside, however the 
 
 ## The Deck page
 
-The Inspiration tree's first skill, **Combat Stance** (1 Inspiration), adds a **Deck** tab after Tower and Delve.
+**Combat Stance** (1 Inspiration, below Auto-Climb in the Inspiration tree) adds a **Deck** tab after Tower and Delve.
 With Sprites on, occupied cards use one full-size card frame, while empty slots keep their own frames.
 The Deck page shows the hand's slots along the top: four, five with **Larger Hand** (1 Inspiration, beside the Archives), and one more for each slot bought with Gems after that (50, 100, 200, 300, 400, 500, 600, 750, 1,000, 1,200, 1,400, 1,600, 1,800, 2,500, 3,500, 4,500, 5,500, 6,500, 7,500, 8,500 and 10,000 Gems, up to 26), the next for sale standing after them; dragging a card to another slot (or moving a focused card with the arrow keys) shifts each card in between over one, and the new order is saved at once.
 The chevron beside the **Hand** heading hides the hand, making room for the deck and badges below, and shows it again; the hand shows once more each time you come back to the page.
@@ -263,34 +266,33 @@ Pressing a diamond links the two cards beside it into a group: the diamond turns
 Linking more neighbours makes a larger group.
 The cards of a group share one priority: of every target any of them would take, the hand heads for the closest (a card that acts in place, like GK Siphon, first of all; of targets as close, the earlier card's).
 Link Gold Key and Blue Key, and the hero takes whichever key is nearer.
-A group gives way to the cards after it only when none of its cards can act, and a focused card plans alone, its group aside.
+A group gives way to the cards after it only when none of its cards can act, and a card you press plans alone, its group aside.
 A link lasts until its diamond is pressed again or either card moves out of place (dragged to another slot, or out of the hand); a run keeps the groups it went in with.
 
-## Focus
+## Pressing a card
 
-**Focus** (5 Courage, after Movement Speed in the Courage tree, below it) is the player's own say in where the hero goes inside a run.
-Pressing a card in the hand under the board puts it ahead of the others: it glows white, the hand plays on (even if it was paused), and the card leads until the hero reaches its target, or until it has no path to one, when the hand's order leads again.
-Each run starts with 1 Focus, shown by a lightning bolt beside the potions in the stats, and each Focus that takes spends one; a Focus Count level completed during a run adds its use at once.
-With none left, the bolt flashes red; a card with no path to a target flashes red and costs nothing; the card already moving the hero can't be focused.
-Undo brings back the Focus uses and focused card of the moment they return to.
+Inside a run, pressing a card in the hand under the board sends the hero to that card's closest target, ahead of the others: it glows white, the hand plays on (even if it was paused), and the card leads until the hero reaches its target, or until it has no path to one, when the hand's order leads again with Auto-Climb (without it, the hand waits for another press).
+It costs nothing and works from a new game's first run, a press being how the hand moves at all before Auto-Climb.
+While a pressed card is still on its way, no other card can be pressed: it flashes red, as does a card with no path to a target, which costs nothing.
+A press plans the card whatever a gate badge on it says.
+Undo brings back the pressed card of the moment it returns to.
 
-## Refocus, Ignore and Target
+## Ignore and Target
 
-Below Interest and Mug at the foot of the Courage tree, and below Overheal under Max Interest, five skills (20 Courage each) give the run more of a say.
-**Refocus** (below Overheal) regains a spent Focus use every 100 new floors a run climbs (new equivalent floors in the Delve); the count waits while Focus is full, and its Archives research, **Refocus**, takes a floor off the wait a level, down to every 10 floors.
-**Ignore** (below Interest) adds a button beside the Focus bolt, a red ⊘ with the uses left: press it, then tap a tile, and no card's path (nor Target's) steps on that tile for the rest of the floor, marked with a red ⊘.
+Below Interest and Mug at the foot of the Courage tree, four skills (20 Courage each) give the run more of a say.
+**Ignore** (below Interest) adds a button beside the potions, a red ⊘ with the uses left: press it, then tap a tile, and no card's path (nor Target's) steps on that tile for the rest of the floor, marked with a red ⊘.
 A run gets 1 use, and **Ignore Count** research adds one a level, up to 10.
 A wall, the hero's own tile or one already ignored costs nothing, and pressing the button again puts it away.
-**Ignore More** (below Ignore) regains Ignore uses as Refocus regains Focus, with its own research.
+**Ignore More** (below Ignore) regains a spent Ignore use every 100 new floors a run climbs (new equivalent floors in the Delve); the count waits while Ignore is full, and its Archives research, **Ignore More**, takes a floor off the wait a level, down to every 10 floors.
 **Target** (below Mug) adds a blue crosshair button: press it, then tap a tile, and the hero walks there (round ignored tiles, fighting or opening what stands on the tile itself), marked with a blue ring until it arrives; then the hand's order leads again.
 A tile out of reach costs nothing; one that becomes out of reach on the way loses the Target.
 A run gets 1 use, and **Target Count** research adds one a level, up to 5 (10 million, 100 million, 1 billion and 10 billion Gold).
 **Target More** (below Target) regains Target uses the same way.
-The three regain projects each take 90 levels (100 floors down to 10), level n taking n²/10 hours (6 minutes at level 1, 34 days at 90, about 2.8 years in all): Focus Count's Gold plus 8 × n³ for Refocus, and Focus Count's Gold raised 5% compounding a level for Ignore More and 10% for Target More.
+The two regain projects each take 90 levels (100 floors down to 10), level n taking n²/10 hours (6 minutes at level 1, 34 days at 90, about 2.8 years in all): Undo Count's Gold raised 5% compounding a level for Ignore More and 10% for Target More.
 
 ## Badges
 
-**Badges** (2 Courage, after Focus) opens a **Badges** box on the Deck page, beside the deck: the two share the space below the hand in two columns, each scrolling on its own when its cards or tokens don't fit.
+**Badges** (2 Courage, after Bombs) opens a **Badges** box on the Deck page, beside the deck: the two share the space below the hand in two columns, each scrolling on its own when its cards or tokens don't fit.
 Above the box, **Buy ×1** (20 Gems) and **Buy ×10** (200 Gems) draw card badges: rounded tokens drawn by rarity (common 70%, rare 27%, epic 3%, among the rarities that still have one to draw), each continuing the same saved random sequence, so reloading never draws again.
 The first copy of a badge rises onto the screen with rays behind it; a repeat drops a coin onto its token, its copies bouncing up to their new count before the slash and the copies its next level takes appear, and a level reached sparkles onto the star in its corner.
 Ten drawn at once show one at a time, counting 1 / 10 to 10 / 10 (Skip jumps ahead), then all ten together, marking each one new or levelled up.
@@ -314,4 +316,4 @@ Gates keep their card from acting while their condition fails: **HP <** (HP belo
 With Settings → **Sprites** on, cards use distinct pixel-art PNG faces and badges use matching symbols, rarity frames and level stars in the Deck, hand and draw reveals.
 Names, levels and gate signs remain readable text; the default setting is off, and a non-default UI theme supplies its own look.
 
-The same optional sprite kit covers the compact Focus, Ignore, Target, Undo and Play/Pause controls, with their uses and movement speed kept as live text.
+The same optional sprite kit covers the compact Ignore, Target, Bomb, Undo and Play/Pause controls, with their uses and movement speed kept as live text.

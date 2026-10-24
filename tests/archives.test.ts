@@ -9,17 +9,16 @@ import { loadout } from "../src/progression/loadout.ts";
 import { UPGRADES } from "../src/progression/upgrades.ts";
 import { decode, defaults } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
-import { ENTRANCE_Y } from "../src/outside.ts";
 import { formatDuration } from "../src/ui/archives-page.ts";
 
 const HOUR = 3_600_000;
 const T0 = Date.UTC(2026, 8, 29, 15);
 
-/** A profile with the Focus skill and `gold` Gold. */
+/** A profile with the Heart Door Resilience skill and `gold` Gold. */
 function owner(gold = 100_000) {
   const save = defaults();
   save.upgrades.archives = 1;
-  save.upgrades.focus = 1;
+  save.upgrades.heartDoorResilience = 1;
   save.goals.claimed[1] = [150]; // Tower I's floor 150 Goal opens Research Speed
   save.gold = gold;
   return save;
@@ -35,50 +34,50 @@ test("every research is well formed: known categories, targets and requirements"
     }
     for (const r of def.requires as any[]) {
       if ("upgrade" in r) assert.ok(UPGRADES.some((u) => u.id === r.upgrade), id);
-      if ("research" in r) assert.ok(r.research in RESEARCH && r.level <= RESEARCH[r.research as "focusCount"].levels.length, id);
+      if ("research" in r) assert.ok(r.research in RESEARCH && r.level <= RESEARCH[r.research as "heartDoorResilience"].levels.length, id);
     }
   }
   assert.equal(ARCHIVISTS.prices.length, ARCHIVISTS.maximum - ARCHIVISTS.start);
 });
 
-test("Focus Count: nine levels of 8 more hours each and 500 × n more Gold each", () => {
-  const levels = RESEARCH.focusCount.levels;
-  assert.deepEqual(levels.map((l) => l.hours), [8, 16, 24, 32, 40, 48, 56, 64, 72]);
-  assert.deepEqual(levels.map((l) => l.gold), [500, 1000, 2000, 3500, 5500, 8000, 11000, 14500, 18500]);
-  assert.ok(levels.every((l) => l.effect.target === "focusPerRun" && l.effect.op === "add" && l.effect.value === 1));
+test("Heart Door Resilience: ten levels of 8 more hours each and 500 × n more Gold each", () => {
+  const levels = RESEARCH.heartDoorResilience.levels;
+  assert.deepEqual(levels.map((l) => l.hours), [8, 16, 24, 32, 40, 48, 56, 64, 72, 80]);
+  assert.deepEqual(levels.map((l) => l.gold), [500, 1000, 2000, 3500, 5500, 8000, 11000, 14500, 18500, 23000]);
+  assert.ok(levels.every((l) => l.effect.target === "heartToll" && l.effect.op === "add" && l.effect.value === -5));
 });
 
 test("research waits on its requirements, and is paid for when it starts", () => {
   const save = owner(600);
-  save.upgrades.focus = 0;
-  assert.equal(status(save, "focusCount"), "locked");
-  assert.equal(startResearch(save, 0, "focusCount", T0), false);
-  save.upgrades.focus = 1;
-  assert.equal(status(save, "focusCount"), "available");
-  assert.ok(startResearch(save, 0, "focusCount", T0));
+  save.upgrades.heartDoorResilience = 0;
+  assert.equal(status(save, "heartDoorResilience"), "locked");
+  assert.equal(startResearch(save, 0, "heartDoorResilience", T0), false);
+  save.upgrades.heartDoorResilience = 1;
+  assert.equal(status(save, "heartDoorResilience"), "available");
+  assert.ok(startResearch(save, 0, "heartDoorResilience", T0));
   assert.equal(save.gold, 100);
-  assert.equal(status(save, "focusCount"), "active");
+  assert.equal(status(save, "heartDoorResilience"), "active");
   assert.equal(save.archives.slots[0].job!.completesAt, T0 + 8 * HOUR);
-  assert.equal(startResearch(save, 0, "focusCount", T0), false, "the archivist is busy");
+  assert.equal(startResearch(save, 0, "heartDoorResilience", T0), false, "the archivist is busy");
 });
 
 test("research completes on the wall clock, however long the game was closed", () => {
   const save = owner();
-  startResearch(save, 0, "focusCount", T0);
+  startResearch(save, 0, "heartDoorResilience", T0);
   assert.deepEqual(settleArchives(save, T0 + 8 * HOUR - 1), []);
   assert.equal(jobProgress(save.archives.slots[0].job!, T0 + 2 * HOUR), 0.25);
   assert.equal(jobProgress(save.archives.slots[0].job!, T0 - HOUR), 0, "a clock set back reads as no progress");
   const done = settleArchives(save, T0 + 100 * HOUR);
-  assert.deepEqual(done, [{ at: T0 + 8 * HOUR, research: "focusCount", level: 1 }]);
-  assert.equal(save.archives.levels.focusCount, 1);
+  assert.deepEqual(done, [{ at: T0 + 8 * HOUR, research: "heartDoorResilience", level: 1 }]);
+  assert.equal(save.archives.levels.heartDoorResilience, 1);
   assert.equal(save.archives.slots[0].job, undefined, "without auto-continue the archivist waits");
-  assert.equal(researched(save.archives, "focusPerRun"), 2);
+  assert.equal(researched(save.archives, "heartToll"), 95);
 });
 
 test("auto-continue starts each next level the moment the last completes, while the Gold lasts", () => {
   const save = owner(500 + 1000 + 2000 + 100);
   save.archives.slots[0].autoContinue = true;
-  startResearch(save, 0, "focusCount", T0);
+  startResearch(save, 0, "heartDoorResilience", T0);
   // Levels 1–3 take 8 + 16 + 24 hours; the fourth costs more than is left.
   const done = settleArchives(save, T0 + 1000 * HOUR);
   assert.deepEqual(done.map((r) => [r.level, r.at]), [[1, T0 + 8 * HOUR], [2, T0 + 24 * HOUR], [3, T0 + 48 * HOUR]]);
@@ -90,24 +89,24 @@ test("auto-continue starts each next level the moment the last completes, while 
 test("auto-continue stops at the last level", () => {
   const save = owner(1e6);
   save.archives.slots[0].autoContinue = true;
-  startResearch(save, 0, "focusCount", T0);
+  startResearch(save, 0, "heartDoorResilience", T0);
   settleArchives(save, T0 + 10_000 * HOUR);
-  assert.equal(save.archives.levels.focusCount, 9);
-  assert.equal(status(save, "focusCount"), "completed");
-  assert.equal(researched(save.archives, "focusPerRun"), 10);
+  assert.equal(save.archives.levels.heartDoorResilience, 10);
+  assert.equal(status(save, "heartDoorResilience"), "completed");
+  assert.equal(researched(save.archives, "heartToll"), 50);
 });
 
 test("stopping research refunds it and keeps its time for later", () => {
   const save = owner(1000);
-  startResearch(save, 0, "focusCount", T0);
+  startResearch(save, 0, "heartDoorResilience", T0);
   assert.ok(cancelResearch(save, 0, T0 + 6 * HOUR));
   assert.equal(save.gold, 1000, "the Gold comes back");
-  assert.equal(save.archives.progress.focusCount, 0.75);
-  assert.ok(startResearch(save, 0, "focusCount", T0 + 50 * HOUR));
+  assert.equal(save.archives.progress.heartDoorResilience, 0.75);
+  assert.ok(startResearch(save, 0, "heartDoorResilience", T0 + 50 * HOUR));
   assert.equal(save.gold, 500, "starting again pays again");
   const job = save.archives.slots[0].job!;
   assert.equal(job.completesAt, T0 + 52 * HOUR, "2 of the 8 hours were left");
-  assert.equal(save.archives.progress.focusCount, undefined);
+  assert.equal(save.archives.progress.heartDoorResilience, undefined);
 });
 
 test("research speed shortens the time a level takes, not the definition", () => {
@@ -136,29 +135,29 @@ test("Research Speed and Research Cost Discount: open with the Archives, linear 
   const a = defaultArchives();
   a.levels.researchSpeed = 50;
   assert.equal(RESEARCH_TARGETS.researchSpeed.shown(researched(a, "researchSpeed")), "200%");
-  assert.equal(duration(a, { gold: 1, hours: 48, effect: { target: "focusPerRun", op: "add", value: 1 } }), 24 * HOUR, "48 hours at 200% take 24");
+  assert.equal(duration(a, { gold: 1, hours: 48, effect: { target: "heartToll", op: "add", value: 1 } }), 24 * HOUR, "48 hours at 200% take 24");
   a.levels.researchCostDiscount = 100;
   assert.equal(RESEARCH_TARGETS.researchCost.shown(researched(a, "researchCost")), "70%");
-  assert.equal(price(a, { gold: 1000, hours: 1, effect: { target: "focusPerRun", op: "add", value: 1 } }), 700);
+  assert.equal(price(a, { gold: 1000, hours: 1, effect: { target: "heartToll", op: "add", value: 1 } }), 700);
 });
 
 test("Research Cost Discount takes its share off every research's Gold as it starts", () => {
   const save = owner(10_000);
   save.archives.levels.researchCostDiscount = 10;
-  assert.ok(startResearch(save, 0, "focusCount", T0));
+  assert.ok(startResearch(save, 0, "heartDoorResilience", T0));
   assert.equal(save.gold, 10_000 - 485, "3% off 500");
   assert.equal(save.archives.slots[0].job!.paid, 485);
   cancelResearch(save, 0, T0);
   assert.equal(save.gold, 10_000, "a stop gives back what was paid");
   save.gold = 499;
-  assert.equal(cannotStart(save, 0, "focusCount"), null, "485 Gold is enough");
+  assert.equal(cannotStart(save, 0, "heartDoorResilience"), null, "485 Gold is enough");
 });
 
 test("a Research Speed level completed hastens the research under way, keeping its share done", () => {
   const save = owner(1e6);
   save.gems = ARCHIVISTS.prices[0];
   hireArchivist(save);
-  startResearch(save, 0, "focusCount", T0); // 8 hours
+  startResearch(save, 0, "heartDoorResilience", T0); // 8 hours
   startResearch(save, 1, "researchSpeed", T0); // 1 minute
   const at = T0 + 60_000;
   settleArchives(save, at);
@@ -185,13 +184,13 @@ test("archivists are hired one at a time for Gems, not Gold, up to the maximum",
 });
 
 test("a project's next level reads as the total before and after it", () => {
-  const a = owner().archives, show = (archives: typeof a, t: "focusPerRun" | "potionHeal" | "trainingSpeed") =>
+  const a = owner().archives, show = (archives: typeof a, t: "heartToll" | "potionHeal" | "trainingSpeed") =>
     RESEARCH_TARGETS[t].shown(researched(archives, t));
-  assert.deepEqual([show(a, "focusPerRun"), show(withNextLevel(a, "focusCount"), "focusPerRun")], ["1", "2"]);
+  assert.deepEqual([show(a, "heartToll"), show(withNextLevel(a, "heartDoorResilience"), "heartToll")], ["100%", "95%"]);
   assert.deepEqual([show(a, "potionHeal"), show(withNextLevel(a, "potionHp"), "potionHeal")], ["100%", "103%"]);
   assert.equal(show(a, "trainingSpeed"), "100%");
   assert.equal(RESEARCH_TARGETS.trainingSpeed.name, "Training Speed");
-  assert.equal(researchLevel(a, "focusCount"), 0, "the Archives themselves are left alone");
+  assert.equal(researchLevel(a, "heartDoorResilience"), 0, "the Archives themselves are left alone");
 });
 
 test("the Archives save and load, dropping anything malformed", () => {
@@ -199,57 +198,25 @@ test("the Archives save and load, dropping anything malformed", () => {
   save.gems = ARCHIVISTS.prices[0];
   assert.ok(hireArchivist(save));
   save.archives.slots[1].autoContinue = true;
-  startResearch(save, 1, "focusCount", T0);
+  startResearch(save, 1, "heartDoorResilience", T0);
   settleArchives(save, T0 + 8 * HOUR);
-  startResearch(save, 0, "focusCount", T0 + 9 * HOUR);
+  startResearch(save, 0, "heartDoorResilience", T0 + 9 * HOUR);
   const loaded = decode(JSON.stringify(save));
   assert.deepEqual(loaded.archives, save.archives);
   assert.deepEqual(decodeArchives(null), defaultArchives());
   const bad = decodeArchives({
-    slots: [{ job: { research: "focusCount", level: 3, startedAt: 0, completesAt: 1, paid: 5 } }, { job: { research: "nope" } }],
-    levels: { focusCount: 99 },
-    progress: { focusCount: 1.5 },
-    history: [{ at: 1, research: "focusCount", level: 1 }, { at: -1, research: "focusCount", level: 1 }, "x"],
+    slots: [{ job: { research: "heartDoorResilience", level: 3, startedAt: 0, completesAt: 1, paid: 5 } }, { job: { research: "nope" } }],
+    levels: { heartDoorResilience: 99 },
+    progress: { heartDoorResilience: 1.5 },
+    history: [{ at: 1, research: "heartDoorResilience", level: 1 }, { at: -1, research: "heartDoorResilience", level: 1 }, "x"],
   });
   assert.deepEqual(bad.slots, [{ autoContinue: false }, { autoContinue: false }]);
   assert.deepEqual(bad.levels, {});
   assert.deepEqual(bad.progress, {});
-  assert.deepEqual(bad.history, [{ at: 1, research: "focusCount", level: 1 }]);
-  const twice = decodeArchives({ slots: [0, 1].map(() => ({ job: { research: "focusCount", level: 1, startedAt: 0, completesAt: 1, paid: 5 } })) });
+  assert.deepEqual(bad.history, [{ at: 1, research: "heartDoorResilience", level: 1 }]);
+  const twice = decodeArchives({ slots: [0, 1].map(() => ({ job: { research: "heartDoorResilience", level: 1, startedAt: 0, completesAt: 1, paid: 5 } })) });
   assert.equal(twice.slots.filter((s) => s.job).length, 1, "no project in two slots");
-  assert.equal(decodeArchives({ history: Array.from({ length: 300 }, (_, i) => ({ at: i, research: "focusCount", level: 1 })) }).history.length, HISTORY_LIMIT);
-});
-
-test("Focus Count adds to the Focus uses each run starts with", () => {
-  const g = new Game(owner());
-  g.clock = () => T0;
-  g.newRun({ outside: true, seed: 1 });
-  assert.equal(g.focusLeft, 1);
-  assert.ok(g.research.start(0, "focusCount"));
-  g.clock = () => T0 + 8 * HOUR;
-  assert.equal(g.research.settle().length, 1);
-  assert.match(g.message, /Focus Count level 1 complete/);
-  assert.equal(g.focusLeft, 2, "the forest shows what the next run gets");
-  g.walkTo(g.run.player.x, ENTRANCE_Y);
-  for (let i = 0; i < 20 && g.route.length; i++) g.routeStep();
-  assert.equal(g.run.outside, false);
-  assert.equal(g.focusLeft, 2);
-});
-
-test("a Focus Count level completed mid-run adds its use at once", () => {
-  const g = new Game(owner());
-  g.clock = () => T0;
-  g.newRun({ outside: true, seed: 1 });
-  g.walkTo(g.run.player.x, ENTRANCE_Y);
-  for (let i = 0; i < 20 && g.route.length; i++) g.routeStep();
-  assert.equal(g.run.outside, false);
-  assert.equal(g.focusLeft, 1);
-  assert.ok(g.research.start(0, "focusCount"));
-  g.clock = () => T0 + 8 * HOUR;
-  g.research.settle();
-  assert.equal(g.focusLeft, 2, "inside the run already");
-  g.run.focusUsed = 2;
-  assert.equal(g.focusLeft, 0);
+  assert.equal(decodeArchives({ history: Array.from({ length: 300 }, (_, i) => ({ at: i, research: "heartDoorResilience", level: 1 })) }).history.length, HISTORY_LIMIT);
 });
 
 test("Potion HP: +3% a level for 100 levels; quick first levels, then 100m + m³ Gold and m/4 + m²/100 hours from level 5", () => {
@@ -266,13 +233,13 @@ test("Potion HP: +3% a level for 100 levels; quick first levels, then 100m + m³
   assert.deepEqual(RESEARCH.potionHp.categories, ["defense"]);
 });
 
-test("Undo Count needs Rehearsed steps or Echoes of time, costs what Focus Count does, and each level stores one more undo at once", () => {
+test("Undo Count needs Rehearsed steps or Echoes of time, costs what Heart Door Resilience does, and each level stores one more undo at once", () => {
   const save = owner();
   const g = new Game(save);
   g.clock = () => T0;
   assert.deepEqual(
     RESEARCH.undoCount.levels.map(({ gold, hours }) => [gold, hours]),
-    RESEARCH.focusCount.levels.slice(0, 8).map(({ gold, hours }) => [gold, hours]),
+    RESEARCH.heartDoorResilience.levels.slice(0, 8).map(({ gold, hours }) => [gold, hours]),
   );
   assert.equal(status(save, "undoCount"), "locked");
   assert.equal(g.research.start(0, "undoCount"), false);
@@ -399,22 +366,22 @@ test("the Game's research commands need the Archives skill", () => {
   const save = owner();
   save.upgrades.archives = 0;
   const g = new Game(save);
-  assert.equal(g.research.start(0, "focusCount"), false);
+  assert.equal(g.research.start(0, "heartDoorResilience"), false);
   assert.equal(g.research.hire(), false);
   g.save.upgrades.archives = 1;
   g.clock = () => T0;
-  assert.ok(g.research.start(0, "focusCount"));
+  assert.ok(g.research.start(0, "heartDoorResilience"));
   assert.deepEqual(g.research.finishNow(0), [], "only in Dev mode");
   g.save.settings.devMode = true;
   assert.equal(g.research.finishNow(0).length, 1);
-  assert.equal(g.save.archives.levels.focusCount, 1);
+  assert.equal(g.save.archives.levels.heartDoorResilience, 1);
 });
 
 test("Rush completes an archivist's research for a Gem per ten minutes left, rounded up", () => {
   const g = new Game(owner());
   g.clock = () => T0;
   assert.equal(g.research.rushGems(0), 0, "nothing to rush while idle");
-  assert.ok(g.research.start(0, "focusCount"));
+  assert.ok(g.research.start(0, "heartDoorResilience"));
   const job = g.save.archives.slots[0].job!;
   assert.equal(g.research.rushGems(0), Math.ceil((job.completesAt - T0) / 600_000));
   // 25 minutes left: two whole ten minutes and part of a third.
@@ -424,11 +391,11 @@ test("Rush completes an archivist's research for a Gem per ten minutes left, rou
   g.save.gems = 2;
   assert.deepEqual(g.research.rush(0), [], "too few Gems");
   assert.equal(g.save.gems, 2);
-  assert.equal(g.save.archives.levels.focusCount ?? 0, 0);
+  assert.equal(g.save.archives.levels.heartDoorResilience ?? 0, 0);
   g.save.gems = 5;
   assert.equal(g.research.rush(0).length, 1);
   assert.equal(g.save.gems, 2);
-  assert.equal(g.save.archives.levels.focusCount, 1);
+  assert.equal(g.save.archives.levels.heartDoorResilience, 1);
   assert.equal(g.save.archives.slots[0].job, undefined);
   // Dev free purchases rush for nothing.
   g.save.settings.freePurchases = true;
@@ -438,9 +405,9 @@ test("Rush completes an archivist's research for a Gem per ten minutes left, rou
 test("each project completed takes 1.5% off Rush", () => {
   const g = new Game(owner());
   g.clock = () => T0;
-  assert.ok(g.research.start(0, "focusCount"));
+  assert.ok(g.research.start(0, "heartDoorResilience"));
   const base = g.research.rushGems(0);
-  const done = RESEARCH_IDS.filter((id) => id !== "focusCount" && status(g.save, id) === "available").slice(0, 10);
+  const done = RESEARCH_IDS.filter((id) => id !== "heartDoorResilience" && status(g.save, id) === "available").slice(0, 10);
   for (const id of done) g.save.archives.levels[id] = RESEARCH[id].levels.length;
   assert.equal(researchCompleted(g.save), done.length);
   assert.ok(done.length >= 2);
@@ -450,20 +417,20 @@ test("each project completed takes 1.5% off Rush", () => {
 test("a busy archivist switches research: its Gold back, its time kept, the new project paid and started", () => {
   const save = owner(1_000);
   save.upgrades.dash = 1;
-  assert.ok(startResearch(save, 0, "focusCount", T0));
+  assert.ok(startResearch(save, 0, "heartDoorResilience", T0));
   assert.equal(save.gold, 500);
-  assert.equal(cannotSwitch(save, 0, "focusCount"), "Already being researched.");
-  assert.equal(switchResearch(save, 0, "focusCount", T0), false);
+  assert.equal(cannotSwitch(save, 0, "heartDoorResilience"), "Already being researched.");
+  assert.equal(switchResearch(save, 0, "heartDoorResilience", T0), false);
   assert.equal(cannotSwitch(save, 0, "dash"), null, "the job's Gold back pays for the new one");
   assert.equal(cannotStart(save, 0, "dash"), "That archivist is busy.");
   assert.ok(switchResearch(save, 0, "dash", T0 + 2 * HOUR));
   assert.equal(save.archives.slots[0].job?.research, "dash");
   assert.equal(save.gold, 1_000 - 250);
-  assert.equal(save.archives.progress.focusCount, 0.25, "two of Focus Count's eight hours are kept");
+  assert.equal(save.archives.progress.heartDoorResilience, 0.25, "two of Heart Door Resilience's eight hours are kept");
   // Too little Gold, even with the job's back, changes nothing.
   save.gold = 0;
-  assert.ok(cannotSwitch(save, 0, "focusCount"));
-  assert.equal(switchResearch(save, 0, "focusCount", T0 + 3 * HOUR), false);
+  assert.ok(cannotSwitch(save, 0, "heartDoorResilience"));
+  assert.equal(switchResearch(save, 0, "heartDoorResilience", T0 + 3 * HOUR), false);
   assert.equal(save.archives.slots[0].job?.research, "dash");
 });
 

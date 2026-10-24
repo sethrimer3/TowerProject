@@ -1,4 +1,4 @@
-import { FOCUS_PER_RUN, IGNORE_PER_RUN, REGAIN_FLOORS, TARGET_PER_RUN } from "../config.ts";
+import { IGNORE_PER_RUN, REGAIN_FLOORS, TARGET_PER_RUN } from "../config.ts";
 import { intPow } from "../exact.ts";
 export type Currency = "courage" | "inspiration";
 /** Upgrades that make the character stronger say so in `grants` (what one
@@ -28,7 +28,6 @@ export const UPGRADES = [
   { id: "maxInterest", name: "Max Interest", description: "Open Max Interest research in the Archives: each level raises the most Interest a floor pays", base: 10, max: 1, currency: "courage" },
   { id: "mug", name: "Mug", description: "Open Mug research in the Archives: each level adds Gold to a kill your first strike makes", base: 10, max: 1, currency: "courage" },
   { id: "overheal", name: "Overheal", description: "Potions can heal you above max HP, up to your Overheal: opens Overheal training", base: 20, max: 1, currency: "courage" },
-  { id: "refocus", name: "Refocus", description: `Inside a run, regain 1 Focus every ${REGAIN_FLOORS} new floors climbed; opens Refocus research, which shortens it`, base: 20, max: 1, currency: "courage" },
   { id: "ignore", name: "Ignore", description: `Inside a run, press Ignore, then a tile: the hero won't step on it for the rest of the floor (${IGNORE_PER_RUN} use a run); opens Ignore Count research`, base: 20, max: 1, currency: "courage" },
   { id: "ignoreMore", name: "Ignore More", description: `Inside a run, regain 1 Ignore use every ${REGAIN_FLOORS} new floors climbed; opens Ignore More research, which shortens it`, base: 20, max: 1, currency: "courage" },
   { id: "target", name: "Target", description: `Inside a run, press Target, then a tile: the hero walks there (${TARGET_PER_RUN} use a run); opens Target Count research`, base: 20, max: 1, currency: "courage" },
@@ -117,6 +116,37 @@ export const UPGRADES = [
     base: 1,
     max: 1,
     currency: "courage",
+  },
+  // The new game's first skills, at the top of the Inspiration tree: the
+  // cards a run needs past doors and enemies (`toHand`: dealt into the hand
+  // as well as the deck), then the hand playing on by itself.
+  {
+    id: "cardDoorKey",
+    name: "Door & Key",
+    description: "Add the DOOR and KEY cards to your deck and hand: KEY moves you toward the closest key, DOOR toward the closest door you hold the keys for, or a Wooden Door you can break down with HP",
+    cards: ["door", "key"],
+    toHand: true,
+    base: 1,
+    max: 1,
+    currency: "inspiration",
+  },
+  {
+    id: "cardEnemy",
+    name: "Enemy",
+    description: "Add the ENEMY card to your deck and hand: it moves you toward the closest enemy, to fight it",
+    card: "monster",
+    toHand: true,
+    base: 1,
+    max: 1,
+    currency: "inspiration",
+  },
+  {
+    id: "autoClimb",
+    name: "Auto-Climb",
+    description: "Inside a run, the hand plays by itself: once a card reaches its target, the first card in your hand that can act leads the next move",
+    base: 1,
+    max: 1,
+    currency: "inspiration",
   },
   {
     id: "combatStance",
@@ -269,9 +299,9 @@ export const UPGRADES = [
     currency: "inspiration",
   },
   {
-    id: "focus",
-    name: "Focus",
-    description: `Inside a run, press a card in your hand to put it ahead of the others until it reaches its target (${FOCUS_PER_RUN} use a run)`,
+    id: "bombs",
+    name: "Bombs",
+    description: "Open the Bomb provision on the Gear page: a Bomb every run, thrown at an enemy to deal it your ATK",
     base: 5,
     max: 1,
     currency: "courage",

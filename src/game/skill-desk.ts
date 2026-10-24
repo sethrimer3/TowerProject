@@ -2,6 +2,7 @@ import { cost, UPGRADES, type UpgradeId } from "../progression/upgrades.ts";
 import { skillAvailable } from "../progression/skill-trees.ts";
 import type { DeskHost } from "./desk.ts";
 import { readyForestRuns } from "./hero-sync.ts";
+import { dealCard, dealsToHand, handSlots, upgradeCards } from "../cards/cards.ts";
 
 /** The skill trees' commands: skills bought with Courage or Inspiration. */
 export class SkillDesk {
@@ -24,6 +25,8 @@ export class SkillDesk {
     const u = UPGRADES.find((u) => u.id === id)!, n = this.save.upgrades[id];
     if (!this.spend(u.currency === "courage", cost(id, n))) return false;
     this.save.upgrades[id]++;
+    // The first cards earned (Door & Key, Enemy) go into the hand as well.
+    if (dealsToHand(id)) for (const card of upgradeCards(id)) this.save.hand = dealCard(this.save.hand, card, handSlots(this.save));
     readyForestRuns(this.save);
     return true;
   }

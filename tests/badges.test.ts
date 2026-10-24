@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { decode, defaults } from "../src/save/save.ts";
+import { decode } from "../src/save/save.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { xpBase } from "../src/progression/xp.ts";
 import { planHand, type CardId } from "../src/cards/cards.ts";
@@ -19,14 +19,15 @@ import { doorCost } from "../src/doors.ts";
 import { keyCount } from "../src/whole.ts";
 import { random } from "../src/random.ts";
 import { snap } from "../src/exact.ts";
+import { playedSave } from "./first-skills.ts";
 
-test("Badges costs 2 Courage and follows Focus in the Courage tree", () => {
-  const g = new Game(defaults());
+test("Badges costs 2 Courage and follows Bombs in the Courage tree", () => {
+  const g = new Game(playedSave());
   g.save.upgrades.delve = 1;
   g.save.upgrades.moveSpeed = 1;
   g.save.delve.courage = 10;
-  assert.equal(g.skills.buy("cardBadges"), false, "waits for Focus");
-  g.save.upgrades.focus = 1;
+  assert.equal(g.skills.buy("cardBadges"), false, "waits for Bombs");
+  g.save.upgrades.bombs = 1;
   assert.ok(g.skills.buy("cardBadges"));
   assert.equal(g.save.delve.courage, 8);
 });
@@ -57,7 +58,7 @@ test("each badge's values by level, and a gate's threshold picked among those it
   assert.deepEqual(RARITY_WEIGHTS, { common: 70, rare: 27, epic: 3 });
 });
 
-const UPGRADES = defaults().upgrades;
+const UPGRADES = playedSave().upgrades;
 
 test("draws follow the rarity weights and carry on one saved stream, purchase after purchase", () => {
   const m = defaultBadges();
@@ -105,7 +106,7 @@ test("Key < Badges and Key ≥ Badges each add their three key gates to the draw
 });
 
 test("Key < Badges sits beside Gold Door and Key ≥ Badges beside it, 50 Inspiration each", () => {
-  const g = new Game(defaults());
+  const g = new Game(playedSave());
   g.save.tower.inspiration = 100;
   assert.equal(g.skills.buy("keyLessBadges"), false, "waits for Gold Door");
   g.save.upgrades.cardYellowDoor = 1;
@@ -130,7 +131,7 @@ test("a badge goes on one card and a card holds one: dropping moves it, swaps, o
 });
 
 test("the desk draws for Gems (red-priced, never refused for show), attaches in the forest only, and picks thresholds", () => {
-  const g = new Game(defaults());
+  const g = new Game(playedSave());
   g.newRun({ outside: true });
   assert.equal(g.badges.draw(1), null, "needs Badges");
   g.save.upgrades.cardBadges = 1;
@@ -151,7 +152,7 @@ test("the desk draws for Gems (red-priced, never refused for show), attaches in 
 });
 
 test("the save keeps badges, their cards and the stream, dropping what doesn't fit", () => {
-  const save = defaults();
+  const save = playedSave();
   save.badges = { owned: { hp: { copies: 4, pick: 0 }, hpGate: { copies: 3, pick: 1 } }, cards: { stairs: ["hp"], door: ["hpGate"] }, rng: 12345 };
   assert.deepEqual(decode(JSON.stringify(save)).badges, save.badges);
   const bad = { owned: { hp: { copies: 81 }, xp: { copies: 2, pick: 5 }, nope: { copies: 1 } }, cards: { stairs: ["xp"], door: ["xp"], heal: ["xp"], monster: ["hp"] }, rng: -1 };
@@ -164,7 +165,7 @@ test("Badge Slots opens with Badges and Tower VI's floor 50 Goal: two levels, 1 
   assert.deepEqual(def.requires, [{ upgrade: "archives" }, { upgrade: "cardBadges" }, { goalUnlock: "badgeSlots" }]);
   assert.deepEqual(def.levels.map((l) => [l.gold, l.hours]), [[1e9, 96], [100e9, 480]]);
   assert.ok(def.levels.every((l) => l.effect.target === "badgeSlots" && l.effect.op === "add" && l.effect.value === 1));
-  const save = defaults();
+  const save = playedSave();
   save.upgrades.archives = 1;
   save.gold = 1e12;
   save.goals.claimed[6] = [50];
@@ -225,7 +226,7 @@ test("badges that can't work together can't share a card: a key colour's < and �
 });
 
 test("the desk fills the slots Badge Slots opens and refuses a conflict", () => {
-  const g = new Game(defaults());
+  const g = new Game(playedSave());
   g.newRun({ outside: true });
   g.save.upgrades.cardBadges = 1;
   for (const id of ["hp", "xp", "yellowGate", "yellowAtLeast", "hpGate"] as const) g.save.badges.owned[id] = { copies: 1, pick: 0 };
@@ -250,7 +251,7 @@ test("the desk fills the slots Badge Slots opens and refuses a conflict", () => 
 /** A Tower floor drawn row by row, the first row highest; `@` is the hero.
  * Badges is owned and undo open. */
 function floor(rows: string[]) {
-  const g = new Game(defaults());
+  const g = new Game(playedSave());
   // No theme's Gold, so these figures are the mechanic's alone (theme-collection.test.ts covers it).
   g.save.themes = [];
   g.save.upgrades.inspirationUndos = 1;
@@ -277,7 +278,7 @@ function badge(g: Game, card: CardId, id: BadgeId, level = 1, pick = 0) {
 const at = (g: Game) => [g.run.player.x, g.run.player.y];
 const turns = (g: Game, n: number) => { for (let i = 0; i < n; i++) g.autoTurn(); };
 
-test("a gate keeps its card from acting while its condition fails; a Focus overrides it", () => {
+test("a gate keeps its card from acting while its condition fails; pressing the card overrides it", () => {
   const g = floor(["@.K", "..."]);
   g.run.hand = ["key"];
   badge(g, "key", "hpGate");
@@ -289,8 +290,7 @@ test("a gate keeps its card from acting while its condition fails; a Focus overr
   badge(g, "key", "yellowGate", 1, 0);
   g.run.player.keys.yellow = 10;
   assert.equal(planHand(g.handRules, g.run.hand, "tower"), null, "holding 10 gold keys closes GK < 10");
-  g.save.upgrades.focus = 1;
-  assert.equal(g.focus(0), "focused", "a Focus plans the card whatever its gate");
+  assert.equal(g.focus(0), "focused", "a press plans the card whatever its gate");
   turns(g, 2);
   assert.equal(g.run.player.keys.yellow, 11);
 });
@@ -714,7 +714,7 @@ test("Floor Skip Reward pays its percent of the Gold the floor skipped held, onc
   const { pickupGold } = await import("../src/doors.ts");
   const { litTorches } = await import("../src/board.ts");
   assert.deepEqual(RESEARCH.floorSkipReward.levels.map((l) => l.effect.value), Array(11).fill(10), "11 levels of 10%");
-  assert.deepEqual(RESEARCH.floorSkipReward.levels.slice(0, 9).map((l) => l.gold), RESEARCH.focusCount.levels.map((l) => l.gold), "Focus Count's curve");
+  assert.deepEqual(RESEARCH.floorSkipReward.levels.slice(0, 9).map((l) => l.gold), RESEARCH.heartDoorResilience.levels.slice(0, 9).map((l) => l.gold), "Heart Door Resilience's curve");
   for (let seed = 1; seed < 500; seed++) {
     const g = floor(["@.S"]);
     g.save.archives.levels.floorSkipReward = 3;
@@ -750,7 +750,7 @@ test("Floor Skip Reward pays its percent of the Gold the floor skipped held, onc
 });
 
 test("Dev mode owns the Badges box and every badge at the top level", () => {
-  const g = new Game(defaults());
+  const g = new Game(playedSave());
   g.setDevMode(true);
   assert.ok(g.save.upgrades.combatStance && g.save.upgrades.buildout && g.save.upgrades.cardBadges);
   assert.ok(BADGE_IDS.every((id) => g.save.badges.owned[id]?.copies === MAX_COPIES));

@@ -2,7 +2,6 @@ import { test } from "node:test";
 import { snap } from "../src/exact.ts";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save/save.ts";
 import { TRAINING, trained, trainingWorth, type StatTrainingRow, trainingDef } from "../src/progression/training.ts";
 import { cost } from "../src/progression/upgrades.ts";
 import { levelForXp } from "../src/progression/xp.ts";
@@ -10,11 +9,12 @@ import { loadout, trainingStep } from "../src/progression/loadout.ts";
 import { resolveStep, BASE_RULES } from "../src/step-effects.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import type { Player } from "../src/entities.ts";
+import { playedSave } from "./first-skills.ts";
 
 const row = (id: string) => TRAINING.find((t) => t.id === id)! as StatTrainingRow;
 
 test("Regen costs 1 Inspiration between On the Job and Heal, and opens a Defense training row", () => {
-  const g = new Game(defaults());
+  const g = new Game(playedSave());
   g.save.tower.inspiration = 1000;
   assert.equal(cost("regen", 0), 1);
   for (const id of ["combatStance", "buildout", "trainers"] as const) assert.ok(g.skills.buy(id));
@@ -34,7 +34,7 @@ test("Regen costs 1 Inspiration between On the Job and Heal, and opens a Defense
 });
 
 test("Regen training gives the hero HP per step, shown to the hundredth", () => {
-  const save = defaults();
+  const save = playedSave();
   save.upgrades.regen = 1;
   save.training.regen = 3;
   const per = trained(row("regen"), 3);
@@ -43,7 +43,7 @@ test("Regen training gives the hero HP per step, shown to the hundredth", () => 
   g.newRun({ seed: 5 });
   assert.equal(g.run.player.regen, loadout(save).regen);
   assert.equal(trainingStep(save, "regen").now, Math.floor(per * 100) / 100);
-  assert.equal(new Game(defaults()).run.player.regen, undefined, "a hero without Regen carries none");
+  assert.equal(new Game(playedSave()).run.player.regen, undefined, "a hero without Regen carries none");
 });
 
 test("each step regains Regen's HP after what the step does, up to max HP, and a fallen hero none", () => {
@@ -68,7 +68,7 @@ test("each step regains Regen's HP after what the step does, up to max HP, and a
 /** A Tower corridor along the bottom row with a key at its east end, the
  * hero at 50 HP regaining 0.5 a step, and `dash` Dash levels. */
 function corridor(dash: number) {
-  const g = new Game(defaults());
+  const g = new Game(playedSave());
   if (dash) {
     g.save.upgrades.dash = 1;
     g.save.archives.levels.dash = dash;
@@ -113,7 +113,7 @@ test("Dash Regen research lets a Dash's first dashed steps regain HP too, once t
 });
 
 test("no Regen in the forest", () => {
-  const g = new Game(defaults());
+  const g = new Game(playedSave());
   g.newRun({ outside: true, seed: 3 });
   g.run.player.regen = 0.5;
   assert.equal(g.stepRules.regen, 0);

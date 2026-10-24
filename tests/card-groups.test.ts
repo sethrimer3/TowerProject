@@ -2,11 +2,12 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { keptLinks, linkedToNext, planHand, toggleLink, type CardId, type HandAt } from "../src/cards/cards.ts";
 import { Game } from "../src/state.ts";
-import { decode, defaults } from "../src/save/save.ts";
+import { decode } from "../src/save/save.ts";
 import { unlockAt } from "../src/goals.ts";
 import type { Board } from "../src/board.ts";
 import type { Run } from "../src/runs.ts";
 import type { Tile } from "../src/entities.ts";
+import { playedSave } from "./first-skills.ts";
 
 // Card Groups (Tower II floor 80's Goal): cards linked side by side in the
 // hand share one priority, the closest target of any of them taken first.
@@ -63,7 +64,7 @@ test("a link holds only while both its cards stay side by side", () => {
 
 /** A Game in the forest with the Card Groups Goal claimed. */
 function forest(claimed = true) {
-  const save = defaults();
+  const save = playedSave();
   save.upgrades.combatStance = 1;
   save.upgrades.buildout = 1;
   if (claimed) {

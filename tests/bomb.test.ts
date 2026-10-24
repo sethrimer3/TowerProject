@@ -1,10 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { decode, defaults } from "../src/save/save.ts";
+import { decode } from "../src/save/save.ts";
 import { provisionPrice } from "../src/progression/loadout.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import type { Enemy, Tile } from "../src/entities.ts";
+import { playedSave } from "./first-skills.ts";
 
 const slime = (hp: number, defense = 0): Tile => ({ kind: "enemy", enemy: { name: "Slime", hp, attack: 5, defense, tier: 1, strength: "normal" } as Enemy });
 
@@ -17,8 +18,9 @@ function lay(g: Game, foe: Tile) {
 /** A Tower run on seed 7 with `bombs` Bomb provisions, the hero at (0, 0)
  * with ATK 10, `foe` two tiles off. */
 function withBombs(bombs: number, foe: Tile = slime(30)) {
-  const s = defaults();
+  const s = playedSave();
   s.upgrades.inspirationUndos = 1;
+  s.upgrades.bombs = 1;
   s.provisions.bomb = bombs;
   const g = new Game(s);
   g.newRun({ seed: 7 });
@@ -28,7 +30,7 @@ function withBombs(bombs: number, foe: Tile = slime(30)) {
 }
 
 test("a Bomb costs 100 Gold, and each one after a hundred times the last", () => {
-  const s = defaults();
+  const s = playedSave();
   assert.deepEqual([0, 1, 2, 3].map((n) => provisionPrice({ provisions: { ...s.provisions, bomb: n } }, "bomb")), [100, 10_000, 1_000_000, 100_000_000]);
 });
 

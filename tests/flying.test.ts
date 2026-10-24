@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults, decode } from "../src/save/save.ts";
+import { decode } from "../src/save/save.ts";
 import { ENEMY_GOLD, RANGED_GOLD } from "../src/economy/kill-pay.ts";
 import { aggroTurn, FLYING_TIER, flyingCells, flyingShare, walkToHero } from "../src/enemies/flying.ts";
 import { FOE_GAIN, foeShotCost, rangedShare, woundMore } from "../src/enemies/ranged.ts";
@@ -15,6 +15,7 @@ import { tileInfo } from "../src/ui/tile-info.ts";
 import type { Board } from "../src/board.ts";
 import type { Run } from "../src/runs.ts";
 import type { Enemy, Player, Tile } from "../src/entities.ts";
+import { playedSave } from "./first-skills.ts";
 
 const bat: Enemy = { name: "Bat", hp: 3000, attack: 7, defense: 0, tier: 5, strength: "normal", flying: true };
 const brute: Enemy = { name: "Brute", hp: 60, attack: 30, defense: 0, tier: 5, strength: "normal" };
@@ -63,7 +64,7 @@ test("Flying enemies say so first, and pay the Ranged enemy's Gold", () => {
 /** A Tower V run inside on an open 9×9 floor, the hero at (0, 0), with
  * `foes` by tile (a Flying one over open floor) and `walls`. */
 function arena(foes: Record<string, Enemy>, over: Partial<Player> = {}, walls: string[] = []) {
-  const save = defaults();
+  const save = playedSave();
   save.upgrades.inspirationUndos = 1;
   const g = new Game(save);
   g.save.themes = [];
@@ -176,7 +177,7 @@ test("every Aggroed enemy steps by one shared walk to the hero, the closest movi
 test("Flying enemies shoot in the volley as Ranged ones do", () => {
   const tiles = new Map<string, Tile>([["1,1", { kind: "floor", flyer: bat }]]);
   const board = { tile: (x: number, y: number) => tiles.get(`${x},${y}`) ?? { kind: "floor" as const }, clear: () => {}, wound: () => {} };
-  const out = volleyTurn({ board, wrap: 0, floorOf: () => 1, hero: hero(), seed: 7, volleys: { turn: 1 }, archer: false, ranks: defaults() } as VolleyTurn);
+  const out = volleyTurn({ board, wrap: 0, floorOf: () => 1, hero: hero(), seed: 7, volleys: { turn: 1 }, archer: false, ranks: playedSave() } as VolleyTurn);
   assert.deepEqual(out.shots.map((s) => [s.by, s.from, s.damage]), [["enemy", { x: 1, y: 1 }, 7]]);
 });
 
@@ -187,7 +188,7 @@ test("the hand's Shot ATK and Attack Speed bonuses come from FLYING ENEMY in han
   // An arrow strikes 5% harder with it.
   const tiles = new Map<string, Tile>([["0,1", { kind: "enemy", enemy: { ...brute, hp: 5000 } }]]);
   const board = { tile: (x: number, y: number) => tiles.get(`${x},${y}`) ?? { kind: "floor" as const }, clear: () => {}, wound: () => {} };
-  const shoot = (handShot?: VolleyTurn["handShot"]) => volleyTurn({ board, wrap: 0, floorOf: () => 1, hero: hero(), seed: 7, volleys: { turn: 1 }, archer: true, ranks: defaults(), handShot }).shots[0]!.damage;
+  const shoot = (handShot?: VolleyTurn["handShot"]) => volleyTurn({ board, wrap: 0, floorOf: () => 1, hero: hero(), seed: 7, volleys: { turn: 1 }, archer: true, ranks: playedSave(), handShot }).shots[0]!.damage;
   assert.equal(shoot({ attack: 5, speed: 5 }), shoot() * 1.05);
 });
 
@@ -237,14 +238,14 @@ test("in a run, FLYING ENEMY holds its ground with a Flying enemy in reach while
 
 test("Tower V's floor 10 Goal unlocks the Flying Enemy card, which joins the deck", () => {
   assert.deepEqual(checkpoint(5, 10)?.reward, { kind: "unlock", unlock: "flyingEnemyCard" });
-  const save = defaults();
+  const save = playedSave();
   assert.ok(!goalUnlocked(save, "flyingEnemyCard"));
   save.goals.claimed[5] = [10];
   assert.ok(goalUnlocked(save, "flyingEnemyCard"));
   assert.equal(CARDS.flyingEnemy.name, "Flying Enemy");
   const reloaded = decode(JSON.stringify({ ...save, hand: ["stairs", "flyingEnemy"] }));
   assert.deepEqual(reloaded.hand, ["stairs", "flyingEnemy"], "a hand may hold it once the Goal is claimed");
-  assert.deepEqual(decode(JSON.stringify({ ...defaults(), hand: ["stairs", "flyingEnemy"] })).hand, ["stairs"], "and not before");
+  assert.deepEqual(decode(JSON.stringify({ ...playedSave(), hand: ["stairs", "flyingEnemy"] })).hand, ["stairs"], "and not before");
 });
 
 test("a Flying enemy that has moved keeps its loot key, so undo and a kill elsewhere can't pay it twice; saves keep it", () => {

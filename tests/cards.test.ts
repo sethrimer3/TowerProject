@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { BASE_HAND, BASE_HAND_SLOTS, CARDS, CARD_IDS, cardText, explainStuck, GOAL_CARDS, HAND_SLOT_GEMS, MAX_HAND_SLOTS, deckCards, handSlots, nextHandSlotGems, moveCard, placeCard, planHand, upgradeCard, type CardId } from "../src/cards/cards.ts";
+import { BASE_HAND, BASE_HAND_SLOTS, CARDS, CARD_IDS, cardText, explainStuck, GOAL_CARDS, HAND_SLOT_GEMS, MAX_HAND_SLOTS, deckCards, handSlots, nextHandSlotGems, moveCard, placeCard, planHand, upgradeCards, dealCard, type CardId } from "../src/cards/cards.ts";
 import { defaults } from "../src/save/save.ts";
 import { UPGRADES } from "../src/progression/upgrades.ts";
 import type { Board, Position } from "../src/board.ts";
@@ -164,27 +164,36 @@ test("each key card heads for its own colour of key only", () => {
   assert.deepEqual(play(board(["@.K.B"]), ["key"]), { card: "key", to: [2, 0], steps: 2 });
 });
 
-test("the deck starts as the base hand, and HEAL, GOLD KEY, EQUIPMENT, BLUE KEY and GK SIPHON join it with their skills", () => {
+test("the deck starts as STAIRS alone; Door & Key, Enemy, HEAL, GOLD KEY, BLUE KEY and the rest join it with their skills", () => {
   const none = defaults().upgrades;
-  assert.deepEqual(BASE_HAND, ["stairs", "door", "key", "monster"]);
-  assert.equal(BASE_HAND.length, BASE_HAND_SLOTS, "the base hand fills the base slots");
-  assert.deepEqual(deckCards(none), ["stairs", "door", "key", "monster"]);
-  assert.deepEqual(deckCards({ ...none, cardHeal: 1 }), ["stairs", "heal", "door", "key", "monster"]);
-  assert.deepEqual(deckCards({ ...none, cardYellowKey: 1 }), ["stairs", "door", "key", "yellowKey", "monster"]);
-  assert.deepEqual(deckCards({ ...none, cardBlueKey: 1 }), ["stairs", "door", "key", "blueKey", "monster"]);
-  const everyUpgrade = { ...none, ...Object.fromEntries(UPGRADES.filter((u) => "card" in u).map((u) => [u.id, 1])) };
+  assert.deepEqual(BASE_HAND, ["stairs"]);
+  assert.equal(BASE_HAND_SLOTS, 4, "room for the first skills' cards");
+  assert.deepEqual(deckCards(none), ["stairs"]);
+  assert.deepEqual(deckCards({ ...none, cardDoorKey: 1 }), ["stairs", "door", "key"]);
+  const first = { ...none, cardDoorKey: 1, cardEnemy: 1 };
+  assert.deepEqual(deckCards(first), ["stairs", "door", "key", "monster"]);
+  assert.deepEqual(deckCards({ ...first, cardHeal: 1 }), ["stairs", "heal", "door", "key", "monster"]);
+  assert.deepEqual(deckCards({ ...first, cardYellowKey: 1 }), ["stairs", "door", "key", "yellowKey", "monster"]);
+  assert.deepEqual(deckCards({ ...first, cardBlueKey: 1 }), ["stairs", "door", "key", "blueKey", "monster"]);
+  const everyUpgrade = { ...none, ...Object.fromEntries(UPGRADES.filter((u) => "card" in u || "cards" in u).map((u) => [u.id, 1])) };
   assert.deepEqual(deckCards(everyUpgrade), CARD_IDS.filter((id) => !Object.values(GOAL_CARDS).includes(id)), "every card but a Goal's comes from an upgrade");
   const goals = defaults().goals;
   goals.claimed[5] = [10];
   assert.deepEqual(deckCards(everyUpgrade, goals), CARD_IDS.filter((id) => id !== "archer"), "Tower V's floor 10 Goal adds FLYING ENEMY");
   goals.claimed[3] = [10];
   assert.deepEqual(deckCards(everyUpgrade, goals), CARD_IDS, "and Tower III's floor 10 Goal ARCHER");
-  assert.equal(upgradeCard("cardYellowKey"), "yellowKey");
-  assert.equal(upgradeCard("cardAtkUp"), "atkUp");
-  assert.equal(upgradeCard("cardDefUp"), "defUp");
-  assert.equal(upgradeCard("cardBlueKey"), "blueKey");
-  assert.equal(upgradeCard("keySiphon"), "keySiphon");
-  assert.equal(upgradeCard("focus"), undefined);
+  assert.deepEqual(["cardDoorKey", "cardEnemy", "cardYellowKey", "cardAtkUp", "cardDefUp", "cardBlueKey", "keySiphon", "autoClimb"].map((id) => upgradeCards(id as never)),
+    [["door", "key"], ["monster"], ["yellowKey"], ["atkUp"], ["defUp"], ["blueKey"], ["keySiphon"], []]);
+});
+
+test("the first skills' cards are dealt into the hand in order after STAIRS, while there is room", () => {
+  assert.deepEqual(dealCard(["stairs"], "door", 4), ["stairs", "door"]);
+  assert.deepEqual(dealCard(["stairs", "door"], "key", 4), ["stairs", "door", "key"]);
+  assert.deepEqual(dealCard(["stairs", "door", "key"], "monster", 4), ["stairs", "door", "key", "monster"]);
+  assert.deepEqual(dealCard(["stairs", "heal"], "monster", 4), ["stairs", "monster", "heal"], "ENEMY right after STAIRS with neither DOOR nor KEY");
+  assert.deepEqual(dealCard(["heal", "stairs"], "door", 4), ["heal", "stairs", "door"], "after STAIRS wherever it stands");
+  assert.deepEqual(dealCard(["stairs", "door"], "door", 4), ["stairs", "door"], "never twice");
+  assert.deepEqual(dealCard(["stairs", "heal", "atkUp", "defUp"], "door", 4), ["stairs", "heal", "atkUp", "defUp"], "a full hand keeps its cards");
 });
 
 test("a deck card dropped on a slot slides the others later, or in a full hand swaps out the card there, never STAIRS", () => {

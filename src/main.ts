@@ -208,7 +208,7 @@ function update() {
   if (runNotes.open) runNotes.refresh();
   refreshEnemyOddsBox(game);
   runTraining.render();
-  if(!provingGrounds.active)renderBoardLesson(game, isBoard(tab), update);
+  if(!provingGrounds.active)renderBoardLesson(game, isBoard(tab), update, tab === "upgrades");
   provingGrounds.decorate();
   const themes = game.themes.claim();
   // A theme Dev mode grants while its look was chosen shows at once.
@@ -329,13 +329,14 @@ function showPage(id: Tab) {
   });
 }
 
-// Focus: pressing a hand card inside a run puts it ahead of the others.
+// Pressing a hand card inside a run sends the hero to its target, ahead
+// of the others; a card that can't reach one, or a press while an earlier
+// one still heads for its target, flashes red.
 el("hand").onclick = (e) => {
   const card = (e.target as HTMLElement).closest<HTMLElement>(".hand-card");
-  if (provingGrounds.active || !card || !game.save.upgrades.focus) return;
+  if (provingGrounds.active || !card || game.run.outside) return;
   const result = game.focus(Number(card.dataset.handSlot));
-  if (result === "spent") flashRed(el("focus-stat"));
-  if (result === "noPath") flashRed(card);
+  if (result === "noPath" || result === "busy") flashRed(card);
   update();
 };
 // With no scrollbar shown, a mouse wheel scrolls a hand wider than the screen sideways.
@@ -430,10 +431,10 @@ document.querySelector(".height")!.addEventListener("click", (e) => {
 el("end-run").onclick = () => {
   closeRunMenu();
   if(provingGrounds.active)provingGrounds.leave();
-  else runEnd.ask();
+  else {game.endRunPressed();runEnd.ask();}
 };
 // Shown at the foot of the height column while no card can act.
-el("stuck-end-run").onclick = () => {if(provingGrounds.active)provingGrounds.leave();else runEnd.ask();};
+el("stuck-end-run").onclick = () => {if(provingGrounds.active)provingGrounds.leave();else {game.endRunPressed();runEnd.ask();}};
 // Inside a run, the hamburger opens and closes the menu over the stats.
 el("run-menu-toggle").onclick = () => toggleRunMenu(game.save.settings.reduceMotion);
 modal.addEventListener("cancel", (e) => {

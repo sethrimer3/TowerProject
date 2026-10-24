@@ -1,16 +1,17 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { decode, defaults } from "../src/save/save.ts";
+import { decode } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
 import { CARD_LEVEL_XP } from "../src/cards/levels.ts";
 import { raiseNode } from "../src/cards/trees.ts";
+import { playedSave } from "./first-skills.ts";
 
 /** XP enough for `levels` card levels. */
 const xpFor = (levels: number) => CARD_LEVEL_XP.slice(0, levels).reduce((a, b) => a + b, 0);
 
 /** A game in the forest with the Deck open and its lessons on the hand done. */
 function forest() {
-  const g = new Game(defaults());
+  const g = new Game(playedSave());
   g.newRun({ outside: true, seed: 1 });
   Object.assign(g.save.tutorials, { deck: true, removeCard: true, addCard: true, enter: true, climb: true });
   g.save.upgrades.combatStance = 1;
@@ -90,7 +91,7 @@ test("the card points lesson never shows inside a run, and points only at cards 
 });
 
 test("a save decodes its card lesson and NEW marks: met its deck, seen its levels, and taught once a point was spent", () => {
-  const old = defaults() as any;
+  const old = playedSave() as any;
   old.upgrades.combatStance = 1;
   old.upgrades.cardHeal = 1;
   old.cardXp = { door: xpFor(2) };
@@ -102,7 +103,7 @@ test("a save decodes its card lesson and NEW marks: met its deck, seen its level
   assert.ok(d.seen.met.includes("heal"), "a save from before NEW has met its deck");
   assert.equal(d.seen.cardLevels, 2, "and seen its cards' levels");
   assert.equal(d.tutorials.cardPoints, true, "a point already spent needs no lesson");
-  const fresh = decode(JSON.stringify(defaults()));
+  const fresh = decode(JSON.stringify(playedSave()));
   assert.equal(fresh.tutorials.cardPoints, false);
-  assert.deepEqual(fresh.seen.met, defaults().seen.met);
+  assert.deepEqual(fresh.seen.met, playedSave().seen.met);
 });

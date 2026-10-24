@@ -28,7 +28,7 @@ A regular potion is drawn red, like the HP bar, and a percent potion blue, like 
 
 ## Overheal
 
-**Overheal** (20 Courage, below Max Interest in the Courage tree, with Refocus below it) lets HP rise above max HP, and opens Overheal training.
+**Overheal** (20 Courage, below Max Interest in the Courage tree) lets HP rise above max HP, and opens Overheal training.
 Potions, regular and percent, GK TO HP and the badges' heals then heal past max HP, up to the Overheal ceiling: max HP times the Overheal training row's value (×1.00 until it has ranks).
 Regen, Lifesteal, Dash Regen, equipment's victory and floor heals still stop at max HP, and none of them lowers HP held above it.
 The HP readout shows HP over max (1,240 / 1,000), and its tooltip the ceiling.

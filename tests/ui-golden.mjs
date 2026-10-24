@@ -69,13 +69,25 @@ try {
     const { Game } = await import("/snapshot/state.js");
     // Every fixture wears the Classic UI theme: the Medieval frame a new hero
     // starts in resizes the board, and the theme menus have their own steps.
-    const defaults = () => {
+    const newGame = () => {
       const s = newSave();
       s.settings.uiTheme = "classic";
       return s;
     };
+    // Every fixture but the new game is past the first skills: Door & Key,
+    // Enemy and Auto-Climb owned, their cards in the hand and met, and the
+    // lesson pointing at KEY and DOOR done.
+    const defaults = () => {
+      const s = newGame();
+      Object.assign(s.upgrades, { cardDoorKey: 1, cardEnemy: 1, autoClimb: 1 });
+      s.hand = ["stairs", "door", "key", "monster"];
+      s.seen.cards = [...s.hand];
+      s.seen.met = [...s.hand];
+      s.tutorials.keys = true;
+      return s;
+    };
     const make = (edit) => {
-      const s = defaults();
+      const s = newGame();
       edit?.(s);
       return { save: JSON.stringify(s), targets: [] };
     };
@@ -104,7 +116,7 @@ try {
     };
     const rich = (s) => {
       quiet(s);
-      Object.assign(s.upgrades, { delve: 1, moveSpeed: 1, legacy: 1, revive: 1, combatStance: 1, buildout: 1, largerHand: 1, cardHeal: 1, focus: 1, archives: 1, inspirationUndos: 1, greaterHeal: 1, recovery: 1, findPotion: 1, shroud: 1, undos: 1, extraKey: 1, gear: 1, trainers: 1, cardBlueKey: 1, pathfinder: 1 });
+      Object.assign(s.upgrades, { delve: 1, moveSpeed: 1, legacy: 1, revive: 1, combatStance: 1, buildout: 1, largerHand: 1, cardHeal: 1, bombs: 1, archives: 1, inspirationUndos: 1, greaterHeal: 1, recovery: 1, findPotion: 1, shroud: 1, undos: 1, extraKey: 1, gear: 1, trainers: 1, cardBlueKey: 1, pathfinder: 1 });
       s.delve.courage = 37;
       s.tower.inspiration = 21;
       s.gold = 480;
@@ -635,9 +647,9 @@ try {
 
   await load("fresh");
   await shot("fresh.start");
-  // A new game's note holds the hand paused until it is tapped.
-  await click(".board-tip");
-  await shot("fresh.noteDismissed");
+  // A new game's note holds the hand of STAIRS alone until the card is pressed.
+  await click('#hand .hand-card[data-card="stairs"]');
+  await shot("fresh.stairsPressed");
   // Inside a run the button plays and pauses the hand.
   await click("#auto");
   await shot("fresh.handToggled");
@@ -649,7 +661,7 @@ try {
   await tab("upgrades");
   await shot("fresh.upgrades");
   // A skill short of its price says how much more it needs.
-  await click('[data-skill="combatStance"]');
+  await click('[data-skill="cardDoorKey"]');
   await shot("fresh.tree.short");
   await tab("board");
   // In the forest Enter, under Goals, goes straight in.
@@ -678,10 +690,11 @@ try {
   await load("rich");
   await boardTour("rich", "rich");
   await dialogsTour("rich");
-  // Focus: a card with no target flashes red for free; one with a target takes the lead.
+  // Pressing a card: one with no target flashes red for free; one with a
+  // target takes the lead, and the others flash red until it arrives.
   for (const card of ["door", "key", "monster"]) {
     await click(`#hand .hand-card[data-card="${card}"]`);
-    await shot(`rich.focus.${card}`);
+    await shot(`rich.press.${card}`);
   }
   await leaveRun();
   // In the forest, Goals shows the Tower's checkpoints: claiming an unlock

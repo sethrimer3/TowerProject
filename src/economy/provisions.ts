@@ -2,7 +2,8 @@
  * one owned is one use every run carries, never a stat at its start. The
  * Traveler's elixir fills HP (`Game.useProvision`), the Whetstone and
  * Aegis charm raise ATK or DEF by `PROVISION_BOOST_PERCENT` for
- * `PROVISION_BOOST_TURNS` turns, a Bomb is thrown at an enemy (`Game.arm`),
+ * `PROVISION_BOOST_TURNS` turns, a Bomb is thrown at an enemy (`Game.arm`,
+ * sold once the Courage skill Bombs is owned),
  * and each Gold Key hands the run a gold key every `PROVISION_KEY_FLOORS`
  * floors. Each costs `price.base` Gold (100), and each one after `ratio` (100) times
  * the last (`schedulePrice`). One with `requires` shows, and sells, only
@@ -38,6 +39,7 @@ export const GOLD_SHOP = [
     name: "Bomb",
     description: "One more Bomb every run: press it, then an enemy's tile, to deal that enemy your ATK",
     price: { base: 100, ratio: 100 },
+    requires: "bombs",
   },
 ] as const;
 /** The provisions pressed from the HUD to use at once (not a Bomb, armed

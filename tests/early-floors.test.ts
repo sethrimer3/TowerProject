@@ -1,17 +1,17 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { BASE_HAND, planHand } from "../src/cards/cards.ts";
+import { planHand, type CardId } from "../src/cards/cards.ts";
 import { predict } from "../src/combat.ts";
 import { doorCost } from "../src/doors.ts";
 import { point, type Player, type Tile } from "../src/entities.ts";
 import type { Run } from "../src/runs.ts";
 import { loadout } from "../src/progression/loadout.ts";
-import { defaults } from "../src/save/save.ts";
 import { reachable } from "../src/board.ts";
 import { TOWER_START_X } from "../src/config.ts";
 import { generateTowerFloor, isBossFloor, type TowerFloor } from "../src/tower/index.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { FULL } from "./test-size.ts";
+import { playedSave } from "./first-skills.ts";
 
 /** How many seeds each floor is checked over. */
 const SEEDS = FULL ? 400 : 120;
@@ -20,7 +20,7 @@ const seeds = Array.from({ length: SEEDS }, (_, i) => (i + 1) * 7919);
 /** A hero standing at the floor's entrance, with the new profile's stats
  * unless `stats` says otherwise. */
 function heroOn(seed: number, room: number, stats: Partial<Player> = {}) {
-  const l = loadout(defaults());
+  const l = loadout(playedSave());
   const player: Player = { x: TOWER_START_X, y: 0, hp: l.maxHp, maxHp: l.maxHp, attack: l.attack, defense: l.defense, keys: { ...l.keys }, ...stats };
   const run = { seed, height: room, player, changes: {} } as unknown as Run;
   return { world: new RoomWorld(seed, room, run.changes), run };
@@ -36,7 +36,7 @@ function beforeStairs({ cells, embedding }: TowerFloor): Tile {
 test("floor 1's stairs are the STAIRS card's target from the entrance, with no fight or door on the way", () => {
   for (const seed of seeds) {
     const at = heroOn(seed, 0);
-    const plan = planHand(at, BASE_HAND, "tower");
+    const plan = planHand(at, FIRST_HAND, "tower");
     assert.equal(plan?.card, 0, `seed ${seed}: STAIRS leads`);
     const last = plan.path[plan.path.length - 1];
     assert.equal(at.world.tile(last.x, last.y).kind, "stairs", `seed ${seed}`);
@@ -62,14 +62,16 @@ test("floors 2 to 5 have a gold lock before the stairs and a gold key reachable 
     }
 });
 
-/** Plays the base hand on a floor with a hero no fight can hurt, taking
+/** Plays the first skills' hand (STAIRS, DOOR, KEY and ENEMY) on a floor
+ * with a hero no fight can hurt, taking
  * what each step lands on, until it reaches the stairs; returns the steps
  * taken, or null when no card can act. */
-function climbWithBaseHand(seed: number, room: number) {
+const FIRST_HAND: CardId[] = ["stairs", "door", "key", "monster"];
+function climbWithFirstHand(seed: number, room: number) {
   const at = heroOn(seed, room, { hp: 1e9, maxHp: 1e9, attack: 1e6 });
   const p = at.run.player;
   for (let steps = 0; steps < 2000; steps++) {
-    const plan = planHand(at, BASE_HAND, "tower");
+    const plan = planHand(at, FIRST_HAND, "tower");
     if (!plan) return null;
     const { x, y } = plan.path[0];
     const t = at.world.tile(x, y);
@@ -87,13 +89,13 @@ function climbWithBaseHand(seed: number, room: number) {
   return null;
 }
 
-test("the base hand always climbs floors 2 to 5: every door it opens has a key behind it", () => {
+test("the first skills' hand always climbs floors 2 to 5: every door it opens has a key behind it", () => {
   for (let room = 1; room <= 4; room++)
-    for (const seed of seeds) assert.notEqual(climbWithBaseHand(seed, room), null, `floor ${room + 1}, seed ${seed}: the hand got stuck`);
+    for (const seed of seeds) assert.notEqual(climbWithFirstHand(seed, room), null, `floor ${room + 1}, seed ${seed}: the hand got stuck`);
 });
 
 test("no enemy on floors 1 to 10 beats a new hero in one fight, but floor 10's boss does", () => {
-  const l = loadout(defaults());
+  const l = loadout(playedSave());
   const hero = { x: 0, y: 0, hp: l.maxHp, maxHp: l.maxHp, attack: l.attack, defense: l.defense, keys: l.keys };
   let worst = 0;
   for (let room = 0; room < 10; room++)

@@ -1,13 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { decode, defaults } from "../src/save/save.ts";
+import { decode } from "../src/save/save.ts";
 import { MAX_CARD_XP } from "../src/cards/levels.ts";
 import { freeUpChances, treeBonus, type CardTreeLevels } from "../src/cards/trees.ts";
 import { doorDiscount, withDoorOdds } from "../src/doors.ts";
 import { resolveStep, BASE_RULES, HEART_DOOR_HP, type StepEffect } from "../src/step-effects.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import type { KeyColor, Player, Tile } from "../src/entities.ts";
+import { playedSave } from "./first-skills.ts";
 
 const keyed = (keys: KeyColor[], heart = false): Tile => ({ kind: "door", color: keys[0], door: { type: "keys", keys, mode: "all", ...(heart ? { heart: true as const } : {}) } });
 const hero: Player = { x: 0, y: 0, hp: 50, maxHp: 100, attack: 10, defense: 0, shroud: 0, keys: { yellow: 2, blue: 2, red: 2 } };
@@ -18,7 +19,7 @@ const lay = (g: Game, door: Tile) => ((g.world as RoomWorld).cells = new Map([["
 /** A Tower run on seed 7 whose hand's trees are `trees`, the hero at (0, 0)
  * with `door` beside it at (1, 0). */
 function beside(door: Tile, trees: CardTreeLevels, player: Partial<Player> = {}) {
-  const s = defaults();
+  const s = playedSave();
   s.upgrades.inspirationUndos = 1;
   const g = new Game(s);
   g.newRun({ seed: 7 });
@@ -127,7 +128,7 @@ test("DOOR's Skeleton Key makes colour doors Wooden Doors, and Lock Pick takes t
 });
 
 test("a run fixes DOOR's door odds as it goes inside and saves them; its floors' doors are remade", () => {
-  const s = defaults();
+  const s = playedSave();
   s.cardXp.door = MAX_CARD_XP;
   s.cardTrees = { door: { doorCost: 5, doorHeal: 1, skeletonKey: 1 } };
   s.cardBuys.opened = { door: { doorHeal: 1, skeletonKey: 1 } };

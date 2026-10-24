@@ -17,6 +17,7 @@ import { attackAgainst } from "../src/combat.ts";
 import { arrowDamage } from "../src/enemies/ranged.ts";
 import { foeGold } from "../src/cards/foe-cards.ts";
 import { BASE_RULES, resolveStep, type StepRules } from "../src/step-effects.ts";
+import { playedSave } from "./first-skills.ts";
 
 test("only GOLD, BLUE and RED KEY, GOLD, HEART and WOODEN DOOR, CHEST, the enemy cards but ENEMY and ARCHER carry a bonus, and KEY none", () => {
   assert.deepEqual(CARD_IDS.filter((id) => cardBonus(id)), [
@@ -66,7 +67,7 @@ const TILES: Record<string, Tile> = {
 /** A Tower floor drawn row by row; `@` is the hero. No theme's Gold, so
  * the figures are the bonus's alone. */
 function floor(rows: string[]) {
-  const g = new Game(defaults());
+  const g = new Game(playedSave());
   g.save.themes = [];
   const w = g.world as RoomWorld, height = rows.length;
   w.cells = new Map();
@@ -154,7 +155,7 @@ test("GOLD DOOR held makes a gold door cost 0.95 of a key, whichever card opens 
 });
 
 test("a Supply or Equipment Chest pays its finds once Equipment is open, from Equipment's stream", () => {
-  const g = new Game(defaults());
+  const g = new Game(playedSave());
   g.newRun({ seed: 7 });
   const draws: number[] = [];
   const purse = (roll: number) => new RunPurse(g.save, g.mode, g.run, () => 0.5, 0, () => (draws.push(roll), roll));
@@ -204,7 +205,7 @@ test("a floor's chests are Supply or Equipment Chests as it is generated, under 
 
 test("a run fixes its chest odds as it goes inside: the CHEST card's, raised by Supply and Equipment Chest chance, once Equipment is open", () => {
   const run = (setup: (s: ReturnType<typeof defaults>) => void) => {
-    const s = defaults();
+    const s = playedSave();
     s.hand = ["chest", "stairs", "door", "key"];
     setup(s);
     const g = new Game(s);
@@ -223,7 +224,7 @@ test("a run fixes its chest odds as it goes inside: the CHEST card's, raised by 
 
 /** A save wearing an Uncommon Gatherer's Shroud in the Tower. */
 function defaultsWithShroud() {
-  const s = defaults();
+  const s = playedSave();
   s.equipment.unlocked = true;
   const item = addItem(s.equipment, "gatherersShroud", "uncommon")!;
   s.equipment.equipped.tower[itemDef(item.def)!.category] = item.id;
@@ -259,7 +260,7 @@ test("an enemy card held strikes the enemies it covers with 5% more ATK, the car
 });
 
 test("a run going inside gives its hero the ATK of its hand's enemy cards", () => {
-  const g = new Game(defaults());
+  const g = new Game(playedSave());
   g.save.hand = ["stairs", "weakEnemy", "monster"];
   g.newRun({ seed: 3 });
   assert.deepEqual(g.run.player.foeAttack, { weakEnemy: 5 });
@@ -273,7 +274,7 @@ test("an enemy card held makes each enemy it covers drop 5% more Gold, multiplyi
   assert.equal(foeGold(["weakEnemy"], foe("weak")), 1.05);
   assert.equal(foeGold(["weakEnemy", "nonBossEnemy", "monster"], foe("weak")), 1.1);
   assert.equal(foeGold(["weakEnemy"], foe("strong")), 1);
-  const g = new Game(defaults());
+  const g = new Game(playedSave());
   g.newRun({ seed: 7 });
   const purse = () => new RunPurse(g.save, g.mode, g.run, () => 0.5);
   g.run.hand = ["stairs"];

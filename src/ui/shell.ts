@@ -39,7 +39,6 @@ const NAV = `<nav aria-label="Main navigation">${NAV_TABS
 /** Inside a run, under the hand: a button for each Training group, to train for the run with Silver (`RunTrainingBar`). */
 const TRAINING_BAR = `<div id="training-bar" class="training-bar" role="group" aria-label="Training for this run" hidden></div><div id="drill-tip" class="drill-tip" role="tooltip" hidden></div>`;
 /** Focus uses left, before the potions: a lightning bolt and the count. */
-const FOCUS_STAT = `<span id="focus-stat" class="focus-stat" hidden title="Focus: press a card in your hand to put it first">${kitIcon("focus", `<svg viewBox="0 0 10 14" aria-hidden="true"><path d="M6.2 0.5L1 8h3.6L3.4 13.5 9 5.8H5.4L6.2 0.5z" fill="#ffe27a" stroke="#6b4a10" stroke-width="0.7" stroke-linejoin="round"/></svg>`, "charge-icon")}<b id="focus-left">0</b></span>`;
 /** The Traveler's elixir, Whetstone and Aegis charm uses left: each a
  * button that uses one at once. */
 const PROVISION_BUTTONS = [
@@ -86,7 +85,7 @@ function arrangeHud() {
   oldPortrait.replaceWith(hudActions, playerStats);
   const inventory = document.createElement("div");
   inventory.className = "run-inventory";
-  inventory.innerHTML = `<div class="run-consumables" aria-label="Run consumables">${FOCUS_STAT}${CHARGE_BUTTONS}</div>`;
+  inventory.innerHTML = `<div class="run-consumables" aria-label="Run consumables">${CHARGE_BUTTONS}</div>`;
   playerStats.append(vitals, identity, inventory);
   const boardFrame = document.querySelector<HTMLElement>("#board-frame")!;
   boardFrame.append(

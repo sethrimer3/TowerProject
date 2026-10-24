@@ -1,4 +1,4 @@
-import { FOCUS_PER_RUN, IGNORE_PER_RUN, REGAIN_FLOORS, TARGET_PER_RUN } from "../config.ts";
+import { IGNORE_PER_RUN, REGAIN_FLOORS, TARGET_PER_RUN } from "../config.ts";
 import { levelForXp } from "./xp.ts";
 import type { UpgradeId } from "./upgrades.ts";
 import type { Settings } from "../save/settings.ts";
@@ -46,10 +46,6 @@ const opened = (n: number) => (n ? "Open" : "Locked");
 /** The numbers research can change, each with its name, the base the game
  * reads it from (before any research) and how a total of it reads. */
 export const RESEARCH_TARGETS = {
-  /** Focus uses a run starts with. */
-  focusPerRun: { name: "Focus Uses", base: FOCUS_PER_RUN, shown: count },
-  /** New floors a run climbs to regain a Focus use, once Refocus is owned. */
-  refocusFloors: { name: "Floors per Focus", base: REGAIN_FLOORS, shown: count },
   /** Ignore uses a run starts with. */
   ignorePerRun: { name: "Ignore Uses", base: IGNORE_PER_RUN, shown: count },
   /** New floors a run climbs to regain an Ignore use, once Ignore More is owned. */
@@ -187,7 +183,7 @@ export type ResearchDefinition = {
   levelsPer?: { upgrades: UpgradeId[]; levels: number };
 };
 
-/** Focus Count and Undo Count: +1 to `target` a level, for nine levels
+/** Undo Count: +1 to `target` a level, for nine levels
  * (Movement Speed takes the first six; Heart Door Resilience, −5% a level,
  * ten, and Floor Skip Reward, +10% a level, eleven). Level 1 costs 500 Gold
  * and takes 8 hours; each level after takes 8 hours more, and costs 500 × n
@@ -341,7 +337,7 @@ const warpLootLevels = (): ResearchLevel[] => {
 
 /** Max Interest's limits by level, up from 50 Silver a floor. */
 const INTEREST_CAPS = [100, 200, 350, 500, 750, 1000, 1500, 2000, 2750, 3750, 5000, 6500, 8250, 10000, 12500, 15000, 20000, 25000, 35000, 50000];
-/** Max Interest: Focus Count's schedule (500 × (1 + n(n+1)/2) Gold, 8 × n
+/** Max Interest: Undo Count's schedule (500 × (1 + n(n+1)/2) Gold, 8 × n
  * hours) with its Gold raised 20% compounding a level, to the nearest 100
  * (500 Gold at level 1, about 3 million at 20 and 11.5 million in all). At
  * the full limit each level pays back its Gold in 10 floors at first and in
@@ -356,12 +352,11 @@ const maxInterestLevels = () => INTEREST_CAPS.map((value, i): ResearchLevel => (
  * x100, Max), 1,000 to 100,000 Gold and 4 to 48 hours. */
 const BUY_QUANTITY_LEVELS: [gold: number, hours: number][] = [[1000, 4], [5000, 12], [25000, 24], [50000, 36], [100000, 48]];
 
-/** Refocus, Ignore More and Target More: one floor fewer to regain a use
- * a level, for 90 levels (100 floors down to 10). Focus Count's Gold (500 ×
+/** Ignore More and Target More: one floor fewer to regain a use a level,
+ * for 90 levels (100 floors down to 10). Undo Count's Gold (500 ×
  * (1 + n(n−1)/2) at level n), plus `cubic` × n³, raised `growth`
- * compounding a level, to the nearest 100 (Refocus: no growth and 8 × n³,
- * 7.8 million at level 90 and 195 million in all; Ignore More: ×1.05 a
- * level, 2.1 billion in all; Target More: ×1.1, 85.4 billion), and n² / 10
+ * compounding a level, to the nearest 100 (Ignore More: ×1.05 a level,
+ * 2.1 billion in all; Target More: ×1.1, 85.4 billion), and n² / 10
  * hours (6 minutes at level 1, 34 days at 90, about 2.8 years in all). */
 const regainLevels = (target: ResearchTarget, growth: number, cubic = 0) => Array.from({ length: 90 }, (_, i): ResearchLevel => ({
   gold: Math.round(((500 * (1 + (i * (i + 1)) / 2) + cubic * intPow(i + 1, 3)) * intPow(growth, i)) / 100) * 100,
@@ -369,7 +364,7 @@ const regainLevels = (target: ResearchTarget, growth: number, cubic = 0) => Arra
   effect: { target, op: "add", value: -1 },
 }));
 /** Ignore Count: +1 Ignore use a level, for nine levels (1 use up to 10).
- * Steeper than Focus Count, less than Target Count: 100,000 Gold at level
+ * Steeper than Undo Count, less than Target Count: 100,000 Gold at level
  * 1, five times as much each level (39 billion at 9, 48.8 billion in all),
  * and 12 × n hours (540 in all). */
 const ignoreCountLevels = () => Array.from({ length: 9 }, (_, i): ResearchLevel => ({
@@ -557,13 +552,6 @@ export const RESEARCH = {
     requires: [{ upgrade: "shroud" }],
     levels: hundredLevels("shroudPercent", 4),
   },
-  focusCount: {
-    name: "Focus Count",
-    description: "Study the old climbers' journals to start each run with more Focus.",
-    categories: ["abilities"],
-    requires: [{ upgrade: "focus" }],
-    levels: countLevels("focusPerRun"),
-  },
   moveSpeed: {
     name: "Movement Speed",
     description: "Drill the old climbers' quickstep: the run's speed arrows go one step a second faster.",
@@ -719,13 +707,6 @@ export const RESEARCH = {
     categories: ["economy"],
     requires: [{ upgrade: "mug" }],
     levels: hundredLevels("instakillGold", 2),
-  },
-  refocus: {
-    name: "Refocus",
-    description: "Catch your breath between climbs: a run regains a Focus use in fewer new floors.",
-    categories: ["abilities"],
-    requires: [{ upgrade: "refocus" }],
-    levels: regainLevels("refocusFloors", 1, 8),
   },
   ignoreCount: {
     name: "Ignore Count",

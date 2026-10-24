@@ -1016,13 +1016,34 @@ canvas {
   transform: rotate(180deg);
   animation: forest-point-down 1s ease-in-out infinite;
 }
-/* The card points lesson's hand points down at the Deck tab from above. */
-.forest-pointer.cards {
+/* The card points lesson's hand points down at the Deck tab from above,
+   the Inspiration lesson's at the Upgrades tab, and on the Upgrades page,
+   once a first skill is bought, at the Tower tab. */
+.forest-pointer.cards,
+.forest-pointer.upgrades,
+.forest-pointer.back {
   bottom: calc(100% + 2px);
   left: 50%;
   margin-left: -13px;
   transform: rotate(180deg);
   animation: forest-point-down 1s ease-in-out infinite;
+}
+/* Inside a run the hand points down onto the card to press, over its
+   top half (the hand row clips anything above it). */
+.forest-pointer.climb,
+.forest-pointer.keys {
+  top: 2px;
+  left: 50%;
+  width: 22px;
+  margin-left: -11px;
+  transform: rotate(180deg);
+  animation: forest-point-down 1s ease-in-out infinite;
+}
+/* While the stuck lessons wait, End Run pulses slowly until it is pressed. */
+#stuck-end-run.lesson-flash { animation: lesson-flash 2s ease-in-out infinite; }
+@keyframes lesson-flash {
+  0%, 100% { box-shadow: 0 0 4px 1px #c8453c; filter: brightness(1); }
+  50% { box-shadow: 0 0 16px 6px #ff7a6e; filter: brightness(1.45); }
 }
 @keyframes forest-point-up {
   0%, 100% { transform: translateY(6px); }
@@ -1036,6 +1057,7 @@ canvas {
 @media (prefers-reduced-motion: reduce) {
   .forest-pointer { animation: none; }
 }
+html.reduce-motion #stuck-end-run.lesson-flash { animation: none; }
 .mini-action.enabled {
   border-color: #b59861;
   color: #ecd19d;
@@ -2324,6 +2346,21 @@ nav {
 .tree-help { display: inline-grid; place-items: center; width: 22px; height: 22px; min-height: 0; margin-left: 8px; padding: 0; border-radius: 50%; font: inherit; font-size: 13px; font-weight: 700; vertical-align: 1px; color: var(--tree-color, #e5d5b8); }
 .tree-heading p, .tree-lock { font-size: 11px; color: #a3afbc; text-align: center; line-height: 1.7; }
 .tree-lock { border: 1px solid #38414b; padding: 9px; }
+/* The Inspiration tree's lesson on a new game's first skills, over the
+   tree, and its hand pointing at the node to buy. */
+.tree-lesson { border: 1px solid #d6ae68; border-radius: 8px; background: linear-gradient(135deg, #222c3a, #101823); padding: 8px 12px; margin: 0 0 8px; color: #efd496; font-size: 13px; line-height: 1.5; text-align: center; }
+.tree-lesson b { display: block; font-weight: inherit; }
+.tree-lesson p { margin: 4px 0 0; font-size: 12px; line-height: 1.6; color: #c3cedd; }
+/* It points left at the node from its right, so a node in the tree's first
+   row doesn't push it out of the viewport's top. */
+.tree-pointer { position: absolute; top: 50%; left: calc(100% + 6px); width: 24px; margin-top: -12px; z-index: 3; pointer-events: none; filter: drop-shadow(0 2px 2px #000c); transform: rotate(-90deg); animation: tree-point-left 1s ease-in-out infinite; }
+@keyframes tree-point-left {
+  0%, 100% { transform: rotate(-90deg) translateY(6px); }
+  50% { transform: rotate(-90deg) translateY(0); }
+}
+.tree-pointer :is(.sprite-icon, svg) { display: block; width: 24px; height: auto; }
+.tree-pointer.still { animation: none; }
+@media (prefers-reduced-motion: reduce) { .tree-pointer { animation: none; } }
 .tree-hint { font-size: 10px; color: #7f8a9d; text-align: center; margin: 4px 0 8px; }
 .tree-viewport { container-type: inline-size; position: relative; flex: 1; min-height: 0; margin: 0; overflow: hidden; border: 1px solid #232b33; border-radius: 6px; touch-action: none; cursor: grab; background: #070a0e; }
 .tree-viewport:active { cursor: grabbing; }
@@ -3975,12 +4012,12 @@ dialog.dismiss-anywhere { cursor: pointer; }
   text-align: center;
 }
 .hand.can-focus .hand-card { cursor: pointer; }
-/* The card a Focus put first. */
+/* The card the player pressed, leading until it reaches its target. */
 .hand-card.focused,
 .hand-card.focused.active {
   box-shadow: 0 0 0 2px #fff, 0 0 14px 4px #ffffffcc;
 }
-/* A refused action: no Focus left, or no path for the card. */
+/* A refused action: a card with no path, or pressed while another leads. */
 .flash-red { animation: flash-red 0.6s ease-out; }
 @keyframes flash-red {
   0%, 60% { box-shadow: 0 0 0 2px #ff5a4a, 0 0 14px 4px #e0302a; background-color: #5a1510; }

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { decode, defaults } from "../src/save/save.ts";
+import { decode } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
 import { cost, UPGRADES } from "../src/progression/upgrades.ts";
 import { schedulePrice } from "../src/economy/prices.ts";
@@ -12,28 +12,28 @@ import { boostMaxHp, shiftHero } from "../src/progression/hero-stats.ts";
 import { potionShade, type Player, type Tile } from "../src/entities.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 import type { Save } from "../src/save/shape.ts";
+import { playedSave } from "./first-skills.ts";
 
 const hero = (hp: number, extra: Partial<Player> = {}): Player =>
   ({ x: 0, y: 0, hp, maxHp: 1000, attack: 50, defense: 0, keys: { yellow: 0, blue: 0, red: 0 }, ...extra });
 const rules = (overheal?: number): StepRules => ({ potionHeal: 100, percentPotion: 100, regen: 0, ...(overheal ? { overheal } : {}) });
 const healed = (p: Player, t: Tile, r: StepRules) => resolveStep(p, t, r) as StepEffect;
 
-test("Overheal is a 20-Courage skill between Max Interest and Refocus", () => {
+test("Overheal is a 20-Courage skill under Max Interest, with nothing under it", () => {
   const row = UPGRADES.find((u) => u.id === "overheal")!;
   assert.deepEqual([row.currency, row.max, cost("overheal", 0)], ["courage", 1, 20]);
   const nodes = TREES.find((t) => t.id === "courage")!.nodes;
   assert.deepEqual(nodes.find((n) => n.id === "overheal")!.requires, ["maxInterest"]);
-  assert.deepEqual(nodes.find((n) => n.id === "refocus")!.requires, ["overheal"]);
-  const s = defaults();
-  Object.assign(s.upgrades, { delve: 1, moveSpeed: 1, focus: 1, findYellowKey: 1, keyEfficiency: 1, interest: 1, maxInterest: 1 });
-  assert.equal(skillAvailable("refocus", s.upgrades), false, "Refocus waits on Overheal");
+  assert.ok(!nodes.some((n) => n.requires.includes("overheal")), "Refocus, which followed it, is gone");
+  const s = playedSave();
+  Object.assign(s.upgrades, { delve: 1, moveSpeed: 1, bombs: 1, findYellowKey: 1, keyEfficiency: 1, interest: 1 });
+  assert.equal(skillAvailable("overheal", s.upgrades), false, "Overheal waits on Max Interest");
+  s.upgrades.maxInterest = 1;
   assert.ok(skillAvailable("overheal", s.upgrades));
-  s.upgrades.overheal = 1;
-  assert.ok(skillAvailable("refocus", s.upgrades));
 });
 
 test("Overheal training is ×1 until the skill, then 0.031 more a rank, ×16.5 at its 500", () => {
-  const s = defaults();
+  const s = playedSave();
   s.training.overheal = 10;
   assert.equal(trainedAmount(s, "overheal"), 1000, "nothing above max without the skill");
   s.upgrades.overheal = 1;
@@ -91,7 +91,7 @@ test("max HP changing keeps HP above it within the new Overheal ceiling", () => 
 
 /** A Game on a cleared floor with Overheal owned and trained `ranks`. */
 function overhealGame(ranks: number, edit: (s: Save) => void = () => {}) {
-  const s = defaults();
+  const s = playedSave();
   Object.assign(s.upgrades, { overheal: 1, inspirationUndos: 1 });
   s.training.overheal = ranks;
   edit(s);

@@ -1,6 +1,6 @@
 import { helpButton, showHelp } from "./dialogs.ts";
 import { play } from "../sound.ts";
-import { upgradeCard } from "../cards/cards.ts";
+import { upgradeCards } from "../cards/cards.ts";
 import { revealCard } from "./card-reveal.ts";
 import { UPGRADES, cost, type UpgradeId } from "../progression/upgrades.ts";
 import { TREES, columnGap, mapNodes, skillAvailable, treeHeight, treeOpen, type TreeId } from "../progression/skill-trees.ts";
@@ -8,7 +8,7 @@ import { upgradeText } from "../progression/loadout.ts";
 import { goalUnlocked, UNLOCK_NAMES } from "../goals.ts";
 import { TreeParticles } from "../render/effects/tree-particles.ts";
 import type { AppContext } from "./app.ts";
-import { clamp, el, skillSprite, uiSprite, type UiSprite } from "./dom.ts";
+import { clamp, el, POINTER_SVG, skillSprite, uiSprite, type UiSprite } from "./dom.ts";
 import { bindPanZoom, type View } from "./pan-zoom.ts";
 import { currencyHelp } from "./currency-help.ts";
 import { heldAmount } from "./currencies-dialog.ts";
@@ -25,6 +25,20 @@ function tooltipHint(p: { locked: boolean; maxed: boolean; available: boolean; a
   if (requirements.length) return `Requires: ${requirements.join(" + ")}${unlocks ? "" : " (one rank each)"}.`;
   if (!p.available) return "Locked.";
   return p.affordable ? "Tap again to purchase." : "";
+}
+
+/** The Inspiration tree's lessons on a new game's first skills: the note
+ * while one waits to be bought (`Game.introSkill`, a hand on its node), and
+ * once bought (`Game.introBought`), what its cards do and the way back to
+ * the entrance (the hand on the Tower tab is `board-lesson.ts`'s). */
+function introNote(game: AppContext["game"]) {
+  const buy = game.introSkill, bought = game.introBought;
+  const lesson = buy === "cardDoorKey" ? { title: "Unlock Door & Key.", text: `Press Door & Key, then press it again to unlock it for ${cost(buy, 0)} Inspiration.` }
+    : buy === "cardEnemy" ? { title: "Unlock Enemy.", text: `Press Enemy, then press it again to unlock it for ${cost(buy, 0)} Inspiration.` }
+    : bought === "cardDoorKey" ? { title: "Door and Key join your hand.", text: "In a run, press them to collect keys and open doors. With no key, some HP can break down a Wooden Door. Press the Tower button to return to the entrance." }
+    : bought === "cardEnemy" ? { title: "Enemy joins your hand.", text: "In a run, press it to fight the closest enemy. Press the Tower button to return to the entrance." }
+    : null;
+  return lesson ? `<div class="tree-lesson" role="status"><b>${lesson.title}</b><p>${lesson.text}</p></div>` : "";
 }
 
 /** The trees whose buyable skills show their price on a corner badge. */
@@ -93,7 +107,7 @@ export class SkillTreePage {
     const tall = treeHeight(tree) !== 100;
     el("upgrades").innerHTML = `${tabs}
       <section class="skill-tree ${tree.id}"><header class="tree-heading"><h3>${tree.name} skill tree${this.helpButton(tree)}</h3></header>
-      ${this.lockHtml(tree)}
+      ${this.lockHtml(tree)}${tree.id === "inspiration" ? introNote(this.ctx.game) : ""}
       <div class="tree-viewport" id="tree-viewport" style="--column-gap:${columnGap(tree)}"><div class="tree-map${tall ? " tall" : ""}" id="tree-map" style="${tall ? `--tree-height:${treeHeight(tree)}%;--tree-rows:${treeHeight(tree)};` : ""}transform:translate(${view.x}px,${view.y}px) scale(${view.scale})"><div class="tree-layer"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${this.linesHtml(nodes)}</svg>
       <canvas class="tree-particles" aria-hidden="true"></canvas>
       ${nodes.map(n => this.nodeHtml(n)).join("")}</div></div><div class="inspect-box tree-tooltip" id="tree-tooltip" hidden></div></div></section>`;
@@ -168,7 +182,9 @@ export class SkillTreePage {
     const { price, affordable, locked, maxed } = this.purchase(n.id);
     const badge = PRICED_TREES.includes(this.current().id) && available && !locked && !maxed
       ? `<span class="node-cost ${affordable ? "" : "short"}" aria-hidden="true">${price}</span>` : "";
-    return `<button class="skill-node ${rank ? "owned" : ""} ${available ? "available" : "locked"} ${chosen ? "chosen" : ""}" data-skill="${n.id}" style="left:${n.x}%;top:${n.y}%" aria-label="${skill.name}${state}${available ? "" : ", locked"}${badge ? `, costs ${price}` : ""}" aria-pressed="${chosen}"><span class="node-icon">${skillSprite(n.id)}${badge}</span><span class="node-name">${skill.name}</span>${unlocks ? "" : `<small>${rank} / ${skill.max}</small>`}</button>`;
+    const game = this.ctx.game, pointer = n.id === game.introSkill
+      ? `<span class="tree-pointer${game.save.settings.reduceMotion ? " still" : ""}" aria-hidden="true">${POINTER_SVG}</span>` : "";
+    return `<button class="skill-node ${rank ? "owned" : ""} ${available ? "available" : "locked"} ${chosen ? "chosen" : ""}" data-skill="${n.id}" style="left:${n.x}%;top:${n.y}%" aria-label="${skill.name}${state}${available ? "" : ", locked"}${badge ? `, costs ${price}` : ""}" aria-pressed="${chosen}"><span class="node-icon">${skillSprite(n.id)}${badge}${pointer}</span><span class="node-name">${skill.name}</span>${unlocks ? "" : `<small>${rank} / ${skill.max}</small>`}</button>`;
   }
 
   /** Where buying `id` stands: its price, the balance, and whether it can
@@ -207,10 +223,11 @@ export class SkillTreePage {
     if (!canBuy) return;
     const game = this.ctx.game;
     game.skills.buy(id);
-    const bought = game.save.upgrades[id] > level, card = upgradeCard(id);
+    const bought = game.save.upgrades[id] > level;
     if (bought) this.celebrate(id, level);
     this.ctx.update();
-    if (bought && card) revealCard(card, game.save.upgrades, game.save.settings.reduceMotion);
+    // Door & Key reveals its two cards one after the other.
+    if (bought) for (const card of upgradeCards(id).reverse()) revealCard(card, game.save.upgrades, game.save.settings.reduceMotion);
   }
 
   /** A rank bought chimes and bursts from its node; the first rank unlocks

@@ -1,6 +1,7 @@
 import { entrance, floorFor } from "./delve/labyrinth.ts";
 import { chooseStep } from "./automation.ts";
-import { CARDS, cardText, deckCards, explainStuck, handBonus, keptLinks, planHand, planTarget, shootsWith, stillOpen, type CardId, type CardPlan, type HandBonus, type StuckReport } from "./cards/cards.ts";
+import { cost } from "./progression/upgrades.ts";
+import { CARDS, cardText, dealCard, deckCards, explainStuck, handSlots, handBonus, keptLinks, planHand, planTarget, shootsWith, stillOpen, type CardId, type CardPlan, type HandBonus, type StuckReport } from "./cards/cards.ts";
 import { addCardXp, PASSIVE_CARDS } from "./cards/levels.ts";
 import { cardMaxLevel, compounded, doorStat, foeCardStat, foeStat, foeStats, keyStat, freeUpChances, freeUpFactors, hasPointsToSpend, pointsLeft, runCardTrees, runFoeCut, treeBonus, treeFactor, treeOverheal, type FoeTreeCard, type TreeBonus } from "./cards/trees.ts";
 import { aggroTurn } from "./enemies/flying.ts";
@@ -107,7 +108,9 @@ import type { Coin, Dash, Drop, Facing, Gain, GainArt, Heal, ShownTurn } from ".
  * which seed (rolled from the game's randomness when left out). */
 export type RunStart = { outside?: boolean; seed?: number; height?: number };
 /** A lesson shown on the board (`Game.boardLesson`). */
-export type BoardLesson = "climb" | "enter" | "cards" | "delve";
+export type BoardLesson = "climb" | "keys" | "stuck" | "enemy" | "upgrades" | "enter" | "cards" | "delve";
+/** The first skills the lessons lead to on the Inspiration tree, in order. */
+export type IntroSkill = "cardDoorKey" | "cardEnemy";
 export type RouteEffects = {
   hp: [number, number];
   attack: [number, number];
@@ -201,6 +204,9 @@ export class Game {
    * when the player ends it. Each thing the player does (an item used, a
    * skill) checks the hand again, and it plays on once a card can act. */
   handStuck = false;
+  /** While the hand is stuck: whether an enemy no card takes blocks the
+   * way, before Enemy is owned (the `enemy` lesson). Never saved. */
+  private enemyBlocks = false;
   paused = false;
   /** While a page covers the board inside a run: whether the hand played
    * and its speed, brought back by `resumeFromPage`. Never saved. */
@@ -364,7 +370,8 @@ export class Game {
     this.save.upgrades.delve = 1;
     this.save.upgrades.legacy = 1;
     // The Deck page with its Badges box, and every badge at the top level.
-    for (const id of ["combatStance", "buildout", "cardBadges"] as const) this.save.upgrades[id] = Math.max(1, this.save.upgrades[id]);
+    for (const id of ["cardDoorKey", "cardEnemy", "autoClimb", "combatStance", "buildout", "cardBadges"] as const) this.save.upgrades[id] = Math.max(1, this.save.upgrades[id]);
+    for (const card of ["door", "key", "monster"] as const) this.save.hand = dealCard(this.save.hand, card, handSlots(this.save));
     for (const id of BADGE_IDS) this.save.badges.owned[id] = { copies: MAX_COPIES, pick: this.save.badges.owned[id]?.pick ?? 0 };
     // Equipment, with materials to spare.
     this.save.equipment.unlocked = true;
@@ -417,18 +424,59 @@ export class Game {
     p.x = this.rules.entranceX;
     p.y = OUTSIDE_START_Y;
   }
-  /** The lesson waiting on the board: in a new game's first run,
-   * `climb`, which holds the hand paused until dismissed; in the Tower's
-   * forest, `enter`, until dismissed or a run goes inside from the forest;
-   * then, in either forest, `cards`, which leads to the Deck to spend the
-   * first card point (`cardPointsLesson`); then, in the Tower's forest once
-   * Into the depths is owned, `delve`, until the Delve is opened. */
+  /** The lesson waiting on the board. Inside a Tower run: in a new game's
+   * first run, `climb`, which holds the hand until the STAIRS card is
+   * pressed; once no card can act, `stuck` the first time, saying the
+   * run's Inspiration buys what gets past, until End Run is pressed, and
+   * `enemy` while an enemy blocks the way with Enemy not yet owned and its
+   * Inspiration held; then `keys`, the first time the hand holds DOOR and
+   * KEY, until one of them is pressed. In the Tower's forest: `upgrades`,
+   * to the Upgrades tab while the next first skill (`introSkill`) can be
+   * bought; `enter`, to Enter, once Door & Key is owned until a run goes
+   * inside from the forest (and again once Enemy is bought after its
+   * lesson); then, in either forest, `cards`, which leads to the Deck to
+   * spend the first card point (`cardPointsLesson`); then, in the Tower's
+   * forest once Into the depths is owned, `delve`, until the Delve is
+   * opened. */
   get boardLesson(): BoardLesson | null {
-    const tower = this.mode === "tower", { climb, enter, delve } = this.save.tutorials;
-    if (!this.run.outside) return !tower || climb || this.fallen ? null : "climb";
-    if (tower && !enter) return "enter";
+    const tower = this.mode === "tower", t = this.save.tutorials, owned = this.save.upgrades;
+    if (!this.run.outside) {
+      if (!tower || this.fallen) return null;
+      if (!t.climb) return "climb";
+      if (this.handStuck && !t.stuck) return "stuck";
+      if (this.handStuck && this.enemyBlocks && !owned.cardEnemy && this.affords("cardEnemy")) return "enemy";
+      return !t.keys && this.hand.includes("door") && this.hand.includes("key") ? "keys" : null;
+    }
+    if (tower && this.introSkill) return "upgrades";
+    if (tower && ((!t.enter && owned.cardDoorKey) || (t.enemy && owned.cardEnemy))) return "enter";
     if (this.cardPointsLesson) return "cards";
-    return tower && this.save.upgrades.delve && !delve ? "delve" : null;
+    return tower && owned.delve && !t.delve ? "delve" : null;
+  }
+  /** The first skill the lessons lead to on the Inspiration tree while it
+   * can be bought: Door & Key, and once the `enemy` lesson has sent the
+   * player back, Enemy. */
+  get introSkill(): IntroSkill | null {
+    const owned = this.save.upgrades;
+    if (!owned.cardDoorKey) return this.affords("cardDoorKey") ? "cardDoorKey" : null;
+    return this.save.tutorials.enemy && !owned.cardEnemy && this.affords("cardEnemy") ? "cardEnemy" : null;
+  }
+  /** The first skill just bought whose lesson leads back to the entrance:
+   * Door & Key until a run goes inside, Enemy likewise after its lesson. */
+  get introBought(): IntroSkill | null {
+    const owned = this.save.upgrades, t = this.save.tutorials;
+    if (t.enemy && owned.cardEnemy) return "cardEnemy";
+    return owned.cardDoorKey && !t.enter ? "cardDoorKey" : null;
+  }
+  /** Whether the Inspiration held pays for skill `id`'s first rank. */
+  private affords(id: IntroSkill) {
+    return this.free || this.save.tower.inspiration >= cost(id, 0);
+  }
+  /** End Run pressed: it ends the `stuck` lesson, and the `enemy` lesson's
+   * press sends the forest's lessons on to Enemy. */
+  endRunPressed() {
+    const lesson = this.boardLesson;
+    if (lesson === "stuck") this.save.tutorials.stuck = true;
+    if (lesson === "enemy") this.save.tutorials.enemy = true;
   }
   /** The card the card points lesson points at, while it waits: in the
    * forest after a run once a card has a point to spend on its tree, the
@@ -443,18 +491,14 @@ export class Game {
     for (const id of shown) if (hasPointsToSpend(save, id) && (!best || pointsLeft(save, id) > pointsLeft(save, best))) best = id;
     return best;
   }
-  /** Dismisses the `climb` or `enter` lesson (the `delve` lesson waits on
-   * the Delve tab); dismissing `climb` sets the hand playing. */
+  /** Dismisses the `enter` lesson (the others wait on what they ask for). */
   dismissLesson() {
-    const lesson = this.boardLesson;
-    if (lesson === "climb") {
-      this.save.tutorials.climb = true;
-      if (this.handStartsPlaying) this.playHand();
-    } else if (lesson === "enter") this.save.tutorials.enter = true;
-    else return false;
+    if (this.boardLesson !== "enter") return false;
+    this.save.tutorials.enter = true;
+    this.save.tutorials.enemy = false;
     return true;
   }
-  /** Whether the first run's lesson holds the hand paused. */
+  /** Whether the first run's lesson holds the hand until STAIRS is pressed. */
   private get teachesClimb() {
     return this.boardLesson === "climb";
   }
@@ -693,7 +737,7 @@ export class Game {
       return;
     }
     if (this.teachesClimb) {
-      this.message = "Tap the note to begin.";
+      this.message = "Press the Stairs card to begin.";
       return;
     }
     this.route = [];
@@ -767,9 +811,10 @@ export class Game {
     return true;
   }
   /** Whether the speed lesson waits: inside a run past the first floor,
-   * slower than its speed, until the player has once sped up to it. */
+   * once Auto-Climb plays the hand, slower than its speed, until the player
+   * has once sped up to it. */
   get teachesSpeed() {
-    return !this.run.outside && !this.save.tutorials.speed && this.save.settings.speed < LESSON_SPEED && this.pastFirstFloor;
+    return !this.run.outside && !this.save.tutorials.speed && this.save.settings.speed < LESSON_SPEED && this.pastFirstFloor && this.autoClimbs;
   }
   private get pastFirstFloor() {
     return this.rules.equivalentFloor(this.run.maxHeight ?? this.run.height) >= 1;
@@ -777,7 +822,7 @@ export class Game {
   /** Reaching the second floor starts the speed lesson, pausing the hand,
    * or, already that fast, passes it by for good. */
   private startSpeedLesson() {
-    if (this.save.tutorials.speed || !this.pastFirstFloor) return;
+    if (this.save.tutorials.speed || !this.pastFirstFloor || !this.autoClimbs) return;
     if (this.save.settings.speed >= LESSON_SPEED) this.save.tutorials.speed = true;
     else {
       this.auto = false;
@@ -811,13 +856,15 @@ export class Game {
     const fresh = !this.cardPlan;
     const next = this.nextHandPlan(), lost = next.lost;
     let plan = next.plan;
+    // Before Auto-Climb the hand waits for the player to press a card.
+    if (!plan && !this.autoClimbs) return this.awaitCard(lost);
     // Stuck with tiles marked ?: the nearest becomes ! for Deprioritize's card.
     while (!plan && this.handRules.raiseBang()) plan = planHand(this.handRules, this.hand, this.mode);
     this.handStuck = !plan;
     if (!plan) return this.handWaits();
     this.activeCard = plan.card;
     const id = this.hand[plan.card];
-    this.message = lost ? `Focus lost · ${CARDS[lost].name} has no path to a target · ${CARDS[id].name} leads.`
+    this.message = lost ? `${CARDS[lost].name} has no path to a target · ${CARDS[id].name} leads.`
       : target === "lost" ? `Target lost · no path to the tile · ${CARDS[id].name} leads.` : this.cardMessage(id);
     if (fresh) this.handRules.coolDown(id);
     // A card that acts in place takes the turn without a step.
@@ -854,7 +901,7 @@ export class Game {
     if (dashes) this.endTurn();
     if (!dashed) return;
     if (this.cardPlan) return;
-    // The card's last step reaches its target: a focus on it is spent, and
+    // The card's last step reaches its target: a press on it is done, and
     // it activates (once a fight into its target has played out). FLYING
     // ENEMY's last step only brings an enemy in reach: nothing activates.
     if (id === this.run.focused) this.run.focused = undefined;
@@ -962,22 +1009,42 @@ export class Game {
     if (plan && this.handRules.gateShut(this.hand[plan.card])) this.cardPlan = null;
   }
   /** The path the hand follows this turn: the one committed, else the
-   * focused card's while it has a path to a target (`lost` once it has
-   * none), else the first card's in priority order that can act. */
+   * pressed card's while it has a path to a target (`lost` once it has
+   * none), else, with Auto-Climb, the first card's in priority order that
+   * can act. */
   private nextHandPlan(): { plan: CardPlan | null; lost: CardId | null } {
     if (this.cardPlan) return { plan: this.cardPlan, lost: null };
     const focused = this.run.focused;
-    if (!focused) return { plan: planHand(this.handRules, this.hand, this.mode), lost: null };
-    const plan = planHand(this.handRules, this.hand, this.mode, this.hand.indexOf(focused));
-    if (plan) return { plan, lost: null };
-    this.run.focused = undefined;
-    return { plan: planHand(this.handRules, this.hand, this.mode), lost: focused };
+    if (focused) {
+      const plan = planHand(this.handRules, this.hand, this.mode, this.hand.indexOf(focused));
+      if (plan) return { plan, lost: null };
+      this.run.focused = undefined;
+    }
+    return { plan: this.autoClimbs ? planHand(this.handRules, this.hand, this.mode) : null, lost: focused ?? null };
+  }
+  /** Whether the hand plays on by itself once a card reaches its target
+   * (Auto-Climb), rather than waiting for the player to press the next. */
+  get autoClimbs() {
+    return !!this.save.upgrades.autoClimb;
+  }
+  /** Before Auto-Climb, with no card pressed: the hand pauses for the
+   * player to press one, or, when none can act, is stuck. */
+  private awaitCard(lost: CardId | null) {
+    let plan = planHand(this.handRules, this.hand, this.mode);
+    while (!plan && this.handRules.raiseBang()) plan = planHand(this.handRules, this.hand, this.mode);
+    this.handStuck = !plan;
+    if (!plan) return this.handWaits();
+    this.cardPlan = null;
+    this.activeCard = null;
+    this.auto = false;
+    this.message = lost ? `${CARDS[lost].name} has no path to a target · press another card.` : "Press a card in your hand to choose the next move.";
   }
   /** No card can act: the hand pauses and End Run lights up. */
   private handWaits() {
     this.cardPlan = null;
     this.activeCard = null;
     this.auto = false;
+    this.enemyBlocks = !this.save.upgrades.cardEnemy && this.stuckReport().blockers.some((b) => b.tile.kind === "enemy" && b.why === "noCard");
     this.message = "No card can move · end the run, or use an item or skill.";
   }
   /** What stops the hand while no card can act (`explainStuck`): the run's
@@ -987,7 +1054,7 @@ export class Game {
   }
   /** The status line for card `id` leading the hand. */
   private cardMessage(id: CardId) {
-    return `${id === this.run.focused ? "Focus · " : ""}${CARDS[id].name} · ${cardText(id, this.save.upgrades)}`;
+    return `${CARDS[id].name} · ${cardText(id, this.save.upgrades)}`;
   }
   /** After something the player does inside a run (an item used, a skill),
    * a stuck hand checks its cards again and plays on if one can act. */
@@ -996,11 +1063,16 @@ export class Game {
     const plan = planHand(this.handRules, this.hand, this.mode);
     if (!plan) return;
     this.handStuck = false;
+    // Before Auto-Climb the hand waits for a card to be pressed.
+    if (!this.autoClimbs) {
+      this.message = "Press a card in your hand to choose the next move.";
+      return;
+    }
     this.cardPlan = plan;
     this.playHand();
   }
   /** A run going inside keeps the hand as it was ordered on the way in,
-   * gets its Focus uses, its Pocket Money Silver and, above floor 1, its
+   * gets its Pocket Money Silver and, above floor 1, its
    * Warp Loot Silver, and fixes its chance of percent potions. */
   private dealHand() {
     noteGoldBoost(this.save, this.slice, this.clock());
@@ -1071,8 +1143,7 @@ export class Game {
       p.hp = snap(p.hp * maxHp);
       if (this.run.loadout) this.run.loadout.maxHp = snap(this.run.loadout.maxHp * maxHp);
     }
-    this.run.focusUsed = 0;
-    for (const k of ["ignoreUsed", "targetUsed", "regain", "ignored", "targeted"] as const) delete this.run[k];
+    for (const k of ["ignoreUsed", "targetUsed", "regain", "ignored", "targeted", "focused"] as const) delete this.run[k];
   }
   /** A run's chances of Supply and Equipment Chests with `hand`: the
    * hand's (the CHEST card's, and the points its tree adds, `tree`), raised
@@ -1238,12 +1309,7 @@ export class Game {
   get startingSilver() {
     return snap(researched(this.save.archives, "startingSilver") + this.worn.startSilver);
   }
-  /** Focus uses left: this run's inside one, or in the forest what the
-   * next run will start with. */
-  get focusLeft() {
-    return this.chargesLeft("focus");
-  }
-  /** Uses of charge `c` (Focus, Ignore, Target) left: this run's inside
+  /** Uses of charge `c` (Ignore, Target) left: this run's inside
    * one, or in the forest what the next run will start with. */
   chargesLeft(c: Charge) {
     return this.run.outside ? chargesPerRun(this.save, c) : chargesLeft(this.save, this.run, c);
@@ -1453,24 +1519,27 @@ export class Game {
     } else this.message = "Target · the hero heads for the tile.";
     return true;
   }
-  /** A new floor climbed for the first time in the run: Refocus, Ignore
-   * More and Target More count it, and each charge regained shows. */
+  /** A new floor climbed for the first time in the run: Ignore More and
+   * Target More count it, and each charge regained shows. */
   private regainCharges(at: { x: number; y: number }) {
-    for (const c of climbFloor(this.save, this.run)) this.gain(at.x, at.y, `+1 ${c === "focus" ? "Focus" : c === "ignore" ? "Ignore" : "Target"}`);
+    for (const c of climbFloor(this.save, this.run)) this.gain(at.x, at.y, `+1 ${c === "ignore" ? "Ignore" : "Target"}`);
   }
-  /** Puts the hand's card in slot `card` ahead of the others until it
-   * reaches its target, spending a Focus use; the hand plays on to it. A
-   * card with no path to a target fails and costs nothing, and the card
-   * already moving the hero can't be focused. */
-  focus(card: number): "focused" | "unavailable" | "active" | "spent" | "noPath" {
+  /** A hand card pressed inside a run (the slot `card`): it leads the
+   * hero to its closest target, ahead of the others (`run.focused`), and
+   * the hand plays on to it. Refused while an earlier press still heads
+   * for its target (`busy`), and for a card with no path to a target
+   * (`noPath`), which costs nothing. The first run's lesson waits on
+   * STAIRS, and the `keys` lesson ends once DOOR or KEY is pressed. */
+  focus(card: number): "focused" | "unavailable" | "busy" | "noPath" {
     const id = this.hand[card];
-    if (!this.save.upgrades.focus || this.run.outside || this.fallen || !id) return "unavailable";
-    if (this.run.focused === id || (card === this.activeCard && !this.handStuck)) return "active";
-    if (this.focusLeft < 1) return "spent";
+    if (this.run.outside || this.fallen || !id) return "unavailable";
+    if (this.run.focused) return "busy";
+    if (this.teachesClimb && id !== "stairs") return "unavailable";
     const plan = planHand(this.handRules, this.hand, this.mode, card);
     if (!plan) return "noPath";
-    this.run.focusUsed = (this.run.focusUsed ?? 0) + 1;
-    this.missions.mark("focus", this.mode, this.run.seed, this.run.focusUsed);
+    const lesson = this.boardLesson;
+    if (lesson === "climb") this.save.tutorials.climb = true;
+    if (lesson === "keys" && (id === "door" || id === "key")) this.save.tutorials.keys = true;
     this.run.focused = id;
     this.route = [];
     // During a fight, the path is found again once the hero has stepped in.
@@ -2061,6 +2130,7 @@ export class Game {
     this.run.outside = false;
     this.run.notes = newNotes(this.clock());
     this.save.tutorials.enter = true;
+    this.save.tutorials.enemy = false;
     this.dealHand();
     p.x = this.rules.entranceX;
     p.y = 0;

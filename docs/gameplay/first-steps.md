@@ -43,8 +43,16 @@ On narrow phones, inventory controls wrap and the Menu, Shop and play/pause butt
 
 ## The first runs
 
-A new game starts inside its first Tower run, with a note over the board, *Climb the Tower to gain Inspiration, XP and resources*, and the hand paused (play and the speed arrows closed) until the note is tapped; it then plays at 2 steps a second.
-The first time the hero stands in the forest after that, a note says *Enter the Tower to try again* and to check the Inspiration tree on the Upgrades page, where the run's Inspiration unlocks new skills, while a hand points at **Enter**; tapping the note dismisses it, as entering does.
+A new game starts inside its first Tower run with a hand of one card, **Stairs**.
+Until the Inspiration tree's **Auto-Climb** is owned, the hand moves only when you press a card: the hero heads for that card's target, and once it gets there the hand waits for your next press (see Pressing a card in hand-and-cards.md).
+A note over the board, *Press the Stairs card to climb*, says each card sends the hero toward what it names, while a hand points at Stairs; play and the speed arrows stay closed until Stairs is pressed, and the hero then walks at 2 steps a second.
+Floor 1's stairs always stand open, so Stairs climbs it, paying the run's first Inspiration; floor 2's stairs are behind a gold door Stairs can't open.
+The first time no card can take the hero further, a note says the Inspiration the run earned unlocks new abilities and to press **End Run**, which pulses slowly until it is pressed.
+In the forest a note then says to spend the Inspiration, a hand pointing at the **Upgrades** tab, while **Door & Key** can be bought.
+On the Inspiration tree a note asks you to unlock Door & Key, a hand pointing at it; once it is bought, the note says Door and Key have joined your hand, that in a run they collect keys and open doors, that with no key some HP can break down a Wooden Door, and to press the Tower button to go back, a hand pointing at it.
+Back in the forest a note says to press **Enter** for another run, a hand pointing at it; tapping the note dismisses it, as entering does.
+In that run a note asks you to press Key and Door, a hand pointing at each, until you press one of them.
+When the hand is stuck again with an enemy in the way, while **Enemy** isn't owned and you hold the Inspiration it costs, a note says an enemy blocks the way, that the Enemy card on the Inspiration tree lets you fight it, and to press End Run, which pulses again; the forest, the Inspiration tree and Enter then lead you to Enemy and back as they did for Door & Key.
 Once Into the depths is owned, the forest's next note says to follow the path down to the Delve for Courage, XP and resources, the hand pointing at the sign at the foot of the forest path, until the Delve is opened.
 
 ## The tab bar and the forest sign
@@ -62,7 +70,7 @@ With Dev mode on, swipes and the keyboard arrows / WASD also step the hero one t
 Monsters on manual routes are fought even when lethal.
 Missing keys stop movement at the necessary door, with a fading red X; unreachable wall targets get the same feedback at the tapped spot.
 Routing prefers an available detour over a door for which no key is held.
-Inside a run, where the hand moves the hero, a tap on a tile highlights it and shows what's there (a monster's stats, an item, a door's keys); once **Pathfinder** (1 Courage, after Movement Speed in the Courage tree, left of Focus) is owned, it also draws the route there on the board and adds a Route totals box of what happens along it (the HP lost, the keys spent, what's picked up).
+Inside a run, where the hand moves the hero, a tap on a tile highlights it and shows what's there (a monster's stats, an item, a door's keys); once **Pathfinder** (1 Courage, after Movement Speed in the Courage tree, left of Bombs) is owned, it also draws the route there on the board and adds a Route totals box of what happens along it (the HP lost, the keys spent, what's picked up).
 With Dev mode on, the hero can also walk by hand inside a run: a second tap on the highlighted tile walks there, fighting monsters and collecting items along the route.
 A pickup's box shows what it gives with every bonus counted, as its icon and +N (a key's keys, a potion's full heal, a shard's ATK or DEF), and a lit torch's says Torch.
 With Pathfinder, tapping a tile inside a run pauses the hand while the highlight shows; once it goes (and no other tile is highlighted in its place), a hand it paused plays on.

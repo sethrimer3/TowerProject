@@ -19,7 +19,8 @@ Open the local URL printed by Vite.
 ## How to play
 
 A new game starts inside its first Tower run.
-Inside a run, your **hand** of cards moves the hero: the first card that can reach a target (the stairs, a door, a key, an enemy …) walks the hero there, and fights play out on their own.
+Inside a run, your **hand** of cards moves the hero: press a card and the hero walks to its target (the stairs, a door, a key, an enemy …), and fights play out on their own.
+A new game's hand holds only Stairs; the Inspiration tree's first skills add Door and Key, then Enemy, then **Auto-Climb**, after which the first card that can reach a target leads on its own.
 Each new Tower floor climbed pays **Inspiration**, and each new depth in the Delve pays **Courage**; both buy skills in the trees on the Upgrades page.
 **Gold** and **XP** last between runs: Gold buys provisions, trainers and Archives research, and each level earns training points.
 **Silver**, found inside a run, buys training for that run only.
@@ -31,11 +32,11 @@ The player-facing rules, in full, one topic a page:
 
 | Page | What it covers |
 |---|---|
-| [First steps](docs/gameplay/first-steps.md) | The opening notes, the tab bar and its dots, the forest and its sign, moving by hand, Pathfinder |
-| [The hand and cards](docs/gameplay/hand-and-cards.md) | The hand and every card, card levels and trees, card buys, the Deck page, Focus, Refocus, Ignore and Target, Badges |
+| [First steps](docs/gameplay/first-steps.md) | The first runs and their lessons, the tab bar and its dots, the forest and its sign, moving by hand, Pathfinder |
+| [The hand and cards](docs/gameplay/hand-and-cards.md) | The hand and every card, card levels and trees, card buys, the Deck page, pressing a card, Ignore and Target, Badges |
 | [Upgrades](docs/gameplay/upgrades.md) | The skill trees' tabs, prices and help, Critical |
 | [Gear and Equipment](docs/gameplay/gear-and-equipment.md) | Provisions, the Blacksmith and Equipment |
-| [The Archives](docs/gameplay/archives.md) | Archivists, Rush, Cells and Speed Up, the library, Focus Count |
+| [The Archives](docs/gameplay/archives.md) | Archivists, Rush, Cells and Speed Up, the library |
 | [Skills and stats](docs/gameplay/skills-and-stats.md) | Shroud, potions, Silver and Gold skills, Free Training, Buy Quantity, Revive, Thorns, Parry |
 | [Fights](docs/gameplay/fights.md) | How a fight plays out, Fast, Ranged, Flying and Shielded monsters, the Archer, kill pay, fractions |
 | [Floors](docs/gameplay/floors.md) | Bosses and Greater Bosses, doors and keys, the early floors, world wrap |

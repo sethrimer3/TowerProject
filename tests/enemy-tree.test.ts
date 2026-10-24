@@ -1,7 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save/save.ts";
 import { MAX_CARD_XP } from "../src/cards/levels.ts";
 import { CARD_TREES, type CardTreeLevels } from "../src/cards/trees.ts";
 import { bout, heroHpAfter, predict } from "../src/combat.ts";
@@ -11,13 +10,14 @@ import { RoomWorld } from "../src/tower/room-world.ts";
 import { World } from "../src/delve/world.ts";
 import { BoardPopups } from "../src/render/board-popups.ts";
 import type { Enemy, Player } from "../src/entities.ts";
+import { playedSave } from "./first-skills.ts";
 
 const hero: Player = { x: 0, y: 0, hp: 100, maxHp: 100, attack: 10, defense: 0, keys: { yellow: 0, blue: 0, red: 0 } };
 const foe = (hp: number, attack = 1): Enemy => ({ name: "rat", hp, attack, defense: 0, tier: 0, strength: "normal" });
 
 /** A Tower run on seed 7 whose hand holds ENEMY with `levels` on its tree. */
 function enemyRun(levels: Record<string, number>) {
-  const s = defaults();
+  const s = playedSave();
   s.cardXp.monster = MAX_CARD_XP;
   s.cardBuys.opened = { monster: Object.fromEntries(CARD_TREES.monster!.map((n) => [n.id, n.max - n.levels])) };
   s.cardTrees = { monster: levels };
@@ -28,13 +28,13 @@ function enemyRun(levels: Record<string, number>) {
 }
 
 test("ENEMY's Crit Chance and Crit Factor raise Crit % and Crit x by their percents", () => {
-  const s = defaults();
+  const s = playedSave();
   s.upgrades.critical = 1;
   s.training.critChance = 20;
   s.training.critFactor = 8;
   assert.deepEqual(critRule(s), { chance: 20, factor: 2 });
   assert.deepEqual(critRule(s, { chance: 5, factor: 10 }), { chance: 21, factor: 2.2, cards: { chance: 5, factor: 10 } }, "the card percents ride along, for an enemy card's to add to");
-  assert.equal(critRule(defaults(), { chance: 5, factor: 10 }), undefined, "no crits without Crit %");
+  assert.equal(critRule(playedSave(), { chance: 5, factor: 10 }), undefined, "no crits without Crit %");
   const g = enemyRun({ attack: 4, critChance: 5, critFactor: 5 });
   Object.assign(g.save.upgrades, { critical: 1 });
   Object.assign(g.save.training, { critChance: 20, critFactor: 8 });
@@ -63,7 +63,7 @@ test("ENEMY's Weaken cuts every enemy's ATK on the board, in the Tower and the D
   assert.ok(enemies.length > 0);
   for (const [x, y] of enemies) assert.equal(weak.world.tile(x, y).enemy!.attack, Math.round(plain.world.tile(x, y).enemy!.attack * 0.95 * 1e6) / 1e6);
   // The Delve's labyrinth reads its enemies through it too.
-  const s = defaults();
+  const s = playedSave();
   s.upgrades.delve = 1;
   const g = new Game(s);
   g.switchMode("delve");
@@ -105,7 +105,7 @@ test("ENEMY's Surprise Attack doubles the first strike's ATK of a fight right af
   /** A corridor: the hero at its west end, a rat of 20 HP on x = 5 that
    * ENEMY targets (Fast when `fast`), Dash owned with `trees` on the run. */
   const corridor = (trees: CardTreeLevels, fast = false) => {
-    const g = new Game(defaults());
+    const g = new Game(playedSave());
     g.save.upgrades.dash = 1;
     g.save.archives.levels.dash = 10;
     const w = g.world as RoomWorld;
