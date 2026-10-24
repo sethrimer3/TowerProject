@@ -585,6 +585,17 @@ function playProvingGrounds(_name: string, _seed: number, canvas: HTMLCanvasElem
   renderer.draw(high,10000,0,true,false);grab("eightBeamWarning");
   trialStep(high,0,0);trialStep(high,0,0);
   renderer.draw(high,11000,10900,true,false);grab("eightBeams");
+  const edge=startTrial(state.player,"manual",[],7391,30);
+  for(let i=0;i<4;i++)trialStep(edge,0,1);
+  edge.player.x=12;edge.player.y=4;edge.elemental.x=12;edge.elemental.y=7;edge.steps=9;
+  renderer.draw(edge,12000,0,true,false);grab("edgeProps");
+  trialStep(edge,0,0);
+  renderer.draw(edge,13000,12900,true,false);grab("edgeBeamDamage");
+  edge.elemental.x=11;edge.steps=49;
+  trialStep(edge,0,0);
+  renderer.draw(edge,14000,13900,true,false);grab("edgeCrateDamage");
+  edge.steps=90;
+  renderer.draw(edge,16000,0,true,false);grab("extinguishedTorches");
 }
 
 /** Which canvas a job draws on: the 408 px board, the Defend board (which

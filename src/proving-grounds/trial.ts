@@ -40,6 +40,7 @@ export type TrialState = {
   slimes: LightSlime[];
   consumed: string[];
   scorches: Record<string, number>;
+  destroyed: Record<string, number>;
 };
 export const key = ({ x, y }: Spot) => `${x},${y}`;
 const same = (a: Spot, b: Spot) => a.x === b.x && a.y === b.y;
@@ -58,10 +59,19 @@ export const wallEdge = (x: number, y: number) => !arenaFloor(x, y)
 
 export const ARENA_TORCHES: Spot[] = [];
 export const ARENA_POTIONS: Spot[] = [];
+export const ARENA_CRATES: Spot[] = [];
 for (let y = 0; y < ARENA_SIZE; y++) for (let x = 0; x < ARENA_SIZE; x++) {
-  if (wallEdge(x, y) && directions.some(([dx,dy])=>arenaFloor(x+dx,y+dy)) && (x + y * 3) % 5 === 0) ARENA_TORCHES.push({ x, y });
-  if (arenaFloor(x, y) && (x + y * 3) % 5 === 2
-    && directions.some(([dx,dy]) => !arenaFloor(x+dx,y+dy))) ARENA_POTIONS.push({ x, y });
+  if (!arenaFloor(x,y) || !directions.some(([dx,dy]) => !arenaFloor(x+dx,y+dy))) continue;
+  const variant=(x+y*3)%5;
+  if(variant===0)ARENA_TORCHES.push({x,y});
+  if(variant===2)ARENA_POTIONS.push({x,y});
+  if(variant===4)ARENA_CRATES.push({x,y});
+}
+const breakable = new Set([...ARENA_TORCHES,...ARENA_CRATES].map(key));
+export const propDestroyed = (s: TrialState, p: Spot) => Object.hasOwn(s.destroyed,key(p));
+function breakProp(s: TrialState, p: Spot) {
+  const k=key(p);
+  if(breakable.has(k) && !propDestroyed(s,p))s.destroyed[k]=s.steps;
 }
 
 export function startTrial(player: Pick<Player, "maxHp" | "attack" | "defense">, mode: TrialMode = "manual", hand: readonly CardId[] = [], seed = 7391, level = 1): TrialState {
@@ -70,7 +80,7 @@ export function startTrial(player: Pick<Player, "maxHp" | "attack" | "defense">,
   return { version: 2, level, mode, displayHand:[...hand], hand: mode === "cards" ? [...hand] : [], playing: mode === "cards", seed: seed >>> 0,
     room: "staging", status: "active", player: { x: 4, y: 2, hp: player.maxHp, maxHp: player.maxHp, attack: player.attack, defense: player.defense },
     elemental: {...ELEMENTAL,incorporeal:false,teleport:null}, beam:null,
-    bossHp: bossMaxHp, bossMaxHp, steps: 0, slimes: [], consumed: [], scorches: {} };
+    bossHp: bossMaxHp, bossMaxHp, steps: 0, slimes: [], consumed: [], scorches: {}, destroyed: {} };
 }
 
 /** Rays include the first wall they strike, so the wall keeps a burn too. */
@@ -103,6 +113,7 @@ function hopSlimes(s: TrialState, hopExisting: boolean, spawn: boolean) {
       if ((dx || dy) && arenaFloor(p.x,p.y) && !same(p,s.elemental) && !occupied.has(key(p))) choices.push(p);
     }
     const target = choices[Math.floor(tileRandom(slime.id,s.steps,s.seed) * choices.length)] ?? slime;
+    breakProp(s,target);
     if (same(target,s.player)) {
       s.player.hp = Math.max(0,s.player.hp-Math.max(1,Math.ceil(s.player.maxHp*.05)));
       hits++;
@@ -140,7 +151,8 @@ function materialize(s: TrialState) {
     const choices: Spot[]=[];
     for(let y=1;y<ARENA_SIZE-1;y++) for(let x=1;x<ARENA_SIZE-1;x++) {
       const p={x,y};
-      if(arenaFloor(x,y) && !same(p,s.player) && !s.slimes.some(q=>same(p,q)) && !ARENA_POTIONS.some(q=>same(p,q))) choices.push(p);
+      if(arenaFloor(x,y) && !same(p,s.player) && !s.slimes.some(q=>same(p,q)) && !ARENA_POTIONS.some(q=>same(p,q))
+        && (!breakable.has(key(p)) || propDestroyed(s,p))) choices.push(p);
     }
     choices.sort((a,b)=>(Math.abs(a.x-boss.x)+Math.abs(a.y-boss.y))-(Math.abs(b.x-boss.x)+Math.abs(b.y-boss.y)));
     const target=choices[0];
@@ -200,7 +212,7 @@ export function trialStep(s: TrialState, dx: number, dy: number, source: TrialMo
     s.beam={origin:{x:s.elemental.x,y:s.elemental.y},axis:(s.steps/BEAM_INTERVAL-1)%8,step:s.steps,count:beamCount(s.level)};
     const cells = beamCells(s.beam.axis,s.beam.origin,s.beam.count);
     if(wasGhost) message="The elemental fires its lasers and becomes corporeal — it can be struck again.";
-    for (const p of cells) s.scorches[key(p)] = s.steps;
+    for (const p of cells) {s.scorches[key(p)] = s.steps;breakProp(s,p);}
     if (cells.some(p => same(p,s.player))) {
       const damage = Math.max(1, Math.ceil(s.player.maxHp * 0.25));
       s.player.hp = Math.max(0, s.player.hp - damage);
@@ -282,6 +294,12 @@ export function decodeTrial(raw: unknown): TrialState | undefined {
     if (validKey(k) && wholeIn(v, BEAM_INTERVAL, raw.steps) && v % BEAM_INTERVAL === 0) scorches[k] = v;
   }
   const consumed = Array.isArray(raw.consumed) ? raw.consumed.slice(0,ARENA_POTIONS.length).filter((k: unknown) => typeof k === "string" && ARENA_POTIONS.some(p => key(p) === k)) : [];
+  const destroyed: Record<string,number>={};
+  if(raw.destroyed!==undefined && !isRecord(raw.destroyed))return;
+  if(isRecord(raw.destroyed))for(const [k,step] of Object.entries(raw.destroyed).slice(0,breakable.size)) {
+    if(breakable.has(k) && wholeIn(step,1,raw.steps))destroyed[k]=step;
+  }
+  if(raw.room==="staging" && Object.keys(destroyed).length)return;
   const slimes: LightSlime[] = [], occupied = new Set<string>(), ids = new Set<number>();
   if (!Array.isArray(raw.slimes) || raw.slimes.length > MAX_SLIMES || (raw.room === "staging" && raw.slimes.length)) return;
   for (const slime of raw.slimes) {
@@ -297,5 +315,5 @@ export function decodeTrial(raw: unknown): TrialState | undefined {
   }
   return { version:2,level,...(displayHand?{displayHand}:{}),...(purchases?{purchases}:{}),elemental,beam,mode:raw.mode,hand:[...raw.hand],playing:raw.playing,seed:raw.seed,
     room: raw.room, status: raw.status, player: { x:p.x,y:p.y,hp:p.hp,maxHp:p.maxHp,attack:p.attack,defense:p.defense },
-    bossHp:raw.bossHp,bossMaxHp:raw.bossMaxHp,steps:raw.steps,slimes,consumed:[...new Set<string>(consumed)],scorches };
+    bossHp:raw.bossHp,bossMaxHp:raw.bossMaxHp,steps:raw.steps,slimes,consumed:[...new Set<string>(consumed)],scorches,destroyed };
 }

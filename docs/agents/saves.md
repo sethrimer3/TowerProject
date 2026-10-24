@@ -44,3 +44,5 @@ Trial `purchases` stores bounded Silver and known integer training ranks; their 
 Only runtime entry/menu checks refill the allowance on a later UTC day; it is outside the attempt and cannot be reset by retry, leaving or reloading.
 Trials now save a fixed `level` (legacy attempts default to 1), and each beam may include its fired ray `count` (absent means the legacy two rays).
 Slime hop times validate against either the three-turn hop cadence or the level's release cadence; old IDs remain valid while new releases use their arena turn as ID.
+Trial `destroyed` maps known edge crate/torch coordinates to their first destruction turn, bounded by the attempt's current turn; unknown positions and invalid turns are dropped, malformed containers rejected, and older attempts receive an empty map.
+The field belongs to the optional attempt, so saves without a trial and their decode golden remain unchanged.

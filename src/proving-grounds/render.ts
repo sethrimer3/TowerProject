@@ -2,7 +2,8 @@ import { drawThemedTile } from "../themed-tilesets.ts";
 import { paintHero, paintTorch } from "../tile-painters.ts";
 import { drawArea1Item } from "../area1-tileset.ts";
 import { sprite } from "../pixel-sprite.ts";
-import { ARENA_POTIONS, ARENA_TORCHES, beamCount, beamDirections, rayCells, floorAt, key, nextBeamAxis, wallEdge, type TrialState } from "./trial.ts";
+import { drawCrates } from "../decor-sprites.ts";
+import { ARENA_CRATES, ARENA_POTIONS, ARENA_TORCHES, beamCount, beamDirections, rayCells, floorAt, key, nextBeamAxis, propDestroyed, wallEdge, type TrialState } from "./trial.ts";
 
 import { drawLightElemental, drawElementalTransit, TELEPORT_MS } from "./elemental-art.ts";
 export { drawLightElemental } from "./elemental-art.ts";
@@ -72,7 +73,17 @@ export class TrialRenderer {
       });
     }
     if (s.room === "arena") {
-      for (const p of ARENA_TORCHES) tile(p.x,p.y,()=>paintTorch(c,{...p,active:true,baseIntensity:0.5,lightRadius:5},now,reduceMotion,spritesOff));
+      for(const p of ARENA_CRATES)tile(p.x,p.y,()=>drawCrates(c,0,0,
+        [{x:4,y:6,w:16,h:16,lift:0,kind:"crate",tone:(p.x+p.y)%3}],propDestroyed(s,p)));
+      for (const p of ARENA_TORCHES) tile(p.x,p.y,()=> {
+        if(propDestroyed(s,p)) {
+          c.fillStyle="#302a23";c.fillRect(8,21,9,2);c.fillRect(11,18,2,4);
+        } else {
+          // A floor stand anchors the torch inside the room, clear of the wall.
+          c.fillStyle="#222a30";c.fillRect(7,21,10,2);c.fillRect(9,20,2,2);c.fillRect(14,20,2,2);
+          paintTorch(c,{...p,active:true,baseIntensity:0.5,lightRadius:5},now,reduceMotion,spritesOff);
+        }
+      });
       for (const p of ARENA_POTIONS) if (!s.consumed.includes(key(p))) tile(p.x,p.y,()=> {
         if (spritesOff || !drawArea1Item(c,{kind:"potion",color:"red"})) {
           c.fillStyle="#633040"; c.fillRect(8,9,8,11); c.fillStyle="#e7adac"; c.fillRect(10,6,4,3);
@@ -93,7 +104,7 @@ export class TrialRenderer {
       };
       // No ambient floor light. The hero has just enough light to find their footing.
       light(s.player.x,s.player.y,1.8,0.8);
-      for(const p of ARENA_TORCHES) light(p.x,p.y,5.5,0.92);
+      for(const p of ARENA_TORCHES) if(!propDestroyed(s,p)) light(p.x,p.y,5.5,0.92);
       for(const p of slimes) light(p.x,p.y,1.7,0.65);
       if(s.status!=="won") {
         light(s.elemental.x,s.elemental.y,s.elemental.incorporeal?2.4:3,s.elemental.incorporeal?0.48:0.85);

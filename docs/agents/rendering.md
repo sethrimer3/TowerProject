@@ -283,3 +283,6 @@ The Classic sprites follow it: `potion_flat.png` is red and `potion_percent.png`
 
 Proving Grounds' `elemental-art.ts` turns the elemental's literal body pixels into curved light paths and fading trails during teleport, then crossfades to a translucent cyan ghost until the next volley.
 The trial renderer keeps a frame-based teleport clock independent of turn count, honors Reduce motion, and draws laser flashes from their saved origin even after a later teleport.
+Trial floor-edge torches, wooden crates and potions use separate tiles; crates reuse the shared `drawCrates` painter, including its broken-board form.
+Destroyed torch stands paint only charred fragments and contribute no darkness-mask light; both passes read the persisted `destroyed` map.
+The trial render scenes include intact edge props, beam damage to torch stands and crates, and darkness after the remaining beam glow fades.

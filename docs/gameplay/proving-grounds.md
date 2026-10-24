@@ -46,7 +46,13 @@ Purchased stats, ranks and remaining Silver survive reloads and are discarded on
 
 ## The Light Elemental
 
-The elemental starts at the center of the chamber, dark except for wall torches, glowing enemies and your immediate footing.
+The elemental starts at the center of the chamber, dark except for standing torches around the inside edge, glowing enemies and your immediate footing.
+Potions, wooden crates and torches occupy separate floor tiles along the room's edges.
+Crates and torch stands are floor props that you can move through.
+Slimes smash crates and torches when they land on them, and beams destroy every crate or torch they cross before striking the wall.
+Broken crates leave splintered boards, and broken torches go out, making that part of the room darker.
+Destruction lasts for the attempt and survives reloads; retrying starts with fresh props.
+Potions survive these hazards and remain available until you drink them.
 Walk into the corporeal elemental to strike it; it answers with a small hit of radiant damage.
 After each nonlethal hit it dissolves into individual pixels of light, which fly with trailing sparks to a different free interior tile and reassemble into a translucent blue ghost.
 In this incorporeal phase it is invincible, does not count as an enemy to any card, and can be walked through.
