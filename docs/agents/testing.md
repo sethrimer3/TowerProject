@@ -12,6 +12,8 @@ They pin the streams' start-up seeds (`__pinnedSeeds`) like the Node preload, wa
 The render suite encodes PNGs only for frames that changed (every frame when recording), and draws a scene a second time, to catch nondeterminism, only when recording or when one of its frames no longer matches.
 
 The UI and render snapshot suites also accept `PLAYWRIGHT_EXECUTABLE_PATH` for an installed Chromium binary.
+`node tests/trial-props.mjs` uses the dev server (or `TEST_URL`) for trial floor-edge props at 320/1024 pixels, an actual canvas-light measurement before/after a torch goes out, beam and slime destruction, reload persistence and isolation from the ordinary Tower run.
+It loads seeded saved attempts and steps them with the real manual Wait button; screenshots go to `test-results/proving-grounds-props/`.
 `tests/sprite-browser.mjs` uses the dev server to check the real Sprites toggle, save/reload, mobile/desktop layouts, PNG loading and independent UI/Game theme overrides.
 `tests/sprite-options-browser.mjs` starts its own server for the Sprites child controls, focus, save/reload, mobile/desktop layout, full-tile square doors, four torch frames with stationary hardware, Reduce motion, live Renderer toggles, theme gates and failed-image fallback.
 The appended `spriteOptions` render scene captures square doors and animated torches without changing the existing scene seeds.

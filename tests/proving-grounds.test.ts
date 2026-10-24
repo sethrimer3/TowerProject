@@ -43,7 +43,7 @@ test("staging stairs enter a connected 25×25 hexagon with border torches and po
   assert.equal(seen.size,count); assert.ok(count>350 && count<500);
   assert.ok(arenaFloor(ELEMENTAL.x,ELEMENTAL.y)); assert.equal(arenaFloor(3,3),false);
   assert.ok(ARENA_TORCHES.length>=10); assert.ok(ARENA_POTIONS.length>=8);
-  for(const p of ARENA_TORCHES)assert.equal(arenaFloor(p.x,p.y),false);
+  for(const p of ARENA_TORCHES)assert.ok(arenaFloor(p.x,p.y));
   for(const p of ARENA_POTIONS)assert.ok(arenaFloor(p.x,p.y));
 });
 
