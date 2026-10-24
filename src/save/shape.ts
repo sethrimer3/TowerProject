@@ -181,7 +181,7 @@ export type Save = {
    * ended, after which a new floor's "A new chamber opens." no longer
    * rises over the board, and `cardPoints`, spending the first card point
    * on an upgrade tree, led there from the forest's Deck tab. */
-  tutorials: { deck: boolean; removeCard: boolean; addCard: boolean; upgrades: boolean; gear: boolean; onTheJob: boolean; speed: boolean; climb: boolean; keys: boolean; stuck: boolean; enemy: boolean; enter: boolean; delve: boolean; chamber: boolean; cardPoints: boolean };
+  tutorials: { deck: boolean; removeCard: boolean; addCard: boolean; upgrades: boolean; gear: boolean; onTheJob: boolean; speed: boolean; climb: boolean; keys: boolean; autoClimb: boolean; stuck: boolean; enemy: boolean; enter: boolean; delve: boolean; chamber: boolean; cardPoints: boolean };
   /** Per tree: a run that earned its currency (Inspiration in the Tower,
    * Courage in the Delve) has ended since the tree was last shown, so its
    * tab (and the Upgrades tab) wear a dot in the forest while a skill there

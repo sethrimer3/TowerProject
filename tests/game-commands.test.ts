@@ -499,3 +499,35 @@ test("a Pathfinder preview pauses a playing hand and plays it on after, never a 
   g.resumeAfterPreview();
   assert.equal(g.auto, false, "a page holding the run paused keeps it so");
 });
+
+test("the first run inside with Auto-Climb explains it, the hand playing on, until its note is tapped or a card pressed", () => {
+  const taughtClimb = () => {
+    const s = taught();
+    s.tutorials.autoClimb = false;
+    return s;
+  };
+  const g = new Game(taughtClimb());
+  g.newRun({ outside: true });
+  assert.notEqual(g.boardLesson, "autoClimb", "not in the forest");
+  assert.ok(g.enterRun());
+  assert.equal(g.boardLesson, "autoClimb");
+  assert.ok(g.auto, "the hand plays on under the note");
+  g.save.upgrades.autoClimb = 0;
+  assert.equal(g.boardLesson, null, "not before Auto-Climb");
+  g.save.upgrades.autoClimb = 1;
+  assert.ok(g.dismissLesson());
+  assert.equal(g.boardLesson, null, "tapping the note ends it");
+  assert.ok(decode(JSON.stringify(g.save)).tutorials.autoClimb, "done for good");
+
+  const pressed = arena();
+  pressed.save.tutorials.autoClimb = false;
+  assert.equal(pressed.boardLesson, "autoClimb");
+  assert.equal(pressed.focus(pressed.hand.indexOf("stairs")), "focused");
+  assert.equal(pressed.boardLesson, null, "pressing a card ends it");
+
+  const delve = new Game(taughtClimb());
+  delve.save.upgrades.delve = 1;
+  delve.switchMode("delve");
+  delve.newRun();
+  assert.equal(delve.boardLesson, null, "the Tower's alone");
+});

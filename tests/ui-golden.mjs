@@ -88,7 +88,7 @@ try {
       s.hand = ["stairs", "door", "key", "monster"];
       s.seen.cards = [...s.hand];
       s.seen.met = [...s.hand];
-      s.tutorials.keys = true;
+      s.tutorials.keys = s.tutorials.autoClimb = true;
       return s;
     };
     const make = (edit) => {
@@ -310,6 +310,17 @@ try {
         g.run.height = g.run.maxHeight = 199;
         g.run.shrine = { picked: [], rolls: 0, offer: ["attack", "goldMaxHp"] };
         return { save: JSON.stringify(g.save), targets: [] };
+      })(),
+      // The first run inside with Auto-Climb, its note waiting.
+      lessonAutoClimb: inside((s) => {
+        quiet(s);
+        s.tutorials.autoClimb = false;
+      }),
+      // Ten steps into the first floor at 2 steps a second: the speed lesson.
+      lessonSpeed: (() => {
+        const { save } = inside(quiet), s = JSON.parse(save);
+        s.tower.run.notes = { startedAt: 0, steps: 10, keys: {}, doors: {}, potions: 0, attackShards: 0, defenseShards: 0, silver: 0 };
+        return { save: JSON.stringify(s), targets: [] };
       })(),
     };
   });
@@ -996,6 +1007,14 @@ try {
     await shot("shrines.taken");
     await page.locator("#boon-autopick").check();
     await shot("shrines.auto");
+  });
+  await section("lessons", async () => {
+    await load("lessonAutoClimb");
+    await shot("lessons.autoClimb");
+    await click(".board-tip");
+    await shot("lessons.autoClimb.dismissed");
+    await load("lessonSpeed");
+    await shot("lessons.speed");
   });
 
   // --- Compare ---

@@ -51,7 +51,9 @@ In the forest a note then says to spend the Inspiration, a hand pointing at the 
 On the Inspiration tree a note asks you to unlock Door & Key, a hand pointing at it; once it is bought, the note says Door and Key have joined your hand, that in a run they collect keys and open doors, that with no key some HP can break down a Wooden Door, and to press the Tower button to go back, a hand pointing at it.
 Back in the forest a note says to press **Enter** for another run, a hand pointing at it; tapping the note dismisses it, as entering does.
 In that run a note asks you to press Key and Door, a hand pointing at each, until you press one of them.
+Ten steps into that run's first floor, a hero slower than 3 steps a second is paused once, a hand pointing at the › beside play, until you press it to walk at 3 ([Play, pause and speed](hand-and-cards.md#play-pause-and-speed)).
 When the hand is stuck again with an enemy in the way, while **Enemy** isn't owned and you hold the Inspiration it costs, a note says an enemy blocks the way, that the Enemy card on the Inspiration tree lets you fight it, and to press End Run, which pulses again; the forest, the Inspiration tree and Enter then lead you to Enemy and back as they did for Door & Key.
+In the first run inside after **Auto-Climb** is bought, a note says Auto-Climb moves the hero for you: it heads for the target of the first card in your hand with an open path to it, and pressing a card goes for that card's target first; the hand plays on under it, and tapping the note or pressing a card dismisses it.
 Once Into the depths is owned, the forest's next note says to follow the path down to the Delve for Courage, XP and resources, the hand pointing at the sign at the foot of the forest path, until the Delve is opened.
 
 ## The tab bar and the forest sign

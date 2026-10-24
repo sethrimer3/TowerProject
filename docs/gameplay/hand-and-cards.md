@@ -70,7 +70,7 @@ Whatever you do next (training for the run, Ignore, and later skills) checks the
 
 The play/pause button (where Automove was, showing ▶ while paused and ❚❚ while playing, with the hero's movement speed under it, *3x* for 3 steps a second) pauses the hand to look around, and undo pauses it too.
 The ‹ and › arrows either side of the speed (a press anywhere on its side of the row counts) slow and speed the hero a step a second at a time, from 0 to 3 (more with research; › closes at the most allowed): slowing to 0 pauses the hand, and playing it again starts at 1.
-A new hero walks at 2; once Auto-Climb is owned, on a run's second floor the game pauses once, a pointing hand under ›, until the player speeds up to 3, then plays on.
+A new hero walks at 2; once Door & Key is owned, ten steps into a Tower run's first floor the game pauses once, a pointing hand under ›, until the player speeds up to 3, then plays on (a hero already at 3 never sees it).
 The forest's Automove keeps the speed last set in a run, but never walks slower than 3.
 The cards sit in the row under the board.
 They keep their size however many the hand holds; a hand wider than the screen scrolls sideways, swiped or wheel-scrolled, with a small arrow at each side it can scroll further to (none at an end it has reached).

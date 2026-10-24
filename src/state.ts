@@ -108,7 +108,7 @@ import type { Coin, Dash, Drop, Facing, Gain, GainArt, Heal, ShownTurn } from ".
  * which seed (rolled from the game's randomness when left out). */
 export type RunStart = { outside?: boolean; seed?: number; height?: number };
 /** A lesson shown on the board (`Game.boardLesson`). */
-export type BoardLesson = "climb" | "keys" | "stuck" | "enemy" | "upgrades" | "enter" | "cards" | "delve" | "provisions";
+export type BoardLesson = "climb" | "keys" | "autoClimb" | "stuck" | "enemy" | "upgrades" | "enter" | "cards" | "delve" | "provisions";
 /** The first skills the lessons lead to on the Inspiration tree, in order. */
 export type IntroSkill = "cardDoorKey" | "cardEnemy";
 export type RouteEffects = {
@@ -142,9 +142,11 @@ const MAX_GAINS = 12;
 /** The forest's Automove walks at least this many steps a second, however
  * slow the run's arrows were last set. */
 const FOREST_SPEED = 3;
-/** The speed the second floor's lesson teaches: one press of › from a new
- * hero's 2. */
+/** The speed the speed lesson teaches: one press of › from a new hero's 2. */
 const LESSON_SPEED = 3;
+/** The steps a run takes on the Tower's first floor before the speed
+ * lesson comes. */
+const LESSON_STEPS = 10;
 /** How long a turn inside a run shows, at most (ms): the hero's step and
  * its shots leaving through it, shorter at higher speeds. */
 const TURN_MS = 220;
@@ -430,7 +432,10 @@ export class Game {
    * run's Inspiration buys what gets past, until End Run is pressed, and
    * `enemy` while an enemy blocks the way with Enemy not yet owned and its
    * Inspiration held; then `keys`, the first time the hand holds DOOR and
-   * KEY, until one of them is pressed. In the Tower's forest: `upgrades`,
+   * KEY, until one of them is pressed; and `autoClimb`, the first run
+   * inside once Auto-Climb is owned, saying the hero heads for the first
+   * card's target with an open path and a pressed card goes first, until
+   * its note is tapped or a card pressed. In the Tower's forest: `upgrades`,
    * to the Upgrades tab while the next first skill (`introSkill`) can be
    * bought; `enter`, to Enter, once Door & Key is owned until a run goes
    * inside from the forest (and again once Enemy is bought after its
@@ -445,7 +450,8 @@ export class Game {
       if (!t.climb) return "climb";
       if (this.handStuck && !t.stuck) return "stuck";
       if (this.handStuck && this.enemyBlocks && !owned.cardEnemy && this.affords("cardEnemy")) return "enemy";
-      return !t.keys && this.hand.includes("door") && this.hand.includes("key") ? "keys" : null;
+      if (!t.keys && this.hand.includes("door") && this.hand.includes("key")) return "keys";
+      return owned.autoClimb && !t.autoClimb ? "autoClimb" : null;
     }
     if (tower && this.introSkill) return "upgrades";
     if (tower && ((!t.enter && owned.cardDoorKey) || (t.enemy && owned.cardEnemy))) return "enter";
@@ -498,9 +504,15 @@ export class Game {
     for (const id of shown) if (hasPointsToSpend(save, id) && (!best || pointsLeft(save, id) > pointsLeft(save, best))) best = id;
     return best;
   }
-  /** Dismisses the `enter` lesson (the others wait on what they ask for). */
+  /** Dismisses the `enter` and `autoClimb` lessons (the others wait on
+   * what they ask for). */
   dismissLesson() {
-    if (this.boardLesson !== "enter") return false;
+    const lesson = this.boardLesson;
+    if (lesson === "autoClimb") {
+      this.save.tutorials.autoClimb = true;
+      return true;
+    }
+    if (lesson !== "enter") return false;
     this.save.tutorials.enter = true;
     this.save.tutorials.enemy = false;
     return true;
@@ -817,19 +829,22 @@ export class Game {
     } else if (from === 0) this.playHand();
     return true;
   }
-  /** Whether the speed lesson waits: inside a run past the first floor,
-   * once Auto-Climb plays the hand, slower than its speed, until the player
-   * has once sped up to it. */
+  /** Whether the speed lesson waits: ten steps into the Tower's first
+   * floor, once Door & Key is owned, slower than its speed, until the
+   * player has once sped up to it. */
   get teachesSpeed() {
-    return !this.run.outside && !this.save.tutorials.speed && this.save.settings.speed < LESSON_SPEED && this.pastFirstFloor && this.autoClimbs;
+    return !this.save.tutorials.speed && this.save.settings.speed < LESSON_SPEED && this.speedLessonDue;
   }
-  private get pastFirstFloor() {
-    return this.rules.equivalentFloor(this.run.maxHeight ?? this.run.height) >= 1;
+  /** Whether the run has come to the speed lesson: inside the Tower, on its
+   * first floor, with Door & Key owned and ten steps taken. */
+  private get speedLessonDue() {
+    const run = this.run;
+    return this.mode === "tower" && !run.outside && run.height === 0 && !!this.save.upgrades.cardDoorKey && (run.notes?.steps ?? 0) >= LESSON_STEPS;
   }
-  /** Reaching the second floor starts the speed lesson, pausing the hand,
-   * or, already that fast, passes it by for good. */
+  /** The tenth step on the first floor starts the speed lesson, pausing
+   * the hand, or, already that fast, passes it by for good. */
   private startSpeedLesson() {
-    if (this.save.tutorials.speed || !this.pastFirstFloor || !this.autoClimbs) return;
+    if (this.save.tutorials.speed || !this.speedLessonDue) return;
     if (this.save.settings.speed >= LESSON_SPEED) this.save.tutorials.speed = true;
     else {
       this.auto = false;
@@ -1551,7 +1566,8 @@ export class Game {
    * the hand plays on to it. Refused while an earlier press still heads
    * for its target (`busy`), and for a card with no path to a target
    * (`noPath`), which costs nothing. The first run's lesson waits on
-   * STAIRS, and the `keys` lesson ends once DOOR or KEY is pressed. */
+   * STAIRS, the `keys` lesson ends once DOOR or KEY is pressed, and the
+   * `autoClimb` lesson once any card is. */
   focus(card: number): "focused" | "unavailable" | "busy" | "noPath" {
     const id = this.held[card];
     if (this.run.outside || this.fallen || !id) return "unavailable";
@@ -1562,6 +1578,7 @@ export class Game {
     const lesson = this.boardLesson;
     if (lesson === "climb") this.save.tutorials.climb = true;
     if (lesson === "keys" && (id === "door" || id === "key")) this.save.tutorials.keys = true;
+    if (lesson === "autoClimb") this.save.tutorials.autoClimb = true;
     this.run.focused = id;
     this.route = [];
     // During a fight, the path is found again once the hero has stepped in.
@@ -1856,6 +1873,7 @@ export class Game {
     const notes = notesOf(this.run);
     if (notes) notes.steps++;
     this.land(step.tile, step.dest.x, step.dest.y, step.outcome, step.card.floorSkip);
+    this.startSpeedLesson();
     this.gemFinder.step();
     if (!step.card.hold) this.endTurn();
     return true;
@@ -2401,7 +2419,6 @@ export class Game {
     slice.best = Math.max(slice.best, reached);
     this.rules.credit(this.save, earned);
     slice.runCurrency += earned;
-    this.startSpeedLesson();
     return earned;
   }
   /** Whether (x, y) is the forest Blacksmith's building, which opens the
