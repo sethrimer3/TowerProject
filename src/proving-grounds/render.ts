@@ -10,9 +10,10 @@ import {drawKeymaster,drawKeymasterTransit,drawMimic,drawDoorSpirits} from "./ke
 import {KEYMASTER_DOORS,DOOR_FLIGHT_MS} from "./keymaster.ts";
 import { drawLightElemental, drawElementalTransit, TELEPORT_MS } from "./elemental-art.ts";
 export { drawLightElemental } from "./elemental-art.ts";
+import {TrialCamera,TRIAL_VIEW_TILES,TRIAL_TILE_SIZE,type TrialTransition} from "./camera.ts";
+export {TRIAL_VIEW_TILES} from "./camera.ts";
 
-export const TRIAL_VIEW_TILES = 17;
-const N = TRIAL_VIEW_TILES, S = 24, SIZE = N * S;
+const N = TRIAL_VIEW_TILES, S = TRIAL_TILE_SIZE, SIZE = N * S;
 
 const SLIME_ART = [
   "......gggg......", "....gghhhhgg....", "...ghwwhhhhhg...", "..ghwwhhhhhhhg..",
@@ -33,15 +34,20 @@ export class TrialRenderer {
   private heroAt: {x:number;y:number;room:TrialState["room"]}|null=null;
   private facing={dx:0,dy:-1};
   private heroIdle=new HeroIdleAnimation();
+  private camera=new TrialCamera();
   private darkness = document.createElement("canvas");
   constructor(private canvas: HTMLCanvasElement) {
     canvas.width = canvas.height = this.darkness.width = this.darkness.height = SIZE;
   }
   view(s: TrialState) {
-    return { left: s.player.x - 8, bottom: s.player.y - 8 };
+    return this.camera.view(s);
   }
+  hero(s:TrialState){return this.camera.hero(s);}
+  get settled(){return this.camera.settled;}
+  tileAt(s:TrialState,u:number,v:number){return this.camera.tileAt(s,u,v);}
   draw(s: TrialState, now: number, firedAt: number, reduceMotion: boolean,
-    options: {styledSprites?:boolean;spriteAnimations?:boolean;destination?:{x:number;y:number}|null} = {}) {
+    options: {styledSprites?:boolean;spriteAnimations?:boolean;destination?:{x:number;y:number}|null;transition?:TrialTransition;pathAhead?:readonly {dx:number;dy:number}[]} = {}) {
+    this.camera.update(s,now,reduceMotion,options.transition,options.pathAhead);
     const styled=true,animated=!!options.spriteAnimations;
     // Animation is presentation only; saved turns own all positions.
     if(this.lastState!==s) { this.lastState=s; this.lastStep=s.steps; this.jumpedAt=-Infinity; this.lastTeleport=s.elemental.teleport; this.teleportAt=-Infinity;this.heroAt=null;this.facing={dx:0,dy:-1}; }
@@ -70,12 +76,13 @@ export class TrialRenderer {
       return {x:p.from.x+(p.x-p.from.x)*t,y:p.from.y+(p.y-p.from.y)*t,lift:Math.round(Math.sin(t*Math.PI)*7)};
     });
     const c = this.canvas.getContext("2d")!, { left, bottom } = this.view(s);
-    const px = (x: number) => (x - left) * S, py = (y: number) => (N - 1 - y + bottom) * S;
+    const offsetX=Math.round(left*S),offsetY=Math.round(bottom*S);
+    const px = (x: number) => x*S-offsetX, py = (y: number) => (N-1-y)*S+offsetY;
     const tile = (x: number, y: number, draw: () => void) => {
       c.save(); c.translate(Math.round(px(x)), Math.round(py(y))); draw(); c.restore();
     };
     c.imageSmoothingEnabled = false; c.fillStyle = "#05080c"; c.fillRect(0,0,SIZE,SIZE);
-    for (let y=bottom; y<bottom+N; y++) for (let x=left; x<left+N; x++) {
+    for (let y=Math.floor(bottom); y<Math.ceil(bottom+N); y++) for (let x=Math.floor(left); x<Math.ceil(left+N); x++) {
       const wall = !trialFloor(s,x,y);
       tile(x,y,() => {
         paintTile(c,world,world.tile(x,y),x,y,now,0,look);
@@ -111,7 +118,8 @@ export class TrialRenderer {
 
       });
     }
-    tile(s.player.x,s.player.y,()=>paintHero(c,this.facing,idle));
+    const hero=this.camera.hero(s);
+    tile(hero.x,hero.y,()=>paintHero(c,this.facing,idle));
     if (s.room === "arena") {
       const d=this.darkness.getContext("2d")!;
       d.globalCompositeOperation="source-over"; d.fillStyle="#000"; d.fillRect(0,0,SIZE,SIZE);
@@ -124,7 +132,7 @@ export class TrialRenderer {
         d.fillStyle=g; d.fillRect(xx-r,yy-r,r*2,r*2);
       };
       // No ambient floor light. The hero has just enough light to find their footing.
-      light(s.player.x,s.player.y,1.8,0.8);
+      light(hero.x,hero.y,1.8,0.8);
       for(const p of ARENA_TORCHES) if(!propDestroyed(s,p)) light(p.x,p.y,5.5,0.92);
       if(s.keymaster) {
         for(const p of KEYMASTER_DOORS)light(p.x,p.y,3,0.8);

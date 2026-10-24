@@ -17,8 +17,11 @@ try {
     },changes);await reload();await expect(world).toHaveAttribute("data-trial-room","arena");
   }
   async function tile(x,y) {
-    const s=await trial(),box=await world.boundingBox();
-    await world.click({position:{x:box.width*(x-s.player.x+8.5)/17,y:box.height*(s.player.y-y+8.5)/17}});
+    await expect(world).toHaveAttribute("data-trial-view-room",(await trial()).room);
+    await expect(world).toHaveAttribute("data-trial-camera-moving","false",{timeout:10000});
+    const view=await world.evaluate(c=>({left:Number(c.dataset.trialViewLeft),bottom:Number(c.dataset.trialViewBottom)}));
+    const box=await world.boundingBox();
+    await world.click({position:{x:box.width*(x-view.left+.5)/17,y:box.height*(view.bottom+17-y-.5)/17}});
   }
   mkdirSync("test-results/keymaster",{recursive:true});
   await page.goto(process.env.TEST_URL||"http://127.0.0.1:5173/",{waitUntil:"domcontentloaded"});

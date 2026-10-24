@@ -102,3 +102,6 @@ Keymaster trials add a saved Use keys/Save keys mimic toggle and encounter golde
 **The Overheal bar.** `.health-track` holds `#overheal`, a bar laid over the red one and shown only while the shown HP is above max HP (`renderVitals`): its fill is the HP above max over the room Overheal gives (`game.hpCeiling − maxHp`), the red bar stays full, and while it shows the fight's purple (`#overheal-loss`) and a heal's growth (`#overheal-gain`, pale blue) are drawn on it rather than on the red; `renderHealthLoss` and `renderHealthGain` take the bar they draw on.
 
 The Keymaster HUD displays its corporeal/incorporeal state and turns until its ten-turn reformation; its trial preview explains ghost teleports and the two-turn movement cadence.
+
+Trials now honor Settings' existing Movement transition choice (Smooth by default) through their Delve-style follow camera, with Reduce motion overriding it.
+Canvas pointer-up resolves the tile in the last rendered camera view; the controller caches route/card look-ahead per changed turn/command and clears its transient camera attributes on exit.

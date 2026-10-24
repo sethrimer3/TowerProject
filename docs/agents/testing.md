@@ -92,3 +92,8 @@ The appended `keymaster` render job covers fifteen browser and drawing-call fram
 
 Keymaster browser checks also exercise saved ghost teleports, one-tile mimic pursuit and boss retreat on even turns, and ten-turn reformation between door hits.
 The `keymaster` render job changes seven existing frames for moving actors/ghosts and appends seven phase/movement frames; the Light Elemental and all earlier jobs stay pinned.
+
+`tests/trial-camera.test.ts` checks smooth trial hero/camera presentation, finite-room and native-pixel bounds, Fast/Off/Reduce motion, room changes and fractional-view click accuracy without mutating a trial.
+`node tests/trial-camera.mjs` uses the dev server to exercise actual camera/hero interpolation, clicks mid-glide, live Movement transition/Reduce motion controls, reload persistence and card movement, with 320/390/1024-pixel previews in `test-results/trial-camera/`.
+Trial browser tile helpers wait for the displayed room and camera settlement, then use the canvas's actual view rather than assuming the hero is centered.
+The appended `trialCamera` render job adds eight frames, and only existing trial motion frames change; other board jobs and save/settings defaults remain unchanged.
