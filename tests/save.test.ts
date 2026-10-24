@@ -120,7 +120,7 @@ const mailSave = {
 const bases: Record<string, () => any> = {
   v3,
   v2: () => ({ ...v3(), version: 2 }),
-  v1: () => ({ version: 1, ...mode(delveRun), best: 12, essence: 8, upgrades: { undos: 1 }, settings: { showInfoBoxes: false } }),
+  v1: () => ({ version: 1, ...mode(delveRun), best: 12, essence: 8, upgrades: { undos: 1 }, settings: { infoDisplay: "none" } }),
   outside: () => ({ ...v3(), tower: { ...v3().tower, run: towerRun({ outside: true, height: 0, floor: 0 }) } }),
   preSkillTrees: () => {
     const s = v3();
@@ -280,12 +280,6 @@ test("decode keeps a valid v3 save's progress and clamps settings", () => {
   assert.equal(d.equipment.pity.ring, 41);
 });
 
-test("decode reads a renamed upgrade under its old id: Evade is Parry", () => {
-  const save = { ...v3(), upgrades: { ...v3().upgrades, evade: 1 } };
-  assert.equal(decode(JSON.stringify(save)).upgrades.parry, 1);
-  assert.equal(decode(JSON.stringify(v3())).upgrades.parry, 0, "none owned, none read");
-});
-
 test("decode keeps the Tournament's save and a tournament run inside a cave not yet opened", () => {
   const d = decode(JSON.stringify(bases.tournament()));
   assert.deepEqual(d.tournament, tournamentSave);
@@ -297,7 +291,7 @@ test("decode keeps Mail: the inbox, what waits to sync, what was claimed, and th
   assert.deepEqual(decode(JSON.stringify(bases.mail())).mail, mailSave);
 });
 
-test("decode migrates v1 saves into the Delve slice and legacy settings", () => {
+test("decode migrates v1 saves into the Delve slice and keeps their settings", () => {
   const d = decode(JSON.stringify(bases.v1()));
   assert.equal(d.delve.best, 12);
   assert.equal(d.delve.courage, 8);

@@ -164,12 +164,5 @@ export function settingValue(setting: Setting, v: unknown): boolean | string | n
 export function decodeSettings(raw: any): Settings {
   const s = raw ?? {}, out = defaultSettings() as Record<SettingKey, unknown>;
   for (const k of KEYS) out[k] = settingValue(SETTINGS[k], s[k]) ?? out[k];
-  // Older saves had a single showInfoBoxes toggle.
-  if (settingValue(SETTINGS.infoDisplay, s.infoDisplay) === undefined && s.showInfoBoxes === false) out.infoDisplay = "none";
-  // Older saves had a Medieval and a Neon toggle, Neon drawing both the page
-  // and the board; a hero who never turned Medieval on keeps the Classic page.
-  if (typeof s.medievalTheme === "boolean" && settingValue(SETTINGS.uiTheme, s.uiTheme) === undefined)
-    out.uiTheme = s.neonTheme === true ? "neon" : s.medievalTheme ? "medieval" : "classic";
-  if (s.neonTheme === true && settingValue(SETTINGS.gameTheme, s.gameTheme) === undefined) out.gameTheme = "neon";
   return out as Settings;
 }

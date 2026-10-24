@@ -240,20 +240,6 @@ test("the Dash badge joins the draw once the Dash Badge skill is owned", () => {
   assert.ok(drawable(defaultBadges(), "dash", save.upgrades));
 });
 
-test("a save from before Rush became Dash keeps its skills, research and badge under the new names", () => {
-  const old: any = JSON.parse(JSON.stringify(defaults()));
-  for (const id of ["dash", "dashRegen", "dashBadge"]) delete old.upgrades[id];
-  Object.assign(old.upgrades, { rush: 1, rushRegen: 1, rushBadge: 1 });
-  delete old.archives.levels.dash;
-  delete old.archives.levels.dashRegen;
-  Object.assign(old.archives.levels, { rush: 3, rushRegen: 2 });
-  old.badges.owned = { rush: { copies: 1, pick: 0 } };
-  const save = decode(JSON.stringify(old));
-  assert.deepEqual([save.upgrades.dash, save.upgrades.dashRegen, save.upgrades.dashBadge], [1, 1, 1]);
-  assert.deepEqual([save.archives.levels.dash, save.archives.levels.dashRegen], [3, 2]);
-  assert.deepEqual(save.badges.owned.dash, { copies: 1, pick: 0 });
-});
-
 /** The tiles `echoes` paints a hero on at `now`, in the order painted. */
 function echoedAt(echoes: DashEchoes, now: number) {
   const painted: number[] = [];

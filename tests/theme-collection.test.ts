@@ -147,11 +147,6 @@ test("saves keep their themes, always with Medieval", () => {
   assert.deepEqual(decode(JSON.stringify(raw)).themes, ["medievalUi"], "an old save gets Medieval");
 });
 
-test("older saves' Medieval and Neon toggles become the UI and Game themes", () => {
-  const old = (medievalTheme: boolean, neonTheme: boolean) => decodeSettings({ medievalTheme, neonTheme });
-  assert.deepEqual([old(false, false).uiTheme, old(false, false).gameTheme], ["classic", "classic"], "a hero who never chose Medieval keeps the Classic page");
-  assert.deepEqual([old(true, false).uiTheme, old(true, false).gameTheme], ["medieval", "classic"]);
-  assert.deepEqual([old(false, true).uiTheme, old(false, true).gameTheme], ["neon", "neon"]);
-  assert.equal(decodeSettings({}).uiTheme, "medieval", "a new save starts in Medieval");
-  assert.equal(decodeSettings({ medievalTheme: false, uiTheme: "neon" }).uiTheme, "neon", "a saved choice wins");
+test("a new save starts in Medieval", () => {
+  assert.equal(decodeSettings({}).uiTheme, "medieval");
 });
