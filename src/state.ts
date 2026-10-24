@@ -1528,6 +1528,14 @@ export class Game {
     this.mode = "tower";
     this.newRun({ outside: true });
   }
+  /** Replaces the whole save with `save` (an imported profile, which holds
+   * no run) and starts again outside the Tower. */
+  replaceSave(save: Save) {
+    this.save = save;
+    stampProfile(this.save, this.clock());
+    this.mode = "tower";
+    this.newRun({ outside: true });
+  }
   routeStep() {
     const step = this.route.shift();
     if (!step) return false;

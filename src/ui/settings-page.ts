@@ -10,6 +10,8 @@ import { capitalized, displayedProgress, el } from "./dom.ts";
 import { MODES } from "../modes.ts";
 import { goalUnlocked } from "../goals.ts";
 import { showStats } from "./stats-dialog.ts";
+import { showHelp } from "./dialogs.ts";
+import { exportProfile, importProfile } from "../profile-file.ts";
 
 /** The settings on the page, in order; each control comes from its row in
  * SETTINGS. */
@@ -135,8 +137,51 @@ export function renderSettingsPage(ctx: AppContext, overlay: BoardOverlay) {
     themeButtons(game) +
     `<button class="setting menu-open" id="toggles-open">Toggles<b>${controlIcon("forward")}</b></button>` +
     shownOf(PAGE, game.save).map((key) => control(key, game) + (key === (game.save.settings.uiSprites ? "squareDoors" : "uiSprites") ? `<p class="hint">Sprites apply to the default interface and board. Other UI and Game themes use their own art.</p>` : "")).join("") +
-    `<p class="hint">Automation pauses outside the board tabs and while the browser is hidden. Progress saves after each action.</p><button class="wide" id="retire">Retire this ${words.run}</button><p class="hint">Keep your milestone rewards and enter a freshly generated ${words.fresh}.</p><button class="wide danger" id="erase">Erase all progress</button><p class="seed">RUN SEED · ${game.run.seed}</p>`;
+    `<p class="hint">Automation pauses outside the board tabs and while the browser is hidden. Progress saves after each action.</p><button class="wide" id="retire">Retire this ${words.run}</button><p class="hint">Keep your milestone rewards and enter a freshly generated ${words.fresh}.</p>${game.save.settings.devMode ? profileButtons : ""}<button class="wide danger" id="erase">Erase all progress</button><p class="seed">RUN SEED · ${game.run.seed}</p>`;
   bindSettings(ctx, overlay);
+}
+
+/** Dev mode's profile file buttons: download everything kept between runs,
+ * or load such a file over the whole save. */
+const profileButtons =
+  `<button class="wide" id="profile-export">Export profile</button><button class="wide" id="profile-import">Import profile</button><input type="file" id="profile-file" accept=".json,application/json,text/plain" hidden><p class="hint">A text file of everything kept between runs; a run in progress isn't in it. Importing replaces this profile and its runs.</p>`;
+
+function bindProfileButtons(ctx: AppContext) {
+  const { game } = ctx;
+  el("profile-export").onclick = () => {
+    const now = game.clock(), url = URL.createObjectURL(new Blob([exportProfile(game.save, now)], { type: "application/json" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `tower-delve-profile-${new Date(now).toISOString().slice(0, 10)}.json`;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    // Revoked once the download has taken the file.
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+  const input = el("profile-file") as HTMLInputElement;
+  el("profile-import").onclick = () => input.click();
+  input.onchange = async () => {
+    const file = input.files?.[0];
+    input.value = "";
+    if (!file) return;
+    const read = importProfile(await file.text());
+    if ("error" in read) return showHelp(ctx, "Import profile", "Can't import", `<p>${read.error}</p>`);
+    ctx.confirm(
+      {
+        title: "Replace your profile?",
+        body: `Everything here, both current runs included, is replaced by ${file.name}.`,
+        label: "Import",
+        cancel: "Keep this profile",
+      },
+      () => {
+        game.replaceSave(read.save);
+        applyUiTheme(game.save);
+        ctx.save();
+        ctx.navigate("tower");
+      },
+    );
+  };
 }
 
 function bindSettings(ctx: AppContext, overlay: BoardOverlay) {
@@ -154,6 +199,7 @@ function bindSettings(ctx: AppContext, overlay: BoardOverlay) {
     ctx.renderPage();
   };
   bindControls(ctx, overlay, shownOf(PAGE, game.save));
+  if (game.save.settings.devMode) bindProfileButtons(ctx);
   el("retire").onclick = () =>
     ctx.confirm(
       {

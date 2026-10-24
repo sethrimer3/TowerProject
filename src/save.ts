@@ -529,6 +529,8 @@ const VERSION_STEPS = new Map<unknown, VersionStep[]>([
   [3, [decodeProgress, decodeInventory, resetProvisions]],
   [4, [decodeProgress, decodeInventory]],
 ]);
+/** Whether `decode` reads saves of `version`. */
+export const decodableVersion = (version: unknown) => VERSION_STEPS.has(version);
 /** The saved hand's cards the player owns, in order, each once and no
  * more than the hand holds (`slots`), or the base hand when the save has
  * none or lost its STAIRS card, which every hand must hold. */
