@@ -316,8 +316,7 @@ function decodeMaterials(s: any): Record<MaterialId, number> {
     for (const id of MATERIAL_IDS) materials[id] = count(s[id], materials[id]);
   return materials;
 }
-/** Older (version-2) saves intentionally get an empty material inventory
- * rather than being invalidated. The crafted equipment of earlier saves
+/** The material inventory. The crafted equipment of earlier saves
  * (`equipmentInventory`, never reachable in play) is dropped. */
 function decodeInventory(s: any, d: Save) {
   d.materials = decodeMaterials(s.materials);
@@ -359,11 +358,11 @@ function decodeTraining(s: any, d: Save) {
   d.trainingBank = count(s.trainingBank, 0, Number.MAX_SAFE_INTEGER);
   d.trainingBoostUntil = count(s.trainingBoostUntil, d.trainingBoostUntil, Number.MAX_SAFE_INTEGER);
 }
-/** Each mode's currency (under its older name too) and best. */
+/** Each mode's currency and best. */
 function decodeModeRecords(tower: any, delve: any, d: Save) {
-  d.tower.inspiration = count(tower.inspiration ?? tower.shards, d.tower.inspiration);
+  d.tower.inspiration = count(tower.inspiration, d.tower.inspiration);
   d.tower.best = count(tower.best, d.tower.best);
-  d.delve.courage = count(delve.courage ?? delve.essence, d.delve.courage);
+  d.delve.courage = count(delve.courage, d.delve.courage);
   d.delve.best = count(delve.best, d.delve.best);
 }
 /** What a stat's ranks were paid with; a save from before this was kept
@@ -425,7 +424,6 @@ type VersionStep = (s: any, d: Save, undoCapacity: number) => void;
 /** What each save version carries beyond upgrades and settings. A Map, so
  * lookups match versions strictly (no "3" or prototype keys). */
 const VERSION_STEPS = new Map<unknown, VersionStep[]>([
-  [2, [decodeProgress]],
   [3, [decodeProgress, decodeInventory]],
   [4, [decodeProgress, decodeInventory]],
 ]);

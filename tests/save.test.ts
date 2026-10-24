@@ -119,7 +119,6 @@ const mailSave = {
 };
 const bases: Record<string, () => any> = {
   v3,
-  v2: () => ({ ...v3(), version: 2 }),
   outside: () => ({ ...v3(), tower: { ...v3().tower, run: towerRun({ outside: true, height: 0, floor: 0 }) } }),
   tournament: () => {
     const s = v3();
@@ -309,11 +308,6 @@ test("decode rejects runs that break player invariants", () => {
   const outsideTooHigh = v3();
   outsideTooHigh.tower.run = towerRun({ outside: true, height: 1, floor: 0 });
   assert.equal(decode(JSON.stringify(outsideTooHigh)).tower.run, null);
-});
-
-test("saves from before the currencies were renamed keep their Inspiration and Courage", () => {
-  const d = decode(JSON.stringify({ ...v3(), tower: { ...v3().tower, inspiration: undefined, shards: 5 }, delve: { ...v3().delve, courage: undefined, essence: 6 } }));
-  assert.deepEqual([d.tower.inspiration, d.delve.courage], [5, 6]);
 });
 
 test("each mode's run keeps only its own fields, on its own board's width, and Automove's memory sits beside the Delve run", () => {
