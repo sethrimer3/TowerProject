@@ -6,8 +6,10 @@ import { drawCrates } from "../decor-sprites.ts";
 import { drawKit } from "../sprite-kit.ts";
 import { HeroIdleAnimation } from "../sprite-animations.ts";
 import type { Tile } from "../entities.ts";
-import { ARENA_CRATES, ARENA_POTIONS, ARENA_TORCHES, beamCount, beamDirections, rayCells, floorAt, key, nextBeamAxis, propDestroyed, wallEdge, type TrialState } from "./trial.ts";
+import { ARENA_CRATES, ARENA_POTIONS, ARENA_TORCHES, beamCount, beamDirections, rayCells, trialFloor, key, nextBeamAxis, propDestroyed, wallEdge, type TrialState } from "./trial.ts";
 
+import {drawKeymaster,drawMimic,drawDoorSpirits} from "./keymaster-art.ts";
+import {KEYMASTER_DOORS,DOOR_FLIGHT_MS} from "./keymaster.ts";
 import { drawLightElemental, drawElementalTransit, TELEPORT_MS } from "./elemental-art.ts";
 export { drawLightElemental } from "./elemental-art.ts";
 
@@ -56,7 +58,7 @@ export class TrialRenderer {
     this.heroAt={x:s.player.x,y:s.player.y,room:s.room};
     const idle=this.heroIdle.frame(now,animated && !reduceMotion && s.player.hp>0,
       `${s.seed}:${s.room}:${s.player.x},${s.player.y}:${this.facing.dx},${this.facing.dy}`);
-    const world={tile:(x:number,y:number):Tile=>({kind:floorAt(s.room,x,y)?"floor":"wall"})};
+    const world={tile:(x:number,y:number):Tile=>({kind:trialFloor(s,x,y)?"floor":"wall"})};
     const look:BoardLook={mode:"tower",tier:1,height:1,seed:s.seed,outside:false,entranceX:0,
       spritesOff,reduceMotion,area1:!spritesOff,themed:null,styledSprites:styled,spriteAnimations:animated};
     if(this.lastTeleport!==s.elemental.teleport) {
@@ -79,10 +81,10 @@ export class TrialRenderer {
     };
     c.imageSmoothingEnabled = false; c.fillStyle = "#05080c"; c.fillRect(0,0,SIZE,SIZE);
     for (let y=bottom; y<bottom+N; y++) for (let x=left; x<left+N; x++) {
-      const wall = !floorAt(s.room,x,y);
-      if (!styled && wall && !(s.room==="arena" && wallEdge(x,y)) && ![[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy]) => floorAt(s.room,x+dx,y+dy))) continue;
+      const wall = !trialFloor(s,x,y);
+      if (!styled && wall && !(s.room==="arena" && wallEdge(x,y)) && ![[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy]) => trialFloor(s,x+dx,y+dy))) continue;
       tile(x,y,() => {
-        const neighbors = { northWall: !floorAt(s.room,x,y+1), eastWall: !floorAt(s.room,x+1,y), southWall: !floorAt(s.room,x,y-1), westWall: !floorAt(s.room,x-1,y) };
+        const neighbors = { northWall: !trialFloor(s,x,y+1), eastWall: !trialFloor(s,x+1,y), southWall: !trialFloor(s,x,y-1), westWall: !trialFloor(s,x-1,y) };
         if(styled)paintTile(c,world,world.tile(x,y),x,y,now,0,look);
         else if (spritesOff || !drawThemedTile(c,"tower",0,wall,x,y,7391,neighbors)) {
           c.fillStyle=wall?"#52616b":"#263442"; c.fillRect(0,0,S,S);
@@ -95,6 +97,13 @@ export class TrialRenderer {
       });
     }
     if (s.room === "arena") {
+      if(s.keymaster) {
+        for(const p of s.keymaster.drops)tile(p.x,p.y,()=>paintContents(c,{kind:"key",color:"yellow"},{...p,time:now,spritesOff,reduceMotion,area1:true,styledSprites:styled}));
+        for(const [door,p] of KEYMASTER_DOORS.entries())tile(p.x,p.y,()=> {
+          if(s.keymaster!.doors.some(d=>d.door===door)) {c.fillStyle="#160e16";c.fillRect(3,2,18,22);c.fillStyle="#8b3c47";c.fillRect(3,2,2,22);c.fillRect(19,2,2,22);}
+          else paintContents(c,{kind:"door",color:"yellow"},{...p,time:now,spritesOff,reduceMotion,area1:true,styledSprites:styled});
+        });
+      }
       for(const p of ARENA_CRATES)tile(p.x,p.y,()=> {
         const broken=propDestroyed(s,p);
         if(styled && (broken?drawKit(c,"crate-broken",6,12,12,12):drawKit(c,"crate")))return;
@@ -131,6 +140,15 @@ export class TrialRenderer {
       // No ambient floor light. The hero has just enough light to find their footing.
       light(s.player.x,s.player.y,1.8,0.8);
       for(const p of ARENA_TORCHES) if(!propDestroyed(s,p)) light(p.x,p.y,5.5,0.92);
+      if(s.keymaster) {
+        for(const p of KEYMASTER_DOORS)light(p.x,p.y,3,0.8);
+        for(const p of s.keymaster.drops)light(p.x,p.y,1.5,0.5);
+        for(const p of s.keymaster.mimics)light(p.x,p.y,1.2,0.4);
+        for(const b of s.keymaster.doors)if(!b.hit && s.status==="active") {
+          const p=KEYMASTER_DOORS[b.door],t=b.elapsed/DOOR_FLIGHT_MS;
+          light(p.x+(12-p.x)*t,p.y+(12-p.y)*t,3,0.8);
+        }
+      }
       for(const p of slimes) light(p.x,p.y,1.7,0.65);
       if(s.status!=="won") {
         light(s.elemental.x,s.elemental.y,s.elemental.incorporeal?2.4:3,s.elemental.incorporeal?0.48:0.85);
@@ -180,7 +198,7 @@ export class TrialRenderer {
         }
         if(transit>.78) tile(boss.x,boss.y,()=> {
           c.save(); c.globalAlpha=transit<1?(transit-.78)/.22:1;
-          drawLightElemental(c,boss.incorporeal,now,reduceMotion);
+          if(s.keymaster)drawKeymaster(c,now,reduceMotion);else drawLightElemental(c,boss.incorporeal,now,reduceMotion);
           c.fillStyle=boss.incorporeal?"#344651":"#3b2922"; c.fillRect(1,23,22,1);
           c.fillStyle=boss.incorporeal?"#91d3ea":"#ffe4a0"; c.fillRect(1,23,22*s.bossHp/s.bossMaxHp,1);
           c.restore();
@@ -190,8 +208,15 @@ export class TrialRenderer {
         c.fillStyle="#9c793d66"; c.fillRect(5,21,14,2);
         c.translate(0,-p.lift); drawLightSlime(c,spritesOff);
       });
+      if(s.keymaster) {
+        for(const p of s.keymaster.mimics)tile(p.x,p.y,()=>drawMimic(c,p.hp/p.maxHp));
+        for(const b of s.keymaster.doors)if(!b.hit && s.status==="active") {
+          const p=KEYMASTER_DOORS[b.door];
+          drawDoorSpirits(c,{x:px(p.x),y:py(p.y)},{x:px(12),y:py(12)},b.elapsed/DOOR_FLIGHT_MS,s.seed^b.door,reduceMotion);
+        }
+      }
       // Telegraph only near the elemental, without revealing the unlit room.
-      if(s.status==="active" && s.steps%10>=8) {
+      if(!s.keymaster && s.status==="active" && s.steps%10>=8) {
         c.fillStyle="#ffeaa8";
         for(const [dx,dy] of beamDirections(nextBeamAxis(s),beamCount(s.level))) for(let i=1;i<=3;i++) tile(s.elemental.x+dx*i,s.elemental.y+dy*i,()=>c.fillRect(11,11,2,2));
       }

@@ -1,6 +1,6 @@
 import {routeTo} from "../pathfinding.ts";
 import {autoplayTrial,trialPosition,trialPlan} from "./autoplay.ts";
-import {floorAt,trialStep,type Spot,type TrialState} from "./trial.ts";
+import {trialFloor,trialStep,type Spot,type TrialState} from "./trial.ts";
 
 /** A click means a destination, not a direction. Replan each step because
  * enemy positions change, and keep this transient route out of saved attempts. */
@@ -8,7 +8,7 @@ export class TrialNavigation {
   target:(Spot & {room:TrialState["room"]})|null=null;
   clear(){this.target=null;}
   select(s:TrialState,x:number,y:number) {
-    if(s.mode==="cards" || s.status!=="active" || !floorAt(s.room,x,y))return false;
+    if(s.mode==="cards" || s.status!=="active" || !trialFloor(s,x,y))return false;
     if(!routeTo(trialPosition(s),x,y))return false;
     this.target={x,y,room:s.room};return true;
   }

@@ -4,7 +4,7 @@ The gold square two columns right of the Tower forest's path on row 4 opens **Pr
 `OutsideWorld.isProvingGrounds` identifies it, `Game.land` stops the route and asks for its menu, and `ProvingGroundsDialog` owns the entrance menu, trial controls and main-board presentation.
 Only the selection menu uses the shared modal; the encounter itself uses `#world`, the normal HUD, `#hand` and `RunTrainingBar`.
 `catalog.ts` defines one entry per boss, its trial number, difficulty multiplier and first-clear reward.
-Selecting Trial 1 — Light Elemental opens a picker for Without cards, Only with cards or With both; there is no difficulty selector.
+Selecting Trial 1 — Light Elemental or Trial 2 — Keymaster opens a picker for Without cards, Only with cards or With both; there is no difficulty selector.
 `progression.ts` selects the highest cleared difficulty plus one (up to 10,000), shared by all three controls for that boss.
 `access.ts` owns the shared two-key daily allowance (`day`, the UTC day index, and `spent`); `trialKeys` refills on a strictly later day, and `spendTrialKey` guards both entry and retry before replacing an attempt.
 Unused keys do not bank; reload/resume does not charge, and Dev mode bypasses spending without changing the ordinary allowance.
@@ -55,7 +55,8 @@ The highest cleared difficulty is never manually selectable, and finishing diffi
 
 ## Turns and persistence
 
-`trial.ts` is the pure turn model: a 9×9 staging room leads through stairs to a hexagonal chamber whose walls fit inside 25×25 tiles.
+`arena.ts` owns the shared hexagonal geometry and edge props; `trial.ts` dispatches the pure turn model after a shared 9×9 staging room.
+`trialFloor` adds four door cells only for the Keymaster, leaving the Light Elemental's geometry intact.
 The Light Elemental starts at (12,12); stepping into its corporeal body strikes it, with a smaller return hit from its radiance.
 Each nonlethal hit deterministically relocates it to a different free interior tile at least six Manhattan tiles from its former position, away from the hero, slimes and wall potions.
 Its saved `elemental` holds its position, `incorporeal` flag and last teleport origin/turn; ghost tiles are walkable and cannot be damaged or targeted by cards.
@@ -90,6 +91,28 @@ Legacy four-axis beams normalize to the equivalent eight-heading axis on decode,
 Attempts without `trialId` default to `light-elemental`; unknown IDs are rejected, and `hybrid` decodes with the same hand rules as `cards`.
 The old selected `trialAccess.level` is ignored and cannot manufacture completed difficulties.
 
+## Keymaster
+
+Trial 2 uses `keymaster.ts` and an optional `TrialState.keymaster` payload; older Light Elemental saves gain no new encounter fields.
+The stationary boss uses the shared center position and HP multiplier, has no ghost phase, lasers or slimes, and retaliates for the same 4% base max-HP damage on a surviving direct hit.
+Every hit scatters exactly three golden keys to three seeded choices of eight compass directions, each three tiles from the boss; repeated drops stack and stepping onto a pile collects it.
+These keys belong only to the encounter and are distinct from daily entry keys.
+Two mimics appear on entry; another spawns every `max(2,8-floor(level/5))` turns, up to six alive.
+Their HP is `ceil(max(30,6*ATK)*difficultyMultiplier(level))`; a surviving mimic counters for 6% max HP times that multiplier, less 20% of copied DEF, with minimum 1 damage.
+Mimics avoid the three-tile key landing ring and occupied tiles.
+Bumping one with Use keys on consumes one key for an immediate kill with no damage; Save keys retains keys and uses normal repeated attacks.
+The toggle is saved, costs no turn and also governs card-controlled combat.
+`trialBoard` exposes golden key piles, affordable gold doors and strong-enemy mimics to the ordinary cards, with the real key inventory copied into the planner and HUD.
+The arena board uses floor bound 0 so routes and cards can reach the south door at row 0.
+`KEYMASTER_DOORS` holds the north/east/south/west wall cells `(12,24)`, `(24,12)`, `(12,0)`, `(0,12)`; a locked door spends no turn without a key.
+Opening consumes one golden key and stores one `DoorBurst` with a door index, elapsed milliseconds and an impact receipt.
+`advanceKeymasterEffects` advances visible flights independently of player turns and card pause; at 1,100 ms each burst removes exactly one fifth of boss max HP once.
+The controller pauses flights behind an open modal and caps frame deltas at 100 ms, preventing a hidden-tab catch-up.
+Opening and impact saves preserve the receipt; intermediate elapsed time is included in any normal attempt save, and reloading a pending flight resumes its remaining duration.
+A door impact can win and settle ordinary per-trial rewards without spending another player turn.
+Decoding bounds inventories, eight key piles, six unique mimics and four unique door bursts; it rejects contradictory elapsed/impact receipts and cross-boss elemental hazards.
+Progress and reward receipts remain independent per trial ID while sharing the same daily entry allowance and points wallet.
+
 ## Rendering and tests
 
 `elemental-art.ts` owns the elemental body, ghost palette and teleport particles; `render.ts` reuses Classic stone, hero, potion and torch art, adds pixel Light Elemental and light slime sprites, and follows the player over 17×17 tiles.
@@ -120,3 +143,10 @@ The render goldens include staging, elemental, beam, glow, wall-scar, slime-hop,
 Five appended sprite-kit frames cover staging, intact edge props, beam damage, extinguished torches and the board-art opt-out; the earlier legacy trial frames remain unchanged.
 
 The appended `manualDestination` render frame covers the gold tile-click marker without changing earlier trial frames.
+
+`keymaster-art.ts` supplies native 24-pixel brass/slate boss and chest-mimic silhouettes with upper-left highlights.
+Golden keys and locked doors reuse the current content painters; red doorway pixels follow the elemental transit's staggered curved flight and fading tails, converging into the boss.
+Reduce motion uses fewer particles and straight paths without changing the mechanical delay.
+Nine appended `keymaster` render frames cover staging, actors, drops, the north door, flood, trails, reduced motion, impact and board-art opt-out; existing frames stay unchanged.
+`tests/keymaster.test.ts` checks exact drops, combat choices, all cardinal doors, arrival receipts, deterministic spawns, card categories, south-door routing, decoding and independent progression.
+`node tests/keymaster.mjs` checks the real Trial 2 picker, all three controls, actual movement/combat/door damage, reloads, rewards, run isolation and native 320/390/1024-pixel previews.

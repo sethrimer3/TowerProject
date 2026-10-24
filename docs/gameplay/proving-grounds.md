@@ -45,6 +45,7 @@ The free-purchases setting alone does not bypass trial keys.
 Each level adds 10% of the level-1 boss HP, starting from at least 240 HP or 24 times your copied ATK, whichever is higher.
 Level 1 fires one beam per volley; levels 10, 20, 30, 40, 50, 60 and 70 add one each, reaching the maximum of eight.
 Slimes spawn every 20 turns at levels 1–4; each multiple of five reduces that interval by two, reaching two turns at level 45.
+These beam/slime rules apply to the Light Elemental; the Keymaster instead gains tougher mimics and summons them more often.
 The difficulty stays fixed through an attempt and reload.
 Any victory counts toward that trial's progression, regardless of the control mode.
 After a defeat, **Try again** offers the same next unbeaten difficulty; after a victory, **Next difficulty** offers the next one and lets you choose controls again.
@@ -98,3 +99,28 @@ Potions along the walls restore 35% of your max HP and can each be used once.
 Defeat the elemental to complete the trial and disperse its remaining slimes.
 After victory or defeat, return to the forest or choose controls for the trial's next unbeaten difficulty from its staging room.
 Attempts saved in the older, larger chamber restart in the new staging room with their copied stats.
+
+## The Keymaster
+
+**Trial 2 — Keymaster** has its own difficulty progression and first-clear Trial Points, shared across the same three control modes.
+Its staircase leads to the same-sized dark chamber, with a locked door at each cardinal edge: north, east, south and west.
+The Keymaster stands in the center and can be attacked directly; he has no elemental ghost phase or lasers.
+Each hit scatters three golden keys three tiles away in random compass directions.
+Walk onto them to collect them; these are encounter items, separate from your two daily trial entry keys.
+
+Two tough chest mimics appear when you enter, and the Keymaster summons more over time, up to six alive.
+A mimic takes several attacks and fights back while it survives.
+With **Mimics: use keys**, entering a mimic spends one golden key to defeat it without taking damage.
+Switch to **Mimics: save keys** to fight normally and reserve your keys for doors; this choice also applies to card autoplay and survives reloads.
+Key, Door and enemy cards recognize the encounter's keys, locks and mimics.
+
+Each cardinal door costs one golden key to open.
+Opening it floods red light pixels from the doorway; they curve toward the Keymaster with trailing sparks, then take **20% of his maximum HP** when they reach him.
+Each door works once, so all four deal 80% of maximum HP in total.
+Flights take about a second, continue while cards are paused, and do not spend extra player turns.
+Reloading resumes a pending flight, and an impact already received can never damage him again.
+Reduce motion simplifies the red particle paths while keeping the same timing.
+
+Higher difficulties raise boss and mimic HP with the displayed multiplier.
+New mimics spawn every eight turns at first; each five difficulties reduces the interval by one turn, down to two.
+Defeat the Keymaster by combining direct attacks and door impacts to earn that difficulty's one-time Trial Points.

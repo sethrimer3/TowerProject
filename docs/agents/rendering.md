@@ -291,3 +291,9 @@ The trial render scenes include intact edge props, beam damage to torch stands a
 Native crate and wreck pieces use 24 and 12 pixels respectively, and every-frame painting lets asynchronously loaded PNGs replace fallbacks immediately.
 
 Trial manual/hybrid clicks add a native one-pixel gold outline inside the destination tile; the `manualDestination` scene appends coverage without changing existing render frames.
+
+Keymaster trials reuse the trial renderer and shared key/door painters, adding native 24-pixel brass/slate Keymaster and chest-mimic silhouettes in `proving-grounds/keymaster-art.ts`.
+Four cardinal door cells replace wall tiles in this encounter only.
+Red door spirits use staggered curved pixel paths and fading tails toward the stationary boss; their saved elapsed time drives both drawing and the one-time 20%-max-HP arrival impact.
+Reduce motion draws fewer particles along straight paths while preserving impact timing.
+The appended `keymaster` render job covers nine frames, leaving prior jobs unchanged.

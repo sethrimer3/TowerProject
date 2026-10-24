@@ -1,5 +1,8 @@
 # UI sprite kit
 
+Proving Grounds' Keymaster and chest mimics use native 24-pixel silhouettes with the shared slate, brass and dark-outline ramps, upper-left highlights and crisp one-pixel clusters.
+Encounter keys and locked doors use the existing world painters; red door spirits retain native pixel heads and fading tails on smooth curved paths.
+
 Settings → **Sprites** opts into the shared PNG interface and world kit and defaults to off, including saves from before this option existed.
 The separate **Turn off board sprites** option also opts out of the new world art.
 UI themes and Game themes retain their saved selections.

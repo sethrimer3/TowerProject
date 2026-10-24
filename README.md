@@ -40,7 +40,7 @@ The player-facing rules, in full, one topic a page:
 | [Fights](docs/gameplay/fights.md) | How a fight plays out, Fast, Ranged, Flying and Shielded monsters, the Archer, kill pay, fractions |
 | [Floors](docs/gameplay/floors.md) | Bosses and Greater Bosses, doors and keys, the early floors, world wrap |
 | [Training](docs/gameplay/training.md) | Silver, training for the run, XP and levels, the Training tab and trainers |
-| [Proving Grounds](docs/gameplay/proving-grounds.md) | The golden square, card/manual trials, light slimes and beams |
+| [Proving Grounds](docs/gameplay/proving-grounds.md) | Three control modes, the Light Elemental, Keymaster, keys and mimics |
 | [Runs](docs/gameplay/runs.md) | Movement settings, Undo, how a run ends, Run Notes, rewards, the in-run controls, Dash |
 | [Cinematic mode](docs/gameplay/cinematic-mode.md) | The board alone: entering and leaving it, idle dimming, Gems in it |
 | [Currencies and the Shop](docs/gameplay/currencies-and-shop.md) | Gems and Gem finds, the ad boosts, the Shop |

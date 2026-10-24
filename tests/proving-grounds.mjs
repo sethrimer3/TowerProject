@@ -54,7 +54,7 @@ try {
   // overlays the square itself at this phone width.
   const forest=await world.boundingBox();await world.click({position:{x:forest.width*10.5/20,y:forest.height*18.5/20}});
   await expect(page.locator("#trial-heading")).toHaveText("Proving Grounds Trials");
-  await expect(page.locator("dialog .trial-choice")).toHaveCount(1);
+  await expect(page.locator("dialog .trial-choice")).toHaveCount(2);
   await expect(page.locator("#trial-level")).toHaveCount(0);
   await expect(page.locator("#trial-key-balance")).toHaveText("Trial keys: 2 / 2");
   const tower=(await read()).tower.run;
@@ -154,12 +154,12 @@ try {
   await page.locator("#trial-retry").click();
   await expect(page.locator("#trial-difficulty")).toHaveText("Difficulty 6 · Difficulty multiplier ×1.5");
   await expect(page.locator("#trial-reward")).toContainText("6 Trial Points");
-  await page.locator("#trial-list-back").click();await expect(page.locator("dialog .trial-choice")).toHaveCount(1);
+  await page.locator("#trial-list-back").click();await expect(page.locator("dialog .trial-choice")).toHaveCount(2);
   await expect(page.locator("#trial-light-elemental")).toContainText("Next: Difficulty 6");
   await page.locator("#trial-menu-leave").click();
   const returned=await read();expect(returned.tower.run).toEqual(tower);expect(returned.delve.run).toEqual(delve);
   expect(returned.provingGrounds).toBeUndefined();expect(returned.trialAccess.points).toBe(15);
   await expect(page.locator("#enter-run")).toBeVisible();await expect(page.locator("#trial-overlay")).toHaveCount(0);
   expect(errors).toEqual([]);
-  console.log("Trials: one boss entry, three controls, tile routes without arrows, cards-only input guard, hybrid overrides/resume, automatic shared difficulty, one-time weighted Trial Points, midnight keys, isolated purchases/runs and 320/390/1024px passed.");
+  console.log("Trials: two boss entries, three controls, tile routes without arrows, cards-only input guard, hybrid overrides/resume, automatic shared difficulty, one-time weighted Trial Points, midnight keys, isolated purchases/runs and 320/390/1024px passed.");
 } finally {await browser.close();}

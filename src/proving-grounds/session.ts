@@ -21,7 +21,7 @@ export class TrialSession {
     game.save.settings=base.save.settings;
     // Trials use their own turn controls and do not repeat Tower lessons.
     for(const key of Object.keys(game.save.tutorials)) game.save.tutorials[key as keyof typeof game.save.tutorials]=true;
-    const run: TowerRun={seed:state.seed,player:{...state.player,keys:{yellow:0,blue:0,red:0}},
+    const run: TowerRun={seed:state.seed,player:{...state.player,keys:{yellow:state.keymaster?.keys??0,blue:0,red:0}},
       height:1,maxHeight:1,floor:1,kills:0,treasures:0,changes:{},damaged:false,
       hand:[...state.hand],silver:state.purchases.silver,training:{...state.purchases.training},
       loadout:{attack:state.player.attack,defense:state.player.defense,maxHp:state.player.maxHp}};
@@ -37,6 +37,7 @@ export class TrialSession {
   sync() {
     const {game,state}=this;
     Object.assign(game.run.player,state.player);
+    game.run.player.keys.yellow=state.keymaster?.keys??0;
     game.run.silver=state.purchases!.silver;
     game.run.training={...state.purchases!.training};
     game.auto=state.mode!=="manual" && state.playing && state.status==="active";

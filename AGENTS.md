@@ -98,7 +98,7 @@ Read the area's doc before changing code there or answering questions about it; 
 - `economy-and-online.md`: Gems, the Shop, Gold bonuses, Spare Change and Wishing Well, the Tournament, Mail, Missions, Events and relics.
 - `rendering.md`: board drawing, lighting, decor, popups, the forest and weather, the render goldens, the Medieval and Neon themes.
 - `ui.md`: `main.ts`, pages, the HUD, dialogs, the desks and `Game`'s UI commands, board lessons, the frame loop, the UI golden.
-- `proving-grounds.md`: the forest trial entrance, tactical Light Elemental encounter, rendering and persistence.
+- `proving-grounds.md`: the forest trial entrance, tactical Light Elemental and Keymaster encounters, rendering and persistence.
 - `saves.md`: loading and decoding the save, adding save state, settings rows.
 - `shrines.md`: Shrines and boons (`src/shrines.ts`): the schedule, offers, boon math, where effects apply, their research and UI.
 - `defend.md`: Defend (`src/defend/`).

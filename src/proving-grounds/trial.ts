@@ -1,3 +1,6 @@
+import { ARENA_SIZE, ELEMENTAL, ARENA_TORCHES, ARENA_POTIONS, ARENA_CRATES, arenaFloor, floorAt, wallEdge, key, same, directions, type Spot } from "./arena.ts";
+export { ARENA_SIZE, ELEMENTAL, ARENA_TORCHES, ARENA_POTIONS, ARENA_CRATES, arenaFloor, floorAt, wallEdge, key, type Spot } from "./arena.ts";
+import { newKeymaster, keymasterStep, enterKeymaster, keymasterDoorAt, decodeKeymaster, type KeymasterState } from "./keymaster.ts";
 import { TRAINING, type TrainingId } from "../config.ts";
 import type { Player } from "../entities.ts";
 import { CARDS, type CardId } from "../cards.ts";
@@ -6,8 +9,6 @@ import { tileRandom } from "../random.ts";
 import { MAX_TRIAL_LEVEL } from "./access.ts";
 import { FIRST_TRIAL, TRIALS, difficultyMultiplier, type TrialId } from "./catalog.ts";
 
-export const ARENA_SIZE = 25;
-export const ELEMENTAL = { x: 12, y: 12 };
 export const BEAM_INTERVAL = 10;
 export const SLIME_INTERVAL = 3;
 export const MAX_SLIMES = 6;
@@ -16,7 +17,6 @@ export const BEAM_DIRECTIONS = [...BEAM_AXES,[0,-1],[-1,-1],[-1,0],[-1,1]] as co
 export const beamCount = (level: number) => Math.min(8,1+Math.floor(level/10));
 export const slimeSpawnInterval = (level: number) => Math.max(2,20-2*Math.floor(level/5));
 export const bossHpFactor = difficultyMultiplier;
-export type Spot = { x: number; y: number };
 export type TrialMode = "cards" | "manual" | "hybrid";
 export type TrialInput = "cards" | "manual";
 export type Elemental = Spot & { incorporeal: boolean; teleport: { from: Spot; step: number } | null };
@@ -25,6 +25,7 @@ export type LightSlime = Spot & { id: number; from: Spot; jumped: number };
 export type TrialState = {
   version: 2;
   trialId:TrialId;
+  keymaster?:KeymasterState;
   level: number;
   mode: TrialMode;
   hand: CardId[];
@@ -45,31 +46,6 @@ export type TrialState = {
   scorches: Record<string, number>;
   destroyed: Record<string, number>;
 };
-export const key = ({ x, y }: Spot) => `${x},${y}`;
-const same = (a: Spot, b: Spot) => a.x === b.x && a.y === b.y;
-const directions = [[1,0],[-1,0],[0,1],[0,-1]];
-
-/** A six-sided room, including its walls, inside a 25×25 tile square. */
-export function arenaFloor(x: number, y: number) {
-  return Number.isInteger(x) && Number.isInteger(y) && x >= 1 && x <= 23 && y >= 1 && y <= 23
-    && Math.abs(x - ELEMENTAL.x) + Math.abs(y - ELEMENTAL.y) / 2 <= 11;
-}
-export const floorAt = (room: TrialState["room"], x: number, y: number) => room === "staging"
-  ? Number.isInteger(x) && Number.isInteger(y) && x >= 1 && x <= 7 && y >= 1 && y <= 7
-  : arenaFloor(x, y);
-export const wallEdge = (x: number, y: number) => !arenaFloor(x, y)
-  && [...directions,[1,1],[1,-1],[-1,1],[-1,-1]].some(([dx,dy]) => arenaFloor(x+dx,y+dy));
-
-export const ARENA_TORCHES: Spot[] = [];
-export const ARENA_POTIONS: Spot[] = [];
-export const ARENA_CRATES: Spot[] = [];
-for (let y = 0; y < ARENA_SIZE; y++) for (let x = 0; x < ARENA_SIZE; x++) {
-  if (!arenaFloor(x,y) || !directions.some(([dx,dy]) => !arenaFloor(x+dx,y+dy))) continue;
-  const variant=(x+y*3)%5;
-  if(variant===0)ARENA_TORCHES.push({x,y});
-  if(variant===2)ARENA_POTIONS.push({x,y});
-  if(variant===4)ARENA_CRATES.push({x,y});
-}
 const breakable = new Set([...ARENA_TORCHES,...ARENA_CRATES].map(key));
 export const propDestroyed = (s: TrialState, p: Spot) => Object.hasOwn(s.destroyed,key(p));
 function breakProp(s: TrialState, p: Spot) {
@@ -80,7 +56,7 @@ function breakProp(s: TrialState, p: Spot) {
 export function startTrial(player: Pick<Player, "maxHp" | "attack" | "defense">, mode: TrialMode = "manual", hand: readonly CardId[] = [], seed = 7391, level = 1, trialId:TrialId=FIRST_TRIAL): TrialState {
   if(!wholeIn(level,1,MAX_TRIAL_LEVEL))throw new RangeError("Invalid trial level");
   const bossMaxHp = Math.ceil(Math.max(240, player.attack * 24)*bossHpFactor(level));
-  return { version: 2, trialId, level, mode, displayHand:[...hand], hand: mode !== "manual" ? [...hand] : [], playing: mode !== "manual", seed: seed >>> 0,
+  return { version: 2, trialId, ...(trialId==="keymaster"?{keymaster:newKeymaster()}:{}), level, mode, displayHand:[...hand], hand: mode !== "manual" ? [...hand] : [], playing: mode !== "manual", seed: seed >>> 0,
     room: "staging", status: "active", player: { x: 4, y: 2, hp: player.maxHp, maxHp: player.maxHp, attack: player.attack, defense: player.defense },
     elemental: {...ELEMENTAL,incorporeal:false,teleport:null}, beam:null,
     bossHp: bossMaxHp, bossMaxHp, steps: 0, slimes: [], consumed: [], scorches: {}, destroyed: {} };
@@ -170,15 +146,17 @@ export function trialStep(s: TrialState, dx: number, dy: number, source: TrialIn
   if ((source!=="cards" && source!=="manual") || (s.mode!=="hybrid" && s.mode !== source) || (source === "cards" && !s.playing) || s.status !== "active"
     || !Number.isInteger(dx) || !Number.isInteger(dy) || Math.abs(dx) + Math.abs(dy) > 1) return unchanged;
   const x = s.player.x + dx, y = s.player.y + dy;
-  if (!floorAt(s.room, x, y)) return unchanged;
+  if (!trialFloor(s, x, y)) return unchanged;
   if (s.room === "staging") {
     s.player.x = x; s.player.y = y;
     if (x === 4 && y === 6) {
       s.room = "arena"; s.player.x = ELEMENTAL.x; s.player.y = 2;
+      if(s.keymaster)return enterKeymaster(s);
       return { changed: true, message: `Level ${s.level} Light Elemental. First volley: ${beamCount(s.level)} beam(s) in 10 turns.`, fired: false };
     }
     return { changed: true, message: "Climb the staircase to enter the trial.", fired: false };
   }
+  if(s.keymaster)return keymasterStep(s,x,y);
   let message = "";
   if (x === s.elemental.x && y === s.elemental.y && !s.elemental.incorporeal) {
     s.bossHp = Math.max(0, s.bossHp - Math.max(1, s.player.attack));
@@ -239,6 +217,8 @@ export function decodeTrial(raw: unknown): TrialState | undefined {
   if(!wholeIn(level,1,MAX_TRIAL_LEVEL))return;
   const trialId=raw.trialId??FIRST_TRIAL;
   if(typeof trialId!=="string" || !Object.hasOwn(TRIALS,trialId))return;
+  const keymaster=trialId==="keymaster"?decodeKeymaster(raw.keymaster,raw):undefined;
+  if(trialId==="keymaster" && !keymaster)return;
   const position = {x:p.x,y:p.y};
   const e=raw.elemental;
   let elemental: Elemental={...ELEMENTAL,incorporeal:false,teleport:null};
@@ -269,7 +249,7 @@ export function decodeTrial(raw: unknown): TrialState | undefined {
     || !wholeIn(raw.seed,0,0xffffffff) || !Array.isArray(raw.hand) || raw.hand.length > 64
     || raw.hand.some((id: unknown) => typeof id !== "string" || !Object.hasOwn(CARDS,id))
     || (raw.mode === "manual" && (raw.hand.length > 0 || raw.playing))
-    || !floorAt(raw.room, p.x, p.y) || (raw.room === "arena" && !elemental.incorporeal && same(position,elemental))
+    || !(floorAt(raw.room, p.x, p.y) || (keymaster && raw.room==="arena" && keymasterDoorAt(p.x,p.y)>=0 && keymaster.doors.some(d=>d.door===keymasterDoorAt(p.x,p.y)))) || (raw.room === "arena" && !elemental.incorporeal && same(position,elemental))
     || (raw.status === "active" && (p.hp === 0 || raw.bossHp === 0))
     || (raw.status === "won" && raw.bossHp !== 0) || (raw.status === "lost" && p.hp !== 0)
     || (raw.status !== "active" && raw.playing)) return;
@@ -318,7 +298,11 @@ export function decodeTrial(raw: unknown): TrialState | undefined {
     slimes.push({id:slime.id,x:slime.x,y:slime.y,from:{x:slime.from.x,y:slime.from.y},jumped:slime.jumped});
     occupied.add(key(position)); ids.add(slime.id);
   }
-  return { version:2,trialId:trialId as TrialId,level,...(displayHand?{displayHand}:{}),...(purchases?{purchases}:{}),elemental,beam,mode:raw.mode,hand:[...raw.hand],playing:raw.playing,seed:raw.seed,
+  if(keymaster && (elemental.x!==12 || elemental.y!==12 || elemental.incorporeal || elemental.teleport || beam || slimes.length || Object.keys(scorches).length || Object.keys(destroyed).length))return;
+  return { version:2,trialId:trialId as TrialId,...(keymaster?{keymaster}:{}),level,...(displayHand?{displayHand}:{}),...(purchases?{purchases}:{}),elemental,beam,mode:raw.mode,hand:[...raw.hand],playing:raw.playing,seed:raw.seed,
     room: raw.room, status: raw.status, player: { x:p.x,y:p.y,hp:p.hp,maxHp:p.maxHp,attack:p.attack,defense:p.defense },
     bossHp:raw.bossHp,bossMaxHp:raw.bossMaxHp,steps:raw.steps,slimes,consumed:[...new Set<string>(consumed)],scorches,destroyed };
 }
+
+/** The Keymaster replaces exactly four wall tiles with cardinal doors. */
+export const trialFloor=(s:Pick<TrialState,"room"|"trialId">,x:number,y:number)=>floorAt(s.room,x,y) || (s.room==="arena" && s.trialId==="keymaster" && keymasterDoorAt(x,y)>=0);

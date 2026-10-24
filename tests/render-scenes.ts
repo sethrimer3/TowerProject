@@ -1,5 +1,6 @@
 import { TrialRenderer } from "../src/proving-grounds/render.ts";
 import { startTrial, trialStep } from "../src/proving-grounds/trial.ts";
+import {advanceKeymasterEffects} from "../src/proving-grounds/keymaster.ts";
 // The fixed scenes behind both render goldens: tests/render-golden.mjs draws
 // them in a browser and hashes pixels, and tests/render-calls.test.ts draws
 // them in Node on a recording canvas and hashes the calls. Each scene is
@@ -619,6 +620,26 @@ export type Job = { name: string; seed: number; canvas: CanvasKind; play: (canva
  * (`npm run test:defend` runs its Node tests on demand). */
 const DEFEND = false;
 
+function playKeymaster(_name:string,_seed:number,canvas:HTMLCanvasElement,grab:Grab) {
+  const s=startTrial({maxHp:1000,attack:10,defense:0},"manual",[],12,1,"keymaster");
+  const renderer=new TrialRenderer(canvas),options={styledSprites:true};
+  renderer.draw(s,1000,0,true,false,options);grab("staging");
+  for(let i=0;i<4;i++)trialStep(s,0,1);
+  s.player.x=12;s.player.y=11;
+  renderer.draw(s,2000,0,true,false,options);grab("bossAndMimics");
+  trialStep(s,0,1);renderer.draw(s,3000,0,true,false,options);grab("scatteredKeys");
+  s.player.y=23;s.keymaster!.keys=4;
+  renderer.draw(s,4000,0,true,false,options);grab("northDoor");
+  trialStep(s,0,1);advanceKeymasterEffects(s,220);s.player.y=17;
+  renderer.draw(s,5000,0,false,false,options);grab("doorFlood");
+  advanceKeymasterEffects(s,380);s.player.y=14;
+  renderer.draw(s,5400,0,false,false,options);grab("redTrails");
+  renderer.draw(s,5400,0,true,false,options);grab("reducedMotion");
+  advanceKeymasterEffects(s,500);
+  renderer.draw(s,6000,0,true,false,options);grab("impact");
+  renderer.draw(s,6000,0,true,true,options);grab("boardOptOut");
+}
+
 /** Every scene, in order, each with its own seed. The Defend scenes keep
  * their places while off, so the later board scenes keep their seeds. */
 export const JOBS: Job[] = [
@@ -627,5 +648,6 @@ export const JOBS: Job[] = [
   { name: "defendIcons", canvas: "icons" as const, run: playIcons },
   ...Object.keys(LATER_BOARD_SCENES).map((name) => ({ name, canvas: "board" as const, run: playBoard })),
   { name: "provingGrounds", canvas: "board" as const, run: playProvingGrounds },
+  { name: "keymaster", canvas: "board" as const, run: playKeymaster },
 ].map(({ name, canvas, run }, i) => ({ name, seed: i + 1, canvas, play: (cv: HTMLCanvasElement, grab: Grab) => run(name, i + 1, cv, grab) }))
   .filter((job) => DEFEND || job.canvas === "board");
