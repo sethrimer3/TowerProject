@@ -7,7 +7,7 @@ import { averageGold, rollGold } from "../economy/loot.ts";
 import { pickupGold } from "../doors.ts";
 import { litTorches } from "../board.ts";
 import { point, type ChestKind, type Enemy, type Mode, type Tile } from "../entities.ts";
-import type { Run } from "../runs.ts";
+import { heldCards, type Run } from "../runs.ts";
 import type { Save } from "../save/shape.ts";
 import { MODES, type ModeProfile } from "../modes.ts";
 import { ranksInRun } from "../progression/run-training.ts";
@@ -209,7 +209,7 @@ export class RunPurse {
     const gold = instakill ? snap((raw * researched(this.save.archives, "instakillGold")) / 100) : raw;
     const tree = this.tree, own = foeStat(tree, enemy, "Gold") + (instakill ? foeStat(tree, enemy, "InstakillGold") : 0);
     const more = snap(tree.foeGold + (enemy.strength === "greaterBoss" ? tree.bossGold : 0) + own);
-    const foe = this.run.outside ? 1 : foeGold(this.run.hand ?? [], enemy, more);
+    const foe = this.run.outside ? 1 : foeGold(heldCards(this.run), enemy, more);
     return foe === 1 ? gold : snap(gold * foe);
   }
 

@@ -367,6 +367,14 @@ export const UPGRADES = [
     currency: "inspiration",
   },
   {
+    id: "manualHand",
+    name: "Manual Hand",
+    description: "Open a second hand on the Deck page, the Manual hand: its cards never play by themselves, only when you press them in a run",
+    base: 10,
+    max: 1,
+    currency: "inspiration",
+  },
+  {
     id: "regenResearch",
     name: "Regen Research",
     description: "Open Regen research in the Archives: every step regains more HP",

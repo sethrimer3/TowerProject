@@ -23,6 +23,9 @@ import type { Finds } from "./finds.ts";
 export interface ActivationHost extends DeskHost {
   readonly mode: Mode;
   readonly hand: readonly CardId[];
+  /** The hand's cards, then the Manual hand's (`Game.held`): a card's slot
+   * in it is what activates. */
+  readonly held: readonly CardId[];
   readonly handRules: HandRules;
   /** Inside a run the hero is still standing in. */
   readonly playing: boolean;
@@ -46,12 +49,12 @@ export interface ActivationHost extends DeskHost {
 export class CardActivation {
   constructor(private readonly host: ActivationHost) {}
 
-  /** Card `card` of the hand activates: it gains an XP toward its level,
+  /** Card `card` of the hand (or past it, of the Manual hand) activates: it gains an XP toward its level,
    * and each of its badges pays what it gives, top slot first. Gold is paid once per target (`key`, gated by
    * lootedTiles like a kill's), since undo can't take it back; HP, Silver
    * and XP are the run's or in its undo snapshot. */
   activate(card: number, key: string) {
-    const { hand, run } = this.host, id = hand[card];
+    const { held, run } = this.host, id = held[card];
     if (!id || !this.host.playing) return;
     this.host.gainCardXp(id, 1);
     // HEAL's tree: each potion it reaches boosts max HP for the run, as the
@@ -72,14 +75,15 @@ export class CardActivation {
   }
   /** One of hand card `card`'s badges pays what it gives on activation. */
   private payBadge(card: number, key: string, badge: RunBadge) {
-    const host = this.host, { hand, run } = host;
-    const id = hand[card], v = badgeValue(badge.id, badge.level, badge.pick), p = run.player;
+    const host = this.host, { hand, held, run } = host;
+    const id = held[card], v = badgeValue(badge.id, badge.level, badge.pick), p = run.player;
     switch (badge.id) {
       case "hp": return this.boostMaxHp(v, badge.id);
       case "hpPercent": return this.badgeHeal(snap((p.maxHp * v) / 100), badge.id);
       case "silverTouch": return host.finds.coins(p, 0, host.purse.silver(v));
       case "goldTouch": return host.finds.coins(p, host.purse.badgeGold(`badge:${id}:${key}`, v), 0, false);
       case "goldback":
+        // The hand's last card only: never one of the Manual hand's.
         if (card !== hand.length - 1) return;
         // The combo is the run's, so undo takes an activation back; the
         // next Gold found spends it (RunPurse).

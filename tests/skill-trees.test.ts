@@ -81,7 +81,8 @@ test("Shroud follows Trainers, ahead of Critical; Greater Heal, then Recovery, R
   assert.deepEqual([at("lifesteal").x, at("lifesteal").y, at("lifesteal").requires], [50, 214, ["delve"]], "Lifesteal sits where GK Siphon did, under Into the depths");
   assert.deepEqual([at("thorns").x, at("thorns").y, at("thorns").requires], [50, 250, ["buyQuantity"]], "Thorns sits under Buy Quantity");
   assert.deepEqual([at("keySiphon").x, at("keySiphon").y, at("keySiphon").requires], [50, 268, ["thorns"]], "GK Siphon sits under Thorns");
-  assert.deepEqual([at("cardYellowDoor").y, at("cardYellowDoor").requires], [322, ["keySiphon"]], "the cards hang from GK Siphon, a row clear of it and Revive");
+  assert.deepEqual([at("manualHand").x, at("manualHand").y, at("manualHand").requires], [50, 295, ["keySiphon"]], "Manual Hand sits under GK Siphon");
+  assert.deepEqual([at("cardYellowDoor").y, at("cardYellowDoor").requires], [322, ["manualHand"]], "the cards hang from Manual Hand, a row clear of it and Revive");
 });
 test("the hand's skills run Buildout, Trainers, Shroud, Critical to the Archives, Gold Key and On the Job off Buildout, ATK Up then DEF Up after Gold Key with their provisions to their right, Regen below On the Job with Heal and the elixir under it, Larger Hand sits by itself to Shroud's right, and Buildout, Trainers and On the Job cost 1 (Critical 2)", () => {
   const at = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;

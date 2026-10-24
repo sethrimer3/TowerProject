@@ -87,7 +87,7 @@ html.ui-sprites :is(.hint, .item-meta, .item-identity, .level-cost):not(#_) { co
 
 /* Keep picture buttons (cards, map markers and skill nodes) intact, and small icon buttons bare: a frame on them looks busy. */
 html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-tile, .deck-add, .deck-card, .deck-entry-art,
-  .card-reveal-card, .forest-sign, .forest-building, .mission-bar, .deck-hand-toggle, #shrine-bar, #forest-sign, .ug-node, .ct-row-main,
+  .card-reveal-card, .forest-sign, .forest-building, .mission-bar, .deck-hand-toggle, .deck-switch, .hand-kinds button, #shrine-bar, #forest-sign, .ug-node, .ct-row-main,
   #currencies-open, #auto-speed .speed-arrow)):not(#_) {
   border-color: transparent;
   border-image: var(--ui-face) 6 fill / 12px / 0 stretch;
@@ -100,7 +100,7 @@ html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-til
   transition: none;
 }
 html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-tile, .deck-add, .deck-card, .deck-entry-art,
-  .card-reveal-card, .forest-sign, .forest-building, .mission-bar, .badge-pick, .deck-link-toggle, .deck-hand-toggle,
+  .card-reveal-card, .forest-sign, .forest-building, .mission-bar, .badge-pick, .deck-link-toggle, .deck-hand-toggle, .deck-switch, .hand-kinds button,
   #shrine-bar, #forest-sign, #defend *, .ug-node, .ct-row-main, #currencies-open, #auto-speed .speed-arrow)):not(#_) {
   border-width: 6px;
   border-style: solid;

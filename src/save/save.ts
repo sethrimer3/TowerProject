@@ -14,7 +14,7 @@ import { decodeEquipment, defaultEquipment } from "../equipment/inventory.ts";
 import { decodeDefendSave, defaultDefendSave } from "../defend/progress.ts";
 import { decodeSettings, defaultSettings } from "./settings.ts";
 import { keepUndos, loadout } from "../progression/loadout.ts";
-import { BASE_HAND, CARD_IDS, HAND_SLOT_GEMS, IN_PLACE, MAX_HAND_SLOTS, deckCards, handSlots, keptLinks, type CardId, type CardLink } from "../cards/cards.ts";
+import { BASE_HAND, CARD_IDS, HAND_SLOT_GEMS, IN_PLACE, MAX_HAND_SLOTS, MAX_MANUAL_SLOTS, deckCards, handSlots, keptLinks, manualSlots, type CardId, type CardLink } from "../cards/cards.ts";
 import { decodeGemDrop, defaultGemDrop } from "../economy/gems.ts";
 import { decodeArchives, defaultArchives, researched } from "../progression/archives.ts";
 import { adsOff, BOOST_FOREVER, decodeEntitlements, permanentBoost } from "../shop/entitlements.ts";
@@ -73,6 +73,8 @@ export function defaults(): Save {
     cardTrees: {},
     cardBuys: defaultCardBuys(),
     handSlots: 0,
+    manualHand: [],
+    manualSlots: 0,
     badges: defaultBadges(),
     tutorials: { deck: false, removeCard: false, addCard: false, upgrades: false, gear: false, onTheJob: false, speed: false, climb: false, keys: false, stuck: false, enemy: false, enter: false, delve: false, chamber: false, cardPoints: false },
     treeNotices: { inspiration: false, courage: false },
@@ -169,9 +171,18 @@ const validRunTraining = (t: any) =>
 const validHand = (h: any) =>
   Array.isArray(h) && h.length <= MAX_HAND_SLOTS && new Set(h).size === h.length &&
   h.every((id) => CARD_IDS.includes(id)) && h.includes("stairs");
+/** A Manual hand: known cards, each once, no more than it can hold, never
+ * STAIRS. */
+const validManual = (h: any) =>
+  Array.isArray(h) && h.length <= MAX_MANUAL_SLOTS && new Set(h).size === h.length &&
+  h.every((id) => CARD_IDS.includes(id) && id !== "stairs");
+/** Whether a run's hand or Manual hand holds `card`. */
+const holds = (r: any, card: unknown) => !!r.hand?.includes(card) || !!r.manual?.includes(card);
 /** A run's optional fields, each dropped when malformed. */
 const RUN_FIELD_CHECKS = {
   hand: validHand,
+  // The hand is checked first: the Manual hand's cards are never in it.
+  manual: (v: any, r: any) => validManual(v) && v.length > 0 && v.every((id: CardId) => !r.hand?.includes(id)),
   silver: (v: unknown) => finite(v),
   xp: (v: unknown) => wholeIn(v, 0, 1e9),
   ignoreUsed: (v: unknown) => wholeIn(v, 0, 99),
@@ -184,8 +195,8 @@ const RUN_FIELD_CHECKS = {
   regain: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, n]) => ["ignore", "target"].includes(k) && wholeIn(n, 1, 1e6)),
   ignored: (v: any) => isRecord(v) && wholeIn(v.floor, 0, 1e6) && Array.isArray(v.tiles) && v.tiles.every((t: unknown) => typeof t === "string" && POINT_KEY.test(t)),
   targeted: (v: unknown) => typeof v === "string" && POINT_KEY.test(v),
-  // The hand is checked first: a pressed card must be in it.
-  focused: (v: unknown, r: any) => !!r.hand?.includes(v),
+  // The hands are checked first: a pressed card must be in one.
+  focused: (v: unknown, r: any) => holds(r, v),
   training: validRunTraining,
   cardUses: (v: unknown) => isRecord(v) && Object.entries(v).every(([id, n]) => IN_PLACE.has(id as CardId) && wholeIn(n, 1, 1e6)),
   tier: (v: unknown) => wholeIn(v, 2, TIERS),
@@ -196,10 +207,10 @@ const RUN_FIELD_CHECKS = {
   doorOdds: (v: any) => isRecord(v) && "skeleton" in v && "lockPick" in v
     && Object.entries(v).every(([k, n]) => ["skeleton", "lockPick", "transmute", "wood", "heartPick"].includes(k) && finite(n) && n >= 0 && n <= 100)
     && Object.values(v).some((n) => (n as number) > 0),
-  // The hand is checked first: every card holding a badge must be in it.
-  badges: (v: unknown, r: any) => validRunBadges(v) && Object.keys(v as object).every((card) => r.hand?.includes(card)),
-  // The hand is checked first: every card with a tree copied must be in it.
-  cardTrees: (v: unknown, r: any) => isRecord(v) && Object.entries(v).every(([card, nodes]) => !!r.hand?.includes(card) && isRecord(nodes) &&
+  // The hands are checked first: every card holding a badge must be in one.
+  badges: (v: unknown, r: any) => validRunBadges(v) && Object.keys(v as object).every((card) => holds(r, card)),
+  // The hands are checked first: every card with a tree copied must be in one.
+  cardTrees: (v: unknown, r: any) => isRecord(v) && Object.entries(v).every(([card, nodes]) => holds(r, card) && isRecord(nodes) &&
     Object.entries(nodes).every(([id, n]) => { const node = treeNode(card as CardId, id); return !!node && wholeIn(n, 1, node.max); })),
   // The hand is checked first: each link joins cards side by side in it.
   links: (v: unknown, r: any) => Array.isArray(v) && v.length > 0 && keptLinks(r.hand ?? [], links(v)).length === v.length,
@@ -448,6 +459,12 @@ function decodeHand(raw: any, owned: CardId[], slots: number): CardId[] {
   const hand = [...new Set(raw.filter((id): id is CardId => owned.includes(id)))].slice(0, slots);
   return validHand(hand) ? hand : [...BASE_HAND];
 }
+/** The saved Manual hand's cards the player owns and the hand doesn't
+ * hold (`owned`), in order, each once and no more than it holds. */
+function decodeManual(raw: any, owned: CardId[], slots: number): CardId[] {
+  if (!Array.isArray(raw)) return [];
+  return [...new Set(raw.filter((id): id is CardId => owned.includes(id) && id !== "stairs"))].slice(0, slots);
+}
 /** The dots' dismissals; a save without them has seen, and met, the deck
  * it holds and its cards' levels. */
 function decodeSeen(s: any, d: Save): Save["seen"] {
@@ -491,6 +508,10 @@ export function decode(raw: string | null): Save {
     if (d.upgrades.largerHand) d.handSlots = count(s.handSlots, 0, HAND_SLOT_GEMS.length);
     d.hand = decodeHand(s.hand, deckCards(d.upgrades, d.goals), handSlots(d));
     d.cardLinks = keptLinks(d.hand, links(s.cardLinks));
+    if (d.upgrades.manualHand) {
+      d.manualSlots = count(s.manualSlots, 0, HAND_SLOT_GEMS.length);
+      d.manualHand = decodeManual(s.manualHand, deckCards(d.upgrades, d.goals).filter((id) => !d.hand.includes(id)), manualSlots(d));
+    }
     d.cardXp = decodeCardXp(s.cardXp);
     d.cardBuys = decodeCardBuys(s.cardBuys);
     d.cardTrees = decodeCardTrees(s.cardTrees, d.cardXp, d.cardBuys.opened);

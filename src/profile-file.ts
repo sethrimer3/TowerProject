@@ -12,7 +12,7 @@ export const PROFILE_SECTIONS = {
   profile: ["profile", "tutorials", "seen", "treeNotices"],
   settings: ["settings", "themes"],
   currencies: ["gold", "gems", "ascensionShards", "medals", "cells", "xp", "goldBoostUntil", "gemDrop"],
-  deck: ["hand", "cardLinks", "handSlots", "cardXp", "cardTrees", "cardBuys", "badges"],
+  deck: ["hand", "cardLinks", "handSlots", "manualHand", "manualSlots", "cardXp", "cardTrees", "cardBuys", "badges"],
   upgrades: ["upgrades", "relics", "shrines"],
   training: ["bonusTrainingPoints", "training", "trainingPaid", "trainerRanks", "trainingJobs", "trainingAuto", "trainingCredit", "trainingBank", "trainingBoostUntil", "trainers"],
   research: ["archives"],

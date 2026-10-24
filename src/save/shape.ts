@@ -155,6 +155,12 @@ export type Save = {
   cardBuys: CardBuysSave;
   /** Hand slots bought with Gems (after Larger Hand's). */
   handSlots: number;
+  /** The Manual hand (Manual Hand): cards the next run holds, as the hand
+   * does, but that act only when pressed. Never STAIRS, and never a card
+   * the hand holds. */
+  manualHand: CardId[];
+  /** Manual hand slots bought with Gems (after its first). */
+  manualSlots: number;
   /** The card badges owned, which card holds each, and where their
    * draws' stream stands (cards/badges.ts). */
   badges: BadgesSave;

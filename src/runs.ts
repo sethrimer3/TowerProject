@@ -29,6 +29,10 @@ export type RunCore = {
   /** The hand as it was ordered when the run went inside: the cards that
    * move the hero for the rest of the run. */
   hand?: CardId[];
+  /** The Manual hand as it was when the run went inside: cards held for
+   * their bonuses, badges and trees, that act only when pressed. Pressed,
+   * one is found at its slot past the hand's (`Game.held`). */
+  manual?: CardId[];
   /** The hand's links (Card Groups) as they were when the run went inside. */
   links?: CardLink[];
   /** Silver held: earned from enemies and spent inside this run only, so
@@ -180,6 +184,8 @@ export type DelveRun = RunCore & {
  * in it, so undo never copies or rewinds it. */
 export type AutomoveMemory = { known: Record<string, true>; visited: Record<string, number> };
 export type Run = TowerRun | DelveRun;
+/** Every card a run holds: its hand's, then its Manual hand's. */
+export const heldCards = (run: Pick<RunCore, "hand" | "manual">): CardId[] => [...(run.hand ?? []), ...(run.manual ?? [])];
 /** An undo point: the run, the best and XP then, the lifetime Silver then
  * (`silver`, absent in a snapshot older than the profile), since undo
  * takes back the Silver found after it, and each card's XP then (`cardXp`,

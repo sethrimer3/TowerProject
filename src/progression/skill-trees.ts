@@ -42,7 +42,7 @@ export const TREES: SkillTree[] = [
     // Blue Key and Faster Trainers either side of the Archives, Rehearsed steps
     // left of Into the depths, and Pocket Money (then Spare Change, Wishing
     // Well and Free Training below it) and Greater Heal after it,
-    // either side of the core path down the middle (Lifesteal, Buy Quantity, Thorns, then GK Siphon).
+    // either side of the core path down the middle (Lifesteal, Buy Quantity, Thorns, GK Siphon, then Manual Hand).
     // Recovery and Regen Research (then Parry, then Revive) stand under Greater Heal.
     { id: "cardBlueKey", icon: "⚿", x: 20, y: 174, requires: ["archives"] },
     { id: "inspirationUndos", icon: "↺", x: 20, y: 196, requires: ["archives"] },
@@ -53,6 +53,7 @@ export const TREES: SkillTree[] = [
     { id: "buyQuantity", icon: "×", x: 50, y: 232, requires: ["lifesteal"] },
     { id: "thorns", icon: "✥", x: 50, y: 250, requires: ["buyQuantity"] },
     { id: "keySiphon", icon: "⚿", x: 50, y: 268, requires: ["thorns"] },
+    { id: "manualHand", icon: "⇄", x: 50, y: 295, requires: ["keySiphon"] },
     { id: "spareChange", icon: "¤", x: 20, y: 232, requires: ["pocketMoney"] },
     { id: "wealthy", icon: "¤", x: 10, y: 250, requires: ["spareChange"] },
     { id: "loot", icon: "☠", x: 30, y: 250, requires: ["spareChange"] },
@@ -64,13 +65,13 @@ export const TREES: SkillTree[] = [
     { id: "regenResearch", icon: "♥", x: 90, y: 232, requires: ["greaterHeal"] },
     { id: "parry", icon: "⇋", x: 90, y: 250, requires: ["regenResearch"] },
     { id: "revive", icon: "☼", x: 90, y: 268, requires: ["parry"] },
-    // The cards down the middle, a row clear of GK Siphon: Gold Door (Key < Badges,
+    // Manual Hand under GK Siphon, then the cards down the middle: Gold Door (Key < Badges,
     // then Key ≥ Badges, to its right; Heart Door Resilience, then Heart Door, to its
     // left), Weak Enemy (Base, then Strong, to its left, Fast under Base; Elite, then Boss, to its
     // right, Non-Boss under Boss), Chest, BK Siphon (BK Trader, then GK to HP, to its left; Red
     // Key, then RK Siphon, to its right) and Floor Skip Reward (Torch to its
     // left, Steel Door to its right).
-    { id: "cardYellowDoor", icon: "⚿", x: 50, y: 322, requires: ["keySiphon"] },
+    { id: "cardYellowDoor", icon: "⚿", x: 50, y: 322, requires: ["manualHand"] },
     { id: "keyLessBadges", icon: "⚿", x: 70, y: 322, requires: ["cardYellowDoor"] },
     { id: "keyAtLeastBadges", icon: "⚿", x: 90, y: 322, requires: ["keyLessBadges"] },
     { id: "heartDoorResilience", icon: "♥", x: 30, y: 322, requires: ["cardYellowDoor"] },

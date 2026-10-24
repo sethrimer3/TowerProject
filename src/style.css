@@ -3453,7 +3453,9 @@ nav button.notify[data-count]::after {
   background: #07090d;
   overflow: hidden;
 }
-.deck-reserve > .deck-label { position: relative; z-index: 1; color: #6c778a; }
+.deck-reserve > .deck-label { position: relative; z-index: 1; }
+/* The locked deck's heading sits in its shadow. */
+.deck-reserve:not(.open) > .deck-label { color: #6c778a; }
 .deck-reserve-slots {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
@@ -3515,6 +3517,82 @@ nav button.notify[data-count]::after {
   .deck-remove { opacity: 1; pointer-events: auto; }
 }
 .deck-hand.dragging .deck-remove { display: none; }
+/* Beside the X, the switch that moves the card to the other hand (Manual
+   Hand), shown as the X is; greyed while the other hand is full. */
+.deck-switch {
+  position: absolute;
+  top: -7px;
+  right: 18px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  min-height: 0;
+  padding: 0;
+  border: 1px solid #b8cdf0;
+  border-radius: 50%;
+  background: #2f5596;
+  color: #fff;
+  box-shadow: 0 1px 4px #000c;
+}
+.deck-switch svg { width: 13px; height: 13px; }
+.deck-switch:not(:disabled):hover { background: #3d6bbb; color: #fff; }
+.deck-switch:disabled { background: #4b5361; border-color: #7b8494; color: #aeb5c1; cursor: default; }
+/* Hidden until its card is hovered or focused, as the X is, over a theme's
+   dimmed disabled button too. */
+@media (hover: hover) {
+  .deck-slot:not(:hover, :focus-within) .deck-switch:not(#_) { opacity: 0; pointer-events: none; }
+}
+.deck-hand.dragging .deck-switch { display: none; }
+/* The Auto | Manual slider over the hand's slots (Manual Hand): its thumb
+   slides under the hand shown. */
+.hand-kinds {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin-left: auto;
+  padding: 2px;
+  border: 1px solid #3a4454;
+  border-radius: 13px;
+  background: #07090d;
+}
+/* A slider in every theme: stronger than the themes' button faces. */
+.hand-kinds > button:not(#_):not(#_) {
+  position: relative;
+  z-index: 1;
+  min-width: 62px;
+  min-height: 0;
+  padding: 3px 10px;
+  border: 0;
+  border-radius: 11px;
+  background: none;
+  color: #8d97a8;
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-shadow: none;
+  box-shadow: none;
+  translate: none;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.hand-kinds > button:not(#_):not(#_):hover { color: #e9d4ac; }
+.hand-kinds > button[aria-checked="true"]:not(#_):not(#_) { color: #1c1408; cursor: default; }
+.hand-kinds-thumb {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 2px;
+  width: calc(50% - 2px);
+  border-radius: 11px;
+  background: #e9d4ac;
+  transition: transform 0.18s;
+}
+.hand-kinds.manual .hand-kinds-thumb { transform: translateX(100%); }
+@media (prefers-reduced-motion: reduce) {
+  .hand-kinds-thumb { transition: none; }
+}
 .deck-reserve.open { overflow: visible; background: #0a0e14; }
 .deck-reserve.open::after { display: none; }
 /* A hand card held over the deck: dropping it returns it there. */
@@ -3540,11 +3618,8 @@ nav button.notify[data-count]::after {
 .deck-add { cursor: grab; touch-action: none; }
 .deck-entry-art { cursor: pointer; }
 .deck-add:not(:disabled):hover { box-shadow: 0 0 0 2px #ebc77f, 0 0 10px 2px #e0b25a88; }
-/* With the hand full, a deck card goes in only by dragging it onto one. */
-.deck-add.full { filter: brightness(0.75); }
 .deck-add:disabled { opacity: 1; filter: brightness(0.6); }
-/* A card already in the hand: greyed, with a check that returns it. */
-.deck-entry.in-hand .deck-entry-art { filter: grayscale(1) brightness(0.45); }
+/* A card already in a hand wears a check that returns it. */
 .deck-check {
   position: absolute;
   right: -6px;
@@ -4318,6 +4393,10 @@ nav.in-run.drilling .run-drills {
 .training-bar .deck-icon img:first-child { left: 1px; }
 .training-bar .deck-icon img:last-child { left: 8px; }
 .training-bar button.selected { border-color: #d6ae68; color: #efd496; box-shadow: inset 0 -2px #d9ac5a; }
+.training-bar button[hidden] { display: none; }
+/* The Auto tab's cards wear an arrow: its hand plays by itself. */
+.training-bar .tab-icon { position: relative; display: block; flex: none; }
+.training-bar .auto-arrow { position: absolute; right: -5px; bottom: -3px; width: 12px; height: 12px; color: #fff; filter: drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000); }
 .training-bar button:disabled { opacity: 0.4; }
 /* Buy Quantity: how many ranks a Training press buys, at the bar's right. */
 .run-buy-quantity { display: flex; flex-shrink: 0; margin-left: auto; }

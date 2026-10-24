@@ -204,7 +204,7 @@ function update() {
   document.querySelectorAll<HTMLButtonElement>("[data-tab]").forEach((b) => (b.disabled = deckOnly && b.dataset.tab !== "deck"));
   const forestHeld = !provingGrounds.active && isBoard(tab) && game.boardLesson === "cards";
   document.querySelectorAll<HTMLElement>(".shell > :not(nav)").forEach((part) => (part.inert = forestHeld));
-  renderHud(shown, renderer, overlay, {hand:provingGrounds.displayHand});
+  renderHud(shown, renderer, overlay, {hand:provingGrounds.displayHand, manual: runTraining.manualOpen});
   if (runNotes.open) runNotes.refresh();
   refreshEnemyOddsBox(game);
   runTraining.render();

@@ -16,10 +16,26 @@ Below Buy Quantity, the middle path adds seventeen more (20 Inspiration each unl
 Below Torch, straight down, **Limit Break 1** to **10** (50 Inspiration each, each after the one before) raise how far ATK, DEF, Max HP, Regen and Shroud train, 500 levels each (see [Training](training.md)).
 Two skills on that path open research instead: **Heart Door Resilience** (left of Gold Door, with Heart Door to its left) opens research making every Heart Door drain 5% less of your HP a level, for ten levels, and **Floor Skip Reward** (below BK Siphon, between Torch and Wooden Door) opens research that, when the Skip badge on STAIRS climbs past a Tower floor, pays 10% a level (up to 110%) of the Gold that floor's battles and chests held; both are priced and timed like Undo Count (500 Gold and 8 hours, each level 8 hours more and 500 × n Gold more than the one before), with two and three more levels.
 The siphons and trades move nowhere, like GK Siphon, and grey out while they can't act.
+**Manual Hand** (10 Inspiration, below GK Siphon, above Gold Door) opens a second hand, the [Manual hand](#the-manual-hand).
 Tower V's floor 10 Goal adds **Flying Enemy** to the deck: it heads for the closest Flying monster the Archer's arrows can hurt, stops as soon as one is within the Attack Range, and holds its ground there, a turn at a time, while one is, the arrows doing the work; once none is in reach, the hand moves on.
 It can't act unless the hand holds Archer too.
 While it is in the hand it also gives the arrows +5% Shot ATK and +5% Attack Speed.
 Tower III's floor 10 Goal adds **Archer** to the deck, a plain wooden bow on its face: it never moves the hero, but while the run's hand holds it the hero is an Archer, firing arrows at the closest monster in reach ([The Archer](fights.md#the-archer)), and the Archer's Training rows can be raised with Silver in the run.
+
+## The Manual hand
+
+Once Manual Hand is owned, a slider over the Deck page's hand switches between the **Auto** hand (the hand the rest of this page describes) and the **Manual** hand.
+The Manual hand starts with one slot; more cost Gems, 50 for the first and then the same prices as the Auto hand's (100, 200, 300 …).
+A deck card goes into whichever hand the slider shows, by pressing it or dragging it to a slot, and a card is in one hand at most.
+Beside a hand card's X, a switch with two arrows moves it to the end of the other hand; it is greyed while the other hand is full.
+Stairs always stays in the Auto hand, so it wears neither.
+Cards in the Manual hand never play by themselves: the hand's automatic play passes them over.
+They act only when you press them in a run, just as pressing an Auto hand card does: the card leads the hero to its closest target (or, like the siphons and trades, acts where the hero stands), and no other card can be pressed until it has.
+This suits the trades and siphons (GK Siphon, BK Siphon, RK Siphon, BK Trader, GK to HP), which then fire only when you choose.
+The Manual hand's cards are still held for the whole run: their bonuses, badges and upgrade trees count, and Archer there still makes the hero an Archer, firing on its own as always.
+They are never linked into Card Groups.
+In a run whose Manual hand holds cards, the bar under the hand shows a **Manual** tab beside the hand's, which shows the Manual hand's cards in the hand's place, to press.
+The hand's own tab is then called **Auto**, an arrow on its cards; once Auto-Climb is owned it is called Auto in every run.
 
 ## Card bonuses
 

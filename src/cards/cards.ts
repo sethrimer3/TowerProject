@@ -172,6 +172,20 @@ export const handSlots = (save: { upgrades: Record<UpgradeId, number>; handSlots
  * (Larger Hand not owned, or every slot bought). */
 export const nextHandSlotGems = (save: { upgrades: Record<UpgradeId, number>; handSlots: number }) =>
   save.upgrades.largerHand ? HAND_SLOT_GEMS[save.handSlots] ?? null : null;
+/** Which of the two hands a card sits in: the Auto hand, whose cards the
+ * hand plays by itself in priority order, or (with the Manual Hand skill)
+ * the Manual hand, whose cards act only when pressed. */
+export type HandKind = "auto" | "manual";
+/** How many cards the Manual hand holds: none before Manual Hand, then one,
+ * and each slot bought with Gems. */
+export const manualSlots = (save: { upgrades: Record<UpgradeId, number>; manualSlots: number }) =>
+  save.upgrades.manualHand ? 1 + save.manualSlots : 0;
+/** The Gems the Manual hand's next slot costs, on the Auto hand's price
+ * list, or null when there is none to buy (Manual Hand not owned, or every
+ * slot bought). */
+export const nextManualSlotGems = (save: { upgrades: Record<UpgradeId, number>; manualSlots: number }) =>
+  save.upgrades.manualHand ? HAND_SLOT_GEMS[save.manualSlots] ?? null : null;
+export const MAX_MANUAL_SLOTS = 1 + HAND_SLOT_GEMS.length;
 /** The hand a new profile starts with: its whole deck, STAIRS alone. DOOR
  * and KEY, ENEMY, HEAL and the rest are earned from the Inspiration tree. */
 export const BASE_HAND: readonly CardId[] = ["stairs"];

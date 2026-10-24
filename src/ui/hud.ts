@@ -168,7 +168,7 @@ export function purseFrame(game: Game, now: number, live = true) {
 }
 
 /** Refreshes every HUD readout from game state. */
-export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay, options: {hand?: readonly CardId[]} = {}) {
+export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay, options: {hand?: readonly CardId[]; manual?: boolean} = {}) {
   overlay.clearIfAt(game.run.player);
   overlay.followHero();
   renderVitals(game);
@@ -181,7 +181,9 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay,
   // The status line sits over the board's bottom row: let the hero show through.
   el("status-row").classList.toggle("see-through", game.run.player.y === renderer.target(renderer.density).bottom);
   renderAutoButton(game);
-  renderHand(game,options.hand);
+  // The Manual tab shows the Manual hand's cards, at their slots past the hand's.
+  if (options.manual && !options.hand) renderHand(game, game.manualHand, game.hand.length);
+  else renderHand(game, options.hand);
   text("density-label", `${renderer.density} × ${renderer.density}`);
   renderUndo(game);
   renderModeTab(game);
@@ -435,17 +437,18 @@ function handBadgeHtml(game: Game, id: CardId) {
   if (!badges.length) return "";
   return `<span class="hand-badges" aria-hidden="true">${badges.map((b) => `<span class="hand-badge-level rarity-${badgeDef(b.id).rarity}" style="${badgeStyle(b.id)}">${badgeGlyph(b.id)}</span>`).join("")}</span>`;
 }
-/** The active hand in the row under the board, the card that made the
- * latest step glowing (paused too); End Run lights up while no card can act. */
-function renderHand(game: Game, hand: readonly CardId[] = game.hand) {
+/** The active hand in the row under the board (or the Manual hand, its
+ * slots from `first`), the card that made the latest step glowing (paused
+ * too); End Run lights up while no card can act. */
+function renderHand(game: Game, hand: readonly CardId[] = game.hand, first = 0) {
   const row = el("hand");
   const levels = hand.map((id) => cardLevelHtml(game.save, id));
-  const key = `${hand.join()}|${game.run.outside ? "" : JSON.stringify(game.run.badges ?? {})}|${levels.join()}`;
+  const key = `${first}|${hand.join()}|${game.run.outside ? "" : JSON.stringify(game.run.badges ?? {})}|${levels.join()}`;
   if (key !== shownHand) {
     shownHand = key;
     // Room for five cards; a bigger hand scrolls sideways.
     row.style.setProperty("--slots", String(Math.max(5, hand.length)));
-    row.innerHTML = hand.map((id, i) => `<div class="hand-card" role="listitem" data-card="${id}" data-hand-slot="${i}">${cardArt(id, CARDS[id].name)}${levels[i]}${handBadgeHtml(game, id)}</div>`).join("");
+    row.innerHTML = hand.map((id, i) => `<div class="hand-card" role="listitem" data-card="${id}" data-hand-slot="${first + i}">${cardArt(id, CARDS[id].name)}${levels[i]}${handBadgeHtml(game, id)}</div>`).join("");
     renderHandMore();
   }
   // Paused, the card that made the latest step still glows.
@@ -453,7 +456,7 @@ function renderHand(game: Game, hand: readonly CardId[] = game.hand) {
   const focused = game.run.focused ? hand.indexOf(game.run.focused) : -1;
   row.classList.toggle("can-focus", !game.run.outside);
   row.querySelectorAll<HTMLElement>(".hand-card").forEach((card, i) => {
-    card.classList.toggle("active", i === glowing);
+    card.classList.toggle("active", first + i === glowing);
     card.classList.toggle("focused", i === focused);
     const title = handCardTitle(game, hand[i]);
     if (card.title !== title) card.title = title;

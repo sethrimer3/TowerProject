@@ -1,7 +1,7 @@
 import { schedulePrice } from "../economy/prices.ts";
 import { trainingDef, TRAINING, trainingCap, type TrainingId, type TrainingRow } from "./training.ts";
 import type { Mode } from "../entities.ts";
-import type { RunCore } from "../runs.ts";
+import { heldCards, type RunCore } from "../runs.ts";
 import type { Save } from "../save/shape.ts";
 import { bulkBuy, type BuyQuantity } from "./buy-quantity.ts";
 import { rowValue, runTrainingOpen } from "./loadout.ts";
@@ -41,7 +41,7 @@ export type RunTrainingOffer = ReturnType<typeof runTrainingOffer>;
 export function runTrainingOffer(save: Pick<Save, "training" | "upgrades" | "goals">, run: Pick<RunCore, "training" | "hand">, id: TrainingId) {
   const row = TRAINING.find((t) => t.id === id)!, bought = boughtInRun(run, id);
   const level = save.training[id] + bought, max = runTrainingMax(row, save);
-  return { row, bought, level, max, price: silverPrice(id, bought), open: runTrainingOpen(row, save, run.hand ?? []), maxed: level >= max };
+  return { row, bought, level, max, price: silverPrice(id, bought), open: runTrainingOpen(row, save, heldCards(run)), maxed: level >= max };
 }
 
 /** What one press of `id`'s price buys in `run` at Buy Quantity `q`: the

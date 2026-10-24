@@ -491,8 +491,12 @@ A treasure chest that, through the Chest card's bonus, also holds Equipment upgr
 A treasure chest that, through the Chest card's bonus, also holds a Standard piece of equipment, Common, Uncommon or Rare; marked by a purple glow and two stars, settled as its floor is made.
 
 **Hand**:
-The cards the player sets up before a run, in priority order, in four slots (five with Larger Hand, and more bought with Gems); it always holds the STAIRS card. Inside a run the hand moves the hero, and the player can't: the first card that can act (or Card Group, as one) picks its closest target, and the hero follows the shortest path there a step at a time before the hand chooses again. The player can pause it, and undo pauses it. Each run keeps the hand as ordered when it went inside.
+The cards the player sets up before a run, in priority order, in four slots (five with Larger Hand, and more bought with Gems); it always holds the STAIRS card. Called the **Auto hand** beside the Manual hand. Inside a run the hand moves the hero, and the player can't: the first card that can act (or Card Group, as one) picks its closest target, and the hero follows the shortest path there a step at a time before the hand chooses again. The player can pause it, and undo pauses it. Each run keeps the hand as ordered when it went inside.
 _Avoid_: loadout (what the character starts a run with)
+
+**Manual hand**:
+A second hand the Manual Hand skill opens, set up on the Deck page beside the Auto hand: one slot, more bought with Gems; never STAIRS, and never a card the Auto hand holds. A run holds its cards as it holds the hand's (their bonuses, badges and trees count), but the hand never plays them by itself: each acts only when the player presses it.
+_Avoid_: second hand, reserve
 
 **Movement speed**:
 How many steps a second the hand (and Automove in the forest) takes. The player sets it inside a run with the arrows beside play/pause, from 0 (paused) to 3; Movement Speed research, which the Movement Speed skill opens, makes faster speeds available, up to 9. A new hero starts at 2; the forest walks at least 3.

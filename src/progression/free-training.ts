@@ -1,5 +1,5 @@
 import { TRAINING, TRAINING_GROUPS, trainedAmount, type TrainingId } from "./training.ts";
-import type { RunCore } from "../runs.ts";
+import { heldCards, type RunCore } from "../runs.ts";
 import type { Save } from "../save/shape.ts";
 import { FREE_TRAINING_ROWS, runTrainingOpen } from "./loadout.ts";
 import { drawAt } from "../random.ts";
@@ -35,7 +35,7 @@ function draw(run: Pick<RunCore, "seed" | "freeRolls">, group: FreeGroup) {
  * (`runTrainingOpen`), and below their most counting the run's ranks. */
 function candidates(save: Pick<Save, "training" | "upgrades" | "goals">, run: Pick<RunCore, "training" | "hand">, group: FreeGroup): TrainingId[] {
   const ranks = ranksInRun(save, run);
-  return TRAINING.filter((row) => row.group === group && runTrainingOpen(row, save, run.hand ?? []) && ranks[row.id] < runTrainingMax(row, save)).map((row) => row.id);
+  return TRAINING.filter((row) => row.group === group && runTrainingOpen(row, save, heldCards(run)) && ranks[row.id] < runTrainingMax(row, save)).map((row) => row.id);
 }
 
 /** One floor passed: each group, in turn, rolls its Free Upgrade chance on

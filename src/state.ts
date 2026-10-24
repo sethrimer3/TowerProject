@@ -870,7 +870,7 @@ export class Game {
     this.handStuck = !plan;
     if (!plan) return this.handWaits();
     this.activeCard = plan.card;
-    const id = this.hand[plan.card];
+    const id = this.held[plan.card];
     this.message = lost ? `${CARDS[lost].name} has no path to a target · ${CARDS[id].name} leads.`
       : target === "lost" ? `Target lost · no path to the tile · ${CARDS[id].name} leads.` : this.cardMessage(id);
     if (fresh) this.handRules.coolDown(id);
@@ -1013,7 +1013,7 @@ export class Game {
    * (`HandRules.gateShut`), so the hand chooses a card again. */
   private dropGatedPlan() {
     const plan = this.cardPlan;
-    if (plan && this.handRules.gateShut(this.hand[plan.card])) this.cardPlan = null;
+    if (plan && this.handRules.gateShut(this.held[plan.card])) this.cardPlan = null;
   }
   /** The path the hand follows this turn: the one committed, else the
    * pressed card's while it has a path to a target (`lost` once it has
@@ -1023,7 +1023,7 @@ export class Game {
     if (this.cardPlan) return { plan: this.cardPlan, lost: null };
     const focused = this.run.focused;
     if (focused) {
-      const plan = planHand(this.handRules, this.hand, this.mode, this.hand.indexOf(focused));
+      const plan = planHand(this.handRules, this.held, this.mode, this.held.indexOf(focused));
       if (plan) return { plan, lost: null };
       this.run.focused = undefined;
     }
@@ -1084,12 +1084,18 @@ export class Game {
   private dealHand() {
     noteGoldBoost(this.save, this.slice, this.clock());
     this.run.hand = [...this.save.hand];
+    const manual = this.save.upgrades.manualHand ? this.save.manualHand : [];
+    if (manual.length) this.run.manual = [...manual];
+    else delete this.run.manual;
     const links = keptLinks(this.run.hand, this.save.cardLinks);
     if (links.length) this.run.links = links;
     else delete this.run.links;
-    const badges = this.save.upgrades.cardBadges ? runBadges(this.save.badges, this.run.hand, this.badges.slots) : {};
+    // The Manual hand's cards are held as the hand's are: their badges,
+    // trees and bonuses count, though they act only when pressed.
+    const held = this.held;
+    const badges = this.save.upgrades.cardBadges ? runBadges(this.save.badges, held, this.badges.slots) : {};
     if (Object.keys(badges).length) this.run.badges = badges;
-    const trees = runCardTrees(this.save.cardTrees, this.run.hand);
+    const trees = runCardTrees(this.save.cardTrees, held);
     if (Object.keys(trees).length) this.run.cardTrees = trees;
     else delete this.run.cardTrees;
     const tree = treeBonus(this.run.cardTrees);
@@ -1101,7 +1107,7 @@ export class Game {
     const chance = Math.min(10_000, Math.floor(trainedAmount(this.save, "findPotion") * treeFactor(tree, "percentPotions")));
     if (chance) this.run.percentPotions = chance;
     else delete this.run.percentPotions;
-    const odds = this.chestOddsFor(this.run.hand, tree);
+    const odds = this.chestOddsFor(held, tree);
     if (odds) this.run.chestOdds = odds;
     else delete this.run.chestOdds;
     // DOOR's Skeleton Key and Lock Pick, GOLD DOOR's Transmute, HEART and WOODEN DOOR's
@@ -1118,7 +1124,7 @@ export class Game {
     // holds more DEF and shroud against theirs, HEAL's more shroud against
     // every enemy and a parry of its own; the enemy cards' trees raise its
     // crits and Lifesteal's ceiling against theirs (combat.ts reads them).
-    const p = this.run.player, foes: NonNullable<Player["foeAttack"]> = Object.fromEntries(Object.entries(handBonus(this.run.hand).foe).map(([id, b]) => [id, b.attack]));
+    const p = this.run.player, foes: NonNullable<Player["foeAttack"]> = Object.fromEntries(Object.entries(handBonus(held).foe).map(([id, b]) => [id, b.attack]));
     for (const [card, n] of Object.entries(foeStats(tree, "Attack")) as [FoeTreeCard, number][]) foes[card] = snap((foes[card] ?? 0) + n);
     if (tree.foeAttack) foes.monster = tree.foeAttack;
     if (tree.bossAttack) foes.torch = tree.bossAttack;
@@ -1539,18 +1545,19 @@ export class Game {
   private regainCharges(at: { x: number; y: number }) {
     for (const c of climbFloor(this.save, this.run)) this.gain(at.x, at.y, `+1 ${c === "ignore" ? "Ignore" : "Target"}`);
   }
-  /** A hand card pressed inside a run (the slot `card`): it leads the
+  /** A hand card pressed inside a run (the slot `card` of `held`, so past
+   * the hand's slots a Manual hand card): it leads the
    * hero to its closest target, ahead of the others (`run.focused`), and
    * the hand plays on to it. Refused while an earlier press still heads
    * for its target (`busy`), and for a card with no path to a target
    * (`noPath`), which costs nothing. The first run's lesson waits on
    * STAIRS, and the `keys` lesson ends once DOOR or KEY is pressed. */
   focus(card: number): "focused" | "unavailable" | "busy" | "noPath" {
-    const id = this.hand[card];
+    const id = this.held[card];
     if (this.run.outside || this.fallen || !id) return "unavailable";
     if (this.run.focused) return "busy";
     if (this.teachesClimb && id !== "stairs") return "unavailable";
-    const plan = planHand(this.handRules, this.hand, this.mode, card);
+    const plan = planHand(this.handRules, this.held, this.mode, card);
     if (!plan) return "noPath";
     const lesson = this.boardLesson;
     if (lesson === "climb") this.save.tutorials.climb = true;
@@ -1746,10 +1753,10 @@ export class Game {
     for (const level of addCardXp(this.save.cardXp, id, xp, cardMaxLevel(this.save.cardBuys.opened, id))) this.cardLevelUps.push({ card: id, level });
   }
   /** `floors` new floors completed: each card of the hand that never
-   * activates (`PASSIVE_CARDS`) gains one XP a floor. */
+   * activates (`PASSIVE_CARDS`), or of the Manual hand, gains one XP a floor. */
   private passiveCardXp(floors: number) {
     if (floors <= 0) return;
-    for (const id of this.hand) if (PASSIVE_CARDS.has(id)) this.gainCardXp(id, floors);
+    for (const id of this.held) if (PASSIVE_CARDS.has(id)) this.gainCardXp(id, floors);
   }
   /** The single path that ends the current run, whether the player
    * accepts defeat or ends it: pays out exactly once and starts the next run
@@ -2466,16 +2473,28 @@ export class Game {
   get hand(): readonly CardId[] {
     return this.run.hand ?? this.save.hand;
   }
-  /** Whether the hero is an Archer: the hand (in the forest, the next
-   * run's) holds the ARCHER card (`shootsWith`). Its arrows fly only inside
-   * a run. */
-  get isArcher() {
-    return shootsWith(this.hand);
+  /** The Manual hand (Manual Hand): inside a run, the one it went in with;
+   * in the forest, the next run's. Its cards act only when pressed. */
+  get manualHand(): readonly CardId[] {
+    return this.run.hand ? this.run.manual ?? [] : this.save.upgrades.manualHand ? this.save.manualHand : [];
   }
-  /** What the cards of the run's hand give while held (`handBonus`): none
-   * in the forest. */
+  /** Every card held: the hand's, then the Manual hand's. A card's slot in
+   * it is the one a press and the hand's plan name, the hand's slots first,
+   * so a Manual card's comes after them. */
+  get held(): readonly CardId[] {
+    const manual = this.manualHand;
+    return manual.length ? [...this.hand, ...manual] : this.hand;
+  }
+  /** Whether the hero is an Archer: a hand (in the forest, the next run's)
+   * holds the ARCHER card (`shootsWith`). Its arrows fly only inside a
+   * run. */
+  get isArcher() {
+    return shootsWith(this.held);
+  }
+  /** What the cards held in the run give (`handBonus`), the Manual hand's
+   * too: none in the forest. */
   get handBonus(): HandBonus {
-    return handBonus(this.run.outside ? [] : this.hand);
+    return handBonus(this.run.outside ? [] : this.held);
   }
   /** Whether a tapped tile shows the route there and its totals: the
    * Courage skill Pathfinder owned, or Dev mode. */
