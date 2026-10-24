@@ -390,12 +390,6 @@ const decodeJob = (j: any): TrainingJob => ({
   gold: count(j.gold, 0, Number.MAX_SAFE_INTEGER), ms: count(j.ms, j.completesAt - j.startedAt, Number.MAX_SAFE_INTEGER),
   ranks: Math.max(1, count(j.ranks, 1, 1000)), speed: Math.max(1, count(j.speed, 1, 10)), used: count(j.used, 0, Number.MAX_SAFE_INTEGER),
 });
-/** Version 1 had a single run (the endless climb); it becomes the Delve slice. */
-function migrateV1(s: any, d: Save, undoCapacity: number) {
-  d.delve.best = count(s.best, d.delve.best);
-  d.delve.courage = count(s.essence, d.delve.courage);
-  applyMode(d.delve, decodeMode({ run: s.run, history: s.history, fall: s.fall }, undoCapacity, decodeDelveRun));
-}
 /** Existing records are already rewarded; preserve old balances without double-paying. */
 function decodeReached(s: any, d: Save) {
   for (const mode of ["tower", "delve"] as const) {
@@ -427,21 +421,10 @@ function decodeTierRecords(raw: Record<string, any>, slice: TieredSlice) {
 /** Whether `key` names an opened tier other than the one selected. */
 const isOtherTier = (key: string, slice: TieredSlice) =>
   /^[1-9]$/.test(key) && Number(key) <= slice.tiersOpen && Number(key) !== slice.tier;
-const touchedDelve = (d: Save) =>
-  !!(d.delve.run || d.delve.best || d.delve.courage) ||
-  UPGRADES.some((u) => u.currency === "courage" && d.upgrades[u.id]);
-/** Preserve access and purchases in saves made before skill trees existed. */
-function migratePreSkillTrees(upgrades: any, d: Save) {
-  if (!upgrades || "delve" in upgrades) return;
-  if (touchedDelve(d)) d.upgrades.delve = 1;
-  if (["quality", "yellow", "blue", "red"].some((id) => upgrades[id] > 0)) d.upgrades.legacy = 1;
-}
-
 type VersionStep = (s: any, d: Save, undoCapacity: number) => void;
 /** What each save version carries beyond upgrades and settings. A Map, so
  * lookups match versions strictly (no "3" or prototype keys). */
 const VERSION_STEPS = new Map<unknown, VersionStep[]>([
-  [1, [migrateV1]],
   [2, [decodeProgress]],
   [3, [decodeProgress, decodeInventory]],
   [4, [decodeProgress, decodeInventory]],
@@ -499,7 +482,6 @@ export function decode(raw: string | null): Save {
     if (adsOff(d)) d.goldBoostUntil = 0;
     decodeReached(s, d);
     decodeTiers(s, d);
-    migratePreSkillTrees(s.upgrades, d);
     d.defend = decodeDefendSave(s.defend);
     // Slots bought with Gems count only with Larger Hand, which opens them.
     if (d.upgrades.largerHand) d.handSlots = count(s.handSlots, 0, HAND_SLOT_GEMS.length);

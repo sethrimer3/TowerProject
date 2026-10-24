@@ -134,17 +134,6 @@ test("a tree taller than its view places its nodes on a taller map", () => {
   assert.equal(treeHeight(TREES.find((t) => t.id === "courage")!), 198);
   assert.ok(TREES.slice(2).every((t) => treeHeight(t) === 100 && mapNodes(t).every((n, i) => n.y === t.nodes[i].y)), "other trees fit one view");
 });
-test("older saves retain earned access without unlocking fresh saves", () => {
-  const old: any = defaults();
-  delete old.upgrades.delve;
-  delete old.upgrades.legacy;
-  assert.equal(decode(JSON.stringify(old)).upgrades.delve, 0);
-  old.upgrades.quality = 2;
-  const saved = decode(JSON.stringify(old));
-  assert.equal(saved.upgrades.delve, 1);
-  assert.equal(saved.upgrades.legacy, 1);
-  assert.equal(saved.upgrades.quality, 2);
-});
 test("Movement Speed research lets the run's arrows go one step a second faster a level", () => {
   const g = new Game(defaults());
   g.save.settings.speed = 9;

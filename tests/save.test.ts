@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { decode, defaults } from "../src/save/save.ts";
+import { decodableVersion, decode, defaults } from "../src/save/save.ts";
 import { BASE_HAND } from "../src/cards/cards.ts";
 import { defaultEquipment } from "../src/equipment/inventory.ts";
 
@@ -120,13 +120,7 @@ const mailSave = {
 const bases: Record<string, () => any> = {
   v3,
   v2: () => ({ ...v3(), version: 2 }),
-  v1: () => ({ version: 1, ...mode(delveRun), best: 12, essence: 8, upgrades: { undos: 1 }, settings: { infoDisplay: "none" } }),
   outside: () => ({ ...v3(), tower: { ...v3().tower, run: towerRun({ outside: true, height: 0, floor: 0 }) } }),
-  preSkillTrees: () => {
-    const s = v3();
-    delete (s.upgrades as any).delve;
-    return { ...s, upgrades: { ...s.upgrades, yellow: 1 } };
-  },
   tournament: () => {
     const s = v3();
     return { ...s, tournament: structuredClone(tournamentSave), delve: { ...s.delve, run: delveRun({ tier: 5, tournament: structuredClone(tournamentRun) }) } };
@@ -291,20 +285,10 @@ test("decode keeps Mail: the inbox, what waits to sync, what was claimed, and th
   assert.deepEqual(decode(JSON.stringify(bases.mail())).mail, mailSave);
 });
 
-test("decode migrates v1 saves into the Delve slice and keeps their settings", () => {
-  const d = decode(JSON.stringify(bases.v1()));
-  assert.equal(d.delve.best, 12);
-  assert.equal(d.delve.courage, 8);
-  assert.equal(d.delve.run?.seed, 1234);
-  assert.equal(d.tower.run, null);
-  assert.equal(d.settings.infoDisplay, "none");
-  assert.equal(d.upgrades.delve, 1);
-});
-
-test("decode grants skill-tree access to saves made before skill trees", () => {
-  const d = decode(JSON.stringify(bases.preSkillTrees()));
-  assert.equal(d.upgrades.delve, 1);
-  assert.equal(d.upgrades.legacy, 1);
+test("a version 1 save is no longer read: its progress starts afresh", () => {
+  assert.equal(decodableVersion(1), false);
+  const d = decode(JSON.stringify({ version: 1, ...mode(delveRun), best: 12, essence: 8 }));
+  assert.deepEqual([d.delve.best, d.delve.courage, d.delve.run], [0, 0, null]);
 });
 
 test("a Tower run keeps no floor but the one it stands on", () => {
