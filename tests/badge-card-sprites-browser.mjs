@@ -24,16 +24,17 @@ try {
   });
   await page.goto(server.resolvedUrls.local[0]);
   await page.locator("#hp").waitFor();
-  assert.equal(await page.locator("html").evaluate(e => e.classList.contains("ui-sprites")), false);
+  assert.equal(await page.locator("html").evaluate(e => e.classList.contains("ui-sprites")), true);
   await page.evaluate(async () => {
-    const { defaults } = await import("/src/save.ts");
+    const { defaults } = await import("/src/save/save.ts");
     const { Game } = await import("/src/state.ts");
-    const { UPGRADES } = await import("/src/config.ts");
-    const { BADGE_IDS } = await import("/src/badges.ts");
+    const { UPGRADES } = await import("/src/progression/upgrades.ts");
+    const { BADGE_IDS } = await import("/src/cards/badges.ts");
     const s = defaults();
     for (const id of Object.keys(s.tutorials)) s.tutorials[id] = true;
     for (const u of UPGRADES) s.upgrades[u.id] = 1;
-    Object.assign(s.settings, { uiSprites: true, reduceMotion: true, transition: "instant", weatherSound: false });
+    Object.assign(s.settings, { reduceMotion: true, transition: "instant", weatherSound: false });
+    s.hand = ["stairs", "door", "key", "monster"];
     s.gems = 0; // Drawing stays actionable even when short of Gems.
     s.archives.levels.badgeSlots = 1;
     s.badges = { owned: Object.fromEntries(BADGE_IDS.map(id => [id, { copies: 4, pick: 0 }])), cards: { stairs: ["hp", "yellowGate"], monster: ["charge"] }, rng: 99 };
@@ -46,7 +47,7 @@ try {
   const ready = selector => page.waitForFunction(selector => [...document.querySelectorAll(`${selector} .sprite-icon`)].every(e => e.classList.contains("sprite-ready")), selector);
   const singleCardFrame = async () => {
     const problems = await page.locator(".deck-card, .deck-entry-art, .deck-add").evaluateAll(cards => cards.flatMap(card => {
-      const art = card.querySelector(".sprite-card"), image = art.querySelector(".sprite-replacement"), style = getComputedStyle(card);
+      const art = card.querySelector(".sprite-card"), image = art.querySelector(".sprite-native"), style = getComputedStyle(card);
       const outer = card.getBoundingClientRect(), inner = image.getBoundingClientRect();
       const issues = [];
       if (style.borderImageSource !== "none" || parseFloat(style.borderLeftWidth) || parseFloat(style.paddingLeft)) issues.push("extra button frame/inset");
@@ -75,9 +76,9 @@ try {
   // The full-size card remains the keyboard control for ordering the hand.
   await page.locator('.deck-card[data-slot="0"]').focus();
   await page.keyboard.press("ArrowRight");
-  assert.ok((await page.locator('.deck-card[data-slot="1"] .sprite-replacement').getAttribute("src")).endsWith("card-stairs.png"));
+  assert.ok((await page.locator('.deck-card[data-slot="1"] .sprite-native').getAttribute("src")).endsWith("card-stairs.png"));
   await page.keyboard.press("ArrowLeft");
-  assert.ok((await page.locator('.deck-card[data-slot="0"] .sprite-replacement').getAttribute("src")).endsWith("card-stairs.png"));
+  assert.ok((await page.locator('.deck-card[data-slot="0"] .sprite-native').getAttribute("src")).endsWith("card-stairs.png"));
   await page.locator('[data-badge="blueAtLeast"]').click();
   await ready("#modal");
   assert.ok(await page.locator("#modal .badge-token.big .sprite-replacement").first().isVisible());
@@ -95,22 +96,22 @@ try {
   // The same saved preference follows independent UI and Game overrides.
   for (const [uiTheme, gameTheme, shown] of [["medieval", "classic", true], ["neon", "classic", false], ["medieval", "pixel", true], ["neon", "pixel", false]]) {
     await page.evaluate(async ({ uiTheme, gameTheme }) => {
-      const { defaults } = await import("/src/save.ts");
+      const { defaults } = await import("/src/save/save.ts");
       const { applyUiTheme } = await import("/src/ui/medieval.ts");
       const s = defaults(); s.themes.push("neonUi", "pixelGame");
-      Object.assign(s.settings, { uiSprites: true, uiTheme, gameTheme }); applyUiTheme(s);
+      Object.assign(s.settings, { uiTheme, gameTheme }); applyUiTheme(s);
     }, { uiTheme, gameTheme });
     assert.equal(await page.locator(".badge-grid .sprite-replacement").first().isVisible(), shown);
-    assert.equal(await page.locator(".sprite-card-label").first().isVisible(), shown);
+    assert.equal(await page.locator(".sprite-card-label").first().isVisible(), true);
   }
   await page.evaluate(async () => {
-    const { defaults } = await import("/src/save.ts");
+    const { defaults } = await import("/src/save/save.ts");
     const { applyUiTheme } = await import("/src/ui/medieval.ts");
-    applyUiTheme(defaults());
+    const s = defaults(); s.themes.push("neonUi"); s.settings.uiTheme = "neon"; applyUiTheme(s);
   });
   assert.equal(await page.locator(".badge-grid .sprite-replacement").first().isVisible(), false);
   assert.equal(await page.locator(".badge-grid .badge-condition").first().isVisible(), false);
-  assert.ok(await page.locator(".badge-grid .sprite-fallback").first().isVisible());
+  assert.ok(await page.locator(".badge-grid .theme-art").first().isVisible());
   // Missing replacements keep their fallback even while sprites are on.
   await page.reload();
   await page.locator('[data-tab="deck"]').click();
@@ -134,7 +135,7 @@ try {
   await page.locator('.badge-pick[data-badge="hp"] .badge-glyph').evaluate(e => {
     e.classList.remove("sprite-ready"); e.querySelector("img").removeAttribute("src");
   });
-  assert.equal(await page.locator('.badge-pick[data-badge="hp"] .badge-glyph > .sprite-fallback').evaluate(e => getComputedStyle(e).visibility), "visible");
+  assert.equal(await page.locator('.badge-pick[data-badge="hp"] .badge-glyph > .theme-art').evaluate(e => getComputedStyle(e).visibility), "visible");
   await page.locator('[data-tab="board"]').click();
   await page.locator("#enter-run").click();
   await ready("#hand");

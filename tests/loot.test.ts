@@ -1,12 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { defaults, decode } from "../src/save.ts";
+import { defaults, decode } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { World } from "../src/delve/world.ts";
-import { metalUnlocked, MATERIAL_IDS } from "../src/materials.ts";
-import { rollGold } from "../src/loot.ts";
-import { TOWER_ZONE_ENEMIES } from "../src/scaling.ts";
+import { metalUnlocked, MATERIAL_IDS } from "../src/economy/materials.ts";
+import { rollGold } from "../src/economy/loot.ts";
+import { TOWER_ZONE_ENEMIES } from "../src/enemies/scaling.ts";
 import { RunPurse } from "../src/game/run-purse.ts";
 
 // --- Deterministic RNG helpers ---

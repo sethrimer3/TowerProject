@@ -1,10 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { decode, defaults } from "../src/save.ts";
-import { LIMIT_BREAKS, TRAINING, trained, xpForLevel, levelForXp, trainedAmount, trainingDef } from "../src/config.ts";
+import { decode, defaults } from "../src/save/save.ts";
+import { LIMIT_BREAKS, TRAINING, trained, trainedAmount, trainingDef } from "../src/progression/training.ts";
+import { xpForLevel, levelForXp } from "../src/progression/xp.ts";
 
-import { ranksInRun, runTrainingOffer, runTrainingValue, silverPrice } from "../src/run-training.ts";
+import { ranksInRun, runTrainingOffer, runTrainingValue, silverPrice } from "../src/progression/run-training.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 
 /** A Tower run inside on an open 5×5 floor, with undo, On the Job and `silver` to spend. */

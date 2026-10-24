@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { decode, defaults } from "../src/save.ts";
+import { decode, defaults } from "../src/save/save.ts";
 import { World } from "../src/delve/world.ts";
 import type { Tile } from "../src/entities.ts";
 import { snap } from "../src/exact.ts";

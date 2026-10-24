@@ -10,7 +10,7 @@ This controls camera and player interpolation on both axes; Reduce motion overri
 **Undo** restores one move (a tapped route counts as a single move), including combat, pickups, gear, keys, doors, torches put out, and the XP a kill paid (with any level it reached), but only on the floor you stand on: climbing a Tower floor forgets the history (the Tower's stairs only lead up, and a floor left behind is gone for the run), as does crossing one of the Delve's floor lines (each ten depth, either way) or a milestone gate.
 A step onto empty floor is seldom worth resuming at, so undoing one goes on back past every empty step before it, and the move before them that did something, to just before that move (a fight, a pickup, a door, a card's activation or training bought).
 It cancels any queued route.
-Undos are a limited resource, like Focus: each run has a number of them to spend, shown on the Undo button, and one spent never comes back, whatever the run does after it.
+Undos are a limited resource, like Ignore and Target: each run has a number of them to spend, shown on the Undo button, and one spent never comes back, whatever the run does after it.
 The history holds no more moves than the run has undos left.
 A game update that reshapes the floors forgets the history, in the Tower as in the Delve, since the moves it held were made on the old layout.
 A new profile has no undo, and the button stays hidden until **Rehearsed steps** (5 Inspiration, after the Archives) gives the first undo a run (or Echoes of time and a level of Undo Count do); each level of **Undo Count** research in the Archives adds one a run: Rehearsed steps opens four levels of it and **Echoes of time** (Courage) four more, either opening it first, up to 9 a run.
@@ -26,7 +26,7 @@ It must be answered: **Undo** (once Rehearsed steps has unlocked undo, while the
 Headed **Regroup and try again**, the dialog says the Tower (or Delve) will shift to a new layout for the next run and invites the player to look over and spend what this one earned.
 The dialog comes back after a refresh until it is answered.
 Rewards are credited as they are earned and never rolled back, so taking a fight back cannot duplicate them.
-Ending a run with End Run (or retiring from Settings) goes straight back to the forest once confirmed.
+Ending a run with End Run goes straight back to the forest once confirmed.
 Gold is banked the moment it is found and kept however the run ends: the stats show the Gold held, and the run's end dialog and the message after the run say how much the run found.
 
 ## Run Notes
@@ -44,14 +44,14 @@ They list the tower, the floor reached and the current floor, the real time sinc
 They refresh as the run goes, and the X at their top right closes them.
 The copy button beside the X puts them in the clipboard as text, to paste elsewhere.
 Undo takes back what it takes back from the run (steps, keys, doors, pickups and Silver), never what was found for good (Gold, materials, Cells, Gems and equipment).
-Nor does it take back a provision used (an elixir, a Whetstone, an Aegis charm): the use stays spent, the heal stays, and a boost keeps counting down its turns.
+Nor does it take back a provision used (an elixir, a Vanguard Banner, an Aegis charm): the use stays spent, the heal stays, and a boost keeps counting down its turns.
 The run's end dialog has a Run Notes button at the end of its totals, which opens them over it.
 The Settings page's Stats dialog has the same copy button.
 Its tallies are rounded down, and shortened from a million (1.23M).
 
 ## Rewards and purchases
 
-Rewards are credited as you climb (Courage for every 10 Delve height, Inspiration for each Tower floor completed beyond your highest, paid as you climb its stairs, and 10 for each area cleared; past floor 100, or depth 1,000, a point of either takes 10 floors, past floor 1,000 100 floors, and past floor 10,000 they stop), so retiring from Settings simply starts a fresh run.
+Rewards are credited as you climb (Courage for every 10 Delve height, Inspiration for each Tower floor completed beyond your highest, paid as you climb its stairs, and 10 for each area cleared; past floor 100, or depth 1,000, a point of either takes 10 floors, past floor 1,000 100 floors, and past floor 10,000 they stop), so ending a run simply starts a fresh one.
 A run still in the forest takes everything bought there at once (skills, training, gear, provisions and research); skills bought while another run is inside apply to that run from its next ascent; Wayfinder, Revive, and undo-capacity upgrades unlock immediately.
 In the forest, Automove still avoids lethal fights; it and the hand pause off the board, in dialogs, and when hidden.
 No offline progress is calculated.
@@ -63,8 +63,8 @@ The Settings button in the stats opens the Settings page at any time, with a Bac
 
 ## Movement Speed and Dash
 
-**Movement Speed** (the Courage tree's first skill, 1 Courage) opens the Archives' **Movement Speed** research (six levels, priced and timed like Focus Count's first six: 500 Gold and 8 hours, up to 8,000 Gold and 48 hours), each level letting the run's speed arrows go one step a second faster: 4, then 5, up to 9.
-**Dash** (1 Courage, after Movement Speed, right of Focus) opens the Archives' **Dash** research: each of its 25 levels lets the hand's first step toward a new target dash across one more empty tile (or chest already opened) in the same step (one turn, one undo), stopping on the tile before anything else (an item, a door, a monster, the stairs, a torch or a Gem), except that a dash with a tile left ends on the item its card is heading for, taking it (scaled by an Effective or Dampen badge as usual; with a Skip badge it stops before the item, which Skip rolls for on its own step); faint echoes of the hero appear on each tile it dashed off, and on the empty tile it landed on, one after another, and fade in the same order within half a second.
+**Movement Speed** (the Courage tree's first skill, 1 Courage) opens the Archives' **Movement Speed** research (six levels, priced and timed like Undo Count's first six: 500 Gold and 8 hours, up to 8,000 Gold and 48 hours), each level letting the run's speed arrows go one step a second faster: 4, then 5, up to 9.
+**Dash** (1 Courage, after Movement Speed, right of Bombs) opens the Archives' **Dash** research: each of its 25 levels lets the hand's first step toward a new target dash across one more empty tile (or chest already opened) in the same step (one turn, one undo), stopping on the tile before anything else (an item, a door, a monster, the stairs, a torch or a Gem), except that a dash with a tile left ends on the item its card is heading for, taking it (scaled by an Effective or Dampen badge as usual; with a Skip badge it stops before the item, which Skip rolls for on its own step); faint echoes of the hero appear on each tile it dashed off, and on the empty tile it landed on, one after another, and fade in the same order within half a second.
 Level n costs 250 × n × 2^(n−1) Gold and takes 1.75 × n × 1.2^(n−1) hours (250 Gold and 1.75 hours first; about 105 billion Gold and 145 days at level 25).
 A dashed turn regains HP by Regen once, on its first step, not on the tiles it dashes across.
 **Dash Regen** (1 Courage, below End Rush, above Dash Badge) opens the Archives' **Dash Regen** research: each of its 35 levels lets one more of a dash's first dashed tiles regain HP by Regen too.
@@ -76,6 +76,10 @@ Instant Combat likewise adds **Animate fights** (see [Fights](fights.md#how-a-fi
 The **Toggles** button opens a menu of what the board shows during a run, each turned off on its own (what each pays is paid all the same):
 **ATK changes**, **DEF changes** and **HP changes** (a shard or potion picked up, a siphon, max HP raised, a heal), **Keys found**, **Door payments** (the keys and HP a door takes), **Gold found**, **Silver found**, **XP gained** (a badge's XP), **Gold combo** (Goldback's "×N Gold" as it grows), **Damage on enemies** and **Item amounts** (once Damage Visual is claimed; see [Towers](towers-areas-goals.md)), **Fight damage numbers** (the damage, shroud, thorns and Lifesteal numbers each strike raises) and **Enemy HP bars** (the bar over an enemy as it is struck).
 Materials, Cells, Gems and Free Training's levels always show.
-Beside Dev mode, **Dev: free purchases** is a lighter tool for testing: it unlocks nothing, but every purchase (skills, Training, provisions, research and archivists, Defend) goes through whatever you have and costs nothing, and research completes the moment it starts.
+The **Dev Mode** toggle near the bottom shows the testing tools under it while it is on, and turning it off turns them off; it grants nothing itself.
+Its first, **Unlimited currency**, is the Dev mode these pages speak of: unlimited currency, every floor section and mode unlocked.
+**Free purchases** is a lighter tool for testing: it unlocks nothing, but every purchase (skills, Training, provisions, research and archivists, Defend) goes through whatever you have and costs nothing, and research completes the moment it starts.
+Under them, **Export profile** downloads a text file (JSON, in sections: profile, settings, currencies, deck, upgrades, training, research, premium, gear, towers, goals, online, Defend) of everything kept between runs, headed by its save version; a run in progress, its undo history and a Proving Grounds attempt aren't in it.
+**Import profile** loads such a file over the whole profile, after a confirm: both current runs end, and anything the file leaves out starts afresh.
 In the forest **Enter**, an arrow going into an arch, stands under Goals beside the tower's number: one press goes straight in through the entrance and starts the run.
 Inside a run the button under Settings plays and pauses the hand.

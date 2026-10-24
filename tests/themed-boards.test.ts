@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { createHash, type Hash } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import type { Enemy, EnemyStrength, Tile, Torch } from "../src/entities.ts";
-import type { FrameContext } from "../src/render-frame.ts";
+import type { FrameContext } from "../src/render/render-frame.ts";
 
 // Characterization hashes of every Game theme's board: each board's every
 // canvas call and property write while it paints each kind of tile contents
@@ -70,7 +70,7 @@ class FakeCanvas {
   fonts: { load: () => Promise.resolve([]), check: () => true },
 };
 // The boards read the DOM as their modules load, so they load after it.
-const { THEMED_BOARDS } = await import("../src/themed-boards.ts");
+const { THEMED_BOARDS } = await import("../src/render/boards/themed-boards.ts");
 
 const STRENGTHS: EnemyStrength[] = ["weak", "normal", "strong", "elite", "boss", "greaterBoss"];
 const enemy = (strength: EnemyStrength, more: Partial<Enemy> = {}): Tile => ({
@@ -114,7 +114,7 @@ const TORCHES: Torch[] = [
 ];
 
 function frame(c: CanvasRenderingContext2D, reduceMotion: boolean, now: number): FrameContext {
-  const look = { mode: "tower", height: 12, seed: 7, outside: false, entranceX: 3, spritesOff: false, reduceMotion, area1: false, themed: null };
+  const look = { mode: "tower", height: 12, seed: 7, outside: false, entranceX: 3, reduceMotion, themed: null };
   return {
     left: 0, bottom: 0, n: SIZE, s: 24, c, now, dt: 0.016, dpr: 1, width: SIZE * 24, playerX: 2, playerY: 2,
     heroFacing: { dx: 1, dy: 0 }, world, look, darkness: 0, torches: TORCHES, walls, glows: [],

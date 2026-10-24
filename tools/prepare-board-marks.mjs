@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { BOARD_MARK_SPRITES } from "../src/sprite-board-marks.ts";
+import { BOARD_MARK_SPRITES } from "../src/sprites/board-marks.ts";
 const root = fileURLToPath(new URL("../", import.meta.url)), out = join(root, "public/assets/style");
 const palette = join(root, "assets/ui-sprites/palette.ppm");
 const manifest = JSON.parse(readFileSync(join(out, "manifest.json"), "utf8"));

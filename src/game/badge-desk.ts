@@ -1,6 +1,6 @@
-import { deckCards, type CardId } from "../cards.ts";
-import { attachBadge, attachConflict, copiesLeft, detachBadge, drawBadges, BADGES, ownedLevel, type BadgeDraw, type BadgeId } from "../badges.ts";
-import { researched } from "../archives.ts";
+import { deckCards, type CardId } from "../cards/cards.ts";
+import { attachBadge, attachConflict, copiesLeft, detachBadge, drawBadges, BADGES, ownedLevel, type BadgeDraw, type BadgeId } from "../cards/badges.ts";
+import { researched } from "../progression/archives.ts";
 import { stream } from "../random.ts";
 import { affordsGems } from "./desk.ts";
 import type { DeckHost } from "./deck-editor.ts";

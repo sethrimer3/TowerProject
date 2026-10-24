@@ -10,19 +10,23 @@ The snapshot suites `test:render` and `test:ui` instead build the app with `vite
 They pin the streams' start-up seeds (`__pinnedSeeds`) like the Node preload, wait for the page's HTML and a ready element rather than every image, and always close the browser and server and exit, pass or fail.
 `test:snapshots` runs both at once, each output line tagged with its suite, and fails if either does; the UI suite takes each snapshot as soon as nothing is moving (no route being walked or fight playing out, from the app's `boardBusy()` debug hook; no finite CSS animation or transition running; no tile highlight fading out) and the HTML is the same on two checks in a row, each after two real animation frames (a busy machine can delay a frame, and the next frame may still change the HTML, such as a canvas it sizes), instead of waiting a fixed time after every step.
 The render suite encodes PNGs only for frames that changed (every frame when recording), and draws a scene a second time, to catch nondeterminism, only when recording or when one of its frames no longer matches.
+`ONLY=<key prefixes>` or `ONLY=failed` runs part of either suite (`tests/golden-filter.mjs`; see goldens.md).
 
 `npm run test:proving` uses the dev server to exercise both boss entries, the three-control picker, actual tile routes without arrow buttons, hybrid overrides and resume, automatic shared difficulty and one-time Trial Points equal to the cleared difficulty.
 It also checks cards-only input authority, reloads, daily key exhaustion/refill, isolated purchases and protection of paused ordinary runs, with picker previews at 320/390/1024 pixels in `test-results/proving-grounds/`.
 
+`tests/default-art-browser.mjs` starts its own Vite server and checks a delayed required sprite, hidden gameplay until decoding completes, a fully painted first board, failed-image Retry recovery, migration from both retired art flags, persistent independent options and UI/Game theme overrides.
+It rejects any requests for the removed bitmap directories and checks every initial DOM image is loaded before reveal.
+`tests/sprite-preload.test.ts` verifies the generated inventory covers all deployed images and contains real nonempty PNGs.
+
+The UI suite allows up to 30 seconds for initial artwork decoding before the HUD becomes visible.
 The UI and render snapshot suites also accept `PLAYWRIGHT_EXECUTABLE_PATH` for an installed Chromium binary.
 `node tests/trial-props.mjs` uses the dev server (or `TEST_URL`) for trial floor-edge props at 320/1024 pixels, an actual canvas-light measurement before/after a torch goes out, beam and slime destruction, reload persistence and isolation from the ordinary Tower run.
 It loads seeded saved attempts and steps them with the real manual Wait button; screenshots go to `test-results/proving-grounds-props/`.
 `node tests/trial-sprites.mjs` also uses the dev server and verifies real trial PNG draws, literal hero/stairs texels, a deliberately delayed hero image, live Settings toggles with exact pixel restoration, independent theme gates and destruction with the kit enabled.
 It captures Sprites-enabled 320/390/1024-pixel previews in `test-results/trial-sprites/`; trial prop review fixtures enable Sprites too.
-`tests/sprite-browser.mjs` uses the dev server to check the real Sprites toggle, save/reload, mobile/desktop layouts, PNG loading and independent UI/Game theme overrides.
-`tests/sprite-options-browser.mjs` starts its own server for the Sprites child controls, focus, save/reload, mobile/desktop layout, full-tile square doors, four torch frames with stationary hardware, Reduce motion, live Renderer toggles, theme gates and failed-image fallback.
 The appended `spriteOptions` render scene captures square doors and animated torches without changing the existing scene seeds.
-The dungeon suite's literal floor/relief checks read the connected Tower paving panel, while the Node suite checks positive/negative coordinate continuity and screen-row orientation across all sixteen frames.
+The dungeon suite's literal floor/relief checks read the connected Tower paving panel, while the Node suite checks positive/negative coordinate continuity and screen-row orientation across all fifteen frames.
 `tests/tower-tier-sprites.test.ts` checks the four new Tower II/III atlas dimensions, fixed selection across biome boundaries, floor under contents, all sixteen wall joins, and exclusion from Delve and legacy rendering.
 `tests/tower-tier-sprites-browser.mjs` starts its own server for literal connected floor reconstruction, correct relief texels, corner footprints, flat black cores, atomic late loading, failed-image fallback, real phone/desktop boards, saved tiers, theme gates and exact restoration on a reused renderer.
 Its native material and board review images go to `test-results/tower-tiers/`; the appended `spriteTowerTwo` and `spriteTowerThree` scenes add ten board and drawing-call golden frames without moving earlier scene seeds.
@@ -47,11 +51,11 @@ It also exercises live badge levels, gate symbols, reveals, missing-image fallba
 It checks slider variables and actual PNG response loads rather than Chromium's unsupported computed styles for its internal thumb pseudo-element.
 
 `tests/combat-sprites-browser.mjs` starts its own server for native/enlarged PNG art and real combat Renderer frames at phone/desktop widths, complete asset loading, independent theme overrides and exact off/on/off pixel restoration.
-The appended `spriteCombat` render scene covers projectiles, shield boundaries, enemy and Target/Ignore/skip marks, live pixel lettering and opened/closed chest stars with Sprites on, without changing earlier scene seeds.
+The appended `spriteCombat` render scene covers projectiles, shield boundaries, enemy and Target/Ignore/skip marks, live pixel lettering and opened/closed chest stars with the default pixel-art kit, without changing earlier scene seeds.
 
 `tests/sprite-layout-browser.mjs` starts its own server and checks actual text/icon bounds inside HUD PNG borders at 320–1100 pixels, open menu controls, large HP/ATK/DEF/Shroud values, phone Training values/controls and actual Settings, Deck and Shop buttons.
-It also checks a packed HUD with all four limited-use items, Pathfinder, large combat stats and both XP/Shrine progress tracks, asserting the portrait stays beside inventory under full-width vitals and play/pause labels remain whole with Sprites on, off and overridden.
-It checks the real Sprites toggle, local font loading, reload and independent theme overrides.
+It also checks a packed HUD with all seven limited-use items, Pathfinder, large combat stats and both XP/Shrine progress tracks, asserting the portrait stays beside inventory under full-width vitals and play/pause labels remain whole with the default kit and alternate themes.
+It checks the default pixel-art interface, local font loading, reload and independent theme overrides.
 
 `tests/sprite-lighting-browser.mjs` compares baked lighting-mask alpha with the actual hero PNG, including a deliberately delayed image, facing changes, highlight clipping and exact toggle restoration before cache expiry.
 `tests/sprite-font.test.ts` checks the bundled WOFF2, legacy font strings and font-ready invalidation; `tests/board-marks.test.ts` checks native placement and unloaded/off fallbacks. The render suite explicitly waits for Tower Pixel before capturing kit text.
@@ -62,8 +66,8 @@ It first taps a hand card and a deck card on a touch phone: their details open o
 `tests/card-points-lesson-browser.mjs` starts its own Vite server and plays the card points lesson at phone and desktop widths: the Deck tab's numbered dot and pointing hand in the forest with everything else held, the Deck page's arrows and NEW marks, the lesson's card the only one to press, its tree held open until a point is spent, the closing note, NEW gone once a card is met, and the lesson gone after a reload.
 
 `tests/environment-sprites-browser.mjs` starts its own server, defers one water PNG, and checks literal PNG texels against the real baked pool/depth/bank pixels, unchanged pool/moss coverage, vine leaves staying out of water and immediate cache refresh.
-It reviews native/enlarged pieces and repeated materials, real phone/desktop dungeon frames, independent themes, board/decor opt-outs, exact off/on/off restoration, and palette-matched emitted light colors with unchanged light geometry.
-`tests/environment-sprites.test.ts` checks native material/plant sizes, distinct variants and exact flower/cap draw anchors; the appended `spriteEnvironment` golden walks a real wet, overgrown room with Sprites on.
+It reviews native/enlarged pieces and repeated materials, real phone/desktop dungeon frames, independent themes, decor opt-outs, exact off/on/off restoration, and palette-matched emitted light colors with unchanged light geometry.
+`tests/environment-sprites.test.ts` checks native material/plant sizes, distinct variants and exact flower/cap draw anchors; the appended `spriteEnvironment` golden walks a real wet, overgrown room with the default pixel-art kit.
 
 `tests/forest-sprites-browser.mjs` starts its own Vite server for native forest art, real Tower/Delve scenes at phone/desktop widths, independent theme gates, decoration/board opt-outs and exact off/on/off restoration.
 It delays a crown PNG to verify the atomic ground/foliage switch, tests failed foliage and landmark images, and taps the real Blacksmith, Tournament Hall, mode sign and both entrances.
@@ -84,7 +88,7 @@ It reads each atlas's actual width to validate sparse alpha coverage, clear nati
 
 `node tests/keymaster.mjs` uses the dev server for the second trial's three-control picker, dropped and collected golden keys, free/paid mimic fights, saved key reservation, four delayed door impacts and impact receipts across reloads.
 It also verifies independent first-clear progression/rewards in all controls and ordinary-run inventory protection, with 320/390/1024-pixel previews in `test-results/keymaster/`.
-The appended `keymaster` render job covers sixteen browser and drawing-call frames without moving existing scene seeds.
+The appended `keymaster` render job covers fifteen browser and drawing-call frames without moving existing scene seeds.
 
 Keymaster browser checks also exercise saved ghost teleports, one-tile mimic pursuit and boss retreat on even turns, and ten-turn reformation between door hits.
 The `keymaster` render job changes seven existing frames for moving actors/ghosts and appends seven phase/movement frames; the Light Elemental and all earlier jobs stay pinned.

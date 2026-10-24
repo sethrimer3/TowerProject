@@ -2,10 +2,10 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { inflateSync } from "node:zlib";
 import test from "node:test";
-import { DETAIL_SPRITES } from "../src/sprite-kit.ts";
-import { DecorBaker, paintKitPlant } from "../src/decor-bake.ts";
-import type { DecorSource, TileDecor } from "../src/decor.ts";
-import { drawCrates } from "../src/decor-sprites.ts";
+import { DETAIL_SPRITES } from "../src/sprites/kit.ts";
+import { DecorBaker, paintKitPlant } from "../src/render/decor/decor-bake.ts";
+import type { DecorSource, TileDecor } from "../src/render/decor/decor.ts";
+import { drawCrates } from "../src/render/decor/decor-sprites.ts";
 
 test("all shared PNGs obey the shared palette, binary transparency and native grid", () => {
   const values = readFileSync(new URL("../assets/ui-sprites/palette.ppm", import.meta.url), "utf8")

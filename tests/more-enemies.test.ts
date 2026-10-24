@@ -1,14 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { decode, defaults } from "../src/save.ts";
-import { UPGRADES } from "../src/config.ts";
+import { decode } from "../src/save/save.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { World, delveExtras } from "../src/delve/world.ts";
 import { region } from "../src/delve/labyrinth.ts";
-import { attachBadge, BADGES, decodeBadges, fitsCard, MAX_COPIES, validRunBadges, type BadgesSave } from "../src/badges.ts";
-import { addEnemies, extraEnemies, extrasSeed, type ExtraEnemies, type ExtraFloor } from "../src/more-enemies.ts";
+import { attachBadge, BADGES, decodeBadges, fitsCard, MAX_COPIES, validRunBadges, type BadgesSave } from "../src/cards/badges.ts";
+import { addEnemies, extraEnemies, extrasSeed, type ExtraEnemies, type ExtraFloor } from "../src/enemies/more-enemies.ts";
 import { point, type Enemy, type Tile } from "../src/entities.ts";
+import { playedSave } from "./first-skills.ts";
 
 const enemy = (strength: Enemy["strength"]): Enemy => ({ name: strength, hp: 10, attack: 2, defense: 1, tier: 0, strength });
 const TILES: Record<string, Tile> = {
@@ -56,7 +56,7 @@ test("it sits only on a monster card, and a swap that would put it elsewhere tak
   assert.ok(attachBadge(m, "moreEnemies", "weakEnemy"));
   assert.ok(attachBadge(m, "moreEnemies", "monster"));
   assert.deepEqual(m.cards, { monster: ["moreEnemies"], weakEnemy: ["hp"] }, "between monster cards it swaps");
-  const saved = decodeBadges({ owned: m.owned, cards: { door: ["moreEnemies"], monster: ["hp"] } }, UPGRADES);
+  const saved = decodeBadges({ owned: m.owned, cards: { door: ["moreEnemies"], monster: ["hp"] } }, playedSave().upgrades);
   assert.deepEqual(saved.cards, { monster: ["hp"] }, "a save with it on DOOR drops it");
   assert.equal(validRunBadges({ door: [{ id: "moreEnemies", level: 1, pick: 0 }] }), false);
 });
@@ -159,7 +159,7 @@ test("in the Delve each equivalent floor counts its own enemies and takes its ow
 });
 
 test("a run with the badge on MONSTER climbs floors holding more enemies, kept through a reload", () => {
-  const save = defaults();
+  const save = playedSave();
   save.tutorials.climb = true;
   save.upgrades.cardBadges = 1;
   save.hand = ["stairs", "monster", "heal", "door"];
@@ -181,7 +181,7 @@ test("a run with the badge on MONSTER climbs floors holding more enemies, kept t
 });
 
 test("Dev mode owns More Enemies at the top level", () => {
-  const g = new Game(defaults());
+  const g = new Game(playedSave());
   g.setDevMode(true);
   assert.equal(g.save.badges.owned.moreEnemies?.copies, MAX_COPIES);
 });

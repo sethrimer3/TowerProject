@@ -1,13 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { reachable } from "../src/board.ts";
-import { TOWER_START_X, WIDTH, xpForLevel } from "../src/config.ts";
+import { TOWER_START_X, WIDTH } from "../src/config.ts";
+import { xpForLevel } from "../src/progression/xp.ts";
 import { point, type EnemyStrength, type Tile, type EnemyProfile } from "../src/entities.ts";
 import { region } from "../src/delve/labyrinth.ts";
 import { generateTowerFloor, isBossFloor } from "../src/tower/index.ts";
-import { getTowerGateEnemy } from "../src/scaling.ts";
-import { defaults } from "../src/save.ts";
-import { loadout } from "../src/loadout.ts";
+import { getTowerGateEnemy } from "../src/enemies/scaling.ts";
+import { defaults } from "../src/save/save.ts";
+import { loadout } from "../src/progression/loadout.ts";
 import { predict } from "../src/combat.ts";
 
 // A boss guards the way up at the end of every ten floors: beside the stairs

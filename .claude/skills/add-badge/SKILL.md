@@ -5,15 +5,15 @@ description: Add a new card badge to Tower Delve (a token drawn for Gems and att
 
 # Add a card badge
 
-A badge is one row in `BADGES` (`src/badges.ts`) plus whatever its effect needs elsewhere. The user usually describes its effect with an example or two, and that leaves the effect on most cards undefined. So the work goes **read → questions → spec → build**, with the user answering between each stage. Code changes start once the user approves the spec.
+A badge is one row in `BADGES` (`src/cards/badges.ts`) plus whatever its effect needs elsewhere. The user usually describes its effect with an example or two, and that leaves the effect on most cards undefined. So the work goes **read → questions → spec → build**, with the user answering between each stage. Code changes start once the user approves the spec.
 
 ## 1. Read the badge system
 
 Read these as they are now. They change often, so trust the files over this list:
 
-- `src/badges.ts`: `BADGES` (rarity, `kind`: `reward` / `gate` / `aim`, glyph, colour, `values` for levels 1–7, `text`, `unit`, `lead`, `unlock`, a gate's `sign`), `RARITY_WEIGHTS`, `COPIES_FOR_LEVEL`, `badgeValue`, `runBadges`, `decodeBadges`.
-- `src/cards.ts`: `CARDS` (each card's target), `CardRules` and how `planHand` reads it, `IN_PLACE` cards.
-- `src/hand-rules.ts` (`HandRules`): `cardRules(card)` (planning), `floor` (the floor badges count by), `cooled` / `markUsed` (cooldowns by floor, in `run.badgeFloors`), the skipped-tile marks (`run.skipped`), Deprioritize's marks, Skip's stream, `scaleOf`, and `canAct` for cards that act in place; `tests/hand-rules.test.ts` tests it without a `Game`.
+- `src/cards/badges.ts`: `BADGES` (rarity, `kind`: `reward` / `gate` / `aim`, glyph, colour, `values` for levels 1–7, `text`, `unit`, `lead`, `unlock`, a gate's `sign`), `RARITY_WEIGHTS`, `COPIES_FOR_LEVEL`, `badgeValue`, `runBadges`, `decodeBadges`.
+- `src/cards/cards.ts`: `CARDS` (each card's target), `CardRules` and how `planHand` reads it, `IN_PLACE` cards.
+- `src/cards/hand-rules.ts` (`HandRules`): `cardRules(card)` (planning), `floor` (the floor badges count by), `cooled` / `markUsed` (cooldowns by floor, in `run.badgeFloors`), the skipped-tile marks (`run.skipped`), Deprioritize's marks, Skip's stream, `scaleOf`, and `canAct` for cards that act in place; `tests/hand-rules.test.ts` tests it without a `Game`.
 - `src/state.ts`: `handTurn` (the turn that asks `handRules`) and `setDevMode` (the Dev grant).
 - `src/game/card-activation.ts`: `CardActivation.activate(card, key)` / `payBadge` (rewards when the card reaches its target).
 - `src/step-effects.ts` (`resolveStep`, `StepRules`): any badge that changes what a step does to the hero goes here, so previews, the planners and Automove agree.

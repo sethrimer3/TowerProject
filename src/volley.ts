@@ -7,18 +7,18 @@
  * lands the tick it fires, so an enemy an arrow fells shoots no more that
  * turn, and the shot that fells the hero ends it. A shot the hero lives
  * through costs its shooter the hero's thorns, which may fell it. The rules of one shot
- * live in ranged.ts; this module plays a whole turn of them, in order, on
+ * live in enemies/ranged.ts; this module plays a whole turn of them, in order, on
  * the board, and says what happened. `Game` decides whether a turn has a
  * volley at all and applies the outcome (the hero's HP, kill pay, a fall). */
 import type { Board } from "./board.ts";
 import type { ByFoe, Enemy, Player } from "./entities.ts";
-import type { Save } from "./save-shape.ts";
+import type { Save } from "./save/shape.ts";
 import { critAgainst, facing, guaranteedCrits, isBoss, stealCeiling, thornDamage } from "./combat.ts";
-import { critRule } from "./loadout.ts";
-import { foeAttack } from "./foe-cards.ts";
-import { trainedAmount } from "./config.ts";
-import { researched } from "./archives.ts";
-import { archerClock, archerState, archerTick, arrowBoost, arrowDamage, arrowRange, charged, enemiesWithin, FOE_REACH, foeGain, foeOn, foeShotCost, foeTickGain, held, reachTicks, shoots, shotDamage, spent, TURN_TICKS, type InReach, type Volleys } from "./ranged.ts";
+import { critRule } from "./progression/loadout.ts";
+import { foeAttack } from "./cards/foe-cards.ts";
+import { trainedAmount } from "./progression/training.ts";
+import { researched } from "./progression/archives.ts";
+import { archerClock, archerState, archerTick, arrowBoost, arrowDamage, arrowRange, charged, enemiesWithin, FOE_REACH, foeGain, foeOn, foeShotCost, foeTickGain, held, reachTicks, shoots, shotDamage, spent, TURN_TICKS, type InReach, type Volleys } from "./enemies/ranged.ts";
 import { tileRandom } from "./random.ts";
 import { snap } from "./exact.ts";
 
@@ -61,7 +61,7 @@ export const volleyOver = (volley: Volley, now: number) => volley.shots.every((s
  * its arrows read (and the card trees' percents on Crit % and Crit x,
  * `cardCrit`), and the percent more Shot ATK and Attack Speed the
  * hand's cards give while held, and the percent more ATK their arrows
- * strike a boss or Greater Boss with (`handBonus` in cards.ts), each with
+ * strike a boss or Greater Boss with (`handBonus` in cards/cards.ts), each with
  * the card trees' added, and the trees' percent more Attack Range for the
  * arrows (`range`) and Charged Shot (`charge`, and the enemy cards' by
  * card against theirs, `foeCharge`); none when absent. */

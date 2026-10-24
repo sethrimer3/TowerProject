@@ -1,5 +1,5 @@
-import type { CardId } from "../cards.ts";
-import { CARD_TREES, nodeLevel, nodeOpen, pointsLeft, pointsSpent, raiseNode, raiseRefusal, RESPEC_GEMS, treeNode, type RaiseRefusal } from "../card-trees.ts";
+import type { CardId } from "../cards/cards.ts";
+import { CARD_TREES, nodeLevel, nodeOpen, pointsLeft, pointsSpent, raiseNode, raiseRefusal, RESPEC_GEMS, treeNode, type RaiseRefusal } from "../cards/trees.ts";
 import { affordsGems, type DeskHost } from "./desk.ts";
 
 /** Why a card tree command was refused: one of `RaiseRefusal`'s, or
@@ -10,7 +10,7 @@ export type TreeRefusal = RaiseRefusal | "inside";
  * (`none`), or too few Gems (`short`, which asks for Gems). */
 export type RespecRefusal = "inside" | "none" | "short";
 
-/** The card trees' commands (card-trees.ts): spending a card's points on
+/** The card trees' commands (cards/trees.ts): spending a card's points on
  * its tree's nodes, and a respec, which gives them all back for
  * `RESPEC_GEMS`. Both happen in the forest only. */
 export class CardTreeDesk {

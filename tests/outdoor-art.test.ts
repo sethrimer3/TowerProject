@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import { createHash, type Hash } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { random } from "../src/random.ts";
-import { OutdoorWeather } from "../src/weather.ts";
-import { OutsideWorld, OUTSIDE_SIZE, drawEntrance, drawForestTile, outsideSpriteKind, outsideWeather } from "../src/outside.ts";
-import { glowColor, torchLightField } from "../src/torch-light.ts";
+import { OutdoorWeather } from "../src/render/weather.ts";
+import { OutsideWorld, OUTSIDE_SIZE, drawEntrance, drawForestTile, onPath, outsideWeather } from "../src/outside.ts";
+import { glowColor, torchLightField } from "../src/render/torch-light.ts";
 import { computeVisibilityPolygon } from "../src/torches.ts";
 import type { Tile } from "../src/entities.ts";
 
@@ -103,7 +103,7 @@ function forest(seed: number, mode: "tower" | "delve") {
         const tile = { kind } as Tile;
         h.update(`tile ${x},${y},${kind}\n`);
         const spot = { x, y, seed, center: world.entranceX };
-        drawn.push(drawForestTile(c, tile, spot, (x + y) % 2 === 0), outsideSpriteKind(tile, spot));
+        drawn.push(drawForestTile(c, tile, spot), onPath(spot));
       }
     }
   for (const center of [world.entranceX, 3, 11]) drawEntrance(c, mode, center);

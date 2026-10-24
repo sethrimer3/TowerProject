@@ -1,6 +1,6 @@
 import type { BoonId } from "../shrines.ts";
-import { BOON_SPRITES } from "../sprite-boons.ts";
-import { kitIcon } from "../sprite-kit.ts";
+import { BOON_SPRITES } from "../sprites/boons.ts";
+import { kitIcon } from "../sprites/kit.ts";
 
 /** Icons supplement live boon descriptions only in the loaded PNG look.
  * With another theme, Sprites off or a failed request, the original text

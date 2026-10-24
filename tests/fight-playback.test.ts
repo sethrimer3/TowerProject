@@ -1,15 +1,15 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { bout, heroHpDuring, predict, raisedAttack, REVIVE_MS, summarize } from "../src/combat.ts";
-import { BoardPopups, enemyBar, lunges } from "../src/board-popups.ts";
-import { HEAL_COLOR } from "../src/damage-labels.ts";
-import { Renderer } from "../src/rendering.ts";
+import { BoardPopups, enemyBar, lunges } from "../src/render/board-popups.ts";
+import { HEAL_COLOR } from "../src/render/effects/damage-labels.ts";
+import { Renderer } from "../src/render/rendering.ts";
 import { unlockAt } from "../src/goals.ts";
 import type { Enemy, Player, Tile } from "../src/entities.ts";
-import type { FrameContext } from "../src/render-frame.ts";
+import type { FrameContext } from "../src/render/render-frame.ts";
 
 /** The damage and heal numbers rising off the board. */
 const numbers = (popups: BoardPopups) =>

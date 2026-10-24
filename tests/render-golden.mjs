@@ -1,5 +1,5 @@
 // Characterization screenshots for the board renderer. The fixed scenes of
-// tests/render-scenes.ts (Tower, dim Tower, Delve, sprites off, outside,
+// tests/render-scenes.ts (Tower, dim Tower, Delve, outside,
 // reduced motion, and decor: a crate stepped on, a pool waded into, tall grass
 // walked through; plus the Defend board in building mode, a rainy battle, a
 // night boss wave and a stormy night zoomed in, and its palette icons) are
@@ -14,16 +14,20 @@
 // current ones to test-results/render/, with a pixel-difference count for any
 // mismatch. It runs against the snapshot build through `vite preview`
 // (tests/snapshot-preview.mjs; `npm run test:render` builds it first).
+// ONLY=<key prefixes> (or ONLY=failed) draws only the scenes that can make a
+// matching frame and compares or records only those (tests/golden-filter.mjs).
 import { chromium } from "@playwright/test";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { bounded, startPreview } from "./snapshot-preview.mjs";
 import { fixClock } from "./fixed-clock.mjs";
+import { goldenFilter, NOTHING_MATCHED } from "./golden-filter.mjs";
 
 const UPDATE = process.env.UPDATE_GOLDEN === "1";
 const GOLDEN = new URL("./fixtures/render.golden.json", import.meta.url);
 const BASELINE_DIR = "test-results/render-golden";
 const OUT_DIR = "test-results/render";
+const filter = goldenFilter("render");
 
 const server = await startPreview(4180);
 const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH } : { channel: process.env.PLAYWRIGHT_CHANNEL || "msedge" }) });
@@ -63,8 +67,9 @@ try {
 
   // The recorded hashes, so the page encodes PNGs and redraws scenes only
   // where they are needed; none when recording.
-  const recorded = UPDATE || !existsSync(GOLDEN) ? null : JSON.parse(readFileSync(GOLDEN, "utf8"));
-  const shots = await page.evaluate(async (recorded) => {
+  const golden = existsSync(GOLDEN) ? JSON.parse(readFileSync(GOLDEN, "utf8")) : null;
+  const recorded = UPDATE ? null : golden;
+  const drawn = await page.evaluate(async ([recorded, prefixes]) => {
     const { JOBS } = await import("/snapshot/render-scenes.js");
 
     const board = document.createElement("canvas");
@@ -107,6 +112,8 @@ try {
     const results = {};
     for (const job of JOBS) {
       const { name } = job, run = () => capture(job);
+      // A filtered run skips scenes none of whose frames it asked for.
+      if (prefixes && !prefixes.some((p) => name.startsWith(p) || p.startsWith(name))) continue;
       // Art loads asynchronously, and a scene may only ask for some of it
       // partway through. A capture counts once every image was settled before
       // it began and it asked for no new ones: then all its art was drawn.
@@ -135,7 +142,8 @@ try {
     board.remove();
     defendCanvas.remove();
     return results;
-  }, recorded);
+  }, [recorded, filter.prefixes]);
+  const shots = filter.pick(drawn);
 
   const png = (dataUrl) => Buffer.from(dataUrl.split(",")[1], "base64");
   const hashes = Object.fromEntries(Object.entries(shots).map(([k, v]) => [k, v.hash]));
@@ -145,14 +153,19 @@ try {
   mkdirSync(OUT_DIR, { recursive: true });
   for (const [k, v] of Object.entries(shots)) if (v.png) writeFileSync(`${OUT_DIR}/${k}.png`, png(v.png));
 
-  if (!recorded) {
+  if (filter.active && !filter.checked(golden ?? {}, hashes).length) {
+    console.error(`No render frames${filter.describe}.`);
+    exitCode = NOTHING_MATCHED;
+  } else if (!recorded) {
     mkdirSync(BASELINE_DIR, { recursive: true });
     for (const [k, v] of Object.entries(shots)) writeFileSync(`${BASELINE_DIR}/${k}.png`, png(v.png));
-    writeFileSync(GOLDEN, JSON.stringify(hashes, null, 2) + "\n");
-    console.log(`Wrote ${Object.keys(hashes).length} render hashes to the golden file.`);
+    writeFileSync(GOLDEN, JSON.stringify(filter.merge(golden ?? {}, hashes), null, 2) + "\n");
+    filter.recordFailures(Object.keys(hashes), []);
+    console.log(`Wrote ${Object.keys(hashes).length} render hashes${filter.describe} to the golden file.`);
   } else {
-    const golden = recorded;
-    const changed = Object.keys({ ...golden, ...hashes }).filter((k) => golden[k] !== hashes[k]);
+    const checked = filter.checked(golden, hashes);
+    const changed = checked.filter((k) => golden[k] !== hashes[k]);
+    filter.recordFailures(checked, changed);
     for (const k of changed) {
       const base = `${BASELINE_DIR}/${k}.png`;
       let detail = "no local baseline PNG to compare";
@@ -177,10 +190,10 @@ try {
     if (changed.length) {
       throw Error(`${changed.length} render frames changed; see ${OUT_DIR}/ vs ${BASELINE_DIR}/`);
     }
-    console.log(`All ${Object.keys(hashes).length} render frames match the golden hashes (${createHash("sha256").update(JSON.stringify(hashes)).digest("hex").slice(0, 8)}).`);
+    console.log(`All ${Object.keys(hashes).length} render frames${filter.describe} match the golden hashes (${createHash("sha256").update(JSON.stringify(hashes)).digest("hex").slice(0, 8)}).`);
   }
   if (errors.length) throw Error(errors.join("\n"));
-  exitCode = 0;
+  if (exitCode !== NOTHING_MATCHED) exitCode = 0;
 } catch (error) {
   console.error(error);
   exitCode = 1;

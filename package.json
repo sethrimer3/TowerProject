@@ -4,9 +4,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "tiles:area1": "node tools/generate-area1-tiles.mjs",
-    "tiles:outside": "node tools/generate-outside-tiles.mjs",
-    "cards:stubs": "node tools/generate-card-stubs.mjs",
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1",
@@ -20,7 +17,9 @@
     "test:snapshots": "vite build --mode snapshot && node tests/snapshot-suites.mjs",
     "test:proving": "node tests/proving-grounds.mjs",
     "test:pointer": "node tests/defend-pointer.mjs",
-    "test:browser": "node tests/browser.mjs && node tests/interactions.mjs && node tests/camera.mjs && node tests/skill-trees.mjs && node tests/outside.mjs && node tests/progression.mjs && node tests/mode-tabs.mjs && node tests/cinematic.mjs"
+    "test:browser": "node tests/browser.mjs && node tests/interactions.mjs && node tests/camera.mjs && node tests/skill-trees.mjs && node tests/outside.mjs && node tests/progression.mjs && node tests/mode-tabs.mjs && node tests/cinematic.mjs",
+    "sprites:manifest": "node tools/build-sprite-manifest.mjs",
+    "prebuild": "node tools/build-sprite-manifest.mjs"
   },
   "devDependencies": {
     "typescript": "~5.9.3",

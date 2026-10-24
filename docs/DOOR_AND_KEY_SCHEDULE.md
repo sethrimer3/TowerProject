@@ -102,7 +102,7 @@ What changes in the code:
 - **Door rule** (`entities.ts`, `doors.ts`): a new `{ type: "wood"; durability: number }` takes the steel rule's place in generation (the steel rule, `keys: all three, mode: "any"`, still works but nothing places it). `doorCost` returns the key, or none when the hero would survive breaking it (a caller passing no HP, like the floor analyzer, counts it as breakable). `resolveStep` (`step-effects.ts`) takes the HP. Every other caller reads it from there.
 - **Planning** (`tower/types.ts`, furnisher, forks, analyzer): the gate `steel` becomes `wood`. The analyzer's map shows `W`.
 - **Card and skill**: the STEEL DOOR card and its skill (`cardSteelDoor` in `config.ts`) become WOODEN DOOR. It heads for a wooden door the hero holds a key for or can break without dying. The renamed ids drop the old card from saved hands. During the prototype phase old saves don't need to convert.
-- **Art**: a new wooden-door sprite (`public/assets/doors/door_wood.png`, replacing `door_steel.png`), a wooden painter in `tile-painters.ts`, and a neon look.
+- **Art**: a new wooden-door sprite (`public/assets/doors/door_wood.png`, replacing `door_steel.png`), a wooden painter in `render/tile-painters.ts`, and a neon look.
 - **The Delve**: its steel gates become wooden doors with durability from the Delve's own enemy curve. Since phase 5 the wooden share decides how many (section 6).
 
 ## 4. Key supply
@@ -254,7 +254,7 @@ Doors placed (alone plus in forks) track the schedule. About 0.2 a floor is drop
 - **Where they stand:**
   - **Tower:** the doorway, then the tile just inside the region it opens, then (a run of three) the tile just outside in the parent's chamber. The doorway is the only way between those two tiles, so neither can be walked round. They're laid after the chambers are furnished (`layRuns`), only on open floor that keeps its chamber in one piece and stands by no other doorway, the entrance or the stairs. A door that finds no place stays owed. About 9 run doors in 10 find their tile.
   - **Delve:** the next single-width tiles of the same throat or corridor.
-- **The hand:** the door cards head for a run only while the hero can pay for every door of it (`paysRun` in `cards.ts`), so a hand never spends keys on a run it would stop partway through.
+- **The hand:** the door cards head for a run only while the hero can pay for every door of it (`paysRun` in `cards/cards.ts`), so a hand never spends keys on a run it would stop partway through.
 
 Measured (`--towers 1,9 --floors 1-1000 --band 200 --seeds 4 --stride 7`), wanted against standing (alone plus fork):
 

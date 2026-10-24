@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { decode, defaults } from "../src/save.ts";
-import { SETTINGS, settingValue, type Setting, type SettingKey } from "../src/settings.ts";
+import { decode, defaults } from "../src/save/save.ts";
+import { SETTINGS, settingValue, type Setting, type SettingKey } from "../src/save/settings.ts";
 
 const rows = Object.entries(SETTINGS) as [SettingKey, Setting][];
 const decoded = (settings: unknown) => decode(JSON.stringify({ version: 3, settings })).settings;
@@ -21,15 +21,13 @@ test("every setting defaults to a value its own row allows", () => {
   for (const [key, row] of rows) assert.equal(settingValue(row, d[key]), d[key], key);
 });
 
-test("UI sprites are opt-in for new and older saves, independent of board sprites", () => {
-  assert.equal(defaults().settings.uiSprites, false);
-  assert.equal(decoded({}).uiSprites, false);
-  assert.equal(decoded({ uiSprites: "true" }).uiSprites, false);
-  for (const spritesOff of [true, false]) {
-    const s = decoded({ uiSprites: true, spritesOff });
-    assert.equal(s.uiSprites, true);
-    assert.equal(s.spritesOff, spritesOff);
-    assert.equal(decoded({ ...s, uiSprites: false }).uiSprites, false);
+test("retired sprite switches are discarded without losing animation or door preferences", () => {
+  for (const uiSprites of [false, true]) for (const spritesOff of [false, true]) {
+    const s = decoded({ uiSprites, spritesOff, spriteAnimations: true, squareDoors: true });
+    assert.equal("uiSprites" in s, false);
+    assert.equal("spritesOff" in s, false);
+    assert.equal(s.spriteAnimations, true);
+    assert.equal(s.squareDoors, true);
   }
 });
 
@@ -62,8 +60,9 @@ test("no setting's control shares an id with the page shell's", async () => {
   }
 });
 
-test("an older save's one item toggle, turned off, turns off ATK, DEF, HP and keys", () => {
-  const s = decoded({ itemGains: false, keyGains: true });
-  assert.deepEqual([s.attackGains, s.defenseGains, s.hpGains, s.keyGains], [false, false, false, true]);
-  assert.equal(decoded({ itemGains: true }).attackGains, true);
+test("a save with a dev section setting on opens with Dev Mode on, which grants nothing", () => {
+  assert.equal(decoded({}).devTools, false);
+  assert.equal(decoded({ devMode: true }).devTools, true);
+  assert.equal(decoded({ freePurchases: true }).devTools, true);
+  assert.equal(decoded({ devTools: true }).devMode, false);
 });

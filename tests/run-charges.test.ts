@@ -1,18 +1,19 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { decode, defaults } from "../src/save.ts";
+import { decode, defaults } from "../src/save/save.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { chargesLeft, chargesPerRun, climbFloor, floorsToRegain, regainEvery } from "../src/run-charges.ts";
-import { RESEARCH, researched } from "../src/archives.ts";
-import { cost } from "../src/config.ts";
-import { skillAvailable } from "../src/skill-trees.ts";
+import { RESEARCH, researched } from "../src/progression/archives.ts";
+import { cost } from "../src/progression/upgrades.ts";
+import { skillAvailable } from "../src/progression/skill-trees.ts";
 import type { Run } from "../src/runs.ts";
+import { playedSave } from "./first-skills.ts";
 
 /** A Tower floor of open tiles, `size` a side, the hero in the corner and
  * the stairs opposite, with the skills `owned`. */
-function arena(size: number, ...owned: ("ignore" | "target" | "focus" | "refocus")[]) {
-  const g = new Game(defaults());
+function arena(size: number, ...owned: ("ignore" | "target")[]) {
+  const g = new Game(playedSave());
   for (const id of owned) g.save.upgrades[id] = 1;
   const w = g.world as RoomWorld;
   w.cells = new Map();
@@ -23,13 +24,13 @@ function arena(size: number, ...owned: ("ignore" | "target" | "focus" | "refocus
   return g;
 }
 
-test("the five new Courage skills cost 20 Courage each and sit below Interest's row", () => {
+test("the four charge skills cost 20 Courage each and sit below Interest's row", () => {
   const save = defaults();
-  for (const id of ["refocus", "ignore", "ignoreMore", "target", "targetMore"] as const) {
+  for (const id of ["ignore", "ignoreMore", "target", "targetMore"] as const) {
     assert.equal(cost(id, 0), 20, id);
     assert.equal(skillAvailable(id, save.upgrades), false, `${id} waits on the skills above it`);
   }
-  Object.assign(save.upgrades, { delve: 1, moveSpeed: 1, focus: 1, findYellowKey: 1, keyEfficiency: 1, interest: 1 });
+  Object.assign(save.upgrades, { delve: 1, moveSpeed: 1, bombs: 1, findYellowKey: 1, keyEfficiency: 1, interest: 1 });
   assert.ok(skillAvailable("ignore", save.upgrades));
   assert.equal(skillAvailable("ignoreMore", save.upgrades), false);
   save.upgrades.ignore = 1;
@@ -38,7 +39,7 @@ test("the five new Courage skills cost 20 Courage each and sit below Interest's 
 
 test("the charges' research: counts to 10 and 5 uses, and regains down to every 10 floors in about 2.8 years", () => {
   const years = (id: keyof typeof RESEARCH) => RESEARCH[id].levels.reduce((h, l) => h + l.hours, 0) / 24 / 365;
-  for (const [id, target, growth, cubic] of [["refocus", "refocusFloors", 1, 8], ["ignoreMore", "ignoreFloors", 1.05, 0], ["targetMore", "targetFloors", 1.1, 0]] as const) {
+  for (const [id, target, growth, cubic] of [["ignoreMore", "ignoreFloors", 1.05, 0], ["targetMore", "targetFloors", 1.1, 0]] as const) {
     const levels = RESEARCH[id].levels;
     assert.equal(levels.length, 90, id);
     assert.equal(researched({ ...defaults().archives, levels: { [id]: 90 } }, target), 10, `${id} reaches every 10 floors`);
@@ -50,37 +51,37 @@ test("the charges' research: counts to 10 and 5 uses, and regains down to every 
   assert.deepEqual(RESEARCH.targetCount.levels.map((l) => l.gold), [10_000_000, 100_000_000, 1_000_000_000, 10_000_000_000]);
   assert.equal(researched({ ...defaults().archives, levels: { targetCount: 4 } }, "targetPerRun"), 5);
   assert.equal(researched({ ...defaults().archives, levels: { ignoreCount: 9 } }, "ignorePerRun"), 10);
-  const ignore = RESEARCH.ignoreCount.levels.map((l) => l.gold), focus = RESEARCH.focusCount.levels.map((l) => l.gold);
+  const ignore = RESEARCH.ignoreCount.levels.map((l) => l.gold), undo = RESEARCH.undoCount.levels.map((l) => l.gold);
   for (let i = 1; i < ignore.length; i++) {
-    assert.ok(ignore[i] / ignore[i - 1] > focus[i] / focus[i - 1], "steeper than Focus Count");
+    if (i < undo.length) assert.ok(ignore[i] / ignore[i - 1] > undo[i] / undo[i - 1], "steeper than Undo Count");
     assert.ok(ignore[i] / ignore[i - 1] < 10, "less steep than Target Count");
   }
 });
 
 test("a charge regains a use every so many new floors while below full, its count waiting while full", () => {
-  const save = defaults(), run = { focusUsed: 1 } as Run;
-  save.upgrades.focus = 1;
-  assert.equal(regainEvery(save, "focus"), 0, "nothing regains without Refocus");
+  const save = defaults(), run = { ignoreUsed: 1 } as Run;
+  save.upgrades.ignore = 1;
+  assert.equal(regainEvery(save, "ignore"), 0, "nothing regains without Ignore More");
   assert.deepEqual(climbFloor(save, run), []);
   assert.equal(run.regain, undefined);
-  save.upgrades.refocus = 1;
-  save.archives.levels.refocus = 88; // every 12 floors
-  assert.equal(regainEvery(save, "focus"), 12);
-  for (let i = 0; i < 11; i++) assert.deepEqual(climbFloor(save, run), []);
-  assert.equal(floorsToRegain(save, run, "focus"), 1);
-  assert.deepEqual(climbFloor(save, run), ["focus"]);
-  assert.equal(chargesLeft(save, run, "focus"), 1);
-  assert.equal(run.regain?.focus, undefined);
-  climbFloor(save, run);
-  assert.equal(run.regain?.focus, undefined, "a full charge counts no floors");
-  assert.equal(floorsToRegain(save, run, "focus"), null);
-  // Ignore and Target regain the same way, with their own skills.
-  save.upgrades.ignore = 1;
   save.upgrades.ignoreMore = 1;
-  run.ignoreUsed = 1;
+  save.archives.levels.ignoreMore = 88; // every 12 floors
+  assert.equal(regainEvery(save, "ignore"), 12);
+  for (let i = 0; i < 11; i++) assert.deepEqual(climbFloor(save, run), []);
+  assert.equal(floorsToRegain(save, run, "ignore"), 1);
+  assert.deepEqual(climbFloor(save, run), ["ignore"]);
+  assert.equal(chargesLeft(save, run, "ignore"), 1);
+  assert.equal(run.regain?.ignore, undefined);
   climbFloor(save, run);
-  assert.equal(run.regain?.ignore, 1);
+  assert.equal(run.regain?.ignore, undefined, "a full charge counts no floors");
+  assert.equal(floorsToRegain(save, run, "ignore"), null);
+  // Target regains the same way, with its own skills.
   assert.equal(chargesPerRun(save, "target"), 0, "no Target uses without the skill");
+  save.upgrades.target = 1;
+  save.upgrades.targetMore = 1;
+  run.targetUsed = 1;
+  climbFloor(save, run);
+  assert.equal(run.regain?.target, 1);
 });
 
 test("Ignore marks a tile no card steps on for the rest of the floor, for one use", () => {
@@ -159,10 +160,11 @@ test("Target goes round a tile ignored on the path it committed to", () => {
   assert.deepEqual([g.run.player.x, g.run.player.y], [1, 1]);
 });
 
-test("climbing a new floor counts toward Refocus once a Focus use is spent", () => {
-  const g = arena(3, "focus", "refocus");
-  g.run.focusUsed = 1;
+test("climbing a new floor counts toward Ignore More once an Ignore use is spent", () => {
+  const g = arena(3, "ignore");
+  g.save.upgrades.ignoreMore = 1;
+  g.run.ignoreUsed = 1;
   for (let i = 0; i < 6 && g.run.height === 0; i++) g.autoTurn();
   assert.equal(g.run.height, 1);
-  assert.equal(g.run.regain?.focus, 1);
+  assert.equal(g.run.regain?.ignore, 1);
 });

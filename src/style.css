@@ -1016,13 +1016,37 @@ canvas {
   transform: rotate(180deg);
   animation: forest-point-down 1s ease-in-out infinite;
 }
-/* The card points lesson's hand points down at the Deck tab from above. */
-.forest-pointer.cards {
+/* The card points lesson's hand points down at the Deck tab from above,
+   the Inspiration lesson's at the Upgrades tab, on the Upgrades page,
+   once a first skill is bought, at the Tower tab, the training lesson's
+   at the Research tab, and the provisions lesson's at the Gear tab. */
+.forest-pointer.cards,
+.forest-pointer.trainingPoints,
+.forest-pointer.upgrades,
+.forest-pointer.back,
+.forest-pointer.provisions {
   bottom: calc(100% + 2px);
   left: 50%;
   margin-left: -13px;
   transform: rotate(180deg);
   animation: forest-point-down 1s ease-in-out infinite;
+}
+/* Inside a run the hand points down onto the card to press, over its
+   top half (the hand row clips anything above it). */
+.forest-pointer.climb,
+.forest-pointer.keys {
+  top: 2px;
+  left: 50%;
+  width: 22px;
+  margin-left: -11px;
+  transform: rotate(180deg);
+  animation: forest-point-down 1s ease-in-out infinite;
+}
+/* While the stuck lessons wait, End Run pulses slowly until it is pressed. */
+#stuck-end-run.lesson-flash { animation: lesson-flash 2s ease-in-out infinite; }
+@keyframes lesson-flash {
+  0%, 100% { box-shadow: 0 0 4px 1px #c8453c; filter: brightness(1); }
+  50% { box-shadow: 0 0 16px 6px #ff7a6e; filter: brightness(1.45); }
 }
 @keyframes forest-point-up {
   0%, 100% { transform: translateY(6px); }
@@ -1036,6 +1060,7 @@ canvas {
 @media (prefers-reduced-motion: reduce) {
   .forest-pointer { animation: none; }
 }
+html.reduce-motion #stuck-end-run.lesson-flash { animation: none; }
 .mini-action.enabled {
   border-color: #b59861;
   color: #ecd19d;
@@ -1629,11 +1654,12 @@ dialog > small {
   border-bottom: 1px solid #2c3746;
   font-size: 12px;
 }
-.setting.sprite-option {
+
+/* The Settings page's dev section, under Dev Mode while it is on. */
+.dev-section {
   margin-left: 16px;
   padding-left: 12px;
   border-left: 2px solid #3e4c59;
-  min-height: 52px;
 }
 /* The Settings page's buttons into the UI and Game theme menus. */
 .theme-buttons {
@@ -2318,6 +2344,21 @@ nav {
 .tree-help { display: inline-grid; place-items: center; width: 22px; height: 22px; min-height: 0; margin-left: 8px; padding: 0; border-radius: 50%; font: inherit; font-size: 13px; font-weight: 700; vertical-align: 1px; color: var(--tree-color, #e5d5b8); }
 .tree-heading p, .tree-lock { font-size: 11px; color: #a3afbc; text-align: center; line-height: 1.7; }
 .tree-lock { border: 1px solid #38414b; padding: 9px; }
+/* The Inspiration tree's lesson on a new game's first skills, over the
+   tree, and its hand pointing at the node to buy. */
+.tree-lesson { border: 1px solid #d6ae68; border-radius: 8px; background: linear-gradient(135deg, #222c3a, #101823); padding: 8px 12px; margin: 0 0 8px; color: #efd496; font-size: 13px; line-height: 1.5; text-align: center; }
+.tree-lesson b { display: block; font-weight: inherit; }
+.tree-lesson p { margin: 4px 0 0; font-size: 12px; line-height: 1.6; color: #c3cedd; }
+/* It points left at the node from its right, so a node in the tree's first
+   row doesn't push it out of the viewport's top. */
+.tree-pointer { position: absolute; top: 50%; left: calc(100% + 6px); width: 24px; margin-top: -12px; z-index: 3; pointer-events: none; filter: drop-shadow(0 2px 2px #000c); transform: rotate(-90deg); animation: tree-point-left 1s ease-in-out infinite; }
+@keyframes tree-point-left {
+  0%, 100% { transform: rotate(-90deg) translateY(6px); }
+  50% { transform: rotate(-90deg) translateY(0); }
+}
+.tree-pointer :is(.sprite-icon, svg) { display: block; width: 24px; height: auto; }
+.tree-pointer.still { animation: none; }
+@media (prefers-reduced-motion: reduce) { .tree-pointer { animation: none; } }
 .tree-hint { font-size: 10px; color: #7f8a9d; text-align: center; margin: 4px 0 8px; }
 .tree-viewport { container-type: inline-size; position: relative; flex: 1; min-height: 0; margin: 0; overflow: hidden; border: 1px solid #232b33; border-radius: 6px; touch-action: none; cursor: grab; background: #070a0e; }
 .tree-viewport:active { cursor: grabbing; }
@@ -3090,6 +3131,9 @@ button.training-timer { border-color: #c0483c; color: #ffd0c8; background: #2a14
 /* The stats a trainer is training, moved up under the trainers. */
 .training-busy { margin-bottom: 2px; }
 .training-label small { display: block; font-size: 9px; letter-spacing: .5px; color: #9aa6b6; }
+/* A row's name opens what the stat does, in a plain box under it. */
+.training-name { cursor: pointer; }
+.training-about { position: fixed; z-index: 60; max-width: min(280px, calc(100vw - 16px)); padding: 8px 10px; background: #121c25; border: 1px solid #6a7480; color: #e3d2ad; font-size: 12px; line-height: 1.4; }
 /* The training time a row's next rank still needs. */
 .training-left { display: inline-flex; align-items: center; gap: 2px; }
 .training-left .clock-icon { width: 10px; height: 10px; }
@@ -3240,6 +3284,12 @@ nav button.notify[data-count]::after {
 .deck-icon img:first-child { left: 4px; transform: rotate(-12deg); }
 .deck-icon img:last-child { left: 13px; transform: rotate(8deg); }
 .skill-sprite.card-sprite { image-rendering: pixelated; object-fit: contain; }
+/* A card's art brings its own frame, so a node that unlocks a card drops
+   the node's frame, in every theme, and shows the card alone. */
+.skill-node .node-icon:has(> .card-sprite):not(#_):not(#_) { border: 0; border-image: none; border-radius: 0; background: none; box-shadow: none; }
+.skill-node .node-icon > .card-sprite { position: absolute; inset: 0; width: auto; height: auto; }
+.skill-node .node-icon > .card-sprite img { width: 100%; height: 100%; object-fit: contain; }
+.skill-node.owned .node-icon:has(> .card-sprite) img { filter: drop-shadow(0 0 3px var(--tree-color)); }
 .deck-page { display: flex; flex-direction: column; gap: 14px; min-height: 100%; padding: 10px 2px 4px; }
 .deck-label { font-size: 13px; letter-spacing: 2px; color: #e9d4ac; text-transform: uppercase; margin: 0 0 8px; }
 /* The Hand heading's row: its chevron collapses the hand to make room below. */
@@ -3408,7 +3458,9 @@ nav button.notify[data-count]::after {
   background: #07090d;
   overflow: hidden;
 }
-.deck-reserve > .deck-label { position: relative; z-index: 1; color: #6c778a; }
+.deck-reserve > .deck-label { position: relative; z-index: 1; }
+/* The locked deck's heading sits in its shadow. */
+.deck-reserve:not(.open) > .deck-label { color: #6c778a; }
 .deck-reserve-slots {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
@@ -3470,6 +3522,82 @@ nav button.notify[data-count]::after {
   .deck-remove { opacity: 1; pointer-events: auto; }
 }
 .deck-hand.dragging .deck-remove { display: none; }
+/* Beside the X, the switch that moves the card to the other hand (Manual
+   Hand), shown as the X is; greyed while the other hand is full. */
+.deck-switch {
+  position: absolute;
+  top: -7px;
+  right: 18px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  min-height: 0;
+  padding: 0;
+  border: 1px solid #b8cdf0;
+  border-radius: 50%;
+  background: #2f5596;
+  color: #fff;
+  box-shadow: 0 1px 4px #000c;
+}
+.deck-switch svg { width: 13px; height: 13px; }
+.deck-switch:not(:disabled):hover { background: #3d6bbb; color: #fff; }
+.deck-switch:disabled { background: #4b5361; border-color: #7b8494; color: #aeb5c1; cursor: default; }
+/* Hidden until its card is hovered or focused, as the X is, over a theme's
+   dimmed disabled button too. */
+@media (hover: hover) {
+  .deck-slot:not(:hover, :focus-within) .deck-switch:not(#_) { opacity: 0; pointer-events: none; }
+}
+.deck-hand.dragging .deck-switch { display: none; }
+/* The Auto | Manual slider over the hand's slots (Manual Hand): its thumb
+   slides under the hand shown. */
+.hand-kinds {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin-left: auto;
+  padding: 2px;
+  border: 1px solid #3a4454;
+  border-radius: 13px;
+  background: #07090d;
+}
+/* A slider in every theme: stronger than the themes' button faces. */
+.hand-kinds > button:not(#_):not(#_) {
+  position: relative;
+  z-index: 1;
+  min-width: 62px;
+  min-height: 0;
+  padding: 3px 10px;
+  border: 0;
+  border-radius: 11px;
+  background: none;
+  color: #8d97a8;
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-shadow: none;
+  box-shadow: none;
+  translate: none;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.hand-kinds > button:not(#_):not(#_):hover { color: #e9d4ac; }
+.hand-kinds > button[aria-checked="true"]:not(#_):not(#_) { color: #1c1408; cursor: default; }
+.hand-kinds-thumb {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 2px;
+  width: calc(50% - 2px);
+  border-radius: 11px;
+  background: #e9d4ac;
+  transition: transform 0.18s;
+}
+.hand-kinds.manual .hand-kinds-thumb { transform: translateX(100%); }
+@media (prefers-reduced-motion: reduce) {
+  .hand-kinds-thumb { transition: none; }
+}
 .deck-reserve.open { overflow: visible; background: #0a0e14; }
 .deck-reserve.open::after { display: none; }
 /* A hand card held over the deck: dropping it returns it there. */
@@ -3495,11 +3623,8 @@ nav button.notify[data-count]::after {
 .deck-add { cursor: grab; touch-action: none; }
 .deck-entry-art { cursor: pointer; }
 .deck-add:not(:disabled):hover { box-shadow: 0 0 0 2px #ebc77f, 0 0 10px 2px #e0b25a88; }
-/* With the hand full, a deck card goes in only by dragging it onto one. */
-.deck-add.full { filter: brightness(0.75); }
 .deck-add:disabled { opacity: 1; filter: brightness(0.6); }
-/* A card already in the hand: greyed, with a check that returns it. */
-.deck-entry.in-hand .deck-entry-art { filter: grayscale(1) brightness(0.45); }
+/* A card already in a hand wears a check that returns it. */
 .deck-check {
   position: absolute;
   right: -6px;
@@ -3951,7 +4076,7 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .charge-stat svg { width: 15px; height: 15px; }
 .charge-stat.armed { border-color: #ffe27a; box-shadow: 0 0 6px #ffe27a; }
 .provision-stat .charge-icon { width: 17px; height: 17px; image-rendering: pixelated; }
-/* A Whetstone's or Aegis charm's boost going on: its button lit like the hero's glow. */
+/* A Vanguard Banner's or Aegis charm's boost going on: its button lit like the hero's glow. */
 #edge-stat.boosting { border-color: #ff6a5a; box-shadow: 0 0 6px #ff6a5a; }
 #guard-stat.boosting { border-color: #6ab4ff; box-shadow: 0 0 6px #6ab4ff; }
 .focus-stat b {
@@ -3969,12 +4094,12 @@ dialog.dismiss-anywhere { cursor: pointer; }
   text-align: center;
 }
 .hand.can-focus .hand-card { cursor: pointer; }
-/* The card a Focus put first. */
+/* The card the player pressed, leading until it reaches its target. */
 .hand-card.focused,
 .hand-card.focused.active {
   box-shadow: 0 0 0 2px #fff, 0 0 14px 4px #ffffffcc;
 }
-/* A refused action: no Focus left, or no path for the card. */
+/* A refused action: a card with no path, or pressed while another leads. */
 .flash-red { animation: flash-red 0.6s ease-out; }
 @keyframes flash-red {
   0%, 60% { box-shadow: 0 0 0 2px #ff5a4a, 0 0 14px 4px #e0302a; background-color: #5a1510; }
@@ -4273,6 +4398,10 @@ nav.in-run.drilling .run-drills {
 .training-bar .deck-icon img:first-child { left: 1px; }
 .training-bar .deck-icon img:last-child { left: 8px; }
 .training-bar button.selected { border-color: #d6ae68; color: #efd496; box-shadow: inset 0 -2px #d9ac5a; }
+.training-bar button[hidden] { display: none; }
+/* The Auto tab's cards wear an arrow: its hand plays by itself. */
+.training-bar .tab-icon { position: relative; display: block; flex: none; }
+.training-bar .auto-arrow { position: absolute; right: -5px; bottom: -3px; width: 12px; height: 12px; color: #fff; filter: drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000); }
 .training-bar button:disabled { opacity: 0.4; }
 /* Buy Quantity: how many ranks a Training press buys, at the bar's right. */
 .run-buy-quantity { display: flex; flex-shrink: 0; margin-left: auto; }
@@ -4879,13 +5008,17 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
 .weekly-head small, .weekly-count { font-size: 10px; letter-spacing: 0.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .weekly-count { display: block; margin-top: 6px; text-align: center; }
 /* The boxes stand over the bar, each at its count's place along it. */
-.weekly-track { position: relative; padding: 0 16px; }
-.weekly-boxes { position: relative; height: 52px; }
-.weekly-box { position: absolute; bottom: 0; left: var(--at); transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 1px; width: 34px; padding: 0; border: 0; background: none; }
+.weekly-track { position: relative; padding: 0 18px; }
+.weekly-boxes { position: relative; height: 54px; }
+.weekly-box { position: absolute; bottom: 0; left: var(--at); transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 2px; width: 34px; padding: 0; border: 0; background: none; }
+/* A reward is a bare picture in every theme: a themed frame squeezes the gift and covers its number. */
+.weekly .weekly-box:not(#_) { min-width: 0; min-height: 0; margin: 0; padding: 0; border: 0; border-image: none; border-radius: 0; background: none; box-shadow: none; translate: none; }
 .weekly-prize { position: relative; display: block; width: 30px; height: 30px; border-radius: 6px; }
 .weekly-prize .gift-icon { display: block; width: 30px; height: 30px; }
-.weekly-prize .check-icon { position: absolute; right: -4px; bottom: -4px; width: 18px; height: 18px; border-radius: 50%; background: #10161f; box-shadow: 0 0 0 1px #8ff0a4; }
-.weekly-box small { font-size: 10px; color: #b9c2cf; font-variant-numeric: tabular-nums; }
+/* Claimed: a small check on the gift's top corner, clear of its number. (`>`: the icon's PNG fallback holds a second `.check-icon`.) */
+.weekly-prize > .check-icon { position: absolute; right: -2px; top: -5px; display: block; width: 14px; height: 14px; border-radius: 50%; background: #10161f; box-shadow: 0 0 0 1px #8ff0a4; }
+.weekly-prize > .check-icon svg { display: block; width: 100%; height: 100%; }
+.weekly-box small { font-size: 11px; line-height: 1.2; color: #b9c2cf; font-variant-numeric: tabular-nums; white-space: nowrap; text-shadow: none; }
 .weekly-box.dim .weekly-prize { opacity: 0.35; filter: grayscale(0.7); }
 .weekly-box.dim small { color: #5d6878; }
 .weekly-box.ready .weekly-prize { box-shadow: 0 0 10px 3px #ffd34d99; animation: weekly-glow 1.4s ease-in-out infinite alternate; }
@@ -4948,8 +5081,10 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
 .event-relics.premium .event-relic { top: 0; flex-direction: column-reverse; }
 .event-relic-art { position: relative; display: block; width: 30px; height: 30px; border-radius: 50%; }
 .event-relic-art .relic-icon { display: block; width: 30px; height: 30px; }
-.event-relic-art .check-icon, .event-relic-art .relic-lock { position: absolute; right: -4px; bottom: -4px; width: 15px; height: 15px; border-radius: 50%; background: #10161f; }
-.event-relic-art .check-icon { box-shadow: 0 0 0 1px #8ff0a4; }
+/* `>`: each icon's PNG fallback holds a second copy of its class. */
+.event-relic-art > :is(.check-icon, .relic-lock) { position: absolute; right: -4px; bottom: -4px; display: block; width: 15px; height: 15px; border-radius: 50%; background: #10161f; }
+.event-relic-art > :is(.check-icon, .relic-lock) svg { display: block; width: 100%; height: 100%; }
+.event-relic-art > .check-icon { box-shadow: 0 0 0 1px #8ff0a4; }
 .event-relic small { font-size: 9px; color: #b9c2cf; font-variant-numeric: tabular-nums; }
 .event-relic:not(.reached) .event-relic-art .relic-icon { opacity: 0.45; filter: grayscale(0.6); }
 .event-relic.reached .event-relic-art { box-shadow: 0 0 10px 3px #ffd34d88; }

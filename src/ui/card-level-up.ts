@@ -1,4 +1,4 @@
-import { CARDS, type CardId } from "../cards.ts";
+import { CARDS, type CardId } from "../cards/cards.ts";
 import type { Game } from "../state.ts";
 import { cardArt, el, pointsIcon } from "./dom.ts";
 

@@ -16,7 +16,7 @@ The coefficient C need not be constant. It may rise slowly (monotonically) acros
 
 Quote `hours` before Research Speed. `duration` divides them by the speed when a level starts, and `price` takes the Research Cost Discount off the Gold, so a definition holds the undiscounted numbers. A late level's quoted time is therefore longer than what a player who has researched Research Speed actually waits. Research Speed's own level 100 is quoted at 100 days but takes about 34 at the 298% speed its first 99 levels give.
 
-## Building one: `curve` in `src/archives.ts`
+## Building one: `curve` in `src/progression/archives.ts`
 
 ```ts
 curve(first, power, length, end, bend)
@@ -48,7 +48,6 @@ Projects first priced linearly keep their early levels and add a gentle power te
 | Potion HP's schedule (Potion HP, Regen, Pocket Money, Find Gold Key, Interest %, Mug, Shard ATK, Shard DEF); m = level − 4, after four hand-set quick levels | 100m + m³ | m/4 + m²/100 |
 | Gold / Floor, Silver / Floor, Silver Bonus, Gold Bonus; Key Efficiency | Potion HP's schedule plus q(m)·m², q(m) = Q·B/(m+B): Q 200, B 100; Key Efficiency Q 400, B 50. Levels 1–4 rise by an even ratio to level 5: 10, 25, 55, 130 (Key Efficiency 10, 25, 70, 185) | as Potion HP's |
 | Faster Trainers | 250n + 2n³ | the shorter of Research Speed's minutes and 1.75n + n²/20 (Research Speed's to level 27) |
-| Refocus | 500(1 + n(n−1)/2) + 8n³ | n²/10 |
 | Ignore More, Target More | 500(1 + n(n−1)/2) × 1.05ⁿ⁻¹ or 1.1ⁿ⁻¹ (steeper than cubic, kept as is) | n²/10 |
 
 The five economy multipliers above add a quadratic Gold term whose coefficient *falls* by level, so their early and middle levels (where a linear multiplier pays back fastest) cost several times Potion HP's, and level 100 about twice. Unlike the rule above, their Gold / n³ falls with the level.

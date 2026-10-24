@@ -11,9 +11,9 @@ page.on("pageerror", (e) => errors.push(e.message));
 await fixClock(page);
 await page.goto(process.env.TEST_URL || "http://127.0.0.1:5173/");
 const results = await page.evaluate(async () => {
-  const { Renderer } = await import("/src/rendering.ts");
+  const { Renderer } = await import("/src/render/rendering.ts");
   const { Game } = await import("/src/state.ts");
-  const { defaults, decode } = await import("/src/save.ts");
+  const { defaults, decode } = await import("/src/save/save.ts");
   const canvas = document.createElement("canvas");
   canvas.style.cssText = "position:fixed;left:-9999px;width:400px;height:400px";
   document.body.append(canvas);
@@ -108,12 +108,12 @@ for (const mode of ["fast", "instant", "smooth"]) {
   await openMenu(page); await page.locator("#auto-settings").click();
   await expect(page.locator("#transition")).toHaveValue(mode);
 }
-await expect(page.locator("#sprites-off")).not.toBeChecked();
-await page.locator("#sprites-off").check();
+await expect(page.locator("#sprite-animations")).not.toBeChecked();
+await page.locator("#sprite-animations").check();
 await page.reload();
 await openMenu(page); await page.locator("#auto-settings").click();
-await expect(page.locator("#sprites-off")).toBeChecked();
-await page.locator("#sprites-off").uncheck();
+await expect(page.locator("#sprite-animations")).toBeChecked();
+await page.locator("#sprite-animations").uncheck();
 await page.screenshot({
   path: "test-results/transition-settings.png",
   fullPage: true,

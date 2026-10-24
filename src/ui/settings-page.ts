@@ -2,34 +2,35 @@ import { controlIcon } from "./control-icon.ts";
 import { applyUiTheme } from "./medieval.ts";
 import { renderThemeMenu, themeMenuTitle, wornName } from "./theme-menu.ts";
 import type { ThemeKind } from "../theme-collection.ts";
-import { SETTINGS, type SettingKey, type Settings } from "../settings.ts";
-import type { Save } from "../save-shape.ts";
+import { SETTINGS, type SettingKey, type Settings } from "../save/settings.ts";
+import type { Save } from "../save/shape.ts";
 import type { AppContext, PageGame } from "./app.ts";
 import type { BoardOverlay } from "./board-overlay.ts";
-import { capitalized, displayedProgress, el } from "./dom.ts";
-import { MODES } from "../modes.ts";
+import { el } from "./dom.ts";
 import { goalUnlocked } from "../goals.ts";
 import { showStats } from "./stats-dialog.ts";
+import { showHelp } from "./dialogs.ts";
+import { exportProfile, importProfile } from "../profile-file.ts";
 
 /** The settings on the page, in order; each control comes from its row in
  * SETTINGS. */
 const PAGE = [
-  "uiSprites", "spriteAnimations", "squareDoors", "transition", "fightAnimation", "brightness", "spritesOff", "decorOff", "batterySaver", "reduceMotion", "weatherSound",
-  "infoDisplay", "cinematic", "cinematicIdle", "cinematicGems", "devMode", "freePurchases",
+  "spriteAnimations", "squareDoors", "transition", "fightAnimation", "brightness", "decorOff", "batterySaver", "reduceMotion", "weatherSound",
+  "infoDisplay", "cinematic", "cinematicIdle", "cinematicGems",
 ] as const satisfies readonly SettingKey[];
+/** The dev section's settings, shown under Dev Mode while it is on. */
+const DEV = ["devMode", "freePurchases"] as const satisfies readonly SettingKey[];
 /** The settings on the Toggles menu, in order: the values the board shows
  * in a run. */
 const TOGGLES = [
   "attackGains", "defenseGains", "hpGains", "keyGains", "doorGains", "goldGains", "silverGains", "xpGains", "comboGains",
   "damageVisual", "itemLabels", "hitNumbers", "enemyBars",
 ] as const satisfies readonly SettingKey[];
-type PageKey = (typeof PAGE)[number] | (typeof TOGGLES)[number];
+type PageKey = (typeof PAGE)[number] | (typeof TOGGLES)[number] | (typeof DEV)[number] | "devTools";
 
 /** Settings that stay off the page until the upgrade (or the setting)
  * behind them is on. */
 const SHOWN: Partial<Record<PageKey, (save: Save) => boolean>> = {
-  spriteAnimations: (save) => save.settings.uiSprites,
-  squareDoors: (save) => save.settings.uiSprites,
   fightAnimation: (save) => !!save.upgrades.instantCombat,
   damageVisual: (save) => goalUnlocked(save, "damageVisual"),
   itemLabels: (save) => goalUnlocked(save, "damageVisual"),
@@ -40,18 +41,6 @@ const shownOf = (keys: readonly PageKey[], save: Save) => keys.filter((key) => S
 
 /** What a change does once written, beyond saving. */
 const AFTER: Partial<Record<PageKey, (ctx: AppContext, overlay: BoardOverlay, s: Settings) => void>> = {
-  uiSprites: (ctx) => {
-    applyUiTheme(ctx.game.save);
-    ctx.save();
-    ctx.update();
-    ctx.renderPage();
-    el("ui-sprites")?.focus();
-  },
-  spritesOff: (ctx) => {
-    applyUiTheme(ctx.game.save);
-    ctx.save();
-    ctx.update();
-  },
   reduceMotion: (ctx) => applyUiTheme(ctx.game.save),
   // The board silences the weather itself once sound is off.
   weatherSound: (ctx) => ctx.update(),
@@ -63,6 +52,17 @@ const AFTER: Partial<Record<PageKey, (ctx: AppContext, overlay: BoardOverlay, s:
   // Its two options show only while it is on.
   cinematic: (ctx) => {
     ctx.save();
+    ctx.renderPage();
+  },
+  // Its section shows only while it is on, and turning it off turns off
+  // what is in it.
+  devTools: (ctx, _, s) => {
+    if (!s.devTools) {
+      ctx.game.setDevMode(false);
+      s.freePurchases = false;
+    }
+    ctx.save();
+    ctx.update();
     ctx.renderPage();
   },
   // Turning it on also grants everything it unlocks.
@@ -83,7 +83,7 @@ function control(key: PageKey, game: PageGame): string {
   switch (row.kind) {
     case "toggle": {
       const checked = "invert" in row.page ? !value : value;
-      return `<label class="setting${key === "spriteAnimations" || key === "squareDoors" ? " sprite-option" : ""}">${row.page.label}<input type="checkbox" id="${row.page.id}" ${checked ? "checked" : ""}></label>`;
+      return `<label class="setting">${row.page.label}<input type="checkbox" id="${row.page.id}" ${checked ? "checked" : ""}></label>`;
     }
     case "choice":
       return `<label class="setting">${row.page.label}<select id="${row.page.id}">${options(row.choices, value as string | number)}</select></label>`;
@@ -102,7 +102,7 @@ const themeButtons = (game: PageGame) =>
     `<button class="setting theme-open" id="${kind}-themes" data-kind="${kind}">${themeMenuTitle(kind)}<b>${wornName(game.save, kind)} ${controlIcon("forward")}</b></button>`).join("")}</div>`;
 
 /** The Settings page: a way back to the board, the Stats dialog, the theme
- * menus, display and control options, retire, and erase. */
+ * menus, display and control options, and erase. */
 export function renderSettingsPage(ctx: AppContext, overlay: BoardOverlay) {
   const { game } = ctx;
   if (menu === "toggles") {
@@ -129,14 +129,59 @@ export function renderSettingsPage(ctx: AppContext, overlay: BoardOverlay) {
     });
     return;
   }
-  const words = MODES[game.mode].words;
   el("settings").innerHTML =
-    `<button class="back" id="settings-back">${controlIcon("back")} Back</button><div class="page-title"><small>MAKE THE ASCENT YOUR OWN</small><h2>Settings</h2></div><button class="wide" id="stats-open">Stats</button>` +
+    `<button class="back" id="settings-back">${controlIcon("back")} Back</button><div class="page-title"><h2>Settings</h2></div><button class="wide" id="stats-open">Stats</button>` +
     themeButtons(game) +
     `<button class="setting menu-open" id="toggles-open">Toggles<b>${controlIcon("forward")}</b></button>` +
-    shownOf(PAGE, game.save).map((key) => control(key, game) + (key === (game.save.settings.uiSprites ? "squareDoors" : "uiSprites") ? `<p class="hint">Sprites apply to the default interface and board. Other UI and Game themes use their own art.</p>` : "")).join("") +
-    `<p class="hint">Automation pauses outside the board tabs and while the browser is hidden. Progress saves after each action.</p><button class="wide" id="retire">Retire this ${words.run}</button><p class="hint">Keep your milestone rewards and enter a freshly generated ${words.fresh}.</p><button class="wide danger" id="erase">Erase all progress</button><p class="seed">RUN SEED · ${game.run.seed}</p>`;
+    shownOf(PAGE, game.save).map((key) => control(key, game) + (key === "squareDoors" ? `<p class="hint">Pixel art is the default. Other UI and Game themes use their own art.</p>` : "")).join("") +
+    `<p class="hint">Automation pauses outside the board tabs and while the browser is hidden. Progress saves after each action.</p>` +
+    control("devTools", game) +
+    (game.save.settings.devTools ? `<div class="dev-section">${DEV.map((key) => control(key, game)).join("")}${profileButtons}</div>` : "") +
+    `<button class="wide danger" id="erase">Erase all progress</button><p class="seed">RUN SEED · ${game.run.seed}</p>`;
   bindSettings(ctx, overlay);
+}
+
+/** The dev section's profile file buttons: download everything kept
+ * between runs, or load such a file over the whole save. */
+const profileButtons =
+  `<button class="wide" id="profile-export">Export profile</button><button class="wide" id="profile-import">Import profile</button><input type="file" id="profile-file" accept=".json,application/json,text/plain" hidden><p class="hint">A text file of everything kept between runs; a run in progress isn't in it. Importing replaces this profile and its runs.</p>`;
+
+function bindProfileButtons(ctx: AppContext) {
+  const { game } = ctx;
+  el("profile-export").onclick = () => {
+    const now = game.clock(), url = URL.createObjectURL(new Blob([exportProfile(game.save, now)], { type: "application/json" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `tower-delve-profile-${new Date(now).toISOString().slice(0, 10)}.json`;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    // Revoked once the download has taken the file.
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+  const input = el("profile-file") as HTMLInputElement;
+  el("profile-import").onclick = () => input.click();
+  input.onchange = async () => {
+    const file = input.files?.[0];
+    input.value = "";
+    if (!file) return;
+    const read = importProfile(await file.text());
+    if ("error" in read) return showHelp(ctx, "Import profile", "Can't import", `<p>${read.error}</p>`);
+    ctx.confirm(
+      {
+        title: "Replace your profile?",
+        body: `Everything here, both current runs included, is replaced by ${file.name}.`,
+        label: "Import",
+        cancel: "Keep this profile",
+      },
+      () => {
+        game.replaceSave(read.save);
+        applyUiTheme(game.save);
+        ctx.save();
+        ctx.navigate("tower");
+      },
+    );
+  };
 }
 
 function bindSettings(ctx: AppContext, overlay: BoardOverlay) {
@@ -153,20 +198,11 @@ function bindSettings(ctx: AppContext, overlay: BoardOverlay) {
     menu = "toggles";
     ctx.renderPage();
   };
-  bindControls(ctx, overlay, shownOf(PAGE, game.save));
-  el("retire").onclick = () =>
-    ctx.confirm(
-      {
-        title: "Leave your mark?",
-        body: `Retire at ${MODES[game.mode].words.progress} ${displayedProgress(game.run.height, !!game.run.outside)}. Milestone rewards are already yours.`,
-        label: `Retire ${MODES[game.mode].words.run}`,
-        cancel: MODES[game.mode].words.keepGoing,
-      },
-      () => {
-        game.finish(`${capitalized(MODES[game.mode].words.run)} retired`);
-        ctx.navigate(game.mode);
-      },
-    );
+  bindControls(ctx, overlay, [...shownOf(PAGE, game.save), "devTools"]);
+  if (game.save.settings.devTools) {
+    bindControls(ctx, overlay, DEV);
+    bindProfileButtons(ctx);
+  }
   el("erase").onclick = () =>
     ctx.confirm(
       {

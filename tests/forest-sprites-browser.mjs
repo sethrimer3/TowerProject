@@ -18,19 +18,19 @@ try {
   await page.route("**/forest-oak.png", route => release(route));
   await page.goto(server.resolvedUrls.local[0]); await page.locator("#hp").waitFor();
   const initial = await page.evaluate(async () => {
-    const { forestSpritesReady } = await import("/src/sprite-forest.ts");
+    const { forestSpritesReady } = await import("/src/sprites/forest.ts");
     return forestSpritesReady();
   });
   assert.equal(initial, false);
   const route = await pending;
   await page.waitForFunction(async () => {
-    const { FOREST_SPRITES } = await import("/src/sprite-forest.ts"), { kitImage } = await import("/src/sprite-kit.ts");
+    const { FOREST_SPRITES } = await import("/src/sprites/forest.ts"), { kitImage } = await import("/src/sprites/kit.ts");
     return Object.keys(FOREST_SPRITES).filter(id => id !== "forest-oak").every(id => !!kitImage(id));
   });
-  assert.equal(await page.evaluate(async () => (await import("/src/sprite-forest.ts")).forestSpritesReady()), false,
+  assert.equal(await page.evaluate(async () => (await import("/src/sprites/forest.ts")).forestSpritesReady()), false,
     "keep the complete tile forest until every replacement foliage PNG is ready");
   const groundSource = () => page.evaluate(async () => {
-    const { drawForestTile } = await import("/src/outside.ts"), { kitImage } = await import("/src/sprite-kit.ts");
+    const { drawForestTile } = await import("/src/outside.ts"), { kitImage } = await import("/src/sprites/kit.ts");
     kitImage("terrain");
     let source = "";
     const canvas = document.createElement("canvas"), c = canvas.getContext("2d"), draw = c.drawImage.bind(c);
@@ -39,17 +39,17 @@ try {
     return source.split("/").at(-1);
   });
   await groundSource();
-  await page.waitForFunction(async () => !!(await import("/src/sprite-kit.ts")).kitImage("terrain"));
+  await page.waitForFunction(async () => !!(await import("/src/sprites/kit.ts")).kitImage("terrain"));
   assert.equal(await groundSource(), "terrain.png", "a delayed crown keeps the old forest tile, including its tree");
   await route.fulfill({ path: resolve("public/assets/style/forest-oak.png"), contentType: "image/png" });
   await page.unroute("**/forest-oak.png");
-  await page.waitForFunction(async () => (await import("/src/sprite-forest.ts")).forestSpritesReady());
+  await page.waitForFunction(async () => (await import("/src/sprites/forest.ts")).forestSpritesReady());
   assert.equal(await groundSource(), "forest-litter.png", "image arrival switches to ground-only art beneath the foliage layer");
   for (const width of [390, 1100]) for (const mode of ["tower", "delve"]) {
     await page.setViewportSize({ width, height: 900 });
     const result = await page.evaluate(async ({ width, mode }) => {
-      const { forestSpriteScene } = await import("/tests/render-scenes.ts"), { Renderer } = await import("/src/rendering.ts");
-      const { loadSpriteFont } = await import("/src/sprite-font.ts"), { THEME_IDS } = await import("/src/theme-collection.ts");
+      const { forestSpriteScene } = await import("/tests/render-scenes.ts"), { Renderer } = await import("/src/render/rendering.ts");
+      const { loadSpriteFont } = await import("/src/sprites/font.ts"), { THEME_IDS } = await import("/src/theme-collection.ts");
       await loadSpriteFont();
       const { g } = forestSpriteScene(mode); g.save.themes = [...THEME_IDS];
       g.effect = { text: "", x: 0, y: 0, until: 0 }; g.blocked = { x: 0, y: 0, until: 0 };
@@ -71,15 +71,15 @@ try {
         throw Error("forest images never settled");
       };
       const hash = async () => [...new Uint8Array(await crypto.subtle.digest("SHA-256", canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height).data))].join(",");
-      g.save.settings.uiSprites = false; draw(); await settle(); const off = await hash();
-      g.save.settings.uiSprites = true; draw(); await settle(); const on = await hash();
+      g.save.themes = [...new Set([...g.save.themes, "neonGame"])]; g.save.settings.gameTheme = "neon"; draw(); await settle(); const off = await hash();
+      g.save.settings.gameTheme = "classic"; draw(); await settle(); const on = await hash();
       g.save.settings.uiTheme = "neon"; draw(); const uiTheme = await hash();
       g.save.settings.gameTheme = "neon"; draw(); await settle(); const theme = await hash();
       g.save.settings.gameTheme = "classic"; draw(); await settle(); const restored = await hash();
-      g.save.settings.spritesOff = true; draw(); await settle(); const boardOff = await hash();
-      g.save.settings.spritesOff = false; g.save.settings.decorOff = true; draw(); await settle(); const decorOff = await hash();
-      g.save.settings.decorOff = false; g.save.settings.uiSprites = false; draw(); const offAgain = await hash();
-      g.save.settings.uiSprites = true; draw(); window.Image = RealImage;
+      g.save.settings.gameTheme = "neon"; draw(); await settle(); const boardOff = await hash();
+      g.save.settings.gameTheme = "classic"; g.save.settings.decorOff = true; draw(); await settle(); const decorOff = await hash();
+      g.save.settings.decorOff = false; g.save.themes = [...new Set([...g.save.themes, "neonGame"])]; g.save.settings.gameTheme = "neon"; draw(); const offAgain = await hash();
+      g.save.settings.gameTheme = "classic"; draw(); window.Image = RealImage;
       return { off, on, uiTheme, theme, restored, boardOff, decorOff, offAgain };
     }, { width, mode });
     assert.notEqual(result.on, result.off); assert.equal(result.on, result.uiTheme);
@@ -90,7 +90,7 @@ try {
     await page.locator("#forest-review").evaluate(e => e.remove());
   }
   await page.evaluate(async () => {
-    const { FOREST_SPRITES, FOREST_LANDMARKS } = await import("/src/sprite-forest.ts"), { kitImage } = await import("/src/sprite-kit.ts");
+    const { FOREST_SPRITES, FOREST_LANDMARKS } = await import("/src/sprites/forest.ts"), { kitImage } = await import("/src/sprites/kit.ts");
     const sheet = document.createElement("canvas"); sheet.id = "forest-art"; sheet.width = 1000; sheet.height = 900;
     const c = sheet.getContext("2d"); c.imageSmoothingEnabled = false; c.fillStyle = "#1b2430"; c.fillRect(0, 0, 1000, 900);
     Object.keys(FOREST_SPRITES).forEach((id, i) => {
@@ -145,14 +145,14 @@ try {
   await failed.route("**/forest-tower-base.png", route => route.abort());
   await failed.goto(server.resolvedUrls.local[0]);
   await failed.evaluate(async () => {
-    (await import("/src/sprite-forest.ts")).forestSpritesReady();
-    (await import("/src/sprite-kit.ts")).kitImage("forest-tower-base");
+    (await import("/src/sprites/forest.ts")).forestSpritesReady();
+    (await import("/src/sprites/kit.ts")).kitImage("forest-tower-base");
   });
   await failed.waitForFunction(async () => {
-    const { FOREST_SPRITES } = await import("/src/sprite-forest.ts"), { kitImage } = await import("/src/sprite-kit.ts");
+    const { FOREST_SPRITES } = await import("/src/sprites/forest.ts"), { kitImage } = await import("/src/sprites/kit.ts");
     return Object.keys(FOREST_SPRITES).filter(id => id !== "forest-oak").every(id => !!kitImage(id));
   });
-  assert.equal(await failed.evaluate(async () => (await import("/src/sprite-forest.ts")).forestSpritesReady()), false);
+  assert.equal(await failed.evaluate(async () => (await import("/src/sprites/forest.ts")).forestSpritesReady()), false);
   const fallback = await failed.evaluate(async () => {
     const { drawEntrance } = await import("/src/outside.ts");
     const cv = document.createElement("canvas"); cv.width = cv.height = 480;

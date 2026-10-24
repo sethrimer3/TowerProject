@@ -13,7 +13,7 @@ try {
   });
   const world=page.locator("#world"),read=()=>page.evaluate(()=>JSON.parse(localStorage.getItem("towerdelve.v1")));
   const trial=async()=>(await read()).provingGrounds;
-  const reload=async()=>page.reload({waitUntil:"domcontentloaded"});
+  const reload=async()=>{await page.reload({waitUntil:"domcontentloaded"});await expect(world).toBeVisible({timeout:30000});};
   async function fixture(patch) {
     await page.evaluate(async patch=> {
       const save=JSON.parse(localStorage.getItem("towerdelve.v1"));
@@ -42,10 +42,12 @@ try {
   mkdirSync("test-results/proving-grounds",{recursive:true});
   await page.goto(process.env.TEST_URL||"http://127.0.0.1:5173/",{waitUntil:"domcontentloaded"});
   await page.evaluate(async()=> {
-    const {Game}=await import("/src/state.ts"),{defaults}=await import("/src/save.ts");
+    const {Game}=await import("/src/state.ts"),{defaults}=await import("/src/save/save.ts");
     const g=new Game(defaults());g.newRun({outside:true,seed:12});
-    g.run.player.x=10;g.run.player.y=5;g.save.settings.oneTapMove=true;g.save.settings.uiSprites=true;
+    g.run.player.x=10;g.run.player.y=5;g.save.settings.oneTapMove=true;
     g.save.settings.reduceMotion=true;g.save.upgrades.onTheJob=1;
+    g.save.upgrades.cardDoorKey=1;g.save.upgrades.cardEnemy=1;g.save.upgrades.autoClimb=1;
+    g.save.hand=["stairs","door","key","monster"];
     for(const key of Object.keys(g.save.tutorials))g.save.tutorials[key]=true;
     sessionStorage.setItem("trialFixture",JSON.stringify(g.save));
   });await reload();

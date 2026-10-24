@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { dungeonDetail, dungeonDetailId, dungeonDetailVariants } from "../src/dungeon-details.ts";
-import { DUNGEON_ATLASES } from "../src/sprite-dungeon.ts";
+import { dungeonDetail, dungeonDetailId, dungeonDetailVariants } from "../src/render/dungeon-details.ts";
+import { DUNGEON_ATLASES } from "../src/sprites/dungeon.ts";
 import type { Tile } from "../src/entities.ts";
 
 test("contextual detail PNGs share native two-tile motifs, two shades and all existing biome ramps", () => {

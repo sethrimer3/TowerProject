@@ -3,7 +3,7 @@ import { spawn } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { BOON_SPRITES, SHRINE_CONTROL_SPRITES } from "../src/sprite-boons.ts";
+import { BOON_SPRITES, SHRINE_CONTROL_SPRITES } from "../src/sprites/boons.ts";
 const root = fileURLToPath(new URL("../", import.meta.url));
 const out = join(root, "public/assets/style");
 const frames = join(root, "public/assets/ui/frames");

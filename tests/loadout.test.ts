@@ -1,15 +1,20 @@
 import { trainNow } from "./train-now.ts";
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import type { StatTrainingRow } from "../src/config.ts";
-import { loadout, trainingBulk, trainingFull, trainingPoints, trainingStep, upgradeText, provisionPrice, provisionText } from "../src/loadout.ts";
-import { decode, defaults } from "../src/save.ts";
-import { GOLD_SHOP, LIMIT_BREAKS, TRAINING, UPGRADES, isStatRow, levelForXp, trained, trainingCap, trainingCeiling, trainingWorth, xpForLevel } from "../src/config.ts";
+import type { StatTrainingRow } from "../src/progression/training.ts";
+import { loadout, trainingBulk, trainingFull, trainingPoints, trainingStep, upgradeText, provisionOpen, provisionPrice, provisionsOpen, provisionText } from "../src/progression/loadout.ts";
+import { decode, defaults } from "../src/save/save.ts";
+import { GOLD_SHOP } from "../src/economy/provisions.ts";
+import { LIMIT_BREAKS, TRAINING, isStatRow, trained, trainingCap, trainingCeiling, trainingWorth } from "../src/progression/training.ts";
+import { UPGRADES, cost, type UpgradeId } from "../src/progression/upgrades.ts";
+import { TREES } from "../src/progression/skill-trees.ts";
+import { levelForXp, xpForLevel } from "../src/progression/xp.ts";
 import { addItem } from "../src/equipment/inventory.ts";
 import { Game } from "../src/state.ts";
 import { predict } from "../src/combat.ts";
-import { getTowerGateEnemy } from "../src/scaling.ts";
-import { enemyStats } from "../src/enemy-curves.ts";
+import { getTowerGateEnemy } from "../src/enemies/scaling.ts";
+import { enemyStats } from "../src/enemies/curves.ts";
+import { snap } from "../src/exact.ts";
 
 test("a new character starts at 12 ATK, 0 DEF, 100 HP, no shroud, no Regen, no keys and no undo", () => {
   assert.deepEqual(loadout(defaults()), {
@@ -64,10 +69,10 @@ test("each training rank is worth more than the one before, whatever the hero's 
   s.xp = xpForLevel(5);
   Object.assign(s.training, { hp: 3, defense: 2, attack: 1 });
   for (const [id, points] of [["hp", 3], ["defense", 2], ["attack", 0]] as const) s.trainingPaid[id].points = points;
-  // Rank curves: max HP 10n + n², DEF n²/12, ATK n + n²/5, fractions kept
+  // Rank curves: max HP 10n + n², DEF the most of n and n²/12, ATK n + n²/5, fractions kept
   // (the page shows the stats whole).
   const l = loadout(s);
-  assert.deepEqual([l.attack, l.defense, l.maxHp], [12 + 1.2, 0.333333, 100 + 39]);
+  assert.deepEqual([l.attack, l.defense, l.maxHp], [12 + 1.2, 2, 100 + 39]);
   assert.deepEqual(trainingPoints(s), { earned: 15, spent: 3 + 2, left: 10 });
   // The next rank: the 4th max HP rank adds 10 + 7 = 17, the 2nd ATK 1 + 3 / 5 = 1.6.
   assert.deepEqual(
@@ -79,10 +84,15 @@ test("each training rank is worth more than the one before, whatever the hero's 
   s.xp = xpForLevel(20);
   assert.deepEqual(loadout(s), l);
   // Each rank adds more than the one before, but Lifesteal's, which each add
-  // less, and the percent rows', which each add the same.
+  // less, the percent rows', which each add the same, and DEF's first
+  // twelve, 1 each.
   const flat = new Set(["thorns", "parry"]);
   for (const row of TRAINING.filter(isStatRow).filter((r) => r.id !== "lifesteal" && !flat.has(r.id)))
-    for (let n = 1; n < 400; n++) assert.ok(trainingWorth(row, n) > trainingWorth(row, n - 1), `${row.id} rank ${n + 1}`);
+    for (let n = row.id === "defense" ? 12 : 1; n < 400; n++) assert.ok(trainingWorth(row, n) > trainingWorth(row, n - 1), `${row.id} rank ${n + 1}`);
+  const def = TRAINING.find((r) => r.id === "defense")! as StatTrainingRow;
+  for (let n = 0; n < 12; n++) assert.equal(trainingWorth(def, n), 1, `DEF rank ${n + 1} adds 1`);
+  for (let n = 12; n < 400; n++) assert.ok(trainingWorth(def, n) > 1, `DEF rank ${n + 1} adds more than 1`);
+  assert.equal(trained(def, 13), snap(169 / 12), "the square takes over at rank 13");
   const steal = TRAINING.find((r) => r.id === "lifesteal")! as StatTrainingRow;
   for (let n = 1; n < steal.max; n++) assert.ok(trainingWorth(steal, n) < trainingWorth(steal, n - 1) && trainingWorth(steal, n) > 0, `lifesteal rank ${n + 1}`);
 });
@@ -108,9 +118,9 @@ test("Shroud blocks 1 damage a fight and opens Shroud training", () => {
   assert.equal(g.run.player.shroud, undefined, "no shroud yet");
   g.save.tower.inspiration = 2;
   g.save.upgrades.trainers = 0; // trainNow owns it
-  assert.equal(g.buy("shroud"), false, "not before Trainers");
+  assert.equal(g.skills.buy("shroud"), false, "not before Trainers");
   g.save.upgrades.trainers = 1;
-  assert.ok(g.buy("shroud"));
+  assert.ok(g.skills.buy("shroud"));
   assert.equal(loadout(g.save).shroud, 1);
   assert.equal(g.save.tower.inspiration, 0, "2 Inspiration");
   assert.equal(g.run.player.shroud, 1, "the run in the forest takes it at once");
@@ -205,7 +215,7 @@ test("descriptions are written from the grants", () => {
   assert.deepEqual(GOLD_SHOP.map((g) => provisionText(g.id)), [
     "One more elixir every run: press it to fill HP to max HP",
     "One more Aegis charm every run: press it for +20% DEF for 100 turns",
-    "One more Whetstone every run: press it for +20% ATK for 100 turns",
+    "One more Vanguard Banner every run: press it for +20% ATK for 100 turns",
     "One more gold key every 100 floors of a run, from the floor it starts on",
     "One more Bomb every run: press it, then an enemy's tile, to deal that enemy your ATK",
   ]);
@@ -217,10 +227,30 @@ test("every provision costs 100 Gold, and each one after a hundred times the las
     assert.deepEqual(Array.from({ length: 4 }, (_, n) => provisionPrice({ provisions: { ...s.provisions, [id]: n } }, id)), [100, 10_000, 1_000_000, 100_000_000], id);
   const g = new Game(s);
   s.gold = 10_500;
+  s.upgrades.elixirProvision = 1;
   assert.ok(g.gear.buyProvision("heal") && g.gear.buyProvision("heal"));
   assert.equal(s.gold, 10_500 - 100 - 10_000);
   assert.equal(g.gear.buyProvision("heal"), false, "1,000,000 Gold, 400 held");
   assert.equal(s.provisions.heal, 2);
+});
+
+test("no provision is open from the start: each opens with its skill, in the Inspiration or Courage tree", () => {
+  const s = defaults(), g = new Game(s);
+  s.gold = 1000;
+  assert.equal(provisionsOpen(s), false);
+  for (const { id } of GOLD_SHOP) assert.equal(g.gear.buyProvision(id), false, id);
+  const skills = { heal: "elixirProvision", edge: "whetstoneProvision", guard: "aegisProvision", yellowKey: "extraKey", bomb: "bombs" } as const;
+  for (const { id } of GOLD_SHOP) {
+    const skill = UPGRADES.find((u) => u.id === skills[id])!;
+    assert.ok(skill.currency === "inspiration" || skill.currency === "courage", id);
+    s.upgrades[skill.id] = 1;
+    assert.ok(provisionOpen(s, id) && provisionsOpen(s), id);
+    s.upgrades[skill.id] = 0;
+  }
+  // The Inspiration tree's three follow Regen, ATK Up and DEF Up, 5 Inspiration each.
+  const at = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;
+  assert.deepEqual(["elixirProvision", "whetstoneProvision", "aegisProvision"].map((id) => [at(id).requires, cost(id as UpgradeId, 0)]),
+    [[["regen"], 5], [["cardAtkUp"], 5], [["cardDefUp"], 5]]);
 });
 
 test("Extra Key opens the Gold Key provision, which adds no key to the loadout", () => {

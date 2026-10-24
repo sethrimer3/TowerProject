@@ -1,17 +1,17 @@
-import { kitIcon } from "../sprite-kit.ts";
+import { kitIcon } from "../sprites/kit.ts";
 import { askForGems, showHelp } from "./dialogs.ts";
-import { CARDS, cardBonusText, cardText, deckCards, handSlots, linkedToNext, moveCard, nextHandSlotGems, placeCard, type CardId } from "../cards.ts";
+import { CARDS, cardBonusText, cardText, deckCards, linkedToNext, moveCard, placeCard, type CardId, type HandKind } from "../cards/cards.ts";
 import type { AppContext } from "./app.ts";
 import { cardArt, el, escapeHtml, gemIcon, POINTER_SVG } from "./dom.ts";
 import { DRAW_GEMS, type DrawCount } from "../game/badge-desk.ts";
-import { cardWith, fitsCard, BADGE_IDS, BADGES, badgeLevel, badgeValue, type BadgeId } from "../badges.ts";
+import { cardWith, fitsCard, BADGE_IDS, BADGES, badgeLevel, badgeValue, type BadgeId } from "../cards/badges.ts";
 import { RARITIES } from "../shop/rarity.ts";
 import { revealDraws } from "./badge-reveal.ts";
 import { revealBuys } from "./card-buy-reveal.ts";
-import { CARD_BUY_GEMS, type CardBuyCount } from "../card-buys.ts";
+import { CARD_BUY_GEMS, type CardBuyCount } from "../cards/buys.ts";
 import { showCard, type CardAction, type CardDetails } from "./card-reveal.ts";
 import { CardTreePanel } from "./card-tree-panel.ts";
-import { CARD_TREES, hasPointsToSpend } from "../card-trees.ts";
+import { CARD_TREES, hasPointsToSpend } from "../cards/trees.ts";
 import { cardLevelHtml, cardXpBarHtml } from "./card-level-marks.ts";
 import { badgeLevelsHtml, cardBadgeHtml, badgeText, progressText, tokenHtml } from "./badge-token.ts";
 
@@ -32,6 +32,10 @@ type DeckDrag = { card: CardId; to: number | null; pointer: number; x: number; y
 type BadgeDrag = { badge: BadgeId; card: CardId | null; pointer: number; x: number; y: number; lifted: boolean; ghost: HTMLElement | null };
 
 const X_SVG = kitIcon("close", `<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2.5 2.5L7.5 7.5M7.5 2.5L2.5 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`, "deck-control-icon");
+/** The switch on a hand card that moves it to the other hand (Manual Hand). */
+const SWITCH_SVG = `<svg viewBox="0 0 10 10" aria-hidden="true" class="deck-control-icon"><path d="M1.8 3.2H7.8M6.2 1.5L8 3.2L6.2 4.9M8.2 6.8H2.2M3.8 5.1L2 6.8L3.8 8.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+/** The two hands' names on the Deck page. */
+const HAND_NAMES: Record<HandKind, string> = { auto: "Auto hand", manual: "Manual hand" };
 const CHECK_SVG = kitIcon("check", `<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2 5.4L4.2 7.6L8.2 2.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`, "deck-control-icon");
 
 /** The rising arrow on a card with card points to spend. */
@@ -82,7 +86,9 @@ function near(box: DOMRect, x: number, y: number) {
 type Lesson = "order" | "remove" | "points" | "add" | null;
 
 /** The Deck page: the hand's slots along the top (with Larger Hand, the
- * next one to buy with Gems after them), whose cards Hand
+ * next one to buy with Gems after them; with Manual Hand, a slider over
+ * them shows the Auto hand's or the Manual hand's, each card wearing a
+ * switch to the other beside its X), whose cards Hand
  * Ordering lets the player drag into a new order before a run, and the
  * deck's cards below, which Buildout lets the player add to the hand
  * or take out of it (STAIRS always stays). Each skill's first visit
@@ -97,6 +103,9 @@ export class DeckPage {
   /** Whether the hand is collapsed under its heading, making room for the
    * deck and badges; until the page is left. */
   private handCollapsed = false;
+  /** Which hand the slots show (Manual Hand): the Auto hand until the
+   * slider picks the Manual hand; until the page is left. */
+  private kind: HandKind = "auto";
 
   constructor(private ctx: AppContext) {}
 
@@ -131,6 +140,7 @@ export class DeckPage {
     if (open) return;
     this.cancelDrag();
     this.handCollapsed = false;
+    this.kind = "auto";
     // Leaving the page puts a card's tree away: the Deck shows again next time.
     this.tree?.close(true);
     this.tree = null;
@@ -170,10 +180,35 @@ export class DeckPage {
     return hand.includes("monster") ? "monster" : hand.filter((c) => c !== "stairs").at(-1);
   }
 
+  /** The cards of the hand the slots show. */
+  private get hand() {
+    return this.ctx.game.deck.cards(this.kind);
+  }
+
+  /** How many cards the hand shown holds. */
+  private get slots() {
+    return this.ctx.game.deck.slots(this.kind);
+  }
+
+  /** Whether the slider between the two hands shows: Manual Hand owned,
+   * and no lesson waiting on the player. */
+  private get showsKinds() {
+    return !!this.ctx.game.save.upgrades.manualHand && !this.waitsOnPlayer;
+  }
+
+  /** The Auto | Manual slider over the hand's slots. */
+  private kindsHtml() {
+    if (!this.showsKinds) return "";
+    const option = (kind: HandKind, name: string, title: string) =>
+      `<button type="button" role="radio" data-hand-kind="${kind}" aria-checked="${this.kind === kind}" title="${title}">${name}</button>`;
+    return `<div class="hand-kinds${this.kind === "manual" ? " manual" : ""}" role="radiogroup" aria-label="Which hand to show">${option("auto", "Auto", "The Auto hand: its cards play by themselves, in order")}${option("manual", "Manual", "The Manual hand: its cards act only when you press them in a run")}<span class="hand-kinds-thumb" aria-hidden="true"></span></div>`;
+  }
+
   render() {
     // A card's tree stands in for the page while it is open.
     if (this.tree) return;
     const save = this.ctx.game.save;
+    if (!this.showsKinds) this.kind = "auto";
     // With nothing to take out of the hand, the remove step has nothing to teach.
     if (this.lesson === "remove" && !this.removeTarget) {
       save.tutorials.removeCard = true;
@@ -192,8 +227,8 @@ export class DeckPage {
     const toggle = this.waitsOnPlayer ? "" : `<button type="button" class="deck-hand-toggle" id="deck-hand-toggle" aria-expanded="${!collapsed}" aria-controls="deck-hand" title="${collapsed ? "Show" : "Hide"} the hand" aria-label="${collapsed ? "Show" : "Hide"} the hand">${CHEVRON_SVG}</button>`;
     el("deck").innerHTML = `<div class="deck-page${this.showsBadges ? " with-badges" : ""}">
       <section class="deck-hand-area${collapsed ? " collapsed" : ""}" aria-labelledby="deck-hand-label">
-        <div class="deck-hand-head"><h3 id="deck-hand-label" class="deck-label">Hand</h3>${toggle}</div>
-        <div class="deck-hand${this.showsLinks ? " with-links" : ""}" id="deck-hand" role="list" aria-label="Hand, in the order its cards are tried">${this.slotsHtml(save.hand)}</div>
+        <div class="deck-hand-head"><h3 id="deck-hand-label" class="deck-label">Hand</h3>${this.kindsHtml()}${toggle}</div>
+        <div class="deck-hand${this.showsLinks ? " with-links" : ""}" id="deck-hand" role="list" aria-label="${this.kind === "manual" ? "Manual hand, its cards acting only when pressed" : "Hand, in the order its cards are tried"}">${this.slotsHtml(this.hand)}</div>
         ${tip}
       </section>
       ${this.columnsHtml()}
@@ -203,10 +238,11 @@ export class DeckPage {
     this.bindBadges();
   }
 
-  /** Whether the hand shows its Card Groups links: the Goal claimed, and no
-   * lesson waiting on the player. */
+  /** Whether the hand shows its Card Groups links: the Goal claimed, no
+   * lesson waiting on the player, and the Auto hand shown (the Manual
+   * hand's cards are never linked). */
   private get showsLinks() {
-    return this.ctx.game.deck.canLink && !this.waitsOnPlayer;
+    return this.ctx.game.deck.canLink && !this.waitsOnPlayer && this.kind === "auto";
   }
 
   /** Whether the Badges box shows: Badges owned, and no lesson
@@ -268,28 +304,28 @@ export class DeckPage {
     return `<button type="button" class="badge-draw${short ? " short" : ""}" data-draw="${count}" ${can ? "" : "disabled"} title="${can ? `Buy ${count === 1 ? "a badge" : "10 badges"} for ${price} Gems` : "Every badge is at its top level"}">Buy ×${count}<span>${gemIcon()}<b>${price}</b></span></button>`;
   }
 
-  /** The deck's cards on a grid: those in the hand greyed with a check that
-   * returns them, the rest ready to add. */
+  /** The deck's cards on a grid: those in a hand with a check that
+   * returns them, the rest ready to add to the hand shown. */
   private deckHtml(note: boolean) {
-    const hand = this.ctx.game.save.hand, full = hand.length >= handSlots(this.ctx.game.save);
+    const { deck } = this.ctx.game, full = deck.full(this.kind), yours = this.kind === "manual" ? "your Manual hand" : "your hand";
     // The card points lesson leaves only the card it points at to press.
     const target = this.lesson === "points" ? this.pointsTarget : null;
     const cards = deckCards(this.ctx.game.save.upgrades, this.ctx.game.save.goals).map((id) => {
-      const name = CARDS[id].name, fixed = target && id !== target ? " disabled" : "";
-      const pointer = id === target && !hand.includes(id) ? this.pointer("at-card") : "";
-      if (hand.includes(id)) {
-        const stays = id === "stairs";
+      const name = CARDS[id].name, fixed = target && id !== target ? " disabled" : "", held = deck.handOf(id);
+      const pointer = id === target && !held ? this.pointer("at-card") : "";
+      if (held) {
+        const stays = id === "stairs", where = held === "manual" ? "your Manual hand" : "your hand";
         const check = (stays
           ? `disabled title="STAIRS always stays in your hand" aria-label="${name} is in your hand and always stays there"`
-          : `title="Return ${name} to the deck" aria-label="${name} is in your hand: return it to the deck"`) + (target && !stays ? " disabled" : "");
-        return `<div class="deck-entry in-hand" role="listitem"${this.badgeTarget(id)}<button type="button" class="deck-entry-art" data-info="${id}"${fixed} title="${name}: in your hand. Press for details" aria-label="${name}: in your hand. Press for details">${cardArt(id, name)}${this.marksHtml(id)}</button><button type="button" class="deck-check" data-return="${id}" ${check}>${CHECK_SVG}</button></div>`;
+          : `title="Return ${name} to the deck" aria-label="${name} is in ${where}: return it to the deck"`) + (target && !stays ? " disabled" : "");
+        return `<div class="deck-entry in-hand" role="listitem"${this.badgeTarget(id)}<button type="button" class="deck-entry-art" data-info="${id}"${fixed} title="${name}: in ${where}. Press for details" aria-label="${name}: in ${where}. Press for details">${cardArt(id, name)}${this.marksHtml(id)}</button><button type="button" class="deck-check" data-return="${id}" ${check}>${CHECK_SVG}</button></div>`;
       }
       // A full hand takes a card only by dragging it onto one to swap out.
-      return `<div class="deck-entry" role="listitem"${this.badgeTarget(id)}<button type="button" class="deck-add${full ? " full" : ""}" data-add="${id}" title="${full ? `${name}: press for details. Your hand is full: drag it onto a card to swap it` : `${name}: press for details, or drag it to a slot`}" aria-label="${full ? `${name}: press for details. Your hand is full: drag it onto a card to swap it` : `${name}: press for details or to add it to your hand`}"${fixed}>${cardArt(id, name)}${this.marksHtml(id)}</button>${pointer}</div>`;
+      return `<div class="deck-entry" role="listitem"${this.badgeTarget(id)}<button type="button" class="deck-add${full ? " full" : ""}" data-add="${id}" title="${full ? `${name}: press for details. ${cap(yours)} is full: drag it onto a card to swap it` : `${name}: press for details, or drag it to a slot`}" aria-label="${full ? `${name}: press for details. ${cap(yours)} is full: drag it onto a card to swap it` : `${name}: press for details or to add it to ${yours}`}"${fixed}>${cardArt(id, name)}${this.marksHtml(id)}</button>${pointer}</div>`;
     }).join("");
     return `<section class="deck-reserve open" aria-labelledby="deck-label">
         <h3 id="deck-label" class="deck-label">Deck</h3>
-        ${note ? `<button type="button" class="deck-tip deck-note" id="deck-add-note"><b>Add cards from your deck</b><p>Press a card to see what it does and add it to your hand, or drag it to a hand slot. Cards already in your hand are greyed out: press their check to return them to the deck.</p><small>Press to dismiss</small></button>` : ""}
+        ${note ? `<button type="button" class="deck-tip deck-note" id="deck-add-note"><b>Add cards from your deck</b><p>Press a card to see what it does and add it to your hand, or drag it to a hand slot. Cards already in your hand wear a check: press it to return them to the deck.</p><small>Press to dismiss</small></button>` : ""}
         <div class="deck-grid" role="list" aria-label="Your deck">${cards}</div>
       </section>`;
   }
@@ -308,17 +344,18 @@ export class DeckPage {
     return this.cardSlotsHtml(hand, held) + this.slotForSaleHtml();
   }
 
-  /** The next hand slot, offered for its Gems, once Larger Hand is owned. */
+  /** The next slot of the hand shown, offered for its Gems, once Larger
+   * Hand (for the Auto hand) or Manual Hand (for the Manual hand) is owned. */
   private slotForSaleHtml() {
-    const { save, free } = this.ctx.game, price = nextHandSlotGems(save);
+    const { save, free, deck } = this.ctx.game, price = deck.slotGems(this.kind);
     if (price === null || this.waitsOnPlayer) return "";
-    const short = save.gems < price && !free;
-    return `<div class="deck-slot for-sale" role="listitem"><button type="button" class="deck-buy-slot${short ? " short" : ""}" data-buy-slot title="${short ? `Needs ${price} Gems` : `Buy a hand slot for ${price} Gems`}" aria-label="Buy a hand slot for ${price} Gems"><span>+</span>${gemIcon()}<b>${price}</b></button></div>`;
+    const short = save.gems < price && !free, what = this.kind === "manual" ? "a Manual hand slot" : "a hand slot";
+    return `<div class="deck-slot for-sale" role="listitem"><button type="button" class="deck-buy-slot${short ? " short" : ""}" data-buy-slot title="${short ? `Needs ${price} Gems` : `Buy ${what} for ${price} Gems`}" aria-label="Buy ${what} for ${price} Gems"><span>+</span>${gemIcon()}<b>${price}</b></button></div>`;
   }
 
   private cardSlotsHtml(hand: readonly CardId[], held: number | null) {
     const linked = linkedToNext(hand, this.ctx.game.save.cardLinks);
-    return Array.from({ length: handSlots(this.ctx.game.save) }, (_, i) => {
+    return Array.from({ length: this.slots }, (_, i) => {
       const id = hand[i];
       return id ? this.cardSlotHtml(id, i, hand.length, i === held, this.linksHtml(hand, linked, i)) : `<div class="deck-slot empty" role="listitem" aria-label="Empty slot ${i + 1}"></div>`;
     }).join("");
@@ -339,14 +376,25 @@ export class DeckPage {
   }
 
   /** Hand slot `i` holding card `id`: the card (fixed in place while a
-   * lesson points elsewhere), its X, and the lesson's pointing hand. */
+   * lesson points elsewhere), its X, its switch to the other hand, and the
+   * lesson's pointing hand. */
   private cardSlotHtml(id: CardId, i: number, count: number, held: boolean, links = "") {
     const lesson = this.lesson, card = CARDS[id], upgrades = this.ctx.game.save.upgrades;
     const fixed = lesson === "remove" || (lesson === "order" && id !== "stairs") || (lesson === "points" && id !== this.pointsTarget);
     const pointed = lesson === "remove" && id === this.removeTarget;
-    const x = this.removable(id) ? `<button type="button" class="deck-remove${pointed ? " shown" : ""}" data-remove="${id}" title="Return ${card.name} to the deck" aria-label="Return ${card.name} to the deck">${X_SVG}</button>` : "";
+    const x = this.removable(id) ? `<button type="button" class="deck-remove${pointed ? " shown" : ""}" data-remove="${id}" title="Return ${card.name} to the deck" aria-label="Return ${card.name} to the deck">${X_SVG}</button>` + this.switchHtml(id) : "";
     const lessonPointer = (lesson === "order" && id === "stairs") || (lesson === "points" && id === this.pointsTarget) ? this.pointer("at-card") : pointed ? this.pointer("at-x") : "";
     return `<div class="deck-slot${held ? " held" : ""}" role="listitem"${this.badgeTarget(id)}<button type="button" class="deck-card" data-slot="${i}" ${fixed ? "disabled" : ""} aria-label="${card.name}, slot ${i + 1} of ${count}. Drag, or press the left and right arrow keys, to move it." title="${card.name}: ${cardText(id, upgrades)}${cardBonusText(id) ? ` · ${cardBonusText(id)}` : ""}">${cardArt(id, card.name)}${this.marksHtml(id)}</button>${x}${lessonPointer}${links}</div>`;
+  }
+
+  /** The switch beside a hand card's X that moves it to the other hand,
+   * with the slider showing (never on STAIRS, which wears no X); greyed
+   * while the other hand is full. */
+  private switchHtml(id: CardId) {
+    if (!this.showsKinds) return "";
+    const other = HAND_NAMES[this.kind === "auto" ? "manual" : "auto"], can = this.ctx.game.deck.canSwitch(id), name = CARDS[id].name;
+    const title = can ? `Move ${name} to the ${other}` : `The ${other} is full`;
+    return `<button type="button" class="deck-switch" data-switch="${id}" ${can ? "" : "disabled"} title="${title}" aria-label="${can ? title : `${name} can't move: the ${other} is full`}">${SWITCH_SVG}</button>`;
   }
 
   /** What card `id` wears over its art: its XP toward its next level on the
@@ -390,16 +438,24 @@ export class DeckPage {
       this.handCollapsed = !this.handCollapsed;
       this.render();
     };
+    document.querySelectorAll<HTMLButtonElement>("[data-hand-kind]").forEach((b) => (b.onclick = () => {
+      const kind = b.dataset.handKind as HandKind;
+      if (kind === this.kind) return;
+      this.kind = kind;
+      this.render();
+    }));
     const row = el("deck-hand");
     row.onclick = (e) => {
       const x = (e.target as HTMLElement).closest<HTMLButtonElement>(".deck-remove");
       if (x) this.remove(x.dataset.remove as CardId);
+      const swap = (e.target as HTMLElement).closest<HTMLButtonElement>(".deck-switch");
+      if (swap && !swap.disabled) this.switch(swap.dataset.switch as CardId);
       if ((e.target as HTMLElement).closest(".deck-buy-slot")) this.buySlot();
       const link = (e.target as HTMLElement).closest<HTMLButtonElement>(".deck-link-toggle");
       if (link) this.change(this.ctx.game.deck.link(Number(link.dataset.link)));
       // From the keyboard (a pointer's press shows it on release).
       const card = (e.target as HTMLElement).closest<HTMLButtonElement>(".deck-card");
-      if (card && e.detail === 0) this.showHandCard(this.ctx.game.save.hand[Number(card.dataset.slot)]);
+      if (card && e.detail === 0) this.showHandCard(this.hand[Number(card.dataset.slot)]);
     };
     row.onpointerdown = (e) => this.pressHandCard(row, e);
     row.onpointermove = (e) => this.dragHandCard(e);
@@ -407,8 +463,8 @@ export class DeckPage {
       const d = this.drag;
       if (!d || e.pointerId !== d.pointer) return;
       this.cancelDrag();
-      if (!d.lifted) return this.showHandCard(this.ctx.game.save.hand[d.from]);
-      if (d.to === TO_DECK) this.remove(this.ctx.game.save.hand[d.from]);
+      if (!d.lifted) return this.showHandCard(this.hand[d.from]);
+      if (d.to === TO_DECK) this.remove(this.hand[d.from]);
       else this.drop(d.from, d.to);
     };
     row.onpointercancel = () => {
@@ -450,7 +506,7 @@ export class DeckPage {
     if (!card || !step) return;
     e.preventDefault();
     const from = Number(card.dataset.slot), to = from + step;
-    if (to < 0 || to >= this.ctx.game.save.hand.length) return;
+    if (to < 0 || to >= this.hand.length) return;
     this.drop(from, to);
     el("deck-hand").querySelector<HTMLButtonElement>(`[data-slot="${to}"]`)?.focus();
   }
@@ -483,7 +539,7 @@ export class DeckPage {
   /** Shows the hand as it would be with the card dropped in `d.to`, or
    * returned to the deck, which lights up as where it would go. */
   private preview(d: Drag) {
-    const hand = this.ctx.game.save.hand, toDeck = d.to === TO_DECK;
+    const hand = this.hand, toDeck = d.to === TO_DECK;
     el("deck-hand").innerHTML = toDeck ? this.slotsHtml(hand.filter((_, i) => i !== d.from)) : this.slotsHtml(moveCard(hand, d.from, d.to), d.to);
     document.querySelector(".deck-reserve")?.classList.toggle("drop-target", toDeck);
   }
@@ -491,7 +547,7 @@ export class DeckPage {
   /** Whether (x, y) is over the open deck, and the dragged card can go back
    * to it (as its X would return it). */
   private overDeck(d: Drag, x: number, y: number) {
-    const deck = document.querySelector<HTMLElement>(".deck-reserve.open"), id = this.ctx.game.save.hand[d.from];
+    const deck = document.querySelector<HTMLElement>(".deck-reserve.open"), id = this.hand[d.from];
     if (!deck || !this.removable(id)) return false;
     const box = deck.getBoundingClientRect();
     return x >= box.left && x <= box.right && y >= box.top && y <= box.bottom;
@@ -500,7 +556,7 @@ export class DeckPage {
   /** The slot whose middle is nearest (x, y), among the slots holding
    * cards (a big hand wraps onto a second row). */
   private slotAt(x: number, y: number) {
-    const slots = Array.from(el("deck-hand").querySelectorAll<HTMLElement>(".deck-slot")).slice(0, this.ctx.game.save.hand.length);
+    const slots = Array.from(el("deck-hand").querySelectorAll<HTMLElement>(".deck-slot")).slice(0, this.hand.length);
     let best = 0, bestGap = Infinity;
     slots.forEach((slot, i) => {
       const box = slot.getBoundingClientRect(), gap = Math.hypot(x - (box.left + box.width / 2), y - (box.top + box.height / 2));
@@ -535,7 +591,7 @@ export class DeckPage {
       this.cancelDrag();
       if (!d.lifted) return this.showDeckCard(d.card);
       if (d.to === null) return this.render();
-      const placed = this.ctx.game.deck.place(d.card, d.to);
+      const placed = this.ctx.game.deck.place(d.card, d.to, this.kind);
       if (placed) this.meet(d.card);
       this.change(placed);
     };
@@ -574,16 +630,15 @@ export class DeckPage {
 
   /** Shows the hand as it would be with the deck card dropped on `d.to`. */
   private previewPlace(d: DeckDrag) {
-    const save = this.ctx.game.save, slots = handSlots(save);
-    const next = d.to === null ? null : placeCard(save.hand, d.card, d.to, slots);
-    el("deck-hand").innerHTML = next ? this.slotsHtml(next, next.indexOf(d.card)) : this.slotsHtml(save.hand);
+    const hand = this.hand, next = d.to === null ? null : placeCard(hand, d.card, d.to, this.slots);
+    el("deck-hand").innerHTML = next ? this.slotsHtml(next, next.indexOf(d.card)) : this.slotsHtml(hand);
   }
 
   /** The hand slot a deck card held at (x, y) would drop on: the nearest
    * one, empty slots too, while the pointer is within a slot's height of
    * the hand; null elsewhere, or over STAIRS in a full hand. */
   private deckSlotAt(card: CardId, x: number, y: number) {
-    const save = this.ctx.game.save, slots = handSlots(save);
+    const slots = this.slots;
     const boxes = Array.from(el("deck-hand").querySelectorAll<HTMLElement>(".deck-slot")).slice(0, slots).map((s) => s.getBoundingClientRect());
     let best: number | null = null, bestGap = Infinity;
     boxes.forEach((box, i) => {
@@ -591,7 +646,7 @@ export class DeckPage {
       const gap = Math.hypot(x - (box.left + box.width / 2), y - (box.top + box.height / 2));
       if (gap < bestGap) [best, bestGap] = [i, gap];
     });
-    return best !== null && placeCard(save.hand, card, best, slots) ? best : null;
+    return best !== null && placeCard(this.hand, card, best, slots) ? best : null;
   }
 
   private bindBadges() {
@@ -732,14 +787,15 @@ export class DeckPage {
     return `${BADGES[id].name} ${v}${id === "hpGate" ? "%" : ""}`;
   }
 
-  /** A hand card's details, with the offer to return it to the deck when
-   * its X would. */
+  /** A hand card's details, with the offers to return it to the deck when
+   * its X would, and to move it to the other hand when its switch would. */
   private showHandCard(id: CardId) {
     if (this.lesson === "points") return this.openLessonTree(id);
     if (this.meet(id)) this.render();
-    const { save } = this.ctx.game;
+    const { save, deck } = this.ctx.game, manual = deck.handOf(id) === "manual";
     const actions = this.removable(id) ? [{ label: "Return to deck", run: () => this.remove(id) }] : [];
-    showCard(id, save.upgrades, save.settings.reduceMotion, "IN YOUR HAND", { ...this.treeDetails(id, actions), note: id === "stairs" ? "STAIRS always stays in your hand." : undefined });
+    if (this.showsKinds && deck.canSwitch(id)) actions.push({ label: `Move to ${manual ? "Auto" : "Manual"} hand`, run: () => this.switch(id) });
+    showCard(id, save.upgrades, save.settings.reduceMotion, manual ? "IN YOUR MANUAL HAND" : "IN YOUR HAND", { ...this.treeDetails(id, actions), note: id === "stairs" ? "STAIRS always stays in your hand." : undefined });
   }
 
   /** A card's level and rarity, and the offer to open the
@@ -757,9 +813,9 @@ export class DeckPage {
   private showDeckCard(id: CardId) {
     if (this.lesson === "points") return this.openLessonTree(id);
     if (this.meet(id)) this.render();
-    const { save, deck } = this.ctx.game, full = save.hand.length >= handSlots(save);
-    const actions = full ? [] : [{ label: "Add to hand", run: () => this.change(deck.add(id)) }];
-    showCard(id, save.upgrades, save.settings.reduceMotion, "IN YOUR DECK", { ...this.treeDetails(id, actions), note: full ? "Your hand is full: drag this card onto one in your hand to swap it." : undefined });
+    const { save, deck } = this.ctx.game, kind = this.kind, full = deck.full(kind), yours = kind === "manual" ? "Manual hand" : "hand";
+    const actions = full ? [] : [{ label: `Add to ${yours}`, run: () => this.change(deck.add(id, kind)) }];
+    showCard(id, save.upgrades, save.settings.reduceMotion, "IN YOUR DECK", { ...this.treeDetails(id, actions), note: full ? `Your ${yours} is full: drag this card onto one in your ${yours} to swap it.` : undefined });
   }
 
   /** In the card points lesson, pressing the card it points at opens that
@@ -770,20 +826,21 @@ export class DeckPage {
     this.openTree(id);
   }
 
-  /** Asks before spending Gems on the next hand slot. */
+  /** Asks before spending Gems on the next slot of the hand shown. */
   private buySlot() {
-    const { game } = this.ctx, price = nextHandSlotGems(game.save);
+    const { game } = this.ctx, kind = this.kind, price = game.deck.slotGems(kind);
     if (price === null) return;
     if (!game.free && game.save.gems < price) return askForGems(this.ctx);
+    const manual = kind === "manual", slots = this.slots + 1;
     this.ctx.confirm(
       {
-        title: "Buy a hand slot?",
-        body: `Spend ${gemIcon()} <b>${price}</b> on one more hand slot: your hand will hold ${handSlots(game.save) + 1} cards.`,
+        title: manual ? "Buy a Manual hand slot?" : "Buy a hand slot?",
+        body: `Spend ${gemIcon()} <b>${price}</b> on one more ${manual ? "Manual hand" : "hand"} slot: your ${manual ? "Manual hand" : "hand"} will hold ${slots} card${slots === 1 ? "" : "s"}.`,
         label: `Buy · ${gemIcon()} <b>${price}</b>`,
         cancel: "Cancel",
       },
       () => {
-        this.change(game.deck.buySlot());
+        this.change(game.deck.buySlot(kind));
         this.ctx.update();
       },
     );
@@ -798,8 +855,8 @@ export class DeckPage {
   /** Commits a move; the first move of STAIRS finishes the order tutorial. */
   private drop(from: number, to: number) {
     const save = this.ctx.game.save;
-    const moved = save.hand[from];
-    if (from === to || !this.ctx.game.deck.arrange(from, to)) return this.render();
+    const moved = this.hand[from];
+    if (from === to || !this.ctx.game.deck.arrange(from, to, this.kind)) return this.render();
     this.meet(moved);
     const taught = this.lesson === "order" && moved === "stairs";
     if (taught) save.tutorials.deck = true;
@@ -807,6 +864,12 @@ export class DeckPage {
     if (!taught) return;
     this.ctx.update();
     this.praise("COMBAT STANCE", "Well arranged!", "Your hand will now try its cards in this order. Each run takes the hand as you leave it here, so try different orders and see which carries you farthest.");
+  }
+
+  /** Moves a hand card to the other hand. */
+  private switch(id: CardId) {
+    if (this.ctx.game.deck.switch(id)) this.meet(id);
+    this.change(true);
   }
 
   /** Returns a hand card to the deck; the first one finishes the remove tutorial. */
@@ -836,3 +899,6 @@ export class DeckPage {
     modal.showModal();
   }
 }
+
+/** `text` with its first letter capitalised. */
+const cap = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);

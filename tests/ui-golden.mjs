@@ -8,16 +8,21 @@
 // differing line is printed for any mismatch. It runs against the snapshot
 // build through `vite preview` (tests/snapshot-preview.mjs; `npm run test:ui`
 // builds it first).
+// ONLY=<key prefixes> (or ONLY=failed) walks only the sections that can make
+// a matching snapshot (each starts from its own fixture save, so it needs no
+// other) and compares or records only those (tests/golden-filter.mjs).
 import { chromium } from "@playwright/test";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { bounded, startPreview } from "./snapshot-preview.mjs";
 import { openMenu } from "./run-menu.mjs";
+import { goldenFilter, NOTHING_MATCHED } from "./golden-filter.mjs";
 
 const UPDATE = process.env.UPDATE_GOLDEN === "1";
 const GOLDEN = new URL("./fixtures/ui.golden.json", import.meta.url);
 const BASELINE_DIR = "test-results/ui-golden";
 const OUT_DIR = "test-results/ui";
+const filter = goldenFilter("ui");
 const server = await startPreview(4190);
 const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH } : { channel: process.env.PLAYWRIGHT_CHANNEL || "msedge" }) });
 let exitCode = 1;
@@ -54,7 +59,7 @@ try {
 
   /** Waits for the page's HTML and the HUD (filled in as the app starts), not
    * the load event, which also waits on every image. */
-  const ready = () => page.locator("#hp").waitFor();
+  const ready = () => page.locator("#hp").waitFor({ timeout: 30000 });
 
   // A fixed clock (a Monday noon, GMT), so the Tournament button's countdown
   // and anything else that reads the time shows the same every run; timers
@@ -69,13 +74,25 @@ try {
     const { Game } = await import("/snapshot/state.js");
     // Every fixture wears the Classic UI theme: the Medieval frame a new hero
     // starts in resizes the board, and the theme menus have their own steps.
-    const defaults = () => {
+    const newGame = () => {
       const s = newSave();
       s.settings.uiTheme = "classic";
       return s;
     };
+    // Every fixture but the new game is past the first skills: Door & Key,
+    // Enemy and Auto-Climb owned, their cards in the hand and met, and the
+    // lesson pointing at KEY and DOOR done.
+    const defaults = () => {
+      const s = newGame();
+      Object.assign(s.upgrades, { cardDoorKey: 1, cardEnemy: 1, autoClimb: 1 });
+      s.hand = ["stairs", "door", "key", "monster"];
+      s.seen.cards = [...s.hand];
+      s.seen.met = [...s.hand];
+      s.tutorials.keys = s.tutorials.autoClimb = s.tutorials.training = true;
+      return s;
+    };
     const make = (edit) => {
-      const s = defaults();
+      const s = newGame();
       edit?.(s);
       return { save: JSON.stringify(s), targets: [] };
     };
@@ -104,7 +121,7 @@ try {
     };
     const rich = (s) => {
       quiet(s);
-      Object.assign(s.upgrades, { delve: 1, moveSpeed: 1, legacy: 1, revive: 1, combatStance: 1, buildout: 1, largerHand: 1, cardHeal: 1, focus: 1, archives: 1, inspirationUndos: 1, greaterHeal: 1, recovery: 1, findPotion: 1, shroud: 1, undos: 1, extraKey: 1, gear: 1, trainers: 1, cardBlueKey: 1, pathfinder: 1 });
+      Object.assign(s.upgrades, { delve: 1, moveSpeed: 1, legacy: 1, revive: 1, combatStance: 1, buildout: 1, largerHand: 1, cardHeal: 1, bombs: 1, archives: 1, inspirationUndos: 1, greaterHeal: 1, recovery: 1, findPotion: 1, shroud: 1, undos: 1, extraKey: 1, elixirProvision: 1, whetstoneProvision: 1, aegisProvision: 1, trainers: 1, cardBlueKey: 1, pathfinder: 1 });
       s.delve.courage = 37;
       s.tower.inspiration = 21;
       s.gold = 480;
@@ -294,6 +311,23 @@ try {
         g.run.shrine = { picked: [], rolls: 0, offer: ["attack", "goldMaxHp"] };
         return { save: JSON.stringify(g.save), targets: [] };
       })(),
+      // The first run inside with Auto-Climb, its note waiting.
+      lessonAutoClimb: inside((s) => {
+        quiet(s);
+        s.tutorials.autoClimb = false;
+      }),
+      // Ten steps into the first floor at 2 steps a second: the speed lesson.
+      lessonSpeed: (() => {
+        const { save } = inside(quiet), s = JSON.parse(save);
+        s.tower.run.notes = { startedAt: 0, steps: 10, keys: {}, doors: {}, potions: 0, attackShards: 0, defenseShards: 0, silver: 0 };
+        return { save: JSON.stringify(s), targets: [] };
+      })(),
+      // Back in the forest at level 1, the first training points to spend.
+      lessonTraining: forest((s) => {
+        quiet(s);
+        Object.assign(s.tutorials, { enter: true, upgrades: true, training: false });
+        s.xp = 48;
+      }),
     };
   });
 
@@ -332,6 +366,12 @@ try {
   async function shot(name) {
     if (shots[name]) throw Error(`Duplicate snapshot ${name}`);
     shots[name] = await settled();
+  }
+  /** Walks one section of the tour, unless the run is filtered to snapshots
+   * it can't make; `owns` are its snapshot names' prefixes. */
+  async function section(...args) {
+    const walk = args.pop();
+    if (filter.wants(...args)) await walk();
   }
   async function load(name) {
     await page.evaluate((f) => sessionStorage.setItem("__uiFixture", f), FIXTURES[name].save);
@@ -583,7 +623,7 @@ try {
     }
   }
   /** The Gear page opens on Provisions;
-   * opening it clears the dot the Gear skill put on its button. */
+   * opening it clears the dot a first provision opened put on its button. */
   async function gearTour(prefix) {
     await shot(`${prefix}.gear.waiting`);
     await tab("gear");
@@ -621,6 +661,8 @@ try {
     await click("#settings-back");
     await shot(`${prefix}.popup`);
     await menuClick("#auto-settings");
+    // Dev Mode shows the dev section, where Dev mode itself is turned on.
+    await page.locator("#dev-tools").setChecked(true);
     await page.locator("#dev-mode").setChecked(true);
     await shot(`${prefix}.settings.dev`);
     // Dev mode owns every theme; one is worn from its menu.
@@ -629,338 +671,382 @@ try {
     await click('.theme-wear[data-look="neon"]');
     await shot(`${prefix}.themes.game.worn`);
     await click("#themes-back");
-    await click("#retire");
-    await shot(`${prefix}.retire.confirm`);
-    await click("#confirm");
-    await shot(`${prefix}.retired`);
   }
 
-  await load("fresh");
-  await shot("fresh.start");
-  // A new game's note holds the hand paused until it is tapped.
-  await click(".board-tip");
-  await shot("fresh.noteDismissed");
-  // Inside a run the button plays and pauses the hand.
-  await click("#auto");
-  await shot("fresh.handToggled");
-  await menuClick("#auto-settings");
-  await shot("fresh.settings");
-  await click("#settings-back");
-  await leaveRun();
-  await shot("fresh.forest");
-  await tab("upgrades");
-  await shot("fresh.upgrades");
-  // A skill short of its price says how much more it needs.
-  await click('[data-skill="combatStance"]');
-  await shot("fresh.tree.short");
-  await tab("board");
-  // In the forest Enter, under Goals, goes straight in.
-  await click("#enter-run");
-  await shot("fresh.entered");
-  // The enemy stats under the floor open every enemy the floor can roll; the X closes it.
-  await click("#base-enemy");
-  await shot("fresh.enemyOdds");
-  await click(".enemy-odds-x");
-  if (await page.locator(".enemy-odds-layer").count()) throw Error("the enemy stats box stayed open");
+  await section("fresh", async () => {
+    await load("fresh");
+    await shot("fresh.start");
+    // A new game's note holds the hand of STAIRS alone until the card is pressed.
+    await click('#hand .hand-card[data-card="stairs"]');
+    await shot("fresh.stairsPressed");
+    // Inside a run the button plays and pauses the hand.
+    await click("#auto");
+    await shot("fresh.handToggled");
+    await menuClick("#auto-settings");
+    await shot("fresh.settings");
+    await click("#settings-back");
+    await leaveRun();
+    await shot("fresh.forest");
+    await tab("upgrades");
+    await shot("fresh.upgrades");
+    // A skill short of its price says how much more it needs.
+    await click('[data-skill="cardDoorKey"]');
+    await shot("fresh.tree.short");
+    await tab("board");
+    // In the forest Enter, under Goals, goes straight in.
+    await click("#enter-run");
+    await shot("fresh.entered");
+    // The enemy stats under the floor open every enemy the floor can roll; the X closes it.
+    await click("#base-enemy");
+    await shot("fresh.enemyOdds");
+    await click(".enemy-odds-x");
+    if (await page.locator(".enemy-odds-layer").count()) throw Error("the enemy stats box stayed open");
+  });
 
   // A fallen hero: the defeat dialog, with an undo or without.
-  await load("fallenUndo");
-  await shot("fallen.undo");
-  await click("#defeat-undo");
-  await shot("fallen.undo.undone");
-  await load("fallenBare");
-  await shot("fallen.bare");
-  await click("#defeat-accept");
-  await shot("fallen.accepted");
+  await section("fallen", async () => {
+    await load("fallenUndo");
+    await shot("fallen.undo");
+    await click("#defeat-undo");
+    await shot("fallen.undo.undone");
+    await load("fallenBare");
+    await shot("fallen.bare");
+    await click("#defeat-accept");
+    await shot("fallen.accepted");
+  });
 
-  await load("towerFloor");
-  await boardTour("floor", "towerFloor");
-  await dialogsTour("floor");
+  await section("floor", async () => {
+    await load("towerFloor");
+    await boardTour("floor", "towerFloor");
+    await dialogsTour("floor");
+  });
 
-  await load("rich");
-  await boardTour("rich", "rich");
-  await dialogsTour("rich");
-  // Focus: a card with no target flashes red for free; one with a target takes the lead.
-  for (const card of ["door", "key", "monster"]) {
-    await click(`#hand .hand-card[data-card="${card}"]`);
-    await shot(`rich.focus.${card}`);
-  }
-  await leaveRun();
-  // In the forest, Goals shows the Tower's checkpoints: claiming an unlock
-  // (Damage Prediction) explains it, a premium reward offers the
-  // pass, an unlock already claimed explains it again, one completed but not
-  // mastered says what warping takes, a mastered checkpoint above one that
-  // isn't (30, over 20) is greyed out and says so, and one whose areas are
-  // all mastered (10) asks to warp there.
-  await click("#section-pick");
-  await shot("rich.goals");
-  await click('[data-goal="1:10:0"]');
-  await shot("rich.goals.predictionUnlocked");
-  await click("#unlock-ok");
-  await shot("rich.goals.claimed");
-  await click('[data-goal="1:10:0"]');
-  await shot("rich.goals.predictionAgain");
-  await click("#unlock-ok");
-  await click('[data-goal="1:20:1"]');
-  await shot("rich.goals.pass");
-  await closeModal();
-  await click('[data-warp="1:20"]');
-  await shot("rich.goals.unmastered");
-  await click('[data-warp="1:30"]');
-  await shot("rich.goals.inactiveWarp");
-  await click('[data-warp="1:10"]');
-  await shot("rich.goals.warp");
-  await click("#cancel");
-  await click("#goals-back");
-  await deckTour("rich");
-  await cardRevealTour("rich");
-  await upgradesTour("rich");
-  await researchTour("rich");
-  await gearTour("rich");
-  // The sign at the foot of the forest path leads to the Delve's forest,
-  // and the mode button takes its art.
-  await tab("board");
-  await shot("rich.forestSign");
-  await click("#forest-sign");
-  await shot("rich.delve");
-  await settingsTour("rich");
+  await section("rich", async () => {
+    await load("rich");
+    await boardTour("rich", "rich");
+    await dialogsTour("rich");
+    // Pressing a card: one with no target flashes red for free; one with a
+    // target takes the lead, and the others flash red until it arrives.
+    for (const card of ["door", "key", "monster"]) {
+      await click(`#hand .hand-card[data-card="${card}"]`);
+      await shot(`rich.press.${card}`);
+    }
+    await leaveRun();
+    // In the forest, Goals shows the Tower's checkpoints: claiming an unlock
+    // (Damage Prediction) explains it, a premium reward offers the
+    // pass, an unlock already claimed explains it again, one completed but not
+    // mastered says what warping takes, a mastered checkpoint above one that
+    // isn't (30, over 20) is greyed out and says so, and one whose areas are
+    // all mastered (10) asks to warp there.
+    await click("#section-pick");
+    await shot("rich.goals");
+    await click('[data-goal="1:10:0"]');
+    await shot("rich.goals.predictionUnlocked");
+    await click("#unlock-ok");
+    await shot("rich.goals.claimed");
+    await click('[data-goal="1:10:0"]');
+    await shot("rich.goals.predictionAgain");
+    await click("#unlock-ok");
+    await click('[data-goal="1:20:1"]');
+    await shot("rich.goals.pass");
+    await closeModal();
+    await click('[data-warp="1:20"]');
+    await shot("rich.goals.unmastered");
+    await click('[data-warp="1:30"]');
+    await shot("rich.goals.inactiveWarp");
+    await click('[data-warp="1:10"]');
+    await shot("rich.goals.warp");
+    await click("#cancel");
+    await click("#goals-back");
+    await deckTour("rich");
+    await cardRevealTour("rich");
+    await upgradesTour("rich");
+    await researchTour("rich");
+    await gearTour("rich");
+    // The sign at the foot of the forest path leads to the Delve's forest,
+    // and the mode button takes its art.
+    await tab("board");
+    await shot("rich.forestSign");
+    await click("#forest-sign");
+    await shot("rich.delve");
+    await settingsTour("rich");
+  });
 
-  await load("devStatus");
-  await boardTour("dev", "devStatus");
-  await leaveRun();
-  await tab("gear");
-  await shot("dev.gear");
-  await tab("upgrades");
-  await shot("dev.upgrades");
-  // The Shop tab, at the bottom right outside a run, opens the Shop, whose
-  // Back returns to the page it was opened from; nothing claimed, so no
-  // countdown reads the clock.
-  await tab("shop");
-  await shot("dev.upgrades.shop");
-  await click('[data-detail="coins3"]');
-  await shot("dev.shop.details");
-  await closeModal();
-  await click("#shop-back");
-  await shot("dev.upgrades.shopBack");
-  await tab("gear");
-  await tab("shop");
-  await click("#shop-back");
-  await shot("dev.gear.shopBack");
+  await section("dev", async () => {
+    await load("devStatus");
+    await boardTour("dev", "devStatus");
+    await leaveRun();
+    await tab("gear");
+    await shot("dev.gear");
+    await tab("upgrades");
+    await shot("dev.upgrades");
+    // The Shop tab, at the bottom right outside a run, opens the Shop, whose
+    // Back returns to the page it was opened from; nothing claimed, so no
+    // countdown reads the clock.
+    await tab("shop");
+    await shot("dev.upgrades.shop");
+    await click('[data-detail="coins3"]');
+    await shot("dev.shop.details");
+    await closeModal();
+    await click("#shop-back");
+    await shot("dev.upgrades.shopBack");
+    await tab("gear");
+    await tab("shop");
+    await click("#shop-back");
+    await shot("dev.gear.shopBack");
+  });
 
-  await load("badges");
-  await badgesTour("badges");
+  await section("badges", async () => {
+    await load("badges");
+    await badgesTour("badges");
+  });
 
   // Badge Slots: a card's two badges stacked, a badge in conflict refused
   // with a box naming both, and the two on the card in a run.
-  await load("badgeSlots");
-  await tab("deck");
-  await shot("badgeSlots.deck");
-  {
-    const a = await page.locator('.badge-pick[data-badge="yellowAtLeast"]').boundingBox();
-    const b = await page.locator('.deck-slot[data-badge-card="stairs"]').boundingBox();
-    await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2);
-    await page.mouse.down();
-    await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 8 });
-    await page.mouse.up();
-    await shot("badgeSlots.conflict");
-  }
-  await load("badgeSlotsRun");
-  await shot("badgeSlots.run");
+  await section("badgeSlots", async () => {
+    await load("badgeSlots");
+    await tab("deck");
+    await shot("badgeSlots.deck");
+    {
+      const a = await page.locator('.badge-pick[data-badge="yellowAtLeast"]').boundingBox();
+      const b = await page.locator('.deck-slot[data-badge-card="stairs"]').boundingBox();
+      await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 8 });
+      await page.mouse.up();
+      await shot("badgeSlots.conflict");
+    }
+    await load("badgeSlotsRun");
+    await shot("badgeSlots.run");
+  });
 
   // Run Notes: opened from the floor number over the board, closed by the
   // X, then from the end dialog's Run Notes button.
-  await load("notes");
-  await click("#height");
-  await shot("notes.open");
-  await click("#run-notes-close");
-  await menuClick("#end-run");
-  await shot("notes.endRun");
-  await click("#summary-notes");
-  await shot("notes.endRun.notes");
-  await click("#run-notes-close");
-  await click("#cancel");
+  await section("notes", async () => {
+    await load("notes");
+    await click("#height");
+    await shot("notes.open");
+    await click("#run-notes-close");
+    await menuClick("#end-run");
+    await shot("notes.endRun");
+    await click("#summary-notes");
+    await shot("notes.endRun.notes");
+    await click("#run-notes-close");
+    await click("#cancel");
+  });
 
   // Equipment: claimed from Tower I's floor 60 Goal, opened through the
   // claim's Visit the Blacksmith, then each view, an item, a merge, a
   // dismantle and a ×10 pull.
-  await load("equipment");
-  await click("#section-pick");
-  await click('[data-goal="2:60:0"]');
-  await shot("equipment.claimed");
-  await click("#unlock-visit");
-  await shot("equipment.loadout");
-  // The ? beside the heading holds what the views leave unsaid.
-  await click("#equip-help");
-  await shot("equipment.help");
-  await click("#tree-help-ok");
-  // An empty slot in the loadout ring shows only its category below.
-  await click('[data-eq-slot="helmet"]');
-  await shot("equipment.slot");
-  await click('[data-eq-slot="helmet"]');
-  await click('[data-eq-item="e1"]');
-  await shot("equipment.item");
-  // Its effect slot: Refine offers candidates beside the current effect,
-  // which stays when kept; a fresh piece's slot rolls free.
-  await click('[data-eq-slotopen="0"]');
-  await shot("equipment.refine");
-  await click("#eq-refine");
-  await shot("equipment.refined");
-  await click("#eq-keep");
-  await shot("equipment.kept");
-  await click("#eq-back");
-  await click("#eq-close");
-  await click('[data-eq-cat="weapon"]');
-  await click('[data-eq-rar="uncommon"]');
-  await shot("equipment.filtered");
-  await click('[data-eq-select="toggle"]');
-  await click('.eq-grid [data-eq-item="e2"]');
-  await click('.eq-grid [data-eq-item="e3"]');
-  await shot("equipment.selected");
-  await click('[data-eq-dismantle]');
-  await shot("equipment.dismantle.confirm");
-  await click("#eq-cancel");
-  // Assemble: choose the piece to keep, its copies fill in, and the result
-  // shows full screen.
-  await click('[data-eq-view="assemble"]');
-  await shot("equipment.assemble");
-  await click('[data-eq-target]');
-  await shot("equipment.merge");
-  await click("#eq-asm-go");
-  await shot("equipment.merged");
-  await click("#eq-ok");
-  await click('[data-eq-view="pulls"]');
-  await click('[data-eq-pullcat="ring"]');
-  await shot("equipment.pulls");
-  await click('[data-eq-pull="10"]');
-  await shot("equipment.pulled");
-  await click("#eq-ok");
+  await section("equipment", async () => {
+    await load("equipment");
+    await click("#section-pick");
+    await click('[data-goal="2:60:0"]');
+    await shot("equipment.claimed");
+    await click("#unlock-visit");
+    await shot("equipment.loadout");
+    // The ? beside the heading holds what the views leave unsaid.
+    await click("#equip-help");
+    await shot("equipment.help");
+    await click("#tree-help-ok");
+    // An empty slot in the loadout ring shows only its category below.
+    await click('[data-eq-slot="helmet"]');
+    await shot("equipment.slot");
+    await click('[data-eq-slot="helmet"]');
+    await click('[data-eq-item="e1"]');
+    await shot("equipment.item");
+    // Its effect slot: Refine offers candidates beside the current effect,
+    // which stays when kept; a fresh piece's slot rolls free.
+    await click('[data-eq-slotopen="0"]');
+    await shot("equipment.refine");
+    await click("#eq-refine");
+    await shot("equipment.refined");
+    await click("#eq-keep");
+    await shot("equipment.kept");
+    await click("#eq-back");
+    await click("#eq-close");
+    await click('[data-eq-cat="weapon"]');
+    await click('[data-eq-rar="uncommon"]');
+    await shot("equipment.filtered");
+    await click('[data-eq-select="toggle"]');
+    await click('.eq-grid [data-eq-item="e2"]');
+    await click('.eq-grid [data-eq-item="e3"]');
+    await shot("equipment.selected");
+    await click('[data-eq-dismantle]');
+    await shot("equipment.dismantle.confirm");
+    await click("#eq-cancel");
+    // Assemble: choose the piece to keep, its copies fill in, and the result
+    // shows full screen.
+    await click('[data-eq-view="assemble"]');
+    await shot("equipment.assemble");
+    await click('[data-eq-target]');
+    await shot("equipment.merge");
+    await click("#eq-asm-go");
+    await shot("equipment.merged");
+    await click("#eq-ok");
+    await click('[data-eq-view="pulls"]');
+    await click('[data-eq-pullcat="ring"]');
+    await shot("equipment.pulls");
+    await click('[data-eq-pull="10"]');
+    await shot("equipment.pulled");
+    await click("#eq-ok");
+  });
 
   // Mail: the forest's button with its dot; the list (the outage notice's
   // gift box, the notice's X); the notice opened, claimed, its reward
   // revealed and the message claimed; back to the list, now an X on each;
   // both removed, and the button gone.
-  await load("mail");
-  await shot("mail.forest");
-  await menuClick("#mail-button");
-  await shot("mail.list");
-  await click('[data-mail-open="outage"]');
-  await shot("mail.message");
-  await click("#mail-claim");
-  await page.locator(".reward-reveal").waitFor();
-  await shot("mail.reveal");
-  await click(".reward-reveal");
-  await page.locator(".mail-claimed").waitFor();
-  await shot("mail.claimed");
-  await click("#mail-back");
-  await shot("mail.listAfter");
-  await click('[data-mail-hide="outage"]');
-  await shot("mail.removed");
-  await click('[data-mail-hide="notice"]');
-  await shot("mail.forestAfter");
+  await section("mail", async () => {
+    await load("mail");
+    await shot("mail.forest");
+    await menuClick("#mail-button");
+    await shot("mail.list");
+    await click('[data-mail-open="outage"]');
+    await shot("mail.message");
+    await click("#mail-claim");
+    await page.locator(".reward-reveal").waitFor();
+    await shot("mail.reveal");
+    await click(".reward-reveal");
+    await page.locator(".mail-claimed").waitFor();
+    await shot("mail.claimed");
+    await click("#mail-back");
+    await shot("mail.listAfter");
+    await click('[data-mail-hide="outage"]');
+    await shot("mail.removed");
+    await click('[data-mail-hide="notice"]');
+    await shot("mail.forestAfter");
+  });
 
   // Missions: the forest's button (3/8, with its dot); the screen, under
   // the currencies bar, the weekly bar with the 10's box glowing; a mission
   // claimed, its pay flown to the bar; the weekly reward claimed, its Gold
   // celebrated and pressed on, then its Gems, with Skip passing over its
   // Medals and Training Point; and the X back to the board.
-  await load("missions");
-  await shot("missions.forest");
-  await menuClick("#missions-button");
-  await shot("missions.page");
-  await click('[data-claim="1"]');
-  await shot("missions.claimed");
-  await click('[data-weekly="1"]');
-  await page.locator(".reward-reveal").waitFor();
-  await shot("missions.weekly.gold");
-  await click(".reward-reveal");
-  await page.locator(".reward-reveal").waitFor();
-  await shot("missions.weekly.gems");
-  await click("#reward-reveal-skip");
-  await shot("missions.weekly");
-  await click("#missions-close");
-  await shot("missions.closed");
+  await section("missions", async () => {
+    await load("missions");
+    await shot("missions.forest");
+    await menuClick("#missions-button");
+    await shot("missions.page");
+    await click('[data-claim="1"]');
+    await shot("missions.claimed");
+    await click('[data-weekly="1"]');
+    await page.locator(".reward-reveal").waitFor();
+    await shot("missions.weekly.gold");
+    await click(".reward-reveal");
+    await page.locator(".reward-reveal").waitFor();
+    await shot("missions.weekly.gems");
+    await click("#reward-reveal-skip");
+    await shot("missions.weekly");
+    await click("#missions-close");
+    await shot("missions.closed");
+  });
 
   // Events: the forest's column (the hamburger, the Tournament's and Events'
   // buttons) and its menu (Settings, Missions, Relics); the Events screen
   // (the banner, the relic track, the booster's offer, the missions, the
   // completed one last); a tier claimed, its Medals flown to the bar; the
   // booster refused while the store is closed; and the Relics screen, empty.
-  await load("events");
-  await shot("events.forest");
-  await click("#run-menu-toggle");
-  await shot("events.menu");
-  await click("#run-menu-toggle");
-  await click("#events-button");
-  await shot("events.page");
-  await click("#events [data-claim]");
-  await shot("events.claimed");
-  await click("#event-boost-buy");
-  await page.locator("#event-boost-message:not(:empty)").waitFor();
-  await shot("events.boostRefused");
-  await click("#events-close");
-  await menuClick("#relics-button");
-  await shot("relics.empty");
-  await click("#relics-close");
-  await shot("events.closed");
+  await section("events", "relics", async () => {
+    await load("events");
+    await shot("events.forest");
+    await click("#run-menu-toggle");
+    await shot("events.menu");
+    await click("#run-menu-toggle");
+    await click("#events-button");
+    await shot("events.page");
+    await click("#events [data-claim]");
+    await shot("events.claimed");
+    await click("#event-boost-buy");
+    await page.locator("#event-boost-message:not(:empty)").waitFor();
+    await shot("events.boostRefused");
+    await click("#events-close");
+    await menuClick("#relics-button");
+    await shot("relics.empty");
+    await click("#relics-close");
+    await shot("events.closed");
+  });
 
   // The Tournament: on Monday, the button's countdown and the page, which
   // shows nothing of Saturday's results once they're over; All prizes. Then the clock moves on
   // (last, so no other snapshot sees it): Wednesday's opens, granting its
   // Ticket with a celebration; its Results come, and the prize is claimed.
-  await load("tournament");
-  await shot("tournament.forest");
-  await click("#tournament-button");
-  await shot("tournament.page");
-  await click("#tournament-all");
-  await shot("tournament.prizes");
-  await click("#prizes-ok");
-  await page.clock.setFixedTime(new Date("2026-10-07T01:00:00Z"));
-  await page.locator(".reward-reveal").waitFor();
-  await shot("tournament.ticket");
-  await click(".reward-reveal");
-  await shot("tournament.open");
-  await page.clock.setFixedTime(new Date("2026-10-08T05:30:00Z"));
-  await page.locator("#tournament-claim").waitFor();
-  await shot("tournament.results");
-  await click("#tournament-claim");
-  await page.locator(".reward-reveal").waitFor();
-  await shot("tournament.claimed");
-  await click(".reward-reveal");
-  await click("#tournament-back");
-  await shot("tournament.forestAfter");
+  await section("tournament", async () => {
+    await load("tournament");
+    await shot("tournament.forest");
+    await click("#tournament-button");
+    await shot("tournament.page");
+    await click("#tournament-all");
+    await shot("tournament.prizes");
+    await click("#prizes-ok");
+    await page.clock.setFixedTime(new Date("2026-10-07T01:00:00Z"));
+    await page.locator(".reward-reveal").waitFor();
+    await shot("tournament.ticket");
+    await click(".reward-reveal");
+    await shot("tournament.open");
+    await page.clock.setFixedTime(new Date("2026-10-08T05:30:00Z"));
+    await page.locator("#tournament-claim").waitFor();
+    await shot("tournament.results");
+    await click("#tournament-claim");
+    await page.locator(".reward-reveal").waitFor();
+    await shot("tournament.claimed");
+    await click(".reward-reveal");
+    await click("#tournament-back");
+    await shot("tournament.forestAfter");
+  });
 
   // Shrine management and a waiting offer, including both boon kinds.
-  await load("shrinesForest");
-  await menuClick("#shrines-button");
-  await shot("shrines.forest");
-  await page.locator("#first-boon").selectOption("regen");
-  await shot("shrines.firstChoice");
-  await page.locator('[data-ban="goldMaxHp"]').check();
-  await shot("shrines.banned");
-  await click('[data-rank="attack"] [data-up]');
-  await shot("shrines.ranked");
-  await load("shrinesRun");
-  await click("#shrine-bar");
-  await shot("shrines.offer");
-  await click('[data-boon="attack"]');
-  await click("#shrine-bar");
-  await shot("shrines.taken");
-  await page.locator("#boon-autopick").check();
-  await shot("shrines.auto");
+  await section("shrines", async () => {
+    await load("shrinesForest");
+    await menuClick("#shrines-button");
+    await shot("shrines.forest");
+    await page.locator("#first-boon").selectOption("regen");
+    await shot("shrines.firstChoice");
+    await page.locator('[data-ban="goldMaxHp"]').check();
+    await shot("shrines.banned");
+    await click('[data-rank="attack"] [data-up]');
+    await shot("shrines.ranked");
+    await load("shrinesRun");
+    await click("#shrine-bar");
+    await shot("shrines.offer");
+    await click('[data-boon="attack"]');
+    await click("#shrine-bar");
+    await shot("shrines.taken");
+    await page.locator("#boon-autopick").check();
+    await shot("shrines.auto");
+  });
+  await section("lessons", async () => {
+    await load("lessonAutoClimb");
+    await shot("lessons.autoClimb");
+    await click(".board-tip");
+    await shot("lessons.autoClimb.dismissed");
+    await load("lessonSpeed");
+    await shot("lessons.speed");
+    await load("lessonTraining");
+    await shot("lessons.trainingPoints");
+    await tab("research");
+    await click('[data-training-about="defense"]');
+    await shot("lessons.trainingAbout");
+  });
 
   // --- Compare ---
-  const hashes = Object.fromEntries(Object.entries(shots).map(([k, html]) => [k, createHash("sha256").update(html).digest("hex").slice(0, 16)]));
+  const hashes = Object.fromEntries(Object.entries(filter.pick(shots)).map(([k, html]) => [k, createHash("sha256").update(html).digest("hex").slice(0, 16)]));
   mkdirSync(OUT_DIR, { recursive: true });
   for (const [k, html] of Object.entries(shots)) writeFileSync(`${OUT_DIR}/${k}.html`, html);
   let failed = false;
-  if (UPDATE || !existsSync(GOLDEN)) {
+  const golden = existsSync(GOLDEN) ? JSON.parse(readFileSync(GOLDEN, "utf8")) : {};
+  if (filter.active && !filter.checked(golden, hashes).length) {
+    console.error(`No UI snapshots${filter.describe}.`);
+    exitCode = NOTHING_MATCHED;
+  } else if (UPDATE || !existsSync(GOLDEN)) {
     mkdirSync(BASELINE_DIR, { recursive: true });
-    for (const [k, html] of Object.entries(shots)) writeFileSync(`${BASELINE_DIR}/${k}.html`, html);
-    writeFileSync(GOLDEN, JSON.stringify(hashes, null, 2) + "\n");
-    console.log(`Wrote ${Object.keys(hashes).length} UI snapshot hashes to the golden file.`);
+    for (const k of Object.keys(hashes)) writeFileSync(`${BASELINE_DIR}/${k}.html`, shots[k]);
+    writeFileSync(GOLDEN, JSON.stringify(filter.merge(golden, hashes), null, 2) + "\n");
+    filter.recordFailures(Object.keys(hashes), []);
+    console.log(`Wrote ${Object.keys(hashes).length} UI snapshot hashes${filter.describe} to the golden file.`);
   } else {
-    const golden = JSON.parse(readFileSync(GOLDEN, "utf8"));
-    const changed = Object.keys({ ...golden, ...hashes }).filter((k) => golden[k] !== hashes[k]);
+    const checked = filter.checked(golden, hashes);
+    const changed = checked.filter((k) => golden[k] !== hashes[k]);
+    filter.recordFailures(checked, changed);
     for (const k of changed) {
       const base = `${BASELINE_DIR}/${k}.html`;
       let detail = "no local baseline HTML to compare";
@@ -976,11 +1062,11 @@ try {
       failed = true;
       console.error(`${changed.length} UI snapshots changed; see ${OUT_DIR}/ vs ${BASELINE_DIR}/`);
     } else {
-      console.log(`All ${Object.keys(hashes).length} UI snapshots match the golden hashes (${createHash("sha256").update(JSON.stringify(hashes)).digest("hex").slice(0, 8)}).`);
+      console.log(`All ${Object.keys(hashes).length} UI snapshots${filter.describe} match the golden hashes (${createHash("sha256").update(JSON.stringify(hashes)).digest("hex").slice(0, 8)}).`);
     }
   }
   if (errors.length) throw Error(errors.join("\n"));
-  exitCode = failed ? 1 : 0;
+  if (exitCode !== NOTHING_MATCHED) exitCode = failed ? 1 : 0;
 } catch (error) {
   console.error(error);
   exitCode = 1;

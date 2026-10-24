@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { TournamentClient } from "../src/tournament/client.ts";
 import { nextLeague } from "../src/tournament/leagues.ts";
 import { placeOf, prizeFor, prizeLevel } from "../src/tournament/prizes.ts";

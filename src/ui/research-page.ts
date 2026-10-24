@@ -2,16 +2,16 @@ import { controlIcon } from "./control-icon.ts";
 import { askForGems, helpButton, showHelp } from "./dialogs.ts";
 import { play } from "../sound.ts";
 import { permanentBoost, trainingRate } from "../shop/entitlements.ts";
-import { TRAINING, TRAINING_GROUPS, TRAINING_PER_LEVEL, trainingCap, type TrainingId } from "../config.ts";
-import { trainingBulk, trainingPoints, trainingRowsFull, trainingStep, trainingText, trainingOpen } from "../loadout.ts";
+import { TRAINING, TRAINING_GROUPS, TRAINING_PER_LEVEL, trainingCap, trainingDef, type TrainingId } from "../progression/training.ts";
+import { trainingBulk, trainingPoints, trainingRowsFull, trainingStep, trainingText, trainingOpen } from "../progression/loadout.ts";
 import { whole } from "../whole.ts";
-import type { BuyQuantity } from "../buy-quantity.ts";
+import type { BuyQuantity } from "../progression/buy-quantity.ts";
 import { bindBuyQuantity, buyQuantityHtml, maxCount } from "./buy-quantity-select.ts";
-import { TrainingParticles } from "../training-particles.ts";
-import { BOOST_CLAIM_MARGIN_MS, BOOST_MAX_MS, BOOST_RATE, boostLeft, claimBoost, nextTrainerGems, ranksInTraining, trainingJob, trainingSlots, workLeft, type TrainingJob } from "../training-jobs.ts";
+import { TrainingParticles } from "../render/effects/training-particles.ts";
+import { BOOST_CLAIM_MARGIN_MS, BOOST_MAX_MS, BOOST_RATE, boostLeft, claimBoost, nextTrainerGems, ranksInTraining, trainingJob, trainingSlots, workLeft, type TrainingJob } from "../progression/training-jobs.ts";
 import type { AppContext } from "./app.ts";
-import { adIcon, clockIcon, el, gemCount, gemIcon, goldIcon, pointsIcon, redoIcon, riseFrom, uiSprite } from "./dom.ts";
-import { TRAINING_RESET_GEMS } from "../gems.ts";
+import { adIcon, clamp, clockIcon, el, gemCount, gemIcon, goldIcon, pointsIcon, redoIcon, riseFrom, uiSprite } from "./dom.ts";
+import { TRAINING_RESET_GEMS } from "../economy/gems.ts";
 import { ArchivesPanel, COUNTDOWN_MIN_MS, formatCountdown, formatDuration, rushEfficiencyHtml, toNextSecond } from "./archives-page.ts";
 import { priceAmount } from "./hud.ts";
 
@@ -105,16 +105,16 @@ export class ResearchPage {
     const training = this.ctx.game.training;
     this.onEach("data-train", (id) => {
       let spent = false;
-      this.withRefund(() => (spent = training.train(id, this.ctx.game.buyQuantity)));
+      this.withRefund(() => (spent = training.train(id, this.ctx.game.training.buyQuantity)));
       if (spent) glow(document.querySelector<HTMLElement>(`[data-train="${id}"]`));
     });
     bindBuyQuantity(el("research"), (q) => {
-      this.ctx.game.setBuyQuantity(q);
+      this.ctx.game.training.setBuyQuantity(q);
       this.ctx.save();
       this.render();
     });
     this.onEach("data-train-gold", (id) => {
-      if (training.trainWithGold(id, this.ctx.game.buyQuantity)) {
+      if (training.trainWithGold(id, this.ctx.game.training.buyQuantity)) {
         this.ctx.update();
         play("coin");
       }
@@ -136,6 +136,49 @@ export class ResearchPage {
       training.setAutoContinue(box.dataset.auto as TrainingId, box.checked);
       this.ctx.save();
     });
+    document.querySelectorAll<HTMLElement>("[data-training-about]").forEach(name => {
+      const id = name.dataset.trainingAbout as TrainingId;
+      name.onclick = () => this.showAbout(name, id);
+      name.onkeydown = (e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        e.preventDefault();
+        this.showAbout(name, id);
+      };
+    });
+  }
+
+  /** A row's name, pressed to show what the stat does (`showAbout`). */
+  private nameHtml(t: { id: TrainingId; name: string }) {
+    return `<span class="training-name" role="button" tabindex="0" data-training-about="${t.id}" aria-label="What ${t.name} does">${t.name}</span>`;
+  }
+
+  /** Row `id`'s description, as a run's training bar shows it, in a plain
+   * box under its name (`name`), outside the page so its redraws keep it.
+   * A press anywhere else, or the rows scrolling, takes it away; pressing
+   * the name again closes it. */
+  private showAbout(name: HTMLElement, id: TrainingId) {
+    const open = document.querySelector<HTMLElement>(".training-about");
+    open?.remove();
+    if (open?.dataset.row === id) return;
+    const box = document.createElement("div"), done = new AbortController();
+    box.className = "training-about";
+    box.setAttribute("role", "tooltip");
+    box.dataset.row = id;
+    box.textContent = trainingDef(id).description;
+    el("app").append(box);
+    const at = name.getBoundingClientRect();
+    box.style.left = `${clamp(at.left, 8, Math.max(8, innerWidth - box.offsetWidth - 8))}px`;
+    box.style.top = `${at.bottom + 4}px`;
+    const close = () => {
+      box.remove();
+      done.abort();
+    };
+    // The name's own press toggles it in `onclick`.
+    document.addEventListener("pointerdown", (e) => {
+      const at = e.target as Element;
+      if (!box.contains(at) && !at.closest?.(`[data-training-about="${id}"]`)) close();
+    }, { capture: true, signal: done.signal });
+    document.addEventListener("scroll", close, { capture: true, signal: done.signal });
   }
 
   /** Binds each button carrying `attribute` to `action` with its row. */
@@ -226,7 +269,7 @@ export class ResearchPage {
     const game = this.ctx.game, save = game.save, points = trainingPoints(save), slots = trainingSlots(save), hired = game.training.hired;
     const row = (t: TrainingRow) => this.trainingRowHtml(t);
     // Buy Quantity sits at the right of the points' row, or before the points at the end of the trainers' row.
-    const quantity = buyQuantityHtml(game.buyQuantities, game.buyQuantity);
+    const quantity = buyQuantityHtml(game.training.buyQuantities, game.training.buyQuantity);
     // A stat a trainer is training moves up under the trainers, in the
     // order they started, until its training ends.
     const training = (t: TrainingRow) => !!trainingJob(save.trainingJobs, t.id);
@@ -262,7 +305,7 @@ export class ResearchPage {
     const game = this.ctx.game, save = game.save, view = game.trainingView, step = trainingStep(save, t.id, 1, view), hired = game.training.hired;
     // A Buy Quantity above x1 shows its price for the ranks it buys and
     // the value they reach.
-    const q = game.buyQuantity, bulk = trainingBulk(save, t.id, q), count = step.maxed ? 1 : Math.max(1, bulk.count);
+    const q = game.training.buyQuantity, bulk = trainingBulk(save, t.id, q), count = step.maxed ? 1 : Math.max(1, bulk.count);
     const { now, unit } = step, next = count === 1 ? step.next : trainingStep(save, t.id, count, view).next;
     // Attack Range and Attack Speed show the bare value; the row's name says what it counts.
     const shown = (v: number) => trainingText(v, unit, unit === "tiles" || unit === "shots");
@@ -273,7 +316,7 @@ export class ResearchPage {
     // place without trainers), and the reset keeps the right edge.
     if (step.maxed && !job) {
       const max = `<button class="training-box training-cost" disabled aria-label="${t.name} is fully trained">Max</button>`;
-      return `<div class="training-row maxed" role="listitem" data-training-row="${t.id}"><span class="training-label">${t.name} - ${this.levelText(t.id, false)}</span>${max}${hired ? `<span aria-hidden="true"></span>` : ""}${this.resetButton(t, false)}</div>`;
+      return `<div class="training-row maxed" role="listitem" data-training-row="${t.id}"><span class="training-label">${this.nameHtml(t)} - ${this.levelText(t.id, false)}</span>${max}${hired ? `<span aria-hidden="true"></span>` : ""}${this.resetButton(t, false)}</div>`;
     }
     const nowButton = step.maxed
       ? ""
@@ -283,9 +326,9 @@ export class ResearchPage {
       const speedup = job.speed > 1
         ? `<span class="training-speedup" title="Training ${job.speed}x faster for training ${job.ranks} ranks at once">×${job.speed}</span>`
         : `<span aria-hidden="true"></span>`;
-      return `<div class="training-row active" role="listitem" data-training-row="${t.id}"${job.speed > 1 ? ` data-speed="${job.speed}"` : ""}><span class="training-label training-head">${this.autoBox(t)}${t.name} - ${this.levelText(t.id, true)}</span>${speedup}${values}${this.trainerHtml(t, step)}${nowButton || `<span aria-hidden="true"></span>`}${this.finishButton(t.id, t.name)}</div>`;
+      return `<div class="training-row active" role="listitem" data-training-row="${t.id}"${job.speed > 1 ? ` data-speed="${job.speed}"` : ""}><span class="training-label training-head">${this.autoBox(t)}${this.nameHtml(t)} - ${this.levelText(t.id, true)}</span>${speedup}${values}${this.trainerHtml(t, step)}${nowButton || `<span aria-hidden="true"></span>`}${this.finishButton(t.id, t.name)}</div>`;
     }
-    return `<div class="training-row" role="listitem" data-training-row="${t.id}"><span class="training-label">${t.name} - ${this.levelText(t.id, false)}${notes ? `<small>${notes}</small>` : ""}</span>${values}${hired ? this.trainerHtml(t, step) : ""}${nowButton}${this.resetButton(t, false)}</div>`;
+    return `<div class="training-row" role="listitem" data-training-row="${t.id}"><span class="training-label">${this.nameHtml(t)} - ${this.levelText(t.id, false)}${notes ? `<small>${notes}</small>` : ""}</span>${values}${hired ? this.trainerHtml(t, step) : ""}${nowButton}${this.resetButton(t, false)}</div>`;
   }
 
   /** The training time to a row's next rank or ranks (at Buy Quantity
@@ -323,7 +366,7 @@ export class ResearchPage {
     const game = this.ctx.game, save = game.save;
     if (trainingJob(save.trainingJobs, t.id))
       return `<span class="training-job"><button class="training-box training-timer" data-cancel="${t.id}" aria-label="Training ${t.name}: tap to stop and get the Gold back" title="Tap to stop and get the Gold back"><span data-training-timer="${t.id}">${formatCountdown(game.training.left(t.id))}</span></button></span>`;
-    const q = game.buyQuantity, batch = game.training.batch(t.id, q), full = save.trainingJobs.length >= trainingSlots(save), gold = whole(batch.gold);
+    const q = game.training.buyQuantity, batch = game.training.batch(t.id, q), full = save.trainingJobs.length >= trainingSlots(save), gold = whole(batch.gold);
     const takes = formatDuration(game.training.toNextRank(t.id, q)), ranks = batch.count === 1 ? `to ${trainingText(step.next, step.unit)}` : `${batch.count} ranks`;
     return `<button class="training-box training-cost training-gold" data-train-gold="${t.id}" ${batch.affordable && !full ? "" : "disabled"} aria-label="Pay ${gold} Gold to a trainer to train ${t.name} ${ranks}, taking ${takes}" title="${full ? "Every trainer is busy" : `${batch.count === 1 ? "" : `${ranks}: `}Takes ${takes}`}">${maxCount(q, batch.count)}${goldIcon()}<span>${priceAmount(gold)}</span></button>`;
   }

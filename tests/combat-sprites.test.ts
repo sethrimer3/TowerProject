@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { ARROW_DIRECTIONS, arrowSprite, shieldSprite } from "../src/sprite-combat.ts";
-import { drawVolley } from "../src/volley-art.ts";
-import { drawShields } from "../src/shield-art.ts";
-import { drawChestMarks } from "../src/chest-marks.ts";
-import { paintContents } from "../src/tile-painters.ts";
-import type { FrameContext } from "../src/render-frame.ts";
+import { ARROW_DIRECTIONS, arrowSprite, shieldSprite } from "../src/sprites/combat.ts";
+import { drawVolley } from "../src/render/volley-art.ts";
+import { drawShields } from "../src/render/shield-art.ts";
+import { drawChestMarks } from "../src/render/chest-marks.ts";
+import { paintContents } from "../src/render/tile-painters.ts";
+import type { FrameContext } from "../src/render/render-frame.ts";
 import type { Volley } from "../src/volley.ts";
 
 test("arrow facings wrap cleanly and shields choose a native density", () => {
@@ -70,7 +70,7 @@ test("combat PNGs preserve flight, wrapped reach, opened-chest marks and late-lo
     ], "an opened chest keeps the same semantic mark");
 
     const tile = { kind: "enemy" as const, enemy: { name: "Goblin", tier: 0, strength: "elite" as const, hp: 10, attack: 1, defense: 0, fast: true, ranged: true } };
-    const art = { x: 0, y: 0, time: 0, spritesOff: false, reduceMotion: true, area1: false, styledSprites: true };
+    const art = { x: 0, y: 0, time: 0, reduceMotion: true, styledSprites: true };
     paintContents(c, tile, art); images.forEach(i => { if (i.src.endsWith("/enemy-goblin.png")) i.load(); });
     paintContents(c, tile, art);
     const before = canvases; paintContents(c, tile, art); assert.equal(canvases, before, "unchanged enemies reuse their bake");

@@ -15,12 +15,12 @@ try {
   await page.route("**/assets/style/hero-up.png", route => release(route));
   await page.goto(server.resolvedUrls.local[0]); await page.locator("#hp").waitFor();
   await page.evaluate(async () => {
-    const { EntityLighting } = await import("/src/entity-lighting.ts");
+    const { EntityLighting } = await import("/src/render/entity-lighting.ts");
     const canvas = document.createElement("canvas"); canvas.width = canvas.height = 72;
     const f = {
       c: canvas.getContext("2d"), s: 24, width: 72, n: 3, left: 0, bottom: 0, now: 1000, darkness: 0.5,
       playerX: 1, playerY: 1, heroFacing: { dx: 0, dy: 1 },
-      look: { spritesOff: false, styledSprites: true, reduceMotion: true, area1: false },
+      look: { styledSprites: true, reduceMotion: true, area1: false },
       world: { tile: () => ({ kind: "floor" }) },
       torches: [{ x: 0, y: 1, active: true, lightRadius: 8, baseIntensity: 1,
         visibilityPolygon: [{ x: -5, y: -5 }, { x: 8, y: -5 }, { x: 8, y: 8 }, { x: -5, y: 8 }] }],
@@ -33,9 +33,9 @@ try {
   });
   const route = await requested;
   await route.fulfill({ path: resolve("public/assets/style/hero-up.png"), contentType: "image/png" });
-  await page.waitForFunction(async () => { const { kitImage } = await import("/src/sprite-kit.ts"); return !!kitImage("hero-up"); });
+  await page.waitForFunction(async () => { const { kitImage } = await import("/src/sprites/kit.ts"); return !!kitImage("hero-up"); });
   const result = await page.evaluate(async () => {
-    const { kitImage } = await import("/src/sprite-kit.ts");
+    const { kitImage } = await import("/src/sprites/kit.ts");
     const { lighting, f, alpha, mask, before } = window.__lightReview;
     const pngAlpha = id => {
       const c = document.createElement("canvas"); c.width = c.height = 24;

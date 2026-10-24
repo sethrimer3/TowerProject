@@ -1,5 +1,5 @@
 import { boonIcon } from "./boon-icon.ts";
-import { kitIcon } from "../sprite-kit.ts";
+import { kitIcon } from "../sprites/kit.ts";
 import { autoPickOpen, boon, boonLabel, pickedLines, type BoonId } from "../shrines.ts";
 import type { AppContext } from "./app.ts";
 import { el, shrineIcon } from "./dom.ts";

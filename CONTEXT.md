@@ -32,6 +32,10 @@ _Avoid_: tower log, reward log
 The player's lifetime record, shown in the Settings page's Stats: when the profile was made, each currency ever earned (spending never lowers it), the Training levels gained, the research levels completed, and the Gold spent on each (less what came back). Erasing all progress starts a new one.
 _Avoid_: account, statistics save
 
+**Profile file**:
+A text file of everything the player keeps between runs (no run in progress), in named sections, which the Settings page's Dev Mode section exports and imports to replace the whole profile.
+_Avoid_: backup, save file (the stored save also holds the runs)
+
 **Run Notes**:
 A run's trivia, kept as it plays: the tower and floor reached, its real time, steps, kills, keys and doors by kind, chests, and what it found (Gold, Silver, Inspiration or Courage, materials and other loot). Note Taking research opens them, from the floor number during a run or the run's end dialog, and they copy as text. Undo takes back what the run itself holds, never what was found for good.
 _Avoid_: run stats, run log
@@ -293,7 +297,7 @@ _Avoid_: resurrection, second life
 The striped potion drawn blue (a regular potion is red): it restores a regular potion's HP plus a share of max HP (1% with the Recovery skill, more with Potion % training). With Recovery owned, each potion a run finds may be one, by a chance fixed when the run goes inside (2%, more with Find Potion training, up to 20%); otherwise each is a regular potion.
 
 **Overheal**:
-HP held above max HP, which the Overheal skill allows: potions, GK TO HP and badge heals may heal up to the **Overheal ceiling**, max HP times the Overheal training row's value (×1 to ×16.5); other heals stop at max HP and never lower HP above it. The HUD shows it as a blue bar over the full red HP bar.
+HP held above max HP, which the Overheal skill allows: potions, the smelts and badge heals may heal up to the **Overheal ceiling**, max HP times the Overheal training row's value (×1 to ×16.5); other heals stop at max HP and never lower HP above it. The HUD shows it as a blue bar over the full red HP bar.
 _Avoid_: overhealth, shield HP
 
 **Lifesteal**:
@@ -320,14 +324,14 @@ A card that moves nowhere: its turn trades Max HP training levels, for the rest 
 _Avoid_: drain
 
 **Key trade**:
-A card that moves nowhere and trades keys it holds for something else: **BK Trader** (3 gold keys for a blue key) and **GK to HP** (a gold key for 10% of max HP, only while that much HP is missing). Skipped while it can't pay.
+A card that moves nowhere and trades keys it holds for something else: the traders **GK -> BK** (3 gold keys for a blue key) and **BK -> RK** (3 blue keys for a red key), and the **smelts**, **Smelt GK**, **Smelt BK** and **Smelt RK** (a gold, blue or red key for 10%, 30% or 90% of max HP, healing past max HP up to the Overheal ceiling, only while the whole heal fits under it). Skipped while it can't pay.
 
 **Regen**:
 The HP a hero regains with every step taken in a run, after whatever the step did, up to max HP. A Dash turn counts as one step, but for the first dashed tiles Dash Regen research lets regain HP too. The Regen skill opens Regen training, which gives it.
 _Avoid_: regeneration, healing (a potion's)
 
 **Provision**:
-An item bought with Gold on the Gear page and kept for good: each one owned is a use every run carries (a heal, a boost, a Bomb) or, for the Gold Key, a gold key every 100 floors of a run; the next of its kind costs more.
+An item bought with Gold on the Gear page and kept for good: each one owned is a use every run carries (a heal, a boost, a Bomb) or, for the Gold Key, a gold key every 100 floors of a run; the next of its kind costs more. Each is opened by its own skill, none from the start.
 _Avoid_: consumable, buff
 
 ### Progress
@@ -487,8 +491,12 @@ A treasure chest that, through the Chest card's bonus, also holds Equipment upgr
 A treasure chest that, through the Chest card's bonus, also holds a Standard piece of equipment, Common, Uncommon or Rare; marked by a purple glow and two stars, settled as its floor is made.
 
 **Hand**:
-The cards the player sets up before a run, in priority order, in four slots (five with Larger Hand, and more bought with Gems); it always holds the STAIRS card. Inside a run the hand moves the hero, and the player can't: the first card that can act (or Card Group, as one) picks its closest target, and the hero follows the shortest path there a step at a time before the hand chooses again. The player can pause it, and undo pauses it. Each run keeps the hand as ordered when it went inside.
+The cards the player sets up before a run, in priority order, in four slots (five with Larger Hand, and more bought with Gems); it always holds the STAIRS card. Called the **Auto hand** beside the Manual hand. Inside a run the hand moves the hero, and the player can't: the first card that can act (or Card Group, as one) picks its closest target, and the hero follows the shortest path there a step at a time before the hand chooses again. The player can pause it, and undo pauses it. Each run keeps the hand as ordered when it went inside.
 _Avoid_: loadout (what the character starts a run with)
+
+**Manual hand**:
+A second hand the Manual Hand skill opens, set up on the Deck page beside the Auto hand: one slot, more bought with Gems; never STAIRS, and never a card the Auto hand holds. A run holds its cards as it holds the hand's (their bonuses, badges and trees count), but the hand never plays them by itself: each acts only when the player presses it.
+_Avoid_: second hand, reserve
 
 **Movement speed**:
 How many steps a second the hand (and Automove in the forest) takes. The player sets it inside a run with the arrows beside play/pause, from 0 (paused) to 3; Movement Speed research, which the Movement Speed skill opens, makes faster speeds available, up to 9. A new hero starts at 2; the forest walks at least 3.
@@ -529,12 +537,19 @@ _Avoid_: shard (alone: an ATK or DEF shard is a pickup)
 A limited currency, kept between runs, earned from the weekly mission rewards and Events' missions. Nothing spends Medals yet. Shown as a gold disc on a red ribbon.
 _Avoid_: badge (a card's token), trophy (the Tournament's)
 
-**Focus**:
-Putting one card of the hand ahead of the others inside a run, until the hero reaches its target or the card has no path to one. A run has a limited number of Focus uses.
-_Avoid_: priority, override
+**Press** (a card):
+The player pressing one card of the hand inside a run, which puts it ahead of the others until the hero reaches its target or the card has no path to one; no other card can be pressed meanwhile. It costs nothing, and before Auto-Climb it is the only way the hand moves. In code it reuses the old Focus's names (`Game.focus`, `run.focused`).
+_Avoid_: focus (the limited-use skill it replaced), priority, override
+
+**Auto-Climb**:
+The Inspiration skill after which the hand plays by itself, the first card in priority order that can act leading whenever no pressed card does. Before it, the hand waits for a press each time a card reaches its target.
+_Avoid_: automove (the forest's walking), autoplay
+
+**First skills**:
+Door & Key, Enemy and Auto-Climb, the three 1-Inspiration skills at the top of the Inspiration tree that a new game's lessons lead to; Door & Key and Enemy deal their cards into the hand as well as the deck.
 
 **Charge**:
-One of a run's limited uses of Focus, Ignore or Target. Each regains a use every so many new floors climbed once its regain skill (Refocus, Ignore More, Target More) is owned.
+One of a run's limited uses of Ignore or Target. Each regains a use every so many new floors climbed once its regain skill (Ignore More, Target More) is owned.
 _Avoid_: token, mana
 
 **Undo**:
@@ -558,7 +573,7 @@ Sending the hero inside a run to a tile the player taps, ahead of the hand, unti
 _Avoid_: waypoint, goto
 
 **Boost**:
-A Whetstone's or Aegis charm's raise of ATK or DEF by 20% for 100 turns of a run, the hero glowing red or blue while it lasts; undo never takes it away.
+A Vanguard Banner's or Aegis charm's raise of ATK or DEF by 20% for 100 turns of a run, the hero glowing red or blue while it lasts; undo never takes it away.
 _Avoid_: buff
 
 **Bomb**:

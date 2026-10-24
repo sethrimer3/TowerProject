@@ -1,11 +1,11 @@
 import { doorName, doorRule, drainsHp, keyWord, pickupGold } from "../doors.ts";
-import type { HandBonus } from "../cards.ts";
-import { compounded, doorStat, foeStat, keyStat, type TreeBonus } from "../card-trees.ts";
+import type { HandBonus } from "../cards/cards.ts";
+import { compounded, doorStat, foeStat, keyStat, type TreeBonus } from "../cards/trees.ts";
 import type { ChestKind, Enemy, Mode, Tile, KeyColor } from "../entities.ts";
 import { RARITY_TIERS } from "../equipment/balance.ts";
 import { EQUIP_MATERIALS, itemDef } from "../equipment/catalog.ts";
 import { snap } from "../exact.ts";
-import { boostMaxHp } from "../hero-stats.ts";
+import { boostMaxHp } from "../progression/hero-stats.ts";
 import type { EventMissionType } from "../events/catalog.ts";
 import type { MissionType } from "../missions/catalog.ts";
 import { MODES, type ModeProfile } from "../modes.ts";

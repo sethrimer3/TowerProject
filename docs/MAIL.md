@@ -121,7 +121,7 @@ The inbox carries the server's time, which the desk confirms as the Shop's clock
 
 ## Save
 
-`save.mail` (in `defaults()`, the `Save` type and `decodeMail`, read through `src/decode.ts`'s readers):
+`save.mail` (in `defaults()`, the `Save` type and `decodeMail`, read through `src/save/decode.ts`'s readers):
 
 | Field | Holds |
 |---|---|

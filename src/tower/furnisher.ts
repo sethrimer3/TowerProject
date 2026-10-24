@@ -1,8 +1,8 @@
 import { point, type Tile } from "../entities.ts";
 import { doorKeys } from "../key-schedule.ts";
-import { woodDurability } from "../enemy-curves.ts";
-import { PROFILES, isRanked } from "../enemy-schedule.ts";
-import { getTowerGateEnemy, strengthOnFloor, type TowerEnemyProfile } from "../scaling.ts";
+import { woodDurability } from "../enemies/curves.ts";
+import { PROFILES, isRanked } from "../enemies/schedule.ts";
+import { getTowerGateEnemy, strengthOnFloor, type TowerEnemyProfile } from "../enemies/scaling.ts";
 import type { Gate, LaneStep, Reward, StrategicNode, Strength } from "./types.ts";
 import { centre, DIRS, inRect, type Rect, type XY } from "./grid.ts";
 

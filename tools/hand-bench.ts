@@ -1,8 +1,8 @@
 import { performance } from "node:perf_hooks";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { random } from "../src/random.ts";
-import { planHand, walkAll } from "../src/cards.ts";
+import { planHand, walkAll } from "../src/cards/cards.ts";
 
 /** Times the hand's pathing over seeded Delve runs: a fresh `planHand` on
  * every turn (more often than play plans, to measure the search), each

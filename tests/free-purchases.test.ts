@@ -1,11 +1,13 @@
 import { trainNow } from "./train-now.ts";
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { GOLD_SHOP, TRAINING, xpForLevel } from "../src/config.ts";
+import { GOLD_SHOP } from "../src/economy/provisions.ts";
+import { TRAINING } from "../src/progression/training.ts";
+import { xpForLevel } from "../src/progression/xp.ts";
 import { addItem } from "../src/equipment/inventory.ts";
 import { buyBomb, buyItem, buyUpgrade, defaultDefendSave } from "../src/defend/progress.ts";
-import { trainingPoints, trainingStep } from "../src/loadout.ts";
-import { decode, defaults } from "../src/save.ts";
+import { trainingPoints, trainingStep } from "../src/progression/loadout.ts";
+import { decode, defaults } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
 
 const T0 = Date.UTC(2026, 8, 30, 12);
@@ -20,11 +22,11 @@ function freeSave() {
 
 test("free purchases: skills, Training and provisions are bought with nothing and cost nothing", () => {
   const g = new Game(freeSave());
-  assert.ok(g.buy("combatStance"));
-  assert.equal(g.save.upgrades.combatStance, 1);
+  assert.ok(g.skills.buy("cardDoorKey"));
+  assert.equal(g.save.upgrades.cardDoorKey, 1);
   assert.equal(g.save.tower.inspiration, 0);
-  assert.ok(!g.buy("combatStance"), "a maxed skill still can't be bought");
-  assert.ok(!g.buy("cardHeal"), "nor one whose requirements aren't owned");
+  assert.ok(!g.skills.buy("cardDoorKey"), "a maxed skill still can't be bought");
+  assert.ok(!g.skills.buy("cardHeal"), "nor one whose requirements aren't owned");
 
   const hp = TRAINING.find((t) => t.id === "hp")!;
   assert.ok(trainingStep(g.save, "hp").affordable);
@@ -36,6 +38,9 @@ test("free purchases: skills, Training and provisions are bought with nothing an
   assert.equal(g.save.training.hp, 3, "at once");
   assert.equal(g.save.trainingJobs.length, 0);
 
+  // Free purchases unlock nothing: a provision still waits for its skill.
+  assert.equal(g.gear.buyProvision(GOLD_SHOP[0].id), false);
+  g.save.upgrades[GOLD_SHOP[0].requires] = 1;
   assert.ok(g.gear.buyProvision(GOLD_SHOP[0].id));
   assert.equal(g.save.provisions[GOLD_SHOP[0].id], 1);
   assert.equal(g.save.gold, 0);
@@ -87,7 +92,7 @@ test("without free purchases, nothing is bought on credit", () => {
   g.save.upgrades.archives = 1;
   g.save.upgrades.greaterHeal = 1;
   g.clock = () => T0;
-  assert.ok(!g.buy("combatStance"));
+  assert.ok(!g.skills.buy("cardDoorKey"));
   assert.ok(!trainNow(g, "hp"));
   assert.ok(!g.gear.buyProvision(GOLD_SHOP[0].id));
   assert.ok(!g.research.start(0, "potionHp"));

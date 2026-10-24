@@ -20,6 +20,7 @@ Pressing a busy archivist opens Select Research too, its own research marked Res
 Each project completed (in a gold box) makes Rush 1.5% more efficient for good: with 10 completed, Rush's Gems are divided by 1.15 and rounded up, so 100 Gems become 87.
 Once any project is completed, the Archives heading shows it at its left, opposite History: *+1.5% to Rush* for one.
 With **Auto-continue** ticked (the box with the looping arrow, as on the Training tab), an archivist starts the project's next level as soon as one completes, if you have the Gold; otherwise it waits idle.
+With Dev **free purchases** on, research completes the moment it starts, so auto-continue waits instead: each press researches one level.
 
 ## Cells and Speed Up
 
@@ -36,7 +37,3 @@ Each level completed pops up at the top of the screen, over everything, as "Rese
 The library lists only research whose requirements are met (Dev mode lists it all), and can be searched and filtered by category and status, and its History button opens a list of the levels completed lately.
 Research at its most levels stays in the list in a gold box, marked Complete; once any is, a **Hide Completed** box at the top leaves those out.
 Each project's box is kept short: its name, categories and level on one line, its description, then what its next level changes, how long it takes and its Research button, which shows only its Gold price, on one line.
-
-## Focus Count
-
-The first project, **Focus Count** (after the Focus skill), adds one Focus use to every run for each of its nine levels: level 1 takes 8 hours and costs 500 Gold, each level after takes 8 hours more, and costs 500 Gold times the level before it more (500, 1000, 2000, 3500, … 18,500).

@@ -1,5 +1,5 @@
 import type { Board } from "../board.ts";
-import { CARDS, planHand } from "../cards.ts";
+import { CARDS, planHand } from "../cards/cards.ts";
 import type { Tile } from "../entities.ts";
 import {TRIALS} from "./catalog.ts";
 import {keymasterDoorAt,mimicDamage} from "./keymaster.ts";

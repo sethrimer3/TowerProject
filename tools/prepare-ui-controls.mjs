@@ -4,7 +4,7 @@ import { spawn } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { SMALL_CONTROL_SPRITES, SLIDER_SPRITES } from "../src/sprite-controls.ts";
+import { SMALL_CONTROL_SPRITES, SLIDER_SPRITES } from "../src/sprites/controls.ts";
 const root = fileURLToPath(new URL("../", import.meta.url)), out = join(root, "public/assets/style");
 const palette = join(root, "assets/ui-sprites/palette.ppm");
 const manifest = JSON.parse(readFileSync(join(out, "manifest.json"), "utf8"));

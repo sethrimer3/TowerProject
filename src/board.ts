@@ -1,7 +1,7 @@
 import { point, type ChestKind, type ChestOdds, type Enemy, type EnemyStrength, type Kind, type Tile, type Torch } from "./entities.ts";
 import type { Run } from "./runs.ts";
 import { tileRandom } from "./random.ts";
-import type { Shield } from "./shielded.ts";
+import type { Shield } from "./enemies/shielded.ts";
 
 /** A board the player walks: the Delve labyrinth, a Tower floor, or the
  * forest outside. */
@@ -17,7 +17,7 @@ export type Board = {
   ): { x: number; y: number } | null;
   clear(x: number, y: number): void;
   /** Wounds the enemy on (x, y) by `damage` more HP (the Archer's arrows,
-   * ranged.ts), on boards that hold enemies. */
+   * enemies/ranged.ts), on boards that hold enemies. */
   wound?(x: number, y: number, damage: number): void;
   /** Present on boards that carry torches (dungeon boards; the forest
    * exterior has none). */
@@ -32,7 +32,7 @@ export type Board = {
    * floor's, or in the Delve the tiles of its area at the same equivalent
    * floor), on boards that hold doors: KEY's Master Key opens them. */
   floorDoors?(x: number, y: number): { x: number; y: number }[];
-  /** The Shielded enemies still standing (shielded.ts), whose bubbles the
+  /** The Shielded enemies still standing (enemies/shielded.ts), whose bubbles the
    * board draws, on boards that hold them. */
   shields?(): readonly Shield[];
   /** The balanced enemy of `strength` (normal unless given) `depth` makes

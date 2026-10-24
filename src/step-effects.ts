@@ -134,7 +134,7 @@ export const potionRestores = (tile: Tile, maxHp: number, rules: StepRules) => {
 };
 
 /** The most HP a hero of `maxHp` may hold under `rules`: its max HP, times
- * its Overheal once owned. Potions, GK to HP and badge heals heal up to
+ * its Overheal once owned. Potions, the smelt cards and badge heals heal up to
  * it; every other heal stops at max HP. */
 export const hpCeiling = (maxHp: number, rules: Pick<StepRules, "overheal">) =>
   rules.overheal && rules.overheal > 1000 ? snap((maxHp * rules.overheal) / 1000) : maxHp;

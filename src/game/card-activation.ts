@@ -1,14 +1,15 @@
-import { SIPHONS, TRADER_YELLOW_KEYS, isSiphon, type CardId, type SiphonCard } from "../cards.ts";
-import { BADGES, badgesOn, badgeValue, type BadgeId, type RunBadge } from "../badges.ts";
-import { TRAINING, xpBase, type StatTrainingRow } from "../config.ts";
+import { SIPHONS, SMELTS, TRADERS, isSiphon, isSmelt, isTrader, type CardId, type SiphonCard } from "../cards/cards.ts";
+import { BADGES, badgesOn, badgeValue, type BadgeId, type RunBadge } from "../cards/badges.ts";
+import { TRAINING, type StatTrainingRow } from "../progression/training.ts";
+import { xpBase } from "../progression/xp.ts";
 import type { Mode, KeyColor } from "../entities.ts";
 import { snap } from "../exact.ts";
 import { healUpTo } from "../combat.ts";
-import { boostMaxHp, shiftHero } from "../hero-stats.ts";
-import { treeBonus } from "../card-trees.ts";
-import { rankShift } from "../loadout.ts";
+import { boostMaxHp, shiftHero } from "../progression/hero-stats.ts";
+import { treeBonus } from "../cards/trees.ts";
+import { rankShift } from "../progression/loadout.ts";
 import { noteKey } from "../run-notes.ts";
-import type { HandRules } from "../hand-rules.ts";
+import type { HandRules } from "../cards/hand-rules.ts";
 import type { GainArt } from "../shown.ts";
 import { keyCount, wholeChange } from "../whole.ts";
 import { keyWord } from "../doors.ts";
@@ -22,6 +23,9 @@ import type { Finds } from "./finds.ts";
 export interface ActivationHost extends DeskHost {
   readonly mode: Mode;
   readonly hand: readonly CardId[];
+  /** The hand's cards, then the Manual hand's (`Game.held`): a card's slot
+   * in it is what activates. */
+  readonly held: readonly CardId[];
   readonly handRules: HandRules;
   /** Inside a run the hero is still standing in. */
   readonly playing: boolean;
@@ -40,17 +44,17 @@ export interface ActivationHost extends DeskHost {
 }
 
 /** A card of the hand activating: a card that acts in place doing what it
- * does (a siphon, Blue Trader, Key to HP), and every card's badges paying
+ * does (a siphon, a trader, a smelt), and every card's badges paying
  * what they give. The hand's turn (`Game.handTurn`) decides when. */
 export class CardActivation {
   constructor(private readonly host: ActivationHost) {}
 
-  /** Card `card` of the hand activates: it gains an XP toward its level,
+  /** Card `card` of the hand (or past it, of the Manual hand) activates: it gains an XP toward its level,
    * and each of its badges pays what it gives, top slot first. Gold is paid once per target (`key`, gated by
    * lootedTiles like a kill's), since undo can't take it back; HP, Silver
    * and XP are the run's or in its undo snapshot. */
   activate(card: number, key: string) {
-    const { hand, run } = this.host, id = hand[card];
+    const { held, run } = this.host, id = held[card];
     if (!id || !this.host.playing) return;
     this.host.gainCardXp(id, 1);
     // HEAL's tree: each potion it reaches boosts max HP for the run, as the
@@ -71,14 +75,15 @@ export class CardActivation {
   }
   /** One of hand card `card`'s badges pays what it gives on activation. */
   private payBadge(card: number, key: string, badge: RunBadge) {
-    const host = this.host, { hand, run } = host;
-    const id = hand[card], v = badgeValue(badge.id, badge.level, badge.pick), p = run.player;
+    const host = this.host, { hand, held, run } = host;
+    const id = held[card], v = badgeValue(badge.id, badge.level, badge.pick), p = run.player;
     switch (badge.id) {
       case "hp": return this.boostMaxHp(v, badge.id);
       case "hpPercent": return this.badgeHeal(snap((p.maxHp * v) / 100), badge.id);
       case "silverTouch": return host.finds.coins(p, 0, host.purse.silver(v));
       case "goldTouch": return host.finds.coins(p, host.purse.badgeGold(`badge:${id}:${key}`, v), 0, false);
       case "goldback":
+        // The hand's last card only: never one of the Manual hand's.
         if (card !== hand.length - 1) return;
         // The combo is the run's, so undo takes an activation back; the
         // next Gold found spends it (RunPurse).
@@ -115,17 +120,19 @@ export class CardActivation {
     const host = this.host, run = host.run, p = run.player;
     host.rememberTurn();
     if (isSiphon(card)) this.siphon(card, scale);
-    else if (card === "blueTrader") {
-      p.keys.yellow = snap(p.keys.yellow - TRADER_YELLOW_KEYS);
-      p.keys.blue = snap(p.keys.blue + scale);
-      noteKey(run, "blue", scale);
-      host.gain(p.x, p.y, `−${TRADER_YELLOW_KEYS} gold keys`, { tile: { kind: "key", color: "yellow" } });
-      host.gain(p.x, p.y, `+${keyCount(scale)} blue key`, { tile: { kind: "key", color: "blue" } });
-    } else if (card === "keyToHp") {
-      const healed = snap(healUpTo(p.hp, snap(host.handRules.keyHeal() * scale), host.handRules.hpCeiling) - p.hp);
-      p.keys.yellow = snap(p.keys.yellow - 1);
+    else if (isTrader(card)) {
+      const { from, keys, to } = TRADERS[card];
+      p.keys[from] = snap(p.keys[from] - keys);
+      p.keys[to] = snap(p.keys[to] + scale);
+      noteKey(run, to, scale);
+      host.gain(p.x, p.y, `−${keys} ${keyWord(from)}s`, { tile: { kind: "key", color: from } });
+      host.gain(p.x, p.y, `+${keyCount(scale)} ${keyWord(to)}`, { tile: { kind: "key", color: to } });
+    } else if (isSmelt(card)) {
+      const color = SMELTS[card].color;
+      const healed = snap(healUpTo(p.hp, snap(host.handRules.smeltHeal(card) * scale), host.handRules.hpCeiling) - p.hp);
+      p.keys[color] = snap(p.keys[color] - 1);
       p.hp = snap(p.hp + healed);
-      host.gain(p.x, p.y, "−1 gold key", { tile: { kind: "key", color: "yellow" } });
+      host.gain(p.x, p.y, `−1 ${keyWord(color)}`, { tile: { kind: "key", color } });
       host.recordHeal(healed);
     }
     (run.cardUses ??= {})[card] = host.handRules.cardUses(card) + 1;

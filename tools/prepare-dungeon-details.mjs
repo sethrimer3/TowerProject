@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { gray, tones } from "./dungeon-palette.mjs";
-import { dungeonDetailId, dungeonDetailVariants } from "../src/dungeon-details.ts";
+import { dungeonDetailId, dungeonDetailVariants } from "../src/render/dungeon-details.ts";
 const root = fileURLToPath(new URL("../", import.meta.url)), out = join(root, "public/assets/style");
 const source = join(root, "assets/game-sprites/dungeon-details.png");
 const towerSource = join(root, "assets/game-sprites/tower-masonry-details.png");

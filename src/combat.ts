@@ -1,6 +1,6 @@
 import type { Enemy, Player } from "./entities.ts";
 import { snap } from "./exact.ts";
-import { foeAttack } from "./foe-cards.ts";
+import { foeAttack } from "./cards/foe-cards.ts";
 
 /** `hp` after a heal of `n` that stops at `ceiling` (max HP, or the
  * Overheal ceiling for a heal that overheals): a heal never lowers HP that
@@ -146,7 +146,7 @@ export function atWorst(player: Player, crit?: CritRule): Player {
   return k ? { ...player, attack: snap(player.attack * critMultiplier(crit!.factor, k)) } : player;
 }
 /** `damage` past `enemy`'s DEF (0 or less: none) as it lands: cut by the
- * percent a Shielded enemy's bubble guards it with (shielded.ts), as a
+ * percent a Shielded enemy's bubble guards it with (enemies/shielded.ts), as a
  * parry cuts the enemy's. The cut never stops a strike that gets past DEF. */
 export const guarded = (damage: number, enemy: Enemy) => (enemy.guard && damage > 0 ? snap((damage * (100 - enemy.guard)) / 100) : damage);
 /** What each of the hero's strikes takes off `enemy`'s HP (0 or less: none),
@@ -411,7 +411,7 @@ const openingMs = (o: { takedown: boolean }) => (o.takedown ? OPENING_SHRINK_MS 
 export type Revival = (strike: number) => boolean;
 
 /** The rounds `predict` sums up, one strike at a time: the hero strikes first
- * (a Fast enemy before it, once, fast-enemies.ts),
+ * (a Fast enemy before it, once, enemies/fast.ts),
  * then the enemy (its ATK rising after each round, the shroud taking its
  * strikes until it is spent, its thorns costing it after each strike the
  * hero lives through), until one of them falls. Ends with the same HP as

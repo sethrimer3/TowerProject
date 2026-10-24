@@ -1,14 +1,15 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { decode, defaults } from "../src/save.ts";
-import { CARD_RARITY_WEIGHTS } from "../src/card-rarity.ts";
-import { buyCards, buyOne, buysLeft, CARD_BUY_GEMS, decodeCardBuys, defaultCardBuys, rarityOn, type CardBuysSave } from "../src/card-buys.ts";
-import { CARD_LEVEL_XP } from "../src/card-levels.ts";
-import { CARD_TREES, cardMaxLevel, levelIn, type CardOpened } from "../src/card-trees.ts";
-import { stampProfile } from "../src/profile.ts";
+import { decode } from "../src/save/save.ts";
+import { CARD_RARITY_WEIGHTS } from "../src/cards/rarity.ts";
+import { buyCards, buyOne, buysLeft, CARD_BUY_GEMS, decodeCardBuys, defaultCardBuys, rarityOn, type CardBuysSave } from "../src/cards/buys.ts";
+import { CARD_LEVEL_XP } from "../src/cards/levels.ts";
+import { CARD_TREES, cardMaxLevel, levelIn, type CardOpened } from "../src/cards/trees.ts";
+import { stampProfile } from "../src/save/profile.ts";
 import { random } from "../src/random.ts";
-import type { CardId } from "../src/cards.ts";
+import type { CardId } from "../src/cards/cards.ts";
+import { playedSave } from "./first-skills.ts";
 
 /** A stream that returns `numbers` in turn. */
 const numbers = (...n: number[]) => () => n.shift() ?? 0;
@@ -81,7 +82,7 @@ test("buys carry on the profile's stream: seeded once, never rewound, the same b
   const fresh = defaultCardBuys();
   buyCards(fresh, cards, 1, () => 0.25);
   assert.equal(typeof fresh.rng, "number", "seeded at the first buy when the profile wasn't");
-  const save = defaults();
+  const save = playedSave();
   assert.equal(save.cardBuys.rng, null);
   stampProfile(save, 1000);
   const seeded = save.cardBuys.rng;
@@ -119,7 +120,7 @@ test("a deck of mostly common-only trees still draws the rarer rarities at their
 });
 
 test("the Game's desk buys for Gems, asks for them when short, refuses past what the deck can take, and banked XP turns into levels", () => {
-  const save = defaults();
+  const save = playedSave();
   save.cardXp = { stairs: xpTo(12) };
   const g = new Game(save);
   g.newRun({ outside: true, seed: 1 });
@@ -143,7 +144,7 @@ test("the Game's desk buys for Gems, asks for them when short, refuses past what
 });
 
 test("the save keeps the stream and the levels opened, within each node's room", () => {
-  const save = defaults();
+  const save = playedSave();
   save.cardBuys = { rng: 77, opened: { stairs: { floorGold: 3, overhealMax: 2 } } };
   assert.deepEqual(decode(JSON.stringify(save)).cardBuys, save.cardBuys);
   assert.deepEqual(decodeCardBuys({ rng: -1, opened: { stairs: { floorGold: 6, nope: 1, goldBonus: 1.5, stairSkip: 5 }, archer: { a: 1 }, bogus: {} } }), { rng: null, opened: { stairs: { stairSkip: 5 } } });

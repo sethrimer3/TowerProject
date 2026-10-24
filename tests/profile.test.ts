@@ -1,13 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { decode, defaults } from "../src/save.ts";
-import { xpForLevel } from "../src/config.ts";
-import { cancelResearch, settleArchives, startResearch } from "../src/archives.ts";
+import { decode, defaults } from "../src/save/save.ts";
+import { xpForLevel } from "../src/progression/xp.ts";
+import { cancelResearch, settleArchives, startResearch } from "../src/progression/archives.ts";
 import { CURRENCIES } from "../src/shop/currency.ts";
 import { MODES } from "../src/modes.ts";
 import { RunPurse } from "../src/game/run-purse.ts";
-import { earn, stampProfile } from "../src/profile.ts";
+import { earn, stampProfile } from "../src/save/profile.ts";
 import { statsRows } from "../src/ui/stats-dialog.ts";
 
 const HOUR = 3_600_000;
@@ -48,7 +48,7 @@ test("the profile round-trips through the save, and an older save's tallies star
   old.cells = 2;
   old.training.attack = 4;
   old.trainingPaid.attack.gold = 300;
-  old.archives.levels = { focusCount: 2 };
+  old.archives.levels = { heartDoorResilience: 2 };
   const p = decode(JSON.stringify(old)).profile;
   assert.deepEqual([p.createdAt, p.earned.gold, p.earned.gems, p.earned.cells, p.trainingLevels, p.trainingGold, p.researchLevels], [0, 50, 7, 2, 4, 300, 2]);
 });
@@ -97,13 +97,13 @@ test("Training counts each rank gained and the trainers' Gold, less what comes b
 test("research counts each level completed and its Gold, less what a stop gives back", () => {
   const save = defaults();
   save.upgrades.archives = 1;
-  save.upgrades.focus = 1;
+  save.upgrades.heartDoorResilience = 1;
   save.gold = 100_000;
-  assert.ok(startResearch(save, 0, "focusCount", T0));
+  assert.ok(startResearch(save, 0, "heartDoorResilience", T0));
   assert.equal(save.profile.researchGold, 500);
   assert.ok(cancelResearch(save, 0, T0 + HOUR));
   assert.equal(save.profile.researchGold, 0);
-  assert.ok(startResearch(save, 0, "focusCount", T0 + HOUR));
+  assert.ok(startResearch(save, 0, "heartDoorResilience", T0 + HOUR));
   settleArchives(save, T0 + 100 * HOUR);
   assert.deepEqual([save.profile.researchLevels, save.profile.researchGold], [1, 500]);
 });

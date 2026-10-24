@@ -8,12 +8,13 @@ try {
   await fixClock(page);const errors=[];page.on("pageerror",e=>errors.push(e.message));
   await page.addInitScript(()=>{const s=sessionStorage.getItem("keymasterFixture");if(s){localStorage.setItem("towerdelve.v1",s);sessionStorage.removeItem("keymasterFixture");}});
   const world=page.locator("#world"),read=()=>page.evaluate(()=>JSON.parse(localStorage.getItem("towerdelve.v1"))),trial=async()=>(await read()).provingGrounds;
+  async function reload(){await page.reload({waitUntil:"domcontentloaded"});await expect(world).toBeVisible({timeout:30000});}
   async function patch(changes) {
     await page.evaluate(changes=> {
       const save=JSON.parse(localStorage.getItem("towerdelve.v1")),s=save.provingGrounds;
       for(const [id,v] of Object.entries(changes))if(["player","keymaster"].includes(id))Object.assign(s[id],v);else s[id]=v;
       sessionStorage.setItem("keymasterFixture",JSON.stringify(save));
-    },changes);await page.reload({waitUntil:"domcontentloaded"});await expect(world).toHaveAttribute("data-trial-room","arena");
+    },changes);await reload();await expect(world).toHaveAttribute("data-trial-room","arena");
   }
   async function tile(x,y) {
     const s=await trial(),box=await world.boundingBox();
@@ -22,14 +23,14 @@ try {
   mkdirSync("test-results/keymaster",{recursive:true});
   await page.goto(process.env.TEST_URL||"http://127.0.0.1:5173/",{waitUntil:"domcontentloaded"});
   await page.evaluate(async()=> {
-    const {Game}=await import("/src/state.ts"),{defaults}=await import("/src/save.ts");
+    const {Game}=await import("/src/state.ts"),{defaults}=await import("/src/save/save.ts");
     const g=new Game(defaults());g.newRun({outside:true,seed:12});g.run.player.x=10;g.run.player.y=5;g.run.player.keys.yellow=7;
-    g.save.settings.oneTapMove=true;g.save.settings.uiSprites=true;g.save.settings.devMode=true;g.save.settings.reduceMotion=false;
+    g.save.settings.oneTapMove=true;g.save.settings.devMode=true;g.save.settings.reduceMotion=false;
     for(const id of Object.keys(g.save.tutorials))g.save.tutorials[id]=true;
     g.save.trialAccess.points=10;g.save.profile.earned.trialPoints=10;
     g.save.trialAccess.progress["light-elemental"]={cleared:4,claimed:[1,2,3,4]};
     sessionStorage.setItem("keymasterFixture",JSON.stringify(g.save));
-  });await page.reload({waitUntil:"domcontentloaded"});
+  });await reload();
   const box=await world.boundingBox();await world.click({position:{x:box.width*10.5/20,y:box.height*18.5/20}});
   await expect(page.locator("#trial-heading")).toHaveText("Proving Grounds Trials");
   const tower=(await read()).tower.run;
@@ -55,7 +56,7 @@ try {
   await page.locator("#trial-wait").click();const moved=await trial();
   const distance=(a,b)=>Math.abs(a.x-b.x)+Math.abs(a.y-b.y);expect(distance(moved.elemental,odd.elemental)).toBe(1);
   for(const m of moved.keymaster.mimics)expect(distance(m,odd.keymaster.mimics.find(p=>p.id===m.id))).toBe(1);
-  await page.reload({waitUntil:"domcontentloaded"});expect((await trial()).elemental).toEqual(moved.elemental);
+  await reload();expect((await trial()).elemental).toEqual(moved.elemental);
   await expect(world).toHaveAttribute("data-trial-phase","incorporeal");
   await patch({keymaster:{mimics:[]}});
   const drop=hit.keymaster.drops[0];await tile(drop.x,drop.y);await expect.poll(async()=>(await trial()).keymaster.keys).toBeGreaterThan(0);
@@ -68,7 +69,7 @@ try {
   await page.locator("#trial-key-use").click();await expect(page.locator("#trial-key-use")).toHaveAttribute("aria-pressed","false");
   await tile(tough.x,tough.y);await expect.poll(async()=>(await trial()).player.hp).toBeLessThan(1000);
   expect((await trial()).keymaster.keys).toBe(2);expect((await trial()).keymaster.mimics.some(m=>m.id===tough.id)).toBe(true);
-  await page.reload({waitUntil:"domcontentloaded"});await expect(page.locator("#trial-key-use")).toHaveAttribute("aria-pressed","false");
+  await reload();await expect(page.locator("#trial-key-use")).toHaveAttribute("aria-pressed","false");
   const doors=[{x:12,y:24},{x:24,y:12},{x:12,y:0},{x:0,y:12}];
   for(const [i,p] of doors.entries()) {
     await patch({player:{x:p.x===0?1:p.x===24?23:12,y:p.y===0?1:p.y===24?23:12,hp:1000},keymaster:{keys:4-i,mimics:[]}});
@@ -79,7 +80,7 @@ try {
     await tile(p.x,p.y);await expect.poll(async()=>(await trial()).keymaster.doors.length).toBe(i+1);
     await expect.poll(async()=>(await trial()).bossHp).toBe(hp-48);
     expect((await trial()).keymaster.doors[i].hit).toBe(true);
-    await page.reload({waitUntil:"domcontentloaded"});expect((await trial()).bossHp).toBe(hp-48);
+    await reload();expect((await trial()).bossHp).toBe(hp-48);
     await page.locator("#trial-wait").click();expect((await trial()).bossHp).toBe(hp-48);
     while((await trial()).elemental.incorporeal)await page.locator("#trial-wait").click();
     expect((await trial()).steps%10).toBe(0);
@@ -88,7 +89,7 @@ try {
   await patch({player:{x:12,y:11,hp:1000},elemental:{x:12,y:12,incorporeal:false,teleport:null},bossHp:10,keymaster:{mimics:[]}});
   await tile(12,12);await expect.poll(async()=>(await trial()).status).toBe("won");
   await expect.poll(async()=>(await read()).trialAccess.points).toBe(11);await expect(page.locator("#message")).toContainText("Difficulty 1 cleared");
-  await page.reload({waitUntil:"domcontentloaded"});expect((await read()).trialAccess.points).toBe(11);
+  await reload();expect((await read()).trialAccess.points).toBe(11);
   await page.locator("#trial-retry").click();await expect(page.locator("#trial-difficulty")).toContainText("Difficulty 2");
   await page.locator("#trial-mode-cards").click();await page.locator("#auto").click();
   // Restore a paused arena to verify cards-only input authority, then let its real boss card win.
@@ -96,7 +97,7 @@ try {
     const save=JSON.parse(localStorage.getItem("towerdelve.v1")),s=save.provingGrounds;
     s.room="arena";s.player.x=12;s.player.y=11;s.bossHp=s.player.attack;s.hand=["bossEnemy"];s.playing=false;
     sessionStorage.setItem("keymasterFixture",JSON.stringify(save));
-  });await page.reload({waitUntil:"domcontentloaded"});
+  });await reload();
   const paused=await trial();await tile(12,12);await page.keyboard.press("ArrowUp");expect(await trial()).toEqual(paused);
   await page.locator("#auto").click();await expect.poll(async()=>(await read()).trialAccess.points,{timeout:10000}).toBe(13);await expect(page.locator("#message")).toContainText("Difficulty 2 cleared");
   await page.locator("#trial-retry").click();await page.locator("#trial-mode-hybrid").click();
@@ -105,7 +106,7 @@ try {
     const save=JSON.parse(localStorage.getItem("towerdelve.v1")),s=save.provingGrounds;
     s.room="arena";s.player.x=12;s.player.y=11;s.bossHp=s.player.attack;s.hand=["bossEnemy"];s.playing=false;
     sessionStorage.setItem("keymasterFixture",JSON.stringify(save));
-  });await page.reload({waitUntil:"domcontentloaded"});await tile(12,12);
+  });await reload();await tile(12,12);
   await expect.poll(async()=>(await read()).trialAccess.points).toBe(16);await expect(page.locator("#message")).toContainText("Difficulty 3 cleared");
   const won=await read();expect(won.trialAccess.points).toBe(16);expect(won.trialAccess.progress["keymaster"].cleared).toBe(3);
   expect(won.trialAccess.progress["light-elemental"].cleared).toBe(4);

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { decode, defaults } from "../src/save.ts";
+import { decode, defaults } from "../src/save/save.ts";
 
 const withBrightness = (brightness: unknown) => {
   const save = defaults() as unknown as { settings: Record<string, unknown> };

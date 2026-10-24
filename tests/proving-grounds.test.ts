@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults, decode } from "../src/save.ts";
+import { defaults, decode } from "../src/save/save.ts";
 import { OutsideWorld, PROVING_GROUNDS } from "../src/outside.ts";
 import { ARENA_POTIONS, ARENA_TORCHES, ARENA_SIZE, MAX_SLIMES, BEAM_AXES, ELEMENTAL, arenaFloor, beamCells, beamCount, decodeTrial, floorAt, key, nextBeamAxis, startTrial, trialStep } from "../src/proving-grounds/trial.ts";
 

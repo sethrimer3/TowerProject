@@ -1,5 +1,5 @@
 import type { Game } from "../src/state.ts";
-import type { TrainingId } from "../src/config.ts";
+import type { TrainingId } from "../src/progression/training.ts";
 
 /** Trains one rank and lets its time pass, so tests see the rank at once
  * (owning the Training skill that opens it). */

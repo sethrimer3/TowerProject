@@ -3,13 +3,13 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save.ts";
 import { random } from "../src/random.ts";
 import type { League } from "../src/tournament/leagues.ts";
 import { PRIZES } from "../src/tournament/prizes.ts";
 import { tournamentScore } from "../src/tournament/run.ts";
 import { tournamentById } from "../src/tournament/schedule.ts";
 import { stubSeeds, type TournamentInfo } from "../src/tournament/server.ts";
+import { playedSave } from "./first-skills.ts";
 
 // Characterization trace of seeded tournament runs: each league's run, from
 // the stand-in server's seeds for one tournament, played by the hand, every
@@ -33,7 +33,7 @@ const hash = (value: unknown) => createHash("sha256").update(canonical(value)).d
  * game's own stream started from `gameSeed`, entered into league `league`'s
  * run of the tournament. */
 function entered(league: League, gameSeed: number) {
-  const save = defaults();
+  const save = playedSave();
   save.goals.claimed = { 1: [60] };
   save.equipment.unlocked = true;
   save.tournament.tickets = 1;

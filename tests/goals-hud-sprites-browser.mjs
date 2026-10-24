@@ -25,13 +25,13 @@ try {
   await page.locator("#hp").waitFor();
   assert.equal(await page.locator("html").evaluate(e => e.classList.contains("ui-sprites")), false);
   await page.evaluate(async () => {
-    const { defaults } = await import("/src/save.ts");
+    const { defaults } = await import("/src/save/save.ts");
     const { Game } = await import("/src/state.ts");
-    const { UPGRADES } = await import("/src/config.ts");
+    const { UPGRADES } = await import("/src/progression/upgrades.ts");
     const s = defaults();
     for (const id of Object.keys(s.tutorials)) s.tutorials[id] = true;
     for (const u of UPGRADES) s.upgrades[u.id] = 1;
-    Object.assign(s.settings, { uiSprites: true, reduceMotion: true, transition: "instant", weatherSound: false });
+    Object.assign(s.settings, { reduceMotion: true, transition: "instant", weatherSound: false });
     s.archives.levels.noteTaking = 1;
     s.tower.tiersOpen = 9;
     s.tower.best = s.tower.reached = 30;
@@ -51,8 +51,8 @@ try {
   await page.screenshot({ path: "test-results/goals-hud-sprites/forest-390.png", animations: "disabled" });
   // Real reusable symbol pairs at native and 2x scale, all fitting a 24px grid.
   await page.evaluate(async () => {
-    const { UI_DETAIL_SPRITES, UI_ORNAMENT_SPRITES } = await import("/src/sprite-ui-details.ts");
-    const { kitIcon } = await import("/src/sprite-kit.ts");
+    const { UI_DETAIL_SPRITES, UI_ORNAMENT_SPRITES } = await import("/src/sprites/ui-details.ts");
+    const { kitIcon } = await import("/src/sprites/kit.ts");
     const gallery = document.createElement("section"); gallery.id = "ui-detail-review";
     gallery.style.cssText = "position:relative;z-index:99;background:#1b2430;padding:12px;display:grid;grid-template-columns:repeat(4,1fr);gap:16px";
     gallery.innerHTML = [...UI_DETAIL_SPRITES, ...UI_ORNAMENT_SPRITES].map(id => `<div style="display:flex;align-items:center;gap:4px">${kitIcon(id, "?", "review-native")}${kitIcon(id, "?", "review-double")}</div>`).join("");
@@ -83,15 +83,15 @@ try {
   // Each theme controls its own art without changing the saved preference.
   for (const [uiTheme, gameTheme, shown] of [["medieval", "classic", true], ["neon", "classic", false], ["medieval", "pixel", true], ["neon", "pixel", false]]) {
     await page.evaluate(async ({ uiTheme, gameTheme }) => {
-      const { defaults } = await import("/src/save.ts");
+      const { defaults } = await import("/src/save/save.ts");
       const { applyUiTheme } = await import("/src/ui/medieval.ts");
       const s = defaults(); s.themes.push("neonUi", "pixelGame");
-      Object.assign(s.settings, { uiSprites: true, uiTheme, gameTheme }); applyUiTheme(s);
+      Object.assign(s.settings, { uiTheme, gameTheme }); applyUiTheme(s);
     }, { uiTheme, gameTheme });
     assert.equal(await page.locator('.goal-art .sprite-replacement[src$="goal-damage-prediction.png"]').first().isVisible(), shown);
   }
   await page.evaluate(async () => {
-    const { defaults } = await import("/src/save.ts");
+    const { defaults } = await import("/src/save/save.ts");
     const { applyUiTheme } = await import("/src/ui/medieval.ts"); applyUiTheme(defaults());
   });
   assert.equal(await page.locator('.goal-art .sprite-replacement[src$="goal-damage-prediction.png"]').first().isVisible(), false);
@@ -134,7 +134,7 @@ try {
   await page.locator(".badge-reveal-go").click();
   // A failed replacement retains its original SVG and all live counts.
   await page.locator("#focus-stat .sprite-icon").evaluate(e => { e.classList.remove("sprite-ready"); e.querySelector("img").removeAttribute("src"); });
-  assert.equal(await page.locator("#focus-stat .sprite-fallback").evaluate(e => getComputedStyle(e).visibility), "visible");
+  assert.equal(await page.locator("#focus-stat .theme-art").evaluate(e => getComputedStyle(e).visibility), "visible");
   assert.deepEqual(errors, []);
   console.log("Goals, utility icons, updated skill/Silver art, live HUD controls, PNG seal, theme overrides and missing-image fallback passed at phone/desktop sizes.");
 } finally { await browser.close(); await server.close(); }

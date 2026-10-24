@@ -1,6 +1,6 @@
 import type { QuotaDoor } from "../key-schedule.ts";
 import type { KeyColor } from "../entities.ts";
-import type { TowerEnemyProfile, TowerEnemyStrength } from "../scaling.ts";
+import type { TowerEnemyProfile, TowerEnemyStrength } from "../enemies/scaling.ts";
 
 /** Shared vocabulary for strategic Tower generation.
  *
@@ -11,7 +11,7 @@ import type { TowerEnemyProfile, TowerEnemyStrength } from "../scaling.ts";
  *   B. a spatial embedding of that graph onto the 17x17 tile grid.
  * Nothing in layer A knows about coordinates. */
 
-/** Enemy difficulty bands (stats in scaling.ts). Enemies are gates that
+/** Enemy difficulty bands (stats in enemies/scaling.ts). Enemies are gates that
  * cost HP instead of keys. */
 export type Strength = TowerEnemyStrength;
 

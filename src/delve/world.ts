@@ -5,16 +5,16 @@ import type { DelveRun } from "../runs.ts";
 import { withChest, withPotions, withTreasureFloors, type Board } from "../board.ts";
 import { breakTorch, placeTorches, torchesLeft } from "../torches.ts";
 import { tierCells, tierTile } from "../tiers.ts";
-import { fastCells } from "../fast-enemies.ts";
-import { rangedCells, wounded, woundMore } from "../ranged.ts";
-import { flyingCells } from "../flying.ts";
+import { fastCells } from "../enemies/fast.ts";
+import { rangedCells, wounded, woundMore } from "../enemies/ranged.ts";
+import { flyingCells } from "../enemies/flying.ts";
 import { tournamentStatFactor, tournamentTile } from "../tournament/run.ts";
-import { addEnemies, extraGround, extrasKey, extrasSeed, hasExtras, type ExtraEnemies } from "../more-enemies.ts";
-import { guardedTile, holdsShield, placeShield, walkDistances, type Shield } from "../shielded.ts";
-import { enemyStats, woodDurability } from "../enemy-curves.ts";
+import { addEnemies, extraGround, extrasKey, extrasSeed, hasExtras, type ExtraEnemies } from "../enemies/more-enemies.ts";
+import { guardedTile, holdsShield, placeShield, walkDistances, type Shield } from "../enemies/shielded.ts";
+import { enemyStats, woodDurability } from "../enemies/curves.ts";
 import { withRunDoors } from "../doors.ts";
 import { foeTile, type FoeRule } from "../shrines.ts";
-import { DELVE_ENEMY_NAMES, enemyTier } from "../scaling.ts";
+import { DELVE_ENEMY_NAMES, enemyTier } from "../enemies/scaling.ts";
 
 // v8 turns some pocket throats into forks: two parallel lanes of costs.
 // v9 adds yellow-or-blue and blue-or-red door forks.
@@ -30,7 +30,7 @@ import { DELVE_ENEMY_NAMES, enemyTier } from "../scaling.ts";
 // v18 places no strong enemy below equivalent floor 11 and no elite below 41.
 // v19 opens blue keys on equivalent floor 21 and red on 51.
 // v20 places no Heart Door below equivalent floor 101 in the first delve.
-// v21 takes every enemy's stats from the delve's enemy curve (enemy-curves.ts).
+// v21 takes every enemy's stats from the delve's enemy curve (enemies/curves.ts).
 // v22 makes steel doors Wooden Doors, which a hero without a key breaks down.
 // v23 follows the Tower's door and key schedules by equivalent floor: blue,
 // red and Heart Door quotas, the wooden share and keys per lock.
@@ -90,7 +90,7 @@ function areaTorches(seed: number, area: number, tier: number): readonly Torch[]
 const torchCache = new Map<string, Torch[]>();
 
 const extraCache = new Map<string, Map<string, Tile>>();
-/** More Enemies' extras in area `area` (more-enemies.ts), by tile: each of
+/** More Enemies' extras in area `area` (enemies/more-enemies.ts), by tile: each of
  * its ten equivalent floors (ten depths each) counts its own enemies and
  * takes its extras among its own tiles, bottom one first, those placed
  * below already standing. The way in is the area's shallowest tile, the
@@ -125,7 +125,7 @@ export function delveExtras(seed: number, area: number, tier: number, extras: Ex
 }
 
 const shieldCache = new Map<string, { placed: Map<string, Tile>; shields: Shield[] }>();
-/** Area `area`'s Shielded enemies and their extras (shielded.ts), by tile,
+/** Area `area`'s Shielded enemies and their extras (enemies/shielded.ts), by tile,
  * with More Enemies' extras standing: each of its ten equivalent floors
  * rolls for its own, the enemy deepest on it (then farthest walked) being
  * the one nearest the way up, and extras standing on tiles walked to sooner
@@ -186,7 +186,7 @@ export class World implements Board {
   chunks = new Map<number, Map<string, Tile>>();
   constructor(
     private run: WorldRun,
-    /** The run's More Enemies badges' extras (more-enemies.ts); none without. */
+    /** The run's More Enemies badges' extras (enemies/more-enemies.ts); none without. */
     private extras?: ExtraEnemies,
     /** What the run's card trees change about its enemies (ENEMY's Weaken,
      * shrines.ts), every enemy tile read through it; none without. */
@@ -207,7 +207,7 @@ export class World implements Board {
   get tier() {
     return this.run.tier ?? 1;
   }
-  /** The Shielded enemies of every area generated so far (shielded.ts), by area. */
+  /** The Shielded enemies of every area generated so far (enemies/shielded.ts), by area. */
   private areaShields = new Map<number, Shield[]>();
   private shieldList: Shield[] = [];
   tile(x: number, y: number): Tile {

@@ -3,17 +3,18 @@
  * and how its board is built, what its enemies drop, and the words the game
  * uses for it. Code that needs a per-mode answer asks `MODES[mode]` rather
  * than branching on the mode; features only the Tower has still test for it. */
-import { START_X, TOWER_START_X, TOWER_WIDTH, WIDTH, goldReward } from "./config.ts";
+import { START_X, TOWER_START_X, TOWER_WIDTH, WIDTH } from "./config.ts";
+import { goldReward } from "./economy/kill-pay.ts";
 import type { DelveRun, Run, TowerRun } from "./runs.ts";
 import type { Mode } from "./entities.ts";
-import type { Save } from "./save-shape.ts";
+import type { Save } from "./save/shape.ts";
 import { LAYOUT_VERSION, World } from "./delve/world.ts";
 import { depthAt } from "./delve/labyrinth.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import type { Board } from "./board.ts";
-import { runExtras, runFoeCut } from "./card-trees.ts";
+import { runExtras, runFoeCut } from "./cards/trees.ts";
 import { weakened } from "./shrines.ts";
-import { earn } from "./profile.ts";
+import { earn } from "./save/profile.ts";
 
 export type ModeProfile<R extends Run = Run> = {
   /** The balance of the currency this mode pays, and paying it. */
@@ -47,8 +48,6 @@ export type ModeProfile<R extends Run = Run> = {
     newBest: string;
     /** A run in this mode. */
     run: string;
-    /** What a retired run is replaced with. */
-    fresh: string;
     /** The numbered places a run climbs, as in "Tower II" (tiers.ts). */
     tierName: string;
     /** Declines a prompt to end the run. */
@@ -115,7 +114,6 @@ export const MODES: { tower: ModeProfile<TowerRun>; delve: ModeProfile<DelveRun>
       progress: "floor",
       newBest: "Inspiration for each floor this ascent has completed beyond your highest: paid as you climb its stairs",
       run: "ascent",
-      fresh: "tower",
       tierName: "Tower",
       keepGoing: "Keep climbing",
       outsideTitle: "THE TOWER APPROACH",
@@ -143,7 +141,6 @@ export const MODES: { tower: ModeProfile<TowerRun>; delve: ModeProfile<DelveRun>
       progress: "depth",
       newBest: "Courage for each new 10-depth milestone this delve has passed beyond your deepest",
       run: "delve",
-      fresh: "descent",
       tierName: "Delve",
       keepGoing: "Keep delving",
       outsideTitle: "THE MOUNTAIN HOLLOW",

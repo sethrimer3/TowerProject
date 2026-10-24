@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { cancelResearch, jobProgress, settleArchives, startResearch, decodeArchives } from "../src/archives.ts";
-import { CELLS_PER_HOUR, SPEED_UP_FACTORS, jobAt, queueNextSpeedUp, speedUpCells, startSpeedUp } from "../src/speed-ups.ts";
-import { decode, defaults } from "../src/save.ts";
+import { cancelResearch, jobProgress, settleArchives, startResearch, decodeArchives } from "../src/progression/archives.ts";
+import { CELLS_PER_HOUR, SPEED_UP_FACTORS, jobAt, queueNextSpeedUp, speedUpCells, startSpeedUp } from "../src/progression/speed-ups.ts";
+import { decode, defaults } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
 import { RunPurse } from "../src/game/run-purse.ts";
 import type { Enemy } from "../src/entities.ts";
@@ -11,15 +11,15 @@ import { formatCountdown, nextCountdownIn } from "../src/ui/archives-page.ts";
 const HOUR = 3_600_000;
 const T0 = Date.UTC(2026, 9, 11, 12);
 
-/** A profile researching Focus Count's first level (8 hours) from T0,
+/** A profile researching Heart Door Resilience's first level (8 hours) from T0,
  * holding `cells` Cells. */
 function researching(cells = 10_000) {
   const save = defaults();
   save.upgrades.archives = 1;
-  save.upgrades.focus = 1;
+  save.upgrades.heartDoorResilience = 1;
   save.gold = 1_000_000;
   save.cells = cells;
-  assert.ok(startResearch(save, 0, "focusCount", T0));
+  assert.ok(startResearch(save, 0, "heartDoorResilience", T0));
   return save;
 }
 
@@ -66,7 +66,7 @@ test("a Speed Up makes the research left count down that much faster while it la
   assert.deepEqual(settleArchives(save, T0 + 7 * HOUR - 1), []);
   assert.equal(slot.speedUp, undefined, "it ended after its hour");
   const done = settleArchives(save, T0 + 7 * HOUR);
-  assert.deepEqual(done.map((r) => [r.research, r.level, r.at]), [["focusCount", 1, T0 + 7 * HOUR]]);
+  assert.deepEqual(done.map((r) => [r.research, r.level, r.at]), [["heartDoorResilience", 1, T0 + 7 * HOUR]]);
 });
 
 test("research done within a Speed Up completes at the faster rate, and the next level auto-continued keeps it", () => {
@@ -96,7 +96,7 @@ test("a Speed Up waits while its archivist is idle, and carries on with the next
   assert.equal(slot.speedUp!.endsAt - slot.speedUp!.appliedUntil, 40 * 60_000);
   assert.equal(save.cells, 10_000 - 75, "a queued one never rebuys while idle");
   // Started again: the 40 minutes run at 2x, then the queued one is bought.
-  assert.ok(startResearch(save, 0, "focusCount", T0 + 10 * HOUR));
+  assert.ok(startResearch(save, 0, "heartDoorResilience", T0 + 10 * HOUR));
   const left = slot.job!.completesAt - (T0 + 10 * HOUR);
   settleArchives(save, T0 + 10 * HOUR + 40 * 60_000);
   assert.equal(slot.job!.completesAt - (T0 + 10 * HOUR + 40 * 60_000), left - 80 * 60_000);
@@ -157,7 +157,7 @@ test("stopping research under a Speed Up keeps the research done, not the time p
   startSpeedUp(save, save.archives.slots[0], 3, 1, false, T0);
   settleArchives(save, T0 + HOUR);
   cancelResearch(save, 0, T0 + HOUR);
-  assert.equal(save.archives.progress.focusCount, 3 / 8);
+  assert.equal(save.archives.progress.heartDoorResilience, 3 / 8);
 });
 
 test("a Speed Up survives a save round trip, and a malformed one is dropped", () => {

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { decode, defaults } from "../src/save.ts";
+import { decode, defaults } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
 import { CHECKPOINTS, PASSES, canWarp, decodeGoals, floorsCompleted, goalState, goalsWaiting, goalUnlocked, passFor, passTotals, unlockFloor, warpUnlocked } from "../src/goals.ts";
 import { TIERS } from "../src/tiers.ts";
@@ -116,7 +116,7 @@ test("a reward is claimed once, after its floor is completed; a premium one need
   assert.equal(g.claimGoal(1, 80, false), null, "never twice");
   assert.equal(goalState(save, 1, 80, true), "needsPass");
   assert.equal(g.claimGoal(1, 80, true), null);
-  assert.equal(g.buyOffer("pass1", 0, true), null);
+  assert.equal(g.shop.buy("pass1", 0, true), null);
   assert.equal(goalState(save, 1, 80, true), "ready");
   assert.equal(goalState(save, 4, 80, true), "needsPass", "the first pass opens only Towers I to III");
   const before = save.gems;

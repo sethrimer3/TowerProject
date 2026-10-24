@@ -1,10 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { defaults } from "../src/save.ts";
-import { trainedAmount } from "../src/config.ts";
+import { defaults } from "../src/save/save.ts";
+import { trainedAmount } from "../src/progression/training.ts";
 import { landsAt, leavesAt, volleyTurn, type VolleyTurn } from "../src/volley.ts";
-import { ShotsInFlight, shotFlight } from "../src/volley-art.ts";
-import { ARROW_COST, FOE_GAIN, FOE_REACH, foeGain, foeRange, foeShotCost, foeTickGain, reachTicks, TURN_TICKS, within, type Volleys } from "../src/ranged.ts";
+import { ShotsInFlight, shotFlight } from "../src/render/volley-art.ts";
+import { ARROW_COST, FOE_GAIN, FOE_REACH, foeGain, foeRange, foeShotCost, foeTickGain, reachTicks, TURN_TICKS, within, type Volleys } from "../src/enemies/ranged.ts";
 import type { Enemy, Player, Tile } from "../src/entities.ts";
 
 const shooter: Enemy = { name: "Archer", hp: 50, attack: 7, defense: 0, tier: 3, strength: "normal", ranged: true };

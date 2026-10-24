@@ -1,6 +1,6 @@
 import { controlIcon } from "./control-icon.ts";
 import type { Game } from "../state.ts";
-import { factorText, goldMultipliers, goldMultiplierTotal } from "../gold-multipliers.ts";
+import { factorText, goldMultipliers, goldMultiplierTotal } from "../economy/gold-multipliers.ts";
 import { goldIcon } from "./dom.ts";
 
 /** The box over the middle of the screen listing every Gold bonus and what

@@ -1,7 +1,7 @@
 import type { TowerRun } from "../runs.ts";
 import { TOWER_SECTION, TOWER_START_X } from "../config.ts";
 import { RoomWorld } from "./room-world.ts";
-import { runExtras, runFoeCut } from "../card-trees.ts";
+import { runExtras, runFoeCut } from "../cards/trees.ts";
 import { weakened } from "../shrines.ts";
 
 /** A Tower run's climb: the floor it stands on and the stairs up from it.

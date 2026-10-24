@@ -1,5 +1,5 @@
 import { controlIcon } from "./control-icon.ts";
-import { kitIcon } from "../sprite-kit.ts";
+import { kitIcon } from "../sprites/kit.ts";
 import { EVENT_MISSION_COUNT, EVENT_MISSIONS, TIER_MEDALS, TIERS, type RelicMilestone } from "../events/catalog.ts";
 import { isFinished, milestoneReached, unclaimedTiers, type EventMission } from "../events/progress.ts";
 import { offer } from "../shop/offers.ts";
@@ -227,7 +227,7 @@ export class EventsPage {
       const message = () => document.getElementById("event-boost-message");
       if (!paid) return void (message() && (message()!.textContent = "The store isn't open yet."));
       const now = (await this.server.time()) ?? game.clock();
-      if (game.buyOffer("eventBoost", now, true)) return void (message() && (message()!.textContent = "Already active."));
+      if (game.shop.buy("eventBoost", now, true)) return void (message() && (message()!.textContent = "Already active."));
       this.ctx.update();
       this.render();
       const shown = offerShown(o);

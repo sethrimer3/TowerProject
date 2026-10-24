@@ -8,7 +8,7 @@ import { reachable } from "../src/board.ts";
 import { generateTowerFloor, geometryProblems, rollUnguardedLoot, towerFloorReport } from "../src/tower/index.ts";
 import { doorCost } from "../src/doors.ts";
 import { OUTSIDE_START_Y } from "../src/outside.ts";
-import { defaults, decode } from "../src/save.ts";
+import { defaults, decode } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
 import { predict } from "../src/combat.ts";
 import { chooseStep } from "../src/automation.ts";
@@ -116,7 +116,7 @@ test("automation avoids lethal fights; a manual death waits on the player, and a
   g.save.delve.courage = 100;
   g.save.upgrades.legacy = 1;
   const defense = g.run.player.defense;
-  assert.ok(g.buy("quality"));
+  assert.ok(g.skills.buy("quality"));
   g.newRun();
   assert.equal(g.run.player.defense, defense + 1);
 });

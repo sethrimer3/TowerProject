@@ -1,14 +1,15 @@
-import { levelForXp, type UpgradeId } from "../config.ts";
-import type { NoticeTree } from "../save-shape.ts";
-import { deckCards, type CardId } from "../cards.ts";
-import { hasPointsToSpend, totalCardLevels } from "../card-trees.ts";
+import { levelForXp } from "../progression/xp.ts";
+import type { SkillDesk } from "./skill-desk.ts";
+import type { NoticeTree } from "../save/shape.ts";
+import { deckCards, type CardId } from "../cards/cards.ts";
+import { hasPointsToSpend, totalCardLevels } from "../cards/trees.ts";
 import { equipmentWaiting } from "../equipment/inventory.ts";
 import { goalsWaiting } from "../goals.ts";
-import { trainingWaiting } from "../loadout.ts";
+import { provisionsOpen, trainingWaiting } from "../progression/loadout.ts";
 import { estimatedServerTime } from "../shop/clock.ts";
 import { OFFERS } from "../shop/offers.ts";
 import { refusal } from "../shop/transactions.ts";
-import { TREES } from "../skill-trees.ts";
+import { TREES } from "../progression/skill-trees.ts";
 import type { DeskHost } from "./desk.ts";
 import type { EventDesk } from "./event-desk.ts";
 import type { MailDesk } from "./mail-desk.ts";
@@ -37,7 +38,7 @@ export interface NoticeHost extends DeskHost {
   readonly events: Pick<EventDesk, "waiting">;
   readonly tournament: Pick<TournamentDesk, "waiting">;
   readonly mail: Pick<MailDesk, "recent" | "unread">;
-  canBuySkill(id: UpgradeId): boolean;
+  readonly skills: Pick<SkillDesk, "canBuy">;
 }
 
 /** The Notices (the game's `notices`): whether each tab and button wears
@@ -93,6 +94,8 @@ export class NoticeDesk {
       case "gear": return this.firstGear && (save.tutorials.gear = true);
       case "equipment": return !save.equipment.seen && (save.equipment.seen = true);
       case "research": {
+        // Opening the Research page ends the training lesson.
+        if (trainingWaiting(save)) save.tutorials.training = true;
         const level = levelForXp(save.xp), archives = this.host.research.events;
         const changed = seen.level !== level || seen.archives !== archives;
         seen.level = level;
@@ -154,9 +157,9 @@ export class NoticeDesk {
     return !this.save.tutorials.upgrades && this.save.tower.inspiration > 0;
   }
 
-  /** The Gear skill is owned and the Gear page hasn't been opened since. */
+  /** A provision is open and the Gear page hasn't been opened since. */
   private get firstGear() {
-    return !this.save.tutorials.gear && !!this.save.upgrades.gear;
+    return !this.save.tutorials.gear && provisionsOpen(this.save);
   }
 
   /** In the forest, after a run that earned `tree`'s currency (Inspiration
@@ -164,7 +167,7 @@ export class NoticeDesk {
    * bought (so never while the tree is locked), until that tree shows. */
   private tree(tree: NoticeTree) {
     return this.save.treeNotices[tree] && !!this.host.run.outside &&
-      TREES.find((t) => t.id === tree)!.nodes.some((n) => this.host.canBuySkill(n.id));
+      TREES.find((t) => t.id === tree)!.nodes.some((n) => this.host.skills.canBuy(n.id));
   }
 
   /** The deck holds a card (from a skill, a Goal or anywhere else) the

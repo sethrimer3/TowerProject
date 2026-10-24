@@ -1,12 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { point, type Enemy, type Tile } from "../src/entities.ts";
 import { bout, DEFEAT_MS, heroHpAfter, heroHpDuring, REVIVE_PAUSE_MS, revivals } from "../src/combat.ts";
-import { trainingStep } from "../src/loadout.ts";
-import { TREES } from "../src/skill-trees.ts";
-import { UPGRADES, trainedAmount } from "../src/config.ts";
+import { trainingStep } from "../src/progression/loadout.ts";
+import { TREES } from "../src/progression/skill-trees.ts";
+import { UPGRADES } from "../src/progression/upgrades.ts";
+import { trainedAmount } from "../src/progression/training.ts";
 
 // 12 ATK takes five strikes to beat it; its fourth strike back (30, 30, 30,
 // 31) fells a 100 HP hero, who at full HP again wins with its fifth.

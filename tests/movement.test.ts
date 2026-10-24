@@ -2,12 +2,13 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { OUTSIDE_START_Y } from "../src/outside.ts";
-import { defaults, decode } from "../src/save.ts";
+import { defaults, decode } from "../src/save/save.ts";
 import { point, type Tile } from "../src/entities.ts";
 import { generate } from "../src/delve/world.ts";
 import { generateDelveMap } from "./delve-map.ts";
 import { reachable } from "../src/board.ts";
-import { WIDTH, levelForXp, xpForLevel } from "../src/config.ts";
+import { WIDTH } from "../src/config.ts";
+import { levelForXp, xpForLevel } from "../src/progression/xp.ts";
 function corridor() {
   const g = new Game(defaults());
   g.save.upgrades.inspirationUndos = 1; // undo needs Rehearsed steps

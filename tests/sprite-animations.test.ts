@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { HeroIdleAnimation, keyShineFrame, potionBubbleFrame, deathSkullFrame, HERO_FACINGS } from "../src/sprite-animations.ts";
-import { paintContents, paintHero } from "../src/tile-painters.ts";
-import { drawStruckDown, DEFEAT_MS } from "../src/struck-down.ts";
-import type { FrameContext } from "../src/render-frame.ts";
+import { HeroIdleAnimation, keyShineFrame, potionBubbleFrame, deathSkullFrame, HERO_FACINGS } from "../src/sprites/animations.ts";
+import { paintContents, paintHero } from "../src/render/tile-painters.ts";
+import { drawStruckDown, DEFEAT_MS } from "../src/render/effects/struck-down.ts";
+import type { FrameContext } from "../src/render/render-frame.ts";
 
 test("ambient strips use native frames and every required facing ships", () => {
   for (const [id, frames] of [["ambient-potion-bubbles", 5], ["ambient-key-shine", 5], ["ambient-death-skull", 6], ...HERO_FACINGS.map(facing => [`ambient-hero-${facing}`, 4])] as [string, number][]) {
@@ -51,17 +51,17 @@ test("the actual painters gate pickup, hero and death frames and retain static a
   try {
     const tile = { kind: "key" as const, color: "blue" as const };
     let time = 0; while (!keyShineFrame(1, 2, time, 47) && time < 40000) time += 50;
-    const art = { x: 1, y: 2, time, seed: 47, spritesOff: false, reduceMotion: false, area1: false, styledSprites: true, spriteAnimations: true };
+    const art = { x: 1, y: 2, time, seed: 47, reduceMotion: false, styledSprites: true, spriteAnimations: true };
     paintContents(c, tile, art);
     assert.deepEqual(calls.map(call => call[0]), ["key-blue.png", "ambient-key-shine.png"]);
     for (const override of [{ spriteAnimations: false }, { reduceMotion: true }, { lifted: true }]) {
       calls.length = 0; paintContents(c, tile, { ...art, ...override });
       assert.deepEqual(calls.map(call => call[0]), ["key-blue.png"]);
     }
-    calls.length = 0; paintHero(c, false, true, { dx: -1, dy: 0 }, 2);
+    calls.length = 0; paintHero(c, { dx: -1, dy: 0 }, 2);
     assert.equal(calls[0][0], "ambient-hero-left.png"); assert.equal(calls[0][1], 48);
-    calls.length = 0; paintHero(c, false, true, { dx: -1, dy: 0 }); assert.equal(calls[0][0], "hero-left.png");
-    const f = { c, look: { styledSprites: true, spritesOff: false, reduceMotion: false, spriteAnimations: true }, playerX: 1, playerY: 2, left: 0, bottom: 0, n: 3, s: 24 } as FrameContext;
+    calls.length = 0; paintHero(c, { dx: -1, dy: 0 }); assert.equal(calls[0][0], "hero-left.png");
+    const f = { c, look: { styledSprites: true, reduceMotion: false, spriteAnimations: true }, playerX: 1, playerY: 2, left: 0, bottom: 0, n: 3, s: 24 } as FrameContext;
     calls.length = 0; drawStruckDown(f, 280); assert.equal(calls[0][0], "ambient-death-skull.png"); assert.equal(calls[0][1], 48);
     f.look.reduceMotion = true; calls.length = 0; drawStruckDown(f, 280); assert.equal(calls[0][1], 0);
     f.look.reduceMotion = false; f.look.spriteAnimations = false; calls.length = 0; drawStruckDown(f, 280); assert.equal(calls[0][1], 0);

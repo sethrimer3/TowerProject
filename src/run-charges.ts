@@ -1,16 +1,16 @@
-import type { UpgradeId } from "./config.ts";
-import { researched, type ArchivesSave, type ResearchTarget } from "./archives.ts";
+import type { UpgradeId } from "./progression/upgrades.ts";
+import { researched, type ArchivesSave, type ResearchTarget } from "./progression/archives.ts";
 import type { Run } from "./runs.ts";
 
-// A run's charges: the uses of Focus, Ignore and Target it has. Each opens
-// with its skill, starts every run with its research's count, and, once its
-// regain skill is owned (Refocus, Ignore More, Target More), comes back one
+// A run's charges: the uses of Ignore and Target it has. Each opens with
+// its skill, starts every run with its research's count, and, once its
+// regain skill is owned (Ignore More, Target More), comes back one
 // use every so many new floors climbed. The run keeps only what the player
 // did (uses spent) and the floors counted toward the next regain, so research
 // completed mid-run counts at once and undo never rolls it back.
 
-export type Charge = "focus" | "ignore" | "target";
-export const CHARGES: readonly Charge[] = ["focus", "ignore", "target"];
+export type Charge = "ignore" | "target";
+export const CHARGES: readonly Charge[] = ["ignore", "target"];
 
 type ChargeDef = {
   /** The skill that opens it. */
@@ -21,10 +21,9 @@ type ChargeDef = {
   regain: UpgradeId;
   every: ResearchTarget;
   /** The run's count of uses spent. */
-  used: "focusUsed" | "ignoreUsed" | "targetUsed";
+  used: "ignoreUsed" | "targetUsed";
 };
 const DEFS: Record<Charge, ChargeDef> = {
-  focus: { skill: "focus", perRun: "focusPerRun", regain: "refocus", every: "refocusFloors", used: "focusUsed" },
   ignore: { skill: "ignore", perRun: "ignorePerRun", regain: "ignoreMore", every: "ignoreFloors", used: "ignoreUsed" },
   target: { skill: "target", perRun: "targetPerRun", regain: "targetMore", every: "targetFloors", used: "targetUsed" },
 };

@@ -25,7 +25,7 @@ try {
     });
     await page.goto(server.resolvedUrls.local[0]); await page.locator("#hp").waitFor();
     await page.evaluate(async () => {
-      const { defaults } = await import("/src/save.ts"); const { Game } = await import("/src/state.ts");
+      const { defaults } = await import("/src/save/save.ts"); const { Game } = await import("/src/state.ts");
       const s = defaults(); Object.keys(s.tutorials).forEach((k) => s.tutorials[k] = true);
       Object.assign(s.upgrades, { combatStance: 1, buildout: 1, cardHeal: 1, cardYellowKey: 1 });
       Object.assign(s.settings, { reduceMotion: true, transition: "instant", weatherSound: false });
@@ -54,7 +54,7 @@ try {
     });
     await page.goto(server.resolvedUrls.local[0]); await page.locator("#hp").waitFor();
     await page.evaluate(async () => {
-      const { defaults } = await import("/src/save.ts"); const { Game } = await import("/src/state.ts");
+      const { defaults } = await import("/src/save/save.ts"); const { Game } = await import("/src/state.ts");
       const s = defaults(); Object.keys(s.tutorials).forEach((k) => s.tutorials[k] = true);
       s.upgrades.combatStance = 1; s.upgrades.buildout = 1;
       // Level 6 STAIRS: 6 card points (100 + 200 + 300 + 400 + 500 + 700 XP),

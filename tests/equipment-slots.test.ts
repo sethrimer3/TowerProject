@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { defaults, decode } from "../src/save.ts";
-import { loadout } from "../src/loadout.ts";
+import { defaults, decode } from "../src/save/save.ts";
+import { loadout } from "../src/progression/loadout.ts";
 import { predict } from "../src/combat.ts";
 import { random } from "../src/random.ts";
 import { CATEGORY_IDS, type CategoryId } from "../src/equipment/catalog.ts";

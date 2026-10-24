@@ -1,9 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { decode, defaults } from "../src/save.ts";
-import { MAX_CARD_XP } from "../src/card-levels.ts";
-import { CARD_TREES, cardMaxLevel, doorStat, freeUpChances, treeBonus, type CardTreeLevels } from "../src/card-trees.ts";
+import { decode, defaults } from "../src/save/save.ts";
+import { MAX_CARD_XP } from "../src/cards/levels.ts";
+import { CARD_TREES, cardMaxLevel, doorStat, freeUpChances, treeBonus, type CardTreeLevels } from "../src/cards/trees.ts";
 import { hasLock, withDoorOdds } from "../src/doors.ts";
 import { facing } from "../src/combat.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";

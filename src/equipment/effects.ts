@@ -3,7 +3,7 @@
 // can never count a bonus twice. Each effect kind is read in one place (see
 // `EffectKind` in catalog.ts).
 import type { Mode } from "../entities.ts";
-import type { Save } from "../save-shape.ts";
+import type { Save } from "../save/shape.ts";
 import { snap } from "../exact.ts";
 import { EFFECTS, itemDef, type EffectKind, type EffectLine } from "./catalog.ts";
 import { atLeast, RARITY_TIERS, type EquipRarity } from "./balance.ts";

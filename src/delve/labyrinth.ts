@@ -1,9 +1,9 @@
 import { point, type Point, type Tile, type KeyColor } from '../entities.ts';
 import type { Fork, Gate, LaneStep } from '../tower/types.ts';
-import { isRanked, type RankedStrength } from '../enemy-schedule.ts';
-import { dealProfiles, drawStrength, extraEnemies, profilesOn, rankStrengths, sharesOn } from '../enemy-stage.ts';
-import { strengthOnFloor, DELVE_ENEMY_NAMES, enemyTier, type TowerEnemyProfile } from '../scaling.ts';
-import { enemyStats, woodDurability } from '../enemy-curves.ts';
+import { isRanked, type RankedStrength } from '../enemies/schedule.ts';
+import { dealProfiles, drawStrength, extraEnemies, profilesOn, rankStrengths, sharesOn } from '../enemies/stage.ts';
+import { strengthOnFloor, DELVE_ENEMY_NAMES, enemyTier, type TowerEnemyProfile } from '../enemies/scaling.ts';
+import { enemyStats, woodDurability } from '../enemies/curves.ts';
 import { FORK_TUNING, forkDepth, forksWorth, stepValue } from '../tower/forks.ts';
 import { pick } from '../tower/patterns.ts';
 import { runsWith } from '../tower/door-quota.ts';

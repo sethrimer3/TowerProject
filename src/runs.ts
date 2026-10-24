@@ -1,12 +1,13 @@
 /** A run in either mode (`RunCore`, `TowerRun`, `DelveRun`), Automove's memory beside it, and undo's snapshots and the fall. */
 import type { ShrineRun } from "./shrines.ts";
-import type { CardId, CardLink } from "./cards.ts";
-import type { RunBadges } from "./badges.ts";
-import type { CardTreeLevels } from "./card-trees.ts";
-import type { PROVISION_BOOSTS, TrainingId, UsedProvision } from "./config.ts";
+import type { CardId, CardLink } from "./cards/cards.ts";
+import type { RunBadges } from "./cards/badges.ts";
+import type { CardTreeLevels } from "./cards/trees.ts";
+import type { PROVISION_BOOSTS, UsedProvision } from "./economy/provisions.ts";
+import type { TrainingId } from "./progression/training.ts";
 import type { RunNotes } from "./run-notes.ts";
 import type { TournamentRun } from "./tournament/run.ts";
-import type { Volleys } from "./ranged.ts";
+import type { Volleys } from "./enemies/ranged.ts";
 import type { ChestOdds, DoorOdds, Player, Tile } from "./entities.ts";
 /** A stat a provision boosts for a while. */
 export type Boosted = (typeof PROVISION_BOOSTS)[keyof typeof PROVISION_BOOSTS];
@@ -28,6 +29,10 @@ export type RunCore = {
   /** The hand as it was ordered when the run went inside: the cards that
    * move the hero for the rest of the run. */
   hand?: CardId[];
+  /** The Manual hand as it was when the run went inside: cards held for
+   * their bonuses, badges and trees, that act only when pressed. Pressed,
+   * one is found at its slot past the hand's (`Game.held`). */
+  manual?: CardId[];
   /** The hand's links (Card Groups) as they were when the run went inside. */
   links?: CardLink[];
   /** Silver held: earned from enemies and spent inside this run only, so
@@ -39,21 +44,20 @@ export type RunCore = {
   /** The run's notes (run-notes.ts): its start, steps, keys, doors,
    * pickups and Silver found; undo takes them back with the run. */
   notes?: RunNotes;
-  /** Focus uses spent this run. What is left is what a run gets now less
-   * these, so a Focus Count level completed mid-run counts at once. */
-  focusUsed?: number;
-  /** Ignore and Target uses spent this run, counted like Focus's. */
+  /** Ignore and Target uses spent this run. What is left is what a run
+   * gets now less these, so a count research level completed mid-run counts
+   * at once. */
   ignoreUsed?: number;
   targetUsed?: number;
   /** Bombs thrown this run: a run has one for each Bomb provision owned,
    * so what is left is those less these. */
   bombsUsed?: number;
-  /** Provisions used this run (Traveler's elixir, Whetstone, Aegis charm):
+  /** Provisions used this run (Traveler's elixir, Vanguard Banner, Aegis charm):
    * a run has one use for each owned, so what is left is those less
    * these. Undo never gives one back: the count rides onto the run it
    * restores. */
   provisionsUsed?: Partial<Record<UsedProvision, number>>;
-  /** The Whetstone's and Aegis charm's boosts going on: the ATK or DEF
+  /** The Vanguard Banner's and Aegis charm's boosts going on: the ATK or DEF
    * each added to the hero (on every copy of the run undo holds, so undo
    * never takes it away) and the turns it has left. Undo carries these
    * onto the run it restores, so a boost keeps counting down. */
@@ -66,9 +70,9 @@ export type RunCore = {
    * capacity, and one spent never comes back, so what is left is that
    * capacity less these (undo carries the count onto the run it restores). */
   undosUsed?: number;
-  /** New floors counted toward each charge's next regained use (Refocus,
-   * Ignore More, Target More; run-charges.ts), while it is below full. */
-  regain?: Partial<Record<"focus" | "ignore" | "target", number>>;
+  /** New floors counted toward each charge's next regained use (Ignore
+   * More, Target More; run-charges.ts), while it is below full. */
+  regain?: Partial<Record<"ignore" | "target", number>>;
   /** The tiles Ignore marked on floor `floor` (points): no card's path, or
    * Target's, steps on them for the rest of that floor. */
   ignored?: { floor: number; tiles: string[] };
@@ -92,26 +96,27 @@ export type RunCore = {
   /** CHEST's tree's percent chance each of its floors is a Treasure Floor,
    * fixed as the run went inside; none without. */
   treasureFloor?: number;
-  /** The card a Focus put ahead of the others, until it reaches its target
-   * or has no path to one. */
+  /** The card the player pressed, ahead of the others, until it reaches
+   * its target or has no path to one; no other card can be pressed
+   * meanwhile. */
   focused?: CardId;
   /** Training ranks bought with Silver this run, on top of the hero's own:
    * they last only for this run. */
   training?: Partial<Record<TrainingId, number>>;
-  /** Times each card that acts in place (cards.ts `IN_PLACE`) has acted this
+  /** Times each card that acts in place (cards/cards.ts `IN_PLACE`) has acted this
    * run: a siphon's nth use took n training levels, lost only for this run. */
   cardUses?: Partial<Record<CardId, number>>;
   /** Which numbered tower (or delve) the run climbs, from 2 up (tiers.ts);
    * absent for the first. */
   tier?: number;
   /** Ranged enemies' and the Archer's cooldowns, and the turns taken
-   * inside (ranged.ts); absent until the first shot is due. */
+   * inside (enemies/ranged.ts); absent until the first shot is due. */
   volleys?: Volleys;
   /** The card badges on the hand's cards as the run went inside
-   * (badges.ts), each card's top slot first, fixed for the run. */
+   * (cards/badges.ts), each card's top slot first, fixed for the run. */
   badges?: RunBadges;
   /** The card points spent on the trees of the hand's cards as the run went
-   * inside (card-trees.ts, `runCardTrees`), fixed for the run, so its floors
+   * inside (cards/trees.ts, `runCardTrees`), fixed for the run, so its floors
    * (More Enemies' extras) and bonuses never change under it. */
   cardTrees?: CardTreeLevels;
   /** The floor each cooling-down badge (Stairward, Skip Open Nodes) last
@@ -128,7 +133,7 @@ export type RunCore = {
    * starts from the run seed. */
   skipRolls?: number;
   /** How many of each Free Upgrade group's rolls this run has drawn from
-   * its stream, which starts from the run seed (free-training.ts). */
+   * its stream, which starts from the run seed (progression/free-training.ts). */
   freeRolls?: Partial<Record<"offense" | "defense" | "utility", number>>;
   /** How many enemies the run has spawned onto its floors
    * (`Game.spawnEnemy`), each numbered by the count before it; absent with
@@ -179,6 +184,8 @@ export type DelveRun = RunCore & {
  * in it, so undo never copies or rewinds it. */
 export type AutomoveMemory = { known: Record<string, true>; visited: Record<string, number> };
 export type Run = TowerRun | DelveRun;
+/** Every card a run holds: its hand's, then its Manual hand's. */
+export const heldCards = (run: Pick<RunCore, "hand" | "manual">): CardId[] => [...(run.hand ?? []), ...(run.manual ?? [])];
 /** An undo point: the run, the best and XP then, the lifetime Silver then
  * (`silver`, absent in a snapshot older than the profile), since undo
  * takes back the Silver found after it, and each card's XP then (`cardXp`,

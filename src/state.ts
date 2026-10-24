@@ -1,50 +1,31 @@
 import { entrance, floorFor } from "./delve/labyrinth.ts";
-import { buyTheme, canWear, grantAllThemes, type GameLook, type ThemeId, type ThemeKind, type UiLook } from "./theme-collection.ts";
 import { chooseStep } from "./automation.ts";
-import { CARDS, cardText, deckCards, explainStuck, handBonus, keptLinks, planHand, planTarget, shootsWith, stillOpen, type CardId, type CardPlan, type HandBonus, type StuckReport } from "./cards.ts";
-import { addCardXp, PASSIVE_CARDS } from "./card-levels.ts";
-import { cardMaxLevel, compounded, doorStat, foeCardStat, foeStat, foeStats, keyStat, freeUpChances, freeUpFactors, hasPointsToSpend, pointsLeft, runCardTrees, runFoeCut, treeBonus, treeFactor, treeOverheal, type FoeTreeCard, type TreeBonus } from "./card-trees.ts";
-import { aggroTurn } from "./flying.ts";
-import { arrowRange, foeOn } from "./ranged.ts";
-import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./badges.ts";
-import { adsOff, BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
-import { noteGoldBoost } from "./gold-boost.ts";
-import { offer, type OfferId } from "./shop/offers.ts";
-import { purchase, type Refusal } from "./shop/transactions.ts";
-import { confirmServerTime } from "./shop/clock.ts";
+import { cost } from "./progression/upgrades.ts";
+import { CARDS, cardText, dealCard, deckCards, explainStuck, handSlots, handBonus, keptLinks, planHand, planTarget, shootsWith, stillOpen, type CardId, type CardPlan, type HandBonus, type StuckReport } from "./cards/cards.ts";
+import { addCardXp, PASSIVE_CARDS } from "./cards/levels.ts";
+import { cardMaxLevel, compounded, doorStat, foeCardStat, foeStat, foeStats, keyStat, freeUpChances, freeUpFactors, hasPointsToSpend, pointsLeft, runCardTrees, runFoeCut, treeBonus, treeFactor, treeOverheal, type FoeTreeCard, type TreeBonus } from "./cards/trees.ts";
+import { aggroTurn } from "./enemies/flying.ts";
+import { arrowRange, foeOn } from "./enemies/ranged.ts";
+import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./cards/badges.ts";
+import { BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
+import { noteGoldBoost } from "./economy/gold-boost.ts";
 import { canWarp, claimGoal, goalUnlocked } from "./goals.ts";
 import { volleyTurn, type Shot, type Volley, type VolleyTurn } from "./volley.ts";
-import { missGem } from "./gems.ts";
+import { missGem } from "./economy/gems.ts";
 import { DelvePlan } from "./delve/automove.ts";
-import { defaults } from "./save.ts";
-import { stampProfile } from "./profile.ts";
+import { defaults } from "./save/save.ts";
+import { stampProfile } from "./save/profile.ts";
 import { defaultFinds, newNotes, noteKey, notesOf } from "./run-notes.ts";
 import { stream, tileRandom } from "./random.ts";
-import { freeTrainingLines, rollFreeTraining } from "./free-training.ts";
+import { freeTrainingLines, rollFreeTraining } from "./progression/free-training.ts";
 import { doorBlockedMessage, doorName, doorRule, drainsHp, KEY_ORDER, pickupGold, type DoorDiscounts } from "./doors.ts";
-import type { SettingKey } from "./settings.ts";
-import { skillAvailable } from "./skill-trees.ts";
+import type { SettingKey } from "./save/settings.ts";
 import { routeTo, type Step } from "./pathfinding.ts";
-import {
-  TOWER_START_X,
-  TOWER_SECTION,
-  xpForKill,
-  levelForXp,
-  TRAINING_PER_LEVEL,
-  isStatRow,
-  cost,
-  UPGRADES,
-  trainedAmount,
-  PROVISION_BOOSTS,
-  PROVISION_BOOST_PERCENT,
-  PROVISION_BOOST_TURNS,
-  PROVISION_KEY_FLOORS,
-  type UpgradeId,
-  type TrainingId,
-  type StatTrainingRow,
-  type UsedProvision,
-} from "./config.ts";
-import type { Save, ModeSave } from "./save-shape.ts";
+import { TOWER_START_X, TOWER_SECTION } from "./config.ts";
+import { xpForKill, levelForXp } from "./progression/xp.ts";
+import { TRAINING_PER_LEVEL, isStatRow, trainedAmount, type TrainingId, type StatTrainingRow } from "./progression/training.ts";
+import { PROVISION_BOOSTS, PROVISION_BOOST_PERCENT, PROVISION_BOOST_TURNS, PROVISION_KEY_FLOORS, type UsedProvision } from "./economy/provisions.ts";
+import type { Save, ModeSave } from "./save/shape.ts";
 import type {
   Boosted,
   Run,
@@ -71,24 +52,27 @@ import { OUTSIDE_START_Y, OutsideWorld } from "./outside.ts";
 import { AREA_BURST_MS, AreaLedger, chestReward, clearedInspiration, type AreaReward } from "./tower/area-ledger.ts";
 import { TowerClimb } from "./tower/climb.ts";
 import { callsGreaterBoss, greaterBoss, greaterBossSpot } from "./tower/greater-boss.ts";
-import { strengthOdds, traitOdds, type OddsSource } from "./enemy-odds.ts";
-import { STEPS_PER_FLOOR } from "./enemy-curves.ts";
-import { materialDef, MATERIALS } from "./materials.ts";
+import { strengthOdds, traitOdds, type OddsSource } from "./enemies/odds.ts";
+import { STEPS_PER_FLOOR } from "./enemies/curves.ts";
+import { materialDef, MATERIALS } from "./economy/materials.ts";
 import { switchTier, tierNumeral, tierRewardText, tierXp } from "./tiers.ts";
-import type { GoldContext } from "./gold-multipliers.ts";
+import type { GoldContext } from "./economy/gold-multipliers.ts";
 import { RunTimeline } from "./run-timeline.ts";
-import { shiftHero } from "./hero-stats.ts";
-import { enemyTitle } from "./scaling.ts";
+import { shiftHero } from "./progression/hero-stats.ts";
+import { enemyTitle } from "./enemies/scaling.ts";
 import { snap } from "./exact.ts";
 import { enemyStat, keyCount, whole, wholeChange } from "./whole.ts";
 import { MODES, milestones, type ModeProfile } from "./modes.ts";
-import { ranksInRun, runTrainingBulk, runTrainingOffer, type RunTrainingOffer } from "./run-training.ts";
-import { openQuantities, type BuyQuantity } from "./buy-quantity.ts";
-import { critRule, loadout, rankShift, type TrainingView } from "./loadout.ts";
-import { researched } from "./archives.ts";
+import { ranksInRun, runTrainingBulk, runTrainingOffer, type RunTrainingOffer } from "./progression/run-training.ts";
+import type { BuyQuantity } from "./progression/buy-quantity.ts";
+import { critRule, loadout, provisionsOpen, rankShift, trainingWaiting, type TrainingView } from "./progression/loadout.ts";
+import { researched } from "./progression/archives.ts";
 import { chargesLeft, chargesPerRun, climbFloor, spendCharge, type Charge } from "./run-charges.ts";
-import type { MaterialId, MaterialStack } from "./materials.ts";
+import type { MaterialId, MaterialStack } from "./economy/materials.ts";
 import { TrainingDesk } from "./game/training-desk.ts";
+import { ShopDesk } from "./game/shop-desk.ts";
+import { SkillDesk } from "./game/skill-desk.ts";
+import { ThemeDesk } from "./game/theme-desk.ts";
 import { ResearchDesk } from "./game/research-desk.ts";
 import { DeckEditor } from "./game/deck-editor.ts";
 import { GearDesk } from "./game/gear-desk.ts";
@@ -96,7 +80,7 @@ import { GemFinder } from "./game/gem-finder.ts";
 import { BadgeDesk } from "./game/badge-desk.ts";
 import { CardTreeDesk } from "./game/card-tree-desk.ts";
 import { CardBuyDesk } from "./game/card-buy-desk.ts";
-import { HandRules } from "./hand-rules.ts";
+import { HandRules } from "./cards/hand-rules.ts";
 import { RunPurse, type EquipmentLoot } from "./game/run-purse.ts";
 import { EquipmentDesk } from "./game/equipment-desk.ts";
 import { TournamentDesk } from "./game/tournament-desk.ts";
@@ -115,7 +99,7 @@ import { raised, wornEffects } from "./equipment/effects.ts";
 import { RARITY_TIERS, type EquipRarity } from "./equipment/balance.ts";
 import { EQUIP_MATERIALS, EQUIP_MATERIAL_IDS, itemDef, type EquipMaterialId } from "./equipment/catalog.ts";
 import { readyForestRuns, startingHero } from "./game/hero-sync.ts";
-import { warpLootSilver } from "./warp-loot.ts";
+import { warpLootSilver } from "./economy/warp-loot.ts";
 import { CardActivation } from "./game/card-activation.ts";
 import { Finds } from "./game/finds.ts";
 import { FightPlayback } from "./game/fight-playback.ts";
@@ -124,7 +108,9 @@ import type { Coin, Dash, Drop, Facing, Gain, GainArt, Heal, ShownTurn } from ".
  * which seed (rolled from the game's randomness when left out). */
 export type RunStart = { outside?: boolean; seed?: number; height?: number };
 /** A lesson shown on the board (`Game.boardLesson`). */
-export type BoardLesson = "climb" | "enter" | "cards" | "delve";
+export type BoardLesson = "climb" | "keys" | "autoClimb" | "stuck" | "enemy" | "upgrades" | "enter" | "trainingPoints" | "cards" | "delve" | "provisions";
+/** The first skills the lessons lead to on the Inspiration tree, in order. */
+export type IntroSkill = "cardDoorKey" | "cardEnemy";
 export type RouteEffects = {
   hp: [number, number];
   attack: [number, number];
@@ -156,9 +142,11 @@ const MAX_GAINS = 12;
 /** The forest's Automove walks at least this many steps a second, however
  * slow the run's arrows were last set. */
 const FOREST_SPEED = 3;
-/** The speed the second floor's lesson teaches: one press of › from a new
- * hero's 2. */
+/** The speed the speed lesson teaches: one press of › from a new hero's 2. */
 const LESSON_SPEED = 3;
+/** The steps a run takes on the Tower's first floor before the speed
+ * lesson comes. */
+const LESSON_STEPS = 10;
 /** How long a turn inside a run shows, at most (ms): the hero's step and
  * its shots leaving through it, shorter at higher speeds. */
 const TURN_MS = 220;
@@ -218,6 +206,9 @@ export class Game {
    * when the player ends it. Each thing the player does (an item used, a
    * skill) checks the hand again, and it plays on once a card can act. */
   handStuck = false;
+  /** While the hand is stuck: whether an enemy no card takes blocks the
+   * way, before Enemy is owned (the `enemy` lesson). Never saved. */
+  private enemyBlocks = false;
   paused = false;
   /** While a page covers the board inside a run: whether the hand played
    * and its speed, brought back by `resumeFromPage`. Never saved. */
@@ -232,7 +223,7 @@ export class Game {
   /** Each card level reached since the board last took them, oldest
    * first, for the hand's level-up animation; emptied by undo. */
   cardLevelUps: { card: CardId; level: number }[] = [];
-  /** The latest turn's shots (ranged.ts), for the board to fly and land;
+  /** The latest turn's shots (enemies/ranged.ts), for the board to fly and land;
    * undo, a new run or a mode switch clears it. */
   volley: Volley | null = null;
   /** The latest turn's step inside a run, for the board to walk the hero
@@ -305,6 +296,12 @@ export class Game {
   /** Events: the fortnight's missions, counting toward them and paying
    * their Medals. */
   readonly events = new EventDesk(this);
+  /** The Shop's command: buying an offer. */
+  readonly shop = new ShopDesk(this, this.training, this.events);
+  /** The skill trees' command: buying a skill. */
+  readonly skills = new SkillDesk(this);
+  /** The Themes page's commands. */
+  readonly themes = new ThemeDesk(this);
   /** The Deck page's card badges: drawing them with Gems and attaching
    * them to cards. */
   readonly badges = new BadgeDesk(this);
@@ -375,7 +372,8 @@ export class Game {
     this.save.upgrades.delve = 1;
     this.save.upgrades.legacy = 1;
     // The Deck page with its Badges box, and every badge at the top level.
-    for (const id of ["combatStance", "buildout", "cardBadges"] as const) this.save.upgrades[id] = Math.max(1, this.save.upgrades[id]);
+    for (const id of ["cardDoorKey", "cardEnemy", "autoClimb", "combatStance", "buildout", "cardBadges"] as const) this.save.upgrades[id] = Math.max(1, this.save.upgrades[id]);
+    for (const card of ["door", "key", "monster"] as const) this.save.hand = dealCard(this.save.hand, card, handSlots(this.save));
     for (const id of BADGE_IDS) this.save.badges.owned[id] = { copies: MAX_COPIES, pick: this.save.badges.owned[id]?.pick ?? 0 };
     // Equipment, with materials to spare.
     this.save.equipment.unlocked = true;
@@ -388,22 +386,6 @@ export class Game {
     this.save.delve.best = Math.max(this.save.delve.best, this.save.delve.reached);
     // Events open with Dev mode: the running Event's first missions come at once.
     this.events.refresh();
-  }
-  /** In Dev mode, gives every theme not owned yet and returns them, for
-   * the player to hear about; otherwise none. */
-  claimThemes(): ThemeId[] {
-    return this.save.settings.devMode ? grantAllThemes(this.save) : [];
-  }
-  /** Buys a theme not owned yet (`THEME_PRICE`); false when it can't. */
-  buyTheme(id: ThemeId) {
-    return buyTheme(this.save, id);
-  }
-  /** Equips an owned theme's look, or Classic; false while it isn't owned. */
-  wearTheme(kind: ThemeKind, look: string) {
-    if (!canWear(this.save, kind, look)) return false;
-    if (kind === "ui") this.save.settings.uiTheme = look as UiLook;
-    else this.save.settings.gameTheme = look as GameLook;
-    return true;
   }
   /** Makes `next` the active mode. A mode with no run yet starts one inside
    * (a new game's first), or in its forest when `outside`. */
@@ -444,18 +426,73 @@ export class Game {
     p.x = this.rules.entranceX;
     p.y = OUTSIDE_START_Y;
   }
-  /** The lesson waiting on the board: in a new game's first run,
-   * `climb`, which holds the hand paused until dismissed; in the Tower's
-   * forest, `enter`, until dismissed or a run goes inside from the forest;
-   * then, in either forest, `cards`, which leads to the Deck to spend the
-   * first card point (`cardPointsLesson`); then, in the Tower's forest once
-   * Into the depths is owned, `delve`, until the Delve is opened. */
+  /** The lesson waiting on the board. Inside a Tower run: in a new game's
+   * first run, `climb`, which holds the hand until the STAIRS card is
+   * pressed; once no card can act, `stuck` the first time, saying the
+   * run's Inspiration buys what gets past, until End Run is pressed, and
+   * `enemy` while an enemy blocks the way with Enemy not yet owned and its
+   * Inspiration held; then `keys`, the first time the hand holds DOOR and
+   * KEY, until one of them is pressed; and `autoClimb`, the first run
+   * inside once Auto-Climb is owned, saying the hero heads for the first
+   * card's target with an open path and a pressed card goes first, until
+   * its note is tapped or a card pressed. In the Tower's forest: `upgrades`,
+   * to the Upgrades tab while the next first skill (`introSkill`) can be
+   * bought; `enter`, to Enter, once Door & Key is owned until a run goes
+   * inside from the forest (and again once Enemy is bought after its
+   * lesson); then, in either forest, `trainingPoints`, the first time training
+   * points can be spent, which leads to the Research tab until it is
+   * opened; then `cards`, which leads to the Deck to
+   * spend the first card point (`cardPointsLesson`); then, in the Tower's
+   * forest once Into the depths is owned, `delve`, until the Delve is
+   * opened; and in either forest, `provisions` (`provisionsLesson`). */
   get boardLesson(): BoardLesson | null {
-    const tower = this.mode === "tower", { climb, enter, delve } = this.save.tutorials;
-    if (!this.run.outside) return !tower || climb || this.fallen ? null : "climb";
-    if (tower && !enter) return "enter";
+    const tower = this.mode === "tower", t = this.save.tutorials, owned = this.save.upgrades;
+    if (!this.run.outside) {
+      if (!tower || this.fallen) return null;
+      if (!t.climb) return "climb";
+      if (this.handStuck && !t.stuck) return "stuck";
+      if (this.handStuck && this.enemyBlocks && !owned.cardEnemy && this.affords("cardEnemy")) return "enemy";
+      if (!t.keys && this.hand.includes("door") && this.hand.includes("key")) return "keys";
+      return owned.autoClimb && !t.autoClimb ? "autoClimb" : null;
+    }
+    if (tower && this.introSkill) return "upgrades";
+    if (tower && ((!t.enter && owned.cardDoorKey) || (t.enemy && owned.cardEnemy))) return "enter";
+    if (!t.training && trainingWaiting(this.save)) return "trainingPoints";
     if (this.cardPointsLesson) return "cards";
-    return tower && this.save.upgrades.delve && !delve ? "delve" : null;
+    if (tower && owned.delve && !t.delve) return "delve";
+    return this.provisionsLesson ? "provisions" : null;
+  }
+  /** Whether the provisions lesson waits: in the forest, once a first
+   * provision is open, a hand on the Gear tab until it is pressed (which
+   * sets `save.tutorials.gear`, `notices.shown("gear")`). */
+  get provisionsLesson() {
+    return this.run.outside && !this.save.tutorials.gear && provisionsOpen(this.save);
+  }
+  /** The first skill the lessons lead to on the Inspiration tree while it
+   * can be bought: Door & Key, and once the `enemy` lesson has sent the
+   * player back, Enemy. */
+  get introSkill(): IntroSkill | null {
+    const owned = this.save.upgrades;
+    if (!owned.cardDoorKey) return this.affords("cardDoorKey") ? "cardDoorKey" : null;
+    return this.save.tutorials.enemy && !owned.cardEnemy && this.affords("cardEnemy") ? "cardEnemy" : null;
+  }
+  /** The first skill just bought whose lesson leads back to the entrance:
+   * Door & Key until a run goes inside, Enemy likewise after its lesson. */
+  get introBought(): IntroSkill | null {
+    const owned = this.save.upgrades, t = this.save.tutorials;
+    if (t.enemy && owned.cardEnemy) return "cardEnemy";
+    return owned.cardDoorKey && !t.enter ? "cardDoorKey" : null;
+  }
+  /** Whether the Inspiration held pays for skill `id`'s first rank. */
+  private affords(id: IntroSkill) {
+    return this.free || this.save.tower.inspiration >= cost(id, 0);
+  }
+  /** End Run pressed: it ends the `stuck` lesson, and the `enemy` lesson's
+   * press sends the forest's lessons on to Enemy. */
+  endRunPressed() {
+    const lesson = this.boardLesson;
+    if (lesson === "stuck") this.save.tutorials.stuck = true;
+    if (lesson === "enemy") this.save.tutorials.enemy = true;
   }
   /** The card the card points lesson points at, while it waits: in the
    * forest after a run once a card has a point to spend on its tree, the
@@ -470,18 +507,20 @@ export class Game {
     for (const id of shown) if (hasPointsToSpend(save, id) && (!best || pointsLeft(save, id) > pointsLeft(save, best))) best = id;
     return best;
   }
-  /** Dismisses the `climb` or `enter` lesson (the `delve` lesson waits on
-   * the Delve tab); dismissing `climb` sets the hand playing. */
+  /** Dismisses the `enter` and `autoClimb` lessons (the others wait on
+   * what they ask for). */
   dismissLesson() {
     const lesson = this.boardLesson;
-    if (lesson === "climb") {
-      this.save.tutorials.climb = true;
-      if (this.handStartsPlaying) this.playHand();
-    } else if (lesson === "enter") this.save.tutorials.enter = true;
-    else return false;
+    if (lesson === "autoClimb") {
+      this.save.tutorials.autoClimb = true;
+      return true;
+    }
+    if (lesson !== "enter") return false;
+    this.save.tutorials.enter = true;
+    this.save.tutorials.enemy = false;
     return true;
   }
-  /** Whether the first run's lesson holds the hand paused. */
+  /** Whether the first run's lesson holds the hand until STAIRS is pressed. */
   private get teachesClimb() {
     return this.boardLesson === "climb";
   }
@@ -720,7 +759,7 @@ export class Game {
       return;
     }
     if (this.teachesClimb) {
-      this.message = "Tap the note to begin.";
+      this.message = "Press the Stairs card to begin.";
       return;
     }
     this.route = [];
@@ -793,18 +832,22 @@ export class Game {
     } else if (from === 0) this.playHand();
     return true;
   }
-  /** Whether the speed lesson waits: inside a run past the first floor,
-   * slower than its speed, until the player has once sped up to it. */
+  /** Whether the speed lesson waits: ten steps into the Tower's first
+   * floor, once Door & Key is owned, slower than its speed, until the
+   * player has once sped up to it. */
   get teachesSpeed() {
-    return !this.run.outside && !this.save.tutorials.speed && this.save.settings.speed < LESSON_SPEED && this.pastFirstFloor;
+    return !this.save.tutorials.speed && this.save.settings.speed < LESSON_SPEED && this.speedLessonDue;
   }
-  private get pastFirstFloor() {
-    return this.rules.equivalentFloor(this.run.maxHeight ?? this.run.height) >= 1;
+  /** Whether the run has come to the speed lesson: inside the Tower, on its
+   * first floor, with Door & Key owned and ten steps taken. */
+  private get speedLessonDue() {
+    const run = this.run;
+    return this.mode === "tower" && !run.outside && run.height === 0 && !!this.save.upgrades.cardDoorKey && (run.notes?.steps ?? 0) >= LESSON_STEPS;
   }
-  /** Reaching the second floor starts the speed lesson, pausing the hand,
-   * or, already that fast, passes it by for good. */
+  /** The tenth step on the first floor starts the speed lesson, pausing
+   * the hand, or, already that fast, passes it by for good. */
   private startSpeedLesson() {
-    if (this.save.tutorials.speed || !this.pastFirstFloor) return;
+    if (this.save.tutorials.speed || !this.speedLessonDue) return;
     if (this.save.settings.speed >= LESSON_SPEED) this.save.tutorials.speed = true;
     else {
       this.auto = false;
@@ -826,7 +869,7 @@ export class Game {
     if (step) {
       this.move(step.dx, step.dy, false);
       this.message = step.label;
-    } else this.message = "Waiting · no safe route. Explore or retire this ascent.";
+    } else this.message = "Waiting · no safe route. Explore or end this ascent.";
   }
   /** One step by the hand: follow the committed path, or, with none, the
    * first card in priority order that can reach a target. When none can,
@@ -838,13 +881,15 @@ export class Game {
     const fresh = !this.cardPlan;
     const next = this.nextHandPlan(), lost = next.lost;
     let plan = next.plan;
+    // Before Auto-Climb the hand waits for the player to press a card.
+    if (!plan && !this.autoClimbs) return this.awaitCard(lost);
     // Stuck with tiles marked ?: the nearest becomes ! for Deprioritize's card.
     while (!plan && this.handRules.raiseBang()) plan = planHand(this.handRules, this.hand, this.mode);
     this.handStuck = !plan;
     if (!plan) return this.handWaits();
     this.activeCard = plan.card;
-    const id = this.hand[plan.card];
-    this.message = lost ? `Focus lost · ${CARDS[lost].name} has no path to a target · ${CARDS[id].name} leads.`
+    const id = this.held[plan.card];
+    this.message = lost ? `${CARDS[lost].name} has no path to a target · ${CARDS[id].name} leads.`
       : target === "lost" ? `Target lost · no path to the tile · ${CARDS[id].name} leads.` : this.cardMessage(id);
     if (fresh) this.handRules.coolDown(id);
     // A card that acts in place takes the turn without a step.
@@ -881,7 +926,7 @@ export class Game {
     if (dashes) this.endTurn();
     if (!dashed) return;
     if (this.cardPlan) return;
-    // The card's last step reaches its target: a focus on it is spent, and
+    // The card's last step reaches its target: a press on it is done, and
     // it activates (once a fight into its target has played out). FLYING
     // ENEMY's last step only brings an enemy in reach: nothing activates.
     if (id === this.run.focused) this.run.focused = undefined;
@@ -986,25 +1031,45 @@ export class Game {
    * (`HandRules.gateShut`), so the hand chooses a card again. */
   private dropGatedPlan() {
     const plan = this.cardPlan;
-    if (plan && this.handRules.gateShut(this.hand[plan.card])) this.cardPlan = null;
+    if (plan && this.handRules.gateShut(this.held[plan.card])) this.cardPlan = null;
   }
   /** The path the hand follows this turn: the one committed, else the
-   * focused card's while it has a path to a target (`lost` once it has
-   * none), else the first card's in priority order that can act. */
+   * pressed card's while it has a path to a target (`lost` once it has
+   * none), else, with Auto-Climb, the first card's in priority order that
+   * can act. */
   private nextHandPlan(): { plan: CardPlan | null; lost: CardId | null } {
     if (this.cardPlan) return { plan: this.cardPlan, lost: null };
     const focused = this.run.focused;
-    if (!focused) return { plan: planHand(this.handRules, this.hand, this.mode), lost: null };
-    const plan = planHand(this.handRules, this.hand, this.mode, this.hand.indexOf(focused));
-    if (plan) return { plan, lost: null };
-    this.run.focused = undefined;
-    return { plan: planHand(this.handRules, this.hand, this.mode), lost: focused };
+    if (focused) {
+      const plan = planHand(this.handRules, this.held, this.mode, this.held.indexOf(focused));
+      if (plan) return { plan, lost: null };
+      this.run.focused = undefined;
+    }
+    return { plan: this.autoClimbs ? planHand(this.handRules, this.hand, this.mode) : null, lost: focused ?? null };
+  }
+  /** Whether the hand plays on by itself once a card reaches its target
+   * (Auto-Climb), rather than waiting for the player to press the next. */
+  get autoClimbs() {
+    return !!this.save.upgrades.autoClimb;
+  }
+  /** Before Auto-Climb, with no card pressed: the hand pauses for the
+   * player to press one, or, when none can act, is stuck. */
+  private awaitCard(lost: CardId | null) {
+    let plan = planHand(this.handRules, this.hand, this.mode);
+    while (!plan && this.handRules.raiseBang()) plan = planHand(this.handRules, this.hand, this.mode);
+    this.handStuck = !plan;
+    if (!plan) return this.handWaits();
+    this.cardPlan = null;
+    this.activeCard = null;
+    this.auto = false;
+    this.message = lost ? `${CARDS[lost].name} has no path to a target · press another card.` : "Press a card in your hand to choose the next move.";
   }
   /** No card can act: the hand pauses and End Run lights up. */
   private handWaits() {
     this.cardPlan = null;
     this.activeCard = null;
     this.auto = false;
+    this.enemyBlocks = !this.save.upgrades.cardEnemy && this.stuckReport().blockers.some((b) => b.tile.kind === "enemy" && b.why === "noCard");
     this.message = "No card can move · end the run, or use an item or skill.";
   }
   /** What stops the hand while no card can act (`explainStuck`): the run's
@@ -1014,7 +1079,7 @@ export class Game {
   }
   /** The status line for card `id` leading the hand. */
   private cardMessage(id: CardId) {
-    return `${id === this.run.focused ? "Focus · " : ""}${CARDS[id].name} · ${cardText(id, this.save.upgrades)}`;
+    return `${CARDS[id].name} · ${cardText(id, this.save.upgrades)}`;
   }
   /** After something the player does inside a run (an item used, a skill),
    * a stuck hand checks its cards again and plays on if one can act. */
@@ -1023,21 +1088,32 @@ export class Game {
     const plan = planHand(this.handRules, this.hand, this.mode);
     if (!plan) return;
     this.handStuck = false;
+    // Before Auto-Climb the hand waits for a card to be pressed.
+    if (!this.autoClimbs) {
+      this.message = "Press a card in your hand to choose the next move.";
+      return;
+    }
     this.cardPlan = plan;
     this.playHand();
   }
   /** A run going inside keeps the hand as it was ordered on the way in,
-   * gets its Focus uses, its Pocket Money Silver and, above floor 1, its
+   * gets its Pocket Money Silver and, above floor 1, its
    * Warp Loot Silver, and fixes its chance of percent potions. */
   private dealHand() {
     noteGoldBoost(this.save, this.slice, this.clock());
     this.run.hand = [...this.save.hand];
+    const manual = this.save.upgrades.manualHand ? this.save.manualHand : [];
+    if (manual.length) this.run.manual = [...manual];
+    else delete this.run.manual;
     const links = keptLinks(this.run.hand, this.save.cardLinks);
     if (links.length) this.run.links = links;
     else delete this.run.links;
-    const badges = this.save.upgrades.cardBadges ? runBadges(this.save.badges, this.run.hand, this.badges.slots) : {};
+    // The Manual hand's cards are held as the hand's are: their badges,
+    // trees and bonuses count, though they act only when pressed.
+    const held = this.held;
+    const badges = this.save.upgrades.cardBadges ? runBadges(this.save.badges, held, this.badges.slots) : {};
     if (Object.keys(badges).length) this.run.badges = badges;
-    const trees = runCardTrees(this.save.cardTrees, this.run.hand);
+    const trees = runCardTrees(this.save.cardTrees, held);
     if (Object.keys(trees).length) this.run.cardTrees = trees;
     else delete this.run.cardTrees;
     const tree = treeBonus(this.run.cardTrees);
@@ -1049,7 +1125,7 @@ export class Game {
     const chance = Math.min(10_000, Math.floor(trainedAmount(this.save, "findPotion") * treeFactor(tree, "percentPotions")));
     if (chance) this.run.percentPotions = chance;
     else delete this.run.percentPotions;
-    const odds = this.chestOddsFor(this.run.hand, tree);
+    const odds = this.chestOddsFor(held, tree);
     if (odds) this.run.chestOdds = odds;
     else delete this.run.chestOdds;
     // DOOR's Skeleton Key and Lock Pick, GOLD DOOR's Transmute, HEART and WOODEN DOOR's
@@ -1066,7 +1142,7 @@ export class Game {
     // holds more DEF and shroud against theirs, HEAL's more shroud against
     // every enemy and a parry of its own; the enemy cards' trees raise its
     // crits and Lifesteal's ceiling against theirs (combat.ts reads them).
-    const p = this.run.player, foes: NonNullable<Player["foeAttack"]> = Object.fromEntries(Object.entries(handBonus(this.run.hand).foe).map(([id, b]) => [id, b.attack]));
+    const p = this.run.player, foes: NonNullable<Player["foeAttack"]> = Object.fromEntries(Object.entries(handBonus(held).foe).map(([id, b]) => [id, b.attack]));
     for (const [card, n] of Object.entries(foeStats(tree, "Attack")) as [FoeTreeCard, number][]) foes[card] = snap((foes[card] ?? 0) + n);
     if (tree.foeAttack) foes.monster = tree.foeAttack;
     if (tree.bossAttack) foes.torch = tree.bossAttack;
@@ -1098,8 +1174,7 @@ export class Game {
       p.hp = snap(p.hp * maxHp);
       if (this.run.loadout) this.run.loadout.maxHp = snap(this.run.loadout.maxHp * maxHp);
     }
-    this.run.focusUsed = 0;
-    for (const k of ["ignoreUsed", "targetUsed", "regain", "ignored", "targeted"] as const) delete this.run[k];
+    for (const k of ["ignoreUsed", "targetUsed", "regain", "ignored", "targeted", "focused"] as const) delete this.run[k];
   }
   /** A run's chances of Supply and Equipment Chests with `hand`: the
    * hand's (the CHEST card's, and the points its tree adds, `tree`), raised
@@ -1126,7 +1201,7 @@ export class Game {
   get boons() {
     return this.mode === "tower" && !this.run.outside ? runBoons(this.run as TowerRun, this.save) : null;
   }
-  /** What the Gold multipliers read now (`gold-multipliers.ts`): the
+  /** What the Gold multipliers read now (`economy/gold-multipliers.ts`): the
    * Shrine Boons line is the boons' Gold factor inside a Tower run once
    * Shrines are open (1 with none), else none. */
   get goldContext(): GoldContext {
@@ -1190,7 +1265,7 @@ export class Game {
       ...(tree.potionHeal ? { potionCard: tree.potionHeal } : {}),
       ...(worn.victoryHeal ? { victoryHeal: worn.victoryHeal } : {}), ...(crit ? { crit } : {}) };
   }
-  /** How far potions, GK to HP and badge heals may heal above max HP now,
+  /** How far potions, the smelt cards and badge heals may heal above max HP now,
    * as a multiple of max HP in thousandths (Overheal training, the run's
    * Silver ranks counting, 1,000 until Overheal is owned), with the card
    * trees' Overheal Max added, skill or not. */
@@ -1255,7 +1330,7 @@ export class Game {
   }
   /** The Silver Warp Loot research adds to a Tower run going inside above
    * floor 1 (a Warp, or a Retry from one), holding `pocket` Silver: its
-   * percent of the Silver the floors below would have paid (warp-loot.ts). */
+   * percent of the Silver the floors below would have paid (economy/warp-loot.ts). */
   private warpLoot(pocket: number) {
     const start = this.mode === "tower" ? this.towerRun.start ?? 0 : 0;
     return start ? warpLootSilver(this.save, this.run.tier ?? 1, start, pocket) : 0;
@@ -1265,12 +1340,7 @@ export class Game {
   get startingSilver() {
     return snap(researched(this.save.archives, "startingSilver") + this.worn.startSilver);
   }
-  /** Focus uses left: this run's inside one, or in the forest what the
-   * next run will start with. */
-  get focusLeft() {
-    return this.chargesLeft("focus");
-  }
-  /** Uses of charge `c` (Focus, Ignore, Target) left: this run's inside
+  /** Uses of charge `c` (Ignore, Target) left: this run's inside
    * one, or in the forest what the next run will start with. */
   chargesLeft(c: Charge) {
     return this.run.outside ? chargesPerRun(this.save, c) : chargesLeft(this.save, this.run, c);
@@ -1281,7 +1351,7 @@ export class Game {
     const owned = this.save.provisions.bomb;
     return this.run.outside ? owned : Math.max(0, owned - (this.run.bombsUsed ?? 0));
   }
-  /** Uses of provision `id` (Traveler's elixir, Whetstone, Aegis charm)
+  /** Uses of provision `id` (Traveler's elixir, Vanguard Banner, Aegis charm)
    * left: this run's (one for each owned, less those used), or in the
    * forest what the next run will carry. */
   provisionsLeft(id: UsedProvision) {
@@ -1295,7 +1365,7 @@ export class Game {
   }
   /** Uses provision `id` at once, after any fight still playing out: the
    * Traveler's elixir fills HP to max HP (`full`, and kept, when HP is
-   * there already), and a Whetstone or Aegis charm raises ATK or DEF by
+   * there already), and a Vanguard Banner or Aegis charm raises ATK or DEF by
    * `PROVISION_BOOST_PERCENT` for `PROVISION_BOOST_TURNS` turns (`active`,
    * and kept, while one is going on). It is no turn of its own, and undo
    * never takes it back: the heal and the boost reach every copy of the
@@ -1322,13 +1392,20 @@ export class Game {
         run.boosts = { ...run.boosts, [stat]: { amount, turns: PROVISION_BOOST_TURNS } };
       }
       this.gain(p.x, p.y, `+${wholeChange(amount)} ${word}`, { tile: { kind: stat } });
-      this.message = `${id === "edge" ? "Whetstone" : "Aegis charm"} · +${PROVISION_BOOST_PERCENT}% ${word} for ${PROVISION_BOOST_TURNS} turns`;
+      this.message = `${id === "edge" ? "Vanguard Banner" : "Aegis charm"} · +${PROVISION_BOOST_PERCENT}% ${word} for ${PROVISION_BOOST_TURNS} turns`;
     }
     for (const run of copies) run.provisionsUsed = { ...run.provisionsUsed, [id]: (run.provisionsUsed?.[id] ?? 0) + 1 };
+    this.countProvisionsUsed();
     // The hand plans again, with the hero as it is now.
     this.cardPlan = null;
     this.afterPlayerAction();
     return "used";
+  }
+  /** Counts the provisions the run has used, Bombs thrown too, toward the
+   * missions: undo takes a throw back, so only the run's most counts. */
+  private countProvisionsUsed() {
+    const run = this.run, used = Object.values(run.provisionsUsed ?? {}).reduce((n, k) => n + (k ?? 0), 0);
+    this.missions.mark("provisions", this.mode, run.seed, used + (run.bombsUsed ?? 0));
   }
   /** A turn taken counts down the boosts going on; one run out takes the
    * ATK or DEF it added back off the hero, on every copy of the run undo
@@ -1412,6 +1489,7 @@ export class Game {
     if (!enemy) return "invalid";
     this.remember(this.snapshot());
     this.run.bombsUsed = (this.run.bombsUsed ?? 0) + 1;
+    this.countProvisionsUsed();
     this.armed = null;
     this.bombed = { x, y, at: performance.now() };
     const damage = this.run.player.attack;
@@ -1480,24 +1558,30 @@ export class Game {
     } else this.message = "Target · the hero heads for the tile.";
     return true;
   }
-  /** A new floor climbed for the first time in the run: Refocus, Ignore
-   * More and Target More count it, and each charge regained shows. */
+  /** A new floor climbed for the first time in the run: Ignore More and
+   * Target More count it, and each charge regained shows. */
   private regainCharges(at: { x: number; y: number }) {
-    for (const c of climbFloor(this.save, this.run)) this.gain(at.x, at.y, `+1 ${c === "focus" ? "Focus" : c === "ignore" ? "Ignore" : "Target"}`);
+    for (const c of climbFloor(this.save, this.run)) this.gain(at.x, at.y, `+1 ${c === "ignore" ? "Ignore" : "Target"}`);
   }
-  /** Puts the hand's card in slot `card` ahead of the others until it
-   * reaches its target, spending a Focus use; the hand plays on to it. A
-   * card with no path to a target fails and costs nothing, and the card
-   * already moving the hero can't be focused. */
-  focus(card: number): "focused" | "unavailable" | "active" | "spent" | "noPath" {
-    const id = this.hand[card];
-    if (!this.save.upgrades.focus || this.run.outside || this.fallen || !id) return "unavailable";
-    if (this.run.focused === id || (card === this.activeCard && !this.handStuck)) return "active";
-    if (this.focusLeft < 1) return "spent";
-    const plan = planHand(this.handRules, this.hand, this.mode, card);
+  /** A hand card pressed inside a run (the slot `card` of `held`, so past
+   * the hand's slots a Manual hand card): it leads the
+   * hero to its closest target, ahead of the others (`run.focused`), and
+   * the hand plays on to it. Refused while an earlier press still heads
+   * for its target (`busy`), and for a card with no path to a target
+   * (`noPath`), which costs nothing. The first run's lesson waits on
+   * STAIRS, the `keys` lesson ends once DOOR or KEY is pressed, and the
+   * `autoClimb` lesson once any card is. */
+  focus(card: number): "focused" | "unavailable" | "busy" | "noPath" {
+    const id = this.held[card];
+    if (this.run.outside || this.fallen || !id) return "unavailable";
+    if (this.run.focused) return "busy";
+    if (this.teachesClimb && id !== "stairs") return "unavailable";
+    const plan = planHand(this.handRules, this.held, this.mode, card);
     if (!plan) return "noPath";
-    this.run.focusUsed = (this.run.focusUsed ?? 0) + 1;
-    this.missions.mark("focus", this.mode, this.run.seed, this.run.focusUsed);
+    const lesson = this.boardLesson;
+    if (lesson === "climb") this.save.tutorials.climb = true;
+    if (lesson === "keys" && (id === "door" || id === "key")) this.save.tutorials.keys = true;
+    if (lesson === "autoClimb") this.save.tutorials.autoClimb = true;
     this.run.focused = id;
     this.route = [];
     // During a fight, the path is found again once the hero has stepped in.
@@ -1524,6 +1608,14 @@ export class Game {
     this.save = { ...defaults(), entitlements, shop, mail };
     this.save.events.boosted = events.boosted;
     if (permanentBoost(this.save)) this.save.trainingBoostUntil = BOOST_FOREVER;
+    stampProfile(this.save, this.clock());
+    this.mode = "tower";
+    this.newRun({ outside: true });
+  }
+  /** Replaces the whole save with `save` (an imported profile, which holds
+   * no run) and starts again outside the Tower. */
+  replaceSave(save: Save) {
+    this.save = save;
     stampProfile(this.save, this.clock());
     this.mode = "tower";
     this.newRun({ outside: true });
@@ -1681,10 +1773,10 @@ export class Game {
     for (const level of addCardXp(this.save.cardXp, id, xp, cardMaxLevel(this.save.cardBuys.opened, id))) this.cardLevelUps.push({ card: id, level });
   }
   /** `floors` new floors completed: each card of the hand that never
-   * activates (`PASSIVE_CARDS`) gains one XP a floor. */
+   * activates (`PASSIVE_CARDS`), or of the Manual hand, gains one XP a floor. */
   private passiveCardXp(floors: number) {
     if (floors <= 0) return;
-    for (const id of this.hand) if (PASSIVE_CARDS.has(id)) this.gainCardXp(id, floors);
+    for (const id of this.held) if (PASSIVE_CARDS.has(id)) this.gainCardXp(id, floors);
   }
   /** The single path that ends the current run, whether the player
    * accepts defeat or ends it: pays out exactly once and starts the next run
@@ -1784,6 +1876,7 @@ export class Game {
     const notes = notesOf(this.run);
     if (notes) notes.steps++;
     this.land(step.tile, step.dest.x, step.dest.y, step.outcome, step.card.floorSkip);
+    this.startSpeedLesson();
     this.gemFinder.step();
     if (!step.card.hold) this.endTurn();
     return true;
@@ -1958,7 +2051,7 @@ export class Game {
       this.message = `Shot down by ${enemyTitle(out.fell)}.`;
       return;
     }
-    // Then the Aggroed enemies close in (flying.ts), their cooldowns with them.
+    // Then the Aggroed enemies close in (enemies/flying.ts), their cooldowns with them.
     const moved = aggroTurn({ board: this.world, changes: this.run.changes, hero: p, floorOf: (x, y) => this.floorOf(x, y), lit: litTorches(this.world), foes: this.run.volleys.foes });
     if (moved.steps.length) {
       if (moved.foes && Object.keys(moved.foes).length) this.run.volleys.foes = moved.foes;
@@ -2023,7 +2116,7 @@ export class Game {
     const e = foeOn(this.world.tile(x, y));
     return e ? this.purse.killGoldPreview(e, x, y, instakill) : 0;
   }
-  /** What the floor the hero stands on can roll (`enemy-odds.ts`): each
+  /** What the floor the hero stands on can roll (`enemies/odds.ts`): each
    * strength's chance, stats and Gold, and each trait's chance, for the
    * enemy stats box; null in the forest. */
   get enemyOdds() {
@@ -2080,6 +2173,7 @@ export class Game {
     this.run.outside = false;
     this.run.notes = newNotes(this.clock());
     this.save.tutorials.enter = true;
+    this.save.tutorials.enemy = false;
     this.dealHand();
     p.x = this.rules.entranceX;
     p.y = 0;
@@ -2328,7 +2422,6 @@ export class Game {
     slice.best = Math.max(slice.best, reached);
     this.rules.credit(this.save, earned);
     slice.runCurrency += earned;
-    this.startSpeedLesson();
     return earned;
   }
   /** Whether (x, y) is the forest Blacksmith's building, which opens the
@@ -2400,16 +2493,28 @@ export class Game {
   get hand(): readonly CardId[] {
     return this.run.hand ?? this.save.hand;
   }
-  /** Whether the hero is an Archer: the hand (in the forest, the next
-   * run's) holds the ARCHER card (`shootsWith`). Its arrows fly only inside
-   * a run. */
-  get isArcher() {
-    return shootsWith(this.hand);
+  /** The Manual hand (Manual Hand): inside a run, the one it went in with;
+   * in the forest, the next run's. Its cards act only when pressed. */
+  get manualHand(): readonly CardId[] {
+    return this.run.hand ? this.run.manual ?? [] : this.save.upgrades.manualHand ? this.save.manualHand : [];
   }
-  /** What the cards of the run's hand give while held (`handBonus`): none
-   * in the forest. */
+  /** Every card held: the hand's, then the Manual hand's. A card's slot in
+   * it is the one a press and the hand's plan name, the hand's slots first,
+   * so a Manual card's comes after them. */
+  get held(): readonly CardId[] {
+    const manual = this.manualHand;
+    return manual.length ? [...this.hand, ...manual] : this.hand;
+  }
+  /** Whether the hero is an Archer: a hand (in the forest, the next run's)
+   * holds the ARCHER card (`shootsWith`). Its arrows fly only inside a
+   * run. */
+  get isArcher() {
+    return shootsWith(this.held);
+  }
+  /** What the cards held in the run give (`handBonus`), the Manual hand's
+   * too: none in the forest. */
   get handBonus(): HandBonus {
-    return handBonus(this.run.outside ? [] : this.hand);
+    return handBonus(this.run.outside ? [] : this.held);
   }
   /** Whether a tapped tile shows the route there and its totals: the
    * Courage skill Pathfinder owned, or Dev mode. */
@@ -2420,34 +2525,6 @@ export class Game {
    * Job owned, or every page shown in Dev mode. */
   get trainsOnTheJob() {
     return !!this.save.upgrades.onTheJob || this.save.settings.devMode;
-  }
-  /** Buys the Shop's offer `id` at `serverNow`, a server time confirmed
-   * for this purchase (the Shop's clock records it): with its price, or,
-   * for a real-money offer, once the store confirms it was paid (`paid`);
-   * Dev free purchases pay nothing. Returns why it was refused, or null
-   * once bought. */
-  buyOffer(id: OfferId, serverNow: number, paid = false): Refusal | null {
-    const o = offer(id);
-    if (!o) return "locked";
-    confirmServerTime(this.save.shop.clock, serverNow, this.clock());
-    // The Event Booster is the running event's.
-    if (o.item?.kind === "eventBoost") this.events.refresh();
-    this.training.settle();
-    const pace = this.training.pace;
-    const t = purchase(this.save, o, serverNow, this.payment(paid));
-    if (typeof t === "string") return t;
-    // A pack's training speed starts from now.
-    this.training.repace(pace);
-    // Ad-Disable's ×1.5 Gold is for good: the Gold ad's stored time goes.
-    if (adsOff(this.save)) this.save.goldBoostUntil = 0;
-    if (id === "dailyGems") this.events.record("freeGems");
-    this.message = o.item?.kind === "entitlement" ? `${t.item}: yours for good` : `+${t.item}`;
-    return null;
-  }
-  /** How a Shop purchase is paid: for nothing (Dev), by the store, or with its price. */
-  private payment(paid: boolean) {
-    if (this.free) return "free";
-    return paid ? "store" : "price";
   }
   /** Buys ranks of Training `id` for this run with its Silver, one or as
    * many as Buy Quantity `quantity` takes (`runTrainingBulk`): they count
@@ -2483,28 +2560,6 @@ export class Game {
     this.afterPlayerAction();
     return true;
   }
-  /** The Buy Quantity choices open: x1 once the Buy Quantity skill is owned
-   * (or in Dev mode), and one more per level of its research; none before. */
-  get buyQuantities(): readonly BuyQuantity[] {
-    return this.save.upgrades.buyQuantity || this.save.settings.devMode ? openQuantities(researched(this.save.archives, "buyQuantity")) : [];
-  }
-  /** How many ranks a press buys on `scope`'s screen (the Training tab,
-   * or the run's training bar, each its own saved choice): the quantity
-   * chosen, while it is open, else one. */
-  buyQuantityFor(scope: QuantityScope): BuyQuantity {
-    const chosen = this.save.settings[QUANTITY_SETTINGS[scope]];
-    return this.buyQuantities.includes(chosen) ? chosen : 1;
-  }
-  /** How many ranks a Training tab press buys. */
-  get buyQuantity(): BuyQuantity {
-    return this.buyQuantityFor("training");
-  }
-  /** Chooses `scope`'s Buy Quantity (the Training tab's by default), if it is open. */
-  setBuyQuantity(q: BuyQuantity, scope: QuantityScope = "training") {
-    if (!this.buyQuantities.includes(q)) return false;
-    this.save.settings[QUANTITY_SETTINGS[scope]] = q;
-    return true;
-  }
   /** What a rank bought for the run changes now: a stat, or the chance of
    * percent potions. Returns the max HP it added. */
   private applyRunTraining({ row, level }: RunTrainingOffer) {
@@ -2530,32 +2585,6 @@ export class Game {
     this.run.percentPotions = chance;
     if (this.world instanceof RoomWorld) this.world.percentPotions = chance;
   }
-  /** Whether skill `id` can be bought now: open, below its last rank, and
-   * paid for by the currency held (anything, with Dev free purchases). */
-  canBuySkill(id: UpgradeId) {
-    if (!skillAvailable(id, this.save.upgrades)) return false;
-    const u = UPGRADES.find((u) => u.id === id)!, n = this.save.upgrades[id];
-    const held = u.currency === "courage" ? this.save.delve.courage : this.save.tower.inspiration;
-    return n < u.max && (this.free || cost(id, n) <= held);
-  }
-  buy(id: UpgradeId) {
-    if (!this.canBuySkill(id)) return false;
-    const u = UPGRADES.find((u) => u.id === id)!, n = this.save.upgrades[id];
-    if (!this.spendTreeCurrency(u.currency === "courage", cost(id, n))) return false;
-    this.save.upgrades[id]++;
-    readyForestRuns(this.save);
-    return true;
-  }
-  /** Pays `price` in Courage, or else Inspiration (nothing with Dev free
-   * purchases); false when short. */
-  private spendTreeCurrency(courage: boolean, price: number) {
-    if (this.free) return true;
-    const save = this.save;
-    if (price > (courage ? save.delve.courage : save.tower.inspiration)) return false;
-    if (courage) save.delve.courage -= price;
-    else save.tower.inspiration -= price;
-    return true;
-  }
   /** The wall clock the Archives' research runs on (ms); tests set it. */
   clock: () => number = () => Date.now();
   /** Records a potion's heal of `n` HP, already applied, where the hero stands. */
@@ -2572,9 +2601,6 @@ export class Game {
 type FightEnd = { enemy: Enemy; damage: number; at: { x: number; y: number }; revived: number; scale?: number; instakill?: boolean; crits?: number; openers?: string[] };
 
 /** How Skip's message names what vanished, by tile kind. */
-/** The screens that keep their own Buy Quantity, and the setting each saves it in. */
-export type QuantityScope = "training" | "run";
-const QUANTITY_SETTINGS = { training: "buyQuantity", run: "runBuyQuantity" } as const;
 const SKIPPED_NAMES: Partial<Record<Tile["kind"], string>> = { door: "The door", key: "The key", potion: "The potion", attack: "The ATK shard", defense: "The DEF shard", treasure: "The chest", reward: "The chest" };
 
 /** Whether the door `t` has a lock of `color` among its locks. */

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ATMOSPHERE_CONFIG, Renderer } from "../src/rendering.ts";
-import { defaults } from "../src/save.ts";
+import { ATMOSPHERE_CONFIG, Renderer } from "../src/render/rendering.ts";
+import { defaults } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
 
 test("atmospheric configuration has restrained, tunable defaults", () => {
@@ -65,7 +65,7 @@ test("Renderer exposes modular atmosphere config instance that can be tuned", ()
 });
 
 test("LIGHTING_CONFIG defines softened ambient darkness, warm candle stops, and penumbra blur", async () => {
-  const { LIGHTING_CONFIG, getTorchFlicker } = await import("../src/lighting.ts");
+  const { LIGHTING_CONFIG, getTorchFlicker } = await import("../src/render/lighting.ts");
   assert.ok(LIGHTING_CONFIG);
 
   // Ambient level should keep dungeon clearly readable (low opacity overlay)

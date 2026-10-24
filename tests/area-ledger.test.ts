@@ -4,7 +4,7 @@ import { AreaLedger, clearedInspiration } from "../src/tower/area-ledger.ts";
 import { TowerClimb } from "../src/tower/climb.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { ENTRY } from "../src/tower/embedder.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
 import { areaCleared, areaMastered, canWarp, decodeGoals, unmasteredBelow } from "../src/goals.ts";
 import { TOWER_START_X } from "../src/config.ts";

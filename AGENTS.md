@@ -21,10 +21,9 @@ npm run test:browser   # Playwright suites (tests/*.mjs); needs `npm run dev` ru
 npm run test:render    # board screenshot hashes vs tests/fixtures/render.golden.json (builds and serves its own copy; no dev server)
 npm run test:ui        # page/HUD/dialog HTML hashes vs tests/fixtures/ui.golden.json (builds and serves its own copy; no dev server)
 npm run test:snapshots # both of the above side by side on one build (tests/snapshot-suites.mjs): the wall time of the slower one
+ONLY=rich.goals,floor. npm run test:ui  # only those key prefixes; ONLY=failed reruns last failures; with UPDATE_GOLDEN=1 records just them (docs/agents/goldens.md)
 npm run test:proving   # Proving Grounds browser flow (needs npm run dev)
 npm run test:pointer   # Defend board pointer gestures vs tests/fixtures/defend-pointer.golden.json (also needs `npm run dev`; on demand only, like test:defend)
-npm run tiles:area1 / tiles:outside     # regenerate tile PNGs
-npm run cards:stubs                     # regenerate the placeholder card faces in public/assets/cards/
 ```
 
 - `npm test` runs the broad property checks on a smaller sample and skips the slowest (`tests/test-size.ts`: `FULL`, `ciOnly`); CI sets `CI`, so it runs them in full.
@@ -41,14 +40,16 @@ npm run cards:stubs                     # regenerate the placeholder card faces 
 
 ## Architecture
 
+`src/bootstrap.ts` waits for decoded artwork and fonts behind the loading screen before `main.ts` paints and starts gameplay; failures offer Retry, and `npm run sprites:manifest` maintains the complete preload inventory.
+
 **Modes.** The modes are `tower`, `delve` (unlocked by upgrade) and `defend` (a tab, unlocked by the `legacy` upgrade).
 Tower and Delve share the tab bar's one board button (`data-tab="board"`, wearing the active mode's art); the only way between them is the **forest sign** (`Game.swapForest`: in either forest once the Delve is open, tapped, `#forest-sign`, which `BoardOverlay.placeSign` keeps over the path, or walked onto, the path's foot, `OutsideWorld.atExit`), which leaves the hero at the forest's start tile and arrives at the other's (`switchMode(next, outside)` starts a mode with no run in its forest).
 A `Game` built on a save whose Delve run is inside and Tower run isn't opens in the Delve, so a reload mid-run returns to it.
 `tests/forest-swap.test.ts` covers the sign, the paused run behind a page, and training bought mid-run surviving undo.
-Tower and Delve share one `Game` (`src/state.ts`: movement, pickups, doors, run lifecycle, purchases) and `Renderer` (`src/rendering.ts`).
+Tower and Delve share one `Game` (`src/state.ts`: movement, pickups, doors, run lifecycle, purchases) and `Renderer` (`src/render/rendering.ts`).
 `game.mode` selects which `save[mode]` slice (run, undo history, revival, bests, looted tiles) is active.
 Each slice holds its own mode's run type (`runs.ts`), both built on `RunCore`: a `TowerRun` adds whether the hero has taken fight damage in the current area (`damaged`) and whether it has climbed past an enemy left in it (`enemiesLeft`), and a `DelveRun` adds the milestone gates crossed (`milestone`).
-The board's pieces (`Tile`, `Enemy`, `Player`, `point`) live in `entities.ts`, which imports nothing, and the save's shape (`Save`, `ModeSave`) in `save-shape.ts`.
+The board's pieces (`Tile`, `Enemy`, `Player`, `point`) live in `entities.ts`, which imports nothing, and the save's shape (`Save`, `ModeSave`) in `save/shape.ts`.
 Automove's memory (`known`, `visited`) sits beside the Delve run in `save.delve.memory`, so undo snapshots never copy or rewind it.
 `Game.run` is either one; Tower-only and Delve-only code reads `game.towerRun` or `game.delveRun`, which throw in the other mode.
 A run may also be `outside` (`src/outside.ts`), the forest clearing before entering.
@@ -80,7 +81,7 @@ Changing generation output breaks existing saves' map state, so bump the mode's 
   Use `+ - * /`, `Math.sqrt` (exact everywhere) and `intPow` from `src/exact.ts`.
   Drawing may use `Math` freely.
   `tests/engine-independence.test.ts` rebuilds all of it under a different stable sort and requires identical output, requires that it calls none of those `Math` functions, and scans the generation modules for `**`.
-- Decor (`decor.ts`) is planned per tile from board + seed and is presentation only: it must never alter tiles.
+- Decor (`render/decor/decor.ts`) is planned per tile from board + seed and is presentation only: it must never alter tiles.
   `planTile` runs one planner per layer (moss, water, vines, standing things) in a fixed order, since later layers read earlier ones.
   `tests/decor-plan.test.ts` hashes every tile's plan over real Tower floors and Delve chunks against `tests/fixtures/decor-plan.golden.json`, so a refactor that reorders the planners' random draws fails it; regenerate with `UPDATE_GOLDEN=1` only for an intended decor change.
 
@@ -124,7 +125,7 @@ Read the area's doc before changing code there or answering questions about it; 
   A button short of Gems gets the `short` class, which turns only its price red, and a press while short opens `askForGems` (`ui/dialogs.ts`), offering the Shop (on the Shop page itself, a Gem-priced offer short of Gems points to the Gem packs instead).
   Only a purchase that can't happen at all (sold out, all hired, locked) may look unavailable.
 - A confirmation that spends a currency shows the price on its button as the currency's icon and the amount (`· ${gemIcon()} <b>2</b>`, likewise `goldIcon()` and the rest), not the currency's name in text; the button's `aria-label` names the currency, for screen readers.
-- The active optional PNG kit uses the original bundled Tower Pixel (`assets/fonts/TowerPixel/`, editable matrices in `tools/prepare-pixel-font.py`) for interface text and Classic board annotations, gated independently by UI/Game theme; Defend keeps its existing text. Otherwise all text uses the bundled Cinzel font (`assets/fonts/Cinzel/`), except under the Terminal, Glyph and Ember UI themes, which use the bundled VT323 (`assets/fonts/VT323/`), the Desktop UI theme, which uses the bundled W95FA (`assets/fonts/W95FA/`), and the Yang and Yin UI themes, which use the bundled Cormorant Garamond (`assets/fonts/CormorantGaramond/`), the Shiro and Kuro UI themes, which use the bundled Inter (`assets/fonts/Inter/`), the Arcade UI theme, which uses the bundled VT323 with Press Start 2P (`assets/fonts/PressStart2P/`) for titles, the System UI theme, which uses the bundled Pixelify Sans (`assets/fonts/PixelifySans/`), the Orbit UI theme, which uses the bundled Exo 2 (`assets/fonts/Exo2/`) with Orbitron (`assets/fonts/Orbitron/`) for titles, the Pixel UI theme, which uses the bundled Tiny5 (`assets/fonts/Tiny5/`) with Silkscreen (`assets/fonts/Silkscreen/`) for titles, the Doodle UI theme, which uses the bundled Comic Neue (`assets/fonts/ComicNeue/`), and the Murk UI theme, which uses the bundled Patrick Hand (`assets/fonts/PatrickHand/`); no remote fonts (browser test checks this).
+- The default PNG kit uses the original bundled Tower Pixel (`assets/fonts/TowerPixel/`, editable matrices in `tools/prepare-pixel-font.py`) for interface text and Classic board annotations, gated independently by UI/Game theme; Defend keeps its existing text. Otherwise all text uses the bundled Cinzel font (`assets/fonts/Cinzel/`), except under the Terminal, Glyph and Ember UI themes, which use the bundled VT323 (`assets/fonts/VT323/`), the Desktop UI theme, which uses the bundled W95FA (`assets/fonts/W95FA/`), and the Yang and Yin UI themes, which use the bundled Cormorant Garamond (`assets/fonts/CormorantGaramond/`), the Shiro and Kuro UI themes, which use the bundled Inter (`assets/fonts/Inter/`), the Arcade UI theme, which uses the bundled VT323 with Press Start 2P (`assets/fonts/PressStart2P/`) for titles, the System UI theme, which uses the bundled Pixelify Sans (`assets/fonts/PixelifySans/`), the Orbit UI theme, which uses the bundled Exo 2 (`assets/fonts/Exo2/`) with Orbitron (`assets/fonts/Orbitron/`) for titles, the Pixel UI theme, which uses the bundled Tiny5 (`assets/fonts/Tiny5/`) with Silkscreen (`assets/fonts/Silkscreen/`) for titles, the Doodle UI theme, which uses the bundled Comic Neue (`assets/fonts/ComicNeue/`), and the Murk UI theme, which uses the bundled Patrick Hand (`assets/fonts/PatrickHand/`); no remote fonts (browser test checks this).
 - Undo has subtle invariants (it can't duplicate rewards; undo cancels queued routes; history persists across refreshes; it never leaves the floor: a snapshot is always of the floor the hero stands on).
   `RunTimeline` (`src/run-timeline.ts`) is the only writer of the history and the fall, and keeps these rules; see `docs/agents/tiers-goals-areas.md`.
   `docs/gameplay/runs.md` is the spec for this player-facing behavior.
@@ -142,13 +143,13 @@ While iterating, run only the tests for the area you touched, then `npm test` on
 |---|---|
 | Tower generation (`src/tower/`) | `tests/tower-*.test.ts tests/world-boards.test.ts tests/decor-plan.test.ts` |
 | Delve labyrinth (`src/delve/labyrinth.ts`, `world.ts`) | `tests/delve.test.ts tests/delve-labyrinth.test.ts tests/delve-nooks.test.ts tests/delve-schedule.test.ts tests/door-runs.test.ts tests/world-boards.test.ts tests/decor-plan.test.ts` |
-| Automove and the hand (`automation.ts`, `delve/automove.ts`, `pathfinding.ts`, `cards.ts`) | `tests/cards.test.ts tests/card-levels.test.ts tests/card-trees.test.ts tests/card-buys.test.ts tests/game-commands.test.ts tests/planners.test.ts tests/tower-automation.test.ts tests/tower-overhaul.test.ts tests/delve-automove.test.ts` (and `CI=1 … tests/delve-ai-tiers.test.ts`) |
+| Automove and the hand (`automation.ts`, `delve/automove.ts`, `pathfinding.ts`, `cards/cards.ts`) | `tests/cards.test.ts tests/card-levels.test.ts tests/card-trees.test.ts tests/card-buys.test.ts tests/game-commands.test.ts tests/planners.test.ts tests/tower-automation.test.ts tests/tower-overhaul.test.ts tests/delve-automove.test.ts` (and `CI=1 … tests/delve-ai-tiers.test.ts`) |
 | Movement, steps, run lifecycle (`state.ts`, `step-effects.ts`, `tower/climb.ts`, `tower/area-ledger.ts`) | `tests/step-*.test.ts tests/undo-clear-trace.test.ts tests/game*.test.ts tests/movement.test.ts tests/doors.test.ts tests/tower-climb.test.ts tests/area-ledger.test.ts tests/fight-playback.test.ts tests/thorns-parry.test.ts` |
-| Economy (`config.ts`, `loadout.ts`, gear, skill trees, `archives.ts`, `modes.ts`) | `tests/archives.test.ts tests/loadout.test.ts tests/progression.test.ts tests/loot.test.ts tests/skill-trees.test.ts tests/modes.test.ts tests/step-trace.test.ts` |
+| Economy (`progression/upgrades.ts`, `progression/training.ts`, `progression/xp.ts`, `economy/kill-pay.ts`, `economy/prices.ts`, `economy/provisions.ts`, `progression/loadout.ts`, gear, skill trees, `progression/archives.ts`, `modes.ts`) | `tests/archives.test.ts tests/loadout.test.ts tests/progression.test.ts tests/loot.test.ts tests/skill-trees.test.ts tests/modes.test.ts tests/step-trace.test.ts` |
 | Goals, Missions and Events (`goals.ts`, `src/missions/`, `src/events/`) | `tests/goals.test.ts tests/missions.test.ts tests/events.test.ts tests/shop.test.ts` |
 | Shrines (`shrines.ts`, `game/shrine-desk.ts`) | `tests/shrines.test.ts tests/goals.test.ts tests/archives.test.ts tests/save.test.ts` |
 | Saves and settings | `tests/save.test.ts tests/settings.test.ts` |
-| Board drawing, camera, lighting, decor art | `tests/render-calls.test.ts tests/camera.test.ts tests/lighting-passes.test.ts tests/art-modules.test.ts tests/terrain-paint.test.ts tests/decor.test.ts tests/themed-boards.test.ts` |
+| Board drawing, camera, lighting, decor art | `tests/render-calls.test.ts tests/camera.test.ts tests/lighting-passes.test.ts tests/art-modules.test.ts tests/decor.test.ts tests/themed-boards.test.ts` |
 | Outside and weather | `tests/outside*.test.ts tests/outdoor-art.test.ts tests/torch-light.test.ts` |
 | Defend (`src/defend/`), on hold | `npm run test:defend` (and `npm run test:pointer`), only when changing Defend |
 

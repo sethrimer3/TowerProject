@@ -4,7 +4,7 @@ import { spawn } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
-import { BADGE_IDS } from "../src/badges.ts";
+import { BADGE_IDS } from "../src/cards/badges.ts";
 const root = fileURLToPath(new URL("../", import.meta.url));
 const out = join(root, "public/assets/style");
 const palette = join(root, "assets/ui-sprites/palette.ppm");

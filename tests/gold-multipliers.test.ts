@@ -1,14 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
 import { RunPurse } from "../src/game/run-purse.ts";
-import { goldMultipliers, goldMultiplierTotal, silverFound } from "../src/gold-multipliers.ts";
+import { goldMultipliers, goldMultiplierTotal, silverFound } from "../src/economy/gold-multipliers.ts";
 import { addItem, equip } from "../src/equipment/inventory.ts";
 import { wornEffects } from "../src/equipment/effects.ts";
 import { snap } from "../src/exact.ts";
 import { THEME_IDS } from "../src/theme-collection.ts";
-import { rowValue } from "../src/loadout.ts";
+import { rowValue } from "../src/progression/loadout.ts";
 import type { Enemy } from "../src/entities.ts";
 import type { TowerRun } from "../src/runs.ts";
 

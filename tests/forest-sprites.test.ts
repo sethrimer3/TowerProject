@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { ForestFoliage, planForest } from "../src/forest-foliage.ts";
+import { ForestFoliage, planForest } from "../src/render/decor/forest-foliage.ts";
 import { OutsideWorld, ENTRANCE_Y, drawEntrance, onPath, roadsOf } from "../src/outside.ts";
-import { FOREST_CANOPIES, FOREST_GROUND, FOREST_LANDMARKS, FOREST_SPRITES, drawForestLandmark } from "../src/sprite-forest.ts";
+import { FOREST_CANOPIES, FOREST_GROUND, FOREST_LANDMARKS, FOREST_SPRITES, drawForestLandmark } from "../src/sprites/forest.ts";
 
 test("forest art has native multi-tile crowns and huge cropped entrance bases", () => {
   const manifest = JSON.parse(readFileSync(new URL("../public/assets/style/manifest.json", import.meta.url), "utf8"));

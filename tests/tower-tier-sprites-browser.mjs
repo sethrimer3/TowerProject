@@ -23,24 +23,24 @@ try {
   await page.route("**/dungeon-tower-2-floor.png", route => release(route));
   await page.goto(server.resolvedUrls.local[0]); await page.locator("#hp").waitFor();
   const paint = () => page.evaluate(async () => {
-    const { drawDungeonGround } = await import("/src/sprite-dungeon.ts");
+    const { drawDungeonGround } = await import("/src/sprites/dungeon.ts");
     const c = document.createElement("canvas").getContext("2d"); c.canvas.width = c.canvas.height = 24;
     return drawDungeonGround(c, { mode: "tower", tier: 2, height: 0, seed: 0, x: 0, y: 0, wall: false, empty: true });
   });
   assert.equal(await paint(), false);
   const route = await requested;
-  await page.waitForFunction(async () => !!(await import("/src/sprite-kit.ts")).kitImage("dungeon-tower-2-walls"));
+  await page.waitForFunction(async () => !!(await import("/src/sprites/kit.ts")).kitImage("dungeon-tower-2-walls"));
   assert.equal(await paint(), false, "floors and walls switch as one complete material group");
   await route.fulfill({ path: resolve("public/assets/style/dungeon-tower-2-floor.png"), contentType: "image/png" });
   await page.unroute("**/dungeon-tower-2-floor.png");
   await page.waitForFunction(async () => {
-    const { drawDungeonGround } = await import("/src/sprite-dungeon.ts");
+    const { drawDungeonGround } = await import("/src/sprites/dungeon.ts");
     const c = document.createElement("canvas").getContext("2d"); c.canvas.width = c.canvas.height = 24;
     return [2, 3].map(tier => drawDungeonGround(c, { mode: "tower", tier, height: 0, seed: 0, x: 0, y: 0, wall: false, empty: true })).every(Boolean);
   });
   const native = await page.evaluate(async () => {
-    const { drawDungeonGround, dungeonFloorSprite, drawDungeonFrame } = await import("/src/sprite-dungeon.ts");
-    const { kitImage } = await import("/src/sprite-kit.ts");
+    const { drawDungeonGround, dungeonFloorSprite, drawDungeonFrame } = await import("/src/sprites/dungeon.ts");
+    const { kitImage } = await import("/src/sprites/kit.ts");
     const c = document.createElement("canvas").getContext("2d"); c.canvas.width = c.canvas.height = 96;
     const read = () => [...c.getImageData(0, 0, 96, 96).data];
     return [2, 3].map(tier => {
@@ -80,9 +80,9 @@ try {
   for (const width of [390, 1100]) for (const tier of [2, 3]) {
     await page.setViewportSize({ width, height: 1000 });
     const result = await page.evaluate(async ({ tier, width }) => {
-      const { towerTierSpriteScene } = await import("/tests/render-scenes.ts"), { Renderer } = await import("/src/rendering.ts");
-      const { loadSpriteFont } = await import("/src/sprite-font.ts"), { THEME_IDS } = await import("/src/theme-collection.ts");
-      const { decode } = await import("/src/save.ts"), { Game } = await import("/src/state.ts");
+      const { towerTierSpriteScene } = await import("/tests/render-scenes.ts"), { Renderer } = await import("/src/render/rendering.ts");
+      const { loadSpriteFont } = await import("/src/sprites/font.ts"), { THEME_IDS } = await import("/src/theme-collection.ts");
+      const { decode } = await import("/src/save/save.ts"), { Game } = await import("/src/state.ts");
       await loadSpriteFont(); const { g } = towerTierSpriteScene(tier); g.save.themes = [...THEME_IDS];
       g.effect = { text: "", x: 0, y: 0, until: 0 }; g.blocked = { x: 0, y: 0, until: 0 };
       const before = JSON.stringify(g.save), size = width < 500 ? 360 : 510;
@@ -105,10 +105,10 @@ try {
       g.save.settings.gameTheme = "neon"; draw(); await settle(); const theme = hash();
       g.run.tier = tier === 2 ? 3 : 2; draw(); const themedOther = hash();
       g.run.tier = tier; g.save.settings.gameTheme = "classic"; draw(); await settle(); const themedBack = hash();
-      g.save.settings.uiSprites = false; draw(); await settle(); const off = hash();
-      g.save.settings.uiSprites = true; draw(); await settle(); const onAgain = hash();
-      g.save.settings.uiSprites = false; draw(); const offAgain = hash();
-      g.save.settings.uiSprites = true; draw();
+      g.save.themes = [...new Set([...g.save.themes, "neonGame"])]; g.save.settings.gameTheme = "neon"; draw(); await settle(); const off = hash();
+      g.save.settings.gameTheme = "classic"; draw(); await settle(); const onAgain = hash();
+      g.save.themes = [...new Set([...g.save.themes, "neonGame"])]; g.save.settings.gameTheme = "neon"; draw(); const offAgain = hash();
+      g.save.settings.gameTheme = "classic"; draw();
       const loaded = new Game(decode(JSON.stringify(g.save)));
       const reloadedTier = new Renderer(document.createElement("canvas"), loaded).look().tier;
       window.Image = RealImage;
@@ -119,13 +119,13 @@ try {
     assert.equal(result.original, result.restored); assert.equal(result.original, result.ui);
     assert.notEqual(result.original, result.theme); assert.equal(result.theme, result.themedOther, "other Game themes override the material identity");
     assert.equal(result.original, result.themedBack); assert.equal(result.original, result.onAgain);
-    assert.equal(result.off, result.offAgain, "sprites off restores exact legacy pixels");
+    assert.equal(result.off, result.offAgain, "returning to the alternate theme restores its exact pixels");
     await page.locator("#tier-board").screenshot({ path: `test-results/tower-tiers/tower-${tier}-${width}.png` });
     await page.locator("#tier-board").evaluate(e => e.remove());
   }
   await page.setViewportSize({ width: 1100, height: 1000 });
   await page.evaluate(async () => {
-    const { kitImage } = await import("/src/sprite-kit.ts");
+    const { kitImage } = await import("/src/sprites/kit.ts");
     const c = document.createElement("canvas").getContext("2d"); c.canvas.id = "tier-art"; c.canvas.width = 1000; c.canvas.height = 600;
     c.canvas.style.cssText = "position:fixed;top:0;left:0;z-index:99999"; c.imageSmoothingEnabled = false;
     c.fillStyle = "#0c1016"; c.fillRect(0, 0, 1000, 600);
@@ -144,15 +144,15 @@ try {
   await failed.route("**/dungeon-tower-3-walls.png", route => route.abort());
   await failed.goto(server.resolvedUrls.local[0]);
   const fallback = await failed.evaluate(async () => {
-    const { drawDungeonGround } = await import("/src/sprite-dungeon.ts"), { paintTile } = await import("/src/tile-painters.ts");
+    const { drawDungeonGround } = await import("/src/sprites/dungeon.ts"), { paintTile } = await import("/src/render/tile-painters.ts");
     const c = document.createElement("canvas").getContext("2d"); c.canvas.width = c.canvas.height = 24;
     const tile = { mode: "tower", tier: 3, height: 0, seed: 0, x: 0, y: 0, wall: true, empty: false };
     const ready = drawDungeonGround(c, tile);
     paintTile(c, { tile: () => ({ kind: "wall" }) }, { kind: "wall" }, 0, 0, 0, 0,
-      { ...tile, outside: false, entranceX: 8, spritesOff: false, styledSprites: true, reduceMotion: true, area1: true, themed: null });
+      { ...tile, outside: false, entranceX: 8, styledSprites: true, reduceMotion: true, themed: null });
     return { ready, opaque: [...c.getImageData(0, 0, 24, 24).data].filter((v, i) => i % 4 === 3 && v === 255).length };
   });
   assert.equal(fallback.ready, false); assert.equal(fallback.opaque, 576); await failed.close();
   assert.deepEqual(errors, []);
-  console.log("Tower II/III literal floor panels, relief, corner footprints, black cores, late/failed loads, phone/desktop scenes, live tier caches, themes, reload and legacy restoration pass.");
+  console.log("Tower II/III literal floor panels, relief, corner footprints, black cores, late/failed loads, phone/desktop scenes, live tier caches, themes, reload and theme restoration pass.");
 } finally { await browser.close(); await server.close(); }

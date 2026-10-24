@@ -1,20 +1,20 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults, load } from "../src/save.ts";
+import { defaults, load } from "../src/save/save.ts";
 import { SAVE_KEY } from "../src/config.ts";
 import {
   MISSION_CAPACITY, MISSION_EVERY_MS, MISSION_GOLD, MISSION_MATERIALS, MISSION_TYPES, MISSIONS,
   WEEKLY_MAX, WEEKLY_REWARDS, weeklyReward, type MissionType,
 } from "../src/missions/catalog.ts";
 import { decodeMissions, defaultMissions, isComplete, missionPeriod, missionWeek, weekEndsAt } from "../src/missions/progress.ts";
-import { enemyFirstFloor } from "../src/enemy-schedule.ts";
+import { enemyFirstFloor } from "../src/enemies/schedule.ts";
 import { keyFirstFloor } from "../src/key-schedule.ts";
 import { DAY_MS } from "../src/shop/clock.ts";
 import { CURRENCIES } from "../src/shop/currency.ts";
-import { trainingPoints } from "../src/loadout.ts";
+import { trainingPoints } from "../src/progression/loadout.ts";
 import type { Enemy, Tile } from "../src/entities.ts";
-import type { Save } from "../src/save-shape.ts";
+import type { Save } from "../src/save/shape.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 
 /** Monday 5 October 2026, 00:00 GMT. */
@@ -65,7 +65,8 @@ test("two missions come at once, then two every 8 hours, up to 8 incomplete", ()
   assert.ok(g.missions.refresh());
   assert.equal(g.missions.list.length, 4);
   // A day away gives three periods' worth, but never more than 8 incomplete.
-  g.save.upgrades.cardBadges = g.save.upgrades.onTheJob = g.save.upgrades.focus = 1;
+  g.save.upgrades.cardBadges = g.save.upgrades.onTheJob = 1;
+  g.save.tower.best = 300;
   g.clock = () => MONDAY + 32 * HOUR;
   g.missions.refresh();
   assert.equal(g.missions.open, MISSION_CAPACITY);
@@ -103,11 +104,15 @@ test("no two incomplete missions share a type, and none asks for what isn't unlo
 
 test("each locked mission is offered once what it needs is unlocked", () => {
   const save = defaults(), offered = (t: MissionType) => MISSIONS[t].offered(save);
-  for (const t of ["strong", "elite", "badge", "runTraining", "blueKeys", "redKeys", "focus"] as const) assert.equal(offered(t), false, t);
+  for (const t of ["strong", "elite", "badge", "runTraining", "blueKeys", "redKeys", "provisions"] as const) assert.equal(offered(t), false, t);
+  // A provision owned, but not the Gold Key, which uses itself.
+  save.provisions.yellowKey = 1;
+  assert.equal(offered("provisions"), false, "a Gold Key uses itself");
+  save.provisions.edge = 1;
+  assert.ok(offered("provisions"));
   save.upgrades.onTheJob = 1;
-  save.upgrades.focus = 1;
   save.upgrades.cardBadges = 1;
-  assert.ok(offered("runTraining") && offered("focus") && offered("badge"));
+  assert.ok(offered("runTraining") && offered("badge"));
   // Enemies and keys: from the floor they first stand on, in any open tower.
   save.tower.best = enemyFirstFloor("strong", 1) - 2;
   assert.equal(offered("strong"), false);
@@ -161,7 +166,7 @@ test("potions and blue and red keys count when picked up; floors as they are cli
   assert.equal(progress(g, "floors"), 1);
 });
 
-test("run training and Focus count only past the most the run has had, so undo can't farm them", () => {
+test("run training counts only past the most the run has had, so undo can't farm them", () => {
   const g = gameAt(MONDAY);
   g.save.upgrades.onTheJob = 1;
   g.save.upgrades.inspirationUndos = 1;
@@ -176,9 +181,21 @@ test("run training and Focus count only past the most the run has had, so undo c
   assert.ok(g.trainInRun("defense"));
   assert.equal(progress(g, "runTraining"), 3);
   // The marks are per run: a new run's purchases count from nothing.
-  g.missions.mark("focus", "tower", 1, 1);
-  g.missions.mark("focus", "tower", 1, 1);
-  assert.equal(g.save.missions.marks["focus:tower:1"], 1);
+  g.missions.mark("runTraining", "tower", 1, 1);
+  g.missions.mark("runTraining", "tower", 1, 1);
+  assert.equal(g.save.missions.marks["runTraining:tower:1"], 1);
+});
+
+test("a provision used in a run completes Use 1 provision, a refusal never", () => {
+  const g = gameAt(MONDAY);
+  g.save.provisions.edge = 1;
+  g.save.provisions.heal = 1;
+  withMissions(g, "provisions");
+  g.run.player.hp = g.run.player.maxHp;
+  assert.equal(g.useProvision("heal"), "full");
+  assert.equal(progress(g, "provisions"), 0, "an elixir refused at full HP counts nothing");
+  assert.equal(g.useProvision("edge"), "used");
+  assert.equal(progress(g, "provisions"), 1);
 });
 
 test("Training ranks and badges drawn count through the desks", () => {
@@ -282,6 +299,6 @@ test("missions save and load, and malformed state is dropped", () => {
 });
 
 test("every mission type is listed with a target", () => {
-  assert.deepEqual(MISSION_TYPES, ["floors", "bosses", "train", "basic", "strong", "elite", "potions", "badge", "runTraining", "blueKeys", "redKeys", "focus"]);
-  assert.deepEqual(MISSION_TYPES.map((t) => MISSIONS[t].target), [10, 3, 1, 50, 30, 10, 20, 1, 10, 10, 5, 2]);
+  assert.deepEqual(MISSION_TYPES, ["floors", "bosses", "train", "basic", "strong", "elite", "potions", "badge", "runTraining", "blueKeys", "redKeys", "provisions"]);
+  assert.deepEqual(MISSION_TYPES.map((t) => MISSIONS[t].target), [10, 3, 1, 50, 30, 10, 20, 1, 10, 10, 5, 1]);
 });

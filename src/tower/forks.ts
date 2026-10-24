@@ -1,5 +1,5 @@
 import type { KeyColor } from "../entities.ts";
-import type { TowerEnemyProfile } from "../scaling.ts";
+import type { TowerEnemyProfile } from "../enemies/scaling.ts";
 import { ARCHETYPES, keyedFloor, pick, type Weighted } from "./patterns.ts";
 import type { GraphBuilder } from "./graph-builder.ts";
 import type { Archetype, Fork, Gate, Lane, LaneStep, Reward, StrategicNode, StrategicTag, Strength } from "./types.ts";

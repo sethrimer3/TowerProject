@@ -2,17 +2,17 @@ import { trainNow } from "./train-now.ts";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { decode, defaults } from "../src/save.ts";
+import { decode, defaults } from "../src/save/save.ts";
 import { random } from "../src/random.ts";
-import { trainingPoints } from "../src/loadout.ts";
-import { xpForLevel } from "../src/config.ts";
+import { trainingPoints } from "../src/progression/loadout.ts";
+import { xpForLevel } from "../src/progression/xp.ts";
 import type { Board } from "../src/board.ts";
 import type { Tile } from "../src/entities.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 import {
   AD_COOLDOWN_MS, AD_GEMS, GEM_COOLDOWN_MS, GEM_MISSED_FLOORS, TRAINING_RESET_GEMS,
   collectedGem, decodeGemDrop, defaultGemDrop, gemSpot, reachFloor,
-} from "../src/gems.ts";
+} from "../src/economy/gems.ts";
 
 const MINUTE = 60 * 1000;
 

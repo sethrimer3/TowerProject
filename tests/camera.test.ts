@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { AHEAD_MARGIN, DEAD_ZONE, EDGE_MARGIN, FollowCamera, GLIDE_SECONDS, LOOK_AHEAD, pointsAhead } from "../src/camera.ts";
+import { AHEAD_MARGIN, DEAD_ZONE, EDGE_MARGIN, FollowCamera, GLIDE_SECONDS, LOOK_AHEAD, pointsAhead } from "../src/render/camera.ts";
 
 const view = { n: 17, width: 30 }, dt = 1 / 60;
 

@@ -18,7 +18,7 @@ try {
   await page.route("**/env-water-deep.png", route => release(route));
   await page.goto(server.resolvedUrls.local[0]); await page.locator("#hp").waitFor();
   await page.evaluate(async () => {
-    const { DecorBaker } = await import("/src/decor-bake.ts");
+    const { DecorBaker } = await import("/src/render/decor/decor-bake.ts");
     const water = new Uint8Array(576);
     for (let y = 1; y < 23; y++) for (let x = 1; x < 23; x++) water[y * 24 + x] = x === 1 || x === 22 || y === 1 || y === 22 ? 2 : 1;
     const d = { water, moss: null, vines: [], flowers: [], plants: [] };
@@ -30,7 +30,7 @@ try {
   });
   const route = await pending;
   await page.waitForFunction(async () => {
-    const { kitImage } = await import("/src/sprite-kit.ts");
+    const { kitImage } = await import("/src/sprites/kit.ts");
     return ["env-water-mid", "env-water-shore", "env-water-bank"].every(id => !!kitImage(id));
   });
   const loading = await page.evaluate(() => {
@@ -39,18 +39,18 @@ try {
   });
   assert.deepEqual(loading.loading, loading.off, "water keeps the complete old look until all four materials load");
   await route.fulfill({ path: resolve("public/assets/style/env-water-deep.png"), contentType: "image/png" });
-  await page.waitForFunction(async () => !!(await import("/src/sprite-kit.ts")).kitImage("env-water-deep"));
+  await page.waitForFunction(async () => !!(await import("/src/sprites/kit.ts")).kitImage("env-water-deep"));
   await page.evaluate(async () => {
-    const { ENVIRONMENT_SPRITES } = await import("/src/sprite-environment.ts");
-    const { kitImage } = await import("/src/sprite-kit.ts"); ENVIRONMENT_SPRITES.forEach(kitImage);
+    const { ENVIRONMENT_SPRITES } = await import("/src/sprites/environment.ts");
+    const { kitImage } = await import("/src/sprites/kit.ts"); ENVIRONMENT_SPRITES.forEach(kitImage);
   });
   await page.waitForFunction(async () => {
-    const { ENVIRONMENT_SPRITES } = await import("/src/sprite-environment.ts"), { kitImage } = await import("/src/sprite-kit.ts");
+    const { ENVIRONMENT_SPRITES } = await import("/src/sprites/environment.ts"), { kitImage } = await import("/src/sprites/kit.ts");
     return ENVIRONMENT_SPRITES.every(id => !!kitImage(id));
   });
   const pixels = await page.evaluate(async () => {
-    const { DecorBaker } = await import("/src/decor-bake.ts");
-    const { environmentPixels, MOSS_SPRITES } = await import("/src/sprite-environment.ts");
+    const { DecorBaker } = await import("/src/render/decor/decor-bake.ts");
+    const { environmentPixels, MOSS_SPRITES } = await import("/src/sprites/environment.ts");
     const { src, d, baker, read, off } = window.__environmentReview;
     const on = read(baker.bake(src, 0, 0, d, true));
     const rgba = (data, x, y) => [...data.slice((y * 24 + x) * 4, (y * 24 + x + 1) * 4)];
@@ -80,8 +80,8 @@ try {
     moss.actual.slice(0, 3).forEach((value, i) => assert.ok(Math.abs(value - moss.expected[i]) <= 2));
   }
   await page.evaluate(async () => {
-    const { ENVIRONMENT_SPRITES, MOSS_SPRITES, WATER_SPRITES } = await import("/src/sprite-environment.ts");
-    const { kitImage } = await import("/src/sprite-kit.ts");
+    const { ENVIRONMENT_SPRITES, MOSS_SPRITES, WATER_SPRITES } = await import("/src/sprites/environment.ts");
+    const { kitImage } = await import("/src/sprites/kit.ts");
     const sheet = document.createElement("canvas"); sheet.id = "environment-art"; sheet.width = 960; sheet.height = 650;
     const c = sheet.getContext("2d"); c.imageSmoothingEnabled = false; c.fillStyle = "#293543"; c.fillRect(0, 0, 960, 650);
     ENVIRONMENT_SPRITES.forEach((id, i) => {
@@ -105,11 +105,11 @@ try {
   for (const width of [390, 1100]) {
     await page.setViewportSize({ width, height: 900 });
     const result = await page.evaluate(async width => {
-      const { environmentSpriteScene } = await import("/tests/render-scenes.ts"), { Renderer } = await import("/src/rendering.ts");
-      const { loadSpriteFont } = await import("/src/sprite-font.ts"), { THEME_IDS } = await import("/src/theme-collection.ts");
+      const { environmentSpriteScene } = await import("/tests/render-scenes.ts"), { Renderer } = await import("/src/render/rendering.ts");
+      const { loadSpriteFont } = await import("/src/sprites/font.ts"), { THEME_IDS } = await import("/src/theme-collection.ts");
       await loadSpriteFont();
       const { g } = environmentSpriteScene(); g.save.themes = [...THEME_IDS];
-      const { DecorLayer } = await import("/src/decor-render.ts");
+      const { DecorLayer } = await import("/src/render/decor/decor-render.ts");
       const layer = new DecorLayer(); layer.planBudget = 1000; layer.sync(g.world, g.run.seed);
       const view = { left: 0, bottom: 0, n: 17, s: 24 };
       const oldLights = layer.glows(view), kitLights = layer.glows(view, true), oldAgain = layer.glows(view);
@@ -132,15 +132,15 @@ try {
         throw Error("environment images never settled");
       };
       const hash = async () => [...new Uint8Array(await crypto.subtle.digest("SHA-256", canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height).data))].join(",");
-      g.save.settings.uiSprites = false; draw(); await settle(); const off = await hash();
-      g.save.settings.uiSprites = true; draw(); await settle(); const on = await hash();
+      g.save.themes = [...new Set([...g.save.themes, "neonGame"])]; g.save.settings.gameTheme = "neon"; draw(); await settle(); const off = await hash();
+      g.save.settings.gameTheme = "classic"; draw(); await settle(); const on = await hash();
       g.save.settings.uiTheme = "neon"; draw(); const uiTheme = await hash();
       g.save.settings.gameTheme = "neon"; draw(); await settle(); const theme = await hash();
       g.save.settings.gameTheme = "classic"; draw(); await settle(); const restored = await hash();
-      g.save.settings.spritesOff = true; draw(); await settle(); const boardOff = await hash();
-      g.save.settings.spritesOff = false; g.save.settings.decorOff = true; draw(); await settle(); const decorOff = await hash();
-      g.save.settings.decorOff = false; g.save.settings.uiSprites = false; draw(); const offAgain = await hash();
-      g.save.settings.uiSprites = true; draw();
+      g.save.settings.gameTheme = "neon"; draw(); await settle(); const boardOff = await hash();
+      g.save.settings.gameTheme = "classic"; g.save.settings.decorOff = true; draw(); await settle(); const decorOff = await hash();
+      g.save.settings.decorOff = false; g.save.themes = [...new Set([...g.save.themes, "neonGame"])]; g.save.settings.gameTheme = "neon"; draw(); const offAgain = await hash();
+      g.save.settings.gameTheme = "classic"; draw();
       window.Image = RealImage;
       return { off, on, uiTheme, theme, restored, boardOff, decorOff, offAgain, oldLights, kitLights, oldAgain };
     }, width);

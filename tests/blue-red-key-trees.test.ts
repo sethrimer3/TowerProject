@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save.ts";
-import { CARD_TREES, treeBonus, type CardTreeLevels } from "../src/card-trees.ts";
+import { defaults } from "../src/save/save.ts";
+import { CARD_TREES, treeBonus, type CardTreeLevels } from "../src/cards/trees.ts";
 import { doorKeyScale } from "../src/doors.ts";
 import { resolveStep, BASE_RULES, type StepEffect } from "../src/step-effects.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";

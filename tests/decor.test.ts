@@ -2,11 +2,11 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { point, type Tile, type Torch } from "../src/entities.ts";
 import type { Board } from "../src/board.ts";
-import { clearDecorCache, decorSourceFor, TILE_PX, tileDecor, waterAt, type DecorSource } from "../src/decor.ts";
-import { DecorLayer } from "../src/decor-render.ts";
-import { OutsideGrass } from "../src/outside-grass.ts";
+import { clearDecorCache, decorSourceFor, TILE_PX, tileDecor, waterAt, type DecorSource } from "../src/render/decor/decor.ts";
+import { DecorLayer } from "../src/render/decor/decor-render.ts";
+import { OutsideGrass } from "../src/render/decor/outside-grass.ts";
 import { OutsideWorld } from "../src/outside.ts";
-import { decode, defaults } from "../src/save.ts";
+import { decode, defaults } from "../src/save/save.ts";
 
 /** A 17x17 room board shaped like a Tower RoomWorld: two chambers split by
  * a wall with a door, pillars, a torch, and a few items. */
@@ -259,7 +259,7 @@ test("the foreground pass is skipped when it has nothing to draw, and busy track
 });
 
 test("the tile cache repaints only when the view leaves it, the key changes, or art is missing", async () => {
-  const { TileLayerCache } = await import("../src/tile-cache.ts");
+  const { TileLayerCache } = await import("../src/render/tile-cache.ts");
   const ctx = new Proxy({}, { get: () => () => {}, set: () => true }) as unknown as CanvasRenderingContext2D;
   const g = globalThis as { document?: unknown };
   const had = g.document;

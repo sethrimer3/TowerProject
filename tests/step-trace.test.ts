@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save.ts";
 import { chooseStep } from "../src/automation.ts";
 import type { DoorRule, Mode, Tile } from "../src/entities.ts";
+import { playedSave } from "./first-skills.ts";
 
 // Characterization trace for stepping rules: seeded runs mix Automove steps,
 // random (sometimes non-forced) moves and route previews, and every step's
@@ -69,7 +69,7 @@ function observe(g: Game, action: unknown, result: unknown, preview: unknown) {
 
 function trace(mode: Mode, seed: number, smartAi: boolean): string[] {
   const rng = mulberry32(seed);
-  const save = defaults();
+  const save = playedSave();
   save.upgrades.delve = 1;
   save.upgrades.inspirationUndos = 1;
   // Five ranks of DEF training (a new hero has none), so runs last long

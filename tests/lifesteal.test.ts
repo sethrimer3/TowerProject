@@ -1,17 +1,18 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import type { Enemy, Player, Tile } from "../src/entities.ts";
 import { bout, heroHpAfter, heroHpDuring, predict, summarize } from "../src/combat.ts";
 import { resolveStep } from "../src/step-effects.ts";
 import { forecast } from "../src/crit-forecast.ts";
-import { loadout, trainingStep } from "../src/loadout.ts";
+import { loadout, trainingStep } from "../src/progression/loadout.ts";
 import { startingHero } from "../src/game/hero-sync.ts";
-import { trainingGold } from "../src/training-jobs.ts";
-import { silverPrice } from "../src/run-training.ts";
-import { TRAINING, UPGRADES, isStatRow, trained } from "../src/config.ts";
-import { TREES } from "../src/skill-trees.ts";
-import { DamagePredictions, HEAL_COLOR } from "../src/damage-labels.ts";
+import { trainingGold } from "../src/progression/training-jobs.ts";
+import { silverPrice } from "../src/progression/run-training.ts";
+import { TRAINING, isStatRow, trained } from "../src/progression/training.ts";
+import { UPGRADES } from "../src/progression/upgrades.ts";
+import { TREES } from "../src/progression/skill-trees.ts";
+import { DamagePredictions, HEAL_COLOR } from "../src/render/effects/damage-labels.ts";
 import { snap } from "../src/exact.ts";
 
 const hero = (over: Partial<Player> = {}): Player => ({ hp: 100, maxHp: 100, attack: 12, defense: 0, keys: { yellow: 0, blue: 0, red: 0 }, ...over }) as Player;
@@ -147,7 +148,7 @@ test("Damage Visual's label follows Lifesteal", () => {
 });
 
 // What rises over the board as the fight plays: the blue heals.
-import { BoardPopups } from "../src/board-popups.ts";
+import { BoardPopups } from "../src/render/board-popups.ts";
 const rising = (popups: BoardPopups) =>
   (popups as unknown as { numbers: { x: number; y: number; text: string; color: string }[] }).numbers.map((n) => `${n.x}:${n.text}:${n.color}`);
 const shownFight = (player: Player, enemy: Enemy, summary: boolean) => {

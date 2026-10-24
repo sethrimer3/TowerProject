@@ -20,8 +20,8 @@ try {
   });
   await page.goto(server.resolvedUrls.local[0]); await page.locator("#hp").waitFor();
   const native = await page.evaluate(async () => {
-    const { kitImage } = await import("/src/sprite-kit.ts"), { HERO_FACINGS, keyShineFrame } = await import("/src/sprite-animations.ts");
-    const { paintContents, paintHero } = await import("/src/tile-painters.ts"), { drawStruckDown } = await import("/src/struck-down.ts");
+    const { kitImage } = await import("/src/sprites/kit.ts"), { HERO_FACINGS, keyShineFrame } = await import("/src/sprites/animations.ts");
+    const { paintContents, paintHero } = await import("/src/render/tile-painters.ts"), { drawStruckDown } = await import("/src/render/effects/struck-down.ts");
     const ids = ["ambient-potion-bubbles", "ambient-key-shine", "ambient-death-skull", ...HERO_FACINGS.flatMap(f => [`hero-${f}`, `ambient-hero-${f}`]), "key-yellow", "key-blue", "key-red", "potion-red", "potion-blue"];
     await new Promise(resolve => { const check = () => ids.map(kitImage).every(Boolean) ? resolve() : requestAnimationFrame(check); check(); });
     const c = document.createElement("canvas").getContext("2d"); c.canvas.width = c.canvas.height = 24;
@@ -39,10 +39,10 @@ try {
     let bubblesInside = true;
     for (let frame = 1; frame < 5; frame++) get("ambient-potion-bubbles", frame).forEach((v, i) => { if (i % 4 === 3 && v && (!red[i] || !blue[i])) bubblesInside = false; });
     let when = 0; while (!keyShineFrame(1, 2, when, 47)) when += 25;
-    const art = { x: 1, y: 2, seed: 47, time: when, spritesOff: false, reduceMotion: false, area1: false, styledSprites: true, spriteAnimations: true };
+    const art = { x: 1, y: 2, seed: 47, time: when, reduceMotion: false, styledSprites: true, spriteAnimations: true };
     const pickup = override => { c.clearRect(0, 0, 24, 24); paintContents(c, { kind: "key", color: "yellow" }, { ...art, ...override }); return c.canvas.toDataURL(); };
     const glint = pickup({}), plain = pickup({ spriteAnimations: false }), reduced = pickup({ reduceMotion: true });
-    const f = { c, n: 1, s: 24, left: 0, bottom: 0, playerX: 0, playerY: -1, look: { styledSprites: true, spritesOff: false, reduceMotion: false, spriteAnimations: true } };
+    const f = { c, n: 1, s: 24, left: 0, bottom: 0, playerX: 0, playerY: -1, look: { styledSprites: true, reduceMotion: false, spriteAnimations: true } };
     const skull = (age, override) => { c.clearRect(0, 0, 24, 24); Object.assign(f.look, override); drawStruckDown(f, age); return c.canvas.toDataURL(); };
     const movingSkulls = [280, 420, 560].map(age => skull(age, { spriteAnimations: true, reduceMotion: false }));
     const staticSkulls = [280, 420, 560].map(age => skull(age, { spriteAnimations: false, reduceMotion: false }));
@@ -67,7 +67,7 @@ try {
   assert.ok(new Set(native.movingSkulls).size > 1); assert.equal(new Set(native.staticSkulls).size, 1); assert.equal(new Set(native.stillSkulls).size, 1);
   await page.locator("#ambient-art").screenshot({ path: "test-results/sprite-animations/native-art.png" }); await page.locator("#ambient-art").evaluate(e => e.remove());
   const caches = await page.evaluate(async () => {
-    const { WaterReflections } = await import("/src/decor-reflections.ts");
+    const { WaterReflections } = await import("/src/render/decor/decor-reflections.ts");
     const c = document.createElement("canvas").getContext("2d"); c.canvas.width = c.canvas.height = 96;
     const pool = { water: new Uint8Array(576).fill(1), waterCount: 576, crates: [] };
     let hero = 0, contents = 0, frame = 0;
@@ -83,8 +83,8 @@ try {
   for (const width of [390, 1100]) {
     await page.setViewportSize({ width, height: 1000 });
     const result = await page.evaluate(async width => {
-      const { dungeonSpriteScene } = await import("/tests/render-scenes.ts"), { Renderer } = await import("/src/rendering.ts");
-      const { loadSpriteFont } = await import("/src/sprite-font.ts"), { THEME_IDS } = await import("/src/theme-collection.ts");
+      const { dungeonSpriteScene } = await import("/tests/render-scenes.ts"), { Renderer } = await import("/src/render/rendering.ts");
+      const { loadSpriteFont } = await import("/src/sprites/font.ts"), { THEME_IDS } = await import("/src/theme-collection.ts");
       await loadSpriteFont(); const { g } = dungeonSpriteScene("tower", { spriteAnimations: false, reduceMotion: false }); g.save.themes = [...THEME_IDS];
       g.effect = { text: "", x: 0, y: 0, until: 0 }; g.blocked = { x: 0, y: 0, until: 0 };
       const canvas = document.createElement("canvas"); canvas.id = "ambient-board"; const size = width < 500 ? 360 : 510;
@@ -101,7 +101,7 @@ try {
       draw(1020); const idle = f.heroIdleFrame;
       g.route = [{ x: g.run.player.x, y: g.run.player.y + 1 }]; draw(); const route = f.heroIdleFrame; g.route = [];
       const gates = [];
-      for (const [key, value] of [["spriteAnimations", false], ["reduceMotion", true], ["uiSprites", false], ["spritesOff", true], ["gameTheme", "neon"]]) {
+      for (const [key, value] of [["spriteAnimations", false], ["reduceMotion", true], ["gameTheme", "neon"]]) {
         const old = g.save.settings[key]; g.save.settings[key] = value; draw(); draw(1100); gates.push(f.heroIdleFrame === 0); g.save.settings[key] = old;
       }
       g.save.settings.uiTheme = "neon"; draw(); draw(1020); const uiThemeIdle = f.heroIdleFrame;
@@ -118,8 +118,8 @@ try {
     await page.locator("#ambient-board").screenshot({ path: `test-results/sprite-animations/tower-${width}.png` }); await page.locator("#ambient-board").evaluate(e => e.remove());
   }
   const death = await page.evaluate(async () => {
-    const { defaults } = await import("/src/save.ts"), { Game } = await import("/src/state.ts"), { Renderer } = await import("/src/rendering.ts");
-    const g = new Game(defaults()); Object.assign(g.save.settings, { uiSprites: true, spriteAnimations: true, reduceMotion: true });
+    const { defaults } = await import("/src/save/save.ts"), { Game } = await import("/src/state.ts"), { Renderer } = await import("/src/render/rendering.ts");
+    const g = new Game(defaults()); Object.assign(g.save.settings, { spriteAnimations: true, reduceMotion: true });
     g.newRun({ seed: 7 }); const p = g.run.player; p.hp = 1; p.attack = 1; p.defense = 0;
     g.run.changes[`${p.x + 1},${p.y}`] = { kind: "enemy", enemy: { name: "Slime", tier: 0, strength: "normal", hp: 100, attack: 100, defense: 0 } };
     g.move(1, 0, true); const at = g.fights.struckDown.at(-1);
@@ -135,12 +135,12 @@ try {
   await page.locator("#death-board").screenshot({ path: "test-results/sprite-animations/death.png" });
   const failed = await browser.newPage(); await fixClock(failed); await failed.route("**/assets/style/ambient-*.png", route => route.abort()); await failed.goto(server.resolvedUrls.local[0]);
   const fallback = await failed.evaluate(async () => {
-    const { kitImage } = await import("/src/sprite-kit.ts"), { paintHero, paintContents } = await import("/src/tile-painters.ts"), { drawStruckDown } = await import("/src/struck-down.ts");
+    const { kitImage } = await import("/src/sprites/kit.ts"), { paintHero, paintContents } = await import("/src/render/tile-painters.ts"), { drawStruckDown } = await import("/src/render/effects/struck-down.ts");
     await new Promise(resolve => { const check = () => ["hero-down", "potion-red"].map(kitImage).every(Boolean) ? resolve() : requestAnimationFrame(check); check(); });
     const c = document.createElement("canvas").getContext("2d"); c.canvas.width = c.canvas.height = 24;
-    const hero = frame => { c.clearRect(0, 0, 24, 24); paintHero(c, false, true, { dx: 0, dy: -1 }, frame); return c.canvas.toDataURL(); };
+    const hero = frame => { c.clearRect(0, 0, 24, 24); paintHero(c, { dx: 0, dy: -1 }, frame); return c.canvas.toDataURL(); };
     const before = hero(0); hero(2);
-    const f = { c, n: 1, s: 24, left: 0, bottom: 0, playerX: 0, playerY: -1, look: { styledSprites: true, spritesOff: false, reduceMotion: true, spriteAnimations: true } };
+    const f = { c, n: 1, s: 24, left: 0, bottom: 0, playerX: 0, playerY: -1, look: { styledSprites: true, reduceMotion: true, spriteAnimations: true } };
     drawStruckDown(f, 280); await new Promise(resolve => setTimeout(resolve, 100)); c.clearRect(0, 0, 24, 24); drawStruckDown(f, 280);
     const skull = [...c.getImageData(0, 0, 24, 24).data].some(Boolean);
     return { hero: before === hero(2), skull };

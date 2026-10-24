@@ -1,6 +1,6 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {defaults,decode} from "../src/save.ts";
+import {defaults,decode} from "../src/save/save.ts";
 import {defaultTrialAccess,decodeTrialAccess,spendTrialKey,trialKeys} from "../src/proving-grounds/access.ts";
 import {beamCells,beamCount,beamDirections,decodeTrial,slimeSpawnInterval,startTrial,trialStep} from "../src/proving-grounds/trial.ts";
 

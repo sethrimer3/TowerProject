@@ -161,7 +161,7 @@ The appended `manualDestination` render frame covers the gold tile-click marker 
 `keymaster-art.ts` supplies native 24-pixel brass/slate boss and chest-mimic silhouettes with upper-left highlights.
 Golden keys and locked doors reuse the current content painters; red doorway pixels follow the elemental transit's staggered curved flight and fading tails, converging into the boss.
 Reduce motion uses fewer particles and straight paths without changing the mechanical delay.
-Sixteen `keymaster` render frames cover staging, actors, drops, doors, red streams, queued spirits, pixel dissolution/trails, ghost/reduced-motion, pursuit, reformation and board-art opt-out.
+Fifteen `keymaster` render frames cover staging, actors, drops, doors, red streams, queued spirits, pixel dissolution/trails, ghost/reduced-motion, pursuit and reformation.
 The Light Elemental and other render jobs remain unchanged.
 `tests/keymaster.test.ts` checks exact drops, combat choices, all cardinal doors, arrival receipts, deterministic spawns, card categories, south-door routing, decoding and independent progression.
 `node tests/keymaster.mjs` checks the real Trial 2 picker, all three controls, actual movement/combat/door damage, reloads, rewards, run isolation and native 320/390/1024-pixel previews.

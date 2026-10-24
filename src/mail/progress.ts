@@ -1,4 +1,4 @@
-import { isRecord } from "../decode.ts";
+import { isRecord } from "../save/decode.ts";
 import { decodeMessage, decodeMessages, isMailId, type MailMessage } from "./message.ts";
 
 // Mail's saved state (`save.mail`): the inbox the server last reported,

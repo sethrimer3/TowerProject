@@ -1,4 +1,4 @@
-import {finite,isRecord,wholeIn} from "../decode.ts";
+import {finite,isRecord,wholeIn} from "../save/decode.ts";
 import {tileRandom} from "../random.ts";
 import {arenaFloor,ARENA_POTIONS,ARENA_SIZE,directions,key,same,type Spot} from "./arena.ts";
 import {difficultyMultiplier} from "./catalog.ts";

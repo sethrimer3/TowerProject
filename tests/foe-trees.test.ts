@@ -1,24 +1,24 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save.ts";
-import { MAX_CARD_XP } from "../src/card-levels.ts";
-import { CARD_TREES, FOE_TREE_CARDS, foeStat, runExtras, treeBonus, type CardTreeLevels } from "../src/card-trees.ts";
-import type { CardId } from "../src/cards.ts";
+import { MAX_CARD_XP } from "../src/cards/levels.ts";
+import { CARD_TREES, FOE_TREE_CARDS, foeStat, runExtras, treeBonus, type CardTreeLevels } from "../src/cards/trees.ts";
+import type { CardId } from "../src/cards/cards.ts";
 import { attackAgainst, bout, critAgainst, facing, heroHpAfter, predict } from "../src/combat.ts";
-import { critRule } from "../src/loadout.ts";
+import { critRule } from "../src/progression/loadout.ts";
 import { volleyTurn, type VolleyTurn } from "../src/volley.ts";
 import { RunPurse } from "../src/game/run-purse.ts";
 import { snap } from "../src/exact.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 import type { Enemy, Player, Tile } from "../src/entities.ts";
+import { playedSave } from "./first-skills.ts";
 
 const hero: Player = { x: 0, y: 0, hp: 100, maxHp: 100, attack: 10, defense: 0, keys: { yellow: 0, blue: 0, red: 0 } };
 const foe = (strength: Enemy["strength"], hp = 50, attack = 1): Enemy => ({ name: "rat", hp, attack, defense: 0, tier: 0, strength });
 
 /** A Tower run on seed 7 whose hand holds `cards`, with `trees` on them. */
 function foeRun(cards: CardId[], trees: CardTreeLevels) {
-  const s = defaults();
+  const s = playedSave();
   for (const card of cards) {
     s.cardXp[card] = MAX_CARD_XP;
     s.cardBuys.opened[card] = Object.fromEntries(CARD_TREES[card]!.map((n) => [n.id, n.max - n.levels]));
@@ -32,7 +32,7 @@ function foeRun(cards: CardId[], trees: CardTreeLevels) {
 /** A purse over a fresh Tower run whose hand is `hand` and card trees
  * `trees`, Equipment open, its finds drawing `roll` every time. */
 function purse(hand: CardId[], trees: CardTreeLevels, roll = 0.5) {
-  const g = new Game(defaults());
+  const g = new Game(playedSave());
   g.save.equipment.unlocked = true;
   g.newRun({ seed: 7 });
   g.run.hand = hand;
@@ -114,7 +114,7 @@ test("an enemy card's DEF, shroud and Lifesteal Overheal hold in fights with its
 });
 
 test("an enemy card's Crit % and Crit x add to ENEMY's percents against its enemies, as one card factor", () => {
-  const s = defaults();
+  const s = playedSave();
   s.upgrades.critical = 1;
   s.training.critChance = 20;
   s.training.critFactor = 8;
@@ -196,7 +196,7 @@ test("WEAK ENEMY's Instakill Vigor boosts max HP for the run with each Instakill
 test("an enemy card's Surprise Attack adds to ENEMY's chance against its enemies", () => {
   /** A corridor: the hero at its west end, a base rat of 20 HP on x = 5, Dash owned with `trees` on the run. */
   const corridor = (trees: CardTreeLevels, strength: Enemy["strength"] = "normal") => {
-    const g = new Game(defaults());
+    const g = new Game(playedSave());
     g.save.upgrades.dash = 1;
     g.save.archives.levels.dash = 10;
     const w = g.world as RoomWorld;
@@ -230,7 +230,7 @@ test("FAST and FLYING ENEMY's trees raise theirs against Fast and Flying enemies
 test("FAST ENEMY's First Strike: a Fast enemy may lose its first strike, so the hero strikes first", () => {
   /** A Tower run with the hero at (0, 0) and a Fast rat it fells in one strike at (1, 0). */
   const facingFast = (trees: CardTreeLevels) => {
-    const g = new Game(defaults());
+    const g = new Game(playedSave());
     const w = g.world as RoomWorld;
     w.cells = new Map([["0,0", { kind: "floor" }], ["1,0", { kind: "enemy", enemy: { ...foe("normal", 10, 5), fast: true } }]]);
     w.torches = [];
@@ -249,7 +249,7 @@ test("FAST ENEMY's First Strike: a Fast enemy may lose its first strike, so the 
 });
 
 test("FLYING ENEMY's and ARCHER's trees raise the arrows: Shot ATK, Attack Speed, the boss bonus, Range and Charge Shot", () => {
-  const s = defaults();
+  const s = playedSave();
   for (const card of ["archer", "flyingEnemy"] as const) s.cardXp[card] = MAX_CARD_XP;
   s.hand = ["archer", "flyingEnemy", ...s.hand].slice(0, s.hand.length);
   s.cardTrees = { archer: { shotAttack: 2, bossShot: 1, chargeShot: 1, shotSpeed: 1, range: 1 }, flyingEnemy: { chargeShot: 1, shotSpeed: 1, range: 1 } };
@@ -263,7 +263,7 @@ test("FLYING ENEMY's and ARCHER's trees raise the arrows: Shot ATK, Attack Speed
 test("the trees' Range lengthens the arrows' reach, and Charge Shot raises Charged Shot's percent, the enemy cards' against theirs", () => {
   const brute: Enemy = { ...foe("normal", 50_000), name: "Brute" };
   const at = (x: number, y: number, enemy = brute) => new Map<string, Tile>([[`${x},${y}`, { kind: "enemy", enemy }]]);
-  const ranks = defaults();
+  const ranks = playedSave();
   ranks.archives.levels.chargedShot = 10;
   const shoot = (tiles: Map<string, Tile>, handShot?: VolleyTurn["handShot"]) => volleyTurn({ board: { tile: (x, y) => tiles.get(`${x},${y}`) ?? { kind: "floor" }, clear: () => {}, wound: () => {} },
     wrap: 0, floorOf: () => 1, hero: { ...hero, attack: 1000 }, seed: 7, volleys: { turn: 1, waited: 2 }, archer: true, ranks, handShot }).shots.filter((s) => s.by === "hero");

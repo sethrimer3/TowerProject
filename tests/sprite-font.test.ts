@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { boardFont, loadSpriteFont, onSpriteFontLoaded, spriteFontRevision } from "../src/sprite-font.ts";
+import { boardFont, loadSpriteFont, onSpriteFontLoaded, spriteFontRevision } from "../src/sprites/font.ts";
 
 test("the custom font is bundled and board text preserves the original look when off", () => {
   const font = readFileSync(new URL("../assets/fonts/TowerPixel/TowerPixel-Regular.woff2", import.meta.url));

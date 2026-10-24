@@ -1,17 +1,19 @@
-import { kitIcon } from "../sprite-kit.ts";
-import { spriteFontRevision } from "../sprite-font.ts";
+import { kitIcon } from "../sprites/kit.ts";
+import { spriteFontRevision } from "../sprites/font.ts";
 import { amountUnit, enemyStat, keyCount, shortAmount, stepsIn, whole, wholeHp } from "../whole.ts";
 import type { Game } from "../state.ts";
-import type { Renderer } from "../rendering.ts";
-import { levelForXp, USED_PROVISIONS, xpForLevel } from "../config.ts";
+import type { Renderer } from "../render/rendering.ts";
+import { levelForXp, xpForLevel } from "../progression/xp.ts";
+import { USED_PROVISIONS } from "../economy/provisions.ts";
+import { provisionsOpen } from "../progression/loadout.ts";
 import { outsideWeather } from "../outside.ts";
 import { tierNumeral, tierRewardText } from "../tiers.ts";
 import { MODES, milestones } from "../modes.ts";
 import { capitalized, cardArt, CURRENCY_SPRITES, displayedProgress, el, POINTER_SVG, text, uiSprite } from "./dom.ts";
 import { notesResearched } from "./run-notes-dialog.ts";
-import { CARDS, IN_PLACE, cardBonusText, cardText, isSiphon, type CardId } from "../cards.ts";
+import { CARDS, IN_PLACE, cardBonusText, cardText, isSiphon, type CardId } from "../cards/cards.ts";
 import { cardLevelHtml, cardLevelTitle } from "./card-level-marks.ts";
-import { badgeDef, badgesOn, badgeValue, type RunBadge } from "../badges.ts";
+import { badgeDef, badgesOn, badgeValue, type RunBadge } from "../cards/badges.ts";
 import { badgeGlyph, badgeStyle } from "./badge-token.ts";
 import { heroClass } from "../goals.ts";
 import { shrinesOpen } from "../shrines.ts";
@@ -21,10 +23,10 @@ import { PlayClock, RateTally } from "./purse-rate.ts";
 import { heldAmount } from "./currencies-dialog.ts";
 import { caveLabel } from "../tournament/leagues.ts";
 import { shortCountdown } from "../tournament/schedule.ts";
-import { GOLD_BOOST_FACTOR, GOLD_BOOST_MS } from "../gold-boost.ts";
+import { GOLD_BOOST_FACTOR, GOLD_BOOST_MS } from "../economy/gold-boost.ts";
 import { adsOff } from "../shop/entitlements.ts";
 import { renderRunMenu } from "./run-menu.ts";
-import { factorText, goldMultipliers, goldMultiplierTotal } from "../gold-multipliers.ts";
+import { factorText, goldMultipliers, goldMultiplierTotal } from "../economy/gold-multipliers.ts";
 import { MISSION_CAPACITY } from "../missions/catalog.ts";
 
 /** The stats cluster, action buttons and status line around the board. */
@@ -166,11 +168,11 @@ export function purseFrame(game: Game, now: number, live = true) {
 }
 
 /** Refreshes every HUD readout from game state. */
-export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay, options: {hand?: readonly CardId[]} = {}) {
+export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay, options: {hand?: readonly CardId[]; manual?: boolean} = {}) {
   overlay.clearIfAt(game.run.player);
   overlay.followHero();
   renderVitals(game);
-  renderFocus(game);
+  renderCharges(game);
   renderProgress(game);
   renderModeActions(game);
   renderCurrencyBar(game);
@@ -179,7 +181,9 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay,
   // The status line sits over the board's bottom row: let the hero show through.
   el("status-row").classList.toggle("see-through", game.run.player.y === renderer.target(renderer.density).bottom);
   renderAutoButton(game);
-  renderHand(game,options.hand);
+  // The Manual tab shows the Manual hand's cards, at their slots past the hand's.
+  if (options.manual && !options.hand) renderHand(game, game.manualHand, game.hand.length);
+  else renderHand(game, options.hand);
   text("density-label", `${renderer.density} × ${renderer.density}`);
   renderUndo(game);
   renderModeTab(game);
@@ -214,7 +218,7 @@ function renderTabs(game: Game) {
   for (const tab of ["deck", "upgrades", "research"] as const)
     document.querySelector(`[data-tab="${tab}"]`)?.classList.toggle("notify", game.notices.waiting(tab));
   renderDeckCount(game);
-  renderLockedTab("gear", !!game.save.upgrades.gear || game.save.equipment.unlocked, "Gear", "Unlock Gear in the Inspiration tree");
+  renderLockedTab("gear", provisionsOpen(game.save) || game.save.equipment.unlocked, "Gear", "Unlock a provision in the Inspiration tree");
   document.querySelector(`[data-tab="gear"]`)?.classList.toggle("notify", game.notices.waiting("gear"));
   renderShopDot(game);
   renderLockedTab("defend", !!game.save.upgrades.legacy, "Defend", "Not yet open");
@@ -433,25 +437,26 @@ function handBadgeHtml(game: Game, id: CardId) {
   if (!badges.length) return "";
   return `<span class="hand-badges" aria-hidden="true">${badges.map((b) => `<span class="hand-badge-level rarity-${badgeDef(b.id).rarity}" style="${badgeStyle(b.id)}">${badgeGlyph(b.id)}</span>`).join("")}</span>`;
 }
-/** The active hand in the row under the board, the card that made the
- * latest step glowing (paused too); End Run lights up while no card can act. */
-function renderHand(game: Game, hand: readonly CardId[] = game.hand) {
+/** The active hand in the row under the board (or the Manual hand, its
+ * slots from `first`), the card that made the latest step glowing (paused
+ * too); End Run lights up while no card can act. */
+function renderHand(game: Game, hand: readonly CardId[] = game.hand, first = 0) {
   const row = el("hand");
   const levels = hand.map((id) => cardLevelHtml(game.save, id));
-  const key = `${hand.join()}|${game.run.outside ? "" : JSON.stringify(game.run.badges ?? {})}|${levels.join()}`;
+  const key = `${first}|${hand.join()}|${game.run.outside ? "" : JSON.stringify(game.run.badges ?? {})}|${levels.join()}`;
   if (key !== shownHand) {
     shownHand = key;
     // Room for five cards; a bigger hand scrolls sideways.
     row.style.setProperty("--slots", String(Math.max(5, hand.length)));
-    row.innerHTML = hand.map((id, i) => `<div class="hand-card" role="listitem" data-card="${id}" data-hand-slot="${i}">${cardArt(id, CARDS[id].name)}${levels[i]}${handBadgeHtml(game, id)}</div>`).join("");
+    row.innerHTML = hand.map((id, i) => `<div class="hand-card" role="listitem" data-card="${id}" data-hand-slot="${first + i}">${cardArt(id, CARDS[id].name)}${levels[i]}${handBadgeHtml(game, id)}</div>`).join("");
     renderHandMore();
   }
   // Paused, the card that made the latest step still glows.
   const glowing = game.handStuck ? null : game.activeCard;
   const focused = game.run.focused ? hand.indexOf(game.run.focused) : -1;
-  row.classList.toggle("can-focus", !!game.save.upgrades.focus);
+  row.classList.toggle("can-focus", !game.run.outside);
   row.querySelectorAll<HTMLElement>(".hand-card").forEach((card, i) => {
-    card.classList.toggle("active", i === glowing);
+    card.classList.toggle("active", first + i === glowing);
     card.classList.toggle("focused", i === focused);
     const title = handCardTitle(game, hand[i]);
     if (card.title !== title) card.title = title;
@@ -639,13 +644,9 @@ function renderShrine(game: Game) {
   bar.setAttribute("aria-label", `Shrine: ${pick}, ${left}`);
 }
 
-/** Focus uses left, once the Focus skill is owned; Ignore, Target, the Bombs and the provisions used at a press likewise. */
-function renderFocus(game: Game) {
+/** Ignore's and Target's uses left, once each skill is owned; the Bombs and the provisions used at a press likewise. */
+function renderCharges(game: Game) {
   renderShrine(game);
-  const stat = el("focus-stat");
-  stat.hidden = !game.save.upgrades.focus;
-  text("focus-left", game.focusLeft);
-  stat.setAttribute("aria-label", `Focus: ${game.focusLeft} left`);
   for (const c of ["ignore", "target", "bomb"] as const) {
     const button = el(`${c}-stat`), left = c === "bomb" ? game.bombsLeft : game.chargesLeft(c), name = { ignore: "Ignore", target: "Target", bomb: "Bombs" }[c];
     button.hidden = c === "bomb" ? !game.save.provisions.bomb : !game.save.upgrades[c];
@@ -658,7 +659,7 @@ function renderFocus(game: Game) {
   // lit in its stat's colour, with the turns it has left.
   for (const id of USED_PROVISIONS) {
     const button = el(`${id}-stat`), left = game.provisionsLeft(id), boost = game.boostOf(id);
-    const name = { heal: "Traveler's elixir", edge: "Whetstone", guard: "Aegis charm" }[id];
+    const name = { heal: "Traveler's elixir", edge: "Vanguard Banner", guard: "Aegis charm" }[id];
     button.hidden = !game.save.provisions[id];
     button.classList.toggle("boosting", !!boost);
     text(`${id}-left`, left);

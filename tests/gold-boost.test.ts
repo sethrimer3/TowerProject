@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { decode, defaults } from "../src/save.ts";
-import { GOLD_BOOST_MAX_MS, GOLD_BOOST_MS, claimGoldBoost, goldBoostFactor, goldBoostLeft } from "../src/gold-boost.ts";
+import { decode, defaults } from "../src/save/save.ts";
+import { GOLD_BOOST_MAX_MS, GOLD_BOOST_MS, claimGoldBoost, goldBoostFactor, goldBoostLeft } from "../src/economy/gold-boost.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 
 const MIN = 60_000;
@@ -92,7 +92,7 @@ test("Ad-Disable clears the Gold ad's stored time and takes no more", () => {
   g.clock = () => now;
   assert.ok(g.gemFinder.claimGoldAd());
   assert.equal(g.gemFinder.goldBoostLeft, GOLD_BOOST_MS);
-  assert.equal(g.buyOffer("adFree", now, true), null);
+  assert.equal(g.shop.buy("adFree", now, true), null);
   assert.equal(g.gemFinder.goldBoostLeft, 0, "the countdown is gone");
   assert.equal(g.gemFinder.goldAdReady, false);
   assert.equal(g.gemFinder.claimGoldAd(), false, "no Gold ad to claim");

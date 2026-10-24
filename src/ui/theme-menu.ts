@@ -1,6 +1,6 @@
 import { controlIcon } from "./control-icon.ts";
 import { CLASSIC_NAME, THEME_GOLD_TEXT, THEME_PRICE, THEMES, canBuyTheme, canWear, gameLook, themeGoldFactor, themesOf, uiLook, type ThemeId, type ThemeKind } from "../theme-collection.ts";
-import { factorText } from "../gold-multipliers.ts";
+import { factorText } from "../economy/gold-multipliers.ts";
 import type { Toast } from "./research-toast.ts";
 import type { PageGame } from "./app.ts";
 import { CURRENCIES, type CurrencyId } from "../shop/currency.ts";
@@ -61,12 +61,12 @@ export function renderThemeMenu(root: HTMLElement, game: PageGame, kind: ThemeKi
   el("themes-back").onclick = back;
   root.querySelectorAll<HTMLButtonElement>(".theme-wear").forEach((b) => {
     b.onclick = () => {
-      if (game.wearTheme(kind, b.dataset.look!)) changed();
+      if (game.themes.wear(kind, b.dataset.look!)) changed();
     };
   });
   root.querySelectorAll<HTMLButtonElement>(".theme-buy").forEach((b) => {
     b.onclick = () => {
-      if (game.buyTheme(b.dataset.id as ThemeId)) changed();
+      if (game.themes.buy(b.dataset.id as ThemeId)) changed();
     };
   });
 }

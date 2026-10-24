@@ -1,5 +1,5 @@
 import type { KeyColor } from "./entities.ts";
-import { isRecord } from "./decode.ts";
+import { isRecord } from "./save/decode.ts";
 import { snap } from "./exact.ts";
 
 // Run Notes: the trivia a run keeps for the Note Taking research's dialog

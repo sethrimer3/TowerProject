@@ -173,7 +173,7 @@ A score that couldn't be sent is kept (`save.tournament.pending`) and sent when 
 
 ## Save
 
-`save.tournament` (in `defaults()`, the `Save` type and `decodeTournament`, read through `src/decode.ts`'s readers):
+`save.tournament` (in `defaults()`, the `Save` type and `decodeTournament`, read through `src/save/decode.ts`'s readers):
 
 | Field | Holds |
 |---|---|
@@ -203,7 +203,7 @@ The confirmed server time is the Shop's (`save.shop`'s clock), shared, so there'
 | `src/game/tournament-desk.ts` | `TournamentDesk` (the game's `tournament`): grant, buy and spend Tickets, begin a run, submit, refresh standing, claim |
 | `src/state.ts` | `atTournamentHall`; `newRun` taking `tier` and `tournament`; the run's seeded streams; `finalizeRun` submitting the score |
 | `src/tiers.ts` / `src/delve/world.ts` | the step between caves; the tournament stats on the run's cells |
-| `src/outside.ts`, `src/rendering.ts` | the hall's tiles, yard and art |
+| `src/outside.ts`, `src/render/rendering.ts` | the hall's tiles, yard and art |
 | `src/ui/tournament-page.ts` | the page and the All prizes dialog |
 | `src/ui/hud.ts`, `ui/shell.ts`, `ui/run-menu.ts` | the button in the forest and in the run menu |
 | `src/ui/dialogs.ts` | the run end dialog's Tournament block |

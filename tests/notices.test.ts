@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
-import { xpForLevel } from "../src/config.ts";
+import { xpForLevel } from "../src/progression/xp.ts";
 
 /** A game in the forest, its Deck lessons done. */
 function forest() {
@@ -22,10 +22,10 @@ test("the first Inspiration puts a dot on the Upgrades tab until the page is sho
   assert.equal(g.notices.shown("upgrades"), false, "nothing new the second time");
 });
 
-test("the Gear skill dots the Gear tab until shown, and Equipment opened dots it until that tab shows", () => {
+test("a first provision opened dots the Gear tab until shown, and Equipment opened dots it until that tab shows", () => {
   const g = forest();
-  assert.equal(g.notices.shown("gear"), false, "nothing to see before the skill");
-  g.save.upgrades.gear = 1;
+  assert.equal(g.notices.shown("gear"), false, "nothing to see before a provision opens");
+  g.save.upgrades.whetstoneProvision = 1;
   assert.equal(g.notices.waiting("gear"), true);
   g.notices.shown("gear");
   assert.equal(g.notices.waiting("gear"), false);
@@ -35,6 +35,18 @@ test("the Gear skill dots the Gear tab until shown, and Equipment opened dots it
   assert.ok(g.notices.waiting("gear"), "opening the page on Provisions leaves Equipment unseen");
   assert.equal(g.notices.shown("equipment"), true);
   assert.ok(!g.notices.waiting("gear") && !g.notices.waiting("equipment"));
+});
+
+test("a first provision opened shows the provisions lesson in the forest, its hand on the Gear tab, until the Gear tab is pressed", () => {
+  const g = forest();
+  Object.assign(g.save.tutorials, { enter: true, delve: true, cardPoints: true });
+  assert.equal(g.provisionsLesson, false, "none open");
+  g.save.upgrades.elixirProvision = 1;
+  assert.ok(g.provisionsLesson);
+  assert.equal(g.boardLesson, "provisions");
+  g.notices.shown("gear");
+  assert.equal(g.provisionsLesson, false);
+  assert.equal(g.boardLesson, null);
 });
 
 test("a level-up with points to spend dots the run's Research button and hamburger until the page shows, and the next brings it back", () => {
@@ -86,4 +98,20 @@ test("showing a tree clears its dot and records it seen", () => {
   assert.equal(g.save.treeNotices.inspiration, false);
   assert.ok(!g.notices.waiting("inspiration") && !g.notices.waiting("upgrades"));
   assert.equal(g.notices.shown("inspiration"), false);
+});
+
+test("the first training points to spend lead to the Research tab in the forest, until it is opened", () => {
+  const g = forest();
+  assert.notEqual(g.boardLesson, "trainingPoints");
+  g.notices.shown("research");
+  assert.equal(g.save.tutorials.training, false, "opening Research with no points to spend leaves the lesson waiting");
+  g.save.xp = xpForLevel(1);
+  assert.equal(g.boardLesson, "trainingPoints");
+  g.newRun({ seed: 1 });
+  assert.notEqual(g.boardLesson, "trainingPoints", "the forest's alone");
+  g.newRun({ outside: true, seed: 1 });
+  assert.equal(g.boardLesson, "trainingPoints");
+  g.notices.shown("research");
+  assert.ok(g.save.tutorials.training);
+  assert.notEqual(g.boardLesson, "trainingPoints", "done for good");
 });

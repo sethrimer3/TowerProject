@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { drawDungeonGround, towerFloorFrame, towerTierAtlasId, towerTileset, dungeonWallVariant } from "../src/sprite-dungeon.ts";
-import { paintTile, type BoardLook } from "../src/tile-painters.ts";
+import { drawDungeonGround, towerFloorFrame, towerTierAtlasId, towerTileset, dungeonWallVariant } from "../src/sprites/dungeon.ts";
+import { paintTile, type BoardLook } from "../src/render/tile-painters.ts";
 
 test("Tower II and III each ship a distinct native floor panel and connected wall atlas", () => {
   for (const part of ["floor", "walls"] as const) {
@@ -28,7 +28,7 @@ test("fixed Tower materials ignore ten-floor biome changes and cover floor under
     const world = { tile: () => ({ kind: "floor" as const }) };
     for (const tier of [2, 3] as const) for (const height of [0, 9, 10, 29, 90, 100, 1234]) {
       const look: BoardLook = { mode: "tower", tier, height, seed: 1103, outside: false, entranceX: 8,
-        spritesOff: false, styledSprites: true, reduceMotion: true, area1: height < 10, themed: null };
+        styledSprites: true, reduceMotion: true, themed: null };
       for (const tile of [{ kind: "floor" }, { kind: "door", color: "blue" }, { kind: "attack" }] as const) {
         draws.length = 0; paintTile(c, world, tile, -3, 5, 0, 0, look);
         const frame = towerFloorFrame(-3, 5, look.seed);
@@ -41,10 +41,7 @@ test("fixed Tower materials ignore ten-floor biome changes and cover floor under
         const frame = 4 + dungeonWallVariant(2, 5, 1103) * 16 + mask;
         assert.deepEqual(draws[0], [`dungeon-tower-${tier}-walls.png`, frame % 4 * 24, Math.floor(frame / 4) * 24, 24, 24, 0, 0, 24, 24]);
       }
-      for (const override of [{ styledSprites: false }, { spritesOff: true }]) {
-        draws.length = 0; paintTile(c, world, { kind: "floor" }, -3, 5, 0, 0, { ...look, ...override });
-        assert.ok(draws.every(d => !String(d[0]).startsWith("dungeon-tower-")), "legacy art gates exclude the new sets");
-      }
+
     }
   } finally {
     if (original) Object.defineProperty(globalThis, "Image", original); else Reflect.deleteProperty(globalThis, "Image");

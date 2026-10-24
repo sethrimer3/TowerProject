@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS, DUNGEON_BLEND_ATLAS, DUNGEON_INFILL_ATLAS, DUNGEON_CORNER_FRAME, drawDungeonGround, dungeonAtlasId, dungeonDiagonals, dungeonFloorFrame, dungeonMaterial, dungeonMaterialJoins, dungeonWallVariant } from "../src/sprite-dungeon.ts";
-import { dungeonWallBands, dungeonWallDepth, dungeonWallProfile } from "../src/wall-depth.ts";
-import { paintTile, type BoardLook } from "../src/tile-painters.ts";
-import { WaterReflections, type ReflectionScene } from "../src/decor-reflections.ts";
-import type { TileDecor } from "../src/decor.ts";
-import { towerFloorAtlasId, towerFloorFrame } from "../src/sprite-dungeon.ts";
+import { DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS, DUNGEON_BLEND_ATLAS, DUNGEON_INFILL_ATLAS, DUNGEON_CORNER_FRAME, drawDungeonGround, dungeonAtlasId, dungeonDiagonals, dungeonFloorFrame, dungeonMaterial, dungeonMaterialJoins, dungeonWallVariant } from "../src/sprites/dungeon.ts";
+import { dungeonWallBands, dungeonWallDepth, dungeonWallProfile } from "../src/render/wall-depth.ts";
+import { paintTile, type BoardLook } from "../src/render/tile-painters.ts";
+import { WaterReflections, type ReflectionScene } from "../src/render/decor/decor-reflections.ts";
+import type { TileDecor } from "../src/render/decor/decor.ts";
+import { towerFloorAtlasId, towerFloorFrame } from "../src/sprites/dungeon.ts";
 
 test("Tower paving crosses positive and negative tile boundaries in screen order without rotating its light", () => {
   for (let tone = 0; tone < 10; tone++) {
@@ -106,7 +106,7 @@ test("all wall connections, material floors and live tile contents use the corre
     }
     const world = { tile: () => ({ kind: "floor" as const }) };
     const look: BoardLook = { mode: "delve", height: 0, seed: 1107, outside: false, entranceX: 8,
-      styledSprites: true, spritesOff: false, reduceMotion: true, area1: false, themed: null };
+      styledSprites: true, reduceMotion: true, themed: null };
     const materialSeen = new Set<string>();
     for (let x = 0; x < 20; x++) for (const tile of [{ kind: "floor" }, { kind: "attack" }, { kind: "door", color: "blue" }] as const) {
       draws.length = 0;

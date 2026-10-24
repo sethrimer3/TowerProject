@@ -37,7 +37,8 @@ Settings can turn off each kind of these rising gains: item pickups, what doors 
 
 ## The first floors
 
-The first floor's stairs can always be reached without a fight, so the starting hand's Stairs card climbs straight to floor 2 (and its Inspiration); floors 2 to 5 always have a gold door in front of the stairs, a gold key lying free near the entrance, and a key behind every door, so the starting hand can open its way up.
+The first floor's stairs can always be reached without a fight, so the starting hand's one card, Stairs, climbs straight to floor 2 (and its Inspiration); floors 2 to 5 always have a gold door in front of the stairs, a gold key lying free near the entrance, and a key behind every door, so a hand with Door & Key's cards can open its way up.
+In Tower I, floor 1 always has a gold key and a door it opens within reach of the entrance without a fight, and floor 2 always has a way to the stairs without a fight: any enemy that would block every way stands as a Wooden Door instead, with a gold key just past it.
 On Tower I's first ten floors, about a third of the doorways on the way to the stairs hold a health potion where a monster would have stood.
 No monster on floors 1 to 10 can beat a new hero (100 HP, 12 ATK) in a single fight, but the floor 10 boss can.
 Strong monsters appear only from floor 11 and elites (from the next zone) only from floor 41, and in the Delve Heart Doors only past equivalent floor 100 in the first cave (from 31 in later ones); the Delve counts its equivalent floors the same way.

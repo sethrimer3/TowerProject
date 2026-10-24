@@ -1,6 +1,7 @@
 import { ProvingGroundsDialog } from "./ui/proving-grounds-dialog.ts";
-import { USED_PROVISIONS, type UpgradeId } from "./config.ts";
-import type { TreeId } from "./skill-trees.ts";
+import { USED_PROVISIONS } from "./economy/provisions.ts";
+import type { UpgradeId } from "./progression/upgrades.ts";
+import type { TreeId } from "./progression/skill-trees.ts";
 import "./style.css";
 import "./medieval.css";
 import "./neon.css";
@@ -17,18 +18,17 @@ import "./pixel.css";
 import "./doodle.css";
 import "./murk.css";
 import "./ui-sprites.css";
-import { bindSpriteImages, drawKit, onSpritesLoaded } from "./sprite-kit.ts";
-import { usesGameSprites } from "./sprite-style.ts";
-import { onSpriteFontLoaded } from "./sprite-font.ts";
+import { drawKit, onSpritesLoaded } from "./sprites/kit.ts";
+import { usesGameSprites } from "./sprites/style.ts";
+import { onSpriteFontLoaded } from "./sprites/font.ts";
 import { gameLook } from "./theme-collection.ts";
-import { themedBoardOf } from "./themed-boards.ts";
-import { load, persist } from "./save.ts";
-import { stampProfile } from "./profile.ts";
+import { themedBoardOf } from "./render/boards/themed-boards.ts";
+import { load, persist } from "./save/save.ts";
+import { stampProfile } from "./save/profile.ts";
 import { Game } from "./state.ts";
-import { Renderer } from "./rendering.ts";
+import { Renderer } from "./render/rendering.ts";
 import { bindInput } from "./input.ts";
 import { DefendPage } from "./defend/ui.ts";
-import { drawGameSprite } from "./game-sprites.ts";
 import { FrameLoop } from "./frame-loop.ts";
 import { installDebugHooks } from "./debug-hooks.ts";
 import { isBoard, type AppContext, type Tab } from "./ui/app.ts";
@@ -75,7 +75,6 @@ import { themeToast } from "./ui/theme-menu.ts";
 // Wires the pages together: builds the shell, creates the game and renderer,
 // and routes navigation, HUD refreshes and input between the ui/ modules.
 
-bindSpriteImages();
 buildShell(document.querySelector<HTMLDivElement>("#app")!);
 const game = new Game(load());
 // A new profile (or one from before profiles kept the date) is made now.
@@ -97,10 +96,7 @@ function renderPortrait() {
     portraitCtx.restore();
     return;
   }
-  if (usesGameSprites(game.save) && drawKit(portraitCtx, "hero-down")) return;
-  if (game.save.settings.spritesOff || !drawGameSprite(portraitCtx, "player")) {
-    Renderer.drawHero(portraitCtx);
-  }
+  drawKit(portraitCtx, "hero-down");
 }
 renderPortrait();
 onSpritesLoaded(renderPortrait);
@@ -203,13 +199,13 @@ function update() {
   document.querySelectorAll<HTMLButtonElement>("[data-tab]").forEach((b) => (b.disabled = deckOnly && b.dataset.tab !== "deck"));
   const forestHeld = !provingGrounds.active && isBoard(tab) && game.boardLesson === "cards";
   document.querySelectorAll<HTMLElement>(".shell > :not(nav)").forEach((part) => (part.inert = forestHeld));
-  renderHud(shown, renderer, overlay, {hand:provingGrounds.displayHand});
+  renderHud(shown, renderer, overlay, {hand:provingGrounds.displayHand, manual: runTraining.manualOpen});
   if (runNotes.open) runNotes.refresh();
   refreshEnemyOddsBox(game);
   runTraining.render();
-  if(!provingGrounds.active)renderBoardLesson(game, isBoard(tab), update);
+  if(!provingGrounds.active)renderBoardLesson(game, isBoard(tab), update, tab === "upgrades");
   provingGrounds.decorate();
-  const themes = game.claimThemes();
+  const themes = game.themes.claim();
   // A theme Dev mode grants while its look was chosen shows at once.
   if (themes.length) applyUiTheme(game.save);
   const finished = [...game.research.done.splice(0).map(researchToast), ...game.training.done.splice(0).map(trainingToast), ...themes.map(themeToast)];
@@ -247,8 +243,6 @@ function renderPage() {
 function unlockTarget(id: string): string {
   const lock = LOCKED_TABS.get(id);
   if (!lock || game.save.upgrades[lock.skill]) return id;
-  // Equipment opens the Gear page too, Gear skill or not.
-  if (id === "gear" && game.save.equipment.unlocked) return id;
   skillTree.focus(lock.tree, lock.skill);
   return "upgrades";
 }
@@ -256,7 +250,6 @@ function unlockTarget(id: string): string {
  * page on that skill instead. */
 const LOCKED_TABS = new Map<string, { skill: UpgradeId; tree: TreeId }>([
   ["deck", { skill: "combatStance", tree: "inspiration" }],
-  ["gear", { skill: "gear", tree: "inspiration" }],
   ["defend", { skill: "legacy", tree: "courage" }],
 ]);
 /** The pages topped by the currencies bar. */
@@ -328,13 +321,14 @@ function showPage(id: Tab) {
   });
 }
 
-// Focus: pressing a hand card inside a run puts it ahead of the others.
+// Pressing a hand card inside a run sends the hero to its target, ahead
+// of the others; a card that can't reach one, or a press while an earlier
+// one still heads for its target, flashes red.
 el("hand").onclick = (e) => {
   const card = (e.target as HTMLElement).closest<HTMLElement>(".hand-card");
-  if (provingGrounds.active || !card || !game.save.upgrades.focus) return;
+  if (provingGrounds.active || !card || game.run.outside) return;
   const result = game.focus(Number(card.dataset.handSlot));
-  if (result === "spent") flashRed(el("focus-stat"));
-  if (result === "noPath") flashRed(card);
+  if (result === "noPath" || result === "busy") flashRed(card);
   update();
 };
 // With no scrollbar shown, a mouse wheel scrolls a hand wider than the screen sideways.
@@ -429,10 +423,10 @@ document.querySelector(".height")!.addEventListener("click", (e) => {
 el("end-run").onclick = () => {
   closeRunMenu();
   if(provingGrounds.active)provingGrounds.leave();
-  else runEnd.ask();
+  else {game.endRunPressed();runEnd.ask();}
 };
 // Shown at the foot of the height column while no card can act.
-el("stuck-end-run").onclick = () => {if(provingGrounds.active)provingGrounds.leave();else runEnd.ask();};
+el("stuck-end-run").onclick = () => {if(provingGrounds.active)provingGrounds.leave();else {game.endRunPressed();runEnd.ask();}};
 // Inside a run, the hamburger opens and closes the menu over the stats.
 el("run-menu-toggle").onclick = () => toggleRunMenu(game.save.settings.reduceMotion);
 modal.addEventListener("cancel", (e) => {
@@ -663,7 +657,12 @@ renderBoardHeading(game, overlay);
 game.missions.refresh();
 game.events.refresh();
 update();
-loop.start();
-// The live tournament: its free Ticket, and any score still to send.
-void refreshTournament();
-void refreshMail();
+/** Start gameplay only after bootstrap has decoded artwork and revealed the UI. */
+export function startGame() {
+  renderVitals(game);
+  renderHandMore();
+  renderer.draw(performance.now());
+  loop.start();
+  void refreshTournament();
+  void refreshMail();
+}

@@ -1,12 +1,12 @@
 import { controlIcon } from "./control-icon.ts";
-import { kitIcon } from "../sprite-kit.ts";
-import { researched } from "../archives.ts";
+import { kitIcon } from "../sprites/kit.ts";
+import { researched } from "../progression/archives.ts";
 import { KEY_NAMES } from "../doors.ts";
 import type { Mode } from "../entities.ts";
 import type { Run } from "../runs.ts";
-import type { Save } from "../save-shape.ts";
+import type { Save } from "../save/shape.ts";
 import { EQUIP_MATERIALS, type EquipMaterialId } from "../equipment/catalog.ts";
-import { materialDef, type MaterialId } from "../materials.ts";
+import { materialDef, type MaterialId } from "../economy/materials.ts";
 import { MODES } from "../modes.ts";
 import { defaultFinds, newNotes } from "../run-notes.ts";
 import { keyCount, whole } from "../whole.ts";

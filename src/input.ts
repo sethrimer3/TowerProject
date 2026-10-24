@@ -1,5 +1,5 @@
 import type { Game } from "./state.ts";
-import type { Renderer } from "./rendering.ts";
+import type { Renderer } from "./render/rendering.ts";
 import { PinchTracker } from "./ui/cinematic.ts";
 
 /** Cinematic mode as the board's input sees it: a pinch (or Ctrl and the

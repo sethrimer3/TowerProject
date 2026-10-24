@@ -1,8 +1,9 @@
-import { kitIcon } from "../sprite-kit.ts";
-import { CARDS } from "../cards.ts";
-import type { CardId } from "../cards.ts";
-import { LIMIT_BREAKS, type UpgradeId } from "../config.ts";
-import { AREA1_ITEM_URLS } from "../area1-tileset.ts";
+import { ITEM_KIT } from "../sprites/items.ts";
+import { kitIcon, pngIcon } from "../sprites/kit.ts";
+import { CARDS } from "../cards/cards.ts";
+import type { CardId } from "../cards/cards.ts";
+import { LIMIT_BREAKS } from "../progression/training.ts";
+import type { UpgradeId } from "../progression/upgrades.ts";
 
 /** Small DOM, number and sprite helpers shared by every page. */
 
@@ -22,14 +23,12 @@ export const capitalized = (word: string) => word[0].toUpperCase() + word.slice(
 
 export type UiSprite = "tower" | "delve" | "defend" | "gear" | "upgrades" | "settings" | "health" | "attack" | "defense" | "undo" | "automove" | "revive" | "log" | "arrow-up" | "arrow-down" | "arrow-left" | "arrow-right" | "gold";
 export const UI_ASSET_BASE = (import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? "/";
-/** A card's face, from public/assets/cards/. */
+/** A framed native card face with a live name. */
 export const cardArt = (id: CardId, alt: string) =>
-  kitIcon(`card-${id}`, `<img class="card-art" src="${UI_ASSET_BASE}assets/cards/${id}.png" alt="${alt}">`, "card-art sprite-card") + `<small class="sprite-card-label">${CARDS[id].name}</small>`;
-const UI_KIT: Partial<Record<UiSprite, string>> = { tower: "tower", delve: "cave", defend: "keep", gear: "helmet", upgrades: "shard", settings: "cog", health: "heart", attack: "sword", defense: "shield", undo: "undo", automove: "boots", revive: "ui-revive", log: "book", gold: "gold", "arrow-up": "arrow-up", "arrow-down": "arrow-down", "arrow-left": "arrow-left", "arrow-right": "arrow-right" };
-export const uiSprite = (name: UiSprite, className = "ui-sprite") => {
-  const original = `<img class="${className}" src="${UI_ASSET_BASE}assets/ui/${name}.png" alt="" aria-hidden="true">`;
-  return UI_KIT[name] ? kitIcon(name === "gold" && className.includes("silver-sprite") ? "silver" : UI_KIT[name]!, original, className) : original;
-};
+  pngIcon(`card-${id}`, "card-art sprite-card", alt) + `<small class="sprite-card-label">${CARDS[id].name}</small>`;
+const UI_KIT: Record<UiSprite, string> = { tower: "tower", delve: "cave", defend: "keep", gear: "helmet", upgrades: "shard", settings: "cog", health: "heart", attack: "sword", defense: "shield", undo: "undo", automove: "boots", revive: "ui-revive", log: "book", gold: "gold", "arrow-up": "arrow-up", "arrow-down": "arrow-down", "arrow-left": "arrow-left", "arrow-right": "arrow-right" };
+export const uiSprite = (name: UiSprite, className = "ui-sprite") =>
+  pngIcon(name === "gold" && className.includes("silver-sprite") ? "silver" : UI_KIT[name], className);
 /** A golden arrow pointing up: training points, earned each level. */
 export const pointsIcon = (className = "points-icon") =>
   kitIcon("arrow-up", `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3L21 13h-5.5v8h-7v-8H3z" fill="#ffc94a" stroke="#5a3200" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 6L17.5 12" stroke="#fff3b8" stroke-width="1.2" stroke-linecap="round"/></svg>`, className);
@@ -96,21 +95,22 @@ export const giftIcon = (className = "gift-icon") =>
 export const escapeHtml = (text: string) =>
   text.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 export const gemCount = (n: number) => `${n} ${n === 1 ? "Gem" : "Gems"}`;
-const ITEM_KIT: Record<keyof typeof AREA1_ITEM_URLS, string> = { key_yellow: "key-yellow", key_blue: "key-blue", key_red: "key-red", potion_flat: "potion-red", potion_percent: "potion-blue", upgrade_attack: "sword", upgrade_defense: "shield", chest_treasure: "chest-wood", chest_silver: "chest-silver", chest_gold: "chest-gold", chest_treasure_open: "chest-open", chest_silver_open: "chest-open", chest_gold_open: "chest-open" };
-export const itemSprite = (name: keyof typeof AREA1_ITEM_URLS, className = "ui-sprite") =>
-  kitIcon(ITEM_KIT[name], `<img class="${className}" src="${AREA1_ITEM_URLS[name]}" alt="" aria-hidden="true">`, className);
+
+export const itemSprite = (name: keyof typeof ITEM_KIT, className = "ui-sprite") =>
+  pngIcon(ITEM_KIT[name], className);
 
 /** Each mode's currency icon, as the currencies row shows it: Inspiration
  * the Upgrades sprite, Courage the Automove one. */
 export const CURRENCY_SPRITES = { tower: "upgrades", delve: "automove" } as const;
 
-const SKILL_ITEM_SPRITES: Partial<Record<UpgradeId, keyof typeof AREA1_ITEM_URLS>> = {
+const SKILL_ITEM_SPRITES: Partial<Record<UpgradeId, keyof typeof ITEM_KIT>> = {
   yellow: "key_yellow", blue: "key_blue", red: "key_red", extraKey: "key_yellow", findYellowKey: "key_yellow", keyEfficiency: "key_yellow",
   greaterHeal: "potion_flat", regen: "potion_flat", regenResearch: "potion_flat", recovery: "potion_percent",
+  elixirProvision: "potion_flat", whetstoneProvision: "upgrade_attack", aegisProvision: "upgrade_defense",
 };
 const SKILL_UI_SPRITES: Partial<Record<UpgradeId, UiSprite>> = {
   inspirationUndos: "undo", undos: "undo", archives: "log",
-  delve: "delve", gear: "gear", moveSpeed: "automove", dash: "automove", instantCombat: "attack", trainers: "arrow-up", fasterTrainers: "automove", freeTraining: "arrow-up", buyQuantity: "arrow-up",
+  delve: "delve", autoClimb: "automove", moveSpeed: "automove", dash: "automove", instantCombat: "attack", trainers: "arrow-up", fasterTrainers: "automove", freeTraining: "arrow-up", buyQuantity: "arrow-up",
   revive: "revive", overheal: "health", spareChange: "gold", loot: "gold", floorSkipReward: "gold", mug: "gold", legacy: "tower", quality: "tower",
   wisdomFocus: "settings", wisdomMemory: "undo", wisdomSight: "upgrades",
   renownBanner: "tower", renownOath: "defense", renownCrown: "gear",
@@ -119,13 +119,13 @@ const SKILL_UI_SPRITES: Partial<Record<UpgradeId, UiSprite>> = {
 /** Skills about Silver show the Gold coin drained of colour, as the purse does. */
 const SKILL_SILVER = new Set<UpgradeId>(["wealthy", "wishingWell", "onTheJob", "pocketMoney", "interest", "maxInterest"]);
 /** Skills about the hand show a card face. */
-const SKILL_CARDS: Partial<Record<UpgradeId, CardId>> = { combatStance: "stairs", buildout: "monster", cardHeal: "heal", cardAtkUp: "atkUp", cardDefUp: "defUp", cardBlueKey: "blueKey", keySiphon: "keySiphon",
+const SKILL_CARDS: Partial<Record<UpgradeId, CardId>> = { cardDoorKey: "door", cardEnemy: "monster", combatStance: "stairs", buildout: "monster", cardHeal: "heal", cardAtkUp: "atkUp", cardDefUp: "defUp", cardBlueKey: "blueKey", keySiphon: "keySiphon",
   cardYellowDoor: "yellowDoor", cardHeartDoor: "heartDoor", cardWeakEnemy: "weakEnemy", cardBaseEnemy: "baseEnemy", cardStrongEnemy: "strongEnemy",
-  cardEliteEnemy: "eliteEnemy", cardBossEnemy: "bossEnemy", cardNonBossEnemy: "nonBossEnemy", cardFastEnemy: "fastEnemy", cardChest: "chest", blueSiphon: "blueSiphon", blueTrader: "blueTrader", keyToHp: "keyToHp",
+  cardEliteEnemy: "eliteEnemy", cardBossEnemy: "bossEnemy", cardNonBossEnemy: "nonBossEnemy", cardFastEnemy: "fastEnemy", cardChest: "chest", blueSiphon: "blueSiphon", blueTrader: "blueTrader", keyToHp: "keyToHp", smeltBlue: "smeltBlue", redTrader: "redTrader", smeltRed: "smeltRed",
   cardRedKey: "redKey", redSiphon: "redSiphon", cardTorch: "torch", cardWoodenDoor: "woodenDoor", heartDoorResilience: "heartDoor" };
 const SKILL_DETAIL_SPRITES: Partial<Record<UpgradeId, string>> = {
   shroud: "ui-ward", critical: "goal-damage-prediction", critPrediction: "goal-damage-prediction",
-  thorns: "sword", lifesteal: "badge-hpPercent", parry: "goal-parry", focus: "focus", refocus: "focus",
+  thorns: "sword", lifesteal: "badge-hpPercent", parry: "goal-parry",
   ignore: "ignore", ignoreMore: "ignore", target: "target", targetMore: "target",
   cardBadges: "goal-badge-slots", dashBadge: "badge-dash", dash: "badge-dash", endRush: "badge-dash", dashRegen: "badge-dash",
   keyLessBadges: "badge-yellowGate", keyAtLeastBadges: "badge-yellowAtLeast", largerHand: "goal-card-groups",
@@ -136,15 +136,13 @@ const SKILL_DETAIL_SPRITES: Partial<Record<UpgradeId, string>> = {
 /** The forest's Enter button: an arrow going up into an arched doorway. */
 export const ENTER_ICON = kitIcon("tower", `<svg class="enter-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 22.5V11a8.5 8.5 0 0 1 17 0v11.5z" fill="#1b1410"/><path d="M3.5 22.5V11a8.5 8.5 0 0 1 17 0v11.5" fill="none" stroke="#c9b48a" stroke-width="2" stroke-linejoin="round"/><path d="M12 21V11.5M8 15.2l4-4 4 4" fill="none" stroke="#ffe27a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`, "enter-icon");
 /** Two cards fanned out: the Deck's icon, made from the card faces. */
-export const DECK_ICON = kitIcon("deck", `<span class="deck-icon" aria-hidden="true"><img src="${UI_ASSET_BASE}assets/cards/heal.png" alt=""><img src="${UI_ASSET_BASE}assets/cards/stairs.png" alt=""></span>`, "deck-icon");
+export const DECK_ICON = pngIcon("deck", "deck-icon");
 export const skillSprite = (id: UpgradeId) => {
+  if (id === "bombs") return bombIcon("skill-sprite");
   const card = SKILL_CARDS[id];
-  if (card) return kitIcon(`card-${card}`, `<img class="skill-sprite card-sprite" src="${UI_ASSET_BASE}assets/cards/${card}.png" alt="" aria-hidden="true">`, "skill-sprite card-sprite");
+  if (card) return pngIcon(`card-${card}`, "skill-sprite card-sprite");
   const detail = SKILL_DETAIL_SPRITES[id];
-  if (detail) {
-    const original = `<img class="skill-sprite${SKILL_SILVER.has(id) ? " silver-sprite" : ""}" src="${UI_ASSET_BASE}assets/ui/${SKILL_SILVER.has(id) ? "gold" : SKILL_UI_SPRITES[id] ?? "upgrades"}.png" alt="" aria-hidden="true">`;
-    return kitIcon(detail, original, "skill-sprite");
-  }
+  if (detail) return pngIcon(detail, "skill-sprite");
   const item = SKILL_ITEM_SPRITES[id];
   if (item) return itemSprite(item, "skill-sprite");
   if (SKILL_SILVER.has(id)) return uiSprite("gold", "skill-sprite silver-sprite");

@@ -1,19 +1,20 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save.ts";
 import { point, type Enemy, type Player, type Tile } from "../src/entities.ts";
 import { PARRY_CAP, bout, heroHpAfter, instakill, parryCut, predict, summarize, thornDamage } from "../src/combat.ts";
-import { loadout, trainingStep } from "../src/loadout.ts";
+import { loadout, trainingStep } from "../src/progression/loadout.ts";
 import { startingHero } from "../src/game/hero-sync.ts";
-import { trainingGold } from "../src/training-jobs.ts";
-import { silverPrice } from "../src/run-training.ts";
-import { TRAINING, UPGRADES, isStatRow, trained, type TrainingId } from "../src/config.ts";
-import { TREES } from "../src/skill-trees.ts";
-import { BoardPopups, enemyBar, lunges } from "../src/board-popups.ts";
+import { trainingGold } from "../src/progression/training-jobs.ts";
+import { silverPrice } from "../src/progression/run-training.ts";
+import { TRAINING, isStatRow, trained, type TrainingId } from "../src/progression/training.ts";
+import { UPGRADES } from "../src/progression/upgrades.ts";
+import { TREES } from "../src/progression/skill-trees.ts";
+import { BoardPopups, enemyBar, lunges } from "../src/render/board-popups.ts";
 import { checkpoint, UNLOCK_NAMES } from "../src/goals.ts";
-import { DamagePredictions, damageLabel } from "../src/damage-labels.ts";
-import { wounded, woundMore } from "../src/ranged.ts";
+import { DamagePredictions, damageLabel } from "../src/render/effects/damage-labels.ts";
+import { wounded, woundMore } from "../src/enemies/ranged.ts";
+import { playedSave } from "./first-skills.ts";
 
 const hero = (over: Partial<Player> = {}): Player => ({ x: 0, y: 0, hp: 100, maxHp: 100, attack: 12, defense: 0, keys: { yellow: 0, blue: 0, red: 0 }, ...over }) as Player;
 const brute: Enemy = { name: "Brute", hp: 60, attack: 30, defense: 0, tier: 0, strength: "normal" };
@@ -27,14 +28,14 @@ test("Thorns sits between Buy Quantity and GK Siphon, Parry between Regen Resear
   }
   assert.deepEqual([node("thorns").requires, node("keySiphon").requires], [["buyQuantity"], ["thorns"]]);
   assert.deepEqual([node("parry").requires, node("revive").requires], [["regenResearch"], ["parry"]]);
-  const g = new Game(defaults());
+  const g = new Game(playedSave());
   g.save.tower.inspiration = 1000;
-  for (const id of ["combatStance", "buildout", "trainers", "shroud", "critical", "archives", "delve", "greaterHeal"] as const) assert.ok(g.buy(id));
-  assert.equal(g.buy("parry"), false, "waits for Regen Research");
-  assert.ok(g.buy("regenResearch"));
-  assert.equal(g.buy("revive"), false, "waits for Parry");
-  assert.ok(g.buy("parry"));
-  assert.ok(g.buy("revive"));
+  for (const id of ["combatStance", "buildout", "trainers", "shroud", "critical", "archives", "delve", "greaterHeal"] as const) assert.ok(g.skills.buy(id));
+  assert.equal(g.skills.buy("parry"), false, "waits for Regen Research");
+  assert.ok(g.skills.buy("regenResearch"));
+  assert.equal(g.skills.buy("revive"), false, "waits for Parry");
+  assert.ok(g.skills.buy("parry"));
+  assert.ok(g.skills.buy("revive"));
 });
 
 test("Thorn Damage adds 1% a rank to 99 and Parry % 0.5% a rank to 100, Defense rows the skills open; no Parry Chance row", () => {
@@ -45,14 +46,14 @@ test("Thorn Damage adds 1% a rank to 99 and Parry % 0.5% a rank to 100, Defense 
     assert.deepEqual([r.group, r.max, r.cost, r.requires], ["defense", max, 1, requires], id);
     assert.deepEqual([trained(r, 0), trained(r, 1), trained(r, 10), trained(r, max)], [0, per, 10 * per, max * per], id);
   }
-  const s = defaults();
+  const s = playedSave();
   Object.assign(s.upgrades, { thorns: 1, parry: 1 });
   Object.assign(s.training, { thorns: 50, parry: 41 });
   const l = loadout(s);
   assert.deepEqual([l.thorns, l.parry], [50, 20.5]);
   const p = startingHero(s, "tower").player;
   assert.deepEqual([p.thorns, p.parry], [50, 20.5], "the hero carries them into a run");
-  assert.equal(startingHero(defaults(), "tower").player.thorns, undefined, "a hero without them carries none");
+  assert.equal(startingHero(playedSave(), "tower").player.thorns, undefined, "a hero without them carries none");
   const step = trainingStep(s, "parry");
   assert.deepEqual([step.unit, step.now, step.next], ["%", 20.5, 21]);
 });
@@ -152,7 +153,7 @@ test("a parry cuts a strike's damage by at most 98%, however Parry % is raised",
   assert.equal(PARRY_CAP, 98);
   assert.equal(parryCut(hero({ parry: 120 })), 98);
   assert.equal(parryCut(hero({ parry: 60 })), 60);
-  const s = defaults();
+  const s = playedSave();
   s.upgrades.parry = 1;
   s.training.parry = 100;
   s.archives.levels.parry = 50;
@@ -232,7 +233,7 @@ test("the hero gives way from a strike it parries in an animated fight; summary 
 /** A Delve run with the hero two tiles below a Brute in a walled corridor,
  * parrying every strike by `parry`%. */
 function arena(parry: number) {
-  const g = new Game(defaults());
+  const g = new Game(playedSave());
   g.save.upgrades.delve = 1;
   g.switchMode("delve");
   g.newRun({ seed: 1 });

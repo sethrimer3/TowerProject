@@ -8,7 +8,7 @@ import { CLAIM_MS, latestTournament, nextTournament, phaseOf, scoreCounts, tourn
 import type { Standing, TournamentInfo } from "../tournament/server.ts";
 import { addGemTicket, gemTicketPrice, grantFreeTicket, nextTicket, spendTicket, takeAdTicket } from "../tournament/tickets.ts";
 import { affordsGems, type DeskHost } from "./desk.ts";
-import { earn } from "../profile.ts";
+import { earn } from "../save/profile.ts";
 
 /** The Tournament's commands (the game's `tournament`): taking in what the
  * server reports, Tickets, standings and claiming prizes. The server's

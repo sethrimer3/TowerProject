@@ -1,7 +1,7 @@
-import type { CardId } from "../cards.ts";
-import { MAX_CARD_LEVEL } from "../card-levels.ts";
-import { CARD_RARITY_NAMES, CARD_RARITY_STARS, type CardRarity } from "../card-rarity.ts";
-import { cardLook, cardMaxLevel, levelIn, type TreeSave } from "../card-trees.ts";
+import type { CardId } from "../cards/cards.ts";
+import { MAX_CARD_LEVEL } from "../cards/levels.ts";
+import { CARD_RARITY_NAMES, CARD_RARITY_STARS, type CardRarity } from "../cards/rarity.ts";
+import { cardLook, cardMaxLevel, levelIn, type TreeSave } from "../cards/trees.ts";
 
 /** What the card marks read from the save: each card's XP and the levels
  * card buys opened on its tree. */

@@ -1,5 +1,5 @@
-import { GOLD_SHOP, type GoldItemId } from "../config.ts";
-import { provisionOpen, provisionPrice, provisionText } from "../loadout.ts";
+import { GOLD_SHOP, type GoldItemId } from "../economy/provisions.ts";
+import { provisionOpen, provisionPrice, provisionsOpen, provisionText } from "../progression/loadout.ts";
 import { whole } from "../whole.ts";
 import { unlockAt } from "../goals.ts";
 import { tierNumeral } from "../tiers.ts";
@@ -14,7 +14,7 @@ const PROVISION_SPRITES = { heal: "potion_flat", guard: "upgrade_defense", edge:
 type GearTab = "provisions" | "equipment";
 const TAB_NAMES: Record<GearTab, string> = { provisions: "Provisions", equipment: "Equipment" };
 
-/** The Gear page: provisions (the Gear skill) and Equipment (opened by
+/** The Gear page: provisions (once one is open, by its skill) and Equipment (opened by
  * Tower II's floor 60 Goal). */
 export class GearPage {
   private tab: GearTab = "provisions";
@@ -29,7 +29,7 @@ export class GearPage {
   /** Which tabs can be opened now. */
   private open(tab: GearTab) {
     const save = this.ctx.game.save;
-    return tab === "equipment" ? save.equipment.unlocked : !!save.upgrades.gear;
+    return tab === "equipment" ? save.equipment.unlocked : provisionsOpen(save);
   }
 
   /** Opens on the Equipment screen (the forest's Blacksmith, or Equipment
@@ -44,7 +44,7 @@ export class GearPage {
     const save = this.ctx.game.save;
     if (this.tab === "equipment") this.ctx.game.notices.shown("equipment");
     const body = this.tab === "equipment" ? this.equipment.html() : this.provisionsHtml();
-    const tabs = (["provisions", "equipment"] as const).filter((t) => t === "equipment" || save.upgrades.gear);
+    const tabs = (["provisions", "equipment"] as const).filter((t) => t === "equipment" || provisionsOpen(save));
     const lockHint = (t: GearTab) => t === "equipment" ? `Claim Tower ${tierNumeral(unlockAt("equipment").tower)}'s floor ${unlockAt("equipment").floor} Goal to open Equipment` : "Locked";
     el("gear").innerHTML = `<div class="tree-tabs page-tabs gear-tabs" role="group" aria-label="Gear tabs">
       ${tabs.map((t) => `<button data-geartab="${t}" aria-pressed="${this.tab === t}" ${this.open(t) ? "" : `disabled title="${lockHint(t)}"`}>${TAB_NAMES[t]}</button>`).join("")}

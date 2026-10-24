@@ -6,11 +6,11 @@ import {advanceKeymasterEffects} from "../src/proving-grounds/keymaster.ts";
 // them in Node on a recording canvas and hashes the calls. Each scene is
 // drawn at fixed timestamps with seeded randomness; `grab` is called at each
 // captured frame, and the caller decides what to record there.
-import { Renderer } from "../src/rendering.ts";
+import { Renderer } from "../src/render/rendering.ts";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save.ts";
-import { decorSourceFor, tileDecor, type TileDecor } from "../src/decor.ts";
-import type { DecorLayer } from "../src/decor-render.ts";
+import { defaults } from "../src/save/save.ts";
+import { decorSourceFor, tileDecor, type TileDecor } from "../src/render/decor/decor.ts";
+import type { DecorLayer } from "../src/render/decor/decor-render.ts";
 import type { Tile } from "../src/entities.ts";
 import { DefendRenderer } from "../src/defend/render.ts";
 import { paintIcon } from "../src/defend/structure-art.ts";
@@ -99,7 +99,7 @@ type BoardScene = { g: Game; to?: Point; fight?: boolean; climb?: boolean; check
 
 /** A readable combat-art arena, shared by the golden and browser review. */
 export function combatSpriteScene(settings: Record<string, unknown> = {}): BoardScene {
-  const g = game("tower", { uiSprites: true, brightness: 85, decorOff: true, ...settings });
+  const g = game("tower", { brightness: 85, decorOff: true, ...settings });
   const p = g.run.player;
   p.x = 8; p.y = 3;
   for (let y = 1; y < 16; y++) for (let x = 1; x < 16; x++) g.run.changes[`${x},${y}`] = { kind: "floor" };
@@ -151,7 +151,7 @@ function decorScene(settings: Record<string, unknown>, want: (d: TileDecor) => b
 
 /** A real overgrown, wet room: reusable environment review and animated golden. */
 export function environmentSpriteScene(settings: Record<string, unknown> = {}): BoardScene {
-  const g = game("tower", { uiSprites: true, brightness: 50, ...settings });
+  const g = game("tower", { brightness: 50, ...settings });
   g.newRun({ seed: 7 });
   for (let room = 0; room < 25; room++) g.advanceTowerRoom();
   const src = decorSourceFor(g.world, g.run.seed)!, candidates: { x: number; y: number; water: number }[] = [];
@@ -185,12 +185,6 @@ const BOARD_SCENES: Record<string, () => BoardScene> = {
   },
   delveTorches: () => {
     const g = game("delve", { brightness: 70 });
-    plantAll(g);
-    return { g };
-  },
-  spritesOff: () => {
-    const g = game("tower", { spritesOff: true, brightness: 55 });
-    for (let i = 0; i < 3; i++) g.advanceTowerRoom();
     plantAll(g);
     return { g };
   },
@@ -306,7 +300,7 @@ LATER_BOARD_SCENES.spriteAmbient = () => {
 /** One fixed material identity for each later Tower, on real tier geometry. */
 export function towerTierSpriteScene(tier: 2 | 3): BoardScene {
   const save = defaults();
-  Object.assign(save.settings, { uiSprites: true, brightness: 75, reduceMotion: true });
+  Object.assign(save.settings, { brightness: 75, reduceMotion: true });
   save.tower.tiersOpen = 3; save.tower.tier = tier;
   const g = new Game(save); g.newRun({ seed: 1103 });
   for (let i = 0; i < 3; i++) g.advanceTowerRoom();
@@ -315,7 +309,7 @@ export function towerTierSpriteScene(tier: 2 | 3): BoardScene {
 
 /** Real connected interior geometry, with native wall faces and material patches. */
 export function dungeonSpriteScene(mode: "tower" | "delve", settings: Record<string, unknown> = {}): BoardScene {
-  const g = game(mode, { uiSprites: true, brightness: 75, reduceMotion: true, ...settings });
+  const g = game(mode, { brightness: 75, reduceMotion: true, ...settings });
   g.newRun({ seed: mode === "tower" ? 1103 : 1107 });
   if (mode === "tower") for (let i = 0; i < 3; i++) g.advanceTowerRoom();
   return { g };
@@ -323,7 +317,7 @@ export function dungeonSpriteScene(mode: "tower" | "delve", settings: Record<str
 
 /** Both enormous entrance bases and the layered forest at the crossroads. */
 export function forestSpriteScene(mode: "tower" | "delve", settings: Record<string, unknown> = {}): BoardScene {
-  const g = game(mode, { uiSprites: true, reduceMotion: true, weatherSound: false, ...settings });
+  const g = game(mode, { reduceMotion: true, weatherSound: false, ...settings });
   g.save.goals.claimed = { 1: [60, 70] };
   g.save.equipment.unlocked = true;
   g.newRun({ outside: true, seed: mode === "tower" ? 503 : 507 });
@@ -562,53 +556,52 @@ function playProvingGrounds(_name: string, _seed: number, canvas: HTMLCanvasElem
   renderer.draw(state, 1100, 1000, true, false); grab("beam");
   renderer.draw(state, 5000, 1000, true, false); grab("glow");
   trialStep(state,0,0);
-  renderer.draw(state,6000,1000,false,false);
-  renderer.draw(state,6130,1000,false,false); grab("slimeHop");
+  renderer.draw(state,6000,1000,false);
+  renderer.draw(state,6130,1000,false); grab("slimeHop");
   state.player.y=22;
   renderer.draw(state, 5000, 1000, true, false); grab("wallScars");
   state.player.x=12;state.player.y=11;
-  renderer.draw(state,7000,0,false,false);
+  renderer.draw(state,7000,0,false);
   trialStep(state,0,1);
   // Frame both ends of this deterministic flight, including the reformed ghost.
   state.player.x=Math.round((12+state.elemental.x)/2);
   state.player.y=Math.round((12+state.elemental.y)/2);
-  renderer.draw(state,7100,0,false,false); grab("dissolve");
-  renderer.draw(state,7550,0,false,false); grab("lightTrails");
-  renderer.draw(state,8080,0,false,false); grab("reform");
-  renderer.draw(state,8500,0,false,false); grab("ghost");
-  renderer.draw(state,8500,0,true,false); grab("ghostReducedMotion");
+  renderer.draw(state,7100,0,false); grab("dissolve");
+  renderer.draw(state,7550,0,false); grab("lightTrails");
+  renderer.draw(state,8080,0,false); grab("reform");
+  renderer.draw(state,8500,0,false); grab("ghost");
+  renderer.draw(state,8500,0,true); grab("ghostReducedMotion");
   while(state.steps%10!==0) trialStep(state,0,0);
-  renderer.draw(state,9000,8900,true,false); grab("corporealLasers");
+  renderer.draw(state,9000,8900,true); grab("corporealLasers");
   const high=startTrial(state.player,"manual",[],7391,70);
   for(let i=0;i<4;i++)trialStep(high,0,1);
   high.player.y=11;
   for(let i=0;i<8;i++)trialStep(high,0,0);
-  renderer.draw(high,10000,0,true,false);grab("eightBeamWarning");
+  renderer.draw(high,10000,0,true);grab("eightBeamWarning");
   trialStep(high,0,0);trialStep(high,0,0);
-  renderer.draw(high,11000,10900,true,false);grab("eightBeams");
+  renderer.draw(high,11000,10900,true);grab("eightBeams");
   const edge=startTrial(state.player,"manual",[],7391,30);
   for(let i=0;i<4;i++)trialStep(edge,0,1);
   edge.player.x=12;edge.player.y=4;edge.elemental.x=12;edge.elemental.y=7;edge.steps=9;
-  renderer.draw(edge,12000,0,true,false);grab("edgeProps");
+  renderer.draw(edge,12000,0,true);grab("edgeProps");
   trialStep(edge,0,0);
-  renderer.draw(edge,13000,12900,true,false);grab("edgeBeamDamage");
+  renderer.draw(edge,13000,12900,true);grab("edgeBeamDamage");
   edge.elemental.x=11;edge.steps=49;
   trialStep(edge,0,0);
-  renderer.draw(edge,14000,13900,true,false);grab("edgeCrateDamage");
+  renderer.draw(edge,14000,13900,true);grab("edgeCrateDamage");
   edge.steps=90;
-  renderer.draw(edge,16000,0,true,false);grab("extinguishedTorches");
-  // The modern kit is opt-in, matching the normal board's Sprites setting.
+  renderer.draw(edge,16000,0,true);grab("extinguishedTorches");
+  // The trial uses the same default pixel-art kit as the normal board.
   const kit=startTrial(state.player,"manual",[],7391,30),options={styledSprites:true};
-  renderer.draw(kit,17000,0,true,false,options);grab("spritesStaging");
+  renderer.draw(kit,17000,0,true,options);grab("spritesStaging");
   for(let i=0;i<4;i++)trialStep(kit,0,1);
   kit.player.y=4;kit.elemental.x=12;kit.elemental.y=7;kit.steps=9;
-  renderer.draw(kit,18000,0,true,false,options);grab("spritesEdge");
+  renderer.draw(kit,18000,0,true,options);grab("spritesEdge");
   trialStep(kit,0,0);
-  renderer.draw(kit,19000,18900,true,false,options);grab("spritesBeamDamage");
+  renderer.draw(kit,19000,18900,true,options);grab("spritesBeamDamage");
   kit.steps=50;
-  renderer.draw(kit,20000,0,true,false,options);grab("spritesTorchOut");
-  renderer.draw(kit,20000,0,true,true,options);grab("spritesOptOut");
-  renderer.draw(kit,21000,0,true,false,{...options,destination:{x:13,y:4}});grab("manualDestination");
+  renderer.draw(kit,20000,0,true,options);grab("spritesTorchOut");
+  renderer.draw(kit,21000,0,true,{...options,destination:{x:13,y:4}});grab("manualDestination");
 }
 
 /** Which canvas a job draws on: the 408 px board, the Defend board (which
@@ -623,34 +616,33 @@ const DEFEND = false;
 function playKeymaster(_name:string,_seed:number,canvas:HTMLCanvasElement,grab:Grab) {
   const s=startTrial({maxHp:1000,attack:10,defense:0},"manual",[],12,1,"keymaster");
   const renderer=new TrialRenderer(canvas),options={styledSprites:true};
-  renderer.draw(s,1000,0,true,false,options);grab("staging");
+  renderer.draw(s,1000,0,true,options);grab("staging");
   for(let i=0;i<4;i++)trialStep(s,0,1);
   s.player.x=12;s.player.y=11;
-  renderer.draw(s,2000,0,true,false,options);grab("bossAndMimics");
-  trialStep(s,0,1);renderer.draw(s,3000,0,true,false,options);grab("scatteredKeys");
+  renderer.draw(s,2000,0,true,options);grab("bossAndMimics");
+  trialStep(s,0,1);renderer.draw(s,3000,0,true,options);grab("scatteredKeys");
   s.player.y=23;s.keymaster!.keys=4;
-  renderer.draw(s,4000,0,true,false,options);grab("northDoor");
+  renderer.draw(s,4000,0,true,options);grab("northDoor");
   trialStep(s,0,1);advanceKeymasterEffects(s,220);s.player.y=17;
-  renderer.draw(s,5000,0,false,false,options);grab("doorFlood");
+  renderer.draw(s,5000,0,false,options);grab("doorFlood");
   advanceKeymasterEffects(s,380);s.player.y=14;
-  renderer.draw(s,5400,0,false,false,options);grab("redTrails");
-  renderer.draw(s,5400,0,true,false,options);grab("reducedMotion");
+  renderer.draw(s,5400,0,false,options);grab("redTrails");
+  renderer.draw(s,5400,0,true,options);grab("reducedMotion");
   advanceKeymasterEffects(s,500);
-  renderer.draw(s,5800,0,true,false,options);grab("spiritsWaiting");
+  renderer.draw(s,5800,0,true,options);grab("spiritsWaiting");
   s.steps=9;s.keymaster!.mimics=[];trialStep(s,0,0);advanceKeymasterEffects(s,1);
-  renderer.draw(s,6000,0,true,false,options);grab("impact");
-  renderer.draw(s,6000,0,true,true,options);grab("boardOptOut");
+  renderer.draw(s,6000,0,true,options);grab("impact");
   const ghost=startTrial({maxHp:1000,attack:10,defense:0},"manual",[],12,1,"keymaster");
   for(let i=0;i<4;i++)trialStep(ghost,0,1);
-  ghost.player.x=12;ghost.player.y=11;renderer.draw(ghost,7000,0,false,false,options);
-  trialStep(ghost,0,1);renderer.draw(ghost,7100,0,false,false,options);grab("dissolve");
-  renderer.draw(ghost,7600,0,false,false,options);grab("lightTrails");
+  ghost.player.x=12;ghost.player.y=11;renderer.draw(ghost,7000,0,false,options);
+  trialStep(ghost,0,1);renderer.draw(ghost,7100,0,false,options);grab("dissolve");
+  renderer.draw(ghost,7600,0,false,options);grab("lightTrails");
   ghost.player.x=ghost.elemental.x;ghost.player.y=ghost.elemental.y-2;
-  renderer.draw(ghost,8300,0,false,false,options);grab("ghost");
-  renderer.draw(ghost,8300,0,true,false,options);grab("ghostReducedMotion");
-  trialStep(ghost,0,0);renderer.draw(ghost,8400,0,true,false,options);grab("pursuit");
+  renderer.draw(ghost,8300,0,false,options);grab("ghost");
+  renderer.draw(ghost,8300,0,true,options);grab("ghostReducedMotion");
+  trialStep(ghost,0,0);renderer.draw(ghost,8400,0,true,options);grab("pursuit");
   while(ghost.steps<10){ghost.keymaster!.mimics=[];trialStep(ghost,0,0);}
-  renderer.draw(ghost,9500,0,true,false,options);grab("reformed");
+  renderer.draw(ghost,9500,0,true,options);grab("reformed");
 }
 
 /** Every scene, in order, each with its own seed. The Defend scenes keep
@@ -662,5 +654,9 @@ export const JOBS: Job[] = [
   ...Object.keys(LATER_BOARD_SCENES).map((name) => ({ name, canvas: "board" as const, run: playBoard })),
   { name: "provingGrounds", canvas: "board" as const, run: playProvingGrounds },
   { name: "keymaster", canvas: "board" as const, run: playKeymaster },
-].map(({ name, canvas, run }, i) => ({ name, seed: i + 1, canvas, play: (cv: HTMLCanvasElement, grab: Grab) => run(name, i + 1, cv, grab) }))
+].map(({ name, canvas, run }, i) => {
+  // Keep the fourth seed reserved for the retired sprite-opt-out scene.
+  const seed = i + 1 + (i >= 3 ? 1 : 0);
+  return { name, seed, canvas, play: (cv: HTMLCanvasElement, grab: Grab) => run(name, seed, cv, grab) };
+})
   .filter((job) => DEFEND || job.canvas === "board");

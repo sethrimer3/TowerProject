@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Game } from '../src/state.ts';
-import { defaults, decode } from '../src/save.ts';
+import { defaults } from '../src/save/save.ts';
 import { RoomWorld } from '../src/tower/room-world.ts';
 function arena() {
   const g = new Game(defaults());
@@ -60,10 +60,4 @@ test('delve approach movement does not award physical Y as progression', () => {
   g.move(0, -1);
   assert.equal(g.run.player.y, 1);
   assert.equal(g.run.maxHeight, 0); // Run best stays 2 even as current depth goes down to 1
-});
-test('legacy balances and records migrate without retroactive duplication', () => {
-  const old = defaults(); old.tower.best=8; old.tower.inspiration=4;
-  delete (old.tower as any).reached;
-  const g = new Game(decode(JSON.stringify(old))); g.run.height=8; g.recordProgress();
-  assert.equal(g.save.tower.inspiration,4); g.run.height=9; g.recordProgress(); assert.equal(g.save.tower.inspiration,5);
 });

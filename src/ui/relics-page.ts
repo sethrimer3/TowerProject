@@ -1,5 +1,5 @@
 import { controlIcon } from "./control-icon.ts";
-import { PREVIEW_RELICS, RELICS, type RelicDef } from "../relics.ts";
+import { PREVIEW_RELICS, RELICS, type RelicDef } from "../economy/relics.ts";
 import type { AppContext } from "./app.ts";
 import { el, relicIcon } from "./dom.ts";
 

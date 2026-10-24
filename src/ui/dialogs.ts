@@ -1,8 +1,8 @@
 import { keyCount, whole, wholeChange, wholeHp } from "../whole.ts";
-import { GOLD_BOOST_FACTOR } from "../gold-boost.ts";
+import { GOLD_BOOST_FACTOR } from "../economy/gold-boost.ts";
 import { MODES } from "../modes.ts";
-import { loadout } from "../loadout.ts";
-import { CARDS, type Blocker } from "../cards.ts";
+import { loadout } from "../progression/loadout.ts";
+import { CARDS, type Blocker } from "../cards/cards.ts";
 import { attackAgainst, defenseAgainst } from "../combat.ts";
 import { doorBlockedMessage, doorRule, KEY_NAMES, KEY_ORDER } from "../doors.ts";
 import { tileInfo } from "./tile-info.ts";

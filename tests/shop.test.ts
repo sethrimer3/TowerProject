@@ -1,10 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { decode, defaults } from "../src/save.ts";
-import { xpForLevel } from "../src/config.ts";
+import { decode, defaults } from "../src/save/save.ts";
+import { xpForLevel } from "../src/progression/xp.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
-import { workLeft } from "../src/training-jobs.ts";
+import { workLeft } from "../src/progression/training-jobs.ts";
 import { DAY_MS, confirmServerTime, estimatedServerTime, gmtDay, untilNextDay } from "../src/shop/clock.ts";
 import { BOOST_FOREVER, goldFactor, permanentBoost, trainingRate } from "../src/shop/entitlements.ts";
 import { HISTORY_KEPT } from "../src/shop/ledger.ts";
@@ -31,12 +31,12 @@ test("the catalog: the Ascension Shard packs, one-time packs, the daily Gems, th
 
 test("the daily Gems are claimed once a GMT day, on the server's time", () => {
   const g = new Game(defaults()), daily = offer("dailyGems")!;
-  assert.equal(g.buyOffer("dailyGems", NOON), null);
+  assert.equal(g.shop.buy("dailyGems", NOON), null);
   assert.equal(g.save.gems, 25);
-  assert.equal(g.buyOffer("dailyGems", NOON + 1000), "limit");
-  assert.equal(g.buyOffer("dailyGems", (gmtDay(NOON) + 1) * DAY_MS - 1), "limit", "the last moment of the day");
+  assert.equal(g.shop.buy("dailyGems", NOON + 1000), "limit");
+  assert.equal(g.shop.buy("dailyGems", (gmtDay(NOON) + 1) * DAY_MS - 1), "limit", "the last moment of the day");
   assert.ok(soldOut(g.save, daily, NOON));
-  assert.equal(g.buyOffer("dailyGems", (gmtDay(NOON) + 1) * DAY_MS), null, "00:00 GMT starts a new day");
+  assert.equal(g.shop.buy("dailyGems", (gmtDay(NOON) + 1) * DAY_MS), null, "00:00 GMT starts a new day");
   assert.equal(g.save.gems, 50);
   assert.equal(timesBought(g.save, daily, (gmtDay(NOON) + 1) * DAY_MS), 1);
 });
@@ -80,25 +80,25 @@ test("purchase limits, start and end times, requirements and store links refuse 
 
 test("a real-money offer is granted only once the store confirms payment, or free in Dev", () => {
   const g = new Game(defaults());
-  assert.equal(g.buyOffer("gems550", NOON), "unpaid");
+  assert.equal(g.shop.buy("gems550", NOON), "unpaid");
   assert.equal(g.save.gems, 0);
-  assert.equal(g.buyOffer("gems550", NOON, true), null);
+  assert.equal(g.shop.buy("gems550", NOON, true), null);
   assert.equal(g.save.gems, 550);
   g.save.settings.freePurchases = true;
-  assert.equal(g.buyOffer("gems7500", NOON), null);
+  assert.equal(g.shop.buy("gems7500", NOON), null);
   assert.equal(g.save.gems, 8050);
   assert.deepEqual(g.save.shop.history.map((t) => t.price), ["$9.99", "Dev: free"]);
 });
 
 test("each Ascension Shard pack grants Shards and Gems, once every two weeks of Shop days", () => {
   const g = new Game(defaults());
-  assert.equal(g.buyOffer("shards300", NOON, true), null);
-  assert.equal(g.buyOffer("shards750", NOON, true), null, "each pack has its own limit");
+  assert.equal(g.shop.buy("shards300", NOON, true), null);
+  assert.equal(g.shop.buy("shards750", NOON, true), null, "each pack has its own limit");
   assert.deepEqual([g.save.ascensionShards, g.save.gems], [1050, 850]);
   const again = (gmtDay(NOON) + SHARD_PACK_DAYS) * DAY_MS;
-  assert.equal(g.buyOffer("shards300", again - 1, true), "limit", "the last moment of the two weeks");
+  assert.equal(g.shop.buy("shards300", again - 1, true), "limit", "the last moment of the two weeks");
   assert.equal(availableAgain(g.save, offer("shards300")!), again);
-  assert.equal(g.buyOffer("shards300", again, true), null);
+  assert.equal(g.shop.buy("shards300", again, true), null);
   assert.equal(g.save.ascensionShards, 1350);
   assert.equal(g.save.shop.history[0].item, "300 Ascension Shards + 250 Gems");
   assert.ok(stubConfirms("shards_300") && stubConfirms("gems_250") && !stubConfirms("coins_x2"), "the stub store confirms only the Gem and shard packs");
@@ -114,8 +114,8 @@ test("Ascension Shards are saved, and a bad count decodes to none", () => {
 test("one-time packs are bought once, kept by an erase, grant their Gems and multiply every Gold banked", () => {
   const g = new Game(defaults());
   const gems = g.save.gems;
-  for (const id of ["coins2", "coins3", "adFree"] as const) assert.equal(g.buyOffer(id, NOON, true), null, id);
-  assert.equal(g.buyOffer("coins2", NOON, true), "limit");
+  for (const id of ["coins2", "coins3", "adFree"] as const) assert.equal(g.shop.buy(id, NOON, true), null, id);
+  assert.equal(g.shop.buy("coins2", NOON, true), "limit");
   assert.equal(g.save.gems - gems, 150 + 750, "the Coin Packs' Gems, once each");
   assert.equal(goldFactor(g.save), 9, "1.5 × 2 × 3");
   g.eraseAll();
@@ -145,7 +145,7 @@ test("Ad-Disable runs the trainers' ×2 boost for good, ranks already training i
   assert.ok(g.training.trainWithGold("hp"));
   now += 5000;
   const left = g.training.left("hp");
-  assert.equal(g.buyOffer("adFree", NOON, true), null);
+  assert.equal(g.shop.buy("adFree", NOON, true), null);
   assert.ok(permanentBoost(g.save));
   assert.equal(g.save.trainingBoostUntil, BOOST_FOREVER);
   assert.equal(g.save.trainingJobs[0].completesAt, now + left / 2, "what was left goes twice as fast");
@@ -168,15 +168,15 @@ test("the Coin Packs make training ×2 and ×3 as fast, stacking with Ad-Disable
   // Max HP's first rank takes 15 s; 12 s are left after 3.
   assert.ok(g.training.trainWithGold("hp"));
   now += 3000;
-  assert.equal(g.buyOffer("coins3", NOON, true), null);
+  assert.equal(g.shop.buy("coins3", NOON, true), null);
   assert.equal(trainingRate(g.save), 3);
   assert.equal(g.training.left("hp"), 12_000, "the training left is kept");
   assert.equal(g.save.trainingJobs[0].completesAt, now + 4000, "and goes three times as fast");
-  assert.equal(g.buyOffer("coins2", NOON, true), null);
+  assert.equal(g.shop.buy("coins2", NOON, true), null);
   assert.equal(trainingRate(g.save), 6);
   assert.ok(!permanentBoost(g.save), "the Special Coin Pack leaves the boost to the ad");
   assert.equal(g.save.trainingJobs[0].completesAt, now + 2000, "six times with both");
-  assert.equal(g.buyOffer("adFree", NOON, true), null);
+  assert.equal(g.shop.buy("adFree", NOON, true), null);
   assert.equal(g.save.trainingJobs[0].completesAt, now + 1000, "twelve with Ad-Disable's boost too");
   now += 500;
   assert.equal(g.training.left("hp"), 6000);

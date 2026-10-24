@@ -1,5 +1,5 @@
-import { SMALL_CONTROL_SPRITES } from "../sprite-controls.ts";
-import { kitIcon } from "../sprite-kit.ts";
+import { SMALL_CONTROL_SPRITES } from "../sprites/controls.ts";
+import { kitIcon } from "../sprites/kit.ts";
 type Control = keyof typeof SMALL_CONTROL_SPRITES;
 const FALLBACKS: Record<Control, string> = { close: "✕", back: "←", forward: "›", check: "✓", lock: "🔒", up: "▲", down: "▼", swap: "⇄", star: "★" };
 /** A load-aware PNG pair that keeps the original theme's control symbol. */

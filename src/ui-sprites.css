@@ -87,7 +87,7 @@ html.ui-sprites :is(.hint, .item-meta, .item-identity, .level-cost):not(#_) { co
 
 /* Keep picture buttons (cards, map markers and skill nodes) intact, and small icon buttons bare: a frame on them looks busy. */
 html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-tile, .deck-add, .deck-card, .deck-entry-art,
-  .card-reveal-card, .forest-sign, .forest-building, .mission-bar, .deck-hand-toggle, #shrine-bar, #forest-sign, .ug-node, .ct-row-main,
+  .card-reveal-card, .forest-sign, .forest-building, .mission-bar, .weekly-box, .deck-hand-toggle, .deck-switch, .hand-kinds button, #shrine-bar, #forest-sign, .ug-node, .ct-row-main,
   #currencies-open, #auto-speed .speed-arrow)):not(#_) {
   border-color: transparent;
   border-image: var(--ui-face) 6 fill / 12px / 0 stretch;
@@ -100,7 +100,7 @@ html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-til
   transition: none;
 }
 html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-tile, .deck-add, .deck-card, .deck-entry-art,
-  .card-reveal-card, .forest-sign, .forest-building, .mission-bar, .badge-pick, .deck-link-toggle, .deck-hand-toggle,
+  .card-reveal-card, .forest-sign, .forest-building, .mission-bar, .weekly-box, .badge-pick, .deck-link-toggle, .deck-hand-toggle, .deck-switch, .hand-kinds button,
   #shrine-bar, #forest-sign, #defend *, .ug-node, .ct-row-main, #currencies-open, #auto-speed .speed-arrow)):not(#_) {
   border-width: 6px;
   border-style: solid;
@@ -338,10 +338,11 @@ html.ui-sprites .page-title :is(h2, small):not(#_) { color: #10151c; text-shadow
 /* Sprite pairs preserve each theme's original icon. Only loaded PNGs
    replace it, and only under the effective default sprite presentation. */
 .sprite-icon { position: relative; display: inline-block; vertical-align: middle; }
-.sprite-fallback { display: contents; }
+.theme-art { display: contents; }
+.sprite-native { display: block; width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
 .tutorial-pointer-art { width: 100%; }
 .sprite-replacement, .sprite-card-label { display: none !important; }
-html.ui-sprites .sprite-ready > .sprite-fallback { visibility: hidden; }
+html.ui-sprites .sprite-ready > .theme-art { visibility: hidden; }
 html.ui-sprites .sprite-ready > .sprite-replacement:not(#_) {
   display: block !important;
   position: absolute;
@@ -356,7 +357,7 @@ html.ui-sprites .sprite-ready > .sprite-replacement:not(#_) {
   border-radius: 0;
   box-shadow: none;
 }
-html.ui-sprites .sprite-card.sprite-ready + .sprite-card-label:not(#_) {
+.sprite-card.sprite-ready + .sprite-card-label:not(#_) {
   display: block !important;
   position: absolute;
   bottom: 8%;

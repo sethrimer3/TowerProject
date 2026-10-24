@@ -3,7 +3,7 @@ import { spawn } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { ARROW_DIRECTIONS, SHIELD_SIZES } from "../src/sprite-combat.ts";
+import { ARROW_DIRECTIONS, SHIELD_SIZES } from "../src/sprites/combat.ts";
 const root = fileURLToPath(new URL("../", import.meta.url));
 const out = join(root, "public/assets/style"), source = join(root, "assets/game-sprites/combat.png");
 const palette = join(root, "assets/ui-sprites/palette.ppm");

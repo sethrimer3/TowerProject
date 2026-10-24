@@ -1,8 +1,8 @@
 import type { Game } from "../state.ts";
-import { TRAINING, TRAINING_GROUPS, type TrainingId } from "../config.ts";
-import { runTrainingBulk, runTrainingOffer, runTrainingValue } from "../run-training.ts";
+import { TRAINING, TRAINING_GROUPS, type TrainingId } from "../progression/training.ts";
+import { runTrainingBulk, runTrainingOffer, runTrainingValue } from "../progression/run-training.ts";
 import { bindBuyQuantity, buyQuantityHtml, runCount } from "./buy-quantity-select.ts";
-import { trainingText, runTrainingOpen } from "../loadout.ts";
+import { trainingText, runTrainingOpen } from "../progression/loadout.ts";
 import { DECK_ICON, el, itemSprite, POINTER_SVG, uiSprite } from "./dom.ts";
 import { priceAmount, sparkRed } from "./hud.ts";
 
@@ -14,8 +14,16 @@ const GROUP_ICONS: Record<Group, string> = {
   utility: uiSprite("gold", "ui-sprite group-sprite"),
 };
 const silverIcon = () => uiSprite("gold", "ui-sprite silver-sprite");
+/** The arrow on the Auto tab's cards: its hand plays by itself. */
+const AUTO_ARROW = `<svg class="auto-arrow" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 5H8M5.5 2.5L8 5L5.5 7.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+/** What the bar shows in the hand's place: the hand (null), the Manual
+ * hand, or a Training group's rows. */
+type Open = Group | "manual" | null;
 
-/** The run's training bar under the hand: tabs, Hand first, then a button
+/** The run's training bar under the hand: tabs, Hand first (named Auto,
+ * its cards wearing an arrow, once Auto-Climb is owned or the run holds a
+ * Manual hand), then Manual while the run holds a Manual hand, which shows
+ * those cards in the hand's place, to press, then a button
  * for each Training group, each only its icon while not selected, so the
  * bar fits a phone beside Buy Quantity, and its icon and name while
  * selected. Hand, selected as a run starts, shows the hand; a group shows
@@ -27,12 +35,14 @@ const silverIcon = () => uiSprite("gold", "ui-sprite silver-sprite");
  * paused, until the player opens a group and goes back to Hand. */
 export class RunTrainingBar {
   /** The group shown in the hand's place, if any: none is the Hand tab. */
-  private open: Group | null = null;
+  private open: Open = null;
   /** The run the tabs were last drawn for, by mode and seed (undo puts a
    * copy of the run in its place): a new one starts on Hand. */
   private run = "";
   /** The rows the cards were last built for. */
   private shown = "";
+  /** The hand tab's contents as last drawn. */
+  private handTab = "";
   /** The card whose details show, if any. */
   private tipFor: HTMLElement | null = null;
   /** Whether a press (not a mouse passing over) showed the details: the
@@ -50,22 +60,23 @@ export class RunTrainingBar {
   constructor(game: Game | (() => Game), private changed: () => void, private available: (id: TrainingId) => boolean = () => true) {
     this.gameSource=typeof game==="function"?game:()=>game;
     const bar = el("training-bar");
-    bar.innerHTML = `<button type="button" data-run-tab="hand" aria-pressed="true" aria-label="Hand" title="Your card hand">${DECK_ICON}<span class="group-name">Hand</span></button>` + (Object.entries(TRAINING_GROUPS) as [Group, string][])
+    bar.innerHTML = `<button type="button" data-run-tab="hand" aria-pressed="true"></button><button type="button" data-run-tab="manual" aria-pressed="false" aria-label="Manual" title="Your Manual hand: its cards act only when you press them" hidden>${DECK_ICON}<span class="group-name">Manual</span></button>` + (Object.entries(TRAINING_GROUPS) as [Group, string][])
       .map(([group, name]) => `<button type="button" data-run-group="${group}" aria-pressed="false" aria-label="${name}">${GROUP_ICONS[group]}<span class="group-name">${name}</span></button>`)
       .join("") + `<span class="run-buy-quantity"></span>`;
     bar.onclick = (e) => {
       const button = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-run-group], [data-run-tab]");
-      if (button && !button.disabled) this.select((button.dataset.runGroup as Group | undefined) ?? null);
+      if (button && !button.disabled) this.select((button.dataset.runGroup as Group | undefined) ?? (button.dataset.runTab === "manual" ? "manual" : null));
     };
     this.bindCards(el("run-drills"));
   }
 
-  /** Shows `group` in the hand's place, or the hand for none; in the
-   * lesson, going back to the hand from a group opened finishes it. */
-  private select(group: Group | null) {
+  /** Shows `group` (or the Manual hand) in the hand's place, or the hand
+   * for none; in the lesson, going back to the hand from a group opened
+   * finishes it. */
+  private select(group: Open) {
     if (group === this.open) return;
     this.open = group;
-    if (this.lesson && this.open) this.triedGroup = true;
+    if (this.lesson && this.group) this.triedGroup = true;
     else if (this.lesson && this.triedGroup) this.finishLesson();
     this.hideTip();
     this.changed();
@@ -105,35 +116,71 @@ export class RunTrainingBar {
   }
 
   private buy(button: HTMLButtonElement) {
-    if (!this.game.trainInRun(button.dataset.runTrain as TrainingId, this.game.buyQuantityFor("run"))) sparkRed(button, this.game.save.settings.reduceMotion);
+    if (!this.game.trainInRun(button.dataset.runTrain as TrainingId, this.game.training.buyQuantityFor("run"))) sparkRed(button, this.game.save.settings.reduceMotion);
     this.changed();
     this.refreshTip();
   }
 
+  /** The Training group open, if one is. */
+  private get group() {
+    return this.open === "manual" ? null : this.open;
+  }
+
+  /** Whether the Manual hand shows in the hand's place: its tab selected,
+   * inside a run that holds one. */
+  get manualOpen() {
+    return this.open === "manual";
+  }
+
+  /** Whether the run holds a Manual hand, to show and press. */
+  private get holdsManual() {
+    return !this.game.run.outside && this.game.manualHand.length > 0;
+  }
+
   /** Shows the bar inside a run, and the open group's cards in the hand's place. */
   render() {
-    const game = this.game, inside = !game.run.outside && game.trainsOnTheJob;
+    const game = this.game, training = !game.run.outside && game.trainsOnTheJob, inside = training || this.holdsManual;
     el("training-bar").hidden = !inside;
     // Hand is selected outside a run and as one starts, and once the open
-    // group has no rows to train.
+    // group has no rows to train (or the run no Manual hand).
     const run = `${game.mode}:${game.run.seed}`;
-    if (!inside || run !== this.run || (this.open && !this.rows(this.open).length)) this.open = null;
+    const gone = this.open === "manual" ? !this.holdsManual : this.open && !this.rows(this.open).length;
+    if (!inside || run !== this.run || gone) this.open = null;
     this.run = run;
-    this.renderGroups();
+    this.renderTabs(training);
     this.renderQuantity();
-    const rows = this.open ? this.rows(this.open) : [];
-    document.querySelector("nav")!.classList.toggle("drilling", !!this.open);
+    const group = this.group, rows = group ? this.rows(group) : [];
+    document.querySelector("nav")!.classList.toggle("drilling", !!group);
     this.renderCards(rows);
     this.renderLesson(inside);
   }
 
-  /** Each group's button: closed with no rows to train, lit while open; Hand lit while none is. */
-  private renderGroups() {
-    const hand = el("training-bar").querySelector<HTMLButtonElement>("[data-run-tab]")!;
+  /** The hand's tab, named Auto with an arrow on its cards once Auto-Climb
+   * is owned or the run holds a Manual hand, and Hand before; Manual's tab,
+   * only while the run holds a Manual hand; each lit while selected. Each
+   * group's button (none in a run that shows the bar only for its Manual
+   * hand, before On the Job, `training`): closed with no rows to train, lit
+   * while open. */
+  private renderTabs(training: boolean) {
+    const bar = el("training-bar"), hand = bar.querySelector<HTMLButtonElement>(`[data-run-tab="hand"]`)!;
+    const manual = bar.querySelector<HTMLButtonElement>(`[data-run-tab="manual"]`)!, auto = this.game.autoClimbs || this.holdsManual;
+    const html = auto
+      ? `<span class="tab-icon">${DECK_ICON}${AUTO_ARROW}</span><span class="group-name">Auto</span>`
+      : `${DECK_ICON}<span class="group-name">Hand</span>`;
+    if (this.handTab !== html) {
+      this.handTab = html;
+      hand.innerHTML = html;
+      hand.setAttribute("aria-label", auto ? "Auto" : "Hand");
+      hand.title = auto ? "Your Auto hand: its cards play by themselves" : "Your card hand";
+    }
     hand.classList.toggle("selected", !this.open);
     hand.setAttribute("aria-pressed", String(!this.open));
+    manual.hidden = !this.holdsManual;
+    manual.classList.toggle("selected", this.open === "manual");
+    manual.setAttribute("aria-pressed", String(this.open === "manual"));
     document.querySelectorAll<HTMLButtonElement>("[data-run-group]").forEach((b) => {
       const group = b.dataset.runGroup as Group, open = this.rows(group).length > 0;
+      b.hidden = !training && this.holdsManual;
       b.disabled = !open;
       b.title = open ? `${TRAINING_GROUPS[group]} training for this run, with Silver` : `No ${TRAINING_GROUPS[group]} training unlocked yet`;
       b.classList.toggle("selected", group === this.open);
@@ -144,13 +191,13 @@ export class RunTrainingBar {
   /** The Buy Quantity dropdown, built again only when its choices change. */
   private renderQuantity() {
     const slot = el("training-bar").querySelector<HTMLElement>(".run-buy-quantity")!;
-    const html = buyQuantityHtml(this.game.buyQuantities, this.game.buyQuantityFor("run"));
+    const html = buyQuantityHtml(this.game.training.buyQuantities, this.game.training.buyQuantityFor("run"));
     if (slot.dataset.html !== html) {
       slot.dataset.html = html;
       slot.innerHTML = html;
       // Buy Quantity, at the right of the group buttons once the skill is owned.
       bindBuyQuantity(slot, (q) => {
-        this.game.setBuyQuantity(q, "run");
+        this.game.training.setBuyQuantity(q, "run");
         this.changed();
       });
     }
@@ -200,7 +247,7 @@ export class RunTrainingBar {
     note.style.bottom = `${document.querySelector("nav")!.offsetHeight + 8}px`;
     // Open, a group points back to Hand; on Hand, at the first group that opens.
     const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>("[data-run-group]"));
-    const at = this.open ? bar.querySelector<HTMLButtonElement>("[data-run-tab]")! : buttons.find((b) => !b.disabled) ?? buttons[0];
+    const at = this.group ? bar.querySelector<HTMLButtonElement>(`[data-run-tab="hand"]`)! : buttons.find((b) => !b.disabled) ?? buttons[0];
     // The selected button is wider than the rest: point at its middle.
     pointer.style.left = `${at.offsetLeft + at.offsetWidth / 2}px`;
   }
@@ -221,7 +268,7 @@ export class RunTrainingBar {
   }
 
   private lessonText() {
-    return this.open
+    return this.group
       ? `<b>Training for this run</b><p>Press a card's price to buy a rank with ${silverIcon()} Silver. Press HAND to bring your cards back.</p>`
       : `<b>Train on the Job</b><p>Spend the ${silverIcon()} Silver you find on upgrades that raise your stats for the rest of this run. Press any of the three menus beside HAND to open it, then HAND to bring your cards back.</p>`;
   }
@@ -229,7 +276,7 @@ export class RunTrainingBar {
   /** The rows of `group` the hero can train in this run (the shot rows
    * only while the hand holds ARCHER). */
   private rows(group: Group): TrainingId[] {
-    return TRAINING.filter((t) => t.group === group && this.available(t.id) && runTrainingOpen(t, this.game.save, this.game.hand)).map((t) => t.id);
+    return TRAINING.filter((t) => t.group === group && this.available(t.id) && runTrainingOpen(t, this.game.save, this.game.held)).map((t) => t.id);
   }
 
   /** One card's value and price (for the ranks the Buy Quantity buys, past
@@ -238,7 +285,7 @@ export class RunTrainingBar {
   private fill(id: TrainingId) {
     const game = this.game, card = document.querySelector<HTMLElement>(`[data-drill="${id}"]`)!;
     const offer = runTrainingOffer(game.save, game.run, id), { value, unit } = runTrainingValue(game.save, game.run, id, game.mode);
-    const q = game.buyQuantityFor("run"), bulk = runTrainingBulk(game.save, game.run, id, q, game.free ? Infinity : game.silver);
+    const q = game.training.buyQuantityFor("run"), bulk = runTrainingBulk(game.save, game.run, id, q, game.free ? Infinity : game.silver);
     const short = !offer.maxed && !bulk.affordable;
     card.classList.toggle("short", short);
     card.classList.toggle("maxed", offer.maxed);

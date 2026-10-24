@@ -15,7 +15,7 @@ import { onCityArtLoaded, paintCityLayer } from "./city-layer.ts";
 import { carriedLights, drawDamage, drawScorches, drawUnits, shadowCasters, type Brush } from "./battle-art.ts";
 import { drawGrid, drawOverlay, type Overlay } from "./edit-overlay.ts";
 import { drawFlag } from "./structure-art.ts";
-import { spriteRevision } from "../sprite-kit.ts";
+import { spriteRevision } from "../sprites/kit.ts";
 
 export type DrawOptions = {
   styledSprites?: boolean;

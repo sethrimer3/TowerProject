@@ -1,19 +1,20 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { decode, defaults } from "../src/save.ts";
+import { decode } from "../src/save/save.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
-import { RESEARCH, missing, research } from "../src/archives.ts";
-import { BADGES, drawable, defaultBadges } from "../src/badges.ts";
-import { DashEchoes, DASH_ECHO_MS } from "../src/dash-echoes.ts";
-import type { FrameContext } from "../src/render-frame.ts";
+import { RESEARCH, missing, research } from "../src/progression/archives.ts";
+import { BADGES, drawable, defaultBadges } from "../src/cards/badges.ts";
+import { DashEchoes, DASH_ECHO_MS } from "../src/render/effects/dash-echoes.ts";
+import type { FrameContext } from "../src/render/render-frame.ts";
+import { playedSave } from "./first-skills.ts";
 
 /** A Tower corridor along the bottom row: the hero at its west end, a
  * gold key on x = 5 and the stairs at x = 7, with the Dash skill owned (or
  * not) and
  * `levels` Dash research levels done. */
 function corridor(levels: number, skill = true) {
-  const g = new Game(defaults());
+  const g = new Game(playedSave());
   g.save.upgrades.inspirationUndos = 1; // undo needs Rehearsed steps
   if (skill) g.save.upgrades.dash = 1;
   if (levels) g.save.archives.levels.dash = levels;
@@ -32,7 +33,7 @@ function corridor(levels: number, skill = true) {
 const at = (g: Game) => [g.run.player.x, g.run.player.y];
 
 test("Dash research needs the Dash skill: 25 levels, Gold doubling and time growing 20% a level", () => {
-  const save = defaults();
+  const save = playedSave();
   assert.equal(missing(save, "dash").length, 1);
   save.upgrades.dash = 1;
   assert.equal(missing(save, "dash").length, 0);
@@ -155,7 +156,7 @@ function toKey(levels: number) {
 }
 
 test("End Rush research needs the End Rush skill and follows Dash's schedule", () => {
-  const save = defaults();
+  const save = playedSave();
   save.upgrades.dash = 1;
   assert.equal(missing(save, "endRush").length, 1);
   save.upgrades.endRush = 1;
@@ -167,7 +168,7 @@ test("End Rush research needs the End Rush skill and follows Dash's schedule", (
 });
 
 test("Dash Regen research needs the Dash Regen skill, after End Rush, and costs Dash's total Gold and time over 35 cheaper levels", () => {
-  const save = defaults();
+  const save = playedSave();
   save.upgrades.dash = save.upgrades.endRush = 1;
   assert.equal(missing(save, "dashRegen").length, 1);
   save.upgrades.dashRegen = 1;
@@ -233,25 +234,11 @@ test("the Dash badge adds its value to its card's dash, stacking with Dash and E
 });
 
 test("the Dash badge joins the draw once the Dash Badge skill is owned", () => {
-  const save = defaults();
+  const save = playedSave();
   assert.equal(BADGES.dash.rarity, "rare");
   assert.ok(!drawable(defaultBadges(), "dash", save.upgrades));
   save.upgrades.dashBadge = 1;
   assert.ok(drawable(defaultBadges(), "dash", save.upgrades));
-});
-
-test("a save from before Rush became Dash keeps its skills, research and badge under the new names", () => {
-  const old: any = JSON.parse(JSON.stringify(defaults()));
-  for (const id of ["dash", "dashRegen", "dashBadge"]) delete old.upgrades[id];
-  Object.assign(old.upgrades, { rush: 1, rushRegen: 1, rushBadge: 1 });
-  delete old.archives.levels.dash;
-  delete old.archives.levels.dashRegen;
-  Object.assign(old.archives.levels, { rush: 3, rushRegen: 2 });
-  old.badges.owned = { rush: { copies: 1, pick: 0 } };
-  const save = decode(JSON.stringify(old));
-  assert.deepEqual([save.upgrades.dash, save.upgrades.dashRegen, save.upgrades.dashBadge], [1, 1, 1]);
-  assert.deepEqual([save.archives.levels.dash, save.archives.levels.dashRegen], [3, 2]);
-  assert.deepEqual(save.badges.owned.dash, { copies: 1, pick: 0 });
 });
 
 /** The tiles `echoes` paints a hero on at `now`, in the order painted. */

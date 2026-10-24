@@ -1,6 +1,6 @@
 import { controlIcon } from "./control-icon.ts";
-import { kitIcon } from "../sprite-kit.ts";
-import { GOAL_SPRITES } from "../sprite-ui-details.ts";
+import { kitIcon } from "../sprites/kit.ts";
+import { GOAL_SPRITES } from "../sprites/ui-details.ts";
 import { CHECKPOINT_EVERY, CHECKPOINT_FLOORS, CHECKPOINTS, UNLOCK_NAMES, areaCleared, checkpoint, areaMastered, canWarp, floorsCompleted, goalState, unmasteredBelow, passFor, passTotals, unlockAt, unlockFloor, warpUnlocked, type Checkpoint, type GoalReward, type GoalState, type GoalUnlock, type Pass } from "../goals.ts";
 import { CURRENCIES, type CurrencyId } from "../shop/currency.ts";
 import { owns } from "../shop/entitlements.ts";
@@ -402,7 +402,7 @@ export class GoalsPage {
       const paid = dev || (await this.server.purchase(pass.sku));
       if (!paid) return void (el("pass-message").textContent = "The store isn't open yet.");
       const now = (await this.server.time()) ?? game.clock();
-      const refused = game.buyOffer(pass.id as Parameters<typeof game.buyOffer>[0], now, true);
+      const refused = game.shop.buy(pass.id as Parameters<typeof game.shop.buy>[0], now, true);
       if (refused) return void (el("pass-message").textContent = "Already yours.");
       this.ctx.modal.close();
       this.message = `Premium Pass ${pass.n} unlocked!`;

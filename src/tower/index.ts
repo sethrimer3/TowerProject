@@ -2,11 +2,12 @@ import { TOWER_SECTION, TOWER_START_X, UNGUARDED_LOOT_CHANCE } from "../config.t
 import { point, type Tile, type KeyColor } from "../entities.ts";
 import { random } from "../random.ts";
 import { reachable } from "../board.ts";
-import { getTowerGateEnemy } from "../scaling.ts";
+import { getTowerGateEnemy } from "../enemies/scaling.ts";
 import type { XY } from "./grid.ts";
 import { analyzeFloor, formatFloorSummary, type FloorAnalysis } from "./analyzer.ts";
 import { embed, ENTRY, type Embedding } from "./embedder.ts";
 import { placeEnemies } from "./enemy-stage.ts";
+import { fixIntroFloor } from "./intro-floors.ts";
 import { GraphBuilder } from "./graph-builder.ts";
 import { generateStrategicGraph } from "./strategic-graph.ts";
 import { keyedFloor, openFirstFloor } from "./patterns.ts";
@@ -19,7 +20,8 @@ import { ALL_KEY_COLORS, keepsKey, towerKeyColorsOn, type KeyColors } from "../k
  *     → forks (parallel lanes of gates)          forks.ts
  *     → resource planning (key/door economy)     resource-planner.ts
  *     → spatial embedding (chambers + doorways)  embedder.ts
- *     → enemies: the schedule's count and mix    enemy-stage.ts
+ *     → enemies: the schedule's count and mix    enemies/stage.ts
+ *     → Tower I's first two floors' lessons       intro-floors.ts
  *     → geometry checks (never economy checks)   below
  *     → analysis for tuning/debugging            analyzer.ts
  *
@@ -97,6 +99,8 @@ export function generateTowerFloor(seed: number, room: number, tier = 1): TowerF
       cells.set(point(...insideStairs(embedding.stairs)), { kind: "enemy", enemy: getTowerGateEnemy(room, "boss", "balanced", tier) });
     // The enemy schedule's count and shares, on a stream of their own.
     embedding.graph.enemyCount = placeEnemies(cells, embedding, room, tier, random((derived ^ 0x2545f491) >>> 0), [insideStairs(embedding.stairs)]);
+    // Tower I's first two floors, as the first lessons need them, on a stream of their own.
+    fixIntroFloor(cells, embedding, room, tier, random((derived ^ 0x1e550a5) >>> 0));
     // The rare unguarded find: only on floor reachable without a fight.
     const blockers = new Set([...cells].filter(([, t]) => t.kind === "enemy").map(([k]) => k));
     for (const k of reachable(cells, point(TOWER_START_X, 0), blockers))

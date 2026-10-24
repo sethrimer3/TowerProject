@@ -1,13 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
-import { THEMED_BOARDS } from "../src/themed-boards.ts";
-import { ARCADE } from "../src/arcade-board.ts";
-import { PIXEL } from "../src/pixel-board.ts";
-import { DOODLE } from "../src/doodle-board.ts";
-import { MURK } from "../src/murk-board.ts";
+import { THEMED_BOARDS } from "../src/render/boards/themed-boards.ts";
+import { ARCADE } from "../src/render/boards/arcade-board.ts";
+import { PIXEL } from "../src/render/boards/pixel-board.ts";
+import { DOODLE } from "../src/render/boards/doodle-board.ts";
+import { MURK } from "../src/render/boards/murk-board.ts";
 
 /** A Tower room of open floor, x 0..4 by y 0..4, the hero at its middle,
  * a wall at (3, 2) and an enemy at (2, 3). */

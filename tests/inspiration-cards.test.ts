@@ -1,19 +1,21 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save.ts";
-import { TRAINING, cost, trained, type StatTrainingRow, type UpgradeId } from "../src/config.ts";
-import { deckCards, planHand, upgradeCard, type CardId } from "../src/cards.ts";
-import { TREES } from "../src/skill-trees.ts";
+import { TRAINING, trained, type StatTrainingRow } from "../src/progression/training.ts";
+import { cost, type UpgradeId } from "../src/progression/upgrades.ts";
+import { deckCards, planHand, upgradeCards, type CardId } from "../src/cards/cards.ts";
+import { TREES } from "../src/progression/skill-trees.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import type { EnemyStrength, Tile } from "../src/entities.ts";
-import type { Save } from "../src/save-shape.ts";
+import type { Save } from "../src/save/shape.ts";
+import { playedSave } from "./first-skills.ts";
 
 /** The new Inspiration card nodes, in the order they can be bought, with
  * their price, the node each needs and its card (null for a node that opens
- * research instead). */
+ * research or the Manual hand instead). */
 const NODES: [UpgradeId, number, UpgradeId, CardId | null][] = [
-  ["cardYellowDoor", 5, "keySiphon", "yellowDoor"],
+  ["manualHand", 10, "keySiphon", null],
+  ["cardYellowDoor", 5, "manualHand", "yellowDoor"],
   ["heartDoorResilience", 20, "cardYellowDoor", null],
   ["cardHeartDoor", 10, "heartDoorResilience", "heartDoor"],
   ["cardWeakEnemy", 20, "cardYellowDoor", "weakEnemy"],
@@ -25,8 +27,11 @@ const NODES: [UpgradeId, number, UpgradeId, CardId | null][] = [
   ["cardNonBossEnemy", 40, "cardBossEnemy", "nonBossEnemy"],
   ["cardChest", 20, "cardWeakEnemy", "chest"],
   ["blueSiphon", 20, "cardChest", "blueSiphon"],
-  ["blueTrader", 20, "blueSiphon", "blueTrader"],
-  ["keyToHp", 20, "blueTrader", "keyToHp"],
+  ["keyToHp", 20, "blueSiphon", "keyToHp"],
+  ["blueTrader", 20, "keyToHp", "blueTrader"],
+  ["smeltBlue", 20, "blueTrader", "smeltBlue"],
+  ["redTrader", 30, "smeltBlue", "redTrader"],
+  ["smeltRed", 30, "redTrader", "smeltRed"],
   ["cardRedKey", 20, "blueSiphon", "redKey"],
   ["redSiphon", 20, "cardRedKey", "redSiphon"],
   ["floorSkipReward", 20, "blueSiphon", null],
@@ -35,34 +40,36 @@ const NODES: [UpgradeId, number, UpgradeId, CardId | null][] = [
 ];
 
 test("each card node costs its price, waits for the node above it and adds its card to the deck", () => {
-  const g = new Game(defaults());
+  const g = new Game(playedSave());
   g.save.tower.inspiration = 10_000;
-  for (const id of ["combatStance", "buildout", "trainers", "shroud", "critical", "archives", "delve", "lifesteal", "buyQuantity", "thorns", "keySiphon"] as const) assert.ok(g.buy(id));
+  for (const id of ["combatStance", "buildout", "trainers", "shroud", "critical", "archives", "delve", "lifesteal", "buyQuantity", "thorns", "keySiphon"] as const) assert.ok(g.skills.buy(id));
   const nodes = TREES.find((t) => t.id === "inspiration")!.nodes;
   for (const [id, price, requires, card] of NODES) {
     assert.deepEqual(nodes.find((n) => n.id === id)!.requires, [requires], id);
     assert.equal(cost(id, 0), price, id);
-    assert.equal(upgradeCard(id) ?? null, card);
+    assert.equal(upgradeCards(id)[0] ?? null, card);
     if (card) assert.ok(!deckCards(g.save.upgrades).includes(card));
     const before = g.save.tower.inspiration;
-    assert.ok(g.buy(id), id);
+    assert.ok(g.skills.buy(id), id);
     assert.equal(before - g.save.tower.inspiration, price);
     if (card) assert.ok(deckCards(g.save.upgrades).includes(card), `${card} joins the deck`);
   }
-  assert.equal(g.buy("cardTorch"), false, "bought once");
+  assert.equal(g.skills.buy("cardTorch"), false, "bought once");
 });
 
 test("a card node can't be bought before the one above it", () => {
-  const g = new Game(defaults());
+  const g = new Game(playedSave());
   g.save.tower.inspiration = 10_000;
-  assert.equal(g.buy("cardYellowDoor"), false);
+  assert.equal(g.skills.buy("cardYellowDoor"), false);
   g.save.upgrades.keySiphon = 1;
-  assert.equal(g.buy("cardHeartDoor"), false);
-  assert.ok(g.buy("cardYellowDoor"));
-  assert.equal(g.buy("cardHeartDoor"), false);
-  assert.ok(g.buy("heartDoorResilience"));
-  assert.ok(g.buy("cardHeartDoor"));
-  assert.ok(g.buy("cardWeakEnemy"), "Weak Enemy hangs straight off Gold Door");
+  assert.equal(g.skills.buy("cardHeartDoor"), false);
+  assert.equal(g.skills.buy("cardYellowDoor"), false, "Manual Hand comes first");
+  assert.ok(g.skills.buy("manualHand"));
+  assert.ok(g.skills.buy("cardYellowDoor"));
+  assert.equal(g.skills.buy("cardHeartDoor"), false);
+  assert.ok(g.skills.buy("heartDoorResilience"));
+  assert.ok(g.skills.buy("cardHeartDoor"));
+  assert.ok(g.skills.buy("cardWeakEnemy"), "Weak Enemy hangs straight off Gold Door");
 });
 
 const enemy = (strength: EnemyStrength): Tile => ({ kind: "enemy", enemy: { name: "rat", hp: 1, attack: 0, defense: 0, tier: 0, strength } });
@@ -70,7 +77,7 @@ const enemy = (strength: EnemyStrength): Tile => ({ kind: "enemy", enemy: { name
 /** A Tower floor: a corridor along row 0, from x = 0 to 12, with the hero
  * at x = 6 and `side` tiles in the pockets above it (row 1). */
 function floor(side: Record<number, Tile>, edit: (save: Save) => void = () => {}) {
-  const save = defaults();
+  const save = playedSave();
   save.upgrades.inspirationUndos = 1;
   edit(save);
   const g = new Game(save);
@@ -208,7 +215,7 @@ for (const [card, id, color] of [["blueSiphon", "defense", "blue"], ["redSiphon"
   });
 }
 
-test("BK TRADER trades 3 gold keys for a blue key, while 3 are held", () => {
+test("GK -> BK trades 3 gold keys for a blue key, while 3 are held", () => {
   const g = floor({});
   g.run.hand = ["blueTrader", "stairs"];
   const p = g.run.player;
@@ -222,7 +229,19 @@ test("BK TRADER trades 3 gold keys for a blue key, while 3 are held", () => {
   assert.deepEqual([g.run.player.keys.yellow, g.run.player.keys.blue], [4, 1], "undo takes a trade back");
 });
 
-test("GK TO HP trades a gold key for 10% of max HP, only while that much is missing", () => {
+test("BK -> RK trades 3 blue keys for a red key, while 3 are held", () => {
+  const g = floor({});
+  g.run.hand = ["redTrader", "stairs"];
+  const p = g.run.player;
+  Object.assign(p.keys, { yellow: 5, blue: 4, red: 0 });
+  g.autoTurn();
+  assert.deepEqual([p.x, p.keys.yellow, p.keys.blue, p.keys.red], [6, 5, 1, 1]);
+  assert.equal(g.handRules.canAct("redTrader"), false);
+  assert.ok(g.undo());
+  assert.deepEqual([g.run.player.keys.blue, g.run.player.keys.red], [4, 0], "undo takes a trade back");
+});
+
+test("Smelt GK trades a gold key for 10% of max HP, only while that much is missing", () => {
   const g = floor({});
   g.run.hand = ["keyToHp", "stairs"];
   const p = g.run.player;
@@ -239,9 +258,28 @@ test("GK TO HP trades a gold key for 10% of max HP, only while that much is miss
   assert.equal(g.handRules.canAct("keyToHp"), false, "no key");
 });
 
+for (const [card, color, percent] of [["smeltBlue", "blue", 30], ["smeltRed", "red", 90]] as const) {
+  test(`${card === "smeltBlue" ? "Smelt BK" : "Smelt RK"} trades a ${color} key for ${percent}% of max HP, only while that much is missing`, () => {
+    const g = floor({});
+    g.run.hand = [card, "stairs"];
+    const p = g.run.player;
+    Object.assign(p.keys, { yellow: 3, blue: 0, red: 0 }, { [color]: 2 });
+    p.hp = p.maxHp * (1 - percent / 100) + 1;
+    assert.equal(g.handRules.canAct(card), false, "missing less than its heal");
+    p.hp = p.maxHp * (0.95 - percent / 100);
+    g.autoTurn();
+    assert.deepEqual([p.x, p.keys[color], p.keys.yellow], [6, 1, 3]);
+    assert.ok(near(p.hp, p.maxHp * 0.95));
+    p.keys[color] = 0;
+    p.hp = 1;
+    assert.equal(g.handRules.canAct(card), false, "no key");
+  });
+}
+
 test("no card acts in place in the forest", () => {
   const g = floor({}, (s) => Object.assign(s.training, { attack: 3, defense: 3 }));
   g.run.player.keys.yellow = 5;
   g.newRun({ outside: true, seed: 9 });
-  for (const card of ["blueSiphon", "redSiphon", "blueTrader", "keyToHp"] as const) assert.equal(g.handRules.canAct(card), false, card);
+  Object.assign(g.run.player.keys, { blue: 5, red: 5 });
+  for (const card of ["blueSiphon", "redSiphon", "blueTrader", "redTrader", "keyToHp", "smeltBlue", "smeltRed"] as const) assert.equal(g.handRules.canAct(card), false, card);
 });

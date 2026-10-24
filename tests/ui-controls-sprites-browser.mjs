@@ -30,10 +30,10 @@ try {
   await page.goto(server.resolvedUrls.local[0]); await page.locator("#hp").waitFor();
   assert.equal(await page.locator("html").evaluate(e => e.classList.contains("ui-sprites")), false);
   await page.evaluate(async () => {
-    const { defaults } = await import("/src/save.ts"); const { Game } = await import("/src/state.ts");
+    const { defaults } = await import("/src/save/save.ts"); const { Game } = await import("/src/state.ts");
     const s = defaults(); Object.keys(s.tutorials).forEach(k => s.tutorials[k] = true);
     Object.assign(s.upgrades, { combatStance: 1, buildout: 1, overheal: 1 }); s.training.overheal = 100;
-    Object.assign(s.settings, { uiSprites: true, reduceMotion: true, transition: "instant", weatherSound: false });
+    Object.assign(s.settings, { reduceMotion: true, transition: "instant", weatherSound: false });
     const g = new Game(s); g.newRun({ seed: 7 }); g.run.player.hp = g.hpCeiling;
     sessionStorage.setItem("__controlSpriteFixture", JSON.stringify(g.save));
   });
@@ -80,8 +80,8 @@ try {
   await page.locator("#themes-back .sprite-replacement").click();
   for (const [uiTheme, gameTheme, sprites, shown] of [["medieval", "classic", true, true], ["neon", "classic", true, false], ["medieval", "pixel", true, true], ["medieval", "classic", false, false]]) {
     await page.evaluate(async ({ uiTheme, gameTheme, sprites }) => {
-      const { defaults } = await import("/src/save.ts"); const { applyUiTheme } = await import("/src/ui/medieval.ts");
-      const s = defaults(); s.themes.push("neonUi", "pixelGame"); Object.assign(s.settings, { uiSprites: sprites, uiTheme, gameTheme }); applyUiTheme(s);
+      const { defaults } = await import("/src/save/save.ts"); const { applyUiTheme } = await import("/src/ui/medieval.ts");
+      const s = defaults(); s.themes.push("neonUi", "pixelGame"); Object.assign(s.settings, { uiTheme: sprites ? uiTheme : "neon", gameTheme }); applyUiTheme(s);
     }, { uiTheme, gameTheme, sprites });
     assert.equal(await page.locator("#settings-back .sprite-replacement").isVisible(), shown);
     assert.equal(await range.evaluate(e => getComputedStyle(e).getPropertyValue("--ui-slider-thumb").includes("ui-slider-thumb")), shown);
@@ -89,7 +89,7 @@ try {
   await page.reload(); await openMenu(page); await page.locator("#auto-settings").click(); await ready("#settings");
   assert.equal(await range.inputValue(), savedBrightness);
   await page.locator("#settings-back .ui-control-icon").evaluate(e => { e.classList.remove("sprite-ready"); e.querySelector("img").removeAttribute("src"); });
-  assert.equal(await page.locator("#settings-back .sprite-fallback").evaluate(e => getComputedStyle(e).visibility), "visible");
+  assert.equal(await page.locator("#settings-back .theme-art").evaluate(e => getComputedStyle(e).visibility), "visible");
   await page.evaluate(async () => {
     const { revealReward, offerShown } = await import("/src/ui/reward-reveal.ts");
     const { OFFERS } = await import("/src/shop/offers.ts"); const { ENTITLEMENTS } = await import("/src/shop/entitlements.ts");

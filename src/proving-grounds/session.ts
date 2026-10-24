@@ -1,4 +1,4 @@
-import type {TrainingId} from "../config.ts";
+import type { TrainingId } from "../progression/training.ts";
 import { Game } from "../state.ts";
 import { random } from "../random.ts";
 import type { TowerRun } from "../runs.ts";

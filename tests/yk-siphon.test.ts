@@ -1,41 +1,42 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save.ts";
-import { TRAINING, cost, trained, type StatTrainingRow } from "../src/config.ts";
-import { deckCards, planHand } from "../src/cards.ts";
-import { RESEARCH } from "../src/archives.ts";
-import { loadout } from "../src/loadout.ts";
+import { TRAINING, trained, type StatTrainingRow } from "../src/progression/training.ts";
+import { cost } from "../src/progression/upgrades.ts";
+import { deckCards, planHand } from "../src/cards/cards.ts";
+import { RESEARCH } from "../src/progression/archives.ts";
+import { loadout } from "../src/progression/loadout.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
-import type { Save } from "../src/save-shape.ts";
+import type { Save } from "../src/save/shape.ts";
+import { playedSave } from "./first-skills.ts";
 
 const hpRow = TRAINING.find((t) => t.id === "hp")! as StatTrainingRow;
 
 test("Rehearsed steps costs 5; Lifesteal (10) follows Into the depths, Buy Quantity (5) Lifesteal, Thorns (10) Buy Quantity, GK Siphon (5) Thorns, Regen Research (10) Shroud", () => {
   assert.equal(cost("inspirationUndos", 0), 5);
-  const g = new Game(defaults());
+  const g = new Game(playedSave());
   g.save.tower.inspiration = 1000;
-  for (const id of ["combatStance", "buildout", "trainers", "shroud", "critical", "archives"] as const) assert.ok(g.buy(id));
-  assert.equal(g.buy("lifesteal"), false, "waits for Into the depths");
-  assert.ok(g.buy("delve"));
-  assert.equal(g.buy("buyQuantity"), false, "waits for Lifesteal");
-  assert.equal(g.buy("thorns"), false, "waits for Buy Quantity");
-  assert.equal(g.buy("keySiphon"), false, "waits for Thorns");
-  assert.equal(g.buy("regenResearch"), false, "waits for Greater Heal");
+  for (const id of ["combatStance", "buildout", "trainers", "shroud", "critical", "archives"] as const) assert.ok(g.skills.buy(id));
+  assert.equal(g.skills.buy("lifesteal"), false, "waits for Into the depths");
+  assert.ok(g.skills.buy("delve"));
+  assert.equal(g.skills.buy("buyQuantity"), false, "waits for Lifesteal");
+  assert.equal(g.skills.buy("thorns"), false, "waits for Buy Quantity");
+  assert.equal(g.skills.buy("keySiphon"), false, "waits for Thorns");
+  assert.equal(g.skills.buy("regenResearch"), false, "waits for Greater Heal");
   const before = g.save.tower.inspiration;
-  assert.ok(g.buy("lifesteal"));
+  assert.ok(g.skills.buy("lifesteal"));
   assert.equal(before - g.save.tower.inspiration, 10);
-  assert.ok(g.buy("buyQuantity"));
+  assert.ok(g.skills.buy("buyQuantity"));
   assert.equal(before - g.save.tower.inspiration, 10 + 5);
-  assert.equal(g.buy("keySiphon"), false, "waits for Thorns");
-  assert.ok(g.buy("thorns"));
+  assert.equal(g.skills.buy("keySiphon"), false, "waits for Thorns");
+  assert.ok(g.skills.buy("thorns"));
   assert.equal(before - g.save.tower.inspiration, 10 + 5 + 10);
-  assert.ok(g.buy("keySiphon"));
+  assert.ok(g.skills.buy("keySiphon"));
   assert.equal(before - g.save.tower.inspiration, 10 + 5 + 10 + 5);
   assert.ok(deckCards(g.save.upgrades).includes("keySiphon"), "its card joins the deck");
-  assert.equal(g.buy("regenResearch"), false, "waits for Greater Heal");
-  assert.ok(g.buy("greaterHeal"));
-  assert.ok(g.buy("regenResearch"));
+  assert.equal(g.skills.buy("regenResearch"), false, "waits for Greater Heal");
+  assert.ok(g.skills.buy("greaterHeal"));
+  assert.ok(g.skills.buy("regenResearch"));
   assert.equal(before - g.save.tower.inspiration, 10 + 5 + 10 + 5 + 3 + 10);
 });
 
@@ -43,7 +44,7 @@ test("Regen research: +3% Regen a level, priced and timed like Potion HP, needin
   assert.deepEqual(RESEARCH.regen.requires, [{ upgrade: "regenResearch" }]);
   assert.deepEqual(RESEARCH.regen.levels.map((l) => [l.gold, l.hours]), RESEARCH.potionHp.levels.map((l) => [l.gold, l.hours]));
   assert.ok(RESEARCH.regen.levels.every((l) => l.effect.target === "regenPercent" && l.effect.op === "add" && l.effect.value === 3));
-  const g = new Game(defaults());
+  const g = new Game(playedSave());
   g.run.player.regen = 0.5;
   g.save.archives.levels.regen = 10;
   assert.equal(g.stepRules.regen, 0.65, "130% of 0.5");
@@ -53,7 +54,7 @@ test("Regen research: +3% Regen a level, priced and timed like Potion HP, needin
  * hero at its west end holding GK SIPHON then STAIRS, with `ranks` of Max
  * HP training. */
 function corridor(ranks: number, edit: (save: Save) => void = () => {}) {
-  const save = defaults();
+  const save = playedSave();
   save.upgrades.keySiphon = 1;
   save.upgrades.inspirationUndos = 1;
   save.training.hp = ranks;

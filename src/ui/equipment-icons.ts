@@ -1,4 +1,4 @@
-import { kitIcon } from "../sprite-kit.ts";
+import { kitIcon } from "../sprites/kit.ts";
 import { itemDef, type CategoryId, type EquipMaterialId } from "../equipment/catalog.ts";
 
 // Pixel icons for Equipment, drawn as inline SVG from 12×12 rows so they

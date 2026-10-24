@@ -16,12 +16,12 @@ try {
   const read=()=>page.evaluate(()=>JSON.parse(localStorage.getItem("towerdelve.v1")));
   async function scene(kind) {
     await page.evaluate(async(kind)=> {
-      const {Game}=await import("/src/state.ts"),{defaults}=await import("/src/save.ts");
+      const {Game}=await import("/src/state.ts"),{defaults}=await import("/src/save/save.ts");
       const {startTrial,trialStep,propDestroyed}=await import("/src/proving-grounds/trial.ts");
       const g=new Game(defaults());g.newRun({outside:true,seed:12});
       for(const key of Object.keys(g.save.tutorials))g.save.tutorials[key]=true;
       g.save.settings.reduceMotion=true;
-      g.save.settings.uiSprites=true;
+
       const s=startTrial({maxHp:1000,attack:10,defense:0},"manual",g.hand,12,kind.startsWith("slime")?45:30);
       s.room="arena";s.player.x=12;s.player.y=4;s.elemental.x=12;s.elemental.y=16;
       if(kind==="lit" || kind==="dark") {

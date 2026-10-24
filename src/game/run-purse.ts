@@ -1,26 +1,27 @@
-import { researched } from "../archives.ts";
-import { ENEMY_GOLD, FAST_GOLD, PICKUP_GOLD, RANGED_GOLD, SHIELDED_GOLD, silverForKill, trainedAmount } from "../config.ts";
+import { researched } from "../progression/archives.ts";
+import { ENEMY_GOLD, FAST_GOLD, PICKUP_GOLD, RANGED_GOLD, SHIELDED_GOLD, silverForKill } from "../economy/kill-pay.ts";
+import { trainedAmount } from "../progression/training.ts";
 import type { RoomWorld } from "../tower/room-world.ts";
 import { snap } from "../exact.ts";
-import { averageGold, rollGold } from "../loot.ts";
+import { averageGold, rollGold } from "../economy/loot.ts";
 import { pickupGold } from "../doors.ts";
 import { litTorches } from "../board.ts";
 import { point, type ChestKind, type Enemy, type Mode, type Tile } from "../entities.ts";
-import type { Run } from "../runs.ts";
-import type { Save } from "../save-shape.ts";
+import { heldCards, type Run } from "../runs.ts";
+import type { Save } from "../save/shape.ts";
 import { MODES, type ModeProfile } from "../modes.ts";
-import { ranksInRun } from "../run-training.ts";
-import { goldBanked, silverFound, type GoldContext } from "../gold-multipliers.ts";
+import { ranksInRun } from "../progression/run-training.ts";
+import { goldBanked, silverFound, type GoldContext } from "../economy/gold-multipliers.ts";
 import { wornEffects } from "../equipment/effects.ts";
 import { keepDrop, rollChestPiece, rollSupplies } from "../equipment/acquire.ts";
 import type { EquipItem } from "../equipment/inventory.ts";
 import { CATEGORIES, type EquipMaterialId } from "../equipment/catalog.ts";
 import { EQUIP_RARITIES, type EquipRarity } from "../equipment/balance.ts";
 import { runBoons } from "../shrines.ts";
-import { earn } from "../profile.ts";
+import { earn } from "../save/profile.ts";
 import { notesOf, tallyIn } from "../run-notes.ts";
-import { foeGold } from "../foe-cards.ts";
-import { foeStat, treeBonus, treeFactor } from "../card-trees.ts";
+import { foeGold } from "../cards/foe-cards.ts";
+import { foeStat, treeBonus, treeFactor } from "../cards/trees.ts";
 
 /** The tiles whose Pickup Gold a skipped floor counts, beside its lit torches. */
 const ITEMS: ReadonlySet<Tile["kind"]> = new Set(["key", "potion", "attack", "defense", "door"]);
@@ -120,7 +121,7 @@ export class RunPurse {
     return wornEffects(this.save, this.mode);
   }
 
-  /** What the Gold multipliers read for this run (`gold-multipliers.ts`). */
+  /** What the Gold multipliers read for this run (`economy/gold-multipliers.ts`). */
   private get goldContext(): GoldContext {
     return { save: this.save, mode: this.mode, tier: this.tier, now: this.now, shrine: this.boons?.gold };
   }
@@ -208,7 +209,7 @@ export class RunPurse {
     const gold = instakill ? snap((raw * researched(this.save.archives, "instakillGold")) / 100) : raw;
     const tree = this.tree, own = foeStat(tree, enemy, "Gold") + (instakill ? foeStat(tree, enemy, "InstakillGold") : 0);
     const more = snap(tree.foeGold + (enemy.strength === "greaterBoss" ? tree.bossGold : 0) + own);
-    const foe = this.run.outside ? 1 : foeGold(this.run.hand ?? [], enemy, more);
+    const foe = this.run.outside ? 1 : foeGold(heldCards(this.run), enemy, more);
     return foe === 1 ? gold : snap(gold * foe);
   }
 

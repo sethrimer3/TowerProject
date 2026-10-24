@@ -1,22 +1,22 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { BoardPopups } from "../src/board-popups.ts";
-import { THEMED_BOARDS, type ThemedLook } from "../src/themed-boards.ts";
-import { NEON } from "../src/neon-board.ts";
-import { TERMINAL } from "../src/terminal-board.ts";
-import { DESKTOP } from "../src/desktop-board.ts";
-import { GLYPH } from "../src/glyph-board.ts";
-import { EMBER } from "../src/ember-board.ts";
-import { YANG, YIN } from "../src/zen-board.ts";
-import { KURO, SHIRO } from "../src/bare-board.ts";
-import { ARCADE } from "../src/arcade-board.ts";
-import { SYSTEM } from "../src/system-board.ts";
-import { KROZ } from "../src/kroz-board.ts";
-import { ORBIT } from "../src/orbit-board.ts";
-import { PIXEL, PIXEL_SPRITES } from "../src/pixel-board.ts";
-import { DOODLE } from "../src/doodle-board.ts";
-import { MURK } from "../src/murk-board.ts";
-import type { FrameContext } from "../src/render-frame.ts";
+import { BoardPopups } from "../src/render/board-popups.ts";
+import { THEMED_BOARDS, type ThemedLook } from "../src/render/boards/themed-boards.ts";
+import { NEON } from "../src/render/boards/neon-board.ts";
+import { TERMINAL } from "../src/render/boards/terminal-board.ts";
+import { DESKTOP } from "../src/render/boards/desktop-board.ts";
+import { GLYPH } from "../src/render/boards/glyph-board.ts";
+import { EMBER } from "../src/render/boards/ember-board.ts";
+import { YANG, YIN } from "../src/render/boards/zen-board.ts";
+import { KURO, SHIRO } from "../src/render/boards/bare-board.ts";
+import { ARCADE } from "../src/render/boards/arcade-board.ts";
+import { SYSTEM } from "../src/render/boards/system-board.ts";
+import { KROZ } from "../src/render/boards/kroz-board.ts";
+import { ORBIT } from "../src/render/boards/orbit-board.ts";
+import { PIXEL, PIXEL_SPRITES } from "../src/render/boards/pixel-board.ts";
+import { DOODLE } from "../src/render/boards/doodle-board.ts";
+import { MURK } from "../src/render/boards/murk-board.ts";
+import type { FrameContext } from "../src/render/render-frame.ts";
 import type { GainArt } from "../src/shown.ts";
 
 // A reward rising off a board drawn in a Game theme but Classic wears the
@@ -43,7 +43,7 @@ function recorder() {
 function drawn(art: GainArt, look: ThemedLook | null) {
   const r = recorder(), popups = new BoardPopups();
   popups.update({ run: { seed: 1 }, gains: [{ x: 1, y: 1, text: "+1", art }], fight: null, lastHeal: null } as never, 0);
-  const boardLook = { mode: "tower", height: 30, seed: 1, outside: false, entranceX: 8, spritesOff: true, reduceMotion: true, area1: false, themed: look && THEMED_BOARDS[look] };
+  const boardLook = { mode: "tower", height: 30, seed: 1, outside: false, entranceX: 8, reduceMotion: true, themed: look && THEMED_BOARDS[look] };
   popups.draw({ c: r.c, now: 100, left: 0, bottom: 0, n: 17, s: 24, look: boardLook } as unknown as FrameContext);
   return r;
 }

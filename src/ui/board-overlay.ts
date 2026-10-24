@@ -1,7 +1,7 @@
 import { MODES } from "../modes.ts";
 import type { Game, RouteEffects } from "../state.ts";
 import type { Step } from "../pathfinding.ts";
-import type { Renderer } from "../rendering.ts";
+import type { Renderer } from "../render/rendering.ts";
 import { el, gemIcon } from "./dom.ts";
 import { flyToPurse } from "./flourish.ts";
 import { holdAmount } from "./hud.ts";

@@ -1,5 +1,5 @@
-import { RESEARCH, type ResearchRecord } from "../archives.ts";
-import { TRAINING, type TrainingId } from "../config.ts";
+import { RESEARCH, type ResearchRecord } from "../progression/archives.ts";
+import { TRAINING, type TrainingId } from "../progression/training.ts";
 
 /** One notification: its heading and the line under it. */
 export type Toast = { title: string; text: string };

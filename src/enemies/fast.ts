@@ -1,0 +1,70 @@
+/** Fast enemies, from the second tower and delve up (docs/ENEMY_SCHEDULE.md):
+ * any enemy but a boss or Greater Boss may be Fast. A Fast enemy strikes
+ * first in every fight (`bout` in combat.ts), so even an enemy the hero
+ * fells in one strike lands a blow, and it strikes with at least `fastCarry`
+ * ATK, a share of the last tower's floor-100 enemy, so a hero fresh from
+ * that tower's boss still feels the next tower's first floors. Past the
+ * floor where the curve outgrows the carry, Fast changes no stats. Each
+ * tile's roll is a fixed number of the run seed, the floor and the tile
+ * (`FAST_SALT`), so no other part of generation draws differently. */
+import type { Enemy, Tile } from "../entities.ts";
+import { enemyStats, STEPS_PER_FLOOR, type CurveMode } from "./curves.ts";
+import { snap } from "../exact.ts";
+import { tileRandom } from "../random.ts";
+import { tierStats } from "../tiers.ts";
+
+/** How many times the last tier's floor-100 normal, balanced enemy's ATK a
+ * Fast enemy strikes with at least. */
+export const FAST_CARRY = 1.75;
+/** The carry, in the tier's own units, of tiers whose `FAST_CARRY` carry
+ * would strike too hard from their first floors (3,500, 14,000 and 42,000),
+ * in the Tower and the Delve alike. */
+const FAST_CARRY_AT: Readonly<Record<number, number>> = { 3: 1000, 4: 2000, 5: 4000 };
+const FAST_SALT = 0xfa57e;
+
+/** The share of enemies that are Fast on equivalent floor `floor` (from 1)
+ * of tier `tier`, in thousandths of a percent: 12% on the second tier's
+ * floor 1, growing 1.5% every 200 floors (a little each floor) without end,
+ * and each tier after starting three quarters of a point higher. None in
+ * the first. */
+export function fastShare(tier: number, floor: number) {
+  if (tier < 2) return 0;
+  return 12_000 + 750 * (tier - 2) + 7.5 * Math.max(0, floor - 1);
+}
+
+/** The least ATK a Fast enemy of `mode`'s tier `tier` strikes with: `FAST_CARRY`
+ * times the tier below's floor-100 normal, balanced enemy's ATK, in this
+ * tier's own units, or `FAST_CARRY_AT` where set (700 in Tower II, 1,000 in
+ * III, 2,000 in IV, 4,000 in V). */
+export const fastCarry = (mode: CurveMode, tier: number) =>
+  tier < 2 ? 0 : FAST_CARRY_AT[tier] ?? snap(FAST_CARRY * enemyStats(mode, tier - 1, 99 * STEPS_PER_FLOOR[mode], "normal", "balanced").attack * tierStats(tier - 1));
+
+/** Whether `enemy` may be Fast: anything but a boss or Greater Boss. */
+export const mayBeFast = (enemy: Enemy) => enemy.strength !== "boss" && enemy.strength !== "greaterBoss";
+
+/** Whether the enemy at (x, y) on equivalent floor `floor` of tier `tier`
+ * is Fast, for a run of seed `seed`. */
+export function rollsFast(seed: number, tier: number, floor: number, x: number, y: number) {
+  const share = fastShare(tier, floor);
+  return share > 0 && tileRandom(x, y, (seed ^ FAST_SALT ^ Math.imul(floor, 0x9e3779b1)) | 0) * 100_000 < share;
+}
+
+/** `cells` (as they stand in tier `tier`, `tierCells`) with each enemy that
+ * rolls Fast made Fast, its ATK raised to `fastCarry`; `floorAt` gives each
+ * tile's equivalent floor. The same map in the first tier. */
+export function fastCells(cells: Map<string, Tile>, mode: CurveMode, tier: number, seed: number, floorAt: (x: number, y: number) => number) {
+  if (tier < 2) return cells;
+  const carry = fastCarry(mode, tier), out = new Map<string, Tile>();
+  for (const [k, t] of cells) {
+    const e = t.kind === "enemy" ? t.enemy : undefined;
+    if (e && mayBeFast(e)) {
+      const [x, y] = k.split(",").map(Number) as [number, number];
+      if (rollsFast(seed, tier, floorAt(x, y), x, y)) {
+        out.set(k, { ...t, enemy: { ...e, fast: true, attack: Math.max(e.attack, carry) } });
+        continue;
+      }
+    }
+    out.set(k, t);
+  }
+  return out;
+}

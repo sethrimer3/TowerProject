@@ -1,17 +1,18 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults } from "../src/save.ts";
+import { defaults } from "../src/save/save.ts";
 import { point, type Enemy, type Player, type Tile } from "../src/entities.ts";
 import { bout, heroHpAfter, predict, summarize, type Crits } from "../src/combat.ts";
 import { forecast } from "../src/crit-forecast.ts";
-import { critRule, trainingStep } from "../src/loadout.ts";
-import { trainingGold } from "../src/training-jobs.ts";
-import { runTrainingValue, silverPrice } from "../src/run-training.ts";
-import { RESEARCH } from "../src/archives.ts";
-import { TRAINING, UPGRADES, trainedAmount } from "../src/config.ts";
-import { TREES } from "../src/skill-trees.ts";
-import { DamagePredictions, damageLabel } from "../src/damage-labels.ts";
+import { critRule, trainingStep } from "../src/progression/loadout.ts";
+import { trainingGold } from "../src/progression/training-jobs.ts";
+import { runTrainingValue, silverPrice } from "../src/progression/run-training.ts";
+import { RESEARCH } from "../src/progression/archives.ts";
+import { TRAINING, trainedAmount } from "../src/progression/training.ts";
+import { UPGRADES } from "../src/progression/upgrades.ts";
+import { TREES } from "../src/progression/skill-trees.ts";
+import { DamagePredictions, damageLabel } from "../src/render/effects/damage-labels.ts";
 
 const hero = (over: Partial<Player> = {}): Player => ({ hp: 100, maxHp: 100, attack: 12, defense: 0, keys: { yellow: 0, blue: 0, red: 0 }, ...over }) as Player;
 const brute: Enemy = { name: "Brute", hp: 60, attack: 30, defense: 0, tier: 0, strength: "normal" };

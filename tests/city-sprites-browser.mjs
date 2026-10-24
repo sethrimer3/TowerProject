@@ -24,7 +24,7 @@ try {
   await page.route("**/__sprite-review.html", route => route.fulfill({ contentType: "text/html", body: "<!doctype html><html><body></body></html>" }));
   await page.goto(new URL("/__sprite-review.html", server.resolvedUrls.local[0]).href);
   await page.evaluate(async () => {
-    const { CITY_SPRITES, WORLD_SPRITES, CONTROL_SPRITES, DEFEND_STRUCTURE_SPRITES, kitImage } = await import("/src/sprite-kit.ts");
+    const { CITY_SPRITES, WORLD_SPRITES, CONTROL_SPRITES, DEFEND_STRUCTURE_SPRITES, kitImage } = await import("/src/sprites/kit.ts");
     const { defaultLayout, fitLayout, placeCityTile, placeStructure } = await import("/src/defend/layout.ts");
     const { generateCity } = await import("/src/defend/citygen.ts");
     const { DefendRenderer } = await import("/src/defend/render.ts");

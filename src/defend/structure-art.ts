@@ -2,7 +2,7 @@
  * (drawn into the city layer and the palette icons), the keep's live banner,
  * and the shared palette. */
 import { SOLDIER, type StructureKind } from "./catalog.ts";
-import { drawKit } from "../sprite-kit.ts";
+import { drawKit } from "../sprites/kit.ts";
 export const structureSprite = (kind: StructureKind, wide = false) => kind === "barracks" && wide ? "defend-barracks-wide" : ({ keep: "defend-keep", barracks: "defend-barracks", archerBarracks: "defend-archer-barracks", archerTower: "defend-archer-tower", cannonTower: "defend-cannon-tower", watchTower: "defend-watch-tower" })[kind];
 
 /** Medieval roofing: terracotta tile, old brick, weathered timber, thatch,

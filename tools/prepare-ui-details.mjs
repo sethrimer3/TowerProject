@@ -3,7 +3,7 @@ import { spawn } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
-import { UI_DETAIL_SPRITES, UI_ORNAMENT_SPRITES } from "../src/sprite-ui-details.ts";
+import { UI_DETAIL_SPRITES, UI_ORNAMENT_SPRITES } from "../src/sprites/ui-details.ts";
 const root = fileURLToPath(new URL("../", import.meta.url));
 const out = join(root, "public/assets/style");
 const manifest = JSON.parse(readFileSync(join(out, "manifest.json"), "utf8"));

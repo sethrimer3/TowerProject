@@ -1,12 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { defaults, decode } from "../src/save.ts";
+import { defaults, decode } from "../src/save/save.ts";
 import { RoomWorld, generateTowerRoom } from "../src/tower/room-world.ts";
 import { predict } from "../src/combat.ts";
 import { isDeadlocked } from "../src/analysis.ts";
-import { enemyTier, getTowerGateEnemy, TOWER_ZONE_ENEMIES, towerZoneIndex } from "../src/scaling.ts";
-import { enemyStats } from "../src/enemy-curves.ts";
+import { enemyTier, getTowerGateEnemy, TOWER_ZONE_ENEMIES, towerZoneIndex } from "../src/enemies/scaling.ts";
+import { enemyStats } from "../src/enemies/curves.ts";
 import { TOWER_START_X } from "../src/config.ts";
 import { point, type Tile } from "../src/entities.ts";
 

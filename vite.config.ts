@@ -12,7 +12,7 @@ export default defineConfig(({ mode }) =>
           outDir: "dist-snapshot",
           emptyOutDir: true,
           rollupOptions: {
-            input: { index: "index.html", "render-scenes": "tests/render-scenes.ts", save: "src/save.ts", state: "src/state.ts" },
+            input: { index: "index.html", "render-scenes": "tests/render-scenes.ts", save: "src/save/save.ts", state: "src/state.ts" },
             preserveEntrySignatures: "exports-only",
             output: { entryFileNames: (chunk) => (chunk.name === "index" ? "assets/[name]-[hash].js" : "snapshot/[name].js") },
           },

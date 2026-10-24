@@ -27,7 +27,7 @@ Missions are small tasks the game gives the player, each paying a reward when cl
 | Buy 10 run training upgrades | 10 | On the Job owned |
 | Pick up 10 blue keys | 10 | once blue keys' first floor has been reached (`keyFirstFloor`) |
 | Pick up 5 red keys | 5 | once red keys' first floor has been reached |
-| Focus on 2 cards | 2 | the Focus skill owned |
+| Use 1 provision in a run | 1 | once an elixir, Vanguard Banner, Aegis charm or Bomb is owned |
 
 "Reached" means any open tower's record (`best`, the selected tower's or one kept in `tierRecords`) is at or past that tower's first floor for it, or the Delve's equivalent floor in the delve of the same number.
 Strong and elite enemies and Buy 1 badge are offered only once possible, so no new player is handed a mission they can't work on.
@@ -38,7 +38,8 @@ Strong and elite enemies and Buy 1 badge are offered only once possible, so no n
 - **Kills** by strength, **potions** and **blue and red keys** picked up: each tile once (`save.missions.counted`, keyed by mode and the mode's loot key), so undo bringing a tile back never counts it twice.
 - **Training:** each rank bought with training points, or finished by a trainer (`TrainingDesk`).
 - **Badges:** each badge drawn (`BadgeDesk.draw`).
-- **Run training** and **Focus:** what undo can take back counts only past the most the run has had (`save.missions.marks`, by mode and run seed).
+- **Run training:** what undo can take back counts only past the most the run has had (`save.missions.marks`, by mode and run seed).
+- **Provisions:** each elixir, Vanguard Banner or Aegis charm pressed and each Bomb thrown, counted like run training (`Game.countProvisionsUsed`), since undo takes a throw back; the Gold Key, which uses itself, never counts.
 - Tournament runs count like any other.
 
 ### Reward
@@ -73,8 +74,9 @@ Each weekly reward's **Training Point** adds to those the hero's levels earn (`s
 
 - **Missions button:** a check mark over *X/8*, the missions in the list out of 8, complete or not (at 8 no more come), with a dot while a mission or weekly reward waits to be claimed.
   It waits in the HUD's menu beside Settings, in the forest and inside a run, and the hamburger wears its dot.
-- **Missions screen** (`ui/missions-page.ts`): an X at the top right returns to the page that opened it.
-  Near the top, the weekly bar fills from 0 to 35 with the week's count, a prize box over each multiple of 5: dim until reached, glowing while it can be claimed, checked once claimed; pressing a glowing box claims it.
+- **Missions screen** (`ui/missions-page.ts`): titled *Missions* alone; an X at the top right returns to the page that opened it.
+  Near the top, the weekly bar fills from 0 to 35 with the week's count, a prize box over each multiple of 5: dim until reached, glowing while it can be claimed, checked once claimed (a small check on the box's top corner, clear of its number); pressing a glowing box claims it.
+  Each box is a bare picture in every UI theme, never a framed button.
   Below, how many missions the list holds out of 8 and when the next two come (or, at 8, to claim or complete one to make room), then each mission: what it asks, what it pays, its bar, and once complete a Claim button.
   The currencies bar tops the screen, as it does the Upgrades page.
   What a daily mission pays flies from its Claim button to the bar, nothing to press away (`flyToPurse` in `ui/flourish.ts`): each currency's icon and amount, one a moment after the other, fading as it lands on its currency, which shows its new amount only then and swells a moment; a material, with no place on the bar, rises and fades where it was claimed; with Reduce motion on, each shows still over its currency and fades.
