@@ -5,11 +5,11 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { World } from "../src/delve/world.ts";
 import type { Board } from "../src/board.ts";
-import { area1ItemId, floorVariant, wallAdjacencyMask } from "../src/area1-tileset.ts";
+import { area1ItemId, floorVariant, wallAdjacencyMask } from "../src/render/area1-tileset.ts";
 import { TreeParticles } from "../src/render/effects/tree-particles.ts";
 import { withStream } from "../src/random.ts";
 import { DecorLayer, type DecorFrame, type MirroredSprites } from "../src/render/decor/decor-render.ts";
-import type { BoardView } from "../src/render-frame.ts";
+import type { BoardView } from "../src/render/render-frame.ts";
 import { decorSourceFor, tileDecor, type TileDecor } from "../src/render/decor/decor.ts";
 import { TREES, type SkillNode } from "../src/progression/skill-trees.ts";
 import type { KeyColor, Tile } from "../src/entities.ts";
@@ -119,7 +119,7 @@ function area1(): Record<string, string> {
 async function area1Draws(state: "loaded" | "loading" | "broken") {
   imageState = state;
   // Each state gets its own module copy, since the image cache keeps the first.
-  const mod = (await import(`../src/area1-tileset.ts?${state}`)) as typeof import("../src/area1-tileset.ts");
+  const mod = (await import(`../src/render/area1-tileset.ts?${state}`)) as typeof import("../src/render/area1-tileset.ts");
   const c = recorder("tile");
   for (const t of tiles()) {
     note(`door ${JSON.stringify(t)} ${mod.drawArea1Door(c, t)}`);

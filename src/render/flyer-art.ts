@@ -4,7 +4,7 @@
  * right (`wingMark`). Every board draws them through `drawFlyers`, Classic
  * with its baked enemies (which wear the wing already) and each Game theme
  * with its own enemy art and this wing over it. */
-import type { Tile } from "./entities.ts";
+import type { Tile } from "../entities.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
 
 /** How far above its tile a Flying enemy hovers, in tile units (of 24). */

@@ -8,9 +8,9 @@ Most tests here are characterization goldens (`tests/fixtures/*.golden.json`): t
 |---|---|
 | Pixels of a PNG in `public/assets/` (edited art, `npm run tiles:area1` / `tiles:outside`) | `render.golden.json` (`npm run test:render`) |
 | A PNG's name, path or size, or add/remove one the game loads | the above, plus `render-calls` (it reads real PNG sizes; sprite-sheet frames depend on width), and `art-modules` / `lighting-passes` if the renamed file is one they draw |
-| Board drawing code (`rendering.ts`, `tile-painters.ts`, lighting, decor, route line, Defend render/art) | `render-calls`, `render.golden.json`, and the module's own golden (`lighting-passes`, `art-modules`, `terrain-paint`, `outdoor-art`, `defend-fences-save`) |
+| Board drawing code (`render/rendering.ts`, `render/tile-painters.ts`, lighting, decor, route line, Defend render/art) | `render-calls`, `render.golden.json`, and the module's own golden (`lighting-passes`, `art-modules`, `terrain-paint`, `outdoor-art`, `defend-fences-save`) |
 | A Game theme board (`*-board.ts` but Classic's) | `themed-boards` (every board's contents, heart, torches, hero, ground and `over`, call by call), and `theme-popups` if what rises off the board changes |
-| Procedural terrain art (`themes.ts`) | `terrain-paint`, `render-calls`, `render.golden.json` |
+| Procedural terrain art (`render/themes.ts`) | `terrain-paint`, `render-calls`, `render.golden.json` |
 | World or content generation (Tower floors, Delve labyrinth, decor plans, Defend cities) | the generation golden (`tower-layout`, `tower-planning`, `delve-labyrinth`, `decor-plan`, `world-boards`, `defend-city`), then every golden that plays on those boards (`step-trace`, `undo-clear-trace`, `tower-automation`, `delve-automove`, `defend-replay`, `render-calls`, `render.golden.json`); saved maps change, so also bump `LAYOUT_VERSION` |
 | Gameplay rules or balance (`config.ts`, `step-effects.ts`, enemies, pickups, Defend units) | `step-trace`, `undo-clear-trace`, `tower-automation`, `delve-automove`, `tournament-trace`, `defend-replay` as they fail |
 | The assemble's melt (`ui/slag-merge.ts`) | `slag-merge` |

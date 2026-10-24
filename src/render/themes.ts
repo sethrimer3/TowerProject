@@ -1,6 +1,6 @@
-import { themeInfluence } from "./delve/labyrinth.ts";
-import type { Mode } from "./entities.ts";
-import { tileRandom } from "./random.ts";
+import { themeInfluence } from "../delve/labyrinth.ts";
+import type { Mode } from "../entities.ts";
+import { tileRandom } from "../random.ts";
 import { AREA1_RIM } from "./area1-tileset.ts";
 
 // Presentation only: themes never consume the generation RNG or alter tiles.

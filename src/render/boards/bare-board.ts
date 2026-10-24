@@ -1,7 +1,7 @@
 import { potionShade, type EnemyStrength, type Tile, type Torch, type KeyColor } from "../../entities.ts";
-import { forEachViewTile, toTileSpace, type FrameContext } from "../../render-frame.ts";
+import { forEachViewTile, toTileSpace, type FrameContext } from "../render-frame.ts";
 import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
-import { rankChevrons } from "../../rank-chevrons.ts";
+import { rankChevrons } from "../rank-chevrons.ts";
 
 /** The Shiro and Kuro Game themes' dungeon board, as bare as it can be while
  * still telling what matters: walls one solid block of colour, the floor

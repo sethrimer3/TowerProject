@@ -15,7 +15,7 @@ try {
   await page.route("**/assets/style/hero-up.png", route => release(route));
   await page.goto(server.resolvedUrls.local[0]); await page.locator("#hp").waitFor();
   await page.evaluate(async () => {
-    const { EntityLighting } = await import("/src/entity-lighting.ts");
+    const { EntityLighting } = await import("/src/render/entity-lighting.ts");
     const canvas = document.createElement("canvas"); canvas.width = canvas.height = 72;
     const f = {
       c: canvas.getContext("2d"), s: 24, width: 72, n: 3, left: 0, bottom: 0, now: 1000, darkness: 0.5,

@@ -1,27 +1,27 @@
-import type { ThemedBoard } from "./render/boards/themed-board.ts";
+import type { ThemedBoard } from "./boards/themed-board.ts";
 import { wingMark } from "./flyer-art.ts";
-import { CHUNK, COLORS } from "./config.ts";
+import { CHUNK, COLORS } from "../config.ts";
 import { drawCornerBricks, drawTerrain, themeAt, type Corner } from "./themes.ts";
-import { tileRandom } from "./random.ts";
-import { potionShade, type Enemy, type EnemyStrength, type Mode, type Tile, type Torch } from "./entities.ts";
-import { drawForestTile, type Roads } from "./outside.ts";
+import { tileRandom } from "../random.ts";
+import { potionShade, type Enemy, type EnemyStrength, type Mode, type Tile, type Torch } from "../entities.ts";
+import { drawForestTile, type Roads } from "../outside.ts";
 import { getTorchFlicker, getTorchSway } from "./lighting.ts";
 import { drawArea1Door, drawArea1Item, drawArea1Quoins, wallAdjacencyMask } from "./area1-tileset.ts";
 import { drawThemedTile } from "./themed-tilesets.ts";
-import { doorColor, doorRule, drainsHp } from "./doors.ts";
-import { drawEnemySprite, enemySpriteReady } from "./sprites/enemy-sprites.ts";
+import { doorColor, doorRule, drainsHp } from "../doors.ts";
+import { drawEnemySprite, enemySpriteReady } from "../sprites/enemy-sprites.ts";
 import { rankChevrons, RANK_CHEVRONS } from "./rank-chevrons.ts";
-import { DELVE_ENEMY_NAMES } from "./enemies/scaling.ts";
-import { drawGameSprite, drawGameSpriteFrame, gameSprite, torchAnimationFrame, TORCH_FRAME_COUNT } from "./sprites/game-sprites.ts";
-import { drawKit, kitEnemy, kitImage, onSpritesLoaded } from "./sprites/kit.ts";
-import { COMBAT_MARKS } from "./sprites/combat.ts";
-import { drawKitTerrain } from "./sprites/terrain.ts";
+import { DELVE_ENEMY_NAMES } from "../enemies/scaling.ts";
+import { drawGameSprite, drawGameSpriteFrame, gameSprite, torchAnimationFrame, TORCH_FRAME_COUNT } from "../sprites/game-sprites.ts";
+import { drawKit, kitEnemy, kitImage, onSpritesLoaded } from "../sprites/kit.ts";
+import { COMBAT_MARKS } from "../sprites/combat.ts";
+import { drawKitTerrain } from "../sprites/terrain.ts";
 import { themedTileUrl } from "./themed-tilesets.ts";
-import { drawDungeonGround, dungeonDiagonals, dungeonMaterial, towerTileset } from "./sprites/dungeon.ts";
+import { drawDungeonGround, dungeonDiagonals, dungeonMaterial, towerTileset } from "../sprites/dungeon.ts";
 import { dungeonWallProfile } from "./wall-depth.ts";
 import { dungeonDetail } from "./dungeon-details.ts";
-import { drawAnimatedTorch, drawSquareDoor } from "./sprites/options.ts";
-import { drawPickupAnimation, drawSpriteFrame } from "./sprites/animations.ts";
+import { drawAnimatedTorch, drawSquareDoor } from "../sprites/options.ts";
+import { drawPickupAnimation, drawSpriteFrame } from "../sprites/animations.ts";
 
 // Everything here paints in 24x24 tile space: the caller translates and
 // scales the context to the tile first.
@@ -444,7 +444,7 @@ const RED = "#9c1f2e", BRIGHT_RED = "#ff3b2b", GOLD_RIM = "#f4c64e", VIOLET_RIM 
  * red band inside a gold rim with two, a boss the elite's bands with
  * three, and a Greater Boss a gold band inside a violet rim with four
  * (`RANK_CHEVRONS`, which every Game theme draws). Only opaque bands cast torch shadows
- * (see toShadow in entity-lighting.ts), so the faint outer glow never
+ * (see toShadow in render/entity-lighting.ts), so the faint outer glow never
  * fattens one. */
 const ENEMY_LOOK: Record<EnemyStrength, { rings: Ring[] }> = {
   weak: { rings: [{ r: 3, color: RED, alpha: 0.3 }, { r: 2, color: RED, alpha: 1 }] },

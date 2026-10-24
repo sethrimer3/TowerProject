@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { ARROW_DIRECTIONS, arrowSprite, shieldSprite } from "../src/sprites/combat.ts";
-import { drawVolley } from "../src/volley-art.ts";
-import { drawShields } from "../src/shield-art.ts";
-import { drawChestMarks } from "../src/chest-marks.ts";
-import { paintContents } from "../src/tile-painters.ts";
-import type { FrameContext } from "../src/render-frame.ts";
+import { drawVolley } from "../src/render/volley-art.ts";
+import { drawShields } from "../src/render/shield-art.ts";
+import { drawChestMarks } from "../src/render/chest-marks.ts";
+import { paintContents } from "../src/render/tile-painters.ts";
+import type { FrameContext } from "../src/render/render-frame.ts";
 import type { Volley } from "../src/volley.ts";
 
 test("arrow facings wrap cleanly and shields choose a native density", () => {

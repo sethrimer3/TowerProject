@@ -1,7 +1,7 @@
 import { potionShade, type EnemyStrength, type Tile, type Torch, type KeyColor } from "../../entities.ts";
-import { forEachViewTile, toTileSpace, type FrameContext } from "../../render-frame.ts";
+import { forEachViewTile, toTileSpace, type FrameContext } from "../render-frame.ts";
 import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
-import { rankChevrons } from "../../rank-chevrons.ts";
+import { rankChevrons } from "../rank-chevrons.ts";
 import { tileHash } from "./ascii-glyphs.ts";
 import { vignette } from "./themed-art.ts";
 

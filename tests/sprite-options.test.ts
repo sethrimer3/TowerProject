@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { defaults, decode } from "../src/save/save.ts";
 import { SQUARE_DOORS, squareDoorSprite } from "../src/sprites/options.ts";
-import { paintContents, paintTorch } from "../src/tile-painters.ts";
+import { paintContents, paintTorch } from "../src/render/tile-painters.ts";
 import type { Tile, Torch } from "../src/entities.ts";
 
 test("sprite sub-options are opt-in and preserve independent preferences through save reload", () => {

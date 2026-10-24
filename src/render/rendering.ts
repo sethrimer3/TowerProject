@@ -1,47 +1,47 @@
-import { boardFont } from "./sprites/font.ts";
-import { drawBoardMark } from "./sprites/board-marks.ts";
-import { CHUNK, TOWER_HEIGHT, VIEWPORT_TILES } from "./config.ts";
+import { boardFont } from "../sprites/font.ts";
+import { drawBoardMark } from "../sprites/board-marks.ts";
+import { CHUNK, TOWER_HEIGHT, VIEWPORT_TILES } from "../config.ts";
 import { drawFlyers } from "./flyer-art.ts";
-import type { Game } from "./state.ts";
-import type { Tile, Torch } from "./entities.ts";
-import { TIER_BONUS_TENTHS, tierNumeral } from "./tiers.ts";
-import { factorText } from "./economy/gold-multipliers.ts";
-import { drawProvingGrounds, drawBlacksmith, drawEntrance, drawTournamentHall, OutsideWorld, OUTSIDE_SIZE, outsideWeather, roadsOf } from "./outside.ts";
-import { DecorLayer, type DecorFrame, type MirroredSprites } from "./render/decor/decor-render.ts";
-import { OutsideGrass } from "./render/decor/outside-grass.ts";
-import { ForestFoliage } from "./render/decor/forest-foliage.ts";
-import { forestSpritesReady } from "./sprites/forest.ts";
+import type { Game } from "../state.ts";
+import type { Tile, Torch } from "../entities.ts";
+import { TIER_BONUS_TENTHS, tierNumeral } from "../tiers.ts";
+import { factorText } from "../economy/gold-multipliers.ts";
+import { drawProvingGrounds, drawBlacksmith, drawEntrance, drawTournamentHall, OutsideWorld, OUTSIDE_SIZE, outsideWeather, roadsOf } from "../outside.ts";
+import { DecorLayer, type DecorFrame, type MirroredSprites } from "./decor/decor-render.ts";
+import { OutsideGrass } from "./decor/outside-grass.ts";
+import { ForestFoliage } from "./decor/forest-foliage.ts";
+import { forestSpritesReady } from "../sprites/forest.ts";
 import { TileLayerCache } from "./tile-cache.ts";
 import { OutdoorWeather } from "./weather.ts";
-import { torchAnimationFrame } from "./sprites/game-sprites.ts";
-import { towerTileset } from "./sprites/dungeon.ts";
+import { torchAnimationFrame } from "../sprites/game-sprites.ts";
+import { towerTileset } from "../sprites/dungeon.ts";
 import { isArea1, paintHero, paintHeroFallback, paintTile, paintTorch, type BoardLook } from "./tile-painters.ts";
 import type { AtmosphereConfig } from "./lighting-pass.ts";
 import { DungeonLight, type LitBoard } from "./dungeon-light.ts";
-import { drawThemedBoard, themedBoardOf } from "./render/boards/themed-boards.ts";
+import { drawThemedBoard, themedBoardOf } from "./boards/themed-boards.ts";
 import { RoutePath } from "./route-path.ts";
 import { BoardPopups, goldCoin, lunges } from "./board-popups.ts";
-import { DamagePredictions, drawDamageLabels } from "./render/effects/damage-labels.ts";
-import { BossFlash } from "./render/effects/boss-flash.ts";
-import { goalUnlocked } from "./goals.ts";
-import { DEFEAT_MS, drawStruckDown } from "./render/effects/struck-down.ts";
-import { AREA_BURST_MS, drawAreaBurst, preloadAreaBurst, drawLevelUp, drawRevive, drawWarpLoot, LEVEL_UP_MS, POINTS_MS, REVIVE_MS, WARP_LOOT_MS } from "./render/effects/level-up.ts";
-import { drawPoof, POOF_MS } from "./render/effects/poof.ts";
-import { drawExplosion, EXPLOSION_MS } from "./render/effects/explosion.ts";
-import { drawBoostGlow } from "./render/effects/boost-glow.ts";
-import type { Boosted } from "./runs.ts";
-import { drawGem, drawGemSparkle, GEM_SPARKLE_MS } from "./render/effects/gem-art.ts";
-import { DashEchoes } from "./render/effects/dash-echoes.ts";
+import { DamagePredictions, drawDamageLabels } from "./effects/damage-labels.ts";
+import { BossFlash } from "./effects/boss-flash.ts";
+import { goalUnlocked } from "../goals.ts";
+import { DEFEAT_MS, drawStruckDown } from "./effects/struck-down.ts";
+import { AREA_BURST_MS, drawAreaBurst, preloadAreaBurst, drawLevelUp, drawRevive, drawWarpLoot, LEVEL_UP_MS, POINTS_MS, REVIVE_MS, WARP_LOOT_MS } from "./effects/level-up.ts";
+import { drawPoof, POOF_MS } from "./effects/poof.ts";
+import { drawExplosion, EXPLOSION_MS } from "./effects/explosion.ts";
+import { drawBoostGlow } from "./effects/boost-glow.ts";
+import type { Boosted } from "../runs.ts";
+import { drawGem, drawGemSparkle, GEM_SPARKLE_MS } from "./effects/gem-art.ts";
+import { DashEchoes } from "./effects/dash-echoes.ts";
 import { drawVolley, ShotsInFlight } from "./volley-art.ts";
-import { volleyOver } from "./volley.ts";
+import { volleyOver } from "../volley.ts";
 import { drawShields } from "./shield-art.ts";
 import { drawChestMarks } from "./chest-marks.ts";
-import type { Dash, ShownTurn } from "./shown.ts";
+import type { Dash, ShownTurn } from "../shown.ts";
 import { darknessOf, forEachViewTile, tileTransform, toTileSpace, type FrameContext } from "./render-frame.ts";
-import { gameLook } from "./theme-collection.ts";
-import { usesGameSprites } from "./sprites/style.ts";
-import { spriteRevision } from "./sprites/kit.ts";
-import { HeroIdleAnimation, pickupAnimationFrame } from "./sprites/animations.ts";
+import { gameLook } from "../theme-collection.ts";
+import { usesGameSprites } from "../sprites/style.ts";
+import { spriteRevision } from "../sprites/kit.ts";
+import { HeroIdleAnimation, pickupAnimationFrame } from "../sprites/animations.ts";
 import { FAST_GLIDE_SECONDS, FollowCamera, GLIDE_SECONDS, pointsAhead, type CameraView } from "./camera.ts";
 
 export { ATMOSPHERE_CONFIG, type AtmosphereConfig } from "./lighting-pass.ts";
@@ -54,8 +54,8 @@ const CACHE_COLUMNS: [number, number] = [-64, 191];
 
 /** Draws the Tower/Delve board: owns the camera (which glides after the
  * hero), and runs each frame as an ordered list of passes over one
- * FrameContext. Tile art lives in tile-painters.ts, the golden route line
- * in route-path.ts, and the dungeon's light in dungeon-light.ts, which runs
+ * FrameContext. Tile art lives in render/tile-painters.ts, the golden route line
+ * in render/route-path.ts, and the dungeon's light in render/dungeon-light.ts, which runs
  * the rest of a dungeon frame once the ground is down. */
 export class Renderer {
   ctx: CanvasRenderingContext2D;
@@ -138,7 +138,7 @@ export class Renderer {
       document.addEventListener("visibilitychange", () => { if (document.hidden) this.weather.silence(); });
     }
   }
-  /** Inside the Delve the camera trails the hero (camera.ts); the Tower and
+  /** Inside the Delve the camera trails the hero (render/camera.ts); the Tower and
    * the forest hold still. */
   private get followsHero() {
     return this.game.mode === "delve" && !this.game.run.outside;
@@ -333,7 +333,7 @@ export class Renderer {
   }
   /** Glides the drawn hero, then the camera, toward where they belong (or
    * snaps them, with motion reduced or transitions off). In the Delve the
-   * camera trails where the hero is drawn (camera.ts); elsewhere it eases to
+   * camera trails where the hero is drawn (render/camera.ts); elsewhere it eases to
    * its fixed spot. */
   private follow(n: number, dt: number, now: number) {
     const settings = this.game.save.settings, snaps = settings.reduceMotion || settings.transition === "instant";

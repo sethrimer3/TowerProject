@@ -2,7 +2,7 @@ import { kitIcon } from "../sprites/kit.ts";
 import { spriteFontRevision } from "../sprites/font.ts";
 import { amountUnit, enemyStat, keyCount, shortAmount, stepsIn, whole, wholeHp } from "../whole.ts";
 import type { Game } from "../state.ts";
-import type { Renderer } from "../rendering.ts";
+import type { Renderer } from "../render/rendering.ts";
 import { levelForXp, USED_PROVISIONS, xpForLevel } from "../config.ts";
 import { outsideWeather } from "../outside.ts";
 import { tierNumeral, tierRewardText } from "../tiers.ts";

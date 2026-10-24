@@ -6,7 +6,7 @@ import {advanceKeymasterEffects} from "../src/proving-grounds/keymaster.ts";
 // them in Node on a recording canvas and hashes the calls. Each scene is
 // drawn at fixed timestamps with seeded randomness; `grab` is called at each
 // captured frame, and the caller decides what to record there.
-import { Renderer } from "../src/rendering.ts";
+import { Renderer } from "../src/render/rendering.ts";
 import { Game } from "../src/state.ts";
 import { defaults } from "../src/save/save.ts";
 import { decorSourceFor, tileDecor, type TileDecor } from "../src/render/decor/decor.ts";

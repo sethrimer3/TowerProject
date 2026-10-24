@@ -54,7 +54,7 @@ try {
   for (const id of ["ui-sprites", "sprite-animations", "square-doors"]) assert.ok(await page.locator(`#${id}`).isChecked());
   const art = await page.evaluate(async () => {
     const { SQUARE_DOORS } = await import("/src/sprites/options.ts"), { kitImage } = await import("/src/sprites/kit.ts");
-    const { paintTorch, paintContents } = await import("/src/tile-painters.ts");
+    const { paintTorch, paintContents } = await import("/src/render/tile-painters.ts");
     const ids = [...SQUARE_DOORS.map(k => `square-door-${k}`), "torch-animation", "torch", "door-wood", "key-blue", "dungeon-floor-masonry-0"];
     await new Promise(resolve => { const check = () => ids.map(kitImage).every(Boolean) ? resolve() : requestAnimationFrame(check); check(); });
     const sheet = document.createElement("canvas"); sheet.id = "options-art"; sheet.width = 432; sheet.height = 384;
@@ -89,7 +89,7 @@ try {
   await page.locator("#options-art").screenshot({ path: "test-results/sprite-options/native-art.png" });
   await page.locator("#options-art").evaluate(e => e.remove());
   const result = await page.evaluate(async () => {
-    const { dungeonSpriteScene } = await import("/tests/render-scenes.ts"), { Renderer } = await import("/src/rendering.ts");
+    const { dungeonSpriteScene } = await import("/tests/render-scenes.ts"), { Renderer } = await import("/src/render/rendering.ts");
     const { loadSpriteFont } = await import("/src/sprites/font.ts"), { THEME_IDS } = await import("/src/theme-collection.ts");
     await loadSpriteFont(); const { g } = dungeonSpriteScene("tower"); g.save.themes = [...THEME_IDS];
     g.effect = { text: "", x: 0, y: 0, until: 0 }; g.blocked = { x: 0, y: 0, until: 0 };
@@ -137,7 +137,7 @@ try {
   await failed.route("**/torch-animation.png", route => route.abort());
   await failed.goto(server.resolvedUrls.local[0]);
   const fallback = await failed.evaluate(async () => {
-    const { paintContents, paintTorch } = await import("/src/tile-painters.ts"), { kitImage } = await import("/src/sprites/kit.ts");
+    const { paintContents, paintTorch } = await import("/src/render/tile-painters.ts"), { kitImage } = await import("/src/sprites/kit.ts");
     const ids = ["door-wood", "key-blue", "torch"];
     await new Promise(resolve => { const check = () => ids.map(kitImage).every(Boolean) ? resolve() : requestAnimationFrame(check); check(); });
     const cv = document.createElement("canvas"); cv.width = cv.height = 24; const c = cv.getContext("2d");

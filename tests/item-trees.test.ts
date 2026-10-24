@@ -5,7 +5,7 @@ import { defaults } from "../src/save/save.ts";
 import { MAX_CARD_XP } from "../src/cards/levels.ts";
 import { CARD_TREES, freeUpChances, nodeOpen, treeBonus, type CardTreeLevels } from "../src/cards/trees.ts";
 import { bout, OPENING_HOLD_MS, OPENING_SHRINK_MS, predict, squaredUp } from "../src/combat.ts";
-import { enemyBar } from "../src/board-popups.ts";
+import { enemyBar } from "../src/render/board-popups.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { World } from "../src/delve/world.ts";
 import { isTreasureFloor } from "../src/board.ts";

@@ -102,7 +102,7 @@ What changes in the code:
 - **Door rule** (`entities.ts`, `doors.ts`): a new `{ type: "wood"; durability: number }` takes the steel rule's place in generation (the steel rule, `keys: all three, mode: "any"`, still works but nothing places it). `doorCost` returns the key, or none when the hero would survive breaking it (a caller passing no HP, like the floor analyzer, counts it as breakable). `resolveStep` (`step-effects.ts`) takes the HP. Every other caller reads it from there.
 - **Planning** (`tower/types.ts`, furnisher, forks, analyzer): the gate `steel` becomes `wood`. The analyzer's map shows `W`.
 - **Card and skill**: the STEEL DOOR card and its skill (`cardSteelDoor` in `config.ts`) become WOODEN DOOR. It heads for a wooden door the hero holds a key for or can break without dying. The renamed ids drop the old card from saved hands. During the prototype phase old saves don't need to convert.
-- **Art**: a new wooden-door sprite (`public/assets/doors/door_wood.png`, replacing `door_steel.png`), a wooden painter in `tile-painters.ts`, and a neon look.
+- **Art**: a new wooden-door sprite (`public/assets/doors/door_wood.png`, replacing `door_steel.png`), a wooden painter in `render/tile-painters.ts`, and a neon look.
 - **The Delve**: its steel gates become wooden doors with durability from the Delve's own enemy curve. Since phase 5 the wooden share decides how many (section 6).
 
 ## 4. Key supply

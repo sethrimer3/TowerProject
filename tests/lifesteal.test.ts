@@ -147,7 +147,7 @@ test("Damage Visual's label follows Lifesteal", () => {
 });
 
 // What rises over the board as the fight plays: the blue heals.
-import { BoardPopups } from "../src/board-popups.ts";
+import { BoardPopups } from "../src/render/board-popups.ts";
 const rising = (popups: BoardPopups) =>
   (popups as unknown as { numbers: { x: number; y: number; text: string; color: string }[] }).numbers.map((n) => `${n.x}:${n.text}:${n.color}`);
 const shownFight = (player: Player, enemy: Enemy, summary: boolean) => {

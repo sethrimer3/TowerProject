@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { THEMED_TILESET_NAMES, THEMED_TILESET_URLS, themedTileUrl } from "../src/themed-tilesets.ts";
+import { THEMED_TILESET_NAMES, THEMED_TILESET_URLS, themedTileUrl } from "../src/render/themed-tilesets.ts";
 
 test("all ten dungeon themes expose complete floor and wall PNG sets", () => {
   assert.equal(THEMED_TILESET_NAMES.length, 10);

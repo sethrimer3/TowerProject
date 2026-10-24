@@ -1,12 +1,12 @@
-import type { Torch } from "./entities.ts";
+import type { Torch } from "../entities.ts";
 import { LIGHTING_CONFIG, getTorchFlicker, getTorchSway } from "./lighting.ts";
 import { area1FloorSprite } from "./area1-tileset.ts";
 import { bakeTorchRelief, type BakedRelief, type ReliefSprite } from "./floor-relief.ts";
-import { dungeonFloorSprite, towerTileset } from "./sprites/dungeon.ts";
-import { spriteRevision } from "./sprites/kit.ts";
+import { dungeonFloorSprite, towerTileset } from "../sprites/dungeon.ts";
+import { spriteRevision } from "../sprites/kit.ts";
 import { bakeTorchLight, type BakedLight } from "./torch-light.ts";
-import { doorColor, doorId } from "./doors.ts";
-import type { Tile } from "./entities.ts";
+import { doorColor, doorId } from "../doors.ts";
+import type { Tile } from "../entities.ts";
 import { CHEST_LOOK } from "./chest-marks.ts";
 import {
   forEachViewTile, screenX, screenY, sized, tileCenter, type FrameContext, type GlowSource, type Rect,
@@ -182,7 +182,7 @@ export class LightingPass {
     return canvas;
   }
 
-  /** Torch bump lighting on area-one floor sprites (see floor-relief.ts):
+  /** Torch bump lighting on area-one floor sprites (see render/floor-relief.ts):
    * each torch's relief is baked once, then blitted with its flicker. */
   drawTorchRelief(f: FrameContext) {
     if (!f.look.area1) return;
@@ -551,7 +551,7 @@ export class LightingPass {
     layers.wall.drawImage(sprite, cx - rwx, wy - rw, rwx * 2, rw * 2);
   }
 
-  /** The torch's baked light field (see torch-light.ts), created on first use. */
+  /** The torch's baked light field (see render/torch-light.ts), created on first use. */
   private torchBake(f: FrameContext, t: Torch) {
     let bake = this.torchBakes.get(t);
     if (bake === undefined) {

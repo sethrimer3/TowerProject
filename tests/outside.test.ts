@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults, decode } from "../src/save/save.ts";
 import { OutsideWorld, ENTRANCE_Y, OUTSIDE_SIZE, OUTSIDE_START_Y, weatherForRoll, outsideWeather, outsideSpriteKind, roadsOf, BLACKSMITH, TOURNAMENT_HALL } from "../src/outside.ts";
-import { lightningOpacity } from "../src/weather.ts";
+import { lightningOpacity } from "../src/render/weather.ts";
 import { chooseStep } from "../src/automation.ts";
 import { TOWER_UNLOCK_FLOOR } from "../src/goals.ts";
 

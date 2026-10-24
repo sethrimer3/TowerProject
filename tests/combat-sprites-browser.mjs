@@ -19,7 +19,7 @@ try {
     await page.goto(server.resolvedUrls.local[0]); await page.locator("#hp").waitFor();
     const result = await page.evaluate(async width => {
       const { combatSpriteScene } = await import("/tests/render-scenes.ts");
-      const { Renderer } = await import("/src/rendering.ts");
+      const { Renderer } = await import("/src/render/rendering.ts");
       const { loadSpriteFont } = await import("/src/sprites/font.ts");
       await loadSpriteFont();
       const { COMBAT_SPRITES } = await import("/src/sprites/combat.ts");

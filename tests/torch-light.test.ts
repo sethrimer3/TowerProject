@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { torchLightField } from "../src/torch-light.ts";
+import { torchLightField } from "../src/render/torch-light.ts";
 import { computeVisibilityPolygon } from "../src/torches.ts";
 import { chooseTorchSpots, TORCH_PLACEMENT } from "../src/torches.ts";
 import { point, type Tile } from "../src/entities.ts";

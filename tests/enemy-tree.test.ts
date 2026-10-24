@@ -9,7 +9,7 @@ import { critRule } from "../src/progression/loadout.ts";
 import { weakened, NO_FOES } from "../src/shrines.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { World } from "../src/delve/world.ts";
-import { BoardPopups } from "../src/board-popups.ts";
+import { BoardPopups } from "../src/render/board-popups.ts";
 import type { Enemy, Player } from "../src/entities.ts";
 
 const hero: Player = { x: 0, y: 0, hp: 100, maxHp: 100, attack: 10, defense: 0, keys: { yellow: 0, blue: 0, red: 0 } };

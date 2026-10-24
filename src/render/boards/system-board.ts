@@ -1,7 +1,7 @@
 import type { EnemyStrength, Tile, Torch, KeyColor } from "../../entities.ts";
-import { forEachViewTile, toTileSpace, type FrameContext } from "../../render-frame.ts";
+import { forEachViewTile, toTileSpace, type FrameContext } from "../render-frame.ts";
 import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
-import { rankChevrons } from "../../rank-chevrons.ts";
+import { rankChevrons } from "../rank-chevrons.ts";
 import { roundRect } from "./themed-art.ts";
 
 /** The System Game theme's dungeon board, as an old one-bit computer's paint

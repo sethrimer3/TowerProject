@@ -1,4 +1,4 @@
-import { tileTransform, type FrameContext } from "../../render-frame.ts";
+import { tileTransform, type FrameContext } from "../render-frame.ts";
 import { DEFEAT_MS } from "../../combat.ts";
 import { deathSkullFrame, drawSpriteFrame } from "../../sprites/animations.ts";
 import { kitImage } from "../../sprites/kit.ts";

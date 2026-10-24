@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { BoardPopups } from "../src/board-popups.ts";
+import { BoardPopups } from "../src/render/board-popups.ts";
 import { THEMED_BOARDS, type ThemedLook } from "../src/render/boards/themed-boards.ts";
 import { NEON } from "../src/render/boards/neon-board.ts";
 import { TERMINAL } from "../src/render/boards/terminal-board.ts";
@@ -16,7 +16,7 @@ import { ORBIT } from "../src/render/boards/orbit-board.ts";
 import { PIXEL, PIXEL_SPRITES } from "../src/render/boards/pixel-board.ts";
 import { DOODLE } from "../src/render/boards/doodle-board.ts";
 import { MURK } from "../src/render/boards/murk-board.ts";
-import type { FrameContext } from "../src/render-frame.ts";
+import type { FrameContext } from "../src/render/render-frame.ts";
 import type { GainArt } from "../src/shown.ts";
 
 // A reward rising off a board drawn in a Game theme but Classic wears the

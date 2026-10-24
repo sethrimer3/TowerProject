@@ -1,6 +1,6 @@
-import type { ChestKind } from "./entities.ts";
+import type { ChestKind } from "../entities.ts";
 import { forEachViewTile, tileCenter, tileOrigin, type FrameContext } from "./render-frame.ts";
-import { drawKit } from "./sprites/kit.ts";
+import { drawKit } from "../sprites/kit.ts";
 
 /** How a Supply or Equipment Chest shows on the board, opened or not: a
  * glow of its colour (the CHEST card's bonus lines' light blue and purple)

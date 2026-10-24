@@ -1,4 +1,4 @@
-import { tileTransform, type FrameContext } from "../../render-frame.ts";
+import { tileTransform, type FrameContext } from "../render-frame.ts";
 
 /** How long a collected Gem's sparkle lasts. */
 export const GEM_SPARKLE_MS = 800;

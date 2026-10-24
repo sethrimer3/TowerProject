@@ -2,7 +2,7 @@ import { kitIcon } from "../sprites/kit.ts";
 import { CARDS } from "../cards/cards.ts";
 import type { CardId } from "../cards/cards.ts";
 import { LIMIT_BREAKS, type UpgradeId } from "../config.ts";
-import { AREA1_ITEM_URLS } from "../area1-tileset.ts";
+import { AREA1_ITEM_URLS } from "../render/area1-tileset.ts";
 
 /** Small DOM, number and sprite helpers shared by every page. */
 

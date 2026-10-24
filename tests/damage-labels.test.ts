@@ -5,7 +5,7 @@ import { BASE_RULES, shardStat } from "../src/step-effects.ts";
 import { predict } from "../src/combat.ts";
 import { forecast } from "../src/crit-forecast.ts";
 import type { Enemy, Player, Tile } from "../src/entities.ts";
-import type { FrameContext } from "../src/render-frame.ts";
+import type { FrameContext } from "../src/render/render-frame.ts";
 import { compactAmount } from "../src/whole.ts";
 
 const hero = (over: Partial<Player> = {}): Player =>

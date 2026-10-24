@@ -11,7 +11,7 @@ page.on("pageerror", (e) => errors.push(e.message));
 await fixClock(page);
 await page.goto(process.env.TEST_URL || "http://127.0.0.1:5173/");
 const results = await page.evaluate(async () => {
-  const { Renderer } = await import("/src/rendering.ts");
+  const { Renderer } = await import("/src/render/rendering.ts");
   const { Game } = await import("/src/state.ts");
   const { defaults, decode } = await import("/src/save/save.ts");
   const canvas = document.createElement("canvas");

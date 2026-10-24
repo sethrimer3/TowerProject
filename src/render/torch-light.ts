@@ -1,6 +1,6 @@
-import type { Torch } from "./entities.ts";
+import type { Torch } from "../entities.ts";
 import { LIGHTING_CONFIG } from "./lighting.ts";
-import { computeVisibilityPolygon } from "./torches.ts";
+import { computeVisibilityPolygon } from "../torches.ts";
 import { insidePolygon } from "./floor-relief.ts";
 
 /** Baked, occlusion-aware torch glow.

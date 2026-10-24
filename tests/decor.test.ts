@@ -259,7 +259,7 @@ test("the foreground pass is skipped when it has nothing to draw, and busy track
 });
 
 test("the tile cache repaints only when the view leaves it, the key changes, or art is missing", async () => {
-  const { TileLayerCache } = await import("../src/tile-cache.ts");
+  const { TileLayerCache } = await import("../src/render/tile-cache.ts");
   const ctx = new Proxy({}, { get: () => () => {}, set: () => true }) as unknown as CanvasRenderingContext2D;
   const g = globalThis as { document?: unknown };
   const had = g.document;

@@ -1,8 +1,8 @@
 import { potionShade, type EnemyStrength, type Tile, type Torch, type KeyColor } from "../../entities.ts";
-import { forEachViewTile, toTileSpace, type FrameContext } from "../../render-frame.ts";
+import { forEachViewTile, toTileSpace, type FrameContext } from "../render-frame.ts";
 import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
 import { sprite, type Sprite } from "../../sprites/pixel-sprite.ts";
-import { rankChevrons } from "../../rank-chevrons.ts";
+import { rankChevrons } from "../rank-chevrons.ts";
 
 /** The Kroz Game theme's dungeon board, after the old Kroz games (Kingdom
  * of Kroz and the rest): every tile one character of an old PC's 8x8 text

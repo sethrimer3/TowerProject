@@ -109,8 +109,8 @@ try {
   const materials = await page.evaluate(async () => {
     const { drawDungeonGround, drawDungeonFrame, dungeonMaterialJoins, dungeonMaterial, dungeonFloorFrame, dungeonWallVariant,
       DUNGEON_ATLASES, DUNGEON_CAP_FRAME, DUNGEON_SHADE_FRAME } = await import("/src/sprites/dungeon.ts");
-    const { dungeonWallProfile, dungeonWallBands } = await import("/src/wall-depth.ts");
-    const { paintTile } = await import("/src/tile-painters.ts");
+    const { dungeonWallProfile, dungeonWallBands } = await import("/src/render/wall-depth.ts");
+    const { paintTile } = await import("/src/render/tile-painters.ts");
     const { kitImage } = await import("/src/sprites/kit.ts");
     const canvas = document.createElement("canvas"); canvas.width = canvas.height = 24;
     const c = canvas.getContext("2d");
@@ -204,7 +204,7 @@ try {
   for (const width of [390, 1100]) for (const mode of ["tower", "delve"]) {
     await page.setViewportSize({ width, height: 1000 });
     const result = await page.evaluate(async ({ width, mode }) => {
-      const { dungeonSpriteScene } = await import("/tests/render-scenes.ts"), { Renderer } = await import("/src/rendering.ts");
+      const { dungeonSpriteScene } = await import("/tests/render-scenes.ts"), { Renderer } = await import("/src/render/rendering.ts");
       const { loadSpriteFont } = await import("/src/sprites/font.ts"), { THEME_IDS } = await import("/src/theme-collection.ts");
       await loadSpriteFont(); const { g } = dungeonSpriteScene(mode); g.save.themes = [...THEME_IDS];
       g.effect = { text: "", x: 0, y: 0, until: 0 }; g.blocked = { x: 0, y: 0, until: 0 };
@@ -274,7 +274,7 @@ try {
   await failed.goto(server.resolvedUrls.local[0]);
   const fallback = await failed.evaluate(async () => {
     const { drawDungeonGround } = await import("/src/sprites/dungeon.ts");
-    const { paintTile } = await import("/src/tile-painters.ts");
+    const { paintTile } = await import("/src/render/tile-painters.ts");
     const cv = document.createElement("canvas"); cv.width = cv.height = 24; const c = cv.getContext("2d");
     const tile = { mode: "tower", height: 0, seed: 1, x: 8, y: 5, wall: true, empty: false };
     const ready = drawDungeonGround(c, tile);

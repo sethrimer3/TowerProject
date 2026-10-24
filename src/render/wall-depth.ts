@@ -1,5 +1,5 @@
-import type { Tile } from "./entities.ts";
-import { tileRandom } from "./random.ts";
+import type { Tile } from "../entities.ts";
+import { tileRandom } from "../random.ts";
 
 export type DungeonWallDepth = 0 | 1 | 2;
 export type DungeonWallProfile = { depth: DungeonWallDepth; openings: number };

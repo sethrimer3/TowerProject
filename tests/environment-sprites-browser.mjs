@@ -105,7 +105,7 @@ try {
   for (const width of [390, 1100]) {
     await page.setViewportSize({ width, height: 900 });
     const result = await page.evaluate(async width => {
-      const { environmentSpriteScene } = await import("/tests/render-scenes.ts"), { Renderer } = await import("/src/rendering.ts");
+      const { environmentSpriteScene } = await import("/tests/render-scenes.ts"), { Renderer } = await import("/src/render/rendering.ts");
       const { loadSpriteFont } = await import("/src/sprites/font.ts"), { THEME_IDS } = await import("/src/theme-collection.ts");
       await loadSpriteFont();
       const { g } = environmentSpriteScene(); g.save.themes = [...THEME_IDS];

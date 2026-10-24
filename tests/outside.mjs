@@ -42,7 +42,7 @@ try {
   const result = await page.evaluate(async () => {
     const { Game } = await import("/src/state.ts");
     const { defaults } = await import("/src/save/save.ts");
-    const { Renderer } = await import("/src/rendering.ts");
+    const { Renderer } = await import("/src/render/rendering.ts");
     const { outsideWeather } = await import("/src/outside.ts");
     document.head.querySelectorAll('style,link[rel="stylesheet"]').forEach(e => e.remove());
     document.body.style.cssText = "margin:0;background:#101a1c;color:#d6dfca;font:14px sans-serif";

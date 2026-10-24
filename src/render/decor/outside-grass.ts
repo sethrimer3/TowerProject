@@ -1,5 +1,5 @@
 import type { Board } from "../../board.ts";
-import type { BoardView } from "../../render-frame.ts";
+import type { BoardView } from "../render-frame.ts";
 import { outsideSpriteKind, roadsOf, type Weather } from "../../outside.ts";
 import { tileRandom } from "../../random.ts";
 

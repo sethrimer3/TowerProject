@@ -13,8 +13,8 @@
  * cell records its brightest light ("dominant light"). A unit's shadow is
  * then just a few small rects stepped away from that one light — no ray
  * casting per unit per frame. */
-import { LIGHTING_CONFIG, getTorchFlicker, getTorchSway } from "../lighting.ts";
-import { glowColor, lightFalloff } from "../torch-light.ts";
+import { LIGHTING_CONFIG, getTorchFlicker, getTorchSway } from "../render/lighting.ts";
+import { glowColor, lightFalloff } from "../render/torch-light.ts";
 import { CELL_COUNT, CELLS_H, CELLS_W, ORTHO, cellInBounds, cellIndex, hash, hash01, type Rect } from "./grid.ts";
 import { CellType, type Building, type CityMap } from "./citygen.ts";
 

@@ -1,5 +1,5 @@
-import type { Tile } from "./entities.ts";
-import { tileRandom } from "./random.ts";
+import type { Tile } from "../entities.ts";
+import { tileRandom } from "../random.ts";
 
 export type DungeonDetail = { variant: number; half: 0 | 1 };
 export const dungeonDetailVariants = (material: string) => material === "masonry" ? 7 : 4;

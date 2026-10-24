@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { dungeonDetail, dungeonDetailId, dungeonDetailVariants } from "../src/dungeon-details.ts";
+import { dungeonDetail, dungeonDetailId, dungeonDetailVariants } from "../src/render/dungeon-details.ts";
 import { DUNGEON_ATLASES } from "../src/sprites/dungeon.ts";
 import type { Tile } from "../src/entities.ts";
 

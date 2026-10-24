@@ -1,6 +1,6 @@
 import type { Tile, Torch } from "../../entities.ts";
 import type { Facing } from "../../shown.ts";
-import type { FrameContext } from "../../render-frame.ts";
+import type { FrameContext } from "../render-frame.ts";
 
 /** How a Game theme other than Classic draws the dungeon board in place of
  * its lit art: the ground, each tile's contents, torches and the hero, each

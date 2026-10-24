@@ -2,7 +2,7 @@ import { boardFont } from "../../sprites/font.ts";
 import { netDamage, PLAYED_ROUNDS, predict, type CritRule } from "../../combat.ts";
 import { forecast } from "../../crit-forecast.ts";
 import type { Enemy, Player, Tile } from "../../entities.ts";
-import { forEachViewTile, type FrameContext } from "../../render-frame.ts";
+import { forEachViewTile, type FrameContext } from "../render-frame.ts";
 import { potionRestores, shardStat, type StepRules } from "../../step-effects.ts";
 import { compactAmount, whole, wholeChange } from "../../whole.ts";
 

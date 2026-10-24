@@ -1,5 +1,5 @@
 import type { Boosted } from "../../runs.ts";
-import { tileTransform, type FrameContext } from "../../render-frame.ts";
+import { tileTransform, type FrameContext } from "../render-frame.ts";
 
 /** How long one swell of a boost's glow takes. */
 const PULSE_MS = 1400;

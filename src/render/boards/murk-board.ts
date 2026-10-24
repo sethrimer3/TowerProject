@@ -1,9 +1,9 @@
 import { potionShade, type EnemyStrength, type Tile, type Torch, type KeyColor } from "../../entities.ts";
 import type { Facing } from "../../shown.ts";
-import { forEachViewTile, toTileSpace, type FrameContext } from "../../render-frame.ts";
+import { forEachViewTile, toTileSpace, type FrameContext } from "../render-frame.ts";
 import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
 import { tileHash } from "./ascii-glyphs.ts";
-import { rankChevrons } from "../../rank-chevrons.ts";
+import { rankChevrons } from "../rank-chevrons.ts";
 import { blobPath, handPath, heartPath, line, shape as doodleShape, spray, stroke as doodleStroke, type Pt } from "./doodle-board.ts";
 import { vignette } from "./themed-art.ts";
 

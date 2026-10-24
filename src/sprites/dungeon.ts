@@ -1,10 +1,10 @@
 import type { Mode, Tile } from "../entities.ts";
 import { tileRandom } from "../random.ts";
-import { themeAt, type TerrainTile } from "../themes.ts";
+import { themeAt, type TerrainTile } from "../render/themes.ts";
 import { kitImage } from "./kit.ts";
-import { wallAdjacencyMask } from "../area1-tileset.ts";
-import { dungeonWallBands, type DungeonWallProfile } from "../wall-depth.ts";
-import { dungeonDetailId, type DungeonDetail } from "../dungeon-details.ts";
+import { wallAdjacencyMask } from "../render/area1-tileset.ts";
+import { dungeonWallBands, type DungeonWallProfile } from "../render/wall-depth.ts";
+import { dungeonDetailId, type DungeonDetail } from "../render/dungeon-details.ts";
 
 export const DUNGEON_MATERIALS = ["masonry", "stone", "earth"] as const;
 export type DungeonMaterial = typeof DUNGEON_MATERIALS[number];

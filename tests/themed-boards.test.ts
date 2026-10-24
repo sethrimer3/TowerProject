@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { createHash, type Hash } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import type { Enemy, EnemyStrength, Tile, Torch } from "../src/entities.ts";
-import type { FrameContext } from "../src/render-frame.ts";
+import type { FrameContext } from "../src/render/render-frame.ts";
 
 // Characterization hashes of every Game theme's board: each board's every
 // canvas call and property write while it paints each kind of tile contents

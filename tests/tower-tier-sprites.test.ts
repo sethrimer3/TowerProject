@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { drawDungeonGround, towerFloorFrame, towerTierAtlasId, towerTileset, dungeonWallVariant } from "../src/sprites/dungeon.ts";
-import { paintTile, type BoardLook } from "../src/tile-painters.ts";
+import { paintTile, type BoardLook } from "../src/render/tile-painters.ts";
 
 test("Tower II and III each ship a distinct native floor panel and connected wall atlas", () => {
   for (const part of ["floor", "walls"] as const) {

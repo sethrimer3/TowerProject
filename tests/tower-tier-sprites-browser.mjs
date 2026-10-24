@@ -80,7 +80,7 @@ try {
   for (const width of [390, 1100]) for (const tier of [2, 3]) {
     await page.setViewportSize({ width, height: 1000 });
     const result = await page.evaluate(async ({ tier, width }) => {
-      const { towerTierSpriteScene } = await import("/tests/render-scenes.ts"), { Renderer } = await import("/src/rendering.ts");
+      const { towerTierSpriteScene } = await import("/tests/render-scenes.ts"), { Renderer } = await import("/src/render/rendering.ts");
       const { loadSpriteFont } = await import("/src/sprites/font.ts"), { THEME_IDS } = await import("/src/theme-collection.ts");
       const { decode } = await import("/src/save/save.ts"), { Game } = await import("/src/state.ts");
       await loadSpriteFont(); const { g } = towerTierSpriteScene(tier); g.save.themes = [...THEME_IDS];
@@ -144,7 +144,7 @@ try {
   await failed.route("**/dungeon-tower-3-walls.png", route => route.abort());
   await failed.goto(server.resolvedUrls.local[0]);
   const fallback = await failed.evaluate(async () => {
-    const { drawDungeonGround } = await import("/src/sprites/dungeon.ts"), { paintTile } = await import("/src/tile-painters.ts");
+    const { drawDungeonGround } = await import("/src/sprites/dungeon.ts"), { paintTile } = await import("/src/render/tile-painters.ts");
     const c = document.createElement("canvas").getContext("2d"); c.canvas.width = c.canvas.height = 24;
     const tile = { mode: "tower", tier: 3, height: 0, seed: 0, x: 0, y: 0, wall: true, empty: false };
     const ready = drawDungeonGround(c, tile);

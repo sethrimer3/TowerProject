@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash, type Hash } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { drawTerrain, type TileNeighbors } from "../src/themes.ts";
+import { drawTerrain, type TileNeighbors } from "../src/render/themes.ts";
 import { tileRandom } from "../src/random.ts";
 import type { Mode } from "../src/entities.ts";
 

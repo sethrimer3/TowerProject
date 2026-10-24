@@ -1,4 +1,4 @@
-import type { FrameContext } from "../../render-frame.ts";
+import type { FrameContext } from "../render-frame.ts";
 
 /** Drawing the Game theme boards share. Drawing only: nothing here is saved
  * or played by. */

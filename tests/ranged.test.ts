@@ -17,8 +17,8 @@ import { runTrainingValue, silverPrice } from "../src/progression/run-training.t
 import { trainingGold } from "../src/progression/training-jobs.ts";
 import { RESEARCH } from "../src/progression/archives.ts";
 import { snap } from "../src/exact.ts";
-import { BoardPopups } from "../src/board-popups.ts";
-import { drawVolley } from "../src/volley-art.ts";
+import { BoardPopups } from "../src/render/board-popups.ts";
+import { drawVolley } from "../src/render/volley-art.ts";
 import type { Enemy, Player, Tile } from "../src/entities.ts";
 
 const hero = (over: Partial<Player> = {}): Player => ({ x: 0, y: 0, hp: 100, maxHp: 100, attack: 12, defense: 0, keys: { yellow: 0, blue: 0, red: 0 }, ...over }) as Player;

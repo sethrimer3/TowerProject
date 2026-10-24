@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { bakeReliefMasks, heightMap, insidePolygon, reliefWeights } from "../src/floor-relief.ts";
+import { bakeReliefMasks, heightMap, insidePolygon, reliefWeights } from "../src/render/floor-relief.ts";
 
 const torch = { x: 5, y: 5, lightRadius: 4.5, baseIntensity: 0.5 };
 

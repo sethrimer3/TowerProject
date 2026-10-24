@@ -1,4 +1,4 @@
-import type { Torch } from "./entities.ts";
+import type { Torch } from "../entities.ts";
 import { LIGHTING_CONFIG } from "./lighting.ts";
 
 /** Torch-driven bump lighting for pixel-art floor sprites.

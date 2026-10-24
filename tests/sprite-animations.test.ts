@@ -2,9 +2,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { HeroIdleAnimation, keyShineFrame, potionBubbleFrame, deathSkullFrame, HERO_FACINGS } from "../src/sprites/animations.ts";
-import { paintContents, paintHero } from "../src/tile-painters.ts";
+import { paintContents, paintHero } from "../src/render/tile-painters.ts";
 import { drawStruckDown, DEFEAT_MS } from "../src/render/effects/struck-down.ts";
-import type { FrameContext } from "../src/render-frame.ts";
+import type { FrameContext } from "../src/render/render-frame.ts";
 
 test("ambient strips use native frames and every required facing ships", () => {
   for (const [id, frames] of [["ambient-potion-bubbles", 5], ["ambient-key-shine", 5], ["ambient-death-skull", 6], ...HERO_FACINGS.map(facing => [`ambient-hero-${facing}`, 4])] as [string, number][]) {

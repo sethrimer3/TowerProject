@@ -1,10 +1,10 @@
-import type { Tile, Torch } from "./entities.ts";
+import type { Tile, Torch } from "../entities.ts";
 import { LIGHTING_CONFIG, getTorchFlicker, getTorchSway } from "./lighting.ts";
 import { torchReaches } from "./floor-relief.ts";
 import { lightFalloff } from "./torch-light.ts";
-import { drawGameSprite } from "./sprites/game-sprites.ts";
+import { drawGameSprite } from "../sprites/game-sprites.ts";
 import { paintContents, paintHero, paintHeroFallback } from "./tile-painters.ts";
-import { spriteRevision } from "./sprites/kit.ts";
+import { spriteRevision } from "../sprites/kit.ts";
 import { forEachViewTile, tileOrigin, toTileSpace, type FrameContext } from "./render-frame.ts";
 
 /** Tile kinds that stand up off the floor and so cast torch shadows. */

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { defaults } from "../src/save/save.ts";
 import { trainedAmount } from "../src/config.ts";
 import { landsAt, leavesAt, volleyTurn, type VolleyTurn } from "../src/volley.ts";
-import { ShotsInFlight, shotFlight } from "../src/volley-art.ts";
+import { ShotsInFlight, shotFlight } from "../src/render/volley-art.ts";
 import { ARROW_COST, FOE_GAIN, FOE_REACH, foeGain, foeRange, foeShotCost, foeTickGain, reachTicks, TURN_TICKS, within, type Volleys } from "../src/enemies/ranged.ts";
 import type { Enemy, Player, Tile } from "../src/entities.ts";
 

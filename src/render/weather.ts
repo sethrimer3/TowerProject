@@ -1,5 +1,5 @@
-import { outsideWeather, type Weather } from "./outside.ts";
-import { tileRandom } from "./random.ts";
+import { outsideWeather, type Weather } from "../outside.ts";
+import { tileRandom } from "../random.ts";
 
 // No full-screen flashes: a single slow, localized glow peaks at 1.5% opacity.
 export function lightningOpacity(seconds: number) {

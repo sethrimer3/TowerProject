@@ -1,6 +1,6 @@
-import { drawThemedTile } from "../themed-tilesets.ts";
-import { paintContents, paintHero, paintTile, paintTorch, type BoardLook } from "../tile-painters.ts";
-import { drawArea1Item } from "../area1-tileset.ts";
+import { drawThemedTile } from "../render/themed-tilesets.ts";
+import { paintContents, paintHero, paintTile, paintTorch, type BoardLook } from "../render/tile-painters.ts";
+import { drawArea1Item } from "../render/area1-tileset.ts";
 import { sprite } from "../sprites/pixel-sprite.ts";
 import { drawCrates } from "../render/decor/decor-sprites.ts";
 import { drawKit } from "../sprites/kit.ts";

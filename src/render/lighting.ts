@@ -1,5 +1,5 @@
-import type { Torch } from "./entities.ts";
-import { TORCH_LIGHT } from "./torches.ts";
+import type { Torch } from "../entities.ts";
+import { TORCH_LIGHT } from "../torches.ts";
 
 /** Centralized dungeon lighting parameters for fast tuning and consistency. */
 export const LIGHTING_CONFIG = {
@@ -43,7 +43,7 @@ export const LIGHTING_CONFIG = {
     /** Flame sprite stretch amount (+/- fraction of its height). */
     stretch: 0.16,
   },
-  /** Baked torch glow (see torch-light.ts). Computed once per torch, drawn
+  /** Baked torch glow (see render/torch-light.ts). Computed once per torch, drawn
    * each frame as two cheap image blits. */
   glow: {
     /** Light-field samples per tile; the field is blurred and upscaled smoothly. */
@@ -175,7 +175,7 @@ export const LIGHTING_CONFIG = {
     /** Extra strength at the darkest Brightness setting. */
     darkBoost: 0.5,
   },
-  /** Torch bump lighting on floor sprites (see floor-relief.ts). */
+  /** Torch bump lighting on floor sprites (see render/floor-relief.ts). */
   relief: {
     /** Luminance (0-255) above which a sprite pixel counts as raised. */
     heightThreshold: 38,

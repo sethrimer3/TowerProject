@@ -1,7 +1,7 @@
 import type { Tile, Torch, KeyColor } from "../../entities.ts";
-import { forEachViewTile, toTileSpace, type FrameContext } from "../../render-frame.ts";
+import { forEachViewTile, toTileSpace, type FrameContext } from "../render-frame.ts";
 import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
-import { rankChevrons } from "../../rank-chevrons.ts";
+import { rankChevrons } from "../rank-chevrons.ts";
 
 /** The Desktop Game theme's dungeon board, as an old windowed desktop
  * computer's mine-sweeping game draws its field: flat grey floor cells,

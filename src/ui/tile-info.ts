@@ -12,7 +12,7 @@ import { doorColor, doorDescription, doorName, doorRule, drainsHp, KEY_NAMES } f
 import { MODES } from "../modes.ts";
 import { litTorches } from "../board.ts";
 import { point } from "../entities.ts";
-import { area1ItemId } from "../area1-tileset.ts";
+import { area1ItemId } from "../render/area1-tileset.ts";
 import { snap } from "../exact.ts";
 import { goldIcon, itemSprite, uiSprite } from "./dom.ts";
 

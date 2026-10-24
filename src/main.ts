@@ -25,7 +25,7 @@ import { themedBoardOf } from "./render/boards/themed-boards.ts";
 import { load, persist } from "./save/save.ts";
 import { stampProfile } from "./save/profile.ts";
 import { Game } from "./state.ts";
-import { Renderer } from "./rendering.ts";
+import { Renderer } from "./render/rendering.ts";
 import { bindInput } from "./input.ts";
 import { DefendPage } from "./defend/ui.ts";
 import { drawGameSprite } from "./sprites/game-sprites.ts";

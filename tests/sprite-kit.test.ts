@@ -14,9 +14,9 @@ import { ICON_SPRITES, WORLD_SPRITES, CONTROL_SPRITES, DETAIL_SPRITES, CITY_SPRI
 import { GOAL_SPRITES, UI_DETAIL_SPRITES, UI_ORNAMENT_SPRITES } from "../src/sprites/ui-details.ts";
 import { CARDS } from "../src/cards/cards.ts";
 import { ICON_ROWS } from "../src/ui/equipment-icons.ts";
-import { THEMED_TILESET_URLS } from "../src/themed-tilesets.ts";
+import { THEMED_TILESET_URLS } from "../src/render/themed-tilesets.ts";
 import { SPRITE_TERRAIN } from "../src/sprites/terrain-index.ts";
-import { paintContents, paintHero } from "../src/tile-painters.ts";
+import { paintContents, paintHero } from "../src/render/tile-painters.ts";
 
 test("every world, UI, Equipment and card sprite ships as a real native-sized PNG", () => {
   const base = new URL("../public/assets/style/", import.meta.url);

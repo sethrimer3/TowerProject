@@ -48,7 +48,7 @@ try {
   for (const width of [390, 1100]) for (const mode of ["tower", "delve"]) {
     await page.setViewportSize({ width, height: 900 });
     const result = await page.evaluate(async ({ width, mode }) => {
-      const { forestSpriteScene } = await import("/tests/render-scenes.ts"), { Renderer } = await import("/src/rendering.ts");
+      const { forestSpriteScene } = await import("/tests/render-scenes.ts"), { Renderer } = await import("/src/render/rendering.ts");
       const { loadSpriteFont } = await import("/src/sprites/font.ts"), { THEME_IDS } = await import("/src/theme-collection.ts");
       await loadSpriteFont();
       const { g } = forestSpriteScene(mode); g.save.themes = [...THEME_IDS];

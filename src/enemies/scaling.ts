@@ -117,7 +117,7 @@ export const enemyTitle = (e: { name: string; strength?: EnemyStrength; flying?:
 export const enemyTier = (strength: EnemyStrength) => STRENGTH_TIER[strength];
 
 /** The Delve's enemy kinds, one per population an area can hold. Each has
- * its own procedural body (tile-painters.ts), since none has sprite art. */
+ * its own procedural body (render/tile-painters.ts), since none has sprite art. */
 export const DELVE_ENEMY_NAMES = ["Cinder slime", "Bone sentinel", "Dusk wing", "Ash warden"];
 
 /** A Tower enemy of the given strength and profile for floor `room` of

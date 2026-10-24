@@ -16,9 +16,9 @@ try {
   await page.route("**/dungeon-details-masonry-0.png", route => release(route));
   await page.goto(server.resolvedUrls.local[0]); await page.locator("#hp").waitFor();
   await page.evaluate(async () => {
-    const { dungeonDetail } = await import("/src/dungeon-details.ts");
-    const { paintTile } = await import("/src/tile-painters.ts");
-    const { dungeonWallProfile, dungeonWallBands } = await import("/src/wall-depth.ts");
+    const { dungeonDetail } = await import("/src/render/dungeon-details.ts");
+    const { paintTile } = await import("/src/render/tile-painters.ts");
+    const { dungeonWallProfile, dungeonWallBands } = await import("/src/render/wall-depth.ts");
     const world = { tile: (_x, y) => ({ kind: y <= 0 ? "wall" : "floor" }) }, seed = 1107;
     let left = -100; while (dungeonDetail(world, left, 0, seed, () => "masonry")?.half !== 0) left++;
     const canvas = document.createElement("canvas"); canvas.width = 48; canvas.height = 24;
@@ -43,7 +43,7 @@ try {
   await page.waitForFunction(async () => !!(await import("/src/sprites/kit.ts")).kitImage("dungeon-details-masonry-0"));
   const result = await page.evaluate(async before => {
     const { world, left, look, paint, dungeonWallProfile, dungeonWallBands } = detailReview;
-    const { kitImage } = await import("/src/sprites/kit.ts"), { dungeonDetail } = await import("/src/dungeon-details.ts");
+    const { kitImage } = await import("/src/sprites/kit.ts"), { dungeonDetail } = await import("/src/render/dungeon-details.ts");
     const cv = document.createElement("canvas"); cv.width = kitImage("dungeon-details-masonry-0").naturalWidth; cv.height = 48;
     const ctx = cv.getContext("2d"); ctx.drawImage(kitImage("dungeon-details-masonry-0"), 0, 0);
     const source = ctx.getImageData(0, 0, cv.width, 48).data, after = paint();
@@ -92,7 +92,7 @@ try {
   assert.ok(atlas.every(a => a.visible > 15 && a.visible < 576 && a.gutter === 0 && a.sameAlpha), "all detail ramps retain sparse native subjects, clear gutters and identical shade silhouettes");
   assert.ok(atlas.filter(a => a.crossing).length >= 60, "most authored features cross the internal tile boundary");
   await page.evaluate(async () => {
-    const { kitImage } = await import("/src/sprites/kit.ts"), { paintTile } = await import("/src/tile-painters.ts");
+    const { kitImage } = await import("/src/sprites/kit.ts"), { paintTile } = await import("/src/render/tile-painters.ts");
     const cv = document.createElement("canvas"); cv.id = "context-review"; cv.width = 1100; cv.height = 910;
     const c = cv.getContext("2d"); c.imageSmoothingEnabled = false; c.fillStyle = "#10151c"; c.fillRect(0, 0, 1100, 910);
     ["masonry-0", "stone-0", "earth"].forEach((material, i) => {
@@ -117,8 +117,8 @@ try {
   await failed.route("**/dungeon-details-masonry-0.png", route => { rejected++; return route.abort(); });
   await failed.goto(server.resolvedUrls.local[0]); await failed.locator("#hp").waitFor();
   const fallback = () => failed.evaluate(async () => {
-    const { dungeonDetail } = await import("/src/dungeon-details.ts"), { dungeonWallProfile } = await import("/src/wall-depth.ts");
-    const { paintTile } = await import("/src/tile-painters.ts"), { drawDungeonGround, dungeonDiagonals } = await import("/src/sprites/dungeon.ts");
+    const { dungeonDetail } = await import("/src/render/dungeon-details.ts"), { dungeonWallProfile } = await import("/src/render/wall-depth.ts");
+    const { paintTile } = await import("/src/render/tile-painters.ts"), { drawDungeonGround, dungeonDiagonals } = await import("/src/sprites/dungeon.ts");
     const world = { tile: (_x, y) => ({ kind: y <= 0 ? "wall" : "floor" }) }, seed = 1107;
     let x = -100; while (dungeonDetail(world, x, 0, seed, () => "masonry")?.half !== 0) x++;
     const cv = document.createElement("canvas"); cv.width = 48; cv.height = 24;

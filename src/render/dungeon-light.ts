@@ -42,8 +42,8 @@ export type LitBoard = {
  * less-darkened sprites, torchlight on sprites, the lightmap and haze, and
  * the vignette. It runs the whole dungeon frame in that order, calling back
  * into the board (a LitBoard) for what it draws in between. The two passes
- * behind it are lighting-pass.ts (the board's light) and
- * entity-lighting.ts (shadows and light on sprites). */
+ * behind it are render/lighting-pass.ts (the board's light) and
+ * render/entity-lighting.ts (shadows and light on sprites). */
 export class DungeonLight {
   private pass = new LightingPass();
   private entities = new EntityLighting();

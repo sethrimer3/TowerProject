@@ -1,5 +1,5 @@
 import { drawKit } from "./kit.ts";
-import type { FrameContext } from "../render-frame.ts";
+import type { FrameContext } from "../render/render-frame.ts";
 
 export const BOARD_MARK_SPRITES = {
   target: { id: "combat-mark-target", size: 16 },

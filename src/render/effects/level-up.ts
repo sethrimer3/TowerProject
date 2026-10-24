@@ -1,7 +1,7 @@
 import { boardFont } from "../../sprites/font.ts";
-import { tileTransform, type FrameContext } from "../../render-frame.ts";
+import { tileTransform, type FrameContext } from "../render-frame.ts";
 import { REVIVE_MS } from "../../combat.ts";
-import { coinImage, INSPIRATION_URL, sprite } from "../../board-popups.ts";
+import { coinImage, INSPIRATION_URL, sprite } from "../board-popups.ts";
 import { compactAmount } from "../../whole.ts";
 import { AREA_BURST_MS, type AreaReward } from "../../tower/area-ledger.ts";
 

@@ -45,7 +45,7 @@ npm run cards:stubs                     # regenerate the placeholder card faces 
 Tower and Delve share the tab bar's one board button (`data-tab="board"`, wearing the active mode's art); the only way between them is the **forest sign** (`Game.swapForest`: in either forest once the Delve is open, tapped, `#forest-sign`, which `BoardOverlay.placeSign` keeps over the path, or walked onto, the path's foot, `OutsideWorld.atExit`), which leaves the hero at the forest's start tile and arrives at the other's (`switchMode(next, outside)` starts a mode with no run in its forest).
 A `Game` built on a save whose Delve run is inside and Tower run isn't opens in the Delve, so a reload mid-run returns to it.
 `tests/forest-swap.test.ts` covers the sign, the paused run behind a page, and training bought mid-run surviving undo.
-Tower and Delve share one `Game` (`src/state.ts`: movement, pickups, doors, run lifecycle, purchases) and `Renderer` (`src/rendering.ts`).
+Tower and Delve share one `Game` (`src/state.ts`: movement, pickups, doors, run lifecycle, purchases) and `Renderer` (`src/render/rendering.ts`).
 `game.mode` selects which `save[mode]` slice (run, undo history, revival, bests, looted tiles) is active.
 Each slice holds its own mode's run type (`runs.ts`), both built on `RunCore`: a `TowerRun` adds whether the hero has taken fight damage in the current area (`damaged`) and whether it has climbed past an enemy left in it (`enemiesLeft`), and a `DelveRun` adds the milestone gates crossed (`milestone`).
 The board's pieces (`Tile`, `Enemy`, `Player`, `point`) live in `entities.ts`, which imports nothing, and the save's shape (`Save`, `ModeSave`) in `save/shape.ts`.

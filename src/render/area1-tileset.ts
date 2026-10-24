@@ -1,6 +1,6 @@
-import { tileRandom } from "./random.ts";
-import { doorId } from "./doors.ts";
-import type { Tile } from "./entities.ts";
+import { tileRandom } from "../random.ts";
+import { doorId } from "../doors.ts";
+import type { Tile } from "../entities.ts";
 
 const AREA1_TILE_SIZE = 24;
 // Vite serves Pages builds beneath /TowerProject/. Root-absolute asset URLs

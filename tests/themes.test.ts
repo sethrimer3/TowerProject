@@ -1,7 +1,7 @@
 import { region } from "../src/delve/labyrinth.ts";
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { THEMES, themeAt } from "../src/themes.ts";
+import { THEMES, themeAt } from "../src/render/themes.ts";
 
 test("ten Tower themes cover ten rooms each and repeat", () => {
   assert.equal(THEMES.length, 10);

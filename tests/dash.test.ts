@@ -6,7 +6,7 @@ import { RoomWorld } from "../src/tower/room-world.ts";
 import { RESEARCH, missing, research } from "../src/progression/archives.ts";
 import { BADGES, drawable, defaultBadges } from "../src/cards/badges.ts";
 import { DashEchoes, DASH_ECHO_MS } from "../src/render/effects/dash-echoes.ts";
-import type { FrameContext } from "../src/render-frame.ts";
+import type { FrameContext } from "../src/render/render-frame.ts";
 
 /** A Tower corridor along the bottom row: the hero at its west end, a
  * gold key on x = 5 and the stairs at x = 7, with the Dash skill owned (or

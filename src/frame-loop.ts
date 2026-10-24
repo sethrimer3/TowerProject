@@ -1,5 +1,5 @@
 import type { Game } from "./state.ts";
-import type { Renderer } from "./rendering.ts";
+import type { Renderer } from "./render/rendering.ts";
 import { isBoard, type Tab } from "./ui/app.ts";
 
 export type FrameLoopHost = {

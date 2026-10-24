@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { AREA1_DOOR_URLS, AREA1_FLOOR_URLS, AREA1_ITEM_URLS, area1ItemId, floorVariant, wallAdjacencyMask } from "../src/area1-tileset.ts";
+import { AREA1_DOOR_URLS, AREA1_FLOOR_URLS, AREA1_ITEM_URLS, area1ItemId, floorVariant, wallAdjacencyMask } from "../src/render/area1-tileset.ts";
 
 test("wall adjacency uses NESW bits for every structural combination", () => {
   for (let mask = 0; mask < 16; mask++) assert.equal(wallAdjacencyMask({

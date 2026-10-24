@@ -1,4 +1,4 @@
-import type { EnemyStrength } from "./entities.ts";
+import type { EnemyStrength } from "../entities.ts";
 
 /** How many rank chevrons an enemy of each strength wears, and whether they
  * point down (a weak enemy's one). Every Game theme draws them, Classic's
