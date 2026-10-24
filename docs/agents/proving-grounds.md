@@ -94,23 +94,37 @@ The old selected `trialAccess.level` is ignored and cannot manufacture completed
 ## Keymaster
 
 Trial 2 uses `keymaster.ts` and an optional `TrialState.keymaster` payload; older Light Elemental saves gain no new encounter fields.
-The stationary boss uses the shared center position and HP multiplier, has no ghost phase, lasers or slimes, and retaliates for the same 4% base max-HP damage on a surviving direct hit.
-Every hit scatters exactly three golden keys to three seeded choices of eight compass directions, each three tiles from the boss; repeated drops stack and stepping onto a pile collects it.
+The Keymaster starts at the shared center with the same HP multiplier and direct-hit retaliation, but has no lasers or slimes.
+`boss-movement.ts` shares the Light Elemental's deterministic teleport and safe reformation rules; a surviving Keymaster hit relocates it at least six Manhattan tiles away and makes it incorporeal.
+Every ten arena turns it reforms and becomes vulnerable; an empty-target card hand waits through this phase rather than pausing.
+Ghosts are passable floor, cannot be struck and do not count as card enemies; the saved position, phase and teleport history survive reloads.
+On every even accepted arena turn, the Keymaster takes one legal cardinal step strictly farther from the player; if walls, actors or pickups block all such steps, it stays put.
+Retreat also runs while incorporeal; turning corporeal relocates an occupied ghost safely before exposing it as an enemy.
+Every hit scatters exactly three golden keys to three seeded choices of eight compass directions, each three tiles from its hit position; directions leaving the arena are excluded, repeated drops stack and stepping onto a pile collects it.
 These keys belong only to the encounter and are distinct from daily entry keys.
 Two mimics appear on entry; another spawns every `max(2,8-floor(level/5))` turns, up to six alive.
 Their HP is `ceil(max(30,6*ATK)*difficultyMultiplier(level))`; a surviving mimic counters for 6% max HP times that multiplier, less 20% of copied DEF, with minimum 1 damage.
-Mimics avoid the three-tile key landing ring and occupied tiles.
+Mimic spawns avoid the boss's three-tile key landing ring and occupied tiles.
+Every even accepted arena turn, each existing mimic takes one cardinal step along a shortest route toward the player.
+A reverse breadth-first map routes around walls, the boss and other mimics; ID order and reserved landing cells prevent stacking and make reloads deterministic.
+A mimic reaching the player triggers the same combat or free-key defeat as bumping it; loss ends further contact actions that turn.
+Pursuing mimics may stand over key piles, so the board exposes the enemy first and the pickup remains underneath.
+Blocked player inputs and staging steps advance neither movement cadence.
 Bumping one with Use keys on consumes one key for an immediate kill with no damage; Save keys retains keys and uses normal repeated attacks.
 The toggle is saved, costs no turn and also governs card-controlled combat.
 `trialBoard` exposes golden key piles, affordable gold doors and strong-enemy mimics to the ordinary cards, with the real key inventory copied into the planner and HUD.
 The arena board uses floor bound 0 so routes and cards can reach the south door at row 0.
 `KEYMASTER_DOORS` holds the north/east/south/west wall cells `(12,24)`, `(24,12)`, `(12,0)`, `(0,12)`; a locked door spends no turn without a key.
 Opening consumes one golden key and stores one `DoorBurst` with a door index, elapsed milliseconds and an impact receipt.
-`advanceKeymasterEffects` advances visible flights independently of player turns and card pause; at 1,100 ms each burst removes exactly one fifth of boss max HP once.
+`advanceKeymasterEffects` advances visible flights independently of player turns and card pause; at 1,100 ms a burst removes exactly one fifth of boss max HP once if the boss is corporeal.
+Arrivals during invincibility gather at the moving ghost and keep their unspent impact until reformation.
+A nonlethal door impact also scatters keys and triggers a ghost teleport; simultaneous pending impacts therefore wait their turn instead of bypassing invincibility.
 The controller pauses flights behind an open modal and caps frame deltas at 100 ms, preventing a hidden-tab catch-up.
 Opening and impact saves preserve the receipt; intermediate elapsed time is included in any normal attempt save, and reloading a pending flight resumes its remaining duration.
 A door impact can win and settle ordinary per-trial rewards without spending another player turn.
-Decoding bounds inventories, eight key piles, six unique mimics and four unique door bursts; it rejects contradictory elapsed/impact receipts and cross-boss elemental hazards.
+Decoding bounds inventories, arena-sized counted key piles, six unique mimics and four unique door bursts.
+It accepts moving boss/ghost/teleport state and fully arrived but unspent bursts, while rejecting invalid positions, contradictory impact receipts and Light Elemental laser/slime hazards.
+Key piles may overlap actors; teleport and reformation prefer clear tiles but fall back to item tiles if a crowded room would otherwise prevent safe relocation.
 Progress and reward receipts remain independent per trial ID while sharing the same daily entry allowance and points wallet.
 
 ## Rendering and tests
@@ -147,6 +161,9 @@ The appended `manualDestination` render frame covers the gold tile-click marker 
 `keymaster-art.ts` supplies native 24-pixel brass/slate boss and chest-mimic silhouettes with upper-left highlights.
 Golden keys and locked doors reuse the current content painters; red doorway pixels follow the elemental transit's staggered curved flight and fading tails, converging into the boss.
 Reduce motion uses fewer particles and straight paths without changing the mechanical delay.
-Nine appended `keymaster` render frames cover staging, actors, drops, the north door, flood, trails, reduced motion, impact and board-art opt-out; existing frames stay unchanged.
+Sixteen `keymaster` render frames cover staging, actors, drops, doors, red streams, queued spirits, pixel dissolution/trails, ghost/reduced-motion, pursuit, reformation and board-art opt-out.
+The Light Elemental and other render jobs remain unchanged.
 `tests/keymaster.test.ts` checks exact drops, combat choices, all cardinal doors, arrival receipts, deterministic spawns, card categories, south-door routing, decoding and independent progression.
 `node tests/keymaster.mjs` checks the real Trial 2 picker, all three controls, actual movement/combat/door damage, reloads, rewards, run isolation and native 320/390/1024-pixel previews.
+
+`tests/keymaster-movement.test.ts` covers teleport immunity and saved ghosts, ten-turn reformation, every-two-turn retreat/pursuit, contact combat, obstacle reservations, wall limits, moving key-drop origins across every floor tile, queued door impacts and crowded-room reformation.

@@ -142,3 +142,5 @@ A Proving Grounds elemental's incorporeal phase is passable floor to all cards; 
 The Keymaster adapter exposes golden key piles and locked cardinal doors to Key/Gold Key and Door/Gold Door, and tough mimics as strong enemies.
 Its actual golden key count is copied to the planner and trial HUD; when Use keys is enabled, a held key makes a mimic a free enemy fight.
 A floor bound of 0 allows normal card routes to target the south door.
+
+The moving Keymaster also becomes passable, untargetable ghost floor after surviving hits; cards replan against current mimic/boss positions each turn and wait if a ghost leaves no other target, until its ten-turn reformation.

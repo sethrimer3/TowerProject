@@ -17,9 +17,9 @@ export function trialBoard(s: TrialState): Board {
       if(s.keymaster) {
         const k=s.keymaster,door=keymasterDoorAt(x,y);
         if(door>=0 && !k.doors.some(d=>d.door===door))return {kind:"door",color:"yellow"};
-        if(k.drops.some(p=>p.x===x && p.y===y))return {kind:"key",color:"yellow"};
         const mimic=k.mimics.find(p=>p.x===x && p.y===y);
         if(mimic)return {kind:"enemy",enemy:{name:"Mimic",hp:k.useKeys && k.keys>0?1:mimic.hp,attack:k.useKeys && k.keys>0?0:mimicDamage(s),defense:0,tier:1,strength:"strong"}};
+        if((s.elemental.incorporeal || x!==s.elemental.x || y!==s.elemental.y) && k.drops.some(p=>p.x===x && p.y===y))return {kind:"key",color:"yellow"};
       }
       const boss = !s.elemental.incorporeal && x===s.elemental.x && y===s.elemental.y;
       if (boss || s.slimes.some(p=>p.x===x && p.y===y)) return { kind:"enemy", enemy: {
@@ -50,7 +50,7 @@ export function autoplayTrial(s: TrialState, plan=trialPlan(s)) {
   const next = plan?.path[0];
   if (!next && s.room==="arena" && s.elemental.incorporeal) {
     const outcome=trialStep(s,0,0,"cards");
-    return {...outcome,message:outcome.message || "The elemental is incorporeal. Waiting for its next lasers."};
+    return {...outcome,message:outcome.message || `${TRIALS[s.trialId].name} is incorporeal. Waiting for reformation.`};
   }
   if (!next) {
     s.playing = false;

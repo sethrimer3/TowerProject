@@ -294,6 +294,8 @@ Trial manual/hybrid clicks add a native one-pixel gold outline inside the destin
 
 Keymaster trials reuse the trial renderer and shared key/door painters, adding native 24-pixel brass/slate Keymaster and chest-mimic silhouettes in `proving-grounds/keymaster-art.ts`.
 Four cardinal door cells replace wall tiles in this encounter only.
-Red door spirits use staggered curved pixel paths and fading tails toward the stationary boss; their saved elapsed time drives both drawing and the one-time 20%-max-HP arrival impact.
+Red door spirits use staggered curved pixel paths and fading tails toward the boss's current position; their saved elapsed time drives both drawing and the one-time 20%-max-HP arrival impact.
 Reduce motion draws fewer particles along straight paths while preserving impact timing.
-The appended `keymaster` render job covers nine frames, leaving prior jobs unchanged.
+The `keymaster` render job covers sixteen frames, including pixel teleport, ghost/reduced-motion, queued spirits, pursuit and reformation; other jobs stay unchanged.
+`drawElementalTransit` accepts optional body texels so Keymaster teleports dissolve its own sprite through the exact same curved flight and trails as the Light Elemental.
+The Keymaster ghost uses the translucent cyan palette and drifting specks until its ten-turn reformation; the existing teleport clock runs independently of player turns.

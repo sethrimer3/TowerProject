@@ -8,7 +8,7 @@ import { HeroIdleAnimation } from "../sprite-animations.ts";
 import type { Tile } from "../entities.ts";
 import { ARENA_CRATES, ARENA_POTIONS, ARENA_TORCHES, beamCount, beamDirections, rayCells, trialFloor, key, nextBeamAxis, propDestroyed, wallEdge, type TrialState } from "./trial.ts";
 
-import {drawKeymaster,drawMimic,drawDoorSpirits} from "./keymaster-art.ts";
+import {drawKeymaster,drawKeymasterTransit,drawMimic,drawDoorSpirits} from "./keymaster-art.ts";
 import {KEYMASTER_DOORS,DOOR_FLIGHT_MS} from "./keymaster.ts";
 import { drawLightElemental, drawElementalTransit, TELEPORT_MS } from "./elemental-art.ts";
 export { drawLightElemental } from "./elemental-art.ts";
@@ -146,7 +146,7 @@ export class TrialRenderer {
         for(const p of s.keymaster.mimics)light(p.x,p.y,1.2,0.4);
         for(const b of s.keymaster.doors)if(!b.hit && s.status==="active") {
           const p=KEYMASTER_DOORS[b.door],t=b.elapsed/DOOR_FLIGHT_MS;
-          light(p.x+(12-p.x)*t,p.y+(12-p.y)*t,3,0.8);
+          light(p.x+(s.elemental.x-p.x)*t,p.y+(s.elemental.y-p.y)*t,3,0.8);
         }
       }
       for(const p of slimes) light(p.x,p.y,1.7,0.65);
@@ -193,12 +193,13 @@ export class TrialRenderer {
       if(s.status!=="won") {
         const boss=s.elemental;
         if(transit<1 && boss.teleport) {
-          drawElementalTransit(c,{x:px(boss.teleport.from.x),y:py(boss.teleport.from.y)},
+          const drawTransit=s.keymaster?drawKeymasterTransit:drawElementalTransit;
+          drawTransit(c,{x:px(boss.teleport.from.x),y:py(boss.teleport.from.y)},
             {x:px(boss.x),y:py(boss.y)},transit,s.seed^boss.teleport.step);
         }
         if(transit>.78) tile(boss.x,boss.y,()=> {
           c.save(); c.globalAlpha=transit<1?(transit-.78)/.22:1;
-          if(s.keymaster)drawKeymaster(c,now,reduceMotion);else drawLightElemental(c,boss.incorporeal,now,reduceMotion);
+          if(s.keymaster)drawKeymaster(c,now,reduceMotion,boss.incorporeal);else drawLightElemental(c,boss.incorporeal,now,reduceMotion);
           c.fillStyle=boss.incorporeal?"#344651":"#3b2922"; c.fillRect(1,23,22,1);
           c.fillStyle=boss.incorporeal?"#91d3ea":"#ffe4a0"; c.fillRect(1,23,22*s.bossHp/s.bossMaxHp,1);
           c.restore();
@@ -212,7 +213,7 @@ export class TrialRenderer {
         for(const p of s.keymaster.mimics)tile(p.x,p.y,()=>drawMimic(c,p.hp/p.maxHp));
         for(const b of s.keymaster.doors)if(!b.hit && s.status==="active") {
           const p=KEYMASTER_DOORS[b.door];
-          drawDoorSpirits(c,{x:px(p.x),y:py(p.y)},{x:px(12),y:py(12)},b.elapsed/DOOR_FLIGHT_MS,s.seed^b.door,reduceMotion);
+          drawDoorSpirits(c,{x:px(p.x),y:py(p.y)},{x:px(s.elemental.x),y:py(s.elemental.y)},b.elapsed/DOOR_FLIGHT_MS,s.seed^b.door,reduceMotion);
         }
       }
       // Telegraph only near the elemental, without revealing the unlit room.

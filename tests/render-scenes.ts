@@ -636,8 +636,21 @@ function playKeymaster(_name:string,_seed:number,canvas:HTMLCanvasElement,grab:G
   renderer.draw(s,5400,0,false,false,options);grab("redTrails");
   renderer.draw(s,5400,0,true,false,options);grab("reducedMotion");
   advanceKeymasterEffects(s,500);
+  renderer.draw(s,5800,0,true,false,options);grab("spiritsWaiting");
+  s.steps=9;s.keymaster!.mimics=[];trialStep(s,0,0);advanceKeymasterEffects(s,1);
   renderer.draw(s,6000,0,true,false,options);grab("impact");
   renderer.draw(s,6000,0,true,true,options);grab("boardOptOut");
+  const ghost=startTrial({maxHp:1000,attack:10,defense:0},"manual",[],12,1,"keymaster");
+  for(let i=0;i<4;i++)trialStep(ghost,0,1);
+  ghost.player.x=12;ghost.player.y=11;renderer.draw(ghost,7000,0,false,false,options);
+  trialStep(ghost,0,1);renderer.draw(ghost,7100,0,false,false,options);grab("dissolve");
+  renderer.draw(ghost,7600,0,false,false,options);grab("lightTrails");
+  ghost.player.x=ghost.elemental.x;ghost.player.y=ghost.elemental.y-2;
+  renderer.draw(ghost,8300,0,false,false,options);grab("ghost");
+  renderer.draw(ghost,8300,0,true,false,options);grab("ghostReducedMotion");
+  trialStep(ghost,0,0);renderer.draw(ghost,8400,0,true,false,options);grab("pursuit");
+  while(ghost.steps<10){ghost.keymaster!.mimics=[];trialStep(ghost,0,0);}
+  renderer.draw(ghost,9500,0,true,false,options);grab("reformed");
 }
 
 /** Every scene, in order, each with its own seed. The Defend scenes keep

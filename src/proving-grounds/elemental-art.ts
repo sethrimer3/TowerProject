@@ -35,14 +35,15 @@ export function drawLightElemental(c: CanvasRenderingContext2D, ghost = false, n
 /** Literal body texels become individual lights; each follows a staggered,
  * smooth curved path with a short fading tail and assembles at the other end. */
 const TEXELS=ELEMENTAL_ART.flatMap((row,y)=>[...row].flatMap((color,x)=>color!=="."?[{x:x-9.5,y:y-10,color}]:[]));
-export function drawElementalTransit(c: CanvasRenderingContext2D, from: Spot, to: Spot, progress: number, seed: number) {
+export function drawElementalTransit(c: CanvasRenderingContext2D, from: Spot, to: Spot, progress: number, seed: number,
+  texels:readonly {x:number;y:number;color:string}[]=TEXELS) {
   const t=Math.max(0,Math.min(1,progress));
   const start={x:from.x+12,y:from.y+11},end={x:to.x+12,y:to.y+11};
   const dx=end.x-start.x,dy=end.y-start.y,length=Math.max(1,Math.sqrt(dx*dx+dy*dy));
   const strength=t>.78?Math.max(0,(1-t)/.22):1;
   c.save(); c.globalCompositeOperation="lighter";
-  for(let i=0;i<TEXELS.length;i++) {
-    const pixel=TEXELS[i],r=tileRandom(i,1,seed),r2=tileRandom(i,2,seed);
+  for(let i=0;i<texels.length;i++) {
+    const pixel=texels[i],r=tileRandom(i,1,seed),r2=tileRandom(i,2,seed);
     const delay=r*.18,duration=.65+r2*.16;
     const at=(time:number)=> {
       const u=Math.max(0,Math.min(1,(time-delay)/duration)),smooth=u*u*(3-2*u);

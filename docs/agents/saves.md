@@ -52,8 +52,11 @@ Slime hop times validate against either the three-turn hop cadence or the level'
 Trial `destroyed` maps known edge crate/torch coordinates to their first destruction turn, bounded by the attempt's current turn; unknown positions and invalid turns are dropped, malformed containers rejected, and older attempts receive an empty map.
 Destruction stays inside the optional attempt; decoding a save without a trial never creates an attempt.
 
-Keymaster attempts add `keymaster`: an encounter-only golden key inventory, Use keys preference, hit/spawn counters, up to eight counted key piles, up to six unique mimics with current/max HP, and up to four door flights with elapsed milliseconds and impact receipts.
-`decodeKeymaster` rejects malformed counts, collisions, invalid landing positions and contradictory flight/impact flags; `decodeTrial` also rejects elemental teleports, lasers, slimes and scars on this boss.
+Keymaster attempts add `keymaster`: an encounter-only golden key inventory, Use keys preference, hit/spawn counters, counted key piles anywhere on the arena floor, up to six unique mimics with current/max HP, and up to four door flights with elapsed milliseconds and impact receipts.
+`decodeKeymaster` rejects malformed counts, actor collisions, invalid positions and contradictory flight/impact flags; `decodeTrial` accepts the moving Keymaster's position, ghost phase and teleport history but still rejects lasers, slimes and scars on this boss.
+An elapsed flight at 1,100 ms may remain unspent while waiting for an incorporeal Keymaster; a spent receipt requires that elapsed time.
+Mimics can share a tile with an uncollected key pile, but never with one another or the boss.
+Existing center-boss saves retain their progress, keys and receipts while gaining retreat and pursuit; movement cadence comes from the existing arena turn count.
 An opened cardinal door is a valid saved hero position, including row or column 0; closed wall cells remain invalid.
 Light Elemental attempts retain their old shape, and save-decode golden hashes remain unchanged.
 Both known trial IDs decode independent clear/reward records under `trialAccess.progress`.

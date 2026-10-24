@@ -48,22 +48,30 @@ try {
   await patch({player:{x:12,y:11,maxHp:1000,hp:1000,attack:10,defense:0},bossMaxHp:240,bossHp:240,steps:1});
   await tile(12,12);await expect.poll(async()=>(await trial()).keymaster.hits).toBe(1);
   const hit=await trial();expect(hit.keymaster.drops.reduce((n,p)=>n+p.count,0)).toBe(3);
-  expect(hit.elemental.incorporeal).toBe(false);expect(hit.beam).toBeNull();expect(hit.slimes).toEqual([]);
+  expect(hit.elemental.incorporeal).toBe(true);expect(hit.beam).toBeNull();expect(hit.slimes).toEqual([]);
   await page.locator(".shell").screenshot({path:"test-results/keymaster/boss-keys-mimics.png"});
+  const beforeMove=await trial();await page.locator("#trial-wait").click();
+  const odd=await trial();expect(odd.elemental).toEqual(beforeMove.elemental);expect(odd.keymaster.mimics).toEqual(beforeMove.keymaster.mimics);
+  await page.locator("#trial-wait").click();const moved=await trial();
+  const distance=(a,b)=>Math.abs(a.x-b.x)+Math.abs(a.y-b.y);expect(distance(moved.elemental,odd.elemental)).toBe(1);
+  for(const m of moved.keymaster.mimics)expect(distance(m,odd.keymaster.mimics.find(p=>p.id===m.id))).toBe(1);
+  await page.reload({waitUntil:"domcontentloaded"});expect((await trial()).elemental).toEqual(moved.elemental);
+  await expect(world).toHaveAttribute("data-trial-phase","incorporeal");
+  await patch({keymaster:{mimics:[]}});
   const drop=hit.keymaster.drops[0];await tile(drop.x,drop.y);await expect.poll(async()=>(await trial()).keymaster.keys).toBeGreaterThan(0);
-  const mimic=(await trial()).keymaster.mimics[0];
-  await patch({player:{x:mimic.x,y:mimic.y-1,hp:1000},steps:1,keymaster:{keys:1,useKeys:true}});
+  const mimic={id:1,x:17,y:13,hp:60,maxHp:60};
+  await patch({player:{x:mimic.x,y:mimic.y-1,hp:1000},steps:1,elemental:{x:12,y:12,incorporeal:false,teleport:null},keymaster:{keys:1,useKeys:true,mimics:[mimic],spawned:1}});
   await tile(mimic.x,mimic.y);await expect.poll(async()=>(await trial()).keymaster.keys).toBe(0);
   expect((await trial()).player.hp).toBe(1000);expect((await trial()).keymaster.mimics.some(m=>m.id===mimic.id)).toBe(false);
-  const tough=(await trial()).keymaster.mimics[0];
-  await patch({player:{x:tough.x,y:tough.y-1},steps:2,keymaster:{keys:2,useKeys:true}});
+  const tough={id:2,x:17,y:13,hp:60,maxHp:60};
+  await patch({player:{x:tough.x,y:tough.y-1},steps:2,keymaster:{keys:2,useKeys:true,mimics:[tough],spawned:2}});
   await page.locator("#trial-key-use").click();await expect(page.locator("#trial-key-use")).toHaveAttribute("aria-pressed","false");
   await tile(tough.x,tough.y);await expect.poll(async()=>(await trial()).player.hp).toBeLessThan(1000);
   expect((await trial()).keymaster.keys).toBe(2);expect((await trial()).keymaster.mimics.some(m=>m.id===tough.id)).toBe(true);
   await page.reload({waitUntil:"domcontentloaded"});await expect(page.locator("#trial-key-use")).toHaveAttribute("aria-pressed","false");
   const doors=[{x:12,y:24},{x:24,y:12},{x:12,y:0},{x:0,y:12}];
   for(const [i,p] of doors.entries()) {
-    await patch({player:{x:p.x===0?1:p.x===24?23:12,y:p.y===0?1:p.y===24?23:12,hp:1000},keymaster:{keys:4-i},steps:3});
+    await patch({player:{x:p.x===0?1:p.x===24?23:12,y:p.y===0?1:p.y===24?23:12,hp:1000},keymaster:{keys:4-i,mimics:[]}});
     if(i===0)for(const width of [320,390,1024]) {
       await page.setViewportSize({width,height:844});await page.locator(".shell").screenshot({path:`test-results/keymaster/north-door-${width}.png`});
     }
@@ -73,11 +81,13 @@ try {
     expect((await trial()).keymaster.doors[i].hit).toBe(true);
     await page.reload({waitUntil:"domcontentloaded"});expect((await trial()).bossHp).toBe(hp-48);
     await page.locator("#trial-wait").click();expect((await trial()).bossHp).toBe(hp-48);
+    while((await trial()).elemental.incorporeal)await page.locator("#trial-wait").click();
+    expect((await trial()).steps%10).toBe(0);
   }
   expect((await trial()).bossHp).toBe(38); // One initial strike, then four fixed 48-HP bursts.
-  await patch({player:{x:12,y:11,hp:1000}});
-  for(let i=0;i<4;i++){await tile(12,12);await expect.poll(async()=>(await trial()).keymaster.hits).toBe(i+2);}
-  await expect(page.locator("#message")).toContainText("+1 Trial Point");expect((await read()).trialAccess.points).toBe(11);
+  await patch({player:{x:12,y:11,hp:1000},elemental:{x:12,y:12,incorporeal:false,teleport:null},bossHp:10,keymaster:{mimics:[]}});
+  await tile(12,12);await expect.poll(async()=>(await trial()).status).toBe("won");
+  await expect.poll(async()=>(await read()).trialAccess.points).toBe(11);await expect(page.locator("#message")).toContainText("Difficulty 1 cleared");
   await page.reload({waitUntil:"domcontentloaded"});expect((await read()).trialAccess.points).toBe(11);
   await page.locator("#trial-retry").click();await expect(page.locator("#trial-difficulty")).toContainText("Difficulty 2");
   await page.locator("#trial-mode-cards").click();await page.locator("#auto").click();
@@ -88,7 +98,7 @@ try {
     sessionStorage.setItem("keymasterFixture",JSON.stringify(save));
   });await page.reload({waitUntil:"domcontentloaded"});
   const paused=await trial();await tile(12,12);await page.keyboard.press("ArrowUp");expect(await trial()).toEqual(paused);
-  await page.locator("#auto").click();await expect(page.locator("#message")).toContainText("+2 Trial Points",{timeout:10000});
+  await page.locator("#auto").click();await expect.poll(async()=>(await read()).trialAccess.points,{timeout:10000}).toBe(13);await expect(page.locator("#message")).toContainText("Difficulty 2 cleared");
   await page.locator("#trial-retry").click();await page.locator("#trial-mode-hybrid").click();
   await page.locator("#auto").click();
   await page.evaluate(()=> {
@@ -96,10 +106,10 @@ try {
     s.room="arena";s.player.x=12;s.player.y=11;s.bossHp=s.player.attack;s.hand=["bossEnemy"];s.playing=false;
     sessionStorage.setItem("keymasterFixture",JSON.stringify(save));
   });await page.reload({waitUntil:"domcontentloaded"});await tile(12,12);
-  await expect(page.locator("#message")).toContainText("+3 Trial Points");
+  await expect.poll(async()=>(await read()).trialAccess.points).toBe(16);await expect(page.locator("#message")).toContainText("Difficulty 3 cleared");
   const won=await read();expect(won.trialAccess.points).toBe(16);expect(won.trialAccess.progress["keymaster"].cleared).toBe(3);
   expect(won.trialAccess.progress["light-elemental"].cleared).toBe(4);
   await page.locator("#trial-leave").click();expect((await read()).tower.run).toEqual(tower);
   await expect(page.locator("#enter-run")).toBeVisible();expect(errors).toEqual([]);
-  console.log("Keymaster: Trial 2 picker, native arena at 320/390/1024px, dropped/collected keys, paid/free mimic combat, key reservation, four delayed door impacts, reload receipts, three controls, independent progression/rewards and ordinary-run isolation passed.");
+  console.log("Keymaster: Trial 2 picker, native arena at 320/390/1024px, ghost teleport, two-step chase/retreat, ten-step reformation, dropped/collected keys, paid/free mimic combat, key reservation, four delayed door impacts, reload receipts, three controls, independent progression/rewards and ordinary-run isolation passed.");
 } finally {await browser.close();}

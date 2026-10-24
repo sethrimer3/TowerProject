@@ -1,6 +1,7 @@
 import {sprite} from "../pixel-sprite.ts";
 import {tileRandom} from "../random.ts";
 import type {Spot} from "./arena.ts";
+import {drawElementalTransit} from "./elemental-art.ts";
 
 // Native 24-pixel actors: slate robes, warm brass, upper-left highlights.
 const KEYMASTER=[
@@ -24,7 +25,21 @@ const MIMIC=[
   "....dd..dd..dd..dd......","...ddd..dd..dd..ddd.....","........................",
 ] as const;
 const PALETTE={d:"#1d2633",b:"#344651",h:"#9c793d",g:"#5b4636",w:"#ffe4a0",r:"#9f3549"};
-export function drawKeymaster(c:CanvasRenderingContext2D,now=0,reduceMotion=true) {
+const GHOST={d:"#344651",b:"#6b99b0",h:"#91d3ea",g:"#7893b7",w:"#d6f8ff",r:"#91d3ea"};
+const TEXELS=KEYMASTER.flatMap((row,y)=>[...row].flatMap((color,x)=>color!=="."?[{x:x-12,y:y-11,color}]:[]));
+export function drawKeymasterTransit(c:CanvasRenderingContext2D,from:Spot,to:Spot,progress:number,seed:number) {
+  drawElementalTransit(c,from,to,progress,seed,TEXELS);
+}
+export function drawKeymaster(c:CanvasRenderingContext2D,now=0,reduceMotion=true,ghost=false) {
+  if(ghost) {
+    c.save();const alpha=c.globalAlpha;
+    if(!reduceMotion)c.translate(0,Math.round(Math.sin(now/550)*2));
+    c.globalAlpha=alpha*.16;sprite(c,KEYMASTER,GHOST,1,10,10);
+    c.globalAlpha=alpha*.35;sprite(c,KEYMASTER,GHOST,1,12,12);
+    c.globalAlpha=alpha*.7;c.fillStyle="#d6f8ff";
+    for(let i=0;i<8;i++)if(reduceMotion || Math.sin(now/320+i)>0)c.fillRect(3+(i*7)%19,2+(i*11)%21,1,1);
+    c.restore();return;
+  }
   c.save();if(!reduceMotion)c.translate(0,Math.round(Math.sin(now/700)));
   sprite(c,KEYMASTER,PALETTE,1,12,12);c.restore();
 }

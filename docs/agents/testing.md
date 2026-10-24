@@ -84,4 +84,7 @@ It reads each atlas's actual width to validate sparse alpha coverage, clear nati
 
 `node tests/keymaster.mjs` uses the dev server for the second trial's three-control picker, dropped and collected golden keys, free/paid mimic fights, saved key reservation, four delayed door impacts and impact receipts across reloads.
 It also verifies independent first-clear progression/rewards in all controls and ordinary-run inventory protection, with 320/390/1024-pixel previews in `test-results/keymaster/`.
-The appended `keymaster` render job adds nine browser and drawing-call frames without moving existing scene seeds.
+The appended `keymaster` render job covers sixteen browser and drawing-call frames without moving existing scene seeds.
+
+Keymaster browser checks also exercise saved ghost teleports, one-tile mimic pursuit and boss retreat on even turns, and ten-turn reformation between door hits.
+The `keymaster` render job changes seven existing frames for moving actors/ghosts and appends seven phase/movement frames; the Light Elemental and all earlier jobs stay pinned.

@@ -1,3 +1,4 @@
+import {teleportBoss,materializeBoss} from "./boss-movement.ts";
 import { ARENA_SIZE, ELEMENTAL, ARENA_TORCHES, ARENA_POTIONS, ARENA_CRATES, arenaFloor, floorAt, wallEdge, key, same, directions, type Spot } from "./arena.ts";
 export { ARENA_SIZE, ELEMENTAL, ARENA_TORCHES, ARENA_POTIONS, ARENA_CRATES, arenaFloor, floorAt, wallEdge, key, type Spot } from "./arena.ts";
 import { newKeymaster, keymasterStep, enterKeymaster, keymasterDoorAt, decodeKeymaster, type KeymasterState } from "./keymaster.ts";
@@ -109,37 +110,6 @@ function hopSlimes(s: TrialState, hopExisting: boolean, spawn: boolean) {
   return hits;
 }
 
-/** A hit scatters the elemental to a different, unoccupied interior tile. */
-function teleportElemental(s: TrialState) {
-  const from = {x:s.elemental.x,y:s.elemental.y}, choices: Spot[] = [];
-  for(let y=1;y<ARENA_SIZE-1;y++) for(let x=1;x<ARENA_SIZE-1;x++) {
-    const p={x,y};
-    if (!arenaFloor(x,y) || same(p,s.player) || s.slimes.some(q=>same(p,q))
-      || ARENA_POTIONS.some(q=>same(p,q)) || !directions.every(([dx,dy])=>arenaFloor(x+dx,y+dy))) continue;
-    if(Math.abs(x-from.x)+Math.abs(y-from.y)>=6 && Math.abs(x-s.player.x)+Math.abs(y-s.player.y)>=3) choices.push(p);
-  }
-  const target=choices[Math.floor(tileRandom(s.steps+1,from.x+from.y*ARENA_SIZE,s.seed^0x11a7)*choices.length)];
-  s.elemental={...target,incorporeal:true,teleport:{from,step:s.steps+1}};
-}
-
-/** A ghost is walkable. If the hero occupies its tile when it reforms,
- * materialize in the closest free tile before casting the rays. */
-function materialize(s: TrialState) {
-  const boss=s.elemental;
-  if(same(boss,s.player)) {
-    const choices: Spot[]=[];
-    for(let y=1;y<ARENA_SIZE-1;y++) for(let x=1;x<ARENA_SIZE-1;x++) {
-      const p={x,y};
-      if(arenaFloor(x,y) && !same(p,s.player) && !s.slimes.some(q=>same(p,q)) && !ARENA_POTIONS.some(q=>same(p,q))
-        && (!breakable.has(key(p)) || propDestroyed(s,p))) choices.push(p);
-    }
-    choices.sort((a,b)=>(Math.abs(a.x-boss.x)+Math.abs(a.y-boss.y))-(Math.abs(b.x-boss.x)+Math.abs(b.y-boss.y)));
-    const target=choices[0];
-    boss.x=target.x; boss.y=target.y;
-  }
-  boss.incorporeal=false;
-}
-
 /** Only the matching input source may spend a turn. Walls cost no turns. */
 export function trialStep(s: TrialState, dx: number, dy: number, source: TrialInput = "manual"): { changed: boolean; message: string; fired: boolean } {
   const unchanged = { changed: false, message: "", fired: false };
@@ -166,7 +136,7 @@ export function trialStep(s: TrialState, dx: number, dy: number, source: TrialIn
     }
     const damage = Math.max(1, Math.ceil(s.player.maxHp * 0.04) - Math.floor(s.player.defense * 0.1));
     s.player.hp = Math.max(0, s.player.hp - damage);
-    teleportElemental(s);
+    teleportBoss(s);
     message = `You strike the elemental for ${Math.max(1,s.player.attack)} damage. It scatters into light, invincible until its next lasers. Its radiance deals ${damage} damage.`;
   } else {
     const slime = s.slimes.findIndex(p => p.x === x && p.y === y);
@@ -189,7 +159,7 @@ export function trialStep(s: TrialState, dx: number, dy: number, source: TrialIn
   const fired = s.steps % BEAM_INTERVAL === 0;
   if (fired) {
     const wasGhost=s.elemental.incorporeal;
-    materialize(s);
+    materializeBoss(s);
     s.beam={origin:{x:s.elemental.x,y:s.elemental.y},axis:(s.steps/BEAM_INTERVAL-1)%8,step:s.steps,count:beamCount(s.level)};
     const cells = beamCells(s.beam.axis,s.beam.origin,s.beam.count);
     if(wasGhost) message="The elemental fires its lasers and becomes corporeal — it can be struck again.";
@@ -241,7 +211,7 @@ export function decodeTrial(raw: unknown): TrialState | undefined {
       || !wholeIn(b.axis,0,7) || b.axis!==(b.step/BEAM_INTERVAL-1)%(raw.level===undefined?4:8)
       || (b.count!==undefined && !wholeIn(b.count,1,8))) return;
     beam={origin:{x:b.origin.x,y:b.origin.y},axis:(b.step/BEAM_INTERVAL-1)%8,step:b.step,...(b.count===undefined?{}:{count:b.count})};
-  } else if(raw.elemental===undefined && raw.steps>=BEAM_INTERVAL) {
+  } else if(trialId!=="keymaster" && raw.elemental===undefined && raw.steps>=BEAM_INTERVAL) {
     const step=Math.floor(raw.steps/BEAM_INTERVAL)*BEAM_INTERVAL;
     beam={origin:{...ELEMENTAL},axis:(step/BEAM_INTERVAL-1)%8,step,...(raw.level===undefined?{}:{count:beamCount(level)})};
   }
@@ -298,7 +268,7 @@ export function decodeTrial(raw: unknown): TrialState | undefined {
     slimes.push({id:slime.id,x:slime.x,y:slime.y,from:{x:slime.from.x,y:slime.from.y},jumped:slime.jumped});
     occupied.add(key(position)); ids.add(slime.id);
   }
-  if(keymaster && (elemental.x!==12 || elemental.y!==12 || elemental.incorporeal || elemental.teleport || beam || slimes.length || Object.keys(scorches).length || Object.keys(destroyed).length))return;
+  if(keymaster && (beam || slimes.length || Object.keys(scorches).length || Object.keys(destroyed).length || keymaster.mimics.some(m=>same(m,elemental))))return;
   return { version:2,trialId:trialId as TrialId,...(keymaster?{keymaster}:{}),level,...(displayHand?{displayHand}:{}),...(purchases?{purchases}:{}),elemental,beam,mode:raw.mode,hand:[...raw.hand],playing:raw.playing,seed:raw.seed,
     room: raw.room, status: raw.status, player: { x:p.x,y:p.y,hp:p.hp,maxHp:p.maxHp,attack:p.attack,defense:p.defense },
     bossHp:raw.bossHp,bossMaxHp:raw.bossMaxHp,steps:raw.steps,slimes,consumed:[...new Set<string>(consumed)],scorches,destroyed };

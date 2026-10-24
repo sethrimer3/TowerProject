@@ -104,11 +104,17 @@ Attempts saved in the older, larger chamber restart in the new staging room with
 
 **Trial 2 — Keymaster** has its own difficulty progression and first-clear Trial Points, shared across the same three control modes.
 Its staircase leads to the same-sized dark chamber, with a locked door at each cardinal edge: north, east, south and west.
-The Keymaster stands in the center and can be attacked directly; he has no elemental ghost phase or lasers.
-Each hit scatters three golden keys three tiles away in random compass directions.
+The Keymaster starts in the center and can be attacked while solid.
+A surviving hit breaks him into pixels of light that fly to a new tile and reform as a translucent ghost, just like the Light Elemental.
+He is invincible and does not count as an enemy while incorporeal; you can walk through his ghost.
+Every ten arena turns he reforms and becomes vulnerable again, without firing lasers.
+Every two player moves, strikes or waits, he retreats one cardinal tile away from you if there is a free tile; walls can corner him.
+Each hit scatters three golden keys three tiles from where he was hit, in random directions that stay inside the arena.
 Walk onto them to collect them; these are encounter items, separate from your two daily trial entry keys.
 
 Two tough chest mimics appear when you enter, and the Keymaster summons more over time, up to six alive.
+Every two player moves, strikes or waits, mimics move one tile toward you, routing around walls and other actors.
+A mimic that reaches you starts combat, just as when you walk into it.
 A mimic takes several attacks and fights back while it survives.
 With **Mimics: use keys**, entering a mimic spends one golden key to defeat it without taking damage.
 Switch to **Mimics: save keys** to fight normally and reserve your keys for doors; this choice also applies to card autoplay and survives reloads.
@@ -116,6 +122,8 @@ Key, Door and enemy cards recognize the encounter's keys, locks and mimics.
 
 Each cardinal door costs one golden key to open.
 Opening it floods red light pixels from the doorway; they curve toward the Keymaster with trailing sparks, then take **20% of his maximum HP** when they reach him.
+Red spirits follow the moving boss; if they reach him while he is incorporeal, they wait for him to reform rather than lose their damage.
+A surviving door hit also triggers his teleport and ghost phase.
 Each door works once, so all four deal 80% of maximum HP in total.
 Flights take about a second, continue while cards are paused, and do not spend extra player turns.
 Reloading resumes a pending flight, and an impact already received can never damage him again.
