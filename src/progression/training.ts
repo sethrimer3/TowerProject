@@ -176,7 +176,7 @@ export type TrainingDef = {
 /** The Training rows, in the order the Training tab and a run's training
  * bar list them within each group. Every stat row's curve is super-linear,
  * every rank worth more than the one before, but Thorn Damage's and
- * Parry %'s, a flat percent a rank. */
+ * Parry %'s, a flat percent a rank, and DEF's first twelve, 1 each. */
 export const TRAINING = [
   {
     id: "hp", name: "Max HP", group: "defense", stat: "maxHp", curve: { per: 10, square: 1 }, cost: 1, max: 1000, breaks: 10,
@@ -268,7 +268,9 @@ export const TRAINING = [
     silver: rapidFireDurationPrices, gold: rapidFireDurationPrices,
   },
   {
-    id: "defense", name: "DEF", group: "defense", stat: "defense", curve: { per: 0, square: 1 / 12 }, cost: 1, max: 1000, breaks: 10,
+    // At least 1 DEF a rank: ranks 1–12 add 1 each, and the square takes
+    // over from rank 13 (+2.08 and rising).
+    id: "defense", name: "DEF", group: "defense", stat: "defense", curve: { per: 0, square: 1 / 12, atLeast: 1 }, cost: 1, max: 1000, breaks: 10,
     description: "Raises DEF, taken off the damage of every enemy strike.",
     silver: cheap, gold: mildTrainers,
   },
@@ -404,14 +406,18 @@ export const TRAINING = [
  * point a rank its old curve began from. Shroud is 5.1 at rank 1, 60 at 10,
  * about 2,100 at 100, 15,000 at 200 and 62,000 at 300, about four billion at
  * its 5,000. */
-export type TrainingCurve = { per: number; square?: number; cube?: number; fourth?: number };
+/** A rank curve's terms; `atLeast`, when set, is the least each rank adds
+ * (the curve is never below `atLeast` × ranks), so a row whose curve starts
+ * slow still pays that much for each of its first ranks. */
+export type TrainingCurve = { per: number; square?: number; cube?: number; fourth?: number; atLeast?: number };
 /** What `ranks` ranks of `row` add up to on its curve (to the character,
- * for a stat row), rounded once. Only `+` and `*`, so it is the same in
- * every engine. */
+ * for a stat row), rounded once. Only `+`, `*` and `Math.max`, so it is the
+ * same in every engine. */
 export function trained(row: Pick<TrainingDef, "curve">, ranks: number) {
   if (ranks <= 0) return 0;
   const c: TrainingCurve = row.curve, m = ranks - 1;
-  return snap(c.per * ranks + (c.square ?? 0) * ranks * ranks + (c.cube ?? 0) * m * m * m + (c.fourth ?? 0) * m * m * m * m);
+  const curve = c.per * ranks + (c.square ?? 0) * ranks * ranks + (c.cube ?? 0) * m * m * m + (c.fourth ?? 0) * m * m * m * m;
+  return snap(Math.max(curve, (c.atLeast ?? 0) * ranks));
 }
 /** What the rank after `ranks` adds to `row`'s stat. */
 export const trainingWorth = (row: StatTrainingRow, ranks: number) => snap(trained(row, ranks + 1) - trained(row, ranks));

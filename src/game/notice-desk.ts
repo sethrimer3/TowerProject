@@ -94,6 +94,8 @@ export class NoticeDesk {
       case "gear": return this.firstGear && (save.tutorials.gear = true);
       case "equipment": return !save.equipment.seen && (save.equipment.seen = true);
       case "research": {
+        // Opening the Research page ends the training lesson.
+        if (trainingWaiting(save)) save.tutorials.training = true;
         const level = levelForXp(save.xp), archives = this.host.research.events;
         const changed = seen.level !== level || seen.archives !== archives;
         seen.level = level;

@@ -65,7 +65,7 @@ import { enemyStat, keyCount, whole, wholeChange } from "./whole.ts";
 import { MODES, milestones, type ModeProfile } from "./modes.ts";
 import { ranksInRun, runTrainingBulk, runTrainingOffer, type RunTrainingOffer } from "./progression/run-training.ts";
 import type { BuyQuantity } from "./progression/buy-quantity.ts";
-import { critRule, loadout, provisionsOpen, rankShift, type TrainingView } from "./progression/loadout.ts";
+import { critRule, loadout, provisionsOpen, rankShift, trainingWaiting, type TrainingView } from "./progression/loadout.ts";
 import { researched } from "./progression/archives.ts";
 import { chargesLeft, chargesPerRun, climbFloor, spendCharge, type Charge } from "./run-charges.ts";
 import type { MaterialId, MaterialStack } from "./economy/materials.ts";
@@ -108,7 +108,7 @@ import type { Coin, Dash, Drop, Facing, Gain, GainArt, Heal, ShownTurn } from ".
  * which seed (rolled from the game's randomness when left out). */
 export type RunStart = { outside?: boolean; seed?: number; height?: number };
 /** A lesson shown on the board (`Game.boardLesson`). */
-export type BoardLesson = "climb" | "keys" | "autoClimb" | "stuck" | "enemy" | "upgrades" | "enter" | "cards" | "delve" | "provisions";
+export type BoardLesson = "climb" | "keys" | "autoClimb" | "stuck" | "enemy" | "upgrades" | "enter" | "trainingPoints" | "cards" | "delve" | "provisions";
 /** The first skills the lessons lead to on the Inspiration tree, in order. */
 export type IntroSkill = "cardDoorKey" | "cardEnemy";
 export type RouteEffects = {
@@ -439,7 +439,9 @@ export class Game {
    * to the Upgrades tab while the next first skill (`introSkill`) can be
    * bought; `enter`, to Enter, once Door & Key is owned until a run goes
    * inside from the forest (and again once Enemy is bought after its
-   * lesson); then, in either forest, `cards`, which leads to the Deck to
+   * lesson); then, in either forest, `trainingPoints`, the first time training
+   * points can be spent, which leads to the Research tab until it is
+   * opened; then `cards`, which leads to the Deck to
    * spend the first card point (`cardPointsLesson`); then, in the Tower's
    * forest once Into the depths is owned, `delve`, until the Delve is
    * opened; and in either forest, `provisions` (`provisionsLesson`). */
@@ -455,6 +457,7 @@ export class Game {
     }
     if (tower && this.introSkill) return "upgrades";
     if (tower && ((!t.enter && owned.cardDoorKey) || (t.enemy && owned.cardEnemy))) return "enter";
+    if (!t.training && trainingWaiting(this.save)) return "trainingPoints";
     if (this.cardPointsLesson) return "cards";
     if (tower && owned.delve && !t.delve) return "delve";
     return this.provisionsLesson ? "provisions" : null;

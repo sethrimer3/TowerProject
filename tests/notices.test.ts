@@ -99,3 +99,19 @@ test("showing a tree clears its dot and records it seen", () => {
   assert.ok(!g.notices.waiting("inspiration") && !g.notices.waiting("upgrades"));
   assert.equal(g.notices.shown("inspiration"), false);
 });
+
+test("the first training points to spend lead to the Research tab in the forest, until it is opened", () => {
+  const g = forest();
+  assert.notEqual(g.boardLesson, "trainingPoints");
+  g.notices.shown("research");
+  assert.equal(g.save.tutorials.training, false, "opening Research with no points to spend leaves the lesson waiting");
+  g.save.xp = xpForLevel(1);
+  assert.equal(g.boardLesson, "trainingPoints");
+  g.newRun({ seed: 1 });
+  assert.notEqual(g.boardLesson, "trainingPoints", "the forest's alone");
+  g.newRun({ outside: true, seed: 1 });
+  assert.equal(g.boardLesson, "trainingPoints");
+  g.notices.shown("research");
+  assert.ok(g.save.tutorials.training);
+  assert.notEqual(g.boardLesson, "trainingPoints", "done for good");
+});

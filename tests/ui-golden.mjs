@@ -88,7 +88,7 @@ try {
       s.hand = ["stairs", "door", "key", "monster"];
       s.seen.cards = [...s.hand];
       s.seen.met = [...s.hand];
-      s.tutorials.keys = s.tutorials.autoClimb = true;
+      s.tutorials.keys = s.tutorials.autoClimb = s.tutorials.training = true;
       return s;
     };
     const make = (edit) => {
@@ -322,6 +322,12 @@ try {
         s.tower.run.notes = { startedAt: 0, steps: 10, keys: {}, doors: {}, potions: 0, attackShards: 0, defenseShards: 0, silver: 0 };
         return { save: JSON.stringify(s), targets: [] };
       })(),
+      // Back in the forest at level 1, the first training points to spend.
+      lessonTraining: forest((s) => {
+        quiet(s);
+        Object.assign(s.tutorials, { enter: true, upgrades: true, training: false });
+        s.xp = 48;
+      }),
     };
   });
 
@@ -1015,6 +1021,11 @@ try {
     await shot("lessons.autoClimb.dismissed");
     await load("lessonSpeed");
     await shot("lessons.speed");
+    await load("lessonTraining");
+    await shot("lessons.trainingPoints");
+    await tab("research");
+    await click('[data-training-about="defense"]');
+    await shot("lessons.trainingAbout");
   });
 
   // --- Compare ---

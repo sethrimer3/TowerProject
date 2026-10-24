@@ -2,7 +2,7 @@ import { controlIcon } from "./control-icon.ts";
 import { askForGems, helpButton, showHelp } from "./dialogs.ts";
 import { play } from "../sound.ts";
 import { permanentBoost, trainingRate } from "../shop/entitlements.ts";
-import { TRAINING, TRAINING_GROUPS, TRAINING_PER_LEVEL, trainingCap, type TrainingId } from "../progression/training.ts";
+import { TRAINING, TRAINING_GROUPS, TRAINING_PER_LEVEL, trainingCap, trainingDef, type TrainingId } from "../progression/training.ts";
 import { trainingBulk, trainingPoints, trainingRowsFull, trainingStep, trainingText, trainingOpen } from "../progression/loadout.ts";
 import { whole } from "../whole.ts";
 import type { BuyQuantity } from "../progression/buy-quantity.ts";
@@ -10,7 +10,7 @@ import { bindBuyQuantity, buyQuantityHtml, maxCount } from "./buy-quantity-selec
 import { TrainingParticles } from "../render/effects/training-particles.ts";
 import { BOOST_CLAIM_MARGIN_MS, BOOST_MAX_MS, BOOST_RATE, boostLeft, claimBoost, nextTrainerGems, ranksInTraining, trainingJob, trainingSlots, workLeft, type TrainingJob } from "../progression/training-jobs.ts";
 import type { AppContext } from "./app.ts";
-import { adIcon, clockIcon, el, gemCount, gemIcon, goldIcon, pointsIcon, redoIcon, riseFrom, uiSprite } from "./dom.ts";
+import { adIcon, clamp, clockIcon, el, gemCount, gemIcon, goldIcon, pointsIcon, redoIcon, riseFrom, uiSprite } from "./dom.ts";
 import { TRAINING_RESET_GEMS } from "../economy/gems.ts";
 import { ArchivesPanel, COUNTDOWN_MIN_MS, formatCountdown, formatDuration, rushEfficiencyHtml, toNextSecond } from "./archives-page.ts";
 import { priceAmount } from "./hud.ts";
@@ -136,6 +136,49 @@ export class ResearchPage {
       training.setAutoContinue(box.dataset.auto as TrainingId, box.checked);
       this.ctx.save();
     });
+    document.querySelectorAll<HTMLElement>("[data-training-about]").forEach(name => {
+      const id = name.dataset.trainingAbout as TrainingId;
+      name.onclick = () => this.showAbout(name, id);
+      name.onkeydown = (e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        e.preventDefault();
+        this.showAbout(name, id);
+      };
+    });
+  }
+
+  /** A row's name, pressed to show what the stat does (`showAbout`). */
+  private nameHtml(t: { id: TrainingId; name: string }) {
+    return `<span class="training-name" role="button" tabindex="0" data-training-about="${t.id}" aria-label="What ${t.name} does">${t.name}</span>`;
+  }
+
+  /** Row `id`'s description, as a run's training bar shows it, in a plain
+   * box under its name (`name`), outside the page so its redraws keep it.
+   * A press anywhere else, or the rows scrolling, takes it away; pressing
+   * the name again closes it. */
+  private showAbout(name: HTMLElement, id: TrainingId) {
+    const open = document.querySelector<HTMLElement>(".training-about");
+    open?.remove();
+    if (open?.dataset.row === id) return;
+    const box = document.createElement("div"), done = new AbortController();
+    box.className = "training-about";
+    box.setAttribute("role", "tooltip");
+    box.dataset.row = id;
+    box.textContent = trainingDef(id).description;
+    el("app").append(box);
+    const at = name.getBoundingClientRect();
+    box.style.left = `${clamp(at.left, 8, Math.max(8, innerWidth - box.offsetWidth - 8))}px`;
+    box.style.top = `${at.bottom + 4}px`;
+    const close = () => {
+      box.remove();
+      done.abort();
+    };
+    // The name's own press toggles it in `onclick`.
+    document.addEventListener("pointerdown", (e) => {
+      const at = e.target as Element;
+      if (!box.contains(at) && !at.closest?.(`[data-training-about="${id}"]`)) close();
+    }, { capture: true, signal: done.signal });
+    document.addEventListener("scroll", close, { capture: true, signal: done.signal });
   }
 
   /** Binds each button carrying `attribute` to `action` with its row. */
@@ -273,7 +316,7 @@ export class ResearchPage {
     // place without trainers), and the reset keeps the right edge.
     if (step.maxed && !job) {
       const max = `<button class="training-box training-cost" disabled aria-label="${t.name} is fully trained">Max</button>`;
-      return `<div class="training-row maxed" role="listitem" data-training-row="${t.id}"><span class="training-label">${t.name} - ${this.levelText(t.id, false)}</span>${max}${hired ? `<span aria-hidden="true"></span>` : ""}${this.resetButton(t, false)}</div>`;
+      return `<div class="training-row maxed" role="listitem" data-training-row="${t.id}"><span class="training-label">${this.nameHtml(t)} - ${this.levelText(t.id, false)}</span>${max}${hired ? `<span aria-hidden="true"></span>` : ""}${this.resetButton(t, false)}</div>`;
     }
     const nowButton = step.maxed
       ? ""
@@ -283,9 +326,9 @@ export class ResearchPage {
       const speedup = job.speed > 1
         ? `<span class="training-speedup" title="Training ${job.speed}x faster for training ${job.ranks} ranks at once">×${job.speed}</span>`
         : `<span aria-hidden="true"></span>`;
-      return `<div class="training-row active" role="listitem" data-training-row="${t.id}"${job.speed > 1 ? ` data-speed="${job.speed}"` : ""}><span class="training-label training-head">${this.autoBox(t)}${t.name} - ${this.levelText(t.id, true)}</span>${speedup}${values}${this.trainerHtml(t, step)}${nowButton || `<span aria-hidden="true"></span>`}${this.finishButton(t.id, t.name)}</div>`;
+      return `<div class="training-row active" role="listitem" data-training-row="${t.id}"${job.speed > 1 ? ` data-speed="${job.speed}"` : ""}><span class="training-label training-head">${this.autoBox(t)}${this.nameHtml(t)} - ${this.levelText(t.id, true)}</span>${speedup}${values}${this.trainerHtml(t, step)}${nowButton || `<span aria-hidden="true"></span>`}${this.finishButton(t.id, t.name)}</div>`;
     }
-    return `<div class="training-row" role="listitem" data-training-row="${t.id}"><span class="training-label">${t.name} - ${this.levelText(t.id, false)}${notes ? `<small>${notes}</small>` : ""}</span>${values}${hired ? this.trainerHtml(t, step) : ""}${nowButton}${this.resetButton(t, false)}</div>`;
+    return `<div class="training-row" role="listitem" data-training-row="${t.id}"><span class="training-label">${this.nameHtml(t)} - ${this.levelText(t.id, false)}${notes ? `<small>${notes}</small>` : ""}</span>${values}${hired ? this.trainerHtml(t, step) : ""}${nowButton}${this.resetButton(t, false)}</div>`;
   }
 
   /** The training time to a row's next rank or ranks (at Buy Quantity
