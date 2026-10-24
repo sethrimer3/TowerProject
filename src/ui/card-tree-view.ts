@@ -364,12 +364,6 @@ const SEALED_WORDS = "Sealed upgrade: a card buy opens it";
 /** A sealed node's face: a ? and nothing else, so what it is stays hidden. */
 const SEALED_FACE = `<span class="ct-sealed-mark" aria-hidden="true">?</span>`;
 
-/** The pips of a node's levels, filled up to `level` (a bar for more than ten). */
-export function levelPips(level: number, levels: number) {
-  if (levels > 10) return `<span class="ct-bar" aria-hidden="true"><i style="width:${(level / levels) * 100}%"></i></span>`;
-  return `<span class="ct-pips" aria-hidden="true">${Array.from({ length: levels }, (_, i) => `<i${i < level ? ` class="on"` : ""}></i>`).join("")}</span>`;
-}
-
 /** Node `node`'s look for its rarity: its rarity, and whether card buys
  * raised it past the levels it started with (a common node then wears
  * green and a hollow star). */
@@ -498,7 +492,7 @@ export function cardTreeListHtml(card: CardId, tree: TreeLevels, picked: string,
     return `<li class="ct-row ${state} r-${rarity}${node.id === picked ? " picked" : ""}" ${at}>`
       + `<button type="button" class="ct-row-main" data-ct-pick="${node.id}" aria-label="${nodeLabel(card, tree, node, refusal)}">`
       + `<span class="ct-detail-icon r-${rarity}">${nodeIcon(node)}</span>`
-      + `<span class="ct-row-text"><b>${nodeName(card, node)}</b><small class="ct-state ${state}">${rarityStarsHtml(rarity, upgraded)}${CARD_RARITY_NAMES[rarity]} · ${capital(STATE_WORDS[state])} · ${level}/${cap}</small>${levelPips(level, cap)}`
+      + `<span class="ct-row-text"><b>${nodeName(card, node)}</b><small class="ct-state ${state}">${rarityStarsHtml(rarity, upgraded)}${CARD_RARITY_NAMES[rarity]} · ${capital(STATE_WORDS[state])} · ${level}/${cap}</small>`
       + `<small>${level ? statText(node, level).join("; ") : "Nothing yet"}${next ? ` <span class="ct-next">→ ${next}</span>` : ""}</small>`
       + (refusal && state !== "owned" ? `<small class="ug-locked">${refusal}</small>` : "")
       + `</span></button>${action}</li>`;

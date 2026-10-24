@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { CARD_IDS } from "../src/cards.ts";
 import { CARD_TREES, type CardOpened, type CardTreeLevels } from "../src/card-trees.ts";
-import { cardTreeCardHtml, cardTreeGraph, cardTreeHelpHtml, cardTreeListHtml, cardTreeNodeHelpHtml, levelPips, nodeLabel, nodeName, ROOT, statChange, statText, type TreeLevels } from "../src/ui/card-tree-view.ts";
+import { cardTreeCardHtml, cardTreeGraph, cardTreeHelpHtml, cardTreeListHtml, cardTreeNodeHelpHtml, nodeLabel, nodeName, ROOT, statChange, statText, type TreeLevels } from "../src/ui/card-tree-view.ts";
 import { layout, trailAim } from "../src/ui/upgrade-graph.ts";
 
 const TREES = CARD_IDS.filter((id) => CARD_TREES[id]);
@@ -125,6 +125,5 @@ test("the list shows every upgrade with its rarity and state in words, and Buy o
   assert.doesNotMatch(html, /Overheal Max|Stair Skip|Legendary/);
   assert.doesNotMatch(html, /data-ct-raise="floorGold"/);
   assert.match(nodeLabel("atkUp", at(), CARD_TREES.atkUp![0], "No points."), /level 0 of 5, available\. Gives nothing yet\. No points\./);
-  assert.equal(levelPips(2, 3).match(/class="on"/g)!.length, 2);
-  assert.match(levelPips(4, 25), /width:16%/);
+  assert.doesNotMatch(html, /ct-pips|ct-bar/, "a row's level is its count alone");
 });
