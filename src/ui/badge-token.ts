@@ -1,5 +1,5 @@
 import { levelProgress, MAX_BADGE_LEVEL, badgeDef, badgeLevel, badgeValue, gateSign, type BadgeId } from "../cards/badges.ts";
-import { kitIcon } from "../sprite-kit.ts";
+import { kitIcon } from "../sprites/kit.ts";
 import { RARITIES } from "../shop/rarity.ts";
 
 const STAR_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.8l3.05 6.6 7.2.8-5.36 4.9 1.5 7.1L12 17.6l-6.39 3.6 1.5-7.1L1.75 9.2l7.2-.8z"/></svg>`;

@@ -23,7 +23,7 @@ import { el, gemIcon, riseFrom, uiSprite } from "./dom.ts";
 import { currencyAmount, devAmount, priceAmount } from "./hud.ts";
 import { ACTION_ICONS, categoryIcon, itemIcon, materialIcon } from "./equipment-icons.ts";
 import { playSlagMerge } from "./slag-merge.ts";
-import { kitIcon } from "../sprite-kit.ts";
+import { kitIcon } from "../sprites/kit.ts";
 
 /** The Equipment screen's views, chosen by the tabs along its bottom: the
  * list (the loadout over the inventory), Assemble (merging) and Acquire

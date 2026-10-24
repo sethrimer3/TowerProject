@@ -34,16 +34,16 @@ try {
   });
   const route = await pending;
   await page.waitForFunction(async () => {
-    const { kitImage } = await import("/src/sprite-kit.ts");
+    const { kitImage } = await import("/src/sprites/kit.ts");
     return ["dungeon-masonry-0", "dungeon-edges", "dungeon-infill", "dungeon-blends"].every(id => kitImage(id));
   });
   const before = await page.evaluate(() => detailReview.paint());
   await route.fulfill({ path: resolve("public/assets/style/dungeon-details-masonry-0.png"), contentType: "image/png" });
   await page.unroute("**/dungeon-details-masonry-0.png");
-  await page.waitForFunction(async () => !!(await import("/src/sprite-kit.ts")).kitImage("dungeon-details-masonry-0"));
+  await page.waitForFunction(async () => !!(await import("/src/sprites/kit.ts")).kitImage("dungeon-details-masonry-0"));
   const result = await page.evaluate(async before => {
     const { world, left, look, paint, dungeonWallProfile, dungeonWallBands } = detailReview;
-    const { kitImage } = await import("/src/sprite-kit.ts"), { dungeonDetail } = await import("/src/dungeon-details.ts");
+    const { kitImage } = await import("/src/sprites/kit.ts"), { dungeonDetail } = await import("/src/dungeon-details.ts");
     const cv = document.createElement("canvas"); cv.width = kitImage("dungeon-details-masonry-0").naturalWidth; cv.height = 48;
     const ctx = cv.getContext("2d"); ctx.drawImage(kitImage("dungeon-details-masonry-0"), 0, 0);
     const source = ctx.getImageData(0, 0, cv.width, 48).data, after = paint();
@@ -65,15 +65,15 @@ try {
   }, before);
   assert.ok(result.exact && result.changed > 10, "both halves use one literal PNG motif, respect shade bands/coping and refresh a warm cache after a delayed load");
   await page.evaluate(async () => {
-    const { DUNGEON_ATLASES } = await import("/src/sprite-dungeon.ts"), { kitImage } = await import("/src/sprite-kit.ts");
+    const { DUNGEON_ATLASES } = await import("/src/sprites/dungeon.ts"), { kitImage } = await import("/src/sprites/kit.ts");
     for (const id of DUNGEON_ATLASES) { kitImage(id); kitImage(id.replace("dungeon-", "dungeon-details-")); }
   });
   await page.waitForFunction(async () => {
-    const { DUNGEON_ATLASES } = await import("/src/sprite-dungeon.ts"), { kitImage } = await import("/src/sprite-kit.ts");
+    const { DUNGEON_ATLASES } = await import("/src/sprites/dungeon.ts"), { kitImage } = await import("/src/sprites/kit.ts");
     return DUNGEON_ATLASES.every(id => kitImage(id) && kitImage(id.replace("dungeon-", "dungeon-details-")));
   });
   const atlas = await page.evaluate(async () => {
-    const { DUNGEON_ATLASES } = await import("/src/sprite-dungeon.ts"), { kitImage } = await import("/src/sprite-kit.ts");
+    const { DUNGEON_ATLASES } = await import("/src/sprites/dungeon.ts"), { kitImage } = await import("/src/sprites/kit.ts");
     return DUNGEON_ATLASES.flatMap(id => {
       const cv = document.createElement("canvas"); cv.width = kitImage(id.replace("dungeon-", "dungeon-details-")).naturalWidth; cv.height = 48;
       const c = cv.getContext("2d"); c.drawImage(kitImage(id.replace("dungeon-", "dungeon-details-")), 0, 0);
@@ -92,7 +92,7 @@ try {
   assert.ok(atlas.every(a => a.visible > 15 && a.visible < 576 && a.gutter === 0 && a.sameAlpha), "all detail ramps retain sparse native subjects, clear gutters and identical shade silhouettes");
   assert.ok(atlas.filter(a => a.crossing).length >= 60, "most authored features cross the internal tile boundary");
   await page.evaluate(async () => {
-    const { kitImage } = await import("/src/sprite-kit.ts"), { paintTile } = await import("/src/tile-painters.ts");
+    const { kitImage } = await import("/src/sprites/kit.ts"), { paintTile } = await import("/src/tile-painters.ts");
     const cv = document.createElement("canvas"); cv.id = "context-review"; cv.width = 1100; cv.height = 910;
     const c = cv.getContext("2d"); c.imageSmoothingEnabled = false; c.fillStyle = "#10151c"; c.fillRect(0, 0, 1100, 910);
     ["masonry-0", "stone-0", "earth"].forEach((material, i) => {
@@ -118,7 +118,7 @@ try {
   await failed.goto(server.resolvedUrls.local[0]); await failed.locator("#hp").waitFor();
   const fallback = () => failed.evaluate(async () => {
     const { dungeonDetail } = await import("/src/dungeon-details.ts"), { dungeonWallProfile } = await import("/src/wall-depth.ts");
-    const { paintTile } = await import("/src/tile-painters.ts"), { drawDungeonGround, dungeonDiagonals } = await import("/src/sprite-dungeon.ts");
+    const { paintTile } = await import("/src/tile-painters.ts"), { drawDungeonGround, dungeonDiagonals } = await import("/src/sprites/dungeon.ts");
     const world = { tile: (_x, y) => ({ kind: y <= 0 ? "wall" : "floor" }) }, seed = 1107;
     let x = -100; while (dungeonDetail(world, x, 0, seed, () => "masonry")?.half !== 0) x++;
     const cv = document.createElement("canvas"); cv.width = 48; cv.height = 24;
@@ -135,7 +135,7 @@ try {
   });
   await fallback();
   await failed.waitForFunction(async () => {
-    const { kitImage } = await import("/src/sprite-kit.ts");
+    const { kitImage } = await import("/src/sprites/kit.ts");
     return ["dungeon-masonry-0", "dungeon-edges", "dungeon-infill", "dungeon-blends"].every(id => kitImage(id));
   });
   const restored = await fallback();

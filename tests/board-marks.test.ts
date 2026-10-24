@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { BOARD_MARK_SPRITES, drawBoardMark } from "../src/sprite-board-marks.ts";
+import { BOARD_MARK_SPRITES, drawBoardMark } from "../src/sprites/board-marks.ts";
 import type { FrameContext } from "../src/render-frame.ts";
 
 test("board marks keep native density and preserve loading/off fallbacks", () => {

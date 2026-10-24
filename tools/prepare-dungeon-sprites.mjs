@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { gray, tones } from "./dungeon-palette.mjs";
-import { DUNGEON_MATERIALS, DUNGEON_TONES, DUNGEON_WALL_VARIANTS, dungeonAtlasId } from "../src/sprite-dungeon.ts";
+import { DUNGEON_MATERIALS, DUNGEON_TONES, DUNGEON_WALL_VARIANTS, dungeonAtlasId } from "../src/sprites/dungeon.ts";
 const root = fileURLToPath(new URL("../", import.meta.url)), out = join(root, "public/assets/style");
 const palette = join(root, "assets/ui-sprites/palette.ppm"), source = join(root, "assets/game-sprites/dungeon-materials.png");
 const cornerSource = join(root, "assets/game-sprites/dungeon-corners.png");

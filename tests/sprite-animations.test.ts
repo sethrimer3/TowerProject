@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { HeroIdleAnimation, keyShineFrame, potionBubbleFrame, deathSkullFrame, HERO_FACINGS } from "../src/sprite-animations.ts";
+import { HeroIdleAnimation, keyShineFrame, potionBubbleFrame, deathSkullFrame, HERO_FACINGS } from "../src/sprites/animations.ts";
 import { paintContents, paintHero } from "../src/tile-painters.ts";
 import { drawStruckDown, DEFEAT_MS } from "../src/struck-down.ts";
 import type { FrameContext } from "../src/render-frame.ts";

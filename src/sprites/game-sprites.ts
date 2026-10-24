@@ -1,4 +1,4 @@
-import { tileRandom } from "./random.ts";
+import { tileRandom } from "../random.ts";
 
 const ASSET_BASE = (import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? "/";
 export const TORCH_FRAME_COUNT = 4;

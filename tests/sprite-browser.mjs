@@ -69,7 +69,7 @@ try {
   }
   // Paint the production dressing functions at native resolution too.
   await page.waitForFunction(async () => {
-    const { DETAIL_SPRITES, kitImage } = await import("/src/sprite-kit.ts");
+    const { DETAIL_SPRITES, kitImage } = await import("/src/sprites/kit.ts");
     return DETAIL_SPRITES.slice(8).map(id => kitImage(id)).every(Boolean);
   });
   await page.evaluate(async () => {

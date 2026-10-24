@@ -1,6 +1,6 @@
-import type { Tile } from "./entities.ts";
-import { doorRule, drainsHp } from "./doors.ts";
-import { drawKit, kitImage } from "./sprite-kit.ts";
+import type { Tile } from "../entities.ts";
+import { doorRule, drainsHp } from "../doors.ts";
+import { drawKit, kitImage } from "./kit.ts";
 import { torchAnimationFrame, TORCH_FRAME_COUNT } from "./game-sprites.ts";
 
 export const SQUARE_DOORS = ["yellow", "blue", "red", "steel", "wood", "heart"] as const;

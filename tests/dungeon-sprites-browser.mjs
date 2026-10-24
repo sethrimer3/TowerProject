@@ -25,7 +25,7 @@ try {
   await page.route("**/dungeon-masonry-0.png", route => release(route));
   await page.goto(server.resolvedUrls.local[0]); await page.locator("#hp").waitFor();
   const paint = () => page.evaluate(async () => {
-    const { drawDungeonGround } = await import("/src/sprite-dungeon.ts");
+    const { drawDungeonGround } = await import("/src/sprites/dungeon.ts");
     const canvas = document.createElement("canvas"); canvas.width = canvas.height = 24;
     const c = canvas.getContext("2d");
     const ready = drawDungeonGround(c, { mode: "tower", height: 0, seed: 3, x: 8, y: 5, wall: false, empty: true });
@@ -33,15 +33,15 @@ try {
   });
   assert.equal((await paint()).ready, false);
   const route = await pending;
-  await page.waitForFunction(async () => !!(await import("/src/sprite-kit.ts")).kitImage("dungeon-edges"));
+  await page.waitForFunction(async () => !!(await import("/src/sprites/kit.ts")).kitImage("dungeon-edges"));
   assert.equal((await paint()).ready, false, "no partial new tiles before the complete material group loads");
   await route.fulfill({ path: resolve("public/assets/style/dungeon-masonry-0.png"), contentType: "image/png" });
   await page.unroute("**/dungeon-masonry-0.png");
-  await page.waitForFunction(async () => !!(await import("/src/sprite-kit.ts")).kitImage("dungeon-masonry-0"));
+  await page.waitForFunction(async () => !!(await import("/src/sprites/kit.ts")).kitImage("dungeon-masonry-0"));
   const loaded = await paint(); assert.ok(loaded.ready);
   const native = await page.evaluate(async () => {
-    const { dungeonFloorSprite, towerFloorFrame, DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS } = await import("/src/sprite-dungeon.ts");
-    const { kitImage } = await import("/src/sprite-kit.ts");
+    const { dungeonFloorSprite, towerFloorFrame, DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS } = await import("/src/sprites/dungeon.ts");
+    const { kitImage } = await import("/src/sprites/kit.ts");
     DUNGEON_ATLASES.forEach(kitImage); kitImage(DUNGEON_EDGE_ATLAS);
     const image = dungeonFloorSprite("tower", 0, 8, 5, 3);
     const pixels = [...image.getContext("2d").getImageData(0, 0, 24, 24).data];
@@ -53,11 +53,11 @@ try {
   assert.deepEqual(loaded.pixels, native.source, "floor painter uses literal PNG texels");
   assert.deepEqual(native.pixels, native.source, "torch relief reads the selected new floor, not an older texture");
   await page.waitForFunction(async () => {
-    const { DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS, towerFloorAtlasId } = await import("/src/sprite-dungeon.ts"), { kitImage } = await import("/src/sprite-kit.ts");
+    const { DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS, towerFloorAtlasId } = await import("/src/sprites/dungeon.ts"), { kitImage } = await import("/src/sprites/kit.ts");
     return [...DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS, ...Array.from({ length: 10 }, (_, tone) => towerFloorAtlasId(tone))].map(kitImage).every(Boolean);
   });
   const masks = await page.evaluate(async () => {
-    const { kitImage } = await import("/src/sprite-kit.ts");
+    const { kitImage } = await import("/src/sprites/kit.ts");
     const c = document.createElement("canvas").getContext("2d"); c.canvas.width = 96; c.canvas.height = 192;
     c.drawImage(kitImage("dungeon-edges"), 0, 0);
     const data = c.getImageData(0, 0, 96, 192).data;
@@ -70,7 +70,7 @@ try {
   });
   assert.ok(masks.every(Boolean), "soil transitions and contact shadows leave floor centers readable");
   const corners = await page.evaluate(async () => {
-    const { DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS, DUNGEON_CORNER_FRAME, DUNGEON_WALL_VARIANTS } = await import("/src/sprite-dungeon.ts"), { kitImage } = await import("/src/sprite-kit.ts");
+    const { DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS, DUNGEON_CORNER_FRAME, DUNGEON_WALL_VARIANTS } = await import("/src/sprites/dungeon.ts"), { kitImage } = await import("/src/sprites/kit.ts");
     return [...DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS].map(id => {
       const image = kitImage(id), cv = document.createElement("canvas"); cv.width = image.naturalWidth; cv.height = image.naturalHeight;
       const c = cv.getContext("2d"); c.drawImage(image, 0, 0);
@@ -108,10 +108,10 @@ try {
   }
   const materials = await page.evaluate(async () => {
     const { drawDungeonGround, drawDungeonFrame, dungeonMaterialJoins, dungeonMaterial, dungeonFloorFrame, dungeonWallVariant,
-      DUNGEON_ATLASES, DUNGEON_CAP_FRAME, DUNGEON_SHADE_FRAME } = await import("/src/sprite-dungeon.ts");
+      DUNGEON_ATLASES, DUNGEON_CAP_FRAME, DUNGEON_SHADE_FRAME } = await import("/src/sprites/dungeon.ts");
     const { dungeonWallProfile, dungeonWallBands } = await import("/src/wall-depth.ts");
     const { paintTile } = await import("/src/tile-painters.ts");
-    const { kitImage } = await import("/src/sprite-kit.ts");
+    const { kitImage } = await import("/src/sprites/kit.ts");
     const canvas = document.createElement("canvas"); canvas.width = canvas.height = 24;
     const c = canvas.getContext("2d");
     const pixels = (id, frame) => { c.clearRect(0, 0, 24, 24); drawDungeonFrame(c, kitImage(id), frame); return [...c.getImageData(0, 0, 24, 24).data]; };
@@ -205,7 +205,7 @@ try {
     await page.setViewportSize({ width, height: 1000 });
     const result = await page.evaluate(async ({ width, mode }) => {
       const { dungeonSpriteScene } = await import("/tests/render-scenes.ts"), { Renderer } = await import("/src/rendering.ts");
-      const { loadSpriteFont } = await import("/src/sprite-font.ts"), { THEME_IDS } = await import("/src/theme-collection.ts");
+      const { loadSpriteFont } = await import("/src/sprites/font.ts"), { THEME_IDS } = await import("/src/theme-collection.ts");
       await loadSpriteFont(); const { g } = dungeonSpriteScene(mode); g.save.themes = [...THEME_IDS];
       g.effect = { text: "", x: 0, y: 0, until: 0 }; g.blocked = { x: 0, y: 0, until: 0 };
       const canvas = document.createElement("canvas"); canvas.id = "dungeon-review";
@@ -256,7 +256,7 @@ try {
   }
   await page.setViewportSize({ width: 1100, height: 2500 });
   await page.evaluate(async () => {
-    const { DUNGEON_ATLASES } = await import("/src/sprite-dungeon.ts"), { kitImage } = await import("/src/sprite-kit.ts");
+    const { DUNGEON_ATLASES } = await import("/src/sprites/dungeon.ts"), { kitImage } = await import("/src/sprites/kit.ts");
     const sheet = document.createElement("canvas"); sheet.id = "dungeon-art"; sheet.width = 1100; sheet.height = 2430;
     const c = sheet.getContext("2d"); c.imageSmoothingEnabled = false; c.fillStyle = "#10151c"; c.fillRect(0, 0, sheet.width, sheet.height);
     DUNGEON_ATLASES.forEach((id, i) => {
@@ -273,7 +273,7 @@ try {
   await failed.route("**/dungeon-masonry-0.png", route => route.abort());
   await failed.goto(server.resolvedUrls.local[0]);
   const fallback = await failed.evaluate(async () => {
-    const { drawDungeonGround } = await import("/src/sprite-dungeon.ts");
+    const { drawDungeonGround } = await import("/src/sprites/dungeon.ts");
     const { paintTile } = await import("/src/tile-painters.ts");
     const cv = document.createElement("canvas"); cv.width = cv.height = 24; const c = cv.getContext("2d");
     const tile = { mode: "tower", height: 0, seed: 1, x: 8, y: 5, wall: true, empty: false };

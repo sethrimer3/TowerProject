@@ -1,5 +1,5 @@
-import type { Save } from "./save/shape.ts";
-import { gameLook, uiLook } from "./theme-collection.ts";
+import type { Save } from "../save/shape.ts";
+import { gameLook, uiLook } from "../theme-collection.ts";
 
 /** The starting Medieval interface and the free Classic look share the
  * default sprite kit. Every other owned UI theme supplies its own art. */

@@ -33,9 +33,9 @@ try {
   });
   const route = await requested;
   await route.fulfill({ path: resolve("public/assets/style/hero-up.png"), contentType: "image/png" });
-  await page.waitForFunction(async () => { const { kitImage } = await import("/src/sprite-kit.ts"); return !!kitImage("hero-up"); });
+  await page.waitForFunction(async () => { const { kitImage } = await import("/src/sprites/kit.ts"); return !!kitImage("hero-up"); });
   const result = await page.evaluate(async () => {
-    const { kitImage } = await import("/src/sprite-kit.ts");
+    const { kitImage } = await import("/src/sprites/kit.ts");
     const { lighting, f, alpha, mask, before } = window.__lightReview;
     const pngAlpha = id => {
       const c = document.createElement("canvas"); c.width = c.height = 24;

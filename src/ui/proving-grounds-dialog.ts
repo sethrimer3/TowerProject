@@ -10,7 +10,7 @@ import {TrialSession,TRIAL_TRAINING} from "../proving-grounds/session.ts";
 import {TrialRenderer,TRIAL_VIEW_TILES} from "../proving-grounds/render.ts";
 import {CARDS} from "../cards/cards.ts";
 import {el} from "./dom.ts";
-import {usesGameSprites} from "../sprite-style.ts";
+import {usesGameSprites} from "../sprites/style.ts";
 
 const MODES=[
   ["manual","Without cards","Click a tile to walk to it. Cards stay disabled."],

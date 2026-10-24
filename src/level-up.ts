@@ -1,4 +1,4 @@
-import { boardFont } from "./sprite-font.ts";
+import { boardFont } from "./sprites/font.ts";
 import { tileTransform, type FrameContext } from "./render-frame.ts";
 import { REVIVE_MS } from "./combat.ts";
 import { coinImage, INSPIRATION_URL, sprite } from "./board-popups.ts";

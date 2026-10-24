@@ -141,7 +141,7 @@ For city prompts, specify directly overhead buildings, the exact footprint and t
 For the world and icon extension, run `node --experimental-transform-types tools/prepare-game-sprites.mjs`.
 Use `--city-only` to export just the city set and `--structures-only` for the overhead Defend buildings.
 Run `node --experimental-transform-types tools/prepare-badge-sprites.mjs` to export the badge symbols and rarity frames before rebuilding card faces.
-Use `--details-only` to refresh the sixteen detail sprites, or `--cards-only` after changing frame art or the explicit compositions in `src/sprite-cards.ts`.
+Use `--details-only` to refresh the sixteen detail sprites, or `--cards-only` after changing frame art or the explicit compositions in `src/sprites/cards.ts`.
 Run `node --experimental-transform-types tools/prepare-ui-details.mjs` to extract the Goal, HUD and ornament set from its measured gutters.
 Run `node --experimental-transform-types tools/prepare-shrine-sprites.mjs` for the twenty boon and four control symbols plus the repeatable bar fill.
 Run `node --experimental-transform-types tools/prepare-equipment-ui.mjs` for the five Equipment frames and three status marks.
@@ -154,7 +154,7 @@ Run `node --experimental-transform-types tools/prepare-dungeon-sprites.mjs` for 
 Run `node --experimental-transform-types tools/prepare-dungeon-details.mjs` for the sparse paired wall motifs in matching biome ramps; the two dungeon exporters share `tools/dungeon-palette.mjs`.
 Regenerate the original font with `python tools/prepare-pixel-font.py` using FontTools with WOFF2 support (`fonttools[woff]`); no font-building dependency is needed at runtime.
 The full game exporter preserves ambient-animation, dungeon, forest, environment, combat, badge, Shrine, Equipment UI and UI-detail assets; rerun their own exporter when a source atlas changes.
-That exporter also packs the terrain atlas and produces `src/sprite-terrain-index.ts`.
+That exporter also packs the terrain atlas and produces `src/sprites/terrain-index.ts`.
 PNG load failures keep the original icon or procedural renderer visible; loaded images invalidate cached terrain and city layers through a shared revision.
 
 Before accepting a replacement, inspect the native-size pieces and compare normal, hover, selected, pressed and disabled states together.

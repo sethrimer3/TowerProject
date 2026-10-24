@@ -1,5 +1,5 @@
-import { kitIcon } from "../sprite-kit.ts";
-import { spriteFontRevision } from "../sprite-font.ts";
+import { kitIcon } from "../sprites/kit.ts";
+import { spriteFontRevision } from "../sprites/font.ts";
 import { amountUnit, enemyStat, keyCount, shortAmount, stepsIn, whole, wholeHp } from "../whole.ts";
 import type { Game } from "../state.ts";
 import type { Renderer } from "../rendering.ts";

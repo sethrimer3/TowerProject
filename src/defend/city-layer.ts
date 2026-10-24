@@ -8,8 +8,8 @@ import { CellType, type Building, type CityMap } from "./citygen.ts";
 import type { Light, Stone } from "./lighting.ts";
 import type { DefendSim } from "./sim.ts";
 import { OUTLINE, ROAD, ROOFS, paintStructureArt } from "./structure-art.ts";
-import { drawKitTerrain } from "../sprite-terrain.ts";
-import { drawKit } from "../sprite-kit.ts";
+import { drawKitTerrain } from "../sprites/terrain.ts";
+import { drawKit } from "../sprites/kit.ts";
 import { paintRoofSprite } from "./city-sprites.ts";
 
 const ASSET_BASE = (import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? "/";

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { inflateSync } from "node:zlib";
 import test from "node:test";
-import { DETAIL_SPRITES } from "../src/sprite-kit.ts";
+import { DETAIL_SPRITES } from "../src/sprites/kit.ts";
 import { DecorBaker, paintKitPlant } from "../src/render/decor/decor-bake.ts";
 import type { DecorSource, TileDecor } from "../src/render/decor/decor.ts";
 import { drawCrates } from "../src/render/decor/decor-sprites.ts";

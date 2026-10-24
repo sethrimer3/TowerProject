@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { defaults } from "../src/save/save.ts";
-import { usesGameSprites, usesUiSprites } from "../src/sprite-style.ts";
+import { usesGameSprites, usesUiSprites } from "../src/sprites/style.ts";
 import { THEME_IDS } from "../src/theme-collection.ts";
 import { SETTINGS } from "../src/save/settings.ts";
 

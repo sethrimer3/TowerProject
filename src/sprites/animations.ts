@@ -1,6 +1,6 @@
-import type { Tile } from "./entities.ts";
-import { tileRandom } from "./random.ts";
-import { kitImage } from "./sprite-kit.ts";
+import type { Tile } from "../entities.ts";
+import { tileRandom } from "../random.ts";
+import { kitImage } from "./kit.ts";
 
 export const AMBIENT_SPRITE_FRAMES = 5;
 export const HERO_IDLE_FRAMES = 4;

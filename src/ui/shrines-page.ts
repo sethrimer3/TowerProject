@@ -1,6 +1,6 @@
 import { boonIcon } from "./boon-icon.ts";
 import { controlIcon } from "./control-icon.ts";
-import { kitIcon } from "../sprite-kit.ts";
+import { kitIcon } from "../sprites/kit.ts";
 import { researched } from "../progression/archives.ts";
 import { BOON_IDS, STANDARD_BOONS, bans, boon, boonLabel, type BoonId } from "../shrines.ts";
 import type { AppContext } from "./app.ts";

@@ -51,8 +51,8 @@ try {
   await page.screenshot({ path: "test-results/goals-hud-sprites/forest-390.png", animations: "disabled" });
   // Real reusable symbol pairs at native and 2x scale, all fitting a 24px grid.
   await page.evaluate(async () => {
-    const { UI_DETAIL_SPRITES, UI_ORNAMENT_SPRITES } = await import("/src/sprite-ui-details.ts");
-    const { kitIcon } = await import("/src/sprite-kit.ts");
+    const { UI_DETAIL_SPRITES, UI_ORNAMENT_SPRITES } = await import("/src/sprites/ui-details.ts");
+    const { kitIcon } = await import("/src/sprites/kit.ts");
     const gallery = document.createElement("section"); gallery.id = "ui-detail-review";
     gallery.style.cssText = "position:relative;z-index:99;background:#1b2430;padding:12px;display:grid;grid-template-columns:repeat(4,1fr);gap:16px";
     gallery.innerHTML = [...UI_DETAIL_SPRITES, ...UI_ORNAMENT_SPRITES].map(id => `<div style="display:flex;align-items:center;gap:4px">${kitIcon(id, "?", "review-native")}${kitIcon(id, "?", "review-double")}</div>`).join("");

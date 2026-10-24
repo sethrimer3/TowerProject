@@ -1,5 +1,5 @@
-import { METALS, type MaterialId, type MetalId } from "./economy/materials.ts";
-import { kitIcon } from "./sprite-kit.ts";
+import { METALS, type MaterialId, type MetalId } from "../economy/materials.ts";
+import { kitIcon } from "./kit.ts";
 
 const ASSET_BASE = (import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? "/";
 

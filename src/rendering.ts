@@ -1,5 +1,5 @@
-import { boardFont } from "./sprite-font.ts";
-import { drawBoardMark } from "./sprite-board-marks.ts";
+import { boardFont } from "./sprites/font.ts";
+import { drawBoardMark } from "./sprites/board-marks.ts";
 import { CHUNK, TOWER_HEIGHT, VIEWPORT_TILES } from "./config.ts";
 import { drawFlyers } from "./flyer-art.ts";
 import type { Game } from "./state.ts";
@@ -10,11 +10,11 @@ import { drawProvingGrounds, drawBlacksmith, drawEntrance, drawTournamentHall, O
 import { DecorLayer, type DecorFrame, type MirroredSprites } from "./render/decor/decor-render.ts";
 import { OutsideGrass } from "./render/decor/outside-grass.ts";
 import { ForestFoliage } from "./render/decor/forest-foliage.ts";
-import { forestSpritesReady } from "./sprite-forest.ts";
+import { forestSpritesReady } from "./sprites/forest.ts";
 import { TileLayerCache } from "./tile-cache.ts";
 import { OutdoorWeather } from "./weather.ts";
-import { torchAnimationFrame } from "./game-sprites.ts";
-import { towerTileset } from "./sprite-dungeon.ts";
+import { torchAnimationFrame } from "./sprites/game-sprites.ts";
+import { towerTileset } from "./sprites/dungeon.ts";
 import { isArea1, paintHero, paintHeroFallback, paintTile, paintTorch, type BoardLook } from "./tile-painters.ts";
 import type { AtmosphereConfig } from "./lighting-pass.ts";
 import { DungeonLight, type LitBoard } from "./dungeon-light.ts";
@@ -39,9 +39,9 @@ import { drawChestMarks } from "./chest-marks.ts";
 import type { Dash, ShownTurn } from "./shown.ts";
 import { darknessOf, forEachViewTile, tileTransform, toTileSpace, type FrameContext } from "./render-frame.ts";
 import { gameLook } from "./theme-collection.ts";
-import { usesGameSprites } from "./sprite-style.ts";
-import { spriteRevision } from "./sprite-kit.ts";
-import { HeroIdleAnimation, pickupAnimationFrame } from "./sprite-animations.ts";
+import { usesGameSprites } from "./sprites/style.ts";
+import { spriteRevision } from "./sprites/kit.ts";
+import { HeroIdleAnimation, pickupAnimationFrame } from "./sprites/animations.ts";
 import { FAST_GLIDE_SECONDS, FollowCamera, GLIDE_SECONDS, pointsAhead, type CameraView } from "./camera.ts";
 
 export { ATMOSPHERE_CONFIG, type AtmosphereConfig } from "./lighting-pass.ts";

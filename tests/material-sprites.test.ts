@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { METALS } from "../src/economy/materials.ts";
-import { METAL_BAR_URLS, metalBarSprite } from "../src/material-sprites.ts";
+import { METAL_BAR_URLS, metalBarSprite } from "../src/sprites/material-sprites.ts";
 
 test("every metal has a deployable bar sprite", () => {
   assert.equal(Object.keys(METAL_BAR_URLS).length, METALS.length);

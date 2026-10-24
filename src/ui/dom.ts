@@ -1,4 +1,4 @@
-import { kitIcon } from "../sprite-kit.ts";
+import { kitIcon } from "../sprites/kit.ts";
 import { CARDS } from "../cards/cards.ts";
 import type { CardId } from "../cards/cards.ts";
 import { LIMIT_BREAKS, type UpgradeId } from "../config.ts";

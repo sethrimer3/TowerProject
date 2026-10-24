@@ -1,4 +1,4 @@
-import { kitIcon } from "../sprite-kit.ts";
+import { kitIcon } from "../sprites/kit.ts";
 import { askForGems, showHelp } from "./dialogs.ts";
 import { CARDS, cardBonusText, cardText, deckCards, handSlots, linkedToNext, moveCard, nextHandSlotGems, placeCard, type CardId } from "../cards/cards.ts";
 import type { AppContext } from "./app.ts";

@@ -3,7 +3,7 @@ import { spawn } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { EQUIPMENT_FRAME_SPRITES, EQUIPMENT_MARK_SPRITES } from "../src/sprite-equipment.ts";
+import { EQUIPMENT_FRAME_SPRITES, EQUIPMENT_MARK_SPRITES } from "../src/sprites/equipment.ts";
 const root = fileURLToPath(new URL("../", import.meta.url));
 const out = join(root, "public/assets/style"), source = join(root, "assets/game-sprites/equipment-ui.png");
 const manifest = JSON.parse(readFileSync(join(out, "manifest.json"), "utf8"));

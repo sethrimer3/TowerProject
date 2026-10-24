@@ -1,7 +1,7 @@
 import { OUTSIDE_SIZE, ENTRANCE_Y, OutsideWorld, onPath, roadsOf, BLACKSMITH, TOURNAMENT_HALL } from "../../outside.ts";
 import { tileRandom } from "../../random.ts";
 import type { BoardView } from "../../render-frame.ts";
-import { FOREST_CANOPIES, FOREST_SPRITES, drawForestSprite, type ForestSprite } from "../../sprite-forest.ts";
+import { FOREST_CANOPIES, FOREST_SPRITES, drawForestSprite, type ForestSprite } from "../../sprites/forest.ts";
 
 export type ForestObject = {
   id: ForestSprite; x: number; y: number; width: number; height: number;

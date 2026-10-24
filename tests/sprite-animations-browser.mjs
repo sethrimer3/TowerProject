@@ -20,7 +20,7 @@ try {
   });
   await page.goto(server.resolvedUrls.local[0]); await page.locator("#hp").waitFor();
   const native = await page.evaluate(async () => {
-    const { kitImage } = await import("/src/sprite-kit.ts"), { HERO_FACINGS, keyShineFrame } = await import("/src/sprite-animations.ts");
+    const { kitImage } = await import("/src/sprites/kit.ts"), { HERO_FACINGS, keyShineFrame } = await import("/src/sprites/animations.ts");
     const { paintContents, paintHero } = await import("/src/tile-painters.ts"), { drawStruckDown } = await import("/src/struck-down.ts");
     const ids = ["ambient-potion-bubbles", "ambient-key-shine", "ambient-death-skull", ...HERO_FACINGS.flatMap(f => [`hero-${f}`, `ambient-hero-${f}`]), "key-yellow", "key-blue", "key-red", "potion-red", "potion-blue"];
     await new Promise(resolve => { const check = () => ids.map(kitImage).every(Boolean) ? resolve() : requestAnimationFrame(check); check(); });
@@ -84,7 +84,7 @@ try {
     await page.setViewportSize({ width, height: 1000 });
     const result = await page.evaluate(async width => {
       const { dungeonSpriteScene } = await import("/tests/render-scenes.ts"), { Renderer } = await import("/src/rendering.ts");
-      const { loadSpriteFont } = await import("/src/sprite-font.ts"), { THEME_IDS } = await import("/src/theme-collection.ts");
+      const { loadSpriteFont } = await import("/src/sprites/font.ts"), { THEME_IDS } = await import("/src/theme-collection.ts");
       await loadSpriteFont(); const { g } = dungeonSpriteScene("tower", { spriteAnimations: false, reduceMotion: false }); g.save.themes = [...THEME_IDS];
       g.effect = { text: "", x: 0, y: 0, until: 0 }; g.blocked = { x: 0, y: 0, until: 0 };
       const canvas = document.createElement("canvas"); canvas.id = "ambient-board"; const size = width < 500 ? 360 : 510;
@@ -135,7 +135,7 @@ try {
   await page.locator("#death-board").screenshot({ path: "test-results/sprite-animations/death.png" });
   const failed = await browser.newPage(); await fixClock(failed); await failed.route("**/assets/style/ambient-*.png", route => route.abort()); await failed.goto(server.resolvedUrls.local[0]);
   const fallback = await failed.evaluate(async () => {
-    const { kitImage } = await import("/src/sprite-kit.ts"), { paintHero, paintContents } = await import("/src/tile-painters.ts"), { drawStruckDown } = await import("/src/struck-down.ts");
+    const { kitImage } = await import("/src/sprites/kit.ts"), { paintHero, paintContents } = await import("/src/tile-painters.ts"), { drawStruckDown } = await import("/src/struck-down.ts");
     await new Promise(resolve => { const check = () => ["hero-down", "potion-red"].map(kitImage).every(Boolean) ? resolve() : requestAnimationFrame(check); check(); });
     const c = document.createElement("canvas").getContext("2d"); c.canvas.width = c.canvas.height = 24;
     const hero = frame => { c.clearRect(0, 0, 24, 24); paintHero(c, false, true, { dx: 0, dy: -1 }, frame); return c.canvas.toDataURL(); };

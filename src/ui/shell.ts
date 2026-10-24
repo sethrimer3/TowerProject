@@ -1,4 +1,4 @@
-import { kitIcon } from "../sprite-kit.ts";
+import { kitIcon } from "../sprites/kit.ts";
 import { bombIcon, CART_ICON, ENTER_ICON, eventIcon, relicIcon, shrineIcon, gemIcon, goldIcon, shardIcon, itemSprite, mailIcon, medalIcon, missionIcon, NAV_TABS, RESEARCH_ICON, trophyIcon, uiSprite } from "./dom.ts";
 import { AD_GEMS } from "../economy/gems.ts";
 import { GOLD_BOOST_FACTOR } from "../economy/gold-boost.ts";

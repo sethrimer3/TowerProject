@@ -22,7 +22,7 @@ import { fitLayout, type Layout } from "./layout.ts";
 import { generateCity, type CityMap } from "./citygen.ts";
 import { DefendSim } from "./sim.ts";
 import { DefendRenderer } from "./render.ts";
-import { spriteRevision } from "../sprite-kit.ts";
+import { spriteRevision } from "../sprites/kit.ts";
 import type { Overlay } from "./edit-overlay.ts";
 import { paintIcon, type IconItem } from "./structure-art.ts";
 import { BoardPointers, eventCell } from "./board-pointers.ts";

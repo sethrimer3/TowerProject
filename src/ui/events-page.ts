@@ -1,5 +1,5 @@
 import { controlIcon } from "./control-icon.ts";
-import { kitIcon } from "../sprite-kit.ts";
+import { kitIcon } from "../sprites/kit.ts";
 import { EVENT_MISSION_COUNT, EVENT_MISSIONS, TIER_MEDALS, TIERS, type RelicMilestone } from "../events/catalog.ts";
 import { isFinished, milestoneReached, unclaimedTiers, type EventMission } from "../events/progress.ts";
 import { offer } from "../shop/offers.ts";

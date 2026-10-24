@@ -3,19 +3,19 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { createHash } from "node:crypto";
 import { BOON_IDS } from "../src/shrines.ts";
-import { BOON_SPRITES, SHRINE_CONTROL_SPRITES } from "../src/sprite-boons.ts";
-import { EQUIPMENT_FRAME_SPRITES, EQUIPMENT_MARK_SPRITES } from "../src/sprite-equipment.ts";
-import { COMBAT_SPRITES } from "../src/sprite-combat.ts";
-import { BOARD_MARK_SPRITES } from "../src/sprite-board-marks.ts";
-import { SMALL_CONTROL_SPRITES, SLIDER_SPRITES } from "../src/sprite-controls.ts";
+import { BOON_SPRITES, SHRINE_CONTROL_SPRITES } from "../src/sprites/boons.ts";
+import { EQUIPMENT_FRAME_SPRITES, EQUIPMENT_MARK_SPRITES } from "../src/sprites/equipment.ts";
+import { COMBAT_SPRITES } from "../src/sprites/combat.ts";
+import { BOARD_MARK_SPRITES } from "../src/sprites/board-marks.ts";
+import { SMALL_CONTROL_SPRITES, SLIDER_SPRITES } from "../src/sprites/controls.ts";
 import { BADGE_IDS } from "../src/cards/badges.ts";
-import { CARD_SPRITE_LAYERS } from "../src/sprite-cards.ts";
-import { ICON_SPRITES, WORLD_SPRITES, CONTROL_SPRITES, DETAIL_SPRITES, CITY_SPRITES, DEFEND_STRUCTURE_SPRITES, NAMED_ENEMY_SPRITES, drawKit, kitEnemy, spriteRevision } from "../src/sprite-kit.ts";
-import { GOAL_SPRITES, UI_DETAIL_SPRITES, UI_ORNAMENT_SPRITES } from "../src/sprite-ui-details.ts";
+import { CARD_SPRITE_LAYERS } from "../src/sprites/cards.ts";
+import { ICON_SPRITES, WORLD_SPRITES, CONTROL_SPRITES, DETAIL_SPRITES, CITY_SPRITES, DEFEND_STRUCTURE_SPRITES, NAMED_ENEMY_SPRITES, drawKit, kitEnemy, spriteRevision } from "../src/sprites/kit.ts";
+import { GOAL_SPRITES, UI_DETAIL_SPRITES, UI_ORNAMENT_SPRITES } from "../src/sprites/ui-details.ts";
 import { CARDS } from "../src/cards/cards.ts";
 import { ICON_ROWS } from "../src/ui/equipment-icons.ts";
 import { THEMED_TILESET_URLS } from "../src/themed-tilesets.ts";
-import { SPRITE_TERRAIN } from "../src/sprite-terrain-index.ts";
+import { SPRITE_TERRAIN } from "../src/sprites/terrain-index.ts";
 import { paintContents, paintHero } from "../src/tile-painters.ts";
 
 test("every world, UI, Equipment and card sprite ships as a real native-sized PNG", () => {

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { ARROW_DIRECTIONS, arrowSprite, shieldSprite } from "../src/sprite-combat.ts";
+import { ARROW_DIRECTIONS, arrowSprite, shieldSprite } from "../src/sprites/combat.ts";
 import { drawVolley } from "../src/volley-art.ts";
 import { drawShields } from "../src/shield-art.ts";
 import { drawChestMarks } from "../src/chest-marks.ts";

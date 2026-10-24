@@ -1,4 +1,4 @@
-import { boardFont } from "./sprite-font.ts";
+import { boardFont } from "./sprites/font.ts";
 import { netDamage, PLAYED_ROUNDS, predict, type CritRule } from "./combat.ts";
 import { forecast } from "./crit-forecast.ts";
 import type { Enemy, Player, Tile } from "./entities.ts";

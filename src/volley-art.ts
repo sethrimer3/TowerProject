@@ -1,8 +1,8 @@
 import type { Tile } from "./entities.ts";
 import { enemyOf, landsAt, leavesAt, SHOT_FLIGHT, volleyOver, type Shot, type Volley } from "./volley.ts";
 import { tileCenter, type BoardTiles, type FrameContext } from "./render-frame.ts";
-import { drawKit } from "./sprite-kit.ts";
-import { arrowSprite } from "./sprite-combat.ts";
+import { drawKit } from "./sprites/kit.ts";
+import { arrowSprite } from "./sprites/combat.ts";
 
 /** A Ranged enemy's shot: a small glowing ball, its radius in tiles. */
 const SHOT_COLOR = "#ffb347";

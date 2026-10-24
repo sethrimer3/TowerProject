@@ -20,12 +20,12 @@ try {
     const result = await page.evaluate(async width => {
       const { combatSpriteScene } = await import("/tests/render-scenes.ts");
       const { Renderer } = await import("/src/rendering.ts");
-      const { loadSpriteFont } = await import("/src/sprite-font.ts");
+      const { loadSpriteFont } = await import("/src/sprites/font.ts");
       await loadSpriteFont();
-      const { COMBAT_SPRITES } = await import("/src/sprite-combat.ts");
-      const { BOARD_MARK_SPRITES } = await import("/src/sprite-board-marks.ts");
+      const { COMBAT_SPRITES } = await import("/src/sprites/combat.ts");
+      const { BOARD_MARK_SPRITES } = await import("/src/sprites/board-marks.ts");
       const artIds = [...COMBAT_SPRITES, ...Object.values(BOARD_MARK_SPRITES).map(mark => mark.id)];
-      const { kitImage } = await import("/src/sprite-kit.ts");
+      const { kitImage } = await import("/src/sprites/kit.ts");
       const { THEME_IDS } = await import("/src/theme-collection.ts");
       const scene = combatSpriteScene(), g = scene.g;
       g.save.themes = [...THEME_IDS];

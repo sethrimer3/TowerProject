@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { SQUARE_DOORS, SPRITE_TORCH_FRAMES } from "../src/sprite-options.ts";
+import { SQUARE_DOORS, SPRITE_TORCH_FRAMES } from "../src/sprites/options.ts";
 const root = fileURLToPath(new URL("../", import.meta.url)), out = join(root, "public/assets/style");
 const scratch = mkdtempSync(join(tmpdir(), "sprite-options-")), p = name => join(scratch, `${name}.png`);
 const run = args => execFileSync("magick", ["-limit", "thread", "1", ...args]);

@@ -1,6 +1,6 @@
 import { controlIcon } from "./control-icon.ts";
-import { kitIcon } from "../sprite-kit.ts";
-import { GOAL_SPRITES } from "../sprite-ui-details.ts";
+import { kitIcon } from "../sprites/kit.ts";
+import { GOAL_SPRITES } from "../sprites/ui-details.ts";
 import { CHECKPOINT_EVERY, CHECKPOINT_FLOORS, CHECKPOINTS, UNLOCK_NAMES, areaCleared, checkpoint, areaMastered, canWarp, floorsCompleted, goalState, unmasteredBelow, passFor, passTotals, unlockAt, unlockFloor, warpUnlocked, type Checkpoint, type GoalReward, type GoalState, type GoalUnlock, type Pass } from "../goals.ts";
 import { CURRENCIES, type CurrencyId } from "../shop/currency.ts";
 import { owns } from "../shop/entitlements.ts";

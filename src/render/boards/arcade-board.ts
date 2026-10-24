@@ -2,7 +2,7 @@ import { potionShade, type EnemyStrength, type Tile, type Torch, type KeyColor }
 import { forEachViewTile, toTileSpace, type FrameContext } from "../../render-frame.ts";
 import type { Facing } from "../../shown.ts";
 import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
-import { sprite, type Sprite } from "../../pixel-sprite.ts";
+import { sprite, type Sprite } from "../../sprites/pixel-sprite.ts";
 
 /** The Arcade Game theme's dungeon board: an old arcade maze, in sprites of
  * our own rather than any one game's. Open ground is black with a pellet on

@@ -23,24 +23,24 @@ try {
   await page.route("**/dungeon-tower-2-floor.png", route => release(route));
   await page.goto(server.resolvedUrls.local[0]); await page.locator("#hp").waitFor();
   const paint = () => page.evaluate(async () => {
-    const { drawDungeonGround } = await import("/src/sprite-dungeon.ts");
+    const { drawDungeonGround } = await import("/src/sprites/dungeon.ts");
     const c = document.createElement("canvas").getContext("2d"); c.canvas.width = c.canvas.height = 24;
     return drawDungeonGround(c, { mode: "tower", tier: 2, height: 0, seed: 0, x: 0, y: 0, wall: false, empty: true });
   });
   assert.equal(await paint(), false);
   const route = await requested;
-  await page.waitForFunction(async () => !!(await import("/src/sprite-kit.ts")).kitImage("dungeon-tower-2-walls"));
+  await page.waitForFunction(async () => !!(await import("/src/sprites/kit.ts")).kitImage("dungeon-tower-2-walls"));
   assert.equal(await paint(), false, "floors and walls switch as one complete material group");
   await route.fulfill({ path: resolve("public/assets/style/dungeon-tower-2-floor.png"), contentType: "image/png" });
   await page.unroute("**/dungeon-tower-2-floor.png");
   await page.waitForFunction(async () => {
-    const { drawDungeonGround } = await import("/src/sprite-dungeon.ts");
+    const { drawDungeonGround } = await import("/src/sprites/dungeon.ts");
     const c = document.createElement("canvas").getContext("2d"); c.canvas.width = c.canvas.height = 24;
     return [2, 3].map(tier => drawDungeonGround(c, { mode: "tower", tier, height: 0, seed: 0, x: 0, y: 0, wall: false, empty: true })).every(Boolean);
   });
   const native = await page.evaluate(async () => {
-    const { drawDungeonGround, dungeonFloorSprite, drawDungeonFrame } = await import("/src/sprite-dungeon.ts");
-    const { kitImage } = await import("/src/sprite-kit.ts");
+    const { drawDungeonGround, dungeonFloorSprite, drawDungeonFrame } = await import("/src/sprites/dungeon.ts");
+    const { kitImage } = await import("/src/sprites/kit.ts");
     const c = document.createElement("canvas").getContext("2d"); c.canvas.width = c.canvas.height = 96;
     const read = () => [...c.getImageData(0, 0, 96, 96).data];
     return [2, 3].map(tier => {
@@ -81,7 +81,7 @@ try {
     await page.setViewportSize({ width, height: 1000 });
     const result = await page.evaluate(async ({ tier, width }) => {
       const { towerTierSpriteScene } = await import("/tests/render-scenes.ts"), { Renderer } = await import("/src/rendering.ts");
-      const { loadSpriteFont } = await import("/src/sprite-font.ts"), { THEME_IDS } = await import("/src/theme-collection.ts");
+      const { loadSpriteFont } = await import("/src/sprites/font.ts"), { THEME_IDS } = await import("/src/theme-collection.ts");
       const { decode } = await import("/src/save/save.ts"), { Game } = await import("/src/state.ts");
       await loadSpriteFont(); const { g } = towerTierSpriteScene(tier); g.save.themes = [...THEME_IDS];
       g.effect = { text: "", x: 0, y: 0, until: 0 }; g.blocked = { x: 0, y: 0, until: 0 };
@@ -125,7 +125,7 @@ try {
   }
   await page.setViewportSize({ width: 1100, height: 1000 });
   await page.evaluate(async () => {
-    const { kitImage } = await import("/src/sprite-kit.ts");
+    const { kitImage } = await import("/src/sprites/kit.ts");
     const c = document.createElement("canvas").getContext("2d"); c.canvas.id = "tier-art"; c.canvas.width = 1000; c.canvas.height = 600;
     c.canvas.style.cssText = "position:fixed;top:0;left:0;z-index:99999"; c.imageSmoothingEnabled = false;
     c.fillStyle = "#0c1016"; c.fillRect(0, 0, 1000, 600);
@@ -144,7 +144,7 @@ try {
   await failed.route("**/dungeon-tower-3-walls.png", route => route.abort());
   await failed.goto(server.resolvedUrls.local[0]);
   const fallback = await failed.evaluate(async () => {
-    const { drawDungeonGround } = await import("/src/sprite-dungeon.ts"), { paintTile } = await import("/src/tile-painters.ts");
+    const { drawDungeonGround } = await import("/src/sprites/dungeon.ts"), { paintTile } = await import("/src/tile-painters.ts");
     const c = document.createElement("canvas").getContext("2d"); c.canvas.width = c.canvas.height = 24;
     const tile = { mode: "tower", tier: 3, height: 0, seed: 0, x: 0, y: 0, wall: true, empty: false };
     const ready = drawDungeonGround(c, tile);

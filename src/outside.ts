@@ -1,11 +1,11 @@
-import { boardFont } from "./sprite-font.ts";
+import { boardFont } from "./sprites/font.ts";
 import type { Mode, Tile } from "./entities.ts";
 import type { Board } from "./board.ts";
 import { tileRandom } from "./random.ts";
 import { MODES } from "./modes.ts";
-import { drawKit } from "./sprite-kit.ts";
-import { drawKitTerrain } from "./sprite-terrain.ts";
-import { drawForestLandmark, drawForestSprite, forestSpritesReady } from "./sprite-forest.ts";
+import { drawKit } from "./sprites/kit.ts";
+import { drawKitTerrain } from "./sprites/terrain.ts";
+import { drawForestLandmark, drawForestSprite, forestSpritesReady } from "./sprites/forest.ts";
 
 export const OUTSIDE_SIZE = 20;
 /** The gold trial square sits on open grass beside the Tower path. */

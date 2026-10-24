@@ -1,5 +1,5 @@
 import { controlIcon } from "./control-icon.ts";
-import { kitIcon } from "../sprite-kit.ts";
+import { kitIcon } from "../sprites/kit.ts";
 import { researched } from "../progression/archives.ts";
 import { KEY_NAMES } from "../doors.ts";
 import type { Mode } from "../entities.ts";

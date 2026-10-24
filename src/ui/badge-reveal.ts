@@ -1,4 +1,4 @@
-import { kitIcon } from "../sprite-kit.ts";
+import { kitIcon } from "../sprites/kit.ts";
 import { levelProgress, badgeDef, badgeLevel, type BadgeDraw, type BadgeId } from "../cards/badges.ts";
 import { RARITIES } from "../shop/rarity.ts";
 import { gemIcon } from "./dom.ts";

@@ -1,4 +1,4 @@
-import {sprite} from "../pixel-sprite.ts";
+import {sprite} from "../sprites/pixel-sprite.ts";
 import {tileRandom} from "../random.ts";
 import type {Spot} from "./arena.ts";
 

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { defaults, decode } from "../src/save/save.ts";
-import { SQUARE_DOORS, squareDoorSprite } from "../src/sprite-options.ts";
+import { SQUARE_DOORS, squareDoorSprite } from "../src/sprites/options.ts";
 import { paintContents, paintTorch } from "../src/tile-painters.ts";
 import type { Tile, Torch } from "../src/entities.ts";
 

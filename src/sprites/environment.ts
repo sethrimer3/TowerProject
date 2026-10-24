@@ -1,4 +1,4 @@
-import { kitImage } from "./sprite-kit.ts";
+import { kitImage } from "./kit.ts";
 
 /** Native materials and small plants for the optional Classic board kit. */
 export const MOSS_SPRITES = ["env-moss-green", "env-moss-teal", "env-moss-wall"] as const;

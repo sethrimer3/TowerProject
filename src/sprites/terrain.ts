@@ -1,5 +1,5 @@
-import { SPRITE_TERRAIN } from "./sprite-terrain-index.ts";
-import { kitImage } from "./sprite-kit.ts";
+import { SPRITE_TERRAIN } from "./terrain-index.ts";
+import { kitImage } from "./kit.ts";
 
 /** Original biome selection and wall adjacency address a palette-normalized
  * PNG atlas, preserving all map semantics and seeded texture variation. */

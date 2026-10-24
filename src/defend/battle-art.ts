@@ -7,7 +7,7 @@ import type { Building } from "./citygen.ts";
 import { center } from "./pathing.ts";
 import type { CarriedLight } from "./lighting.ts";
 import { BUILDING_FLASH, type DefendSim, type Effect, type Enemy, type Scorch } from "./sim.ts";
-import { drawKit, kitEnemy } from "../sprite-kit.ts";
+import { drawKit, kitEnemy } from "../sprites/kit.ts";
 
 export type Brush = { c: CanvasRenderingContext2D; px: number; styledSprites?: boolean };
 

@@ -1,4 +1,4 @@
-import { drawKit, kitImage } from "./sprite-kit.ts";
+import { drawKit, kitImage } from "./kit.ts";
 
 /** Native pixels, shared with the exporter. Large crowns contain more
  * pixels rather than scaling up a one-tile tree icon. */

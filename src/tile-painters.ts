@@ -9,19 +9,19 @@ import { getTorchFlicker, getTorchSway } from "./lighting.ts";
 import { drawArea1Door, drawArea1Item, drawArea1Quoins, wallAdjacencyMask } from "./area1-tileset.ts";
 import { drawThemedTile } from "./themed-tilesets.ts";
 import { doorColor, doorRule, drainsHp } from "./doors.ts";
-import { drawEnemySprite, enemySpriteReady } from "./enemy-sprites.ts";
+import { drawEnemySprite, enemySpriteReady } from "./sprites/enemy-sprites.ts";
 import { rankChevrons, RANK_CHEVRONS } from "./rank-chevrons.ts";
 import { DELVE_ENEMY_NAMES } from "./enemies/scaling.ts";
-import { drawGameSprite, drawGameSpriteFrame, gameSprite, torchAnimationFrame, TORCH_FRAME_COUNT } from "./game-sprites.ts";
-import { drawKit, kitEnemy, kitImage, onSpritesLoaded } from "./sprite-kit.ts";
-import { COMBAT_MARKS } from "./sprite-combat.ts";
-import { drawKitTerrain } from "./sprite-terrain.ts";
+import { drawGameSprite, drawGameSpriteFrame, gameSprite, torchAnimationFrame, TORCH_FRAME_COUNT } from "./sprites/game-sprites.ts";
+import { drawKit, kitEnemy, kitImage, onSpritesLoaded } from "./sprites/kit.ts";
+import { COMBAT_MARKS } from "./sprites/combat.ts";
+import { drawKitTerrain } from "./sprites/terrain.ts";
 import { themedTileUrl } from "./themed-tilesets.ts";
-import { drawDungeonGround, dungeonDiagonals, dungeonMaterial, towerTileset } from "./sprite-dungeon.ts";
+import { drawDungeonGround, dungeonDiagonals, dungeonMaterial, towerTileset } from "./sprites/dungeon.ts";
 import { dungeonWallProfile } from "./wall-depth.ts";
 import { dungeonDetail } from "./dungeon-details.ts";
-import { drawAnimatedTorch, drawSquareDoor } from "./sprite-options.ts";
-import { drawPickupAnimation, drawSpriteFrame } from "./sprite-animations.ts";
+import { drawAnimatedTorch, drawSquareDoor } from "./sprites/options.ts";
+import { drawPickupAnimation, drawSpriteFrame } from "./sprites/animations.ts";
 
 // Everything here paints in 24x24 tile space: the caller translates and
 // scales the context to the tile first.

@@ -1,4 +1,4 @@
-import { kitImage, CITY_SPRITES } from "../sprite-kit.ts";
+import { kitImage, CITY_SPRITES } from "../sprites/kit.ts";
 
 export const CITY_ROOFS = CITY_SPRITES.slice(0, 6);
 type Box = { x: number; y: number; w: number; h: number };

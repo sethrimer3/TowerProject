@@ -1,5 +1,5 @@
 import { TILE_PX, waterAt, type Blade, type Crate, type DecorSource, type Drip } from "./decor.ts";
-import { drawKit } from "../../sprite-kit.ts";
+import { drawKit } from "../../sprites/kit.ts";
 
 /** Painting shared by decor's live passes (ground, foreground, and the
  * mirrored copy in the water): crates, tall grass, ripple rings and drips,

@@ -1,4 +1,4 @@
-import type { BoonId } from "./shrines.ts";
+import type { BoonId } from "../shrines.ts";
 
 /** Native 24-pixel subjects in the generated atlas's measured cell order. */
 export const BOON_SPRITES = {

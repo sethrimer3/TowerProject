@@ -30,7 +30,7 @@ try {
   });
   const route = await pending;
   await page.waitForFunction(async () => {
-    const { kitImage } = await import("/src/sprite-kit.ts");
+    const { kitImage } = await import("/src/sprites/kit.ts");
     return ["env-water-mid", "env-water-shore", "env-water-bank"].every(id => !!kitImage(id));
   });
   const loading = await page.evaluate(() => {
@@ -39,18 +39,18 @@ try {
   });
   assert.deepEqual(loading.loading, loading.off, "water keeps the complete old look until all four materials load");
   await route.fulfill({ path: resolve("public/assets/style/env-water-deep.png"), contentType: "image/png" });
-  await page.waitForFunction(async () => !!(await import("/src/sprite-kit.ts")).kitImage("env-water-deep"));
+  await page.waitForFunction(async () => !!(await import("/src/sprites/kit.ts")).kitImage("env-water-deep"));
   await page.evaluate(async () => {
-    const { ENVIRONMENT_SPRITES } = await import("/src/sprite-environment.ts");
-    const { kitImage } = await import("/src/sprite-kit.ts"); ENVIRONMENT_SPRITES.forEach(kitImage);
+    const { ENVIRONMENT_SPRITES } = await import("/src/sprites/environment.ts");
+    const { kitImage } = await import("/src/sprites/kit.ts"); ENVIRONMENT_SPRITES.forEach(kitImage);
   });
   await page.waitForFunction(async () => {
-    const { ENVIRONMENT_SPRITES } = await import("/src/sprite-environment.ts"), { kitImage } = await import("/src/sprite-kit.ts");
+    const { ENVIRONMENT_SPRITES } = await import("/src/sprites/environment.ts"), { kitImage } = await import("/src/sprites/kit.ts");
     return ENVIRONMENT_SPRITES.every(id => !!kitImage(id));
   });
   const pixels = await page.evaluate(async () => {
     const { DecorBaker } = await import("/src/render/decor/decor-bake.ts");
-    const { environmentPixels, MOSS_SPRITES } = await import("/src/sprite-environment.ts");
+    const { environmentPixels, MOSS_SPRITES } = await import("/src/sprites/environment.ts");
     const { src, d, baker, read, off } = window.__environmentReview;
     const on = read(baker.bake(src, 0, 0, d, true));
     const rgba = (data, x, y) => [...data.slice((y * 24 + x) * 4, (y * 24 + x + 1) * 4)];
@@ -80,8 +80,8 @@ try {
     moss.actual.slice(0, 3).forEach((value, i) => assert.ok(Math.abs(value - moss.expected[i]) <= 2));
   }
   await page.evaluate(async () => {
-    const { ENVIRONMENT_SPRITES, MOSS_SPRITES, WATER_SPRITES } = await import("/src/sprite-environment.ts");
-    const { kitImage } = await import("/src/sprite-kit.ts");
+    const { ENVIRONMENT_SPRITES, MOSS_SPRITES, WATER_SPRITES } = await import("/src/sprites/environment.ts");
+    const { kitImage } = await import("/src/sprites/kit.ts");
     const sheet = document.createElement("canvas"); sheet.id = "environment-art"; sheet.width = 960; sheet.height = 650;
     const c = sheet.getContext("2d"); c.imageSmoothingEnabled = false; c.fillStyle = "#293543"; c.fillRect(0, 0, 960, 650);
     ENVIRONMENT_SPRITES.forEach((id, i) => {
@@ -106,7 +106,7 @@ try {
     await page.setViewportSize({ width, height: 900 });
     const result = await page.evaluate(async width => {
       const { environmentSpriteScene } = await import("/tests/render-scenes.ts"), { Renderer } = await import("/src/rendering.ts");
-      const { loadSpriteFont } = await import("/src/sprite-font.ts"), { THEME_IDS } = await import("/src/theme-collection.ts");
+      const { loadSpriteFont } = await import("/src/sprites/font.ts"), { THEME_IDS } = await import("/src/theme-collection.ts");
       await loadSpriteFont();
       const { g } = environmentSpriteScene(); g.save.themes = [...THEME_IDS];
       const { DecorLayer } = await import("/src/render/decor/decor-render.ts");

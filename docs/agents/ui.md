@@ -8,25 +8,25 @@ Switching Sprites rerenders the Settings page immediately, restores focus to its
 The existing board-art setting remains separate, labelled **Turn off board sprites**.
 Erasing progress reapplies the default UI theme and removes the sprite class.
 The art contract, reference, prompt and extraction instructions live in [UI sprites](../art/ui-sprites.md).
-`sprite-style.ts` decides effective art independently for UI and Game themes: the Medieval/Classic interface uses the optional kit, other UI themes override it, and only the Classic Game theme uses world sprites.
-`sprite-kit.ts` provides shared PNG loading, load revisions and icon pairs that retain their original art until a replacement PNG loads.
-DOM icons, relic pendants, tutorial hands and Equipment actions use those pairs; `sprite-cards.ts` specifies distinct layered PNG card faces with live card names.
+`sprites/style.ts` decides effective art independently for UI and Game themes: the Medieval/Classic interface uses the optional kit, other UI themes override it, and only the Classic Game theme uses world sprites.
+`sprites/kit.ts` provides shared PNG loading, load revisions and icon pairs that retain their original art until a replacement PNG loads.
+DOM icons, relic pendants, tutorial hands and Equipment actions use those pairs; `sprites/cards.ts` specifies distinct layered PNG card faces with live card names.
 `badge-token.ts` shares PNG symbols, rarity frames and the live-number level star between the Deck, card marks, hand, details and draw reveals.
 Gate signs remain live text, visible only with a loaded replacement.
-`sprite-ui-details.ts` maps every Goal unlock to the shared kit and fixes the row order of the Goal/utility and ornament atlases for authoring and coverage checks.
+`sprites/ui-details.ts` maps every Goal unlock to the shared kit and fixes the row order of the Goal/utility and ornament atlases for authoring and coverage checks.
 Goal/status icons, compact HUD controls, Copy, Deck remove/check controls and Event locks use PNG pairs; the seal, forest sign and linked-card diamonds use reusable PNG components under the same opt-in class.
 Skill nodes use PNG state frames and specific shared subjects, and Silver uses its own PNG while its original recolored art remains the fallback.
 Shell icon replacement updates an existing pair rather than inserting duplicate currency or combat symbols.
 `boon-icon.ts` adds optional, load-aware Shrine subjects to the existing text controls; the native first-choice select and all boon labels, counts, ban and ranking actions remain live.
-`sprite-equipment.ts` lists Equipment's native PNG rarity/empty/selection frames and status marks, shared across its inventory, loadouts, detail and result screens through `ui-sprites.css` and `kitIcon` pairs.
-`ui/control-icon.ts` maps small navigation, close, check, lock, swap and ranking symbols through `sprite-controls.ts` to native 12-pixel PNGs; the same atlas supplies the reward star and native slider parts.
+`sprites/equipment.ts` lists Equipment's native PNG rarity/empty/selection frames and status marks, shared across its inventory, loadouts, detail and result screens through `ui-sprites.css` and `kitIcon` pairs.
+`ui/control-icon.ts` maps small navigation, close, check, lock, swap and ranking symbols through `sprites/controls.ts` to native 12-pixel PNGs; the same atlas supplies the reward star and native slider parts.
 Range inputs retain their original event handlers, values and keyboard behavior, with PNG track/thumb states applied only by the effective UI sprite class.
 The Gold-bonus and enemy-odds layers reuse the dialog PNG, and heal/loss preview segments use palette-matched PNG fills, including Overheal.
 `applyUiTheme` mirrors effective art in `ui-sprites` and `game-sprites` classes without changing the saved preference.
 Under the kit the HUD's panel frame is 6px and its columns sit inside it (padded, with the columns re-proportioned so the actions column's framed labels fit), so the left rail's background no longer hides the frame's left edge.
 The pages' currencies chevron and the run's speed arrows are bare glyphs, and a card's details show its face without a button frame round it.
 The open menu's hamburger shows the kit's X (`ui-menu-close`, drawn pixel by pixel in `tools/prepare-menu-close.mjs`); other looks morph the SVG bars into an X.
-The active UI kit uses the original local Tower Pixel face (`sprite-font.ts`, `assets/fonts/TowerPixel/`); text remains live, and Defend and badge glyphs keep their original typography.
+The active UI kit uses the original local Tower Pixel face (`sprites/font.ts`, `assets/fonts/TowerPixel/`); text remains live, and Defend and badge glyphs keep their original typography.
 PNG button edges reserve real border space: six pixels on ordinary controls and three on compact controls, with matching `border-image-width`; picture buttons keep their own component frames.
 Deck card faces fill their controls without the generic button frame or an occupied hand-slot frame; empty and purchasable slots retain their inset frames, and lesson dimming, level marks and badge targeting remain separate.
 The shared HUD puts full-width HP, combat stats and keys above a compact portrait beside the limited-use inventory (`.run-inventory`), with XP and the unlocked Shrine bar retained inside the portrait.

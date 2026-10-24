@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS, DUNGEON_BLEND_ATLAS, DUNGEON_INFILL_ATLAS, DUNGEON_CORNER_FRAME, drawDungeonGround, dungeonAtlasId, dungeonDiagonals, dungeonFloorFrame, dungeonMaterial, dungeonMaterialJoins, dungeonWallVariant } from "../src/sprite-dungeon.ts";
+import { DUNGEON_ATLASES, DUNGEON_EDGE_ATLAS, DUNGEON_BLEND_ATLAS, DUNGEON_INFILL_ATLAS, DUNGEON_CORNER_FRAME, drawDungeonGround, dungeonAtlasId, dungeonDiagonals, dungeonFloorFrame, dungeonMaterial, dungeonMaterialJoins, dungeonWallVariant } from "../src/sprites/dungeon.ts";
 import { dungeonWallBands, dungeonWallDepth, dungeonWallProfile } from "../src/wall-depth.ts";
 import { paintTile, type BoardLook } from "../src/tile-painters.ts";
 import { WaterReflections, type ReflectionScene } from "../src/render/decor/decor-reflections.ts";
 import type { TileDecor } from "../src/render/decor/decor.ts";
-import { towerFloorAtlasId, towerFloorFrame } from "../src/sprite-dungeon.ts";
+import { towerFloorAtlasId, towerFloorFrame } from "../src/sprites/dungeon.ts";
 
 test("Tower paving crosses positive and negative tile boundaries in screen order without rotating its light", () => {
   for (let tone = 0; tone < 10; tone++) {

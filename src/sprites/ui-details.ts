@@ -1,4 +1,4 @@
-import type { GoalUnlock } from "./goals.ts";
+import type { GoalUnlock } from "../goals.ts";
 
 /** Measured atlas order, shared by the authoring tool and coverage tests. */
 export const UI_DETAIL_SPRITES = [

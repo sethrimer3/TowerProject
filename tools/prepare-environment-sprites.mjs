@@ -4,7 +4,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { FLOWER_SPRITES, GLOWCAP_SPRITES, MOSS_SPRITES, VINE_SPRITES, WATER_SPRITES } from "../src/sprite-environment.ts";
+import { FLOWER_SPRITES, GLOWCAP_SPRITES, MOSS_SPRITES, VINE_SPRITES, WATER_SPRITES } from "../src/sprites/environment.ts";
 const root = fileURLToPath(new URL("../", import.meta.url)), out = join(root, "public/assets/style");
 const palette = join(root, "assets/ui-sprites/palette.ppm");
 const manifest = JSON.parse(readFileSync(join(out, "manifest.json"), "utf8"));

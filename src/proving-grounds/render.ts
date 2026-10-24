@@ -1,10 +1,10 @@
 import { drawThemedTile } from "../themed-tilesets.ts";
 import { paintContents, paintHero, paintTile, paintTorch, type BoardLook } from "../tile-painters.ts";
 import { drawArea1Item } from "../area1-tileset.ts";
-import { sprite } from "../pixel-sprite.ts";
+import { sprite } from "../sprites/pixel-sprite.ts";
 import { drawCrates } from "../render/decor/decor-sprites.ts";
-import { drawKit } from "../sprite-kit.ts";
-import { HeroIdleAnimation } from "../sprite-animations.ts";
+import { drawKit } from "../sprites/kit.ts";
+import { HeroIdleAnimation } from "../sprites/animations.ts";
 import type { Tile } from "../entities.ts";
 import { ARENA_CRATES, ARENA_POTIONS, ARENA_TORCHES, beamCount, beamDirections, rayCells, trialFloor, key, nextBeamAxis, propDestroyed, wallEdge, type TrialState } from "./trial.ts";
 

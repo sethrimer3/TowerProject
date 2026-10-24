@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { drawDungeonGround, towerFloorFrame, towerTierAtlasId, towerTileset, dungeonWallVariant } from "../src/sprite-dungeon.ts";
+import { drawDungeonGround, towerFloorFrame, towerTierAtlasId, towerTileset, dungeonWallVariant } from "../src/sprites/dungeon.ts";
 import { paintTile, type BoardLook } from "../src/tile-painters.ts";
 
 test("Tower II and III each ship a distinct native floor panel and connected wall atlas", () => {
