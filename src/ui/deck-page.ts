@@ -1,6 +1,6 @@
 import { kitIcon } from "../sprites/kit.ts";
 import { askForGems, showHelp } from "./dialogs.ts";
-import { CARDS, cardBonusText, cardText, deckCards, linkedToNext, moveCard, placeCard, type CardId, type HandKind } from "../cards/cards.ts";
+import { CARDS, cardBonusText, deckCards, linkedToNext, moveCard, placeCard, type CardId, type HandKind } from "../cards/cards.ts";
 import type { AppContext } from "./app.ts";
 import { cardArt, el, escapeHtml, gemIcon, POINTER_SVG } from "./dom.ts";
 import { DRAW_GEMS, type DrawCount } from "../game/badge-desk.ts";
@@ -379,12 +379,12 @@ export class DeckPage {
    * lesson points elsewhere), its X, its switch to the other hand, and the
    * lesson's pointing hand. */
   private cardSlotHtml(id: CardId, i: number, count: number, held: boolean, links = "") {
-    const lesson = this.lesson, card = CARDS[id], upgrades = this.ctx.game.save.upgrades;
+    const lesson = this.lesson, card = CARDS[id];
     const fixed = lesson === "remove" || (lesson === "order" && id !== "stairs") || (lesson === "points" && id !== this.pointsTarget);
     const pointed = lesson === "remove" && id === this.removeTarget;
     const x = this.removable(id) ? `<button type="button" class="deck-remove${pointed ? " shown" : ""}" data-remove="${id}" title="Return ${card.name} to the deck" aria-label="Return ${card.name} to the deck">${X_SVG}</button>` + this.switchHtml(id) : "";
     const lessonPointer = (lesson === "order" && id === "stairs") || (lesson === "points" && id === this.pointsTarget) ? this.pointer("at-card") : pointed ? this.pointer("at-x") : "";
-    return `<div class="deck-slot${held ? " held" : ""}" role="listitem"${this.badgeTarget(id)}<button type="button" class="deck-card" data-slot="${i}" ${fixed ? "disabled" : ""} aria-label="${card.name}, slot ${i + 1} of ${count}. Drag, or press the left and right arrow keys, to move it." title="${card.name}: ${cardText(id, upgrades)}${cardBonusText(id) ? ` · ${cardBonusText(id)}` : ""}">${cardArt(id, card.name)}${this.marksHtml(id)}</button>${x}${lessonPointer}${links}</div>`;
+    return `<div class="deck-slot${held ? " held" : ""}" role="listitem"${this.badgeTarget(id)}<button type="button" class="deck-card" data-slot="${i}" ${fixed ? "disabled" : ""} aria-label="${card.name}, slot ${i + 1} of ${count}. Drag, or press the left and right arrow keys, to move it." title="${card.name}: ${this.ctx.game.cardText(id)}${cardBonusText(id) ? ` · ${cardBonusText(id)}` : ""}">${cardArt(id, card.name)}${this.marksHtml(id)}</button>${x}${lessonPointer}${links}</div>`;
   }
 
   /** The switch beside a hand card's X that moves it to the other hand,
@@ -795,7 +795,7 @@ export class DeckPage {
     const { save, deck } = this.ctx.game, manual = deck.handOf(id) === "manual";
     const actions = this.removable(id) ? [{ label: "Return to deck", run: () => this.remove(id) }] : [];
     if (this.showsKinds && deck.canSwitch(id)) actions.push({ label: `Move to ${manual ? "Auto" : "Manual"} hand`, run: () => this.switch(id) });
-    showCard(id, save.upgrades, save.settings.reduceMotion, manual ? "IN YOUR MANUAL HAND" : "IN YOUR HAND", { ...this.treeDetails(id, actions), note: id === "stairs" ? "STAIRS always stays in your hand." : undefined });
+    showCard(id, this.ctx.game.cardText(id), save.settings.reduceMotion, manual ? "IN YOUR MANUAL HAND" : "IN YOUR HAND", { ...this.treeDetails(id, actions), note: id === "stairs" ? "STAIRS always stays in your hand." : undefined });
   }
 
   /** A card's level and rarity, and the offer to open the
@@ -815,7 +815,7 @@ export class DeckPage {
     if (this.meet(id)) this.render();
     const { save, deck } = this.ctx.game, kind = this.kind, full = deck.full(kind), yours = kind === "manual" ? "Manual hand" : "hand";
     const actions = full ? [] : [{ label: `Add to ${yours}`, run: () => this.change(deck.add(id, kind)) }];
-    showCard(id, save.upgrades, save.settings.reduceMotion, "IN YOUR DECK", { ...this.treeDetails(id, actions), note: full ? `Your ${yours} is full: drag this card onto one in your ${yours} to swap it.` : undefined });
+    showCard(id, this.ctx.game.cardText(id), save.settings.reduceMotion, "IN YOUR DECK", { ...this.treeDetails(id, actions), note: full ? `Your ${yours} is full: drag this card onto one in your ${yours} to swap it.` : undefined });
   }
 
   /** In the card points lesson, pressing the card it points at opens that

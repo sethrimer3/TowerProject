@@ -231,7 +231,7 @@ export class SkillTreePage {
     if (bought) this.celebrate(id, level);
     this.ctx.update();
     // Door & Key reveals its two cards one after the other.
-    if (bought) for (const card of upgradeCards(id).reverse()) revealCard(card, game.save.upgrades, game.save.settings.reduceMotion);
+    if (bought) for (const card of upgradeCards(id).reverse()) revealCard(card, game.cardText(card), game.save.settings.reduceMotion);
   }
 
   /** A rank bought chimes and bursts from its node; the first rank unlocks

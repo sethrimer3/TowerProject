@@ -277,9 +277,12 @@ export class HandRules implements HandAt {
   cardUses(card: CardId) {
     return this.run.cardUses?.[card] ?? 0;
   }
-  /** The keys trader `card` takes a trade: its 3, less its tree's Efficiency. */
+  /** The keys trader `card` takes a trade: its 3, less its tree's
+   * Efficiency, by the run's copy of the trees inside it and by the save's
+   * in the forest (what the next run goes in with). */
   tradeCost(card: TraderCard) {
-    const { keys, to } = TRADERS[card], off = Math.min(100, tradeStat(treeBonus(this.run.cardTrees), to, "TradeCost"));
+    const trees = this.run.outside ? this.host.save.cardTrees : this.run.cardTrees;
+    const { keys, to } = TRADERS[card], off = Math.min(100, tradeStat(treeBonus(trees), to, "TradeCost"));
     return snap((keys * (100 - off)) / 100);
   }
   /** Smelt `card`'s heal: its percent of max HP (10%, 30% or 90%). */

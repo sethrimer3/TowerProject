@@ -112,10 +112,16 @@ export const SMELTS = {
 export type SmeltCard = keyof typeof SMELTS;
 export const isSmelt = (id: CardId): id is SmeltCard => id in SMELTS;
 /** What card `id` does, as the player is told: STAIRS says how it climbs
- * in the Delve only once Into the depths is owned. */
-export function cardText(id: CardId, upgrades: Record<UpgradeId, number>): string {
-  return id === "stairs" && !upgrades.delve ? "Move toward the stairs up." : CARDS[id].text;
+ * in the Delve only once Into the depths is owned, and a trader the keys
+ * a trade takes (`tradeCost`: its 3, or fewer with its tree's Efficiency). */
+export function cardText(id: CardId, upgrades: Record<UpgradeId, number>, tradeCost: (card: TraderCard) => number = (card) => TRADERS[card].keys): string {
+  if (id === "stairs" && !upgrades.delve) return "Move toward the stairs up.";
+  if (!isTrader(id)) return CARDS[id].text;
+  const { from, to } = TRADERS[id], keys = `${snap(tradeCost(id))} ${KEY_WORDS[from]} keys`;
+  return `Trade ${keys} for a ${KEY_WORDS[to]} key, without moving. Skipped with fewer than ${keys}.`;
 }
+/** A key colour as a card's text names it. */
+const KEY_WORDS: Record<KeyColor, string> = { yellow: "gold", blue: "blue", red: "red" };
 /** What card `id` gives while held, if anything (`CardBonus`). */
 export const cardBonus = (id: CardId): CardBonus | undefined => (CARDS[id] as CardDef).bonus;
 /** A card bonus's lines as the player reads them, each with its tone: a

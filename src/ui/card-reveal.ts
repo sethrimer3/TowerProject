@@ -1,5 +1,4 @@
-import { CARDS, cardBonusLines, cardText, type CardId } from "../cards/cards.ts";
-import type { UpgradeId } from "../progression/upgrades.ts";
+import { CARDS, cardBonusLines, type CardId } from "../cards/cards.ts";
 import { cardArt } from "./dom.ts";
 import { cardLevelHtml, cardLevelLines, cardXpBarHtml } from "./card-level-marks.ts";
 import type { TreeSave } from "../cards/trees.ts";
@@ -20,7 +19,7 @@ function bonusHtml(id: CardId) {
  * its next level on the rule above its name, its rarity and level on it,
  * and its rarity, level and progress under its name. Pressing
  * the card closes it. */
-function cardLayer(id: CardId, upgrades: Record<UpgradeId, number>, classes: string, words: Words, extra = "", levels?: CardLevels) {
+function cardLayer(id: CardId, text: string, classes: string, words: Words, extra = "", levels?: CardLevels) {
   const card = CARDS[id];
   // Rays celebrate a card just obtained; its details, reviewed later, show none.
   const rays = classes.includes(" details") ? "" : `<div class="card-reveal-rays" aria-hidden="true"></div>`;
@@ -29,7 +28,7 @@ function cardLayer(id: CardId, upgrades: Record<UpgradeId, number>, classes: str
   layer.setAttribute("role", "dialog");
   layer.setAttribute("aria-modal", "true");
   layer.setAttribute("aria-label", words.label);
-  layer.innerHTML = `<div class="card-reveal-stage">${rays}<button type="button" class="card-reveal-card" id="card-reveal-card" aria-label="${card.name}: ${words.hint.toLowerCase()}">${cardArt(id, card.name)}${levels ? cardXpBarHtml(levels, id) + cardLevelHtml(levels, id) : ""}</button></div><div class="card-reveal-text"><small>${words.kicker}</small><b>${card.name}</b>${levels ? cardLevelLines(levels, id) : ""}<p>${cardText(id, upgrades)}</p>${bonusHtml(id)}${extra}<span>${words.hint}</span></div>`;
+  layer.innerHTML = `<div class="card-reveal-stage">${rays}<button type="button" class="card-reveal-card" id="card-reveal-card" aria-label="${card.name}: ${words.hint.toLowerCase()}">${cardArt(id, card.name)}${levels ? cardXpBarHtml(levels, id) + cardLevelHtml(levels, id) : ""}</button></div><div class="card-reveal-text"><small>${words.kicker}</small><b>${card.name}</b>${levels ? cardLevelLines(levels, id) : ""}<p>${text}</p>${bonusHtml(id)}${extra}<span>${words.hint}</span></div>`;
   (document.querySelector("#app") ?? document.body).append(layer);
   // A tap that opened the layer on its release still clicks after it, onto
   // the layer: only a press begun on the layer (or a key) closes it.
@@ -48,8 +47,8 @@ function cardLayer(id: CardId, upgrades: Record<UpgradeId, number>, classes: str
  * its middle, green rays turning behind it, with what it does written
  * underneath. Pressing the card dismisses it. With Reduce motion on, the
  * card and rays appear still. */
-export function revealCard(id: CardId, upgrades: Record<UpgradeId, number>, reduceMotion: boolean) {
-  cardLayer(id, upgrades, reduceMotion ? " still" : "", { kicker: "NEW CARD FOR YOUR DECK", hint: "Press the card to continue", label: `New card: ${CARDS[id].name}` });
+export function revealCard(id: CardId, text: string, reduceMotion: boolean) {
+  cardLayer(id, text, reduceMotion ? " still" : "", { kicker: "NEW CARD FOR YOUR DECK", hint: "Press the card to continue", label: `New card: ${CARDS[id].name}` });
 }
 
 /** What a card's details offer to do with it, such as adding it to the hand. */
@@ -67,11 +66,11 @@ export type CardDetails = { note?: string; actions?: CardAction[]; levels?: Card
  * (`kicker`), its level, what it does, a note, and the actions on offer.
  * Pressing the card, outside it or Escape closes it, as an action does
  * once run. */
-export function showCard(id: CardId, upgrades: Record<UpgradeId, number>, reduceMotion: boolean, kicker: string, { note, actions = [], levels }: CardDetails = {}) {
+export function showCard(id: CardId, text: string, reduceMotion: boolean, kicker: string, { note, actions = [], levels }: CardDetails = {}) {
   const extra = (note ? `<em class="card-reveal-note">${note}</em>` : "")
     + (actions.length ? `<div class="card-reveal-actions">${actions.map((a, i) => `<button type="button" class="card-reveal-action" data-card-action="${i}">${a.label}</button>`).join("")}</div>` : "");
   const back = document.activeElement as HTMLElement | null;
-  const layer = cardLayer(id, upgrades, ` details${reduceMotion ? " still" : ""}`, { kicker, hint: "Press anywhere to close", label: CARDS[id].name }, extra, levels);
+  const layer = cardLayer(id, text, ` details${reduceMotion ? " still" : ""}`, { kicker, hint: "Press anywhere to close", label: CARDS[id].name }, extra, levels);
   const close = () => {
     layer.remove();
     document.removeEventListener("keydown", onKey, true);

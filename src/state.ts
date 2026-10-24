@@ -1081,7 +1081,12 @@ export class Game {
   }
   /** The status line for card `id` leading the hand. */
   private cardMessage(id: CardId) {
-    return `${CARDS[id].name} · ${cardText(id, this.save.upgrades)}`;
+    return `${CARDS[id].name} · ${this.cardText(id)}`;
+  }
+  /** What card `id` does, as the player is told now (`cardText`): a
+   * trader's keys a trade by its tree (`HandRules.tradeCost`). */
+  cardText(id: CardId) {
+    return cardText(id, this.save.upgrades, (card) => this.handRules.tradeCost(card));
   }
   /** After something the player does inside a run (an item used, a skill),
    * a stuck hand checks its cards again and plays on if one can act. */

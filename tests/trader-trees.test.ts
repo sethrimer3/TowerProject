@@ -94,3 +94,16 @@ test("Extra Blue and Red Key give a key of their colour on each floor new to the
   none.advanceTowerRoom();
   assert.deepEqual([none.run.player.keys.blue, none.run.player.keys.red], [0, 0]);
 });
+
+test("a trader's text names the keys a trade takes: in the forest by the saved trees, inside by the run's", () => {
+  const g = trading({}, { yellow: 0, blue: 0, red: 0 });
+  assert.equal(g.cardText("blueTrader"), "Trade 3 gold keys for a blue key, without moving. Skipped with fewer than 3 gold keys.");
+  g.run.cardTrees = { blueTrader: { efficiency: 10 }, redTrader: { efficiency: 5 } };
+  assert.equal(g.cardText("blueTrader"), "Trade 2.7 gold keys for a blue key, without moving. Skipped with fewer than 2.7 gold keys.");
+  assert.equal(g.cardText("redTrader"), "Trade 2.85 blue keys for a red key, without moving. Skipped with fewer than 2.85 blue keys.");
+  const forest = new Game(playedSave());
+  forest.newRun({ outside: true });
+  forest.save.cardTrees = { blueTrader: { efficiency: 4 } };
+  assert.ok(forest.run.outside);
+  assert.equal(forest.cardText("blueTrader"), "Trade 2.88 gold keys for a blue key, without moving. Skipped with fewer than 2.88 gold keys.");
+});
