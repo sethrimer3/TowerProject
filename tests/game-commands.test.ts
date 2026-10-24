@@ -159,11 +159,11 @@ test("in the forest Enter goes straight in, starting the run with the hand playi
 
 test("ending a run goes straight back to the forest with the next run", () => {
   const g = arena();
-  const retired = g.run.seed;
-  g.finish("Ascent retired");
-  assert.ok(g.run.outside && g.run.seed !== retired && g.save.tower.run === g.run);
+  const ended = g.run.seed;
+  g.finish("Ascent ended");
+  assert.ok(g.run.outside && g.run.seed !== ended && g.save.tower.run === g.run);
   assert.equal(g.fallen, false);
-  assert.match(g.message, /^Ascent retired.*Follow the forest path to begin again\.$/);
+  assert.match(g.message, /^Ascent ended.*Follow the forest path to begin again\.$/);
 });
 
 test("erasing everything leaves a fresh save with a new run outside the Tower", () => {

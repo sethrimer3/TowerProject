@@ -47,8 +47,6 @@ export type ModeProfile<R extends Run = Run> = {
     newBest: string;
     /** A run in this mode. */
     run: string;
-    /** What a retired run is replaced with. */
-    fresh: string;
     /** The numbered places a run climbs, as in "Tower II" (tiers.ts). */
     tierName: string;
     /** Declines a prompt to end the run. */
@@ -115,7 +113,6 @@ export const MODES: { tower: ModeProfile<TowerRun>; delve: ModeProfile<DelveRun>
       progress: "floor",
       newBest: "Inspiration for each floor this ascent has completed beyond your highest: paid as you climb its stairs",
       run: "ascent",
-      fresh: "tower",
       tierName: "Tower",
       keepGoing: "Keep climbing",
       outsideTitle: "THE TOWER APPROACH",
@@ -143,7 +140,6 @@ export const MODES: { tower: ModeProfile<TowerRun>; delve: ModeProfile<DelveRun>
       progress: "depth",
       newBest: "Courage for each new 10-depth milestone this delve has passed beyond your deepest",
       run: "delve",
-      fresh: "descent",
       tierName: "Delve",
       keepGoing: "Keep delving",
       outsideTitle: "THE MOUNTAIN HOLLOW",

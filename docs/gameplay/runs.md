@@ -26,7 +26,7 @@ It must be answered: **Undo** (once Rehearsed steps has unlocked undo, while the
 Headed **Regroup and try again**, the dialog says the Tower (or Delve) will shift to a new layout for the next run and invites the player to look over and spend what this one earned.
 The dialog comes back after a refresh until it is answered.
 Rewards are credited as they are earned and never rolled back, so taking a fight back cannot duplicate them.
-Ending a run with End Run (or retiring from Settings) goes straight back to the forest once confirmed.
+Ending a run with End Run goes straight back to the forest once confirmed.
 Gold is banked the moment it is found and kept however the run ends: the stats show the Gold held, and the run's end dialog and the message after the run say how much the run found.
 
 ## Run Notes
@@ -51,7 +51,7 @@ Its tallies are rounded down, and shortened from a million (1.23M).
 
 ## Rewards and purchases
 
-Rewards are credited as you climb (Courage for every 10 Delve height, Inspiration for each Tower floor completed beyond your highest, paid as you climb its stairs, and 10 for each area cleared; past floor 100, or depth 1,000, a point of either takes 10 floors, past floor 1,000 100 floors, and past floor 10,000 they stop), so retiring from Settings simply starts a fresh run.
+Rewards are credited as you climb (Courage for every 10 Delve height, Inspiration for each Tower floor completed beyond your highest, paid as you climb its stairs, and 10 for each area cleared; past floor 100, or depth 1,000, a point of either takes 10 floors, past floor 1,000 100 floors, and past floor 10,000 they stop), so ending a run simply starts a fresh one.
 A run still in the forest takes everything bought there at once (skills, training, gear, provisions and research); skills bought while another run is inside apply to that run from its next ascent; Wayfinder, Revive, and undo-capacity upgrades unlock immediately.
 In the forest, Automove still avoids lethal fights; it and the hand pause off the board, in dialogs, and when hidden.
 No offline progress is calculated.

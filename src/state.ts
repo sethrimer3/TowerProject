@@ -826,7 +826,7 @@ export class Game {
     if (step) {
       this.move(step.dx, step.dy, false);
       this.message = step.label;
-    } else this.message = "Waiting · no safe route. Explore or retire this ascent.";
+    } else this.message = "Waiting · no safe route. Explore or end this ascent.";
   }
   /** One step by the hand: follow the committed path, or, with none, the
    * first card in priority order that can reach a target. When none can,

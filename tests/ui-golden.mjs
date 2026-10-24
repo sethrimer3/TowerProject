@@ -629,10 +629,6 @@ try {
     await click('.theme-wear[data-look="neon"]');
     await shot(`${prefix}.themes.game.worn`);
     await click("#themes-back");
-    await click("#retire");
-    await shot(`${prefix}.retire.confirm`);
-    await click("#confirm");
-    await shot(`${prefix}.retired`);
   }
 
   await load("fresh");

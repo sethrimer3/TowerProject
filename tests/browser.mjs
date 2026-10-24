@@ -100,13 +100,12 @@ if ((await page.locator("#height").textContent()) !== "1")
 // The viewport is a fixed 17 × 17 tiles, independent of world size.
 if ((await page.locator("#density-label").textContent()) !== "17 × 17")
   throw Error("Viewport size failed");
-await openMenu(page); await page.locator("#auto-settings").click();
-await page.locator("#retire").click();
+await openMenu(page); await page.locator("#end-run").click();
 await page.locator("#confirm").click();
-// Delve Courage is credited per 10 height as it's reached; retiring pays nothing extra.
+// Delve Courage is credited per 10 height as it's reached; ending pays nothing extra.
 // Dev mode shows balances as ∞, so read the saved one.
 if ((await page.evaluate(() => JSON.parse(localStorage.getItem("towerdelve.v1")).delve.courage)) !== 0)
-  throw Error("Retire paid an unexpected reward");
+  throw Error("End Run paid an unexpected reward");
 const overflow = await page.evaluate(
   () => document.documentElement.scrollWidth > innerWidth,
 );
@@ -123,7 +122,7 @@ console.log(
       "movement",
       "reload",
       "viewport",
-      "retire confirmation",
+      "end run confirmation",
       "straight back to the forest",
       "new run",
       "courage",
@@ -141,8 +140,7 @@ for (let i = 0; i < 2; i++) {
     throw Error("Forest walking awarded depth");
   for (let step = 0; step < i + 2; step++)
     await stepUp();
-  await openMenu(page); await page.locator("#auto-settings").click();
-  await page.locator("#retire").click();
+  await openMenu(page); await page.locator("#end-run").click();
   await page.locator("#confirm").click();
 }
 // Earning Courage takes 10 height per point, so grant enough for Automove.

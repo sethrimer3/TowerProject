@@ -6,8 +6,7 @@ import { SETTINGS, type SettingKey, type Settings } from "../save/settings.ts";
 import type { Save } from "../save/shape.ts";
 import type { AppContext, PageGame } from "./app.ts";
 import type { BoardOverlay } from "./board-overlay.ts";
-import { capitalized, displayedProgress, el } from "./dom.ts";
-import { MODES } from "../modes.ts";
+import { el } from "./dom.ts";
 import { goalUnlocked } from "../goals.ts";
 import { showStats } from "./stats-dialog.ts";
 import { showHelp } from "./dialogs.ts";
@@ -104,7 +103,7 @@ const themeButtons = (game: PageGame) =>
     `<button class="setting theme-open" id="${kind}-themes" data-kind="${kind}">${themeMenuTitle(kind)}<b>${wornName(game.save, kind)} ${controlIcon("forward")}</b></button>`).join("")}</div>`;
 
 /** The Settings page: a way back to the board, the Stats dialog, the theme
- * menus, display and control options, retire, and erase. */
+ * menus, display and control options, and erase. */
 export function renderSettingsPage(ctx: AppContext, overlay: BoardOverlay) {
   const { game } = ctx;
   if (menu === "toggles") {
@@ -131,13 +130,12 @@ export function renderSettingsPage(ctx: AppContext, overlay: BoardOverlay) {
     });
     return;
   }
-  const words = MODES[game.mode].words;
   el("settings").innerHTML =
-    `<button class="back" id="settings-back">${controlIcon("back")} Back</button><div class="page-title"><small>MAKE THE ASCENT YOUR OWN</small><h2>Settings</h2></div><button class="wide" id="stats-open">Stats</button>` +
+    `<button class="back" id="settings-back">${controlIcon("back")} Back</button><div class="page-title"><h2>Settings</h2></div><button class="wide" id="stats-open">Stats</button>` +
     themeButtons(game) +
     `<button class="setting menu-open" id="toggles-open">Toggles<b>${controlIcon("forward")}</b></button>` +
     shownOf(PAGE, game.save).map((key) => control(key, game) + (key === (game.save.settings.uiSprites ? "squareDoors" : "uiSprites") ? `<p class="hint">Sprites apply to the default interface and board. Other UI and Game themes use their own art.</p>` : "")).join("") +
-    `<p class="hint">Automation pauses outside the board tabs and while the browser is hidden. Progress saves after each action.</p><button class="wide" id="retire">Retire this ${words.run}</button><p class="hint">Keep your milestone rewards and enter a freshly generated ${words.fresh}.</p>${game.save.settings.devMode ? profileButtons : ""}<button class="wide danger" id="erase">Erase all progress</button><p class="seed">RUN SEED · ${game.run.seed}</p>`;
+    `<p class="hint">Automation pauses outside the board tabs and while the browser is hidden. Progress saves after each action.</p>${game.save.settings.devMode ? profileButtons : ""}<button class="wide danger" id="erase">Erase all progress</button><p class="seed">RUN SEED · ${game.run.seed}</p>`;
   bindSettings(ctx, overlay);
 }
 
@@ -200,19 +198,6 @@ function bindSettings(ctx: AppContext, overlay: BoardOverlay) {
   };
   bindControls(ctx, overlay, shownOf(PAGE, game.save));
   if (game.save.settings.devMode) bindProfileButtons(ctx);
-  el("retire").onclick = () =>
-    ctx.confirm(
-      {
-        title: "Leave your mark?",
-        body: `Retire at ${MODES[game.mode].words.progress} ${displayedProgress(game.run.height, !!game.run.outside)}. Milestone rewards are already yours.`,
-        label: `Retire ${MODES[game.mode].words.run}`,
-        cancel: MODES[game.mode].words.keepGoing,
-      },
-      () => {
-        game.finish(`${capitalized(MODES[game.mode].words.run)} retired`);
-        ctx.navigate(game.mode);
-      },
-    );
   el("erase").onclick = () =>
     ctx.confirm(
       {
