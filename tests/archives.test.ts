@@ -6,7 +6,7 @@ import {
   type ResearchId,
 } from "../src/progression/archives.ts";
 import { loadout } from "../src/progression/loadout.ts";
-import { UPGRADES } from "../src/config.ts";
+import { UPGRADES } from "../src/progression/upgrades.ts";
 import { decode, defaults } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
 import { ENTRANCE_Y } from "../src/outside.ts";

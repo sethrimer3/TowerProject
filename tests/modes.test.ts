@@ -4,7 +4,8 @@ import { MODES, milestonePoints, milestones } from "../src/modes.ts";
 import { defaults } from "../src/save/save.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { World } from "../src/delve/world.ts";
-import { START_X, TOWER_START_X, goldReward } from "../src/config.ts";
+import { START_X, TOWER_START_X } from "../src/config.ts";
+import { goldReward } from "../src/economy/kill-pay.ts";
 import type { Run } from "../src/runs.ts";
 
 const { tower, delve } = MODES;

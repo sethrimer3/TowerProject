@@ -1,4 +1,4 @@
-import { TRAINING, TRAINING_GROUPS, trainedAmount, type TrainingId } from "../config.ts";
+import { TRAINING, TRAINING_GROUPS, trainedAmount, type TrainingId } from "./training.ts";
 import type { RunCore } from "../runs.ts";
 import type { Save } from "../save/shape.ts";
 import { FREE_TRAINING_ROWS, runTrainingOpen } from "./loadout.ts";

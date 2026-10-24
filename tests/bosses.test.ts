@@ -1,7 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { reachable } from "../src/board.ts";
-import { TOWER_START_X, WIDTH, xpForLevel } from "../src/config.ts";
+import { TOWER_START_X, WIDTH } from "../src/config.ts";
+import { xpForLevel } from "../src/progression/xp.ts";
 import { point, type EnemyStrength, type Tile, type EnemyProfile } from "../src/entities.ts";
 import { region } from "../src/delve/labyrinth.ts";
 import { generateTowerFloor, isBossFloor } from "../src/tower/index.ts";

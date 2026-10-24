@@ -1,5 +1,6 @@
 import { researched } from "../progression/archives.ts";
-import { ENEMY_GOLD, FAST_GOLD, PICKUP_GOLD, RANGED_GOLD, SHIELDED_GOLD, silverForKill, trainedAmount } from "../config.ts";
+import { ENEMY_GOLD, FAST_GOLD, PICKUP_GOLD, RANGED_GOLD, SHIELDED_GOLD, silverForKill } from "../economy/kill-pay.ts";
+import { trainedAmount } from "../progression/training.ts";
 import type { RoomWorld } from "../tower/room-world.ts";
 import { snap } from "../exact.ts";
 import { averageGold, rollGold } from "../economy/loot.ts";

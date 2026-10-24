@@ -1,4 +1,4 @@
-import { GOLD_SHOP, type GoldItemId } from "../config.ts";
+import { GOLD_SHOP, type GoldItemId } from "../economy/provisions.ts";
 import { provisionOpen, provisionPrice, provisionText } from "../progression/loadout.ts";
 import { whole } from "../whole.ts";
 import { unlockAt } from "../goals.ts";

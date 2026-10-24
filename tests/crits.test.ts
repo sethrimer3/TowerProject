@@ -9,7 +9,8 @@ import { critRule, trainingStep } from "../src/progression/loadout.ts";
 import { trainingGold } from "../src/progression/training-jobs.ts";
 import { runTrainingValue, silverPrice } from "../src/progression/run-training.ts";
 import { RESEARCH } from "../src/progression/archives.ts";
-import { TRAINING, UPGRADES, trainedAmount } from "../src/config.ts";
+import { TRAINING, trainedAmount } from "../src/progression/training.ts";
+import { UPGRADES } from "../src/progression/upgrades.ts";
 import { TREES } from "../src/progression/skill-trees.ts";
 import { DamagePredictions, damageLabel } from "../src/render/effects/damage-labels.ts";
 

@@ -1,4 +1,6 @@
-import { TOWER_SECTION, silverForKill, trainedAmount } from "../config.ts";
+import { TOWER_SECTION } from "../config.ts";
+import { silverForKill } from "./kill-pay.ts";
+import { trainedAmount } from "../progression/training.ts";
 import { enemyCountPercent, enemyShare, RANKED_STRENGTHS } from "../enemies/schedule.ts";
 import { researched } from "../progression/archives.ts";
 import { silverFound } from "./gold-multipliers.ts";

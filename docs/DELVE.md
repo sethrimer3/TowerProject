@@ -43,7 +43,7 @@ The way on passes the nook by, so the hand takes the reward only with a card tha
 `tests/delve-nooks.test.ts` checks that nooks are dead ends that never touch a neighbouring area and that almost every guard reward gets one.
 An area then holds about 64 enemies and 31 potions, near ten Tower floors' 63 and 33, so both modes pay about the same XP for each equivalent floor. Guards are passable costs like any other enemy, so they never change what the labyrinth connects. The area's last stage is the enemy stage (`placeEnemies`, docs/ENEMY_SCHEDULE.md section 3): each of its ten equivalent floors adds enemies for the enemy schedule's count on its own plain floor tiles (never the way in, near the milestone gate or in a fork's lane) and deals its enemies but bosses and fork lanes' the strengths of its shares, from the tower of the delve's number; the region records what it found and added as `enemyCount`.
 
-## Automove tiers (`config.ts` upgrades → `capabilities()`)
+## Automove tiers (`progression/upgrades.ts` → `capabilities()`)
 
 | Upgrade | Unlocks |
 | --- | --- |

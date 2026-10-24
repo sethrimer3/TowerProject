@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save/save.ts";
-import { UPGRADES } from "../src/config.ts";
+import { UPGRADES } from "../src/progression/upgrades.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { World, delveExtras } from "../src/delve/world.ts";
 import { region } from "../src/delve/labyrinth.ts";

@@ -27,7 +27,7 @@ try {
   await page.evaluate(async () => {
     const { defaults } = await import("/src/save/save.ts");
     const { Game } = await import("/src/state.ts");
-    const { UPGRADES } = await import("/src/config.ts");
+    const { UPGRADES } = await import("/src/progression/upgrades.ts");
     const s = defaults();
     for (const id of Object.keys(s.tutorials)) s.tutorials[id] = true;
     for (const u of UPGRADES) s.upgrades[u.id] = 1;

@@ -1,6 +1,7 @@
 import { SIPHONS, TRADER_YELLOW_KEYS, isSiphon, type CardId, type SiphonCard } from "../cards/cards.ts";
 import { BADGES, badgesOn, badgeValue, type BadgeId, type RunBadge } from "../cards/badges.ts";
-import { TRAINING, xpBase, type StatTrainingRow } from "../config.ts";
+import { TRAINING, type StatTrainingRow } from "../progression/training.ts";
+import { xpBase } from "../progression/xp.ts";
 import type { Mode, KeyColor } from "../entities.ts";
 import { snap } from "../exact.ts";
 import { healUpTo } from "../combat.ts";

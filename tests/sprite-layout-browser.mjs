@@ -33,7 +33,7 @@ try {
         s.upgrades.shroud = 1; Object.assign(g.run.player, { hp: 999_999_999, maxHp: 999_999_999, attack: 999_999_999, defense: 999_999_999, shroud: 999_999_999 });
       }
       if (packed) {
-        const { xpForLevel } = await import("/src/config.ts");
+        const { xpForLevel } = await import("/src/progression/xp.ts");
         s.settings.devMode = false;
         s.gems = 264; s.gold = 6688; g.run.silver = 1434;
         s.tower.tiersOpen = 2;

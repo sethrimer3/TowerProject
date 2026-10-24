@@ -1,10 +1,13 @@
 import { trainNow } from "./train-now.ts";
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import type { StatTrainingRow } from "../src/config.ts";
+import type { StatTrainingRow } from "../src/progression/training.ts";
 import { loadout, trainingBulk, trainingFull, trainingPoints, trainingStep, upgradeText, provisionPrice, provisionText } from "../src/progression/loadout.ts";
 import { decode, defaults } from "../src/save/save.ts";
-import { GOLD_SHOP, LIMIT_BREAKS, TRAINING, UPGRADES, isStatRow, levelForXp, trained, trainingCap, trainingCeiling, trainingWorth, xpForLevel } from "../src/config.ts";
+import { GOLD_SHOP } from "../src/economy/provisions.ts";
+import { LIMIT_BREAKS, TRAINING, isStatRow, trained, trainingCap, trainingCeiling, trainingWorth } from "../src/progression/training.ts";
+import { UPGRADES } from "../src/progression/upgrades.ts";
+import { levelForXp, xpForLevel } from "../src/progression/xp.ts";
 import { addItem } from "../src/equipment/inventory.ts";
 import { Game } from "../src/state.ts";
 import { predict } from "../src/combat.ts";

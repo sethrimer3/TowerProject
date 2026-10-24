@@ -1,7 +1,7 @@
 import { ARENA_SIZE, ELEMENTAL, ARENA_TORCHES, ARENA_POTIONS, ARENA_CRATES, arenaFloor, floorAt, wallEdge, key, same, directions, type Spot } from "./arena.ts";
 export { ARENA_SIZE, ELEMENTAL, ARENA_TORCHES, ARENA_POTIONS, ARENA_CRATES, arenaFloor, floorAt, wallEdge, key, type Spot } from "./arena.ts";
 import { newKeymaster, keymasterStep, enterKeymaster, keymasterDoorAt, decodeKeymaster, type KeymasterState } from "./keymaster.ts";
-import { TRAINING, type TrainingId } from "../config.ts";
+import { TRAINING, type TrainingId } from "../progression/training.ts";
 import type { Player } from "../entities.ts";
 import { CARDS, type CardId } from "../cards/cards.ts";
 import { finite, isRecord, wholeIn } from "../save/decode.ts";

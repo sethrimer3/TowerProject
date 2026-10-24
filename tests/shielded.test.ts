@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults } from "../src/save/save.ts";
-import { ENEMY_GOLD, SHIELDED_GOLD } from "../src/config.ts";
+import { ENEMY_GOLD, SHIELDED_GOLD } from "../src/economy/kill-pay.ts";
 import { attackForFewerHits, bout, predict } from "../src/combat.ts";
 import { arrowDamage } from "../src/enemies/ranged.ts";
 import { DamagePredictions } from "../src/render/effects/damage-labels.ts";

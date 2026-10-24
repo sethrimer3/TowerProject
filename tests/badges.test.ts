@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save/save.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
-import { xpBase } from "../src/config.ts";
+import { xpBase } from "../src/progression/xp.ts";
 import { planHand, type CardId } from "../src/cards/cards.ts";
 import type { Board, Position } from "../src/board.ts";
 import type { Enemy, Tile } from "../src/entities.ts";
@@ -708,7 +708,7 @@ test("Skip on STAIRS climbs two floors, with Floor Skipped", () => {
 });
 
 test("Floor Skip Reward pays its percent of the Gold the floor skipped held, once", async () => {
-  const { ENEMY_GOLD } = await import("../src/config.ts");
+  const { ENEMY_GOLD } = await import("../src/economy/kill-pay.ts");
   const { averageGold } = await import("../src/economy/loot.ts");
   const { RESEARCH } = await import("../src/progression/archives.ts");
   const { pickupGold } = await import("../src/doors.ts");

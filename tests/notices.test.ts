@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { defaults } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
-import { xpForLevel } from "../src/config.ts";
+import { xpForLevel } from "../src/progression/xp.ts";
 
 /** A game in the forest, its Deck lessons done. */
 function forest() {

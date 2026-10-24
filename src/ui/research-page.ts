@@ -2,7 +2,7 @@ import { controlIcon } from "./control-icon.ts";
 import { askForGems, helpButton, showHelp } from "./dialogs.ts";
 import { play } from "../sound.ts";
 import { permanentBoost, trainingRate } from "../shop/entitlements.ts";
-import { TRAINING, TRAINING_GROUPS, TRAINING_PER_LEVEL, trainingCap, type TrainingId } from "../config.ts";
+import { TRAINING, TRAINING_GROUPS, TRAINING_PER_LEVEL, trainingCap, type TrainingId } from "../progression/training.ts";
 import { trainingBulk, trainingPoints, trainingRowsFull, trainingStep, trainingText, trainingOpen } from "../progression/loadout.ts";
 import { whole } from "../whole.ts";
 import type { BuyQuantity } from "../progression/buy-quantity.ts";

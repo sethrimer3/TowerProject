@@ -3,7 +3,10 @@ import { defaultTrialAccess, decodeTrialAccess } from "../proving-grounds/access
 import { TRAINER_GEMS, trainingSlots, type TrainingJob, type TrainingPaid } from "../progression/training-jobs.ts";
 import { count, dropInvalid, finite, fraction, isRecord, wholeIn } from "./decode.ts";
 import { TIERS } from "../tiers.ts";
-import { GOLD_SHOP, PROVISION_BOOST_TURNS, USED_PROVISIONS, SAVE_KEY, TOWER_WIDTH, TRAINING, UPGRADES, WIDTH, amountAt, trainingCeiling, trainingDef, type UpgradeId } from "../config.ts";
+import { GOLD_SHOP, PROVISION_BOOST_TURNS, USED_PROVISIONS } from "../economy/provisions.ts";
+import { SAVE_KEY, TOWER_WIDTH, WIDTH } from "../config.ts";
+import { TRAINING, amountAt, trainingCeiling, trainingDef } from "../progression/training.ts";
+import { UPGRADES, type UpgradeId } from "../progression/upgrades.ts";
 import type { AutomoveMemory, DelveRun, Fall, MoveSnapshot, Run, TowerRun } from "../runs.ts";
 import type { ModeSave, Save } from "./shape.ts";
 import { emptyMaterials, MATERIAL_IDS, type MaterialId } from "../economy/materials.ts";

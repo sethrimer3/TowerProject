@@ -1,4 +1,4 @@
-import { TRAINING, trainingDef, type TrainingId } from "../config.ts";
+import { TRAINING, trainingDef, type TrainingId } from "../progression/training.ts";
 import { snap } from "../exact.ts";
 import { TRAINING_RESET_GEMS } from "../economy/gems.ts";
 import { batchSpeedup, bulkBuy, type BuyQuantity } from "../progression/buy-quantity.ts";

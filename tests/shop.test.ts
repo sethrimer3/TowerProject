@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save/save.ts";
-import { xpForLevel } from "../src/config.ts";
+import { xpForLevel } from "../src/progression/xp.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 import { workLeft } from "../src/progression/training-jobs.ts";
 import { DAY_MS, confirmServerTime, estimatedServerTime, gmtDay, untilNextDay } from "../src/shop/clock.ts";

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults } from "../src/save/save.ts";
 import { trainingOpen } from "../src/progression/loadout.ts";
-import { TRAINING, trainedAmount } from "../src/config.ts";
+import { TRAINING, trainedAmount } from "../src/progression/training.ts";
 import { RESEARCH, researched } from "../src/progression/archives.ts";
 import { trainingStep } from "../src/progression/loadout.ts";
 import { runTrainingValue } from "../src/progression/run-training.ts";

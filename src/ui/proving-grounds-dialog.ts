@@ -5,7 +5,7 @@ import {TRIAL_IDS,TRIALS,type TrialId} from "../proving-grounds/catalog.ts";
 import {clearedDifficulty,nextDifficulty,settleTrialVictory} from "../proving-grounds/progression.ts";
 import {advanceTrial,TrialNavigation} from "../proving-grounds/navigation.ts";
 import {advanceKeymasterEffects,mimicInterval} from "../proving-grounds/keymaster.ts";
-import type {TrainingId} from "../config.ts";
+import type { TrainingId } from "../progression/training.ts";
 import {TrialSession,TRIAL_TRAINING} from "../proving-grounds/session.ts";
 import {TrialRenderer,TRIAL_VIEW_TILES} from "../proving-grounds/render.ts";
 import {CARDS} from "../cards/cards.ts";

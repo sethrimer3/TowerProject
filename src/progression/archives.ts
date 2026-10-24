@@ -1,4 +1,6 @@
-import { FOCUS_PER_RUN, IGNORE_PER_RUN, REGAIN_FLOORS, TARGET_PER_RUN, levelForXp, type UpgradeId } from "../config.ts";
+import { FOCUS_PER_RUN, IGNORE_PER_RUN, REGAIN_FLOORS, TARGET_PER_RUN } from "../config.ts";
+import { levelForXp } from "./xp.ts";
+import type { UpgradeId } from "./upgrades.ts";
 import type { Settings } from "../save/settings.ts";
 import type { Save } from "../save/shape.ts";
 import type { Profile } from "../save/profile.ts";

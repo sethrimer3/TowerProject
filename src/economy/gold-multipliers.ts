@@ -1,5 +1,5 @@
 import { researched } from "../progression/archives.ts";
-import { trainedAmount } from "../config.ts";
+import { trainedAmount } from "../progression/training.ts";
 import type { Mode } from "../entities.ts";
 import type { Save } from "../save/shape.ts";
 import { wornEffects } from "../equipment/effects.ts";

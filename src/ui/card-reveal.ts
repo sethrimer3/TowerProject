@@ -1,5 +1,5 @@
 import { CARDS, cardBonusLines, cardText, type CardId } from "../cards/cards.ts";
-import type { UpgradeId } from "../config.ts";
+import type { UpgradeId } from "../progression/upgrades.ts";
 import { cardArt } from "./dom.ts";
 import { cardLevelHtml, cardLevelLines, cardXpBarHtml } from "./card-level-marks.ts";
 import type { TreeSave } from "../cards/trees.ts";

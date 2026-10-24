@@ -1,4 +1,4 @@
-import type { GoldItemId } from "../config.ts";
+import type { GoldItemId } from "../economy/provisions.ts";
 import { provisionOpen, provisionPrice } from "../progression/loadout.ts";
 import type { DeskHost } from "./desk.ts";
 

@@ -2,7 +2,7 @@ import { helpButton, showHelp } from "./dialogs.ts";
 import { play } from "../sound.ts";
 import { upgradeCard } from "../cards/cards.ts";
 import { revealCard } from "./card-reveal.ts";
-import { UPGRADES, cost, type UpgradeId } from "../config.ts";
+import { UPGRADES, cost, type UpgradeId } from "../progression/upgrades.ts";
 import { TREES, columnGap, mapNodes, skillAvailable, treeHeight, treeOpen, type TreeId } from "../progression/skill-trees.ts";
 import { upgradeText } from "../progression/loadout.ts";
 import { goalUnlocked, UNLOCK_NAMES } from "../goals.ts";

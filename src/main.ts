@@ -1,5 +1,6 @@
 import { ProvingGroundsDialog } from "./ui/proving-grounds-dialog.ts";
-import { USED_PROVISIONS, type UpgradeId } from "./config.ts";
+import { USED_PROVISIONS } from "./economy/provisions.ts";
+import type { UpgradeId } from "./progression/upgrades.ts";
 import type { TreeId } from "./progression/skill-trees.ts";
 import "./style.css";
 import "./medieval.css";

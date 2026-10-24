@@ -5,7 +5,7 @@ import { decode, defaults } from "../src/save/save.ts";
 import { ENTRANCE_Y } from "../src/outside.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { chooseStep } from "../src/automation.ts";
-import { silverForKill } from "../src/config.ts";
+import { silverForKill } from "../src/economy/kill-pay.ts";
 
 /** A new game's save, its first run's note already dismissed, so the hand
  * plays as a run starts. */

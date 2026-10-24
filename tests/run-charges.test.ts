@@ -5,7 +5,7 @@ import { decode, defaults } from "../src/save/save.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { chargesLeft, chargesPerRun, climbFloor, floorsToRegain, regainEvery } from "../src/run-charges.ts";
 import { RESEARCH, researched } from "../src/progression/archives.ts";
-import { cost } from "../src/config.ts";
+import { cost } from "../src/progression/upgrades.ts";
 import { skillAvailable } from "../src/progression/skill-trees.ts";
 import type { Run } from "../src/runs.ts";
 

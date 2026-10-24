@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults } from "../src/save/save.ts";
-import { cost } from "../src/config.ts";
+import { cost } from "../src/progression/upgrades.ts";
 import { RESEARCH } from "../src/progression/archives.ts";
 
 test("Pocket Money costs 1 Inspiration after Into the depths, and opens research priced like Potion HP", () => {

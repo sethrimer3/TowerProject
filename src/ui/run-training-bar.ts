@@ -1,5 +1,5 @@
 import type { Game } from "../state.ts";
-import { TRAINING, TRAINING_GROUPS, type TrainingId } from "../config.ts";
+import { TRAINING, TRAINING_GROUPS, type TrainingId } from "../progression/training.ts";
 import { runTrainingBulk, runTrainingOffer, runTrainingValue } from "../progression/run-training.ts";
 import { bindBuyQuantity, buyQuantityHtml, runCount } from "./buy-quantity-select.ts";
 import { trainingText, runTrainingOpen } from "../progression/loadout.ts";

@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save/save.ts";
-import { xpForLevel } from "../src/config.ts";
+import { xpForLevel } from "../src/progression/xp.ts";
 import { RESEARCH } from "../src/progression/archives.ts";
 import { bulkBuy, openQuantities } from "../src/progression/buy-quantity.ts";
 import { trainingBulk, trainingPoints, trainingStep } from "../src/progression/loadout.ts";

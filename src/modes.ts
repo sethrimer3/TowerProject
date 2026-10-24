@@ -3,7 +3,8 @@
  * and how its board is built, what its enemies drop, and the words the game
  * uses for it. Code that needs a per-mode answer asks `MODES[mode]` rather
  * than branching on the mode; features only the Tower has still test for it. */
-import { START_X, TOWER_START_X, TOWER_WIDTH, WIDTH, goldReward } from "./config.ts";
+import { START_X, TOWER_START_X, TOWER_WIDTH, WIDTH } from "./config.ts";
+import { goldReward } from "./economy/kill-pay.ts";
 import type { DelveRun, Run, TowerRun } from "./runs.ts";
 import type { Mode } from "./entities.ts";
 import type { Save } from "./save/shape.ts";

@@ -1,4 +1,4 @@
-import { TRAINING } from "../config.ts";
+import { TRAINING } from "../progression/training.ts";
 import { fraction, isRecord, time } from "./decode.ts";
 import type { Save } from "./shape.ts";
 import { snap } from "../exact.ts";

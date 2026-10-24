@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import { defaults, decode } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
 import { TREES, columnGap, mapNodes, treeHeight } from "../src/progression/skill-trees.ts";
-import { LIMIT_BREAKS, TRAINING, UPGRADES, cost, type UpgradeId } from "../src/config.ts";
+import { LIMIT_BREAKS, TRAINING } from "../src/progression/training.ts";
+import { UPGRADES, cost, type UpgradeId } from "../src/progression/upgrades.ts";
 import { RESEARCH } from "../src/progression/archives.ts";
 test("fresh progression gates Delve, currencies, Courage root, and Legacy", () => {
   const g = new Game(defaults());

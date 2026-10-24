@@ -16,7 +16,7 @@ import type { Save } from "./save/shape.ts";
 import { critAgainst, facing, guaranteedCrits, isBoss, stealCeiling, thornDamage } from "./combat.ts";
 import { critRule } from "./progression/loadout.ts";
 import { foeAttack } from "./cards/foe-cards.ts";
-import { trainedAmount } from "./config.ts";
+import { trainedAmount } from "./progression/training.ts";
 import { researched } from "./progression/archives.ts";
 import { archerClock, archerState, archerTick, arrowBoost, arrowDamage, arrowRange, charged, enemiesWithin, FOE_REACH, foeGain, foeOn, foeShotCost, foeTickGain, held, reachTicks, shoots, shotDamage, spent, TURN_TICKS, type InReach, type Volleys } from "./enemies/ranged.ts";
 import { tileRandom } from "./random.ts";

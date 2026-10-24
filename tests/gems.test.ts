@@ -5,7 +5,7 @@ import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save/save.ts";
 import { random } from "../src/random.ts";
 import { trainingPoints } from "../src/progression/loadout.ts";
-import { xpForLevel } from "../src/config.ts";
+import { xpForLevel } from "../src/progression/xp.ts";
 import type { Board } from "../src/board.ts";
 import type { Tile } from "../src/entities.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";

@@ -25,25 +25,11 @@ import { doorBlockedMessage, doorName, doorRule, drainsHp, KEY_ORDER, pickupGold
 import type { SettingKey } from "./save/settings.ts";
 import { skillAvailable } from "./progression/skill-trees.ts";
 import { routeTo, type Step } from "./pathfinding.ts";
-import {
-  TOWER_START_X,
-  TOWER_SECTION,
-  xpForKill,
-  levelForXp,
-  TRAINING_PER_LEVEL,
-  isStatRow,
-  cost,
-  UPGRADES,
-  trainedAmount,
-  PROVISION_BOOSTS,
-  PROVISION_BOOST_PERCENT,
-  PROVISION_BOOST_TURNS,
-  PROVISION_KEY_FLOORS,
-  type UpgradeId,
-  type TrainingId,
-  type StatTrainingRow,
-  type UsedProvision,
-} from "./config.ts";
+import { TOWER_START_X, TOWER_SECTION } from "./config.ts";
+import { xpForKill, levelForXp } from "./progression/xp.ts";
+import { TRAINING_PER_LEVEL, isStatRow, trainedAmount, type TrainingId, type StatTrainingRow } from "./progression/training.ts";
+import { cost, UPGRADES, type UpgradeId } from "./progression/upgrades.ts";
+import { PROVISION_BOOSTS, PROVISION_BOOST_PERCENT, PROVISION_BOOST_TURNS, PROVISION_KEY_FLOORS, type UsedProvision } from "./economy/provisions.ts";
 import type { Save, ModeSave } from "./save/shape.ts";
 import type {
   Boosted,

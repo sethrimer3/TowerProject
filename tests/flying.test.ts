@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults, decode } from "../src/save/save.ts";
-import { ENEMY_GOLD, RANGED_GOLD } from "../src/config.ts";
+import { ENEMY_GOLD, RANGED_GOLD } from "../src/economy/kill-pay.ts";
 import { aggroTurn, FLYING_TIER, flyingCells, flyingShare, walkToHero } from "../src/enemies/flying.ts";
 import { FOE_GAIN, foeShotCost, rangedShare, woundMore } from "../src/enemies/ranged.ts";
 import { planHand, handBonus, cardBonusLines, CARDS, type HandAt } from "../src/cards/cards.ts";

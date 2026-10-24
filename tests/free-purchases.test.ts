@@ -1,7 +1,9 @@
 import { trainNow } from "./train-now.ts";
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { GOLD_SHOP, TRAINING, xpForLevel } from "../src/config.ts";
+import { GOLD_SHOP } from "../src/economy/provisions.ts";
+import { TRAINING } from "../src/progression/training.ts";
+import { xpForLevel } from "../src/progression/xp.ts";
 import { addItem } from "../src/equipment/inventory.ts";
 import { buyBomb, buyItem, buyUpgrade, defaultDefendSave } from "../src/defend/progress.ts";
 import { trainingPoints, trainingStep } from "../src/progression/loadout.ts";

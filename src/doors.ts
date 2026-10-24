@@ -1,6 +1,7 @@
 import { snap } from "./exact.ts";
 import { tileRandom } from "./random.ts";
-import { COLORS, KEY_GOLD, PICKUP_GOLD } from "./config.ts";
+import { COLORS } from "./config.ts";
+import { KEY_GOLD, PICKUP_GOLD } from "./economy/kill-pay.ts";
 import type { DoorOdds, DoorRule, Player, Tile, KeyColor } from "./entities.ts";
 import { wholeChange } from "./whole.ts";
 

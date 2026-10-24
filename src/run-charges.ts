@@ -1,4 +1,4 @@
-import type { UpgradeId } from "./config.ts";
+import type { UpgradeId } from "./progression/upgrades.ts";
 import { researched, type ArchivesSave, type ResearchTarget } from "./progression/archives.ts";
 import type { Run } from "./runs.ts";
 

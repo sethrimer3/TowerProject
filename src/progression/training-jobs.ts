@@ -1,4 +1,5 @@
-import { curvePrice, risingPrice, type TrainerCurve, type TrainerTime, type TrainingId } from "../config.ts";
+import { curvePrice, risingPrice } from "../economy/prices.ts";
+import type { TrainerCurve, TrainerTime, TrainingId } from "./training.ts";
 import { halfPow } from "../exact.ts";
 
 // A Training rank is bought one of two ways: with training points, which

@@ -5,7 +5,7 @@ import { loadout } from "../progression/loadout.ts";
 import { MODES } from "../modes.ts";
 import { loadoutShift, shiftHero } from "../progression/hero-stats.ts";
 import { RunTimeline } from "../run-timeline.ts";
-import { trainedAmount } from "../config.ts";
+import { trainedAmount } from "../progression/training.ts";
 import { ranksInRun } from "../progression/run-training.ts";
 import { treeBonus, treeOverheal } from "../cards/trees.ts";
 

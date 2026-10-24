@@ -1,4 +1,5 @@
-import { schedulePrice, trainingDef, TRAINING, trainingCap, type TrainingId, type TrainingRow } from "../config.ts";
+import { schedulePrice } from "../economy/prices.ts";
+import { trainingDef, TRAINING, trainingCap, type TrainingId, type TrainingRow } from "./training.ts";
 import type { Mode } from "../entities.ts";
 import type { RunCore } from "../runs.ts";
 import type { Save } from "../save/shape.ts";

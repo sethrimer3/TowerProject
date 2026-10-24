@@ -1,5 +1,5 @@
 import { CARD_IDS, deckCards, type CardId } from "./cards.ts";
-import type { UpgradeId } from "../config.ts";
+import type { UpgradeId } from "../progression/upgrades.ts";
 import type { Save } from "../save/shape.ts";
 import { isRecord, wholeIn } from "../save/decode.ts";
 import { random } from "../random.ts";

@@ -9,7 +9,8 @@ import { World } from "../src/delve/world.ts";
 import { withPotions } from "../src/board.ts";
 import { resolveStep, POTION_HEAL, type StepEffect } from "../src/step-effects.ts";
 import { trainingPoints, trainingStep } from "../src/progression/loadout.ts";
-import { xpForLevel, trainedAmount } from "../src/config.ts";
+import { xpForLevel } from "../src/progression/xp.ts";
+import { trainedAmount } from "../src/progression/training.ts";
 import type { Player, Tile } from "../src/entities.ts";
 
 const redPotions = (tiles: Iterable<Tile>) => [...tiles].filter((t) => t.kind === "potion" && t.color === "red").length;
