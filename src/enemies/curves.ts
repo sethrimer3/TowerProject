@@ -86,12 +86,14 @@ export const DEFAULT_CURVE: Record<CurveMode, EnemyCurve> = {
 };
 
 /** Towers I to IV's: the default curve, its ATK raised from floor 11 to 45
- * on floor 25 (rather than 21.53), where a hero with Training and On the
+ * on floor 25 (rather than 22.4) and its HP by the same factor, 124 rather
+ * than 61.8, where a hero with Training and On the
  * Job could otherwise outgrow every enemy's ATK in DEF, the raise fading
- * back to the default's 400 on floor 100. Floors 1 to 10 are the
+ * back to the default's 400 ATK and 1,300 HP on floor 100. Floors 1 to 10 are the
  * default's, before training is open. */
 const EARLY_TOWER_CURVE: EnemyCurve = {
   ...DEFAULT_CURVE.tower,
+  hp: [...DEFAULT_BALANCED.hp.slice(0, 2), [25, 124], ...DEFAULT_BALANCED.hp.slice(2)],
   attack: [...DEFAULT_BALANCED.attack.slice(0, 2), [25, 45], ...DEFAULT_BALANCED.attack.slice(2)],
 };
 

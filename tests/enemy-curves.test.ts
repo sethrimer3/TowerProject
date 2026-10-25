@@ -105,15 +105,24 @@ test("a Delve enemy of each strength matches a default-curve Tower's on the same
     }
 });
 
-test("Towers I to IV raise ATK from floor 11 to 45 on floor 25, back to the default by floor 100; Tower V on is the default", () => {
-  const atk = (tier: number, floor: number) => enemyStats("tower", tier, floor - 1, "normal", "balanced").attack;
+test("Towers I to IV raise ATK from floor 11 to 45 and HP to 124 on floor 25, back to the default by floor 100; Tower V on is the default", () => {
+  const stat = (tier: number, floor: number, key: "hp" | "attack") => enemyStats("tower", tier, floor - 1, "normal", "balanced")[key];
+  const atk = (tier: number, floor: number) => stat(tier, floor, "attack"), hp = (tier: number, floor: number) => stat(tier, floor, "hp");
   for (const tier of [1, 2, 3, 4]) {
-    for (let floor = 1; floor <= 10; floor++) assert.equal(atk(tier, floor), atk(5, floor), `tower ${tier} floor ${floor}`);
-    for (let floor = 11; floor < 100; floor++) assert.ok(atk(tier, floor) > atk(5, floor), `tower ${tier} floor ${floor}`);
+    for (let floor = 1; floor <= 10; floor++) {
+      assert.equal(atk(tier, floor), atk(5, floor), `tower ${tier} floor ${floor}`);
+      assert.equal(hp(tier, floor), hp(5, floor), `tower ${tier} floor ${floor}`);
+    }
+    for (let floor = 11; floor < 100; floor++) {
+      assert.ok(atk(tier, floor) > atk(5, floor), `tower ${tier} floor ${floor}`);
+      assert.ok(hp(tier, floor) > hp(5, floor), `tower ${tier} floor ${floor}`);
+    }
     assert.equal(atk(tier, 25), 45);
-    for (const floor of [100, 101, 250, 1200]) assert.equal(atk(tier, floor), atk(5, floor), `tower ${tier} floor ${floor}`);
-    // Only ATK (and DEF, its share) moves.
-    assert.equal(enemyStats("tower", tier, 24, "normal", "balanced").hp, enemyStats("tower", 5, 24, "normal", "balanced").hp);
+    assert.equal(hp(tier, 25), 124);
+    for (const floor of [100, 101, 250, 1200]) {
+      assert.equal(atk(tier, floor), atk(5, floor), `tower ${tier} floor ${floor}`);
+      assert.equal(hp(tier, floor), hp(5, floor), `tower ${tier} floor ${floor}`);
+    }
   }
   assert.equal(atk(5, 25), 21.53);
 });

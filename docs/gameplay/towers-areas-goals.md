@@ -5,7 +5,7 @@
 Beating the boss on floor 100 makes floor 100's Goals checkpoint claimable, and claiming it opens **Tower II**; floor 100's checkpoint there opens Tower III, up to Tower IX.
 Each tower opened opens the Delve's cave of the same number.
 Each one's monsters have more HP, ATK and DEF than the one before: five times in Tower II, four times Tower II's in III (20 times Tower I's), and three times the one before in each tower after, so a hero needs about that many times the ATK, DEF and HP to climb as far.
-In Towers I to IV the monsters' ATK climbs faster from floor 11, to about twice the usual by floor 25 (45 in Tower I), so the floors past the first ten ask for some Training; the extra fades out by floor 100, and from Tower V the climb is the usual one.
+In Towers I to IV the monsters' HP and ATK climb faster from floor 11, to about twice the usual by floor 25 (124 HP and 45 ATK in Tower I), so the floors past the first ten ask for some Training; the extra fades out by floor 100, and from Tower V the climb is the usual one.
 Each pays more Gold: ×2 in Tower II, ×3.1 in III, ×4.3 in IV, then ×5.6, ×7, ×8.5, ×10.1 and ×11.8 in IX; and its kills pay XP times the same factor as the monsters' stats (×5 in Tower II, ×20 in III …), so the hero levels faster too.
 Silver stays the same, so a run buys about the same run training, while potions stay the same too (only upgrades will raise those).
 ATK and DEF shards raise their stat by 1 in Tower I and by 2.75 times as much in each tower after (2.75 in II, 7.56 in III, …).

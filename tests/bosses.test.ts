@@ -36,8 +36,10 @@ test("a boss stands on the only way to each boss floor's stairs, and on no other
 
 test("a Tower boss has 3.5 times a normal enemy's HP, 1.3 times its ATK and its DEF, on any floor", () => {
   for (const room of [0, 4, 9, 19, 49, 333]) {
-    const normal = getTowerGateEnemy(room, "normal", "balanced"), boss = getTowerGateEnemy(room, "boss", "balanced");
-    const elite = getTowerGateEnemy(room, "elite", "balanced"), hitter = getTowerGateEnemy(room, "elite", "attackHeavy");
+    // Read on Tower V's default curve: Towers I to IV's raise from floor 11
+    // lifts an elite that reads ten floors ahead (floor 5's reads floor 15).
+    const normal = getTowerGateEnemy(room, "normal", "balanced", 5), boss = getTowerGateEnemy(room, "boss", "balanced", 5);
+    const elite = getTowerGateEnemy(room, "elite", "balanced", 5), hitter = getTowerGateEnemy(room, "elite", "attackHeavy", 5);
     // Each is rounded to hundredths on its own.
     for (const [stat, k] of [["hp", 3.5], ["attack", 1.3], ["defense", 1]] as const)
       assert.ok(Math.abs(boss[stat] - normal[stat] * k) <= 0.02, `floor ${room + 1} ${stat}`);
@@ -80,8 +82,10 @@ test("tenth-floor bosses below floor 50 cost an evenly trained hero no more than
   // (7 ranks give 4.1 DEF, not 11.1): 74 of 219 HP, not 49, so no more than
   // 35% of the hero's max HP. Floor 20's costs more since Towers I to IV
   // raise ATK from floor 11 (45 on floor 25, not 21.53), so a hero who
-  // hasn't invested in Training pays for it: 74 of 399 HP, not 65, so no
-  // more than 20% of max HP.
+  // hasn't invested in Training pays for it, and the HP raised the same
+  // way lengthens the fight: 128 of 399 HP on floor 20, not 65, and 213 of
+  // 604 on floor 30, not 87, and 242 of 859 on floor 40, not 125, so no more
+  // than 40% of max HP.
   const before = [[80, 30, 3], [120, 46, 4], [180, 70, 7], [280, 106, 11]], levels = [7, 13, 18, 23];
   before.forEach(([hp, attack, defense], i) => {
     const s = defaults(), points = levels[i] * 3;
@@ -92,8 +96,8 @@ test("tenth-floor bosses below floor 50 cost an evenly trained hero no more than
     const now = predict(hero, enemy(getTowerGateEnemy(i * 10 + 9, "boss", "balanced"))).damage;
     const old = predict(hero, enemy({ hp, attack, defense })).damage;
     if (i === 0) assert.ok(now <= 0.35 * l.maxHp, `floor 10: ${now} of ${l.maxHp} HP`);
-    else if (i === 1) assert.ok(now <= 0.2 * l.maxHp, `floor 20: ${now} of ${l.maxHp} HP`);
-    else assert.ok(now <= old, `floor ${i * 10 + 10}: ${now} against ${old}`);
+    else if (i <= 3) assert.ok(now <= 0.4 * l.maxHp, `floor ${i * 10 + 10}: ${now} of ${l.maxHp} HP`);
+    else assert.ok(now <= old, `floor ${i * 10 + 10}: ${now} against ${old} (max HP ${l.maxHp})`);
   });
 });
 
