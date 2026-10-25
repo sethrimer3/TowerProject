@@ -5,13 +5,13 @@ import { Game } from "../src/state.ts";
 import { UPGRADES } from "../src/progression/upgrades.ts";
 import { TREES, skillAvailable } from "../src/progression/skill-trees.ts";
 
-test("legacy upgrade description mentions unlocking the legacy skill tree and Defend", () => {
+test("legacy upgrade description mentions unlocking the legacy skill tree", () => {
   const legacy = UPGRADES.find((u) => u.id === "legacy");
   assert.ok(legacy, "Legacy upgrade should exist");
   assert.match(
     legacy.description,
-    /unlock.*legacy.*skill tree.*unlock.*defend/i,
-    "Legacy description should mention unlocking the legacy skill tree and Defend",
+    /unlock.*legacy.*skill tree/i,
+    "Legacy description should mention unlocking the legacy skill tree",
   );
 });
 
@@ -25,16 +25,8 @@ test("fresh save has delve and legacy locked; dev mode unlocks both", () => {
   assert.equal(g.save.upgrades.legacy, 1);
 });
 
-test("dev mode grants unlimited metal bars", () => {
-  const g = new Game(defaults());
 
-  g.setDevMode(true);
-
-  assert.equal(g.save.materials.ironBar, 999_999_999);
-  assert.equal(g.save.materials.voidsteelBar, 999_999_999);
-});
-
-test("legacy skill tree is gated by legacy upgrade which unlocks Defend", () => {
+test("legacy skill tree is gated by legacy upgrade", () => {
   const legacyTree = TREES.find((t) => t.id === "legacy")!;
   assert.equal(legacyTree.gate, "legacy");
 

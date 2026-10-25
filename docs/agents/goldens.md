@@ -8,16 +8,16 @@ Most tests here are characterization goldens (`tests/fixtures/*.golden.json`): t
 |---|---|
 | Pixels of a PNG in `public/assets/` (edited art) | `render.golden.json` (`npm run test:render`) |
 | A PNG's name, path or size, or add/remove one the game loads | the above, plus `render-calls` (it reads real PNG sizes; sprite-sheet frames depend on width), and `art-modules` / `lighting-passes` if the renamed file is one they draw |
-| Board drawing code (`render/rendering.ts`, `render/tile-painters.ts`, lighting, decor, route line, Defend render/art) | `render-calls`, `render.golden.json`, and the module's own golden (`lighting-passes`, `art-modules`, `outdoor-art`, `defend-fences-save`) |
+| Board drawing code (`render/rendering.ts`, `render/tile-painters.ts`, lighting, decor, route line) | `render-calls`, `render.golden.json`, and the module's own golden (`lighting-passes`, `art-modules`, `outdoor-art`) |
 | A Game theme board (`*-board.ts` but Classic's) | `themed-boards` (every board's contents, heart, torches, hero, ground and `over`, call by call), and `theme-popups` if what rises off the board changes |
 | Native terrain art (`sprites/dungeon.ts`) | `render-calls`, `render.golden.json` |
-| World or content generation (Tower floors, Delve labyrinth, decor plans, Defend cities) | the generation golden (`tower-layout`, `tower-planning`, `delve-labyrinth`, `decor-plan`, `world-boards`, `defend-city`), then every golden that plays on those boards (`step-trace`, `undo-clear-trace`, `tower-automation`, `delve-automove`, `defend-replay`, `render-calls`, `render.golden.json`); saved maps change, so also bump `LAYOUT_VERSION` |
-| Gameplay rules or balance (`progression/upgrades.ts`, `progression/training.ts`, `economy/kill-pay.ts`, `step-effects.ts`, enemies, pickups, Defend units) | `step-trace`, `undo-clear-trace`, `tower-automation`, `delve-automove`, `tournament-trace`, `defend-replay` as they fail |
+| World or content generation (Tower floors, Delve labyrinth, decor plans) | the generation golden (`tower-layout`, `tower-planning`, `delve-labyrinth`, `decor-plan`, `world-boards`), then every golden that plays on those boards (`step-trace`, `undo-clear-trace`, `tower-automation`, `delve-automove`, `render-calls`, `render.golden.json`); saved maps change, so also bump `LAYOUT_VERSION` |
+| Gameplay rules or balance (`progression/upgrades.ts`, `progression/training.ts`, `economy/kill-pay.ts`, `step-effects.ts`, enemies, pickups) | `step-trace`, `undo-clear-trace`, `tower-automation`, `delve-automove`, `tournament-trace` as they fail |
 | The assemble's melt (`ui/slag-merge.ts`) | `slag-merge` |
-| UI text, pages, HUD or dialogs | `ui.golden.json` (`npm run test:ui`) (the Defend page is left out while Defend is on hold) |
+| UI text, pages, HUD or dialogs | `ui.golden.json` (`npm run test:ui`) |
 | Save format | `save-decode` |
 
-Run a browser golden only when the change reaches what it captures: `test:ui` for pages, HUD and dialogs; `test:render` for board drawing, art, or anything that changes the render scenes' boards (`test:snapshots` for both at once); `test:pointer` only for a Defend page change (Defend is on hold; see defend.md).
+Run a browser golden only when the change reaches what it captures: `test:ui` for pages, HUD and dialogs; `test:render` for board drawing, art, or anything that changes the render scenes' boards (`test:snapshots` for both at once).
 When a change reaches only some of what a suite captures, or you are rerunning what failed, run that part alone (next section).
 
 ## Running part of a browser suite

@@ -34,10 +34,9 @@ Its native material and board review images go to `test-results/tower-tiers/`; t
 `tests/sprite-animations-browser.mjs` checks literal hero alpha and fixed gear, original rest frames, bubble clipping, native motion, reflection-frame invalidation, route/settings/theme gates, reduced-motion restoration, missing-image fallbacks and the skull emitted by a real lethal fight.
 It captures native/enlarged art and phone/desktop board/death review images in `test-results/sprite-animations/`; the appended `spriteAmbient` scene adds five golden frames while `spriteOptions` now includes ambient motion.
 
-`tests/city-sprites-browser.mjs` starts its own Vite server and checks Defend PNGs at normal and zoomed scales, damage/rebuilding and exact pixel restoration after toggling off.
 
 `tests/goals-hud-sprites-browser.mjs` starts its own Vite server for Tower/Delve PNG presentation, with native/2× review art and actual Goals, skill and HUD checks at phone/desktop widths.
-It covers independent theme overrides, original-image fallback, live control counts and palette-correct Silver without entering Defend.
+It covers independent theme overrides, original-image fallback, live control counts and palette-correct Silver.
 
 `tests/shrine-sprites-browser.mjs` starts its own Vite server for the Shrine PNG subjects, count/choice components and real offer/pick/management actions at phone and desktop widths, including save/reload, PNG grip dragging, independent theme overrides and failed-image fallback.
 The UI golden's Shrine fixtures are appended after earlier fixtures so their seeded runs keep the same seeds.
@@ -101,3 +100,7 @@ The appended `trialCamera` render job adds eight frames, and only existing trial
 `tests/keymaster-arena.test.ts` covers the connected wall clusters, open cardinal approaches, movement/planner authority, mimic detours, legal retreat/teleports and idempotent old-attempt relocation.
 The Keymaster browser flow checks literal Tower II floor/cover texels on the live canvas without darkness, retains the Light Elemental's dark treatment, and captures the new room at phone/desktop widths.
 Only Keymaster pixel frames change for the lit Tower II room and new geometry; subsequent trial-camera drawing-call hashes also change because the fake canvas IDs follow the new terrain bakes.
+
+All remaining Node tests run through `npm test`; there are no separate city-defense or pointer suites.
+The board render scenes retain historical seed gaps so removing dormant scenes does not change the Tower/Delve/trial fixtures.
+The mode-tab browser flow checks the removed page stays absent even with Legacy owned and in Dev mode, while old-save tests verify discarded city data cannot affect retained progress.

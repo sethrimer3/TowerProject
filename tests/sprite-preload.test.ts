@@ -3,7 +3,7 @@ import test from "node:test";
 import { readdirSync, readFileSync } from "node:fs";
 import { SPRITE_ASSETS } from "../src/sprites/assets.ts";
 
-test("startup covers every deployed sprite, control frame, theme preview and retained Defend image", () => {
+test("startup covers every deployed sprite, control frame, theme preview", () => {
   const found: string[] = [];
   function scan(path: string) {
     for (const e of readdirSync(new URL(`../public/${path}`, import.meta.url), { withFileTypes: true })) {
@@ -11,7 +11,7 @@ test("startup covers every deployed sprite, control frame, theme preview and ret
       else if (/\.(png|svg|webp|jpe?g|gif)$/i.test(e.name)) found.push(`${path}/${e.name}`);
     }
   }
-  for (const dir of ["assets/style", "assets/ui/frames", "assets/themes", "assets/defend"]) scan(dir);
+  for (const dir of ["assets/style", "assets/ui/frames", "assets/themes"]) scan(dir);
   assert.deepEqual([...SPRITE_ASSETS], found.sort(), "regenerate with npm run sprites:manifest after adding art");
   for (const path of SPRITE_ASSETS) {
     assert.ok(!/assets\/(cards|enemies|materials|sprites|tilesets)\//.test(path), path);

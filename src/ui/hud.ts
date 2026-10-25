@@ -221,7 +221,6 @@ function renderTabs(game: Game) {
   renderLockedTab("gear", provisionsOpen(game.save) || game.save.equipment.unlocked, "Gear", "Unlock a provision in the Inspiration tree");
   document.querySelector(`[data-tab="gear"]`)?.classList.toggle("notify", game.notices.waiting("gear"));
   renderShopDot(game);
-  renderLockedTab("defend", !!game.save.upgrades.legacy, "Defend", "Not yet open");
 }
 
 /** Puts the dot on the Shop tab and the run's Shop while a daily offer can

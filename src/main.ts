@@ -19,7 +19,6 @@ import "./doodle.css";
 import "./murk.css";
 import "./ui-sprites.css";
 import { drawKit, onSpritesLoaded } from "./sprites/kit.ts";
-import { usesGameSprites } from "./sprites/style.ts";
 import { onSpriteFontLoaded } from "./sprites/font.ts";
 import { gameLook } from "./theme-collection.ts";
 import { themedBoardOf } from "./render/boards/themed-boards.ts";
@@ -28,7 +27,6 @@ import { stampProfile } from "./save/profile.ts";
 import { Game } from "./state.ts";
 import { Renderer } from "./render/rendering.ts";
 import { bindInput } from "./input.ts";
-import { DefendPage } from "./defend/ui.ts";
 import { FrameLoop } from "./frame-loop.ts";
 import { installDebugHooks } from "./debug-hooks.ts";
 import { isBoard, type AppContext, type Tab } from "./ui/app.ts";
@@ -165,19 +163,6 @@ const runTraining = new RunTrainingBar(shownGame, () => {
   else {overlay.refresh(true);update();}
 }, id => !provingGrounds.active || provingGrounds.allowsTraining(id));
 const researchToasts = new ResearchToasts(() => game.save.settings.reduceMotion);
-const defendPage = new DefendPage(el("defend"), {
-  save: () => game.save.defend,
-  wallet: () => ({ gold: game.save.gold, ironBar: game.save.materials.ironBar, steelBar: game.save.materials.steelBar, free: game.free }),
-  setWallet: (w) => {
-    game.save.gold = w.gold;
-    game.save.materials.ironBar = w.ironBar;
-    game.save.materials.steelBar = w.steelBar;
-  },
-  persist: save,
-  reduceMotion: () => game.save.settings.reduceMotion,
-  devMode: () => game.save.settings.devMode,
-  sprites: () => usesGameSprites(game.save),
-});
 
 function save() {
   if (!persist(game.save))
@@ -225,7 +210,6 @@ function followMode() {
   renderer.weather.silence();
 }
 function renderPage() {
-  if (tab === "defend") defendPage.show();
   if (tab === "deck") deck.render();
   if (tab === "gear") gear.render();
   if (tab === "upgrades") skillTree.render();
@@ -250,7 +234,6 @@ function unlockTarget(id: string): string {
  * page on that skill instead. */
 const LOCKED_TABS = new Map<string, { skill: UpgradeId; tree: TreeId }>([
   ["deck", { skill: "combatStance", tree: "inspiration" }],
-  ["defend", { skill: "legacy", tree: "courage" }],
 ]);
 /** The pages topped by the currencies bar. */
 const CURRENCY_PAGES: string[] = ["upgrades", "research", "deck", "gear", "missions", "events"];
@@ -268,7 +251,6 @@ function navigate(requested: string) {
   if (!isBoard(id)) cinematic.exit();
   // Only the board plays a fight out: leaving it settles one still playing.
   game.fights.finish();
-  if (id !== "defend") defendPage.pause();
   const from = tab;
   tab = id;
   if (id === "upgrades" || id === "gear" || id === "research" || id === "deck") game.notices.shown(id);
@@ -619,7 +601,6 @@ const loop = new FrameLoop({
   upgradesFrame: (time) => skillTree.drawParticles(time),
   researchFrame: (time) => research.frame(time),
   archivesTick,
-  defendFrame: (time) => defendPage.frame(time),
   update,
   vitals: () => renderVitals(shownGame()),
   purse: (time) => purseFrame(shownGame(), time, !modal.open),
@@ -639,7 +620,6 @@ document.addEventListener("visibilitychange", () => {
 window.addEventListener("pagehide", save);
 installDebugHooks(
   game,
-  defendPage,
   async () => {
     const refused = await tournament.begin();
     update();

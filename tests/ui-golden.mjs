@@ -46,7 +46,7 @@ try {
     Math.random = rng;
   // The random streams' start-up seeds, pinned by name, so they never depend
   // on which module (or the dev server's client) drew from Math.random first.
-  globalThis.__pinnedSeeds = { game: 3513001552, defend: 2079646450 };
+  globalThis.__pinnedSeeds = { game: 3513001552 };
   // The hand would keep stepping inside a run; snapshots need the board
   // still. It starts paused, and pressing play (or a card's Focus) shows it
   // playing without its turns ever running, so no snapshot races a step.
@@ -127,7 +127,6 @@ try {
       s.gold = 480;
       s.gems = 260;
       s.xp = 900;
-      for (const k of Object.keys(s.materials)) s.materials[k] = 120;
       s.tower.reached = 41;
       s.tower.best = 41;
       s.delve.reached = 57;

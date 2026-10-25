@@ -9,9 +9,7 @@ import { TRAINING, amountAt, trainingCeiling, trainingDef } from "../progression
 import { UPGRADES, type UpgradeId } from "../progression/upgrades.ts";
 import type { AutomoveMemory, DelveRun, Fall, MoveSnapshot, Run, TowerRun } from "../runs.ts";
 import type { ModeSave, Save } from "./shape.ts";
-import { emptyMaterials, MATERIAL_IDS, type MaterialId } from "../economy/materials.ts";
 import { decodeEquipment, defaultEquipment } from "../equipment/inventory.ts";
-import { decodeDefendSave, defaultDefendSave } from "../defend/progress.ts";
 import { decodeSettings, defaultSettings } from "./settings.ts";
 import { keepUndos, loadout } from "../progression/loadout.ts";
 import { BASE_HAND, CARD_IDS, HAND_SLOT_GEMS, IN_PLACE, MAX_HAND_SLOTS, MAX_MANUAL_SLOTS, deckCards, handSlots, keptLinks, manualSlots, type CardId, type CardLink } from "../cards/cards.ts";
@@ -65,7 +63,6 @@ export function defaults(): Save {
       UPGRADES.map((u) => [u.id, 0]),
     ) as Save["upgrades"],
     settings: defaultSettings(),
-    materials: emptyMaterials(),
     equipment: defaultEquipment(),
     hand: [...BASE_HAND],
     cardLinks: [],
@@ -80,7 +77,6 @@ export function defaults(): Save {
     treeNotices: { inspiration: false, courage: false },
     seen: { level: 0, training: 0, archives: 0, cards: [...BASE_HAND], cardLevels: 0, met: [...BASE_HAND] },
     archives: defaultArchives(),
-    defend: defaultDefendSave(),
     entitlements: [],
     shop: defaultShop(),
     goals: defaultGoals(),
@@ -322,19 +318,6 @@ function applyMode<R extends Run>(slice: ModeSave<R>, decoded: DecodedMode<R>) {
   slice.runFinds = decoded.runFinds;
 }
 
-// --- Inventory ---
-function decodeMaterials(s: any): Record<MaterialId, number> {
-  const materials = emptyMaterials();
-  if (s && typeof s === "object")
-    for (const id of MATERIAL_IDS) materials[id] = count(s[id], materials[id]);
-  return materials;
-}
-/** The material inventory. The crafted equipment of earlier saves
- * (`equipmentInventory`, never reachable in play) is dropped. */
-function decodeInventory(s: any, d: Save) {
-  d.materials = decodeMaterials(s.materials);
-}
-
 // --- Settings, currencies and records ---
 function decodeUpgrades(raw: any, d: Save) {
   for (const u of UPGRADES) d.upgrades[u.id] = count(raw?.[u.id], d.upgrades[u.id], u.max);
@@ -441,8 +424,8 @@ type VersionStep = (s: any, d: Save, undoCapacity: number) => void;
 /** What each save version carries beyond upgrades and settings. A Map, so
  * lookups match versions strictly (no "3" or prototype keys). */
 const VERSION_STEPS = new Map<unknown, VersionStep[]>([
-  [3, [decodeProgress, decodeInventory]],
-  [4, [decodeProgress, decodeInventory]],
+  [3, [decodeProgress]],
+  [4, [decodeProgress]],
 ]);
 /** Whether `decode` reads saves of `version`. */
 export const decodableVersion = (version: unknown) => VERSION_STEPS.has(version);
@@ -503,7 +486,6 @@ export function decode(raw: string | null): Save {
     if (adsOff(d)) d.goldBoostUntil = 0;
     decodeReached(s, d);
     decodeTiers(s, d);
-    d.defend = decodeDefendSave(s.defend);
     // Slots bought with Gems count only with Larger Hand, which opens them.
     if (d.upgrades.largerHand) d.handSlots = count(s.handSlots, 0, HAND_SLOT_GEMS.length);
     d.hand = decodeHand(s.hand, deckCards(d.upgrades, d.goals), handSlots(d));

@@ -1,5 +1,4 @@
 // Actual Tower/Delve UI plus an exhaustive native-art review sheet.
-// Defend is deliberately outside this suite.
 import assert from "node:assert/strict";
 import { mkdirSync } from "node:fs";
 import { createServer } from "vite";

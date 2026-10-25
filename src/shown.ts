@@ -1,5 +1,4 @@
 import type { Enemy, Tile } from "./entities.ts";
-import type { MaterialId } from "./economy/materials.ts";
 import type { EquipMaterialId } from "./equipment/catalog.ts";
 import type { EquipRarity } from "./equipment/balance.ts";
 import type { Bout } from "./combat.ts";
@@ -20,7 +19,7 @@ export type Gain = { x: number; y: number; text: string; art: GainArt | null; dr
  * negative), Gold over Silver over the rest, and whether it starts `with`
  * the drop queued before it rather than after. */
 export type Drop = { row: number; with: boolean };
-export type GainArt = { tile: Tile; spent?: true } | { material: MaterialId; quantity: number } | { heart: true; raised?: true } | { gem: true } | { coin: Coin } | { cell: true }
+export type GainArt = { tile: Tile; spent?: true } | { heart: true; raised?: true } | { gem: true } | { coin: Coin } | { cell: true }
   | { equipMaterial: EquipMaterialId; quantity: number } | { equipPiece: string; rarity: EquipRarity }
   /** CHEST's Double and Triple: the times over a chest paid, flashed over it. */
   | { multiplier: number };

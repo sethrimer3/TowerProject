@@ -16,7 +16,7 @@ The former Sprites and Turn off board sprites settings, old PNG directories and 
 Use the [source atlas](../../assets/ui-sprites/source-atlas.png) as the visual reference for additional components.
 Keep the shared [27-color palette](../../assets/ui-sprites/palette.ppm), upper-left light, charcoal outlines, stepped corners, restrained brass trim and quiet slate interiors.
 Frames are 48 × 24 native pixels with six-pixel edge slices. Ordinary buttons display a six-pixel edge and compact controls a three-pixel edge; reserve that same width as a real border so trim never covers labels or icons. Larger panels can display the slices at 2×.
-Keep typography and values as live DOM or Canvas text; never bake labels into an asset. The active kit uses the original local Tower Pixel face, with editable square-pixel matrices, distinct lowercase and tabular digits; UI and Game themes gate it independently, excluding Defend.
+Keep typography and values as live DOM or Canvas text; never bake labels into an asset. The active kit uses the original local Tower Pixel face, with editable square-pixel matrices, distinct lowercase and tabular digits; UI and Game themes gate it independently.
 The native grid is enforced during export with nearest-neighbor sampling, binary alpha, palette remapping and no dithering.
 Do not use SVG replacements, gradients, glow, blur or fine texture in this kit.
 
@@ -24,7 +24,7 @@ The runtime components live in `public/assets/ui/frames/`, with sizes and slice 
 There are six button states, panel and dialog frames, an inset field, a progress track, three colored progress fills, a tiling surface, a title banner and a card slot.
 `src/ui-sprites.css` applies these components only under `html.ui-sprites`; buttons, dialogs, settings controls, HUD bars and page panels retain their existing interactions.
 The shared extension lives in `public/assets/style/`, with its native dimensions in `manifest.json`.
-It includes currencies, pickups, controls, four hero directions, every named enemy, forest and Defend structures, Equipment, materials and card faces.
+It includes currencies, pickups, controls, four hero directions, every named enemy, forest structures, Equipment, materials and card faces.
 Card names remain live text over the PNG backgrounds.
 The card face supplies the only frame on occupied Deck cards, filling its button without an extra button skin or hand-slot frame; empty and purchasable slots keep the inset slot PNG.
 All 29 card faces have distinct compositions: door requirements, enemy groups and source-to-destination trades remain recognizable without baked lettering.
@@ -100,16 +100,8 @@ The [Celeste tileset format reference](https://github.com/EverestAPI/Resources/w
 Our application uses original static marks on the 24-pixel angled grid: choose details by edge context, share one motif across two tiles, leave most wall tiles unmarked and never rotate authored lighting.
 Use small chips on thin strips and longer joints on compatible broad surfaces; reject material boundaries, missing terrain and incompatible corners rather than cutting a feature in half.
 Clip marks to exposed and body shades before coping/facades, and leave the deepest shaded band and core untextured.
-The palette-normalized terrain atlas retains only four pixel-identical Defend floor cells; Tower and Delve use the dedicated native atlases.
 Equipment's existing Unique silhouettes and the named enemy roster are preserved during normalization.
 Small dressing (plants, cobwebs, pebbles and broken containers) uses 12-pixel PNGs drawn 1:1 inside the same 24-pixel tile grid.
-Defend’s [city atlas](../../assets/game-sprites/city.png) adds six roof materials, oak and pine canopies, wall cap and face pieces, rubble, scaffolding, lilies, reeds, lanterns and the city-tile tool icon.
-Roofs use 24-pixel panels whose narrow centers repeat to fit the existing house footprints, preserving square pixels and upper-left lighting.
-Small city objects and wall caps use 12 pixels, and the wall face is 12 × 6.
-The [Defend structure atlas](../../assets/game-sprites/defend-structures.png) replaces the earlier front-facing city structures with overhead buildings at twelve native pixels per simulation cell.
-The keep and archer barracks are 36 × 36, the barracks 36 × 48 (48 × 36 for a horizontal fit), and towers 24 × 24; their palette icons retain the same aspect ratios.
-The [tower reference](../../assets/game-sprites/defend-towers.png) simplifies the three small towers for their 24-pixel grid, and the [horizontal barracks](../../assets/game-sprites/defend-barracks-wide.png) is separately lit from the upper left.
-Roof and wall panels are marked `tile` in the manifest and may be opaque so adjacent pieces join; isolated objects keep transparent padding.
 Ordinary objects use a 24-pixel native grid; structure icons use 48 pixels, forest crowns and entrance bases use the larger native dimensions above, and card faces use 48 × 64.
 The source atlases for [icons](../../assets/game-sprites/icons.png), [world objects](../../assets/game-sprites/world.png) and [controls](../../assets/game-sprites/controls.png) remain outside the deployed assets.
 
@@ -141,7 +133,6 @@ Frame centers are flat slate (brass for the title banner) so stretching does not
 The game needs no image-processing dependency.
 For city prompts, specify directly overhead buildings, the exact footprint and twelve native pixels per simulation cell, with no front facade.
 For the world and icon extension, run `node --experimental-transform-types tools/prepare-game-sprites.mjs`.
-Use `--city-only` to export just the city set and `--structures-only` for the overhead Defend buildings.
 Run `node --experimental-transform-types tools/prepare-badge-sprites.mjs` to export the badge symbols and rarity frames before rebuilding card faces.
 Use `--details-only` to refresh the sixteen detail sprites, or `--cards-only` after changing frame art or the explicit compositions in `src/sprites/cards.ts`.
 Run `node --experimental-transform-types tools/prepare-ui-details.mjs` to extract the Goal, HUD and ornament set from its measured gutters.
@@ -156,7 +147,6 @@ Run `node --experimental-transform-types tools/prepare-dungeon-sprites.mjs` for 
 Run `node --experimental-transform-types tools/prepare-dungeon-details.mjs` for the sparse paired wall motifs in matching biome ramps; the two dungeon exporters share `tools/dungeon-palette.mjs`.
 Regenerate the original font with `python tools/prepare-pixel-font.py` using FontTools with WOFF2 support (`fonttools[woff]`); no font-building dependency is needed at runtime.
 The full game exporter preserves ambient-animation, dungeon, forest, environment, combat, badge, Shrine, Equipment UI and UI-detail assets; rerun their own exporter when a source atlas changes.
-The retained terrain atlas and `src/sprites/terrain-index.ts` contain only Defend's four unchanged floors.
 PNG load failures keep the startup loading screen visible with Retry; isolated drawing caches still use the shared image revision.
 
 Before accepting a replacement, inspect the native-size pieces and compare normal, hover, selected, pressed and disabled states together.
@@ -165,7 +155,6 @@ Check phone and desktop layouts, keyboard focus, save/reload, theme overrides, e
 `tests/sprite-details.test.ts` decodes every shared object/card PNG and checks the palette, binary alpha and transparent padding for isolated objects.
 `PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node tests/default-art-browser.mjs` starts its own server and checks the startup barrier, Settings, migration and theme overrides, with screenshots under `test-results/default-art/`.
 
-`PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node tests/city-sprites-browser.mjs` starts its own server and captures Defend at both scales, including damage and rebuilding, then checks identical pixels after switching sprites off.
 
 `PLAYWRIGHT_EXECUTABLE_PATH=/usr/bin/chromium node tests/badge-card-sprites-browser.mjs` starts its own server and checks the actual Deck, card marks, draw controls, badge details/reveals and in-run hand at phone and desktop sizes, including live text, fallbacks and independent theme overrides.
 
@@ -204,7 +193,7 @@ Both use the shared native corner silhouettes, original upper-left light, three 
 
 ## Remaining sprite work
 
-Excluding Defend and custom themes, live water ripples/glints, falling drops, wet-foot overlays, moving tall grass and some wall-corner overlays still use procedural pixels.
+Outside custom themes, live water ripples/glints, falling drops, wet-foot overlays, moving tall grass and some wall-corner overlays still use procedural pixels.
 Reveal rays, celebration/skill particles and the Equipment melt still use procedural or older icon art.
 The board route and badge annotations also retain procedural marks; letters should remain live text.
 Alternate Game themes retain their own vector/text art; retired Classic PNG directories and their loaders have been removed.

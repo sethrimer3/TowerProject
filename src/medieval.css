@@ -116,9 +116,7 @@ html.medieval input:focus-visible {
 html.medieval button[aria-pressed="true"],
 html.medieval .tree-tabs [aria-pressed="true"],
 html.medieval nav button.selected,
-html.medieval .defend-go,
 html.medieval button.training-cost:not(:disabled),
-html.medieval .defend-card button:not(:disabled),
 html.medieval .mine-hire:not(:disabled) {
   border-color: #6e4c1c;
   color: #ffe1a0;
@@ -136,13 +134,9 @@ html.medieval .mine-hire:not(:disabled) {
     0 2px 0 #000000b0;
   text-shadow: 0 1px 0 #000, 0 0 8px #ff9a3c70;
 }
-html.medieval .defend-go {
-  border-color: #6e4c1c !important;
-}
 
 /* Danger is lacquered red, the colour of the wax that seals an order. */
-html.medieval .danger,
-html.medieval .defend-danger {
+html.medieval .danger {
   color: #ffc9b8 !important;
   background:
     var(--nails),
@@ -150,17 +144,6 @@ html.medieval .defend-danger {
     var(--wood),
     #3a1410;
   border-color: #2a0a08;
-}
-html.medieval .defend-danger.armed {
-  border-color: #e0604e;
-  background:
-    var(--brass-nails),
-    radial-gradient(ellipse at 50% 120%, #ff5a3c70, transparent 70%),
-    linear-gradient(#c0302588, #5a0f0caa),
-    var(--wood),
-    #3a1410;
-  color: #ffe0d6 !important;
-  box-shadow: inset 0 0 14px #ff6a4a50, 0 0 10px #ff4a2a50;
 }
 
 html.medieval select {
@@ -183,7 +166,7 @@ html.medieval .upgrade h3 {
   text-shadow: 0 1px 0 #000, 0 -1px 0 #ffffff12;
   letter-spacing: 0.6px;
 }
-html.medieval .defend-section,
+
 html.medieval .training-group,
 html.medieval .page-title h2,
 html.medieval .tree-heading h3 {
@@ -192,8 +175,7 @@ html.medieval .tree-heading h3 {
   justify-content: center;
   gap: 10px;
 }
-html.medieval .defend-section::before,
-html.medieval .defend-section::after,
+
 html.medieval .training-group::before,
 html.medieval .training-group::after,
 html.medieval .page-title h2::before,
@@ -206,16 +188,11 @@ html.medieval .tree-heading h3::after {
   height: 12px;
   background: url("../assets/theme/rule.svg") right center / auto 12px no-repeat;
 }
-html.medieval .defend-section::after,
+
 html.medieval .training-group::after,
 html.medieval .page-title h2::after,
 html.medieval .tree-heading h3::after {
   transform: scaleX(-1);
-}
-html.medieval .defend-section {
-  font-size: 15px;
-  color: #f0d9a8;
-  text-shadow: 0 1px 0 #000;
 }
 html.medieval .page-title {
   text-align: center;
@@ -374,104 +351,14 @@ html.medieval nav button.selected {
 html.medieval nav button > span img {
   filter: drop-shadow(0 2px 0 #000);
 }
-
-/* ── Defend: the header, the shelf and the framed board ── */
-html.medieval .defend-hud {
-  color: #cbbb98;
-  text-shadow: 0 1px 0 #000;
-}
-html.medieval .defend-hud b {
-  color: #fbe6b6;
-}
-html.medieval .defend-sky {
-  color: #a9c2d6;
-}
 /* The keep's health, a phial of red tincture. */
-html.medieval .defend-keep i {
-  height: 8px;
-  border: 1px solid #8a7550;
-  border-radius: 4px;
-  background: #160b0a;
-  box-shadow: inset 0 1px 2px #000, 0 0 0 1px #000;
-  overflow: hidden;
-}
-html.medieval .defend-keep em {
-  background: linear-gradient(#ffb0a0, #c8322a 45%, #6a0f0c);
-  box-shadow: 0 0 6px #ff4a3a;
-}
-html.medieval .defend-cog {
-  color: #e6d2a6;
-}
 
 /* The palette is an apothecary's shelf of cubbies. */
-html.medieval .defend-palette {
-  border: 2px solid #120d09;
-  border-radius: 3px;
-  background:
-    linear-gradient(#00000080, #00000090),
-    var(--wood),
-    #241810;
-  box-shadow:
-    inset 0 0 0 1px #5a412455,
-    inset 0 0 14px #000,
-    0 3px 10px #000000a0;
-  scrollbar-color: #8a6a3a transparent;
-}
-html.medieval .defend-palette-title {
-  color: #c79f5c;
-  text-shadow: 0 1px 0 #000;
-}
-html.medieval .defend-item {
-  border-color: #0c0907;
-  background:
-    linear-gradient(#00000060, #00000030),
-    var(--stone),
-    #161412;
-  box-shadow:
-    inset 0 3px 6px #000000c0,
-    inset 0 -1px 0 #ffffff14,
-    0 1px 0 #ffd9a01a;
-}
-html.medieval .defend-item:hover {
-  box-shadow:
-    inset 0 3px 6px #000000c0,
-    inset 0 0 12px #ffae5530,
-    0 1px 0 #ffd9a01a;
-}
-html.medieval .defend-item b {
-  color: #ffd98f;
-}
-html.medieval .defend-item canvas {
-  filter: drop-shadow(0 2px 1px #000);
-}
 
 /* The board hangs in an oak frame with iron corner brackets. */
-html.medieval .defend-board {
-  border-color: #1a110a;
-  box-shadow:
-    0 0 0 1px #000,
-    0 0 0 4px #4d3420,
-    0 0 0 5px #120c07,
-    0 8px 30px #000000c0;
-}
-html.medieval .defend-board::before {
-  content: "";
-  position: absolute;
-  inset: -7px;
-  z-index: 4;
-  border: 16px solid transparent;
-  border-image: url("../assets/theme/frame.svg") 16 / 16px;
-  pointer-events: none;
-}
-html.medieval .defend-message {
-  color: #fbe6b6;
-  text-shadow: 0 1px 0 #000, 0 0 4px #000, 0 0 10px #000;
-}
 
 /* Proclamations, settings and tooltips are written on parchment. */
 html.medieval .mine-away,
-html.medieval .defend-banner,
-html.medieval .defend-settings,
 html.medieval .inspect-box,
 html.medieval dialog {
   color: var(--ink);
@@ -483,27 +370,6 @@ html.medieval dialog {
     0 2px 0 #000,
     0 10px 30px #000000c0;
   text-shadow: none;
-}
-html.medieval .defend-banner {
-  z-index: 5;
-  border-radius: 2px;
-}
-html.medieval .defend-banner strong {
-  color: #7d1a12;
-}
-html.medieval .defend-banner span {
-  color: var(--ink);
-}
-html.medieval .defend-banner em {
-  color: #6a4510;
-  font-weight: 600;
-}
-html.medieval .defend-settings small,
-html.medieval .defend-settings .hint {
-  color: var(--ink-soft);
-}
-html.medieval .defend-setting {
-  color: var(--ink);
 }
 html.medieval .inspect-box {
   color: var(--ink);
@@ -537,15 +403,6 @@ html.medieval .skill-tree.stewardship .tree-tooltip {
 }
 
 /* ── The Armory: notices nailed to dark oak ── */
-html.medieval .defend-wallet {
-  color: #bfae8c;
-}
-html.medieval .defend-wallet b {
-  color: #ffd98f;
-}
-html.medieval .defend-armory h4 {
-  color: #c79f5c;
-}
 html.medieval .card {
   border: 2px solid #120d09;
   border-radius: 3px;
@@ -564,18 +421,11 @@ html.medieval .card {
 html.medieval .card small {
   color: #b59a6c;
 }
-html.medieval .card p,
-html.medieval .defend-card p {
+html.medieval .card p {
   color: #cdbd9c;
 }
 html.medieval .card p b {
   color: #ffd98f;
-}
-html.medieval .defend-card > canvas {
-  padding: 3px;
-  border: 1px solid #3a2a18;
-  background: #0d0b09;
-  box-shadow: inset 0 2px 4px #000, 0 1px 0 #ffd9a014;
 }
 html.medieval .hint,
 html.medieval .page-title p {
@@ -849,12 +699,6 @@ html.medieval .td-currencies::after {
   html.medieval:not(.reduce-motion) dialog[open] {
     animation: unroll 0.32s cubic-bezier(0.2, 0.9, 0.3, 1.15);
   }
-  html.medieval:not(.reduce-motion) .defend-banner:not([hidden]) {
-    animation: unroll 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.15) 0.35s backwards;
-  }
-  html.medieval:not(.reduce-motion) .defend-settings:not([hidden]) {
-    animation: unroll 0.2s ease-out;
-  }
 
   /* A holding that rises on the signboard glints in brass. */
   html.medieval:not(.reduce-motion) .td-currencies .currency.gain b {
@@ -866,19 +710,6 @@ html.medieval .td-currencies::after {
   }
   html.medieval:not(.reduce-motion) .td-currencies .level-currency.gain {
     animation: level-glow 1.4s ease-out;
-  }
-
-  /* The herald's line: a win rises in gold, a boss wave shudders in red. */
-  html.medieval:not(.reduce-motion) .defend-message.herald {
-    animation: herald 1.1s cubic-bezier(0.2, 1.4, 0.4, 1);
-  }
-  html.medieval:not(.reduce-motion) .defend-message.dread {
-    animation: dread 1.2s ease-out;
-  }
-
-  /* The keep falls: the whole board shudders. */
-  html.medieval:not(.reduce-motion) .defend-board.quake {
-    animation: quake 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97);
   }
 
   /* A purchase stamps its card with a brass flash. */
@@ -929,52 +760,6 @@ html.medieval .td-currencies::after {
   }
   to {
     background: radial-gradient(ellipse at 50% 50%, #c08aff00, transparent 70%);
-  }
-}
-@keyframes herald {
-  from {
-    transform: translateY(10px) scale(0.9);
-    opacity: 0;
-  }
-  35% {
-    transform: translateY(-3px) scale(1.08);
-    color: #fff1c4;
-    text-shadow: 0 1px 2px #000, 0 0 12px #ffb84a, 0 0 22px #ff9a3c;
-  }
-}
-@keyframes dread {
-  from {
-    opacity: 0;
-    letter-spacing: 3px;
-  }
-  15%,
-  45% {
-    color: #ffb0a0;
-    text-shadow: 0 1px 2px #000, 0 0 12px #ff3a2a;
-    transform: translateX(-2px);
-  }
-  30%,
-  60% {
-    transform: translateX(2px);
-  }
-}
-@keyframes quake {
-  10%,
-  90% {
-    transform: translate(-1px, 0);
-  }
-  20%,
-  80% {
-    transform: translate(3px, 1px);
-  }
-  30%,
-  50%,
-  70% {
-    transform: translate(-4px, -1px);
-  }
-  40%,
-  60% {
-    transform: translate(4px, 1px);
   }
 }
 @keyframes stamped {

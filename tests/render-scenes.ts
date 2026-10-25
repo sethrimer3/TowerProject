@@ -12,14 +12,7 @@ import { defaults } from "../src/save/save.ts";
 import { decorSourceFor, tileDecor, type TileDecor } from "../src/render/decor/decor.ts";
 import type { DecorLayer } from "../src/render/decor/decor-render.ts";
 import type { Tile } from "../src/entities.ts";
-import { DefendRenderer } from "../src/defend/render.ts";
-import { paintIcon } from "../src/defend/structure-art.ts";
-import { defaultLayout, fitLayout, placeCityTile, placeStructure } from "../src/defend/layout.ts";
-import { generateCity } from "../src/defend/citygen.ts";
-import { DefendSim } from "../src/defend/sim.ts";
-import { UPGRADES, ENEMIES, BOMB_RADIUS } from "../src/defend/catalog.ts";
-import { tileKey, SUB, TILES_W, TILES_H, withDefendStream } from "../src/defend/grid.ts";
-import { withStream } from "../src/random.ts";
+import { withStream, stream } from "../src/random.ts";
 
 type Point = { x: number; y: number };
 /** Called at each captured frame with its name. */
@@ -42,7 +35,7 @@ function seeded<T>(seed: number, body: () => T): T {
     for (let i = 0; i < a.length; i++) a[i] = Math.floor(rng() * 2 ** 32);
     return arr;
   }) as typeof crypto.getRandomValues;
-  const streams = () => withStream("game", rng, () => withStream("effects", rng, () => withDefendStream("rolls", rng, () => withDefendStream("effects", rng, body))));
+  const streams = () => withStream("game", rng, () => withStream("effects", rng, body));
   try { return streams(); } finally { Math.random = realRandom; crypto.getRandomValues = realValues; }
 }
 
@@ -74,6 +67,8 @@ function plantAll(g: Game) {
   if (g.world.tile(p.x, p.y).kind === "floor") g.run.changes[`${p.x},${p.y}`] = { kind: "floor", flyer: { name: "Bat", hp: 20, attack: 5, defense: 1, tier: 5, strength: "normal", flying: true } };
 }
 function game(mode: "tower" | "delve", settings: Record<string, unknown> = {}) {
+  // Reserve the historical fixture RNG offset so board seeds remain stable.
+  stream("game")();
   const save = defaults();
   save.upgrades.delve = 1;
   Object.assign(save.settings, settings);
@@ -212,8 +207,7 @@ const BOARD_SCENES: Record<string, () => BoardScene> = {
   }),
 };
 
-/** Board scenes added since the Defend scenes: they draw after all the
- * others, since each scene's seed is its place in JOBS. */
+/** Later board scenes retain their historical fixture seeds. */
 const LATER_BOARD_SCENES: Record<string, () => BoardScene> = {
   towerFight: () => {
     const g = game("tower", { brightness: 70 });
@@ -382,170 +376,6 @@ function playBoard(name: string, seed: number, canvas: HTMLCanvasElement, grab: 
   });
 }
 
-// ── Defend ───────────────────────────────────────────────────────────────
-// The Defend board: fixed cities stepped to fixed moments (the same
-// scenarios as tests/defend-replay.test.ts), then drawn under each sky.
-
-type Levels = Record<string, number>;
-const levelsAt = (over: Levels = {}): Levels => ({ ...Object.fromEntries(UPGRADES.map((u) => [u.id, 0])), ...over });
-const maxLevels = () => levelsAt(Object.fromEntries(UPGRADES.map((u) => [u.id, u.maxLevel])));
-function cityLayout(ring: number[][], structures: [string, number, number][]) {
-  let l = defaultLayout();
-  const { tx, ty } = l.keep;
-  for (const [dx, dy] of ring) l = placeCityTile(l, tx + dx, ty + dy)!;
-  for (const [kind, dx, dy] of structures) l = placeStructure(l, kind as never, tx + dx, ty + dy)!;
-  return l;
-}
-const SQUARE = [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, -1], [-1, 1], [1, 1]];
-const WIDE = [...SQUARE, [-2, 0], [2, 0], [-2, 1], [2, 1], [-2, -1], [2, -1], [0, -2], [-1, -2], [1, -2]];
-type Scenario = { layout: () => ReturnType<typeof defaultLayout>; citySeed: number; levels: () => Levels; seed: number; smash: [number, string][] };
-const GARRISON: Scenario = {
-  layout: () => cityLayout(SQUARE, [["barracks", 1, 1], ["archerBarracks", -1, -1], ["archerTower", -1, 1], ["watchTower", 1, -1], ["cannonTower", 0, -2]]),
-  citySeed: 5, levels: levelsAt, seed: 2, smash: [[20, "house"], [21, "house"], [30, "wall"]],
-};
-const FORTRESS: Scenario = {
-  layout: () => cityLayout(WIDE, [["barracks", 1, 1], ["barracks", -2, 0], ["archerBarracks", -1, -1], ["archerBarracks", 2, 1], ["archerTower", -1, 1], ["archerTower", 0, -3], ["watchTower", 1, -1], ["cannonTower", 2, -2], ["cannonTower", -2, -2]]),
-  citySeed: 8, levels: maxLevels, seed: 9, smash: [[45, "house"], [46, "wall"], [47, "barracks"]],
-};
-const cityOf = (sc: Scenario) => generateCity(fitLayout(sc.layout()), sc.citySeed);
-const intactOf = (sim: DefendSim, kind: string) => sim.map.buildings.find((b) => b.kind === kind && sim.intact(b))!;
-/** Steps a scenario to `seconds`, then optionally drops a bomb on the
- * southernmost walking enemy so a fresh blast, scorch and dust are live. */
-/** Where to drop a scene's bomb: on the lowest ground enemy, sparing the
- * boss, bats and marked enemies (the scenes show those) and keeping the
- * blast clear of the boss and the marks; with no such enemy, on open ground
- * six cells from them. */
-function bombSpot(sim: DefendSim): Unit | undefined {
-  const reach = BOMB_RADIUS + 1;
-  const spared = sim.enemies.filter((m) => m.marked || ENEMIES[m.kind].boss);
-  const clear = (e: Unit) => !spared.some((m) => (m.x - e.x) * (m.x - e.x) + (m.y - e.y) * (m.y - e.y) < reach * reach);
-  const enemy = sim.enemies.filter((e) => !ENEMIES[e.kind].boss && !ENEMIES[e.kind].flying && clear(e)).sort((a, b) => b.y - a.y)[0];
-  if (enemy || !spared.length) return enemy;
-  const cx = spared.reduce((s, m) => s + m.x, 0) / spared.length, cy = spared.reduce((s, m) => s + m.y, 0) / spared.length;
-  const ring = [[0, 1], [1, 1], [1, 0], [1, -1], [0, -1], [-1, -1], [-1, 0], [-1, 1]].map(([dx, dy]) => ({ x: cx + dx * 6, y: cy + dy * 6 }));
-  return ring.find(clear);
-}
-
-/** A battle stepped `seconds` in, then on a second at a time (up to two
- * more minutes) until what a scene shows is there: everything in `need`
- * but the blast, and (when `bomb`) an enemy to bomb clear of what the scene
- * shows. Then the bomb, and tenths of a second (up to two) until all of
- * `need` holds, so a scene still finds what it shows when the city changes. */
-function battle(sc: Scenario, seconds: number, bomb: boolean, need: string[] = []) {
-  const sim = new DefendSim(cityOf(sc), sc.levels() as never, sc.seed);
-  const before = need.filter((n) => n !== "boom" && n !== "scorch");
-  const holds = (list: string[]) => list.every((n) => has[n](sim));
-  let t = 1;
-  for (; t <= seconds + 120; t++) {
-    for (let f = 0; f < 4; f++) sim.update(0.25);
-    for (const [at, kind] of sc.smash) if (at === t) sim.damageBuilding(intactOf(sim, kind).id, 1e9);
-    if (t >= seconds && holds(before) && (!bomb || bombSpot(sim))) break;
-  }
-  if (t > seconds + 120) throw Error(`${sc.seed}: the battle never showed ${before.filter((n) => !has[n](sim)).join(", ")}`);
-  if (!bomb) return sim;
-  const at = bombSpot(sim)!;
-  sim.dropBomb(at.x, at.y);
-  for (let k = 0; k < 20; k++) {
-    sim.update(0.1);
-    if (holds(need)) return sim;
-  }
-  throw Error(`${sc.seed}: after the bomb the battle lacks ${need.filter((n) => !has[n](sim)).join(", ")}`);
-}
-const has: Record<string, (s: DefendSim) => boolean> = {
-  boom: (s) => s.effects.some((e) => e.kind === "boom"), scorch: (s) => s.scorches.length > 0, shell: (s) => s.shells.length > 0,
-  arrow: (s) => s.arrows.length > 0, rubble: (s) => s.map.buildings.some((b) => !s.intact(b)),
-  rebuilt: (s) => s.built.some((b, id) => b > 0 && b < s.map.buildings[id].cells.length),
-  boss: (s) => s.enemies.some((e) => ENEMIES[e.kind].boss), marked: (s) => s.enemies.some((e) => e.marked),
-  bat: (s) => s.enemies.some((e) => ENEMIES[e.kind].flying), working: (s) => s.civilians.some((c) => c.state === "working"),
-  archer: (s) => s.soldiers.some((u) => u.kind === "archer"), sword: (s) => s.soldiers.some((u) => u.kind === "sword"),
-};
-type Unit = { x: number; y: number };
-const enemyWhere = (want: (d: (typeof ENEMIES)[keyof typeof ENEMIES]) => boolean) => (sim: DefendSim): Unit => sim.enemies.find((e) => want(ENEMIES[e.kind]))!;
-
-type DefendScene = {
-  map: ReturnType<typeof cityOf>; sim: DefendSim | null; overlay: unknown; zoom?: number; focus?: (sim: DefendSim) => Unit;
-  opts: Record<string, unknown>; need?: string[];
-};
-const DEFEND_SCENES: Record<string, () => DefendScene> = {
-  // Building mode: no battle, the tile grid, legal tiles, a hovered tile,
-  // a structure ghost and an aimed bomb.
-  defendEdit: () => {
-    const layout = GARRISON.layout(), map = cityOf(GARRISON);
-    const legal = new Set<string>();
-    for (let ty = 0; ty < TILES_H; ty++) for (let tx = 0; tx < TILES_W; tx++) if (placeCityTile(layout, tx, ty)) legal.add(tileKey(tx, ty));
-    const hover = [...legal][0], [hx, hy] = hover.split(",").map(Number);
-    return {
-      map, sim: null,
-      overlay: { legal, hover, ghost: { rect: { x: hx * SUB + 2, y: hy * SUB + 1, w: 3, h: 4 }, kind: "barracks" }, bomb: { x: 30, y: 50, r: 2.5 } },
-      opts: { grid: true, weather: null, night: 0, reduceMotion: false },
-    };
-  },
-  // Early rain battle: rubble, rebuilding, cannon shells, a fresh blast,
-  // plus a hurt tower (health bar), a hurt house, and struck units.
-  defendRain: () => {
-    const sim = battle(GARRISON, 30, true);
-    const tower = intactOf(sim, "archerTower"), house = intactOf(sim, "house");
-    sim.damageBuilding(tower.id, sim.maxHp[tower.id] * 0.6);
-    sim.damageBuilding(house.id, sim.maxHp[house.id] * 0.4);
-    const struck = [sim.soldiers[0], sim.civilians[0], sim.enemies[0]].filter(Boolean);
-    if (!struck.length) throw Error("defendRain: no unit to strike");
-    for (const u of struck) u.flash = 0.1;
-    return { map: sim.map, sim, overlay: null, opts: { grid: false, weather: { rain: true }, night: 0, reduceMotion: false }, need: ["boom", "scorch", "shell", "rubble", "rebuilt", "working", "archer", "sword"] };
-  },
-  // The wave-10 boss at night and the fight at the wall, zoomed in (the
-  // city layer repainted at 2×).
-  defendNight: () => {
-    const need = ["boom", "scorch", "arrow", "boss", "marked", "rebuilt", "archer", "sword"];
-    const sim = battle(FORTRESS, 400, true, need);
-    const boss = enemyWhere((d) => !!d.boss)(sim), marked = sim.enemies.find((e) => e.marked)!;
-    const focus = () => ({ x: (boss.x + marked.x) / 2, y: (boss.y + marked.y) / 2 });
-    return { map: sim.map, sim, overlay: null, zoom: 1.5, focus, opts: { grid: false, weather: { rain: false }, night: 0.85, reduceMotion: false }, need };
-  },
-  // A stormy night, reduced motion, zoomed right in (3×) on a bat.
-  defendStorm: () => {
-    const sim = battle(FORTRESS, 456, false);
-    return { map: sim.map, sim, overlay: null, zoom: 3, focus: enemyWhere((d) => !!d.flying), opts: { grid: false, weather: { rain: true }, night: 1, reduceMotion: true }, need: ["bat", "arrow"] };
-  },
-};
-
-/** A Defend scene on `canvas`: frames until every light has baked, then a
- * later frame (the flag has waved, torches flickered, rain fallen). */
-function playDefend(name: string, seed: number, canvas: HTMLCanvasElement, grab: Grab) {
-  seeded(seed, () => {
-    const scene = DEFEND_SCENES[name]();
-    for (const need of scene.need ?? []) if (!has[need](scene.sim!)) throw Error(`${name}: no ${need} in the scene`);
-    const r = new DefendRenderer(canvas);
-    r.resize(504);
-    if (scene.zoom) {
-      // Zooming about a point keeps it fixed, so zoom twice: about the
-      // canvas centre, then pan the focus there.
-      const f = scene.focus!(scene.sim!), box = canvas.getBoundingClientRect();
-      r.zoomAt(box.left + box.width / 2, box.top + box.height / 2, scene.zoom);
-      r.panBy(box.width / 2 - ((f.x / 63) * box.width * scene.zoom + r.cam.x), box.height / 2 - ((f.y / 91) * box.height * scene.zoom + r.cam.y));
-    }
-    const draw = (now: number) => r.draw(scene.map, scene.sim, scene.overlay as never, { ...scene.opts, now } as never);
-    for (let t = 1000; t <= 2000; t += 50) draw(t);
-    grab("settled");
-    for (let t = 2050; t <= 2600; t += 50) draw(t);
-    grab("later");
-  });
-}
-
-/** Every palette icon side by side on `sheet` (8 × 48 by 48 pixels). */
-function playIcons(_name: string, _seed: number, sheet: HTMLCanvasElement, grab: Grab) {
-  const items = ["cityTile", "bomb", "keep", "barracks", "archerBarracks", "archerTower", "cannonTower", "watchTower"];
-  sheet.width = items.length * 48;
-  sheet.height = 48;
-  const s = sheet.getContext("2d")!;
-  items.forEach((item, i) => {
-    const icon = document.createElement("canvas");
-    icon.width = icon.height = 48;
-    paintIcon(icon, item as never);
-    s.drawImage(icon, i * 48, 0);
-  });
-  grab("sheet");
-}
-
 /** The trial's staging room, elemental, crossing beams and burned wall face. */
 function playProvingGrounds(_name: string, _seed: number, canvas: HTMLCanvasElement, grab: Grab) {
   const state = startTrial(game("tower").run.player), renderer = new TrialRenderer(canvas);
@@ -604,14 +434,8 @@ function playProvingGrounds(_name: string, _seed: number, canvas: HTMLCanvasElem
   renderer.draw(kit,21000,0,true,{...options,destination:{x:13,y:4}});grab("manualDestination");
 }
 
-/** Which canvas a job draws on: the 408 px board, the Defend board (which
- * sizes itself), or a fresh sheet for the icons. */
-export type CanvasKind = "board" | "defend" | "icons";
-export type Job = { name: string; seed: number; canvas: CanvasKind; play: (canvas: HTMLCanvasElement, grab: Grab) => void };
-
-/** Whether the Defend scenes are drawn: not while Defend isn't being tested
- * (`npm run test:defend` runs its Node tests on demand). */
-const DEFEND = false;
+/** Each job draws the 408-pixel board. */
+export type Job = { name: string; seed: number; canvas: "board"; play: (canvas: HTMLCanvasElement, grab: Grab) => void };
 
 function playKeymaster(_name:string,_seed:number,canvas:HTMLCanvasElement,grab:Grab) {
   const s=startTrial({maxHp:1000,attack:10,defense:0},"manual",[],12,1,"keymaster");
@@ -664,19 +488,15 @@ function playTrialCamera(_name:string,_seed:number,canvas:HTMLCanvasElement,grab
   renderer.draw(s,6066,0,true);grab("reducedMotion");
 }
 
-/** Every scene, in order, each with its own seed. The Defend scenes keep
- * their places while off, so the later board scenes keep their seeds. */
+/** Every scene retains its seed, including gaps left by retired scenes. */
 export const JOBS: Job[] = [
   ...Object.keys(BOARD_SCENES).map((name) => ({ name, canvas: "board" as const, run: playBoard })),
-  ...Object.keys(DEFEND_SCENES).map((name) => ({ name, canvas: "defend" as const, run: playDefend })),
-  { name: "defendIcons", canvas: "icons" as const, run: playIcons },
   ...Object.keys(LATER_BOARD_SCENES).map((name) => ({ name, canvas: "board" as const, run: playBoard })),
   { name: "provingGrounds", canvas: "board" as const, run: playProvingGrounds },
   { name: "keymaster", canvas: "board" as const, run: playKeymaster },
   { name: "trialCamera", canvas: "board" as const, run: playTrialCamera },
 ].map(({ name, canvas, run }, i) => {
   // Keep the fourth seed reserved for the retired sprite-opt-out scene.
-  const seed = i + 1 + (i >= 3 ? 1 : 0);
+  const seed = i + 1 + (i >= 3 ? 1 : 0) + (i >= Object.keys(BOARD_SCENES).length ? 5 : 0);
   return { name, seed, canvas, play: (cv: HTMLCanvasElement, grab: Grab) => run(name, seed, cv, grab) };
-})
-  .filter((job) => DEFEND || job.canvas === "board");
+});

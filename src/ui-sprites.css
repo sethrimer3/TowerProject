@@ -29,12 +29,11 @@ html.ui-sprites {
 }
 
 /* Keep labels as live text, including inputs and headings with their own font.
-   Badge glyphs and the paused Defend page retain their existing typography. */
+   Badge glyphs retain their existing typography. */
 html.ui-sprites:not(#_),
-html.ui-sprites :not(:where(svg, svg *, .badge-glyph, .badge-glyph *, #defend, #defend *)):not(#_) {
+html.ui-sprites :not(:where(svg, svg *, .badge-glyph, .badge-glyph *)):not(#_) {
   font-family: "Tower Pixel", monospace;
 }
-html.ui-sprites #defend { font-family: Cinzel, Georgia, serif; }
 
 html.ui-sprites body:not(#_) {
   background: #10151c url("../public/assets/ui/frames/surface.png") repeat;
@@ -50,7 +49,7 @@ html.ui-sprites :is(.stats, .card, .upgrade, .shop, .theme-card, .weekly,
   .mission, .event-boost, .archivist, .research, .pull-box, .eq-loadout,
   .equip-materials, .training-boost,
   .tournament-standing, .tournament-tickets, .badge-box, .deck-reserve,
-  .defend-palette, .card-reveal, .badge-reveal, .skill-tree, .goals-stage,
+  .card-reveal, .badge-reveal, .skill-tree, .goals-stage,
   .training-box, label.setting, .inspect-box, .run-menu-frame, .inspection):not(#_) {
   border-color: transparent;
   border-style: solid;
@@ -101,7 +100,7 @@ html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-til
 }
 html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-tile, .deck-add, .deck-card, .deck-entry-art,
   .card-reveal-card, .forest-sign, .forest-building, .mission-bar, .weekly-box, .badge-pick, .deck-link-toggle, .deck-hand-toggle, .deck-switch, .hand-kinds button,
-  #shrine-bar, #forest-sign, #defend *, .ug-node, .ct-row-main, #currencies-open, #auto-speed .speed-arrow)):not(#_) {
+  #shrine-bar, #forest-sign, .ug-node, .ct-row-main, #currencies-open, #auto-speed .speed-arrow)):not(#_) {
   border-width: 6px;
   border-style: solid;
   border-image-width: 6px;
@@ -187,7 +186,7 @@ html.ui-sprites :is(select, input[type="text"], input[type="search"],
   image-rendering: pixelated;
 }
 html.ui-sprites select option { background: #1b2430; color: #eee0b7; }
-html.ui-sprites :is(select, input[type="text"], input[type="search"], input[type="number"]):not(:where(#defend *)):not(#_) {
+html.ui-sprites :is(select, input[type="text"], input[type="search"], input[type="number"]):not(#_) {
   border-width: 6px;
   border-style: solid;
   border-image-width: 6px;

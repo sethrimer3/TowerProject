@@ -57,12 +57,11 @@ function plant(g: Game, rng: () => number) {
 
 function observe(g: Game, action: unknown, result: unknown, preview: unknown) {
   const r = g.run;
-  const materials = Object.values(g.save.materials).reduce((a, b) => a + b, 0);
   return canonical({
     action, result, preview, message: g.message, decisions: g.delvePlan.decisions, fallen: g.fallen,
     player: r.player, kills: r.kills, treasures: r.treasures, height: r.height, floor: r.floor,
     outside: !!r.outside, ...(g.mode === "tower" ? { damaged: r.damaged } : {}),
-    gold: g.save.gold, xp: g.save.xp, materials, looted: Object.keys(g.save[g.mode].lootedTiles).length,
+    gold: g.save.gold, xp: g.save.xp, looted: Object.keys(g.save[g.mode].lootedTiles).length,
     history: g.save[g.mode].history.length, changes: Object.keys(r.changes).length,
   });
 }

@@ -21,12 +21,12 @@ export const displayedProgress = (value: number, outside = false) => outside ? 0
 /** `word` with its first letter in capitals. */
 export const capitalized = (word: string) => word[0].toUpperCase() + word.slice(1);
 
-export type UiSprite = "tower" | "delve" | "defend" | "gear" | "upgrades" | "settings" | "health" | "attack" | "defense" | "undo" | "automove" | "revive" | "log" | "arrow-up" | "arrow-down" | "arrow-left" | "arrow-right" | "gold";
+export type UiSprite = "tower" | "delve" | "gear" | "upgrades" | "settings" | "health" | "attack" | "defense" | "undo" | "automove" | "revive" | "log" | "arrow-up" | "arrow-down" | "arrow-left" | "arrow-right" | "gold";
 export const UI_ASSET_BASE = (import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? "/";
 /** A framed native card face with a live name. */
 export const cardArt = (id: CardId, alt: string) =>
   pngIcon(`card-${id}`, "card-art sprite-card", alt) + `<small class="sprite-card-label">${CARDS[id].name}</small>`;
-const UI_KIT: Record<UiSprite, string> = { tower: "tower", delve: "cave", defend: "keep", gear: "helmet", upgrades: "shard", settings: "cog", health: "heart", attack: "sword", defense: "shield", undo: "undo", automove: "boots", revive: "ui-revive", log: "book", gold: "gold", "arrow-up": "arrow-up", "arrow-down": "arrow-down", "arrow-left": "arrow-left", "arrow-right": "arrow-right" };
+const UI_KIT: Record<UiSprite, string> = { tower: "tower", delve: "cave", gear: "helmet", upgrades: "shard", settings: "cog", health: "heart", attack: "sword", defense: "shield", undo: "undo", automove: "boots", revive: "ui-revive", log: "book", gold: "gold", "arrow-up": "arrow-up", "arrow-down": "arrow-down", "arrow-left": "arrow-left", "arrow-right": "arrow-right" };
 export const uiSprite = (name: UiSprite, className = "ui-sprite") =>
   pngIcon(name === "gold" && className.includes("silver-sprite") ? "silver" : UI_KIT[name], className);
 /** A golden arrow pointing up: training points, earned each level. */
@@ -160,7 +160,6 @@ export const NAV_TABS = [
   { id: "deck", name: "Deck", icon: DECK_ICON },
   { id: "gear", name: "Gear", icon: uiSprite("gear") },
   { id: "research", name: "Research", icon: RESEARCH_ICON },
-  { id: "defend", name: "Defend", icon: uiSprite("defend") },
   { id: "shop", name: "Shop", icon: CART_ICON },
 ] as const;
 /** A pixel-art hand pointing up, row by row: `#` outline, `w` skin. */

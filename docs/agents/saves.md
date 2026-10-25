@@ -65,3 +65,7 @@ Both known trial IDs decode independent clear/reward records under `trialAccess.
 Keymaster payloads now record `layout:2` for the scattered wall cover.
 Attempts without the marker validate against the previous open arena, then move newly blocked actors, key piles and teleport origins to nearest legal floor without discarding stats, training, turns, keys or door receipts.
 Current-layout wall occupants and unknown layout markers are rejected; migrated attempts round-trip without moving again, and ordinary mode layouts and Light Elemental saves are unchanged.
+
+Defend and its obsolete top-level metal inventory have been retired.
+The decoder ignores old `defend` and `materials` fields while retaining all supported Tower, Delve, Equipment, trial, currency and progression state; current saves and exported profiles omit them.
+Older profile files may still contain the removed section, which imports ignore without parsing its city data.

@@ -1,5 +1,4 @@
 // Real Shrine offers, picks and management. Starts its own server;
-// Tower-only Shrines leave Delve and Defend untouched.
 import assert from "node:assert/strict";
 import { mkdirSync } from "node:fs";
 import { createServer } from "vite";

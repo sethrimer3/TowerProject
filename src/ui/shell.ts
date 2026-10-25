@@ -67,7 +67,7 @@ const CINEMATIC = `<button id="cinematic-gear" class="cinematic-gear" aria-label
  * pages, navigation and the shared dialog, with sprite icons in place of
  * the text glyphs. */
 export function buildShell(app: HTMLElement) {
-  app.innerHTML = `<main class="shell">${CURRENCIES}${STATS}${BOARD}<section id="deck" class="page"></section><section id="defend" class="page"></section><section id="gear" class="page"></section><section id="upgrades" class="page"></section><section id="research" class="page"></section><section id="settings" class="page"></section><section id="shop" class="page"></section><section id="goals" class="page"></section><section id="tournament" class="page"></section><section id="missions" class="page"></section><section id="events" class="page"></section><section id="relics" class="page"></section><section id="shrines" class="page"></section>${NAV}${TRAINING_BAR}${CINEMATIC}</main><dialog id="modal"></dialog>`;
+  app.innerHTML = `<main class="shell">${CURRENCIES}${STATS}${BOARD}<section id="deck" class="page"></section><section id="gear" class="page"></section><section id="upgrades" class="page"></section><section id="research" class="page"></section><section id="settings" class="page"></section><section id="shop" class="page"></section><section id="goals" class="page"></section><section id="tournament" class="page"></section><section id="missions" class="page"></section><section id="events" class="page"></section><section id="relics" class="page"></section><section id="shrines" class="page"></section>${NAV}${TRAINING_BAR}${CINEMATIC}</main><dialog id="modal"></dialog>`;
   arrangeHud();
   replaceGlyphs();
 }

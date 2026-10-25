@@ -59,7 +59,7 @@ The forest's menu has Shrine Boons (`#shrines-button`) once Shrines are research
 With the optional shared PNG kit active, `ui/boon-icon.ts` and `sprites/boons.ts` supply one native 24-pixel subject per boon in offers, taken rows, first-choice preview, bans and ranking.
 The twenty subjects and four control symbols are exported from `assets/game-sprites/shrines.png` by `tools/prepare-shrine-sprites.mjs`; choices and rows reuse the normal, danger and selected kit frames.
 The count diamond and bar fill use matching PNGs, retaining live counts and progress; other UI themes, Sprites off and failed symbol requests keep the text-only interface.
-`tests/shrine-sprites-browser.mjs` checks offers, picks, save/reload, first choice, bans, grip/arrow reordering and theme/fallback behavior in actual phone and desktop layouts without entering Defend.
+`tests/shrine-sprites-browser.mjs` checks offers, picks, save/reload, first choice, bans, grip/arrow reordering and theme/fallback behavior in actual phone and desktop layouts.
 `tests/ui-golden.mjs` includes Shrine management, offers and taken-boon fixtures after the existing fixtures to preserve their seeds.
 
 **Tests.** `tests/shrines.test.ts`.

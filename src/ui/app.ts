@@ -3,7 +3,7 @@ import type { ConfirmPrompt } from "./dialogs.ts";
 
 /** Every page. Tower and Delve both show the board (the tab bar's one
  * mode button, `board`, opens the active mode's). */
-export type Tab = "tower" | "delve" | "deck" | "defend" | "gear" | "upgrades" | "research" | "settings" | "shop" | "goals" | "tournament" | "missions" | "events" | "relics" | "shrines";
+export type Tab = "tower" | "delve" | "deck" | "gear" | "upgrades" | "research" | "settings" | "shop" | "goals" | "tournament" | "missions" | "events" | "relics" | "shrines";
 export const isBoard = (id: string): id is "tower" | "delve" => id === "tower" || id === "delve";
 
 /** The game as pages see it: its state to read (a page may change a setting
