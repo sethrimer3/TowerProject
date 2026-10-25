@@ -2,7 +2,7 @@
 
 ## Archivists
 
-**Archives** (5 Inspiration, after Larger Hand; Into the depths, 3 Inspiration, follows it) adds an Archives tab to the Research page, after Training: research that lasts between runs, paid in Gold and real time.
+**Archives** (5 Inspiration, after Critical; Into the depths, 3 Inspiration, follows it) adds an Archives tab to the Research page, after Training: research that lasts between runs, paid in Gold and real time.
 An archivist works on one project at a time, a level at a time: pay the level's Gold, and it completes on the clock, whether the game is open, on another page, or closed.
 A busy archivist shows the time its research has left down to the second (*7h 41m 33s*), ticking each second.
 You start with one archivist and can hire up to four more for Gems (100, 400, 1,400 and 3,000).
