@@ -8,24 +8,23 @@ import { UPGRADES, cost, type UpgradeId } from "../src/progression/upgrades.ts";
 import { RESEARCH } from "../src/progression/archives.ts";
 import { GOLD_SHOP } from "../src/economy/provisions.ts";
 import { provisionOpen } from "../src/progression/loadout.ts";
-test("fresh progression gates Delve, currencies, Courage root, and Legacy", () => {
+test("fresh progression gates Delve, currencies, Breakthrough root, and Legacy", () => {
   const g = new Game(defaults());
   g.save.tower.inspiration = 100;
-  g.save.delve.courage = 100;
-  g.switchMode("delve");
-  assert.equal(g.mode, "tower");
+  g.save.breakthrough = 100;
+  assert.equal(g.canSwapForest, false, "the Delve waits on a tournament");
   assert.equal(g.skills.buy("moveSpeed"), false);
-  assert.equal(g.skills.buy("delve"), false);
-  for (const id of ["cardDoorKey", "cardEnemy", "autoClimb", "combatStance", "buildout", "trainers", "largerHand", "shroud", "critical", "archives", "delve"] as const) assert.ok(g.skills.buy(id));
-  assert.equal(g.save.delve.courage, 100);
+  assert.equal(g.skills.buy("breakthrough"), false);
+  for (const id of ["cardDoorKey", "cardEnemy", "autoClimb", "combatStance", "buildout", "trainers", "largerHand", "shroud", "critical", "archives", "breakthrough"] as const) assert.ok(g.skills.buy(id));
+  assert.equal(g.save.breakthrough, 100);
   g.switchMode("delve");
   assert.equal(g.mode, "delve");
   assert.equal(g.skills.buy("pathfinder"), false);
   assert.ok(g.skills.buy("moveSpeed"));
-  assert.equal(g.save.delve.courage, 99);
+  assert.equal(g.save.breakthrough, 99);
   assert.equal(g.showsRoutes, false, "no route preview before Pathfinder");
   assert.ok(g.skills.buy("pathfinder"));
-  assert.equal(g.save.delve.courage, 98, "Pathfinder costs 1 Courage");
+  assert.equal(g.save.breakthrough, 98, "Pathfinder costs 1 Breakthrough");
   assert.ok(g.showsRoutes);
   assert.equal(g.skills.buy("quality"), false);
   // Movement Speed no longer opens Wayfinding: nothing does yet.
@@ -37,10 +36,10 @@ test("fresh progression gates Delve, currencies, Courage root, and Legacy", () =
   assert.equal(restored.mode, "delve");
   assert.equal(TREES[1].nodes[0].id, "moveSpeed");
   assert.ok(TREES[0].nodes.every(n => UPGRADES.find(u => u.id === n.id)!.currency === "inspiration"));
-  assert.deepEqual(TREES.map(tree => tree.id), ["inspiration", "courage", "wayfinding", "legacy", "wisdom", "renown"]);
+  assert.deepEqual(TREES.map(tree => tree.id), ["inspiration", "breakthrough", "wayfinding", "legacy", "wisdom", "renown"]);
   assert.ok(TREES.slice(3).every(tree => tree.nodes.length >= 3));
 });
-test("Shroud follows Trainers and Larger Hand, ahead of Critical; Greater Heal, then Recovery, Regen Research and Find Potion, come after Into the depths, past the Archives, whose research they open", () => {
+test("Shroud follows Trainers and Larger Hand, ahead of Critical; Greater Heal, then Recovery, Regen Research and Find Potion, come after Breakthrough, past the Archives, whose research they open", () => {
   const g = new Game(defaults());
   g.save.tower.inspiration = 1000;
   for (const id of ["cardDoorKey", "cardEnemy", "autoClimb", "combatStance", "buildout"] as const) assert.ok(g.skills.buy(id));
@@ -53,8 +52,8 @@ test("Shroud follows Trainers and Larger Hand, ahead of Critical; Greater Heal, 
   assert.ok(g.skills.buy("shroud"));
   assert.equal(before - g.save.tower.inspiration, 2);
   assert.ok(g.skills.buy("critical") && g.skills.buy("archives"));
-  assert.equal(g.skills.buy("greaterHeal"), false, "Into the depths comes first");
-  assert.ok(g.skills.buy("delve"));
+  assert.equal(g.skills.buy("greaterHeal"), false, "Breakthrough comes first");
+  assert.ok(g.skills.buy("breakthrough"));
   assert.equal(g.skills.buy("recovery"), false, "then Greater Heal");
   assert.equal(g.skills.buy("regenResearch"), false, "Greater Heal comes first");
   before = g.save.tower.inspiration;
@@ -73,14 +72,14 @@ test("Shroud follows Trainers and Larger Hand, ahead of Critical; Greater Heal, 
   const at = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;
   assert.deepEqual([at("shroud").x, at("shroud").y, at("shroud").requires], [50, 138, ["largerHand"]], "Shroud sits between Larger Hand and Critical");
   assert.deepEqual([at("critical").y, at("critical").requires], [156, ["shroud"]]);
-  assert.deepEqual([at("greaterHeal").x, at("greaterHeal").y, at("greaterHeal").requires], [80, 214, ["delve"]], "Greater Heal sits a row under Into the depths, above Recovery and Regen Research");
+  assert.deepEqual([at("greaterHeal").x, at("greaterHeal").y, at("greaterHeal").requires], [80, 214, ["breakthrough"]], "Greater Heal sits a row under Breakthrough, above Recovery and Regen Research");
   assert.deepEqual([at("recovery").x, at("recovery").y, at("recovery").requires], [70, 232, ["greaterHeal"]]);
   assert.deepEqual([at("regenResearch").x, at("regenResearch").y, at("regenResearch").requires], [90, 232, ["greaterHeal"]], "Regen Research sits beside Recovery");
   assert.deepEqual([at("parry").x, at("parry").y, at("parry").requires], [90, 250, ["regenResearch"]], "Parry sits below Regen Research");
   assert.deepEqual([at("revive").x, at("revive").y, at("revive").requires], [90, 268, ["parry"]], "Revive sits below Parry");
   assert.deepEqual([at("findPotion").x, at("findPotion").y, at("findPotion").requires], [70, 250, ["recovery"]], "Find Potion sits below Recovery");
   assert.deepEqual([at("buyQuantity").x, at("buyQuantity").y, at("buyQuantity").requires], [50, 232, ["lifesteal"]], "Buy Quantity sits under Lifesteal");
-  assert.deepEqual([at("lifesteal").x, at("lifesteal").y, at("lifesteal").requires], [50, 214, ["delve"]], "Lifesteal sits where GK Siphon did, under Into the depths");
+  assert.deepEqual([at("lifesteal").x, at("lifesteal").y, at("lifesteal").requires], [50, 214, ["breakthrough"]], "Lifesteal sits where GK Siphon did, under Breakthrough");
   assert.deepEqual([at("thorns").x, at("thorns").y, at("thorns").requires], [50, 250, ["buyQuantity"]], "Thorns sits under Buy Quantity");
   assert.deepEqual([at("keySiphon").x, at("keySiphon").y, at("keySiphon").requires], [50, 268, ["thorns"]], "GK Siphon sits under Thorns");
   assert.deepEqual([at("manualHand").x, at("manualHand").y, at("manualHand").requires], [50, 295, ["keySiphon"]], "Manual Hand sits under GK Siphon");
@@ -123,13 +122,13 @@ test("the hand's skills run Buildout, Trainers, Larger Hand, Shroud, Critical to
 test("Trainers (1) follows Buildout, Blue Key (2) the Archives, and Extra Key (1) Movement Speed", () => {
   const node = (id: UpgradeId) => TREES.flatMap((t) => t.nodes.map((n) => ({ ...n, tree: t.id }))).find((n) => n.id === id)!;
   assert.deepEqual(["trainers", "cardBlueKey", "extraKey"].map((id) => [node(id as UpgradeId).tree, node(id as UpgradeId).requires, cost(id as UpgradeId, 0)]),
-    [["inspiration", ["buildout"], 1], ["inspiration", ["archives"], 2], ["courage", ["moveSpeed"], 1]]);
+    [["inspiration", ["buildout"], 1], ["inspiration", ["archives"], 2], ["breakthrough", ["moveSpeed"], 1]]);
   assert.equal(UPGRADES.find((u) => u.id === "cardBlueKey")!.card, "blueKey");
   assert.ok(!TREES.some((t) => t.nodes.some((n) => (n.id as string) === "autoPersist")), "Extra Key takes Steadfast wayfinder's place");
 });
 test("each skill in a tree of unlocks is bought once", () => {
   const unlockTrees = TREES.filter((t) => t.unlocks);
-  assert.deepEqual(unlockTrees.map((t) => t.id), ["inspiration"]);
+  assert.deepEqual(unlockTrees.map((t) => t.id), ["inspiration", "breakthrough"]);
   for (const tree of unlockTrees)
     for (const n of tree.nodes) assert.equal(UPGRADES.find((u) => u.id === n.id)!.max, 1, n.id);
 });
@@ -139,7 +138,7 @@ test("a tree taller than its view places its nodes on a taller map", () => {
   assert.equal(treeHeight(inspiration), 588);
   assert.ok(inspiration.nodes.every((n) => n.y > 0 && n.y < treeHeight(inspiration)), "every node on the map");
   assert.equal(mapNodes(inspiration).find((n) => n.id === "recovery")!.y, (232 * 100) / 588);
-  assert.equal(treeHeight(TREES.find((t) => t.id === "courage")!), 198);
+  assert.equal(treeHeight(TREES.find((t) => t.id === "breakthrough")!), 198);
   assert.ok(TREES.slice(2).every((t) => treeHeight(t) === 100 && mapNodes(t).every((n, i) => n.y === t.nodes[i].y)), "other trees fit one view");
 });
 test("Movement Speed research lets the run's arrows go one step a second faster a level", () => {
@@ -156,35 +155,35 @@ test("Movement Speed research lets the run's arrows go one step a second faster 
   assert.deepEqual(RESEARCH.moveSpeed.levels, RESEARCH.undoCount.levels.slice(0, 6).map((l) => ({ ...l, effect: { ...l.effect, target: "moveSpeed" } })));
   assert.deepEqual(RESEARCH.moveSpeed.requires, [{ upgrade: "moveSpeed" }]);
 });
-test("Inspiration tree: Heal follows Regen, Critical leads to the Archives (5), and Into the Depths follows them", () => {
+test("Inspiration tree: Heal follows Regen, Critical leads to the Archives (5), and Breakthrough follows them", () => {
   const node = (id: UpgradeId) => TREES[0].nodes.find((n) => n.id === id)!;
   assert.deepEqual(node("cardHeal").requires, ["regen"]);
   assert.deepEqual([node("archives").x, node("archives").y, node("archives").requires], [50, 174, ["critical"]]);
-  assert.deepEqual([node("delve").x, node("delve").y, node("delve").requires], [50, 196, ["archives"]]);
+  assert.deepEqual([node("breakthrough").x, node("breakthrough").y, node("breakthrough").requires], [50, 196, ["archives"]]);
   assert.deepEqual(node("inspirationUndos").requires, ["archives"]);
   assert.equal(cost("archives", 0), 5);
   const g = new Game(defaults());
   g.save.tower.inspiration = 100;
-  for (const id of ["cardDoorKey", "cardEnemy", "autoClimb", "combatStance", "buildout", "trainers", "largerHand", "shroud", "critical", "archives", "delve"] as const) assert.ok(g.skills.buy(id), id);
+  for (const id of ["cardDoorKey", "cardEnemy", "autoClimb", "combatStance", "buildout", "trainers", "largerHand", "shroud", "critical", "archives", "breakthrough"] as const) assert.ok(g.skills.buy(id), id);
   assert.ok(!g.save.upgrades.cardHeal);
 });
-test("Bombs (5 Courage) takes Focus's place in the Courage tree, which is gone with Refocus, and opens the Bomb provision", () => {
-  const courage = TREES.find((t) => t.id === "courage")!;
-  const bombs = courage.nodes.find((n) => n.id === "bombs")!;
+test("Bombs (5 Breakthrough) takes Focus's place in the Breakthrough tree, which is gone with Refocus, and opens the Bomb provision", () => {
+  const breakthrough = TREES.find((t) => t.id === "breakthrough")!;
+  const bombs = breakthrough.nodes.find((n) => n.id === "bombs")!;
   assert.deepEqual([bombs.x, bombs.y, bombs.requires], [50, 34, ["moveSpeed"]]);
   assert.ok(!TREES.some((t) => t.nodes.some((n) => ["focus", "refocus"].includes(n.id))), "Focus and Refocus are gone");
   assert.ok(!UPGRADES.some((u) => ["attack", "focus", "refocus"].includes(u.id)), "Tempered Edge, Focus and Refocus are gone");
-  assert.deepEqual([UPGRADES.find((u) => u.id === "bombs")!.currency, cost("bombs", 0)], ["courage", 5]);
+  assert.deepEqual([UPGRADES.find((u) => u.id === "bombs")!.currency, cost("bombs", 0)], ["breakthrough", 5]);
   assert.equal(GOLD_SHOP.find((p) => p.id === "bomb")!.requires, "bombs");
   const save = defaults();
   assert.equal(provisionOpen(save, "bomb"), false, "no Bombs on sale before the skill");
   save.upgrades.bombs = 1;
   assert.ok(provisionOpen(save, "bomb"));
 });
-test("Echoes of time leads nowhere; the research skills (10 Courage each) take An enduring legacy's place under Bombs", () => {
-  const courage = TREES.find((t) => t.id === "courage")!;
-  const at = (id: string) => courage.nodes.find((n) => n.id === id)!;
-  assert.ok(!courage.nodes.some((n) => n.requires.includes("undos")), "nothing below Echoes of time");
+test("Echoes of time leads nowhere; the research skills (10 Breakthrough each) take An enduring legacy's place under Bombs", () => {
+  const breakthrough = TREES.find((t) => t.id === "breakthrough")!;
+  const at = (id: string) => breakthrough.nodes.find((n) => n.id === id)!;
+  assert.ok(!breakthrough.nodes.some((n) => n.requires.includes("undos")), "nothing below Echoes of time");
   assert.ok(!TREES.some((t) => t.nodes.some((n) => n.id === "legacy")), "An enduring legacy is no node");
   assert.deepEqual([at("findYellowKey").x, at("findYellowKey").y, at("findYellowKey").requires], [50, 87, ["bombs"]]);
   assert.deepEqual(at("keyEfficiency").requires, ["findYellowKey"]);
@@ -193,7 +192,7 @@ test("Echoes of time leads nowhere; the research skills (10 Courage each) take A
   assert.deepEqual([at("mug").x > at("interest").x, at("mug").requires], [true, ["interest"]]);
   for (const id of ["findYellowKey", "keyEfficiency", "interest", "maxInterest", "mug"] as const) {
     const row = UPGRADES.find((u) => u.id === id)!;
-    assert.deepEqual([row.currency, row.max, cost(id, 0)], ["courage", 1, 10], id);
+    assert.deepEqual([row.currency, row.max, cost(id, 0)], ["breakthrough", 1, 10], id);
   }
   assert.deepEqual([UPGRADES.find((u) => u.id === "undos")!.max, cost("undos", 0)], [1, 5]);
 });
@@ -202,7 +201,7 @@ test("Faster Trainers sits right of the Archives, off them, costs 2 and opens it
   const node = at("fasterTrainers");
   assert.deepEqual([node.x, node.y, node.requires], [80, 174, ["archives"]]);
   assert.deepEqual([at("cardBlueKey").x, at("cardBlueKey").y], [20, 174], "Blue Key sits below DEF Up");
-  assert.deepEqual([at("pocketMoney").x, at("pocketMoney").y, at("pocketMoney").requires], [20, 214, ["delve"]], "Pocket Money follows Into the depths");
+  assert.deepEqual([at("pocketMoney").x, at("pocketMoney").y, at("pocketMoney").requires], [20, 214, ["breakthrough"]], "Pocket Money follows Breakthrough");
   assert.deepEqual([at("spareChange").x, at("spareChange").y, at("spareChange").requires], [20, 232, ["pocketMoney"]], "Spare Change follows Pocket Money");
   assert.equal(cost("fasterTrainers", 0), 2);
   assert.deepEqual(RESEARCH.fasterTrainers.requires, [{ upgrade: "fasterTrainers" }]);
@@ -229,7 +228,7 @@ test("a run that earned Inspiration puts a dot on the Inspiration tab in the for
   g.save.tower.inspiration = 1;
   assert.equal(g.notices.waiting("inspiration"), false, "not inside a run");
   g.finish("Ascent ended");
-  assert.deepEqual(g.save.treeNotices, { inspiration: true, courage: false });
+  assert.deepEqual(g.save.treeNotices, { inspiration: true, breakthrough: false });
   assert.ok(g.run.outside && g.notices.waiting("inspiration"), "Door & Key costs 1");
   g.save.tower.inspiration = 0;
   assert.equal(g.notices.waiting("inspiration"), false, "nothing affordable");
@@ -238,34 +237,32 @@ test("a run that earned Inspiration puts a dot on the Inspiration tab in the for
   assert.equal(g.notices.waiting("inspiration"), false, "spent");
   assert.ok(decode(JSON.stringify(g.save)).treeNotices.inspiration, "kept until the tree is shown");
 });
-test("a Delve run that earned Courage puts a dot on the Courage tab in the forest once the tree is open and a skill there can be bought", () => {
+test("a Tower Goal claimed pays a Breakthrough point and puts a dot on the Breakthrough tab in the forest once the tree is open and a skill there can be bought", () => {
   const g = new Game(defaults());
-  g.save.upgrades.delve = 1;
-  g.switchMode("delve");
+  g.save.upgrades.breakthrough = 1;
+  g.save.tower.reached = 20;
+  assert.equal(g.notices.waiting("breakthrough"), false, "not inside a run");
   g.newRun({ outside: true, seed: 2 });
-  assert.ok(g.enterRun());
-  g.save.delve.runCurrency = 3;
-  g.save.delve.courage = 1;
-  assert.equal(g.notices.waiting("courage"), false, "not inside a run");
-  g.finish("Delve run ended");
-  assert.deepEqual(g.save.treeNotices, { inspiration: false, courage: true });
-  assert.ok(g.run.outside && g.notices.waiting("courage"), "Movement Speed costs 1");
-  g.save.delve.courage = 0;
-  assert.equal(g.notices.waiting("courage"), false, "nothing affordable");
-  g.save.delve.courage = 1;
-  g.save.upgrades.delve = 0;
-  assert.equal(g.notices.waiting("courage"), false, "the tree is locked");
-  g.save.upgrades.delve = 1;
+  assert.ok(g.claimGoal(1, 10, false));
+  assert.equal(g.save.breakthrough, 1, "one point a Goal");
+  assert.deepEqual(g.save.treeNotices, { inspiration: false, breakthrough: true });
+  assert.ok(g.run.outside && g.notices.waiting("breakthrough"), "Movement Speed costs 1");
+  g.save.breakthrough = 0;
+  assert.equal(g.notices.waiting("breakthrough"), false, "nothing affordable");
+  g.save.breakthrough = 1;
+  g.save.upgrades.breakthrough = 0;
+  assert.equal(g.notices.waiting("breakthrough"), false, "the tree is locked");
+  g.save.upgrades.breakthrough = 1;
   assert.ok(g.skills.buy("moveSpeed"));
-  assert.equal(g.notices.waiting("courage"), false, "spent");
-  assert.ok(decode(JSON.stringify(g.save)).treeNotices.courage, "kept until the tree is shown");
+  assert.equal(g.notices.waiting("breakthrough"), false, "spent");
+  assert.ok(decode(JSON.stringify(g.save)).treeNotices.breakthrough, "kept until the tree is shown");
 });
 
 test("a tree's column gap is the least distance across between two nodes in one row", () => {
   const tree = (id: string) => TREES.find(t => t.id === id)!;
   assert.equal(columnGap(tree("inspiration")), 20, "its five-across rows");
-  assert.equal(columnGap(tree("courage")), 28);
-  assert.equal(columnGap({ ...tree("courage"), nodes: [tree("courage").nodes[0]] }), 100, "no row holds two");
+  assert.equal(columnGap(tree("breakthrough")), 28);
+  assert.equal(columnGap({ ...tree("breakthrough"), nodes: [tree("breakthrough").nodes[0]] }), 100, "no row holds two");
 });
 
 test("Limit Break 1 to 10 run straight down under Torch, each needing the one before", () => {

@@ -24,7 +24,7 @@ const NOTES: Record<BoardLesson, { title: string; text?: string }> = {
   enter: { title: "Press Enter to try another run." },
   trainingPoints: { title: "Training points to spend.", text: "After levelling up, you can spend points to increase your stats. Press the Research tab to train." },
   cards: { title: "Your cards gain levels as you use them.", text: "Each level grants a card point. Open your Deck to spend it." },
-  delve: { title: "Follow the path down to the Delve to gain Courage, XP and resources." },
+  delve: { title: "A tournament is open: follow the path down to the Delve and enter its cave." },
   provisions: PROVISIONS_NOTE,
 };
 

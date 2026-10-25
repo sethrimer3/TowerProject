@@ -41,7 +41,7 @@ function mulberry32(seed: number) {
 function trace(seed: number, level: Level, who: typeof CHARACTERS.strong): string[] {
   const rng = mulberry32(seed);
   const g = new Game(defaults(), rng);
-  Object.assign(g.save.upgrades, { delve: 1, auto: 1 }, level);
+  Object.assign(g.save.upgrades, { breakthrough: 1, auto: 1 }, level);
   g.switchMode("delve");
   g.newRun({ seed });
   Object.assign(g.run.player, { hp: who.hp, maxHp: who.hp, attack: who.attack, defense: who.defense, keys: { yellow: who.keys, blue: 0, red: 0 } });

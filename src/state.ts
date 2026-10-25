@@ -180,6 +180,10 @@ const KEY_WORDS: Record<KeyColor, string> = { yellow: "Gold", blue: "Blue", red:
 const DASH_ONTO = new Set<Tile["kind"]>(["key", "potion", "attack", "defense", "treasure", "reward"]);
 export class Game {
   provingGroundsRequested = false;
+  /** The Delve's cave entrance, entered from its forest: a tournament run
+   * asked for (`enter`, which waits on the server, so `main.ts` begins it),
+   * or a Ticket wanted first (`ticket`). Taken by whoever acts on it. */
+  tournamentRequested: "enter" | "ticket" | null = null;
   mode: Mode = "tower";
   world!: Board;
   run!: Run;
@@ -333,8 +337,7 @@ export class Game {
     // A Delve run left inside (the page reloaded mid-run) opens where it
     // was: no tab leads to the Delve, only the forest's sign.
     const inside = (run: Run | null) => !!run && !run.outside;
-    // A tournament run plays in the Delve whether or not it is open.
-    if ((save.upgrades.delve || save.delve.run?.tournament) && inside(save.delve.run) && !inside(save.tower.run)) this.mode = "delve";
+    if (inside(save.delve.run) && !inside(save.tower.run)) this.mode = "delve";
     this.loadMode();
   }
   /** Dev: whether every purchase is allowed and costs nothing (and research
@@ -367,8 +370,8 @@ export class Game {
     this.save.gold = 999_999_999;
     this.save.gems = 999_999_999;
     this.save.tower.inspiration = 999_999_999;
-    this.save.delve.courage = 999_999_999;
-    this.save.upgrades.delve = 1;
+    this.save.breakthrough = 999_999_999;
+    this.save.upgrades.breakthrough = 1;
     this.save.upgrades.legacy = 1;
     // The Deck page with its Badges box, and every badge at the top level.
     for (const id of ["cardDoorKey", "cardEnemy", "autoClimb", "combatStance", "buildout", "cardBadges"] as const) this.save.upgrades[id] = Math.max(1, this.save.upgrades[id]);
@@ -387,25 +390,47 @@ export class Game {
     this.events.refresh();
   }
   /** Makes `next` the active mode. A mode with no run yet starts one inside
-   * (a new game's first), or in its forest when `outside`. */
+   * (a new game's first), or in its forest when `outside`. The player
+   * reaches the Delve only by the forest's sign (`canSwapForest`). */
   switchMode(next: Mode, outside = false) {
-    if (next === "delve" && !this.save.upgrades.delve) return;
-    this.enterMode(next, outside);
-  }
-  /** Makes `next` the active mode, the Delve's even before it opens (a
-   * tournament run plays there). */
-  private enterMode(next: Mode, outside: boolean) {
     if (next === this.mode) return;
     this.fights.finish();
     this.armed = null;
+    this.tournamentRequested = null;
     this.mode = next;
-    if (next === "delve" && this.save.upgrades.delve) this.save.tutorials.delve = true;
+    if (next === "delve") this.save.tutorials.delve = true;
     this.loadMode(outside);
   }
+  /** Whether the Delve can be entered: only while a tournament is open for
+   * entry, once the Tournament is unlocked. Its cave is the tournament's
+   * way in. */
+  get delveOpen() {
+    return this.tournament.unlocked && this.tournament.phase === "open";
+  }
   /** Whether the forest's sign leads to the other mode's forest: in the
-   * forest, once Into the depths is owned. */
+   * forest, from the Delve's always, and from the Tower's while the Delve
+   * is open. */
   get canSwapForest() {
-    return !!this.run.outside && !!this.save.upgrades.delve && !this.fallen;
+    return !!this.run.outside && !this.fallen && (this.mode === "delve" || this.delveOpen);
+  }
+  /** The Tournament button: to the Delve's forest, whose cave enters the
+   * open tournament. False where it can't go (no tournament open, or a run
+   * inside). */
+  toDelveForest() {
+    if (this.mode === "delve") return !!this.run.outside && this.delveOpen;
+    return this.delveOpen && this.canBeginTournament && this.swapForest();
+  }
+  /** Once tournament entry closes, a player in the Delve's forest is led
+   * back to the Tower's at once, since its cave can no longer be entered.
+   * Returns whether they were. */
+  leaveClosedDelve() {
+    if (this.mode !== "delve" || !this.run.outside || this.fallen || this.delveOpen) return false;
+    this.toForestStart();
+    this.switchMode("tower", true);
+    if (this.run.outside) this.toForestStart();
+    this.auto = false;
+    this.cancelRoute();
+    return true;
   }
   /** The forest's sign, tapped or walked onto: down the path to the other
    * mode's forest. The hero leaves this forest at its start, and arrives at
@@ -442,7 +467,7 @@ export class Game {
    * points can be spent, which leads to the Research tab until it is
    * opened; then `cards`, which leads to the Deck to
    * spend the first card point (`cardPointsLesson`); then, in the Tower's
-   * forest once Into the depths is owned, `delve`, until the Delve is
+   * forest while a tournament opens the Delve, `delve`, until the Delve is
    * opened; and in either forest, `provisions` (`provisionsLesson`). */
   get boardLesson(): BoardLesson | null {
     const tower = this.mode === "tower", t = this.save.tutorials, owned = this.save.upgrades;
@@ -458,7 +483,7 @@ export class Game {
     if (tower && ((!t.enter && owned.cardDoorKey) || (t.enemy && owned.cardEnemy))) return "enter";
     if (!t.training && trainingWaiting(this.save)) return "trainingPoints";
     if (this.cardPointsLesson) return "cards";
-    if (tower && owned.delve && !t.delve) return "delve";
+    if (tower && this.delveOpen && !t.delve) return "delve";
     return this.provisionsLesson ? "provisions" : null;
   }
   /** Whether the provisions lesson waits: in the forest, once a first
@@ -857,8 +882,17 @@ export class Game {
    * starting the run, as walking onto it does. */
   enterRun() {
     if (!this.run.outside) return false;
-    this.enterFromOutside();
+    this.throughEntrance();
     return true;
+  }
+  /** Through the forest's entrance: into the Tower, or in the Delve, a
+   * tournament run asked for, which spends a Ticket (or, with none held,
+   * the way to get one). */
+  private throughEntrance() {
+    if (this.mode === "tower") return this.enterFromOutside();
+    this.auto = false;
+    this.cancelRoute();
+    this.tournamentRequested = this.save.tournament.tickets > 0 ? "enter" : "ticket";
   }
   /** One turn of automatic movement: the hand's step inside a run, or
    * Automove's in the forest. */
@@ -1686,7 +1720,8 @@ export class Game {
     this.paused = false;
   }
   /** Whether a tournament run can begin now: the Tournament open to the
-   * player, in a forest, and no run of either mode inside. */
+   * player, in a forest, and no run of either mode inside (its cave, in the
+   * Delve's forest, begins it). */
   get canBeginTournament() {
     const inside = (run: Run | null) => !!run && !run.outside;
     return this.tournament.unlocked && !!this.run.outside && !inside(this.save.tower.run) && !inside(this.save.delve.run);
@@ -1699,7 +1734,7 @@ export class Game {
   beginTournament(info: TournamentInfo, entry: string) {
     if (!this.canBeginTournament || !this.tournament.enter(info.id, entry)) return false;
     const back = { mode: this.mode, tier: this.save.delve.tier }, cave = LEAGUE_INFO[info.league].cave;
-    this.enterMode("delve", true);
+    this.switchMode("delve", true);
     if (this.slice.tier !== cave) switchTier(this.slice, cave);
     this.newRun({ outside: true, seed: info.seeds.layout });
     const run: TournamentRun = { id: info.id, league: info.league, entry, seeds: { ...info.seeds }, drawn: { game: 0, equipment: 0 }, back };
@@ -1714,6 +1749,8 @@ export class Game {
   claimGoal(tower: number, floor: number, premium: boolean) {
     const reward = claimGoal(this.save, tower, floor, premium);
     if (reward) readyForestRuns(this.save);
+    // Its Breakthrough point calls the player to the Breakthrough tree.
+    if (reward && !premium) this.save.treeNotices.breakthrough = true;
     // Equipment's Blacksmith, the Tournament's Hall, and the road out to a newly opened tower, open in the forest at once.
     const reshapes = reward?.kind === "tower" || (reward?.kind === "unlock" && (reward.unlock === "equipment" || reward.unlock === "tournament"));
     if (reshapes && this.run.outside) this.world = this.buildWorld();
@@ -1792,14 +1829,14 @@ export class Game {
     if (this.mode === "tower") this.save.tutorials.chamber = true;
     this.forestSeeds.clear();
     // A run that earned its currency sends the player to spend it.
-    if (this.slice.runCurrency > 0) this.save.treeNotices[this.rules === MODES.tower ? "inspiration" : "courage"] = true;
+    if (this.slice.runCurrency > 0) this.save.treeNotices.inspiration = true;
     this.route = [];
     const tournament = this.tournamentRun;
     if (tournament) this.tournament.recordScore(tournament.id, tournamentScore(this.run));
     // A tournament run's cave gives way to the tier the player had selected.
     if (tournament && tournament.back.tier !== this.slice.tier) switchTier(this.slice, tournament.back.tier);
     this.newRun({ outside: true });
-    if (tournament) this.enterMode(tournament.back.mode, true);
+    if (tournament) this.switchMode(tournament.back.mode, true);
     this.auto = false;
     this.dropHandPlan();
     this.message = `${reason}${record ? " · a new record" : ""}${whole(gold) ? ` · ${whole(gold)} Gold kept` : ""}. Follow the forest path to begin again.`;
@@ -1916,7 +1953,7 @@ export class Game {
     // active torches from this same list.
     const torch = this.world.breakTorchAt?.(x, y);
     if (this.run.outside) {
-      if (t.kind === "stairs") this.enterFromOutside();
+      if (t.kind === "stairs") this.throughEntrance();
       else if (this.world instanceof OutsideWorld && this.world.isProvingGrounds(x, y)) {
         this.auto = false;
         this.cancelRoute();
@@ -2460,7 +2497,7 @@ export class Game {
     if (reached > slice.reached) slice.runRecord = true;
     slice.reached = reached;
     slice.best = Math.max(slice.best, reached);
-    this.rules.credit(this.save, earned);
+    if (earned) this.rules.pays!.credit(this.save, earned);
     slice.runCurrency += earned;
     return earned;
   }
@@ -2557,7 +2594,7 @@ export class Game {
     return handBonus(this.run.outside ? [] : this.held);
   }
   /** Whether a tapped tile shows the route there and its totals: the
-   * Courage skill Pathfinder owned, or Dev mode. */
+   * Breakthrough skill Pathfinder owned, or Dev mode. */
   get showsRoutes() {
     return !!this.save.upgrades.pathfinder || this.save.settings.devMode;
   }

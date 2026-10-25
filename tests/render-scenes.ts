@@ -70,7 +70,7 @@ function game(mode: "tower" | "delve", settings: Record<string, unknown> = {}) {
   // Reserve the historical fixture RNG offset so board seeds remain stable.
   stream("game")();
   const save = defaults();
-  save.upgrades.delve = 1;
+  save.upgrades.breakthrough = 1;
   Object.assign(save.settings, settings);
   const g = new Game(save);
   g.switchMode(mode);

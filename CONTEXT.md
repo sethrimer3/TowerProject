@@ -37,7 +37,7 @@ A text file of everything the player keeps between runs (no run in progress), in
 _Avoid_: backup, save file (the stored save also holds the runs)
 
 **Run Notes**:
-A run's trivia, kept as it plays: the tower and floor reached, its real time, steps, kills, keys and doors by kind, chests, and what it found (Gold, Silver, Inspiration or Courage, materials and other loot). Note Taking research opens them, from the floor number during a run or the run's end dialog, and they copy as text. Undo takes back what the run itself holds, never what was found for good.
+A run's trivia, kept as it plays: the tower and floor reached, its real time, steps, kills, keys and doors by kind, chests, and what it found (Gold, Silver, Inspiration or Breakthrough, materials and other loot). Note Taking research opens them, from the floor number during a run or the run's end dialog, and they copy as text. Undo takes back what the run itself holds, never what was found for good.
 _Avoid_: run stats, run log
 
 **Cinematic mode**:
@@ -405,7 +405,7 @@ Beginning a new Tower run at once on the floor just above a checkpoint already c
 _Avoid_: teleport, starting floor
 
 **Route preview**:
-The route to a tapped tile drawn on the board, with a Route totals box of what happens along it (HP lost, keys spent, items picked up). Shown once the Courage skill Pathfinder is owned; before that a tap only highlights and inspects the tile.
+The route to a tapped tile drawn on the board, with a Route totals box of what happens along it (HP lost, keys spent, items picked up). Shown once the Breakthrough skill Pathfinder is owned; before that a tap only highlights and inspects the tile.
 _Avoid_: path preview
 
 **Damage Prediction**:
@@ -442,9 +442,9 @@ _Avoid_: attack breakpoint
 A one-time purchase that opens the premium checkpoint rewards in one set of three towers (I–III, IV–VI or VII–IX).
 _Avoid_: battle pass, season pass
 
-**Courage**:
-The Delve's currency: one for each new equivalent floor reached, spent on upgrades in the skill trees.
-_Avoid_: essence
+**Breakthrough**:
+The currency of new limits: one point for each Tower Goal reward claimed (a premium reward pays none), spent in the Breakthrough tree and the trees it opens. Also the Inspiration skill that opens that tree.
+_Avoid_: courage, essence
 
 **Archives**:
 Research that lasts between runs, paid in Gold and real time, unlocked by the Archives skill.
@@ -687,7 +687,7 @@ _Avoid_: product, listing, deal
 
 **Entitlement**:
 A permanent perk bought once, such as a coin pack's Gold multiplier or Ad-Disable's permanent ×2 training. Erasing progress keeps it.
-_Avoid_: unlock (a skill bought with Inspiration or Courage), perk
+_Avoid_: unlock (a skill bought with Inspiration or Breakthrough), perk
 
 **Shop day**:
 The day as the Shop counts it, from 00:00 to 00:00 GMT on the server's clock. A daily offer, such as the Daily Free Gems, can be claimed once each Shop day, and changing the device's clock never brings a new one.
@@ -704,7 +704,7 @@ The bracket a player competes in: Copper, Silver, Gold, Platinum or Champion, ea
 _Avoid_: division, tier (a tier is a numbered tower or cave)
 
 **Ticket**:
-What entering a tournament costs. Each tournament grants one; more come from an ad, then for Gems.
+What entering a tournament costs, paid at the Delve's cave. Each tournament grants one; more come from an ad, then for Gems.
 _Avoid_: pass (a Premium Pass is the Goals screen's), token
 
 **Entry**:
@@ -762,7 +762,7 @@ _Avoid_: trophy (the Tournament's), artifact, badge
 ### The Delve
 
 **Forest sign**:
-The sign at the foot of each forest's path once the Delve is open, showing the other place: tapped, or walked onto, it leads to the other mode's forest. It is the only way between the Tower and the Delve.
+The sign at the foot of each forest's path while the Delve is open (a tournament open for entry), and always in the Delve's, showing the other place: tapped, or walked onto, it leads to the other mode's forest. It is the only way between the Tower and the Delve.
 _Avoid_: Delve tab, mode switch
 
 **Automove memory**:

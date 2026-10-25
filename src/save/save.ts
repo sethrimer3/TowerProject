@@ -37,7 +37,8 @@ export function defaults(): Save {
   return {
     version: 4,
     tower: { run: null, history: [], fall: null, best: 0, reached: 0, inspiration: 0, lootedTiles: {}, runGold: 0, runFinds: defaultFinds(), runBoostGold: null, runCurrency: 0, runRecord: false, tier: 1, tiersOpen: 1, tierRecords: {} },
-    delve: { run: null, history: [], fall: null, best: 0, reached: 0, courage: 0, lootedTiles: {}, runGold: 0, runFinds: defaultFinds(), runBoostGold: null, runCurrency: 0, runRecord: false, memory: { known: {}, visited: {} }, tier: 1, tiersOpen: 1, tierRecords: {} },
+    delve: { run: null, history: [], fall: null, best: 0, reached: 0, lootedTiles: {}, runGold: 0, runFinds: defaultFinds(), runBoostGold: null, runCurrency: 0, runRecord: false, memory: { known: {}, visited: {} }, tier: 1, tiersOpen: 1, tierRecords: {} },
+    breakthrough: 0,
     gems: 0,
     ascensionShards: 0,
     medals: 0,
@@ -74,7 +75,7 @@ export function defaults(): Save {
     manualSlots: 0,
     badges: defaultBadges(),
     tutorials: { deck: false, removeCard: false, addCard: false, upgrades: false, gear: false, onTheJob: false, speed: false, climb: false, keys: false, autoClimb: false, stuck: false, enemy: false, enter: false, training: false, delve: false, chamber: false, cardPoints: false },
-    treeNotices: { inspiration: false, courage: false },
+    treeNotices: { inspiration: false, breakthrough: false },
     seen: { level: 0, training: 0, archives: 0, cards: [...BASE_HAND], cardLevels: 0, met: [...BASE_HAND] },
     archives: defaultArchives(),
     entitlements: [],
@@ -321,6 +322,8 @@ function applyMode<R extends Run>(slice: ModeSave<R>, decoded: DecodedMode<R>) {
 // --- Settings, currencies and records ---
 function decodeUpgrades(raw: any, d: Save) {
   for (const u of UPGRADES) d.upgrades[u.id] = count(raw?.[u.id], d.upgrades[u.id], u.max);
+  // TODO: remove once saves from before the rename are gone (Into the depths).
+  d.upgrades.breakthrough ||= count(raw?.delve, 0, 1);
   // A save from before the first skills (Door & Key, Enemy, Auto-Climb) that
   // owns Combat Stance, which now follows them, owns them too, so its hand
   // keeps DOOR, KEY and ENEMY and plays by itself. TODO: drop in a later save version.
@@ -338,7 +341,7 @@ function decodeProgress(s: any, d: Save, undoCapacity: number) {
   d.xp = count(s.xp, d.xp);
   d.bonusTrainingPoints = count(s.bonusTrainingPoints, d.bonusTrainingPoints);
   decodeTraining(s, d);
-  decodeModeRecords(s.tower ?? {}, s.delve ?? {}, d);
+  decodeModeRecords(s.tower ?? {}, s.delve ?? {}, d, s);
   applyMode(d.tower, decodeMode(s.tower, undoCapacity, decodeTowerRun));
   applyMode(d.delve, decodeMode(s.delve, undoCapacity, decodeDelveRun));
   d.delve.memory = decodeMemory(s.delve?.memory);
@@ -359,10 +362,11 @@ function decodeTraining(s: any, d: Save) {
   d.trainingBoostUntil = count(s.trainingBoostUntil, d.trainingBoostUntil, Number.MAX_SAFE_INTEGER);
 }
 /** Each mode's currency and best. */
-function decodeModeRecords(tower: any, delve: any, d: Save) {
+function decodeModeRecords(tower: any, delve: any, d: Save, s: any) {
   d.tower.inspiration = count(tower.inspiration, d.tower.inspiration);
   d.tower.best = count(tower.best, d.tower.best);
-  d.delve.courage = count(delve.courage, d.delve.courage);
+  // TODO: remove once saves from before the rename are gone (held in the Delve's slice as `courage`).
+  d.breakthrough = count(s.breakthrough ?? delve.courage, d.breakthrough);
   d.delve.best = count(delve.best, d.delve.best);
 }
 /** What a stat's ranks were paid with; a save from before this was kept
@@ -501,7 +505,9 @@ export function decode(raw: string | null): Save {
     for (const k of ["deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob", "speed", "climb", "keys", "autoClimb", "stuck", "enemy", "enter", "training", "delve", "chamber", "cardPoints"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
     // A player who has already spent a card point needs no lesson on it.
     if (CARD_IDS.some((id) => pointsSpent(d.cardTrees, id) > 0)) d.tutorials.cardPoints = true;
-    for (const k of ["inspiration", "courage"] as const) d.treeNotices[k] = s.treeNotices?.[k] === true;
+    for (const k of ["inspiration", "breakthrough"] as const) d.treeNotices[k] = s.treeNotices?.[k] === true;
+    // TODO: remove once saves from before the rename are gone.
+    d.treeNotices.breakthrough ||= s.treeNotices?.courage === true;
     d.seen = decodeSeen(s.seen, d);
     d.profile = decodeProfile(s.profile);
     backfillProfile(d);

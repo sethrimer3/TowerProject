@@ -1,7 +1,7 @@
 import { controlIcon } from "./control-icon.ts";
 import { kitIcon } from "../sprites/kit.ts";
 import { GOAL_SPRITES } from "../sprites/ui-details.ts";
-import { CHECKPOINT_EVERY, CHECKPOINT_FLOORS, CHECKPOINTS, UNLOCK_NAMES, areaCleared, checkpoint, areaMastered, canWarp, floorsCompleted, goalState, unmasteredBelow, passFor, passTotals, unlockAt, unlockFloor, warpUnlocked, type Checkpoint, type GoalReward, type GoalState, type GoalUnlock, type Pass } from "../goals.ts";
+import { GOAL_BREAKTHROUGH, CHECKPOINT_EVERY, CHECKPOINT_FLOORS, CHECKPOINTS, UNLOCK_NAMES, areaCleared, checkpoint, areaMastered, canWarp, floorsCompleted, goalState, unmasteredBelow, passFor, passTotals, unlockAt, unlockFloor, warpUnlocked, type Checkpoint, type GoalReward, type GoalState, type GoalUnlock, type Pass } from "../goals.ts";
 import { CURRENCIES, type CurrencyId } from "../shop/currency.ts";
 import { owns } from "../shop/entitlements.ts";
 import { stubServer, type ShopServer } from "../shop/server.ts";
@@ -9,7 +9,8 @@ import { offer } from "../shop/offers.ts";
 import { clearedInspiration } from "../tower/area-ledger.ts";
 import { tierNumeral, tierRewardText, tierStats } from "../tiers.ts";
 import type { AppContext } from "./app.ts";
-import { el, eventIcon, gemIcon, goldIcon, medalIcon, shardIcon, shrineIcon, trophyIcon } from "./dom.ts";
+import { el, eventIcon, gemIcon, goldIcon, medalIcon, shardIcon, shrineIcon, trophyIcon, uiSprite } from "./dom.ts";
+import { flyToPurse } from "./flourish.ts";
 import { goalRewardShown, offerShown, revealReward } from "./reward-reveal.ts";
 
 // The Goals screen: each tower drawn as a stone column rising from the
@@ -102,7 +103,7 @@ const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
   attackSpeed: `<p>Attack Speed joins Offense training: each rank adds 0.05 shots every 10 turns, from 1 up to 6.</p>` +
     `<p class="hint">A fraction of a turn left over carries to the next shot: 3 shots in 10 turns fire 4, 3 and 3 turns apart.</p>`,
   tournament: `<p>Twice a week, on Wednesday and Saturday (GMT), the Tournament opens: one Delve run from seeds every player in your league shares, among stronger enemies, scored by the depth you reach and ranked worldwide.</p>` +
-    `<p>Its Hall now stands in the forest, right of the path: tap it, or the trophy at the right, to see when the next one opens.</p>` +
+    `<p>Its Hall now stands in the forest, right of the path: tap it to see when the next one opens. While one is open, the Delve opens with it: the trophy at the right leads down to its cave, and entering costs a Ticket.</p>` +
     `<p class="hint">Each new tournament gives you a Ticket to enter. Place high to win Gems and Ascension Shards, and climb from Copper through Silver, Gold and Platinum to Champion.</p>`,
   events: `<p>Every two weeks an Event begins: missions released over its first eight days, each with three tiers paying Medals as you complete them.</p>` +
     `<p>The Medals an event pays count toward its relics, unique keepsakes that each give a permanent bonus. The Event Booster doubles them, and opens two premium relics.</p>` +
@@ -293,7 +294,7 @@ export class GoalsPage {
     el("goals").querySelectorAll<HTMLButtonElement>("[data-goal]").forEach((b) => {
       b.onclick = () => {
         const [tower, floor, premium] = b.dataset.goal!.split(":").map(Number) as [number, number, number];
-        this.choose(tower, floor, premium === 1);
+        this.choose(tower, floor, premium === 1, b.getBoundingClientRect());
       };
     });
     el("goals").querySelectorAll<HTMLButtonElement>("[data-warp]").forEach((b) => {
@@ -315,9 +316,11 @@ export class GoalsPage {
     return `Floors ${from}–${floor} mastered. Claim Unlock Warp at Tower ${tierNumeral(unlockAt("warp").tower)}'s floor ${unlockFloor("warp")} to start runs here.${cleared}`;
   }
 
-  /** A reward pressed: claimed when ready (or, with Dev free purchases, before
-   * its floor is completed), the pass offered when it needs one. */
-  private choose(tower: number, floor: number, premium: boolean) {
+  /** A reward pressed (`from`, its button's box): claimed when ready (or,
+   * with Dev free purchases, before its floor is completed), the pass
+   * offered when it needs one. A standard reward's Breakthrough point,
+   * unsaid on the page, drops from it as it is claimed. */
+  private choose(tower: number, floor: number, premium: boolean, from: DOMRect) {
     const game = this.ctx.game, state: GoalState = goalState(game.save, tower, floor, premium);
     if (state === "needsPass") return this.showPass(passFor(tower));
     if (state === "locked" && !game.save.settings.freePurchases) return this.say(`Complete floor ${floor} in Tower ${tierNumeral(tower)} to claim it.`);
@@ -332,8 +335,13 @@ export class GoalsPage {
     this.message = `Claimed: ${rewardText(reward)}`;
     this.ctx.update();
     this.render();
-    if (reward.kind === "unlock") this.unlockTutorial(reward.unlock);
-    if (reward.kind === "tower") this.towerOpened(reward.tower);
+    // An unlock's or tower's dialog waits for the point to land, so it doesn't hide it.
+    const explain = () => {
+      if (reward.kind === "unlock") this.unlockTutorial(reward.unlock);
+      if (reward.kind === "tower") this.towerOpened(reward.tower);
+    };
+    if (premium) explain();
+    else flyToPurse(from, [{ html: `${uiSprite("automove")}<b>+${GOAL_BREAKTHROUGH}</b>`, to: null, landed: explain }]);
     const shown = goalRewardShown(reward);
     if (shown) revealReward(shown, game.save.settings.reduceMotion);
   }

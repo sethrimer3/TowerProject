@@ -30,7 +30,7 @@ test("Thorns sits between Buy Quantity and GK Siphon, Parry between Regen Resear
   assert.deepEqual([node("parry").requires, node("revive").requires], [["regenResearch"], ["parry"]]);
   const g = new Game(playedSave());
   g.save.tower.inspiration = 1000;
-  for (const id of ["combatStance", "buildout", "trainers", "largerHand", "shroud", "critical", "archives", "delve", "greaterHeal"] as const) assert.ok(g.skills.buy(id));
+  for (const id of ["combatStance", "buildout", "trainers", "largerHand", "shroud", "critical", "archives", "breakthrough", "greaterHeal"] as const) assert.ok(g.skills.buy(id));
   assert.equal(g.skills.buy("parry"), false, "waits for Regen Research");
   assert.ok(g.skills.buy("regenResearch"));
   assert.equal(g.skills.buy("revive"), false, "waits for Parry");
@@ -234,7 +234,7 @@ test("the hero gives way from a strike it parries in an animated fight; summary 
  * parrying every strike by `parry`%. */
 function arena(parry: number) {
   const g = new Game(playedSave());
-  g.save.upgrades.delve = 1;
+  g.save.upgrades.breakthrough = 1;
   g.switchMode("delve");
   g.newRun({ seed: 1 });
   for (let y = 0; y < 20; y++)

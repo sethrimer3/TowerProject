@@ -6,7 +6,7 @@ Inside a Tower or Delve run, your **hand** of cards moves the hero instead; taps
 
 ## Cards
 
-A new profile's hand is its whole deck, one card: **Stairs** (the stairs up; in the Delve, the highest open tile it can reach above any row reached this run, however far off screen, which its card text mentions only once Into the depths is owned).
+A new profile's hand is its whole deck, one card: **Stairs** (the stairs up; in the Delve, the highest open tile it can reach above any row reached this run, however far off screen, which its card text mentions only once Breakthrough is owned).
 The Inspiration tree opens with three skills down its middle, 1 Inspiration each, every other skill hanging below them: **Door & Key** adds **Door** (a door you hold the keys for, or a Wooden Door you can break down) and **Key** (the closest key of any colour) to the deck and to the hand, after Stairs; **Enemy**, below it, adds **Enemy** (any enemy that can be fought, even a lethal one) to the deck and the hand, after Door and Key; and **Auto-Climb**, below Enemy, lets the hand play by itself (see How the hand plays).
 A card those skills add goes into the hand only while it has room; Door & Key's two cards rise onto the screen one after the other, Door first.
 Six more cards join the deck from the Inspiration tree: **Heal** (a potion; the Heal skill, 3 Inspiration, below Regen), **Gold Key** (a gold key, never a blue or red one; the Gold Key skill, 3 Inspiration, left of Shroud), **ATK Up** (an ATK pickup; the ATK Up skill, 5 Inspiration, left of Trainers), **DEF Up** (a DEF pickup; the DEF Up skill, 5 Inspiration, under ATK Up) and **Blue Key** (a blue key; the Blue Key skill, 2 Inspiration, after the Archives, below DEF Up), and **GK Siphon** (the GK Siphon skill, 5 Inspiration, below Thorns in the tree's middle path), which moves nowhere: when its turn comes it trades Max HP training levels, for the rest of the run only, for a gold key, the hero losing the max HP those levels give and standing still for the turn (undo takes it back).
@@ -310,7 +310,7 @@ Undo brings back the pressed card of the moment it returns to.
 
 ## Ignore and Target
 
-Below Interest and Mug at the foot of the Courage tree, four skills (20 Courage each) give the run more of a say.
+Below Interest and Mug at the foot of the Breakthrough tree, four skills (20 Breakthrough each) give the run more of a say.
 **Ignore** (below Interest) adds a button beside the potions, a red ⊘ with the uses left: press it, then tap a tile, and no card's path (nor Target's) steps on that tile for the rest of the floor, marked with a red ⊘.
 A run gets 1 use, and **Ignore Count** research adds one a level, up to 10.
 A wall, the hero's own tile or one already ignored costs nothing, and pressing the button again puts it away.
@@ -323,7 +323,7 @@ The two regain projects each take 90 levels (100 floors down to 10), level n tak
 
 ## Badges
 
-**Badges** (2 Courage, after Bombs) opens a **Badges** box on the Deck page, beside the deck: the two share the space below the hand in two columns, each scrolling on its own when its cards or tokens don't fit.
+**Badges** (2 Breakthrough, after Bombs) opens a **Badges** box on the Deck page, beside the deck: the two share the space below the hand in two columns, each scrolling on its own when its cards or tokens don't fit.
 Above the box, **Buy ×1** (20 Gems) and **Buy ×10** (200 Gems) draw card badges: rounded tokens drawn by rarity (common 70%, rare 27%, epic 3%, among the rarities that still have one to draw), each continuing the same saved random sequence, so reloading never draws again.
 The first copy of a badge rises onto the screen with rays behind it; a repeat drops a coin onto its token, its copies bouncing up to their new count before the slash and the copies its next level takes appear, and a level reached sparkles onto the star in its corner.
 Ten drawn at once show one at a time, counting 1 / 10 to 10 / 10 (Skip jumps ahead), then all ten together, marking each one new or levelled up.

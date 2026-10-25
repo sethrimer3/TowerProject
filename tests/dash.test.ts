@@ -208,7 +208,7 @@ test("End Rush works without Dash research, and only on STAIRS", () => {
 
 test("End Rush counts for STAIRS's climb in the Delve too", () => {
   const g = toStairs(1, 4);
-  g.save.upgrades.delve = 1;
+  g.save.upgrades.breakthrough = 1;
   g.switchMode("delve");
   assert.equal(g.mode, "delve");
   assert.equal(g.dashFor("stairs"), 5);

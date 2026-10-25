@@ -25,7 +25,7 @@ try {
   await page.evaluate(async () => {
     const { defaults } = await import("/src/save/save.ts"); const { Game } = await import("/src/state.ts");
     const s = defaults(); Object.keys(s.tutorials).forEach(k => s.tutorials[k] = true);
-    Object.assign(s.upgrades, { elixirProvision: 1, delve: 1, combatStance: 1, buildout: 1 });
+    Object.assign(s.upgrades, { elixirProvision: 1, breakthrough: 1, combatStance: 1, buildout: 1 });
     Object.assign(s.settings, { reduceMotion: true, transition: "instant", weatherSound: false });
     s.gold = 20000; s.gems = 0;
     const item = (id, def, rarity, level, extra = {}) => ({ id, def, rarity, level, slots: [], ...extra });

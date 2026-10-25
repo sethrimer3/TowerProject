@@ -34,7 +34,7 @@ test("Wealthy, Loot and Wishing Well cost 2 Inspiration each, after Spare Change
     assert.equal(cost(skill, 0), 2);
     assert.equal(g.skills.buy(skill), false, `${skill} waits for Spare Change`);
   }
-  for (const id of ["combatStance", "buildout", "trainers", "largerHand", "shroud", "critical", "archives", "delve", "pocketMoney", "spareChange"] as const) assert.ok(g.skills.buy(id));
+  for (const id of ["combatStance", "buildout", "trainers", "largerHand", "shroud", "critical", "archives", "breakthrough", "pocketMoney", "spareChange"] as const) assert.ok(g.skills.buy(id));
   for (const [skill] of SKILLS) assert.ok(g.skills.buy(skill), skill);
 });
 
@@ -231,7 +231,7 @@ test("a floor already reached this run pays no Silver; Silver training raises it
 
 test("the Delve pays Silver / Floor for each new equivalent floor (ten depth)", () => {
   const g = new Game(playedSave());
-  g.save.upgrades.delve = g.save.upgrades.wishingWell = 1;
+  g.save.upgrades.breakthrough = g.save.upgrades.wishingWell = 1;
   g.save.training.floorSilver = 1;
   g.switchMode("delve");
   g.newRun({ seed: 5 });

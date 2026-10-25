@@ -235,11 +235,11 @@ test("moving a card shifts each card between its old and new slots over one", ()
   assert.deepEqual(hand, ["stairs", "heal", "door", "yellowKey", "monster"], "the hand given is left alone");
 });
 
-test("the Stairs card mentions the Delve only once Into the depths is owned", () => {
+test("the Stairs card mentions the Delve only once Breakthrough is owned", () => {
   const s = defaults();
   assert.equal(cardText("stairs", s.upgrades), "Move toward the stairs up.");
   assert.equal(cardText("door", s.upgrades), CARDS.door.text);
-  s.upgrades.delve = 1;
+  s.upgrades.breakthrough = 1;
   assert.equal(cardText("stairs", s.upgrades), CARDS.stairs.text);
   assert.match(cardText("stairs", s.upgrades), /Delve/);
 });

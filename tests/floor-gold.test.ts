@@ -87,7 +87,7 @@ test("without Spare Change a new floor pays nothing; Silver training raises it f
 
 test("the Delve pays Gold / Floor for each new equivalent floor (ten depth) once", () => {
   const g = new Game({ ...defaults(), themes: [] });
-  g.save.upgrades.delve = g.save.upgrades.spareChange = 1;
+  g.save.upgrades.breakthrough = g.save.upgrades.spareChange = 1;
   g.switchMode("delve");
   g.newRun({ seed: 5 });
   (g as unknown as { enterFromOutside(): void }).enterFromOutside();

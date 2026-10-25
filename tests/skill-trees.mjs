@@ -12,20 +12,20 @@ await openMenu(page); await page.locator("#end-run").click();
 await page.locator("#confirm").click();
 await expect(page.locator('#forest-sign')).toBeHidden();
 await page.locator('[data-tab="upgrades"]').click();
-await page.locator('[data-skill="delve"]').click();
-await expect(page.locator('#tree-tooltip')).toContainText('Into the depths');
+await page.locator('[data-skill="breakthrough"]').click();
+await expect(page.locator('#tree-tooltip')).toContainText('Breakthrough');
 await expect(page.locator('#upgrades')).not.toContainText('WHAT REMAINS WHEN YOU FALL');
 await expect(page.locator('#upgrades')).not.toContainText('Tap a skill for details');
-await expect(page.locator('.tree-heading')).not.toContainText(/INSPIRATION|COURAGE/);
-await page.evaluate(()=>{const s=JSON.parse(localStorage.getItem('towerdelve.v1'));s.tower.inspiration=100;s.delve.courage=100;s.tutorials.climb=true;s.tutorials.enter=true;s.tutorials.onTheJob=true;sessionStorage.setItem('__treeFixture',JSON.stringify(s));});
+await expect(page.locator('.tree-heading')).not.toContainText(/INSPIRATION|BREAKTHROUGH/);
+await page.evaluate(()=>{const s=JSON.parse(localStorage.getItem('towerdelve.v1'));s.tower.inspiration=100;s.breakthrough=100;s.tutorials.climb=true;s.tutorials.enter=true;s.tutorials.onTheJob=true;sessionStorage.setItem('__treeFixture',JSON.stringify(s));});
 await page.reload();await page.locator('[data-tab="upgrades"]').click();
 for(const id of ['combatStance','buildout','trainers','largerHand','onTheJob','archives','delve']) {await page.locator(`[data-skill="${id}"]`).click();await page.locator(`[data-skill="${id}"]`).click();if(await page.locator('#card-reveal-card').count()) await page.locator('#card-reveal-card').click();}
-await page.locator('[data-tree="courage"]').click();
+await page.locator('[data-tree="breakthrough"]').click();
 await page.locator('[data-skill="moveSpeed"]').click();
 await expect(page.locator('#tree-tooltip')).toContainText('Movement Speed');
 await page.locator('[data-skill="moveSpeed"]').click();
-await page.screenshot({path:'test-results/courage-tree.png',fullPage:true});
-// Into the depths bought, the forest's sign leads to the Delve (On the
+await page.screenshot({path:'test-results/breakthrough-tree.png',fullPage:true});
+// Breakthrough bought, the forest's sign leads to the Delve (On the
 // Job's lesson, which pauses the hand in its first run, is done). Inside a run
 // of either mode the button plays and pauses the hand; in the forest Enter
 // stands in its place.

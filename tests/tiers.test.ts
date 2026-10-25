@@ -54,7 +54,7 @@ test("ATK and DEF shards give 1 in the first tier, ×2.75 compounding each tier 
 test("past the first, a tier's boards are the one before's with each matching enemy's stats multiplied", () => {
   for (const mode of ["tower", "delve"] as Mode[]) {
     const g = new Game(defaults());
-    g.save.upgrades.delve = 1;
+    g.save.upgrades.breakthrough = 1;
     g.switchMode(mode);
     assert.equal(g.mode, mode);
     g.newRun({ seed: 11 });
@@ -154,7 +154,7 @@ test("each tier pays its own milestones again", () => {
 
 test("the tiers survive a save and reload; bad ones fall back", () => {
   const g = new Game(defaults());
-  g.save.upgrades.delve = 1;
+  g.save.upgrades.breakthrough = 1;
   g.save.tower.tiersOpen = g.save.delve.tiersOpen = 3;
   g.switchMode("delve");
   g.newRun({ outside: true });

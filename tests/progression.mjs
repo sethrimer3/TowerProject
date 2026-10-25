@@ -51,7 +51,7 @@ assert.equal(await shown('#run-shop'), false);
 // still a placeholder, and a Delve run's End Run names it.
 await page.evaluate(() => {
   const save = JSON.parse(localStorage.getItem('towerdelve.v1'));
-  save.upgrades.delve = 1;
+  save.upgrades.breakthrough = 1;
   save.tutorials.enter = true;
   sessionStorage.setItem('hudFixture', JSON.stringify(save));
 });

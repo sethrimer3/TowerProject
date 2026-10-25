@@ -53,7 +53,7 @@ test("combat predicts first strike, defenses, strict survival, and impervious/le
 });
 test("doors consume matching keys; pickups and walls obey movement", () => {
   const g = new Game(defaults());
-  g.save.upgrades.delve = 1;
+  g.save.upgrades.breakthrough = 1;
   g.switchMode("delve");
   const p = g.run.player;
   g.world.changes["15,1"] = { kind: "door", color: "blue" };
@@ -70,21 +70,21 @@ test("doors consume matching keys; pickups and walls obey movement", () => {
 });
 test("combination, steel, and heart doors apply their runtime rules", () => {
   const combo = new Game(defaults());
-  combo.save.upgrades.delve = 1; combo.switchMode("delve");
+  combo.save.upgrades.breakthrough = 1; combo.switchMode("delve");
   combo.world.changes["15,1"] = { kind: "door", door: { type: "keys", keys: ["yellow", "blue"], mode: "all" } };
   combo.run.player.keys.yellow = 1; combo.run.player.keys.blue = 1;
   assert.equal(combo.move(0, 1), true);
   assert.equal(combo.run.player.keys.yellow, 0); assert.equal(combo.run.player.keys.blue, 0);
 
   const steel = new Game(defaults());
-  steel.save.upgrades.delve = 1; steel.switchMode("delve");
+  steel.save.upgrades.breakthrough = 1; steel.switchMode("delve");
   steel.world.changes["15,1"] = { kind: "door", door: { type: "keys", keys: ["yellow", "blue", "red"], mode: "any" } };
   steel.run.player.keys.blue = 1; steel.run.player.keys.red = 1;
   assert.equal(steel.move(0, 1), true);
   assert.equal(steel.run.player.keys.blue, 0); assert.equal(steel.run.player.keys.red, 1);
 
   const heart = new Game(defaults());
-  heart.save.upgrades.delve = 1; heart.switchMode("delve");
+  heart.save.upgrades.breakthrough = 1; heart.switchMode("delve");
   heart.world.changes["15,1"] = { kind: "door", door: { type: "fullHp" } };
   heart.run.player.hp--;
   const keys = { ...heart.run.player.keys };
@@ -94,7 +94,7 @@ test("combination, steel, and heart doors apply their runtime rules", () => {
 });
 test("automation avoids lethal fights; a manual death waits on the player, and accepting it awards once", () => {
   const g = new Game(defaults());
-  g.save.upgrades.delve = 1;
+  g.save.upgrades.breakthrough = 1;
   g.switchMode("delve");
   // Lethal but damageable (low defense so it's not impervious): the player
   // can strike it, but the fight is unwinnable.
@@ -110,10 +110,10 @@ test("automation avoids lethal fights; a manual death waits on the player, and a
   assert.ok(g.acceptDefeat());
   assert.ok(g.run.outside);
   assert.equal(g.save.delve.run?.player.y, OUTSIDE_START_Y, "the next run waits partway up the forest path");
-  const earned = g.save.delve.courage;
+  const earned = g.save.breakthrough;
   g.finish("again");
-  assert.equal(g.save.delve.courage, earned);
-  g.save.delve.courage = 100;
+  assert.equal(g.save.breakthrough, earned);
+  g.save.breakthrough = 100;
   g.save.upgrades.legacy = 1;
   const defense = g.run.player.defense;
   assert.ok(g.skills.buy("quality"));
@@ -125,7 +125,7 @@ test("automation avoids lethal fights; a manual death waits on the player, and a
 const seasoned = (g: Game) => Object.assign(g.run.player, { hp: 800, maxHp: 800, attack: 14, defense: 8 });
 test("automation climbs purposefully, never takes lethal fights, bounds chunk memory", () => {
   const g = new Game(defaults());
-  g.save.upgrades.delve = 1;
+  g.save.upgrades.breakthrough = 1;
   g.switchMode("delve");
   seasoned(g);
   for (let i = 0; i < 1500; i++) {
@@ -142,7 +142,7 @@ test("automation climbs purposefully, never takes lethal fights, bounds chunk me
 });
 test("save roundtrip, malformed values and old versions are safe", () => {
   const g = new Game(defaults());
-  g.save.upgrades.delve = 1;
+  g.save.upgrades.breakthrough = 1;
   g.switchMode("delve");
   g.run.changes["15,1"] = { kind: "floor" }; // Isolate persistence from procedural encounters.
   g.move(0, 1);
@@ -161,7 +161,7 @@ test("save roundtrip, malformed values and old versions are safe", () => {
 });
 test("density is a rendering setting only: it never mutates world or run state", () => {
   const g = new Game(defaults());
-  g.save.upgrades.delve = 1;
+  g.save.upgrades.breakthrough = 1;
   g.switchMode("delve");
   const tiles = Array.from((g.world as World).chunks.entries());
   const before = structuredClone(g.run);
@@ -227,7 +227,7 @@ test("the key economy is coherent on early floors but never force-balanced", () 
 test("old runs safely migrate topology while retaining earned stats and permanent progress", () => {
   const save = defaults(),
     g = new Game(save);
-  g.save.upgrades.delve = 1;
+  g.save.upgrades.breakthrough = 1;
   g.switchMode("delve");
   // Migration expectations must not depend on the wall layout of a
   // Date.now-derived seed selected by the test runner.
@@ -237,7 +237,7 @@ test("old runs safely migrate topology while retaining earned stats and permanen
   g.run.height = 29;
   g.run.player.attack = 40;
   g.run.changes["15,25"] = { kind: "floor" };
-  save.delve.courage = 19;
+  save.breakthrough = 19;
   save.delve.reached = 29; // isolate migration from unrelated milestone crediting
   save.upgrades.undos = 1;
   const migrated = new Game(decode(JSON.stringify(save)));
@@ -246,7 +246,7 @@ test("old runs safely migrate topology while retaining earned stats and permanen
   assert.equal(migrated.run.player.y, 0);
   assert.equal(migrated.run.player.attack, 40);
   assert.equal(migrated.run.height, 29);
-  assert.equal(migrated.save.delve.courage, 19);
+  assert.equal(migrated.save.breakthrough, 19);
   assert.equal(migrated.save.upgrades.undos, 1);
   assert.deepEqual(migrated.run.changes, {});
   // The old generator's chunk-local "stairs" coordinates no longer exist;
@@ -256,7 +256,7 @@ test("old runs safely migrate topology while retaining earned stats and permanen
 test("automation reliably makes forward progress, never taking a lethal fight, across many fixed seeds", () => {
   for (let seed = 0; seed < 12; seed++) {
     const g = new Game(defaults());
-    g.save.upgrades.delve = 1;
+    g.save.upgrades.breakthrough = 1;
     g.switchMode("delve");
     g.newRun({ seed });
     seasoned(g);

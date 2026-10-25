@@ -9,6 +9,7 @@ import { MODES } from "../src/modes.ts";
 import { RunPurse } from "../src/game/run-purse.ts";
 import { earn, stampProfile } from "../src/save/profile.ts";
 import { statsRows } from "../src/ui/stats-dialog.ts";
+import { claimGoal } from "../src/goals.ts";
 
 const HOUR = 3_600_000;
 const T0 = Date.UTC(2026, 9, 11, 12);
@@ -60,10 +61,12 @@ test("currencies earned count toward the profile, and spending never takes them 
   CURRENCIES.gold.credit(save, 100);
   CURRENCIES.shards.credit(save, 2);
   CURRENCIES.medals.credit(save, 5);
-  MODES.tower.credit(save, 3);
-  MODES.delve.credit(save, 6);
+  MODES.tower.pays!.credit(save, 3);
+  // A standard Goal reward claimed pays a Breakthrough point.
+  save.tower.reached = 10;
+  claimGoal(save, 1, 10, false);
   const e = save.profile.earned;
-  assert.deepEqual([e.gems, e.gold, e.ascensionShards, e.medals, e.inspiration, e.courage], [10, 100, 2, 5, 3, 6]);
+  assert.deepEqual([e.gems, e.gold, e.ascensionShards, e.medals, e.inspiration, e.breakthrough], [10, 100, 2, 5, 3, 1]);
 });
 
 test("Gold and Silver a run finds count toward the profile, and undo takes the Silver back", () => {

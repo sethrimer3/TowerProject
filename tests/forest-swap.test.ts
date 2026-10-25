@@ -2,23 +2,24 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save/save.ts";
-import { OUTSIDE_START_Y, OutsideWorld } from "../src/outside.ts";
+import { ENTRANCE_Y, OUTSIDE_START_Y, OutsideWorld } from "../src/outside.ts";
 import { MODES } from "../src/modes.ts";
 import { xpForLevel } from "../src/progression/xp.ts";
 import { trainNow } from "./train-now.ts";
+import { CLOSED, openTournament } from "./open-tournament.ts";
 
 // The forest's sign down the path to the other mode's forest, the run paused
 // behind the Research page, and training bought mid-run surviving undo.
 
-/** A game in the Tower's forest, its lessons done. */
+/** A game in the Tower's forest, its lessons done, a tournament open
+ * (unless `delve` is false), so the Delve is too. */
 function forest(delve = true) {
   const s = defaults();
   s.tutorials.climb = true;
   s.tutorials.enter = true;
-  if (delve) s.upgrades.delve = 1;
   const g = new Game(s);
   g.finish("again");
-  return g;
+  return delve ? openTournament(g) : g;
 }
 
 test("a forest run's hero starts partway up the path", () => {
@@ -27,11 +28,18 @@ test("a forest run's hero starts partway up the path", () => {
   assert.deepEqual([g.run.player.x, g.run.player.y], [MODES.tower.entranceX, OUTSIDE_START_Y]);
 });
 
-test("the sign leads to the other mode's forest only once the Delve is open", () => {
+test("the sign leads to the Delve's forest only while a tournament is open, and back always", () => {
   const locked = forest(false);
   assert.ok(!locked.canSwapForest);
   assert.equal(locked.swapForest(), false);
   assert.equal(locked.mode, "tower");
+  // Breakthrough no longer opens the Delve, and an unlocked Tournament only while one is open.
+  locked.save.upgrades.breakthrough = 1;
+  assert.ok(!locked.canSwapForest);
+  openTournament(locked, CLOSED);
+  assert.ok(!locked.canSwapForest && !locked.delveOpen);
+  openTournament(locked);
+  assert.ok(locked.canSwapForest && locked.delveOpen);
 
   const g = forest();
   assert.ok(g.canSwapForest);
@@ -60,7 +68,7 @@ test("walking down onto the foot of the path swaps forests, arriving at the star
 test("a reload mid-Delve-run opens the Delve, where it was", () => {
   const g = forest();
   g.swapForest();
-  g.enterRun();
+  g.newRun();
   assert.ok(g.mode === "delve" && !g.run.outside);
   const loaded = new Game(decode(JSON.stringify(g.save)));
   assert.equal(loaded.mode, "delve");
@@ -69,6 +77,53 @@ test("a reload mid-Delve-run opens the Delve, where it was", () => {
   const tower = forest();
   tower.enterRun();
   assert.equal(new Game(decode(JSON.stringify(tower.save))).mode, "tower");
+});
+
+test("the Delve's cave asks for a tournament run, or a Ticket first, and never goes in by itself", () => {
+  const g = forest();
+  g.swapForest();
+  g.save.tournament.tickets = 0;
+  assert.ok(g.enterRun());
+  assert.equal(g.tournamentRequested, "ticket");
+  assert.ok(g.mode === "delve" && g.run.outside, "the run waits on the server");
+  g.tournamentRequested = null;
+  g.save.tournament.tickets = 1;
+  // Walking onto the entrance asks the same.
+  g.run.player.x = MODES.delve.entranceX;
+  g.run.player.y = ENTRANCE_Y - 1;
+  assert.ok(g.move(0, 1, true));
+  assert.equal(g.tournamentRequested, "enter");
+  assert.ok(g.run.outside);
+  assert.equal(g.save.tournament.tickets, 1, "nothing is spent until the server registers the entry");
+  // The Tower's entrance still goes straight in.
+  const tower = forest();
+  tower.enterRun();
+  assert.ok(!tower.run.outside && tower.tournamentRequested === null);
+});
+
+test("the Tournament button leads to the Delve's forest while a tournament is open", () => {
+  const closed = openTournament(forest(false), CLOSED);
+  assert.equal(closed.toDelveForest(), false);
+  assert.equal(closed.mode, "tower");
+  const g = forest();
+  assert.ok(g.toDelveForest());
+  assert.ok(g.mode === "delve" && g.run.outside);
+  assert.ok(g.toDelveForest(), "already there");
+  // Inside a Tower run it can't lead there.
+  const inside = forest();
+  inside.enterRun();
+  assert.equal(inside.toDelveForest(), false);
+});
+
+test("entry closing leads the player out of the Delve's forest at once, to the Tower's start", () => {
+  const g = forest();
+  g.swapForest();
+  assert.equal(g.leaveClosedDelve(), false, "still open");
+  openTournament(g, CLOSED);
+  assert.ok(g.leaveClosedDelve());
+  assert.ok(g.mode === "tower" && g.run.outside);
+  assert.deepEqual([g.run.player.x, g.run.player.y], [MODES.tower.entranceX, OUTSIDE_START_Y]);
+  assert.equal(g.leaveClosedDelve(), false);
 });
 
 test("a page over the board pauses the hand, and leaving it plays on as it was", () => {

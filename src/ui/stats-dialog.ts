@@ -14,7 +14,7 @@ const EARNED: [LifetimeCurrency, string][] = [
   ["cells", "Cells earned"],
   ["medals", "Medals earned"],
   ["inspiration", "Inspiration earned"],
-  ["courage", "Courage earned"],
+  ["breakthrough", "Breakthrough earned"],
   ["tickets", "Tickets earned"],
 ];
 

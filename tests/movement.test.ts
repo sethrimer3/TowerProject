@@ -14,7 +14,7 @@ function corridor() {
   g.save.upgrades.inspirationUndos = 1; // undo needs Rehearsed steps
   // Inside a run only Dev mode lets the player walk; these test walking.
   g.save.settings.devMode = true;
-  g.save.upgrades.delve = 1;
+  g.save.upgrades.breakthrough = 1;
   g.switchMode("delve");
   for (let y = 0; y < 20; y++)
     for (let x = 0; x < 30; x++) g.run.changes[point(x, y)] = { kind: "wall" };
@@ -136,7 +136,7 @@ test("a fatal fight stops a walked route; accepting defeat starts the next run, 
   assert.equal(g.run.player.y, OUTSIDE_START_Y);
   assert.equal(g.save.delve.history.length, 0);
   assert.equal(g.undo(), false);
-  assert.equal(g.save.delve.courage, 0);
+  assert.equal(g.save.breakthrough, 0);
 });
 test("a fallen hero waits: undo spends one to take the fight back, and the hand stays paused", () => {
   const g = corridor();
@@ -155,7 +155,7 @@ test("a fallen hero waits: undo spends one to take the fight back, and the hand 
   assert.equal(g.save.delve.history.length, undos - 1, "one undo spent");
   assert.equal(g.undosLeft, 0, "and it is gone for the run");
   assert.ok(!g.fallen && !g.auto && g.save.delve.fall === null);
-  assert.equal(g.save.delve.courage, 0);
+  assert.equal(g.save.breakthrough, 0);
 });
 test("a fallen hero, and the fight to take back, persist safely across refresh", () => {
   const g = corridor();

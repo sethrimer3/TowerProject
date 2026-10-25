@@ -16,7 +16,7 @@ export type CurrencyRow = { id: string; icon: string; name: string; value: strin
 
 /** Every currency the player holds, in the dialog's order: Gold, Gems,
  * Ascension Shards, Medals, the run's Silver, Training Points, Inspiration
- * and Courage, then Cells, Tickets and each Equipment material. Each shows
+ * and Breakthrough, then Cells, Tickets and each Equipment material. Each shows
  * once the system behind it is open (all of them in Dev mode), so the list
  * never names what the player hasn't reached. */
 export function currencyRows(game: Game): CurrencyRow[] {
@@ -30,7 +30,7 @@ export function currencyRows(game: Game): CurrencyRow[] {
     [!outside || silver > 0, "silver", uiSprite("gold", "ui-sprite silver-sprite"), outside ? "Silver (next run)" : "Silver", silver],
     [true, "training", pointsIcon(), "Training Points", trainingPoints(save).left],
     [true, "inspiration", uiSprite("upgrades"), "Inspiration", save.tower.inspiration],
-    [!!save.upgrades.delve, "courage", uiSprite("automove"), "Courage", save.delve.courage],
+    [!!save.upgrades.breakthrough, "breakthrough", uiSprite("automove"), "Breakthrough", save.breakthrough],
     [save.profile.earned.cells > 0, "cells", cellIcon(), "Cells", save.cells],
     [game.tournament.unlocked, "tickets", ticketIcon(), "Tournament Tickets", save.tournament.tickets],
     ...EQUIP_MATERIAL_IDS.map((m): [boolean, string, string, string, number] =>

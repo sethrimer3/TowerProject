@@ -7,7 +7,7 @@
  * floors. Each costs `price.base` Gold (100), and each one after `ratio` (100) times
  * the last (`schedulePrice`). None is sold from the start: each `requires`
  * its skill (the elixir, Vanguard Banner and Aegis charm on the Inspiration
- * tree, the Gold Key and Bomb on the Courage tree), and shows, and sells,
+ * tree, the Gold Key and Bomb on the Breakthrough tree), and shows, and sells,
  * only once that is owned. */
 export const GOLD_SHOP = [
   {

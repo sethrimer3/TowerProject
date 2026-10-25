@@ -17,7 +17,7 @@ await page.goto(process.env.TEST_URL || "http://127.0.0.1:5173/");
 // Movement fixtures begin after the Delve unlock; fresh progression has its own suite.
 await page.evaluate(() => {
   const save = JSON.parse(localStorage.getItem("towerdelve.v1"));
-  save.upgrades.delve = 1;
+  save.upgrades.breakthrough = 1;
   // Inside a run only Dev mode walks by hand, and it starts the hand paused.
   save.settings.devMode = true;
   sessionStorage.setItem("__treeFixture", JSON.stringify(save));
@@ -102,9 +102,9 @@ if ((await page.locator("#density-label").textContent()) !== "17 × 17")
   throw Error("Viewport size failed");
 await openMenu(page); await page.locator("#end-run").click();
 await page.locator("#confirm").click();
-// Delve Courage is credited per 10 height as it's reached; ending pays nothing extra.
+// Delve Breakthrough is credited per 10 height as it's reached; ending pays nothing extra.
 // Dev mode shows balances as ∞, so read the saved one.
-if ((await page.evaluate(() => JSON.parse(localStorage.getItem("towerdelve.v1")).delve.courage)) !== 0)
+if ((await page.evaluate(() => JSON.parse(localStorage.getItem("towerdelve.v1")).delve.breakthrough)) !== 0)
   throw Error("End Run paid an unexpected reward");
 const overflow = await page.evaluate(
   () => document.documentElement.scrollWidth > innerWidth,
@@ -125,7 +125,7 @@ console.log(
       "end run confirmation",
       "straight back to the forest",
       "new run",
-      "courage",
+      "breakthrough",
     ],
   }),
 );
@@ -143,15 +143,15 @@ for (let i = 0; i < 2; i++) {
   await openMenu(page); await page.locator("#end-run").click();
   await page.locator("#confirm").click();
 }
-// Earning Courage takes 10 height per point, so grant enough for Automove.
+// Earning Breakthrough takes 10 height per point, so grant enough for Automove.
 await page.evaluate(() => {
   const save = JSON.parse(localStorage.getItem("towerdelve.v1"));
-  save.delve.courage = 3;
+  save.breakthrough = 3;
   sessionStorage.setItem("__treeFixture", JSON.stringify(save));
 });
 await page.reload();
 await page.locator('[data-tab="upgrades"]').click();
-await page.locator('[data-tree="courage"]').click();
+await page.locator('[data-tree="breakthrough"]').click();
 // A skill node's first tap shows its tooltip; tapping it again buys it.
 await page.locator('[data-skill="moveSpeed"]').click();
 await page.locator('[data-skill="moveSpeed"]').click();
@@ -181,7 +181,7 @@ await page.reload();
 await openMenu(page); await page.locator("#end-run").click();
 await page.locator("#confirm").click();
 await page.locator('[data-tab="upgrades"]').click();
-await page.locator('[data-tree="courage"]').click();
+await page.locator('[data-tree="breakthrough"]').click();
 if ((await page.locator('[data-skill="moveSpeed"] small').textContent()) !== "1 / 1")
   throw Error("Upgrade persistence failed");
 console.log(

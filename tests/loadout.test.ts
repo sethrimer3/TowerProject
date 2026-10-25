@@ -235,7 +235,7 @@ test("every provision costs 100 Gold, and each one after a hundred times the las
   assert.equal(s.provisions.heal, 2);
 });
 
-test("no provision is open from the start: each opens with its skill, in the Inspiration or Courage tree", () => {
+test("no provision is open from the start: each opens with its skill, in the Inspiration or Breakthrough tree", () => {
   const s = defaults(), g = new Game(s);
   s.gold = 1000;
   assert.equal(provisionsOpen(s), false);
@@ -243,7 +243,7 @@ test("no provision is open from the start: each opens with its skill, in the Ins
   const skills = { heal: "elixirProvision", edge: "whetstoneProvision", guard: "aegisProvision", yellowKey: "extraKey", bomb: "bombs" } as const;
   for (const { id } of GOLD_SHOP) {
     const skill = UPGRADES.find((u) => u.id === skills[id])!;
-    assert.ok(skill.currency === "inspiration" || skill.currency === "courage", id);
+    assert.ok(skill.currency === "inspiration" || skill.currency === "breakthrough", id);
     s.upgrades[skill.id] = 1;
     assert.ok(provisionOpen(s, id) && provisionsOpen(s), id);
     s.upgrades[skill.id] = 0;

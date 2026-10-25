@@ -6,7 +6,7 @@ import { seedCardBuys } from "../cards/buys.ts";
 import { stream } from "../random.ts";
 
 /** The currencies whose lifetime earnings the player profile tallies. */
-export const LIFETIME_CURRENCIES = ["gold", "silver", "gems", "ascensionShards", "cells", "medals", "inspiration", "courage", "tickets", "trialPoints"] as const;
+export const LIFETIME_CURRENCIES = ["gold", "silver", "gems", "ascensionShards", "cells", "medals", "inspiration", "breakthrough", "tickets", "trialPoints"] as const;
 export type LifetimeCurrency = (typeof LIFETIME_CURRENCIES)[number];
 
 /** The lifetime tallies the Settings page's Stats dialog shows: kept as
@@ -71,6 +71,8 @@ export function decodeProfile(raw: unknown): Profile {
   if (!isRecord(raw)) return d;
   d.createdAt = time(raw.createdAt);
   for (const c of LIFETIME_CURRENCIES) d.earned[c] = fraction(raw.earned?.[c], 0);
+  // TODO: remove once saves from before the rename are gone.
+  d.earned.breakthrough ||= fraction(raw.earned?.courage, 0);
   for (const k of ["trainingLevels", "researchLevels", "trainingGold", "researchGold"] as const) d[k] = fraction(raw[k], 0);
   return d;
 }
@@ -86,7 +88,7 @@ export function backfillProfile(save: Save) {
   at("cells", save.cells);
   at("medals", save.medals);
   at("inspiration", save.tower.inspiration);
-  at("courage", save.delve.courage);
+  at("breakthrough", save.breakthrough);
   at("tickets", save.tournament.tickets);
   at("trialPoints", save.trialAccess.points);
   const ranks = TRAINING.reduce((n, t) => n + save.training[t.id], 0);

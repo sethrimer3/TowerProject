@@ -86,7 +86,7 @@ function observe(g: Game, action: unknown, result: unknown) {
     action, result, message: g.message, fallen: g.fallen,
     player: r.player, height: r.height, floor: r.floor, outside: !!r.outside,
     ...(g.mode === "tower" ? { damaged: r.damaged } : {}),
-    areas: g.save.goals, shards: g.save.tower.inspiration, essence: g.save.delve.courage,
+    areas: g.save.goals, shards: g.save.tower.inspiration, essence: g.save.breakthrough,
     gold: g.save.gold, reached: slice.reached, best: slice.best,
     history: slice.history.length, fall: !!slice.fall,
     changes: r.changes, floors: r.floors ?? null, route: g.route.length, auto: g.auto, paused: g.paused,
@@ -101,7 +101,7 @@ function trace(mode: Mode, seed: number): string[] {
   try {
     const save = defaults();
     save.tutorials.climb = true;
-    save.upgrades.delve = 1;
+    save.upgrades.breakthrough = 1;
     save.upgrades.inspirationUndos = 1;
     save.upgrades.undos = 1;
     // Every Undo Count level, so a run has nine undos to spend.

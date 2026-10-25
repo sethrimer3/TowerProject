@@ -9,7 +9,7 @@ import type { DeckHost } from "./deck-editor.ts";
 export const DRAW_GEMS = { 1: 20, 10: 200 } as const;
 export type DrawCount = keyof typeof DRAW_GEMS;
 
-/** The Deck page's card badge commands (Badges, a Courage
+/** The Deck page's card badge commands (Badges, a Breakthrough
  * skill): drawing them with Gems, attaching them to cards and choosing a
  * gate's threshold. Attaching and choosing happen in the forest only, so a
  * run inside keeps the badges it went in with. */

@@ -10,11 +10,11 @@ export const isBoard = (id: string): id is "tower" | "delve" => id === "tower" |
  * or a purchase in the save, never swap the save, run or mode), and the
  * commands that change the rest: its own, and those of its desks (Training,
  * skills, the Shop, themes, the Archives, the Deck, Gear and Equipment). */
-export type PageGame = Readonly<Pick<Game, "mode" | "run" | "world" | "save" | "fallen" | "fights" | "handStuck" | "stepRules" | "enemyGold" | "free" | "maxSpeed" | "stepsPerSecond" | "canBeginTournament" | "undosLeft" | "canUndo" | "trainingView" | "cardPointsLesson" | "introSkill" | "introBought" | "provisionsLesson">> &
+export type PageGame = Readonly<Pick<Game, "mode" | "run" | "world" | "save" | "fallen" | "fights" | "handStuck" | "stepRules" | "enemyGold" | "free" | "maxSpeed" | "stepsPerSecond" | "canBeginTournament" | "delveOpen" | "undosLeft" | "canUndo" | "trainingView" | "cardPointsLesson" | "introSkill" | "introBought" | "provisionsLesson">> &
   Pick<
     Game,
     | "undo" | "acceptDefeat" | "stuckReport" | "cardText" | "retry" | "retryHeight" | "eraseAll" | "replaceSave" | "finish" | "setDevMode"
-    | "claimGoal" | "warp" | "clock"
+    | "claimGoal" | "warp" | "clock" | "toDelveForest"
     | "training" | "skills" | "shop" | "themes" | "research" | "deck" | "cardTrees" | "cardBuys" | "badges" | "gear" | "equipment" | "tournament" | "mail" | "missions" | "events" | "shrine" | "notices"
   >;
 

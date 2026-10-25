@@ -1,5 +1,6 @@
 /** How the Tower and the Delve differ, one profile per mode: the currency a
- * mode pays and how progress maps to an equivalent floor, where a run enters
+ * mode pays (the Tower's Inspiration; the Delve's depth only scores a
+ * tournament) and how progress maps to an equivalent floor, where a run enters
  * and how its board is built, what its enemies drop, and the words the game
  * uses for it. Code that needs a per-mode answer asks `MODES[mode]` rather
  * than branching on the mode; features only the Tower has still test for it. */
@@ -17,11 +18,12 @@ import { weakened } from "./shrines.ts";
 import { earn } from "./save/profile.ts";
 
 export type ModeProfile<R extends Run = Run> = {
-  /** The balance of the currency this mode pays, and paying it. */
-  balance(save: Save): number;
-  credit(save: Save, amount: number): void;
+  /** The currency new progress in this mode pays, if any: its balance,
+   * paying it, its name as the player sees it, and what a new best pays it
+   * for (the reward under the height). */
+  pays: { balance(save: Save): number; credit(save: Save, amount: number): void; currency: string; newBest: string } | null;
   /** The equivalent floor `progress` counts as: the scale every loot table
-   * is gated on, and each new one reached pays one currency. */
+   * is gated on, and each new one reached pays one currency where `pays`. */
   equivalentFloor(progress: number): number;
   /** The progress loot at row `y` of the run's board is measured at. */
   progressAt(run: R, y: number): number;
@@ -40,12 +42,8 @@ export type ModeProfile<R extends Run = Run> = {
   /** Keys a kill or treasure so it pays out once, whatever undo does. */
   lootKey(run: R, x: number, y: number): string;
   words: {
-    /** The currency, as the player sees it. */
-    currency: string;
     /** What the progress count measures. */
     progress: string;
-    /** What the currency a new best pays is paid for (the reward under the height). */
-    newBest: string;
     /** A run in this mode. */
     run: string;
     /** The numbered places a run climbs, as in "Tower II" (tiers.ts). */
@@ -87,8 +85,10 @@ export function milestonePoints(floor: number) {
 }
 
 /** Milestone currency for progress rising from `from` to `to`, by the
- * equivalent floors it reaches (`milestonePoints`). */
+ * equivalent floors it reaches (`milestonePoints`); none in a mode that
+ * pays none. */
 export function milestones(profile: ModeProfile, from: number, to: number) {
+  if (!profile.pays) return 0;
   return milestonePoints(profile.equivalentFloor(to)) - milestonePoints(profile.equivalentFloor(from));
 }
 
@@ -97,8 +97,12 @@ const delveFloor = (depth: number) => Math.floor(depth / 10);
 
 export const MODES: { tower: ModeProfile<TowerRun>; delve: ModeProfile<DelveRun> } = {
   tower: {
-    balance: (save) => save.tower.inspiration,
-    credit: (save, amount) => { save.tower.inspiration += amount; earn(save, "inspiration", amount); },
+    pays: {
+      balance: (save) => save.tower.inspiration,
+      credit: (save, amount) => { save.tower.inspiration += amount; earn(save, "inspiration", amount); },
+      currency: "Inspiration",
+      newBest: "Inspiration for each floor this ascent has completed beyond your highest: paid as you climb its stairs",
+    },
     equivalentFloor: (height) => height,
     progressAt: (run) => run.height,
     floorOf: (run) => run.height,
@@ -110,9 +114,7 @@ export const MODES: { tower: ModeProfile<TowerRun>; delve: ModeProfile<DelveRun>
     // Tower floors reuse the same x/y space, so the floor is part of the key.
     lootKey: (run, x, y) => `${run.seed}:${run.height}:${x},${y}`,
     words: {
-      currency: "Inspiration",
       progress: "floor",
-      newBest: "Inspiration for each floor this ascent has completed beyond your highest: paid as you climb its stairs",
       run: "ascent",
       tierName: "Tower",
       keepGoing: "Keep climbing",
@@ -125,8 +127,7 @@ export const MODES: { tower: ModeProfile<TowerRun>; delve: ModeProfile<DelveRun>
     },
   },
   delve: {
-    balance: (save) => save.delve.courage,
-    credit: (save, amount) => { save.delve.courage += amount; earn(save, "courage", amount); },
+    pays: null,
     equivalentFloor: delveFloor,
     progressAt: (_run, y) => y,
     floorOf: (run) => delveFloor(depthAt(run.seed, run.player.x, run.player.y, run.milestone, run.tier ?? 1)),
@@ -137,9 +138,7 @@ export const MODES: { tower: ModeProfile<TowerRun>; delve: ModeProfile<DelveRun>
     endGold: (run) => goldReward(run.treasures),
     lootKey: (run, x, y) => `${run.seed}:${x},${y}`,
     words: {
-      currency: "Courage",
       progress: "depth",
-      newBest: "Courage for each new 10-depth milestone this delve has passed beyond your deepest",
       run: "delve",
       tierName: "Delve",
       keepGoing: "Keep delving",

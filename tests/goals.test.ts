@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { decode, defaults } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
-import { CHECKPOINTS, PASSES, canWarp, decodeGoals, floorsCompleted, goalState, goalsWaiting, goalUnlocked, passFor, passTotals, unlockFloor, warpUnlocked } from "../src/goals.ts";
+import { CHECKPOINTS, GOAL_BREAKTHROUGH, PASSES, canWarp, claimGoal, decodeGoals, floorsCompleted, goalState, goalsWaiting, goalUnlocked, passFor, passTotals, unlockFloor, warpUnlocked } from "../src/goals.ts";
 import { TIERS } from "../src/tiers.ts";
 
 test("every tower has a checkpoint each ten floors to 100, every 50 to 300, then 400 to 4,500; Tower I's first eight pay Damage Prediction, Combat Forecast, Attack Lore, 20 Gems, Damage Visual, the Tournament, Events and 25 Gems, its premium rewards set by hand", () => {
@@ -202,4 +202,19 @@ test("the Goals button's dot shows while a reward in an open tower waits to be c
   assert.equal(goalsWaiting(g.save), false, "nor one in a tower not yet open");
   g.save.tower.tiersOpen = 2;
   assert.equal(goalsWaiting(g.save), true, "a tower opened brings its own");
+});
+
+test("each standard Goal reward claimed pays one Breakthrough point besides itself; a premium reward pays none", () => {
+  const save = defaults();
+  save.tower.reached = 40;
+  save.settings.freePurchases = false;
+  assert.ok(claimGoal(save, 1, 10, false));
+  assert.equal(save.breakthrough, GOAL_BREAKTHROUGH);
+  assert.equal(save.profile.earned.breakthrough, 1);
+  assert.equal(claimGoal(save, 1, 10, false), null, "once");
+  assert.ok(claimGoal(save, 1, 40, false));
+  assert.equal(save.breakthrough, 2, "a currency reward pays its point too");
+  save.entitlements.push(passFor(1).id);
+  assert.ok(claimGoal(save, 1, 10, true));
+  assert.equal(save.breakthrough, 2, "premium pays no point");
 });

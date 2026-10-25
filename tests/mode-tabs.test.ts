@@ -17,11 +17,11 @@ test("legacy upgrade description mentions unlocking the legacy skill tree", () =
 
 test("fresh save has delve and legacy locked; dev mode unlocks both", () => {
   const g = new Game(defaults());
-  assert.equal(g.save.upgrades.delve ?? 0, 0);
+  assert.equal(g.save.upgrades.breakthrough ?? 0, 0);
   assert.equal(g.save.upgrades.legacy ?? 0, 0);
 
   g.setDevMode(true);
-  assert.equal(g.save.upgrades.delve, 1);
+  assert.equal(g.save.upgrades.breakthrough, 1);
   assert.equal(g.save.upgrades.legacy, 1);
 });
 

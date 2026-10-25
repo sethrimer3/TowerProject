@@ -82,7 +82,7 @@ const { key, door, enemy } = scene;
 /** A fresh run on the chosen seed with the player at (x, y) and `open` /
  * `closed` tiles forced to floor / wall. */
 const place = (s, { seed, x, y, open = [], closed = [], stats = {}, undo = false }) => {
-  s.upgrades.delve = 1;
+  s.upgrades.breakthrough = 1;
   if (undo) s.upgrades.inspirationUndos = 1;
   // A settled camera keeps tap positions deterministic.
   s.settings.transition = "instant";
@@ -103,7 +103,7 @@ const place = (s, { seed, x, y, open = [], closed = [], stats = {}, undo = false
 
 // A fresh save has no Delve run until Delve is unlocked and its forest
 // reached, by the sign down the Tower forest's path.
-await fixture((s) => { s.upgrades.delve = 1; });
+await fixture((s) => { s.upgrades.breakthrough = 1; });
 await page.locator("#forest-sign").click();
 
 // Swipes in all four directions, below the key.

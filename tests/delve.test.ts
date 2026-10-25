@@ -70,7 +70,7 @@ test('a forked pocket is reached by either lane and by nothing else', () => {
   assert.ok(forks > 20, `only ${forks} forked pockets`);
 });
 test('milestone crossing seals behind the player, persists, and prevents undo across the seal', () => {
-  const g = new Game(defaults()); g.save.upgrades.delve = 1; g.switchMode('delve');
+  const g = new Game(defaults()); g.save.upgrades.breakthrough = 1; g.switchMode('delve');
   g.newRun({ seed: 42 });
   const gate = region(42, 0).gate;
   Object.assign(g.run.player, { x: gate.x, y: gate.y - 1 });
@@ -97,7 +97,7 @@ test('torches sit on plain floor, once, even where areas interlock', () => {
 
 test('undo stays on its equivalent floor: a step across a floor line (each ten depth) forgets the history', () => {
   const g = new Game(defaults());
-  g.save.upgrades.delve = g.save.upgrades.inspirationUndos = 1;
+  g.save.upgrades.breakthrough = g.save.upgrades.inspirationUndos = 1;
   g.switchMode('delve');
   g.newRun({ seed: 42 });
   (g as unknown as { enterFromOutside(): void }).enterFromOutside();

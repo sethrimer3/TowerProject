@@ -17,7 +17,7 @@ function progressed() {
   s.training.attack = 3;
   s.tower.best = 42;
   s.tower.reached = 42;
-  s.delve.courage = 11;
+  s.breakthrough = 11;
   s.tutorials.deck = true;
   s.profile.createdAt = NOW - 1000;
   const g = new Game(decode(JSON.stringify(s)));
@@ -56,7 +56,7 @@ test("the file is readable JSON headed by its format and save version, with no r
   assert.equal(file.exportedAt, "2026-10-24T00:00:00.000Z");
   assert.deepEqual(Object.keys(file), ["format", "version", "exportedAt", ...Object.keys(PROFILE_SECTIONS)]);
   assert.deepEqual(Object.keys(file.towers.tower), [...KEPT_SLICE, "inspiration"]);
-  assert.deepEqual(Object.keys(file.towers.delve), [...KEPT_SLICE, "courage"]);
+  assert.deepEqual(Object.keys(file.towers.delve), [...KEPT_SLICE]);
   assert.equal(file.towers.tower.best, 42);
   assert.equal(file.currencies.gemDrop.out, null);
   assert.equal(file.gear.provisions.heal, 2);

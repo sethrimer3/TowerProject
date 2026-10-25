@@ -47,7 +47,7 @@ test("Revive's chance: 0.5%, and 0.5% more a training rank, up to 50% at 99 rank
   assert.deepEqual([trainingStep(s, "revive").now, trainingStep(s, "revive").next, trainingStep(s, "revive").worth], [0.5, 1, 0.5]);
 });
 
-test("Revive is a 10 Inspiration skill below Parry, and the Courage tree no longer has it", () => {
+test("Revive is a 10 Inspiration skill below Parry, and the Breakthrough tree no longer has it", () => {
   const row = UPGRADES.find((u) => u.id === "revive")!;
   assert.deepEqual([row.currency, row.base, row.max], ["inspiration", 10, 1]);
   const where = TREES.filter((t) => t.nodes.some((n) => n.id === "revive")).map((t) => t.id);
@@ -60,7 +60,7 @@ test("Revive is a 10 Inspiration skill below Parry, and the Courage tree no long
 function arena(seed: number, ranks: number | null) {
   const g = new Game(defaults());
   g.save.upgrades.inspirationUndos = 1;
-  g.save.upgrades.delve = 1;
+  g.save.upgrades.breakthrough = 1;
   g.save.settings.devMode = true;
   if (ranks !== null) {
     g.save.upgrades.revive = 1;

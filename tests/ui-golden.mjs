@@ -121,8 +121,8 @@ try {
     };
     const rich = (s) => {
       quiet(s);
-      Object.assign(s.upgrades, { delve: 1, moveSpeed: 1, legacy: 1, revive: 1, combatStance: 1, buildout: 1, largerHand: 1, cardHeal: 1, bombs: 1, archives: 1, inspirationUndos: 1, greaterHeal: 1, recovery: 1, findPotion: 1, shroud: 1, undos: 1, extraKey: 1, elixirProvision: 1, whetstoneProvision: 1, aegisProvision: 1, trainers: 1, cardBlueKey: 1, pathfinder: 1 });
-      s.delve.courage = 37;
+      Object.assign(s.upgrades, { breakthrough: 1, moveSpeed: 1, legacy: 1, revive: 1, combatStance: 1, buildout: 1, largerHand: 1, cardHeal: 1, bombs: 1, archives: 1, inspirationUndos: 1, greaterHeal: 1, recovery: 1, findPotion: 1, shroud: 1, undos: 1, extraKey: 1, elixirProvision: 1, whetstoneProvision: 1, aegisProvision: 1, trainers: 1, cardBlueKey: 1, pathfinder: 1 });
+      s.breakthrough = 37;
       s.tower.inspiration = 21;
       s.gold = 480;
       s.gems = 260;
@@ -555,7 +555,7 @@ try {
     for (const tree of await page.locator("[data-tree]").evaluateAll((bs) => bs.map((b) => b.dataset.tree))) {
       await click(`[data-tree="${tree}"]`);
       await shot(`${prefix}.tree.${tree}`);
-      // The Inspiration and Courage trees explain how their currency is earned.
+      // The Inspiration and Breakthrough trees explain how their currency is earned.
       if (await page.locator("#tree-help").count()) {
         await click("#tree-help");
         await shot(`${prefix}.tree.${tree}.help`);
@@ -762,12 +762,10 @@ try {
     await upgradesTour("rich");
     await researchTour("rich");
     await gearTour("rich");
-    // The sign at the foot of the forest path leads to the Delve's forest,
-    // and the mode button takes its art.
+    // With no tournament open, the forest path shows no sign down to the
+    // Delve (the Tournament section goes there).
     await tab("board");
     await shot("rich.forestSign");
-    await click("#forest-sign");
-    await shot("rich.delve");
     await settingsTour("rich");
   });
 
@@ -968,7 +966,8 @@ try {
   // The Tournament: on Monday, the button's countdown and the page, which
   // shows nothing of Saturday's results once they're over; All prizes. Then the clock moves on
   // (last, so no other snapshot sees it): Wednesday's opens, granting its
-  // Ticket with a celebration; its Results come, and the prize is claimed.
+  // Ticket with a celebration, and its page leads to the Delve's forest; entry
+  // closes, leading back to the Tower's; its Results come, and the prize is claimed.
   await section("tournament", async () => {
     await load("tournament");
     await shot("tournament.forest");
@@ -982,7 +981,16 @@ try {
     await shot("tournament.ticket");
     await click(".reward-reveal");
     await shot("tournament.open");
+    // Go to the Delve: its forest, whose cave's Enter wears a Ticket, and the
+    // mode button takes its art.
+    await click("#tournament-begin");
+    await shot("tournament.delve");
+    // Entry closing leads back to the Tower's forest, saying so until a click.
     await page.clock.setFixedTime(new Date("2026-10-08T05:30:00Z"));
+    await page.locator("#modal[open]").waitFor();
+    await shot("tournament.entryClosed");
+    await click("#modal");
+    await click("#tournament-button");
     await page.locator("#tournament-claim").waitFor();
     await shot("tournament.results");
     await click("#tournament-claim");

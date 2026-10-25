@@ -8,7 +8,7 @@ import { resolveStep, type StepEffect } from "../src/step-effects.ts";
 import type { Enemy, Player } from "../src/entities.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 
-// The research the Courage tree's Find Gold Key, Key Efficiency,
+// The research the Breakthrough tree's Find Gold Key, Key Efficiency,
 // Interest, Max Interest and Mug skills open.
 
 /** A Tower run inside, the hero at (0, 0) beside the stairs at (1, 0). */

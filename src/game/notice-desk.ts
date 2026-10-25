@@ -20,15 +20,15 @@ import type { TournamentDesk } from "./tournament-desk.ts";
 /** Where a Notice can show: the tabs (`upgrades`, `gear`, `research`,
  * `deck`, `shop`), the forest's Goals button, the run's Research button
  * and the hamburger (`run-menu`), and the tabs inside pages (the
- * Inspiration and Courage trees', the Research page's Training tab and the
+ * Inspiration and Breakthrough trees', the Research page's Training tab and the
  * Gear page's Equipment tab). */
 export type NoticeSpot =
   | "upgrades" | "gear" | "research" | "deck" | "shop" | "goals" | "run-research" | "run-menu"
-  | "inspiration" | "courage" | "training" | "equipment";
+  | "inspiration" | "breakthrough" | "training" | "equipment";
 
 /** What the player can be shown, clearing the Notices it answers: a page
  * opened, or a tab inside one. */
-export type NoticeView = "upgrades" | "gear" | "equipment" | "research" | "training" | "deck" | "inspiration" | "courage";
+export type NoticeView = "upgrades" | "gear" | "equipment" | "research" | "training" | "deck" | "inspiration" | "breakthrough";
 
 /** What the Notices read from the game besides the save: the desks that
  * keep their own Notices, the Archives, and whether a skill can be bought. */
@@ -58,7 +58,7 @@ export class NoticeDesk {
   waiting(spot: NoticeSpot): boolean {
     const save = this.save, host = this.host;
     switch (spot) {
-      case "upgrades": return this.firstInspiration || this.tree("inspiration") || this.tree("courage");
+      case "upgrades": return this.firstInspiration || this.tree("inspiration") || this.tree("breakthrough");
       case "gear": return this.firstGear || equipmentWaiting(save);
       case "research": return trainingWaiting(save);
       case "deck": {
@@ -79,7 +79,7 @@ export class NoticeDesk {
       case "run-menu": return host.missions.waiting || (host.run.outside
         ? host.mail.recent.length > 0 && host.mail.unread
         : this.waiting("run-research") || host.tournament.waiting || host.events.waiting);
-      case "inspiration": case "courage": return this.tree(spot);
+      case "inspiration": case "breakthrough": return this.tree(spot);
       case "training": return trainingWaiting(save) && levelForXp(save.xp) > save.seen.training;
       case "equipment": return equipmentWaiting(save);
     }
@@ -114,7 +114,7 @@ export class NoticeDesk {
         seen.cardLevels = levels;
         return changed;
       }
-      case "inspiration": case "courage": {
+      case "inspiration": case "breakthrough": {
         const changed = save.treeNotices[view];
         save.treeNotices[view] = false;
         return changed;
@@ -163,7 +163,7 @@ export class NoticeDesk {
   }
 
   /** In the forest, after a run that earned `tree`'s currency (Inspiration
-   * from the Tower, Courage from the Delve), while a skill in it can be
+   * from the Tower, Breakthrough from the Delve), while a skill in it can be
    * bought (so never while the tree is locked), until that tree shows. */
   private tree(tree: NoticeTree) {
     return this.save.treeNotices[tree] && !!this.host.run.outside &&

@@ -9,7 +9,7 @@ import { provisionsOpen } from "../progression/loadout.ts";
 import { outsideWeather } from "../outside.ts";
 import { tierNumeral, tierRewardText } from "../tiers.ts";
 import { MODES, milestones } from "../modes.ts";
-import { capitalized, cardArt, CURRENCY_SPRITES, displayedProgress, el, POINTER_SVG, text, uiSprite } from "./dom.ts";
+import { capitalized, cardArt, CURRENCY_SPRITES, displayedProgress, el, POINTER_SVG, text, ticketIcon, uiSprite } from "./dom.ts";
 import { notesResearched } from "./run-notes-dialog.ts";
 import { CARDS, IN_PLACE, cardBonusText, isSiphon, type CardId } from "../cards/cards.ts";
 import { cardLevelHtml, cardLevelTitle } from "./card-level-marks.ts";
@@ -362,11 +362,19 @@ const HAND_ICON = { play: "▶︎", pause: "❚❚" };
 /** Inside a run the button plays and pauses the hand, showing the play or
  * pause icon, with the hero's movement speed under it (*3x*: steps a
  * second) between the arrows that change it. In the forest it gives way to
- * Enter, under Goals, which goes straight in to start the run. */
+ * Enter, under Goals, which goes straight in to start the run: in the
+ * Delve's, into the tournament, wearing its price, a Ticket. */
 function renderAutoButton(game: Game) {
-  const button = el("auto"), inside = !game.run.outside;
+  const button = el("auto"), inside = !game.run.outside, enter = el("enter-run");
   button.hidden = !inside;
-  el("enter-run").hidden = inside;
+  enter.hidden = inside;
+  const cave = game.mode === "delve";
+  if (enter.classList.contains("tournament-entry") !== cave) {
+    enter.classList.toggle("tournament-entry", cave);
+    enter.querySelector("small")!.innerHTML = cave ? `ENTER · ${ticketIcon()}<b>1</b>` : "ENTER";
+    enter.setAttribute("aria-label", cave ? "Enter the tournament: costs 1 Ticket" : "Enter");
+    enter.title = cave ? "Enter the tournament · 1 Ticket" : "Enter";
+  }
   el("stats").classList.toggle("outside", !inside);
   const label = game.auto ? "Pause the hand" : "Play the hand";
   const icon = game.auto ? HAND_ICON.pause : HAND_ICON.play,
@@ -715,11 +723,12 @@ function renderProgress(game: Game) {
   renderGoldBonus(game);
   renderBaseEnemy(game);
   const rewardEl = el("best-reward");
-  rewardEl.hidden = rawRunBest <= rawAllBest;
-  if (rewardEl.hidden) return;
+  // The Delve's depth pays nothing: it only scores a tournament.
+  rewardEl.hidden = rawRunBest <= rawAllBest || !rules.pays;
+  if (rewardEl.hidden || !rules.pays) return;
   text("best-reward-val", milestones(rules, rawAllBest, rawRunBest));
-  text("best-reward-type", rules.words.currency.toUpperCase());
-  rewardEl.title = rules.words.newBest;
+  text("best-reward-type", rules.pays.currency.toUpperCase());
+  rewardEl.title = rules.pays.newBest;
 }
 
 /** Inside a run, between lines under the floor: every Gold bonus applied,
@@ -746,7 +755,7 @@ function renderBaseEnemy(game: Game) {
   text("base-enemy-hp", shortStat(s.hp));
 }
 
-/** The run's Inspiration (Courage in the Delve) last shown under the
+/** The run's Inspiration (Breakthrough in the Delve) last shown under the
  * floor, and the mode it was shown for. */
 let earnedShown = { mode: "", amount: 0 };
 /** On a line under the floor inside a run, once it has earned any: the mode's
@@ -759,7 +768,7 @@ function renderRunEarned(game: Game) {
     icon.dataset.mode = game.mode;
     icon.innerHTML = uiSprite(CURRENCY_SPRITES[game.mode]);
   }
-  box.title = `${MODES[game.mode].words.currency} earned this run`;
+  box.title = `${MODES[game.mode].pays?.currency ?? ""} earned this run`;
   text("run-earned-val", String(amount));
   const rose = earnedShown.mode === game.mode && amount > earnedShown.amount;
   earnedShown = { mode: game.mode, amount };

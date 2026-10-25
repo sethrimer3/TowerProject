@@ -10,7 +10,7 @@ Silver stays the same, so a run buys about the same run training, while potions 
 ATK and DEF shards raise their stat by 1 in Tower I and by 2.75 times as much in each tower after (2.75 in II, 7.56 in III, …).
 The floors are laid out as in Tower I, but blue, red and Heart Doors (and blue and red keys) come earlier in each tower.
 Once a second one is open, arrows on either side of the board in the forest choose which the next run enters; its numeral glows over the doorway, and the board's subtitle names it with its Gold & XP bonus.
-Each keeps its own records: its highest floor, the Inspiration or Courage its new floors pay (again from its first floor) and its areas mastered and cleared, and the Goals screen shows each tower's checkpoints apart.
+Each keeps its own records: its highest floor, the Inspiration its new floors pay (again from its first floor) and its areas mastered and cleared, and the Goals screen shows each tower's checkpoints apart.
 
 ## Areas
 
@@ -23,6 +23,7 @@ Undo never takes an area's reward back.
 
 In the forest, the Tower's **Goals** button (with a red dot while a reward in an open tower waits to be claimed) opens the Goals screen: the tower drawn as a stone column rising from the ground, a line up its middle lit to the highest floor completed in it (shown at the bottom, *Floor 35*; a floor counts as completed once its stairs are climbed, so a tower not yet climbed shows *Floor 0*), and a checkpoint every ten floors to 100, every 50 floors to 300, then at 400, 500, 750, 1,000, 1,250, 1,500, 2,000, 2,500 and 4,500.
 Each checkpoint has a reward on the left, claimed by tapping it once its floor is completed (floor 10's once floor 11 is reached), and a premium reward on the right, claimed the same way with that set's **Premium Pass**: Pass 1 opens Towers I–III ($9.99), Pass 2 IV–VI ($19.99), Pass 3 VII–IX ($29.99); the pass button at the top right, or a premium reward tapped without it, offers the pass with the Gems and other rewards it opens.
+Claiming a checkpoint's reward on the left also pays one **Breakthrough point**, unsaid on the screen: a Breakthrough icon and *+1* rise off the reward as it is claimed (a premium reward pays none).
 A reward whose floor isn't completed yet shows faded with a lock, a claimed one faded with a check, one ready to claim bright.
 With **Dev: free purchases** on, tapping a locked reward claims it anyway (a premium one still needs its pass).
 

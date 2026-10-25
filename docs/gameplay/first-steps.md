@@ -55,12 +55,15 @@ Ten steps into that run's first floor, a hero slower than 3 steps a second is pa
 When the hand is stuck again with an enemy in the way, while **Enemy** isn't owned and you hold the Inspiration it costs, a note says an enemy blocks the way, that the Enemy card on the Inspiration tree lets you fight it, and to press End Run, which pulses again; the forest, the Inspiration tree and Enter then lead you to Enemy and back as they did for Door & Key.
 In the first run inside after **Auto-Climb** is bought, a note says Auto-Climb moves the hero for you: it heads for the target of the first card in your hand with an open path to it, and pressing a card goes for that card's target first; the hand plays on under it, and tapping the note or pressing a card dismisses it.
 The first time training points can be spent, in the forest a note says that after levelling up you can spend points to increase your stats, a hand pointing at the **Research** tab, until you open it.
-Once Into the depths is owned, the forest's next note says to follow the path down to the Delve for Courage, XP and resources, the hand pointing at the sign at the foot of the forest path, until the Delve is opened.
+While a tournament is open, the forest's next note says to follow the path down to the Delve and enter its cave, the hand pointing at the sign at the foot of the forest path, until the Delve is opened.
 
 ## The tab bar and the forest sign
 
 The tab bar along the bottom is one strip of icons, the open page's lit: the board (its icon the Tower's or the Delve's, whichever is active), Upgrades, Deck, Gear, Research and Shop.
-Tower and Delve share the one board button: from the Delve's opening on, a large sign stands at the foot of each forest's path, the other place's icon over a down arrow, and tapping it or walking the hero down onto the path's last tile goes to the other forest.
+Tower and Delve share the one board button: a large sign stands at the foot of each forest's path, the other place's icon over a down arrow, and tapping it or walking the hero down onto the path's last tile goes to the other forest.
+The Delve is open only while a tournament is open for entry, once the Tournament is unlocked: only then does the Tower's forest show its sign, and the Delve's cave is the way into the tournament (`docs/TOURNAMENT.md`).
+The Delve's forest always shows its sign back to the Tower's.
+If tournament entry closes while the Delve's forest shows, the game goes back to the Tower's forest at once and says *Tournament entry has closed*, until a click.
 A forest run's hero starts partway up the path.
 The dirt path has patches of packed earth, gravel, pebbles, cracks, scuffs and fallen leaves, with grass along its edges; these details do not change where the hero can walk.
 Reloading mid-Delve-run opens the Delve where it was.
@@ -72,7 +75,7 @@ With Dev mode on, swipes and the keyboard arrows / WASD also step the hero one t
 Monsters on manual routes are fought even when lethal.
 Missing keys stop movement at the necessary door, with a fading red X; unreachable wall targets get the same feedback at the tapped spot.
 Routing prefers an available detour over a door for which no key is held.
-Inside a run, where the hand moves the hero, a tap on a tile highlights it and shows what's there (a monster's stats, an item, a door's keys); once **Pathfinder** (1 Courage, after Movement Speed in the Courage tree, left of Bombs) is owned, it also draws the route there on the board and adds a Route totals box of what happens along it (the HP lost, the keys spent, what's picked up).
+Inside a run, where the hand moves the hero, a tap on a tile highlights it and shows what's there (a monster's stats, an item, a door's keys); once **Pathfinder** (1 Breakthrough, after Movement Speed in the Breakthrough tree, left of Bombs) is owned, it also draws the route there on the board and adds a Route totals box of what happens along it (the HP lost, the keys spent, what's picked up).
 With Dev mode on, the hero can also walk by hand inside a run: a second tap on the highlighted tile walks there, fighting monsters and collecting items along the route.
 A pickup's box shows what it gives with every bonus counted, as its icon and +N (a key's keys, a potion's full heal, a shard's ATK or DEF), and a lit torch's says Torch.
 With Pathfinder, tapping a tile inside a run pauses the hand while the highlight shows; once it goes (and no other tile is highlighted in its place), a hand it paused plays on.
@@ -84,4 +87,4 @@ A potion's box also says how much HP it restores (a percent potion its share of 
 
 While a Deck lesson is waiting, its tab carries a red dot.
 After a card levels up or joins the deck, the Deck tab carries one with a number until you open it: the new cards and the cards with card points to spend (see Card levels in hand-and-cards.md).
-The Upgrades tab carries one too, once the first run that earns Inspiration is over, until you open it; and whenever a run that earned Inspiration ends, the Upgrades tab and the Inspiration tab on that page carry one in the forest while you hold enough Inspiration to buy a skill there, until you look at the Inspiration tree (likewise a Delve run that earned Courage, once the Courage tree is open, for the Courage tab); and so does the Gear tab once a first provision opens, until you open it.
+The Upgrades tab carries one too, once the first run that earns Inspiration is over, until you open it; and whenever a run that earned Inspiration ends, the Upgrades tab and the Inspiration tab on that page carry one in the forest while you hold enough Inspiration to buy a skill there, until you look at the Inspiration tree (likewise a Tower Goal claimed, which pays a Breakthrough point, once the Breakthrough tree is open, for the Breakthrough tab); and so does the Gear tab once a first provision opens, until you open it.

@@ -8,6 +8,7 @@ import { chooseStep } from "../src/automation.ts";
 import { silverForKill } from "../src/economy/kill-pay.ts";
 import { withFirstSkills } from "./first-skills.ts";
 import type { Tile } from "../src/entities.ts";
+import { openTournament } from "./open-tournament.ts";
 
 /** A save past a new game's first skills (`withFirstSkills`), its first
  * run's lesson done, so the hand plays as a run starts. */
@@ -461,7 +462,7 @@ test("stuck behind an enemy without Enemy, with its Inspiration held, the lesson
   assert.deepEqual([g.introBought, g.save.tutorials.enemy], [null, false]);
 });
 
-test("the forest's lessons: Enter once Door & Key is owned, until dismissed or a run goes inside, then the Delve tab once Into the depths is owned", () => {
+test("the forest's lessons: Enter once Door & Key is owned, until dismissed or a run goes inside, then the Delve's sign while a tournament opens it", () => {
   const g = new Game(taught());
   assert.equal(g.boardLesson, null);
   g.newRun({ outside: true });
@@ -473,7 +474,9 @@ test("the forest's lessons: Enter once Door & Key is owned, until dismissed or a
   g.enterRun();
   g.newRun({ outside: true });
   assert.equal(g.boardLesson, null, "entering a run finishes it too");
-  g.save.upgrades.delve = 1;
+  g.save.upgrades.breakthrough = 1;
+  assert.equal(g.boardLesson, null, "Breakthrough no longer opens the Delve");
+  openTournament(g);
   assert.equal(g.boardLesson, "delve");
   assert.equal(g.dismissLesson(), false, "the Delve lesson waits on the Delve tab");
   g.switchMode("delve");
@@ -525,7 +528,7 @@ test("the first run inside with Auto-Climb explains it, the hand playing on, unt
   assert.equal(pressed.boardLesson, null, "pressing a card ends it");
 
   const delve = new Game(taughtClimb());
-  delve.save.upgrades.delve = 1;
+  delve.save.upgrades.breakthrough = 1;
   delve.switchMode("delve");
   delve.newRun();
   assert.equal(delve.boardLesson, null, "the Tower's alone");

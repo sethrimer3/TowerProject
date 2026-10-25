@@ -130,7 +130,7 @@ test("each new Tower floor rolls: free levels cost no Silver but raise the row's
 
 test("the Delve rolls once for each new equivalent floor", () => {
   const save = owned({ freeDefense: 100 });
-  save.upgrades.delve = 1;
+  save.upgrades.breakthrough = 1;
   const g = new Game(save);
   g.switchMode("delve");
   g.newRun({ seed: 5 });

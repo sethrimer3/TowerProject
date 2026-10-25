@@ -66,7 +66,7 @@ const v3 = () => ({
   tower: {
     ...mode(towerRun), inspiration: 17,
   },
-  delve: { ...mode(delveRun), courage: 33, memory: { known: { "1,2": true, "4,5": true }, visited: { "1,2": 3 } } },
+  delve: { ...mode(delveRun), breakthrough: 33, memory: { known: { "1,2": true, "4,5": true }, visited: { "1,2": 3 } } },
   goals: { claimed: { "1": [10, 20] }, premium: { "1": [10] }, mastered: { "1": [10, 20] }, cleared: { "1": [10, 110] } },
   equipment: {
     ...defaultEquipment(), unlocked: true, seen: true, nextId: 4,
@@ -108,7 +108,7 @@ const scope: Record<string, (p: string[]) => boolean> = {
   v2: (p) => p.length === 1,
   v1: (p) => !nested(p),
   outside: under("tower.run"),
-  preSkillTrees: under("upgrades", "delve.run", "delve.best", "delve.courage"),
+  preSkillTrees: under("upgrades", "delve.run", "delve.best", "delve.breakthrough"),
   tournament: under("tournament", "delve.run.tournament"),
   mail: under("mail"),
 };
@@ -298,7 +298,7 @@ test("decode keeps Mail: the inbox, what waits to sync, what was claimed, and th
 test("a version 1 save is no longer read: its progress starts afresh", () => {
   assert.equal(decodableVersion(1), false);
   const d = decode(JSON.stringify({ version: 1, ...mode(delveRun), best: 12, essence: 8 }));
-  assert.deepEqual([d.delve.best, d.delve.courage, d.delve.run], [0, 0, null]);
+  assert.deepEqual([d.delve.best, d.breakthrough, d.delve.run], [0, 0, null]);
 });
 
 test("a Tower run keeps no floor but the one it stands on", () => {

@@ -11,7 +11,7 @@ export const PROFILE_FORMAT = "tower-delve-profile";
 export const PROFILE_SECTIONS = {
   profile: ["profile", "tutorials", "seen", "treeNotices"],
   settings: ["settings", "themes"],
-  currencies: ["gold", "gems", "ascensionShards", "medals", "cells", "xp", "goldBoostUntil", "gemDrop"],
+  currencies: ["gold", "gems", "breakthrough", "ascensionShards", "medals", "cells", "xp", "goldBoostUntil", "gemDrop"],
   deck: ["hand", "cardLinks", "handSlots", "manualHand", "manualSlots", "cardXp", "cardTrees", "cardBuys", "badges"],
   upgrades: ["upgrades", "relics", "shrines"],
   training: ["bonusTrainingPoints", "training", "trainingPaid", "trainerRanks", "trainingJobs", "trainingAuto", "trainingCredit", "trainingBank", "trainingBoostUntil", "trainers"],
@@ -33,16 +33,14 @@ export const UNSECTIONED = ["version", "provingGrounds"] as const satisfies read
  * run's. */
 export const KEPT_SLICE = ["best", "reached", "tier", "tiersOpen", "tierRecords"] as const satisfies readonly (keyof ModeSave)[];
 
-function slice(mode: ModeSave, currency: "inspiration" | "courage", amount: number) {
-  return { ...Object.fromEntries(KEPT_SLICE.map((k) => [k, mode[k]])), [currency]: amount };
-}
+const slice = (mode: ModeSave) => Object.fromEntries(KEPT_SLICE.map((k) => [k, mode[k]]));
 
 /** The profile file for `save`, made at `now` (wall clock, ms). */
 export function exportProfile(save: Save, now: number): string {
   const kept: Record<string, unknown> = {
     ...save,
-    tower: slice(save.tower, "inspiration", save.tower.inspiration),
-    delve: slice(save.delve, "courage", save.delve.courage),
+    tower: { ...slice(save.tower), inspiration: save.tower.inspiration },
+    delve: slice(save.delve),
     // A Gem lying on a floor, and how far the runs have gone, are the runs'.
     gemDrop: { ...save.gemDrop, out: null, reached: { tower: null, delve: null } },
   };

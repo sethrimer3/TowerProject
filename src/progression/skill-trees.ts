@@ -1,5 +1,5 @@
 import type { UpgradeId, Currency } from "./upgrades.ts";
-export type TreeId = "wayfinding" | "inspiration" | "courage" | "legacy" | "wisdom" | "renown";
+export type TreeId = "wayfinding" | "inspiration" | "breakthrough" | "legacy" | "wisdom" | "renown";
 export type SkillNode = { id: UpgradeId; icon: string; x: number; y: number; requires: UpgradeId[] };
 /** A skill tree. Node positions are percentages of the tree's view: x of
  * its width, y of its height, so a tree taller than one screen (`height`,
@@ -41,16 +41,16 @@ export const TREES: SkillTree[] = [
     { id: "aegisProvision", icon: "⛨", x: 10, y: 120, requires: ["cardDefUp"] },
     // Research needs the Archives, so the skills that open it come after them:
     // Blue Key and Faster Trainers either side of the Archives, Rehearsed steps
-    // left of Into the depths, and Pocket Money (then Spare Change, Wishing
+    // left of Breakthrough, and Pocket Money (then Spare Change, Wishing
     // Well and Free Training below it) and Greater Heal after it,
     // either side of the core path down the middle (Lifesteal, Buy Quantity, Thorns, GK Siphon, then Manual Hand).
     // Recovery and Regen Research (then Parry, then Revive) stand under Greater Heal.
     { id: "cardBlueKey", icon: "⚿", x: 20, y: 174, requires: ["archives"] },
     { id: "inspirationUndos", icon: "↺", x: 20, y: 196, requires: ["archives"] },
-    { id: "delve", icon: "▼", x: 50, y: 196, requires: ["archives"] },
+    { id: "breakthrough", icon: "▼", x: 50, y: 196, requires: ["archives"] },
     { id: "fasterTrainers", icon: "»", x: 80, y: 174, requires: ["archives"] },
-    { id: "pocketMoney", icon: "¤", x: 20, y: 214, requires: ["delve"] },
-    { id: "lifesteal", icon: "♥", x: 50, y: 214, requires: ["delve"] },
+    { id: "pocketMoney", icon: "¤", x: 20, y: 214, requires: ["breakthrough"] },
+    { id: "lifesteal", icon: "♥", x: 50, y: 214, requires: ["breakthrough"] },
     { id: "buyQuantity", icon: "×", x: 50, y: 232, requires: ["lifesteal"] },
     { id: "thorns", icon: "✥", x: 50, y: 250, requires: ["buyQuantity"] },
     { id: "keySiphon", icon: "⚿", x: 50, y: 268, requires: ["thorns"] },
@@ -60,7 +60,7 @@ export const TREES: SkillTree[] = [
     { id: "loot", icon: "☠", x: 30, y: 250, requires: ["spareChange"] },
     { id: "wishingWell", icon: "◎", x: 20, y: 268, requires: ["spareChange"] },
     { id: "freeTraining", icon: "↑", x: 20, y: 286, requires: ["wishingWell"] },
-    { id: "greaterHeal", icon: "✚", x: 80, y: 214, requires: ["delve"] },
+    { id: "greaterHeal", icon: "✚", x: 80, y: 214, requires: ["breakthrough"] },
     { id: "recovery", icon: "✦", x: 70, y: 232, requires: ["greaterHeal"] },
     { id: "findPotion", icon: "⚗", x: 70, y: 250, requires: ["recovery"] },
     { id: "regenResearch", icon: "♥", x: 90, y: 232, requires: ["greaterHeal"] },
@@ -109,8 +109,8 @@ export const TREES: SkillTree[] = [
     { id: "limitBreak9", icon: "⇑", x: 30, y: 556, requires: ["limitBreak8"] },
     { id: "limitBreak10", icon: "⇑", x: 30, y: 574, requires: ["limitBreak9"] },
   ] },
-  { id: "courage", name: "Courage", currency: "courage", gate: "delve", description: "Earn Courage by beating your best Delve depth.", height: 198, nodes: [
-    { id: "moveSpeed", icon: "»", x: 50, y: 10, requires: ["delve"] },
+  { id: "breakthrough", name: "Breakthrough", currency: "breakthrough", gate: "breakthrough", description: "Earn a Breakthrough point for each Tower Goal you claim.", height: 198, unlocks: true, nodes: [
+    { id: "moveSpeed", icon: "»", x: 50, y: 10, requires: ["breakthrough"] },
     { id: "instantCombat", icon: "↯", x: 18, y: 10, requires: ["moveSpeed"] },
     { id: "extraKey", icon: "⚿", x: 82, y: 10, requires: ["moveSpeed"] },
     { id: "pathfinder", icon: "⌖", x: 18, y: 34, requires: ["moveSpeed"] },
@@ -137,12 +137,12 @@ export const TREES: SkillTree[] = [
     { id: "ignoreMore", icon: "⊘", x: 50, y: 185, requires: ["ignore"] },
     { id: "targetMore", icon: "⌖", x: 78, y: 185, requires: ["target"] },
   ] },
-  { id: "wayfinding", name: "Wayfinding", currency: "courage", gate: null, description: "Teach Delve Automove to explore, compare routes and preserve resources.", nodes: [
+  { id: "wayfinding", name: "Wayfinding", currency: "breakthrough", gate: null, description: "Teach Delve Automove to explore, compare routes and preserve resources.", nodes: [
     { id: "aiMemory", icon: "◇", x: 50, y: 20, requires: [] },
     { id: "aiEvaluation", icon: "⚖", x: 25, y: 52, requires: ["aiMemory"] },
     { id: "aiLookahead", icon: "✧", x: 75, y: 78, requires: ["aiMemory"] },
   ] },
-  { id: "legacy", name: "Legacy", currency: "courage", gate: "legacy", description: "Spend Courage on heirlooms carried into every new run.", nodes: [
+  { id: "legacy", name: "Legacy", currency: "breakthrough", gate: "legacy", description: "Spend Breakthrough on heirlooms carried into every new run.", nodes: [
     { id: "quality", icon: "♜", x: 50, y: 15, requires: ["legacy"] },
     { id: "yellow", icon: "⚿", x: 23, y: 40, requires: ["quality"] },
     { id: "blue", icon: "⚿", x: 77, y: 65, requires: ["yellow"] },
@@ -153,7 +153,7 @@ export const TREES: SkillTree[] = [
     { id: "wisdomMemory", icon: "◇", x: 28, y: 52, requires: ["wisdomFocus"] },
     { id: "wisdomSight", icon: "✧", x: 72, y: 78, requires: ["wisdomMemory"] },
   ] },
-  { id: "renown", name: "Renown", currency: "courage", gate: "legacy", description: "A path awaiting its final purpose.", nodes: [
+  { id: "renown", name: "Renown", currency: "breakthrough", gate: "legacy", description: "A path awaiting its final purpose.", nodes: [
     { id: "renownBanner", icon: "⚑", x: 50, y: 18, requires: ["legacy"] },
     { id: "renownOath", icon: "◆", x: 72, y: 50, requires: ["renownBanner"] },
     { id: "renownCrown", icon: "♛", x: 38, y: 80, requires: ["renownOath"] },

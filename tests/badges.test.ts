@@ -21,15 +21,15 @@ import { random } from "../src/random.ts";
 import { snap } from "../src/exact.ts";
 import { playedSave } from "./first-skills.ts";
 
-test("Badges costs 2 Courage and follows Bombs in the Courage tree", () => {
+test("Badges costs 2 Breakthrough and follows Bombs in the Breakthrough tree", () => {
   const g = new Game(playedSave());
-  g.save.upgrades.delve = 1;
+  g.save.upgrades.breakthrough = 1;
   g.save.upgrades.moveSpeed = 1;
-  g.save.delve.courage = 10;
+  g.save.breakthrough = 10;
   assert.equal(g.skills.buy("cardBadges"), false, "waits for Bombs");
   g.save.upgrades.bombs = 1;
   assert.ok(g.skills.buy("cardBadges"));
-  assert.equal(g.save.delve.courage, 8);
+  assert.equal(g.save.breakthrough, 8);
 });
 
 test("the first copy opens level 1 and counts toward level 2; 80 copies reach level 7", () => {

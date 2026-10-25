@@ -164,7 +164,7 @@ export class RunEndDialog {
       stat(displayedProgress(run.height, !!run.outside), rules.words.progress.toUpperCase()),
       record && run.height === highest ? "" : stat(displayedProgress(highest, !!run.outside), "HIGHEST"),
       stat(whole(slice.runGold), "GOLD", uiSprite("gold")),
-      stat(slice.runCurrency, rules.words.currency.toUpperCase(), uiSprite(CURRENCY_SPRITES[game.mode])),
+      rules.pays ? stat(slice.runCurrency, rules.pays.currency.toUpperCase(), uiSprite(CURRENCY_SPRITES[game.mode])) : "",
       stat(run.xp ?? 0, "XP"),
     ].join("");
     const cheer = record ? `<p class="summary-record">Highest ${rules.words.progress.toLowerCase()} reached!</p>` : "";

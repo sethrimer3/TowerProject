@@ -3,9 +3,9 @@
 ## Provisions
 
 **Provisions** are limited-use items for a run, bought with Gold on the **Gear** tab and kept for good: each one owned is a use that every run carries, a run already inside included.
-None is sold from the start: each opens with its own skill, 5 Inspiration each in the Inspiration tree for the three below (the **Traveler's Elixir** skill after Regen, **Vanguard Banner** after ATK Up, left of it, and **Aegis Charm** after DEF Up, left of it), and in the Courage tree for the Gold Key and Bombs.
+None is sold from the start: each opens with its own skill, 5 Inspiration each in the Inspiration tree for the three below (the **Traveler's Elixir** skill after Regen, **Vanguard Banner** after ATK Up, left of it, and **Aegis Charm** after DEF Up, left of it), and in the Breakthrough tree for the Gold Key and Bombs.
 The Gear tab, and its Provisions tab, show only once one is open.
-The first time one opens, a note says to press the Gear tab to buy provisions, and a hand points at the tab, on the forest's board and on the Inspiration and Courage trees, until it is pressed.
+The first time one opens, a note says to press the Gear tab to buy provisions, and a hand points at the tab, on the forest's board and on the Inspiration and Breakthrough trees, until it is pressed.
 None of them adds anything as a run starts: inside a run, each shows as a button beside Ignore and Target with its uses left, and a press uses one at once (it is no turn of its own).
 A **Traveler's elixir** fills HP to max HP, the HP bar filling up to it; with HP at max (or above it), it does nothing and isn't spent.
 A **Vanguard Banner** raises ATK by 20% for the next 100 turns, and an **Aegis charm** raises DEF by 20% for the next 100 turns; while one is on, the hero glows red (the Vanguard Banner) or blue (the Aegis charm), its button is lit, and another of the same kind can't be used until it runs out.
@@ -15,10 +15,10 @@ Uses come back only with the next run.
 The tab has a **?** at the top that explains provisions (your Gold shows in the currencies bar above); each provision's icon carries the number owned in a circle at its bottom right, which bounces as you buy one, and its **Buy** button stands at the row's right.
 Every provision costs 100 Gold, and each one after a hundred times the last (10,000, 1,000,000, 100,000,000 …).
 Provisions bought before they became uses (when they gave starting stats) were reset to none.
-Once **Extra Key** (1 Courage, after Movement Speed in the Courage tree) is owned, Provisions also sell a **Gold Key**, which uses itself: each owned gives a run one gold key on the floor it starts on, and again on the first floor 100 or more floors past the last that gave them (floor 1, then 101, 201 …; a floor Skip climbs past still counts, so the next floor gives them).
+Once **Extra Key** (1 Breakthrough, after Movement Speed in the Breakthrough tree) is owned, Provisions also sell a **Gold Key**, which uses itself: each owned gives a run one gold key on the floor it starts on, and again on the first floor 100 or more floors past the last that gave them (floor 1, then 101, 201 …; a floor Skip climbs past still counts, so the next floor gives them).
 In the Delve, floors are its equivalent floors.
 The keys come as a floor begins, so undo can't take them back.
-Once the Courage skill **Bombs** (5 Courage, below Movement Speed) is owned, Provisions also sell **Bombs**: each one owned is a Bomb every run carries.
+Once the Breakthrough skill **Bombs** (5 Breakthrough, below Movement Speed) is owned, Provisions also sell **Bombs**: each one owned is a Bomb every run carries.
 Its button shows the Bombs left: press it, then tap an enemy, and the Bomb explodes on its tile, dealing that enemy your ATK (its DEF doesn't reduce it).
 An enemy the Bomb fells is cleared and pays out as if you had beaten it; a tap on a tile with no enemy uses no Bomb, and pressing the button again puts the Bomb away.
 Unlike the other provisions, throwing a Bomb is a turn of its own, so undo takes it back, Bomb included, without paying the kill twice.

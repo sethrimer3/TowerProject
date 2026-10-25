@@ -138,7 +138,7 @@ test("KEY's Master Key opens every door on a Tower floor as its key is picked up
 
 test("KEY's Master Key opens the doors of a Delve area on the key's equivalent floor", () => {
   const s = defaults();
-  s.upgrades.delve = 1;
+  s.upgrades.breakthrough = 1;
   const g = new Game(s);
   g.switchMode("delve");
   g.newRun({ seed: 5 });

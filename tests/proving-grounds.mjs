@@ -21,7 +21,7 @@ try {
       if(patch.access)Object.assign(save.trialAccess,patch.access);
       if(patch.profilePoints!==undefined)save.profile.earned.trialPoints=patch.profilePoints;
       if(patch.delve) {
-        const {Game}=await import("/src/state.ts");save.upgrades.delve=1;
+        const {Game}=await import("/src/state.ts");save.upgrades.breakthrough=1;
         const other=new Game(structuredClone(save));other.switchMode("delve");save.delve=other.save.delve;
       }
       sessionStorage.setItem("trialFixture",JSON.stringify(save));

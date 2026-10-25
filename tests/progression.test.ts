@@ -18,11 +18,13 @@ test('milestones are immediate, incremental and cannot be farmed with undo or re
   g.advanceTowerRoom(); assert.equal(g.save.tower.inspiration, 1);
   g.advanceTowerRoom(); assert.equal(g.save.tower.inspiration, 2);
   g.newRun(); g.advanceTowerRoom(); assert.equal(g.save.tower.inspiration, 2);
-  g.save.upgrades.delve = 1; g.switchMode('delve');
-  for (const [height, balance] of [[9,0],[10,1],[19,1],[20,2],[10,2],[30,3]]) {
-    g.run.height = height; g.recordProgress(); assert.equal(g.save.delve.courage, balance);
+  // The Delve's depth pays nothing: it only scores a tournament.
+  g.switchMode('delve');
+  for (const height of [9, 10, 19, 20, 10, 30]) {
+    g.run.height = height; assert.equal(g.recordProgress(), 0); assert.equal(g.save.breakthrough, 0);
   }
-  g.finish('test'); assert.equal(g.save.delve.courage, 3);
+  assert.equal(g.save.delve.reached, 30, "the record still rises");
+  g.finish('test'); assert.equal(g.save.breakthrough, 0);
 });
 test('area chests persist open, undo closed, and never pay', () => {
   const g = arena(), w = g.world as RoomWorld;
@@ -39,7 +41,7 @@ test('area chests persist open, undo closed, and never pay', () => {
 });
 test('delve approach movement does not award physical Y as progression', () => {
   const g = new Game(defaults());
-  g.save.upgrades.delve = 1;
+  g.save.upgrades.breakthrough = 1;
   g.switchMode('delve');
   // Keep the two northward cells deterministic instead of relying on a
   // Date.now-derived map that can occasionally place a wall in the route.

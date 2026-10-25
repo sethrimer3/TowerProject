@@ -32,7 +32,7 @@ const orNone = (rows: [string, string][]): [string, string][] => (rows.length ? 
 /** The run's notes at `now` (wall clock, ms), grouped: where the run
  * stands, its exploring, fighting, keys and doors, and what it found. */
 export function notesSections(save: Save, mode: Mode, run: Run, now: number): NotesSection[] {
-  const words = MODES[mode].words, slice = save[mode];
+  const { words, pays } = MODES[mode], slice = save[mode];
   const notes = run.notes ?? newNotes(0), finds = run.outside ? defaultFinds() : slice.runFinds;
   const progress = capitalized(words.progress);
   return [
@@ -49,7 +49,7 @@ export function notesSections(save: Save, mode: Mode, run: Run, now: number): No
     { title: "Currency", rows: [
       ["Gold", amount(run.outside ? 0 : slice.runGold)],
       ["Silver", amount(notes.silver)],
-      [words.currency, amount(run.outside ? 0 : slice.runCurrency)],
+      ...(pays ? [[pays.currency, amount(run.outside ? 0 : slice.runCurrency)] as [string, string]] : []),
     ] },
     { title: "Materials", rows: orNone(Object.entries(finds.materials).map(([id, n]): [string, string] => [materialName(id), amount(n)])) },
     { title: "Other loot", rows: [

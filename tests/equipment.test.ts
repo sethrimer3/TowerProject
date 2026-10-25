@@ -410,7 +410,7 @@ test("the inventory holds at most 500 pieces", () => {
 
 test("worn stats are derived: equip, unequip, reload and mode switches never count them twice", () => {
   const s = defaults();
-  s.upgrades.delve = 1;
+  s.upgrades.breakthrough = 1;
   s.equipment.unlocked = true;
   const g = new Game(s);
   g.newRun({ seed: 9 });
@@ -440,7 +440,7 @@ test("worn stats are derived: equip, unequip, reload and mode switches never cou
 
 test("a Delve loadout reaches the Delve run and not the Tower's", () => {
   const s = defaults();
-  s.upgrades.delve = 1;
+  s.upgrades.breakthrough = 1;
   s.equipment.unlocked = true;
   const g = new Game(s);
   g.newRun({ seed: 2 });

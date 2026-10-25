@@ -10,7 +10,7 @@ The inspect panel's damage already counts the rise.
 
 Stepping into a monster plays the fight out: the hero waits on its own tile and strikes first, the monster strikes back, and each strike's damage rises in red off whoever was struck (a darker red off the hero) while HP counts down in the stats.
 From the hero's first strike, the monster's HP shows in a red bar above it, draining with each strike and fading once the monster falls.
-**Instant Combat** (1 Courage, left of Movement Speed in the Courage tree) adds **Animate fights** to Settings (hidden until then, and on): turned off, each fight counts at once, in one step, and shows as a summary.
+**Instant Combat** (1 Breakthrough, left of Movement Speed in the Breakthrough tree) adds **Animate fights** to Settings (hidden until then, and on): turned off, each fight counts at once, in one step, and shows as a summary.
 A monster that falls raises nothing (it plainly lost all its HP), and only the damage the hero took rises off the hero.
 A fight the hero loses raises the damage each way at once, and the monster's HP bar stays, showing what it has left, so you can judge whether to undo.
 A revival shows the fight up to it the same way, and once its golden fire is out the rest of the fight follows as another summary.

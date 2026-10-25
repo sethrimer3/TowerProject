@@ -1,15 +1,13 @@
 import { controlIcon } from "./control-icon.ts";
-import { adsOff } from "../shop/entitlements.ts";
-import type { BeginRefusal, TournamentClient } from "../tournament/client.ts";
+import type { TournamentClient } from "../tournament/client.ts";
 import { caveLabel, LEAGUE_INFO, LEAGUES, type League } from "../tournament/leagues.ts";
 import { PRIZE_LEVEL_TOP, PRIZES, placeText, prizeLevel, type Prize } from "../tournament/prizes.ts";
 import { tournamentStatFactor } from "../tournament/run.ts";
 import { CLAIM_MS, shortCountdown } from "../tournament/schedule.ts";
-import { GEM_TICKET_STEP } from "../tournament/tickets.ts";
 import type { AppContext } from "./app.ts";
-import { askForGems } from "./dialogs.ts";
-import { adIcon, el, gemIcon, shardIcon, ticketIcon, trophyIcon } from "./dom.ts";
+import { el, gemIcon, shardIcon, ticketIcon, trophyIcon } from "./dom.ts";
 import { revealReward } from "./reward-reveal.ts";
+import { REFUSALS } from "./tournament-entry.ts";
 
 /** Each league's cup: its metal's outline over a darker fill. */
 export const LEAGUE_CUPS: Record<League, { stroke: string; fill: string }> = {
@@ -23,14 +21,6 @@ export const LEAGUE_CUPS: Record<League, { stroke: string; fill: string }> = {
 export const leagueTrophy = (league: League, className = "league-trophy") =>
   trophyIcon(className, LEAGUE_CUPS[league].stroke, LEAGUE_CUPS[league].fill);
 
-/** What the player is told when a tournament run couldn't begin. */
-const REFUSALS: Record<BeginRefusal, string> = {
-  busy: "End the run you're in to enter.",
-  noTicket: "You need a Ticket to enter.",
-  offline: "Can't reach the Tournament right now. Try again soon.",
-  closed: "Entry has closed.",
-};
-
 /** A countdown on the page: *2d 5h*, *7h 12m*, *12m*. */
 const countdown = (ms: number) => shortCountdown(ms).replace(/([dh])(?=\d)/g, "$1 ");
 /** A prize: its Ascension Shards and Gems. */
@@ -41,8 +31,8 @@ const levelShare = (i: number) =>
 
 /** The Tournament page (docs/TOURNAMENT.md): the player's league and its
  * cave, where the tournament stands and when it changes, the Tickets held,
- * *Begin Tournament* while it is open (or the ad or Gem Ticket when out of
- * them), the player's best score and place, their prize, *Claim rewards*
+ * *Go to the Delve* while it is open (its cave enters the tournament, for a
+ * Ticket, and gets one when out of them: ui/tournament-entry.ts), the player's best score and place, their prize, *Claim rewards*
  * once the results are final, and *All prizes*. Opened from the forest's
  * Hall, the HUD's Tournament button or the Goals unlock; its Back returns
  * to whichever page opened it. What waits on the server goes through the
@@ -114,21 +104,13 @@ export class TournamentPage {
     }
   }
 
-  /** While the tournament is open: Begin, or how to get a Ticket. */
+  /** While the tournament is open: the way to the Delve's forest, whose
+   * cave enters it. */
   private action() {
-    const game = this.ctx.game, desk = game.tournament, wait = this.busy ? " disabled" : "";
+    const game = this.ctx.game, desk = game.tournament;
     if (desk.phase !== "open") return "";
     if (!game.canBeginTournament) return `<p class="hint tournament-hint">${game.run.outside ? REFUSALS.busy : "Finish this run to enter again."}</p>`;
-    if (game.save.tournament.tickets > 0)
-      return `<button class="tournament-begin" id="tournament-begin"${wait}>${ticketIcon()}Begin Tournament</button><p class="hint tournament-hint">Spends a Ticket. Your best score counts.</p>`;
-    const next = desk.nextTicket;
-    if (next === "ad")
-      return `<button class="tournament-begin" id="tournament-ad"${wait}>${adsOff(game.save) ? ticketIcon() : adIcon()}Get a Ticket</button><p class="hint tournament-hint">${adsOff(game.save) ? "Free with Ad-Disable." : "Watch an ad for one more Ticket."}</p>`;
-    if (next === "gems") {
-      const price = desk.gemTicketPrice, short = !game.free && game.save.gems < price;
-      return `<button class="tournament-begin${short ? " short" : ""}" id="tournament-gems"${wait}>${ticketIcon()}Buy a Ticket<span class="tournament-price">${gemIcon()}${price}</span></button><p class="hint tournament-hint">Each Ticket bought this tournament costs ${gemIcon()}${GEM_TICKET_STEP} more.</p>`;
-    }
-    return `<p class="hint tournament-hint">${REFUSALS.offline}</p>`;
+    return `<button class="tournament-begin" id="tournament-begin">${ticketIcon()}Go to the Delve</button><p class="hint tournament-hint">Enter its cave to begin: each entry costs a Ticket. Your best score counts.</p>`;
   }
 
   /** The player's best score and place, with the prize it pays; the
@@ -168,44 +150,19 @@ export class TournamentPage {
   }
 
   private bind() {
-    const { ctx } = this, desk = ctx.game.tournament;
+    const { ctx } = this;
     el("tournament-back").onclick = () => ctx.navigate(this.from || ctx.game.mode);
     el("tournament-all").onclick = () => this.showPrizes();
     const press = (id: string, act: () => void) => {
       const b = document.getElementById(id);
       if (b) b.onclick = act;
     };
-    press("tournament-begin", () => void this.begin());
-    press("tournament-ad", () => this.done(desk.takeAdTicket()));
-    press("tournament-gems", () => {
-      if (!ctx.game.free && ctx.game.save.gems < desk.gemTicketPrice) return askForGems(ctx);
-      this.done(desk.buyGemTicket());
+    press("tournament-begin", () => {
+      if (!ctx.game.toDelveForest()) return this.render();
+      ctx.navigate("board");
+      ctx.update();
     });
     press("tournament-claim", () => void this.claim());
-  }
-
-  /** After a Ticket is had: the page and HUD again, and saved. */
-  private done(changed: boolean) {
-    this.message = changed ? "+1 Ticket" : "";
-    this.render();
-    this.ctx.update();
-  }
-
-  /** Enters the tournament and goes in, or says why it couldn't. */
-  private async begin() {
-    if (this.busy) return;
-    this.busy = true;
-    this.message = "Entering…";
-    this.render();
-    const refused = await this.client.begin();
-    this.busy = false;
-    if (refused === null) {
-      this.ctx.navigate("board");
-      return;
-    }
-    this.message = REFUSALS[refused];
-    this.render();
-    this.ctx.update();
   }
 
   /** Collects the final prize, celebrated. */

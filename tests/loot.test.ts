@@ -60,7 +60,7 @@ test("kills drop none of the old crafting materials, in either mode", () => {
   assert.ok(Object.values(tower.save.equipment.materials).every((n) => n === 0));
 
   const delve = new Game(defaults());
-  delve.save.upgrades.delve = 1;
+  delve.save.upgrades.breakthrough = 1;
   delve.switchMode("delve");
   delve.run.changes["15,1"] = { kind: "enemy", enemy: { name: "Cinder slime", hp: 1, attack: 0, defense: 0, tier: 0 } };
   delve.world = new World(delve.run);

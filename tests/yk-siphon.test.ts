@@ -12,13 +12,13 @@ import { playedSave } from "./first-skills.ts";
 
 const hpRow = TRAINING.find((t) => t.id === "hp")! as StatTrainingRow;
 
-test("Rehearsed steps costs 5; Lifesteal (10) follows Into the depths, Buy Quantity (5) Lifesteal, Thorns (10) Buy Quantity, GK Siphon (5) Thorns, Regen Research (10) Shroud", () => {
+test("Rehearsed steps costs 5; Lifesteal (10) follows Breakthrough, Buy Quantity (5) Lifesteal, Thorns (10) Buy Quantity, GK Siphon (5) Thorns, Regen Research (10) Shroud", () => {
   assert.equal(cost("inspirationUndos", 0), 5);
   const g = new Game(playedSave());
   g.save.tower.inspiration = 1000;
   for (const id of ["combatStance", "buildout", "trainers", "largerHand", "shroud", "critical", "archives"] as const) assert.ok(g.skills.buy(id));
-  assert.equal(g.skills.buy("lifesteal"), false, "waits for Into the depths");
-  assert.ok(g.skills.buy("delve"));
+  assert.equal(g.skills.buy("lifesteal"), false, "waits for Breakthrough");
+  assert.ok(g.skills.buy("breakthrough"));
   assert.equal(g.skills.buy("buyQuantity"), false, "waits for Lifesteal");
   assert.equal(g.skills.buy("thorns"), false, "waits for Buy Quantity");
   assert.equal(g.skills.buy("keySiphon"), false, "waits for Thorns");

@@ -4,7 +4,7 @@ import type { DeskHost } from "./desk.ts";
 import { readyForestRuns } from "./hero-sync.ts";
 import { dealCard, dealsToHand, handSlots, upgradeCards } from "../cards/cards.ts";
 
-/** The skill trees' commands: skills bought with Courage or Inspiration. */
+/** The skill trees' commands: skills bought with Breakthrough or Inspiration. */
 export class SkillDesk {
   constructor(private readonly host: DeskHost) {}
 
@@ -17,26 +17,26 @@ export class SkillDesk {
   canBuy(id: UpgradeId) {
     if (!skillAvailable(id, this.save.upgrades)) return false;
     const u = UPGRADES.find((u) => u.id === id)!, n = this.save.upgrades[id];
-    const held = u.currency === "courage" ? this.save.delve.courage : this.save.tower.inspiration;
+    const held = u.currency === "breakthrough" ? this.save.breakthrough : this.save.tower.inspiration;
     return n < u.max && (this.host.free || cost(id, n) <= held);
   }
   buy(id: UpgradeId) {
     if (!this.canBuy(id)) return false;
     const u = UPGRADES.find((u) => u.id === id)!, n = this.save.upgrades[id];
-    if (!this.spend(u.currency === "courage", cost(id, n))) return false;
+    if (!this.spend(u.currency === "breakthrough", cost(id, n))) return false;
     this.save.upgrades[id]++;
     // The first cards earned (Door & Key, Enemy) go into the hand as well.
     if (dealsToHand(id)) for (const card of upgradeCards(id)) this.save.hand = dealCard(this.save.hand, card, handSlots(this.save));
     readyForestRuns(this.save);
     return true;
   }
-  /** Pays `price` in Courage, or else Inspiration (nothing with Dev free
+  /** Pays `price` in Breakthrough, or else Inspiration (nothing with Dev free
    * purchases); false when short. */
-  private spend(courage: boolean, price: number) {
+  private spend(breakthrough: boolean, price: number) {
     if (this.host.free) return true;
     const save = this.save;
-    if (price > (courage ? save.delve.courage : save.tower.inspiration)) return false;
-    if (courage) save.delve.courage -= price;
+    if (price > (breakthrough ? save.breakthrough : save.tower.inspiration)) return false;
+    if (breakthrough) save.breakthrough -= price;
     else save.tower.inspiration -= price;
     return true;
   }

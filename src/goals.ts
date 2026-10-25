@@ -2,6 +2,7 @@ import type { Save } from "./save/shape.ts";
 import { CURRENCIES, type CurrencyId } from "./shop/currency.ts";
 import { owns, type EntitlementId } from "./shop/entitlements.ts";
 import { TIERS } from "./tiers.ts";
+import { earn } from "./save/profile.ts";
 
 // Goals: each tower's checkpoints, one every ten floors, each with a reward
 // the player claims once the checkpoint's floor is completed (the floor
@@ -236,14 +237,23 @@ function canClaimGoal(save: Save, tower: number, floor: number, premium: boolean
   return state === "ready" || (state === "locked" && save.settings.freePurchases);
 }
 
+/** The Breakthrough points each standard Goal reward pays besides itself,
+ * unsaid on the Goals page (a premium reward pays none). */
+export const GOAL_BREAKTHROUGH = 1;
+
 /** Claims a reward that can be claimed (`canClaimGoal`), paying it to its
- * owner; returns it, or null when it can't be. */
+ * owner, and a standard one's Breakthrough point; returns it, or null when
+ * it can't be. */
 export function claimGoal(save: Save, tower: number, floor: number, premium: boolean): GoalReward | null {
   const c = checkpoint(tower, floor);
   if (!c || !canClaimGoal(save, tower, floor, premium)) return null;
   const reward = premium ? c.premium : c.reward;
   if (reward.kind === "currency") CURRENCIES[reward.currency].credit(save, reward.amount);
   if (reward.kind === "tower") openTower(save, reward.tower);
+  if (!premium) {
+    save.breakthrough += GOAL_BREAKTHROUGH;
+    earn(save, "breakthrough", GOAL_BREAKTHROUGH);
+  }
   // Equipment keeps its own flag, which a save that claimed it before it
   // moved to Tower II may already hold.
   if (reward.kind === "unlock" && reward.unlock === "equipment") save.equipment.unlocked = true;

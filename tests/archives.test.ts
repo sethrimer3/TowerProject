@@ -297,7 +297,7 @@ test("Potion HP needs Greater Heal, and every level strengthens potions at once,
 
 test("Shard ATK and Shard DEF open with Tower II's floor 20 and 30 Goals, cost what Potion HP does, and raise every shard picked up at once", () => {
   const save = owner();
-  save.upgrades.delve = 1;
+  save.upgrades.breakthrough = 1;
   const g = new Game(save);
   g.switchMode("delve");
   for (const [id, target, value] of [["shardAttack", "shardAttackPercent", 2], ["shardDefense", "shardDefensePercent", 3]] as const) {

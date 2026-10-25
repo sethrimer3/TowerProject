@@ -43,8 +43,9 @@ export type ModeSave<R extends Run = Run> = {
    * before the boost (it banked `GOLD_BOOST_FACTOR` times this), or null
    * while the boost hasn't run during the run; for the run's end dialog. */
   runBoostGold: number | null;
-  /** The mode's currency (Inspiration or Courage) earned during the current
-   * run, from milestones and areas cleared, kept beside `runGold`. */
+  /** The mode's currency (the Tower's Inspiration; the Delve pays none)
+   * earned during the current run, from milestones and areas cleared, kept
+   * beside `runGold`. */
   runCurrency: number;
   /** What the current run found that undo never takes back (materials,
    * Cells, Gems, equipment), for its notes (run-notes.ts), kept beside
@@ -63,7 +64,7 @@ export type ModeSave<R extends Run = Run> = {
   tierRecords: Record<string, TierRecord>;
 };
 /** The skill trees a run's currency calls the player back to. */
-export type NoticeTree = "inspiration" | "courage";
+export type NoticeTree = "inspiration" | "breakthrough";
 export type Save = {
   trialAccess: import("../proving-grounds/access.ts").TrialAccess;
   /** A separate encounter; ordinary mode runs remain untouched. */
@@ -72,8 +73,11 @@ export type Save = {
   tower: ModeSave<TowerRun> & {
     inspiration: number;
   };
-  delve: ModeSave<DelveRun> & { courage: number; memory: AutomoveMemory };
+  delve: ModeSave<DelveRun> & { memory: AutomoveMemory };
   /** The premium currency, kept between runs like Gold (economy/gems.ts). */
+  /** Breakthrough points: one for each Tower Goal claimed (goals.ts),
+   * spent on the Breakthrough tree. */
+  breakthrough: number;
   gems: number;
   /** Ascension Shards: a limited currency, kept between runs, bought only
    * in the Shop's limited packs for now. */
@@ -172,13 +176,13 @@ export type Save = {
    * that an enemy blocks the way has sent the player to buy Enemy, until a
    * run goes inside; and in the forest `enter`, the note to try
    * again once Door & Key is owned, dismissed (or a run entered), `delve`, opening the Delve
-   * once Into the depths is owned, `chamber`, the first Tower run
+   * once a tournament opens it, `chamber`, the first Tower run
    * ended, after which a new floor's "A new chamber opens." no longer
    * rises over the board, and `cardPoints`, spending the first card point
    * on an upgrade tree, led there from the forest's Deck tab. */
   tutorials: { deck: boolean; removeCard: boolean; addCard: boolean; upgrades: boolean; gear: boolean; onTheJob: boolean; speed: boolean; climb: boolean; keys: boolean; autoClimb: boolean; stuck: boolean; enemy: boolean; enter: boolean; training: boolean; delve: boolean; chamber: boolean; cardPoints: boolean };
-  /** Per tree: a run that earned its currency (Inspiration in the Tower,
-   * Courage in the Delve) has ended since the tree was last shown, so its
+  /** Per tree: its currency earned since the tree was last shown (a Tower
+   * run's Inspiration, ended; a Goal's Breakthrough point, claimed), so its
    * tab (and the Upgrades tab) wear a dot in the forest while a skill there
    * can be bought. */
   treeNotices: Record<NoticeTree, boolean>;

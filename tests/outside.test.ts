@@ -11,7 +11,7 @@ for (const mode of ["tower", "delve"] as const) {
   test(`${mode}: death, forest persistence, entry and Undo preserve progression`, () => {
     const g = new Game(defaults());
     g.save.upgrades.inspirationUndos = 1; // undo needs Rehearsed steps
-    g.save.upgrades.delve = 1;
+    g.save.upgrades.breakthrough = 1;
     g.switchMode(mode);
     const before = g.snapshot();
     // Lethal but damageable (low defense so it's not impervious), on the
@@ -46,6 +46,8 @@ for (const mode of ["tower", "delve"] as const) {
     loaded.walkTo(loaded.run.player.x, ENTRANCE_Y);
     assert.ok(loaded.route.length);
     for (let i = 0; i < 20 && loaded.route.length; i++) loaded.routeStep();
+    // The Delve's cave asks for a tournament run instead (forest-swap.test.ts).
+    if (mode === "delve") return assert.ok(loaded.run.outside && loaded.tournamentRequested === "ticket");
     assert.equal(loaded.run.outside, false);
     assert.equal(loaded.run.height, 0);
     assert.equal(loaded.run.player.y, 0);
@@ -59,12 +61,14 @@ for (const mode of ["tower", "delve"] as const) {
     assert.equal(loaded.run.outside, false);
   });
   test(`${mode}: automation finds the forest entrance without farming height`, () => {
-    const g = new Game(defaults()); g.save.upgrades.delve = 1; g.switchMode(mode); g.newRun({ outside: true });
-    for (let i = 0; i < 25 && g.run.outside; i++) {
+    const g = new Game(defaults()); g.save.upgrades.breakthrough = 1; g.switchMode(mode); g.newRun({ outside: true });
+    for (let i = 0; i < 25 && g.run.outside && !g.tournamentRequested; i++) {
       const step = chooseStep(g); assert.ok(step); assert.ok(g.move(step.dx, step.dy, false));
       assert.equal(g.run.height, 0);
     }
-    assert.equal(g.run.outside, false);
+    // The Delve's cave asks for a tournament run instead of going in.
+    if (mode === "delve") assert.ok(g.run.outside && g.tournamentRequested);
+    else assert.equal(g.run.outside, false);
   });
 }
 
@@ -100,7 +104,7 @@ test("the crossroads' road goes on to each building's door once that building st
 for (const mode of ["tower", "delve"] as const)
   test(`${mode}: the crossroads' road runs out to the forest's edge toward each opened tier the arrows can reach`, () => {
     const g = new Game(defaults());
-    g.save.upgrades.delve = 1;
+    g.save.upgrades.breakthrough = 1;
     g.switchMode(mode);
     const row = OUTSIDE_START_Y;
     const roadTo = (edge: number) => {

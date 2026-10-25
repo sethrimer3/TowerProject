@@ -1,11 +1,11 @@
 import { IGNORE_PER_RUN, REGAIN_FLOORS, TARGET_PER_RUN } from "../config.ts";
 import { intPow } from "../exact.ts";
-export type Currency = "courage" | "inspiration";
+export type Currency = "breakthrough" | "inspiration";
 /** Upgrades that make the character stronger say so in `grants` (what one
  * rank adds; see progression/loadout.ts), which also writes their description. */
 export const UPGRADES = [
-  { id: "delve", name: "Into the depths", description: "Unlock Delve and the Courage skill tree", base: 3, max: 1, currency: "inspiration" },
-  { id: "legacy", name: "An enduring legacy", description: "Unlock the Legacy skill tree", base: 8, max: 1, currency: "courage" },
+  { id: "breakthrough", name: "Breakthrough", description: "Unlock the Breakthrough skill tree", base: 3, max: 1, currency: "inspiration" },
+  { id: "legacy", name: "An enduring legacy", description: "Unlock the Legacy skill tree", base: 8, max: 1, currency: "breakthrough" },
   {
     id: "revive",
     name: "Revive",
@@ -20,36 +20,36 @@ export const UPGRADES = [
     description: "Open Undo Count research in the Archives, or 4 more levels of it once Rehearsed steps has opened it",
     base: 5,
     max: 1,
-    currency: "courage",
+    currency: "breakthrough",
   },
-  { id: "findYellowKey", name: "Find Gold Key", description: "Open Find Gold Key research in the Archives: each new floor climbed may hand you a gold key", base: 10, max: 1, currency: "courage" },
-  { id: "keyEfficiency", name: "Key Efficiency", description: "Open Key Efficiency research in the Archives: each level makes a door take less of a key", base: 10, max: 1, currency: "courage" },
-  { id: "interest", name: "Interest", description: "Open Interest % research in the Archives: each new floor climbed adds a share of the Silver you hold, up to a limit", base: 10, max: 1, currency: "courage" },
-  { id: "maxInterest", name: "Max Interest", description: "Open Max Interest research in the Archives: each level raises the most Interest a floor pays", base: 10, max: 1, currency: "courage" },
-  { id: "mug", name: "Mug", description: "Open Mug research in the Archives: each level adds Gold to a kill your first strike makes", base: 10, max: 1, currency: "courage" },
-  { id: "overheal", name: "Overheal", description: "Potions can heal you above max HP, up to your Overheal: opens Overheal training", base: 20, max: 1, currency: "courage" },
-  { id: "ignore", name: "Ignore", description: `Inside a run, press Ignore, then a tile: the hero won't step on it for the rest of the floor (${IGNORE_PER_RUN} use a run); opens Ignore Count research`, base: 20, max: 1, currency: "courage" },
-  { id: "ignoreMore", name: "Ignore More", description: `Inside a run, regain 1 Ignore use every ${REGAIN_FLOORS} new floors climbed; opens Ignore More research, which shortens it`, base: 20, max: 1, currency: "courage" },
-  { id: "target", name: "Target", description: `Inside a run, press Target, then a tile: the hero walks there (${TARGET_PER_RUN} use a run); opens Target Count research`, base: 20, max: 1, currency: "courage" },
-  { id: "targetMore", name: "Target More", description: `Inside a run, regain 1 Target use every ${REGAIN_FLOORS} new floors climbed; opens Target More research, which shortens it`, base: 20, max: 1, currency: "courage" },
+  { id: "findYellowKey", name: "Find Gold Key", description: "Open Find Gold Key research in the Archives: each new floor climbed may hand you a gold key", base: 10, max: 1, currency: "breakthrough" },
+  { id: "keyEfficiency", name: "Key Efficiency", description: "Open Key Efficiency research in the Archives: each level makes a door take less of a key", base: 10, max: 1, currency: "breakthrough" },
+  { id: "interest", name: "Interest", description: "Open Interest % research in the Archives: each new floor climbed adds a share of the Silver you hold, up to a limit", base: 10, max: 1, currency: "breakthrough" },
+  { id: "maxInterest", name: "Max Interest", description: "Open Max Interest research in the Archives: each level raises the most Interest a floor pays", base: 10, max: 1, currency: "breakthrough" },
+  { id: "mug", name: "Mug", description: "Open Mug research in the Archives: each level adds Gold to a kill your first strike makes", base: 10, max: 1, currency: "breakthrough" },
+  { id: "overheal", name: "Overheal", description: "Potions can heal you above max HP, up to your Overheal: opens Overheal training", base: 20, max: 1, currency: "breakthrough" },
+  { id: "ignore", name: "Ignore", description: `Inside a run, press Ignore, then a tile: the hero won't step on it for the rest of the floor (${IGNORE_PER_RUN} use a run); opens Ignore Count research`, base: 20, max: 1, currency: "breakthrough" },
+  { id: "ignoreMore", name: "Ignore More", description: `Inside a run, regain 1 Ignore use every ${REGAIN_FLOORS} new floors climbed; opens Ignore More research, which shortens it`, base: 20, max: 1, currency: "breakthrough" },
+  { id: "target", name: "Target", description: `Inside a run, press Target, then a tile: the hero walks there (${TARGET_PER_RUN} use a run); opens Target Count research`, base: 20, max: 1, currency: "breakthrough" },
+  { id: "targetMore", name: "Target More", description: `Inside a run, regain 1 Target use every ${REGAIN_FLOORS} new floors climbed; opens Target More research, which shortens it`, base: 20, max: 1, currency: "breakthrough" },
   {
     id: "dash",
     name: "Dash",
     description: "Unlock Dash research in the Archives: the hand's first step toward a new target dashes across empty tiles",
     base: 1,
     max: 1,
-    currency: "courage",
+    currency: "breakthrough",
   },
-  { id: "endRush", name: "End Rush", description: "Open End Rush research in the Archives: STAIRS's dash toward the stairs crosses more empty tiles", base: 1, max: 1, currency: "courage" },
-  { id: "dashRegen", name: "Dash Regen", description: "Open Dash Regen research in the Archives: a Dash's first steps regain HP by Regen", base: 1, max: 1, currency: "courage" },
-  { id: "dashBadge", name: "Dash Badge", description: "Add the Dash badge to the badge draw: its card's dash toward its target crosses more empty tiles", base: 1, max: 1, currency: "courage" },
+  { id: "endRush", name: "End Rush", description: "Open End Rush research in the Archives: STAIRS's dash toward the stairs crosses more empty tiles", base: 1, max: 1, currency: "breakthrough" },
+  { id: "dashRegen", name: "Dash Regen", description: "Open Dash Regen research in the Archives: a Dash's first steps regain HP by Regen", base: 1, max: 1, currency: "breakthrough" },
+  { id: "dashBadge", name: "Dash Badge", description: "Add the Dash badge to the badge draw: its card's dash toward its target crosses more empty tiles", base: 1, max: 1, currency: "breakthrough" },
   {
     id: "yellow",
     name: "Gilded passage",
     grants: { yellow: 1 },
     base: 3,
     max: 10,
-    currency: "courage",
+    currency: "breakthrough",
   },
   {
     id: "blue",
@@ -57,7 +57,7 @@ export const UPGRADES = [
     grants: { blue: 1 },
     base: 5,
     max: 10,
-    currency: "courage",
+    currency: "breakthrough",
   },
   {
     id: "red",
@@ -65,7 +65,7 @@ export const UPGRADES = [
     grants: { red: 1 },
     base: 7,
     max: 10,
-    currency: "courage",
+    currency: "breakthrough",
   },
   {
     id: "quality",
@@ -74,7 +74,7 @@ export const UPGRADES = [
     words: { attack: "weapon attack", defense: "armor defense" },
     base: 6,
     max: 20,
-    currency: "courage",
+    currency: "breakthrough",
   },
   {
     id: "moveSpeed",
@@ -82,7 +82,7 @@ export const UPGRADES = [
     description: "Open the Archives' Movement Speed research: each level lets the run's speed arrows go one step a second faster than 3",
     base: 1,
     max: 1,
-    currency: "courage",
+    currency: "breakthrough",
   },
   {
     id: "instantCombat",
@@ -90,7 +90,7 @@ export const UPGRADES = [
     description: "Unlock the Animate fights setting: turn it off to settle each fight at once, in one step",
     base: 1,
     max: 1,
-    currency: "courage",
+    currency: "breakthrough",
   },
   {
     id: "pathfinder",
@@ -98,16 +98,16 @@ export const UPGRADES = [
     description: "Tapping a tile shows the way there on the board and what happens along it",
     base: 1,
     max: 1,
-    currency: "courage",
+    currency: "breakthrough",
   },
   {
-    id: "aiMemory", name: "Route memory", description: "Delve: remember explored routes, then recognize dead ends", base: 3, max: 2, currency: "courage",
+    id: "aiMemory", name: "Route memory", description: "Delve: remember explored routes, then recognize dead ends", base: 3, max: 2, currency: "breakthrough",
   },
   {
-    id: "aiEvaluation", name: "Resource judgment", description: "Delve: learn combat cost, key cost, contextual rewards, then scarcity", base: 4, max: 4, currency: "courage",
+    id: "aiEvaluation", name: "Resource judgment", description: "Delve: learn combat cost, key cost, contextual rewards, then scarcity", base: 4, max: 4, currency: "breakthrough",
   },
   {
-    id: "aiLookahead", name: "Labyrinth scouting", description: "Delve: +4 scouting radius and +2 interactions of route lookahead", base: 5, max: 4, currency: "courage",
+    id: "aiLookahead", name: "Labyrinth scouting", description: "Delve: +4 scouting radius and +2 interactions of route lookahead", base: 5, max: 4, currency: "breakthrough",
   },
   {
     id: "extraKey",
@@ -115,7 +115,7 @@ export const UPGRADES = [
     description: "Open the Gold Key provision on the Gear page: a gold key every 100 floors of a run",
     base: 1,
     max: 1,
-    currency: "courage",
+    currency: "breakthrough",
   },
   // The new game's first skills, at the top of the Inspiration tree: the
   // cards a run needs past doors and enemies (`toHand`: dealt into the hand
@@ -323,7 +323,7 @@ export const UPGRADES = [
     description: "Open the Bomb provision on the Gear page: a Bomb every run, thrown at an enemy to deal it your ATK",
     base: 5,
     max: 1,
-    currency: "courage",
+    currency: "breakthrough",
   },
   {
     id: "cardBadges",
@@ -331,7 +331,7 @@ export const UPGRADES = [
     description: "Open the Badges box on the Deck page: tokens bought with Gems that change what a card does when it activates",
     base: 2,
     max: 1,
-    currency: "courage",
+    currency: "breakthrough",
   },
   {
     id: "archives",
@@ -532,7 +532,7 @@ export const UPGRADES = [
     description: "A placeholder Renown upgrade",
     base: 6,
     max: 5,
-    currency: "courage",
+    currency: "breakthrough",
   },
   {
     id: "renownOath",
@@ -540,7 +540,7 @@ export const UPGRADES = [
     description: "A placeholder Renown upgrade",
     base: 8,
     max: 5,
-    currency: "courage",
+    currency: "breakthrough",
   },
   {
     id: "renownCrown",
@@ -548,7 +548,7 @@ export const UPGRADES = [
     description: "A placeholder Renown upgrade",
     base: 10,
     max: 5,
-    currency: "courage",
+    currency: "breakthrough",
   },
 ] as const;
 export type UpgradeId = (typeof UPGRADES)[number]["id"];

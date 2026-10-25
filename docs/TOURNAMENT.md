@@ -94,16 +94,18 @@ Gold's and Platinum's Shards meet the rule exactly at level 4, the most it allow
 **Tickets** are held in `save.tournament.tickets` (not a `CURRENCIES` row, since the Shop neither sells nor prices them), with a ticket icon, shown on the Tournament page, and beside Gems in the forest's purse once the Tournament is unlocked. Unused Tickets carry over between tournaments.
 
 - **Free Ticket:** the first time the client confirms a server time in a tournament's Open phase, it grants one Ticket and plays the celebration (`revealReward`, rays and all, with *A new Tournament has begun!*). Once per tournament id (`save.tournament.granted`).
-- **Ad Ticket:** pressing *Begin* with no Ticket offers one for watching an ad, once per tournament. With Ad-Disable owned (`adsOff`), the press grants it with no ad, as the ad Gem button does.
-- **Gem Tickets:** after that, *Begin* with no Ticket offers one for 10 Gems, then 20, 30, 40 … (10 × (Gem Tickets already bought this tournament + 1), `save.tournament.gemTickets`, starting over each tournament). A Gem price follows the game's Gem rule: never greyed out, red when short, and pressing it short opens `askForGems`.
+- **Ad Ticket:** entering the Delve's cave with no Ticket opens the Ticket dialog (`ui/tournament-entry.ts`), which offers one for watching an ad, once per tournament. With Ad-Disable owned (`adsOff`), the press grants it with no ad, as the ad Gem button does.
+- **Gem Tickets:** after that, the Ticket dialog offers one for 10 Gems, then 20, 30, 40 … (10 × (Gem Tickets already bought this tournament + 1), `save.tournament.gemTickets`, starting over each tournament). A Gem price follows the game's Gem rule: never greyed out, red when short, and pressing it short opens `askForGems`.
 
 Each entry spends one Ticket. A player may enter as often as they have Tickets; the best score counts.
 
 ## The tournament run
 
-*Begin Tournament* starts a run at once, inside, from either forest, like Warp. `TournamentClient.begin` (`tournament/client.ts`, which does everything that waits on the server, so the game's commands never do) asks the server for the live tournament, registers the entry (`enter`), and then `Game.beginTournament(info, entry)` spends the Ticket and goes in; it refuses, spending nothing, unless the Tournament is unlocked and neither mode's run is inside.
+The Delve is open only while a tournament is open for entry (`Game.delveOpen`), so its cave is the way in: the Tournament button, and the page's *Go to the Delve*, lead to the Delve's forest (`Game.toDelveForest`), and entering the cave there (walking onto it, or Enter, which wears the Ticket's price) asks for a tournament run (`Game.tournamentRequested`), begun by `TournamentEntry` (`ui/tournament-entry.ts`), or, with no Ticket, opens the Ticket dialog, entering as soon as one is had.
+If entry closes while the Delve's forest shows, `Game.leaveClosedDelve` takes the player back to the Tower's forest at once, and *Tournament entry has closed* shows until a click.
+`TournamentClient.begin` (`tournament/client.ts`, which does everything that waits on the server, so the game's commands never do) asks the server for the live tournament, registers the entry (`enter`), and then `Game.beginTournament(info, entry)` spends the Ticket and goes in; it refuses, spending nothing, unless the Tournament is unlocked and neither mode's run is inside.
 
-- **Mode:** the Delve, whether or not the player has opened it (`Game.enterMode`, which `switchMode` gates on Into the depths).
+- **Mode:** the Delve (`Game.switchMode`).
 - **Tier:** the league's cave: the Delve's selected tier switches to it (`switchTier`), so the run's records are the cave's. **Depth:** the start. **Hero:** the player's own loadout, at full HP, as any run.
 - **The same run for everyone:** the server sends the tournament's seeds, by name, and every chance in the run draws from them:
   - `layout`: the run seed (the labyrinth, torches, decor, percent potions, Skip and Revive rolls, which all derive from the run seed already);
@@ -115,7 +117,7 @@ Each entry spends one Ticket. A player may enter as often as they have Tickets; 
   Any other chance a run gains later takes a named seed too. Players still differ in their loadout, training, hand and badges, and that difference is the competition.
 - **Harder enemies:** every enemy's HP, ATK and DEF times the next cave's step (`tournamentStatFactor`: `TIER_STEP_FACTORS` of the cave above, ×5 in Copper and ×3 above it, Champion's cave 9 taking the last cave's ×3; `tournamentTile`), so they stand as strong as the next cave's, without its Fast or Ranged enemies, which go by the cave's own tier.
   It is applied after the tier's factor as the Delve `World` builds each chunk, a whole-number factor `snap`ped, so it is exact in every engine. Bosses included. It replaced a flat ×1.1, which left a tournament run little harder than the cave itself. Rewards that follow enemy stats (XP by `tierXp`) stay as for the tier.
-- **Rewards:** it plays and pays as a normal Delve run of that tier: Gold, Silver, Courage, XP, milestones and records.
+- **Rewards:** it plays and pays as a normal Delve run of that tier: Gold, Silver, XP and records; its depth pays no currency, only the score.
 - The run carries `tournament: { id, league, entry, seeds, drawn, back }` (`TournamentRun` on the `DelveRun`, checked by `isTournamentRun` in `decodeDelveRun`), so a reload mid-run is still a tournament run (and opens in the Delve, opened or not), and the HUD's height column reads *Delve 3+* over the depth.
 - **Undo** works as usual; the score is the deepest depth reached, as the HUD counts it (`tournamentScore`), which undo can't raise.
 - The forest sign can't be reached from inside, so a tournament run can't be swapped out. Ending it, by defeat or End Run, goes through `finalizeRun` as every run does, which keeps the score to send (`TournamentDesk.recordScore`: the entry's best, and `pending` until the server takes it), then returns the Delve to the tier the player had selected and the player to the forest they began from (`back`).
@@ -136,7 +138,7 @@ Each entry spends one Ticket. A player may enter as often as they have Tickets; 
 1. *The Tournament*, then the league's trophy and name, and its cave (*Delve 3+*).
 2. The phase and its countdown: *Opens in 2d 5h*, *Entry closes in 7h 12m*, *Ending — results in about 3h*, *Final results — claim within 18h*.
 3. Tickets held, with the ticket icon.
-4. While Open: **Begin Tournament**, or the ad / Gem Ticket offer when out of Tickets.
+4. While Open: **Go to the Delve**, to the Delve's forest, whose cave enters (the Ticket dialog there gets one when out of them).
 5. The player's best score this tournament, their place and percentile in the league (*12th of 1,480 · top 1%*), and the anticipated prize level; or the league's top prize when they haven't entered.
 6. In Results: the final place and prize, **Claim rewards**, and the league the results move the player to (*Promoted to Silver League*, *Moved down to …*, *Staying in the …*; `TournamentDesk.final`).
    Once the Results are over (24 hours, claimed or not), the page shows only *Opens in …* and the next tournament's top prize (in the league the results moved the player to); a prize left unclaimed comes as Mail instead (`docs/MAIL.md`), never *Rewards expired*. A tournament the player never entered, or whose prize they have claimed, shows nothing of itself once entry closes: no Ending or results, only the same, and the HUD button its countdown (`TournamentDesk.phase` reports it as upcoming).
@@ -205,6 +207,7 @@ The confirmed server time is the Shop's (`save.shop`'s clock), shared, so there'
 | `src/tiers.ts` / `src/delve/world.ts` | the step between caves; the tournament stats on the run's cells |
 | `src/outside.ts`, `src/render/rendering.ts` | the hall's tiles, yard and art |
 | `src/ui/tournament-page.ts` | the page and the All prizes dialog |
+| `src/ui/tournament-entry.ts` | the Delve's cave: beginning the run it asks for, the Ticket dialog, and *Tournament entry has closed* |
 | `src/ui/hud.ts`, `ui/shell.ts`, `ui/run-menu.ts` | the button in the forest and in the run menu |
 | `src/ui/dialogs.ts` | the run end dialog's Tournament block |
 | `src/ui/dom.ts` | trophy and ticket icons |

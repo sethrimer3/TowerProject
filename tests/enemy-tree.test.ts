@@ -64,7 +64,7 @@ test("ENEMY's Weaken cuts every enemy's ATK on the board, in the Tower and the D
   for (const [x, y] of enemies) assert.equal(weak.world.tile(x, y).enemy!.attack, Math.round(plain.world.tile(x, y).enemy!.attack * 0.95 * 1e6) / 1e6);
   // The Delve's labyrinth reads its enemies through it too.
   const s = playedSave();
-  s.upgrades.delve = 1;
+  s.upgrades.breakthrough = 1;
   const g = new Game(s);
   g.switchMode("delve");
   g.newRun({ seed: 5 });

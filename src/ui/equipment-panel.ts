@@ -130,7 +130,7 @@ export class EquipmentPanel {
    * 3×3 grid shaped like the hero, and what they add up to. A worn piece
    * opens its details; an empty slot shows only that category below. */
   private loadoutHtml() {
-    const worn = this.e.equipped[this.mode], delve = !!this.game.save.upgrades.delve, other = this.mode === "tower" ? "delve" : "tower";
+    const worn = this.e.equipped[this.mode], delve = this.game.tournament.unlocked, other = this.mode === "tower" ? "delve" : "tower";
     const slots = GRID.map((c) => {
       const item = worn[c] ? findItem(this.e, worn[c]!) : undefined;
       const name = item ? `<small class="eq-slot-name rar-${item.rarity}">${nameOf(item)}</small>` : `<small class="eq-slot-name">${CATEGORIES[c].name}</small>`;
@@ -510,7 +510,7 @@ export class EquipmentPanel {
   /** Equip or take off in each loadout, Lock, Assemble and Dismantle. */
   private itemActionsHtml(item: EquipItem) {
     const worn = wornIn(this.e, item.id);
-    const equipButtons = (this.game.save.upgrades.delve ? (["tower", "delve"] as const) : (["tower"] as const)).map((m) => worn.includes(m)
+    const equipButtons = (this.game.tournament.unlocked ? (["tower", "delve"] as const) : (["tower"] as const)).map((m) => worn.includes(m)
       ? `<button data-eq-off="${m}">Take off (${MODE_NAMES[m]})</button>`
       : `<button data-eq-on="${m}">Equip (${MODE_NAMES[m]})</button>`).join("");
     const tier = RARITY_TIERS[item.rarity], fodder = mergeFodder(this.e, item);

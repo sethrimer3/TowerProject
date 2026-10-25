@@ -23,7 +23,7 @@ const results = await page.evaluate(async () => {
   // (16,11) -> left 8, bottom 3.
   for (const mode of ["smooth", "fast", "instant"]) {
     const g = new Game(defaults());
-    g.save.upgrades.delve = 1;
+    g.save.upgrades.breakthrough = 1;
     g.switchMode("delve");
     g.save.settings.transition = mode;
     g.run.player.x = 15;

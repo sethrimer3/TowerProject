@@ -13,7 +13,7 @@ function corridor() {
   const g = new Game(defaults());
   g.save.upgrades.inspirationUndos = 1;
   g.save.settings.devMode = true;
-  g.save.upgrades.delve = 1;
+  g.save.upgrades.breakthrough = 1;
   g.switchMode("delve");
   for (let y = 0; y < 20; y++)
     for (let x = 0; x < 30; x++) g.run.changes[point(x, y)] = { kind: "wall" };
@@ -97,7 +97,7 @@ test("the notes come grouped under headings, and copy as text", () => {
   assert.equal(rows["Blue keys"], "1");
   assert.equal(rows["Whetstone"], "2");
   assert.equal(rows["None"], "—", "no door opened");
-  assert.ok("Courage" in rows, "the mode's currency");
+  assert.ok(!("Breakthrough" in rows) && !("Inspiration" in rows), "the Delve pays no currency");
   const text = notesText("Descent Notes", sections);
   assert.match(text, /^Descent Notes\n\nRUN\nDelve: 1\n/);
   assert.match(text, /\nKEYS OBTAINED\nGold keys: 0\nBlue keys: 1\n/);

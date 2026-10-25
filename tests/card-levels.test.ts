@@ -120,7 +120,7 @@ test("ARCHER, which never activates, gains an XP a new floor: two for a floor Sk
 
 test("ARCHER gains an XP for each of the Delve's equivalent floors passed", () => {
   const save = playedSave();
-  save.upgrades.delve = 1;
+  save.upgrades.breakthrough = 1;
   const g = new Game(save);
   g.switchMode("delve");
   g.newRun({ seed: 3 });

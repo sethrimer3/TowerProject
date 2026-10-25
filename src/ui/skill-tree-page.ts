@@ -17,7 +17,7 @@ import { PROVISIONS_NOTE } from "./board-lesson.ts";
 type Tree = (typeof TREES)[number];
 
 const TREE_ICONS: Record<string, UiSprite> = {
-  inspiration: "upgrades", courage: "automove", legacy: "tower", wisdom: "settings",
+  inspiration: "upgrades", breakthrough: "automove", legacy: "tower", wisdom: "settings",
 };
 /** What a skill's tooltip says can be done with it now. */
 function tooltipHint(p: { locked: boolean; maxed: boolean; available: boolean; affordable: boolean }, requirements: string[], unlocks: boolean) {
@@ -32,7 +32,7 @@ function tooltipHint(p: { locked: boolean; maxed: boolean; available: boolean; a
  * while one waits to be bought (`Game.introSkill`, a hand on its node), and
  * once bought (`Game.introBought`), what its cards do and the way back to
  * the entrance (the hand on the Tower tab is `board-lesson.ts`'s); then, on
- * the Inspiration and Courage trees (where provisions are opened), once a
+ * the Inspiration and Breakthrough trees (where provisions are opened), once a
  * first provision is open, the way to the Gear tab (its hand too). */
 function introNote(game: AppContext["game"], tree: TreeId) {
   const intro = tree === "inspiration", buy = intro ? game.introSkill : null, bought = intro ? game.introBought : null;
@@ -46,7 +46,7 @@ function introNote(game: AppContext["game"], tree: TreeId) {
 }
 
 /** The trees whose buyable skills show their price on a corner badge. */
-const PRICED_TREES: TreeId[] = ["inspiration", "courage"];
+const PRICED_TREES: TreeId[] = ["inspiration", "breakthrough"];
 
 /** The Upgrades page: one skill tree at a time, a tab each (pannable and
  * zoomable; tap a node to see its tooltip, tap it again to buy a rank). */
@@ -71,8 +71,8 @@ export class SkillTreePage {
     if (!this.shown(this.tree)) this.tree = "inspiration";
     // The tab row shows even for Inspiration alone, since its tab reads the points held.
     this.renderTree(`<div class="tree-tabs page-tabs" role="group" aria-label="Skill trees">${this.tabsHtml()}</div>`);
-    // Showing the Inspiration or Courage tree clears the dot a run's currency put on it.
-    if ((this.tree === "inspiration" || this.tree === "courage") && this.ctx.game.notices.shown(this.tree)) this.ctx.update();
+    // Showing the Inspiration or Breakthrough tree clears the dot a run's currency put on it.
+    if ((this.tree === "inspiration" || this.tree === "breakthrough") && this.ctx.game.notices.shown(this.tree)) this.ctx.update();
   }
 
   /** A tree's tab shows once the tree is open; Dev mode shows them all. */
@@ -81,15 +81,15 @@ export class SkillTreePage {
     return save.settings.devMode || treeOpen(TREES.find(t => t.id === tab)!, save.upgrades);
   }
 
-  /** The tab buttons, one a tree: Inspiration's and Courage's reading the
+  /** The tab buttons, one a tree: Inspiration's and Breakthrough's reading the
    * points held under their name, as Training's tab does, and wearing a dot
    * while a run's currency waits to be spent there. */
   private tabsHtml() {
-    const game = this.ctx.game, held = { inspiration: game.save.tower.inspiration, courage: game.save.delve.courage };
+    const game = this.ctx.game, held = { inspiration: game.save.tower.inspiration, breakthrough: game.save.breakthrough };
     return TREES.filter(t => this.shown(t.id)).map(t => {
-      const priced = t.id === "inspiration" || t.id === "courage";
-      const points = priced ? `<small>${heldAmount(game, held[t.id as "inspiration" | "courage"])} POINTS</small>` : "";
-      return `<button data-tree="${t.id}" aria-pressed="${t.id === this.tree}"${priced && this.tree !== t.id && game.notices.waiting(t.id as "inspiration" | "courage") ? ` class="notify"` : ""}><span>${uiSprite(TREE_ICONS[t.id] ?? "tower")}</span>${t.name}${points}</button>`;
+      const priced = t.id === "inspiration" || t.id === "breakthrough";
+      const points = priced ? `<small>${heldAmount(game, held[t.id as "inspiration" | "breakthrough"])} POINTS</small>` : "";
+      return `<button data-tree="${t.id}" aria-pressed="${t.id === this.tree}"${priced && this.tree !== t.id && game.notices.waiting(t.id as "inspiration" | "breakthrough") ? ` class="notify"` : ""}><span>${uiSprite(TREE_ICONS[t.id] ?? "tower")}</span>${t.name}${points}</button>`;
     }).join("");
   }
 
@@ -116,7 +116,7 @@ export class SkillTreePage {
       <canvas class="tree-particles" aria-hidden="true"></canvas>
       ${nodes.map(n => this.nodeHtml(n)).join("")}</div></div><div class="inspect-box tree-tooltip" id="tree-tooltip" hidden></div></div></section>`;
     this.bindTabs();
-    if (tree.id === "inspiration" || tree.id === "courage") el("tree-help").onclick = () => this.showHelp(tree.id as "inspiration" | "courage");
+    if (tree.id === "inspiration" || tree.id === "breakthrough") el("tree-help").onclick = () => this.showHelp(tree.id as "inspiration" | "breakthrough");
     bindPanZoom(el("tree-viewport"), el("tree-map"), view, {
       tap: (target) => this.tapped(target),
       pan: () => this.hideTooltip(),
@@ -125,13 +125,13 @@ export class SkillTreePage {
     if (this.tooltipVisible && tree.nodes.some(n => n.id === this.skill)) this.showTooltip();
   }
 
-  /** The ? beside the Inspiration and Courage trees' headings. */
+  /** The ? beside the Inspiration and Breakthrough trees' headings. */
   private helpButton(tree: Tree) {
-    return tree.id === "inspiration" || tree.id === "courage" ? helpButton(`How ${tree.name} is earned`) : "";
+    return tree.id === "inspiration" || tree.id === "breakthrough" ? helpButton(`How ${tree.name} is earned`) : "";
   }
 
   /** How the tree's currency is earned. */
-  private showHelp(tree: "inspiration" | "courage") {
+  private showHelp(tree: "inspiration" | "breakthrough") {
     const help = currencyHelp(this.ctx.game.save, tree);
     showHelp(this.ctx, "UPGRADES", help.title, help.body);
   }
@@ -140,7 +140,7 @@ export class SkillTreePage {
   private lockHtml(tree: Tree) {
     if (tree.gate === null) return `<p class="tree-lock">What opens this tree is still to come.</p>`;
     if (!this.locked(tree)) return "";
-    return `<p class="tree-lock">Unlock ${UPGRADES.find(u => u.id === tree.gate)!.name} in the ${tree.id === "courage" ? "Inspiration" : "Courage"} tree.</p>`;
+    return `<p class="tree-lock">Unlock ${UPGRADES.find(u => u.id === tree.gate)!.name} in the ${tree.id === "breakthrough" ? "Inspiration" : "Breakthrough"} tree.</p>`;
   }
 
   /** The lines from each skill to those it requires, lit once owned. */
@@ -180,7 +180,7 @@ export class SkillTreePage {
     const chosen = n.id === this.skill && this.tooltipVisible;
     const unlocks = this.current().unlocks;
     const state = unlocks ? (rank ? ", unlocked" : "") : `, ${rank} of ${skill.max}`;
-    // In the Inspiration and Courage trees, a skill that can be bought wears
+    // In the Inspiration and Breakthrough trees, a skill that can be bought wears
     // its next rank's price on its corner, so each path's cost shows at a
     // glance.
     const { price, affordable, locked, maxed } = this.purchase(n.id);
@@ -198,7 +198,7 @@ export class SkillTreePage {
     const u = UPGRADES.find(u => u.id === id)!;
     const level = save.upgrades[id];
     const price = cost(id, level);
-    const balance = tree.currency === "inspiration" ? save.tower.inspiration : save.delve.courage;
+    const balance = tree.currency === "inspiration" ? save.tower.inspiration : save.breakthrough;
     const locked = this.locked(tree);
     const maxed = level >= u.max;
     const available = skillAvailable(id, save.upgrades);
@@ -261,7 +261,7 @@ export class SkillTreePage {
     const node = this.current().nodes.find(n => n.id === id)!;
     const { u, level, price, balance, locked, maxed, available, affordable, canBuy } = this.purchase(id);
     const requirements = node.requires.filter(rid => !this.ctx.game.save.upgrades[rid]).map(rid => UPGRADES.find(u => u.id === rid)!.name);
-    const currency = this.current().currency === "inspiration" ? "Inspiration" : "Courage";
+    const currency = this.current().currency === "inspiration" ? "Inspiration" : "Breakthrough";
     const unlocks = this.current().unlocks;
     const hint = tooltipHint({ locked, maxed, available, affordable }, requirements, !!unlocks);
     // Short of the price, the cost line says how much more it takes.

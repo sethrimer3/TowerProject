@@ -69,7 +69,7 @@ function observe(g: Game, action: unknown, result: unknown, preview: unknown) {
 function trace(mode: Mode, seed: number, smartAi: boolean): string[] {
   const rng = mulberry32(seed);
   const save = playedSave();
-  save.upgrades.delve = 1;
+  save.upgrades.breakthrough = 1;
   save.upgrades.inspirationUndos = 1;
   // Five ranks of DEF training (a new hero has none), so runs last long
   // enough to reach the stairs.

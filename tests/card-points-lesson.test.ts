@@ -69,7 +69,7 @@ test("the card points lesson waits in either forest for a card with points, afte
   g.save.upgrades.combatStance = 0;
   assert.equal(g.cardPointsLesson, null, "the Deck must be open");
   g.save.upgrades.combatStance = 1;
-  g.save.upgrades.delve = 1;
+  g.save.upgrades.breakthrough = 1;
   g.switchMode("delve", true);
   assert.equal(g.boardLesson, "cards", "the Delve's forest too");
   g.save.tutorials.cardPoints = true;

@@ -19,14 +19,14 @@ const hero = (hp: number, extra: Partial<Player> = {}): Player =>
 const rules = (overheal?: number): StepRules => ({ potionHeal: 100, percentPotion: 100, regen: 0, ...(overheal ? { overheal } : {}) });
 const healed = (p: Player, t: Tile, r: StepRules) => resolveStep(p, t, r) as StepEffect;
 
-test("Overheal is a 20-Courage skill under Max Interest, with nothing under it", () => {
+test("Overheal is a 20-Breakthrough skill under Max Interest, with nothing under it", () => {
   const row = UPGRADES.find((u) => u.id === "overheal")!;
-  assert.deepEqual([row.currency, row.max, cost("overheal", 0)], ["courage", 1, 20]);
-  const nodes = TREES.find((t) => t.id === "courage")!.nodes;
+  assert.deepEqual([row.currency, row.max, cost("overheal", 0)], ["breakthrough", 1, 20]);
+  const nodes = TREES.find((t) => t.id === "breakthrough")!.nodes;
   assert.deepEqual(nodes.find((n) => n.id === "overheal")!.requires, ["maxInterest"]);
   assert.ok(!nodes.some((n) => n.requires.includes("overheal")), "Refocus, which followed it, is gone");
   const s = playedSave();
-  Object.assign(s.upgrades, { delve: 1, moveSpeed: 1, bombs: 1, findYellowKey: 1, keyEfficiency: 1, interest: 1 });
+  Object.assign(s.upgrades, { breakthrough: 1, moveSpeed: 1, bombs: 1, findYellowKey: 1, keyEfficiency: 1, interest: 1 });
   assert.equal(skillAvailable("overheal", s.upgrades), false, "Overheal waits on Max Interest");
   s.upgrades.maxInterest = 1;
   assert.ok(skillAvailable("overheal", s.upgrades));

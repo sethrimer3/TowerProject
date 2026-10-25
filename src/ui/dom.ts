@@ -100,7 +100,7 @@ export const itemSprite = (name: keyof typeof ITEM_KIT, className = "ui-sprite")
   pngIcon(ITEM_KIT[name], className);
 
 /** Each mode's currency icon, as the currencies row shows it: Inspiration
- * the Upgrades sprite, Courage the Automove one. */
+ * the Upgrades sprite, Breakthrough the Automove one. */
 export const CURRENCY_SPRITES = { tower: "upgrades", delve: "automove" } as const;
 
 const SKILL_ITEM_SPRITES: Partial<Record<UpgradeId, keyof typeof ITEM_KIT>> = {
@@ -110,7 +110,7 @@ const SKILL_ITEM_SPRITES: Partial<Record<UpgradeId, keyof typeof ITEM_KIT>> = {
 };
 const SKILL_UI_SPRITES: Partial<Record<UpgradeId, UiSprite>> = {
   inspirationUndos: "undo", undos: "undo", archives: "log",
-  delve: "delve", autoClimb: "automove", moveSpeed: "automove", dash: "automove", instantCombat: "attack", trainers: "arrow-up", fasterTrainers: "automove", freeTraining: "arrow-up", buyQuantity: "arrow-up",
+  breakthrough: "delve", autoClimb: "automove", moveSpeed: "automove", dash: "automove", instantCombat: "attack", trainers: "arrow-up", fasterTrainers: "automove", freeTraining: "arrow-up", buyQuantity: "arrow-up",
   revive: "revive", overheal: "health", spareChange: "gold", loot: "gold", floorSkipReward: "gold", mug: "gold", legacy: "tower", quality: "tower",
   wisdomFocus: "settings", wisdomMemory: "undo", wisdomSight: "upgrades",
   renownBanner: "tower", renownOath: "defense", renownCrown: "gear",

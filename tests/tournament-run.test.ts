@@ -50,7 +50,7 @@ function firstEnemy(world: World) {
 test("a tournament run spends a Ticket and goes into the league's cave from its seeds, enemies as strong as the next cave's", () => {
   const g = unlockedGame(OPEN, 2), i = info("gold");
   assert.equal(g.mode, "tower");
-  assert.ok(!g.save.upgrades.delve, "the Delve need not be open");
+  assert.ok(!g.save.upgrades.breakthrough, "the Delve need not be open");
   assert.equal(g.canBeginTournament, true);
   assert.equal(g.beginTournament(i, "2026-10-07#1"), true);
   assert.equal(g.save.tournament.tickets, 1);

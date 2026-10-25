@@ -56,6 +56,7 @@ import { gemSparkle, goldSparkle } from "./ui/flourish.ts";
 import { TournamentClient } from "./tournament/client.ts";
 import { stubTournament } from "./tournament/server.ts";
 import { TournamentPage } from "./ui/tournament-page.ts";
+import { TournamentEntry } from "./ui/tournament-entry.ts";
 import { revealReward } from "./ui/reward-reveal.ts";
 import { toggleGoldBonusBox } from "./ui/gold-bonus-box.ts";
 import { refreshEnemyOddsBox, toggleEnemyOddsBox } from "./ui/enemy-odds-box.ts";
@@ -117,6 +118,8 @@ const runEnd = new RunEndDialog(ctx, tournament, runNotes);
 const provingGrounds = new ProvingGroundsDialog(game, modal, save, update, () => isBoard(tab));
 const shownGame = () => provingGrounds.viewGame ?? game;
 const tournamentPage = new TournamentPage(ctx, tournament, refreshTournament);
+// The Delve's cave, the way into a tournament.
+const tournamentEntry = new TournamentEntry(ctx, game, tournament);
 // Mail's server (a stand-in until it exists), and the popup the forest's Mail button opens.
 const mail = new MailClient(game.mail, stubMail(() => game.save, () => game.clock()));
 const mailDialog = new MailDialog(ctx, mail, refreshMail);
@@ -197,6 +200,7 @@ function update() {
   if (finished.length) play("trained");
   researchToasts.add(finished);
   save();
+  tournamentEntry.check();
   runEnd.check();
   // The run's end, a fall or a lesson takes cinematic mode away at once.
   if (cinematic.active) cinematic.tick();
@@ -425,10 +429,14 @@ el("run-shop").onclick = () => {
   navigate("shop");
 };
 // The Tournament button: at the top of the forest's actions column, and in
-// the run's menu once the player has entered.
+// the run's menu once the player has entered. While a tournament is open it
+// leads to the Delve's forest, whose cave enters it; otherwise to its page.
 el("tournament-button").onclick = () => {
   closeRunMenu();
-  navigate("tournament");
+  if (!game.toDelveForest()) return navigate("tournament");
+  overlay.hide();
+  navigate("board");
+  update();
 };
 // The Missions button, in the forest's actions column and the run's menu.
 el("missions-button").onclick = () => {
@@ -540,6 +548,12 @@ function archivesTick() {
     renderEventsButtons(shownGame());
   }
   tournament.tick();
+  // Entry closing takes the player out of the Delve's forest at once.
+  if (game.leaveClosedDelve()) {
+    overlay.hide();
+    update();
+    if (isBoard(tab)) tournamentEntry.showClosed();
+  }
   // Cinematic mode's idle clock, and the gear a tap showed.
   cinematic.tick();
   // A tournament opening (or ending, or the Tournament unlocked) asks the
@@ -586,7 +600,7 @@ async function refreshTournament() {
   const granted = await tournament.refresh();
   if (granted)
     revealReward(
-      { icon: ticketIcon("ticket-icon reward-ticket"), amount: "+1", kicker: "A NEW TOURNAMENT HAS BEGUN!", name: "Ticket", text: "Enter it at the forest's Tournament Hall, or with the trophy button.", permanent: true },
+      { icon: ticketIcon("ticket-icon reward-ticket"), amount: "+1", kicker: "A NEW TOURNAMENT HAS BEGUN!", name: "Ticket", text: "Enter it through the Delve's cave: the trophy button leads there.", permanent: true },
       game.save.settings.reduceMotion,
     );
   update();
