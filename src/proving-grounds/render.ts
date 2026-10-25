@@ -4,7 +4,7 @@ import { drawCrates } from "../render/decor/decor-sprites.ts";
 import { drawKit } from "../sprites/kit.ts";
 import { HeroIdleAnimation } from "../sprites/animations.ts";
 import type { Tile } from "../entities.ts";
-import { ARENA_CRATES, ARENA_POTIONS, ARENA_TORCHES, beamCount, beamDirections, rayCells, trialFloor, key, nextBeamAxis, propDestroyed, wallEdge, type TrialState } from "./trial.ts";
+import { ARENA_CRATES, ARENA_POTIONS, ARENA_TORCHES, beamCount, beamDirections, rayCells, trialFloor, key, nextBeamAxis, propDestroyed, type TrialState } from "./trial.ts";
 
 import {drawKeymaster,drawKeymasterTransit,drawMimic,drawDoorSpirits} from "./keymaster-art.ts";
 import {KEYMASTER_DOORS,DOOR_FLIGHT_MS} from "./keymaster.ts";
@@ -60,7 +60,7 @@ export class TrialRenderer {
     const idle=this.heroIdle.frame(now,animated && !reduceMotion && s.player.hp>0,
       `${s.seed}:${s.room}:${s.player.x},${s.player.y}:${this.facing.dx},${this.facing.dy}`);
     const world={tile:(x:number,y:number):Tile=>({kind:trialFloor(s,x,y)?"floor":"wall"})};
-    const look:BoardLook={mode:"tower",tier:1,height:1,seed:s.seed,outside:false,entranceX:0,
+    const look:BoardLook={mode:"tower",tier:s.trialId==="keymaster"?2:1,height:1,seed:s.seed,outside:false,entranceX:0,
       reduceMotion,themed:null,styledSprites:styled,spriteAnimations:animated};
     if(this.lastTeleport!==s.elemental.teleport) {
       this.lastTeleport=s.elemental.teleport; this.teleportAt=now;
@@ -83,7 +83,6 @@ export class TrialRenderer {
     };
     c.imageSmoothingEnabled = false; c.fillStyle = "#05080c"; c.fillRect(0,0,SIZE,SIZE);
     for (let y=Math.floor(bottom); y<Math.ceil(bottom+N); y++) for (let x=Math.floor(left); x<Math.ceil(left+N); x++) {
-      const wall = !trialFloor(s,x,y);
       tile(x,y,() => {
         paintTile(c,world,world.tile(x,y),x,y,now,0,look);
         if (s.room === "staging" && x===4 && y===6) {
@@ -121,42 +120,35 @@ export class TrialRenderer {
     const hero=this.camera.hero(s);
     tile(hero.x,hero.y,()=>paintHero(c,this.facing,idle));
     if (s.room === "arena") {
-      const d=this.darkness.getContext("2d")!;
-      d.globalCompositeOperation="source-over"; d.fillStyle="#000"; d.fillRect(0,0,SIZE,SIZE);
-      d.globalCompositeOperation="destination-out";
-      const light = (x:number,y:number,radius:number,strength:number) => {
-        const xx=px(x)+12, yy=py(y)+12, r=radius*S;
-        if(xx+r<0||yy+r<0||xx-r>SIZE||yy-r>SIZE)return;
-        const g=d.createRadialGradient(xx,yy,0,xx,yy,r);
-        g.addColorStop(0,`rgba(0,0,0,${strength})`); g.addColorStop(0.35,`rgba(0,0,0,${strength*0.75})`); g.addColorStop(1,"rgba(0,0,0,0)");
-        d.fillStyle=g; d.fillRect(xx-r,yy-r,r*2,r*2);
-      };
-      // No ambient floor light. The hero has just enough light to find their footing.
-      light(hero.x,hero.y,1.8,0.8);
-      for(const p of ARENA_TORCHES) if(!propDestroyed(s,p)) light(p.x,p.y,5.5,0.92);
-      if(s.keymaster) {
-        for(const p of KEYMASTER_DOORS)light(p.x,p.y,3,0.8);
-        for(const p of s.keymaster.drops)light(p.x,p.y,1.5,0.5);
-        for(const p of s.keymaster.mimics)light(p.x,p.y,1.2,0.4);
-        for(const b of s.keymaster.doors)if(!b.hit && s.status==="active") {
-          const p=KEYMASTER_DOORS[b.door],t=b.elapsed/DOOR_FLIGHT_MS;
-          light(p.x+(s.elemental.x-p.x)*t,p.y+(s.elemental.y-p.y)*t,3,0.8);
+      if(!s.keymaster) {
+        const d=this.darkness.getContext("2d")!;
+        d.globalCompositeOperation="source-over"; d.fillStyle="#000"; d.fillRect(0,0,SIZE,SIZE);
+        d.globalCompositeOperation="destination-out";
+        const light = (x:number,y:number,radius:number,strength:number) => {
+          const xx=px(x)+12, yy=py(y)+12, r=radius*S;
+          if(xx+r<0||yy+r<0||xx-r>SIZE||yy-r>SIZE)return;
+          const g=d.createRadialGradient(xx,yy,0,xx,yy,r);
+          g.addColorStop(0,`rgba(0,0,0,${strength})`); g.addColorStop(0.35,`rgba(0,0,0,${strength*0.75})`); g.addColorStop(1,"rgba(0,0,0,0)");
+          d.fillStyle=g; d.fillRect(xx-r,yy-r,r*2,r*2);
+        };
+        // No ambient floor light. The hero has just enough light to find their footing.
+        light(hero.x,hero.y,1.8,0.8);
+        for(const p of ARENA_TORCHES) if(!propDestroyed(s,p)) light(p.x,p.y,5.5,0.92);
+        for(const p of slimes) light(p.x,p.y,1.7,0.65);
+        if(s.status!=="won") {
+          light(s.elemental.x,s.elemental.y,s.elemental.incorporeal?2.4:3,s.elemental.incorporeal?0.48:0.85);
+          if(transit<1 && s.elemental.teleport) {
+            const from=s.elemental.teleport.from;
+            light(from.x+(s.elemental.x-from.x)*transit,from.y+(s.elemental.y-from.y)*transit,2.5,0.7);
+          }
         }
-      }
-      for(const p of slimes) light(p.x,p.y,1.7,0.65);
-      if(s.status!=="won") {
-        light(s.elemental.x,s.elemental.y,s.elemental.incorporeal?2.4:3,s.elemental.incorporeal?0.48:0.85);
-        if(transit<1 && s.elemental.teleport) {
-          const from=s.elemental.teleport.from;
-          light(from.x+(s.elemental.x-from.x)*transit,from.y+(s.elemental.y-from.y)*transit,2.5,0.7);
+        for(const [k,step] of Object.entries(s.scorches)) {
+          const [x,y]=k.split(",").map(Number); const glow=Math.max(0,1-(s.steps-step)/30);
+          if(glow>0) light(x,y,1.3,glow*0.45);
         }
+        d.globalCompositeOperation="source-over";
+        c.drawImage(this.darkness,0,0);
       }
-      for(const [k,step] of Object.entries(s.scorches)) {
-        const [x,y]=k.split(",").map(Number); const glow=Math.max(0,1-(s.steps-step)/30);
-        if(glow>0) light(x,y,1.3,glow*0.45);
-      }
-      d.globalCompositeOperation="source-over";
-      c.drawImage(this.darkness,0,0);
       // Cracks persist for the whole attempt; their heat subsides over 30 turns.
       for(const [k,step] of Object.entries(s.scorches)) {
         const [x,y]=k.split(",").map(Number);

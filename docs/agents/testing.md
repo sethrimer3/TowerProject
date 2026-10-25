@@ -97,3 +97,7 @@ The `keymaster` render job changes seven existing frames for moving actors/ghost
 `node tests/trial-camera.mjs` uses the dev server to exercise actual camera/hero interpolation, clicks mid-glide, live Movement transition/Reduce motion controls, reload persistence and card movement, with 320/390/1024-pixel previews in `test-results/trial-camera/`.
 Trial browser tile helpers wait for the displayed room and camera settlement, then use the canvas's actual view rather than assuming the hero is centered.
 The appended `trialCamera` render job adds eight frames, and only existing trial motion frames change; other board jobs and save/settings defaults remain unchanged.
+
+`tests/keymaster-arena.test.ts` covers the connected wall clusters, open cardinal approaches, movement/planner authority, mimic detours, legal retreat/teleports and idempotent old-attempt relocation.
+The Keymaster browser flow checks literal Tower II floor/cover texels on the live canvas without darkness, retains the Light Elemental's dark treatment, and captures the new room at phone/desktop widths.
+Only Keymaster pixel frames change for the lit Tower II room and new geometry; subsequent trial-camera drawing-call hashes also change because the fake canvas IDs follow the new terrain bakes.

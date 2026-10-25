@@ -1,4 +1,4 @@
-import {ARENA_SIZE,ARENA_POTIONS,ARENA_CRATES,ARENA_TORCHES,arenaFloor,directions,key,same,type Spot} from "./arena.ts";
+import {ARENA_SIZE,ARENA_POTIONS,ARENA_CRATES,ARENA_TORCHES,arenaFloorFor,directions,key,same,type Spot} from "./arena.ts";
 import {tileRandom} from "../random.ts";
 import type {TrialState} from "./trial.ts";
 const breakable=new Set([...ARENA_TORCHES,...ARENA_CRATES].map(key));
@@ -9,9 +9,9 @@ export function teleportBoss(s: TrialState, step=s.steps+1) {
   const from = {x:s.elemental.x,y:s.elemental.y}, choices: Spot[] = [], fallback:Spot[]=[];
   for(let y=1;y<ARENA_SIZE-1;y++) for(let x=1;x<ARENA_SIZE-1;x++) {
     const p={x,y};
-    if (!arenaFloor(x,y) || same(p,s.player) || s.slimes.some(q=>same(p,q))
+    if (!arenaFloorFor(s.trialId,x,y) || same(p,s.player) || s.slimes.some(q=>same(p,q))
       || s.keymaster?.mimics.some(q=>same(p,q))
-      || ARENA_POTIONS.some(q=>same(p,q)) || !directions.every(([dx,dy])=>arenaFloor(x+dx,y+dy))) continue;
+      || ARENA_POTIONS.some(q=>same(p,q)) || !directions.every(([dx,dy])=>arenaFloorFor(s.trialId,x+dx,y+dy))) continue;
     if(Math.abs(x-from.x)+Math.abs(y-from.y)>=6 && Math.abs(x-s.player.x)+Math.abs(y-s.player.y)>=3) {
       if(s.keymaster?.drops.some(q=>same(p,q)))fallback.push(p);else choices.push(p);
     }
@@ -29,7 +29,7 @@ export function materializeBoss(s: TrialState) {
     const choices: Spot[]=[],fallback:Spot[]=[];
     for(let y=1;y<ARENA_SIZE-1;y++) for(let x=1;x<ARENA_SIZE-1;x++) {
       const p={x,y};
-      if(arenaFloor(x,y) && !same(p,s.player) && !s.slimes.some(q=>same(p,q)) && !s.keymaster?.mimics.some(q=>same(p,q)) && !ARENA_POTIONS.some(q=>same(p,q))
+      if(arenaFloorFor(s.trialId,x,y) && !same(p,s.player) && !s.slimes.some(q=>same(p,q)) && !s.keymaster?.mimics.some(q=>same(p,q)) && !ARENA_POTIONS.some(q=>same(p,q))
         && (!breakable.has(key(p)) || propDestroyed(s,p))) {
         if(s.keymaster?.drops.some(q=>same(p,q)))fallback.push(p);else choices.push(p);
       }

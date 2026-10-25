@@ -10,9 +10,17 @@ export function arenaFloor(x: number, y: number) {
   return Number.isInteger(x) && Number.isInteger(y) && x >= 1 && x <= 23 && y >= 1 && y <= 23
     && Math.abs(x - ELEMENTAL.x) + Math.abs(y - ELEMENTAL.y) / 2 <= 11;
 }
-export const floorAt = (room: "staging" | "arena", x: number, y: number) => room === "staging"
+/** Fixed cover keeps door approaches, the entrance and the boss's center clear. */
+export const KEYMASTER_WALL_BLOCKS = [
+  {x:6,y:7,size:2}, {x:16,y:7,size:3}, {x:6,y:16,size:3},
+  {x:17,y:17,size:2}, {x:4,y:11,size:2}, {x:19,y:12,size:2},
+] as const;
+export const keymasterArenaFloor = (x:number,y:number) => arenaFloor(x,y)
+  && !KEYMASTER_WALL_BLOCKS.some(p=>x>=p.x && x<p.x+p.size && y>=p.y && y<p.y+p.size);
+export const arenaFloorFor = (trialId:string,x:number,y:number) => trialId==="keymaster" ? keymasterArenaFloor(x,y) : arenaFloor(x,y);
+export const floorAt = (room: "staging" | "arena", x: number, y: number, trialId="light-elemental") => room === "staging"
   ? Number.isInteger(x) && Number.isInteger(y) && x >= 1 && x <= 7 && y >= 1 && y <= 7
-  : arenaFloor(x, y);
+  : arenaFloorFor(trialId,x,y);
 export const wallEdge = (x: number, y: number) => !arenaFloor(x, y)
   && [...directions,[1,1],[1,-1],[-1,1],[-1,-1]].some(([dx,dy]) => arenaFloor(x+dx,y+dy));
 

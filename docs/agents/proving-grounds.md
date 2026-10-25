@@ -57,7 +57,9 @@ The highest cleared difficulty is never manually selectable, and finishing diffi
 ## Turns and persistence
 
 `arena.ts` owns the shared hexagonal geometry and edge props; `trial.ts` dispatches the pure turn model after a shared 9×9 staging room.
-`trialFloor` adds four door cells only for the Keymaster, leaving the Light Elemental's geometry intact.
+`KEYMASTER_WALL_BLOCKS` defines six fixed square cover clusters, four 2×2 and two 3×3, inside the shared outline.
+`keymasterArenaFloor` excludes them, and `trialFloor` adds the four Keymaster door cells; staging and Light Elemental geometry remain unchanged.
+Player input, card/manual paths, mimic spawns and pursuit, key drops, retreat, teleport destinations and safe reformation all respect this same encounter geometry.
 The Light Elemental starts at (12,12); stepping into its corporeal body strikes it, with a smaller return hit from its radiance.
 Each nonlethal hit deterministically relocates it to a different free interior tile at least six Manhattan tiles from its former position, away from the hero, slimes and wall potions.
 Its saved `elemental` holds its position, `incorporeal` flag and last teleport origin/turn; ghost tiles are walkable and cannot be damaged or targeted by cards.
@@ -101,7 +103,7 @@ Every ten arena turns it reforms and becomes vulnerable; an empty-target card ha
 Ghosts are passable floor, cannot be struck and do not count as card enemies; the saved position, phase and teleport history survive reloads.
 On every even accepted arena turn, the Keymaster takes one legal cardinal step strictly farther from the player; if walls, actors or pickups block all such steps, it stays put.
 Retreat also runs while incorporeal; turning corporeal relocates an occupied ghost safely before exposing it as an enemy.
-Every hit scatters exactly three golden keys to three seeded choices of eight compass directions, each three tiles from its hit position; directions leaving the arena are excluded, repeated drops stack and stepping onto a pile collects it.
+Every hit scatters exactly three golden keys to three seeded choices of the 24 tiles on its three-tile square-radius ring; walls and positions leaving the arena are excluded, repeated drops stack and stepping onto a pile collects it.
 These keys belong only to the encounter and are distinct from daily entry keys.
 Two mimics appear on entry; another spawns every `max(2,8-floor(level/5))` turns, up to six alive.
 Their HP is `ceil(max(30,6*ATK)*difficultyMultiplier(level))`; a surviving mimic counters for 6% max HP times that multiplier, less 20% of copied DEF, with minimum 1 damage.
@@ -124,6 +126,10 @@ The controller pauses flights behind an open modal and caps frame deltas at 100 
 Opening and impact saves preserve the receipt; intermediate elapsed time is included in any normal attempt save, and reloading a pending flight resumes its remaining duration.
 A door impact can win and settle ordinary per-trial rewards without spending another player turn.
 Decoding bounds inventories, arena-sized counted key piles, six unique mimics and four unique door bursts.
+The encounter payload records `keymaster.layout:2`; unknown layout revisions are rejected, and current-layout actors and keys cannot occupy cover.
+Attempts without that marker validate against the old open chamber before `migrateKeymasterLayout` relocates only newly blocked occupants to nearest legal floor with deterministic row/column tie breaks.
+Actor reservations prevent collisions, key piles merge when necessary, and a blocked teleport origin relocates too; HP, turn count, keys, training, progress and door receipts are retained.
+The migration marks the new layout so reloads are idempotent and never change ordinary Tower/Delve layouts.
 It accepts moving boss/ghost/teleport state and fully arrived but unspent bursts, while rejecting invalid positions, contradictory impact receipts and Light Elemental laser/slime hazards.
 Key piles may overlap actors; teleport and reformation prefer clear tiles but fall back to item tiles if a crowded room would otherwise prevent safe relocation.
 Progress and reward receipts remain independent per trial ID while sharing the same daily entry allowance and points wallet.
@@ -139,10 +145,12 @@ The controller passes `usesGameSprites(save)` and Animations into every trial fr
 With the kit enabled, shared `paintTile` draws connected native paving and wall contours over the trial geometry, `paintContents` draws stairs and potions, and `paintHero`/`paintTorch` select the same PNGs and ambient animation options as the main board.
 Kit crates draw at their native 24-pixel size, and broken crates retain their native 12-pixel pieces; legacy procedural crates and other old art remain complete off/loading/failure fallbacks.
 Hero facing follows trial movement; its optional idle cycle uses `HeroIdleAnimation` and honors Reduce motion.
+The Keymaster selects `BoardLook.tier:2` in both staging and arena, reusing Tower II's native limestone and connected rectangular paving.
+Its arena skips the darkness mask entirely, keeping the floor, wall cover, pickups and hero fully visible while retaining ghost teleports and red door spirits.
 The trial repaints every frame, so late images and settings changes do not need a separate cache invalidation path.
 Edge crates reuse `drawCrates` and its splintered-board wreckage; floor torches have small iron stands and leave charred fragments when broken.
 Both torch painting and its darkness-mask light source read the same persisted destruction state, so an extinguished torch cannot keep illuminating the room or return on reload.
-The arena has no ambient floor light: only torches, glowing enemies, smoldering cracks and the hero's small foothold light reveal it.
+The Light Elemental arena has no ambient floor light: only torches, glowing enemies, smoldering cracks and the hero's small foothold light reveal it.
 Slime hops interpolate for 260 ms on native pixel coordinates; Reduce motion displays their new tiles immediately.
 Animation state is presentation only and resets on reload; saved destinations remain authoritative.
 A teleport breaks the literal body texels into staggered curved paths with fading trails, then crossfades them into a translucent cyan body over 1,100 ms.
@@ -175,3 +183,6 @@ The Light Elemental and other render jobs remain unchanged.
 
 `tests/trial-camera.test.ts` covers default smoothing, dead-zone behavior, native-pixel/room bounds, Fast versus Instant/Reduce motion, room resets, fractional click coordinates and path framing without game-state mutation.
 `node tests/trial-camera.mjs` exercises real interpolated movement and clicks during a glide, live Settings controls and saved preferences, card autoplay and 320/390/1024-pixel layouts.
+
+`tests/keymaster-arena.test.ts` checks connected cover geometry, clear doors and edge props, blocked-turn authority, manual detours, mimic pursuit, retreat, teleport/reformation and old-layout migration.
+The Keymaster browser flow compares actual floor and cover texels against Tower II tiles to prove the darkness mask is absent, verifies Tower I remains distinct, and captures the lit room at 320/390/1024 pixels.

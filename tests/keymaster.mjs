@@ -50,6 +50,33 @@ try {
   await expect(world).toHaveAttribute("data-trial-room","arena");
   expect((await trial()).keymaster.keys).toBe(0);expect((await trial()).keymaster.mimics).toHaveLength(2);
   await patch({player:{x:12,y:11,maxHp:1000,hp:1000,attack:10,defense:0},bossMaxHp:240,bossHp:240,steps:1});
+  await expect(world).toHaveAttribute("data-trial-camera-moving","false");
+  const terrain=await world.evaluate(async canvas=> {
+    const {paintTile}=await import("/src/render/tile-painters.ts");
+    const {trialFloor,startTrial}=await import("/src/proving-grounds/trial.ts");
+    const {TrialRenderer}=await import("/src/proving-grounds/render.ts");
+    const s=JSON.parse(localStorage.getItem("towerdelve.v1")).provingGrounds;
+    const world={tile:(x,y)=>({kind:trialFloor(s,x,y)?"floor":"wall"})};
+    const left=Number(canvas.dataset.trialViewLeft),bottom=Number(canvas.dataset.trialViewBottom);
+    const read=(canvas,x,y)=>Array.from(canvas.getContext("2d").getImageData(x,y,24,24).data);
+    const expected=(x,y,tier)=> {
+      const c=document.createElement("canvas");c.width=c.height=24;
+      paintTile(c.getContext("2d"),world,world.tile(x,y),x,y,0,0,{mode:"tower",tier,height:1,seed:s.seed,outside:false,entranceX:0,reduceMotion:true,themed:null,styledSprites:true,spriteAnimations:false});
+      return read(c,0,0);
+    };
+    const actual=(x,y)=>read(canvas,Math.round((x-left)*24),Math.round((bottom+16-y)*24));
+    const light=startTrial(s.player);light.room="arena";light.player.x=12;light.player.y=11;
+    const c=document.createElement("canvas"),r=new TrialRenderer(c);r.draw(light,1000,0,true);
+    return {floor:actual(12,7),floorII:expected(12,7,2),floorI:expected(12,7,1),wall:actual(6,7),wallII:expected(6,7,2),lightFloor:read(c,8*24,12*24)};
+  });
+  // Exact native texels prove that no darkness overlay dims either floors or cover.
+  expect(terrain.floor).toEqual(terrain.floorII);expect(terrain.wall).toEqual(terrain.wallII);
+  expect(terrain.floor).not.toEqual(terrain.floorI);expect(terrain.lightFloor).not.toEqual(terrain.floorI);
+  for(const width of [320,390,1024]) {
+    await page.setViewportSize({width,height:844});
+    await page.locator(".shell").screenshot({path:`test-results/keymaster/lit-cover-${width}.png`});
+  }
+  await page.setViewportSize({width:390,height:844});
   await tile(12,12);await expect.poll(async()=>(await trial()).keymaster.hits).toBe(1);
   const hit=await trial();expect(hit.keymaster.drops.reduce((n,p)=>n+p.count,0)).toBe(3);
   expect(hit.elemental.incorporeal).toBe(true);expect(hit.beam).toBeNull();expect(hit.slimes).toEqual([]);

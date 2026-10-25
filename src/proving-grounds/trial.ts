@@ -1,7 +1,7 @@
 import {teleportBoss,materializeBoss} from "./boss-movement.ts";
-import { ARENA_SIZE, ELEMENTAL, ARENA_TORCHES, ARENA_POTIONS, ARENA_CRATES, arenaFloor, floorAt, wallEdge, key, same, directions, type Spot } from "./arena.ts";
+import { ARENA_SIZE, ELEMENTAL, ARENA_TORCHES, ARENA_POTIONS, ARENA_CRATES, arenaFloor, arenaFloorFor, floorAt, wallEdge, key, same, directions, type Spot } from "./arena.ts";
 export { ARENA_SIZE, ELEMENTAL, ARENA_TORCHES, ARENA_POTIONS, ARENA_CRATES, arenaFloor, floorAt, wallEdge, key, type Spot } from "./arena.ts";
-import { newKeymaster, keymasterStep, enterKeymaster, keymasterDoorAt, decodeKeymaster, type KeymasterState } from "./keymaster.ts";
+import { newKeymaster, keymasterStep, enterKeymaster, keymasterDoorAt, decodeKeymaster, migrateKeymasterLayout, type KeymasterState } from "./keymaster.ts";
 import { TRAINING, type TrainingId } from "../progression/training.ts";
 import type { Player } from "../entities.ts";
 import { CARDS, type CardId } from "../cards/cards.ts";
@@ -189,15 +189,17 @@ export function decodeTrial(raw: unknown): TrialState | undefined {
   if(typeof trialId!=="string" || !Object.hasOwn(TRIALS,trialId))return;
   const keymaster=trialId==="keymaster"?decodeKeymaster(raw.keymaster,raw):undefined;
   if(trialId==="keymaster" && !keymaster)return;
+  const legacyKeymaster=!!keymaster && raw.keymaster.layout===undefined;
+  const layoutTrial=legacyKeymaster?"light-elemental":trialId;
   const position = {x:p.x,y:p.y};
   const e=raw.elemental;
   let elemental: Elemental={...ELEMENTAL,incorporeal:false,teleport:null};
   if(e!==undefined) {
-    if(!isRecord(e) || !arenaFloor(e.x,e.y) || typeof e.incorporeal!=="boolean") return;
+    if(!isRecord(e) || !arenaFloorFor(layoutTrial,e.x,e.y) || typeof e.incorporeal!=="boolean") return;
     let teleport: Elemental["teleport"]=null;
     if(e.teleport!==null) {
       const t=e.teleport;
-      if(!isRecord(t) || !isRecord(t.from) || !arenaFloor(t.from.x,t.from.y) || !wholeIn(t.step,1,raw.steps)) return;
+      if(!isRecord(t) || !isRecord(t.from) || !arenaFloorFor(layoutTrial,t.from.x,t.from.y) || !wholeIn(t.step,1,raw.steps)) return;
       teleport={from:{x:t.from.x,y:t.from.y},step:t.step};
     }
     if(e.incorporeal && (raw.room!=="arena" || raw.status==="won" || !teleport)) return;
@@ -219,7 +221,7 @@ export function decodeTrial(raw: unknown): TrialState | undefined {
     || !wholeIn(raw.seed,0,0xffffffff) || !Array.isArray(raw.hand) || raw.hand.length > 64
     || raw.hand.some((id: unknown) => typeof id !== "string" || !Object.hasOwn(CARDS,id))
     || (raw.mode === "manual" && (raw.hand.length > 0 || raw.playing))
-    || !(floorAt(raw.room, p.x, p.y) || (keymaster && raw.room==="arena" && keymasterDoorAt(p.x,p.y)>=0 && keymaster.doors.some(d=>d.door===keymasterDoorAt(p.x,p.y)))) || (raw.room === "arena" && !elemental.incorporeal && same(position,elemental))
+    || !(floorAt(raw.room,p.x,p.y,layoutTrial) || (keymaster && raw.room==="arena" && keymasterDoorAt(p.x,p.y)>=0 && keymaster.doors.some(d=>d.door===keymasterDoorAt(p.x,p.y)))) || (raw.room === "arena" && !elemental.incorporeal && same(position,elemental))
     || (raw.status === "active" && (p.hp === 0 || raw.bossHp === 0))
     || (raw.status === "won" && raw.bossHp !== 0) || (raw.status === "lost" && p.hp !== 0)
     || (raw.status !== "active" && raw.playing)) return;
@@ -269,10 +271,12 @@ export function decodeTrial(raw: unknown): TrialState | undefined {
     occupied.add(key(position)); ids.add(slime.id);
   }
   if(keymaster && (beam || slimes.length || Object.keys(scorches).length || Object.keys(destroyed).length || keymaster.mimics.some(m=>same(m,elemental))))return;
-  return { version:2,trialId:trialId as TrialId,...(keymaster?{keymaster}:{}),level,...(displayHand?{displayHand}:{}),...(purchases?{purchases}:{}),elemental,beam,mode:raw.mode,hand:[...raw.hand],playing:raw.playing,seed:raw.seed,
+  const decoded:TrialState = { version:2,trialId:trialId as TrialId,...(keymaster?{keymaster}:{}),level,...(displayHand?{displayHand}:{}),...(purchases?{purchases}:{}),elemental,beam,mode:raw.mode,hand:[...raw.hand],playing:raw.playing,seed:raw.seed,
     room: raw.room, status: raw.status, player: { x:p.x,y:p.y,hp:p.hp,maxHp:p.maxHp,attack:p.attack,defense:p.defense },
     bossHp:raw.bossHp,bossMaxHp:raw.bossMaxHp,steps:raw.steps,slimes,consumed:[...new Set<string>(consumed)],scorches,destroyed };
+  if(legacyKeymaster)migrateKeymasterLayout(decoded);
+  return decoded;
 }
 
-/** The Keymaster replaces exactly four wall tiles with cardinal doors. */
-export const trialFloor=(s:Pick<TrialState,"room"|"trialId">,x:number,y:number)=>floorAt(s.room,x,y) || (s.room==="arena" && s.trialId==="keymaster" && keymasterDoorAt(x,y)>=0);
+/** Keymaster cover and four cardinal doors share the same collision map. */
+export const trialFloor=(s:Pick<TrialState,"room"|"trialId">,x:number,y:number)=>floorAt(s.room,x,y,s.trialId) || (s.room==="arena" && s.trialId==="keymaster" && keymasterDoorAt(x,y)>=0);

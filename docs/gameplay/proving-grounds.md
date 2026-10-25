@@ -106,7 +106,10 @@ Attempts saved in the older, larger chamber restart in the new staging room with
 ## The Keymaster
 
 **Trial 2 — Keymaster** has its own difficulty progression and first-clear Trial Points, shared across the same three control modes.
-Its staircase leads to the same-sized dark chamber, with a locked door at each cardinal edge: north, east, south and west.
+Its staircase leads to a fully lit 25×25 chamber using Tower II's warm limestone walls and rectangular paving, with a locked door at each cardinal edge: north, east, south and west.
+Six solid 2×2 and 3×3 wall blocks are scattered through the chamber; you and the mimics must route around them, and the Keymaster cannot retreat or teleport into them.
+Torches, crates and potions remain around the inside edge, and the four door approaches stay clear.
+Older saved attempts keep their progress; anyone or any key pile inside a newly added wall moves to nearby floor when resumed.
 The Keymaster starts in the center and can be attacked while solid.
 A surviving hit breaks him into pixels of light that fly to a new tile and reform as a translucent ghost, just like the Light Elemental.
 He is invincible and does not count as an enemy while incorporeal; you can walk through his ghost.
