@@ -111,14 +111,25 @@ export const SMELTS = {
 } as const satisfies Partial<Record<CardId, { color: KeyColor; percent: number }>>;
 export type SmeltCard = keyof typeof SMELTS;
 export const isSmelt = (id: CardId): id is SmeltCard => id in SMELTS;
+/** What the cards that act in place take and give as their trees have it
+ * now (`HandRules`'s): the keys a trade takes, and the key a smelt takes
+ * and the percent of max HP it heals. */
+export type InPlaceTerms = { tradeCost(card: TraderCard): number; smeltCost(card: SmeltCard): number; smeltPercent(card: SmeltCard): number };
+/** The terms without any tree. */
+const PLAIN_TERMS: InPlaceTerms = { tradeCost: (card) => TRADERS[card].keys, smeltCost: () => 1, smeltPercent: (card) => SMELTS[card].percent };
 /** What card `id` does, as the player is told: STAIRS says how it climbs
- * in the Delve only once Into the depths is owned, and a trader the keys
- * a trade takes (`tradeCost`: its 3, or fewer with its tree's Efficiency). */
-export function cardText(id: CardId, upgrades: Record<UpgradeId, number>, tradeCost: (card: TraderCard) => number = (card) => TRADERS[card].keys): string {
+ * in the Delve only once Into the depths is owned, a trader the keys a
+ * trade takes (its 3, or fewer with its tree's Efficiency), and a smelt
+ * the key it takes and the HP it heals (`terms`). */
+export function cardText(id: CardId, upgrades: Record<UpgradeId, number>, terms: InPlaceTerms = PLAIN_TERMS): string {
   if (id === "stairs" && !upgrades.delve) return "Move toward the stairs up.";
-  if (!isTrader(id)) return CARDS[id].text;
-  const { from, to } = TRADERS[id], keys = `${snap(tradeCost(id))} ${KEY_WORDS[from]} keys`;
-  return `Trade ${keys} for a ${KEY_WORDS[to]} key, without moving. Skipped with fewer than ${keys}.`;
+  if (isTrader(id)) {
+    const { from, to } = TRADERS[id], keys = `${snap(terms.tradeCost(id))} ${KEY_WORDS[from]} keys`;
+    return `Trade ${keys} for a ${KEY_WORDS[to]} key, without moving. Skipped with fewer than ${keys}.`;
+  }
+  if (!isSmelt(id)) return CARDS[id].text;
+  const color = SMELTS[id].color, cost = snap(terms.smeltCost(id)), key = cost === 1 ? `a ${KEY_WORDS[color]} key` : `${cost} of a ${KEY_WORDS[color]} key`;
+  return `Trade ${key} for ${snap(terms.smeltPercent(id))}% of your max HP, without moving, healing past max HP up to your Overheal ceiling. Skipped ${cost === 1 ? "without" : "with less than"} ${key}, or while the whole heal wouldn't fit under that ceiling.`;
 }
 /** A key colour as a card's text names it. */
 const KEY_WORDS: Record<KeyColor, string> = { yellow: "gold", blue: "blue", red: "red" };

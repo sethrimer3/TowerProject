@@ -99,6 +99,11 @@ export type TreeStat =
   | ColorKeyStat
   /** A key trader's own stats (GK -> BK's and BK -> RK's trees), for its trades only. */
   | TradeStat
+  /** A smelt's own stats (Smelt GK's, BK's and RK's trees), for its smelts only. */
+  | SmeltStat
+  /** Flat: the percent chance any smelt pays twice its Gold (Key Smelter),
+   * every smelt tree's added as one. */
+  | "keySmelter"
   /** An enemy card's own stats (WEAK through NON-BOSS ENEMY's trees), against the enemies it covers only. */
   | FoeCardStat
   /** Max HP for the run, its own factor beside the boons' and the Max HP badge's. */
@@ -164,13 +169,15 @@ export type TreeStat =
  * and Key Find (each its own factor on KEY's and the key cards'), Door Cost
  * (the percent less of the key a single door of the colour takes, its own
  * factor on the other door discounts), and the flat chances a key of the
- * colour is two (its Locksmith, rolled apart from KEY's) and opens every
- * door with a lock of its colour on its floor (its Master Key). */
-export const COLOR_KEY_PARTS = ["KeyHeal", "KeyOverheal", "KeyGold", "KeyFind", "KeySilver", "KeyChest", "DoorCost", "DoubleKey", "MasterKey"] as const;
+ * colour is two (its Locksmith, rolled apart from KEY's), opens every
+ * door with a lock of its colour on its floor (its Master Key), and of a
+ * key of the colour on each floor new to the run (Floor Key: the traders'
+ * and smelts' Extra Key). */
+export const COLOR_KEY_PARTS = ["KeyHeal", "KeyOverheal", "KeyGold", "KeyFind", "KeySilver", "KeyChest", "DoorCost", "DoubleKey", "MasterKey", "FloorKey"] as const;
 export type ColorKeyPart = (typeof COLOR_KEY_PARTS)[number];
 export type ColorKeyStat = `${KeyColor}${ColorKeyPart}`;
-const KEY_COLORS: readonly KeyColor[] = ["yellow", "blue", "red"];
-const FLAT_KEY_PARTS: readonly ColorKeyPart[] = ["KeyHeal", "KeyOverheal", "KeySilver", "KeyChest", "DoubleKey", "MasterKey"];
+export const KEY_COLORS: readonly KeyColor[] = ["yellow", "blue", "red"];
+const FLAT_KEY_PARTS: readonly ColorKeyPart[] = ["KeyHeal", "KeyOverheal", "KeySilver", "KeyChest", "DoubleKey", "MasterKey", "FloorKey"];
 const colorKeyStats = (parts: readonly ColorKeyPart[]) => KEY_COLORS.flatMap((color) => parts.map((part): ColorKeyStat => `${color}${part}`));
 /** Key colour `color`'s own stat `part` in `bonus`. */
 export const keyStat = (bonus: TreeBonus, color: KeyColor, part: ColorKeyPart) => bonus[`${color}${part}`];
@@ -179,10 +186,9 @@ export const keyStat = (bonus: TreeBonus, color: KeyColor, part: ColorKeyPart) =
  * each named `${colour}${part}` by the colour it trades for: Trade Cost
  * (the percent less of the keys each trade takes, its Efficiency), and the
  * flat chances of a free Utility level on each trade (Trade Free Utility),
- * of a key of the colour on each floor new to the run (Floor Key), of a
- * second key from a trade (Forge), and of a third when the Forge gives one
- * (Smelter). */
-export const TRADE_PARTS = ["TradeCost", "TradeFreeUtility", "FloorKey", "Forge", "Smelter"] as const;
+ * of a second key from a trade (Forge), and of a third when the Forge
+ * gives one (Smelter). */
+export const TRADE_PARTS = ["TradeCost", "TradeFreeUtility", "Forge", "Smelter"] as const;
 export type TradePart = (typeof TRADE_PARTS)[number];
 export type TradeColor = (typeof TRADERS)[TraderCard]["to"];
 export type TradeStat = `${TradeColor}${TradePart}`;
@@ -190,6 +196,20 @@ export const TRADE_COLORS: readonly TradeColor[] = ["blue", "red"];
 const tradeStats = (parts: readonly TradePart[]) => TRADE_COLORS.flatMap((color) => parts.map((part): TradeStat => `${color}${part}`));
 /** The trader for key colour `color`'s own stat `part` in `bonus`. */
 export const tradeStat = (bonus: TreeBonus, color: TradeColor, part: TradePart) => bonus[`${color}${part}`];
+
+/** What a smelt's own stats (Smelt GK's, BK's and RK's trees) raise, each
+ * named `${colour}${part}` by the colour it smelts: Smelt Cost (the percent
+ * less of the key each smelt takes, its Efficiency), and the flat Gold and
+ * Silver each smelt pays (Smelt Gold, Smelt Silver), percent of max HP it
+ * heals more (Smelt Heal), and chances of a free training level (Smelt
+ * Free: Defense for gold keys, Offense for blue, each group for red) and of
+ * three times its Gold (Smelt Master: its Master Smelter). */
+export const SMELT_PARTS = ["SmeltGold", "SmeltHeal", "SmeltSilver", "SmeltFree", "SmeltCost", "SmeltMaster"] as const;
+export type SmeltPart = (typeof SMELT_PARTS)[number];
+export type SmeltStat = `${KeyColor}${SmeltPart}`;
+const smeltStats = (parts: readonly SmeltPart[]) => KEY_COLORS.flatMap((color) => parts.map((part): SmeltStat => `${color}${part}`));
+/** The smelt for key colour `color`'s own stat `part` in `bonus`. */
+export const smeltStat = (bonus: TreeBonus, color: KeyColor, part: SmeltPart) => bonus[`${color}${part}`];
 
 /** What a door card's own stats (GOLD, HEART and WOODEN DOOR's trees)
  * raise, for its doors only (`hasLock`: a door with a gold lock, one
@@ -250,7 +270,8 @@ export function foeStats(bonus: TreeBonus, part: FoePart): Partial<Record<FoeTre
 /** The stats added as they are, not as percents of a factor. */
 export const FLAT_STATS: ReadonlySet<TreeStat> = new Set<TreeStat>(["floorHeal", "overhealMax", "stairSkip", "potionMaxHp", "potionSilver", "freeOffenseChance", "freeDefenseChance", "freeUtilityChance",
   "doorSilver", "doorHeal", "skeletonKey", "lockPick", "secretKnock", "doorChest", "yellowLockHeal", "yellowTransmute", "woodTransmute", "heartLockPick", "heartShroud", "druidKey", ...doorLockStats(["Silver", "Chest", "Knock"]), "keyChest", "keyHeal", "keyOverheal", "keySilver", "doubleKey", "masterKey", "surpriseAttack", "foeAttackCut", "stealOverheal", "parry", "reviveChance",
-  "attackShardSilver", "defenseShardSilver", "powerStrike", "takedown", "tangle", "greaterTakedown", "greaterTangle", "bossCells", "chestSilver", "chestCells", "supplyChance", "equipmentChance", "treasureFloor", "rarityUp", "chestDouble", "chestTriple", ...colorKeyStats(FLAT_KEY_PARTS), ...tradeStats(["TradeFreeUtility", "FloorKey", "Forge", "Smelter"]), ...foeCardStats(FLAT_FOE_PARTS)]);
+  "attackShardSilver", "defenseShardSilver", "powerStrike", "takedown", "tangle", "greaterTakedown", "greaterTangle", "bossCells", "chestSilver", "chestCells", "supplyChance", "equipmentChance", "treasureFloor", "rarityUp", "chestDouble", "chestTriple", ...colorKeyStats(FLAT_KEY_PARTS), ...tradeStats(["TradeFreeUtility", "Forge", "Smelter"]),
+  ...smeltStats(["SmeltGold", "SmeltHeal", "SmeltSilver", "SmeltFree", "SmeltMaster"]), "keySmelter", ...foeCardStats(FLAT_FOE_PARTS)]);
 
 /** One node of a card's tree: the stats each of its levels raises, its
  * rarity, how many levels it holds from the start (`levels`: 0 for a node
@@ -302,9 +323,31 @@ function traderTree(to: TradeColor, n: Record<"gold" | "silver" | "goldBonus" | 
     { id: "freeUtility", stats: trade("TradeFreeUtility", n.freeUtility), rarity: "legendary", levels: 0, max: 5, after: "goldBonus" },
     common("efficiency", trade("TradeCost", 1), 5, 10),
     { id: "doorCost", stats: own("DoorCost", 1), rarity: "uncommon", levels: 0, max: 5, after: "efficiency" },
-    { id: "floorKey", stats: trade("FloorKey", 1), rarity: "rare", levels: 0, max: 5, after: "doorCost" },
+    { id: "floorKey", stats: own("FloorKey", 1), rarity: "rare", levels: 0, max: 5, after: "doorCost" },
     { id: "forge", stats: trade("Forge", n.forge), rarity: "epic", levels: 0, max: 5, after: "floorKey" },
     { id: "smelter", stats: trade("Smelter", n.smelter), rarity: "legendary", levels: 0, max: 5, after: "forge" },
+  ];
+}
+
+/** A smelt's tree (Smelt GK's, BK's and RK's), for the colour `color` it
+ * smelts, `n` its levels' amounts: Smelt Gold, then Smelt Heal, Smelt
+ * Silver, Gold Bonus and Smelt Free (2% a level); Efficiency (Smelt Cost,
+ * 1% a level), then Door Cost (1%), Floor Key (1%), Key Smelter (2%) and
+ * its Master Smelter (2%). Its commons hold 10 levels from the start. */
+function smeltTree(color: KeyColor, n: Record<"gold" | "heal" | "silver" | "goldBonus", number>): CardTreeNode[] {
+  const own = (part: ColorKeyPart, each: number) => ({ [`${color}${part}`]: each }) as CardTreeNode["stats"];
+  const smelt = (part: SmeltPart, each: number) => ({ [`${color}${part}`]: each }) as CardTreeNode["stats"];
+  return [
+    common("gold", smelt("SmeltGold", n.gold), 5, 10),
+    { id: "heal", stats: smelt("SmeltHeal", n.heal), rarity: "uncommon", levels: 0, max: 5, after: "gold" },
+    { id: "silver", stats: smelt("SmeltSilver", n.silver), rarity: "rare", levels: 0, max: 5, after: "heal" },
+    { id: "goldBonus", stats: { goldBonus: n.goldBonus }, rarity: "epic", levels: 0, max: 5, after: "silver" },
+    { id: "free", stats: smelt("SmeltFree", 2), rarity: "legendary", levels: 0, max: 5, after: "goldBonus" },
+    common("efficiency", smelt("SmeltCost", 1), 5, 10),
+    { id: "doorCost", stats: own("DoorCost", 1), rarity: "uncommon", levels: 0, max: 5, after: "efficiency" },
+    { id: "floorKey", stats: own("FloorKey", 1), rarity: "rare", levels: 0, max: 5, after: "doorCost" },
+    { id: "keySmelter", stats: { keySmelter: 2 }, rarity: "epic", levels: 0, max: 5, after: "floorKey" },
+    { id: "master", stats: smelt("SmeltMaster", 2), rarity: "legendary", levels: 0, max: 5, after: "keySmelter" },
   ];
 }
 
@@ -430,6 +473,10 @@ export const CARD_TREES: Partial<Record<CardId, readonly CardTreeNode[]>> = {
   // GK -> BK's and BK -> RK's Key Find, Key Gold, Key Silver and Door Cost are BLUE and RED KEY's own, added to theirs.
   blueTrader: traderTree("blue", { gold: 2, silver: 0.1, goldBonus: 1, freeUtility: 1, forge: 2, smelter: 2 }),
   redTrader: traderTree("red", { gold: 3, silver: 0.2, goldBonus: 2, freeUtility: 2, forge: 2, smelter: 2 }),
+  // The smelts' Door Cost and Floor Key are GOLD, BLUE and RED KEY's own, added to theirs and the traders'.
+  keyToHp: smeltTree("yellow", { gold: 0.2, heal: 2, silver: 0.1, goldBonus: 1 }),
+  smeltBlue: smeltTree("blue", { gold: 0.4, heal: 6, silver: 0.2, goldBonus: 2 }),
+  smeltRed: smeltTree("red", { gold: 0.6, heal: 18, silver: 0.3, goldBonus: 3 }),
   monster: [
     common("attack", { foeAttack: 2 }, 4, 5),
     { id: "critChance", stats: { critChance: 1 }, rarity: "uncommon", levels: 0, max: 5, after: "attack" },
@@ -652,7 +699,7 @@ export type TreeBonus = Record<TreeStat, number>;
 const NO_BONUS = Object.freeze(Object.fromEntries(
   ["floorGold", "floorSilver", "goldBonus", "silverBonus", "freeOffense", "freeDefense", "freeUtility", "freeOffenseChance", "freeDefenseChance", "freeUtilityChance", "floorHeal", "overhealMax", "stairSkip", "percentPotions", "potionHeal", "potionMaxHp", "potionSilver", "regen", "shroud", "parry", "reviveChance",
     "doorCost", "doorGold", "doorSilver", "doorHeal", "skeletonKey", "lockPick", "secretKnock", "doorChest", ...doorLockStats(DOOR_LOCK_PARTS), "yellowLockHeal", "yellowTransmute", "woodTransmute", "heartLockCost", "heartLockPick", "heartShroud", "woodKeyCost", "woodDurability", "druidKey", "keyChest", "keyFind", "keyGold", "keyHeal", "keyOverheal", "keySilver", "plainDoorCost", "heartDoorCost", "doubleKey", "masterKey",
-    ...colorKeyStats(COLOR_KEY_PARTS), ...tradeStats(TRADE_PARTS), ...foeCardStats(FOE_PARTS), "maxHp", "foeAttack", "foeDefense", "foeGold", "foeSilver", "critChance", "critFactor", "killXp", "surpriseAttack", "foeAttackCut", "stealOverheal", "moreEnemies", "attackShard", "defenseShard", "attackShardGold", "defenseShardGold",
+    ...colorKeyStats(COLOR_KEY_PARTS), ...tradeStats(TRADE_PARTS), ...smeltStats(SMELT_PARTS), "keySmelter", ...foeCardStats(FOE_PARTS), "maxHp", "foeAttack", "foeDefense", "foeGold", "foeSilver", "critChance", "critFactor", "killXp", "surpriseAttack", "foeAttackCut", "stealOverheal", "moreEnemies", "attackShard", "defenseShard", "attackShardGold", "defenseShardGold",
     "attackShardSilver", "defenseShardSilver", "powerStrike", "takedown", "tangle", "greaterTakedown", "greaterTangle",
     "bossAttack", "bossDefense", "bossShroud", "bossGold", "bossCells", "chestGold", "chestSilver", "chestCells", "supplyChance", "equipmentChance", "treasureFloor", "rarityUp", "chestDouble", "chestTriple",
     "shotAttack", "bossShotAttack", "shotSpeed", "shotRange", "chargeShot"].map((s) => [s, 0]),

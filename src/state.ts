@@ -3,7 +3,7 @@ import { chooseStep } from "./automation.ts";
 import { cost } from "./progression/upgrades.ts";
 import { CARDS, cardText, dealCard, deckCards, explainStuck, handSlots, handBonus, keptLinks, planHand, planTarget, shootsWith, stillOpen, type CardId, type CardPlan, type HandBonus, type StuckReport } from "./cards/cards.ts";
 import { addCardXp, PASSIVE_CARDS } from "./cards/levels.ts";
-import { TRADE_COLORS, cardMaxLevel, compounded, doorStat, foeCardStat, foeStat, foeStats, keyStat, freeUpChances, freeUpFactors, hasPointsToSpend, pointsLeft, runCardTrees, runFoeCut, tradeStat, treeBonus, treeFactor, treeOverheal, type FoeTreeCard, type TradeColor, type TreeBonus } from "./cards/trees.ts";
+import { KEY_COLORS, cardMaxLevel, compounded, doorStat, foeCardStat, foeStat, foeStats, keyStat, freeUpChances, freeUpFactors, hasPointsToSpend, pointsLeft, runCardTrees, runFoeCut, treeBonus, treeFactor, treeOverheal, type FoeTreeCard, type TreeBonus } from "./cards/trees.ts";
 import { aggroTurn } from "./enemies/flying.ts";
 import { arrowRange, foeOn } from "./enemies/ranged.ts";
 import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./cards/badges.ts";
@@ -152,8 +152,8 @@ const LESSON_STEPS = 10;
 const TURN_MS = 220;
 /** Salts the run seed for Find Gold Key's roll on each new floor. */
 const YELLOW_KEY_SALT = 0x6e11a;
-/** Salt the run seed for GK -> BK's and BK -> RK's Floor Key rolls on each new floor. */
-const FLOOR_KEY_SALT: Record<TradeColor, number> = { blue: 0xb1f10, red: 0x4ef10 };
+/** Salt the run seed for the traders' and smelts' Floor Key rolls on each new floor. */
+const FLOOR_KEY_SALT: Record<KeyColor, number> = { yellow: 0x9f10e, blue: 0xb1f10, red: 0x4ef10 };
 /** A step resolved and about to be taken: the tile stepped onto, what it
  * does, where it is, whether it goes in the undo history, and for a fight
  * the hero's critical strikes in it as played (`crits`) and whether it
@@ -1084,9 +1084,10 @@ export class Game {
     return `${CARDS[id].name} · ${this.cardText(id)}`;
   }
   /** What card `id` does, as the player is told now (`cardText`): a
-   * trader's keys a trade by its tree (`HandRules.tradeCost`). */
+   * trader's keys a trade and a smelt's key and heal by its tree
+   * (`HandRules.tradeCost`, `smeltCost`, `smeltPercent`). */
   cardText(id: CardId) {
-    return cardText(id, this.save.upgrades, (card) => this.handRules.tradeCost(card));
+    return cardText(id, this.save.upgrades, this.handRules);
   }
   /** After something the player does inside a run (an item used, a skill),
    * a stuck hand checks its cards again and plays on if one can act. */
@@ -2328,7 +2329,7 @@ export class Game {
       silver += interest;
       this.events.climbed(this.mode, this.run.seed, interest > 0 && interest >= purse.interestCap);
       this.findYellowKey(f, at);
-      this.findTradeKeys(f, at);
+      this.findFloorKeys(f, at);
       this.provisionKeys(f);
       this.regainCharges(at);
       this.floorHeal();
@@ -2351,15 +2352,20 @@ export class Game {
     if (given.length) this.freeTrained = { lines: freeTrainingLines(given), at: performance.now() };
     this.events.record("freeUpgrades", given.length);
   }
-  /** A free level of `group` from a trade (GK -> BK's and BK -> RK's Free
-   * Utility), `pick` choosing its row (`freeLevelRow`): it joins the run's
-   * training as a floor's do, announced the same way. A trade can be undone,
-   * so it counts toward no Event. */
-  trainFree(group: FreeGroup, pick: number) {
-    const id = freeLevelRow(this.save, this.run, group, pick);
-    if (!id) return;
-    this.giveFreeLevel(id);
-    this.freeTrained = { lines: freeTrainingLines([id]), at: performance.now() };
+  /** Free levels from a trade or a smelt (the traders' Free Utility, the
+   * smelts' Free Defense, Offense and Upgrades), each of a group, its pick
+   * choosing its row (`freeLevelRow`): they join the run's training as a
+   * floor's do, announced the same way. A trade or smelt can be undone, so
+   * they count toward no Event. */
+  trainFree(levels: readonly (readonly [FreeGroup, number])[]) {
+    const given: TrainingId[] = [];
+    for (const [group, pick] of levels) {
+      const id = freeLevelRow(this.save, this.run, group, pick);
+      if (!id) continue;
+      this.giveFreeLevel(id);
+      given.push(id);
+    }
+    if (given.length) this.freeTrained = { lines: freeTrainingLines(given), at: performance.now() };
   }
   /** Training row `id` gains a free level for the run, as a Silver rank would, costing nothing. */
   private giveFreeLevel(id: TrainingId) {
@@ -2379,13 +2385,13 @@ export class Game {
     noteKey(this.run, "yellow", 1);
     this.gain(at.x, at.y, "+1 gold key", { tile: { kind: "key", color: "yellow" } });
   }
-  /** GK -> BK's and BK -> RK's Floor Key: on floor `floor` climbed for the
-   * first time in the run, a key of the colour each trades for under its
-   * chance, a fixed number per run seed, floor and colour, as Find Gold
-   * Key's. */
-  private findTradeKeys(floor: number, at: { x: number; y: number }) {
-    for (const color of TRADE_COLORS) {
-      const chance = tradeStat(this.treeBonus, color, "FloorKey");
+  /** The traders' and smelts' Floor Key (Extra Gold, Blue and Red Key): on
+   * floor `floor` climbed for the first time in the run, a key of each
+   * colour under its chance, a fixed number per run seed, floor and colour,
+   * as Find Gold Key's. */
+  private findFloorKeys(floor: number, at: { x: number; y: number }) {
+    for (const color of KEY_COLORS) {
+      const chance = keyStat(this.treeBonus, color, "FloorKey");
       if (!chance || tileRandom(-1, floor, (this.run.seed ^ FLOOR_KEY_SALT[color]) | 0) * 100 >= chance) continue;
       const keys = this.run.player.keys;
       keys[color] = snap(keys[color] + 1);
@@ -2423,7 +2429,7 @@ export class Game {
       for (let f = highest; f < this.run.height; f++) this.events.climbed(this.mode, this.run.seed, interest > 0 && interest >= purse.interestCap);
       this.events.best("floor", this.run.height + 1);
       this.findYellowKey(this.run.height, p);
-      this.findTradeKeys(this.run.height, p);
+      this.findFloorKeys(this.run.height, p);
       this.provisionKeys(this.run.height);
       this.floorHeal();
       this.freeTrain(this.run.height - highest);

@@ -8,7 +8,7 @@ import type { Save } from "../save/shape.ts";
 import { snap } from "../exact.ts";
 import { MODES, type ModeProfile } from "../modes.ts";
 import { drawAt } from "../random.ts";
-import { tradeStat, treeBonus } from "./trees.ts";
+import { smeltStat, tradeStat, treeBonus } from "./trees.ts";
 import { boughtInRun } from "../progression/run-training.ts";
 
 /** Mixed into the run seed to start Skip's stream of rolls. */
@@ -263,31 +263,43 @@ export class HandRules implements HandAt {
   /** Whether a card that acts in place can act now (`planHand` asks),
    * inside a run only: a siphon while enough of its training levels are
    * left for its next use, a trader (GK -> BK, BK -> RK) while the keys
-   * it trades are held (`tradeCost`), and a smelt (Smelt GK, BK, RK) while its key is held
-   * and its whole heal would land under the Overheal ceiling. */
+   * it trades are held (`tradeCost`), and a smelt (Smelt GK, BK, RK) while
+   * the key it takes is held (`smeltCost`) and its whole heal would land
+   * under the Overheal ceiling. */
   canAct(card: CardId) {
     if (this.run.outside) return false;
     const p = this.run.player;
     if (isSiphon(card)) return this.siphonLevel(card) >= this.siphonCost(card);
     if (isTrader(card)) return p.keys[TRADERS[card].from] >= this.tradeCost(card);
-    if (isSmelt(card)) return p.keys[SMELTS[card].color] >= 1 && snap(this.hpCeiling - p.hp) >= this.smeltHeal(card);
+    if (isSmelt(card)) return p.keys[SMELTS[card].color] >= this.smeltCost(card) && snap(this.hpCeiling - p.hp) >= this.smeltHeal(card);
     return false;
   }
   /** Times card `card`, one that acts in place, has acted this run. */
   cardUses(card: CardId) {
     return this.run.cardUses?.[card] ?? 0;
   }
-  /** The keys trader `card` takes a trade: its 3, less its tree's
-   * Efficiency, by the run's copy of the trees inside it and by the save's
-   * in the forest (what the next run goes in with). */
+  /** What the card trees give the hand's cards that act in place: by the
+   * run's copy of the trees inside it and by the save's in the forest (what
+   * the next run goes in with). */
+  private get inPlaceTree() {
+    return treeBonus(this.run.outside ? this.host.save.cardTrees : this.run.cardTrees);
+  }
+  /** The keys trader `card` takes a trade: its 3, less its tree's Efficiency. */
   tradeCost(card: TraderCard) {
-    const trees = this.run.outside ? this.host.save.cardTrees : this.run.cardTrees;
-    const { keys, to } = TRADERS[card], off = Math.min(100, tradeStat(treeBonus(trees), to, "TradeCost"));
+    const { keys, to } = TRADERS[card], off = Math.min(100, tradeStat(this.inPlaceTree, to, "TradeCost"));
     return snap((keys * (100 - off)) / 100);
   }
-  /** Smelt `card`'s heal: its percent of max HP (10%, 30% or 90%). */
+  /** The key smelt `card` takes a smelt: 1, less its tree's Efficiency. */
+  smeltCost(card: SmeltCard) {
+    return snap((100 - Math.min(100, smeltStat(this.inPlaceTree, SMELTS[card].color, "SmeltCost"))) / 100);
+  }
+  /** Smelt `card`'s percent of max HP healed: its 10%, 30% or 90%, and its tree's Smelt Heal. */
+  smeltPercent(card: SmeltCard) {
+    return snap(SMELTS[card].percent + smeltStat(this.inPlaceTree, SMELTS[card].color, "SmeltHeal"));
+  }
+  /** Smelt `card`'s heal: its percent (`smeltPercent`) of max HP. */
   smeltHeal(card: SmeltCard) {
-    return snap((this.run.player.maxHp * SMELTS[card].percent) / 100);
+    return snap((this.run.player.maxHp * this.smeltPercent(card)) / 100);
   }
   /** The run's training level of the row siphon `card` drains (Max HP for
    * GK SIPHON, DEF for BK SIPHON, ATK for RK SIPHON): the hero's own ranks

@@ -26,10 +26,10 @@ test("GK -> BK's and BK -> RK's trees: two tracks, each rising one rarity an upg
   assert.deepEqual(shape("blueTrader"), expected);
   assert.deepEqual(shape("redTrader"), expected);
   const full = (card: "blueTrader" | "redTrader") => Object.entries(treeBonus({ [card]: Object.fromEntries(CARD_TREES[card]!.map((n) => [n.id, 1])) })).filter(([, n]) => n);
-  assert.deepEqual(full("blueTrader"), [["goldBonus", 1], ["blueKeyGold", 2], ["blueKeyFind", 1], ["blueKeySilver", 0.1], ["blueDoorCost", 1],
-    ["blueTradeCost", 1], ["blueTradeFreeUtility", 1], ["blueFloorKey", 1], ["blueForge", 2], ["blueSmelter", 2]]);
-  assert.deepEqual(full("redTrader"), [["goldBonus", 2], ["redKeyGold", 3], ["redKeyFind", 1], ["redKeySilver", 0.2], ["redDoorCost", 1],
-    ["redTradeCost", 1], ["redTradeFreeUtility", 2], ["redFloorKey", 1], ["redForge", 2], ["redSmelter", 2]]);
+  assert.deepEqual(full("blueTrader"), [["goldBonus", 1], ["blueKeyGold", 2], ["blueKeyFind", 1], ["blueKeySilver", 0.1], ["blueDoorCost", 1], ["blueFloorKey", 1],
+    ["blueTradeCost", 1], ["blueTradeFreeUtility", 1], ["blueForge", 2], ["blueSmelter", 2]]);
+  assert.deepEqual(full("redTrader"), [["goldBonus", 2], ["redKeyGold", 3], ["redKeyFind", 1], ["redKeySilver", 0.2], ["redDoorCost", 1], ["redFloorKey", 1],
+    ["redTradeCost", 1], ["redTradeFreeUtility", 2], ["redForge", 2], ["redSmelter", 2]]);
 });
 
 test("Efficiency cuts the keys a trade takes: at 10%, 2.7 gold keys for a blue key", () => {

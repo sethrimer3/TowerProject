@@ -26,7 +26,7 @@ test("the rarities' chances: 60%, 32%, 6%, 1.5% and 0.5%", () => {
 
 test("the buys left are every level the deck's trees can still open", () => {
   assert.equal(buysLeft({}, ["stairs", "door", "key", "monster"]), 50 + 50 + 50 + 50);
-  assert.equal(buysLeft({}, ["keyToHp"]), 0, "a card without a tree takes none");
+  assert.equal(buysLeft({}, ["blueSiphon"]), 0, "a card without a tree takes none");
   assert.equal(buysLeft({}, ["heartDoor", "woodenDoor"]), 100, "HEART and WOODEN DOOR open to 60 each");
   assert.equal(buysLeft({}, ["archer", "fastEnemy", "flyingEnemy"]), 150, "ARCHER, FAST and FLYING ENEMY open to 60 each");
   assert.equal(buysLeft({ stairs: { floorGold: 5, overhealMax: 2 } }, ["stairs"]), 43);

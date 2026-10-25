@@ -382,6 +382,15 @@ export class RunPurse {
     return this.gold(amount);
   }
 
+  /** A smelt's Gold (Smelt GK's, BK's and RK's trees): `base` raised by
+   * Gold Bonus, `times` over (Key Smelter, Master Smelter), with the tier's
+   * bonus, once per smelt (`key`, in lootedTiles), since undo can't take
+   * Gold back. Returns what it paid. */
+  smeltGold(key: string, base: number, times: number) {
+    if (!base || !this.loot(key)) return 0;
+    return this.gold(snap(this.bonused(base) * times));
+  }
+
   /** The key that gates a floor's Spare Change: the Tower's stairs tile at
    * (x, y), or the Delve's equivalent floor `y` on its `x = -1` column. */
   floorKey(x: number, y: number) {
