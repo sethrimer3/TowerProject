@@ -270,7 +270,7 @@ export class RunTrainingBar {
   private lessonText() {
     return this.group
       ? `<b>Training for this run</b><p>Press a card's price to buy a rank with ${silverIcon()} Silver. Press HAND to bring your cards back.</p>`
-      : `<b>Train on the Job</b><p>Spend the ${silverIcon()} Silver you find on upgrades that raise your stats for the rest of this run. Press any of the three menus beside HAND to open it, then HAND to bring your cards back.</p>`;
+      : `<b>Train on the Job</b><p>Spend the ${silverIcon()} Silver you find on upgrades that raise your stats for the rest of this run. Press any of the three menus beside HAND to open it.</p>`;
   }
 
   /** The rows of `group` the hero can train in this run (the shot rows

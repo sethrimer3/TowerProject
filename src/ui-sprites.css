@@ -331,6 +331,7 @@ html.ui-sprites .page-title:not(#_) {
   image-rendering: pixelated;
   padding-block: 14px;
   color: #10151c;
+  text-align: center;
 }
 html.ui-sprites .page-title :is(h2, small):not(#_) { color: #10151c; text-shadow: none; }
 

@@ -304,7 +304,7 @@ export const UPGRADES = [
   {
     id: "onTheJob",
     name: "On the Job",
-    description: "Inside a run, train with the Silver you find: the Training buttons under your hand buy ranks that last the run",
+    description: "Inside a run, train with the Silver you find: the Training buttons buy ranks that last the run",
     base: 1,
     max: 1,
     currency: "inspiration",
