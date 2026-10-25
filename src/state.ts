@@ -48,7 +48,7 @@ import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import { chestKindAt, litTorches, type Board } from "./board.ts";
 import { healUpTo, instakill, squaredUp, type CritRule } from "./combat.ts";
 import { HEART_DOOR_HP, hpCeiling, isLethal, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardStat } from "./step-effects.ts";
-import { ENTRANCE_Y, OUTSIDE_START_Y, OutsideWorld } from "./outside.ts";
+import { ENTRANCE_Y, ENTRANCE_ZOOM_MS, OUTSIDE_START_Y, OutsideWorld } from "./outside.ts";
 import { AREA_BURST_MS, AreaLedger, chestReward, clearedInspiration, type AreaReward } from "./tower/area-ledger.ts";
 import { TowerClimb } from "./tower/climb.ts";
 import { callsGreaterBoss, greaterBoss, greaterBossSpot } from "./tower/greater-boss.ts";
@@ -178,12 +178,24 @@ const COLOR_MASTER_KEY_SALT: Record<KeyColor, number> = { yellow: 0x7e113, blue:
 const KEY_WORDS: Record<KeyColor, string> = { yellow: "Gold", blue: "Blue", red: "Red" };
 /** The targets a Dash may end on, a tile of it left: items to take. */
 const DASH_ONTO = new Set<Tile["kind"]>(["key", "potion", "attack", "defense", "treasure", "reward"]);
+/** The walk in's stage (see `Game.walkIn`): on the steps, in the arch
+ * (`x`, `y`, the tile above them), or gone inside since `since`. */
+export type WalkIn = { x: number; y: number; stage: "steps" | "arch" | "gone"; since: number; then: () => void };
 export class Game {
   provingGroundsRequested = false;
   /** The Delve's cave entrance, entered from its forest: a tournament run
    * asked for (`enter`, which waits on the server, so `main.ts` begins it),
    * or a Ticket wanted first (`ticket`). Taken by whoever acts on it. */
   tournamentRequested: "enter" | "ticket" | null = null;
+  /** Whether reaching the forest's entrance plays the walk in (the browser
+   * game) or goes in at once. */
+  animatesEntrance = false;
+  /** The walk in through the forest's entrance, once the hero stands on its
+   * steps: a turn later up into the dark of the arch, a turn after that gone
+   * inside, then, once the view has closed in on the arch
+   * (`ENTRANCE_ZOOM_MS`), what entering does (`then`). Never saved: the hero
+   * stays on the steps until it is done. */
+  walkIn: WalkIn | null = null;
   mode: Mode = "tower";
   world!: Board;
   run!: Run;
@@ -592,6 +604,7 @@ export class Game {
    * refused step's mark (which would stand on the wrong tile of a new
    * board). */
   private stopPlay() {
+    this.walkIn = null;
     this.route = [];
     this.fights.clear();
     this.volley = null;
@@ -689,6 +702,7 @@ export class Game {
     return run;
   }
   undo() {
+    if (this.walkIn) return false;
     // A fight still playing out counts first, so undo takes it back.
     this.fights.finish();
     this.armed = null;
@@ -755,7 +769,7 @@ export class Game {
   }
   /** Whether play waits: paused, fallen, or a fight playing out. */
   private get busy() {
-    return this.paused || this.fallen || !!this.fights.encounter;
+    return this.paused || this.fallen || !!this.fights.encounter || !!this.walkIn;
   }
   walkTo(x: number, y: number) {
     if (this.busy) return;
@@ -929,10 +943,35 @@ export class Game {
    * tournament run asked for, which spends a Ticket (or, with none held,
    * the way to get one). */
   private throughEntrance() {
-    if (this.mode === "tower") return this.enterFromOutside();
+    if (this.mode === "tower") return this.walkInThen(() => this.enterFromOutside());
     this.auto = false;
     this.cancelRoute();
     this.tournamentRequested = this.save.tournament.tickets > 0 ? "enter" : "ticket";
+  }
+  /** From the entrance's steps, walks the hero in before `then` (the run
+   * begun), when the entrance plays its walk in. */
+  private walkInThen(then: () => void) {
+    if (!this.animatesEntrance) return then();
+    const p = this.run.player;
+    this.auto = false;
+    this.cancelRoute();
+    this.walkIn = { x: p.x, y: p.y + 1, stage: "steps", since: 0, then };
+  }
+  /** The walk in's next turn, at `now`: up into the arch, then gone, then,
+   * once the view has closed in (at once with motion reduced or
+   * transitions off), in. Whether it moved on. */
+  walkInTurn(now: number) {
+    const w = this.walkIn, settings = this.save.settings;
+    if (!w) return false;
+    if (w.stage === "steps") w.stage = "arch";
+    else if (w.stage === "arch") {
+      w.stage = "gone";
+      w.since = now;
+    } else if (settings.reduceMotion || settings.transition === "instant" || now - w.since >= ENTRANCE_ZOOM_MS) {
+      this.walkIn = null;
+      w.then();
+    } else return false;
+    return true;
   }
   /** One turn of automatic movement: the hand's step inside a run, or
    * Automove's in the forest. */
@@ -1782,12 +1821,18 @@ export class Game {
     const back = { mode: this.mode, tier: this.save.delve.tier }, cave = LEAGUE_INFO[info.league].cave;
     this.switchMode("delve", true);
     if (this.slice.tier !== cave) switchTier(this.slice, cave);
-    this.newRun({ outside: true, seed: info.seeds.layout });
-    const run: TournamentRun = { id: info.id, league: info.league, entry, seeds: { ...info.seeds }, drawn: { game: 0, equipment: 0 }, back };
-    this.delveRun.tournament = run;
-    this.events.record("tournaments", 1, String(info.id));
-    this.enterFromOutside();
-    this.message = `Tournament · ${LEAGUE_INFO[info.league].name} League`;
+    const begin = () => {
+      this.newRun({ outside: true, seed: info.seeds.layout });
+      const run: TournamentRun = { id: info.id, league: info.league, entry, seeds: { ...info.seeds }, drawn: { game: 0, equipment: 0 }, back };
+      this.delveRun.tournament = run;
+      this.events.record("tournaments", 1, String(info.id));
+      this.enterFromOutside();
+      this.message = `Tournament · ${LEAGUE_INFO[info.league].name} League`;
+    };
+    // Begun from the cave's steps, the hero walks in first.
+    const p = this.run.player;
+    if (this.run.outside && this.world instanceof OutsideWorld && p.x === this.rules.entranceX && p.y === ENTRANCE_Y) this.walkInThen(begin);
+    else begin();
     return true;
   }
   /** Claims a Goals checkpoint's reward (or its premium one) in `tower`

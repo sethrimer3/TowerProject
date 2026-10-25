@@ -87,6 +87,8 @@ applyUiTheme(game.save);
 bindMedievalFeedback(() => uiLook(game.save) === "medieval", () => game.save.settings.reduceMotion);
 // The frame loop settles fights as they finish playing out.
 game.fights.playsFights = true;
+// The hero walks in through the forest's entrance before the run begins.
+game.animatesEntrance = true;
 const renderer = new Renderer(document.querySelector("#world")!, game);
 onSpriteFontLoaded(() => renderVitals(shownGame()));
 window.addEventListener("resize", () => renderVitals(shownGame()));
@@ -183,6 +185,8 @@ function update() {
   renderPortrait();
   followMode();
   if (boardHeadingStale(game)) renderBoardHeading(game, overlay);
+  // Walking in through the entrance, the board's notes and buttons step aside for the view closing in.
+  el("board").classList.toggle("walking-in", !!game.walkIn);
   // Inside a run the tabs give way to an empty row, kept for the hand.
   document.querySelector("nav")!.classList.toggle("in-run", !shown.run.outside);
   // The Deck tutorials keep the player on its page until they reorder the

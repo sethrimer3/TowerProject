@@ -46,6 +46,8 @@ function guard(part: () => void) {
 
 /** Walked routes advance one tile per this many ms. */
 const ROUTE_STEP_MS = 130;
+/** The walk in through the forest's entrance takes a turn per this many ms. */
+const WALK_IN_TURN_MS = 260;
 /** Battery saver: while nothing moves, draw at most every this many ms. */
 const IDLE_FRAME_MS = 30;
 const AUTOSAVE_MS = 10000;
@@ -107,6 +109,15 @@ export class FrameLoop {
       this.lastBoardDraw = time;
     }
     if (game.fights.encounter) this.playFight(time);
+    if (game.walkIn) {
+      // Once the hero is gone, the walk in waits only on the view closing in.
+      const due = game.walkIn.stage === "gone" || time - this.lastRoute > WALK_IN_TURN_MS;
+      if (due && this.canAct() && game.walkInTurn(time)) {
+        this.lastRoute = time;
+        this.host.update();
+      }
+      return;
+    }
     if (game.route.length && this.due(time, this.lastRoute, ROUTE_STEP_MS)) {
       this.lastRoute = time;
       game.routeStep();

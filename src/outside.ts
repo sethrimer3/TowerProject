@@ -10,6 +10,9 @@ export const OUTSIDE_SIZE = 20;
 /** The gold trial square sits on open grass beside the Tower path. */
 export const PROVING_GROUNDS = { dx: 2, y: 4 } as const;
 export const ENTRANCE_Y = 12;
+/** How long the view takes to close in on the entrance's arch once the
+ * hero has gone in (`Game.walkIn`). */
+export const ENTRANCE_ZOOM_MS = 1000;
 /** The row a run's hero starts the forest on: the crossroads partway up
  * the path, where it widens (`onPath`). */
 export const OUTSIDE_START_Y = 7;

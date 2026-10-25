@@ -2,10 +2,45 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults, decode } from "../src/save/save.ts";
-import { OutsideWorld, ENTRANCE_Y, OUTSIDE_SIZE, OUTSIDE_START_Y, weatherForRoll, outsideWeather, onPath, roadsOf, BLACKSMITH, TOURNAMENT_HALL } from "../src/outside.ts";
+import { OutsideWorld, ENTRANCE_Y, ENTRANCE_ZOOM_MS, OUTSIDE_SIZE, OUTSIDE_START_Y, weatherForRoll, outsideWeather, onPath, roadsOf, BLACKSMITH, TOURNAMENT_HALL } from "../src/outside.ts";
 import { lightningOpacity } from "../src/render/weather.ts";
 import { chooseStep } from "../src/automation.ts";
 import { TOWER_UNLOCK_FLOOR } from "../src/goals.ts";
+
+test("the Tower's entrance walks the hero in: up into the arch, gone, then in once the view has closed in", () => {
+  const g = new Game(defaults());
+  g.newRun({ outside: true });
+  g.animatesEntrance = true;
+  g.walkTo(g.run.player.x, ENTRANCE_Y);
+  for (let i = 0; i < 20 && g.route.length; i++) g.routeStep();
+  const x = g.run.player.x;
+  assert.deepEqual({ ...g.walkIn, then: undefined }, { x, y: ENTRANCE_Y + 1, stage: "steps", since: 0, then: undefined });
+  assert.ok(g.run.outside);
+  // Nothing else moves the hero meanwhile.
+  assert.equal(g.stepManually(0, -1), false);
+  assert.equal(g.undo(), false);
+  assert.ok(g.walkInTurn(100));
+  assert.equal(g.walkIn?.stage, "arch");
+  assert.ok(g.walkInTurn(200));
+  assert.equal(g.walkIn?.stage, "gone");
+  assert.equal(g.walkInTurn(200 + ENTRANCE_ZOOM_MS - 1), false);
+  assert.ok(g.run.outside);
+  assert.ok(g.walkInTurn(200 + ENTRANCE_ZOOM_MS));
+  assert.equal(g.walkIn, null);
+  assert.equal(g.run.outside, false);
+  assert.equal(g.run.player.y, 0);
+  // With motion reduced, it goes in as the hero goes.
+  const reduced = new Game(defaults());
+  reduced.newRun({ outside: true });
+  reduced.animatesEntrance = true;
+  reduced.save.settings.reduceMotion = true;
+  reduced.walkTo(reduced.run.player.x, ENTRANCE_Y);
+  for (let i = 0; i < 20 && reduced.route.length; i++) reduced.routeStep();
+  reduced.walkInTurn(0);
+  reduced.walkInTurn(0);
+  assert.ok(reduced.walkInTurn(0));
+  assert.equal(reduced.run.outside, false);
+});
 
 for (const mode of ["tower", "delve"] as const) {
   test(`${mode}: death, forest persistence, entry and Undo preserve progression`, () => {

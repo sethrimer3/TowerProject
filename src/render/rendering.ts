@@ -2,12 +2,12 @@ import { boardFont } from "../sprites/font.ts";
 import { drawBoardMark } from "../sprites/board-marks.ts";
 import { CHUNK, TOWER_HEIGHT, VIEWPORT_TILES } from "../config.ts";
 import { drawFlyers } from "./flyer-art.ts";
-import type { Game } from "../state.ts";
+import type { Game, WalkIn } from "../state.ts";
 import type { Tile, Torch } from "../entities.ts";
 import { TIER_BONUS_TENTHS, tierNumeral } from "../tiers.ts";
 import { LEAGUE_INFO } from "../tournament/leagues.ts";
 import { factorText } from "../economy/gold-multipliers.ts";
-import { drawProvingGrounds, drawBlacksmith, drawEntrance, drawTournamentHall, OutsideWorld, OUTSIDE_SIZE, outsideWeather, roadsOf } from "../outside.ts";
+import { drawProvingGrounds, drawBlacksmith, drawEntrance, drawTournamentHall, ENTRANCE_ZOOM_MS, OutsideWorld, OUTSIDE_SIZE, outsideWeather, roadsOf } from "../outside.ts";
 import { DecorLayer, type DecorFrame, type MirroredSprites } from "./decor/decor-render.ts";
 import { OutsideGrass } from "./decor/outside-grass.ts";
 import { ForestFoliage } from "./decor/forest-foliage.ts";
@@ -184,7 +184,37 @@ export class Renderer {
     this.echoes.draw(f, themed ? (c, facing) => themed.hero(c, facing) : (c) => paintHero(c, f.heroFacing));
     if (!f.look.outside) drawBoostGlow(f, this.boosts);
     this.drawOverlays(f);
+    const walkIn = this.game.walkIn;
+    if (walkIn?.stage === "gone" && f.look.outside) this.zoomIntoEntrance(f, walkIn);
   }
+  /** Where the hero went in, closing in on it as if walking after it: the
+   * frame drawn, scaled up about the arch's tile and drawn toward the
+   * board's middle, until that one tile fills the board. */
+  private zoomIntoEntrance(f: FrameContext, w: WalkIn) {
+    const k = Math.min(1, Math.max(0, (f.now - w.since) / ENTRANCE_ZOOM_MS));
+    const size = this.canvas.width, tile = f.s * f.dpr;
+    if (!size || !tile) return;
+    const copy = (this.zoomCanvas ??= document.createElement("canvas"));
+    if (copy.width !== size) copy.width = copy.height = size;
+    const cc = copy.getContext("2d")!;
+    cc.clearRect(0, 0, size, size);
+    cc.drawImage(this.canvas, 0, 0);
+    // Scaled evenly in steps of size, easing in and out, the tile's centre
+    // drawn toward the board's as it grows.
+    const cx = (w.x - f.left + 0.5) * tile, cy = (f.n - 1 - (w.y - f.bottom) + 0.5) * tile;
+    const end = size / tile, ease = k * k * (3 - 2 * k), scale = Math.pow(end, ease);
+    const toward = end > 1 ? (scale - 1) / (end - 1) : 1;
+    const x = cx + (size / 2 - cx) * toward, y = cy + (size / 2 - cy) * toward;
+    const c = f.c;
+    c.save();
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    c.imageSmoothingEnabled = false;
+    c.fillStyle = "#0b1017";
+    c.fillRect(0, 0, size, size);
+    c.drawImage(copy, cx - x / scale, cy - y / scale, size / scale, size / scale, 0, 0, size, size);
+    c.restore();
+  }
+  private zoomCanvas: HTMLCanvasElement | undefined;
   /** Gameplay feedback drawn over every board. */
   private drawOverlays(f: FrameContext) {
     // A Shielded enemy's bubble shows above the darkness, under the labels.
@@ -362,7 +392,7 @@ export class Renderer {
    * run (`Game.turnShown`) it walks the step at an even pace instead, so it
    * stands where the turn's shots leave from. */
   private walkHero(blend: number, snaps: boolean, now: number) {
-    const p = this.game.run.player, turn = this.game.turnShown;
+    const turn = this.game.turnShown, p = this.heroSpot;
     // A turn stamped after the first frame showing it (a clock that frame doesn't keep) walks from that frame.
     if (turn !== this.turnSeen) {
       this.turnSeen = turn;
@@ -459,12 +489,16 @@ export class Renderer {
   /** The hero between the forest grass behind it and the blades at its feet. */
   private drawHeroOutside(f: FrameContext, grassBehindFoliage = false) {
     const c = f.c, g = this.game;
-    const m = tileTransform(f, f.playerX, f.playerY);
+    const m = tileTransform(f, f.playerX, f.playerY), walkIn = g.walkIn;
     if (this.decorOn && !grassBehindFoliage) this.drawForestGrass(f, "back");
-    c.save();
-    c.setTransform(m);
-    paintHero(c, f.heroFacing, f.heroIdleFrame);
-    c.restore();
+    if (walkIn?.stage !== "gone") {
+      c.save();
+      c.setTransform(m);
+      // Walking in, the hero darkens as it steps into the arch.
+      if (walkIn) c.filter = `brightness(${1 - 0.6 * Math.min(1, Math.max(0, f.playerY - (walkIn.y - 1)))})`;
+      paintHero(c, f.heroFacing, f.heroIdleFrame);
+      c.restore();
+    }
     if (this.decorOn) this.drawForestGrass(f, "front");
   }
   private drawWeather(f: FrameContext) {
@@ -676,11 +710,17 @@ export class Renderer {
    * effect is playing. (Torches and grass still sway.) Used by Battery saver. */
   isIdle(now: number) {
     const g = this.game;
-    return this.settled() && !g.route.length && !g.fights.encounter && this.popups.idle(now) && !this.decor.busy && this.effectsOver(now);
+    return this.settled() && !g.walkIn && !g.route.length && !g.fights.encounter && this.popups.idle(now) && !this.decor.busy && this.effectsOver(now);
+  }
+  /** Where the hero is drawn headed: its tile, or walking in through the
+   * forest's entrance, up in its arch. */
+  private get heroSpot() {
+    const w = this.game.walkIn;
+    return w && w.stage !== "steps" ? w : this.game.run.player;
   }
   /** The hero and the camera stand where they are headed. */
   private settled() {
-    const p = this.game.run.player, t = this.target(this.density), near = (a: number, b: number) => Math.abs(a - b) < 0.01;
+    const p = this.heroSpot, t = this.target(this.density), near = (a: number, b: number) => Math.abs(a - b) < 0.01;
     return near(this.playerX, p.x) && near(this.playerY, p.y) && near(this.left, t.left) && near(this.bottom, t.bottom) && (!this.followsHero || this.camera.settled());
   }
   /** The boosts going on in the run, which glow round the hero. */

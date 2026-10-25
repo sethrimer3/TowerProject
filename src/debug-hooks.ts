@@ -25,7 +25,8 @@ export const OUTAGE_MAIL: MailDraft = {
  *   stand-in Mail server's mailbox, as the server will send one (with
  *   nothing given, `OUTAGE_MAIL`), and asks it for the inbox.
  * - `boardBusy()` is true while the board is still moving on its own (a
- *   route being walked, a fight playing out), so the UI snapshot suite
+ *   route being walked, a fight playing out, the hero walking in through
+ *   the forest's entrance), so the UI snapshot suite
  *   knows when a step has finished without waiting a fixed time. */
 
 export function installDebugHooks(game: Game, beginTournament: () => Promise<string | null>, sendMail: (draft: MailDraft) => Promise<void>) {
@@ -48,7 +49,7 @@ export function installDebugHooks(game: Game, beginTournament: () => Promise<str
   };
   w.tournamentDebug = beginTournament;
   w.mailDebug = { send: (draft = {}) => sendMail({ ...OUTAGE_MAIL, ...draft }) };
-  w.boardBusy = () => game.route.length > 0 || !!game.fights.encounter;
+  w.boardBusy = () => game.route.length > 0 || !!game.fights.encounter || !!game.walkIn;
 }
 
 function delveReport(game: Game) {

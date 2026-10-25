@@ -5020,6 +5020,9 @@ html.cinematic .shell {
 html.cinematic :is(#stats, #currencies, nav, #training-bar, #drill-tip, #card-tip, .research-toast, #status-row, #inspect, #tile-highlight, .inspect-box, #free-training-box, .tier-arrow, #forest-sign, #density-label, .board-tip, .forest-pointer, .job-pointer) {
   display: none !important;
 }
+#board.walking-in :is(#inspect, #tile-highlight, .inspect-box, #free-training-box, .tier-arrow, #forest-sign, #density-label, .board-tip, .forest-pointer, .job-pointer) {
+  display: none !important;
+}
 html.cinematic .board-cell {
   align-items: center;
 }

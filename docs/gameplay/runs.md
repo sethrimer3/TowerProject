@@ -87,4 +87,7 @@ Its first, **Unlimited currency**, is the Dev mode these pages speak of: unlimit
 Under them, **Export profile** downloads a text file (JSON, in sections: profile, settings, currencies, deck, upgrades, training, research, premium, gear, towers, goals, online) of everything kept between runs, headed by its save version; a run in progress, its undo history and a Proving Grounds attempt aren't in it.
 **Import profile** loads such a file over the whole profile, after a confirm: both current runs end, and anything the file leaves out starts afresh.
 In the forest **Enter**, an arrow going into an arch, stands under Goals beside the tower's number: one press walks the hero to the entrance, and the run begins as the hero steps onto it.
+Reaching the entrance's steps, the hero walks in: a turn later it steps up into the dark of the arch (or the cave's mouth), a turn after that it is gone inside, and the view closes in on that spot for a second, until it fills the board, before the first floor shows.
+With Reduce Motion or Instant transitions, the floor shows as soon as the hero is gone.
+Nothing else moves, and Undo waits, while the hero walks in.
 Inside a run the button under Settings plays and pauses the hand.
