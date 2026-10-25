@@ -539,11 +539,15 @@ try {
     await shot(`${prefix}.autoSettings`);
     await click("#settings-back");
     // Research opens over the run, paused; its Back plays on. A Gem reset
-    // waits for the forest.
-    await menuClick("#run-research");
-    await shot(`${prefix}.runResearch`);
-    await click("#research-back");
-    await shot(`${prefix}.runResearch.back`);
+    // waits for the forest. It isn't in the menu before the hero has
+    // levelled up or Trainers is owned.
+    await openMenu(page);
+    if (await page.locator("#run-research").isVisible()) {
+      await click("#run-research");
+      await shot(`${prefix}.runResearch`);
+      await click("#research-back");
+      await shot(`${prefix}.runResearch.back`);
+    }
     await menuClick("#end-run");
     await shot(`${prefix}.endRun`);
     await click("#cancel");

@@ -305,6 +305,8 @@ A link lasts until its diamond is pressed again or either card moves out of plac
 Inside a run, pressing a card in the hand under the board sends the hero to that card's closest target, ahead of the others: it glows white, the hand plays on (even if it was paused), and the card leads until the hero reaches its target, or until it has no path to one, when the hand's order leads again with Auto-Climb (without it, the hand waits for another press).
 It costs nothing and works from a new game's first run, a press being how the hand moves at all before Auto-Climb.
 While a pressed card is still on its way, no other card can be pressed: it flashes red, as does a card with no path to a target, which costs nothing.
+A card with no path also says *No open path exists.* over itself for 3 seconds, or until the next press anywhere.
+Without Auto-Climb, a golden glow pulses round the hero while it waits for a card to be pressed, until a press sets it moving.
 A press plans the card whatever a gate badge on it says.
 Undo brings back the pressed card of the moment it returns to.
 

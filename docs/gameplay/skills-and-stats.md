@@ -1,6 +1,7 @@
 # Skills and stats
 
 A new game's Inspiration tree shows one line of skills, from Door & Key down to **Trainers**; buying Trainers reveals the paths that branch out after it (Larger Hand, On the Job, ATK Up and everything under them).
+A skill you can't yet afford, once pressed, says how many more Inspiration points it needs: *You need 2 more Inspiration points. Climb higher in the tower to get more.*
 
 ## Below the Archives
 

@@ -1,6 +1,7 @@
 import type { Game } from "../state.ts";
 import { MODES } from "../modes.ts";
 import { el } from "./dom.ts";
+import { researchOpen } from "../progression/loadout.ts";
 
 /** The HUD's menu: the hamburger at the top of the actions column. Pressed,
  * a thin white frame appears round it (and, inside a run, the Shop under
@@ -49,7 +50,8 @@ export function renderRunMenu(game: Game) {
   const inside = !game.run.outside, stuck = inside && game.handStuck;
   // The forest's menu has no Shop under the hamburger: one row of cells.
   el("run-menu").classList.toggle("forest", !inside);
-  el("run-research").hidden = el("end-run").hidden = !inside;
+  el("end-run").hidden = !inside;
+  el("run-research").hidden = !inside || !researchOpen(game.save);
   const tournament = el("tournament-button"), events = el("events-button");
   if (inside) {
     if (tournament.nextElementSibling !== el("missions-button")) el("missions-button").before(tournament);

@@ -99,7 +99,6 @@ export class ShopPage {
     const ownedOffers = OFFERS.filter(owned);
     el("shop").innerHTML =
       `<button class="back" id="shop-back">${controlIcon("back")} Back</button><div class="page-title"><small>SUPPLIES FOR THE ASCENT</small><h2>Shop</h2></div>` +
-      this.purse() +
       `<p class="shop-message" id="shop-message" aria-live="polite">${this.message}</p>` +
       section("limited", of("limited")) +
       section("special", of("special").filter((o) => !owned(o))) +
@@ -107,16 +106,6 @@ export class ShopPage {
       (ownedOffers.length ? `<section class="shop-section shop-owned"><h3>Owned</h3><div class="shop-grid">${ownedOffers.map((o) => this.card(o)).join("")}</div></section>` : "") +
       this.history();
     this.bind();
-  }
-
-  /** Every currency the Shop prices in, held now; each opens its information. */
-  private purse() {
-    const save = this.ctx.game.save;
-    // Medals aren't sold here: they show once held.
-    return `<div class="shop-purse" aria-label="Currencies">${(Object.keys(CURRENCIES) as CurrencyId[])
-      .filter((id) => id !== "medals" || save.medals > 0)
-      .map((id) => `<button class="shop-currency" data-currency="${id}" aria-label="${CURRENCIES[id].name}: ${whole(CURRENCIES[id].balance(save)).toLocaleString("en-US")}">${CURRENCY_ICONS[id]()}<b>${whole(CURRENCIES[id].balance(save)).toLocaleString("en-US")}</b><small>${CURRENCIES[id].name.toUpperCase()}</small></button>`)
-      .join("")}</div>`;
   }
 
   /** What `o` costs, with the server's price for a real-money offer. */
@@ -173,7 +162,6 @@ export class ShopPage {
 
   private bind() {
     el("shop-back").onclick = () => this.ctx.navigate(this.from || this.ctx.game.mode);
-    document.querySelectorAll<HTMLButtonElement>("[data-currency]").forEach((b) => (b.onclick = () => this.showCurrency(b.dataset.currency as CurrencyId)));
     document.querySelectorAll<HTMLButtonElement>("[data-detail]").forEach((b) => (b.onclick = () => this.showDetails(offer(b.dataset.detail!)!)));
     document.querySelectorAll<HTMLButtonElement>("[data-buy]").forEach((b) => (b.onclick = () => this.choose(offer(b.dataset.buy!)!)));
   }
@@ -189,13 +177,6 @@ export class ShopPage {
       const id = span.dataset.countdown!;
       span.textContent = countdown(id.startsWith("again:") ? availableAgain(save, offer(id.slice(6))!) - now : offer(id)!.endTime! - now);
     });
-  }
-
-  private showCurrency(id: CurrencyId) {
-    const c = CURRENCIES[id], modal = this.ctx.modal;
-    modal.innerHTML = `<small>SHOP</small><h2>${CURRENCY_ICONS[id]()} ${c.name}</h2><p>You have ${whole(c.balance(this.ctx.game.save)).toLocaleString("en-US")}.</p><p>${c.info}</p><div class="dialog-actions"><button id="cancel">Close</button></div>`;
-    modal.showModal();
-    el("cancel").onclick = () => modal.close();
   }
 
   /** The offer in full, without buying it: what it grants, its price, the

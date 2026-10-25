@@ -32,6 +32,7 @@ import { installDebugHooks } from "./debug-hooks.ts";
 import { isBoard, type AppContext, type Tab } from "./ui/app.ts";
 import { el, ticketIcon } from "./ui/dom.ts";
 import { buildShell } from "./ui/shell.ts";
+import { drawSelectsUnder } from "./ui/game-select.ts";
 import { BoardOverlay } from "./ui/board-overlay.ts";
 import { CardLevelUps } from "./ui/card-level-up.ts";
 import { boardHeadingStale, flashRed, renderAdButton, renderEventsButtons, renderMailButton, renderMissionsButton, renderShopDot, renderTournamentButton, renderBoardHeading, renderHud, renderHandMore, renderVitals, purseFrame, togglePurseRates } from "./ui/hud.ts";
@@ -61,6 +62,7 @@ import { revealReward } from "./ui/reward-reveal.ts";
 import { toggleGoldBonusBox } from "./ui/gold-bonus-box.ts";
 import { refreshEnemyOddsBox, toggleEnemyOddsBox } from "./ui/enemy-odds-box.ts";
 import { bindFloorTip } from "./ui/floor-tip.ts";
+import { showCardTip } from "./ui/card-tip.ts";
 import { MailClient } from "./mail/client.ts";
 import { postStubMail, stubMail } from "./mail/server.ts";
 import { MailDialog } from "./ui/mail-dialog.ts";
@@ -76,6 +78,8 @@ import { themeToast } from "./ui/theme-menu.ts";
 // and routes navigation, HUD refreshes and input between the ui/ modules.
 
 buildShell(document.querySelector<HTMLDivElement>("#app")!);
+// Every dropdown, on any page or dialog, is the game's own (game-select.ts).
+drawSelectsUnder(document.querySelector<HTMLDivElement>("#app")!);
 const game = new Game(load());
 // A new profile (or one from before profiles kept the date) is made now.
 stampProfile(game.save, game.clock());
@@ -242,7 +246,7 @@ const LOCKED_TABS = new Map<string, { skill: UpgradeId; tree: TreeId }>([
   ["deck", { skill: "combatStance", tree: "inspiration" }],
 ]);
 /** The pages topped by the currencies bar. */
-const CURRENCY_PAGES: string[] = ["upgrades", "research", "deck", "gear", "missions", "events"];
+const CURRENCY_PAGES: string[] = ["upgrades", "research", "deck", "gear", "missions", "events", "shop"];
 /** Whether a lesson keeps the player on the Deck page, or leads them to it. */
 function deckLesson() {
   return deck.teaching || game.boardLesson === "cards";
@@ -319,12 +323,13 @@ function showPage(id: Tab) {
 
 // Pressing a hand card inside a run sends the hero to its target, ahead
 // of the others; a card that can't reach one, or a press while an earlier
-// one still heads for its target, flashes red.
+// one still heads for its target, flashes red, the first saying so a moment.
 el("hand").onclick = (e) => {
   const card = (e.target as HTMLElement).closest<HTMLElement>(".hand-card");
   if (provingGrounds.active || !card || game.run.outside) return;
   const result = game.focus(Number(card.dataset.handSlot));
   if (result === "noPath" || result === "busy") flashRed(card);
+  if (result === "noPath") showCardTip(card, "No open path exists.");
   update();
 };
 // With no scrollbar shown, a mouse wheel scrolls a hand wider than the screen sideways.

@@ -27,7 +27,8 @@ assert.equal(await shown('#run-shop'), true);
 assert.equal(await page.getByRole('button', { name: 'Claim 7 Gems', exact: true }).innerText(), '7\nCLAIM');
 await page.locator('#run-menu-toggle').click();
 assert.equal(await shown('#auto-settings'), true);
-assert.equal(await shown('#run-research'), true);
+// Research waits until the hero has levelled up or Trainers is owned.
+assert.equal(await shown('#run-research'), false);
 await page.getByRole('button', { name: 'End current climb', exact: true }).click();
 assert.match(await page.locator('#modal').innerText(), /End this climb\?/);
 await page.locator('#confirm').click();

@@ -1114,6 +1114,12 @@ export class Game {
   get autoClimbs() {
     return !!this.save.upgrades.autoClimb;
   }
+  /** Before Auto-Climb, inside a run: the hero stands waiting for a card
+   * to be pressed, with nothing to follow (the board pulses a glow round it
+   * until a press sets it moving). */
+  get awaitsPress() {
+    return this.playing && !this.autoClimbs && !this.auto && !this.handStuck && !this.route.length && !this.targetPath && !this.cardPlan;
+  }
   /** Before Auto-Climb, with no card pressed: the hand pauses for the
    * player to press one, or, when none can act, is stuck. */
   private awaitCard(lost: CardId | null) {

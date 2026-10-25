@@ -30,6 +30,7 @@ import { AREA_BURST_MS, drawAreaBurst, preloadAreaBurst, drawLevelUp, drawRevive
 import { drawPoof, POOF_MS } from "./effects/poof.ts";
 import { drawExplosion, EXPLOSION_MS } from "./effects/explosion.ts";
 import { drawBoostGlow } from "./effects/boost-glow.ts";
+import { drawHeroLight, drawStairsLights } from "./effects/position-lights.ts";
 import type { Boosted } from "../runs.ts";
 import { drawGem, drawGemSparkle, GEM_SPARKLE_MS } from "./effects/gem-art.ts";
 import { DashEchoes } from "./effects/dash-echoes.ts";
@@ -190,6 +191,11 @@ export class Renderer {
     if (!this.game.run.outside) drawShields(f, this.game.world.shields?.() ?? [], this.game.mode === "delve" ? this.game.world.width : 0);
     // Supply and Equipment Chests show their kind, opened or not.
     if (!this.game.run.outside) drawChestMarks(f);
+    // The way up and the hero's own tile are lit, the hero pulsing while it waits for a press.
+    if (!this.game.run.outside) {
+      if (this.game.mode === "tower") drawStairsLights(f);
+      drawHeroLight(f, this.game.awaitsPress);
+    }
     this.drawDamageLabels(f);
     if (!this.game.run.outside) this.bossFlash.draw(f, this.game.run.seed, this.game.run.height, f.look.reduceMotion);
     this.drawSkipMarks(f);

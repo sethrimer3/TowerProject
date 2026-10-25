@@ -8,7 +8,7 @@ This document is the reference for the Shop's design: what Version 1 does, how i
 
 ### The page, top to bottom
 
-1. **Currencies**: Gems, Ascension Shards and Gold held. Tapping one opens its information.
+1. **Currencies**: the pages' currencies bar (Gold, Gems and Ascension Shards held), as on the other pages that spend them; its chevron opens every currency held.
 2. **Limited Offers**, in two columns: the Ascension Shard packs, each bought at most once every two weeks (14 Shop days from the day of its last purchase; until then its button reads *Purchased* with *Next in 13d hh:mm:ss* under it):
 
    | Offer | Grants | Default price |

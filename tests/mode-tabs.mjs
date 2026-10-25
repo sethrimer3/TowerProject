@@ -37,12 +37,13 @@ await openMenu(page); await page.locator("#end-run").click();
 await page.locator("#confirm").click();
 
 // 1. Fresh start: one board button (the Tower's), no Delve sign, and the
-// Deck and Gear tabs hidden until their skills are owned.
+// Deck and Gear tabs hidden until their skills are owned, Research until a
+// level or Trainers.
 assert.equal(await page.locator('[data-tab="board"]').getAttribute("aria-label"), "Tower", "The board button should be the Tower's");
 assert.equal(await page.locator("#forest-sign").isVisible(), false, "The forest sign should be hidden until the Delve is open");
-for (const tab of ["deck", "gear"])
+for (const tab of ["deck", "gear", "research"])
   assert.equal(await page.locator(`[data-tab="${tab}"]`).isVisible(), false, `${tab} tab should be hidden when not unlocked`);
-for (const tab of ["board", "upgrades", "research", "shop"])
+for (const tab of ["board", "upgrades", "shop"])
   assert.equal(await page.locator(`[data-tab="${tab}"]`).isVisible(), true, `${tab} tab should be visible`);
 // The tab bar is icons only: no words in its buttons.
 assert.equal((await page.locator("nav > button").allInnerTexts()).join("").trim(), "", "Tabs should show icons, not words");

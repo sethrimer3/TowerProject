@@ -106,7 +106,6 @@ function replaceGlyphs() {
     target.insertAdjacentHTML("afterbegin", sprite);
   };
   replaceGlyph(".currencies .gold-currency", uiSprite("gold"));
-  replaceGlyph(".heart", uiSprite("health"));
   replaceGlyph(".combat-stats .attack-stat", itemSprite("upgrade_attack"));
   replaceGlyph(".combat-stats .defense-stat", itemSprite("upgrade_defense"));
   replaceGlyph(".purse .gold-stat", uiSprite("gold"));

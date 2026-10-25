@@ -202,6 +202,13 @@ export function trainingPoints(save: Pick<Save, "xp" | "trainingPaid"> & Partial
   return { earned, spent, left: Math.max(0, earned - spent) };
 }
 
+/** Whether the Research tab (Training and the Archives) shows: once the
+ * hero has levelled up or has training points from elsewhere, once Trainers
+ * or the Archives is owned, or in Dev mode. Before then nothing there can
+ * be done. */
+export const researchOpen = (save: Pick<Save, "xp" | "upgrades" | "settings"> & Partial<Pick<Save, "bonusTrainingPoints">>) =>
+  levelForXp(save.xp) > 0 || (save.bonusTrainingPoints ?? 0) > 0 || save.upgrades.trainers > 0 || save.upgrades.archives > 0 || save.settings.devMode;
+
 /** Whether training points can be spent now: some row that shows can
  * take a rank they pay for (the Upgrades and Training tabs' dot). */
 export function trainingWaiting(save: Save) {

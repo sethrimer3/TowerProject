@@ -3911,6 +3911,8 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .research-history { margin: 8px 0; padding: 0 4px 0 0; list-style: none; display: grid; gap: 4px; max-height: 50vh; overflow-y: auto; font-size: 11px; color: #b7c0cc; text-align: left; }
 .research-history time { margin-right: 6px; color: #8793a2; font-variant-numeric: tabular-nums; }
 @media (max-width: 440px) { .research-filters { grid-template-columns: 1fr; } }
+.research-filters .game-select, .boon-first-choice .game-select { flex: 1; }
+.research-filters .game-select-button, .boon-first-choice .game-select-button { flex: 1; font-size: 11px; }
 
 /* Silver: the run's own currency, shown beside Gold. */
 .silver-sprite { filter: grayscale(1) brightness(1.35); }
@@ -4100,6 +4102,20 @@ button.buy-quantity { display: inline-flex; align-items: center; gap: 4px; min-h
 .buy-quantity-menu button { min-height: 30px; padding: 2px 10px; font-family: Cinzel, Georgia, serif; font-size: 11px; letter-spacing: 1px; color: #c3cedd; background: transparent; border: 1px solid transparent; border-radius: 4px; white-space: nowrap; }
 .buy-quantity-menu button:hover { border-color: #6b5a3a; }
 .buy-quantity-menu button[aria-selected="true"] { color: #efd496; border-color: #d6ae68; background: #2a2618; }
+/* Every other dropdown (`game-select.ts`): the select stays, out of sight
+   and reach, under a button the themes draw as theirs, and a list like the
+   Buy Quantity's, scrolling once it is long. */
+.game-select { position: relative; display: inline-flex; min-width: 0; }
+.game-select > select.game-select-native:not(#_):not(#_) { position: absolute; left: 0; bottom: 0; width: 1px; min-width: 0; height: 1px; min-height: 0; padding: 0; margin: 0; border: 0; opacity: 0; pointer-events: none; }
+button.game-select-button { display: inline-flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; max-width: 100%; min-height: 36px; padding: 6px 10px; text-align: left; }
+.game-select-value { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.game-select-caret { flex-shrink: 0; font-size: 10px; opacity: 0.8; }
+.game-select-menu { position: absolute; top: calc(100% + 4px); right: 0; z-index: 40; display: flex; flex-direction: column; gap: 2px; min-width: 100%; max-width: min(320px, calc(100vw - 32px)); max-height: min(320px, 50vh); overflow-y: auto; box-sizing: border-box; padding: 3px; background: linear-gradient(#1b222d, #10161f); border: 1px solid #6b5a3a; border-radius: 6px; box-shadow: 0 8px 20px #000b; }
+.game-select-menu.up { top: auto; bottom: calc(100% + 4px); }
+.game-select-menu[hidden] { display: none; }
+.game-select-menu button:not(#_) { flex-shrink: 0; min-height: 34px; padding: 4px 10px; color: #c3cedd; background: transparent; border: 1px solid transparent; border-image: none; border-radius: 4px; box-shadow: none; text-align: left; white-space: nowrap; }
+.game-select-menu button:not(#_):hover { border-color: #6b5a3a; }
+.game-select-menu button[aria-selected="true"]:not(#_) { color: #efd496; border-color: #d6ae68; background: #2a2618; }
 .training-points .buy-quantity-pick { float: right; }
 .training-points button.buy-quantity { min-height: 24px; }
 /* "x12": the ranks a Max press buys, before its price. */
@@ -4141,17 +4157,6 @@ button.buy-quantity { display: inline-flex; align-items: center; gap: 4px; min-h
 }
 #shop-back { margin-top: 12px; }
 #shop-back + .page-title { margin-top: 16px; margin-bottom: 14px; }
-.shop-purse { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
-.shop-currency {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 34px;
-  padding: 4px 10px;
-  font-size: 13px;
-}
-.shop-currency small { font-size: 8px; letter-spacing: 1px; color: var(--muted); }
-.shop-currency .gem-icon, .shop-currency .shard-icon, .shop-currency .gold-icon { width: 18px; height: 18px; }
 .shop-message { min-height: 1.4em; font-size: 12px; color: #ecd19d; margin-bottom: 6px; }
 .shop-section { margin-bottom: 20px; }
 .shop-section h3 { font-size: 13px; letter-spacing: 2px; color: var(--gold); margin-bottom: 8px; }
@@ -5003,7 +5008,7 @@ html.cinematic .shell {
   box-shadow: none !important;
   --board-cap: 100vmax;
 }
-html.cinematic :is(#stats, #currencies, nav, #training-bar, #drill-tip, .research-toast, #status-row, #inspect, #tile-highlight, .inspect-box, #free-training-box, .tier-arrow, #forest-sign, #density-label, .board-tip, .forest-pointer, .job-pointer) {
+html.cinematic :is(#stats, #currencies, nav, #training-bar, #drill-tip, #card-tip, .research-toast, #status-row, #inspect, #tile-highlight, .inspect-box, #free-training-box, .tier-arrow, #forest-sign, #density-label, .board-tip, .forest-pointer, .job-pointer) {
   display: none !important;
 }
 html.cinematic .board-cell {

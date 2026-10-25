@@ -5,7 +5,7 @@ import type { Game } from "../state.ts";
 import type { Renderer } from "../render/rendering.ts";
 import { levelForXp, xpForLevel } from "../progression/xp.ts";
 import { USED_PROVISIONS } from "../economy/provisions.ts";
-import { provisionsOpen } from "../progression/loadout.ts";
+import { provisionsOpen, researchOpen } from "../progression/loadout.ts";
 import { outsideWeather } from "../outside.ts";
 import { tierNumeral, tierRewardText } from "../tiers.ts";
 import { MODES, milestones } from "../modes.ts";
@@ -218,6 +218,7 @@ function renderTabs(game: Game) {
   for (const tab of ["deck", "upgrades", "research"] as const)
     document.querySelector(`[data-tab="${tab}"]`)?.classList.toggle("notify", game.notices.waiting(tab));
   renderDeckCount(game);
+  renderLockedTab("research", researchOpen(game.save), "Research", "Gain a level or unlock Trainers in the Inspiration tree");
   renderLockedTab("gear", provisionsOpen(game.save) || game.save.equipment.unlocked, "Gear", "Unlock a provision in the Inspiration tree");
   document.querySelector(`[data-tab="gear"]`)?.classList.toggle("notify", game.notices.waiting("gear"));
   renderShopDot(game);
