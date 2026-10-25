@@ -26,12 +26,12 @@ const silverBonus = (save: ReturnType<typeof defaults>) => snap(silverFound(save
  * Utility Training row and Archives research of the same name. */
 const SKILLS: [UpgradeId, TrainingId & ResearchId][] = [["wealthy", "silverBonus"], ["loot", "goldBonus"], ["wishingWell", "floorSilver"]];
 
-test("Wealthy, Loot and Wishing Well cost 2 Inspiration each, after Spare Change", () => {
+test("Wealthy, Loot and Wishing Well cost 3 Inspiration each, after Spare Change", () => {
   const g = new Game(playedSave());
   g.save.tower.inspiration = 1000;
   for (const [skill] of SKILLS) {
     assert.deepEqual(TREES[0].nodes.find((n) => n.id === skill)!.requires, ["spareChange"]);
-    assert.equal(cost(skill, 0), 2);
+    assert.equal(cost(skill, 0), 3);
     assert.equal(g.skills.buy(skill), false, `${skill} waits for Spare Change`);
   }
   g.save.upgrades.questForKnowledge = g.save.upgrades.pathToWealth = g.save.upgrades.physician = 1; // the Archives and the tree under them revealed

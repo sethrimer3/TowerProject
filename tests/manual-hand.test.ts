@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { cost } from "../src/progression/upgrades.ts";
+import { UPGRADES, cost } from "../src/progression/upgrades.ts";
 import { HAND_SLOT_GEMS, manualSlots, nextManualSlotGems } from "../src/cards/cards.ts";
 import { decode } from "../src/save/save.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
@@ -19,8 +19,9 @@ function forest(edit: (save: Save) => void = () => {}) {
   return g;
 }
 
-test("Manual Hand costs 10 Inspiration and opens a Manual hand of one slot, more for the Auto hand's Gem prices", () => {
-  assert.equal(cost("manualHand", 0), 10);
+test("Manual Hand costs 1 Breakthrough and opens a Manual hand of one slot, more for the Auto hand's Gem prices", () => {
+  assert.equal(cost("manualHand", 0), 1);
+  assert.equal(UPGRADES.find((u) => u.id === "manualHand")!.currency, "breakthrough");
   const save = playedSave();
   assert.equal(manualSlots(save), 0, "none before the skill");
   assert.equal(nextManualSlotGems(save), null);

@@ -14,8 +14,7 @@ import { playedSave } from "./first-skills.ts";
  * their price, the node each needs and its card (null for a node that opens
  * research or the Manual hand instead). */
 const NODES: [UpgradeId, number, UpgradeId, CardId | null][] = [
-  ["manualHand", 10, "keySiphon", null],
-  ["cardYellowDoor", 5, "manualHand", "yellowDoor"],
+  ["cardYellowDoor", 5, "keySiphon", "yellowDoor"],
   ["heartDoorResilience", 20, "cardYellowDoor", null],
   ["cardHeartDoor", 10, "heartDoorResilience", "heartDoor"],
   ["cardWeakEnemy", 20, "cardYellowDoor", "weakEnemy"],
@@ -42,8 +41,9 @@ const NODES: [UpgradeId, number, UpgradeId, CardId | null][] = [
 test("each card node costs its price, waits for the node above it and adds its card to the deck", () => {
   const g = new Game(playedSave());
   g.save.tower.inspiration = 10_000;
-  g.save.upgrades.questForKnowledge = g.save.upgrades.pathToWealth = g.save.upgrades.physician = 1; // the Archives and the tree under them revealed
-  for (const id of ["combatStance", "buildout", "trainers", "largerHand", "shroud", "critical", "breakthrough", "archives", "lifesteal", "buyQuantity", "thorns", "keySiphon"] as const) assert.ok(g.skills.buy(id));
+  g.save.upgrades.questForKnowledge = g.save.upgrades.pathToWealth = g.save.upgrades.physician = g.save.upgrades.keyMastery = 1; // the Archives and the tree under them revealed
+  g.save.breakthrough = 100;
+  for (const id of ["combatStance", "buildout", "trainers", "largerHand", "shroud", "critical", "breakthrough", "archives", "lifesteal", "buyQuantity", "thorns", "findYellowKey", "keyEfficiency", "keySiphon"] as const) assert.ok(g.skills.buy(id));
   const nodes = TREES.find((t) => t.id === "inspiration")!.nodes;
   for (const [id, price, requires, card] of NODES) {
     assert.deepEqual(nodes.find((n) => n.id === id)!.requires, [requires], id);
@@ -62,10 +62,8 @@ test("a card node can't be bought before the one above it", () => {
   const g = new Game(playedSave());
   g.save.tower.inspiration = 10_000;
   assert.equal(g.skills.buy("cardYellowDoor"), false);
-  g.save.upgrades.keySiphon = g.save.upgrades.questForKnowledge = g.save.upgrades.pathToWealth = g.save.upgrades.physician = 1;
+  g.save.upgrades.keySiphon = g.save.upgrades.keyMastery = g.save.upgrades.questForKnowledge = g.save.upgrades.pathToWealth = g.save.upgrades.physician = 1;
   assert.equal(g.skills.buy("cardHeartDoor"), false);
-  assert.equal(g.skills.buy("cardYellowDoor"), false, "Manual Hand comes first");
-  assert.ok(g.skills.buy("manualHand"));
   assert.ok(g.skills.buy("cardYellowDoor"));
   assert.equal(g.skills.buy("cardHeartDoor"), false);
   assert.ok(g.skills.buy("heartDoorResilience"));

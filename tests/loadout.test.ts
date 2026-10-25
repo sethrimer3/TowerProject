@@ -308,7 +308,7 @@ test("ATK, DEF, Max HP, Regen and Shroud train to 1,000 levels, and each Limit B
   assert.deepEqual(caps(), [1500, 1500, 1500, 1500, 1500]);
   for (const id of LIMIT_BREAKS) save.upgrades[id] = 1;
   assert.deepEqual(caps(), [6000, 6000, 6000, 6000, 5000]);
-  assert.deepEqual(LIMIT_BREAKS.map((id) => UPGRADES.find((u) => u.id === id)!).map((u) => [u.currency, u.base, u.max]), LIMIT_BREAKS.map(() => ["inspiration", 50, 1]));
+  assert.deepEqual(LIMIT_BREAKS.map((id) => UPGRADES.find((u) => u.id === id)!).map((u) => [u.currency, u.base, u.max]), LIMIT_BREAKS.map(() => ["breakthrough", 5, 1]));
 });
 
 test("a rank can't be trained past the cap, and a saved rank above it is kept until Limit Breaks raise the cap to it", () => {

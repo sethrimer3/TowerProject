@@ -20,15 +20,15 @@ const brute: Enemy = { name: "Brute", hp: 60, attack: 30, defense: 0, tier: 0, s
 const row = TRAINING.find((t) => t.id === "lifesteal")!;
 if (!isStatRow(row)) throw new Error("Lifesteal is a stat row");
 
-test("Lifesteal is a 10 Inspiration skill under the Archives, and Buy Quantity, Thorns and GK Siphon follow it", () => {
+test("Lifesteal is a 5 Inspiration skill under the Archives, and Buy Quantity, Thorns and GK Siphon follow it", () => {
   const u = UPGRADES.find((u) => u.id === "lifesteal")!;
-  assert.deepEqual([u.currency, u.base, u.max], ["inspiration", 10, 1]);
+  assert.deepEqual([u.currency, u.base, u.max], ["inspiration", 5, 1]);
   const node = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;
   assert.deepEqual(node("lifesteal").requires, ["archives"]);
   assert.deepEqual(node("buyQuantity").requires, ["lifesteal"]);
   assert.deepEqual(node("thorns").requires, ["buyQuantity"]);
-  assert.deepEqual(node("keySiphon").requires, ["thorns"]);
-  assert.ok(node("lifesteal").y < node("buyQuantity").y && node("buyQuantity").y < node("thorns").y && node("thorns").y < node("keySiphon").y);
+  assert.deepEqual(node("keySiphon").requires, ["keyEfficiency"]);
+  assert.ok(node("lifesteal").y < node("buyQuantity").y && node("buyQuantity").y < node("thorns").y && node("thorns").y < node("findYellowKey").y && node("findYellowKey").y < node("keySiphon").y);
 });
 
 test("Lifesteal training adds 0.1% for the first rank, each rank 0.001% less, 80 ranks in all", () => {
