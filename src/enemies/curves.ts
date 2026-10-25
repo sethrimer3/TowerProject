@@ -85,9 +85,22 @@ export const DEFAULT_CURVE: Record<CurveMode, EnemyCurve> = {
   delve: { ...DEFAULT_BALANCED, ...DELVE_SHAPES },
 };
 
+/** Towers I to IV's: the default curve, its ATK raised from floor 11 to 45
+ * on floor 25 (rather than 21.53), where a hero with Training and On the
+ * Job could otherwise outgrow every enemy's ATK in DEF, the raise fading
+ * back to the default's 400 on floor 100. Floors 1 to 10 are the
+ * default's, before training is open. */
+const EARLY_TOWER_CURVE: EnemyCurve = {
+  ...DEFAULT_CURVE.tower,
+  attack: [...DEFAULT_BALANCED.attack.slice(0, 2), [25, 45], ...DEFAULT_BALANCED.attack.slice(2)],
+};
+
 /** A tier's own curve, by mode and tier number; a tier not listed here
  * uses its mode's `DEFAULT_CURVE`. */
-export const ENEMY_CURVES: Record<CurveMode, Partial<Record<number, EnemyCurve>>> = { tower: {}, delve: {} };
+export const ENEMY_CURVES: Record<CurveMode, Partial<Record<number, EnemyCurve>>> = {
+  tower: { 1: EARLY_TOWER_CURVE, 2: EARLY_TOWER_CURVE, 3: EARLY_TOWER_CURVE, 4: EARLY_TOWER_CURVE },
+  delve: {},
+};
 
 export const enemyCurve = (mode: CurveMode, tier = 1): EnemyCurve => ENEMY_CURVES[mode][tier] ?? DEFAULT_CURVE[mode];
 

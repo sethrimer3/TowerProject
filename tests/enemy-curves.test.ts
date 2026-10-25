@@ -96,17 +96,30 @@ test("bosses are a multiplier on their own floor's curve, and a Greater Boss twi
     }
 });
 
-test("a Delve enemy of each strength matches the Tower's on the same equivalent floor, its elite ten floors ahead", () => {
+test("a Delve enemy of each strength matches a default-curve Tower's on the same equivalent floor, its elite ten floors ahead", () => {
   for (const floor of [0, 9, 40, 99, 299])
     for (const strength of ["weak", "normal", "strong", "elite", "boss"] as const) {
-      const delve = enemyStats("delve", 1, floor * 10, strength, "balanced"), tower = enemyStats("tower", 1, floor, strength, "balanced");
+      const delve = enemyStats("delve", 1, floor * 10, strength, "balanced"), tower = enemyStats("tower", 5, floor, strength, "balanced");
       for (const stat of ["hp", "attack", "defense"] as const)
         assert.ok(near(delve[stat], tower[stat], 0.01), `floor ${floor + 1} ${strength} ${stat}: ${delve[stat]} against ${tower[stat]}`);
     }
 });
 
+test("Towers I to IV raise ATK from floor 11 to 45 on floor 25, back to the default by floor 100; Tower V on is the default", () => {
+  const atk = (tier: number, floor: number) => enemyStats("tower", tier, floor - 1, "normal", "balanced").attack;
+  for (const tier of [1, 2, 3, 4]) {
+    for (let floor = 1; floor <= 10; floor++) assert.equal(atk(tier, floor), atk(5, floor), `tower ${tier} floor ${floor}`);
+    for (let floor = 11; floor < 100; floor++) assert.ok(atk(tier, floor) > atk(5, floor), `tower ${tier} floor ${floor}`);
+    assert.equal(atk(tier, 25), 45);
+    for (const floor of [100, 101, 250, 1200]) assert.equal(atk(tier, floor), atk(5, floor), `tower ${tier} floor ${floor}`);
+    // Only ATK (and DEF, its share) moves.
+    assert.equal(enemyStats("tower", tier, 24, "normal", "balanced").hp, enemyStats("tower", 5, 24, "normal", "balanced").hp);
+  }
+  assert.equal(atk(5, 25), 21.53);
+});
+
 test("a tower or delve given its own curve generates its enemies from it", () => {
-  const custom = { ...DEFAULT_CURVE.tower, hp: [[1, 1000], [2, 2000]] as const };
+  const custom = { ...DEFAULT_CURVE.tower, hp: [[1, 1000], [2, 2000]] as const }, own = ENEMY_CURVES.tower[2];
   ENEMY_CURVES.tower[2] = custom;
   ENEMY_CURVES.delve[2] = { ...DEFAULT_CURVE.delve, hp: [[1, 1000], [2, 2000]] };
   try {
@@ -117,7 +130,7 @@ test("a tower or delve given its own curve generates its enemies from it", () =>
     assert.ok(Math.min(...hps(2)) >= 750, "every tier-2 Delve enemy has at least weak × 1000 HP");
     assert.ok(Math.max(...hps(1)) < 750);
   } finally {
-    delete ENEMY_CURVES.tower[2];
+    ENEMY_CURVES.tower[2] = own;
     delete ENEMY_CURVES.delve[2];
   }
 });
