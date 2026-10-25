@@ -3,7 +3,7 @@ import { play } from "../sound.ts";
 import { upgradeCards } from "../cards/cards.ts";
 import { revealCard } from "./card-reveal.ts";
 import { UPGRADES, cost, type UpgradeId } from "../progression/upgrades.ts";
-import { TREES, columnGap, mapNodes, skillAvailable, treeHeight, treeOpen, type TreeId } from "../progression/skill-trees.ts";
+import { TREES, columnGap, mapNodes, skillAvailable, skillHidden, treeHeight, treeOpen, type TreeId } from "../progression/skill-trees.ts";
 import { upgradeText } from "../progression/loadout.ts";
 import { goalUnlocked, UNLOCK_NAMES } from "../goals.ts";
 import { TreeParticles } from "../render/effects/tree-particles.ts";
@@ -104,7 +104,7 @@ export class SkillTreePage {
   private renderTree(tabs: string) {
     const tree = this.current();
     const view = this.view(tree.id);
-    const nodes = mapNodes(tree);
+    const nodes = mapNodes(tree), shown = this.visible(nodes);
     // A tree taller than one view scrolls, with a margin above its first
     // row and below its last so no node is cut off on a short screen, and
     // never shorter than its rows need to keep their nodes apart.
@@ -114,7 +114,7 @@ export class SkillTreePage {
       ${this.lockHtml(tree)}${introNote(this.ctx.game, tree.id)}
       <div class="tree-viewport" id="tree-viewport" style="--column-gap:${columnGap(tree)}"><div class="tree-map${tall ? " tall" : ""}" id="tree-map" style="${tall ? `--tree-height:${treeHeight(tree)}%;--tree-rows:${treeHeight(tree)};` : ""}transform:translate(${view.x}px,${view.y}px) scale(${view.scale})"><div class="tree-layer"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${this.linesHtml(nodes)}</svg>
       <canvas class="tree-particles" aria-hidden="true"></canvas>
-      ${nodes.map(n => this.nodeHtml(n)).join("")}</div></div><div class="inspect-box tree-tooltip" id="tree-tooltip" hidden></div></div></section>`;
+      ${shown.map(n => this.nodeHtml(n)).join("")}</div></div><div class="inspect-box tree-tooltip" id="tree-tooltip" hidden></div></div></section>`;
     this.bindTabs();
     if (tree.id === "inspiration" || tree.id === "breakthrough") el("tree-help").onclick = () => this.showHelp(tree.id as "inspiration" | "breakthrough");
     bindPanZoom(el("tree-viewport"), el("tree-map"), view, {
@@ -122,7 +122,7 @@ export class SkillTreePage {
       pan: () => this.hideTooltip(),
       zoom: () => { if (this.tooltipVisible) this.showTooltip(); },
     });
-    if (this.tooltipVisible && tree.nodes.some(n => n.id === this.skill)) this.showTooltip();
+    if (this.tooltipVisible && shown.some(n => n.id === this.skill)) this.showTooltip();
   }
 
   /** The ? beside the Inspiration and Breakthrough trees' headings. */
@@ -143,12 +143,27 @@ export class SkillTreePage {
     return `<p class="tree-lock">Unlock ${UPGRADES.find(u => u.id === tree.gate)!.name} in the ${tree.id === "breakthrough" ? "Inspiration" : "Breakthrough"} tree.</p>`;
   }
 
-  /** The lines from each skill to those it requires, lit once owned. */
-  private linesHtml(nodes: ReturnType<typeof mapNodes>) {
+  /** `nodes` less those hidden (`skillHidden`), which aren't drawn at all. */
+  private visible(nodes: ReturnType<typeof mapNodes>) {
     const upgrades = this.ctx.game.save.upgrades;
+    return nodes.filter(n => !skillHidden(n.id, upgrades));
+  }
+
+  /** The lines from each skill to those it requires, lit once owned; a
+   * line from a skill shown to one hidden fades away before reaching it,
+   * and none is drawn between hidden skills. */
+  private linesHtml(nodes: ReturnType<typeof mapNodes>) {
+    const upgrades = this.ctx.game.save.upgrades, shown = new Set(this.visible(nodes).map(n => n.id));
     return nodes.flatMap(n => n.requires.map(id => {
       const parent = nodes.find(p => p.id === id);
-      return parent ? `<line x1="${parent.x}" y1="${parent.y}" x2="${n.x}" y2="${n.y}" class="${upgrades[id] ? "lit" : ""}"/>` : "";
+      if (!parent || !shown.has(id)) return "";
+      const line = `x1="${parent.x}" y1="${parent.y}" x2="${n.x}" y2="${n.y}"`;
+      if (shown.has(n.id)) return `<line ${line} class="${upgrades[id] ? "lit" : ""}"/>`;
+      // The fade is a mask: a gradient along the line, so it fades in every theme's stroke.
+      const fade = `fade-${id}-${n.id}`;
+      return `<defs><linearGradient id="${fade}-g" gradientUnits="userSpaceOnUse" ${line}><stop offset="0" stop-color="#fff"/><stop offset=".75" stop-color="#fff" stop-opacity="0"/></linearGradient>`
+        + `<mask id="${fade}" maskUnits="userSpaceOnUse" x="-10" y="-10" width="120" height="120"><rect x="-10" y="-10" width="120" height="120" fill="url(#${fade}-g)"/></mask></defs>`
+        + `<line ${line} class="fading${upgrades[id] ? " lit" : ""}" mask="url(#${fade})"/>`;
     })).join("");
   }
 
@@ -158,7 +173,7 @@ export class SkillTreePage {
     if (!canvas) return;
     const tree = this.current();
     this.particles.draw(canvas, time, {
-      tree: tree.id, nodes: mapNodes(tree), selected: this.tooltipVisible ? this.skill : null, reduced: this.ctx.game.save.settings.reduceMotion,
+      tree: tree.id, nodes: this.visible(mapNodes(tree)), selected: this.tooltipVisible ? this.skill : null, reduced: this.ctx.game.save.settings.reduceMotion,
     });
   }
 
@@ -188,7 +203,7 @@ export class SkillTreePage {
       ? `<span class="node-cost ${affordable ? "" : "short"}" aria-hidden="true">${price}</span>` : "";
     const game = this.ctx.game, pointer = n.id === game.introSkill
       ? `<span class="tree-pointer${game.save.settings.reduceMotion ? " still" : ""}" aria-hidden="true">${POINTER_SVG}</span>` : "";
-    return `<button class="skill-node ${rank ? "owned" : ""} ${available ? "available" : "locked"} ${chosen ? "chosen" : ""}" data-skill="${n.id}" style="left:${n.x}%;top:${n.y}%" aria-label="${skill.name}${state}${available ? "" : ", locked"}${badge ? `, costs ${price}` : ""}" aria-pressed="${chosen}"><span class="node-icon">${skillSprite(n.id)}${badge}${pointer}</span><span class="node-name">${skill.name}</span>${unlocks ? "" : `<small>${rank} / ${skill.max}</small>`}</button>`;
+    return `<button class="skill-node ${rank ? "owned" : ""} ${available ? "available" : "locked"} ${chosen ? "chosen" : ""}" data-skill="${n.id}" style="left:${n.x}%;top:${n.y}%" aria-label="${skill.name}${state}${available ? "" : ", locked"}${badge ? `, costs ${price}` : ""}" aria-pressed="${chosen}"><span class="node-icon">${skillSprite(n.id)}${badge}${pointer}</span><span class="node-label"><span class="node-name">${skill.name}</span>${unlocks ? "" : `<small>${rank} / ${skill.max}</small>`}</span></button>`;
   }
 
   /** Where buying `id` stands: its price, the balance, and whether it can
@@ -246,8 +261,8 @@ export class SkillTreePage {
   }
 
   /** The centre of node `id`'s circle as a fraction of the particle canvas,
-   * which its rays and burst shine from (the node's own point is where the
-   * tree's lines meet, below it). */
+   * which its rays and burst shine from (also the node's own point, where the
+   * tree's lines meet, but measured, so it holds under any zoom). */
   private iconCenter(id: UpgradeId) {
     const canvas = document.querySelector<HTMLCanvasElement>(".tree-particles");
     const icon = document.querySelector(`[data-skill="${id}"] .node-icon`);

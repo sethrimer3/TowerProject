@@ -30,7 +30,8 @@ test("Thorns sits between Buy Quantity and GK Siphon, Parry between Regen Resear
   assert.deepEqual([node("parry").requires, node("revive").requires], [["regenResearch"], ["parry"]]);
   const g = new Game(playedSave());
   g.save.tower.inspiration = 1000;
-  for (const id of ["combatStance", "buildout", "trainers", "largerHand", "shroud", "critical", "archives", "breakthrough", "greaterHeal"] as const) assert.ok(g.skills.buy(id));
+  g.save.upgrades.questForKnowledge = 1; // the Archives and the tree under them revealed
+  for (const id of ["combatStance", "buildout", "trainers", "largerHand", "shroud", "critical", "breakthrough", "archives", "greaterHeal"] as const) assert.ok(g.skills.buy(id));
   assert.equal(g.skills.buy("parry"), false, "waits for Regen Research");
   assert.ok(g.skills.buy("regenResearch"));
   assert.equal(g.skills.buy("revive"), false, "waits for Parry");

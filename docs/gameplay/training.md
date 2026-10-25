@@ -9,7 +9,7 @@ Undo takes back the Silver of the kills it undoes, and a new run starts with non
 
 ## Training for the run
 
-Once **On the Job** is owned (1 Inspiration, after Buildout, right of it), a bar of tabs under the hand holds **Hand** and then a button for each Training group: Offense, Defense and Utility (greyed until something in it is unlocked).
+Once **On the Job** is owned (1 Inspiration, after Trainers, right of it), a bar of tabs under the hand holds **Hand** and then a button for each Training group: Offense, Defense and Utility (greyed until something in it is unlocked).
 A tab not selected shows only its icon; the selected one widens to add its name.
 Hand is selected as each run starts, and shows the card hand; the hand shows only while Hand is selected.
 Pressing a group shows that group's Training rows in the hand's place (the Archer's rows only while the run's hand holds the Archer card), a card each, scrolled sideways: its name, where it stands now (the hero's stat, the percentage, or the Gold a new floor pays), and a button with the Silver price of the next level.
@@ -76,4 +76,4 @@ Each rank a trainer finishes, whatever page shows or while the game was closed, 
 The box at the top of the tab is the **training boost**: "×2" with its time left, or "Inactive", and an ad button, "+1h" (no ad plays yet: it is granted on the press), each press banking an hour more, up to four (the button closes while more than 3 hours 50 minutes are banked, until the time runs down).
 While it lasts, ranks in training go twice as fast, their countdowns dropping two seconds a second, on the clock like the rest.
 With Permanent Ad-Disable the boost runs for good, no ad needed, and in the box's place a glowing "×2" stands on the trainers' row; the Special Coin Pack and the Premium Coin Pack make training ×2 and ×3 as fast besides, all three multiplying (×12 with all three), the speed glowing there too.
-**Faster Trainers** (2 Inspiration, after the Archives, right of them) opens Faster Trainers research: +2% training speed a level for 100 levels (+200%, a rank then taking a third of its time), the n-th level costing 250 × n + 2 × n³ Gold and taking Research Speed's time or 1.75 × n + n²/20 hours, whichever is shorter (1 minute first, Research Speed's to level 27, then 88 hours at 28; 2 million Gold and 28 days at level 100), about 2.9 years in all.
+**Faster Trainers** (2 Inspiration, after Critical, right of it) opens Faster Trainers research: +2% training speed a level for 100 levels (+200%, a rank then taking a third of its time), the n-th level costing 250 × n + 2 × n³ Gold and taking Research Speed's time or 1.75 × n + n²/20 hours, whichever is shorter (1 minute first, Research Speed's to level 27, then 88 hours at 28; 2 million Gold and 28 days at level 100), about 2.9 years in all.

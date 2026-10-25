@@ -14,7 +14,7 @@ It cancels any queued route.
 Undos are a limited resource, like Ignore and Target: each run has a number of them to spend, shown on the Undo button, and one spent never comes back, whatever the run does after it.
 The history holds no more moves than the run has undos left.
 A game update that reshapes the floors forgets the history, in the Tower as in the Delve, since the moves it held were made on the old layout.
-A new profile has no undo, and the button stays hidden until **Rehearsed steps** (5 Inspiration, after the Archives) gives the first undo a run (or Echoes of time and a level of Undo Count do); each level of **Undo Count** research in the Archives adds one a run: Rehearsed steps opens four levels of it and **Echoes of time** (Breakthrough) four more, either opening it first, up to 9 a run.
+A new profile has no undo, and the button stays hidden until **Rehearsed steps** (1 Breakthrough, under Pathfinder in the Breakthrough tree, above Echoes of time) gives the first undo a run (or Echoes of time and a level of Undo Count do); each level of **Undo Count** research in the Archives adds one a run: Rehearsed steps opens four levels of it and **Echoes of time** (Breakthrough, after Rehearsed steps) four more, either opening it first, up to 9 a run.
 Each counts the moment it's bought or completed, in a run already under way too; a new run starts with them all.
 History persists across refreshes.
 
@@ -64,7 +64,7 @@ The Settings button in the stats opens the Settings page at any time, with a Bac
 
 ## Movement Speed and Dash
 
-**Movement Speed** (the Breakthrough tree's first skill, 1 Breakthrough) opens the Archives' **Movement Speed** research (six levels, priced and timed like Undo Count's first six: 500 Gold and 8 hours, up to 8,000 Gold and 48 hours), each level letting the run's speed arrows go one step a second faster: 4, then 5, up to 9.
+**Movement Speed** (1 Breakthrough, under Quest for Knowledge at the top of the Breakthrough tree) opens the Archives' **Movement Speed** research (six levels, priced and timed like Undo Count's first six: 500 Gold and 8 hours, up to 8,000 Gold and 48 hours), each level letting the run's speed arrows go one step a second faster: 4, then 5, up to 9.
 **Dash** (1 Breakthrough, after Movement Speed, right of Bombs) opens the Archives' **Dash** research: each of its 25 levels lets the hand's first step toward a new target dash across one more empty tile (or chest already opened) in the same step (one turn, one undo), stopping on the tile before anything else (an item, a door, a monster, the stairs, a torch or a Gem), except that a dash with a tile left ends on the item its card is heading for, taking it (scaled by an Effective or Dampen badge as usual; with a Skip badge it stops before the item, which Skip rolls for on its own step); faint echoes of the hero appear on each tile it dashed off, and on the empty tile it landed on, one after another, and fade in the same order within half a second.
 Level n costs 250 × n × 2^(n−1) Gold and takes 1.75 × n × 1.2^(n−1) hours (250 Gold and 1.75 hours first; about 105 billion Gold and 145 days at level 25).
 A dashed turn regains HP by Regen once, on its first step, not on the tiles it dashes across.

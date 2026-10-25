@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { TRAINING, trained, type StatTrainingRow } from "../src/progression/training.ts";
-import { cost } from "../src/progression/upgrades.ts";
+import { UPGRADES, cost } from "../src/progression/upgrades.ts";
 import { deckCards, planHand } from "../src/cards/cards.ts";
 import { RESEARCH } from "../src/progression/archives.ts";
 import { loadout } from "../src/progression/loadout.ts";
@@ -12,13 +12,15 @@ import { playedSave } from "./first-skills.ts";
 
 const hpRow = TRAINING.find((t) => t.id === "hp")! as StatTrainingRow;
 
-test("Rehearsed steps costs 5; Lifesteal (10) follows Breakthrough, Buy Quantity (5) Lifesteal, Thorns (10) Buy Quantity, GK Siphon (5) Thorns, Regen Research (10) Shroud", () => {
-  assert.equal(cost("inspirationUndos", 0), 5);
+test("Rehearsed steps costs 1 Breakthrough; Lifesteal (10) follows the Archives, Buy Quantity (5) Lifesteal, Thorns (10) Buy Quantity, GK Siphon (5) Thorns, Regen Research (10) Shroud", () => {
+  assert.equal(cost("inspirationUndos", 0), 1);
+  assert.equal(UPGRADES.find((u) => u.id === "inspirationUndos")!.currency, "breakthrough");
   const g = new Game(playedSave());
   g.save.tower.inspiration = 1000;
-  for (const id of ["combatStance", "buildout", "trainers", "largerHand", "shroud", "critical", "archives"] as const) assert.ok(g.skills.buy(id));
-  assert.equal(g.skills.buy("lifesteal"), false, "waits for Breakthrough");
-  assert.ok(g.skills.buy("breakthrough"));
+  g.save.upgrades.questForKnowledge = 1;
+  for (const id of ["combatStance", "buildout", "trainers", "largerHand", "shroud", "critical", "breakthrough"] as const) assert.ok(g.skills.buy(id));
+  assert.equal(g.skills.buy("lifesteal"), false, "waits for the Archives");
+  assert.ok(g.skills.buy("archives"));
   assert.equal(g.skills.buy("buyQuantity"), false, "waits for Lifesteal");
   assert.equal(g.skills.buy("thorns"), false, "waits for Buy Quantity");
   assert.equal(g.skills.buy("keySiphon"), false, "waits for Thorns");

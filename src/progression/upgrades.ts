@@ -5,6 +5,7 @@ export type Currency = "breakthrough" | "inspiration";
  * rank adds; see progression/loadout.ts), which also writes their description. */
 export const UPGRADES = [
   { id: "breakthrough", name: "Breakthrough", description: "Unlock the Breakthrough skill tree", base: 3, max: 1, currency: "inspiration" },
+  { id: "questForKnowledge", name: "Quest for Knowledge", description: "Discover hidden archives to research new skills", base: 1, max: 1, currency: "breakthrough" },
   { id: "legacy", name: "An enduring legacy", description: "Unlock the Legacy skill tree", base: 8, max: 1, currency: "breakthrough" },
   {
     id: "revive",
@@ -297,7 +298,7 @@ export const UPGRADES = [
     name: "Blue Key",
     description: "Add the BLUE KEY card to your deck: it moves you toward the closest blue key, and while you hold it each blue key is worth 5% more and pays 2 more Gold",
     card: "blueKey",
-    base: 2,
+    base: 5,
     max: 1,
     currency: "inspiration",
   },
@@ -498,9 +499,9 @@ export const UPGRADES = [
     name: "Rehearsed steps",
     description: "Rewind one action a run, and open Undo Count research in the Archives, or 4 more levels of it once Echoes of time has opened it",
     grants: { undos: 1 },
-    base: 5,
+    base: 1,
     max: 1,
-    currency: "inspiration",
+    currency: "breakthrough",
   },
   {
     id: "wisdomFocus",

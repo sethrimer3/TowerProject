@@ -20,11 +20,11 @@ const brute: Enemy = { name: "Brute", hp: 60, attack: 30, defense: 0, tier: 0, s
 const row = TRAINING.find((t) => t.id === "lifesteal")!;
 if (!isStatRow(row)) throw new Error("Lifesteal is a stat row");
 
-test("Lifesteal is a 10 Inspiration skill under Breakthrough, and Buy Quantity, Thorns and GK Siphon follow it", () => {
+test("Lifesteal is a 10 Inspiration skill under the Archives, and Buy Quantity, Thorns and GK Siphon follow it", () => {
   const u = UPGRADES.find((u) => u.id === "lifesteal")!;
   assert.deepEqual([u.currency, u.base, u.max], ["inspiration", 10, 1]);
   const node = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;
-  assert.deepEqual(node("lifesteal").requires, ["breakthrough"]);
+  assert.deepEqual(node("lifesteal").requires, ["archives"]);
   assert.deepEqual(node("buyQuantity").requires, ["lifesteal"]);
   assert.deepEqual(node("thorns").requires, ["buyQuantity"]);
   assert.deepEqual(node("keySiphon").requires, ["thorns"]);

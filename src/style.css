@@ -2375,7 +2375,10 @@ nav {
 .tree-map svg { position: absolute; width: 100%; height: 100%; overflow: visible; }
 .tree-map line { stroke: #46505b; stroke-width: 1; vector-effect: non-scaling-stroke; }
 .tree-map line.lit { stroke: var(--tree-color); stroke-width: 2; }
-.skill-node { position: absolute; transform: translate(-50%, -50%); display: flex; align-items: center; flex-direction: column; width: 96px; border: 0; background: none; padding: 0; gap: 5px; touch-action: none; }
+/* A node's box is its icon alone, centred on its point where the lines meet; its
+   name (and ranks) hang below it. */
+.skill-node { position: absolute; transform: translate(-50%, -50%); display: flex; align-items: center; flex-direction: column; width: 96px; border: 0; background: none; padding: 0; touch-action: none; }
+.node-label { position: absolute; top: calc(100% + 5px); left: 0; right: 0; display: flex; flex-direction: column; align-items: center; gap: 5px; }
 .skill-node:hover { background: none; color: var(--tree-color); }
 .node-icon { display: grid; place-items: center; width: 44px; height: 44px; font-size: 23px; background: #121c25; border: 1px solid #6a7480; box-shadow: 0 0 0 4px #0a1016; }
 .breakthrough .node-icon, .wisdom .node-icon { border-radius: 50%; }
@@ -2745,6 +2748,8 @@ nav button > span :is(img, svg) { display: block; width: 42px; height: 42px; max
 .page-tabs small { margin-top: 1px; }
 .node-icon img { width: 38px; height: 38px; }
 .skill-node.locked .node-icon img { filter: grayscale(1); opacity: .48; }
+/* A card not yet unlocked is dimmed, not see-through, so no line or backdrop shows through it. */
+.skill-node.locked .node-icon > .card-sprite img { filter: grayscale(1) brightness(.48); opacity: 1; }
 .slot-filter button img { width: 28px; height: 28px; }
 .summary-icon img { width: 72px; height: 72px; }
 .ascent > span img { width: 24px; height: 24px; }

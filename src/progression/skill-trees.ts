@@ -1,6 +1,8 @@
 import type { UpgradeId, Currency } from "./upgrades.ts";
 export type TreeId = "wayfinding" | "inspiration" | "breakthrough" | "legacy" | "wisdom" | "renown";
-export type SkillNode = { id: UpgradeId; icon: string; x: number; y: number; requires: UpgradeId[] };
+/** A node with `reveal` stays hidden, with every node that requires it,
+ * until that upgrade is owned: unseen, it can't be read or bought. */
+export type SkillNode = { id: UpgradeId; icon: string; x: number; y: number; requires: UpgradeId[]; reveal?: UpgradeId };
 /** A skill tree. Node positions are percentages of the tree's view: x of
  * its width, y of its height, so a tree taller than one screen (`height`,
  * in the same units, 100 by default) scrolls. In a tree of `unlocks`, each
@@ -16,12 +18,13 @@ export const TREES: SkillTree[] = [
     { id: "cardDoorKey", icon: "⚿", x: 50, y: 12, requires: [] },
     { id: "cardEnemy", icon: "☠", x: 50, y: 30, requires: ["cardDoorKey"] },
     { id: "autoClimb", icon: "»", x: 50, y: 48, requires: ["cardEnemy"] },
-    // The hand's skills, down to the Archives: Buildout, Trainers, Larger
-    // Hand, Shroud (with Gold Key to its left), Critical (with Critical
-    // Prediction to its left). ATK Up branches left off Trainers, with DEF Up
-    // under it, each with its provision (Vanguard Banner, Aegis Charm) to its
-    // left, and On the Job right off Buildout, with Regen below it and Heal and
-    // the Traveler's Elixir under that.
+    // The hand's skills, down to Breakthrough: Buildout, Trainers, Larger
+    // Hand, Shroud (with Gold Key, then Blue Key, to its left), Critical (with
+    // Critical Prediction to its left and Faster Trainers to its right). ATK
+    // Up branches left off Trainers, with DEF Up under it, each with its
+    // provision (Vanguard Banner, Aegis Charm) to its left, and On the Job
+    // right off Trainers, with Regen below it and Heal and the Traveler's
+    // Elixir under that.
     { id: "combatStance", icon: "▤", x: 50, y: 66, requires: ["autoClimb"] },
     { id: "buildout", icon: "⚔", x: 50, y: 84, requires: ["combatStance"] },
     { id: "trainers", icon: "⚔", x: 50, y: 102, requires: ["buildout"] },
@@ -29,28 +32,28 @@ export const TREES: SkillTree[] = [
     { id: "shroud", icon: "◈", x: 50, y: 138, requires: ["largerHand"] },
     { id: "critical", icon: "✸", x: 50, y: 156, requires: ["shroud"] },
     { id: "critPrediction", icon: "✸", x: 30, y: 156, requires: ["critical"] },
-    { id: "onTheJob", icon: "¤", x: 80, y: 84, requires: ["buildout"] },
-    { id: "regen", icon: "♥", x: 80, y: 102, requires: ["onTheJob"] },
-    { id: "cardHeal", icon: "♥", x: 70, y: 120, requires: ["regen"] },
-    { id: "elixirProvision", icon: "⚗", x: 90, y: 120, requires: ["regen"] },
-    { id: "archives", icon: "▥", x: 50, y: 174, requires: ["critical"] },
+    { id: "fasterTrainers", icon: "»", x: 70, y: 156, requires: ["critical"] },
+    { id: "onTheJob", icon: "¤", x: 80, y: 102, requires: ["trainers"] },
+    { id: "regen", icon: "♥", x: 80, y: 120, requires: ["onTheJob"] },
+    { id: "cardHeal", icon: "♥", x: 70, y: 138, requires: ["regen"] },
+    { id: "elixirProvision", icon: "⚗", x: 90, y: 138, requires: ["regen"] },
+    { id: "breakthrough", icon: "▼", x: 50, y: 174, requires: ["critical"] },
     { id: "cardYellowKey", icon: "⚿", x: 30, y: 138, requires: ["shroud"] },
+    { id: "cardBlueKey", icon: "⚿", x: 10, y: 138, requires: ["cardYellowKey"] },
     { id: "cardAtkUp", icon: "⚔", x: 30, y: 102, requires: ["trainers"] },
     { id: "whetstoneProvision", icon: "⚑", x: 10, y: 102, requires: ["cardAtkUp"] },
     { id: "cardDefUp", icon: "⛨", x: 30, y: 120, requires: ["cardAtkUp"] },
     { id: "aegisProvision", icon: "⛨", x: 10, y: 120, requires: ["cardDefUp"] },
-    // Research needs the Archives, so the skills that open it come after them:
-    // Blue Key and Faster Trainers either side of the Archives, Rehearsed steps
-    // left of Breakthrough, and Pocket Money (then Spare Change, Wishing
-    // Well and Free Training below it) and Greater Heal after it,
-    // either side of the core path down the middle (Lifesteal, Buy Quantity, Thorns, GK Siphon, then Manual Hand).
+    // The Archives under Breakthrough, and the rest of the tree under them,
+    // stay hidden until Quest for Knowledge (in the Breakthrough tree) is
+    // owned. Research needs the Archives, so the skills that open it come
+    // after them: Pocket Money (then Spare Change, Wishing Well and Free
+    // Training below it) and Greater Heal either side of the core path down
+    // the middle (Lifesteal, Buy Quantity, Thorns, GK Siphon, then Manual Hand).
     // Recovery and Regen Research (then Parry, then Revive) stand under Greater Heal.
-    { id: "cardBlueKey", icon: "⚿", x: 20, y: 174, requires: ["archives"] },
-    { id: "inspirationUndos", icon: "↺", x: 20, y: 196, requires: ["archives"] },
-    { id: "breakthrough", icon: "▼", x: 50, y: 196, requires: ["archives"] },
-    { id: "fasterTrainers", icon: "»", x: 80, y: 174, requires: ["archives"] },
-    { id: "pocketMoney", icon: "¤", x: 20, y: 214, requires: ["breakthrough"] },
-    { id: "lifesteal", icon: "♥", x: 50, y: 214, requires: ["breakthrough"] },
+    { id: "archives", icon: "▥", x: 50, y: 196, requires: ["breakthrough"], reveal: "questForKnowledge" },
+    { id: "pocketMoney", icon: "¤", x: 20, y: 214, requires: ["archives"] },
+    { id: "lifesteal", icon: "♥", x: 50, y: 214, requires: ["archives"] },
     { id: "buyQuantity", icon: "×", x: 50, y: 232, requires: ["lifesteal"] },
     { id: "thorns", icon: "✥", x: 50, y: 250, requires: ["buyQuantity"] },
     { id: "keySiphon", icon: "⚿", x: 50, y: 268, requires: ["thorns"] },
@@ -60,7 +63,7 @@ export const TREES: SkillTree[] = [
     { id: "loot", icon: "☠", x: 30, y: 250, requires: ["spareChange"] },
     { id: "wishingWell", icon: "◎", x: 20, y: 268, requires: ["spareChange"] },
     { id: "freeTraining", icon: "↑", x: 20, y: 286, requires: ["wishingWell"] },
-    { id: "greaterHeal", icon: "✚", x: 80, y: 214, requires: ["breakthrough"] },
+    { id: "greaterHeal", icon: "✚", x: 80, y: 214, requires: ["archives"] },
     { id: "recovery", icon: "✦", x: 70, y: 232, requires: ["greaterHeal"] },
     { id: "findPotion", icon: "⚗", x: 70, y: 250, requires: ["recovery"] },
     { id: "regenResearch", icon: "♥", x: 90, y: 232, requires: ["greaterHeal"] },
@@ -109,33 +112,38 @@ export const TREES: SkillTree[] = [
     { id: "limitBreak9", icon: "⇑", x: 30, y: 556, requires: ["limitBreak8"] },
     { id: "limitBreak10", icon: "⇑", x: 30, y: 574, requires: ["limitBreak9"] },
   ] },
-  { id: "breakthrough", name: "Breakthrough", currency: "breakthrough", gate: "breakthrough", description: "Earn a Breakthrough point for each Tower Goal you claim.", height: 198, unlocks: true, nodes: [
-    { id: "moveSpeed", icon: "»", x: 50, y: 10, requires: ["breakthrough"] },
-    { id: "instantCombat", icon: "↯", x: 18, y: 10, requires: ["moveSpeed"] },
-    { id: "extraKey", icon: "⚿", x: 82, y: 10, requires: ["moveSpeed"] },
-    { id: "pathfinder", icon: "⌖", x: 18, y: 34, requires: ["moveSpeed"] },
-    { id: "bombs", icon: "✹", x: 50, y: 34, requires: ["moveSpeed"] },
-    { id: "dash", icon: "⇶", x: 82, y: 34, requires: ["moveSpeed"] },
+  { id: "breakthrough", name: "Breakthrough", currency: "breakthrough", gate: "breakthrough", description: "Earn a Breakthrough point for each Tower Goal you claim.", height: 222, unlocks: true, nodes: [
+    // Quest for Knowledge first: it reveals the Inspiration tree's Archives
+    // and everything under them.
+    { id: "questForKnowledge", icon: "▥", x: 50, y: 10, requires: ["breakthrough"] },
+    { id: "moveSpeed", icon: "»", x: 50, y: 34, requires: ["questForKnowledge"] },
+    { id: "instantCombat", icon: "↯", x: 18, y: 34, requires: ["moveSpeed"] },
+    { id: "extraKey", icon: "⚿", x: 82, y: 34, requires: ["moveSpeed"] },
+    { id: "pathfinder", icon: "⌖", x: 18, y: 58, requires: ["moveSpeed"] },
+    { id: "bombs", icon: "✹", x: 50, y: 58, requires: ["moveSpeed"] },
+    { id: "dash", icon: "⇶", x: 82, y: 58, requires: ["moveSpeed"] },
     // Dash's own skills down the right edge: End Rush, Dash Regen, then Dash Badge.
-    { id: "endRush", icon: "⇶", x: 90, y: 61, requires: ["dash"] },
-    { id: "dashRegen", icon: "⇶", x: 90, y: 87, requires: ["endRush"] },
-    { id: "dashBadge", icon: "◪", x: 90, y: 111, requires: ["dashRegen", "cardBadges"] },
-    { id: "undos", icon: "↺", x: 23, y: 61, requires: ["pathfinder"] },
-    { id: "cardBadges", icon: "◪", x: 56, y: 61, requires: ["bombs"] },
+    { id: "endRush", icon: "⇶", x: 90, y: 85, requires: ["dash"] },
+    { id: "dashRegen", icon: "⇶", x: 90, y: 111, requires: ["endRush"] },
+    { id: "dashBadge", icon: "◪", x: 90, y: 135, requires: ["dashRegen", "cardBadges"] },
+    // Rehearsed steps, then Echoes of time, under Pathfinder: the undos.
+    { id: "inspirationUndos", icon: "↺", x: 23, y: 85, requires: ["pathfinder"] },
+    { id: "undos", icon: "↺", x: 23, y: 111, requires: ["inspirationUndos"] },
+    { id: "cardBadges", icon: "◪", x: 56, y: 85, requires: ["bombs"] },
     // The research skills down the middle under Bombs: Find Gold Key, Key
     // Efficiency, then Interest, with Max Interest to its left and Mug to its right.
-    { id: "findYellowKey", icon: "⚿", x: 50, y: 87, requires: ["bombs"] },
-    { id: "keyEfficiency", icon: "⚿", x: 50, y: 111, requires: ["findYellowKey"] },
-    { id: "interest", icon: "¤", x: 50, y: 135, requires: ["keyEfficiency"] },
-    { id: "maxInterest", icon: "¤", x: 22, y: 135, requires: ["interest"] },
-    { id: "mug", icon: "☠", x: 78, y: 135, requires: ["interest"] },
+    { id: "findYellowKey", icon: "⚿", x: 50, y: 111, requires: ["bombs"] },
+    { id: "keyEfficiency", icon: "⚿", x: 50, y: 135, requires: ["findYellowKey"] },
+    { id: "interest", icon: "¤", x: 50, y: 159, requires: ["keyEfficiency"] },
+    { id: "maxInterest", icon: "¤", x: 22, y: 159, requires: ["interest"] },
+    { id: "mug", icon: "☠", x: 78, y: 159, requires: ["interest"] },
     // Overheal under Max Interest, then the run's charges: Ignore and
     // Target, each with the skill that regains it below.
-    { id: "overheal", icon: "♥", x: 22, y: 161, requires: ["maxInterest"] },
-    { id: "ignore", icon: "⊘", x: 50, y: 161, requires: ["interest"] },
-    { id: "target", icon: "⌖", x: 78, y: 161, requires: ["mug"] },
-    { id: "ignoreMore", icon: "⊘", x: 50, y: 185, requires: ["ignore"] },
-    { id: "targetMore", icon: "⌖", x: 78, y: 185, requires: ["target"] },
+    { id: "overheal", icon: "♥", x: 22, y: 185, requires: ["maxInterest"] },
+    { id: "ignore", icon: "⊘", x: 50, y: 185, requires: ["interest"] },
+    { id: "target", icon: "⌖", x: 78, y: 185, requires: ["mug"] },
+    { id: "ignoreMore", icon: "⊘", x: 50, y: 209, requires: ["ignore"] },
+    { id: "targetMore", icon: "⌖", x: 78, y: 209, requires: ["target"] },
   ] },
   { id: "wayfinding", name: "Wayfinding", currency: "breakthrough", gate: null, description: "Teach Delve Automove to explore, compare routes and preserve resources.", nodes: [
     { id: "aiMemory", icon: "◇", x: 50, y: 20, requires: [] },
@@ -162,7 +170,14 @@ export const TREES: SkillTree[] = [
 export function skillAvailable(id: UpgradeId, levels: Record<UpgradeId, number>) {
   const tree = TREES.find(t => t.nodes.some(n => n.id === id));
   const node = tree?.nodes.find(n => n.id === id);
-  return !!node && treeOpen(tree!, levels) && node.requires.every(key => levels[key] > 0);
+  return !!node && treeOpen(tree!, levels) && !skillHidden(id, levels) && node.requires.every(key => levels[key] > 0);
+}
+/** Whether skill `id` is hidden: its node waits on a `reveal` not yet owned,
+ * or requires a node that is hidden. */
+export function skillHidden(id: UpgradeId, levels: Record<UpgradeId, number>): boolean {
+  const node = TREES.flatMap(t => t.nodes).find(n => n.id === id);
+  if (!node) return false;
+  return (node.reveal !== undefined && !(levels[node.reveal] > 0)) || node.requires.some(key => skillHidden(key, levels));
 }
 /** Whether `tree`'s gate is owned (or it has none). */
 export function treeOpen(tree: SkillTree, levels: Record<UpgradeId, number>) {

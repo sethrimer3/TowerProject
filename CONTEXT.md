@@ -360,6 +360,11 @@ _Avoid_: new tower, prestige, world
 The Tower's currency: one for each floor completed beyond the highest completed before (paid as the hero climbs its stairs onto the floor above) and 10 for each area cleared, spent on upgrades in the skill trees.
 _Avoid_: shards
 
+**Hidden skill**:
+A skill-tree node not yet revealed: it isn't drawn, can't be read or bought, and the line to it from the skill above fades away.
+A Breakthrough skill reveals it, and with it everything under it (Quest for Knowledge reveals the Archives and the rest of the Inspiration tree).
+_Avoid_: locked skill (a locked skill shows, waiting on its requirements), secret skill
+
 **Boss**:
 The monster guarding the way up at the end of every ten floors: in front of the stairs on the Tower's 10th, 20th, … floors, and below each Delve milestone gate. It has several times a normal monster's HP and hits harder than any other monster on its floor, and must be beaten to climb on.
 _Avoid_: area boss, guardian
