@@ -118,11 +118,12 @@ export type InPlaceTerms = { tradeCost(card: TraderCard): number; smeltCost(card
 /** The terms without any tree. */
 const PLAIN_TERMS: InPlaceTerms = { tradeCost: (card) => TRADERS[card].keys, smeltCost: () => 1, smeltPercent: (card) => SMELTS[card].percent };
 /** What card `id` does, as the player is told: STAIRS says how it climbs
- * in the Delve only once Breakthrough is owned, a trader the keys a
+ * in the Delve only once the Tournament, which plays it, is unlocked
+ * (`delveKnown`), a trader the keys a
  * trade takes (its 3, or fewer with its tree's Efficiency), and a smelt
  * the key it takes and the HP it heals (`terms`). */
-export function cardText(id: CardId, upgrades: Record<UpgradeId, number>, terms: InPlaceTerms = PLAIN_TERMS): string {
-  if (id === "stairs" && !upgrades.breakthrough) return "Move toward the stairs up.";
+export function cardText(id: CardId, delveKnown: boolean, terms: InPlaceTerms = PLAIN_TERMS): string {
+  if (id === "stairs" && !delveKnown) return "Move toward the stairs up.";
   if (isTrader(id)) {
     const { from, to } = TRADERS[id], keys = `${snap(terms.tradeCost(id))} ${KEY_WORDS[from]} keys`;
     return `Trade ${keys} for a ${KEY_WORDS[to]} key, without moving. Skipped with fewer than ${keys}.`;

@@ -90,7 +90,7 @@ import { NoticeDesk } from "./game/notice-desk.ts";
 import { boonFactor, runBoons, weakened } from "./shrines.ts";
 import type { MissionType } from "./missions/catalog.ts";
 import type { EventMissionType } from "./events/catalog.ts";
-import { LEAGUE_INFO } from "./tournament/leagues.ts";
+import { LEAGUE_INFO, type League } from "./tournament/leagues.ts";
 import { runStream, tournamentScore, type TournamentRun } from "./tournament/run.ts";
 import type { TournamentInfo } from "./tournament/server.ts";
 import { raised, wornEffects } from "./equipment/effects.ts";
@@ -1118,7 +1118,7 @@ export class Game {
    * trader's keys a trade and a smelt's key and heal by its tree
    * (`HandRules.tradeCost`, `smeltCost`, `smeltPercent`). */
   cardText(id: CardId) {
-    return cardText(id, this.save.upgrades, this.handRules);
+    return cardText(id, this.tournament.unlocked, this.handRules);
   }
   /** After something the player does inside a run (an item used, a skill),
    * a stuck hand checks its cards again and plays on if one can act. */
@@ -2548,6 +2548,12 @@ export class Game {
    * run can be). */
   get tournamentRun(): TournamentRun | undefined {
     return this.mode === "delve" ? this.delveRun.tournament : undefined;
+  }
+  /** The league whose cave the Delve plays: the tournament run's, or, in
+   * the Delve's forest, the player's, whose cave the run it enters will
+   * play (`beginTournament`), whichever cave is selected. */
+  get delveLeague(): League {
+    return this.tournamentRun?.league ?? this.save.tournament.league;
   }
   /** An area reward chest opened: its reward was paid when earned, so it
    * only shows it, with the board's golden burst. The chest stands on the

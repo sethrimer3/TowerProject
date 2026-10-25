@@ -6,7 +6,7 @@ import { ENTRANCE_Y, OUTSIDE_START_Y, OutsideWorld } from "../src/outside.ts";
 import { MODES } from "../src/modes.ts";
 import { xpForLevel } from "../src/progression/xp.ts";
 import { trainNow } from "./train-now.ts";
-import { CLOSED, openTournament } from "./open-tournament.ts";
+import { CLOSED, enterTournament, openTournament } from "./open-tournament.ts";
 
 // The forest's sign down the path to the other mode's forest, the run paused
 // behind the Research page, and training bought mid-run surviving undo.
@@ -113,6 +113,17 @@ test("the Tournament button leads to the Delve's forest while a tournament is op
   const inside = forest();
   inside.enterRun();
   assert.equal(inside.toDelveForest(), false);
+});
+
+test("the Delve plays its league's cave, whichever cave is selected", () => {
+  const g = forest();
+  g.toDelveForest();
+  g.save.tournament.league = "gold";
+  assert.equal(g.delveLeague, "gold", "the forest names the cave its run will play");
+  assert.equal(g.save.delve.tier, 1);
+  assert.ok(enterTournament(g, "silver"));
+  assert.equal(g.delveLeague, "silver", "the run's own league");
+  assert.equal(g.save.delve.tier, 3);
 });
 
 test("entry closing leads the player out of the Delve's forest at once, to the Tower's start", () => {

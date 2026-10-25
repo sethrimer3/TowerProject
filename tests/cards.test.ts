@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { BASE_HAND, BASE_HAND_SLOTS, CARDS, CARD_IDS, cardText, explainStuck, GOAL_CARDS, HAND_SLOT_GEMS, MAX_HAND_SLOTS, deckCards, handSlots, nextHandSlotGems, moveCard, placeCard, planHand, upgradeCards, dealCard, type CardId } from "../src/cards/cards.ts";
 import { defaults } from "../src/save/save.ts";
+import { Game } from "../src/state.ts";
 import { UPGRADES } from "../src/progression/upgrades.ts";
 import type { Board, Position } from "../src/board.ts";
 import type { DelveRun, Run } from "../src/runs.ts";
@@ -235,13 +236,17 @@ test("moving a card shifts each card between its old and new slots over one", ()
   assert.deepEqual(hand, ["stairs", "heal", "door", "yellowKey", "monster"], "the hand given is left alone");
 });
 
-test("the Stairs card mentions the Delve only once Breakthrough is owned", () => {
-  const s = defaults();
-  assert.equal(cardText("stairs", s.upgrades), "Move toward the stairs up.");
-  assert.equal(cardText("door", s.upgrades), CARDS.door.text);
-  s.upgrades.breakthrough = 1;
-  assert.equal(cardText("stairs", s.upgrades), CARDS.stairs.text);
-  assert.match(cardText("stairs", s.upgrades), /Delve/);
+test("the Stairs card mentions the Delve only once the Tournament is unlocked", () => {
+  assert.equal(cardText("stairs", false), "Move toward the stairs up.");
+  assert.equal(cardText("door", false), CARDS.door.text);
+  assert.equal(cardText("stairs", true), CARDS.stairs.text);
+  assert.match(cardText("stairs", true), /Delve/);
+  const g = new Game(defaults());
+  assert.equal(g.cardText("stairs"), "Move toward the stairs up.");
+  g.save.upgrades.breakthrough = 1;
+  assert.equal(g.cardText("stairs"), "Move toward the stairs up.", "Breakthrough alone doesn't");
+  g.save.settings.devMode = true;
+  assert.equal(g.cardText("stairs"), CARDS.stairs.text);
 });
 
 test("a reward in a nook beside a corridor guard is taken only by a card that wants it", () => {

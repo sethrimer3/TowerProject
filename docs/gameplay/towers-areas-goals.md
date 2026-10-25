@@ -9,7 +9,8 @@ Each pays more Gold: ×2 in Tower II, ×3.1 in III, ×4.3 in IV, then ×5.6, ×7
 Silver stays the same, so a run buys about the same run training, while potions stay the same too (only upgrades will raise those).
 ATK and DEF shards raise their stat by 1 in Tower I and by 2.75 times as much in each tower after (2.75 in II, 7.56 in III, …).
 The floors are laid out as in Tower I, but blue, red and Heart Doors (and blue and red keys) come earlier in each tower.
-Once a second one is open, arrows on either side of the board in the forest choose which the next run enters; its numeral glows over the doorway, and the board's subtitle names it with its Gold & XP bonus.
+Once a second one is open, arrows on either side of the board in the Tower's forest choose which the next run enters; its numeral glows over the doorway, and the board's subtitle names it with its Gold & XP bonus.
+The Delve's forest has no arrows: it always shows the cave its tournament run will play, its league's (*Delve 3+* in Silver).
 Each keeps its own records: its highest floor, the Inspiration its new floors pay (again from its first floor) and its areas mastered and cleared, and the Goals screen shows each tower's checkpoints apart.
 
 ## Areas

@@ -5,6 +5,7 @@ import { drawFlyers } from "./flyer-art.ts";
 import type { Game } from "../state.ts";
 import type { Tile, Torch } from "../entities.ts";
 import { TIER_BONUS_TENTHS, tierNumeral } from "../tiers.ts";
+import { LEAGUE_INFO } from "../tournament/leagues.ts";
 import { factorText } from "../economy/gold-multipliers.ts";
 import { drawProvingGrounds, drawBlacksmith, drawEntrance, drawTournamentHall, OutsideWorld, OUTSIDE_SIZE, outsideWeather, roadsOf } from "../outside.ts";
 import { DecorLayer, type DecorFrame, type MirroredSprites } from "./decor/decor-render.ts";
@@ -430,10 +431,11 @@ export class Renderer {
     c.save();
     c.translate(-f.left * f.s, (f.n - OUTSIDE_SIZE + f.bottom) * f.s);
     c.scale(f.s / 24, f.s / 24);
-    const slice = g.save[g.mode];
-    const tiers = slice.tiersOpen > 1;
-    drawEntrance(c, g.mode, Math.floor(g.world.width / 2), tiers ? tierNumeral(slice.tier) : "",
-      tiers ? { text: factorText(TIER_BONUS_TENTHS[slice.tier - 1]! / 10), coin: goldCoin() } : undefined, f.look.styledSprites);
+    // The Delve's cave is always its league's, the one its run plays.
+    const delve = g.mode === "delve", tier = delve ? LEAGUE_INFO[g.delveLeague].cave : g.save.tower.tier;
+    const tiers = delve || g.save.tower.tiersOpen > 1;
+    drawEntrance(c, g.mode, Math.floor(g.world.width / 2), tiers ? tierNumeral(tier) : "",
+      tiers ? { text: factorText(TIER_BONUS_TENTHS[tier - 1]! / 10), coin: goldCoin() } : undefined, f.look.styledSprites);
     if (g.mode === "tower") drawProvingGrounds(c, Math.floor(g.world.width / 2));
     if (g.world instanceof OutsideWorld && g.world.blacksmith) drawBlacksmith(c, g.world.entranceX, f.look.styledSprites);
     if (g.world instanceof OutsideWorld && g.world.hall) drawTournamentHall(c, g.world.entranceX, f.look.styledSprites);

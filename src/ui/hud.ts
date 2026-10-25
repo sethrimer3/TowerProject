@@ -21,7 +21,7 @@ import type { BoardOverlay } from "./board-overlay.ts";
 import { CountUp } from "./count-up.ts";
 import { PlayClock, RateTally } from "./purse-rate.ts";
 import { heldAmount } from "./currencies-dialog.ts";
-import { caveLabel } from "../tournament/leagues.ts";
+import { caveLabel, LEAGUE_INFO } from "../tournament/leagues.ts";
 import { shortCountdown } from "../tournament/schedule.ts";
 import { GOLD_BOOST_FACTOR, GOLD_BOOST_MS } from "../economy/gold-boost.ts";
 import { adsOff } from "../shop/entitlements.ts";
@@ -329,17 +329,23 @@ export function renderBoardHeading(game: Game, overlay: BoardOverlay) {
   overlay.hide();
 }
 
-/** Once a second tier is open: the tier climbed and its Gold and XP bonuses. */
+/** Once a second tier is open: the tier climbed and its Gold and XP bonuses.
+ * The Delve always names its league's cave, the only one it plays. */
 function tierLine(game: Game) {
+  if (game.mode === "delve") {
+    const league = game.delveLeague;
+    return `${caveLabel(league)} · ${tierRewardText(LEAGUE_INFO[league].cave)}`.toUpperCase();
+  }
   const slice = game.save[game.mode];
   if (slice.tiersOpen < 2) return null;
   return `${MODES[game.mode].words.tierName.toUpperCase()} ${tierNumeral(slice.tier)} · ${tierRewardText(slice.tier).toUpperCase()}`;
 }
 
-/** In the forest, once a second tier is open, the arrows beside the board
- * choose the tier the next run climbs. */
+/** In the Tower's forest, once a second tier is open, the arrows beside the
+ * board choose the tier the next run climbs (the Delve's cave is its
+ * league's). */
 function renderTierArrows(game: Game) {
-  const slice = game.save[game.mode], shown = !!game.run.outside && slice.tiersOpen > 1;
+  const slice = game.save[game.mode], shown = !!game.run.outside && game.mode === "tower" && slice.tiersOpen > 1;
   const name = MODES[game.mode].words.tierName;
   for (const [id, to] of [["tier-prev", slice.tier - 1], ["tier-next", slice.tier + 1]] as const) {
     const button = el(id) as HTMLButtonElement;
@@ -352,7 +358,7 @@ function renderTierArrows(game: Game) {
 /** What the board's heading shows: redrawn when it changes. */
 const headingKey = (game: Game) => {
   const slice = game.save[game.mode];
-  return `${game.mode}:${!!game.run.outside}:${slice.tier}:${slice.tiersOpen}`;
+  return `${game.mode}:${!!game.run.outside}:${slice.tier}:${slice.tiersOpen}${game.mode === "delve" ? `:${game.delveLeague}` : ""}`;
 };
 
 /** The button's icon inside a run, by what pressing it does: text glyphs
@@ -712,7 +718,7 @@ function renderProgress(game: Game) {
   text("height-label", (outside ? rules.words.tierName : rules.words.progress).toUpperCase());
   const rawRunBest = game.run.maxHeight ?? game.run.height;
   const rawAllBest = game.save[game.mode].best;
-  text("height", outside ? game.save[game.mode].tier : displayedProgress(game.run.height));
+  text("height", outside ? (game.mode === "delve" ? `${LEAGUE_INFO[game.delveLeague].cave}+` : game.save.tower.tier) : displayedProgress(game.run.height));
   // Once Note Taking is researched, the floor number opens the run's notes.
   const notes = !outside && notesResearched(game.save), height = document.querySelector<HTMLElement>(".height")!;
   if (height.classList.contains("takes-notes") !== notes) {

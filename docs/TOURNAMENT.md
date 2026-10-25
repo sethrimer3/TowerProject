@@ -106,7 +106,7 @@ If entry closes while the Delve's forest shows, `Game.leaveClosedDelve` takes th
 `TournamentClient.begin` (`tournament/client.ts`, which does everything that waits on the server, so the game's commands never do) asks the server for the live tournament, registers the entry (`enter`), and then `Game.beginTournament(info, entry)` spends the Ticket and goes in; it refuses, spending nothing, unless the Tournament is unlocked and neither mode's run is inside.
 
 - **Mode:** the Delve (`Game.switchMode`).
-- **Tier:** the league's cave: the Delve's selected tier switches to it (`switchTier`), so the run's records are the cave's. **Depth:** the start. **Hero:** the player's own loadout, at full HP, as any run.
+- **Tier:** the league's cave: the Delve's selected tier switches to it (`switchTier`), so the run's records are the cave's. The Delve's forest names that cave already (its entrance, heading and HUD tier, by `Game.delveLeague`), and has no tier arrows. **Depth:** the start. **Hero:** the player's own loadout, at full HP, as any run.
 - **The same run for everyone:** the server sends the tournament's seeds, by name, and every chance in the run draws from them:
   - `layout`: the run seed (the labyrinth, torches, decor, percent potions, Skip and Revive rolls, which all derive from the run seed already);
   - `game`: the run's other chances (treasure loot, and every other draw `RunPurse` makes), in place of the game's shared `game` stream;
