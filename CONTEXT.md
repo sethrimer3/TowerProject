@@ -410,7 +410,7 @@ Beginning a new Tower run at once on the floor just above a checkpoint already c
 _Avoid_: teleport, starting floor
 
 **Route preview**:
-The route to a tapped tile drawn on the board, with a Route totals box of what happens along it (HP lost, keys spent, items picked up). Shown once the Breakthrough skill Pathfinder is owned; before that a tap only highlights and inspects the tile.
+The route to a tapped tile drawn on the board, with a Route totals box of what happens along it (HP lost, keys spent, items picked up). Switched off for now: a tap inside a run only highlights and inspects the tile.
 _Avoid_: path preview
 
 **Damage Prediction**:

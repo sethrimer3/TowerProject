@@ -60,7 +60,8 @@ export class NoticeDesk {
     switch (spot) {
       case "upgrades": return this.firstInspiration || this.tree("inspiration") || this.tree("breakthrough");
       case "gear": return this.firstGear || equipmentWaiting(save);
-      case "research": return trainingWaiting(save);
+      // The Archives lesson's dot waits until the Research page is opened.
+      case "research": return trainingWaiting(save) || (!!save.upgrades.archives && !save.tutorials.research && !save.tutorials.archives);
       case "deck": {
         // A new Deck lesson waits behind the tab until it is done, as does a
         // card not yet shown or a card level gained since the page last showed.
@@ -94,8 +95,10 @@ export class NoticeDesk {
       case "gear": return this.firstGear && (save.tutorials.gear = true);
       case "equipment": return !save.equipment.seen && (save.equipment.seen = true);
       case "research": {
-        // Opening the Research page ends the training lesson.
+        // Opening the Research page ends the training lesson, and leads the
+        // Archives lesson on to its note there.
         if (trainingWaiting(save)) save.tutorials.training = true;
+        if (save.upgrades.archives) save.tutorials.research = true;
         const level = levelForXp(save.xp), archives = this.host.research.events;
         const changed = seen.level !== level || seen.archives !== archives;
         seen.level = level;

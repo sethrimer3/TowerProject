@@ -178,9 +178,12 @@ export type Save = {
    * again once Door & Key is owned, dismissed (or a run entered), `delve`, opening the Delve
    * once a tournament opens it, `chamber`, the first Tower run
    * ended, after which a new floor's "A new chamber opens." no longer
-   * rises over the board, and `cardPoints`, spending the first card point
-   * on an upgrade tree, led there from the forest's Deck tab. */
-  tutorials: { deck: boolean; removeCard: boolean; addCard: boolean; upgrades: boolean; gear: boolean; onTheJob: boolean; speed: boolean; climb: boolean; keys: boolean; autoClimb: boolean; stuck: boolean; enemy: boolean; enter: boolean; training: boolean; delve: boolean; chamber: boolean; cardPoints: boolean };
+   * rises over the board, `cardPoints`, spending the first card point
+   * on an upgrade tree, led there from the forest's Deck tab, and once the
+   * Archives skill is owned, `research`, opening the Research page, led there
+   * from the Tower's forest, then `archives`, its note on the Archives tab
+   * dismissed. */
+  tutorials: { deck: boolean; removeCard: boolean; addCard: boolean; upgrades: boolean; gear: boolean; onTheJob: boolean; speed: boolean; climb: boolean; keys: boolean; autoClimb: boolean; stuck: boolean; enemy: boolean; enter: boolean; training: boolean; delve: boolean; chamber: boolean; cardPoints: boolean; research: boolean; archives: boolean };
   /** Per tree: its currency earned since the tree was last shown (a Tower
    * run's Inspiration, ended; a Goal's Breakthrough point, claimed), so its
    * tab (and the Upgrades tab) wear a dot in the forest while a skill there

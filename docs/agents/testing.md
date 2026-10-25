@@ -53,7 +53,7 @@ It checks slider variables and actual PNG response loads rather than Chromium's 
 The appended `spriteCombat` render scene covers projectiles, shield boundaries, enemy and Target/Ignore/skip marks, live pixel lettering and opened/closed chest stars with the default pixel-art kit, without changing earlier scene seeds.
 
 `tests/sprite-layout-browser.mjs` starts its own server and checks actual text/icon bounds inside HUD PNG borders at 320–1100 pixels, open menu controls, large HP/ATK/DEF/Shroud values, phone Training values/controls and actual Settings, Deck and Shop buttons.
-It also checks a packed HUD with all seven limited-use items, Pathfinder, large combat stats and both XP/Shrine progress tracks, asserting the portrait stays beside inventory under full-width vitals and play/pause labels remain whole with the default kit and alternate themes.
+It also checks a packed HUD with all seven limited-use items, large combat stats and both XP/Shrine progress tracks, asserting the portrait stays beside inventory under full-width vitals and play/pause labels remain whole with the default kit and alternate themes.
 It checks the default pixel-art interface, local font loading, reload and independent theme overrides.
 
 `tests/sprite-lighting-browser.mjs` compares baked lighting-mask alpha with the actual hero PNG, including a deliberately delayed image, facing changes, highlight clipping and exact toggle restoration before cache expiry.
@@ -63,6 +63,7 @@ It checks the default pixel-art interface, local font loading, reload and indepe
 It first taps a hand card and a deck card on a touch phone: their details open on the tap's release and must stay open through the tap's own click, then close on the next tap.
 
 `tests/card-points-lesson-browser.mjs` starts its own Vite server and plays the card points lesson at phone and desktop widths: the Deck tab's numbered dot and pointing hand in the forest with everything else held, the Deck page's arrows and NEW marks, the lesson's card the only one to press, its tree held open until a point is spent, the closing note, NEW gone once a card is met, and the lesson gone after a reload.
+`tests/archives-lesson-browser.mjs` starts its own Vite server and plays the Archives lesson at phone and desktop widths: the Research tab's dot and pointing hand in the Tower's forest with everything else held, the hand under the Research page's Archives tab over the note, the other tabs held until the note is pressed, and a reload after.
 
 `tests/environment-sprites-browser.mjs` starts its own server, defers one water PNG, and checks literal PNG texels against the real baked pool/depth/bank pixels, unchanged pool/moss coverage, vine leaves staying out of water and immediate cache refresh.
 It reviews native/enlarged pieces and repeated materials, real phone/desktop dungeon frames, independent themes, decor opt-outs, exact off/on/off restoration, and palette-matched emitted light colors with unchanged light geometry.

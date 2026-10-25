@@ -17,7 +17,7 @@ import { PROVISIONS_NOTE } from "./board-lesson.ts";
 type Tree = (typeof TREES)[number];
 
 const TREE_ICONS: Record<string, UiSprite> = {
-  inspiration: "upgrades", breakthrough: "automove", legacy: "tower", wisdom: "settings",
+  inspiration: "inspiration", breakthrough: "breakthrough", legacy: "tower", wisdom: "settings",
 };
 /** What a skill's tooltip says can be done with it now. */
 function tooltipHint(p: { locked: boolean; maxed: boolean; available: boolean; affordable: boolean }, requirements: string[], unlocks: boolean) {

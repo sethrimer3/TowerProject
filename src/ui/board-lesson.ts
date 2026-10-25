@@ -5,8 +5,8 @@ import { el, POINTER_SVG } from "./dom.ts";
 // board. Inside a run the tutorials' pointing hand shows the card to press
 // (STAIRS on the first run, then KEY and DOOR) and, while the hand is stuck,
 // End Run flashes slowly; in the forest the hand shows the button to press
-// next, the Upgrades tab, Enter, the Research tab (the first time training
-// points wait to be spent), the Deck tab, the sign down the path to the
+// next, the Upgrades tab, Enter, the Research tab (once the Archives skill is
+// owned, and the first time training points wait to be spent), the Deck tab, the sign down the path to the
 // Delve or, once a first provision is open, the Gear tab. Only `enter` and `autoClimb` are dismissed by tapping their notes; the others wait
 // on what they ask for (`cards` on the Deck page, which takes the lesson on).
 // Each hand sits inside what it points at.
@@ -22,6 +22,7 @@ const NOTES: Record<BoardLesson, { title: string; text?: string }> = {
   enemy: { title: "An enemy blocks the way.", text: "Unlock the Enemy card on the Inspiration tree to fight it. Press End Run to go and spend your Inspiration." },
   upgrades: { title: "Spend your Inspiration.", text: "Open Upgrades: the Inspiration tree's skills give you new abilities." },
   enter: { title: "Press Enter to try another run." },
+  research: { title: "Research unlocked.", text: "Press the Research tab to open the Research menu." },
   trainingPoints: { title: "Training points to spend.", text: "After levelling up, you can spend points to increase your stats. Press the Research tab to train." },
   cards: { title: "Your cards gain levels as you use them.", text: "Each level grants a card point. Open your Deck to spend it." },
   delve: { title: "A tournament is open: follow the path down to the Delve and enter its cave." },
@@ -37,7 +38,7 @@ function targets(lesson: BoardLesson | "back"): HTMLElement[] {
   const tab = (id: string) => document.querySelector<HTMLElement>(`nav [data-tab="${id}"]`);
   const found = {
     climb: [card("stairs")], keys: [card("key"), card("door")], autoClimb: [], stuck: [], enemy: [],
-    upgrades: [tab("upgrades")], enter: [el("enter-run")], trainingPoints: [tab("research")], cards: [tab("deck")], delve: [el("forest-sign")], provisions: [tab("gear")], back: [tab("board")],
+    upgrades: [tab("upgrades")], enter: [el("enter-run")], research: [tab("research")], trainingPoints: [tab("research")], cards: [tab("deck")], delve: [el("forest-sign")], provisions: [tab("gear")], back: [tab("board")],
   }[lesson] as (HTMLElement | null)[];
   return found.filter((t): t is HTMLElement => !!t);
 }

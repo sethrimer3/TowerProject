@@ -341,7 +341,7 @@ export class GoalsPage {
       if (reward.kind === "tower") this.towerOpened(reward.tower);
     };
     if (premium) explain();
-    else flyToPurse(from, [{ html: `${uiSprite("automove")}<b>+${GOAL_BREAKTHROUGH}</b>`, to: null, landed: explain }]);
+    else flyToPurse(from, [{ html: `${uiSprite("breakthrough")}<b>+${GOAL_BREAKTHROUGH}</b>`, to: null, landed: explain }]);
     const shown = goalRewardShown(reward);
     if (shown) revealReward(shown, game.save.settings.reduceMotion);
   }

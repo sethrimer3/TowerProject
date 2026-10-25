@@ -106,7 +106,7 @@ import type { Coin, Dash, Drop, Facing, Gain, GainArt, Heal, ShownTurn } from ".
  * which seed (rolled from the game's randomness when left out). */
 export type RunStart = { outside?: boolean; seed?: number; height?: number };
 /** A lesson shown on the board (`Game.boardLesson`). */
-export type BoardLesson = "climb" | "keys" | "autoClimb" | "stuck" | "enemy" | "upgrades" | "enter" | "trainingPoints" | "cards" | "delve" | "provisions";
+export type BoardLesson = "climb" | "keys" | "autoClimb" | "stuck" | "enemy" | "upgrades" | "enter" | "trainingPoints" | "cards" | "delve" | "provisions" | "research";
 /** The first skills the lessons lead to on the Inspiration tree, in order. */
 export type IntroSkill = "cardDoorKey" | "cardEnemy";
 export type RouteEffects = {
@@ -463,7 +463,9 @@ export class Game {
    * to the Upgrades tab while the next first skill (`introSkill`) can be
    * bought; `enter`, to Enter, once Door & Key is owned until a run goes
    * inside from the forest (and again once Enemy is bought after its
-   * lesson); then, in either forest, `trainingPoints`, the first time training
+   * lesson); `research`, once the Archives skill is owned, to the Research
+   * tab, until the Research page is opened (`archivesLesson` then waits on
+   * its note there); then, in either forest, `trainingPoints`, the first time training
    * points can be spent, which leads to the Research tab until it is
    * opened; then `cards`, which leads to the Deck to
    * spend the first card point (`cardPointsLesson`); then, in the Tower's
@@ -481,6 +483,7 @@ export class Game {
     }
     if (tower && this.introSkill) return "upgrades";
     if (tower && ((!t.enter && owned.cardDoorKey) || (t.enemy && owned.cardEnemy))) return "enter";
+    if (tower && owned.archives && !t.research && !t.archives) return "research";
     if (!t.training && trainingWaiting(this.save)) return "trainingPoints";
     if (this.cardPointsLesson) return "cards";
     if (tower && this.delveOpen && !t.delve) return "delve";
@@ -530,6 +533,19 @@ export class Game {
     let best: CardId | null = null;
     for (const id of shown) if (hasPointsToSpend(save, id) && (!best || pointsLeft(save, id) > pointsLeft(save, best))) best = id;
     return best;
+  }
+  /** Whether the Archives lesson waits on the Research page: the page opened
+   * since the Archives skill was bought (`research`, the board lesson that
+   * leads there), until its note on the Archives tab is dismissed. */
+  get archivesLesson() {
+    const t = this.save.tutorials;
+    return !!this.save.upgrades.archives && t.research && !t.archives;
+  }
+  /** Dismisses the Archives lesson's note, ending the lesson. */
+  finishArchivesLesson() {
+    if (!this.archivesLesson) return false;
+    this.save.tutorials.archives = true;
+    return true;
   }
   /** Dismisses the `enter` and `autoClimb` lessons (the others wait on
    * what they ask for). */
@@ -2598,11 +2614,6 @@ export class Game {
    * too: none in the forest. */
   get handBonus(): HandBonus {
     return handBonus(this.run.outside ? [] : this.held);
-  }
-  /** Whether a tapped tile shows the route there and its totals: the
-   * Breakthrough skill Pathfinder owned, or Dev mode. */
-  get showsRoutes() {
-    return !!this.save.upgrades.pathfinder || this.save.settings.devMode;
   }
   /** Whether a run's Training can be bought with Silver inside it: On the
    * Job owned, or every page shown in Dev mode. */

@@ -74,7 +74,7 @@ export function defaults(): Save {
     manualHand: [],
     manualSlots: 0,
     badges: defaultBadges(),
-    tutorials: { deck: false, removeCard: false, addCard: false, upgrades: false, gear: false, onTheJob: false, speed: false, climb: false, keys: false, autoClimb: false, stuck: false, enemy: false, enter: false, training: false, delve: false, chamber: false, cardPoints: false },
+    tutorials: { deck: false, removeCard: false, addCard: false, upgrades: false, gear: false, onTheJob: false, speed: false, climb: false, keys: false, autoClimb: false, stuck: false, enemy: false, enter: false, training: false, delve: false, chamber: false, cardPoints: false, research: false, archives: false },
     treeNotices: { inspiration: false, breakthrough: false },
     seen: { level: 0, training: 0, archives: 0, cards: [...BASE_HAND], cardLevels: 0, met: [...BASE_HAND] },
     archives: defaultArchives(),
@@ -328,6 +328,10 @@ function decodeUpgrades(raw: any, d: Save) {
   // owns Combat Stance, which now follows them, owns them too, so its hand
   // keeps DOOR, KEY and ENEMY and plays by itself. TODO: drop in a later save version.
   if (d.upgrades.combatStance) for (const id of ["cardDoorKey", "cardEnemy", "autoClimb"] as const) d.upgrades[id] = Math.max(1, d.upgrades[id]);
+  // Path to Wealth and Physician took Pathfinder's and Bombs' places, and now
+  // reveal skills a save may own already. TODO: drop in a later save version.
+  d.upgrades.pathToWealth ||= Math.min(1, count(raw?.pathfinder, 0, 1) + d.upgrades.pocketMoney);
+  d.upgrades.physician ||= Math.min(1, d.upgrades.greaterHeal + d.upgrades.cardBadges + d.upgrades.findYellowKey);
 }
 function decodeProgress(s: any, d: Save, undoCapacity: number) {
   d.gold = fraction(s.gold, d.gold);
@@ -502,9 +506,11 @@ export function decode(raw: string | null): Save {
     d.cardBuys = decodeCardBuys(s.cardBuys);
     d.cardTrees = decodeCardTrees(s.cardTrees, d.cardXp, d.cardBuys.opened);
     d.badges = decodeBadges(s.badges, d.upgrades, researched(d.archives, "badgeSlots"), d.goals);
-    for (const k of ["deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob", "speed", "climb", "keys", "autoClimb", "stuck", "enemy", "enter", "training", "delve", "chamber", "cardPoints"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
+    for (const k of ["deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob", "speed", "climb", "keys", "autoClimb", "stuck", "enemy", "enter", "training", "delve", "chamber", "cardPoints", "research", "archives"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
     // A player who has already spent a card point needs no lesson on it.
     if (CARD_IDS.some((id) => pointsSpent(d.cardTrees, id) > 0)) d.tutorials.cardPoints = true;
+    // Nor does one who has already researched in the Archives need their lesson.
+    if (d.archives.history.length || d.archives.slots.some((slot) => slot.job)) d.tutorials.research = d.tutorials.archives = true;
     for (const k of ["inspiration", "breakthrough"] as const) d.treeNotices[k] = s.treeNotices?.[k] === true;
     // TODO: remove once saves from before the rename are gone.
     d.treeNotices.breakthrough ||= s.treeNotices?.courage === true;

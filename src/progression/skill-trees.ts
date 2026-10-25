@@ -20,7 +20,7 @@ export const TREES: SkillTree[] = [
     { id: "autoClimb", icon: "»", x: 50, y: 48, requires: ["cardEnemy"] },
     // The hand's skills, down to Breakthrough: Buildout, Trainers, Larger
     // Hand, Shroud (with Gold Key, then Blue Key, to its left), Critical (with
-    // Critical Prediction to its left and Faster Trainers to its right). ATK
+    // Critical Prediction, then Bombs, to its left and Faster Trainers to its right). ATK
     // Up branches left off Trainers, with DEF Up under it, each with its
     // provision (Vanguard Banner, Aegis Charm) to its left, and On the Job
     // right off Trainers, with Regen below it and Heal and the Traveler's
@@ -32,6 +32,7 @@ export const TREES: SkillTree[] = [
     { id: "shroud", icon: "◈", x: 50, y: 138, requires: ["largerHand"] },
     { id: "critical", icon: "✸", x: 50, y: 156, requires: ["shroud"] },
     { id: "critPrediction", icon: "✸", x: 30, y: 156, requires: ["critical"] },
+    { id: "bombs", icon: "✹", x: 10, y: 156, requires: ["critPrediction"] },
     { id: "fasterTrainers", icon: "»", x: 70, y: 156, requires: ["critical"] },
     { id: "onTheJob", icon: "¤", x: 80, y: 102, requires: ["trainers"] },
     { id: "regen", icon: "♥", x: 80, y: 120, requires: ["onTheJob"] },
@@ -51,8 +52,10 @@ export const TREES: SkillTree[] = [
     // Training below it) and Greater Heal either side of the core path down
     // the middle (Lifesteal, Buy Quantity, Thorns, GK Siphon, then Manual Hand).
     // Recovery and Regen Research (then Parry, then Revive) stand under Greater Heal.
+    // Pocket Money's side waits on Path to Wealth, and Greater Heal's on Physician,
+    // both in the Breakthrough tree.
     { id: "archives", icon: "▥", x: 50, y: 196, requires: ["breakthrough"], reveal: "questForKnowledge" },
-    { id: "pocketMoney", icon: "¤", x: 20, y: 214, requires: ["archives"] },
+    { id: "pocketMoney", icon: "¤", x: 20, y: 214, requires: ["archives"], reveal: "pathToWealth" },
     { id: "lifesteal", icon: "♥", x: 50, y: 214, requires: ["archives"] },
     { id: "buyQuantity", icon: "×", x: 50, y: 232, requires: ["lifesteal"] },
     { id: "thorns", icon: "✥", x: 50, y: 250, requires: ["buyQuantity"] },
@@ -63,7 +66,7 @@ export const TREES: SkillTree[] = [
     { id: "loot", icon: "☠", x: 30, y: 250, requires: ["spareChange"] },
     { id: "wishingWell", icon: "◎", x: 20, y: 268, requires: ["spareChange"] },
     { id: "freeTraining", icon: "↑", x: 20, y: 286, requires: ["wishingWell"] },
-    { id: "greaterHeal", icon: "✚", x: 80, y: 214, requires: ["archives"] },
+    { id: "greaterHeal", icon: "✚", x: 80, y: 214, requires: ["archives"], reveal: "physician" },
     { id: "recovery", icon: "✦", x: 70, y: 232, requires: ["greaterHeal"] },
     { id: "findPotion", icon: "⚗", x: 70, y: 250, requires: ["recovery"] },
     { id: "regenResearch", icon: "♥", x: 90, y: 232, requires: ["greaterHeal"] },
@@ -114,25 +117,26 @@ export const TREES: SkillTree[] = [
   ] },
   { id: "breakthrough", name: "Breakthrough", currency: "breakthrough", gate: "breakthrough", description: "Earn a Breakthrough point for each Tower Goal you claim.", height: 222, unlocks: true, nodes: [
     // Quest for Knowledge first: it reveals the Inspiration tree's Archives
-    // and everything under them.
+    // and everything under them (but Pocket Money's and Greater Heal's sides,
+    // which Path to Wealth and Physician reveal).
     { id: "questForKnowledge", icon: "▥", x: 50, y: 10, requires: ["breakthrough"] },
     { id: "moveSpeed", icon: "»", x: 50, y: 34, requires: ["questForKnowledge"] },
     { id: "instantCombat", icon: "↯", x: 18, y: 34, requires: ["moveSpeed"] },
     { id: "extraKey", icon: "⚿", x: 82, y: 34, requires: ["moveSpeed"] },
-    { id: "pathfinder", icon: "⌖", x: 18, y: 58, requires: ["moveSpeed"] },
-    { id: "bombs", icon: "✹", x: 50, y: 58, requires: ["moveSpeed"] },
+    { id: "pathToWealth", icon: "¤", x: 18, y: 58, requires: ["moveSpeed"] },
+    { id: "physician", icon: "✚", x: 50, y: 58, requires: ["moveSpeed"] },
     { id: "dash", icon: "⇶", x: 82, y: 58, requires: ["moveSpeed"] },
     // Dash's own skills down the right edge: End Rush, Dash Regen, then Dash Badge.
     { id: "endRush", icon: "⇶", x: 90, y: 85, requires: ["dash"] },
     { id: "dashRegen", icon: "⇶", x: 90, y: 111, requires: ["endRush"] },
     { id: "dashBadge", icon: "◪", x: 90, y: 135, requires: ["dashRegen", "cardBadges"] },
-    // Rehearsed steps, then Echoes of time, under Pathfinder: the undos.
-    { id: "inspirationUndos", icon: "↺", x: 23, y: 85, requires: ["pathfinder"] },
+    // Rehearsed steps, then Echoes of time, under Path to Wealth: the undos.
+    { id: "inspirationUndos", icon: "↺", x: 23, y: 85, requires: ["pathToWealth"] },
     { id: "undos", icon: "↺", x: 23, y: 111, requires: ["inspirationUndos"] },
-    { id: "cardBadges", icon: "◪", x: 56, y: 85, requires: ["bombs"] },
-    // The research skills down the middle under Bombs: Find Gold Key, Key
+    { id: "cardBadges", icon: "◪", x: 56, y: 85, requires: ["physician"] },
+    // The research skills down the middle under Physician: Find Gold Key, Key
     // Efficiency, then Interest, with Max Interest to its left and Mug to its right.
-    { id: "findYellowKey", icon: "⚿", x: 50, y: 111, requires: ["bombs"] },
+    { id: "findYellowKey", icon: "⚿", x: 50, y: 111, requires: ["physician"] },
     { id: "keyEfficiency", icon: "⚿", x: 50, y: 135, requires: ["findYellowKey"] },
     { id: "interest", icon: "¤", x: 50, y: 159, requires: ["keyEfficiency"] },
     { id: "maxInterest", icon: "¤", x: 22, y: 159, requires: ["interest"] },

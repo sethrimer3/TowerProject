@@ -1021,9 +1021,10 @@ canvas {
 }
 /* The card points lesson's hand points down at the Deck tab from above,
    the Inspiration lesson's at the Upgrades tab, on the Upgrades page,
-   once a first skill is bought, at the Tower tab, the training lesson's
-   at the Research tab, and the provisions lesson's at the Gear tab. */
+   once a first skill is bought, at the Tower tab, the Archives and training
+   lessons' at the Research tab, and the provisions lesson's at the Gear tab. */
 .forest-pointer.cards,
+.forest-pointer.research,
 .forest-pointer.trainingPoints,
 .forest-pointer.upgrades,
 .forest-pointer.back,
@@ -2362,6 +2363,17 @@ nav {
 .tree-pointer :is(.sprite-icon, svg) { display: block; width: 24px; height: auto; }
 .tree-pointer.still { animation: none; }
 @media (prefers-reduced-motion: reduce) { .tree-pointer { animation: none; } }
+/* The Archives lesson on the Research page: its note under the tabs, a
+   button that dismisses it, with room above for the hand pointing up at the
+   Archives tab. */
+.research-lesson { display: block; width: 100%; margin-top: 30px; font-family: inherit; cursor: pointer; }
+.research-lesson small { display: block; margin-top: 4px; font-size: 10px; letter-spacing: 1px; color: #8d9db1; }
+.tree-tabs [data-research-tab="archives"] { position: relative; }
+.tree-tabs button:has(> .research-pointer) { overflow: visible; }
+.tree-tabs .research-pointer { position: absolute; margin-bottom: 0; font-size: 0; top: calc(100% + 2px); left: 50%; width: 26px; margin-left: -13px; z-index: 3; pointer-events: none; filter: drop-shadow(0 2px 2px #000c); animation: forest-point-up 1s ease-in-out infinite; }
+.tree-tabs .research-pointer :is(svg, .sprite-icon, img) { display: block; width: 100%; height: auto; margin: 0; }
+.research-pointer.still { animation: none; }
+@media (prefers-reduced-motion: reduce) { .research-pointer { animation: none; } }
 .tree-hint { font-size: 10px; color: #7f8a9d; text-align: center; margin: 4px 0 8px; }
 .tree-viewport { container-type: inline-size; position: relative; flex: 1; min-height: 0; margin: 0; overflow: hidden; border: 1px solid #232b33; border-radius: 6px; touch-action: none; cursor: grab; background: #070a0e; }
 .tree-viewport:active { cursor: grabbing; }

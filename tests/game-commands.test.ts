@@ -487,7 +487,7 @@ test("the forest's lessons: Enter once Door & Key is owned, until dismissed or a
   assert.ok(saved.climb && saved.enter && saved.delve);
 });
 
-test("a Pathfinder preview pauses a playing hand and plays it on after, never a hand already paused", () => {
+test("a route preview pauses a playing hand and plays it on after, never a hand already paused", () => {
   const g = arena();
   g.autoTurn();
   assert.equal(g.auto, true);

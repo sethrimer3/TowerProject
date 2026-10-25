@@ -42,7 +42,7 @@ const NODES: [UpgradeId, number, UpgradeId, CardId | null][] = [
 test("each card node costs its price, waits for the node above it and adds its card to the deck", () => {
   const g = new Game(playedSave());
   g.save.tower.inspiration = 10_000;
-  g.save.upgrades.questForKnowledge = 1; // the Archives and the tree under them revealed
+  g.save.upgrades.questForKnowledge = g.save.upgrades.pathToWealth = g.save.upgrades.physician = 1; // the Archives and the tree under them revealed
   for (const id of ["combatStance", "buildout", "trainers", "largerHand", "shroud", "critical", "breakthrough", "archives", "lifesteal", "buyQuantity", "thorns", "keySiphon"] as const) assert.ok(g.skills.buy(id));
   const nodes = TREES.find((t) => t.id === "inspiration")!.nodes;
   for (const [id, price, requires, card] of NODES) {
@@ -62,7 +62,7 @@ test("a card node can't be bought before the one above it", () => {
   const g = new Game(playedSave());
   g.save.tower.inspiration = 10_000;
   assert.equal(g.skills.buy("cardYellowDoor"), false);
-  g.save.upgrades.keySiphon = g.save.upgrades.questForKnowledge = 1;
+  g.save.upgrades.keySiphon = g.save.upgrades.questForKnowledge = g.save.upgrades.pathToWealth = g.save.upgrades.physician = 1;
   assert.equal(g.skills.buy("cardHeartDoor"), false);
   assert.equal(g.skills.buy("cardYellowDoor"), false, "Manual Hand comes first");
   assert.ok(g.skills.buy("manualHand"));

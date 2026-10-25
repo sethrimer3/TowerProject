@@ -22,13 +22,13 @@ test("fresh progression gates Delve, currencies, Breakthrough root, and Legacy",
   assert.equal(g.skills.buy("moveSpeed"), false, "Quest for Knowledge comes first");
   assert.ok(g.skills.buy("questForKnowledge"));
   assert.equal(g.save.breakthrough, 99, "Quest for Knowledge costs 1 Breakthrough");
-  assert.equal(g.skills.buy("pathfinder"), false);
+  assert.equal(g.skills.buy("pathToWealth"), false);
   assert.ok(g.skills.buy("moveSpeed"));
   assert.equal(g.save.breakthrough, 98);
-  assert.equal(g.showsRoutes, false, "no route preview before Pathfinder");
-  assert.ok(g.skills.buy("pathfinder"));
-  assert.equal(g.save.breakthrough, 97, "Pathfinder costs 1 Breakthrough");
-  assert.ok(g.showsRoutes);
+  assert.ok(g.skills.buy("pathToWealth"));
+  assert.equal(g.save.breakthrough, 97, "Path to Wealth costs 1 Breakthrough");
+  assert.ok(g.skills.buy("physician"));
+  assert.equal(g.save.breakthrough, 96, "Physician costs 1 Breakthrough");
   assert.equal(g.skills.buy("quality"), false);
   // Movement Speed no longer opens Wayfinding: nothing does yet.
   assert.equal(TREES.find(t => t.id === "wayfinding")!.gate, null);
@@ -58,6 +58,8 @@ test("Shroud follows Trainers and Larger Hand, ahead of Critical; Greater Heal, 
   assert.ok(g.skills.buy("critical") && g.skills.buy("breakthrough"));
   assert.equal(g.skills.buy("greaterHeal"), false, "the Archives come first");
   assert.ok(g.skills.buy("archives"));
+  assert.equal(g.skills.buy("greaterHeal"), false, "then Physician reveals it");
+  g.save.upgrades.physician = 1;
   assert.equal(g.skills.buy("recovery"), false, "then Greater Heal");
   assert.equal(g.skills.buy("regenResearch"), false, "Greater Heal comes first");
   before = g.save.tower.inspiration;
@@ -189,32 +191,33 @@ test("the Archives and everything under them stay hidden, unbuyable, until Quest
   for (const n of TREES[0].nodes) for (const r of n.requires) upgrades[r] = 1;
   for (const id of below) upgrades[id] = 0;
   assert.ok([...below].every((id) => !skillAvailable(id, upgrades)), "hidden, whatever is owned");
-  upgrades.questForKnowledge = 1;
+  upgrades.questForKnowledge = upgrades.pathToWealth = upgrades.physician = 1;
   assert.ok(TREES[0].nodes.every((n) => !skillHidden(n.id, upgrades)), "all revealed");
   assert.ok(skillAvailable("archives", upgrades));
   const quest = UPGRADES.find((u) => u.id === "questForKnowledge")!;
   assert.deepEqual([quest.name, quest.description, quest.currency, cost("questForKnowledge", 0)], ["Quest for Knowledge", "Discover hidden archives to research new skills", "breakthrough", 1]);
 });
-test("Bombs (5 Breakthrough) takes Focus's place in the Breakthrough tree, which is gone with Refocus, and opens the Bomb provision", () => {
-  const breakthrough = TREES.find((t) => t.id === "breakthrough")!;
-  const bombs = breakthrough.nodes.find((n) => n.id === "bombs")!;
-  assert.deepEqual([bombs.x, bombs.y, bombs.requires], [50, 58, ["moveSpeed"]]);
+test("Bombs (5 Inspiration) stands left of Critical Prediction in the Inspiration tree, Focus and Refocus are gone, and it opens the Bomb provision", () => {
+  const bombs = TREES[0].nodes.find((n) => n.id === "bombs")!;
+  assert.deepEqual([bombs.x, bombs.y, bombs.requires], [10, 156, ["critPrediction"]]);
+  assert.ok(!TREES.find((t) => t.id === "breakthrough")!.nodes.some((n) => n.id === "bombs"), "no longer in the Breakthrough tree");
   assert.ok(!TREES.some((t) => t.nodes.some((n) => ["focus", "refocus"].includes(n.id))), "Focus and Refocus are gone");
   assert.ok(!UPGRADES.some((u) => ["attack", "focus", "refocus"].includes(u.id)), "Tempered Edge, Focus and Refocus are gone");
-  assert.deepEqual([UPGRADES.find((u) => u.id === "bombs")!.currency, cost("bombs", 0)], ["breakthrough", 5]);
+  assert.deepEqual([UPGRADES.find((u) => u.id === "bombs")!.currency, cost("bombs", 0)], ["inspiration", 5]);
   assert.equal(GOLD_SHOP.find((p) => p.id === "bomb")!.requires, "bombs");
   const save = defaults();
   assert.equal(provisionOpen(save, "bomb"), false, "no Bombs on sale before the skill");
   save.upgrades.bombs = 1;
   assert.ok(provisionOpen(save, "bomb"));
 });
-test("Echoes of time leads nowhere; the research skills (10 Breakthrough each) take An enduring legacy's place under Bombs", () => {
+test("Echoes of time leads nowhere; the research skills (10 Breakthrough each) take An enduring legacy's place under Physician", () => {
   const breakthrough = TREES.find((t) => t.id === "breakthrough")!;
   const at = (id: string) => breakthrough.nodes.find((n) => n.id === id)!;
   assert.ok(!breakthrough.nodes.some((n) => n.requires.includes("undos")), "nothing below Echoes of time");
   assert.ok(!TREES.some((t) => t.nodes.some((n) => n.id === "legacy")), "An enduring legacy is no node");
-  assert.deepEqual([at("findYellowKey").x, at("findYellowKey").y, at("findYellowKey").requires], [50, 111, ["bombs"]]);
-  assert.deepEqual(["inspirationUndos", "undos"].map((id) => [at(id).x, at(id).y, at(id).requires]), [[23, 85, ["pathfinder"]], [23, 111, ["inspirationUndos"]]], "Rehearsed steps under Pathfinder, then Echoes of time");
+  assert.deepEqual([at("findYellowKey").x, at("findYellowKey").y, at("findYellowKey").requires], [50, 111, ["physician"]]);
+  assert.deepEqual(["inspirationUndos", "undos"].map((id) => [at(id).x, at(id).y, at(id).requires]), [[23, 85, ["pathToWealth"]], [23, 111, ["inspirationUndos"]]], "Rehearsed steps under Path to Wealth, then Echoes of time");
+  assert.deepEqual(at("cardBadges").requires, ["physician"]);
   assert.deepEqual(at("keyEfficiency").requires, ["findYellowKey"]);
   assert.deepEqual(at("interest").requires, ["keyEfficiency"]);
   assert.deepEqual([at("maxInterest").x < at("interest").x, at("maxInterest").requires], [true, ["interest"]]);
@@ -309,4 +312,30 @@ test("the Inspiration tree opens with Door & Key, Enemy and Auto-Climb down the 
   assert.ok(TREES[0].nodes.slice(3).every((n) => n.y >= 66), "everything else three rows down");
   assert.deepEqual(["cardDoorKey", "cardEnemy", "autoClimb"].map((id) => cost(id as UpgradeId, 0)), [1, 1, 1]);
   assert.deepEqual(["cardDoorKey", "cardEnemy", "autoClimb"].map((id) => UPGRADES.find((u) => u.id === id)!.name), ["Door & Key", "Enemy", "Auto-Climb"]);
+});
+
+test("Path to Wealth and Physician (1 Breakthrough each) take Pathfinder's and Bombs' places and reveal Pocket Money's and Greater Heal's sides of the Inspiration tree", () => {
+  const breakthrough = TREES.find((t) => t.id === "breakthrough")!;
+  const at = (id: string) => breakthrough.nodes.find((n) => n.id === id)!;
+  assert.deepEqual([at("pathToWealth").x, at("pathToWealth").y, at("pathToWealth").requires], [18, 58, ["moveSpeed"]]);
+  assert.deepEqual([at("physician").x, at("physician").y, at("physician").requires], [50, 58, ["moveSpeed"]]);
+  assert.ok(!UPGRADES.some((u) => (u.id as string) === "pathfinder"), "Pathfinder is gone");
+  for (const id of ["pathToWealth", "physician"] as const) assert.deepEqual([UPGRADES.find((u) => u.id === id)!.currency, cost(id, 0)], ["breakthrough", 1], id);
+  const upgrades = { ...defaults().upgrades, questForKnowledge: 1 };
+  const sides = { pathToWealth: ["pocketMoney", "spareChange", "wealthy", "loot", "wishingWell", "freeTraining"], physician: ["greaterHeal", "recovery", "findPotion", "regenResearch", "parry", "revive"] } as const;
+  for (const ids of Object.values(sides)) for (const id of ids) assert.ok(skillHidden(id, upgrades), `${id} hidden`);
+  assert.ok(!skillHidden("lifesteal", upgrades), "the middle path shows with the Archives");
+  upgrades.pathToWealth = 1;
+  for (const id of sides.pathToWealth) assert.ok(!skillHidden(id, upgrades), `${id} revealed`);
+  for (const id of sides.physician) assert.ok(skillHidden(id, upgrades), `${id} still hidden`);
+  upgrades.physician = 1;
+  for (const id of sides.physician) assert.ok(!skillHidden(id, upgrades), `${id} revealed`);
+});
+
+test("a save from before Path to Wealth and Physician keeps what it owns in view", () => {
+  const raw = JSON.parse(JSON.stringify(defaults()));
+  Object.assign(raw.upgrades, { pathfinder: 1, greaterHeal: 1 });
+  const save = decode(JSON.stringify(raw));
+  assert.deepEqual([save.upgrades.pathToWealth, save.upgrades.physician], [1, 1]);
+  assert.deepEqual([decode(JSON.stringify(defaults())).upgrades.pathToWealth, decode(JSON.stringify(defaults())).upgrades.physician], [0, 0]);
 });

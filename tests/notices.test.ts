@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { defaults } from "../src/save/save.ts";
+import { decode, defaults } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
 import { xpForLevel } from "../src/progression/xp.ts";
 
@@ -98,6 +98,30 @@ test("showing a tree clears its dot and records it seen", () => {
   assert.equal(g.save.treeNotices.inspiration, false);
   assert.ok(!g.notices.waiting("inspiration") && !g.notices.waiting("upgrades"));
   assert.equal(g.notices.shown("inspiration"), false);
+});
+
+test("the Archives lead to the Research tab from the Tower's forest, with its dot, then wait on their note on the Research page", () => {
+  const g = forest();
+  assert.notEqual(g.boardLesson, "research");
+  g.save.upgrades.archives = 1;
+  assert.equal(g.boardLesson, "research");
+  assert.ok(g.notices.waiting("research"), "the Research tab wears a dot");
+  assert.equal(g.archivesLesson, false);
+  assert.equal(g.finishArchivesLesson(), false, "nothing to dismiss before the page opens");
+  g.newRun({ seed: 1 });
+  assert.notEqual(g.boardLesson, "research", "the forest's alone");
+  g.newRun({ outside: true, seed: 1 });
+  g.notices.shown("research");
+  assert.notEqual(g.boardLesson, "research");
+  assert.ok(!g.notices.waiting("research"));
+  assert.ok(g.archivesLesson, "the note waits on the Research page");
+  assert.ok(g.finishArchivesLesson());
+  assert.ok(!g.archivesLesson && g.save.tutorials.archives, "done for good");
+  const researched = defaults();
+  researched.upgrades.archives = 1;
+  researched.archives.history.push({ research: "researchSpeed", level: 1, at: 0 } as never);
+  const decoded = new Game(decode(JSON.stringify(researched)));
+  assert.ok(decoded.save.tutorials.research && decoded.save.tutorials.archives, "a save that has researched needs no lesson");
 });
 
 test("the first training points to spend lead to the Research tab in the forest, until it is opened", () => {

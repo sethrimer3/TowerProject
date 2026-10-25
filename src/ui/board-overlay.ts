@@ -17,6 +17,9 @@ const FREE_TRAINING_MS = 2000;
 const PLAIN_TILE_MS = 3000;
 /** What the board's tap feedback is drawn with. */
 const FEEDBACK = ["tile-highlight", "inspect-box", "route-box"];
+/** Whether a tap inside a run also previews the route there and its totals,
+ * pausing the hand while they show: off for now, so a tap only inspects. */
+const ROUTE_PREVIEW = false;
 
 /** The board's tap feedback: a highlighted tile, its inspect box, and the
  * route totals box. In the forest a tap walks straight there; inside a run a
@@ -189,16 +192,16 @@ export class BoardOverlay {
     this.inspectVisible = false;
   }
 
-  /** Highlights the tile and shows its info; with Pathfinder, also the
+  /** Highlights the tile and shows its info; with `ROUTE_PREVIEW`, also the
    * route there, drawn on the board, and its totals, pausing the hand while
    * it shows. */
   private preview(x: number, y: number) {
-    if (this.game.showsRoutes && this.game.pauseForPreview()) this.pausedHand = true;
+    if (ROUTE_PREVIEW && this.game.pauseForPreview()) this.pausedHand = true;
     this.highlight(x, y);
     const popup = this.shows("popup");
     if (popup) this.showInspect(x, y);
     else this.hideInspect();
-    const route = this.game.showsRoutes ? this.game.previewRoute(x, y) : null;
+    const route = ROUTE_PREVIEW ? this.game.previewRoute(x, y) : null;
     this.renderer.previewRoute = route?.length ? route.map((s) => ({ x: s.x, y: s.y })) : null;
     const effects = popup && route ? this.game.previewRouteEffects(route) : null;
     if (effects) this.showRoute(effects);

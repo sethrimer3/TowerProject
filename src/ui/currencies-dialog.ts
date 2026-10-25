@@ -29,8 +29,8 @@ export function currencyRows(game: Game): CurrencyRow[] {
     [true, "medals", medalIcon(), "Medals", save.medals],
     [!outside || silver > 0, "silver", uiSprite("gold", "ui-sprite silver-sprite"), outside ? "Silver (next run)" : "Silver", silver],
     [true, "training", pointsIcon(), "Training Points", trainingPoints(save).left],
-    [true, "inspiration", uiSprite("upgrades"), "Inspiration", save.tower.inspiration],
-    [!!save.upgrades.breakthrough, "breakthrough", uiSprite("automove"), "Breakthrough", save.breakthrough],
+    [true, "inspiration", uiSprite("inspiration"), "Inspiration", save.tower.inspiration],
+    [!!save.upgrades.breakthrough, "breakthrough", uiSprite("breakthrough"), "Breakthrough", save.breakthrough],
     [save.profile.earned.cells > 0, "cells", cellIcon(), "Cells", save.cells],
     [game.tournament.unlocked, "tickets", ticketIcon(), "Tournament Tickets", save.tournament.tickets],
     ...EQUIP_MATERIAL_IDS.map((m): [boolean, string, string, string, number] =>

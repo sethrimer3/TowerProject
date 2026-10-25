@@ -184,9 +184,10 @@ function update() {
   // The Deck tutorials keep the player on its page until they reorder the
   // hand, and the card points lesson leads them there and keeps them there
   // until a point is spent: in the forest only the Deck tab can be pressed.
-  const deckOnly = !provingGrounds.active && deckLesson();
-  document.querySelectorAll<HTMLButtonElement>("[data-tab]").forEach((b) => (b.disabled = deckOnly && b.dataset.tab !== "deck"));
-  const forestHeld = !provingGrounds.active && isBoard(tab) && game.boardLesson === "cards";
+  // The Archives lesson does the same with the Research tab and page.
+  const only = provingGrounds.active ? null : lessonTab();
+  document.querySelectorAll<HTMLButtonElement>("[data-tab]").forEach((b) => (b.disabled = !!only && b.dataset.tab !== only));
+  const forestHeld = !provingGrounds.active && isBoard(tab) && (game.boardLesson === "cards" || game.boardLesson === "research");
   document.querySelectorAll<HTMLElement>(".shell > :not(nav)").forEach((part) => (part.inert = forestHeld));
   renderHud(shown, renderer, overlay, {hand:provingGrounds.displayHand, manual: runTraining.manualOpen});
   if (runNotes.open) runNotes.refresh();
@@ -246,11 +247,19 @@ const CURRENCY_PAGES: string[] = ["upgrades", "research", "deck", "gear", "missi
 function deckLesson() {
   return deck.teaching || game.boardLesson === "cards";
 }
+/** The one tab a lesson leaves to press, if any: the Deck's lessons' Deck
+ * tab, and the Archives lesson's Research tab, from the forest until its note
+ * on the Research page is dismissed (inside a run, Back still leaves it). */
+function lessonTab() {
+  if (deckLesson()) return "deck";
+  return game.boardLesson === "research" || (game.archivesLesson && game.run.outside) ? "research" : null;
+}
 /** Opens page `requested`: `board` is the active mode's board. Leaving the
  * board inside a run pauses the hand, and coming back plays it on as it
  * was (`Game.pauseForPage`). */
 function navigate(requested: string) {
-  if (deckLesson() && requested !== "deck") return;
+  const only = lessonTab();
+  if (only && requested !== only) return;
   const id = unlockTarget(requested === "board" ? game.mode : requested) as Tab;
   // Cinematic mode is the board's alone.
   if (!isBoard(id)) cinematic.exit();

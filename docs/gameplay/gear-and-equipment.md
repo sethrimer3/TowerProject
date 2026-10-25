@@ -3,7 +3,7 @@
 ## Provisions
 
 **Provisions** are limited-use items for a run, bought with Gold on the **Gear** tab and kept for good: each one owned is a use that every run carries, a run already inside included.
-None is sold from the start: each opens with its own skill, 5 Inspiration each in the Inspiration tree for the three below (the **Traveler's Elixir** skill after Regen, **Vanguard Banner** after ATK Up, left of it, and **Aegis Charm** after DEF Up, left of it), and in the Breakthrough tree for the Gold Key and Bombs.
+None is sold from the start: each opens with its own skill, 5 Inspiration each in the Inspiration tree for the three below (the **Traveler's Elixir** skill after Regen, **Vanguard Banner** after ATK Up, left of it, and **Aegis Charm** after DEF Up, left of it), and **Bombs** after Critical Prediction, left of it; and in the Breakthrough tree for the Gold Key.
 The Gear tab, and its Provisions tab, show only once one is open.
 The first time one opens, a note says to press the Gear tab to buy provisions, and a hand points at the tab, on the forest's board and on the Inspiration and Breakthrough trees, until it is pressed.
 None of them adds anything as a run starts: inside a run, each shows as a button beside Ignore and Target with its uses left, and a press uses one at once (it is no turn of its own).
@@ -18,7 +18,7 @@ Provisions bought before they became uses (when they gave starting stats) were r
 Once **Extra Key** (1 Breakthrough, after Movement Speed in the Breakthrough tree) is owned, Provisions also sell a **Gold Key**, which uses itself: each owned gives a run one gold key on the floor it starts on, and again on the first floor 100 or more floors past the last that gave them (floor 1, then 101, 201 …; a floor Skip climbs past still counts, so the next floor gives them).
 In the Delve, floors are its equivalent floors.
 The keys come as a floor begins, so undo can't take them back.
-Once the Breakthrough skill **Bombs** (5 Breakthrough, below Movement Speed) is owned, Provisions also sell **Bombs**: each one owned is a Bomb every run carries.
+Once the Inspiration skill **Bombs** (5 Inspiration, left of Critical Prediction) is owned, Provisions also sell **Bombs**: each one owned is a Bomb every run carries.
 Its button shows the Bombs left: press it, then tap an enemy, and the Bomb explodes on its tile, dealing that enemy your ATK (its DEF doesn't reduce it).
 An enemy the Bomb fells is cleared and pays out as if you had beaten it; a tap on a tile with no enemy uses no Bomb, and pressing the button again puts the Bomb away.
 Unlike the other provisions, throwing a Bomb is a turn of its own, so undo takes it back, Bomb included, without paying the kill twice.

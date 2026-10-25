@@ -21,13 +21,13 @@ import { random } from "../src/random.ts";
 import { snap } from "../src/exact.ts";
 import { playedSave } from "./first-skills.ts";
 
-test("Badges costs 2 Breakthrough and follows Bombs in the Breakthrough tree", () => {
+test("Badges costs 2 Breakthrough and follows Physician in the Breakthrough tree", () => {
   const g = new Game(playedSave());
   g.save.upgrades.breakthrough = 1;
   g.save.upgrades.moveSpeed = 1;
   g.save.breakthrough = 10;
-  assert.equal(g.skills.buy("cardBadges"), false, "waits for Bombs");
-  g.save.upgrades.bombs = 1;
+  assert.equal(g.skills.buy("cardBadges"), false, "waits for Physician");
+  g.save.upgrades.physician = 1;
   assert.ok(g.skills.buy("cardBadges"));
   assert.equal(g.save.breakthrough, 8);
 });
@@ -109,7 +109,7 @@ test("Key < Badges sits beside Gold Door and Key ≥ Badges beside it, 50 Inspir
   const g = new Game(playedSave());
   g.save.tower.inspiration = 100;
   assert.equal(g.skills.buy("keyLessBadges"), false, "waits for Gold Door");
-  g.save.upgrades.cardYellowDoor = g.save.upgrades.questForKnowledge = 1;
+  g.save.upgrades.cardYellowDoor = g.save.upgrades.questForKnowledge = g.save.upgrades.pathToWealth = g.save.upgrades.physician = 1;
   assert.equal(g.skills.buy("keyAtLeastBadges"), false, "waits for Key < Badges");
   assert.ok(g.skills.buy("keyLessBadges"));
   assert.ok(g.skills.buy("keyAtLeastBadges"));

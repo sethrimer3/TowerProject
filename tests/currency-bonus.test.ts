@@ -34,7 +34,7 @@ test("Wealthy, Loot and Wishing Well cost 2 Inspiration each, after Spare Change
     assert.equal(cost(skill, 0), 2);
     assert.equal(g.skills.buy(skill), false, `${skill} waits for Spare Change`);
   }
-  g.save.upgrades.questForKnowledge = 1; // the Archives and the tree under them revealed
+  g.save.upgrades.questForKnowledge = g.save.upgrades.pathToWealth = g.save.upgrades.physician = 1; // the Archives and the tree under them revealed
   for (const id of ["combatStance", "buildout", "trainers", "largerHand", "shroud", "critical", "breakthrough", "archives", "pocketMoney", "spareChange"] as const) assert.ok(g.skills.buy(id));
   for (const [skill] of SKILLS) assert.ok(g.skills.buy(skill), skill);
 });

@@ -2,6 +2,8 @@
 
 ## Below the Archives
 
+Greater Heal and the skills under it stay hidden until the Breakthrough skill **Physician** (1 Breakthrough, below Movement Speed) is bought, and Pocket Money and the skills under it until **Path to Wealth** (1 Breakthrough, left of Physician).
+**Bombs** (5 Inspiration, left of Critical Prediction, after it) opens the Bomb provision (see gear-and-equipment.md).
 Below the Archives in the Inspiration tree, which grows taller than the screen and scrolls (drag it, or turn the mouse wheel; Ctrl and the wheel, or a pinch, zooms), **Greater Heal** (3 Inspiration, after the Archives) opens the Archives' **Potion HP** research,, **Recovery** (10 Inspiration, after Greater Heal) brings **percent potions** onto the floors (2% of potions), **Find Potion** (10 Inspiration, below Recovery) opens **Find Potion** training, which makes more of them percent potions, and **Shroud** (2 Inspiration, after Trainers, above Critical) wraps the hero in a **shroud** that blocks the first 1 damage of every fight and opens **Shroud** training and the Archives' **Shroud** research (+4% of the shroud a level, for 100 levels, up to ×5, priced and timed like Pocket Money), **Parry** (10 Inspiration, below Regen Research) lets the hero parry, **Revive** (10 Inspiration, below Parry) may raise a felled hero at full HP, and **Thorns** (10 Inspiration, on the middle path between Buy Quantity and GK Siphon) makes every monster pay for striking (see below).
 
 ## Silver and Gold

@@ -9,7 +9,7 @@ import { enterTournament } from "./open-tournament.ts";
 test("Pocket Money costs 1 Inspiration after the Archives, and opens research priced like Potion HP", () => {
   const g = new Game(playedSave());
   g.save.tower.inspiration = 1000;
-  g.save.upgrades.questForKnowledge = 1;
+  g.save.upgrades.questForKnowledge = g.save.upgrades.pathToWealth = g.save.upgrades.physician = 1;
   assert.equal(cost("pocketMoney", 0), 1);
   for (const id of ["combatStance", "buildout", "trainers", "largerHand", "shroud", "critical", "breakthrough"] as const) assert.ok(g.skills.buy(id));
   assert.equal(g.skills.buy("pocketMoney"), false, "waits for the Archives");

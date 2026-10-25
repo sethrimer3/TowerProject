@@ -88,7 +88,7 @@ try {
       s.hand = ["stairs", "door", "key", "monster"];
       s.seen.cards = [...s.hand];
       s.seen.met = [...s.hand];
-      s.tutorials.keys = s.tutorials.autoClimb = s.tutorials.training = true;
+      s.tutorials.keys = s.tutorials.autoClimb = s.tutorials.training = s.tutorials.research = s.tutorials.archives = true;
       return s;
     };
     const make = (edit) => {
@@ -121,7 +121,7 @@ try {
     };
     const rich = (s) => {
       quiet(s);
-      Object.assign(s.upgrades, { breakthrough: 1, questForKnowledge: 1, moveSpeed: 1, legacy: 1, revive: 1, combatStance: 1, buildout: 1, largerHand: 1, cardHeal: 1, bombs: 1, archives: 1, inspirationUndos: 1, greaterHeal: 1, recovery: 1, findPotion: 1, shroud: 1, undos: 1, extraKey: 1, elixirProvision: 1, whetstoneProvision: 1, aegisProvision: 1, trainers: 1, cardBlueKey: 1, pathfinder: 1 });
+      Object.assign(s.upgrades, { breakthrough: 1, questForKnowledge: 1, moveSpeed: 1, legacy: 1, revive: 1, combatStance: 1, buildout: 1, largerHand: 1, cardHeal: 1, bombs: 1, archives: 1, inspirationUndos: 1, greaterHeal: 1, recovery: 1, findPotion: 1, shroud: 1, undos: 1, extraKey: 1, elixirProvision: 1, whetstoneProvision: 1, aegisProvision: 1, trainers: 1, cardBlueKey: 1, pathToWealth: 1, physician: 1 });
       s.breakthrough = 37;
       s.tower.inspiration = 21;
       s.gold = 480;

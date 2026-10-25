@@ -10,7 +10,7 @@ import { bindBuyQuantity, buyQuantityHtml, maxCount } from "./buy-quantity-selec
 import { TrainingParticles } from "../render/effects/training-particles.ts";
 import { BOOST_CLAIM_MARGIN_MS, BOOST_MAX_MS, BOOST_RATE, boostLeft, claimBoost, nextTrainerGems, ranksInTraining, trainingJob, trainingSlots, workLeft, type TrainingJob } from "../progression/training-jobs.ts";
 import type { AppContext } from "./app.ts";
-import { adIcon, clamp, clockIcon, el, gemCount, gemIcon, goldIcon, pointsIcon, redoIcon, riseFrom, uiSprite } from "./dom.ts";
+import { adIcon, clamp, clockIcon, el, gemCount, gemIcon, goldIcon, pointsIcon, POINTER_SVG, redoIcon, riseFrom, uiSprite } from "./dom.ts";
 import { TRAINING_RESET_GEMS } from "../economy/gems.ts";
 import { ArchivesPanel, COUNTDOWN_MIN_MS, formatCountdown, formatDuration, rushEfficiencyHtml, toNextSecond } from "./archives-page.ts";
 import { priceAmount } from "./hud.ts";
@@ -47,10 +47,23 @@ export class ResearchPage {
     if (!this.archivesOpen) this.tab = "training";
     this.nextCountdown = 0;
     const back = this.ctx.game.run.outside ? "" : `<button class="back" id="research-back">${controlIcon("back")} Back</button>`;
-    const head = `${back}${this.tabsHtml()}`;
+    const head = `${back}${this.tabsHtml()}${this.lessonHtml()}`;
     if (this.tab === "archives") this.renderArchives(head);
     else this.renderTraining(head);
     el("research-back")?.addEventListener("click", () => this.ctx.navigate(this.ctx.game.mode));
+    el("archives-lesson")?.addEventListener("click", () => {
+      if (!this.ctx.game.finishArchivesLesson()) return;
+      this.ctx.update();
+      this.render();
+    });
+  }
+
+  /** The Archives lesson's note (`Game.archivesLesson`), under the tabs:
+   * pressing it dismisses it and ends the lesson. */
+  private lessonHtml() {
+    if (!this.ctx.game.archivesLesson || !this.archivesOpen) return "";
+    return `<button type="button" class="tree-lesson research-lesson" id="archives-lesson"><b>Press the Archives tab.</b>`
+      + `<p>Pay the archivist Gold to research permanent upgrades. Gems rush research and hire additional archivists to do more research at once.</p><small>Tap to dismiss</small></button>`;
   }
 
   /** Whether the Archives' tab shows: once that skill is owned, or in Dev mode. */
@@ -69,9 +82,12 @@ export class ResearchPage {
     // Once trainers work, Training's subtitle also counts them at work.
     const trainers = this.ctx.game.training.hired ? ` · ${save.trainingJobs.length}/${trainingSlots(save)} TRAINING` : "";
     const trainingDot = this.tab !== "training" && this.ctx.game.notices.waiting("training") ? ` class="notify"` : "";
+    // While the Archives lesson waits, the tutorials' hand points up at the Archives tab until it shows.
+    const pointer = this.ctx.game.archivesLesson && this.tab !== "archives"
+      ? `<span class="research-pointer${save.settings.reduceMotion ? " still" : ""}" aria-hidden="true">${POINTER_SVG}</span>` : "";
     return `<div class="tree-tabs page-tabs" role="group" aria-label="Research">` +
       `<button data-research-tab="training" aria-pressed="${this.tab === "training"}"${trainingDot}><span>${pointsIcon("ui-sprite")}</span>Training<small>${trainingPoints(save).left} POINTS${trainers}</small></button>` +
-      `<button data-research-tab="archives" aria-pressed="${this.tab === "archives"}"><span>${uiSprite("log")}</span>Archives<small>${busy}/${save.archives.slots.length} RESEARCHING</small></button></div>`;
+      `<button data-research-tab="archives" aria-pressed="${this.tab === "archives"}"><span>${uiSprite("log")}</span>Archives<small>${busy}/${save.archives.slots.length} RESEARCHING</small>${pointer}</button></div>`;
   }
 
   private bindTabs() {

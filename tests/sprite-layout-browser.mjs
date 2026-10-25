@@ -37,7 +37,7 @@ try {
         s.settings.devMode = false;
         s.gems = 264; s.gold = 6688; g.run.silver = 1434;
         s.tower.tiersOpen = 2;
-        Object.assign(s.upgrades, { archives: 1, ignore: 1, target: 1, undos: 1, shroud: 1, pathfinder: 1 });
+        Object.assign(s.upgrades, { archives: 1, ignore: 1, target: 1, undos: 1, shroud: 1 });
         Object.assign(s.provisions, { bomb: 1, heal: 1, edge: 1, guard: 1 });
         s.archives.levels.unlockShrines = 1;
         s.archives.levels.undoCount = 2;

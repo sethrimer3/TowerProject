@@ -8,7 +8,7 @@ import { paintContents } from "./tile-painters.ts";
 import { paintGem } from "./effects/gem-art.ts";
 import { RARITY_TIERS } from "../equipment/balance.ts";
 import { iconPixels, materialPixels, pieceSpriteId } from "../ui/equipment-icons.ts";
-import { drawKit, kitImage } from "../sprites/kit.ts";
+import { drawKit, INSPIRATION_SPRITE, kitImage } from "../sprites/kit.ts";
 import { tileCenter, toTileSpace, type FrameContext } from "./render-frame.ts";
 
 /** How long each popup shows, and the fade that ends it (ms). */
@@ -76,7 +76,7 @@ const HEART_URL = `${BASE_URL}assets/style/heart.png`;
 /** The HUD's Gold coin, raised beside the Gold or Silver found. */
 const GOLD_URL = `${BASE_URL}assets/style/gold.png`;
 /** The HUD's Inspiration icon. */
-export const INSPIRATION_URL = `${BASE_URL}assets/style/shard.png`;
+export const INSPIRATION_URL = `${BASE_URL}assets/style/${INSPIRATION_SPRITE}.png`;
 /** Rewards use the startup-decoded shared cache too. */
 export function sprite(url: string) {
   return kitImage(url.split("/").at(-1)!.replace(/\.png$/, ""));
