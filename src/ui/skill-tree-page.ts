@@ -89,7 +89,7 @@ export class SkillTreePage {
     return TREES.filter(t => this.shown(t.id)).map(t => {
       const priced = t.id === "inspiration" || t.id === "courage";
       const points = priced ? `<small>${heldAmount(game, held[t.id as "inspiration" | "courage"])} POINTS</small>` : "";
-      return `<button data-tree="${t.id}" aria-pressed="${t.id === this.tree}"${priced && this.tree !== t.id && game.notices.waiting(t.id as "inspiration" | "courage") ? ` class="notify"` : ""}><span>${uiSprite(TREE_ICONS[t.id] ?? "defend")}</span>${t.name}${points}</button>`;
+      return `<button data-tree="${t.id}" aria-pressed="${t.id === this.tree}"${priced && this.tree !== t.id && game.notices.waiting(t.id as "inspiration" | "courage") ? ` class="notify"` : ""}><span>${uiSprite(TREE_ICONS[t.id] ?? "tower")}</span>${t.name}${points}</button>`;
     }).join("");
   }
 

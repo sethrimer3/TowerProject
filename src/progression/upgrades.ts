@@ -5,7 +5,7 @@ export type Currency = "courage" | "inspiration";
  * rank adds; see progression/loadout.ts), which also writes their description. */
 export const UPGRADES = [
   { id: "delve", name: "Into the depths", description: "Unlock Delve and the Courage skill tree", base: 3, max: 1, currency: "inspiration" },
-  { id: "legacy", name: "An enduring legacy", description: "Unlock the Legacy skill tree and unlock Defend", base: 8, max: 1, currency: "courage" },
+  { id: "legacy", name: "An enduring legacy", description: "Unlock the Legacy skill tree", base: 8, max: 1, currency: "courage" },
   {
     id: "revive",
     name: "Revive",

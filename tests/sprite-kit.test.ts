@@ -10,17 +10,16 @@ import { BOARD_MARK_SPRITES } from "../src/sprites/board-marks.ts";
 import { SMALL_CONTROL_SPRITES, SLIDER_SPRITES } from "../src/sprites/controls.ts";
 import { BADGE_IDS } from "../src/cards/badges.ts";
 import { CARD_SPRITE_LAYERS } from "../src/sprites/cards.ts";
-import { ICON_SPRITES, WORLD_SPRITES, CONTROL_SPRITES, DETAIL_SPRITES, CITY_SPRITES, DEFEND_STRUCTURE_SPRITES, NAMED_ENEMY_SPRITES, drawKit, kitEnemy, spriteRevision } from "../src/sprites/kit.ts";
+import { ICON_SPRITES, WORLD_SPRITES, CONTROL_SPRITES, DETAIL_SPRITES, NAMED_ENEMY_SPRITES, drawKit, kitEnemy, spriteRevision } from "../src/sprites/kit.ts";
 import { GOAL_SPRITES, UI_DETAIL_SPRITES, UI_ORNAMENT_SPRITES } from "../src/sprites/ui-details.ts";
 import { CARDS } from "../src/cards/cards.ts";
 import { ICON_ROWS } from "../src/ui/equipment-icons.ts";
-import { SPRITE_TERRAIN } from "../src/sprites/terrain-index.ts";
 import { paintContents, paintHero } from "../src/render/tile-painters.ts";
 
 test("every world, UI, Equipment and card sprite ships as a real native-sized PNG", () => {
   const base = new URL("../public/assets/style/", import.meta.url);
   const manifest = JSON.parse(readFileSync(new URL("manifest.json", base), "utf8"));
-  for (const id of [...COMBAT_SPRITES, ...Object.values(SMALL_CONTROL_SPRITES), ...SLIDER_SPRITES, "ui-fill-gain", "ui-menu-close", ...EQUIPMENT_FRAME_SPRITES, ...EQUIPMENT_MARK_SPRITES, ...Object.values(BOON_SPRITES), ...SHRINE_CONTROL_SPRITES, "shrine-fill", ...UI_DETAIL_SPRITES, ...UI_ORNAMENT_SPRITES, ...ICON_SPRITES, ...WORLD_SPRITES, ...CONTROL_SPRITES, ...DETAIL_SPRITES, ...CITY_SPRITES, ...DEFEND_STRUCTURE_SPRITES, ...NAMED_ENEMY_SPRITES.map(id => `enemy-${id}`), ...Object.keys(ICON_ROWS).map(id => `equip-${id}`), ...Object.keys(CARDS).map(id => `card-${id}`), ...BADGE_IDS.map(id => `badge-${id}`), "badge-star", "card-exchange", ...["common", "rare", "epic"].map(rarity => `badge-frame-${rarity}`)]) {
+  for (const id of [...COMBAT_SPRITES, ...Object.values(SMALL_CONTROL_SPRITES), ...SLIDER_SPRITES, "ui-fill-gain", "ui-menu-close", ...EQUIPMENT_FRAME_SPRITES, ...EQUIPMENT_MARK_SPRITES, ...Object.values(BOON_SPRITES), ...SHRINE_CONTROL_SPRITES, "shrine-fill", ...UI_DETAIL_SPRITES, ...UI_ORNAMENT_SPRITES, ...ICON_SPRITES, ...WORLD_SPRITES, ...CONTROL_SPRITES, ...DETAIL_SPRITES, ...NAMED_ENEMY_SPRITES.map(id => `enemy-${id}`), ...Object.keys(ICON_ROWS).map(id => `equip-${id}`), ...Object.keys(CARDS).map(id => `card-${id}`), ...BADGE_IDS.map(id => `badge-${id}`), "badge-star", "card-exchange", ...["common", "rare", "epic"].map(rarity => `badge-frame-${rarity}`)]) {
     const asset = manifest.assets[id];
     assert.ok(asset, id);
     const png = readFileSync(new URL(asset.file, base));

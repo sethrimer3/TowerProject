@@ -1,4 +1,5 @@
-import { chromium } from "@playwright/test";
+import { chromium, expect } from "@playwright/test";
+import {mkdirSync} from "node:fs";
 import { fixClock } from "./fixed-clock.mjs";
 import assert from "node:assert/strict";
 import { openMenu } from "./run-menu.mjs";
@@ -7,6 +8,7 @@ const browser = await chromium.launch({
   headless: true,
   channel: process.env.PLAYWRIGHT_CHANNEL || "msedge",
 });
+try {
 const page = await browser.newPage({
   viewport: { width: 390, height: 844 },
   deviceScaleFactor: 1,
@@ -25,6 +27,7 @@ await page.addInitScript(() => {
 const url = process.env.TEST_URL || "http://127.0.0.1:5173/";
 await fixClock(page);
 await page.goto(url);
+await expect(page.locator("#world")).toBeVisible({timeout:30000});
 
 // 0. A fresh game starts inside a Tower run, where the tabs are hidden but
 // keep their row; ending the run returns to the forest and shows them.
@@ -34,10 +37,10 @@ await openMenu(page); await page.locator("#end-run").click();
 await page.locator("#confirm").click();
 
 // 1. Fresh start: one board button (the Tower's), no Delve sign, and the
-// Deck, Gear and Defend tabs hidden until their skills are owned.
+// Deck and Gear tabs hidden until their skills are owned.
 assert.equal(await page.locator('[data-tab="board"]').getAttribute("aria-label"), "Tower", "The board button should be the Tower's");
 assert.equal(await page.locator("#forest-sign").isVisible(), false, "The forest sign should be hidden until the Delve is open");
-for (const tab of ["deck", "gear", "defend"])
+for (const tab of ["deck", "gear"])
   assert.equal(await page.locator(`[data-tab="${tab}"]`).isVisible(), false, `${tab} tab should be hidden when not unlocked`);
 for (const tab of ["board", "upgrades", "research", "shop"])
   assert.equal(await page.locator(`[data-tab="${tab}"]`).isVisible(), true, `${tab} tab should be visible`);
@@ -51,7 +54,7 @@ for (const width of [390, 320]) {
   assert.equal(overflow, false, `Fresh tabs should not overflow at ${width}px`);
 }
 
-// 2. Unlock DELVE: the forest's sign appears, Defend remains hidden
+// 2. Unlock DELVE: the forest's sign appears
 await page.evaluate(() => {
   const save = JSON.parse(localStorage.getItem("towerdelve.v1") || "{}");
   save.upgrades = save.upgrades || {};
@@ -59,11 +62,11 @@ await page.evaluate(() => {
   sessionStorage.setItem("__testFixture", JSON.stringify(save));
 });
 await page.reload();
+await expect(page.locator("#world")).toBeVisible({timeout:30000});
 
 const delveVisibleUnlocked = await page.locator("#forest-sign").isVisible();
-const defendVisibleLocked = await page.locator('[data-tab="defend"]').isVisible();
+await expect(page.locator('[data-tab="defend"]')).toHaveCount(0);
 assert.equal(delveVisibleUnlocked, true, "The forest sign should show once the Delve is unlocked");
-assert.equal(defendVisibleLocked, false, "DEFEND tab should still be hidden when legacy is not unlocked");
 
 // Short desktop/browser windows use the compact board layout. The playfield
 // must retain a real square row after the status and controls move into it.
@@ -84,7 +87,7 @@ for (const width of [390, 320]) {
   assert.equal(overflow, false, `Tabs with Delve unlocked should not overflow at ${width}px`);
 }
 
-// 3. Unlock AN ENDURING LEGACY: Defend tab appears
+// 3. Unlock AN ENDURING LEGACY: the additional skill tree opens
 await page.evaluate(() => {
   const save = JSON.parse(localStorage.getItem("towerdelve.v1") || "{}");
   save.upgrades = save.upgrades || {};
@@ -92,24 +95,42 @@ await page.evaluate(() => {
   sessionStorage.setItem("__testFixture", JSON.stringify(save));
 });
 await page.reload();
+await expect(page.locator("#world")).toBeVisible({timeout:30000});
 
 const delveVisibleBoth = await page.locator("#forest-sign").isVisible();
-const defendVisibleUnlocked = await page.locator('[data-tab="defend"]').isVisible();
+await expect(page.locator('[data-tab="defend"]')).toHaveCount(0);
 assert.equal(delveVisibleBoth, true, "The forest sign should still show");
-assert.equal(defendVisibleUnlocked, true, "DEFEND tab should be visible when legacy is unlocked");
 
-// Check overflow with all 6 tabs unlocked
 for (const width of [390, 320]) {
   await page.setViewportSize({ width, height: 844 });
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
   assert.equal(overflow, false, `Every tab should not overflow at ${width}px`);
 }
 
-// The Defend page itself isn't tested while Defend is on hold.
+
+// Dev mode also has no retired page, debug hook or saved city.
+await page.evaluate(()=> {
+  const save=JSON.parse(localStorage.getItem("towerdelve.v1"));
+  save.settings.devMode=true;
+  save.defend={seed:99,bestWave:100};save.materials={ironBar:80};
+  sessionStorage.setItem("__testFixture",JSON.stringify(save));
+});
+await page.reload();
+await expect(page.locator("#world")).toBeVisible({timeout:30000});
+await expect(page.locator('[data-tab="defend"], #defend')).toHaveCount(0);
+assert.equal(await page.evaluate(()=>"defendDebug" in window),false);
+await expect(page.locator('[data-tab="board"]')).toBeVisible();
+
+mkdirSync("test-results/removed-defend",{recursive:true});
+for(const width of [320,1024]) {
+  await page.setViewportSize({width,height:844});
+  await expect(page.locator("nav [data-tab]")).toHaveCount(6);
+  await page.locator(".shell").screenshot({path:`test-results/removed-defend/forest-${width}.png`});
+}
 
 // Clean up fixture from sessionStorage
 await page.evaluate(() => sessionStorage.removeItem("__testFixture"));
 
 assert.deepEqual(errors, []);
-await browser.close();
-console.log("All mode-tabs browser checks passed!");
+console.log("All mode-tabs browser checks passed, including removal in Legacy/Dev mode and old-save compatibility.");
+} finally {await browser.close();}

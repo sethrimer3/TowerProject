@@ -6,7 +6,6 @@ import type { Mode } from "../entities.ts";
 import type { Run } from "../runs.ts";
 import type { Save } from "../save/shape.ts";
 import { EQUIP_MATERIALS, type EquipMaterialId } from "../equipment/catalog.ts";
-import { materialDef, type MaterialId } from "../economy/materials.ts";
 import { MODES } from "../modes.ts";
 import { defaultFinds, newNotes } from "../run-notes.ts";
 import { keyCount, whole } from "../whole.ts";
@@ -26,7 +25,7 @@ export function elapsed(ms: number) {
   return h ? `${h}h ${pad(m)}m ${pad(s % 60)}s` : `${m}m ${pad(s % 60)}s`;
 }
 const materialName = (id: string) =>
-  id in EQUIP_MATERIALS ? EQUIP_MATERIALS[id as EquipMaterialId].name : materialDef(id as MaterialId).name;
+  id in EQUIP_MATERIALS ? EQUIP_MATERIALS[id as EquipMaterialId].name : id;
 /** A group's lines, or a single "None" when it has none. */
 const orNone = (rows: [string, string][]): [string, string][] => (rows.length ? rows : [["None", "—"]]);
 

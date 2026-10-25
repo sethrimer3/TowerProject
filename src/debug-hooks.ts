@@ -2,7 +2,6 @@ import { analyzeDelve } from "./delve/analyzer.ts";
 import { ownerAt, region, themeInfluence } from "./delve/labyrinth.ts";
 import { capabilities } from "./delve/automove.ts";
 import { towerFloorReport } from "./tower/index.ts";
-import type { DefendPage } from "./defend/ui.ts";
 import type { Game } from "./state.ts";
 import type { MailDraft } from "./mail/server.ts";
 
@@ -19,8 +18,6 @@ export const OUTAGE_MAIL: MailDraft = {
  *   Tower floor currently being played.
  * - `delveDebug()` returns live Delve navigation diagnostics (dev mode only;
  *   no generation hints ever go to Automove).
- * - `defendDebug(seconds, { rain }?)` fast-forwards a running Defend battle,
- *   optionally forcing its weather.
  * - `tournamentDebug()` begins a tournament run now, until the Tournament
  *   page does (a Ticket spent, from a forest); it resolves to why it
  *   couldn't, or null once inside.
@@ -31,11 +28,10 @@ export const OUTAGE_MAIL: MailDraft = {
  *   route being walked, a fight playing out), so the UI snapshot suite
  *   knows when a step has finished without waiting a fixed time. */
 
-export function installDebugHooks(game: Game, defendPage: DefendPage, beginTournament: () => Promise<string | null>, sendMail: (draft: MailDraft) => Promise<void>) {
+export function installDebugHooks(game: Game, beginTournament: () => Promise<string | null>, sendMail: (draft: MailDraft) => Promise<void>) {
   const w = window as unknown as {
     towerDebug: () => void;
     delveDebug: () => unknown;
-    defendDebug: typeof defendPage.fastForward;
     boardBusy: () => boolean;
     tournamentDebug: () => Promise<string | null>;
     mailDebug: { send: (draft?: Partial<MailDraft>) => Promise<void> };
@@ -50,7 +46,6 @@ export function installDebugHooks(game: Game, defendPage: DefendPage, beginTourn
     console.log(report);
     return report;
   };
-  w.defendDebug = (s, weather) => defendPage.fastForward(s, weather);
   w.tournamentDebug = beginTournament;
   w.mailDebug = { send: (draft = {}) => sendMail({ ...OUTAGE_MAIL, ...draft }) };
   w.boardBusy = () => game.route.length > 0 || !!game.fights.encounter;

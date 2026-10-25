@@ -10,7 +10,7 @@
 //   a rounding or a weighted pick.
 //
 // So this test builds Tower floors, Delve regions, torch spots, enemy
-// stats, upgrade prices and Defend cities twice, natively and with a
+// stats and upgrade prices twice, natively and with a
 // different (correct, stable) sort, and requires identical output; and it
 // requires that building them calls none of those Math functions at all.
 // `**` can't be intercepted at run time, so the modules generation runs
@@ -27,8 +27,6 @@ import { chooseTorchSpots } from "../src/torches.ts";
 import { getTowerGateEnemy, type TowerEnemyProfile, type TowerEnemyStrength } from "../src/enemies/scaling.ts";
 import { cost, UPGRADES } from "../src/progression/upgrades.ts";
 import { WIDTH } from "../src/config.ts";
-import { defaultLayout, fitLayout } from "../src/defend/layout.ts";
-import { generateCity } from "../src/defend/citygen.ts";
 
 const json = (v: unknown) => JSON.stringify(v, (_k, x) => (x instanceof Map ? [...x.entries()] : x instanceof Uint8Array || x instanceof Int32Array ? [...x] : x));
 const digest = (v: unknown) => createHash("sha256").update(json(v)).digest("hex").slice(0, 16);
@@ -58,12 +56,6 @@ function outputs(): Record<string, string> {
   const profiles: TowerEnemyProfile[] = ["attackHeavy", "balanced", "defenseHeavy"];
   out.enemies = digest([0, 9, 55, 99, 100, 250, 480].flatMap((room) => strengths.flatMap((s) => profiles.map((p) => getTowerGateEnemy(room, s, p)))));
   out.prices = digest(UPGRADES.flatMap((u) => Array.from({ length: 40 }, (_, level) => cost(u.id, level))));
-  const fit = fitLayout(defaultLayout());
-  assert.ok(fit.ok);
-  for (const seed of [1, 2, 3]) {
-    const m = generateCity(fit, seed * 104729);
-    out[`defend city ${seed}`] = digest([m.type, m.owner, m.buildings]);
-  }
   return out;
 }
 
@@ -118,11 +110,11 @@ test("saved and played-by generation calls no inexact Math function", () => {
   assert.deepEqual(Object.fromEntries(calls), {});
 });
 
-/** The modules Tower, Delve and Defend generation run through. */
+/** The modules Tower and Delve generation run through. */
 const GENERATION = [
   ...readdirSync(new URL("../src/tower/", import.meta.url)).map((f) => `tower/${f}`),
   "delve/labyrinth.ts", "delve/patterns.ts", "delve/world.ts", "enemies/more-enemies.ts", "torches.ts", "board.ts", "random.ts", "exact.ts",
-  "enemies/scaling.ts", "enemies/curves.ts", "enemies/fast.ts", "enemies/shielded.ts", "tiers.ts", "config.ts", "progression/upgrades.ts", "economy/kill-pay.ts", "progression/xp.ts", "economy/prices.ts", "progression/training.ts", "economy/provisions.ts", "defend/citygen.ts", "defend/layout.ts", "defend/grid.ts",
+  "enemies/scaling.ts", "enemies/curves.ts", "enemies/fast.ts", "enemies/shielded.ts", "tiers.ts", "config.ts", "progression/upgrades.ts", "economy/kill-pay.ts", "progression/xp.ts", "economy/prices.ts", "progression/training.ts", "economy/provisions.ts",
 ];
 
 test("generation modules use no ** (intPow or sqrt instead)", () => {

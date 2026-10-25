@@ -68,7 +68,6 @@ const v3 = () => ({
   },
   delve: { ...mode(delveRun), courage: 33, memory: { known: { "1,2": true, "4,5": true }, visited: { "1,2": 3 } } },
   goals: { claimed: { "1": [10, 20] }, premium: { "1": [10] }, mastered: { "1": [10, 20] }, cleared: { "1": [10, 110] } },
-  materials: { ...defaults().materials },
   equipment: {
     ...defaultEquipment(), unlocked: true, seen: true, nextId: 4,
     // e1 and e2 as saved before effect slots; e3 with them.
@@ -84,6 +83,18 @@ const v3 = () => ({
     materials: { ...defaultEquipment().materials, whetstone: 12, amber: 3 },
     pity: { ...defaultEquipment().pity, ring: 41 },
   },
+});
+
+test("retired city and metal data cannot change supported save state", () => {
+  for(const version of [3,4]) {
+    const raw={...v3(),version},expected=decode(JSON.stringify(raw));
+    for(const defend of [null,"obsolete",{seed:71,bestWave:100,layout:{keep:{tx:10,ty:10}}}]) {
+      const loaded=decode(JSON.stringify({...raw,defend,materials:{ironBar:400,steelBar:12}}));
+      assert.deepEqual(loaded,expected);
+      assert.equal("defend" in loaded,false);assert.equal("materials" in loaded,false);
+      assert.deepEqual(decode(JSON.stringify(loaded)),loaded);
+    }
+  }
 });
 // Each base mutates only the subtrees where it behaves differently, keeping the
 // corpus small: snapshots nested in history/fall reuse the run validator.
@@ -184,7 +195,7 @@ const EDGES: [string, unknown[]][] = [
   ["tournament:tournament.claimed", [["2026-10-03", "2026-10-03", "x"], Array.from({ length: 10 }, (_, i) => `2026-09-${String(i + 10)}`)]],
   ["tournament:delve.run.tournament.seeds.layout", [4294967296, 0]],
   ["tournament:delve.run.tournament.back.tier", [0, 9]],
-  ["tournament:delve.run.tournament.back.mode", ["defend"]],
+  ["tournament:delve.run.tournament.back.mode", ["retired-mode"]],
   ["tournament:delve.run.tournament.id", ["2026-10-07x"]],
   ["mail:mail.inbox.0.id", ["", "x".repeat(101)]],
   ["mail:mail.inbox.0.items.0.currency", ["rubies"]],
@@ -218,7 +229,7 @@ function canonical(value: any): string {
   return JSON.stringify(value) ?? "undefined";
 }
 function fingerprint(raw: string | null) {
-  const { defend: _defend, ...rest } = decode(raw); // Defend has its own decoder and a random default seed.
+  const rest = decode(raw);
   return createHash("sha256").update(canonical(rest)).digest("hex").slice(0, 16);
 }
 function corpus(): Record<string, string> {

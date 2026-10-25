@@ -14,8 +14,6 @@ export type FrameLoopHost = {
   /** Moves the tab's countdowns on as each shows another second, and
    * redraws the Training tab's particles, while the Research page shows. */
   researchFrame(time: number): void;
-  /** Advances the Defend battle while its page shows. */
-  defendFrame(time: number): void;
   update(): void;
   /** Once a second: completes research the clock has reached and ticks the
    * Archives' countdowns. */
@@ -90,7 +88,6 @@ export class FrameLoop {
         guard(() => host.purse(time));
         guard(() => host.highlight());
       }
-      if (tab === "defend" && !host.modal.open) guard(() => host.defendFrame(time));
     }
     if (time - this.lastArchives > ARCHIVES_TICK_MS) {
       this.lastArchives = time;

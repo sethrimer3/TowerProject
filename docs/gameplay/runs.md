@@ -59,7 +59,7 @@ No offline progress is calculated.
 
 ## Controls inside a run
 
-Inside a run, the row of tabs at the bottom (Tower, Delve, Deck, Defend, Gear, Upgrades, Shop) is hidden and its space left empty: modes, gear and upgrades are chosen in the forest before a run, and a run ends back there.
+Inside a run, the row of tabs at the bottom (board, Upgrades, Deck, Gear, Research and Shop) is hidden and its space left empty: modes, gear and upgrades are chosen in the forest before a run, and a run ends back there.
 The Settings button in the stats opens the Settings page at any time, with a Back button to the board; inside a run it, Research and End Run wait in the menu the three-line button at the top right opens over the stats, and the Shop (whose Back returns to the run) stands under that button.
 
 ## Movement Speed and Dash
@@ -79,8 +79,8 @@ The **Toggles** button opens a menu of what the board shows during a run, each t
 Materials, Cells, Gems and Free Training's levels always show.
 The **Dev Mode** toggle near the bottom shows the testing tools under it while it is on, and turning it off turns them off; it grants nothing itself.
 Its first, **Unlimited currency**, is the Dev mode these pages speak of: unlimited currency, every floor section and mode unlocked.
-**Free purchases** is a lighter tool for testing: it unlocks nothing, but every purchase (skills, Training, provisions, research and archivists, Defend) goes through whatever you have and costs nothing, and research completes the moment it starts.
-Under them, **Export profile** downloads a text file (JSON, in sections: profile, settings, currencies, deck, upgrades, training, research, premium, gear, towers, goals, online, Defend) of everything kept between runs, headed by its save version; a run in progress, its undo history and a Proving Grounds attempt aren't in it.
+**Free purchases** is a lighter tool for testing: it unlocks nothing, but every purchase (skills, Training, provisions, research and archivists) goes through whatever you have and costs nothing, and research completes the moment it starts.
+Under them, **Export profile** downloads a text file (JSON, in sections: profile, settings, currencies, deck, upgrades, training, research, premium, gear, towers, goals, online) of everything kept between runs, headed by its save version; a run in progress, its undo history and a Proving Grounds attempt aren't in it.
 **Import profile** loads such a file over the whole profile, after a confirm: both current runs end, and anything the file leaves out starts afresh.
 In the forest **Enter**, an arrow going into an arch, stands under Goals beside the tower's number: one press goes straight in through the entrance and starts the run.
 Inside a run the button under Settings plays and pauses the hand.

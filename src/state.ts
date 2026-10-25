@@ -54,7 +54,6 @@ import { TowerClimb } from "./tower/climb.ts";
 import { callsGreaterBoss, greaterBoss, greaterBossSpot } from "./tower/greater-boss.ts";
 import { strengthOdds, traitOdds, type OddsSource } from "./enemies/odds.ts";
 import { STEPS_PER_FLOOR } from "./enemies/curves.ts";
-import { materialDef, MATERIALS } from "./economy/materials.ts";
 import { switchTier, tierNumeral, tierRewardText, tierXp } from "./tiers.ts";
 import type { GoldContext } from "./economy/gold-multipliers.ts";
 import { RunTimeline } from "./run-timeline.ts";
@@ -68,7 +67,6 @@ import type { BuyQuantity } from "./progression/buy-quantity.ts";
 import { critRule, loadout, provisionsOpen, rankShift, trainingWaiting, type TrainingView } from "./progression/loadout.ts";
 import { researched } from "./progression/archives.ts";
 import { chargesLeft, chargesPerRun, climbFloor, spendCharge, type Charge } from "./run-charges.ts";
-import type { MaterialId, MaterialStack } from "./economy/materials.ts";
 import { TrainingDesk } from "./game/training-desk.ts";
 import { ShopDesk } from "./game/shop-desk.ts";
 import { SkillDesk } from "./game/skill-desk.ts";
@@ -370,7 +368,6 @@ export class Game {
     this.save.gems = 999_999_999;
     this.save.tower.inspiration = 999_999_999;
     this.save.delve.courage = 999_999_999;
-    for (const material of MATERIALS) this.save.materials[material.id] = 999_999_999;
     this.save.upgrades.delve = 1;
     this.save.upgrades.legacy = 1;
     // The Deck page with its Badges box, and every badge at the top level.

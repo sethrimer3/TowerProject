@@ -5,7 +5,6 @@ import type { Coin, Encounter, Gain, GainArt, Heal, ShownFight } from "../shown.
 import { landsAt, type Volley } from "../volley.ts";
 import { OPENING_SHRINK_MS } from "../combat.ts";
 import { paintContents } from "./tile-painters.ts";
-import { materialImage } from "../sprites/material-sprites.ts";
 import { paintGem } from "./effects/gem-art.ts";
 import { RARITY_TIERS } from "../equipment/balance.ts";
 import { iconPixels, materialPixels, pieceSpriteId } from "../ui/equipment-icons.ts";
@@ -479,7 +478,6 @@ const paintsItself = (art: GainArt, themed: boolean) =>
  * still loading. */
 function artImage(art: GainArt): CanvasImageSource | null {
   if ("equipMaterial" in art || "equipPiece" in art) return null;
-  if ("material" in art) return materialImage(art.material);
   if ("heart" in art) return heart();
   return "coin" in art ? coinImage(art.coin) : null;
 }
@@ -524,9 +522,6 @@ function paintArt(c: CanvasRenderingContext2D, f: FrameContext, p: Popup & { gai
     else if (!(f.look.styledSprites && drawKit(c, "heart", 2, 2, 18))) c.drawImage(image!, 2, 2, 18, 18);
     if (art.raised) plus(c, 17, 17);
     else check(c, 13, 13);
-  } else {
-    if (!(f.look.styledSprites && "material" in art && drawKit(c, `metal-${art.material.replace(/Bar$/, "")}-bar`, 3, 3, 18))) c.drawImage(image!, 3, 3, 18, 18);
-    if (art.quantity > 1) mark(c, `×${art.quantity}`, { x: 18, y: 21 }, { color: REWARD_COLOR, size: 8, align: "left", styled: f.look.styledSprites });
   }
 }
 

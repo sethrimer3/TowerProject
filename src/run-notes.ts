@@ -30,7 +30,7 @@ export type RunNotes = {
 
 /** The finds kept beside the run, which undo never takes back. */
 export type RunFinds = {
-  /** Chests' metal bars and Equipment's upgrade materials, by id. */
+  /** Equipment's upgrade materials and historical finds, by id. */
   materials: Record<string, number>;
   cells: number;
   gems: number;

@@ -4,7 +4,6 @@ import { defaults, decode } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { World } from "../src/delve/world.ts";
-import { metalUnlocked, MATERIAL_IDS } from "../src/economy/materials.ts";
 import { rollGold } from "../src/economy/loot.ts";
 import { TOWER_ZONE_ENEMIES } from "../src/enemies/scaling.ts";
 import { RunPurse } from "../src/game/run-purse.ts";
@@ -13,13 +12,6 @@ import { RunPurse } from "../src/game/run-purse.ts";
 const constant = (v: number) => () => v;
 
 
-test("metal availability follows documented unlock floors", () => {
-  assert.equal(metalUnlocked("iron", 0), true);
-  assert.equal(metalUnlocked("steel", 14), false);
-  assert.equal(metalUnlocked("steel", 15), true);
-  assert.equal(metalUnlocked("voidsteel", 99), false);
-  assert.equal(metalUnlocked("voidsteel", 100), true);
-});
 
 test("a treasure chest pays only Gold: no metal bars, whatever its roll", () => {
   for (const roll of [0, 0.5, 0.999]) {
@@ -28,7 +20,7 @@ test("a treasure chest pays only Gold: no metal bars, whatever its roll", () => 
     const loot = new RunPurse(g.save, g.mode, g.run, constant(roll)).treasure(3, 3)!;
     assert.ok(loot.gold >= 3);
     assert.equal(loot.kind, "plain");
-    assert.ok(Object.values(g.save.materials).every((n) => n === 0), `no bars at ${roll}`);
+    assert.ok(Object.values(g.save.equipment.materials).every((n) => n === 0), `no bars at ${roll}`);
   }
 });
 
@@ -37,22 +29,13 @@ test("gold formula matches the documented range at floor 0", () => {
   assert.equal(rollGold(0, constant(0.999)), 6);
 });
 
-test("materials persist across a save encode/decode round trip", () => {
-  const save = defaults();
-  save.materials.ironBar = 40;
-  save.materials.steelBar = 3;
-  const loaded = decode(JSON.stringify(save));
-  assert.equal(loaded.materials.steelBar, 3);
-  assert.equal(loaded.materials.ironBar, 40);
-});
 
-test("a save holding the old crafting materials keeps its metal bars and drops the rest", () => {
+test("a save holding the old crafting materials drops the retired inventory", () => {
   const save = defaults() as any;
   save.materials = { ironBar: 7, cinderSlimeBlob: 12, garnet: 3, emptyVial: 2 };
   save.consumables = { cinderTonic: 4 };
   const loaded = decode(JSON.stringify(save)) as any;
-  assert.deepEqual(Object.keys(loaded.materials).sort(), [...MATERIAL_IDS].sort());
-  assert.equal(loaded.materials.ironBar, 7);
+  assert.equal(loaded.materials, undefined);
   assert.equal(loaded.consumables, undefined);
 });
 
@@ -62,7 +45,7 @@ test("a version-2 (pre-crafting) save migrates with empty materials/equipment ra
   delete (old as any).materials;
   delete (old as any).equipment;
   const loaded = decode(JSON.stringify(old));
-  assert.equal(loaded.materials.ironBar, 0);
+  assert.equal("materials" in loaded, false);
   assert.deepEqual(loaded.equipment.items, []);
   assert.equal(loaded.equipment.unlocked, false);
 });
@@ -74,7 +57,7 @@ test("kills drop none of the old crafting materials, in either mode", () => {
   tower.run.player.x = 8; tower.run.player.y = 0;
   assert.ok(tower.move(1, 0));
   assert.equal(tower.run.kills, 1);
-  assert.ok(Object.values(tower.save.materials).every((n) => n === 0));
+  assert.ok(Object.values(tower.save.equipment.materials).every((n) => n === 0));
 
   const delve = new Game(defaults());
   delve.save.upgrades.delve = 1;
@@ -83,7 +66,7 @@ test("kills drop none of the old crafting materials, in either mode", () => {
   delve.world = new World(delve.run);
   delve.move(0, 1);
   assert.equal(delve.run.kills, 1);
-  assert.ok(Object.values(delve.save.materials).every((n) => n === 0));
+  assert.ok(Object.values(delve.save.equipment.materials).every((n) => n === 0));
 });
 
 test("undo/reopen the same treasure chest cannot duplicate its Gold", () => {

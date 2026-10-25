@@ -11,9 +11,7 @@ import type { CardTreeLevels } from "../cards/trees.ts";
 import type { GoldItemId } from "../economy/provisions.ts";
 import type { TrainingId } from "../progression/training.ts";
 import type { UpgradeId } from "../progression/upgrades.ts";
-import type { MaterialId } from "../economy/materials.ts";
 import type { EquipmentSave } from "../equipment/inventory.ts";
-import type { DefendSave } from "../defend/progress.ts";
 import type { GemDrop } from "../economy/gems.ts";
 import type { RunFinds } from "../run-notes.ts";
 import type { Settings } from "./settings.ts";
@@ -130,9 +128,6 @@ export type Save = {
   trainers: number;
   upgrades: Record<UpgradeId, number>;
   settings: Settings;
-  /** Persistent crafting-material inventory. Never part of `Run` — must
-   * survive movement undo, death, and new runs. */
-  materials: Record<MaterialId, number>;
   /** Equipment, opened by Tower II's floor 60 Goal: the pieces owned, what each mode's
    * hero wears, the upgrade materials, and the Gem pulls' pity
    * (equipment/inventory.ts). */
@@ -200,9 +195,6 @@ export type Save = {
   /** The Archives' archivists, completed research and its history
    * (progression/archives.ts). */
   archives: ArchivesSave;
-  /** DEFEND mini-game: city layout, purchases, upgrades and best wave. A
-   * defense run itself is never saved. */
-  defend: DefendSave;
   /** Permanent perks bought in the Shop (shop/entitlements.ts). Erasing
    * progress keeps them: they were paid for. */
   entitlements: EntitlementId[];

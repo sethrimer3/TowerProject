@@ -17,11 +17,10 @@ export const PROFILE_SECTIONS = {
   training: ["bonusTrainingPoints", "training", "trainingPaid", "trainerRanks", "trainingJobs", "trainingAuto", "trainingCredit", "trainingBank", "trainingBoostUntil", "trainers"],
   research: ["archives"],
   premium: ["entitlements", "shop"],
-  gear: ["provisions", "materials", "equipment"],
+  gear: ["provisions", "equipment"],
   towers: ["tower", "delve"],
   goals: ["goals", "trialAccess"],
   online: ["tournament", "mail", "missions", "events"],
-  defend: ["defend"],
 } as const satisfies Record<string, readonly (keyof Save)[]>;
 
 /** The save's fields in no section: its version, which heads the file, and

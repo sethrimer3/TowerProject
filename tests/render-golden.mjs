@@ -1,9 +1,7 @@
 // Characterization screenshots for the board renderer. The fixed scenes of
 // tests/render-scenes.ts (Tower, dim Tower, Delve, outside,
 // reduced motion, and decor: a crate stepped on, a pool waded into, tall grass
-// walked through; plus the Defend board in building mode, a rainy battle, a
-// night boss wave and a stormy night zoomed in, and its palette icons) are
-// drawn at fixed timestamps with seeded randomness, and each canvas's pixels are hashed
+// walked through) are drawn at fixed timestamps with seeded randomness, and each canvas's pixels are hashed
 // against tests/fixtures/render.golden.json. A scene is only hashed once every
 // image the app asked for has loaded and a capture asks for no more, and then
 // it must draw the same twice. Canvases are kept on the CPU (Chrome would
@@ -42,7 +40,7 @@ try {
   await page.addInitScript(() => {
     // The app's random streams' start-up seeds, pinned by name (as in
     // tests/ui-golden.mjs), so they never depend on which module drew first.
-    globalThis.__pinnedSeeds = { game: 3513001552, defend: 2079646450 };
+    globalThis.__pinnedSeeds = { game: 3513001552 };
     const Real = window.Image, images = (window.__images = []);
     window.Image = function Image(...args) {
       const img = new Real(...args);
@@ -74,9 +72,7 @@ try {
 
     const board = document.createElement("canvas");
     board.style.cssText = "position:fixed;left:0;top:0;width:408px;height:408px";
-    const defendCanvas = document.createElement("canvas");
-    defendCanvas.style.cssText = "position:fixed;left:0;top:0";
-    document.body.append(board, defendCanvas);
+    document.body.append(board);
     const pixelsOf = (cv) => ({ pixels: cv.getContext("2d").getImageData(0, 0, cv.width, cv.height).data.slice(), width: cv.width, height: cv.height });
     /** A captured frame as a PNG, made only for a frame someone will look at. */
     const encode = ({ pixels, width, height }) => {
@@ -88,7 +84,7 @@ try {
     };
     /** One job's frames: its pixels at each grab. */
     const capture = (job) => {
-      const cv = job.canvas === "board" ? board : job.canvas === "defend" ? defendCanvas : document.createElement("canvas");
+      const cv = board;
       const out = {};
       job.play(cv, (frame) => (out[frame] = pixelsOf(cv)));
       return out;
@@ -140,7 +136,6 @@ try {
         results[`${name}.${frame}`] = { hash: hashes[frame], png: changed.includes(frame) ? encode(shot[frame]) : null };
     }
     board.remove();
-    defendCanvas.remove();
     return results;
   }, [recorded, filter.prefixes]);
   const shots = filter.pick(drawn);

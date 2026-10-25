@@ -5,7 +5,6 @@ import { GOLD_SHOP } from "../src/economy/provisions.ts";
 import { TRAINING } from "../src/progression/training.ts";
 import { xpForLevel } from "../src/progression/xp.ts";
 import { addItem } from "../src/equipment/inventory.ts";
-import { buyBomb, buyItem, buyUpgrade, defaultDefendSave } from "../src/defend/progress.ts";
 import { trainingPoints, trainingStep } from "../src/progression/loadout.ts";
 import { decode, defaults } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
@@ -112,13 +111,4 @@ test("completed research queues for its notification, oldest first, however many
   g.clock = () => T0 + 10 * 60_000; // 15 s + 1 min + 5 min pass while away
   g.research.settle();
   assert.deepEqual(g.research.done.map((r) => r.level), [1, 2, 3]);
-});
-
-test("free purchases: Defend buys for nothing", () => {
-  const save = defaultDefendSave(), wallet = { gold: 0, ironBar: 0, steelBar: 0, free: true };
-  assert.ok(buyItem(save, wallet, "watchTower"));
-  assert.ok(buyUpgrade(save, wallet, "barracksCapacity"));
-  assert.ok(buyBomb(save, wallet));
-  assert.deepEqual(wallet, { gold: 0, ironBar: 0, steelBar: 0, free: true });
-  assert.ok(!buyBomb(save, { gold: 0, ironBar: 0, steelBar: 0 }));
 });

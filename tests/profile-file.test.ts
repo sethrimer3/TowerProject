@@ -30,6 +30,17 @@ const imported = (text: string) => {
   return read.save;
 };
 
+test("old profiles ignore the removed city section while keeping supported progression",()=> {
+  const original=JSON.parse(exportProfile(progressed().save,NOW));
+  const expected=imported(JSON.stringify(original));
+  original.defend={defend:{seed:11,bestWave:20,layout:{}}};
+  original.gear.materials={ironBar:40,steelBar:5};
+  const loaded=imported(JSON.stringify(original));
+  assert.deepEqual(loaded,expected);
+  const file=JSON.parse(exportProfile(loaded,NOW));
+  assert.equal("defend" in file,false);assert.equal("materials" in file.gear,false);
+});
+
 test("every field of the save is in one section of the file, or named as left out", () => {
   const placed = [...Object.values(PROFILE_SECTIONS).flat(), ...UNSECTIONED];
   assert.equal(new Set(placed).size, placed.length);
