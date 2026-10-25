@@ -29,10 +29,10 @@ export const UPGRADES = [
   { id: "maxInterest", name: "Max Interest", description: "Open Max Interest research in the Archives: each level raises the most Interest a floor pays", base: 10, max: 1, currency: "breakthrough" },
   { id: "mug", name: "Mug", description: "Open Mug research in the Archives: each level adds Gold to a kill your first strike makes", base: 10, max: 1, currency: "breakthrough" },
   { id: "overheal", name: "Overheal", description: "Potions can heal you above max HP, up to your Overheal: opens Overheal training", base: 20, max: 1, currency: "breakthrough" },
-  { id: "ignore", name: "Ignore", description: `Inside a run, press Ignore, then a tile: the hero won't step on it for the rest of the floor (${IGNORE_PER_RUN} use a run); opens Ignore Count research`, base: 20, max: 1, currency: "breakthrough" },
-  { id: "ignoreMore", name: "Ignore More", description: `Inside a run, regain 1 Ignore use every ${REGAIN_FLOORS} new floors climbed; opens Ignore More research, which shortens it`, base: 20, max: 1, currency: "breakthrough" },
-  { id: "target", name: "Target", description: `Inside a run, press Target, then a tile: the hero walks there (${TARGET_PER_RUN} use a run); opens Target Count research`, base: 20, max: 1, currency: "breakthrough" },
-  { id: "targetMore", name: "Target More", description: `Inside a run, regain 1 Target use every ${REGAIN_FLOORS} new floors climbed; opens Target More research, which shortens it`, base: 20, max: 1, currency: "breakthrough" },
+  { id: "ignore", name: "Ignore", description: `During a climb, press Ignore, then a tile: the hero won't step on it for the rest of the floor (${IGNORE_PER_RUN} use a climb); opens Ignore Count research`, base: 20, max: 1, currency: "breakthrough" },
+  { id: "ignoreMore", name: "Ignore More", description: `During a climb, regain 1 Ignore use every ${REGAIN_FLOORS} new floors climbed; opens Ignore More research, which shortens it`, base: 20, max: 1, currency: "breakthrough" },
+  { id: "target", name: "Target", description: `During a climb, press Target, then a tile: the hero walks there (${TARGET_PER_RUN} use a climb); opens Target Count research`, base: 20, max: 1, currency: "breakthrough" },
+  { id: "targetMore", name: "Target More", description: `During a climb, regain 1 Target use every ${REGAIN_FLOORS} new floors climbed; opens Target More research, which shortens it`, base: 20, max: 1, currency: "breakthrough" },
   {
     id: "dash",
     name: "Dash",
@@ -80,7 +80,7 @@ export const UPGRADES = [
   {
     id: "moveSpeed",
     name: "Movement Speed",
-    description: "Open the Archives' Movement Speed research: each level lets the run's speed arrows go one step a second faster than 3",
+    description: "Open the Archives' Movement Speed research: each level lets the climb's speed arrows go one step a second faster than 3",
     base: 1,
     max: 1,
     currency: "breakthrough",
@@ -129,7 +129,7 @@ export const UPGRADES = [
   {
     id: "extraKey",
     name: "Extra Key",
-    description: "Open the Gold Key provision on the Gear page: a gold key every 100 floors of a run",
+    description: "Open the Gold Key provision on the Gear page: a gold key every 100 floors of a climb",
     base: 1,
     max: 1,
     currency: "breakthrough",
@@ -160,7 +160,7 @@ export const UPGRADES = [
   {
     id: "autoClimb",
     name: "Auto-Climb",
-    description: "Inside a run, the hand plays by itself: once a card reaches its target, the first card in your hand that can act leads the next move",
+    description: "During a climb, the hand plays by itself: once a card reaches its target, the first card in your hand that can act leads the next move",
     base: 1,
     max: 1,
     currency: "inspiration",
@@ -168,7 +168,7 @@ export const UPGRADES = [
   {
     id: "combatStance",
     name: "Combat Stance",
-    description: "Open the Deck, where you reorder the cards in your hand before a run",
+    description: "Open the Deck, where you reorder the cards in your hand before a climb",
     base: 1,
     max: 1,
     currency: "inspiration",
@@ -176,7 +176,7 @@ export const UPGRADES = [
   {
     id: "buildout",
     name: "Buildout",
-    description: "Unlock the Deck: add its cards to your hand, or set them aside, to choose what a run heads for",
+    description: "Unlock the Deck: add its cards to your hand, or set them aside, to choose what a climb heads for",
     base: 1,
     max: 1,
     currency: "inspiration",
@@ -280,7 +280,7 @@ export const UPGRADES = [
   {
     id: "elixirProvision",
     name: "Traveler's Elixir",
-    description: "Open the Traveler's elixir provision on the Gear page: an elixir every run, pressed to fill HP to max HP",
+    description: "Open the Traveler's elixir provision on the Gear page: an elixir every climb, pressed to fill HP to max HP",
     base: 5,
     max: 1,
     currency: "inspiration",
@@ -288,7 +288,7 @@ export const UPGRADES = [
   {
     id: "whetstoneProvision",
     name: "Vanguard Banner",
-    description: "Open the Vanguard Banner provision on the Gear page: a Vanguard Banner every run, pressed for +20% ATK for 100 turns",
+    description: "Open the Vanguard Banner provision on the Gear page: a Vanguard Banner every climb, pressed for +20% ATK for 100 turns",
     base: 5,
     max: 1,
     currency: "inspiration",
@@ -296,7 +296,7 @@ export const UPGRADES = [
   {
     id: "aegisProvision",
     name: "Aegis Charm",
-    description: "Open the Aegis charm provision on the Gear page: an Aegis charm every run, pressed for +20% DEF for 100 turns",
+    description: "Open the Aegis charm provision on the Gear page: an Aegis charm every climb, pressed for +20% DEF for 100 turns",
     base: 5,
     max: 1,
     currency: "inspiration",
@@ -321,7 +321,7 @@ export const UPGRADES = [
   {
     id: "onTheJob",
     name: "On the Job",
-    description: "Inside a run, train with the Silver you find: the Training buttons buy ranks that last the run",
+    description: "During a climb, train with the Silver you find: the Training buttons buy ranks that last the climb",
     base: 1,
     max: 1,
     currency: "inspiration",
@@ -329,7 +329,7 @@ export const UPGRADES = [
   {
     id: "regen",
     name: "Regen",
-    description: "Open Regen training: regain HP with every step you take in a run",
+    description: "Open Regen training: regain HP with every step you take in a climb",
     base: 1,
     max: 1,
     currency: "inspiration",
@@ -337,7 +337,7 @@ export const UPGRADES = [
   {
     id: "bombs",
     name: "Bombs",
-    description: "Open the Bomb provision on the Gear page: a Bomb every run, thrown at an enemy to deal it your ATK",
+    description: "Open the Bomb provision on the Gear page: a Bomb every climb, thrown at an enemy to deal it your ATK",
     base: 5,
     max: 1,
     currency: "inspiration",
@@ -377,7 +377,7 @@ export const UPGRADES = [
   {
     id: "keySiphon",
     name: "GK Siphon",
-    description: "Add the GK SIPHON card to your deck: it trades Max HP training levels, for the rest of the run, for a gold key, each use costing one level more than the last",
+    description: "Add the GK SIPHON card to your deck: it trades Max HP training levels, for the rest of the climb, for a gold key, each use costing one level more than the last",
     card: "keySiphon",
     base: 5,
     max: 1,
@@ -386,7 +386,7 @@ export const UPGRADES = [
   {
     id: "manualHand",
     name: "Manual Hand",
-    description: "Open a second hand on the Deck page, the Manual hand: its cards never play by themselves, only when you press them in a run",
+    description: "Open a second hand on the Deck page, the Manual hand: its cards never play by themselves, only when you press them in a climb",
     base: 1,
     max: 1,
     currency: "breakthrough",
@@ -402,7 +402,7 @@ export const UPGRADES = [
   {
     id: "buyQuantity",
     name: "Buy Quantity",
-    description: "Choose how many Training ranks one press buys, with training points or with Silver in a run (x1 at first): Buy Quantity research in the Archives opens x5, x10, x25, x100 and Max, and a trainer that trains 5 or more ranks at once works faster (×2 at 5, ×3 at 10, ×5 at 25, ×10 at 100)",
+    description: "Choose how many Training ranks one press buys, with training points or with Silver in a climb (x1 at first): Buy Quantity research in the Archives opens x5, x10, x25, x100 and Max, and a trainer that trains 5 or more ranks at once works faster (×2 at 5, ×3 at 10, ×5 at 25, ×10 at 100)",
     base: 5,
     max: 1,
     currency: "inspiration",
@@ -410,7 +410,7 @@ export const UPGRADES = [
   {
     id: "pocketMoney",
     name: "Pocket Money",
-    description: "Open Pocket Money research in the Archives: every run goes inside with Silver in hand",
+    description: "Open Pocket Money research in the Archives: every climb goes inside with Silver in hand",
     base: 3,
     max: 1,
     currency: "inspiration",
@@ -418,7 +418,7 @@ export const UPGRADES = [
   {
     id: "spareChange",
     name: "Spare Change",
-    description: "Every floor climbed for the first time in a run pays Gold: opens Gold / Floor training, and Gold / Floor research in the Archives",
+    description: "Every floor climbed for the first time in a climb pays Gold: opens Gold / Floor training, and Gold / Floor research in the Archives",
     base: 3,
     max: 1,
     currency: "inspiration",
@@ -426,7 +426,7 @@ export const UPGRADES = [
   {
     id: "wealthy",
     name: "Wealthy",
-    description: "All Silver found in a run is multiplied: opens Silver Bonus training, and Silver Bonus research in the Archives",
+    description: "All Silver found in a climb is multiplied: opens Silver Bonus training, and Silver Bonus research in the Archives",
     base: 3,
     max: 1,
     currency: "inspiration",
@@ -442,7 +442,7 @@ export const UPGRADES = [
   {
     id: "wishingWell",
     name: "Wishing Well",
-    description: "Every floor climbed for the first time in a run pays Silver: opens Silver / Floor training, and Silver / Floor research in the Archives",
+    description: "Every floor climbed for the first time in a climb pays Silver: opens Silver / Floor training, and Silver / Floor research in the Archives",
     base: 3,
     max: 1,
     currency: "inspiration",
@@ -450,7 +450,7 @@ export const UPGRADES = [
   {
     id: "freeTraining",
     name: "Free Training",
-    description: "Opens Free Offense, Defense and Utility Up training: each floor passed in a run may train a stat for free",
+    description: "Opens Free Offense, Defense and Utility Up training: each floor passed in a climb may train a stat for free",
     base: 10,
     max: 1,
     currency: "inspiration",
@@ -487,14 +487,14 @@ export const UPGRADES = [
   { id: "cardFastEnemy", name: "Fast Enemy", description: "Add the FAST ENEMY card to your deck: it moves you toward the closest Fast enemy", card: "fastEnemy", base: 20, max: 1, currency: "inspiration" },
   { id: "cardChest", name: "Chest", description: "Add the CHEST card to your deck: it moves you toward the closest closed chest, treasure or area reward, and while you hold it each treasure chest has a 1.5% chance to be a Supply Chest and a 0.5% chance to be an Equipment Chest", card: "chest", base: 20, max: 1, currency: "inspiration" },
   { id: "heartDoorResilience", name: "Heart Door Resilience", description: "Open Heart Door Resilience research in the Archives: each level makes a Heart Door drain less HP", base: 20, max: 1, currency: "inspiration" },
-  { id: "blueSiphon", name: "BK Siphon", description: "Add the BK SIPHON card to your deck: it trades DEF training levels, for the rest of the run, for a blue key, each use costing one level more than the last", card: "blueSiphon", base: 20, max: 1, currency: "inspiration" },
+  { id: "blueSiphon", name: "BK Siphon", description: "Add the BK SIPHON card to your deck: it trades DEF training levels, for the rest of the climb, for a blue key, each use costing one level more than the last", card: "blueSiphon", base: 20, max: 1, currency: "inspiration" },
   { id: "keyToHp", name: "Smelt Gold Key", description: "Add the SMELT GK card to your deck: it trades a gold key for 10% of your max HP, without moving, while that much HP fits under your Overheal ceiling", card: "keyToHp", base: 20, max: 1, currency: "inspiration" },
   { id: "blueTrader", name: "GK -> BK", description: "Add the GK -> BK card to your deck: it trades 3 gold keys for a blue key, without moving", card: "blueTrader", base: 20, max: 1, currency: "inspiration" },
   { id: "smeltBlue", name: "Smelt Blue Key", description: "Add the SMELT BK card to your deck: it trades a blue key for 30% of your max HP, without moving, while that much HP fits under your Overheal ceiling", card: "smeltBlue", base: 20, max: 1, currency: "inspiration" },
   { id: "redTrader", name: "BK -> RK", description: "Add the BK -> RK card to your deck: it trades 3 blue keys for a red key, without moving", card: "redTrader", base: 30, max: 1, currency: "inspiration" },
   { id: "smeltRed", name: "Smelt Red Key", description: "Add the SMELT RK card to your deck: it trades a red key for 90% of your max HP, without moving, while that much HP fits under your Overheal ceiling", card: "smeltRed", base: 30, max: 1, currency: "inspiration" },
   { id: "cardRedKey", name: "Red Key", description: "Add the RED KEY card to your deck: it moves you toward the closest red key, and while you hold it each red key is worth 5% more and pays 3 more Gold", card: "redKey", base: 20, max: 1, currency: "inspiration" },
-  { id: "redSiphon", name: "RK Siphon", description: "Add the RK SIPHON card to your deck: it trades ATK training levels, for the rest of the run, for a red key, each use costing one level more than the last", card: "redSiphon", base: 20, max: 1, currency: "inspiration" },
+  { id: "redSiphon", name: "RK Siphon", description: "Add the RK SIPHON card to your deck: it trades ATK training levels, for the rest of the climb, for a red key, each use costing one level more than the last", card: "redSiphon", base: 20, max: 1, currency: "inspiration" },
   { id: "floorSkipReward", name: "Floor Skip Reward", description: "Open Floor Skip Reward research in the Archives: each level pays a share of the Gold a skipped floor's chests and battles held", base: 20, max: 1, currency: "inspiration" },
   { id: "cardTorch", name: "Torch", description: "Add the TORCH card to your deck: it moves you toward the closest lit torch, putting it out", card: "torch", base: 20, max: 1, currency: "inspiration" },
   // Limit Break 1 to 10, a chain under Torch: each raises the most levels of
@@ -513,7 +513,7 @@ export const UPGRADES = [
   {
     id: "inspirationUndos",
     name: "Rehearsed steps",
-    description: "Rewind one action a run, and open Undo Count research in the Archives, or 4 more levels of it once Echoes of time has opened it",
+    description: "Rewind one action a climb, and open Undo Count research in the Archives, or 4 more levels of it once Echoes of time has opened it",
     grants: { undos: 1 },
     base: 1,
     max: 1,

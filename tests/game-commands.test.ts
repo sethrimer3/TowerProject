@@ -101,7 +101,7 @@ test("inside a run only Dev mode lets the player move the hero", () => {
   assert.equal(g.stepManually(1, 0), false);
   g.walkTo(4, 4);
   assert.deepEqual([g.run.player.x, g.run.player.y, g.route.length], [0, 0, 0]);
-  assert.equal(g.message, "The hand moves you inside a run.");
+  assert.equal(g.message, "The hand moves you inside a climb.");
   g.save.settings.devMode = true;
   assert.ok(g.stepManually(1, 0));
 });

@@ -28,8 +28,8 @@ let lastView: View | null = null;
 
 /** Why a point can't go on a node, in words. */
 function refusalText(card: CardId, id: string, refusal: TreeRefusal): string {
-  if (refusal === "inside") return "Points are spent in the forest: a run keeps the tree it went in with.";
-  if (refusal === "points") return "No card points left: the card earns one each level, by being used in runs.";
+  if (refusal === "inside") return "Points are spent in the forest: a climb keeps the tree it went in with.";
+  if (refusal === "points") return "No card points left: the card earns one each level, by being used in climbs.";
   if (refusal === "sealed") return "Sealed: a card buy opens it. Buy cards on the Deck page.";
   if (refusal === "locked") {
     const after = treeNode(card, id)?.after, parent = after ? treeNode(card, after) : undefined;

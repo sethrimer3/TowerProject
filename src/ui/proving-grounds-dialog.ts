@@ -11,6 +11,7 @@ import {TrialRenderer} from "../proving-grounds/render.ts";
 import {trialPlan} from "../proving-grounds/autoplay.ts";
 import {CARDS} from "../cards/cards.ts";
 import {el} from "./dom.ts";
+import {setEndRunLabel} from "./run-menu.ts";
 import {usesGameSprites} from "../sprites/style.ts";
 
 const MODES=[
@@ -217,6 +218,6 @@ export class ProvingGroundsDialog {
     this.session=null;this.renderer=null;this.navigation.clear();document.documentElement.classList.remove("trial-running","trial-manual");el("trial-overlay")?.remove();
     for(const key of ["trialMode","trialLevel","trialRoom","trialSteps","trialPhase","trialViewLeft","trialViewBottom","trialViewRoom","trialHeroX","trialHeroY","trialCameraMoving"])delete this.canvas.dataset[key];
     this.canvas.setAttribute("aria-label",this.originalLabel);this.canvas.tabIndex=this.originalTabIndex;el("hand").querySelectorAll("[aria-disabled]").forEach(c=>c.removeAttribute("aria-disabled"));
-    (el("base-enemy") as HTMLButtonElement).disabled=false;el("end-run").textContent="End Run";delete el("board").dataset.heading;
+    (el("base-enemy") as HTMLButtonElement).disabled=false;setEndRunLabel(this.base);delete el("board").dataset.heading;
   }
 }

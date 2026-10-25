@@ -38,8 +38,8 @@ function introNote(game: AppContext["game"], tree: TreeId) {
   const intro = tree === "inspiration", buy = intro ? game.introSkill : null, bought = intro ? game.introBought : null;
   const lesson = buy === "cardDoorKey" ? { title: "Unlock Door & Key.", text: `Press Door & Key, then press it again to unlock it for ${cost(buy, 0)} Inspiration.` }
     : buy === "cardEnemy" ? { title: "Unlock Enemy.", text: `Press Enemy, then press it again to unlock it for ${cost(buy, 0)} Inspiration.` }
-    : bought === "cardDoorKey" ? { title: "Door and Key join your hand.", text: "In a run, press them to collect keys and open doors. With no key, some HP can break down a Wooden Door. Press the Tower button to return to the entrance." }
-    : bought === "cardEnemy" ? { title: "Enemy joins your hand.", text: "In a run, press it to fight the closest enemy. Press the Tower button to return to the entrance." }
+    : bought === "cardDoorKey" ? { title: "Door and Key join your hand.", text: "During a climb, press them to collect keys and open doors. With no key, some HP can break down a Wooden Door. Press the Tower button to return to the entrance." }
+    : bought === "cardEnemy" ? { title: "Enemy joins your hand.", text: "During a climb, press it to fight the closest enemy. Press the Tower button to return to the entrance." }
     : game.provisionsLesson && !game.introBought && PRICED_TREES.includes(tree) ? PROVISIONS_NOTE
     : null;
   return lesson ? `<div class="tree-lesson" role="status"><b>${lesson.title}</b><p>${lesson.text}</p></div>` : "";
@@ -275,7 +275,7 @@ export class SkillTreePage {
   private tooltipHtml(id: UpgradeId): string {
     const node = this.current().nodes.find(n => n.id === id)!;
     const { u, level, price, balance, locked, maxed, available, affordable, canBuy } = this.purchase(id);
-    const requirements = node.requires.filter(rid => !this.ctx.game.save.upgrades[rid]).map(rid => UPGRADES.find(u => u.id === rid)!.name);
+    const requirements = node.requires.filter(rid => !this.ctx.game.save.upgrades[rid]).map(rid => `<span class="required">${UPGRADES.find(u => u.id === rid)!.name}</span>`);
     const currency = this.current().currency === "inspiration" ? "Inspiration" : "Breakthrough";
     const unlocks = this.current().unlocks;
     const hint = tooltipHint({ locked, maxed, available, affordable }, requirements, !!unlocks);

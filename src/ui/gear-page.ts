@@ -62,7 +62,7 @@ export class GearPage {
   /** The Provisions screen's help, behind the ? button at its top. */
   private showHelp() {
     const modal = this.ctx.modal;
-    modal.innerHTML = `<small>GEAR</small><h2>Provisions</h2><p>Provisions are bought with Gold and kept for good: each one you own is one use in every run, pressed from its button beside the board when you need it. A Gold Key uses itself.</p><p>Undo never gives a use back, and a boost keeps counting down through it.</p><p class="hint">Each one bought makes the next of its kind cost a hundred times more.</p><div class="dialog-actions"><button id="gear-help-ok">Got it</button></div>`;
+    modal.innerHTML = `<small>GEAR</small><h2>Provisions</h2><p>Provisions are bought with Gold and kept for good: each one you own is one use in every climb, pressed from its button beside the board when you need it. A Gold Key uses itself.</p><p>Undo never gives a use back, and a boost keeps counting down through it.</p><p class="hint">Each one bought makes the next of its kind cost a hundred times more.</p><div class="dialog-actions"><button id="gear-help-ok">Got it</button></div>`;
     modal.showModal();
     el("gear-help-ok").onclick = () => modal.close();
   }
@@ -100,7 +100,7 @@ export class GearPage {
     const bought = this.bought;
     this.bought = null;
     const open = GOLD_SHOP.filter((item) => provisionOpen(game.save, item.id));
-    return `<div class="provision-head">${helpButton("About provisions", "gear-help")}<p class="hint">Each one owned is one use in every run.</p></div>${open.map((item) => {
+    return `<div class="provision-head">${helpButton("About provisions", "gear-help")}<p class="hint">Each one owned is one use in every climb.</p></div>${open.map((item) => {
       const owned = game.save.provisions[item.id], price = provisionPrice(game.save, item.id), just = item.id === bought ? " bought" : "";
       // The count owned, in a circle at the icon's foot.
       const count = owned ? `<b class="owned-count${just}" title="${whole(owned)} owned" aria-label="${whole(owned)} owned">${whole(owned)}</b>` : "";

@@ -167,7 +167,7 @@ export function describeGrants(grants: Grants, words: Partial<Record<Stat, strin
   return (Object.entries(grants) as [Stat, number][])
     .map(([stat, n]) =>
       stat === "undos"
-        ? `${n === 1 ? "One" : n} ${words.undos ?? WORDS.undos}${n === 1 ? "" : "s"} a run (up to ${UNDO_CAP})`
+        ? `${n === 1 ? "One" : n} ${words.undos ?? WORDS.undos}${n === 1 ? "" : "s"} a climb (up to ${UNDO_CAP})`
         : `+${n} ${words[stat] ?? WORDS[stat]}`)
     .join(" and ");
 }

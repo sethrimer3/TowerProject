@@ -158,7 +158,7 @@ export const TREES: SkillTree[] = [
     { id: "aiEvaluation", icon: "⚖", x: 25, y: 52, requires: ["aiMemory"] },
     { id: "aiLookahead", icon: "✧", x: 75, y: 78, requires: ["aiMemory"] },
   ] },
-  { id: "legacy", name: "Legacy", currency: "breakthrough", gate: "legacy", description: "Spend Breakthrough on heirlooms carried into every new run.", nodes: [
+  { id: "legacy", name: "Legacy", currency: "breakthrough", gate: "legacy", description: "Spend Breakthrough on heirlooms carried into every new climb.", nodes: [
     { id: "quality", icon: "♜", x: 50, y: 15, requires: ["legacy"] },
     { id: "yellow", icon: "⚿", x: 23, y: 40, requires: ["quality"] },
     { id: "blue", icon: "⚿", x: 77, y: 65, requires: ["yellow"] },

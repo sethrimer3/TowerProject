@@ -278,7 +278,7 @@ export const TRAINING = [
   {
     id: "regen", name: "Regen", group: "defense", stat: "regen", curve: { per: 0.1, square: 1 / 120 }, cost: 1, max: 1000, breaks: 10, requires: "regen",
     research: "regenPercent",
-    description: "Raises the HP regained with every step taken in a run.",
+    description: "Raises the HP regained with every step taken in a climb.",
     silver: cheap, gold: mildTrainers,
   },
   // The damage the shroud blocks each fight.
@@ -322,7 +322,7 @@ export const TRAINING = [
   {
     id: "floorGold", name: "Gold / Floor", group: "utility", requires: "spareChange", cost: 1, max: 150,
     curve: { per: 1 }, base: 3, unit: "", research: "floorGold",
-    description: "Raises the Gold paid for each floor climbed for the first time in a run.",
+    description: "Raises the Gold paid for each floor climbed for the first time in a climb.",
     silver: opened, gold: firmTrainers,
   },
   // The Silver each floor climbed for the first time in a run pays, before
@@ -330,7 +330,7 @@ export const TRAINING = [
   {
     id: "floorSilver", name: "Silver / Floor", group: "utility", requires: "wishingWell", cost: 1, max: 150,
     curve: { per: 4 }, unit: "", research: "floorSilver",
-    description: "Raises the Silver paid for each floor climbed for the first time in a run.",
+    description: "Raises the Silver paid for each floor climbed for the first time in a climb.",
     silver: opened, gold: firmTrainers,
   },
   // Silver Bonus's multiplier on all Silver a run finds, in percent: ×1, and
@@ -338,7 +338,7 @@ export const TRAINING = [
   {
     id: "silverBonus", name: "Silver Bonus", group: "utility", requires: "wealthy", cost: 1, max: 150,
     curve: { per: 1 }, base: 100, off: 100, scale: 100, unit: "×", research: "silverBonus",
-    description: "Multiplies all Silver found in a run.",
+    description: "Multiplies all Silver found in a climb.",
     silver: opened, gold: firmTrainers,
   },
   // Gold Bonus's multiplier on the Gold a kill, chest, item picked up or
@@ -346,7 +346,7 @@ export const TRAINING = [
   {
     id: "goldBonus", name: "Gold Bonus", group: "utility", requires: "loot", cost: 1, max: 150,
     curve: { per: 3 }, base: 100, off: 100, scale: 100, unit: "×", research: "goldBonus",
-    description: "Multiplies the Gold kills, chests, items picked up and doors opened pay in a run, and what Floor Skip pays for them, with Gold Bonus research. Gold / Floor and Interest aren't raised.",
+    description: "Multiplies the Gold kills, chests, items picked up and doors opened pay in a climb, and what Floor Skip pays for them, with Gold Bonus research. Gold / Floor and Interest aren't raised.",
     silver: opened, gold: firmTrainers,
   },
   // The Free Upgrade rows: the chance each floor passed in a run trains a
@@ -355,19 +355,19 @@ export const TRAINING = [
   {
     id: "freeOffense", name: "Free Offense Up", group: "utility", requires: "freeTraining", cost: 1, max: 100,
     curve: { per: 50 }, scale: 100, unit: "%",
-    description: "Each floor passed in a run has a chance to train a random Offense stat one level for free, for the run.",
+    description: "Each floor passed in a climb has a chance to train a random Offense stat one level for free, for the climb.",
     silver: freeUpgrades, gold: freeUpgradeTrainers,
   },
   {
     id: "freeDefense", name: "Free Defense Up", group: "utility", requires: "freeTraining", cost: 1, max: 100,
     curve: { per: 50 }, scale: 100, unit: "%",
-    description: "Each floor passed in a run has a chance to train a random Defense stat one level for free, for the run.",
+    description: "Each floor passed in a climb has a chance to train a random Defense stat one level for free, for the climb.",
     silver: freeUpgrades, gold: freeUpgradeTrainers,
   },
   {
     id: "freeUtility", name: "Free Utility Up", group: "utility", requires: "freeTraining", cost: 1, max: 100,
     curve: { per: 50 }, scale: 100, unit: "%",
-    description: "Each floor passed in a run has a chance to train a random Utility stat one level for free, for the run.",
+    description: "Each floor passed in a climb has a chance to train a random Utility stat one level for free, for the climb.",
     silver: freeUpgrades, gold: freeUpgradeTrainers,
   },
   // What a percent potion restores beyond its HP, in hundredths of a

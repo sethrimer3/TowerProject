@@ -391,7 +391,7 @@ export class ResearchPage {
    * trained up (`TrainingDesk.canReset`), and with no ranks to reset. */
   private resetButton(t: TrainingRow, inTraining: boolean) {
     const game = this.ctx.game, ranked = game.save.training[t.id] > 0 || inTraining, open = ranked && game.training.canReset;
-    const title = !game.training.canReset ? "Stats reset only between runs" : ranked ? `Reset ${t.name} for ${TRAINING_RESET_GEMS} Gems` : `${t.name} has no ranks to reset`;
+    const title = !game.training.canReset ? "Stats reset only between climbs" : ranked ? `Reset ${t.name} for ${TRAINING_RESET_GEMS} Gems` : `${t.name} has no ranks to reset`;
     return `<button class="training-reset" data-reset="${t.id}" ${open ? "" : "disabled"} aria-label="Reset ${t.name}" title="${title}">${uiSprite("undo")}</button>`;
   }
 

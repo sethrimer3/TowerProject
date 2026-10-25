@@ -132,7 +132,7 @@ const STAT_TEXT: Record<TreeStat, (n: string) => string> = {
   stairSkip: (n) => `${n}% chance the Tower's stairs climb two floors`,
   percentPotions: (n) => `+${n}% chance each potion is a percent potion`,
   potionHeal: (n) => `+${n}% HP from every potion`,
-  potionMaxHp: (n) => `+${n}% max HP for the run each time a potion is reached`,
+  potionMaxHp: (n) => `+${n}% max HP for the climb each time a potion is reached`,
   potionSilver: (n) => `+${n} Silver from each potion`,
   regen: (n) => `+${n}% Regen`,
   shroud: (n) => `+${n}% shroud against every enemy`,
@@ -156,7 +156,7 @@ const STAT_TEXT: Record<TreeStat, (n: string) => string> = {
   woodTransmute: (n) => `${n}% chance each Heart Door taking no keys on a floor is a Wooden Door`,
   heartLockCost: (n) => `−${n}% of the HP each Heart Door drains`,
   heartLockPick: (n) => `${n}% chance each Heart Door taking keys on a floor loses its drain`,
-  heartShroud: (n) => `+${n}% shroud against every enemy for the run, each Heart Door's drain paid`,
+  heartShroud: (n) => `+${n}% shroud against every enemy for the climb, each Heart Door's drain paid`,
   woodKeyCost: (n) => `−${n}% of the key each Wooden Door takes`,
   woodDurability: (n) => `−${n}% of the HP breaking down each Wooden Door takes`,
   druidKey: (n) => `${n}% chance an opened Wooden Door gives a gold key`,
@@ -182,7 +182,7 @@ const STAT_TEXT: Record<TreeStat, (n: string) => string> = {
     DoorCost: (n) => `−${n}% of each ${color} key a door takes`,
     DoubleKey: (n) => `${n}% chance a ${color} key picked up is two`,
     MasterKey: (n) => `${n}% chance a ${color} key picked up opens every door with a ${color} lock on its floor`,
-    FloorKey: (n) => `${n}% chance of a ${color} key on each floor new to the run`,
+    FloorKey: (n) => `${n}% chance of a ${color} key on each floor new to the climb`,
     };
   }),
   ...byTrade((color, word): Record<TradePart, (n: string) => string> => ({
@@ -217,7 +217,7 @@ const STAT_TEXT: Record<TreeStat, (n: string) => string> = {
     Material: (n) => `${n}% chance each ${one} killed drops upgrade materials`,
     InstakillMaterial: (n) => `${n}% chance each Instakill of ${a} drops upgrade materials`,
     Equipment: (n) => `${n}% chance each ${one} killed drops a piece of equipment`,
-    InstakillMaxHp: (n) => `+${n}% max HP for the run with each Instakill of ${a}`,
+    InstakillMaxHp: (n) => `+${n}% max HP for the climb with each Instakill of ${a}`,
     StealOverheal: (n) => `Lifesteal heals up to ${n}% above max HP against ${many}`,
     SurpriseAttack: (n) => `${n}% chance the first strike of a fight with ${a} right after a Dash deals twice your ATK`,
     Cells: (n) => `+${n} Cell${n === "1" ? "" : "s"} from each ${one} killed`,
@@ -484,7 +484,7 @@ export function cardTreeGraph(card: CardId, tree: TreeLevels, why: (id: string) 
 export function cardTreeHelpHtml(card: CardId, left: number) {
   const n = CARD_TREES[card]?.length ?? 0;
   return `<p>${CARDS[card].name} has <b>${left}</b> point${left === 1 ? "" : "s"} to spend on ${n} upgrades.</p>`
-    + `<p>Each card level earns a point. Upgrades open from the card upward, each once the one below it holds enough levels, and count while the card is in the run's hand. Choose one to see what it does.</p>`
+    + `<p>Each card level earns a point. Upgrades open from the card upward, each once the one below it holds enough levels, and count while the card is in the climb's hand. Choose one to see what it does.</p>`
     + `<p>Buying cards on the Deck page raises a card's max level and the levels its upgrades hold, and opens its sealed upgrades: uncommon, rare, epic and legendary, each opened by a card buy of its rarity.</p>`;
 }
 

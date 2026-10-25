@@ -46,7 +46,7 @@ A new game starts inside its first Tower run with a hand of one card, **Stairs**
 Until the Inspiration tree's **Auto-Climb** is owned, the hand moves only when you press a card: the hero heads for that card's target, and once it gets there the hand waits for your next press (see Pressing a card in hand-and-cards.md).
 A note over the board, *Press the Stairs card to climb*, says each card sends the hero toward what it names, while a hand points at Stairs; play and the speed arrows stay closed until Stairs is pressed, and the hero then walks at 2 steps a second.
 Floor 1's stairs always stand open, so Stairs climbs it, paying the run's first Inspiration; floor 2's stairs are behind a gold door Stairs can't open.
-The first time no card can take the hero further, a note says the Inspiration the run earned unlocks new abilities and to press **End Run**, which pulses slowly until it is pressed.
+The first time no card can take the hero further, a note says the Inspiration the run earned unlocks new abilities and to press **End Climb**, which pulses slowly until it is pressed.
 In the forest a note then says to spend the Inspiration, a hand pointing at the **Upgrades** tab, while **Door & Key** can be bought.
 On the Inspiration tree a note asks you to unlock Door & Key, a hand pointing at it; once it is bought, the note says Door and Key have joined your hand, that in a run they collect keys and open doors, that with no key some HP can break down a Wooden Door, and to press the Tower button to go back, a hand pointing at it.
 Back in the forest a note says to press **Enter** for another run, a hand pointing at it; tapping the note dismisses it, as entering does.

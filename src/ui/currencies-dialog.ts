@@ -27,7 +27,7 @@ export function currencyRows(game: Game): CurrencyRow[] {
     [true, "gems", gemIcon(), "Gems", save.gems],
     [true, "shards", shardIcon(), "Ascension Shards", save.ascensionShards],
     [true, "medals", medalIcon(), "Medals", save.medals],
-    [!outside || silver > 0, "silver", uiSprite("gold", "ui-sprite silver-sprite"), outside ? "Silver (next run)" : "Silver", silver],
+    [!outside || silver > 0, "silver", uiSprite("gold", "ui-sprite silver-sprite"), outside ? "Silver (next climb)" : "Silver", silver],
     [true, "training", pointsIcon(), "Training Points", trainingPoints(save).left],
     [true, "inspiration", uiSprite("inspiration"), "Inspiration", save.tower.inspiration],
     [!!save.upgrades.breakthrough, "breakthrough", uiSprite("breakthrough"), "Breakthrough", save.breakthrough],

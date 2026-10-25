@@ -58,7 +58,7 @@ export const RESEARCH_TARGETS = {
   moveSpeed: { name: "Steps / Sec", base: 3, shown: count },
   /** Undos a run has to spend, once Rehearsed steps has given the first;
    * its base is the loadout's own undos, so the Archives page reads it there. */
-  undoCapacity: { name: "Undos per Run", base: 0, shown: count },
+  undoCapacity: { name: "Undos per Climb", base: 0, shown: count },
   /** The percent of its HP a potion restores, from 100 (red potions aside). */
   potionHeal: { name: "Potion Healing", base: 100, shown: percent },
   /** The percent of its Regen training a step regains, from 100. */
@@ -150,7 +150,7 @@ export const RESEARCH_TARGETS = {
   /** Boons Auto Pick can rank. */
   boonRanks: { name: "Boons Ranked", base: 0, shown: count },
   /** Whether the run's notes can be read (run-notes.ts): tap the floor number. */
-  runNotes: { name: "Run Notes", base: 0, shown: opened },
+  runNotes: { name: "Climb Notes", base: 0, shown: opened },
   /** Badges each card can hold. */
   badgeSlots: { name: "Badge Slots", base: 1, shown: count },
 } as const;
@@ -484,7 +484,7 @@ export const RESEARCH = {
   },
   attack: {
     name: "ATK",
-    description: "Study the old climbers' strokes: the hero starts every run with more ATK.",
+    description: "Study the old climbers' strokes: the hero starts every climb with more ATK.",
     categories: ["offense"],
     requires: [{ upgrade: "archives" }],
     levels: hundredLevels("attackPercent", 2),
@@ -512,21 +512,21 @@ export const RESEARCH = {
   },
   shardAttack: {
     name: "Shard ATK",
-    description: "Learn to draw more from every ATK shard: each one a run picks up raises ATK by more.",
+    description: "Learn to draw more from every ATK shard: each one a climb picks up raises ATK by more.",
     categories: ["offense"],
     requires: [{ upgrade: "archives" }, { goalUnlock: "shardAttack" }],
     levels: hundredLevels("shardAttackPercent", 2),
   },
   defense: {
     name: "DEF",
-    description: "Study the old climbers' guard: the hero starts every run with more DEF.",
+    description: "Study the old climbers' guard: the hero starts every climb with more DEF.",
     categories: ["defense"],
     requires: [{ upgrade: "archives" }],
     levels: hundredLevels("defensePercent", 3),
   },
   shardDefense: {
     name: "Shard DEF",
-    description: "Learn to draw more from every DEF shard: each one a run picks up raises DEF by more.",
+    description: "Learn to draw more from every DEF shard: each one a climb picks up raises DEF by more.",
     categories: ["defense"],
     requires: [{ upgrade: "archives" }, { goalUnlock: "shardDefense" }],
     levels: hundredLevels("shardDefensePercent", 3),
@@ -540,7 +540,7 @@ export const RESEARCH = {
   },
   maxHp: {
     name: "Max HP",
-    description: "Study the old climbers' endurance: the hero starts every run with more max HP.",
+    description: "Study the old climbers' endurance: the hero starts every climb with more max HP.",
     categories: ["defense"],
     requires: [{ upgrade: "archives" }],
     levels: hundredLevels("maxHpPercent", 3),
@@ -554,7 +554,7 @@ export const RESEARCH = {
   },
   moveSpeed: {
     name: "Movement Speed",
-    description: "Drill the old climbers' quickstep: the run's speed arrows go one step a second faster.",
+    description: "Drill the old climbers' quickstep: the climb's speed arrows go one step a second faster.",
     categories: ["qualityOfLife"],
     requires: [{ upgrade: "moveSpeed" }],
     levels: countLevels("moveSpeed", 6),
@@ -582,7 +582,7 @@ export const RESEARCH = {
   },
   undoCount: {
     name: "Undo Count",
-    description: "Rehearse old climbs to give each run one more undo.",
+    description: "Rehearse old climbs to give each climb one more undo.",
     categories: ["abilities"],
     requires: [{ anyUpgrade: ["inspirationUndos", "undos"] }],
     levels: countLevels("undoCapacity", 8),
@@ -611,7 +611,7 @@ export const RESEARCH = {
   },
   noteTaking: {
     name: "Note Taking",
-    description: "Keep a ledger of the climb: tap the floor number during a run to read its notes (time, steps, kills, keys, doors, chests and loot), and copy them.",
+    description: "Keep a ledger of the climb: tap the floor number during a climb to read its notes (time, steps, kills, keys, doors, chests and loot), and copy them.",
     categories: ["qualityOfLife"],
     requires: [{ upgrade: "archives" }, { goalUnlock: "noteTaking" }],
     // 100,000 Gold and 2 days.
@@ -619,35 +619,35 @@ export const RESEARCH = {
   },
   pocketMoney: {
     name: "Pocket Money",
-    description: "Put a little by between climbs: every run goes inside with more Silver in hand.",
+    description: "Put a little by between climbs: every climb goes inside with more Silver in hand.",
     categories: ["economy"],
     requires: [{ upgrade: "pocketMoney" }],
     levels: hundredLevels("startingSilver", 5),
   },
   floorGold: {
     name: "Gold / Floor",
-    description: "Count the coins in the cracks: every new floor of a run pays more Gold.",
+    description: "Count the coins in the cracks: every new floor of a climb pays more Gold.",
     categories: ["economy"],
     requires: [{ upgrade: "spareChange" }],
     levels: hundredLevels("floorGold", 5, STEEP_INCOME),
   },
   floorSilver: {
     name: "Silver / Floor",
-    description: "Toss a coin in the well: every new floor of a run pays more Silver.",
+    description: "Toss a coin in the well: every new floor of a climb pays more Silver.",
     categories: ["economy"],
     requires: [{ upgrade: "wishingWell" }],
     levels: hundredLevels("floorSilver", 5, STEEP_INCOME),
   },
   silverBonus: {
     name: "Silver Bonus",
-    description: "Learn the moneychangers' tricks: all Silver found in a run is worth more.",
+    description: "Learn the moneychangers' tricks: all Silver found in a climb is worth more.",
     categories: ["economy"],
     requires: [{ upgrade: "wealthy" }],
     levels: hundredLevels("silverBonus", 3, STEEP_INCOME),
   },
   goldBonus: {
     name: "Gold Bonus",
-    description: "Search more thoroughly: every kill, chest, item picked up and door opened in a run, and what Floor Skip pays for them, pays more Gold, multiplying Gold Bonus training.",
+    description: "Search more thoroughly: every kill, chest, item picked up and door opened in a climb, and what Floor Skip pays for them, pays more Gold, multiplying Gold Bonus training.",
     categories: ["economy"],
     requires: [{ upgrade: "loot" }],
     levels: hundredLevels("goldBonus", 3, STEEP_INCOME),
@@ -696,7 +696,7 @@ export const RESEARCH = {
   },
   warpLoot: {
     name: "Warp Loot",
-    description: "Pick the pockets of the climb you skip: a run that starts above floor 1 (a Warp, or a Retry from one) goes inside with a share of the Silver its skipped floors' kills, Wishing Well and Interest would have paid, estimated from your training and research.",
+    description: "Pick the pockets of the climb you skip: a climb that starts above floor 1 (a Warp, or a Retry from one) goes inside with a share of the Silver its skipped floors' kills, Wishing Well and Interest would have paid, estimated from your training and research.",
     categories: ["economy"],
     requires: [{ upgrade: "archives" }, { goalUnlock: "warpLoot" }],
     levels: warpLootLevels(),
@@ -710,35 +710,35 @@ export const RESEARCH = {
   },
   ignoreCount: {
     name: "Ignore Count",
-    description: "Learn which stones to step around: start each run with more Ignore uses.",
+    description: "Learn which stones to step around: start each climb with more Ignore uses.",
     categories: ["abilities"],
     requires: [{ upgrade: "ignore" }],
     levels: ignoreCountLevels(),
   },
   ignoreMore: {
     name: "Ignore More",
-    description: "Keep your eyes moving: a run regains an Ignore use in fewer new floors.",
+    description: "Keep your eyes moving: a climb regains an Ignore use in fewer new floors.",
     categories: ["abilities"],
     requires: [{ upgrade: "ignoreMore" }],
     levels: regainLevels("ignoreFloors", 1.05),
   },
   targetCount: {
     name: "Target Count",
-    description: "Map the old climbers' shortcuts: start each run with more Target uses.",
+    description: "Map the old climbers' shortcuts: start each climb with more Target uses.",
     categories: ["abilities"],
     requires: [{ upgrade: "target" }],
     levels: TARGET_COUNT_LEVELS.map(([gold, hours]): ResearchLevel => ({ gold, hours, effect: { target: "targetPerRun", op: "add", value: 1 } })),
   },
   targetMore: {
     name: "Target More",
-    description: "Pick your marks faster: a run regains a Target use in fewer new floors.",
+    description: "Pick your marks faster: a climb regains a Target use in fewer new floors.",
     categories: ["abilities"],
     requires: [{ upgrade: "targetMore" }],
     levels: regainLevels("targetFloors", 1.1),
   },
   unlockShrines: {
     name: "Unlock Shrines",
-    description: "Find the old climbers' shrines: every so many floors climbed in the Tower grants a boon for the rest of the run.",
+    description: "Find the old climbers' shrines: every so many floors climbed in the Tower grants a boon for the rest of the climb.",
     categories: ["shrines"],
     requires: [{ upgrade: "archives" }, { goalUnlock: "shrines" }],
     levels: [levelOf("shrines", 1, 1.5e6, 4999)],
@@ -759,7 +759,7 @@ export const RESEARCH = {
   },
   firstBoonChoice: {
     name: "First Boon Choice",
-    description: "Choose your first prayer: a standard boon picked on the forest's Shrine Boons page heads every run's first offer.",
+    description: "Choose your first prayer: a standard boon picked on the forest's Shrine Boons page heads every climb's first offer.",
     categories: ["shrines"],
     requires: [SHRINES, { goalUnlock: "firstBoonChoice" }],
     levels: [levelOf("firstBoonChoice", 1, 1e9, 6667)],
@@ -773,7 +773,7 @@ export const RESEARCH = {
   },
   autoPickBoons: {
     name: "Auto Pick Boons",
-    description: "Let the shrines choose: a run can take the top boon offered by itself, turned on from the Shrine button.",
+    description: "Let the shrines choose: a climb can take the top boon offered by itself, turned on from the Shrine button.",
     categories: ["shrines"],
     requires: [SHRINES, { goalUnlock: "autoPickBoons" }],
     levels: [levelOf("autoPickBoons", 1, 100e6, 7166)],

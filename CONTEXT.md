@@ -105,8 +105,9 @@ The forest building, standing once Equipment is open, that opens the Equipment s
 ### The climb
 
 **Climb**:
-A Tower run's way through its floors, only ever up: a floor's stairs lead to the next, and a floor left behind is never returned to in the run.
-_Avoid_: descent, revisit
+A Tower run, one trip into the Tower from its forest, and its way through the floors, only ever up: a floor's stairs lead to the next, and a floor left behind is never returned to in the climb.
+Player-facing text says climb (End Climb, Climb Notes), as do the descriptions of skills, research, training, cards and gear that apply in both modes; code and Delve-only text keep run, and the Delve's own words call its run a delve.
+_Avoid_: ascent, descent, revisit
 
 **Section**:
 A run of ten Tower floors; the hero keeps every stat on entering it.

@@ -25,7 +25,7 @@ Each new Tower floor climbed pays **Inspiration**, and each Tower Goal claimed a
 The Delve opens only during a Tournament, whose runs it plays.
 **Gold** and **XP** last between runs: Gold buys provisions, trainers and Archives research, and each level earns training points.
 **Silver**, found inside a run, buys training for that run only.
-When no card can act, End Run returns the hero to the forest, where the next run is entered.
+When no card can act, End Climb returns the hero to the forest, where the next climb is entered.
 
 ## Gameplay reference
 

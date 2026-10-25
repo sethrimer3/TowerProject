@@ -35,7 +35,7 @@ Dev mode owns every theme.
 ## In the forest
 
 In the forest the purse also shows the Silver each run starts with, once that is any, and the stats show only the keys a run starts with.
-In the forest Goals stands in End Run's place, with **Enter** under it.
+In the forest Goals stands in End Climb's place, with **Enter** under it.
 
 ## The Shop
 

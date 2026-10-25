@@ -382,6 +382,9 @@ html.medieval .tree-tooltip .safe {
 html.medieval .inspect-box .danger {
   color: #8a1a12 !important;
 }
+html.medieval .tree-tooltip .required {
+  color: #8a1a12;
+}
 /* An enemy's stat line keeps its colours, inked dark enough for the
    parchment: what gets through red, Lifesteal's heal blue, the Gold drop
    gold. */

@@ -81,14 +81,14 @@ const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
   flyingEnemyCard: `<p>The Flying Enemy card joins your deck: it moves you toward the closest Flying enemy your arrows can hurt, stops once one is within your Attack Range, and waits there while your arrows fly.</p>` +
     `<p>While it is in your hand, your arrows strike with 5% more ATK and charge 5% faster.</p>` +
     `<p class="hint">Flying enemies hover out of reach of your sword: walk under them freely, but only arrows can bring them down. A Flying enemy an arrow wounds comes after you.</p>`,
-  warpLoot: `<p>Warp Loot opens in the Archives: research it, and a run that starts above floor 1 (a Warp, or a Retry from one) goes inside with a share of the Silver its skipped floors would have paid, 2% a level, up to all of it at level 50.</p>` +
-    `<p class="hint">The skipped floors' kills, Wishing Well and Interest are estimated from your training and research as the run begins.</p>`,
+  warpLoot: `<p>Warp Loot opens in the Archives: research it, and a climb that starts above floor 1 (a Warp, or a Retry from one) goes inside with a share of the Silver its skipped floors would have paid, 2% a level, up to all of it at level 50.</p>` +
+    `<p class="hint">The skipped floors' kills, Wishing Well and Interest are estimated from your training and research as the climb begins.</p>`,
   trainingDiscount: `<p>Training Discount opens in the Archives: research it, and every rank a trainer trains costs 0.5% less Gold a level, up to 49.5% at level 99.</p>` +
-    `<p class="hint">Training points and a run's Silver cost the same as ever.</p>`,
+    `<p class="hint">Training points and a climb's Silver cost the same as ever.</p>`,
   cardGroups: `<p>Card Groups opens on the Deck: tap a diamond under the hand, between two cards, to link them into a group. The cards of a group share one priority: of every target any of them can reach, the hand heads for the closest.</p>` +
     `<p class="hint">Link Gold Key and Blue Key, and the hero takes whichever key is nearer. Moving a card out of place breaks its links.</p>`,
   archerCard: `<p>The Archer card joins your deck. It never moves you, but while it is in your hand your hero is an Archer: every 10 turns it fires an arrow at the closest enemy within 3 m, walls and doors no obstacle, dealing one strike's damage (critical hits and the enemy's DEF counted) before you ever touch it.</p>` +
-    `<p>While it is in your hand, your arrows strike bosses with 5% more ATK, and your Archer training can be raised with Silver during the run. Training it between runs works with or without the card.</p>` +
+    `<p>While it is in your hand, your arrows strike bosses with 5% more ATK, and your Archer training can be raised with Silver during the climb. Training it between climbs works with or without the card.</p>` +
     `<p class="hint">A ready shot waits for an enemy to come in range, and fires the turn one does. Ranged enemies reach five sixths as far as your arrows: strike first, then close in.</p>`,
   attackRange: `<p>Attack Range joins Offense training: each rank lets your arrows reach 0.05 m further, from 3 m up to 7 m.</p>` +
     `<p class="hint">Ranged enemies always reach five sixths as far as you do.</p>`,
@@ -108,11 +108,11 @@ const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
   events: `<p>Every two weeks an Event begins: missions released over its first eight days, each with three tiers paying Medals as you complete them.</p>` +
     `<p>The Medals an event pays count toward its relics, unique keepsakes that each give a permanent bonus. The Event Booster doubles them, and opens two premium relics.</p>` +
     `<p class="hint">Tap the pennant at the right to see the running event. The relics you own wait on the Relics screen, in the menu.</p>`,
-  damagePrediction: `<p>Inspect an enemy in a run and its panel now says how much HP the fight would cost you, and whether you survive it: Survivable, Harmless when it costs no HP, LETHAL, or Instakill when your first strike defeats it.</p>`,
-  combatForecast: `<p>Inspect an enemy in a run and its panel now also says how many of your hits defeat it, or Instakill when one does.</p>`,
-  attackLore: `<p>Inspect an enemy in a run and its panel now also says how much more ATK would defeat it in one hit fewer.</p>` +
-    `<p class="hint">Train ATK in the run, even mid-fight, to make the most of it.</p>`,
-  warp: `<p>Master an area, climbing its ten floors without taking damage, to warp to the next checkpoint: tap the floor number to begin a new ascent there at once, on the floor just above it.</p>` +
+  damagePrediction: `<p>Inspect an enemy in a climb and its panel now says how much HP the fight would cost you, and whether you survive it: Survivable, Harmless when it costs no HP, LETHAL, or Instakill when your first strike defeats it.</p>`,
+  combatForecast: `<p>Inspect an enemy in a climb and its panel now also says how many of your hits defeat it, or Instakill when one does.</p>`,
+  attackLore: `<p>Inspect an enemy in a climb and its panel now also says how much more ATK would defeat it in one hit fewer.</p>` +
+    `<p class="hint">Train ATK in the climb, even mid-fight, to make the most of it.</p>`,
+  warp: `<p>Master an area, climbing its ten floors without taking damage, to warp to the next checkpoint: tap the floor number to begin a new climb there at once, on the floor just above it.</p>` +
     `<p class="hint">Checkpoints with a golden swirl can be warped to. Entering the tower from the forest always starts on floor 1.</p>`,
   relativeDamageColor: `<p>Each enemy's damage number now takes its colour from your HP as it stands: bright green when the fight costs under 1% of it, sliding through yellow at 10% and orange at 25% to red at half your HP or more.</p>` +
     `<p class="hint">Gray still marks an Instakill, and red a lethal fight.</p>`,
@@ -121,21 +121,21 @@ const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
     `<p class="hint">Turn it off in Settings if the board feels crowded.</p>`,
   equipment: `<p>A Blacksmith opens in the forest: tap it, or the Gear tab, to wear weapons, armour and trinkets, level them up with Gold and materials, and merge them.</p>` +
     `<p class="hint">With the Chest card in your hand, a treasure chest may now be a Supply Chest, holding upgrade materials, or an Equipment Chest, holding a piece of equipment.</p>`,
-  noteTaking: `<p>Note Taking opens in the Archives: research it, and tap the floor number during a run to read the run's notes, kept as you play: its time, steps, kills, keys, doors, chests and loot.</p>` +
-    `<p class="hint">The notes stay open while the run plays on, and copy to paste elsewhere. The run's summary opens them too.</p>`,
+  noteTaking: `<p>Note Taking opens in the Archives: research it, and tap the floor number during a climb to read the climb's notes, kept as you play: its time, steps, kills, keys, doors, chests and loot.</p>` +
+    `<p class="hint">The notes stay open while the climb plays on, and copy to paste elsewhere. The climb's summary opens them too.</p>`,
   researchSpeed: `<p>Research Speed opens in the Archives: train the archivists to read faster, and every research, those under way included, takes less time.</p>`,
   badgeSlots: `<p>Badge Slots opens in the Archives: research it, and each card holds one more badge a level. Drag a badge onto a card on the Deck page to fill its next slot; on a card with every slot full, it takes the bottom slot's place.</p>` +
     `<p class="hint">Badges that can't work together can't share a card: a key colour's &lt; gate with its ≥ gate (GK &lt; with GK ≥), or Effective with Dampen.</p>`,
-  shardAttack: `<p>Shard ATK opens in the Archives: research it, and every ATK shard a run picks up raises ATK by more, from the next one on, in the Tower and the Delve alike.</p>`,
+  shardAttack: `<p>Shard ATK opens in the Archives: research it, and every ATK shard a climb picks up raises ATK by more, from the next one on, in the Tower and the Delve alike.</p>`,
   parryPercent: `<p>Parry % opens in the Archives once Parry is yours: research it, and every strike you parry is cut by more, at once, in the Tower and the Delve alike.</p>` +
     `<p class="hint">However it is raised, a parry cuts a strike's damage by at most 98%.</p>`,
-  shardDefense: `<p>Shard DEF opens in the Archives: research it, and every DEF shard a run picks up raises DEF by more, from the next one on, in the Tower and the Delve alike.</p>`,
-  shrines: `<p>Unlock Shrines opens in the Archives: research it, and every so many floors climbed in the Tower grants a boon, a bonus that lasts the rest of the run, chosen from a few offered.</p>` +
+  shardDefense: `<p>Shard DEF opens in the Archives: research it, and every DEF shard a climb picks up raises DEF by more, from the next one on, in the Tower and the Delve alike.</p>`,
+  shrines: `<p>Unlock Shrines opens in the Archives: research it, and every so many floors climbed in the Tower grants a boon, a bonus that lasts the rest of the climb, chosen from a few offered.</p>` +
     `<p class="hint">Its research also opens Floors Required and Standard Boon Bonus. Boons are the Tower's alone, not the Delve's.</p>`,
-  firstBoonChoice: `<p>First Boon Choice opens in the Archives once Shrines are yours: research it, and pick on the forest's Shrine Boons page a standard boon to head every run's first offer.</p>`,
+  firstBoonChoice: `<p>First Boon Choice opens in the Archives once Shrines are yours: research it, and pick on the forest's Shrine Boons page a standard boon to head every climb's first offer.</p>`,
   improveTradeoffs: `<p>Improve Trade-off Boons opens in the Archives once Shrines are yours: research it, and the benefit of every trade-off boon grows, its cost unchanged.</p>`,
-  autoPickBoons: `<p>Auto Pick Boons opens in the Archives once Shrines are yours: research it, and a run can pick its boons itself, the top one offered, as soon as each is earned.</p>` +
-    `<p class="hint">Turn it on or off from the Shrine button in a run.</p>`,
+  autoPickBoons: `<p>Auto Pick Boons opens in the Archives once Shrines are yours: research it, and a climb can pick its boons itself, the top one offered, as soon as each is earned.</p>` +
+    `<p class="hint">Turn it on or off from the Shrine button in a climb.</p>`,
   boonOptions: `<p>Boon Option Quantity opens in the Archives once Shrines are yours: research it, and each boon offered gives one more to choose from, up to four.</p>`,
   banBoons: `<p>Ban Boons opens in the Archives once Shrines are yours: research it, and ban boons from ever being offered, on the forest's Shrine Boons page.</p>`,
   autoPickRanking: `<p>Auto Pick Ranking opens in the Archives once Auto Pick Boons is yours: research it, and rank the boons Auto Pick takes first, on the forest's Shrine Boons page.</p>`,
@@ -313,7 +313,7 @@ export class GoalsPage {
     if (!areaMastered(save, tower, floor)) return `Master floors ${from}–${floor}, climbing them without taking damage, to warp here.${cleared}`;
     const below = unmasteredBelow(save, tower, floor);
     if (below !== null && warpUnlocked(save)) return `Floors ${from}–${floor} mastered. Master floors ${below - 9}–${below} too: a warp point opens once every one below it is mastered.${cleared}`;
-    return `Floors ${from}–${floor} mastered. Claim Unlock Warp at Tower ${tierNumeral(unlockAt("warp").tower)}'s floor ${unlockFloor("warp")} to start runs here.${cleared}`;
+    return `Floors ${from}–${floor} mastered. Claim Unlock Warp at Tower ${tierNumeral(unlockAt("warp").tower)}'s floor ${unlockFloor("warp")} to start climbs here.${cleared}`;
   }
 
   /** A reward pressed (`from`, its button's box): claimed when ready (or,
@@ -374,7 +374,7 @@ export class GoalsPage {
   private askWarp(tower: number, floor: number) {
     const towerName = this.towers > 1 ? ` of Tower ${tierNumeral(tower)}` : "";
     this.ctx.confirm(
-      { title: `Warp to floor ${floor}?`, body: `Begin a new ascent${towerName} from the floor ${floor} checkpoint, on floor ${floor + 1}.`, label: "Warp", cancel: "Not yet" },
+      { title: `Warp to floor ${floor}?`, body: `Begin a new climb${towerName} from the floor ${floor} checkpoint, on floor ${floor + 1}.`, label: "Warp", cancel: "Not yet" },
       () => {
         if (!this.ctx.game.warp(tower, floor)) return;
         this.ctx.navigate("tower");

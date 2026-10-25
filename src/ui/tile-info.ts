@@ -188,13 +188,13 @@ const DESCRIBE: Partial<Record<Kind, Describe>> = {
       ? `Restores ${wholeChange(t.amount ?? POTION_HEAL).toLocaleString("en-US")} HP + ${share}% of max HP (${total.toLocaleString("en-US")} HP)`
       : `Restores ${total.toLocaleString("en-US")} HP`;
     // A run with percent potions says how many of its potions are.
-    const chance = g.run.percentPotions ? `<br><small>${g.run.percentPotions / 100}% of this run's potions are percent potions</small>` : "";
+    const chance = g.run.percentPotions ? `<br><small>${g.run.percentPotions / 100}% of this ${MODES[g.mode].words.run}'s potions are percent potions</small>` : "";
     return { title: percent ? "Percent Potion" : "Potion", body: `<span>${restores}</span><br>${gain(t, String(wholeChange(after.blocked ? 0 : after.healed)), " HP")}${chance}` };
   },
   stairs,
   floor: (_t, _p, g) => ({ title: "Floor", body: MODES[g.mode].words.floor }),
-  attack: (t, p, g) => ({ title: "Attack Shard", body: `<span>Raises ATK for this run</span><br>${gain(t, shardGain(t, p, g, "attack"), " ATK")}` }),
-  defense: (t, p, g) => ({ title: "Defense Shard", body: `<span>Raises DEF for this run</span><br>${gain(t, shardGain(t, p, g, "defense"), " DEF")}` }),
+  attack: (t, p, g) => ({ title: "Attack Shard", body: `<span>Raises ATK for this ${MODES[g.mode].words.run}</span><br>${gain(t, shardGain(t, p, g, "attack"), " ATK")}` }),
+  defense: (t, p, g) => ({ title: "Defense Shard", body: `<span>Raises DEF for this ${MODES[g.mode].words.run}</span><br>${gain(t, shardGain(t, p, g, "defense"), " DEF")}` }),
   treasure: (t) => t.chest === "supply" ? { title: "Supply Chest", body: "Contains Gold and upgrade materials." }
     : t.chest === "equipment" ? { title: "Equipment Chest", body: "Contains Gold and a piece of equipment." }
     : { title: "Treasure", body: "Contains Gold." },

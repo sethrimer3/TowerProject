@@ -1,3 +1,4 @@
+import { MODES } from "../modes.ts";
 import type { Game } from "../state.ts";
 import { TRAINING, TRAINING_GROUPS, type TrainingId } from "../progression/training.ts";
 import { runTrainingBulk, runTrainingOffer, runTrainingValue } from "../progression/run-training.ts";
@@ -182,7 +183,7 @@ export class RunTrainingBar {
       const group = b.dataset.runGroup as Group, open = this.rows(group).length > 0;
       b.hidden = !training && this.holdsManual;
       b.disabled = !open;
-      b.title = open ? `${TRAINING_GROUPS[group]} training for this run, with Silver` : `No ${TRAINING_GROUPS[group]} training unlocked yet`;
+      b.title = open ? `${TRAINING_GROUPS[group]} training for this ${MODES[this.game.mode].words.run}, with Silver` : `No ${TRAINING_GROUPS[group]} training unlocked yet`;
       b.classList.toggle("selected", group === this.open);
       b.setAttribute("aria-pressed", String(group === this.open));
     });
@@ -269,8 +270,8 @@ export class RunTrainingBar {
 
   private lessonText() {
     return this.group
-      ? `<b>Training for this run</b><p>Press a card's price to buy a rank with ${silverIcon()} Silver. Press HAND to bring your cards back.</p>`
-      : `<b>Train on the Job</b><p>Spend the ${silverIcon()} Silver you find on upgrades that raise your stats for the rest of this run. Press any of the three menus beside HAND to open it.</p>`;
+      ? `<b>Training for this ${MODES[this.game.mode].words.run}</b><p>Press a card's price to buy a rank with ${silverIcon()} Silver. Press HAND to bring your cards back.</p>`
+      : `<b>Train on the Job</b><p>Spend the ${silverIcon()} Silver you find on upgrades that raise your stats for the rest of this ${MODES[this.game.mode].words.run}. Press any of the three menus beside HAND to open it.</p>`;
   }
 
   /** The rows of `group` the hero can train in this run (the shot rows
@@ -299,7 +300,7 @@ export class RunTrainingBar {
     }
     // Short of Silver it still answers a press, with red sparks.
     buy.disabled = offer.maxed;
-    buy.setAttribute("aria-label", offer.maxed ? `${offer.row.name} is at its highest level` : `Train ${offer.row.name} for this run, ${bulk.count === 1 ? "one rank" : `${bulk.count} ranks`}, for ${bulk.cost} Silver`);
+    buy.setAttribute("aria-label", offer.maxed ? `${offer.row.name} is at its highest level` : `Train ${offer.row.name} for this ${MODES[this.game.mode].words.run}, ${bulk.count === 1 ? "one rank" : `${bulk.count} ranks`}, for ${bulk.cost} Silver`);
   }
 
   private showTip(card: HTMLElement) {

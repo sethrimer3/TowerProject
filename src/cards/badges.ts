@@ -61,7 +61,7 @@ const every = (n: number) => (n === 1 ? "every floor" : `once every ${n} floors`
 
 /** Every card badge, in the order the Badges box lists them. */
 export const BADGES = {
-  hp: { name: "Max HP", rarity: "common", kind: "reward", glyph: "♥", color: "#ff6b6b", values: HP_BOOSTS, unit: "% max HP", text: (v) => `Boost max HP by ${v}% each time the card activates. The boosts add up for the rest of the run into one multiplier on max HP, which also multiplies all max HP gained later in the run, and HP rises with it, keeping its share of max HP.` },
+  hp: { name: "Max HP", rarity: "common", kind: "reward", glyph: "♥", color: "#ff6b6b", values: HP_BOOSTS, unit: "% max HP", text: (v) => `Boost max HP by ${v}% each time the card activates. The boosts add up for the rest of the climb into one multiplier on max HP, which also multiplies all max HP gained later in the climb, and HP rises with it, keeping its share of max HP.` },
   silverTouch: { name: "Silver Touch", rarity: "common", kind: "reward", glyph: "◉", color: "#d6dde6", values: LEVELS, unit: "Silver", text: (v) => `Gain ${v} Silver each time the card activates (Silver bonuses apply).` },
   goldback: { name: "Goldback", rarity: "common", kind: "reward", glyph: "⇥", color: "#f5c542", values: COMBOS, unit: "× Gold", text: (v) => `On the last card in the hand, multiply the next Gold pickup by ${v}× each time it activates, stacking: the combo adds up until a Gold pickup uses it, then starts over.` },
   xp: { name: "XP", rarity: "common", kind: "reward", glyph: "✧", color: "#9be86f", values: SQUARES, unit: "XP", text: (v) => `Gain ${v} XP each time the card activates, rising with the floor like a kill's XP.` },

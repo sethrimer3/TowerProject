@@ -207,18 +207,18 @@ test("descriptions are written from the grants", () => {
       red: "+1 starting red key",
       quality: "+2 weapon attack and +1 armor defense",
       undos: "Open Undo Count research in the Archives, or 4 more levels of it once Rehearsed steps has opened it",
-      combatStance: "Open the Deck, where you reorder the cards in your hand before a run",
-      buildout: "Unlock the Deck: add its cards to your hand, or set them aside, to choose what a run heads for",
-      inspirationUndos: "Rewind one action a run, and open Undo Count research in the Archives, or 4 more levels of it once Echoes of time has opened it",
+      combatStance: "Open the Deck, where you reorder the cards in your hand before a climb",
+      buildout: "Unlock the Deck: add its cards to your hand, or set them aside, to choose what a climb heads for",
+      inspirationUndos: "Rewind one action a climb, and open Undo Count research in the Archives, or 4 more levels of it once Echoes of time has opened it",
       revive: "When a strike would fell you, a 0.5% chance to rise at full HP and fight on: opens Revive training",
     },
   );
   assert.deepEqual(GOLD_SHOP.map((g) => provisionText(g.id)), [
-    "One more elixir every run: press it to fill HP to max HP",
-    "One more Aegis charm every run: press it for +20% DEF for 100 turns",
-    "One more Vanguard Banner every run: press it for +20% ATK for 100 turns",
-    "One more gold key every 100 floors of a run, from the floor it starts on",
-    "One more Bomb every run: press it, then an enemy's tile, to deal that enemy your ATK",
+    "One more elixir every climb: press it to fill HP to max HP",
+    "One more Aegis charm every climb: press it for +20% DEF for 100 turns",
+    "One more Vanguard Banner every climb: press it for +20% ATK for 100 turns",
+    "One more gold key every 100 floors of a climb, from the floor it starts on",
+    "One more Bomb every climb: press it, then an enemy's tile, to deal that enemy your ATK",
   ]);
 });
 

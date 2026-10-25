@@ -42,7 +42,7 @@ export class ShrinesPage {
     const label = (id: BoonId) => boonLabel(id, save);
     const parts: string[] = [];
     if (first) {
-      parts.push(`<section class="shrine-part"><h3>First Boon Choice</h3><p class="hint">Heads every run's first offer.</p>` +
+      parts.push(`<section class="shrine-part"><h3>First Boon Choice</h3><p class="hint">Heads every climb's first offer.</p>` +
         `<div class="boon-first-choice">${save.shrines.firstChoice ? `<span class="boon-first-preview">${boonIcon(save.shrines.firstChoice)}</span>` : ""}<select id="first-boon" aria-label="First Boon Choice"><option value="">None</option>${STANDARD_BOONS.map((id) =>
           `<option value="${id}"${save.shrines.firstChoice === id ? " selected" : ""}>${label(id)}</option>`).join("")}</select></div></section>`);
     }
@@ -71,7 +71,7 @@ export class ShrinesPage {
     if (!parts.length) parts.push(`<p class="hint">Research First Boon Choice, Ban Boons or Auto Pick Ranking in the Archives to set them here.</p>`);
     el("shrines").innerHTML =
       `<button class="missions-close" id="shrines-close" aria-label="Close" title="Close">${controlIcon("close", "✕", "shrine-close-icon")}</button>` +
-      `<div class="page-title"><small>BETWEEN RUNS</small><h2>Shrine Boons</h2></div>` +
+      `<div class="page-title"><small>BETWEEN CLIMBS</small><h2>Shrine Boons</h2></div>` +
       (this.ctx.game.run.outside ? "" : `<p class="hint">Return to the forest to change these.</p>`) + parts.join("");
     el("shrines-close").onclick = () => this.ctx.navigate(this.from || "board");
     this.wire();

@@ -201,7 +201,7 @@ export class DeckPage {
     if (!this.showsKinds) return "";
     const option = (kind: HandKind, name: string, title: string) =>
       `<button type="button" role="radio" data-hand-kind="${kind}" aria-checked="${this.kind === kind}" title="${title}">${name}</button>`;
-    return `<div class="hand-kinds${this.kind === "manual" ? " manual" : ""}" role="radiogroup" aria-label="Which hand to show">${option("auto", "Auto", "The Auto hand: its cards play by themselves, in order")}${option("manual", "Manual", "The Manual hand: its cards act only when you press them in a run")}<span class="hand-kinds-thumb" aria-hidden="true"></span></div>`;
+    return `<div class="hand-kinds${this.kind === "manual" ? " manual" : ""}" role="radiogroup" aria-label="Which hand to show">${option("auto", "Auto", "The Auto hand: its cards play by themselves, in order")}${option("manual", "Manual", "The Manual hand: its cards act only when you press them in a climb")}<span class="hand-kinds-thumb" aria-hidden="true"></span></div>`;
   }
 
   render() {
@@ -216,9 +216,9 @@ export class DeckPage {
     }
     const lesson = this.lesson;
     const tip = lesson === "order"
-      ? `<div class="deck-tip" role="status"><b>Order your hand</b><p>Inside a run your hand tries its cards from left to right, and the first that can act moves you. Drag STAIRS to another slot to change the order.</p></div>`
+      ? `<div class="deck-tip" role="status"><b>Order your hand</b><p>Inside a climb your hand tries its cards from left to right, and the first that can act moves you. Drag STAIRS to another slot to change the order.</p></div>`
       : lesson === "remove"
-        ? `<div class="deck-tip" role="status"><b>Choose your cards</b><p>You can take cards out of your hand, and your runs will stop heading for their targets. Press the X on ${CARDS[this.removeTarget!].name.toUpperCase()} to return it to your deck.</p></div>`
+        ? `<div class="deck-tip" role="status"><b>Choose your cards</b><p>You can take cards out of your hand, and your climbs will stop heading for their targets. Press the X on ${CARDS[this.removeTarget!].name.toUpperCase()} to return it to your deck.</p></div>`
         : lesson === "points"
           ? `<div class="deck-tip" role="status"><b>Spend card points</b><p>Select ${CARDS[this.pointsTarget!].name.toUpperCase()} and spend its card points on its upgrade tree to unlock bonuses.</p></div>`
           : "";
@@ -863,7 +863,7 @@ export class DeckPage {
     this.change(true);
     if (!taught) return;
     this.ctx.update();
-    this.praise("COMBAT STANCE", "Well arranged!", "Your hand will now try its cards in this order. Each run takes the hand as you leave it here, so try different orders and see which carries you farthest.");
+    this.praise("COMBAT STANCE", "Well arranged!", "Your hand will now try its cards in this order. Each climb takes the hand as you leave it here, so try different orders and see which carries you farthest.");
   }
 
   /** Moves a hand card to the other hand. */
@@ -881,7 +881,7 @@ export class DeckPage {
     this.change(true);
     if (!taught) return;
     this.ctx.update();
-    this.praise("BUILDOUT", "Nicely done!", "With that card set aside, your runs will leave its targets alone. Try out different hands to find the one that suits each climb.");
+    this.praise("BUILDOUT", "Nicely done!", "With that card set aside, your climbs will leave its targets alone. Try out different hands to find the one that suits each climb.");
   }
 
   /** A dialog praising what the player just did, closed by a press anywhere

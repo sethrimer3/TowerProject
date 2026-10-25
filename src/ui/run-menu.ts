@@ -1,4 +1,5 @@
 import type { Game } from "../state.ts";
+import { MODES } from "../modes.ts";
 import { el } from "./dom.ts";
 
 /** The HUD's menu: the hamburger at the top of the actions column. Pressed,
@@ -57,7 +58,18 @@ export function renderRunMenu(game: Game) {
     if (el("run-menu").nextElementSibling !== tournament) el("run-menu").after(tournament);
     if (tournament.nextElementSibling !== events) tournament.after(events);
   }
+  setEndRunLabel(game);
   el("end-run").classList.toggle("deadlocked", stuck);
   el("stuck-end-run").classList.toggle("deadlocked", stuck);
   el("stuck-end-run").hidden = !stuck;
+}
+
+/** Names the End Run buttons for the mode: End Climb in the Tower, End Run
+ * in the Delve (and restores the menu's after a trial renamed it). */
+export function setEndRunLabel(game: Game) {
+  const words = MODES[game.mode].words, end = el("end-run"), html = `<small>${words.endRun.toUpperCase()}</small>`;
+  if (end.innerHTML !== html) end.innerHTML = html;
+  end.title = el("stuck-end-run").textContent = words.endRun;
+  end.setAttribute("aria-label", `End current ${words.run}`);
+  el("stuck-end-run").setAttribute("aria-label", `End current ${words.run}`);
 }

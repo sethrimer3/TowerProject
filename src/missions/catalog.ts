@@ -53,11 +53,11 @@ export const MISSIONS: Record<MissionType, MissionDef> = {
   potions: { text: "Pick up 20 potions", target: 20, offered: always },
   // Badges are drawn once the Badges skill is owned, while copies are left.
   badge: { text: "Buy 1 badge", target: 1, offered: (s) => !!s.upgrades.cardBadges && copiesLeft(s.badges, s.upgrades) > 0 },
-  runTraining: { text: "Buy 10 run training upgrades", target: 10, offered: (s) => !!s.upgrades.onTheJob },
+  runTraining: { text: "Buy 10 climb training upgrades", target: 10, offered: (s) => !!s.upgrades.onTheJob },
   blueKeys: { text: "Pick up 10 blue keys", target: 10, offered: (s) => reached(s, (t) => keyFirstFloor("blue", t)) },
   redKeys: { text: "Pick up 5 red keys", target: 5, offered: (s) => reached(s, (t) => keyFirstFloor("red", t)) },
   // A provision pressed or thrown in a run (an elixir, Vanguard Banner, Aegis charm or Bomb), once one is owned.
-  provisions: { text: "Use 1 provision in a run", target: 1, offered: (s) => USED_IN_RUN.some((id) => s.provisions[id] > 0) },
+  provisions: { text: "Use 1 provision in a climb", target: 1, offered: (s) => USED_IN_RUN.some((id) => s.provisions[id] > 0) },
 };
 export const MISSION_TYPES = Object.keys(MISSIONS) as MissionType[];
 

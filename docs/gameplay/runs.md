@@ -1,5 +1,8 @@
 # Runs
 
+A run is one trip into a mode from its forest.
+The game calls a Tower run a **climb** (End Climb, Climb Notes, "for the rest of the climb"), and the descriptions of skills, research, training, cards and gear, which apply in both modes, say climb too; Delve-only text keeps **run**, and the Delve's own words call its run a **delve** (End this delve?).
+
 ## Movement transitions
 
 Movement transitions can be set to **Smooth** (default), **Fast**, or **Off (instant)** in Settings.
@@ -21,13 +24,13 @@ History persists across refreshes.
 ## How a run ends
 
 Every way a run ends goes through one dialog, which says what brought it up and shows the same totals of what the run obtained: the floor reached, the run's highest floor, and the Gold, the Inspiration (in the Tower) and the XP earned in this run, the first two with their icons, not the amounts held (undo takes a kill's XP back from it, as from the hero).
-Pressing End Run asks whether to end the run (or, when no card in the hand can act, says so first), with **End run** and **Keep climbing** (Keep delving).
+Pressing **End Climb** (End Run in the Delve) asks whether to end the climb (or, when no card in the hand can act, says so first), with **End Climb** and **Keep climbing** (End Run and Keep delving in the Delve).
 When the hero falls in a fight, the run waits at 0 HP with the hand paused, a skull and crossbones burns in a red glow over the hero's head for two and a half seconds, and then the dialog, headed **Fallen in combat**, names the monster.
 It must be answered: **Undo** (once Rehearsed steps has unlocked undo, while the run has an undo left and a move to take back; without it the dialog doesn't mention undo) spends one to take the fight back and leaves the hand paused; **Return to entrance** ends the run, pays what it still owes, and returns to the forest for the next run.
 Headed **Regroup and try again**, the dialog says the Tower (or Delve) will shift to a new layout for the next run and invites the player to look over and spend what this one earned.
 The dialog comes back after a refresh until it is answered.
 Rewards are credited as they are earned and never rolled back, so taking a fight back cannot duplicate them.
-Ending a run with End Run goes straight back to the forest once confirmed.
+Ending a run with End Climb (End Run) goes straight back to the forest once confirmed.
 Gold is banked the moment it is found and kept however the run ends: the stats show the Gold held, and the run's end dialog and the message after the run say how much the run found.
 
 ## Run Notes
@@ -61,7 +64,7 @@ No offline progress is calculated.
 ## Controls inside a run
 
 Inside a run, the row of tabs at the bottom (board, Upgrades, Deck, Gear, Research and Shop) is hidden and its space left empty: modes, gear and upgrades are chosen in the forest before a run, and a run ends back there.
-The Settings button in the stats opens the Settings page at any time, with a Back button to the board; inside a run it, Research and End Run wait in the menu the three-line button at the top right opens over the stats, and the Shop (whose Back returns to the run) stands under that button.
+The Settings button in the stats opens the Settings page at any time, with a Back button to the board; inside a run it, Research and End Climb (End Run in the Delve) wait in the menu the three-line button at the top right opens over the stats, and the Shop (whose Back returns to the run) stands under that button.
 
 ## Movement Speed and Dash
 

@@ -128,11 +128,11 @@ function purseRate(game: Game, id: string, perMinute: number | null, name: strin
  * Silver shows what the next run starts with, once that is any. */
 function renderPurse(game: Game) {
   const now = performance.now(), instant = game.save.settings.reduceMotion;
-  purse(game, "gems", game.save.gems, "Gems, kept between runs");
-  purse(game, "shards", game.save.ascensionShards, "Ascension Shards, kept between runs");
+  purse(game, "gems", game.save.gems, "Gems, kept between climbs");
+  purse(game, "shards", game.save.ascensionShards, "Ascension Shards, kept between climbs");
   el("shards").parentElement!.hidden = !game.run.outside;
   // Medals show only in the forest, once held, where the purse has room.
-  purse(game, "medals", game.save.medals, "Medals, kept between runs");
+  purse(game, "medals", game.save.medals, "Medals, kept between climbs");
   el("medals").parentElement!.hidden = !game.run.outside || game.save.medals <= 0;
   el("shards").closest(".purse")!.classList.toggle("forest", !!game.run.outside);
   const gold = goldShown.show(game.save.gold, now, instant);
@@ -145,13 +145,13 @@ function renderPurse(game: Game) {
     purseRate(game, "run-silver", rates.silver.perMinute, "Silver");
     return;
   }
-  purse(game, "gold", game.save.gold, "Gold, kept between runs", gold);
+  purse(game, "gold", game.save.gold, "Gold, kept between climbs", gold);
   if (game.run.outside) {
     const start = game.startingSilver;
-    purse(game, "run-silver", start, "Silver each run starts with");
+    purse(game, "run-silver", start, "Silver each climb starts with");
     el("run-silver").parentElement!.hidden = start <= 0;
   } else {
-    purse(game, "run-silver", game.silver, "Silver, spent only inside this run", silverShown.show(game.silver, now, instant));
+    purse(game, "run-silver", game.silver, `Silver, spent only inside this ${MODES[game.mode].words.run}`, silverShown.show(game.silver, now, instant));
     el("run-silver").parentElement!.hidden = false;
   }
 }
@@ -439,7 +439,7 @@ Badge: ${badgeTitle(badge)}`;
   if (isSiphon(id)) {
     const uses = game.handRules.cardUses(id), next = game.handRules.siphonCost(id);
     title += `
-Used ${uses} time${uses === 1 ? "" : "s"} this run; the next use takes ${next} level${next === 1 ? "" : "s"}.`;
+Used ${uses} time${uses === 1 ? "" : "s"} this ${MODES[game.mode].words.run}; the next use takes ${next} level${next === 1 ? "" : "s"}.`;
   }
   return title;
 }
@@ -774,7 +774,7 @@ function renderRunEarned(game: Game) {
     icon.dataset.mode = game.mode;
     icon.innerHTML = uiSprite(CURRENCY_SPRITES[game.mode]);
   }
-  box.title = `${MODES[game.mode].pays?.currency ?? ""} earned this run`;
+  box.title = `${MODES[game.mode].pays?.currency ?? ""} earned this ${MODES[game.mode].words.run}`;
   text("run-earned-val", String(amount));
   const rose = earnedShown.mode === game.mode && amount > earnedShown.amount;
   earnedShown = { mode: game.mode, amount };

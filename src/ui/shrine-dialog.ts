@@ -32,7 +32,7 @@ export function showShrine(ctx: AppContext) {
 function offerHtml(ctx: AppContext, offer: BoonId[]) {
   const save = ctx.game.save, waiting = ctx.game.shrine.unspent;
   return `<small>SHRINE</small><h2>${shrineIcon("shrine-title-icon")} Choose a Boon</h2>` +
-    `<p class="hint">${waiting > 1 ? `${waiting} boons waiting. ` : ""}It lasts the rest of this run.</p>` +
+    `<p class="hint">${waiting > 1 ? `${waiting} boons waiting. ` : ""}It lasts the rest of this climb.</p>` +
     `<div class="boon-offer">${offer.map((id) => {
       const kind = boon(id).kind;
       return `<button class="boon-choice ${kind}" data-boon="${id}">${boonIcon(id)}<span class="boon-choice-text"><small>${kind === "tradeoff" ? "TRADE-OFF" : "STANDARD"}</small><b>${boonLabel(id, save)}</b></span></button>`;
@@ -46,7 +46,7 @@ function pickedHtml(ctx: AppContext) {
     (lines.length
       ? `<div class="boon-table-scroll"><table class="boon-table"><thead><tr><th>Boon</th><th>Taken</th></tr></thead><tbody>${lines.map((l) =>
         `<tr class="${boon(l.id).kind}"><td>${boonIcon(l.id)}<span>${l.text}</span></td><td>${l.count}</td></tr>`).join("")}</tbody></table></div>`
-      : `<p class="research-empty">No boons taken yet this run.</p>`);
+      : `<p class="research-empty">No boons taken yet this climb.</p>`);
 }
 
 function autoPickHtml(ctx: AppContext) {

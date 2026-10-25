@@ -121,7 +121,7 @@ export class CardActivation {
     const run = this.host.run, p = run.player;
     boostMaxHp(run, percent);
     this.host.gain(p.x, p.y, `+${percent}% max HP`, { heart: true, raised: true });
-    this.host.message = `${BADGES[id].name} · +${percent}% max HP (+${run.maxHpBoost}% this run)`;
+    this.host.message = `${BADGES[id].name} · +${percent}% max HP (+${run.maxHpBoost}% this ${MODES[this.host.mode].words.run})`;
   }
   /** Heals up to `n` HP for badge `id`, as a potion's heal shows. */
   private badgeHeal(n: number, id: BadgeId) {

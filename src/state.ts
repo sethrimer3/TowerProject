@@ -786,7 +786,7 @@ export class Game {
     this.route = [];
   }
   private handMovesNote(): false {
-    this.message = "The hand moves you inside a run.";
+    this.message = `The hand moves you inside a ${MODES[this.mode].words.run}.`;
     return false;
   }
   /** Plays or pauses the hand inside a run. */
@@ -918,7 +918,7 @@ export class Game {
     if (step) {
       this.move(step.dx, step.dy, false);
       this.message = step.label;
-    } else this.message = "Waiting · no safe route. Explore or end this ascent.";
+    } else this.message = `Waiting · no safe route. Explore or end this ${MODES[this.mode].words.run}.`;
   }
   /** One step by the hand: follow the committed path, or, with none, the
    * first card in priority order that can reach a target. When none can,
@@ -1119,7 +1119,7 @@ export class Game {
     this.activeCard = null;
     this.auto = false;
     this.enemyBlocks = !this.save.upgrades.cardEnemy && this.stuckReport().blockers.some((b) => b.tile.kind === "enemy" && b.why === "noCard");
-    this.message = "No card can move · end the run, or use an item or skill.";
+    this.message = `No card can move · end the ${MODES[this.mode].words.run}, or use an item or skill.`;
   }
   /** What stops the hand while no card can act (`explainStuck`): the run's
    * end dialog shows it. */
@@ -2647,7 +2647,7 @@ export class Game {
     }
     // A fight playing out goes on with the stats (or Revive) bought.
     if (isStatRow(first.row) || id === "revive") this.fights.retrain(hpGain);
-    this.message = `${first.row.name} trained for this run · level ${first.level + bulk.count}`;
+    this.message = `${first.row.name} trained for this ${MODES[this.mode].words.run} · level ${first.level + bulk.count}`;
     // Undo takes the ranks back, so only the run's most bought counts.
     const bought = Object.values(this.run.training ?? {}).reduce((n, k) => n + (k ?? 0), 0);
     this.missions.mark("runTraining", this.mode, this.run.seed, bought);

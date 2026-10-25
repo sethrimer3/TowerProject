@@ -28,8 +28,8 @@ assert.equal(await page.getByRole('button', { name: 'Claim 7 Gems', exact: true 
 await page.locator('#run-menu-toggle').click();
 assert.equal(await shown('#auto-settings'), true);
 assert.equal(await shown('#run-research'), true);
-await page.getByRole('button', { name: 'End current run', exact: true }).click();
-assert.match(await page.locator('#modal').innerText(), /End this ascent\?/);
+await page.getByRole('button', { name: 'End current climb', exact: true }).click();
+assert.match(await page.locator('#modal').innerText(), /End this climb\?/);
 await page.locator('#confirm').click();
 
 // In the forest Goals and Enter take End Run's place; Settings and
@@ -60,7 +60,7 @@ await page.locator('#forest-sign').click();
 assert.equal(await page.getByRole('button', { name: 'Future Delve action 2', exact: true }).isVisible(), true);
 await page.locator('#enter-run').click();
 await page.locator('#run-menu-toggle').click();
-await page.getByRole('button', { name: 'End current run', exact: true }).click();
+await page.getByRole('button', { name: 'End current delve', exact: true }).click();
 assert.match(await page.locator('#modal').innerText(), /End this delve\?/);
 await page.locator('#cancel').click();
 assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);

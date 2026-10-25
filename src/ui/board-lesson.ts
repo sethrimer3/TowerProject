@@ -12,16 +12,16 @@ import { el, POINTER_SVG } from "./dom.ts";
 // Each hand sits inside what it points at.
 
 /** The provisions lesson's note, on the board and the Upgrades page alike. */
-export const PROVISIONS_NOTE = { title: "Provisions unlocked.", text: "Press the Gear tab to buy provisions with Gold: limited-use items every run carries, pressed beside the board when you need them." };
+export const PROVISIONS_NOTE = { title: "Provisions unlocked.", text: "Press the Gear tab to buy provisions with Gold: limited-use items every climb carries, pressed beside the board when you need them." };
 
 const NOTES: Record<BoardLesson, { title: string; text?: string }> = {
   climb: { title: "Press the Stairs card to climb.", text: "Each card in your hand sends the hero toward what it names. Climb the Tower to gain Inspiration, XP and resources." },
   keys: { title: "Press Key and Door to collect keys and open doors.", text: "Key heads for the closest key, and Door for a door your keys open, or a Wooden Door your HP can break down." },
   autoClimb: { title: "Auto-Climb moves the hero for you.", text: "The hero heads for the target of the first card in your hand with an open path to it. Press a card to go for its target first." },
-  stuck: { title: "No card can take you further.", text: "The Inspiration this run earned unlocks new abilities to climb higher. Press End Run, then spend it on the Inspiration tree." },
-  enemy: { title: "An enemy blocks the way.", text: "Unlock the Enemy card on the Inspiration tree to fight it. Press End Run to go and spend your Inspiration." },
+  stuck: { title: "No card can take you further.", text: "The Inspiration this climb earned unlocks new abilities to climb higher. Press End Climb, then spend it on the Inspiration tree." },
+  enemy: { title: "An enemy blocks the way.", text: "Unlock the Enemy card on the Inspiration tree to fight it. Press End Climb to go and spend your Inspiration." },
   upgrades: { title: "Spend your Inspiration.", text: "Open Upgrades: the Inspiration tree's skills give you new abilities." },
-  enter: { title: "Press Enter to try another run." },
+  enter: { title: "Press Enter to try another climb." },
   research: { title: "Research unlocked.", text: "Press the Research tab to open the Research menu." },
   trainingPoints: { title: "Training points to spend.", text: "After levelling up, you can spend points to increase your stats. Press the Research tab to train." },
   cards: { title: "Your cards gain levels as you use them.", text: "Each level grants a card point. Open your Deck to spend it." },

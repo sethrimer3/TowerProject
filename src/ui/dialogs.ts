@@ -257,9 +257,9 @@ export class RunEndDialog {
     }
     const [label, title, why] = cause === "stuck"
       ? ["NO CARD CAN ACT", `End this ${words.run}?`, `Nothing in your hand can act at ${where}. `]
-      : ["END RUN", `End this ${words.run}?`, `End the current ${words.run} at ${where}. `];
+      : [words.endRun.toUpperCase(), `End this ${words.run}?`, `End the current ${words.run} at ${where}. `];
     const blocked = cause === "stuck" ? stuckBlock(game) : "";
-    modal.innerHTML = `<small>${label}</small><h2>${title}</h2><p>${why}${kept}</p>${blocked}${stats}<div class="dialog-actions"><button id="cancel">${words.keepGoing}</button><button id="confirm">End run</button>${this.retryButton("retry")}</div>`;
+    modal.innerHTML = `<small>${label}</small><h2>${title}</h2><p>${why}${kept}</p>${blocked}${stats}<div class="dialog-actions"><button id="cancel">${words.keepGoing}</button><button id="confirm">${words.endRun}</button>${this.retryButton("retry")}</div>`;
     modal.showModal();
     this.bindNotes();
     el("cancel").onclick = () => modal.close();

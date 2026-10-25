@@ -368,7 +368,7 @@ export class ArchivesPanel {
   private showHelp() {
     const p = (text: string) => `<p>${text}</p>`;
     showHelp(this.ctx, "UPGRADES", "Archives",
-      p("Archivists research projects whose effects last between runs. Pick an idle archivist to choose its research; each level costs Gold and takes time.") +
+      p("Archivists research projects whose effects last between climbs. Pick an idle archivist to choose its research; each level costs Gold and takes time.") +
       p("Research goes on while you play or are away. Each archivist works on one project at a time; Gems hire more.") +
       p(`Auto-continue (${redoIcon("redo-icon help-redo")}) starts the project's next level as soon as one completes, when the Gold is there. Research once begun can only be switched to another project, which gives its Gold back and keeps the time spent for later; Gems finish a level at once.`) +
       (this.cellsShown ? p(`Speed Up (${cellIcon("cell-icon help-cell")}) spends Cells, which Greater Bosses drop (more on later towers), to make an archivist research faster for a while; Queue buys it again as it ends, while the Cells are there.`) : "") +

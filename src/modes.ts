@@ -46,6 +46,8 @@ export type ModeProfile<R extends Run = Run> = {
     progress: string;
     /** A run in this mode. */
     run: string;
+    /** The button and dialog action that end a run. */
+    endRun: string;
     /** The numbered places a run climbs, as in "Tower II" (tiers.ts). */
     tierName: string;
     /** Declines a prompt to end the run. */
@@ -101,7 +103,7 @@ export const MODES: { tower: ModeProfile<TowerRun>; delve: ModeProfile<DelveRun>
       balance: (save) => save.tower.inspiration,
       credit: (save, amount) => { save.tower.inspiration += amount; earn(save, "inspiration", amount); },
       currency: "Inspiration",
-      newBest: "Inspiration for each floor this ascent has completed beyond your highest: paid as you climb its stairs",
+      newBest: "Inspiration for each floor this climb has completed beyond your highest: paid as you climb its stairs",
     },
     equivalentFloor: (height) => height,
     progressAt: (run) => run.height,
@@ -115,7 +117,8 @@ export const MODES: { tower: ModeProfile<TowerRun>; delve: ModeProfile<DelveRun>
     lootKey: (run, x, y) => `${run.seed}:${run.height}:${x},${y}`,
     words: {
       progress: "floor",
-      run: "ascent",
+      run: "climb",
+      endRun: "End Climb",
       tierName: "Tower",
       keepGoing: "Keep climbing",
       outsideTitle: "THE TOWER APPROACH",
@@ -140,6 +143,7 @@ export const MODES: { tower: ModeProfile<TowerRun>; delve: ModeProfile<DelveRun>
     words: {
       progress: "depth",
       run: "delve",
+      endRun: "End Run",
       tierName: "Delve",
       keepGoing: "Keep delving",
       outsideTitle: "THE MOUNTAIN HOLLOW",

@@ -19,28 +19,28 @@ export type Currency = {
 export const CURRENCIES: Record<CurrencyId, Currency> = {
   gems: {
     name: "Gems",
-    info: "The premium currency, kept between runs. Found on floors now and then, claimed free each day in the Shop, or bought in packs.",
+    info: "The premium currency, kept between climbs. Found on floors now and then, claimed free each day in the Shop, or bought in packs.",
     balance: (save) => save.gems,
     spend: (save, n) => void (save.gems -= n),
     credit: (save, n) => { save.gems += n; earn(save, "gems", n); },
   },
   shards: {
     name: "Ascension Shards",
-    info: "A limited currency, kept between runs. Bought in the Shop's limited packs, one of each every two weeks.",
+    info: "A limited currency, kept between climbs. Bought in the Shop's limited packs, one of each every two weeks.",
     balance: (save) => save.ascensionShards,
     spend: (save, n) => void (save.ascensionShards -= n),
     credit: (save, n) => { save.ascensionShards += n; earn(save, "ascensionShards", n); },
   },
   gold: {
     name: "Gold",
-    info: "Kept between runs: found on floors, paid for kills, and spent on training, provisions and research.",
+    info: "Kept between climbs: found on floors, paid for kills, and spent on training, provisions and research.",
     balance: (save) => save.gold,
     spend: (save, n) => void (save.gold = snap(save.gold - n)),
     credit: (save, n) => { save.gold = snap(save.gold + n); earn(save, "gold", n); },
   },
   medals: {
     name: "Medals",
-    info: "A limited currency, kept between runs. Earned from the weekly mission rewards.",
+    info: "A limited currency, kept between climbs. Earned from the weekly mission rewards.",
     balance: (save) => save.medals,
     spend: (save, n) => void (save.medals -= n),
     credit: (save, n) => { save.medals += n; earn(save, "medals", n); },
