@@ -16,7 +16,7 @@ test("Rehearsed steps costs 5; Lifesteal (10) follows Into the depths, Buy Quant
   assert.equal(cost("inspirationUndos", 0), 5);
   const g = new Game(playedSave());
   g.save.tower.inspiration = 1000;
-  for (const id of ["combatStance", "buildout", "trainers", "shroud", "critical", "archives"] as const) assert.ok(g.skills.buy(id));
+  for (const id of ["combatStance", "buildout", "trainers", "largerHand", "shroud", "critical", "archives"] as const) assert.ok(g.skills.buy(id));
   assert.equal(g.skills.buy("lifesteal"), false, "waits for Into the depths");
   assert.ok(g.skills.buy("delve"));
   assert.equal(g.skills.buy("buyQuantity"), false, "waits for Lifesteal");

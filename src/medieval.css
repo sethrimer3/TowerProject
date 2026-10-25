@@ -508,6 +508,15 @@ html.medieval .skill-node:active:not(:disabled) {
   box-shadow: none;
   transform: translate(-50%, -50%);
 }
+/* The Deck page's Hand chevron stays a bare glyph: a board on so small a button looks busy. */
+html.medieval .deck-hand-toggle,
+html.medieval .deck-hand-toggle:hover,
+html.medieval .deck-hand-toggle:active:not(:disabled) {
+  background: none;
+  border: 0;
+  box-shadow: none;
+  translate: none;
+}
 html.medieval .node-icon {
   border-radius: 50%;
   color: #c7b48e;

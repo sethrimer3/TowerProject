@@ -16,25 +16,26 @@ export const TREES: SkillTree[] = [
     { id: "cardDoorKey", icon: "⚿", x: 50, y: 12, requires: [] },
     { id: "cardEnemy", icon: "☠", x: 50, y: 30, requires: ["cardDoorKey"] },
     { id: "autoClimb", icon: "»", x: 50, y: 48, requires: ["cardEnemy"] },
-    // The hand's skills, down to the Archives: Buildout, Trainers (two rows
-    // lower), Shroud, Critical (with Critical Prediction to its left). Gold Key and On the Job branch off
-    // Buildout: ATK Up, then DEF Up, under Gold Key, each with its provision
-    // (Vanguard Banner, Aegis Charm) to its left, and Regen below On the Job, with
-    // Heal and the Traveler's Elixir under it, and Larger Hand under Heal.
+    // The hand's skills, down to the Archives: Buildout, Trainers, Larger
+    // Hand, Shroud (with Gold Key to its left), Critical (with Critical
+    // Prediction to its left). ATK Up branches left off Trainers, with DEF Up
+    // under it, each with its provision (Vanguard Banner, Aegis Charm) to its
+    // left, and On the Job right off Buildout, with Regen below it and Heal and
+    // the Traveler's Elixir under that.
     { id: "combatStance", icon: "▤", x: 50, y: 66, requires: ["autoClimb"] },
     { id: "buildout", icon: "⚔", x: 50, y: 84, requires: ["combatStance"] },
-    { id: "trainers", icon: "⚔", x: 50, y: 120, requires: ["buildout"] },
-    { id: "shroud", icon: "◈", x: 50, y: 138, requires: ["trainers"] },
+    { id: "trainers", icon: "⚔", x: 50, y: 102, requires: ["buildout"] },
+    { id: "largerHand", icon: "▦", x: 50, y: 120, requires: ["trainers"] },
+    { id: "shroud", icon: "◈", x: 50, y: 138, requires: ["largerHand"] },
     { id: "critical", icon: "✸", x: 50, y: 156, requires: ["shroud"] },
     { id: "critPrediction", icon: "✸", x: 30, y: 156, requires: ["critical"] },
-    { id: "largerHand", icon: "▦", x: 70, y: 138, requires: ["trainers"] },
     { id: "onTheJob", icon: "¤", x: 80, y: 84, requires: ["buildout"] },
     { id: "regen", icon: "♥", x: 80, y: 102, requires: ["onTheJob"] },
     { id: "cardHeal", icon: "♥", x: 70, y: 120, requires: ["regen"] },
     { id: "elixirProvision", icon: "⚗", x: 90, y: 120, requires: ["regen"] },
     { id: "archives", icon: "▥", x: 50, y: 174, requires: ["critical"] },
-    { id: "cardYellowKey", icon: "⚿", x: 30, y: 84, requires: ["buildout"] },
-    { id: "cardAtkUp", icon: "⚔", x: 30, y: 102, requires: ["cardYellowKey"] },
+    { id: "cardYellowKey", icon: "⚿", x: 30, y: 138, requires: ["shroud"] },
+    { id: "cardAtkUp", icon: "⚔", x: 30, y: 102, requires: ["trainers"] },
     { id: "whetstoneProvision", icon: "⚑", x: 10, y: 102, requires: ["cardAtkUp"] },
     { id: "cardDefUp", icon: "⛨", x: 30, y: 120, requires: ["cardAtkUp"] },
     { id: "aegisProvision", icon: "⛨", x: 10, y: 120, requires: ["cardDefUp"] },

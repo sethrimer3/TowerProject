@@ -118,8 +118,9 @@ test("Shroud blocks 1 damage a fight and opens Shroud training", () => {
   assert.equal(g.run.player.shroud, undefined, "no shroud yet");
   g.save.tower.inspiration = 2;
   g.save.upgrades.trainers = 0; // trainNow owns it
-  assert.equal(g.skills.buy("shroud"), false, "not before Trainers");
   g.save.upgrades.trainers = 1;
+  assert.equal(g.skills.buy("shroud"), false, "not before Larger Hand");
+  g.save.upgrades.largerHand = 1;
   assert.ok(g.skills.buy("shroud"));
   assert.equal(loadout(g.save).shroud, 1);
   assert.equal(g.save.tower.inspiration, 0, "2 Inspiration");
