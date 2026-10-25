@@ -23,7 +23,7 @@ import { playedSave } from "./first-skills.ts";
 
 test("Badges costs 2 Breakthrough and follows Physician in the Breakthrough tree", () => {
   const g = new Game(playedSave());
-  g.save.upgrades.breakthrough = 1;
+  g.save.upgrades.trainers = g.save.upgrades.breakthrough = 1;
   g.save.upgrades.moveSpeed = 1;
   g.save.breakthrough = 10;
   assert.equal(g.skills.buy("cardBadges"), false, "waits for Physician");
@@ -109,7 +109,7 @@ test("Key < Badges sits beside Gold Door and Key ≥ Badges beside it, 50 Inspir
   const g = new Game(playedSave());
   g.save.tower.inspiration = 100;
   assert.equal(g.skills.buy("keyLessBadges"), false, "waits for Gold Door");
-  g.save.upgrades.cardYellowDoor = g.save.upgrades.keyMastery = g.save.upgrades.questForKnowledge = g.save.upgrades.pathToWealth = g.save.upgrades.physician = 1;
+  g.save.upgrades.trainers = g.save.upgrades.cardYellowDoor = g.save.upgrades.keyMastery = g.save.upgrades.questForKnowledge = g.save.upgrades.pathToWealth = g.save.upgrades.physician = 1;
   assert.equal(g.skills.buy("keyAtLeastBadges"), false, "waits for Key < Badges");
   assert.ok(g.skills.buy("keyLessBadges"));
   assert.ok(g.skills.buy("keyAtLeastBadges"));

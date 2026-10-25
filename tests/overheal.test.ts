@@ -26,7 +26,7 @@ test("Overheal is a 20-Breakthrough skill under Max Interest, with nothing under
   assert.deepEqual(nodes.find((n) => n.id === "overheal")!.requires, ["maxInterest"]);
   assert.ok(!nodes.some((n) => n.requires.includes("overheal")), "Refocus, which followed it, is gone");
   const s = playedSave();
-  Object.assign(s.upgrades, { breakthrough: 1, moveSpeed: 1, bombs: 1, findYellowKey: 1, keyEfficiency: 1, interest: 1 });
+  Object.assign(s.upgrades, { trainers: 1, breakthrough: 1, moveSpeed: 1, bombs: 1, findYellowKey: 1, keyEfficiency: 1, interest: 1 });
   assert.equal(skillAvailable("overheal", s.upgrades), false, "Overheal waits on Max Interest");
   s.upgrades.maxInterest = 1;
   assert.ok(skillAvailable("overheal", s.upgrades));

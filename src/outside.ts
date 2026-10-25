@@ -56,6 +56,9 @@ export const TOURNAMENT_HALL = { dx: 4, width: 3, y: 8, height: 3 } as const;
 const HALL_YARD = { dx: TOURNAMENT_HALL.dx - 1, width: TOURNAMENT_HALL.width + 2, y: TOURNAMENT_HALL.y - 1, height: TOURNAMENT_HALL.height + 1 };
 /** Whether (x, y) is one of the Tournament Hall's tiles, by the entrance column. */
 export const onTournamentHall = (center: number, x: number, y: number) => within(TOURNAMENT_HALL, center, x, y);
+/** The Tower's arched doorway, by the entrance column: the entrance tile
+ * and the tiles either side, up to the top of the arch. */
+export const TOWER_ARCH = { dx: -1, width: 3, y: ENTRANCE_Y, height: 5 } as const;
 
 /** The roads `world` has laid (none unless it is the clearing). */
 export const roadsOf = (world: unknown): Roads | undefined =>
@@ -93,6 +96,11 @@ export class OutsideWorld implements Board {
   /** Whether (x, y) is the Tournament Hall, which a tap opens. */
   isTournamentHall(x: number, y: number) {
     return this.hall && onTournamentHall(this.entranceX, x, y);
+  }
+  /** Whether (x, y) is in the Tower's arch, which a tap walks the hero
+   * through, to the entrance. */
+  isArch(x: number, y: number) {
+    return this.mode === "tower" && within(TOWER_ARCH, this.entranceX, x, y);
   }
   /** Whether (x, y) is the foot of the path, under the sign to the other
    * mode's forest: stepping onto it goes there (`Game.swapForest`). */

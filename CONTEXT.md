@@ -363,7 +363,7 @@ _Avoid_: shards
 
 **Hidden skill**:
 A skill-tree node not yet revealed: it isn't drawn, can't be read or bought, and the line to it from the skill above fades away.
-A Breakthrough skill reveals it, and with it everything under it (Quest for Knowledge reveals the Archives and the rest of the Inspiration tree).
+Another skill reveals it, and with it everything under it (Trainers reveals the Inspiration tree's paths after it; Quest for Knowledge, a Breakthrough skill, the Archives and the rest of the tree).
 _Avoid_: locked skill (a locked skill shows, waiting on its requirements), secret skill
 
 **Boss**:

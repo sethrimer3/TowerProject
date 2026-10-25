@@ -138,6 +138,8 @@ try {
   assert.equal(await page.locator('.badge-pick[data-badge="hp"] .badge-glyph > .theme-art').evaluate(e => getComputedStyle(e).visibility), "visible");
   await page.locator('[data-tab="board"]').click();
   await page.locator("#enter-run").click();
+  // Enter walks the hero to the entrance; the run begins as it arrives.
+  await page.locator("#enter-run").waitFor({ state: "hidden" });
   await ready("#hand");
   assert.ok(await page.locator(".hand-badge-level .sprite-replacement").first().isVisible());
   for (const width of [390, 1024]) {

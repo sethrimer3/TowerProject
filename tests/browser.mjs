@@ -90,6 +90,8 @@ await openMenu(page); await page.locator("#end-run").click();
 await page.locator("#confirm").click();
 await toDelve();
 await page.locator("#enter-run").click();
+// Enter walks the hero to the entrance; the run begins as it arrives.
+await page.locator("#enter-run").waitFor({ state: "hidden" });
 await stepUp();
 if ((await page.locator("#height").textContent()) !== "1")
   throw Error("Movement failed");

@@ -62,7 +62,7 @@ test("a card node can't be bought before the one above it", () => {
   const g = new Game(playedSave());
   g.save.tower.inspiration = 10_000;
   assert.equal(g.skills.buy("cardYellowDoor"), false);
-  g.save.upgrades.keySiphon = g.save.upgrades.keyMastery = g.save.upgrades.questForKnowledge = g.save.upgrades.pathToWealth = g.save.upgrades.physician = 1;
+  g.save.upgrades.trainers = g.save.upgrades.keySiphon = g.save.upgrades.keyMastery = g.save.upgrades.questForKnowledge = g.save.upgrades.pathToWealth = g.save.upgrades.physician = 1;
   assert.equal(g.skills.buy("cardHeartDoor"), false);
   assert.ok(g.skills.buy("cardYellowDoor"));
   assert.equal(g.skills.buy("cardHeartDoor"), false);

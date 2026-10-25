@@ -35,7 +35,7 @@ export const SETTINGS = {
   brightness: { kind: "range", default: 100, min: 20, max: 100, step: 5, page: { id: "brightness", label: "Brightness", aria: "Dungeon brightness" } },
   /** Which tile-inspection surfaces appear on tap. */
   infoDisplay: {
-    kind: "choice", default: "both", choices: [["both", "Popup + status line"], ["popup", "Popup only"], ["status", "Status line only"], ["none", "Off"]],
+    kind: "choice", default: "popup", choices: [["both", "Popup + status line"], ["popup", "Popup only"], ["status", "Status line only"], ["none", "Off"]],
     page: { id: "info-display", label: "Tile info display" },
   },
   /** The UI theme worn round the board (theme-collection.ts): Classic, or

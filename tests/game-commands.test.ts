@@ -149,15 +149,42 @@ test("a deck card dragged to the hand goes into its slot, in the forest with Bui
   assert.equal(g.deck.place("monster", 1), false, "only in the forest");
 });
 
-test("in the forest Enter goes straight in, starting the run with the hand playing", () => {
+test("in the forest Enter walks the hero to the entrance, and the run begins there with the hand playing", () => {
   const g = new Game(taught());
   g.newRun({ outside: true, seed: 1 });
   g.toggleAuto();
   assert.ok(!g.auto, "the forest has no play or pause");
-  assert.ok(g.enterRun());
+  assert.ok(g.headForEntrance());
+  assert.ok(g.run.outside && g.route.length, "walking there first");
+  const end = g.route[g.route.length - 1];
+  assert.deepEqual([end.x, end.y], [g.run.player.x, ENTRANCE_Y], "to the entrance");
+  while (g.run.outside && g.routeStep());
   assert.ok(!g.run.outside && g.auto);
   assert.equal(g.run.player.y, 0, "at the entrance");
+  assert.equal(g.headForEntrance(), false, "only from the forest");
   assert.equal(g.enterRun(), false, "only from the forest");
+});
+
+test("after the first skill, the forest's note to press Enter goes once Enter is pressed", () => {
+  const g = new Game(taught());
+  g.newRun({ outside: true, seed: 1 });
+  assert.equal(g.boardLesson, "enter");
+  g.headForEntrance();
+  assert.equal(g.boardLesson, null, "dismissed by Enter, before the hero arrives");
+  assert.ok(g.run.outside);
+});
+
+test("a tap on the Tower's arch walks the hero to the entrance", () => {
+  const g = new Game(taught());
+  g.newRun({ outside: true, seed: 1 });
+  const x = g.run.player.x;
+  for (const [dx, dy] of [[-1, 4], [1, 2], [0, 3]]) {
+    g.walkTo(x + dx, ENTRANCE_Y + dy);
+    const end = g.route[g.route.length - 1];
+    assert.deepEqual([end.x, end.y], [x, ENTRANCE_Y], `from the arch at ${dx}, ${dy}`);
+  }
+  g.walkTo(x - 2, ENTRANCE_Y + 2);
+  assert.equal(g.route.length, 0, "beside the arch is the tower's wall");
 });
 
 test("ending a run goes straight back to the forest with the next run", () => {
@@ -166,7 +193,7 @@ test("ending a run goes straight back to the forest with the next run", () => {
   g.finish("Ascent ended");
   assert.ok(g.run.outside && g.run.seed !== ended && g.save.tower.run === g.run);
   assert.equal(g.fallen, false);
-  assert.match(g.message, /^Ascent ended.*Follow the forest path to begin again\.$/);
+  assert.match(g.message, /^Ascent ended.*Press Enter or the tower entrance to begin a climb\.$/);
 });
 
 test("erasing everything leaves a fresh save with a new run outside the Tower", () => {

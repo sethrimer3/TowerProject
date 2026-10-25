@@ -1,5 +1,7 @@
 # Skills and stats
 
+A new game's Inspiration tree shows one line of skills, from Door & Key down to **Trainers**; buying Trainers reveals the paths that branch out after it (Larger Hand, On the Job, ATK Up and everything under them).
+
 ## Below the Archives
 
 Greater Heal and the skills under it stay hidden until the Breakthrough skill **Physician** (1 Breakthrough, below Movement Speed) is bought, and Pocket Money and the skills under it until **Path to Wealth** (1 Breakthrough, left of Physician).

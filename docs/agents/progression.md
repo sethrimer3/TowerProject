@@ -95,6 +95,7 @@ The Dev Mode section's setting **free purchases** (`settings.freePurchases`, rea
 The save keeps `save.archives` (`decodeArchives`).
 `tests/archives.test.ts` covers it.
 Skill trees are in `progression/skill-trees.ts`; the Inspiration tree is one of `unlocks`, opening with the first skills down its middle (Door & Key, Enemy, Auto-Climb, 1 Inspiration each; Combat Stance, under them, roots the rest, three rows lower than before them; a save owning Combat Stance from before them decodes owning them too) (each skill bought once, no ranks shown; more comes from the panels it opens).
+The skills straight after Trainers (Larger Hand, On the Job, ATK Up) are revealed by Trainers, so a new game's tree is one line down to it, and the paths branch out once it is owned.
 The tree mixes currencies by skill: Find Gold Key and Key Efficiency (10 Breakthrough each) stand under Thorns, before GK Siphon, and stay hidden with everything below them until Key Mastery (1 Breakthrough, under Physician in the Breakthrough tree) is owned.
 Manual Hand (1 Breakthrough) and Limit Break 1 to 10 (5 Breakthrough each) are Breakthrough skills too: Manual Hand under Echoes of time, the Limit Breaks straight down under Ignore More.
 Interest follows Key Mastery.

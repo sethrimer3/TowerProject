@@ -44,12 +44,12 @@ On narrow phones, inventory controls wrap and the Menu, Shop and play/pause butt
 
 A new game starts inside its first Tower run with a hand of one card, **Stairs**.
 Until the Inspiration tree's **Auto-Climb** is owned, the hand moves only when you press a card: the hero heads for that card's target, and once it gets there the hand waits for your next press (see Pressing a card in hand-and-cards.md).
-A note over the board, *Press the Stairs card to climb*, says each card sends the hero toward what it names, while a hand points at Stairs; play and the speed arrows stay closed until Stairs is pressed, and the hero then walks at 2 steps a second.
+A note over the board, headed *Welcome, adventurer!* and then *Press the Stairs card to climb*, says each card sends the hero toward what it names, while a hand points at Stairs; play and the speed arrows stay closed until Stairs is pressed, and the hero then walks at 2 steps a second.
 Floor 1's stairs always stand open, so Stairs climbs it, paying the run's first Inspiration; floor 2's stairs are behind a gold door Stairs can't open.
 The first time no card can take the hero further, a note says the Inspiration the run earned unlocks new abilities and to press **End Climb**, which pulses slowly until it is pressed.
 In the forest a note then says to spend the Inspiration, a hand pointing at the **Upgrades** tab, while **Door & Key** can be bought.
 On the Inspiration tree a note asks you to unlock Door & Key, a hand pointing at it; once it is bought, the note says Door and Key have joined your hand, that in a run they collect keys and open doors, that with no key some HP can break down a Wooden Door, and to press the Tower button to go back, a hand pointing at it.
-Back in the forest a note says to press **Enter** for another run, a hand pointing at it; tapping the note dismisses it, as entering does.
+Back in the forest a note says *Click Enter to start climbing the tower.*, a hand pointing at **Enter**; pressing Enter dismisses it, as tapping the note or entering does.
 In that run a note asks you to press Key and Door, a hand pointing at each, until you press one of them.
 Ten steps into that run's first floor, a hero slower than 3 steps a second is paused once, a hand pointing at the › beside play, until you press it to walk at 3 ([Play, pause and speed](hand-and-cards.md#play-pause-and-speed)).
 When the hand is stuck again with an enemy in the way, while **Enemy** isn't owned and you hold the Inspiration it costs, a note says an enemy blocks the way, that the Enemy card on the Inspiration tree lets you fight it, and to press End Run, which pulses again; the forest, the Inspiration tree and Enter then lead you to Enemy and back as they did for Door & Key.
@@ -73,7 +73,8 @@ Reloading mid-Delve-run opens the Delve where it was.
 
 ## Moving by hand
 
-In the forest before a run, a tap on an open tile walks straight to it.
+In the forest before a run, a tap on an open tile walks straight to it, and a tap anywhere in the Tower's arch walks to the entrance under it, beginning a climb.
+The line under the forest says *Press Enter or the tower entrance to begin a climb.* (in the Delve's forest, *Press Enter or the cave entrance to begin a delve.*), as does the status line when a run ends.
 With Dev mode on, swipes and the keyboard arrows / WASD also step the hero one tile in any cardinal direction, in the forest or inside a run.
 Monsters on manual routes are fought even when lethal.
 Missing keys stop movement at the necessary door, with a fading red X; unreachable wall targets get the same feedback at the tapped spot.

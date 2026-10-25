@@ -58,6 +58,8 @@ export type ModeProfile<R extends Run = Run> = {
     subtitle: string;
     /** Feedback on stepping through the entrance. */
     enter: string;
+    /** The forest's hint: how to begin a run. */
+    begin: string;
     /** The inspect text for the forest entrance and a plain floor tile. */
     entrance: string;
     floor: string;
@@ -125,6 +127,7 @@ export const MODES: { tower: ModeProfile<TowerRun>; delve: ModeProfile<DelveRun>
       title: "THE ASCENT TRIALS",
       subtitle: "ONE CHAMBER AT A TIME",
       enter: "You enter the tower.",
+      begin: "Press Enter or the tower entrance to begin a climb.",
       entrance: "Begin the climb — Floor 1",
       floor: "Well-worn stone floor.",
     },
@@ -150,6 +153,7 @@ export const MODES: { tower: ModeProfile<TowerRun>; delve: ModeProfile<DelveRun>
       title: "THE HOLLOW SPIRE",
       subtitle: "HIGHER DANGERS · GREATER REWARDS",
       enter: "You enter the mountain cave.",
+      begin: "Press Enter or the cave entrance to begin a delve.",
       entrance: "Descend into the cave",
       floor: "Ancient cavern floor.",
     },

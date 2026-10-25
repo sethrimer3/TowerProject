@@ -653,7 +653,9 @@ try {
     await click("#toggles-back");
     await page.locator("#info-display").selectOption("status");
     await click("#settings-back");
-    await tapTile(8, 3);
+    // A tree in the forest above the path: the status line says there's no
+    // route, and the hero stays put (the forest's view is wider than 17).
+    await tapTile(2, 13);
     await shot(`${prefix}.statusInfo`);
     await menuClick("#auto-settings");
     await page.locator("#info-display").selectOption("popup");
@@ -692,7 +694,7 @@ try {
     await click('[data-skill="cardDoorKey"]');
     await shot("fresh.tree.short");
     await tab("board");
-    // In the forest Enter, under Goals, goes straight in.
+    // In the forest Enter, under Goals, walks the hero in through the entrance.
     await click("#enter-run");
     await shot("fresh.entered");
     // The enemy stats under the floor open every enemy the floor can roll; the X closes it.

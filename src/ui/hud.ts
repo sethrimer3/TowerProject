@@ -320,7 +320,7 @@ export function renderBoardHeading(game: Game, overlay: BoardOverlay) {
     const labels = { cloudy: "CLOUDY", sunny: "SUNNY", rain: "RAINING", storm: "THUNDERSTORM" };
     text("board-subtitle", tiers ?? `FOREST CLEARING · ${labels[outsideWeather(game.run.seed)]}`);
     // The sign down the path stands where this hint would.
-    el("inspect").textContent = game.canSwapForest ? "" : "Follow the forest path and step onto the entrance at the top to begin again.";
+    el("inspect").textContent = game.canSwapForest ? "" : words.begin;
   } else {
     text("board-subtitle", tiers ?? words.subtitle);
     el("inspect").textContent = "";

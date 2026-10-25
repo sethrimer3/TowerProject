@@ -48,7 +48,7 @@ import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import { chestKindAt, litTorches, type Board } from "./board.ts";
 import { healUpTo, instakill, squaredUp, type CritRule } from "./combat.ts";
 import { HEART_DOOR_HP, hpCeiling, isLethal, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardStat } from "./step-effects.ts";
-import { OUTSIDE_START_Y, OutsideWorld } from "./outside.ts";
+import { ENTRANCE_Y, OUTSIDE_START_Y, OutsideWorld } from "./outside.ts";
 import { AREA_BURST_MS, AreaLedger, chestReward, clearedInspiration, type AreaReward } from "./tower/area-ledger.ts";
 import { TowerClimb } from "./tower/climb.ts";
 import { callsGreaterBoss, greaterBoss, greaterBossSpot } from "./tower/greater-boss.ts";
@@ -461,8 +461,8 @@ export class Game {
    * card's target with an open path and a pressed card goes first, until
    * its note is tapped or a card pressed. In the Tower's forest: `upgrades`,
    * to the Upgrades tab while the next first skill (`introSkill`) can be
-   * bought; `enter`, to Enter, once Door & Key is owned until a run goes
-   * inside from the forest (and again once Enemy is bought after its
+   * bought; `enter`, to Enter, once Door & Key is owned until Enter is
+   * pressed or a run goes inside from the forest (and again once Enemy is bought after its
    * lesson); `research`, once the Archives skill is owned, to the Research
    * tab, until the Research page is opened (`archivesLesson` then waits on
    * its note there); then, in either forest, `trainingPoints`, the first time training
@@ -753,6 +753,11 @@ export class Game {
       return;
     }
     this.auto = false;
+    // A tap on the Tower's arch heads for the entrance under it.
+    if (this.run.outside && this.world instanceof OutsideWorld && this.world.isArch(x, y)) {
+      x = this.rules.entranceX;
+      y = ENTRANCE_Y;
+    }
     const route = routeTo(this, x, y);
     if (!route) {
       this.reject(x, y, "No route to that space.");
@@ -894,8 +899,16 @@ export class Game {
       this.message = "Press › beside play to move faster.";
     }
   }
-  /** The forest's Enter button: goes straight in through the entrance,
-   * starting the run, as walking onto it does. */
+  /** The forest's Enter button: the hero walks to the entrance, and the
+   * run begins as it steps onto it. It ends the `enter` lesson. */
+  headForEntrance() {
+    if (!this.run.outside) return false;
+    if (this.boardLesson === "enter") this.dismissLesson();
+    this.walkTo(this.rules.entranceX, ENTRANCE_Y);
+    return true;
+  }
+  /** Goes straight in through the forest's entrance, starting the run, as
+   * walking onto it does. */
   enterRun() {
     if (!this.run.outside) return false;
     this.throughEntrance();
@@ -1722,7 +1735,7 @@ export class Game {
       this.run.outside = true;
       this.toForestStart();
       this.world = this.forestWorld(seed);
-      this.message = "Follow the forest path to the entrance.";
+      this.message = this.rules.words.begin;
     } else {
       this.forgetLabyrinth();
       this.dealHand();
@@ -1855,7 +1868,7 @@ export class Game {
     if (tournament) this.switchMode(tournament.back.mode, true);
     this.auto = false;
     this.dropHandPlan();
-    this.message = `${reason}${record ? " · a new record" : ""}${whole(gold) ? ` · ${whole(gold)} Gold kept` : ""}. Follow the forest path to begin again.`;
+    this.message = `${reason}${record ? " · a new record" : ""}${whole(gold) ? ` · ${whole(gold)} Gold kept` : ""}. ${this.rules.words.begin}`;
   }
   /** The hero fell in a fight: the run waits at 0 HP, the hand paused, for
    * the player to undo the fight or accept defeat. */

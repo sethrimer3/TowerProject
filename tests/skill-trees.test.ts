@@ -181,7 +181,7 @@ test("Inspiration tree: Heal follows Regen, Critical leads to Breakthrough, and 
 });
 
 test("the Archives and everything under them stay hidden, unbuyable, until Quest for Knowledge (1 Breakthrough) reveals them", () => {
-  const upgrades = { ...defaults().upgrades };
+  const upgrades = { ...defaults().upgrades, trainers: 1 };
   const below = new Set<UpgradeId>(["archives"]);
   for (let grew = true; grew;) {
     grew = false;
@@ -197,6 +197,16 @@ test("the Archives and everything under them stay hidden, unbuyable, until Quest
   assert.ok(skillAvailable("archives", upgrades));
   const quest = UPGRADES.find((u) => u.id === "questForKnowledge")!;
   assert.deepEqual([quest.name, quest.description, quest.currency, cost("questForKnowledge", 0)], ["Quest for Knowledge", "Discover hidden archives to research new skills", "breakthrough", 1]);
+});
+
+test("a new game's Inspiration tree shows its first skills down to Trainers, and Trainers reveals the paths after it", () => {
+  const upgrades = { ...defaults().upgrades }, first = ["cardDoorKey", "cardEnemy", "autoClimb", "combatStance", "buildout", "trainers"];
+  assert.deepEqual(TREES[0].nodes.filter((n) => !skillHidden(n.id, upgrades)).map((n) => n.id), first);
+  assert.deepEqual(TREES[0].nodes.filter((n) => n.reveal === "trainers").map((n) => n.id), ["largerHand", "onTheJob", "cardAtkUp"], "the skills straight after Trainers");
+  for (const id of first) upgrades[id as UpgradeId] = 1;
+  for (const id of ["largerHand", "onTheJob", "cardAtkUp", "shroud", "regen", "cardDefUp", "breakthrough"] as const) assert.ok(!skillHidden(id, upgrades), `${id} revealed`);
+  assert.ok(skillHidden("archives", upgrades), "the Archives still wait on Quest for Knowledge");
+  assert.ok(skillAvailable("largerHand", upgrades));
 });
 test("Bombs (5 Inspiration) stands left of Critical Prediction in the Inspiration tree, Focus and Refocus are gone, and it opens the Bomb provision", () => {
   const bombs = TREES[0].nodes.find((n) => n.id === "bombs")!;
@@ -228,7 +238,7 @@ test("Manual Hand (1 Breakthrough) follows Echoes of time; Key Mastery (1) under
     assert.deepEqual([row.currency, row.max, cost(id, 0)], ["breakthrough", 1, 10], id);
   }
   assert.deepEqual([UPGRADES.find((u) => u.id === "undos")!.max, cost("undos", 0)], [1, 5]);
-  const upgrades = { ...defaults().upgrades, questForKnowledge: 1, pathToWealth: 1, physician: 1 };
+  const upgrades = { ...defaults().upgrades, trainers: 1, questForKnowledge: 1, pathToWealth: 1, physician: 1 };
   for (const id of ["findYellowKey", "keyEfficiency", "keySiphon", "cardYellowDoor"] as const) assert.ok(skillHidden(id, upgrades), `${id} hidden`);
   upgrades.keyMastery = 1;
   for (const id of ["findYellowKey", "keyEfficiency", "keySiphon", "cardYellowDoor"] as const) assert.ok(!skillHidden(id, upgrades), `${id} revealed`);
@@ -276,7 +286,7 @@ test("a run that earned Inspiration puts a dot on the Inspiration tab in the for
 });
 test("a Tower Goal claimed pays a Breakthrough point and puts a dot on the Breakthrough tab in the forest once the tree is open and a skill there can be bought", () => {
   const g = new Game(defaults());
-  g.save.upgrades.breakthrough = 1;
+  g.save.upgrades.trainers = g.save.upgrades.breakthrough = 1;
   g.save.tower.reached = 20;
   assert.equal(g.notices.waiting("breakthrough"), false, "not inside a run");
   g.newRun({ outside: true, seed: 2 });
@@ -328,7 +338,7 @@ test("Path to Wealth and Physician (1 Breakthrough each) take Pathfinder's and B
   assert.deepEqual([at("physician").x, at("physician").y, at("physician").requires], [50, 58, ["moveSpeed"]]);
   assert.ok(!UPGRADES.some((u) => (u.id as string) === "pathfinder"), "Pathfinder is gone");
   for (const id of ["pathToWealth", "physician"] as const) assert.deepEqual([UPGRADES.find((u) => u.id === id)!.currency, cost(id, 0)], ["breakthrough", 1], id);
-  const upgrades = { ...defaults().upgrades, questForKnowledge: 1 };
+  const upgrades = { ...defaults().upgrades, trainers: 1, questForKnowledge: 1 };
   const sides = { pathToWealth: ["pocketMoney", "spareChange", "wealthy", "loot", "wishingWell", "freeTraining"], physician: ["greaterHeal", "recovery", "findPotion", "regenResearch", "parry", "revive"] } as const;
   for (const ids of Object.values(sides)) for (const id of ids) assert.ok(skillHidden(id, upgrades), `${id} hidden`);
   assert.ok(!skillHidden("lifesteal", upgrades), "the middle path shows with the Archives");

@@ -24,24 +24,25 @@ export const TREES: SkillTree[] = [
     // Up branches left off Trainers, with DEF Up under it, each with its
     // provision (Vanguard Banner, Aegis Charm) to its left, and On the Job
     // right off Trainers, with Regen below it and Heal and the Traveler's
-    // Elixir under that.
+    // Elixir under that. The skills after Trainers stay hidden until it is
+    // owned, so a new game's first skills run in one line.
     { id: "combatStance", icon: "▤", x: 50, y: 66, requires: ["autoClimb"] },
     { id: "buildout", icon: "⚔", x: 50, y: 84, requires: ["combatStance"] },
     { id: "trainers", icon: "⚔", x: 50, y: 102, requires: ["buildout"] },
-    { id: "largerHand", icon: "▦", x: 50, y: 120, requires: ["trainers"] },
+    { id: "largerHand", icon: "▦", x: 50, y: 120, requires: ["trainers"], reveal: "trainers" },
     { id: "shroud", icon: "◈", x: 50, y: 138, requires: ["largerHand"] },
     { id: "critical", icon: "✸", x: 50, y: 156, requires: ["shroud"] },
     { id: "critPrediction", icon: "✸", x: 30, y: 156, requires: ["critical"] },
     { id: "bombs", icon: "✹", x: 10, y: 156, requires: ["critPrediction"] },
     { id: "fasterTrainers", icon: "»", x: 70, y: 156, requires: ["critical"] },
-    { id: "onTheJob", icon: "¤", x: 80, y: 102, requires: ["trainers"] },
+    { id: "onTheJob", icon: "¤", x: 80, y: 102, requires: ["trainers"], reveal: "trainers" },
     { id: "regen", icon: "♥", x: 80, y: 120, requires: ["onTheJob"] },
     { id: "cardHeal", icon: "♥", x: 70, y: 138, requires: ["regen"] },
     { id: "elixirProvision", icon: "⚗", x: 90, y: 138, requires: ["regen"] },
     { id: "breakthrough", icon: "▼", x: 50, y: 174, requires: ["critical"] },
     { id: "cardYellowKey", icon: "⚿", x: 30, y: 138, requires: ["shroud"] },
     { id: "cardBlueKey", icon: "⚿", x: 10, y: 138, requires: ["cardYellowKey"] },
-    { id: "cardAtkUp", icon: "⚔", x: 30, y: 102, requires: ["trainers"] },
+    { id: "cardAtkUp", icon: "⚔", x: 30, y: 102, requires: ["trainers"], reveal: "trainers" },
     { id: "whetstoneProvision", icon: "⚑", x: 10, y: 102, requires: ["cardAtkUp"] },
     { id: "cardDefUp", icon: "⛨", x: 30, y: 120, requires: ["cardAtkUp"] },
     { id: "aegisProvision", icon: "⛨", x: 10, y: 120, requires: ["cardDefUp"] },

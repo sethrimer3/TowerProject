@@ -59,6 +59,8 @@ await page.reload();
 await page.locator('#forest-sign').click();
 assert.equal(await page.getByRole('button', { name: 'Future Delve action 2', exact: true }).isVisible(), true);
 await page.locator('#enter-run').click();
+// Enter walks the hero to the entrance; the run begins as it arrives.
+await page.locator('#enter-run').waitFor({ state: 'hidden' });
 await page.locator('#run-menu-toggle').click();
 await page.getByRole('button', { name: 'End current delve', exact: true }).click();
 assert.match(await page.locator('#modal').innerText(), /End this delve\?/);

@@ -30,7 +30,7 @@ test("the four charge skills cost 20 Breakthrough each and sit below Interest's 
     assert.equal(cost(id, 0), 20, id);
     assert.equal(skillAvailable(id, save.upgrades), false, `${id} waits on the skills above it`);
   }
-  Object.assign(save.upgrades, { breakthrough: 1, moveSpeed: 1, bombs: 1, findYellowKey: 1, keyEfficiency: 1, interest: 1 });
+  Object.assign(save.upgrades, { trainers: 1, breakthrough: 1, moveSpeed: 1, bombs: 1, findYellowKey: 1, keyEfficiency: 1, interest: 1 });
   assert.ok(skillAvailable("ignore", save.upgrades));
   assert.equal(skillAvailable("ignoreMore", save.upgrades), false);
   save.upgrades.ignore = 1;

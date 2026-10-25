@@ -499,11 +499,12 @@ el("auto").onclick = () => {
   if (game.auto) overlay.dismiss();
   update();
 };
-// In the forest, Enter (under Goals) goes straight in, starting the run.
+// In the forest, Enter (under Goals) walks the hero to the entrance,
+// starting the run as it steps on.
 el("enter-run").onclick = () => {
   if (!game.run.outside) return;
   overlay.hide();
-  game.enterRun();
+  game.headForEntrance();
   update();
 };
 // The speed arrows beside play/pause, inside a run.
