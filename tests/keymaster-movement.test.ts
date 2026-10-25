@@ -1,8 +1,9 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {startTrial,trialStep,decodeTrial,arenaFloor,type TrialState} from "../src/proving-grounds/trial.ts";
+import {startTrial,trialStep,decodeTrial,type TrialState} from "../src/proving-grounds/trial.ts";
 import {advanceKeymasterEffects,KEYMASTER_REFORM_INTERVAL,pursueMimics,retreatKeymaster} from "../src/proving-grounds/keymaster.ts";
 import {autoplayTrial,trialBoard,trialPlan} from "../src/proving-grounds/autoplay.ts";
+import {keymasterArenaFloor as arenaFloor} from "../src/proving-grounds/arena.ts";
 const manhattan=(a:{x:number;y:number},b:{x:number;y:number})=>Math.abs(a.x-b.x)+Math.abs(a.y-b.y);
 function arena() {
   const s=startTrial({maxHp:10000,attack:10,defense:0},"manual",[],12,1,"keymaster");

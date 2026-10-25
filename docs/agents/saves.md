@@ -61,3 +61,7 @@ Existing center-boss saves retain their progress, keys and receipts while gainin
 An opened cardinal door is a valid saved hero position, including row or column 0; closed wall cells remain invalid.
 Light Elemental attempts retain their old shape, and save-decode golden hashes remain unchanged.
 Both known trial IDs decode independent clear/reward records under `trialAccess.progress`.
+
+Keymaster payloads now record `layout:2` for the scattered wall cover.
+Attempts without the marker validate against the previous open arena, then move newly blocked actors, key piles and teleport origins to nearest legal floor without discarding stats, training, turns, keys or door receipts.
+Current-layout wall occupants and unknown layout markers are rejected; migrated attempts round-trip without moving again, and ordinary mode layouts and Light Elemental saves are unchanged.

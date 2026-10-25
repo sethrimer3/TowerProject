@@ -307,3 +307,7 @@ The drawn hero and camera are presentation state only, reset at room/attempt cha
 The camera is rounded to native pixels on the 24-pixel tile grid, and tile loops include partially visible edge tiles so there are no seams or missing rows during a pan.
 Hero painting and its foothold light use the drawn position together.
 The appended `trialCamera` render job captures staging, arena start, hero/camera glide, settled, Fast, Instant and Reduce motion; existing non-trial jobs stay pinned.
+
+The Keymaster trial uses the Tower II floor-and-wall set in staging and its arena, passing tier 2 to the shared terrain painter over its own cover/door collision map.
+It skips the trial darkness mask so the entire chamber is visible; the Light Elemental retains its existing tier-1 terrain and torch-lit darkness.
+Ghost teleport trails, mimics and red door particles draw normally over the lit Keymaster room.

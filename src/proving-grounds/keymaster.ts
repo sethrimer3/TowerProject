@@ -1,6 +1,6 @@
 import {finite,isRecord,wholeIn} from "../save/decode.ts";
 import {tileRandom} from "../random.ts";
-import {arenaFloor,ARENA_POTIONS,ARENA_SIZE,directions,key,same,type Spot} from "./arena.ts";
+import {arenaFloor,keymasterArenaFloor,ARENA_POTIONS,ARENA_SIZE,directions,key,same,type Spot} from "./arena.ts";
 import {difficultyMultiplier} from "./catalog.ts";
 import {teleportBoss,materializeBoss} from "./boss-movement.ts";
 import type {TrialState} from "./trial.ts";
@@ -13,10 +13,11 @@ export const KEYMASTER_REFORM_INTERVAL=10;
 export const mimicInterval=(level:number)=>Math.max(2,8-Math.floor(level/5));
 export type Mimic=Spot & {id:number;hp:number;maxHp:number};
 export type DoorBurst={door:number;elapsed:number;hit:boolean};
-export type KeymasterState={keys:number;useKeys:boolean;hits:number;spawned:number;drops:(Spot & {count:number})[];mimics:Mimic[];doors:DoorBurst[]};
-export const newKeymaster=():KeymasterState=>({keys:0,useKeys:true,hits:0,spawned:0,drops:[],mimics:[],doors:[]});
+export type KeymasterState={layout:2;keys:number;useKeys:boolean;hits:number;spawned:number;drops:(Spot & {count:number})[];mimics:Mimic[];doors:DoorBurst[]};
+export const newKeymaster=():KeymasterState=>({layout:2,keys:0,useKeys:true,hits:0,spawned:0,drops:[],mimics:[],doors:[]});
 export const keymasterDoorAt=(x:number,y:number)=>KEYMASTER_DOORS.findIndex(p=>p.x===x && p.y===y);
-const KEY_DIRECTIONS=[[0,1],[1,1],[1,0],[1,-1],[0,-1],[-1,-1],[-1,0],[-1,1]];
+const KEY_OFFSETS:Spot[]=[];
+for(let y=-3;y<=3;y++)for(let x=-3;x<=3;x++)if(Math.max(Math.abs(x),Math.abs(y))===3)KEY_OFFSETS.push({x,y});
 const distance=(a:Spot,b:Spot)=>Math.abs(a.x-b.x)+Math.abs(a.y-b.y);
 export const mimicDamage=(s:TrialState)=>Math.max(1,Math.ceil(s.player.maxHp*.06*difficultyMultiplier(s.level))-Math.floor(s.player.defense*.2));
 
@@ -25,7 +26,7 @@ function spawnMimic(s:TrialState) {
   const choices:Spot[]=[];
   for(let y=4;y<=20;y++)for(let x=4;x<=20;x++) {
     const p={x,y},range=distance(p,s.elemental);
-    if(range<4 || range>10 || Math.max(Math.abs(x-s.elemental.x),Math.abs(y-s.elemental.y))===3 || !arenaFloor(x,y) || same(p,s.player) || same(p,s.elemental)
+    if(range<4 || range>10 || Math.max(Math.abs(x-s.elemental.x),Math.abs(y-s.elemental.y))===3 || !keymasterArenaFloor(x,y) || same(p,s.player) || same(p,s.elemental)
       || k.mimics.some(q=>same(p,q)) || k.drops.some(q=>same(p,q)) || ARENA_POTIONS.some(q=>same(p,q)))continue;
     choices.push(p);
   }
@@ -41,8 +42,8 @@ export function enterKeymaster(s:TrialState) {
 function dropKeys(s:TrialState) {
   const k=s.keymaster!;k.hits++;
   const origin=s.elemental;
-  const choices=KEY_DIRECTIONS.map(([dx,dy],i)=>({x:origin.x+dx*3,y:origin.y+dy*3,score:tileRandom(k.hits,i,s.seed^0x4b4559),i}))
-    .filter(p=>arenaFloor(p.x,p.y));
+  const choices=KEY_OFFSETS.map(({x,y},i)=>({x:origin.x+x,y:origin.y+y,score:tileRandom(k.hits,i,s.seed^0x4b4559),i}))
+    .filter(p=>keymasterArenaFloor(p.x,p.y));
   choices.sort((a,b)=>a.score-b.score || a.i-b.i);
   for(const {x,y} of choices.slice(0,3)) {
     const existing=k.drops.find(p=>p.x===x && p.y===y);
@@ -72,7 +73,7 @@ function fightMimic(s:TrialState,mimic:Mimic) {
 export function retreatKeymaster(s:TrialState) {
   const boss=s.elemental,current=distance(boss,s.player);
   const choices=directions.map(([dx,dy],i)=>({x:boss.x+dx,y:boss.y+dy,i})).filter(p=>
-    arenaFloor(p.x,p.y) && distance(p,s.player)>current && !s.keymaster!.mimics.some(m=>same(m,p))
+    keymasterArenaFloor(p.x,p.y) && distance(p,s.player)>current && !s.keymaster!.mimics.some(m=>same(m,p))
     && !s.keymaster!.drops.some(k=>same(k,p)) && !ARENA_POTIONS.some(k=>same(k,p)));
   const next=choices[Math.floor(tileRandom(s.steps,boss.x+boss.y*ARENA_SIZE,s.seed^0x61776179)*choices.length)];
   if(next){boss.x=next.x;boss.y=next.y;}
@@ -90,7 +91,7 @@ export function pursueMimics(s:TrialState) {
       const p=queue[i],d=distances.get(key(p))!;
       for(const [dx,dy] of directions) {
         const next={x:p.x+dx,y:p.y+dy},at=key(next);
-        if(!arenaFloor(next.x,next.y) || occupied.has(at) || distances.has(at))continue;
+        if(!keymasterArenaFloor(next.x,next.y) || occupied.has(at) || distances.has(at))continue;
         distances.set(at,d+1);queue.push(next);
       }
     }
@@ -169,19 +170,20 @@ export function keymasterStep(s:TrialState,x:number,y:number) {
 }
 
 export function decodeKeymaster(raw:unknown,attempt:Record<string,any>):KeymasterState|undefined {
-  if(!isRecord(raw) || !wholeIn(raw.keys,0,1e9) || typeof raw.useKeys!=="boolean" || !wholeIn(raw.hits,0,1e9)
+  if(!isRecord(raw) || (raw.layout!==undefined && raw.layout!==2) || !wholeIn(raw.keys,0,1e9) || typeof raw.useKeys!=="boolean" || !wholeIn(raw.hits,0,1e9)
     || !wholeIn(raw.spawned,0,1e9) || !Array.isArray(raw.drops) || raw.drops.length>ARENA_SIZE*ARENA_SIZE
     || !Array.isArray(raw.mimics) || raw.mimics.length>MAX_MIMICS || !Array.isArray(raw.doors) || raw.doors.length>4)return;
+  const floor=raw.layout===undefined?arenaFloor:keymasterArenaFloor;
   const k=newKeymaster();k.keys=raw.keys;k.useKeys=raw.useKeys;k.hits=raw.hits;k.spawned=raw.spawned;
   const occupied=new Set<string>(),ids=new Set<number>();
   for(const p of raw.drops) {
-    if(!isRecord(p) || !arenaFloor(p.x,p.y)
+    if(!isRecord(p) || !floor(p.x,p.y)
       || !wholeIn(p.count,1,1e9) || occupied.has(key(p as Spot)))return;
     occupied.add(key(p as Spot));k.drops.push({x:p.x,y:p.y,count:p.count});
   }
   occupied.clear();
   for(const m of raw.mimics) {
-    if(!isRecord(m) || !arenaFloor(m.x,m.y) || same(m as Spot,attempt.elemental??{x:12,y:12}) || same(m as Spot,attempt.player) || occupied.has(key(m as Spot))
+    if(!isRecord(m) || !floor(m.x,m.y) || same(m as Spot,attempt.elemental??{x:12,y:12}) || same(m as Spot,attempt.player) || occupied.has(key(m as Spot))
       || !wholeIn(m.id,1,k.spawned) || ids.has(m.id) || !finite(m.hp,1e100) || !finite(m.maxHp,1e100) || m.hp<=0 || m.hp>m.maxHp)return;
     occupied.add(key(m as Spot));ids.add(m.id);k.mimics.push({x:m.x,y:m.y,id:m.id,hp:m.hp,maxHp:m.maxHp});
   }
@@ -193,4 +195,31 @@ export function decodeKeymaster(raw:unknown,attempt:Record<string,any>):Keymaste
   if(attempt.room==="staging" && (k.keys || k.hits || k.spawned || k.drops.length || k.mimics.length || k.doors.length))return;
   if(attempt.status==="won" && k.mimics.length)return;
   return k;
+}
+
+/** Preserve old attempts when the cover layout changes, relocating only blocked
+ * occupants. Reservations keep actors separate; key piles can share actors. */
+export function migrateKeymasterLayout(s:TrialState) {
+  const k=s.keymaster!;
+  const floor:Spot[]=[];
+  for(let y=1;y<ARENA_SIZE-1;y++)for(let x=1;x<ARENA_SIZE-1;x++)if(keymasterArenaFloor(x,y))floor.push({x,y});
+  const actors=[...(s.room==="arena"?[s.player]:[]),s.elemental,...k.mimics];
+  const occupied=new Set(actors.filter(p=>keymasterArenaFloor(p.x,p.y)).map(key));
+  const relocate=(p:Spot,reserve:boolean)=> {
+    if(keymasterArenaFloor(p.x,p.y))return;
+    const choices=floor.filter(q=>!reserve || !occupied.has(key(q)));
+    choices.sort((a,b)=>distance(a,p)-distance(b,p) || a.y-b.y || a.x-b.x);
+    const next=choices[0];p.x=next.x;p.y=next.y;if(reserve)occupied.add(key(p));
+  };
+  for(const actor of actors) {
+    if(actor===s.player && keymasterDoorAt(actor.x,actor.y)>=0)continue;
+    relocate(actor,true);
+  }
+  if(s.elemental.teleport)relocate(s.elemental.teleport.from,false);
+  const drops:KeymasterState["drops"]=[];
+  for(const p of k.drops) {
+    relocate(p,false);
+    const pile=drops.find(q=>same(p,q));if(pile)pile.count+=p.count;else drops.push(p);
+  }
+  k.drops=drops;
 }
