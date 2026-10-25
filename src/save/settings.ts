@@ -136,6 +136,10 @@ export const SETTINGS = {
   cinematicIdle: { kind: "toggle", default: false, page: { id: "cinematic-idle", label: "Cinematic mode after 2 minutes idle" } },
   /** With Cinematic mode on: keep the ad's Gem button while it shows. */
   cinematicGems: { kind: "toggle", default: false, page: { id: "cinematic-gems-setting", label: "Show the Gem button in cinematic mode" } },
+  /** With Auto-Climb: draw the golden line along the path of the card the
+   * hand chose itself, as it is drawn for a pressed card's
+   * (`Game.shownPath`). */
+  showPath: { kind: "toggle", default: false, page: { id: "show-path", label: "Show path" } },
 } as const satisfies Record<string, Setting>;
 
 export type SettingKey = keyof typeof SETTINGS;

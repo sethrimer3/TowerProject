@@ -283,6 +283,25 @@ test("a card pressed leads the hero to its target ahead of the others, and no ot
   assert.equal(g.focus(0), "focused", "and a card can be pressed again");
 });
 
+test("the board's line follows a pressed card's path as the hero walks it, and the hand's own choice only with Show path", () => {
+  const g = arena();
+  g.autoTurn();
+  assert.ok(g.cardPlan?.path.length, "STAIRS heads for the stairs by itself");
+  assert.deepEqual(g.shownPath, [], "with Auto-Climb its path is hidden by default");
+  g.save.settings.showPath = true;
+  assert.equal(g.shownPath, g.cardPlan!.path, "Show path draws it");
+  g.save.settings.showPath = false;
+  (g.world as RoomWorld).cells.set("4,0", { kind: "key", color: "yellow" });
+  assert.equal(g.focus(g.hand.indexOf("key")), "focused");
+  const ahead = g.shownPath.length;
+  assert.ok(ahead > 1, "a pressed card's path shows from the press");
+  assert.equal(g.shownPath[ahead - 1].x, 4, "and ends on its target");
+  g.autoTurn();
+  assert.equal(g.shownPath.length, ahead - 1, "each step takes one off it");
+  for (let i = 0; i < 8 && g.run.focused; i++) g.autoTurn();
+  assert.deepEqual(g.shownPath, [], "gone once the hero arrives");
+});
+
 test("a press is refused for a card with no path, costing nothing, and outside a run", () => {
   const g = arena();
   assert.equal(g.focus(g.hand.indexOf("key")), "noPath", "there is no key on the floor");

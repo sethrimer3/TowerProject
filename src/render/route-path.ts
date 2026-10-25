@@ -2,7 +2,8 @@ import { tileCenter, type FrameContext } from "./render-frame.ts";
 
 type Point = { x: number; y: number };
 
-/** The golden line along a route being walked (or previewed). Its shape is
+/** The golden line along a route being walked (a tapped walk or the
+ * hand's card's path, `Game.shownPath`), or previewed. Its shape is
  * a fixed polyline of tile centers, recomputed only when a walk or preview
  * starts, so it never changes mid-walk. `progress` is a smoothed arclength
  * (in tiles) consumed along it, advanced independently of the hero sprite's
@@ -18,7 +19,7 @@ export class RoutePath {
   /** Rebuilds the polyline when a new walk/preview starts and eases the
    * consumed length toward the steps already taken. `route` is the walk in
    * progress (it takes priority), `preview` a highlighted destination's path. */
-  update(route: Point[], preview: Point[] | null, player: Point, dt: number) {
+  update(route: readonly Point[], preview: readonly Point[] | null, player: Point, dt: number) {
     const live = route.length > 0,
       source = live ? route : preview;
     if (!source || source.length === 0) {

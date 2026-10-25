@@ -478,7 +478,7 @@ export class Renderer {
     c.restore();
   }
   private drawRoute(f: FrameContext) {
-    this.routePath.update(this.game.route, this.previewRoute, this.game.run.player, f.dt);
+    this.routePath.update(this.game.shownPath, this.previewRoute, this.game.run.player, f.dt);
     this.routePath.draw(f);
   }
   private forestFoliage = new ForestFoliage();

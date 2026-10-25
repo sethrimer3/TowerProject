@@ -216,6 +216,16 @@ export class Game {
   get pathAhead(): readonly Step[] {
     return this.route.length ? this.route : this.targetPath ?? this.cardPlan?.path ?? [];
   }
+  /** The steps the board's golden line follows, nearest first: a walk
+   * tapped, or the hand's card's path while it heads for a pressed card's
+   * target, or, with the Show path setting and Auto-Climb, for the target
+   * the hand chose itself; empty otherwise. */
+  get shownPath(): readonly Step[] {
+    if (this.route.length) return this.route;
+    const plan = this.cardPlan;
+    if (!plan || this.run.outside) return [];
+    return this.run.focused || (this.autoClimbs && this.save.settings.showPath) ? plan.path : [];
+  }
   /** The hand's card that made the latest step, to show it glowing. */
   activeCard: number | null = null;
   /** No card in the hand can act: the hand pauses, and the run ends only

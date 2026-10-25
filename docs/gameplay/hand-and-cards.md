@@ -303,6 +303,8 @@ A link lasts until its diamond is pressed again or either card moves out of plac
 ## Pressing a card
 
 Inside a run, pressing a card in the hand under the board sends the hero to that card's closest target, ahead of the others: it glows white, the hand plays on (even if it was paused), and the card leads until the hero reaches its target, or until it has no path to one, when the hand's order leads again with Auto-Climb (without it, the hand waits for another press).
+A glowing golden line runs along the path from the hero to the card's target, shrinking behind the hero as it steps, so you see each step it will take and what it is heading for.
+With Auto-Climb, the **Show path** toggle (Settings, Toggles) draws the same line for the card the hand chooses itself.
 It costs nothing and works from a new game's first run, a press being how the hand moves at all before Auto-Climb.
 While a pressed card is still on its way, no other card can be pressed: it flashes red, as does a card with no path to a target, which costs nothing.
 A card with no path also says *No open path exists.* over itself for 3 seconds, or until the next press anywhere.
