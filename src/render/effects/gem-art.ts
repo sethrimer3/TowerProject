@@ -1,3 +1,4 @@
+import { drawKit } from "../../sprites/kit.ts";
 import { tileTransform, type FrameContext } from "../render-frame.ts";
 
 /** How long a collected Gem's sparkle lasts. */
@@ -78,13 +79,14 @@ function star(c: CanvasRenderingContext2D, x: number, y: number, r: number, alph
   c.fill();
 }
 
-/** The Gem lying at (x, y), bobbing gently over its tile. */
+/** The Gem lying at (x, y), bobbing gently over its tile: the kit's Gem
+ * sprite, as its pickup popup shows, where sprites are styled. */
 export function drawGem(f: FrameContext, x: number, y: number) {
   const still = f.look.reduceMotion, c = f.c;
   c.save();
   c.setTransform(tileTransform(f, x, y));
   if (!still) c.translate(0, Math.sin(f.now / 400) * 0.8);
-  paintGem(c, f.now, still);
+  if (!(f.look.styledSprites && drawKit(c, "gem"))) paintGem(c, f.now, still);
   c.restore();
 }
 
