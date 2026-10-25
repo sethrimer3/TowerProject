@@ -1039,6 +1039,8 @@ try {
     await tab("research");
     await click('[data-training-about="defense"]');
     await shot("lessons.trainingAbout");
+    await click("#training-lesson");
+    await shot("lessons.trainingDismissed");
   });
 
   // --- Compare ---

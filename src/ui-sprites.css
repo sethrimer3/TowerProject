@@ -217,6 +217,8 @@ html.ui-sprites .stats .portrait-top:not(#_) {
   min-width: 0;
 }
 html.ui-sprites .portrait-top small { font-size: 7px; letter-spacing: 0; }
+/* A row's trained value is light green, the upgrade a rank buys. */
+html.ui-sprites .training-box.next:not(#_) { color: #b8f0b4; }
 html.ui-sprites .portrait-top canvas { max-width: 100%; height: auto; }
 html.ui-sprites .xp-row { min-width: 0; margin-inline: 0; }
 html.ui-sprites .xp-row #level { flex-shrink: 0; }
@@ -229,19 +231,22 @@ html.ui-sprites .hp-readout .heart { flex-shrink: 0; margin-right: 0; }
 html.ui-sprites .keys { flex-wrap: wrap; }
 @media (max-width: 480px) {
   html.ui-sprites .portrait-top small { font-size: 6px; }
-  /* Long current/next values get their own line above the purchase controls. */
+  /* A row's name takes a line of its own, and its values and buttons share
+     the line under it, the values narrowing for a phone's width (a trainer's
+     row moves its speedup up to its name's line). */
   html.ui-sprites .training-row:not(.maxed) {
-    grid-template-columns: minmax(0, 1fr) 12px minmax(0, 1fr) 28px;
-    row-gap: 3px;
+    grid-template-columns: minmax(0, 1fr) 8px minmax(0, 1fr) auto minmax(26px, auto);
+    gap: 3px 4px;
   }
-  html.ui-sprites .training-row:not(.maxed) .training-label { grid-column: 1 / -1; grid-row: 1; }
-  html.ui-sprites .training-row > span.training-box { grid-column: 1; grid-row: 2; min-width: 0; overflow-wrap: anywhere; }
-  html.ui-sprites .training-row > .training-arrow { grid-column: 2; grid-row: 2; }
-  html.ui-sprites .training-row > span.training-box.next { grid-column: 3; }
-  html.ui-sprites .training-row > .training-speedup { grid-column: 4; grid-row: 2; }
-  html.ui-sprites .training-row:not(.maxed) > :is(.training-gold, .training-job) { grid-column: 1 / 3; grid-row: 3; }
-  html.ui-sprites .training-row:not(.maxed) > .training-now { grid-column: 3; grid-row: 3; }
-  html.ui-sprites .training-row:not(.maxed) > :is(.training-reset, .training-finish) { grid-column: 4; grid-row: 3; }
+  html.ui-sprites .training-row:not(.maxed):has(> :is(.training-gold, .training-job)) {
+    grid-template-columns: minmax(0, 1fr) 8px minmax(0, 1fr) auto auto minmax(26px, auto);
+  }
+  html.ui-sprites .training-row:not(.maxed) .training-label { grid-column: 1 / -1; }
+  html.ui-sprites .training-row.active .training-head { grid-column: 1 / -2; grid-row: 1; }
+  html.ui-sprites .training-row.active > .training-speedup { grid-column: -2; grid-row: 1; }
+  html.ui-sprites .training-row > span.training-box { min-width: 0; padding-inline: 2px; font-size: 11px; overflow-wrap: anywhere; }
+  html.ui-sprites .training-row:not(.maxed) > :is(.training-gold, .training-now, .training-timer, .training-finish) { padding-inline: 2px; gap: 2px; }
+  html.ui-sprites .training-row:not(.maxed) > .training-finish { min-width: 0; }
 }
 @media (max-width: 360px) {
   html.ui-sprites .hud-controls .gem-ad small:not(#_) { font-size: 8px; white-space: nowrap; }

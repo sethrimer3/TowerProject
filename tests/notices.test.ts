@@ -124,18 +124,20 @@ test("the Archives lead to the Research tab from the Tower's forest, with its do
   assert.ok(decoded.save.tutorials.research && decoded.save.tutorials.archives, "a save that has researched needs no lesson");
 });
 
-test("the first training points to spend lead to the Research tab in the forest, until it is opened", () => {
+test("the first training points to spend lead to the Research tab in the forest, until the Training tab's note is dismissed", () => {
   const g = forest();
   assert.notEqual(g.boardLesson, "trainingPoints");
-  g.notices.shown("research");
-  assert.equal(g.save.tutorials.training, false, "opening Research with no points to spend leaves the lesson waiting");
+  assert.ok(!g.trainingLesson, "no note before any points are earned");
+  assert.ok(!g.finishTrainingLesson());
   g.save.xp = xpForLevel(1);
   assert.equal(g.boardLesson, "trainingPoints");
+  assert.ok(g.trainingLesson);
   g.newRun({ seed: 1 });
   assert.notEqual(g.boardLesson, "trainingPoints", "the forest's alone");
   g.newRun({ outside: true, seed: 1 });
-  assert.equal(g.boardLesson, "trainingPoints");
   g.notices.shown("research");
-  assert.ok(g.save.tutorials.training);
+  assert.equal(g.boardLesson, "trainingPoints", "opening Research leaves the lesson waiting");
+  assert.ok(g.finishTrainingLesson());
+  assert.ok(g.save.tutorials.training && !g.trainingLesson);
   assert.notEqual(g.boardLesson, "trainingPoints", "done for good");
 });

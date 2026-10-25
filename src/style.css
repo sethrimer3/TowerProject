@@ -2368,6 +2368,15 @@ nav {
    Archives tab. */
 .research-lesson { display: block; width: 100%; margin-top: 30px; font-family: inherit; cursor: pointer; }
 .research-lesson small { display: block; margin-top: 4px; font-size: 10px; letter-spacing: 1px; color: #8d9db1; }
+/* The training lesson's note over the Training tab's rows, and its hands
+   pointing down at the points buttons to press. */
+.training-lesson { display: block; width: 100%; font-family: inherit; cursor: pointer; }
+.training-lesson small { display: block; margin-top: 4px; font-size: 10px; letter-spacing: 1px; color: #8d9db1; }
+button.training-now:has(> .train-pointer) { position: relative; overflow: visible; }
+.train-pointer { position: absolute; bottom: calc(100% - 7px); left: 50%; width: 20px; margin-left: -10px; z-index: 3; pointer-events: none; filter: drop-shadow(0 2px 2px #000c); transform: rotate(180deg); animation: forest-point-down 1s ease-in-out infinite; }
+.train-pointer :is(svg, .sprite-icon, img) { display: block; width: 100%; height: auto; margin: 0; }
+.train-pointer.still { animation: none; }
+@media (prefers-reduced-motion: reduce) { .train-pointer { animation: none; } }
 .tree-tabs [data-research-tab="archives"] { position: relative; }
 .tree-tabs button:has(> .research-pointer) { overflow: visible; }
 .tree-tabs .research-pointer { position: absolute; margin-bottom: 0; font-size: 0; top: calc(100% + 2px); left: 50%; width: 26px; margin-left: -13px; z-index: 3; pointer-events: none; filter: drop-shadow(0 2px 2px #000c); animation: forest-point-up 1s ease-in-out infinite; }

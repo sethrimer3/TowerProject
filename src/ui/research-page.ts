@@ -113,6 +113,11 @@ export class ResearchPage {
     this.bindTabs();
     this.bindTraining();
     el("research-help").onclick = () => this.showTrainingHelp();
+    el("training-lesson")?.addEventListener("click", () => {
+      if (!this.ctx.game.finishTrainingLesson()) return;
+      this.ctx.update();
+      this.render();
+    });
   }
 
   /** The Training tab's buttons: each row's points and trainer, cancel,
@@ -305,8 +310,15 @@ export class ResearchPage {
       ${hired
         ? `<div class="training-points training-slots"><span class="training-trainers">Trainers: <b id="training-slots">${save.trainingJobs.length} / ${slots}</b> ${this.trainerButton()}${this.speedHtml()}</span><span class="training-end">${quantity}${bank}${held}</span></div>`
         : `<div class="training-points">${held}${bank}${quantity}</div>`}
-      <div class="training-scroll">${inTraining.length ? `<div class="training-table training-busy" role="list" aria-label="Stats in training">${inTraining.map(row).join("")}</div>` : ""}
+      ${this.trainingLessonHtml()}<div class="training-scroll">${inTraining.length ? `<div class="training-table training-busy" role="list" aria-label="Stats in training">${inTraining.map(row).join("")}</div>` : ""}
       <div class="training-table" role="list" aria-label="Stat training">${rows}</div></div></section>`;
+  }
+
+  /** The training lesson's note (`Game.trainingLesson`), over the rows:
+   * pressing it dismisses it and ends the lesson. */
+  private trainingLessonHtml() {
+    if (!this.ctx.game.trainingLesson) return "";
+    return `<button type="button" class="tree-lesson training-lesson" id="training-lesson"><b>Spend training points to upgrade your stats.</b><small>Tap to dismiss</small></button>`;
   }
 
   /** One stat's row: its value now and after a rank, the points that train
@@ -336,7 +348,7 @@ export class ResearchPage {
     }
     const nowButton = step.maxed
       ? ""
-      : `<button class="training-box training-cost training-now" data-train="${t.id}" ${bulk.affordable ? "" : "disabled"} aria-label="Spend ${bulk.cost} training ${bulk.cost === 1 ? "point" : "points"} to train ${t.name} ${count === 1 ? "one rank" : `${count} ranks`} now" title="Train now">${maxCount(q, count)}${pointsIcon()}<span>${bulk.cost}</span></button>`;
+      : `<button class="training-box training-cost training-now" data-train="${t.id}" ${bulk.affordable ? "" : "disabled"} aria-label="Spend ${bulk.cost} training ${bulk.cost === 1 ? "point" : "points"} to train ${t.name} ${count === 1 ? "one rank" : `${count} ranks`} now" title="Train now">${maxCount(q, count)}${pointsIcon()}<span>${bulk.cost}</span>${this.trainPointer(bulk.affordable)}</button>`;
     const values = `<span class="training-box">${shown(now)}</span><span class="training-arrow" aria-hidden="true">→</span><span class="training-box next">${shown(next)}</span>`;
     if (job) {
       const speedup = job.speed > 1
@@ -345,6 +357,13 @@ export class ResearchPage {
       return `<div class="training-row active" role="listitem" data-training-row="${t.id}"${job.speed > 1 ? ` data-speed="${job.speed}"` : ""}><span class="training-label training-head">${this.autoBox(t)}${this.nameHtml(t)} - ${this.levelText(t.id, true)}</span>${speedup}${values}${this.trainerHtml(t, step)}${nowButton || `<span aria-hidden="true"></span>`}${this.finishButton(t.id, t.name)}</div>`;
     }
     return `<div class="training-row" role="listitem" data-training-row="${t.id}"><span class="training-label">${this.nameHtml(t)} - ${this.levelText(t.id, false)}${notes ? `<small>${notes}</small>` : ""}</span>${values}${hired ? this.trainerHtml(t, step) : ""}${nowButton}${this.resetButton(t, false)}</div>`;
+  }
+
+  /** While the training lesson waits, the tutorials' hand points down at
+   * each points button that can be pressed. */
+  private trainPointer(affordable: boolean) {
+    if (!affordable || !this.ctx.game.trainingLesson) return "";
+    return `<span class="train-pointer${this.ctx.game.save.settings.reduceMotion ? " still" : ""}" aria-hidden="true">${POINTER_SVG}</span>`;
   }
 
   /** The training time to a row's next rank or ranks (at Buy Quantity

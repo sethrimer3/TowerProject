@@ -57,7 +57,8 @@ In the first run inside after **Auto-Climb** is bought, a note says Auto-Climb m
 Once the **Archives** skill is bought, in the Tower's forest a note says research is unlocked and to press the **Research** tab, a hand pointing at it and a red dot on it; until you open the Research page, nothing else in the forest can be pressed.
 On the Research page a hand then points at its **Archives** tab, over a note: pay the archivist Gold to research permanent upgrades, and Gems rush research and hire more archivists to research more at once.
 Until that note is tapped, which ends the lesson, the other tabs can't be pressed.
-The first time training points can be spent, in the forest a note says that after levelling up you can spend points to increase your stats, a hand pointing at the **Research** tab, until you open it.
+The first time training points can be spent, in the forest a note says that after levelling up you can spend points to increase your stats, a hand pointing at the **Research** tab.
+On its Training tab a note says *Spend training points to upgrade your stats.*, with a hand on each training-points button you can press, until you tap the note, which ends the lesson.
 While a tournament is open, the forest's next note says to follow the path down to the Delve and enter its cave, the hand pointing at the sign at the foot of the forest path, until the Delve is opened.
 
 ## The tab bar and the forest sign

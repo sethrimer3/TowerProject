@@ -64,7 +64,7 @@ import { enemyStat, keyCount, whole, wholeChange } from "./whole.ts";
 import { MODES, milestones, type ModeProfile } from "./modes.ts";
 import { ranksInRun, runTrainingBulk, runTrainingOffer, type RunTrainingOffer } from "./progression/run-training.ts";
 import type { BuyQuantity } from "./progression/buy-quantity.ts";
-import { critRule, loadout, provisionsOpen, rankShift, trainingWaiting, type TrainingView } from "./progression/loadout.ts";
+import { critRule, loadout, provisionsOpen, rankShift, trainingPoints, trainingWaiting, type TrainingView } from "./progression/loadout.ts";
 import { researched } from "./progression/archives.ts";
 import { chargesLeft, chargesPerRun, climbFloor, spendCharge, type Charge } from "./run-charges.ts";
 import { TrainingDesk } from "./game/training-desk.ts";
@@ -466,8 +466,8 @@ export class Game {
    * lesson); `research`, once the Archives skill is owned, to the Research
    * tab, until the Research page is opened (`archivesLesson` then waits on
    * its note there); then, in either forest, `trainingPoints`, the first time training
-   * points can be spent, which leads to the Research tab until it is
-   * opened; then `cards`, which leads to the Deck to
+   * points can be spent, which leads to the Research tab until the
+   * Training tab's note is dismissed (`trainingLesson`); then `cards`, which leads to the Deck to
    * spend the first card point (`cardPointsLesson`); then, in the Tower's
    * forest while a tournament opens the Delve, `delve`, until the Delve is
    * opened; and in either forest, `provisions` (`provisionsLesson`). */
@@ -545,6 +545,17 @@ export class Game {
   finishArchivesLesson() {
     if (!this.archivesLesson) return false;
     this.save.tutorials.archives = true;
+    return true;
+  }
+  /** Whether the training lesson's note waits on the Training tab: once
+   * training points have been earned, until the note is dismissed. */
+  get trainingLesson() {
+    return !this.save.tutorials.training && trainingPoints(this.save).earned > 0;
+  }
+  /** Dismisses the training lesson's note, ending the lesson. */
+  finishTrainingLesson() {
+    if (!this.trainingLesson) return false;
+    this.save.tutorials.training = true;
     return true;
   }
   /** Dismisses the `enter` and `autoClimb` lessons (the others wait on
