@@ -60,6 +60,7 @@ import { TournamentEntry } from "./ui/tournament-entry.ts";
 import { revealReward } from "./ui/reward-reveal.ts";
 import { toggleGoldBonusBox } from "./ui/gold-bonus-box.ts";
 import { refreshEnemyOddsBox, toggleEnemyOddsBox } from "./ui/enemy-odds-box.ts";
+import { bindFloorTip } from "./ui/floor-tip.ts";
 import { MailClient } from "./mail/client.ts";
 import { postStubMail, stubMail } from "./mail/server.ts";
 import { MailDialog } from "./ui/mail-dialog.ts";
@@ -406,6 +407,8 @@ el("currencies-open").onclick = () => showCurrencies(modal, game);
 document.querySelector(".height")!.addEventListener("click", (e) => {
   if ((e.target as Element).closest("#height, #height-label, #height-tier")) runNotes.show();
 });
+// Resting on the floor number or tapping it says the tier's highest floor.
+bindFloorTip(game, () => !provingGrounds.active);
 el("end-run").onclick = () => {
   closeRunMenu();
   if(provingGrounds.active)provingGrounds.leave();

@@ -34,10 +34,11 @@ Gold is banked the moment it is found and kept however the run ends: the stats s
 
 Tower I's floor 250 Goal opens the Archives' **Note Taking** (one level, 100,000 Gold and 2 days).
 Once it is researched, tapping the floor number during a run opens the run's notes, and the run plays on beneath them.
+During a run, resting the pointer on the floor number, its label or its tower, or tapping them, shows the tower's highest floor reached under it (*Max Floor: 57*; in the Delve, *Max Depth*), this run's climb included.
 Below the floor number during a run, under a line, stand the ATK, DEF and HP of a normal enemy at the run's deepest floor or depth, as strong as the real ones there: the tower's or cave's factor, a tournament's raise and the Shrine boons that change enemies all count.
 Large stats are shortened to three figures (1.21K, 12.3K, 123K).
 Pressing them opens a box of every enemy the floor the hero stands on can roll, while the run plays on behind it; its X, or a press anywhere outside it, closes it, and it follows the hero onto each new floor.
-Its first table lists each strength the floor can roll, weakest first, with its **Chance** (its share of the floor's enemies), and a balanced one's HP, ATK, DEF and the Gold its kill pays now (every Gold bonus and the hand's enemy cards counted).
+Its first table lists each strength the floor can roll, weakest first, with its **Chance** (its share of the floor's enemies), and a balanced one's HP, ATK, DEF and the Gold its kill pays now (every Gold bonus and the hand's enemy cards counted), each column headed by its stat's icon.
 The Boss row is always there, at 100% on a floor a boss guards (every tenth) and 0% on the rest; once a Greater Boss has appeared on the floor, a Greater Boss row follows it at 100%.
 Its second table lists the attributes enemies there may carry, those that can't appear left out: Fast, Ranged and Flying with the chance an enemy has each (a Flying roll comes first, so Fast and Ranged are of the rest), Shielded with the chance the floor holds one, and Aggroed at 0% wherever Flying enemies stand, since only an arrow's wound makes one.
 Its Attack Speed (Ranged and Flying) and Move Speed (Aggroed) are shots and steps every 10 turns, as the Archer's Attack Speed counts.

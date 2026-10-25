@@ -557,6 +557,7 @@ h1 span {
 .enemy-odds-table th, .enemy-odds-table td { padding: 4px 3px; border-bottom: 1px solid #ffffff14; text-align: right; white-space: nowrap; }
 .enemy-odds-table th[scope="row"], .enemy-odds-table thead th:first-child { text-align: left; font-weight: 600; }
 .enemy-odds-table thead th { color: #a8afbc; font-size: 11px; font-weight: 600; }
+.enemy-odds-table thead :is(.stat-sprite, .gold-icon) { width: 1.6em; height: 1.6em; vertical-align: middle; }
 .base-enemy > span { display: inline-flex; align-items: center; gap: 1px; }
 .base-enemy b { font-weight: 700; }
 .base-enemy-hp { color: #df797e; }
@@ -4105,6 +4106,9 @@ button.buy-quantity { display: inline-flex; align-items: center; gap: 4px; min-h
 .drill-tip b { color: #efd496; font-family: Cinzel, Georgia, serif; }
 .drill-tip p { margin: 4px 0; }
 .drill-tip small { color: #8f9bac; }
+/* "Max Floor: 12", under the floor number (floor-tip.ts). */
+.floor-tip { position: fixed; z-index: 20; padding: 5px 8px; border: 1px solid #d6ae68; border-radius: 5px; background: #0b1018f2; color: #efd496; font-size: 11px; white-space: nowrap; pointer-events: none; }
+.floor-tip[hidden] { display: none; }
 
 /* --- Shop --- */
 .mini-action .cart-icon, .mini-action .enter-icon, .mini-action .research-icon { display: block; width: 18px; height: 18px; }

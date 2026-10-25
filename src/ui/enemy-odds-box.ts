@@ -4,9 +4,17 @@ import type { EnemyStrength } from "../entities.ts";
 import type { StrengthOdds, Trait, TraitOdds } from "../enemies/odds.ts";
 import { enemyStat } from "../whole.ts";
 import { shortStat } from "./hud.ts";
+import { goldIcon, itemSprite, uiSprite } from "./dom.ts";
 
 const STRENGTH_NAMES: Record<EnemyStrength, string> = { weak: "Weak", normal: "Base", strong: "Strong", elite: "Elite", boss: "Boss", greaterBoss: "Greater Boss" };
 const TRAIT_NAMES: Record<Trait, string> = { fast: "Fast", ranged: "Ranged", shielded: "Shielded", flying: "Flying", aggroed: "Aggroed" };
+
+/** A stat's column head: its icon, as the enemy's panel shows it, named for screen readers. */
+const statHead = (icon: string, label: string) => `<th scope="col" title="${label}" aria-label="${label}">${icon}</th>`;
+const statHeads = () => statHead(uiSprite("health", "stat-sprite"), "HP")
+  + statHead(itemSprite("upgrade_attack", "stat-sprite"), "ATK")
+  + statHead(itemSprite("upgrade_defense", "stat-sprite"), "DEF")
+  + statHead(goldIcon(), "Gold");
 
 /** A chance as the box shows it: to two decimals at most, with its %. */
 const chance = (percent: number) => `${Number(percent.toFixed(2))}%`;
@@ -24,7 +32,7 @@ function content(game: Game) {
   const odds = game.enemyOdds;
   if (!odds) return null;
   const key = `${game.mode}|${game.tier}|${odds.floor}|${odds.strengths.length}`;
-  const strengths = `<table class="enemy-odds-table"><thead><tr><th scope="col">Strength</th><th scope="col">Chance</th><th scope="col">HP</th><th scope="col">ATK</th><th scope="col">DEF</th><th scope="col">Gold</th></tr></thead><tbody>${odds.strengths.map(strengthRow).join("")}</tbody></table>`;
+  const strengths = `<table class="enemy-odds-table"><thead><tr><th scope="col">Strength</th><th scope="col">Chance</th>${statHeads()}</tr></thead><tbody>${odds.strengths.map(strengthRow).join("")}</tbody></table>`;
   const traits = odds.traits.length
     ? `<table class="enemy-odds-table"><thead><tr><th scope="col">Attribute</th><th scope="col">Chance</th><th scope="col">Attack Speed</th><th scope="col">Move Speed</th></tr></thead><tbody>${odds.traits.map(traitRow).join("")}</tbody></table>`
     : "";

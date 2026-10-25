@@ -50,7 +50,7 @@ try {
   assert.equal(await page.locator(".gold-bonus-layer").count(), 0);
   await page.locator("#base-enemy").click(); await ready(".enemy-odds-box");
   const table = await page.locator(".enemy-odds-table").first().textContent();
-  assert.ok(table.includes("Chance") && table.includes("ATK"));
+  assert.ok(table.includes("Chance") && await page.locator('.enemy-odds-table th[aria-label="ATK"] .stat-sprite').count());
   await page.screenshot({ path: "test-results/ui-controls-sprites/enemy-popup.png", animations: "disabled" });
   await page.locator(".enemy-odds-x .sprite-replacement").click();
   assert.equal(await page.locator(".enemy-odds-layer").count(), 0);
