@@ -80,7 +80,7 @@ test("the shroud takes the enemy's first damage, then the hero's HP takes the re
   const shown = { from: { x: 0, y: 0 }, to: { x: 1, y: 0 }, bout: fight, start: 0, hp: 36, summary: false };
   popups.update({ ...game, fight: shown }, fight.strikes[3].at);
   assert.deepEqual(numbers(popups).filter((d) => d.x < 1).map((d) => `${d.x}:${d.text}:${d.color}`),
-    ["0:5:#c9d3e0", "-0.22:3:#c9d3e0", "0.22:3:#b3121f"], "what the shroud blocks rises in silver, beside what got through");
+    ["0:5:#4da3ff", "-0.22:3:#4da3ff", "0.22:3:#b3121f"], "what the shroud blocks rises in blue, beside what got through");
 });
 
 test("a fight's numbers stay off the board while their setting is off, and a heal's while HP's is", () => {

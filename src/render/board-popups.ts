@@ -64,7 +64,7 @@ const THORN_COLOR = "#ffd83d";
 const CHECK_COLOR = "#5fdc6a";
 /** Damage the shroud blocked, and how far apart it and the damage that got
  * through rise when a strike has both, in tiles. */
-const SHROUD_COLOR = "#c9d3e0";
+const SHROUD_COLOR = "#4da3ff";
 const SHROUD_SPLIT = 0.22;
 /** The amount of Silver beside its coin. */
 const SILVER_COLOR = "#d6dde6";
@@ -251,7 +251,7 @@ export class BoardPopups {
     if (Math.round(amount) > 0 && this.shown.hitNumbers) this.numbers.push({ x: on.x, y: on.y + DAMAGE_START, start, text: `+${popupAmount(amount)}`, color: HEAL_COLOR });
   }
   /** A strike's numbers over `on` from `start`: the damage that got
-   * through, and what the shroud blocked in silver beside it. A round the
+   * through, and what the shroud blocked in blue beside it. A round the
    * hero came out ahead of raises only its blue gain. An arrow with a
    * `charge` (percent) above 0 wears a gold outline around its black one,
    * a faint one under `FULL_CHARGE`, as does a `pronounced` strike (a
