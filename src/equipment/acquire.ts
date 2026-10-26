@@ -3,12 +3,12 @@
 // pieces) and Supply Chests (upgrade materials). Each takes the randomness it draws from, so tests pass a
 // seeded stream; the rates are in balance.ts.
 import { random } from "../random.ts";
-import { CATEGORY_IDS, materialOf, standardOf, uniquesOf, type CategoryId, type EquipMaterialId } from "./catalog.ts";
+import { EQUIP_MATERIAL_IDS, STARTER_CATEGORIES, materialOf, standardOf, uniquesOf, type CategoryId, type EquipMaterialId } from "./catalog.ts";
 import {
   EQUIP_RARITIES, EQUIPMENT_CHEST_RARITY, PITY, PULL_RATES, SUPPLY_CHEST_MATERIALS,
   type EquipRarity,
 } from "./balance.ts";
-import { addItem, salvageOf, type EquipItem, type EquipmentSave } from "./inventory.ts";
+import { addItem, availableCategories, salvageOf, type EquipItem, type EquipmentSave } from "./inventory.ts";
 
 /** Picks a rarity by percent weights with one number in [0, 1). */
 export function rollRarity(weights: Partial<Record<EquipRarity, number>>, roll: number): EquipRarity {
@@ -43,23 +43,23 @@ export function withSavedStream<T>(e: EquipmentSave, seed: () => number, draw: (
   e.rng = (state + Math.imul(used, STEP)) >>> 0;
   return result;
 }
-/** `count` pulls in `category`, or of all categories (`"all"`: each
+/** `count` pulls in `category`, or of all open categories (`"all"`: each
  * pull's category drawn evenly first), resolved in order (pity counts
  * through them, each category its own), carrying on the saved stream. The
  * caller makes sure there is room and has taken the Gems. */
 export function pull(e: EquipmentSave, category: CategoryId | "all", count: number, seed: () => number) {
   return withSavedStream(e, seed, (rng) => {
     const results: { item: EquipItem; pity: boolean }[] = [];
-    for (let i = 0; i < count; i++) results.push(pullOne(e, category === "all" ? pick(CATEGORY_IDS, rng()) : category, rng));
+    for (let i = 0; i < count; i++) results.push(pullOne(e, category === "all" ? pick(availableCategories(e), rng()) : category, rng));
     return results;
   });
 }
 
 /** An Equipment Chest's piece: a Standard piece of a random category at a
  * rarity rolled by `EQUIPMENT_CHEST_RARITY`. */
-export function rollChestPiece(rng: () => number) {
+export function rollChestPiece(rng: () => number, categories: readonly CategoryId[] = STARTER_CATEGORIES) {
   const rarity = rollRarity(EQUIPMENT_CHEST_RARITY, rng());
-  const category = pick(CATEGORY_IDS, rng());
+  const category = pick(categories, rng());
   return { def: standardOf(category).id, rarity, category };
 }
 
@@ -77,9 +77,9 @@ export function keepDrop(e: EquipmentSave, drop: { def: string; rarity: EquipRar
 
 /** A Supply Chest's upgrade materials in tower `tier`: 5 in tower I and 2
  * more each tower after (`SUPPLY_CHEST_MATERIALS`), raised by `find`
- * percent (rounded down), of one category at random. */
+ * percent (rounded down), of one base resource at random. */
 export function rollSupplies(tier: number, find: number, rng: () => number): { id: EquipMaterialId; quantity: number } {
   const base = SUPPLY_CHEST_MATERIALS.base + SUPPLY_CHEST_MATERIALS.perTower * (Math.max(1, tier) - 1);
   const quantity = Math.max(base, Math.floor((base * (100 + find)) / 100));
-  return { id: materialOf(pick(CATEGORY_IDS, rng())), quantity };
+  return { id: pick(EQUIP_MATERIAL_IDS, rng()), quantity };
 }

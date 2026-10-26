@@ -69,3 +69,10 @@ Current-layout wall occupants and unknown layout markers are rejected; migrated 
 Defend and its obsolete top-level metal inventory have been retired.
 The decoder ignores old `defend` and `materials` fields while retaining all supported Tower, Delve, Equipment, trial, currency and progression state; current saves and exported profiles omit them.
 Older profile files may still contain the removed section, which imports ignore without parsing its city data.
+
+Equipment stores `categories` alongside its four base material balances.
+`decodeEquipment` always opens the five starter types and retains valid explicit unlocks and owned categories, preserving legacy loadouts without inventing future gates.
+Legacy Leather, Silk, Buckles, Moonstone and Amber balances split into their two recipe inputs, assigning any odd remainder to the first input and capping safely; subsequent saves omit the obsolete keys.
+Saved missions using a removed material keep their progress and reward amount, converted by `baseMaterial` to a base resource.
+Legacy saves with no Equipment category list also apply the chestplate balance change to both modes' heroes and every undo/fall copy via `upgradeLegacyChestplateRuns`, keeping damage, pickups and boons and preventing a later unequip from subtracting too much.
+The conversion uses loadout totals with the old intrinsic strength, leaves effect slots unchanged, and runs only before the category list is first saved.

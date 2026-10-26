@@ -25,6 +25,7 @@ export const FAMILIES: Record<FamilyId, { name: string; theme: string }> = {
 /** The families each category's slots roll from. */
 export const CATEGORY_FAMILIES: Record<CategoryId, readonly FamilyId[]> = {
   weapon: ["might", "lore"],
+  shield: ["guard", "vitality"],
   chestplate: ["guard", "vitality"],
   helmet: ["guard", "vitality", "lore"],
   gloves: ["might", "recovery"],

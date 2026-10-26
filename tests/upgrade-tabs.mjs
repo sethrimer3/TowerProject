@@ -15,8 +15,12 @@ try {
     const fixture=sessionStorage.getItem("upgradeTabsFixture");
     if(fixture){localStorage.setItem("towerdelve.v1",fixture);sessionStorage.removeItem("upgradeTabsFixture");}
   });
-  await page.goto(process.env.TEST_URL||"http://127.0.0.1:5173/");
-  await expect(page.locator("#world")).toBeVisible({timeout:30000});
+  const ready=async()=>{
+    await page.locator("#boot-loading").waitFor({state:"hidden",timeout:120000});
+    await expect(page.locator("#world")).toBeVisible({timeout:30000});
+  };
+  await page.goto(process.env.TEST_URL||"http://127.0.0.1:5173/",{waitUntil:"domcontentloaded"});
+  await ready();
   const fixture=await page.evaluate(async()=> {
     const {Game}=await import("/src/state.ts"),{defaults}=await import("/src/save/save.ts");
     const g=new Game(defaults());g.setDevMode(true);
@@ -30,7 +34,7 @@ try {
       fixture.tower.inspiration=123456789;fixture.breakthrough=987654321;
       sessionStorage.setItem("upgradeTabsFixture",JSON.stringify(fixture));
     },{fixture,theme,dev});
-    await page.reload();await expect(page.locator("#world")).toBeVisible({timeout:30000});
+    await page.reload({waitUntil:"domcontentloaded"});await ready();
     await page.addStyleTag({content:".research-toast { display:none!important }"});
     await page.locator('[data-tab="upgrades"]').click();
   }
@@ -59,10 +63,11 @@ try {
     assert.equal(s.overflow,false,"the page must fit the viewport");
     assert.ok(s.viewport.height>=80,"tree map must retain usable room");
     for(const b of s.buttons) {
-      assert.ok(b.box.height<=84,`${b.id}: selector grew to ${b.box.height}px`);
+      assert.ok(b.box.height<=96,`${b.id}: selector grew to ${b.box.height}px`);
       assert.equal(b.lines,1,`${b.id}: name wraps into ${b.lines} lines`);
       assert.ok(b.label.left>=b.box.left+3 && b.label.right<=b.box.right-3,`${b.id}: label clipped by its button`);
-      assert.ok(b.label.left>=b.icon.right+3,`${b.id}: label overlaps icon`);
+      assert.ok(b.label.top>=b.icon.bottom+3,`${b.id}: name must be below the icon`);
+      assert.ok(Math.abs((b.label.left+b.label.right-b.icon.left-b.icon.right)/2)<=1,`${b.id}: icon and name must be centered`);
       assert.ok(b.box.left>=s.tabs.left && b.box.right<=s.tabs.right+.5,`${b.id}: button overflows selector`);
       if(b.points) {
         assert.equal(b.points.lines,1,`${b.id}: points wrap into ${b.points.lines} lines`);
@@ -71,7 +76,7 @@ try {
     }
   }
   await open("medieval");
-  for(const [width,height] of [[320,844],[390,844],[570,844],[768,1024],[1024,844],[844,390]]) {
+  for(const [width,height] of [[320,844],[390,844],[570,844],[647,844],[768,1024],[1024,844],[844,390]]) {
     await page.setViewportSize({width,height});
     await expect(page.locator("[data-tree]")).toHaveCount(6);
     await page.locator('[data-tree="renown"]').click();
@@ -90,5 +95,5 @@ try {
   }
   await open("medieval",false);readable(await layout());
   assert.deepEqual(errors,[]);
-  console.log("Upgrade tree selectors: single-line labels, icons/points inside buttons, all six selections, responsive wrapping, short landscape, normal/Dev and four UI themes passed.");
+  console.log("Upgrade tree selectors: single-line labels below centered icons, icons/points inside buttons, all six selections, responsive wrapping, short landscape, normal/Dev and four UI themes passed.");
 } finally {await browser.close();}

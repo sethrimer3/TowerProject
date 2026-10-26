@@ -2356,6 +2356,26 @@
       "file": "breakthrough.png",
       "width": 24,
       "height": 24
+    },
+    "equip-shield": {
+      "file": "equip-shield.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-wardensShield": {
+      "file": "equip-wardensShield.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-bulwarkShield": {
+      "file": "equip-bulwarkShield.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-dawnShield": {
+      "file": "equip-dawnShield.png",
+      "width": 24,
+      "height": 24
     }
   }
 }

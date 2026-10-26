@@ -1,12 +1,12 @@
 // What the save keeps of Equipment, and every change to it: the unlock,
 // items (each an instance naming its definition, rarity and level), the two
-// loadouts, the nine material balances, each category's pity and the pull
+// loadouts, the four material balances, each category's pity and the pull
 // stream. Pure functions over the save, so tests drive them directly; the
 // game's EquipmentDesk wraps them with the loadout sync and the Gems.
 import type { Mode } from "../entities.ts";
 import { isRecord, wholeIn } from "../save/decode.ts";
 import { snap } from "../exact.ts";
-import { CATEGORY_IDS, EQUIP_MATERIAL_IDS, itemDef, materialOf, type CategoryId, type EquipMaterialId } from "./catalog.ts";
+import { CATEGORIES, CATEGORY_IDS, EQUIP_MATERIAL_IDS, itemDef, materialOf, hasMaterials, spendMaterials, STARTER_CATEGORIES, type CategoryId, type EquipMaterialId } from "./catalog.ts";
 import {
   EFFECT_CANDIDATES, EQUIP_RARITIES, EQUIPMENT_CAPACITY, openSlots, PITY, RARITY_TIERS, rarityRank, REFINE_CHOICE_EVERY, UNIQUE_SALVAGE,
   upgradeGold, upgradeMaterial, type EquipRarity,
@@ -28,7 +28,7 @@ export type EffectSlot = {
   offer?: EffectChoice[];
 };
 /** One piece owned. `spent` is what leveling it has cost (Gold and its
- * material), so a later reset can return exactly that; consumed copies'
+ * materials in total), so a later reset can return exactly that; consumed copies'
  * investment is lost with them. `slots` holds an entry for each effect slot
  * opened so far (`openSlots`). */
 export type EquipItem = {
@@ -42,10 +42,12 @@ export type EquipItem = {
 };
 export type Loadout = Partial<Record<CategoryId, string>>;
 export type EquipmentSave = {
-  /** Set by claiming Tower I's floor-60 Goal (goals.ts). */
+  /** Set by claiming Tower II's floor-60 Goal (goals.ts). */
   unlocked: boolean;
   /** Set once the Equipment tab has been opened after the unlock (its dot). */
   seen: boolean;
+  /** Extra categories have no automatic unlock schedule yet. */
+  categories: CategoryId[];
   items: EquipItem[];
   /** What each mode's hero wears, by category: the inventory is shared,
    * and one piece may be worn in both. */
@@ -64,11 +66,14 @@ export type EquipmentSave = {
 
 const zeroes = <K extends string>(keys: readonly K[]) => Object.fromEntries(keys.map((k) => [k, 0])) as Record<K, number>;
 export const defaultEquipment = (): EquipmentSave => ({
-  unlocked: false, seen: false, items: [], equipped: { tower: {}, delve: {} },
+  unlocked: false, seen: false, categories: CATEGORY_IDS.filter(c => STARTER_CATEGORIES.includes(c)), items: [], equipped: { tower: {}, delve: {} },
   materials: zeroes(EQUIP_MATERIAL_IDS), pity: zeroes(CATEGORY_IDS), nextId: 1, rng: null, autoSalvage: false,
 });
 
 // --- Reading ---
+
+export const categoryOpen = (e: EquipmentSave, category: CategoryId) => e.categories.includes(category);
+export const availableCategories = (e: EquipmentSave) => CATEGORY_IDS.filter(c => categoryOpen(e, c));
 
 export const findItem = (e: EquipmentSave, id: string) => e.items.find((i) => i.id === id);
 export const categoryOf = (item: EquipItem) => itemDef(item.def)!.category;
@@ -91,10 +96,10 @@ export const roomLeft = (e: EquipmentSave) => EQUIPMENT_CAPACITY - e.items.lengt
 /** What raising `item` one level costs, or null at its rarity's cap. */
 export function levelCost(item: EquipItem) {
   if (item.level >= maxLevel(item)) return null;
-  return { gold: upgradeGold(item.level), material: upgradeMaterial(item.level), materialId: materialOf(categoryOf(item)) };
+  return { gold: upgradeGold(item.level), material: upgradeMaterial(item.level), materialId: materialOf(categoryOf(item)), category: categoryOf(item) };
 }
 /** What leveling `item` from 1 to its level cost in all (Gold and
- * material), on today's curve. */
+ * each recipe input), on today's curve. */
 export function curveCost(level: number) {
   let gold = 0, material = 0;
   for (let l = 1; l < level; l++) { gold += upgradeGold(l); material += upgradeMaterial(l); }
@@ -113,6 +118,7 @@ export function addItem(e: EquipmentSave, def: string, rarity: EquipRarity): Equ
   const item: EquipItem = { id: `e${e.nextId++}`, def, rarity, level: 1, slots: [] };
   fillSlots(item);
   e.items.push(item);
+  if (!categoryOpen(e, categoryOf(item))) e.categories = CATEGORY_IDS.filter(c => categoryOpen(e, c) || c === categoryOf(item));
   return item;
 }
 
@@ -129,12 +135,12 @@ export function levelUp(e: EquipmentSave, purse: { gold: number }, id: string, l
     const cost = levelCost(item);
     if (!cost) { refusal = "maxed"; break; }
     if (!free && purse.gold < cost.gold) { refusal = "gold"; break; }
-    if (!free && e.materials[cost.materialId] < cost.material) { refusal = "material"; break; }
+    if (!free && !hasMaterials(e.materials, cost.category, cost.material)) { refusal = "material"; break; }
     if (!free) {
       purse.gold = snap(purse.gold - cost.gold);
-      e.materials[cost.materialId] -= cost.material;
+      spendMaterials(e.materials, cost.category, cost.material);
       const spent = item.spent ?? { gold: 0, material: 0 };
-      item.spent = { gold: spent.gold + cost.gold, material: spent.material + cost.material };
+      item.spent = { gold: spent.gold + cost.gold, material: spent.material + cost.material * CATEGORIES[cost.category].materials.length };
     }
     item.level++;
     gained++;
@@ -311,6 +317,10 @@ export function decodeEquipment(raw: unknown): EquipmentSave {
       fillSlots(item);
       e.items.push(item);
     }
+  // TODO: remove the inferred unlocks when pre-recipe saves are retired.
+  // Retain categories already owned, without opening any unowned future slot.
+  e.categories = CATEGORY_IDS.filter(c => STARTER_CATEGORIES.includes(c) ||
+    (Array.isArray(raw.categories) && raw.categories.includes(c)) || e.items.some(i => categoryOf(i) === c));
   for (const mode of ["tower", "delve"] as const) {
     const worn = isRecord(raw.equipped) ? raw.equipped[mode] : undefined;
     if (!isRecord(worn)) continue;
@@ -320,6 +330,17 @@ export function decodeEquipment(raw: unknown): EquipmentSave {
     }
   }
   for (const m of EQUIP_MATERIAL_IDS) if (isRecord(raw.materials) && wholeIn(raw.materials[m], 0, Number.MAX_SAFE_INTEGER)) e.materials[m] = raw.materials[m];
+  // TODO: remove this conversion when nine-material saves are retired.
+  // Split old balances without losing a unit; the next save contains only four.
+  const legacy: Record<string, readonly EquipMaterialId[]> = {
+    leather: ["padding", "whetstone"], silk: ["rivets", "padding"],
+    buckles: ["rivets", "hobnails"], moonstone: ["whetstone", "padding"], amber: ["whetstone", "hobnails"],
+  };
+  if (isRecord(raw.materials)) for (const [old, inputs] of Object.entries(legacy)) {
+    const amount = raw.materials[old];
+    if (!wholeIn(amount, 0, Number.MAX_SAFE_INTEGER)) continue;
+    inputs.forEach((m, i) => { e.materials[m] = Math.min(Number.MAX_SAFE_INTEGER, e.materials[m] + Math.floor(amount / inputs.length) + (i < amount % inputs.length ? 1 : 0)); });
+  }
   for (const c of CATEGORY_IDS) if (isRecord(raw.pity) && wholeIn(raw.pity[c], 0, PITY - 1)) e.pity[c] = raw.pity[c];
   const highest = e.items.reduce((n, i) => Math.max(n, Number(i.id.slice(1))), 0);
   e.nextId = Math.max(highest + 1, wholeIn(raw.nextId, 1, 1e9) ? raw.nextId : 1);

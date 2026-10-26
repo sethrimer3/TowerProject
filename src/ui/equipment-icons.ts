@@ -31,6 +31,9 @@ const CATEGORY_ROWS: Record<CategoryId, string[]> = {
     ".....##.....", "....#ws#....", "....#ws#....", "....#ws#....", "....#ws#....", "....#ws#....",
     "..########..", "..#gyggyg#..", "..########..", "....#bb#....", "....#gg#....", ".....##.....",
   ],
+  shield: mirrored([
+    "......", ".#####", "#sssss", "#swwww", "#swggg", "#swgww", ".#wgwg", ".#wggg", "..#www", "...#ww", "....#w", ".....#",
+  ]),
   chestplate: mirrored([
     ".##...", "#ws#..", "#wws##", ".#wwww", ".#wwws", ".#wwws", "..#wws", "..#wws", "..#wws", "...#ws", "...###", "......",
   ]),
@@ -63,6 +66,15 @@ const CATEGORY_ROWS: Record<CategoryId, string[]> = {
 /** Each Unique piece's own icon (and the Silver Band's), by definition id;
  * every other Standard piece wears its category's. */
 const ITEM_ROWS: Record<string, string[]> = {
+  wardensShield: mirrored([
+    ".#####", "#ygggg", "#gssss", "#gswww", "#gswgg", "#gswgw", "#gswgw", ".#swgg", ".#swww", "..#sww", "...#sw", "....##",
+  ]),
+  bulwarkShield: mirrored([
+    "...###", "..#sss", ".#swww", "#swwws", "#swsss", "#swsww", "#swsww", "#swsss", "#swwws", ".#swww", "..#sss", "...###",
+  ]),
+  dawnShield: mirrored([
+    "......", "..####", ".#gyyy", "#gywww", "#gwwoo", "#gwwoy", "#gyooo", ".#wwoy", ".#wwoo", "..#www", "...#ww", "....##",
+  ]),
   kingsbane: [
     ".....##.....", "....#dk#....", "....#dr#....", "....#dk#....", "....#dr#....", "....#dk#....",
     ".#.#.##.#.#.", "#y#g#rr#g#y#", "#gggggggggg#", ".####bb####.", "....#gg#....", ".....##.....",
@@ -190,28 +202,9 @@ const MATERIAL_ROWS: Record<EquipMaterialId, string[]> = {
     "............", ".##########.", ".#tlttlttl#.", ".#lltllltl#.", ".#tlttlttl#.", ".#lltllltl#.",
     ".#tlttlttl#.", ".#lltllltl#.", ".#tlttlttl#.", ".##########.", "............", "............",
   ],
-  leather: [
-    "............", "...######...", "..#tttttl#..", ".#tttttttl#.", ".#ttlttttl#.", ".#tttttltl#.",
-    ".#ttttttll#.", "..#ttltll#..", "..#tttlll#..", "...#llll#...", "....####....", "............",
-  ],
   hobnails: [
     "............", ".###....###.", "#wsd#..#wsd#", ".#s#....#s#.", ".#s#....#s#.", "..#......#..",
     "....###.....", "...#wsd#....", "....#s#.....", "....#s#.....", ".....#......", "............",
-  ],
-  silk: [
-    "............", "..########..", "..#bbbbbb#..", "...#mmmm#...", "...#mnmn#...", "...#nmnm#...",
-    "...#mnmn#...", "...#nmnm#...", "..#bbbbbb#..", "..########..", "........#m#.", ".........##.",
-  ],
-  buckles: [
-    "............", "............", "..########..", "..#gyyyyg#..", "..#g####g#..", "..#g#..#g#..",
-    "..#g#..#g#..", "..#g####g#..", "..#ggggggg#.", "..#########.", "............", "............",
-  ],
-  moonstone: mirrored([
-    "......", "......", "...###", "..#mmm", ".#mwmm", ".#mmmn", ".#mmnn", "..#mnn", "...#nn", "....##", "......", "......",
-  ]),
-  amber: [
-    "............", ".....##.....", "....#aa#....", "....#aa#....", "...#aaao#...", "..#aaoyaa#..",
-    "..#aayoaa#..", "..#aaaaaa#..", "..#aaaaaa#..", "...#aaaa#...", "....####....", "............",
   ],
 };
 

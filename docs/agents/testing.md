@@ -108,3 +108,9 @@ The mode-tab browser flow checks the removed page stays absent even with Legacy 
 
 `node tests/upgrade-tabs.mjs` reproduces the progression-tree selector with all six Dev trees, checking single-line text, unclipped icons/points, every selection and usable map space at phone/tablet/desktop and short landscape sizes.
 It also checks normal balances and Classic, Medieval, Desktop and Terminal UI themes, with review images in `test-results/upgrade-tabs/`.
+
+After `vite build --mode snapshot` (also built by `npm run test:ui`), `node tests/equipment-recipes.mjs` serves that built game and checks the five-slot plus on narrow phones, four resource balances, actual crafting and equipping, locked acquisition pools, a preserved Cape's position/paired recipe, and decoded native shield sprites.
+Its screenshots are in `test-results/equipment-recipes/`; model coverage is in `tests/equipment-recipes.test.ts`.
+Shield pixel icons can be exported alone with `node --experimental-transform-types tools/prepare-game-sprites.mjs --equipment-only=shield,wardensShield,bulwarkShield,dawnShield`, leaving existing sprites untouched.
+The UI golden tour and upgrade-tree browser checks wait for the startup artwork/font loader to finish before checking the HUD, allowing two minutes for that preload on a busy machine.
+The UI golden tour allows 30 seconds for browser interactions so a busy renderer does not fail an otherwise visible control's layout check.

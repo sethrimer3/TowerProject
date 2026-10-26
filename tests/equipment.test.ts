@@ -10,7 +10,7 @@ import { loadout } from "../src/progression/loadout.ts";
 import { predict } from "../src/combat.ts";
 import { resolveStep } from "../src/step-effects.ts";
 import {
-  CATEGORIES, CATEGORY_IDS, EQUIP_MATERIALS, EQUIP_MATERIAL_IDS, ITEMS, itemDef, materialOf, standardOf, uniquesOf,
+  CATEGORIES, CATEGORY_IDS, EQUIP_MATERIALS, EQUIP_MATERIAL_IDS, ITEMS, itemDef, materialOf, materialsOf, STARTER_CATEGORIES, standardOf, uniquesOf,
 } from "../src/equipment/catalog.ts";
 import {
   EQUIPMENT_CAPACITY, PITY, PULL_GEMS, PULL_RATES, pullGems, RARITY_TIERS,
@@ -34,14 +34,14 @@ const seq = (values: number[]) => {
 
 // --- Catalogue ---
 
-test("nine categories, each with its own material, a Standard piece and three Uniques", () => {
-  assert.equal(CATEGORY_IDS.length, 9);
-  assert.equal(EQUIP_MATERIAL_IDS.length, 9);
-  assert.deepEqual(new Set(CATEGORY_IDS.map(materialOf)).size, 9, "one material per category");
+test("ten categories share four base resources, each with a Standard piece and three Uniques", () => {
+  assert.equal(CATEGORY_IDS.length, 10);
+  assert.equal(EQUIP_MATERIAL_IDS.length, 4);
+  assert.deepEqual(new Set(CATEGORY_IDS.map(materialOf)).size, 4, "only four resource types");
   for (const c of CATEGORY_IDS) {
     assert.equal(standardOf(c).class, "standard");
     assert.equal(uniquesOf(c).length, 3, c);
-    assert.equal(EQUIP_MATERIALS[CATEGORIES[c].material].category, c);
+    assert.ok(materialsOf(c).every(m => EQUIP_MATERIAL_IDS.includes(m)));
   }
   assert.equal(new Set(ITEMS.map((i) => i.id)).size, ITEMS.length, "ids are unique");
   assert.equal(new Set(ITEMS.map((i) => i.name)).size, ITEMS.length, "names are unique");
@@ -130,7 +130,8 @@ test("decoding drops unknown pieces, clamps levels to the cap, and keeps loadout
   assert.deepEqual(e.items.map((i) => [i.id, i.level]), [["e1", 20], ["e4", 1]]);
   assert.deepEqual(e.equipped, { tower: { weapon: "e1" }, delve: { ring: "e4" } });
   assert.deepEqual([e.pity.weapon, e.pity.ring], [0, 12]);
-  assert.deepEqual([e.materials.amber, e.materials.silk], [0, 4]);
+  assert.deepEqual([e.materials.padding, e.materials.rivets], [2, 2]);
+  assert.ok(!("silk" in e.materials) && !("amber" in e.materials));
   assert.equal(e.nextId, 5, "never reuses an id");
 });
 
@@ -225,7 +226,7 @@ test("pulls cost 20 and 200 Gems, need room, and bring only the category's Uniqu
   assert.equal(g.equipment.pull("weapon", 1), "gems");
   for (let i = g.save.equipment.items.length; i < EQUIPMENT_CAPACITY - 5; i++) addItem(g.save.equipment, "silverBand", "common");
   g.save.gems = 1000;
-  assert.equal(g.equipment.pull("ring", 10), "room");
+  assert.equal(g.equipment.pull("weapon", 10), "room");
   assert.equal(g.save.gems, 1000, "a refused pull takes nothing");
 });
 
@@ -260,7 +261,7 @@ test("pulls of all types cost 10% less and bring Uniques of every category", () 
   const items = pulled.flatMap((r) => (Array.isArray(r) ? r.map((x) => x.item) : assert.fail(String(r))));
   assert.equal(items.length, 61);
   assert.ok(items.every((i) => itemDef(i.def)!.class === "unique"));
-  assert.deepEqual(new Set(items.map((i) => itemDef(i.def)!.category)), new Set(CATEGORY_IDS), "61 pulls reach all nine");
+  assert.deepEqual(new Set(items.map((i) => itemDef(i.def)!.category)), new Set(STARTER_CATEGORIES), "all-type pulls reach only the five starting categories");
   // Each category's pity counts its own pulls since its last Rare.
   const since = Object.fromEntries(CATEGORY_IDS.map((c) => [c, 0]));
   for (const i of items) { const c = itemDef(i.def)!.category; since[c] = i.rarity === "rare" ? 0 : since[c] + 1; }
@@ -449,7 +450,7 @@ test("a Delve loadout reaches the Delve run and not the Tower's", () => {
   g.newRun({ seed: 2 });
   const delve = g.run.player.defense;
   g.equipment.equip("delve", addItem(s.equipment, "steelCuirass", "common")!.id);
-  assert.equal(g.run.player.defense, delve + 2);
+  assert.equal(g.run.player.defense, delve + 4);
   g.switchMode("tower");
   assert.equal(g.run.player.defense, tower);
 });

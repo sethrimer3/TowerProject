@@ -16,7 +16,7 @@ import {
 } from "./balance.ts";
 import { effectPool, inPool, slotEffectDef } from "./slot-effects.ts";
 import { categoryOf, findItem, openSlotCount, type EffectChoice, type EffectSlot, type EquipItem, type EquipmentSave } from "./inventory.ts";
-import { materialOf } from "./catalog.ts";
+import { materialOf, hasMaterials, spendMaterials } from "./catalog.ts";
 import { rollRarity, withSavedStream } from "./acquire.ts";
 
 /** The rarest effect `item`'s slots may hold. */
@@ -41,10 +41,10 @@ export function nextMilestone(slot: EffectSlot) {
   return { at, reward: at % REFINE_CHOICE_EVERY === 0 ? ("choice" as const) : ("guarantee" as const) };
 }
 
-/** What one Refine of `item`'s slot costs: Gold and its category's material. */
+/** What one Refine of `item`'s slot costs: Gold and its category's recipe inputs. */
 export function refineCost(item: EquipItem) {
   const c = REFINE_COST[item.rarity];
-  return { gold: c.gold, material: c.material, materialId: materialOf(categoryOf(item)) };
+  return { gold: c.gold, material: c.material, materialId: materialOf(categoryOf(item)), category: categoryOf(item) };
 }
 /** What improving a slot's effect one rarity costs. */
 export function improveCost(item: EquipItem) {
@@ -88,9 +88,9 @@ function openSlot(e: EquipmentSave, id: string, index: number): { item: EquipIte
 function pay(e: EquipmentSave, purse: { gold: number }, cost: ReturnType<typeof refineCost>, free: boolean): SlotRefusal | null {
   if (free) return null;
   if (purse.gold < cost.gold) return "gold";
-  if (e.materials[cost.materialId] < cost.material) return "material";
+  if (!hasMaterials(e.materials, cost.category, cost.material)) return "material";
   purse.gold = snap(purse.gold - cost.gold);
-  e.materials[cost.materialId] -= cost.material;
+  spendMaterials(e.materials, cost.category, cost.material);
   return null;
 }
 

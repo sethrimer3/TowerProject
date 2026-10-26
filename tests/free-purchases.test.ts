@@ -65,7 +65,8 @@ test("free purchases: equipment levels and Gem pulls cost nothing, and caps stil
   assert.equal(g.equipment.levelUp(sword.id), "maxed");
   assert.equal(sword.spent, undefined, "nothing invested");
   assert.equal(g.save.gold, 0);
-  const pulled = g.equipment.pull("ring", 10);
+  assert.equal(g.equipment.pull("ring", 10), "locked", "free purchases never open a future category");
+  const pulled = g.equipment.pull("shield", 10);
   assert.ok(Array.isArray(pulled) && pulled.length === 10);
   assert.equal(g.save.gems, 0);
 });

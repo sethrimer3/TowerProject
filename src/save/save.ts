@@ -10,6 +10,7 @@ import { UPGRADES, type UpgradeId } from "../progression/upgrades.ts";
 import type { AutomoveMemory, DelveRun, Fall, MoveSnapshot, Run, TowerRun } from "../runs.ts";
 import type { ModeSave, Save } from "./shape.ts";
 import { decodeEquipment, defaultEquipment } from "../equipment/inventory.ts";
+import { upgradeLegacyChestplateRuns } from "../equipment/legacy-chestplates.ts";
 import { decodeSettings, defaultSettings } from "./settings.ts";
 import { keepUndos, loadout } from "../progression/loadout.ts";
 import { BASE_HAND, CARD_IDS, HAND_SLOT_GEMS, IN_PLACE, MAX_HAND_SLOTS, MAX_MANUAL_SLOTS, deckCards, handSlots, keptLinks, manualSlots, type CardId, type CardLink } from "../cards/cards.ts";
@@ -515,6 +516,8 @@ export function decode(raw: string | null): Save {
     // TODO: remove once saves from before the rename are gone.
     d.treeNotices.breakthrough ||= s.treeNotices?.courage === true;
     d.seen = decodeSeen(s.seen, d);
+    // TODO: remove once saves from before shared recipes are retired.
+    if (isRecord(s.equipment) && !Object.hasOwn(s.equipment, "categories")) upgradeLegacyChestplateRuns(d);
     d.profile = decodeProfile(s.profile);
     backfillProfile(d);
   } catch {}
