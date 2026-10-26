@@ -16,6 +16,7 @@ Its `INSPIRATION_SPRITE` and `BREAKTHROUGH_SPRITE` select dedicated native PNGs 
 Inspiration is a compact blue-white spark; Breakthrough is a larger brass/ivory eight-point flash on the same 24-pixel canvas.
 `skillSprite` in `ui/dom.ts` picks each skill node's sprite, falling back on Inspiration's.
 The progression selector in `skill-tree-page.ts` uses `.skill-tree-tabs`, with separate icon and name/points wrappers so labels are never anonymous grid items.
+Only Inspiration and Breakthrough are offered, even in Dev mode or with old Legacy unlocks; `shown` also sends any retired focused tree back to Inspiration.
 Its grid wraps to fit the available width, and each button keeps a fixed 24px icon above a single-line name and optional points; rules are scoped to the Upgrades page and do not change card trees or other page tabs.
 DOM icons, relic pendants, tutorial hands and Equipment actions use those themed pairs; `sprites/cards.ts` specifies distinct layered PNG card faces with live card names.
 `badge-token.ts` shares PNG symbols, rarity frames and the live-number level star between the Deck, card marks, hand, details and draw reveals.

@@ -1,4 +1,4 @@
-// Actual skill-tree selectors, including every Dev tree on narrow phones.
+// The two progression-tree selectors, including Dev and old unlocked saves.
 import {chromium,expect} from "@playwright/test";
 import assert from "node:assert/strict";
 import {mkdirSync} from "node:fs";
@@ -24,6 +24,8 @@ try {
   const fixture=await page.evaluate(async()=> {
     const {Game}=await import("/src/state.ts"),{defaults}=await import("/src/save/save.ts");
     const g=new Game(defaults());g.setDevMode(true);
+    // Existing unlocks must never bring back the retired selectors.
+    g.save.upgrades.trainers=1;g.save.upgrades.breakthrough=1;g.save.upgrades.legacy=1;
     for(const id of Object.keys(g.save.tutorials))g.save.tutorials[id]=true;
     g.save.settings.reduceMotion=true;g.newRun({outside:true,seed:7});
     return g.save;
@@ -78,14 +80,17 @@ try {
   await open("medieval");
   for(const [width,height] of [[320,844],[390,844],[570,844],[647,844],[768,1024],[1024,844],[844,390]]) {
     await page.setViewportSize({width,height});
-    await expect(page.locator("[data-tree]")).toHaveCount(6);
-    await page.locator('[data-tree="renown"]').click();
+    await expect(page.locator("[data-tree]")).toHaveCount(2);
+    assert.deepEqual(await page.locator("[data-tree]").evaluateAll(bs=>bs.map(b=>b.dataset.tree)),["inspiration","breakthrough"]);
+    await page.locator('[data-tree="breakthrough"]').click();
+    await expect(page.locator(".skill-node").first()).toBeInViewport();
     await page.locator("#upgrades").screenshot({path:`${out}/medieval-${width}x${height}.png`});
     readable(await layout());
-    for(const id of ["inspiration","breakthrough","wayfinding","legacy","wisdom","renown"]) {
+    for(const id of ["inspiration","breakthrough"]) {
       await page.locator(`[data-tree="${id}"]`).click();
       await expect(page.locator(`[data-tree="${id}"]`)).toHaveAttribute("aria-pressed","true");
-      await expect(page.locator(".tree-heading h3")).toContainText(id==="wayfinding"?"Wayfinding":id[0].toUpperCase()+id.slice(1));
+      await expect(page.locator(".tree-heading h3")).toContainText(id[0].toUpperCase()+id.slice(1));
+      await expect(page.locator(".skill-node").first()).toBeInViewport();
       readable(await layout());
     }
   }
@@ -94,6 +99,7 @@ try {
     readable(await layout());await page.locator("#upgrades").screenshot({path:`${out}/${theme}-320.png`});
   }
   await open("medieval",false);readable(await layout());
+  assert.deepEqual(await page.locator("[data-tree]").evaluateAll(bs=>bs.map(b=>b.dataset.tree)),["inspiration","breakthrough"]);
   assert.deepEqual(errors,[]);
-  console.log("Upgrade tree selectors: single-line labels below centered icons, icons/points inside buttons, all six selections, responsive wrapping, short landscape, normal/Dev and four UI themes passed.");
+  console.log("Upgrade tree selectors: only Inspiration/Breakthrough in normal/Dev saves, single-line labels below centered icons, icons/points inside buttons, short landscape and four UI themes passed.");
 } finally {await browser.close();}

@@ -1,6 +1,7 @@
 # Skills and stats
 
-The tree buttons above the upgrade map put each icon above its name and points, keeping the text centered and on single lines.
+The upgrade map offers only the Inspiration and Breakthrough trees, including in developer mode.
+Their buttons put each icon above its name and points, keeping the text centered and on single lines.
 The taller buttons wrap into rows on phones so labels and balances stay readable.
 
 A new game's Inspiration tree shows one line of skills, from Door & Key down to **Trainers**; buying Trainers reveals the paths that branch out after it (Larger Hand, On the Job, ATK Up and everything under them).

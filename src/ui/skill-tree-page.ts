@@ -17,7 +17,7 @@ import { PROVISIONS_NOTE } from "./board-lesson.ts";
 type Tree = (typeof TREES)[number];
 
 const TREE_ICONS: Record<string, UiSprite> = {
-  inspiration: "inspiration", breakthrough: "breakthrough", legacy: "tower", wisdom: "settings",
+  inspiration: "inspiration", breakthrough: "breakthrough",
 };
 /** What a skill's tooltip says can be done with it now. */
 function tooltipHint(p: { locked: boolean; maxed: boolean; available: boolean; affordable: boolean }, requirements: string[], unlocks: boolean) {
@@ -75,8 +75,10 @@ export class SkillTreePage {
     if ((this.tree === "inspiration" || this.tree === "breakthrough") && this.ctx.game.notices.shown(this.tree)) this.ctx.update();
   }
 
-  /** A tree's tab shows once the tree is open; Dev mode shows them all. */
+  /** Only Inspiration and Breakthrough are offered, including in Dev mode.
+   * Breakthrough keeps its normal unlock requirement. */
   private shown(tab: TreeId) {
+    if (tab !== "inspiration" && tab !== "breakthrough") return false;
     const save = this.ctx.game.save;
     return save.settings.devMode || treeOpen(TREES.find(t => t.id === tab)!, save.upgrades);
   }
