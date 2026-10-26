@@ -70,7 +70,7 @@ export class SkillTreePage {
   render() {
     if (!this.shown(this.tree)) this.tree = "inspiration";
     // The tab row shows even for Inspiration alone, since its tab reads the points held.
-    this.renderTree(`<div class="tree-tabs page-tabs" role="group" aria-label="Skill trees">${this.tabsHtml()}</div>`);
+    this.renderTree(`<div class="tree-tabs page-tabs skill-tree-tabs" role="group" aria-label="Skill trees">${this.tabsHtml()}</div>`);
     // Showing the Inspiration or Breakthrough tree clears the dot a run's currency put on it.
     if ((this.tree === "inspiration" || this.tree === "breakthrough") && this.ctx.game.notices.shown(this.tree)) this.ctx.update();
   }
@@ -89,7 +89,7 @@ export class SkillTreePage {
     return TREES.filter(t => this.shown(t.id)).map(t => {
       const priced = t.id === "inspiration" || t.id === "breakthrough";
       const points = priced ? `<small>${heldAmount(game, held[t.id as "inspiration" | "breakthrough"])} POINTS</small>` : "";
-      return `<button data-tree="${t.id}" aria-pressed="${t.id === this.tree}"${priced && this.tree !== t.id && game.notices.waiting(t.id as "inspiration" | "breakthrough") ? ` class="notify"` : ""}><span>${uiSprite(TREE_ICONS[t.id] ?? "tower")}</span>${t.name}${points}</button>`;
+      return `<button data-tree="${t.id}" aria-pressed="${t.id === this.tree}"${priced && this.tree !== t.id && game.notices.waiting(t.id as "inspiration" | "breakthrough") ? ` class="notify"` : ""}><span class="skill-tree-tab-icon">${uiSprite(TREE_ICONS[t.id] ?? "tower")}</span><span class="skill-tree-tab-label"><span class="skill-tree-tab-name">${t.name}</span>${points}</span></button>`;
     }).join("");
   }
 
