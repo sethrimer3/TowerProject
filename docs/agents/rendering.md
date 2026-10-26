@@ -315,3 +315,6 @@ The appended `trialCamera` render job captures staging, arena start, hero/camera
 The Keymaster trial uses the Tower II floor-and-wall set in staging and its arena, passing tier 2 to the shared terrain painter over its own cover/door collision map.
 It skips the trial darkness mask so the entire chamber is visible; the Light Elemental retains its existing tier-1 terrain and torch-lit darkness.
 Ghost teleport trails, mimics and red door particles draw normally over the lit Keymaster room.
+
+Inspiration rewards use the dedicated `inspiration.png` blue-white spark through `INSPIRATION_SPRITE`; its native 24-pixel canvas matches the new brass/ivory `breakthrough.png` flash used by the interface.
+The generated currency source and `tools/prepare-currency-sprites.mjs` retain smaller Inspiration and larger Breakthrough footprints, binary alpha and the shared palette without changing reward amounts or timing.

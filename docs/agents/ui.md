@@ -12,7 +12,8 @@ An image or font failure keeps gameplay hidden with a Retry button that reloads 
 The art contract, reference, prompt and extraction instructions live in [UI sprites](../art/ui-sprites.md).
 `sprites/style.ts` decides effective art independently for UI and Game themes: the Medieval/Classic interface uses the default kit, other UI themes override it, and only the Classic Game theme uses world sprites.
 `sprites/kit.ts` provides the shared decoded PNG cache, load revisions, native PNG controls and icon pairs whose vector/text art belongs to alternate UI themes.
-Its `INSPIRATION_SPRITE` and `BREAKTHROUGH_SPRITE` name the two skill-tree currencies' art (the `inspiration` and `breakthrough` `UiSprite`s in `ui/dom.ts`, the board's Inspiration popup): each borrows another sprite (the Shard, the boots) until its own exists.
+Its `INSPIRATION_SPRITE` and `BREAKTHROUGH_SPRITE` select dedicated native PNGs for the currency UI helpers and the board's Inspiration popup.
+Inspiration is a compact blue-white spark; Breakthrough is a larger brass/ivory eight-point flash on the same 24-pixel canvas.
 `skillSprite` in `ui/dom.ts` picks each skill node's sprite, falling back on Inspiration's.
 DOM icons, relic pendants, tutorial hands and Equipment actions use those themed pairs; `sprites/cards.ts` specifies distinct layered PNG card faces with live card names.
 `badge-token.ts` shares PNG symbols, rarity frames and the live-number level star between the Deck, card marks, hand, details and draw reveals.

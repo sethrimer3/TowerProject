@@ -1,5 +1,8 @@
 # Currencies and the Shop
 
+Inspiration uses a small blue-white spark, while Breakthrough uses a larger ivory-and-brass starburst.
+These distinct symbols appear wherever their balances, skill trees and rewards are shown.
+
 ## Gems
 
 **Gems** are the premium currency, kept between runs like Gold.
