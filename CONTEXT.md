@@ -47,7 +47,9 @@ _Avoid_: fullscreen, zen mode, screensaver
 ### Equipment
 
 **Equipment**:
-The pieces a hero wears, one per category (Weapon, Chestplate, Helmet, Gloves, Boots, Cape, Belt, Ring, Amulet), opened by claiming Tower II's floor 60 Goal. Kept in one shared inventory between runs.
+The pieces a hero wears, one per open category, opened by claiming Tower II's floor 60 Goal.
+Helmet, Shield, Chestplate, Sword and Boots start open; Gloves, Cape, Belt, Ring and Amulet await later unlocks.
+Kept in one shared inventory between runs.
 _Avoid_: gear (the Gear page and its provisions), items (pickups on the board)
 
 **Loadout** (equipment):
@@ -55,7 +57,7 @@ The pieces one mode's hero wears; the Tower and the Delve each have their own, d
 _Avoid_: build, set
 
 **Standard piece**:
-A category's plain piece, held by Equipment Chests once Equipment is open.
+A category's plain piece, held by Equipment Chests or crafted once its category is open.
 _Avoid_: common item (Common is a rarity)
 
 **Unique piece**:
@@ -63,8 +65,13 @@ One of a category's three named pieces with a specialised ability, from Gem pull
 _Avoid_: legendary, artifact
 
 **Upgrade material**:
-A category's leveling currency (Whetstone, Iron Rivets …), held by Supply Chests and returned by dismantling.
+One of four shared equipment resources: Whetstone, Iron Rivets, Quilted Padding and Hobnails, held by Supply Chests and returned by dismantling.
+A piece's recipe uses one, two or all four for crafting, leveling and Refinement.
 _Avoid_: crafting material, monster part
+
+**Craft**:
+Making a Common Standard piece by spending every upgrade material in its recipe.
+_Avoid_: Assemble (raising rarity by consuming copies)
 
 **Merge**:
 Three copies of a piece at one rarity (Uncommon or above; Common pieces never merge) becoming one of the next rarity; the chosen target keeps its level. The Equipment screen calls it **Assemble**.

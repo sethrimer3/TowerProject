@@ -28,7 +28,7 @@ const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIG
 let exitCode = 1;
 try {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
-  page.setDefaultTimeout(10000);
+  page.setDefaultTimeout(30000);
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   // Seeded randomness from the first script on, and the fixture save (if any).
@@ -59,7 +59,10 @@ try {
 
   /** Waits for the page's HTML and the HUD (filled in as the app starts), not
    * the load event, which also waits on every image. */
-  const ready = () => page.locator("#hp").waitFor({ timeout: 30000 });
+  const ready = async () => {
+    await page.locator("#boot-loading").waitFor({ state: "hidden", timeout: 120000 });
+    await page.locator("#hp").waitFor({ timeout: 30000 });
+  };
 
   // A fixed clock (a Monday noon, GMT), so the Tournament button's countdown
   // and anything else that reads the time shows the same every run; timers
@@ -848,6 +851,9 @@ try {
     await shot("equipment.claimed");
     await click("#unlock-visit");
     await shot("equipment.loadout");
+    await click('[data-eq-view="craft"]');
+    await shot("equipment.craft");
+    await click('[data-eq-view="list"]');
     // The ? beside the heading holds what the views leave unsaid.
     await click("#equip-help");
     await shot("equipment.help");

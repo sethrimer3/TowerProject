@@ -183,14 +183,14 @@ test("evenly spread training alone still beats both modes' normal enemies at flo
 test("gear adds flat bonuses, then its percentages of the total, fractions kept; provisions add nothing", () => {
   const s = defaults();
   s.equipment.unlocked = true;
-  // Uncommon (×1.25): +3.75 ATK and +2.5% ATK; +37.5 max HP and +5% max HP.
+  // Uncommon (×1.25): +3.75 ATK and +2.5% ATK; +75 max HP and +10% max HP.
   s.equipment.equipped.tower.weapon = addItem(s.equipment, "knightsSword", "uncommon")!.id;
   s.equipment.equipped.tower.chestplate = addItem(s.equipment, "giantsHauberk", "uncommon")!.id;
   Object.assign(s.provisions, { edge: 1, guard: 2, heal: 1 });
   const l = loadout(s);
   assert.equal(l.attack, 16.14375, "(12 + 3.75) × 1.025");
   assert.equal(l.defense, 0);
-  assert.equal(l.maxHp, 144.375, "137.5 × 1.05");
+  assert.equal(l.maxHp, 192.5, "175 × 1.10");
   // The Delve's hero wears nothing yet.
   assert.equal(loadout(s, "delve").attack, 12);
 });
@@ -296,7 +296,7 @@ test("a gear change reaches a run still outside, which starts at its new full HP
   e.unlocked = true;
   g.equipment.equip("tower", addItem(e, "knightsSword", "common")!.id);
   g.equipment.equip("tower", addItem(e, "giantsHauberk", "common")!.id);
-  assert.deepEqual([g.run.player.attack, g.run.player.maxHp, g.run.player.hp], [15, 130, 130]);
+  assert.deepEqual([g.run.player.attack, g.run.player.maxHp, g.run.player.hp], [15, 160, 160]);
 });
 
 test("ATK, DEF, Max HP, Regen and Shroud train to 1,000 levels, and each Limit Break owned raises that by 500, Shroud's but by the first eight", () => {

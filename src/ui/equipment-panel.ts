@@ -1,15 +1,15 @@
 import { controlIcon } from "./control-icon.ts";
 import type { Mode } from "../entities.ts";
 import {
-  CATEGORIES, CATEGORY_IDS, EQUIP_MATERIALS, EQUIP_MATERIAL_IDS, itemDef, materialOf, uniquesOf,
+  CATEGORIES, CATEGORY_IDS, EQUIP_MATERIALS, EQUIP_MATERIAL_IDS, itemDef, materialsOf, hasMaterials, standardOf, uniquesOf,
   type CategoryId, type EquipMaterialId,
 } from "../equipment/catalog.ts";
 import {
-  EFFECT_CANDIDATES, EQUIP_RARITIES, EQUIPMENT_CAPACITY, PITY, PULL_ALL_DISCOUNT, PULL_GEMS, PULL_RATES, pullGems, RARITY_TIERS, rarityRank, REFINE_CHOICE_EVERY, REFINE_GUARANTEE_EVERY,
+  CRAFT_MATERIAL, EFFECT_CANDIDATES, EQUIP_RARITIES, EQUIPMENT_CAPACITY, PITY, PULL_ALL_DISCOUNT, PULL_GEMS, PULL_RATES, pullGems, RARITY_TIERS, rarityRank, REFINE_CHOICE_EVERY, REFINE_GUARANTEE_EVERY,
   type EquipRarity, type PullCount,
 } from "../equipment/balance.ts";
 import {
-  autoMerges, categoryOf, findItem, isProtected, levelCost, maxLevel, mergeFodder, openSlotCount, salvageTotals, wornIn,
+  autoMerges, availableCategories, categoryOpen, categoryOf, findItem, isProtected, levelCost, maxLevel, mergeFodder, openSlotCount, salvageTotals, wornIn,
   type EffectChoice, type EffectSlot, type EquipItem,
 } from "../equipment/inventory.ts";
 import { effectText, equipmentEffects, itemLines, lineValue } from "../equipment/effects.ts";
@@ -26,10 +26,10 @@ import { playSlagMerge } from "./slag-merge.ts";
 import { kitIcon } from "../sprites/kit.ts";
 
 /** The Equipment screen's views, chosen by the tabs along its bottom: the
- * list (the loadout over the inventory), Assemble (merging) and Acquire
+ * list (the loadout over the inventory), Assemble (merging), Craft and Acquire
  * (Gem pulls). */
-type View = "list" | "assemble" | "pulls";
-const VIEWS: { id: View; name: string }[] = [{ id: "list", name: "List" }, { id: "assemble", name: "Assemble" }, { id: "pulls", name: "Acquire" }];
+type View = "list" | "assemble" | "craft" | "pulls";
+const VIEWS: { id: View; name: string }[] = [{ id: "list", name: "List" }, { id: "assemble", name: "Assemble" }, { id: "craft", name: "Craft" }, { id: "pulls", name: "Acquire" }];
 type SortKey = "rarity" | "level" | "category" | "newest" | "name";
 const SORTS: { id: SortKey; name: string }[] = [
   { id: "rarity", name: "Rarity" }, { id: "level", name: "Level" }, { id: "category", name: "Category" }, { id: "newest", name: "Newest" }, { id: "name", name: "Name" },
@@ -45,11 +45,9 @@ const nameOf = (item: EquipItem) => itemDef(item.def)!.name;
 const article = (word: string) => `${/^[AEIOU]/.test(word) ? "an" : "a"} ${word}`;
 const rarityTag = (r: EquipRarity) => `<span class="rarity-tag rar-${r}">${RARITY_TIERS[r].name}</span>`;
 const matAmount = (id: EquipMaterialId, n: number) => `${materialIcon(id)}<b>${currencyAmount(n)}</b>`;
-/** The loadout's nine slots as a 3×3 grid laid out like the hero: the
- * helmet, chestplate and boots down the middle, the ring and amulet at the
- * top corners, the weapon and cape at the sides, the gloves and belt at the
- * bottom corners. */
-const GRID: readonly CategoryId[] = ["ring", "helmet", "amulet", "weapon", "chestplate", "cape", "gloves", "boots", "belt"];
+/** The starting plus, with the Cape above the Shield and left of the Helmet.
+ * Future corner slots stay empty until opened; owned legacy Rings sit below. */
+const GRID: readonly CategoryId[] = ["cape", "helmet", "gloves", "shield", "chestplate", "weapon", "belt", "boots", "amulet"];
 /** Sets what pressing the button `sel` finds does, if it is there. */
 const onPress = (sel: string, fn: () => void) => { const b = document.querySelector<HTMLButtonElement>(sel); if (b) b.onclick = fn; };
 
@@ -92,14 +90,14 @@ export class EquipmentPanel {
   }
 
   html() {
-    const body = this.view === "list" ? this.listHtml() : this.view === "assemble" ? this.assembleHtml() : this.pullsHtml();
+    const body = this.view === "list" ? this.listHtml() : this.view === "assemble" ? this.assembleHtml() : this.view === "craft" ? this.craftHtml() : this.pullsHtml();
     const ready = this.mergeable().length > 0;
     return `${this.materialsHtml()}<div class="eq-screen">${body}</div>
       <div class="eq-views" role="group" aria-label="Equipment views">${VIEWS.map((v) =>
         `<button data-eq-view="${v.id}" aria-pressed="${this.view === v.id}">${v.name}${v.id === "assemble" && ready ? `<span class="eq-new" title="A piece is ready to assemble">N</span>` : ""}</button>`).join("")}</div>`;
   }
 
-  /** The nine material balances, and Gold, always in sight. */
+  /** The four material balances, and Gold, always in sight. */
   private materialsHtml() {
     const mats = EQUIP_MATERIAL_IDS.map((m) => `<span class="mat-balance" title="${EQUIP_MATERIALS[m].name}: ${EQUIP_MATERIALS[m].description}">${matAmount(m, this.e.materials[m])}</span>`).join("");
     return `<div class="equip-materials" id="equip-materials" aria-label="Upgrade materials"><span class="mat-balance" title="Gold">${uiSprite("gold", "ui-sprite gold-icon")}<b>${devAmount(this.game, this.game.save.gold)}</b></span>${mats}</div>`;
@@ -126,15 +124,16 @@ export class EquipmentPanel {
   }
 
   /** The mode's loadout: its switch at the top left, Equipment's ? by its
-   * heading, the nine slots in a
+   * heading, the unlocked slots in a
    * 3×3 grid shaped like the hero, and what they add up to. A worn piece
    * opens its details; an empty slot shows only that category below. */
   private loadoutHtml() {
     const worn = this.e.equipped[this.mode], delve = this.game.tournament.unlocked, other = this.mode === "tower" ? "delve" : "tower";
-    const slots = GRID.map((c) => {
+    const slots = [...GRID, ...(categoryOpen(this.e, "ring") ? ["ring" as const] : [])].map((c) => {
+      if (!categoryOpen(this.e, c)) return `<div class="eq-slot eq-slot-reserved" aria-hidden="true"></div>`;
       const item = worn[c] ? findItem(this.e, worn[c]!) : undefined;
       const name = item ? `<small class="eq-slot-name rar-${item.rarity}">${nameOf(item)}</small>` : `<small class="eq-slot-name">${CATEGORIES[c].name}</small>`;
-      return `<div class="eq-slot${item ? ` rar-${item.rarity}` : ""}">${item ? this.tile(item, "eq-item") : this.ghost(c, ` data-eq-slot="${c}"`, `${CATEGORIES[c].name}: empty`)}${name}</div>`;
+      return `<div class="eq-slot${item ? ` rar-${item.rarity}` : ""}${c === "ring" ? " eq-slot-ring" : ""}" data-eq-category="${c}">${item ? this.tile(item, "eq-item") : this.ghost(c, ` data-eq-slot="${c}"`, `${CATEGORIES[c].name}: empty`)}${name}</div>`;
     }).join("");
     const switcher = delve
       ? `<button class="eq-mode" data-eq-mode="${other}" title="Showing the ${MODE_NAMES[this.mode]} loadout: switch to the ${MODE_NAMES[other]}'s">${uiSprite(this.mode)}<span>${MODE_NAMES[this.mode]}</span><b aria-hidden="true">${controlIcon("swap")}</b></button>`
@@ -161,7 +160,7 @@ export class EquipmentPanel {
   }
 
   private filtersHtml() {
-    const cats = `<div class="tree-tabs equip-filter" role="group" aria-label="Category"><button data-eq-cat="all" aria-pressed="${this.category === "all"}">All</button>${CATEGORY_IDS.map((c) =>
+    const cats = `<div class="tree-tabs equip-filter" role="group" aria-label="Category"><button data-eq-cat="all" aria-pressed="${this.category === "all"}">All</button>${availableCategories(this.e).map((c) =>
       `<button data-eq-cat="${c}" aria-pressed="${this.category === c}" title="${CATEGORIES[c].plural}" aria-label="${CATEGORIES[c].plural}">${categoryIcon(c)}</button>`).join("")}</div>`;
     const rars = `<div class="tree-tabs equip-filter" role="group" aria-label="Rarity"><button data-eq-rar="all" aria-pressed="${this.rarity === "all"}">Any rarity</button>${EQUIP_RARITIES.map((r) =>
       `<button data-eq-rar="${r}" aria-pressed="${this.rarity === r}" class="rar-${r}">${RARITY_TIERS[r].name}</button>`).join("")}</div>`;
@@ -326,13 +325,31 @@ export class EquipmentPanel {
     modal.showModal();
   }
 
+  // --- Craft: deterministic Standard pieces from base resources ---
+
+  private craftHtml() {
+    return `<h3 class="eq-section">Craft equipment</h3><p class="hint">A Common piece costs ${CRAFT_MATERIAL} of each resource shown. Chestplates use all four and provide superior defense and vitality. Other slots await future unlocks.</p>
+      <div class="eq-crafts">${availableCategories(this.e).map(c => {
+        const def = standardOf(c), ready = this.game.free || hasMaterials(this.e.materials, c, CRAFT_MATERIAL);
+        const price = materialsOf(c).map(m => `<span title="${EQUIP_MATERIALS[m].name}">${materialIcon(m)} ${CRAFT_MATERIAL}</span>`).join(" + ");
+        return `<article class="eq-craft" data-eq-recipe="${c}">${itemIcon(def.id)}<strong>${def.name}</strong><p>${def.identity}</p><div class="eq-recipe-cost">${price}</div><button data-eq-craft="${c}"${ready ? "" : " disabled"}>Craft</button></article>`;
+      }).join("")}</div>`;
+  }
+
+  private craft(category: CategoryId) {
+    const result = this.game.equipment.craft(category);
+    if (typeof result === "string") return;
+    this.changed();
+    this.showResult("Craft complete!", [result]);
+  }
+
   // --- Acquire: Gem pulls ---
 
   private pullsHtml() {
     const c = this.pullCategory, all = c === "all", gems = this.game.save.gems;
     const off = `<span class="pull-off">−${PULL_ALL_DISCOUNT}%</span>`;
-    const cats = `<button class="pull-cat pull-all" data-eq-pullcat="all" aria-pressed="${all}">${off}<span class="pull-all-icons">${GRID.slice(0, 4).map((id) => categoryIcon(id)).join("")}</span><span>All types</span><small>Discounted</small></button>`
-      + CATEGORY_IDS.map((id) => `<button class="pull-cat" data-eq-pullcat="${id}" aria-pressed="${c === id}">${categoryIcon(id)}<span>${CATEGORIES[id].name}</span><small>${this.e.pity[id]}/${PITY}</small></button>`).join("");
+    const cats = `<button class="pull-cat pull-all" data-eq-pullcat="all" aria-pressed="${all}">${off}<span class="pull-all-icons">${availableCategories(this.e).slice(0, 4).map((id) => categoryIcon(id)).join("")}</span><span>All types</span><small>Discounted</small></button>`
+      + availableCategories(this.e).map((id) => `<button class="pull-cat" data-eq-pullcat="${id}" aria-pressed="${c === id}">${categoryIcon(id)}<span>${CATEGORIES[id].name}</span><small>${this.e.pity[id]}/${PITY}</small></button>`).join("");
     const rates = EQUIP_RARITIES.map((r) => `${rarityTag(r)} ${PULL_RATES[r]}%`).join(" ");
     const button = (n: PullCount) => {
       const price = pullGems(n, all), short = !this.game.free && gems < price;
@@ -427,6 +444,7 @@ export class EquipmentPanel {
         this.rerender();
       },
       eqUnpick: (v) => { this.copies = this.copies.filter((id) => id !== v); this.rerender(); },
+      eqCraft: (v) => this.craft(v as CategoryId),
       eqPullcat: (v) => { this.pullCategory = v as CategoryId | "all"; this.rerender(); },
       eqPull: (v) => this.pull(Number(v) as PullCount),
     };
@@ -448,10 +466,10 @@ export class EquipmentPanel {
    * the page's heading. */
   showHelp() {
     const salvage = EQUIP_RARITIES.map((r) => `${RARITY_TIERS[r].name} ${RARITY_TIERS[r].salvage}`).join(" · ");
-    showHelp(this.ctx, "GEAR", "Equipment", `<p><b>Wearing.</b> Each hero wears one piece of each kind; the Tower and the Delve keep separate loadouts. Tap a piece to equip, level or lock it. Equipment Chests hold Standard pieces; Gem pulls bring Unique ones.</p>
-      <p><b>Assemble.</b> Three copies of a piece at the same rarity (Uncommon or above; Common pieces never merge) make one of the next rarity, with a higher level cap. The piece kept keeps its level, effect slots and Refinement; what was put into the others is lost. Locked and worn copies don't count. Auto-assemble lists every merge your unworn pieces make at once, to make all you leave checked.</p>
+    showHelp(this.ctx, "GEAR", "Equipment", `<p><b>Wearing.</b> Each hero wears one piece of each kind; the Tower and the Delve keep separate loadouts. Tap a piece to equip, level or lock it. Start with Helmet, Shield, Chestplate, Sword and Boots. Other slots await future unlocks. Equipment Chests hold unlocked Standard pieces; Gem pulls bring unlocked Unique ones.</p>
+      <p><b>Craft.</b> Craft Common Standard pieces with four base resources. Helmets use Padding, Shields Rivets, Swords Whetstones and Boots Hobnails. Chestplates use all four and have superior intrinsic effects. Later pieces combine two resources, such as Rivets and Padding for a Cape. Leveling and Refinement use the same recipes.</p><p><b>Assemble.</b> Three copies of a piece at the same rarity (Uncommon or above; Common pieces never merge) make one of the next rarity, with a higher level cap. The piece kept keeps its level, effect slots and Refinement; what was put into the others is lost. Locked and worn copies don't count. Auto-assemble lists every merge your unworn pieces make at once, to make all you leave checked.</p>
       <p><b>Acquire.</b> Each pull brings a Unique piece at a rolled rarity, of the chosen category, or of a random one for ${PULL_ALL_DISCOUNT}% less. The ${PITY}th pull in a row without a Rare in a category is a Rare.</p>
-      <p><b>Salvage.</b> Dismantling turns a piece into its category's material (${salvage}; Unique twice that), not returning upgrades. Locked and worn pieces are never included; press Select to choose pieces one by one. With Auto-salvage on, Common pieces Equipment Chests hold are dismantled as they are found, and those Gem pulls bring once pulled.</p>`);
+      <p><b>Salvage.</b> Dismantling turns a piece into its recipe's first base resource (${salvage}; Unique twice that), not returning upgrades. Locked and worn pieces are never included; press Select to choose pieces one by one. With Auto-salvage on, Common pieces Equipment Chests hold are dismantled as they are found, and those Gem pulls bring once pulled.</p>`);
   }
 
   private rerender() {
@@ -490,10 +508,10 @@ export class EquipmentPanel {
   /** What the next level costs and the buttons that buy it, or, at the
    * rarity's highest level, what merging up would bring. */
   private levelHtml(item: EquipItem) {
-    const cost = levelCost(item), mat = materialOf(categoryOf(item));
+    const cost = levelCost(item), mat = categoryOf(item);
     if (cost) {
       const off = this.affords(cost, mat) ? "" : " disabled";
-      return `<p class="level-cost">Next level: ${this.costText(cost, mat)} ${EQUIP_MATERIALS[mat].name}</p>
+      return `<p class="level-cost">Next level: ${this.costText(cost, mat)}</p>
         <div class="dialog-actions"><button id="eq-level"${off}>${ACTION_ICONS.upgrade} Level up</button><button id="eq-level10"${off}>+10</button><button id="eq-levelmax"${off}>Max</button></div>`;
     }
     const tier = RARITY_TIERS[item.rarity], next = tier.next && RARITY_TIERS[tier.next];
@@ -502,7 +520,7 @@ export class EquipmentPanel {
 
   /** What has been spent on the piece, and why it can't be used up, if it can't. */
   private notesHtml(item: EquipItem) {
-    const invested = item.spent ? `<p class="hint">Invested: ${currencyAmount(item.spent.gold)} Gold and ${item.spent.material} ${EQUIP_MATERIALS[materialOf(categoryOf(item))].name}.</p>` : "";
+    const invested = item.spent ? `<p class="hint">Invested: ${currencyAmount(item.spent.gold)} Gold and ${item.spent.material} materials.</p>` : "";
     const protectedNote = isProtected(this.e, item) ? `<p class="hint">${item.locked ? "Locked" : "Worn"}: it can't be dismantled or used up in a merge until you ${item.locked ? "unlock it" : "take it off"}.</p>` : "";
     return invested + protectedNote;
   }
@@ -536,12 +554,12 @@ export class EquipmentPanel {
   }
 
   /** A price in Gold and `mat`, as icons and amounts. */
-  private costText(c: { gold: number; material: number }, mat: EquipMaterialId) {
-    return `${uiSprite("gold", "ui-sprite gold-icon")} ${priceAmount(c.gold)} + ${materialIcon(mat)} ${c.material}`;
+  private costText(c: { gold: number; material: number }, category: CategoryId) {
+    return `${uiSprite("gold", "ui-sprite gold-icon")} ${priceAmount(c.gold)} + ${materialsOf(category).map(m => `<span title="${EQUIP_MATERIALS[m].name}">${materialIcon(m)} ${c.material}</span>`).join(" + ")}`;
   }
   /** Whether the Gold and `mat` held pay `c` (always, with free purchases on). */
-  private affords(c: { gold: number; material: number }, mat: EquipMaterialId) {
-    return this.game.free || (this.game.save.gold >= c.gold && this.e.materials[mat] >= c.material);
+  private affords(c: { gold: number; material: number }, category: CategoryId) {
+    return this.game.free || (this.game.save.gold >= c.gold && hasMaterials(this.e.materials, category, c.material));
   }
 
   /** Where `item` stands on its way up: the level cap, and what the next
@@ -629,7 +647,7 @@ export class EquipmentPanel {
    * Choice, with their prices, for a slot holding an effect and no offer. */
   private slotActionsHtml(item: EquipItem, slot: EffectSlot) {
     if (!slot.effect || slot.offer) return "";
-    const mat = materialOf(categoryOf(item)), rc = refineCost(item), ic = improveCost(item);
+    const mat = categoryOf(item), rc = refineCost(item), ic = improveCost(item);
     const canImprove = slot.rarity && rarityRank(slot.rarity) < rarityRank(effectCap(item));
     return `<p class="level-cost">Refine: ${this.costText(rc, mat)}</p>
       <div class="dialog-actions"><button id="eq-refine"${this.affords(rc, mat) ? "" : " disabled"}>Refine</button>

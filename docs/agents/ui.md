@@ -16,7 +16,7 @@ Its `INSPIRATION_SPRITE` and `BREAKTHROUGH_SPRITE` select dedicated native PNGs 
 Inspiration is a compact blue-white spark; Breakthrough is a larger brass/ivory eight-point flash on the same 24-pixel canvas.
 `skillSprite` in `ui/dom.ts` picks each skill node's sprite, falling back on Inspiration's.
 The progression selector in `skill-tree-page.ts` uses `.skill-tree-tabs`, with separate icon and name/points wrappers so labels are never anonymous grid items.
-Its grid wraps to fit the available width, and each button keeps a fixed 24px icon beside a single-line name and optional points; rules are scoped to the Upgrades page and do not change card trees or other page tabs.
+Its grid wraps to fit the available width, and each button keeps a fixed 24px icon above a single-line name and optional points; rules are scoped to the Upgrades page and do not change card trees or other page tabs.
 DOM icons, relic pendants, tutorial hands and Equipment actions use those themed pairs; `sprites/cards.ts` specifies distinct layered PNG card faces with live card names.
 `badge-token.ts` shares PNG symbols, rarity frames and the live-number level star between the Deck, card marks, hand, details and draw reveals.
 Gate signs remain live text, visible only with a loaded replacement.
@@ -122,3 +122,7 @@ Canvas pointer-up resolves the tile in the last rendered camera view; the contro
 
 The navigation and frame loop own only Tower/Delve and the supported progression pages; the retired city-defense page, tab and debug hook are removed.
 Legacy remains a skill-tree upgrade and no longer advertises another game mode.
+
+Equipment's List view reserves a 3×3 grid with Helmet/Chestplate/Boots down the center and Shield/Sword left/right.
+Future corners render empty until open; a preserved legacy Ring sits below the grid.
+Its four views include Craft, which displays all recipe inputs and disables crafting until every input is affordable; Acquire and category filters list only open categories.

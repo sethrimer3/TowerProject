@@ -21,8 +21,10 @@ const run = (args) => new Promise((resolve, reject) => {
   p.on("error", reject);
   p.on("exit", code => code === 0 ? resolve() : reject(new Error(`ImageMagick exit ${code}`)));
 });
+// Limit equipment authoring to named icons without touching shipped atlases.
+const equipmentOnly = process.argv.find(a => a.startsWith("--equipment-only="))?.split("=")[1]?.split(",");
 const detailsOnly = process.argv.includes("--details-only");
-const cardsOnly = detailsOnly || process.argv.includes("--cards-only");
+const cardsOnly = !!equipmentOnly || detailsOnly || process.argv.includes("--cards-only");
 const previousManifest = JSON.parse(readFileSync(join(out,"manifest.json"),"utf8"));
 // Named enemy PNGs are native master assets now, not conversions
 // from a second legacy runtime directory. Preserve them and extension atlases.
@@ -55,7 +57,7 @@ if (!cardsOnly) for (const [file, ids] of [["icons.png", ICON_SPRITES], ["world.
 
 // Small dressing exports at 12 native pixels: it paints at 1:1 inside a
 // 24-pixel tile, keeping the same pixel density as the larger objects.
-if (!process.argv.includes("--cards-only")) for (const [i, id] of DETAIL_SPRITES.entries()) {
+if (!equipmentOnly && !process.argv.includes("--cards-only")) for (const [i, id] of DETAIL_SPRITES.entries()) {
   const image = join(source, "details.png");
   const edges = [40, 350, 655, 940, 1230];
   const row = Math.floor(i / 4), x = i % 4 * 313;
@@ -76,7 +78,8 @@ const chunk = (type, data) => {
   let c=0xffffffff; for(const b of Buffer.concat([name,data])) c=crcTable[(c^b)&255]^(c>>>8);
   sum.writeUInt32BE((c^0xffffffff)>>>0); return Buffer.concat([len,name,data,sum]);
 };
-if (!cardsOnly) for (const [id, rows] of Object.entries(ICON_ROWS)) {
+if (!cardsOnly || equipmentOnly) for (const [id, rows] of Object.entries(ICON_ROWS)) {
+  if (equipmentOnly && !equipmentOnly.includes(id)) continue;
   const raw = Buffer.alloc((24*4+1)*24);
   rows.forEach((row,y)=>[...row].forEach((key,x)=>{
     const color=ICON_PALETTE[key]; if(!color)return;
@@ -90,7 +93,7 @@ if (!cardsOnly) for (const [id, rows] of Object.entries(ICON_ROWS)) {
   manifest.assets[`equip-${id}`]={file:`equip-${id}.png`,width:24,height:24};
 }
 
-if (!detailsOnly) for (const [id, layers] of Object.entries(CARD_SPRITE_LAYERS)) {
+if (!equipmentOnly && !detailsOnly) for (const [id, layers] of Object.entries(CARD_SPRITE_LAYERS)) {
   const frame = join(root,"public/assets/ui/frames/slot.png");
   await run(["-size","48x64","xc:none","-filter","point",
     "(",frame,"-crop","48x6+0+0","+repage",")","-geometry","+0+0","-composite",

@@ -20,19 +20,28 @@ What a loadout does is never written into the hero's stats: `loadout(save, mode)
 
 ## 3. Categories and materials
 
-Each category levels with its own upgrade material. Materials are currencies (`save.equipment.materials`), not inventory pieces.
+Five categories open with Equipment: Helmet, Shield, Chestplate, Sword and Boots, in a plus with Shield left and Sword right.
+The remaining categories have no automatic unlock schedule; already-owned pieces keep their categories usable.
+There are exactly four resource currencies (`save.equipment.materials`), not inventory pieces.
+Craft, level, Refine and Improve use every input in the category recipe; salvage returns only its first input.
 
-| Category | Role | Material | Material theme |
-|---|---|---|---|
-| Weapon | Offense: ATK, boss fights and what kills pay | Whetstone | A fine-grit stone that hones every edge. |
-| Chestplate | Defense: DEF, max HP and sustain | Iron Rivets | Rivets and plate scraps, hammered into armor. |
-| Helmet | The first blow: shroud, and what each fight teaches | Quilted Padding | Thick lining that softens the first blow. |
-| Gloves | Handling: ATK, keys and potions | Tanned Leather | Supple hide for a sure grip. |
-| Boots | Movement: speed, Dash and fresh floors | Hobnails | Iron studs for sure footing on worn stone. |
-| Cape | Fortune: Gold, Silver and materials | Spun Silk | Fine thread that catches the light, and the luck. |
-| Belt | Provisions: potions, max HP and Silver | Brass Buckles | Clasps that keep provisions close at hand. |
-| Ring | Power: percentages of ATK, DEF and max HP | Moonstone | A pale stone that holds a quiet charge. |
-| Amulet | Life: max HP, regeneration and healing | Amber | Warm resin around a trapped spark of life. |
+| Category | Recipe inputs | Starting position |
+|---|---|---|
+| Helmet | Quilted Padding | Top |
+| Shield | Iron Rivets | Left |
+| Sword | Whetstone | Right |
+| Boots | Hobnails | Bottom |
+| Chestplate | Iron Rivets + Quilted Padding + Whetstone + Hobnails | Center |
+| Cape | Iron Rivets + Quilted Padding | Future top left |
+| Gloves | Quilted Padding + Whetstone | Future top right |
+| Belt | Iron Rivets + Hobnails | Future bottom left |
+| Amulet | Whetstone + Hobnails | Future bottom right |
+| Ring | Whetstone + Quilted Padding | Future; legacy owned Ring below the grid |
+
+The Craft view makes a Common Standard for 25 of every input, without Gold or Gems; full inventories and locked categories refuse before any payment.
+Chestplate intrinsic bases and per-level growth are twice their former values, giving superior effects for the four-resource recipe.
+Gem pulls and Equipment Chests choose only open categories; Supply Chests and mission rewards choose only the four base resources.
+Old five removed material balances split into their recipe's two inputs, preserving every unit; owned equipment, slots, levels and loadouts remain.
 
 Each category's icon (on filters and empty slots), each piece's icon (every Unique and the Silver Band its own, so pieces of a category tell apart at a glance; the other Standard pieces wear their category's), each material's icon, and the dismantle (hammer), merge (three arrows into one), level up (arrow) and lock icons are 12 × 12 pixel art drawn as inline SVG (`ui/equipment-icons.ts`).
 
@@ -46,7 +55,7 @@ Rarity always shows as a word and a letter mark (C, U, R) beside its colour, and
 | Uncommon | U | 1.25 | 40 | 3 → 1 Rare | 20 |
 | Rare | R | 1.6 | 60 | top (for now) | 75 |
 
-Common pieces never merge (`next` is null, so `mergeFodder` offers none and `merge` refuses them as `unmergeable`): they are only worn as they are or salvaged, and Uncommon comes only from drops and pulls.
+Common pieces never merge (`next` is null, so `mergeFodder` offers none and `merge` refuses them as `unmergeable`): they are only worn as they are or salvaged, and Uncommon comes only from drops and pulls; Common Standards can also be crafted.
 
 A Unique piece dismantles for twice its rarity's amount (`UNIQUE_SALVAGE`), since it was bought with Gems.
 
@@ -96,14 +105,23 @@ Each category has one **Standard** piece (from bosses) and three **Unique** piec
 | Reaper's Scythe | Unique | Clears floors for profit: more XP and Silver from every kill | +2 ATK; +5% XP from kills | +2.5 ATK; +6.25% XP from kills; +6.25% Silver found | +3.2 ATK; +8% XP from kills; +8% Silver found; 0.8% of max HP healed after each victory | 0.3 / 0.2 / 0.2 / 0.01 |
 | Bloodprice Blade | Unique | High risk: the most ATK of any weapon, paid for in max HP | +8% ATK; −10% max HP | +10% ATK; −10% max HP; +3.75 ATK | +12.8% ATK; −10% max HP; +4.8 ATK; 2.4% of max HP healed after each victory | 0.2 / fixed / 0.5 / 0.03 |
 
+### Shields
+
+| Piece | Class | Identity | Common, level 1 | Uncommon, level 1 | Rare, level 1 | Growth a level (each line, before rarity) |
+|---|---|---|---|---|---|---|
+| Iron Shield | Standard | Reliable DEF and protection | +2 DEF | +2.5 DEF; +3.75 shroud (damage blocked each fight) | +3.2 DEF; +4.8 shroud (damage blocked each fight); +3.2% DEF | 0.4 / 0.5 / 0.1 |
+| Warden's Shield | Unique | Blocks the first blows | +5 shroud (damage blocked each fight) | +6.25 shroud (damage blocked each fight); +2.5 DEF | +8 shroud (damage blocked each fight); +3.2 DEF; +4.8% DEF | 1 / 0.3 / 0.1 |
+| Bulwark Shield | Unique | Steady defense and vitality | +3 DEF | +3.75 DEF; +18.75 max HP | +4.8 DEF; +24 max HP; +4.8% DEF | 0.5 / 3 / 0.1 |
+| Dawn Shield | Unique | Regains health between battles | +1 DEF; 2% of max HP healed on each new floor | +1.25 DEF; 2.5% of max HP healed on each new floor; +18.75 max HP | +1.6 DEF; 3.2% of max HP healed on each new floor; +24 max HP; +4.8 shroud (damage blocked each fight) | 0.25 / 0.05 / 3 / 0.6 |
+
 ### Chestplates
 
 | Piece | Class | Identity | Common, level 1 | Uncommon, level 1 | Rare, level 1 | Growth a level (each line, before rarity) |
 |---|---|---|---|---|---|---|
-| Steel Cuirass | Standard | Reliable raw DEF | +2 DEF | +2.5 DEF; +2.5% DEF | +3.2 DEF; +3.2% DEF; +32 max HP | 0.4 / 0.1 / 4 |
-| Bastion Plate | Unique | Raw defense: DEF, more DEF, then a shroud for the first blows | +3 DEF | +3.75 DEF; +3.75% DEF | +4.8 DEF; +4.8% DEF; +8 shroud (damage blocked each fight) | 0.5 / 0.12 / 1 |
-| Giant's Hauberk | Unique | A deep pool of HP to outlast long fights | +30 max HP | +37.5 max HP; +5% max HP | +48 max HP; +6.4% max HP; +3.2 DEF | 6 / 0.12 / 0.3 |
-| Verdant Mail | Unique | Sustain: regains HP as the hero walks and climbs | +0.5 HP regained each step; +1 DEF | +0.63 HP regained each step; +1.25 DEF; 2.5% of max HP healed on each new floor | +0.8 HP regained each step; +1.6 DEF; 3.2% of max HP healed on each new floor; 1.6% of max HP healed after each victory | 0.05 / 0.2 / 0.05 / 0.02 |
+| Steel Cuirass | Standard | Superior DEF and vitality | +4 DEF | +5 DEF; +5% DEF | +6.4 DEF; +6.4% DEF; +64 max HP | 0.8 / 0.2 / 8 |
+| Bastion Plate | Unique | Raw defense: DEF, more DEF, then a shroud for the first blows | +6 DEF | +7.5 DEF; +7.5% DEF | +9.6 DEF; +9.6% DEF; +16 shroud (damage blocked each fight) | 1 / 0.24 / 2 |
+| Giant's Hauberk | Unique | A deep pool of HP to outlast long fights | +60 max HP | +75 max HP; +10% max HP | +96 max HP; +12.8% max HP; +6.4 DEF | 12 / 0.24 / 0.6 |
+| Verdant Mail | Unique | Sustain: regains HP as the hero walks and climbs | +1 HP regained each step; +2 DEF | +1.25 HP regained each step; +2.5 DEF; 5% of max HP healed on each new floor | +1.6 HP regained each step; +3.2 DEF; 6.4% of max HP healed on each new floor; 3.2% of max HP healed after each victory | 0.1 / 0.4 / 0.1 / 0.04 |
 
 ### Helmets
 
@@ -170,7 +188,7 @@ Each category has one **Standard** piece (from bosses) and three **Unique** piec
 
 ## 7. Leveling
 
-Raising a piece one level costs Gold and its category's material:
+Raising a piece one level costs Gold and the listed amount of every input in its recipe:
 
 - Gold: `5 × L × (L + 9)`
 - Material: `⌈L × (L + 10) / 20⌉`
@@ -200,13 +218,13 @@ Three pieces of the **same definition and rarity** make one of the next rarity. 
 
 ## 9. Dismantling
 
-Dismantling breaks pieces into their category's material (section 4 amounts). From the List view's Select mode (any number of pieces, across categories) or its Salvage quick buttons (every unprotected piece of a rarity). The confirmation shows the count, the rarities, the materials returned, and a warning for valuable pieces (Rare, Unique or leveled). Locked and worn pieces can't be selected or dismantled; unlock or take them off first. The materials gained rise from their balances (*+20*).
+Dismantling breaks pieces into their recipe's first base resource (section 4 amounts). From the List view's Select mode (any number of pieces, across categories) or its Salvage quick buttons (every unprotected piece of a rarity). The confirmation shows the count, the rarities, the materials returned, and a warning for valuable pieces (Rare, Unique or leveled). Locked and worn pieces can't be selected or dismantled; unlock or take them off first. The materials gained rise from their balances (*+20*).
 
 The Salvage section also holds the **Auto-salvage common drops** toggle (`save.equipment.autoSalvage`, off by default, kept between sessions): while it is on, a Common piece an Equipment Chest holds is dismantled at once into its material (`keepDrop`) instead of joining the inventory, and the status line says *Auto-salvaged · +5 …* (on the board, the material rises as its icon with its count). A Gem pull's Common pieces are dismantled the same way once pulled (`EquipmentDesk.pull`): the result screen still shows each, dimmed, with the material it returned. Uncommon and Rare pieces are always kept.
 
 ## 10. Inventory
 
-At most **500** pieces (`EQUIPMENT_CAPACITY`). An Equipment Chest's piece that finds the inventory full is dismantled at once into its material; a Gem pull needs room for every piece it brings. The List view shows the loadout (nine slots in a 3×3 grid shaped like the hero: ring, helmet, amulet; weapon, chestplate, cape; gloves, boots, belt; the Tower/Delve switch at its top left; an empty slot shows only its category below) over the inventory as a grid of square tiles. It filters by category and by rarity together, sorts by rarity, level, category, newest or name, and selects several pieces at once to dismantle or (two) to compare. Each tile shows the icon on its rarity's colour, the rarity mark, the level, a check when the loadout shown wears it, a lock, and a star for a Unique; tapping it opens the piece.
+At most **500** pieces (`EQUIPMENT_CAPACITY`). An Equipment Chest's piece that finds the inventory full is dismantled at once into its material; a Gem pull needs room for every piece it brings. The List view shows the loadout (five starting slots in a plus: Helmet top, Shield left, Chestplate center, Sword right and Boots below; later corners stay empty until opened and legacy owned Rings sit below; the Tower/Delve switch at its top left; an empty slot shows only its category below) over the inventory as a grid of square tiles. It filters by category and by rarity together, sorts by rarity, level, category, newest or name, and selects several pieces at once to dismantle or (two) to compare. Each tile shows the icon on its rarity's colour, the rarity mark, the level, a check when the loadout shown wears it, a lock, and a star for a Unique; tapping it opens the piece.
 
 ## 11. Equipment Chests (Standard pieces)
 
@@ -216,7 +234,7 @@ Kills drop no equipment. While the run's hand holds the **Chest** card, each tre
 |---:|---:|---:|
 | 67% | 30% | 3% |
 
-The category is even among the nine.
+The category is even among the open categories.
 
 A chest's kind is fixed as its floor is generated, not as it opens. As the run goes inside, it fixes its odds (`run.chestOdds`, set by `Game.dealHand`): the hand's Chest card's 0.5% and 1.5%, each raised by the worn **Supply and Equipment Chest chance** (`chestFind`: Kingsbane, Gatherer's Shroud, Spire Signet and the Bounty slot effect; +5% makes 0.5% into 0.525%). Each treasure tile's fixed number (`chestKindAt` in `board.ts`, from the floor's seed and the tile) under the Equipment Chest's chance makes one, then under both chances a Supply Chest, so higher odds only ever add more. The board shows a Supply Chest with a light blue glow and one star in its tile's upper-left corner, and an Equipment Chest with a purple glow and two stars, and both stay on the floor once it is opened (`render/chest-marks.ts`).
 
@@ -230,7 +248,7 @@ It holds **5** in tower I and **2** more in each tower after (7 in tower II, 9 i
 
 ## 13. Gem pulls (Unique pieces)
 
-The Acquire view pulls in one chosen category, or of **all types** for 10% less (`PULL_ALL_DISCOUNT`): each pull brings one of its category's three Uniques, evenly, at a rolled rarity, an all-types pull drawing its category evenly from the nine first. The pieces pulled show on a full-screen result.
+The Acquire view pulls in one chosen category, or of **all types** for 10% less (`PULL_ALL_DISCOUNT`): each pull brings one of its category's three Uniques, evenly, at a rolled rarity, an all-types pull drawing its category evenly from the open categories first. The pieces pulled show on a full-screen result.
 
 | Pull | Price |
 |---|---:|
@@ -254,7 +272,7 @@ The Acquire view pulls in one chosen category, or of **all types** for 10% less 
 | `unlocked`, `seen` | Opened (by Tower II's floor 60 Goal); the Equipment screen seen (the Gear dot) |
 | `items` | Each piece: `id` (`e1`, `e2` …, never reused), `def` (catalogue id), `rarity`, `level`, `locked?`, `spent?` (Gold and material invested), `slots` (one per slot opened: `effect?`, `rarity?`, `refinement?`, `choicesUsed?`, `offer?`) |
 | `equipped.tower`, `equipped.delve` | Category → item id, per mode |
-| `materials` | The nine upgrade material balances |
+| `materials` | The four base resource balances |
 | `pity` | Pulls since the last Rare, per category |
 | `nextId`, `rng` | The next item id; the stream pulls and effect candidates draw from |
 
@@ -300,6 +318,7 @@ Each effect (`SLOT_EFFECTS` in `equipment/slot-effects.ts`) has an id, a name, a
 | Category | Families | Effects |
 |---|---|---|
 | Weapon | Might, Lore | 7 |
+| Shield | Guard, Vitality | 6 |
 | Chestplate | Guard, Vitality | 6 |
 | Helmet | Guard, Vitality, Lore | 9 |
 | Gloves | Might, Recovery | 7 |

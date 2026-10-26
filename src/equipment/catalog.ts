@@ -1,47 +1,56 @@
-// The Equipment system's static data: the nine categories, their upgrade
+// The Equipment system's static data: the equipment categories, their shared upgrade
 // materials, the effect kinds an item can carry, and every item definition
-// (Standard pieces from bosses, named Unique pieces from Gem pulls). Saves
+// (Standard pieces from chests/crafting, named Unique pieces from Gem pulls). Saves
 // name items by definition id only, so this catalogue can change without
 // touching saved equipment. Balance numbers (rarity caps, costs, drop and
 // pull rates) live in `balance.ts`; see docs/EQUIPMENT.md.
 import type { Mode } from "../entities.ts";
 import type { EquipRarity } from "./balance.ts";
 
-/** The nine equipment slots: the hero wears one piece of each. */
-export type CategoryId = "weapon" | "chestplate" | "helmet" | "gloves" | "boots" | "cape" | "belt" | "ring" | "amulet";
-export const CATEGORY_IDS: readonly CategoryId[] = ["weapon", "chestplate", "helmet", "gloves", "boots", "cape", "belt", "ring", "amulet"];
+/** Slots retained by the catalogue, including future unlocks. */
+export type CategoryId = "weapon" | "shield" | "chestplate" | "helmet" | "gloves" | "boots" | "cape" | "belt" | "ring" | "amulet";
+export const CATEGORY_IDS: readonly CategoryId[] = ["weapon", "shield", "chestplate", "helmet", "gloves", "boots", "cape", "belt", "ring", "amulet"];
+export const STARTER_CATEGORIES: readonly CategoryId[] = ["helmet", "shield", "chestplate", "weapon", "boots"];
 
-/** The upgrade material each category levels with, a currency apart from
- * the crafting materials (it takes no inventory space). */
-export type EquipMaterialId = "whetstone" | "rivets" | "padding" | "leather" | "hobnails" | "silk" | "buckles" | "moonstone" | "amber";
-export const EQUIP_MATERIAL_IDS: readonly EquipMaterialId[] = ["whetstone", "rivets", "padding", "leather", "hobnails", "silk", "buckles", "moonstone", "amber"];
-
-export type CategoryDef = { name: string; plural: string; role: string; material: EquipMaterialId };
+/** Four base resources; recipes refer to these instead of separate currencies. */
+export type EquipMaterialId = "whetstone" | "rivets" | "padding" | "hobnails";
+export const EQUIP_MATERIAL_IDS: readonly EquipMaterialId[] = ["padding", "rivets", "whetstone", "hobnails"];
+export type CategoryDef = { name: string; plural: string; role: string; materials: readonly EquipMaterialId[] };
 export const CATEGORIES: Record<CategoryId, CategoryDef> = {
-  weapon: { name: "Weapon", plural: "Weapons", role: "Offense: ATK, boss fights and what kills pay", material: "whetstone" },
-  chestplate: { name: "Chestplate", plural: "Chestplates", role: "Defense: DEF, max HP and sustain", material: "rivets" },
-  helmet: { name: "Helmet", plural: "Helmets", role: "The first blow: shroud, and what each fight teaches", material: "padding" },
-  gloves: { name: "Gloves", plural: "Gloves", role: "Handling: ATK, keys and potions", material: "leather" },
-  boots: { name: "Boots", plural: "Boots", role: "Movement: speed, Dash and fresh floors", material: "hobnails" },
-  cape: { name: "Cape", plural: "Capes", role: "Fortune: Gold, Silver and materials", material: "silk" },
-  belt: { name: "Belt", plural: "Belts", role: "Provisions: potions, max HP and Silver", material: "buckles" },
-  ring: { name: "Ring", plural: "Rings", role: "Power: percentages of ATK, DEF and max HP", material: "moonstone" },
-  amulet: { name: "Amulet", plural: "Amulets", role: "Life: max HP, regeneration and healing", material: "amber" },
+  weapon: { name: "Sword", plural: "Swords", role: "Offense: ATK, boss fights and what kills pay", materials: ["whetstone"] },
+  shield: { name: "Shield", plural: "Shields", role: "Guard: DEF and protection from the first blow", materials: ["rivets"] },
+  chestplate: { name: "Chestplate", plural: "Chestplates", role: "Superior armor: stronger defense, vitality and sustain", materials: ["rivets", "padding", "whetstone", "hobnails"] },
+  helmet: { name: "Helmet", plural: "Helmets", role: "The first blow: shroud, and what each fight teaches", materials: ["padding"] },
+  gloves: { name: "Gloves", plural: "Gloves", role: "Handling: ATK, keys and potions", materials: ["padding", "whetstone"] },
+  boots: { name: "Boots", plural: "Boots", role: "Movement: speed, Dash and fresh floors", materials: ["hobnails"] },
+  cape: { name: "Cape", plural: "Capes", role: "Fortune: Gold, Silver and materials", materials: ["rivets", "padding"] },
+  belt: { name: "Belt", plural: "Belts", role: "Provisions: potions, max HP and Silver", materials: ["rivets", "hobnails"] },
+  ring: { name: "Ring", plural: "Rings", role: "Power: percentages of ATK, DEF and max HP", materials: ["whetstone", "padding"] },
+  amulet: { name: "Amulet", plural: "Amulets", role: "Life: max HP, regeneration and healing", materials: ["whetstone", "hobnails"] },
 };
-
 export type EquipMaterialDef = { name: string; category: CategoryId; description: string };
 export const EQUIP_MATERIALS: Record<EquipMaterialId, EquipMaterialDef> = {
-  whetstone: { name: "Whetstone", category: "weapon", description: "A fine-grit stone that hones every edge." },
-  rivets: { name: "Iron Rivets", category: "chestplate", description: "Rivets and plate scraps, hammered into armor." },
-  padding: { name: "Quilted Padding", category: "helmet", description: "Thick lining that softens the first blow." },
-  leather: { name: "Tanned Leather", category: "gloves", description: "Supple hide for a sure grip." },
-  hobnails: { name: "Hobnails", category: "boots", description: "Iron studs for sure footing on worn stone." },
-  silk: { name: "Spun Silk", category: "cape", description: "Fine thread that catches the light, and the luck." },
-  buckles: { name: "Brass Buckles", category: "belt", description: "Clasps that keep provisions close at hand." },
-  moonstone: { name: "Moonstone", category: "ring", description: "A pale stone that holds a quiet charge." },
-  amber: { name: "Amber", category: "amulet", description: "Warm resin around a trapped spark of life." },
+  whetstone: { name: "Whetstone", category: "weapon", description: "Hones swords and forms part of combined recipes." },
+  rivets: { name: "Iron Rivets", category: "shield", description: "Reinforces shields and forms part of combined recipes." },
+  padding: { name: "Quilted Padding", category: "helmet", description: "Lines helmets and forms part of combined recipes." },
+  hobnails: { name: "Hobnails", category: "boots", description: "Studs boots and forms part of combined recipes." },
 };
-export const materialOf = (category: CategoryId) => CATEGORIES[category].material;
+export const materialsOf = (category: CategoryId) => CATEGORIES[category].materials;
+/** Salvage returns the recipe's primary base resource. */
+export const materialOf = (category: CategoryId) => materialsOf(category)[0];
+/** Every input is charged in full, keeping four-resource armor more costly. */
+export const hasMaterials = (held: Record<EquipMaterialId, number>, category: CategoryId, amount: number) =>
+  materialsOf(category).every(m => held[m] >= amount);
+export function spendMaterials(held: Record<EquipMaterialId, number>, category: CategoryId, amount: number) {
+  for (const m of materialsOf(category)) held[m] -= amount;
+}
+
+/** Old mission rewards keep their amount, paying an equivalent base resource. */
+export function baseMaterial(id: unknown): EquipMaterialId | undefined {
+  if (EQUIP_MATERIAL_IDS.includes(id as EquipMaterialId)) return id as EquipMaterialId;
+  const legacy: Record<string, EquipMaterialId> = { leather: "whetstone", silk: "padding", buckles: "hobnails", moonstone: "whetstone", amber: "hobnails" };
+  return typeof id === "string" && Object.hasOwn(legacy, id) ? legacy[id] : undefined;
+}
 
 /** What an item can do, each read in one place: the loadout (stats, shroud,
  * Regen, starting keys), combat (`bossAttack`, `pierce`), the step rules (healing),
@@ -112,15 +121,24 @@ export const ITEMS: readonly ItemDef[] = [
     effects: [line("attack", 2, 0.3), line("xpGain", 5, 0.2), line("silverFind", 5, 0.2, U), line("victoryHeal", 0.5, 0.01, R)] },
   { id: "bloodpriceBlade", name: "Bloodprice Blade", category: "weapon", class: "unique", identity: "High risk: the most ATK of any weapon, paid for in max HP",
     effects: [line("attackPct", 8, 0.2), line("maxHpPct", -10, 0, { fixed: true }), line("attack", 3, 0.5, U), line("victoryHeal", 1.5, 0.03, R)] },
+  // Shields
+  { id: "ironShield", name: "Iron Shield", category: "shield", class: "standard", identity: "Reliable DEF and protection",
+    effects: [line("defense", 2, 0.4), line("shroud", 3, 0.5, U), line("defensePct", 2, 0.1, R)] },
+  { id: "wardensShield", name: "Warden's Shield", category: "shield", class: "unique", identity: "Blocks the first blows",
+    effects: [line("shroud", 5, 1), line("defense", 2, 0.3, U), line("defensePct", 3, 0.1, R)] },
+  { id: "bulwarkShield", name: "Bulwark Shield", category: "shield", class: "unique", identity: "Steady defense and vitality",
+    effects: [line("defense", 3, 0.5), line("maxHp", 15, 3, U), line("defensePct", 3, 0.1, R)] },
+  { id: "dawnShield", name: "Dawn Shield", category: "shield", class: "unique", identity: "Regains health between battles",
+    effects: [line("defense", 1, 0.25), line("floorHeal", 2, 0.05), line("maxHp", 15, 3, U), line("shroud", 3, 0.6, R)] },
   // Chestplates
-  { id: "steelCuirass", name: "Steel Cuirass", category: "chestplate", class: "standard", identity: "Reliable raw DEF",
-    effects: [line("defense", 2, 0.4), line("defensePct", 2, 0.1, U), line("maxHp", 20, 4, R)] },
+  { id: "steelCuirass", name: "Steel Cuirass", category: "chestplate", class: "standard", identity: "Superior DEF and vitality",
+    effects: [line("defense", 4, 0.8), line("defensePct", 4, 0.2, U), line("maxHp", 40, 8, R)] },
   { id: "bastionPlate", name: "Bastion Plate", category: "chestplate", class: "unique", identity: "Raw defense: DEF, more DEF, then a shroud for the first blows",
-    effects: [line("defense", 3, 0.5), line("defensePct", 3, 0.12, U), line("shroud", 5, 1, R)] },
+    effects: [line("defense", 6, 1), line("defensePct", 6, 0.24, U), line("shroud", 10, 2, R)] },
   { id: "giantsHauberk", name: "Giant's Hauberk", category: "chestplate", class: "unique", identity: "A deep pool of HP to outlast long fights",
-    effects: [line("maxHp", 30, 6), line("maxHpPct", 4, 0.12, U), line("defense", 2, 0.3, R)] },
+    effects: [line("maxHp", 60, 12), line("maxHpPct", 8, 0.24, U), line("defense", 4, 0.6, R)] },
   { id: "verdantMail", name: "Verdant Mail", category: "chestplate", class: "unique", identity: "Sustain: regains HP as the hero walks and climbs",
-    effects: [line("regen", 0.5, 0.05), line("defense", 1, 0.2), line("floorHeal", 2, 0.05, U), line("victoryHeal", 1, 0.02, R)] },
+    effects: [line("regen", 1, 0.1), line("defense", 2, 0.4), line("floorHeal", 4, 0.1, U), line("victoryHeal", 2, 0.04, R)] },
   // Helmets
   { id: "ironHelm", name: "Iron Helm", category: "helmet", class: "standard", identity: "Reliable max HP and DEF",
     effects: [line("maxHp", 15, 3), line("defense", 1, 0.25, U), line("shroud", 3, 0.5, R)] },

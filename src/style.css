@@ -2771,18 +2771,15 @@ nav button > span :is(img, svg) { display: block; width: 42px; height: 42px; max
 .page-tabs span { grid-row: span 2; margin-bottom: 0; }
 .page-tabs small { margin-top: 1px; }
 /* Skill trees wrap into readable selectors instead of squeezing every tree
-   into one row. Keep names and points together, beside a fixed-size icon. */
-#upgrades > .skill-tree-tabs { grid-auto-flow: row; grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr)); }
-#upgrades > .skill-tree-tabs button { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 54px; padding: 6px; }
+   into one row. Keep names and points together, below a fixed-size icon. */
+#upgrades > .skill-tree-tabs { grid-auto-flow: row; grid-template-columns: repeat(auto-fit, minmax(min(100%, 90px), 1fr)); gap: 6px; }
+#upgrades > .skill-tree-tabs button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 76px; padding: 8px 6px; text-align: center; }
 #upgrades > .skill-tree-tabs button > span { grid-row: auto; margin: 0; }
 #upgrades > .skill-tree-tabs .skill-tree-tab-icon { flex: none; width: 24px; height: 24px; font-size: 0; }
 #upgrades > .skill-tree-tabs .skill-tree-tab-icon :is(.sprite-icon, img) { width: 24px; height: 24px; }
-#upgrades > .skill-tree-tabs .skill-tree-tab-label { display: flex; flex-direction: column; gap: 3px; min-width: 0; font-size: 9px; letter-spacing: .4px; line-height: 1.25; }
+#upgrades > .skill-tree-tabs .skill-tree-tab-label { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0; font-size: 9px; letter-spacing: .4px; line-height: 1.25; }
 #upgrades > .skill-tree-tabs .skill-tree-tab-name { margin: 0; font-size: inherit; white-space: nowrap; }
 #upgrades > .skill-tree-tabs small { margin: 0; font-size: 7px; white-space: nowrap; }
-@media (max-width: 480px) {
-  #upgrades > .skill-tree-tabs { grid-template-columns: repeat(auto-fit, minmax(min(100%, 132px), 1fr)); }
-}
 .node-icon img { width: 38px; height: 38px; }
 .skill-node.locked .node-icon img { filter: grayscale(1); opacity: .48; }
 /* A card not yet unlocked is dimmed, not see-through, so no line or backdrop shows through it. */
@@ -5172,3 +5169,18 @@ html.trial-running :is(#focus-stat, #ignore-stat, #target-stat, #bomb-stat, #hea
 .proving-grounds-dialog #trial-reward { font-size: .8rem; line-height: 1.5; }
 .proving-grounds-dialog .trial-points { color: #b9d6e4; }
 .proving-grounds-dialog .trial-choice > span { display: block; margin-top: 6px; color: #f3dc9c; font-size: .8rem; }
+
+/* Four base materials and a plus-shaped starting loadout. */
+.eq-slot-reserved { visibility: hidden; pointer-events: none; }
+.eq-slot-ring { grid-column: 2; }
+.eq-views { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.eq-crafts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr)); gap: 10px; }
+.eq-craft { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px; border: 1px solid #526071; text-align: center; min-width: 0; }
+.eq-craft > .equip-icon { width: 36px; height: 36px; }
+.eq-craft p { margin: 0; font-size: 10px; }
+.eq-recipe-cost { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 5px; font-size: 10px; }
+.eq-recipe-cost > span { display: inline-flex; align-items: center; gap: 3px; }
+.eq-craft button { margin-top: auto; }
+
+.eq-views button { min-width: 0; font-size: 10px; letter-spacing: .3px; white-space: nowrap; }
+@media (max-width: 480px) { .eq-views button { font-size: 8px; } }

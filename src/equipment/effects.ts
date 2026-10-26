@@ -34,14 +34,14 @@ export function itemLines(item: Pick<EquipItem, "def" | "rarity" | "level">) {
 /** Everything `mode`'s loadout does, each kind summed: lines open at their
  * piece's rarity and the effects its open slots hold, each for that mode
  * (a Tower-only one adds nothing in the Delve). */
-export function equipmentEffects(e: EquipmentSave, mode: Mode): EffectTotals {
+export function equipmentEffects(e: EquipmentSave, mode: Mode, legacyChestplates = false): EffectTotals {
   const totals = noEffects();
   if (!e.unlocked) return totals;
   for (const id of Object.values(e.equipped[mode])) {
     const item = id && findItem(e, id);
     if (!item) continue;
     for (const { line, open, value } of itemLines(item))
-      if (open && (!line.mode || line.mode === mode)) totals[line.kind] = snap(totals[line.kind] + value);
+      if (open && (!line.mode || line.mode === mode)) totals[line.kind] = snap(totals[line.kind] + value * (legacyChestplates && itemDef(item.def)!.category === "chestplate" ? .5 : 1));
     for (const { def, rarity } of slotEffects(item))
       if (!def.mode || def.mode === mode) totals[def.kind] = snap(totals[def.kind] + slotValue(def, rarity, item.level));
   }

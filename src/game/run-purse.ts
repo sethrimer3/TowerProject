@@ -303,9 +303,9 @@ export class RunPurse {
       tallyIn(this.slice.runFinds.materials, materials.id, materials.quantity);
       return { materials, item: null, salvaged: null };
     }
-    const rolled = rollChestPiece(this.equipmentRng), up = this.tree.rarityUp;
+    const rolled = rollChestPiece(this.equipmentRng, e.categories), up = this.tree.rarityUp;
     const drop = up && this.equipmentRng() * 100 < up ? { ...rolled, rarity: rarityAbove(rolled.rarity) } : rolled;
-    const kept = keepDrop(e, drop), material = CATEGORIES[drop.category].material;
+    const kept = keepDrop(e, drop), material = CATEGORIES[drop.category].materials[0];
     if (!kept.item) tallyIn(this.slice.runFinds.materials, material, kept.salvaged);
     return { materials: null, item: kept.item, salvaged: kept.item ? null : { id: material, quantity: kept.salvaged, auto: kept.auto } };
   }

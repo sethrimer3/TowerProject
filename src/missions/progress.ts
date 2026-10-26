@@ -1,5 +1,5 @@
 import { isRecord, whole, wholeIn } from "../save/decode.ts";
-import { EQUIP_MATERIAL_IDS, type EquipMaterialId } from "../equipment/catalog.ts";
+import { baseMaterial, type EquipMaterialId } from "../equipment/catalog.ts";
 import { DAY_MS, gmtDay } from "../shop/clock.ts";
 import { MISSION_CAPACITY, MISSION_EVERY_MS, MISSIONS, MISSION_TYPES, WEEKLY_MAX, WEEKLY_REWARDS, type MissionType } from "./catalog.ts";
 
@@ -64,14 +64,14 @@ export function decodeMissions(raw: unknown): MissionsSave {
   if (!isRecord(raw)) return d;
   const ids = new Set<number>(), open = new Set<MissionType>();
   for (const m of Array.isArray(raw.list) ? raw.list : []) {
-    if (!isRecord(m) || !whole(m.id) || ids.has(m.id) || !MISSION_TYPES.includes(m.type) || !EQUIP_MATERIAL_IDS.includes(m.material)) continue;
+    if (!isRecord(m) || !whole(m.id) || ids.has(m.id) || !MISSION_TYPES.includes(m.type) || !baseMaterial(m.material)) continue;
     const target = MISSIONS[m.type as MissionType].target;
     if (!wholeIn(m.progress, 0, target)) continue;
     // Never two incomplete missions of one type, nor more than the list holds.
     if ((m.progress < target && open.has(m.type)) || d.list.length >= MISSION_CAPACITY) continue;
     if (m.progress < target) open.add(m.type);
     ids.add(m.id);
-    d.list.push({ id: m.id, type: m.type, progress: m.progress, material: m.material });
+    d.list.push({ id: m.id, type: m.type, progress: m.progress, material: baseMaterial(m.material)! });
   }
   d.period = whole(raw.period) ? raw.period : null;
   d.nextId = Math.max(whole(raw.nextId) ? raw.nextId : 1, ...[...ids].map((i) => i + 1));

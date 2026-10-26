@@ -1,10 +1,10 @@
 import type { Mode } from "../entities.ts";
 import { stream } from "../random.ts";
-import { EQUIP_RARITIES, pullGems, type PullCount } from "../equipment/balance.ts";
-import { materialOf, type CategoryId, type EquipMaterialId } from "../equipment/catalog.ts";
+import { CRAFT_MATERIAL, EQUIP_RARITIES, pullGems, type PullCount } from "../equipment/balance.ts";
+import { materialOf, standardOf, hasMaterials, spendMaterials, type CategoryId, type EquipMaterialId } from "../equipment/catalog.ts";
 import { pull } from "../equipment/acquire.ts";
 import {
-  categoryOf, dismantle, equip, findItem, levelUp, merge, roomLeft, salvageOf, setLocked, unequip,
+  addItem, categoryOpen, categoryOf, dismantle, equip, findItem, levelUp, merge, roomLeft, salvageOf, setLocked, unequip,
   type EquipItem,
 } from "../equipment/inventory.ts";
 import { firstRoll, improve, keepCurrent, refine, spendChoice, takeCandidate } from "../equipment/slots.ts";
@@ -34,6 +34,17 @@ export class EquipmentDesk {
   /** Whether Equipment is open (Tower II's floor 60 Goal claimed). */
   get open() {
     return this.e.unlocked;
+  }
+
+  /** Craft a Common Standard using every base resource in its recipe. */
+  craft(category: CategoryId): EquipItem | "locked" | "room" | "material" {
+    if (!this.open || !categoryOpen(this.e, category)) return "locked";
+    if (roomLeft(this.e) <= 0) return "room";
+    if (!this.host.free && !hasMaterials(this.e.materials, category, CRAFT_MATERIAL)) return "material";
+    if (!this.host.free) spendMaterials(this.e.materials, category, CRAFT_MATERIAL);
+    const item = addItem(this.e, standardOf(category).id, "common")!;
+    this.host.eventDone("equipment", 1);
+    return item;
   }
 
   /** Raises item `id` by up to `levels` levels for Gold and its material
@@ -150,6 +161,7 @@ export class EquipmentDesk {
    * one (pity counting through them). With Auto-salvage on, each Common
    * piece pulled is then dismantled into its material. */
   pull(category: CategoryId | "all", count: PullCount): Pulled[] | PullRefusal {
+    if (category !== "all" && !categoryOpen(this.e, category)) return "locked";
     const all = category === "all", refusal = this.pullRefusal(count, all);
     if (refusal) return refusal;
     if (!this.host.free) this.save.gems -= pullGems(count, all);

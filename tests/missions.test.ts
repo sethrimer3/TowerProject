@@ -31,7 +31,7 @@ function gameAt(at: number, save: Save = defaults()) {
 /** Gives the player one incomplete mission of each type in `types`. */
 function withMissions(g: Game, ...types: MissionType[]) {
   const m = g.save.missions;
-  m.list = types.map((type, i) => ({ id: i + 1, type, progress: 0, material: "silk" as const }));
+  m.list = types.map((type, i) => ({ id: i + 1, type, progress: 0, material: "padding" as const }));
   m.nextId = types.length + 1;
   m.period = missionPeriod(g.clock());
 }
@@ -230,8 +230,8 @@ test("a completed mission is claimed once for 3 Gems, its tower's Gold and mater
   withMissions(g, "bosses");
   g.missions.record("bosses", 3);
   const four = g.missions.claim(1)!;
-  assert.deepEqual([four.gold, four.material], [30000, { id: "silk", amount: 8 }]);
-  assert.equal(g.save.equipment.materials.silk, 8);
+  assert.deepEqual([four.gold, four.material], [30000, { id: "padding", amount: 8 }]);
+  assert.equal(g.save.equipment.materials.padding, 8);
 });
 
 test("every 5 missions claimed in the week opens a weekly reward, claimed once, until the week turns", () => {

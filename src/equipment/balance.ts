@@ -57,7 +57,7 @@ export const EQUIPMENT_CAPACITY = 500;
 export const UNIQUE_SALVAGE = 2;
 
 /** What raising an item from `level` to the next costs: Gold
- * 5 × L × (L + 9) and its category's material ⌈L × (L + 10) / 20⌉, both
+ * 5 × L × (L + 9) and its category's recipe inputs ⌈L × (L + 10) / 20⌉, both
  * rising smoothly with the square of the level (50 Gold and 1 material at
  * level 1, 950 and 10 at 10, 20,700 and 210 at 60). */
 export const upgradeGold = (level: number) => 5 * level * (level + 9);
@@ -93,7 +93,7 @@ export const EFFECT_CANDIDATES = 3;
 export const EFFECT_RARITY_WEIGHTS: Record<EquipRarity, number> = { common: 70, uncommon: 25, rare: 5 };
 
 /** What one paid Refine of a slot costs, by the item's rarity: Gold and its
- * category's material. A slot's first roll is free. */
+ * category's recipe inputs. A slot's first roll is free. */
 export const REFINE_COST: Record<EquipRarity, { gold: number; material: number }> = {
   common: { gold: 1000, material: 10 },
   uncommon: { gold: 5000, material: 40 },
@@ -110,3 +110,6 @@ export const REFINE_CHOICE_EVERY = 10;
 
 /** The most of an enemy's DEF the hero's strikes can ignore (Piercing). */
 export const PIERCE_CAP = 50;
+
+/** A Common Standard piece: no Gold or Gems, this much of every recipe input. */
+export const CRAFT_MATERIAL = 25;
