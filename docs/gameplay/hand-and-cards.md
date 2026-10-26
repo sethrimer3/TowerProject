@@ -82,8 +82,15 @@ Each run keeps the hand as it was ordered when the run went inside, however the 
 In the default interface, occupied cards use one full-size card frame, while empty slots keep their own frames.
 The Deck page shows the hand's slots along the top: four, five with **Larger Hand** (1 Inspiration, between Trainers and Shroud), and one more for each slot bought with Gems after that (50, 100, 200, 300, 400, 500, 600, 750, 1,000, 1,200, 1,400, 1,600, 1,800, 2,500, 3,500, 4,500, 5,500, 6,500, 7,500, 8,500 and 10,000 Gems, up to 26), the next for sale standing after them; dragging a card to another slot (or moving a focused card with the arrow keys) shifts each card in between over one, and the new order is saved at once.
 The chevron beside the **Hand** heading hides the hand, making room for the deck and badges below, and shows it again; the hand shows once more each time you come back to the page.
-Below the hand sits the deck, locked until **Buildout** (1 Inspiration, after Combat Stance): then the deck's cards are laid out on a grid, those in the hand greyed out with a check that returns them to the deck, and pressing any other card adds it to the hand's first empty slot.
-Dragging one onto a hand slot puts it there instead: with room in the hand, the cards from that slot on slide one slot later; with the hand full, the card in that slot goes back to the deck (never STAIRS).
+Below the hand sits the deck, locked until **Buildout** (1 Inspiration, after Combat Stance); its grid shows only cards in neither hand.
+Tap a card for a pop-up pointing at its sprite, showing its description, bonuses, rarity, level and XP.
+Tap that same card again to open its upgrade tree; the hint shows the points available beside it.
+Swipe up on an available card to move it into the next empty hand slot, or swipe down on a hand card to return it to the deck.
+The card flies into its new place while nearby cards slide to close gaps or make room.
+A full hand refuses an incoming card with a side-to-side shake and an error sound, leaving both places as they were.
+Keyboard users can press Arrow Up on a deck card to add it and Arrow Down on a hand card to return it; STAIRS always stays in the hand.
+Reduce motion skips the travel and shifting animations.
+Dragging one onto a hand slot with room also inserts it there, shifting later cards along; a full hand refuses it.
 A hand card shows an X in its corner while hovered (always, on touch screens) that also returns it to the deck, as does dragging it onto the deck (which lights up while it is held there).
 A hand must always hold STAIRS, which has no X and can only be reordered; every other card is optional.
 Every change is saved at once.
@@ -102,7 +109,7 @@ A card at its max level keeps gaining XP toward the levels above it, so when a c
 Each level gives the card 1 card point, to be spent on the card's own tree (see Card trees below).
 A card shows its level in small type at its top left, in the hand and on the Deck page, from level 1.
 On the Deck page the grey rule between a card's picture and its name is its XP bar, filling in white toward its next level (full at level 60; at its max level, with the XP it keeps gathering).
-A card's details show its level on the card and its XP toward the next level in white over the grey line above its name, as on the Deck page, and under its name its rarity with its stars, then its level of its max level and its XP toward the next (*Level 4 / 10 · 340/1,800 XP*, or at the max, *… · buy cards to raise the max*); its card points equal its level, so they aren't repeated; the hand card's tooltip says the same line.
+A card's pop-up shows its rarity with its stars, then its level of its max level and its XP toward the next (*Level 4 / 10 · 340/1,800 XP*, or at the max, *… · buy cards to raise the max*).
 A card can level up during a run: if the card is in view in the hand, a golden glow covers it with the training point icon at its centre for a second, which then rises and fades over the next second, and the glow fades over a third.
 A card out of view (in a hand scrolled sideways) shows as a ghost at 75% transparency over the board's top left, a golden glow behind it, with the same icon, the ghost fading once the icon is gone.
 Several level-ups play one after another, and wait while a page covers the board.
@@ -113,7 +120,7 @@ On the Deck page a card with card points to spend wears a gold arrow rising besi
 The starting hand's cards never wear NEW.
 
 The first time a card has a point to spend, after a run (and after the Deck's lessons on the hand), a note over the forest says cards gain levels as you use them, each level granting a card point, and a hand points at the Deck tab, the only thing that can be pressed.
-On the Deck page the hand points at the card with the most points to spend (a hand card first), the only card that can be pressed; pressing it opens its upgrade tree at once.
+On the Deck page the hand points at the card with the most points to spend (a hand card first), the only card that can be pressed; tapping it shows its details and tapping it again opens its upgrade tree.
 There the hand points at the button that spends a point on an upgrade that can take one, and **‹ Deck** waits until a point is spent.
 A note then encourages you to keep levelling your cards to unlock more bonuses, says Gems will soon unlock stronger rare and special card powers, and that Gems can respec a card.
 A player who had already spent a card point never sees the lesson.
@@ -127,7 +134,7 @@ Each tree's tracks start from the card itself, so a track's first upgrade takes 
 A tree's bonuses count while the run's hand holds the card, whichever card leads the hero; each adds into one factor with every other card's bonus to the same thing (two cards' +10% Gold Bonus make ×1.2), and that factor multiplies the other kinds of bonus.
 A run keeps the trees its hand had as it went inside, so points are spent in the forest only; for 20 Gems a card's points all come back, to spend again (the levels card buys opened stay).
 
-On the Deck page, a card with a tree offers **Upgrade tree** in its details, its points left to spend on a second line (*6 points available*), which opens the tree in place of the Deck page; **‹ Deck** (or Escape, or another tab) goes back.
+On the Deck page, tap a card for its details, then tap it again to open its tree in place of the Deck page; the hint shows its points left to spend beside it, and **‹ Deck** (or Escape, or another tab) goes back.
 Its top is one compact row (two on a phone): the card, its name, its level of its max level and XP toward the next, the points left to spend (and how many of its points are spent), and **Respec** for 20 Gems.
 The upgrades show as a **Tree** or a **List**, chosen by one small switch labelled with both, the Tree first; the choice lasts while the game is open.
 A **?** button beside the key says how the tree works and how card buys open it.

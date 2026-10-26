@@ -51,40 +51,5 @@ export function revealCard(id: CardId, text: string, reduceMotion: boolean) {
   cardLayer(id, text, reduceMotion ? " still" : "", { kicker: "NEW CARD FOR YOUR DECK", hint: "Press the card to continue", label: `New card: ${CARDS[id].name}` });
 }
 
-/** What a card's details offer to do with it, such as adding it to the hand. */
-export type CardAction = { label: string; run: () => void };
-
-/** What the card's level and rarity are read from: each card's XP and the
- * levels card buys opened on its tree. */
+/** What a card's optional level marks read. */
 type CardLevels = Pick<TreeSave, "cardXp" | "cardBuys">;
-/** What a card's details show besides the card: a `note`, the `actions`
- * on offer, and its level and rarity (`levels`). */
-export type CardDetails = { note?: string; actions?: CardAction[]; levels?: CardLevels };
-
-/** A card's details, as its reveal showed them, for the Deck page: the
- * card pops up over the rays (still with Reduce motion), with where it is
- * (`kicker`), its level, what it does, a note, and the actions on offer.
- * Pressing the card, outside it or Escape closes it, as an action does
- * once run. */
-export function showCard(id: CardId, text: string, reduceMotion: boolean, kicker: string, { note, actions = [], levels }: CardDetails = {}) {
-  const extra = (note ? `<em class="card-reveal-note">${note}</em>` : "")
-    + (actions.length ? `<div class="card-reveal-actions">${actions.map((a, i) => `<button type="button" class="card-reveal-action" data-card-action="${i}">${a.label}</button>`).join("")}</div>` : "");
-  const back = document.activeElement as HTMLElement | null;
-  const layer = cardLayer(id, text, ` details${reduceMotion ? " still" : ""}`, { kicker, hint: "Press anywhere to close", label: CARDS[id].name }, extra, levels);
-  const close = () => {
-    layer.remove();
-    document.removeEventListener("keydown", onKey, true);
-    if (back?.isConnected) back.focus({ preventScroll: true });
-  };
-  const onKey = (e: KeyboardEvent) => {
-    if (e.key !== "Escape") return;
-    e.preventDefault();
-    close();
-  };
-  document.addEventListener("keydown", onKey, true);
-  layer.onclick = (e) => {
-    const pressed = (e.target as HTMLElement).closest<HTMLElement>("[data-card-action]");
-    close();
-    if (pressed) actions[Number(pressed.dataset.cardAction)]!.run();
-  };
-}

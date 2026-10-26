@@ -9,6 +9,8 @@ import { stream } from "./random.ts";
 export type Cue =
   /** Pressing an oak button. */
   | "knock"
+  /** A card refused by a full hand: two low, descending notes. */
+  | "error"
   /** Choosing a page on the stone tab row. */
   | "stone"
   /** Spending at the Armory or on Training: coins on a counter. */
@@ -157,6 +159,10 @@ function bell(freq: number, at: number, peak: number, length: number, wet = 1) {
 const vary = (cents: number) => Math.pow(2, ((rand() * 2 - 1) * cents) / 1200);
 
 const CUES: Record<Cue, (t: number) => void> = {
+  error(t) {
+    tone({ type: "triangle", freq: 190, to: 145, at: t, peak: 0.18, end: 0.1, wet: 0.15 });
+    tone({ type: "triangle", freq: 145, to: 100, at: t + 0.11, peak: 0.18, end: 0.15, wet: 0.15 });
+  },
   knock(t) {
     const v = vary(60);
     noise(t, 0.05, 0.5, 1400 * v, 4, 0.4);

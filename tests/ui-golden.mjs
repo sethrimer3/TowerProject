@@ -457,15 +457,17 @@ try {
     await shot(`${prefix}.deck`);
     await dragCard(2, 0);
     await shot(`${prefix}.deck.reordered`);
-    await click('[data-return="door"]');
+    await page.locator('#deck-hand [data-deck-card="door"] .deck-card').focus();
+    await page.keyboard.press("ArrowDown");
     await shot(`${prefix}.deck.returned`);
     // Pressing a card shows what it does, as its reveal did.
     await click('.deck-card[data-slot="0"]');
     await shot(`${prefix}.deck.handCard`);
-    await click("#card-reveal-card");
+    await page.keyboard.press("Escape");
     await click('[data-add="heal"]');
     await shot(`${prefix}.deck.deckCard`);
-    await click(".card-reveal-actions .card-reveal-action:last-child");
+    await page.locator('[data-add="heal"]').focus();
+    await page.keyboard.press("ArrowUp");
     await shot(`${prefix}.deck.added`);
     // A deck card dragged onto a slot goes there, the cards after it sliding on.
     await dragFromDeck("door", 1);
@@ -487,7 +489,7 @@ try {
     // The page draws again once the dialog's close event has fired.
     await settled();
     const a = await page.locator('.badge-pick[data-badge="xp"]').boundingBox();
-    const b = await page.locator('.deck-entry[data-badge-card="door"]').boundingBox();
+    const b = await page.locator('[data-deck-card="door"][data-badge-card]').boundingBox();
     await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2);
     await page.mouse.down();
     await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 8 });

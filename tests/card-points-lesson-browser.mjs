@@ -22,19 +22,21 @@ try {
       const fixture = sessionStorage.getItem("__pointsFixture");
       if (fixture) { localStorage.setItem("towerdelve.v1", fixture); sessionStorage.removeItem("__pointsFixture"); }
     });
-    await page.goto(server.resolvedUrls.local[0]); await page.locator("#hp").waitFor();
+    await page.goto(server.resolvedUrls.local[0], { waitUntil: "domcontentloaded" }); await page.locator("#boot-loading").waitFor({ state: "hidden", timeout: 120000 }); await page.locator("#hp").waitFor();
     await page.evaluate(async () => {
       const { defaults } = await import("/src/save/save.ts"); const { Game } = await import("/src/state.ts");
-      const s = defaults(); Object.keys(s.tutorials).forEach((k) => s.tutorials[k] = true);
+      const { withFirstSkills } = await import("/tests/first-skills.ts");
+      const s = withFirstSkills(defaults()); Object.keys(s.tutorials).forEach((k) => s.tutorials[k] = true);
       s.tutorials.cardPoints = false;
+      s.tutorials.enemy = false;
       s.upgrades.combatStance = 1; s.upgrades.buildout = 1; s.upgrades.cardHeal = 1;
-      // DOOR at level 2 (2 points), KEY at level 1; HEAL new to the deck.
+      // DOOR at level 3 (3 points), KEY at level 1; HEAL new to the deck.
       s.cardXp.door = 600; s.cardXp.key = 200;
       Object.assign(s.settings, { reduceMotion: false, transition: "instant", weatherSound: false });
       const g = new Game(s); g.newRun({ seed: 7, outside: true });
       sessionStorage.setItem("__pointsFixture", JSON.stringify(g.save));
     });
-    await page.reload(); await page.locator("#hp").waitFor();
+    await page.reload({ waitUntil: "domcontentloaded" }); await page.locator("#boot-loading").waitFor({ state: "hidden", timeout: 120000 }); await page.locator("#hp").waitFor();
     const deckTab = page.locator('nav [data-tab="deck"]');
     // The forest: the note, the hand at the Deck tab, its dot counting HEAL and the two cards with points.
     await page.locator('.board-tip[data-lesson="cards"]').waitFor();
@@ -50,7 +52,7 @@ try {
     // The Deck page: the dot gone, the hand pointing at DOOR, the only card to press.
     await page.locator(".deck-page").waitFor();
     assert.equal(await deckTab.evaluate((e) => e.classList.contains("notify")), false, "opening the Deck dismisses its dot");
-    assert.match(await page.locator(".deck-tip").innerText(), /Select DOOR and spend its card points/);
+    assert.match(await page.locator(".deck-tip").innerText(), /Tap DOOR for details/);
     const door = page.locator('#deck-hand .deck-slot:has(.deck-card[aria-label^="Door"])');
     assert.equal(await door.locator(".deck-pointer").count(), 1);
     assert.equal(await page.locator("#deck-hand .deck-card:not(:disabled)").count(), 1, "only DOOR can be pressed");
@@ -60,11 +62,14 @@ try {
     assert.ok(await page.locator('nav [data-tab="upgrades"]').isDisabled());
     await page.waitForTimeout(1000);
     await page.screenshot({ path: `test-results/card-points/${name}-deck.png` });
-    // DOOR opens its tree at once, Back held, the hand at the Spend button.
+    // The first tap explains DOOR; its second opens the held tutorial tree.
+    await door.locator(".deck-card").click();
+    await page.locator("#deck-card-popover").waitFor();
+    assert.match(await page.locator(".deck-tree-hint").innerText(), /Tap the card again/);
     await door.locator(".deck-card").click();
     const tree = page.locator(".card-tree");
     await tree.waitFor();
-    assert.equal(await page.locator(".card-reveal.details").count(), 0, "no details on the way");
+    assert.equal(await page.locator("#deck-card-popover").count(), 0, "details close when the tree opens");
     assert.ok(await tree.locator("[data-ct-close]").isDisabled());
     await page.keyboard.press("Escape");
     assert.equal(await tree.count(), 1, "Escape doesn't leave either");
@@ -91,14 +96,14 @@ try {
     assert.equal(await page.locator("#deck-hand .card-points-mark").count(), 2, "both still have points");
     // Meeting HEAL takes its NEW away.
     await page.locator('.deck-add[data-add="heal"]').click();
-    await page.locator(".card-reveal.details").waitFor();
+    await page.locator("#deck-card-popover").waitFor();
     await page.keyboard.press("Escape");
-    await page.locator(".card-reveal.details").waitFor({ state: "detached" });
+    await page.locator("#deck-card-popover").waitFor({ state: "detached" });
     assert.equal(await page.locator(".card-new").count(), 0);
     // Back on the board, the lesson is gone, and stays gone after a reload.
     await page.locator('nav [data-tab="board"]').click();
     assert.equal(await page.locator('.board-tip[data-lesson="cards"]').count(), 0);
-    await page.reload(); await page.locator("#hp").waitFor();
+    await page.reload({ waitUntil: "domcontentloaded" }); await page.locator("#boot-loading").waitFor({ state: "hidden", timeout: 120000 }); await page.locator("#hp").waitFor();
     assert.equal(await page.locator('.board-tip[data-lesson="cards"]').count(), 0);
     assert.equal(await page.locator(".forest-pointer").count(), 0);
     assert.deepEqual(errors, []);

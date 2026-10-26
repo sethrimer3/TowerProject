@@ -114,3 +114,6 @@ Its screenshots are in `test-results/equipment-recipes/`; model coverage is in `
 Shield pixel icons can be exported alone with `node --experimental-transform-types tools/prepare-game-sprites.mjs --equipment-only=shield,wardensShield,bulwarkShield,dawnShield`, leaving existing sprites untouched.
 The UI golden tour and upgrade-tree browser checks wait for the startup artwork/font loader to finish before checking the HUD, allowing two minutes for that preload on a busy machine.
 The UI golden tour allows 30 seconds for browser interactions so a busy renderer does not fail an otherwise visible control's layout check.
+
+`node tests/deck-swipes.mjs` starts its own Vite server and checks real touch swipes, arrowed card details, second-tap trees, exclusive hand/reserve ownership, finite transfer/gap animations, full-hand refusal sound/shake, cancelled touches, keyboard equivalents, Manual hand, reduced motion and save/reload.
+Its phone/desktop screenshots are in `test-results/deck-swipes/`.

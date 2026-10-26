@@ -22,7 +22,7 @@ async function restage(page, edit) {
     new Function("s", body)(s);
     sessionStorage.setItem("__buyFixture", JSON.stringify(s));
   }, `(${edit})(s)`);
-  await page.reload(); await page.locator("#hp").waitFor();
+  await page.reload({ waitUntil: "domcontentloaded" }); await page.locator("#boot-loading").waitFor({ state: "hidden", timeout: 120000 }); await page.locator("#hp").waitFor();
 }
 try {
   for (const [name, viewport] of [["phone", { width: 390, height: 844 }], ["desktop", { width: 1280, height: 800 }]]) {
@@ -33,7 +33,7 @@ try {
       const fixture = sessionStorage.getItem("__buyFixture");
       if (fixture) { localStorage.setItem("towerdelve.v1", fixture); sessionStorage.removeItem("__buyFixture"); }
     });
-    await page.goto(server.resolvedUrls.local[0]); await page.locator("#hp").waitFor();
+    await page.goto(server.resolvedUrls.local[0], { waitUntil: "domcontentloaded" }); await page.locator("#boot-loading").waitFor({ state: "hidden", timeout: 120000 }); await page.locator("#hp").waitFor();
     await page.evaluate(async () => {
       const { defaults } = await import("/src/save/save.ts"); const { Game } = await import("/src/state.ts");
       const s = defaults(); Object.keys(s.tutorials).forEach((k) => s.tutorials[k] = true);
@@ -45,7 +45,7 @@ try {
       const g = new Game(s); g.newRun({ seed: 7, outside: true });
       sessionStorage.setItem("__buyFixture", JSON.stringify(g.save));
     });
-    await page.reload(); await page.locator("#hp").waitFor();
+    await page.reload({ waitUntil: "domcontentloaded" }); await page.locator("#boot-loading").waitFor({ state: "hidden", timeout: 120000 }); await page.locator("#hp").waitFor();
     await page.locator('[data-tab="deck"]').click();
     const buys = page.locator(".deck-stack > .card-buys");
     await buys.waitFor();
@@ -97,7 +97,7 @@ try {
     await page.locator('#deck-hand [data-slot="0"]').click();
     assert.match(await page.locator(".card-rarity-line").innerText(), /Legendary/i);
     await page.screenshot({ path: `test-results/card-buys/${name}-details.png` });
-    await page.locator("[data-card-action='0']").click();
+    await page.locator('#deck-hand [data-slot="0"]').click();
     const tree = page.locator(".card-tree");
     await tree.waitFor();
     assert.equal(await tree.locator("[data-ct-switch]").getAttribute("aria-checked"), "false", "the tree view first");

@@ -23,7 +23,7 @@ try {
       const fixture = sessionStorage.getItem("__tapFixture");
       if (fixture) { localStorage.setItem("towerdelve.v1", fixture); sessionStorage.removeItem("__tapFixture"); }
     });
-    await page.goto(server.resolvedUrls.local[0]); await page.locator("#hp").waitFor();
+    await page.goto(server.resolvedUrls.local[0], { waitUntil: "domcontentloaded" }); await page.locator("#boot-loading").waitFor({ state: "hidden", timeout: 120000 }); await page.locator("#hp").waitFor();
     await page.evaluate(async () => {
       const { defaults } = await import("/src/save/save.ts"); const { Game } = await import("/src/state.ts");
       const s = defaults(); Object.keys(s.tutorials).forEach((k) => s.tutorials[k] = true);
@@ -32,15 +32,15 @@ try {
       const g = new Game(s); g.newRun({ seed: 7, outside: true });
       sessionStorage.setItem("__tapFixture", JSON.stringify(g.save));
     });
-    await page.reload(); await page.locator("#hp").waitFor();
+    await page.reload({ waitUntil: "domcontentloaded" }); await page.locator("#boot-loading").waitFor({ state: "hidden", timeout: 120000 }); await page.locator("#hp").waitFor();
     await page.locator('[data-tab="deck"]').tap();
     for (const card of ['#deck-hand [data-slot="0"]', ".deck-add"]) {
       const box = await page.locator(card).first().boundingBox();
       await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
       await page.waitForTimeout(300);
-      assert.equal(await page.locator(".card-reveal.details").count(), 1, `${card}: details stay open after the tap`);
+      assert.equal(await page.locator("#deck-card-popover").count(), 1, `${card}: details stay open after the tap`);
       await page.touchscreen.tap(20, 20);
-      await page.locator(".card-reveal").waitFor({ state: "detached" });
+      await page.locator("#deck-card-popover").waitFor({ state: "detached" });
     }
     await context.close();
   }
@@ -52,7 +52,7 @@ try {
       const fixture = sessionStorage.getItem("__treeFixture");
       if (fixture) { localStorage.setItem("towerdelve.v1", fixture); sessionStorage.removeItem("__treeFixture"); }
     });
-    await page.goto(server.resolvedUrls.local[0]); await page.locator("#hp").waitFor();
+    await page.goto(server.resolvedUrls.local[0], { waitUntil: "domcontentloaded" }); await page.locator("#boot-loading").waitFor({ state: "hidden", timeout: 120000 }); await page.locator("#hp").waitFor();
     await page.evaluate(async () => {
       const { defaults } = await import("/src/save/save.ts"); const { Game } = await import("/src/state.ts");
       const s = defaults(); Object.keys(s.tutorials).forEach((k) => s.tutorials[k] = true);
@@ -65,15 +65,15 @@ try {
       const g = new Game(s); g.newRun({ seed: 7, outside: true });
       sessionStorage.setItem("__treeFixture", JSON.stringify(g.save));
     });
-    await page.reload(); await page.locator("#hp").waitFor();
+    await page.reload({ waitUntil: "domcontentloaded" }); await page.locator("#boot-loading").waitFor({ state: "hidden", timeout: 120000 }); await page.locator("#hp").waitFor();
     await page.locator('[data-tab="deck"]').click();
     await page.locator('#deck-hand [data-slot="0"]').click();
-    await page.locator(".card-reveal.details").waitFor();
+    await page.locator("#deck-card-popover").waitFor();
     assert.match(await page.locator(".card-level-line").innerText(), /^Level 6 \/ 11 · /);
-    assert.equal(await page.locator(".card-points-line").count(), 0, "a card's points are its level: not said again");
+    assert.equal(await page.locator(".card-points-line").count(), 0, "points belong beside the upgrade hint, not in a separate stat line");
     assert.match(await page.locator(".card-rarity-line").innerText(), /Uncommon/i);
-    assert.match(await page.locator("[data-card-action='0']").innerText(), /Upgrade tree\s+6 points available/i);
-    await page.locator("[data-card-action='0']").click();
+    assert.match(await page.locator(".deck-tree-hint").innerText(), /Tap the card again to open upgrade tree\s+6 points available/i);
+    await page.locator('#deck-hand [data-slot="0"]').click();
     const tree = page.locator(".card-tree");
     await tree.waitFor();
     assert.equal(await tree.locator(".ct-left b").innerText(), "6");
@@ -158,7 +158,7 @@ try {
     await tree.waitFor({ state: "detached" });
     // Back on the Deck page.
     await page.locator("#deck .deck-page").waitFor();
-    await page.reload(); await page.locator("#hp").waitFor();
+    await page.reload({ waitUntil: "domcontentloaded" }); await page.locator("#boot-loading").waitFor({ state: "hidden", timeout: 120000 }); await page.locator("#hp").waitFor();
     assert.deepEqual(await page.evaluate(() => JSON.parse(localStorage.getItem("towerdelve.v1")).cardTrees), { stairs: { floorSilver: 1 } });
     assert.deepEqual(errors, []);
     await page.close();
