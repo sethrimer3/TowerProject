@@ -105,3 +105,6 @@ Only Keymaster pixel frames change for the lit Tower II room and new geometry; s
 All remaining Node tests run through `npm test`; there are no separate city-defense or pointer suites.
 The board render scenes retain historical seed gaps so removing dormant scenes does not change the Tower/Delve/trial fixtures.
 The mode-tab browser flow checks the removed page stays absent even with Legacy owned and in Dev mode, while old-save tests verify discarded city data cannot affect retained progress.
+
+`node tests/upgrade-tabs.mjs` reproduces the progression-tree selector with all six Dev trees, checking single-line text, unclipped icons/points, every selection and usable map space at phone/tablet/desktop and short landscape sizes.
+It also checks normal balances and Classic, Medieval, Desktop and Terminal UI themes, with review images in `test-results/upgrade-tabs/`.

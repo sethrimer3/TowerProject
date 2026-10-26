@@ -2770,6 +2770,19 @@ nav button > span :is(img, svg) { display: block; width: 42px; height: 42px; max
 .page-tabs button { display: grid; grid-template-columns: auto auto; justify-content: center; align-items: center; column-gap: 6px; min-height: 40px; text-align: left; }
 .page-tabs span { grid-row: span 2; margin-bottom: 0; }
 .page-tabs small { margin-top: 1px; }
+/* Skill trees wrap into readable selectors instead of squeezing every tree
+   into one row. Keep names and points together, beside a fixed-size icon. */
+#upgrades > .skill-tree-tabs { grid-auto-flow: row; grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr)); }
+#upgrades > .skill-tree-tabs button { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 54px; padding: 6px; }
+#upgrades > .skill-tree-tabs button > span { grid-row: auto; margin: 0; }
+#upgrades > .skill-tree-tabs .skill-tree-tab-icon { flex: none; width: 24px; height: 24px; font-size: 0; }
+#upgrades > .skill-tree-tabs .skill-tree-tab-icon :is(.sprite-icon, img) { width: 24px; height: 24px; }
+#upgrades > .skill-tree-tabs .skill-tree-tab-label { display: flex; flex-direction: column; gap: 3px; min-width: 0; font-size: 9px; letter-spacing: .4px; line-height: 1.25; }
+#upgrades > .skill-tree-tabs .skill-tree-tab-name { margin: 0; font-size: inherit; white-space: nowrap; }
+#upgrades > .skill-tree-tabs small { margin: 0; font-size: 7px; white-space: nowrap; }
+@media (max-width: 480px) {
+  #upgrades > .skill-tree-tabs { grid-template-columns: repeat(auto-fit, minmax(min(100%, 132px), 1fr)); }
+}
 .node-icon img { width: 38px; height: 38px; }
 .skill-node.locked .node-icon img { filter: grayscale(1); opacity: .48; }
 /* A card not yet unlocked is dimmed, not see-through, so no line or backdrop shows through it. */
