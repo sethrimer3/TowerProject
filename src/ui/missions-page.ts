@@ -96,7 +96,8 @@ export class MissionsPage {
       `<p class="missions-next" id="missions-next">${this.nextText()}</p>` +
       (list.length
         ? `<ul class="mission-list">${list.map((m) => this.missionHtml(m)).join("")}</ul>`
-        : `<p class="hint">No missions yet. New ones come every 8 hours.</p>`);
+        : `<p class="hint">No missions yet. New ones come every 8 hours.</p>`) +
+      `<p class="hint missions-about">Completing missions earns gems and gold, and makes progress toward weekly prizes.</p>`;
     this.bind();
   }
 

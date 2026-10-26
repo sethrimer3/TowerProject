@@ -160,8 +160,8 @@ export class RunTrainingBar {
    * is owned or the run holds a Manual hand, and Hand before; Manual's tab,
    * only while the run holds a Manual hand; each lit while selected. Each
    * group's button (none in a run that shows the bar only for its Manual
-   * hand, before On the Job, `training`): closed with no rows to train, lit
-   * while open. */
+   * hand, before On the Job, `training`): closed with no rows to train
+   * (Utility hidden), lit while open. */
   private renderTabs(training: boolean) {
     const bar = el("training-bar"), hand = bar.querySelector<HTMLButtonElement>(`[data-run-tab="hand"]`)!;
     const manual = bar.querySelector<HTMLButtonElement>(`[data-run-tab="manual"]`)!, auto = this.game.autoClimbs || this.holdsManual;
@@ -181,7 +181,8 @@ export class RunTrainingBar {
     manual.setAttribute("aria-pressed", String(this.open === "manual"));
     document.querySelectorAll<HTMLButtonElement>("[data-run-group]").forEach((b) => {
       const group = b.dataset.runGroup as Group, open = this.rows(group).length > 0;
-      b.hidden = !training && this.holdsManual;
+      // Utility stays hidden until one of its rows can be trained.
+      b.hidden = (!training && this.holdsManual) || (group === "utility" && !open);
       b.disabled = !open;
       b.title = open ? `${TRAINING_GROUPS[group]} training for this ${MODES[this.game.mode].words.run}, with Silver` : `No ${TRAINING_GROUPS[group]} training unlocked yet`;
       b.classList.toggle("selected", group === this.open);
@@ -231,10 +232,11 @@ export class RunTrainingBar {
   }
 
   /** The lesson's note, over the hand, and its hand pointing down at the
-   * open group's button, or the first that opens. */
+   * open group's button, or the first that opens; it waits while the
+   * Auto-Climb lesson's note shows, until that is dismissed. */
   private renderLesson(inside: boolean) {
     const bar = el("training-bar");
-    if (!inside || !this.lesson) {
+    if (!inside || !this.lesson || this.game.boardLesson === "autoClimb") {
       bar.querySelector(".job-tip")?.remove();
       bar.querySelector(".job-pointer")?.remove();
       return;
@@ -271,7 +273,7 @@ export class RunTrainingBar {
   private lessonText() {
     return this.group
       ? `<b>Training for this ${MODES[this.game.mode].words.run}</b><p>Press a card's price to buy a rank with ${silverIcon()} Silver. Press HAND to bring your cards back.</p>`
-      : `<b>Train on the Job</b><p>Spend the ${silverIcon()} Silver you find on upgrades that raise your stats for the rest of this ${MODES[this.game.mode].words.run}. Press any of the three menus beside HAND to open it.</p>`;
+      : `<b>Train on the Job</b><p>Spend the ${silverIcon()} Silver you find on upgrades that raise your stats for the rest of this ${MODES[this.game.mode].words.run}. Press a menu beside HAND to open it.</p>`;
   }
 
   /** The rows of `group` the hero can train in this run (the shot rows

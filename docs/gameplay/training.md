@@ -9,7 +9,7 @@ Undo takes back the Silver of the kills it undoes, and a new run starts with non
 
 ## Training for the run
 
-Once **On the Job** is owned (1 Inspiration, after Trainers, right of it), a bar of tabs under the hand holds **Hand** and then a button for each Training group: Offense, Defense and Utility (greyed until something in it is unlocked).
+Once **On the Job** is owned (1 Inspiration, after Trainers, right of it), a bar of tabs under the hand holds **Hand** and then a button for each Training group: Offense and Defense (greyed until something in it is unlocked), and Utility once one of its rows can be trained.
 A tab not selected shows only its icon; the selected one widens to add its name.
 Hand is selected as each run starts, and shows the card hand; the hand shows only while Hand is selected.
 Pressing a group shows that group's Training rows in the hand's place (the Archer's rows only while the run's hand holds the Archer card), a card each, scrolled sideways: its name, where it stands now (the hero's stat, the percentage, or the Gold a new floor pays), and a button with the Silver price of the next level.
@@ -26,7 +26,7 @@ A row goes no higher than its most on the Training tab (1,000 for ATK, DEF, Rege
 A row at its most shows no values, only its name and level, a Max where the trainer's price stood, and its reset at the right edge.
 Each purchase is a turn of its own: undo takes it back, Silver and all.
 A level can be bought while a fight plays out too (not one shown as a summary): it counts from the fight's next strike, so ATK bought makes the hero's next strikes harder, DEF softens the monster's next strikes, and max HP raises the HP left at once, which can turn a losing fight around.
-The first run after On the Job is bought teaches the bar: a note over the hand explains spending Silver on upgrades for the run, and a pointing hand bounces over a group's button until the player opens a group and presses Hand to bring the cards back.
+The first run after On the Job is bought teaches the bar: a note over the hand explains spending Silver on upgrades for the run, and a pointing hand bounces over a group's button until the player opens a group and presses Hand to bring the cards back; while the Auto-Climb lesson's note shows, it waits until that note is dismissed.
 
 ## XP and levels
 
