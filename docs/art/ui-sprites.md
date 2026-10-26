@@ -36,6 +36,9 @@ The [ornament atlas](../../assets/game-sprites/ui-ornaments.png) adds Menu (its 
 These share the 24-pixel grid, palette and transparency contract; range and charged-shot rings use different palette ramps so their faces remain distinct.
 Goal status marks, small HUD controls, Deck remove/check buttons and Event locks use the same PNG pairs as the larger controls.
 Silver uses its own palette-correct PNG instead of a recolored Gold image, and skill nodes use specific symbols where those previously fell back to generic upgrade art.
+The [currency source](../../assets/game-sprites/currencies.png) adds a small blue-white four-point Inspiration spark and a larger brass/ivory eight-point Breakthrough flash, distinct from coins, gems, cells and mineral shards.
+Both export to transparent 24×24 PNGs; Inspiration fits inside 16×18 pixels and Breakthrough inside 22×22, preserving their size hierarchy even in the same UI icon box.
+The currency constants in `sprites/kit.ts` share these assets across balances, skill trees, unlocks, rewards and the board's Inspiration popup.
 Skill-node states use PNG frames over a quiet slate backdrop, and heading dividers use the same linked-diamond ornament.
 A node that unlocks a card shows the card alone, with no node frame, since the card art carries its own frame.
 The [Shrine atlas](../../assets/game-sprites/shrines.png) adds a distinct 24-pixel symbol for all twenty boons, plus the pending-count diamond, drag grip, Auto Pick and ban marks.
@@ -135,6 +138,7 @@ For city prompts, specify directly overhead buildings, the exact footprint and t
 For the world and icon extension, run `node --experimental-transform-types tools/prepare-game-sprites.mjs`.
 Run `node --experimental-transform-types tools/prepare-badge-sprites.mjs` to export the badge symbols and rarity frames before rebuilding card faces.
 Use `--details-only` to refresh the sixteen detail sprites, or `--cards-only` after changing frame art or the explicit compositions in `src/sprites/cards.ts`.
+Run `node --experimental-transform-types tools/prepare-currency-sprites.mjs` to export the currency pair with nearest-neighbor sampling, binary alpha and the shared palette.
 Run `node --experimental-transform-types tools/prepare-ui-details.mjs` to extract the Goal, HUD and ornament set from its measured gutters.
 Run `node --experimental-transform-types tools/prepare-shrine-sprites.mjs` for the twenty boon and four control symbols plus the repeatable bar fill.
 Run `node --experimental-transform-types tools/prepare-equipment-ui.mjs` for the five Equipment frames and three status marks.

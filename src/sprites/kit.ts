@@ -22,10 +22,10 @@ export const DETAIL_SPRITES = [
   "fern", "mushrooms", "tuft", "sprout", "crate-broken", "barrel-broken", "pebbles", "web",
 ] as const;
 export const NAMED_ENEMY_SPRITES = ["amethyst-golem", "armored-knight", "assassin", "bat", "berserker", "blackstone-colossus", "celestial-guardian", "coral-knight", "crystal-savant", "cultist", "demon", "dragon-whelp", "drowned-marauder", "gargoyle", "goblin", "golem", "mage", "obsidian-revenant", "ogre", "orc", "shadow-stalker", "skeleton", "slime", "spore-colossus", "sporeling", "starfire-adept", "stone-warden", "temple-wraith", "thief", "troll"] as const;
-/** The skill trees' currencies' sprites. Inspiration and Breakthrough have
- * no art of their own yet, so each borrows another's until it comes. */
-export const INSPIRATION_SPRITE = "shard", BREAKTHROUGH_SPRITE = "boots";
-export type KitSprite = typeof ICON_SPRITES[number] | typeof WORLD_SPRITES[number] | typeof CONTROL_SPRITES[number] | typeof DETAIL_SPRITES[number];
+/** A compact blue spark and a larger brass/ivory flash on equal native canvases. */
+export const INSPIRATION_SPRITE = "inspiration", BREAKTHROUGH_SPRITE = "breakthrough";
+export const CURRENCY_ICON_SPRITES = [INSPIRATION_SPRITE,BREAKTHROUGH_SPRITE] as const;
+export type KitSprite = typeof ICON_SPRITES[number] | typeof WORLD_SPRITES[number] | typeof CONTROL_SPRITES[number] | typeof DETAIL_SPRITES[number] | typeof CURRENCY_ICON_SPRITES[number];
 export const kitUrl = (id: string) => `${BASE}assets/style/${id}.png`;
 /** Native PNG controls have one art source across UI themes. */
 export function pngIcon(id: string, className: string, alt = "") {

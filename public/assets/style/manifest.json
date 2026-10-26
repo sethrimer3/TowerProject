@@ -2346,6 +2346,16 @@
       "file": "ui-menu-close.png",
       "width": 24,
       "height": 24
+    },
+    "inspiration": {
+      "file": "inspiration.png",
+      "width": 24,
+      "height": 24
+    },
+    "breakthrough": {
+      "file": "breakthrough.png",
+      "width": 24,
+      "height": 24
     }
   }
 }
