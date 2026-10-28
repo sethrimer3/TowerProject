@@ -1796,7 +1796,8 @@ export class Game {
       ? { damaged: false, ...core, ...(height > 0 ? { start: height } : {}) }
       : { ...core, milestone: 0 };
     this.run.loadout = loadout;
-    this.world = this.rules.board(this.run);
+    // The board is built once below: the forest's, or the run's once its
+    // hand is dealt (generating a floor is slow).
     if (outside) {
       this.run.outside = true;
       this.toForestStart();
@@ -2543,11 +2544,13 @@ export class Game {
     const highest = this.run.maxHeight ?? this.run.height;
     // Skip on STAIRS climbs past the next floor, which pays nothing; an area
     // climbed past is still judged as its section ends.
-    const skipped = floorSkip ? this.climb.up() : null;
+    // The floor stood on is the board already built; generating a floor is slow.
+    const left = this.world instanceof RoomWorld ? this.world : undefined;
+    const skipped = floorSkip ? this.climb.up(left) : null;
     // Floor Skip Reward pays a share of the Gold the floor passed held.
     const skipGold = skipped ? purse.skippedFloorGold(skipped.board) : 0;
     const passed = skipped?.sectionStart ? new AreaLedger(this.save).enter(this.towerRun, skipped.board) : [];
-    const { board, sectionStart } = this.climb.up();
+    const { board, sectionStart } = this.climb.up(skipped?.board ?? left);
     // Only a floor new to the run pays Silver: the run's own highest floor
     // gates it.
     let silver = 0;

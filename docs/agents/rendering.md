@@ -154,6 +154,8 @@ Pixels can still differ between browsers and machines, so before changing render
 The viewport is a fixed 17×17 tiles (`VIEWPORT_TILES`; 20×20 outside); rendering density is independent of world dimensions.
 `render/tile-cache.ts` bakes rarely-changing layers (floor, decor pixels) into one offscreen image per layer covering the view plus a margin, and repaints only when the view leaves that area, the board or tile size changes, or tile art is still loading.
 Battery saver drops to 30 fps while nothing moves.
+`node tools/transition-bench.mjs` times the board transitions (a Tower climb, the Delve walked up through new chunks and areas, going in from the forest) in Edge with the CPU slowed 4× (`THROTTLE`): the step's logic, the first frame after it and the frames catching up after that; `PROFILE=1` lists where each scenario's time went, `ONLY=tower` runs one.
+Compare its numbers before and after a change, on one machine.
 `decor-render.ts` (`DecorLayer`, the renderer's only decor entry point) budgets tile planning per frame and runs decor's passes: `decor-bake.ts` bakes each tile's static pixels for the tile cache, `decor-effects.ts` owns the live state and particle physics (splintering crates, stirred grass, spores, splashes and ripples), `decor-reflections.ts` mirrors crates, walls, tile contents, torch flames and the hero into pools (the renderer hands `drawGround` a `MirroredSprites` that paints each in tile space; the mirror lines, snapshots and reuse live in decor), and `decor-sprites.ts` paints crates, parting grass, ripple rings and drips.
 Glowing blooms and fireflies scale with the Brightness setting.
 Its draw passes take one `DecorFrame` (view, time, tile lookup, reduced motion).

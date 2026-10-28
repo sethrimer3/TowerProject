@@ -17,10 +17,11 @@ export class TowerClimb {
     return new RoomWorld(this.run.seed, this.run.height, this.run.changes, this.run.percentPotions, this.run.tier, runExtras(this.run), weakened(this.run.shrine?.applied?.foes, runFoeCut(this.run)), this.run.chestOdds, this.run.doorOdds, this.run.treasureFloor);
   }
 
-  /** Climbs the stairs to the next floor's entrance; `sectionStart` when
-   * it is a section's first floor. */
-  up() {
-    if (!noEnemies(this.board())) this.run.enemiesLeft = true;
+  /** Climbs the stairs from `left`, the floor the run stands on (rebuilt
+   * when not given), to the next floor's entrance; `sectionStart` when it
+   * is a section's first floor. */
+  up(left: RoomWorld = this.board()) {
+    if (!noEnemies(left)) this.run.enemiesLeft = true;
     this.run.height++;
     this.run.changes = {};
     this.run.maxHeight = Math.max(this.run.maxHeight ?? 0, this.run.height);

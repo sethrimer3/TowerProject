@@ -22,6 +22,7 @@ This is presentation only; tier layouts, collisions, enemy scaling and save data
 
 Tower floor transitions go through `TowerClimb` (`tower/climb.ts`, over the run), which only goes up: the floor the player stands on keeps its changes in `run.changes`, and a floor left behind is forgotten, all but whether it still held an enemy (`run.enemiesLeft`, set by `up` from `noEnemies`, for its area's cleared reward).
 It hands out the current floor's board (`board()`, the same view play and the deadlock search read), and `up` returns the new floor's board and whether it is a section's first floor (`sectionStart`).
+`up` takes the board the hero stands on (`Game.advanceTowerRoom` passes `Game.world`, and Skip on STAIRS the floor it climbed past) rather than building it again, since building a floor is slow.
 `Game` applies what a new floor or section means (keys, progress, an area's rewards; the hero keeps every stat into a new section).
 `tests/tower-climb.test.ts` covers it.
 **The run timeline** (`RunTimeline`, `src/run-timeline.ts`, over a mode's slice) is what undo can take a run back to, and the only writer of the slice's `history` and `fall`: `snapshot`, `remember`, `eventful`, `fall`, `undo`, `standOn`, `runs` and `reset`.
