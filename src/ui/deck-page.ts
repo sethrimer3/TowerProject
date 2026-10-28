@@ -605,8 +605,8 @@ export class DeckPage {
       this.cancelDrag();
       if (!d.lifted) return this.showDeckCard(d.card);
       el("deck-hand").innerHTML = this.slotsHtml(this.hand);
-      if (swiped(d, e, -1)) return this.addToHand(d.card, origin);
-      if (d.to === null) return this.render();
+      // Dropped on a slot, it goes there; only a swipe that ends away from the hand appends.
+      if (d.to === null) return swiped(d, e, -1) ? this.addToHand(d.card, origin) : this.render();
       if (this.ctx.game.deck.full(this.kind)) return this.refuseCard(d.card);
       const placed = this.ctx.game.deck.place(d.card, d.to, this.kind);
       if (placed) this.meet(d.card);
@@ -827,7 +827,7 @@ export class DeckPage {
     const tree = CARD_TREES[id] ? `<p class="deck-tree-hint"><span>Tap the card again to open upgrade tree</span><span class="deck-points-available"><b>${points}</b> point${points === 1 ? "" : "s"} available</span></p>` : "";
     const gesture = held ? (id === "stairs" ? "STAIRS always stays in your hand." : save.upgrades.buildout ? "Swipe down to return to deck." : "Unlock Buildout to return cards to the deck.") : "Swipe up to add to hand.";
     const full = !held && game.deck.full(this.kind) ? `<small class="deck-full-note" role="status">Your hand is full.</small>` : "";
-    this.popover.show(id, anchor, `<small>${held ? "IN YOUR HAND" : "IN YOUR DECK"}</small><b class="deck-popover-name">${CARDS[id].name}</b>${cardLevelLines(save, id)}<p>${game.cardText(id)}</p>${bonuses ? `<p class="card-bonus">${bonuses}</p>` : ""}${tree}<small class="deck-swipe-hint">${gesture}</small>${full}`, CARDS[id].name);
+    this.popover.show(id, anchor, `<b class="deck-popover-name">${CARDS[id].name}</b>${cardLevelLines(save, id)}<p>${game.cardText(id)}</p>${bonuses ? `<p class="card-bonus">${bonuses}</p>` : ""}${tree}<small class="deck-swipe-hint">${gesture}</small>${full}`, CARDS[id].name);
   }
 
   /** A swipe appends to the next empty slot; a full hand never swaps a card. */

@@ -17,8 +17,8 @@ function bonusHtml(id: CardId) {
 /** The card over the screen, green rays turning behind it, with what it
  * does written underneath, and with `levels` given, the card's XP toward
  * its next level on the rule above its name, its rarity and level on it,
- * and its rarity, level and progress under its name. Pressing
- * the card closes it. */
+ * and its rarity, level and progress under its name. A press anywhere
+ * closes it. */
 function cardLayer(id: CardId, text: string, classes: string, words: Words, extra = "", levels?: CardLevels) {
   const card = CARDS[id];
   // Rays celebrate a card just obtained; its details, reviewed later, show none.
@@ -37,18 +37,17 @@ function cardLayer(id: CardId, text: string, classes: string, words: Words, extr
   layer.addEventListener("click", (e) => {
     if (!pressedHere && e.detail !== 0) e.stopImmediatePropagation();
   }, true);
-  const button = layer.querySelector<HTMLButtonElement>("#card-reveal-card")!;
-  button.onclick = () => layer.remove();
-  button.focus({ preventScroll: true });
+  layer.onclick = () => layer.remove();
+  layer.querySelector<HTMLButtonElement>("#card-reveal-card")!.focus({ preventScroll: true });
   return layer;
 }
 
 /** Celebrates a card joining the deck: it rises from below the screen to
  * its middle, green rays turning behind it, with what it does written
- * underneath. Pressing the card dismisses it. With Reduce motion on, the
+ * underneath. A press anywhere dismisses it. With Reduce motion on, the
  * card and rays appear still. */
 export function revealCard(id: CardId, text: string, reduceMotion: boolean) {
-  cardLayer(id, text, reduceMotion ? " still" : "", { kicker: "NEW CARD FOR YOUR DECK", hint: "Press the card to continue", label: `New card: ${CARDS[id].name}` });
+  cardLayer(id, text, reduceMotion ? " still" : "", { kicker: "NEW CARD FOR YOUR DECK", hint: "Tap anywhere to continue", label: `New card: ${CARDS[id].name}` });
 }
 
 /** What a card's optional level marks read. */

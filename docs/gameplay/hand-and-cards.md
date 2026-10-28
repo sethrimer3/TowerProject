@@ -57,7 +57,7 @@ A profile from before the Key card holds Key in Gold Key's place, with any badge
 
 ## How the hand plays
 
-Each new card rises from the bottom of the screen to its middle, green rays turning behind it and what it does written below, until you press it.
+Each new card rises from the bottom of the screen to its middle, green rays turning behind it and what it does written below, until you tap anywhere.
 Until **Auto-Climb** is owned, the hand moves only for a card you press (see Pressing a card): once the hero reaches that card's target, the hand pauses and waits for the next press, its status line saying so, or, when no card can reach anything, is stuck (below).
 Once Auto-Climb is owned, whenever the hero has no path to follow, the first card that can reach a target over open floor and items picks its closest one, and the hero walks the shortest path there, one step per tick of the movement speed (2 steps a second for a new hero); of equally short paths it takes the one stepping on the fewest items (keys, potions, ATK and DEF shards, treasure chests) and lit torches, so it walks round them unless they lie on the only shortest way, leaving them to the cards that aim at them (an area reward chest is no item here).
 Tapped routes do the same; the card glows as it moves, and keeps glowing while the hand is paused; playing on carries on along the same path.
@@ -90,7 +90,7 @@ The card flies into its new place while nearby cards slide to close gaps or make
 A full hand refuses an incoming card with a side-to-side shake and an error sound, leaving both places as they were.
 Keyboard users can press Arrow Up on a deck card to add it and Arrow Down on a hand card to return it; STAIRS always stays in the hand.
 Reduce motion skips the travel and shifting animations.
-Dragging one onto a hand slot with room also inserts it there, shifting later cards along; a full hand refuses it.
+Dragging one onto a hand slot with room instead inserts it there, shifting later cards along (an upward drag that ends on the hand counts as this, not a swipe); a full hand refuses it.
 A hand card shows an X in its corner while hovered (always, on touch screens) that also returns it to the deck, as does dragging it onto the deck (which lights up while it is held there).
 A hand must always hold STAIRS, which has no X and can only be reordered; every other card is optional.
 Every change is saved at once.
