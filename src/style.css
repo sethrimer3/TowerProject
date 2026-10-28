@@ -558,6 +558,15 @@ h1 span {
 .enemy-odds-table th[scope="row"], .enemy-odds-table thead th:first-child { text-align: left; font-weight: 600; }
 .enemy-odds-table thead th { color: #a8afbc; font-size: 11px; font-weight: 600; }
 .enemy-odds-table thead :is(.stat-sprite, .gold-icon) { width: 1.6em; height: 1.6em; vertical-align: middle; }
+/* Each row's name after the board's marks for it, at twice their pixels: a strength's rank chevrons stacked 4 pixels apart as the enemies wear them, an attribute's mark (Shielded's thin bubble larger, so it reads). */
+.enemy-odds-table .odds-name { display: inline-flex; align-items: center; gap: 5px; }
+.enemy-odds-table .odds-marks { display: inline-flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+.enemy-odds-table .odds-ranks { width: 14px; }
+.enemy-odds-table .odds-traits { width: 24px; }
+.enemy-odds-table .odds-ranks .odds-mark { width: 14px; height: 12px; }
+.enemy-odds-table .odds-ranks .odds-mark + .odds-mark { margin-top: -4px; }
+.enemy-odds-table .odds-traits .odds-mark { width: 24px; height: 16px; }
+.enemy-odds-table .odds-traits .odds-shielded { height: 24px; margin: -4px 0; }
 .base-enemy > span { display: inline-flex; align-items: center; gap: 1px; }
 .base-enemy b { font-weight: 700; }
 .base-enemy-hp { color: #df797e; }
