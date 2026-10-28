@@ -38,7 +38,7 @@ test("fresh progression gates Delve, currencies, Breakthrough root, and Legacy",
   restored.switchMode("delve");
   assert.equal(restored.mode, "delve");
   assert.deepEqual(TREES[1].nodes.slice(0, 2).map((n) => [n.id, n.x, n.y, n.requires]), [["questForKnowledge", 50, 10, ["breakthrough"]], ["moveSpeed", 50, 34, ["questForKnowledge"]]], "Movement Speed under Quest for Knowledge");
-  assert.deepEqual(TREES[0].nodes.filter(n => UPGRADES.find(u => u.id === n.id)!.currency !== "inspiration").map(n => n.id), ["interest", "maxInterest", "mug", "findYellowKey", "keyEfficiency"], "Breakthrough points pay only for the research skills moved here");
+  assert.deepEqual(TREES.flatMap(t => t.nodes.filter(n => UPGRADES.find(u => u.id === n.id)!.currency !== t.currency).map(n => n.id)), [], "every skill costs its tree's currency");
   assert.deepEqual(TREES.map(tree => tree.id), ["inspiration", "breakthrough", "wayfinding", "legacy", "wisdom", "renown"]);
   assert.ok(TREES.slice(3).every(tree => tree.nodes.length >= 3));
 });
@@ -246,7 +246,7 @@ test("Manual Hand (1 Breakthrough) follows Echoes of time under More Wealth; Key
   for (const id of ["keyMastery", "manualHand", "moreWealth", "cardMastery", "beastMastery"] as const) assert.deepEqual([UPGRADES.find((u) => u.id === id)!.currency, cost(id, 0)], ["breakthrough", 1], id);
   for (const id of ["findYellowKey", "keyEfficiency", "interest", "maxInterest", "mug"] as const) {
     const row = UPGRADES.find((u) => u.id === id)!;
-    assert.deepEqual([row.currency, row.max, cost(id, 0)], ["breakthrough", 1, 10], id);
+    assert.deepEqual([row.currency, row.max, cost(id, 0)], ["inspiration", 1, 10], id);
   }
   assert.deepEqual([UPGRADES.find((u) => u.id === "undos")!.max, cost("undos", 0)], [1, 5]);
   const upgrades = { ...defaults().upgrades, trainers: 1, questForKnowledge: 1, pathToWealth: 1, physician: 1 };
