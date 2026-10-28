@@ -157,7 +157,7 @@ export const RESEARCH_ICON = kitIcon("hourglass", `<svg class="research-icon" vi
  * that mode's (set by the HUD). */
 export const NAV_TABS = [
   { id: "board", name: "Tower", icon: uiSprite("tower") },
-  { id: "upgrades", name: "Upgrades", icon: uiSprite("upgrades") },
+  { id: "upgrades", name: "Upgrades", icon: uiSprite("inspiration") },
   { id: "deck", name: "Deck", icon: DECK_ICON },
   { id: "gear", name: "Gear", icon: uiSprite("gear") },
   { id: "research", name: "Research", icon: RESEARCH_ICON },

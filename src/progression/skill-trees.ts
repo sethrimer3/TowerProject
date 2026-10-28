@@ -19,8 +19,8 @@ export const TREES: SkillTree[] = [
     { id: "cardEnemy", icon: "☠", x: 50, y: 30, requires: ["cardDoorKey"] },
     { id: "autoClimb", icon: "»", x: 50, y: 48, requires: ["cardEnemy"] },
     // The hand's skills, down to Breakthrough: Buildout, Trainers, Larger
-    // Hand, Shroud (with Gold Key, then Blue Key, to its left), Critical (with
-    // Critical Prediction, then Bombs, to its left and Faster Trainers to its right). ATK
+    // Hand, Shroud, Critical (with Critical Prediction, then Bombs, to its
+    // left and Faster Trainers to its right). ATK
     // Up branches left off Trainers, with DEF Up under it, each with its
     // provision (Vanguard Banner, Aegis Charm) to its left, and On the Job
     // right off Trainers, with Regen below it and Heal and the Traveler's
@@ -40,8 +40,6 @@ export const TREES: SkillTree[] = [
     { id: "cardHeal", icon: "♥", x: 70, y: 138, requires: ["regen"] },
     { id: "elixirProvision", icon: "⚗", x: 90, y: 138, requires: ["regen"] },
     { id: "breakthrough", icon: "▼", x: 50, y: 174, requires: ["critical"] },
-    { id: "cardYellowKey", icon: "⚿", x: 30, y: 138, requires: ["shroud"] },
-    { id: "cardBlueKey", icon: "⚿", x: 10, y: 138, requires: ["cardYellowKey"] },
     { id: "cardAtkUp", icon: "⚔", x: 30, y: 102, requires: ["trainers"], reveal: "trainers" },
     { id: "whetstoneProvision", icon: "⚑", x: 10, y: 102, requires: ["cardAtkUp"] },
     { id: "cardDefUp", icon: "⛨", x: 30, y: 120, requires: ["cardAtkUp"] },
@@ -54,9 +52,12 @@ export const TREES: SkillTree[] = [
     // the middle (Lifesteal, Buy Quantity, Thorns, Find Gold Key, Key Efficiency, then GK Siphon; Key
     // Mastery, in the Breakthrough tree, reveals Find Gold Key and all below it).
     // Recovery and Regen Research (then Parry, then Revive) stand under Greater Heal.
+    // Gold Key, then Blue Key, stand left of the Archives, revealed once they are owned.
     // Pocket Money's side waits on Path to Wealth, and Greater Heal's on Physician,
     // both in the Breakthrough tree.
     { id: "archives", icon: "▥", x: 50, y: 196, requires: ["breakthrough"], reveal: "questForKnowledge" },
+    { id: "cardYellowKey", icon: "⚿", x: 30, y: 196, requires: ["archives"], reveal: "archives" },
+    { id: "cardBlueKey", icon: "⚿", x: 10, y: 196, requires: ["cardYellowKey"] },
     { id: "pocketMoney", icon: "¤", x: 20, y: 214, requires: ["archives"], reveal: "pathToWealth" },
     { id: "lifesteal", icon: "♥", x: 50, y: 214, requires: ["archives"] },
     { id: "buyQuantity", icon: "×", x: 50, y: 232, requires: ["lifesteal"] },

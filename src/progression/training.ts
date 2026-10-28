@@ -119,8 +119,9 @@ const freeUpgradeTrainers: TrainerCurve = { growth: freeUpgrades.growth, start: 
 /** How a value row's amount reads on the Training tab and the run's cards
  * (`trainingText`): a multiplier (×1.30), meters (a tile is one), shots
  * every 10 turns, ATK multiplier a meter, a count with no unit (its name
- * says what), turns, a percent, or a bare amount. */
-export type TrainingUnit = "×" | "m" | "shots" | "perMeter" | "count" | "turns" | "%" | "";
+ * says what), turns, a chance (a percent to the hundredth, 7.42%), a
+ * percent, or a bare amount. */
+export type TrainingUnit = "×" | "m" | "shots" | "perMeter" | "count" | "turns" | "chance" | "%" | "";
 /** How long a trainer's ranks of a row take, when not the usual schedule
  * (`trainingSeconds`): `skip` passes over that many of its quickest first
  * ranks, so the row's first rank takes as long as the usual second; `each`
@@ -192,7 +193,7 @@ export const TRAINING = [
   // percent: 1% a rank, before research.
   {
     id: "critChance", name: "Critical Chance", short: "Crit %", group: "offense", requires: "critical", cost: 1, max: 80,
-    curve: { per: 100 }, scale: 100, unit: "%", research: "critChancePercent",
+    curve: { per: 100 }, scale: 100, unit: "chance", research: "critChancePercent",
     description: "Raises the chance each of your strikes is a critical hit.",
     silver: opened, gold: critTrainers,
   },

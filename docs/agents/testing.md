@@ -15,7 +15,7 @@ The render suite encodes PNGs only for frames that changed (every frame when rec
 `npm run test:proving` uses the dev server to exercise both boss entries, the three-control picker, actual tile routes without arrow buttons, hybrid overrides and resume, automatic shared difficulty and one-time Trial Points equal to the cleared difficulty.
 It also checks cards-only input authority, reloads, daily key exhaustion/refill, isolated purchases and protection of paused ordinary runs, with picker previews at 320/390/1024 pixels in `test-results/proving-grounds/`.
 
-`tests/default-art-browser.mjs` starts its own Vite server and checks a delayed required sprite, hidden gameplay until decoding completes, a fully painted first board, failed-image Retry recovery, migration from both retired art flags, persistent independent options and UI/Game theme overrides.
+`tests/default-art-browser.mjs` starts its own Vite server and checks a delayed required sprite, hidden gameplay until decoding completes, a fully painted first board, a dropped image recovering by itself, a failing one reloading twice before Retry, Retry recovery, migration from both retired art flags, persistent independent options and UI/Game theme overrides.
 It rejects any requests for the removed bitmap directories and checks every initial DOM image is loaded before reveal.
 `tests/sprite-preload.test.ts` verifies the generated inventory covers all deployed images and contains real nonempty PNGs.
 

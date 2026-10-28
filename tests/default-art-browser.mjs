@@ -73,11 +73,24 @@ try {
   assert.equal(await page.locator("html").evaluate(e => e.classList.contains("ui-sprites")), true);
   assert.equal(await page.locator("html").evaluate(e => e.classList.contains("game-sprites")), false);
 
+  // A load that fails once reloads by itself a second later and plays.
+  const flaky = await browser.newPage();
+  await fixClock(flaky);
+  let dropped = 0;
+  await flaky.route("**/assets/style/hero-down.png", route => (dropped++ === 0 ? route.abort() : route.continue()));
+  await flaky.goto(server.resolvedUrls.local[0], { waitUntil: "domcontentloaded" });
+  await flaky.locator("#hp").waitFor({ timeout: 30000 });
+  assert.equal(await flaky.locator("#boot-retry").count(), 0, "recovered without Retry");
+  await flaky.close();
+
+  // One that keeps failing reloads twice, then offers Retry.
   const failed = await browser.newPage();
   await fixClock(failed);
-  await failed.route("**/assets/style/hero-down.png", route => route.abort());
+  let aborted = 0;
+  await failed.route("**/assets/style/hero-down.png", route => { aborted++; return route.abort(); });
   await failed.goto(server.resolvedUrls.local[0], { waitUntil: "domcontentloaded" });
-  await failed.locator("#boot-retry").waitFor({ timeout: 30000 });
+  await failed.locator("#boot-retry").waitFor({ state: "visible", timeout: 30000 });
+  assert.equal(aborted, 3, "the first load and two retries");
   assert.equal(await failed.locator("#app").isVisible(), false, "a failed image never exposes incomplete gameplay");
   await failed.unroute("**/assets/style/hero-down.png");
   await failed.locator("#boot-retry").click();
@@ -86,5 +99,5 @@ try {
   assert.deepEqual(missing, []);
   assert.deepEqual(legacy, []);
   assert.deepEqual(errors, []);
-  console.log("Default pixel art, delayed/failed asset barrier and Retry, old saves, independent options, cached pages and theme overrides passed.");
+  console.log("Default pixel art, delayed/failed asset barrier, auto-retry and Retry, old saves, independent options, cached pages and theme overrides passed.");
 } finally { await browser.close(); await server.close(); }

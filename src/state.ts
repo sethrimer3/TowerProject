@@ -2664,7 +2664,7 @@ export class Game {
     const inspiration = reward === "cleared" ? clearedInspiration(this.run.height) : 0;
     const playing = this.areaBursts.filter((b) => now - b.at < AREA_BURST_MS), last = playing.at(-1);
     this.areaBursts = [...playing, { reward, inspiration, at: last ? Math.max(now, last.at + AREA_BURST_MS) : now }];
-    this.message = reward === "mastered" ? "Area mastered · checkpoint warp unlocked" : `Enemies cleared · +${inspiration} Inspiration`;
+    this.message = reward === "mastered" ? "Area mastered · checkpoint warp claimed" : `Enemies cleared · +${inspiration} Inspiration`;
   }
   /** Ends the run (the End Run button), or, fallen, accepts defeat. */
   finish(reason: string) {

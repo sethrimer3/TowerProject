@@ -233,14 +233,15 @@ const FREE_ROWS: ReadonlySet<TrainingId> = new Set(Object.values(FREE_TRAINING_R
 /** How a Training row's value reads: a multiplier as ×1.30, Attack Range
  * as 3.00 m (a tile is a meter), Attack Speed as 1.00/10 turns, ATK / m
  * as the multiplier it gives an arrow for each meter, ×1.010/m, Multishot
- * Targets as a bare 2, Rapid Fire Duration as 1.00 turns, the others with
+ * Targets as a bare 2, Rapid Fire Duration as 1.00 turns, Critical Chance
+ * to the hundredth of a percent (7.42%, research included), the others with
  * their unit after. `bare` leaves out the units of Attack Range, Attack
  * Speed, ATK / m and Rapid Fire Duration (3.00, 1.00, ×1.010, 1.00),
  * for the run's training cards, whose tooltips say what they count. */
 export const trainingText = (value: number, unit: string, bare = false) =>
   unit === "×" ? `×${value.toFixed(2)}` : unit === "m" ? `${value.toFixed(2)}${bare ? "" : " m"}` : unit === "shots" ? `${value.toFixed(2)}${bare ? "" : "/10 turns"}`
     : unit === "perMeter" ? `×${(1 + value).toFixed(3)}${bare ? "" : "/m"}` : unit === "count" ? String(value)
-    : unit === "turns" ? `${value.toFixed(2)}${bare ? "" : " turns"}` : `${value}${unit}`;
+    : unit === "turns" ? `${value.toFixed(2)}${bare ? "" : " turns"}` : unit === "chance" ? `${value.toFixed(2)}%` : `${value}${unit}`;
 
 /** How much faster trainers train than at first (Faster Trainers research:
  * 0.02 a level); a rank takes its time / (1 + this). */

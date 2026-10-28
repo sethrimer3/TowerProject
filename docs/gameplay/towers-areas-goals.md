@@ -17,8 +17,8 @@ Each keeps its own records: its highest floor, the Inspiration its new floors pa
 ## Areas
 
 Each ten Tower floors ending at a checkpoint (1–10, 11–20 …) are an area, judged as the hero climbs onto the next area's first floor.
-An area climbed without taking damage in a fight (a Heart Door's toll doesn't count) is **mastered**, which lets runs warp to the next checkpoint once Warp is owned; one whose every floor you leave with no monster on it is **cleared**, which pays its floors' Inspiration again: 10 to floor 100, 1 an area to floor 1,000, then 1 for each area ending at a hundredth floor to floor 10,000; an area that would pay nothing (the rest past floor 1,000, and every one past 10,000) isn't cleared at all, with no chest (areas past floor 100, which have no checkpoint yet, can be cleared but not mastered).
-Each pays the moment it is earned, once per area in each tower, and a chest for each (gold for mastered, silver for cleared) then stands directly in front of the hero; opening it pays nothing more but bursts into gold with *AREA MASTERED* and *Checkpoint Warp Unlocked*, or *ENEMIES CLEARED* and the Inspiration it paid.
+An area climbed without taking damage in a fight (a Heart Door's toll doesn't count) is **mastered**, which lets runs warp to the next checkpoint once Warp is owned; one whose every floor you leave with no monster on it is **cleared**, which pays its floors' Inspiration again, up to 5: 5 to floor 100, 1 an area to floor 1,000, then 1 for each area ending at a hundredth floor to floor 10,000; an area that would pay nothing (the rest past floor 1,000, and every one past 10,000) isn't cleared at all, with no chest (areas past floor 100, which have no checkpoint yet, can be cleared but not mastered).
+Each pays the moment it is earned, once per area in each tower, and a chest for each (gold for mastered, silver for cleared) then stands directly in front of the hero; opening it pays nothing more but bursts into gold with *AREA MASTERED* and *Checkpoint Warp Claimed*, or *ENEMIES CLEARED* and the Inspiration it paid.
 Undo never takes an area's reward back.
 
 ## Goals

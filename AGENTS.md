@@ -38,7 +38,7 @@ npm run test:proving   # Proving Grounds browser flow (needs npm run dev)
 
 ## Architecture
 
-`src/bootstrap.ts` waits for decoded artwork and fonts behind the loading screen before `main.ts` paints and starts gameplay; failures offer Retry, and `npm run sprites:manifest` maintains the complete preload inventory.
+`src/bootstrap.ts` waits for decoded artwork and fonts behind the loading screen before `main.ts` paints and starts gameplay; a failure reloads the page by itself twice, a second apart, then offers Retry, and `npm run sprites:manifest` maintains the complete preload inventory.
 
 **Modes.** The modes are `tower` and `delve` (unlocked by upgrade).
 Tower and Delve share the tab bar's one board button (`data-tab="board"`, wearing the active mode's art); the only way between them is the **forest sign** (`Game.swapForest`: in the Tower's forest while the Delve is open, which is only while a tournament is open for entry (`Game.delveOpen`), and always in the Delve's, tapped, `#forest-sign`, which `BoardOverlay.placeSign` keeps over the path, or walked onto, the path's foot, `OutsideWorld.atExit`), which leaves the hero at the forest's start tile and arrives at the other's (`switchMode(next, outside)` starts a mode with no run in its forest).

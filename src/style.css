@@ -2858,6 +2858,15 @@ button.training-cost:disabled .gold-icon, button.training-cost:disabled .points-
 button.training-gold:disabled { opacity: 1; border-color: #2a323e; color: #4c5664; background: #0c121b; }
 button.training-gold:disabled .gold-icon { opacity: 1; }
 button.training-gold:disabled > span { color: #f0d79c; }
+/* In every theme, a trainer's countdown is red in a red-tinted box, since
+ * pressing it stops the training, and a trainer's Gold price that can be
+ * paid wears a gold tint, since pressing it buys. The tint lies over the
+ * box, so it shows over a theme's frame (a PNG kit's too). */
+button:is(.training-timer, .training-gold:not(:disabled)) { position: relative; }
+button:is(.training-timer, .training-gold:not(:disabled))::after { content: ""; position: absolute; inset: 1px; border-radius: inherit; pointer-events: none; }
+button.training-timer::after { background: #ff3a2a2e; box-shadow: inset 0 0 0 1px #ff5a4a66; }
+button.training-gold:not(:disabled)::after { background: #ffc4402a; box-shadow: inset 0 0 0 1px #ffd06a66; }
+button.training-timer:not(#_):not(#_), button.training-timer:not(#_):not(#_) > span { color: #ff6b5c; }
 .points-icon, .clock-icon, .ad-icon { width: 14px; height: 14px; vertical-align: -2px; flex-shrink: 0; }
 .ui-sprite.gold-icon { width: 14px; height: 14px; vertical-align: -2px; image-rendering: pixelated; flex-shrink: 0; }
 .training-points small .points-icon, .training-points small .gold-icon { width: 11px; height: 11px; }
