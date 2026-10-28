@@ -118,6 +118,30 @@ export const UPGRADES = [
     currency: "breakthrough",
   },
   {
+    id: "moreWealth",
+    name: "More Wealth",
+    description: "Reveal Interest, Max Interest and Mug in the Inspiration tree",
+    base: 1,
+    max: 1,
+    currency: "breakthrough",
+  },
+  {
+    id: "cardMastery",
+    name: "Card Mastery",
+    description: "Reveal BK Siphon and the skills under it in the Inspiration tree",
+    base: 1,
+    max: 1,
+    currency: "breakthrough",
+  },
+  {
+    id: "beastMastery",
+    name: "Beast Mastery",
+    description: "Reveal Weak Enemy and the skills under it in the Inspiration tree",
+    base: 1,
+    max: 1,
+    currency: "breakthrough",
+  },
+  {
     id: "aiMemory", name: "Route memory", description: "Delve: remember explored routes, then recognize dead ends", base: 3, max: 2, currency: "breakthrough",
   },
   {

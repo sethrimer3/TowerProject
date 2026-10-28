@@ -17,7 +17,7 @@ It cancels any queued route.
 Undos are a limited resource, like Ignore and Target: each run has a number of them to spend, shown on the Undo button, and one spent never comes back, whatever the run does after it.
 The history holds no more moves than the run has undos left.
 A game update that reshapes the floors forgets the history, in the Tower as in the Delve, since the moves it held were made on the old layout.
-A new profile has no undo, and the button stays hidden until **Rehearsed steps** (1 Breakthrough, under Path to Wealth in the Breakthrough tree, above Echoes of time) gives the first undo a run (or Echoes of time and a level of Undo Count do); each level of **Undo Count** research in the Archives adds one a run: Rehearsed steps opens four levels of it and **Echoes of time** (Breakthrough, after Rehearsed steps) four more, either opening it first, up to 9 a run.
+A new profile has no undo, and the button stays hidden until **Rehearsed steps** (1 Breakthrough, under More Wealth, under Path to Wealth, in the Breakthrough tree, above Echoes of time) gives the first undo a run (or Echoes of time and a level of Undo Count do); each level of **Undo Count** research in the Archives adds one a run: Rehearsed steps opens four levels of it and **Echoes of time** (Breakthrough, after Rehearsed steps) four more, either opening it first, up to 9 a run.
 Each counts the moment it's bought or completed, in a run already under way too; a new run starts with them all.
 History persists across refreshes.
 

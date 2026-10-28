@@ -333,6 +333,11 @@ function decodeUpgrades(raw: any, d: Save) {
   // reveal skills a save may own already. TODO: drop in a later save version.
   d.upgrades.pathToWealth ||= Math.min(1, count(raw?.pathfinder, 0, 1) + d.upgrades.pocketMoney);
   d.upgrades.physician ||= Math.min(1, d.upgrades.greaterHeal + d.upgrades.cardBadges + d.upgrades.findYellowKey);
+  // More Wealth and the Masteries now reveal skills a save may own already.
+  // TODO: drop in a later save version.
+  d.upgrades.moreWealth ||= Math.min(1, d.upgrades.interest + d.upgrades.maxInterest + d.upgrades.mug);
+  d.upgrades.cardMastery ||= Math.min(1, d.upgrades.blueSiphon + d.upgrades.cardRedKey + d.upgrades.keyToHp);
+  d.upgrades.beastMastery ||= Math.min(1, d.upgrades.cardWeakEnemy);
 }
 function decodeProgress(s: any, d: Save, undoCapacity: number) {
   d.gold = fraction(s.gold, d.gold);

@@ -10,6 +10,8 @@ A skill you can't yet afford, once pressed, says how many more Inspiration point
 ## Below the Archives
 
 Greater Heal and the skills under it stay hidden until the Breakthrough skill **Physician** (1 Breakthrough, below Movement Speed) is bought, and Pocket Money and the skills under it until **Path to Wealth** (1 Breakthrough, left of Physician).
+Below Free Training, **Interest**, with **Max Interest** and **Mug** either side under it (10 Breakthrough each), and Chest, Torch, Floor Skip Reward and Wooden Door under them, wait besides on **More Wealth** (1 Breakthrough, under Path to Wealth).
+**Thorns** stands below Buy Quantity, level with Torch and Floor Skip Reward, and leads three ways, each hidden until a Breakthrough skill under Physician is bought: down the middle Find Gold Key and the door cards (**Key Mastery**, under Overheal), down to the left BK Siphon and the key trades (**Card Mastery**), and to the right Weak Enemy and the enemy cards (**Beast Mastery**), the two Masteries 1 Breakthrough each, split off under Key Mastery.
 **Bombs** (5 Inspiration, left of Critical Prediction, after it) opens the Bomb provision (see gear-and-equipment.md).
 Below the Archives in the Inspiration tree, which grows taller than the screen and scrolls (drag it, or turn the mouse wheel; Ctrl and the wheel, or a pinch, zooms), **Greater Heal** (3 Inspiration, after the Archives) opens the Archives' **Potion HP** research,, **Recovery** (10 Inspiration, after Greater Heal) brings **percent potions** onto the floors (2% of potions), **Find Potion** (10 Inspiration, below Recovery) opens **Find Potion** training, which makes more of them percent potions, and **Shroud** (2 Inspiration, after Trainers, above Critical) wraps the hero in a **shroud** that blocks the first 1 damage of every fight and opens **Shroud** training and the Archives' **Shroud** research (+4% of the shroud a level, for 100 levels, up to ×5, priced and timed like Pocket Money), **Parry** (10 Inspiration, below Regen Research) lets the hero parry, **Revive** (10 Inspiration, below Parry) may raise a felled hero at full HP, and **Thorns** (10 Inspiration, on the middle path between Buy Quantity and GK Siphon) makes every monster pay for striking (see below).
 
@@ -37,7 +39,7 @@ A regular potion is drawn red, like the HP bar, and a percent potion blue, like 
 
 ## Overheal
 
-**Overheal** (20 Breakthrough, below Max Interest in the Breakthrough tree) lets HP rise above max HP, and opens Overheal training.
+**Overheal** (20 Breakthrough, between Physician and Key Mastery in the Breakthrough tree) lets HP rise above max HP, and opens Overheal training.
 Potions, regular and percent, the smelts (Smelt GK, BK and RK) and the badges' heals then heal past max HP, up to the Overheal ceiling: max HP times the Overheal training row's value (×1.00 until it has ranks).
 Regen, Lifesteal, Dash Regen, equipment's victory and floor heals still stop at max HP, and none of them lowers HP held above it.
 The HP readout shows HP over max (1,240 / 1,000), and its tooltip the ceiling.

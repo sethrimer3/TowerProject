@@ -24,17 +24,18 @@ function arena(size: number, ...owned: ("ignore" | "target")[]) {
   return g;
 }
 
-test("the four charge skills cost 20 Breakthrough each and sit below Interest's row", () => {
+test("the four charge skills cost 20 Breakthrough each and sit below Key Mastery", () => {
   const save = defaults();
   for (const id of ["ignore", "ignoreMore", "target", "targetMore"] as const) {
     assert.equal(cost(id, 0), 20, id);
     assert.equal(skillAvailable(id, save.upgrades), false, `${id} waits on the skills above it`);
   }
-  Object.assign(save.upgrades, { trainers: 1, breakthrough: 1, moveSpeed: 1, bombs: 1, findYellowKey: 1, keyEfficiency: 1, interest: 1 });
+  Object.assign(save.upgrades, { trainers: 1, breakthrough: 1, moveSpeed: 1, physician: 1, overheal: 1, keyMastery: 1 });
   assert.ok(skillAvailable("ignore", save.upgrades));
   assert.equal(skillAvailable("ignoreMore", save.upgrades), false);
+  assert.equal(skillAvailable("target", save.upgrades), false, "Target follows Ignore");
   save.upgrades.ignore = 1;
-  assert.ok(skillAvailable("ignoreMore", save.upgrades));
+  assert.ok(skillAvailable("ignoreMore", save.upgrades) && skillAvailable("target", save.upgrades));
 });
 
 test("the charges' research: counts to 10 and 5 uses, and regains down to every 10 floors in about 2.8 years", () => {
