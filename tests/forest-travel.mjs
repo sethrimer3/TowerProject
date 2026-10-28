@@ -84,7 +84,7 @@ try {
     await page.waitForFunction(y => forestGame.run.player.x === 18 && forestGame.run.player.y === y && !forestGame.route.length, grass);
     async function phase(ms) {
       await page.evaluate(ms => window.forestElapsed = ms, ms);
-      await page.waitForFunction(ms => forestFrame?.phase === ms && forestFrame.arrival && forestFrame.tier === forestGame.tier, ms);
+      await page.waitForFunction(ms => window.forestFrame?.phase === ms && window.forestFrame.arrival && window.forestFrame.tier === forestGame.tier, ms);
       return page.evaluate(() => forestFrame);
     }
     await page.locator("#tier-next").click();

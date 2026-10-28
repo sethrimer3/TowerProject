@@ -15,6 +15,8 @@ import { ForestFoliage } from "./decor/forest-foliage.ts";
 import { forestSpritesReady } from "../sprites/forest.ts";
 import { TileLayerCache } from "./tile-cache.ts";
 import { OutdoorWeather } from "./weather.ts";
+import { CloudShadows } from "./cloud-shadows.ts";
+import { MODES } from "../modes.ts";
 import { torchAnimationFrame } from "../sprites/options.ts";
 import { towerTileset } from "../sprites/dungeon.ts";
 import { paintHero, paintTile, paintTorch, type BoardLook } from "./tile-painters.ts";
@@ -478,9 +480,9 @@ export class Renderer {
     // The Delve's cave is always its league's, the one its run plays.
     const delve = g.mode === "delve", tier = delve ? LEAGUE_INFO[g.delveLeague].cave : g.save.tower.tier;
     const tiers = delve || g.save.tower.tiersOpen > 1;
-    drawEntrance(c, g.mode, Math.floor(g.world.width / 2), tiers ? tierNumeral(tier) : "",
+    drawEntrance(c, g.mode, MODES[g.mode].entranceX, tiers ? tierNumeral(tier) : "",
       tiers ? { text: factorText(TIER_BONUS_TENTHS[tier - 1]! / 10), coin: goldCoin() } : undefined, f.look.styledSprites);
-    if (g.mode === "tower") drawProvingGrounds(c, Math.floor(g.world.width / 2));
+    if (g.mode === "tower") drawProvingGrounds(c, MODES[g.mode].entranceX);
     if (g.world instanceof OutsideWorld && g.world.blacksmith) drawBlacksmith(c, g.world.entranceX, f.look.styledSprites);
     if (g.world instanceof OutsideWorld && g.world.hall) drawTournamentHall(c, g.world.entranceX, f.look.styledSprites);
     c.restore();
@@ -490,8 +492,9 @@ export class Renderer {
     this.routePath.draw(f);
   }
   private forestFoliage = new ForestFoliage();
+  private cloudShadows = new CloudShadows();
   private drawForestGrass(f: FrameContext, layer: "back" | "front") {
-    this.grass.draw(f.c, f, this.game.world, this.game.run.seed, Math.floor(this.game.world.width / 2), outsideWeather(this.game.run.seed), f.now, f.dt,
+    this.grass.draw(f.c, f, this.game.world, this.game.run.seed, MODES[this.game.mode].entranceX, outsideWeather(this.game.run.seed), f.now, f.dt,
       this.playerX, this.playerY, f.look.reduceMotion, layer);
   }
   /** The hero between the forest grass behind it and the blades at its feet. */
@@ -513,7 +516,11 @@ export class Renderer {
   private drawWeather(f: FrameContext) {
     const g = this.game;
     this.weather.draw(f.c, f.width, g.run.seed, { dt: f.dt, reduceMotion: g.save.settings.reduceMotion,
-      active: !g.paused && !g.fallen && !document.hidden, sound: g.save.settings.weatherSound });
+      active: !g.paused && !g.fallen && !document.hidden, sound: g.save.settings.weatherSound }, seconds => {
+        if (!(g.world instanceof OutsideWorld)) return;
+        const visible = g.walkIn?.stage !== "gone" && (!g.forestArrival || forestArrivalPose(g.forestArrival, f.now, g.forestArrivalWalkMs).visible);
+        this.cloudShadows.draw(f, g.world, this.decorOn, !!f.look.styledSprites && forestSpritesReady(), seconds, visible);
+      });
   }
   /** A white glow fading behind the hero just after it reaches a new floor,
    * drawn in its tile space. */
@@ -692,7 +699,7 @@ export class Renderer {
   private look(): BoardLook {
     const g = this.game;
     return {
-      mode: g.mode, tier: g.run.tier ?? 1, height: g.run.height, seed: g.run.seed, outside: !!g.run.outside, entranceX: Math.floor(g.world.width / 2),
+      mode: g.mode, tier: g.run.tier ?? 1, height: g.run.height, seed: g.run.seed, outside: !!g.run.outside, entranceX: MODES[g.mode].entranceX,
       roads: g.run.outside ? roadsOf(g.world) : undefined,
       reduceMotion: g.save.settings.reduceMotion,
       styledSprites: !!g.run.outside || usesGameSprites(g.save),

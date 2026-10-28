@@ -44,13 +44,14 @@ export class OutdoorWeather {
     source.onended = () => { source.disconnect(); filter.disconnect(); gain.disconnect(); if (this.source === source) this.source = undefined; };
     this.source = source; source.start();
   }
-  draw(c: CanvasRenderingContext2D, size: number, seed: number, frame: WeatherFrame) {
+  draw(c: CanvasRenderingContext2D, size: number, seed: number, frame: WeatherFrame, shadows?: (seconds: number) => void) {
     this.follow(seed);
     const weather: Weather = outsideWeather(seed);
     const live = frame.active && !frame.reduceMotion;
     if (live) this.elapsed += frame.dt;
     if (!live || !frame.sound) this.silence();
     const lightning = weather === "storm" && live ? this.thunder(seed, frame.sound) : null;
+    shadows?.(this.elapsed);
     paintWeather({ c, size, seed, elapsed: this.elapsed }, weather, lightning);
   }
   /** A new seed starts its weather afresh. */
@@ -103,17 +104,10 @@ function paintSun({ c, size }: Sky) {
 
 const OVERCAST: Record<Weather, string> = { storm: "#14213550", rain: "#26394730", cloudy: "#36414c18", sunny: "#36414c18" };
 
-/** A grey tint under broad cloud shadows drifting slowly across the clearing. */
-function paintOvercast({ c, size, seed, elapsed }: Sky, weather: Weather) {
+/** The atmosphere's tint; surface-aware cloud shadows are drawn separately. */
+function paintOvercast({ c, size }: Sky, weather: Weather) {
   c.fillStyle = OVERCAST[weather];
   c.fillRect(0, 0, size, size);
-  for (let i = 0; i < 5; i++) {
-    const x = ((tileRandom(i, 5, seed) + elapsed / 250) % 1.6 - 0.3) * size;
-    const y = tileRandom(i, 9, seed) * size;
-    const cloud = c.createRadialGradient(x, y, 0, x, y, size * 0.4);
-    cloud.addColorStop(0, "#121e2b22"); cloud.addColorStop(1, "#121e2b00");
-    c.fillStyle = cloud; c.fillRect(0, 0, size, size);
-  }
 }
 
 /** Slanting streaks of rain, heavier in a storm. */

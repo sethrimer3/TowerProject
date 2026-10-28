@@ -8,6 +8,8 @@ Settings offers **Animations** and **Square doors** as independent checkboxes; b
 Animations enables matching torch frames, subtle potion bubbles, occasional key shines and a small idle motion after the hero stops.
 The skull and crossbones shown when the hero falls also uses matching PNG art, with a short animation while Animations is on.
 Reduce motion keeps these frames still; movement and combat stop the hero's idle motion.
+Outside, cloud shadows drift across the ground, trees, buildings and hero, shifting over taller surfaces.
+Reduce motion keeps the cloud shadows still too.
 Square doors uses tile-filling rectangular doors with the same key and HP requirements as before.
 Tower I sprite floors mix large slabs and smaller bricks with connected joints across neighboring tiles.
 Tower II has warm limestone walls and rectangular paving; Tower III has cool basalt walls and octagonal paving with small square insets.
