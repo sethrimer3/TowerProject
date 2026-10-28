@@ -85,16 +85,18 @@ export const DEFAULT_CURVE: Record<CurveMode, EnemyCurve> = {
   delve: { ...DEFAULT_BALANCED, ...DELVE_SHAPES },
 };
 
-/** Towers I to IV's: the default curve, its ATK raised from floor 11 to 45
- * on floor 25 (rather than 22.4) and its HP by the same factor, 124 rather
- * than 61.8, where a hero with Training and On the
- * Job could otherwise outgrow every enemy's ATK in DEF, the raise fading
- * back to the default's 400 ATK and 1,300 HP on floor 100. Floors 1 to 10 are the
- * default's, before training is open. */
+/** Towers I to IV's: the default curve raised where a hero with Training and
+ * On the Job could otherwise outgrow every enemy's ATK in DEF.
+ * ATK is 45 on floor 25 (rather than 22.4), 110 on floor 50 (57) and 220 on
+ * floor 75 (151), and HP the same factor above the default: 124 rather than
+ * 61.8, 320 rather than 166, 677 rather than 465.
+ * The raise fades back to the default's 400 ATK and 1,300 HP on floor 100.
+ * DEF follows ATK.
+ * Floors 1 to 10 are the default's, before training is open. */
 const EARLY_TOWER_CURVE: EnemyCurve = {
   ...DEFAULT_CURVE.tower,
-  hp: [...DEFAULT_BALANCED.hp.slice(0, 2), [25, 124], ...DEFAULT_BALANCED.hp.slice(2)],
-  attack: [...DEFAULT_BALANCED.attack.slice(0, 2), [25, 45], ...DEFAULT_BALANCED.attack.slice(2)],
+  hp: [...DEFAULT_BALANCED.hp.slice(0, 2), [25, 124], [50, 320], [75, 677], ...DEFAULT_BALANCED.hp.slice(2)],
+  attack: [...DEFAULT_BALANCED.attack.slice(0, 2), [25, 45], [50, 110], [75, 220], ...DEFAULT_BALANCED.attack.slice(2)],
 };
 
 /** A tier's own curve, by mode and tier number; a tier not listed here
