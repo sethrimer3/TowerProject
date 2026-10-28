@@ -91,6 +91,8 @@ export class FrameLoop {
         guard(() => host.highlight());
       }
     }
+    // Off the board (or hidden), the forest's wind dies away.
+    if (document.hidden || !isBoard(tab)) guard(() => host.renderer.hush?.());
     if (time - this.lastArchives > ARCHIVES_TICK_MS) {
       this.lastArchives = time;
       guard(() => host.archivesTick());
