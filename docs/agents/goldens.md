@@ -52,4 +52,8 @@ A UI hash that flips between two values from one machine to the next usually mea
 Then re-record those goldens with `UPDATE_GOLDEN=1` (a browser suite's own keys only: `ONLY=<prefixes> UPDATE_GOLDEN=1`; one Node file: `UPDATE_GOLDEN=1 node --experimental-transform-types --import ./tests/pin-random.ts --test tests/<name>.test.ts`), commit the fixtures in the same commit, and say in the message which goldens were re-recorded and why.
 3.
 The browser goldens build and serve their own copy of the app (no dev server needed) and aren't run by CI; when visuals or UI change, run them yourself.
+Run them through their npm scripts, which rebuild every time.
+Running `tests/ui-golden.mjs` or `tests/render-golden.mjs` directly reuses the last snapshot build, which after a baseline run with your change set aside is the old code: recording then writes the old hashes, and the check after it passes against the same old build.
+So the build carries a stamp of its source (`tests/snapshot-stamp.mjs`, a hash of `src/`, `assets/`, `public/`, `index.html`, `vite.config.ts` and `tests/*.ts`, written by `vite.config.ts`), and `startPreview` refuses to serve a build whose stamp no longer matches.
+After any `UPDATE_GOLDEN=1`, check that `git diff --stat tests/fixtures/` lists the goldens you meant to move, with about as many keys changed as failed.
 The Node goldens run in CI on Linux, so they must hash the same on every OS: one whose hashes depend on `Math.pow` imports `tests/portable-math.ts` first.
