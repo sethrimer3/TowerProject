@@ -84,8 +84,8 @@ test("Shroud follows Trainers and Larger Hand, ahead of Critical; Greater Heal, 
   assert.deepEqual([at("parry").x, at("parry").y, at("parry").requires], [90, 250, ["regenResearch"]], "Parry sits below Regen Research");
   assert.deepEqual([at("revive").x, at("revive").y, at("revive").requires], [90, 268, ["parry"]], "Revive sits below Parry");
   assert.deepEqual([at("findPotion").x, at("findPotion").y, at("findPotion").requires], [70, 250, ["recovery"]], "Find Potion sits below Recovery");
-  assert.deepEqual([at("buyQuantity").x, at("buyQuantity").y, at("buyQuantity").requires], [50, 232, ["lifesteal"]], "Buy Quantity sits under Lifesteal");
-  assert.deepEqual([at("lifesteal").x, at("lifesteal").y, at("lifesteal").requires], [50, 214, ["archives"]], "Lifesteal sits under the Archives");
+  assert.deepEqual([at("buyQuantity").x, at("buyQuantity").y, at("buyQuantity").requires], [50, 268, ["lifesteal"]], "Buy Quantity sits under Lifesteal");
+  assert.deepEqual([at("lifesteal").x, at("lifesteal").y, at("lifesteal").requires], [50, 232, ["archives"]], "Lifesteal sits under the Archives");
   assert.deepEqual([at("thorns").x, at("thorns").y, at("thorns").requires], [50, 358, ["buyQuantity"]], "Thorns sits under Buy Quantity, beside Torch and Floor Skip Reward");
   assert.deepEqual([at("findYellowKey").x, at("findYellowKey").y, at("findYellowKey").requires, at("findYellowKey").reveal], [50, 376, ["thorns"], "keyMastery"], "Find Gold Key sits under Thorns, revealed by Key Mastery");
   assert.deepEqual([at("keyEfficiency").y, at("keyEfficiency").requires], [394, ["findYellowKey"]], "Key Efficiency sits under Find Gold Key");

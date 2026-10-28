@@ -21,7 +21,7 @@ import { random } from "../src/random.ts";
 import { snap } from "../src/exact.ts";
 import { playedSave } from "./first-skills.ts";
 
-test("Badges costs 2 Breakthrough and follows Physician in the Breakthrough tree", () => {
+test("Badges costs 3 Breakthrough and follows Physician in the Breakthrough tree", () => {
   const g = new Game(playedSave());
   g.save.upgrades.trainers = g.save.upgrades.breakthrough = 1;
   g.save.upgrades.moveSpeed = 1;
@@ -29,7 +29,7 @@ test("Badges costs 2 Breakthrough and follows Physician in the Breakthrough tree
   assert.equal(g.skills.buy("cardBadges"), false, "waits for Physician");
   g.save.upgrades.physician = 1;
   assert.ok(g.skills.buy("cardBadges"));
-  assert.equal(g.save.breakthrough, 8);
+  assert.equal(g.save.breakthrough, 7);
 });
 
 test("the first copy opens level 1 and counts toward level 2; 80 copies reach level 7", () => {
