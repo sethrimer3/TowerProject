@@ -135,7 +135,9 @@ export function drawEntrance(c: CanvasRenderingContext2D, mode: Mode, center: nu
   const x = center * 24 + 12, base = (OUTSIDE_SIZE - 1 - ENTRANCE_Y) * 24;
   c.save();
   const landmark = drawForestLandmark(c, mode === "tower", x, base + 24);
-  const y = landmark && mode === "tower" ? (bonus ? 46 : 22) : base - (mode === "tower" ? 66 : 76);
+  // Over a landmark, the numeral and Gold bonus stand in the same rows near
+  // the top in both modes, clear of the tower's door and the cave's mouth.
+  const y = landmark ? (bonus ? 46 : 22) : base - (mode === "tower" ? 66 : 76);
   if (numeral) {
     drawTierNumeral(c, numeral, x, bonus ? y - 24 : y, styled);
     if (bonus) drawGoldBonus(c, bonus.text, bonus.coin, x, y, styled);

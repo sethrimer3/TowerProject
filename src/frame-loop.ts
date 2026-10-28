@@ -150,10 +150,10 @@ export class FrameLoop {
     return this.canAct() && time - last > interval;
   }
 
-  /** Steps only run while the game is live: not paused, finished, in a
-   * fight still playing out, or behind a dialog. */
+  /** Steps only run while the game is live: not paused, held by a lesson,
+   * finished, in a fight still playing out, or behind a dialog. */
   private canAct() {
     const { game, modal } = this.host;
-    return !game.paused && !game.fallen && !game.fights.encounter && !modal.open;
+    return !game.paused && !game.lessonHolds && !game.fallen && !game.fights.encounter && !modal.open;
   }
 }

@@ -182,8 +182,10 @@ export type Save = {
    * on an upgrade tree, led there from the forest's Deck tab, and once the
    * Archives skill is owned, `research`, opening the Research page, led there
    * from the Tower's forest, then `archives`, its note on the Archives tab
-   * dismissed. */
-  tutorials: { deck: boolean; removeCard: boolean; addCard: boolean; upgrades: boolean; gear: boolean; onTheJob: boolean; speed: boolean; climb: boolean; keys: boolean; autoClimb: boolean; stuck: boolean; enemy: boolean; enter: boolean; training: boolean; delve: boolean; chamber: boolean; cardPoints: boolean; research: boolean; archives: boolean };
+   * dismissed; `goals`, opening the Goals page, led there from the Tower's
+   * forest once a reward waits; and `autoClimbHint`, the note on floor 4
+   * before Auto-Climb is owned, dismissed (or the climb ended). */
+  tutorials: { deck: boolean; removeCard: boolean; addCard: boolean; upgrades: boolean; gear: boolean; onTheJob: boolean; speed: boolean; climb: boolean; keys: boolean; autoClimb: boolean; stuck: boolean; enemy: boolean; enter: boolean; training: boolean; delve: boolean; chamber: boolean; cardPoints: boolean; research: boolean; archives: boolean; goals: boolean; autoClimbHint: boolean };
   /** Per tree: its currency earned since the tree was last shown (a Tower
    * run's Inspiration, ended; a Goal's Breakthrough point, claimed), so its
    * tab (and the Upgrades tab) wear a dot in the forest while a skill there

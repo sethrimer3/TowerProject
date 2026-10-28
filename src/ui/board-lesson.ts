@@ -7,7 +7,10 @@ import { el, POINTER_SVG } from "./dom.ts";
 // End Run flashes slowly; in the forest the hand shows the button to press
 // next, the Upgrades tab, Enter, the Research tab (once the Archives skill is
 // owned, and the first time training points wait to be spent), the Deck tab, the sign down the path to the
-// Delve or, once a first provision is open, the Gear tab. Only `enter` and `autoClimb` are dismissed by tapping their notes; the others wait
+// Delve or, once a first provision is open, the Gear tab, and the Goals
+// button while a Goal waits. On floor 4 before Auto-Climb is owned,
+// `autoClimbHint` holds the hero and says ending the climb unlocks it.
+// Only `enter`, `autoClimbHint` and `autoClimb` are dismissed by tapping their notes; the others wait
 // on what they ask for (`cards` on the Deck page, which takes the lesson on).
 // Each hand sits inside what it points at.
 
@@ -17,6 +20,7 @@ export const PROVISIONS_NOTE = { title: "Provisions unlocked.", text: "Press the
 const NOTES: Record<BoardLesson, { greeting?: string; title: string; text?: string }> = {
   climb: { greeting: "Welcome, adventurer!", title: "Press the Stairs card to climb.", text: "Each card in your hand sends the hero toward what it names. Climb the Tower to gain Inspiration, XP and resources." },
   keys: { title: "Press Key and Door to collect keys and open doors.", text: "Key heads for the closest key, and Door for a door your keys open, or a Wooden Door your HP can break down." },
+  autoClimbHint: { title: "You can end the climb now to unlock Auto-Climb.", text: "End the climb from the menu, then spend its Inspiration on Auto-Climb on the Inspiration tree: the hand then plays by itself." },
   autoClimb: { title: "Auto-Climb moves the hero for you.", text: "The hero heads for the target of the first card in your hand with an open path to it. Press a card to go for its target first." },
   stuck: { title: "No card can take you further.", text: "The Inspiration this climb earned unlocks new abilities to climb higher. Press End Climb, then spend it on the Inspiration tree." },
   enemy: { title: "An enemy blocks the way.", text: "Unlock the Enemy card on the Inspiration tree to fight it. Press End Climb to go and spend your Inspiration." },
@@ -26,6 +30,7 @@ const NOTES: Record<BoardLesson, { greeting?: string; title: string; text?: stri
   trainingPoints: { title: "Training points to spend.", text: "After levelling up, you can spend points to increase your stats. Press the Research tab to train." },
   cards: { title: "Your cards gain levels as you use them.", text: "Each level grants a card point. Open your Deck to spend it." },
   delve: { title: "A tournament is open: follow the path down to the Delve and enter its cave." },
+  goals: { title: "Tower Goals are ready to claim.", text: "Every ten floors climbed pays a Goal reward. Press Goals to claim yours." },
   provisions: PROVISIONS_NOTE,
 };
 
@@ -37,8 +42,8 @@ function targets(lesson: BoardLesson | "back"): HTMLElement[] {
   const card = (id: string) => document.querySelector<HTMLElement>(`#hand .hand-card[data-card="${id}"]`);
   const tab = (id: string) => document.querySelector<HTMLElement>(`nav [data-tab="${id}"]`);
   const found = {
-    climb: [card("stairs")], keys: [card("key"), card("door")], autoClimb: [], stuck: [], enemy: [],
-    upgrades: [tab("upgrades")], enter: [el("enter-run")], research: [tab("research")], trainingPoints: [tab("research")], cards: [tab("deck")], delve: [el("forest-sign")], provisions: [tab("gear")], back: [tab("board")],
+    climb: [card("stairs")], keys: [card("key"), card("door")], autoClimbHint: [], autoClimb: [], stuck: [], enemy: [],
+    upgrades: [tab("upgrades")], enter: [el("enter-run")], research: [tab("research")], trainingPoints: [tab("research")], cards: [tab("deck")], goals: [el("section-pick")], delve: [el("forest-sign")], provisions: [tab("gear")], back: [tab("board")],
   }[lesson] as (HTMLElement | null)[];
   return found.filter((t): t is HTMLElement => !!t);
 }
@@ -69,7 +74,7 @@ export function renderBoardLesson(game: Game, onBoard: boolean, dismissed: () =>
   if (!lesson) return;
   if (!note) {
     const { greeting, title, text } = NOTES[lesson], body = `${greeting ? `<b>${greeting}</b>` : ""}<b>${title}</b>${text ? `<p>${text}</p>` : ""}`;
-    frame.insertAdjacentHTML("beforeend", lesson !== "enter" && lesson !== "autoClimb"
+    frame.insertAdjacentHTML("beforeend", lesson !== "enter" && lesson !== "autoClimb" && lesson !== "autoClimbHint"
       ? `<div class="board-tip" role="status" data-lesson="${lesson}">${body}</div>`
       : `<button type="button" class="board-tip dismissable" data-lesson="${lesson}">${body}<small>Tap to dismiss</small></button>`);
     note = frame.querySelector<HTMLElement>(".board-tip")!;

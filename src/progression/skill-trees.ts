@@ -52,15 +52,15 @@ export const TREES: SkillTree[] = [
     // core path down the middle (Lifesteal, Buy Quantity, then Thorns, low
     // enough that the paths it leads to clear Pocket Money's side).
     // Recovery and Regen Research (then Parry, then Revive) stand under Greater Heal.
-    // Gold Key, then Blue Key, stand left of the Archives, revealed once they are owned.
+    // Gold Key stands down and right of Buy Quantity, with Blue Key under it.
     // Pocket Money's side waits on Path to Wealth, and Greater Heal's on Physician,
     // both in the Breakthrough tree.
     { id: "archives", icon: "▥", x: 50, y: 196, requires: ["breakthrough"], reveal: "questForKnowledge" },
-    { id: "cardYellowKey", icon: "⚿", x: 30, y: 196, requires: ["archives"], reveal: "archives" },
-    { id: "cardBlueKey", icon: "⚿", x: 10, y: 196, requires: ["cardYellowKey"] },
     { id: "pocketMoney", icon: "¤", x: 20, y: 214, requires: ["archives"], reveal: "pathToWealth" },
     { id: "lifesteal", icon: "♥", x: 50, y: 232, requires: ["archives"] },
     { id: "buyQuantity", icon: "×", x: 50, y: 268, requires: ["lifesteal"] },
+    { id: "cardYellowKey", icon: "⚿", x: 70, y: 286, requires: ["buyQuantity"] },
+    { id: "cardBlueKey", icon: "⚿", x: 70, y: 304, requires: ["cardYellowKey"] },
     { id: "thorns", icon: "✥", x: 50, y: 358, requires: ["buyQuantity"] },
     { id: "spareChange", icon: "¤", x: 20, y: 232, requires: ["pocketMoney"] },
     { id: "wealthy", icon: "¤", x: 10, y: 250, requires: ["spareChange"] },

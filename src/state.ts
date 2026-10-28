@@ -9,7 +9,7 @@ import { arrowRange, foeOn } from "./enemies/ranged.ts";
 import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./cards/badges.ts";
 import { BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
 import { noteGoldBoost } from "./economy/gold-boost.ts";
-import { canWarp, claimGoal, goalUnlocked } from "./goals.ts";
+import { canWarp, claimGoal, goalUnlocked, goalsWaiting } from "./goals.ts";
 import { volleyTurn, type Shot, type Volley, type VolleyTurn } from "./volley.ts";
 import { missGem } from "./economy/gems.ts";
 import { DelvePlan } from "./delve/automove.ts";
@@ -106,7 +106,7 @@ import type { Coin, Dash, Drop, Facing, Gain, GainArt, Heal, ShownTurn } from ".
  * which seed (rolled from the game's randomness when left out). */
 export type RunStart = { outside?: boolean; seed?: number; height?: number };
 /** A lesson shown on the board (`Game.boardLesson`). */
-export type BoardLesson = "climb" | "keys" | "autoClimb" | "stuck" | "enemy" | "upgrades" | "enter" | "trainingPoints" | "cards" | "delve" | "provisions" | "research";
+export type BoardLesson = "climb" | "keys" | "autoClimbHint" | "autoClimb" | "stuck" | "enemy" | "upgrades" | "enter" | "trainingPoints" | "cards" | "delve" | "provisions" | "research" | "goals";
 /** The first skills the lessons lead to on the Inspiration tree, in order. */
 export type IntroSkill = "cardDoorKey" | "cardEnemy";
 export type RouteEffects = {
@@ -145,6 +145,9 @@ const LESSON_SPEED = 3;
 /** The steps a run takes on the Tower's first floor before the speed
  * lesson comes. */
 const LESSON_STEPS = 10;
+/** The height (floor 4) at which the `autoClimbHint` lesson stops a climb
+ * before Auto-Climb is owned. */
+const AUTO_CLIMB_HINT_HEIGHT = 3;
 /** How long a turn inside a run shows, at most (ms): the hero's step and
  * its shots leaving through it, shorter at higher speeds. */
 const TURN_MS = 220;
@@ -478,14 +481,18 @@ export class Game {
    * run's Inspiration buys what gets past, until End Run is pressed, and
    * `enemy` while an enemy blocks the way with Enemy not yet owned and its
    * Inspiration held; then `keys`, the first time the hand holds DOOR and
-   * KEY, until one of them is pressed; and `autoClimb`, the first run
+   * KEY, until one of them is pressed; `autoClimbHint`, on reaching floor 4
+   * before Auto-Climb is owned, which holds the hero still (`lessonHolds`)
+   * and says ending the climb unlocks it, until its note is tapped or the
+   * climb ends; and `autoClimb`, the first run
    * inside once Auto-Climb is owned, saying the hero heads for the first
    * card's target with an open path and a pressed card goes first, until
    * its note is tapped or a card pressed. In the Tower's forest: `upgrades`,
    * to the Upgrades tab while the next first skill (`introSkill`) can be
    * bought; `enter`, to Enter, once Door & Key is owned until Enter is
    * pressed or a run goes inside from the forest (and again once Enemy is bought after its
-   * lesson); `research`, once the Archives skill is owned, to the Research
+   * lesson); `goals`, to the Goals button while a Goal waits to be claimed,
+   * until the Goals page is opened; `research`, once the Archives skill is owned, to the Research
    * tab, until the Research page is opened (`archivesLesson` then waits on
    * its note there); then, in either forest, `trainingPoints`, the first time training
    * points can be spent, which leads to the Research tab until the
@@ -501,10 +508,12 @@ export class Game {
       if (this.handStuck && !t.stuck) return "stuck";
       if (this.handStuck && this.enemyBlocks && !owned.cardEnemy && this.affords("cardEnemy")) return "enemy";
       if (!t.keys && this.hand.includes("door") && this.hand.includes("key")) return "keys";
+      if (owned.cardEnemy && !owned.autoClimb && !t.autoClimbHint && this.run.height >= AUTO_CLIMB_HINT_HEIGHT) return "autoClimbHint";
       return owned.autoClimb && !t.autoClimb ? "autoClimb" : null;
     }
     if (tower && this.introSkill) return "upgrades";
     if (tower && ((!t.enter && owned.cardDoorKey) || (t.enemy && owned.cardEnemy))) return "enter";
+    if (tower && !t.goals && goalsWaiting(this.save)) return "goals";
     if (tower && owned.archives && !t.research && !t.archives) return "research";
     if (!t.training && trainingWaiting(this.save)) return "trainingPoints";
     if (this.cardPointsLesson) return "cards";
@@ -542,6 +551,12 @@ export class Game {
     const lesson = this.boardLesson;
     if (lesson === "stuck") this.save.tutorials.stuck = true;
     if (lesson === "enemy") this.save.tutorials.enemy = true;
+    if (lesson === "autoClimbHint") this.save.tutorials.autoClimbHint = true;
+  }
+  /** Whether the waiting lesson holds the hero still: `autoClimbHint`
+   * pauses the route walked until its note is dismissed. */
+  get lessonHolds() {
+    return this.boardLesson === "autoClimbHint";
   }
   /** The card the card points lesson points at, while it waits: in the
    * forest after a run once a card has a point to spend on its tree, the
@@ -580,12 +595,12 @@ export class Game {
     this.save.tutorials.training = true;
     return true;
   }
-  /** Dismisses the `enter` and `autoClimb` lessons (the others wait on
-   * what they ask for). */
+  /** Dismisses the `enter`, `autoClimbHint` and `autoClimb` lessons (the
+   * others wait on what they ask for). */
   dismissLesson() {
     const lesson = this.boardLesson;
-    if (lesson === "autoClimb") {
-      this.save.tutorials.autoClimb = true;
+    if (lesson === "autoClimb" || lesson === "autoClimbHint") {
+      this.save.tutorials[lesson] = true;
       return true;
     }
     if (lesson !== "enter") return false;
@@ -1709,7 +1724,7 @@ export class Game {
     const id = this.held[card];
     if (this.run.outside || this.fallen || !id) return "unavailable";
     if (this.run.focused) return "busy";
-    if (this.teachesClimb && id !== "stairs") return "unavailable";
+    if ((this.teachesClimb && id !== "stairs") || this.lessonHolds) return "unavailable";
     const plan = planHand(this.handRules, this.held, this.mode, card);
     if (!plan) return "noPath";
     const lesson = this.boardLesson;

@@ -99,6 +99,14 @@ try {
   assert.ok(await page.evaluate(() => deckAnimations.some(a => a.frames?.some?.(f => f.transform === "translateX(-7px)"))));
   assert.ok(await page.evaluate(() => deckTones.includes(190) && deckTones.includes(145)), "error cue plays");
   await page.keyboard.press("Escape");
+  // Dragged onto a full hand's card, a deck card swaps with it; STAIRS stays.
+  await dragTo('[data-add="heal"]', '#deck-hand [data-deck-card="key"]'); await settled();
+  assert.deepEqual(await hand(), ["stairs", "door", "heal", "monster"]);
+  await expect(page.locator('[data-add="key"]')).toBeVisible();
+  await dragTo('[data-add="key"]', '#deck-hand [data-deck-card="stairs"]'); await settled();
+  assert.deepEqual(await hand(), ["stairs", "door", "heal", "monster"], "STAIRS is never swapped out");
+  await dragTo('[data-add="key"]', '#deck-hand [data-deck-card="heal"]'); await settled();
+  assert.deepEqual(await hand(), ["stairs", "door", "key", "monster"]);
   // Swipe down anywhere on a hand card returns it; cards make room in order.
   await swipe('#deck-hand [data-deck-card="door"] .deck-card', 36); await settled();
   assert.deepEqual(await hand(), ["stairs", "key", "monster"]);

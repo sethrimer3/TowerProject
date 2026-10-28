@@ -605,9 +605,10 @@ export class DeckPage {
       this.cancelDrag();
       if (!d.lifted) return this.showDeckCard(d.card);
       el("deck-hand").innerHTML = this.slotsHtml(this.hand);
-      // Dropped on a slot, it goes there; only a swipe that ends away from the hand appends.
+      // Dropped on a slot, it goes there (in a full hand, taking the place
+      // of the card there, which returns to the deck); only a swipe that
+      // ends away from the hand appends.
       if (d.to === null) return swiped(d, e, -1) ? this.addToHand(d.card, origin) : this.render();
-      if (this.ctx.game.deck.full(this.kind)) return this.refuseCard(d.card);
       const placed = this.ctx.game.deck.place(d.card, d.to, this.kind);
       if (placed) this.meet(d.card);
       this.change(placed, d.card, origin);
@@ -654,7 +655,7 @@ export class DeckPage {
 
   /** Shows the hand as it would be with the deck card dropped on `d.to`. */
   private previewPlace(d: DeckDrag) {
-    const hand = this.hand, next = d.to === null || this.ctx.game.deck.full(this.kind) ? null : placeCard(hand, d.card, d.to, this.slots);
+    const hand = this.hand, next = d.to === null ? null : placeCard(hand, d.card, d.to, this.slots);
     el("deck-hand").innerHTML = next ? this.slotsHtml(next, next.indexOf(d.card)) : this.slotsHtml(hand);
   }
 
@@ -826,7 +827,7 @@ export class DeckPage {
     const bonuses = cardBonusLines(id).map(l => `<i class="bonus-${l.tone}">${l.text}</i>`).join("");
     const tree = CARD_TREES[id] ? `<p class="deck-tree-hint"><span>Tap the card again to open upgrade tree</span><span class="deck-points-available"><b>${points}</b> point${points === 1 ? "" : "s"} available</span></p>` : "";
     const gesture = held ? (id === "stairs" ? "STAIRS always stays in your hand." : save.upgrades.buildout ? "Swipe down to return to deck." : "Unlock Buildout to return cards to the deck.") : "Swipe up to add to hand.";
-    const full = !held && game.deck.full(this.kind) ? `<small class="deck-full-note" role="status">Your hand is full.</small>` : "";
+    const full = !held && game.deck.full(this.kind) ? `<small class="deck-full-note" role="status">Your hand is full. Drag onto a card to swap.</small>` : "";
     this.popover.show(id, anchor, `<b class="deck-popover-name">${CARDS[id].name}</b>${cardLevelLines(save, id)}<p>${game.cardText(id)}</p>${bonuses ? `<p class="card-bonus">${bonuses}</p>` : ""}${tree}<small class="deck-swipe-hint">${gesture}</small>${full}`, CARDS[id].name);
   }
 

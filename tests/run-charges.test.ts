@@ -24,10 +24,10 @@ function arena(size: number, ...owned: ("ignore" | "target")[]) {
   return g;
 }
 
-test("the four charge skills cost 20 Breakthrough each and sit below Key Mastery", () => {
+test("the four charge skills cost 3 Breakthrough (Ignore, Target) or 4 (Ignore More, Target More) and sit below Key Mastery", () => {
   const save = defaults();
-  for (const id of ["ignore", "ignoreMore", "target", "targetMore"] as const) {
-    assert.equal(cost(id, 0), 20, id);
+  for (const [id, price] of [["ignore", 3], ["ignoreMore", 4], ["target", 3], ["targetMore", 4]] as const) {
+    assert.equal(cost(id, 0), price, id);
     assert.equal(skillAvailable(id, save.upgrades), false, `${id} waits on the skills above it`);
   }
   Object.assign(save.upgrades, { trainers: 1, breakthrough: 1, moveSpeed: 1, physician: 1, overheal: 1, keyMastery: 1 });

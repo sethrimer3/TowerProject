@@ -521,8 +521,8 @@ try {
   async function cardRevealTour(prefix) {
     await tab("upgrades");
     await click('[data-tree="inspiration"]');
-    await click('[data-skill="cardYellowKey"]');
-    await click('[data-skill="cardYellowKey"]');
+    await click('[data-skill="cardAtkUp"]');
+    await click('[data-skill="cardAtkUp"]');
     await shot(`${prefix}.cardReveal`);
     await click(".card-reveal-text");
     await shot(`${prefix}.cardRevealed`);

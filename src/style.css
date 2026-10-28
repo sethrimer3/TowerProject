@@ -1019,6 +1019,14 @@ canvas {
   transform: rotate(180deg);
   animation: forest-point-down 1s ease-in-out infinite;
 }
+/* The Goals lesson's hand points right at the Goals button from its left. */
+.forest-pointer.goals {
+  top: 50%;
+  right: calc(100% + 2px);
+  margin-top: -13px;
+  transform: rotate(90deg);
+  animation: forest-point-right 1s ease-in-out infinite;
+}
 /* The card points lesson's hand points down at the Deck tab from above,
    the Inspiration lesson's at the Upgrades tab, on the Upgrades page,
    once a first skill is bought, at the Tower tab, the Archives and training
@@ -1055,6 +1063,10 @@ canvas {
 @keyframes forest-point-up {
   0%, 100% { transform: translateY(6px); }
   50% { transform: translateY(0); }
+}
+@keyframes forest-point-right {
+  0%, 100% { transform: rotate(90deg) translateY(6px); }
+  50% { transform: rotate(90deg) translateY(0); }
 }
 @keyframes forest-point-down {
   0%, 100% { transform: rotate(180deg) translateY(6px); }
@@ -2703,7 +2715,7 @@ html.reduce-motion :is(.item-icon.bought, .owned-count.bought) { animation: none
 .goals-ground { position: absolute; left: 0; right: 0; bottom: 0; height: 96px; background: linear-gradient(#2b3a24, #18210f 40%, #0d1209); border-top: 2px solid #4b6a35; }
 .goals-line { position: absolute; left: 50%; width: 4px; height: calc(100% - 96px); transform: translateX(-50%); background: #2c313a; border-radius: 2px; box-shadow: 0 0 0 1px #0008; }
 .goals-line.lit { background: linear-gradient(#fff3c4, #e2b55a 30px, #c8963c); box-shadow: 0 0 8px #e2b55a99, 0 0 0 1px #0008; }
-.goal-row { position: absolute; left: 0; right: 0; transform: translateY(50%); display: grid; grid-template-columns: minmax(0, 1fr) 52px minmax(0, 1fr); align-items: center; gap: 8px; padding: 0 8px; }
+.goal-row { position: absolute; left: 0; right: 0; transform: translateY(50%); display: grid; grid-template-columns: minmax(0, 1fr) 64px minmax(0, 1fr); align-items: center; gap: 6px; padding: 0 8px; }
 /* The standard reward, then its area's marks just left of the floor number. */
 .goal-left { display: flex; justify-content: flex-end; align-items: center; gap: 4px; min-width: 0; }
 .goal-left > .goal-reward { min-width: 0; }
@@ -2712,7 +2724,8 @@ html.reduce-motion :is(.item-icon.bought, .owned-count.bought) { animation: none
 .goal-mark { width: 16px; height: 16px; filter: drop-shadow(0 0 3px #000c); }
 /* A warp point that can't be used yet: every area below it isn't mastered. */
 .goal-marks > .inactive .goal-mark { filter: grayscale(1) brightness(0.7) drop-shadow(0 0 3px #000c); opacity: 0.6; }
-.goal-floor { justify-self: center; z-index: 1; min-height: 0; width: 46px; height: 28px; padding: 0; border-radius: 14px; font-size: 13px; font-weight: 700; color: #7e899b; border: 1px solid #3c434f; background: #14181f; }
+/* Wide enough for a four-digit floor (Tower IX's 4500) on one line. */
+.goal-floor { justify-self: center; z-index: 1; min-height: 0; width: auto; min-width: 46px; height: 28px; padding: 0; white-space: nowrap; border-radius: 14px; font-size: 13px; font-weight: 700; color: #7e899b; border: 1px solid #3c434f; background: #14181f; }
 .goal-floor.completed { color: #ffe9b0; border-color: #d8b572; background: linear-gradient(#4a3a1c, #2b2214); box-shadow: 0 0 8px #d8b57266; }
 .goal-floor.warpable { box-shadow: 0 0 6px #d8b572aa, 0 0 14px #b48cff88; border-color: #e2c8ff; }
 .goal-reward { position: relative; display: flex; align-items: center; gap: 6px; min-height: 0; padding: 5px 7px; text-align: left; border-radius: 8px; background: #141922e6; }
