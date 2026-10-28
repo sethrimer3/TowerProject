@@ -203,18 +203,35 @@ function overgrowthBase(src: DecorSource, fx: number, fy: number, lush: number) 
   return (n - (0.8 - lush * 0.36)) * 3;
 }
 
-/** Overgrowth (0 bare .. 1+ dense) at a tile-local pixel of a ground tile. */
-function overgrowth(src: DecorSource, x: number, y: number, i: number, j: number, walls = wallNeighbors(src, x, y)) {
+/** Overgrowth (0 bare .. 1+ dense) at a tile-local pixel of a ground tile;
+ * `proximity` is `wallProximity(walls, i, j)`, when already known. */
+function overgrowth(src: DecorSource, x: number, y: number, i: number, j: number, walls = wallNeighbors(src, x, y), proximity?: number) {
   const lush = src.lush(x, y);
   if (lush <= 0.02) return 0;
   const fx = x + (i + 0.5) / TILE_PX, fy = -y + (j + 0.5) / TILE_PX;
-  return overgrowthBase(src, fx, fy, lush) + wallProximity(walls, i, j) * (0.25 + lush * 0.45);
+  return overgrowthBase(src, fx, fy, lush) + (proximity ?? wallProximity(walls, i, j)) * (0.25 + lush * 0.45);
 }
 /** Overgrowth for every pixel of a tile. */
 function overgrowthGrid(src: DecorSource, x: number, y: number) {
-  const walls = wallNeighbors(src, x, y), grid = new Float32Array(AREA);
+  const walls = wallNeighbors(src, x, y), near = proximityGrid(walls), grid = new Float32Array(AREA);
   for (let j = 0; j < TILE_PX; j++)
-    for (let i = 0; i < TILE_PX; i++) grid[j * TILE_PX + i] = overgrowth(src, x, y, i, j, walls);
+    for (let i = 0; i < TILE_PX; i++) grid[j * TILE_PX + i] = overgrowth(src, x, y, i, j, walls, near[j * TILE_PX + i]);
+  return grid;
+}
+const proximityGrids = new Map<number, Float64Array>();
+/** `wallProximity` at every pixel of a tile whose neighbouring walls are
+ * `walls` (as `wallNeighbors` lists them), worked out once for each of the
+ * 256 patterns of neighbouring walls rather than once a tile. */
+function proximityGrid(walls: [number, number, number][]) {
+  let pattern = 0;
+  for (const w of walls) pattern |= 1 << NEIGHBORS.indexOf(w);
+  let grid = proximityGrids.get(pattern);
+  if (!grid) {
+    grid = new Float64Array(AREA);
+    for (let j = 0; j < TILE_PX; j++)
+      for (let i = 0; i < TILE_PX; i++) grid[j * TILE_PX + i] = wallProximity(walls, i, j);
+    proximityGrids.set(pattern, grid);
+  }
   return grid;
 }
 

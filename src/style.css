@@ -558,6 +558,17 @@ h1 span {
 .enemy-odds-table th[scope="row"], .enemy-odds-table thead th:first-child { text-align: left; font-weight: 600; }
 .enemy-odds-table thead th { color: #a8afbc; font-size: 11px; font-weight: 600; }
 .enemy-odds-table thead :is(.stat-sprite, .gold-icon) { width: 1.6em; height: 1.6em; vertical-align: middle; }
+/* Each row's name after the board's marks for it, at twice their pixels: a strength's rank chevrons stacked 4 pixels apart as the enemies wear them, an attribute's mark (Shielded's thin bubble larger, so it reads). */
+.enemy-odds-table .odds-name { display: inline-flex; align-items: center; gap: 5px; }
+.enemy-odds-table .odds-marks { display: inline-flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+.enemy-odds-table .odds-ranks { width: 14px; }
+.enemy-odds-table .odds-traits { width: 24px; }
+.enemy-odds-table .odds-ranks .odds-mark { width: 14px; height: 12px; }
+.enemy-odds-table .odds-ranks .odds-mark + .odds-mark { margin-top: -4px; }
+.enemy-odds-table .odds-traits .odds-mark { width: 24px; height: 16px; }
+.enemy-odds-table .odds-traits .odds-shielded { height: 24px; margin: -4px 0; }
+.enemy-odds-table .odds-here { color: #f0b429; }
+.enemy-odds-table .odds-env-golden.here th { color: #f0c34a; }
 .base-enemy > span { display: inline-flex; align-items: center; gap: 1px; }
 .base-enemy b { font-weight: 700; }
 .base-enemy-hp { color: #df797e; }
@@ -1019,6 +1030,14 @@ canvas {
   transform: rotate(180deg);
   animation: forest-point-down 1s ease-in-out infinite;
 }
+/* The Goals lesson's hand points right at the Goals button from its left. */
+.forest-pointer.goals {
+  top: 50%;
+  right: calc(100% + 2px);
+  margin-top: -13px;
+  transform: rotate(90deg);
+  animation: forest-point-right 1s ease-in-out infinite;
+}
 /* The card points lesson's hand points down at the Deck tab from above,
    the Inspiration lesson's at the Upgrades tab, on the Upgrades page,
    once a first skill is bought, at the Tower tab, the Archives and training
@@ -1055,6 +1074,10 @@ canvas {
 @keyframes forest-point-up {
   0%, 100% { transform: translateY(6px); }
   50% { transform: translateY(0); }
+}
+@keyframes forest-point-right {
+  0%, 100% { transform: rotate(90deg) translateY(6px); }
+  50% { transform: rotate(90deg) translateY(0); }
 }
 @keyframes forest-point-down {
   0%, 100% { transform: rotate(180deg) translateY(6px); }
@@ -2703,7 +2726,7 @@ html.reduce-motion :is(.item-icon.bought, .owned-count.bought) { animation: none
 .goals-ground { position: absolute; left: 0; right: 0; bottom: 0; height: 96px; background: linear-gradient(#2b3a24, #18210f 40%, #0d1209); border-top: 2px solid #4b6a35; }
 .goals-line { position: absolute; left: 50%; width: 4px; height: calc(100% - 96px); transform: translateX(-50%); background: #2c313a; border-radius: 2px; box-shadow: 0 0 0 1px #0008; }
 .goals-line.lit { background: linear-gradient(#fff3c4, #e2b55a 30px, #c8963c); box-shadow: 0 0 8px #e2b55a99, 0 0 0 1px #0008; }
-.goal-row { position: absolute; left: 0; right: 0; transform: translateY(50%); display: grid; grid-template-columns: minmax(0, 1fr) 52px minmax(0, 1fr); align-items: center; gap: 8px; padding: 0 8px; }
+.goal-row { position: absolute; left: 0; right: 0; transform: translateY(50%); display: grid; grid-template-columns: minmax(0, 1fr) 64px minmax(0, 1fr); align-items: center; gap: 6px; padding: 0 8px; }
 /* The standard reward, then its area's marks just left of the floor number. */
 .goal-left { display: flex; justify-content: flex-end; align-items: center; gap: 4px; min-width: 0; }
 .goal-left > .goal-reward { min-width: 0; }
@@ -2712,7 +2735,8 @@ html.reduce-motion :is(.item-icon.bought, .owned-count.bought) { animation: none
 .goal-mark { width: 16px; height: 16px; filter: drop-shadow(0 0 3px #000c); }
 /* A warp point that can't be used yet: every area below it isn't mastered. */
 .goal-marks > .inactive .goal-mark { filter: grayscale(1) brightness(0.7) drop-shadow(0 0 3px #000c); opacity: 0.6; }
-.goal-floor { justify-self: center; z-index: 1; min-height: 0; width: 46px; height: 28px; padding: 0; border-radius: 14px; font-size: 13px; font-weight: 700; color: #7e899b; border: 1px solid #3c434f; background: #14181f; }
+/* Wide enough for a four-digit floor (Tower IX's 4500) on one line. */
+.goal-floor { justify-self: center; z-index: 1; min-height: 0; width: auto; min-width: 46px; height: 28px; padding: 0; white-space: nowrap; border-radius: 14px; font-size: 13px; font-weight: 700; color: #7e899b; border: 1px solid #3c434f; background: #14181f; }
 .goal-floor.completed { color: #ffe9b0; border-color: #d8b572; background: linear-gradient(#4a3a1c, #2b2214); box-shadow: 0 0 8px #d8b57266; }
 .goal-floor.warpable { box-shadow: 0 0 6px #d8b572aa, 0 0 14px #b48cff88; border-color: #e2c8ff; }
 .goal-reward { position: relative; display: flex; align-items: center; gap: 6px; min-height: 0; padding: 5px 7px; text-align: left; border-radius: 8px; background: #141922e6; }
@@ -2858,6 +2882,15 @@ button.training-cost:disabled .gold-icon, button.training-cost:disabled .points-
 button.training-gold:disabled { opacity: 1; border-color: #2a323e; color: #4c5664; background: #0c121b; }
 button.training-gold:disabled .gold-icon { opacity: 1; }
 button.training-gold:disabled > span { color: #f0d79c; }
+/* In every theme, a trainer's countdown is red in a red-tinted box, since
+ * pressing it stops the training, and a trainer's Gold price that can be
+ * paid wears a gold tint, since pressing it buys. The tint lies over the
+ * box, so it shows over a theme's frame (a PNG kit's too). */
+button:is(.training-timer, .training-gold:not(:disabled)) { position: relative; }
+button:is(.training-timer, .training-gold:not(:disabled))::after { content: ""; position: absolute; inset: 1px; border-radius: inherit; pointer-events: none; }
+button.training-timer::after { background: #ff3a2a2e; box-shadow: inset 0 0 0 1px #ff5a4a66; }
+button.training-gold:not(:disabled)::after { background: #ffc4402a; box-shadow: inset 0 0 0 1px #ffd06a66; }
+button.training-timer:not(#_):not(#_), button.training-timer:not(#_):not(#_) > span { color: #ff6b5c; }
 .points-icon, .clock-icon, .ad-icon { width: 14px; height: 14px; vertical-align: -2px; flex-shrink: 0; }
 .ui-sprite.gold-icon { width: 14px; height: 14px; vertical-align: -2px; image-rendering: pixelated; flex-shrink: 0; }
 .training-points small .points-icon, .training-points small .gold-icon { width: 11px; height: 11px; }

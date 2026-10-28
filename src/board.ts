@@ -1,6 +1,7 @@
 import { point, type ChestKind, type ChestOdds, type Enemy, type EnemyStrength, type Kind, type Tile, type Torch } from "./entities.ts";
 import type { Run } from "./runs.ts";
 import { tileRandom } from "./random.ts";
+import { environmentOn } from "./environments.ts";
 import type { Shield } from "./enemies/shielded.ts";
 
 /** A board the player walks: the Delve labyrinth, a Tower floor, or the
@@ -94,11 +95,9 @@ export function reachable(
 
 const PERCENT_POTION_SALT = 0x5eed7;
 const CHEST_KIND_SALT = 0xc4e57;
-const TREASURE_FLOOR_SALT = 0x7f10c;
 /** Whether equivalent floor `floor` of a run seeded `seed` is a Treasure
- * Floor (CHEST's tree, at `chance` percent): the floor's own fixed number,
- * so it is one from the moment it is generated. */
-export const isTreasureFloor = (seed: number, floor: number, chance: number) => chance > 0 && tileRandom(floor, 0, seed ^ TREASURE_FLOOR_SALT) * 100 < chance;
+ * Floor (CHEST's tree, at `chance` percent; environments.ts). */
+export const isTreasureFloor = (seed: number, floor: number, chance: number) => environmentOn("treasure", seed, floor, chance);
 /** `cells` with every ATK and DEF shard and potion on a Treasure Floor
  * (each tile's equivalent floor by `floorAt`) made a treasure chest;
  * `cells` itself at no chance. */

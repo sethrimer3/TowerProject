@@ -80,12 +80,12 @@ const AREA_TITLES: Record<AreaReward, string> = { mastered: "AREA MASTERED", cle
 export const preloadAreaBurst = () => void sprite(INSPIRATION_URL);
 
 /** An area reward's chest opened, `age` ms ago: the blaze, its title, and
- * under it "Checkpoint Warp Unlocked" or the `inspiration` it paid. */
+ * under it "Checkpoint Warp Claimed" or the `inspiration` it paid. */
 export function drawAreaBurst(f: FrameContext, age: number, reward: AreaReward, inspiration: number) {
   const b: Blaze = { ...AREA, text: AREA_TITLES[reward] };
   if (!drawBlaze(f, age, b)) return;
   const fade = Math.min(1, (b.ms - age) / b.fadeMs);
-  const sub = reward === "mastered" ? "Checkpoint Warp Unlocked" : `+${inspiration}`;
+  const sub = reward === "mastered" ? "Checkpoint Warp Claimed" : `+${inspiration}`;
   drawWords(f, age, fade, b, sub, 0.6, 0.1, reward === "cleared" ? sprite(INSPIRATION_URL) : null);
 }
 

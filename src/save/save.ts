@@ -76,7 +76,7 @@ export function defaults(): Save {
     manualHand: [],
     manualSlots: 0,
     badges: defaultBadges(),
-    tutorials: { deck: false, removeCard: false, addCard: false, upgrades: false, gear: false, onTheJob: false, speed: false, climb: false, keys: false, autoClimb: false, stuck: false, enemy: false, enter: false, training: false, delve: false, chamber: false, cardPoints: false, research: false, archives: false },
+    tutorials: { deck: false, removeCard: false, addCard: false, upgrades: false, gear: false, onTheJob: false, speed: false, climb: false, keys: false, autoClimb: false, stuck: false, enemy: false, enter: false, training: false, delve: false, chamber: false, cardPoints: false, research: false, archives: false, goals: false, autoClimbHint: false },
     treeNotices: { inspiration: false, breakthrough: false },
     seen: { level: 0, training: 0, archives: 0, cards: [...BASE_HAND], cardLevels: 0, met: [...BASE_HAND] },
     archives: defaultArchives(),
@@ -203,6 +203,7 @@ const RUN_FIELD_CHECKS = {
   percentPotions: (v: unknown) => wholeIn(v, 1, 10_000),
   chestOdds: (v: any) => isRecord(v) && Object.keys(v).length === 2 && [v.supply, v.equipment].every((n) => finite(n) && n >= 0 && n <= 100) && v.supply + v.equipment > 0,
   treasureFloor: (v: unknown) => finite(v) && v > 0 && v <= 100,
+  goldenFloor: (v: unknown) => finite(v) && v > 0 && v <= 100,
   doorOdds: (v: any) => isRecord(v) && "skeleton" in v && "lockPick" in v
     && Object.entries(v).every(([k, n]) => ["skeleton", "lockPick", "transmute", "wood", "heartPick"].includes(k) && finite(n) && n >= 0 && n <= 100)
     && Object.values(v).some((n) => (n as number) > 0),
@@ -334,6 +335,11 @@ function decodeUpgrades(raw: any, d: Save) {
   // reveal skills a save may own already. TODO: drop in a later save version.
   d.upgrades.pathToWealth ||= Math.min(1, count(raw?.pathfinder, 0, 1) + d.upgrades.pocketMoney);
   d.upgrades.physician ||= Math.min(1, d.upgrades.greaterHeal + d.upgrades.cardBadges + d.upgrades.findYellowKey);
+  // More Wealth and the Masteries now reveal skills a save may own already.
+  // TODO: drop in a later save version.
+  d.upgrades.moreWealth ||= Math.min(1, d.upgrades.interest + d.upgrades.maxInterest + d.upgrades.mug);
+  d.upgrades.cardMastery ||= Math.min(1, d.upgrades.blueSiphon + d.upgrades.cardRedKey + d.upgrades.keyToHp);
+  d.upgrades.beastMastery ||= Math.min(1, d.upgrades.cardWeakEnemy);
 }
 function decodeProgress(s: any, d: Save, undoCapacity: number) {
   d.gold = fraction(s.gold, d.gold);
@@ -508,11 +514,13 @@ export function decode(raw: string | null): Save {
     d.cardBuys = decodeCardBuys(s.cardBuys);
     d.cardTrees = decodeCardTrees(s.cardTrees, d.cardXp, d.cardBuys.opened);
     d.badges = decodeBadges(s.badges, d.upgrades, researched(d.archives, "badgeSlots"), d.goals);
-    for (const k of ["deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob", "speed", "climb", "keys", "autoClimb", "stuck", "enemy", "enter", "training", "delve", "chamber", "cardPoints", "research", "archives"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
+    for (const k of ["deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob", "speed", "climb", "keys", "autoClimb", "stuck", "enemy", "enter", "training", "delve", "chamber", "cardPoints", "research", "archives", "goals", "autoClimbHint"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
     // A player who has already spent a card point needs no lesson on it.
     if (CARD_IDS.some((id) => pointsSpent(d.cardTrees, id) > 0)) d.tutorials.cardPoints = true;
     // Nor does one who has already researched in the Archives need their lesson.
     if (d.archives.history.length || d.archives.slots.some((slot) => slot.job)) d.tutorials.research = d.tutorials.archives = true;
+    // Nor one who has already claimed a Goal its lesson.
+    if (Object.values(d.goals.claimed).some((floors) => floors.length)) d.tutorials.goals = true;
     for (const k of ["inspiration", "breakthrough"] as const) d.treeNotices[k] = s.treeNotices?.[k] === true;
     // TODO: remove once saves from before the rename are gone.
     d.treeNotices.breakthrough ||= s.treeNotices?.courage === true;

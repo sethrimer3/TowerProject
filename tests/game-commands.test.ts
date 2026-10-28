@@ -579,3 +579,56 @@ test("the first run inside with Auto-Climb explains it, the hand playing on, unt
   delve.newRun();
   assert.equal(delve.boardLesson, null, "the Tower's alone");
 });
+
+test("reaching floor 4 before Auto-Climb holds the climb and says ending it unlocks Auto-Climb, until its note is tapped or the climb ended", () => {
+  const before = () => {
+    const s = taught();
+    s.upgrades.autoClimb = 0;
+    return s;
+  };
+  const g = new Game(before());
+  g.newRun({ outside: true });
+  assert.ok(g.enterRun());
+  assert.equal(g.boardLesson, null, "not below floor 4");
+  g.run.height = 3;
+  assert.deepEqual([g.boardLesson, g.lessonHolds], ["autoClimbHint", true]);
+  assert.equal(g.focus(g.hand.indexOf("stairs")), "unavailable", "the hero holds still");
+  g.save.upgrades.cardEnemy = 0;
+  assert.equal(g.boardLesson, null, "not before Auto-Climb can be bought");
+  g.save.upgrades.cardEnemy = 1;
+  assert.ok(g.dismissLesson());
+  assert.deepEqual([g.boardLesson, g.lessonHolds], [null, false], "tapping the note ends it");
+  assert.ok(decode(JSON.stringify(g.save)).tutorials.autoClimbHint, "done for good");
+
+  const ended = new Game(before());
+  ended.newRun({ outside: true });
+  ended.enterRun();
+  ended.run.height = 5;
+  assert.equal(ended.boardLesson, "autoClimbHint");
+  ended.endRunPressed();
+  assert.equal(ended.save.tutorials.autoClimbHint, true, "ending the climb ends it too");
+
+  const owned = new Game(taught());
+  owned.newRun({ outside: true });
+  owned.enterRun();
+  owned.run.height = 3;
+  assert.notEqual(owned.boardLesson, "autoClimbHint", "not once Auto-Climb is owned");
+});
+
+test("in the Tower's forest, a Goal ready to claim points to the Goals button until the Goals page is opened", () => {
+  const s = taught();
+  s.tutorials.enter = true;
+  const g = new Game(s);
+  g.newRun({ outside: true });
+  assert.equal(g.boardLesson, null, "no Goal waits");
+  g.save.tower.best = g.save.tower.reached = 30;
+  assert.equal(g.boardLesson, "goals");
+  assert.equal(g.dismissLesson(), false, "it waits on the Goals page");
+  g.notices.shown("goals");
+  assert.equal(g.boardLesson, null, "opening the Goals page ends it");
+  assert.ok(decode(JSON.stringify(g.save)).tutorials.goals, "done for good");
+
+  const claimed = taught();
+  claimed.goals.claimed = { 1: [10] };
+  assert.ok(decode(JSON.stringify(claimed)).tutorials.goals, "a save that has claimed a Goal needs no lesson");
+});

@@ -9,7 +9,7 @@ import { arrowRange, foeOn } from "./enemies/ranged.ts";
 import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./cards/badges.ts";
 import { BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
 import { noteGoldBoost } from "./economy/gold-boost.ts";
-import { canWarp, claimGoal, goalUnlocked } from "./goals.ts";
+import { canWarp, claimGoal, goalUnlocked, goalsWaiting } from "./goals.ts";
 import { volleyTurn, type Shot, type Volley, type VolleyTurn } from "./volley.ts";
 import { missGem } from "./economy/gems.ts";
 import { DelvePlan } from "./delve/automove.ts";
@@ -67,6 +67,7 @@ import { ranksInRun, runTrainingBulk, runTrainingOffer, type RunTrainingOffer } 
 import type { BuyQuantity } from "./progression/buy-quantity.ts";
 import { critRule, loadout, provisionsOpen, rankShift, trainingPoints, trainingWaiting, type TrainingView } from "./progression/loadout.ts";
 import { researched } from "./progression/archives.ts";
+import { hasEnvironment, possibleEnvironments } from "./environments.ts";
 import { chargesLeft, chargesPerRun, climbFloor, spendCharge, type Charge } from "./run-charges.ts";
 import { TrainingDesk } from "./game/training-desk.ts";
 import { ShopDesk } from "./game/shop-desk.ts";
@@ -107,7 +108,7 @@ import type { Coin, Dash, Drop, Facing, Gain, GainArt, Heal, ShownTurn } from ".
  * which seed (rolled from the game's randomness when left out). */
 export type RunStart = { outside?: boolean; seed?: number; height?: number };
 /** A lesson shown on the board (`Game.boardLesson`). */
-export type BoardLesson = "climb" | "keys" | "autoClimb" | "stuck" | "enemy" | "upgrades" | "enter" | "trainingPoints" | "cards" | "delve" | "provisions" | "research";
+export type BoardLesson = "climb" | "keys" | "autoClimbHint" | "autoClimb" | "stuck" | "enemy" | "upgrades" | "enter" | "trainingPoints" | "cards" | "delve" | "provisions" | "research" | "goals";
 /** The first skills the lessons lead to on the Inspiration tree, in order. */
 export type IntroSkill = "cardDoorKey" | "cardEnemy";
 export type RouteEffects = {
@@ -146,6 +147,9 @@ const LESSON_SPEED = 3;
 /** The steps a run takes on the Tower's first floor before the speed
  * lesson comes. */
 const LESSON_STEPS = 10;
+/** The height (floor 4) at which the `autoClimbHint` lesson stops a climb
+ * before Auto-Climb is owned. */
+const AUTO_CLIMB_HINT_HEIGHT = 3;
 /** How long a turn inside a run shows, at most (ms): the hero's step and
  * its shots leaving through it, shorter at higher speeds. */
 const TURN_MS = 220;
@@ -480,14 +484,18 @@ export class Game {
    * run's Inspiration buys what gets past, until End Run is pressed, and
    * `enemy` while an enemy blocks the way with Enemy not yet owned and its
    * Inspiration held; then `keys`, the first time the hand holds DOOR and
-   * KEY, until one of them is pressed; and `autoClimb`, the first run
+   * KEY, until one of them is pressed; `autoClimbHint`, on reaching floor 4
+   * before Auto-Climb is owned, which holds the hero still (`lessonHolds`)
+   * and says ending the climb unlocks it, until its note is tapped or the
+   * climb ends; and `autoClimb`, the first run
    * inside once Auto-Climb is owned, saying the hero heads for the first
    * card's target with an open path and a pressed card goes first, until
    * its note is tapped or a card pressed. In the Tower's forest: `upgrades`,
    * to the Upgrades tab while the next first skill (`introSkill`) can be
    * bought; `enter`, to Enter, once Door & Key is owned until Enter is
    * pressed or a run goes inside from the forest (and again once Enemy is bought after its
-   * lesson); `research`, once the Archives skill is owned, to the Research
+   * lesson); `goals`, to the Goals button while a Goal waits to be claimed,
+   * until the Goals page is opened; `research`, once the Archives skill is owned, to the Research
    * tab, until the Research page is opened (`archivesLesson` then waits on
    * its note there); then, in either forest, `trainingPoints`, the first time training
    * points can be spent, which leads to the Research tab until the
@@ -503,10 +511,12 @@ export class Game {
       if (this.handStuck && !t.stuck) return "stuck";
       if (this.handStuck && this.enemyBlocks && !owned.cardEnemy && this.affords("cardEnemy")) return "enemy";
       if (!t.keys && this.hand.includes("door") && this.hand.includes("key")) return "keys";
+      if (owned.cardEnemy && !owned.autoClimb && !t.autoClimbHint && this.run.height >= AUTO_CLIMB_HINT_HEIGHT) return "autoClimbHint";
       return owned.autoClimb && !t.autoClimb ? "autoClimb" : null;
     }
     if (tower && this.introSkill) return "upgrades";
     if (tower && ((!t.enter && owned.cardDoorKey) || (t.enemy && owned.cardEnemy))) return "enter";
+    if (tower && !t.goals && goalsWaiting(this.save)) return "goals";
     if (tower && owned.archives && !t.research && !t.archives) return "research";
     if (!t.training && trainingWaiting(this.save)) return "trainingPoints";
     if (this.cardPointsLesson) return "cards";
@@ -544,6 +554,12 @@ export class Game {
     const lesson = this.boardLesson;
     if (lesson === "stuck") this.save.tutorials.stuck = true;
     if (lesson === "enemy") this.save.tutorials.enemy = true;
+    if (lesson === "autoClimbHint") this.save.tutorials.autoClimbHint = true;
+  }
+  /** Whether the waiting lesson holds the hero still: `autoClimbHint`
+   * pauses the route walked until its note is dismissed. */
+  get lessonHolds() {
+    return this.boardLesson === "autoClimbHint";
   }
   /** The card the card points lesson points at, while it waits: in the
    * forest after a run once a card has a point to spend on its tree, the
@@ -582,12 +598,12 @@ export class Game {
     this.save.tutorials.training = true;
     return true;
   }
-  /** Dismisses the `enter` and `autoClimb` lessons (the others wait on
-   * what they ask for). */
+  /** Dismisses the `enter`, `autoClimbHint` and `autoClimb` lessons (the
+   * others wait on what they ask for). */
   dismissLesson() {
     const lesson = this.boardLesson;
-    if (lesson === "autoClimb") {
-      this.save.tutorials.autoClimb = true;
+    if (lesson === "autoClimb" || lesson === "autoClimbHint") {
+      this.save.tutorials[lesson] = true;
       return true;
     }
     if (lesson !== "enter") return false;
@@ -1274,6 +1290,10 @@ export class Game {
     // CHEST's Treasure Floor makes a floor's shards and potions chests as it is generated.
     if (tree.treasureFloor) this.run.treasureFloor = Math.min(100, tree.treasureFloor);
     else delete this.run.treasureFloor;
+    // Golden Floor Chance research makes floors Golden Floors, fixed for the run.
+    const golden = this.save.upgrades.goldenFloors ? Math.min(100, researched(this.save.archives, "goldenFloorChance") / 10) : 0;
+    if (golden) this.run.goldenFloor = golden;
+    else delete this.run.goldenFloor;
     // The hero strikes the enemies each enemy card covers harder (its tree
     // harder still), and with the enemy cards', ENEMY's and TORCH's trees
     // holds more DEF and shroud against theirs, HEAL's more shroud against
@@ -1340,9 +1360,29 @@ export class Game {
   }
   /** What the Gold multipliers read now (`economy/gold-multipliers.ts`): the
    * Shrine Boons line is the boons' Gold factor inside a Tower run once
-   * Shrines are open (1 with none), else none. */
+   * Shrines are open (1 with none), else none; the Golden Floor line, once
+   * Golden Floors is owned, the multiplier on the Gold found on the hero's
+   * floor (1 off a Golden Floor). */
   get goldContext(): GoldContext {
-    return { save: this.save, mode: this.mode, tier: this.tier, now: this.clock(), shrine: this.shrine.open ? this.boons?.gold ?? 1 : undefined };
+    const p = this.run.player, golden = this.save.upgrades.goldenFloors ? this.run.outside ? 1 : this.purse.golden(this.floorOf(p.x, p.y)) : undefined;
+    return { save: this.save, mode: this.mode, tier: this.tier, now: this.clock(), shrine: this.shrine.open ? this.boons?.gold ?? 1 : undefined, golden };
+  }
+  /** Whether the tile at (x, y) stands on a Golden Floor, as the board
+   * draws it. A Delve wall has no floor of its own: it is golden beside the
+   * open ground of one. */
+  goldenAt(x: number, y: number): boolean {
+    if (this.run.outside || !this.run.goldenFloor) return false;
+    const world = this.world, on = (xx: number, yy: number) => hasEnvironment(this.run, "golden", this.floorOf(xx, yy));
+    if (!(world instanceof World) || world.tile(x, y).kind !== "wall") return on(x, y);
+    return [[0, 1], [1, 0], [0, -1], [-1, 0]].some(([dx, dy]) => world.tile(x + dx!, y + dy!).kind !== "wall" && on(x + dx!, y + dy!));
+  }
+  /** The environments the run may give a floor, each with its chance and
+   * whether the hero's floor has it (the enemy stats box's), or none in
+   * the forest or while every chance is none. */
+  get floorEnvironments() {
+    if (this.run.outside) return [];
+    const p = this.run.player, floor = this.floorOf(p.x, p.y);
+    return possibleEnvironments(this.run).map((e) => ({ ...e, here: hasEnvironment(this.run, e.id, floor) }));
   }
   /** The run's boons changed its hero or enemies (`ShrineDesk.sync`): the
    * floor's enemies are read afresh and the hand plans again. */
@@ -1712,7 +1752,7 @@ export class Game {
     const id = this.held[card];
     if (this.run.outside || this.fallen || !id) return "unavailable";
     if (this.run.focused) return "busy";
-    if (this.teachesClimb && id !== "stairs") return "unavailable";
+    if ((this.teachesClimb && id !== "stairs") || this.lessonHolds) return "unavailable";
     const plan = planHand(this.handRules, this.held, this.mode, card);
     if (!plan) return "noPath";
     const lesson = this.boardLesson;
@@ -1799,7 +1839,8 @@ export class Game {
       ? { damaged: false, ...core, ...(height > 0 ? { start: height } : {}) }
       : { ...core, milestone: 0 };
     this.run.loadout = loadout;
-    this.world = this.rules.board(this.run);
+    // The board is built once below: the forest's, or the run's once its
+    // hand is dealt (generating a floor is slow).
     if (outside) {
       this.run.outside = true;
       this.toForestStart();
@@ -2288,10 +2329,10 @@ export class Game {
    * a mode switch and a new run each replace one. */
   get purse() {
     // A tournament run's chances come from the seeds its league shares.
-    const t = this.tournamentRun;
+    const t = this.tournamentRun, floorOf = (x: number, y: number) => this.floorOf(x, y);
     return t
-      ? new RunPurse(this.save, this.mode, this.run, runStream(t, "game"), this.clock(), runStream(t, "equipment"))
-      : new RunPurse(this.save, this.mode, this.run, this.rng, this.clock());
+      ? new RunPurse(this.save, this.mode, this.run, runStream(t, "game"), this.clock(), runStream(t, "equipment"), floorOf)
+      : new RunPurse(this.save, this.mode, this.run, this.rng, this.clock(), this.rng, floorOf);
   }
   /** The numbered tower (or delve) the run climbs. */
   get tier() {
@@ -2500,7 +2541,7 @@ export class Game {
     this.missions.record("floors", last - floorBefore);
     let gold = 0, silver = 0;
     for (let f = floorBefore + 1; f <= last; f++) {
-      gold += purse.floorGold(purse.floorKey(-1, f));
+      gold += purse.floorGold(purse.floorKey(-1, f), f + 1);
       silver += purse.floorSilver();
       const interest = purse.interest();
       silver += interest;
@@ -2580,16 +2621,19 @@ export class Game {
    * the next floor too. */
   advanceTowerRoom(floorSkip = false) {
     const purse = this.purse, p = this.run.player;
-    // Keyed by the stairs taken, so it pays once a run.
-    const gold = purse.floorGold(purse.floorKey(p.x, p.y));
+    // Keyed by the stairs taken, so it pays once a run; the floor reached
+    // is the one above.
+    const gold = purse.floorGold(purse.floorKey(p.x, p.y), this.run.height + 2);
     const highest = this.run.maxHeight ?? this.run.height;
     // Skip on STAIRS climbs past the next floor, which pays nothing; an area
     // climbed past is still judged as its section ends.
-    const skipped = floorSkip ? this.climb.up() : null;
+    // The floor stood on is the board already built; generating a floor is slow.
+    const left = this.world instanceof RoomWorld ? this.world : undefined;
+    const skipped = floorSkip ? this.climb.up(left) : null;
     // Floor Skip Reward pays a share of the Gold the floor passed held.
     const skipGold = skipped ? purse.skippedFloorGold(skipped.board) : 0;
     const passed = skipped?.sectionStart ? new AreaLedger(this.save).enter(this.towerRun, skipped.board) : [];
-    const { board, sectionStart } = this.climb.up();
+    const { board, sectionStart } = this.climb.up(skipped?.board ?? left);
     // Only a floor new to the run pays Silver: the run's own highest floor
     // gates it.
     let silver = 0;
@@ -2706,7 +2750,7 @@ export class Game {
     const inspiration = reward === "cleared" ? clearedInspiration(this.run.height) : 0;
     const playing = this.areaBursts.filter((b) => now - b.at < AREA_BURST_MS), last = playing.at(-1);
     this.areaBursts = [...playing, { reward, inspiration, at: last ? Math.max(now, last.at + AREA_BURST_MS) : now }];
-    this.message = reward === "mastered" ? "Area mastered · checkpoint warp unlocked" : `Enemies cleared · +${inspiration} Inspiration`;
+    this.message = reward === "mastered" ? "Area mastered · checkpoint warp claimed" : `Enemies cleared · +${inspiration} Inspiration`;
   }
   /** Ends the run (the End Run button), or, fallen, accepts defeat. */
   finish(reason: string) {

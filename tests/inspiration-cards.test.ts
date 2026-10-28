@@ -17,15 +17,15 @@ const NODES: [UpgradeId, number, UpgradeId, CardId | null][] = [
   ["cardYellowDoor", 5, "keySiphon", "yellowDoor"],
   ["heartDoorResilience", 20, "cardYellowDoor", null],
   ["cardHeartDoor", 10, "heartDoorResilience", "heartDoor"],
-  ["cardWeakEnemy", 20, "cardYellowDoor", "weakEnemy"],
+  ["cardWeakEnemy", 20, "thorns", "weakEnemy"],
   ["cardBaseEnemy", 20, "cardWeakEnemy", "baseEnemy"],
   ["cardStrongEnemy", 20, "cardBaseEnemy", "strongEnemy"],
   ["cardFastEnemy", 20, "cardBaseEnemy", "fastEnemy"],
   ["cardEliteEnemy", 20, "cardWeakEnemy", "eliteEnemy"],
   ["cardBossEnemy", 20, "cardEliteEnemy", "bossEnemy"],
   ["cardNonBossEnemy", 40, "cardBossEnemy", "nonBossEnemy"],
-  ["cardChest", 20, "cardWeakEnemy", "chest"],
-  ["blueSiphon", 20, "cardChest", "blueSiphon"],
+  ["cardChest", 20, "interest", "chest"],
+  ["blueSiphon", 20, "thorns", "blueSiphon"],
   ["keyToHp", 20, "blueSiphon", "keyToHp"],
   ["blueTrader", 20, "keyToHp", "blueTrader"],
   ["smeltBlue", 20, "blueTrader", "smeltBlue"],
@@ -33,15 +33,16 @@ const NODES: [UpgradeId, number, UpgradeId, CardId | null][] = [
   ["smeltRed", 30, "redTrader", "smeltRed"],
   ["cardRedKey", 20, "blueSiphon", "redKey"],
   ["redSiphon", 20, "cardRedKey", "redSiphon"],
-  ["floorSkipReward", 20, "blueSiphon", null],
-  ["cardTorch", 20, "floorSkipReward", "torch"],
+  ["floorSkipReward", 20, "cardChest", null],
+  ["cardTorch", 20, "cardChest", "torch"],
   ["cardWoodenDoor", 20, "floorSkipReward", "woodenDoor"],
 ];
 
 test("each card node costs its price, waits for the node above it and adds its card to the deck", () => {
   const g = new Game(playedSave());
   g.save.tower.inspiration = 10_000;
-  g.save.upgrades.questForKnowledge = g.save.upgrades.pathToWealth = g.save.upgrades.physician = g.save.upgrades.keyMastery = 1; // the Archives and the tree under them revealed
+  g.save.upgrades.questForKnowledge = g.save.upgrades.pathToWealth = g.save.upgrades.physician = g.save.upgrades.keyMastery = g.save.upgrades.moreWealth = g.save.upgrades.cardMastery = g.save.upgrades.beastMastery = 1; // the Archives and the tree under them revealed
+  g.save.upgrades.pocketMoney = g.save.upgrades.spareChange = g.save.upgrades.wishingWell = g.save.upgrades.freeTraining = g.save.upgrades.interest = 1; // the wealth path down to Interest, above Chest
   g.save.breakthrough = 100;
   for (const id of ["combatStance", "buildout", "trainers", "largerHand", "shroud", "critical", "breakthrough", "archives", "lifesteal", "buyQuantity", "thorns", "findYellowKey", "keyEfficiency", "keySiphon"] as const) assert.ok(g.skills.buy(id));
   const nodes = TREES.find((t) => t.id === "inspiration")!.nodes;
@@ -68,7 +69,9 @@ test("a card node can't be bought before the one above it", () => {
   assert.equal(g.skills.buy("cardHeartDoor"), false);
   assert.ok(g.skills.buy("heartDoorResilience"));
   assert.ok(g.skills.buy("cardHeartDoor"));
-  assert.ok(g.skills.buy("cardWeakEnemy"), "Weak Enemy hangs straight off Gold Door");
+  assert.equal(g.skills.buy("cardWeakEnemy"), false, "Weak Enemy hangs off Thorns, hidden until Beast Mastery");
+  g.save.upgrades.thorns = g.save.upgrades.beastMastery = 1;
+  assert.ok(g.skills.buy("cardWeakEnemy"), "Weak Enemy hangs straight off Thorns");
 });
 
 const enemy = (strength: EnemyStrength): Tile => ({ kind: "enemy", enemy: { name: "rat", hp: 1, attack: 0, defense: 0, tier: 0, strength } });

@@ -105,7 +105,7 @@ test("a Delve enemy of each strength matches a default-curve Tower's on the same
     }
 });
 
-test("Towers I to IV raise ATK from floor 11 to 45 and HP to 124 on floor 25, back to the default by floor 100; Tower V on is the default", () => {
+test("Towers I to IV raise ATK from floor 11 to 45, 110 and 220 on floors 25, 50 and 75 (HP to 124, 320 and 677), back to the default by floor 100; Tower V on is the default", () => {
   const stat = (tier: number, floor: number, key: "hp" | "attack") => enemyStats("tower", tier, floor - 1, "normal", "balanced")[key];
   const atk = (tier: number, floor: number) => stat(tier, floor, "attack"), hp = (tier: number, floor: number) => stat(tier, floor, "hp");
   for (const tier of [1, 2, 3, 4]) {
@@ -119,6 +119,10 @@ test("Towers I to IV raise ATK from floor 11 to 45 and HP to 124 on floor 25, ba
     }
     assert.equal(atk(tier, 25), 45);
     assert.equal(hp(tier, 25), 124);
+    assert.equal(atk(tier, 50), 110);
+    assert.equal(hp(tier, 50), 320);
+    assert.equal(atk(tier, 75), 220);
+    assert.equal(hp(tier, 75), 677);
     for (const floor of [100, 101, 250, 1200]) {
       assert.equal(atk(tier, floor), atk(5, floor), `tower ${tier} floor ${floor}`);
       assert.equal(hp(tier, floor), hp(5, floor), `tower ${tier} floor ${floor}`);

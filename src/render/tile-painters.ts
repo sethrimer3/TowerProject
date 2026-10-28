@@ -37,6 +37,9 @@ export type BoardLook = {
    * Classic art (always outside: the forest keeps its art), so what rises
    * off it wears that art too. */
   themed: ThemedBoard | null;
+  /** Whether the tile at (x, y) stands on a Golden Floor (`Game.goldenAt`);
+   * none while the run can't have one. */
+  golden?: (x: number, y: number) => boolean;
 };
 type TileWorld = { tile(x: number, y: number): Tile | undefined };
 /** What a contents painter needs besides the tile: its position (for
@@ -69,7 +72,35 @@ function paintGround(c: CanvasRenderingContext2D, world: TileWorld, t: Tile, x: 
   const profile = wall ? dungeonWallProfile(world, x, y) : undefined;
   const detail = wall && profile?.depth === 0 && !towerTileset(look.mode, look.tier) ? dungeonDetail(world, x, y, look.seed,
     (xx, yy) => dungeonMaterial(look.mode, xx, yy, look.seed)) : undefined;
-  return drawDungeonGround(c, terrain, dungeonDiagonals(world, look.mode, x, y, look.seed), profile, detail);
+  const drawn = drawDungeonGround(c, terrain, dungeonDiagonals(world, look.mode, x, y, look.seed), profile, detail);
+  if (drawn && !wall && look.golden?.(x, y)) gild(c, GOLDEN_GROUND);
+  return drawn;
+}
+
+/** How a Golden Floor wears its gold: on its open ground or its walls, in
+ * which colour, blended how. Gold belongs to Golden Floors alone. */
+export type GoldenLook = {
+  on: "floor" | "wall"; color: string; blend: GlobalCompositeOperation; alpha: number;
+  /** A second coat brightening the gold: `lift`, blended by `liftBlend` (a screen by default). */
+  lift?: string; liftBlend?: GlobalCompositeOperation;
+};
+/** The Classic stone's own shading in gold, lifted a little so the dark
+ * paving still reads as gold. */
+export const GOLDEN_GROUND: GoldenLook = { on: "floor", color: "#ffc23a", blend: "color", alpha: 1, lift: "rgba(255, 196, 64, 0.42)" };
+/** Gilds the tile in tile space (24x24) as `look` says. */
+export function gild(c: CanvasRenderingContext2D, look: GoldenLook) {
+  c.save();
+  c.globalCompositeOperation = look.blend;
+  c.globalAlpha = look.alpha;
+  c.fillStyle = look.color;
+  c.fillRect(0, 0, 24, 24);
+  if (look.lift) {
+    c.globalCompositeOperation = look.liftBlend ?? "screen";
+    c.globalAlpha = 1;
+    c.fillStyle = look.lift;
+    c.fillRect(0, 0, 24, 24);
+  }
+  c.restore();
 }
 
 /** Classic contents always use the decoded PNG kit; themes paint their own contents. */

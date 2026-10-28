@@ -1,6 +1,7 @@
 import type { Tile, Torch } from "../../entities.ts";
 import type { Facing } from "../../shown.ts";
 import type { FrameContext } from "../render-frame.ts";
+import type { GoldenLook } from "../tile-painters.ts";
 
 /** How a Game theme other than Classic draws the dungeon board in place of
  * its lit art: the ground, each tile's contents, torches and the hero, each
@@ -20,6 +21,10 @@ export type ThemedBoard = {
   /** Drawn over the whole board after the hero, before the feedback
    * overlays. */
   over?(f: FrameContext): void;
+  /** How a Golden Floor wears its gold over the ground: its walls, for a
+   * board whose open ground is black or without hue; its open ground,
+   * tinted gold, without. */
+  golden?: GoldenLook;
 };
 
 /** The kinds of tile contents a board paints: every tile kind but open

@@ -61,8 +61,19 @@ export function generateTowerRoom(
   room: number,
   tier = 1,
 ): Map<string, Tile> {
-  return generateTowerFloor(seed, room, tier).cells;
+  const key = `${seed}:${room}:${tier}`;
+  let cells = towerRooms.get(key);
+  if (!cells) {
+    cells = generateTowerFloor(seed, room, tier).cells;
+    towerRooms.set(key, cells);
+    if (towerRooms.size > 4) towerRooms.delete(towerRooms.keys().next().value!);
+  }
+  // Each caller gets a map of its own, free to edit; the tiles are shared.
+  return new Map(cells);
 }
+/** The last few floors generated, by seed, room number and tier: an undo or
+ * reload rebuilds the floor it stands on, and generating one is slow. */
+const towerRooms = new Map<string, Map<string, Tile>>();
 const towerTorchCaches = new Map<string, Torch[]>();
 /** Torches for one tower room as placed, all lit, computed once when that
  * room is first entered this session and cached by seed, room number and

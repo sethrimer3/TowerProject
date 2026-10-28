@@ -22,6 +22,7 @@ import { earn } from "../save/profile.ts";
 import { notesOf, tallyIn } from "../run-notes.ts";
 import { foeGold } from "../cards/foe-cards.ts";
 import { foeStat, treeBonus, treeFactor } from "../cards/trees.ts";
+import { hasEnvironment } from "../environments.ts";
 
 /** The tiles whose Pickup Gold a skipped floor counts, beside its lit torches. */
 const ITEMS: ReadonlySet<Tile["kind"]> = new Set(["key", "potion", "attack", "defense", "door"]);
@@ -59,6 +60,9 @@ export class RunPurse {
     /** What Equipment's finds (a Supply Chest's materials, an Equipment Chest's piece) draw from: `rng`,
      * unless a tournament run gives them a stream of their own. */
     private readonly equipmentRng: () => number = rng,
+    /** The equivalent floor (from 1) of the tile at (x, y), the one its
+     * environments roll on (`Game.floorOf`); without it, no floor is golden. */
+    private readonly floorOf?: (x: number, y: number) => number,
   ) {}
 
   private get rules(): ModeProfile {
@@ -121,18 +125,37 @@ export class RunPurse {
     return wornEffects(this.save, this.mode);
   }
 
-  /** What the Gold multipliers read for this run (`economy/gold-multipliers.ts`). */
-  private get goldContext(): GoldContext {
-    return { save: this.save, mode: this.mode, tier: this.tier, now: this.now, shrine: this.boons?.gold };
+  /** What the Gold multipliers read for this run (`economy/gold-multipliers.ts`),
+   * for Gold found where Golden Floor Multiplier's factor is `golden`. */
+  private goldContext(golden = 1): GoldContext {
+    return { save: this.save, mode: this.mode, tier: this.tier, now: this.now, shrine: this.boons?.gold, golden };
+  }
+
+  /** Golden Floor Multiplier's factor on Gold found on equivalent floor
+   * `floor` (from 1) when the run makes it a Golden Floor, read now so a
+   * level researched mid-run counts at once; 1 on any other floor. */
+  golden(floor: number) {
+    return hasEnvironment(this.run, "golden", floor) ? researched(this.save.archives, "goldenFloorMultiplier") / 10 : 1;
+  }
+
+  /** `golden` for the floor of the tile at (x, y). */
+  private goldenAt(x: number, y: number) {
+    return this.floorOf && this.run.goldenFloor ? this.golden(this.floorOf(x, y)) : 1;
+  }
+
+  /** `goldenAt` the hero's tile. */
+  private get goldenHere() {
+    return this.goldenAt(this.run.player.x, this.run.player.y);
   }
 
   /** Banks Gold found in the run, fractions and all (`snap`), times every
    * Gold multiplier (`goldBanked`: the tower's, the ads', the Shop's coin
-   * packs, the themes owned, equipment's Gold found and the run's Gold
-   * boons; what it found while the Gold ad's boost ran kept in
+   * packs, the themes owned, equipment's Gold found, the run's Gold boons
+   * and, found on a Golden Floor, `golden`, its multiplier, once for the
+   * find; what it found while the Gold ad's boost ran kept in
    * `runBoostGold`); returns what it banked. */
-  gold(found: number) {
-    const { gold, unboosted } = goldBanked(found, this.goldContext);
+  gold(found: number, golden = 1) {
+    const { gold, unboosted } = goldBanked(found, this.goldContext(golden));
     if (unboosted !== null) this.slice.runBoostGold = snap((this.slice.runBoostGold ?? 0) + unboosted);
     this.save.gold = snap(this.save.gold + gold);
     earn(this.save, "gold", gold);
@@ -145,14 +168,14 @@ export class RunPurse {
    * once its tile is looted. Changes nothing. */
   killGoldPreview(enemy: Enemy, x: number, y: number, instakill = false) {
     if (this.slice.lootedTiles[this.killKey(enemy, x, y)]) return 0;
-    return goldBanked(snap(this.killGold(enemy, instakill) * (this.run.goldCombo ?? 1)), this.goldContext).gold;
+    return goldBanked(snap(this.killGold(enemy, instakill) * (this.run.goldCombo ?? 1)), this.goldContext(this.goldenAt(x, y))).gold;
   }
 
-  /** The Gold a kill of `enemy` banks now, wherever it stands and whether
-   * or not its tile is looted, without Goldback's combo (the enemy stats
-   * box's). Changes nothing. */
+  /** The Gold a kill of `enemy` on the hero's floor banks now, wherever it
+   * stands and whether or not its tile is looted, without Goldback's combo
+   * (the enemy stats box's). Changes nothing. */
   killGoldOf(enemy: Enemy) {
-    return goldBanked(this.killGold(enemy), this.goldContext).gold;
+    return goldBanked(this.killGold(enemy), this.goldContext(this.goldenHere)).gold;
   }
 
   /** Adds Silver found in the run, times Silver found's multiplier
@@ -224,7 +247,7 @@ export class RunPurse {
     // Effective or Dampen on the card that took the fight scales it; `gold`
     // then adds the tier's bonus and the other Gold multipliers.
     const base = this.withCombo(this.killGold(enemy, instakill)), raised = scale === 1 ? base : snap(base * scale);
-    const gold = this.gold(raised), more = foeStat(this.tree, enemy, "Cells");
+    const gold = this.gold(raised, this.goldenAt(x, y)), more = foeStat(this.tree, enemy, "Cells");
     const cells = enemy.strength === "greaterBoss" ? this.cells(scale, more) : more ? this.bankCells(snap(more * scale)) : 0;
     return { gold, cells, equipment: this.killDrops(enemy, instakill) };
   }
@@ -265,7 +288,7 @@ export class RunPurse {
   pickupGold(x: number, y: number, base: number, more = 0) {
     if (!base || !this.loot(this.pickupKey(x, y))) return 0;
     const gold = this.bonused(base);
-    return this.gold(more ? snap((gold * (100 + more)) / 100) : gold);
+    return this.gold(more ? snap((gold * (100 + more)) / 100) : gold, this.goldenAt(x, y));
   }
 
   /** What gates an item's Gold at (x, y), apart from a kill's or chest's
@@ -285,7 +308,7 @@ export class RunPurse {
   treasure(x: number, y: number, kind: ChestKind = "plain", roll: ChestRoll = PLAIN_ROLL): { gold: number; kind: ChestKind; equipment: EquipmentLoot | null; more: EquipmentLoot[]; cells: number } | null {
     if (!this.loot(this.lootKey(x, y))) return null;
     const rules = this.rules, floor = rules.equivalentFloor(rules.progressAt(this.run, y)), times = roll.multiplier;
-    const gold = this.gold(this.withCombo(snap(this.chestGold(snap(rollGold(floor, this.rng) + PICKUP_GOLD)) * times)));
+    const gold = this.gold(this.withCombo(snap(this.chestGold(snap(rollGold(floor, this.rng) + PICKUP_GOLD)) * times)), this.goldenAt(x, y));
     if (!this.save.equipment.unlocked) kind = "plain";
     const pieces = kind === "plain" ? [] : kind === "supply" ? [this.chestEquipment(kind, times)] : Array.from({ length: times }, () => this.chestEquipment(kind));
     return { gold, kind, equipment: pieces[0] ?? null, more: pieces.slice(1), cells: roll.cells ? this.cells(1) : 0 };
@@ -316,7 +339,7 @@ export class RunPurse {
   treasureGoldPreview(x: number, y: number) {
     if (this.slice.lootedTiles[this.lootKey(x, y)]) return 0;
     const rules = this.rules, floor = rules.equivalentFloor(rules.progressAt(this.run, y));
-    return goldBanked(snap(this.chestGold(snap(averageGold(floor) + PICKUP_GOLD)) * (this.run.goldCombo ?? 1)), this.goldContext).gold;
+    return goldBanked(snap(this.chestGold(snap(averageGold(floor) + PICKUP_GOLD)) * (this.run.goldCombo ?? 1)), this.goldContext(this.goldenAt(x, y))).gold;
   }
 
   /** A treasure chest's Gold `base` raised by Gold Bonus, then by CHEST's
@@ -327,12 +350,14 @@ export class RunPurse {
   }
 
   /** Spare Change: Gold for a floor climbed for the first time in the run,
-   * its Gold / Floor raised by research and the tier's bonus. Gated by
-   * `key` in lootedTiles, like a kill's Gold; returns what it paid. */
-  floorGold(key: string) {
+   * its Gold / Floor raised by research and the tier's bonus, and by
+   * Golden Floor Multiplier when `reached`, the equivalent floor (from 1)
+   * it climbed to, is a Golden Floor. Gated by `key` in lootedTiles, like a
+   * kill's Gold; returns what it paid. */
+  floorGold(key: string, reached: number) {
     const base = trainedAmount(this.trainingNow, "floorGold");
     if (!base || !this.loot(key)) return 0;
-    return this.gold(snap(this.researched(base, "floorGold") * treeFactor(this.tree, "floorGold")));
+    return this.gold(snap(this.researched(base, "floorGold") * treeFactor(this.tree, "floorGold")), this.golden(reached));
   }
 
   /** Floor Skip Reward: when Skip climbs past the floor the run stands on
@@ -340,7 +365,7 @@ export class RunPurse {
    * chests and items still hold: each enemy's kill Gold, each closed
    * treasure chest's average Gold (`averageGold`) and each item's, door's
    * and lit torch's Pickup Gold (the chests' and items' raised by Gold
-   * Bonus), with the tier's bonus. Each one counted is marked looted, so one
+   * Bonus), with the tier's bonus and, on a Golden Floor, its multiplier. Each one counted is marked looted, so one
    * fought, opened or picked up later pays no Gold again, and the floor
    * pays once a run. Returns what it paid. */
   skippedFloorGold(board: RoomWorld) {
@@ -360,7 +385,7 @@ export class RunPurse {
         }
         found = snap(found + gold);
       }
-    return found ? this.gold(snap((found * percent) / 100)) : 0;
+    return found ? this.gold(snap((found * percent) / 100), this.golden(board.room + 1)) : 0;
   }
 
   /** Goldback's combo: `amount` times the multiplier its activations
@@ -375,20 +400,21 @@ export class RunPurse {
   }
 
   /** A card badge's Gold (Gold Touch) for a card reaching its
-   * target, with the tier's bonus: once per target (`key`, in lootedTiles),
-   * since undo can't take Gold back. Returns what it paid. */
+   * target, with the tier's bonus and the hero's floor's Golden Floor
+   * Multiplier: once per target (`key`, in lootedTiles), since undo can't
+   * take Gold back. Returns what it paid. */
   badgeGold(key: string, amount: number) {
     if (!this.loot(key)) return 0;
-    return this.gold(amount);
+    return this.gold(amount, this.goldenHere);
   }
 
   /** A smelt's Gold (Smelt GK's, BK's and RK's trees): `base` raised by
    * Gold Bonus, `times` over (Key Smelter, Master Smelter), with the tier's
-   * bonus, once per smelt (`key`, in lootedTiles), since undo can't take
+   * bonus and the hero's floor's Golden Floor Multiplier, once per smelt (`key`, in lootedTiles), since undo can't take
    * Gold back. Returns what it paid. */
   smeltGold(key: string, base: number, times: number) {
     if (!base || !this.loot(key)) return 0;
-    return this.gold(snap(this.bonused(base) * times));
+    return this.gold(snap(this.bonused(base) * times), this.goldenHere);
   }
 
   /** The key that gates a floor's Spare Change: the Tower's stairs tile at

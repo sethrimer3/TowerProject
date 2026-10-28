@@ -1,7 +1,6 @@
 import type { Torch } from "../entities.ts";
 import { LIGHTING_CONFIG } from "./lighting.ts";
 import { computeVisibilityPolygon } from "../torches.ts";
-import { insidePolygon } from "./floor-relief.ts";
 
 /** Baked, occlusion-aware torch glow.
  *
@@ -122,6 +121,29 @@ function boxPass(src: Float32Array, dst: Float32Array, { lines, len, across, alo
   }
 }
 
+/** Where the edges of `poly` cross the row at height `y`, sorted, each by
+ * `insidePolygon`'s own sum, so counting those strictly right of a point
+ * on the row judges it exactly as `insidePolygon` does, without walking
+ * every edge for every sample. */
+function rowCrossings(y: number, poly: readonly { x: number; y: number }[]) {
+  const xs: number[] = [];
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const a = poly[i]!, b = poly[j]!;
+    if (a.y > y !== b.y > y) xs.push(((b.x - a.x) * (y - a.y)) / (b.y - a.y) + a.x);
+  }
+  return xs.sort((p, q) => p - q);
+}
+/** Whether an odd number of the sorted crossings `xs` lie strictly right of `x`. */
+function oddRightOf(xs: readonly number[], x: number) {
+  let lo = 0, hi = xs.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (xs[mid]! <= x) lo = mid + 1;
+    else hi = mid;
+  }
+  return (xs.length - lo) % 2 === 1;
+}
+
 /** Light intensity (0-1) around a torch, before color and flicker. */
 export function torchLightField(
   torch: LightSource,
@@ -156,13 +178,18 @@ export function torchLightField(
   const floor = new Float32Array(cols * rows);
   for (let py = 0; py < rows; py++) {
     const wy = top - (py + 0.5) / res;
+    // The row's samples run left to right past its sorted crossings: a
+    // sample is inside when an odd number lie to its right.
+    const crossings = poly.length >= 3 ? rowCrossings(wy, poly) : [];
+    let passed = 0;
     for (let px = 0; px < cols; px++) {
       const wx = left + (px + 0.5) / res;
+      while (passed < crossings.length && crossings[passed]! <= wx) passed++;
       const ti = Math.floor(wx) - left, tj = Math.floor(wy) - bottom;
       if (!wall[tj * n + ti]) floor[py * cols + px] = 1;
       const d = Math.hypot(wx - ox, wy - oy);
       if (d >= radius) continue;
-      const direct = poly.length >= 3 && insidePolygon(wx, wy, poly) ? lightFalloff(d, radius) : 0;
+      const direct = poly.length >= 3 && (crossings.length - passed) % 2 === 1 ? lightFalloff(d, radius) : 0;
       const indirect = bounceAt(wx - left - 0.5, wy - bottom - 0.5);
       values[py * cols + px] = Math.max(direct, indirect);
     }
@@ -182,33 +209,39 @@ export function torchLightField(
   // into the wall. Added after the blur so the lit edge stays crisp.
   if (cfg.wallSheen > 0) {
     const depth = cfg.wallSheenDepth;
-    const directAt = (x: number, y: number) =>
-      poly.length >= 3 && insidePolygon(x, y, poly) ? lightFalloff(Math.hypot(x - ox, y - oy), radius) : 0;
     const isFloorTile = (i: number, j: number) => i >= 0 && j >= 0 && i < n && j < n && !wall[j * n + i];
+    const crossingsAt = (y: number) => (poly.length >= 3 ? rowCrossings(y, poly) : []);
+    /** The sheen on a face `d` into the wall with outward normal (nx, ny),
+     * from the light arriving at (sx, sy) just in front of it, whose row's
+     * crossings are `xs`. */
+    const sheen = (sx: number, sy: number, d: number, nx: number, ny: number, xs: readonly number[]) => {
+      const reach = Math.hypot(sx - ox, sy - oy);
+      if (reach >= radius || !oddRightOf(xs, sx)) return 0;
+      const light = lightFalloff(reach, radius);
+      if (light <= 0) return 0;
+      const toX = ox - sx, toY = oy - sy, len = Math.hypot(toX, toY) || 1;
+      const facing = Math.max(0, (nx * toX + ny * toY) / len);
+      return cfg.wallSheen * light * (0.35 + 0.65 * facing) * Math.pow(1 - d / depth, 1.5);
+    };
     for (let py = 0; py < rows; py++) {
       const wy = top - (py + 0.5) / res;
+      const tj = Math.floor(wy) - bottom, fy = wy - Math.floor(wy);
+      // The light just in front of a side face lies on this row, and in
+      // front of the face above or below on one row each, the same all
+      // along this one, so each row's crossings are found once.
+      const upY = wy + 1 * (1 - fy + 0.02), downY = wy + -1 * (fy + 0.02);
+      const side = crossingsAt(wy), up = 1 - fy < depth ? crossingsAt(upY) : [], down = fy < depth ? crossingsAt(downY) : [];
       for (let px = 0; px < cols; px++) {
         const idx = py * cols + px;
         if (floor[idx]) continue;
         const wx = left + (px + 0.5) / res;
-        const ti = Math.floor(wx) - left, tj = Math.floor(wy) - bottom;
-        const fx = wx - Math.floor(wx), fy = wy - Math.floor(wy);
-        let best = 0;
-        // Faces of this wall tile that open onto floor: [neighbour, depth into wall, outward normal].
-        for (const [ni, nj, d, nx, ny] of [
-          [ti, tj + 1, 1 - fy, 0, 1], [ti, tj - 1, fy, 0, -1],
-          [ti + 1, tj, 1 - fx, 1, 0], [ti - 1, tj, fx, -1, 0],
-        ] as const) {
-          if (d >= depth || !isFloorTile(ni, nj)) continue;
-          // Light arriving just in front of the face, at this point along it.
-          const sx = wx + nx * (d + 0.02), sy = wy + ny * (d + 0.02);
-          const light = directAt(sx, sy);
-          if (light <= 0) continue;
-          const toX = ox - sx, toY = oy - sy, len = Math.hypot(toX, toY) || 1;
-          const facing = Math.max(0, (nx * toX + ny * toY) / len);
-          const v = cfg.wallSheen * light * (0.35 + 0.65 * facing) * Math.pow(1 - d / depth, 1.5);
-          if (v > best) best = v;
-        }
+        const ti = Math.floor(wx) - left, fx = wx - Math.floor(wx);
+        let best = 0, v = 0;
+        // Faces of this wall tile that open onto floor, near enough.
+        if (1 - fy < depth && isFloorTile(ti, tj + 1) && (v = sheen(wx, upY, 1 - fy, 0, 1, up)) > best) best = v;
+        if (fy < depth && isFloorTile(ti, tj - 1) && (v = sheen(wx, downY, fy, 0, -1, down)) > best) best = v;
+        if (1 - fx < depth && isFloorTile(ti + 1, tj) && (v = sheen(wx + 1 * (1 - fx + 0.02), wy, 1 - fx, 1, 0, side)) > best) best = v;
+        if (fx < depth && isFloorTile(ti - 1, tj) && (v = sheen(wx + -1 * (fx + 0.02), wy, fx, -1, 0, side)) > best) best = v;
         if (best > lit[idx]) lit[idx] = Math.min(1, best);
       }
     }

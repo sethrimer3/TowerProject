@@ -27,7 +27,7 @@ Undo never brings a collected Gem back or takes one away.
 Under the currencies, in the forest and inside a run, in the Tower and the Delve alike, a Gem button offers **7 Gems**, marked Claim (for watching an ad, once ads are hooked up; for now pressing it pays them, in a burst of blue glints); it hides once claimed and comes back 10 minutes later.
 Inside a run a **×1.5 Gold** ad button stands beside it: each claim (again, no ad plays yet) stores 20 minutes of real time in which all Gold found is multiplied by 1.5, claimable again and again up to two hours stored (the button closes while it holds more than an hour and fifty minutes); while it lasts the button glows and shows the time left, and with none stored it reads *Inactive*.
 Permanent Ad-Disable's ×1.5 Gold takes the same slot: while the boost runs, the boost counts instead, so the two never stack.
-Inside a run the height column shows every Gold multiplier multiplied together, and pressing it lists them in the *All Gold Bonuses* box: the tower's, the ads' slot, each Coin Pack, the themes owned, the equipment's Gold found and the Shrine boons; every Gold the run banks is what it found times that total.
+Inside a run the height column shows every Gold multiplier multiplied together, and pressing it lists them in the *All Gold Bonuses* box: the tower's, the ads' slot, each Coin Pack, the themes owned, the equipment's Gold found, the Shrine boons and, once Golden Floors is owned, the Golden Floor line (the hero's floor's [Golden Floor Multiplier](environments.md#golden-floor), Inactive off one); every Gold the run banks is what it found times that total.
 When the boost ran during a run, its end dialog adds a line for it, such as *50 Gold × 1.5 boost = 75 Gold*.
 
 ## Themes

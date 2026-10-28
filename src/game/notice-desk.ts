@@ -28,7 +28,7 @@ export type NoticeSpot =
 
 /** What the player can be shown, clearing the Notices it answers: a page
  * opened, or a tab inside one. */
-export type NoticeView = "upgrades" | "gear" | "equipment" | "research" | "training" | "deck" | "inspiration" | "breakthrough";
+export type NoticeView = "upgrades" | "gear" | "equipment" | "research" | "training" | "deck" | "inspiration" | "breakthrough" | "goals";
 
 /** What the Notices read from the game besides the save: the desks that
  * keep their own Notices, the Archives, and whether a skill can be bought. */
@@ -94,6 +94,8 @@ export class NoticeDesk {
       case "upgrades": return this.firstInspiration && (save.tutorials.upgrades = true);
       case "gear": return this.firstGear && (save.tutorials.gear = true);
       case "equipment": return !save.equipment.seen && (save.equipment.seen = true);
+      // Opening the Goals page ends the forest's lesson leading there.
+      case "goals": return !save.tutorials.goals && (save.tutorials.goals = true);
       case "research": {
         // Opening the Research page leads the Archives lesson on to its note there.
         if (save.upgrades.archives) save.tutorials.research = true;

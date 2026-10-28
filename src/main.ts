@@ -275,7 +275,7 @@ function navigate(requested: string) {
   game.fights.finish();
   const from = tab;
   tab = id;
-  if (id === "upgrades" || id === "gear" || id === "research" || id === "deck") game.notices.shown(id);
+  if (id === "upgrades" || id === "gear" || id === "research" || id === "deck" || id === "goals") game.notices.shown(id);
   deck.shown(id === "deck");
   // The Shop's Back returns to the page that opened it.
   if (id === "shop" && from !== "shop") shop.open(from);

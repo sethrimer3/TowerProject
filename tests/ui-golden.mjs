@@ -516,14 +516,15 @@ try {
     await page.mouse.up();
     await shot(`${prefix}.returned`);
   }
-  /** Buying a card's skill raises the card over the screen until pressed. */
+  /** Buying a card's skill raises the card over the screen until a press
+   * anywhere (here on its text, off the card). */
   async function cardRevealTour(prefix) {
     await tab("upgrades");
     await click('[data-tree="inspiration"]');
-    await click('[data-skill="cardYellowKey"]');
-    await click('[data-skill="cardYellowKey"]');
+    await click('[data-skill="cardAtkUp"]');
+    await click('[data-skill="cardAtkUp"]');
     await shot(`${prefix}.cardReveal`);
-    await click("#card-reveal-card");
+    await click(".card-reveal-text");
     await shot(`${prefix}.cardRevealed`);
   }
   async function dialogsTour(prefix) {

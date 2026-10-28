@@ -14,6 +14,7 @@ A tab not selected shows only its icon; the selected one widens to add its name.
 Hand is selected as each run starts, and shows the card hand; the hand shows only while Hand is selected.
 Pressing a group shows that group's Training rows in the hand's place (the Archer's rows only while the run's hand holds the Archer card), a card each, scrolled sideways: its name, where it stands now (the hero's stat, the percentage, or the Gold a new floor pays), and a button with the Silver price of the next level.
 What a value counts, on the Training tab and the run's cards alike: everything lasting that changes the row directly (Archives research and the equipment the mode's hero wears), and inside a run what the run has changed too (the hero's own stats as they stand, with what it found and its Max HP badge's multiplier, its ranks bought with Silver, and its shrine boons).
+Critical Chance shows to the hundredth of a percent (7.42%), its research counted, as do ATK and Critical Factor, so each shows what a strike uses.
 Silver / Floor counts Silver Bonus (with the equipment's Silver found), since that multiplies it; a global Gold multiplier (the tower's, the Shop's packs, the ad's boost, themes, Gold found, the Gold boons) counts in no row, only in the HUD's Gold bonus total, and shows in the Gold each kill or item actually pays.
 Pressing the button pays the Silver and raises it at once by what the Training tab shows (equipment's percent and research counted), for the rest of this run only (more max HP comes with the HP to fill it, as it does when a trainer finishes a Max HP rank mid-run); while the Silver isn't there the button's outline and face fade, its price still clear, and the card stays readable.
 A card at its most turns gold, its button reading *Max*.
@@ -61,7 +62,8 @@ A trainer's rank takes time, on the clock like the Archives' research: a stat's 
 ATK / m and Multishot Chance skip the 15 seconds, starting at 1 minute, and Multishot Targets' ranks take an hour more each (1 hour, 2, 3 … 7).
 **Training Discount** research (opened by Tower II's floor 80 Goal) takes 0.5% a level off the Gold every rank a trainer trains costs, rounded up, for 99 levels (30 Gold and 30 seconds for the first level, about 10,000 Gold at level 12, 100,000 at 26, a million at 59 and 4.1 million at 99, which takes 49 days); training points and a run's Silver cost the same as ever.
 One stat trains at a time, with one more for each trainer bought with Gems beside the trainer count (100, 250, 450, 700, 1,000 and 1,400 Gems, up to seven at once).
-A rank in training shows its countdown (press it to stop, get the Gold back and keep the time spent as credit) and a Gem button that finishes it at once: 1 Gem for each 10 minutes left, and 1 more for any part of 10 minutes.
+A rank in training shows its countdown, red in a red-tinted box (press it to stop, get the Gold back and keep the time spent as credit), and a Gem button that finishes it at once: 1 Gem for each 10 minutes left, and 1 more for any part of 10 minutes.
+A trainer's Gold price wears a gold tint while it can be paid, since pressing it buys the rank.
 Each stat at its most (Max, in a gold box) makes finishing 1.5% more efficient: with 10 at their most, the Gems are divided by 1.15 and rounded up, so 100 Gems become 87.
 Since a reset or a Limit Break can take a stat off its most, this can go down as well as up.
 Once any stat is at its most, the Training heading shows it at its left: *+1.5% to Rush* for one.

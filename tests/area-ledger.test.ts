@@ -37,8 +37,8 @@ test("an area climbed without damage and cleared earns both rewards, with their 
   const before = save.tower.inspiration;
   assert.deepEqual(new AreaLedger(save).enter(run, board), ["mastered", "cleared"]);
   assert.ok(areaMastered(save, 1, 10) && areaCleared(save, 1, 10));
-  assert.equal(save.tower.inspiration - before, 10);
-  assert.equal(save.tower.runCurrency, 10);
+  assert.equal(save.tower.inspiration - before, 5);
+  assert.equal(save.tower.runCurrency, 5);
   assert.deepEqual(entry(run), { kind: "reward", tier: "gold" });
   const chests = Object.values(run.changes).filter((t) => t.kind === "reward");
   assert.deepEqual(chests.map((t) => t.tier).sort(), ["gold", "silver"]);
@@ -116,7 +116,7 @@ test("climbing onto an area's first floor pays at once; opening the chest shows 
   const before = g.save.tower.inspiration;
   g.advanceTowerRoom();
   assert.equal(g.run.height, 10);
-  assert.equal(g.save.tower.inspiration - before, 10 + 1, "and +1 for the new floor");
+  assert.equal(g.save.tower.inspiration - before, 5 + 1, "and +1 for the new floor");
   assert.deepEqual(entry(g.towerRun), { kind: "reward", tier: "gold" });
   assert.match(g.message, /mastered and cleared/);
   const paid = g.save.tower.inspiration;
@@ -143,7 +143,7 @@ test("fight damage costs the area's mastery; a Heart Door's toll does not", () =
 });
 
 test("an area cleared pays its floors' Inspiration on the milestone schedule", () => {
-  assert.deepEqual([10, 100, 110, 1000, 1010, 1090, 1100, 10000, 10010].map(clearedInspiration), [10, 10, 1, 1, 0, 0, 1, 1, 0]);
+  assert.deepEqual([10, 100, 110, 1000, 1010, 1090, 1100, 10000, 10010].map(clearedInspiration), [5, 5, 1, 1, 0, 0, 1, 1, 0]);
 });
 
 test("an area that would pay no Inspiration is never cleared: no reward, chest or record", () => {

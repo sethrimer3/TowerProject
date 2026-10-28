@@ -38,7 +38,7 @@ npm run test:proving   # Proving Grounds browser flow (needs npm run dev)
 
 ## Architecture
 
-`src/bootstrap.ts` waits for decoded artwork and fonts behind the loading screen before `main.ts` paints and starts gameplay; failures offer Retry, and `npm run sprites:manifest` maintains the complete preload inventory.
+`src/bootstrap.ts` waits for decoded artwork and fonts behind the loading screen before `main.ts` paints and starts gameplay; a failure reloads the page by itself twice, a second apart, then offers Retry, and `npm run sprites:manifest` maintains the complete preload inventory.
 
 **Modes.** The modes are `tower` and `delve` (unlocked by upgrade).
 Tower and Delve share the tab bar's one board button (`data-tab="board"`, wearing the active mode's art); the only way between them is the **forest sign** (`Game.swapForest`: in the Tower's forest while the Delve is open, which is only while a tournament is open for entry (`Game.delveOpen`), and always in the Delve's, tapped, `#forest-sign`, which `BoardOverlay.placeSign` keeps over the path, or walked onto, the path's foot, `OutsideWorld.atExit`), which leaves the hero at the forest's start tile and arrives at the other's (`switchMode(next, outside)` starts a mode with no run in its forest).
@@ -99,6 +99,7 @@ Read the area's doc before changing code there or answering questions about it; 
 - `proving-grounds.md`: the forest trial entrance, tactical Light Elemental and Keymaster encounters, rendering and persistence.
 - `saves.md`: loading and decoding the save, adding save state, settings rows.
 - `shrines.md`: Shrines and boons (`src/shrines.ts`): the schedule, offers, boon math, where effects apply, their research and UI.
+- `environments.md`: Floor Environments (`src/environments.ts`): Treasure and Golden Floors, their rolls, Golden Floor Gold, drawing and the enemy stats box's table.
 - `goldens.md`: which goldens a change moves, the browser goldens, recording them.
 - `testing.md`: browser test setup.
 

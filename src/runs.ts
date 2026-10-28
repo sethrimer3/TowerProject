@@ -96,6 +96,10 @@ export type RunCore = {
   /** CHEST's tree's percent chance each of its floors is a Treasure Floor,
    * fixed as the run went inside; none without. */
   treasureFloor?: number;
+  /** Golden Floor Chance research's percent chance each of its floors is a
+   * Golden Floor (environments.ts), fixed as the run went inside; none
+   * without. */
+  goldenFloor?: number;
   /** The card the player pressed, ahead of the others, until it reaches
    * its target or has no path to one; no other card can be pressed
    * meanwhile. */

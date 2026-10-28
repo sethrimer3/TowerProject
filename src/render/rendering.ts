@@ -422,7 +422,7 @@ export class Renderer {
     const anyWorld = g.world as { milestone?: number };
     if (!this.worldIds.has(g.world)) this.worldIds.set(g.world, this.nextWorldId++);
     const groundKey = [
-      this.worldIds.get(g.world), g.run.seed, g.mode, g.run.height, g.run.outside ? 1 : 0, g.world.floor, anyWorld.milestone ?? 0,
+      this.worldIds.get(g.world), g.run.seed, g.mode, g.run.height, g.run.outside ? 1 : 0, g.world.floor, anyWorld.milestone ?? 0, g.run.goldenFloor ?? 0,
       // Without sprite art, floor under items is drawn differently, so edits matter.
       f.look.styledSprites ? `kit:${spriteRevision()}` : "",
       ...(f.look.styledSprites && towerTileset(f.look.mode, f.look.tier) ? [`tower:${f.look.tier}`] : []),
@@ -699,6 +699,7 @@ export class Renderer {
       spriteAnimations: usesGameSprites(g.save) && g.save.settings.spriteAnimations,
       squareDoors: usesGameSprites(g.save) && g.save.settings.squareDoors,
       themed: g.run.outside ? null : this.themed,
+      golden: g.run.goldenFloor && !g.run.outside ? (x, y) => g.goldenAt(x, y) : undefined,
     };
   }
   /** Paints one tile in tile space (see paintTile); false while its ground

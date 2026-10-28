@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { generateTowerRoom, RoomWorld } from "../src/tower/room-world.ts";
+import { generateTowerFloor } from "../src/tower/index.ts";
 import { reachable } from "../src/board.ts";
 import { point } from "../src/entities.ts";
 import { Game } from "../src/state.ts";
@@ -11,7 +12,8 @@ test("tower rooms are fully generated and reachable from entrance to exit", () =
   for (let seed = 0; seed < 40; seed++)
     for (const room of [0, 3, 7, 15, 30]) {
       const cells = generateTowerRoom(seed, room);
-      assert.deepEqual(cells, generateTowerRoom(seed, room));
+      // Generated afresh, not from the floors kept, it comes out the same.
+      assert.deepEqual(cells, generateTowerFloor(seed, room).cells);
       const entrance = point(TOWER_START_X, 0);
       assert.notEqual(cells.get(entrance)?.kind, "wall");
       const exits = [...cells].filter(([, t]) => t.kind === "stairs");

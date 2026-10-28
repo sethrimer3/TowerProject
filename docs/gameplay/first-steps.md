@@ -57,12 +57,15 @@ Back in the forest a note says *Click Enter to start climbing the tower.*, a han
 In that run a note asks you to press Key and Door, a hand pointing at each, until you press one of them.
 Ten steps into that run's first floor, a hero slower than 3 steps a second is paused once, a hand pointing at the › beside play, until you press it to walk at 3 ([Play, pause and speed](hand-and-cards.md#play-pause-and-speed)).
 When the hand is stuck again with an enemy in the way, while **Enemy** isn't owned and you hold the Inspiration it costs, a note says an enemy blocks the way, that the Enemy card on the Inspiration tree lets you fight it, and to press End Run, which pulses again; the forest, the Inspiration tree and Enter then lead you to Enemy and back as they did for Door & Key.
+Reaching floor 4 of a climb while Enemy is owned and **Auto-Climb** isn't, the hero stops and a note says you can end the climb now to unlock Auto-Climb: end it from the menu, then spend its Inspiration on Auto-Climb on the Inspiration tree.
+The climb stays paused until you tap the note, which dismisses it for good (ending the climb does too).
 In the first run inside after **Auto-Climb** is bought, a note says Auto-Climb moves the hero for you: it heads for the target of the first card in your hand with an open path to it, and pressing a card goes for that card's target first; the hand plays on under it, and tapping the note or pressing a card dismisses it.
 Once the **Archives** skill is bought, in the Tower's forest a note says research is unlocked and to press the **Research** tab, a hand pointing at it and a red dot on it; until you open the Research page, nothing else in the forest can be pressed.
 On the Research page a hand then points at its **Archives** tab, over a note: pay the archivist Gold to research permanent upgrades, and Gems rush research and hire more archivists to research more at once.
 Until that note is tapped, which ends the lesson, the other tabs can't be pressed.
 The first time training points can be spent, in the forest a note says that after levelling up you can spend points to increase your stats, a hand pointing at the **Research** tab.
 On its Training tab a note says *Spend training points to upgrade your stats.*, with a hand on each training-points button you can press, until you tap the note, which ends the lesson.
+When a Tower Goal is ready to claim, the Tower's forest says Tower Goals are ready to claim, every ten floors climbed paying a Goal reward, a hand pointing at the **Goals** button, until you open the Goals page.
 While a tournament is open, the forest's next note says to follow the path down to the Delve and enter its cave, the hand pointing at the sign at the foot of the forest path, until the Delve is opened.
 
 ## The tab bar and the forest sign

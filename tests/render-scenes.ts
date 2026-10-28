@@ -291,6 +291,19 @@ LATER_BOARD_SCENES.spriteAmbient = () => {
   return { g };
 };
 
+/** Golden Floors at `chance` percent, with every plant on them. */
+function goldenScene(mode: "tower" | "delve", chance: number): BoardScene {
+  const g = game(mode, { brightness: 75 });
+  g.run.goldenFloor = chance;
+  plantAll(g);
+  return { g };
+}
+/** Board scenes after the trial's jobs, so none before them moves. */
+const APPENDED_BOARD_SCENES: Record<string, () => BoardScene> = {
+  goldenTower: () => goldenScene("tower", 100),
+  goldenDelve: () => goldenScene("delve", 100),
+};
+
 /** One fixed material identity for each later Tower, on real tier geometry. */
 export function towerTierSpriteScene(tier: 2 | 3): BoardScene {
   const save = defaults();
@@ -324,7 +337,7 @@ export function forestSpriteScene(mode: "tower" | "delve", settings: Record<stri
  * scene, mid-strike), and later frames once the camera has caught up. */
 function playBoard(name: string, seed: number, canvas: HTMLCanvasElement, grab: Grab) {
   seeded(seed, () => {
-    const scene = (BOARD_SCENES[name] ?? LATER_BOARD_SCENES[name])(), g = scene.g;
+    const scene = (BOARD_SCENES[name] ?? LATER_BOARD_SCENES[name] ?? APPENDED_BOARD_SCENES[name])(), g = scene.g;
     quiet(g);
     const r = new Renderer(canvas, g);
     for (let t = 1000; t <= 1400; t += 50) r.draw(t);
@@ -522,6 +535,7 @@ export const JOBS: Job[] = [
   { name: "provingGrounds", canvas: "board" as const, run: playProvingGrounds },
   { name: "keymaster", canvas: "board" as const, run: playKeymaster },
   { name: "trialCamera", canvas: "board" as const, run: playTrialCamera },
+  ...Object.keys(APPENDED_BOARD_SCENES).map((name) => ({ name, canvas: "board" as const, run: playBoard })),
   { name: "forestTravel", canvas: "board" as const, run: playForestTravel },
 ].map(({ name, canvas, run }, i) => {
   // Keep the fourth seed reserved for the retired sprite-opt-out scene.

@@ -5,7 +5,7 @@ import { defaults } from "../src/save/save.ts";
 import { point, type Enemy, type Player, type Tile } from "../src/entities.ts";
 import { bout, heroHpAfter, predict, summarize, type Crits } from "../src/combat.ts";
 import { forecast } from "../src/crit-forecast.ts";
-import { critRule, trainingStep } from "../src/progression/loadout.ts";
+import { critRule, loadout, trainingStep, trainingText } from "../src/progression/loadout.ts";
 import { trainingGold } from "../src/progression/training-jobs.ts";
 import { runTrainingValue, silverPrice } from "../src/progression/run-training.ts";
 import { RESEARCH } from "../src/progression/archives.ts";
@@ -53,7 +53,7 @@ test("Crit %: 1% a rank to 80%; Crit x: x1.2, and 0.1 more a rank to x16.2", () 
   assert.deepEqual(critRule(s), { chance: 80, factor: 16.2 });
   s.training.critChance = 0;
   s.training.critFactor = 0;
-  assert.deepEqual([trainingStep(s, "critChance").now, trainingStep(s, "critChance").next, trainingStep(s, "critChance").unit], [0, 1, "%"]);
+  assert.deepEqual([trainingStep(s, "critChance").now, trainingStep(s, "critChance").next, trainingStep(s, "critChance").unit], [0, 1, "chance"]);
   assert.deepEqual([trainingStep(s, "critFactor").now, trainingStep(s, "critFactor").next, trainingStep(s, "critFactor").unit], [1.2, 1.3, "×"]);
   // Research multiplies each trained value: +2% a level.
   s.training.critChance = 80;
@@ -63,11 +63,24 @@ test("Crit %: 1% a rank to 80%; Crit x: x1.2, and 0.1 more a rank to x16.2", () 
   assert.deepEqual(critRule(s), { chance: 240, factor: 2.4 });
 });
 
+test("Critical Chance shows to the hundredth of a percent, and it, Critical Factor and ATK show with their research, as play uses them", () => {
+  const s = defaults();
+  s.upgrades.critical = s.upgrades.archives = 1;
+  Object.assign(s.training, { critChance: 7, critFactor: 3, attack: 20 });
+  Object.assign(s.archives.levels, { critChance: 3, critFactor: 3, attack: 5 });
+  const shown = (id: "critChance" | "critFactor" | "attack") => { const step = trainingStep(s, id); return trainingText(step.now, step.unit); };
+  assert.deepEqual(critRule(s), { chance: 7.42, factor: 1.59 });
+  assert.deepEqual([shown("critChance"), shown("critFactor"), shown("attack")], ["7.42%", "×1.59", String(Math.floor(loadout(s, "tower").attack))]);
+  s.archives.levels.critChance = 0;
+  assert.equal(shown("critChance"), "7.00%");
+  assert.equal(trainingText(runTrainingValue(s, { training: { critChance: 1 }, player: hero() } as never, "critChance").value, "chance", true), "8.00%", "the run's card too");
+});
+
 test("a Silver rank counts at once in the run's card, and the rows' first prices are 10 and 12 in Silver and 30 in Gold", () => {
   const s = defaults();
   s.upgrades.critical = 1;
   s.training.critChance = 5;
-  assert.deepEqual(runTrainingValue(s, { training: { critChance: 3 }, player: hero() } as never, "critChance"), { value: 8, unit: "%" });
+  assert.deepEqual(runTrainingValue(s, { training: { critChance: 3 }, player: hero() } as never, "critChance"), { value: 8, unit: "chance" });
   assert.deepEqual(runTrainingValue(s, { training: { critFactor: 2 }, player: hero() } as never, "critFactor"), { value: 1.4, unit: "×" });
   assert.deepEqual([silverPrice("critChance", 0), silverPrice("critFactor", 0)], [10, 12]);
   const rows = (id: "critChance" | "critFactor") => TRAINING.find((r) => r.id === id)!;

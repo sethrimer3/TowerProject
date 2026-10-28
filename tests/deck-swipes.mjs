@@ -65,6 +65,13 @@ try {
     for (let i = 1; i <= 5; i++) await client.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x, y: y + dy * i / 5 }] });
     await client.send("Input.dispatchTouchEvent", { type: cancel ? "touchCancel" : "touchEnd", touchPoints: [] });
   }
+  async function dragTo(selector, target) {
+    const from = await page.locator(selector).boundingBox(), to = await page.locator(target).boundingBox();
+    const x = from.x + from.width / 2, y = from.y + from.height / 2, dx = to.x + to.width / 2 - x, dy = to.y + to.height / 2 - y;
+    await client.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y }] });
+    for (let i = 1; i <= 8; i++) await client.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: x + dx * i / 8, y: y + dy * i / 8 }] });
+    await client.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  }
   await load();
   assert.deepEqual(await hand(), ["stairs", "door", "key", "monster"]);
   await expect(page.locator('.deck-grid [data-deck-card="stairs"], .deck-check')).toHaveCount(0);
@@ -74,6 +81,7 @@ try {
   await expect(pop).toContainText("Tap the card again to open upgrade tree");
   await expect(pop).toContainText("3 points available");
   await expect(pop).toContainText("Swipe up to add to hand.");
+  await expect(pop).not.toContainText("IN YOUR DECK");
   await expect(page.locator(".card-reveal.details, [data-card-action]")).toHaveCount(0);
   const anchor = await page.locator('[data-add="heal"]').boundingBox(), popup = await pop.boundingBox();
   assert.ok(popup.y + popup.height < anchor.y, "deck details sit above the card");
@@ -91,11 +99,24 @@ try {
   assert.ok(await page.evaluate(() => deckAnimations.some(a => a.frames?.some?.(f => f.transform === "translateX(-7px)"))));
   assert.ok(await page.evaluate(() => deckTones.includes(190) && deckTones.includes(145)), "error cue plays");
   await page.keyboard.press("Escape");
+  // Dragged onto a full hand's card, a deck card swaps with it; STAIRS stays.
+  await dragTo('[data-add="heal"]', '#deck-hand [data-deck-card="key"]'); await settled();
+  assert.deepEqual(await hand(), ["stairs", "door", "heal", "monster"]);
+  await expect(page.locator('[data-add="key"]')).toBeVisible();
+  await dragTo('[data-add="key"]', '#deck-hand [data-deck-card="stairs"]'); await settled();
+  assert.deepEqual(await hand(), ["stairs", "door", "heal", "monster"], "STAIRS is never swapped out");
+  await dragTo('[data-add="key"]', '#deck-hand [data-deck-card="heal"]'); await settled();
+  assert.deepEqual(await hand(), ["stairs", "door", "key", "monster"]);
   // Swipe down anywhere on a hand card returns it; cards make room in order.
   await swipe('#deck-hand [data-deck-card="door"] .deck-card', 36); await settled();
   assert.deepEqual(await hand(), ["stairs", "key", "monster"]);
   await expect(page.locator('[data-add="door"]')).toBeVisible();
   assert.ok(await page.evaluate(() => deckAnimations.some(a => ["yellowKey", "atkUp", "defUp"].includes(a.id) && a.frames?.some?.(f => f.transform?.startsWith("translate(")))), "reserve cards move to make room");
+  // Dropped on a hand slot, a deck card takes that slot, not the end.
+  await dragTo('[data-add="heal"]', '#deck-hand [data-deck-card="key"]'); await settled();
+  assert.deepEqual(await hand(), ["stairs", "heal", "key", "monster"]);
+  await swipe('#deck-hand [data-deck-card="heal"] .deck-card', 36); await settled();
+  assert.deepEqual(await hand(), ["stairs", "key", "monster"]);
   // Swipe up fills the first empty slot and removes the reserve duplicate.
   await page.evaluate(() => deckAnimations.length = 0);
   await swipe('[data-add="heal"]', -36); await settled();

@@ -110,7 +110,7 @@ const SKILL_ITEM_SPRITES: Partial<Record<UpgradeId, keyof typeof ITEM_KIT>> = {
 const SKILL_UI_SPRITES: Partial<Record<UpgradeId, UiSprite>> = {
   inspirationUndos: "undo", undos: "undo", archives: "log", questForKnowledge: "log",
   breakthrough: "breakthrough", moveSpeed: "automove", dash: "automove", instantCombat: "attack", trainers: "arrow-up", buyQuantity: "arrow-up",
-  pathToWealth: "gold", physician: "health", keyMastery: "log",
+  pathToWealth: "gold", moreWealth: "gold", goldenFloors: "gold", physician: "health", keyMastery: "log", cardMastery: "log", beastMastery: "attack",
   revive: "revive", overheal: "health", spareChange: "gold", loot: "gold", floorSkipReward: "gold", mug: "gold", legacy: "tower", quality: "tower",
   wisdomFocus: "settings", wisdomMemory: "undo", wisdomSight: "upgrades",
   renownBanner: "tower", renownOath: "defense", renownCrown: "gear",
@@ -157,7 +157,7 @@ export const RESEARCH_ICON = kitIcon("hourglass", `<svg class="research-icon" vi
  * that mode's (set by the HUD). */
 export const NAV_TABS = [
   { id: "board", name: "Tower", icon: uiSprite("tower") },
-  { id: "upgrades", name: "Upgrades", icon: uiSprite("upgrades") },
+  { id: "upgrades", name: "Upgrades", icon: uiSprite("inspiration") },
   { id: "deck", name: "Deck", icon: DECK_ICON },
   { id: "gear", name: "Gear", icon: uiSprite("gear") },
   { id: "research", name: "Research", icon: RESEARCH_ICON },

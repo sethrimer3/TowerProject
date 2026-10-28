@@ -5,7 +5,7 @@
 Beating the boss on floor 100 makes floor 100's Goals checkpoint claimable, and claiming it opens **Tower II**; floor 100's checkpoint there opens Tower III, up to Tower IX.
 Each tower opened opens the Delve's cave of the same number.
 Each one's monsters have more HP, ATK and DEF than the one before: five times in Tower II, four times Tower II's in III (20 times Tower I's), and three times the one before in each tower after, so a hero needs about that many times the ATK, DEF and HP to climb as far.
-In Towers I to IV the monsters' HP and ATK climb faster from floor 11, to about twice the usual by floor 25 (124 HP and 45 ATK in Tower I), so the floors past the first ten ask for some Training; the extra fades out by floor 100, and from Tower V the climb is the usual one.
+In Towers I to IV the monsters' HP and ATK climb faster from floor 11, to about twice the usual by floor 25 (124 HP and 45 ATK in Tower I), 110 ATK and 320 HP on floor 50 and 220 ATK and 677 HP on floor 75, so the floors past the first ten ask for some Training; the extra fades out by floor 100, and from Tower V the climb is the usual one.
 Each pays more Gold: ×2 in Tower II, ×3.1 in III, ×4.3 in IV, then ×5.6, ×7, ×8.5, ×10.1 and ×11.8 in IX; and its kills pay XP times the same factor as the monsters' stats (×5 in Tower II, ×20 in III …), so the hero levels faster too.
 Silver stays the same, so a run buys about the same run training, while potions stay the same too (only upgrades will raise those).
 ATK and DEF shards raise their stat by 1 in Tower I and by 2.75 times as much in each tower after (2.75 in II, 7.56 in III, …).
@@ -17,8 +17,8 @@ Each keeps its own records: its highest floor, the Inspiration its new floors pa
 ## Areas
 
 Each ten Tower floors ending at a checkpoint (1–10, 11–20 …) are an area, judged as the hero climbs onto the next area's first floor.
-An area climbed without taking damage in a fight (a Heart Door's toll doesn't count) is **mastered**, which lets runs warp to the next checkpoint once Warp is owned; one whose every floor you leave with no monster on it is **cleared**, which pays its floors' Inspiration again: 10 to floor 100, 1 an area to floor 1,000, then 1 for each area ending at a hundredth floor to floor 10,000; an area that would pay nothing (the rest past floor 1,000, and every one past 10,000) isn't cleared at all, with no chest (areas past floor 100, which have no checkpoint yet, can be cleared but not mastered).
-Each pays the moment it is earned, once per area in each tower, and a chest for each (gold for mastered, silver for cleared) then stands directly in front of the hero; opening it pays nothing more but bursts into gold with *AREA MASTERED* and *Checkpoint Warp Unlocked*, or *ENEMIES CLEARED* and the Inspiration it paid.
+An area climbed without taking damage in a fight (a Heart Door's toll doesn't count) is **mastered**, which lets runs warp to the next checkpoint once Warp is owned; one whose every floor you leave with no monster on it is **cleared**, which pays its floors' Inspiration again, up to 5: 5 to floor 100, 1 an area to floor 1,000, then 1 for each area ending at a hundredth floor to floor 10,000; an area that would pay nothing (the rest past floor 1,000, and every one past 10,000) isn't cleared at all, with no chest (areas past floor 100, which have no checkpoint yet, can be cleared but not mastered).
+Each pays the moment it is earned, once per area in each tower, and a chest for each (gold for mastered, silver for cleared) then stands directly in front of the hero; opening it pays nothing more but bursts into gold with *AREA MASTERED* and *Checkpoint Warp Claimed*, or *ENEMIES CLEARED* and the Inspiration it paid.
 Undo never takes an area's reward back.
 
 ## Goals
