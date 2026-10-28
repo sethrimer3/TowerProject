@@ -1,4 +1,5 @@
 import { boardFont } from "../sprites/font.ts";
+import { forestArrivalPose } from "../forest-arrival.ts";
 import { drawBoardMark } from "../sprites/board-marks.ts";
 import { CHUNK, TOWER_HEIGHT, VIEWPORT_TILES } from "../config.ts";
 import { drawFlyers } from "./flyer-art.ts";
@@ -392,6 +393,13 @@ export class Renderer {
    * run (`Game.turnShown`) it walks the step at an even pace instead, so it
    * stands where the turn's shots leave from. */
   private walkHero(blend: number, snaps: boolean, now: number) {
+    const arrival = this.game.forestArrival;
+    if (arrival) {
+      const pose = forestArrivalPose(arrival, now, this.game.forestArrivalWalkMs);
+      this.playerX = pose.x;
+      this.playerY = pose.y;
+      return;
+    }
     const turn = this.game.turnShown, p = this.heroSpot;
     // A turn stamped after the first frame showing it (a clock that frame doesn't keep) walks from that frame.
     if (turn !== this.turnSeen) {
@@ -491,7 +499,8 @@ export class Renderer {
     const c = f.c, g = this.game;
     const m = tileTransform(f, f.playerX, f.playerY), walkIn = g.walkIn;
     if (this.decorOn && !grassBehindFoliage) this.drawForestGrass(f, "back");
-    if (walkIn?.stage !== "gone") {
+    const arrival = g.forestArrival;
+    if (walkIn?.stage !== "gone" && (!arrival || forestArrivalPose(arrival, f.now, g.forestArrivalWalkMs).visible)) {
       c.save();
       c.setTransform(m);
       // Walking in, the hero darkens as it steps into the arch.
@@ -710,7 +719,7 @@ export class Renderer {
    * effect is playing. (Torches and grass still sway.) Used by Battery saver. */
   isIdle(now: number) {
     const g = this.game;
-    return this.settled() && !g.walkIn && !g.route.length && !g.fights.encounter && this.popups.idle(now) && !this.decor.busy && this.effectsOver(now);
+    return this.settled() && !g.walkIn && !g.forestArrival && !g.route.length && !g.fights.encounter && this.popups.idle(now) && !this.decor.busy && this.effectsOver(now);
   }
   /** Where the hero is drawn headed: its tile, or walking in through the
    * forest's entrance, up in its arch. */

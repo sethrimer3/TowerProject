@@ -109,6 +109,10 @@ export class FrameLoop {
       this.lastBoardDraw = time;
     }
     if (game.fights.encounter) this.playFight(time);
+    if (game.forestArrival) {
+      if (this.canAct() && game.forestArrivalFrame(time)) this.host.update();
+      return;
+    }
     if (game.walkIn) {
       // Once the hero is gone, the walk in waits only on the view closing in.
       const due = game.walkIn.stage === "gone" || time - this.lastRoute > WALK_IN_TURN_MS;

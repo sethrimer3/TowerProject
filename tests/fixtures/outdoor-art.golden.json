@@ -49,10 +49,10 @@
   },
   "forest 1 tower": {
     "entranceX": 8,
-    "tiles": "5aac861385e4",
-    "steps": "301939357744",
-    "drawn": "cf3ab1f571da",
-    "canvas": "67940f187586"
+    "tiles": "b482af872eff",
+    "steps": "174f9158e037",
+    "drawn": "64fe78cefcf7",
+    "canvas": "62c1cd64a228"
   },
   "forest 1 delve": {
     "entranceX": 15,
@@ -63,10 +63,10 @@
   },
   "forest 7 tower": {
     "entranceX": 8,
-    "tiles": "69b67d9a7c51",
-    "steps": "301939357744",
-    "drawn": "cf3ab1f571da",
-    "canvas": "139f17eee418"
+    "tiles": "9a07b587c19d",
+    "steps": "174f9158e037",
+    "drawn": "64fe78cefcf7",
+    "canvas": "49588f0782b5"
   },
   "forest 7 delve": {
     "entranceX": 15,
@@ -77,10 +77,10 @@
   },
   "forest 42 tower": {
     "entranceX": 8,
-    "tiles": "b94c601ff11a",
-    "steps": "301939357744",
-    "drawn": "cf3ab1f571da",
-    "canvas": "69ec53569a49"
+    "tiles": "d008b8b14a28",
+    "steps": "174f9158e037",
+    "drawn": "64fe78cefcf7",
+    "canvas": "b3ce5688a320"
   },
   "forest 42 delve": {
     "entranceX": 15,
@@ -91,10 +91,10 @@
   },
   "forest 1234 tower": {
     "entranceX": 8,
-    "tiles": "20d2b6968106",
-    "steps": "301939357744",
-    "drawn": "cf3ab1f571da",
-    "canvas": "b68a53b8d6d7"
+    "tiles": "63de90d3ef08",
+    "steps": "174f9158e037",
+    "drawn": "64fe78cefcf7",
+    "canvas": "692fd6fdb52d"
   },
   "forest 1234 delve": {
     "entranceX": 15,
@@ -121,16 +121,16 @@
     "22796b6a5a60"
   ],
   "sprites 1 tower": {
-    "drawn": "8e554c94b0bf",
-    "canvas": "95c3d8b2cf4e"
+    "drawn": "c710bbc8c2db",
+    "canvas": "3815de16b27e"
   },
   "sprites 1 delve": {
     "drawn": "b228dcfdc837",
     "canvas": "98865d38ae32"
   },
   "sprites 42 tower": {
-    "drawn": "8e554c94b0bf",
-    "canvas": "b23c6da0743e"
+    "drawn": "c710bbc8c2db",
+    "canvas": "82c8b16d56c9"
   },
   "sprites 42 delve": {
     "drawn": "b228dcfdc837",

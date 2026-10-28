@@ -488,6 +488,33 @@ function playTrialCamera(_name:string,_seed:number,canvas:HTMLCanvasElement,grab
   renderer.draw(s,6066,0,true);grab("reducedMotion");
 }
 
+/** Empty, walking and settled frames for both sides of a forest crossing. */
+function playForestTravel(_name: string, seed: number, canvas: HTMLCanvasElement, grab: Grab) {
+  seeded(seed, () => {
+    const g = new Game(defaults());
+    g.save.tower.tiersOpen = 3;
+    g.save.equipment.unlocked = true;
+    g.save.settings.reduceMotion = false;
+    g.save.settings.transition = "smooth";
+    g.save.settings.weatherSound = false;
+    g.newRun({ outside: true, seed: 7 });
+    const r = new Renderer(canvas, g);
+    g.travelForest(1); g.forestArrivalFrame(1000);
+    r.draw(1000); grab("emptyLeft");
+    r.draw(1099); grab("pauseLeft");
+    r.draw(1250); grab("walkLeft");
+    g.forestArrivalFrame(1400); r.draw(1450); grab("arrivedLeft");
+    g.travelForest(-1); g.forestArrivalFrame(2000);
+    r.draw(2000); grab("emptyRight");
+    r.draw(2250); grab("walkRight");
+    g.forestArrivalFrame(2400); r.draw(2450); grab("arrivedRight");
+    g.save.settings.reduceMotion = true;
+    g.travelForest(1); g.forestArrivalFrame(3000);
+    r.draw(3099); grab("pauseReduced");
+    g.forestArrivalFrame(3100); r.draw(3100); grab("arrivedReduced");
+  });
+}
+
 /** Every scene retains its seed, including gaps left by retired scenes. */
 export const JOBS: Job[] = [
   ...Object.keys(BOARD_SCENES).map((name) => ({ name, canvas: "board" as const, run: playBoard })),
@@ -495,6 +522,7 @@ export const JOBS: Job[] = [
   { name: "provingGrounds", canvas: "board" as const, run: playProvingGrounds },
   { name: "keymaster", canvas: "board" as const, run: playKeymaster },
   { name: "trialCamera", canvas: "board" as const, run: playTrialCamera },
+  { name: "forestTravel", canvas: "board" as const, run: playForestTravel },
 ].map(({ name, canvas, run }, i) => {
   // Keep the fourth seed reserved for the retired sprite-opt-out scene.
   const seed = i + 1 + (i >= 3 ? 1 : 0) + (i >= Object.keys(BOARD_SCENES).length ? 5 : 0);

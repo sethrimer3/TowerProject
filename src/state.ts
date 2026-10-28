@@ -49,6 +49,7 @@ import { chestKindAt, litTorches, type Board } from "./board.ts";
 import { healUpTo, instakill, squaredUp, type CritRule } from "./combat.ts";
 import { HEART_DOOR_HP, hpCeiling, isLethal, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardStat } from "./step-effects.ts";
 import { ENTRANCE_Y, ENTRANCE_ZOOM_MS, OUTSIDE_START_Y, OutsideWorld } from "./outside.ts";
+import { FOREST_ARRIVAL_PAUSE_MS, FOREST_ARRIVAL_WALK_MS, type ForestArrival } from "./forest-arrival.ts";
 import { AREA_BURST_MS, AreaLedger, chestReward, clearedInspiration, type AreaReward } from "./tower/area-ledger.ts";
 import { TowerClimb } from "./tower/climb.ts";
 import { callsGreaterBoss, greaterBoss, greaterBossSpot } from "./tower/greater-boss.ts";
@@ -196,6 +197,7 @@ export class Game {
    * (`ENTRANCE_ZOOM_MS`), what entering does (`then`). Never saved: the hero
    * stays on the steps until it is done. */
   walkIn: WalkIn | null = null;
+  forestArrival: ForestArrival | null = null;
   mode: Mode = "tower";
   world!: Board;
   run!: Run;
@@ -615,6 +617,7 @@ export class Game {
    * board). */
   private stopPlay() {
     this.walkIn = null;
+    this.forestArrival = null;
     this.route = [];
     this.fights.clear();
     this.volley = null;
@@ -779,7 +782,7 @@ export class Game {
   }
   /** Whether play waits: paused, fallen, or a fight playing out. */
   private get busy() {
-    return this.paused || this.fallen || !!this.fights.encounter || !!this.walkIn;
+    return this.paused || this.fallen || !!this.fights.encounter || !!this.walkIn || !!this.forestArrival;
   }
   walkTo(x: number, y: number) {
     if (this.busy) return;
@@ -2046,6 +2049,7 @@ export class Game {
   /** Moves the player onto the tile and applies what standing there does. */
   private land(t: Tile, x: number, y: number, outcome: StepEffect, floorSkip = false) {
     const p = this.run.player;
+    const previousX = p.x;
     p.x = x;
     p.y = y;
     this.handRules.unmark(x, y);
@@ -2061,6 +2065,10 @@ export class Game {
         this.provingGroundsRequested = true;
       }
       else if (this.world instanceof OutsideWorld && this.world.atExit(x, y)) this.swapForest();
+      else if (this.mode === "tower" && this.world instanceof OutsideWorld) {
+        if (x === 0 && x < previousX) this.travelForest(-1, y);
+        else if (x === this.world.width - 1 && x > previousX) this.travelForest(1, y);
+      }
       return;
     }
     if (torch) this.finds.pickupGold(null, { x, y });
@@ -2300,10 +2308,44 @@ export class Game {
     this.message = `${this.rules.words.tierName} ${tierNumeral(tier)} · ${tierRewardText(tier)}`;
     return true;
   }
+  /** Side arrows and walking onto a side edge take the same path to an
+   * adjacent opened forest. Prefer the same row, falling back to nearby
+   * clear grass (the crossroads always supplies a safe entry). */
+  travelForest(direction: -1 | 1, row = OUTSIDE_START_Y) {
+    if (this.mode !== "tower" || this.busy || !this.selectTier(this.slice.tier + direction)) return false;
+    const world = this.world as OutsideWorld;
+    const edge = direction === 1 ? 0 : world.width - 1;
+    const x = edge + direction;
+    const rows = Array.from({ length: ENTRANCE_Y }, (_, y) => y).sort((a, b) => Math.abs(a - row) - Math.abs(b - row) || a - b);
+    // The fresh run still starts at the crossroads. A route from there
+    // rules out clear-looking grass pockets surrounded by trees.
+    const y = rows.find(y => world.tile(edge, y).kind === "floor" &&
+      world.tile(x, y).kind === "floor" && routeTo(this, x, y) !== null) ?? OUTSIDE_START_Y;
+    this.run.player.x = x;
+    this.run.player.y = y;
+    this.facing = { dx: direction, dy: 0 };
+    this.auto = false;
+    this.cancelRoute();
+    this.forestArrival = { from: { x: edge - direction, y }, to: { x, y }, started: null };
+    return true;
+  }
+  get forestArrivalWalkMs() {
+    const settings = this.save.settings;
+    return settings.reduceMotion || settings.transition === "instant" ? 0 : settings.transition === "fast" ? FOREST_ARRIVAL_WALK_MS / 2 : FOREST_ARRIVAL_WALK_MS;
+  }
+  /** Start the pause at the new screen's first painted frame. */
+  forestArrivalFrame(now: number) {
+    const arrival = this.forestArrival;
+    if (!arrival) return false;
+    if (arrival.started === null) arrival.started = now;
+    if (now - arrival.started < FOREST_ARRIVAL_PAUSE_MS + this.forestArrivalWalkMs) return false;
+    this.forestArrival = null;
+    return true;
+  }
   /** Whether the forest may switch to `tier`: opened, and not the one selected. */
   private canSelectTier(tier: number) {
     const slice = this.slice;
-    return !!this.run.outside && tier !== slice.tier && tier >= 1 && tier <= slice.tiersOpen;
+    return !!this.run.outside && !this.forestArrival && tier !== slice.tier && tier >= 1 && tier <= slice.tiersOpen;
   }
   /** The forests' seeds, by mode and tier, kept while the player looks
    * between them: the weather comes from the seed, so each stays as it was

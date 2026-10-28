@@ -22,6 +22,10 @@ The Classic board kit also uses pixel lettering for damage, rewards and other an
 With environmental decoration enabled, the Classic sprite kit also gives moss, pools, vine leaves, flowers and glowing mushrooms matching PNG artwork, preserving their locations, water movement and interactions.
 In the forest, the Classic sprite kit shows the enormous lower bases of the Tower and Delve mountain extending beyond the top of the view.
 Oak, birch and pine crowns span several tiles above smaller trees, bushes, ferns, rocks, logs, stumps, flowers and mushrooms, with paths, entrances, building yards and the mode sign kept clear.
+The whole 20-column Tower clearing is walkable wherever grass or dirt is clear of trees, rocks and buildings, including the path and grass on the right.
+Walk onto a left or right edge tile to enter the adjacent unlocked tower's clearing, or use the side arrow.
+The new screen pauses for 0.1 seconds before your hero walks in from the opposite side; movement waits until the walk finishes.
+Fast transitions shorten the walk, while Instant transitions and Reduce motion keep the pause and place the hero directly on its landing tile.
 Grass still moves around the hero; turning environmental decoration off hides that grass and extra floor plants while keeping the forest's trees and rocks.
 Inside the Tower, the Classic sprite kit uses fitted stone floors and joined masonry walls with visible tops and south-facing wall faces.
 In the Delve, rough stone and packed earth form adjoining patches of floors and walls, with stepped soil edges and matching biome colors.

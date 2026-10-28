@@ -5,6 +5,7 @@ import { count, dropInvalid, finite, fraction, isRecord, wholeIn } from "./decod
 import { TIERS } from "../tiers.ts";
 import { GOLD_SHOP, PROVISION_BOOST_TURNS, USED_PROVISIONS } from "../economy/provisions.ts";
 import { SAVE_KEY, TOWER_WIDTH, WIDTH } from "../config.ts";
+import { OUTSIDE_SIZE } from "../outside.ts";
 import { TRAINING, amountAt, trainingCeiling, trainingDef } from "../progression/training.ts";
 import { UPGRADES, type UpgradeId } from "../progression/upgrades.ts";
 import type { AutomoveMemory, DelveRun, Fall, MoveSnapshot, Run, TowerRun } from "../runs.ts";
@@ -153,7 +154,7 @@ const validPlayer = (p: any, width: number) =>
   KEY_COLORS.every((k) => finite(p.keys?.[k]));
 /** Checks every run passes, whatever its mode; `width` is the mode's board. */
 const validCore = (r: any, width: number) =>
-  !!r && validOutside(r) && validCounters(r) && validPlayer(r.player, width) && validChanges(r.changes);
+  !!r && validOutside(r) && validCounters(r) && validPlayer(r.player, r.outside ? Math.max(width, OUTSIDE_SIZE) : width) && validChanges(r.changes);
 const validDelveState = (r: any) => Number.isInteger(r.milestone) && finite(r.milestone);
 const TOWER_FIELDS = ["damaged", "enemiesLeft", "summoned", "start", "shrine"];
 const DELVE_FIELDS = ["milestone", "tournament"];

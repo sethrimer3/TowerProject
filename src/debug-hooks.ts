@@ -49,7 +49,7 @@ export function installDebugHooks(game: Game, beginTournament: () => Promise<str
   };
   w.tournamentDebug = beginTournament;
   w.mailDebug = { send: (draft = {}) => sendMail({ ...OUTAGE_MAIL, ...draft }) };
-  w.boardBusy = () => game.route.length > 0 || !!game.fights.encounter || !!game.walkIn;
+  w.boardBusy = () => game.route.length > 0 || !!game.fights.encounter || !!game.walkIn || !!game.forestArrival;
 }
 
 function delveReport(game: Game) {

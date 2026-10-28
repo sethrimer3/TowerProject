@@ -117,3 +117,7 @@ The UI golden tour allows 30 seconds for browser interactions so a busy renderer
 
 `node tests/deck-swipes.mjs` starts its own Vite server and checks real touch swipes, arrowed card details, second-tap trees, exclusive hand/reserve ownership, finite transfer/gap animations, full-hand refusal sound/shake, cancelled touches, keyboard equivalents, Manual hand, reduced motion and save/reload.
 Its phone/desktop screenshots are in `test-results/deck-swipes/`.
+
+`node tests/forest-travel.mjs` starts its own Vite server and tests actual clicks on the right-side path and grass, reload persistence, arrows and edge travel, the 100ms interval with no native hero draw, visible sprite motion, input locking and both entry directions at phone/desktop widths.
+Its images are in `test-results/forest-travel/`; `tests/forest-travel.test.ts` covers safe landing rows, closed edges, route termination, repeated transitions and motion settings.
+The appended `forestTravel` drawing-call and pixel scenes pin both directions of the arrival and reduced motion.

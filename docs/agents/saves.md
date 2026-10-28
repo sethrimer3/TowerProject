@@ -76,3 +76,7 @@ Legacy Leather, Silk, Buckles, Moonstone and Amber balances split into their two
 Saved missions using a removed material keep their progress and reward amount, converted by `baseMaterial` to a base resource.
 Legacy saves with no Equipment category list also apply the chestplate balance change to both modes' heroes and every undo/fall copy via `upgradeLegacyChestplateRuns`, keeping damage, pickups and boons and preventing a later unequip from subtracting too much.
 The conversion uses loadout totals with the old intrinsic strength, leaves effect slots unchanged, and runs only before the category list is first saved.
+
+Outside Tower runs accept player columns 0–19, matching the full forest view; dungeon runs retain their 17-column validation.
+Forest arrivals are not serialized: the saved player occupies a safe, walkable landing tile throughout the 100ms pause and entrance animation.
+The forest has no persistent tile edits, so expanding its bounds needs no dungeon layout-version change or reset of existing runs.

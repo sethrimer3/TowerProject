@@ -351,7 +351,7 @@ function renderTierArrows(game: Game) {
   for (const [id, to] of [["tier-prev", slice.tier - 1], ["tier-next", slice.tier + 1]] as const) {
     const button = el(id) as HTMLButtonElement;
     button.hidden = !shown;
-    button.disabled = to < 1 || to > slice.tiersOpen;
+    button.disabled = !!game.forestArrival || to < 1 || to > slice.tiersOpen;
     button.title = button.disabled ? "" : `${name} ${tierNumeral(to)} · ${tierRewardText(to)}`;
   }
 }
@@ -359,7 +359,7 @@ function renderTierArrows(game: Game) {
 /** What the board's heading shows: redrawn when it changes. */
 const headingKey = (game: Game) => {
   const slice = game.save[game.mode];
-  return `${game.mode}:${!!game.run.outside}:${slice.tier}:${slice.tiersOpen}${game.mode === "delve" ? `:${game.delveLeague}` : ""}`;
+  return `${game.mode}:${!!game.run.outside}:${slice.tier}:${slice.tiersOpen}${game.mode === "delve" ? `:${game.delveLeague}` : ""}${game.forestArrival ? ":arriving" : ""}`;
 };
 
 /** The button's icon inside a run, by what pressing it does: text glyphs

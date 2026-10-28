@@ -1,4 +1,5 @@
 import { CHUNK } from "./config.ts";
+import { OutsideWorld } from "./outside.ts";
 import { point, type KeyColor } from "./entities.ts";
 import { litTorches, takesSomething, type Position } from "./board.ts";
 import { doorCost } from "./doors.ts";
@@ -49,6 +50,11 @@ export function routeTo(at: Position, x: number, y: number): Step[] | null {
     ]) {
       const dest = w.step(n.x, n.y, dx, dy);
       if (!dest || dest.y < minY || dest.y > maxY) continue;
+      // An open forest edge is an exit, not a shortcut to other grass in
+      // this screen. Reach it only as the route's actual destination.
+      if (w instanceof OutsideWorld && w.mode === "tower" &&
+        ((dest.x === 0 && w.prevRoad) || (dest.x === w.width - 1 && w.nextRoad)) &&
+        (dest.x !== x || dest.y !== y)) continue;
       const tile = w.tile(dest.x, dest.y);
       if (tile.kind === "wall") continue;
       const keys = tile.kind === "door" ? doorCost(tile, p) : [];

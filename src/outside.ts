@@ -76,12 +76,13 @@ export class OutsideWorld implements Board {
    * `nextRoad`: a tier before or after this one is open, so the crossroads
    * runs on through the trees to the left or right edge. */
   constructor(public seed: number, public mode: Mode, public blacksmith = false, public hall = false, public prevRoad = false, public nextRoad = false) {
-    this.width = MODES[mode].width;
+    // The Tower dungeon is 17 columns wide; its visible clearing needs all 20.
+    this.width = Math.max(OUTSIDE_SIZE, MODES[mode].width);
     this.entranceX = MODES[mode].entranceX;
   }
   tile(x: number, y: number): Tile {
-    // A road out runs on past the board's edge, across the view's spare
-    // columns (the Tower's board is narrower than the forest's view).
+    // Roads continue beyond the clearing for visual continuity; movement
+    // stays bounded and connected edge tiles switch screens in Game.land.
     if (y === OUTSIDE_START_Y && (x < this.entranceX ? this.prevRoad : this.nextRoad)) return { kind: "floor" };
     if (!this.inside(x, y)) return { kind: "wall" };
     if (x === this.entranceX && y === ENTRANCE_Y) return { kind: "stairs" };
@@ -118,11 +119,11 @@ export class OutsideWorld implements Board {
   private inside(x: number, y: number) {
     return x >= 0 && x < this.width && y >= 0 && y < OUTSIDE_SIZE;
   }
-  /** Trees and rocks: everything from the entrance row down, the far sides,
-   * and a scattering beyond the clear strip around the path. */
+  /** Trees and rocks above the entrance, a scattering away from the path,
+   * and the Delve's dense outer woodland. */
   private wooded(x: number, y: number) {
     const d = Math.abs(x - this.entranceX);
-    return y >= ENTRANCE_Y || d >= 9 || (d > 2 && tileRandom(x, y, this.seed) < 0.26);
+    return y >= ENTRANCE_Y || (this.mode === "delve" && d >= 9) || (d > 2 && tileRandom(x, y, this.seed) < 0.26);
   }
 }
 

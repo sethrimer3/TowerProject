@@ -388,7 +388,7 @@ el("section-pick").onclick = () => {
 };
 for (const [id, step] of [["tier-prev", -1], ["tier-next", 1]] as const)
   el(id).onclick = () => {
-    if (!game.selectTier(game.save[game.mode].tier + step)) return;
+    if (!game.travelForest(step)) return;
     save();
     update();
   };
