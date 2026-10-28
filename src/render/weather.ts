@@ -1,5 +1,12 @@
 import { outsideWeather, type Weather } from "../outside.ts";
-import { tileRandom } from "../random.ts";
+import { stream, tileRandom } from "../random.ts";
+import { bed } from "../sound-files.ts";
+
+/** How loud the forest's wind blows, and how long it takes to rise or die
+ * away (seconds). */
+const WIND_GAIN = 0.12;
+const WIND_FADE = 1.5;
+const effects = stream("effects");
 
 // No full-screen flashes: a single slow, localized glow peaks at 1.5% opacity.
 export function lightningOpacity(seconds: number) {
@@ -20,6 +27,32 @@ export class OutdoorWeather {
       this.audio ??= new AudioContext();
       if (this.audio.state === "suspended") void this.audio.resume().catch(() => {});
     } catch { /* Audio is optional on browsers without a usable output device. */ }
+  }
+  /** The forest's recorded wind, looping while it blows. */
+  private wind?: { source: AudioBufferSourceNode; gain: GainNode };
+  /** Lets the wind blow (once its recording has loaded) or dies it away. */
+  blow(on: boolean) {
+    const a = this.audio;
+    if (!a || a.state !== "running") return;
+    if (on && !this.wind) {
+      const buffer = bed(a, "windForest");
+      if (!buffer) return;
+      const source = a.createBufferSource(), gain = a.createGain();
+      source.buffer = buffer; source.loop = true;
+      gain.gain.setValueAtTime(0, a.currentTime);
+      gain.gain.linearRampToValueAtTime(WIND_GAIN, a.currentTime + WIND_FADE);
+      source.connect(gain).connect(a.destination);
+      source.start(0, (effects() * buffer.duration) % buffer.duration);
+      this.wind = { source, gain };
+    } else if (!on && this.wind) {
+      const { source, gain } = this.wind;
+      this.wind = undefined;
+      gain.gain.cancelScheduledValues(a.currentTime);
+      gain.gain.setValueAtTime(gain.gain.value, a.currentTime);
+      gain.gain.linearRampToValueAtTime(0, a.currentTime + WIND_FADE);
+      source.stop(a.currentTime + WIND_FADE);
+      source.onended = () => { source.disconnect(); gain.disconnect(); };
+    }
   }
   silence() {
     if (this.source) { this.source.stop(); this.source.disconnect(); this.source = undefined; }

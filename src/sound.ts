@@ -1,6 +1,9 @@
 import { stream } from "./random.ts";
+import { oneShot, preloadOneShots, type OneShot } from "./sound-files.ts";
 
-/** The keep's sounds, all made here with Web Audio: no sound files. Each cue
+/** The keep's sounds. Most are made here with Web Audio; a few cues play a
+ * recording from `sound-files.ts` instead (`SAMPLED`), falling back to their
+ * made voice while it loads (those with no made voice stay silent). Each cue
  * is built from a few voices (a wooden knock is a burst of filtered noise on
  * a low thump; a bell is a handful of inharmonic sine partials; a horn is a
  * sawtooth through a closing low-pass) and everything rings into a short
@@ -30,7 +33,15 @@ export type Cue =
   /** A boss wave: a low war horn. */
   | "horn"
   /** The keep falls: a tolling bell. */
-  | "fallen";
+  | "fallen"
+  /** A blow landing in a fight (a recording only). */
+  | "punch"
+  /** An arrow or a Ranged enemy's shot striking (a recording only). */
+  | "arrowHit"
+  /** An enemy or the hero falling (a recording only). */
+  | "bodyFall"
+  /** A Bomb going off (a recording only). */
+  | "blast";
 
 const rand = stream("effects");
 let enabled: () => boolean = () => true;
@@ -48,6 +59,7 @@ export function soundEnabledBy(isOn: () => boolean) {
  * a gentle compressor → the speakers. */
 function audio(): AudioContext | null {
   if (!ctx) {
+    if (typeof window === "undefined") return null;
     const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!AC) return null;
     ctx = new AC();
@@ -67,6 +79,7 @@ function audio(): AudioContext | null {
     noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
     const d = noiseBuf.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = rand() * 2 - 1;
+    preloadOneShots(ctx);
   }
   if (ctx.state === "suspended") void ctx.resume();
   return ctx;
@@ -158,7 +171,8 @@ function bell(freq: number, at: number, peak: number, length: number, wet = 1) {
 /** Up to ±`cents` of pitch, so repeats never sound stamped from one mould. */
 const vary = (cents: number) => Math.pow(2, ((rand() * 2 - 1) * cents) / 1200);
 
-const CUES: Record<Cue, (t: number) => void> = {
+/** The made voices; a cue missing here is only ever a recording. */
+const CUES: Partial<Record<Cue, (t: number) => void>> = {
   error(t) {
     tone({ type: "triangle", freq: 190, to: 145, at: t, peak: 0.18, end: 0.1, wet: 0.15 });
     tone({ type: "triangle", freq: 145, to: 100, at: t + 0.11, peak: 0.18, end: 0.15, wet: 0.15 });
@@ -188,7 +202,7 @@ const CUES: Record<Cue, (t: number) => void> = {
     bell(1975 * v, t + 0.06, 0.07, 0.9);
   },
   unlock(t) {
-    CUES.chime(t);
+    CUES.chime!(t);
     [784, 988, 1175, 1568, 1976].forEach((f, i) => tone({ freq: f, at: t + 0.08 + i * 0.05, peak: 0.06, attack: 0.02, end: 0.8, wet: 1.4 }));
     tone({ type: "triangle", freq: 196, at: t, peak: 0.08, attack: 0.2, end: 1.4, wet: 1 });
   },
@@ -229,6 +243,42 @@ const CUES: Record<Cue, (t: number) => void> = {
   },
 };
 
+/** The cues that play a recording: which, how loud (the files are all
+ * peak-normalized), how much of it rings into the hall, and how far its
+ * pitch may wander (in cents) so repeats differ. */
+const SAMPLED: Partial<Record<Cue, { file: OneShot; gain: number; wet: number; cents: number }>> = {
+  knock: { file: "buttonThud", gain: 0.45, wet: 0.2, cents: 80 },
+  punch: { file: "punch", gain: 0.3, wet: 0.15, cents: 200 },
+  arrowHit: { file: "arrowHit", gain: 0.3, wet: 0.15, cents: 200 },
+  bodyFall: { file: "bodyFall", gain: 0.4, wet: 0.2, cents: 150 },
+  blast: { file: "explosionSmall", gain: 0.5, wet: 0.35, cents: 150 },
+};
+
+/** Recordings ringing now; past `MAX_VOICES` new ones are dropped, so a
+ * burst of blows never piles up into mud. */
+let voices = 0;
+const MAX_VOICES = 12;
+
+/** Plays one of `s.file`'s variants now, unless it hasn't loaded yet. */
+function playSample(ac: AudioContext, s: NonNullable<(typeof SAMPLED)[Cue]>): boolean {
+  const bufs = oneShot(ac, s.file);
+  if (!bufs) return false;
+  if (voices >= MAX_VOICES) return true;
+  const src = ac.createBufferSource();
+  src.buffer = bufs[Math.floor(rand() * bufs.length) % bufs.length];
+  src.playbackRate.value = vary(s.cents);
+  const g = ac.createGain();
+  g.gain.value = s.gain;
+  route(src.connect(g), s.wet);
+  voices++;
+  src.onended = () => {
+    voices--;
+    g.disconnect();
+  };
+  src.start(ac.currentTime + 0.01);
+  return true;
+}
+
 /** Plays a cue now, unless sound is off, the browser has none, or the same
  * cue just played. */
 export function play(cue: Cue) {
@@ -238,5 +288,7 @@ export function play(cue: Cue) {
   lastAt.set(cue, now);
   const ac = audio();
   if (!ac) return;
-  CUES[cue](ac.currentTime + 0.01);
+  const sampled = SAMPLED[cue];
+  if (sampled && playSample(ac, sampled)) return;
+  CUES[cue]?.(ac.currentTime + 0.01);
 }
