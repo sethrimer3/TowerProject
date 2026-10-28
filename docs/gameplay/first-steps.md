@@ -10,6 +10,7 @@ The skull and crossbones shown when the hero falls also uses matching PNG art, w
 Reduce motion keeps these frames still; movement and combat stop the hero's idle motion.
 Outside, cloud shadows drift across the ground, trees, buildings and hero, shifting over taller surfaces.
 Soft shafts of sunlight shine through the moving cloud gaps, with fainter rays during rain and storms.
+They descend steeply with softly fading edges and low opacity so the pixel art remains clear.
 Reduce motion keeps the cloud shadows still too.
 World pickups and chests have thin gold pixel outlines, the hero and staircase sprites have blue outlines, and doors have black outlines.
 Square doors uses tile-filling rectangular doors with the same key and HP requirements as before.

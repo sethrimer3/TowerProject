@@ -172,6 +172,10 @@ Sprite alpha silhouettes and drawing order preserve ground gaps; canopy crowns, 
 The map and PNG alpha readbacks are cached by forest layout, decoration/style and sprite revision; ordinary cloud frames perform 96 × 96 bilinear samples and one scaled canvas draw, with no full-board readback or dynamic blur.
 Cloud drift ticks at 15 Hz; moving the hero or camera also refreshes the projection so the shadows stay attached to the surfaces.
 The same density texture supplies god rays through clear cloud gaps: sixteen samples along the sun direction are integrated once per seed into a wrapping shaft texture, then sampled into a second cached 96 × 96 warm screen-blended overlay.
+`CLOUD_LIGHT.direction` sets a steep integer (1,3), roughly 72-degree direction for both ray ribbons and height projection; `elevationScale` controls the height displacement and `driftX`/`driftY` set the shared animation speed.
+`GOD_RAY_STYLE` caps weather opacity at 0.16/0.13/0.045/0.02 and controls eight normalized feather layers, their 2.8× outer width, and two radius-two separable blur passes on the 128 × 128 shaft texture.
+`render/soft-field.ts` provides reusable `layeredFeather` and `softenField` helpers for cached light, fog or glow density; wrap mode preserves cloud seams, while clamp mode supports local effects.
+Feather neighboring bands first, then soften their combined field once per seed; no canvas filters, per-frame blur, added frame buffers or full-resolution readbacks are needed, and the original sprite art stays crisp.
 The rays share cloud motion, height projection, pause and Reduce motion, weaken in rain/storms and replace the old fixed sunny triangles; ordinary frames never march rays or blur a full-size image.
 The projection is anchored in forest coordinates during camera movement, covers every outdoor weather and Game theme, and runs before atmospheric tint, rain and lightning so those stay visible.
 Cloud time follows `OutdoorWeather.elapsed`, freezes with pause/Reduce motion/hidden tabs and resets with the forest seed; it never draws gameplay randomness or changes collision/save data.

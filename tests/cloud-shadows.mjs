@@ -22,6 +22,7 @@ try {
       const { kitImage } = await import("/src/sprites/kit.ts");
       const { MODES } = await import("/src/modes.ts");
       const { outsideWeather } = await import("/src/outside.ts");
+      const { GOD_RAY_STYLE } = await import("/src/render/cloud-shadows.ts");
       const { g } = forestSpriteScene(mode);
       const weather = outsideWeather(g.run.seed);
       g.save.settings.reduceMotion = true;
@@ -49,6 +50,8 @@ try {
       draw(42); const second = shot();
       draw(84); const third = shot();
       const rayImage = clouds.rayImage, savedRays = rayImage.data.slice();
+      let rayAlphaPeak = 0;
+      for (let i = 3; i < savedRays.length; i += 4) rayAlphaPeak = Math.max(rayAlphaPeak, savedRays[i]);
       rayImage.data.fill(0); clouds.rayCanvas.getContext("2d").putImageData(rayImage, 0, 0);
       draw(84); const noRays = shot();
       rayImage.data.set(savedRays); clouds.rayCanvas.getContext("2d").putImageData(rayImage, 0, 0);
@@ -58,7 +61,7 @@ try {
         if (third[i] < noRays[i] || third[i + 1] < noRays[i + 1] || third[i + 2] < noRays[i + 2]) darkenedByRays++;
         rayPeak = Math.max(rayPeak, third[i] - noRays[i], third[i + 1] - noRays[i + 1], third[i + 2] - noRays[i + 2]);
       }
-      const heightMap = clouds.heights, alphaReads = clouds.silhouettes.size;
+      const heightMap = clouds.heights, sharedField = clouds.field, alphaReads = clouds.silhouettes.size;
       const tallCells = heightMap.pixels.filter(h => h > 50).length;
       const at = heightMap.at;
       heightMap.at = () => 0;
@@ -115,8 +118,8 @@ try {
       board.getContext("2d").drawImage(img, 0, 0);
       return {
         motion: [diff(first, second), diff(second, third)], relief: diff(third, flat), restoration: diff(third, recovered), freeze: diff(recovered, frozen),
-        rays: diff(third, noRays), rayPeak, weather, darkenedByRays, rayResolution: [clouds.rayCanvas.width, clouds.rayCanvas.height],
-        tallCells, alphaReads, readbacks, updates, cachedUpdates, reused, decorRefresh, cameraReuses, indoorCalls,
+        rays: diff(third, noRays), rayPeak, rayAlphaPeak, rayOpacityCap: Math.round(GOD_RAY_STYLE.opacity[weather] * 255), weather, darkenedByRays, rayResolution: [clouds.rayCanvas.width, clouds.rayCanvas.height],
+        tallCells, alphaReads, readbacks, updates, cachedUpdates, reused, decorRefresh, cameraReuses, fieldReused: sharedField === clouds.field, indoorCalls,
         resolution: [clouds.canvas.width, clouds.canvas.height], averageFrameMs: timings.reduce((a, b) => a + b) / timings.length,
         averageCloudMs: cloudTimings.reduce((a, b) => a + b) / cloudTimings.length, landmarkCenter, expectedLandmarkCenter,
         assetsReady: !!kitImage("forest-tower-base"),
@@ -126,7 +129,8 @@ try {
     assert.ok(Math.abs(result.landmarkCenter - result.expectedLandmarkCenter) < .01, "the entrance artwork and shadow heights align with the real stairs column");
     assert.ok(result.motion.every(pixels => pixels > 5000), "clouds visibly cross the real forest");
     assert.ok(result.rays > 5000, "shafts of sunlight are visible between the clouds");
-    assert.ok(result.rayPeak >= (result.weather === "storm" ? 4 : result.weather === "rain" ? 7 : 10), `the rays have a visible ${result.weather} lighting contrast (${result.rayPeak})`);
+    assert.ok(result.rayPeak >= (result.weather === "storm" ? 1 : result.weather === "rain" ? 2 : 4), `the rays have a faint ${result.weather} lighting contrast (${result.rayPeak})`);
+    assert.ok(result.rayAlphaPeak <= result.rayOpacityCap, "soft layers cannot accumulate beyond the low opacity cap");
     assert.equal(result.darkenedByRays, 0, "sunlight brightens the scene instead of adding another dark overlay");
     assert.deepEqual(result.rayResolution, [96, 96]);
     assert.ok(result.relief > 100, "tree and building surfaces differ from flat ground projection");
@@ -136,6 +140,7 @@ try {
     assert.equal(result.cachedUpdates, 0, "the same 15Hz cloud frame is reused");
     assert.ok(result.updates >= 25 && result.updates <= 30);
     assert.ok(result.reused && result.decorRefresh && result.cameraReuses);
+    assert.ok(result.fieldReused, "feathered/blurred textures survive ordinary frames, camera movement and decoration changes");
     assert.equal(result.indoorCalls, 0);
     assert.deepEqual(result.resolution, [96, 96]);
     await page.locator("#cloud-review").screenshot({ path: `test-results/cloud-shadows/${mode}-${width}.png` });

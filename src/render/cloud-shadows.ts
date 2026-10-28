@@ -4,11 +4,19 @@ import { kitImage, spriteRevision } from "../sprites/kit.ts";
 import { FOREST_LANDMARKS } from "../sprites/forest.ts";
 import { planForest } from "./decor/forest-foliage.ts";
 import type { FrameContext } from "./render-frame.ts";
+import { layeredFeather, softenField } from "./soft-field.ts";
 
 const CELL = 4, RESOLUTION = 96, FIELD = 128, PERIOD = 768;
-const SUN_X = .7, SUN_Y = .45;
+/** Shared direction and drift keep clouds, elevated surfaces and rays aligned. */
+export const CLOUD_LIGHT = { direction: { x: 1, y: 3 }, elevationScale: .25, driftX: 3, driftY: 1.1 } as const;
+/** Opacity is a final cap, independent of the number of feather layers. */
+export const GOD_RAY_STYLE = {
+  opacity: { sunny: .16, cloudy: .13, rain: .045, storm: .02 } satisfies Record<Weather, number>,
+  layers: 8, outerWidth: 2.8, blurRadius: 2, blurPasses: 2,
+} as const;
+const SUN_X = CLOUD_LIGHT.direction.x * CLOUD_LIGHT.elevationScale;
+const SUN_Y = CLOUD_LIGHT.direction.y * CLOUD_LIGHT.elevationScale;
 const STRENGTH: Record<Weather, number> = { sunny: .19, cloudy: .29, rain: .22, storm: .27 };
-const RAY_STRENGTH: Record<Weather, number> = { sunny: .34, cloudy: .29, rain: .10, storm: .045 };
 const smooth = (v: number) => { v = Math.max(0, Math.min(1, v)); return v * v * (3 - 2 * v); };
 const wrap = (v: number, size: number) => ((v % size) + size) % size;
 
@@ -30,6 +38,19 @@ export class CloudField {
     };
     for (let y = 0; y < FIELD; y++) for (let x = 0; x < FIELD; x++)
       this.pixels[y * FIELD + x] = smooth((noise(x / FIELD * 6, y / FIELD * 6, 6) * .78 + noise(x / FIELD * 13, y / FIELD * 13, 13) * .22 - .36) / .34);
+    // Every texel at the same distance across a shaft shares its feather.
+    const profile = new Float32Array(FIELD);
+    for (let across = 0; across < FIELD; across++) {
+      const band = Math.floor(across / 32);
+      let shaft = 0;
+      for (let offset = -1; offset <= 1; offset++) {
+        const neighbor = wrap(band + offset, FIELD / 32);
+        const center = offset * 32 + 8 + tileRandom(neighbor, 113, seed) * 16;
+        const width = 3 + tileRandom(neighbor, 114, seed) * 4;
+        shaft += layeredFeather(across % 32 - center, width, GOD_RAY_STYLE.layers, GOD_RAY_STYLE.outerWidth);
+      }
+      profile[across] = Math.min(1, shaft);
+    }
     // Integrate clear gaps along the sunlight direction once, instead of
     // marching rays every frame. Narrow openings become long, soft shafts.
     for (let y = 0; y < FIELD; y++) for (let x = 0; x < FIELD; x++) {
@@ -38,17 +59,16 @@ export class CloudField {
         const clear = 1 - this.sample(x / FIELD * PERIOD, y / FIELD * PERIOD, 70 + step * 18, 0);
         light += clear * clear * clear * clear * (1 - step / 20);
       }
-      // Sparse parallel ribbons make the clear air read as shafts rather
-      // than a flat bright wash. Integer direction (3,2) wraps seamlessly.
-      const across = wrap(2 * x - 3 * y, FIELD), band = Math.floor(across / 32);
-      const center = 8 + tileRandom(band, 113, seed) * 16, width = 3 + tileRandom(band, 114, seed) * 4;
-      const shaft = smooth(1 - Math.abs(across % 32 - center) / width);
-      this.rays[y * FIELD + x] = smooth((light / 10 - .08) / .92) * (.12 + .88 * shaft);
+      // Steep (1,3) shafts, with low-energy widening layers. Neighboring
+      // bands overlap across slot boundaries before the combined blur.
+      const shaft = profile[wrap(CLOUD_LIGHT.direction.y * x - CLOUD_LIGHT.direction.x * y, FIELD)];
+      this.rays[y * FIELD + x] = smooth((light / 10 - .08) / .92) * (.04 + .96 * shaft);
     }
+    this.rays.set(softenField(this.rays, FIELD, FIELD, GOD_RAY_STYLE.blurRadius, GOD_RAY_STYLE.blurPasses));
   }
   sample(x: number, y: number, height: number, seconds: number, pixels = this.pixels) {
-    x = wrap((x + height * SUN_X - seconds * 3) / PERIOD * FIELD, FIELD);
-    y = wrap((y + height * SUN_Y - seconds * 1.1) / PERIOD * FIELD, FIELD);
+    x = wrap((x + height * SUN_X - seconds * CLOUD_LIGHT.driftX) / PERIOD * FIELD, FIELD);
+    y = wrap((y + height * SUN_Y - seconds * CLOUD_LIGHT.driftY) / PERIOD * FIELD, FIELD);
     const ix = Math.floor(x), iy = Math.floor(y), fx = x - ix, fy = y - iy;
     const row = iy * FIELD, below = ((iy + 1) % FIELD) * FIELD, right = (ix + 1) % FIELD;
     return (pixels[row + ix] * (1 - fx) + pixels[row + right] * fx) * (1 - fy) + (pixels[below + ix] * (1 - fx) + pixels[below + right] * fx) * fy;
@@ -147,7 +167,7 @@ export class CloudShadows {
     if (frameKey !== this.frameKey) {
       this.frameKey = frameKey;
       const data = this.image.data, step = f.n * 24 / RESOLUTION, strength = STRENGTH[outsideWeather(world.seed)] * 255;
-      const rays = this.rayImage!.data, rayStrength = RAY_STRENGTH[outsideWeather(world.seed)] * 255;
+      const rays = this.rayImage!.data, rayStrength = GOD_RAY_STYLE.opacity[outsideWeather(world.seed)] * 255;
       const cloudTime = Math.floor(seconds * 15) / 15;
       const hx = f.playerX * 24, hy = -f.playerY * 24;
       for (let y = 0; y < RESOLUTION; y++) for (let x = 0; x < RESOLUTION; x++) {
