@@ -3012,10 +3012,8 @@ nav button.notify[data-count]::after {
   0%, 100% { transform: translateX(-6px) rotate(90deg); }
   50% { transform: rotate(90deg); }
 }
-.deck-icon { position: relative; display: block; width: 42px; height: 42px; }
-.deck-icon img { position: absolute; top: 4px; width: 25px; height: 33px; image-rendering: pixelated; border-radius: 2px; box-shadow: 0 1px 3px #000a; }
-.deck-icon img:first-child { left: 4px; transform: rotate(-12deg); }
-.deck-icon img:last-child { left: 13px; transform: rotate(8deg); }
+/* The native deck sprite already contains both fanned cards. */
+.deck-icon { display: inline-block; width: 42px; height: 42px; }
 .skill-sprite.card-sprite { image-rendering: pixelated; object-fit: contain; }
 /* A card's art brings its own frame, so a node that unlocks a card drops
    the node's frame, in every theme, and shows the card alone. */
@@ -4137,9 +4135,7 @@ nav.in-run.drilling .run-drills {
 .training-bar button:is([data-run-group], [data-run-tab]):not(.selected) .group-name { display: none; }
 /* Hand's icon: the Deck tab's two cards, at the group icons' size. */
 .training-bar .deck-icon { width: 22px; height: 22px; flex: none; }
-.training-bar .deck-icon img { top: 2px; width: 12px; height: 16px; }
-.training-bar .deck-icon img:first-child { left: 1px; }
-.training-bar .deck-icon img:last-child { left: 8px; }
+
 .training-bar button.selected { border-color: #d6ae68; color: #efd496; box-shadow: inset 0 -2px #d9ac5a; }
 .training-bar button[hidden] { display: none; }
 /* The Auto tab's cards wear an arrow: its hand plays by itself. */

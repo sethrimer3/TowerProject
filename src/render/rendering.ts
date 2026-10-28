@@ -33,6 +33,7 @@ import { AREA_BURST_MS, drawAreaBurst, preloadAreaBurst, drawLevelUp, drawRevive
 import { drawPoof, POOF_MS } from "./effects/poof.ts";
 import { drawExplosion, EXPLOSION_MS } from "./effects/explosion.ts";
 import { drawBoostGlow } from "./effects/boost-glow.ts";
+import { POSITION_HALOS_ENABLED } from "./lighting.ts";
 import { drawHeroLight, drawStairsLights } from "./effects/position-lights.ts";
 import type { Boosted } from "../runs.ts";
 import { drawGem, drawGemSparkle, GEM_SPARKLE_MS } from "./effects/gem-art.ts";
@@ -279,7 +280,7 @@ export class Renderer {
       torches: () => { for (const t of f.torches) this.drawTorchSprite(f.c, f, t); },
       route: () => this.drawRoute(f),
       // Only while the hero has just reached a new floor.
-      halo: f.now - this.arrived < ARRIVAL_GLOW_MS ? (ctx) => this.drawArrivalGlow(ctx, f.now) : undefined,
+      halo: POSITION_HALOS_ENABLED && f.now - this.arrived < ARRIVAL_GLOW_MS ? (ctx) => this.drawArrivalGlow(ctx, f.now) : undefined,
       hero: (ctx) => paintHero(ctx, f.heroFacing, f.heroIdleFrame),
       foreground: () => {
         const bounds = decor && this.decor.foregroundBounds(decor);
@@ -750,12 +751,12 @@ export class Renderer {
    * sparkle, the turn's shots in flight, and a boost's glow pulsing. */
   private effectsOver(now: number) {
     const g = this.game, sparkle = g.gemFinder.sparkle;
-    return now - this.arrived > ARRIVAL_GLOW_MS && this.echoes.over(now) && g.blocked.until <= now && g.effect.until <= now &&
+    return (!POSITION_HALOS_ENABLED || now - this.arrived > ARRIVAL_GLOW_MS) && this.echoes.over(now) && g.blocked.until <= now && g.effect.until <= now &&
       now - g.levelUpAt >= LEVEL_UP_MS + POINTS_MS && g.fights.revivedAt.every((at) => now - at >= REVIVE_MS) && g.fights.struckDown.every((at) => now - at >= DEFEAT_MS) &&
       g.areaBursts.every((b) => now - b.at >= AREA_BURST_MS) && (!g.warpLooted || now - g.warpLooted.at >= WARP_LOOT_MS) &&
       (!g.summoned || now - g.summoned.at >= POOF_MS) && (!g.vanished || now - g.vanished.at >= POOF_MS) && (!g.bombed || now - g.bombed.at >= EXPLOSION_MS) &&
       (!sparkle || now - sparkle.at >= GEM_SPARKLE_MS) && (!g.volley || volleyOver(g.volley, now)) && this.inFlight.over(now) &&
-      (g.save.settings.reduceMotion || !this.boosts.length);
+      (!POSITION_HALOS_ENABLED || g.save.settings.reduceMotion || !this.boosts.length);
   }
   /** Active torches roughly within the camera viewport, padded so a torch
    * whose center is just offscreen can still light visible ground. Cheap

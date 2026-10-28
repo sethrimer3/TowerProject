@@ -1,5 +1,5 @@
 import type { Torch } from "../entities.ts";
-import { LIGHTING_CONFIG, getTorchFlicker, getTorchSway } from "./lighting.ts";
+import { LIGHTING_CONFIG, POSITION_HALOS_ENABLED, getTorchFlicker, getTorchSway } from "./lighting.ts";
 import { bakeTorchRelief, type BakedRelief, type ReliefSprite } from "./floor-relief.ts";
 import { dungeonFloorSprite, towerTileset } from "../sprites/dungeon.ts";
 import { spriteRevision } from "../sprites/kit.ts";
@@ -63,7 +63,7 @@ function tileGlow(t: Tile, breathe: number): Omit<GlowSource, "x" | "y"> | null 
   if (t.chest) return { rgb: CHEST_LOOK[t.chest].rgb, radius: og.item.radius, strength: og.item.strength * breathe };
   if (GLOW_ITEMS.has(t.kind)) return { rgb: og.item.color, radius: og.item.radius, strength: og.item.strength * breathe };
   if (t.kind === "door") return { rgb: doorGlow(t), radius: og.door.radius, strength: og.door.strength, door: true };
-  if (t.kind === "stairs")
+  if (t.kind === "stairs" && POSITION_HALOS_ENABLED)
     return { rgb: [150, 160, 200], radius: dk.heroHaloRadius * og.stairsRadiusScale, strength: dk.heroHaloAlpha * og.stairsAlphaScale };
   return null;
 }
@@ -249,15 +249,17 @@ export class LightingPass {
       dc.globalAlpha = Math.min(1, LIGHTING_CONFIG.shadow.blockLight * k);
       dc.drawImage(shadows, 0, 0);
     }
-    const hero = tileCenter(f, f.playerX, f.playerY);
-    const r = cfg.heroHaloRadius * f.s;
-    const halo = dc.createRadialGradient(hero.x, hero.y, 0, hero.x, hero.y, r);
-    halo.addColorStop(0, `rgba(150, 160, 200, ${cfg.heroHaloAlpha * k})`);
-    halo.addColorStop(1, "rgba(150, 160, 200, 0)");
-    dc.globalCompositeOperation = "lighter";
-    dc.globalAlpha = 1;
-    dc.fillStyle = halo;
-    dc.fillRect(hero.x - r, hero.y - r, r * 2, r * 2);
+    if (POSITION_HALOS_ENABLED) {
+      const hero = tileCenter(f, f.playerX, f.playerY);
+      const r = cfg.heroHaloRadius * f.s;
+      const halo = dc.createRadialGradient(hero.x, hero.y, 0, hero.x, hero.y, r);
+      halo.addColorStop(0, `rgba(150, 160, 200, ${cfg.heroHaloAlpha * k})`);
+      halo.addColorStop(1, "rgba(150, 160, 200, 0)");
+      dc.globalCompositeOperation = "lighter";
+      dc.globalAlpha = 1;
+      dc.fillStyle = halo;
+      dc.fillRect(hero.x - r, hero.y - r, r * 2, r * 2);
+    }
     dc.globalCompositeOperation = "source-over";
     // Snapshot for darkening the sprites, before the object glows go in.
     const sd = this.spriteDarkCanvas = sized(this.spriteDarkCanvas, size);

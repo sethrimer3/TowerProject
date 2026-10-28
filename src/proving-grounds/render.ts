@@ -1,6 +1,7 @@
 import { paintContents, paintHero, paintTile, paintTorch, type BoardLook } from "../render/tile-painters.ts";
 import { sprite } from "../sprites/pixel-sprite.ts";
 import { drawCrates } from "../render/decor/decor-sprites.ts";
+import { POSITION_HALOS_ENABLED } from "../render/lighting.ts";
 import { drawKit } from "../sprites/kit.ts";
 import { HeroIdleAnimation } from "../sprites/animations.ts";
 import type { Tile } from "../entities.ts";
@@ -131,8 +132,8 @@ export class TrialRenderer {
           g.addColorStop(0,`rgba(0,0,0,${strength})`); g.addColorStop(0.35,`rgba(0,0,0,${strength*0.75})`); g.addColorStop(1,"rgba(0,0,0,0)");
           d.fillStyle=g; d.fillRect(xx-r,yy-r,r*2,r*2);
         };
-        // No ambient floor light. The hero has just enough light to find their footing.
-        light(hero.x,hero.y,1.8,0.8);
+        // No ambient floor light; the personal foothold light is temporarily disabled.
+        if(POSITION_HALOS_ENABLED) light(hero.x,hero.y,1.8,0.8);
         for(const p of ARENA_TORCHES) if(!propDestroyed(s,p)) light(p.x,p.y,5.5,0.92);
         for(const p of slimes) light(p.x,p.y,1.7,0.65);
         if(s.status!=="won") {
@@ -148,6 +149,8 @@ export class TrialRenderer {
         }
         d.globalCompositeOperation="source-over";
         c.drawImage(this.darkness,0,0);
+        // Keep the player readable without lighting a circle of floor.
+        if(!POSITION_HALOS_ENABLED) tile(hero.x,hero.y,()=>paintHero(c,this.facing,idle));
       }
       // Cracks persist for the whole attempt; their heat subsides over 30 turns.
       for(const [k,step] of Object.entries(s.scorches)) {

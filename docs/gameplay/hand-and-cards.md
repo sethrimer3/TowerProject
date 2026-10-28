@@ -316,7 +316,7 @@ With Auto-Climb, the **Show path** toggle (Settings, Toggles) draws the same lin
 It costs nothing and works from a new game's first run, a press being how the hand moves at all before Auto-Climb.
 While a pressed card is still on its way, no other card can be pressed: it flashes red, as does a card with no path to a target, which costs nothing.
 A card with no path also says *No open path exists.* over itself for 3 seconds, or until the next press anywhere.
-Without Auto-Climb, a golden glow pulses round the hero while it waits for a card to be pressed, until a press sets it moving.
+Without Auto-Climb, the hero waits for a card to be pressed before moving; its golden waiting pulse is temporarily disabled.
 A press plans the card whatever a gate badge on it says.
 Undo brings back the pressed card of the moment it returns to.
 

@@ -151,7 +151,8 @@ Its arena skips the darkness mask entirely, keeping the floor, wall cover, picku
 The trial repaints every frame, so late images and settings changes do not need a separate cache invalidation path.
 Edge crates reuse `drawCrates` and its splintered-board wreckage; floor torches have small iron stands and leave charred fragments when broken.
 Both torch painting and its darkness-mask light source read the same persisted destruction state, so an extinguished torch cannot keep illuminating the room or return on reload.
-The Light Elemental arena has no ambient floor light: only torches, glowing enemies, smoldering cracks and the hero's small foothold light reveal it.
+The Light Elemental arena has no ambient floor light: torches, glowing enemies and smoldering cracks reveal it.
+The hero's small foothold light is temporarily disabled by the shared `POSITION_HALOS_ENABLED` switch; the hero alone is painted above the darkness so the player remains visible without a floor halo.
 Slime hops interpolate for 260 ms on native pixel coordinates; Reduce motion displays their new tiles immediately.
 Animation state is presentation only and resets on reload; saved destinations remain authoritative.
 A teleport breaks the literal body texels into staggered curved paths with fading trails, then crossfades them into a translucent cyan body over 1,100 ms.

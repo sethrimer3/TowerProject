@@ -1,3 +1,4 @@
+import { POSITION_HALOS_ENABLED } from "../lighting.ts";
 import type { Boosted } from "../../runs.ts";
 import { tileTransform, type FrameContext } from "../render-frame.ts";
 
@@ -11,7 +12,7 @@ const GLOW: Record<Boosted, string> = { attack: "255, 74, 52", defense: "70, 150
  * swells and fades, the two out of step when both go on; with reduced
  * motion, the ring holds still. */
 export function drawBoostGlow(f: FrameContext, boosts: readonly Boosted[]) {
-  if (!boosts.length) return;
+  if (!POSITION_HALOS_ENABLED || !boosts.length) return;
   const c = f.c;
   c.save();
   c.setTransform(tileTransform(f, f.playerX, f.playerY));

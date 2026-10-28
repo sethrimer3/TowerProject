@@ -26,7 +26,9 @@ Once the monster falls the hero steps onto its tile.
 Either way, every reward picked up (an item, a chest's Gold and what a Supply or Equipment Chest holds) rises from its tile as its sprite for about a second, starting at once over anything still rising; what a monster or a chest drops all rises at once, stacked (a monster's Gold just above its Silver and anything else it dropped, like a Greater Boss's Cells or Equipment materials, below them; a chest's Gold above its metal bars), and after a fight played out strike by strike, its drops wait until the last damage numbers start to fade; rewards with no sprite rise as "+N" text.
 Damage and heal numbers rise over the other rewards, but what a monster or a chest drops rises over the numbers.
 A door raises each key it took with a minus sign, and a Heart Door, which needs no key but drains the hero's HP to 1, a heart with the HP it took.
-Taking the stairs snaps the hero straight onto the new floor with a brief white glow behind it, and while the hero stands on the board's bottom row the status line over it turns half see-through.
+Taking the stairs snaps the hero straight onto the new floor.
+The white arrival flash and decorative player and staircase halos are temporarily disabled; their blue pixel outlines remain visible.
+While the hero stands on the board's bottom row the status line over it turns half see-through.
 Undo during a fight takes back the whole fight.
 
 ## Monsters and their pay

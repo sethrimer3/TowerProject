@@ -15,6 +15,7 @@ The art contract, reference, prompt and extraction instructions live in [UI spri
 Its `INSPIRATION_SPRITE` and `BREAKTHROUGH_SPRITE` select dedicated native PNGs for the currency UI helpers and the board's Inspiration popup.
 Inspiration is a compact blue-white spark; Breakthrough is a larger brass/ivory eight-point flash on the same 24-pixel canvas.
 `skillSprite` in `ui/dom.ts` picks each skill node's sprite, falling back on Inspiration's.
+The Deck tab displays one native `deck.png` containing both fanned cards, centered without individual-card rotation, stretching or a rectangular shadow.
 The Deck's card details use `deck-card-popover.ts`, a nonmodal arrowed pop-up anchored to the real card; a second tap opens its upgrade tree, and the text shows available points and swipe directions.
 `deck-motion.ts` animates swiped cards between their sole location (hand or reserve), with neighbour motion on redraw and no displacement under Reduce motion.
 A full hand refuses swipes and Arrow Up with a shake and the generated error cue, while a deck card dragged onto a full hand's card (not STAIRS) swaps with it (`DeckEditor.place`); `tests/deck-swipes.mjs` exercises real touch, keyboard, cancellation, both hands and persistence.

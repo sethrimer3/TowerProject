@@ -1,6 +1,9 @@
 import type { Torch } from "../entities.ts";
 import { TORCH_LIGHT } from "../torches.ts";
 
+/** Temporary visual review switch; restore true to re-enable player/stair halos. */
+export const POSITION_HALOS_ENABLED: boolean = false;
+
 /** Centralized dungeon lighting parameters for fast tuning and consistency. */
 export const LIGHTING_CONFIG = {
   /** Global ambient darkness overlay color and opacity.
