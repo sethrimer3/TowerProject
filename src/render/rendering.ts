@@ -15,6 +15,8 @@ import { ForestFoliage } from "./decor/forest-foliage.ts";
 import { forestSpritesReady } from "../sprites/forest.ts";
 import { TileLayerCache } from "./tile-cache.ts";
 import { OutdoorWeather } from "./weather.ts";
+import { BoardSounds } from "./board-sounds.ts";
+import { play } from "../sound.ts";
 import { CloudShadows } from "./cloud-shadows.ts";
 import { MODES } from "../modes.ts";
 import { torchAnimationFrame } from "../sprites/options.ts";
@@ -93,6 +95,8 @@ export class Renderer {
   private bossFlash = new BossFlash();
   /** Damage numbers and rewards rising off their tiles. */
   popups = new BoardPopups();
+  /** Blows, arrows, falls and Bombs heard as they land. */
+  private sounds = new BoardSounds(play);
   /** The Tower floor the hero was last drawn on (seed and height), and when
    * it arrived on the one it stands on now. */
   private floorKey = "";
@@ -140,7 +144,7 @@ export class Renderer {
       window.addEventListener("keydown", unlock);
     }
     if (typeof document !== "undefined") {
-      document.addEventListener("visibilitychange", () => { if (document.hidden) this.weather.silence(); });
+      document.addEventListener("visibilitychange", () => { if (document.hidden) { this.weather.silence(); this.weather.blow(false); } });
     }
   }
   /** Inside the Delve the camera trails the hero (render/camera.ts); the Tower and
@@ -307,6 +311,7 @@ export class Renderer {
     this.follow(n, dt, now);
     this.inFlight.update(g.volley, now, g.mode === "delve" ? g.world.width : 0);
     this.popups.update({ run: g.run, gains: g.gains, fight: g.fights.shown, lastHeal: g.lastHeal, volley: g.volley, save: g.save }, now);
+    this.sounds.update({ fight: g.fights.shown, volley: g.volley, struckDown: g.fights.struckDown, bombed: g.bombed }, now);
     const lunge = lunges(g.fights.encounter, now, g.save.settings.reduceMotion);
     this.enemyLunge = { ...(g.fights.encounter?.to ?? { x: 0, y: 0 }), ...lunge.enemy };
     const c = this.ctx, s = this.size, outside = !!g.run.outside, settings = g.save.settings;
@@ -351,6 +356,7 @@ export class Renderer {
       this.echoes.clear();
       this.outside = !!g.run.outside;
       this.weather.silence();
+      if (!this.outside) this.weather.blow(false);
       this.seed = g.run.seed;
       this.playerX = p.x;
       this.playerY = p.y;
@@ -513,8 +519,13 @@ export class Renderer {
     }
     if (this.decorOn) this.drawForestGrass(f, "front");
   }
+  /** Stills the board's lasting sounds while it isn't showing. */
+  hush() {
+    this.weather.blow(false);
+  }
   private drawWeather(f: FrameContext) {
     const g = this.game;
+    this.weather.blow(g.save.settings.weatherSound && !document.hidden);
     this.weather.draw(f.c, f.width, g.run.seed, { dt: f.dt, reduceMotion: g.save.settings.reduceMotion,
       active: !g.paused && !g.fallen && !document.hidden, sound: g.save.settings.weatherSound }, seconds => {
         if (!(g.world instanceof OutsideWorld)) return;
