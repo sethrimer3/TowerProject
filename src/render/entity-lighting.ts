@@ -151,12 +151,12 @@ export class EntityLighting {
       casters.push({
         x, y,
         key: `${t.kind}|${t.color}|${t.tier}|${t.enemy?.name ?? ""}|${t.enemy?.tier}|${t.enemy?.strength}|${styledSprites ? `|kit|${t.enemy?.fast}|${t.enemy?.ranged}|${t.enemy?.flying}` : ""}`,
-        draw: (c) => paintContents(c, t, { x, y, time: f.now, reduceMotion, styledSprites, squareDoors }),
+        draw: (c) => paintContents(c, t, { x, y, time: f.now, reduceMotion, styledSprites, squareDoors, outline: false }),
       });
     });
     casters.push({
       x: f.playerX, y: f.playerY, key: `hero${styledSprites ? `|kit|${f.heroFacing.dx},${f.heroFacing.dy}` : ""}`,
-      draw: (c) => paintHero(c, f.heroFacing),
+      draw: (c) => paintHero(c, f.heroFacing, 0, false),
       hero: true,
     });
     return casters;

@@ -143,6 +143,7 @@ Off and Reduce motion retain instant centered movement.
 `TrialCamera` changes no logical turn, hero stats or enemy state; room changes and reloads reset its transient position.
 The controller passes `usesGameSprites(save)` and Animations into every trial frame, so the live Sprites setting, board-art opt-out and independent Game theme gate agree with the normal Tower renderer.
 With the kit enabled, shared `paintTile` draws connected native paving and wall contours over the trial geometry, `paintContents` draws stairs and potions, and `paintHero`/`paintTorch` select the same PNGs and ambient animation options as the main board.
+Shared world painters also supply procedural gold pickup contours, blue hero/stair contours and black door contours, preserving the original sprite texels and independent trial lighting.
 Kit crates draw at their native 24-pixel size, and broken crates retain their native 12-pixel pieces; legacy procedural crates and other old art remain complete off/loading/failure fallbacks.
 Hero facing follows trial movement; its optional idle cycle uses `HeroIdleAnimation` and honors Reduce motion.
 The Keymaster selects `BoardLook.tier:2` in both staging and arena, reusing Tower II's native limestone and connected rectangular paving.

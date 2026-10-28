@@ -124,3 +124,6 @@ Its images are in `test-results/forest-travel/`; `tests/forest-travel.test.ts` c
 The appended `forestTravel` drawing-call and pixel scenes pin both directions of the arrival and reduced motion.
 `tests/cloud-shadows.test.ts` checks wrapping cloud continuity, seeded motion, height projection, transparent silhouette gaps, layering and the paused/reduced-motion clock.
 `node tests/cloud-shadows.mjs` checks actual forest pixels at phone/desktop widths, raised versus flat surfaces, frozen time, cached height maps/readbacks, a bounded 96 × 96 overlay, camera movement and exclusion from dungeons, with review images in `test-results/cloud-shadows/`.
+It also checks visible god rays, their bounded overlay and that screen-blended sunlight only brightens the scene; the cloud unit tests pin the shared, wrapping shaft field.
+`tests/pixel-outlines.test.ts` checks one-pixel exterior geometry, closed holes, preserved translucent texels, hard palettes and upper-left lighting.
+`node tests/pixel-outlines.mjs` checks actual outlined PNGs, every original texel, hero facings/idle, both door styles, physical mask exclusion and zero steady sprite readbacks, with native art and phone/desktop dungeon/trial previews in `test-results/pixel-outlines/`.

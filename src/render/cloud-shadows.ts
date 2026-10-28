@@ -8,6 +8,7 @@ import type { FrameContext } from "./render-frame.ts";
 const CELL = 4, RESOLUTION = 96, FIELD = 128, PERIOD = 768;
 const SUN_X = .7, SUN_Y = .45;
 const STRENGTH: Record<Weather, number> = { sunny: .19, cloudy: .29, rain: .22, storm: .27 };
+const RAY_STRENGTH: Record<Weather, number> = { sunny: .34, cloudy: .29, rain: .10, storm: .045 };
 const smooth = (v: number) => { v = Math.max(0, Math.min(1, v)); return v * v * (3 - 2 * v); };
 const wrap = (v: number, size: number) => ((v % size) + size) % size;
 
@@ -19,6 +20,7 @@ export const cloudSurfacePoint = (x: number, y: number, height: number) => ({ x:
  * per-frame noise generation. The seam wraps in both directions. */
 export class CloudField {
   readonly pixels = new Float32Array(FIELD * FIELD);
+  readonly rays = new Float32Array(FIELD * FIELD);
   constructor(seed: number) {
     const noise = (x: number, y: number, cells: number) => {
       const ix = Math.floor(x), iy = Math.floor(y), fx = smooth(x - ix), fy = smooth(y - iy);
@@ -28,12 +30,27 @@ export class CloudField {
     };
     for (let y = 0; y < FIELD; y++) for (let x = 0; x < FIELD; x++)
       this.pixels[y * FIELD + x] = smooth((noise(x / FIELD * 6, y / FIELD * 6, 6) * .78 + noise(x / FIELD * 13, y / FIELD * 13, 13) * .22 - .36) / .34);
+    // Integrate clear gaps along the sunlight direction once, instead of
+    // marching rays every frame. Narrow openings become long, soft shafts.
+    for (let y = 0; y < FIELD; y++) for (let x = 0; x < FIELD; x++) {
+      let light = 0;
+      for (let step = 0; step < 16; step++) {
+        const clear = 1 - this.sample(x / FIELD * PERIOD, y / FIELD * PERIOD, 70 + step * 18, 0);
+        light += clear * clear * clear * clear * (1 - step / 20);
+      }
+      // Sparse parallel ribbons make the clear air read as shafts rather
+      // than a flat bright wash. Integer direction (3,2) wraps seamlessly.
+      const across = wrap(2 * x - 3 * y, FIELD), band = Math.floor(across / 32);
+      const center = 8 + tileRandom(band, 113, seed) * 16, width = 3 + tileRandom(band, 114, seed) * 4;
+      const shaft = smooth(1 - Math.abs(across % 32 - center) / width);
+      this.rays[y * FIELD + x] = smooth((light / 10 - .08) / .92) * (.12 + .88 * shaft);
+    }
   }
-  sample(x: number, y: number, height: number, seconds: number) {
+  sample(x: number, y: number, height: number, seconds: number, pixels = this.pixels) {
     x = wrap((x + height * SUN_X - seconds * 3) / PERIOD * FIELD, FIELD);
     y = wrap((y + height * SUN_Y - seconds * 1.1) / PERIOD * FIELD, FIELD);
     const ix = Math.floor(x), iy = Math.floor(y), fx = x - ix, fy = y - iy;
-    const row = iy * FIELD, below = ((iy + 1) % FIELD) * FIELD, right = (ix + 1) % FIELD, pixels = this.pixels;
+    const row = iy * FIELD, below = ((iy + 1) % FIELD) * FIELD, right = (ix + 1) % FIELD;
     return (pixels[row + ix] * (1 - fx) + pixels[row + right] * fx) * (1 - fy) + (pixels[below + ix] * (1 - fx) + pixels[below + right] * fx) * fy;
   }
 }
@@ -65,18 +82,21 @@ export class ForestHeightMap {
   }
 }
 
-/** One tiny shadow image over the finished forest, before rain/lightning.
+/** Two tiny cached overlays over the finished forest, before rain/lightning.
  * Static silhouettes are read only when art/layout changes; ordinary frames
- * cost 96x96 bilinear samples and one scaled draw. Cloud drift ticks at
+ * cost two 96x96 texture samples per pixel and two scaled draws. Drift ticks at
  * 15Hz; hero/camera movement also refreshes the projection to stay attached. */
 export class CloudShadows {
   private key = "";
   private frameKey = "";
   private heights?: ForestHeightMap;
   private field?: CloudField;
+  private fieldSeed: number | null = null;
   private canvas?: HTMLCanvasElement;
+  private rayCanvas?: HTMLCanvasElement;
   private scratch?: HTMLCanvasElement;
   private image?: ImageData;
+  private rayImage?: ImageData;
   private silhouettes = new Map<string, Silhouette>();
   private silhouette(id: string) {
     const cached = this.silhouettes.get(id);
@@ -99,7 +119,7 @@ export class CloudShadows {
     if (key !== this.key) {
       this.key = key; this.frameKey = ""; this.silhouettes.clear();
       const heights = this.heights = new ForestHeightMap(world.width);
-      this.field = new CloudField(world.seed);
+      if (this.fieldSeed !== world.seed) { this.field = new CloudField(world.seed); this.fieldSeed = world.seed; }
       const stamp = (id: string, x: number, y: number, width: number, height: number, base: number, rise: number) => {
         const mask = this.silhouette(id);
         if (mask) heights.stamp(mask, x, y, width, height, base, rise);
@@ -118,10 +138,16 @@ export class CloudShadows {
     const hero = heroVisible && f.look.styledSprites ? this.silhouette(`hero-${f.heroFacing.dx ? f.heroFacing.dx > 0 ? "right" : "left" : f.heroFacing.dy > 0 ? "up" : "down"}`) : null;
     const frameKey = [Math.floor(seconds * 15), f.left, f.bottom, f.n, f.playerX, f.playerY, heroVisible, f.heroFacing.dx, f.heroFacing.dy, !!hero].join(":");
     const canvas = this.canvas ??= document.createElement("canvas");
-    if (!this.image) { canvas.width = canvas.height = RESOLUTION; this.image = canvas.getContext("2d")!.createImageData(RESOLUTION, RESOLUTION); }
+    const rayCanvas = this.rayCanvas ??= document.createElement("canvas");
+    if (!this.image) {
+      canvas.width = canvas.height = rayCanvas.width = rayCanvas.height = RESOLUTION;
+      this.image = canvas.getContext("2d")!.createImageData(RESOLUTION, RESOLUTION);
+      this.rayImage = rayCanvas.getContext("2d")!.createImageData(RESOLUTION, RESOLUTION);
+    }
     if (frameKey !== this.frameKey) {
       this.frameKey = frameKey;
       const data = this.image.data, step = f.n * 24 / RESOLUTION, strength = STRENGTH[outsideWeather(world.seed)] * 255;
+      const rays = this.rayImage!.data, rayStrength = RAY_STRENGTH[outsideWeather(world.seed)] * 255;
       const cloudTime = Math.floor(seconds * 15) / 15;
       const hx = f.playerX * 24, hy = -f.playerY * 24;
       for (let y = 0; y < RESOLUTION; y++) for (let x = 0; x < RESOLUTION; x++) {
@@ -132,11 +158,16 @@ export class CloudShadows {
         const i = (y * RESOLUTION + x) * 4;
         data[i] = 12; data[i + 1] = 22; data[i + 2] = 32;
         data[i + 3] = Math.round(this.field!.sample(wx, wy, height, cloudTime) * strength);
+        rays[i] = 255; rays[i + 1] = 233; rays[i + 2] = 174;
+        rays[i + 3] = Math.round(this.field!.sample(wx, wy, height, cloudTime, this.field!.rays) * rayStrength);
       }
       canvas.getContext("2d")!.putImageData(this.image, 0, 0);
+      rayCanvas.getContext("2d")!.putImageData(this.rayImage!, 0, 0);
     }
     f.c.save(); f.c.imageSmoothingEnabled = true;
     f.c.drawImage(canvas, 0, 0, f.width, f.width);
+    f.c.globalCompositeOperation = "screen";
+    f.c.drawImage(rayCanvas, 0, 0, f.width, f.width);
     f.c.restore();
   }
 }

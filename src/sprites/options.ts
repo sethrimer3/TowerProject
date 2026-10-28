@@ -2,6 +2,7 @@ import type { Tile } from "../entities.ts";
 import { doorRule, drainsHp } from "../doors.ts";
 import { drawKit, kitImage } from "./kit.ts";
 import { tileRandom } from "../random.ts";
+import { drawPixelOutline } from "./pixel-outline.ts";
 export const TORCH_FRAME_COUNT = 4;
 export const TORCH_FRAME_MS = 130;
 export function torchAnimationFrame(x: number, y: number, now: number, reduceMotion: boolean) {
@@ -19,7 +20,8 @@ export function squareDoorSprite(tile: Tile) {
 
 /** The entire door stays within its 24-pixel collision tile. Requirements
  * remain live PNG marks, including mixed-key and heart-draining doors. */
-export function drawSquareDoor(c: CanvasRenderingContext2D, tile: Tile) {
+export function drawSquareDoor(c: CanvasRenderingContext2D, tile: Tile, outline = true) {
+  if (outline) drawPixelOutline(c, squareDoorSprite(tile), "black");
   if (!drawKit(c, squareDoorSprite(tile))) return false;
   const rule = doorRule(tile);
   if (rule.type === "keys") {

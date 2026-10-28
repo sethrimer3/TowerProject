@@ -93,13 +93,11 @@ function paintWeather(sky: Sky, weather: Weather, lightning: number | null) {
   sky.c.restore();
 }
 
-/** A warm wash with three faint slanting sunbeams. */
+/** A warm wash; moving shafts of sunlight follow the shared cloud gaps. */
 function paintSun({ c, size }: Sky) {
   const sun = c.createLinearGradient(0, 0, size, size);
   sun.addColorStop(0, "#ffe8a321"); sun.addColorStop(1, "#ffe8a300");
   c.fillStyle = sun; c.fillRect(0, 0, size, size);
-  c.fillStyle = "#ffeaba09";
-  for (let i = 0; i < 3; i++) { c.beginPath(); c.moveTo(size * (0.1 + i * 0.2), 0); c.lineTo(size * (0.35 + i * 0.2), size); c.lineTo(size * (0.48 + i * 0.2), size); c.lineTo(size * (0.17 + i * 0.2), 0); c.fill(); }
 }
 
 const OVERCAST: Record<Weather, string> = { storm: "#14213550", rain: "#26394730", cloudy: "#36414c18", sunny: "#36414c18" };

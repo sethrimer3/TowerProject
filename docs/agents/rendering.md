@@ -27,6 +27,10 @@ Each effect keeps its original renderer until its PNG is ready and when the effe
 `sprites/board-marks.ts` supplies native Target/Ignore (16 pixels) and skipped/blocked X (12 pixels) PNGs inside the same 24-pixel tile grid, preserving blocked-mark fading.
 `boardFont` in `sprites/font.ts` selects the original bundled Tower Pixel face for Classic kit annotations, damage/reward numbers, level-up text and forest signs; other Game themes preserve the original font strings.
 `EntityLighting` paints silhouettes from the active PNG contents and hero facing; both shadow and highlight caches clear immediately when the effective style or image revision changes.
+`sprites/pixel-outline.ts` generates cached one-native-pixel exterior contours from sprite alpha: shaded gold for pickups/chests, blue for heroes/stairs/one-way markers and black for standard and square doors.
+An exterior-air flood fill leaves interior holes and all original texels untouched, including translucent pixels; three hard palette colors follow the kit's upper-left light and nearest-neighbor scaling.
+Only world painters request the contours, so inventory/control icons retain their original art; the hero's existing idle-frame alpha invariant lets all its frames share one contour per facing.
+`TileArt.outline: false` and `paintHero`'s fourth argument omit decorative contours when `EntityLighting` builds physical silhouettes and torch highlights, preserving their original size and light response.
 Other Game themes keep their own drawing and portrait art; changing UI themes affects only the interface kit.
 `sprites/environment.ts` names sixteen native environmental components: seven 24-pixel material tiles, four 8-pixel flowers, two 8-pixel vine modules and three 12-pixel glowing mushroom clusters.
 `environmentPixels` decodes material and vine PNGs once; `DecorBaker` samples their literal texels through the existing moss and pool masks, preserving coverage and bank/shore/depth selection.
@@ -167,6 +171,8 @@ Lighting, weather, torch light, outside grass, and tree particles are separate m
 Sprite alpha silhouettes and drawing order preserve ground gaps; canopy crowns, the tower/mountain and building roofs use approximate height ramps, and the moving hero samples its own silhouette without rebuilding the static map.
 The map and PNG alpha readbacks are cached by forest layout, decoration/style and sprite revision; ordinary cloud frames perform 96 × 96 bilinear samples and one scaled canvas draw, with no full-board readback or dynamic blur.
 Cloud drift ticks at 15 Hz; moving the hero or camera also refreshes the projection so the shadows stay attached to the surfaces.
+The same density texture supplies god rays through clear cloud gaps: sixteen samples along the sun direction are integrated once per seed into a wrapping shaft texture, then sampled into a second cached 96 × 96 warm screen-blended overlay.
+The rays share cloud motion, height projection, pause and Reduce motion, weaken in rain/storms and replace the old fixed sunny triangles; ordinary frames never march rays or blur a full-size image.
 The projection is anchored in forest coordinates during camera movement, covers every outdoor weather and Game theme, and runs before atmospheric tint, rain and lightning so those stay visible.
 Cloud time follows `OutdoorWeather.elapsed`, freezes with pause/Reduce motion/hidden tabs and resets with the forest seed; it never draws gameplay randomness or changes collision/save data.
 The Tower forest has a full 20-column movement grid, matching its viewport, independently of the 17-column dungeon; the newly reachable right-side grass uses the same seeded tree scattering as the other grass.

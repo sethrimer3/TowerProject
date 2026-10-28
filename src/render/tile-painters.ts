@@ -11,6 +11,7 @@ import { dungeonWallProfile } from "./wall-depth.ts";
 import { dungeonDetail } from "./dungeon-details.ts";
 import { drawAnimatedTorch, drawSquareDoor } from "../sprites/options.ts";
 import { drawPickupAnimation, drawSpriteFrame } from "../sprites/animations.ts";
+import { drawPixelOutline } from "../sprites/pixel-outline.ts";
 
 // Everything here paints in 24x24 tile space: the caller translates and
 // scales the context to the tile first.
@@ -46,7 +47,7 @@ type TileWorld = { tile(x: number, y: number): Tile | undefined };
  * per-tile variation), the time (for sparkles), and which art to use.
  * `lifted` items are off the ground (a reward rising from its tile), so they
  * cast no ground shadow. */
-export type TileArt = { x: number; y: number; time: number; reduceMotion: boolean; lifted?: boolean; styledSprites?: boolean; squareDoors?: boolean; spriteAnimations?: boolean; seed?: number };
+export type TileArt = { x: number; y: number; time: number; reduceMotion: boolean; lifted?: boolean; styledSprites?: boolean; squareDoors?: boolean; spriteAnimations?: boolean; seed?: number; outline?: boolean };
 
 /** Paints one tile. Layer 0 is the ground (terrain), layer 1 whatever stands
  * on it (items, doors, enemies...). Returns false while ground art is still
@@ -106,22 +107,27 @@ export function gild(c: CanvasRenderingContext2D, look: GoldenLook) {
 /** Classic contents always use the decoded PNG kit; themes paint their own contents. */
 export function paintContents(c: CanvasRenderingContext2D, t: Tile, art: TileArt) {
   if (t.kind === "enemy") { paintEnemy(c, t); return; }
-  if (art.squareDoors && t.kind === "door") { drawSquareDoor(c, t); return; }
-  paintKitContents(c, t);
+  if (art.squareDoors && t.kind === "door") { drawSquareDoor(c, t, art.outline !== false); return; }
+  paintKitContents(c, t, art.outline !== false);
   if (art.spriteAnimations && !art.reduceMotion && !art.lifted) drawPickupAnimation(c, t, art.x, art.y, art.time, art.seed);
 }
 
-function paintKitContents(c: CanvasRenderingContext2D, t: Tile) {
+function paintKitContents(c: CanvasRenderingContext2D, t: Tile, outline: boolean) {
   const id = t.kind === "key" ? `key-${t.color ?? "yellow"}`
     : t.kind === "potion" ? `potion-${potionShade(t)}`
     : t.kind === "attack" ? "sword" : t.kind === "defense" ? "shield"
     : t.kind === "stairs" ? "stairs" : t.kind === "oneway" ? "arrow-up" : t.kind === "treasure" ? "chest-wood"
     : t.kind === "reward" ? `chest-${t.tier === "gold" ? "gold" : "silver"}`
     : t.kind === "openedChest" ? "chest-open" : null;
-  if (id) return drawKit(c, id);
+  if (id) {
+    if (outline) drawPixelOutline(c, id, t.kind === "stairs" || t.kind === "oneway" ? "blue" : "gold");
+    return drawKit(c, id);
+  }
   if (t.kind !== "door") return false;
   const rule = doorRule(t);
-  if (!drawKit(c, rule.type === "keys" && rule.mode === "any" ? "door-steel" : "door-wood")) return false;
+  const door = rule.type === "keys" && rule.mode === "any" ? "door-steel" : "door-wood";
+  if (outline) drawPixelOutline(c, door, "black");
+  if (!drawKit(c, door)) return false;
   if (drainsHp(rule)) drawKit(c, "heart", 8, 7, 8);
   // Keep every colored-key requirement visible on mixed doors.
   if (rule.type !== "wood" && "keys" in rule) {
@@ -217,8 +223,9 @@ function square(size: number) {
 }
 
 /** The hero with its grounding shadow and outline. */
-export function paintHero(c: CanvasRenderingContext2D, facing = { dx: 0, dy: -1 }, idleFrame = 0) {
+export function paintHero(c: CanvasRenderingContext2D, facing = { dx: 0, dy: -1 }, idleFrame = 0, outline = true) {
   const direction = facing.dx > 0 ? "right" : facing.dx < 0 ? "left" : facing.dy > 0 ? "up" : "down";
+  if (outline) drawPixelOutline(c, `hero-${direction}`, "blue");
   if (idleFrame) drawSpriteFrame(c, `ambient-hero-${direction}`, idleFrame);
   else drawKit(c, `hero-${direction}`);
 }

@@ -1,39 +1,39 @@
 {
   "weather 1": {
-    "frames": "8b8ce3833371",
+    "frames": "57ce9fdc75f7",
     "calls": "e0b4a6fa9638",
     "rumbles": 0,
-    "canvas": "cfca0bc83864"
+    "canvas": "9a327d3db132"
   },
   "weather 2": {
-    "frames": "90b0afae8d9c",
+    "frames": "cd6f270f4c1d",
     "calls": "8b7756310322",
     "rumbles": 3,
-    "canvas": "a8840c1e6aad"
+    "canvas": "98d6d0f5f9de"
   },
   "weather 3": {
-    "frames": "c98cf91acf57",
+    "frames": "12549749dd90",
     "calls": "7c73bd51f5f9",
     "rumbles": 0,
-    "canvas": "eebc98b8876e"
+    "canvas": "02de925a87a9"
   },
   "weather 4": {
-    "frames": "307b57fc0a6f",
+    "frames": "79e21d0b6d9b",
     "calls": "99e397a90ff9",
     "rumbles": 0,
-    "canvas": "604f1e9b25f8"
+    "canvas": "cdb9d5c54eb7"
   },
   "weather 5": {
-    "frames": "cf33d3653e7e",
+    "frames": "fc1c7493506b",
     "calls": "f765fd624df3",
     "rumbles": 0,
-    "canvas": "208730b63685"
+    "canvas": "b2bbaf04c6d5"
   },
   "weather 6": {
-    "frames": "4f90de019e89",
+    "frames": "cf3099641733",
     "calls": "c7b0d5f22121",
     "rumbles": 0,
-    "canvas": "c4181cbd19ce"
+    "canvas": "1da456144cb8"
   },
   "weather 7": {
     "frames": "cfe4855ea553",
@@ -42,10 +42,10 @@
     "canvas": "e3815f1146c3"
   },
   "weather 8": {
-    "frames": "ff54291ef9b9",
+    "frames": "7c03c420b055",
     "calls": "cf750f65d3dc",
     "rumbles": 2,
-    "canvas": "ead12beee904"
+    "canvas": "a07e08eca663"
   },
   "forest 1 tower": {
     "entranceX": 8,

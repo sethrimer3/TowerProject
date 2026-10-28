@@ -9,7 +9,9 @@ Animations enables matching torch frames, subtle potion bubbles, occasional key 
 The skull and crossbones shown when the hero falls also uses matching PNG art, with a short animation while Animations is on.
 Reduce motion keeps these frames still; movement and combat stop the hero's idle motion.
 Outside, cloud shadows drift across the ground, trees, buildings and hero, shifting over taller surfaces.
+Soft shafts of sunlight shine through the moving cloud gaps, with fainter rays during rain and storms.
 Reduce motion keeps the cloud shadows still too.
+World pickups and chests have thin gold pixel outlines, the hero and staircase sprites have blue outlines, and doors have black outlines.
 Square doors uses tile-filling rectangular doors with the same key and HP requirements as before.
 Tower I sprite floors mix large slabs and smaller bricks with connected joints across neighboring tiles.
 Tower II has warm limestone walls and rectangular paving; Tower III has cool basalt walls and octagonal paving with small square insets.

@@ -7,11 +7,15 @@ test("cloud density is continuous across wrapped world coordinates, seeded, and 
   const field = new CloudField(7), same = new CloudField(7), other = new CloudField(8);
   assert.deepEqual(field.pixels, same.pixels);
   assert.notDeepEqual(field.pixels, other.pixels);
+  assert.deepEqual(field.rays, same.rays);
+  assert.notDeepEqual(field.rays, field.pixels, "light shafts integrate gaps along the sun rather than reusing the shadow mask");
+  assert.ok(Math.max(...field.rays) > .25 && Math.min(...field.rays) < .01, "visible shafts and unlit air coexist");
   for (let x = -1000; x < 1000; x += 19) {
     const v = field.sample(x, x / 2, 0, 20);
     assert.ok(v >= 0 && v <= 1);
     assert.ok(Math.abs(v - field.sample(x + 768, x / 2 + 768, 0, 20)) < 1e-12);
     assert.ok(Math.abs(v - field.sample(x + .001, x / 2, 0, 20)) < .001);
+    assert.ok(Math.abs(field.sample(x, x / 2, 0, 20, field.rays) - field.sample(x + 768, x / 2 + 768, 0, 20, field.rays)) < 1e-12);
   }
   assert.ok(Math.min(...field.pixels) < .01 && Math.max(...field.pixels) > .99, "both sunlit and clouded patches");
 });
