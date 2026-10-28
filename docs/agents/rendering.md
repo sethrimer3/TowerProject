@@ -177,7 +177,8 @@ The same density texture supplies god rays through clear cloud gaps: sixteen sam
 `render/soft-field.ts` provides reusable `layeredFeather` and `softenField` helpers for cached light, fog or glow density; wrap mode preserves cloud seams, while clamp mode supports local effects.
 Feather neighboring bands first, then soften their combined field once per seed; no canvas filters, per-frame blur, added frame buffers or full-resolution readbacks are needed, and the original sprite art stays crisp.
 The rays share cloud motion, height projection, pause and Reduce motion, weaken in rain/storms and replace the old fixed sunny triangles; ordinary frames never march rays or blur a full-size image.
-The projection is anchored in forest coordinates during camera movement, covers every outdoor weather and Game theme, and runs before atmospheric tint, rain and lightning so those stay visible.
+The projection is anchored in forest coordinates during camera movement, covers every outdoor weather and Game theme, and runs before rain and localized lightning so those stay visible.
+Weather has no full-screen overcast tint or sunny color wash; cloud shadows use neutral black attenuation and warm light is restricted to the actual feathered shafts, with no diffuse ray baseline lifting the whole clearing.
 Cloud time follows `OutdoorWeather.elapsed`, freezes with pause/Reduce motion/hidden tabs and resets with the forest seed; it never draws gameplay randomness or changes collision/save data.
 The Tower forest has a full 20-column movement grid, matching its viewport, independently of the 17-column dungeon; the newly reachable right-side grass uses the same seeded tree scattering as the other grass.
 The path, entrance, trial square, grass clearances and shadow-height landmarks all use the mode's entrance column rather than half the clearing width, keeping the art aligned with its collision and interaction tiles.

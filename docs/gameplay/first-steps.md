@@ -11,6 +11,7 @@ Reduce motion keeps these frames still; movement and combat stop the hero's idle
 Outside, cloud shadows drift across the ground, trees, buildings and hero, shifting over taller surfaces.
 Soft shafts of sunlight shine through the moving cloud gaps, with fainter rays during rain and storms.
 They descend steeply with softly fading edges and low opacity so the pixel art remains clear.
+Weather preserves the artwork's colors: passing shadows darken locally and sunlight follows the shafts, without a full-screen gray or yellow filter.
 Reduce motion keeps the cloud shadows still too.
 World pickups and chests have thin gold pixel outlines, the hero and staircase sprites have blue outlines, and doors have black outlines.
 Square doors uses tile-filling rectangular doors with the same key and HP requirements as before.

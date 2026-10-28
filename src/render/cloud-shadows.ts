@@ -62,7 +62,7 @@ export class CloudField {
       // Steep (1,3) shafts, with low-energy widening layers. Neighboring
       // bands overlap across slot boundaries before the combined blur.
       const shaft = profile[wrap(CLOUD_LIGHT.direction.y * x - CLOUD_LIGHT.direction.x * y, FIELD)];
-      this.rays[y * FIELD + x] = smooth((light / 10 - .08) / .92) * (.04 + .96 * shaft);
+      this.rays[y * FIELD + x] = smooth((light / 10 - .08) / .92) * shaft;
     }
     this.rays.set(softenField(this.rays, FIELD, FIELD, GOD_RAY_STYLE.blurRadius, GOD_RAY_STYLE.blurPasses));
   }
@@ -176,7 +176,8 @@ export class CloudShadows {
         const u = (wx - hx) / 24, v = (wy - hy) / 24;
         if (hero && u >= 0 && v >= 0 && u < 1 && v < 1 && hero.alpha[Math.floor(v * hero.height) * hero.width + Math.floor(u * hero.width)] >= 128) height = (1 - v) * 18;
         const i = (y * RESOLUTION + x) * 4;
-        data[i] = 12; data[i + 1] = 22; data[i + 2] = 32;
+        // Neutral attenuation preserves the artwork's hue and saturation.
+        data[i] = data[i + 1] = data[i + 2] = 0;
         data[i + 3] = Math.round(this.field!.sample(wx, wy, height, cloudTime) * strength);
         rays[i] = 255; rays[i + 1] = 233; rays[i + 2] = 174;
         rays[i + 3] = Math.round(this.field!.sample(wx, wy, height, cloudTime, this.field!.rays) * rayStrength);

@@ -86,26 +86,9 @@ type Sky = { c: CanvasRenderingContext2D; size: number; seed: number; elapsed: n
  * strike while a live storm shows it, else null. */
 function paintWeather(sky: Sky, weather: Weather, lightning: number | null) {
   sky.c.save();
-  if (weather === "sunny") paintSun(sky);
-  else paintOvercast(sky, weather);
   if (weather === "rain" || weather === "storm") paintRain(sky, weather === "storm");
   if (lightning !== null) paintLightning(sky, lightning);
   sky.c.restore();
-}
-
-/** A warm wash; moving shafts of sunlight follow the shared cloud gaps. */
-function paintSun({ c, size }: Sky) {
-  const sun = c.createLinearGradient(0, 0, size, size);
-  sun.addColorStop(0, "#ffe8a321"); sun.addColorStop(1, "#ffe8a300");
-  c.fillStyle = sun; c.fillRect(0, 0, size, size);
-}
-
-const OVERCAST: Record<Weather, string> = { storm: "#14213550", rain: "#26394730", cloudy: "#36414c18", sunny: "#36414c18" };
-
-/** The atmosphere's tint; surface-aware cloud shadows are drawn separately. */
-function paintOvercast({ c, size }: Sky, weather: Weather) {
-  c.fillStyle = OVERCAST[weather];
-  c.fillRect(0, 0, size, size);
 }
 
 /** Slanting streaks of rain, heavier in a storm. */

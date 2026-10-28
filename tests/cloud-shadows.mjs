@@ -13,6 +13,27 @@ try {
   const errors = []; page.on("pageerror", e => errors.push(e.message));
   await page.goto(server.resolvedUrls.local[0], { waitUntil: "domcontentloaded" });
   await page.locator("#boot-loading").waitFor({ state: "hidden", timeout: 120000 });
+  const paletteChecks = await page.evaluate(async () => {
+    const { OutdoorWeather } = await import("/src/render/weather.ts");
+    const { outsideWeather } = await import("/src/outside.ts");
+    const seeds = {};
+    for (let seed = 1; Object.keys(seeds).length < 4; seed++) seeds[outsideWeather(seed)] ??= seed;
+    return Object.entries(seeds).map(([weather, seed]) => {
+      const canvas = document.createElement("canvas"); canvas.width = canvas.height = 240;
+      const c = canvas.getContext("2d", { willReadFrequently: true });
+      ["#b42a26", "#318b3d", "#263c9a", "#a37b29", "#080a0f", "#d3d9df"].forEach((color, i) => { c.fillStyle = color; c.fillRect(i * 40, 0, 40, 240); });
+      const before = c.getImageData(0, 0, 240, 240).data;
+      new OutdoorWeather().draw(c, 240, seed, { dt: 0, reduceMotion: true, active: false, sound: false });
+      const after = c.getImageData(0, 0, 240, 240).data;
+      let changed = 0;
+      for (let i = 0; i < before.length; i += 4) if (before[i] !== after[i] || before[i + 1] !== after[i + 1] || before[i + 2] !== after[i + 2]) changed++;
+      return { weather, changed };
+    });
+  });
+  for (const check of paletteChecks) {
+    if (check.weather === "sunny" || check.weather === "cloudy") assert.equal(check.changed, 0, `${check.weather} must leave the original palette untouched outside localized cloud lighting`);
+    else assert.ok(check.changed > 0 && check.changed < 240 * 240 * .1, `${check.weather} should paint rain streaks, without a screen-wide tint`);
+  }
   for (const width of [390, 1024]) for (const mode of ["tower", "delve"]) {
     await page.setViewportSize({ width, height: 900 });
     const result = await page.evaluate(async ({ width, mode }) => {
@@ -62,6 +83,9 @@ try {
         rayPeak = Math.max(rayPeak, third[i] - noRays[i], third[i + 1] - noRays[i + 1], third[i + 2] - noRays[i + 2]);
       }
       const heightMap = clouds.heights, sharedField = clouds.field, alphaReads = clouds.silhouettes.size;
+      const shadow = clouds.image.data;
+      let tintedShadows = 0;
+      for (let i = 0; i < shadow.length; i += 4) if (shadow[i] || shadow[i + 1] || shadow[i + 2]) tintedShadows++;
       const tallCells = heightMap.pixels.filter(h => h > 50).length;
       const at = heightMap.at;
       heightMap.at = () => 0;
@@ -119,7 +143,7 @@ try {
       return {
         motion: [diff(first, second), diff(second, third)], relief: diff(third, flat), restoration: diff(third, recovered), freeze: diff(recovered, frozen),
         rays: diff(third, noRays), rayPeak, rayAlphaPeak, rayOpacityCap: Math.round(GOD_RAY_STYLE.opacity[weather] * 255), weather, darkenedByRays, rayResolution: [clouds.rayCanvas.width, clouds.rayCanvas.height],
-        tallCells, alphaReads, readbacks, updates, cachedUpdates, reused, decorRefresh, cameraReuses, fieldReused: sharedField === clouds.field, indoorCalls,
+        tallCells, alphaReads, readbacks, updates, cachedUpdates, reused, decorRefresh, cameraReuses, tintedShadows, fieldReused: sharedField === clouds.field, indoorCalls,
         resolution: [clouds.canvas.width, clouds.canvas.height], averageFrameMs: timings.reduce((a, b) => a + b) / timings.length,
         averageCloudMs: cloudTimings.reduce((a, b) => a + b) / cloudTimings.length, landmarkCenter, expectedLandmarkCenter,
         assetsReady: !!kitImage("forest-tower-base"),
@@ -141,6 +165,7 @@ try {
     assert.ok(result.updates >= 25 && result.updates <= 30);
     assert.ok(result.reused && result.decorRefresh && result.cameraReuses);
     assert.ok(result.fieldReused, "feathered/blurred textures survive ordinary frames, camera movement and decoration changes");
+    assert.equal(result.tintedShadows, 0, "cloud shadows dim the original colors without mixing in blue-gray haze");
     assert.equal(result.indoorCalls, 0);
     assert.deepEqual(result.resolution, [96, 96]);
     await page.locator("#cloud-review").screenshot({ path: `test-results/cloud-shadows/${mode}-${width}.png` });
