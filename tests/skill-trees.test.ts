@@ -227,10 +227,11 @@ test("Bombs (5 Inspiration) stands left of Critical Prediction in the Inspiratio
   save.upgrades.bombs = 1;
   assert.ok(provisionOpen(save, "bomb"));
 });
-test("Manual Hand (1 Breakthrough) follows Echoes of time under More Wealth; Key Mastery (1) under Overheal under Physician reveals Find Gold Key and Key Efficiency, now in the Inspiration tree (10 each), and Card and Beast Mastery split off under it", () => {
+test("Golden Floors (3 Breakthrough), then Rehearsed steps, Echoes of time and Manual Hand (1) straight down under More Wealth; Key Mastery (1) under Overheal under Physician reveals Find Gold Key and Key Efficiency, now in the Inspiration tree (10 each), and Card and Beast Mastery split off under it", () => {
   const breakthrough = TREES.find((t) => t.id === "breakthrough")!;
   const at = (id: string) => breakthrough.nodes.find((n) => n.id === id)!;
-  assert.deepEqual(["inspirationUndos", "undos", "manualHand"].map((id) => [at(id).x, at(id).y, at(id).requires]), [[18, 111, ["moreWealth"]], [18, 137, ["inspirationUndos"]], [18, 163, ["undos"]]], "Rehearsed steps, Echoes of time and Manual Hand straight down under More Wealth");
+  assert.deepEqual(["goldenFloors", "inspirationUndos", "undos", "manualHand"].map((id) => [at(id).x, at(id).y, at(id).requires]), [[18, 111, ["moreWealth"]], [18, 137, ["goldenFloors"]], [18, 163, ["inspirationUndos"]], [18, 189, ["undos"]]], "Golden Floors, Rehearsed steps, Echoes of time and Manual Hand straight down under More Wealth");
+  assert.equal(cost("goldenFloors", 0), 3, "Golden Floors costs 3 Breakthrough");
   assert.deepEqual([at("moreWealth").x, at("moreWealth").y, at("moreWealth").requires], [18, 85, ["pathToWealth"]], "More Wealth under Path to Wealth");
   assert.deepEqual([at("overheal").x, at("overheal").y, at("overheal").requires], [50, 85, ["physician"]], "Overheal between Physician and Key Mastery");
   assert.deepEqual([at("keyMastery").x, at("keyMastery").y, at("keyMastery").requires], [50, 111, ["overheal"]]);

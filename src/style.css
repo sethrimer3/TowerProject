@@ -567,6 +567,8 @@ h1 span {
 .enemy-odds-table .odds-ranks .odds-mark + .odds-mark { margin-top: -4px; }
 .enemy-odds-table .odds-traits .odds-mark { width: 24px; height: 16px; }
 .enemy-odds-table .odds-traits .odds-shielded { height: 24px; margin: -4px 0; }
+.enemy-odds-table .odds-here { color: #f0b429; }
+.enemy-odds-table .odds-env-golden.here th { color: #f0c34a; }
 .base-enemy > span { display: inline-flex; align-items: center; gap: 1px; }
 .base-enemy b { font-weight: 700; }
 .base-enemy-hp { color: #df797e; }

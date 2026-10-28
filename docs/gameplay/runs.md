@@ -17,7 +17,7 @@ It cancels any queued route.
 Undos are a limited resource, like Ignore and Target: each run has a number of them to spend, shown on the Undo button, and one spent never comes back, whatever the run does after it.
 The history holds no more moves than the run has undos left.
 A game update that reshapes the floors forgets the history, in the Tower as in the Delve, since the moves it held were made on the old layout.
-A new profile has no undo, and the button stays hidden until **Rehearsed steps** (1 Breakthrough, under More Wealth, under Path to Wealth, in the Breakthrough tree, above Echoes of time) gives the first undo a run (or Echoes of time and a level of Undo Count do); each level of **Undo Count** research in the Archives adds one a run: Rehearsed steps opens four levels of it and **Echoes of time** (Breakthrough, after Rehearsed steps) four more, either opening it first, up to 9 a run.
+A new profile has no undo, and the button stays hidden until **Rehearsed steps** (1 Breakthrough, under Golden Floors, under More Wealth, under Path to Wealth, in the Breakthrough tree, above Echoes of time) gives the first undo a run (or Echoes of time and a level of Undo Count do); each level of **Undo Count** research in the Archives adds one a run: Rehearsed steps opens four levels of it and **Echoes of time** (Breakthrough, after Rehearsed steps) four more, either opening it first, up to 9 a run.
 Each counts the moment it's bought or completed, in a run already under way too; a new run starts with them all.
 History persists across refreshes.
 
@@ -46,6 +46,7 @@ The Boss row is always there, at 100% on a floor a boss guards (every tenth) and
 Its second table lists the attributes enemies there may carry, those that can't appear left out: Fast, Ranged and Flying with the chance an enemy has each (a Flying roll comes first, so Fast and Ranged are of the rest), Shielded with the chance the floor holds one, and Aggroed at 0% wherever Flying enemies stand, since only an arrow's wound makes one.
 Each attribute's name follows the mark its enemies wear on the board (Fast's double chevron, Ranged's arrow, Flying's wing, Shielded's bubble); Aggroed has none.
 Its Attack Speed (Ranged and Flying) and Move Speed (Aggroed) are shots and steps every 10 turns, as the Archer's Attack Speed counts.
+Once any [Floor Environment](environments.md) has a chance, a last table lists each with its chance, marked in its This Floor column where the hero's floor has it; on a Golden Floor the first table's Gold counts its multiplier.
 They list the tower, the floor reached and the current floor, the real time since the run went inside, the steps taken, chests opened, enemies defeated and XP earned, the keys obtained by colour and the doors opened by kind, the Gold, Silver and Inspiration (in the Tower) found, the materials found, and the potions, ATK and DEF shards, Gems, Cells and equipment picked up, each group under its heading.
 They refresh as the run goes, and the X at their top right closes them.
 The copy button beside the X puts them in the clipboard as text, to paste elsewhere.

@@ -66,6 +66,7 @@ import { ranksInRun, runTrainingBulk, runTrainingOffer, type RunTrainingOffer } 
 import type { BuyQuantity } from "./progression/buy-quantity.ts";
 import { critRule, loadout, provisionsOpen, rankShift, trainingPoints, trainingWaiting, type TrainingView } from "./progression/loadout.ts";
 import { researched } from "./progression/archives.ts";
+import { hasEnvironment, possibleEnvironments } from "./environments.ts";
 import { chargesLeft, chargesPerRun, climbFloor, spendCharge, type Charge } from "./run-charges.ts";
 import { TrainingDesk } from "./game/training-desk.ts";
 import { ShopDesk } from "./game/shop-desk.ts";
@@ -1286,6 +1287,10 @@ export class Game {
     // CHEST's Treasure Floor makes a floor's shards and potions chests as it is generated.
     if (tree.treasureFloor) this.run.treasureFloor = Math.min(100, tree.treasureFloor);
     else delete this.run.treasureFloor;
+    // Golden Floor Chance research makes floors Golden Floors, fixed for the run.
+    const golden = this.save.upgrades.goldenFloors ? Math.min(100, researched(this.save.archives, "goldenFloorChance") / 10) : 0;
+    if (golden) this.run.goldenFloor = golden;
+    else delete this.run.goldenFloor;
     // The hero strikes the enemies each enemy card covers harder (its tree
     // harder still), and with the enemy cards', ENEMY's and TORCH's trees
     // holds more DEF and shroud against theirs, HEAL's more shroud against
@@ -1352,9 +1357,29 @@ export class Game {
   }
   /** What the Gold multipliers read now (`economy/gold-multipliers.ts`): the
    * Shrine Boons line is the boons' Gold factor inside a Tower run once
-   * Shrines are open (1 with none), else none. */
+   * Shrines are open (1 with none), else none; the Golden Floor line, once
+   * Golden Floors is owned, the multiplier on the Gold found on the hero's
+   * floor (1 off a Golden Floor). */
   get goldContext(): GoldContext {
-    return { save: this.save, mode: this.mode, tier: this.tier, now: this.clock(), shrine: this.shrine.open ? this.boons?.gold ?? 1 : undefined };
+    const p = this.run.player, golden = this.save.upgrades.goldenFloors ? this.run.outside ? 1 : this.purse.golden(this.floorOf(p.x, p.y)) : undefined;
+    return { save: this.save, mode: this.mode, tier: this.tier, now: this.clock(), shrine: this.shrine.open ? this.boons?.gold ?? 1 : undefined, golden };
+  }
+  /** Whether the tile at (x, y) stands on a Golden Floor, as the board
+   * draws it. A Delve wall has no floor of its own: it is golden beside the
+   * open ground of one. */
+  goldenAt(x: number, y: number): boolean {
+    if (this.run.outside || !this.run.goldenFloor) return false;
+    const world = this.world, on = (xx: number, yy: number) => hasEnvironment(this.run, "golden", this.floorOf(xx, yy));
+    if (!(world instanceof World) || world.tile(x, y).kind !== "wall") return on(x, y);
+    return [[0, 1], [1, 0], [0, -1], [-1, 0]].some(([dx, dy]) => world.tile(x + dx!, y + dy!).kind !== "wall" && on(x + dx!, y + dy!));
+  }
+  /** The environments the run may give a floor, each with its chance and
+   * whether the hero's floor has it (the enemy stats box's), or none in
+   * the forest or while every chance is none. */
+  get floorEnvironments() {
+    if (this.run.outside) return [];
+    const p = this.run.player, floor = this.floorOf(p.x, p.y);
+    return possibleEnvironments(this.run).map((e) => ({ ...e, here: hasEnvironment(this.run, e.id, floor) }));
   }
   /** The run's boons changed its hero or enemies (`ShrineDesk.sync`): the
    * floor's enemies are read afresh and the hand plans again. */
@@ -2296,10 +2321,10 @@ export class Game {
    * a mode switch and a new run each replace one. */
   get purse() {
     // A tournament run's chances come from the seeds its league shares.
-    const t = this.tournamentRun;
+    const t = this.tournamentRun, floorOf = (x: number, y: number) => this.floorOf(x, y);
     return t
-      ? new RunPurse(this.save, this.mode, this.run, runStream(t, "game"), this.clock(), runStream(t, "equipment"))
-      : new RunPurse(this.save, this.mode, this.run, this.rng, this.clock());
+      ? new RunPurse(this.save, this.mode, this.run, runStream(t, "game"), this.clock(), runStream(t, "equipment"), floorOf)
+      : new RunPurse(this.save, this.mode, this.run, this.rng, this.clock(), this.rng, floorOf);
   }
   /** The numbered tower (or delve) the run climbs. */
   get tier() {
@@ -2474,7 +2499,7 @@ export class Game {
     this.missions.record("floors", last - floorBefore);
     let gold = 0, silver = 0;
     for (let f = floorBefore + 1; f <= last; f++) {
-      gold += purse.floorGold(purse.floorKey(-1, f));
+      gold += purse.floorGold(purse.floorKey(-1, f), f + 1);
       silver += purse.floorSilver();
       const interest = purse.interest();
       silver += interest;
@@ -2554,8 +2579,9 @@ export class Game {
    * the next floor too. */
   advanceTowerRoom(floorSkip = false) {
     const purse = this.purse, p = this.run.player;
-    // Keyed by the stairs taken, so it pays once a run.
-    const gold = purse.floorGold(purse.floorKey(p.x, p.y));
+    // Keyed by the stairs taken, so it pays once a run; the floor reached
+    // is the one above.
+    const gold = purse.floorGold(purse.floorKey(p.x, p.y), this.run.height + 2);
     const highest = this.run.maxHeight ?? this.run.height;
     // Skip on STAIRS climbs past the next floor, which pays nothing; an area
     // climbed past is still judged as its section ends.

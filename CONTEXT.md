@@ -528,8 +528,14 @@ ATK Up's legendary upgrade: an ATK shard taken may charge the hero's next fight,
 **Takedown** and **Tangle**:
 A share of a boss's max HP (Takedown) or ATK (Tangle) taken as a fight with it begins, before the hero's first strike; Greater Takedown and Greater Tangle take a Greater Boss's, and Boss Enemy's tree's take both.
 
+**Floor Environment**:
+A rule a whole floor (in the Delve, an equivalent floor) may be given, at its own chance, rolled once for each floor; environments overlap, and a floor with none is a plain floor.
+
 **Treasure Floor**:
 A floor whose ATK and DEF shards and potions are all treasure chests, by Chest's upgrade, rolled once for each floor.
+
+**Golden Floor**:
+A Floor Environment, by Golden Floor Chance research: every Gold found on it is multiplied by Golden Floor Multiplier, once for each find, and its ground (or, on a black or hueless Game theme, its walls) is gold.
 
 **Deck**:
 All the player's cards: those in the hand and those waiting outside it. Also the page where the hand is ordered (with the Combat Stance skill) and its cards chosen from the deck (with Buildout).

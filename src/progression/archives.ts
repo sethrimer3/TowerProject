@@ -97,6 +97,12 @@ export const RESEARCH_TARGETS = {
   /** The percent of its Gold a kill, or an item picked up or door opened,
    * pays, from 100. */
   goldBonus: { name: "Gold Bonus", base: 100, shown: percent },
+  /** The chance, in tenths of a percent, each floor of a climb is a Golden
+   * Floor, fixed as the climb goes inside, from 0. */
+  goldenFloorChance: { name: "Golden Floor Chance", base: 0, shown: tenths },
+  /** Golden Floor Multiplier: the factor on every Gold found on a Golden
+   * Floor, in tenths, from ×2. */
+  goldenFloorMultiplier: { name: "Golden Floor Multiplier", base: 20, shown: (n: number) => `×${n / 10}` },
   /** The chance, in tenths of a percent, that a new floor climbed hands
    * the hero a gold key. */
   yellowKeyChance: { name: "Gold Key Chance", base: 0, shown: tenths },
@@ -452,6 +458,21 @@ const ARCHIVE_MINUTES = curve([1, 9, 23, 44, 73, 112, 162, 225, 301, 391], 2, 10
 const archiveLevels = (effect: ResearchEffect) =>
   ARCHIVE_GOLD.map((gold, i): ResearchLevel => ({ gold, hours: ARCHIVE_MINUTES[i]! / 60, effect }));
 
+/** Golden Floor Chance (+0.5% a level, to 30% at 60) and Golden Floor
+ * Multiplier (+×0.1 a level, to ×10 at 80): Gold for good on every climb,
+ * so among the dearest research. Both open with the same ten levels by
+ * hand (5,000 to 1.95 million Gold, 10 minutes to 9 hours 10), then C × n³
+ * Gold, C rising to 11,600 (2.51 billion at Chance's level 60, about 34
+ * billion in all) or 9,800 (5.02 billion at Multiplier's level 80, about 94
+ * billion), and C × n² minutes, C rising to 12 (30 days at 60) or 9 (40
+ * days at 80). */
+const GOLDEN_GOLD = [5000, 15000, 40000, 90000, 180000, 330000, 560000, 900000, 1350000, 1950000];
+const GOLDEN_MINUTES = [10, 30, 60, 100, 150, 210, 280, 360, 450, 550];
+function goldenLevels(effect: ResearchEffect, length: number, goldEnd: number, minutesEnd: number) {
+  const gold = curve(GOLDEN_GOLD, 3, length, goldEnd, 30), minutes = curve(GOLDEN_MINUTES, 2, length, minutesEnd, 40);
+  return gold.map((g, i): ResearchLevel => ({ gold: g, hours: minutes[i]! / 60, effect }));
+}
+
 /** The research library, in the order the Archives list it. */
 export const RESEARCH = {
   researchSpeed: {
@@ -651,6 +672,20 @@ export const RESEARCH = {
     categories: ["economy"],
     requires: [{ upgrade: "loot" }],
     levels: hundredLevels("goldBonus", 3, STEEP_INCOME),
+  },
+  goldenFloorChance: {
+    name: "Golden Floor Chance",
+    description: "Learn where the old climbers hid their hoards: more floors of each climb are Golden Floors, where every Gold found is multiplied by Golden Floor Multiplier. A climb's chance is fixed as it goes inside.",
+    categories: ["economy"],
+    requires: [{ upgrade: "goldenFloors" }],
+    levels: goldenLevels({ target: "goldenFloorChance", op: "add", value: 5 }, 60, 11600, 12),
+  },
+  goldenFloorMultiplier: {
+    name: "Golden Floor Multiplier",
+    description: "Polish the gilt: every Gold found on a Golden Floor (a kill's, a chest's, an item's, a door's, a badge's) is multiplied more, once for each find.",
+    categories: ["economy"],
+    requires: [{ upgrade: "goldenFloors" }],
+    levels: goldenLevels({ target: "goldenFloorMultiplier", op: "add", value: 1 }, 80, 9800, 9),
   },
   heartDoorResilience: {
     name: "Heart Door Resilience",

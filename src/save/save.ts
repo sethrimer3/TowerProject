@@ -202,6 +202,7 @@ const RUN_FIELD_CHECKS = {
   percentPotions: (v: unknown) => wholeIn(v, 1, 10_000),
   chestOdds: (v: any) => isRecord(v) && Object.keys(v).length === 2 && [v.supply, v.equipment].every((n) => finite(n) && n >= 0 && n <= 100) && v.supply + v.equipment > 0,
   treasureFloor: (v: unknown) => finite(v) && v > 0 && v <= 100,
+  goldenFloor: (v: unknown) => finite(v) && v > 0 && v <= 100,
   doorOdds: (v: any) => isRecord(v) && "skeleton" in v && "lockPick" in v
     && Object.entries(v).every(([k, n]) => ["skeleton", "lockPick", "transmute", "wood", "heartPick"].includes(k) && finite(n) && n >= 0 && n <= 100)
     && Object.values(v).some((n) => (n as number) > 0),

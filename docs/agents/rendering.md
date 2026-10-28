@@ -22,6 +22,7 @@ Enemy bakes clear on kit image arrival so small marks loaded after the body repl
 `render/volley-art.ts` selects one of eight PNG arrow facings without changing flight positions; enemy shots use an eight-pixel orb.
 `render/shield-art.ts` selects a 48-, 96- or 144-pixel hollow ring nearest the native diameter, drawing at the exact existing radius with no baked glow.
 `render/chest-marks.ts` keeps one blue Supply star and two purple Equipment stars over both closed and opened chest tiles.
+A Golden Floor (`BoardLook.golden`) gilds Classic's open ground as the ground cache bakes it (`gild`, `GOLDEN_GROUND` in `tile-painters.ts`) and each Game theme's ground or walls after its `ground` (`GOLDEN_LOOKS` in `themed-boards.ts`); see environments.md.
 Each effect keeps its original renderer until its PNG is ready and when the effective Game kit is disabled.
 `sprites/board-marks.ts` supplies native Target/Ignore (16 pixels) and skipped/blocked X (12 pixels) PNGs inside the same 24-pixel tile grid, preserving blocked-mark fading.
 `boardFont` in `sprites/font.ts` selects the original bundled Tower Pixel face for Classic kit annotations, damage/reward numbers, level-up text and forest signs; other Game themes preserve the original font strings.

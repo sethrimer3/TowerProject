@@ -12,27 +12,31 @@ import { themeGoldFactor } from "../theme-collection.ts";
 /** One Gold multiplier: a factor on every Gold banked, its name as the
  * player sees it, and its factor, or null while it isn't applied (the
  * player sees "Inactive"). `id` names it for the code. */
-export type GoldMultiplier = { id: "tower" | "ads" | EntitlementId | "themes" | "gear" | "boons"; name: string; factor: number | null };
+export type GoldMultiplier = { id: "tower" | "ads" | EntitlementId | "themes" | "gear" | "boons" | "golden"; name: string; factor: number | null };
 
 /** What the Gold multipliers read: the save, the mode whose hero's
- * equipment counts, the tier, the wall clock (ms, for the Gold ad's boost)
- * and, in a Tower run once Shrines are open, the run's Gold boons' factor
- * (`shrine`, 1 with none; undefined shows no Shrine Boons line). */
+ * equipment counts, the tier, the wall clock (ms, for the Gold ad's boost),
+ * in a Tower run once Shrines are open, the run's Gold boons' factor
+ * (`shrine`, 1 with none; undefined shows no Shrine Boons line), and, once
+ * Golden Floors is owned, Golden Floor Multiplier's factor on the Gold
+ * found (`golden`: 1 off a Golden Floor; undefined shows no Golden Floor
+ * line). */
 export type GoldContext = {
   save: Pick<Save, "goldBoostUntil" | "entitlements" | "themes" | "equipment">;
   mode: Mode;
   tier: number;
   now: number;
   shrine?: number;
+  golden?: number;
 };
 
 /** Every Gold multiplier, in the order the All Gold Bonuses box lists
  * them: the tower's, the ads' one line (the Gold ad's boost while it runs,
  * else Ad-Disable), each Coin Pack (the Shop's `goldFactor`s), the themes
- * owned (each +2.5%), the mode's equipment's Gold found, and the run's
- * Gold boons. Paying (`goldBanked`) and the box read this one list, so
+ * owned (each +2.5%), the mode's equipment's Gold found, the run's
+ * Gold boons, and a Golden Floor's multiplier. Paying (`goldBanked`) and the box read this one list, so
  * what is shown is what is banked. */
-export function goldMultipliers({ save, mode, tier, now, shrine }: GoldContext): GoldMultiplier[] {
+export function goldMultipliers({ save, mode, tier, now, shrine, golden }: GoldContext): GoldMultiplier[] {
   const packs = ENTITLEMENT_IDS.filter((id) => id !== "adFree" && ENTITLEMENTS[id].goldFactor !== 1)
     .map((id): GoldMultiplier => ({ id, name: ENTITLEMENTS[id].name, factor: owns(save, id) ? ENTITLEMENTS[id].goldFactor : null }));
   // The ad's boost and Ad-Disable are one ×1.5 slot, temporary or for good:
@@ -43,7 +47,8 @@ export function goldMultipliers({ save, mode, tier, now, shrine }: GoldContext):
   const found = wornEffects(save, mode).goldFind;
   const gear: GoldMultiplier = { id: "gear", name: "Gold Found", factor: found ? (100 + found) / 100 : null };
   const boons: GoldMultiplier[] = shrine === undefined ? [] : [{ id: "boons", name: "Shrine Boons", factor: shrine === 1 ? null : shrine }];
-  return [{ id: "tower", name: "Tower Multiplier", factor: TIER_BONUS_TENTHS[tier - 1]! / 10 }, ads, ...packs, themes, gear, ...boons];
+  const floor: GoldMultiplier[] = golden === undefined ? [] : [{ id: "golden", name: "Golden Floor", factor: golden === 1 ? null : golden }];
+  return [{ id: "tower", name: "Tower Multiplier", factor: TIER_BONUS_TENTHS[tier - 1]! / 10 }, ads, ...packs, themes, gear, ...boons, ...floor];
 }
 
 /** The multipliers applied, multiplied together (unrounded: `factorText`

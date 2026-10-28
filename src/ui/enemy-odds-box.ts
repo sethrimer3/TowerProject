@@ -39,18 +39,26 @@ const strengthRow = (r: StrengthOdds) =>
   `<tr><th scope="row">${strengthName(r.strength)}</th><td>${chance(r.chance)}</td><td>${shortStat(r.hp)}</td><td>${shortStat(r.attack)}</td><td>${shortStat(r.defense)}</td><td>${shortStat(r.gold)}</td></tr>`;
 const traitRow = (r: TraitOdds) =>
   `<tr><th scope="row">${traitName(r.trait)}</th><td>${chance(r.chance)}</td><td>${speed(r.attackSpeed)}</td><td>${speed(r.moveSpeed)}</td></tr>`;
+/** An environment's row: its name, its chance, and a mark when the floor has it. */
+const environmentRow = (e: Game["floorEnvironments"][number]) =>
+  `<tr class="odds-env-${e.id}${e.here ? " here" : ""}"><th scope="row">${e.name}</th><td>${chance(e.chance)}</td><td>${e.here ? `<span class="odds-here" aria-label="This floor">●</span>` : ""}</td></tr>`;
 
 /** What the box shows for the floor now, and the key it is redrawn by: a
- * new floor, or a Greater Boss appearing on it. */
+ * new floor, or a Greater Boss appearing on it. Below the enemies, the
+ * floor environments the run can roll, once any can. */
 function content(game: Game) {
   const odds = game.enemyOdds;
   if (!odds) return null;
-  const key = `${game.mode}|${game.tier}|${odds.floor}|${odds.strengths.length}`;
+  const environments = game.floorEnvironments;
+  const key = `${game.mode}|${game.tier}|${odds.floor}|${odds.strengths.length}|${environments.map((e) => `${e.id}${e.here ? "+" : ""}`).join(",")}`;
   const strengths = `<table class="enemy-odds-table"><thead><tr><th scope="col">Strength</th><th scope="col">Chance</th>${statHeads()}</tr></thead><tbody>${odds.strengths.map(strengthRow).join("")}</tbody></table>`;
   const traits = odds.traits.length
     ? `<table class="enemy-odds-table"><thead><tr><th scope="col">Attribute</th><th scope="col">Chance</th><th scope="col">Attack Speed</th><th scope="col">Move Speed</th></tr></thead><tbody>${odds.traits.map(traitRow).join("")}</tbody></table>`
     : "";
-  return { key, html: `<button type="button" class="enemy-odds-x" aria-label="Close">${controlIcon("close")}</button><h2>Enemies on this floor</h2>${strengths}${traits}` };
+  const places = environments.length
+    ? `<table class="enemy-odds-table environment-odds"><thead><tr><th scope="col">Environment</th><th scope="col">Chance</th><th scope="col">This Floor</th></tr></thead><tbody>${environments.map(environmentRow).join("")}</tbody></table>`
+    : "";
+  return { key, html: `<button type="button" class="enemy-odds-x" aria-label="Close">${controlIcon("close")}</button><h2>Enemies on this floor</h2>${strengths}${traits}${places}` };
 }
 
 /** The box over the middle of the screen listing the enemies the floor the

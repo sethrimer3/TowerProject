@@ -110,7 +110,7 @@ const SKILL_ITEM_SPRITES: Partial<Record<UpgradeId, keyof typeof ITEM_KIT>> = {
 const SKILL_UI_SPRITES: Partial<Record<UpgradeId, UiSprite>> = {
   inspirationUndos: "undo", undos: "undo", archives: "log", questForKnowledge: "log",
   breakthrough: "breakthrough", moveSpeed: "automove", dash: "automove", instantCombat: "attack", trainers: "arrow-up", buyQuantity: "arrow-up",
-  pathToWealth: "gold", moreWealth: "gold", physician: "health", keyMastery: "log", cardMastery: "log", beastMastery: "attack",
+  pathToWealth: "gold", moreWealth: "gold", goldenFloors: "gold", physician: "health", keyMastery: "log", cardMastery: "log", beastMastery: "attack",
   revive: "revive", overheal: "health", spareChange: "gold", loot: "gold", floorSkipReward: "gold", mug: "gold", legacy: "tower", quality: "tower",
   wisdomFocus: "settings", wisdomMemory: "undo", wisdomSight: "upgrades",
   renownBanner: "tower", renownOath: "defense", renownCrown: "gear",

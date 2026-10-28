@@ -126,6 +126,14 @@ export const UPGRADES = [
     currency: "breakthrough",
   },
   {
+    id: "goldenFloors",
+    name: "Golden Floors",
+    description: "Open Golden Floor Chance and Golden Floor Multiplier research: floors where every Gold found is multiplied",
+    base: 3,
+    max: 1,
+    currency: "breakthrough",
+  },
+  {
     id: "cardMastery",
     name: "Card Mastery",
     description: "Reveal BK Siphon and the skills under it in the Inspiration tree",

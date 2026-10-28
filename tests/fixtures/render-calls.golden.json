@@ -163,5 +163,15 @@
  "trialCamera.settled": "6ac2172cf2e524ab",
  "trialCamera.fast": "0e8187c55e1894a4",
  "trialCamera.instant": "73102076d4023980",
- "trialCamera.reducedMotion": "2c5c166b351b4ed3"
+ "trialCamera.reducedMotion": "2c5c166b351b4ed3",
+ "goldenTower.settled": "ae77122ea55be582",
+ "goldenTower.moving": "164a07523ca66584",
+ "goldenTower.after": "1de7b13fd1b82f87",
+ "goldenTower.ripples": "7c5f6708bccfd872",
+ "goldenTower.later": "4a9ce215cb42918d",
+ "goldenDelve.settled": "f94a43d87fa19b56",
+ "goldenDelve.moving": "0fe8cbe4f092edd9",
+ "goldenDelve.after": "2b24cff9bb008a69",
+ "goldenDelve.ripples": "dee42e0c5505873b",
+ "goldenDelve.later": "5e10c706c32fea43"
 }
