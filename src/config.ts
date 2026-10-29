@@ -4,6 +4,10 @@ export const WIDTH = 30;
 export const CHUNK = 20;
 export const START_X = 15;
 export const VIEWPORT_TILES = 17;
+/** One in-game pixel: a tile is this many art pixels square. Boards draw in
+ * this tile space (the PNG kit, dungeon tiles and decor are native to it) and
+ * the renderer scales it to the screen by `s / ART_PX`. */
+export const ART_PX = 24;
 export const TOWER_WIDTH = 17;
 export const TOWER_HEIGHT = 17;
 export const TOWER_START_X = 8;

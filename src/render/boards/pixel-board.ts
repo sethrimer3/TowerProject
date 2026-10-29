@@ -2,7 +2,7 @@ import { potionShade, type EnemyStrength, type Tile, type Torch, type KeyColor }
 import { forEachViewTile, toTileSpace, type FrameContext } from "../render-frame.ts";
 import type { Facing } from "../../shown.ts";
 import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
-import { sprite, type Sprite } from "../../sprites/pixel-sprite.ts";
+import { fillSprite, snapCell, snapEdge, sprite, type Sprite } from "../../sprites/pixel-sprite.ts";
 import { rankChevrons } from "../rank-chevrons.ts";
 import { tileHash } from "./ascii-glyphs.ts";
 
@@ -96,7 +96,7 @@ function bake(a: Art): CanvasImageSource | null {
     const g = cv.getContext("2d");
     // Only a real canvas: a stand-in (a test's) draws the sprite itself.
     if (typeof CanvasRenderingContext2D === "undefined" || !(g instanceof CanvasRenderingContext2D)) return null;
-    sprite(g, a.rows, a.colors, 1, cv.width / 2, cv.height / 2);
+    fillSprite(g, a.rows, a.colors, 1, 0, 0);
     return cv;
   } catch {
     return null;
@@ -107,6 +107,7 @@ function bake(a: Art): CanvasImageSource | null {
  * the baked canvas scaled without smoothing, or the sprite itself. */
 function draw(c: CanvasRenderingContext2D, a: Art, cell = 1.5, cx = 12, cy = 12) {
   if (a.baked === undefined) a.baked = bake(a);
+  cell = snapCell(cell);
   const w = a.rows[0].length * cell, h = a.rows.length * cell;
   if (!a.baked) {
     sprite(c, a.rows, a.colors, cell, cx, cy);
@@ -114,7 +115,7 @@ function draw(c: CanvasRenderingContext2D, a: Art, cell = 1.5, cx = 12, cy = 12)
   }
   const smoothing = c.imageSmoothingEnabled;
   c.imageSmoothingEnabled = false;
-  c.drawImage(a.baked, cx - w / 2, cy - h / 2, w, h);
+  c.drawImage(a.baked, snapEdge(cx - w / 2), snapEdge(cy - h / 2), w, h);
   c.imageSmoothingEnabled = smoothing;
 }
 
@@ -702,6 +703,7 @@ function paintPixelHero(c: CanvasRenderingContext2D, facing: Facing = { dx: 1, d
 }
 
 export const PIXEL_BOARD: ThemedBoard = {
+  artGrid: 16,
   ground: drawPixelGround, contents: paintPixelContents, heart: (c) => paintPixelHeart(c),
   torch: paintPixelTorch, hero: paintPixelHero,
 };

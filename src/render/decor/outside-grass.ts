@@ -1,4 +1,5 @@
 import type { Board } from "../../board.ts";
+import { ART_PX } from "../../config.ts";
 import type { BoardView } from "../render-frame.ts";
 import { onPath, roadsOf, type Weather } from "../../outside.ts";
 import { tileRandom } from "../../random.ts";
@@ -10,7 +11,7 @@ import { tileRandom } from "../../random.ts";
  * "back" before the hero, then "front" after it, for just the blades rooted
  * at its feet, so the hero wades through the grass. */
 
-const PX = 24;
+const PX = ART_PX;
 type Blade = { i: number; j: number; h: number; color: number; phase: number; flower: number; splay: number };
 const COLORS = ["#27472c", "#335c35", "#437640", "#58904c", "#74ad5c", "#8fc56c"];
 const FLOWERS = ["#f2eecb", "#f2d36b", "#c8b0f0"];

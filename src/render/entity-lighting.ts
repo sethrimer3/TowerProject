@@ -1,3 +1,4 @@
+import { ART_PX } from "../config.ts";
 import type { Tile, Torch } from "../entities.ts";
 import { LIGHTING_CONFIG, getTorchFlicker, getTorchSway } from "./lighting.ts";
 import { torchReaches } from "./floor-relief.ts";
@@ -115,7 +116,7 @@ export class EntityLighting {
     for (const c of stamps) {
       const o = tileOrigin(f, c.x, c.y);
       layer.setTransform(1, 0, 0, 1, o.x, o.y);
-      layer.scale(f.s / 24, f.s / 24);
+      layer.scale(f.s / ART_PX, f.s / ART_PX);
       layer.drawImage(c.sil, 0, 0);
     }
     // ...and never across wall tops.
@@ -203,7 +204,7 @@ export class EntityLighting {
     const vert = this.verticalStretch(`${x},${y},${t.x},${t.y}`, uy);
     const o = tileOrigin(f, x, y);
     layer.setTransform(1, 0, 0, 1, o.x, o.y);
-    layer.scale(f.s / 24, f.s / 24);
+    layer.scale(f.s / ART_PX, f.s / ART_PX);
     // Sprite point (x, y), height h = 22 - y -> (x + h*k*lean, 22 + h*k*vert).
     layer.transform(1, 0, -k * lean, -k * vert, 22 * k * lean, 22 + 22 * k * vert);
     layer.globalAlpha = Math.min(1, shadow.alpha);

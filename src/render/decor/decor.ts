@@ -1,4 +1,4 @@
-import { CHUNK } from "../../config.ts";
+import { ART_PX, CHUNK } from "../../config.ts";
 import { point, type Tile } from "../../entities.ts";
 import type { Board } from "../../board.ts";
 import type { RoomWorld } from "../../tower/room-world.ts";
@@ -14,7 +14,7 @@ import { random, tileRandom } from "../../random.ts";
  * Coordinates: a tile is 24 decor pixels square. Local pixel (i, j) runs
  * right/down inside tile (x, y). World pixels are gx = x*24 + i and
  * gy = -y*24 + j, so gy grows down the screen like j does. */
-export const TILE_PX = 24;
+export const TILE_PX = ART_PX;
 const AREA = TILE_PX * TILE_PX;
 
 /** Tuning for how much of each feature appears. */

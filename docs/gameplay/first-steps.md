@@ -15,6 +15,8 @@ Weather preserves the artwork's colors: passing shadows darken locally and sunli
 Reduce motion keeps the cloud shadows still too.
 World pickups and chests have thin gold pixel outlines, the hero and staircase sprites have blue outlines, and doors have black outlines.
 Square doors uses tile-filling rectangular doors with the same key and HP requirements as before.
+**Experimental pixel filter** (off by default) draws the board on one grid of equal pixels, so sprites drawn at different sizes line up and the camera and hero move a whole pixel at a time; the Pixel and Arcade Game themes' sprites then share one pixel size, so some are a little larger or smaller than usual.
+Labels, numbers and other feedback over the board stay sharp.
 Tower I sprite floors mix large slabs and smaller bricks with connected joints across neighboring tiles.
 Tower II has warm limestone walls and rectangular paving; Tower III has cool basalt walls and octagonal paving with small square insets.
 Each of these two towers keeps its own single floor-and-wall tileset throughout the climb while the Classic Game theme is selected.

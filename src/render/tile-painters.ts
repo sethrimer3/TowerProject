@@ -33,6 +33,9 @@ export type BoardLook = {
   styledSprites?: boolean;
   spriteAnimations?: boolean;
   squareDoors?: boolean;
+  /** The art pixels a tile the Experimental pixel filter draws the board on
+   * (the Game theme's `artGrid`, or ART_PX); none while it is off. */
+  pixelGrid?: number;
   reduceMotion: boolean;
   /** How the Game theme worn draws the board, or null for the lit
    * Classic art (always outside: the forest keeps its art), so what rises

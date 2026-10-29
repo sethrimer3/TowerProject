@@ -140,6 +140,10 @@ export const SETTINGS = {
    * hand chose itself, as it is drawn for a pressed card's
    * (`Game.shownPath`). */
   showPath: { kind: "toggle", default: false, page: { id: "show-path", label: "Show path" } },
+  /** Draw the board on one grid of art pixels, each the same size: ART_PX a
+   * tile (16 for Pixel), each letter-grid sprite's pixel a whole number of
+   * them, the camera and hero moving a whole art pixel at a time. */
+  pixelFilter: { kind: "toggle", default: false, page: { id: "pixel-filter", label: "Experimental pixel filter" } },
 } as const satisfies Record<string, Setting>;
 
 export type SettingKey = keyof typeof SETTINGS;

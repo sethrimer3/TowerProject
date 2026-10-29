@@ -1,4 +1,5 @@
 import type { Game } from "../state.ts";
+import { ART_PX } from "../config.ts";
 import type { Tile, Torch } from "../entities.ts";
 import type { Facing } from "../shown.ts";
 import type { BoardLook } from "./tile-painters.ts";
@@ -72,11 +73,11 @@ export function forEachViewTile(view: Pick<BoardView, "n" | "left" | "bottom">, 
     }
 }
 
-/** Sets `ctx` to draw in 24x24 tile space at a (possibly fractional) tile. */
+/** Sets `ctx` to draw in ART_PX × ART_PX tile space at a (possibly fractional) tile. */
 export function toTileSpace(ctx: CanvasRenderingContext2D, f: FrameContext, x: number, y: number) {
   const o = tileOrigin(f, x, y);
   ctx.translate(o.x, o.y);
-  ctx.scale(f.s / 24, f.s / 24);
+  ctx.scale(f.s / ART_PX, f.s / ART_PX);
 }
 
 /** The board context's transform for drawing in tile space at a tile. */

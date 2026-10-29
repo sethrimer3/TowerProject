@@ -9,6 +9,9 @@ import type { GoldenLook } from "../tile-painters.ts";
  * while one is worn, until each has a version of its own. Every board in
  * `THEMED_BOARDS` (themed-boards.ts) is one. */
 export type ThemedBoard = {
+  /** The art pixels a tile its sprites are drawn on, when not ART_PX: the
+   * Experimental pixel filter draws the board on this grid. */
+  artGrid?: number;
   /** The background, floor and walls over the whole board. */
   ground(f: FrameContext): void;
   /** One tile's contents (also as they rise off the board). */

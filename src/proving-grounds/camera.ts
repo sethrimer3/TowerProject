@@ -1,9 +1,10 @@
 import {FollowCamera,GLIDE_SECONDS,FAST_GLIDE_SECONDS,pointsAhead} from "../render/camera.ts";
 import {ARENA_SIZE} from "./arena.ts";
+import {ART_PX} from "../config.ts";
 import type {TrialState,Spot} from "./trial.ts";
 
 export const TRIAL_VIEW_TILES=17;
-export const TRIAL_TILE_SIZE=24;
+export const TRIAL_TILE_SIZE=ART_PX;
 export type TrialTransition="smooth"|"fast"|"instant";
 type Ahead=readonly {dx:number;dy:number}[];
 

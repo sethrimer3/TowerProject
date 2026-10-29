@@ -103,6 +103,16 @@ The shared core and stepped blend masks come from `assets/game-sprites/dungeon-m
 
 Board drawing (`Renderer`, frames, lighting, decor, popups, tile caches, the forest outside, weather), the render goldens, and the Medieval and Neon themes.
 Board drawing lives in `src/render/`: the Renderer, its frame, camera, tile cache, terrain painters, tilesets and lighting at its root; the Game themes' boards (`*-board.ts`, `themed-board.ts`, `themed-boards.ts`, `themed-art.ts`, `ascii-glyphs.ts`) in `src/render/boards/`; decor (`decor*.ts`, `forest-foliage.ts`, `outside-grass.ts`) in `src/render/decor/`; and the passing effects (poofs, explosions, flashes, glows, damage labels, particles) in `src/render/effects/`.
+
+**One in-game pixel.** `ART_PX` (`config.ts`, 24) is the tile's size in art pixels: every board draws each tile in that tile space (`toTileSpace` in `render-frame.ts`, the tile cache, the entity lighting), and the PNG kit, dungeon tilesets, decor (`TILE_PX`), forest grass and the Proving Grounds (`TRIAL_TILE_SIZE`) are native to it.
+The renderer scales it by `s / ART_PX`, where `s` is the board's CSS width over the tiles in view, so an art pixel is usually a fractional number of screen pixels.
+The letter-grid boards draw their own pixel size: `sprite` and Pixel's `draw` take a `cell` in tile units a pixel, chosen per sprite (Pixel 1.25 to 1.6, Arcade 0.8 to 2.6, Kroz 1 and 3).
+**The Experimental pixel filter** (setting `pixelFilter`, off by default) puts the board on one grid: `BoardLook.pixelGrid` is the art pixels a tile (the Game theme's `ThemedBoard.artGrid`, 16 for Pixel, whose art is all drawn 1.5 tile units a pixel, else `ART_PX`).
+While it is on, `Renderer.beginFrame` puts the camera and the drawn hero on that grid, `snapSprites` (`sprites/pixel-sprite.ts`, set only while the board draws) rounds every letter-grid sprite's `cell` to a whole number of grid pixels (at least one) and its edges onto the grid (so Pixel's sprites all take 1.5 units a pixel and Arcade's mostly 2; `fillSprite` fills one off the grid, for Pixel's bakes), and `Renderer.pixelate` takes the board down to `n × pixelGrid` pixels, one sample from each middle, and blows it back up without smoothing.
+It runs after the flyers and before a theme's `over` (Arcade's and Terminal's scanlines stay screen-sized), so echoes, the boost glow and the overlays (labels, numbers, shields) stay sharp; a screen with no more device pixels than art pixels skips it.
+Scaled to the screen, an art pixel is still a whole number of device pixels only where the board's width happens to divide evenly.
+`tests/pixel-filter.test.ts` covers the sprites' snapping.
+
 The sprite modules (the PNG kit, `sprites/kit.ts`, and every `sprites/*.ts` it feeds, with the board's and the interface's sprites) are in `src/sprites/`, since the interface uses them as much as the board.
 
 **Rendering layers.** `render/rendering.ts` (`Renderer`) owns the camera and smooth player interpolation: the camera, and the hero outside a run's turns, ease after their targets, while through a turn's single step inside a run (`Game.turnShown`) the hero walks at an even pace over the turn's `ms`, so it stands where that turn's shots leave from (a turn stamped after the first frame showing it walks from that frame).

@@ -2,7 +2,7 @@ import { potionShade, type EnemyStrength, type Tile, type Torch, type KeyColor }
 import { forEachViewTile, toTileSpace, type FrameContext } from "../render-frame.ts";
 import type { Facing } from "../../shown.ts";
 import { contentsFrom, type ThemedBoard } from "./themed-board.ts";
-import { sprite, type Sprite } from "../../sprites/pixel-sprite.ts";
+import { snapCell, snapEdge, sprite, type Sprite } from "../../sprites/pixel-sprite.ts";
 
 /** The Arcade Game theme's dungeon board: an old arcade maze, in sprites of
  * our own rather than any one game's. Open ground is black with a pellet on
@@ -244,9 +244,9 @@ const FAST_SPRITE: Sprite = ["W.W..", ".W.W.", "..W.W", ".W.W.", "W.W.."];
 
 /** A small white sprite on a black patch a pixel wider all round. */
 function badge(c: CanvasRenderingContext2D, rows: Sprite, cx: number, cy: number) {
-  const w = rows[0].length + 2, h = rows.length + 2;
+  const u = snapCell(1), w = (rows[0].length + 2) * u, h = (rows.length + 2) * u;
   c.fillStyle = ARCADE.ground;
-  c.fillRect(cx - w / 2, cy - h / 2, w, h);
+  c.fillRect(snapEdge(cx - w / 2), snapEdge(cy - h / 2), w, h);
   sprite(c, rows, { W: ARCADE.white }, 1, cx, cy);
 }
 

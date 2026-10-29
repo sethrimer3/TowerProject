@@ -1,4 +1,5 @@
 import type { BoardView } from "./render-frame.ts";
+import { ART_PX } from "../config.ts";
 
 /** A layer of tiles that rarely change (stone, forest floor, baked decor),
  * painted once into an offscreen canvas at screen resolution and then drawn
@@ -95,7 +96,7 @@ export class TileLayerCache {
       for (let x = this.x0; x <= this.x1; x++) {
         ctx.setTransform(sx, 0, 0, sy, 0, 0);
         ctx.translate((x - this.x0) * s, (this.y1 - y) * s);
-        ctx.scale(s / 24, s / 24);
+        ctx.scale(s / ART_PX, s / ART_PX);
         ctx.save();
         if (!paint(ctx, x, y)) complete = false;
         ctx.restore();

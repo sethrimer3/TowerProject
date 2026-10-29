@@ -1,7 +1,7 @@
 import { boardFont } from "../sprites/font.ts";
 import { forestArrivalPose } from "../forest-arrival.ts";
 import { drawBoardMark } from "../sprites/board-marks.ts";
-import { CHUNK, TOWER_HEIGHT, VIEWPORT_TILES } from "../config.ts";
+import { ART_PX, CHUNK, TOWER_HEIGHT, VIEWPORT_TILES } from "../config.ts";
 import { drawFlyers } from "./flyer-art.ts";
 import type { Game, WalkIn } from "../state.ts";
 import type { Tile, Torch } from "../entities.ts";
@@ -25,6 +25,7 @@ import { paintHero, paintTile, paintTorch, type BoardLook } from "./tile-painter
 import type { AtmosphereConfig } from "./lighting-pass.ts";
 import { DungeonLight, type LitBoard } from "./dungeon-light.ts";
 import { drawThemedBoard, themedBoardOf } from "./boards/themed-boards.ts";
+import { snapSprites } from "../sprites/pixel-sprite.ts";
 import { RoutePath } from "./route-path.ts";
 import { BoardPopups, goldCoin, lunges } from "./board-popups.ts";
 import { DamagePredictions, drawDamageLabels } from "./effects/damage-labels.ts";
@@ -176,8 +177,24 @@ export class Renderer {
   }
   draw(now: number) {
     const f = this.beginFrame(now);
-    const themed = f.look.themed;
-    if (themed) drawThemedBoard(f, themed, this.enemyLunge, () => this.drawRoute(f), this.game.run.player, this.game.mode === "delve" ? this.game.world.width : 0);
+    const themed = f.look.themed, grid = f.look.pixelGrid;
+    snapSprites(grid ? ART_PX / grid : 0);
+    try {
+      this.drawBoard(f);
+    } finally {
+      snapSprites(0);
+    }
+    this.echoes.draw(f, themed ? (c, facing) => themed.hero(c, facing) : (c) => paintHero(c, f.heroFacing));
+    if (!f.look.outside) drawBoostGlow(f, this.boosts);
+    this.drawOverlays(f);
+    const walkIn = this.game.walkIn;
+    if (walkIn?.stage === "gone" && f.look.outside) this.zoomIntoEntrance(f, walkIn);
+  }
+  /** The board itself, through the Experimental pixel filter while it is on
+   * (before a theme's own screen effects, such as Arcade's scanlines). */
+  private drawBoard(f: FrameContext) {
+    const themed = f.look.themed, filter = () => this.pixelate(f);
+    if (themed) drawThemedBoard(f, themed, this.enemyLunge, () => this.drawRoute(f), this.game.run.player, this.game.mode === "delve" ? this.game.world.width : 0, filter);
     else {
       // Ground first; in the dungeon the light then runs the frame (relief,
       // decor, shadows, contents, torches, route, hero, frame) over it.
@@ -188,13 +205,35 @@ export class Renderer {
         // Flying enemies hover over it all, the hero included.
         drawFlyers(f, this.game.run.player, this.game.mode === "delve" ? this.game.world.width : 0, (c, t, x, y) => this.tile(c, f, t, x, y, 1), false);
       }
+      filter();
     }
-    this.echoes.draw(f, themed ? (c, facing) => themed.hero(c, facing) : (c) => paintHero(c, f.heroFacing));
-    if (!f.look.outside) drawBoostGlow(f, this.boosts);
-    this.drawOverlays(f);
-    const walkIn = this.game.walkIn;
-    if (walkIn?.stage === "gone" && f.look.outside) this.zoomIntoEntrance(f, walkIn);
   }
+  /** The Experimental pixel filter: the board drawn so far, taken down to
+   * `pixelGrid` art pixels a tile (one sample each, from its middle) and
+   * blown back up without smoothing, so every art pixel on it is the same
+   * size and on one grid. The camera and hero already stand on that grid
+   * (beginFrame). Nothing while the filter is off, or on a screen with no
+   * more device pixels than art pixels. */
+  private pixelate(f: FrameContext) {
+    const grid = f.look.pixelGrid, size = this.canvas.width;
+    if (!grid || typeof document === "undefined") return;
+    const art = Math.round(f.n * grid);
+    if (size <= art) return;
+    const low = (this.pixelCanvas ??= document.createElement("canvas"));
+    if (low.width !== art) low.width = low.height = art;
+    const lc = low.getContext("2d");
+    if (!lc) return;
+    lc.imageSmoothingEnabled = false;
+    lc.clearRect(0, 0, art, art);
+    lc.drawImage(this.canvas, 0, 0, size, size, 0, 0, art, art);
+    const c = f.c;
+    c.save();
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    c.imageSmoothingEnabled = false;
+    c.drawImage(low, 0, 0, art, art, 0, 0, size, size);
+    c.restore();
+  }
+  private pixelCanvas: HTMLCanvasElement | undefined;
   /** Where the hero went in, closing in on it as if walking after it: the
    * frame drawn, scaled up about the arch's tile and drawn toward the
    * board's middle, until that one tile fills the board. */
@@ -323,8 +362,11 @@ export class Renderer {
       && Math.abs(this.playerX - p.x) < .01 && Math.abs(this.playerY - p.y) < .01;
     const idleKey = `${g.run.seed}:${g.run.height}:${g.run.tier}:${outside}:${p.x},${p.y}:${g.facing.dx},${g.facing.dy}`;
     const heroIdleFrame = this.heroIdle.frame(now, !!idle, idleKey);
+    // Under the pixel filter the camera and hero move a whole art pixel at a time.
+    const grid = look.pixelGrid, onGrid = (v: number) => (grid ? Math.round(v * grid) / grid : v);
     const f: FrameContext = {
-      c, now, dt, dpr, width: box.width, n, s, left: this.left, bottom: this.bottom, playerX: this.playerX + lunge.hero.dx, playerY: this.playerY + lunge.hero.dy, heroFacing: g.facing,
+      c, now, dt, dpr, width: box.width, n, s, left: onGrid(this.left), bottom: onGrid(this.bottom),
+      playerX: onGrid(this.playerX + lunge.hero.dx), playerY: onGrid(this.playerY + lunge.hero.dy), heroFacing: g.facing,
       world: this.inFlight.board(g.world), look, heroIdleFrame, darkness: darknessOf(g), torches: [], walls: [], glows: [],
     };
     f.torches = outside ? [] : this.visibleTorches();
@@ -483,7 +525,7 @@ export class Renderer {
     const c = f.c, g = this.game;
     c.save();
     c.translate(-f.left * f.s, (f.n - OUTSIDE_SIZE + f.bottom) * f.s);
-    c.scale(f.s / 24, f.s / 24);
+    c.scale(f.s / ART_PX, f.s / ART_PX);
     // The Delve's cave is always its league's, the one its run plays.
     const delve = g.mode === "delve", tier = delve ? LEAGUE_INFO[g.delveLeague].cave : g.save.tower.tier;
     const tiers = delve || g.save.tower.tiersOpen > 1;
@@ -717,6 +759,7 @@ export class Renderer {
       styledSprites: !!g.run.outside || usesGameSprites(g.save),
       spriteAnimations: usesGameSprites(g.save) && g.save.settings.spriteAnimations,
       squareDoors: usesGameSprites(g.save) && g.save.settings.squareDoors,
+      pixelGrid: g.save.settings.pixelFilter ? (!g.run.outside && this.themed?.artGrid) || ART_PX : undefined,
       themed: g.run.outside ? null : this.themed,
       golden: g.run.goldenFloor && !g.run.outside ? (x, y) => g.goldenAt(x, y) : undefined,
     };
