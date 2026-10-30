@@ -14,7 +14,8 @@ import { playedSave } from "./first-skills.ts";
  * their price, the node each needs and its card (null for a node that opens
  * research or the Manual hand instead). */
 const NODES: [UpgradeId, number, UpgradeId, CardId | null][] = [
-  ["cardYellowDoor", 5, "keySiphon", "yellowDoor"],
+  ["cardWoodenDoor", 20, "thorns", "woodenDoor"],
+  ["cardYellowDoor", 5, "cardWoodenDoor", "yellowDoor"],
   ["heartDoorResilience", 20, "cardYellowDoor", null],
   ["cardHeartDoor", 10, "heartDoorResilience", "heartDoor"],
   ["cardWeakEnemy", 20, "thorns", "weakEnemy"],
@@ -25,7 +26,7 @@ const NODES: [UpgradeId, number, UpgradeId, CardId | null][] = [
   ["cardBossEnemy", 20, "cardEliteEnemy", "bossEnemy"],
   ["cardNonBossEnemy", 40, "cardBossEnemy", "nonBossEnemy"],
   ["cardChest", 20, "interest", "chest"],
-  ["blueSiphon", 20, "thorns", "blueSiphon"],
+  ["blueSiphon", 20, "keySiphon", "blueSiphon"],
   ["keyToHp", 20, "blueSiphon", "keyToHp"],
   ["blueTrader", 20, "keyToHp", "blueTrader"],
   ["smeltBlue", 20, "blueTrader", "smeltBlue"],
@@ -35,13 +36,12 @@ const NODES: [UpgradeId, number, UpgradeId, CardId | null][] = [
   ["redSiphon", 20, "cardRedKey", "redSiphon"],
   ["floorSkipReward", 20, "cardChest", null],
   ["cardTorch", 20, "cardChest", "torch"],
-  ["cardWoodenDoor", 20, "floorSkipReward", "woodenDoor"],
 ];
 
 test("each card node costs its price, waits for the node above it and adds its card to the deck", () => {
   const g = new Game(playedSave());
   g.save.tower.inspiration = 10_000;
-  g.save.upgrades.questForKnowledge = g.save.upgrades.pathToWealth = g.save.upgrades.physician = g.save.upgrades.keyMastery = g.save.upgrades.moreWealth = g.save.upgrades.cardMastery = g.save.upgrades.beastMastery = 1; // the Archives and the tree under them revealed
+  g.save.upgrades.questForKnowledge = g.save.upgrades.pathToWealth = g.save.upgrades.physician = g.save.upgrades.keyMastery = g.save.upgrades.moreWealth = g.save.upgrades.cardMastery = g.save.upgrades.beastMastery = g.save.upgrades.doorMastery = 1; // the Archives and the tree under them revealed
   g.save.upgrades.pocketMoney = g.save.upgrades.spareChange = g.save.upgrades.wishingWell = g.save.upgrades.freeTraining = g.save.upgrades.interest = 1; // the wealth path down to Interest, above Chest
   g.save.breakthrough = 100;
   for (const id of ["combatStance", "buildout", "trainers", "largerHand", "shroud", "critical", "breakthrough", "archives", "lifesteal", "buyQuantity", "thorns", "findYellowKey", "keyEfficiency", "keySiphon"] as const) assert.ok(g.skills.buy(id));
@@ -63,7 +63,7 @@ test("a card node can't be bought before the one above it", () => {
   const g = new Game(playedSave());
   g.save.tower.inspiration = 10_000;
   assert.equal(g.skills.buy("cardYellowDoor"), false);
-  g.save.upgrades.trainers = g.save.upgrades.keySiphon = g.save.upgrades.keyMastery = g.save.upgrades.questForKnowledge = g.save.upgrades.pathToWealth = g.save.upgrades.physician = 1;
+  g.save.upgrades.trainers = g.save.upgrades.cardWoodenDoor = g.save.upgrades.doorMastery = g.save.upgrades.questForKnowledge = g.save.upgrades.pathToWealth = g.save.upgrades.physician = 1;
   assert.equal(g.skills.buy("cardHeartDoor"), false);
   assert.ok(g.skills.buy("cardYellowDoor"));
   assert.equal(g.skills.buy("cardHeartDoor"), false);

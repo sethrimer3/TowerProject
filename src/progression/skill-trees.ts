@@ -12,7 +12,7 @@ export type SkillNode = { id: UpgradeId; icon: string; x: number; y: number; req
  * only Dev mode shows it, and its skills can't be bought). */
 export type SkillTree = { id: TreeId; name: string; currency: Currency; gate?: UpgradeId | null; description: string; height?: number; unlocks?: boolean; nodes: SkillNode[] };
 export const TREES: SkillTree[] = [
-  { id: "inspiration", name: "Inspiration", currency: "inspiration", description: "Earn Inspiration by beating your best Tower climb.", height: 498, unlocks: true, nodes: [
+  { id: "inspiration", name: "Inspiration", currency: "inspiration", description: "Earn Inspiration by beating your best Tower climb.", height: 552, unlocks: true, nodes: [
     // A new game's first skills down the middle: Door & Key, Enemy, then
     // Auto-Climb, each a row above the next.
     { id: "cardDoorKey", icon: "⚿", x: 50, y: 12, requires: [] },
@@ -61,7 +61,7 @@ export const TREES: SkillTree[] = [
     { id: "buyQuantity", icon: "×", x: 50, y: 268, requires: ["lifesteal"] },
     { id: "cardYellowKey", icon: "⚿", x: 70, y: 286, requires: ["buyQuantity"] },
     { id: "cardBlueKey", icon: "⚿", x: 70, y: 304, requires: ["cardYellowKey"] },
-    { id: "thorns", icon: "✥", x: 50, y: 358, requires: ["buyQuantity"] },
+    { id: "thorns", icon: "✥", x: 50, y: 376, requires: ["buyQuantity"] },
     { id: "spareChange", icon: "¤", x: 20, y: 232, requires: ["pocketMoney"] },
     { id: "wealthy", icon: "¤", x: 10, y: 250, requires: ["spareChange"] },
     { id: "loot", icon: "☠", x: 30, y: 250, requires: ["spareChange"] },
@@ -69,14 +69,13 @@ export const TREES: SkillTree[] = [
     { id: "freeTraining", icon: "↑", x: 20, y: 286, requires: ["wishingWell"] },
     // Interest under Free Training (More Wealth, in the Breakthrough tree,
     // reveals it), Max Interest and Mug either side under it, Chest under
-    // them, and Torch and Floor Skip Reward (then Wooden Door) under Chest.
+    // them, and Torch and Floor Skip Reward under Chest.
     { id: "interest", icon: "¤", x: 20, y: 304, requires: ["freeTraining"], reveal: "moreWealth" },
     { id: "maxInterest", icon: "¤", x: 10, y: 322, requires: ["interest"] },
     { id: "mug", icon: "☠", x: 30, y: 322, requires: ["interest"] },
     { id: "cardChest", icon: "▣", x: 20, y: 340, requires: ["interest"] },
     { id: "cardTorch", icon: "☼", x: 10, y: 358, requires: ["cardChest"] },
     { id: "floorSkipReward", icon: "↷", x: 30, y: 358, requires: ["cardChest"] },
-    { id: "cardWoodenDoor", icon: "⚿", x: 10, y: 376, requires: ["floorSkipReward"] },
     { id: "greaterHeal", icon: "✚", x: 80, y: 214, requires: ["archives"], reveal: "physician" },
     { id: "recovery", icon: "✦", x: 70, y: 232, requires: ["greaterHeal"] },
     { id: "findPotion", icon: "⚗", x: 70, y: 250, requires: ["recovery"] },
@@ -84,40 +83,41 @@ export const TREES: SkillTree[] = [
     { id: "parry", icon: "⇋", x: 90, y: 250, requires: ["regenResearch"] },
     { id: "revive", icon: "☼", x: 90, y: 268, requires: ["parry"] },
     // Thorns leads three ways, each revealed by a Mastery in the Breakthrough
-    // tree. Down the middle (Key Mastery): Find Gold Key, Key Efficiency, GK
-    // Siphon, then Gold Door (Key < Badges, then Key ≥ Badges, to its right;
-    // Heart Door Resilience, then Heart Door, to its left).
-    { id: "findYellowKey", icon: "⚿", x: 50, y: 376, requires: ["thorns"], reveal: "keyMastery" },
-    { id: "keyEfficiency", icon: "⚿", x: 50, y: 394, requires: ["findYellowKey"] },
-    { id: "keySiphon", icon: "⚿", x: 50, y: 412, requires: ["keyEfficiency"] },
-    { id: "cardYellowDoor", icon: "⚿", x: 50, y: 484, requires: ["keySiphon"] },
-    { id: "keyLessBadges", icon: "⚿", x: 70, y: 484, requires: ["cardYellowDoor"] },
-    { id: "keyAtLeastBadges", icon: "⚿", x: 90, y: 484, requires: ["keyLessBadges"] },
-    { id: "heartDoorResilience", icon: "♥", x: 30, y: 484, requires: ["cardYellowDoor"] },
-    { id: "cardHeartDoor", icon: "♥", x: 10, y: 484, requires: ["heartDoorResilience"] },
+    // tree. Down the middle (Door Mastery): Wooden Door, two rows under
+    // Thorns, then Gold Door, Heart Door Resilience and Heart Door below it.
+    { id: "cardWoodenDoor", icon: "⚿", x: 50, y: 412, requires: ["thorns"], reveal: "doorMastery" },
+    { id: "cardYellowDoor", icon: "⚿", x: 50, y: 466, requires: ["cardWoodenDoor"] },
+    { id: "heartDoorResilience", icon: "♥", x: 50, y: 484, requires: ["cardYellowDoor"] },
+    { id: "cardHeartDoor", icon: "♥", x: 50, y: 502, requires: ["heartDoorResilience"] },
     // To the right (Beast Mastery): Weak Enemy, with Elite, then Boss, then
     // Non-Boss to its right and down; Base under it, with Fast under Base and
     // Strong down and right of it.
-    { id: "cardWeakEnemy", icon: "☠", x: 70, y: 376, requires: ["thorns"], reveal: "beastMastery" },
-    { id: "cardEliteEnemy", icon: "☠", x: 90, y: 376, requires: ["cardWeakEnemy"] },
-    { id: "cardBossEnemy", icon: "☠", x: 90, y: 394, requires: ["cardEliteEnemy"] },
-    { id: "cardNonBossEnemy", icon: "☠", x: 90, y: 412, requires: ["cardBossEnemy"] },
-    { id: "cardBaseEnemy", icon: "☠", x: 70, y: 412, requires: ["cardWeakEnemy"] },
-    { id: "cardFastEnemy", icon: "☠", x: 70, y: 430, requires: ["cardBaseEnemy"] },
-    { id: "cardStrongEnemy", icon: "☠", x: 90, y: 430, requires: ["cardBaseEnemy"] },
-    // Down to the left (Card Mastery): BK Siphon, with Smelt Gold Key, then
-    // GK -> BK, Smelt Blue Key, BK -> RK and Smelt Red Key, down its left,
-    // and Red Key, then RK Siphon, under it.
-    { id: "blueSiphon", icon: "⚿", x: 30, y: 376, requires: ["thorns"], reveal: "cardMastery" },
-    { id: "keyToHp", icon: "♥", x: 10, y: 394, requires: ["blueSiphon"] },
-    { id: "blueTrader", icon: "⚿", x: 10, y: 412, requires: ["keyToHp"] },
-    { id: "smeltBlue", icon: "♥", x: 10, y: 430, requires: ["blueTrader"] },
-    { id: "redTrader", icon: "⚿", x: 10, y: 448, requires: ["smeltBlue"] },
-    { id: "smeltRed", icon: "♥", x: 10, y: 466, requires: ["redTrader"] },
-    { id: "cardRedKey", icon: "⚿", x: 30, y: 394, requires: ["blueSiphon"] },
-    { id: "redSiphon", icon: "⚿", x: 30, y: 412, requires: ["cardRedKey"] },
+    { id: "cardWeakEnemy", icon: "☠", x: 70, y: 394, requires: ["thorns"], reveal: "beastMastery" },
+    { id: "cardEliteEnemy", icon: "☠", x: 90, y: 394, requires: ["cardWeakEnemy"] },
+    { id: "cardBossEnemy", icon: "☠", x: 90, y: 412, requires: ["cardEliteEnemy"] },
+    { id: "cardNonBossEnemy", icon: "☠", x: 90, y: 430, requires: ["cardBossEnemy"] },
+    { id: "cardBaseEnemy", icon: "☠", x: 70, y: 430, requires: ["cardWeakEnemy"] },
+    { id: "cardFastEnemy", icon: "☠", x: 70, y: 448, requires: ["cardBaseEnemy"] },
+    { id: "cardStrongEnemy", icon: "☠", x: 90, y: 448, requires: ["cardBaseEnemy"] },
+    // Down to the left (Card Mastery): Find Gold Key, Key Efficiency and GK
+    // Siphon, then BK Siphon, with Smelt Gold Key, then GK -> BK, Smelt Blue
+    // Key, BK -> RK and Smelt Red Key, down its left, and Red Key, RK Siphon,
+    // Key < Badges and Key ≥ Badges under it.
+    { id: "findYellowKey", icon: "⚿", x: 30, y: 394, requires: ["thorns"], reveal: "cardMastery" },
+    { id: "keyEfficiency", icon: "⚿", x: 30, y: 412, requires: ["findYellowKey"], reveal: "cardMastery" },
+    { id: "keySiphon", icon: "⚿", x: 30, y: 430, requires: ["keyEfficiency"], reveal: "cardMastery" },
+    { id: "blueSiphon", icon: "⚿", x: 30, y: 448, requires: ["keySiphon"], reveal: "cardMastery" },
+    { id: "keyToHp", icon: "♥", x: 10, y: 466, requires: ["blueSiphon"] },
+    { id: "blueTrader", icon: "⚿", x: 10, y: 484, requires: ["keyToHp"] },
+    { id: "smeltBlue", icon: "♥", x: 10, y: 502, requires: ["blueTrader"] },
+    { id: "redTrader", icon: "⚿", x: 10, y: 520, requires: ["smeltBlue"] },
+    { id: "smeltRed", icon: "♥", x: 10, y: 538, requires: ["redTrader"] },
+    { id: "cardRedKey", icon: "⚿", x: 30, y: 466, requires: ["blueSiphon"] },
+    { id: "redSiphon", icon: "⚿", x: 30, y: 484, requires: ["cardRedKey"] },
+    { id: "keyLessBadges", icon: "⚿", x: 30, y: 502, requires: ["redSiphon"] },
+    { id: "keyAtLeastBadges", icon: "⚿", x: 30, y: 520, requires: ["keyLessBadges"] },
   ] },
-  { id: "breakthrough", name: "Breakthrough", currency: "breakthrough", gate: "breakthrough", description: "Earn a Breakthrough point for each Tower Goal you claim.", height: 440, unlocks: true, nodes: [
+  { id: "breakthrough", name: "Breakthrough", currency: "breakthrough", gate: "breakthrough", description: "Earn a Breakthrough point for each Tower Goal you claim.", height: 464, unlocks: true, nodes: [
     // Quest for Knowledge first: it reveals the Inspiration tree's Archives
     // and everything under them (but Pocket Money's and Greater Heal's sides,
     // which Path to Wealth and Physician reveal, and the paths More Wealth
@@ -142,7 +142,8 @@ export const TREES: SkillTree[] = [
     { id: "undos", icon: "↺", x: 18, y: 163, requires: ["inspirationUndos"] },
     // Overheal, then Key Mastery, under Physician; Badges stand down and
     // right of Physician. Card Mastery and Beast Mastery split off under Key
-    // Mastery: with it, they reveal the Inspiration tree's three paths under Thorns.
+    // Mastery, and Door Mastery follows it: they reveal the Inspiration
+    // tree's three paths under Thorns.
     { id: "overheal", icon: "♥", x: 50, y: 85, requires: ["physician"] },
     { id: "keyMastery", icon: "⚿", x: 50, y: 111, requires: ["overheal"] },
     { id: "cardBadges", icon: "◪", x: 70, y: 111, requires: ["physician"] },
@@ -151,23 +152,25 @@ export const TREES: SkillTree[] = [
     // Manual Hand, the second hand, after Card Mastery: down and left of it,
     // two rows under it to keep clear of Echoes of time and Ignore.
     { id: "manualHand", icon: "⇄", x: 30, y: 189, requires: ["cardMastery"] },
-    // Then the run's charges under Key Mastery: Ignore, with Target to its
-    // right, each with the skill that regains it below.
-    { id: "ignore", icon: "⊘", x: 50, y: 163, requires: ["keyMastery"] },
-    { id: "target", icon: "⌖", x: 78, y: 163, requires: ["ignore"] },
-    { id: "ignoreMore", icon: "⊘", x: 50, y: 187, requires: ["ignore"] },
-    { id: "targetMore", icon: "⌖", x: 78, y: 187, requires: ["target"] },
+    // Door Mastery under Key Mastery reveals the Inspiration tree's door path
+    // under Thorns. Then the run's charges: Ignore, with Target to its right,
+    // each with the skill that regains it below.
+    { id: "doorMastery", icon: "⚿", x: 50, y: 163, requires: ["keyMastery"] },
+    { id: "ignore", icon: "⊘", x: 50, y: 187, requires: ["doorMastery"] },
+    { id: "target", icon: "⌖", x: 78, y: 187, requires: ["ignore"] },
+    { id: "ignoreMore", icon: "⊘", x: 50, y: 211, requires: ["ignore"] },
+    { id: "targetMore", icon: "⌖", x: 78, y: 211, requires: ["target"] },
     // Limit Break 1 to 10 straight down under Ignore More, each requiring the one before.
-    { id: "limitBreak1", icon: "⇑", x: 50, y: 211, requires: ["ignoreMore"] },
-    { id: "limitBreak2", icon: "⇑", x: 50, y: 235, requires: ["limitBreak1"] },
-    { id: "limitBreak3", icon: "⇑", x: 50, y: 259, requires: ["limitBreak2"] },
-    { id: "limitBreak4", icon: "⇑", x: 50, y: 283, requires: ["limitBreak3"] },
-    { id: "limitBreak5", icon: "⇑", x: 50, y: 307, requires: ["limitBreak4"] },
-    { id: "limitBreak6", icon: "⇑", x: 50, y: 331, requires: ["limitBreak5"] },
-    { id: "limitBreak7", icon: "⇑", x: 50, y: 355, requires: ["limitBreak6"] },
-    { id: "limitBreak8", icon: "⇑", x: 50, y: 379, requires: ["limitBreak7"] },
-    { id: "limitBreak9", icon: "⇑", x: 50, y: 403, requires: ["limitBreak8"] },
-    { id: "limitBreak10", icon: "⇑", x: 50, y: 427, requires: ["limitBreak9"] },
+    { id: "limitBreak1", icon: "⇑", x: 50, y: 235, requires: ["ignoreMore"] },
+    { id: "limitBreak2", icon: "⇑", x: 50, y: 259, requires: ["limitBreak1"] },
+    { id: "limitBreak3", icon: "⇑", x: 50, y: 283, requires: ["limitBreak2"] },
+    { id: "limitBreak4", icon: "⇑", x: 50, y: 307, requires: ["limitBreak3"] },
+    { id: "limitBreak5", icon: "⇑", x: 50, y: 331, requires: ["limitBreak4"] },
+    { id: "limitBreak6", icon: "⇑", x: 50, y: 355, requires: ["limitBreak5"] },
+    { id: "limitBreak7", icon: "⇑", x: 50, y: 379, requires: ["limitBreak6"] },
+    { id: "limitBreak8", icon: "⇑", x: 50, y: 403, requires: ["limitBreak7"] },
+    { id: "limitBreak9", icon: "⇑", x: 50, y: 427, requires: ["limitBreak8"] },
+    { id: "limitBreak10", icon: "⇑", x: 50, y: 451, requires: ["limitBreak9"] },
   ] },
   { id: "wayfinding", name: "Wayfinding", currency: "breakthrough", gate: null, description: "Teach Delve Automove to explore, compare routes and preserve resources.", nodes: [
     { id: "aiMemory", icon: "◇", x: 50, y: 20, requires: [] },

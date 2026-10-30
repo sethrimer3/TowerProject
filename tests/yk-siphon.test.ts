@@ -17,7 +17,7 @@ test("Rehearsed steps costs 1 Breakthrough; Lifesteal (5) follows the Archives, 
   assert.equal(UPGRADES.find((u) => u.id === "inspirationUndos")!.currency, "breakthrough");
   const g = new Game(playedSave());
   g.save.tower.inspiration = 1000;
-  g.save.upgrades.questForKnowledge = g.save.upgrades.pathToWealth = g.save.upgrades.physician = g.save.upgrades.keyMastery = 1;
+  g.save.upgrades.questForKnowledge = g.save.upgrades.pathToWealth = g.save.upgrades.physician = g.save.upgrades.keyMastery = g.save.upgrades.cardMastery = 1;
   g.save.breakthrough = 100;
   for (const id of ["combatStance", "buildout", "trainers", "largerHand", "shroud", "critical", "breakthrough"] as const) assert.ok(g.skills.buy(id));
   assert.equal(g.skills.buy("lifesteal"), false, "waits for the Archives");

@@ -112,7 +112,7 @@ export const UPGRADES = [
   {
     id: "keyMastery",
     name: "Key Mastery",
-    description: "Reveal Find Gold Key and the skills under it in the Inspiration tree",
+    description: "Open Card Mastery, Beast Mastery and Door Mastery, which reveal the paths under Thorns in the Inspiration tree",
     base: 1,
     max: 1,
     currency: "breakthrough",
@@ -136,7 +136,7 @@ export const UPGRADES = [
   {
     id: "cardMastery",
     name: "Card Mastery",
-    description: "Reveal BK Siphon and the skills under it in the Inspiration tree",
+    description: "Reveal Find Gold Key, Key Efficiency, GK Siphon, BK Siphon and the skills under them in the Inspiration tree",
     base: 1,
     max: 1,
     currency: "breakthrough",
@@ -146,6 +146,14 @@ export const UPGRADES = [
     name: "Beast Mastery",
     description: "Reveal Weak Enemy and the skills under it in the Inspiration tree",
     base: 1,
+    max: 1,
+    currency: "breakthrough",
+  },
+  {
+    id: "doorMastery",
+    name: "Door Mastery",
+    description: "Reveal Wooden Door and the skills under it in the Inspiration tree",
+    base: 2,
     max: 1,
     currency: "breakthrough",
   },

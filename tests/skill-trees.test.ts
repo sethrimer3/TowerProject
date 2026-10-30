@@ -86,13 +86,14 @@ test("Shroud follows Trainers and Larger Hand, ahead of Critical; Greater Heal, 
   assert.deepEqual([at("findPotion").x, at("findPotion").y, at("findPotion").requires], [70, 250, ["recovery"]], "Find Potion sits below Recovery");
   assert.deepEqual([at("buyQuantity").x, at("buyQuantity").y, at("buyQuantity").requires], [50, 268, ["lifesteal"]], "Buy Quantity sits under Lifesteal");
   assert.deepEqual([at("lifesteal").x, at("lifesteal").y, at("lifesteal").requires], [50, 232, ["archives"]], "Lifesteal sits under the Archives");
-  assert.deepEqual([at("thorns").x, at("thorns").y, at("thorns").requires], [50, 358, ["buyQuantity"]], "Thorns sits under Buy Quantity, beside Torch and Floor Skip Reward");
-  assert.deepEqual([at("findYellowKey").x, at("findYellowKey").y, at("findYellowKey").requires, at("findYellowKey").reveal], [50, 376, ["thorns"], "keyMastery"], "Find Gold Key sits under Thorns, revealed by Key Mastery");
-  assert.deepEqual([at("keyEfficiency").y, at("keyEfficiency").requires], [394, ["findYellowKey"]], "Key Efficiency sits under Find Gold Key");
-  assert.deepEqual([at("keySiphon").x, at("keySiphon").y, at("keySiphon").requires], [50, 412, ["keyEfficiency"]], "GK Siphon sits under Key Efficiency");
-  assert.deepEqual([at("cardYellowDoor").y, at("cardYellowDoor").requires], [484, ["keySiphon"]], "the door cards hang from GK Siphon");
-  for (const [id, x, reveal] of [["blueSiphon", 30, "cardMastery"], ["findYellowKey", 50, "keyMastery"], ["cardWeakEnemy", 70, "beastMastery"]] as const)
-    assert.deepEqual([at(id).x, at(id).y, at(id).requires, at(id).reveal], [x, 376, ["thorns"], reveal], `${id} under Thorns, revealed by ${reveal}`);
+  assert.deepEqual([at("thorns").x, at("thorns").y, at("thorns").requires], [50, 376, ["buyQuantity"]], "Thorns sits under Buy Quantity, a row below Torch and Floor Skip Reward");
+  assert.deepEqual(["findYellowKey", "keyEfficiency", "keySiphon", "blueSiphon"].map((id) => [at(id).x, at(id).y, at(id).requires, at(id).reveal]),
+    [[30, 394, ["thorns"], "cardMastery"], [30, 412, ["findYellowKey"], "cardMastery"], [30, 430, ["keyEfficiency"], "cardMastery"], [30, 448, ["keySiphon"], "cardMastery"]], "Find Gold Key, Key Efficiency and GK Siphon between Thorns and BK Siphon, revealed by Card Mastery");
+  assert.deepEqual(["cardRedKey", "redSiphon", "keyLessBadges", "keyAtLeastBadges"].map((id) => [at(id).x, at(id).y]), [[30, 466], [30, 484], [30, 502], [30, 520]], "Red Key, RK Siphon, then the key badges down under BK Siphon");
+  assert.deepEqual(["keyLessBadges", "keyAtLeastBadges"].map((id) => at(id).requires), [["redSiphon"], ["keyLessBadges"]]);
+  assert.deepEqual(["cardWoodenDoor", "cardYellowDoor", "heartDoorResilience", "cardHeartDoor"].map((id) => [at(id).x, at(id).y, at(id).requires, at(id).reveal]),
+    [[50, 412, ["thorns"], "doorMastery"], [50, 466, ["cardWoodenDoor"], undefined], [50, 484, ["cardYellowDoor"], undefined], [50, 502, ["heartDoorResilience"], undefined]], "the door path down the middle, two rows under Thorns, revealed by Door Mastery");
+  assert.deepEqual([at("cardWeakEnemy").x, at("cardWeakEnemy").y, at("cardWeakEnemy").requires, at("cardWeakEnemy").reveal], [70, 394, ["thorns"], "beastMastery"], "Weak Enemy under Thorns, revealed by Beast Mastery");
 });
 test("the hand's skills run Buildout, Trainers, Larger Hand, Shroud, Critical to Breakthrough, then the Archives, Gold Key down and right of Buy Quantity with Blue Key under it, ATK Up off Trainers then DEF Up under it with their provisions to their left, On the Job off Trainers with Regen below it and Heal and the elixir under that, and Buildout, Trainers and On the Job cost 1 (Critical 2)", () => {
   const at = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;
@@ -152,10 +153,10 @@ test("each skill in a tree of unlocks is bought once", () => {
 
 test("a tree taller than its view places its nodes on a taller map", () => {
   const inspiration = TREES[0];
-  assert.equal(treeHeight(inspiration), 498);
+  assert.equal(treeHeight(inspiration), 552);
   assert.ok(inspiration.nodes.every((n) => n.y > 0 && n.y < treeHeight(inspiration)), "every node on the map");
-  assert.equal(mapNodes(inspiration).find((n) => n.id === "recovery")!.y, (232 * 100) / 498);
-  assert.equal(treeHeight(TREES.find((t) => t.id === "breakthrough")!), 440);
+  assert.equal(mapNodes(inspiration).find((n) => n.id === "recovery")!.y, (232 * 100) / 552);
+  assert.equal(treeHeight(TREES.find((t) => t.id === "breakthrough")!), 464);
   assert.ok(TREES.slice(2).every((t) => treeHeight(t) === 100 && mapNodes(t).every((n, i) => n.y === t.nodes[i].y)), "other trees fit one view");
 });
 test("Movement Speed research lets the run's arrows go one step a second faster a level", () => {
@@ -198,7 +199,7 @@ test("the Archives and everything under them stay hidden, unbuyable, until Quest
   for (const n of TREES[0].nodes) for (const r of n.requires) upgrades[r] = 1;
   for (const id of below) upgrades[id] = 0;
   assert.ok([...below].every((id) => !skillAvailable(id, upgrades)), "hidden, whatever is owned");
-  upgrades.questForKnowledge = upgrades.pathToWealth = upgrades.physician = upgrades.keyMastery = upgrades.moreWealth = upgrades.cardMastery = upgrades.beastMastery = 1;
+  upgrades.questForKnowledge = upgrades.pathToWealth = upgrades.physician = upgrades.keyMastery = upgrades.moreWealth = upgrades.cardMastery = upgrades.beastMastery = upgrades.doorMastery = 1;
   assert.ok(TREES[0].nodes.every((n) => !skillHidden(n.id, upgrades)), "all revealed");
   assert.ok(skillAvailable("archives", upgrades));
   const quest = UPGRADES.find((u) => u.id === "questForKnowledge")!;
@@ -253,7 +254,14 @@ test("Golden Floors (3 Breakthrough), then Rehearsed steps and Echoes of time st
   const upgrades = { ...defaults().upgrades, trainers: 1, questForKnowledge: 1, pathToWealth: 1, physician: 1 };
   for (const id of ["findYellowKey", "keyEfficiency", "keySiphon", "cardYellowDoor"] as const) assert.ok(skillHidden(id, upgrades), `${id} hidden`);
   upgrades.keyMastery = 1;
-  for (const id of ["findYellowKey", "keyEfficiency", "keySiphon", "cardYellowDoor"] as const) assert.ok(!skillHidden(id, upgrades), `${id} revealed`);
+  for (const id of ["findYellowKey", "keyEfficiency", "keySiphon", "cardYellowDoor"] as const) assert.ok(skillHidden(id, upgrades), `${id} still hidden: Key Mastery reveals no skill itself`);
+  upgrades.cardMastery = 1;
+  for (const id of ["findYellowKey", "keyEfficiency", "keySiphon", "blueSiphon"] as const) assert.ok(!skillHidden(id, upgrades), `${id} revealed by Card Mastery`);
+  assert.ok(skillHidden("cardWoodenDoor", upgrades));
+  upgrades.doorMastery = 1;
+  for (const id of ["cardWoodenDoor", "cardYellowDoor", "heartDoorResilience", "cardHeartDoor"] as const) assert.ok(!skillHidden(id, upgrades), `${id} revealed by Door Mastery`);
+  assert.deepEqual([at("doorMastery").x, at("doorMastery").y, at("doorMastery").requires, at("ignore").y, at("ignore").requires], [50, 163, ["keyMastery"], 187, ["doorMastery"]], "Door Mastery in Ignore's old spot, Ignore a row below it");
+  assert.deepEqual([UPGRADES.find((u) => u.id === "doorMastery")!.currency, cost("doorMastery", 0)], ["breakthrough", cost("keyMastery", 0) + 1], "Door Mastery costs one more than Key Mastery");
 });
 test("Faster Trainers sits right of Critical, off it, costs 2 and opens its research", () => {
   const at = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;
