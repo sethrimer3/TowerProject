@@ -75,6 +75,8 @@ export function squaredUp(player: Player, enemy: Enemy): { player: Player; enemy
 export const POWER_FACTOR = 2;
 /** The percent more ATK a Dash Combo gives a fight, per Combo. */
 export const COMBO_PERCENT = 20;
+/** The highest Combo a Dash Combo's ATK counts; the Combo itself goes on rising. */
+export const COMBO_LIMIT = 50;
 /** The turns without a fight that end a Dash Combo. */
 export const COMBO_TURNS = 2;
 /** `player` as it stands against `enemy`: its DEF and shroud raised by the

@@ -77,8 +77,8 @@ Level n costs 250 × n × 2^(n−1) Gold and takes 1.75 × n × 1.2^(n−1) hour
 A dashed turn regains HP by Regen once, on its first step, not on the tiles it dashes across.
 **Dash Combo** (1 Breakthrough, down and left of Dash) rewards chaining fights.
 A dash that lands beside an enemy, followed by a fight on the next turn, starts a combo at 1.
-Each fight in the combo strikes with +20% ATK per Combo (+20% at 1, +40% at 2), a factor of its own.
-A fight begun within two turns of the last one (right away, or after one step or dash) raises the Combo by 1, with no limit, and carries across floors.
+Each fight in the combo strikes with +20% ATK per Combo (+20% at 1, +40% at 2), a factor of its own, up to +1000% at Combo 50.
+A fight begun within two turns of the last one (right away, or after one step or dash) raises the Combo by 1, and it carries across floors; the Combo goes on rising past 50, though the ATK doesn't.
 Two turns without a fight end it, and a run's end does too.
 Only a dash starts a combo; a dash on a combo's last turn that lands beside an enemy starts a new one at 1.
 While the Combo is 1 or more, the sword and **x Combo** show under the currencies in the run.

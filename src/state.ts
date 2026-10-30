@@ -46,7 +46,7 @@ import type {
 import { World, LAYOUT_VERSION } from "./delve/world.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import { chestKindAt, litTorches, type Board } from "./board.ts";
-import { COMBO_PERCENT, COMBO_TURNS, healUpTo, instakill, squaredUp, type CritRule, type Wings } from "./combat.ts";
+import { COMBO_LIMIT, COMBO_PERCENT, COMBO_TURNS, healUpTo, instakill, squaredUp, type CritRule, type Wings } from "./combat.ts";
 import { smites, type Smitten } from "./angel.ts";
 import { HEART_DOOR_HP, hpCeiling, isLethal, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardStat } from "./step-effects.ts";
 import { ENTRANCE_Y, ENTRANCE_ZOOM_MS, OUTSIDE_START_Y, OutsideWorld } from "./outside.ts";
@@ -1150,10 +1150,11 @@ export class Game {
     return moved;
   }
   /** The hero as it takes a fight: with a Dash Combo going on, a copy
-   * carrying its ATK, which only the fight reads (`squaredUp`). */
+   * carrying its ATK, up to `COMBO_LIMIT`'s worth, which only the fight reads
+   * (`squaredUp`). */
   get fighter(): Player {
     const p = this.run.player, combo = this.run.combo;
-    return combo ? { ...p, comboAttack: combo.next * COMBO_PERCENT } : p;
+    return combo ? { ...p, comboAttack: Math.min(combo.next, COMBO_LIMIT) * COMBO_PERCENT } : p;
   }
   /** The Dash Combo the meter shows: the next fight's while a fight plays
    * out (it is that fight's), otherwise the last fight's, so 0 until a fight

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { COMBO_PERCENT, predict } from "../src/combat.ts";
+import { COMBO_LIMIT, COMBO_PERCENT, predict } from "../src/combat.ts";
 import { decode } from "../src/save/save.ts";
 import { TREES, skillAvailable } from "../src/progression/skill-trees.ts";
 import { UPGRADES, cost } from "../src/progression/upgrades.ts";
@@ -80,6 +80,29 @@ test("a fight within two turns of the last raises the Combo, and two turns witho
   assert.equal(g.comboShown, 0);
   step(g);
   assert.equal(g.run.combo, undefined, "the next fight isn't chained");
+});
+
+test("the ATK stops rising at Combo 50, and the Combo goes on past it", () => {
+  assert.equal(COMBO_LIMIT, 50);
+  const g = corridor({ 1: foe(), 2: foe() });
+  g.run.combo = { next: 49, idle: 0 };
+  assert.equal(g.fighter.comboAttack, 980, "+980% just under the limit");
+  step(g);
+  assert.deepEqual([g.comboShown, g.run.combo?.next], [49, 50]);
+  assert.equal(g.fighter.comboAttack, 1000, "+1000% at the limit");
+  step(g);
+  assert.deepEqual([g.comboShown, g.run.combo?.next], [50, 51]);
+  assert.equal(g.fighter.comboAttack, 1000, "no more past it");
+  // ATK 10 at +1000% is 110: 110 HP falls to one strike, 111 takes two, however high the Combo.
+  const felled = corridor({ 1: foe(110) });
+  felled.run.combo = { next: 80, idle: 0 };
+  step(felled);
+  assert.equal(felled.run.player.hp, 100, "one strike");
+  assert.equal(felled.comboShown, 80, "the meter goes on rising");
+  const held = corridor({ 1: foe(111) });
+  held.run.combo = { next: 80, idle: 0 };
+  step(held);
+  assert.ok(held.run.player.hp < 100, "two strikes, and one back");
 });
 
 test("only a dash starts a combo: a walked fight doesn't", () => {
