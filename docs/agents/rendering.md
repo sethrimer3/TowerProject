@@ -103,6 +103,9 @@ The shared core and stepped blend masks come from `assets/game-sprites/dungeon-m
 
 Board drawing (`Renderer`, frames, lighting, decor, popups, tile caches, the forest outside, weather), the render goldens, and the Medieval and Neon themes.
 Board drawing lives in `src/render/`: the Renderer, its frame, camera, tile cache, terrain painters, tilesets and lighting at its root; the Game themes' boards (`*-board.ts`, `themed-board.ts`, `themed-boards.ts`, `themed-art.ts`, `ascii-glyphs.ts`) in `src/render/boards/`; decor (`decor*.ts`, `forest-foliage.ts`, `outside-grass.ts`) in `src/render/decor/`; and the passing effects (poofs, explosions, flashes, glows, damage labels, particles) in `src/render/effects/`.
+**Pixel-perfect scaling** (setting `pixelPerfect`, off by default; `render/pixel-scale.ts`): `ART_PX` (24) is a tile in art pixels, and while the setting is on `Renderer.beginFrame` sizes the canvas to `n × ART_PX × artPixelScale(…)`, a whole number of canvas pixels an art pixel at or just above the screen's own density (up to 4), for the browser to fit to the board's box, and puts the camera and drawn hero on whole art pixels (`onArtGrid`).
+The view still shows `n` tiles, so tap mapping and the overlays are unchanged.
+
 The sprite modules (the PNG kit, `sprites/kit.ts`, and every `sprites/*.ts` it feeds, with the board's and the interface's sprites) are in `src/sprites/`, since the interface uses them as much as the board.
 
 **Rendering layers.** `render/rendering.ts` (`Renderer`) owns the camera and smooth player interpolation: the camera, and the hero outside a run's turns, ease after their targets, while through a turn's single step inside a run (`Game.turnShown`) the hero walks at an even pace over the turn's `ms`, so it stands where that turn's shots leave from (a turn stamped after the first frame showing it walks from that frame).

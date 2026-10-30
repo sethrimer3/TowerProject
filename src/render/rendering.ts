@@ -47,6 +47,7 @@ import { drawShields } from "./shield-art.ts";
 import { drawChestMarks } from "./chest-marks.ts";
 import type { Dash, ShownTurn } from "../shown.ts";
 import { darknessOf, forEachViewTile, tileTransform, toTileSpace, type FrameContext } from "./render-frame.ts";
+import { ART_PX, artPixelScale, onArtGrid } from "./pixel-scale.ts";
 import { gameLook } from "../theme-collection.ts";
 import { usesGameSprites } from "../sprites/style.ts";
 import { spriteRevision } from "../sprites/kit.ts";
@@ -301,10 +302,16 @@ export class Renderer {
   private beginFrame(now: number): FrameContext {
     const g = this.game, n = this.density;
     this.snapOnNewBoard(n, now);
-    const box = this.canvas.getBoundingClientRect(),
-      dpr = Math.min(devicePixelRatio || 1, 2);
-    if (this.canvas.width !== Math.round(box.width * dpr)) {
-      this.canvas.width = Math.round(box.width * dpr);
+    const pixelPerfect = g.save.settings.pixelPerfect, box = this.canvas.getBoundingClientRect();
+    // Pixel-perfect scaling draws a whole number of canvas pixels an art
+    // pixel (from the screen's own density, up to 4), for the browser to
+    // fit to the board's box, and keeps the camera and hero on whole art
+    // pixels.
+    const screen = Math.min(devicePixelRatio || 1, pixelPerfect ? 4 : 2),
+      width = pixelPerfect && box.width ? n * ART_PX * artPixelScale(box.width * screen, n) : Math.round(box.width * screen),
+      dpr = pixelPerfect && box.width ? width / box.width : screen;
+    if (this.canvas.width !== width) {
+      this.canvas.width = width;
       this.canvas.height = this.canvas.width;
     }
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -325,8 +332,10 @@ export class Renderer {
       && Math.abs(this.playerX - p.x) < .01 && Math.abs(this.playerY - p.y) < .01;
     const idleKey = `${g.run.seed}:${g.run.height}:${g.run.tier}:${outside}:${p.x},${p.y}:${g.facing.dx},${g.facing.dy}`;
     const heroIdleFrame = this.heroIdle.frame(now, !!idle, idleKey);
+    const snap = (v: number) => (pixelPerfect ? onArtGrid(v) : v);
     const f: FrameContext = {
-      c, now, dt, dpr, width: box.width, n, s, left: this.left, bottom: this.bottom, playerX: this.playerX + lunge.hero.dx, playerY: this.playerY + lunge.hero.dy, heroFacing: g.facing,
+      c, now, dt, dpr, width: box.width, n, s, left: snap(this.left), bottom: snap(this.bottom),
+      playerX: snap(this.playerX + lunge.hero.dx), playerY: snap(this.playerY + lunge.hero.dy), heroFacing: g.facing,
       world: this.inFlight.board(g.world), look, heroIdleFrame, darkness: darknessOf(g), torches: [], walls: [], glows: [],
     };
     f.torches = outside ? [] : this.visibleTorches();
