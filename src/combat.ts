@@ -123,8 +123,10 @@ export function defenseAgainst(player: Player, enemy: Enemy) {
 /** The hero's critical strikes: each strike is critical with `chance` percent
  * (100 or more: that many applications are certain, and the rest rolls for
  * one more), and every application adds `factor` − 1 times the hero's ATK to
- * the strike, so one application multiplies it by `factor`. */
-export type CritRule = { chance: number; factor: number; cards?: { chance: number; factor: number } };
+ * the strike, so one application multiplies it by `factor`. A critical
+ * strike is then a Super Critical hit with `superCrit.chance` percent, its
+ * multiplier multiplied by `superCrit.factor`. */
+export type CritRule = { chance: number; factor: number; cards?: { chance: number; factor: number }; superCrit?: { chance: number; factor: number } };
 /** `crit` against `enemy`: the enemy cards' trees' percents covering it
  * (`foeCritChance`, `foeCritFactor`) added to the card percents already in
  * it (`cards`, ENEMY's), as one card factor; itself when none covers it. */
@@ -133,6 +135,7 @@ export function critAgainst(crit: CritRule | undefined, player: Player, enemy: E
   if (!crit || (!chance && !factor)) return crit;
   const had = crit.cards ?? { chance: 0, factor: 0 }, cards = { chance: snap(had.chance + chance), factor: snap(had.factor + factor) };
   return {
+    ...crit,
     chance: chance ? snap((crit.chance * (100 + cards.chance)) / (100 + had.chance)) : crit.chance,
     factor: factor ? snap((crit.factor * (100 + cards.factor)) / (100 + had.factor)) : crit.factor,
     cards,
@@ -143,8 +146,12 @@ export const critMultiplier = (factor: number, applications: number) => (applica
 /** The hero's critical rolls in one fight: the `factor` and how many
  * applications strike number `strike` (from 0, the hero's own) has, and
  * what the hero's first strike's ATK is multiplied by on top (`first`:
- * ENEMY's Surprise Attack, ×2). */
-export type Crits = { factor: number; applications: (strike: number) => number; first?: number };
+ * ENEMY's Surprise Attack, ×2), and, with `superFactor`, which strikes that
+ * land a critical hit are Super Critical (`superCrit`). */
+export type Crits = { factor: number; applications: (strike: number) => number; first?: number; superFactor?: number; superCrit?: (strike: number) => boolean };
+/** Whether a strike `crit` already made critical is Super Critical, for its
+ * `roll` from 0 up to 1. */
+export const landsSuperCrit = (crit: CritRule, roll: number) => !!crit.superCrit && roll * 100 < crit.superCrit.chance;
 /** How many applications of its critical factor `chance` percent always lands. */
 export const guaranteedCrits = (chance: number) => Math.floor(chance / 100);
 /** `player` striking with the applications `crit` is certain to land: its
@@ -405,7 +412,7 @@ export const REVIVE_PAUSE_MS = DEFEAT_MS + REVIVE_MS;
  * (`thorns`), leaving it `thornHp`. A revival Angel Wings gave (`winged`)
  * may smite the enemy too (`smote`, Avenging Angel), ending the fight with
  * it at 0 HP (`thornHp`, as thorns that fell it leave it). */
-export type Strike = { by: "hero" | "enemy"; damage: number; crit?: number; pronounced?: true; heroHp?: number; healed?: number; shrouded?: number; revived?: true; winged?: true; smote?: true; parried?: true; thorns?: number; thornHp?: number; start: number; at: number; end: number; hp: number };
+export type Strike = { by: "hero" | "enemy"; damage: number; crit?: number; superCrit?: true; pronounced?: true; heroHp?: number; healed?: number; shrouded?: number; revived?: true; winged?: true; smote?: true; parried?: true; thorns?: number; thornHp?: number; start: number; at: number; end: number; hp: number };
 /** A fight's opening, before the hero's first strike: a boss's Takedown
  * (`takedown`) and Tangle (`tangle`) shown over it, its HP left `hp` from
  * `at` ms in. */
@@ -470,13 +477,14 @@ function play(strikes: Strike[], { player, enemy, revives, crits, powered, wings
   for (;;) {
     if (!s.enemyNext) {
       const applications = crits?.applications(s.heroStrikes) ?? 0, first = !s.heroStrikes && crits?.first ? crits.first : 1;
-      const multiplier = snap(critMultiplier(crits?.factor ?? 1, applications) * first), struck = multiplier === 1 ? hit : heroHit(player, enemy, multiplier);
+      const superCrit = applications > 0 && !!crits?.superCrit?.(s.heroStrikes);
+      const multiplier = snap(critMultiplier(crits?.factor ?? 1, applications) * (superCrit ? crits!.superFactor! : 1) * first), struck = multiplier === 1 ? hit : heroHit(player, enemy, multiplier);
       s.heroStrikes++;
       const healed = player.lifesteal ? healUpTo(s.heroHp, lifestealHeal(player, struck), stealCeiling(player)) : s.heroHp;
       const heals = healed !== s.heroHp, gained = snap(healed - s.heroHp);
       s.heroHp = healed;
       s.enemyHp = snap(Math.max(0, s.enemyHp - struck));
-      strike({ by: "hero", damage: struck, ...(applications ? { crit: applications } : {}), ...(first !== 1 || powered ? { pronounced: true as const } : {}), ...(heals ? { heroHp: healed, healed: gained } : {}), hp: s.enemyHp });
+      strike({ by: "hero", damage: struck, ...(applications ? { crit: applications } : {}), ...(superCrit ? { superCrit: true as const } : {}), ...(first !== 1 || powered ? { pronounced: true as const } : {}), ...(heals ? { heroHp: healed, healed: gained } : {}), hp: s.enemyHp });
       if (!s.enemyHp) break;
     }
     s.enemyNext = false;
@@ -580,7 +588,7 @@ function withStrike(round: Round, s: Strike, t: number): Round {
     // A heal comes after the enemy's strikes already in the round, so the HP the round ends on is the healed one.
     const healed = snap((round.hero?.healed ?? 0) + (s.healed ?? 0));
     const heroHp = s.heroHp ?? round.hero?.heroHp, enemy = s.heroHp !== undefined && round.enemy ? { ...round.enemy, hp: s.heroHp } : round.enemy;
-    return { ...round, ...(enemy ? { enemy } : {}), hero: { by: "hero", damage: snap((round.hero?.damage ?? 0) + s.damage), ...(crit ? { crit } : {}), ...(heroHp !== undefined ? { heroHp } : {}), ...(healed ? { healed } : {}), hp: s.hp, ...at } };
+    return { ...round, ...(enemy ? { enemy } : {}), hero: { by: "hero", damage: snap((round.hero?.damage ?? 0) + s.damage), ...(crit ? { crit } : {}), ...(round.hero?.superCrit || s.superCrit ? { superCrit: true as const } : {}), ...(heroHp !== undefined ? { heroHp } : {}), ...(healed ? { healed } : {}), hp: s.hp, ...at } };
   }
   // A summary round shows no parries, only the damage they left.
   const prev = round.enemy, shrouded = snap((prev?.shrouded ?? 0) + (s.shrouded ?? 0)), thorns = snap((prev?.thorns ?? 0) + (s.thorns ?? 0)), thornHp = s.thornHp ?? prev?.thornHp;

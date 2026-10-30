@@ -14,7 +14,9 @@ import type { StepEffect } from "./step-effects.ts";
  * key a door used, a material, or the heart a Heart Door checked, or with
  * a plus, `raised`, the max HP Max HP's badge added), or as `text` where it
  * has none. A kill's drops carry their `drop` place, so they rise together. */
-export type Gain = { x: number; y: number; text: string; art: GainArt | null; drop?: Drop };
+/** A reward that is a strike's number, in that strike's colours (a Bomb's). */
+export type GainStrike = "crit" | "superCrit";
+export type Gain = { x: number; y: number; text: string; art: GainArt | null; drop?: Drop; strike?: GainStrike };
 /** Where one of a kill's or a chest's drops rises: `row` rows above its tile (below,
  * negative), Gold over Silver over the rest, and whether it starts `with`
  * the drop queued before it rather than after. */

@@ -46,13 +46,14 @@ import { earn } from "./save/profile.ts";
  * (floor 90: the Deck links neighbouring cards of the hand into a group
  * whose cards share one priority, cards/cards.ts), and Tower V's Flying Enemy
  * Card (floor 10: the FLYING ENEMY card joins the deck, `GOAL_CARDS` in
- * cards/cards.ts). */
+ * cards/cards.ts) and Super Critical Research (floor 200: the Archives'
+ * two Super Critical projects, which need the skill too). */
 export type GoalUnlock =
   | "damagePrediction" | "combatForecast" | "attackLore" | "warp" | "damageVisual" | "relativeDamageColor" | "equipment" | "tournament" | "events" | "researchSpeed"
   | "shardAttack" | "shardDefense" | "parryPercent"
   | "shrines" | "firstBoonChoice" | "improveTradeoffs" | "autoPickBoons" | "boonOptions" | "banBoons" | "autoPickRanking"
   | "badgeSlots" | "noteTaking" | "archerCard" | "attackRange" | "attackSpeed" | "attackPerTile" | "chargedShot" | "multishot" | "rapidFire"
-  | "trainingDiscount" | "cardGroups" | "flyingEnemyCard" | "warpLoot";
+  | "trainingDiscount" | "cardGroups" | "flyingEnemyCard" | "warpLoot" | "superCriticalResearch";
 export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   damagePrediction: "Damage Prediction", combatForecast: "Combat Forecast", attackLore: "Attack Lore", warp: "Warp", damageVisual: "Damage Visual",
   relativeDamageColor: "Relative Damage Color", equipment: "Equipment", tournament: "Tournament", events: "Events",
@@ -63,7 +64,7 @@ export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   badgeSlots: "Badge Slots", noteTaking: "Note Taking",
   archerCard: "Archer Card", attackRange: "Attack Range", attackSpeed: "Attack Speed", attackPerTile: "ATK / m", chargedShot: "Charged Shot", multishot: "Multishot", rapidFire: "Rapid Fire",
   trainingDiscount: "Training Discount", cardGroups: "Card Groups", flyingEnemyCard: "Flying Enemy Card",
-  warpLoot: "Warp Loot",
+  warpLoot: "Warp Loot", superCriticalResearch: "Super Critical Research",
 };
 /** What a checkpoint pays: an unlock, the next tower opened, or an amount of a currency. */
 export type GoalReward =
@@ -149,6 +150,7 @@ const TOWER_FIVE: Record<number, CheckpointSet> = {
   10: { reward: unlock("flyingEnemyCard") },
   30: { reward: unlock("parryPercent") },
   40: { reward: unlock("banBoons") },
+  200: { reward: unlock("superCriticalResearch") },
 };
 /** Tower VI's checkpoints that differ from the stub. */
 const TOWER_SIX: Record<number, CheckpointSet> = {

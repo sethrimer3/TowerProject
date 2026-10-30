@@ -412,8 +412,16 @@ export const UPGRADES = [
   {
     id: "bombs",
     name: "Bombs",
-    description: "Open the Bomb provision on the Gear page: a Bomb every climb, thrown at an enemy to deal it your ATK",
+    description: "Open the Bomb provision on the Gear page: a Bomb every climb, thrown at an enemy to deal it your ATK, critical hits counted",
     base: 5,
+    max: 1,
+    currency: "inspiration",
+  },
+  {
+    id: "superCritical",
+    name: "Super Critical",
+    description: "Your critical hits can become Super Critical hits, multiplied again: unlock SCrit % and SCrit x training",
+    base: 30,
     max: 1,
     currency: "inspiration",
   },

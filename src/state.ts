@@ -46,7 +46,7 @@ import type {
 import { World, LAYOUT_VERSION } from "./delve/world.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import { chestKindAt, litTorches, type Board } from "./board.ts";
-import { COMBO_LIMIT, COMBO_PERCENT, COMBO_TURNS, healUpTo, instakill, squaredUp, type CritRule, type Wings } from "./combat.ts";
+import { COMBO_LIMIT, COMBO_PERCENT, COMBO_TURNS, critAgainst, critMultiplier, guaranteedCrits, healUpTo, instakill, landsSuperCrit, squaredUp, type CritRule, type Wings } from "./combat.ts";
 import { smites, type Smitten } from "./angel.ts";
 import { HEART_DOOR_HP, hpCeiling, isLethal, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardStat } from "./step-effects.ts";
 import { ENTRANCE_Y, ENTRANCE_ZOOM_MS, OUTSIDE_START_Y, OutsideWorld } from "./outside.ts";
@@ -106,7 +106,7 @@ import { warpLootSilver } from "./economy/warp-loot.ts";
 import { CardActivation } from "./game/card-activation.ts";
 import { Finds } from "./game/finds.ts";
 import { FightPlayback } from "./game/fight-playback.ts";
-import type { Coin, Dash, Drop, Facing, Gain, GainArt, Heal, ShownTurn } from "./shown.ts";
+import type { Coin, Dash, Drop, Facing, Gain, GainArt, GainStrike, Heal, ShownTurn } from "./shown.ts";
 /** How a new run starts: out in the forest or at the entrance, and from
  * which seed (rolled from the game's randomness when left out). */
 export type RunStart = { outside?: boolean; seed?: number; height?: number };
@@ -158,6 +158,8 @@ const AUTO_CLIMB_HINT_HEIGHT = 3;
 const TURN_MS = 220;
 /** Salts the run seed for Find Gold Key's roll on each new floor. */
 const YELLOW_KEY_SALT = 0x6e11a;
+/** Salt a Bomb's critical and Super Critical rolls. */
+const BOMB_SALT = 0xb0b1c, BOMB_SUPER_SALT = 0xb0b5c;
 /** Salt the run seed for the traders' and smelts' Floor Key rolls on each new floor. */
 const FLOOR_KEY_SALT: Record<KeyColor, number> = { yellow: 0x9f10e, blue: 0xb1f10, red: 0x4ef10 };
 /** A step resolved and about to be taken: the tile stepped onto, what it
@@ -1709,8 +1711,8 @@ export class Game {
     return c === "ignore" ? this.ignoreTile(x, y) : c === "target" ? this.targetTile(x, y) : this.bombTile(x, y);
   }
   /** A Bomb going off on (x, y): the enemy there (or a Flying one over it)
-   * takes the hero's ATK, its DEF no help, and falls to it as to an arrow,
-   * paid as a kill. A tile with no enemy takes no Bomb. The throw is a turn
+   * takes the hero's ATK, critical and Super Critical rolls counted, its DEF
+   * no help, and falls to it as to an arrow, paid as a kill. A tile with no enemy takes no Bomb. The throw is a turn
    * of its own, so undo takes it back, and its kill's Gold can't be paid
    * twice. A fight still playing out counts first. */
   private bombTile(x: number, y: number): "used" | "invalid" | "unavailable" {
@@ -1726,19 +1728,31 @@ export class Game {
     this.countProvisionsUsed();
     this.armed = null;
     this.bombed = { x, y, at: performance.now() };
-    const damage = this.run.player.attack;
-    this.gain(x, y, `−${wholeChange(Math.min(damage, enemy.hp))}`, null, undefined, "hit");
+    const { damage, applications, superCrit } = this.bombStrike(x, y, enemy);
+    this.gain(x, y, `−${wholeChange(Math.min(damage, enemy.hp))}`, null, undefined, "hit", superCrit ? "superCrit" : applications ? "crit" : undefined);
     if (enemy.hp > damage) {
       this.world.wound?.(x, y, damage);
       this.message = `Bomb · ${enemyTitle(enemy)} −${wholeChange(damage)} HP`;
     } else {
       this.world.clear(x, y);
-      this.message = [`Bomb · ${enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, { x, y }, 1, false, 0)].join(" · ");
+      this.message = [`Bomb · ${enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, { x, y }, 1, false, applications ? 1 : 0)].join(" · ");
     }
     // The hand plans again, round what the Bomb left.
     this.cardPlan = null;
     this.afterPlayerAction();
     return "used";
+  }
+  /** What the Bomb just thrown at `enemy` on (x, y) deals: its rolls are a
+   * fixed number per run, tile and Bomb, so undoing the throw and throwing it
+   * again lands the same. */
+  private bombStrike(x: number, y: number, enemy: Enemy) {
+    const { player, seed, bombsUsed } = this.run, crit = critAgainst(this.crit, player, enemy);
+    if (!crit) return { damage: player.attack, applications: 0, superCrit: false };
+    const rolls = (seed ^ BOMB_SALT ^ Math.imul(bombsUsed ?? 0, 0x85ebca6b)) | 0;
+    const sure = guaranteedCrits(crit.chance), rest = snap(crit.chance - 100 * sure);
+    const applications = sure + (tileRandom(x, y, rolls) * 100 < rest ? 1 : 0);
+    const superCrit = applications > 0 && landsSuperCrit(crit, tileRandom(x, y, (rolls ^ BOMB_SUPER_SALT) | 0));
+    return { damage: snap(player.attack * critMultiplier(crit.factor, applications) * (superCrit ? crit.superCrit!.factor : 1)), applications, superCrit };
   }
   private ignoreTile(x: number, y: number): "used" | "invalid" {
     if (!this.handRules.ignore(x, y)) return "invalid";
@@ -1987,9 +2001,9 @@ export class Game {
   }
   /** Queues a reward to rise from (x, y), unless the Settings turn off
    * gains of its `kind` (by default, the kind its art raises). */
-  gain(x: number, y: number, text: string, art: GainArt | null = null, drop?: Drop, kind: GainKind | null = kindOf(art)) {
+  gain(x: number, y: number, text: string, art: GainArt | null = null, drop?: Drop, kind: GainKind | null = kindOf(art), strike?: GainStrike) {
     if (kind && !this.save.settings[GAIN_SETTINGS[kind]]) return;
-    this.gains.push({ x, y, text, art, ...(drop ? { drop } : {}) });
+    this.gains.push({ x, y, text, art, ...(drop ? { drop } : {}), ...(strike ? { strike } : {}) });
     if (this.gains.length > MAX_GAINS) this.gains.shift();
   }
   /** Pays the XP for beating `enemy` on equivalent floor `floor`, counting

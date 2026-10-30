@@ -19,8 +19,8 @@ export const TREES: SkillTree[] = [
     { id: "cardEnemy", icon: "☠", x: 50, y: 30, requires: ["cardDoorKey"] },
     { id: "autoClimb", icon: "»", x: 50, y: 48, requires: ["cardEnemy"] },
     // The hand's skills, down to Breakthrough: Buildout, Trainers, Larger
-    // Hand, Shroud, Critical (with Critical Prediction, then Bombs, to its
-    // left and Faster Trainers to its right). ATK
+    // Hand, Shroud, Critical (with Critical Prediction, then Bombs with Super
+    // Critical under it, to its left and Faster Trainers to its right). ATK
     // Up branches left off Trainers, with DEF Up to its left, each with its
     // provision (Vanguard Banner, Aegis Charm) under it, so more can follow
     // down those two columns, and On the Job
@@ -35,6 +35,7 @@ export const TREES: SkillTree[] = [
     { id: "critical", icon: "✸", x: 50, y: 156, requires: ["shroud"] },
     { id: "critPrediction", icon: "✸", x: 30, y: 156, requires: ["critical"] },
     { id: "bombs", icon: "✹", x: 10, y: 156, requires: ["critPrediction"] },
+    { id: "superCritical", icon: "✸", x: 10, y: 174, requires: ["bombs"] },
     { id: "fasterTrainers", icon: "»", x: 70, y: 156, requires: ["critical"] },
     { id: "onTheJob", icon: "¤", x: 80, y: 102, requires: ["trainers"], reveal: "trainers" },
     { id: "regen", icon: "♥", x: 80, y: 120, requires: ["onTheJob"] },

@@ -218,7 +218,7 @@ test("descriptions are written from the grants", () => {
     "One more Aegis charm every climb: press it for +20% DEF for 100 turns",
     "One more Vanguard Banner every climb: press it for +20% ATK for 100 turns",
     "One more gold key every 100 floors of a climb, from the floor it starts on",
-    "One more Bomb every climb: press it, then an enemy's tile, to deal that enemy your ATK",
+    "One more Bomb every climb: press it, then an enemy's tile, to deal that enemy your ATK, critical hits counted",
   ]);
 });
 

@@ -14,7 +14,7 @@ export const UI_ORNAMENT_SPRITES = ["ui-menu", "ui-seal", "ui-mastered", "ui-rev
 
 /** Every Goal reward has a matching PNG, including existing kit subjects. */
 export const GOAL_SPRITES = {
-  flyingEnemyCard: "card-flyingEnemy", archerCard: "card-archer",
+  flyingEnemyCard: "card-flyingEnemy", archerCard: "card-archer", superCriticalResearch: "badge-star",
   warpLoot: "goal-warp-loot", trainingDiscount: "goal-training-discount", cardGroups: "goal-card-groups",
   attackRange: "goal-attack-range", attackSpeed: "goal-attack-speed", attackPerTile: "goal-attack-per-tile",
   chargedShot: "goal-charged-shot", multishot: "goal-multishot", rapidFire: "goal-rapid-fire",

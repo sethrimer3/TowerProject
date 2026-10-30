@@ -93,6 +93,26 @@ const overhealPrices = {
     return 1_000 + Math.ceil(((n * n * n * n - 1) * (800 + n)) / 400);
   }),
 };
+/** Prices from `first`, rising by a fixed ratio through each stretch of
+ * ranks, multiplied out in order so every engine agrees. */
+const stretchedPrices = (first: number, stretches: readonly (readonly [ranks: number, ratio: number])[]) => {
+  const prices = [first];
+  let price = first;
+  for (const [ranks, ratio] of stretches) {
+    for (let k = 0; k < ranks; k++) prices.push(Math.round((price *= ratio)));
+  }
+  return prices;
+};
+/** Super Critical Chance's trainers: 50,000 Gold for the first rank, about
+ * 1.5 million for the 10th, 158 million for the 25th, 255 billion for the 100th. */
+const superCritChanceGold = stretchedPrices(50_000, [[9, 1.459233], [15, 1.364073], [75, 1.103499]]);
+/** Super Critical Factor's trainers: 30,000 Gold for the first rank, about
+ * 848,000 for the 10th, 17 million for the 20th, 2 billion for the 50th, 618
+ * billion for the 100th, 6.1 trillion for the 120th. */
+const superCritFactorGold = stretchedPrices(30_000, [[9, 1.449615], [10, 1.349601], [30, 1.172248], [70, 1.1215]]);
+/** The Super Critical rows' Silver: from 100 for the first rank, rising in
+ * step with their trainers' Gold. */
+const fromHundred = (gold: readonly number[]) => gold.map((price) => Math.ceil((price * 100) / gold[0]!));
 /** A trainer's Gold curve: each rank asks `TRAINING_GOLD_PER_POINT` Gold
  * a point of the row's cost times the rank's number, times 1 + ranks /
  * `growth` (see `trainingGold`), so a smaller `growth` pulls away faster. A
@@ -204,6 +224,22 @@ export const TRAINING = [
     curve: { per: 10 }, base: 120, off: 100, scale: 100, unit: "×", research: "critFactorPercent",
     description: "Raises how much a critical hit multiplies your ATK.",
     silver: { base: 12, step: 2, growth: 3 }, gold: critTrainers,
+  },
+  // The chance a critical hit is a Super Critical hit, in hundredths of a
+  // percent: 0.2% a rank, 20% at its 100, before research (`critRule`).
+  {
+    id: "superCritChance", name: "Super Critical Chance", short: "SCrit %", group: "offense", requires: "superCritical", cost: 1, max: 100,
+    curve: { per: 20 }, scale: 100, unit: "chance",
+    description: "Raises the chance a critical hit becomes a Super Critical hit.",
+    silver: { prices: fromHundred(superCritChanceGold) }, gold: { prices: superCritChanceGold },
+  },
+  // What a Super Critical hit multiplies a critical hit's ATK by, in
+  // hundredths: ×1, and ×0.1 more a rank, ×13 at its 120, before research.
+  {
+    id: "superCritFactor", name: "Super Critical Factor", short: "SCrit x", group: "offense", requires: "superCritical", cost: 1, max: 120,
+    curve: { per: 10 }, base: 100, off: 100, scale: 100, unit: "×", research: "superCritFactorPercent",
+    description: "Raises how much a Super Critical hit multiplies a critical hit.",
+    silver: { prices: fromHundred(superCritFactorGold) }, gold: { prices: superCritFactorGold },
   },
   // The Archer's reach, in hundredths of a tile (a meter): 3 tiles, and 0.05 more a
   // rank, 7 at its 80 (enemies/ranged.ts).

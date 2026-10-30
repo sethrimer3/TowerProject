@@ -36,6 +36,12 @@ const HERO_DAMAGE_COLOR = "#b3121f";
 /** A critical strike's number: a little brighter, in a glow. */
 const CRIT_COLOR = "#ff7a6a";
 const CRIT_GLOW = "#ffb04a";
+/** A Super Critical strike's number: light purple, edged in gold inside an
+ * outer black outline, larger than the others, and popping in larger still
+ * over its first `SUPER_CRIT_POP_MS`. */
+const SUPER_CRIT_COLOR = "#c9a0ff";
+const SUPER_CRIT_EDGE = "#ffd34d";
+const SUPER_CRIT_POP_MS = 180;
 /** CHEST's Double and Triple flash: a large gold multiplier in a glow, as
  * tall as this share of a tile. */
 const FLASH_SIZE = 0.9;
@@ -130,9 +136,11 @@ const PARRY_GIVE = 0.4;
 
 type Popup = { x: number; y: number; start: number };
 /** A rising number's colour, how far it rises (tiles) and its size (of a tile). */
-type TextStyle = { color: string; rise: number; size: number; glow?: string; ring?: Ring };
+type TextStyle = { color: string; rise: number; size: number; glow?: string; ring?: Ring; edge?: string };
 /** A reward without a sprite, written in gold. */
 const REWARD_TEXT: TextStyle = { color: REWARD_COLOR, rise: REWARD_RISE, size: 0.42 };
+const SUPER_CRIT_TEXT: TextStyle = { color: SUPER_CRIT_COLOR, rise: DAMAGE_RISE, size: 0.75, edge: SUPER_CRIT_EDGE };
+const CRIT_TEXT: TextStyle = { color: CRIT_COLOR, rise: DAMAGE_RISE, size: 0.55, glow: CRIT_GLOW };
 /** A mark's colour, size (px in tile space) and alignment. */
 type MarkStyle = { color: string; size: number; align?: CanvasTextAlign; styled?: boolean };
 type Offset = { dx: number; dy: number };
@@ -145,7 +153,7 @@ const STILL: Offset = { dx: 0, dy: 0 };
 export class BoardPopups {
   private rewards: (Popup & { gain: Gain })[] = [];
   /** Damage and heal numbers. */
-  private numbers: (Popup & { text: string; color: string; glow?: string; ring?: Ring })[] = [];
+  private numbers: (Popup & { text: string; color: string; glow?: string; ring?: Ring; superCrit?: true })[] = [];
   /** The last heal raised. */
   private healed = 0;
   /** The fights still showing, oldest first, the game's latest last, each
@@ -234,7 +242,7 @@ export class BoardPopups {
         if (s.thorns && s.full) this.arrowBars.push({ x: s.from.x, y: s.from.y, from: s.before ?? s.full, hp: s.hp ?? 0, full: s.full, start });
         continue;
       }
-      this.raise({ by: "hero", damage: s.damage, ...(s.crit ? { crit: s.crit } : {}), start: 0, at: 0, end: 0, hp: s.hp ?? 0 }, s.to, start, s.charge);
+      this.raise({ by: "hero", damage: s.damage, ...(s.crit ? { crit: s.crit } : {}), ...(s.superCrit ? { superCrit: true as const } : {}), start: 0, at: 0, end: 0, hp: s.hp ?? 0 }, s.to, start, s.charge);
       if (s.healed) this.heal(s.healed, s.from, start);
       if (s.full) this.arrowBars.push({ x: s.to.x, y: s.to.y, from: s.before ?? s.full, hp: s.hp ?? 0, full: s.full, start });
     }
@@ -255,12 +263,17 @@ export class BoardPopups {
    * hero came out ahead of raises only its blue gain. An arrow with a
    * `charge` (percent) above 0 wears a gold outline around its black one,
    * a faint one under `FULL_CHARGE`, as does a `pronounced` strike (a
-   * full one: a Surprise Attack's first, a Power Strike's). */
+   * full one: a Surprise Attack's first, a Power Strike's). A Super Critical
+   * hit's own edge takes the place of those. */
   private raise(s: Strike, on: { x: number; y: number }, start: number, charge = 0) {
     if (!this.shown.hitNumbers || (s.by === "enemy" && s.healed && !s.damage && !s.shrouded)) return;
     const both = !!s.shrouded && s.damage > 0, y = on.y + DAMAGE_START;
     if (s.shrouded) this.numbers.push({ x: on.x - (both ? SHROUD_SPLIT : 0), y, start, text: popupAmount(s.shrouded), color: SHROUD_COLOR });
     if (s.shrouded && !s.damage) return;
+    if (s.superCrit) {
+      this.numbers.push({ x: on.x, y, start, text: popupAmount(s.damage), color: SUPER_CRIT_COLOR, superCrit: true });
+      return;
+    }
     this.numbers.push({ x: on.x + (both ? SHROUD_SPLIT : 0), y, start, text: popupAmount(s.damage), ...(s.crit ? { color: CRIT_COLOR, glow: CRIT_GLOW } : { color: s.by === "hero" ? DAMAGE_COLOR : HERO_DAMAGE_COLOR }), ...(s.pronounced ? { ring: CHARGED_RING } : charge > 0 ? { ring: charge < FULL_CHARGE ? FAINT_RING : CHARGED_RING } : {}) });
   }
   /** Nothing is rising or waiting to, and the enemy's HP bar is still. */
@@ -281,9 +294,9 @@ export class BoardPopups {
     for (const shown of this.fights) drawOpening(f, shown.fight);
     const started = <T extends Popup>(popups: T[]) => popups.filter((p) => p.start <= f.now).sort((a, b) => a.start - b.start);
     const rewards = started(this.rewards), reward = (p: (typeof rewards)[number]) =>
-      p.gain.art && "multiplier" in p.gain.art ? this.drawFlash(f, p, p.gain.text) : this.drawSprite(f, p) || this.drawText(f, p, p.gain.text, REWARD_TEXT);
+      p.gain.art && "multiplier" in p.gain.art ? this.drawFlash(f, p, p.gain.text) : this.drawSprite(f, p) || this.drawText(f, p, p.gain.text, p.gain.strike === "superCrit" ? SUPER_CRIT_TEXT : p.gain.strike === "crit" ? CRIT_TEXT : REWARD_TEXT);
     for (const p of rewards) if (!p.gain.drop) reward(p);
-    for (const p of started(this.numbers)) this.drawText(f, p, p.text, { color: p.color, rise: DAMAGE_RISE, size: 0.55, ...(p.glow ? { glow: p.glow } : {}), ...(p.ring ? { ring: p.ring } : {}) });
+    for (const p of started(this.numbers)) this.drawText(f, p, p.text, p.superCrit ? SUPER_CRIT_TEXT : { color: p.color, rise: DAMAGE_RISE, size: 0.55, ...(p.glow ? { glow: p.glow } : {}), ...(p.ring ? { ring: p.ring } : {}) });
     for (const p of rewards) if (p.gain.drop) reward(p);
   }
   /** CHEST's Double and Triple: `text` (×2, ×3, ×6) flashed large over
@@ -314,11 +327,12 @@ export class BoardPopups {
       rise: f.look.reduceMotion ? 0 : (rise * age) / POPUP_MS,
     };
   }
-  private drawText(f: FrameContext, p: Popup, text: string, { color, rise, size, glow, ring }: TextStyle) {
+  private drawText(f: FrameContext, p: Popup, text: string, { color, rise, size, glow, ring, edge }: TextStyle) {
     const c = f.c, { alpha, rise: up } = this.phase(f, p, rise), at = tileCenter(f, p.x, p.y + up);
     c.save();
     c.globalAlpha = alpha;
-    c.font = boardFont(f.look.styledSprites, Math.max(11, f.s * size));
+    const age = f.now - p.start, pop = edge && !f.look.reduceMotion && age < SUPER_CRIT_POP_MS ? 1 + 0.4 * (1 - age / SUPER_CRIT_POP_MS) : 1;
+    c.font = boardFont(f.look.styledSprites, Math.max(11, f.s * size * pop));
     c.textAlign = "center";
     c.textBaseline = "middle";
     const outline = Math.max(2, f.s * 0.1);
@@ -329,9 +343,16 @@ export class BoardPopups {
       c.strokeStyle = ring.color;
       c.strokeText(text, at.x, at.y);
     }
-    c.lineWidth = outline;
+    if (edge) c.lineJoin = "round";
+    c.lineWidth = edge ? outline * 2.4 : outline;
     c.strokeStyle = "#000";
     c.strokeText(text, at.x, at.y);
+    if (edge) {
+      // The gold edge, narrower, over the black outline.
+      c.lineWidth = outline * 1.2;
+      c.strokeStyle = edge;
+      c.strokeText(text, at.x, at.y);
+    }
     if (glow) {
       c.shadowColor = glow;
       c.shadowBlur = Math.max(6, f.s * 0.35);

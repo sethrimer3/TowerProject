@@ -36,9 +36,11 @@ const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon("
  * the Archer Card a card wearing a plain wooden bow, Attack Range an arrow flying past
  * a range ring, Attack Speed two arrows in a row, Training Discount a Gold
  * coin under a falling arrow, Card Groups two cards linked by a bracket and
- * a diamond, the Flying Enemy Card a card wearing a wing, and every Shrine
- * research a shrine's gate (`shrineIcon`). */
+ * a diamond, the Flying Enemy Card a card wearing a wing, Super Critical
+ * Research a purple star edged in gold, and every Shrine research a shrine's
+ * gate (`shrineIcon`). */
 const LEGACY_UNLOCK_ICONS: Record<GoalUnlock, string> = {
+  superCriticalResearch: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.9 6.6 7.1.7-5.4 4.7 1.6 7L12 17.3 5.8 21l1.6-7L2 9.3l7.1-.7z" fill="#c9a0ff" stroke="#ffd34d" stroke-width="1.5" stroke-linejoin="round"/></svg>`,
   flyingEnemyCard: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="2" width="15" height="20" rx="2" fill="#2a3346" stroke="#c9ced8" stroke-width="1.3"/><path d="M6.5 15c2-4.5 6-7.5 11-8.5-1 1.2-1.6 2.2-2 3.2 1-.2 1.8-.2 2.6 0-1 .9-1.8 1.8-2.4 2.8.8 0 1.5.2 2.1.5-2.6 1.6-6.4 2.4-11.3 2z" fill="#e8f2ff" stroke="#7fb6ff" stroke-width="1" stroke-linejoin="round"/></svg>`,
   warpLoot: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="9" cy="11" rx="6" ry="8" fill="#2a1d4a" stroke="#c9a6ff" stroke-width="1.5"/><path d="M9 6.8c2.2 0 3.4 1.8 3 3.6-.5 1.7-2.6 2.5-3.9 1.5-1.1-.8-.9-2.4.3-2.7" fill="none" stroke="#f0e2ff" stroke-width="1.3" stroke-linecap="round"/><circle cx="16.5" cy="16.5" r="5" fill="#5d6673" stroke="#e6ebf2" stroke-width="1.4"/><circle cx="16.5" cy="16.5" r="2.8" fill="none" stroke="#ffffff" stroke-width="1"/></svg>`,
   trainingDiscount: `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="13" r="7.5" fill="#6b4a0e" stroke="#ffd34d" stroke-width="1.5"/><circle cx="10" cy="13" r="4.6" fill="none" stroke="#ffe58a" stroke-width="1"/><path d="M19.5 2.5v9M16.6 8.6l2.9 2.9 2.9-2.9" fill="none" stroke="#8ff0a8" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
@@ -78,6 +80,7 @@ const UNLOCK_ICONS = Object.fromEntries((Object.keys(LEGACY_UNLOCK_ICONS) as Goa
 const TOWER_ICON = kitIcon("tower", `<svg class="goal-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 21.5V8.5H4.5v-5h3v2h2.2v-2h4.6v2h2.2v-2h3v5H18v13z" fill="#3a3f4b" stroke="#c9ced8" stroke-width="1.3" stroke-linejoin="round"/><path d="M10 21.5v-4a2 2 0 0 1 4 0v4z" fill="#ffd34d"/><rect x="11" y="10" width="2" height="3" rx=".5" fill="#ffd34d"/></svg>`, "goal-icon");
 /** What each unlock does, shown once it is claimed and again whenever its claimed reward is pressed. */
 const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
+  superCriticalResearch: `<p>Super Critical Chance and Super Critical Factor research open in the Archives once you own the Super Critical skill: more chance a critical hit becomes a Super Critical hit, and a larger multiplier when it does.</p>`,
   flyingEnemyCard: `<p>The Flying Enemy card joins your deck: it moves you toward the closest Flying enemy your arrows can hurt, stops once one is within your Attack Range, and waits there while your arrows fly.</p>` +
     `<p>While it is in your hand, your arrows strike with 5% more ATK and charge 5% faster.</p>` +
     `<p class="hint">Flying enemies hover out of reach of your sword: walk under them freely, but only arrows can bring them down. A Flying enemy an arrow wounds comes after you.</p>`,

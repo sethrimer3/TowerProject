@@ -222,8 +222,18 @@ export function critRule(save: Pick<Save, "upgrades" | "training" | "archives">,
   const chance = snap(trainedAmount(save, "critChance") / 100 * researched(save.archives, "critChancePercent") / 100 * (100 + (cards?.chance ?? 0)) / 100);
   if (chance <= 0) return undefined;
   const factor = snap(trainedAmount(save, "critFactor") / 100 * researched(save.archives, "critFactorPercent") / 100 * (100 + (cards?.factor ?? 0)) / 100);
+  const superCrit = superCritRule(save);
   // The card percents ride along, so an enemy card's own add to them (`critAgainst`).
-  return cards?.chance || cards?.factor ? { chance, factor, cards: { chance: cards.chance, factor: cards.factor } } : { chance, factor };
+  return { chance, factor, ...(cards?.chance || cards?.factor ? { cards: { chance: cards.chance, factor: cards.factor } } : {}), ...(superCrit ? { superCrit } : {}) };
+}
+/** A hero's Super Critical hits, or none until they would change a strike:
+ * SCrit %'s chance, in percent, its research adding to it, and SCrit x's
+ * factor, its research multiplying it. */
+function superCritRule(save: Pick<Save, "upgrades" | "training" | "archives">) {
+  if (!save.upgrades.superCritical) return undefined;
+  const chance = snap(trainedAmount(save, "superCritChance") / 100 + researched(save.archives, "superCritChance") / 10);
+  const factor = snap(trainedAmount(save, "superCritFactor") / 100 * researched(save.archives, "superCritFactorPercent") / 100);
+  return chance > 0 && factor > 1 ? { chance, factor } : undefined;
 }
 
 /** The Free Upgrade row training each group's free levels. */
@@ -347,6 +357,8 @@ export function rowValue(save: Save, id: TrainingId, extra: number, view: Traini
     return { unit, value: shownAmount(amountAt(def, ranks) * f * (boons?.floorSilver ?? 1) * found) };
   }
   const value = amountAt(def, ranks) / (def.scale ?? 1);
+  // Its research adds to the chance, in tenths of a percent, rather than multiplying it.
+  if (id === "superCritChance") return { unit, value: snap(value + researched(save.archives, "superCritChance") / 10) };
   if (FREE_ROWS.has(id) && boons) return { unit, value: snap(value + boons.freeUp / 100) };
   return { unit, value: unit === "" ? shownAmount(value * f) : snap(value * f) };
 }

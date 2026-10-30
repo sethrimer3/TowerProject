@@ -3,6 +3,7 @@
 ## Archivists
 
 **Archives** (5 Inspiration, after Breakthrough, which follows Critical) adds an Archives tab to the Research page, after Training: research that lasts between runs, paid in Gold and real time.
+Claiming Tower V's floor 200 Goal, with the Super Critical skill owned, opens **Super Critical Chance** research (+0.1% chance a level, 50 levels, up to +5%) and **Super Critical Factor** research (+2% of the factor a level, 40 levels, up to +80%): each level costs 200,000 + 11,936 × (n³ − 1) Gold and takes 1,440 + 65 × (n² − 1) minutes, so level 5 is 1.68 million Gold and 3,000 minutes.
 The Archives, and everything under them in the Inspiration tree, stay hidden until **Quest for Knowledge** (1 Breakthrough, the Breakthrough tree's first skill) is bought: until then the line below Breakthrough fades away into nothing.
 An archivist works on one project at a time, a level at a time: pay the level's Gold, and it completes on the clock, whether the game is open, on another page, or closed.
 A busy archivist shows the time its research has left down to the second (*7h 41m 33s*), ticking each second.

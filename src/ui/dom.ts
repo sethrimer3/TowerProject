@@ -125,7 +125,7 @@ const SKILL_CARDS: Partial<Record<UpgradeId, CardId>> = { cardDoorKey: "door", c
   cardRedKey: "redKey", redSiphon: "redSiphon", cardTorch: "torch", cardWoodenDoor: "woodenDoor", heartDoorResilience: "heartDoor",
   angelWings: "angelWings" };
 const SKILL_DETAIL_SPRITES: Partial<Record<UpgradeId, string>> = {
-  shroud: "ui-ward", critical: "goal-damage-prediction", critPrediction: "goal-damage-prediction",
+  shroud: "ui-ward", critical: "goal-damage-prediction", critPrediction: "goal-damage-prediction", superCritical: "badge-star",
   thorns: "sword", lifesteal: "boon-lifesteal", parry: "goal-parry", regen: "boon-regen", regenResearch: "boon-regen",
   autoClimb: "play", fasterTrainers: "hourglass", freeTraining: "boon-free-up", buildout: "deck", manualHand: "card-exchange",
   ignore: "ignore", ignoreMore: "ignore", target: "target", targetMore: "target",

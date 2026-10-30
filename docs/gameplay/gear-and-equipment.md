@@ -19,7 +19,7 @@ Once **Extra Key** (1 Breakthrough, after Movement Speed in the Breakthrough tre
 In the Delve, floors are its equivalent floors.
 The keys come as a floor begins, so undo can't take them back.
 Once the Inspiration skill **Bombs** (5 Inspiration, left of Critical Prediction) is owned, Provisions also sell **Bombs**: each one owned is a Bomb every run carries.
-Its button shows the Bombs left: press it, then tap an enemy, and the Bomb explodes on its tile, dealing that enemy your ATK (its DEF doesn't reduce it).
+Its button shows the Bombs left: press it, then tap an enemy, and the Bomb explodes on its tile, dealing that enemy your ATK, critical and Super Critical hits rolled as for a strike (its DEF doesn't reduce it).
 An enemy the Bomb fells is cleared and pays out as if you had beaten it; a tap on a tile with no enemy uses no Bomb, and pressing the button again puts the Bomb away.
 Unlike the other provisions, throwing a Bomb is a turn of its own, so undo takes it back, Bomb included, without paying the kill twice.
 Bombs used come back only with the next run.

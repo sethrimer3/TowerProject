@@ -48,7 +48,7 @@ export class DamagePredictions {
     // fight that fells the hero first heals nothing.
     const steal = player.lifesteal ? `${player.lifesteal}|${player.hp}` : "";
     const guard = `${player.thorns ?? 0}|${player.parry ?? 0}|${player.cardParry ?? 0}|${player.bossAttack ?? 0}|${player.pierce ?? 0}|${JSON.stringify(player.foeAttack ?? {})}|${JSON.stringify(player.foeDefense ?? {})}|${JSON.stringify(player.foeShroud ?? {})}|${player.doorShroud ?? 0}|${JSON.stringify(player.foeCritChance ?? {})}|${JSON.stringify(player.foeCritFactor ?? {})}|${JSON.stringify(player.foeStealOverheal ?? {})}`;
-    const hero = `${player.attack}|${player.defense}|${player.shroud ?? 0}|${steal}|${crit ? `${crit.chance}|${crit.factor}` : ""}|${guard}`;
+    const hero = `${player.attack}|${player.defense}|${player.shroud ?? 0}|${steal}|${crit ? `${crit.chance}|${crit.factor}|${crit.superCrit?.chance ?? 0}|${crit.superCrit?.factor ?? 1}` : ""}|${guard}`;
     if (hero !== this.hero) [this.hero, this.costs] = [hero, new Map()];
     // A boss's strength sets its thorns and the hero's boss ATK; a Fast enemy strikes first;
     // a bubble's guard cuts the hero's strikes; a wounded enemy's full HP sets its thorns.

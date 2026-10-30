@@ -210,11 +210,11 @@ export function shotDamage(player: Player, enemy: Enemy) {
 /** What the Archer's arrow takes off `enemy`: one of its strikes, raised
  * against a boss and by the hand's cards (`cards`, the Shot ATK percent
  * added to the enemy cards'), multiplied by its `boost` (`arrowBoost`) and by
- * `applications` of the critical `factor`, less the enemy's DEF (Piercing
+ * `applications` of the critical `factor` and a Super Critical's `superFactor`, less the enemy's DEF (Piercing
  * ignoring some), cut by a Shielded enemy's bubble; 0 or less does nothing. */
-export function arrowDamage(player: Player, enemy: Enemy, applications = 0, factor = 1, boost = 1, cards = 0) {
+export function arrowDamage(player: Player, enemy: Enemy, applications = 0, factor = 1, boost = 1, cards = 0, superFactor = 1) {
   const attack = boost === 1 ? attackAgainst(player, enemy, cards) : snap(attackAgainst(player, enemy, cards) * boost);
-  const raised = applications ? snap(attack * critMultiplier(factor, applications)) : attack;
+  const raised = applications ? snap(attack * critMultiplier(factor, applications) * superFactor) : attack;
   return guarded(snap(raised - defenseAgainst(player, enemy)), enemy);
 }
 
