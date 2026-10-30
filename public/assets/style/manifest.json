@@ -1649,6 +1649,11 @@
       "width": 9,
       "height": 8
     },
+    "combat-armor": {
+      "file": "combat-armor.png",
+      "width": 9,
+      "height": 8
+    },
     "combat-fast": {
       "file": "combat-fast.png",
       "width": 12,

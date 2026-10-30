@@ -115,13 +115,18 @@ export function struckDamage(attack: number, defense: number, cut: number) {
   const damage = snap(Math.max(0, attack - defense));
   return cut ? snap((damage * (100 - cut)) / 100) : damage;
 }
+/** How many times its DEF an Armored enemy has (enemies/armored.ts). */
+export const ARMORED_DEF = 2;
+/** What `broken` percent of Armor Break takes off `enemy`'s DEF: that share of
+ * its DEF before Armored, so a higher DEF never makes a hit break more. */
+export const defenseBroken = (enemy: Enemy, broken: number) => ((enemy.armored ? enemy.defense / ARMORED_DEF : enemy.defense) * broken) / 100;
 /** The DEF `enemy` holds against the hero: its own, less the percent the
  * hero's equipment pierces (`pierce`), less the percent of its own Armor Break
  * has taken off (`broken`), which may take it below 0: a hit then does that
  * much more than ATK. */
 export function defenseAgainst(player: Player, enemy: Enemy, broken = enemy.broken ?? 0) {
   const held = player.pierce ? snap((enemy.defense * (100 - player.pierce)) / 100) : enemy.defense;
-  return broken ? snap(held - (enemy.defense * broken) / 100) : held;
+  return broken ? snap(held - defenseBroken(enemy, broken)) : held;
 }
 /** Whether the hero's hits wear down `enemy`'s DEF (Armor Break). They do
  * whether or not they do damage, so such an enemy can always be fought. */

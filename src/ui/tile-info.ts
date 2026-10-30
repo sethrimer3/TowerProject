@@ -3,7 +3,7 @@ import type { Enemy, Kind, Player, Tile } from "../entities.ts";
 import { enemyTitle } from "../enemies/scaling.ts";
 import type { Game, RouteEffects } from "../state.ts";
 import { POTION_HEAL, potionRestores, resolveStep, shardStat } from "../step-effects.ts";
-import { attackForFewerHits, brokenAfter, defenseAgainst, instakill, lifestealHeal, netDamage, parryCut, predict, struckDamage, type CombatPrediction } from "../combat.ts";
+import { attackForFewerHits, brokenAfter, defenseAgainst, defenseBroken, instakill, lifestealHeal, netDamage, parryCut, predict, struckDamage, type CombatPrediction } from "../combat.ts";
 import { forecast as critForecast, type CritForecast } from "../crit-forecast.ts";
 import { arrowDamage, shotDamage } from "../enemies/ranged.ts";
 import { goalUnlocked } from "../goals.ts";
@@ -117,7 +117,7 @@ const stat = (icon: string, label: string, value: string, extra = "") =>
 
 /** What Armor Break has taken off `e`'s DEF so far (`broken`: a fight being
  * played out counted), to go after its DEF. */
-const brokenStat = (e: Enemy, broken = e.broken ?? 0) => (broken ? ` (<span class="hit-heal">-${enemyStat(snap((e.defense * broken) / 100))}</span>)` : "");
+const brokenStat = (e: Enemy, broken = e.broken ?? 0) => (broken ? ` (<span class="hit-heal">-${enemyStat(snap(defenseBroken(e, broken)))}</span>)` : "");
 /** Says what DEF below 0 does to the hero's next hit, the one the stat line
  * shows, once Armor Break takes it there: its DEF now, then for that hit, which
  * breaks it further first (unless the hero has no ranks to). */

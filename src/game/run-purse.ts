@@ -1,5 +1,5 @@
 import { researched } from "../progression/archives.ts";
-import { ENEMY_GOLD, FAST_GOLD, PICKUP_GOLD, RANGED_GOLD, SHIELDED_GOLD, silverForKill } from "../economy/kill-pay.ts";
+import { ENEMY_GOLD, FAST_GOLD, PICKUP_GOLD, RANGED_GOLD, SHIELDED_GOLD, ARMORED_GOLD, silverForKill } from "../economy/kill-pay.ts";
 import { trainedAmount } from "../progression/training.ts";
 import type { RoomWorld } from "../tower/room-world.ts";
 import { snap } from "../exact.ts";
@@ -228,7 +228,7 @@ export class RunPurse {
    * TORCH's for a Greater Boss, and the enemy cards' own covering it, their
    * Instakill Bounty too for an `instakill`: `foeGold`). */
   private killGold(enemy: Enemy, instakill = false) {
-    const raw = snap(((ENEMY_GOLD[enemy.strength] + (enemy.fast ? FAST_GOLD : 0) + (enemy.ranged || enemy.flying ? RANGED_GOLD : 0) + (enemy.shielded ? SHIELDED_GOLD : 0)) * this.goldBonus) / 10_000);
+    const raw = snap(((ENEMY_GOLD[enemy.strength] + (enemy.fast ? FAST_GOLD : 0) + (enemy.ranged || enemy.flying ? RANGED_GOLD : 0) + (enemy.shielded ? SHIELDED_GOLD : 0) + (enemy.armored ? ARMORED_GOLD : 0)) * this.goldBonus) / 10_000);
     const gold = instakill ? snap((raw * researched(this.save.archives, "instakillGold")) / 100) : raw;
     const tree = this.tree, own = foeStat(tree, enemy, "Gold") + (instakill ? foeStat(tree, enemy, "InstakillGold") : 0);
     const more = snap(tree.foeGold + (enemy.strength === "greaterBoss" ? tree.bossGold : 0) + own);

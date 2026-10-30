@@ -9,6 +9,7 @@ import { tierCells, tierTile } from "../tiers.ts";
 import { foeTile, type FoeRule } from "../shrines.ts";
 import { fastCells } from "../enemies/fast.ts";
 import { rangedCells, wounded, woundMore } from "../enemies/ranged.ts";
+import { armoredCells } from "../enemies/armored.ts";
 import { flyingCells } from "../enemies/flying.ts";
 import { addEnemies, extrasSeed, hasExtras, type ExtraEnemies } from "../enemies/more-enemies.ts";
 import { ENTRY } from "./embedder.ts";
@@ -171,7 +172,7 @@ export class RoomWorld implements Board {
     this.shield = shielded.shield;
     cells = shielded.cells;
     const floorAt = () => room + 1;
-    this.cells = rangedCells(fastCells(flyingCells(tierCells(cells, tier), tier, seed, floorAt), "tower", tier, seed, floorAt), tier, seed, floorAt);
+    this.cells = rangedCells(fastCells(flyingCells(armoredCells(tierCells(cells, tier), tier, seed, floorAt), tier, seed, floorAt), "tower", tier, seed, floorAt), tier, seed, floorAt);
   }
   breakTorchAt(x: number, y: number): boolean {
     return breakTorch(this.torches, this.changes, x, y);

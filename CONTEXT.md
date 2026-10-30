@@ -219,7 +219,7 @@ The HP the Archer's arrows have taken off an enemy that still stands; the enemy 
 _Avoid_: damage taken, injury
 
 **Enemy profile**:
-Which of an enemy's stats lead: attack-heavy (more ATK, less DEF), balanced, or defense-heavy (more DEF, less ATK). Any strength may wear any profile; bosses are balanced. In the Tower a profile also names the enemy: each zone's **roster** has one enemy per profile (Goblin, Thief, Armored Knight on the first zone's floors), each tower starting its rosters one zone further along.
+Which of an enemy's stats lead: attack-heavy (more ATK, less DEF), balanced, or defense-heavy (more DEF, less ATK). Any strength may wear any profile; bosses are balanced. In the Tower a profile also names the enemy: each zone's **roster** has one enemy per profile (Goblin, Thief, Iron Knight on the first zone's floors), each tower starting its rosters one zone further along.
 _Avoid_: enemy type, class, archetype
 
 **Enemy schedule**:
@@ -227,7 +227,10 @@ How many enemies a floor should hold and the share of each strength and profile,
 _Avoid_: enemy budget, spawn rate, enemy quota
 
 **Enemy trait**:
-An ability an enemy may carry beyond its stats (Armored, Piercing, Swift, Enraged: each a hero power turned against the hero). Planned for Tournament leagues and future towers; none exists yet.
+What an enemy may carry beyond its strength and profile, on its own roll: Fast, Ranged, Flying, Shielded and Armored so far, with Piercing and Enraged among the candidates. One enemy may carry several.
+
+**Armored enemy**:
+An enemy with twice its DEF, from Tower VI and Delve VI on; never a boss or Greater Boss.
 _Avoid_: modifier, affix, enemy type (the profile and name already are)
 
 ### Fights

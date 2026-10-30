@@ -41,6 +41,7 @@ function outputs(): Record<string, string> {
       out[`tower extras ${seed}/${room}`] = digest(withExtraEnemies(f.cells, seed, room, [], { weak: 90, normal: 90, strong: 90, elite: 90, boss: 90 }));
       out[`tower torches ${seed}/${room}`] = digest(chooseTorchSpots(f.cells, { xMin: 1, xMax: 15, yMin: 1, yMax: 15, seed: seed + room }));
       out[`tower fast ${seed}/${room}`] = digest(new RoomWorld(seed * 7919, room, {}, 0, 3).cells);
+      out[`tower armored ${seed}/${room}`] = digest(new RoomWorld(seed * 7919, room, {}, 0, 6).cells);
     }
   // Shielded enemies and their extras, on floors far enough up to hold them.
   for (let seed = 1; seed <= 12; seed++)

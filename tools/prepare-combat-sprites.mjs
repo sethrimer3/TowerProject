@@ -34,6 +34,8 @@ await exportPiece("combat-shot", "220x210+650+285", 8, 8, "8x8");
 await exportPiece("combat-wing", "260x250+50+620", 9, 8, "9x8!");
 await exportPiece("combat-ranged", "200x230+360+630", 9, 8, "9x8!");
 await exportPiece("combat-fast", "230x220+650+630", 12, 8, "12x8!");
+// Plotted on its native grid in its own source, in the palette's colours.
+await exportPiece("combat-armor", "9x8+0+0", 9, 8, "9x8!", [], join(root, "assets/game-sprites/combat-armor.png"));
 await exportPiece("combat-rank-up", "210x180+970+650", 7, 6, "7x5!");
 await exportPiece("combat-rank-down", "220x180+40+980", 7, 6, "7x5!");
 await exportPiece("combat-chest-supply", "200x220+330+950", 10, 10, "10x10");
@@ -43,4 +45,4 @@ for (const size of SHIELD_SIZES) {
   await exportPiece(`combat-shield-${size}`, "1280x1280+0+0", size, size, `${size}x${size}!`, [], join(root, "assets/game-sprites/combat-shield.png"));
 }
 writeFileSync(join(out, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
-console.log("Prepared 27 native combat PNGs: directional arrows, shots, marks, chest stars and shield rings.");
+console.log("Prepared 28 native combat PNGs: directional arrows, shots, marks, chest stars and shield rings.");

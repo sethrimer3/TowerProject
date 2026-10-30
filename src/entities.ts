@@ -36,6 +36,8 @@ export type Enemy = {
   fast?: true;
   /** A Ranged enemy (enemies/ranged.ts) shoots the hero from a distance. */
   ranged?: true;
+  /** An Armored enemy (enemies/armored.ts): its `defense` is already multiplied. */
+  armored?: true;
   /** A Flying enemy (enemies/flying.ts) hovers over a floor tile (`Tile.flyer`):
    * it shoots the hero as a Ranged one does, and the hero can only shoot
    * it, walking under it as over open floor. */
