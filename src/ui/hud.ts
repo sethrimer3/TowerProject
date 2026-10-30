@@ -176,6 +176,7 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay,
   renderProgress(game);
   renderModeActions(game);
   renderCurrencyBar(game);
+  renderCombo(game);
   renderXp(game);
   renderStatus(game, overlay);
   // The status line sits over the board's bottom row: let the hero show through.
@@ -198,6 +199,13 @@ function renderCurrencyBar(game: Game) {
   barAmount("gold-held", heldAmount(game, game.save.gold));
   barAmount("gems-held", heldAmount(game, game.save.gems));
   barAmount("shards-held", heldAmount(game, game.save.ascensionShards));
+}
+
+/** The Dash Combo meter under the purse, while the combo is 1 or more. */
+function renderCombo(game: Game) {
+  const combo = game.comboShown;
+  el("combo-stat").hidden = combo < 1;
+  text("combo", `x ${combo}`);
 }
 
 /** The run's buttons beside the board: its menu, the online ones, the Shop, Research and the ad. */

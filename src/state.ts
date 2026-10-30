@@ -46,7 +46,7 @@ import type {
 import { World, LAYOUT_VERSION } from "./delve/world.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import { chestKindAt, litTorches, type Board } from "./board.ts";
-import { healUpTo, instakill, squaredUp, type CritRule, type Wings } from "./combat.ts";
+import { COMBO_PERCENT, COMBO_TURNS, healUpTo, instakill, squaredUp, type CritRule, type Wings } from "./combat.ts";
 import { smites, type Smitten } from "./angel.ts";
 import { HEART_DOOR_HP, hpCeiling, isLethal, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardStat } from "./step-effects.ts";
 import { ENTRANCE_Y, ENTRANCE_ZOOM_MS, OUTSIDE_START_Y, OutsideWorld } from "./outside.ts";
@@ -305,6 +305,9 @@ export class Game {
    * step: a fight stepped into from there is a dash attack, which ENEMY's
    * Surprise Attack may double the first strike of. */
   private dashedTo: { x: number; y: number } | null = null;
+  /** Whether the turn under way has dashed, or won a fight, for `comboTurn`. */
+  private turnDashed = false;
+  private turnFought = false;
   /** The last step the hero took (into a fight too): the way it faces,
    * for a board whose hero turns. Right until it first steps; undo leaves it. */
   facing: Facing = { dx: 1, dy: 0 };
@@ -1143,7 +1146,43 @@ export class Game {
     const last = tiles[tiles.length - 1], end = onItem ? undefined : { x: p.x, y: p.y, dx: last.dx, dy: last.dy };
     if (tiles.length > 1) this.dash = { tiles, end, at: performance.now() };
     if (tiles.length > 1 && end) this.dashedTo = { x: end.x, y: end.y };
+    if (tiles.length > 1) this.turnDashed = true;
     return moved;
+  }
+  /** The hero as it takes a fight: with a Dash Combo going on, a copy
+   * carrying its ATK, which only the fight reads (`squaredUp`). */
+  get fighter(): Player {
+    const p = this.run.player, combo = this.run.combo;
+    return combo ? { ...p, comboAttack: combo.next * COMBO_PERCENT } : p;
+  }
+  /** The Dash Combo the meter shows: the next fight's while a fight plays
+   * out (it is that fight's), otherwise the last fight's, so 0 until a fight
+   * has begun. */
+  get comboShown() {
+    const combo = this.run.combo;
+    return !combo ? 0 : this.fights.encounter ? combo.next : combo.next - 1;
+  }
+  /** Whether an enemy stands on a tile next to the hero. */
+  private get besideEnemy() {
+    const p = this.run.player;
+    return [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => {
+      const to = this.world.step(p.x, p.y, dx, dy);
+      return !!to && this.world.tile(to.x, to.y).kind === "enemy";
+    });
+  }
+  /** Dash Combo at a turn's end. A turn with no fight counts toward the
+   * `COMBO_TURNS` that end the combo, and a dash that lands beside an enemy,
+   * with no combo going on, starts one: the next turn's fight would be its
+   * first, and it counts as the first of the turns without one. */
+  private comboTurn(fought: boolean, dashed: boolean) {
+    const run = this.run;
+    if (fought) return;
+    if (run.combo) {
+      const idle = run.combo.idle + 1;
+      if (idle < COMBO_TURNS) run.combo = { ...run.combo, idle };
+      else delete run.combo;
+    }
+    if (dashed && !run.combo && this.save.upgrades.dashCombo && this.besideEnemy) run.combo = { next: 1, idle: 1 };
   }
   /** Tiles the hand's first step toward a new target may dash across: none
    * without the Dash skill, and one more a Dash research level. */
@@ -2054,12 +2093,14 @@ export class Game {
     // wall, lock, impervious enemy, or (automation's) declined lethal fight
     // never touches history, damages the player, alters the enemy, or ends the run.
     const rules: StepRules = { ...this.stepRules, ...(regen ? {} : { regen: 0 }), ...(card.scale !== undefined && card.scale !== 1 ? { scale: card.scale } : {}) };
-    const resolved = resolveStep(p, met, rules);
+    // A fight is taken with a Dash Combo's ATK; previews and planners go without.
+    const hero = t.kind === "enemy" ? this.fighter : p;
+    const resolved = resolveStep(hero, met, rules);
     if (resolved.blocked) return this.rejectStep(resolved, t, dest.x, dest.y);
     // DOOR's Secret Knock: a door the hero can open may open for nothing;
     // KEY's Locksmith: a key may be two.
     const lucky = this.luckyStep(t, dest.x, dest.y);
-    const outcome = lucky ? resolveStep(p, met, { ...rules, ...lucky }) as StepEffect : resolved;
+    const outcome = lucky ? resolveStep(hero, met, { ...rules, ...lucky }) as StepEffect : resolved;
     if (!force && isLethal(outcome)) {
       this.feedback("Lethal encounter. Inspect the enemy before proceeding.");
       return false;
@@ -2110,6 +2151,10 @@ export class Game {
     const angel = winged ? this.spendWings(dest) : [];
     const won = this.winFight({ enemy: t.enemy!, damage: snap(outcome.combat!.damage + extra), at: dest, revived, scale: outcome.scale, instakill: instakill(outcome.combat!), crits, openers }, before);
     if (won && angel.length) this.message = [...angel, this.message].join(" · ");
+    if (won) {
+      this.turnFought = true;
+      if (this.run.combo) this.run.combo = { next: this.run.combo.next + 1, idle: 0 };
+    }
     return won;
   }
   /** Angel Wings raised the hero: its charge is spent for the run, and
@@ -2261,8 +2306,10 @@ export class Game {
   private endTurn() {
     const before = this.turnBefore;
     this.turnBefore = null;
-    const archer = this.isArcher;
+    const archer = this.isArcher, fought = this.turnFought, dashed = this.turnDashed;
+    this.turnFought = this.turnDashed = false;
     if (!before || this.run.outside || this.fallen) return;
+    this.comboTurn(fought, dashed);
     this.tickBoosts();
     const p = this.run.player, from = before.run.player, sameFloor = this.mode !== "tower" || before.run.height === this.run.height;
     const at = performance.now(), ms = Math.min(TURN_MS, 800 / Math.max(1, this.stepsPerSecond));

@@ -129,7 +129,7 @@ const SKILL_DETAIL_SPRITES: Partial<Record<UpgradeId, string>> = {
   thorns: "sword", lifesteal: "boon-lifesteal", parry: "goal-parry", regen: "boon-regen", regenResearch: "boon-regen",
   autoClimb: "play", fasterTrainers: "hourglass", freeTraining: "boon-free-up", buildout: "deck", manualHand: "card-exchange",
   ignore: "ignore", ignoreMore: "ignore", target: "target", targetMore: "target",
-  cardBadges: "goal-badge-slots", dashBadge: "badge-dash", dash: "badge-dash", endRush: "badge-dash", dashRegen: "badge-dash",
+  cardBadges: "goal-badge-slots", dashBadge: "badge-dash", dash: "badge-dash", dashCombo: "badge-dash", endRush: "badge-dash", dashRegen: "badge-dash",
   keyLessBadges: "badge-yellowGate", keyAtLeastBadges: "badge-yellowAtLeast", largerHand: "goal-card-groups",
   wealthy: "silver", wishingWell: "silver", onTheJob: "silver", pocketMoney: "silver", interest: "silver", maxInterest: "silver",
   aiMemory: "goal-note-taking", aiEvaluation: "goal-combat-forecast", aiLookahead: "goal-attack-lore",

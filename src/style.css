@@ -652,6 +652,7 @@ h1 span {
 .gem-stat b { color: #8fe3ff; }
 .shard-stat b { color: #8dffb8; }
 .gold-stat b { color: #ffd86b; }
+.combo-stat b { color: #ff9d6b; }
 .gem-icon,
 .shard-icon {
   width: 1em;

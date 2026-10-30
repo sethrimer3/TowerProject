@@ -62,6 +62,7 @@ export const UPGRADES = [
   { id: "endRush", name: "End Rush", description: "Open End Rush research in the Archives: STAIRS's dash toward the stairs crosses more empty tiles", base: 1, max: 1, currency: "breakthrough" },
   { id: "dashRegen", name: "Dash Regen", description: "Open Dash Regen research in the Archives: a Dash's first steps regain HP by Regen", base: 1, max: 1, currency: "breakthrough" },
   { id: "dashBadge", name: "Dash Badge", description: "Add the Dash badge to the badge draw: its card's dash toward its target crosses more empty tiles", base: 1, max: 1, currency: "breakthrough" },
+  { id: "dashCombo", name: "Dash Combo", description: "A fight begun right after a Dash lands beside an enemy starts a combo: each fight in it strikes with +20% ATK per Combo, and a new fight within two turns of the last raises the Combo", base: 1, max: 1, currency: "breakthrough" },
   {
     id: "yellow",
     name: "Gilded passage",

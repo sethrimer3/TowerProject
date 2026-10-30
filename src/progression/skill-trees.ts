@@ -134,7 +134,9 @@ export const TREES: SkillTree[] = [
     { id: "pathToWealth", icon: "¤", x: 18, y: 58, requires: ["moveSpeed"] },
     { id: "physician", icon: "✚", x: 50, y: 58, requires: ["moveSpeed"] },
     { id: "dash", icon: "⇶", x: 82, y: 58, requires: ["moveSpeed"] },
-    // Dash's own skills down the right edge: End Rush, Dash Regen, then Dash Badge.
+    // Dash's own skills down the right edge: End Rush, Dash Regen, then Dash
+    // Badge. Dash Combo splits off down and left of Dash.
+    { id: "dashCombo", icon: "⇶", x: 70, y: 85, requires: ["dash"] },
     { id: "endRush", icon: "⇶", x: 90, y: 85, requires: ["dash"] },
     { id: "dashRegen", icon: "⇶", x: 90, y: 111, requires: ["endRush"] },
     { id: "dashBadge", icon: "◪", x: 90, y: 135, requires: ["dashRegen", "cardBadges"] },

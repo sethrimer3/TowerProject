@@ -465,6 +465,10 @@ _Avoid_: battle pass, season pass
 The currency of new limits: one point for each Tower Goal reward claimed (a premium reward pays none), spent in the Breakthrough tree and the trees it opens. Also the Inspiration skill that opens that tree.
 _Avoid_: courage, essence
 
+**Combo**:
+The count of fights chained by Dash Combo, begun by a dash that lands beside an enemy and raised by each fight within two turns of the last; each fight strikes with more ATK for it.
+_Avoid_: streak, chain counter
+
 **Archives**:
 Research that lasts between runs, paid in Gold and real time, unlocked by the Archives skill.
 _Avoid_: lab, research tree

@@ -148,6 +148,10 @@ export type Player = {
   /** ATK UP's Power Strike, charged by an ATK shard: the hero's next fight
    * strikes with twice its ATK; absent while not charged. */
   powerStrike?: true;
+  /** The percent more ATK a Dash Combo gives the fight being taken. Only the
+   * copy of the hero a fight is taken with carries it (`Game.fighter`), so
+   * previews and planners never count it. */
+  comboAttack?: number;
   /** The percent of a boss's or a Greater Boss's max HP (`takedown`: ATK
    * UP's Takedown, TORCH's Greater Takedown) and ATK (`tangle`: DEF UP's
    * Tangle, TORCH's Greater Tangle) taken off as a fight with it begins, by

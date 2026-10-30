@@ -75,6 +75,15 @@ The Settings button in the stats opens the Settings page at any time, with a Bac
 **Dash** (1 Breakthrough, after Movement Speed, right of Physician) opens the Archives' **Dash** research: each of its 25 levels lets the hand's first step toward a new target dash across one more empty tile (or chest already opened) in the same step (one turn, one undo), stopping on the tile before anything else (an item, a door, a monster, the stairs, a torch or a Gem), except that a dash with a tile left ends on the item its card is heading for, taking it (scaled by an Effective or Dampen badge as usual; with a Skip badge it stops before the item, which Skip rolls for on its own step); faint echoes of the hero appear on each tile it dashed off, and on the empty tile it landed on, one after another, and fade in the same order within half a second.
 Level n costs 250 × n × 2^(n−1) Gold and takes 1.75 × n × 1.2^(n−1) hours (250 Gold and 1.75 hours first; about 105 billion Gold and 145 days at level 25).
 A dashed turn regains HP by Regen once, on its first step, not on the tiles it dashes across.
+**Dash Combo** (1 Breakthrough, down and left of Dash) rewards chaining fights.
+A dash that lands beside an enemy, followed by a fight on the next turn, starts a combo at 1.
+Each fight in the combo strikes with +20% ATK per Combo (+20% at 1, +40% at 2), a factor of its own.
+A fight begun within two turns of the last one (right away, or after one step or dash) raises the Combo by 1, with no limit, and carries across floors.
+Two turns without a fight end it, and a run's end does too.
+Only a dash starts a combo; a dash on a combo's last turn that lands beside an enemy starts a new one at 1.
+While the Combo is 1 or more, the sword and **x Combo** show under the currencies in the run.
+It counts only in the fight itself: Damage Visual, the inspect panel and the hand's plans leave it out, so a chained fight can end better than its label says, and can get past a DEF they call impervious.
+Arrows and enemy shots don't count it, and undo takes it back with the step.
 **Dash Regen** (1 Breakthrough, below End Rush, above Dash Badge) opens the Archives' **Dash Regen** research: each of its 35 levels lets one more of a dash's first dashed tiles regain HP by Regen too.
 It costs the same in all as Dash, about 201 billion Gold and 697 days, spread more gently: level n takes n × 1.6^(n−1) shares of the Gold and n × 1.12^(n−1) shares of the time (about 260 Gold and 1.4 hours first, 79 billion Gold and 97 days at level 35), so each level after the first is cheaper and quicker than Dash's.
 

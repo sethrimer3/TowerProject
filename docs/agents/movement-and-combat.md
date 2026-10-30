@@ -66,6 +66,11 @@ There is no parry chance and no parry roll.
 A parried `Strike` carries `parried`, and in an animated fight the hero gives way a little from it (`lunges`, `PARRY_GIVE`); summary rounds drop it, showing only the damage.
 `tests/thorns-parry.test.ts` covers both.
 How a fight begins (`squaredUp`): ATK UP's Power Strike doubles the hero's ATK, and a boss's Takedown and Tangle (TORCH's Greater kin for a Greater Boss) cut the enemy before the first strike, in every prediction and in `bout`, whose `opening` holds the first strike back while the board shows them.
+**Dash Combo** (the Breakthrough skill, off Dash) is `run.combo` (`{ next, idle }`: the Combo the next fight would have and the turns since the last fight; absent with none), so undo and the save carry it.
+`Game.comboTurn`, called from `endTurn`, counts a turn with no fight (`COMBO_TURNS`, 2, end it) and starts a combo (`{ next: 1, idle: 1 }`) on a dash that lands beside an enemy (`besideEnemy`); `enter` raises `next` once a fight is won.
+`Game.fighter` is the hero with `comboAttack` (`next` × `COMBO_PERCENT`), a copy that only `Game.move`'s `resolveStep` and `FightPlayback`'s `bout` and `retrain` take, and `squaredUp` applies as its own ATK factor: every preview and planner reads the plain hero, so they count the worst case, as with crits.
+`Game.comboShown` is the meter (`renderCombo`, `#combo-stat`): `next` while a fight plays out, otherwise `next` − 1, so a dash with no fight after it never shows.
+`tests/dash-combo.test.ts` covers it.
 A **Fast** enemy (`enemy.fast`, `src/enemies/fast.ts`) strikes first: `bout` starts with `enemyNext`, and `predict` counts one more enemy strike (`CombatPrediction.fast`, read by `replies`), as do `thornRounds`, `lifestealEnding` (whose opening strike heals nothing) and the crit forecast's `turnOdds` (`opening`); `instakill` is never true against one, so Mug pays nothing more and Damage Visual never grays it (`DamagePredictions` keys by `fast`), and `RunPurse.killGold` pays `FAST_GOLD` more.
 `tests/fast-enemies.test.ts` covers it.
 **Ranged enemies and the Archer** (`src/enemies/ranged.ts`): from the third tier, `rangedCells` marks `enemy.ranged` on its own tile roll (`RANGED_SALT`, `rangedShare`: Fast's share less 1,000 thousandths), after `fastCells`, in both worlds; `RunPurse.killGold` pays `RANGED_GOLD` more.

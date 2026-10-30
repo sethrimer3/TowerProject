@@ -157,6 +157,10 @@ export type RunCore = {
    * charge; absent until it has. Undo takes it back with the run, so the
    * fight that spent it, undone, leaves it ready again. */
   wingsSpent?: true;
+  /** The Dash Combo going on (`Game.comboTurn`): the Combo the next fight
+   * would have (`next`) and the turns since the last fight (`idle`); absent
+   * with none. Undo takes it back with the run. */
+  combo?: { next: number; idle: number };
 };
 /** A Tower ascent. */
 export type TowerRun = RunCore & {

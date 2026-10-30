@@ -1,5 +1,5 @@
 import { bout, critAgainst, DEFEAT_MS, guaranteedCrits, heroHpAfter, heroHpDuring, resume, REVIVE_PAUSE_MS, revivals, summarize, type Bout, type CritRule, type Crits, type Revival, type Wings } from "../combat.ts";
-import type { Enemy, Mode } from "../entities.ts";
+import type { Enemy, Mode, Player } from "../entities.ts";
 import type { Run } from "../runs.ts";
 import { snap } from "../exact.ts";
 import { tileRandom } from "../random.ts";
@@ -12,6 +12,8 @@ import { healAfterVictory, isLethal, regenerate, type StepEffect, type StepRules
  * and whether fights play out strike by strike. */
 export interface FightHost {
   readonly run: Run;
+  /** The hero as it takes a fight: the run's hero, with a Dash Combo's ATK. */
+  readonly fighter: Player;
   readonly mode: Mode;
   readonly stepRules: StepRules;
   readonly crit: CritRule | undefined;
@@ -86,7 +88,7 @@ export class FightPlayback<S extends FoughtStep> {
     const lethal = isLethal(outcome), revive = lethal ? this.revival(step.dest) : undefined, wings = lethal ? this.host.wingsFor(enemy) : undefined;
     const crits = this.critRolls(step.dest, enemy);
     if (!this.playsFights && !revive && !wings && !crits) return this.take(step, 0);
-    const fight = bout(p, enemy, revive, crits, wings), start = performance.now(), rose = revivals(fight).length;
+    const fight = bout(this.host.fighter, enemy, revive, crits, wings), start = performance.now(), rose = revivals(fight).length;
     step.crits = critHits(fight);
     step.winged = winged(fight);
     // Critical strikes, and a smite, change how long the fight lasts, so it ends as it was played.
@@ -211,7 +213,7 @@ export class FightPlayback<S extends FoughtStep> {
       hp = s.hp;
       shroud = snap(Math.max(0, shroud - (s.shrouded ?? 0)));
     }
-    fight.bout = resume(fight.bout, from, { player: { ...p, hp, shroud }, enemy: fight.enemy, revives: this.revival(fight.to), crits: this.critRolls(fight.to, fight.enemy), wings: this.host.wingsFor(fight.enemy) });
+    fight.bout = resume(fight.bout, from, { player: { ...this.host.fighter, hp, shroud }, enemy: fight.enemy, revives: this.revival(fight.to), crits: this.critRolls(fight.to, fight.enemy), wings: this.host.wingsFor(fight.enemy) });
     this.showRevivals(fight.start, fight.bout);
     this.restate(fight.outcome, fight.bout);
     Object.assign(fight.outcome.player, { attack: p.attack, defense: p.defense, maxHp: p.maxHp });

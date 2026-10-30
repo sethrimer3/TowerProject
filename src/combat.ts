@@ -50,16 +50,18 @@ function bossCuts(player: Player, enemy: Enemy) {
   return hp || attack ? { hp, attack } : null;
 }
 /** How a fight begins: the hero (`player`) with ATK UP's Power Strike
- * charged strikes with twice its ATK (`powered`), and a boss Takedown or
+ * charged strikes with twice its ATK (`powered`), a Dash Combo raises it by
+ * its own factor (`comboAttack`), and a boss Takedown or
  * Tangle cut (`opening`) loses its share of max HP and ATK (`enemy`), at
  * least 1 HP left, before the hero's first strike. The player comes back
  * without the charge and cuts, so taking a fight through it twice changes
  * nothing more. */
 export function squaredUp(player: Player, enemy: Enemy): { player: Player; enemy: Enemy; powered: boolean; opening: { takedown: boolean; tangle: boolean } | null } {
-  if (!player.powerStrike && !player.takedown && !player.tangle) return { player, enemy, powered: false, opening: null };
-  const { powerStrike, takedown: _, tangle: __, ...rest } = player, cut = bossCuts(player, enemy), full = enemy.fullHp ?? enemy.hp;
+  if (!player.powerStrike && !player.comboAttack && !player.takedown && !player.tangle) return { player, enemy, powered: false, opening: null };
+  const { powerStrike, comboAttack, takedown: _, tangle: __, ...rest } = player, cut = bossCuts(player, enemy), full = enemy.fullHp ?? enemy.hp;
+  const charged = powerStrike ? snap(rest.attack * POWER_FACTOR) : rest.attack;
   return {
-    player: powerStrike ? { ...rest, attack: snap(rest.attack * POWER_FACTOR) } : rest,
+    player: powerStrike || comboAttack ? { ...rest, attack: comboAttack ? snap((charged * (100 + comboAttack)) / 100) : charged } : rest,
     enemy: cut ? {
       ...enemy,
       ...(cut.hp ? { hp: Math.max(1, snap(enemy.hp - (full * cut.hp) / 100)), fullHp: full } : {}),
@@ -71,6 +73,10 @@ export function squaredUp(player: Player, enemy: Enemy): { player: Player; enemy
 }
 /** Power Strike's ATK multiplier. */
 export const POWER_FACTOR = 2;
+/** The percent more ATK a Dash Combo gives a fight, per Combo. */
+export const COMBO_PERCENT = 20;
+/** The turns without a fight that end a Dash Combo. */
+export const COMBO_TURNS = 2;
 /** `player` as it stands against `enemy`: its DEF and shroud raised by the
  * card trees' percents covering it (`foeDefense`, `foeShroud`, and HEART
  * DOOR's Shroud Growth, `doorShroud`), each added into one card factor, and the enemy cards' trees' Lifesteal Overheal
