@@ -1,19 +1,23 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, readdirSync } from "node:fs";
+import { join, relative, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 import { BEDS, blendLoop, ONE_SHOTS } from "../src/sound-files.ts";
 import { BoardSounds, type BoardCue, type Heard } from "../src/render/board-sounds.ts";
 import type { ShownFight } from "../src/shown.ts";
 import type { Volley } from "../src/volley.ts";
 
 const ROOT = new URL("../public/assets/sounds/", import.meta.url);
+const ROOT_DIR = fileURLToPath(ROOT);
 
 test("every listed sound has its file, and every file is listed", () => {
   const listed = new Set([...Object.values(ONE_SHOTS).flat(), ...Object.values(BEDS)].map((p) => `${p}.mp3`));
   for (const path of listed) assert.ok(existsSync(new URL(path, ROOT)), `missing ${path}`);
   const files = readdirSync(ROOT, { recursive: true, withFileTypes: true })
     .filter((d) => d.isFile() && d.name.endsWith(".mp3"))
-    .map((d) => `${d.parentPath.slice(ROOT.pathname.length).replace(/^\/|\/$/g, "")}/${d.name}`.replace(/^\//, ""));
+    // Each file's path under the sounds folder, with "/" on every OS.
+    .map((d) => relative(ROOT_DIR, join(d.parentPath, d.name)).split(sep).join("/"));
   for (const f of files) assert.ok(listed.has(f), `unused ${f}`);
 });
 
