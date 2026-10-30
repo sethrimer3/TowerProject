@@ -140,6 +140,10 @@ export const SETTINGS = {
    * hand chose itself, as it is drawn for a pressed card's
    * (`Game.shownPath`). */
   showPath: { kind: "toggle", default: false, page: { id: "show-path", label: "Show path" } },
+  /** Draw the board so each art pixel is a whole number of the screen's
+   * pixels (render/pixel-scale.ts), at the screen's own density, showing a
+   * little more or less than the usual view round the same middle. */
+  pixelPerfect: { kind: "toggle", default: false, page: { id: "pixel-perfect", label: "Pixel-perfect scaling" } },
 } as const satisfies Record<string, Setting>;
 
 export type SettingKey = keyof typeof SETTINGS;
