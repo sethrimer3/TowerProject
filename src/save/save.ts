@@ -338,7 +338,7 @@ function decodeUpgrades(raw: any, d: Save) {
   // More Wealth and the Masteries now reveal skills a save may own already.
   // TODO: drop in a later save version.
   d.upgrades.moreWealth ||= Math.min(1, d.upgrades.interest + d.upgrades.maxInterest + d.upgrades.mug);
-  d.upgrades.cardMastery ||= Math.min(1, d.upgrades.blueSiphon + d.upgrades.cardRedKey + d.upgrades.keyToHp + d.upgrades.findYellowKey + d.upgrades.keyEfficiency + d.upgrades.keySiphon + d.upgrades.keyLessBadges + d.upgrades.keyAtLeastBadges);
+  d.upgrades.cardMastery ||= Math.min(1, d.upgrades.blueSiphon + d.upgrades.cardRedKey + d.upgrades.keyToHp + d.upgrades.keySiphon + d.upgrades.keyLessBadges + d.upgrades.keyAtLeastBadges);
   d.upgrades.doorMastery ||= Math.min(1, d.upgrades.cardWoodenDoor + d.upgrades.cardYellowDoor + d.upgrades.heartDoorResilience + d.upgrades.cardHeartDoor);
   d.upgrades.beastMastery ||= Math.min(1, d.upgrades.cardWeakEnemy);
 }

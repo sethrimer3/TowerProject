@@ -99,12 +99,12 @@ export const TREES: SkillTree[] = [
     { id: "cardBaseEnemy", icon: "☠", x: 70, y: 430, requires: ["cardWeakEnemy"] },
     { id: "cardFastEnemy", icon: "☠", x: 70, y: 448, requires: ["cardBaseEnemy"] },
     { id: "cardStrongEnemy", icon: "☠", x: 90, y: 448, requires: ["cardBaseEnemy"] },
-    // Down to the left (Card Mastery): Find Gold Key, Key Efficiency and GK
-    // Siphon, then BK Siphon, with Smelt Gold Key, then GK -> BK, Smelt Blue
+    // Down to the left: Find Gold Key and Key Efficiency (Key Mastery), then
+    // (Card Mastery) GK Siphon, BK Siphon, with Smelt Gold Key, then GK -> BK, Smelt Blue
     // Key, BK -> RK and Smelt Red Key, down its left, and Red Key, RK Siphon,
     // Key < Badges and Key ≥ Badges under it.
-    { id: "findYellowKey", icon: "⚿", x: 30, y: 394, requires: ["thorns"], reveal: "cardMastery" },
-    { id: "keyEfficiency", icon: "⚿", x: 30, y: 412, requires: ["findYellowKey"], reveal: "cardMastery" },
+    { id: "findYellowKey", icon: "⚿", x: 30, y: 394, requires: ["thorns"], reveal: "keyMastery" },
+    { id: "keyEfficiency", icon: "⚿", x: 30, y: 412, requires: ["findYellowKey"], reveal: "keyMastery" },
     { id: "keySiphon", icon: "⚿", x: 30, y: 430, requires: ["keyEfficiency"], reveal: "cardMastery" },
     { id: "blueSiphon", icon: "⚿", x: 30, y: 448, requires: ["keySiphon"], reveal: "cardMastery" },
     { id: "keyToHp", icon: "♥", x: 10, y: 466, requires: ["blueSiphon"] },

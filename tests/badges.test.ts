@@ -109,7 +109,7 @@ test("Key < Badges sits under RK Siphon and Key ≥ Badges under it, 50 Inspirat
   const g = new Game(playedSave());
   g.save.tower.inspiration = 100;
   assert.equal(g.skills.buy("keyLessBadges"), false, "waits for RK Siphon");
-  g.save.upgrades.trainers = g.save.upgrades.redSiphon = g.save.upgrades.cardMastery = g.save.upgrades.questForKnowledge = g.save.upgrades.pathToWealth = g.save.upgrades.physician = 1;
+  g.save.upgrades.trainers = g.save.upgrades.redSiphon = g.save.upgrades.keyMastery = g.save.upgrades.cardMastery = g.save.upgrades.questForKnowledge = g.save.upgrades.pathToWealth = g.save.upgrades.physician = 1;
   assert.equal(g.skills.buy("keyAtLeastBadges"), false, "waits for Key < Badges");
   assert.ok(g.skills.buy("keyLessBadges"));
   assert.ok(g.skills.buy("keyAtLeastBadges"));

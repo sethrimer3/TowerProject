@@ -88,7 +88,7 @@ test("Shroud follows Trainers and Larger Hand, ahead of Critical; Greater Heal, 
   assert.deepEqual([at("lifesteal").x, at("lifesteal").y, at("lifesteal").requires], [50, 232, ["archives"]], "Lifesteal sits under the Archives");
   assert.deepEqual([at("thorns").x, at("thorns").y, at("thorns").requires], [50, 376, ["buyQuantity"]], "Thorns sits under Buy Quantity, a row below Torch and Floor Skip Reward");
   assert.deepEqual(["findYellowKey", "keyEfficiency", "keySiphon", "blueSiphon"].map((id) => [at(id).x, at(id).y, at(id).requires, at(id).reveal]),
-    [[30, 394, ["thorns"], "cardMastery"], [30, 412, ["findYellowKey"], "cardMastery"], [30, 430, ["keyEfficiency"], "cardMastery"], [30, 448, ["keySiphon"], "cardMastery"]], "Find Gold Key, Key Efficiency and GK Siphon between Thorns and BK Siphon, revealed by Card Mastery");
+    [[30, 394, ["thorns"], "keyMastery"], [30, 412, ["findYellowKey"], "keyMastery"], [30, 430, ["keyEfficiency"], "cardMastery"], [30, 448, ["keySiphon"], "cardMastery"]], "Find Gold Key, Key Efficiency (revealed by Key Mastery) and GK Siphon (by Card Mastery) between Thorns and BK Siphon");
   assert.deepEqual(["cardRedKey", "redSiphon", "keyLessBadges", "keyAtLeastBadges"].map((id) => [at(id).x, at(id).y]), [[30, 466], [30, 484], [30, 502], [30, 520]], "Red Key, RK Siphon, then the key badges down under BK Siphon");
   assert.deepEqual(["keyLessBadges", "keyAtLeastBadges"].map((id) => at(id).requires), [["redSiphon"], ["keyLessBadges"]]);
   assert.deepEqual(["cardWoodenDoor", "cardYellowDoor", "heartDoorResilience", "cardHeartDoor"].map((id) => [at(id).x, at(id).y, at(id).requires, at(id).reveal]),
@@ -254,9 +254,10 @@ test("Golden Floors (3 Breakthrough), then Rehearsed steps and Echoes of time st
   const upgrades = { ...defaults().upgrades, trainers: 1, questForKnowledge: 1, pathToWealth: 1, physician: 1 };
   for (const id of ["findYellowKey", "keyEfficiency", "keySiphon", "cardYellowDoor"] as const) assert.ok(skillHidden(id, upgrades), `${id} hidden`);
   upgrades.keyMastery = 1;
-  for (const id of ["findYellowKey", "keyEfficiency", "keySiphon", "cardYellowDoor"] as const) assert.ok(skillHidden(id, upgrades), `${id} still hidden: Key Mastery reveals no skill itself`);
+  for (const id of ["findYellowKey", "keyEfficiency"] as const) assert.ok(!skillHidden(id, upgrades), `${id} revealed by Key Mastery`);
+  for (const id of ["keySiphon", "blueSiphon", "cardYellowDoor"] as const) assert.ok(skillHidden(id, upgrades), `${id} still hidden`);
   upgrades.cardMastery = 1;
-  for (const id of ["findYellowKey", "keyEfficiency", "keySiphon", "blueSiphon"] as const) assert.ok(!skillHidden(id, upgrades), `${id} revealed by Card Mastery`);
+  for (const id of ["keySiphon", "blueSiphon"] as const) assert.ok(!skillHidden(id, upgrades), `${id} revealed by Card Mastery`);
   assert.ok(skillHidden("cardWoodenDoor", upgrades));
   upgrades.doorMastery = 1;
   for (const id of ["cardWoodenDoor", "cardYellowDoor", "heartDoorResilience", "cardHeartDoor"] as const) assert.ok(!skillHidden(id, upgrades), `${id} revealed by Door Mastery`);
