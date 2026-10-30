@@ -21,8 +21,9 @@ export const TREES: SkillTree[] = [
     // The hand's skills, down to Breakthrough: Buildout, Trainers, Larger
     // Hand, Shroud, Critical (with Critical Prediction, then Bombs, to its
     // left and Faster Trainers to its right). ATK
-    // Up branches left off Trainers, with DEF Up under it, each with its
-    // provision (Vanguard Banner, Aegis Charm) to its left, and On the Job
+    // Up branches left off Trainers, with DEF Up to its left, each with its
+    // provision (Vanguard Banner, Aegis Charm) under it, so more can follow
+    // down those two columns, and On the Job
     // right off Trainers, with Regen below it and Heal and the Traveler's
     // Elixir under that. The skills after Trainers stay hidden until it is
     // owned, so a new game's first skills run in one line.
@@ -41,8 +42,8 @@ export const TREES: SkillTree[] = [
     { id: "elixirProvision", icon: "⚗", x: 90, y: 138, requires: ["regen"] },
     { id: "breakthrough", icon: "▼", x: 50, y: 174, requires: ["critical"] },
     { id: "cardAtkUp", icon: "⚔", x: 30, y: 102, requires: ["trainers"], reveal: "trainers" },
-    { id: "whetstoneProvision", icon: "⚑", x: 10, y: 102, requires: ["cardAtkUp"] },
-    { id: "cardDefUp", icon: "⛨", x: 30, y: 120, requires: ["cardAtkUp"] },
+    { id: "whetstoneProvision", icon: "⚑", x: 30, y: 120, requires: ["cardAtkUp"] },
+    { id: "cardDefUp", icon: "⛨", x: 10, y: 102, requires: ["cardAtkUp"] },
     { id: "aegisProvision", icon: "⛨", x: 10, y: 120, requires: ["cardDefUp"] },
     // The Archives under Breakthrough, and the rest of the tree under them,
     // stay hidden until Quest for Knowledge (in the Breakthrough tree) is

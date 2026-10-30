@@ -3,7 +3,7 @@
 ## Provisions
 
 **Provisions** are limited-use items for a run, bought with Gold on the **Gear** tab and kept for good: each one owned is a use that every run carries, a run already inside included.
-None is sold from the start: each opens with its own skill, 5 Inspiration each in the Inspiration tree for the three below (the **Traveler's Elixir** skill after Regen, **Vanguard Banner** after ATK Up, left of it, and **Aegis Charm** after DEF Up, left of it), and **Bombs** after Critical Prediction, left of it; and in the Breakthrough tree for the Gold Key.
+None is sold from the start: each opens with its own skill, 5 Inspiration each in the Inspiration tree for the three below (the **Traveler's Elixir** skill after Regen, **Vanguard Banner** after ATK Up, under it, and **Aegis Charm** after DEF Up, under it), and **Bombs** after Critical Prediction, left of it; and in the Breakthrough tree for the Gold Key.
 The Gear tab, and its Provisions tab, show only once one is open.
 The first time one opens, a note says to press the Gear tab to buy provisions, and a hand points at the tab, on the forest's board and on the Inspiration and Breakthrough trees, until it is pressed.
 None of them adds anything as a run starts: inside a run, each shows as a button beside Ignore and Target with its uses left, and a press uses one at once (it is no turn of its own).
