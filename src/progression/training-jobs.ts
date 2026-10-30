@@ -108,9 +108,9 @@ export function batchWork(ms: number, speed: number, credit: number, bank: numbe
  * done at its own pace, the speedup not counted as extra time. */
 export const jobInvested = (job: TrainingJob, left: number) => Math.round(job.used + Math.max(0, (job.ms - job.used) / job.speed - left));
 
-/** How many stats can be in training at once: the first slot, and one for
- * each trainer bought. */
-export const trainingSlots = (save: { trainers: number }) => TRAINING_SLOTS + save.trainers;
+/** How many stats can be in training at once: the first slot, one for
+ * each trainer bought, and one for the Extra Trainer skill. */
+export const trainingSlots = (save: { trainers: number; upgrades: { extraTrainer: number } }) => TRAINING_SLOTS + save.trainers + save.upgrades.extraTrainer;
 /** The Gems the next trainer costs, or null once every one is bought. */
 export const nextTrainerGems = (save: { trainers: number }) => TRAINER_GEMS[save.trainers] ?? null;
 /** What each item maxed takes off its tab's Gem rushes, in tenths of a

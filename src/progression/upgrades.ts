@@ -168,6 +168,14 @@ export const UPGRADES = [
     currency: "breakthrough",
   },
   {
+    id: "extraTrainer",
+    name: "Extra Trainer",
+    description: "One more trainer: one more stat trains at once",
+    base: 5,
+    max: 1,
+    currency: "breakthrough",
+  },
+  {
     id: "doorMastery",
     name: "Door Mastery",
     description: "Reveal Wooden Door and the skills under it in the Inspiration tree",

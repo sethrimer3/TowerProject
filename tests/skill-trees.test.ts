@@ -8,6 +8,7 @@ import { UPGRADES, cost, type UpgradeId } from "../src/progression/upgrades.ts";
 import { RESEARCH } from "../src/progression/archives.ts";
 import { GOLD_SHOP } from "../src/economy/provisions.ts";
 import { provisionOpen } from "../src/progression/loadout.ts";
+import { TRAINER_GEMS, nextTrainerGems, trainingSlots } from "../src/progression/training-jobs.ts";
 test("fresh progression gates Delve, currencies, Breakthrough root, and Legacy", () => {
   const g = new Game(defaults());
   g.save.tower.inspiration = 100;
@@ -262,8 +263,19 @@ test("Golden Floors (3 Breakthrough), then Rehearsed steps and Echoes of time st
   assert.ok(skillHidden("cardWoodenDoor", upgrades));
   upgrades.doorMastery = 1;
   for (const id of ["cardWoodenDoor", "cardYellowDoor", "heartDoorResilience", "cardHeartDoor"] as const) assert.ok(!skillHidden(id, upgrades), `${id} revealed by Door Mastery`);
-  assert.deepEqual([at("doorMastery").x, at("doorMastery").y, at("doorMastery").requires, at("ignore").y, at("ignore").requires], [50, 189, ["keyMastery"], 213, ["doorMastery"]], "Door Mastery in Ignore's old spot, Ignore a row below it");
+  assert.deepEqual([at("doorMastery").x, at("doorMastery").y, at("doorMastery").requires], [78, 189, ["extraTrainer"]], "Door Mastery right of Extra Trainer, after it");
   assert.deepEqual([UPGRADES.find((u) => u.id === "doorMastery")!.currency, cost("doorMastery", 0)], ["breakthrough", cost("keyMastery", 0) + 1], "Door Mastery costs one more than Key Mastery");
+});
+test("Extra Trainer stands under Key Mastery, Ignore below it, costs 5 Breakthrough and adds a training slot", () => {
+  const at = (id: string) => TREES.find((t) => t.id === "breakthrough")!.nodes.find((n) => n.id === id)!;
+  assert.deepEqual([at("extraTrainer").x, at("extraTrainer").y, at("extraTrainer").requires], [50, 189, ["keyMastery"]]);
+  assert.deepEqual([at("ignore").x, at("ignore").y, at("ignore").requires], [50, 213, ["extraTrainer"]], "Ignore below it, after it");
+  assert.deepEqual([UPGRADES.find((u) => u.id === "extraTrainer")!.currency, cost("extraTrainer", 0)], ["breakthrough", 5]);
+  const save = defaults();
+  assert.equal(trainingSlots(save), 1);
+  save.upgrades.extraTrainer = 1;
+  assert.equal(trainingSlots(save), 2);
+  assert.equal(nextTrainerGems(save), TRAINER_GEMS[0], "the Gem trainers' prices don't move");
 });
 test("Faster Trainers sits right of Critical, off it, costs 2 and opens its research", () => {
   const at = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;

@@ -50,8 +50,9 @@ test("the profile round-trips through the save, and an older save's tallies star
   old.training.attack = 4;
   old.trainingPaid.attack.gold = 300;
   old.archives.levels = { heartDoorResilience: 2 };
+  old.tower.best = 9;
   const p = decode(JSON.stringify(old)).profile;
-  assert.deepEqual([p.createdAt, p.earned.gold, p.earned.gems, p.earned.cells, p.trainingLevels, p.trainingGold, p.researchLevels], [0, 50, 7, 2, 4, 300, 2]);
+  assert.deepEqual([p.createdAt, p.earned.gold, p.earned.gems, p.earned.cells, p.trainingLevels, p.trainingGold, p.researchLevels, p.floorsClimbed], [0, 50, 7, 2, 4, 300, 2, 9]);
 });
 
 test("currencies earned count toward the profile, and spending never takes them off", () => {
@@ -120,4 +121,17 @@ test("the Stats dialog shows tallies rounded down, in full below a million and s
   assert.equal(value.get("Silver earned"), "1.00M");
   assert.equal(value.get("Gems earned"), "1.23M");
   assert.equal(value.get("Gold spent on Training"), "4.56B");
+});
+
+test("each floor the Tower climbs counts toward Floors climbed, Skip on STAIRS's floor passed too", () => {
+  const g = new Game(defaults());
+  g.newRun({ seed: 7 });
+  g.advanceTowerRoom();
+  assert.equal(g.save.profile.floorsClimbed, 1);
+  g.advanceTowerRoom(true);
+  assert.equal(g.save.profile.floorsClimbed, 3, "a skip climbs two floors");
+  g.newRun({ seed: 7 });
+  g.advanceTowerRoom();
+  assert.equal(g.save.profile.floorsClimbed, 4, "a floor climbed again in a new run counts again");
+  assert.equal(new Map(statsRows(g.save.profile)).get("Floors climbed"), "4");
 });

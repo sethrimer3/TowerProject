@@ -28,10 +28,13 @@ export type Profile = {
   trainingGold: number;
   /** Gold paid for research, less what came back (research stopped). */
   researchGold: number;
+  /** Tower floors climbed: each staircase taken, and each floor Skip on
+   * STAIRS climbs past. */
+  floorsClimbed: number;
 };
 
 /** The tallies that are counts rather than a currency earned. */
-export type ProfileCount = "trainingLevels" | "researchLevels" | "trainingGold" | "researchGold";
+export type ProfileCount = "trainingLevels" | "researchLevels" | "trainingGold" | "researchGold" | "floorsClimbed";
 
 /** Anything holding a profile: a `Save`, or a part of one a module reads
  * (the Archives' owner); a test's bare owner may have none. */
@@ -45,6 +48,7 @@ export function defaultProfile(): Profile {
     researchLevels: 0,
     trainingGold: 0,
     researchGold: 0,
+    floorsClimbed: 0,
   };
 }
 
@@ -73,13 +77,14 @@ export function decodeProfile(raw: unknown): Profile {
   for (const c of LIFETIME_CURRENCIES) d.earned[c] = fraction(raw.earned?.[c], 0);
   // TODO: remove once saves from before the rename are gone.
   d.earned.breakthrough ||= fraction(raw.earned?.courage, 0);
-  for (const k of ["trainingLevels", "researchLevels", "trainingGold", "researchGold"] as const) d[k] = fraction(raw[k], 0);
+  for (const k of ["trainingLevels", "researchLevels", "trainingGold", "researchGold", "floorsClimbed"] as const) d[k] = fraction(raw[k], 0);
   return d;
 }
 
 /** Raises each tally to at least what the rest of `save` proves (a save
  * from before the profile kept them): the currencies held, the Training
- * ranks held and the Gold paid for them, and the research levels done. */
+ * ranks held and the Gold paid for them, the research levels done, and
+ * the floors climbed to the Tower's highest. */
 export function backfillProfile(save: Save) {
   const p = save.profile, at = (c: LifetimeCurrency, held: number) => (p.earned[c] = Math.max(p.earned[c], held));
   at("gold", save.gold);
@@ -97,4 +102,5 @@ export function backfillProfile(save: Save) {
   p.trainingLevels = Math.max(p.trainingLevels, ranks);
   p.trainingGold = Math.max(p.trainingGold, gold);
   p.researchLevels = Math.max(p.researchLevels, levels);
+  p.floorsClimbed = Math.max(p.floorsClimbed, save.tower.best);
 }

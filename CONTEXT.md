@@ -29,7 +29,7 @@ _Avoid_: tower log, reward log
 ### The player
 
 **Player profile**:
-The player's lifetime record, shown in the Settings page's Stats: when the profile was made, each currency ever earned (spending never lowers it), the Training levels gained, the research levels completed, and the Gold spent on each (less what came back). Erasing all progress starts a new one.
+The player's lifetime record, shown in the Settings page's Stats: when the profile was made, each currency ever earned (spending never lowers it), the Tower floors climbed, the Training levels gained, the research levels completed, and the Gold spent on each (less what came back). Erasing all progress starts a new one.
 _Avoid_: account, statistics save
 
 **Profile file**:

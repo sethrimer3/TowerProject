@@ -158,11 +158,13 @@ export const TREES: SkillTree[] = [
     // Manual Hand, the second hand, after Card Mastery: down and left of it,
     // two rows under it to keep clear of Echoes of time and Ignore.
     { id: "manualHand", icon: "⇄", x: 30, y: 215, requires: ["cardMastery"] },
-    // Door Mastery under Key Mastery reveals the Inspiration tree's door path
-    // under Thorns. Then the run's charges: Ignore, with Target to its right,
-    // each with the skill that regains it below.
-    { id: "doorMastery", icon: "⚿", x: 50, y: 189, requires: ["keyMastery"] },
-    { id: "ignore", icon: "⊘", x: 50, y: 213, requires: ["doorMastery"] },
+    // Extra Trainer under Key Mastery, with Door Mastery to its right after
+    // it, which reveals the Inspiration tree's door path under Thorns. Then
+    // the run's charges below Extra Trainer: Ignore, with Target to its
+    // right, each with the skill that regains it below.
+    { id: "extraTrainer", icon: "⚔", x: 50, y: 189, requires: ["keyMastery"] },
+    { id: "doorMastery", icon: "⚿", x: 78, y: 189, requires: ["extraTrainer"] },
+    { id: "ignore", icon: "⊘", x: 50, y: 213, requires: ["extraTrainer"] },
     { id: "target", icon: "⌖", x: 78, y: 213, requires: ["ignore"] },
     { id: "ignoreMore", icon: "⊘", x: 50, y: 237, requires: ["ignore"] },
     { id: "targetMore", icon: "⌖", x: 78, y: 237, requires: ["target"] },

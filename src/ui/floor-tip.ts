@@ -5,11 +5,15 @@ import { capitalized, displayedProgress } from "./dom.ts";
 /** How long a tap's tip stays, in milliseconds. */
 const TAP_SHOWN_MS = 2500;
 
-/** "Max Floor: 12": the highest floor (the Delve's depth) the selected tier
- * has reached, this run's climb included. */
+/** The highest floor (the Delve's depth) the selected tier has reached,
+ * this run's climb included: what the floor tip and the run's summary say. */
+export function tierHighest(game: Pick<Game, "save" | "mode" | "run">) {
+  return Math.max(game.save[game.mode].best, game.run.maxHeight ?? game.run.height);
+}
+
+/** "Max Floor: 12": the tier's highest floor, `tierHighest`. */
 export function floorTipText(game: Game) {
-  const best = Math.max(game.save[game.mode].best, game.run.maxHeight ?? game.run.height);
-  return `Max ${capitalized(MODES[game.mode].words.progress)}: ${displayedProgress(best).toLocaleString("en-US")}`;
+  return `Max ${capitalized(MODES[game.mode].words.progress)}: ${displayedProgress(tierHighest(game)).toLocaleString("en-US")}`;
 }
 
 /** Inside a run, a tip under the floor number, its label and tower saying

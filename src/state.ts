@@ -14,7 +14,7 @@ import { volleyTurn, type Shot, type Volley, type VolleyTurn } from "./volley.ts
 import { missGem } from "./economy/gems.ts";
 import { DelvePlan } from "./delve/automove.ts";
 import { defaults } from "./save/save.ts";
-import { stampProfile } from "./save/profile.ts";
+import { stampProfile, tally } from "./save/profile.ts";
 import { defaultFinds, newNotes, noteKey, notesOf } from "./run-notes.ts";
 import { stream, tileRandom } from "./random.ts";
 import { freeLevelRow, freeTrainingLines, rollFreeTraining, type FreeGroup } from "./progression/free-training.ts";
@@ -2667,7 +2667,7 @@ export class Game {
     // Keyed by the stairs taken, so it pays once a run; the floor reached
     // is the one above.
     const gold = purse.floorGold(purse.floorKey(p.x, p.y), this.run.height + 2);
-    const highest = this.run.maxHeight ?? this.run.height;
+    const highest = this.run.maxHeight ?? this.run.height, from = this.run.height;
     // Skip on STAIRS climbs past the next floor, which pays nothing; an area
     // climbed past is still judged as its section ends.
     // The floor stood on is the board already built; generating a floor is slow.
@@ -2677,6 +2677,7 @@ export class Game {
     const skipGold = skipped ? purse.skippedFloorGold(skipped.board) : 0;
     const passed = skipped?.sectionStart ? new AreaLedger(this.save).enter(this.towerRun, skipped.board) : [];
     const { board, sectionStart } = this.climb.up(skipped?.board ?? left);
+    tally(this.save, "floorsClimbed", this.run.height - from);
     // Only a floor new to the run pays Silver: the run's own highest floor
     // gates it.
     let silver = 0;

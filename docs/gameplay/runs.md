@@ -23,7 +23,7 @@ History persists across refreshes.
 
 ## How a run ends
 
-Every way a run ends goes through one dialog, which says what brought it up and shows the same totals of what the run obtained: the floor reached, the run's highest floor, and the Gold, the Inspiration (in the Tower) and the XP earned in this run, the first two with their icons, not the amounts held (undo takes a kill's XP back from it, as from the hero).
+Every way a run ends goes through one dialog, which says what brought it up and shows the same totals of what the run obtained: the floor reached, the tower's highest floor (the same *Max Floor* the floor number's tip shows, this run included), and the Gold, the Inspiration (in the Tower) and the XP earned in this run, the first two with their icons, not the amounts held (undo takes a kill's XP back from it, as from the hero).
 Pressing **End Climb** (End Run in the Delve) asks whether to end the climb (or, when no card in the hand can act, says so first), with **End Climb** and **Keep climbing** (End Run and Keep delving in the Delve).
 When the hero falls in a fight, the run waits at 0 HP with the hand paused, a skull and crossbones burns in a red glow over the hero's head for two and a half seconds, and then the dialog, headed **Fallen in combat**, names the monster.
 It must be answered: **Undo** (once Rehearsed steps has unlocked undo, while the run has an undo left and a move to take back; without it the dialog doesn't mention undo) spends one to take the fight back and leaves the hand paused; **Return to entrance** ends the run, pays what it still owes, and returns to the forest for the next run.
@@ -54,6 +54,7 @@ Undo takes back what it takes back from the run (steps, keys, doors, pickups and
 Nor does it take back a provision used (an elixir, a Vanguard Banner, an Aegis charm): the use stays spent, the heal stays, and a boost keeps counting down its turns.
 The run's end dialog has a Run Notes button at the end of its totals, which opens them over it.
 The Settings page's Stats dialog has the same copy button.
+Among its lifetime tallies, **Floors climbed** counts every Tower floor the hero climbs to, by its stairs or passed by Skip on STAIRS, in every run (a floor climbed again in a later run counts again).
 Its tallies are rounded down, and shortened from a million (1.23M).
 
 ## Rewards and purchases

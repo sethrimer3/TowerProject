@@ -15,6 +15,7 @@ import { LEAGUE_INFO } from "../tournament/leagues.ts";
 import { placeText } from "../tournament/prizes.ts";
 import { tournamentScore } from "../tournament/run.ts";
 import { notesResearched, type RunNotesDialog } from "./run-notes-dialog.ts";
+import { tierHighest } from "./floor-tip.ts";
 
 /** The modal dialogs opened from the HUD, all sharing `ctx.modal`. */
 
@@ -152,14 +153,14 @@ export class RunEndDialog {
     requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.remove("active")));
   }
 
-  /** The run's totals, the same whatever ended it: where it stands, its
-   * highest, and the Gold, currency and XP it obtained (not the balances
+  /** The run's totals, the same whatever ended it: where it stands, the
+   * tier's highest (as the floor tip says it, this run included), and the Gold, currency and XP it obtained (not the balances
    * held). A run that climbed past the tier's record says so over them,
    * and its highest goes unsaid while it stands there. */
   private stats() {
     const { game } = this.ctx, rules = MODES[game.mode], slice = game.save[game.mode], run = game.run;
     const stat = (value: string | number, label: string, icon = "") => `<div><strong>${icon}${value}</strong>${label}</div>`;
-    const highest = run.maxHeight ?? run.height, record = slice.runRecord && !run.outside;
+    const highest = tierHighest(game), record = slice.runRecord && !run.outside;
     const stats = [
       stat(displayedProgress(run.height, !!run.outside), rules.words.progress.toUpperCase()),
       record && run.height === highest ? "" : stat(displayedProgress(highest, !!run.outside), "HIGHEST"),
