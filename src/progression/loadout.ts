@@ -69,10 +69,9 @@ export type Loadout = {
   undoCapacity: number;
 };
 
-/** Every character's baseline: 10 ATK plus the starter weapon (+2), which
- * Heirloom steel improves; no DEF; 100 HP; no shroud (Shroud gives the
- * first point); no Regen; no undo (Rehearsed steps gives the first). */
-const BASE = { attack: 12, defense: 0, maxHp: 100, shroud: 0, regen: 0, lifesteal: 0, thorns: 0, parry: 0, armorBreak: 0, undos: 0 };
+/** Every character's baseline: 10 ATK; no DEF; 100 HP; no shroud (Shroud
+ * gives the first point); no Regen; no undo (Rehearsed steps gives the first). */
+const BASE = { attack: 10, defense: 0, maxHp: 100, shroud: 0, regen: 0, lifesteal: 0, thorns: 0, parry: 0, armorBreak: 0, undos: 0 };
 
 const WORDS: Record<Stat, string> = {
   attack: "starting attack",

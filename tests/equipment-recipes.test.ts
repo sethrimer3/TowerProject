@@ -117,12 +117,12 @@ test("old chestplates update a run and its undo history once, keeping damage and
     const migrated=decode(JSON.stringify(raw));
     assert.equal(migrated.tower.run!.player.maxHp,after);
     assert.equal(migrated.tower.run!.player.hp,after-20,"the same 20 HP of damage is retained");
-    assert.equal(migrated.tower.run!.player.attack,14,"collected ATK remains");
+    assert.equal(migrated.tower.run!.player.attack,12,"collected ATK remains");
     assert.equal(migrated.tower.history[0].run.player.maxHp,after);
     assert.deepEqual(decode(JSON.stringify(migrated)),migrated,"the conversion runs only once");
     const resumed=new Game(migrated);resumed.equipment.unequip("tower","chestplate");
     assert.equal(resumed.run.player.maxHp,100,"taking off the armor returns the original base HP");
-    assert.equal(resumed.run.player.attack,14);
+    assert.equal(resumed.run.player.attack,12);
     assert.ok(resumed.undo());assert.equal(resumed.run.player.maxHp,100);
   }
 });

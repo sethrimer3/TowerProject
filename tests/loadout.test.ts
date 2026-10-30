@@ -16,9 +16,9 @@ import { getTowerGateEnemy } from "../src/enemies/scaling.ts";
 import { enemyStats } from "../src/enemies/curves.ts";
 import { snap } from "../src/exact.ts";
 
-test("a new character starts at 12 ATK, 0 DEF, 100 HP, no shroud, no Regen, no keys and no undo", () => {
+test("a new character starts at 10 ATK, 0 DEF, 100 HP, no shroud, no Regen, no keys and no undo", () => {
   assert.deepEqual(loadout(defaults()), {
-    attack: 12, defense: 0, maxHp: 100, shroud: 0, regen: 0, lifesteal: 0, thorns: 0, parry: 0, armorBreak: 0, bossAttack: 0, pierce: 0, keys: { yellow: 0, blue: 0, red: 0 }, startKeys: { yellow: 0, blue: 0 }, undoCapacity: 0,
+    attack: 10, defense: 0, maxHp: 100, shroud: 0, regen: 0, lifesteal: 0, thorns: 0, parry: 0, armorBreak: 0, bossAttack: 0, pierce: 0, keys: { yellow: 0, blue: 0, red: 0 }, startKeys: { yellow: 0, blue: 0 }, undoCapacity: 0,
   });
 });
 
@@ -39,7 +39,7 @@ test("each rank of an upgrade adds its grant", () => {
     yellow: 1, blue: 2, red: 3, undos: 1, inspirationUndos: 1, shroud: 1,
   });
   assert.deepEqual(loadout(s), {
-    attack: 12 + 2,
+    attack: 10 + 2,
     defense: 0 + 1,
     maxHp: 100,
     shroud: 1,
@@ -73,12 +73,12 @@ test("each training rank is worth more than the one before, whatever the hero's 
   // Rank curves: max HP 10n + n², DEF the most of n and n²/12, ATK n + n²/5, fractions kept
   // (the page shows the stats whole).
   const l = loadout(s);
-  assert.deepEqual([l.attack, l.defense, l.maxHp], [12 + 1.2, 2, 100 + 39]);
+  assert.deepEqual([l.attack, l.defense, l.maxHp], [10 + 1.2, 2, 100 + 39]);
   assert.deepEqual(trainingPoints(s), { earned: 15, spent: 3 + 2, left: 10 });
   // The next rank: the 4th max HP rank adds 10 + 7 = 17, the 2nd ATK 1 + 3 / 5 = 1.6.
   assert.deepEqual(
     [trainingStep(s, "hp"), trainingStep(s, "attack")].map(({ now, next, worth, affordable }) => [now, next, worth, affordable]),
-    [[139, 156, 17, true], [13, 14, 1.6, true]],
+    [[139, 156, 17, true], [11, 12, 1.6, true]],
   );
   assert.equal(trainingStep({ ...s, trainingPaid: { ...s.trainingPaid, hp: { points: 13, gold: 0, ms: 0 } } }, "attack").affordable, false, "1 point a rank, none left");
   // Levelling up only earns points: ranks bought are worth what they were.
@@ -189,11 +189,11 @@ test("gear adds flat bonuses, then its percentages of the total, fractions kept;
   s.equipment.equipped.tower.chestplate = addItem(s.equipment, "giantsHauberk", "uncommon")!.id;
   Object.assign(s.provisions, { edge: 1, guard: 2, heal: 1 });
   const l = loadout(s);
-  assert.equal(l.attack, 16.14375, "(12 + 3.75) × 1.025");
+  assert.equal(l.attack, 14.09375, "(10 + 3.75) × 1.025");
   assert.equal(l.defense, 0);
   assert.equal(l.maxHp, 192.5, "175 × 1.10");
   // The Delve's hero wears nothing yet.
-  assert.equal(loadout(s, "delve").attack, 12);
+  assert.equal(loadout(s, "delve").attack, 10);
 });
 
 test("descriptions are written from the grants", () => {
@@ -278,15 +278,15 @@ function armoury(g: Game) {
 test("changing gear mid-run keeps the ATK gathered", () => {
   const g = new Game(defaults());
   g.newRun();
-  assert.equal(g.run.player.attack, 12);
+  assert.equal(g.run.player.attack, 10);
   g.run.player.attack += 2; // an attack shard picked up
   const sword = armoury(g);
   assert.ok(g.equipment.equip("tower", sword));
-  assert.equal(g.run.player.attack, 17);
-  assert.deepEqual(g.run.loadout, { attack: 15, defense: 0, maxHp: 100 });
+  assert.equal(g.run.player.attack, 15);
+  assert.deepEqual(g.run.loadout, { attack: 13, defense: 0, maxHp: 100 });
   g.equipment.unequip("tower", "weapon");
-  assert.equal(g.run.player.attack, 14);
-  assert.deepEqual(g.run.loadout, { attack: 12, defense: 0, maxHp: 100 });
+  assert.equal(g.run.player.attack, 12);
+  assert.deepEqual(g.run.loadout, { attack: 10, defense: 0, maxHp: 100 });
   assert.equal(g.run.player.hp, 100);
 });
 
@@ -297,7 +297,7 @@ test("a gear change reaches a run still outside, which starts at its new full HP
   e.unlocked = true;
   g.equipment.equip("tower", addItem(e, "knightsSword", "common")!.id);
   g.equipment.equip("tower", addItem(e, "giantsHauberk", "common")!.id);
-  assert.deepEqual([g.run.player.attack, g.run.player.maxHp, g.run.player.hp], [15, 160, 160]);
+  assert.deepEqual([g.run.player.attack, g.run.player.maxHp, g.run.player.hp], [13, 160, 160]);
 });
 
 test("ATK, DEF, Max HP, Regen and Shroud train to 1,000 levels, and each Limit Break owned raises that by 500, Shroud's but by the first eight", () => {
