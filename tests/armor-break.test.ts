@@ -296,26 +296,33 @@ test("a save keeps a tile's break, with or without a wound, and rejects a bad on
   assert.equal(round({ kind: "floor" }, { armorBreak: 25 }).tower.run?.player.armorBreak, 25);
 });
 
-test("the inspect panel shows what is broken after DEF, and what DEF below 0 does", () => {
+test("the inspect panel shows what is broken after DEF, and what DEF below 0 does to the next hit, the one it shows", () => {
   const g = arena(brute), w = g.world as RoomWorld;
   g.run.player.attack = 100;
+  g.run.player.armorBreak = 25;
   const body = () => tileInfo(g, 1, 0).body;
   assert.doesNotMatch(body(), /hit-heal">-/, "nothing broken: no (-X)");
   assert.doesNotMatch(body(), /Armor broken/);
   w.wound(1, 0, 0, 25);
   assert.match(body(), /hit-heal">-10<\/span>\)/, "25% of 40 DEF");
-  assert.doesNotMatch(body(), /Armor broken/, "DEF still above 0");
-  w.wound(1, 0, 0, 100);
-  assert.match(body(), /hit-heal">-50<\/span>\)/);
-  assert.match(body(), /Armor broken: DEF -10, your hits deal 10 extra damage/);
-  assert.match(tileInfo({ ...g, world: g.world, run: g.run, mode: g.mode, stepRules: g.stepRules, save: g.save, enemyGold: () => 0, fights: { brokenAt: () => 200 } } as never, 1, 0).body, /hit-heal">-80<\/span>\).*Armor broken: DEF -40, your hits deal 40 extra damage/, "a fight being played out counts its strikes");
+  assert.doesNotMatch(body(), /Armor broken/, "DEF still above 0 on the next hit");
+  w.wound(1, 0, 0, 75);
+  assert.match(body(), /Armor broken: DEF 0, -10 on your next hit, for 10 extra damage/, "below 0 first on the next hit");
+  w.wound(1, 0, 0, 25);
+  assert.match(body(), /hit-heal">-50<\/span>\) \(<span class="hit-hurt">-120<\/span>\)/, "the hit shown is ATK and those 20 extra");
+  assert.match(body(), /Armor broken: DEF -10, -20 on your next hit, for 20 extra damage/);
+  delete g.run.player.armorBreak;
+  assert.match(body(), /hit-hurt">-110<\/span>\).*Armor broken: DEF -10, your next hit deals 10 extra damage/, "no ranks: nothing more breaks");
+  g.run.player.armorBreak = 25;
+  assert.match(tileInfo({ ...g, world: g.world, run: g.run, mode: g.mode, stepRules: g.stepRules, save: g.save, enemyGold: () => 0, fights: { brokenAt: () => 200 } } as never, 1, 0).body, /hit-heal">-80<\/span>\) \(<span class="hit-hurt">-150<\/span>\).*Armor broken: DEF -40, -50 on your next hit, for 50 extra damage/, "a fight being played out counts its strikes");
 });
 
 test("a flyer's panel shows it too", () => {
   const g = arena(), w = g.world as RoomWorld, bat: Enemy = { ...brute, flying: true };
+  g.run.player.armorBreak = 25;
   w.cells.set("1,0", { kind: "floor", flyer: bat });
   w.wound(1, 0, 0, 125);
-  assert.match(tileInfo(g, 1, 0).body, /hit-heal">-50<\/span>\).*Armor broken: DEF -10/);
+  assert.match(tileInfo(g, 1, 0).body, /hit-heal">-50<\/span>\).*Armor broken: DEF -10, -20 on your next hit, for 20 extra damage/);
 });
 
 test("Silver buys ranks that count in the run at once, up to the cap, and Free Offense Up can give one", () => {

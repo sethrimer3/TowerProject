@@ -3,7 +3,7 @@ import type { Enemy, Kind, Player, Tile } from "../entities.ts";
 import { enemyTitle } from "../enemies/scaling.ts";
 import type { Game, RouteEffects } from "../state.ts";
 import { POTION_HEAL, potionRestores, resolveStep, shardStat } from "../step-effects.ts";
-import { attackForFewerHits, defenseAgainst, instakill, lifestealHeal, netDamage, parryCut, predict, struckDamage, type CombatPrediction } from "../combat.ts";
+import { attackForFewerHits, brokenAfter, defenseAgainst, instakill, lifestealHeal, netDamage, parryCut, predict, struckDamage, type CombatPrediction } from "../combat.ts";
 import { forecast as critForecast, type CritForecast } from "../crit-forecast.ts";
 import { arrowDamage, shotDamage } from "../enemies/ranged.ts";
 import { goalUnlocked } from "../goals.ts";
@@ -118,10 +118,14 @@ const stat = (icon: string, label: string, value: string, extra = "") =>
 /** What Armor Break has taken off `e`'s DEF so far (`broken`: a fight being
  * played out counted), to go after its DEF. */
 const brokenStat = (e: Enemy, broken = e.broken ?? 0) => (broken ? ` (<span class="hit-heal">-${enemyStat(snap((e.defense * broken) / 100))}</span>)` : "");
-/** Says what DEF below 0 does, once Armor Break has taken it there. */
+/** Says what DEF below 0 does to the hero's next hit, the one the stat line
+ * shows, once Armor Break takes it there: its DEF now, then for that hit, which
+ * breaks it further first (unless the hero has no ranks to). */
 function brokenLine(e: Enemy, p: Player, broken = e.broken ?? 0) {
-  const defense = defenseAgainst(p, e, broken);
-  return defense < 0 ? `<br><small>Armor broken: DEF ${enemyStat(defense)}, your hits deal ${enemyStat(-defense)} extra damage</small>` : "";
+  const now = defenseAgainst(p, e, broken), next = defenseAgainst(p, e, brokenAfter(p, e, broken)), extra = enemyStat(-next);
+  if (next >= 0) return "";
+  const says = next === now ? `your next hit deals ${extra} extra damage` : `${enemyStat(next)} on your next hit, for ${extra} extra damage`;
+  return `<br><small>Armor broken: DEF ${enemyStat(now)}, ${says}</small>`;
 }
 
 /** The enemy's stat line: its HP, its ATK with what each of its strikes
@@ -161,9 +165,11 @@ const DESCRIBE: Partial<Record<Kind, Describe>> = {
     const crit = g.save.upgrades.critPrediction ? g.stepRules.crit : undefined;
     const e = t.enemy!, r = predict(p, e), c = crit && !r.impervious ? critForecast(p, e, crit) : null;
     const gold = g.run.outside ? 0 : g.enemyGold(at.x, at.y, !r.impervious && instakill(r)), broken = g.fights?.brokenAt(at.x, at.y);
+    // A fight being played out has its own next hit, from what it has broken so far.
+    const next = broken === undefined ? r : predict(p, { ...e, broken });
     return {
       title: enemyTitle(e),
-      body: enemyStats(e, p, r, gold, broken) + brokenLine(e, p, broken) + guardLine(e) + prediction(r, p, g, c) + forecast(p, e, r.impervious ? 0 : r.turns, g, !!crit),
+      body: enemyStats(e, p, next, gold, broken) + brokenLine(e, p, broken) + guardLine(e) + prediction(r, p, g, c) + forecast(p, e, r.impervious ? 0 : r.turns, g, !!crit),
     };
   },
   wall: () => ({ title: "Wall", body: "Impassable obstacle." }),

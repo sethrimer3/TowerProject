@@ -87,7 +87,7 @@ Below 0 DEF your hits deal that much extra damage: 500 ATK deals 500 at 0 DEF an
 What arrows break stays on the enemy for the run, and a fight starts from it, while a fight's own hits end with the fight; Bombs and Thorns break nothing.
 Piercing ignores its share of the enemy's original DEF, and Armor Break comes off after it.
 A prediction counts the rising hits, and an arrow can aim at an enemy it can't yet hurt.
-Tapping an enemy shows what is broken after its DEF, as DEF 100 (-30), and once DEF is below 0 a line says how much extra damage your hits deal.
+Tapping an enemy shows what is broken after its DEF, as DEF 100 (-30), and once your next hit would take DEF below 0 a line gives its DEF now and for that hit, and the extra damage: Armor broken: DEF -10, -20 on your next hit, for 20 extra damage.
 **Multishot Chance** and **Multishot Targets** join Offense training from floor 70: each shot has a chance (0.5% a rank, up to 49.5%) to be a multishot, firing at once at the closest enemies an arrow can hurt, 2 of them and one more a Targets rank (up to 9), or one at each when fewer are in range.
 Every arrow of a multishot carries the first's Charged Shot, rolls its own critical hit, and has its own ATK / m for its own distance.
 **Rapid Fire Chance** and **Rapid Fire Duration** join Offense training from floor 80: each shot fired outside Rapid Fire has a chance (0.4% a rank, up to 34%) to start it, and from that moment the Archer's arrows come four times as fast for its Duration (1 turn, and 0.05 turns more a rank, up to 5.95).
