@@ -229,16 +229,17 @@ test("Bombs (5 Inspiration) stands left of Critical Prediction in the Inspiratio
   save.upgrades.bombs = 1;
   assert.ok(provisionOpen(save, "bomb"));
 });
-test("Golden Floors (3 Breakthrough), then Rehearsed steps and Echoes of time straight down under More Wealth; Manual Hand (1) after Card Mastery; Key Mastery (1) under Overheal under Physician reveals Find Gold Key and Key Efficiency, now in the Inspiration tree (10 each), and Card and Beast Mastery split off under it", () => {
+test("Golden Floors (3 Breakthrough), then Rehearsed steps and Echoes of time straight down under More Wealth, Offline Gold (2) beside Rehearsed steps; Manual Hand (1) after Card Mastery; Key Mastery (1) under Badges reveals Find Gold Key and Key Efficiency, now in the Inspiration tree (10 each), and Card and Beast Mastery split off under it", () => {
   const breakthrough = TREES.find((t) => t.id === "breakthrough")!;
   const at = (id: string) => breakthrough.nodes.find((n) => n.id === id)!;
   assert.deepEqual(["goldenFloors", "inspirationUndos", "undos"].map((id) => [at(id).x, at(id).y, at(id).requires]), [[18, 111, ["moreWealth"]], [18, 137, ["goldenFloors"]], [18, 163, ["inspirationUndos"]]], "Golden Floors, Rehearsed steps and Echoes of time straight down under More Wealth");
   assert.deepEqual([at("manualHand").x, at("manualHand").y, at("manualHand").requires], [30, 215, ["cardMastery"]], "Manual Hand below and after Card Mastery");
   assert.equal(cost("goldenFloors", 0), 3, "Golden Floors costs 3 Breakthrough");
+  assert.deepEqual([at("offlineGold").x, at("offlineGold").y, at("offlineGold").requires, cost("offlineGold", 0)], [38, 137, ["goldenFloors"], 2], "Offline Gold (2) splits off after Golden Floors, beside Rehearsed steps");
   assert.deepEqual([at("moreWealth").x, at("moreWealth").y, at("moreWealth").requires], [18, 85, ["pathToWealth"]], "More Wealth under Path to Wealth");
   assert.deepEqual([at("overheal").x, at("overheal").y, at("overheal").requires], [50, 85, ["physician"]], "Overheal between Physician and Life");
-  assert.deepEqual([at("life").x, at("life").y, at("life").requires], [50, 111, ["overheal"]], "Life between Overheal and Key Mastery");
-  assert.deepEqual([at("keyMastery").x, at("keyMastery").y, at("keyMastery").requires], [50, 137, ["life"]]);
+  assert.deepEqual([at("life").x, at("life").y, at("life").requires], [50, 111, ["overheal"]], "Life under Overheal");
+  assert.deepEqual([at("keyMastery").x, at("keyMastery").y, at("keyMastery").requires], [at("cardBadges").x, at("cardBadges").y + 26, ["cardBadges"]], "Key Mastery under Badges, after it");
   assert.ok(["cardMastery", "beastMastery"].every((id) => at(id).y > at("keyMastery").y && at(id).requires.join() === "keyMastery"), "the Masteries split off under Key Mastery");
   assert.ok(at("cardBadges").x > 56 && at("cardBadges").y > 85, "Badges moved down and right");
   const inspiration = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;

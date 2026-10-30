@@ -68,6 +68,8 @@ import { ranksInRun, runTrainingBulk, runTrainingOffer, type RunTrainingOffer } 
 import type { BuyQuantity } from "./progression/buy-quantity.ts";
 import { critRule, loadout, provisionsOpen, rankShift, trainingPoints, trainingWaiting, type TrainingView } from "./progression/loadout.ts";
 import { researched } from "./progression/archives.ts";
+import { arrive, recordClimb, type OfflineGrant } from "./offline-gold.ts";
+import { CURRENCIES } from "./shop/currency.ts";
 import { hasEnvironment, possibleEnvironments } from "./environments.ts";
 import { chargesLeft, chargesPerRun, climbFloor, spendCharge, type Charge } from "./run-charges.ts";
 import { TrainingDesk } from "./game/training-desk.ts";
@@ -1832,6 +1834,7 @@ export class Game {
     this.slice.runCurrency = 0;
     this.slice.runRecord = false;
     this.slice.runFinds = defaultFinds();
+    if (this.mode === "tower") this.save.offline.climbAway = 0;
     this.warpLooted = null;
     this.stopPlay();
     const { player, loadout } = startingHero(this.save, this.mode);
@@ -1985,6 +1988,10 @@ export class Game {
    * in the forest. */
   private finalizeRun(reason: string) {
     const record = this.payout(), gold = this.slice.runGold;
+    // A Tower climb's Gold and real time (less the time offline) count
+    // toward the Recent Gold per Hour.
+    const notes = this.run.notes;
+    if (this.mode === "tower" && !this.run.outside && notes) recordClimb(this.save.offline, gold, this.clock() - notes.startedAt - this.save.offline.climbAway);
     // A new floor's "A new chamber opens." teaches only the first Tower run.
     if (this.mode === "tower") this.save.tutorials.chamber = true;
     this.forestSeeds.clear();
@@ -2441,6 +2448,7 @@ export class Game {
     const p = this.run.player;
     this.run.outside = false;
     this.run.notes = newNotes(this.clock());
+    if (this.mode === "tower") this.save.offline.climbAway = 0;
     this.save.tutorials.enter = true;
     this.save.tutorials.enemy = false;
     this.dealHand();
@@ -2893,6 +2901,20 @@ export class Game {
     const chance = trainedAmount(this.trainingNow, "findPotion");
     this.run.percentPotions = chance;
     if (this.world instanceof RoomWorld) this.world.percentPotions = chance;
+  }
+  /** The app has started: the time since it was last open is time
+   * offline, which owes Offline Gold once the skill is owned. Returns the
+   * grant owed, if any. */
+  arriveOffline(): OfflineGrant | null {
+    const tower = this.save.tower.run;
+    return arrive(this.save, this.clock(), !!tower && !tower.outside);
+  }
+  /** Banks the Offline Gold owed; returns the Gold. */
+  claimOfflineGold() {
+    const grant = this.save.offline.grant;
+    this.save.offline.grant = null;
+    if (grant && grant.gold > 0) CURRENCIES.gold.credit(this.save, grant.gold);
+    return grant?.gold ?? 0;
   }
   /** The wall clock the Archives' research runs on (ms); tests set it. */
   clock: () => number = () => Date.now();

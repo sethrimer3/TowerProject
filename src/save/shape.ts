@@ -23,6 +23,7 @@ import type { MailSave } from "../mail/progress.ts";
 import type { MissionsSave } from "../missions/progress.ts";
 import type { EventsSave } from "../events/progress.ts";
 import type { Profile } from "./profile.ts";
+import type { OfflineSave } from "../offline-gold.ts";
 import type { TowerRun, DelveRun, AutomoveMemory, Run, MoveSnapshot, Fall } from "../runs.ts";
 export type ModeSave<R extends Run = Run> = {
   history: MoveSnapshot<R>[];
@@ -236,4 +237,7 @@ export type Save = {
   /** The player profile: when it was made and its lifetime tallies, the
    * currencies earned and Training and research done (save/profile.ts). */
   profile: Profile;
+  /** The latest Tower climbs' Gold and time, when the app was last open,
+   * and the Offline Gold owed (offline-gold.ts). */
+  offline: OfflineSave;
 };

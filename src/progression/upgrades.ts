@@ -152,6 +152,14 @@ export const UPGRADES = [
     currency: "breakthrough",
   },
   {
+    id: "offlineGold",
+    name: "Offline Gold",
+    description: "Earn Gold while away, from your Recent Gold per Hour, claimed when you return; open Offline Gold Multiplier and Offline Gold Duration research",
+    base: 2,
+    max: 1,
+    currency: "breakthrough",
+  },
+  {
     id: "cardMastery",
     name: "Card Mastery",
     description: "Reveal GK Siphon, BK Siphon and the skills under them in the Inspiration tree",

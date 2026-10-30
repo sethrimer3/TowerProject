@@ -73,6 +73,8 @@ import { ShrinesPage } from "./ui/shrines-page.ts";
 import { showShrine } from "./ui/shrine-dialog.ts";
 import { uiLook } from "./theme-collection.ts";
 import { themeToast } from "./ui/theme-menu.ts";
+import { showOfflineGold } from "./ui/offline-gold-dialog.ts";
+import { dropGold } from "./ui/gold-drop.ts";
 
 // Wires the pages together: builds the shell, creates the game and renderer,
 // and routes navigation, HUD refreshes and input between the ui/ modules.
@@ -83,6 +85,9 @@ drawSelectsUnder(document.querySelector<HTMLDivElement>("#app")!);
 const game = new Game(load());
 // A new profile (or one from before profiles kept the date) is made now.
 stampProfile(game.save, game.clock());
+// The time since the app was last open is time offline, before anything
+// saves (and marks the app open now): it may owe Offline Gold.
+const offlineGrant = game.arriveOffline();
 applyUiTheme(game.save);
 bindMedievalFeedback(() => uiLook(game.save) === "medieval", () => game.save.settings.reduceMotion);
 // The frame loop settles fights as they finish playing out.
@@ -174,7 +179,10 @@ const runTraining = new RunTrainingBar(shownGame, () => {
 }, id => !provingGrounds.active || provingGrounds.allowsTraining(id));
 const researchToasts = new ResearchToasts(() => game.save.settings.reduceMotion);
 
-function save() {
+/** Saves; `seen` (while the page shows) marks the app open now, so a
+ * restart counts the time offline from here. */
+function save(seen = !document.hidden) {
+  if (seen) game.save.offline.seenAt = game.clock();
   if (!persist(game.save))
     game.message = "Storage unavailable — progress is only kept for this session.";
 }
@@ -649,11 +657,12 @@ const loop = new FrameLoop({
   },
   save,
 });
+// Hidden or shown again, the app was open until (or from) now.
 document.addEventListener("visibilitychange", () => {
   loop.resetAutoTimer();
-  save();
+  save(true);
 });
-window.addEventListener("pagehide", save);
+window.addEventListener("pagehide", () => save());
 installDebugHooks(
   game,
   async () => {
@@ -679,6 +688,21 @@ export function startGame() {
   renderHandMore();
   renderer.draw(performance.now());
   loop.start();
+  if (offlineGrant) offerOfflineGold();
   void refreshTournament();
   void refreshMail();
+}
+/** The Offline Gold owed as the app started: the run in progress waits
+ * while the dialog shows, and Claim banks the Gold, drops it, and plays on. */
+function offerOfflineGold() {
+  const grant = game.save.offline.grant;
+  if (!grant) return;
+  game.pauseForPage();
+  showOfflineGold(modal, grant, () => {
+    const gold = game.claimOfflineGold();
+    game.resumeFromPage();
+    save();
+    update();
+    dropGold(gold, game.save.settings.reduceMotion);
+  });
 }

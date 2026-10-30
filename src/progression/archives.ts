@@ -42,6 +42,11 @@ const percent = (n: number) => `${n}%`;
 const tenths = (n: number) => `${n / 10}%`;
 /** A speed (0 = as fast as without research) as a percent of the base. */
 const speed = (n: number) => `${Math.round(100 + n * 100)}%`;
+/** A span of minutes as hours and minutes, "02h:10m". */
+export const hoursMinutes = (minutes: number) => {
+  const m = Math.floor(minutes);
+  return `${String(Math.floor(m / 60)).padStart(2, "0")}h:${String(m % 60).padStart(2, "0")}m`;
+};
 /** A one-level unlock: open or not. */
 const opened = (n: number) => (n ? "Open" : "Locked");
 /** The numbers research can change, each with its name, the base the game
@@ -104,6 +109,11 @@ export const RESEARCH_TARGETS = {
   /** Golden Floor Multiplier: the factor on every Gold found on a Golden
    * Floor, in tenths, from ×2. */
   goldenFloorMultiplier: { name: "Golden Floor Multiplier", base: 20, shown: (n: number) => `×${n / 10}` },
+  /** The share of the Recent Gold per Hour that each hour offline pays,
+   * in tenths of a percent (offline-gold.ts), from 0. */
+  offlineGoldMultiplier: { name: "Offline Gold Multiplier", base: 0, shown: tenths },
+  /** The most minutes offline that Offline Gold pays for, from 2 hours. */
+  offlineGoldMinutes: { name: "Offline Gold Duration", base: 120, shown: hoursMinutes },
   /** The chance, in tenths of a percent, that a new floor climbed hands
    * the hero a gold key. */
   yellowKeyChance: { name: "Gold Key Chance", base: 0, shown: tenths },
@@ -246,6 +256,22 @@ const critLevels = (target: ResearchTarget) => Array.from({ length: 100 }, (_, i
   const m = i + 1 - POTION_HP_START.length, seconds = POTION_HP_START[i]?.[1] ?? 900 * m + 36 * m * m;
   return { gold: 30 + 8 * i * i * i, hours: seconds / 3600, effect: { target, op: "add", value: 2 } };
 });
+
+/** Offline Gold Multiplier research (+0.5% of the Recent Gold per Hour a
+ * level, 5 tenths, for 100 levels, to 50%): Critical Chance's Gold and hours. */
+const offlineMultiplierLevels = () => critLevels("offlineGoldMultiplier").map((level): ResearchLevel => ({
+  ...level, effect: { target: "offlineGoldMultiplier", op: "add", value: 5 },
+}));
+
+/** Offline Gold Duration research (+10 minutes a level, for 60 levels, from
+ * 2 hours to 12): Offline Gold Multiplier's level n, its Gold and hours each
+ * 1.02^(n − 1) times more (30 Gold and 15 seconds at level 1, about 6.3
+ * million Gold and 64 hours at 60). */
+const offlineDurationLevels = () => offlineMultiplierLevels().slice(0, 60).map((level, i): ResearchLevel => ({
+  gold: Math.round(level.gold * intPow(1.02, i)),
+  hours: level.hours * intPow(1.02, i),
+  effect: { target: "offlineGoldMinutes", op: "add", value: 10 },
+}));
 
 /** Charged Shot research (+1% of ATK a turn waited, a level, for 100
  * levels): Critical Factor's hours, at ten times its Gold: level n costs
@@ -700,6 +726,20 @@ export const RESEARCH = {
     categories: ["economy"],
     requires: [{ upgrade: "goldenFloors" }],
     levels: goldenLevels({ target: "goldenFloorMultiplier", op: "add", value: 1 }, 80, 9800, 9),
+  },
+  offlineGoldMultiplier: {
+    name: "Offline Gold Multiplier",
+    description: "Leave the hirelings a share: each hour away (up to Offline Gold Duration) pays more of your Recent Gold per Hour, the Gold per hour of real time of your last ten Tower climbs.",
+    categories: ["economy"],
+    requires: [{ upgrade: "offlineGold" }],
+    levels: offlineMultiplierLevels(),
+  },
+  offlineGoldDuration: {
+    name: "Offline Gold Duration",
+    description: "Keep the hirelings at it longer: Offline Gold pays for more of the time you're away.",
+    categories: ["economy"],
+    requires: [{ upgrade: "offlineGold" }],
+    levels: offlineDurationLevels(),
   },
   heartDoorResilience: {
     name: "Heart Door Resilience",

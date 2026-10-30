@@ -46,7 +46,7 @@ The player-facing rules, in full, one topic a page:
 | [Proving Grounds](docs/gameplay/proving-grounds.md) | Three control modes, the Light Elemental, Keymaster, keys and mimics |
 | [Runs](docs/gameplay/runs.md) | Movement settings, Undo, how a run ends, Run Notes, rewards, the in-run controls, Dash |
 | [Cinematic mode](docs/gameplay/cinematic-mode.md) | The board alone: entering and leaving it, idle dimming, Gems in it |
-| [Currencies and the Shop](docs/gameplay/currencies-and-shop.md) | Gems and Gem finds, the ad boosts, the Shop |
+| [Currencies and the Shop](docs/gameplay/currencies-and-shop.md) | Gems and Gem finds, the ad boosts, Offline Gold, the Shop |
 | [Towers, Areas and Goals](docs/gameplay/towers-areas-goals.md) | Higher towers, mastered and cleared areas, Goals and Warp |
 | [Shrines](docs/gameplay/shrines.md) | Shrines and boons |
 

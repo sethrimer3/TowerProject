@@ -540,6 +540,14 @@ A rule a whole floor (in the Delve, an equivalent floor) may be given, at its ow
 **Treasure Floor**:
 A floor whose ATK and DEF shards and potions are all treasure chests, by Chest's upgrade, rolled once for each floor.
 
+**Recent Gold per Hour** (RGPH):
+The Gold the last ten Tower climbs found over the real time they took (less the time the app was closed), shown in the Stats dialog.
+_Avoid_: gold rate, GPH
+
+**Offline Gold**:
+Gold paid on returning to the app for the time it was closed: the Recent Gold per Hour times the hours away, at most Offline Gold Duration, times Offline Gold Multiplier.
+_Avoid_: idle gold, AFK gold
+
 **Golden Floor**:
 A Floor Environment, by Golden Floor Chance research: every Gold found on it is multiplied by Golden Floor Multiplier, once for each find, and its ground (or, on a black or hueless Game theme, its walls) is gold.
 

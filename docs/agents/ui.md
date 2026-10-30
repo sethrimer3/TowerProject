@@ -119,6 +119,8 @@ The trial entrance lists one entry per boss, then shows three control buttons fo
 `archivesTick` calls its `tick` to refresh midnight refills without closing the menu or restarting an encounter.
 Manual and hybrid trials map canvas taps to actual world tiles and queue `TrialNavigation`; a destination marker shows the pending tile, and the only movement overlay button is Wait.
 The Stats dialog includes Trial Points earned after the profile has earned some, keeping the existing empty-profile layout.
+It shows the Recent Gold per Hour after the Gold earned (`statsRows`' `offline`, shortened by `shortAmount` from 1,000).
+On start-up, with Offline Gold owed, `offerOfflineGold` opens the Offline Gold dialog (`ui/offline-gold-dialog.ts`) over a paused run; see economy-and-online.md.
 Keymaster trials add a saved Use keys/Save keys mimic toggle and encounter golden-key/door/mimic counts; the menu previews its own mimic cadence and four 20%-max-HP door impacts.
 **The Overheal bar.** `.health-track` holds `#overheal`, a bar laid over the red one and shown only while the shown HP is above max HP (`renderVitals`): its fill is the HP above max over the room Overheal gives (`game.hpCeiling − maxHp`), the red bar stays full, and while it shows the fight's purple (`#overheal-loss`) and a heal's growth (`#overheal-gain`, pale blue) are drawn on it rather than on the red; `renderHealthLoss` and `renderHealthGain` take the bar they draw on.
 

@@ -30,6 +30,7 @@ import { decodeThemes, defaultThemes } from "../theme-collection.ts";
 import { isTournamentRun } from "../tournament/run.ts";
 import { decodeBadges, defaultBadges, validRunBadges } from "../cards/badges.ts";
 import { backfillProfile, decodeProfile, defaultProfile } from "./profile.ts";
+import { decodeOffline, defaultOffline } from "../offline-gold.ts";
 import { decodeFinds, defaultFinds, validNotes } from "../run-notes.ts";
 import { isFoeKey } from "../cards/foe-cards.ts";
 import { decodeCardXp } from "../cards/levels.ts";
@@ -91,6 +92,7 @@ export function defaults(): Save {
     shrines: defaultShrines(),
     themes: defaultThemes(),
     profile: defaultProfile(),
+    offline: defaultOffline(),
     trialAccess: defaultTrialAccess(),
   };
 }
@@ -531,6 +533,7 @@ export function decode(raw: string | null): Save {
     if (isRecord(s.equipment) && !Object.hasOwn(s.equipment, "categories")) upgradeLegacyChestplateRuns(d);
     d.profile = decodeProfile(s.profile);
     backfillProfile(d);
+    d.offline = decodeOffline(s.offline);
   } catch {}
   return d;
 }
