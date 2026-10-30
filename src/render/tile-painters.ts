@@ -169,7 +169,7 @@ onSpritesLoaded(() => bakedEnemies.clear());
 export function paintEnemy(c: CanvasRenderingContext2D, t: Tile) {
   const e = t.enemy!;
   groundShadow(c, 12, 21, 8, 2.6, 0.4);
-  const key = `${e.name}|${e.tier}|${e.strength}|${e.fast}|${e.ranged}|${e.flying}`;
+  const key = `${e.name}|${e.tier}|${e.strength}|${e.fast}|${e.ranged}|${e.flying}|${e.armored}`;
   let baked = bakedEnemies.get(key);
   if (!baked) bakedEnemies.set(key, (baked = bakeEnemy(e)));
   c.drawImage(baked, -ENEMY_MARGIN, -ENEMY_MARGIN);
@@ -201,6 +201,7 @@ function bakeEnemy(e: Enemy) {
   if (e.flying) drawKit(oc, COMBAT_MARKS.flying, m + 15, m, 9, 8);
   if (e.ranged) drawKit(oc, COMBAT_MARKS.ranged, m + 15, m, 9, 8);
   if (e.fast) drawKit(oc, COMBAT_MARKS.fast, m + 12, m + (e.ranged ? 8 : 0), 12, 8);
+  if (e.armored) drawKit(oc, COMBAT_MARKS.armored, m + 15, m + 16, 9, 8);
   return out;
 }
 

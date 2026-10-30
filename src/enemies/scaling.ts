@@ -21,7 +21,7 @@ export const TOWER_ZONE_ENEMIES: readonly (readonly TowerEnemyDefinition[])[] = 
   [
     { name: "Goblin", profile: "attackHeavy" },
     { name: "Thief", profile: "balanced" },
-    { name: "Armored Knight", profile: "defenseHeavy" },
+    { name: "Iron Knight", profile: "defenseHeavy" },
   ],
   [
     { name: "Bat", profile: "attackHeavy" },
@@ -108,10 +108,10 @@ export function strengthOnFloor(asked: EnemyStrength, floor: number, tower = 1):
 /** Weak, strong and elite enemies and bosses say so before their name. */
 const RANK: Record<EnemyStrength, string> = { weak: "Weak ", normal: "", strong: "Strong ", elite: "Elite ", boss: "Boss ", greaterBoss: "Greater Boss " };
 /** What the game calls an enemy: its name, after its strength unless it
- * is a normal one, and after "Flying", "Fast", "Ranged" and "Shielded"
+ * is a normal one, and after "Flying", "Fast", "Ranged", "Shielded" and "Armored"
  * when it is. */
-export const enemyTitle = (e: { name: string; strength?: EnemyStrength; flying?: true; fast?: true; ranged?: true; shielded?: true }) =>
-  (e.flying ? "Flying " : "") + (e.fast ? "Fast " : "") + (e.ranged ? "Ranged " : "") + (e.shielded ? "Shielded " : "") + (e.strength ? RANK[e.strength] : "") + e.name;
+export const enemyTitle = (e: { name: string; strength?: EnemyStrength; flying?: true; fast?: true; ranged?: true; shielded?: true; armored?: true }) =>
+  (e.flying ? "Flying " : "") + (e.fast ? "Fast " : "") + (e.ranged ? "Ranged " : "") + (e.shielded ? "Shielded " : "") + (e.armored ? "Armored " : "") + (e.strength ? RANK[e.strength] : "") + e.name;
 
 /** The tier an enemy of each strength carries, in both modes. */
 export const enemyTier = (strength: EnemyStrength) => STRENGTH_TIER[strength];

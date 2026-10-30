@@ -55,6 +55,9 @@ A Flying monster shoots the hero as a Ranged one does, from the same reach and a
 While the hero stands under one, it shows half see-through.
 Only the Archer's arrows can hurt it, and it pays what a Ranged monster does.
 A Flying monster an arrow wounds turns **Aggroed**: it closes in on the hero along open floor (never over an item, a lit torch or another monster), a tile each time it could shoot, so 10 turns a tile at first, until it hovers over the hero.
+From Tower VI and Delve VI on, some monsters are **Armored** (12.75% at first, growing as Flying does, and more each tower after; never a boss): named *Armored …*, with a steel shield on their tile, they have twice their DEF, and pay 1 Gold more.
+Any other attribute may come with it.
+A hero whose ATK can't get past that DEF can't fight one until it can, so it may bar the way up; Armor Break, Bombs and Piercing are the ways past it, and Piercing at its 50% cap cancels it exactly.
 From Tower IV and Delve IV on, a floor may hold one **Shielded** monster (4% of floors at first, 1% more a tower and 1% more every 250 floors to floor 4,000): the monster nearest the way up, boss aside, named *Shielded …*, inside a glowing green bubble.
 While it stands, the hero's strikes and arrows on every monster in its bubble, itself included, do 60% less after DEF; a strike that gets past DEF still lands, so no monster becomes unbeatable, and the inspect panel and damage numbers count the cut.
 Felling it bursts the bubble at once.
@@ -81,6 +84,14 @@ Attack Range and Attack Speed join Offense training from Tower III's floors 20 a
 Training shows it as that multiplier a meter: ×1.010/m for the first rank.
 **Charged Shot** opens in the Archives from floor 60: each turn that ends with a ready arrow still waiting adds its percent (1% a level) to the next arrow's ATK, and that arrow flies in a blue glow and its number rises with a gold outline, a faint one while the charge is under 50%; the charge starts over once it fires.
 ATK / m, Charged Shot and a critical hit multiply one another.
+A Super Critical hit multiplies that critical hit again.
+**Armor Break** wears the enemy's DEF down with each hit, in a fight or from an arrow: the hit takes its share of the enemy's original DEF off first, then does its damage, and it does so even if that damage is 0, so with any rank no enemy with DEF is out of reach (a long fight may still be lethal, and the prediction says so).
+Below 0 DEF your hits deal that much extra damage: 500 ATK deals 500 at 0 DEF and 530 at -30.
+What arrows break stays on the enemy for the run, and a fight starts from it, while a fight's own hits end with the fight; Bombs and Thorns break nothing.
+Piercing ignores its share of the enemy's original DEF, and Armor Break comes off after it.
+An Armored monster's original DEF, for Armor Break, is what it had before Armored: each hit breaks as much as on a plain one, so its extra DEF always counts.
+A prediction counts the rising hits, and an arrow can aim at an enemy it can't yet hurt.
+Tapping an enemy shows what is broken after its DEF, as DEF 100 (-30), and once your next hit would take DEF below 0 a line gives its DEF now and for that hit, and the extra damage: Armor broken: DEF -10, -20 on your next hit, for 20 extra damage.
 **Multishot Chance** and **Multishot Targets** join Offense training from floor 70: each shot has a chance (0.5% a rank, up to 49.5%) to be a multishot, firing at once at the closest enemies an arrow can hurt, 2 of them and one more a Targets rank (up to 9), or one at each when fewer are in range.
 Every arrow of a multishot carries the first's Charged Shot, rolls its own critical hit, and has its own ATK / m for its own distance.
 **Rapid Fire Chance** and **Rapid Fire Duration** join Offense training from floor 80: each shot fired outside Rapid Fire has a chance (0.4% a rank, up to 34%) to start it, and from that moment the Archer's arrows come four times as fast for its Duration (1 turn, and 0.05 turns more a rank, up to 5.95).

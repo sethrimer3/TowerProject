@@ -39,7 +39,7 @@ export const runTrainingOpen = (row: TrainingRow, save: Pick<Save, "upgrades" | 
 
 /** What one rank of an upgrade adds to a character. */
 export type Grants = Partial<Record<Stat, number>>;
-export type Stat = "attack" | "defense" | "maxHp" | "shroud" | "regen" | "lifesteal" | "thorns" | "parry" | "yellow" | "blue" | "red" | "undos";
+export type Stat = "attack" | "defense" | "maxHp" | "shroud" | "regen" | "lifesteal" | "thorns" | "parry" | "armorBreak" | "yellow" | "blue" | "red" | "undos";
 
 /** The character a run starts with. */
 export type Loadout = {
@@ -56,6 +56,8 @@ export type Loadout = {
   thorns: number;
   /** The percent every enemy strike's damage is cut by, parried (Parry %). */
   parry: number;
+  /** The percent of an enemy's original DEF each hit takes off it (Armor Break). */
+  armorBreak: number;
   /** The percent more ATK struck against bosses (equipment). */
   bossAttack: number;
   /** The percent of enemy DEF ignored (equipment's Piercing), up to `PIERCE_CAP`. */
@@ -67,10 +69,9 @@ export type Loadout = {
   undoCapacity: number;
 };
 
-/** Every character's baseline: 10 ATK plus the starter weapon (+2), which
- * Heirloom steel improves; no DEF; 100 HP; no shroud (Shroud gives the
- * first point); no Regen; no undo (Rehearsed steps gives the first). */
-const BASE = { attack: 12, defense: 0, maxHp: 100, shroud: 0, regen: 0, lifesteal: 0, thorns: 0, parry: 0, undos: 0 };
+/** Every character's baseline: 10 ATK; no DEF; 100 HP; no shroud (Shroud
+ * gives the first point); no Regen; no undo (Rehearsed steps gives the first). */
+const BASE = { attack: 10, defense: 0, maxHp: 100, shroud: 0, regen: 0, lifesteal: 0, thorns: 0, parry: 0, armorBreak: 0, undos: 0 };
 
 const WORDS: Record<Stat, string> = {
   attack: "starting attack",
@@ -81,6 +82,7 @@ const WORDS: Record<Stat, string> = {
   lifesteal: "% of strike damage restored as HP",
   thorns: "% of an enemy's max HP each of its strikes costs it",
   parry: "% less damage from every enemy strike",
+  armorBreak: "% of an enemy's original DEF each hit takes off it",
   yellow: "starting gold key",
   blue: "starting blue key",
   red: "starting red key",
@@ -142,6 +144,7 @@ export function loadout(save: Save, mode: Mode = "tower", eq: EffectTotals = wor
     thorns: own.thorns,
     // Parry % research is kept in tenths of a percent.
     parry: Math.min(PARRY_CAP, snap(own.parry + researched(save.archives, "parryPercent") / 10)),
+    armorBreak: own.armorBreak,
     bossAttack: eq.bossAttack,
     pierce: Math.min(eq.pierce, PIERCE_CAP),
     keys: { yellow: own.yellow, blue: own.blue, red: own.red },
@@ -222,8 +225,18 @@ export function critRule(save: Pick<Save, "upgrades" | "training" | "archives">,
   const chance = snap(trainedAmount(save, "critChance") / 100 * researched(save.archives, "critChancePercent") / 100 * (100 + (cards?.chance ?? 0)) / 100);
   if (chance <= 0) return undefined;
   const factor = snap(trainedAmount(save, "critFactor") / 100 * researched(save.archives, "critFactorPercent") / 100 * (100 + (cards?.factor ?? 0)) / 100);
+  const superCrit = superCritRule(save);
   // The card percents ride along, so an enemy card's own add to them (`critAgainst`).
-  return cards?.chance || cards?.factor ? { chance, factor, cards: { chance: cards.chance, factor: cards.factor } } : { chance, factor };
+  return { chance, factor, ...(cards?.chance || cards?.factor ? { cards: { chance: cards.chance, factor: cards.factor } } : {}), ...(superCrit ? { superCrit } : {}) };
+}
+/** A hero's Super Critical hits, or none until they would change a strike:
+ * SCrit %'s chance, in percent, its research adding to it, and SCrit x's
+ * factor, its research multiplying it. */
+function superCritRule(save: Pick<Save, "upgrades" | "training" | "archives">) {
+  if (!save.upgrades.superCritical) return undefined;
+  const chance = snap(trainedAmount(save, "superCritChance") / 100 + researched(save.archives, "superCritChance") / 10);
+  const factor = snap(trainedAmount(save, "superCritFactor") / 100 * researched(save.archives, "superCritFactorPercent") / 100);
+  return chance > 0 && factor > 1 ? { chance, factor } : undefined;
 }
 
 /** The Free Upgrade row training each group's free levels. */
@@ -347,6 +360,8 @@ export function rowValue(save: Save, id: TrainingId, extra: number, view: Traini
     return { unit, value: shownAmount(amountAt(def, ranks) * f * (boons?.floorSilver ?? 1) * found) };
   }
   const value = amountAt(def, ranks) / (def.scale ?? 1);
+  // Its research adds to the chance, in tenths of a percent, rather than multiplying it.
+  if (id === "superCritChance") return { unit, value: snap(value + researched(save.archives, "superCritChance") / 10) };
   if (FREE_ROWS.has(id) && boons) return { unit, value: snap(value + boons.freeUp / 100) };
   return { unit, value: unit === "" ? shownAmount(value * f) : snap(value * f) };
 }
@@ -359,14 +374,14 @@ const rowWorth = (row: TrainingRow, ranks: number) => {
   return (amountAt(def, ranks + 1) - amountAt(def, ranks)) / (def.scale ?? 1);
 };
 
-/** The stats kept in percent: Lifesteal, Thorn Damage and the parry rows. */
-const PERCENT_STATS: ReadonlySet<Stat> = new Set(["lifesteal", "thorns", "parry"]);
+/** The stats kept in percent: Lifesteal, Thorn Damage, Armor Break and the parry rows. */
+const PERCENT_STATS: ReadonlySet<Stat> = new Set(["lifesteal", "thorns", "parry", "armorBreak"]);
 /** The unit a stat row's value shows with. */
 export const statUnit = (stat: Stat) => (PERCENT_STATS.has(stat) ? "%" : "");
 /** A stat as the Training rows show it: whole, but Regen, a fraction of an
- * HP a step, to the hundredth (rounded down, like `whole`), and Parry %, in
- * half percents, to the tenth. */
+ * HP a step, to the hundredth (rounded down, like `whole`), and Parry % and
+ * Armor Break, in half percents, to the tenth. */
 export const shownStat = (stat: StatTrainingRow["stat"], value: number) =>
   stat === "regen" ? Math.floor(Math.round(value * 1e6) / 1e4) / 100
-    : stat === "parry" ? Math.floor(Math.round(value * 1e6) / 1e5) / 10
+    : stat === "parry" || stat === "armorBreak" ? Math.floor(Math.round(value * 1e6) / 1e5) / 10
     : stat === "lifesteal" ? Math.floor(Math.round(value * 1e6) / 1e3) / 1000 : whole(value);

@@ -76,6 +76,8 @@ export function kitIcon(id: string, themeArt: string, className: string, overlay
  * The named silhouettes cover every existing Tower and Delve enemy. */
 export function kitEnemy(name: string): string {
   const n = name.toLowerCase();
+  // The Iron Knight wears the art it was drawn for under its old name.
+  if (n === "iron knight") return "enemy-armored-knight";
   const slug = n.replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   if ((NAMED_ENEMY_SPRITES as readonly string[]).includes(slug)) return `enemy-${slug}`;
   if (/slime/.test(n)) return "slime";

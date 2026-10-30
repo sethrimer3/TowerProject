@@ -8,6 +8,7 @@ import { fastShare } from "./fast.ts";
 import { FOE_GAIN, foeShotCost, rangedShare } from "./ranged.ts";
 import { flyingShare } from "./flying.ts";
 import { shieldShare } from "./shielded.ts";
+import { armoredShare } from "./armored.ts";
 import { isBossFloor } from "../tower/index.ts";
 import { snap } from "../exact.ts";
 
@@ -16,7 +17,7 @@ import { snap } from "../exact.ts";
  * boss guards; a Greater Boss's, 100 once it has appeared), and a
  * balanced enemy of it as the board makes it, with the Gold its kill pays. */
 export type StrengthOdds = { strength: EnemyStrength; chance: number; hp: number; attack: number; defense: number; gold: number };
-export type Trait = "fast" | "ranged" | "shielded" | "flying" | "aggroed";
+export type Trait = "fast" | "ranged" | "shielded" | "flying" | "armored" | "aggroed";
 /** A trait's row: its chance in percent (an enemy's, but Shielded's, which
  * is the floor's chance of holding one), and the shots (Ranged, Flying) or
  * steps (Aggroed) it takes every 10 turns. */
@@ -55,7 +56,8 @@ const per10Turns = (cost: number) => snap((10 * FOE_GAIN) / cost);
 /** The traits the floor can roll, those at 0% left out, but Aggroed, shown
  * at 0% wherever an enemy can become Aggroed (a Flying one, once an arrow
  * wounds it), since none appears so. A Flying roll comes first and the Fast
- * and Ranged rolls pass Flying enemies by, so theirs are of the rest. */
+ * and Ranged rolls pass Flying enemies by, so theirs are of the rest; Armored
+ * rolls for every enemy alike. */
 export function traitOdds(tier: number, floor: number): TraitOdds[] {
   const f = floor + 1, flying = flyingShare(tier, f) / 1000, rest = 1 - flying / 100;
   const speed = per10Turns(foeShotCost(f));
@@ -64,6 +66,7 @@ export function traitOdds(tier: number, floor: number): TraitOdds[] {
     { trait: "ranged", chance: snap((rangedShare(tier, f) / 1000) * rest), attackSpeed: speed },
     { trait: "shielded", chance: snap(shieldShare(tier, f) / 1000) },
     { trait: "flying", chance: snap(flying), attackSpeed: speed },
+    { trait: "armored", chance: snap(armoredShare(tier, f) / 1000) },
   ];
   return [...rows.filter((r) => r.chance > 0), ...(flying > 0 ? [{ trait: "aggroed" as const, chance: 0, moveSpeed: speed }] : [])];
 }

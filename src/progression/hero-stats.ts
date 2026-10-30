@@ -7,7 +7,7 @@ import { treeHeroFactor } from "../cards/trees.ts";
 
 /** The stats the loadout carries into a run's hero, which a change to the
  * loadout moves mid-run. */
-export const HERO_STATS = ["attack", "defense", "maxHp", "shroud", "regen", "lifesteal", "thorns", "parry", "bossAttack", "pierce"] as const;
+export const HERO_STATS = ["attack", "defense", "maxHp", "shroud", "regen", "lifesteal", "thorns", "parry", "armorBreak", "bossAttack", "pierce"] as const;
 export type HeroStat = (typeof HERO_STATS)[number];
 /** How far each hero stat moves (on the loadout's scale, before boons). */
 export type StatShift = Partial<Record<HeroStat, number>>;

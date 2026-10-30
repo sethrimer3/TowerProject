@@ -1,4 +1,4 @@
-import { bout, critAgainst, DEFEAT_MS, guaranteedCrits, heroHpAfter, heroHpDuring, resume, REVIVE_PAUSE_MS, revivals, summarize, type Bout, type CritRule, type Crits, type Revival, type Wings } from "../combat.ts";
+import { bout, critAgainst, DEFEAT_MS, guaranteedCrits, landsSuperCrit, heroHpAfter, heroHpDuring, resume, REVIVE_PAUSE_MS, revivals, summarize, type Bout, type CritRule, type Crits, type Revival, type Wings } from "../combat.ts";
 import type { Enemy, Mode, Player } from "../entities.ts";
 import type { Run } from "../runs.ts";
 import { snap } from "../exact.ts";
@@ -34,6 +34,8 @@ export type FoughtStep = { outcome: StepEffect; dest: { x: number; y: number }; 
 const REVIVE_SALT = 0x7e51e;
 /** Seeds the critical rolls apart from the revival rolls. */
 const CRIT_SALT = 0x3c71c;
+/** Seeds the Super Critical rolls apart from the critical rolls. */
+const SUPER_SALT = 0x5c217;
 /** What ENEMY's Surprise Attack multiplies the hero's first strike's ATK by. */
 const SURPRISE_FACTOR = 2;
 
@@ -161,13 +163,15 @@ export class FightPlayback<S extends FoughtStep> {
    * run, floor, tile and strike, so taking the fight back and fighting it
    * again lands the same crits, and more Crit % only ever adds some. Chance
    * of 100% or more lands that many applications of the factor for certain,
-   * and the rest rolls for one more. */
+   * and the rest rolls for one more. A critical strike rolls apart for
+   * Super Critical. */
   private critRolls(at: { x: number; y: number }, enemy: Enemy): Crits | undefined {
     const rule = critAgainst(this.host.crit, this.host.run.player, enemy), { run, mode } = this.host, first = this.surprised ? { first: SURPRISE_FACTOR } : {};
     if (!rule) return this.surprised ? { factor: 1, applications: () => 0, ...first } : undefined;
     const floor = mode === "tower" ? run.height + 1 : 0, seed = run.seed ^ CRIT_SALT ^ Math.imul(floor, 0x9e3779b1);
     const sure = guaranteedCrits(rule.chance), rest = snap(rule.chance - 100 * sure);
-    return { factor: rule.factor, applications: (strike) => sure + (tileRandom(at.x, at.y, (seed ^ Math.imul(strike + 1, 0x85ebca6b)) | 0) * 100 < rest ? 1 : 0), ...first };
+    return { factor: rule.factor, applications: (strike) => sure + (tileRandom(at.x, at.y, (seed ^ Math.imul(strike + 1, 0x85ebca6b)) | 0) * 100 < rest ? 1 : 0),
+      ...(rule.superCrit ? { superFactor: rule.superCrit.factor, superCrit: (strike: number) => landsSuperCrit(rule, tileRandom(at.x, at.y, (seed ^ SUPER_SALT ^ Math.imul(strike + 1, 0x85ebca6b)) | 0)) } : {}), ...first };
   }
   /** Settles the fight being played out, as if it had played to the end.
    * Returns whether there was one. */
@@ -189,6 +193,17 @@ export class FightPlayback<S extends FoughtStep> {
   endHp() {
     const fight = this.encounter, hp = this.host.run.player.hp;
     return fight ? heroHpDuring(fight.bout, hp, Infinity) : hp;
+  }
+  /** The percent of the DEF of the enemy at (x, y) that the fight being played
+   * out there has taken off so far (Armor Break), the strikes landed counted;
+   * nothing when no such fight is on or none has landed. */
+  brokenAt(x: number, y: number) {
+    const fight = this.encounter;
+    if (!fight || fight.to.x !== x || fight.to.y !== y) return undefined;
+    const elapsed = performance.now() - fight.start;
+    let broken: number | undefined;
+    for (const s of fight.bout.strikes) if (s.broken !== undefined && s.at <= elapsed) broken = s.broken;
+    return broken;
   }
   /** Training bought while a fight plays out counts in it from the first
    * strike not yet swinging: the fight plays on from there with the hero's

@@ -2,6 +2,7 @@ import type { Tile, Torch } from "../../entities.ts";
 import type { Facing } from "../../shown.ts";
 import type { FrameContext } from "../render-frame.ts";
 import type { GoldenLook } from "../tile-painters.ts";
+import { armorMark } from "../armor-mark.ts";
 
 /** How a Game theme other than Classic draws the dungeon board in place of
  * its lit art: the ground, each tile's contents, torches and the hero, each
@@ -38,5 +39,6 @@ export type ContentPainters = Readonly<Record<ContentKind, (c: CanvasRenderingCo
 export function contentsFrom(painters: ContentPainters): ThemedBoard["contents"] {
   return (c, t) => {
     if (t.kind !== "wall" && t.kind !== "floor") painters[t.kind](c, t);
+    if (t.enemy?.armored) armorMark(c);
   };
 }

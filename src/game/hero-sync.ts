@@ -15,10 +15,10 @@ const KEY_COLORS = ["yellow", "blue", "red"] as const;
 /** The hero a run in `mode` gets with everything owned now, at full HP,
  * standing at the entrance's row, and the loadout it keeps. */
 export function startingHero(save: Save, mode: Mode) {
-  const { attack, defense, maxHp, shroud, regen, lifesteal, thorns, parry, bossAttack, pierce, keys: owned, startKeys } = loadout(save, mode);
+  const { attack, defense, maxHp, shroud, regen, lifesteal, thorns, parry, armorBreak, bossAttack, pierce, keys: owned, startKeys } = loadout(save, mode);
   const keys = { ...owned, yellow: owned.yellow + startKeys.yellow, blue: owned.blue + startKeys.blue };
-  // Only a hero with a shroud, Regen, Lifesteal, Thorn Damage, Parry %, a boss bonus or Piercing carries one.
-  const extras = { ...(shroud ? { shroud } : {}), ...(regen ? { regen } : {}), ...(lifesteal ? { lifesteal } : {}), ...(thorns ? { thorns } : {}), ...(parry ? { parry } : {}), ...(bossAttack ? { bossAttack } : {}), ...(pierce ? { pierce } : {}) };
+  // Only a hero with a shroud, Regen, Lifesteal, Thorn Damage, Parry %, Armor Break, a boss bonus or Piercing carries one.
+  const extras = { ...(shroud ? { shroud } : {}), ...(regen ? { regen } : {}), ...(lifesteal ? { lifesteal } : {}), ...(thorns ? { thorns } : {}), ...(parry ? { parry } : {}), ...(armorBreak ? { armorBreak } : {}), ...(bossAttack ? { bossAttack } : {}), ...(pierce ? { pierce } : {}) };
   return {
     player: { x: MODES[mode].entranceX, y: 0, hp: maxHp, maxHp, attack, defense, ...extras, keys } as Player,
     loadout: { attack, defense, maxHp, ...extras },

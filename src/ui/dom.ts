@@ -113,7 +113,7 @@ const SKILL_UI_SPRITES: Partial<Record<UpgradeId, UiSprite>> = {
   pathToWealth: "gold", moreWealth: "gold", goldenFloors: "gold", offlineGold: "gold", physician: "health", keyMastery: "log", cardMastery: "log", beastMastery: "attack", doorMastery: "log",
   revive: "revive", life: "health", overheal: "health", spareChange: "gold", loot: "gold", floorSkipReward: "gold", mug: "gold", legacy: "tower", quality: "tower",
   wisdomFocus: "settings", wisdomMemory: "undo", wisdomSight: "upgrades",
-  renownBanner: "tower", renownOath: "defense", renownCrown: "gear",
+  renownBanner: "tower", renownOath: "defense", renownCrown: "gear", armorBreak: "defense",
   ...Object.fromEntries(LIMIT_BREAKS.map((id) => [id, "arrow-up"])),
 };
 /** Skills about Silver show the Gold coin drained of colour, as the purse does. */
@@ -125,7 +125,7 @@ const SKILL_CARDS: Partial<Record<UpgradeId, CardId>> = { cardDoorKey: "door", c
   cardRedKey: "redKey", redSiphon: "redSiphon", cardTorch: "torch", cardWoodenDoor: "woodenDoor", heartDoorResilience: "heartDoor",
   angelWings: "angelWings" };
 const SKILL_DETAIL_SPRITES: Partial<Record<UpgradeId, string>> = {
-  shroud: "ui-ward", critical: "goal-damage-prediction", critPrediction: "goal-damage-prediction",
+  shroud: "ui-ward", critical: "goal-damage-prediction", critPrediction: "goal-damage-prediction", superCritical: "badge-star",
   thorns: "sword", lifesteal: "boon-lifesteal", parry: "goal-parry", regen: "boon-regen", regenResearch: "boon-regen",
   autoClimb: "play", fasterTrainers: "hourglass", freeTraining: "boon-free-up", buildout: "deck", manualHand: "card-exchange",
   ignore: "ignore", ignoreMore: "ignore", target: "target", targetMore: "target",

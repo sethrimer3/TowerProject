@@ -1,7 +1,7 @@
 /** Native combat pieces, all drawn at the board's 24-pixel tile density. */
 export const ARROW_DIRECTIONS = ["e", "se", "s", "sw", "w", "nw", "n", "ne"] as const;
 export const COMBAT_MARKS = {
-  flying: "combat-wing", ranged: "combat-ranged", fast: "combat-fast",
+  flying: "combat-wing", ranged: "combat-ranged", fast: "combat-fast", armored: "combat-armor",
   rankUp: "combat-rank-up", rankDown: "combat-rank-down",
 } as const;
 export const SHIELD_SIZES = [48, 96, 144] as const;

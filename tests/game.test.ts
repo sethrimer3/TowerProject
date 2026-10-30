@@ -30,7 +30,7 @@ test("combat predicts first strike, defenses, strict survival, and impervious/le
   const p = new Game(defaults()).run.player;
   assert.deepEqual(
     predict(p, { name: "test", hp: 25, attack: 10, defense: 0, tier: 0 }),
-    { impervious: false, hit: 12, turns: 3, damage: 21, survivable: true, requiredAttack: 0 }, // 10, then 11
+    { impervious: false, hit: 10, turns: 3, damage: 21, survivable: true, requiredAttack: 0 }, // 10, then 11
   );
   p.hp = 10;
   assert.equal(
@@ -63,7 +63,7 @@ test("doors consume matching keys; pickups and walls obey movement", () => {
   assert.equal(p.keys.blue, 0);
   g.world.changes["15,2"] = { kind: "attack" };
   g.move(0, 1);
-  assert.equal(p.attack, 13);
+  assert.equal(p.attack, 11);
   g.world.changes["15,3"] = { kind: "wall" };
   assert.equal(g.move(0, 1), false);
   assert.equal(g.run.height, (g.world as World).depth(p.x, p.y));

@@ -124,7 +124,6 @@ First measurement, before the stage (`--towers 1,9 --floors 1-1200 --band 200 --
 
 Abilities an enemy may carry beyond its stats, the enemies' counterpart of blue, red and Heart Doors. They are meant for Tournament leagues and future towers, each with knobs for its chance to appear (or to trigger) by floor, tower area or league. Candidates, each mirroring a power the hero has:
 
-- **Armored:** a shroud that blocks the fight's first damage.
 - **Piercing:** ignores a share of the hero's DEF.
 - **Enraged:** its ATK climbs faster than the usual 1% a round.
 
@@ -174,6 +173,24 @@ A Flying enemy (`src/enemies/flying.ts`) hovers over the floor: it can't be foug
 
 `tests/flying.test.ts` covers it.
 
+### Armored (built)
+
+An Armored enemy (`src/enemies/armored.ts`) has twice its DEF, so a hero who has kept pace pays for a longer fight and one who has fallen behind meets a wall before the rest of the floor stops it.
+
+- **Who:** any enemy but a boss or Greater Boss, from Tower VI and Delve VI up, on its own roll, so it may be Fast, Ranged, Flying or Shielded as well. A boss stands on the only way up, where a DEF past the hero's ATK would end the climb.
+- **Share** (`armoredShare`): the Flying share of the tower below: 12.75% on Tower VI's floor 1, growing 1.5% every 200 floors, and three quarters of a point more each tower after.
+- **Roll:** one `tileRandom` number per run seed, floor and tile (`ARMORED_SALT`), straight after the tier's factor and before the Flying, Fast and Ranged rolls (`armoredCells`), which carry it along.
+- **DEF:** `ARMORED_DEF` (2) times its DEF, whatever its strength, profile and tier, which puts a defense-heavy one's DEF above half its ATK (the rule `tests/enemy-curves.test.ts` holds the curves to, before attributes). HP and ATK are untouched.
+- **Against it:** Piercing's 50% cap cancels it exactly. Armor Break takes its share of the DEF before Armored (`defenseBroken`), so a hit never breaks more for it and it never makes a fight shorter; with any rank it can still be fought. Bombs ignore DEF.
+- **Pay:** 1 Gold more (`ARMORED_GOLD`), beside the other attributes'.
+- **Look:** "Armored" before its strength (*Flying Fast Armored Elite Goblin*), and a steel shield: at the tile's bottom right on Classic (`COMBAT_MARKS.armored`), at its right on every Game theme (`armorMark`, between where they put Ranged's mark and Fast's).
+
+A DEF multiple is worth a fixed number of floors of the curve: 18 below floor 100, 34 on floors 100 to 200, 74 on floors 200 to 300 and 117 past that, each moving the floor where the hero's ATK stops getting through that much earlier.
+A hero with equal ranks in ATK, DEF and Max HP sized to clear each Tower VI floor keeps at least 2.06 times the hardest enemy's DEF in ATK (floor 89), and an Armored fight costs it up to about 1.3 times a plain one.
+
+Tune it with `ARMORED_DEF` and `armoredShare`.
+`tests/armored.test.ts` covers it.
+
 ### Shielded (built)
 
 A Shielded enemy (`src/enemies/shielded.ts`) guards the enemies round it, so the way up asks the hero either to fight through a bubble at a cut or to fell the Shielded enemy first.
@@ -196,4 +213,4 @@ Tune it with `shieldShare`, `extraShare`, `bubbleReach` and `SHIELD_CUT`.
 2. **The enemy stage, Tower** (done): count, then re-rank, and strong and elite first floors by tower. `TOWER_LAYOUT_VERSION` 22.
 3. **The enemy stage, Delve** (done), by equivalent floor, replacing `guardStrengths`' fixed mix. `LAYOUT_VERSION` 25.
 4. **Profiles** (done): every strength may wear every profile, with scheduled shares, and rosters by tower. `TOWER_LAYOUT_VERSION` 23, `LAYOUT_VERSION` 26.
-5. **Traits** (section 6), one at a time. Fast (done): no layout bump, since nothing moves. Ranged (done): the same. Shielded (done): `TOWER_LAYOUT_VERSION` 25, `LAYOUT_VERSION` 27, since its extras move what stands where.
+5. **Traits** (section 6), one at a time. Fast (done): no layout bump, since nothing moves. Ranged (done): the same. Shielded (done): `TOWER_LAYOUT_VERSION` 25, `LAYOUT_VERSION` 27, since its extras move what stands where. Armored (done): no layout bump, since nothing moves.

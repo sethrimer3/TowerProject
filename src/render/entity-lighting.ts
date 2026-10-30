@@ -150,7 +150,7 @@ export class EntityLighting {
       if (!SHADOW_CASTERS.has(t.kind)) return;
       casters.push({
         x, y,
-        key: `${t.kind}|${t.color}|${t.tier}|${t.enemy?.name ?? ""}|${t.enemy?.tier}|${t.enemy?.strength}|${styledSprites ? `|kit|${t.enemy?.fast}|${t.enemy?.ranged}|${t.enemy?.flying}` : ""}`,
+        key: `${t.kind}|${t.color}|${t.tier}|${t.enemy?.name ?? ""}|${t.enemy?.tier}|${t.enemy?.strength}|${styledSprites ? `|kit|${t.enemy?.fast}|${t.enemy?.ranged}|${t.enemy?.flying}|${t.enemy?.armored}` : ""}`,
         draw: (c) => paintContents(c, t, { x, y, time: f.now, reduceMotion, styledSprites, squareDoors, outline: false }),
       });
     });

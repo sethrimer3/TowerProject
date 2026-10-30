@@ -7,6 +7,7 @@ import { breakTorch, placeTorches, torchesLeft } from "../torches.ts";
 import { tierCells, tierTile } from "../tiers.ts";
 import { fastCells } from "../enemies/fast.ts";
 import { rangedCells, wounded, woundMore } from "../enemies/ranged.ts";
+import { armoredCells } from "../enemies/armored.ts";
 import { flyingCells } from "../enemies/flying.ts";
 import { tournamentStatFactor, tournamentTile } from "../tournament/run.ts";
 import { addEnemies, extraGround, extrasKey, extrasSeed, hasExtras, type ExtraEnemies } from "../enemies/more-enemies.ts";
@@ -238,7 +239,8 @@ export class World implements Board {
       // DOOR's tree remakes doors before the tier scales a Wooden Door's durability, as generated ones.
       const doors = withRunDoors(this.generated(index), this.seed, this.run.doorOdds, (x, y) => woodDurability("delve", this.tier, depthAt(this.seed, x, y, ownerAt(this.seed, x, y), this.tier)));
       // CHEST's Treasure Floor rolls each equivalent floor once.
-      const lifted = flyingCells(tierCells(withTreasureFloors(doors, this.seed, this.run.treasureFloor ?? 0, floorAt), this.tier), this.tier, this.seed, floorAt);
+      const scaled = tierCells(withTreasureFloors(doors, this.seed, this.run.treasureFloor ?? 0, floorAt), this.tier);
+      const lifted = flyingCells(armoredCells(scaled, this.tier, this.seed, floorAt), this.tier, this.seed, floorAt);
       const cells = rangedCells(fastCells(lifted, "delve", this.tier, this.seed, floorAt), this.tier, this.seed, floorAt);
       chunk = this.run.tournament ? new Map([...cells].map(([k, t]) => [k, this.inLeague(t)])) : cells;
       this.chunks.set(index, chunk);
@@ -321,12 +323,12 @@ export class World implements Board {
     }
     return found;
   }
-  /** The enemy as generated keeps its wound in the changes. */
-  wound(x: number, y: number, damage: number) {
+  /** The enemy as generated keeps its wound, and what is broken of its DEF, in the changes. */
+  wound(x: number, y: number, damage: number, broke = 0) {
     const t = this.tile(x, y);
     if (t.kind !== "enemy" && !t.flyer) return;
     const k = point(x, y), raw = this.changes[k] ?? this.chunks.get(Math.floor(y / CHUNK))?.get(k);
-    if (raw?.kind === "enemy" || raw?.flyer) this.changes[k] = woundMore(raw, damage);
+    if (raw?.kind === "enemy" || raw?.flyer) this.changes[k] = woundMore(raw, damage, broke);
   }
   private torchAreas = new Map<number, Torch[]>();
   /** The torch list and lit tiles last worked out: the list until the areas

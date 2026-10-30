@@ -219,7 +219,7 @@ The HP the Archer's arrows have taken off an enemy that still stands; the enemy 
 _Avoid_: damage taken, injury
 
 **Enemy profile**:
-Which of an enemy's stats lead: attack-heavy (more ATK, less DEF), balanced, or defense-heavy (more DEF, less ATK). Any strength may wear any profile; bosses are balanced. In the Tower a profile also names the enemy: each zone's **roster** has one enemy per profile (Goblin, Thief, Armored Knight on the first zone's floors), each tower starting its rosters one zone further along.
+Which of an enemy's stats lead: attack-heavy (more ATK, less DEF), balanced, or defense-heavy (more DEF, less ATK). Any strength may wear any profile; bosses are balanced. In the Tower a profile also names the enemy: each zone's **roster** has one enemy per profile (Goblin, Thief, Iron Knight on the first zone's floors), each tower starting its rosters one zone further along.
 _Avoid_: enemy type, class, archetype
 
 **Enemy schedule**:
@@ -227,7 +227,10 @@ How many enemies a floor should hold and the share of each strength and profile,
 _Avoid_: enemy budget, spawn rate, enemy quota
 
 **Enemy trait**:
-An ability an enemy may carry beyond its stats (Armored, Piercing, Swift, Enraged: each a hero power turned against the hero). Planned for Tournament leagues and future towers; none exists yet.
+What an enemy may carry beyond its strength and profile, on its own roll: Fast, Ranged, Flying, Shielded and Armored so far, with Piercing and Enraged among the candidates. One enemy may carry several.
+
+**Armored enemy**:
+An enemy with twice its DEF, from Tower VI and Delve VI on; never a boss or Greater Boss.
 _Avoid_: modifier, affix, enemy type (the profile and name already are)
 
 ### Fights
@@ -270,7 +273,7 @@ How much XP the character has gathered from kills over every run. A kill pays mo
 _Avoid_: rank
 
 **Training point**:
-The currency each level earns (three a level), spent to buy ranks of training at once (a trainer can train them for Gold instead) in the character's stats (max HP, ATK, DEF, and the shroud once the Shroud skill is owned; Lifesteal once the Lifesteal skill is, Thorn Damage once Thorns is, Parry % once Parry is, Crit % and Crit x once Critical is, Attack Range, Attack Speed and ATK / m once Tower III's floor 20, 30 and 50 Goals are claimed, Multishot Chance and Multishot Targets once its floor 70 Goal is, Rapid Fire Chance and Rapid Fire Duration once its floor 80 Goal is) and, with Recovery, Find Potion, Revive, Spare Change, Wishing Well, Wealthy, Loot, Free Training and Overheal, in Potion %, Find Potion, Revive, Gold / Floor, Silver / Floor, Silver Bonus, Gold Bonus, the Free Offense, Defense and Utility Up rows and, with Overheal, Overheal on the Training tab. A stat's ranks add up on its **rank curve**: each rank is worth more than the one before, whatever the character's level.
+The currency each level earns (three a level), spent to buy ranks of training at once (a trainer can train them for Gold instead) in the character's stats (max HP, ATK, DEF, and the shroud once the Shroud skill is owned; Lifesteal once the Lifesteal skill is, Thorn Damage once Thorns is, Parry % once Parry is, Crit % and Crit x once Critical is, Armor Break once its skill is, Attack Range, Attack Speed and ATK / m once Tower III's floor 20, 30 and 50 Goals are claimed, Multishot Chance and Multishot Targets once its floor 70 Goal is, Rapid Fire Chance and Rapid Fire Duration once its floor 80 Goal is) and, with Recovery, Find Potion, Revive, Spare Change, Wishing Well, Wealthy, Loot, Free Training and Overheal, in Potion %, Find Potion, Revive, Gold / Floor, Silver / Floor, Silver Bonus, Gold Bonus, the Free Offense, Defense and Utility Up rows and, with Overheal, Overheal on the Training tab. A stat's ranks add up on its **rank curve**: each rank is worth more than the one before, whatever the character's level.
 _Avoid_: skill point, stat point
 
 **Trainer**:
@@ -443,6 +446,16 @@ _Avoid_: damage gradient
 **Critical hit**:
 A hero strike that lands with its ATK multiplied by the **critical factor** (Crit x training and research, ×1.2 to start) before the enemy's DEF comes off. Each strike is critical with the **critical chance** (Crit % training and research, Critical skill): a fixed roll per run, floor, tile and strike, so taking a fight back and fighting it again lands the same crits. At 100% or more that many applications are certain and the rest rolls for one more; applications add to the strike's ATK (ATK × (1 + n × (factor − 1))). Fights are forecast by expected damage: the damage line shows the mean and, in the inspect panel, the range 90% of fights fall in and the chance to survive; Survivable and LETHAL stay certain (worst and best case).
 Predictions count critical strikes only once the Critical Prediction skill is owned; before it they show the fight without crits.
+
+**Super Critical hit**:
+A critical hit that rolls again and lands: its critical multiplier is multiplied by the **Super Critical factor** (SCrit x training and research).
+The roll's chance is the **Super Critical chance** (SCrit % training and research, Super Critical skill).
+Fights, arrows and Bombs can all land one.
+
+**Armor Break**:
+Each of the hero's hits, in a fight or from an arrow, first takes a share of the enemy's original DEF off it (Armor Break training and skill), whether or not it then does damage.
+DEF can go below 0, where hits deal that much extra damage.
+_Avoid_: DEF shred, armor pen
 _Avoid_: crit strike, lucky hit
 
 **Instakill**:

@@ -83,6 +83,10 @@ export const RESEARCH_TARGETS = {
   critChancePercent: { name: "Critical Chance", base: 100, shown: percent },
   /** The percent of the Crit x training's factor that the hero has, from 100. */
   critFactorPercent: { name: "Critical Factor", base: 100, shown: percent },
+  /** Super Critical chance added to the trained SCrit %, in tenths of a percent. */
+  superCritChance: { name: "Super Critical Chance", base: 0, shown: tenths },
+  /** The percent of the SCrit x training's factor that the hero has, from 100. */
+  superCritFactorPercent: { name: "Super Critical Factor", base: 100, shown: percent },
   /** The percent a turn the Archer's ready arrow waits unfired adds to its next arrow's ATK, from 0. */
   chargedShotPercent: { name: "Charge / Turn", base: 0, shown: (v: number) => `+${v}%` },
   /** The percent of the max HP a run starts with that the hero has, from 100. */
@@ -255,6 +259,16 @@ const hundredLevels = (target: ResearchTarget, value: number, steep?: Steep) => 
 const critLevels = (target: ResearchTarget) => Array.from({ length: 100 }, (_, i): ResearchLevel => {
   const m = i + 1 - POTION_HP_START.length, seconds = POTION_HP_START[i]?.[1] ?? 900 * m + 36 * m * m;
   return { gold: 30 + 8 * i * i * i, hours: seconds / 3600, effect: { target, op: "add", value: 2 } };
+});
+
+/** Super Critical Chance and Factor research: level n costs 200,000 + 11,936
+ * × (n³ − 1) Gold, three significant figures (200,000 at level 1, 1.68
+ * million at 5, 763 million at 40, 1.49 billion at 50), and takes 1,440 + 65 ×
+ * (n² − 1) minutes (a day at level 1, 3,000 minutes at 5, 73 days at 40, 114
+ * days at 50). */
+const superCritLevels = (target: ResearchTarget, length: number, value: number) => Array.from({ length }, (_, i): ResearchLevel => {
+  const n = i + 1;
+  return { gold: neat(200_000 + 11_936 * (n * n * n - 1)), hours: (1440 + 65 * (n * n - 1)) / 60, effect: { target, op: "add", value } };
 });
 
 /** Offline Gold Multiplier research (+0.5% of the Recent Gold per Hour a
@@ -556,6 +570,20 @@ export const RESEARCH = {
     categories: ["offense"],
     requires: [{ upgrade: "critical" }],
     levels: critLevels("critFactorPercent"),
+  },
+  superCritChance: {
+    name: "Super Critical Chance",
+    description: "Study the old climbers' finest blows: a critical hit is more likely to be a Super Critical hit, past what training reaches.",
+    categories: ["offense"],
+    requires: [{ upgrade: "archives" }, { upgrade: "superCritical" }, { goalUnlock: "superCriticalResearch" }],
+    levels: superCritLevels("superCritChance", 50, 1),
+  },
+  superCritFactor: {
+    name: "Super Critical Factor",
+    description: "Study how the old climbers' finest blows landed: a Super Critical hit multiplies a critical hit by more.",
+    categories: ["offense"],
+    requires: [{ upgrade: "archives" }, { upgrade: "superCritical" }, { goalUnlock: "superCriticalResearch" }],
+    levels: superCritLevels("superCritFactorPercent", 40, 2),
   },
   chargedShot: {
     name: "Charged Shot",

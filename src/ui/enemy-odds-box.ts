@@ -10,10 +10,10 @@ import { COMBAT_MARKS, shieldSprite } from "../sprites/combat.ts";
 import { pngIcon } from "../sprites/kit.ts";
 
 const STRENGTH_NAMES: Record<EnemyStrength, string> = { weak: "Weak", normal: "Base", strong: "Strong", elite: "Elite", boss: "Boss", greaterBoss: "Greater Boss" };
-const TRAIT_NAMES: Record<Trait, string> = { fast: "Fast", ranged: "Ranged", shielded: "Shielded", flying: "Flying", aggroed: "Aggroed" };
+const TRAIT_NAMES: Record<Trait, string> = { fast: "Fast", ranged: "Ranged", shielded: "Shielded", flying: "Flying", armored: "Armored", aggroed: "Aggroed" };
 
 /** Each attribute's mark as the board draws it on the enemy; Aggroed wears none. */
-const TRAIT_MARKS: Partial<Record<Trait, string>> = { fast: COMBAT_MARKS.fast, ranged: COMBAT_MARKS.ranged, flying: COMBAT_MARKS.flying, shielded: shieldSprite(48) };
+const TRAIT_MARKS: Partial<Record<Trait, string>> = { fast: COMBAT_MARKS.fast, ranged: COMBAT_MARKS.ranged, flying: COMBAT_MARKS.flying, armored: COMBAT_MARKS.armored, shielded: shieldSprite(48) };
 /** A row's name after its marks, in a slot as wide in every row so the names line up. */
 const named = (marks: string, name: string, kind: string) => `<span class="odds-name"><span class="odds-marks ${kind}">${marks}</span>${name}</span>`;
 /** A strength's name after its rank chevrons, stacked as the board's enemies wear them. */

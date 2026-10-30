@@ -41,7 +41,7 @@ export const GOLD_SHOP = [
   {
     id: "bomb",
     name: "Bomb",
-    description: "One more Bomb every climb: press it, then an enemy's tile, to deal that enemy your ATK",
+    description: "One more Bomb every climb: press it, then an enemy's tile, to deal that enemy your ATK, critical hits counted",
     price: { base: 100, ratio: 100 },
     requires: "bombs",
   },
