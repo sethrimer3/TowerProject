@@ -8,6 +8,7 @@ import { goalUnlocked, type GoalUnlock } from "../goals.ts";
 import { finite as finiteIn, isRecord, wholeIn } from "../save/decode.ts";
 import { intPow } from "../exact.ts";
 import { BUY_QUANTITIES, quantityLabel } from "./buy-quantity.ts";
+import { smittenText } from "../angel.ts";
 import { tally } from "../save/profile.ts";
 import { carrySpeedUp, completionAt, decodeSpeedUp, endSpeedUp, type SpeedUp } from "./speed-ups.ts";
 
@@ -130,6 +131,8 @@ export const RESEARCH_TARGETS = {
   endRushTiles: { name: "Tiles Rushed to the Stairs", base: 0, shown: count },
   /** How many of a Dash's dashed tiles regain HP by Regen, once Dash Regen is owned. */
   dashRegenSteps: { name: "Dashed Steps with Regen", base: 0, shown: count },
+  /** The enemy ranks Angel Wings' rising smites (angel.ts), one more a level. */
+  avengingAngel: { name: "Smites", base: 0, shown: smittenText },
   /** Buy quantities opened past x1: x5, x10, x100, then Max. */
   buyQuantity: { name: "Buy Quantity", base: 0, shown: (n: number) => quantityLabel(BUY_QUANTITIES[Math.min(n, BUY_QUANTITIES.length - 1)]!) },
   /** How fast archivists work: a level of `d` hours takes d / (1 + speed). */
@@ -358,6 +361,10 @@ const maxInterestLevels = () => INTEREST_CAPS.map((value, i): ResearchLevel => (
  * x100, Max), 1,000 to 100,000 Gold and 4 to 48 hours. */
 const BUY_QUANTITY_LEVELS: [gold: number, hours: number][] = [[1000, 4], [5000, 12], [25000, 24], [50000, 36], [100000, 48]];
 
+/** Avenging Angel: Buy Quantity's schedule at ten times the Gold, 10,000
+ * to 1,000,000 Gold and 4 to 48 hours. */
+const AVENGING_ANGEL_LEVELS = BUY_QUANTITY_LEVELS.map(([gold, hours]): ResearchLevel => ({ gold: gold * 10, hours, effect: { target: "avengingAngel", op: "add", value: 1 } }));
+
 /** Ignore More and Target More: one floor fewer to regain a use a level,
  * for 90 levels (100 floors down to 10). Undo Count's Gold (500 ×
  * (1 + n(n−1)/2) at level n), plus `cubic` × n³, raised `growth`
@@ -572,6 +579,13 @@ export const RESEARCH = {
     categories: ["defense"],
     requires: [{ upgrade: "shroud" }],
     levels: hundredLevels("shroudPercent", 4),
+  },
+  avengingAngel: {
+    name: "Avenging Angel",
+    description: "Learn the angel's wrath: when Angel Wings raises you, every enemy left on the floor of a rank it has learned falls, one rank more a level (weak, standard, strong, elite, then the bosses).",
+    categories: ["defense"],
+    requires: [{ upgrade: "avengingAngel" }],
+    levels: AVENGING_ANGEL_LEVELS,
   },
   moveSpeed: {
     name: "Movement Speed",

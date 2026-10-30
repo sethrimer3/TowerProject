@@ -166,7 +166,7 @@ const bakedEnemies = new Map<string, HTMLCanvasElement>();
 // A body may arrive before its small marks. Re-bake when either loads.
 onSpritesLoaded(() => bakedEnemies.clear());
 
-function paintEnemy(c: CanvasRenderingContext2D, t: Tile) {
+export function paintEnemy(c: CanvasRenderingContext2D, t: Tile) {
   const e = t.enemy!;
   groundShadow(c, 12, 21, 8, 2.6, 0.4);
   const key = `${e.name}|${e.tier}|${e.strength}|${e.fast}|${e.ranged}|${e.flying}`;

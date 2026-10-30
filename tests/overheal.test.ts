@@ -19,12 +19,12 @@ const hero = (hp: number, extra: Partial<Player> = {}): Player =>
 const rules = (overheal?: number): StepRules => ({ potionHeal: 100, percentPotion: 100, regen: 0, ...(overheal ? { overheal } : {}) });
 const healed = (p: Player, t: Tile, r: StepRules) => resolveStep(p, t, r) as StepEffect;
 
-test("Overheal is a 2-Breakthrough skill between Physician and Key Mastery", () => {
+test("Overheal is a 2-Breakthrough skill between Physician and Life", () => {
   const row = UPGRADES.find((u) => u.id === "overheal")!;
   assert.deepEqual([row.currency, row.max, cost("overheal", 0)], ["breakthrough", 1, 2]);
   const nodes = TREES.find((t) => t.id === "breakthrough")!.nodes;
   assert.deepEqual(nodes.find((n) => n.id === "overheal")!.requires, ["physician"]);
-  assert.deepEqual(nodes.filter((n) => n.requires.includes("overheal")).map((n) => n.id), ["keyMastery"], "Key Mastery follows it");
+  assert.deepEqual(nodes.filter((n) => n.requires.includes("overheal")).map((n) => n.id), ["life"], "Life follows it");
   const s = playedSave();
   Object.assign(s.upgrades, { trainers: 1, breakthrough: 1, moveSpeed: 1, bombs: 1, findYellowKey: 1, keyEfficiency: 1, interest: 1 });
   assert.equal(skillAvailable("overheal", s.upgrades), false, "Overheal waits on Physician");

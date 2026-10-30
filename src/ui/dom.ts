@@ -111,7 +111,7 @@ const SKILL_UI_SPRITES: Partial<Record<UpgradeId, UiSprite>> = {
   inspirationUndos: "undo", undos: "undo", archives: "log", questForKnowledge: "log",
   breakthrough: "breakthrough", moveSpeed: "automove", dash: "automove", instantCombat: "attack", trainers: "arrow-up", buyQuantity: "arrow-up",
   pathToWealth: "gold", moreWealth: "gold", goldenFloors: "gold", physician: "health", keyMastery: "log", cardMastery: "log", beastMastery: "attack", doorMastery: "log",
-  revive: "revive", overheal: "health", spareChange: "gold", loot: "gold", floorSkipReward: "gold", mug: "gold", legacy: "tower", quality: "tower",
+  revive: "revive", life: "health", overheal: "health", spareChange: "gold", loot: "gold", floorSkipReward: "gold", mug: "gold", legacy: "tower", quality: "tower",
   wisdomFocus: "settings", wisdomMemory: "undo", wisdomSight: "upgrades",
   renownBanner: "tower", renownOath: "defense", renownCrown: "gear",
   ...Object.fromEntries(LIMIT_BREAKS.map((id) => [id, "arrow-up"])),
@@ -122,7 +122,8 @@ const SKILL_SILVER = new Set<UpgradeId>(["wealthy", "wishingWell", "onTheJob", "
 const SKILL_CARDS: Partial<Record<UpgradeId, CardId>> = { cardDoorKey: "door", cardEnemy: "monster", combatStance: "stairs", cardHeal: "heal", cardAtkUp: "atkUp", cardDefUp: "defUp", cardYellowKey: "yellowKey", cardBlueKey: "blueKey", keySiphon: "keySiphon",
   cardYellowDoor: "yellowDoor", cardHeartDoor: "heartDoor", cardWeakEnemy: "weakEnemy", cardBaseEnemy: "baseEnemy", cardStrongEnemy: "strongEnemy",
   cardEliteEnemy: "eliteEnemy", cardBossEnemy: "bossEnemy", cardNonBossEnemy: "nonBossEnemy", cardFastEnemy: "fastEnemy", cardChest: "chest", blueSiphon: "blueSiphon", blueTrader: "blueTrader", keyToHp: "keyToHp", smeltBlue: "smeltBlue", redTrader: "redTrader", smeltRed: "smeltRed",
-  cardRedKey: "redKey", redSiphon: "redSiphon", cardTorch: "torch", cardWoodenDoor: "woodenDoor", heartDoorResilience: "heartDoor" };
+  cardRedKey: "redKey", redSiphon: "redSiphon", cardTorch: "torch", cardWoodenDoor: "woodenDoor", heartDoorResilience: "heartDoor",
+  angelWings: "angelWings" };
 const SKILL_DETAIL_SPRITES: Partial<Record<UpgradeId, string>> = {
   shroud: "ui-ward", critical: "goal-damage-prediction", critPrediction: "goal-damage-prediction",
   thorns: "sword", lifesteal: "boon-lifesteal", parry: "goal-parry", regen: "boon-regen", regenResearch: "boon-regen",
@@ -133,6 +134,7 @@ const SKILL_DETAIL_SPRITES: Partial<Record<UpgradeId, string>> = {
   wealthy: "silver", wishingWell: "silver", onTheJob: "silver", pocketMoney: "silver", interest: "silver", maxInterest: "silver",
   aiMemory: "goal-note-taking", aiEvaluation: "goal-combat-forecast", aiLookahead: "goal-attack-lore",
   renownCrown: "ui-crown",
+  avengingAngel: "combat-wing",
 };
 /** The forest's Enter button: an arrow going up into an arched doorway. */
 export const ENTER_ICON = kitIcon("tower", `<svg class="enter-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 22.5V11a8.5 8.5 0 0 1 17 0v11.5z" fill="#1b1410"/><path d="M3.5 22.5V11a8.5 8.5 0 0 1 17 0v11.5" fill="none" stroke="#c9b48a" stroke-width="2" stroke-linejoin="round"/><path d="M12 21V11.5M8 15.2l4-4 4 4" fill="none" stroke="#ffe27a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`, "enter-icon");

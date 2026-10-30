@@ -201,6 +201,7 @@ h1 span {
   min-width: 0;
 }
 .portrait-top {
+  position: relative;
   grid-column: 1;
   grid-row: 2;
   align-self: start;
@@ -244,6 +245,21 @@ h1 span {
   width: 43px;
   height: 43px;
   image-rendering: pixelated;
+}
+/* Angel Wings' charge, while ready: a wing in the portrait's top-left corner. */
+.wings-ready {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  line-height: 0;
+  pointer-events: none;
+}
+.wings-ready[hidden] { display: none; }
+.wings-ready img {
+  width: 14px;
+  height: auto;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 2px #ffe08a);
 }
 .portrait-top small {
   font-size: 6px;

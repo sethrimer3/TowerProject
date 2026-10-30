@@ -220,6 +220,7 @@ const RUN_FIELD_CHECKS = {
   goldCombo: (v: unknown) => wholeIn(v, 1, 1e9),
   maxHpBoost: (v: unknown) => finite(v) && v > 0 && v <= 1e9,
   spawns: (v: unknown) => wholeIn(v, 1, 1e9),
+  wingsSpent: (v: unknown) => v === true,
   volleys: (v: any) => isRecord(v) && wholeIn(v.turn, 0, 1e12) && (v.hero === undefined || wholeIn(v.hero, 0, 1e6)) &&
     (v.waited === undefined || wholeIn(v.waited, 1, 1e12)) && (v.rapid === undefined || wholeIn(v.rapid, 1, 1e4)) &&
     (v.foes === undefined || pointMap(v.foes, (n) => wholeIn(n, 0, 1e6))),

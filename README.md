@@ -38,7 +38,7 @@ The player-facing rules, in full, one topic a page:
 | [Upgrades](docs/gameplay/upgrades.md) | The skill trees' tabs, prices and help, Critical |
 | [Gear and Equipment](docs/gameplay/gear-and-equipment.md) | Provisions, the Blacksmith and Equipment |
 | [The Archives](docs/gameplay/archives.md) | Archivists, Rush, Cells and Speed Up, the library |
-| [Skills and stats](docs/gameplay/skills-and-stats.md) | Shroud, potions, Silver and Gold skills, Free Training, Buy Quantity, Revive, Thorns, Parry |
+| [Skills and stats](docs/gameplay/skills-and-stats.md) | Shroud, potions, Silver and Gold skills, Free Training, Buy Quantity, Revive, Angel Wings, Thorns, Parry |
 | [Fights](docs/gameplay/fights.md) | How a fight plays out, Fast, Ranged, Flying and Shielded monsters, the Archer, kill pay, fractions |
 | [Floors](docs/gameplay/floors.md) | Bosses and Greater Bosses, doors and keys, the early floors, world wrap |
 | [Floor Environments](docs/gameplay/environments.md) | Treasure and Golden Floors, their research, the enemy stats box's Environments |

@@ -305,13 +305,21 @@ export class World implements Board {
   }
   /** The doors still standing in the area (x, y) stands in, on its equivalent floor. */
   floorDoors(x: number, y: number) {
+    return this.floorTiles(x, y, (t) => t.kind === "door");
+  }
+  /** The enemies still standing in the area (x, y) stands in, on its equivalent floor. */
+  floorEnemies(x: number, y: number) {
+    return this.floorTiles(x, y, (t) => t.kind === "enemy" || !!t.flyer);
+  }
+  /** The tiles `want` picks in the area (x, y) stands in, on its equivalent floor. */
+  private floorTiles(x: number, y: number, want: (t: Tile) => boolean) {
     const area = ownerAt(this.seed, x, y), floorOf = (px: number, py: number) => Math.floor(depthAt(this.seed, px, py, area, this.tier) / 10);
-    const floor = floorOf(x, y), doors: { x: number; y: number }[] = [];
+    const floor = floorOf(x, y), found: { x: number; y: number }[] = [];
     for (const k of region(this.seed, area, this.tier).metadata.keys()) {
       const [px, py] = k.split(",").map(Number) as [number, number];
-      if (floorOf(px, py) === floor && this.tile(px, py).kind === "door") doors.push({ x: px, y: py });
+      if (floorOf(px, py) === floor && want(this.tile(px, py))) found.push({ x: px, y: py });
     }
-    return doors;
+    return found;
   }
   /** The enemy as generated keeps its wound in the changes. */
   wound(x: number, y: number, damage: number) {

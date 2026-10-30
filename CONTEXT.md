@@ -301,6 +301,12 @@ _Avoid_: speedup, double time
 The hero rising at full HP from a strike that would have felled it, by the Revive skill's chance (0.5%, more with Revive training); the fight goes on.
 _Avoid_: resurrection, second life
 
+**Angel Wings**:
+A card whose charge, once a run while either hand holds it, raises the hero at full HP from a strike or shot that would fell it and that Revive didn't save.
+
+**Smite**:
+Avenging Angel's stroke as Angel Wings raises the hero: every enemy left on the floor of a rank its research has learned falls at once and pays as a kill.
+
 **Percent potion**:
 The striped potion drawn blue (a regular potion is red): it restores a regular potion's HP plus a share of max HP (1% with the Recovery skill, more with Potion % training). With Recovery owned, each potion a run finds may be one, by a chance fixed when the run goes inside (2%, more with Find Potion training, up to 20%); otherwise each is a regular potion.
 

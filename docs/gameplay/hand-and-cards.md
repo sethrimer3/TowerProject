@@ -103,6 +103,7 @@ With Buildout, the next lesson shows the X on ENEMY with a hand pointing at it, 
 Each card has a level of its own, from 0 up to its **max level**, raised by the XP it gains in runs.
 Every card's max level starts at 10; buying cards (see Card buys below) raises it, up to 60 for every card with an upgrade tree, whose trees reach every rarity.
 A card gains 1 XP each time it activates: its path reaching its target (once any fight there is over), or a card that moves nowhere acting (the siphons and trades); **Flying Enemy** gains it each time it brings a Flying enemy within reach.
+**Angel Wings** (from its Inspiration skill) never moves the hero either: while either hand holds it, it raises the hero once a climb ([Angel Wings](skills-and-stats.md#angel-wings-and-avenging-angel)), and it gains XP as Archer does.
 **Archer**, which never activates, gains 1 XP for each floor completed for the first time in the run while it is in the run's hand, a floor the Skip badge climbs past included (in the Delve, each equivalent floor passed).
 
 The levels cost, in XP: 100, 200, 300, 400 and 500 for the first five; 700, 900, 1,100, 1,300 and 1,500 for the next five; then 1,800, 2,100, 2,400, 2,700 and 3,000; then 3,500, 4,000, 4,500, 5,000 and 5,500; then 6,250, 7,250, 8,500, 10,000 and 11,750; and from level 26 each level costs 250 XP more than the step before it (13,750, 16,000, 18,500 and so on, up to 230,500 for level 60; 3,541,500 in all).

@@ -153,6 +153,10 @@ export type RunCore = {
    * them (`badgeFactor`); absent with none. Undo takes it back with the
    * run. */
   maxHpBoost?: number;
+  /** Whether Angel Wings has raised the hero this run, spending its
+   * charge; absent until it has. Undo takes it back with the run, so the
+   * fight that spent it, undone, leaves it ready again. */
+  wingsSpent?: true;
 };
 /** A Tower ascent. */
 export type TowerRun = RunCore & {

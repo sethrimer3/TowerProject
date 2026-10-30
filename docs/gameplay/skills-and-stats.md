@@ -12,7 +12,7 @@ A skill you can't yet afford, once pressed, says how many more Inspiration point
 Greater Heal and the skills under it stay hidden until the Breakthrough skill **Physician** (1 Breakthrough, below Movement Speed) is bought, and Pocket Money and the skills under it until **Path to Wealth** (1 Breakthrough, left of Physician).
 Below Free Training, **Interest**, with **Max Interest** and **Mug** either side under it (10 Inspiration each), and Chest, Torch and Floor Skip Reward under them, wait besides on **More Wealth** (1 Breakthrough, under Path to Wealth).
 **Golden Floors** (3 Breakthrough, under More Wealth) opens the [Golden Floor](environments.md#golden-floor) research.
-**Thorns** stands below Buy Quantity, a row below Torch and Floor Skip Reward, and leads three ways, each hidden until a Mastery under **Key Mastery** (1 Breakthrough, under Overheal) in the Breakthrough tree is bought: down the middle Wooden Door and the door cards (**Door Mastery**, 2 Breakthrough, under Key Mastery), down to the left Find Gold Key and Key Efficiency (revealed by Key Mastery itself), then GK Siphon, BK Siphon, the key trades and the key badges (**Card Mastery**), and to the right Weak Enemy and the enemy cards (**Beast Mastery**), those two 1 Breakthrough each, split off under Key Mastery.
+**Thorns** stands below Buy Quantity, a row below Torch and Floor Skip Reward, and leads three ways, each hidden until a Mastery under **Key Mastery** (1 Breakthrough, under Life, under Overheal) in the Breakthrough tree is bought: down the middle Wooden Door and the door cards (**Door Mastery**, 2 Breakthrough, under Key Mastery), down to the left Find Gold Key and Key Efficiency (revealed by Key Mastery itself), then GK Siphon, BK Siphon, the key trades and the key badges (**Card Mastery**), and to the right Weak Enemy and the enemy cards (**Beast Mastery**), those two 1 Breakthrough each, split off under Key Mastery.
 **Bombs** (5 Inspiration, left of Critical Prediction, after it) opens the Bomb provision (see gear-and-equipment.md).
 Below the Archives in the Inspiration tree, which grows taller than the screen and scrolls (drag it, or turn the mouse wheel; Ctrl and the wheel, or a pinch, zooms), **Greater Heal** (3 Inspiration, after the Archives) opens the Archives' **Potion HP** research,, **Recovery** (10 Inspiration, after Greater Heal) brings **percent potions** onto the floors (2% of potions), **Find Potion** (10 Inspiration, below Recovery) opens **Find Potion** training, which makes more of them percent potions, and **Shroud** (2 Inspiration, after Trainers, above Critical) wraps the hero in a **shroud** that blocks the first 1 damage of every fight and opens **Shroud** training and the Archives' **Shroud** research (+4% of the shroud a level, for 100 levels, up to ×5, priced and timed like Pocket Money), **Parry** (10 Inspiration, below Regen Research) lets the hero parry, **Revive** (10 Inspiration, below Parry) may raise a felled hero at full HP, and **Thorns** (10 Inspiration, on the middle path between Buy Quantity and GK Siphon) makes every monster pay for striking (see below).
 
@@ -40,7 +40,7 @@ A regular potion is drawn red, like the HP bar, and a percent potion blue, like 
 
 ## Overheal
 
-**Overheal** (2 Breakthrough, between Physician and Key Mastery in the Breakthrough tree) lets HP rise above max HP, and opens Overheal training.
+**Overheal** (2 Breakthrough, between Physician and Life in the Breakthrough tree) lets HP rise above max HP, and opens Overheal training.
 Potions, regular and percent, the smelts (Smelt GK, BK and RK) and the badges' heals then heal past max HP, up to the Overheal ceiling: max HP times the Overheal training row's value (×1.00 until it has ranks).
 Regen, Lifesteal, Dash Regen, equipment's victory and floor heals still stop at max HP, and none of them lowers HP held above it.
 The HP readout shows HP over max (1,240 / 1,000), and its tooltip the ceiling.
@@ -64,10 +64,23 @@ The first four levels are quick (15 seconds for 10 Gold, 1 minute for 25, 5 minu
 
 ## Revive
 
-**Revive** (10 Inspiration, below Parry) gives each monster's strike that would fell the hero a 0.5% chance to raise it at full HP instead: the skull of a defeat burns over the hero first (its HP shown at 0), then it rises in a smaller golden blaze like a level-up's, under a beam of white and golden light that a few small white angel wings flutter down and fade from, and once that is over the fight goes on from the next round, the monster as hurt and as fierce as it was, and a later strike that would fell the hero again rolls again.
+**Revive** (10 Inspiration, below Parry, hidden until **Life**, 2 Breakthrough between Overheal and Key Mastery, is owned) gives each monster's strike that would fell the hero a 0.5% chance to raise it at full HP instead: the skull of a defeat burns over the hero first (its HP shown at 0), then it rises in a smaller golden blaze like a level-up's, under a beam of white and golden light that a few small white angel wings flutter down and fade from, and once that is over the fight goes on from the next round, the monster as hurt and as fierce as it was, and a later strike that would fell the hero again rolls again.
 It opens Revive training, 1 training point a rank, each adding 0.5%, up to 50% at 99 ranks.
 Each strike's roll is fixed for that run, floor and tile, so undoing a fight and fighting it again ends the same way.
 Forecasts, Automove and the hand still treat such a fight as lost.
+
+## Angel Wings and Avenging Angel
+
+**Angel Wings** (10 Inspiration, under Revive) adds the **Angel Wings** card to the deck.
+It never moves the hero: while either hand holds it, once a climb, a monster's strike (or shot) that would fell the hero and that Revive doesn't save raises it at full HP instead.
+While its charge is ready, a small wing shows in the top-left corner of the hero's portrait.
+Its raising looks like Revive's, broader, with "ANGEL WINGS", a great pair of wings spreading behind the hero and a flurry of small wings fluttering down the beam.
+Undoing the fight that spent it gives the charge back.
+
+**Avenging Angel** (10 Inspiration, under Angel Wings) opens Avenging Angel research in the Archives (Defense), five levels at 10,000, 50,000, 250,000, 500,000 and 1,000,000 Gold, taking 4, 12, 24, 36 and 48 hours.
+When Angel Wings raises the hero, every monster left on the floor (in the Delve, the hero's equivalent floor of its area) of a rank the research has learned falls at once: weak at level 1, then standard, strong, elite, and at level 5 bosses and Greater Bosses.
+A golden slash cuts across each, which vanishes in a poof and pays as a kill (XP, Silver, Gold and drops).
+The monster being fought falls with them if its rank is learned, ending the fight; it smites only at that moment, never again in the climb.
 
 ## Thorns
 

@@ -58,6 +58,10 @@ const REVIVAL: Blaze = {
   fill: ["#fffbe0", "#ffe07a", "#e8a91c"],
 };
 
+/** Angel Wings raising the hero: the revival's blaze, broader, with its
+ * own words. */
+const WINGED: Blaze = { ...REVIVAL, flames: 16, glow: 34, reach: 0.9, text: "ANGEL WINGS" };
+
 /** An area reward chest opened: a golden blaze as big as the level-up's,
  * its title across the board and what it gave under it. */
 const AREA: Omit<Blaze, "text"> = {
@@ -146,7 +150,18 @@ export function drawRevive(f: FrameContext, age: number) {
   if (age < 0 || age >= REVIVE_MS) return;
   drawBeam(f, age);
   drawBlaze(f, age, REVIVAL);
-  drawWings(f, age);
+  drawWings(f, age, WINGS);
+}
+/** The hero raised by Angel Wings, a revival Revive didn't give: the
+ * revival's beam and a broader blaze, "ANGEL WINGS", a great pair of wings
+ * spreading behind the hero and beating, and a flurry of small wings
+ * fluttering down the beam, `age` ms after it. */
+export function drawWingedRevive(f: FrameContext, age: number) {
+  if (age < 0 || age >= REVIVE_MS) return;
+  drawBeam(f, age);
+  drawGreatWings(f, age);
+  drawBlaze(f, age, WINGED);
+  drawWings(f, age, FLURRY);
 }
 
 /** How tall the revival's beam is, in tile units (24 a tile), and how wide. */
@@ -160,6 +175,13 @@ const WINGS = [
   { at: 130, x: 5, phase: 2 },
   { at: 260, x: 19, phase: 4 },
   { at: 400, x: 11, phase: 1 },
+];
+/** Angel Wings' flurry: three times as many, across a wider beam. */
+const FLURRY = [
+  ...WINGS,
+  { at: 60, x: -2, phase: 3 }, { at: 190, x: 26, phase: 5 }, { at: 320, x: 1, phase: 1.5 },
+  { at: 350, x: 23, phase: 2.5 }, { at: 220, x: 14, phase: 6 }, { at: 90, x: 8, phase: 0.5 },
+  { at: 300, x: 17, phase: 3.5 }, { at: 30, x: 20, phase: 4.5 },
 ];
 
 /** A column of white and golden light shining down on the hero, rising
@@ -188,7 +210,7 @@ function drawBeam(f: FrameContext, age: number) {
 
 /** Small white angel wings fluttering down from the top of the beam to the
  * hero, each fading over a second. */
-function drawWings(f: FrameContext, age: number) {
+function drawWings(f: FrameContext, age: number, wings: readonly { at: number; x: number; phase: number }[]) {
   const c = f.c, still = f.look.reduceMotion;
   c.save();
   c.setTransform(tileTransform(f, f.playerX, f.playerY));
@@ -196,7 +218,7 @@ function drawWings(f: FrameContext, age: number) {
   c.lineWidth = 0.8;
   c.shadowColor = "rgba(255, 220, 120, 0.9)";
   c.shadowBlur = 5;
-  for (const w of WINGS) {
+  for (const w of wings) {
     const t = (age - w.at) / WING_MS;
     if (t < 0 || t >= 1) continue;
     const y = 24 - BEAM_HEIGHT + 10 + (still ? 0.45 : t) * (BEAM_HEIGHT - 30),
@@ -206,25 +228,50 @@ function drawWings(f: FrameContext, age: number) {
     c.save();
     c.translate(x, y);
     c.scale(beat, 1);
-    c.fillStyle = "#ffffff";
-    c.strokeStyle = "rgba(255, 214, 110, 0.9)";
-    for (const side of [-1, 1]) {
-      // A wing: a rising arch out to its tip, then back along three feathers.
-      c.beginPath();
-      c.moveTo(0, 0);
-      c.quadraticCurveTo(side * 5, -7, side * 11, -4);
-      c.lineTo(side * 9, -1);
-      c.lineTo(side * 8.5, 1.4);
-      c.lineTo(side * 6, 1);
-      c.lineTo(side * 5.5, 3);
-      c.lineTo(side * 2.5, 2);
-      c.quadraticCurveTo(side * 1, 1.5, 0, 0);
-      c.closePath();
-      c.fill();
-      c.stroke();
-    }
+    wingPair(c);
     c.restore();
   }
+  c.restore();
+}
+
+/** A pair of white wings, gold-edged, about 22 units across, joined at
+ * the origin: each a rising arch out to its tip, then back along three
+ * feathers. */
+function wingPair(c: CanvasRenderingContext2D) {
+  c.fillStyle = "#ffffff";
+  c.strokeStyle = "rgba(255, 214, 110, 0.9)";
+  for (const side of [-1, 1]) {
+    c.beginPath();
+    c.moveTo(0, 0);
+    c.quadraticCurveTo(side * 5, -7, side * 11, -4);
+    c.lineTo(side * 9, -1);
+    c.lineTo(side * 8.5, 1.4);
+    c.lineTo(side * 6, 1);
+    c.lineTo(side * 5.5, 3);
+    c.lineTo(side * 2.5, 2);
+    c.quadraticCurveTo(side * 1, 1.5, 0, 0);
+    c.closePath();
+    c.fill();
+    c.stroke();
+  }
+}
+
+/** A great pair of wings behind the hero, spreading open over the first
+ * part of the revival, beating slowly, and fading with the blaze. */
+function drawGreatWings(f: FrameContext, age: number) {
+  const c = f.c, still = f.look.reduceMotion;
+  const open = still ? 1 : Math.min(1, age / 300), fade = Math.min(1, (REVIVE_MS - age) / 500),
+    beat = still ? 1 : 0.85 + 0.15 * Math.sin(age / 90);
+  c.save();
+  c.setTransform(tileTransform(f, f.playerX, f.playerY));
+  c.translate(12, 10);
+  c.globalAlpha = Math.min(1, age / 120) * fade;
+  c.lineJoin = "round";
+  c.lineWidth = 0.6;
+  c.shadowColor = "rgba(255, 230, 140, 1)";
+  c.shadowBlur = 8;
+  c.scale(2.4 * open * beat, 2.4 * (0.6 + 0.4 * open));
+  wingPair(c);
   c.restore();
 }
 

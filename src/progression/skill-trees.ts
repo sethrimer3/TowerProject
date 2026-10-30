@@ -81,7 +81,11 @@ export const TREES: SkillTree[] = [
     { id: "findPotion", icon: "⚗", x: 70, y: 250, requires: ["recovery"] },
     { id: "regenResearch", icon: "♥", x: 90, y: 232, requires: ["greaterHeal"] },
     { id: "parry", icon: "⇋", x: 90, y: 250, requires: ["regenResearch"] },
-    { id: "revive", icon: "☼", x: 90, y: 268, requires: ["parry"] },
+    // Revive, Angel Wings and Avenging Angel straight down, revealed by Life
+    // (in the Breakthrough tree).
+    { id: "revive", icon: "☼", x: 90, y: 268, requires: ["parry"], reveal: "life" },
+    { id: "angelWings", icon: "⚚", x: 90, y: 286, requires: ["revive"] },
+    { id: "avengingAngel", icon: "⚔", x: 90, y: 304, requires: ["angelWings"] },
     // Thorns leads three ways, each revealed by a Mastery in the Breakthrough
     // tree. Down the middle (Door Mastery): Wooden Door, two rows under
     // Thorns, then Gold Door, Heart Door Resilience and Heart Door below it.
@@ -117,7 +121,7 @@ export const TREES: SkillTree[] = [
     { id: "keyLessBadges", icon: "⚿", x: 30, y: 502, requires: ["redSiphon"] },
     { id: "keyAtLeastBadges", icon: "⚿", x: 30, y: 520, requires: ["keyLessBadges"] },
   ] },
-  { id: "breakthrough", name: "Breakthrough", currency: "breakthrough", gate: "breakthrough", description: "Earn a Breakthrough point for each Tower Goal you claim.", height: 464, unlocks: true, nodes: [
+  { id: "breakthrough", name: "Breakthrough", currency: "breakthrough", gate: "breakthrough", description: "Earn a Breakthrough point for each Tower Goal you claim.", height: 490, unlocks: true, nodes: [
     // Quest for Knowledge first: it reveals the Inspiration tree's Archives
     // and everything under them (but Pocket Money's and Greater Heal's sides,
     // which Path to Wealth and Physician reveal, and the paths More Wealth
@@ -140,37 +144,39 @@ export const TREES: SkillTree[] = [
     { id: "goldenFloors", icon: "¤", x: 18, y: 111, requires: ["moreWealth"] },
     { id: "inspirationUndos", icon: "↺", x: 18, y: 137, requires: ["goldenFloors"] },
     { id: "undos", icon: "↺", x: 18, y: 163, requires: ["inspirationUndos"] },
-    // Overheal, then Key Mastery, under Physician; Badges stand down and
-    // right of Physician. Card Mastery and Beast Mastery split off under Key
-    // Mastery, and Door Mastery follows it: they reveal the Inspiration
-    // tree's three paths under Thorns.
+    // Overheal, Life (which reveals Revive and the Angel skills), then Key
+    // Mastery, under Physician; Badges stand down and right of Physician.
+    // Card Mastery and Beast Mastery split off under Key Mastery, and Door
+    // Mastery follows it: they reveal the Inspiration tree's three paths
+    // under Thorns.
     { id: "overheal", icon: "♥", x: 50, y: 85, requires: ["physician"] },
-    { id: "keyMastery", icon: "⚿", x: 50, y: 111, requires: ["overheal"] },
+    { id: "life", icon: "✚", x: 50, y: 111, requires: ["overheal"] },
+    { id: "keyMastery", icon: "⚿", x: 50, y: 137, requires: ["life"] },
     { id: "cardBadges", icon: "◪", x: 70, y: 111, requires: ["physician"] },
-    { id: "cardMastery", icon: "▤", x: 38, y: 137, requires: ["keyMastery"] },
-    { id: "beastMastery", icon: "☠", x: 62, y: 137, requires: ["keyMastery"] },
+    { id: "cardMastery", icon: "▤", x: 38, y: 163, requires: ["keyMastery"] },
+    { id: "beastMastery", icon: "☠", x: 62, y: 163, requires: ["keyMastery"] },
     // Manual Hand, the second hand, after Card Mastery: down and left of it,
     // two rows under it to keep clear of Echoes of time and Ignore.
-    { id: "manualHand", icon: "⇄", x: 30, y: 189, requires: ["cardMastery"] },
+    { id: "manualHand", icon: "⇄", x: 30, y: 215, requires: ["cardMastery"] },
     // Door Mastery under Key Mastery reveals the Inspiration tree's door path
     // under Thorns. Then the run's charges: Ignore, with Target to its right,
     // each with the skill that regains it below.
-    { id: "doorMastery", icon: "⚿", x: 50, y: 163, requires: ["keyMastery"] },
-    { id: "ignore", icon: "⊘", x: 50, y: 187, requires: ["doorMastery"] },
-    { id: "target", icon: "⌖", x: 78, y: 187, requires: ["ignore"] },
-    { id: "ignoreMore", icon: "⊘", x: 50, y: 211, requires: ["ignore"] },
-    { id: "targetMore", icon: "⌖", x: 78, y: 211, requires: ["target"] },
+    { id: "doorMastery", icon: "⚿", x: 50, y: 189, requires: ["keyMastery"] },
+    { id: "ignore", icon: "⊘", x: 50, y: 213, requires: ["doorMastery"] },
+    { id: "target", icon: "⌖", x: 78, y: 213, requires: ["ignore"] },
+    { id: "ignoreMore", icon: "⊘", x: 50, y: 237, requires: ["ignore"] },
+    { id: "targetMore", icon: "⌖", x: 78, y: 237, requires: ["target"] },
     // Limit Break 1 to 10 straight down under Ignore More, each requiring the one before.
-    { id: "limitBreak1", icon: "⇑", x: 50, y: 235, requires: ["ignoreMore"] },
-    { id: "limitBreak2", icon: "⇑", x: 50, y: 259, requires: ["limitBreak1"] },
-    { id: "limitBreak3", icon: "⇑", x: 50, y: 283, requires: ["limitBreak2"] },
-    { id: "limitBreak4", icon: "⇑", x: 50, y: 307, requires: ["limitBreak3"] },
-    { id: "limitBreak5", icon: "⇑", x: 50, y: 331, requires: ["limitBreak4"] },
-    { id: "limitBreak6", icon: "⇑", x: 50, y: 355, requires: ["limitBreak5"] },
-    { id: "limitBreak7", icon: "⇑", x: 50, y: 379, requires: ["limitBreak6"] },
-    { id: "limitBreak8", icon: "⇑", x: 50, y: 403, requires: ["limitBreak7"] },
-    { id: "limitBreak9", icon: "⇑", x: 50, y: 427, requires: ["limitBreak8"] },
-    { id: "limitBreak10", icon: "⇑", x: 50, y: 451, requires: ["limitBreak9"] },
+    { id: "limitBreak1", icon: "⇑", x: 50, y: 261, requires: ["ignoreMore"] },
+    { id: "limitBreak2", icon: "⇑", x: 50, y: 285, requires: ["limitBreak1"] },
+    { id: "limitBreak3", icon: "⇑", x: 50, y: 309, requires: ["limitBreak2"] },
+    { id: "limitBreak4", icon: "⇑", x: 50, y: 333, requires: ["limitBreak3"] },
+    { id: "limitBreak5", icon: "⇑", x: 50, y: 357, requires: ["limitBreak4"] },
+    { id: "limitBreak6", icon: "⇑", x: 50, y: 381, requires: ["limitBreak5"] },
+    { id: "limitBreak7", icon: "⇑", x: 50, y: 405, requires: ["limitBreak6"] },
+    { id: "limitBreak8", icon: "⇑", x: 50, y: 429, requires: ["limitBreak7"] },
+    { id: "limitBreak9", icon: "⇑", x: 50, y: 453, requires: ["limitBreak8"] },
+    { id: "limitBreak10", icon: "⇑", x: 50, y: 477, requires: ["limitBreak9"] },
   ] },
   { id: "wayfinding", name: "Wayfinding", currency: "breakthrough", gate: null, description: "Teach Delve Automove to explore, compare routes and preserve resources.", nodes: [
     { id: "aiMemory", icon: "◇", x: 50, y: 20, requires: [] },

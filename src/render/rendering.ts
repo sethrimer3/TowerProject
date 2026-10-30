@@ -31,8 +31,9 @@ import { DamagePredictions, drawDamageLabels } from "./effects/damage-labels.ts"
 import { BossFlash } from "./effects/boss-flash.ts";
 import { goalUnlocked } from "../goals.ts";
 import { DEFEAT_MS, drawStruckDown } from "./effects/struck-down.ts";
-import { AREA_BURST_MS, drawAreaBurst, preloadAreaBurst, drawLevelUp, drawRevive, drawWarpLoot, LEVEL_UP_MS, POINTS_MS, REVIVE_MS, WARP_LOOT_MS } from "./effects/level-up.ts";
+import { AREA_BURST_MS, drawAreaBurst, preloadAreaBurst, drawLevelUp, drawRevive, drawWingedRevive, drawWarpLoot, LEVEL_UP_MS, POINTS_MS, REVIVE_MS, WARP_LOOT_MS } from "./effects/level-up.ts";
 import { drawPoof, POOF_MS } from "./effects/poof.ts";
+import { drawSmite, SMITE_MS } from "./effects/smite.ts";
 import { drawExplosion, EXPLOSION_MS } from "./effects/explosion.ts";
 import { drawBoostGlow } from "./effects/boost-glow.ts";
 import { POSITION_HALOS_ENABLED } from "./lighting.ts";
@@ -248,13 +249,14 @@ export class Renderer {
     this.popups.draw(f);
     this.drawEffectText(f);
     for (const at of this.game.fights.struckDown) drawStruckDown(f, f.now - at);
-    for (const at of this.game.fights.revivedAt) drawRevive(f, f.now - at);
+    for (const at of this.game.fights.revivedAt) (this.game.fights.wingedAt.includes(at) ? drawWingedRevive : drawRevive)(f, f.now - at);
     drawLevelUp(f, f.now - this.game.levelUpAt, this.game.levelUpPoints);
     for (const area of this.game.areaBursts) if (f.now >= area.at) drawAreaBurst(f, f.now - area.at, area.reward, area.inspiration);
     const loot = this.game.warpLooted;
     if (loot) drawWarpLoot(f, f.now - loot.at, loot.silver);
     const summoned = this.game.summoned;
     if (summoned) drawPoof(f, summoned.x, summoned.y, f.now - summoned.at);
+    for (const smitten of this.game.smitten) drawSmite(f, smitten, f.now - smitten.at);
     const vanished = this.game.vanished;
     if (vanished) drawPoof(f, vanished.x, vanished.y, f.now - vanished.at);
     const bombed = this.game.bombed;
@@ -758,14 +760,14 @@ export class Renderer {
   }
   /** Every timed effect has played out: the arrival glow, a dash's echoes,
    * a blocked step, the feedback text, the level-up, skulls, revivals, an area
-   * reward's burst, Warp Loot's, a Greater Boss's poof, a Bomb's explosion, a Gem's
+   * reward's burst, Warp Loot's, a Greater Boss's poof, Avenging Angel's smites, a Bomb's explosion, a Gem's
    * sparkle, the turn's shots in flight, and a boost's glow pulsing. */
   private effectsOver(now: number) {
     const g = this.game, sparkle = g.gemFinder.sparkle;
     return (!POSITION_HALOS_ENABLED || now - this.arrived > ARRIVAL_GLOW_MS) && this.echoes.over(now) && g.blocked.until <= now && g.effect.until <= now &&
       now - g.levelUpAt >= LEVEL_UP_MS + POINTS_MS && g.fights.revivedAt.every((at) => now - at >= REVIVE_MS) && g.fights.struckDown.every((at) => now - at >= DEFEAT_MS) &&
       g.areaBursts.every((b) => now - b.at >= AREA_BURST_MS) && (!g.warpLooted || now - g.warpLooted.at >= WARP_LOOT_MS) &&
-      (!g.summoned || now - g.summoned.at >= POOF_MS) && (!g.vanished || now - g.vanished.at >= POOF_MS) && (!g.bombed || now - g.bombed.at >= EXPLOSION_MS) &&
+      (!g.summoned || now - g.summoned.at >= POOF_MS) && g.smitten.every((s) => now - s.at >= SMITE_MS) && (!g.vanished || now - g.vanished.at >= POOF_MS) && (!g.bombed || now - g.bombed.at >= EXPLOSION_MS) &&
       (!sparkle || now - sparkle.at >= GEM_SPARKLE_MS) && (!g.volley || volleyOver(g.volley, now)) && this.inFlight.over(now) &&
       (!POSITION_HALOS_ENABLED || g.save.settings.reduceMotion || !this.boosts.length);
   }

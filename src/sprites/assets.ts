@@ -68,6 +68,7 @@ export const SPRITE_ASSETS = [
   "assets/style/boon-silver.png",
   "assets/style/boots.png",
   "assets/style/breakthrough.png",
+  "assets/style/card-angelWings.png",
   "assets/style/card-archer.png",
   "assets/style/card-atkUp.png",
   "assets/style/card-baseEnemy.png",

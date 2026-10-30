@@ -33,6 +33,10 @@ export type Board = {
    * floor's, or in the Delve the tiles of its area at the same equivalent
    * floor), on boards that hold doors: KEY's Master Key opens them. */
   floorDoors?(x: number, y: number): { x: number; y: number }[];
+  /** The enemies still standing on the same floor, by the tile each stands
+   * on or (a Flying one) hovers over, on boards that hold enemies: Avenging
+   * Angel smites them. */
+  floorEnemies?(x: number, y: number): { x: number; y: number }[];
   /** The Shielded enemies still standing (enemies/shielded.ts), whose bubbles the
    * board draws, on boards that hold them. */
   shields?(): readonly Shield[];

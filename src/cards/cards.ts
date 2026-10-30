@@ -82,6 +82,7 @@ export const CARDS = {
   woodenDoor: { name: "Wooden Door", text: "Move toward the closest Wooden Door you hold a key for, or can break down and survive.", bonus: { door: { kind: "wood", percent: DOOR_CARD_DISCOUNT } } },
   flyingEnemy: { name: "Flying Enemy", text: "Move toward the closest Flying enemy your arrows can hurt, stopping once one is within your Attack Range, and wait there while one is.", bonus: { shot: { attack: 5, speed: 5 }, ...FOE } },
   archer: { name: "Archer", text: "Never moves you. While it is in your hand, you fire arrows at the closest enemy within your Attack Range, and your Archer training can be raised with Silver in the climb.", bonus: { boss: { attack: 5 } } },
+  angelWings: { name: "Angel Wings", text: "Never moves you. While it is in either hand, once a climb, a strike that would fell you and that Revive doesn't save raises you at full HP instead." },
 } as const;
 export type CardId = keyof typeof CARDS;
 export const CARD_IDS = Object.keys(CARDS) as CardId[];
@@ -232,6 +233,9 @@ export const GOAL_CARDS: Partial<Record<GoalUnlock, CardId>> = { archerCard: "ar
 /** Whether `hand` makes the hero an Archer: it holds ARCHER, so its arrows
  * fly and its Archer training rows can be raised in the run. */
 export const shootsWith = (hand: readonly CardId[]) => hand.includes("archer");
+/** Whether `hand` holds ANGEL WINGS, whose charge raises the hero once a
+ * run (`Game.wingsReady`). */
+export const wingedWith = (hand: readonly CardId[]) => hand.includes("angelWings");
 /** The cards the player owns, in `CARDS` order: the base hand's, each card
  * whose upgrade is owned, and each card whose Goal is claimed (`goals`;
  * none without). A hand holds any of them, but always STAIRS. */
@@ -452,6 +456,8 @@ const WANTS: Record<CardId, (t: Tile, at: HandAt, rules: CardRules | undefined, 
   flyingEnemy: never,
   // Never moves the hero: it only makes it an Archer while held.
   archer: never,
+  // Never moves the hero: it only raises it, once a run, while held.
+  angelWings: never,
   chest: (t) => t.kind === "treasure" || t.kind === "reward",
   blueSiphon: never,
   blueTrader: never,

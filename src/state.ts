@@ -1,7 +1,7 @@
 import { entrance, floorFor } from "./delve/labyrinth.ts";
 import { chooseStep } from "./automation.ts";
 import { cost } from "./progression/upgrades.ts";
-import { CARDS, cardText, dealCard, deckCards, explainStuck, handSlots, handBonus, keptLinks, planHand, planTarget, shootsWith, stillOpen, type CardId, type CardPlan, type HandBonus, type StuckReport } from "./cards/cards.ts";
+import { CARDS, cardText, dealCard, deckCards, explainStuck, handSlots, handBonus, keptLinks, planHand, planTarget, shootsWith, stillOpen, wingedWith, type CardId, type CardPlan, type HandBonus, type StuckReport } from "./cards/cards.ts";
 import { addCardXp, PASSIVE_CARDS } from "./cards/levels.ts";
 import { KEY_COLORS, cardMaxLevel, compounded, doorStat, foeCardStat, foeStat, foeStats, keyStat, freeUpChances, freeUpFactors, hasPointsToSpend, pointsLeft, runCardTrees, runFoeCut, treeBonus, treeFactor, treeOverheal, type FoeTreeCard, type TreeBonus } from "./cards/trees.ts";
 import { aggroTurn } from "./enemies/flying.ts";
@@ -46,7 +46,8 @@ import type {
 import { World, LAYOUT_VERSION } from "./delve/world.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import { chestKindAt, litTorches, type Board } from "./board.ts";
-import { healUpTo, instakill, squaredUp, type CritRule } from "./combat.ts";
+import { healUpTo, instakill, squaredUp, type CritRule, type Wings } from "./combat.ts";
+import { smites, type Smitten } from "./angel.ts";
 import { HEART_DOOR_HP, hpCeiling, isLethal, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardStat } from "./step-effects.ts";
 import { ENTRANCE_Y, ENTRANCE_ZOOM_MS, OUTSIDE_START_Y, OutsideWorld } from "./outside.ts";
 import { FOREST_ARRIVAL_PAUSE_MS, FOREST_ARRIVAL_WALK_MS, type ForestArrival } from "./forest-arrival.ts";
@@ -162,7 +163,7 @@ const FLOOR_KEY_SALT: Record<KeyColor, number> = { yellow: 0x9f10e, blue: 0xb1f1
  * the hero's critical strikes in it as played (`crits`) and whether it
  * began with ENEMY's Surprise Attack (`surprise`) or a Fast enemy lost its
  * first strike to FAST ENEMY's First Strike (`firstStrike`). */
-type TakenStep = { tile: Tile; outcome: StepEffect; dest: { x: number; y: number }; track: boolean; quiet?: boolean; crits?: number; surprise?: true; firstStrike?: true; card: CardStep };
+type TakenStep = { tile: Tile; outcome: StepEffect; dest: { x: number; y: number }; track: boolean; quiet?: boolean; crits?: number; winged?: boolean; surprise?: true; firstStrike?: true; card: CardStep };
 /** How the hand's turn takes a step: Effective or Dampen on a card's last
  * step (`scale`, what its target's effect is multiplied by; 1 on every
  * other step), Skip on STAIRS succeeding (`floorSkip`: the climb goes up
@@ -287,6 +288,9 @@ export class Game {
   /** Where a Greater Boss last appeared, and when (performance.now()), for
    * the board's poof; cleared by undo. */
   summoned: { x: number; y: number; at: number } | null = null;
+  /** The enemies Avenging Angel last smote, for the board's slashes and
+   * poofs; cleared by undo. */
+  smitten: Smitten[] = [];
   /** Where the last Bomb went off and when (performance time), for its explosion. */
   bombed: { x: number; y: number; at: number } | null = null;
   /** Where Skip last made a card's target vanish, and when
@@ -709,6 +713,7 @@ export class Game {
     this.areaBursts = [];
     this.warpLooted = null;
     this.summoned = null;
+    this.smitten = [];
     this.vanished = null;
     this.bombed = null;
     this.save.xp = snapshot.xp;
@@ -1458,6 +1463,16 @@ export class Game {
   get reviveChance() {
     return snap(trainedAmount(this.trainingNow, "revive") + this.treeBonus.reviveChance * 100);
   }
+  /** Whether Angel Wings' charge is ready: inside a run, a hand holds the
+   * ANGEL WINGS card, and the run hasn't spent it. */
+  get wingsReady() {
+    return !this.run.outside && !this.run.wingsSpent && wingedWith(this.held);
+  }
+  /** Angel Wings' charge against `enemy`, while it is ready: whether its
+   * raising smites `enemy` too, by Avenging Angel's research now. */
+  wingsFor(enemy: Enemy): Wings | undefined {
+    return this.wingsReady ? { smites: smites(researched(this.save.archives, "avengingAngel"), enemy) } : undefined;
+  }
   /** The hero's critical strikes now (Critical, Crit % and Crit x training
    * and research, the run's Silver ranks counting), read when a fight is
    * taken or shown; none in the forest. */
@@ -2070,7 +2085,7 @@ export class Game {
   }
   /** Commits a resolved step: undo history, stats, and the door or fight on
    * the way in. Returns false when the player fell. */
-  private enter({ tile: t, outcome, dest, track, quiet, crits, surprise, firstStrike }: TakenStep, revived: number) {
+  private enter({ tile: t, outcome, dest, track, quiet, crits, winged, surprise, firstStrike }: TakenStep, revived: number) {
     const before = this.snapshot();
     this.turnBefore ??= before;
     if (track) this.remember(quiet ? { ...before, quiet: true } : before);
@@ -2085,7 +2100,30 @@ export class Game {
     // Effective's added damage rises off the hero; Dampen's given back heals.
     if (extra > 0 && p.hp > 0) this.gain(p.x, p.y, `−${wholeChange(extra)} HP`, { heart: true }, undefined, "hit");
     else if (extra < 0) this.recordHeal(-extra);
-    return this.winFight({ enemy: t.enemy!, damage: snap(outcome.combat!.damage + extra), at: dest, revived, scale: outcome.scale, instakill: instakill(outcome.combat!), crits, openers }, before);
+    const angel = winged ? this.spendWings(dest) : [];
+    const won = this.winFight({ enemy: t.enemy!, damage: snap(outcome.combat!.damage + extra), at: dest, revived, scale: outcome.scale, instakill: instakill(outcome.combat!), crits, openers }, before);
+    if (won && angel.length) this.message = [...angel, this.message].join(" · ");
+    return won;
+  }
+  /** Angel Wings raised the hero: its charge is spent for the run, and
+   * Avenging Angel smites every enemy of the ranks its research has
+   * learned left on the hero's floor (but the one fought at `fighting`,
+   * which its fight settles), each paid as a kill, slashed and gone in a
+   * poof. Returns the status line's words for it. */
+  private spendWings(fighting?: { x: number; y: number }) {
+    this.run.wingsSpent = true;
+    const level = researched(this.save.archives, "avengingAngel"), p = this.run.player, now = performance.now();
+    let smote = 0;
+    if (level) for (const at of this.world.floorEnemies?.(p.x, p.y) ?? []) {
+      if (fighting && at.x === fighting.x && at.y === fighting.y) continue;
+      const t = this.world.tile(at.x, at.y), enemy = t.kind === "enemy" ? t.enemy : t.flyer;
+      if (!enemy || !smites(level, enemy)) continue;
+      this.world.clear(at.x, at.y);
+      this.finds.kill(enemy, at, 1, false);
+      this.smitten.push({ ...at, enemy, at: now });
+      smote++;
+    }
+    return [CARDS.angelWings.name, ...(smote ? [`Avenging Angel · ${smote} ${smote === 1 ? "enemy" : "enemies"} smitten`] : [])];
   }
   /** Moves the player onto the tile and applies what standing there does. */
   private land(t: Tile, x: number, y: number, outcome: StepEffect, floorSkip = false) {
@@ -2238,7 +2276,12 @@ export class Game {
     for (const { enemy, at, instakill, crits, thorns } of out.kills)
       this.message = [`${thorns ? "Thorns" : "Arrow"} · ${enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, at, 1, instakill, crits ? 1 : 0)].join(" · ");
     this.showVolley(out.shots, at, ms);
-    if (out.fell) {
+    // Angel Wings raises the hero from a shot that would fell it, as from a strike.
+    if (out.fell && this.wingsReady) {
+      p.hp = p.maxHp;
+      this.fights.raise();
+      this.message = this.spendWings().join(" · ");
+    } else if (out.fell) {
       this.fallIn(before, out.fell);
       this.message = `Shot down by ${enemyTitle(out.fell)}.`;
       return;

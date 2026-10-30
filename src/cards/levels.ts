@@ -28,7 +28,7 @@ export const POINTS_PER_CARD_LEVEL = 1;
 /** The cards that never activate: each gains its XP from the floors
  * completed while the run's hand holds it, one a floor (a floor Skip climbs
  * past too). */
-export const PASSIVE_CARDS: ReadonlySet<CardId> = new Set<CardId>(["archer"]);
+export const PASSIVE_CARDS: ReadonlySet<CardId> = new Set<CardId>(["archer", "angelWings"]);
 
 /** Where a card with `xp` stands under its max level `cap` (cards/trees.ts'
  * `cardMaxLevel`): its level, no higher than the cap; the XP gathered

@@ -293,6 +293,8 @@ export function renderEventsButtons(game: Game) {
  * above (`heroClass`). */
 function renderXp(game: Game) {
   text("hero-class", heroClass(game.save, game.isArcher).toUpperCase());
+  // Angel Wings' charge, ready, wears a wing in the portrait's corner.
+  el("wings-ready").hidden = !game.wingsReady;
   const level = levelForXp(game.save.xp), from = xpForLevel(level),
     into = game.save.xp - from, need = xpForLevel(level + 1) - from;
   text("level", String(level));
