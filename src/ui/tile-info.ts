@@ -3,7 +3,7 @@ import type { Enemy, Kind, Player, Tile } from "../entities.ts";
 import { enemyTitle } from "../enemies/scaling.ts";
 import type { Game, RouteEffects } from "../state.ts";
 import { POTION_HEAL, potionRestores, resolveStep, shardStat } from "../step-effects.ts";
-import { attackForFewerHits, instakill, lifestealHeal, netDamage, parryCut, predict, struckDamage, type CombatPrediction } from "../combat.ts";
+import { attackForFewerHits, defenseAgainst, instakill, lifestealHeal, netDamage, parryCut, predict, struckDamage, type CombatPrediction } from "../combat.ts";
 import { forecast as critForecast, type CritForecast } from "../crit-forecast.ts";
 import { arrowDamage, shotDamage } from "../enemies/ranged.ts";
 import { goalUnlocked } from "../goals.ts";
@@ -18,7 +18,7 @@ import { goldIcon, itemSprite, uiSprite } from "./dom.ts";
 
 /** What the inspect panel says about one board tile. */
 export type TileInfo = { color: string; title: string; body: string };
-type Board = Pick<Game, "world" | "run" | "mode" | "stepRules" | "save" | "enemyGold">;
+type Board = Pick<Game, "world" | "run" | "mode" | "stepRules" | "save" | "enemyGold"> & { fights?: Pick<Game["fights"], "brokenAt"> };
 type Describe = (t: Tile, p: Player, g: Board, at: { x: number; y: number }) => Omit<TileInfo, "color">;
 
 const KIND_COLORS: Partial<Record<Kind, string>> = {
@@ -115,18 +115,27 @@ function shardGain(t: Tile, p: Player, g: Board, stat: "attack" | "defense") {
 const stat = (icon: string, label: string, value: string, extra = "") =>
   `<span class="enemy-stat">${icon.replace('alt=""', `alt="${label}"`)} ${value}${extra}</span>`;
 
+/** What Armor Break has taken off `e`'s DEF so far (`broken`: a fight being
+ * played out counted), to go after its DEF. */
+const brokenStat = (e: Enemy, broken = e.broken ?? 0) => (broken ? ` (<span class="hit-heal">-${enemyStat(snap((e.defense * broken) / 100))}</span>)` : "");
+/** Says what DEF below 0 does, once Armor Break has taken it there. */
+function brokenLine(e: Enemy, p: Player, broken = e.broken ?? 0) {
+  const defense = defenseAgainst(p, e, broken);
+  return defense < 0 ? `<br><small>Armor broken: DEF ${enemyStat(defense)}, your hits deal ${enemyStat(-defense)} extra damage</small>` : "";
+}
+
 /** The enemy's stat line: its HP, its ATK with what each of its strikes
  * does to the hero (after DEF and a parry; with Lifesteal, what each of the
  * hero's strikes heals beside it), its DEF with what each of the hero's
  * strikes takes off it, and the Gold killing it would bank. */
-function enemyStats(e: Enemy, p: Player, r: CombatPrediction, gold: number) {
+function enemyStats(e: Enemy, p: Player, r: CombatPrediction, gold: number, broken?: number) {
   const taken = struckDamage(e.attack, p.defense, parryCut(p)), healed = p.lifesteal ? lifestealHeal(p, r.hit) : 0;
   const hurt = `<span class="hit-hurt">-${enemyStat(taken)}</span>`;
   const heal = healed ? ` <span class="hit-heal">+${enemyStat(healed)}</span>` : "";
   const coins = gold ? ` · ${stat(goldIcon(), "Gold", `<span class="hit-gold">${enemyStat(gold)}</span>`)}` : "";
   return `<span>${stat(uiSprite("health", "stat-sprite"), "HP", enemyStat(e.hp))}`
     + ` · ${stat(itemSprite("upgrade_attack", "stat-sprite"), "ATK", enemyStat(e.attack), ` (${hurt}${heal})`)}`
-    + ` · ${stat(itemSprite("upgrade_defense", "stat-sprite"), "DEF", enemyStat(e.defense), ` (<span class="hit-hurt">-${enemyStat(r.hit)}</span>)`)}${coins}</span>`;
+    + ` · ${stat(itemSprite("upgrade_defense", "stat-sprite"), "DEF", enemyStat(e.defense), `${brokenStat(e, broken)} (<span class="hit-hurt">-${enemyStat(r.hit)}</span>)`)}${coins}</span>`;
 }
 
 /** A Flying enemy's panel (enemies/flying.ts): its HP, its ATK with what each of
@@ -138,9 +147,9 @@ function flyerInfo(e: Enemy, p: Player, gold: number) {
   const coins = gold ? ` · ${stat(goldIcon(), "Gold", `<span class="hit-gold">${enemyStat(gold)}</span>`)}` : "";
   const line = `<span>${stat(uiSprite("health", "stat-sprite"), "HP", enemyStat(e.hp))}`
     + ` · ${stat(itemSprite("upgrade_attack", "stat-sprite"), "ATK", enemyStat(e.attack), ` (<span class="hit-hurt">-${enemyStat(shot)}</span>)`)}`
-    + ` · ${stat(itemSprite("upgrade_defense", "stat-sprite"), "DEF", enemyStat(e.defense), ` (<span class="hit-hurt">-${enemyStat(arrow)}</span>)`)}${coins}</span>`;
+    + ` · ${stat(itemSprite("upgrade_defense", "stat-sprite"), "DEF", enemyStat(e.defense), `${brokenStat(e)} (<span class="hit-hurt">-${enemyStat(arrow)}</span>)`)}${coins}</span>`;
   const aggro = e.aggro ? "<br><small>Aggroed: it closes in on you as fast as it shoots</small>" : "";
-  return `${line}<br><small>Flying: it shoots you from the air; only your arrows reach it, and you walk under it freely</small>${aggro}`;
+  return `${line}${brokenLine(e, p)}<br><small>Flying: it shoots you from the air; only your arrows reach it, and you walk under it freely</small>${aggro}`;
 }
 
 /** What a Shielded enemy's bubble does to an enemy standing in it (enemies/shielded.ts). */
@@ -151,10 +160,10 @@ const DESCRIBE: Partial<Record<Kind, Describe>> = {
     // Critical strikes count in the prediction only with Critical Prediction.
     const crit = g.save.upgrades.critPrediction ? g.stepRules.crit : undefined;
     const e = t.enemy!, r = predict(p, e), c = crit && !r.impervious ? critForecast(p, e, crit) : null;
-    const gold = g.run.outside ? 0 : g.enemyGold(at.x, at.y, !r.impervious && instakill(r));
+    const gold = g.run.outside ? 0 : g.enemyGold(at.x, at.y, !r.impervious && instakill(r)), broken = g.fights?.brokenAt(at.x, at.y);
     return {
       title: enemyTitle(e),
-      body: enemyStats(e, p, r, gold) + guardLine(e) + prediction(r, p, g, c) + forecast(p, e, r.impervious ? 0 : r.turns, g, !!crit),
+      body: enemyStats(e, p, r, gold, broken) + brokenLine(e, p, broken) + guardLine(e) + prediction(r, p, g, c) + forecast(p, e, r.impervious ? 0 : r.turns, g, !!crit),
     };
   },
   wall: () => ({ title: "Wall", body: "Impassable obstacle." }),

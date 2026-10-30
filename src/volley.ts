@@ -13,7 +13,7 @@
 import type { Board } from "./board.ts";
 import type { ByFoe, Enemy, Player } from "./entities.ts";
 import type { Save } from "./save/shape.ts";
-import { critAgainst, facing, guaranteedCrits, isBoss, landsSuperCrit, stealCeiling, thornDamage } from "./combat.ts";
+import { breaksArmor, critAgainst, facing, guaranteedCrits, isBoss, landsSuperCrit, stealCeiling, thornDamage } from "./combat.ts";
 import { critRule } from "./progression/loadout.ts";
 import { foeAttack } from "./cards/foe-cards.ts";
 import { trainedAmount } from "./progression/training.ts";
@@ -256,7 +256,8 @@ function arrows(turn: VolleyTurn, p: Player, v: Volleys, shots: Shot[], kills: V
   const boost = (e: InReach) => arrowBoost(perTile, e.d2, charging(e), v.waited ?? 0);
   // The cards' Shot ATK adds to the enemy cards' ATK, one factor for the hand.
   const cards = ({ tile }: InReach) => shotAtk + (isBoss(tile.enemy) ? bossAtk : 0);
-  const hurts = (e: InReach) => arrowDamage(p, e.tile.enemy, 0, 1, boost(e), cards(e)) > 0;
+  // Armor Break wears down DEF whether or not the arrow does damage, so it can aim at any enemy.
+  const hurts = (e: InReach) => breaksArmor(p, e.tile.enemy) || arrowDamage(p, e.tile.enemy, 0, 1, boost(e), cards(e)) > 0;
   // A fixed number per run, turn, shot of the turn (the first keeping the
   // turn's own roll) and the hero's tile, for `salt`.
   const shotRoll = (salt: number, shot: number) => tileRandom(p.x, p.y, (turn.seed ^ salt ^ Math.imul(v.turn, 0x85ebca6b) ^ Math.imul(shot, 0xc2b2ae35)) | 0);
@@ -310,18 +311,18 @@ function arrow({ board, seed, volleys }: VolleyTurn, p: Player, from: { x: numbe
     applications = sure + (tileRandom(x, y, (seed ^ ARROW_SALT ^ Math.imul(volleys.turn, 0x85ebca6b) ^ Math.imul(shot, 0xc2b2ae35)) | 0) * 100 < rest ? 1 : 0);
     superCrit = applications > 0 && landsSuperCrit(crit, tileRandom(x, y, (seed ^ ARROW_SALT ^ ARROW_SUPER_SALT ^ Math.imul(volleys.turn, 0x85ebca6b) ^ Math.imul(shot, 0xc2b2ae35)) | 0));
   }
-  const damage = arrowDamage(p, enemy, applications, crit?.factor ?? 1, boost, cards, superCrit ? crit!.superCrit!.factor : 1), left = snap(Math.max(0, enemy.hp - damage));
+  const damage = Math.max(0, arrowDamage(p, enemy, applications, crit?.factor ?? 1, boost, cards, superCrit ? crit!.superCrit!.factor : 1)), left = snap(Math.max(0, enemy.hp - damage));
   const healed = p.lifesteal ? snap(Math.min(stealCeiling(facing(p, enemy)) - p.hp, (damage * p.lifesteal) / 100)) : 0;
   if (healed > 0) p.hp = snap(p.hp + healed);
   const landed: Shot = { by: "hero", from, to: { x, y }, damage, tick, ...(applications ? { crit: applications } : {}), ...(superCrit ? { superCrit: true as const } : {}), ...(charge > 0 ? { charge } : {}), ...(healed > 0 ? { healed } : {}),
     before: enemy.hp, hp: left, full: snap(enemy.hp + (tile.wound ?? 0)) };
   shots.push(landed);
   if (left > 0) {
-    board.wound?.(x, y, damage);
+    board.wound?.(x, y, damage, breaksArmor(p, enemy) ? p.armorBreak : 0);
     return undefined;
   }
   board.clear(x, y);
   landed.fell = enemy;
-  // One arrow felling an unwounded enemy is an instakill, as Mug pays it.
-  return { enemy, at: { x, y }, instakill: !tile.wound, crits: applications };
+  // One arrow felling an enemy no arrow has struck is an instakill, as Mug pays it.
+  return { enemy, at: { x, y }, instakill: !tile.wound && !tile.broken, crits: applications };
 }

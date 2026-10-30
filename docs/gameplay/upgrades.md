@@ -7,6 +7,7 @@ Part of a tree can be hidden: its skills aren't shown and can't be read or bough
 The Inspiration tree below Breakthrough (the Archives and all under them) is hidden until **Quest for Knowledge** (1 Breakthrough, the Breakthrough tree's first skill: *Discover hidden archives to research new skills*) is bought.
 **Critical** (2 Inspiration, after Trainers, before Breakthrough) opens **Crit %** and **Crit x** training and their research: each strike of the hero may be a critical hit (see Critical hits in [CONTEXT.md](../../CONTEXT.md)), its ATK multiplied by the critical factor before the enemy's DEF comes off.
 **Super Critical** (30 Inspiration, under Bombs) opens **SCrit %** and **SCrit x** training: a critical hit may become a Super Critical hit, its critical multiplier multiplied again by SCrit x.
+**Armor Break** (50 Inspiration, under Super Critical) opens **Armor Break** training: each of your hits wears down the enemy's DEF, even below 0, where your hits deal extra damage (see fights.md).
 
 The Upgrades page shows a tab only once what unlocks it is owned: Inspiration from the start, then Training, Breakthrough (with the Breakthrough skill), the Archives, and Legacy, Wisdom and Renown (Dev mode only for now).
 The Inspiration and Breakthrough tabs read the points held under their names (over 9,999 shortened), as the Research page's Training tab reads its points, so the row of tabs shows even while Inspiration is the only one.

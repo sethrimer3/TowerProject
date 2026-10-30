@@ -19,7 +19,7 @@ export type Board = {
   clear(x: number, y: number): void;
   /** Wounds the enemy on (x, y) by `damage` more HP (the Archer's arrows,
    * enemies/ranged.ts), on boards that hold enemies. */
-  wound?(x: number, y: number, damage: number): void;
+  wound?(x: number, y: number, damage: number, broke?: number): void;
   /** Present on boards that carry torches (dungeon boards; the forest
    * exterior has none). */
   torches?: Torch[];

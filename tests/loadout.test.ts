@@ -18,7 +18,7 @@ import { snap } from "../src/exact.ts";
 
 test("a new character starts at 12 ATK, 0 DEF, 100 HP, no shroud, no Regen, no keys and no undo", () => {
   assert.deepEqual(loadout(defaults()), {
-    attack: 12, defense: 0, maxHp: 100, shroud: 0, regen: 0, lifesteal: 0, thorns: 0, parry: 0, bossAttack: 0, pierce: 0, keys: { yellow: 0, blue: 0, red: 0 }, startKeys: { yellow: 0, blue: 0 }, undoCapacity: 0,
+    attack: 12, defense: 0, maxHp: 100, shroud: 0, regen: 0, lifesteal: 0, thorns: 0, parry: 0, armorBreak: 0, bossAttack: 0, pierce: 0, keys: { yellow: 0, blue: 0, red: 0 }, startKeys: { yellow: 0, blue: 0 }, undoCapacity: 0,
   });
 });
 
@@ -47,6 +47,7 @@ test("each rank of an upgrade adds its grant", () => {
     lifesteal: 0,
     thorns: 0,
     parry: 0,
+    armorBreak: 0,
     bossAttack: 0,
     pierce: 0,
     keys: { yellow: 1, blue: 2, red: 3 },
@@ -86,7 +87,7 @@ test("each training rank is worth more than the one before, whatever the hero's 
   // Each rank adds more than the one before, but Lifesteal's, which each add
   // less, the percent rows', which each add the same, and DEF's first
   // twelve, 1 each.
-  const flat = new Set(["thorns", "parry"]);
+  const flat = new Set(["thorns", "parry", "armorBreak"]);
   for (const row of TRAINING.filter(isStatRow).filter((r) => r.id !== "lifesteal" && !flat.has(r.id)))
     for (let n = row.id === "defense" ? 12 : 1; n < 400; n++) assert.ok(trainingWorth(row, n) > trainingWorth(row, n - 1), `${row.id} rank ${n + 1}`);
   const def = TRAINING.find((r) => r.id === "defense")! as StatTrainingRow;

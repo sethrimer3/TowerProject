@@ -194,6 +194,17 @@ export class FightPlayback<S extends FoughtStep> {
     const fight = this.encounter, hp = this.host.run.player.hp;
     return fight ? heroHpDuring(fight.bout, hp, Infinity) : hp;
   }
+  /** The percent of the DEF of the enemy at (x, y) that the fight being played
+   * out there has taken off so far (Armor Break), the strikes landed counted;
+   * nothing when no such fight is on or none has landed. */
+  brokenAt(x: number, y: number) {
+    const fight = this.encounter;
+    if (!fight || fight.to.x !== x || fight.to.y !== y) return undefined;
+    const elapsed = performance.now() - fight.start;
+    let broken: number | undefined;
+    for (const s of fight.bout.strikes) if (s.broken !== undefined && s.at <= elapsed) broken = s.broken;
+    return broken;
+  }
   /** Training bought while a fight plays out counts in it from the first
    * strike not yet swinging: the fight plays on from there with the hero's
    * stats as they are now (more max HP raising the HP left by `hpGain`),

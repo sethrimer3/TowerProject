@@ -113,6 +113,15 @@ const superCritFactorGold = stretchedPrices(30_000, [[9, 1.449615], [10, 1.34960
 /** The Super Critical rows' Silver: from 100 for the first rank, rising in
  * step with their trainers' Gold. */
 const fromHundred = (gold: readonly number[]) => gold.map((price) => Math.ceil((price * 100) / gold[0]!));
+/** Armor Break's trainers: 600 million Gold for the first rank, 3 billion for
+ * the 50th, 105 billion for the 100th, 2.74 trillion for the 150th, 46 trillion
+ * for the 200th, 1.6 quadrillion for the 250th, 20 quadrillion for the 300th. */
+const armorBreakGold = stretchedPrices(600_000_000, [[49, 1.033391], [50, 1.073696], [50, 1.06741], [50, 1.058035], [50, 1.073562], [50, 1.051812]]);
+/** Armor Break's Silver: from 150, rising faster than the Super Critical
+ * rows' through their ranks (5,767 for the 10th, 56 million for the 50th, 25
+ * billion for the 100th, 292 billion for the 120th), then ×1.08 a rank, still
+ * faster than its trainers' Gold. */
+const armorBreakSilver = stretchedPrices(150, [[9, 1.5], [15, 1.4], [25, 1.18], [70, 1.13], [180, 1.08]]);
 /** A trainer's Gold curve: each rank asks `TRAINING_GOLD_PER_POINT` Gold
  * a point of the row's cost times the rank's number, times 1 + ranks /
  * `growth` (see `trainingGold`), so a smaller `growth` pulls away faster. A
@@ -240,6 +249,13 @@ export const TRAINING = [
     curve: { per: 10 }, base: 100, off: 100, scale: 100, unit: "×", research: "superCritFactorPercent",
     description: "Raises how much a Super Critical hit multiplies a critical hit.",
     silver: { prices: fromHundred(superCritFactorGold) }, gold: { prices: superCritFactorGold },
+  },
+  // The percent of an enemy's original DEF each of the hero's hits takes off
+  // it: 0.5% a rank, 150% at its 300.
+  {
+    id: "armorBreak", name: "Armor Break", group: "offense", stat: "armorBreak", curve: { per: 0.5 }, requires: "armorBreak", cost: 1, max: 300,
+    description: "Each of your hits, in a fight or from an arrow, takes this share of the enemy's original DEF off it, even if the hit does no damage. Below 0 DEF, your hits deal that much extra damage.",
+    silver: { prices: armorBreakSilver }, gold: { prices: armorBreakGold },
   },
   // The Archer's reach, in hundredths of a tile (a meter): 3 tiles, and 0.05 more a
   // rank, 7 at its 80 (enemies/ranged.ts).

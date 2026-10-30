@@ -20,7 +20,7 @@
  * mid-turn. Each tile's roll is a fixed number of the run seed, the floor
  * and the tile (`RANGED_SALT`). */
 import type { Enemy, Player, Tile } from "../entities.ts";
-import { attackAgainst, critMultiplier, defenseAgainst, facing, guarded, parryCut, struckDamage } from "../combat.ts";
+import { attackAgainst, brokenAfter, critMultiplier, defenseAgainst, facing, guarded, parryCut, struckDamage } from "../combat.ts";
 import { fastShare, mayBeFast } from "./fast.ts";
 import { snap } from "../exact.ts";
 import { tileRandom } from "../random.ts";
@@ -70,18 +70,21 @@ export const shoots = (enemy: Enemy) => !!(enemy.ranged || enemy.flying);
 
 /** A tile as it stands once the hero's arrows have wounded its enemy: its
  * HP less the `wound` (kept on the tile, so its full HP is HP + wound),
- * its full HP kept as `fullHp`. */
+ * its full HP kept as `fullHp`, and what they have broken of its DEF
+ * (Armor Break) as `broken`. */
 export const wounded = (t: Tile): Tile => {
-  if (!t.wound) return t;
-  const less = (e: Enemy) => ({ ...e, hp: snap(Math.max(0, e.hp - t.wound!)), fullHp: e.fullHp ?? e.hp });
+  if (!t.wound && !t.broken) return t;
+  const less = (e: Enemy) => ({ ...e, ...(t.wound ? { hp: snap(Math.max(0, e.hp - t.wound)), fullHp: e.fullHp ?? e.hp } : {}), ...(t.broken ? { broken: t.broken } : {}) });
   return t.enemy ? { ...t, enemy: less(t.enemy) } : t.flyer ? { ...t, flyer: less(t.flyer) } : t;
 };
-/** `raw` (a tile as generated) with `damage` more wound. A Flying enemy
- * wounded becomes Aggroed (enemies/flying.ts). */
-export const woundMore = (raw: Tile, damage: number): Tile => ({
+/** `raw` (a tile as generated) with `damage` more wound (an arrow that only
+ * wears down DEF adds none) and `broke` percent more of its DEF broken. A
+ * Flying enemy struck becomes Aggroed (enemies/flying.ts). */
+export const woundMore = (raw: Tile, damage: number, broke = 0): Tile => ({
   ...raw,
   ...(raw.flyer && !raw.flyer.aggro ? { flyer: { ...raw.flyer, aggro: true as const } } : {}),
-  wound: snap((raw.wound ?? 0) + damage),
+  ...(damage || raw.wound ? { wound: snap((raw.wound ?? 0) + damage) } : {}),
+  ...(broke ? { broken: snap((raw.broken ?? 0) + broke) } : {}),
 });
 
 /** The ticks a turn is played in: every shot of a turn fires on one of
@@ -211,11 +214,12 @@ export function shotDamage(player: Player, enemy: Enemy) {
  * against a boss and by the hand's cards (`cards`, the Shot ATK percent
  * added to the enemy cards'), multiplied by its `boost` (`arrowBoost`) and by
  * `applications` of the critical `factor` and a Super Critical's `superFactor`, less the enemy's DEF (Piercing
- * ignoring some), cut by a Shielded enemy's bubble; 0 or less does nothing. */
+ * ignoring some, and Armor Break, this arrow's first, taking more off), cut by
+ * a Shielded enemy's bubble; 0 or less does nothing. */
 export function arrowDamage(player: Player, enemy: Enemy, applications = 0, factor = 1, boost = 1, cards = 0, superFactor = 1) {
   const attack = boost === 1 ? attackAgainst(player, enemy, cards) : snap(attackAgainst(player, enemy, cards) * boost);
   const raised = applications ? snap(attack * critMultiplier(factor, applications) * superFactor) : attack;
-  return guarded(snap(raised - defenseAgainst(player, enemy)), enemy);
+  return guarded(snap(raised - defenseAgainst(player, enemy, brokenAfter(player, enemy))), enemy);
 }
 
 /** What an arrow's ATK is multiplied by before any critical hit: ATK / m

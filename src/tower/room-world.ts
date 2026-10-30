@@ -233,9 +233,10 @@ export class RoomWorld implements Board {
     return found;
   }
   /** The enemy as generated (or summoned), before the run's boons, keeps
-   * its wound in the changes; `tile` scales it, then takes the wound off. */
-  wound(x: number, y: number, damage: number) {
+   * its wound, and what is broken of its DEF, in the changes; `tile` scales
+   * it, then takes the wound off. */
+  wound(x: number, y: number, damage: number, broke = 0) {
     const k = point(x, y), raw = this.changes[k] ?? this.cells.get(k);
-    if (raw?.kind === "enemy" || raw?.flyer) this.changes[k] = woundMore(raw, damage);
+    if (raw?.kind === "enemy" || raw?.flyer) this.changes[k] = woundMore(raw, damage, broke);
   }
 }

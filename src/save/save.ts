@@ -113,15 +113,17 @@ const validEnemy = (e: any) =>
  * numbered among the run's spawns. TODO: drop the unnumbered Greater Boss
  * once saves from before spawn numbers are gone. */
 const validSpawned = (e: any) => validEnemy(e) && (e.spawn !== undefined || e.strength === "greaterBoss");
-/** An enemy the hero's arrows have wounded (enemies/ranged.ts): the generated or
- * spawned enemy, kept with its wound. */
-const validWounded = (v: any) => finite(v.wound) && v.wound > 0 && validEnemy(v.enemy);
+/** What the hero's arrows have taken off an enemy's DEF (Armor Break), if anything. */
+const validBroken = (v: any) => v.broken === undefined || (finite(v.broken) && v.broken > 0);
+/** An enemy the hero's arrows have wounded or broken (enemies/ranged.ts): the
+ * generated or spawned enemy, kept with its wound and what they broke. */
+const validWounded = (v: any) => (v.wound === undefined || (finite(v.wound) && v.wound > 0)) && validBroken(v) && validEnemy(v.enemy);
 /** Open floor, maybe with a Flying enemy over it (enemies/flying.ts), generated
  * or moved there, kept with its wound. */
-const validFloor = (v: any) => v.flyer === undefined ? v.wound === undefined : validEnemy(v.flyer) && (v.wound === undefined || (finite(v.wound) && v.wound > 0));
+const validFloor = (v: any) => v.flyer === undefined ? v.wound === undefined && v.broken === undefined : validEnemy(v.flyer) && (v.wound === undefined || (finite(v.wound) && v.wound > 0)) && validBroken(v);
 const validChange = (v: any) =>
   (v?.kind === "floor" && validFloor(v)) || v?.kind === "wall" ||
-  (v?.kind === "enemy" && (v.wound === undefined ? validSpawned(v.enemy) : validWounded(v))) ||
+  (v?.kind === "enemy" && (v.wound === undefined && v.broken === undefined ? validSpawned(v.enemy) : validWounded(v))) ||
   (v?.kind === "openedChest" && (v.tier === undefined || CHEST_TIERS.includes(v.tier))) ||
   (v?.kind === "reward" && CHEST_TIERS.includes(v.tier));
 const validChanges = (m: any) => pointMap(m, validChange);
@@ -145,6 +147,7 @@ const validPlayer = (p: any, width: number) =>
   (p.lifesteal === undefined || (finite(p.lifesteal) && p.lifesteal >= 0)) &&
   (p.thorns === undefined || (finite(p.thorns) && p.thorns >= 0)) &&
   (p.parry === undefined || (finite(p.parry) && p.parry >= 0 && p.parry <= 100)) &&
+  (p.armorBreak === undefined || (finite(p.armorBreak) && p.armorBreak >= 0)) &&
   (p.cardParry === undefined || (finite(p.cardParry) && p.cardParry >= 0 && p.cardParry <= 100)) &&
   (p.bossAttack === undefined || (finite(p.bossAttack) && p.bossAttack >= 0)) &&
   (p.pierce === undefined || (finite(p.pierce) && p.pierce >= 0 && p.pierce <= 100)) &&

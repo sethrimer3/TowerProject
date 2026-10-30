@@ -321,12 +321,12 @@ export class World implements Board {
     }
     return found;
   }
-  /** The enemy as generated keeps its wound in the changes. */
-  wound(x: number, y: number, damage: number) {
+  /** The enemy as generated keeps its wound, and what is broken of its DEF, in the changes. */
+  wound(x: number, y: number, damage: number, broke = 0) {
     const t = this.tile(x, y);
     if (t.kind !== "enemy" && !t.flyer) return;
     const k = point(x, y), raw = this.changes[k] ?? this.chunks.get(Math.floor(y / CHUNK))?.get(k);
-    if (raw?.kind === "enemy" || raw?.flyer) this.changes[k] = woundMore(raw, damage);
+    if (raw?.kind === "enemy" || raw?.flyer) this.changes[k] = woundMore(raw, damage, broke);
   }
   private torchAreas = new Map<number, Torch[]>();
   /** The torch list and lit tiles last worked out: the list until the areas

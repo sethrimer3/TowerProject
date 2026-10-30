@@ -270,7 +270,7 @@ How much XP the character has gathered from kills over every run. A kill pays mo
 _Avoid_: rank
 
 **Training point**:
-The currency each level earns (three a level), spent to buy ranks of training at once (a trainer can train them for Gold instead) in the character's stats (max HP, ATK, DEF, and the shroud once the Shroud skill is owned; Lifesteal once the Lifesteal skill is, Thorn Damage once Thorns is, Parry % once Parry is, Crit % and Crit x once Critical is, Attack Range, Attack Speed and ATK / m once Tower III's floor 20, 30 and 50 Goals are claimed, Multishot Chance and Multishot Targets once its floor 70 Goal is, Rapid Fire Chance and Rapid Fire Duration once its floor 80 Goal is) and, with Recovery, Find Potion, Revive, Spare Change, Wishing Well, Wealthy, Loot, Free Training and Overheal, in Potion %, Find Potion, Revive, Gold / Floor, Silver / Floor, Silver Bonus, Gold Bonus, the Free Offense, Defense and Utility Up rows and, with Overheal, Overheal on the Training tab. A stat's ranks add up on its **rank curve**: each rank is worth more than the one before, whatever the character's level.
+The currency each level earns (three a level), spent to buy ranks of training at once (a trainer can train them for Gold instead) in the character's stats (max HP, ATK, DEF, and the shroud once the Shroud skill is owned; Lifesteal once the Lifesteal skill is, Thorn Damage once Thorns is, Parry % once Parry is, Crit % and Crit x once Critical is, Armor Break once its skill is, Attack Range, Attack Speed and ATK / m once Tower III's floor 20, 30 and 50 Goals are claimed, Multishot Chance and Multishot Targets once its floor 70 Goal is, Rapid Fire Chance and Rapid Fire Duration once its floor 80 Goal is) and, with Recovery, Find Potion, Revive, Spare Change, Wishing Well, Wealthy, Loot, Free Training and Overheal, in Potion %, Find Potion, Revive, Gold / Floor, Silver / Floor, Silver Bonus, Gold Bonus, the Free Offense, Defense and Utility Up rows and, with Overheal, Overheal on the Training tab. A stat's ranks add up on its **rank curve**: each rank is worth more than the one before, whatever the character's level.
 _Avoid_: skill point, stat point
 
 **Trainer**:
@@ -448,6 +448,11 @@ Predictions count critical strikes only once the Critical Prediction skill is ow
 A critical hit that rolls again and lands: its critical multiplier is multiplied by the **Super Critical factor** (SCrit x training and research).
 The roll's chance is the **Super Critical chance** (SCrit % training and research, Super Critical skill).
 Fights, arrows and Bombs can all land one.
+
+**Armor Break**:
+Each of the hero's hits, in a fight or from an arrow, first takes a share of the enemy's original DEF off it (Armor Break training and skill), whether or not it then does damage.
+DEF can go below 0, where hits deal that much extra damage.
+_Avoid_: DEF shred, armor pen
 _Avoid_: crit strike, lucky hit
 
 **Instakill**:

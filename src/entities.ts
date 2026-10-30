@@ -59,6 +59,10 @@ export type Enemy = {
    * HP plus the tile's wound), which its thorns are a share of; set by the
    * board as it reads the tile (`wounded` in enemies/ranged.ts), never saved. */
   fullHp?: number;
+  /** The percent of its DEF the hero's arrows have taken off it (Armor Break,
+   * the tile's `broken`), over 100 when that takes it below 0; set by the board
+   * as it reads the tile (`wounded` in enemies/ranged.ts), never saved. */
+  broken?: number;
   /** An enemy spawned onto the floor during the run (`Game.spawnEnemy`):
    * its number among the run's spawns, which keys its loot apart from the
    * tile's (`RunPurse.killKey`); absent on enemies the floor was made with. */
@@ -95,14 +99,15 @@ export type DoorRule =
    * for `durability` HP, which DEF doesn't reduce (doors.ts). */
   | { type: "wood"; durability: number };
 /** `wound`: the HP the hero's arrows have taken off the enemy standing
- * here (enemies/ranged.ts); the board reads its HP that much lower. `flyer`: the
+ * here (enemies/ranged.ts); the board reads its HP that much lower. `broken`:
+ * the percent of that enemy's DEF they have taken off it (Armor Break). `flyer`: the
  * Flying enemy hovering over this open floor tile (enemies/flying.ts), which the
  * hero walks under; its wound is the tile's `wound`. */
 /** The colour a potion is drawn in: a regular potion red, like the HP bar
  * it fills, and a percent potion (whose tile is marked `color: "red"`, the
  * mark generation and saves keep) blue, like the Overheal bar. */
 export const potionShade = (t: Pick<Tile, "color">): "red" | "blue" => (t.color === "red" ? "blue" : "red");
-export type Tile = { kind: Kind; amount?: number; color?: KeyColor; door?: DoorRule; enemy?: Enemy; flyer?: Enemy; tier?: ChestTier; wound?: number; chest?: Exclude<ChestKind, "plain"> };
+export type Tile = { kind: Kind; amount?: number; color?: KeyColor; door?: DoorRule; enemy?: Enemy; flyer?: Enemy; tier?: ChestTier; wound?: number; broken?: number; chest?: Exclude<ChestKind, "plain"> };
 export type Point = { x: number; y: number };
 /** A stationary wall-mounted light source, anchored to a walkable floor
  * tile adjacent to a wall. Its visibility polygon is computed once (on
@@ -139,6 +144,9 @@ export type Player = {
   /** The percent every enemy strike's damage is cut by, parried (Parry %);
    * none when absent. */
   parry?: number;
+  /** The percent of an enemy's original DEF each of the hero's hits takes off
+   * it before its damage (Armor Break); none when absent. */
+  armorBreak?: number;
   /** The percent of every enemy strike HEAL's card tree parries, added to
    * Parry %; absent without it. */
   cardParry?: number;

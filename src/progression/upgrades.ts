@@ -426,6 +426,14 @@ export const UPGRADES = [
     currency: "inspiration",
   },
   {
+    id: "armorBreak",
+    name: "Armor Break",
+    description: "Your hits wear down enemy DEF, even below 0: unlock Armor Break training",
+    base: 50,
+    max: 1,
+    currency: "inspiration",
+  },
+  {
     id: "cardBadges",
     name: "Badges",
     description: "Open the Badges box on the Deck page: tokens bought with Gems that change what a card does when it activates",

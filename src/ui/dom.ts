@@ -113,7 +113,7 @@ const SKILL_UI_SPRITES: Partial<Record<UpgradeId, UiSprite>> = {
   pathToWealth: "gold", moreWealth: "gold", goldenFloors: "gold", offlineGold: "gold", physician: "health", keyMastery: "log", cardMastery: "log", beastMastery: "attack", doorMastery: "log",
   revive: "revive", life: "health", overheal: "health", spareChange: "gold", loot: "gold", floorSkipReward: "gold", mug: "gold", legacy: "tower", quality: "tower",
   wisdomFocus: "settings", wisdomMemory: "undo", wisdomSight: "upgrades",
-  renownBanner: "tower", renownOath: "defense", renownCrown: "gear",
+  renownBanner: "tower", renownOath: "defense", renownCrown: "gear", armorBreak: "defense",
   ...Object.fromEntries(LIMIT_BREAKS.map((id) => [id, "arrow-up"])),
 };
 /** Skills about Silver show the Gold coin drained of colour, as the purse does. */

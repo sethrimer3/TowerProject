@@ -25,7 +25,7 @@ export type RunCore = {
   floor: number;
   /** The ATK/DEF/max HP the run started with (its loadout), shifted by any
    * gear change since. */
-  loadout?: { attack: number; defense: number; maxHp: number; shroud?: number; regen?: number; lifesteal?: number; thorns?: number; parry?: number; bossAttack?: number; pierce?: number };
+  loadout?: { attack: number; defense: number; maxHp: number; shroud?: number; regen?: number; lifesteal?: number; thorns?: number; parry?: number; armorBreak?: number; bossAttack?: number; pierce?: number };
   /** The hand as it was ordered when the run went inside: the cards that
    * move the hero for the rest of the run. */
   hand?: CardId[];
