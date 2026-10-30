@@ -200,7 +200,7 @@ const countLevels = (target: ResearchTarget, length = 9, value = 1) => Array.fro
   effect: { target, op: "add", value },
 }));
 
-/** Potion HP (+3% potion healing a level), Regen (+3% of the HP Regen
+/** Potion HP (+20% potion healing a level), Regen (+3% of the HP Regen
  * training gives a step, a level), ATK (+2% a level), DEF and Max HP (+3%
  * a level), Shard ATK (+2% of what each ATK shard gives, a level), Shard DEF
  * (+3% of what each DEF shard gives, a level), Shroud (+4% a level, to
@@ -494,7 +494,7 @@ export const RESEARCH = {
     description: "Stronger draughts: every potion restores more HP.",
     categories: ["defense"],
     requires: [{ upgrade: "greaterHeal" }],
-    levels: hundredLevels("potionHeal", 3),
+    levels: hundredLevels("potionHeal", 20),
   },
   regen: {
     name: "Regen",

@@ -4,7 +4,7 @@ import { play } from "../sound.ts";
 import { permanentBoost, trainingRate } from "../shop/entitlements.ts";
 import { TRAINING, TRAINING_GROUPS, TRAINING_PER_LEVEL, trainingCap, trainingDef, type TrainingId } from "../progression/training.ts";
 import { trainingBulk, trainingPoints, trainingRowsFull, trainingStep, trainingText, trainingOpen } from "../progression/loadout.ts";
-import { whole } from "../whole.ts";
+import { shortAmount, whole } from "../whole.ts";
 import type { BuyQuantity } from "../progression/buy-quantity.ts";
 import { bindBuyQuantity, buyQuantityHtml, maxCount } from "./buy-quantity-select.ts";
 import { TrainingParticles } from "../render/effects/training-particles.ts";
@@ -336,7 +336,10 @@ export class ResearchPage {
     const q = game.training.buyQuantity, bulk = trainingBulk(save, t.id, q), count = step.maxed ? 1 : Math.max(1, bulk.count);
     const { now, unit } = step, next = count === 1 ? step.next : trainingStep(save, t.id, count, view).next;
     // Attack Range and Attack Speed show the bare value; the row's name says what it counts.
-    const shown = (v: number) => trainingText(v, unit, unit === "tiles" || unit === "shots");
+    // A plain value past 9,999 shortens as the purse does (12.3K, 4.56M), so its box keeps one line.
+    const shown = (v: number) => v >= 10_000 && (unit === "" || unit === "%" || unit === "count")
+      ? `${shortAmount(v)}${unit === "count" ? "" : unit}`
+      : trainingText(v, unit, unit === "tiles" || unit === "shots");
     const job = trainingJob(save.trainingJobs, t.id);
     const notes = step.maxed || !hired || job ? "" : this.timeNote(t.id, q);
     // A row at its most has nothing more to show or buy: its label spans the
@@ -396,14 +399,14 @@ export class ResearchPage {
 
   /** A rank a trainer is training shows its countdown (tap to stop it and
    * get the Gold back; its Gem finish stands at the row's end), else the
-   * trainer's price. */
+   * trainer's price, shortened from 10,000 Gold (12.3K). */
   private trainerHtml(t: TrainingRow, step: ReturnType<typeof trainingStep>) {
     const game = this.ctx.game, save = game.save;
     if (trainingJob(save.trainingJobs, t.id))
       return `<span class="training-job"><button class="training-box training-timer" data-cancel="${t.id}" aria-label="Training ${t.name}: tap to stop and get the Gold back" title="Tap to stop and get the Gold back"><span data-training-timer="${t.id}">${formatCountdown(game.training.left(t.id))}</span></button></span>`;
     const q = game.training.buyQuantity, batch = game.training.batch(t.id, q), full = save.trainingJobs.length >= trainingSlots(save), gold = whole(batch.gold);
     const takes = formatDuration(game.training.toNextRank(t.id, q)), ranks = batch.count === 1 ? `to ${trainingText(step.next, step.unit)}` : `${batch.count} ranks`;
-    return `<button class="training-box training-cost training-gold" data-train-gold="${t.id}" ${batch.affordable && !full ? "" : "disabled"} aria-label="Pay ${gold} Gold to a trainer to train ${t.name} ${ranks}, taking ${takes}" title="${full ? "Every trainer is busy" : `${batch.count === 1 ? "" : `${ranks}: `}Takes ${takes}`}">${maxCount(q, batch.count)}${goldIcon()}<span>${priceAmount(gold)}</span></button>`;
+    return `<button class="training-box training-cost training-gold" data-train-gold="${t.id}" ${batch.affordable && !full ? "" : "disabled"} aria-label="Pay ${gold} Gold to a trainer to train ${t.name} ${ranks}, taking ${takes}" title="${full ? "Every trainer is busy" : `${batch.count === 1 ? "" : `${ranks}: `}Takes ${takes}`}">${maxCount(q, batch.count)}${goldIcon()}<span>${priceAmount(gold, 10_000)}</span></button>`;
   }
 
   /** A row's Gem reset: closed inside a run, where a hero is only ever

@@ -11,7 +11,7 @@ Inside a run a tap on the currencies switches Gold and Silver to the rates the r
 The pages that spend currencies (Upgrades, Research, Deck, Gear, Missions and Events) show a single row at their top: Gold, Gems and Ascension Shards, each its icon and amount (amounts over 9,999 shortened), and a down chevron.
 The chevron opens a list of every currency held, a row each with its icon, name and amount (shortened the same way), which scrolls or swipes, and closes with the X at its top right: Gold, Gems, Ascension Shards, Medals, Silver, Training Points, Inspiration and Breakthrough, then at the bottom Cells, Tournament Tickets and the Equipment upgrade materials, each listed once what earns it is open.
 The Upgrades page's Inspiration and Breakthrough tabs also read the points held, and the Events page's banner the Medals held, beside the time the event has left.
-Gold prices on buy buttons read in full up to 99,999 and shortened from 100,000 (123K, 4.56M); Silver prices on a run's training cards are shortened from 10,000 (12.3K).
+Gold prices on buy buttons read in full up to 99,999 and shortened from 100,000 (123K, 4.56M); Silver prices on a run's training cards, and trainers' Gold prices on the Training page, are shortened from 10,000 (12.3K).
 Shortened amounts, wherever they appear, use K (thousand), M (million), B (billion), T (trillion), q (quadrillion), Q (quintillion), s (sextillion), S (septillion), O (octillion), N (nonillion) and D (decillion), always rounded down; past 999D they read as a power of ten.
 
 ## Gems on the floors

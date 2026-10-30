@@ -59,7 +59,7 @@ Trainers still train one rank at a time.
 
 ## Potion HP
 
-**Potion HP** (listed first in the Archives) makes every potion restore 3% more HP a level, for 100 levels (up to four times as much), the Cinder Tonic included but not the percent potion; each level counts the moment it completes, even mid-run.
+**Potion HP** (listed first in the Archives) makes every potion restore 20% more HP a level, for 100 levels (up to 21 times as much), the Cinder Tonic included but not the percent potion; each level counts the moment it completes, even mid-run.
 The first four levels are quick (15 seconds for 10 Gold, 1 minute for 25, 5 minutes for 50, 10 minutes for 75); then the formula starts over, so the m-th level after those takes m/4 + m²/100 hours and costs 100 × m + m³ Gold (about 16 minutes and 101 Gold at level 5, up to about 4.8 days and 894,000 Gold at level 100).
 
 ## Revive

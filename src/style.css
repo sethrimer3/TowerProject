@@ -4149,8 +4149,9 @@ nav.in-run.drilling .run-drills {
 /* The game's own dropdown (`buy-quantity-select.ts`): a button showing the
    quantity, and its list laid over the page just below it, or above it in
    the screen's lower half. */
-.buy-quantity-pick { position: relative; display: inline-flex; }
-button.buy-quantity { display: inline-flex; align-items: center; gap: 4px; min-height: 30px; padding: 2px 6px 2px 8px; font-family: Cinzel, Georgia, serif; font-size: 11px; letter-spacing: 1px; color: #efd496; background: #10161f; border: 1px solid #6b5a3a; border-radius: 6px; }
+.buy-quantity-pick { position: relative; display: inline-flex; flex-shrink: 0; }
+/* Never squeezed onto two lines, whichever quantity it shows. */
+button.buy-quantity { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; min-height: 30px; padding: 2px 6px 2px 8px; font-family: Cinzel, Georgia, serif; font-size: 11px; letter-spacing: 1px; color: #efd496; background: #10161f; border: 1px solid #6b5a3a; border-radius: 6px; }
 .buy-quantity-caret { font-size: 9px; opacity: 0.8; }
 .buy-quantity-menu { position: absolute; top: calc(100% + 4px); right: 0; z-index: 40; display: flex; flex-direction: column; gap: 2px; min-width: 100%; box-sizing: border-box; padding: 3px; background: linear-gradient(#1b222d, #10161f); border: 1px solid #6b5a3a; border-radius: 6px; box-shadow: 0 8px 20px #000b; }
 .buy-quantity-menu.up { top: auto; bottom: calc(100% + 4px); }

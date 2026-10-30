@@ -24,11 +24,11 @@ import type { RoomWorld } from "./room-world.ts";
 
 export type AreaReward = "mastered" | "cleared";
 /** The most Inspiration clearing one area pays. */
-const CLEARED_MAX = 5;
+const CLEARED_MAX = 1;
 /** The Inspiration clearing the area ending at floor `last` pays: what
  * reaching its floors pays on the milestone schedule (`milestonePoints`),
- * up to `CLEARED_MAX`, so 5 an area to floor 100, 1 an area to 1,000, 1 at
- * each hundredth floor to 10,000, then none. */
+ * up to `CLEARED_MAX`, so 1 an area to 1,000, 1 at each hundredth floor to
+ * 10,000, then none. */
 export const clearedInspiration = (last: number) =>
   Math.min(CLEARED_MAX, milestonePoints(last) - milestonePoints(Math.max(0, last - TOWER_SECTION)));
 /** How long an area reward's burst and its words last on the board. */

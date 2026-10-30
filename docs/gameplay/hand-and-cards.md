@@ -16,7 +16,7 @@ Below Thorns, the three paths add twenty more (20 Inspiration each unless said):
 Below Torch, straight down, **Limit Break 1** to **10** (50 Inspiration each, each after the one before) raise how far ATK, DEF, Max HP, Regen and Shroud train, 500 levels each (see [Training](training.md)).
 Two skills on that path open research instead: **Heart Door Resilience** (left of Gold Door, with Heart Door to its left) opens research making every Heart Door drain 5% less of your HP a level, for ten levels, and **Floor Skip Reward** (below Chest, right of Torch, with Wooden Door after it) opens research that, when the Skip badge on STAIRS climbs past a Tower floor, pays 10% a level (up to 110%) of the Gold that floor's battles and chests held; both are priced and timed like Undo Count (500 Gold and 8 hours, each level 8 hours more and 500 × n Gold more than the one before), with two and three more levels.
 The siphons and trades move nowhere, like GK Siphon, and grey out while they can't act.
-**Manual Hand** (10 Inspiration, below GK Siphon, above Gold Door) opens a second hand, the [Manual hand](#the-manual-hand).
+**Manual Hand** (1 Breakthrough, after Card Mastery in the Breakthrough tree) opens a second hand, the [Manual hand](#the-manual-hand).
 Tower V's floor 10 Goal adds **Flying Enemy** to the deck: it heads for the closest Flying monster the Archer's arrows can hurt, stops as soon as one is within the Attack Range, and holds its ground there, a turn at a time, while one is, the arrows doing the work; once none is in reach, the hand moves on.
 It can't act unless the hand holds Archer too.
 While it is in the hand it also gives the arrows +5% Shot ATK and +5% Attack Speed.

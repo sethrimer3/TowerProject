@@ -133,14 +133,13 @@ export const TREES: SkillTree[] = [
     { id: "endRush", icon: "⇶", x: 90, y: 85, requires: ["dash"] },
     { id: "dashRegen", icon: "⇶", x: 90, y: 111, requires: ["endRush"] },
     { id: "dashBadge", icon: "◪", x: 90, y: 135, requires: ["dashRegen", "cardBadges"] },
-    // Golden Floors, then Rehearsed steps, Echoes of time and Manual Hand,
-    // straight down under More Wealth (under Path to Wealth): the Golden
-    // Floors' research, the undos and the second hand.
+    // Golden Floors, then Rehearsed steps and Echoes of time, straight down
+    // under More Wealth (under Path to Wealth): the Golden Floors' research
+    // and the undos.
     { id: "moreWealth", icon: "¤", x: 18, y: 85, requires: ["pathToWealth"] },
     { id: "goldenFloors", icon: "¤", x: 18, y: 111, requires: ["moreWealth"] },
     { id: "inspirationUndos", icon: "↺", x: 18, y: 137, requires: ["goldenFloors"] },
     { id: "undos", icon: "↺", x: 18, y: 163, requires: ["inspirationUndos"] },
-    { id: "manualHand", icon: "⇄", x: 18, y: 189, requires: ["undos"] },
     // Overheal, then Key Mastery, under Physician; Badges stand down and
     // right of Physician. Card Mastery and Beast Mastery split off under Key
     // Mastery: with it, they reveal the Inspiration tree's three paths under Thorns.
@@ -149,6 +148,9 @@ export const TREES: SkillTree[] = [
     { id: "cardBadges", icon: "◪", x: 70, y: 111, requires: ["physician"] },
     { id: "cardMastery", icon: "▤", x: 38, y: 137, requires: ["keyMastery"] },
     { id: "beastMastery", icon: "☠", x: 62, y: 137, requires: ["keyMastery"] },
+    // Manual Hand, the second hand, after Card Mastery: down and left of it,
+    // two rows under it to keep clear of Echoes of time and Ignore.
+    { id: "manualHand", icon: "⇄", x: 30, y: 189, requires: ["cardMastery"] },
     // Then the run's charges under Key Mastery: Ignore, with Target to its
     // right, each with the skill that regains it below.
     { id: "ignore", icon: "⊘", x: 50, y: 163, requires: ["keyMastery"] },

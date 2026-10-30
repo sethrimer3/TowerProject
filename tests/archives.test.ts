@@ -187,7 +187,7 @@ test("a project's next level reads as the total before and after it", () => {
   const a = owner().archives, show = (archives: typeof a, t: "heartToll" | "potionHeal" | "trainingSpeed") =>
     RESEARCH_TARGETS[t].shown(researched(archives, t));
   assert.deepEqual([show(a, "heartToll"), show(withNextLevel(a, "heartDoorResilience"), "heartToll")], ["100%", "95%"]);
-  assert.deepEqual([show(a, "potionHeal"), show(withNextLevel(a, "potionHp"), "potionHeal")], ["100%", "103%"]);
+  assert.deepEqual([show(a, "potionHeal"), show(withNextLevel(a, "potionHp"), "potionHeal")], ["100%", "120%"]);
   assert.equal(show(a, "trainingSpeed"), "100%");
   assert.equal(RESEARCH_TARGETS.trainingSpeed.name, "Training Speed");
   assert.equal(researchLevel(a, "heartDoorResilience"), 0, "the Archives themselves are left alone");
@@ -219,7 +219,7 @@ test("the Archives save and load, dropping anything malformed", () => {
   assert.equal(decodeArchives({ history: Array.from({ length: 300 }, (_, i) => ({ at: i, research: "heartDoorResilience", level: 1 })) }).history.length, HISTORY_LIMIT);
 });
 
-test("Potion HP: +3% a level for 100 levels; quick first levels, then 100m + m³ Gold and m/4 + m²/100 hours from level 5", () => {
+test("Potion HP: +20% a level for 100 levels; quick first levels, then 100m + m³ Gold and m/4 + m²/100 hours from level 5", () => {
   const levels = RESEARCH.potionHp.levels;
   assert.equal(levels.length, 100);
   assert.deepEqual(levels.slice(0, 6).map((l) => l.gold), [10, 25, 50, 75, 101, 208]);
@@ -228,7 +228,7 @@ test("Potion HP: +3% a level for 100 levels; quick first levels, then 100m + m³
   assert.equal(levels[99].hours, 24 + 96 * 96 / 100);
   assert.equal(levels.reduce((sum, l) => sum + l.gold, 0), 22_144_096);
   assert.deepEqual(levels.slice(0, 4).map((l) => duration(defaultArchives(), l)), [15_000, 60_000, 300_000, 600_000]);
-  assert.ok(levels.every((l) => l.effect.target === "potionHeal" && l.effect.op === "add" && l.effect.value === 3));
+  assert.ok(levels.every((l) => l.effect.target === "potionHeal" && l.effect.op === "add" && l.effect.value === 20));
   assert.deepEqual(RESEARCH_IDS.slice(0, 10), ["researchSpeed", "researchCostDiscount", "potionHp", "regen", "attack", "critChance", "critFactor", "chargedShot", "shardAttack", "defense"], "after the Archives' own two, Regen beside it, then the stats' (the crits, Charged Shot and Shard ATK beside ATK)");
   assert.deepEqual(RESEARCH.potionHp.categories, ["defense"]);
 });
@@ -289,10 +289,10 @@ test("Potion HP needs Greater Heal, and every level strengthens potions at once,
   assert.ok(g.research.start(0, "potionHp"));
   g.clock = () => T0 + 15_000;
   assert.equal(g.research.settle().length, 1);
-  assert.equal(g.stepRules.potionHeal, 103);
+  assert.equal(g.stepRules.potionHeal, 120);
   save.archives.levels.potionHp = 100;
-  assert.equal(g.stepRules.potionHeal, 400);
-  assert.equal(researched(save.archives, "potionHeal"), 400);
+  assert.equal(g.stepRules.potionHeal, 2100);
+  assert.equal(researched(save.archives, "potionHeal"), 2100);
 });
 
 test("Shard ATK and Shard DEF open with Tower II's floor 20 and 30 Goals, cost what Potion HP does, and raise every shard picked up at once", () => {
