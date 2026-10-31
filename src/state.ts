@@ -93,6 +93,7 @@ import { EventDesk } from "./game/event-desk.ts";
 import { ShrineDesk } from "./game/shrine-desk.ts";
 import { NoticeDesk } from "./game/notice-desk.ts";
 import { boonFactor, runBoons, weakened } from "./shrines.ts";
+import { LEVEL_SKIP_KINDS, LEVEL_SKIP_ROWS, rollLevelSkip } from "./enemies/level-skips.ts";
 import type { MissionType } from "./missions/catalog.ts";
 import type { EventMissionType } from "./events/catalog.ts";
 import { LEAGUE_INFO, type League } from "./tournament/leagues.ts";
@@ -2665,9 +2666,16 @@ export class Game {
       this.regainCharges(at);
       this.floorHeal();
     }
+    this.rollLevelSkips(last - floorBefore);
     this.freeTrain(last - floorBefore);
     this.passiveCardXp(last - floorBefore);
     this.finds.coins(at, gold, silver, false);
+  }
+  /** Enemy Level Skips for `floors` floors new to the run, one after another,
+   * each kind at the chance its row gives now. */
+  private rollLevelSkips(floors: number) {
+    for (let f = 0; f < floors; f++)
+      for (const kind of LEVEL_SKIP_KINDS) rollLevelSkip(this.run, kind, trainedAmount(this.trainingNow, LEVEL_SKIP_ROWS[kind]));
   }
   /** Free Training for `floors` floors passed, one after another: the
    * levels each floor's rolls give (`rollFreeTraining`) join the run's
@@ -2767,9 +2775,12 @@ export class Game {
       this.findFloorKeys(this.run.height, p);
       this.provisionKeys(this.run.height);
       this.floorHeal();
+      this.rollLevelSkips(this.run.height - highest);
       this.freeTrain(this.run.height - highest);
       this.passiveCardXp(this.run.height - highest);
     }
+    // The new floor was built before its rolls.
+    board.levelSkips = this.run.levelSkips;
     this.enterTowerFloor(board);
     // A new floor may earn a boon, which Auto Pick takes at once.
     this.shrine.autoPick();

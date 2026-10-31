@@ -7,6 +7,7 @@ import { breakTorch, placeTorches, torchesLeft } from "../torches.ts";
 import { tierCells, tierTile } from "../tiers.ts";
 import { fastCells } from "../enemies/fast.ts";
 import { rangedCells, wounded, woundMore } from "../enemies/ranged.ts";
+import { skippedTile } from "../enemies/level-skips.ts";
 import { armoredCells } from "../enemies/armored.ts";
 import { flyingCells } from "../enemies/flying.ts";
 import { tournamentStatFactor, tournamentTile } from "../tournament/run.ts";
@@ -177,7 +178,7 @@ const upward = (dx: number, dy: number) => dx === 0 && dy === 1;
 
 /** What of a run the Delve board keeps: its map edits, the floor below
  * which the labyrinth is sealed, and the milestones crossed. */
-type WorldRun = Pick<DelveRun, "seed" | "changes" | "floor" | "milestone" | "percentPotions" | "chestOdds" | "doorOdds" | "treasureFloor" | "tier" | "tournament">;
+type WorldRun = Pick<DelveRun, "seed" | "changes" | "floor" | "milestone" | "percentPotions" | "chestOdds" | "doorOdds" | "treasureFloor" | "tier" | "tournament" | "levelSkips">;
 
 /** The endless Delve labyrinth of a run, generated chunk by chunk around
  * the player. It reads and writes the run's own changes, floor and
@@ -216,8 +217,19 @@ export class World implements Board {
     const chunk = this.chunk(Math.floor(y / CHUNK));
     const k = point(x, y), changed = this.changes[k];
     const generated = chunk.get(k) ?? { kind: "wall" }, odds = this.run.chestOdds;
-    const t = foeTile(changed ? wounded(withChest(changed, generated, x, y, this.seed, odds)) : withChest(withPotions(generated, x, y, this.seed, this.run.percentPotions ?? 0), generated, x, y, this.seed, odds), this.foes);
+    const t = foeTile(changed ? wounded(this.skipped(withChest(changed, generated, x, y, this.seed, odds), x, y)) : this.skipped(withChest(withPotions(generated, x, y, this.seed, this.run.percentPotions ?? 0), generated, x, y, this.seed, odds), x, y), this.foes);
     return this.shieldList.length ? guardedTile(t, x, y, this.shieldList, (s) => this.holds(s), this.width) : t;
+  }
+  /** Each enemy tile's depth, kept as it is read: tiles are read every frame. */
+  private enemyDepths = new Map<string, number>();
+  /** `t` at (x, y) as the run's Enemy Level Skips stand now. */
+  private skipped(t: Tile, x: number, y: number) {
+    const skips = this.run.levelSkips;
+    if (!skips || !(t.enemy || t.flyer)) return t;
+    const k = point(x, y);
+    let depth = this.enemyDepths.get(k);
+    if (depth === undefined) this.enemyDepths.set(k, (depth = depthAt(this.seed, x, y, ownerAt(this.seed, x, y), this.tier)));
+    return skippedTile(t, "delve", this.tier, depth, skips);
   }
   /** Whether the Shielded enemy `s` still stands; `loaded`: judged only
    * in the chunks already built (else false), so drawing never builds one. */
@@ -254,10 +266,10 @@ export class World implements Board {
     return league ? tournamentTile(t, tournamentStatFactor(league)) : t;
   }
   /** The balanced enemy of `strength` at `depth`: the delve's curve, its
-   * stat factor as the chunks take it, then the run's league. */
+   * stat factor as the chunks take it, the run's league, then its Level Skips. */
   typicalEnemy(depth: number, strength: EnemyStrength = "normal"): Enemy {
     const enemy: Enemy = { name: DELVE_ENEMY_NAMES[0]!, tier: enemyTier(strength), strength, profile: "balanced", ...enemyStats("delve", this.tier, depth, strength, "balanced") };
-    return foeTile(this.inLeague(tierTile({ kind: "enemy", enemy }, this.tier)), this.foes).enemy!;
+    return foeTile(skippedTile(this.inLeague(tierTile({ kind: "enemy", enemy }, this.tier)), "delve", this.tier, depth, this.run.levelSkips), this.foes).enemy!;
   }
   /** Chunk `index` as generated, with More Enemies' extras, then each
    * area's Shielded enemies and theirs. */

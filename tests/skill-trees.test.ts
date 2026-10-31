@@ -200,7 +200,7 @@ test("the Archives and everything under them stay hidden, unbuyable, until Quest
   for (const n of TREES[0].nodes) for (const r of n.requires) upgrades[r] = 1;
   for (const id of below) upgrades[id] = 0;
   assert.ok([...below].every((id) => !skillAvailable(id, upgrades)), "hidden, whatever is owned");
-  upgrades.questForKnowledge = upgrades.pathToWealth = upgrades.physician = upgrades.life = upgrades.keyMastery = upgrades.moreWealth = upgrades.cardMastery = upgrades.beastMastery = upgrades.doorMastery = 1;
+  upgrades.enemyLevelSkips = upgrades.questForKnowledge = upgrades.pathToWealth = upgrades.physician = upgrades.life = upgrades.keyMastery = upgrades.moreWealth = upgrades.cardMastery = upgrades.beastMastery = upgrades.doorMastery = 1;
   assert.ok(TREES[0].nodes.every((n) => !skillHidden(n.id, upgrades)), "all revealed");
   assert.ok(skillAvailable("archives", upgrades));
   const quest = UPGRADES.find((u) => u.id === "questForKnowledge")!;
@@ -229,13 +229,13 @@ test("Bombs (5 Inspiration) stands left of Critical Prediction in the Inspiratio
   save.upgrades.bombs = 1;
   assert.ok(provisionOpen(save, "bomb"));
 });
-test("Golden Floors (3 Breakthrough), then Rehearsed steps and Echoes of time straight down under More Wealth, Offline Gold (2) beside Rehearsed steps; Manual Hand (1) after Card Mastery; Key Mastery (1) under Badges reveals Find Gold Key and Key Efficiency, now in the Inspiration tree (10 each), and Card and Beast Mastery split off under it", () => {
+test("Golden Floors (3 Breakthrough), then Rehearsed steps and Echoes of time straight down under More Wealth, Offline Gold (2) beside Echoes of time; Manual Hand (1) after Card Mastery; Key Mastery (1) under Badges reveals Find Gold Key and Key Efficiency, now in the Inspiration tree (10 each), and Card and Beast Mastery split off under it", () => {
   const breakthrough = TREES.find((t) => t.id === "breakthrough")!;
   const at = (id: string) => breakthrough.nodes.find((n) => n.id === id)!;
   assert.deepEqual(["goldenFloors", "inspirationUndos", "undos"].map((id) => [at(id).x, at(id).y, at(id).requires]), [[18, 111, ["moreWealth"]], [18, 137, ["goldenFloors"]], [18, 163, ["inspirationUndos"]]], "Golden Floors, Rehearsed steps and Echoes of time straight down under More Wealth");
   assert.deepEqual([at("manualHand").x, at("manualHand").y, at("manualHand").requires], [30, 215, ["cardMastery"]], "Manual Hand below and after Card Mastery");
   assert.equal(cost("goldenFloors", 0), 3, "Golden Floors costs 3 Breakthrough");
-  assert.deepEqual([at("offlineGold").x, at("offlineGold").y, at("offlineGold").requires, cost("offlineGold", 0)], [38, 137, ["goldenFloors"], 2], "Offline Gold (2) splits off after Golden Floors, beside Rehearsed steps");
+  assert.deepEqual([at("offlineGold").x, at("offlineGold").y, at("offlineGold").requires, cost("offlineGold", 0)], [38, 163, ["goldenFloors"], 2], "Offline Gold (2) splits off after Golden Floors, beside Echoes of time");
   assert.deepEqual([at("moreWealth").x, at("moreWealth").y, at("moreWealth").requires], [18, 85, ["pathToWealth"]], "More Wealth under Path to Wealth");
   assert.deepEqual([at("overheal").x, at("overheal").y, at("overheal").requires], [50, 85, ["physician"]], "Overheal between Physician and Life");
   assert.deepEqual([at("life").x, at("life").y, at("life").requires], [50, 111, ["overheal"]], "Life under Overheal");

@@ -5,6 +5,7 @@ import type { RunBadges } from "./cards/badges.ts";
 import type { CardTreeLevels } from "./cards/trees.ts";
 import type { PROVISION_BOOSTS, UsedProvision } from "./economy/provisions.ts";
 import type { TrainingId } from "./progression/training.ts";
+import type { LevelSkips } from "./enemies/level-skips.ts";
 import type { RunNotes } from "./run-notes.ts";
 import type { TournamentRun } from "./tournament/run.ts";
 import type { Volleys } from "./enemies/ranged.ts";
@@ -139,6 +140,10 @@ export type RunCore = {
   /** How many of each Free Upgrade group's rolls this run has drawn from
    * its stream, which starts from the run seed (progression/free-training.ts). */
   freeRolls?: Partial<Record<"offense" | "defense" | "utility", number>>;
+  /** Each Enemy Level Skip kind's skips, draws and chance added up
+   * (enemies/level-skips.ts), absent until it first draws. Undo takes them
+   * back with the run, and a floor passed again draws the same. */
+  levelSkips?: LevelSkips;
   /** How many enemies the run has spawned onto its floors
    * (`Game.spawnEnemy`), each numbered by the count before it; absent with
    * none. Undo takes it back with the run, so a spawn undone and made again

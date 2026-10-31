@@ -273,7 +273,7 @@ How much XP the character has gathered from kills over every run. A kill pays mo
 _Avoid_: rank
 
 **Training point**:
-The currency each level earns (three a level), spent to buy ranks of training at once (a trainer can train them for Gold instead) in the character's stats (max HP, ATK, DEF, and the shroud once the Shroud skill is owned; Lifesteal once the Lifesteal skill is, Thorn Damage once Thorns is, Parry % once Parry is, Crit % and Crit x once Critical is, Armor Break once its skill is, Attack Range, Attack Speed and ATK / m once Tower III's floor 20, 30 and 50 Goals are claimed, Multishot Chance and Multishot Targets once its floor 70 Goal is, Rapid Fire Chance and Rapid Fire Duration once its floor 80 Goal is) and, with Recovery, Find Potion, Revive, Spare Change, Wishing Well, Wealthy, Loot, Free Training and Overheal, in Potion %, Find Potion, Revive, Gold / Floor, Silver / Floor, Silver Bonus, Gold Bonus, the Free Offense, Defense and Utility Up rows and, with Overheal, Overheal on the Training tab. A stat's ranks add up on its **rank curve**: each rank is worth more than the one before, whatever the character's level.
+The currency each level earns (three a level), spent to buy ranks of training at once (a trainer can train them for Gold instead) in the character's stats (max HP, ATK, DEF, and the shroud once the Shroud skill is owned; Lifesteal once the Lifesteal skill is, Thorn Damage once Thorns is, Parry % once Parry is, Crit % and Crit x once Critical is, Armor Break once its skill is, Attack Range, Attack Speed and ATK / m once Tower III's floor 20, 30 and 50 Goals are claimed, Multishot Chance and Multishot Targets once its floor 70 Goal is, Rapid Fire Chance and Rapid Fire Duration once its floor 80 Goal is) and, with Recovery, Find Potion, Revive, Spare Change, Wishing Well, Wealthy, Loot, Free Training, Overheal, Enemy HP Level Skips and Enemy Combat Level Skips, in Potion %, Find Potion, Revive, Gold / Floor, Silver / Floor, Silver Bonus, Gold Bonus, the Free Offense, Defense and Utility Up rows and, with Overheal, Overheal, and with their skills, Enemy HP Level Skip and Enemy Combat Level Skip on the Training tab. A stat's ranks add up on its **rank curve**: each rank is worth more than the one before, whatever the character's level.
 _Avoid_: skill point, stat point
 
 **Trainer**:
@@ -291,6 +291,10 @@ _Avoid_: banked time, refund time
 **Time bank**:
 Training time a Gem reset returns: all the time spent on the reset stat (its trainers' ranks, a rank in training, and its time credit). Any stat's next ranks trainers train use it, after that stat's own time credit, until it is used up.
 _Avoid_: common credit, time pool
+
+**Enemy Level Skip**:
+A floor new to the run on which enemies' stats don't rise, of one of two kinds rolled apart: HP, or Combat (ATK and DEF). After N skips of a kind, enemies have those stats as N floors lower. Below a 10% chance, the chance adds up floor by floor and a skip comes by itself at 100%.
+_Avoid_: floor skip (Skip on STAIRS climbs past a floor; this leaves the floor to play)
 
 **Limit Break**:
 One of ten Inspiration skills in a chain under Torch, 50 Inspiration each, each raising by 500 the most levels ATK, DEF, max HP, Regen and the shroud train to (the shroud by the first eight only): 1,000 levels without one, 6,000 with all ten (5,000 for the shroud).

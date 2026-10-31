@@ -238,6 +238,9 @@ Generation places strong enemies only from floor 11 and elites only from floor 4
 
 ### Difficulty data should be centralized
 
+Enemy HP Level Skip and Enemy Combat Level Skip training can hold those stats back: each skip reads the curve one floor lower for the rest of the run (`docs/gameplay/skills-and-stats.md`).
+They cost 300 million Gold (240 Silver) for the first rank, through 3.72 billion at the 10th, 9 billion at the 20th, 45 billion at the 50th, 280 billion (1 million Silver) at the 100th, 5.26 trillion (35 million) at the 200th, 78 trillion at the 300th, 1.45 quadrillion at the 400th, 45.54 quadrillion at the 500th, 1.57 quintillion at the 600th and 124 quintillion at the 700th.
+
 Enemy stats in both modes come from one place, `src/enemies/curves.ts` (`enemyStats(mode, tier, step, strength, profile)`, a step being a Tower floor or a Delve depth), rather than formulas scattered through generation code. Its curves are the first pass at the shared power budget; exact HP/Attack/Defense values should still be tuned together with the equipment and research power curves.
 
 ---

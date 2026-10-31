@@ -40,7 +40,7 @@ Dev mode owns every theme.
 Each Tower climb, as it ends, keeps the Gold it found and the real time it took (less any time the app was closed during it); Delve runs don't count.
 The last ten give the **Recent Gold per Hour**: their Gold over their time, so a long climb weighs more than a short one.
 The Settings page's Stats dialog shows it after the Gold earned, shortened (*12.3K*).
-**Offline Gold** (2 Breakthrough, beside Rehearsed steps under Golden Floors) pays Gold for the time the app was closed.
+**Offline Gold** (2 Breakthrough, down and right of Golden Floors, beside Echoes of time) pays Gold for the time the app was closed.
 Starting the app again after a minute or more away (less is no time away) opens the *Offline Gold* dialog, pausing a climb in progress: the time away and the most that pays (*03h:10m offline (of 02h:00m max)*), and the sum, *Recent 12.3K × 02h:00m × 10.0% = 2.46K*.
 **Claim** banks the Gold, rains coins down the screen, and plays the climb on.
 The skill opens two Archives projects: **Offline Gold Multiplier**, the share of the Recent Gold per Hour each hour away pays, 0% at first and 0.5% more a level for 100 levels (50%), on Critical Chance's prices and times; and **Offline Gold Duration**, the most time away that pays, 2 hours at first and 10 minutes more a level for 60 levels (12 hours), each level's Gold and time Offline Gold Multiplier's at the same level, times 1.02 for each level before it.

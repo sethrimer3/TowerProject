@@ -6,6 +6,7 @@ import { bindBuyQuantity, buyQuantityHtml, runCount } from "./buy-quantity-selec
 import { trainingText, runTrainingOpen } from "../progression/loadout.ts";
 import { DECK_ICON, el, itemSprite, POINTER_SVG, uiSprite } from "./dom.ts";
 import { priceAmount, sparkRed } from "./hud.ts";
+import { levelSkipsOf } from "../enemies/level-skips.ts";
 
 type Group = keyof typeof TRAINING_GROUPS;
 /** Each group's button icon. */
@@ -310,13 +311,14 @@ export class RunTrainingBar {
     this.tipPressed = false;
     this.refreshTip();
   }
-  /** The card's name, what it trains, and its level of the most it reaches,
-   * over the card. */
+  /** The card's name, what it trains, its level of the most it reaches and,
+   * for a Level Skip, the floors it has skipped this run, over the card. */
   private refreshTip() {
     const card = this.tipFor, tip = el("drill-tip");
     if (!card?.isConnected) return this.hideTip();
     const offer = runTrainingOffer(this.game.save, this.game.run, card.dataset.drill as TrainingId);
-    tip.innerHTML = `<b>${offer.row.name}</b><p>${offer.row.description}</p><small>Level ${offer.level} of ${offer.max.toLocaleString("en-US")}${offer.bought ? ` · ${offer.bought} bought this run` : ""}</small>`;
+    const skips = levelSkipsOf(this.game.run, offer.row.id);
+    tip.innerHTML = `<b>${offer.row.name}</b><p>${offer.row.description}</p><small>Level ${offer.level} of ${offer.max.toLocaleString("en-US")}${offer.bought ? ` · ${offer.bought} bought this run` : ""}${skips === null ? "" : ` · ${skips.toLocaleString("en-US")} ${skips === 1 ? "floor" : "floors"} skipped this run`}</small>`;
     tip.hidden = false;
     const box = card.getBoundingClientRect(), width = tip.offsetWidth;
     tip.style.left = `${Math.max(8, Math.min(innerWidth - width - 8, box.left + box.width / 2 - width / 2))}px`;

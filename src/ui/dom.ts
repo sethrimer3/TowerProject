@@ -114,6 +114,7 @@ const SKILL_UI_SPRITES: Partial<Record<UpgradeId, UiSprite>> = {
   revive: "revive", life: "health", overheal: "health", spareChange: "gold", loot: "gold", floorSkipReward: "gold", mug: "gold", legacy: "tower", quality: "tower",
   wisdomFocus: "settings", wisdomMemory: "undo", wisdomSight: "upgrades",
   renownBanner: "tower", renownOath: "defense", renownCrown: "gear", armorBreak: "defense",
+  enemyLevelSkipLimitBreak: "arrow-up",
   ...Object.fromEntries(LIMIT_BREAKS.map((id) => [id, "arrow-up"])),
 };
 /** Skills about Silver show the Gold coin drained of colour, as the purse does. */
@@ -134,6 +135,7 @@ const SKILL_DETAIL_SPRITES: Partial<Record<UpgradeId, string>> = {
   wealthy: "silver", wishingWell: "silver", onTheJob: "silver", pocketMoney: "silver", interest: "silver", maxInterest: "silver",
   aiMemory: "goal-note-taking", aiEvaluation: "goal-combat-forecast", aiLookahead: "goal-attack-lore",
   renownCrown: "ui-crown",
+  enemyLevelSkips: "badge-skip", enemyHpLevelSkips: "boon-enemy-hp-regen", enemyCombatLevelSkips: "boon-enemy-attack",
   avengingAngel: "combat-wing",
 };
 /** The forest's Enter button: an arrow going up into an arched doorway. */

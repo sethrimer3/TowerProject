@@ -41,6 +41,18 @@ What it blocks rises off the hero in silver, beside the red of any damage that g
 Without Recovery every potion is a regular one; with it, the striped potions the Tower's floors roll (half of them) and half of the Delve's corridor-guard potions become percent potions, from the next run on: each restores the regular 35 HP plus 1% of max HP, and 0.25% more for each rank of **Potion %** training.
 A regular potion is drawn red, like the HP bar, and a percent potion blue, like the Overheal bar.
 
+## Enemy Level Skips
+
+**Enemy Level Skips** (5 Breakthrough, below Life) reveals **Enemy HP Level Skips** and, below it, **Enemy Combat Level Skips** (50 Inspiration each, below Floor Skip Reward), which open the Enemy HP Level Skip and Enemy Combat Level Skip training rows in Utility.
+**Enemy Level Skip Limit Break** (5 Breakthrough, beside Limit Break 1, after it, hidden until Enemy Level Skips is owned) raises both rows' most from 350 levels to 700.
+Each floor new to the run, each row's chance may skip that floor: enemies from then on stand as they would one floor lower, so after 5 skips an enemy on floor 100 has floor 95's stats.
+Enemy HP Level Skip counts for enemies' HP, and Enemy Combat Level Skip for their ATK and DEF, each rolled apart.
+A Delve rolls for each equivalent floor, and each skip applies to every enemy on the board, those in view included.
+Only stats change: floors, what enemies pay and Wooden Doors stay as they were.
+While a row's chance is under 10%, its chance also adds up on every floor: when the total reaches 100% a skip comes by itself, and any skip takes 100% off the total, so at 0.5% the first comes by floor 200 at the latest, and a lucky early one makes the next guaranteed one wait longer.
+From 10% on, only the roll counts.
+Pressing or hovering over either row's training card in a run shows how many floors it has skipped so far.
+
 ## Overheal
 
 **Overheal** (2 Breakthrough, between Physician and Life in the Breakthrough tree) lets HP rise above max HP, and opens Overheal training.

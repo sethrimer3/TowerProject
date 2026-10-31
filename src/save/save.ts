@@ -7,6 +7,7 @@ import { GOLD_SHOP, PROVISION_BOOST_TURNS, USED_PROVISIONS } from "../economy/pr
 import { SAVE_KEY, TOWER_WIDTH, WIDTH } from "../config.ts";
 import { OUTSIDE_SIZE } from "../outside.ts";
 import { TRAINING, amountAt, trainingCeiling, trainingDef } from "../progression/training.ts";
+import { LEVEL_SKIP_SURE } from "../enemies/level-skips.ts";
 import { UPGRADES, type UpgradeId } from "../progression/upgrades.ts";
 import type { AutomoveMemory, DelveRun, Fall, MoveSnapshot, Run, TowerRun } from "../runs.ts";
 import type { ModeSave, Save } from "./shape.ts";
@@ -222,6 +223,7 @@ const RUN_FIELD_CHECKS = {
   badgeFloors: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, n]) => (k === "stairward" || k === "skipOpen") && wholeIn(n, 0, 1e6)),
   skipRolls: (v: unknown) => wholeIn(v, 1, 1e9),
   freeRolls: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, n]) => ["offense", "defense", "utility"].includes(k) && wholeIn(n, 1, 1e9)),
+  levelSkips: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, s]: [string, any]) => ["hp", "combat"].includes(k) && isRecord(s) && wholeIn(s.skips, 0, 1e9) && wholeIn(s.draws, 1, 1e9) && wholeIn(s.tally, -1e12, LEVEL_SKIP_SURE)),
   goldCombo: (v: unknown) => wholeIn(v, 1, 1e9),
   maxHpBoost: (v: unknown) => finite(v) && v > 0 && v <= 1e9,
   spawns: (v: unknown) => wholeIn(v, 1, 1e9),

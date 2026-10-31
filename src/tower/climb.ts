@@ -14,7 +14,7 @@ export class TowerClimb {
 
   /** The floor the run stands on, as it stands now. */
   board() {
-    return new RoomWorld(this.run.seed, this.run.height, this.run.changes, this.run.percentPotions, this.run.tier, runExtras(this.run), weakened(this.run.shrine?.applied?.foes, runFoeCut(this.run)), this.run.chestOdds, this.run.doorOdds, this.run.treasureFloor);
+    return new RoomWorld(this.run.seed, this.run.height, this.run.changes, this.run.percentPotions, this.run.tier, runExtras(this.run), weakened(this.run.shrine?.applied?.foes, runFoeCut(this.run)), this.run.chestOdds, this.run.doorOdds, this.run.treasureFloor, this.run.levelSkips);
   }
 
   /** Climbs the stairs from `left`, the floor the run stands on (rebuilt

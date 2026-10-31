@@ -9,6 +9,7 @@ import { tierCells, tierTile } from "../tiers.ts";
 import { foeTile, type FoeRule } from "../shrines.ts";
 import { fastCells } from "../enemies/fast.ts";
 import { rangedCells, wounded, woundMore } from "../enemies/ranged.ts";
+import { skippedTile, type LevelSkips } from "../enemies/level-skips.ts";
 import { armoredCells } from "../enemies/armored.ts";
 import { flyingCells } from "../enemies/flying.ts";
 import { addEnemies, extrasSeed, hasExtras, type ExtraEnemies } from "../enemies/more-enemies.ts";
@@ -162,6 +163,9 @@ export class RoomWorld implements Board {
     doorOdds?: DoorOdds,
     /** CHEST's tree's percent chance the floor is a Treasure Floor (`treasureFloor`); none without. */
     treasureFloor = 0,
+    /** The run's Enemy Level Skips (enemies/level-skips.ts), every enemy tile
+     * read through them; none without. `Game` sets them as the floor begins. */
+    public levelSkips?: LevelSkips,
   ) {
     const doors = withRunDoors(generateTowerRoom(seed, room, tier), seed ^ Math.imul(room + 1, 0x9e3779b1), doorOdds, () => woodDurability("tower", tier, room));
     let cells = withTreasureFloors(doors, seed, treasureFloor, () => room + 1);
@@ -190,10 +194,10 @@ export class RoomWorld implements Board {
       : this.withBoons(withChest(withPotions(generated, x, y, seed, this.percentPotions), generated, x, y, seed, this.chestOdds));
     return this.shield ? guardedTile(t, x, y, [this.shield], (s) => this.holds(s)) : t;
   }
-  /** `t` as the run's boons make it now, read afresh since a boon can
-   * change mid-run. */
+  /** `t` as the run's Level Skips and boons make it now, read afresh since a
+   * boon can change mid-run. */
   private withBoons(t: Tile) {
-    return foeTile(t, this.foes);
+    return foeTile(skippedTile(t, "tower", this.tier, this.room, this.levelSkips), this.foes);
   }
   /** The floor's balanced enemy of `strength`: the tower's curve, its stat
    * factor as the cells take it, then the run's boons. */

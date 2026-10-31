@@ -1,4 +1,4 @@
-import { TRAINING, trainingDef, type TrainingId } from "../progression/training.ts";
+import { trainingCap, TRAINING, trainingDef, type TrainingId } from "../progression/training.ts";
 import { snap } from "../exact.ts";
 import { TRAINING_RESET_GEMS } from "../economy/gems.ts";
 import { batchSpeedup, bulkBuy, openQuantities, type BuyQuantity } from "../progression/buy-quantity.ts";
@@ -77,7 +77,7 @@ export class TrainingDesk {
    * left it stops, as `cancel` does. Its speedup stays. */
   private trimJob(id: TrainingId) {
     const save = this.save, job = trainingJob(save.trainingJobs, id), row = rowOf(id), time = trainingDef(id).time;
-    const keep = Math.max(0, row.max - save.training[id]);
+    const keep = Math.max(0, trainingCap(row, save.upgrades) - save.training[id]);
     if (!job || keep >= job.ranks) return;
     if (keep === 0) return void this.cancel(id);
     const from = save.trainerRanks[id], done = jobInvested(job, this.left(id)) - job.used;
@@ -106,7 +106,7 @@ export class TrainingDesk {
    * 25, x10 from 100). `affordable` says whether the Gold held pays. */
   batch(id: TrainingId, q: BuyQuantity = 1) {
     const save = this.save, row = rowOf(id), ranks = save.trainerRanks[id], speed = trainingSpeed(save), discount = trainingDiscount(save);
-    const room = Math.max(0, row.max - save.training[id] - ranksInTraining(save.trainingJobs, id));
+    const room = Math.max(0, trainingCap(row, save.upgrades) - save.training[id] - ranksInTraining(save.trainingJobs, id));
     const bulk = bulkBuy(q, room, (k) => trainingGold(row, ranks + k, discount), this.host.free ? Infinity : save.gold);
     const { gold, ms } = trainerBatch(row, ranks, bulk.count, speed, discount);
     return { count: bulk.count, gold: this.host.free ? 0 : gold, ms, speedup: batchSpeedup(bulk.count), affordable: bulk.affordable };

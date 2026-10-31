@@ -32,6 +32,8 @@ export const UPGRADES = [
     max: 1,
     currency: "inspiration",
   },
+  { id: "enemyLevelSkips", name: "Enemy Level Skips", description: "Reveal Enemy HP Level Skips and Enemy Combat Level Skips in the Inspiration tree", base: 5, max: 1, currency: "breakthrough" },
+  { id: "enemyLevelSkipLimitBreak", name: "Enemy Level Skip Limit Break", description: "Raise the most training levels of Enemy HP Level Skip and Enemy Combat Level Skip from 350 to 700", base: 5, max: 1, currency: "breakthrough" },
   { id: "life", name: "Life", description: "Reveal Revive, Angel Wings and Avenging Angel in the Inspiration tree", base: 2, max: 1, currency: "breakthrough" },
   {
     id: "undos",
@@ -587,6 +589,8 @@ export const UPGRADES = [
   { id: "cardRedKey", name: "Red Key", description: "Add the RED KEY card to your deck: it moves you toward the closest red key, and while you hold it each red key is worth 5% more and pays 3 more Gold", card: "redKey", base: 20, max: 1, currency: "inspiration" },
   { id: "redSiphon", name: "RK Siphon", description: "Add the RK SIPHON card to your deck: it trades ATK training levels, for the rest of the climb, for a red key, each use costing one level more than the last", card: "redSiphon", base: 20, max: 1, currency: "inspiration" },
   { id: "floorSkipReward", name: "Floor Skip Reward", description: "Open Floor Skip Reward research in the Archives: each level pays a share of the Gold a skipped floor's chests and battles held", base: 20, max: 1, currency: "inspiration" },
+  { id: "enemyHpLevelSkips", name: "Enemy HP Level Skips", description: "Opens Enemy HP Level Skip training: each new floor may leave enemies' HP where the last floor's stood", base: 50, max: 1, currency: "inspiration" },
+  { id: "enemyCombatLevelSkips", name: "Enemy Combat Level Skips", description: "Opens Enemy Combat Level Skip training: each new floor may leave enemies' ATK and DEF where the last floor's stood", base: 50, max: 1, currency: "inspiration" },
   { id: "cardTorch", name: "Torch", description: "Add the TORCH card to your deck: it moves you toward the closest lit torch, putting it out", card: "torch", base: 20, max: 1, currency: "inspiration" },
   // Limit Break 1 to 10, a chain under Torch: each raises the most levels of
   // the Training rows with `breaks` (LIMIT_BREAK_RANKS, trainingCap).

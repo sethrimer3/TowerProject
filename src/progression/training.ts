@@ -16,13 +16,14 @@ export const LIMIT_BREAKS = ["limitBreak1", "limitBreak2", "limitBreak3", "limit
 export const LIMIT_BREAK_RANKS = 500;
 /** The Limit Breaks that raise `row`'s cap: its first `breaks` of them. */
 const breaksOf = (row: TrainingRow) => ("breaks" in row ? row.breaks : 0);
-/** The most levels `row` trains to with `upgrades` owned: its `max`, and
- * `LIMIT_BREAK_RANKS` more for each Limit Break owned that raises it. */
+/** The most levels `row` trains to with `upgrades` owned: its `max`,
+ * `LIMIT_BREAK_RANKS` more for each Limit Break owned that raises it, and
+ * what its own `raisedBy` skill adds once owned. */
 export const trainingCap = (row: TrainingRow, upgrades: Partial<Record<UpgradeId, number>>) =>
-  row.max + LIMIT_BREAK_RANKS * LIMIT_BREAKS.slice(0, breaksOf(row)).filter((id) => upgrades[id]).length;
-/** The most levels `row` trains to with every Limit Break owned, which a
- * saved rank may hold. */
-export const trainingCeiling = (row: TrainingRow) => row.max + LIMIT_BREAK_RANKS * breaksOf(row);
+  row.max + LIMIT_BREAK_RANKS * LIMIT_BREAKS.slice(0, breaksOf(row)).filter((id) => upgrades[id]).length + ("raisedBy" in row && upgrades[row.raisedBy.upgrade] ? row.raisedBy.ranks : 0);
+/** The most levels `row` trains to with every skill that raises it owned,
+ * which a saved rank may hold. */
+export const trainingCeiling = (row: TrainingRow) => row.max + LIMIT_BREAK_RANKS * breaksOf(row) + ("raisedBy" in row ? row.raisedBy.ranks : 0);
 /** A row that raises one of the character's stats. */
 export type StatTrainingRow = Extract<TrainingRow, { stat: string }>;
 export const isStatRow = (row: TrainingRow): row is StatTrainingRow => "stat" in row;
@@ -122,6 +123,17 @@ const armorBreakGold = stretchedPrices(600_000_000, [[49, 1.033391], [50, 1.0736
  * billion for the 100th, 292 billion for the 120th), then ×1.08 a rank, still
  * faster than its trainers' Gold. */
 const armorBreakSilver = stretchedPrices(150, [[9, 1.5], [15, 1.4], [25, 1.18], [70, 1.13], [180, 1.08]]);
+/** The Enemy Level Skip rows' trainers, long-term sinks: 300 million Gold for
+ * the first rank, about 3.72 billion for the 10th, 9 billion for the 20th, 45
+ * billion for the 50th, 280 billion for the 100th, 5.26 trillion for the 200th,
+ * 78 trillion for the 300th, 1.45 quadrillion for the 400th, 45.54 quadrillion
+ * for the 500th, 1.57 quintillion for the 600th and 124 quintillion for the 700th. */
+const LEVEL_SKIP_LATE: readonly (readonly [number, number])[] = [[100, 1.027333], [100, 1.029657], [100, 1.035071], [100, 1.036037], [100, 1.044661]];
+const levelSkipGold = stretchedPrices(300_000_000, [[9, 1.322791], [10, 1.09237], [30, 1.055113], [50, 1.037239], [100, 1.029765], ...LEVEL_SKIP_LATE]);
+/** Their Silver: 240, 341, 449 and 569 for the first four ranks, about 122,000
+ * for the 50th, 1 million for the 100th and 35 million for the 200th, then
+ * rising as their trainers' Gold does (825 trillion for the 700th). */
+const levelSkipSilver = [240, 341, 449, ...stretchedPrices(569, [[46, 1.123775], [50, 1.042972], [100, 1.036193], ...LEVEL_SKIP_LATE])];
 /** A trainer's Gold curve: each rank asks `TRAINING_GOLD_PER_POINT` Gold
  * a point of the row's cost times the rank's number, times 1 + ranks /
  * `growth` (see `trainingGold`), so a smaller `growth` pulls away faster. A
@@ -158,9 +170,10 @@ export type TrainingUnit = "×" | "m" | "shots" | "perMeter" | "count" | "turns"
 export type TrainerTime = { readonly skip: number } | { readonly each: number };
 /** One Training row, all of it in one place. Each rank costs `cost`
  * training points, and the row trains no further than its cap
- * (`trainingCap`): `max` ranks, and `LIMIT_BREAK_RANKS` more for each of its
- * first `breaks` Limit Breaks owned, its ranks and those bought for a run with
- * Silver together. A row with `requires` shows, and trains, only once that
+ * (`trainingCap`): `max` ranks, `LIMIT_BREAK_RANKS` more for each of its
+ * first `breaks` Limit Breaks owned, and `raisedBy`'s `ranks` once its
+ * `upgrade` is owned, its ranks and those bought for a run with Silver
+ * together. A row with `requires` shows, and trains, only once that
  * upgrade is owned, and one with `goal` once that Goals checkpoint is claimed
  * (`trainingOpen`).
  *
@@ -189,6 +202,7 @@ export type TrainingDef = {
   readonly cost: number;
   readonly max: number;
   readonly breaks?: number;
+  readonly raisedBy?: { readonly upgrade: UpgradeId; readonly ranks: number };
   readonly description: string;
   readonly stat?: string;
   readonly curve: TrainingCurve;
@@ -448,6 +462,21 @@ export const TRAINING = [
     curve: { per: 31 }, base: 1000, off: 1000, scale: 1000, unit: "×",
     description: "Raises how far potions, the smelt cards and badge heals can heal you above max HP.",
     silver: overhealPrices, gold: overhealPrices,
+  },
+  // The chance each floor new to a run leaves enemies' HP, or their ATK and
+  // DEF, one floor lower on their curve, in hundredths of a percent: 0.05% a
+  // rank, 17.5% at its 350, 35% at 700 (enemies/level-skips.ts).
+  {
+    id: "enemyHpSkip", name: "Enemy HP Level Skip", short: "HP Skip", group: "utility", requires: "enemyHpLevelSkips", cost: 1, max: 350, raisedBy: { upgrade: "enemyLevelSkipLimitBreak", ranks: 350 },
+    curve: { per: 5 }, scale: 100, unit: "chance",
+    description: "Raises the chance each new floor leaves enemies' HP where the last floor's stood. Below 10%, floors without a skip add up to a sure one.",
+    silver: { prices: levelSkipSilver }, gold: { prices: levelSkipGold },
+  },
+  {
+    id: "enemyCombatSkip", name: "Enemy Combat Level Skip", short: "Combat Skip", group: "utility", requires: "enemyCombatLevelSkips", cost: 1, max: 350, raisedBy: { upgrade: "enemyLevelSkipLimitBreak", ranks: 350 },
+    curve: { per: 5 }, scale: 100, unit: "chance",
+    description: "Raises the chance each new floor leaves enemies' ATK and DEF where the last floor's stood. Below 10%, floors without a skip add up to a sure one.",
+    silver: { prices: levelSkipSilver }, gold: { prices: levelSkipGold },
   },
 ] as const satisfies readonly TrainingDef[];
 /** A row's rank curve: what `n` ranks add up to is `per` × n +

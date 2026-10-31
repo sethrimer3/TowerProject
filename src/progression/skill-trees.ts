@@ -72,13 +72,17 @@ export const TREES: SkillTree[] = [
     { id: "freeTraining", icon: "↑", x: 20, y: 286, requires: ["wishingWell"] },
     // Interest under Free Training (More Wealth, in the Breakthrough tree,
     // reveals it), Max Interest and Mug either side under it, Chest under
-    // them, and Torch and Floor Skip Reward under Chest.
+    // them, and Floor Skip Reward and Torch under Chest. Enemy HP and Combat
+    // Level Skips straight down under Floor Skip Reward, revealed by Enemy
+    // Level Skips (in the Breakthrough tree).
     { id: "interest", icon: "¤", x: 20, y: 304, requires: ["freeTraining"], reveal: "moreWealth" },
     { id: "maxInterest", icon: "¤", x: 10, y: 322, requires: ["interest"] },
     { id: "mug", icon: "☠", x: 30, y: 322, requires: ["interest"] },
     { id: "cardChest", icon: "▣", x: 20, y: 340, requires: ["interest"] },
-    { id: "cardTorch", icon: "☼", x: 10, y: 358, requires: ["cardChest"] },
-    { id: "floorSkipReward", icon: "↷", x: 30, y: 358, requires: ["cardChest"] },
+    { id: "floorSkipReward", icon: "↷", x: 10, y: 358, requires: ["cardChest"] },
+    { id: "cardTorch", icon: "☼", x: 30, y: 358, requires: ["cardChest"] },
+    { id: "enemyHpLevelSkips", icon: "↷", x: 10, y: 376, requires: ["floorSkipReward"], reveal: "enemyLevelSkips" },
+    { id: "enemyCombatLevelSkips", icon: "↷", x: 10, y: 394, requires: ["enemyHpLevelSkips"] },
     { id: "greaterHeal", icon: "✚", x: 80, y: 214, requires: ["archives"], reveal: "physician" },
     { id: "recovery", icon: "✦", x: 70, y: 232, requires: ["greaterHeal"] },
     { id: "findPotion", icon: "⚗", x: 70, y: 250, requires: ["recovery"] },
@@ -141,16 +145,18 @@ export const TREES: SkillTree[] = [
     { id: "dashCombo", icon: "⇶", x: 70, y: 85, requires: ["dash"] },
     { id: "endRush", icon: "⇶", x: 90, y: 85, requires: ["dash"] },
     { id: "dashRegen", icon: "⇶", x: 90, y: 111, requires: ["endRush"] },
-    { id: "dashBadge", icon: "◪", x: 90, y: 135, requires: ["dashRegen", "cardBadges"] },
+    { id: "dashBadge", icon: "◪", x: 90, y: 137, requires: ["dashRegen", "cardBadges"] },
     // Golden Floors, then Rehearsed steps and Echoes of time, straight down
     // under More Wealth (under Path to Wealth): the Golden Floors' research
-    // and the undos. Offline Gold splits off down and right of Golden Floors.
+    // and the undos. Offline Gold splits off down and right of Golden Floors,
+    // beside Echoes of time.
     { id: "moreWealth", icon: "¤", x: 18, y: 85, requires: ["pathToWealth"] },
     { id: "goldenFloors", icon: "¤", x: 18, y: 111, requires: ["moreWealth"] },
-    { id: "offlineGold", icon: "¤", x: 38, y: 137, requires: ["goldenFloors"] },
+    { id: "offlineGold", icon: "¤", x: 38, y: 163, requires: ["goldenFloors"] },
     { id: "inspirationUndos", icon: "↺", x: 18, y: 137, requires: ["goldenFloors"] },
     { id: "undos", icon: "↺", x: 18, y: 163, requires: ["inspirationUndos"] },
-    // Overheal and Life (which reveals Revive and the Angel skills) under
+    // Overheal, Life (which reveals Revive and the Angel skills) and Enemy
+    // Level Skips (which reveals its two skills under Floor Skip Reward) under
     // Physician; Badges stand down and right of Physician, and Key Mastery
     // under Badges. Beast Mastery splits off down and right of Key Mastery,
     // Card Mastery down and far left of it, with Manual Hand, the second
@@ -158,6 +164,7 @@ export const TREES: SkillTree[] = [
     // Inspiration tree's three paths under Thorns.
     { id: "overheal", icon: "♥", x: 50, y: 85, requires: ["physician"] },
     { id: "life", icon: "✚", x: 50, y: 111, requires: ["overheal"] },
+    { id: "enemyLevelSkips", icon: "↷", x: 50, y: 137, requires: ["life"] },
     { id: "cardBadges", icon: "◪", x: 70, y: 111, requires: ["physician"] },
     { id: "keyMastery", icon: "⚿", x: 70, y: 137, requires: ["cardBadges"] },
     { id: "beastMastery", icon: "☠", x: 86, y: 163, requires: ["keyMastery"] },
@@ -173,8 +180,10 @@ export const TREES: SkillTree[] = [
     { id: "target", icon: "⌖", x: 78, y: 213, requires: ["ignore"] },
     { id: "ignoreMore", icon: "⊘", x: 50, y: 237, requires: ["ignore"] },
     { id: "targetMore", icon: "⌖", x: 78, y: 237, requires: ["target"] },
-    // Limit Break 1 to 10 straight down under Ignore More, each requiring the one before.
+    // Limit Break 1 to 10 straight down under Ignore More, each requiring the
+    // one before, and Enemy Level Skip Limit Break split off the first.
     { id: "limitBreak1", icon: "⇑", x: 50, y: 261, requires: ["ignoreMore"] },
+    { id: "enemyLevelSkipLimitBreak", icon: "⇑", x: 30, y: 261, requires: ["limitBreak1"], reveal: "enemyLevelSkips" },
     { id: "limitBreak2", icon: "⇑", x: 50, y: 285, requires: ["limitBreak1"] },
     { id: "limitBreak3", icon: "⇑", x: 50, y: 309, requires: ["limitBreak2"] },
     { id: "limitBreak4", icon: "⇑", x: 50, y: 333, requires: ["limitBreak3"] },
