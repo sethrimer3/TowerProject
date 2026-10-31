@@ -34,6 +34,8 @@ export const UPGRADES = [
   },
   { id: "enemyLevelSkips", name: "Enemy Level Skips", description: "Reveal Enemy HP Level Skips and Enemy Combat Level Skips in the Inspiration tree", base: 5, max: 1, currency: "breakthrough" },
   { id: "enemyLevelSkipLimitBreak", name: "Enemy Level Skip Limit Break", description: "Raise the most training levels of Enemy HP Level Skip and Enemy Combat Level Skip from 350 to 700", base: 5, max: 1, currency: "breakthrough" },
+  { id: "aetherShield", name: "Aether Shield", description: "Reveal Shield, Shield Thorns, Regrow Shield and Shield Regen in the Inspiration tree", base: 5, max: 1, currency: "breakthrough" },
+  { id: "shieldLimitBreak", name: "Shield Limit Break", description: "Raise the most training levels of Shield HP from 800 to 1,800", base: 5, max: 1, currency: "breakthrough" },
   { id: "life", name: "Life", description: "Reveal Revive, Angel Wings and Avenging Angel in the Inspiration tree", base: 2, max: 1, currency: "breakthrough" },
   {
     id: "undos",
@@ -591,6 +593,10 @@ export const UPGRADES = [
   { id: "floorSkipReward", name: "Floor Skip Reward", description: "Open Floor Skip Reward research in the Archives: each level pays a share of the Gold a skipped floor's chests and battles held", base: 20, max: 1, currency: "inspiration" },
   { id: "enemyHpLevelSkips", name: "Enemy HP Level Skips", description: "Opens Enemy HP Level Skip training: each new floor may leave enemies' HP where the last floor's stood", base: 50, max: 1, currency: "inspiration" },
   { id: "enemyCombatLevelSkips", name: "Enemy Combat Level Skips", description: "Opens Enemy Combat Level Skip training: each new floor may leave enemies' ATK and DEF where the last floor's stood", base: 50, max: 1, currency: "inspiration" },
+  { id: "heroShield", name: "Shield", description: "A shield of aether takes the damage of enemy strikes and shots before your HP, and regrows after it breaks: unlock Shield HP training", base: 10, max: 1, currency: "inspiration" },
+  { id: "shieldThorns", name: "Shield Thorns", description: "Open Shield Thorns research in the Archives: enemies striking your shield take a share of your Thorns", base: 15, max: 1, currency: "inspiration" },
+  { id: "regrowShield", name: "Regrow Shield", description: "Your shield regrows sooner after it breaks: unlock Regrow Shield training", base: 10, max: 1, currency: "inspiration" },
+  { id: "shieldRegen", name: "Shield Regen", description: "Open Shield Regen research in the Archives: each step gives your standing shield a share of your Regen", base: 15, max: 1, currency: "inspiration" },
   { id: "cardTorch", name: "Torch", description: "Add the TORCH card to your deck: it moves you toward the closest lit torch, putting it out", card: "torch", base: 20, max: 1, currency: "inspiration" },
   // Limit Break 1 to 10, a chain under Torch: each raises the most levels of
   // the Training rows with `breaks` (LIMIT_BREAK_RANKS, trainingCap).

@@ -79,6 +79,14 @@ export const RESEARCH_TARGETS = {
   shardDefensePercent: { name: "Shard DEF", base: 100, shown: percent },
   /** Parry % added to the trained Parry %, in tenths of a percent. */
   parryPercent: { name: "Parry %", base: 0, shown: tenths },
+  /** The percent of its Shield HP training that the shield holds, from 100. */
+  shieldHpPercent: { name: "Shield HP", base: 100, shown: percent },
+  /** The turns taken off Regrow Shield's training. */
+  regrowTurns: { name: "Regrow Turns", base: 0, shown: (n: number) => `−${n}` },
+  /** The percent of its Regen a standing shield regains each step, from 0. */
+  shieldRegenPercent: { name: "Shield Regen", base: 0, shown: percent },
+  /** The percent of its Thorns a strike on the shield costs an enemy, from 0. */
+  shieldThornsPercent: { name: "Shield Thorns", base: 0, shown: percent },
   /** The percent of the Crit % training's chance that the hero has, from 100. */
   critChancePercent: { name: "Critical Chance", base: 100, shown: percent },
   /** The percent of the Crit x training's factor that the hero has, from 100. */
@@ -270,6 +278,23 @@ const superCritLevels = (target: ResearchTarget, length: number, value: number) 
   const n = i + 1;
   return { gold: neat(200_000 + 11_936 * (n * n * n - 1)), hours: (1440 + 65 * (n * n - 1)) / 60, effect: { target, op: "add", value } };
 });
+
+/** Shield HP research: +2% of the trained value a level for 50 levels. Level n
+ * costs 1 + 0.2m + 0.0001m^3.3 billion Gold, m = n − 1, to the million, and
+ * takes the minutes listed: worked out once, since prices never call inexact
+ * `Math` functions. */
+const SHIELD_HP_GOLD = [1000, 1200, 1401, 1604, 1810, 2020, 2237, 2461, 2696, 2941, 3200, 3473, 3764, 4074, 4406, 4761, 5141, 5549, 5988, 6459, 6965, 7508, 8092, 8717, 9387, 10104, 10871, 11691, 12565, 13498, 14490, 15546, 16668, 17859, 19121, 20457, 21871, 23365, 24941, 26604, 28355, 30198, 32136, 34172, 36309, 38550, 40897, 43355, 45926, 48614];
+const SHIELD_HP_MINUTES = [333, 337, 346, 359, 379, 405, 434, 467, 505, 547, 594, 644, 699, 758, 821, 887, 958, 1033, 1111, 1194, 1280, 1370, 1463, 1561, 1662, 1767, 1875, 1987, 2103, 2223, 2346, 2472, 2602, 2736, 2873, 3014, 3158, 3306, 3457, 3612, 3770, 3931, 4096, 4264, 4436, 4611, 4790, 4972, 5157, 5346];
+/** Regrow Shield research: 10 turns off a level for 20 levels, its Gold in
+ * millions and its time in seconds. */
+const REGROW_SHIELD_GOLD = [1600, 1910, 2230, 2610, 3040, 3555, 4158, 4862, 5686, 6650, 7705, 8928, 10345, 11987, 13890, 15785, 17939, 20387, 23169, 26330];
+const REGROW_SHIELD_SECONDS = [49980, 70200, 98580, 138420, 194340, 272940, 334260, 401460, 482220, 579180, 695700, 835560, 1003620, 1205460, 1447860, 1739040, 2088780, 2508840, 3013380, 3619380];
+/** Shield Regen and Shield Thorns research: +1% a level for the five levels
+ * open so far, n billion Gold for level n and the seconds listed (Thorns'
+ * each 3.6% steeper than the last, compounded). */
+const SHIELD_REGEN_SECONDS = [99960, 120060, 141360, 167880, 207120];
+const SHIELD_THORNS_SECONDS = [99960, 124382, 151721, 186672, 238595];
+const shieldSkillLevels = (target: ResearchTarget, seconds: readonly number[]) => seconds.map((s, i): ResearchLevel => ({ gold: (i + 1) * 1e9, hours: s / 3600, effect: { target, op: "add", value: 1 } }));
 
 /** Offline Gold Multiplier research (+0.5% of the Recent Gold per Hour a
  * level, 5 tenths, for 100 levels, to 50%): Critical Chance's Gold and hours. */
@@ -619,6 +644,34 @@ export const RESEARCH = {
     categories: ["defense"],
     requires: [{ upgrade: "parry" }, { goalUnlock: "parryPercent" }],
     levels: parryLevels(),
+  },
+  shieldHp: {
+    name: "Shield HP",
+    description: "Study the aether's weave: your shield holds more HP, past what training reaches.",
+    categories: ["defense"],
+    requires: [{ upgrade: "archives" }, { upgrade: "heroShield" }, { goalUnlock: "aetherShield" }],
+    levels: SHIELD_HP_GOLD.map((gold, i): ResearchLevel => ({ gold: gold * 1e6, hours: SHIELD_HP_MINUTES[i]! / 60, effect: { target: "shieldHpPercent", op: "add", value: 2 } })),
+  },
+  regrowShield: {
+    name: "Regrow Shield",
+    description: "Learn how a broken shield gathers itself: it regrows in fewer turns, past what training reaches.",
+    categories: ["defense"],
+    requires: [{ upgrade: "archives" }, { upgrade: "regrowShield" }, { goalUnlock: "aetherShield" }],
+    levels: REGROW_SHIELD_GOLD.map((gold, i): ResearchLevel => ({ gold: gold * 1e6, hours: REGROW_SHIELD_SECONDS[i]! / 3600, effect: { target: "regrowTurns", op: "add", value: 10 } })),
+  },
+  shieldRegen: {
+    name: "Shield Regen",
+    description: "Teach your Regen to mend the aether: each step, a standing shield regains a share of your Regen.",
+    categories: ["defense"],
+    requires: [{ upgrade: "archives" }, { upgrade: "shieldRegen" }],
+    levels: shieldSkillLevels("shieldRegenPercent", SHIELD_REGEN_SECONDS),
+  },
+  shieldThorns: {
+    name: "Shield Thorns",
+    description: "Set thorns in the aether: an enemy striking your shield takes a share of your Thorns, where it would take none.",
+    categories: ["defense"],
+    requires: [{ upgrade: "archives" }, { upgrade: "shieldThorns" }],
+    levels: shieldSkillLevels("shieldThornsPercent", SHIELD_THORNS_SECONDS),
   },
   maxHp: {
     name: "Max HP",

@@ -149,6 +149,14 @@ export type Player = {
   /** The percent of an enemy's original DEF each of the hero's hits takes off
    * it before its damage (Armor Break); none when absent. */
   armorBreak?: number;
+  /** The percent of Thorns a strike on the shield costs an enemy (Shield
+   * Thorns research); none when absent. */
+  shieldThorns?: number;
+  /** The Aether Shield's HP now, which takes the damage of enemy strikes and
+   * shots before HP does; absent without the Shield, 0 while it regrows. */
+  shield?: number;
+  /** The most HP the shield holds, as last worked out (`syncShield`). */
+  shieldMax?: number;
   /** The percent of every enemy strike HEAL's card tree parries, added to
    * Parry %; absent without it. */
   cardParry?: number;

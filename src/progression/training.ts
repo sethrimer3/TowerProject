@@ -123,6 +123,21 @@ const armorBreakGold = stretchedPrices(600_000_000, [[49, 1.033391], [50, 1.0736
  * billion for the 100th, 292 billion for the 120th), then ×1.08 a rank, still
  * faster than its trainers' Gold. */
 const armorBreakSilver = stretchedPrices(150, [[9, 1.5], [15, 1.4], [25, 1.18], [70, 1.13], [180, 1.08]]);
+/** Shield HP's trainers: 8 million Gold for the first rank, 1.9 billion for the
+ * 100th, 8.5 billion for the 200th, 39 billion for the 300th, 2.35 trillion for
+ * the 800th, 64 trillion for the 1,300th, 3.21 quadrillion for the 1,800th. */
+const shieldHpGold = stretchedPrices(8_000_000, [[99, 1.05681], [100, 1.01509], [100, 1.01535], [500, 1.008232], [500, 1.006631], [500, 1.007861]]);
+/** Regrow Shield's trainers: 16 million Gold for the first rank, 1.84 billion
+ * for the 50th, 12.69 billion for the 100th, 740 billion for the 200th, 40
+ * trillion for the 300th. */
+const regrowShieldGold = stretchedPrices(16_000_000, [[49, 1.10165], [50, 1.03938], [100, 1.04149], [100, 1.04071]]);
+/** A row's Silver from `first` for the first rank, rising in step with its trainers' Gold. */
+const silverFrom = (first: number, gold: readonly number[]) => gold.map((price) => Math.ceil((price * first) / gold[0]!));
+/** The fewest turns a shield can take to regrow, whatever lowers it. */
+export const REGROW_FLOOR = 150;
+/** The turns a shield takes to regrow, from what Regrow Shield trains and what
+ * its research takes off. */
+export const regrowTurns = (trainedTurns: number, researchedOff: number) => Math.max(REGROW_FLOOR, trainedTurns - researchedOff);
 /** The Enemy Level Skip rows' trainers, long-term sinks: 300 million Gold for
  * the first rank, about 3.72 billion for the 10th, 9 billion for the 20th, 45
  * billion for the 50th, 280 billion for the 100th, 5.26 trillion for the 200th,
@@ -162,7 +177,7 @@ const freeUpgradeTrainers: TrainerCurve = { growth: freeUpgrades.growth, start: 
  * every 10 turns, ATK multiplier a meter, a count with no unit (its name
  * says what), turns, a chance (a percent to the hundredth, 7.42%), a
  * percent, or a bare amount. */
-export type TrainingUnit = "×" | "m" | "shots" | "perMeter" | "count" | "turns" | "chance" | "%" | "";
+export type TrainingUnit = "×" | "m" | "shots" | "perMeter" | "count" | "turns" | "wholeTurns" | "chance" | "%" | "";
 /** How long a trainer's ranks of a row take, when not the usual schedule
  * (`trainingSeconds`): `skip` passes over that many of its quickest first
  * ranks, so the row's first rank takes as long as the usual second; `each`
@@ -463,6 +478,21 @@ export const TRAINING = [
     description: "Raises how far potions, the smelt cards and badge heals can heal you above max HP.",
     silver: overhealPrices, gold: overhealPrices,
   },
+  // The most shield HP, in tenths of a percent of max HP: 20%, and 0.1% more a
+  // rank, 100% at its 800 and 200% at its 1,800 (hero-shield.ts).
+  {
+    id: "shieldHp", name: "Shield HP", group: "defense", requires: "heroShield", cost: 1, max: 800, raisedBy: { upgrade: "shieldLimitBreak", ranks: 1000 },
+    base: 200, curve: { per: 1 }, scale: 10, unit: "%", research: "shieldHpPercent",
+    description: "Raises the most HP your shield holds, a percent of your max HP.",
+    silver: { prices: silverFrom(150, shieldHpGold) }, gold: { prices: shieldHpGold },
+  },
+  // The turns a broken shield takes to regrow: 1,200, and 2 fewer a rank, 600 at its 300.
+  {
+    id: "regrowShield", name: "Regrow Shield", short: "Regrow", group: "defense", requires: "regrowShield", cost: 1, max: 300,
+    base: 1200, off: 1200, curve: { per: -2 }, unit: "wholeTurns",
+    description: "Lowers the turns your shield takes to regrow after it breaks.",
+    silver: { prices: silverFrom(300, regrowShieldGold) }, gold: { prices: regrowShieldGold },
+  },
   // The chance each floor new to a run leaves enemies' HP, or their ATK and
   // DEF, one floor lower on their curve, in hundredths of a percent: 0.05% a
   // rank, 17.5% at its 350, 35% at 700 (enemies/level-skips.ts).
@@ -499,7 +529,7 @@ export function trained(row: Pick<TrainingDef, "curve">, ranks: number) {
   if (ranks <= 0) return 0;
   const c: TrainingCurve = row.curve, m = ranks - 1;
   const curve = c.per * ranks + (c.square ?? 0) * ranks * ranks + (c.cube ?? 0) * m * m * m + (c.fourth ?? 0) * m * m * m * m;
-  return snap(Math.max(curve, (c.atLeast ?? 0) * ranks));
+  return snap(c.atLeast === undefined ? curve : Math.max(curve, c.atLeast * ranks));
 }
 /** What the rank after `ranks` adds to `row`'s stat. */
 export const trainingWorth = (row: StatTrainingRow, ranks: number) => snap(trained(row, ranks + 1) - trained(row, ranks));

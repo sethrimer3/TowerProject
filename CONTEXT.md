@@ -456,6 +456,11 @@ A critical hit that rolls again and lands: its critical multiplier is multiplied
 The roll's chance is the **Super Critical chance** (SCrit % training and research, Super Critical skill).
 Fights, arrows and Bombs can all land one.
 
+**Aether Shield**:
+A pool of **Shield HP** the hero carries once the Shield skill is owned, a percent of its max HP, taking enemy strikes and shots after the shroud and before HP.
+It lasts from fight to fight, unlike the shroud, and when spent it **regrows**: after a count of turns it reforms full.
+Not a **Shielded** enemy's bubble, the Equipment category Shield, or the DEF stat's shield icon.
+
 **Armor Break**:
 Each of the hero's hits, in a fight or from an arrow, first takes a share of the enemy's original DEF off it (Armor Break training and skill), whether or not it then does damage.
 DEF can go below 0, where hits deal that much extra damage.

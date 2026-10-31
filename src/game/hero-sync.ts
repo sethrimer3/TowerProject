@@ -8,6 +8,7 @@ import { RunTimeline } from "../run-timeline.ts";
 import { trainedAmount } from "../progression/training.ts";
 import { ranksInRun } from "../progression/run-training.ts";
 import { treeBonus, treeOverheal } from "../cards/trees.ts";
+import { shieldCapacity, syncShield } from "../hero-shield.ts";
 
 const BOTH_MODES = ["tower", "delve"] as const;
 const KEY_COLORS = ["yellow", "blue", "red"] as const;
@@ -15,12 +16,14 @@ const KEY_COLORS = ["yellow", "blue", "red"] as const;
 /** The hero a run in `mode` gets with everything owned now, at full HP,
  * standing at the entrance's row, and the loadout it keeps. */
 export function startingHero(save: Save, mode: Mode) {
-  const { attack, defense, maxHp, shroud, regen, lifesteal, thorns, parry, armorBreak, bossAttack, pierce, keys: owned, startKeys } = loadout(save, mode);
+  const { attack, defense, maxHp, shroud, regen, lifesteal, thorns, parry, armorBreak, shieldThorns, bossAttack, pierce, keys: owned, startKeys } = loadout(save, mode);
   const keys = { ...owned, yellow: owned.yellow + startKeys.yellow, blue: owned.blue + startKeys.blue };
-  // Only a hero with a shroud, Regen, Lifesteal, Thorn Damage, Parry %, Armor Break, a boss bonus or Piercing carries one.
-  const extras = { ...(shroud ? { shroud } : {}), ...(regen ? { regen } : {}), ...(lifesteal ? { lifesteal } : {}), ...(thorns ? { thorns } : {}), ...(parry ? { parry } : {}), ...(armorBreak ? { armorBreak } : {}), ...(bossAttack ? { bossAttack } : {}), ...(pierce ? { pierce } : {}) };
+  // Only a hero with a shroud, Regen, Lifesteal, Thorn Damage, Parry %, Armor Break, Shield Thorns, a boss bonus or Piercing carries one.
+  const extras = { ...(shroud ? { shroud } : {}), ...(regen ? { regen } : {}), ...(lifesteal ? { lifesteal } : {}), ...(thorns ? { thorns } : {}), ...(parry ? { parry } : {}), ...(armorBreak ? { armorBreak } : {}), ...(shieldThorns ? { shieldThorns } : {}), ...(bossAttack ? { bossAttack } : {}), ...(pierce ? { pierce } : {}) };
+  // A hero with the Shield starts every run with it full.
+  const shieldMax = save.upgrades.heroShield ? shieldCapacity(save, save.training, maxHp) : undefined;
   return {
-    player: { x: MODES[mode].entranceX, y: 0, hp: maxHp, maxHp, attack, defense, ...extras, keys } as Player,
+    player: { x: MODES[mode].entranceX, y: 0, hp: maxHp, maxHp, attack, defense, ...extras, ...(shieldMax === undefined ? {} : { shield: shieldMax, shieldMax }), keys } as Player,
     loadout: { attack, defense, maxHp, ...extras },
   };
 }
@@ -60,6 +63,7 @@ export function changeLoadout(save: Save, change: () => boolean | void) {
       const keys = copy.player.keys;
       for (const color of KEY_COLORS) keys[color] = Math.max(0, keys[color] + after.keys[color] - before[i].keys[color]);
     }
+    syncShield(save, run);
   });
   readyForestRuns(save);
   return true;

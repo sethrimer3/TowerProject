@@ -18,7 +18,7 @@ import { snap } from "../src/exact.ts";
 
 test("a new character starts at 10 ATK, 0 DEF, 100 HP, no shroud, no Regen, no keys and no undo", () => {
   assert.deepEqual(loadout(defaults()), {
-    attack: 10, defense: 0, maxHp: 100, shroud: 0, regen: 0, lifesteal: 0, thorns: 0, parry: 0, armorBreak: 0, bossAttack: 0, pierce: 0, keys: { yellow: 0, blue: 0, red: 0 }, startKeys: { yellow: 0, blue: 0 }, undoCapacity: 0,
+    attack: 10, defense: 0, maxHp: 100, shroud: 0, regen: 0, lifesteal: 0, thorns: 0, parry: 0, armorBreak: 0, shieldThorns: 0, bossAttack: 0, pierce: 0, keys: { yellow: 0, blue: 0, red: 0 }, startKeys: { yellow: 0, blue: 0 }, undoCapacity: 0,
   });
 });
 
@@ -48,6 +48,7 @@ test("each rank of an upgrade adds its grant", () => {
     thorns: 0,
     parry: 0,
     armorBreak: 0,
+    shieldThorns: 0,
     bossAttack: 0,
     pierce: 0,
     keys: { yellow: 1, blue: 2, red: 3 },

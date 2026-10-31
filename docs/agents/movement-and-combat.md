@@ -75,6 +75,18 @@ The planners and forecasts don't count shots, so neither do they count their tho
 Thorns are certain, so `predict` counts them: with thorns it plays the rounds (`thornRounds`, or `lifestealEnding` with Lifesteal), never estimating (thorns end a fight within 200 rounds), and marks a fight its thorns end `thornKill` (the hero takes `turns` strikes, `replies`); `instakill` (a first strike that wins, no thorn kill) replaces `turns === 1` in kill pay, the inspect panel and Damage Visual's gray.
 `resume` reads `thornHp`, `summarize` sums a round's thorns, and the crit forecast's fight lengths (`turnOdds`) end on either side's turn.
 
+**The Aether Shield** (`src/hero-shield.ts`; the skill `heroShield`): `Player.shield` (HP now, 0 while it regrows) and `Player.shieldMax` (its most as last worked out), absent without the skill, so every path without it runs as before; `run.shieldRegrow` (`{ left, of }`) is the countdown.
+All three live on the run, so undo and the save carry them.
+`shieldCapacity` is max HP times Shield HP's amount times its research; `syncShield` compares it with `shieldMax` and fills a first shield or adds what the most gained (unless down), leaving more than the most alone, so it is called from where capacity may have moved (`changeLoadout`, `trainInRun`, `endTurn`, `restore`, `enterFromOutside`) and needs no per-copy shifting: a snapshot catches up as it is restored.
+A strike's damage goes shroud, then shield, then HP: `enemyBlow` in `play` (`BoutState.shield`, `Strike.shielded` and `shieldBroke`), `lifestealEnding`, `predict` (closed form, `CombatPrediction.shieldAfter`, which `resolveStep` applies), `shotDamage` and `volleyTurn` (`Shot.shielded`, `shieldBroke`, `VolleyOutcome.shield`), and `damageByStrikes` in the forecast, which takes shroud and shield as one pool.
+Door tolls and `afterExtra` stay on HP, and a badge's `scale` applies to what reaches HP; `run.damaged` follows the HP lost, as with the shroud.
+A strike on a standing shield costs the enemy `shieldThorn` (`Player.shieldThorns`, a loadout stat from Shield Thorns research, reaching a run through `changeLoadout` as Parry %'s does) rather than its thorns, even if it breaks the shield; since that makes thorns differ by strike, `thornRounds` and the forecast's `totalThorns` read `thornsByStrike`.
+`regenerateShield` (`StepRules.shieldRegen`, percent of the step's Regen) runs beside each `regenerate`, only on a standing shield, up to the most.
+`Game.enter` and `endTurn` call `startRegrow` once a commit leaves it at 0, and `endTurn` calls `tickRegrow` each turn, setting `game.shieldFormedAt`; `fights.shieldBrokeAt` is when the breaking strike or shot lands.
+`regrowTurns` (`progression/training.ts`) floors the count at `REGROW_FLOOR`; it is read once, as the shield breaks.
+Proving Grounds' tactical fights have their own combat, which doesn't read the shield.
+`tests/aether-shield.test.ts` covers it, sweeping `predict` against `bout` across thorns, Shield Thorns, Lifesteal, parries, shrouds, Fast and Armor Break.
+
 **Parries** (the Inspiration skill **Parry**, 10, between Regen Research and Revive; the Defense stat row Parry %, `parry`, 0.5% a rank, 100 ranks, on `Player` in percent) are certain: a hero with any Parry % parries every enemy strike, cutting what it does after DEF by Parry % (`struckDamage`) before the shroud and Lifesteal's heals; the enemy's ATK rises as usual.
 There is no parry chance and no parry roll.
 `parryCut` holds Parry % to `PARRY_CAP` (98), and `loadout` adds the Archives' Parry % research (`parryPercent`, in tenths of a percent) to the trained Parry % under the same cap; research completes through `changeLoadout`, so a run inside gains a level at once and undo keeps it.

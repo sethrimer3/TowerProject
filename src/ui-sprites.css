@@ -539,6 +539,7 @@ html.ui-sprites .stats .shrine-diamond:not(#_) {
 html.ui-sprites .stats .shrine-diamond.lit:not(#_) { opacity: 1; }
 html.ui-sprites .stats .shrine-diamond b:not(#_) { transform: none; color: #eee0b7; }
 html.ui-sprites #shrine-fill:not(#_) { background: url("../public/assets/style/shrine-fill.png") left top / 32px 100% repeat-x; box-shadow: none; }
+html.ui-sprites #shield-fill:not(#_) { background: url("../public/assets/ui/frames/fill-blue.png") left top / 32px 100% repeat-x; }
 html.ui-sprites #overheal-fill:not(#_) { background: url("../public/assets/ui/frames/fill-blue.png") left top / 32px 100% repeat-x; }
 
 /* Equipment keeps its live rarity letters and levels over reusable frames. */

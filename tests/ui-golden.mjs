@@ -330,6 +330,21 @@ try {
         Object.assign(s.tutorials, { enter: true, upgrades: true, training: false });
         s.xp = 48;
       }),
+      // The Aether Shield inside a run: standing, and regrowing. Built last, so
+      // no fixture before them changes.
+      shieldUp: inside((s) => {
+        quiet(s);
+        s.upgrades.aetherShield = s.upgrades.heroShield = 1;
+      }),
+      shieldRegrow: (() => {
+        const { save } = inside((s) => {
+          quiet(s);
+          s.upgrades.aetherShield = s.upgrades.heroShield = 1;
+        }), s = JSON.parse(save);
+        s.tower.run.player.shield = 0;
+        s.tower.run.shieldRegrow = { left: 900, of: 1200 };
+        return { save: JSON.stringify(s), targets: [] };
+      })(),
     };
   });
 
@@ -1035,6 +1050,12 @@ try {
     await shot("shrines.taken");
     await page.locator("#boon-autopick").check();
     await shot("shrines.auto");
+  });
+  await section("shield", async () => {
+    await load("shieldUp");
+    await shot("shield.up");
+    await load("shieldRegrow");
+    await shot("shield.regrow");
   });
   await section("lessons", async () => {
     await load("lessonAutoClimb");

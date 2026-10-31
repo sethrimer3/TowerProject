@@ -4,6 +4,7 @@ import { HEAL_COLOR } from "./effects/damage-labels.ts";
 import type { Coin, Encounter, Gain, GainArt, Heal, ShownFight } from "../shown.ts";
 import { landsAt, type Volley } from "../volley.ts";
 import { OPENING_SHRINK_MS } from "../combat.ts";
+import { snap } from "../exact.ts";
 import { paintContents } from "./tile-painters.ts";
 import { paintGem } from "./effects/gem-art.ts";
 import { RARITY_TIERS } from "../equipment/balance.ts";
@@ -71,6 +72,8 @@ const CHECK_COLOR = "#5fdc6a";
 /** Damage the shroud blocked, and how far apart it and the damage that got
  * through rise when a strike has both, in tiles. */
 const SHROUD_COLOR = "#4da3ff";
+/** What the Aether Shield took of a strike or shot. */
+const SHIELD_COLOR = "#9fd6ff";
 const SHROUD_SPLIT = 0.22;
 /** The amount of Silver beside its coin. */
 const SILVER_COLOR = "#d6dde6";
@@ -237,7 +240,7 @@ export class BoardPopups {
     for (const s of volley.shots) {
       const start = landsAt(volley, s);
       if (s.by === "enemy") {
-        if (s.damage > 0) this.raise({ by: "enemy", damage: s.damage, ...(s.shrouded ? { shrouded: s.shrouded } : {}), start: 0, at: 0, end: 0, hp: 0 }, s.to, start);
+        if (s.damage > 0 || s.shielded) this.raise({ by: "enemy", damage: s.damage, ...(s.shrouded ? { shrouded: s.shrouded } : {}), ...(s.shielded ? { shielded: s.shielded } : {}), start: 0, at: 0, end: 0, hp: 0 }, s.to, start);
         if (s.thorns) this.thorns(s.thorns, s.from, start);
         if (s.thorns && s.full) this.arrowBars.push({ x: s.from.x, y: s.from.y, from: s.before ?? s.full, hp: s.hp ?? 0, full: s.full, start });
         continue;
@@ -266,10 +269,11 @@ export class BoardPopups {
    * full one: a Surprise Attack's first, a Power Strike's). A Super Critical
    * hit's own edge takes the place of those. */
   private raise(s: Strike, on: { x: number; y: number }, start: number, charge = 0) {
-    if (!this.shown.hitNumbers || (s.by === "enemy" && s.healed && !s.damage && !s.shrouded)) return;
-    const both = !!s.shrouded && s.damage > 0, y = on.y + DAMAGE_START;
-    if (s.shrouded) this.numbers.push({ x: on.x - (both ? SHROUD_SPLIT : 0), y, start, text: popupAmount(s.shrouded), color: SHROUD_COLOR });
-    if (s.shrouded && !s.damage) return;
+    const blocked = snap((s.shrouded ?? 0) + (s.shielded ?? 0));
+    if (!this.shown.hitNumbers || (s.by === "enemy" && s.healed && !s.damage && !blocked)) return;
+    const both = !!blocked && s.damage > 0, y = on.y + DAMAGE_START;
+    if (blocked) this.numbers.push({ x: on.x - (both ? SHROUD_SPLIT : 0), y, start, text: popupAmount(blocked), color: s.shielded ? SHIELD_COLOR : SHROUD_COLOR });
+    if (blocked && !s.damage) return;
     if (s.superCrit) {
       this.numbers.push({ x: on.x, y, start, text: popupAmount(s.damage), color: SUPER_CRIT_COLOR, superCrit: true });
       return;

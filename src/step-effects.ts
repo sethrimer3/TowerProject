@@ -112,6 +112,9 @@ export type StepRules = {
    * Shard DEF research), 100 when absent. */
   shardAttack?: number;
   shardDefense?: number;
+  /** The percent of the step's Regen a standing shield regains too (Shield
+   * Regen research), none when absent. */
+  shieldRegen?: number;
   /** The hero's critical strikes (Critical): resolving a fight counts only
    * the applications it is certain to land (chance of 100% or more), the
    * worst it can go; `Game` plays the real rolls out over it. */
@@ -158,6 +161,7 @@ export function resolveStep(player: Player, tile: Tile, rules: StepRules = BASE_
       // counted; a scale's extra damage comes off that.
       const left = combat.hpAfter === undefined ? snap(next.hp - damage) : snap(combat.hpAfter - (damage - combat.damage));
       next.hp = healAfterVictory(snap(Math.max(0, left)), next.maxHp, rules);
+      if (combat.shieldAfter !== undefined) next.shield = combat.shieldAfter;
       effect.combat = scale === 1 ? combat : { ...combat, survivable: next.hp > 0 };
       if (scale !== 1) Object.assign(effect, { extraDamage: snap(damage - combat.damage), scale });
       break;
@@ -226,6 +230,7 @@ export function resolveStep(player: Player, tile: Tile, rules: StepRules = BASE_
   }
   // Regen comes after the step's fight, door or pickup.
   next.hp = regenerate(next.hp, next.maxHp, rules);
+  if (next.shield) next.shield = regenerateShield(next.shield, next.shieldMax ?? 0, rules);
   return effect;
 }
 
@@ -238,6 +243,11 @@ export const healAfterVictory = (hp: number, maxHp: number, rules: StepRules) =>
  * (0 HP) regains nothing. */
 export const regenerate = (hp: number, maxHp: number, rules: StepRules) =>
   rules.regen && hp > 0 && hp < maxHp ? snap(Math.min(maxHp, hp + rules.regen)) : hp;
+
+/** A standing `shield` after a step's Shield Regen, its share of the step's
+ * Regen, up to `max`; one down regains nothing, and one above max keeps what it has. */
+export const regenerateShield = (shield: number, max: number, rules: StepRules) =>
+  rules.shieldRegen && rules.regen && shield > 0 && shield < max ? snap(Math.min(max, shield + (rules.regen * rules.shieldRegen) / 100)) : shield;
 
 /** A fight the player would not survive. */
 export const isLethal = (effect: StepEffect) => !!effect.combat && !effect.combat.survivable;

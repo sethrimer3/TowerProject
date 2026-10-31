@@ -14,11 +14,11 @@ import { playedSave } from "./first-skills.ts";
  * their price, the node each needs and its card (null for a node that opens
  * research or the Manual hand instead). */
 const NODES: [UpgradeId, number, UpgradeId, CardId | null][] = [
-  ["cardWoodenDoor", 20, "thorns", "woodenDoor"],
+  ["cardWoodenDoor", 20, "cardTorch", "woodenDoor"],
   ["cardYellowDoor", 5, "cardWoodenDoor", "yellowDoor"],
   ["heartDoorResilience", 20, "cardYellowDoor", null],
   ["cardHeartDoor", 10, "heartDoorResilience", "heartDoor"],
-  ["cardWeakEnemy", 20, "thorns", "weakEnemy"],
+  ["cardWeakEnemy", 20, "cardTorch", "weakEnemy"],
   ["cardBaseEnemy", 20, "cardWeakEnemy", "baseEnemy"],
   ["cardStrongEnemy", 20, "cardBaseEnemy", "strongEnemy"],
   ["cardFastEnemy", 20, "cardBaseEnemy", "fastEnemy"],
@@ -32,10 +32,9 @@ const NODES: [UpgradeId, number, UpgradeId, CardId | null][] = [
   ["smeltBlue", 20, "blueTrader", "smeltBlue"],
   ["redTrader", 30, "smeltBlue", "redTrader"],
   ["smeltRed", 30, "redTrader", "smeltRed"],
-  ["cardRedKey", 20, "blueSiphon", "redKey"],
-  ["redSiphon", 20, "cardRedKey", "redSiphon"],
+  ["cardRedKey", 20, "cardBlueKey", "redKey"],
+  ["redSiphon", 20, "blueSiphon", "redSiphon"],
   ["floorSkipReward", 20, "cardChest", null],
-  ["cardTorch", 20, "cardChest", "torch"],
 ];
 
 test("each card node costs its price, waits for the node above it and adds its card to the deck", () => {
@@ -44,7 +43,7 @@ test("each card node costs its price, waits for the node above it and adds its c
   g.save.upgrades.questForKnowledge = g.save.upgrades.pathToWealth = g.save.upgrades.physician = g.save.upgrades.keyMastery = g.save.upgrades.moreWealth = g.save.upgrades.cardMastery = g.save.upgrades.beastMastery = g.save.upgrades.doorMastery = 1; // the Archives and the tree under them revealed
   g.save.upgrades.pocketMoney = g.save.upgrades.spareChange = g.save.upgrades.wishingWell = g.save.upgrades.freeTraining = g.save.upgrades.interest = 1; // the wealth path down to Interest, above Chest
   g.save.breakthrough = 100;
-  for (const id of ["combatStance", "buildout", "trainers", "largerHand", "shroud", "critical", "breakthrough", "archives", "lifesteal", "buyQuantity", "thorns", "findYellowKey", "keyEfficiency", "keySiphon"] as const) assert.ok(g.skills.buy(id));
+  for (const id of ["combatStance", "buildout", "trainers", "largerHand", "shroud", "critical", "breakthrough", "archives", "lifesteal", "buyQuantity", "cardYellowKey", "cardBlueKey", "thorns", "cardTorch", "findYellowKey", "keyEfficiency", "keySiphon"] as const) assert.ok(g.skills.buy(id));
   const nodes = TREES.find((t) => t.id === "inspiration")!.nodes;
   for (const [id, price, requires, card] of NODES) {
     assert.deepEqual(nodes.find((n) => n.id === id)!.requires, [requires], id);
@@ -56,7 +55,7 @@ test("each card node costs its price, waits for the node above it and adds its c
     assert.equal(before - g.save.tower.inspiration, price);
     if (card) assert.ok(deckCards(g.save.upgrades).includes(card), `${card} joins the deck`);
   }
-  assert.equal(g.skills.buy("cardTorch"), false, "bought once");
+  assert.equal(g.skills.buy("cardChest"), false, "bought once");
 });
 
 test("a card node can't be bought before the one above it", () => {
@@ -69,9 +68,9 @@ test("a card node can't be bought before the one above it", () => {
   assert.equal(g.skills.buy("cardHeartDoor"), false);
   assert.ok(g.skills.buy("heartDoorResilience"));
   assert.ok(g.skills.buy("cardHeartDoor"));
-  assert.equal(g.skills.buy("cardWeakEnemy"), false, "Weak Enemy hangs off Thorns, hidden until Beast Mastery");
-  g.save.upgrades.thorns = g.save.upgrades.beastMastery = 1;
-  assert.ok(g.skills.buy("cardWeakEnemy"), "Weak Enemy hangs straight off Thorns");
+  assert.equal(g.skills.buy("cardWeakEnemy"), false, "Weak Enemy hangs off Torch, hidden until Beast Mastery");
+  g.save.upgrades.cardTorch = g.save.upgrades.beastMastery = 1;
+  assert.ok(g.skills.buy("cardWeakEnemy"), "Weak Enemy hangs straight off Torch");
 });
 
 const enemy = (strength: EnemyStrength): Tile => ({ kind: "enemy", enemy: { name: "rat", hp: 1, attack: 0, defense: 0, tier: 0, strength } });

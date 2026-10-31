@@ -8,7 +8,7 @@ import type { Save } from "../save/shape.ts";
 import { boonFactor, runBoons } from "../shrines.ts";
 import { badgeFactor } from "../cards/badges.ts";
 import { treeHeroFactor } from "../cards/trees.ts";
-import { TRAINING_GROUPS, TRAINING, TRAINING_PER_LEVEL, trainingCap, isStatRow, trained, trainingWorth, amountAt, trainedAmount, trainingDef, type StatTrainingRow, type TrainingDef, type TrainingId, type TrainingRow } from "./training.ts";
+import { TRAINING_GROUPS, TRAINING, TRAINING_PER_LEVEL, trainingCap, isStatRow, trained, trainingWorth, amountAt, regrowTurns, trainedAmount, trainingDef, type StatTrainingRow, type TrainingDef, type TrainingId, type TrainingRow } from "./training.ts";
 import { GOLD_SHOP, type GoldItemId } from "../economy/provisions.ts";
 import { schedulePrice } from "../economy/prices.ts";
 import { UPGRADES, type UpgradeId } from "./upgrades.ts";
@@ -58,6 +58,8 @@ export type Loadout = {
   parry: number;
   /** The percent of an enemy's original DEF each hit takes off it (Armor Break). */
   armorBreak: number;
+  /** The percent of Thorns a strike on the shield costs an enemy (Shield Thorns research). */
+  shieldThorns: number;
   /** The percent more ATK struck against bosses (equipment). */
   bossAttack: number;
   /** The percent of enemy DEF ignored (equipment's Piercing), up to `PIERCE_CAP`. */
@@ -145,6 +147,7 @@ export function loadout(save: Save, mode: Mode = "tower", eq: EffectTotals = wor
     // Parry % research is kept in tenths of a percent.
     parry: Math.min(PARRY_CAP, snap(own.parry + researched(save.archives, "parryPercent") / 10)),
     armorBreak: own.armorBreak,
+    shieldThorns: researched(save.archives, "shieldThornsPercent"),
     bossAttack: eq.bossAttack,
     pierce: Math.min(eq.pierce, PIERCE_CAP),
     keys: { yellow: own.yellow, blue: own.blue, red: own.red },
@@ -254,7 +257,7 @@ const FREE_ROWS: ReadonlySet<TrainingId> = new Set(Object.values(FREE_TRAINING_R
 export const trainingText = (value: number, unit: string, bare = false) =>
   unit === "×" ? `×${value.toFixed(2)}` : unit === "m" ? `${value.toFixed(2)}${bare ? "" : " m"}` : unit === "shots" ? `${value.toFixed(2)}${bare ? "" : "/10 turns"}`
     : unit === "perMeter" ? `×${(1 + value).toFixed(3)}${bare ? "" : "/m"}` : unit === "count" ? String(value)
-    : unit === "turns" ? `${value.toFixed(2)}${bare ? "" : " turns"}` : unit === "chance" ? `${value.toFixed(2)}%` : `${value}${unit}`;
+    : unit === "turns" ? `${value.toFixed(2)}${bare ? "" : " turns"}` : unit === "wholeTurns" ? `${value}${bare ? "" : " turns"}` : unit === "chance" ? `${value.toFixed(2)}%` : `${value}${unit}`;
 
 /** How much faster trainers train than at first (Faster Trainers research:
  * 0.02 a level); a rank takes its time / (1 + this). */
@@ -362,6 +365,8 @@ export function rowValue(save: Save, id: TrainingId, extra: number, view: Traini
   const value = amountAt(def, ranks) / (def.scale ?? 1);
   // Its research adds to the chance, in tenths of a percent, rather than multiplying it.
   if (id === "superCritChance") return { unit, value: snap(value + researched(save.archives, "superCritChance") / 10) };
+  // Its research takes turns off, down to the floor every shield keeps.
+  if (id === "regrowShield") return { unit, value: regrowTurns(value, researched(save.archives, "regrowTurns")) };
   if (FREE_ROWS.has(id) && boons) return { unit, value: snap(value + boons.freeUp / 100) };
   return { unit, value: unit === "" ? shownAmount(value * f) : snap(value * f) };
 }

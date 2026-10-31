@@ -1,4 +1,4 @@
-import { atWorst, breaksArmor, critAgainst, critMultiplier, guaranteedCrits, heroHit, instakill as instakills, netDamage, parriedEstimate, parryCut, predict, raisedAttack, replies, squaredUp, struckDamage, thornDamage, type CombatPrediction, type CritRule } from "./combat.ts";
+import { atWorst, breaksArmor, critAgainst, critMultiplier, facing, guaranteedCrits, heroHit, instakill as instakills, netDamage, parriedEstimate, parryCut, predict, raisedAttack, replies, squaredUp, struckDamage, thornDamage, thornsByStrike, type CombatPrediction, type CritRule } from "./combat.ts";
 import { snap } from "./exact.ts";
 import type { Enemy, Player } from "./entities.ts";
 
@@ -58,6 +58,7 @@ export function forecast(player: Player, enemy: Enemy, crit: CritRule, played = 
     return { worst, best, expected: net, p10: net, p90: net, turns: worst.turns, survive: worst.survivable ? 1 : 0, instakill: instakills(worst) ? 1 : 0 };
   }
   const thorn = thornDamage(player, enemy), low = worst.hit, step = snap(best.hit - worst.hit);
+  const thornsOver = totalThorns(player, enemy, thorn);
   // Armor Break makes every strike's outcomes different, each strike's DEF lower than the last's.
   const breaks = breaksArmor(player, enemy), rate = player.armorBreak ?? 0, start = enemy.broken ?? 0, opening = enemy.fast ? 1 : 0;
   const brokenAt = (t: number) => snap(start + t * rate);
@@ -66,9 +67,9 @@ export function forecast(player: Player, enemy: Enemy, crit: CritRule, played = 
   // Their average hit over a fight of the length an average strike's ATK makes it.
   const mean = breaks ? enemy.hp / predict({ ...player, attack: snap(player.attack * meanMultiplier(crit, k, extra)) }, enemy, played).turns : hits ? meanHit(hits) : low + extra * step;
   const odds = hits
-    ? mixedOdds(enemy.hp, hitsAt, worst.turns, best.turns, thorn ? Infinity : Math.min(MIXED_TURNS, played), thorn, opening, mean, hitSpread(hits))
-    : turnOdds(enemy.hp, low, step, extra, worst.turns, best.turns, thorn ? Infinity : Math.min(EXACT_TURNS, played), thorn, opening);
-  const { cost, felled } = damageByStrikes(player, enemy, replies(worst), thorn ? Infinity : played, thorn, { mean, top: breaks ? Math.max(mean, enemy.hp / best.turns) : low + step });
+    ? mixedOdds(enemy.hp, hitsAt, worst.turns, best.turns, thorn ? Infinity : Math.min(MIXED_TURNS, played), thorn, opening, mean, hitSpread(hits), thornsOver)
+    : turnOdds(enemy.hp, low, step, extra, worst.turns, best.turns, thorn ? Infinity : Math.min(EXACT_TURNS, played), thorn, opening, thornsOver);
+  const { cost, felled } = damageByStrikes(player, enemy, replies(worst), thorn ? Infinity : played, thornsOver, { mean, top: breaks ? Math.max(mean, enemy.hp / best.turns) : low + step });
   // A fight heals at most up to max HP; its damage is never capped by the HP
   // the hero has, so regenerating HP never moves the forecast.
   const floor = snap(player.hp - player.maxHp), capped = (t: number, r: number) => Math.max(floor, cost(t, r));
@@ -85,12 +86,24 @@ export function forecast(player: Player, enemy: Enemy, crit: CritRule, played = 
   return { worst, best, expected: snap(expected), p10: p10 ?? capped(best.turns, replies(best)), p90: p90 ?? capped(worst.turns, replies(worst)), turns, survive: Math.abs(1 - survive) < 1e-9 ? 1 : Math.min(1, survive), instakill };
 }
 
+/** What the enemy's first `r` strikes cost it in thorns, fewer while the
+ * Aether Shield takes them (`thornsByStrike`). */
+function totalThorns(player: Player, enemy: Enemy, thorn: number) {
+  if (!player.shield || !thorn) return (r: number) => r * thorn;
+  const at = thornsByStrike(facing(player, enemy), enemy, thorn, parryCut(player)), sums = [0];
+  return (r: number) => {
+    while (sums.length <= r) sums.push(snap(sums.at(-1)! + at(sums.length - 1)));
+    return sums[r]!;
+  };
+}
+
 /** The damage the hero takes when the fight lasts `t` of its strikes and
  * `r` of the enemy's, as though it fought on whatever its HP, and whether
  * that fight fells it, summed once up to `most` enemy strikes, or up to
  * `played` and estimated past them. */
-function damageByStrikes(player: Player, enemy: Enemy, most: number, played: number, thorn: number, hits: { mean: number; top: number }) {
-  const sums: number[] = [0], shroud = player.shroud ?? 0, fatal = player.hp + shroud, defense = player.defense, cut = parryCut(player);
+function damageByStrikes(player: Player, enemy: Enemy, most: number, played: number, thornsOver: (r: number) => number, hits: { mean: number; top: number }) {
+  // The Aether Shield takes what gets past the shroud, as the shroud does.
+  const sums: number[] = [0], shroud = (player.shroud ?? 0) + (player.shield ?? 0), fatal = player.hp + shroud, defense = player.defense, cut = parryCut(player);
   // Lifesteal: each of the hero's `t` strikes restores that share of its
   // whole damage, overkill and all: on average the `mean` hit, but at least
   // the enemy's HP its thorns left and at most every strike the `top` hit.
@@ -99,7 +112,7 @@ function damageByStrikes(player: Player, enemy: Enemy, most: number, played: num
   // balance: its damage below 0.
   const healedAt = (t: number, r: number) => {
     if (!player.lifesteal) return 0;
-    const left = Math.max(0, enemy.hp - r * thorn);
+    const left = Math.max(0, enemy.hp - thornsOver(r));
     const dealt = Math.min(t * hits.top, Math.max(left, t * hits.mean));
     return snap((dealt * player.lifesteal) / 100);
   };
@@ -132,8 +145,8 @@ function damageByStrikes(player: Player, enemy: Enemy, most: number, played: num
  * `thorn`, the enemy striking `opening` times (a Fast enemy's once) before
  * the hero's first, and the fight ends once the enemy's `hp` is gone,
  * exactly when it lasts at most `exact` strikes. */
-function turnOdds(hp: number, low: number, step: number, chance: number, last: number, first: number, exact: number, thorn = 0, opening = 0): Ending[] {
-  const done = (t: number, rolls: number, thorns: number) => snap(thorn && thorns ? t * low + rolls * step + thorns * thorn : t * low + rolls * step) >= hp;
+function turnOdds(hp: number, low: number, step: number, chance: number, last: number, first: number, exact: number, thorn = 0, opening = 0, thornsOver: (r: number) => number = (r) => r * thorn): Ending[] {
+  const done = (t: number, rolls: number, thorns: number) => snap(thorn && thorns ? t * low + rolls * step + thornsOver(thorns) : t * low + rolls * step) >= hp;
   const out: Ending[] = [];
   if (last <= exact) {
     // pmf[j]: the odds j of the strikes so far rolled the higher hit and the fight is still on.
@@ -217,9 +230,9 @@ function meanMultiplier(crit: CritRule, k: number, extra: number) {
  * worked out strike by strike up to `exact`, the damage dealt so far merged
  * within a thousandth of the enemy's HP, and past it from the `mean` hit and
  * its `spread`. */
-function mixedOdds(hp: number, hitsAt: (t: number) => Hit[], last: number, first: number, exact: number, thorn: number, opening: number, mean: number, spread: number): Ending[] {
+function mixedOdds(hp: number, hitsAt: (t: number) => Hit[], last: number, first: number, exact: number, thorn: number, opening: number, mean: number, spread: number, thornsOver: (r: number) => number = (r) => r * thorn): Ending[] {
   if (last > exact) return normalOdds(hp, mean, spread, last, first, opening);
-  const done = (dealt: number, thorns: number) => snap(dealt + thorns * thorn) >= hp;
+  const done = (dealt: number, thorns: number) => snap(dealt + thornsOver(thorns)) >= hp;
   const part = hp / MIXED_PARTS, out: Ending[] = [];
   let live: [dealt: number, chance: number][] = [[0, 1]];
   for (let t = 1; t <= last; t++) {

@@ -200,14 +200,14 @@ export const foeRange = (range: number) => (range * 5) / 6;
 export const FOE_REACH = { scale: 36, limit: (range: number) => 25 * range * range };
 
 /** What a Ranged enemy's shot does to `player`: its ATK less DEF, cut by
- * Parry % (every shot is parried), and the shroud (whole for every
- * shot) taking what it can of the rest; the card trees' DEF and shroud
- * against it count (`facing`). */
+ * Parry % (every shot is parried), the shroud (whole for every shot) taking
+ * what it can of the rest, then the Aether Shield; the card trees' DEF and
+ * shroud against it count (`facing`). */
 export function shotDamage(player: Player, enemy: Enemy) {
   player = facing(player, enemy);
   const struck = struckDamage(enemy.attack, player.defense, parryCut(player));
-  const shrouded = Math.min(player.shroud ?? 0, struck);
-  return { damage: snap(struck - shrouded), shrouded };
+  const shrouded = Math.min(player.shroud ?? 0, struck), rest = snap(struck - shrouded), shielded = Math.min(player.shield ?? 0, rest);
+  return { damage: snap(rest - shielded), shrouded, ...(shielded ? { shielded } : {}) };
 }
 
 /** What the Archer's arrow takes off `enemy`: one of its strikes, raised

@@ -149,6 +149,7 @@ const validPlayer = (p: any, width: number) =>
   (p.thorns === undefined || (finite(p.thorns) && p.thorns >= 0)) &&
   (p.parry === undefined || (finite(p.parry) && p.parry >= 0 && p.parry <= 100)) &&
   (p.armorBreak === undefined || (finite(p.armorBreak) && p.armorBreak >= 0)) &&
+  [p.shield, p.shieldMax, p.shieldThorns].every((n) => n === undefined || (finite(n) && n >= 0)) &&
   (p.cardParry === undefined || (finite(p.cardParry) && p.cardParry >= 0 && p.cardParry <= 100)) &&
   (p.bossAttack === undefined || (finite(p.bossAttack) && p.bossAttack >= 0)) &&
   (p.pierce === undefined || (finite(p.pierce) && p.pierce >= 0 && p.pierce <= 100)) &&
@@ -224,6 +225,7 @@ const RUN_FIELD_CHECKS = {
   skipRolls: (v: unknown) => wholeIn(v, 1, 1e9),
   freeRolls: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, n]) => ["offense", "defense", "utility"].includes(k) && wholeIn(n, 1, 1e9)),
   levelSkips: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, s]: [string, any]) => ["hp", "combat"].includes(k) && isRecord(s) && wholeIn(s.skips, 0, 1e9) && wholeIn(s.draws, 1, 1e9) && wholeIn(s.tally, -1e12, LEVEL_SKIP_SURE)),
+  shieldRegrow: (v: unknown) => isRecord(v) && wholeIn(v.left, 1, 1e6) && wholeIn(v.of, 1, 1e6),
   goldCombo: (v: unknown) => wholeIn(v, 1, 1e9),
   maxHpBoost: (v: unknown) => finite(v) && v > 0 && v <= 1e9,
   spawns: (v: unknown) => wholeIn(v, 1, 1e9),
@@ -347,7 +349,7 @@ function decodeUpgrades(raw: any, d: Save) {
   // More Wealth and the Masteries now reveal skills a save may own already.
   // TODO: drop in a later save version.
   d.upgrades.moreWealth ||= Math.min(1, d.upgrades.interest + d.upgrades.maxInterest + d.upgrades.mug);
-  d.upgrades.cardMastery ||= Math.min(1, d.upgrades.blueSiphon + d.upgrades.cardRedKey + d.upgrades.keyToHp + d.upgrades.keySiphon + d.upgrades.keyLessBadges + d.upgrades.keyAtLeastBadges);
+  d.upgrades.cardMastery ||= Math.min(1, d.upgrades.blueSiphon + d.upgrades.keyToHp + d.upgrades.keySiphon + d.upgrades.keyLessBadges + d.upgrades.keyAtLeastBadges);
   d.upgrades.doorMastery ||= Math.min(1, d.upgrades.cardWoodenDoor + d.upgrades.cardYellowDoor + d.upgrades.heartDoorResilience + d.upgrades.cardHeartDoor);
   d.upgrades.beastMastery ||= Math.min(1, d.upgrades.cardWeakEnemy);
 }

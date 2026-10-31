@@ -404,6 +404,90 @@ h1 span {
 #overheal-loss.settling {
   transition: width 1s linear;
 }
+/* The HP and shield counters side by side, the shield's bar under the HP's, a
+ * pixel or two between them, and the vitals' gaps shrunk to make room for it. */
+.hp-readouts {
+  display: flex;
+  gap: 4px;
+  min-width: 0;
+}
+.hp-readouts > .hp-readout {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.hp-readouts > .shield-readout[hidden],
+.shield-track[hidden] {
+  display: none !important;
+}
+.shield-icon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+.hp-readouts > .shield-readout.regrowing {
+  flex: 1.8 1 0;
+}
+/* Its height never moves the board, whatever size its text fits at. */
+.vitals.has-shield .hp-readout b:not(#_) {
+  line-height: 12px;
+}
+.vitals.has-shield:not(#_) {
+  padding-top: 5px;
+}
+/* A phone hasn't the width for both side by side, but has the height. */
+@media (max-width: 480px) {
+  .vitals.has-shield .hp-readouts {
+    flex-direction: column;
+    gap: 2px;
+  }
+  .hp-readouts > .hp-readout:not(#_) {
+    flex: none;
+  }
+}
+.vitals.has-shield .health-track:not(#_):not(#_) {
+  margin: 3px 3px 0;
+}
+.vitals.has-shield .shield-track:not(#_):not(#_) {
+  margin: 3px 3px 4px;
+  background: #1c2a40;
+}
+.vitals.has-shield .shield-track.regrowing:not(#_):not(#_) {
+  background: transparent;
+}
+.vitals.has-shield .keys:not(#_) {
+  margin-top: 3px;
+}
+.shield-track span {
+  display: block;
+  height: 100%;
+}
+#shield-fill {
+  flex: none;
+  background: repeating-linear-gradient(90deg, #2f6fc0 0 5px, #4a8fe0 5px 10px, #6fb0f5 10px 15px);
+}
+#shield-fill.reforming {
+  animation: shield-fill-in 600ms linear;
+}
+@keyframes shield-fill-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+#shield-over {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: repeating-linear-gradient(90deg, #a9d4ff 0 5px, #c6e3ff 5px 10px, #e4f2ff 10px 15px);
+}
+/* A regrowing shield: a hollow bar, which grows longer turn by turn. */
+#shield-regrow {
+  position: absolute;
+  inset: 0 auto 0 0;
+  box-sizing: border-box;
+  border: 1px solid #6fb0f5;
+}
+/* Its border would leave a stub even at no width. */
+.shield-track:not(.regrowing) #shield-regrow {
+  display: none;
+}
 /* ATK, DEF and the shroud in a row, the same space between each: up to
    18px, narrowing evenly (to 3px) where the row is tight, so the shroud
    never runs off the edge. */

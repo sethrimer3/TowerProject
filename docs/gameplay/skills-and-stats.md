@@ -10,10 +10,11 @@ A skill you can't yet afford, once pressed, says how many more Inspiration point
 ## Below the Archives
 
 Greater Heal and the skills under it stay hidden until the Breakthrough skill **Physician** (1 Breakthrough, below Movement Speed) is bought, and Pocket Money and the skills under it until **Path to Wealth** (1 Breakthrough, left of Physician).
-Below Free Training, **Interest**, with **Max Interest** and **Mug** either side under it (10 Inspiration each), and Chest, Torch and Floor Skip Reward under them, wait besides on **More Wealth** (1 Breakthrough, under Path to Wealth).
+Below Free Training, **Interest**, with **Max Interest** and **Mug** either side under it (10 Inspiration each), and Chest and Floor Skip Reward under them, wait besides on **More Wealth** (1 Breakthrough, under Path to Wealth).
 **Golden Floors** (3 Breakthrough, under More Wealth) opens the [Golden Floor](environments.md#golden-floor) research.
 **Offline Gold** (2 Breakthrough, down and right of Golden Floors, after it) pays Gold for time away and opens its research (see [Offline Gold](currencies-and-shop.md#offline-gold)).
-**Thorns** stands below Buy Quantity, a row below Torch and Floor Skip Reward, and leads three ways, each hidden until a Mastery under **Key Mastery** (1 Breakthrough, under Badges) in the Breakthrough tree is bought: down the middle Wooden Door and the door cards (**Door Mastery**, 2 Breakthrough, right of Extra Trainer under Key Mastery, after it), down to the left Find Gold Key and Key Efficiency (revealed by Key Mastery itself), then GK Siphon, BK Siphon, the key trades and the key badges (**Card Mastery**), and to the right Weak Enemy and the enemy cards (**Beast Mastery**), those two 1 Breakthrough each, split off under Key Mastery.
+**Thorns** stands below Buy Quantity, with **Torch** (20 Inspiration) below it, a row below Floor Skip Reward.
+Torch leads three ways, each hidden until a Mastery under **Key Mastery** (1 Breakthrough, under Badges) in the Breakthrough tree is bought: down the middle Wooden Door and the door cards (**Door Mastery**, 2 Breakthrough, right of Extra Trainer under Key Mastery, after it), down to the left Find Gold Key and Key Efficiency (revealed by Key Mastery itself), then GK Siphon, BK Siphon, the key trades and the key badges (**Card Mastery**), and to the right Weak Enemy and the enemy cards (**Beast Mastery**), those two 1 Breakthrough each, split off under Key Mastery.
 **Bombs** (5 Inspiration, left of Critical Prediction, after it) opens the Bomb provision (see gear-and-equipment.md).
 **Super Critical** (30 Inspiration, under Bombs) opens SCrit % and SCrit x training (see training.md).
 **Armor Break** (50 Inspiration, under Super Critical) opens Armor Break training (see training.md).

@@ -33,7 +33,7 @@ test("the skills: their trees, prices, places and what reveals them", () => {
   for (const id of ["enemyHpLevelSkips", "enemyCombatLevelSkips"] as const) assert.deepEqual([UPGRADES.find((u) => u.id === id)!.currency, cost(id, 0)], ["inspiration", 50], id);
   assert.deepEqual([at("enemyLevelSkips").x, at("enemyLevelSkips").y, at("enemyLevelSkips").requires], [50, 137, ["life"]], "straight below Life");
   assert.deepEqual([at("life").x, at("life").y], [50, 111]);
-  assert.deepEqual(["floorSkipReward", "cardTorch"].map((id) => [at(id).x, at(id).y]), [[10, 358], [30, 358]], "Floor Skip Reward and Torch swapped");
+  assert.deepEqual([at("floorSkipReward").x, at("floorSkipReward").y], [10, 358]);
   assert.deepEqual([at("enemyHpLevelSkips").x, at("enemyHpLevelSkips").y, at("enemyHpLevelSkips").requires], [10, 376, ["floorSkipReward"]]);
   assert.deepEqual([at("enemyCombatLevelSkips").x, at("enemyCombatLevelSkips").y, at("enemyCombatLevelSkips").requires], [10, 394, ["enemyHpLevelSkips"]]);
   assert.deepEqual([at("enemyLevelSkipLimitBreak").y, at("enemyLevelSkipLimitBreak").requires], [at("limitBreak1").y, ["limitBreak1"]], "splits off Limit Break 1");

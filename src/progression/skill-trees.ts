@@ -52,10 +52,11 @@ export const TREES: SkillTree[] = [
     // owned. Research needs the Archives, so the skills that open it come
     // after them: Pocket Money (then Spare Change, Wishing Well, Free
     // Training and Interest below it) and Greater Heal either side of the
-    // core path down the middle (Lifesteal, Buy Quantity, then Thorns, low
-    // enough that the paths it leads to clear Pocket Money's side).
+    // core path down the middle (Lifesteal, Buy Quantity, Thorns, then Torch,
+    // low enough that the paths it leads to clear Pocket Money's side).
     // Recovery and Regen Research (then Parry, then Revive) stand under Greater Heal.
-    // Gold Key stands down and right of Buy Quantity, with Blue Key under it.
+    // Gold Key stands down and right of Buy Quantity, with Blue Key and Red Key
+    // under it.
     // Pocket Money's side waits on Path to Wealth, and Greater Heal's on Physician,
     // both in the Breakthrough tree.
     { id: "archives", icon: "▥", x: 50, y: 196, requires: ["breakthrough"], reveal: "questForKnowledge" },
@@ -64,7 +65,16 @@ export const TREES: SkillTree[] = [
     { id: "buyQuantity", icon: "×", x: 50, y: 268, requires: ["lifesteal"] },
     { id: "cardYellowKey", icon: "⚿", x: 70, y: 286, requires: ["buyQuantity"] },
     { id: "cardBlueKey", icon: "⚿", x: 70, y: 304, requires: ["cardYellowKey"] },
-    { id: "thorns", icon: "✥", x: 50, y: 376, requires: ["buyQuantity"] },
+    { id: "cardRedKey", icon: "⚿", x: 70, y: 322, requires: ["cardBlueKey"] },
+    { id: "thorns", icon: "✥", x: 50, y: 322, requires: ["buyQuantity"] },
+    { id: "cardTorch", icon: "☼", x: 50, y: 376, requires: ["thorns"] },
+    // The Shield path splits off Torch to the right, revealed by Aether Shield
+    // (in the Breakthrough tree): Shield, with Shield Thorns under it, then
+    // Regrow Shield to its right, with Shield Regen under that.
+    { id: "heroShield", icon: "◯", x: 70, y: 376, requires: ["cardTorch"], reveal: "aetherShield" },
+    { id: "shieldThorns", icon: "✥", x: 70, y: 394, requires: ["heroShield"] },
+    { id: "regrowShield", icon: "↻", x: 90, y: 376, requires: ["heroShield"] },
+    { id: "shieldRegen", icon: "♥", x: 90, y: 394, requires: ["regrowShield"] },
     { id: "spareChange", icon: "¤", x: 20, y: 232, requires: ["pocketMoney"] },
     { id: "wealthy", icon: "¤", x: 10, y: 250, requires: ["spareChange"] },
     { id: "loot", icon: "☠", x: 30, y: 250, requires: ["spareChange"] },
@@ -72,7 +82,7 @@ export const TREES: SkillTree[] = [
     { id: "freeTraining", icon: "↑", x: 20, y: 286, requires: ["wishingWell"] },
     // Interest under Free Training (More Wealth, in the Breakthrough tree,
     // reveals it), Max Interest and Mug either side under it, Chest under
-    // them, and Floor Skip Reward and Torch under Chest. Enemy HP and Combat
+    // them, and Floor Skip Reward under Chest. Enemy HP and Combat
     // Level Skips straight down under Floor Skip Reward, revealed by Enemy
     // Level Skips (in the Breakthrough tree).
     { id: "interest", icon: "¤", x: 20, y: 304, requires: ["freeTraining"], reveal: "moreWealth" },
@@ -80,7 +90,6 @@ export const TREES: SkillTree[] = [
     { id: "mug", icon: "☠", x: 30, y: 322, requires: ["interest"] },
     { id: "cardChest", icon: "▣", x: 20, y: 340, requires: ["interest"] },
     { id: "floorSkipReward", icon: "↷", x: 10, y: 358, requires: ["cardChest"] },
-    { id: "cardTorch", icon: "☼", x: 30, y: 358, requires: ["cardChest"] },
     { id: "enemyHpLevelSkips", icon: "↷", x: 10, y: 376, requires: ["floorSkipReward"], reveal: "enemyLevelSkips" },
     { id: "enemyCombatLevelSkips", icon: "↷", x: 10, y: 394, requires: ["enemyHpLevelSkips"] },
     { id: "greaterHeal", icon: "✚", x: 80, y: 214, requires: ["archives"], reveal: "physician" },
@@ -93,28 +102,28 @@ export const TREES: SkillTree[] = [
     { id: "revive", icon: "☼", x: 90, y: 268, requires: ["parry"], reveal: "life" },
     { id: "angelWings", icon: "⚚", x: 90, y: 286, requires: ["revive"] },
     { id: "avengingAngel", icon: "⚔", x: 90, y: 304, requires: ["angelWings"] },
-    // Thorns leads three ways, each revealed by a Mastery in the Breakthrough
+    // Torch leads three ways, each revealed by a Mastery in the Breakthrough
     // tree. Down the middle (Door Mastery): Wooden Door, two rows under
-    // Thorns, then Gold Door, Heart Door Resilience and Heart Door below it.
-    { id: "cardWoodenDoor", icon: "⚿", x: 50, y: 412, requires: ["thorns"], reveal: "doorMastery" },
+    // Torch, then Gold Door, Heart Door Resilience and Heart Door below it.
+    { id: "cardWoodenDoor", icon: "⚿", x: 50, y: 412, requires: ["cardTorch"], reveal: "doorMastery" },
     { id: "cardYellowDoor", icon: "⚿", x: 50, y: 466, requires: ["cardWoodenDoor"] },
     { id: "heartDoorResilience", icon: "♥", x: 50, y: 484, requires: ["cardYellowDoor"] },
     { id: "cardHeartDoor", icon: "♥", x: 50, y: 502, requires: ["heartDoorResilience"] },
     // To the right (Beast Mastery): Weak Enemy, with Elite, then Boss, then
     // Non-Boss to its right and down; Base under it, with Fast under Base and
     // Strong down and right of it.
-    { id: "cardWeakEnemy", icon: "☠", x: 70, y: 394, requires: ["thorns"], reveal: "beastMastery" },
-    { id: "cardEliteEnemy", icon: "☠", x: 90, y: 394, requires: ["cardWeakEnemy"] },
-    { id: "cardBossEnemy", icon: "☠", x: 90, y: 412, requires: ["cardEliteEnemy"] },
-    { id: "cardNonBossEnemy", icon: "☠", x: 90, y: 430, requires: ["cardBossEnemy"] },
-    { id: "cardBaseEnemy", icon: "☠", x: 70, y: 430, requires: ["cardWeakEnemy"] },
-    { id: "cardFastEnemy", icon: "☠", x: 70, y: 448, requires: ["cardBaseEnemy"] },
-    { id: "cardStrongEnemy", icon: "☠", x: 90, y: 448, requires: ["cardBaseEnemy"] },
+    { id: "cardWeakEnemy", icon: "☠", x: 70, y: 412, requires: ["cardTorch"], reveal: "beastMastery" },
+    { id: "cardEliteEnemy", icon: "☠", x: 90, y: 412, requires: ["cardWeakEnemy"] },
+    { id: "cardBossEnemy", icon: "☠", x: 90, y: 430, requires: ["cardEliteEnemy"] },
+    { id: "cardNonBossEnemy", icon: "☠", x: 90, y: 448, requires: ["cardBossEnemy"] },
+    { id: "cardBaseEnemy", icon: "☠", x: 70, y: 448, requires: ["cardWeakEnemy"] },
+    { id: "cardFastEnemy", icon: "☠", x: 70, y: 466, requires: ["cardBaseEnemy"] },
+    { id: "cardStrongEnemy", icon: "☠", x: 90, y: 466, requires: ["cardBaseEnemy"] },
     // Down to the left: Find Gold Key and Key Efficiency (Key Mastery), then
     // (Card Mastery) GK Siphon, BK Siphon, with Smelt Gold Key, then GK -> BK, Smelt Blue
-    // Key, BK -> RK and Smelt Red Key, down its left, and Red Key, RK Siphon,
+    // Key, BK -> RK and Smelt Red Key, down its left, and RK Siphon,
     // Key < Badges and Key ≥ Badges under it.
-    { id: "findYellowKey", icon: "⚿", x: 30, y: 394, requires: ["thorns"], reveal: "keyMastery" },
+    { id: "findYellowKey", icon: "⚿", x: 30, y: 394, requires: ["cardTorch"], reveal: "keyMastery" },
     { id: "keyEfficiency", icon: "⚿", x: 30, y: 412, requires: ["findYellowKey"], reveal: "keyMastery" },
     { id: "keySiphon", icon: "⚿", x: 30, y: 430, requires: ["keyEfficiency"], reveal: "cardMastery" },
     { id: "blueSiphon", icon: "⚿", x: 30, y: 448, requires: ["keySiphon"], reveal: "cardMastery" },
@@ -123,8 +132,7 @@ export const TREES: SkillTree[] = [
     { id: "smeltBlue", icon: "♥", x: 10, y: 502, requires: ["blueTrader"] },
     { id: "redTrader", icon: "⚿", x: 10, y: 520, requires: ["smeltBlue"] },
     { id: "smeltRed", icon: "♥", x: 10, y: 538, requires: ["redTrader"] },
-    { id: "cardRedKey", icon: "⚿", x: 30, y: 466, requires: ["blueSiphon"] },
-    { id: "redSiphon", icon: "⚿", x: 30, y: 484, requires: ["cardRedKey"] },
+    { id: "redSiphon", icon: "⚿", x: 30, y: 484, requires: ["blueSiphon"] },
     { id: "keyLessBadges", icon: "⚿", x: 30, y: 502, requires: ["redSiphon"] },
     { id: "keyAtLeastBadges", icon: "⚿", x: 30, y: 520, requires: ["keyLessBadges"] },
   ] },
@@ -146,22 +154,24 @@ export const TREES: SkillTree[] = [
     { id: "endRush", icon: "⇶", x: 90, y: 85, requires: ["dash"] },
     { id: "dashRegen", icon: "⇶", x: 90, y: 111, requires: ["endRush"] },
     { id: "dashBadge", icon: "◪", x: 90, y: 137, requires: ["dashRegen", "cardBadges"] },
-    // Golden Floors, then Rehearsed steps and Echoes of time, straight down
-    // under More Wealth (under Path to Wealth): the Golden Floors' research
-    // and the undos. Offline Gold splits off down and right of Golden Floors,
-    // beside Echoes of time.
+    // Golden Floors, then Rehearsed steps and Aether Shield, straight down
+    // under More Wealth (under Path to Wealth), then Echoes of time down and
+    // left of Aether Shield, clear of Card Mastery: the Golden Floors' research,
+    // the undos, and what reveals the Inspiration tree's Shield path. Offline
+    // Gold splits off down and right of Golden Floors, beside Aether Shield.
     { id: "moreWealth", icon: "¤", x: 18, y: 85, requires: ["pathToWealth"] },
     { id: "goldenFloors", icon: "¤", x: 18, y: 111, requires: ["moreWealth"] },
     { id: "offlineGold", icon: "¤", x: 38, y: 163, requires: ["goldenFloors"] },
     { id: "inspirationUndos", icon: "↺", x: 18, y: 137, requires: ["goldenFloors"] },
-    { id: "undos", icon: "↺", x: 18, y: 163, requires: ["inspirationUndos"] },
+    { id: "aetherShield", icon: "◯", x: 18, y: 163, requires: ["inspirationUndos"] },
+    { id: "undos", icon: "↺", x: 10, y: 189, requires: ["aetherShield"] },
     // Overheal, Life (which reveals Revive and the Angel skills) and Enemy
     // Level Skips (which reveals its two skills under Floor Skip Reward) under
     // Physician; Badges stand down and right of Physician, and Key Mastery
     // under Badges. Beast Mastery splits off down and right of Key Mastery,
     // Card Mastery down and far left of it, with Manual Hand, the second
     // hand, under Card Mastery. Card, Beast and Door Mastery reveal the
-    // Inspiration tree's three paths under Thorns.
+    // Inspiration tree's three paths under Torch.
     { id: "overheal", icon: "♥", x: 50, y: 85, requires: ["physician"] },
     { id: "life", icon: "✚", x: 50, y: 111, requires: ["overheal"] },
     { id: "enemyLevelSkips", icon: "↷", x: 50, y: 137, requires: ["life"] },
@@ -171,7 +181,7 @@ export const TREES: SkillTree[] = [
     { id: "cardMastery", icon: "▤", x: 30, y: 189, requires: ["keyMastery"] },
     { id: "manualHand", icon: "⇄", x: 30, y: 215, requires: ["cardMastery"] },
     // Extra Trainer under Key Mastery, with Door Mastery to its right after
-    // it, which reveals the Inspiration tree's door path under Thorns. Then
+    // it, which reveals the Inspiration tree's door path under Torch. Then
     // the run's charges below Extra Trainer: Ignore, with Target to its
     // right, each with the skill that regains it below.
     { id: "extraTrainer", icon: "⚔", x: 50, y: 189, requires: ["keyMastery"] },
@@ -181,10 +191,12 @@ export const TREES: SkillTree[] = [
     { id: "ignoreMore", icon: "⊘", x: 50, y: 237, requires: ["ignore"] },
     { id: "targetMore", icon: "⌖", x: 78, y: 237, requires: ["target"] },
     // Limit Break 1 to 10 straight down under Ignore More, each requiring the
-    // one before, and Enemy Level Skip Limit Break split off the first.
+    // one before, Enemy Level Skip Limit Break split off the first, and Shield
+    // Limit Break off the second.
     { id: "limitBreak1", icon: "⇑", x: 50, y: 261, requires: ["ignoreMore"] },
     { id: "enemyLevelSkipLimitBreak", icon: "⇑", x: 30, y: 261, requires: ["limitBreak1"], reveal: "enemyLevelSkips" },
     { id: "limitBreak2", icon: "⇑", x: 50, y: 285, requires: ["limitBreak1"] },
+    { id: "shieldLimitBreak", icon: "⇑", x: 78, y: 285, requires: ["limitBreak2"], reveal: "aetherShield" },
     { id: "limitBreak3", icon: "⇑", x: 50, y: 309, requires: ["limitBreak2"] },
     { id: "limitBreak4", icon: "⇑", x: 50, y: 333, requires: ["limitBreak3"] },
     { id: "limitBreak5", icon: "⇑", x: 50, y: 357, requires: ["limitBreak4"] },

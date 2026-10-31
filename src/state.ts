@@ -10,7 +10,7 @@ import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./cards/b
 import { BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
 import { noteGoldBoost } from "./economy/gold-boost.ts";
 import { canWarp, claimGoal, goalUnlocked, goalsWaiting } from "./goals.ts";
-import { volleyTurn, type Shot, type Volley, type VolleyTurn } from "./volley.ts";
+import { landsAt, volleyTurn, type Shot, type Volley, type VolleyTurn } from "./volley.ts";
 import { missGem } from "./economy/gems.ts";
 import { DelvePlan } from "./delve/automove.ts";
 import { defaults } from "./save/save.ts";
@@ -94,6 +94,7 @@ import { ShrineDesk } from "./game/shrine-desk.ts";
 import { NoticeDesk } from "./game/notice-desk.ts";
 import { boonFactor, runBoons, weakened } from "./shrines.ts";
 import { LEVEL_SKIP_KINDS, LEVEL_SKIP_ROWS, rollLevelSkip } from "./enemies/level-skips.ts";
+import { startRegrow, syncShield, tickRegrow } from "./hero-shield.ts";
 import type { MissionType } from "./missions/catalog.ts";
 import type { EventMissionType } from "./events/catalog.ts";
 import { LEAGUE_INFO, type League } from "./tournament/leagues.ts";
@@ -277,6 +278,9 @@ export class Game {
   /** When the hero last reached a new level (performance.now()), for the
    * board's level-up burst; -Infinity once undo takes the level back. */
   levelUpAt = -Infinity;
+  /** When the Aether Shield last reformed (performance.now()), for the board's
+   * growing bubble and sparkles; undo forgets it. */
+  shieldFormedAt = -Infinity;
   /** The training points the latest level-up earned, which the board
    * raises over the hero once its burst is over. */
   levelUpPoints = 0;
@@ -717,6 +721,8 @@ export class Game {
     this.recordProgress();
     if (levelForXp(snapshot.xp) < levelForXp(this.save.xp)) this.levelUpAt = -Infinity;
     this.fights.forgetMarks();
+    this.shieldFormedAt = -Infinity;
+    syncShield(this.save, this.run);
     this.dashedTo = null;
     this.areaBursts = [];
     this.warpLooted = null;
@@ -1482,8 +1488,8 @@ export class Game {
       return n ? [[color, n] as const] : [];
     });
     const keyFind = found.length ? { keyFind: Object.fromEntries(found) } : {};
-    const overheal = this.overheal;
-    return { potionHeal, percentPotion: trainedAmount(this.trainingNow, "potion"), regen, ...(overheal > 1000 ? { overheal } : {}),
+    const overheal = this.overheal, shieldRegen = researched(this.save.archives, "shieldRegenPercent");
+    return { potionHeal, percentPotion: trainedAmount(this.trainingNow, "potion"), regen, ...(overheal > 1000 ? { overheal } : {}), ...(shieldRegen ? { shieldRegen } : {}),
       heartToll: researched(this.save.archives, "heartToll"), keyCost: this.keyCost, ...keyFind, ...(this.doorOff ? { doorOff: this.doorOff } : {}),
       ...(tree.doorHeal ? { doorHeal: tree.doorHeal } : {}), ...(tree.yellowLockHeal ? { yellowLockHeal: tree.yellowLockHeal } : {}), ...(tree.keyHeal ? { keyHeal: tree.keyHeal } : {}), ...(tree.keyOverheal ? { keyOverheal: tree.keyOverheal } : {}),
       ...Object.fromEntries(KEY_ORDER.flatMap((color) => (["KeyHeal", "KeyOverheal"] as const).flatMap((part) => (keyStat(tree, color, part) ? [[`${color}${part}`, keyStat(tree, color, part)]] : [])))),
@@ -2156,6 +2162,7 @@ export class Game {
     // A door's Door Heal comes after its drain, which is shown as it was.
     const drained = snap(this.run.player.hp - outcome.player.hp + (t.kind === "door" ? outcome.healed : 0));
     this.applyStats(outcome.player);
+    startRegrow(this.save, this.run);
     if (t.kind === "door") this.finds.door(t, outcome, drained, dest);
     if (t.kind !== "enemy") return true;
     const extra = outcome.extraDamage ?? 0, p = this.run.player, openers = fightOpeners(p, t.enemy!, !!surprise, !!firstStrike);
@@ -2293,6 +2300,7 @@ export class Game {
     p.hp = next.hp;
     p.attack = next.attack;
     p.defense = next.defense;
+    if (next.shield !== undefined) p.shield = next.shield;
     Object.assign(p.keys, next.keys);
   }
   /** Marks the Tower area as no longer mastered; the Delve has no areas. */
@@ -2327,6 +2335,8 @@ export class Game {
     if (!before || this.run.outside || this.fallen) return;
     this.comboTurn(fought, dashed);
     this.tickBoosts();
+    syncShield(this.save, this.run);
+    if (tickRegrow(this.run)) this.shieldFormedAt = performance.now();
     const p = this.run.player, from = before.run.player, sameFloor = this.mode !== "tower" || before.run.height === this.run.height;
     const at = performance.now(), ms = Math.min(TURN_MS, 800 / Math.max(1, this.stepsPerSecond));
     // The board walks a single step at an even pace; anything else it snaps.
@@ -2337,6 +2347,8 @@ export class Game {
       volleys: { ...v, turn: v.turn + 1 }, archer, ranks: { ...this.trainingNow, archives: this.save.archives }, cardCrit: this.cardCrit, handShot: this.handShot });
     this.run.volleys = out.volleys;
     p.hp = out.hp;
+    if (out.shield !== undefined) p.shield = out.shield;
+    startRegrow(this.save, this.run);
     if (out.hurt) {
       this.markDamaged();
       this.events.hurt(this.mode, this.run.seed);
@@ -2402,6 +2414,8 @@ export class Game {
   private showVolley(shots: Shot[], at: number, ms: number) {
     if (!shots.length) return;
     this.volley = { at, ms, shots };
+    const broke = shots.find((s) => s.shieldBroke);
+    if (broke) this.fights.shieldBrokeAt = landsAt(this.volley, broke);
   }
   /** A desk's command counted toward the missions (Training, badges), and
    * the Event's alike. */
@@ -2508,6 +2522,7 @@ export class Game {
   private forestKey = (tier: number) => `${this.mode}:${tier}`;
   private enterFromOutside() {
     this.forestSeeds.clear();
+    syncShield(this.save, this.run);
     const p = this.run.player;
     this.run.outside = false;
     this.run.notes = newNotes(this.clock());
@@ -2947,6 +2962,7 @@ export class Game {
     // Undo takes the ranks back, so only the run's most bought counts.
     const bought = Object.values(this.run.training ?? {}).reduce((n, k) => n + (k ?? 0), 0);
     this.missions.mark("runTraining", this.mode, this.run.seed, bought);
+    syncShield(this.save, this.run);
     this.afterPlayerAction();
     return true;
   }

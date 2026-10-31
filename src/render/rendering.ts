@@ -36,6 +36,7 @@ import { drawPoof, POOF_MS } from "./effects/poof.ts";
 import { drawSmite, SMITE_MS } from "./effects/smite.ts";
 import { drawExplosion, EXPLOSION_MS } from "./effects/explosion.ts";
 import { drawBoostGlow } from "./effects/boost-glow.ts";
+import { drawShieldBubble, SHIELD_FORM_MS, SHIELD_POP_MS } from "./effects/shield-bubble.ts";
 import { POSITION_HALOS_ENABLED } from "./lighting.ts";
 import { drawHeroLight, drawStairsLights } from "./effects/position-lights.ts";
 import type { Boosted } from "../runs.ts";
@@ -193,6 +194,7 @@ export class Renderer {
     }
     this.echoes.draw(f, themed ? (c, facing) => themed.hero(c, facing) : (c) => paintHero(c, f.heroFacing));
     if (!f.look.outside) drawBoostGlow(f, this.boosts);
+    if (!f.look.outside) drawShieldBubble(f, { up: this.game.fights.shownShield(now) > 0, brokeAt: this.game.fights.shieldBrokeAt, formedAt: this.game.shieldFormedAt });
     this.drawOverlays(f);
     const walkIn = this.game.walkIn;
     if (walkIn?.stage === "gone" && f.look.outside) this.zoomIntoEntrance(f, walkIn);
@@ -770,7 +772,7 @@ export class Renderer {
   /** Every timed effect has played out: the arrival glow, a dash's echoes,
    * a blocked step, the feedback text, the level-up, skulls, revivals, an area
    * reward's burst, Warp Loot's, a Greater Boss's poof, Avenging Angel's smites, a Bomb's explosion, a Gem's
-   * sparkle, the turn's shots in flight, and a boost's glow pulsing. */
+   * sparkle, the turn's shots in flight, a boost's glow pulsing, and the shield popping or reforming. */
   private effectsOver(now: number) {
     const g = this.game, sparkle = g.gemFinder.sparkle;
     return (!POSITION_HALOS_ENABLED || now - this.arrived > ARRIVAL_GLOW_MS) && this.echoes.over(now) && g.blocked.until <= now && g.effect.until <= now &&
@@ -778,7 +780,8 @@ export class Renderer {
       g.areaBursts.every((b) => now - b.at >= AREA_BURST_MS) && (!g.warpLooted || now - g.warpLooted.at >= WARP_LOOT_MS) &&
       (!g.summoned || now - g.summoned.at >= POOF_MS) && g.smitten.every((s) => now - s.at >= SMITE_MS) && (!g.vanished || now - g.vanished.at >= POOF_MS) && (!g.bombed || now - g.bombed.at >= EXPLOSION_MS) &&
       (!sparkle || now - sparkle.at >= GEM_SPARKLE_MS) && (!g.volley || volleyOver(g.volley, now)) && this.inFlight.over(now) &&
-      (!POSITION_HALOS_ENABLED || g.save.settings.reduceMotion || !this.boosts.length);
+      (!POSITION_HALOS_ENABLED || g.save.settings.reduceMotion || !this.boosts.length) &&
+      now - g.fights.shieldBrokeAt >= SHIELD_POP_MS && now - g.shieldFormedAt >= SHIELD_FORM_MS;
   }
   /** Active torches roughly within the camera viewport, padded so a torch
    * whose center is just offscreen can still light visible ground. Cheap

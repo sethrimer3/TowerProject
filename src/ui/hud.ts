@@ -16,6 +16,8 @@ import { cardLevelHtml, cardLevelTitle } from "./card-level-marks.ts";
 import { badgeDef, badgesOn, badgeValue, type RunBadge } from "../cards/badges.ts";
 import { badgeGlyph, badgeStyle } from "./badge-token.ts";
 import { heroClass } from "../goals.ts";
+/** How long a reformed shield's bar takes to fill in. */
+const SHIELD_FILL_MS = 600;
 import { shrinesOpen } from "../shrines.ts";
 import type { BoardOverlay } from "./board-overlay.ts";
 import { CountUp } from "./count-up.ts";
@@ -523,8 +525,9 @@ function fitCombatStats() {
   if (!row) return;
   const hp = el("hp"), pixel = document.documentElement.classList.contains("ui-sprites");
   // Pixel digits are tabular: equal-length HP changes need no new measurement.
-  const hpShape = pixel ? hp.textContent?.replace(/\d/g, "0") : hp.textContent;
-  const key = `${row.textContent}|${el("shroud-stat").hidden}|${row.clientWidth}|${document.documentElement.className}|${spriteFontRevision()}|${hpShape}`;
+  const shape = (text: string | null) => (pixel ? text?.replace(/\d/g, "0") : text);
+  const shield = el("shield-hp");
+  const key = `${row.textContent}|${el("shroud-stat").hidden}|${row.clientWidth}|${document.documentElement.className}|${spriteFontRevision()}|${shape(hp.textContent)}|${shape(shield.textContent)}`;
   if (key === combatFitted) return;
   row.style.fontSize = "";
   // Hidden (another page showing): fitted once it shows again.
@@ -533,9 +536,14 @@ function fitCombatStats() {
   // The gaps between the stats (3px each at their narrowest) don't scale with the text.
   const gaps = 6, over = (row.scrollWidth - gaps) / (row.clientWidth - gaps);
   if (over > 1) row.style.fontSize = `${Math.max(7, Math.floor((parseFloat(getComputedStyle(row).fontSize) / over) * 10) / 10)}px`;
-  hp.style.removeProperty("font-size");
-  if (hp.clientWidth && hp.scrollWidth > hp.clientWidth + 1)
-    hp.style.fontSize = `${Math.max(7, Math.floor(parseFloat(getComputedStyle(hp).fontSize) * hp.clientWidth / hp.scrollWidth))}px`;
+  fitReadout(hp, 7);
+  fitReadout(shield, 7);
+}
+/** Shrinks a vitals counter's text just enough to fit its box, down to `least` px. */
+function fitReadout(readout: HTMLElement, least: number) {
+  readout.style.removeProperty("font-size");
+  if (readout.clientWidth && readout.scrollWidth > readout.clientWidth + 1)
+    readout.style.fontSize = `${Math.max(least, Math.floor(parseFloat(getComputedStyle(readout).fontSize) * readout.clientWidth / readout.scrollWidth))}px`;
 }
 
 /** HP, ATK, DEF (and the shroud, once owned), the run's Gold and keys. During a fight being played out, HP counts down
@@ -544,6 +552,29 @@ function fitCombatStats() {
  * red and shows in blue over it, full when it reaches the Overheal
  * ceiling; while it shows, the fight's purple and a heal's growth are
  * drawn on the blue. */
+/** The Aether Shield's counter and bar, once the Shield is owned: its HP and
+ * its most over a bar whose paler layer shows what it holds above that; while
+ * it regrows, the turns left over a hollow bar that grows to the full width
+ * turn by turn, and fills in as it reforms. */
+function renderShield(game: Game) {
+  const p = game.run.player, max = p.shieldMax, owned = max !== undefined, regrow = game.run.shieldRegrow, now = performance.now();
+  el("vitals").classList.toggle("has-shield", owned);
+  el("shield-readout").hidden = !owned;
+  el("shield-track").hidden = !owned;
+  if (!owned) return;
+  const shield = regrow ? 0 : game.fights.shownShield(now), over = Math.max(0, shield - max);
+  el("shield-readout").classList.toggle("regrowing", !!regrow);
+  el("shield-track").classList.toggle("regrowing", !!regrow);
+  el("shield-fill").classList.toggle("reforming", now - game.shieldFormedAt < SHIELD_FILL_MS);
+  text("shield-hp", regrow ? `${shortAmount(regrow.left)} ${regrow.left === 1 ? "turn" : "turns"} to rebuild` : `${shortAmount(whole(shield))} / ${shortAmount(whole(max))}`);
+  el("shield-readout").title = regrow
+    ? `Shield regrowing: ${regrow.left.toLocaleString("en-US")} of ${regrow.of.toLocaleString("en-US")} turns left`
+    : `Shield HP: ${whole(shield).toLocaleString("en-US")} / ${whole(max).toLocaleString("en-US")}`;
+  el("shield-fill").style.width = `${max ? (100 * Math.min(shield, max)) / max : 0}%`;
+  el("shield-over").style.width = `${max ? Math.min(100, (100 * over) / max) : 0}%`;
+  el("shield-regrow").style.width = regrow ? `${(100 * (regrow.of - regrow.left)) / regrow.of}%` : "0";
+}
+
 export function renderVitals(game: Game) {
   const p = game.run.player, hp = game.fights.shownHp(performance.now());
   // Shortened from 10,000 like the purse, so the line stays one line on a
@@ -571,6 +602,7 @@ export function renderVitals(game: Game) {
   combatStat("defense", "DEF", whole(p.defense));
   combatStat("shroud", "Shroud", whole(p.shroud ?? 0), ", damage blocked at the start of every fight");
   el("shroud-stat").hidden = !game.save.upgrades.shroud;
+  renderShield(game);
   fitCombatStats();
   renderPurse(game);
   // Inside a run, blue and red keys show once the hero holds one, and stay

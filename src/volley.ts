@@ -13,7 +13,7 @@
 import type { Board } from "./board.ts";
 import type { ByFoe, Enemy, Player } from "./entities.ts";
 import type { Save } from "./save/shape.ts";
-import { breaksArmor, critAgainst, facing, guaranteedCrits, isBoss, landsSuperCrit, stealCeiling, thornDamage } from "./combat.ts";
+import { breaksArmor, critAgainst, facing, guaranteedCrits, isBoss, landsSuperCrit, shieldThorn, stealCeiling, thornDamage } from "./combat.ts";
 import { critRule } from "./progression/loadout.ts";
 import { foeAttack } from "./cards/foe-cards.ts";
 import { trainedAmount } from "./progression/training.ts";
@@ -39,7 +39,7 @@ const RAPID_FIRE_SALT = 0x5f1d3;
  * thorns cost an enemy's shooter), for an arrow (or a shot's thorns) the
  * enemy's HP before and after it out of its full HP, and the enemy it
  * felled (`fell`), which the board keeps showing until the shot lands. */
-export type Shot = { by: "hero" | "enemy"; from: { x: number; y: number }; to: { x: number; y: number }; damage: number; tick: number; shrouded?: number; crit?: number; superCrit?: true; charge?: number; healed?: number; thorns?: number; before?: number; hp?: number; full?: number; fell?: Enemy };
+export type Shot = { by: "hero" | "enemy"; from: { x: number; y: number }; to: { x: number; y: number }; damage: number; tick: number; shrouded?: number; shielded?: number; shieldBroke?: true; crit?: number; superCrit?: true; charge?: number; healed?: number; thorns?: number; before?: number; hp?: number; full?: number; fell?: Enemy };
 /** Where `shot`'s target stands: the hero's tile for an enemy's shot (whose
  * thorns cost the shooter, at `from`), the enemy's for an arrow. */
 export const enemyOf = (shot: Shot) => (shot.by === "enemy" ? shot.from : shot.to);
@@ -89,7 +89,7 @@ export type VolleyKill = { enemy: Enemy; at: { x: number; y: number }; instakill
  * shot got through (`hurt`), the enemy whose shot felled the hero (the
  * turn then ends at that tick), and the enemies the arrows and thorns
  * felled, in order. */
-export type VolleyOutcome = { volleys: Volleys; shots: Shot[]; hp: number; hurt: boolean; fell?: Enemy; kills: VolleyKill[] };
+export type VolleyOutcome = { volleys: Volleys; shots: Shot[]; hp: number; shield?: number; hurt: boolean; fell?: Enemy; kills: VolleyKill[] };
 
 /** The hero's walk over the turn: the tile it starts from and its step;
  * none when it stood still or came farther than a step (a dash, a floor's
@@ -185,15 +185,16 @@ export function volleyTurn(turn: VolleyTurn): VolleyOutcome {
         s.charge = undefined;
         continue;
       }
-      const { damage, shrouded } = shotDamage(hero, e.tile.enemy);
+      const { damage, shrouded, shielded = 0 } = shotDamage(hero, e.tile.enemy), onShield = (hero.shield ?? 0) > 0;
       s.charge = spent(s.charge, s.cost);
       hero.hp = snap(Math.max(0, hero.hp - damage));
-      const shot: Shot = { by: "enemy", from: { x: e.x, y: e.y }, to: { x: hero.x, y: hero.y }, damage, tick, ...(shrouded ? { shrouded } : {}) };
+      if (onShield) hero.shield = snap(hero.shield! - shielded);
+      const shot: Shot = { by: "enemy", from: { x: e.x, y: e.y }, to: { x: hero.x, y: hero.y }, damage, tick, ...(shrouded ? { shrouded } : {}), ...(shielded ? { shielded } : {}), ...(onShield && !hero.shield ? { shieldBroke: true as const } : {}) };
       shots.push(shot);
       if (damage > 0) hurt = true;
       if (!hero.hp) fell = e.tile.enemy;
       else {
-        const kill = thornsOf(board, hero, e, shot);
+        const kill = thornsOf(board, hero, e, shot, onShield);
         if (kill) kills.push(kill);
       }
     }
@@ -202,15 +203,15 @@ export function volleyTurn(turn: VolleyTurn): VolleyOutcome {
   for (const s of shooters) if (s.charge !== undefined && shooterAt(s.near.x, s.near.y)) foes[s.key] = s.charge;
   if (Object.keys(foes).length) v.foes = foes;
   else delete v.foes;
-  return { volleys: v, shots, hp: hero.hp, hurt, ...(fell ? { fell } : {}), kills };
+  return { volleys: v, shots, hp: hero.hp, ...(hero.shield === undefined ? {} : { shield: hero.shield }), hurt, ...(fell ? { fell } : {}), kills };
 }
 
 /** Thorns: a shot the hero lived through costs its shooter `e` the hero's
  * thorns, a share of its full HP (wounds and all), as a fight's strike
  * does; they wound it, or clear it from the board and return it as a kill.
  * Recorded on the `shot`, for the board's numbers and HP bar. */
-function thornsOf(board: VolleyTurn["board"], hero: Player, { x, y, tile }: InReach, shot: Shot): VolleyKill | undefined {
-  const enemy = tile.enemy, full = snap(enemy.hp + (tile.wound ?? 0)), thorns = thornDamage(hero, { ...enemy, fullHp: full });
+function thornsOf(board: VolleyTurn["board"], hero: Player, { x, y, tile }: InReach, shot: Shot, onShield: boolean): VolleyKill | undefined {
+  const enemy = tile.enemy, full = snap(enemy.hp + (tile.wound ?? 0)), thorn = thornDamage(hero, { ...enemy, fullHp: full }), thorns = onShield ? shieldThorn(hero, thorn) : thorn;
   if (!thorns) return undefined;
   const left = snap(Math.max(0, enemy.hp - thorns));
   Object.assign(shot, { thorns, before: enemy.hp, hp: left, full });

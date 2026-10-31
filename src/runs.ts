@@ -26,7 +26,7 @@ export type RunCore = {
   floor: number;
   /** The ATK/DEF/max HP the run started with (its loadout), shifted by any
    * gear change since. */
-  loadout?: { attack: number; defense: number; maxHp: number; shroud?: number; regen?: number; lifesteal?: number; thorns?: number; parry?: number; armorBreak?: number; bossAttack?: number; pierce?: number };
+  loadout?: { attack: number; defense: number; maxHp: number; shroud?: number; regen?: number; lifesteal?: number; thorns?: number; parry?: number; armorBreak?: number; shieldThorns?: number; bossAttack?: number; pierce?: number };
   /** The hand as it was ordered when the run went inside: the cards that
    * move the hero for the rest of the run. */
   hand?: CardId[];
@@ -140,6 +140,10 @@ export type RunCore = {
   /** How many of each Free Upgrade group's rolls this run has drawn from
    * its stream, which starts from the run seed (progression/free-training.ts). */
   freeRolls?: Partial<Record<"offense" | "defense" | "utility", number>>;
+  /** The broken shield's regrow: the turns left and the turns it began with
+   * (hero-shield.ts); absent while the shield stands. Undo takes it back with
+   * the run. */
+  shieldRegrow?: { left: number; of: number };
   /** Each Enemy Level Skip kind's skips, draws and chance added up
    * (enemies/level-skips.ts), absent until it first draws. Undo takes them
    * back with the run, and a floor passed again draws the same. */
