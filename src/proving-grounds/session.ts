@@ -1,4 +1,5 @@
 import { defaultArcanaRun, ownedArcana } from "../arcana/arcana.ts";
+import { fieldReach } from "../arcana/time-dilation.ts";
 import type { TrainingId } from "../progression/training.ts";
 import { Game } from "../state.ts";
 import { random } from "../random.ts";
@@ -53,7 +54,9 @@ export class TrialSession {
       const desk=game.arcana,beams=desk.beams;
       const spring=desk.lifespringRule();
       if(spring)game.run.lifespring=state.arcana.lifespring??={};
-      state.arcana.spells={ricochet:desk.ricochet(),thunderbolt:desk.thunderbolt(),lifespring:spring&&{hp:spring.hp,waves:spring.waves,turns:spring.turns,reach:game.lifespringReach},beams:beams&&{count:beams.count,width:beams.width,bonus:beams.bonus},overseer:desk.held.some(h=>h.id==="overseer")};
+      const dilation=desk.timeDilationRule();
+      if(dilation)game.run.timeDilation=state.arcana.dilation??={};
+      state.arcana.spells={ricochet:desk.ricochet(),thunderbolt:desk.thunderbolt(),lifespring:spring&&{hp:spring.hp,waves:spring.waves,turns:spring.turns,reach:game.lifespringReach},timeDilation:dilation&&{duration:dilation.duration,slow:dilation.slow,turns:dilation.turns,reach:fieldReach(game.lifespringReach,dilation.effects)},beams:beams&&{count:beams.count,width:beams.width,bonus:beams.bonus},overseer:desk.held.some(h=>h.id==="overseer")};
     }
     game.save.gemDrop={...this.base.save.gemDrop};game.save.goldBoostUntil=this.base.save.goldBoostUntil;
     for(const key of ["gold","gems","arcanite","medals"] as const) game.save[key]=this.base.save[key];

@@ -68,7 +68,7 @@ export const themedBoardOf = (look: GameLook): ThemedBoard | null => (look === "
 /** The dungeon board in a Game theme's own art: ground (gilded on a Golden
  * Floor), contents (the enemy struck leaning into its lunge), torches, then
  * the route and the hero. */
-export function drawThemedBoard(f: FrameContext, board: ThemedBoard, lunge: { x: number; y: number; dx: number; dy: number }, drawRoute: () => void, hero: { x: number; y: number }, wrap: number) {
+export function drawThemedBoard(f: FrameContext, board: ThemedBoard, lunge: { x: number; y: number; dx: number; dy: number }, drawRoute: () => void, hero: { x: number; y: number }, wrap: number, underContents?: () => void) {
   const c = f.c;
   board.ground(f);
   const golden = f.look.golden;
@@ -83,6 +83,7 @@ export function drawThemedBoard(f: FrameContext, board: ThemedBoard, lunge: { x:
       c.restore();
     });
   }
+  underContents?.();
   forEachViewTile(f, (x, y) => {
     const t = f.world.tile(x, y);
     if (!t || t.kind === "wall" || t.kind === "floor") return;

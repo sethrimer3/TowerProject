@@ -16,6 +16,8 @@ export { drawLightElemental } from "./elemental-art.ts";
 import {TrialCamera,TRIAL_VIEW_TILES,TRIAL_TILE_SIZE,type TrialTransition} from "./camera.ts";
 import {paintOverseerBeams} from "../render/effects/overseer-beams.ts";
 import {FIELD_GROW_MS,paintEffectWave,paintLifespring} from "../render/effects/lifespring.ts";
+import {paintDilationField} from "../render/effects/time-dilation.ts";
+import {bossClock} from "./trial-spells.ts";
 import {paintThunderbolt,paintThunderlight} from "../render/effects/thunderbolt.ts";
 import {beamDirection} from "../arcana/overseer.ts";
 import {RICOCHET_FLASH_MS,THUNDERBOLT_FALL_MS,THUNDERBOLT_FLASH_MS} from "../volley.ts";
@@ -110,6 +112,14 @@ export class TrialRenderer {
         }
       });
     }
+    // Time Dilation's field lies on the floor, under what stands on it.
+    const dilationField=() => {
+      const rule=s.arcana?.spells?.timeDilation,at=this.camera.hero(s);
+      if(rule && s.arcana?.dilation?.left)paintDilationField(c,px(at.x)+12,py(at.y)+12,S*rule.reach/100,1);
+    };
+    // The Light Elemental's dark would hide it, so there it comes after the dark.
+    const unlit=s.room==="arena" && !s.keymaster && !s.bossVariant;
+    if(s.room==="arena" && !unlit)dilationField();
     if (s.room === "arena") {
       if(s.keymaster) {
         for(const p of s.keymaster.drops)tile(p.x,p.y,()=>paintContents(c,{kind:"key",color:"yellow"},{...p,time:now,reduceMotion,styledSprites:styled}));
@@ -193,6 +203,7 @@ export class TrialRenderer {
         }
         d.globalCompositeOperation="source-over";
         c.drawImage(this.darkness,0,0);
+        if(unlit)dilationField();
         // Keep the player readable without lighting a circle of floor.
         if(!POSITION_HALOS_ENABLED) tile(hero.x,hero.y,()=>paintHero(c,this.facing,idle));
       }
@@ -285,7 +296,7 @@ export class TrialRenderer {
         c.fillStyle="#fff";c.fillText(`-${Math.round(strike.damage)}`,to.x,to.y-12);c.restore();
       }
       // Telegraph only near the elemental, without revealing the unlit room.
-      if(!s.keymaster && !s.bossVariant && s.status==="active" && s.steps%10>=8) {
+      if(!s.keymaster && !s.bossVariant && s.status==="active" && (bossClock(s)/100)%10>=8) {
         c.fillStyle="#ffeaa8";
         for(const [dx,dy] of beamDirections(nextBeamAxis(s),beamCount(s.level))) for(let i=1;i<=3;i++) tile(s.elemental.x+dx*i,s.elemental.y+dy*i,()=>c.fillRect(11,11,2,2));
       }

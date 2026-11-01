@@ -156,6 +156,29 @@ export const ARCANA = {
     summary: ([hp, waves, turns]) => `Every ${turns} turns, ${waves === 1 ? "an Effect Wave hits" : `${countOf(waves)} Effect Waves, ${WAVE_INTERVAL} turns apart, hit`} every enemy on the floor. ${WAVE_INTERVAL} turns later, a field as wide as your shot range forms round the hero and adds ${countOf(hp)}x ATK to its HP Pool. The enemies it touches lose HP from the pool, closest first, through their DEF, until the pool runs out: those entering range before your shots fly, the rest at the end of the turn.`,
     effect: ([hp, waves]) => `${countOf(hp)}x · ${countOf(waves)} ${waves === 1 ? "wave" : "waves"}`,
   },
+  timeDilation: {
+    name: "Time Dilation",
+    trigger: { on: "cooldown", turns: ([, , turns]) => turns },
+    attributes: [
+      {
+        name: "Duration",
+        shown: (v) => `${v} turns`,
+        steps: [[5, 0], [6, 5], [7, 14], [8, 23], [9, 32], [10, 41], [11, 50], [12, 59], [13, 68], [14, 77], [15, 86], [16, 95], [17, 104], [18, 113], [19, 122], [20, 131], [21, 140], [22, 149], [23, 158], [24, 167], [25, 176], [26, 185], [27, 194], [28, 203], [29, 212], [30, 221], [31, 230], [32, 239], [33, 248], [34, 257], [35, 266], [36, 275], [37, 284], [38, 293], [39, 302], [40, 311]],
+      },
+      {
+        name: "Slowdown",
+        shown: (v) => `${v}%`,
+        steps: [[20, 0], [25, 15], [30, 25], [35, 40], [40, 60], [45, 120], [50, 150], [55, 200], [60, 300], [65, 450], [70, 650], [75, 900]],
+      },
+      {
+        name: "Cooldown",
+        shown: (v) => `${v} turns`,
+        steps: [[180, 0], [170, 10], [160, 31], [150, 52], [140, 73], [130, 94], [120, 115], [110, 136], [100, 157], [90, 178], [80, 199], [70, 220], [60, 241]],
+      },
+    ],
+    summary: ([duration, slow, turns]) => `Every ${turns} turns, a field as wide as your shot range forms round the hero for ${duration} turns. Enemies in it strike, shoot and move ${slow}% slower, and a boss's effects count down ${slow}% slower.`,
+    effect: ([duration, slow]) => `${slow}% · ${duration} turns`,
+  },
 } as const satisfies Record<string, ArcanumDef>;
 
 export type ArcanumId = keyof typeof ARCANA;

@@ -22,6 +22,7 @@ import { archerClock, archerState, archerTick, arrowBoost, arrowDamage, arrowRan
 import { beamFactor, type Beams } from "./arcana/overseer.ts";
 import { boltTargets } from "./arcana/arcana.ts";
 import { fieldHit } from "./arcana/lifespring.ts";
+import { slowedCharge, slowedTickGain } from "./arcana/time-dilation.ts";
 import { tileRandom } from "./random.ts";
 import { snap } from "./exact.ts";
 
@@ -98,6 +99,9 @@ export type VolleyTurn = {
   ricochet?: { boost: number; rebounds: number; chance: number };
   /** Overseer's beams, held and on, as the turn begins (arcana/overseer.ts). */
   beams?: Beams;
+  /** Time Dilation's field, if one stands: the percent it slows the cooldowns of the
+   * shooters in it by, and its reach round the hero, in hundredths of a tile. */
+  dilation?: { slow: number; reach: number };
 };
 /** An enemy an arrow felled, or the thorns of its own shot (`thorns`):
  * where, whether it fell to its first wound (an instakill), and the
@@ -178,7 +182,8 @@ export function volleyTurn(turn: VolleyTurn): VolleyOutcome {
   for (const [key, charge] of Object.entries(v.foes ?? {})) {
     if (watched.has(key)) continue;
     const [x, y] = key.split(",").map(Number) as [number, number], foe = shooterAt(x, y);
-    const kept = foe && held(charged(charge, foeGain(foe)), foeShotCost(floorOf(x, y)));
+    const slow = turn.dilation && inRange(shortWay(x - hero.x, wrap), y - hero.y, turn.dilation.reach) ? turn.dilation.slow : 0;
+    const kept = foe && held(charged(charge, slowedCharge(foeGain(foe), slow)), foeShotCost(floorOf(x, y)));
     if (kept !== undefined) foes[key] = kept;
   }
 
@@ -196,7 +201,9 @@ export function volleyTurn(turn: VolleyTurn): VolleyOutcome {
     const firing: { s: Shooter; e: InReach }[] = [];
     for (const s of shooters) {
       if (s.charge !== undefined) {
-        s.charge += s.gain;
+        // In Time Dilation's field as the hero stands this tick, its cooldown runs slower.
+        const field = turn.dilation;
+        s.charge += field && distance(s.near, tick) <= field.reach * field.reach ? slowedTickGain(s.gain, field.slow, tick) : s.gain;
         if (s.charge < s.cost) continue;
       }
       const e = within(tick, s.near.shots) ? standing(s.near, tick) : undefined;

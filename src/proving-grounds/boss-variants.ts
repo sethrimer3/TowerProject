@@ -4,7 +4,7 @@ import { ARENA_POTIONS, ARENA_SIZE, ELEMENTAL, arenaFloor, directions, key, same
 import { difficultyMultiplier } from "./catalog.ts";
 import type { SavedBossProgress } from "./access.ts";
 import type { TrialState } from "./trial.ts";
-import { heroAttackOn } from "./trial-spells.ts";
+import { bossClock, bossTurn, foeActs, heroAttackOn } from "./trial-spells.ts";
 
 export const OBELISK_DEFAULT_TURNS = 100;
 export const OBELISK_SHOT_INTERVAL = 3;
@@ -321,8 +321,8 @@ function roundFightMinion(s: TrialState, minion: BossMinion, step: number): { he
     s.purchases.silver += Math.max(10, Math.round(15 * difficultyMultiplier(s.level)));
     return { heroDamage: heroStrike, enemyDamage: 0, defeated: true };
   }
-  // Minion survives this round and strikes once; ATK never increases with hits.
-  const enemyStrike = Math.max(1, Math.round(minion.attack - s.player.defense * 0.35));
+  // Minion survives this round and strikes once, unless Time Dilation holds it back; ATK never increases with hits.
+  const enemyStrike = foeActs(s, minion, `minion:${minion.id}`) ? Math.max(1, Math.round(minion.attack - s.player.defense * 0.35)) : 0;
   s.player.hp = Math.max(0, s.player.hp - enemyStrike);
   return { heroDamage: heroStrike, enemyDamage: enemyStrike, defeated: false };
 }
@@ -339,6 +339,7 @@ function advanceVariantMinions(s: TrialState, step: number): { message: string; 
   let round: CombatRound | null = null;
   for (const minion of [...v.minions].sort((a, b) => a.id - b.id)) {
     if (s.player.hp === 0) break;
+    if (!foeActs(s, minion, `move:minion:${minion.id}`)) continue;
     occupied.delete(key(minion));
     const distances = new Map([[key(s.player), 0]]);
     const queue: Spot[] = [{ x: s.player.x, y: s.player.y }];
@@ -427,8 +428,8 @@ export function bossVariantStep(s: TrialState, x: number, y: number): { changed:
       };
     }
 
-    // Boss counters once; Boss ATK never increases with hits.
-    const bossCounter = Math.max(1, Math.round(v.bossAtk - heroDef * 0.35));
+    // Boss counters once, unless Time Dilation holds it back; Boss ATK never increases with hits.
+    const bossCounter = foeActs(s, s.elemental, "boss") ? Math.max(1, Math.round(v.bossAtk - heroDef * 0.35)) : 0;
     s.player.hp = Math.max(0, s.player.hp - bossCounter);
     round = {
       step: nextStep,
@@ -441,7 +442,7 @@ export function bossVariantStep(s: TrialState, x: number, y: number): { changed:
       shots: [],
     };
     const coinNote = coins.length ? " Gold & Silver coins pop out!" : "";
-    message = `Round of combat: you deal ${actualBossDmg} damage (${Math.ceil(s.bossHp)} HP left); boss counters for ${bossCounter} damage.${coinNote}`;
+    message = `Round of combat: you deal ${actualBossDmg} damage (${Math.ceil(s.bossHp)} HP left); ${bossCounter ? `boss counters for ${bossCounter} damage` : "boss is too slow to counter"}.${coinNote}`;
   } else if (part) {
     // Single round of combat against a boss part.
     move = false;
@@ -452,9 +453,9 @@ export function bossVariantStep(s: TrialState, x: number, y: number): { changed:
     const coins = popCoinsOnBossHit(s, { x: part.x, y: part.y }, nextStep);
     let partCounter = 0;
     if (part.hp > 0) {
-      partCounter = Math.max(1, Math.round(part.attack - s.player.defense * 0.35));
+      partCounter = foeActs(s, part, `part:${part.id}`) ? Math.max(1, Math.round(part.attack - s.player.defense * 0.35)) : 0;
       s.player.hp = Math.max(0, s.player.hp - partCounter);
-      message = `Round vs ${part.name}: −${actualPartDmg} HP (${part.hp}/${part.maxHp} left); it counters for ${partCounter} damage.`;
+      message = `Round vs ${part.name}: −${actualPartDmg} HP (${part.hp}/${part.maxHp} left); ${partCounter ? `it counters for ${partCounter} damage` : "it is too slow to counter"}.`;
     } else {
       message = `${part.name} is knocked out and disappears from the floor! Its effect is permanently disabled.`;
     }
@@ -484,7 +485,7 @@ export function bossVariantStep(s: TrialState, x: number, y: number): { changed:
     };
     message = result.defeated
       ? `You strike ${minion.name} for ${result.heroDamage} damage and defeat it!`
-      : `Round vs ${minion.name}: you deal ${result.heroDamage} damage (${minion.hp}/${minion.maxHp} HP left); it counters for ${result.enemyDamage} damage.`;
+      : `Round vs ${minion.name}: you deal ${result.heroDamage} damage (${minion.hp}/${minion.maxHp} HP left); ${result.enemyDamage ? `it counters for ${result.enemyDamage} damage` : "it is too slow to counter"}.`;
   }
 
   if (move) {
@@ -526,6 +527,7 @@ export function bossVariantStep(s: TrialState, x: number, y: number): { changed:
   }
 
   s.steps = nextStep;
+  const due = bossTurn(s, s.elemental);
 
   // Boss Regeneration (Magic Tower always; Obelisk if Regen Conduit part is alive).
   const regen = effectiveBossRegen(s);
@@ -544,14 +546,14 @@ export function bossVariantStep(s: TrialState, x: number, y: number): { changed:
     if (minionTurn.message && !message) message = minionTurn.message;
     if (minionTurn.round && !round) round = minionTurn.round;
   }
-  if (s.player.hp > 0 && s.steps % VARIANT_MINION_INTERVAL === 0) {
+  if (s.player.hp > 0 && due(VARIANT_MINION_INTERVAL)) {
     spawnVariantMinion(s);
   }
 
   // Periodic ranged shots & Special attacks (Obelisk + Blaster Turret part).
   const shots: CombatShot[] = [];
   const turret = v.parts.find((p) => p.id === "turret" && p.hp > 0);
-  if (s.player.hp > 0 && turret && s.steps % 4 === 2) {
+  if (s.player.hp > 0 && turret && bossTurn(s, turret, "turret")(4, 2)) {
     const dmg = Math.max(1, Math.round(turret.attack * 0.65 - s.player.defense * 0.25));
     s.player.hp = Math.max(0, s.player.hp - dmg);
     shots.push({ from: { x: turret.x, y: turret.y }, to: { x: s.player.x, y: s.player.y }, damage: dmg });
@@ -560,7 +562,7 @@ export function bossVariantStep(s: TrialState, x: number, y: number): { changed:
   }
 
   if (s.player.hp > 0 && v.variant === "obelisk") {
-    if (s.steps % OBELISK_SPECIAL_INTERVAL === 0) {
+    if (due(OBELISK_SPECIAL_INTERVAL)) {
       const dmg = Math.max(2, Math.round(v.bossAtk * 1.1 - s.player.defense * 0.25));
       s.player.hp = Math.max(0, s.player.hp - dmg);
       shots.push({ from: { x: s.elemental.x, y: s.elemental.y }, to: { x: s.player.x, y: s.player.y }, damage: dmg, special: true });
@@ -573,13 +575,13 @@ export function bossVariantStep(s: TrialState, x: number, y: number): { changed:
             id: ++v.spawned,
             x: spot.x,
             y: spot.y,
-            kind: (s.steps / OBELISK_SPECIAL_INTERVAL) % 2 === 0 ? "attack" : "defense",
+            kind: Math.floor(bossClock(s) / (OBELISK_SPECIAL_INTERVAL * 100)) % 2 === 0 ? "attack" : "defense",
             amount: Math.max(1, Math.round(s.player.attack * 0.08 * difficultyMultiplier(s.level))),
           });
         }
       }
       message = message ? `${message} Obelisk Arcane Pulse hits for ${dmg} damage!` : `Obelisk unleashes an Arcane Pulse for ${dmg} damage!`;
-    } else if (s.steps % OBELISK_SHOT_INTERVAL === 0) {
+    } else if (due(OBELISK_SHOT_INTERVAL)) {
       const dmg = Math.max(1, Math.round(v.bossAtk * 0.6 - s.player.defense * 0.25));
       s.player.hp = Math.max(0, s.player.hp - dmg);
       shots.push({ from: { x: s.elemental.x, y: s.elemental.y }, to: { x: s.player.x, y: s.player.y }, damage: dmg });

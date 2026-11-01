@@ -4,7 +4,7 @@ import {arenaFloor,keymasterArenaFloor,ARENA_POTIONS,ARENA_SIZE,directions,key,s
 import {difficultyMultiplier} from "./catalog.ts";
 import {teleportBoss,materializeBoss} from "./boss-movement.ts";
 import type {TrialState} from "./trial.ts";
-import {heroAttackOn} from "./trial-spells.ts";
+import {bossTurn,foeActs,heroAttackOn} from "./trial-spells.ts";
 
 export const KEYMASTER_DOORS=[{x:12,y:24},{x:24,y:12},{x:12,y:0},{x:0,y:12}] as const;
 export const DOOR_FLIGHT_MS=1100;
@@ -66,12 +66,14 @@ function fightMimic(s:TrialState,mimic:Mimic) {
   }
   mimic.hp=Math.max(0,mimic.hp-Math.max(1,heroAttackOn(s,mimic)));
   if(mimic.hp===0){k.mimics=k.mimics.filter(m=>m.id!==mimic.id);return "You defeat the mimic in combat.";}
+  if(!foeActs(s,mimic,`mimic:${mimic.id}`))return `The tough mimic has ${mimic.hp} HP left, too slow to bite.`;
   const damage=mimicDamage(s);s.player.hp=Math.max(0,s.player.hp-damage);
   return `The tough mimic has ${mimic.hp} HP left and bites for ${damage} damage.`;
 }
 /** One cardinal tile that strictly increases separation; walls and actors
  * can corner the boss, in which case it stays put rather than overlapping. */
 export function retreatKeymaster(s:TrialState) {
+  if(!foeActs(s,s.elemental,"move:boss"))return;
   const boss=s.elemental,current=distance(boss,s.player);
   const choices=directions.map(([dx,dy],i)=>({x:boss.x+dx,y:boss.y+dy,i})).filter(p=>
     keymasterArenaFloor(p.x,p.y) && distance(p,s.player)>current && !s.keymaster!.mimics.some(m=>same(m,p))
@@ -86,6 +88,7 @@ export function pursueMimics(s:TrialState) {
   let message="";
   for(const mimic of [...k.mimics].sort((a,b)=>a.id-b.id)) {
     if(s.player.hp===0)break;
+    if(!foeActs(s,mimic,`move:mimic:${mimic.id}`))continue;
     occupied.delete(key(mimic));
     const distances=new Map([[key(s.player),0]]),queue:Spot[]=[{x:s.player.x,y:s.player.y}];
     for(let i=0;i<queue.length;i++) {
@@ -132,11 +135,13 @@ export function keymasterStep(s:TrialState,x:number,y:number) {
     k.keys--;k.doors.push({door,elapsed:0,hit:false});
     message="Door opened. Red spirits flood out and converge on the Keymaster.";
   } else if(same({x,y},s.elemental) && !s.elemental.incorporeal) {
+    // He answers from where he stood, before he teleports.
+    const answers=foeActs(s,s.elemental,"boss");
     move=false;hitKeymaster(s,Math.max(1,heroAttackOn(s,s.elemental)),s.steps+1);
     if(s.bossHp===0){win(s);return {changed:true,message:"Trial complete — the Keymaster is defeated.",fired:false};}
-    const damage=Math.max(1,Math.ceil(s.player.maxHp*.04)-Math.floor(s.player.defense*.1));
+    const damage=answers?Math.max(1,Math.ceil(s.player.maxHp*.04)-Math.floor(s.player.defense*.1)):0;
     s.player.hp=Math.max(0,s.player.hp-damage);
-    message=`Three keys scatter. The Keymaster teleports and becomes invincible until his next reformation. He deals ${damage} damage.`;
+    message=`Three keys scatter. The Keymaster teleports and becomes invincible until his next reformation.${damage?` He deals ${damage} damage.`:""}`;
   } else {
     const index=k.mimics.findIndex(p=>p.x===x && p.y===y);
     if(index>=0) {
@@ -153,6 +158,7 @@ export function keymasterStep(s:TrialState,x:number,y:number) {
     s.player.hp+=healed;s.consumed.push(here);message=`Potion restores ${healed} HP.`;
   }
   s.steps++;
+  const due=bossTurn(s,s.elemental);
   if(s.player.hp===0){s.status="lost";s.playing=false;message="The Keymaster trial ends in defeat. Your Tower progress is safe.";}
   else {
     if(s.steps%KEYMASTER_MOVE_INTERVAL===0) {
@@ -161,8 +167,8 @@ export function keymasterStep(s:TrialState,x:number,y:number) {
     }
     if(s.player.hp===0){s.status="lost";s.playing=false;message="The mimics overwhelm you. Your Tower progress is safe.";}
     else {
-      if(s.steps%mimicInterval(s.level)===0)spawnMimic(s);
-      if(s.elemental.incorporeal && s.steps%KEYMASTER_REFORM_INTERVAL===0) {
+      if(due(mimicInterval(s.level)))spawnMimic(s);
+      if(s.elemental.incorporeal && due(KEYMASTER_REFORM_INTERVAL)) {
         materializeBoss(s);message="The Keymaster reforms and becomes vulnerable again.";
       }
     }

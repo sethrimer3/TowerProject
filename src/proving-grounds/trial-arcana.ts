@@ -1,8 +1,9 @@
 import { boltTargets, chargeBolts, decodeArcanaRun, settleBolts, tickCooldowns } from "../arcana/arcana.ts";
 import { fieldHit, lifespringEffects, springAmplify, stepLifespring, validLifespring } from "../arcana/lifespring.ts";
+import { stepDilation, validDilation } from "../arcana/time-dilation.ts";
 import { TURN_TICKS } from "../enemies/ranged.ts";
 import { tileRandom } from "../random.ts";
-import { isRecord, wholeIn } from "../save/decode.ts";
+import { finite, isRecord, wholeIn } from "../save/decode.ts";
 import { activeBossParts, effectiveBossDef } from "./boss-variants.ts";
 import { difficultyMultiplier, TRIALS } from "./catalog.ts";
 import { same, type Spot } from "./arena.ts";
@@ -98,8 +99,9 @@ function lifespringTurn(s: TrialState, a: NonNullable<TrialState["arcana"]>, { h
 }
 
 /** The arcana's part of a turn the attempt just spent: a Ricochet Shot off the
- * hero's hit, the cooldowns running on, Thunderbolt's bolts, Lifespring, then the
- * beams turning. An ended attempt does none of it. */
+ * hero's hit, the cooldowns running on, Thunderbolt's bolts, Lifespring, Time
+ * Dilation's field, which holds back what comes next turn, then the beams turning.
+ * An ended attempt does none of it. */
 export function trialArcanaTurn<O extends { message: string }>(s: TrialState, outcome: O): O {
   const a = s.arcana, spells = a?.spells;
   if (!a || !spells) return outcome;
@@ -125,15 +127,33 @@ export function trialArcanaTurn<O extends { message: string }>(s: TrialState, ou
     }
   }
   if (lifespring && s.status === "active") lifespringTurn(s, a, lifespring, strikes);
+  if (spells.timeDilation && s.status === "active") stepDilation((a.dilation ??= {}), spells.timeDilation);
   if (spells.overseer) a.beamTurns++;
   a.strikes = strikes;
   if (s.status !== "active") return { ...outcome, message: `Trial complete — ${TRIALS[s.trialId].name} falls to your Arcana.` };
   return strikes.length && !outcome.message ? { ...outcome, message: `Your Arcana strike ${strikes.length} ${strikes.length === 1 ? "time" : "times"}.` } : outcome;
 }
 
+/** The most foes' tallies an attempt keeps: more than ever stand at once, and spent ones linger. */
+const MOST_TALLIES = 1000;
+const tally = (v: unknown) => finite(v, 100) && (v as number) > 0;
+/** The saved tallies of Time Dilation's field, if any are worth keeping. */
+function decodeTallies(raw: unknown) {
+  if (!isRecord(raw)) return {};
+  const kept = Object.entries(raw).filter(([, v]) => tally(v)).slice(0, MOST_TALLIES);
+  return kept.length ? { tallies: Object.fromEntries(kept) as Record<string, number> } : {};
+}
+/** How far its field has held back the saved boss clocks, if at all. */
+function decodeLag(raw: unknown) {
+  if (!isRecord(raw)) return {};
+  const lag = { ...(finite(raw.boss, 1e12) && raw.boss > 0 ? { boss: raw.boss as number } : {}), ...(finite(raw.turret, 1e12) && raw.turret > 0 ? { turret: raw.turret as number } : {}) };
+  return Object.keys(lag).length ? { lag } : {};
+}
+
 /** The saved arcana of an attempt, if it has any. */
 export function decodeTrialArcana(raw: unknown): TrialArcana | undefined {
   if (!isRecord(raw)) return undefined;
   return { run: decodeArcanaRun(raw.run), beamTurns: wholeIn(raw.beamTurns, 0, 1e9) ? (raw.beamTurns as number) : 0,
-    ...(validLifespring(raw.lifespring) && Object.keys(raw.lifespring).length ? { lifespring: raw.lifespring } : {}), ...(wholeIn(raw.springWaves, 1, 1e9) ? { springWaves: raw.springWaves as number } : {}) };
+    ...(validLifespring(raw.lifespring) && Object.keys(raw.lifespring).length ? { lifespring: raw.lifespring } : {}), ...(wholeIn(raw.springWaves, 1, 1e9) ? { springWaves: raw.springWaves as number } : {}),
+    ...(validDilation(raw.dilation) && Object.keys(raw.dilation).length ? { dilation: raw.dilation } : {}), ...decodeTallies(raw.tallies), ...decodeLag(raw.lag) };
 }

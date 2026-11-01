@@ -4,6 +4,7 @@ import {
 } from "../arcana/arcana.ts";
 import { clearLifespring, lifespringEffects, springAmplify, stepLifespring } from "../arcana/lifespring.ts";
 import type { Beams } from "../arcana/overseer.ts";
+import { clearDilation, dilationEffects, fieldSlowdown, stepDilation } from "../arcana/time-dilation.ts";
 import type { CritRule } from "../combat.ts";
 import type { Enemy, Mode } from "../entities.ts";
 import type { FloorBloom } from "../environments.ts";
@@ -130,6 +131,7 @@ export class ArcanaDesk {
       delete r.timers[id];
       if (id === "thunderbolt") delete r.bolts;
       if (id === "lifespring") clearLifespring(this.host.run.lifespring);
+      if (id === "timeDilation") clearDilation(this.host.run.timeDilation);
     } else r.off = r.off.filter((o) => o !== id);
     return true;
   }
@@ -145,7 +147,7 @@ export class ArcanaDesk {
     const trigger = arcanum(id).trigger;
     if (trigger.on !== "cooldown") return undefined;
     const turns = trigger.turns(valuesAt(id, levels));
-    const timer = id === "lifespring" ? this.host.run.lifespring?.timer : this.runState.timers[id];
+    const timer = id === "lifespring" ? this.host.run.lifespring?.timer : id === "timeDilation" ? this.host.run.timeDilation?.timer : this.runState.timers[id];
     return { left: Math.min(timer ?? turns, turns), turns };
   }
   /** What Ricochet Shot gives this turn's arrows (`VolleyTurn.ricochet`), if it is held and on. */
@@ -216,6 +218,18 @@ export class ArcanaDesk {
     const s = this.host.run.lifespring;
     return { pool: s?.pool ?? 0, effects: lifespringEffects(this.save), health: 1 + (s?.health ?? 0) / 100 };
   }
+  /** Time Dilation, if it is held and on: its attributes, Slowdown with what raises it. */
+  timeDilationRule() {
+    const held = this.held.find((h) => h.id === "timeDilation" && this.isOn(h.id));
+    if (!held) return undefined;
+    const [duration, slowdown, turns] = valuesAt(held.id, held.levels), effects = dilationEffects(this.save);
+    return { duration, slow: fieldSlowdown(slowdown, effects), turns, effects };
+  }
+  /** Time Dilation's turn: the field's turns and its cooldown, if it is held and on. */
+  timeDilationTurn() {
+    const rule = this.timeDilationRule();
+    if (rule) stepDilation((this.host.run.timeDilation ??= {}), rule);
+  }
   /** An enemy Lifespring touched (an Effect Wave or the field) fell, by whatever
    * means, while it is on: it pays Health Bonus, and what its Gold and Cells are
    * raised by is returned. */
@@ -233,8 +247,8 @@ export class ArcanaDesk {
     if (this.held.some((h) => h.id === "overseer")) run.beamTurns = (run.beamTurns ?? 0) + 1;
     const active = this.held.flatMap(({ id, levels }) => {
       const trigger = arcanum(id).trigger;
-      // Lifespring runs its own, in the run: `lifespringTurn`.
-      return trigger.on === "cooldown" && id !== "lifespring" && this.isOn(id) ? [{ id, turns: trigger.turns(valuesAt(id, levels)) }] : [];
+      // Lifespring and Time Dilation run their own, in the run: `lifespringTurn`, `timeDilationTurn`.
+      return trigger.on === "cooldown" && id !== "lifespring" && id !== "timeDilation" && this.isOn(id) ? [{ id, turns: trigger.turns(valuesAt(id, levels)) }] : [];
     });
     return tickCooldowns(active, this.runState.timers);
   }

@@ -620,6 +620,12 @@ One of Lifespring's rings, hitting every enemy on the floor at once for no damag
 **HP Pool**:
 What Lifespring's field has left to spend, added to by each activation as a multiple of ATK. It pays an enemy's remaining HP, divided by its Damage Amplification, through DEF.
 
+**Time Dilation**:
+An arcanum on a cooldown: a field round the hero as wide as its shot range, lasting a number of turns, in which enemies are slowed. A new field replaces the old one.
+
+**Slowdown**:
+The percent Time Dilation slows what is in its field by: it acts on the rest of its chances (strikes, steps), its shots charge and a boss's effects count down that much slower. 90% at most.
+
 **Ricochet**:
 Ricochet Shot's strike: an arrow's hit springing a white line to the closest other enemies on the floor. A ricochet never sets off another.
 

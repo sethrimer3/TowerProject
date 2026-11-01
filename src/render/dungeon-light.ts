@@ -20,6 +20,8 @@ export type LitBoard = {
   /** Extra glows laid on the darkened ground after the objects' own (decor
    * blooms). Only called below the default brightness. */
   glow(): void;
+  /** What lies on the floor, undimmed, under the tile contents (Time Dilation's field). */
+  underContents?(): void;
   /** Tile contents (doors, stairs, items, enemies), in screen space. */
   contents(ctx: CanvasRenderingContext2D): void;
   /** Torch sprites: over the darkness, so the flames are never dimmed. */
@@ -92,13 +94,17 @@ export class DungeonLight {
       c.restore();
       this.pass.drawObjectBloom(f);
       board.glow();
+      board.underContents?.();
       const region = occupiedRegion(f);
       if (region)
         this.pass.drawDarkened(f, dark.spriteDark, {
           amount: LIGHTING_CONFIG.objectGlow.spriteDarkness, draw: (ctx) => board.contents(ctx), region,
         });
       this.pass.drawDoorWash(f);
-    } else board.contents(c);
+    } else {
+      board.underContents?.();
+      board.contents(c);
+    }
     this.entities.drawSpriteLighting(f, c);
     return dark?.spriteDark ?? null;
   }

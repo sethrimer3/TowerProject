@@ -36,6 +36,7 @@ import { DEFEAT_MS, drawStruckDown } from "./effects/struck-down.ts";
 import { AREA_BURST_MS, drawAreaBurst, preloadAreaBurst, drawLevelUp, drawRevive, drawWingedRevive, drawWarpLoot, LEVEL_UP_MS, POINTS_MS, REVIVE_MS, WARP_LOOT_MS } from "./effects/level-up.ts";
 import { drawPoof, POOF_MS } from "./effects/poof.ts";
 import { drawLifespring } from "./effects/lifespring.ts";
+import { drawDilationField } from "./effects/time-dilation.ts";
 import { drawOverseerBeams } from "./effects/overseer-beams.ts";
 import { drawSmite, SMITE_MS } from "./effects/smite.ts";
 import { drawExplosion, EXPLOSION_MS } from "./effects/explosion.ts";
@@ -185,7 +186,7 @@ export class Renderer {
   draw(now: number) {
     const f = this.beginFrame(now);
     const themed = f.look.themed;
-    if (themed) drawThemedBoard(f, themed, this.enemyLunge, () => this.drawRoute(f), this.game.run.player, this.game.mode === "delve" ? this.game.world.width : 0);
+    if (themed) drawThemedBoard(f, themed, this.enemyLunge, () => this.drawRoute(f), this.game.run.player, this.game.mode === "delve" ? this.game.world.width : 0, () => this.drawDilation(f));
     else {
       // Ground first; in the dungeon the light then runs the frame (relief,
       // decor, shadows, contents, torches, route, hero, frame) over it.
@@ -232,6 +233,10 @@ export class Renderer {
     c.restore();
   }
   private zoomCanvas: HTMLCanvasElement | undefined;
+  /** Time Dilation's field on the floor, while one stands. */
+  private drawDilation(f: FrameContext) {
+    if (!this.game.run.outside) drawDilationField(f, this.game.dilation);
+  }
   /** Gameplay feedback drawn over every board. */
   private drawOverlays(f: FrameContext) {
     // Overseer's beams lighten the board above the darkness, under everything marked on it.
@@ -304,6 +309,7 @@ export class Renderer {
     return {
       floor: () => this.drawDecorGround(f),
       glow: () => { if (decor) this.decor.drawGlow(f.c, decor, f.darkness); },
+      underContents: () => this.drawDilation(f),
       contents: (ctx) => this.drawEachContents(f, ctx),
       torches: () => { for (const t of f.torches) this.drawTorchSprite(f.c, f, t); },
       route: () => this.drawRoute(f),

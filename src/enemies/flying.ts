@@ -20,6 +20,7 @@ import type { Board } from "../board.ts";
 import { point, type Enemy, type Point, type Tile } from "../entities.ts";
 import { tileRandom } from "../random.ts";
 import { FOE_GAIN, foeShotCost, rangedShare, type Volleys } from "./ranged.ts";
+import { slowedCharge } from "../arcana/time-dilation.ts";
 
 const FLYING_SALT = 0xf1e5;
 /** The first tier with Flying enemies. */
@@ -90,8 +91,9 @@ export function walkToHero(board: Pick<Board, "tile" | "step" | "floor">, hero: 
 /** What a turn of Aggroed enemies moves on: the board, the run's changes
  * (where every Aggroed enemy is kept, an arrow's wound having written it
  * there), the hero, each tile's equivalent floor, the tiles holding a lit
- * torch (never stepped on, so the torch stays lit) and the Ranged
- * cooldowns by tile, which move with their enemies. */
+ * torch (never stepped on, so the torch stays lit), the Ranged
+ * cooldowns by tile, which move with their enemies, and the percent Time
+ * Dilation's field slows the enemy at a tile by, if there is a field. */
 export type AggroTurn = {
   board: Pick<Board, "tile" | "step" | "floor">;
   changes: Record<string, Tile>;
@@ -99,6 +101,7 @@ export type AggroTurn = {
   floorOf: (x: number, y: number) => number;
   lit: ReadonlySet<string>;
   foes?: Volleys["foes"];
+  slowAt?: (x: number, y: number) => number;
 };
 /** One Aggroed enemy's step: from where to where. */
 export type AggroStep = { from: Point; to: Point };
@@ -128,7 +131,7 @@ export function aggroTurn(turn: AggroTurn): { steps: AggroStep[]; foes?: Volleys
     .sort((a, b) => a.d - b.d || a.at[1] - b.at[1] || a.at[0] - b.at[0]);
   for (const { k, d, at: [x, y] } of order) {
     const raw = changes[k]!, flying = raw.kind !== "enemy", e = (flying ? raw.flyer : raw.enemy)!;
-    const cost = foeShotCost(turn.floorOf(x, y)), stride = (e.stride ?? 0) + FOE_GAIN;
+    const cost = foeShotCost(turn.floorOf(x, y)), stride = (e.stride ?? 0) + slowedCharge(FOE_GAIN, turn.slowAt?.(x, y) ?? 0);
     const opens = (n: Point) => {
       const nk = point(n.x, n.y), t = board.tile(n.x, n.y);
       if ((away.get(nk) ?? Infinity) >= d) return false;

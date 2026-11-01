@@ -7,7 +7,7 @@ export { effectiveBossDef, effectiveBossRegen, activeBossParts, bossPartAt, boss
 import { TRAINING, type TrainingId } from "../progression/training.ts";
 import type { Player } from "../entities.ts";
 import { decodeTrialArcana, noteStrike, trialArcanaTurn } from "./trial-arcana.ts";
-import { heroAttackOn, type TrialArcana } from "./trial-spells.ts";
+import { bossClock, bossTurn, foeActs, heroAttackOn, type TrialArcana } from "./trial-spells.ts";
 import { CARDS, type CardId } from "../cards/cards.ts";
 import { finite, isRecord, wholeIn } from "../save/decode.ts";
 import { tileRandom } from "../random.ts";
@@ -100,7 +100,7 @@ export function rayCells([dx,dy]: readonly number[], origin: Spot): Spot[] {
 export function beamCells(axis: number, origin: Spot = ELEMENTAL, count = 2): Spot[] {
   return beamDirections(axis,count).flatMap(direction=>rayCells(direction,origin));
 }
-export const nextBeamAxis = (s: TrialState) => Math.floor(s.steps / BEAM_INTERVAL) % 8;
+export const nextBeamAxis = (s: TrialState) => Math.floor(bossClock(s) / (BEAM_INTERVAL * 100)) % 8;
 
 /** Hops and releases have independent schedules. Destinations survive reloads. */
 function hopSlimes(s: TrialState, hopExisting: boolean, spawn: boolean) {
@@ -125,7 +125,7 @@ function hopSlimes(s: TrialState, hopExisting: boolean, spawn: boolean) {
     }
   };
   for (const slime of s.slimes) {
-    if(hopExisting)hop(slime);else next.push(slime);
+    if(hopExisting && foeActs(s,slime,`move:slime:${slime.id}`))hop(slime);else next.push(slime);
   }
   if (spawn && next.length < MAX_SLIMES) hop({ id: s.steps, x:s.elemental.x,y:s.elemental.y, from: {x:s.elemental.x,y:s.elemental.y}, jumped: s.steps });
   s.slimes = next;
@@ -164,10 +164,10 @@ function elementalStep(s: TrialState, x: number, y: number): { changed: boolean;
       s.status = "won"; s.playing = false; s.slimes = [];
       return { changed: true, message: "Trial complete — the Light Elemental is defeated.", fired: false };
     }
-    const damage = Math.max(1, Math.ceil(s.player.maxHp * 0.04) - Math.floor(s.player.defense * 0.1));
+    const damage = foeActs(s,s.elemental,"boss") ? Math.max(1, Math.ceil(s.player.maxHp * 0.04) - Math.floor(s.player.defense * 0.1)) : 0;
     s.player.hp = Math.max(0, s.player.hp - damage);
     teleportBoss(s);
-    message = `You strike the elemental for ${strike} damage. It scatters into light, invincible until its next lasers. Its radiance deals ${damage} damage.`;
+    message = `You strike the elemental for ${strike} damage. It scatters into light, invincible until its next lasers.${damage?` Its radiance deals ${damage} damage.`:""}`;
   } else {
     const slime = s.slimes.findIndex(p => p.x === x && p.y === y);
     if (slime >= 0) { s.slimes.splice(slime,1); message = "You disperse a light slime."; }
@@ -180,17 +180,18 @@ function elementalStep(s: TrialState, x: number, y: number): { changed: boolean;
     }
   }
   s.steps++;
-  const hop=s.steps%SLIME_INTERVAL===0,spawn=s.steps%slimeSpawnInterval(s.level)===0;
+  const due=bossTurn(s,s.elemental);
+  const hop=s.steps%SLIME_INTERVAL===0,spawn=due(slimeSpawnInterval(s.level));
   if (s.player.hp > 0 && (hop || spawn)) {
     const hits = hopSlimes(s,hop,spawn);
     if (hits) message = `A light slime lands on you! ${hits * Math.max(1,Math.ceil(s.player.maxHp*.05))} damage.`;
     else message ||= "Light slimes leap through the dark.";
   }
-  const fired = s.steps % BEAM_INTERVAL === 0;
+  const fired = due(BEAM_INTERVAL);
   if (fired) {
     const wasGhost=s.elemental.incorporeal;
     materializeBoss(s);
-    s.beam={origin:{x:s.elemental.x,y:s.elemental.y},axis:(s.steps/BEAM_INTERVAL-1)%8,step:s.steps,count:beamCount(s.level)};
+    s.beam={origin:{x:s.elemental.x,y:s.elemental.y},axis:(Math.floor(bossClock(s)/(BEAM_INTERVAL*100))-1)%8,step:s.steps,count:beamCount(s.level)};
     const cells = beamCells(s.beam.axis,s.beam.origin,s.beam.count);
     if(wasGhost) message="The elemental fires its lasers and becomes corporeal — it can be struck again.";
     for (const p of cells) {s.scorches[key(p)] = s.steps;breakProp(s,p);}
@@ -217,6 +218,8 @@ export function decodeTrial(raw: unknown): TrialState | undefined {
   if(!wholeIn(level,1,MAX_TRIAL_LEVEL))return;
   const trialId=raw.trialId??FIRST_TRIAL;
   if(typeof trialId!=="string" || !Object.hasOwn(TRIALS,trialId))return;
+  // Time Dilation's field moves the boss's effects off the turns they fall on otherwise.
+  const held=!!decodeTrialArcana(raw.arcana)?.lag?.boss;
   const keymaster=trialId==="keymaster"?decodeKeymaster(raw.keymaster,raw):undefined;
   if(trialId==="keymaster" && !keymaster)return;
   const isVariant=trialId==="magic-tower" || trialId==="obelisk";
@@ -242,10 +245,10 @@ export function decodeTrial(raw: unknown): TrialState | undefined {
   if(raw.beam!==undefined && raw.beam!==null) {
     const b=raw.beam;
     if(!isRecord(b) || !isRecord(b.origin) || !arenaFloor(b.origin.x,b.origin.y)
-      || !wholeIn(b.step,BEAM_INTERVAL,raw.steps) || b.step%BEAM_INTERVAL!==0
-      || !wholeIn(b.axis,0,7) || b.axis!==(b.step/BEAM_INTERVAL-1)%(raw.level===undefined?4:8)
+      || !wholeIn(b.step,BEAM_INTERVAL,raw.steps) || (!held && b.step%BEAM_INTERVAL!==0)
+      || !wholeIn(b.axis,0,7) || (!held && b.axis!==(b.step/BEAM_INTERVAL-1)%(raw.level===undefined?4:8))
       || (b.count!==undefined && !wholeIn(b.count,1,8))) return;
-    beam={origin:{x:b.origin.x,y:b.origin.y},axis:(b.step/BEAM_INTERVAL-1)%8,step:b.step,...(b.count===undefined?{}:{count:b.count})};
+    beam={origin:{x:b.origin.x,y:b.origin.y},axis:held?b.axis:(b.step/BEAM_INTERVAL-1)%8,step:b.step,...(b.count===undefined?{}:{count:b.count})};
   } else if(trialId!=="keymaster" && !bossVariant && raw.elemental===undefined && raw.steps>=BEAM_INTERVAL) {
     const step=Math.floor(raw.steps/BEAM_INTERVAL)*BEAM_INTERVAL;
     beam={origin:{...ELEMENTAL},axis:(step/BEAM_INTERVAL-1)%8,step,...(raw.level===undefined?{}:{count:beamCount(level)})};
@@ -281,7 +284,7 @@ export function decodeTrial(raw: unknown): TrialState | undefined {
   };
   const scorches: Record<string, number> = {};
   if (isRecord(raw.scorches)) for (const [k,v] of Object.entries(raw.scorches).slice(0,ARENA_SIZE*ARENA_SIZE)) {
-    if (validKey(k) && wholeIn(v, BEAM_INTERVAL, raw.steps) && v % BEAM_INTERVAL === 0) scorches[k] = v;
+    if (validKey(k) && wholeIn(v, BEAM_INTERVAL, raw.steps) && (held || v % BEAM_INTERVAL === 0)) scorches[k] = v;
   }
   const consumed = Array.isArray(raw.consumed) ? raw.consumed.slice(0,ARENA_POTIONS.length).filter((k: unknown) => typeof k === "string" && ARENA_POTIONS.some(p => key(p) === k)) : [];
   const destroyed: Record<string,number>={};
@@ -298,7 +301,7 @@ export function decodeTrial(raw: unknown): TrialState | undefined {
     if (!wholeIn(slime.id,1,raw.steps)
       || ids.has(slime.id) || !arenaFloor(slime.x,slime.y) || same(position,elemental) || same(position,{x:p.x,y:p.y})
       || occupied.has(key(position)) || !arenaFloor(slime.from.x,slime.from.y)
-      || !wholeIn(slime.jumped,2,raw.steps) || (slime.jumped % SLIME_INTERVAL !== 0 && slime.jumped % slimeSpawnInterval(level) !== 0)
+      || !wholeIn(slime.jumped,2,raw.steps) || (!held && slime.jumped % SLIME_INTERVAL !== 0 && slime.jumped % slimeSpawnInterval(level) !== 0)
       || Math.abs(slime.x-slime.from.x)>2 || Math.abs(slime.y-slime.from.y)>2) return;
     slimes.push({id:slime.id,x:slime.x,y:slime.y,from:{x:slime.from.x,y:slime.from.y},jumped:slime.jumped});
     occupied.add(key(position)); ids.add(slime.id);

@@ -6,11 +6,12 @@ import { CARDS, cardText, dealCard, deckCards, explainStuck, handSlots, handBonu
 import { addCardXp, PASSIVE_CARDS } from "./cards/levels.ts";
 import { KEY_COLORS, cardMaxLevel, compounded, doorStat, foeCardStat, foeStat, foeStats, keyStat, freeUpChances, freeUpFactors, hasPointsToSpend, pointsLeft, runCardTrees, runFoeCut, treeBonus, treeFactor, treeOverheal, type FoeTreeCard, type TreeBonus } from "./cards/trees.ts";
 import { aggroTurn } from "./enemies/flying.ts";
-import { arrowRange, foeOn } from "./enemies/ranged.ts";
+import { arrowRange, foeOn, within as inShotRange } from "./enemies/ranged.ts";
 import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./cards/badges.ts";
 import { BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
 import { noteGoldBoost } from "./economy/gold-boost.ts";
 import { canWarp, claimGoal, goalUnlocked, goalsWaiting } from "./goals.ts";
+import { fieldReach } from "./arcana/time-dilation.ts";
 import { fightRicochet, landsAt, lifespringContact, shortWay, thunderbolts, volleyTurn, type Shot, type Volley, type VolleyTurn } from "./volley.ts";
 import { missGem } from "./economy/gems.ts";
 import { DelvePlan } from "./delve/automove.ts";
@@ -1197,8 +1198,9 @@ export class Game {
   /** The hero as it takes the fight at `to`, the step's tile: with Overseer's
    * beams as the turn begins on that tile, a copy carrying their ATK as well. */
   fighterAt(to: { x: number; y: number }): Player {
-    const factor = this.beamFactorAt(to);
-    return factor === 1 ? this.fighter : { ...this.fighter, beamAttack: factor };
+    const factor = this.beamFactorAt(to), slow = this.slowdownAt(to);
+    if (factor === 1 && !slow) return this.fighter;
+    return { ...this.fighter, ...(factor === 1 ? {} : { beamAttack: factor }), ...(slow ? { slowdown: slow } : {}) };
   }
   /** What Overseer's beams, as the turn begins, multiply ATK by against `to`. */
   private beamFactorAt(to: { x: number; y: number }) {
@@ -2419,6 +2421,8 @@ export class Game {
     // The board walks a single step at an even pace; anything else it snaps.
     this.turnShown = sameFloor && Math.abs(p.x - from.x) + Math.abs(p.y - from.y) === 1 ? { at, ms, from: { x: from.x, y: from.y }, to: { x: p.x, y: p.y } } : null;
     this.lifespringTurn(at);
+    this.arcana.timeDilationTurn();
+    const dilation = this.dilation;
     // Thunderbolt strikes first, so what it fells shoots no more this turn.
     const struck = [...(sameFloor ? sprung : []), ...this.strikeBolts(fired, beams, sameFloor ? from : undefined)];
     if ((this.tier < 3 && !archer) || !sameFloor) {
@@ -2430,7 +2434,7 @@ export class Game {
     const met = this.lifespringContact(from, 1);
     const v = this.run.volleys ?? { turn: 0 };
     const out = volleyTurn({ board: this.world, wrap: this.wrap, floorOf: (x, y) => this.floorOf(x, y), hero: p, from, seed: this.run.seed,
-      volleys: { ...v, turn: v.turn + 1 }, archer, ranks: { ...this.trainingNow, archives: this.save.archives }, cardCrit: this.cardCrit, handShot: this.handShot, ricochet: this.arcana.ricochet(), ...(beams ? { beams } : {}) });
+      volleys: { ...v, turn: v.turn + 1 }, archer, ranks: { ...this.trainingNow, archives: this.save.archives }, cardCrit: this.cardCrit, handShot: this.handShot, ricochet: this.arcana.ricochet(), ...(beams ? { beams } : {}), ...(dilation ? { dilation } : {}) });
     this.run.volleys = out.volleys;
     p.hp = out.hp;
     if (out.shield !== undefined) p.shield = out.shield;
@@ -2455,7 +2459,7 @@ export class Game {
       return;
     }
     // Then the Aggroed enemies close in (enemies/flying.ts), their cooldowns with them.
-    const moved = aggroTurn({ board: this.world, changes: this.run.changes, hero: p, floorOf: (x, y) => this.floorOf(x, y), lit: litTorches(this.world), foes: this.run.volleys.foes });
+    const moved = aggroTurn({ board: this.world, changes: this.run.changes, hero: p, floorOf: (x, y) => this.floorOf(x, y), lit: litTorches(this.world), foes: this.run.volleys.foes, ...(dilation ? { slowAt: (x: number, y: number) => this.slowdownAt({ x, y }) } : {}) });
     if (moved.steps.length) {
       if (moved.foes && Object.keys(moved.foes).length) this.run.volleys.foes = moved.foes;
       else delete this.run.volleys.foes;
@@ -2477,6 +2481,17 @@ export class Game {
    * range, Attack Range's first rank until the Archer's training raises it. */
   get lifespringReach() {
     return arrowRange(trainedAmount(this.trainingNow, "attackRange"), this.handShot.range);
+  }
+  /** Time Dilation's field while one stands: the percent it slows what is in it
+   * by, and its reach in hundredths of a tile, which is the hero's shot range. */
+  get dilation() {
+    const rule = this.arcana.timeDilationRule();
+    return rule && this.run.timeDilation?.left ? { slow: rule.slow, reach: fieldReach(this.lifespringReach, rule.effects) } : undefined;
+  }
+  /** The percent Time Dilation's field slows an enemy at `at` by, the hero where it stands now. */
+  private slowdownAt(at: { x: number; y: number }) {
+    const field = this.dilation, p = this.run.player;
+    return field && inShotRange(shortWay(at.x - p.x, this.wrap), at.y - p.y, field.reach) ? field.slow : 0;
   }
   /** Lifespring's field as the board shows it, while it is on and its pool holds. */
   get lifespringField() {

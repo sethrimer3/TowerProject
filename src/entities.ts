@@ -178,6 +178,10 @@ export type Player = {
    * its enemy stands in one. Like `comboAttack`, only the copy of the hero a
    * fight is taken with carries it (`Game.fighterAt`). */
   beamAttack?: number;
+  /** The percent Time Dilation's field slows the enemy of the fight being taken
+   * by (`slowedAct` skipping its strikes). Like `beamAttack`, only the copy of the
+   * hero a fight is taken with carries it (`Game.fighterAt`). */
+  slowdown?: number;
   /** The percent of a boss's or a Greater Boss's max HP (`takedown`: ATK
    * UP's Takedown, TORCH's Greater Takedown) and ATK (`tangle`: DEF UP's
    * Tangle, TORCH's Greater Tangle) taken off as a fight with it begins, by

@@ -38,6 +38,7 @@ import { decodeCardXp } from "../cards/levels.ts";
 import { decodeCardBuys, defaultCardBuys } from "../cards/buys.ts";
 import { decodeArcana, decodeArcanaRun, defaultArcana, defaultArcanaRun } from "../arcana/arcana.ts";
 import { validLifespring } from "../arcana/lifespring.ts";
+import { validDilation } from "../arcana/time-dilation.ts";
 import { totalCardLevels, treeNode, decodeCardTrees, pointsSpent } from "../cards/trees.ts";
 export function defaults(): Save {
   return {
@@ -237,6 +238,7 @@ const RUN_FIELD_CHECKS = {
   wingsSpent: (v: unknown) => v === true,
   beamTurns: (v: unknown) => wholeIn(v, 1, 1e12),
   lifespring: validLifespring,
+  timeDilation: validDilation,
   combo: (v: any) => isRecord(v) && wholeIn(v.next, 1, 1e9) && wholeIn(v.idle, 0, 1),
   volleys: (v: any) => isRecord(v) && wholeIn(v.turn, 0, 1e12) && (v.hero === undefined || wholeIn(v.hero, 0, 1e6)) &&
     (v.waited === undefined || wholeIn(v.waited, 1, 1e12)) && (v.rapid === undefined || wholeIn(v.rapid, 1, 1e4)) &&

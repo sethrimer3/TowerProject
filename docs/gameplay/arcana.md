@@ -143,6 +143,35 @@ Switching it off loses the pool, the waves on their way and its cooldown; the He
 | Effect Waves | 1 | 5 | 5 |
 | Cooldown | 300 turns | 50 turns | 26 |
 
+## Time Dilation
+
+*Every x turns, a field as wide as your shot range forms round you for y turns. Enemies in it strike, shoot and move z% slower, and a boss's effects count down z% slower.*
+The field shows as a faint light blue circle with a thin solid rim, lying on the floor under items and enemies.
+Its radius is your shot range, 3 tiles until you train Attack Range, whether or not you hold the Archer, measured straight to each enemy, walls or no walls.
+
+The cooldown starts over the moment it runs out, and a new field simply replaces the old one: what was left of it is lost, and fields never stack.
+With a Duration as long as the Cooldown, the field never ends.
+Slowdown can reach 90% at most, whatever raises it.
+
+**In a fight** the enemy's strikes come less often, so you may strike twice in a row.
+At 25%, the enemy misses every fourth round: rounds 4, 8, 12.
+At 50% and above the delay comes first: at 50% it strikes in rounds 2, 4, 6, and at 75% in rounds 4, 8, 12.
+A Fast enemy's first strike counts as its first chance: at 35% it strikes first, strikes again, then misses a round; from 50% it waits until you have struck.
+Its ATK rises only with the strikes that land.
+Enemy previews, the Damage Visual and Automove count fights without the field, since it may not be there when you arrive.
+
+**A Ranged or Flying enemy** in the field recharges its shot that much slower, as you stand each moment of the turn, and one already ready still fires.
+**An enemy on the move** takes longer between steps: at 30%, each takes 1 / 0.7 times as many turns; at 90%, ten times as many.
+
+Undo takes back the field with what it slowed.
+Switching it off loses the field and its cooldown.
+
+| Attribute | First | Highest | Levels |
+|---|---|---|---|
+| Duration | 5 turns | 40 turns | 36 |
+| Slowdown | 20% | 75% | 12 |
+| Cooldown | 180 turns | 60 turns | 13 |
+
 ## In a trial
 
 Your Arcana work on what stands in a trial's arena: the boss while it is corporeal, its parts, its minions, mimics and Light Slimes.
@@ -155,4 +184,7 @@ It can defeat the boss and win the trial, and its damage counts toward Damage th
 **Ricochet Shot** springs from your own hits there, since a trial has no arrows: each hit rolls its chance, and a ricochet strikes the closest others.
 **Overseer** multiplies your hits on what stands in a beam, as the turn begins.
 **Lifespring** works as above on what stands in the arena, each wave counting for all of it, even what arrives later; a trial pays no kills, so its Health, Gold and Cell Bonuses do nothing there, and neither does DEF Reduction.
+**Time Dilation** works as above on everything in the field: its tally for a counter or bite goes on from one of your hits to the next, a scheduled step or hop is skipped the same way, and a boss's or part's effects count down slower while it stands in the field.
+At 75% a cooldown falls by 0.25 a turn, so a beam due in 10 turns takes 40, and any part of a turn left over counts toward the next.
+A boss's Regen isn't on a cooldown, so it isn't slowed, and an Obelisk's turn limit still counts every turn.
 Toggles and cooldowns are the attempt's own, leave your run outside alone, and survive a reload.
