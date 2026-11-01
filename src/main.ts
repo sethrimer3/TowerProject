@@ -338,7 +338,12 @@ function showPage(id: Tab) {
 // one still heads for its target, flashes red, the first saying so a moment.
 el("hand").onclick = (e) => {
   const card = (e.target as HTMLElement).closest<HTMLElement>(".hand-card");
-  if (provingGrounds.active || !card || game.run.outside) return;
+  if (!card) return;
+  if (provingGrounds.active) {
+    if (!provingGrounds.focusCard(Number(card.dataset.handSlot))) flashRed(card);
+    return;
+  }
+  if (game.run.outside) return;
   const result = game.focus(Number(card.dataset.handSlot));
   if (result === "noPath" || result === "busy") flashRed(card);
   if (result === "noPath") showCardTip(card, "No open path exists.");

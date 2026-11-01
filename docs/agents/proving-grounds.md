@@ -188,3 +188,23 @@ The Light Elemental and other render jobs remain unchanged.
 
 `tests/keymaster-arena.test.ts` checks connected cover geometry, clear doors and edge props, blocked-turn authority, manual detours, mimic pursuit, retreat, teleport/reformation and old-layout migration.
 The Keymaster browser flow compares actual floor and cover texels against Tower II tiles to prove the darkness mask is absent, verifies Tower I remains distinct, and captures the lit room at 320/390/1024 pixels.
+
+## Magic Tower and Obelisk (Boss Variants 1 & 2, 1b & 2b)
+
+`catalog.ts` adds Trial 3 — Magic Tower (`"magic-tower"`) and Trial 4 — Obelisk (`"obelisk"`).
+`boss-variants.ts` and `boss-variants-art.ts` implement both encounters and their selectable multi-part sub-variants (`1b` and `2b`, stored in `TrialProgress.multiPart`).
+In both encounters, attacking the boss, a boss part or a boss minion resolves **one round of combat per turn** instead of fighting to the death in a single turn.
+Boss, part and minion ATK remain constant and never increase with each hit on the player.
+Each combat round records a `CombatRound` (`lastRound`) with the hero's lunge coordinates, damage dealt and taken, popped coins and ranged shots so `TrialRenderer` animates each round on the board.
+Players in `cards` or `hybrid` mode can click any `.hand-card` in `#hand` (`ProvingGroundsDialog.focusCard` → `focusTrialCard`) to break off combat at any turn and redirect `trialPlan` to another target (such as an ATK/DEF shard, potion, coin drop, minion, part or boss).
+**Magic Tower (Variant 1)** has ~30× player ATK HP (`max(300, 30 * ATK) * difficultyMultiplier(level)`), a per-turn `bossRegen` stat, and no turn limit (`turnLimit: 0`).
+Every hit on the Magic Tower pops out Gold and Silver coins (`popCoinsOnBossHit`), crediting trial Silver immediately and scattering coin pickups onto nearby floor tiles so the player can raise stat levels mid-encounter via `RunTrainingBar` to surpass the boss's regeneration threshold.
+**Obelisk (Variant 2)** has ~150× player ATK HP (`max(1500, 150 * ATK) * difficultyMultiplier(level)`) and a per-run turn limit (`turnLimit`, base `OBELISK_DEFAULT_TURNS = 100`, increased by +10 per level of the `trialTurns` Archives research project in `src/progression/archives.ts`).
+The Obelisk fires periodic shots every `OBELISK_SHOT_INTERVAL` (3) turns and an Arcane Pulse special attack every `OBELISK_SPECIAL_INTERVAL` (8) turns.
+An Obelisk run ends when the boss is defeated (`status: "won"`), turns run out (`status: "lost"`, `outOfTurns: true`), or the hero is knocked out (`status: "lost"`).
+When an Obelisk run ends before the boss is defeated, `saveTrialDamage` (`progression.ts`) saves `SavedBossProgress` (`level`, `damage`, `partDamage`) on `save.trialAccess.progress.obelisk`, and the next attempt at that difficulty starts with that damage already subtracted from the boss and its parts; `settleTrialVictory` clears `savedBoss` on victory.
+In the `1b` and `2b` **multi-part boss** configurations (`multiPart: true`), three parts (`Blaster Turret` at `(9,12)`, `Regen Conduit` at `(15,12)`, and `Ward Crystal` at `(12,15)`) stand around the boss as `"elite"` enemies on `trialBoard`.
+While alive, `Blaster Turret` fires periodic bolts, `Regen Conduit` increases `effectiveBossRegen`, and `Ward Crystal` increases `effectiveBossDef` and dampens player DEF against the boss.
+When a part reaches 0 HP, it stops its activity, disappears from `activeBossParts` and `trialBoard`, and its HP cannot be regenerated.
+While any trial is active, `ProvingGroundsDialog` renders `#trial-boss-meter` directly above `.board-cell` inside `#board`: a boss icon on the left, a progress bar with 10%–90% tick marks and a centered shortened HP readout (`shortAmount`), and `"Damage this run: X"` (`trialDamageThisRun`) and `"DPT: Y"` (`trialDpt`) indicators next to the bar.
+`tests/boss-variants.test.ts` covers single-round combat, constant boss ATK, card focus switching, Magic Tower regeneration and coin drops, Obelisk turn limits, `trialTurns` research, periodic shots/pulses, saved damage across runs, and multi-part boss knockout rules.

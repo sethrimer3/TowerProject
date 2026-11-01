@@ -5324,6 +5324,18 @@ html body dialog.proving-grounds-dialog h2 { font-size: 1.05rem; margin: 0 0 8px
 .card-buy-reveal.still .cb-stars i { animation: none; opacity: 0.8; transform: rotate(var(--a)) translateY(-110px); }
 
 /* Boss trials use the same board, HUD, hand and run-purchase bar as a Tower run. */
+.trial-boss-meter { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; width: 100%; max-width: var(--board-cap, 440px); margin: 2px auto 4px; padding: 4px 8px; background: #0a1019e6; border: 1px solid #5c4b2b; border-radius: 4px; font-size: 10px; color: #f3dc9c; box-sizing: border-box; }
+.trial-boss-bar-wrap { display: flex; align-items: center; gap: 6px; flex: 1 1 180px; min-width: 150px; }
+.trial-boss-icon { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 3px; background: #261b2e; border: 1px solid #9a7a3c; color: #ffd978; font-size: 12px; line-height: 1; flex-shrink: 0; }
+.trial-boss-bar { position: relative; flex: 1; height: 16px; background: #1c1018; border: 1px solid #8c7548; border-radius: 3px; overflow: hidden; }
+.trial-boss-fill { position: absolute; inset: 0 auto 0 0; width: 100%; background: linear-gradient(90deg, #8e1f2f, #d94336 60%, #f07842); transition: width 0.16s ease-out; }
+.trial-boss-ticks { position: absolute; inset: 0; pointer-events: none; }
+.trial-boss-tick { position: absolute; top: 0; bottom: 0; width: 1px; background: #ffffff44; }
+.trial-boss-hp { position: absolute; inset: 0; display: grid; place-items: center; font-size: 10px; font-weight: 700; color: #fff8e6; text-shadow: 0 1px 2px #000, 0 0 3px #000; pointer-events: none; }
+.trial-boss-stats { display: flex; align-items: center; gap: 10px; font-size: 10px; color: #d6e4f0; white-space: nowrap; }
+.trial-variant-pick { display: flex; gap: 6px; margin: 8px 0; }
+.trial-variant-pick button { flex: 1; min-height: 32px; padding: 6px 8px; font-size: .78rem; border-color: #6b5832; }
+.trial-variant-pick button.selected { border-color: #ebc77f; background: #262015; color: #ffe7a8; }
 #trial-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 6; }
 #trial-overlay #trial-vitals { position: absolute; top: 4px; left: 4px; right: 4px; padding: 5px; text-align: center; background: #060c13d9; font-size: 10px; line-height: 1.35; color: #f3dc9c; }
 #trial-overlay .trial-actions { position: absolute; right: 5px; bottom: 52px; display: flex; gap: 4px; pointer-events: auto; }

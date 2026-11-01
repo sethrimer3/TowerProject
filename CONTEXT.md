@@ -840,3 +840,6 @@ _Avoid_: known tiles, visit map
 - **Keymaster**: the second Proving Grounds boss, which drops golden keys when struck, teleports into a ghost and retreats from the player while its tough chest mimics pursue.
 - **Trial golden key**: a Keymaster encounter pickup spent on a mimic or cardinal door, separate from a daily trial entry key.
 - **Door spirits**: red particles released once from a Keymaster door that converge on the boss and remove 20% of its maximum HP on arrival.
+- **Magic Tower**: the third Proving Grounds boss, a high-HP arcane spire with per-turn regeneration that pops out Gold and Silver coins when struck and resolves one combat round per turn with no turn limit.
+- **Obelisk**: the fourth Proving Grounds boss, a massive-HP monolith fought under a per-run turn limit (raised by Archives research) that fires periodic shots and Arcane Pulses and saves inflicted damage across trial runs.
+- **Boss part**: one of three auxiliary structures (`Blaster Turret`, `Regen Conduit`, `Ward Crystal`) in the `1b` and `2b` multi-part boss sub-variants; knocking a part out permanently disables its activity and removes it from the floor without regeneration.

@@ -189,20 +189,22 @@ export const floorPickupAt = (v: BossVariantState, x: number, y: number): FloorP
   v.pickups.find((p) => p.x === x && p.y === y);
 
 /** Effective boss defense: increased while the Ward Crystal part is alive. */
-export function effectiveBossDef(s: TrialState): number {
-  const v = s.bossVariant;
+export function effectiveBossDef(s: TrialState | BossVariantState): number {
+  const v = "variant" in s ? s : s.bossVariant;
   if (!v) return 0;
-  const wardAlive = v.parts.some((p) => p.id === "ward" && p.hp > 0);
-  const bonus = wardAlive ? Math.max(1, Math.ceil(s.player.attack * 0.15)) : 0;
+  const ward = v.parts.find((p) => p.id === "ward" && p.hp > 0);
+  const atk = "variant" in s ? v.bossAtk : s.player.attack;
+  const bonus = ward ? Math.max(1, Math.ceil(atk * 0.15)) : 0;
   return v.bossDef + bonus;
 }
 
 /** Effective boss regeneration per turn: base regen plus Regen Conduit bonus while alive. */
-export function effectiveBossRegen(s: TrialState): number {
-  const v = s.bossVariant;
+export function effectiveBossRegen(s: TrialState | BossVariantState): number {
+  const v = "variant" in s ? s : s.bossVariant;
   if (!v) return 0;
-  const regenPartAlive = v.parts.some((p) => p.id === "regen" && p.hp > 0);
-  const conduitBonus = regenPartAlive ? Math.max(1, Math.round(s.player.attack * 0.14 * difficultyMultiplier(s.level))) : 0;
+  const regenPart = v.parts.find((p) => p.id === "regen" && p.hp > 0);
+  const scale = "variant" in s ? Math.max(10, v.bossAtk) : s.player.attack * difficultyMultiplier(s.level);
+  const conduitBonus = regenPart ? Math.max(1, Math.round(scale * 0.14)) : 0;
   return v.bossRegen + conduitBonus;
 }
 
@@ -737,6 +739,47 @@ export function decodeBossVariant(raw: unknown, trialRaw: Record<string, unknown
         ? raw.focusedCard
         : undefined;
   if (focusedCard === undefined) return;
+  let lastRound: CombatRound | null = null;
+  if (isRecord(raw.lastRound) && isRecord(raw.lastRound.from) && isRecord(raw.lastRound.to)) {
+    const lr = raw.lastRound;
+    if (
+      wholeIn(lr.step, 1, 1e9) &&
+      wholeIn(lr.from.x, 0, ARENA_SIZE) &&
+      wholeIn(lr.from.y, 0, ARENA_SIZE) &&
+      wholeIn(lr.to.x, 0, ARENA_SIZE) &&
+      wholeIn(lr.to.y, 0, ARENA_SIZE) &&
+      typeof lr.targetName === "string" &&
+      finite(lr.heroDamage, 1e100) &&
+      finite(lr.enemyDamage, 1e100) &&
+      Array.isArray(lr.coins) &&
+      Array.isArray(lr.shots)
+    ) {
+      lastRound = {
+        step: lr.step,
+        from: { x: lr.from.x, y: lr.from.y },
+        to: { x: lr.to.x, y: lr.to.y },
+        targetName: lr.targetName,
+        heroDamage: lr.heroDamage,
+        enemyDamage: lr.enemyDamage,
+        coins: lr.coins
+          .filter((c): c is Record<string, unknown> => isRecord(c) && isRecord(c.from) && isRecord(c.to) && (c.kind === "gold" || c.kind === "silver") && finite(c.amount, 1e100))
+          .map((c) => ({
+            from: { x: (c.from as Spot).x, y: (c.from as Spot).y },
+            to: { x: (c.to as Spot).x, y: (c.to as Spot).y },
+            kind: c.kind as "gold" | "silver",
+            amount: c.amount as number,
+          })),
+        shots: lr.shots
+          .filter((sh): sh is Record<string, unknown> => isRecord(sh) && isRecord(sh.from) && isRecord(sh.to) && finite(sh.damage, 1e100))
+          .map((sh) => ({
+            from: { x: (sh.from as Spot).x, y: (sh.from as Spot).y },
+            to: { x: (sh.to as Spot).x, y: (sh.to as Spot).y },
+            damage: sh.damage as number,
+            ...(sh.special ? { special: true } : {}),
+          })),
+      };
+    }
+  }
   void trialRaw;
   return {
     variant: raw.variant,
@@ -754,6 +797,6 @@ export function decodeBossVariant(raw: unknown, trialRaw: Record<string, unknown
     pickups,
     spawned: raw.spawned,
     focusedCard,
-    lastRound: null,
+    lastRound,
   };
 }

@@ -28,7 +28,7 @@ export function saveTrialDamage(save:Pick<Save,"trialAccess">,state:TrialState) 
   if(state.trialId!=="obelisk" || state.bossHp<=0)return false;
   const damage=Math.max(0,Math.round(state.bossMaxHp-state.bossHp));
   const partDamage: Record<string, number> = {};
-  for(const part of state.parts) {
+  for(const part of state.bossVariant?.parts??[]) {
     const lost=Math.max(0,Math.round(part.maxHp-part.hp));
     if(lost>0)partDamage[part.id]=lost;
   }

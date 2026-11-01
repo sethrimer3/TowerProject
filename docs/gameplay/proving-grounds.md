@@ -138,3 +138,34 @@ Reduce motion simplifies the red particle paths while keeping the same timing.
 Higher difficulties raise boss and mimic HP with the displayed multiplier.
 New mimics spawn every eight turns at first; each five difficulties reduces the interval by one turn, down to two.
 Defeat the Keymaster by combining direct attacks and door impacts to earn that difficulty's one-time Trial Points.
+
+## Boss HP Meter and Run Damage
+
+Above the floor area during a trial, a **Boss HP Meter** shows the boss's icon on the left, a health bar with tick marks every 10%, and a shortened HP readout centered over the bar.
+Next to the bar, **Damage this run: X** and **DPT: Y** display the total damage you have inflicted on the boss during the current run and your average damage per turn over the run.
+
+## Single-Round Combat, Magic Tower, and Obelisk
+
+In **Trial 3 — Magic Tower** and **Trial 4 — Obelisk**, attacking the boss, a boss part, or a boss minion performs **one round of combat per turn** instead of resolving the entire fight to the death in a single turn.
+A fight animation shows the strike and counter-strike results of each round.
+Boss ATK remains constant and does not increase with each hit on you.
+In **Only with cards** or **With both**, you can click any card in your hand at any time to break off combat and target something else in the arena (such as a stat shard, potion, coin drop, minion, or boss part), then click your boss card later to resume attacking the boss.
+
+### Trial 3 — Magic Tower (Variant 1 & 1b)
+
+The Magic Tower has high HP (around 30× your ATK) and no turn limit, so multiple partial combat engagements take place before it falls.
+It has a **Regen** stat that restores its HP every turn, meaning turns spent away from combat require dealing more total damage to finish it off.
+Each time you damage the boss, **Gold and Silver coins pop out** as loot drops, which you can use with the in-run training bar and floor stat shards to raise your stats during the encounter and surpass the boss's regeneration threshold.
+
+### Trial 4 — Obelisk (Variant 2 & 2b)
+
+The Obelisk has very high HP (requiring hundreds of turns to defeat), and you are given a fixed number of turns per run to inflict damage, starting at **100 turns** and increasing by +10 per level of the **Trial Turn Limit** research project in the Archives.
+The Obelisk fires periodic arcane shots every 3 turns and an **Arcane Pulse** special attack every 8 turns.
+The encounter ends when the Obelisk is defeated, your turns run out, or you are knocked out.
+When turns run out (or the run ends early), **all damage inflicted on the Obelisk is saved**, and your next trial run at that difficulty resumes from the boss's remaining HP.
+
+### Multi-Part Bosses (1b & 2b)
+
+In the trial details menu for Magic Tower and Obelisk, you can switch between the **Standard Boss** (`1` / `2`) and the **Multi-Part Boss** (`1b` / `2b`).
+In the multi-part sub-variant, the boss is accompanied by three parts on the floor—**Blaster Turret** (fires periodic bolts), **Regen Conduit** (increases boss regeneration), and **Ward Crystal** (increases boss DEF and dampens your DEF)—each with its own stats.
+When you knock out a part, it stops its activity, disappears from the floor, and its HP cannot be regenerated.
