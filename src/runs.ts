@@ -11,6 +11,7 @@ import type { TournamentRun } from "./tournament/run.ts";
 import type { Volleys } from "./enemies/ranged.ts";
 import type { LifespringRun } from "./arcana/lifespring.ts";
 import type { DilationRun } from "./arcana/time-dilation.ts";
+import type { PhantasmRun } from "./arcana/phantasm.ts";
 import type { ChestOdds, DoorOdds, Player, Tile } from "./entities.ts";
 /** A stat a provision boosts for a while. */
 export type Boosted = (typeof PROVISION_BOOSTS)[keyof typeof PROVISION_BOOSTS];
@@ -127,6 +128,9 @@ export type RunCore = {
   /** Time Dilation's cooldown and field (arcana/time-dilation.ts), in the run so
    * undo takes them back with what they slowed; absent before its first turn. */
   timeDilation?: DilationRun;
+  /** Phantasm's cooldown, turning and ghosts (arcana/phantasm.ts), in the run so
+   * undo takes them back with what they struck; absent before its first turn. */
+  phantasm?: PhantasmRun;
   /** Ranged enemies' and the Archer's cooldowns, and the turns taken
    * inside (enemies/ranged.ts); absent until the first shot is due. */
   volleys?: Volleys;

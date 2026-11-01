@@ -25,10 +25,11 @@ const DEV = ["devMode", "freePurchases"] as const satisfies readonly SettingKey[
  * in a run. */
 const TOGGLES = [
   "attackGains", "defenseGains", "hpGains", "keyGains", "doorGains", "goldGains", "silverGains", "xpGains", "comboGains",
-  "damageVisual", "itemLabels", "hitNumbers", "ricochetAnimation", "thunderboltAnimation", "lifespringDamage", "enemyBars", "showPath",
+  "damageVisual", "itemLabels", "hitNumbers", "ricochetAnimation", "thunderboltAnimation", "lifespringDamage", "phantasmDamage", "phantasmAlpha", "enemyBars", "showPath",
 ] as const satisfies readonly SettingKey[];
 type PageKey = (typeof PAGE)[number] | (typeof TOGGLES)[number] | (typeof DEV)[number] | "devTools";
 
+const phantasmUnlocked = (save: Save) => !!save.arcana.owned.phantasm || !!save.tower.run?.shrine?.arcana?.includes("phantasm");
 /** Settings that stay off the page until the upgrade (or the setting)
  * behind them is on. */
 const SHOWN: Partial<Record<PageKey, (save: Save) => boolean>> = {
@@ -39,6 +40,8 @@ const SHOWN: Partial<Record<PageKey, (save: Save) => boolean>> = {
   thunderboltAnimation: arcanaOpen,
   // Once it is unlocked: bought, or lent to the climb by a Shrine.
   lifespringDamage: (save) => !!save.arcana.owned.lifespring || !!save.tower.run?.shrine?.arcana?.includes("lifespring"),
+  phantasmDamage: phantasmUnlocked,
+  phantasmAlpha: phantasmUnlocked,
   showPath: (save) => !!save.upgrades.autoClimb,
   cinematicIdle: (save) => save.settings.cinematic,
   cinematicGems: (save) => save.settings.cinematic,

@@ -1,6 +1,7 @@
 import type { ArcanaRun } from "../arcana/arcana.ts";
 import type { LifespringRun, LifespringStep } from "../arcana/lifespring.ts";
 import { beamFactor, type Beams } from "../arcana/overseer.ts";
+import type { PhantasmRun } from "../arcana/phantasm.ts";
 import { slowedAct, type DilationRun } from "../arcana/time-dilation.ts";
 import { snap } from "../exact.ts";
 import type { Spot } from "./arena.ts";
@@ -18,20 +19,21 @@ export type TrialSpells = {
   lifespring?: { hp: number; waves: number; turns: number; reach: number };
   /** `slow`: the percent its field slows what is in it by; `reach`: the field's, in hundredths of a tile. */
   timeDilation?: { duration: number; slow: number; turns: number; reach: number };
+  phantasm?: { boost: number; quantity: number; turns: number; blast: number; spin: number };
   beams?: Pick<Beams, "count" | "width" | "bonus">;
   /** Whether Overseer is held, on or off: its beams turn on either way. */
   overseer: boolean;
 };
 /** An arcanum's strike of the last turn, for the board to show. */
-export type TrialStrike = { kind: "ricochet" | "thunderbolt" | "lifespring"; from: Spot; to: Spot; damage: number; tick: number };
+export type TrialStrike = { kind: "ricochet" | "thunderbolt" | "lifespring" | "phantasm"; from: Spot; to: Spot; damage: number; tick: number };
 /** The attempt's arcana: its toggles, cooldowns and bolts, the turns Overseer's
  * beams have turned, Lifespring's state and the Effect Waves it has fired
  * (`springWaves`), and Time Dilation's: its field and cooldown (`dilation`), each
  * foe's tally on what it does (`tallies`), and how far its field has held back the
  * clocks of the boss's effects and its Blaster Turret's, in hundredths of a turn
- * (`lag`), all saved with it; `spells`, what strikes this turn, `struck`, what
+ * (`lag`), and Phantasm's (`phantasm`), all saved with it; `spells`, what strikes this turn, `struck`, what
  * the hero's step strikes, `strikes` and `springStep`, what Lifespring did last turn, aren't saved. */
-export type TrialArcana = { run: ArcanaRun; beamTurns: number; lifespring?: LifespringRun; springWaves?: number; dilation?: DilationRun; tallies?: Record<string, number>; lag?: Partial<Record<BossClock, number>>; spells?: TrialSpells; struck?: Spot & { foe: object }; strikes?: TrialStrike[]; springStep?: LifespringStep };
+export type TrialArcana = { run: ArcanaRun; beamTurns: number; lifespring?: LifespringRun; springWaves?: number; dilation?: DilationRun; tallies?: Record<string, number>; lag?: Partial<Record<BossClock, number>>; phantasm?: PhantasmRun; spells?: TrialSpells; struck?: Spot & { foe: object }; strikes?: TrialStrike[]; springStep?: LifespringStep };
 
 /** The clocks Time Dilation can hold back: the boss's own effects, and its Blaster Turret's. */
 export type BossClock = "boss" | "turret";

@@ -1,6 +1,7 @@
 import type { CritRule } from "../combat.ts";
 import { STELLAR_FACTOR } from "../environments.ts";
 import { WAVE_INTERVAL } from "./lifespring.ts";
+import { phantasmCooldown } from "./phantasm.ts";
 import { drawAt, tileRandom } from "../random.ts";
 import { isRecord, wholeIn } from "../save/decode.ts";
 
@@ -178,6 +179,29 @@ export const ARCANA = {
     ],
     summary: ([duration, slow, turns]) => `Every ${turns} turns, a field as wide as your shot range forms round the hero for ${duration} turns. Enemies in it strike, shoot and move ${slow}% slower, and a boss's effects count down ${slow}% slower.`,
     effect: ([duration, slow]) => `${slow}% · ${duration} turns`,
+  },
+  phantasm: {
+    name: "Phantasm",
+    trigger: { on: "cooldown", turns: ([, , turns]) => phantasmCooldown(turns) },
+    attributes: [
+      {
+        name: "ATK Mult",
+        shown: (v) => `${countOf(v)}x`,
+        steps: [[10, 0], [11, 5], [13, 11], [16, 17], [20, 23], [26, 29], [34, 35], [43, 41], [55, 47], [69, 53], [87, 61], [108, 71], [134, 84], [164, 100], [200, 120], [243, 144], [293, 174], [352, 210], [421, 254], [502, 308], [597, 374], [708, 454], [838, 540], [989, 632], [1165, 730], [1370, 834], [1608, 944], [1886, 1060], [2209, 1182], [2585, 1312], [3021, 1448], [3776, 1592], [4720, 1742], [5900, 1898], [7375, 2060], [9219, 2228]],
+      },
+      {
+        name: "Quantity",
+        shown: countOf,
+        steps: [[3, 0], [4, 50], [5, 125], [6, 250]],
+      },
+      {
+        name: "Cooldown",
+        shown: (v) => `${v} turns`,
+        steps: [[200, 0], [190, 8], [180, 24], [170, 40], [160, 56], [150, 72], [140, 88], [130, 104], [120, 120], [110, 136], [100, 152], [90, 168], [80, 184], [70, 200], [60, 216], [50, 232]],
+      },
+    ],
+    summary: ([mult, quantity, turns]) => `Every ${turns} turns, lost phantasms return until ${countOf(quantity)} ring the hero, one tile out, turning 1° clockwise each turn. One that touches an enemy's tile strikes every enemy in its blast with ${countOf(mult * 100)}% of ATK (accounts for critical chances and factors), then disappears.`,
+    damage: ([mult]) => mult,
   },
 } as const satisfies Record<string, ArcanumDef>;
 

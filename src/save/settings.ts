@@ -3,7 +3,7 @@ type Toggle = { kind: "toggle"; default: boolean; page?: { id: string; label: st
 /** A setting that is one of a fixed list of values, each with its label. */
 type Choice = { kind: "choice"; default: string | number; choices: readonly (readonly [string | number, string])[]; page?: { id: string; label: string } };
 /** A number kept within `min`–`max`; out-of-range saved values are clamped
- * and rounded, not rejected. */
+ * and rounded (to the whole number, or the `step` of one under 1), not rejected. */
 type Range = { kind: "range"; default: number; min: number; max: number; step: number; page?: { id: string; label: string; aria: string } };
 export type Setting = Toggle | Choice | Range;
 
@@ -124,6 +124,10 @@ export const SETTINGS = {
   thunderboltAnimation: { kind: "toggle", default: true, page: { id: "thunderbolt-animation", label: "Thunderbolt damage animations" } },
   /** Show the damage Lifespring's field deals on the enemies it touches (it deals it all the same). */
   lifespringDamage: { kind: "toggle", default: true, page: { id: "lifespring-damage", label: "Lifespring damage on enemies" } },
+  /** Show the damage Phantasm's ghosts deal on the enemies they strike (they deal it all the same). */
+  phantasmDamage: { kind: "toggle", default: true, page: { id: "phantasm-damage", label: "Phantasm damage on enemies" } },
+  /** How solid Phantasm's ghosts are drawn, 0 (not at all; they strike all the same) to 1. */
+  phantasmAlpha: { kind: "range", default: 0.5, min: 0, max: 1, step: 0.05, page: { id: "phantasm-alpha", label: "Phantasm alpha", aria: "Phantasm alpha" } },
   /** The XP a badge pays, and the Gold combo's "×N Gold" as it grows
    * (`Game.gain`). */
   xpGains: { kind: "toggle", default: true, page: { id: "xp-gains", label: "XP gained" } },
@@ -169,7 +173,11 @@ export function settingValue(setting: Setting, v: unknown): boolean | string | n
   switch (setting.kind) {
     case "toggle": return typeof v === "boolean" ? v : undefined;
     case "choice": return setting.choices.some(([c]) => c === v) ? v as string | number : undefined;
-    case "range": return typeof v === "number" && Number.isFinite(v) ? Math.round(Math.min(setting.max, Math.max(setting.min, v))) : undefined;
+    case "range": {
+      if (typeof v !== "number" || !Number.isFinite(v)) return undefined;
+      const kept = Math.min(setting.max, Math.max(setting.min, v)), per = setting.step < 1 ? 1 / setting.step : 1;
+      return Math.round(kept * per) / per;
+    }
   }
 }
 

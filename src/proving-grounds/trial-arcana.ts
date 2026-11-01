@@ -1,5 +1,6 @@
 import { boltTargets, chargeBolts, decodeArcanaRun, settleBolts, tickCooldowns } from "../arcana/arcana.ts";
 import { fieldHit, lifespringEffects, springAmplify, stepLifespring, validLifespring } from "../arcana/lifespring.ts";
+import { ghostDirection, ghostOffset, inBlast, loseGhost, stepPhantasm, touchesTile, validPhantasm } from "../arcana/phantasm.ts";
 import { stepDilation, validDilation } from "../arcana/time-dilation.ts";
 import { TURN_TICKS } from "../enemies/ranged.ts";
 import { tileRandom } from "../random.ts";
@@ -98,8 +99,26 @@ function lifespringTurn(s: TrialState, a: NonNullable<TrialState["arcana"]>, { h
   }
 }
 
+/** Phantasm's part of a turn: the ring turning, its cooldown and the ghosts it
+ * brings back, then each ghost on what it touches as the turn ends, a trial's turn
+ * having no ticks. */
+function phantasmTurn(s: TrialState, a: NonNullable<TrialState["arcana"]>, rule: NonNullable<TrialSpells["phantasm"]>, strikes: TrialStrike[]) {
+  const ghosts = (a.phantasm ??= {}), hero = s.player;
+  stepPhantasm(ghosts, rule);
+  const ring = ghosts.ring;
+  for (const slot of ghosts.ghosts ?? []) {
+    if (s.status !== "active") return;
+    const off = ghostOffset(ghostDirection(ghosts.turns! - 1, slot, ring!, rule.spin, TURN_TICKS)), at = { x: hero.x + off.x, y: hero.y + off.y };
+    const near = targets(s);
+    if (!near.some((t) => touchesTile(t.x - at.x, t.y - at.y))) continue;
+    loseGhost(ghosts, slot);
+    for (const t of near.filter((t) => touchesTile(t.x - at.x, t.y - at.y) || inBlast(t.x - at.x, t.y - at.y, rule.blast)))
+      if (s.status === "active") strike(s, t, rule.boost, "phantasm", at, TURN_TICKS, strikes);
+  }
+}
+
 /** The arcana's part of a turn the attempt just spent: a Ricochet Shot off the
- * hero's hit, the cooldowns running on, Thunderbolt's bolts, Lifespring, Time
+ * hero's hit, the cooldowns running on, Thunderbolt's bolts, Lifespring, Phantasm, Time
  * Dilation's field, which holds back what comes next turn, then the beams turning.
  * An ended attempt does none of it. */
 export function trialArcanaTurn<O extends { message: string }>(s: TrialState, outcome: O): O {
@@ -127,6 +146,7 @@ export function trialArcanaTurn<O extends { message: string }>(s: TrialState, ou
     }
   }
   if (lifespring && s.status === "active") lifespringTurn(s, a, lifespring, strikes);
+  if (spells.phantasm && s.status === "active") phantasmTurn(s, a, spells.phantasm, strikes);
   if (spells.timeDilation && s.status === "active") stepDilation((a.dilation ??= {}), spells.timeDilation);
   if (spells.overseer) a.beamTurns++;
   a.strikes = strikes;
@@ -155,5 +175,6 @@ export function decodeTrialArcana(raw: unknown): TrialArcana | undefined {
   if (!isRecord(raw)) return undefined;
   return { run: decodeArcanaRun(raw.run), beamTurns: wholeIn(raw.beamTurns, 0, 1e9) ? (raw.beamTurns as number) : 0,
     ...(validLifespring(raw.lifespring) && Object.keys(raw.lifespring).length ? { lifespring: raw.lifespring } : {}), ...(wholeIn(raw.springWaves, 1, 1e9) ? { springWaves: raw.springWaves as number } : {}),
-    ...(validDilation(raw.dilation) && Object.keys(raw.dilation).length ? { dilation: raw.dilation } : {}), ...decodeTallies(raw.tallies), ...decodeLag(raw.lag) };
+    ...(validDilation(raw.dilation) && Object.keys(raw.dilation).length ? { dilation: raw.dilation } : {}), ...decodeTallies(raw.tallies), ...decodeLag(raw.lag),
+    ...(validPhantasm(raw.phantasm) && Object.keys(raw.phantasm).length ? { phantasm: raw.phantasm } : {}) };
 }

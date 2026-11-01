@@ -623,6 +623,9 @@ What Lifespring's field has left to spend, added to by each activation as a mult
 **Time Dilation**:
 An arcanum on a cooldown: a field round the hero as wide as its shot range, lasting a number of turns, in which enemies are slowed. A new field replaces the old one.
 
+**Phantasm**:
+An arcanum on a cooldown: ghosts in an evenly spaced ring one tile round the hero, turning slowly. A ghost that touches an enemy's tile strikes everything in its blast and disappears; each activation fills the ring's gaps, up to its Quantity.
+
 **Slowdown**:
 The percent Time Dilation slows what is in its field by: it acts on the rest of its chances (strikes, steps), its shots charge and a boss's effects count down that much slower. 90% at most.
 

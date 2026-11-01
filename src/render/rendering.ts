@@ -37,6 +37,7 @@ import { AREA_BURST_MS, drawAreaBurst, preloadAreaBurst, drawLevelUp, drawRevive
 import { drawPoof, POOF_MS } from "./effects/poof.ts";
 import { drawLifespring } from "./effects/lifespring.ts";
 import { drawDilationField } from "./effects/time-dilation.ts";
+import { drawPhantasms } from "./effects/phantasm.ts";
 import { drawOverseerBeams } from "./effects/overseer-beams.ts";
 import { drawSmite, SMITE_MS } from "./effects/smite.ts";
 import { drawExplosion, EXPLOSION_MS } from "./effects/explosion.ts";
@@ -244,6 +245,8 @@ export class Renderer {
     if (beams) drawOverseerBeams(f, beams, this.game.turnClock);
     // Lifespring's rings and Effect Waves show above the darkness too.
     if (!this.game.run.outside) drawLifespring(f, this.game.lifespringField, this.game.springFx);
+    // Phantasm's ghosts drift above the darkness too, as solid as the player has set.
+    if (!this.game.run.outside) drawPhantasms(f, this.game.phantasms, this.game.ghostFx, this.game.turnClock, this.game.save.settings.phantasmAlpha, this.game.mode === "delve" ? this.game.world.width : 0);
     // A Shielded enemy's bubble shows above the darkness, under the labels.
     if (!this.game.run.outside) drawShields(f, this.game.world.shields?.() ?? [], this.game.mode === "delve" ? this.game.world.width : 0);
     // Supply and Equipment Chests show their kind, opened or not.

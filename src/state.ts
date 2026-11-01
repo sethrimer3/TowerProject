@@ -6,13 +6,14 @@ import { CARDS, cardText, dealCard, deckCards, explainStuck, handSlots, handBonu
 import { addCardXp, PASSIVE_CARDS } from "./cards/levels.ts";
 import { KEY_COLORS, cardMaxLevel, compounded, doorStat, foeCardStat, foeStat, foeStats, keyStat, freeUpChances, freeUpFactors, hasPointsToSpend, pointsLeft, runCardTrees, runFoeCut, treeBonus, treeFactor, treeOverheal, type FoeTreeCard, type TreeBonus } from "./cards/trees.ts";
 import { aggroTurn } from "./enemies/flying.ts";
-import { arrowRange, foeOn, within as inShotRange } from "./enemies/ranged.ts";
+import { arrowRange, foeOn, TURN_TICKS, within as inShotRange } from "./enemies/ranged.ts";
 import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./cards/badges.ts";
 import { BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
 import { noteGoldBoost } from "./economy/gold-boost.ts";
 import { canWarp, claimGoal, goalUnlocked, goalsWaiting } from "./goals.ts";
 import { fieldReach } from "./arcana/time-dilation.ts";
-import { fightRicochet, landsAt, lifespringContact, shortWay, thunderbolts, volleyTurn, type Shot, type Volley, type VolleyTurn } from "./volley.ts";
+import type { GhostStrike } from "./arcana/phantasm.ts";
+import { fightRicochet, ghostStrikes, landsAt, lifespringContact, shortWay, thunderbolts, volleyTurn, type Shot, type Volley, type VolleyTurn } from "./volley.ts";
 import { missGem } from "./economy/gems.ts";
 import { DelvePlan } from "./delve/automove.ts";
 import { defaults } from "./save/save.ts";
@@ -276,6 +277,8 @@ export class Game {
   volley: Volley | null = null;
   /** When Lifespring's latest Effect Waves fired and its field last formed, for the board to draw. */
   springFx: { waves: number[]; formedAt: number } = { waves: [], formedAt: -Infinity };
+  /** Phantasm's latest strikes, for the board to show: where each ghost was, and when it struck. */
+  ghostFx: (GhostStrike & { at: number })[] = [];
   /** The latest turn's step inside a run, for the board to walk the hero
    * along as its shots leave; null when it came no single step. */
   turnShown: ShownTurn | null = null;
@@ -680,6 +683,7 @@ export class Game {
     this.fights.clear();
     this.volley = null;
     this.springFx = { waves: [], formedAt: -Infinity };
+    this.ghostFx = [];
     this.turnShown = null;
     this.turnClock = null;
     this.dropHandPlan();
@@ -2422,9 +2426,10 @@ export class Game {
     this.turnShown = sameFloor && Math.abs(p.x - from.x) + Math.abs(p.y - from.y) === 1 ? { at, ms, from: { x: from.x, y: from.y }, to: { x: p.x, y: p.y } } : null;
     this.lifespringTurn(at);
     this.arcana.timeDilationTurn();
+    this.arcana.phantasmTurn();
     const dilation = this.dilation;
-    // Thunderbolt strikes first, so what it fells shoots no more this turn.
-    const struck = [...(sameFloor ? sprung : []), ...this.strikeBolts(fired, beams, sameFloor ? from : undefined)];
+    // Thunderbolt strikes first, so what it fells shoots no more this turn, then the ghosts along the hero's step.
+    const struck = [...(sameFloor ? sprung : []), ...this.strikeBolts(fired, beams, sameFloor ? from : undefined), ...this.strikeGhosts(beams, at, ms, sameFloor ? from : undefined)];
     if ((this.tier < 3 && !archer) || !sameFloor) {
       this.showVolley(struck, at, ms);
       this.showVolley(this.lifespringContact(), at, ms, true);
@@ -2464,6 +2469,8 @@ export class Game {
       if (moved.foes && Object.keys(moved.foes).length) this.run.volleys.foes = moved.foes;
       else delete this.run.volleys.foes;
     }
+    // What stepped up to the ring meets it now, the hero's step over.
+    this.showVolley(this.strikeGhosts(beams, at, ms, undefined, TURN_TICKS), at, ms, true);
     this.showVolley(this.lifespringContact(), at, ms, true);
   }
   /** Lifespring's turn, before anything strikes (arcana.md): its cooldown, and an
@@ -2509,6 +2516,21 @@ export class Game {
     if (out.pool) s.pool = out.pool;
     else delete s.pool;
     for (const { enemy, at: tile } of out.kills) this.message = [`Lifespring · ${enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, tile, 1, false, 0)].join(" · ");
+    return out.shots;
+  }
+  /** Phantasm's ghosts as the board shows them, while any are out and it is on. */
+  get phantasms() {
+    const rule = this.arcana.phantasmRule(), s = this.run.phantasm;
+    return rule && s?.ghosts?.length ? { ghosts: s.ghosts, ring: s.ring ?? s.ghosts.length, turns: s.turns ?? 1, spin: rule.spin } : undefined;
+  }
+  /** Phantasm's ghosts on what they touch from tick `first` (arcana.md), the hero
+   * walking from `from`: pays what they fell and returns their shots. */
+  private strikeGhosts(beams: Beams | undefined, at: number, ms: number, from: { x: number; y: number } | undefined, first?: number) {
+    const rule = this.arcana.phantasmRule(), s = this.run.phantasm;
+    if (!rule || !s?.ghosts?.length) return [];
+    const out = ghostStrikes({ board: this.world, wrap: this.wrap, hero: this.run.player, ...(from ? { from } : {}), ...(beams ? { beams } : {}) }, rule, s, first);
+    for (const { enemy, at: tile } of out.kills) this.message = [`Phantasm · ${enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, tile, 1, false, 0)].join(" · ");
+    if (out.struck.length) this.ghostFx = [...this.ghostFx.slice(-11), ...out.struck.map((g) => ({ ...g, at: at + (ms * g.tick) / TURN_TICKS }))];
     return out.shots;
   }
   /** Thunderbolt's bolts of this turn (arcana.md), `fired` being the cooldowns
@@ -2560,8 +2582,8 @@ export class Game {
    * shown from `at` for `ms` as it fired; those the Toggles hide don't show.
    * `more`: they join what this turn already shows. */
   private showVolley(all: Shot[], at: number, ms: number, more = false) {
-    const { ricochetAnimation, thunderboltAnimation, lifespringDamage } = this.save.settings;
-    const shots = all.filter((s) => (!s.ricochet || ricochetAnimation) && (!s.thunderbolt || thunderboltAnimation) && (!s.lifespring || lifespringDamage));
+    const { ricochetAnimation, thunderboltAnimation, lifespringDamage, phantasmDamage } = this.save.settings;
+    const shots = all.filter((s) => (!s.ricochet || ricochetAnimation) && (!s.thunderbolt || thunderboltAnimation) && (!s.lifespring || lifespringDamage) && (!s.phantasm || phantasmDamage));
     if (!shots.length) return;
     this.volley = { at, ms, shots: more && this.volley?.at === at ? [...this.volley.shots, ...shots] : shots };
     const broke = shots.find((s) => s.shieldBroke);

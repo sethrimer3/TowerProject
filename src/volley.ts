@@ -23,6 +23,7 @@ import { beamFactor, type Beams } from "./arcana/overseer.ts";
 import { boltTargets } from "./arcana/arcana.ts";
 import { fieldHit } from "./arcana/lifespring.ts";
 import { slowedCharge, slowedTickGain } from "./arcana/time-dilation.ts";
+import { GHOST_RADIUS, ghostDirection, ghostOffset, inBlast, loseGhost, RING_RADIUS, touchesTile, type GhostStrike, type PhantasmRun } from "./arcana/phantasm.ts";
 import { tileRandom } from "./random.ts";
 import { snap } from "./exact.ts";
 
@@ -46,7 +47,7 @@ const FIGHT_RICOCHET_SALT = 0x71c0d;
  * thorns cost an enemy's shooter), for an arrow (or a shot's thorns) the
  * enemy's HP before and after it out of its full HP, and the enemy it
  * felled (`fell`), which the board keeps showing until the shot lands. */
-export type Shot = { by: "hero" | "enemy"; from: { x: number; y: number }; to: { x: number; y: number }; damage: number; tick: number; shrouded?: number; shielded?: number; shieldBroke?: true; crit?: number; superCrit?: true; charge?: number; healed?: number; thorns?: number; before?: number; hp?: number; full?: number; fell?: Enemy; ricochet?: true; thunderbolt?: true; lifespring?: true };
+export type Shot = { by: "hero" | "enemy"; from: { x: number; y: number }; to: { x: number; y: number }; damage: number; tick: number; shrouded?: number; shielded?: number; shieldBroke?: true; crit?: number; superCrit?: true; charge?: number; healed?: number; thorns?: number; before?: number; hp?: number; full?: number; fell?: Enemy; ricochet?: true; thunderbolt?: true; lifespring?: true; phantasm?: true };
 /** Where `shot`'s target stands: the hero's tile for an enemy's shot (whose
  * thorns cost the shooter, at `from`), the enemy's for an arrow. */
 export const enemyOf = (shot: Shot) => (shot.by === "enemy" ? shot.from : shot.to);
@@ -63,9 +64,9 @@ export const THUNDERBOLT_FALL_MS = 90;
 export const THUNDERBOLT_FLASH_MS = 240;
 /** When `shot` of `volley` leaves its shooter, and when it lands: a ricochet
  * does both as the arrow it springs from lands; a thunderbolt falls from its
- * tick of the turn; Lifespring's field strikes at once as the turn ends. */
-export const landsAt = (volley: Volley, shot: Shot) => volley.at + (volley.ms * shot.tick) / TURN_TICKS + (shot.lifespring ? 0 : shot.thunderbolt ? THUNDERBOLT_FALL_MS : volley.ms * SHOT_FLIGHT);
-export const leavesAt = (volley: Volley, shot: Shot) => landsAt(volley, shot) - (shot.ricochet || shot.lifespring ? 0 : shot.thunderbolt ? THUNDERBOLT_FALL_MS : volley.ms * SHOT_FLIGHT);
+ * tick of the turn; Lifespring's field and Phantasm's ghosts strike at once. */
+export const landsAt = (volley: Volley, shot: Shot) => volley.at + (volley.ms * shot.tick) / TURN_TICKS + (shot.lifespring || shot.phantasm ? 0 : shot.thunderbolt ? THUNDERBOLT_FALL_MS : volley.ms * SHOT_FLIGHT);
+export const leavesAt = (volley: Volley, shot: Shot) => landsAt(volley, shot) - (shot.ricochet || shot.lifespring || shot.phantasm ? 0 : shot.thunderbolt ? THUNDERBOLT_FALL_MS : volley.ms * SHOT_FLIGHT);
 /** Whether every shot of `volley` has landed, and its flashes ended, by `now`. */
 export const volleyOver = (volley: Volley, now: number) => volley.shots.every((s) => now >= landsAt(volley, s) + (s.ricochet ? RICOCHET_FLASH_MS : s.thunderbolt ? THUNDERBOLT_FLASH_MS : 0));
 
@@ -106,7 +107,7 @@ export type VolleyTurn = {
 /** An enemy an arrow felled, or the thorns of its own shot (`thorns`):
  * where, whether it fell to its first wound (an instakill), and the
  * arrow's critical applications. */
-export type VolleyKill = { enemy: Enemy; at: { x: number; y: number }; instakill: boolean; crits: number; thorns?: true; ricochet?: true; thunderbolt?: true; lifespring?: true };
+export type VolleyKill = { enemy: Enemy; at: { x: number; y: number }; instakill: boolean; crits: number; thorns?: true; ricochet?: true; thunderbolt?: true; lifespring?: true; phantasm?: true };
 /** What a turn's volley did: the run's volley state after it, the shots in
  * the order they fired, the hero's HP after them, whether a Ranged enemy's
  * shot got through (`hurt`), the enemy whose shot felled the hero (the
@@ -379,7 +380,7 @@ function rebound(board: VolleyTurn["board"], wrap: number, p: Player, { x, y }: 
 /** An arcanum's strike on the enemy at `to`, if one stands there: Arcanum Damage
  * (`boost`, its crits averaged and none rolled) as an arrow's less DEF, with no
  * Lifesteal and no Armor Break. Marked as what struck it (`how`), its kill too. */
-function arcaneStrike(board: VolleyTurn["board"], p: Player, to: { x: number; y: number }, boost: number, how: Pick<Shot, "from" | "tick" | "ricochet" | "thunderbolt">, shots: Shot[], kills: VolleyKill[]) {
+function arcaneStrike(board: VolleyTurn["board"], p: Player, to: { x: number; y: number }, boost: number, how: Pick<Shot, "from" | "tick" | "ricochet" | "thunderbolt" | "phantasm">, shots: Shot[], kills: VolleyKill[]) {
   const tile = board.tile(to.x, to.y), enemy = foeOn(tile);
   if (!enemy) return;
   const { armorBreak: _, ...striker } = p;
@@ -390,7 +391,7 @@ function arcaneStrike(board: VolleyTurn["board"], p: Player, to: { x: number; y:
   else {
     board.clear(to.x, to.y);
     landed.fell = enemy;
-    kills.push({ enemy, at: to, instakill: false, crits: 0, ...(how.ricochet ? { ricochet: true as const } : { thunderbolt: true as const }) });
+    kills.push({ enemy, at: to, instakill: false, crits: 0, ...(how.ricochet ? { ricochet: true as const } : how.phantasm ? { phantasm: true as const } : { thunderbolt: true as const }) });
   }
 }
 
@@ -409,6 +410,35 @@ export function thunderbolts(turn: Pick<VolleyTurn, "board" | "wrap" | "hero" | 
   });
   const left = board.floorEnemies?.(hero.x, hero.y).length ? rule.bolts - targets.length : 0;
   return { shots, kills, left };
+}
+
+/** How far from a tile's center its corner lies, rounded up: the farthest a ghost can touch it from. */
+const TILE_CORNER = 0.7072;
+
+/** Phantasm's ghosts along the hero's walk, tick by tick from `first`: a ghost whose
+ * body touches an enemy's tile is gone, and that enemy, any other whose tile it
+ * touches and any within its blast of it take a strike of Arcanum Damage, walls or no
+ * walls. Overseer's beams multiply each as the hero and they stand that tick. Edits
+ * the ghosts and the board's enemies; returns the shots, the kills and where each struck. */
+export function ghostStrikes(turn: Pick<VolleyTurn, "board" | "wrap" | "hero" | "from" | "beams">, rule: { boost: number; blast: number; spin: number }, s: PhantasmRun, first = 1) {
+  const shots: Shot[] = [], kills: VolleyKill[] = [], struck: GhostStrike[] = [], { board, wrap, hero, beams } = turn;
+  if (!s.ghosts?.length) return { shots, kills, struck };
+  const walk = walkOf(turn), step = walk.ux || walk.uy ? 1 : 0, ring = s.ring ?? s.ghosts.length, turns = (s.turns ?? 1) - 1;
+  const reach = Math.ceil(100 * (RING_RADIUS + step + Math.max(GHOST_RADIUS + TILE_CORNER, rule.blast)));
+  let foes = enemiesWithin(board, walk, reach, wrap).map(({ x, y }) => ({ x, y, dx: shortWay(x - walk.x, wrap), dy: y - walk.y }));
+  for (let tick = first; tick <= TURN_TICKS && foes.length && s.ghosts; tick++)
+    for (const slot of s.ghosts ?? []) {
+      const direction = ghostDirection(turns, slot, ring, rule.spin, tick), off = ghostOffset(direction);
+      const gx = (walk.ux * tick) / TURN_TICKS + off.x, gy = (walk.uy * tick) / TURN_TICKS + off.y;
+      if (!foes.some((f) => touchesTile(f.dx - gx, f.dy - gy))) continue;
+      loseGhost(s, slot);
+      struck.push({ tick, x: walk.x + gx, y: walk.y + gy, direction });
+      const at = heroAt(walk, tick, wrap);
+      for (const f of foes.filter((f) => touchesTile(f.dx - gx, f.dy - gy) || inBlast(f.dx - gx, f.dy - gy, rule.blast)))
+        arcaneStrike(board, hero, { x: f.x, y: f.y }, snap(rule.boost * beamFactor(beams, tick, shortWay(f.x - at.x, wrap), f.y - at.y)), { from: { x: f.x, y: f.y }, tick, phantasm: true }, shots, kills);
+      foes = foes.filter((f) => foeOn(board.tile(f.x, f.y)));
+    }
+  return { shots, kills, struck };
 }
 
 /** Lifespring's field, the hero at its center and `reach` (hundredths of a tile)

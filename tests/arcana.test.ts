@@ -287,7 +287,7 @@ test("the boon offers only while an arcanum is left to lend", () => {
   assert.equal(offered({ ricochetShot: [0, 0, 0], aurumBloom: [0, 0, 0] }), true);
   assert.equal(offered({ ricochetShot: [0, 0, 0], aurumBloom: [0, 0, 0], overseer: [0, 0, 0] }), true);
   assert.equal(offered({ ricochetShot: [0, 0, 0], aurumBloom: [0, 0, 0], overseer: [0, 0, 0], thunderbolt: [0, 0, 0] }), true);
-  assert.equal(offered({ ricochetShot: [0, 0, 0], aurumBloom: [0, 0, 0], overseer: [0, 0, 0], thunderbolt: [0, 0, 0], lifespring: [0, 0, 0], timeDilation: [0, 0, 0] }), false);
+  assert.equal(offered({ ricochetShot: [0, 0, 0], aurumBloom: [0, 0, 0], overseer: [0, 0, 0], thunderbolt: [0, 0, 0], lifespring: [0, 0, 0], timeDilation: [0, 0, 0], phantasm: [0, 0, 0] }), false);
   assert.ok(BOON_IDS.includes("unlockArcanum"));
 });
 

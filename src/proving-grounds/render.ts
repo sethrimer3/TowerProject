@@ -17,6 +17,8 @@ import {TrialCamera,TRIAL_VIEW_TILES,TRIAL_TILE_SIZE,type TrialTransition} from 
 import {paintOverseerBeams} from "../render/effects/overseer-beams.ts";
 import {FIELD_GROW_MS,paintEffectWave,paintLifespring} from "../render/effects/lifespring.ts";
 import {paintDilationField} from "../render/effects/time-dilation.ts";
+import {ghostBob,paintGhost,paintGhostBurst,GHOST_BURST_MS} from "../render/effects/phantasm.ts";
+import {ghostDirection,ghostOffset} from "../arcana/phantasm.ts";
 import {bossClock} from "./trial-spells.ts";
 import {paintThunderbolt,paintThunderlight} from "../render/effects/thunderbolt.ts";
 import {beamDirection} from "../arcana/overseer.ts";
@@ -61,7 +63,7 @@ export class TrialRenderer {
   get settled(){return this.camera.settled;}
   tileAt(s:TrialState,u:number,v:number){return this.camera.tileAt(s,u,v);}
   draw(s: TrialState, now: number, firedAt: number, reduceMotion: boolean,
-    options: {styledSprites?:boolean;spriteAnimations?:boolean;destination?:{x:number;y:number}|null;transition?:TrialTransition;pathAhead?:readonly {dx:number;dy:number}[];hidden?:{ricochet:boolean;thunderbolt:boolean;lifespring:boolean}} = {}) {
+    options: {styledSprites?:boolean;spriteAnimations?:boolean;destination?:{x:number;y:number}|null;transition?:TrialTransition;pathAhead?:readonly {dx:number;dy:number}[];hidden?:{ricochet:boolean;thunderbolt:boolean;lifespring:boolean;phantasm:boolean};phantasmAlpha?:number} = {}) {
     this.camera.update(s,now,reduceMotion,options.transition,options.pathAhead);
     const styled=true,animated=!!options.spriteAnimations;
     // Animation is presentation only; saved turns own all positions.
@@ -276,9 +278,22 @@ export class TrialRenderer {
         if(step?.wave)paintEffectWave(c,px(hero.x)+12,py(hero.y)+12,SIZE*1.5,age);
         if(spring?.pool)paintLifespring(c,px(hero.x)+12,py(hero.y)+12,S*s.arcana.spells.lifespring.reach/100,reduceMotion?0:now,!!spring.tint,step?.formed?Math.max(0,Math.min(1,age/FIELD_GROW_MS)):1);
       }
+      const ghostAlpha=options.phantasmAlpha??0.5,ring=s.arcana?.phantasm;
+      if(s.arcana?.spells?.phantasm && ring?.ghosts && ghostAlpha>0) {
+        const hero=this.camera.hero(s),spin=s.arcana.spells.phantasm.spin;
+        c.save();c.globalAlpha=ghostAlpha;
+        for(const slot of ring.ghosts) {
+          const off=ghostOffset(ghostDirection(ring.turns??1,slot,ring.ring??ring.ghosts.length,spin));
+          tile(hero.x+off.x,hero.y+off.y,()=>paintGhost(c,reduceMotion?0:ghostBob(now,slot)));
+        }
+        c.restore();
+      }
       for(const strike of this.lastStrikes??[]) {
         const age=now-this.strikesAt,to={x:px(strike.to.x)+12,y:py(strike.to.y)+12};
-        if(strike.kind==="lifespring") {
+        if(strike.kind==="phantasm") {
+          if(!reduceMotion && ghostAlpha>0 && age<GHOST_BURST_MS)tile(strike.from.x,strike.from.y,()=>paintGhostBurst(c,age/GHOST_BURST_MS,ghostAlpha));
+          if(options.hidden?.phantasm || age>=RICOCHET_FLASH_MS+200)continue;
+        } else if(strike.kind==="lifespring") {
           if(options.hidden?.lifespring || age>=RICOCHET_FLASH_MS+200)continue;
         } else if(strike.kind==="ricochet") {
           if(options.hidden?.ricochet || age>=RICOCHET_FLASH_MS+200)continue;

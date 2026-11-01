@@ -4,6 +4,7 @@ import {
 } from "../arcana/arcana.ts";
 import { clearLifespring, lifespringEffects, springAmplify, stepLifespring } from "../arcana/lifespring.ts";
 import type { Beams } from "../arcana/overseer.ts";
+import { clearPhantasm, phantasmCooldown, phantasmEffects, stepPhantasm } from "../arcana/phantasm.ts";
 import { clearDilation, dilationEffects, fieldSlowdown, stepDilation } from "../arcana/time-dilation.ts";
 import type { CritRule } from "../combat.ts";
 import type { Enemy, Mode } from "../entities.ts";
@@ -132,6 +133,7 @@ export class ArcanaDesk {
       if (id === "thunderbolt") delete r.bolts;
       if (id === "lifespring") clearLifespring(this.host.run.lifespring);
       if (id === "timeDilation") clearDilation(this.host.run.timeDilation);
+      if (id === "phantasm") clearPhantasm(this.host.run.phantasm);
     } else r.off = r.off.filter((o) => o !== id);
     return true;
   }
@@ -146,8 +148,8 @@ export class ArcanaDesk {
   cooldown({ id, levels }: HeldArcanum) {
     const trigger = arcanum(id).trigger;
     if (trigger.on !== "cooldown") return undefined;
-    const turns = trigger.turns(valuesAt(id, levels));
-    const timer = id === "lifespring" ? this.host.run.lifespring?.timer : id === "timeDilation" ? this.host.run.timeDilation?.timer : this.runState.timers[id];
+    const values = valuesAt(id, levels), turns = id === "phantasm" ? phantasmCooldown(values[2], phantasmEffects(this.save)) : trigger.turns(values);
+    const timer = id === "lifespring" ? this.host.run.lifespring?.timer : id === "timeDilation" ? this.host.run.timeDilation?.timer : id === "phantasm" ? this.host.run.phantasm?.timer : this.runState.timers[id];
     return { left: Math.min(timer ?? turns, turns), turns };
   }
   /** What Ricochet Shot gives this turn's arrows (`VolleyTurn.ricochet`), if it is held and on. */
@@ -230,6 +232,19 @@ export class ArcanaDesk {
     const rule = this.timeDilationRule();
     if (rule) stepDilation((this.host.run.timeDilation ??= {}), rule);
   }
+  /** Phantasm, if it is held and on: what a ghost's strike multiplies the hero's
+   * ATK by, its Quantity and cooldown, and its blast and turning with what raises them. */
+  phantasmRule() {
+    const held = this.held.find((h) => h.id === "phantasm" && this.isOn(h.id));
+    if (!held) return undefined;
+    const [multiplier, quantity, cooldown] = valuesAt(held.id, held.levels), effects = phantasmEffects(this.save);
+    return { boost: arcanumBoost(multiplier, this.host.crit), quantity, turns: phantasmCooldown(cooldown, effects), blast: effects.blast, spin: effects.spin };
+  }
+  /** Phantasm's turn: the ring turning, its cooldown and the ghosts it brings back, if it is held and on. */
+  phantasmTurn() {
+    const rule = this.phantasmRule();
+    if (rule) stepPhantasm((this.host.run.phantasm ??= {}), rule);
+  }
   /** An enemy Lifespring touched (an Effect Wave or the field) fell, by whatever
    * means, while it is on: it pays Health Bonus, and what its Gold and Cells are
    * raised by is returned. */
@@ -247,8 +262,8 @@ export class ArcanaDesk {
     if (this.held.some((h) => h.id === "overseer")) run.beamTurns = (run.beamTurns ?? 0) + 1;
     const active = this.held.flatMap(({ id, levels }) => {
       const trigger = arcanum(id).trigger;
-      // Lifespring and Time Dilation run their own, in the run: `lifespringTurn`, `timeDilationTurn`.
-      return trigger.on === "cooldown" && id !== "lifespring" && id !== "timeDilation" && this.isOn(id) ? [{ id, turns: trigger.turns(valuesAt(id, levels)) }] : [];
+      // Lifespring, Time Dilation and Phantasm run their own, in the run: `lifespringTurn`, `timeDilationTurn`, `phantasmTurn`.
+      return trigger.on === "cooldown" && id !== "lifespring" && id !== "timeDilation" && id !== "phantasm" && this.isOn(id) ? [{ id, turns: trigger.turns(valuesAt(id, levels)) }] : [];
     });
     return tickCooldowns(active, this.runState.timers);
   }

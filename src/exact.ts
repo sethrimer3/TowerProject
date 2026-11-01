@@ -51,6 +51,20 @@ export function bearing(dx: number, dy: number) {
   return dx >= 0 ? 180 - off : 180 + off;
 }
 
+/** The unit vector `degrees` clockwise from (0, 1): the sine and cosine by
+ * their series, within an eighth of a turn, in the same bits everywhere. */
+export function pointing(degrees: number) {
+  const whole = ((degrees % 360) + 360) % 360, quarter = Math.round(whole / 90), t = ((whole - quarter * 90) * Math.PI) / 180, t2 = t * t;
+  let s = 1, c = 1;
+  for (let k = 14; k >= 2; k -= 2) s = 1 - (t2 / (k * (k + 1))) * s;
+  for (let k = 13; k >= 1; k -= 2) c = 1 - (t2 / (k * (k + 1))) * c;
+  s *= t;
+  if (quarter === 1) return { x: c, y: -s };
+  if (quarter === 2) return { x: -s, y: -c };
+  if (quarter === 3) return { x: -c, y: s };
+  return { x: s, y: c };
+}
+
 /** `n` on a grid of millionths. Gold, HP and the hero's and enemies' stats
  * keep their fractions (a 2% bonus on 1 ATK strikes for 1.02), and each sum
  * or difference of them is snapped back onto the grid, so 0.1 + 0.2 is 0.3

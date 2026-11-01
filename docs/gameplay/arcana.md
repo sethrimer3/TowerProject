@@ -23,7 +23,8 @@ An arcanum with a cooldown also has a bar on its card, filling as the cooldown r
 You can switch them on and off up to 40 times a run, all of them together; the number left rises off the switch each time.
 Undo doesn't give a toggle back.
 An arcanum with a cooldown starts it over when switched back on.
-**Toggles** in Settings hide Ricochet Shot's and Thunderbolt's damage animations and, once you have it, Lifespring's damage on enemies; they strike all the same.
+**Toggles** in Settings hide Ricochet Shot's and Thunderbolt's damage animations and, once you have them, Lifespring's and Phantasm's damage on enemies; they strike all the same.
+Once you have Phantasm, an alpha slider there, 0 to 1, sets how solid its ghosts are drawn: 0.5 at first, and at 0 you don't see them at all.
 Pressing a card anywhere else shows its stats and what modifies them.
 
 **Arcanum Damage** = Arcanum Multiplier × Hero ATK × Equipment × (1 + Critical Factor × Critical Chance) × (1 + Super Crit Mult × Super Crit Chance × Critical Chance).
@@ -172,6 +173,31 @@ Switching it off loses the field and its cooldown.
 | Slowdown | 20% | 75% | 12 |
 | Cooldown | 180 turns | 60 turns | 13 |
 
+## Phantasm
+
+*Every x turns, lost phantasms return until y ring you, one tile out, turning 1° clockwise each turn. One that touches an enemy's tile strikes every enemy in its blast with z% of ATK, then disappears.*
+Its first ghosts come when its first cooldown runs out, and the cooldown starts over the moment it runs out.
+It can never be shorter than 37 turns, whatever lowers it.
+
+Ghosts ride evenly spaced round you and go where you go, onto the next floor too.
+A ghost that overlaps any part of an enemy's tile strikes, even partway through your step, walls or no walls, and is gone until the next activation.
+A lost ghost leaves a gap: the others keep their places.
+Each activation fills every gap, up to the Quantity, and a Quantity you have bought since spaces the whole ring evenly.
+
+A strike hits every enemy whose tile the ghost overlaps, and every enemy within its blast radius of the ghost, 0.1 tiles at first, measured straight to the middle of the enemy's tile.
+Each takes [Arcanum Damage](#in-a-run) less its DEF, and Overseer's beams multiply it as the ghost strikes.
+It kills like any other hit, paying what the enemy pays, and heals nothing.
+
+Ghosts strike along your step before your arrows fly, and those an enemy has stepped up to strike at the end of the turn.
+Undo takes back the ghosts with what they struck.
+Switching it off loses the ghosts and its cooldown.
+
+| Attribute | First | Highest | Levels |
+|---|---|---|---|
+| ATK Mult | 10x | 9,219x | 36 |
+| Quantity | 3 | 6 | 4 |
+| Cooldown | 200 turns | 50 turns | 16 |
+
 ## In a trial
 
 Your Arcana work on what stands in a trial's arena: the boss while it is corporeal, its parts, its minions, mimics and Light Slimes.
@@ -187,4 +213,5 @@ It can defeat the boss and win the trial, and its damage counts toward Damage th
 **Time Dilation** works as above on everything in the field: its tally for a counter or bite goes on from one of your hits to the next, a scheduled step or hop is skipped the same way, and a boss's or part's effects count down slower while it stands in the field.
 At 75% a cooldown falls by 0.25 a turn, so a beam due in 10 turns takes 40, and any part of a turn left over counts toward the next.
 A boss's Regen isn't on a cooldown, so it isn't slowed, and an Obelisk's turn limit still counts every turn.
+**Phantasm** works as above on what stands in the arena, its ghosts striking as each turn ends, wherever you stand then.
 Toggles and cooldowns are the attempt's own, leave your run outside alone, and survive a reload.
