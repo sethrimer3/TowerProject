@@ -1,6 +1,6 @@
 # Arcana
 
-Arcana (`src/arcana/arcana.ts`, `src/game/arcana-desk.ts`, `ui/arcana-panel.ts`), their triggers, Ricochet Shot, Aurum Bloom, Overseer, Thunderbolt, Lifespring, Time Dilation, Phantasm, Necrotic Frost, Voidwell, their run cards, and how they work in a trial.
+Arcana (`src/arcana/arcana.ts`, `src/game/arcana-desk.ts`, `ui/arcana-panel.ts`), their triggers, their Shrine boons, Ricochet Shot, Aurum Bloom, Overseer, Thunderbolt, Lifespring, Time Dilation, Phantasm, Necrotic Frost, Voidwell, their run cards, and how they work in a trial.
 
 **What they are.**
 Spells bought with Arcanite on the Gear page's Arcana tab and kept for good, or lent to one climb by a Shrine boon.
@@ -108,7 +108,7 @@ Thorns, Bombs and arrows at the enemy don't read it; a Shielded enemy's bubble i
 `DungeonLight` calls `LitBoard.underContents` after the darkness and just before the contents (the Classic board), and `drawThemedBoard` takes the same hook, so it lies on the floor under items and enemies and isn't dimmed; it isn't baked into the ground cache.
 
 **Phantasm** (`src/arcana/phantasm.ts`, trigger `cooldown`; `ArcanaDesk.phantasmRule`, `Game.strikeGhosts`, `ghostStrikes` in `volley.ts`) keeps ghosts in a ring round the hero.
-**Its state** is `run.phantasm` (`PhantasmRun`: `timer`, `turns`, `ring`, `ghosts`), in the run like Lifespring's, so undo takes the ghosts back with what they struck and a replay comes out the same; `ArcanaDesk.turn` leaves it out of `tickCooldowns`, and `phantasmTurn` runs `stepPhantasm` in `Game.endTurn`, after Time Dilation's turn.
+**Its state** is `run.phantasm` (`PhantasmRun`: `timer`, `turns`, `ring`, `ghosts`, and `outer` for its augment boon: see **The Shrine boons**), in the run like Lifespring's, so undo takes the ghosts back with what they struck and a replay comes out the same; `ArcanaDesk.turn` leaves it out of `tickCooldowns`, and `phantasmTurn` runs `stepPhantasm` in `Game.endTurn`, after Time Dilation's turn.
 `stepPhantasm` counts `turns` (the ring's turning) and the cooldown, which starts over the moment it runs out and fills every slot, `ring` set to Quantity, so a Quantity bought since spaces the whole ring anew.
 A ghost lost keeps its slot empty; the others don't close up.
 Switching it off clears all but `turns` (`clearPhantasm`).
@@ -143,7 +143,7 @@ Its `Shot` carries `necro`: no art of its own in `drawVolley`, only its number a
 
 **Voidwell** (`src/arcana/voidwell.ts`, trigger `cooldown`; `ArcanaDesk.voidwellRule`, `Game.voidwellTurn`, `Game.vortex`) opens a vortex out on the floor that stuns what is in it.
 **Its state** is `run.voidwell` (`VoidwellRun`: `timer`, `casts`, `vortex`), in the run like Time Dilation's, so undo takes it back with what it stunned and a replay comes out the same; `ArcanaDesk.turn` leaves it out of `tickCooldowns`, and `Game.voidwellTurn` runs `stepVoidwell` in `Game.endTurn`, after Necrotic Frost's turn and before anything strikes, so a new vortex stuns that turn's shots and steps.
-`stepVoidwell` counts the vortex down and the cooldown, which starts over the moment it runs out and opens a new one in the old one's place; Duration's highest is under Cooldown's lowest, so as the tables stand they never meet.
+`stepVoidwell` counts the vortex down and the cooldown, which starts over the moment it runs out and opens a new one in the old one's place; Duration's highest is under Cooldown's lowest, so as the tables stand they meet only with the augment boon at both tables' ends (50 and 50), and then the new vortex takes over as the old one ends.
 A vortex stands where it opened, whatever the hero does, and lasts its turns onto a new floor: its coordinates carry over, so on a Tower floor it lies at the same place on the new board, and in the Delve at the same place in the world. It stuns what stands there, and placement isn't checked again.
 Switching it off clears the timer and vortex (`clearVoidwell`); `casts` stays, so the rolls go on.
 **Where it opens** (`placeVortex`) decides play, so it is exact in every engine: `UNITS`, `ANGLES` (720) directions from `pointing`, and one `voidwellRoll` (`tileRandom` by the run's seed and `casts`) picks among those whose center is allowed at `distance`, the hero's shot range (`Game.lifespringReach`: 3 tiles untrained, whether or not the hero is an Archer).
@@ -167,7 +167,7 @@ What it leaves alone: a stunned enemy still replies in a fight, the Shielded bub
 `phantasmAlpha` (a slider, 0 to 1, default 0.5, shown with `phantasmDamage`) is how solid the ghosts and their bursts are drawn; at 0 they don't draw at all.
 
 **In a trial.**
-Aurum Bloom raises floors a trial doesn't have; every other arcanum works, and a lent one doesn't exist there.
+Aurum Bloom raises floors a trial doesn't have; every other arcanum works, and a lent one or an augment boon doesn't exist there (`TrialSession`'s run has no `shrine`).
 `TrialSession` deletes Aurum Bloom from its `Game`'s copy, and points that `Game`'s `tower.runArcana` at `state.arcana.run` (`TrialArcana`, `trial-spells.ts`, saved with the attempt, none without arcana), so the run bar's Arcana tab toggles the attempt's own, never the ordinary run's.
 `sync` copies what the desk gives into `state.arcana.spells` (not saved) before each turn.
 `trialStep` is the only turn: `noteStrike` records what the hero's step strikes, and `trialArcanaTurn` (`trial-arcana.ts`) follows every accepted arena turn while the attempt is active, staging's steps being none.
@@ -189,11 +189,20 @@ Aurum Bloom raises floors a trial doesn't have; every other arcanum works, and a
 So undo takes back what a bolt did to the board but not its cooldown: the bolts are spent.
 Toggling off forgets the arcanum's cooldown, and Thunderbolt's bolts, so it starts over when turned on.
 
-**The Shrine boon.**
+**The Shrine boons.**
 `unlockArcanum`, the one `spell` boon, joins `rollOffer` at weight 20 against the trade-offs' 15 and the standard boons' 65 while `arcanaToLend` has any.
 `ShrineDesk.pick` then rolls `run.shrine.choosing` from the run's own draws (`rollArcanumChoice`), which counts as unspent and holds back further offers until `choose` moves the pick to `run.shrine.arcana`; `share` copies both to every undo snapshot, so undo never takes one back.
 Auto Pick takes the first option.
 It has no boon PNG: `boonIcon` gives it the Arcanite icon.
+**Augment boons** (`kind: "augment"`, one per arcanum, `augmentOf`) share that slot of the offer, each once a run and only while the run holds its arcanum, owned or lent (on or off), so holding every arcanum keeps the slot going.
+They lie in `run.shrine.picked` like any boon, so undo never takes one back, and none of them changes `boonEffects`.
+`ArcanaDesk.augmented(id)` is the one reader, and `valuesOf` the attributes as the run has them (`augmentedValues`: Ricochet Shot's ATK Mult ×2, Overseer's Bonus ×1.5, Thunderbolt's Quantity +4, Lifespring's Effect Waves +1, Time Dilation's Duration +5, Voidwell's Duration +12), read by every rule and `cardValue`; `showHeldArcanum` shows them with a Modifiers row.
+Three change what no attribute holds, each given by its rule only with the boon:
+- Aurum Bloom: `FloorBloom.golden` (`GOLDEN_AUGMENT`, ×1.5) multiplies `RunPurse.golden`'s whole factor (environments.md); its chances don't move.
+- Necrotic Frost: `frostRule`'s `effects.radius` ×`FROST_AUGMENT`, which every reader of a field already takes from there; its offset doesn't move.
+- Phantasm: `phantasmRule`'s `outer` (`OUTER_GHOSTS`, 5) has `stepPhantasm` fill `run.phantasm.outer` as well on each activation, its slots in a ring of `OUTER_RADIUS` (2 tiles) turning the other way (`outerDirection`, exact as `ghostDirection` is).
+  `ghostsOut` lists both rings, inner first, for `ghostStrikes` (whose reach widens only while an outer ghost is out), `Game.phantasms` and `drawPhantasms`; `GhostStrike.radius` keeps a struck ghost in its ring until its burst.
+  So a ghost of either ring strikes alike, and `loseGhost` leaves the other ring alone.
 
 **UI.**
 The Gear page's Arcana tab (`GearPage`, `ArcanaPanel`) shows once `arcanaOpen`: Arcanite held or ever earned, or an arcanum owned; the Gear tab opens with it.
@@ -206,4 +215,4 @@ The bar shows inside a run holding any arcanum, even before On the Job.
 `enhancementsOf` gives the rows of research enhancements both information views show; none are defined yet.
 The `.arcana-attr` and `.arcana-switch` rules use two ids to beat the themes' and the sprite kit's blanket button rules.
 
-**Tests.** `tests/arcana.test.ts`, `tests/aurum-bloom.test.ts`, `tests/overseer.test.ts`, `tests/thunderbolt.test.ts` (with the arcana in trials), `tests/lifespring.test.ts`, `tests/time-dilation.test.ts`, `tests/phantasm.test.ts`, `tests/necrotic-frost.test.ts`, `tests/voidwell.test.ts`; `node tests/voidwell.mjs` (dev server) checks the vortex's pixels and spin in the Tower and a trial, its colours, its card and a real activation, with review images in `test-results/voidwell/`; `node tests/necrotic-frost.mjs` (dev server) checks the field's pixels and colours in the Tower and two trials, the bubbles moving, its card and a real activation, with review images in `test-results/necrotic-frost/`; `node tests/phantasm.mjs` (dev server) checks the ghosts' pixels and their alpha, the Toggles' two controls, its card and a real activation, with review images in `test-results/phantasm/`; `node tests/time-dilation.mjs` (dev server) checks the field's pixels in the Tower and three trials, its card and a real activation, with review images in `test-results/time-dilation/`; `node tests/lifespring.mjs` (dev server) checks the rings' pixels and its card, with review images in `test-results/lifespring/`; `node tests/thunderbolt.mjs` (dev server) checks the card's bar, real strikes' pixels, the toggle and a trial, with review images in `test-results/thunderbolt/`.
+**Tests.** `tests/arcana.test.ts`, `tests/arcana-boons.test.ts` (the augment boons), `tests/aurum-bloom.test.ts`, `tests/overseer.test.ts`, `tests/thunderbolt.test.ts` (with the arcana in trials), `tests/lifespring.test.ts`, `tests/time-dilation.test.ts`, `tests/phantasm.test.ts`, `tests/necrotic-frost.test.ts`, `tests/voidwell.test.ts`; `node tests/voidwell.mjs` (dev server) checks the vortex's pixels and spin in the Tower and a trial, its colours, its card and a real activation, with review images in `test-results/voidwell/`; `node tests/necrotic-frost.mjs` (dev server) checks the field's pixels and colours in the Tower and two trials, the bubbles moving, its card and a real activation, with review images in `test-results/necrotic-frost/`; `node tests/phantasm.mjs` (dev server) checks the ghosts' pixels and their alpha, the Toggles' two controls, its card and a real activation, with review images in `test-results/phantasm/`; `node tests/time-dilation.mjs` (dev server) checks the field's pixels in the Tower and three trials, its card and a real activation, with review images in `test-results/time-dilation/`; `node tests/lifespring.mjs` (dev server) checks the rings' pixels and its card, with review images in `test-results/lifespring/`; `node tests/thunderbolt.mjs` (dev server) checks the card's bar, real strikes' pixels, the toggle and a trial, with review images in `test-results/thunderbolt/`.

@@ -1,11 +1,11 @@
 import {
-  arcanum, arcanumBoost, arcanumPrice, chargeBolts, drawOptions, levelsOf, nextDraw, nextStep, OFFER_SIZE, ownedArcana, redrawOptions, rerollOpen, rerollPrice, RUN_TOGGLES, settleBolts, tickCooldowns, unownedArcana, valuesAt,
+  arcanum, arcanumBoost, arcanumPrice, augmentedValues, chargeBolts, drawOptions, FROST_AUGMENT, GOLDEN_AUGMENT, levelsOf, nextDraw, nextStep, OFFER_SIZE, ownedArcana, redrawOptions, rerollOpen, rerollPrice, RUN_TOGGLES, settleBolts, tickCooldowns, unownedArcana, valuesAt,
   type ArcanumId, type AttributeLevels,
 } from "../arcana/arcana.ts";
 import { clearLifespring, lifespringEffects, springAmplify, stepLifespring } from "../arcana/lifespring.ts";
 import type { Beams } from "../arcana/overseer.ts";
 import { clearFrost, frostEffects, stepFrost } from "../arcana/necrotic-frost.ts";
-import { clearPhantasm, phantasmCooldown, phantasmEffects, stepPhantasm } from "../arcana/phantasm.ts";
+import { clearPhantasm, OUTER_GHOSTS, phantasmCooldown, phantasmEffects, stepPhantasm } from "../arcana/phantasm.ts";
 import { clearDilation, dilationEffects, fieldSlowdown, stepDilation } from "../arcana/time-dilation.ts";
 import { clearVoidwell } from "../arcana/voidwell.ts";
 import type { CritRule } from "../combat.ts";
@@ -15,6 +15,7 @@ import { boostLifespringHealth } from "../progression/hero-stats.ts";
 import { stream } from "../random.ts";
 import type { TowerRun } from "../runs.ts";
 import { CURRENCIES } from "../shop/currency.ts";
+import { augmentOf } from "../shrines.ts";
 import { snap } from "../exact.ts";
 import type { DeskHost } from "./desk.ts";
 
@@ -115,6 +116,14 @@ export class ArcanaDesk {
       ...lent.filter((id) => !this.arcana.owned[id]).map((id) => ({ id, levels: [0, 0, 0] as AttributeLevels, lent: true })),
     ];
   }
+  /** Whether the run has picked `id`'s augment boon. */
+  augmented(id: ArcanumId) {
+    return !!(this.host.run as TowerRun).shrine?.picked.includes(augmentOf(id));
+  }
+  /** `held`'s attribute values as the run has them: its levels', and its augment boon's. */
+  valuesOf({ id, levels }: Pick<HeldArcanum, "id" | "levels">) {
+    return this.augmented(id) ? augmentedValues(id, valuesAt(id, levels)) : valuesAt(id, levels);
+  }
   isOn(id: ArcanumId) {
     return !this.runState.off.includes(id);
   }
@@ -143,7 +152,7 @@ export class ArcanaDesk {
   }
   /** What the arcanum's card reads: its damage with the hero's ATK and crits, or its own effect. */
   cardValue({ id, levels }: HeldArcanum) {
-    const def = arcanum(id), values = valuesAt(id, levels);
+    const def = arcanum(id), values = this.valuesOf({ id, levels });
     if (def.damage) return { damage: this.host.run.player.attack * arcanumBoost(def.damage(values), this.host.crit) };
     return { text: def.effect?.(values) ?? "" };
   }
@@ -160,21 +169,21 @@ export class ArcanaDesk {
   ricochet() {
     const held = this.held.find((h) => h.id === "ricochetShot" && this.isOn(h.id));
     if (!held) return undefined;
-    const [multiplier, rebounds, chance] = valuesAt(held.id, held.levels);
+    const [multiplier, rebounds, chance] = this.valuesOf(held);
     return { boost: arcanumBoost(multiplier, this.host.crit), rebounds, chance };
   }
   /** What Aurum Bloom gives the floors' environments, if it is held and on. */
   aurumBloom(): FloorBloom | undefined {
     const held = this.held.find((h) => h.id === "aurumBloom" && this.isOn(h.id));
     if (!held) return undefined;
-    const [bonus, chance, stellar] = valuesAt(held.id, held.levels);
-    return { bonus, chance, stellar };
+    const [bonus, chance, stellar] = this.valuesOf(held);
+    return { bonus, chance, stellar, ...(this.augmented(held.id) ? { golden: GOLDEN_AUGMENT } : {}) };
   }
   /** Overseer's beams (arcana/overseer.ts), if it is held and on. */
   get beams(): Beams | undefined {
     const held = this.held.find((h) => h.id === "overseer" && this.isOn(h.id));
     if (!held) return undefined;
-    const [bonus, width, count] = valuesAt(held.id, held.levels);
+    const [bonus, width, count] = this.valuesOf(held);
     return { bonus, width, count, turns: this.host.run.beamTurns ?? 0 };
   }
   /** Thunderbolt, if it is held and on: what its strikes multiply the hero's
@@ -182,7 +191,7 @@ export class ArcanaDesk {
   thunderbolt() {
     const held = this.held.find((h) => h.id === "thunderbolt" && this.isOn(h.id));
     if (!held) return undefined;
-    const [multiplier, bolts, turns] = valuesAt(held.id, held.levels);
+    const [multiplier, bolts, turns] = this.valuesOf(held);
     return { boost: arcanumBoost(multiplier, this.host.crit), bolts, turns };
   }
   /** The bolts this turn strikes with (`fired`: what `turn` says ran out), if any. */
@@ -200,7 +209,7 @@ export class ArcanaDesk {
   lifespringRule() {
     const held = this.held.find((h) => h.id === "lifespring" && this.isOn(h.id));
     if (!held) return undefined;
-    const [hp, waves, turns] = valuesAt(held.id, held.levels);
+    const [hp, waves, turns] = this.valuesOf(held);
     return { hp, waves, turns, effects: lifespringEffects(this.save) };
   }
   /** Lifespring's turn: its cooldown, and the Effect Wave or field it brings, if it is held and on. */
@@ -228,7 +237,7 @@ export class ArcanaDesk {
   timeDilationRule() {
     const held = this.held.find((h) => h.id === "timeDilation" && this.isOn(h.id));
     if (!held) return undefined;
-    const [duration, slowdown, turns] = valuesAt(held.id, held.levels), effects = dilationEffects(this.save);
+    const [duration, slowdown, turns] = this.valuesOf(held), effects = dilationEffects(this.save);
     return { duration, slow: fieldSlowdown(slowdown, effects), turns, effects };
   }
   /** Time Dilation's turn: the field's turns and its cooldown, if it is held and on. */
@@ -237,12 +246,13 @@ export class ArcanaDesk {
     if (rule) stepDilation((this.host.run.timeDilation ??= {}), rule);
   }
   /** Phantasm, if it is held and on: what a ghost's strike multiplies the hero's
-   * ATK by, its Quantity and cooldown, and its blast and turning with what raises them. */
+   * ATK by, its Quantity and cooldown, its blast and turning with what raises them,
+   * and the outer ring its augment boon adds. */
   phantasmRule() {
     const held = this.held.find((h) => h.id === "phantasm" && this.isOn(h.id));
     if (!held) return undefined;
-    const [multiplier, quantity, cooldown] = valuesAt(held.id, held.levels), effects = phantasmEffects(this.save);
-    return { boost: arcanumBoost(multiplier, this.host.crit), quantity, turns: phantasmCooldown(cooldown, effects), blast: effects.blast, spin: effects.spin };
+    const [multiplier, quantity, cooldown] = this.valuesOf(held), effects = phantasmEffects(this.save);
+    return { boost: arcanumBoost(multiplier, this.host.crit), quantity, turns: phantasmCooldown(cooldown, effects), blast: effects.blast, spin: effects.spin, ...(this.augmented(held.id) ? { outer: OUTER_GHOSTS } : {}) };
   }
   /** Phantasm's turn: the ring turning, its cooldown and the ghosts it brings back, if it is held and on. */
   phantasmTurn() {
@@ -254,8 +264,8 @@ export class ArcanaDesk {
   frostRule() {
     const held = this.held.find((h) => h.id === "necroticFrost" && this.isOn(h.id));
     if (!held) return undefined;
-    const [multiplier, duration, turns] = valuesAt(held.id, held.levels);
-    return { boost: arcanumBoost(multiplier, this.host.crit), duration, turns, effects: frostEffects(this.save) };
+    const [multiplier, duration, turns] = this.valuesOf(held), effects = frostEffects(this.save);
+    return { boost: arcanumBoost(multiplier, this.host.crit), duration, turns, effects: this.augmented(held.id) ? { ...effects, radius: effects.radius * FROST_AUGMENT } : effects };
   }
   /** Necrotic Frost's turn: the fields' turns and its cooldown, if it is held and on. */
   frostTurn() {
@@ -266,7 +276,7 @@ export class ArcanaDesk {
   voidwellRule() {
     const held = this.held.find((h) => h.id === "voidwell" && this.isOn(h.id));
     if (!held) return undefined;
-    const [radius, duration, turns] = valuesAt(held.id, held.levels);
+    const [radius, duration, turns] = this.valuesOf(held);
     return { radius, duration, turns };
   }
   /** An enemy Lifespring touched (an Effect Wave or the field) fell, by whatever

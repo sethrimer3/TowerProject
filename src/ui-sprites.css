@@ -514,8 +514,17 @@ html.ui-sprites :is(.boon-choice, .boon-ban, .boon-rank):not(#_) {
 html.ui-sprites :is(.boon-choice, .boon-ban, .boon-rank).tradeoff:not(#_) {
   border-image-source: var(--ui-danger);
 }
+/* An augment boon has no PNG frame of its own: plain green, whichever kit is on. */
+html.ui-sprites :is(.boon-choice, .boon-ban, .boon-rank).augment:not(#_):not(#__) {
+  border-image-source: none;
+  border: 2px solid #3f8f5c;
+  background: #12241a;
+  color: #9be8a9;
+}
 html.ui-sprites :is(.boon-ban, .boon-rank).banned:not(#_) { border-image-source: var(--ui-danger); }
 html.ui-sprites .boon-rank.ranked:not(#_) { border-image-source: var(--ui-selected); }
+html.ui-sprites .boon-rank.augment.ranked:not(#_):not(#__) { border-image-source: none; border-color: #4fae70; background: #173a24; }
+html.ui-sprites :is(.boon-ban, .boon-rank).augment.banned:not(#_):not(#__) { border: 1px solid transparent; border-image: var(--ui-danger) 6 fill / 8px / 0 stretch; background: none; color: inherit; }
 html.ui-sprites .boon-choice-text :is(small, b) { display: block; }
 html.ui-sprites .boon-ban-name { flex: 1; min-width: 0; }
 html.ui-sprites .boon-rank .rank-grip { flex-shrink: 0; }

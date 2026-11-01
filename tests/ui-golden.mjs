@@ -386,6 +386,19 @@ try {
         g.travelForest(-1); g.forestArrivalFrame(0); g.forestArrivalFrame(1000);
         return { save: JSON.stringify(g.save), targets: [] };
       })(),
+      // Augment boons: an offer with one, the green row taken, and the arcanum's information. Last, for the seeds above.
+      arcanaAugment: (() => {
+        const s = defaults(); quiet(s);
+        Object.keys(s.tutorials).forEach(k => s.tutorials[k] = true);
+        s.upgrades.archives = 1;
+        s.upgrades.onTheJob = 1;
+        s.archives.levels.unlockShrines = 1;
+        s.arcana.owned.overseer = [1, 2, 3];
+        const g = new Game(s); g.newRun({ seed: 7 });
+        g.run.height = g.run.maxHeight = 199;
+        g.run.shrine = { picked: [], rolls: 0, offer: ["augmentOverseer", "attack"] };
+        return { save: JSON.stringify(g.save), targets: [] };
+      })(),
     };
   });
 
@@ -1123,6 +1136,16 @@ try {
     await shot("arcana.boon");
     await click('[data-boon="unlockArcanum"]');
     await shot("arcana.boonChoice");
+    await load("arcanaAugment");
+    await click("#shrine-bar");
+    await shot("arcana.augmentOffer");
+    await click('[data-boon="augmentOverseer"]');
+    await click("#shrine-bar");
+    await shot("arcana.augmentTaken");
+    await click("#shrine-close");
+    await click('[data-run-tab="arcana"]');
+    await click(".arcana-card .drill-name");
+    await shot("arcana.augmentInfo");
   });
   await section("shield", async () => {
     await load("shieldUp");

@@ -1,4 +1,4 @@
-import { ghostDirection, ghostOffset, type GhostStrike } from "../../arcana/phantasm.ts";
+import { ghostDirection, ghostOffset, outerDirection, OUTER_GHOSTS, OUTER_RADIUS, type GhostStrike } from "../../arcana/phantasm.ts";
 import { shortWay } from "../../volley.ts";
 import type { ShownClock } from "../../shown.ts";
 import { tileTransform, type FrameContext } from "../render-frame.ts";
@@ -54,10 +54,10 @@ export function paintGhostBurst(c: CanvasRenderingContext2D, k: number, alpha: n
   c.restore();
 }
 
-/** What the board shows of Phantasm at `alpha`: the ghosts round the hero as drawn,
+/** What the board shows of Phantasm at `alpha`: the ghosts of both rings round the hero as drawn,
  * turning through the turn `clock` shows; a ghost that struck this turn until the
  * moment it did, then its burst where it was. */
-export function drawPhantasms(f: FrameContext, ring: { ghosts: readonly number[]; ring: number; turns: number; spin: number } | undefined, struck: readonly (GhostStrike & { at: number })[], clock: ShownClock | null, alpha: number, wrap: number) {
+export function drawPhantasms(f: FrameContext, ring: { ghosts: readonly number[]; ring: number; turns: number; spin: number; outer?: readonly number[] } | undefined, struck: readonly (GhostStrike & { at: number })[], clock: ShownClock | null, alpha: number, wrap: number) {
   if (alpha <= 0 || (!ring && !struck.length)) return;
   const { c, now, playerX, playerY } = f, still = f.look.reduceMotion;
   // Each from the board's own transform, which `tileTransform` builds on.
@@ -68,15 +68,16 @@ export function drawPhantasms(f: FrameContext, ring: { ghosts: readonly number[]
     paint();
     c.restore();
   };
-  const ghost = (direction: number, slot: number) => {
-    const off = ghostOffset(direction);
+  const ghost = (direction: number, slot: number, radius?: number) => {
+    const off = ghostOffset(direction, radius);
     onTile(playerX + off.x, playerY + off.y, () => paintGhost(c, still ? 0 : ghostBob(now, slot)));
   };
   // `turns` has already counted the turn being shown.
   if (ring) for (const slot of ring.ghosts) ghost(ghostDirection(ring.turns - 1, slot, ring.ring, ring.spin, shownTick(clock, now, still)), slot);
+  if (ring?.outer) for (const slot of ring.outer) ghost(outerDirection(ring.turns - 1, slot, ring.spin, shownTick(clock, now, still)), slot + OUTER_GHOSTS, OUTER_RADIUS);
   for (const g of struck) {
     if (still) continue;
-    if (now < g.at) ghost(g.direction, g.tick);
+    if (now < g.at) ghost(g.direction, g.tick, g.radius);
     else if (now < g.at + GHOST_BURST_MS) onTile(playerX + shortWay(g.x - playerX, wrap), g.y, () => paintGhostBurst(c, (now - g.at) / GHOST_BURST_MS, alpha));
   }
 }

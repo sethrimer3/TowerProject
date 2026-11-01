@@ -318,6 +318,24 @@ export const valuesAt = (id: ArcanumId, levels: AttributeLevels): AttributeValue
   const [a, b, c] = arcanum(id).attributes;
   return [a.steps[levels[0]]![0], b.steps[levels[1]]![0], c.steps[levels[2]]![0]];
 };
+/** What each augment boon (shrines.ts) does to its arcanum's attributes. Phantasm's
+ * (`OUTER_GHOSTS`), Aurum Bloom's (`GOLDEN_AUGMENT`) and Necrotic Frost's
+ * (`FROST_AUGMENT`) change what no attribute holds. */
+const AUGMENTED: Partial<Record<ArcanumId, (values: AttributeValues) => AttributeValues>> = {
+  ricochetShot: ([mult, rebounds, chance]) => [mult * 2, rebounds, chance],
+  thunderbolt: ([mult, bolts, turns]) => [mult, bolts + 4, turns],
+  lifespring: ([hp, waves, turns]) => [hp, waves + 1, turns],
+  timeDilation: ([duration, slow, turns]) => [duration + 5, slow, turns],
+  voidwell: ([size, duration, turns]) => [size, duration + 12, turns],
+  overseer: ([bonus, angle, beams]) => [bonus * 1.5, angle, beams],
+};
+/** `values` with `id`'s augment boon. */
+export const augmentedValues = (id: ArcanumId, values: AttributeValues) => AUGMENTED[id]?.(values) ?? values;
+/** What Aurum Bloom's augment boon multiplies a Golden Floor's whole factor by. */
+export const GOLDEN_AUGMENT = 1.5;
+/** What Necrotic Frost's augment boon multiplies a field's radius by. */
+export const FROST_AUGMENT = 1.5;
+
 /** What the attribute's next level costs and holds; null at its highest. */
 export function nextStep(id: ArcanumId, attribute: number, level: number) {
   const step = arcanum(id).attributes[attribute]!.steps[level + 1];

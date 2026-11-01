@@ -155,7 +155,7 @@ test("a Stellar Floor shows in the All Gold Bonuses box with Aurum Bloom, and a 
   g.arcana.aurumBloom = () => ({ bonus: 5, chance: 100, stellar: 100 });
   assert.deepEqual(lines().map((m) => m.factor), [5, 10]);
   const lent = inside();
-  lent.towerRun.shrine = { arcana: ["aurumBloom"] } as never;
+  lent.towerRun.shrine = { picked: [], rolls: 0, arcana: ["aurumBloom"] };
   assert.deepEqual(lent.arcana.aurumBloom(), { bonus: 5, chance: 5, stellar: 0.5 });
   assert.deepEqual(valuesAt("aurumBloom", [0, 0, 0]), [5, 5, 0.5]);
 });

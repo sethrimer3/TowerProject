@@ -2565,13 +2565,14 @@ export class Game {
   /** Phantasm's ghosts as the board shows them, while any are out and it is on. */
   get phantasms() {
     const rule = this.arcana.phantasmRule(), s = this.run.phantasm;
-    return rule && s?.ghosts?.length ? { ghosts: s.ghosts, ring: s.ring ?? s.ghosts.length, turns: s.turns ?? 1, spin: rule.spin } : undefined;
+    if (!rule || !(s?.ghosts?.length || s?.outer?.length)) return undefined;
+    return { ghosts: s.ghosts ?? [], ring: s.ring ?? s.ghosts?.length ?? 1, turns: s.turns ?? 1, spin: rule.spin, ...(s.outer ? { outer: s.outer } : {}) };
   }
   /** Phantasm's ghosts on what they touch from tick `first` (arcana.md), the hero
    * walking from `from`: pays what they fell and returns their shots. */
   private strikeGhosts(beams: Beams | undefined, at: number, ms: number, from: { x: number; y: number } | undefined, first?: number) {
     const rule = this.arcana.phantasmRule(), s = this.run.phantasm;
-    if (!rule || !s?.ghosts?.length) return [];
+    if (!rule || !(s?.ghosts?.length || s?.outer?.length)) return [];
     const out = ghostStrikes({ board: this.world, wrap: this.wrap, hero: this.run.player, ...(from ? { from } : {}), ...(beams ? { beams } : {}) }, rule, s, first);
     for (const { enemy, at: tile } of out.kills) this.message = [`Phantasm · ${enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, tile, 1, false, 0)].join(" · ");
     if (out.struck.length) this.ghostFx = [...this.ghostFx.slice(-11), ...out.struck.map((g) => ({ ...g, at: at + (ms * g.tick) / TURN_TICKS }))];

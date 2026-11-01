@@ -13,7 +13,7 @@ Boon k is earned on the floor that is the sum of the first k intervals; each int
 The schedule is recomputed every time, so a Boon Floor Requirement boon can earn several boons at once.
 Unspent = earned − picked (`ShrineDesk.unspent`).
 
-**Boons** (`BOONS`): standard boons (several copies each), trade-offs (one copy each) and the spell boon that lends an arcanum (docs/agents/arcana.md).
+**Boons** (`BOONS`): standard boons (several copies each), trade-offs (one copy each), the spell boon that lends an arcanum and the augment boons that strengthen one (docs/agents/arcana.md).
 A standard boon's total with n copies is `(1 + value × n) × (1 + SBB/100)` for a multiplier, `value × n × (1 + SBB/100)` for an addition, nothing with no copy (`standardTotal`; SBB is Standard Boon Bonus research).
 A trade-off's benefit is scaled by `t = 1 + Improve Trade-off Boons%` (`1 + 0.5t` for ×1.50 ATK, `1 − 0.5t` for −50% enemy HP), its cost never; Fast Enemies Strike Second is `fixed`.
 Copies of one standard boon add, but boons of different types multiply on purpose (an exception to the rule that a kind of source sums its bonuses, AGENTS.md): `boonEffects` multiplies each trade-off's benefit and cost onto the standard boons' totals and each other (5 ATK copies' ×1.75 with ×1.50 ATK make ×2.625; −70% and −60% max HP make ×0.12).
@@ -34,7 +34,8 @@ Bounce Shot, Orbs and the ranged enemies' trade-off wait for what they act on.
 A pick (and the offer's draws) is copied into every undo snapshot of the run and a fall's (`ShrineDesk.share`), and `sync` rescales each, as Training bought mid-run is: undo takes back steps, never a boon.
 
 **Offers** (`rollOffer`).
-Each slot is a trade-off, a standard boon or a spell boon by weights 15, 65 and 20 (the last only while an arcanum is left to lend), drawn from boons with copies left, not banned and not already offered; a kind with none left gives way to the other.
+Each slot is a trade-off, a standard boon or a boon of the arcana by weights 15, 65 and 20 (the last only while an arcanum is left to lend or the run holds one to augment; its pool is the spell boon and the augment boons, each as likely as another), drawn from boons with copies left, not banned and not already offered; a kind with none left gives way to the other.
+With no arcana to lend or augment, the draws are what they always were.
 The draws come from `drawAt(seed ^ SHRINE_SALT, run.shrine.rolls++)`, so undo and a replay offer the same.
 The offer waiting is kept in `run.shrine.offer` until a pick.
 Size: 2 plus Boon Option Quantity (`offerSize`).
@@ -57,6 +58,10 @@ The bar opens `ui/shrine-dialog.ts`: the offer (again while more wait), or the b
 The forest's menu has Shrine Boons (`#shrines-button`) once Shrines are researched, opening `ui/shrines-page.ts` (`ShrinesPage`, tab `shrines`): First Boon Choice, bans and the ranking (dragged by its grips or moved by arrows, the rows counted lit, banned ones last in red), each shown once researched; the desk refuses changes inside a run.
 
 With the optional shared PNG kit active, `ui/boon-icon.ts` and `sprites/boons.ts` supply one native 24-pixel subject per boon in offers, taken rows, first-choice preview, bans and ranking.
+Augment boons have no PNG: `boonIcon` gives each its arcanum's picture (`ARCANUM_ICONS`), shown under every theme.
+Their rows are green in every list (`.augment`: an offer, the taken table, bans and ranking), a banned one red like any other, and a ranked one a brighter green.
+Those rules use two ids and colour the row's words themselves, so they beat every theme's blanket rules (Shiro and Kuro colour each element), and under Sprites they drop the PNG frame.
+`tests/arcana-boons.mjs` checks them under every UI theme, with review images in `test-results/arcana-boons/`.
 The twenty subjects and four control symbols are exported from `assets/game-sprites/shrines.png` by `tools/prepare-shrine-sprites.mjs`; choices and rows reuse the normal, danger and selected kit frames.
 The count diamond and bar fill use matching PNGs, retaining live counts and progress; other UI themes, Sprites off and failed symbol requests keep the text-only interface.
 `tests/shrine-sprites-browser.mjs` checks offers, picks, save/reload, first choice, bans, grip/arrow reordering and theme/fallback behavior in actual phone and desktop layouts.

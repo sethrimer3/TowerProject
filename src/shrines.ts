@@ -3,7 +3,7 @@ import type { Enemy, Tile } from "./entities.ts";
 import { snap } from "./exact.ts";
 import { PARRY_CAP } from "./combat.ts";
 import { drawAt } from "./random.ts";
-import { ARCANUM_IDS, drawOptions, isArcanum, OFFER_SIZE, unownedArcana, type ArcanaSave, type ArcanumId } from "./arcana/arcana.ts";
+import { arcanum, ARCANUM_IDS, drawOptions, isArcanum, OFFER_SIZE, unownedArcana, type ArcanaSave, type ArcanumId } from "./arcana/arcana.ts";
 import { isRecord, whole } from "./save/decode.ts";
 
 // Shrines (docs/agents/shrines.md): once Unlock Shrines is researched, a
@@ -25,7 +25,11 @@ type TradeoffBoon = { kind: "tradeoff"; name: string; max: 1; label: (t: number)
 /** A spell boon: picked, it lends the climb an arcanum the player doesn't own,
  * chosen from a few offered (`rollArcanumChoice`). */
 type SpellBoon = { kind: "spell"; name: string; max: number; label: (t: number) => string; fixed: true };
-export type BoonDef = StandardBoon | TradeoffBoon | SpellBoon;
+/** An augment boon: once a run, offered only while the run holds `arcanum`,
+ * bought or lent, which it strengthens for the rest of the climb (`effect`,
+ * worked by `ArcanaDesk`). */
+type AugmentBoon = { kind: "augment"; name: string; max: 1; arcanum: ArcanumId; effect: string; label: (t: number) => string; fixed: true };
+export type BoonDef = StandardBoon | TradeoffBoon | SpellBoon | AugmentBoon;
 
 const times = (n: number) => `×${Number(n.toFixed(2))}`;
 const plus = (n: number, unit = "") => `+${Number(n.toFixed(2))}${unit}`;
@@ -36,6 +40,10 @@ const add = (name: string, max: number, value: number, label: (total: number) =>
   ({ kind: "standard", name, max, math: "add", value, label });
 const tradeoff = (name: string, label: (t: number) => string, fixed?: true): TradeoffBoon =>
   ({ kind: "tradeoff", name, max: 1, label, ...(fixed ? { fixed } : {}) });
+const augment = (id: ArcanumId, effect: string): AugmentBoon => {
+  const name = `${arcanum(id).name}: ${effect}`;
+  return { kind: "augment", name, max: 1, arcanum: id, effect, label: () => name, fixed: true };
+};
 
 /** Every boon, standard first, in the order the Shrine Boons page lists
  * them. Bounce Shot, Orbs and the ranged enemies' trade-off wait for what
@@ -62,12 +70,26 @@ export const BOONS = {
   lifesteal: tradeoff("Lifesteal, Parry % −70%", (t) => `Lifesteal ${times(1 + 1.5 * t)}, but Parry % −70%`),
   fastSecond: tradeoff("Fast Enemies Strike Second", () => `Fast Enemies Strike Second, but Their ATK ×2.5`, true),
   unlockArcanum: { kind: "spell", name: "Unlock an Arcanum", max: ARCANUM_IDS.length, label: () => "Unlock an Arcanum for This Climb", fixed: true },
+  augmentRicochetShot: augment("ricochetShot", "×2 ATK"),
+  augmentThunderbolt: augment("thunderbolt", "+4 Bolts per Activation"),
+  augmentLifespring: augment("lifespring", "+1 Effect Wave per Activation"),
+  augmentTimeDilation: augment("timeDilation", "Duration +5 Turns"),
+  augmentPhantasm: augment("phantasm", "5 Extra Phantasms, a Tile Farther Out, Turning the Other Way"),
+  augmentAurumBloom: augment("aurumBloom", "×1.5 Golden Floor Bonus"),
+  augmentNecroticFrost: augment("necroticFrost", "×1.5 Radius"),
+  augmentVoidwell: augment("voidwell", "Duration +12 Turns"),
+  augmentOverseer: augment("overseer", "×1.5 ATK"),
 } satisfies Record<string, BoonDef>;
 export type BoonId = keyof typeof BOONS;
 export const BOON_IDS = Object.keys(BOONS) as BoonId[];
 export const boon = (id: BoonId): BoonDef => BOONS[id];
 export const isBoon = (id: unknown): id is BoonId => typeof id === "string" && BOON_IDS.includes(id as BoonId);
 export const STANDARD_BOONS = BOON_IDS.filter((id) => boon(id).kind === "standard");
+/** The augment boon that strengthens arcanum `id`. */
+export const augmentOf = (id: ArcanumId) => BOON_IDS.find((b) => {
+  const def = boon(b);
+  return def.kind === "augment" && def.arcanum === id;
+})!;
 /** Every boon a run can pick, all copies counted. */
 const ALL_COPIES = BOON_IDS.reduce((n, id) => n + boon(id).max, 0);
 
@@ -289,8 +311,8 @@ export const autoPickOpen = (o: ShrineOwner) => researched(o.archives, "autoPick
 
 /** Mixed into the run seed to start the offers' stream. */
 const SHRINE_SALT = 0x5a1e7;
-/** The chance an offer's slot is a trade-off, a standard boon or a spell boon:
- * 15, 65 and, while one can be picked, 20. */
+/** The chance an offer's slot is a trade-off, a standard boon or a boon of the
+ * arcana (a spell or an augment boon): 15, 65 and, while one can be picked, 20. */
 const TRADEOFF_WEIGHT = 15, STANDARD_WEIGHT = 65, SPELL_WEIGHT = 20;
 
 /** The arcana a run's spell boon can still lend: not owned, not lent already. */
@@ -300,22 +322,24 @@ export const rollArcanumChoice = (seed: number, run: ShrineRun, o: Pick<OfferOwn
   drawOptions(arcanaToLend(run, o), OFFER_SIZE, () => drawAt((seed ^ SHRINE_SALT) >>> 0, run.rolls++));
 
 /** Rolls the run's next offer: the First Boon Choice first on the run's
- * first, then each slot a trade-off, a standard boon or a spell boon (15, 65
- * and 20, the last only while an arcanum is left to lend), drawn
+ * first, then each slot a trade-off, a standard boon or a boon of the arcana
+ * (15, 65 and 20, the last only while an arcanum is left to lend or the run
+ * holds one to augment), drawn
  * from those with copies left, not banned and not already offered; a kind
  * with none left gives way to the other. The draws come from the run's own
  * stream (`run.rolls` counts them), so undo and a replay offer the same. */
 export function rollOffer(seed: number, run: ShrineRun, o: OfferOwner): BoonId[] {
   const n = copies(run.picked), banned = bans(o), offer: BoonId[] = [];
   const lendable = arcanaToLend(run, o).length > 0;
-  const open = (id: BoonId) => (n[id] ?? 0) < boon(id).max && !banned.includes(id) && !offer.includes(id) && (boon(id).kind !== "spell" || lendable);
+  const usable = (def: BoonDef) => (def.kind === "spell" ? lendable : def.kind !== "augment" || !!o.arcana.owned[def.arcanum] || !!run.arcana?.includes(def.arcanum));
+  const open = (id: BoonId) => (n[id] ?? 0) < boon(id).max && !banned.includes(id) && !offer.includes(id) && usable(boon(id));
   const draw = () => drawAt((seed ^ SHRINE_SALT) >>> 0, run.rolls++);
   const first = run.picked.length === 0 ? firstChoice(o) : undefined;
   if (first && open(first)) offer.push(first);
   while (offer.length < offerSize(o)) {
     const standard = BOON_IDS.filter((id) => boon(id).kind === "standard" && open(id));
     const tradeoffs = BOON_IDS.filter((id) => boon(id).kind === "tradeoff" && open(id));
-    const spells = BOON_IDS.filter((id) => boon(id).kind === "spell" && open(id));
+    const spells = BOON_IDS.filter((id) => (boon(id).kind === "spell" || boon(id).kind === "augment") && open(id));
     if (!standard.length && !tradeoffs.length && !spells.length) break;
     const roll = draw() * (TRADEOFF_WEIGHT + STANDARD_WEIGHT + (spells.length ? SPELL_WEIGHT : 0));
     const wanted = roll < TRADEOFF_WEIGHT ? tradeoffs : roll < TRADEOFF_WEIGHT + STANDARD_WEIGHT ? standard : spells;

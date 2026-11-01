@@ -50,7 +50,7 @@ function offerHtml(ctx: AppContext, offer: BoonId[]) {
     `<p class="hint">${waiting > 1 ? `${waiting} boons waiting. ` : ""}It lasts the rest of this climb.</p>` +
     `<div class="boon-offer">${offer.map((id) => {
       const kind = boon(id).kind;
-      return `<button class="boon-choice ${kind}" data-boon="${id}">${boonIcon(id)}<span class="boon-choice-text"><small>${kind === "tradeoff" ? "TRADE-OFF" : kind === "spell" ? "ARCANUM" : "STANDARD"}</small><b>${boonLabel(id, save)}</b></span></button>`;
+      return `<button class="boon-choice ${kind}" data-boon="${id}">${boonIcon(id)}<span class="boon-choice-text"><small>${kind === "tradeoff" ? "TRADE-OFF" : kind === "spell" || kind === "augment" ? "ARCANUM" : "STANDARD"}</small><b>${boonLabel(id, save)}</b></span></button>`;
     }).join("")}</div>`;
 }
 

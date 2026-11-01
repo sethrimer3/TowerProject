@@ -5084,6 +5084,11 @@ html .stats .portrait-top .shrine-next:not(#_) {
 .boon-choice b { font-size: 13px; }
 .boon-choice.tradeoff { border-color: #7a3a52; background: #22131b; }
 .boon-choice.tradeoff small { color: #e79ab6; }
+.boon-choice.augment:not(#_):not(#__) { display: flex; align-items: center; gap: 8px; border-color: #3f8f5c; background: #12241a; color: #c4f0cd; }
+.boon-choice.augment:not(#_):not(#__) small { color: #7fdc97; }
+/* A green row's words: some themes colour every element by itself, so a row's colour alone wouldn't reach them. */
+:is(.boon-choice, .boon-ban:not(.banned), .boon-rank:not(.banned)).augment:not(#_):not(#__) :is(b, span),
+.boon-table tr.augment:not(#_):not(#__) span { color: #9be8a9; }
 .boon-choice:hover, .boon-choice:focus-visible { border-color: #ffd34d; }
 .boon-table-scroll { max-height: 50vh; overflow-y: auto; margin: 8px 0; }
 .boon-table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: left; }
@@ -5091,6 +5096,8 @@ html .stats .portrait-top .shrine-next:not(#_) {
 .boon-table td { padding: 5px 4px; border-top: 1px solid #303742; }
 .boon-table td:last-child, .boon-table th:last-child { text-align: right; width: 3em; }
 .boon-table tr.tradeoff td:first-child { color: #e79ab6; }
+.boon-table tr.augment td:not(#_):not(#__) { background: #12241a; color: #9be8a9; }
+.boon-table .arcanum-icon, .boon-ban .arcanum-icon, .boon-rank .arcanum-icon { width: 20px; height: 20px; flex-shrink: 0; vertical-align: middle; margin-inline-end: 6px; }
 .boon-autopick { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 8px 0 0; font-size: 12px; }
 .page#shrines { position: relative; }
 #shrines .page-title { margin: 18px 44px 14px; text-align: center; }
@@ -5102,10 +5109,15 @@ html .stats .portrait-top .shrine-next:not(#_) {
 .boon-bans { display: grid; gap: 4px; }
 .boon-ban { display: flex; align-items: center; gap: 6px; padding: 5px 8px; border: 1px solid #303742; border-radius: 3px; font-size: 12px; }
 .boon-ban.banned { border-color: #8a3030; background: #2a1414; }
+.boon-ban.augment:not(#_):not(#__) { border-color: #3f8f5c; background: #12241a; color: #9be8a9; }
+.boon-ban.augment.banned:not(#_):not(#__) { border-color: #8a3030; background: #2a1414; color: inherit; }
 .boon-ranking { display: grid; gap: 3px; margin: 0; padding: 0; list-style: none; counter-reset: rank; }
 .boon-rank { display: flex; align-items: center; gap: 6px; padding: 4px 6px; border: 1px solid #303742; border-radius: 3px; background: #14171c; font-size: 12px; touch-action: none; }
 .boon-rank.ranked { border-color: #6b5a2a; background: #2a2412; }
+.boon-rank.augment:not(#_):not(#__) { border-color: #2c5a3c; background: #12281a; color: #9be8a9; }
+.boon-rank.augment.ranked:not(#_):not(#__) { border-color: #4fae70; background: #173a24; }
 .boon-rank.banned { border-color: #8a3030; background: #3a1616; color: #f0b0b0; }
+.boon-rank.augment.banned:not(#_):not(#__) { border-color: #8a3030; background: #3a1616; color: #f0b0b0; }
 .boon-rank.dragging { position: relative; z-index: 2; box-shadow: 0 4px 12px #000a; }
 .boon-rank.drop-here { outline: 1px dashed #ffd34d; }
 .rank-grip { width: 16px; cursor: grab; color: #8793a2; text-align: center; user-select: none; }

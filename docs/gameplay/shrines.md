@@ -8,6 +8,7 @@ Pressing the bar offers two boons (up to four with Boon Option Quantity research
 Standard boons can be taken several times (×1.20 Max HP, ×1.15 ATK, All Gold Bonuses, Shroud and Silver Bonus, ×1.75 Regen, Interest ×1.50, +5% Free Up Chance, +4 Parry %, −20% Boon Floor Requirement, +1 Max Play Speed): a multiplier's copies add up as (1 + value × copies), an addition's as value × copies, both then raised by Standard Boon Bonus research (+1% a level).
 Trade-offs, once each, give a benefit at a cost (×1.50 ATK but bosses ×8 HP, ×1.80 Gold but −70% max HP, −50% enemy HP but −90% Regen and Lifesteal, and more); Improve Trade-off Boons research raises the benefit.
 **Unlock an Arcanum** lends the climb an arcanum you don't own, your choice of up to three, while any remain ([Arcana](arcana.md)).
+**Arcana boons** appear once you hold an arcanum, bought or lent: one for each arcanum you hold, once a climb, shown in green in every list of boons ([Arcana](arcana.md#shrine-boons)).
 Boons of different types multiply each other: a trade-off's ×1.50 ATK on five ATK copies' ×1.75 makes ×2.625.
 A boon applies at once, to the hero's stats as they stand and to what it gains later; undo never takes one back.
 Taking a Boon Floor Requirement boon shortens the whole schedule, so several boons can come due at once.
@@ -15,5 +16,5 @@ More research, each opened by a later Goal: Floors Required (one floor fewer a l
 The Delve has no shrines.
 
 With Settings → **Sprites** on, each boon has a matching pixel-art PNG symbol in offers, the taken-boons list, First Boon Choice, bans and ranking.
-Standard choices have brass frames and trade-offs have red frames; names, values, copies and the waiting count remain readable text.
+Standard choices have brass frames, trade-offs red frames and arcana boons green ones, with their arcanum's picture; names, values, copies and the waiting count remain readable text.
 The option defaults to off, and non-default UI themes supply their own look.

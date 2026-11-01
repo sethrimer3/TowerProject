@@ -23,7 +23,7 @@ A Golden Floor that is also a Treasure Floor makes its many chests worth all the
 - **Golden Floor Chance**: +0.5% chance each floor is a Golden Floor a level, for 60 levels, up to 30%. A climb keeps the chance it went inside with, so a level done mid-climb counts from the next.
 - **Golden Floor Multiplier**: ×2 at first, +×0.1 a level, for 80 levels, up to ×10. A level done mid-climb counts at once.
 
-[Aurum Bloom](arcana.md#aurum-bloom) adds to both, without needing Golden Floors.
+[Aurum Bloom](arcana.md#aurum-bloom) adds to both, without needing Golden Floors, and its [Shrine boon](arcana.md#shrine-boons) multiplies a Golden Floor's whole bonus by 1.5.
 
 Both are among the dearest research there is: their first levels cost 5,000 Gold and take ten minutes, their last 2.51 billion Gold and 30 days (Chance) and 5.02 billion and 40 days (Multiplier), before Research Speed and Research Cost Discount.
 

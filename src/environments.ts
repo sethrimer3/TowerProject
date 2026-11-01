@@ -37,8 +37,9 @@ export const STELLAR_FACTOR = 10;
 
 /** What Aurum Bloom gives while the run holds it on: the Golden Floor's factor
  * it alone makes (`bonus`, from ×1) and, in percent, what it adds to the Golden
- * (`chance`) and Stellar Floor (`stellar`) chances. */
-export type FloorBloom = { bonus: number; chance: number; stellar: number };
+ * (`chance`) and Stellar Floor (`stellar`) chances. With its augment boon,
+ * `golden` multiplies the Golden Floor's whole factor. */
+export type FloorBloom = { bonus: number; chance: number; stellar: number; golden?: number };
 
 /** `run`'s chances with `bloom`'s added. They are read, never saved, so a
  * toggle or a level counts at once and undo can't touch them. */

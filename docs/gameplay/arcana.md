@@ -36,6 +36,26 @@ In a [Proving Grounds](proving-grounds.md) trial, every arcanum you own works ex
 
 A Tower run's Shrines can also offer **Unlock an Arcanum**, while you don't own them all: pick it, then choose one you don't own, up to three offered, to hold at its first levels for the rest of the climb.
 
+## Shrine boons
+
+While a Tower run holds an arcanum, bought or lent, its Shrines can offer one green boon that strengthens it, once a climb, as a slot of the same kind as Unlock an Arcanum.
+Each lasts the rest of the climb, whether the arcanum is on or off, and undo never takes one back.
+Your card and its information show what it comes to.
+
+| Arcanum | Boon | What it does |
+|---|---|---|
+| Ricochet Shot | ×2 ATK | Multiplies its ATK Mult. |
+| Thunderbolt | +4 Bolts | Each activation strikes with 4 more. |
+| Lifespring | +1 Effect Wave | Each activation sends one more, 4 turns after the last. |
+| Time Dilation | Duration +5 turns | Each field lasts 5 turns longer. |
+| Phantasm | 5 Extra Phantasms | Each activation also fills a second ring of five, two tiles out, turning the other way. |
+| Aurum Bloom | ×1.5 Golden Floor Bonus | Multiplies a Golden Floor's whole bonus, its other sources included: ×5 becomes ×7.5, and with the Golden Floors skill ×6 becomes ×9. |
+| Necrotic Frost | ×1.5 Radius | Each field's radius is 4.5 tiles, not 3. |
+| Voidwell | Duration +12 turns | Each vortex lasts 12 turns longer. |
+| Overseer | ×1.5 ATK | Multiplies its Bonus. |
+
+They count for the climb they were picked in, not for a trial or the Delve, which have no shrines.
+
 ## Ricochet Shot
 
 *x% chance on enemy hit to ricochet the shot to y additional enemies, with z% of ATK.*
@@ -183,6 +203,7 @@ It can never be shorter than 37 turns, whatever lowers it.
 Ghosts ride evenly spaced round you and go where you go, onto the next floor too.
 A ghost that overlaps any part of an enemy's tile strikes, even partway through your step, walls or no walls, and is gone until the next activation.
 A lost ghost leaves a gap: the others keep their places.
+Its [Shrine boon](#shrine-boons)'s outer ring comes with the next activation after you pick it, and works the same way, its ghosts lost and refilled apart from the inner ring's.
 Each activation fills every gap, up to the Quantity, and a Quantity you have bought since spaces the whole ring evenly.
 
 A strike hits every enemy whose tile the ghost overlaps, and every enemy within its blast radius of the ghost, 0.1 tiles at first, measured straight to the middle of the enemy's tile.

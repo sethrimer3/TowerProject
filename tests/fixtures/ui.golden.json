@@ -229,10 +229,10 @@
   "tournament.results": "8d5aac7b8c90efce",
   "tournament.claimed": "195a81c881b63346",
   "tournament.forestAfter": "842fb7b4f4b67c6a",
-  "shrines.forest": "4baab4f802fc0b48",
-  "shrines.firstChoice": "fbc32c68355719c2",
-  "shrines.banned": "c60d26c8c71bcfc5",
-  "shrines.ranked": "838570ab96c4d033",
+  "shrines.forest": "02cc240eff21e22b",
+  "shrines.firstChoice": "591747b96d1d00a3",
+  "shrines.banned": "e66152a5d1c3db65",
+  "shrines.ranked": "771f0d8c918ccdb5",
   "shrines.offer": "f6c94c3dcc38c216",
   "shrines.taken": "d718d645ee2d9513",
   "shrines.auto": "208d006b881aec7a",
@@ -260,5 +260,8 @@
   "lakeside.arrival": "06902ac78ed42f5b",
   "lakeside.fisherman": "4e78959ee12b1e32",
   "lakeside.farewell": "5b5e86559c394384",
-  "lakeside.returned": "aaf9a52a095b9f14"
+  "lakeside.returned": "aaf9a52a095b9f14",
+  "arcana.augmentOffer": "4a4b6d14ee76f4c9",
+  "arcana.augmentTaken": "29c2712d6429f6a5",
+  "arcana.augmentInfo": "9697277672dfaf0c"
 }

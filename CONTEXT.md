@@ -362,8 +362,12 @@ What grants a Tower run its boons, once Unlock Shrines is researched: one every 
 _Avoid_: altar, perk shrine
 
 **Boon**:
-A bonus a Tower run picks at a shrine, lasting the rest of the run: a standard boon (several copies a run, strengthened by Standard Boon Bonus) or a trade-off (once a run, a benefit at a cost).
+A bonus a Tower run picks at a shrine, lasting the rest of the run: a standard boon (several copies a run, strengthened by Standard Boon Bonus), a trade-off (once a run, a benefit at a cost), the spell boon that lends an arcanum, or an augment boon.
 _Avoid_: perk, blessing
+
+**Augment boon**:
+A boon that strengthens one arcanum for the rest of the climb, offered once a run while the run holds that arcanum, bought or lent. Its rows are green.
+_Avoid_: arcana boon, upgrade
 
 **Offer**:
 The boons a shrine lets the player choose one from: two, up to four with research; Auto Pick can choose instead.

@@ -24,7 +24,7 @@ import { boltTargets } from "./arcana/arcana.ts";
 import { fieldHit } from "./arcana/lifespring.ts";
 import { slowedCharge, slowedTickGain, togetherSlow } from "./arcana/time-dilation.ts";
 import { decayed, fieldsOn, frostSlowAt, type FrostArea } from "./arcana/necrotic-frost.ts";
-import { GHOST_RADIUS, ghostDirection, ghostOffset, inBlast, loseGhost, RING_RADIUS, touchesTile, type GhostStrike, type PhantasmRun } from "./arcana/phantasm.ts";
+import { GHOST_RADIUS, ghostDirection, ghostOffset, ghostsOut, inBlast, loseGhost, outerDirection, OUTER_RADIUS, RING_RADIUS, touchesTile, type GhostStrike, type PhantasmRun } from "./arcana/phantasm.ts";
 import { tileRandom } from "./random.ts";
 import { snap } from "./exact.ts";
 
@@ -436,17 +436,18 @@ const TILE_CORNER = 0.7072;
  * the ghosts and the board's enemies; returns the shots, the kills and where each struck. */
 export function ghostStrikes(turn: Pick<VolleyTurn, "board" | "wrap" | "hero" | "from" | "beams">, rule: { boost: number; blast: number; spin: number }, s: PhantasmRun, first = 1) {
   const shots: Shot[] = [], kills: VolleyKill[] = [], struck: GhostStrike[] = [], { board, wrap, hero, beams } = turn;
-  if (!s.ghosts?.length) return { shots, kills, struck };
-  const walk = walkOf(turn), step = walk.ux || walk.uy ? 1 : 0, ring = s.ring ?? s.ghosts.length, turns = (s.turns ?? 1) - 1;
-  const reach = Math.ceil(100 * (RING_RADIUS + step + Math.max(GHOST_RADIUS + TILE_CORNER, rule.blast)));
+  if (!ghostsOut(s).length) return { shots, kills, struck };
+  const walk = walkOf(turn), step = walk.ux || walk.uy ? 1 : 0, ring = s.ring ?? s.ghosts?.length ?? 1, turns = (s.turns ?? 1) - 1;
+  const reach = Math.ceil(100 * ((s.outer ? OUTER_RADIUS : RING_RADIUS) + step + Math.max(GHOST_RADIUS + TILE_CORNER, rule.blast)));
   let foes = enemiesWithin(board, walk, reach, wrap).map(({ x, y }) => ({ x, y, dx: shortWay(x - walk.x, wrap), dy: y - walk.y }));
-  for (let tick = first; tick <= TURN_TICKS && foes.length && s.ghosts; tick++)
-    for (const slot of s.ghosts ?? []) {
-      const direction = ghostDirection(turns, slot, ring, rule.spin, tick), off = ghostOffset(direction);
+  for (let tick = first; tick <= TURN_TICKS && foes.length && (s.ghosts || s.outer); tick++)
+    for (const { slot, outer } of ghostsOut(s)) {
+      const direction = outer ? outerDirection(turns, slot, rule.spin, tick) : ghostDirection(turns, slot, ring, rule.spin, tick);
+      const radius = outer ? OUTER_RADIUS : RING_RADIUS, off = ghostOffset(direction, radius);
       const gx = (walk.ux * tick) / TURN_TICKS + off.x, gy = (walk.uy * tick) / TURN_TICKS + off.y;
       if (!foes.some((f) => touchesTile(f.dx - gx, f.dy - gy))) continue;
-      loseGhost(s, slot);
-      struck.push({ tick, x: walk.x + gx, y: walk.y + gy, direction });
+      loseGhost(s, slot, outer);
+      struck.push({ tick, x: walk.x + gx, y: walk.y + gy, direction, radius });
       const at = heroAt(walk, tick, wrap);
       for (const f of foes.filter((f) => touchesTile(f.dx - gx, f.dy - gy) || inBlast(f.dx - gx, f.dy - gy, rule.blast)))
         arcaneStrike(board, hero, { x: f.x, y: f.y }, snap(rule.boost * beamFactor(beams, tick, shortWay(f.x - at.x, wrap), f.y - at.y)), { from: { x: f.x, y: f.y }, tick, phantasm: true }, shots, kills);
