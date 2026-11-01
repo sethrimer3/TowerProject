@@ -98,7 +98,7 @@ export class CardActivation {
     switch (badge.id) {
       case "hp": return this.boostMaxHp(v, badge.id);
       case "hpPercent": return this.badgeHeal(snap((p.maxHp * v) / 100), badge.id);
-      case "silverTouch": return host.finds.coins(p, 0, host.purse.silver(v));
+      case "silverTouch": return host.finds.coins(p, 0, host.purse.silverHere(v));
       case "goldTouch": return host.finds.coins(p, host.purse.badgeGold(`badge:${id}:${key}`, v), 0, false);
       case "goldback":
         // The hand's last card only: never one of the Manual hand's.
@@ -161,7 +161,7 @@ export class CardActivation {
     const doubled = rolls(KEY_SMELTER_SALT, tree.keySmelter), tripled = rolls(MASTER_SMELTER_SALT, smeltStat(tree, color, "SmeltMaster"));
     const profile: ModeProfile = MODES[host.mode], key = `smelt:${profile.lootKey(run, p.x, p.y)}:${card}${use}`;
     const gold = host.purse.smeltGold(key, snap(smeltStat(tree, color, "SmeltGold") * scale), (doubled ? 2 : 1) * (tripled ? 3 : 1));
-    const base = snap(smeltStat(tree, color, "SmeltSilver") * scale), silver = base ? host.purse.silver(base) : 0;
+    const base = snap(smeltStat(tree, color, "SmeltSilver") * scale), silver = base ? host.purse.silverHere(base) : 0;
     host.finds.coins(p, gold, silver, false);
     const hits = [doubled && "Key Smelter", tripled && `Master ${KEY_NAMES[color]} Smelter`].filter(Boolean);
     if (hits.length && gold) host.message = `${hits.join(" & ")} · +${wholeChange(gold)} Gold`;

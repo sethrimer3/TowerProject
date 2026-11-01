@@ -40,6 +40,7 @@ import { drawExplosion, EXPLOSION_MS } from "./effects/explosion.ts";
 import { drawBoostGlow } from "./effects/boost-glow.ts";
 import { drawShieldBubble, SHIELD_FORM_MS, SHIELD_POP_MS } from "./effects/shield-bubble.ts";
 import { POSITION_HALOS_ENABLED } from "./lighting.ts";
+import { drawStellarStars } from "./stellar-stars.ts";
 import { drawHeroLight, drawStairsLights } from "./effects/position-lights.ts";
 import type { Boosted } from "../runs.ts";
 import { drawGem, drawGemSparkle, GEM_SPARKLE_MS } from "./effects/gem-art.ts";
@@ -250,6 +251,8 @@ export class Renderer {
     const gem = this.game.gemFinder.gem, sparkle = this.game.gemFinder.sparkle;
     if (gem) drawGem(f, gem.x, gem.y);
     if (sparkle) drawGemSparkle(f, sparkle.x, sparkle.y, f.now - sparkle.at);
+    // A Stellar Floor's stars pass over all that stands on it, under what rises off it.
+    if (!this.game.run.outside && this.game.environments.stellarFloor) drawStellarStars(f, (x, y) => this.game.stellarAt(x, y));
     drawVolley(f, this.inFlight.volleys, this.game.mode === "delve" ? this.game.world.width : 0);
     this.popups.draw(f);
     this.drawEffectText(f);
@@ -453,7 +456,7 @@ export class Renderer {
     const anyWorld = g.world as { milestone?: number };
     if (!this.worldIds.has(g.world)) this.worldIds.set(g.world, this.nextWorldId++);
     const groundKey = [
-      this.worldIds.get(g.world), g.run.seed, g.mode, g.run.height, g.run.outside ? 1 : 0, g.world.floor, anyWorld.milestone ?? 0, g.run.goldenFloor ?? 0,
+      this.worldIds.get(g.world), g.run.seed, g.mode, g.run.height, g.run.outside ? 1 : 0, g.world.floor, anyWorld.milestone ?? 0, g.environments.goldenFloor ?? 0,
       // Without sprite art, floor under items is drawn differently, so edits matter.
       f.look.styledSprites ? `kit:${spriteRevision()}` : "",
       ...(f.look.styledSprites && towerTileset(f.look.mode, f.look.tier) ? [`tower:${f.look.tier}`] : []),
@@ -741,7 +744,7 @@ export class Renderer {
       spriteAnimations: usesGameSprites(g.save) && g.save.settings.spriteAnimations,
       squareDoors: usesGameSprites(g.save) && g.save.settings.squareDoors,
       themed: g.run.outside ? null : this.themed,
-      golden: g.run.goldenFloor && !g.run.outside ? (x, y) => g.goldenAt(x, y) : undefined,
+      golden: g.environments.goldenFloor && !g.run.outside ? (x, y) => g.goldenAt(x, y) : undefined,
     };
   }
   /** Paints one tile in tile space (see paintTile); false while its ground

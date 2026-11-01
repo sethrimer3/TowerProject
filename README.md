@@ -42,7 +42,7 @@ The player-facing rules, in full, one topic a page:
 | [The Aether Shield](docs/gameplay/aether-shield.md) | The shield, its bar and bubble, regrowing, its training and research |
 | [Fights](docs/gameplay/fights.md) | How a fight plays out, Fast, Ranged, Flying and Shielded monsters, the Archer, kill pay, fractions |
 | [Floors](docs/gameplay/floors.md) | Bosses and Greater Bosses, doors and keys, the early floors, world wrap |
-| [Floor Environments](docs/gameplay/environments.md) | Treasure and Golden Floors, their research, the enemy stats box's Environments |
+| [Floor Environments](docs/gameplay/environments.md) | Treasure, Golden and Stellar Floors, their research, the enemy stats box's Environments |
 | [Training](docs/gameplay/training.md) | Silver, training for the run, XP and levels, the Training tab and trainers |
 | [Proving Grounds](docs/gameplay/proving-grounds.md) | Three control modes, the Light Elemental, Keymaster, keys and mimics |
 | [Runs](docs/gameplay/runs.md) | Movement settings, Undo, how a run ends, Run Notes, rewards, the in-run controls, Dash |
@@ -50,7 +50,7 @@ The player-facing rules, in full, one topic a page:
 | [Currencies and the Shop](docs/gameplay/currencies-and-shop.md) | Gems and Gem finds, the ad boosts, Offline Gold, the Shop |
 | [Towers, Areas and Goals](docs/gameplay/towers-areas-goals.md) | Higher towers, mastered and cleared areas, Goals and Warp |
 | [Shrines](docs/gameplay/shrines.md) | Shrines and boons |
-| [Arcana](docs/gameplay/arcana.md) | Arcanite's spells: buying and upgrading them, the run's cards, Ricochet Shot |
+| [Arcana](docs/gameplay/arcana.md) | Arcanite's spells: buying and upgrading them, the run's cards, Ricochet Shot, Aurum Bloom |
 
 ## How it's built
 

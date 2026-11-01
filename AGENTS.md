@@ -100,8 +100,8 @@ Read the area's doc before changing code there or answering questions about it; 
 - `proving-grounds.md`: the forest trial entrance, tactical Light Elemental and Keymaster encounters, rendering and persistence.
 - `saves.md`: loading and decoding the save, adding save state, settings rows.
 - `shrines.md`: Shrines and boons (`src/shrines.ts`): the schedule, offers, boon math, where effects apply, their research and UI.
-- `arcana.md`: Arcana (`src/arcana/`, `game/arcana-desk.ts`): the catalog and triggers, buying, Arcanum Damage, Ricochet Shot, the run's toggles, the Shrine boon and their UI.
-- `environments.md`: Floor Environments (`src/environments.ts`): Treasure and Golden Floors, their rolls, Golden Floor Gold, drawing and the enemy stats box's table.
+- `arcana.md`: Arcana (`src/arcana/`, `game/arcana-desk.ts`): the catalog and triggers, buying, Arcanum Damage, Ricochet Shot, Aurum Bloom, the run's toggles, the Shrine boon and their UI.
+- `environments.md`: Floor Environments (`src/environments.ts`): Treasure, Golden and Stellar Floors, their rolls, their Gold and Silver, drawing and the enemy stats box's table.
 - `goldens.md`: which goldens a change moves, the browser goldens, recording them.
 - `testing.md`: browser test setup.
 

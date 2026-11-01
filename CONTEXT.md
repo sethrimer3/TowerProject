@@ -575,7 +575,10 @@ Gold paid on returning to the app for the time it was closed: the Recent Gold pe
 _Avoid_: idle gold, AFK gold
 
 **Golden Floor**:
-A Floor Environment, by Golden Floor Chance research: every Gold found on it is multiplied by Golden Floor Multiplier, once for each find, and its ground (or, on a black or hueless Game theme, its walls) is gold.
+A Floor Environment, by Golden Floor Chance research and Aurum Bloom: all Gold and Silver found on it is multiplied by Golden Floor Multiplier, once for each find, and its ground (or, on a black or hueless Game theme, its walls) is gold.
+
+**Stellar Floor**:
+A Floor Environment, by Aurum Bloom: all Gold and Silver found on it is multiplied by 10, times a Golden Floor's multiplier on a floor that is both. Stars cycling through the rainbow pass over everything standing on it.
 
 **Deck**:
 All the player's cards: those in the hand and those waiting outside it. Also the page where the hand is ordered (with the Combat Stance skill) and its cards chosen from the deck (with Buildout).
@@ -598,6 +601,9 @@ _Avoid_: ability, power
 
 **Arcanum Damage**:
 What a damaging arcanum strikes with: its multiplier and the equipment's times the hero's ATK and the average of its crits, never rolled.
+
+**Aurum Bloom**:
+An arcanum that raises the Golden Floor's bonus and chance and gives the Stellar Floor's chance, for as long as it is on.
 
 **Ricochet**:
 Ricochet Shot's strike: an arrow's hit springing a white line to the closest other enemies on the floor. A ricochet never sets off another.

@@ -59,7 +59,7 @@ export class Finds {
     const floor = rules.equivalentFloor(rules.progressAt(run, at.y));
     this.host.gainXp(enemy, floor, scale);
     // Silver belongs to the run, so it isn't gated like Gold: undo takes it back.
-    const silver = purse.killSilver(enemy, floor, scale);
+    const silver = purse.killSilver(enemy, floor, scale, at);
     const { gold, cells, equipment } = purse.enemyLoot(enemy, at.x, at.y, scale, instakill);
     const cellsFound = cells ? [cellsText(cells)] : [], found = equipment.flatMap(equipmentGains);
     for (const piece of equipment) {
@@ -111,7 +111,7 @@ export class Finds {
       const silverFound = t.kind === "potion" ? tree.potionSilver : t.kind === "key" ? snap(tree.keySilver + keyStat(tree, t.color!, "KeySilver"))
         : t.kind === "attack" ? tree.attackShardSilver : t.kind === "defense" ? tree.defenseShardSilver : 0;
       if (silverFound) {
-        const silver = this.host.purse.silver(silverFound);
+        const silver = this.host.purse.silverAt(silverFound, x, y);
         if (silver) this.host.gain(x, y, `+${wholeChange(silver)} Silver`, { coin: "silver" }, { row: outcome.healed && t.kind === "key" ? 3 : 2, with: true });
       }
       if (t.kind === "potion") missions.record("potions", 1, this.missionKey({ x, y }));
@@ -147,7 +147,7 @@ export class Finds {
     host.run.treasures++;
     host.events.record("chests", 1, this.missionKey({ x, y }));
     // CHEST's tree finds Silver with each chest, as HEAL's does with each potion (undo takes it back with the run).
-    const silverFound = host.treeBonus.chestSilver, silver = silverFound ? host.purse.silver(snap(silverFound * roll.multiplier)) : 0;
+    const silverFound = host.treeBonus.chestSilver, silver = silverFound ? host.purse.silverAt(snap(silverFound * roll.multiplier), x, y) : 0;
     const loot = host.purse.treasure(x, y, kind, roll);
     if (!loot) {
       if (silver) host.gain(x, y, `+${wholeChange(silver)} Silver`, { coin: "silver" });
@@ -186,7 +186,7 @@ export class Finds {
     this.pickupGold(t, at, 0, doorStat(tree, t, "Gold"));
     const doorSilver = doorStat(tree, t, "Silver");
     if (doorSilver) {
-      const silver = host.purse.silver(doorSilver);
+      const silver = host.purse.silverAt(doorSilver, at.x, at.y);
       if (silver) host.gain(at.x, at.y, `+${wholeChange(silver)} Silver`, { coin: "silver" }, { row: 2, with: true });
     }
     const total = snap(keysSpent.reduce((sum, color) => sum + each(color), 0));

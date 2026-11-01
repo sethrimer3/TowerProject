@@ -1,4 +1,5 @@
 import type { CritRule } from "../combat.ts";
+import { STELLAR_FACTOR } from "../environments.ts";
 import { drawAt } from "../random.ts";
 import { isRecord, wholeIn } from "../save/decode.ts";
 
@@ -18,10 +19,11 @@ export type AttributeValues = readonly [number, number, number];
 export type AttributeLevels = [number, number, number];
 
 /** What sets an arcanum off: its own event (`shotHit`, the hero's shot
- * striking an enemy: volley.ts), or a cooldown of so many turns that restarts
- * the moment it runs out, whatever the arcanum is still doing. A new trigger
- * is a new member here, and the code that raises that event. */
-export type ArcanumTrigger = { on: "shotHit" } | { on: "cooldown"; turns: (values: AttributeValues) => number };
+ * striking an enemy: volley.ts), a cooldown of so many turns that restarts
+ * the moment it runs out, whatever the arcanum is still doing, or nothing
+ * (`always`: it works for as long as it is on). A new trigger is a new member
+ * here, and the code that raises that event. */
+export type ArcanumTrigger = { on: "shotHit" } | { on: "cooldown"; turns: (values: AttributeValues) => number } | { on: "always" };
 
 export type ArcanumDef = {
   name: string;
@@ -60,6 +62,29 @@ export const ARCANA = {
     ],
     summary: ([mult, rebounds, chance]) => `${chance.toFixed(1)}% chance on enemy hit to ricochet the shot to ${countOf(rebounds)} additional ${rebounds === 1 ? "enemy" : "enemies"}, with ${countOf(mult * 100)}% of ATK (accounts for critical chances and factors).`,
     damage: ([mult]) => mult,
+  },
+  aurumBloom: {
+    name: "Aurum Bloom",
+    trigger: { on: "always" },
+    attributes: [
+      {
+        name: "Bonus",
+        shown: (v) => `${v.toFixed(1)}×`,
+        steps: [[5, 0], [5.8, 5], [6.6, 13], [7.4, 22], [8.2, 32], [9, 43], [9.8, 55], [10.6, 68], [11.4, 82], [12.2, 98], [13, 116], [13.8, 138], [14.6, 162], [15.4, 250], [16.2, 350], [17, 500], [17.8, 700], [18.6, 950], [19.4, 1250], [20.2, 1600], [21, 2000]],
+      },
+      {
+        name: "Golden Chance",
+        shown: (v) => `${v.toFixed(1)}%`,
+        steps: [[5, 0], [5.5, 5], [6, 14], [6.5, 23], [7, 32], [7.5, 41], [8, 50], [8.5, 59], [9, 68], [9.5, 77], [10, 87], [10.5, 98], [11, 110], [11.5, 123], [12, 137], [12.5, 152], [13, 168], [13.5, 185], [14, 203], [14.5, 222], [15, 242], [15.5, 263], [16, 285], [16.5, 308], [17, 332], [17.5, 356], [18, 380], [18.5, 404], [19, 428], [19.5, 452], [20, 476], [20.5, 530], [21, 614], [21.5, 728], [22, 872], [22.5, 1046], [23, 1250], [23.5, 1484], [24, 1748]],
+      },
+      {
+        name: "Stellar Chance",
+        shown: (v) => `${v.toFixed(1)}%`,
+        steps: [[0.5, 0], [1, 10], [1.5, 28], [2, 46], [2.5, 64], [3, 82], [3.5, 100], [4, 118], [4.5, 136], [5, 154], [5.5, 172], [6, 190], [6.5, 208], [7, 226], [7.5, 244], [8, 262], [8.5, 300], [9, 368], [9.5, 476], [10, 644]],
+      },
+    ],
+    summary: ([bonus, chance, stellar]) => `Adds ${chance.toFixed(1)}% chance each floor is a Golden Floor and ${bonus.toFixed(1)}× to its bonus, and ${stellar.toFixed(1)}% chance each floor is a Stellar Floor, which multiplies its Gold and Silver by ${STELLAR_FACTOR}×.`,
+    effect: ([bonus, chance, stellar]) => `+${bonus.toFixed(1)}× · +${chance.toFixed(1)}% · ${stellar.toFixed(1)}% Stellar`,
   },
 } as const satisfies Record<string, ArcanumDef>;
 

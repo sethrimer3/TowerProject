@@ -4,6 +4,7 @@ import {
 } from "../arcana/arcana.ts";
 import type { CritRule } from "../combat.ts";
 import type { Mode } from "../entities.ts";
+import type { FloorBloom } from "../environments.ts";
 import { stream } from "../random.ts";
 import type { TowerRun } from "../runs.ts";
 import { CURRENCIES } from "../shop/currency.ts";
@@ -137,6 +138,13 @@ export class ArcanaDesk {
     if (!held) return undefined;
     const [multiplier, rebounds, chance] = valuesAt(held.id, held.levels);
     return { boost: arcanumBoost(multiplier, this.host.crit), rebounds, chance };
+  }
+  /** What Aurum Bloom adds to the floors' environments and Golden Floor Multiplier, if it is held and on. */
+  aurumBloom(): FloorBloom | undefined {
+    const held = this.held.find((h) => h.id === "aurumBloom" && this.isOn(h.id));
+    if (!held) return undefined;
+    const [bonus, chance, stellar] = valuesAt(held.id, held.levels);
+    return { bonus, chance, stellar };
   }
   /** A turn ends: each cooldown on its way, restarting the moment it runs out. */
   turn() {

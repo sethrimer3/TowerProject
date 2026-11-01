@@ -1,6 +1,6 @@
 # Arcana
 
-Arcana (`src/arcana/arcana.ts`, `src/game/arcana-desk.ts`, `ui/arcana-panel.ts`), their triggers, Ricochet Shot, and their run cards.
+Arcana (`src/arcana/arcana.ts`, `src/game/arcana-desk.ts`, `ui/arcana-panel.ts`), their triggers, Ricochet Shot, Aurum Bloom, and their run cards.
 
 **What they are.**
 Spells bought with Arcanite on the Gear page's Arcana tab and kept for good, or lent to one climb by a Shrine boon.
@@ -9,7 +9,7 @@ Tower and Delve runs alike hold every arcanum owned; Proving Grounds' trial `Gam
 
 **Triggers.**
 Each arcanum names its own (`ArcanumTrigger`), since they differ from one to the next.
-`shotHit` is raised in `volley.ts`; `cooldown` is a number of turns, worked by `ArcanaDesk.turn` (`Game.endTurn`) through `tickCooldowns`, restarting the moment it runs out, whatever the arcanum is still doing.
+`always` needs no event: the arcanum works while it is on; `shotHit` is raised in `volley.ts`; `cooldown` is a number of turns, worked by `ArcanaDesk.turn` (`Game.endTurn`) through `tickCooldowns`, restarting the moment it runs out, whatever the arcanum is still doing.
 No arcanum has a cooldown yet, so its firing has no effect to apply: the first one to use it reads what `turn` returns.
 A new trigger is a new member of `ArcanumTrigger` and the code that raises its event.
 
@@ -33,6 +33,10 @@ Its `Shot` carries `ricochet`: it lands as its arrow does (`leavesAt` equals `la
 A kill is a `VolleyKill` marked `ricochet`, never an instakill, and pays through `finds.kill`.
 A multishot's later targets are read again from the board (`inPlace`), since a ricochet may have struck them.
 
+**Aurum Bloom** (trigger `always`, given by `ArcanaDesk.aurumBloom`, its effect the run card's text) raises the floor environments: Bonus adds to Golden Floor Multiplier, Golden Chance to the Golden Floor's chance and Stellar Chance to the Stellar Floor's.
+None needs a Breakthrough skill or research: it works without Golden Floors, on the research's base ×2.
+It holds nothing in the run: see `withBloom` in environments.md.
+
 **The run.**
 `ArcanaDesk.held` is what the run holds: owned at their levels, and lent at their first.
 `slice.runArcana` (`ArcanaRun`, `decodeArcanaRun`) sits beside the run, like `runFinds`, so undo never touches it, and `newRun` resets it: the toggles spent (`RUN_TOGGLES`, all arcana together), those off, and the cooldowns left.
@@ -54,4 +58,4 @@ The bar shows inside a run holding any arcanum, even before On the Job.
 `enhancementsOf` gives the rows of research enhancements both information views show; none are defined yet.
 The `.arcana-attr` and `.arcana-switch` rules use two ids to beat the themes' and the sprite kit's blanket button rules.
 
-**Tests.** `tests/arcana.test.ts`.
+**Tests.** `tests/arcana.test.ts`, `tests/aurum-bloom.test.ts`.

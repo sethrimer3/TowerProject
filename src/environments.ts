@@ -6,11 +6,11 @@ import { tileRandom } from "./random.ts";
 // moment it is generated, environments overlap freely, and rolling one
 // never shifts another or any stream. A floor with none is a plain floor.
 
-/** What a run fixes about its environments as it goes inside: its seed and
- * each environment's percent chance (none without). */
-export type EnvironmentRun = { seed: number; treasureFloor?: number; goldenFloor?: number };
+/** A run's seed and each environment's percent chance (none without): what
+ * it fixed as it went inside, with `withBloom`'s added. */
+export type EnvironmentRun = { seed: number; treasureFloor?: number; goldenFloor?: number; stellarFloor?: number };
 
-export type EnvironmentId = "treasure" | "golden";
+export type EnvironmentId = "treasure" | "golden" | "stellar";
 type Environment = {
   /** The name the player sees. */
   name: string;
@@ -22,13 +22,28 @@ type Environment = {
 
 /** Every environment, in the order the enemy stats box lists them.
  * Treasure Floor (CHEST's tree): a floor's ATK and DEF shards and potions
- * are treasure chests. Golden Floor (Golden Floor Chance research): every
- * Gold found on it is multiplied by Golden Floor Multiplier. */
+ * are treasure chests. Golden Floor (Golden Floor Chance research, Aurum
+ * Bloom): all Gold and Silver found on it is multiplied by Golden Floor
+ * Multiplier. Stellar Floor (Aurum Bloom): all of it by `STELLAR_FACTOR`. */
 export const ENVIRONMENTS: Readonly<Record<EnvironmentId, Environment>> = {
   treasure: { name: "Treasure Floor", salt: 0x7f10c, chance: (run) => run.treasureFloor ?? 0 },
   golden: { name: "Golden Floor", salt: 0x601de, chance: (run) => run.goldenFloor ?? 0 },
+  stellar: { name: "Stellar Floor", salt: 0x57e11a, chance: (run) => run.stellarFloor ?? 0 },
 };
 export const ENVIRONMENT_IDS = Object.keys(ENVIRONMENTS) as EnvironmentId[];
+
+/** What a Stellar Floor multiplies its Gold and Silver by. */
+export const STELLAR_FACTOR = 10;
+
+/** What Aurum Bloom adds while the run holds it on: to Golden Floor Multiplier
+ * (`bonus`) and, in percent, to the Golden (`chance`) and Stellar Floor
+ * (`stellar`) chances. */
+export type FloorBloom = { bonus: number; chance: number; stellar: number };
+
+/** `run`'s chances with `bloom`'s added. They are read, never saved, so a
+ * toggle or a level counts at once and undo can't touch them. */
+export const withBloom = (run: EnvironmentRun, bloom: FloorBloom | undefined): EnvironmentRun =>
+  bloom ? { seed: run.seed, treasureFloor: run.treasureFloor, goldenFloor: (run.goldenFloor ?? 0) + bloom.chance, stellarFloor: (run.stellarFloor ?? 0) + bloom.stellar } : run;
 
 /** Whether equivalent floor `floor` (from 1) of a run seeded `seed` has
  * environment `id` at `chance` percent: the floor's own fixed number, so a

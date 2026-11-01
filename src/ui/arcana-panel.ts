@@ -8,6 +8,7 @@ import { shortAmount } from "../whole.ts";
 
 /** Each arcanum's picture. */
 export const ARCANUM_ICONS: Record<ArcanumId, string> = {
+  aurumBloom: `<svg class="arcanum-icon" viewBox="0 0 24 24" aria-hidden="true"><g fill="#f0c34a" stroke="#10151c" stroke-width="1.2">${[0, 60, 120, 180, 240, 300].map((turn) => `<ellipse cx="12" cy="6.2" rx="3.2" ry="5" transform="rotate(${turn} 12 12)"/>`).join("")}</g><circle cx="12" cy="12" r="3.4" fill="#fff4c2" stroke="#10151c" stroke-width="1.2"/></svg>`,
   ricochetShot: `<svg class="arcanum-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 19.5L9.5 5l5 11 7-9" fill="none" stroke="#10151c" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.5 19.5L9.5 5l5 11 7-9" fill="none" stroke="#f4f7ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9.5" cy="5" r="2.2" fill="#ff8f6b"/><circle cx="14.5" cy="16" r="2.2" fill="#ff8f6b"/><path d="M21.5 7l-.6 4-3.2-2.4z" fill="#ffd34d"/></svg>`,
 };
 

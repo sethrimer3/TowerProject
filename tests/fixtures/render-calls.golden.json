@@ -186,5 +186,15 @@
  "lakeside.arrival": "6414b19101c98940",
  "lakeside.dockGreeting": "b6ae5eeee0bd6a10",
  "lakeside.onDock": "f59c5e27bc1c6ea7",
- "lakeside.withoutDecoration": "79c6ddfdd59c4c21"
+ "lakeside.withoutDecoration": "79c6ddfdd59c4c21",
+ "stellarTower.settled": "b8bc5d0898e12125",
+ "stellarTower.moving": "d39174f7a6a0c32d",
+ "stellarTower.after": "8cf9d1ed55e77ca5",
+ "stellarTower.ripples": "b9c7affe0aceae4c",
+ "stellarTower.later": "57750c3e4e24b38f",
+ "stellarDelve.settled": "8473e35fb968ae5b",
+ "stellarDelve.moving": "b73bcf3ba43998cb",
+ "stellarDelve.after": "b652ded8abe61d73",
+ "stellarDelve.ripples": "003935ae6ea33c28",
+ "stellarDelve.later": "8d94bcfd7222a845"
 }

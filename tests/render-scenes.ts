@@ -298,10 +298,22 @@ function goldenScene(mode: "tower" | "delve", chance: number): BoardScene {
   plantAll(g);
   return { g };
 }
+/** Every floor a Stellar Floor, as Aurum Bloom can't quite make it, with every plant on it. */
+function stellarScene(mode: "tower" | "delve"): BoardScene {
+  const g = game(mode, { brightness: 75 });
+  g.arcana.aurumBloom = () => ({ bonus: 0, chance: 0, stellar: 100 });
+  plantAll(g);
+  return { g };
+}
 /** Board scenes after the trial's jobs, so none before them moves. */
 const APPENDED_BOARD_SCENES: Record<string, () => BoardScene> = {
   goldenTower: () => goldenScene("tower", 100),
   goldenDelve: () => goldenScene("delve", 100),
+};
+/** Board scenes after the forest's, so none before them moves. */
+const STELLAR_BOARD_SCENES: Record<string, () => BoardScene> = {
+  stellarTower: () => stellarScene("tower"),
+  stellarDelve: () => stellarScene("delve"),
 };
 
 /** One fixed material identity for each later Tower, on real tier geometry. */
@@ -337,7 +349,7 @@ export function forestSpriteScene(mode: "tower" | "delve", settings: Record<stri
  * scene, mid-strike), and later frames once the camera has caught up. */
 function playBoard(name: string, seed: number, canvas: HTMLCanvasElement, grab: Grab) {
   seeded(seed, () => {
-    const scene = (BOARD_SCENES[name] ?? LATER_BOARD_SCENES[name] ?? APPENDED_BOARD_SCENES[name])(), g = scene.g;
+    const scene = (BOARD_SCENES[name] ?? LATER_BOARD_SCENES[name] ?? APPENDED_BOARD_SCENES[name] ?? STELLAR_BOARD_SCENES[name])(), g = scene.g;
     quiet(g);
     const r = new Renderer(canvas, g);
     for (let t = 1000; t <= 1400; t += 50) r.draw(t);
@@ -560,6 +572,7 @@ export const JOBS: Job[] = [
   ...Object.keys(APPENDED_BOARD_SCENES).map((name) => ({ name, canvas: "board" as const, run: playBoard })),
   { name: "forestTravel", canvas: "board" as const, run: playForestTravel },
   { name: "lakeside", canvas: "board" as const, run: playLakeside },
+  ...Object.keys(STELLAR_BOARD_SCENES).map((name) => ({ name, canvas: "board" as const, run: playBoard })),
 ].map(({ name, canvas, run }, i) => {
   // Keep the fourth seed reserved for the retired sprite-opt-out scene.
   const seed = i + 1 + (i >= 3 ? 1 : 0) + (i >= Object.keys(BOARD_SCENES).length ? 5 : 0);
