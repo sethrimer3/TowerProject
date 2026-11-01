@@ -139,7 +139,7 @@ export class ArcanaDesk {
     const [multiplier, rebounds, chance] = valuesAt(held.id, held.levels);
     return { boost: arcanumBoost(multiplier, this.host.crit), rebounds, chance };
   }
-  /** What Aurum Bloom adds to the floors' environments and Golden Floor Multiplier, if it is held and on. */
+  /** What Aurum Bloom gives the floors' environments, if it is held and on. */
   aurumBloom(): FloorBloom | undefined {
     const held = this.held.find((h) => h.id === "aurumBloom" && this.isOn(h.id));
     if (!held) return undefined;

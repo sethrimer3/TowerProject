@@ -44,9 +44,10 @@ A ricochet flashes a white line from the enemy struck to each of the closest oth
 
 ## Aurum Bloom
 
-*Adds x% chance each floor is a Golden Floor and y× to its bonus, and z% chance each floor is a Stellar Floor, which multiplies its Gold and Silver by 10×.*
+*Adds x% chance each floor is a Golden Floor and raises its bonus to y× (Golden Floors and its research add to that), and z% chance each floor is a Stellar Floor, which multiplies its Gold and Silver by 10×.*
 It works for as long as it is on, in every floor it reaches, and a level bought counts at once; it needs no research.
-Its Bonus and Golden Chance add to [Golden Floor](environments.md#golden-floor) research's, so with none of that research its first level makes a ×7 Golden Floor at 5%.
+Its first level alone makes a ×5 [Golden Floor](environments.md#golden-floor) at 5%.
+The Golden Floors skill adds 1 to that, making ×6 (it is ×2 without Aurum Bloom), and Golden Floor research adds its levels and its chance on top.
 Its Stellar Chance adds to any other chance of a [Stellar Floor](environments.md#stellar-floor).
 
 | Attribute | First | Highest | Levels |

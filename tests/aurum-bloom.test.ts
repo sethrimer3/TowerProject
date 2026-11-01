@@ -43,6 +43,7 @@ test("a save keeps Aurum Bloom's levels up to its highest", () => {
 
 test("all Silver found on a Golden Floor is multiplied by its bonus, and a plain floor's isn't", () => {
   const g = inside();
+  g.save.upgrades.goldenFloors = 1;
   g.run.goldenFloor = 50;
   const golden = FLOORS.find((f) => hasEnvironment(g.run, "golden", f))!, plain = FLOORS.find((f) => !hasEnvironment(g.run, "golden", f))!;
   const purse = (floor?: number) => new RunPurse(g.save, "tower", g.run, () => 0.5, 0, () => 0.5, floor === undefined ? undefined : () => floor);
@@ -56,6 +57,7 @@ test("all Silver found on a Golden Floor is multiplied by its bonus, and a plain
 
 test("the Gold and Silver of climbing onto a floor, Interest with them, count that floor's multipliers", () => {
   const g = inside();
+  g.save.upgrades.goldenFloors = 1;
   g.run.goldenFloor = 50;
   g.save.upgrades.wishingWell = 1;
   g.save.training.floorSilver = 1;
@@ -88,19 +90,26 @@ test("a Stellar Floor pays ten times over, and a Golden Stellar Floor both bonus
   const pays = (p: RunPurse, x: number) => [p.silverAt(10, x, 0), p.badgeGold(`badge:${x}`, 10), p.pickupGold(x, 3, 4)];
   const base = pays(plain, 0);
   assert.deepEqual(pays(purse(stellar), 1), base.map((n) => n * 10), "×10");
-  assert.deepEqual(pays(purse(gold), 2), base.map((n) => n * 7), "×2 and Aurum Bloom's +5");
-  assert.deepEqual(pays(purse(both), 3), base.map((n) => n * 70), "×7 × ×10");
+  assert.deepEqual(pays(purse(gold), 2), base.map((n) => n * 5), "Aurum Bloom alone: ×5");
+  assert.deepEqual(pays(purse(both), 3), base.map((n) => n * 50), "×5 × ×10");
+  g.save.upgrades.goldenFloors = 1;
+  assert.deepEqual(pays(purse(gold), 4), base.map((n) => n * 6), "with Golden Floors: ×6");
+  assert.deepEqual(pays(purse(both), 5), base.map((n) => n * 60), "×6 × ×10");
 });
 
-test("Aurum Bloom's Bonus and Chance add to the research's", () => {
+test("Aurum Bloom's Bonus and Golden Chance add to the skill's and its research's", () => {
   const g = inside(), bloom: FloorBloom = { bonus: 5.8, chance: 5, stellar: 0.5 };
   g.run.goldenFloor = 3.5;
   g.save.archives.levels.goldenFloorMultiplier = 1;
   assert.deepEqual(withBloom(g.run, bloom).goldenFloor, 8.5);
   assert.deepEqual(withBloom(g.run, bloom).stellarFloor, 0.5);
   assert.equal(withBloom(g.run, undefined), g.run, "without it, the run's own");
-  const floor = FLOORS.find((f) => environmentOn("golden", g.run.seed, f, 8.5))!;
-  assert.equal(new RunPurse(g.save, "tower", g.run, () => 0.5, 0, () => 0.5, () => floor, bloom).golden(floor), 7.9, "×2.1 + 5.8, on the grid");
+  const floor = FLOORS.find((f) => environmentOn("golden", g.run.seed, f, 3.5))!;
+  const golden = (with_?: FloorBloom) => new RunPurse(g.save, "tower", g.run, () => 0.5, 0, () => 0.5, () => floor, with_).golden(floor);
+  assert.equal(golden(bloom), 5.8, "without the skill, its Bonus alone, whatever the research");
+  g.save.upgrades.goldenFloors = 1;
+  assert.equal(golden(), 2.1, "the skill and its research alone");
+  assert.equal(golden(bloom), 6.9, "×2.1 + 4.8 more, on the grid");
 });
 
 for (const mode of ["tower", "delve"] as const)
@@ -144,7 +153,7 @@ test("a Stellar Floor shows in the All Gold Bonuses box with Aurum Bloom, and a 
   g.save.arcana.owned.aurumBloom = [0, 0, 19];
   assert.deepEqual(lines().map((m) => m.id), ["golden", "stellar"]);
   g.arcana.aurumBloom = () => ({ bonus: 5, chance: 100, stellar: 100 });
-  assert.deepEqual(lines().map((m) => m.factor), [7, 10]);
+  assert.deepEqual(lines().map((m) => m.factor), [5, 10]);
   const lent = inside();
   lent.towerRun.shrine = { arcana: ["aurumBloom"] } as never;
   assert.deepEqual(lent.arcana.aurumBloom(), { bonus: 5, chance: 5, stellar: 0.5 });

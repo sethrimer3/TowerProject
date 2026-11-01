@@ -33,7 +33,7 @@ Gold belongs to Golden Floors: on the Game themes whose ground is black or witho
 ## Stellar Floor
 
 A **Stellar Floor** multiplies all Gold and Silver found on it by 10, just as a Golden Floor does (the All Gold Bonuses box shows a Stellar Floor line).
-On a floor that is both, the two multiply: at ×7 Golden, a find pays ×70.
+On a floor that is both, the two multiply: at ×6 Golden, a find pays ×60.
 Only [Aurum Bloom](arcana.md#aurum-bloom) gives a chance of one.
 
 Stars show a Stellar Floor: they appear anywhere on it, over everything standing there, the hero and enemies included, but under damage numbers, loot and other effects.

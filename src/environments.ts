@@ -35,9 +35,9 @@ export const ENVIRONMENT_IDS = Object.keys(ENVIRONMENTS) as EnvironmentId[];
 /** What a Stellar Floor multiplies its Gold and Silver by. */
 export const STELLAR_FACTOR = 10;
 
-/** What Aurum Bloom adds while the run holds it on: to Golden Floor Multiplier
- * (`bonus`) and, in percent, to the Golden (`chance`) and Stellar Floor
- * (`stellar`) chances. */
+/** What Aurum Bloom gives while the run holds it on: the Golden Floor's factor
+ * it alone makes (`bonus`, from ×1) and, in percent, what it adds to the Golden
+ * (`chance`) and Stellar Floor (`stellar`) chances. */
 export type FloorBloom = { bonus: number; chance: number; stellar: number };
 
 /** `run`'s chances with `bloom`'s added. They are read, never saved, so a

@@ -141,11 +141,15 @@ export class RunPurse {
     return withBloom(this.run, this.bloom);
   }
 
-  /** Golden Floor Multiplier's factor on Gold and Silver found on equivalent
-   * floor `floor` (from 1) when it is a Golden Floor, Aurum Bloom's Bonus added,
-   * read now so a level researched mid-run counts at once; 1 on any other floor. */
+  /** The factor on Gold and Silver found on equivalent floor `floor` (from 1)
+   * when it is a Golden Floor: from ×1, what the Golden Floors skill and its
+   * Golden Floor Multiplier research raise it to, and what Aurum Bloom's Bonus
+   * raises it to, added; read now so a level researched mid-run counts at
+   * once. 1 on any other floor. */
   golden(floor: number) {
-    return hasEnvironment(this.environments, "golden", floor) ? snap(researched(this.save.archives, "goldenFloorMultiplier") / 10 + (this.bloom?.bonus ?? 0)) : 1;
+    if (!hasEnvironment(this.environments, "golden", floor)) return 1;
+    const skill = this.save.upgrades.goldenFloors ? researched(this.save.archives, "goldenFloorMultiplier") / 10 : 1;
+    return snap(skill + (this.bloom ? this.bloom.bonus - 1 : 0));
   }
 
   /** `STELLAR_FACTOR` on Gold and Silver found on `floor` when it is a Stellar Floor; 1 on any other. */

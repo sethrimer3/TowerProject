@@ -33,8 +33,8 @@ Its `Shot` carries `ricochet`: it lands as its arrow does (`leavesAt` equals `la
 A kill is a `VolleyKill` marked `ricochet`, never an instakill, and pays through `finds.kill`.
 A multishot's later targets are read again from the board (`inPlace`), since a ricochet may have struck them.
 
-**Aurum Bloom** (trigger `always`, given by `ArcanaDesk.aurumBloom`, its effect the run card's text) raises the floor environments: Bonus adds to Golden Floor Multiplier, Golden Chance to the Golden Floor's chance and Stellar Chance to the Stellar Floor's.
-None needs a Breakthrough skill or research: it works without Golden Floors, on the research's base ×2.
+**Aurum Bloom** (trigger `always`, given by `ArcanaDesk.aurumBloom`, its effect the run card's text) raises the floor environments: Bonus is the Golden Floor's factor it makes alone, and over Golden Floor Multiplier counts all but the ×1 they share (first level: ×5 alone, ×6 with the skill); Golden Chance to the Golden Floor's chance and Stellar Chance to the Stellar Floor's.
+None needs a Breakthrough skill or research.
 It holds nothing in the run: see `withBloom` in environments.md.
 
 **The run.**

@@ -71,6 +71,7 @@ test("every Gold found on a Golden Floor is multiplied by Golden Floor Multiplie
   save.themes = [];
   const g = new Game(save);
   g.newRun({ seed: 7 });
+  save.upgrades.goldenFloors = 1;
   g.run.goldenFloor = 50;
   const golden = FLOORS.find((f) => hasEnvironment(g.run, "golden", f))!, plain = FLOORS.find((f) => !hasEnvironment(g.run, "golden", f))!;
   const purse = (floor?: number) => new RunPurse(save, "tower", g.run, () => 0.5, 0, () => 0.5, floor === undefined ? undefined : () => floor);

@@ -83,8 +83,8 @@ export const ARCANA = {
         steps: [[0.5, 0], [1, 10], [1.5, 28], [2, 46], [2.5, 64], [3, 82], [3.5, 100], [4, 118], [4.5, 136], [5, 154], [5.5, 172], [6, 190], [6.5, 208], [7, 226], [7.5, 244], [8, 262], [8.5, 300], [9, 368], [9.5, 476], [10, 644]],
       },
     ],
-    summary: ([bonus, chance, stellar]) => `Adds ${chance.toFixed(1)}% chance each floor is a Golden Floor and ${bonus.toFixed(1)}× to its bonus, and ${stellar.toFixed(1)}% chance each floor is a Stellar Floor, which multiplies its Gold and Silver by ${STELLAR_FACTOR}×.`,
-    effect: ([bonus, chance, stellar]) => `+${bonus.toFixed(1)}× · +${chance.toFixed(1)}% · ${stellar.toFixed(1)}% Stellar`,
+    summary: ([bonus, chance, stellar]) => `Adds ${chance.toFixed(1)}% chance each floor is a Golden Floor and raises its bonus to ${bonus.toFixed(1)}× (Golden Floors and its research add to that), and ${stellar.toFixed(1)}% chance each floor is a Stellar Floor, which multiplies its Gold and Silver by ${STELLAR_FACTOR}×.`,
+    effect: ([bonus, chance, stellar]) => `${bonus.toFixed(1)}× · +${chance.toFixed(1)}% · ${stellar.toFixed(1)}% Stellar`,
   },
 } as const satisfies Record<string, ArcanumDef>;
 
