@@ -34,6 +34,23 @@ export function root(x: number, n: number) {
   return x - intPow(lo, n) <= intPow(hi, n) - x ? lo : hi;
 }
 
+/** The arctangent of `z` (0 to 1), in radians: halved twice, to below 0.2,
+ * then its series, to better than a trillionth of a radian. */
+function arctangent(z: number) {
+  const half = (t: number) => t / (1 + Math.sqrt(1 + t * t)), t = half(half(z)), t2 = t * t;
+  let sum = 0;
+  for (let k = 19; k >= 1; k -= 2) sum = 1 / k - t2 * sum;
+  return 4 * t * sum;
+}
+const DEGREES_PER_RADIAN = 57.29577951308232;
+/** The direction of (`dx`, `dy`), not both 0, in degrees clockwise from
+ * (0, 1), 0 up to 360: `Math.atan2` in the same bits everywhere. */
+export function bearing(dx: number, dy: number) {
+  const a = Math.abs(dx), b = Math.abs(dy), off = (a <= b ? arctangent(a / b) : Math.PI / 2 - arctangent(b / a)) * DEGREES_PER_RADIAN;
+  if (dy >= 0) return dx >= 0 ? off : 360 - off;
+  return dx >= 0 ? 180 - off : 180 + off;
+}
+
 /** `n` on a grid of millionths. Gold, HP and the hero's and enemies' stats
  * keep their fractions (a 2% bonus on 1 ATK strikes for 1.02), and each sum
  * or difference of them is snapped back onto the grid, so 0.1 + 0.2 is 0.3

@@ -40,6 +40,8 @@ export type Dash = { tiles: ({ x: number; y: number } & Facing)[]; end?: { x: nu
  * `at`, for `ms`, the hero walks straight from tile `from` to `to`, at an
  * even pace, so a shot fired a share of the way through the turn leaves
  * from where the hero is drawn then (volley.ts). */
+/** When the turn being shown began (performance time), and how long it shows. */
+export type ShownClock = { at: number; ms: number };
 export type ShownTurn = { at: number; ms: number; from: { x: number; y: number }; to: { x: number; y: number } };
 /** The latest fight as the board shows it: the hero struck from `from`,
  * the enemy (`hp` at the start) stood at `to`, and its strikes land from

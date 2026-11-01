@@ -19,6 +19,7 @@ import { foeAttack } from "./cards/foe-cards.ts";
 import { trainedAmount } from "./progression/training.ts";
 import { researched } from "./progression/archives.ts";
 import { archerClock, archerState, archerTick, arrowBoost, arrowDamage, arrowRange, charged, enemiesWithin, FOE_REACH, foeGain, foeOn, foeShotCost, foeTickGain, held, reachTicks, shoots, shotDamage, spent, TURN_TICKS, type InReach, type Volleys } from "./enemies/ranged.ts";
+import { beamFactor, type Beams } from "./arcana/overseer.ts";
 import { tileRandom } from "./random.ts";
 import { snap } from "./exact.ts";
 
@@ -86,6 +87,8 @@ export type VolleyTurn = {
   /** Ricochet Shot, held and on (game/arcana-desk.ts): what its strikes multiply
    * the hero's ATK by, the enemies each reaches, and the percent chance. */
   ricochet?: { boost: number; rebounds: number; chance: number };
+  /** Overseer's beams, held and on, as the turn begins (arcana/overseer.ts). */
+  beams?: Beams;
 };
 /** An enemy an arrow felled, or the thorns of its own shot (`thorns`):
  * where, whether it fell to its first wound (an instakill), and the
@@ -113,7 +116,7 @@ type Near = { x: number; y: number; dx: number; dy: number; arrows?: Span; shots
 type Shooter = { near: Near; key: string; charge: number | undefined; gain: number; cost: number };
 
 /** A column difference the short way round a board `wrap` wide (0: none). */
-const shortWay = (dx: number, wrap: number) => (wrap && Math.abs(dx) > wrap / 2 ? dx - Math.sign(dx) * wrap : dx);
+export const shortWay = (dx: number, wrap: number) => (wrap && Math.abs(dx) > wrap / 2 ? dx - Math.sign(dx) * wrap : dx);
 const within = (tick: number, span: Span | undefined) => !!span && tick >= span.first && tick <= span.last;
 
 function walkOf({ hero, from, wrap }: VolleyTurn): Walk {
@@ -170,7 +173,13 @@ export function volleyTurn(turn: VolleyTurn): VolleyOutcome {
     if (kept !== undefined) foes[key] = kept;
   }
 
-  const archer = turn.archer ? arrows(turn, hero, v, shots, kills, (tick) => near.filter((n) => within(tick, n.arrows)).map((n) => standing(n, tick)).filter((e): e is InReach => !!e).sort(byDistance), (tick) => heroAt(walk, tick, wrap)) : undefined;
+  /** What Overseer's beams multiply the hero's ATK by against (x, y) at `tick`, as the hero and beams stand then. */
+  const beam = (x: number, y: number, tick: number) => {
+    if (!turn.beams) return 1;
+    const at = heroAt(walk, tick, wrap);
+    return beamFactor(turn.beams, tick, shortWay(x - at.x, wrap), y - at.y);
+  };
+  const archer = turn.archer ? arrows(turn, hero, v, shots, kills, beam, (tick) => near.filter((n) => within(tick, n.arrows)).map((n) => standing(n, tick)).filter((e): e is InReach => !!e).sort(byDistance), (tick) => heroAt(walk, tick, wrap)) : undefined;
   let fell: Enemy | undefined, hurt = false;
   for (let tick = 1; tick <= TURN_TICKS && !fell; tick++) {
     archer?.tick(tick);
@@ -250,8 +259,10 @@ function heroAt(w: Walk, tick: number, wrap: number) {
  * own critical roll. A shot fired while Rapid Fire isn't may start it, for
  * Rapid Fire Duration from that moment, so the turn may fire more than
  * once. A ready arrow with no target waits for one, counting the turn
- * toward Charged Shot once that is researched. `end` keeps the clock. */
-function arrows(turn: VolleyTurn, p: Player, v: Volleys, shots: Shot[], kills: VolleyKill[], inReach: (tick: number) => InReach[], at: (tick: number) => { x: number; y: number }) {
+ * toward Charged Shot once that is researched. Overseer's beams multiply an
+ * arrow's boost by where its target and the hero stand the tick it fires
+ * (`beam`), so they too decide what it can hurt. `end` keeps the clock. */
+function arrows(turn: VolleyTurn, p: Player, v: Volleys, shots: Shot[], kills: VolleyKill[], beam: (x: number, y: number, tick: number) => number, inReach: (tick: number) => InReach[], at: (tick: number) => { x: number; y: number }) {
   const { ranks } = turn, perTile = trainedAmount(ranks, "attackPerTile"), percent = researched(ranks.archives, "chargedShotPercent");
   const shotAtk = turn.handShot?.attack ?? 0, bossAtk = turn.handShot?.boss ?? 0, base = trainedAmount(ranks, "attackSpeed");
   const speed = turn.handShot?.speed ? snap(base * (1 + turn.handShot.speed / 100)) : base;
@@ -261,11 +272,14 @@ function arrows(turn: VolleyTurn, p: Player, v: Volleys, shots: Shot[], kills: V
     const more = snap(charge + foeAttack(foeCharge, tile.enemy));
     return more ? snap((percent * (100 + more)) / 100) : percent;
   };
-  const boost = (e: InReach) => arrowBoost(perTile, e.d2, charging(e), v.waited ?? 0);
+  const boost = (e: InReach, tick: number) => {
+    const raised = arrowBoost(perTile, e.d2, charging(e), v.waited ?? 0), factor = beam(e.x, e.y, tick);
+    return factor === 1 ? raised : snap(raised * factor);
+  };
   // The cards' Shot ATK adds to the enemy cards' ATK, one factor for the hand.
   const cards = ({ tile }: InReach) => shotAtk + (isBoss(tile.enemy) ? bossAtk : 0);
   // Armor Break wears down DEF whether or not the arrow does damage, so it can aim at any enemy.
-  const hurts = (e: InReach) => breaksArmor(p, e.tile.enemy) || arrowDamage(p, e.tile.enemy, 0, 1, boost(e), cards(e)) > 0;
+  const hurts = (e: InReach, tick: number) => breaksArmor(p, e.tile.enemy) || arrowDamage(p, e.tile.enemy, 0, 1, boost(e, tick), cards(e)) > 0;
   // A fixed number per run, turn, shot of the turn (the first keeping the
   // turn's own roll) and the hero's tile, for `salt`.
   const shotRoll = (salt: number, shot: number) => tileRandom(p.x, p.y, (turn.seed ^ salt ^ Math.imul(v.turn, 0x85ebca6b) ^ Math.imul(shot, 0xc2b2ae35)) | 0);
@@ -280,17 +294,17 @@ function arrows(turn: VolleyTurn, p: Player, v: Volleys, shots: Shot[], kills: V
   const crit = critRule(ranks, turn.cardCrit), clock = archerState({ charge: v.hero, rapid: v.rapid });
   let fired = 0;
   const shoot = (rapid: boolean, tick: number) => {
-    const reach = inReach(tick), target = reach.find(hurts);
+    const reach = inReach(tick), target = reach.find((e) => hurts(e, tick));
     if (!target) return false;
     const shot = fired++, from = at(tick);
-    const targets = multishot(shot) ? reach.filter(hurts).slice(0, trainedAmount(ranks, "multishotTargets")) : [target];
+    const targets = multishot(shot) ? reach.filter((e) => hurts(e, tick)).slice(0, trainedAmount(ranks, "multishotTargets")) : [target];
     for (const aimed of targets) {
       // A ricochet may have struck this target since it was aimed at.
       const t = turn.ricochet ? inPlace(turn.board, aimed) : aimed;
       if (!t) continue;
-      const kill = arrow(turn, p, from, tick, t, crit, shot, boost(t), cards(t), snap(charging(t) * (v.waited ?? 0)), shots);
+      const kill = arrow(turn, p, from, tick, t, crit, shot, boost(t, tick), cards(t), snap(charging(t) * (v.waited ?? 0)), shots);
       if (kill) kills.push(kill);
-      ricochet(turn, p, t, tick, shot, shots, kills);
+      ricochet(turn, p, t, tick, shot, shots, kills, beam);
     }
     delete v.waited;
     return rapid ? 0 : rapidFire(shot);
@@ -318,8 +332,9 @@ function inPlace(board: VolleyTurn["board"], e: InReach): InReach | undefined {
  * spring on to the closest other enemies on the floor, however far, each a
  * line of Arcanum Damage (its crits averaged, none rolled) less that enemy's
  * DEF, with no Lifesteal and no Armor Break. The roll is fixed per run, turn,
- * shot and tile, so undo and a replay agree. */
-function ricochet({ board, seed, volleys, wrap, ricochet: rule }: VolleyTurn, p: Player, { x, y }: InReach, tick: number, shot: number, shots: Shot[], kills: VolleyKill[]) {
+ * shot and tile, so undo and a replay agree. Overseer's beams multiply a strike
+ * on an enemy in them (`beam`). */
+function ricochet({ board, seed, volleys, wrap, ricochet: rule }: VolleyTurn, p: Player, { x, y }: InReach, tick: number, shot: number, shots: Shot[], kills: VolleyKill[], beam: (x: number, y: number, tick: number) => number) {
   if (!rule || tileRandom(x, y, (seed ^ RICOCHET_SALT ^ Math.imul(volleys.turn, 0x85ebca6b) ^ Math.imul(shot, 0xc2b2ae35)) | 0) * 100 >= rule.chance) return;
   const d2 = (o: { x: number; y: number }) => {
     const dx = shortWay(o.x - x, wrap), dy = o.y - y;
@@ -330,7 +345,7 @@ function ricochet({ board, seed, volleys, wrap, ricochet: rule }: VolleyTurn, p:
   for (const to of targets) {
     const tile = board.tile(to.x, to.y), enemy = foeOn(tile);
     if (!enemy) continue;
-    const damage = Math.max(0, arrowDamage(striker, enemy, 0, 1, rule.boost)), left = snap(Math.max(0, enemy.hp - damage));
+    const damage = Math.max(0, arrowDamage(striker, enemy, 0, 1, snap(rule.boost * beam(to.x, to.y, tick)))), left = snap(Math.max(0, enemy.hp - damage));
     const landed: Shot = { by: "hero", ricochet: true, from: { x, y }, to, damage, tick, before: enemy.hp, hp: left, full: snap(enemy.hp + (tile.wound ?? 0)) };
     shots.push(landed);
     if (left > 0) board.wound?.(to.x, to.y, damage);

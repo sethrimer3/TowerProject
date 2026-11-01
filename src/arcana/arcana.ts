@@ -86,6 +86,29 @@ export const ARCANA = {
     summary: ([bonus, chance, stellar]) => `Adds ${chance.toFixed(1)}% chance each floor is a Golden Floor and raises its bonus to ${bonus.toFixed(1)}× (Golden Floors and its research add to that), and ${stellar.toFixed(1)}% chance each floor is a Stellar Floor, which multiplies its Gold and Silver by ${STELLAR_FACTOR}×.`,
     effect: ([bonus, chance, stellar]) => `${bonus.toFixed(1)}× · +${chance.toFixed(1)}% · ${stellar.toFixed(1)}% Stellar`,
   },
+  overseer: {
+    name: "Overseer",
+    trigger: { on: "always" },
+    attributes: [
+      {
+        name: "Bonus",
+        shown: (v) => `${v.toFixed(1)}×`,
+        steps: [[8, 0], [9.4, 5], [10.8, 13], [12.2, 21], [13.6, 30], [15, 40], [16.4, 52], [17.8, 65], [19.2, 80], [20.6, 95], [22, 112], [23.4, 133], [24.8, 150], [26.2, 180], [27.6, 220], [29, 280], [30.4, 320], [31.8, 360], [33.2, 420], [34.6, 500], [36, 600], [37.4, 720], [38.8, 850], [40.2, 1000], [41.6, 1175], [43, 1400], [44.4, 1650], [45.8, 1925], [47.2, 2225], [48.6, 2550], [50, 2900]],
+      },
+      {
+        name: "Angle",
+        shown: (v) => `${v}°`,
+        steps: [[30, 0], [31, 5], [32, 16], [33, 27], [34, 38], [35, 49], [36, 60], [37, 71], [38, 82], [39, 93], [40, 104], [41, 115], [42, 126], [43, 137], [44, 148], [45, 159], [46, 170], [47, 181], [48, 192], [49, 203], [50, 214], [51, 225], [52, 236], [53, 247], [54, 258], [55, 269], [56, 280], [57, 291], [58, 302], [59, 313], [60, 324], [61, 337], [62, 352], [63, 369], [64, 388], [65, 409], [66, 432], [67, 457], [68, 484], [69, 513], [70, 544], [71, 577], [72, 612], [73, 649], [74, 688], [75, 729], [76, 772], [77, 817], [78, 864], [79, 913], [80, 964], [81, 1017], [82, 1072], [83, 1129], [84, 1188], [85, 1249], [86, 1312], [87, 1377], [88, 1444], [89, 1513], [90, 1584]],
+      },
+      {
+        name: "Quantity",
+        shown: countOf,
+        steps: [[1, 0], [2, 375], [3, 850], [4, 2500]],
+      },
+    ],
+    summary: ([bonus, angle, beams]) => `${beams === 1 ? "A spotlight beam" : `${countOf(beams)} spotlight beams`} of ${angle}° from the hero, turning 4° clockwise each turn, through walls and out to the area's edges. Enemies in ${beams === 1 ? "it" : "them"} take ${bonus.toFixed(1)}× ATK on hits from your ATK.`,
+    effect: ([bonus, angle, beams]) => `${bonus.toFixed(1)}× · ${angle}° · ${countOf(beams)} ${beams === 1 ? "beam" : "beams"}`,
+  },
 } as const satisfies Record<string, ArcanumDef>;
 
 export type ArcanumId = keyof typeof ARCANA;
@@ -123,9 +146,10 @@ export const arcanumPrice = (a: Owned) => ARCANUM_PRICES[Math.min(ownedArcana(a)
 export const rerollPrice = (a: Owned) => Math.ceil(arcanumPrice(a) / 5);
 /** Whether a reroll could change anything: otherwise every option left already shows. */
 export const rerollOpen = (a: Owned) => unownedArcana(a).length > OFFER_SIZE;
-/** The Arcana tab shows once Arcanite has been held, whatever is left of it. */
-export const arcanaOpen = (save: { arcanite: number; arcana: ArcanaSave; profile: { earned: { arcanite: number } } }) =>
-  save.arcanite > 0 || save.profile.earned.arcanite > 0 || ownedArcana(save.arcana).length > 0;
+/** The Arcana tab shows once Arcanite has been held, whatever is left of it,
+ * and with Dev free purchases, which need none. */
+export const arcanaOpen = (save: { arcanite: number; arcana: ArcanaSave; profile: { earned: { arcanite: number } }; settings: { freePurchases: boolean } }) =>
+  save.settings.freePurchases || save.arcanite > 0 || save.profile.earned.arcanite > 0 || ownedArcana(save.arcana).length > 0;
 
 /** Up to `count` of `pool` drawn without repeats, each as likely as any other. */
 export function drawOptions<T>(pool: readonly T[], count: number, draw: () => number): T[] {

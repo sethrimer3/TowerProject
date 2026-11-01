@@ -13,7 +13,7 @@ import { healAfterVictory, isLethal, regenerate, regenerateShield, type StepEffe
 export interface FightHost {
   readonly run: Run;
   /** The hero as it takes a fight: the run's hero, with a Dash Combo's ATK. */
-  readonly fighter: Player;
+  fighterAt(to: { x: number; y: number }): Player;
   readonly mode: Mode;
   readonly stepRules: StepRules;
   readonly crit: CritRule | undefined;
@@ -93,7 +93,7 @@ export class FightPlayback<S extends FoughtStep> {
     const lethal = isLethal(outcome), revive = lethal ? this.revival(step.dest) : undefined, wings = lethal ? this.host.wingsFor(enemy) : undefined;
     const crits = this.critRolls(step.dest, enemy);
     if (!this.playsFights && !revive && !wings && !crits) return this.take(step, 0);
-    const fight = bout(this.host.fighter, enemy, revive, crits, wings), start = performance.now(), rose = revivals(fight).length;
+    const fight = bout(this.host.fighterAt(step.dest), enemy, revive, crits, wings), start = performance.now(), rose = revivals(fight).length;
     step.crits = critHits(fight);
     step.winged = winged(fight);
     // Critical strikes, and a smite, change how long the fight lasts, so it ends as it was played.
@@ -244,7 +244,7 @@ export class FightPlayback<S extends FoughtStep> {
       shroud = snap(Math.max(0, shroud - (s.shrouded ?? 0)));
       shield = snap(Math.max(0, shield - (s.shielded ?? 0)));
     }
-    fight.bout = resume(fight.bout, from, { player: { ...this.host.fighter, hp, shroud, ...(p.shield === undefined ? {} : { shield }) }, enemy: fight.enemy, revives: this.revival(fight.to), crits: this.critRolls(fight.to, fight.enemy), wings: this.host.wingsFor(fight.enemy) });
+    fight.bout = resume(fight.bout, from, { player: { ...this.host.fighterAt(fight.to), hp, shroud, ...(p.shield === undefined ? {} : { shield }) }, enemy: fight.enemy, revives: this.revival(fight.to), crits: this.critRolls(fight.to, fight.enemy), wings: this.host.wingsFor(fight.enemy) });
     this.showRevivals(fight.start, fight.bout);
     this.showBreak(fight.start, fight.bout);
     this.restate(fight.outcome, fight.bout);

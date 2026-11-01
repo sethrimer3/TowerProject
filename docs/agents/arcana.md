@@ -1,6 +1,6 @@
 # Arcana
 
-Arcana (`src/arcana/arcana.ts`, `src/game/arcana-desk.ts`, `ui/arcana-panel.ts`), their triggers, Ricochet Shot, Aurum Bloom, and their run cards.
+Arcana (`src/arcana/arcana.ts`, `src/game/arcana-desk.ts`, `ui/arcana-panel.ts`), their triggers, Ricochet Shot, Aurum Bloom, Overseer, and their run cards.
 
 **What they are.**
 Spells bought with Arcanite on the Gear page's Arcana tab and kept for good, or lent to one climb by a Shrine boon.
@@ -18,7 +18,7 @@ A new trigger is a new member of `ArcanumTrigger` and the code that raises its e
 `save.arcana` (`ArcanaSave`, `decodeArcana`) keeps each arcanum's attribute levels, the choice waiting (`offer`), and the choices' own stream: `rng`, seeded once from `stream("arcana")`, and the `rolls` drawn (`nextDraw`).
 `ArcanaDesk.offer` draws up to `OFFER_SIZE` of those not owned, each as likely as any other (`drawOptions`), and keeps them until one is bought or rerolled, so closing the dialog or reloading changes nothing.
 `reroll` costs a fifth of the price (`rerollPrice`) and gives a different set whenever there is one (`redrawOptions`); it is offered only while more than `OFFER_SIZE` remain (`rerollOpen`), since otherwise every option left already shows.
-With Dev free purchases nothing is paid.
+With Dev free purchases nothing is paid, and the Arcana tab shows whatever Arcanite has been held (`arcanaOpen`), so a choice and every upgrade can be pressed from a fresh save.
 
 **Arcanum Damage** (`arcanumBoost`): Multiplier × Equipment × Hero ATK × (1 + Critical Factor × Critical Chance) × (1 + Super Crit Mult × Super Crit Chance × Critical Chance).
 It is this average, never rolled, and is what a damaging arcanum's card shows.
@@ -36,6 +36,25 @@ A multishot's later targets are read again from the board (`inPlace`), since a r
 **Aurum Bloom** (trigger `always`, given by `ArcanaDesk.aurumBloom`, its effect the run card's text) raises the floor environments: Bonus is the Golden Floor's factor it makes alone, and over Golden Floor Multiplier counts all but the ×1 they share (first level: ×5 alone, ×6 with the skill); Golden Chance to the Golden Floor's chance and Stellar Chance to the Stellar Floor's.
 None needs a Breakthrough skill or research.
 It holds nothing in the run: see `withBloom` in environments.md.
+
+**Overseer** (`src/arcana/overseer.ts`, trigger `always`, given by `ArcanaDesk.beams`, its effect the run card's text) sends out Quantity beams, spread evenly round the hero, each Angle degrees wide, and multiplies the hero's ATK by Bonus on hits on enemies in them.
+Quantity's table starts at a free 1 beam, with 2, 3 and 4 the priced levels.
+They take no notice of walls or distance.
+**Their direction** (`beamDirection`) is whole hundredths of a degree clockwise from straight up the board, starting at 0: `BEAM_TURN` (4 degrees) a turn and a hundredth of that a tick.
+`run.beamTurns` counts the turns finished; `ArcanaDesk.turn` raises it in `Game.endTurn` while the run holds Overseer, on or off, whether or not the turn has a volley, and since it lies in the run, undo turns the beams back and a new run starts them at 0.
+A dash is one turn; a Bomb's throw, no `endTurn`, is none.
+**Being in a beam** (`inBeams`) compares the angle from the hero to the center of the enemy's tile with the nearest beam's center: at most half the Angle counts, the edge included, and the hero's own spot (a Flying enemy overhead) is in them all.
+It decides play, so the angle comes from `bearing` in `src/exact.ts`, an arctangent of `+ - * /` and `Math.sqrt`, never `Math.atan2`.
+**What it multiplies**, each before DEF and multiplying the other kinds:
+- A fight: `Game.fighterAt(to)` carries `Player.beamAttack`, which `squaredUp` applies as its own factor, read as the turn begins (tick 0) from the tile the hero stands on, the same for the whole fight. Like `comboAttack`, only `Game.move`'s `resolveStep` and `FightPlayback`'s `bout` and `retrain` read it, so previews, the inspect panel, Damage Visual and the planners count the plain hero, the worst case.
+- An arrow: `beam` in `volleyTurn` multiplies its `boost` by the beams and the hero as they stand the tick it fires, mid-step and round the Delve's wrap (`heroAt`, `shortWay`), so it also decides what `hurts` can aim at. Enemies don't move during a turn's ticks (Aggroed ones step after tick 100), so each is read at its tile as it stands that tick.
+- A ricochet: `ricochet` multiplies its `boost` by the same `beam` at the enemy it strikes, at the tick of the arrow that sprang it.
+- A Bomb: `Game.bombStrike` multiplies the hero's ATK, read as the turn stands (tick 0).
+
+Thorns, Shield Thorns and boss Takedown take shares of the enemy's HP, and doors take keys or HP, so none of them reads it.
+A new damage source that is struck with the hero's ATK must read the beams too.
+**Drawing** (`drawOverseerBeams`, `render/effects/overseer-beams.ts`, first in `drawOverlays`) fills each wedge from the hero as drawn (`f.playerX`, `f.playerY`) with a faint white in `soft-light` (`BEAM_LIGHT`), above the darkness and under what is marked on the board, reaching past the canvas's edges.
+It turns by `Game.turnClock`, stamped with every `endTurn`, unlike `turnShown` set however far the turn came, as the volley's ticks do; reduced motion jumps to the turn's end.
 
 **The run.**
 `ArcanaDesk.held` is what the run holds: owned at their levels, and lent at their first.
@@ -58,4 +77,4 @@ The bar shows inside a run holding any arcanum, even before On the Job.
 `enhancementsOf` gives the rows of research enhancements both information views show; none are defined yet.
 The `.arcana-attr` and `.arcana-switch` rules use two ids to beat the themes' and the sprite kit's blanket button rules.
 
-**Tests.** `tests/arcana.test.ts`, `tests/aurum-bloom.test.ts`.
+**Tests.** `tests/arcana.test.ts`, `tests/aurum-bloom.test.ts`, `tests/overseer.test.ts`.

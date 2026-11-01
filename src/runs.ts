@@ -116,6 +116,9 @@ export type RunCore = {
   /** Which numbered tower (or delve) the run climbs, from 2 up (tiers.ts);
    * absent for the first. */
   tier?: number;
+  /** The turns Overseer's beams have turned this run (arcana/overseer.ts),
+   * in the run so undo turns them back; absent before the first. */
+  beamTurns?: number;
   /** Ranged enemies' and the Archer's cooldowns, and the turns taken
    * inside (enemies/ranged.ts); absent until the first shot is due. */
   volleys?: Volleys;

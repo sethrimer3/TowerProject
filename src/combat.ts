@@ -53,17 +53,17 @@ function bossCuts(player: Player, enemy: Enemy) {
 }
 /** How a fight begins: the hero (`player`) with ATK UP's Power Strike
  * charged strikes with twice its ATK (`powered`), a Dash Combo raises it by
- * its own factor (`comboAttack`), and a boss Takedown or
+ * its own factor (`comboAttack`), Overseer's beams by theirs (`beamAttack`), and a boss Takedown or
  * Tangle cut (`opening`) loses its share of max HP and ATK (`enemy`), at
  * least 1 HP left, before the hero's first strike. The player comes back
  * without the charge and cuts, so taking a fight through it twice changes
  * nothing more. */
 export function squaredUp(player: Player, enemy: Enemy): { player: Player; enemy: Enemy; powered: boolean; opening: { takedown: boolean; tangle: boolean } | null } {
-  if (!player.powerStrike && !player.comboAttack && !player.takedown && !player.tangle) return { player, enemy, powered: false, opening: null };
-  const { powerStrike, comboAttack, takedown: _, tangle: __, ...rest } = player, cut = bossCuts(player, enemy), full = enemy.fullHp ?? enemy.hp;
-  const charged = powerStrike ? snap(rest.attack * POWER_FACTOR) : rest.attack;
+  if (!player.powerStrike && !player.comboAttack && !player.beamAttack && !player.takedown && !player.tangle) return { player, enemy, powered: false, opening: null };
+  const { powerStrike, comboAttack, beamAttack, takedown: _, tangle: __, ...rest } = player, cut = bossCuts(player, enemy), full = enemy.fullHp ?? enemy.hp;
+  const charged = powerStrike ? snap(rest.attack * POWER_FACTOR) : rest.attack, combined = comboAttack ? snap((charged * (100 + comboAttack)) / 100) : charged;
   return {
-    player: powerStrike || comboAttack ? { ...rest, attack: comboAttack ? snap((charged * (100 + comboAttack)) / 100) : charged } : rest,
+    player: powerStrike || comboAttack || beamAttack ? { ...rest, attack: beamAttack ? snap(combined * beamAttack) : combined } : rest,
     enemy: cut ? {
       ...enemy,
       ...(cut.hp ? { hp: Math.max(1, snap(enemy.hp - (full * cut.hp) / 100)), fullHp: full } : {}),

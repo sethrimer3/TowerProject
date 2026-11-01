@@ -2,6 +2,7 @@ import {
   arcanum, arcanumBoost, arcanumPrice, drawOptions, levelsOf, nextDraw, nextStep, OFFER_SIZE, ownedArcana, redrawOptions, rerollOpen, rerollPrice, RUN_TOGGLES, tickCooldowns, unownedArcana, valuesAt,
   type ArcanumId, type AttributeLevels,
 } from "../arcana/arcana.ts";
+import type { Beams } from "../arcana/overseer.ts";
 import type { CritRule } from "../combat.ts";
 import type { Mode } from "../entities.ts";
 import type { FloorBloom } from "../environments.ts";
@@ -146,8 +147,18 @@ export class ArcanaDesk {
     const [bonus, chance, stellar] = valuesAt(held.id, held.levels);
     return { bonus, chance, stellar };
   }
-  /** A turn ends: each cooldown on its way, restarting the moment it runs out. */
+  /** Overseer's beams (arcana/overseer.ts), if it is held and on. */
+  get beams(): Beams | undefined {
+    const held = this.held.find((h) => h.id === "overseer" && this.isOn(h.id));
+    if (!held) return undefined;
+    const [bonus, width, count] = valuesAt(held.id, held.levels);
+    return { bonus, width, count, turns: this.host.run.beamTurns ?? 0 };
+  }
+  /** A turn ends: Overseer's beams turn on, on or off, and each cooldown on
+   * its way, restarting the moment it runs out. */
   turn() {
+    const run = this.host.run;
+    if (this.held.some((h) => h.id === "overseer")) run.beamTurns = (run.beamTurns ?? 0) + 1;
     const active = this.held.flatMap(({ id, levels }) => {
       const trigger = arcanum(id).trigger;
       return trigger.on === "cooldown" && this.isOn(id) ? [{ id, turns: trigger.turns(valuesAt(id, levels)) }] : [];

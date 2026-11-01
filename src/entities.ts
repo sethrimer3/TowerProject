@@ -170,6 +170,10 @@ export type Player = {
    * copy of the hero a fight is taken with carries it (`Game.fighter`), so
    * previews and planners never count it. */
   comboAttack?: number;
+  /** What Overseer's beams multiply the ATK of the fight being taken by, when
+   * its enemy stands in one. Like `comboAttack`, only the copy of the hero a
+   * fight is taken with carries it (`Game.fighterAt`). */
+  beamAttack?: number;
   /** The percent of a boss's or a Greater Boss's max HP (`takedown`: ATK
    * UP's Takedown, TORCH's Greater Takedown) and ATK (`tangle`: DEF UP's
    * Tangle, TORCH's Greater Tangle) taken off as a fight with it begins, by

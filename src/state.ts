@@ -11,7 +11,7 @@ import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./cards/b
 import { BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
 import { noteGoldBoost } from "./economy/gold-boost.ts";
 import { canWarp, claimGoal, goalUnlocked, goalsWaiting } from "./goals.ts";
-import { landsAt, volleyTurn, type Shot, type Volley, type VolleyTurn } from "./volley.ts";
+import { landsAt, shortWay, volleyTurn, type Shot, type Volley, type VolleyTurn } from "./volley.ts";
 import { missGem } from "./economy/gems.ts";
 import { DelvePlan } from "./delve/automove.ts";
 import { defaults } from "./save/save.ts";
@@ -94,6 +94,7 @@ import { EventDesk } from "./game/event-desk.ts";
 import { ShrineDesk } from "./game/shrine-desk.ts";
 import { ArcanaDesk } from "./game/arcana-desk.ts";
 import { arcanaOpen, defaultArcanaRun } from "./arcana/arcana.ts";
+import { beamFactor } from "./arcana/overseer.ts";
 import { NoticeDesk } from "./game/notice-desk.ts";
 import { boonFactor, runBoons, weakened } from "./shrines.ts";
 import { LEVEL_SKIP_KINDS, LEVEL_SKIP_ROWS, rollLevelSkip } from "./enemies/level-skips.ts";
@@ -111,7 +112,7 @@ import { warpLootSilver } from "./economy/warp-loot.ts";
 import { CardActivation } from "./game/card-activation.ts";
 import { Finds } from "./game/finds.ts";
 import { FightPlayback } from "./game/fight-playback.ts";
-import type { Coin, Dash, Drop, Facing, Gain, GainArt, GainStrike, Heal, ShownTurn } from "./shown.ts";
+import type { Coin, Dash, Drop, Facing, Gain, GainArt, GainStrike, Heal, ShownClock, ShownTurn } from "./shown.ts";
 /** How a new run starts: out in the forest or at the entrance, and from
  * which seed (rolled from the game's randomness when left out). */
 export type RunStart = { outside?: boolean; seed?: number; height?: number };
@@ -274,6 +275,8 @@ export class Game {
   /** The latest turn's step inside a run, for the board to walk the hero
    * along as its shots leave; null when it came no single step. */
   turnShown: ShownTurn | null = null;
+  /** The clock of the latest turn, however far it came, which Overseer's beams turn by as drawn. */
+  turnClock: ShownClock | null = null;
   /** The snapshot from before the turn being taken, for a shot that fells
    * the hero. */
   private turnBefore: MoveSnapshot | null = null;
@@ -671,6 +674,7 @@ export class Game {
     this.fights.clear();
     this.volley = null;
     this.turnShown = null;
+    this.turnClock = null;
     this.dropHandPlan();
     this.blocked = { x: 0, y: 0, until: 0 };
   }
@@ -1183,6 +1187,17 @@ export class Game {
   get fighter(): Player {
     const p = this.run.player, combo = this.run.combo;
     return combo ? { ...p, comboAttack: Math.min(combo.next, COMBO_LIMIT) * COMBO_PERCENT } : p;
+  }
+  /** The hero as it takes the fight at `to`, the step's tile: with Overseer's
+   * beams as the turn begins on that tile, a copy carrying their ATK as well. */
+  fighterAt(to: { x: number; y: number }): Player {
+    const factor = this.beamFactorAt(to);
+    return factor === 1 ? this.fighter : { ...this.fighter, beamAttack: factor };
+  }
+  /** What Overseer's beams, as the turn begins, multiply ATK by against `to`. */
+  private beamFactorAt(to: { x: number; y: number }) {
+    const p = this.run.player;
+    return beamFactor(this.arcana.beams, 0, shortWay(to.x - p.x, this.wrap), to.y - p.y);
   }
   /** The Dash Combo the meter shows: the next fight's while a fight plays
    * out (it is that fight's), otherwise the last fight's, so 0 until a fight
@@ -1753,8 +1768,8 @@ export class Game {
     return c === "ignore" ? this.ignoreTile(x, y) : c === "target" ? this.targetTile(x, y) : this.bombTile(x, y);
   }
   /** A Bomb going off on (x, y): the enemy there (or a Flying one over it)
-   * takes the hero's ATK, critical and Super Critical rolls counted, its DEF
-   * no help, and falls to it as to an arrow, paid as a kill. A tile with no enemy takes no Bomb. The throw is a turn
+   * takes the hero's ATK, multiplied by Overseer's beams if it lies in one,
+   * critical and Super Critical rolls counted, its DEF no help, and falls to it as to an arrow, paid as a kill. A tile with no enemy takes no Bomb. The throw is a turn
    * of its own, so undo takes it back, and its kill's Gold can't be paid
    * twice. A fight still playing out counts first. */
   private bombTile(x: number, y: number): "used" | "invalid" | "unavailable" {
@@ -1788,13 +1803,13 @@ export class Game {
    * fixed number per run, tile and Bomb, so undoing the throw and throwing it
    * again lands the same. */
   private bombStrike(x: number, y: number, enemy: Enemy) {
-    const { player, seed, bombsUsed } = this.run, crit = critAgainst(this.crit, player, enemy);
-    if (!crit) return { damage: player.attack, applications: 0, superCrit: false };
+    const { player, seed, bombsUsed } = this.run, crit = critAgainst(this.crit, player, enemy), attack = snap(player.attack * this.beamFactorAt({ x, y }));
+    if (!crit) return { damage: attack, applications: 0, superCrit: false };
     const rolls = (seed ^ BOMB_SALT ^ Math.imul(bombsUsed ?? 0, 0x85ebca6b)) | 0;
     const sure = guaranteedCrits(crit.chance), rest = snap(crit.chance - 100 * sure);
     const applications = sure + (tileRandom(x, y, rolls) * 100 < rest ? 1 : 0);
     const superCrit = applications > 0 && landsSuperCrit(crit, tileRandom(x, y, (rolls ^ BOMB_SUPER_SALT) | 0));
-    return { damage: snap(player.attack * critMultiplier(crit.factor, applications) * (superCrit ? crit.superCrit!.factor : 1)), applications, superCrit };
+    return { damage: snap(attack * critMultiplier(crit.factor, applications) * (superCrit ? crit.superCrit!.factor : 1)), applications, superCrit };
   }
   private ignoreTile(x: number, y: number): "used" | "invalid" {
     if (!this.handRules.ignore(x, y)) return "invalid";
@@ -2151,8 +2166,8 @@ export class Game {
     // wall, lock, impervious enemy, or (automation's) declined lethal fight
     // never touches history, damages the player, alters the enemy, or ends the run.
     const rules: StepRules = { ...this.stepRules, ...(regen ? {} : { regen: 0 }), ...(card.scale !== undefined && card.scale !== 1 ? { scale: card.scale } : {}) };
-    // A fight is taken with a Dash Combo's ATK; previews and planners go without.
-    const hero = t.kind === "enemy" ? this.fighter : p;
+    // A fight is taken with a Dash Combo's ATK and Overseer's beams; previews and planners go without.
+    const hero = t.kind === "enemy" ? this.fighterAt(dest) : p;
     const resolved = resolveStep(hero, met, rules);
     if (resolved.blocked) return this.rejectStep(resolved, t, dest.x, dest.y);
     // DOOR's Secret Knock: a door the hero can open may open for nothing;
@@ -2379,15 +2394,17 @@ export class Game {
     this.tickBoosts();
     syncShield(this.save, this.run);
     if (tickRegrow(this.run)) this.shieldFormedAt = performance.now();
+    const beams = this.arcana.beams;
     this.arcana.turn();
     const p = this.run.player, from = before.run.player, sameFloor = this.mode !== "tower" || before.run.height === this.run.height;
     const at = performance.now(), ms = Math.min(TURN_MS, 800 / Math.max(1, this.stepsPerSecond));
+    this.turnClock = { at, ms };
     // The board walks a single step at an even pace; anything else it snaps.
     this.turnShown = sameFloor && Math.abs(p.x - from.x) + Math.abs(p.y - from.y) === 1 ? { at, ms, from: { x: from.x, y: from.y }, to: { x: p.x, y: p.y } } : null;
     if ((this.tier < 3 && !archer) || !sameFloor) return;
     const v = this.run.volleys ?? { turn: 0 };
     const out = volleyTurn({ board: this.world, wrap: this.wrap, floorOf: (x, y) => this.floorOf(x, y), hero: p, from, seed: this.run.seed,
-      volleys: { ...v, turn: v.turn + 1 }, archer, ranks: { ...this.trainingNow, archives: this.save.archives }, cardCrit: this.cardCrit, handShot: this.handShot, ricochet: this.arcana.ricochet() });
+      volleys: { ...v, turn: v.turn + 1 }, archer, ranks: { ...this.trainingNow, archives: this.save.archives }, cardCrit: this.cardCrit, handShot: this.handShot, ricochet: this.arcana.ricochet(), ...(beams ? { beams } : {}) });
     this.run.volleys = out.volleys;
     p.hp = out.hp;
     if (out.shield !== undefined) p.shield = out.shield;

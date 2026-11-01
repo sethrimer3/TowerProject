@@ -92,7 +92,7 @@ test("buying pays the price and keeps the choice until it is bought", () => {
   const g = game(4);
   assert.equal(g.arcana.price, 5);
   const offer = g.arcana.offer();
-  assert.deepEqual([...offer].sort(), ["aurumBloom", "ricochetShot"]);
+  assert.deepEqual([...offer].sort(), ["aurumBloom", "overseer", "ricochetShot"]);
   assert.equal(g.arcana.buy("ricochetShot"), "short");
   assert.deepEqual(g.save.arcana.owned, {});
   g.save.arcanite = 7;
@@ -102,6 +102,7 @@ test("buying pays the price and keeps the choice until it is bought", () => {
   assert.deepEqual(g.save.arcana.owned.ricochetShot, [0, 0, 0]);
   assert.equal(g.arcana.price, 50, "the next one's price");
   g.save.arcana.owned.aurumBloom = [0, 0, 0];
+  g.save.arcana.owned.overseer = [0, 0, 0];
   assert.equal(g.arcana.price, null, "nothing left to buy: no button");
   assert.equal(g.arcana.canReroll, false, "a reroll could change nothing");
   assert.equal(g.arcana.reroll(), "refused");
@@ -113,7 +114,7 @@ test("the choices draw from their own saved stream, seeded once", () => {
   g.arcana.offer();
   const seed = g.save.arcana.rng;
   assert.equal(typeof seed, "number");
-  assert.equal(g.save.arcana.rolls, 2, "one for each option");
+  assert.equal(g.save.arcana.rolls, 3, "one for each option");
   assert.equal(decodeArcana(g.save.arcana).rng, seed);
 });
 
@@ -283,7 +284,8 @@ test("the boon offers only while an arcanum is left to lend", () => {
   };
   assert.equal(offered({}), true);
   assert.equal(offered({ ricochetShot: [0, 0, 0] }), true);
-  assert.equal(offered({ ricochetShot: [0, 0, 0], aurumBloom: [0, 0, 0] }), false);
+  assert.equal(offered({ ricochetShot: [0, 0, 0], aurumBloom: [0, 0, 0] }), true);
+  assert.equal(offered({ ricochetShot: [0, 0, 0], aurumBloom: [0, 0, 0], overseer: [0, 0, 0] }), false);
   assert.ok(BOON_IDS.includes("unlockArcanum"));
 });
 
@@ -291,7 +293,7 @@ test("picking it asks which arcanum; taken, it lasts the climb at first levels a
   const g = shrineGame();
   offering(g);
   assert.equal(g.shrine.pick("unlockArcanum"), true);
-  assert.deepEqual([...g.shrine.choosing].sort(), ["aurumBloom", "ricochetShot"]);
+  assert.deepEqual([...g.shrine.choosing].sort(), ["aurumBloom", "overseer", "ricochetShot"]);
   assert.ok(g.shrine.unspent >= 1, "the choice waits like a boon");
   assert.deepEqual(g.shrine.offer(), [], "no other offer until it is chosen");
   assert.deepEqual(g.arcana.held, []);

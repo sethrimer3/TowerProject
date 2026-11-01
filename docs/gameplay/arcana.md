@@ -55,3 +55,25 @@ Its Stellar Chance adds to any other chance of a [Stellar Floor](environments.md
 | Bonus | 5.0× | 21.0× | 21 |
 | Golden Chance | 5.0% | 24.0% | 39 |
 | Stellar Chance | 0.5% | 10.0% | 20 |
+
+## Overseer
+
+*Spotlight beams shine out from the hero, turning 4° clockwise each turn. Enemies in them take the Bonus × your ATK on hits from your ATK.*
+The beams start with the first pointing straight up, and turn smoothly through each turn: they stop for nothing, including walls, and reach the edges of the area.
+They show as a faint brightening on the board, and go on turning while switched off.
+Undo turns them back, and each run starts them over.
+
+An enemy is in a beam by the direction from you to the center of its tile, within half the beam's Angle of the beam's center.
+A fight and a Bomb read the beams as the turn begins; an arrow and a ricochet read them, and where you stand mid-step, the moment each fires.
+The beams can let your ATK past a DEF it couldn't otherwise pass, and then the Archer will aim there.
+The Bonus multiplies every other bonus to that ATK, and comes before the enemy's DEF.
+It doesn't touch what isn't your ATK: Thorns, which are a share of the enemy's HP, or opening doors.
+Enemy previews, the Damage Visual and Automove count fights without the beams, since they will have turned by the time you arrive.
+
+Beams spread evenly: 2 are 180° apart, 3 are 120° and 4 are 90°.
+
+| Attribute | First | Highest | Levels |
+|---|---|---|---|
+| Bonus | 8.0× | 50.0× | 31 |
+| Angle | 30° | 90° | 61 |
+| Quantity | 1 | 4 | 4 |

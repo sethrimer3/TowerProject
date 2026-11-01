@@ -605,6 +605,9 @@ What a damaging arcanum strikes with: its multiplier and the equipment's times t
 **Aurum Bloom**:
 An arcanum that raises the Golden Floor's bonus and chance and gives the Stellar Floor's chance, for as long as it is on.
 
+**Beam**:
+One of Overseer's spotlights from the hero, turning clockwise each turn. Hits from the hero's ATK on an enemy in a beam multiply by Overseer's Bonus.
+
 **Ricochet**:
 Ricochet Shot's strike: an arrow's hit springing a white line to the closest other enemies on the floor. A ricochet never sets off another.
 
