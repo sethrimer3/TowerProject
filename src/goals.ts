@@ -81,13 +81,13 @@ export const CHECKPOINT_FLOORS: readonly number[] = [10, 20, 30, 40, 50, 60, 70,
 
 const gold = (amount: number): GoalReward => ({ kind: "currency", currency: "gold", amount });
 const gems = (amount: number): GoalReward => ({ kind: "currency", currency: "gems", amount });
-const shards = (amount: number): GoalReward => ({ kind: "currency", currency: "shards", amount });
+const arcanite = (amount: number): GoalReward => ({ kind: "currency", currency: "arcanite", amount });
 
 const unlock = (unlock: GoalUnlock): GoalReward => ({ kind: "unlock", unlock });
 /** A checkpoint's rewards that differ from the stub; either left out is the stub's. */
 type CheckpointSet = Partial<Omit<Checkpoint, "floor">>;
 /** Tower I's checkpoints that differ from the stub: an unlock each, Gems,
- * Gold and Ascension Shards, and its premium rewards. */
+ * Gold and Arcanite, and its premium rewards. */
 const TOWER_ONE: Record<number, CheckpointSet> = {
   10: { reward: unlock("damagePrediction"), premium: gold(100) },
   20: { reward: unlock("combatForecast"), premium: gems(10) },
@@ -107,10 +107,10 @@ const TOWER_ONE: Record<number, CheckpointSet> = {
   750: { premium: gems(35) },
   1000: { premium: gems(40) },
   1250: { premium: gems(45) },
-  1500: { reward: shards(5), premium: shards(10) },
+  1500: { reward: arcanite(5), premium: arcanite(10) },
   2000: { premium: gems(50) },
-  2500: { premium: shards(15) },
-  4500: { premium: shards(20) },
+  2500: { premium: arcanite(15) },
+  4500: { premium: arcanite(20) },
 };
 
 /** Tower II's checkpoints that differ from the stub: an unlock each, and Gold. */

@@ -4,6 +4,7 @@ import type { TierRecord } from "../tiers.ts";
 import type { ThemeId } from "../theme-collection.ts";
 import type { ArchivesSave } from "../progression/archives.ts";
 import type { ShrinesSave } from "../shrines.ts";
+import type { ArcanaRun, ArcanaSave } from "../arcana/arcana.ts";
 import type { CardId, CardLink } from "../cards/cards.ts";
 import type { BadgesSave } from "../cards/badges.ts";
 import type { CardBuysSave } from "../cards/buys.ts";
@@ -52,6 +53,9 @@ export type ModeSave<R extends Run = Run> = {
    * Cells, Gems, equipment), for its notes (run-notes.ts), kept beside
    * `runGold`. */
   runFinds: RunFinds;
+  /** What the current run has done with its arcana (arcana/arcana.ts), kept
+   * beside `runGold`, so undo never gives a toggle back. */
+  runArcana: ArcanaRun;
   /** Whether the current run has climbed past the tier's record (`reached`
    * as the run began), for the run's end dialog. */
   runRecord: boolean;
@@ -80,9 +84,11 @@ export type Save = {
    * spent on the Breakthrough tree. */
   breakthrough: number;
   gems: number;
-  /** Ascension Shards: a limited currency, kept between runs, bought only
-   * in the Shop's limited packs for now. */
-  ascensionShards: number;
+  /** Arcanite: a limited currency, kept between runs, spent on Arcana; bought
+   * in the Shop's limited packs and won in tournaments. */
+  arcanite: number;
+  /** The Arcana bought, and the choice waiting (arcana/arcana.ts). */
+  arcana: ArcanaSave;
   /** Medals: a limited currency, kept between runs, paid by the weekly
    * mission rewards (missions/catalog.ts) and Events' missions
    * (events/catalog.ts); nothing spends them yet. */
@@ -186,7 +192,7 @@ export type Save = {
    * dismissed; `goals`, opening the Goals page, led there from the Tower's
    * forest once a reward waits; and `autoClimbHint`, the note on floor 4
    * before Auto-Climb is owned, dismissed (or the climb ended). */
-  tutorials: { deck: boolean; removeCard: boolean; addCard: boolean; upgrades: boolean; gear: boolean; onTheJob: boolean; speed: boolean; climb: boolean; keys: boolean; autoClimb: boolean; stuck: boolean; enemy: boolean; enter: boolean; training: boolean; delve: boolean; chamber: boolean; cardPoints: boolean; research: boolean; archives: boolean; goals: boolean; autoClimbHint: boolean };
+  tutorials: { arcana: boolean; deck: boolean; removeCard: boolean; addCard: boolean; upgrades: boolean; gear: boolean; onTheJob: boolean; speed: boolean; climb: boolean; keys: boolean; autoClimb: boolean; stuck: boolean; enemy: boolean; enter: boolean; training: boolean; delve: boolean; chamber: boolean; cardPoints: boolean; research: boolean; archives: boolean; goals: boolean; autoClimbHint: boolean };
   /** Per tree: its currency earned since the tree was last shown (a Tower
    * run's Inspiration, ended; a Goal's Breakthrough point, claimed), so its
    * tab (and the Upgrades tab) wear a dot in the forest while a skill there

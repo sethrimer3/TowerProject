@@ -3,6 +3,7 @@ import type { Enemy, Tile } from "./entities.ts";
 import { snap } from "./exact.ts";
 import { PARRY_CAP } from "./combat.ts";
 import { drawAt } from "./random.ts";
+import { ARCANUM_IDS, drawOptions, isArcanum, OFFER_SIZE, unownedArcana, type ArcanaSave, type ArcanumId } from "./arcana/arcana.ts";
 import { isRecord, whole } from "./save/decode.ts";
 
 // Shrines (docs/agents/shrines.md): once Unlock Shrines is researched, a
@@ -21,7 +22,10 @@ type StandardBoon = { kind: "standard"; name: string; max: number; math: "multip
  * Trade-off Boons research, unless `fixed`) at a cost. `label` reads the
  * benefit's strength, 1 before research. */
 type TradeoffBoon = { kind: "tradeoff"; name: string; max: 1; label: (t: number) => string; fixed?: true };
-export type BoonDef = StandardBoon | TradeoffBoon;
+/** A spell boon: picked, it lends the climb an arcanum the player doesn't own,
+ * chosen from a few offered (`rollArcanumChoice`). */
+type SpellBoon = { kind: "spell"; name: string; max: number; label: (t: number) => string; fixed: true };
+export type BoonDef = StandardBoon | TradeoffBoon | SpellBoon;
 
 const times = (n: number) => `×${Number(n.toFixed(2))}`;
 const plus = (n: number, unit = "") => `+${Number(n.toFixed(2))}${unit}`;
@@ -34,8 +38,8 @@ const tradeoff = (name: string, label: (t: number) => string, fixed?: true): Tra
   ({ kind: "tradeoff", name, max: 1, label, ...(fixed ? { fixed } : {}) });
 
 /** Every boon, standard first, in the order the Shrine Boons page lists
- * them. Spell boons, Bounce Shot, Orbs and the ranged enemies' trade-off
- * wait for what they act on. */
+ * them. Bounce Shot, Orbs and the ranged enemies' trade-off wait for what
+ * they act on. */
 export const BOONS = {
   maxHp: multiply("Max HP", 5, 0.2),
   attack: multiply("ATK", 5, 0.15),
@@ -57,6 +61,7 @@ export const BOONS = {
   bossHp: tradeoff("Boss HP, Boss Strikes First", (t) => `Boss Health ${minus(0.7 * t)}, but Boss Strikes First`),
   lifesteal: tradeoff("Lifesteal, Parry % −70%", (t) => `Lifesteal ${times(1 + 1.5 * t)}, but Parry % −70%`),
   fastSecond: tradeoff("Fast Enemies Strike Second", () => `Fast Enemies Strike Second, but Their ATK ×2.5`, true),
+  unlockArcanum: { kind: "spell", name: "Unlock an Arcanum", max: ARCANUM_IDS.length, label: () => "Unlock an Arcanum for This Climb", fixed: true },
 } satisfies Record<string, BoonDef>;
 export type BoonId = keyof typeof BOONS;
 export const BOON_IDS = Object.keys(BOONS) as BoonId[];
@@ -256,11 +261,12 @@ export const defaultShrines = (): ShrinesSave => ({ autoPick: false, banned: [],
 
 /** What a Tower run keeps of its boons: those picked, in order; the draws
  * its offers have made; the offer waiting, if any; and the boons' effects
- * last applied to the hero and the enemies (`syncBoons`). */
-export type ShrineRun = { picked: BoonId[]; rolls: number; offer?: BoonId[]; applied?: Pick<BoonEffects, HeroFactor | "parryBonus" | "foes"> };
+ * last applied to the hero and the enemies (`syncBoons`); the arcana its
+ * spell boons lent it, and the choice of one waiting (`choosing`). */
+export type ShrineRun = { picked: BoonId[]; rolls: number; offer?: BoonId[]; arcana?: ArcanumId[]; choosing?: ArcanumId[]; applied?: Pick<BoonEffects, HeroFactor | "parryBonus" | "foes"> };
 
 /** The profile as offers read it. */
-export type OfferOwner = ShrineOwner & { shrines: ShrinesSave };
+export type OfferOwner = ShrineOwner & { shrines: ShrinesSave; arcana: Pick<ArcanaSave, "owned"> };
 
 /** The boons banned now: the first as many as Ban Boons research allows. */
 export const bans = (o: OfferOwner) => o.shrines.banned.slice(0, researched(o.archives, "boonBans"));
@@ -283,27 +289,37 @@ export const autoPickOpen = (o: ShrineOwner) => researched(o.archives, "autoPick
 
 /** Mixed into the run seed to start the offers' stream. */
 const SHRINE_SALT = 0x5a1e7;
-/** The chance in 80 an offer's slot is a trade-off: 15 against the
- * standard boons' 65 (Spell boons' 20 waits for spells). */
-const TRADEOFF_WEIGHT = 15, STANDARD_WEIGHT = 65;
+/** The chance an offer's slot is a trade-off, a standard boon or a spell boon:
+ * 15, 65 and, while one can be picked, 20. */
+const TRADEOFF_WEIGHT = 15, STANDARD_WEIGHT = 65, SPELL_WEIGHT = 20;
+
+/** The arcana a run's spell boon can still lend: not owned, not lent already. */
+export const arcanaToLend = (run: Pick<ShrineRun, "arcana">, o: Pick<OfferOwner, "arcana">) => unownedArcana(o.arcana).filter((id) => !run.arcana?.includes(id));
+/** Rolls the choice a spell boon gives, up to three, from the run's own stream. */
+export const rollArcanumChoice = (seed: number, run: ShrineRun, o: Pick<OfferOwner, "arcana">) =>
+  drawOptions(arcanaToLend(run, o), OFFER_SIZE, () => drawAt((seed ^ SHRINE_SALT) >>> 0, run.rolls++));
 
 /** Rolls the run's next offer: the First Boon Choice first on the run's
- * first, then each slot a trade-off (15 in 80) or a standard boon, drawn
+ * first, then each slot a trade-off, a standard boon or a spell boon (15, 65
+ * and 20, the last only while an arcanum is left to lend), drawn
  * from those with copies left, not banned and not already offered; a kind
  * with none left gives way to the other. The draws come from the run's own
  * stream (`run.rolls` counts them), so undo and a replay offer the same. */
 export function rollOffer(seed: number, run: ShrineRun, o: OfferOwner): BoonId[] {
   const n = copies(run.picked), banned = bans(o), offer: BoonId[] = [];
-  const open = (id: BoonId) => (n[id] ?? 0) < boon(id).max && !banned.includes(id) && !offer.includes(id);
+  const lendable = arcanaToLend(run, o).length > 0;
+  const open = (id: BoonId) => (n[id] ?? 0) < boon(id).max && !banned.includes(id) && !offer.includes(id) && (boon(id).kind !== "spell" || lendable);
   const draw = () => drawAt((seed ^ SHRINE_SALT) >>> 0, run.rolls++);
   const first = run.picked.length === 0 ? firstChoice(o) : undefined;
   if (first && open(first)) offer.push(first);
   while (offer.length < offerSize(o)) {
     const standard = BOON_IDS.filter((id) => boon(id).kind === "standard" && open(id));
     const tradeoffs = BOON_IDS.filter((id) => boon(id).kind === "tradeoff" && open(id));
-    if (!standard.length && !tradeoffs.length) break;
-    const wantsTradeoff = draw() * (TRADEOFF_WEIGHT + STANDARD_WEIGHT) < TRADEOFF_WEIGHT;
-    const pool = (wantsTradeoff && tradeoffs.length) || !standard.length ? tradeoffs : standard;
+    const spells = BOON_IDS.filter((id) => boon(id).kind === "spell" && open(id));
+    if (!standard.length && !tradeoffs.length && !spells.length) break;
+    const roll = draw() * (TRADEOFF_WEIGHT + STANDARD_WEIGHT + (spells.length ? SPELL_WEIGHT : 0));
+    const wanted = roll < TRADEOFF_WEIGHT ? tradeoffs : roll < TRADEOFF_WEIGHT + STANDARD_WEIGHT ? standard : spells;
+    const pool = wanted.length ? wanted : [standard, tradeoffs, spells].find((kind) => kind.length)!;
     offer.push(pool[Math.floor(draw() * pool.length)]!);
   }
   return offer;
@@ -372,6 +388,8 @@ const validPicks = (p: unknown): p is BoonId[] => Array.isArray(p) && p.every(is
 export function validShrineRun(r: any): r is ShrineRun {
   return isRecord(r) && validPicks(r.picked) && whole(r.rolls)
     && (r.offer === undefined || (Array.isArray(r.offer) && r.offer.every(isBoon)))
+    && (r.arcana === undefined || (Array.isArray(r.arcana) && r.arcana.every(isArcanum)))
+    && (r.choosing === undefined || (Array.isArray(r.choosing) && r.choosing.every(isArcanum)))
     && (r.applied === undefined || validApplied(r.applied));
 }
 

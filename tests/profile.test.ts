@@ -60,14 +60,14 @@ test("currencies earned count toward the profile, and spending never takes them 
   CURRENCIES.gems.credit(save, 10);
   CURRENCIES.gems.spend(save, 4);
   CURRENCIES.gold.credit(save, 100);
-  CURRENCIES.shards.credit(save, 2);
+  CURRENCIES.arcanite.credit(save, 2);
   CURRENCIES.medals.credit(save, 5);
   MODES.tower.pays!.credit(save, 3);
   // A standard Goal reward claimed pays a Breakthrough point.
   save.tower.reached = 10;
   claimGoal(save, 1, 10, false);
   const e = save.profile.earned;
-  assert.deepEqual([e.gems, e.gold, e.ascensionShards, e.medals, e.inspiration, e.breakthrough], [10, 100, 2, 5, 3, 1]);
+  assert.deepEqual([e.gems, e.gold, e.arcanite, e.medals, e.inspiration, e.breakthrough], [10, 100, 2, 5, 3, 1]);
 });
 
 test("Gold and Silver a run finds count toward the profile, and undo takes the Silver back", () => {

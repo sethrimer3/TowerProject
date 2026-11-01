@@ -588,9 +588,19 @@ _Avoid_: set, combo (Goldback's), stack
 The premium currency, kept between runs like Gold. Also the one lying on a run's floor now and then, collected by touching or tapping it.
 _Avoid_: diamond, crystal, premium
 
-**Ascension Shard**:
-A limited currency, kept between runs, bought in the Shop's limited packs (each at most once every two weeks). Shown as a green crystal.
-_Avoid_: shard (alone: an ATK or DEF shard is a pickup)
+**Arcanite**:
+A limited currency, kept between runs, spent on Arcana; bought in the Shop's limited packs (each at most once every two weeks) and won in tournaments. Shown as a green crystal.
+_Avoid_: shard (alone: an ATK or DEF shard is a pickup), Ascension Shard
+
+**Arcanum** (plural **Arcana**):
+A spell bought with Arcanite and kept for good, or lent to a climb by a Shrine boon, with three attributes to upgrade, set off by its own trigger in every run.
+_Avoid_: ability, power
+
+**Arcanum Damage**:
+What a damaging arcanum strikes with: its multiplier and the equipment's times the hero's ATK and the average of its crits, never rolled.
+
+**Ricochet**:
+Ricochet Shot's strike: an arrow's hit springing a white line to the closest other enemies on the floor. A ricochet never sets off another.
 
 **Medal**:
 A limited currency, kept between runs, earned from the weekly mission rewards and Events' missions. Nothing spends Medals yet. Shown as a gold disc on a red ribbon.
@@ -797,7 +807,7 @@ A small task the player is given, two every 8 hours (from 00:00 GMT), such as *A
 _Avoid_: quest, task, challenge, daily (alone)
 
 **Weekly reward**:
-One of seven prizes for every 5 daily missions claimed in the week (Monday 00:00 GMT to the next), up to 35: Gold, Gems, Medals and Ascension Shards. Each can be claimed once a week.
+One of seven prizes for every 5 daily missions claimed in the week (Monday 00:00 GMT to the next), up to 35: Gold, Gems, Medals and Arcanite. Each can be claimed once a week.
 _Avoid_: weekly mission (nothing is asked beyond the daily missions), chest
 
 ### Events
@@ -846,3 +856,6 @@ _Avoid_: known tiles, visit map
 - **Keymaster**: the second Proving Grounds boss, which drops golden keys when struck, teleports into a ghost and retreats from the player while its tough chest mimics pursue.
 - **Trial golden key**: a Keymaster encounter pickup spent on a mimic or cardinal door, separate from a daily trial entry key.
 - **Door spirits**: red particles released once from a Keymaster door that converge on the boss and remove 20% of its maximum HP on arrival.
+- **Magic Tower**: the third Proving Grounds boss, a high-HP arcane spire with per-turn regeneration that pops out Gold and Silver coins when struck and resolves one combat round per turn with no turn limit.
+- **Obelisk**: the fourth Proving Grounds boss, a massive-HP monolith fought under a per-run turn limit (raised by Archives research) that fires periodic shots and Arcane Pulses and saves inflicted damage across trial runs.
+- **Boss part**: one of three auxiliary structures (`Blaster Turret`, `Regen Conduit`, `Ward Crystal`) in the `1b` and `2b` multi-part boss sub-variants; knocking a part out permanently disables its activity and removes it from the floor without regeneration.

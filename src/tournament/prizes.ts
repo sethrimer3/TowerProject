@@ -4,8 +4,8 @@ import { LEAGUES, withinTop, type League } from "./leagues.ts";
 // player's global percentile in it. The server will send the live table;
 // this one is the fallback, and the design reference (docs/TOURNAMENT.md).
 
-/** A prize: Ascension Shards and Gems. */
-export type Prize = { shards: number; gems: number };
+/** A prize: Arcanite and Gems. */
+export type Prize = { arcanite: number; gems: number };
 
 /** Each prize level's lower bound, as the top percent of entrants it
  * reaches down to: level 1 is the top 3%, level 2 the next 4% (to 7%) …
@@ -15,7 +15,7 @@ export const PRIZE_LEVEL_TOP: readonly number[] = [3, 7, 13, 20, 28, 36, 44, 52,
 
 /** Each league's prizes, level 1 first. Levels 2 to 9 are tuned to keep
  * the oscillation rule (see `oscillationFailures`). */
-const table = (shards: number[], gems: number[]): Prize[] => shards.map((s, i) => ({ shards: s, gems: gems[i]! }));
+const table = (arcanite: number[], gems: number[]): Prize[] => arcanite.map((s, i) => ({ arcanite: s, gems: gems[i]! }));
 export const PRIZES: Record<League, readonly Prize[]> = {
   copper: table([20, 17, 14, 12, 10, 9, 8, 7, 6, 5], [100, 80, 60, 40, 35, 30, 25, 20, 15, 10]),
   silver: table([40, 33, 26, 20, 18, 16, 15, 14, 13, 12], [200, 150, 100, 50, 48, 46, 45, 44, 42, 40]),
@@ -50,7 +50,7 @@ export function oscillationFailures(prizes: Record<League, readonly Prize[]>, de
   const failures: string[] = [];
   for (let i = 0; i + 1 < LEAGUES.length; i++) {
     const lower = LEAGUES[i]!, upper = LEAGUES[i + 1]!;
-    for (const c of ["shards", "gems"] as const) {
+    for (const c of ["arcanite", "gems"] as const) {
       const l3 = prizes[lower][2]![c], l4 = prizes[lower][3]![c], up10 = prizes[upper][9]![c];
       const ok = demotes(upper) ? l3 + up10 >= 2 * l4 : up10 >= l4;
       if (!ok) failures.push(`${lower} → ${upper} ${c}`);

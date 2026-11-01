@@ -211,10 +211,10 @@ export class TournamentDesk {
   /** Pays the prize the server granted for tournament `id`, once. */
   claim(id: string, prize: Prize) {
     if (this.t.claimed.includes(id)) return false;
-    CURRENCIES.shards.credit(this.host.save, prize.shards);
+    CURRENCIES.arcanite.credit(this.host.save, prize.arcanite);
     CURRENCIES.gems.credit(this.host.save, prize.gems);
     this.t.claimed = [...this.t.claimed, id].slice(-CLAIMS_KEPT);
-    this.host.message = `+${prize.gems} Gems, +${prize.shards} Ascension Shards`;
+    this.host.message = `+${prize.gems} Gems, +${prize.arcanite} Arcanite`;
     return true;
   }
 }

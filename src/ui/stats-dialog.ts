@@ -12,7 +12,7 @@ const EARNED: [LifetimeCurrency, string][] = [
   ["gold", "Gold earned"],
   ["silver", "Silver earned"],
   ["gems", "Gems earned"],
-  ["ascensionShards", "Ascension Shards earned"],
+  ["arcanite", "Arcanite earned"],
   ["cells", "Cells earned"],
   ["medals", "Medals earned"],
   ["inspiration", "Inspiration earned"],

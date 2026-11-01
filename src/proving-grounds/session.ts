@@ -1,3 +1,4 @@
+import { defaultArcana } from "../arcana/arcana.ts";
 import type { TrainingId } from "../progression/training.ts";
 import { Game } from "../state.ts";
 import { random } from "../random.ts";
@@ -14,6 +15,7 @@ export class TrialSession {
   constructor(private base: Game, readonly state: TrialState) {
     const save=structuredClone(base.save);
     delete save.provingGrounds;
+    save.arcana=defaultArcana();
     save.delve.run=null;
     const game=this.game=new Game(save,random(state.seed));
     state.displayHand ??= [...(state.mode!=="manual"?state.hand:base.hand)];
@@ -43,7 +45,7 @@ export class TrialSession {
     game.auto=state.mode!=="manual" && state.playing && state.status==="active";
     game.handStuck=false;game.world=trialBoard(state);
     game.save.gemDrop={...this.base.save.gemDrop};game.save.goldBoostUntil=this.base.save.goldBoostUntil;
-    for(const key of ["gold","gems","ascensionShards","medals"] as const) game.save[key]=this.base.save[key];
+    for(const key of ["gold","gems","arcanite","medals"] as const) game.save[key]=this.base.save[key];
   }
   capture() {
     const p=this.game.run.player;

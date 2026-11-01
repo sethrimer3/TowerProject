@@ -36,15 +36,17 @@ import { decodeFinds, defaultFinds, validNotes } from "../run-notes.ts";
 import { isFoeKey } from "../cards/foe-cards.ts";
 import { decodeCardXp } from "../cards/levels.ts";
 import { decodeCardBuys, defaultCardBuys } from "../cards/buys.ts";
+import { decodeArcana, decodeArcanaRun, defaultArcana, defaultArcanaRun } from "../arcana/arcana.ts";
 import { totalCardLevels, treeNode, decodeCardTrees, pointsSpent } from "../cards/trees.ts";
 export function defaults(): Save {
   return {
     version: 4,
-    tower: { run: null, history: [], fall: null, best: 0, reached: 0, inspiration: 0, lootedTiles: {}, runGold: 0, runFinds: defaultFinds(), runBoostGold: null, runCurrency: 0, runRecord: false, tier: 1, tiersOpen: 1, tierRecords: {} },
-    delve: { run: null, history: [], fall: null, best: 0, reached: 0, lootedTiles: {}, runGold: 0, runFinds: defaultFinds(), runBoostGold: null, runCurrency: 0, runRecord: false, memory: { known: {}, visited: {} }, tier: 1, tiersOpen: 1, tierRecords: {} },
+    tower: { run: null, history: [], fall: null, best: 0, reached: 0, inspiration: 0, lootedTiles: {}, runGold: 0, runFinds: defaultFinds(), runArcana: defaultArcanaRun(), runBoostGold: null, runCurrency: 0, runRecord: false, tier: 1, tiersOpen: 1, tierRecords: {} },
+    delve: { run: null, history: [], fall: null, best: 0, reached: 0, lootedTiles: {}, runGold: 0, runFinds: defaultFinds(), runArcana: defaultArcanaRun(), runBoostGold: null, runCurrency: 0, runRecord: false, memory: { known: {}, visited: {} }, tier: 1, tiersOpen: 1, tierRecords: {} },
     breakthrough: 0,
     gems: 0,
-    ascensionShards: 0,
+    arcanite: 0,
+    arcana: defaultArcana(),
     medals: 0,
     cells: 0,
     gemDrop: defaultGemDrop(),
@@ -78,7 +80,7 @@ export function defaults(): Save {
     manualHand: [],
     manualSlots: 0,
     badges: defaultBadges(),
-    tutorials: { deck: false, removeCard: false, addCard: false, upgrades: false, gear: false, onTheJob: false, speed: false, climb: false, keys: false, autoClimb: false, stuck: false, enemy: false, enter: false, training: false, delve: false, chamber: false, cardPoints: false, research: false, archives: false, goals: false, autoClimbHint: false },
+    tutorials: { arcana: false, deck: false, removeCard: false, addCard: false, upgrades: false, gear: false, onTheJob: false, speed: false, climb: false, keys: false, autoClimb: false, stuck: false, enemy: false, enter: false, training: false, delve: false, chamber: false, cardPoints: false, research: false, archives: false, goals: false, autoClimbHint: false },
     treeNotices: { inspiration: false, breakthrough: false },
     seen: { level: 0, training: 0, archives: 0, cards: [...BASE_HAND], cardLevels: 0, met: [...BASE_HAND] },
     archives: defaultArchives(),
@@ -267,7 +269,7 @@ function decodeDelveRun(r: any): DelveRun | null {
 }
 
 // --- Mode slices ---
-type DecodedMode<R extends Run> = Pick<ModeSave<R>, "run" | "history" | "fall" | "lootedTiles" | "runGold" | "runBoostGold" | "runCurrency" | "runRecord" | "runFinds">;
+type DecodedMode<R extends Run> = Pick<ModeSave<R>, "run" | "history" | "fall" | "lootedTiles" | "runGold" | "runBoostGold" | "runCurrency" | "runRecord" | "runFinds" | "runArcana">;
 type RunDecoder<R extends Run> = (raw: any) => R | null;
 const validSnapshot = (value: any) => !!value && finite(value.best) && finite(value.xp);
 function snapshot<R extends Run>(value: any, decodeRun: RunDecoder<R>): MoveSnapshot<R> | null {
@@ -320,6 +322,7 @@ function decodeMode<R extends Run>(s: any, undoCapacity: number, decodeRun: RunD
     runCurrency: run ? count(s.runCurrency, 0) : 0,
     runRecord: !!run && s.runRecord === true,
     runFinds: run ? decodeFinds(s.runFinds) : defaultFinds(),
+    runArcana: run ? decodeArcanaRun(s.runArcana) : defaultArcanaRun(),
   };
 }
 function applyMode<R extends Run>(slice: ModeSave<R>, decoded: DecodedMode<R>) {
@@ -332,6 +335,7 @@ function applyMode<R extends Run>(slice: ModeSave<R>, decoded: DecodedMode<R>) {
   slice.runCurrency = decoded.runCurrency;
   slice.runRecord = decoded.runRecord;
   slice.runFinds = decoded.runFinds;
+  slice.runArcana = decoded.runArcana;
 }
 
 // --- Settings, currencies and records ---
@@ -357,7 +361,8 @@ function decodeUpgrades(raw: any, d: Save) {
 function decodeProgress(s: any, d: Save, undoCapacity: number) {
   d.gold = fraction(s.gold, d.gold);
   d.gems = count(s.gems, d.gems);
-  d.ascensionShards = count(s.ascensionShards, d.ascensionShards);
+  // TODO: drop `ascensionShards` in a later save version (renamed Arcanite).
+  d.arcanite = count(s.arcanite ?? s.ascensionShards, d.arcanite);
   d.medals = count(s.medals, d.medals);
   d.cells = fraction(s.cells, d.cells);
   d.gemDrop = decodeGemDrop(s.gemDrop);
@@ -504,6 +509,7 @@ export function decode(raw: string | null): Save {
     d.events = decodeEvents(s.events);
     d.relics = decodeRelics(s.relics);
     d.shrines = decodeShrines(s.shrines);
+    d.arcana = decodeArcana(s.arcana);
     d.themes = decodeThemes(s.themes);
     const trial = decodeTrial(s.provingGrounds);
     d.trialAccess = decodeTrialAccess(s.trialAccess);
@@ -527,7 +533,7 @@ export function decode(raw: string | null): Save {
     d.cardBuys = decodeCardBuys(s.cardBuys);
     d.cardTrees = decodeCardTrees(s.cardTrees, d.cardXp, d.cardBuys.opened);
     d.badges = decodeBadges(s.badges, d.upgrades, researched(d.archives, "badgeSlots"), d.goals);
-    for (const k of ["deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob", "speed", "climb", "keys", "autoClimb", "stuck", "enemy", "enter", "training", "delve", "chamber", "cardPoints", "research", "archives", "goals", "autoClimbHint"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
+    for (const k of ["arcana", "deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob", "speed", "climb", "keys", "autoClimb", "stuck", "enemy", "enter", "training", "delve", "chamber", "cardPoints", "research", "archives", "goals", "autoClimbHint"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
     // A player who has already spent a card point needs no lesson on it.
     if (CARD_IDS.some((id) => pointsSpent(d.cardTrees, id) > 0)) d.tutorials.cardPoints = true;
     // Nor does one who has already researched in the Archives need their lesson.

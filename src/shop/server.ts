@@ -17,7 +17,7 @@ export interface ShopServer {
 }
 
 /** Whether the stub store confirms `sku` unpaid: for now, the Gem packs
- * and the Ascension Shard packs, so they can be tried out. */
+ * and the Arcanite packs, so they can be tried out. */
 export const stubConfirms = (sku: string) => sku.startsWith("gems_") || sku.startsWith("shards_");
 
 /** The stand-in until the server exists.

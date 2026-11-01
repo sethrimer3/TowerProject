@@ -7,5 +7,5 @@ export const BOON_SPRITES = {
   parry: "boon-parry", floorReq: "boon-floor-req", playSpeed: "boon-play-speed", attackBossHp: "boon-attack-boss-hp",
   goldMaxHp: "boon-gold-max-hp", enemyHpRegen: "boon-enemy-hp-regen", enemyAttack: "boon-enemy-attack", floorSilver: "boon-floor-silver",
   regenMaxHp: "boon-regen-max-hp", bossHp: "boon-boss-hp", lifesteal: "boon-lifesteal", fastSecond: "boon-fast-second",
-} satisfies Record<BoonId, string>;
+} satisfies Record<Exclude<BoonId, "unlockArcanum">, string>;
 export const SHRINE_CONTROL_SPRITES = ["shrine-count", "shrine-grip", "shrine-auto", "shrine-ban"] as const;

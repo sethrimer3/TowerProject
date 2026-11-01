@@ -12,7 +12,7 @@ export type ShopItem =
   | { kind: "currency"; currency: CurrencyId; amount: number }
   /** A permanent perk, with any currencies granted beside it. */
   | { kind: "entitlement"; id: EntitlementId; amounts?: Partial<Record<CurrencyId, number>> }
-  /** Several currencies at once, such as a pack of Ascension Shards and Gems. */
+  /** Several currencies at once, such as a pack of Arcanite and Gems. */
   | { kind: "bundle"; amounts: Partial<Record<CurrencyId, number>> }
   /** The running Event's booster: its Medals doubled, retroactively, and its
    * premium relics opened (events/progress.ts). */

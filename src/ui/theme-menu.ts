@@ -4,7 +4,7 @@ import { factorText } from "../economy/gold-multipliers.ts";
 import type { Toast } from "./research-toast.ts";
 import type { PageGame } from "./app.ts";
 import { CURRENCIES, type CurrencyId } from "../shop/currency.ts";
-import { UI_ASSET_BASE, el, gemIcon, goldIcon, medalIcon, shardIcon } from "./dom.ts";
+import { UI_ASSET_BASE, el, gemIcon, goldIcon, medalIcon, arcaniteIcon } from "./dom.ts";
 
 /** Each kind's menu heading and the line over its heading. */
 const HEADINGS: Record<ThemeKind, { title: string; kicker: string }> = {
@@ -19,7 +19,7 @@ export function wornName(save: PageGame["save"], kind: ThemeKind) {
   return themesOf(kind).map((id) => THEMES[id]).find((t) => t.look === look)?.name ?? CLASSIC_NAME;
 }
 
-const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon(), shards: () => shardIcon(), gold: goldIcon, medals: () => medalIcon() };
+const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon(), arcanite: () => arcaniteIcon(), gold: goldIcon, medals: () => medalIcon() };
 
 /** A theme granted (Dev mode gives them all), announced as research is. */
 export const themeToast = (id: ThemeId): Toast => ({

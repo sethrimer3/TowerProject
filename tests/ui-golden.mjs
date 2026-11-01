@@ -313,6 +313,33 @@ try {
         g.run.shrine = { picked: [], rolls: 0, offer: ["attack", "goldMaxHp"] };
         return { save: JSON.stringify(g.save), targets: [] };
       })(),
+      // Arcana: the first Arcanite in the forest; one owned, at its highest; and inside a run.
+      arcanaForest: forest((s) => {
+        quiet(s);
+        Object.keys(s.tutorials).forEach(k => s.tutorials[k] = true);
+        s.tutorials.arcana = false;
+        s.arcanite = 20;
+      }),
+      arcanaMaxed: forest((s) => {
+        quiet(s);
+        Object.keys(s.tutorials).forEach(k => s.tutorials[k] = true);
+        s.arcanite = 3;
+        s.arcana.owned.ricochetShot = [31, 4, 14];
+      }),
+      arcanaRun: inside((s) => {
+        quiet(s);
+        s.arcana.owned.ricochetShot = [2, 1, 3];
+      }),
+      arcanaBoon: (() => {
+        const s = defaults(); quiet(s);
+        Object.keys(s.tutorials).forEach(k => s.tutorials[k] = true);
+        s.upgrades.archives = 1;
+        s.archives.levels.unlockShrines = 1;
+        const g = new Game(s); g.newRun({ seed: 7 });
+        g.run.height = g.run.maxHeight = 199;
+        g.run.shrine = { picked: [], rolls: 0, offer: ["unlockArcanum", "attack"] };
+        return { save: JSON.stringify(g.save), targets: [] };
+      })(),
       // The first run inside with Auto-Climb, its note waiting.
       lessonAutoClimb: inside((s) => {
         quiet(s);
@@ -1058,6 +1085,38 @@ try {
     await shot("shrines.taken");
     await page.locator("#boon-autopick").check();
     await shot("shrines.auto");
+  });
+  await section("arcana", async () => {
+    await load("arcanaForest");
+    await shot("arcana.lesson");
+    await click('nav [data-tab="gear"]');
+    await shot("arcana.empty");
+    await click("#arcana-help");
+    await shot("arcana.help");
+    await click("#tree-help-ok");
+    await click("#arcana-select");
+    await shot("arcana.choice");
+    await click('[data-arcana-buy="ricochetShot"]');
+    await shot("arcana.bought");
+    await click('[data-arcana-up="ricochetShot:0"]');
+    await shot("arcana.upgraded");
+    await click('[data-arcana-row="ricochetShot"] h3');
+    await shot("arcana.info");
+    await load("arcanaMaxed");
+    await click('nav [data-tab="gear"]');
+    await shot("arcana.maxed");
+    await load("arcanaRun");
+    await click('[data-run-tab="arcana"]');
+    await shot("arcana.cards");
+    await click(".arcana-switch");
+    await shot("arcana.toggled");
+    await click(".arcana-card .drill-name");
+    await shot("arcana.cardInfo");
+    await load("arcanaBoon");
+    await click("#shrine-bar");
+    await shot("arcana.boon");
+    await click('[data-boon="unlockArcanum"]');
+    await shot("arcana.boonChoice");
   });
   await section("shield", async () => {
     await load("shieldUp");

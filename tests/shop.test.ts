@@ -19,7 +19,7 @@ const gemOffer = (amount: number): ShopOffer => ({
   price: { kind: "currency", currency: "gold", amount }, rarity: "common", purchaseLimit: 2, effects: [], tags: [],
 });
 
-test("the catalog: the Ascension Shard packs, one-time packs, the daily Gems, the Gem packs, the Premium Passes and the Event Booster at their default prices", () => {
+test("the catalog: the Arcanite packs, one-time packs, the daily Gems, the Gem packs, the Premium Passes and the Event Booster at their default prices", () => {
   const shown = OFFERS.map((o) => [o.id, o.price.kind === "money" ? o.price.label : o.price.kind]);
   assert.deepEqual(shown, [
     ["shards300", "$29.99"], ["shards750", "$59.99"], ["adFree", "$9.95"], ["coins2", "$9.95"], ["coins3", "$29.95"], ["dailyGems", "free"],
@@ -90,25 +90,25 @@ test("a real-money offer is granted only once the store confirms payment, or fre
   assert.deepEqual(g.save.shop.history.map((t) => t.price), ["$9.99", "Dev: free"]);
 });
 
-test("each Ascension Shard pack grants Shards and Gems, once every two weeks of Shop days", () => {
+test("each Arcanite pack grants Shards and Gems, once every two weeks of Shop days", () => {
   const g = new Game(defaults());
   assert.equal(g.shop.buy("shards300", NOON, true), null);
   assert.equal(g.shop.buy("shards750", NOON, true), null, "each pack has its own limit");
-  assert.deepEqual([g.save.ascensionShards, g.save.gems], [1050, 850]);
+  assert.deepEqual([g.save.arcanite, g.save.gems], [1050, 850]);
   const again = (gmtDay(NOON) + SHARD_PACK_DAYS) * DAY_MS;
   assert.equal(g.shop.buy("shards300", again - 1, true), "limit", "the last moment of the two weeks");
   assert.equal(availableAgain(g.save, offer("shards300")!), again);
   assert.equal(g.shop.buy("shards300", again, true), null);
-  assert.equal(g.save.ascensionShards, 1350);
-  assert.equal(g.save.shop.history[0].item, "300 Ascension Shards + 250 Gems");
+  assert.equal(g.save.arcanite, 1350);
+  assert.equal(g.save.shop.history[0].item, "300 Arcanite + 250 Gems");
   assert.ok(stubConfirms("shards_300") && stubConfirms("gems_250") && !stubConfirms("coins_x2"), "the stub store confirms only the Gem and shard packs");
 });
 
-test("Ascension Shards are saved, and a bad count decodes to none", () => {
+test("Arcanite are saved, and a bad count decodes to none", () => {
   const save = defaults();
-  save.ascensionShards = 42;
-  assert.equal(decode(JSON.stringify(save)).ascensionShards, 42);
-  assert.equal(decode(JSON.stringify({ ...save, ascensionShards: -3 })).ascensionShards, 0);
+  save.arcanite = 42;
+  assert.equal(decode(JSON.stringify(save)).arcanite, 42);
+  assert.equal(decode(JSON.stringify({ ...save, arcanite: -3 })).arcanite, 0);
 });
 
 test("one-time packs are bought once, kept by an erase, grant their Gems and multiply every Gold banked", () => {

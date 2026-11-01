@@ -9,6 +9,8 @@ import { ARENA_CRATES, ARENA_POTIONS, ARENA_TORCHES, beamCount, beamDirections, 
 
 import {drawKeymaster,drawKeymasterTransit,drawMimic,drawDoorSpirits} from "./keymaster-art.ts";
 import {KEYMASTER_DOORS,DOOR_FLIGHT_MS} from "./keymaster.ts";
+import {drawMagicTowerBoss,drawObeliskBoss,drawBossPart,drawBossMinion,drawCombatRoundOverlay} from "./boss-variants-art.ts";
+import {activeBossParts} from "./boss-variants.ts";
 import { drawLightElemental, drawElementalTransit, TELEPORT_MS } from "./elemental-art.ts";
 export { drawLightElemental } from "./elemental-art.ts";
 import {TrialCamera,TRIAL_VIEW_TILES,TRIAL_TILE_SIZE,type TrialTransition} from "./camera.ts";
@@ -32,6 +34,8 @@ export class TrialRenderer {
   private teleportAt = -Infinity;
   private lastStep = -1;
   private jumpedAt = -Infinity;
+  private lastCombatStep = -1;
+  private combatAt = -Infinity;
   private heroAt: {x:number;y:number;room:TrialState["room"]}|null=null;
   private facing={dx:0,dy:-1};
   private heroIdle=new HeroIdleAnimation();
@@ -51,7 +55,13 @@ export class TrialRenderer {
     this.camera.update(s,now,reduceMotion,options.transition,options.pathAhead);
     const styled=true,animated=!!options.spriteAnimations;
     // Animation is presentation only; saved turns own all positions.
-    if(this.lastState!==s) { this.lastState=s; this.lastStep=s.steps; this.jumpedAt=-Infinity; this.lastTeleport=s.elemental.teleport; this.teleportAt=-Infinity;this.heroAt=null;this.facing={dx:0,dy:-1}; }
+    if(this.lastState!==s) { this.lastState=s; this.lastStep=s.steps; this.jumpedAt=-Infinity; this.lastCombatStep=s.bossVariant?.lastRound?.step??-1; this.combatAt=-Infinity; this.lastTeleport=s.elemental.teleport; this.teleportAt=-Infinity;this.heroAt=null;this.facing={dx:0,dy:-1}; }
+    if(s.bossVariant?.lastRound && s.bossVariant.lastRound.step!==this.lastCombatStep) {
+      this.lastCombatStep=s.bossVariant.lastRound.step;
+      this.combatAt=now;
+      const r=s.bossVariant.lastRound;
+      if(Math.abs(r.to.x-r.from.x)+Math.abs(r.to.y-r.from.y)===1)this.facing={dx:r.to.x-r.from.x,dy:r.to.y-r.from.y};
+    }
     if(this.heroAt) {
       const dx=s.player.x-this.heroAt.x,dy=s.player.y-this.heroAt.y;
       if(this.heroAt.room!==s.room)this.facing={dx:0,dy:1};
@@ -117,11 +127,36 @@ export class TrialRenderer {
         paintContents(c,{kind:"potion",color:"red"},{...p,time:now,reduceMotion,styledSprites:styled,spriteAnimations:animated,seed:s.seed});
 
       });
+      if (s.bossVariant) {
+        for (const item of s.bossVariant.pickups) {
+          tile(item.x, item.y, () => {
+            if (item.kind === "attack" || item.kind === "defense") {
+              paintContents(c, { kind: item.kind, amount: item.amount }, { x: item.x, y: item.y, time: now, reduceMotion, styledSprites: styled, spriteAnimations: animated, seed: s.seed });
+            } else if (item.kind === "potion") {
+              paintContents(c, { kind: "potion", color: "red" }, { x: item.x, y: item.y, time: now, reduceMotion, styledSprites: styled, spriteAnimations: animated, seed: s.seed });
+            } else {
+              c.fillStyle = item.kind === "gold" ? "#ffd34d" : "#d9e6f5";
+              c.beginPath();
+              c.arc(12, 14, 4, 0, Math.PI * 2);
+              c.fill();
+              c.strokeStyle = "#1b1408";
+              c.lineWidth = 1;
+              c.stroke();
+            }
+          });
+        }
+      }
     }
     const hero=this.camera.hero(s);
-    tile(hero.x,hero.y,()=>paintHero(c,this.facing,idle));
+    const combatProgress=s.bossVariant?.lastRound ? (reduceMotion ? 0.5 : Math.min(1, Math.max(0, (now - this.combatAt) / 380))) : 1;
+    const roundLunge = s.bossVariant?.lastRound && s.bossVariant.lastRound.heroDamage > 0 && combatProgress < 1
+      ? Math.sin(combatProgress * Math.PI) * 0.32
+      : 0;
+    const heroDrawX = hero.x + (s.bossVariant?.lastRound ? (s.bossVariant.lastRound.to.x - s.bossVariant.lastRound.from.x) * roundLunge : 0);
+    const heroDrawY = hero.y + (s.bossVariant?.lastRound ? (s.bossVariant.lastRound.to.y - s.bossVariant.lastRound.from.y) * roundLunge : 0);
+    tile(heroDrawX,heroDrawY,()=>paintHero(c,this.facing,idle));
     if (s.room === "arena") {
-      if(!s.keymaster) {
+      if(!s.keymaster && !s.bossVariant) {
         const d=this.darkness.getContext("2d")!;
         d.globalCompositeOperation="source-over"; d.fillStyle="#000"; d.fillRect(0,0,SIZE,SIZE);
         d.globalCompositeOperation="destination-out";
@@ -188,7 +223,10 @@ export class TrialRenderer {
         }
         if(transit>.78) tile(boss.x,boss.y,()=> {
           c.save(); c.globalAlpha=transit<1?(transit-.78)/.22:1;
-          if(s.keymaster)drawKeymaster(c,now,reduceMotion,boss.incorporeal);else drawLightElemental(c,boss.incorporeal,now,reduceMotion);
+          if(s.keymaster)drawKeymaster(c,now,reduceMotion,boss.incorporeal);
+          else if(s.trialId==="magic-tower")drawMagicTowerBoss(c,now,reduceMotion);
+          else if(s.trialId==="obelisk")drawObeliskBoss(c,now,reduceMotion);
+          else drawLightElemental(c,boss.incorporeal,now,reduceMotion);
           c.fillStyle=boss.incorporeal?"#344651":"#3b2922"; c.fillRect(1,23,22,1);
           c.fillStyle=boss.incorporeal?"#91d3ea":"#ffe4a0"; c.fillRect(1,23,22*s.bossHp/s.bossMaxHp,1);
           c.restore();
@@ -205,8 +243,15 @@ export class TrialRenderer {
           drawDoorSpirits(c,{x:px(p.x),y:py(p.y)},{x:px(s.elemental.x),y:py(s.elemental.y)},b.elapsed/DOOR_FLIGHT_MS,s.seed^b.door,reduceMotion);
         }
       }
+      if(s.bossVariant) {
+        for(const part of activeBossParts(s.bossVariant))tile(part.x,part.y,()=>drawBossPart(c,part,now,reduceMotion));
+        for(const minion of s.bossVariant.minions)tile(minion.x,minion.y,()=>drawBossMinion(c,minion,now,reduceMotion));
+        if(s.bossVariant.lastRound && combatProgress < 1) {
+          drawCombatRoundOverlay(c,s.bossVariant.lastRound,combatProgress,px,py);
+        }
+      }
       // Telegraph only near the elemental, without revealing the unlit room.
-      if(!s.keymaster && s.status==="active" && s.steps%10>=8) {
+      if(!s.keymaster && !s.bossVariant && s.status==="active" && s.steps%10>=8) {
         c.fillStyle="#ffeaa8";
         for(const [dx,dy] of beamDirections(nextBeamAxis(s),beamCount(s.level))) for(let i=1;i<=3;i++) tile(s.elemental.x+dx*i,s.elemental.y+dy*i,()=>c.fillRect(11,11,2,2));
       }

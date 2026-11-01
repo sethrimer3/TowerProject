@@ -184,6 +184,8 @@ export const RESEARCH_TARGETS = {
   runNotes: { name: "Climb Notes", base: 0, shown: opened },
   /** Badges each card can hold. */
   badgeSlots: { name: "Badge Slots", base: 1, shown: count },
+  /** Turns allowed per Obelisk boss trial run before the encounter ends. */
+  trialTurns: { name: "Trial Turns", base: 100, shown: count },
 } as const;
 export type ResearchTarget = keyof typeof RESEARCH_TARGETS;
 
@@ -976,6 +978,13 @@ export const RESEARCH = {
     requires: [{ upgrade: "archives" }, { upgrade: "cardBadges" }, { goalUnlock: "badgeSlots" }],
     // 1 billion Gold and 4 days, then 100 billion and 20 days.
     levels: [levelOf("badgeSlots", 1, 1e9, 4 * 24 * 60), levelOf("badgeSlots", 1, 100e9, 20 * 24 * 60)],
+  },
+  trialTurns: {
+    name: "Trial Turns",
+    description: "Extend your stamina in the Obelisk trial: each level grants 10 more turns per run to inflict damage on the boss.",
+    categories: ["special"],
+    requires: [{ upgrade: "archives" }, { playerLevel: 10 }],
+    levels: countLevels("trialTurns", 20, 10),
   },
 } satisfies Record<string, ResearchDefinition>;
 export type ResearchId = keyof typeof RESEARCH;

@@ -32,6 +32,7 @@ const NOTES: Record<BoardLesson, { greeting?: string; title: string; text?: stri
   delve: { title: "A tournament is open: follow the path down to the Delve and enter its cave." },
   goals: { title: "Tower Goals are ready to claim.", text: "Every ten floors climbed pays a Goal reward. Press Goals to claim yours." },
   provisions: PROVISIONS_NOTE,
+  arcana: { title: "Spend Arcanite to obtain and upgrade Arcana - mighty spells that unlock new powers." },
 };
 
 /** What each lesson's pointing hands point at, and from where (the
@@ -43,7 +44,7 @@ function targets(lesson: BoardLesson | "back"): HTMLElement[] {
   const tab = (id: string) => document.querySelector<HTMLElement>(`nav [data-tab="${id}"]`);
   const found = {
     climb: [card("stairs")], keys: [card("key"), card("door")], autoClimbHint: [], autoClimb: [], stuck: [], enemy: [],
-    upgrades: [tab("upgrades")], enter: [el("enter-run")], research: [tab("research")], trainingPoints: [tab("research")], cards: [tab("deck")], goals: [el("section-pick")], delve: [el("forest-sign")], provisions: [tab("gear")], back: [tab("board")],
+    upgrades: [tab("upgrades")], enter: [el("enter-run")], research: [tab("research")], trainingPoints: [tab("research")], cards: [tab("deck")], goals: [el("section-pick")], delve: [el("forest-sign")], provisions: [tab("gear")], arcana: [tab("gear")], back: [tab("board")],
   }[lesson] as (HTMLElement | null)[];
   return found.filter((t): t is HTMLElement => !!t);
 }

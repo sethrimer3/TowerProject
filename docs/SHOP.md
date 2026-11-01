@@ -8,15 +8,15 @@ This document is the reference for the Shop's design: what Version 1 does, how i
 
 ### The page, top to bottom
 
-1. **Currencies**: the pages' currencies bar (Gold, Gems and Ascension Shards held), as on the other pages that spend them; its chevron opens every currency held.
-2. **Limited Offers**, in two columns: the Ascension Shard packs, each bought at most once every two weeks (14 Shop days from the day of its last purchase; until then its button reads *Purchased* with *Next in 13d hh:mm:ss* under it):
+1. **Currencies**: the pages' currencies bar (Gold, Gems and Arcanite held), as on the other pages that spend them; its chevron opens every currency held.
+2. **Limited Offers**, in two columns: the Arcanite packs, each bought at most once every two weeks (14 Shop days from the day of its last purchase; until then its button reads *Purchased* with *Next in 13d hh:mm:ss* under it):
 
    | Offer | Grants | Default price |
    |---|---|---|
-   | 300 Ascension Shard Pack | 300 Ascension Shards + 250 Gems | $29.99 |
-   | 750 Ascension Shard Pack | 750 Ascension Shards + 600 Gems | $59.99 |
+   | 300 Arcanite Pack | 300 Arcanite + 250 Gems | $29.99 |
+   | 750 Arcanite Pack | 750 Arcanite + 600 Gems | $59.99 |
 
-   **Ascension Shards** are a limited currency, kept between runs (`save.ascensionShards`), with a green crystal icon wherever they are shown: after Gems in the currencies bar of the Upgrades, Research, Deck and Gear pages, in the Shop's currencies, and in the forest's purse under Gems (the purse's lines close up there to make room). Nothing spends them yet. An offer can also be a banner that only opens the store (*Go to store*), and an offer with an end time shows *Expires in hh:mm:ss*, and it can't be bought once that time has passed, whatever the page still shows.
+   **Arcanite** are a limited currency, kept between runs (`save.arcanite`), with a green crystal icon wherever they are shown: after Gems in the currencies bar of the Upgrades, Research, Deck and Gear pages, in the Shop's currencies, and in the forest's purse under Gems (the purse's lines close up there to make room). Nothing spends them yet. An offer can also be a banner that only opens the store (*Go to store*), and an offer with an end time shows *Expires in hh:mm:ss*, and it can't be bought once that time has passed, whatever the page still shows.
 3. **One-Time Offers** not yet owned. Each can be bought once, with real money; prices come from the server, with these defaults until it answers:
 
    | Offer | Does | Default price |
@@ -47,7 +47,7 @@ The Shop's day runs from 00:00 to 00:00 GMT on the **server's** clock. A claim o
 
 ### The server and the store (stubbed)
 
-`ShopServer` (`src/shop/server.ts`) is everything the Shop asks of the outside world: the time, real-money prices by sku, taking payment for a sku, and opening the store. Until they are set up, `stubServer` stands in: the device clock serves as the server's (so the shard packs' two weeks count on it for now), the default prices show, the store confirms the Gem packs and the Ascension Shard packs without payment (`stubConfirms`, so they can be tried out) and nothing else, and *Go to store* does nothing. Dev mode's free purchases grant real-money offers without the store, for testing.
+`ShopServer` (`src/shop/server.ts`) is everything the Shop asks of the outside world: the time, real-money prices by sku, taking payment for a sku, and opening the store. Until they are set up, `stubServer` stands in: the device clock serves as the server's (so the shard packs' two weeks count on it for now), the default prices show, the store confirms the Gem packs and the Arcanite packs without payment (`stubConfirms`, so they can be tried out) and nothing else, and *Go to store* does nothing. Dev mode's free purchases grant real-money offers without the store, for testing.
 
 ## How it is built
 
@@ -55,7 +55,7 @@ Offers, items, currencies, entitlements, the ledger and the Shop's clock are sep
 
 | Module | Holds |
 |---|---|
-| `currency.ts` | The currencies offers can be priced in or grant (`CURRENCIES`: Gems, Ascension Shards, Gold): how each is read, spent and credited. |
+| `currency.ts` | The currencies offers can be priced in or grant (`CURRENCIES`: Gems, Arcanite, Gold): how each is read, spent and credited. |
 | `rarity.ts` | `RARITIES`, from Common to Ancestral: display name, colour, power multiplier and drop weight, as data. |
 | `items.ts` | What an offer grants (`ShopItem`: an amount of a currency, a `bundle` of several currencies, an entitlement, or the running Event's booster, `eventBoost`, bought once an event and sold on the Events page in the `passes` category: docs/EVENTS.md), checking it can be granted before anything is paid, and granting it to its owner. |
 | `entitlements.ts` | The permanent perks (`ENTITLEMENTS`), saved in `save.entitlements`, and what the game reads from them: `goldFactor` (read by `RunPurse.gold` in `game/run-purse.ts`), `permanentBoost` (the training boost's end is set to never) and `adsOff`. The Premium Passes (`pass1` to `pass3`) are entitlements too, read by the Goals screen (`goals.ts`) and sold from it as the `passes` category, which the Shop page doesn't list. Erasing progress keeps them. |
@@ -108,7 +108,7 @@ None of these is built yet; the model leaves room for each.
 - **Randomized equipment**: `GenerateItem(itemType, rarity, level, seed)` making an item's base stats, modifiers and unique effect from a seeded stream of its own; gem slots with randomized sub-effects and their own reroll currency, with more slots at higher rarities and levels. Its details would list *Guaranteed* effects apart from *Possible* ones. The item is generated before anything is paid, so the transaction stays all or nothing, and a *View in inventory* button follows the purchase.
 - **Purchase history for players**: the ledger already keeps the last 100 transactions; today only Dev mode shows them.
 - **Dynamic pricing**: prices from the server per player or per region.
-- **Special currencies**: tokens and others, each one row in `CURRENCIES` and shown in the Shop's currency bar, as Ascension Shards are.
+- **Special currencies**: tokens and others, each one row in `CURRENCIES` and shown in the Shop's currency bar, as Arcanite are.
 - **More categories**: Featured, Equipment (Modules, Weapons, Armor), Resources, Consumables, Special and History, as tabs once there are enough of them; some gated by tier rewards (*Reach Tower 8 to unlock*).
 - **Notifications**: *NEW*, *SALE*, *EXPIRING* and *FREE* tags on the Shop button and on cards, cleared once seen or claimed.
 - **Connected purchases**: restoring entitlements from the store's receipts, and asking the server for the time, the prices and the limited offers.

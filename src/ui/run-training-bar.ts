@@ -4,8 +4,11 @@ import { TRAINING, TRAINING_GROUPS, type TrainingId } from "../progression/train
 import { runTrainingBulk, runTrainingOffer, runTrainingValue } from "../progression/run-training.ts";
 import { bindBuyQuantity, buyQuantityHtml, runCount } from "./buy-quantity-select.ts";
 import { trainingText, runTrainingOpen } from "../progression/loadout.ts";
-import { DECK_ICON, el, itemSprite, POINTER_SVG, uiSprite } from "./dom.ts";
+import { arcaniteIcon, DECK_ICON, el, itemSprite, POINTER_SVG, uiSprite } from "./dom.ts";
+import { arcanum, RUN_TOGGLES, type ArcanumId } from "../arcana/arcana.ts";
+import type { HeldArcanum } from "../game/arcana-desk.ts";
 import { priceAmount, sparkRed } from "./hud.ts";
+import { shortAmount } from "../whole.ts";
 import { levelSkipsOf } from "../enemies/level-skips.ts";
 
 type Group = keyof typeof TRAINING_GROUPS;
@@ -18,9 +21,11 @@ const GROUP_ICONS: Record<Group, string> = {
 const silverIcon = () => uiSprite("gold", "ui-sprite silver-sprite");
 /** The arrow on the Auto tab's cards: its hand plays by itself. */
 const AUTO_ARROW = `<svg class="auto-arrow" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 5H8M5.5 2.5L8 5L5.5 7.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+/** How long the number of toggles left shows after a toggle, in ms. */
+const TOGGLES_SHOWN_MS = 900;
 /** What the bar shows in the hand's place: the hand (null), the Manual
- * hand, or a Training group's rows. */
-type Open = Group | "manual" | null;
+ * hand, a Training group's rows, or the run's Arcana. */
+type Open = Group | "manual" | "arcana" | null;
 
 /** The run's training bar under the hand: tabs, Hand first (named Auto,
  * its cards wearing an arrow, once Auto-Climb is owned or the run holds a
@@ -28,7 +33,8 @@ type Open = Group | "manual" | null;
  * those cards in the hand's place, to press, then a button
  * for each Training group, each only its icon while not selected, so the
  * bar fits a phone beside Buy Quantity, and its icon and name while
- * selected. Hand, selected as a run starts, shows the hand; a group shows
+ * selected, then Arcana once the run holds any: their cards, each with a
+ * switch, in the hand's place. Hand, selected as a run starts, shows the hand; a group shows
  * that group's rows in the hand's place, a card each, scrolled sideways, to
  * buy a rank for this run with Silver. Pressing or hovering a card's face
  * shows what it trains and its level; pressing it again hides that. The bar
@@ -59,15 +65,15 @@ export class RunTrainingBar {
 
   private gameSource: () => Game;
   private get game() { return this.gameSource(); }
-  constructor(game: Game | (() => Game), private changed: () => void, private available: (id: TrainingId) => boolean = () => true) {
+  constructor(game: Game | (() => Game), private changed: () => void, private available: (id: TrainingId) => boolean = () => true, private showArcanum: (held: HeldArcanum) => void = () => {}) {
     this.gameSource=typeof game==="function"?game:()=>game;
     const bar = el("training-bar");
     bar.innerHTML = `<button type="button" data-run-tab="hand" aria-pressed="true"></button><button type="button" data-run-tab="manual" aria-pressed="false" aria-label="Manual" title="Your Manual hand: its cards act only when you press them" hidden>${DECK_ICON}<span class="group-name">Manual</span></button>` + (Object.entries(TRAINING_GROUPS) as [Group, string][])
       .map(([group, name]) => `<button type="button" data-run-group="${group}" aria-pressed="false" aria-label="${name}">${GROUP_ICONS[group]}<span class="group-name">${name}</span></button>`)
-      .join("") + `<span class="run-buy-quantity"></span>`;
+      .join("") + `<button type="button" data-run-tab="arcana" aria-pressed="false" aria-label="Arcana" title="Your Arcana: their cards switch them on and off for this run" hidden>${arcaniteIcon("arcanite-icon group-sprite")}<span class="group-name">Arcana</span></button><span class="run-buy-quantity"></span>`;
     bar.onclick = (e) => {
       const button = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-run-group], [data-run-tab]");
-      if (button && !button.disabled) this.select((button.dataset.runGroup as Group | undefined) ?? (button.dataset.runTab === "manual" ? "manual" : null));
+      if (button && !button.disabled) this.select((button.dataset.runGroup as Group | undefined) ?? (button.dataset.runTab === "manual" || button.dataset.runTab === "arcana" ? button.dataset.runTab : null));
     };
     this.bindCards(el("run-drills"));
   }
@@ -90,6 +96,13 @@ export class RunTrainingBar {
     cards.onclick = (e) => {
       const target = e.target as HTMLElement, buy = target.closest<HTMLButtonElement>("[data-run-train]");
       if (buy) return this.buy(buy);
+      const toggle = target.closest<HTMLButtonElement>("[data-arcana-toggle]");
+      if (toggle) return this.toggleArcanum(toggle);
+      const arcanumCard = target.closest<HTMLElement>(".arcana-card");
+      if (arcanumCard) {
+        const held = this.game.arcana.held.find((h) => h.id === arcanumCard.dataset.arcanum);
+        return void (held && this.showArcanum(held));
+      }
       const card = target.closest<HTMLElement>(".drill-card");
       if (!card) return;
       if (card === this.tipFor && this.tipPressed) return this.hideTip();
@@ -98,7 +111,7 @@ export class RunTrainingBar {
     };
     cards.addEventListener("pointerover", (e) => {
       if (e.pointerType !== "mouse") return;
-      const card = (e.target as HTMLElement).closest<HTMLElement>(".drill-card");
+      const card = (e.target as HTMLElement).closest<HTMLElement>(".drill-card:not(.arcana-card)");
       if (card && card !== this.tipFor) this.showTip(card);
     });
     // A mouse leaving the card hides its details, even into the strip's
@@ -125,7 +138,7 @@ export class RunTrainingBar {
 
   /** The Training group open, if one is. */
   private get group() {
-    return this.open === "manual" ? null : this.open;
+    return this.open === "manual" || this.open === "arcana" ? null : this.open;
   }
 
   /** Whether the Manual hand shows in the hand's place: its tab selected,
@@ -141,19 +154,20 @@ export class RunTrainingBar {
 
   /** Shows the bar inside a run, and the open group's cards in the hand's place. */
   render() {
-    const game = this.game, training = !game.run.outside && game.trainsOnTheJob, inside = training || this.holdsManual;
+    const game = this.game, training = !game.run.outside && game.trainsOnTheJob, arcana = game.arcana.held, inside = training || this.holdsManual || arcana.length > 0;
     el("training-bar").hidden = !inside;
     // Hand is selected outside a run and as one starts, and once the open
     // group has no rows to train (or the run no Manual hand).
     const run = `${game.mode}:${game.run.seed}`;
-    const gone = this.open === "manual" ? !this.holdsManual : this.open && !this.rows(this.open).length;
+    const gone = this.open === "manual" ? !this.holdsManual : this.open === "arcana" ? !arcana.length : this.open && !this.rows(this.open).length;
     if (!inside || run !== this.run || gone) this.open = null;
     this.run = run;
     this.renderTabs(training);
     this.renderQuantity();
     const group = this.group, rows = group ? this.rows(group) : [];
-    document.querySelector("nav")!.classList.toggle("drilling", !!group);
-    this.renderCards(rows);
+    document.querySelector("nav")!.classList.toggle("drilling", !!group || this.open === "arcana");
+    if (this.open === "arcana") this.renderArcana(arcana);
+    else this.renderCards(rows);
     this.renderLesson(inside);
   }
 
@@ -180,10 +194,14 @@ export class RunTrainingBar {
     manual.hidden = !this.holdsManual;
     manual.classList.toggle("selected", this.open === "manual");
     manual.setAttribute("aria-pressed", String(this.open === "manual"));
+    const arcana = bar.querySelector<HTMLButtonElement>(`[data-run-tab="arcana"]`)!;
+    arcana.hidden = !this.game.arcana.held.length;
+    arcana.classList.toggle("selected", this.open === "arcana");
+    arcana.setAttribute("aria-pressed", String(this.open === "arcana"));
     document.querySelectorAll<HTMLButtonElement>("[data-run-group]").forEach((b) => {
       const group = b.dataset.runGroup as Group, open = this.rows(group).length > 0;
       // Utility stays hidden until one of its rows can be trained.
-      b.hidden = (!training && this.holdsManual) || (group === "utility" && !open);
+      b.hidden = !training || (group === "utility" && !open);
       b.disabled = !open;
       b.title = open ? `${TRAINING_GROUPS[group]} training for this ${MODES[this.game.mode].words.run}, with Silver` : `No ${TRAINING_GROUPS[group]} training unlocked yet`;
       b.classList.toggle("selected", group === this.open);
@@ -218,6 +236,35 @@ export class RunTrainingBar {
       }).join("");
     }
     for (const id of rows) this.fill(id);
+  }
+
+  /** The run's Arcana cards in the hand's place: built again only when the
+   * arcana held change; their values and switches kept up on every redraw. */
+  private renderArcana(held: HeldArcanum[]) {
+    const key = `arcana:${held.map((h) => h.id).join()}`;
+    if (key !== this.shown) {
+      this.shown = key;
+      this.hideTip();
+      el("run-drills").innerHTML = held.map(({ id }) => `<div class="drill-card arcana-card" role="listitem" data-arcanum="${id}"><b class="drill-name">${arcanum(id).name}</b><span class="drill-value"></span><button type="button" class="arcana-switch" role="switch" data-arcana-toggle="${id}" aria-label="${arcanum(id).name}"><i></i></button></div>`).join("");
+    }
+    for (const h of held) {
+      const card = document.querySelector<HTMLElement>(`.arcana-card[data-arcanum="${h.id}"]`)!, on = this.game.arcana.isOn(h.id), value = this.game.arcana.cardValue(h);
+      card.classList.toggle("off", !on);
+      card.querySelector(".drill-value")!.textContent = value.damage === undefined ? value.text ?? "" : `${shortAmount(value.damage)} DMG`;
+      card.querySelector(".arcana-switch")!.setAttribute("aria-checked", String(on));
+    }
+  }
+
+  /** A press on an arcanum's switch: on or off, the toggles left rising off it, or red sparks with none left. */
+  private toggleArcanum(button: HTMLButtonElement) {
+    const game = this.game;
+    if (!game.arcana.toggle(button.dataset.arcanaToggle as ArcanumId)) return sparkRed(button, game.save.settings.reduceMotion);
+    this.changed();
+    const left = game.arcana.togglesLeft;
+    button.closest(".arcana-card")!.querySelector(".arcana-toggles-left")?.remove();
+    button.insertAdjacentHTML("afterend", `<span class="arcana-toggles-left" title="Toggles left this run, of ${RUN_TOGGLES}">${left}</span>`);
+    const shown = button.nextElementSibling!;
+    setTimeout(() => shown.remove(), TOGGLES_SHOWN_MS);
   }
 
   /** Ends the lesson, and plays the hand on if the lesson paused it. */

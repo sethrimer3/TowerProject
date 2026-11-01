@@ -2,7 +2,7 @@ import type { Tile } from "./entities.ts";
 import { OutsideWorld, OUTSIDE_SIZE, OUTSIDE_START_Y } from "./outside.ts";
 
 export const FISHERMAN_DIALOGUE = "Come back later, traveller...";
-export const FISHERMAN = { x: 6, y: 8 } as const;
+export const FISHERMAN = { x: 5, y: 8 } as const;
 /** A fixed shore keeps the path and dock connected for every run seed. */
 const SHORE = [11, 11, 12, 12, 12, 13, 13, 13, 13, 14, 14, 15, 16, 16, 17, 17, 18, 18, 19, 19];
 export const shoreAt = (y: number) => SHORE[Math.max(0, Math.min(OUTSIDE_SIZE - 1, y))];

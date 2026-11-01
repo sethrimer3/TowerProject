@@ -56,7 +56,7 @@ Every 5 daily missions **claimed** in the week (counted as each is claimed, not 
 The week runs from Monday 00:00 GMT; the tally and rewards claimed start over then, and a reward left unclaimed is gone.
 Gold is the daily mission's Gold for the highest tower open, times the multiplier (`WEEKLY_REWARDS`, `weeklyReward`).
 
-| Completed | Gold | Gems | Medals | Ascension Shards | Training Points |
+| Completed | Gold | Gems | Medals | Arcanite | Training Points |
 |---|---|---|---|---|---|
 | 5 | ×3 | 10 | 0 | 0 | 1 |
 | 10 | ×4 | 15 | 10 | 0 | 1 |
@@ -80,7 +80,7 @@ Each weekly reward's **Training Point** adds to those the hero's levels earn (`s
   Below, how many missions the list holds out of 8 and when the next two come (or, at 8, to claim or complete one to make room), then each mission: what it asks, what it pays, its bar, and once complete a Claim button.
   The currencies bar tops the screen, as it does the Upgrades page.
   What a daily mission pays flies from its Claim button to the bar, nothing to press away (`flyToPurse` in `ui/flourish.ts`): each currency's icon and amount, one a moment after the other, fading as it lands on its currency, which shows its new amount only then and swells a moment; a material, with no place on the bar, rises and fades where it was claimed; with Reduce motion on, each shows still over its currency and fades.
-  A weekly reward's currencies rise to the middle of the screen one celebration each in turn (`revealReward`: Gold, Gems, Medals, Ascension Shards, Training Points, those it pays), each pressed away to show the next; a Skip button at the top right, on each but the last, passes over the rest (they are paid already).
+  A weekly reward's currencies rise to the middle of the screen one celebration each in turn (`revealReward`: Gold, Gems, Medals, Arcanite, Training Points, those it pays), each pressed away to show the next; a Skip button at the top right, on each but the last, passes over the rest (they are paid already).
 
 ## Future
 

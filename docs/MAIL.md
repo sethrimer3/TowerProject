@@ -20,7 +20,7 @@ Examples:
 
 ```ts
 type MailItem =
-  | { kind: "currency"; currency: CurrencyId; amount: number }  // Gems, Ascension Shards, Gold
+  | { kind: "currency"; currency: CurrencyId; amount: number }  // Gems, Arcanite, Gold
   | { kind: "tickets"; amount: number }                          // Tournament Tickets
   | { kind: "unknown" };                                         // a kind this client doesn't know
 
@@ -91,7 +91,7 @@ The missed prize comes as Mail:
 - **id** `tournament:<id>`
 - **subject** *Your Tournament prize*
 - **body** the date, the final place and league (*Wednesday 7 October · 12th of 1,000 in the Copper League*), and that the prize waits here.
-- **items** the prize level's Gems and Ascension Shards.
+- **items** the prize level's Gems and Arcanite.
 
 The server sends it only once the window has closed, and refuses the Tournament claim from then on, so a prize is claimable in exactly one place.
 
@@ -137,7 +137,7 @@ Mail past its time (`kept`) is dropped from the inbox as the server's next answe
 - **Mail button:** `#mail-button`, the envelope (`mailIcon()` in `ui/dom.ts`) over *MAIL*, in the forest's menu (`.run-menu-items`) after Relics. Its state comes from `renderMailButton` in `ui/hud.ts`: hidden inside a run or with no recent mail, with a dot (`notify`) while any is unread. Check that the column still fits at phone height (360×640) with the Tournament button, Settings and Mail.
 - **Mail popup** (`ui/mail-dialog.ts`, `MailDialog`, in the shared dialog):
   - **List:** *INBOX* over *Mail*, and *Close* at the foot. One row a message: the unread dot, the subject (ellipsized), the gift box while items wait, and how long ago it came (*now*, *5m*, *2h*, *3d*). A row with nothing to claim has its own X button; one with unclaimed items has none.
-  - **Message:** *MAIL* and the date it was sent (*5 October 2026 at 12:00 GMT*), the subject, and the body as paragraphs. Then the items, each item's icon (`gemIcon`, `shardIcon`, `goldIcon`, `ticketIcon`), amount and name, with a check once claimed. Then *Back* to the list and *Claim*, or *Claimed*. While claiming, *Claiming…*; if it fails, *Couldn't reach the server. Try again later.*
+  - **Message:** *MAIL* and the date it was sent (*5 October 2026 at 12:00 GMT*), the subject, and the body as paragraphs. Then the items, each item's icon (`gemIcon`, `arcaniteIcon`, `goldIcon`, `ticketIcon`), amount and name, with a check once claimed. Then *Back* to the list and *Claim*, or *Claimed*. While claiming, *Claiming…*; if it fails, *Couldn't reach the server. Try again later.*
   - Claiming closes the dialog for the reward's reveal, and pressing the reveal away opens it again on the message, now claimed.
   - The phone's Back closes the message view, then the popup.
   - Every word from the server is escaped (`escapeHtml` in `ui/dom.ts`).

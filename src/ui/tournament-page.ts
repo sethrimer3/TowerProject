@@ -5,7 +5,7 @@ import { PRIZE_LEVEL_TOP, PRIZES, placeText, prizeLevel, type Prize } from "../t
 import { tournamentStatFactor } from "../tournament/run.ts";
 import { CLAIM_MS, shortCountdown } from "../tournament/schedule.ts";
 import type { AppContext } from "./app.ts";
-import { el, gemIcon, shardIcon, ticketIcon, trophyIcon } from "./dom.ts";
+import { el, gemIcon, arcaniteIcon, ticketIcon, trophyIcon } from "./dom.ts";
 import { revealReward } from "./reward-reveal.ts";
 import { REFUSALS } from "./tournament-entry.ts";
 
@@ -23,8 +23,8 @@ export const leagueTrophy = (league: League, className = "league-trophy") =>
 
 /** A countdown on the page: *2d 5h*, *7h 12m*, *12m*. */
 const countdown = (ms: number) => shortCountdown(ms).replace(/([dh])(?=\d)/g, "$1 ");
-/** A prize: its Ascension Shards and Gems. */
-const prizeHtml = (p: Prize) => `<span class="tournament-prize">${shardIcon()}<b>${p.shards.toLocaleString("en-US")}</b>${gemIcon()}<b>${p.gems.toLocaleString("en-US")}</b></span>`;
+/** A prize: its Arcanite and Gems. */
+const prizeHtml = (p: Prize) => `<span class="tournament-prize">${arcaniteIcon()}<b>${p.arcanite.toLocaleString("en-US")}</b>${gemIcon()}<b>${p.gems.toLocaleString("en-US")}</b></span>`;
 /** A prize level's share of entrants: *Top 3%*, *3–7%* … *Bottom 20%*. */
 const levelShare = (i: number) =>
   i === 0 ? `Top ${PRIZE_LEVEL_TOP[0]}%` : i === PRIZE_LEVEL_TOP.length - 1 ? `Bottom ${100 - PRIZE_LEVEL_TOP[i - 1]!}%` : `${PRIZE_LEVEL_TOP[i - 1]}–${PRIZE_LEVEL_TOP[i]}%`;
@@ -175,7 +175,7 @@ export class TournamentPage {
     this.message = prize ? "" : REFUSALS.offline;
     if (prize)
       revealReward(
-        { icon: gemIcon(), amount: `+${prize.gems.toLocaleString("en-US")}`, kicker: "TOURNAMENT PRIZE", name: "Gems", text: `+${prize.shards.toLocaleString("en-US")} Ascension Shards`, permanent: false },
+        { icon: gemIcon(), amount: `+${prize.gems.toLocaleString("en-US")}`, kicker: "TOURNAMENT PRIZE", name: "Gems", text: `+${prize.arcanite.toLocaleString("en-US")} Arcanite`, permanent: false },
         this.ctx.game.save.settings.reduceMotion,
       );
     this.render();

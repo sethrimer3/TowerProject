@@ -6,6 +6,7 @@ import type { Renderer } from "../render/rendering.ts";
 import { levelForXp, xpForLevel } from "../progression/xp.ts";
 import { USED_PROVISIONS } from "../economy/provisions.ts";
 import { provisionsOpen, researchOpen } from "../progression/loadout.ts";
+import { arcanaOpen } from "../arcana/arcana.ts";
 import { outsideWeather } from "../outside.ts";
 import { tierNumeral, tierRewardText } from "../tiers.ts";
 import { MODES, milestones } from "../modes.ts";
@@ -125,18 +126,18 @@ function purseRate(game: Game, id: string, perMinute: number | null, name: strin
   el(id).parentElement!.title = `${name} found a minute, over the last minute of play: ${dev ? "∞" : rate === null ? "—" : rate.toLocaleString("en-US")} (tap for ${name} held)`;
 }
 
-/** The purse: Gems, Ascension Shards in the forest, then Gold and, inside a
+/** The purse: Gems, Arcanite in the forest, then Gold and, inside a
  * run, the run's Silver, counting up to what they rose to. In the forest
  * Silver shows what the next run starts with, once that is any. */
 function renderPurse(game: Game) {
   const now = performance.now(), instant = game.save.settings.reduceMotion;
   purse(game, "gems", game.save.gems, "Gems, kept between climbs");
-  purse(game, "shards", game.save.ascensionShards, "Ascension Shards, kept between climbs");
-  el("shards").parentElement!.hidden = !game.run.outside;
+  purse(game, "arcanite", game.save.arcanite, "Arcanite, kept between climbs");
+  el("arcanite").parentElement!.hidden = !game.run.outside;
   // Medals show only in the forest, once held, where the purse has room.
   purse(game, "medals", game.save.medals, "Medals, kept between climbs");
   el("medals").parentElement!.hidden = !game.run.outside || game.save.medals <= 0;
-  el("shards").closest(".purse")!.classList.toggle("forest", !!game.run.outside);
+  el("arcanite").closest(".purse")!.classList.toggle("forest", !!game.run.outside);
   const gold = goldShown.show(game.save.gold, now, instant);
   const showRates = rates.shown && !game.run.outside;
   el("gold").closest(".purse")!.classList.toggle("rates", showRates);
@@ -195,12 +196,12 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay,
   renderTabs(game);
 }
 
-/** The currencies bar's Gold, Gems and Ascension Shards, in full to 9,999,
+/** The currencies bar's Gold, Gems and Arcanite, in full to 9,999,
  * then shortened; the rest are in the dialog its chevron opens. */
 function renderCurrencyBar(game: Game) {
   barAmount("gold-held", heldAmount(game, game.save.gold));
   barAmount("gems-held", heldAmount(game, game.save.gems));
-  barAmount("shards-held", heldAmount(game, game.save.ascensionShards));
+  barAmount("arcanite-held", heldAmount(game, game.save.arcanite));
 }
 
 /** The Dash Combo meter under the purse, while the combo is 1 or more. */
@@ -229,7 +230,7 @@ function renderTabs(game: Game) {
     document.querySelector(`[data-tab="${tab}"]`)?.classList.toggle("notify", game.notices.waiting(tab));
   renderDeckCount(game);
   renderLockedTab("research", researchOpen(game.save), "Research", "Gain a level or unlock Trainers in the Inspiration tree");
-  renderLockedTab("gear", provisionsOpen(game.save) || game.save.equipment.unlocked, "Gear", "Unlock a provision in the Inspiration tree");
+  renderLockedTab("gear", provisionsOpen(game.save) || game.save.equipment.unlocked || arcanaOpen(game.save), "Gear", "Unlock a provision in the Inspiration tree");
   document.querySelector(`[data-tab="gear"]`)?.classList.toggle("notify", game.notices.waiting("gear"));
   renderShopDot(game);
 }

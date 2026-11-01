@@ -60,13 +60,13 @@ export type ShopOffer = {
   tags: string[];
 };
 
-/** A limited pack of Ascension Shards with Gems beside them, once a fortnight. */
-const shardPack = (id: OfferId, shards: number, gems: number, sku: string, label: string, rarity: RarityId): ShopOffer => ({
-  id, name: `${shards} Ascension Shard Pack`, category: "limited", item: { kind: "bundle", amounts: { shards, gems } }, quantity: 1,
+/** A limited pack of Arcanite with Gems beside them, once a fortnight. */
+const arcanitePack = (id: OfferId, arcanite: number, gems: number, sku: string, label: string, rarity: RarityId): ShopOffer => ({
+  id, name: `${arcanite} Arcanite Pack`, category: "limited", item: { kind: "bundle", amounts: { arcanite, gems } }, quantity: 1,
   price: { kind: "money", sku, label }, rarity, purchaseLimit: 1, period: SHARD_PACK_DAYS,
   effects: ["Every two weeks"], tags: ["limited"],
 });
-/** Shop days between purchases of each Ascension Shard pack. */
+/** Shop days between purchases of each Arcanite pack. */
 export const SHARD_PACK_DAYS = 14;
 
 const gemPack = (id: OfferId, gems: number, sku: string, label: string, rarity: RarityId, badge?: string): ShopOffer => ({
@@ -76,8 +76,8 @@ const gemPack = (id: OfferId, gems: number, sku: string, label: string, rarity: 
 
 /** Every offer, in the order the page shows each category's. */
 export const OFFERS: readonly ShopOffer[] = [
-  shardPack("shards300", 300, 250, "shards_300", "$29.99", "legendary"),
-  shardPack("shards750", 750, 600, "shards_750", "$59.99", "mythic"),
+  arcanitePack("shards300", 300, 250, "shards_300", "$29.99", "legendary"),
+  arcanitePack("shards750", 750, 600, "shards_750", "$59.99", "mythic"),
   {
     id: "adFree", name: "Permanent Ad-Disable", category: "special", item: { kind: "entitlement", id: "adFree" }, quantity: 1,
     price: { kind: "money", sku: "ad_free", label: "$9.95" }, rarity: "epic", purchaseLimit: 1,
