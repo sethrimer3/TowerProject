@@ -4,6 +4,7 @@ import { ARENA_POTIONS, ARENA_SIZE, ELEMENTAL, arenaFloor, directions, key, same
 import { difficultyMultiplier } from "./catalog.ts";
 import type { SavedBossProgress } from "./access.ts";
 import type { TrialState } from "./trial.ts";
+import { heroAttackOn } from "./trial-spells.ts";
 
 export const OBELISK_DEFAULT_TURNS = 100;
 export const OBELISK_SHOT_INTERVAL = 3;
@@ -312,7 +313,7 @@ function popCoinsOnBossHit(s: TrialState, origin: Spot, step: number): CombatCoi
 
 /** Resolves a single round of combat between the hero and a minion (never to the death). */
 function roundFightMinion(s: TrialState, minion: BossMinion, step: number): { heroDamage: number; enemyDamage: number; defeated: boolean } {
-  const heroStrike = Math.max(1, Math.round(s.player.attack - minion.defense));
+  const heroStrike = Math.max(1, Math.round(heroAttackOn(s, minion) - minion.defense));
   minion.hp = Math.max(0, minion.hp - heroStrike);
   if (minion.hp === 0) {
     s.bossVariant!.minions = s.bossVariant!.minions.filter((m) => m.id !== minion.id);
@@ -398,7 +399,7 @@ export function bossVariantStep(s: TrialState, x: number, y: number): { changed:
     const bossDef = effectiveBossDef(s);
     const wardAlive = v.parts.some((p) => p.id === "ward" && p.hp > 0);
     const heroDef = wardAlive ? Math.floor(s.player.defense * 0.8) : s.player.defense;
-    const heroStrike = Math.max(1, Math.round(s.player.attack - bossDef));
+    const heroStrike = Math.max(1, Math.round(heroAttackOn(s, s.elemental) - bossDef));
     const actualBossDmg = Math.min(s.bossHp, heroStrike);
     s.bossHp = Math.max(0, s.bossHp - heroStrike);
     v.damageThisRun += actualBossDmg;
@@ -444,7 +445,7 @@ export function bossVariantStep(s: TrialState, x: number, y: number): { changed:
   } else if (part) {
     // Single round of combat against a boss part.
     move = false;
-    const heroStrike = Math.max(1, Math.round(s.player.attack - part.defense));
+    const heroStrike = Math.max(1, Math.round(heroAttackOn(s, part) - part.defense));
     const actualPartDmg = Math.min(part.hp, heroStrike);
     part.hp = Math.max(0, part.hp - heroStrike);
     v.damageThisRun += actualPartDmg;

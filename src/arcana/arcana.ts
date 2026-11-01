@@ -1,6 +1,6 @@
 import type { CritRule } from "../combat.ts";
 import { STELLAR_FACTOR } from "../environments.ts";
-import { drawAt } from "../random.ts";
+import { drawAt, tileRandom } from "../random.ts";
 import { isRecord, wholeIn } from "../save/decode.ts";
 
 // Arcana (docs/agents/arcana.md): mighty spells bought and upgraded with
@@ -109,6 +109,29 @@ export const ARCANA = {
     summary: ([bonus, angle, beams]) => `${beams === 1 ? "A spotlight beam" : `${countOf(beams)} spotlight beams`} of ${angle}° from the hero, turning 4° clockwise each turn, through walls and out to the area's edges. Enemies in ${beams === 1 ? "it" : "them"} take ${bonus.toFixed(1)}× ATK on hits from your ATK.`,
     effect: ([bonus, angle, beams]) => `${bonus.toFixed(1)}× · ${angle}° · ${countOf(beams)} ${beams === 1 ? "beam" : "beams"}`,
   },
+  thunderbolt: {
+    name: "Thunderbolt",
+    trigger: { on: "cooldown", turns: ([, , turns]) => turns },
+    attributes: [
+      {
+        name: "ATK Mult",
+        shown: (v) => `${countOf(v)}x`,
+        steps: [[10, 0], [11, 5], [13, 11], [16, 17], [20, 23], [26, 29], [34, 35], [43, 41], [55, 47], [69, 53], [87, 61], [108, 71], [134, 84], [164, 100], [200, 120], [243, 144], [293, 174], [352, 210], [421, 252], [502, 302], [597, 362], [708, 432], [838, 528], [989, 654], [1165, 810], [1370, 996], [1608, 1222], [1886, 1488], [2209, 1804], [2585, 2180], [3021, 2636], [3776, 2742], [4720, 2848], [5900, 2954], [7375, 3060], [9219, 3166]],
+      },
+      {
+        name: "Quantity",
+        shown: countOf,
+        steps: [[5, 0], [6, 4], [7, 12], [8, 35], [9, 70], [10, 120], [11, 180], [12, 275], [13, 350], [14, 420], [15, 500], [16, 600], [17, 750], [18, 950], [19, 1200], [20, 1500]],
+      },
+      {
+        name: "Cooldown",
+        shown: (v) => `${v} turns`,
+        steps: [[180, 0], [170, 8], [160, 24], [150, 40], [140, 56], [130, 72], [120, 88], [110, 104], [100, 120], [90, 136], [80, 152], [70, 168], [60, 184], [50, 200], [40, 216], [30, 232], [20, 750]],
+      },
+    ],
+    summary: ([mult, bolts, turns]) => `Every ${turns} turns, ${countOf(bolts)} thunderbolts strike random enemies on the floor, with ${countOf(mult * 100)}% of ATK each (accounts for critical chances and factors). With fewer enemies than thunderbolts, the rest strike again, once a turn, until they are used up or no enemies remain on the floor.`,
+    damage: ([mult]) => mult,
+  },
 } as const satisfies Record<string, ArcanumDef>;
 
 export type ArcanumId = keyof typeof ARCANA;
@@ -131,8 +154,10 @@ export type ArcanaSave = { owned: Partial<Record<ArcanumId, AttributeLevels>>; o
 export const defaultArcana = (): ArcanaSave => ({ owned: {}, offer: [], rng: null, rolls: 0 });
 
 /** What a run keeps of its arcana beside it, so undo never touches them: the
- * toggles spent, those switched off, and the turns each cooldown has left. */
-export type ArcanaRun = { toggles: number; off: ArcanumId[]; timers: Partial<Record<ArcanumId, number>> };
+ * toggles spent, those switched off, the turns each cooldown has left, and
+ * Thunderbolt's bolts still to strike and the turns it has struck (`strikes`,
+ * which fixes each turn's random targets). */
+export type ArcanaRun = { toggles: number; off: ArcanumId[]; timers: Partial<Record<ArcanumId, number>>; bolts?: number; strikes?: number };
 export const defaultArcanaRun = (): ArcanaRun => ({ toggles: 0, off: [], timers: {} });
 
 type Owned = Pick<ArcanaSave, "owned">;
@@ -195,11 +220,36 @@ export function arcanumBoost(multiplier: number, crit: CritRule | undefined, equ
 export function tickCooldowns(active: readonly { id: ArcanumId; turns: number }[], timers: ArcanaRun["timers"]) {
   const fired: ArcanumId[] = [];
   for (const { id, turns } of active) {
-    const left = (timers[id] ?? turns) - 1;
+    // A cooldown upgraded while it ran counts down from no more than its new length.
+    const left = Math.min(timers[id] ?? turns, turns) - 1;
     if (left <= 0) fired.push(id);
     timers[id] = left <= 0 ? turns : left;
   }
   return fired;
+}
+
+/** Salts a run's seed for Thunderbolt's targets. */
+const THUNDERBOLT_SALT = 0x7b017;
+/** Thunderbolt's targets, one bolt each: up to `bolts` of `enemies`, each as
+ * likely as any other, fixed by the run and the turn it strikes (`strike`), so
+ * undo and a replay agree. Each draws its key first, whatever order they come in. */
+export function boltTargets<T extends { x: number; y: number }>(enemies: readonly T[], bolts: number, seed: number, strike: number): T[] {
+  const salted = (seed ^ THUNDERBOLT_SALT ^ Math.imul(strike, 0x85ebca6b)) | 0;
+  return enemies.map((enemy) => ({ enemy, key: tileRandom(enemy.x, enemy.y, salted) }))
+    .sort((a, b) => a.key - b.key || a.enemy.y - b.enemy.y || a.enemy.x - b.enemy.x)
+    .slice(0, bolts).map(({ enemy }) => enemy);
+}
+/** The bolts this turn strikes with: those left from the last trigger, and a
+ * new trigger's `quantity` if its cooldown just ran out. Counts the strike. */
+export function chargeBolts(run: ArcanaRun, quantity: number, fired: boolean) {
+  const bolts = (run.bolts ?? 0) + (fired ? quantity : 0);
+  if (bolts) run.strikes = (run.strikes ?? 0) + 1;
+  return { bolts, strike: run.strikes ?? 0 };
+}
+/** Keeps the bolts a strike left for the next turn. */
+export function settleBolts(run: ArcanaRun, left: number) {
+  if (left) run.bolts = left;
+  else delete run.bolts;
 }
 
 /** What research and the like have added to an arcanum, as rows of its
@@ -237,5 +287,7 @@ export function decodeArcanaRun(raw: unknown): ArcanaRun {
     const left = (raw.timers as Record<string, unknown> | undefined)?.[id];
     if (wholeIn(left, 1, 1e9)) d.timers[id] = left as number;
   }
+  if (wholeIn(raw.bolts, 1, 1e9)) d.bolts = raw.bolts as number;
+  if (wholeIn(raw.strikes, 1, 1e9)) d.strikes = raw.strikes as number;
   return d;
 }

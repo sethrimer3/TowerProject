@@ -5325,6 +5325,8 @@ html body dialog.proving-grounds-dialog h2 { font-size: 1.05rem; margin: 0 0 8px
 .card-buy-reveal.still .cb-stars i { animation: none; opacity: 0.8; transform: rotate(var(--a)) translateY(-110px); }
 
 /* Boss trials use the same board, HUD, hand and run-purchase bar as a Tower run. */
+/* The meter takes a row of its own over the board, or the board has none. */
+html.trial-running #board.active { grid-template-rows: auto minmax(0, 1fr); }
 .trial-boss-meter { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; width: 100%; max-width: var(--board-cap, 440px); margin: 2px auto 4px; padding: 4px 8px; background: #0a1019e6; border: 1px solid #5c4b2b; border-radius: 4px; font-size: 10px; color: #f3dc9c; box-sizing: border-box; }
 .trial-boss-bar-wrap { display: flex; align-items: center; gap: 6px; flex: 1 1 180px; min-width: 150px; }
 .trial-boss-icon { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 3px; background: #261b2e; border: 1px solid #9a7a3c; color: #ffd978; font-size: 12px; line-height: 1; flex-shrink: 0; }
@@ -5402,6 +5404,10 @@ html.trial-running :is(#focus-stat, #ignore-stat, #target-stat, #bomb-stat, #hea
 .arcana-box h3 { margin: 0 0 4px; font-size: 12px; }
 .arcana-card { position: relative; flex-basis: 108px; cursor: pointer; }
 .arcana-card.off .drill-value { opacity: 0.45; }
+.arcana-cooldown { position: relative; flex: none; align-self: stretch; height: 11px; border: 1px solid #5b6474; border-radius: 3px; background: #10151c; overflow: hidden; }
+.arcana-cooldown i { position: absolute; inset: 0 auto 0 0; background: #6d8fd0; }
+.arcana-cooldown span { position: absolute; top: 0; right: 3px; font-size: 9px; line-height: 10px; color: #fff; text-shadow: 0 0 2px #000, 0 1px 1px #000; }
+.arcana-card.off .arcana-cooldown { opacity: 0.45; }
 .arcana-switch.arcana-switch:not(#_):not(#__) { display: block; position: relative; flex: none; width: 36px; height: 18px; min-width: 0; min-height: 0; margin: 0; padding: 0; border: 1px solid #5b6474; border-image: none; border-radius: 9px; background: #2a313d; cursor: pointer; }
 .arcana-switch i { position: absolute; top: 1px; left: 1px; width: 14px; height: 14px; border-radius: 50%; background: #aab3c0; transition: left 0.12s; }
 .arcana-switch[aria-checked="true"].arcana-switch:not(#_):not(#__) { border-color: #8dffb8; background: #1f5b3a; }

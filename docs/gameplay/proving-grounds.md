@@ -23,6 +23,7 @@ The ordinary HUD play/pause button and speed arrows control autoplay; you cannot
 While the elemental is incorporeal, cards ignore it and autoplay waits if no other card has a target, keeping the laser countdown moving.
 Otherwise, if no card can act, autoplay pauses; return to the forest to equip a hand suited to the trial, including Stairs and an enemy card, then enter again.
 The encounter copies your stats and uses its own combat rules; normal-run rewards, card activations, badges and supplies do not apply.
+Your [Arcana](arcana.md#in-a-trial) do apply, all but Aurum Bloom, and strike the boss, its parts and its minions or summoned enemies.
 
 **Without cards** gives you full movement control and has no card autoplay.
 Your equipped cards stay visible at the bottom with red X overlays, and cannot activate or affect movement.

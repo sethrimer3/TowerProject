@@ -18,9 +18,14 @@ export function shownTick(clock: ShownClock | null, now: number, reduceMotion: b
  * as drawn, out past the board's edges and over its walls, turning through
  * the turn being shown as the volley's ticks read it. */
 export function drawOverseerBeams(f: FrameContext, beams: Beams, clock: ShownClock | null) {
-  const c = f.c, { x, y } = tileCenter(f, f.playerX, f.playerY), reach = f.width * 2;
+  const { x, y } = tileCenter(f, f.playerX, f.playerY);
   // `turns` has already counted the turn being shown; with none shown, the last tick is the next turn's start.
   const degrees = beams.turns ? beamDirection(beams.turns - 1, shownTick(clock, f.now, f.look.reduceMotion)) / 100 : 0;
+  paintOverseerBeams(f.c, x, y, f.width * 2, beams, degrees);
+}
+
+/** The beams from (x, y), `reach` long, the first `degrees` clockwise from straight up. */
+export function paintOverseerBeams(c: CanvasRenderingContext2D, x: number, y: number, reach: number, beams: Pick<Beams, "count" | "width">, degrees: number) {
   c.save();
   c.globalCompositeOperation = "soft-light";
   c.fillStyle = BEAM_LIGHT;

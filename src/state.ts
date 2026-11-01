@@ -11,7 +11,7 @@ import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./cards/b
 import { BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
 import { noteGoldBoost } from "./economy/gold-boost.ts";
 import { canWarp, claimGoal, goalUnlocked, goalsWaiting } from "./goals.ts";
-import { landsAt, shortWay, volleyTurn, type Shot, type Volley, type VolleyTurn } from "./volley.ts";
+import { landsAt, shortWay, thunderbolts, volleyTurn, type Shot, type Volley, type VolleyTurn } from "./volley.ts";
 import { missGem } from "./economy/gems.ts";
 import { DelvePlan } from "./delve/automove.ts";
 import { defaults } from "./save/save.ts";
@@ -93,7 +93,8 @@ import { MissionDesk } from "./game/mission-desk.ts";
 import { EventDesk } from "./game/event-desk.ts";
 import { ShrineDesk } from "./game/shrine-desk.ts";
 import { ArcanaDesk } from "./game/arcana-desk.ts";
-import { arcanaOpen, defaultArcanaRun } from "./arcana/arcana.ts";
+import { arcanaOpen, defaultArcanaRun, type ArcanumId } from "./arcana/arcana.ts";
+import type { Beams } from "./arcana/overseer.ts";
 import { beamFactor } from "./arcana/overseer.ts";
 import { NoticeDesk } from "./game/notice-desk.ts";
 import { boonFactor, runBoons, weakened } from "./shrines.ts";
@@ -2395,13 +2396,18 @@ export class Game {
     syncShield(this.save, this.run);
     if (tickRegrow(this.run)) this.shieldFormedAt = performance.now();
     const beams = this.arcana.beams;
-    this.arcana.turn();
+    const fired = this.arcana.turn();
     const p = this.run.player, from = before.run.player, sameFloor = this.mode !== "tower" || before.run.height === this.run.height;
     const at = performance.now(), ms = Math.min(TURN_MS, 800 / Math.max(1, this.stepsPerSecond));
     this.turnClock = { at, ms };
     // The board walks a single step at an even pace; anything else it snaps.
     this.turnShown = sameFloor && Math.abs(p.x - from.x) + Math.abs(p.y - from.y) === 1 ? { at, ms, from: { x: from.x, y: from.y }, to: { x: p.x, y: p.y } } : null;
-    if ((this.tier < 3 && !archer) || !sameFloor) return;
+    // Thunderbolt strikes first, so what it fells shoots no more this turn.
+    const struck = this.strikeBolts(fired, beams, sameFloor ? from : undefined);
+    if ((this.tier < 3 && !archer) || !sameFloor) {
+      this.showVolley(struck, at, ms);
+      return;
+    }
     const v = this.run.volleys ?? { turn: 0 };
     const out = volleyTurn({ board: this.world, wrap: this.wrap, floorOf: (x, y) => this.floorOf(x, y), hero: p, from, seed: this.run.seed,
       volleys: { ...v, turn: v.turn + 1 }, archer, ranks: { ...this.trainingNow, archives: this.save.archives }, cardCrit: this.cardCrit, handShot: this.handShot, ricochet: this.arcana.ricochet(), ...(beams ? { beams } : {}) });
@@ -2417,7 +2423,7 @@ export class Game {
     }
     for (const { enemy, at, instakill, crits, thorns, ricochet } of out.kills)
       this.message = [`${thorns ? "Thorns" : ricochet ? "Ricochet" : "Arrow"} · ${enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, at, 1, instakill, crits ? 1 : 0)].join(" · ");
-    this.showVolley(out.shots, at, ms);
+    this.showVolley([...struck, ...out.shots], at, ms);
     // Angel Wings raises the hero from a shot that would fell it, as from a strike.
     if (out.fell && this.wingsReady) {
       p.hp = p.maxHp;
@@ -2434,6 +2440,17 @@ export class Game {
       if (moved.foes && Object.keys(moved.foes).length) this.run.volleys.foes = moved.foes;
       else delete this.run.volleys.foes;
     }
+  }
+  /** Thunderbolt's bolts of this turn (arcana.md), `fired` being the cooldowns
+   * that just ran out: pays what they fell and returns their shots. */
+  private strikeBolts(fired: readonly ArcanumId[], beams: Beams | undefined, from: { x: number; y: number } | undefined) {
+    const rule = this.arcana.chargeBolts(fired);
+    if (!rule) return [];
+    const out = thunderbolts({ board: this.world, wrap: this.wrap, hero: this.run.player, ...(from ? { from } : {}), seed: this.run.seed, ...(beams ? { beams } : {}) }, rule);
+    this.arcana.settleBolts(out.left);
+    for (const { enemy, at, instakill, crits } of out.kills)
+      this.message = [`Thunderbolt · ${enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, at, 1, instakill, crits)].join(" · ");
+    return out.shots;
   }
   /** A turn the hero holds its ground (FLYING ENEMY with a Flying enemy in
    * reach): no step, so no Regen, but a turn all the same, which the undo
@@ -2470,8 +2487,10 @@ export class Game {
     return world instanceof World ? Math.floor(world.depth(x, y) / 10) + 1 : this.run.height + 1;
   }
   /** The board flies the turn's shots, each leaving as far into the turn
-   * shown from `at` for `ms` as it fired. */
-  private showVolley(shots: Shot[], at: number, ms: number) {
+   * shown from `at` for `ms` as it fired; those the Toggles hide don't show. */
+  private showVolley(all: Shot[], at: number, ms: number) {
+    const { ricochetAnimation, thunderboltAnimation } = this.save.settings;
+    const shots = all.filter((s) => (!s.ricochet || ricochetAnimation) && (!s.thunderbolt || thunderboltAnimation));
     if (!shots.length) return;
     this.volley = { at, ms, shots };
     const broke = shots.find((s) => s.shieldBroke);

@@ -19,14 +19,18 @@ Pressing a row anywhere else shows what the arcanum does, each attribute now and
 
 Every arcanum you hold works at once in every Tower and Delve run, by its own trigger.
 Inside a run, the **Arcana** tab after the Training tabs shows a card for each, with its name, its value (for damage, what it deals with your ATK and crits) and a switch.
+An arcanum with a cooldown also has a bar on its card, filling as the cooldown runs down, with the turns left at its right end.
 You can switch them on and off up to 40 times a run, all of them together; the number left rises off the switch each time.
 Undo doesn't give a toggle back.
 An arcanum with a cooldown starts it over when switched back on.
+**Toggles** in Settings hide Ricochet Shot's and Thunderbolt's damage animations; they strike all the same.
 Pressing a card anywhere else shows its stats and what modifies them.
 
 **Arcanum Damage** = Arcanum Multiplier × Hero ATK × Equipment × (1 + Critical Factor × Critical Chance) × (1 + Super Crit Mult × Super Crit Chance × Critical Chance).
 It is an average: an arcanum never rolls a critical hit of its own.
 It is ATK like any other, so the enemy's DEF still counts.
+
+In a [Proving Grounds](proving-grounds.md) trial, every arcanum you own works except Aurum Bloom, on the boss, its parts and its minions or summoned enemies, with its own toggles and cooldowns for the attempt (see [In a trial](#in-a-trial)).
 
 A Tower run's Shrines can also offer **Unlock an Arcanum**, while you don't own them all: pick it, then choose one you don't own, up to three offered, to hold at its first levels for the rest of the climb.
 
@@ -77,3 +81,38 @@ Beams spread evenly: 2 are 180° apart, 3 are 120° and 4 are 90°.
 | Bonus | 8.0× | 50.0× | 31 |
 | Angle | 30° | 90° | 61 |
 | Quantity | 1 | 4 | 4 |
+
+## Thunderbolt
+
+*Every x turns, y thunderbolts strike random enemies on the floor, with z% of ATK each.*
+Each is a jagged white bolt falling straight down from the board's upper edge to its target, which a jagged white light surrounds for a moment.
+The cooldown runs a turn at a time and starts over the moment it runs out.
+It counts down whether or not any enemy stands on the floor.
+
+Each bolt strikes a different enemy once, each enemy as likely as any other, at any distance, for [Arcanum Damage](#in-a-run) less the enemy's DEF.
+Overseer's beams multiply it, as the bolt falls.
+It kills like any other hit, paying what the enemy pays, and heals nothing.
+
+With fewer enemies than bolts, the rest strike again next turn, each enemy at most once a turn, until they are used up or no enemies remain on the floor: any left then are wasted.
+If the cooldown runs out meanwhile, its bolts join those still waiting.
+Bolts still waiting follow you to the next floor, and switching it off loses them.
+Undo takes back what a bolt did, but not its cooldown or the bolts spent.
+
+| Attribute | First | Highest | Levels |
+|---|---|---|---|
+| ATK Mult | 10x | 9,219x | 36 |
+| Quantity | 5 | 20 | 16 |
+| Cooldown | 180 turns | 20 turns | 17 |
+
+## In a trial
+
+Your Arcana work on what stands in a trial's arena: the boss while it is corporeal, its parts, its minions, mimics and Light Slimes.
+An incorporeal boss can't be struck.
+**Aurum Bloom** doesn't work there, having no floors to raise, and doesn't show in the Arcana tab.
+
+An arcanum's hit only wounds: it never makes a boss teleport, drop keys or pop coins, and draws no counter.
+It can defeat the boss and win the trial, and its damage counts toward Damage this run.
+**Thunderbolt** works as above, once a turn on a lone boss.
+**Ricochet Shot** springs from your own hits there, since a trial has no arrows: each hit rolls its chance, and a ricochet strikes the closest others.
+**Overseer** multiplies your hits on what stands in a beam, as the turn begins.
+Toggles and cooldowns are the attempt's own, leave your run outside alone, and survive a reload.

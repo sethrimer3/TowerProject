@@ -9,6 +9,7 @@ import { shortAmount } from "../whole.ts";
 /** Each arcanum's picture. */
 export const ARCANUM_ICONS: Record<ArcanumId, string> = {
   aurumBloom: `<svg class="arcanum-icon" viewBox="0 0 24 24" aria-hidden="true"><g fill="#f0c34a" stroke="#10151c" stroke-width="1.2">${[0, 60, 120, 180, 240, 300].map((turn) => `<ellipse cx="12" cy="6.2" rx="3.2" ry="5" transform="rotate(${turn} 12 12)"/>`).join("")}</g><circle cx="12" cy="12" r="3.4" fill="#fff4c2" stroke="#10151c" stroke-width="1.2"/></svg>`,
+  thunderbolt: `<svg class="arcanum-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 1.5L5 13.5h5.5L8.5 22.5 19.5 9.5h-6z" fill="#fff" stroke="#10151c" stroke-width="1.4" stroke-linejoin="miter"/></svg>`,
   overseer: `<svg class="arcanum-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12L3 2.5h7.5zM12 12l9 9.5h-7.5z" fill="#fff4c2" stroke="#10151c" stroke-width="1.1" stroke-linejoin="round"/><path d="M3 12s3.6-5 9-5 9 5 9 5-3.6 5-9 5-9-5-9-5z" fill="#f4f7ff" stroke="#10151c" stroke-width="1.3" stroke-linejoin="round"/><circle cx="12" cy="12" r="3.2" fill="#5fb3d9" stroke="#10151c" stroke-width="1.1"/><circle cx="12" cy="12" r="1.2" fill="#10151c"/></svg>`,
   ricochetShot: `<svg class="arcanum-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 19.5L9.5 5l5 11 7-9" fill="none" stroke="#10151c" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.5 19.5L9.5 5l5 11 7-9" fill="none" stroke="#f4f7ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9.5" cy="5" r="2.2" fill="#ff8f6b"/><circle cx="14.5" cy="16" r="2.2" fill="#ff8f6b"/><path d="M21.5 7l-.6 4-3.2-2.4z" fill="#ffd34d"/></svg>`,
 };
@@ -109,8 +110,8 @@ function showArcanum(ctx: AppContext, id: ArcanumId) {
 
 /** An arcanum's information, from its card in a run: what it does, its stats,
  * and what modifies them, among them what its damage comes to. */
-export function showHeldArcanum(ctx: AppContext, { id, levels, lent }: HeldArcanum) {
-  const game = ctx.game, modal = ctx.modal, def = arcanum(id), crit = game.crit, value = game.arcana.cardValue({ id, levels, lent });
+export function showHeldArcanum(ctx: AppContext, { id, levels, lent }: HeldArcanum, game: Pick<AppContext["game"], "crit" | "arcana" | "run" | "save"> = ctx.game) {
+  const modal = ctx.modal, def = arcanum(id), crit = game.crit, value = game.arcana.cardValue({ id, levels, lent });
   const percent = (n: number) => `${Number(n.toFixed(2))}%`, factor = (n: number) => `×${Number(n.toFixed(2))}`;
   const modifiers: [string, string][] = def.damage ? [
     ["Hero ATK", shortAmount(game.run.player.attack)],

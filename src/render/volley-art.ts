@@ -1,6 +1,7 @@
 import type { Tile } from "../entities.ts";
-import { enemyOf, landsAt, leavesAt, RICOCHET_FLASH_MS, SHOT_FLIGHT, volleyOver, type Shot, type Volley } from "../volley.ts";
-import { tileCenter, type BoardTiles, type FrameContext } from "./render-frame.ts";
+import { enemyOf, landsAt, leavesAt, RICOCHET_FLASH_MS, SHOT_FLIGHT, shortWay, THUNDERBOLT_FALL_MS, THUNDERBOLT_FLASH_MS, volleyOver, type Shot, type Volley } from "../volley.ts";
+import { paintThunderbolt, paintThunderlight } from "./effects/thunderbolt.ts";
+import { tileCenter, tileTransform, type BoardTiles, type FrameContext } from "./render-frame.ts";
 import { drawKit } from "../sprites/kit.ts";
 import { arrowSprite } from "../sprites/combat.ts";
 
@@ -30,6 +31,10 @@ export function drawVolley(f: FrameContext, volleys: readonly Volley[], wrap = 0
     for (const shot of volley.shots) {
       if (shot.ricochet) {
         if (f.now >= landsAt(volley, shot) && f.now < landsAt(volley, shot) + RICOCHET_FLASH_MS) drawRicochet(f, shot, wrap);
+        continue;
+      }
+      if (shot.thunderbolt) {
+        drawThunderbolt(f, shot, f.now - leavesAt(volley, shot), wrap);
         continue;
       }
       const t = shotFlight(volley, shot, f.now, early);
@@ -114,6 +119,21 @@ function drawRicochet(f: FrameContext, shot: Shot, wrap: number) {
   c.moveTo(from.x, from.y);
   c.lineTo(to.x, to.y);
   c.stroke();
+  c.restore();
+}
+
+/** A thunderbolt `age` ms after it starts to fall: straight down from the
+ * board's upper edge to its target, then the jagged light round the target. */
+function drawThunderbolt(f: FrameContext, shot: Shot, age: number, wrap: number) {
+  if (age < 0 || age >= THUNDERBOLT_FALL_MS + THUNDERBOLT_FLASH_MS) return;
+  const x = f.playerX + shortWay(shot.to.x - f.playerX, wrap), { x: cx, y: bottom } = tileCenter(f, x, shot.to.y), c = f.c;
+  if (bottom < 0) return;
+  c.save();
+  paintThunderbolt(c, cx, bottom, f.look.reduceMotion ? 1 : age / THUNDERBOLT_FALL_MS, shot.to.x, shot.to.y, shot.tick, f.s);
+  if (age >= THUNDERBOLT_FALL_MS || f.look.reduceMotion) {
+    c.setTransform(tileTransform(f, x, shot.to.y));
+    paintThunderlight(c, f.look.reduceMotion ? 0 : age);
+  }
   c.restore();
 }
 

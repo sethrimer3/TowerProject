@@ -118,6 +118,10 @@ export const SETTINGS = {
   /** The numbers a fight raises as each strike lands: the damage dealt and
    * taken, the shroud's share, thorns and Lifesteal (`BoardPopups`). */
   hitNumbers: { kind: "toggle", default: true, page: { id: "hit-numbers", label: "Fight damage numbers" } },
+  /** Show Ricochet Shot's line and damage (they strike all the same). */
+  ricochetAnimation: { kind: "toggle", default: true, page: { id: "ricochet-animation", label: "Ricochet Shot damage animations" } },
+  /** Show Thunderbolt's bolts, their light and their damage (they strike all the same). */
+  thunderboltAnimation: { kind: "toggle", default: true, page: { id: "thunderbolt-animation", label: "Thunderbolt damage animations" } },
   /** The XP a badge pays, and the Gold combo's "×N Gold" as it grows
    * (`Game.gain`). */
   xpGains: { kind: "toggle", default: true, page: { id: "xp-gains", label: "XP gained" } },

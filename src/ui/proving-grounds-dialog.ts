@@ -174,6 +174,7 @@ export class ProvingGroundsDialog {
     if(!this.modal.open)this.apply(advanceKeymasterEffects(s,Math.min(100,Math.max(0,now-this.lastFrame))));
     this.lastFrame=now;
     if(!this.modal.open && s.status==="active" && now>=this.nextAutoAt && (this.navigation.target || (s.mode!=="manual" && s.playing))) {
+      this.session.sync();
       const manual=!!this.navigation.target,turn=advanceTrial(s,this.navigation);
       this.nextAutoAt=now+1000/Math.max(manual?4:1,g.stepsPerSecond);g.activeCard=turn.card;
       this.apply(turn.outcome);
@@ -186,7 +187,7 @@ export class ProvingGroundsDialog {
     }
     this.renderer!.draw(s,now,this.firedAt,this.base.save.settings.reduceMotion,
       {styledSprites:usesGameSprites(this.base.save),spriteAnimations:this.base.save.settings.spriteAnimations,destination:target,
-        transition:this.base.save.settings.transition,pathAhead:this.cameraPath});
+        transition:this.base.save.settings.transition,pathAhead:this.cameraPath,hidden:{ricochet:!this.base.save.settings.ricochetAnimation,thunderbolt:!this.base.save.settings.thunderboltAnimation}});
     const view=this.renderer!.view(s),hero=this.renderer!.hero(s);
     Object.assign(this.canvas.dataset,{trialViewLeft:String(view.left),trialViewBottom:String(view.bottom),trialViewRoom:s.room,trialHeroX:String(hero.x),trialHeroY:String(hero.y),trialCameraMoving:String(!this.renderer!.settled)});
     return true;
@@ -214,7 +215,7 @@ export class ProvingGroundsDialog {
   purchasesChanged(){if(this.session){this.message=this.session.game.message;this.save();this.changed();}}
   private step(dx:number,dy:number) {
     if(!this.session || this.session.state.mode==="cards")return;
-    this.navigation.clear();this.session.game.activeCard=null;
+    this.navigation.clear();this.session.game.activeCard=null;this.session.sync();
     this.nextAutoAt=performance.now()+250;this.apply(trialStep(this.session.state,dx,dy));
   }
   private apply(outcome:ReturnType<typeof trialStep>) {

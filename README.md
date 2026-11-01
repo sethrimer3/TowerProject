@@ -50,7 +50,7 @@ The player-facing rules, in full, one topic a page:
 | [Currencies and the Shop](docs/gameplay/currencies-and-shop.md) | Gems and Gem finds, the ad boosts, Offline Gold, the Shop |
 | [Towers, Areas and Goals](docs/gameplay/towers-areas-goals.md) | Higher towers, mastered and cleared areas, Goals and Warp |
 | [Shrines](docs/gameplay/shrines.md) | Shrines and boons |
-| [Arcana](docs/gameplay/arcana.md) | Arcanite's spells: buying and upgrading them, the run's cards, Ricochet Shot, Aurum Bloom |
+| [Arcana](docs/gameplay/arcana.md) | Arcanite's spells: buying and upgrading them, the run's cards, Ricochet Shot, Aurum Bloom, Overseer, Thunderbolt, in trials |
 
 ## How it's built
 

@@ -245,13 +245,23 @@ export class RunTrainingBar {
     if (key !== this.shown) {
       this.shown = key;
       this.hideTip();
-      el("run-drills").innerHTML = held.map(({ id }) => `<div class="drill-card arcana-card" role="listitem" data-arcanum="${id}"><b class="drill-name">${arcanum(id).name}</b><span class="drill-value"></span><button type="button" class="arcana-switch" role="switch" data-arcana-toggle="${id}" aria-label="${arcanum(id).name}"><i></i></button></div>`).join("");
+      el("run-drills").innerHTML = held.map(({ id }) => `<div class="drill-card arcana-card" role="listitem" data-arcanum="${id}"><b class="drill-name">${arcanum(id).name}</b><span class="drill-value"></span>${arcanum(id).trigger.on === "cooldown" ? `<div class="arcana-cooldown" role="progressbar" aria-label="Cooldown" aria-valuemin="0"><i></i><span></span></div>` : ""}<button type="button" class="arcana-switch" role="switch" data-arcana-toggle="${id}" aria-label="${arcanum(id).name}"><i></i></button></div>`).join("");
     }
     for (const h of held) {
       const card = document.querySelector<HTMLElement>(`.arcana-card[data-arcanum="${h.id}"]`)!, on = this.game.arcana.isOn(h.id), value = this.game.arcana.cardValue(h);
       card.classList.toggle("off", !on);
       card.querySelector(".drill-value")!.textContent = value.damage === undefined ? value.text ?? "" : `${shortAmount(value.damage)} DMG`;
       card.querySelector(".arcana-switch")!.setAttribute("aria-checked", String(on));
+      const cooldown = this.game.arcana.cooldown(h), bar = card.querySelector<HTMLElement>(".arcana-cooldown");
+      if (cooldown && bar) {
+        // Fills as the cooldown runs down, the turns left at its right end.
+        const done = cooldown.turns - cooldown.left;
+        bar.setAttribute("aria-valuemax", String(cooldown.turns));
+        bar.setAttribute("aria-valuenow", String(done));
+        bar.title = `${cooldown.left} ${cooldown.left === 1 ? "turn" : "turns"} until it strikes`;
+        bar.querySelector("i")!.style.width = `${(100 * done) / cooldown.turns}%`;
+        bar.querySelector("span")!.textContent = String(cooldown.left);
+      }
     }
   }
 

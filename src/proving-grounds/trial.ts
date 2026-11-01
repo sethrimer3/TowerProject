@@ -6,6 +6,8 @@ import { newBossVariant, enterBossVariant, bossVariantStep, decodeBossVariant, t
 export { effectiveBossDef, effectiveBossRegen, activeBossParts, bossPartAt, bossMinionAt, floorPickupAt, OBELISK_DEFAULT_TURNS, OBELISK_SHOT_INTERVAL, OBELISK_SPECIAL_INTERVAL, type BossVariantState, type BossPart, type BossMinion, type FloorPickup, type CombatRound } from "./boss-variants.ts";
 import { TRAINING, type TrainingId } from "../progression/training.ts";
 import type { Player } from "../entities.ts";
+import { decodeTrialArcana, noteStrike, trialArcanaTurn } from "./trial-arcana.ts";
+import { heroAttackOn, type TrialArcana } from "./trial-spells.ts";
 import { CARDS, type CardId } from "../cards/cards.ts";
 import { finite, isRecord, wholeIn } from "../save/decode.ts";
 import { tileRandom } from "../random.ts";
@@ -49,6 +51,8 @@ export type TrialState = {
   consumed: string[];
   scorches: Record<string, number>;
   destroyed: Record<string, number>;
+  /** The arcana the attempt holds (trial-spells.ts); none without any. */
+  arcana?: TrialArcana;
 };
 export const trialDamageThisRun = (s: TrialState): number =>
   s.bossVariant ? s.bossVariant.damageThisRun : Math.max(0, s.bossMaxHp - s.bossHp);
@@ -145,11 +149,17 @@ export function trialStep(s: TrialState, dx: number, dy: number, source: TrialIn
     }
     return { changed: true, message: "Climb the staircase to enter the trial.", fired: false };
   }
-  if(s.keymaster)return keymasterStep(s,x,y);
-  if(s.bossVariant)return bossVariantStep(s,x,y);
+  noteStrike(s,x,y);
+  const outcome=s.keymaster?keymasterStep(s,x,y):s.bossVariant?bossVariantStep(s,x,y):elementalStep(s,x,y);
+  return outcome.changed?trialArcanaTurn(s,outcome):outcome;
+}
+
+/** One accepted turn of the Light Elemental's arena. */
+function elementalStep(s: TrialState, x: number, y: number): { changed: boolean; message: string; fired: boolean } {
   let message = "";
   if (x === s.elemental.x && y === s.elemental.y && !s.elemental.incorporeal) {
-    s.bossHp = Math.max(0, s.bossHp - Math.max(1, s.player.attack));
+    const strike = Math.max(1, heroAttackOn(s, s.elemental));
+    s.bossHp = Math.max(0, s.bossHp - strike);
     if (s.bossHp === 0) {
       s.status = "won"; s.playing = false; s.slimes = [];
       return { changed: true, message: "Trial complete — the Light Elemental is defeated.", fired: false };
@@ -157,7 +167,7 @@ export function trialStep(s: TrialState, dx: number, dy: number, source: TrialIn
     const damage = Math.max(1, Math.ceil(s.player.maxHp * 0.04) - Math.floor(s.player.defense * 0.1));
     s.player.hp = Math.max(0, s.player.hp - damage);
     teleportBoss(s);
-    message = `You strike the elemental for ${Math.max(1,s.player.attack)} damage. It scatters into light, invincible until its next lasers. Its radiance deals ${damage} damage.`;
+    message = `You strike the elemental for ${strike} damage. It scatters into light, invincible until its next lasers. Its radiance deals ${damage} damage.`;
   } else {
     const slime = s.slimes.findIndex(p => p.x === x && p.y === y);
     if (slime >= 0) { s.slimes.splice(slime,1); message = "You disperse a light slime."; }
@@ -295,7 +305,8 @@ export function decodeTrial(raw: unknown): TrialState | undefined {
   }
   if(keymaster && (beam || slimes.length || Object.keys(scorches).length || Object.keys(destroyed).length || keymaster.mimics.some(m=>same(m,elemental))))return;
   if(bossVariant && (beam || slimes.length || Object.keys(scorches).length || Object.keys(destroyed).length))return;
-  const decoded:TrialState = { version:2,trialId:trialId as TrialId,...(keymaster?{keymaster}:{}),...(bossVariant?{bossVariant}:{}),level,...(displayHand?{displayHand}:{}),...(purchases?{purchases}:{}),elemental,beam,mode:raw.mode,hand:[...raw.hand],playing:raw.playing,seed:raw.seed,
+  const arcana=decodeTrialArcana(raw.arcana);
+  const decoded:TrialState = { version:2,trialId:trialId as TrialId,...(arcana?{arcana}:{}),...(keymaster?{keymaster}:{}),...(bossVariant?{bossVariant}:{}),level,...(displayHand?{displayHand}:{}),...(purchases?{purchases}:{}),elemental,beam,mode:raw.mode,hand:[...raw.hand],playing:raw.playing,seed:raw.seed,
     room: raw.room, status: raw.status, player: { x:p.x,y:p.y,hp:p.hp,maxHp:p.maxHp,attack:p.attack,defense:p.defense },
     bossHp:raw.bossHp,bossMaxHp:raw.bossMaxHp,steps:raw.steps,slimes,consumed:[...new Set<string>(consumed)],scorches,destroyed };
   if(legacyKeymaster)migrateKeymasterLayout(decoded);

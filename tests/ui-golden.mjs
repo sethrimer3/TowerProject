@@ -327,12 +327,14 @@ try {
         s.arcana.owned.ricochetShot = [31, 4, 14];
         s.arcana.owned.aurumBloom = [20, 38, 19];
         s.arcana.owned.overseer = [30, 60, 3];
+        s.arcana.owned.thunderbolt = [35, 15, 16];
       }),
       arcanaRun: inside((s) => {
         quiet(s);
         s.arcana.owned.ricochetShot = [2, 1, 3];
         s.arcana.owned.aurumBloom = [1, 2, 3];
         s.arcana.owned.overseer = [1, 2, 3];
+        s.arcana.owned.thunderbolt = [1, 2, 3];
       }),
       arcanaBoon: (() => {
         const s = defaults(); quiet(s);

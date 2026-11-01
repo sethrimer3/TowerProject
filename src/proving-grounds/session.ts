@@ -1,4 +1,4 @@
-import { defaultArcana } from "../arcana/arcana.ts";
+import { defaultArcanaRun, ownedArcana } from "../arcana/arcana.ts";
 import type { TrainingId } from "../progression/training.ts";
 import { Game } from "../state.ts";
 import { random } from "../random.ts";
@@ -15,7 +15,11 @@ export class TrialSession {
   constructor(private base: Game, readonly state: TrialState) {
     const save=structuredClone(base.save);
     delete save.provingGrounds;
-    save.arcana=defaultArcana();
+    // Every arcanum but Aurum Bloom works here: it raises floors a trial doesn't have.
+    delete save.arcana.owned.aurumBloom;
+    save.arcana.offer=[];
+    if(ownedArcana(save.arcana).length)state.arcana ??= {run:defaultArcanaRun(),beamTurns:0};
+    save.tower.runArcana=state.arcana?.run??defaultArcanaRun();
     save.delve.run=null;
     const game=this.game=new Game(save,random(state.seed));
     state.displayHand ??= [...(state.mode!=="manual"?state.hand:base.hand)];
@@ -44,6 +48,11 @@ export class TrialSession {
     game.run.training={...state.purchases!.training};
     game.auto=state.mode!=="manual" && state.playing && state.status==="active";
     game.handStuck=false;game.world=trialBoard(state);
+    if(state.arcana) {
+      game.run.beamTurns=state.arcana.beamTurns;
+      const desk=game.arcana,beams=desk.beams;
+      state.arcana.spells={ricochet:desk.ricochet(),thunderbolt:desk.thunderbolt(),beams:beams&&{count:beams.count,width:beams.width,bonus:beams.bonus},overseer:desk.held.some(h=>h.id==="overseer")};
+    }
     game.save.gemDrop={...this.base.save.gemDrop};game.save.goldBoostUntil=this.base.save.goldBoostUntil;
     for(const key of ["gold","gems","arcanite","medals"] as const) game.save[key]=this.base.save[key];
   }

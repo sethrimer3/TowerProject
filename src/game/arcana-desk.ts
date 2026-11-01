@@ -1,5 +1,5 @@
 import {
-  arcanum, arcanumBoost, arcanumPrice, drawOptions, levelsOf, nextDraw, nextStep, OFFER_SIZE, ownedArcana, redrawOptions, rerollOpen, rerollPrice, RUN_TOGGLES, tickCooldowns, unownedArcana, valuesAt,
+  arcanum, arcanumBoost, arcanumPrice, chargeBolts, drawOptions, levelsOf, nextDraw, nextStep, OFFER_SIZE, ownedArcana, redrawOptions, rerollOpen, rerollPrice, RUN_TOGGLES, settleBolts, tickCooldowns, unownedArcana, valuesAt,
   type ArcanumId, type AttributeLevels,
 } from "../arcana/arcana.ts";
 import type { Beams } from "../arcana/overseer.ts";
@@ -116,7 +116,8 @@ export class ArcanaDesk {
     return RUN_TOGGLES - this.runState.toggles;
   }
   /** Switches `id` on or off for this run; false with no toggles left. Off,
-   * its cooldown is forgotten, so it starts over when it comes back on. */
+   * its cooldown is forgotten, so it starts over when it comes back on, and
+   * any bolts it had left are gone. */
   toggle(id: ArcanumId) {
     if (!this.togglesLeft || !this.held.some((h) => h.id === id)) return false;
     const r = this.runState;
@@ -124,6 +125,7 @@ export class ArcanaDesk {
     if (this.isOn(id)) {
       r.off.push(id);
       delete r.timers[id];
+      if (id === "thunderbolt") delete r.bolts;
     } else r.off = r.off.filter((o) => o !== id);
     return true;
   }
@@ -132,6 +134,14 @@ export class ArcanaDesk {
     const def = arcanum(id), values = valuesAt(id, levels);
     if (def.damage) return { damage: this.host.run.player.attack * arcanumBoost(def.damage(values), this.host.crit) };
     return { text: def.effect?.(values) ?? "" };
+  }
+  /** An arcanum's cooldown as its card shows it: the turns left of how many,
+   * full while it is off; none without a cooldown. */
+  cooldown({ id, levels }: HeldArcanum) {
+    const trigger = arcanum(id).trigger;
+    if (trigger.on !== "cooldown") return undefined;
+    const turns = trigger.turns(valuesAt(id, levels));
+    return { left: Math.min(this.runState.timers[id] ?? turns, turns), turns };
   }
   /** What Ricochet Shot gives this turn's arrows (`VolleyTurn.ricochet`), if it is held and on. */
   ricochet() {
@@ -153,6 +163,25 @@ export class ArcanaDesk {
     if (!held) return undefined;
     const [bonus, width, count] = valuesAt(held.id, held.levels);
     return { bonus, width, count, turns: this.host.run.beamTurns ?? 0 };
+  }
+  /** Thunderbolt, if it is held and on: what its strikes multiply the hero's
+   * ATK by, the bolts of one trigger, and its cooldown. */
+  thunderbolt() {
+    const held = this.held.find((h) => h.id === "thunderbolt" && this.isOn(h.id));
+    if (!held) return undefined;
+    const [multiplier, bolts, turns] = valuesAt(held.id, held.levels);
+    return { boost: arcanumBoost(multiplier, this.host.crit), bolts, turns };
+  }
+  /** The bolts this turn strikes with (`fired`: what `turn` says ran out), if any. */
+  chargeBolts(fired: readonly ArcanumId[]) {
+    const rule = this.thunderbolt();
+    if (!rule) return undefined;
+    const { bolts, strike } = chargeBolts(this.runState, rule.bolts, fired.includes("thunderbolt"));
+    return bolts ? { boost: rule.boost, bolts, strike } : undefined;
+  }
+  /** Keeps the bolts a strike left for the next turn. */
+  settleBolts(left: number) {
+    settleBolts(this.runState, left);
   }
   /** A turn ends: Overseer's beams turn on, on or off, and each cooldown on
    * its way, restarting the moment it runs out. */

@@ -14,6 +14,11 @@ import {activeBossParts} from "./boss-variants.ts";
 import { drawLightElemental, drawElementalTransit, TELEPORT_MS } from "./elemental-art.ts";
 export { drawLightElemental } from "./elemental-art.ts";
 import {TrialCamera,TRIAL_VIEW_TILES,TRIAL_TILE_SIZE,type TrialTransition} from "./camera.ts";
+import {paintOverseerBeams} from "../render/effects/overseer-beams.ts";
+import {paintThunderbolt,paintThunderlight} from "../render/effects/thunderbolt.ts";
+import {beamDirection} from "../arcana/overseer.ts";
+import {RICOCHET_FLASH_MS,THUNDERBOLT_FALL_MS,THUNDERBOLT_FLASH_MS} from "../volley.ts";
+import type {TrialStrike} from "./trial-spells.ts";
 export {TRIAL_VIEW_TILES} from "./camera.ts";
 
 const N = TRIAL_VIEW_TILES, S = TRIAL_TILE_SIZE, SIZE = N * S;
@@ -41,6 +46,8 @@ export class TrialRenderer {
   private heroIdle=new HeroIdleAnimation();
   private camera=new TrialCamera();
   private darkness = document.createElement("canvas");
+  private lastStrikes: TrialStrike[]|undefined;
+  private strikesAt = -Infinity;
   constructor(private canvas: HTMLCanvasElement) {
     canvas.width = canvas.height = this.darkness.width = this.darkness.height = SIZE;
   }
@@ -51,11 +58,12 @@ export class TrialRenderer {
   get settled(){return this.camera.settled;}
   tileAt(s:TrialState,u:number,v:number){return this.camera.tileAt(s,u,v);}
   draw(s: TrialState, now: number, firedAt: number, reduceMotion: boolean,
-    options: {styledSprites?:boolean;spriteAnimations?:boolean;destination?:{x:number;y:number}|null;transition?:TrialTransition;pathAhead?:readonly {dx:number;dy:number}[]} = {}) {
+    options: {styledSprites?:boolean;spriteAnimations?:boolean;destination?:{x:number;y:number}|null;transition?:TrialTransition;pathAhead?:readonly {dx:number;dy:number}[];hidden?:{ricochet:boolean;thunderbolt:boolean}} = {}) {
     this.camera.update(s,now,reduceMotion,options.transition,options.pathAhead);
     const styled=true,animated=!!options.spriteAnimations;
     // Animation is presentation only; saved turns own all positions.
-    if(this.lastState!==s) { this.lastState=s; this.lastStep=s.steps; this.jumpedAt=-Infinity; this.lastCombatStep=s.bossVariant?.lastRound?.step??-1; this.combatAt=-Infinity; this.lastTeleport=s.elemental.teleport; this.teleportAt=-Infinity;this.heroAt=null;this.facing={dx:0,dy:-1}; }
+    if(this.lastState!==s) { this.lastState=s; this.lastStep=s.steps; this.jumpedAt=-Infinity; this.lastCombatStep=s.bossVariant?.lastRound?.step??-1; this.combatAt=-Infinity; this.lastTeleport=s.elemental.teleport; this.teleportAt=-Infinity;this.heroAt=null;this.facing={dx:0,dy:-1}; this.lastStrikes=s.arcana?.strikes; this.strikesAt=-Infinity; }
+    if(s.arcana?.strikes!==this.lastStrikes){this.lastStrikes=s.arcana?.strikes;this.strikesAt=now;}
     if(s.bossVariant?.lastRound && s.bossVariant.lastRound.step!==this.lastCombatStep) {
       this.lastCombatStep=s.bossVariant.lastRound.step;
       this.combatAt=now;
@@ -249,6 +257,24 @@ export class TrialRenderer {
         if(s.bossVariant.lastRound && combatProgress < 1) {
           drawCombatRoundOverlay(c,s.bossVariant.lastRound,combatProgress,px,py);
         }
+      }
+      if(s.arcana?.spells?.beams){const hero=this.camera.hero(s);paintOverseerBeams(c,px(hero.x)+12,py(hero.y)+12,SIZE*2,s.arcana.spells.beams,beamDirection(s.arcana.beamTurns)/100);}
+      for(const strike of this.lastStrikes??[]) {
+        const age=now-this.strikesAt,to={x:px(strike.to.x)+12,y:py(strike.to.y)+12};
+        if(strike.kind==="ricochet") {
+          if(options.hidden?.ricochet || age>=RICOCHET_FLASH_MS+200)continue;
+          if(age<RICOCHET_FLASH_MS){c.save();c.strokeStyle="#fff";c.lineWidth=1.5;c.beginPath();c.moveTo(px(strike.from.x)+12,py(strike.from.y)+12);c.lineTo(to.x,to.y);c.stroke();c.restore();}
+        } else {
+          const delayed=age-(strike.tick/100)*160;
+          if(options.hidden?.thunderbolt || delayed<0 || delayed>=THUNDERBOLT_FALL_MS+THUNDERBOLT_FLASH_MS)continue;
+          c.save();
+          paintThunderbolt(c,to.x,to.y,reduceMotion?1:delayed/THUNDERBOLT_FALL_MS,strike.to.x,strike.to.y,strike.tick,S);
+          if(delayed>=THUNDERBOLT_FALL_MS || reduceMotion){c.translate(to.x-12,to.y-12);paintThunderlight(c,reduceMotion?0:delayed);}
+          c.restore();
+        }
+        c.save();c.font="bold 9px sans-serif";c.textAlign="center";
+        c.fillStyle="#000";c.fillText(`-${Math.round(strike.damage)}`,to.x+1,to.y-11);
+        c.fillStyle="#fff";c.fillText(`-${Math.round(strike.damage)}`,to.x,to.y-12);c.restore();
       }
       // Telegraph only near the elemental, without revealing the unlit room.
       if(!s.keymaster && !s.bossVariant && s.status==="active" && s.steps%10>=8) {

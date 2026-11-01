@@ -178,7 +178,7 @@ function renderCinematicGems() {
 const runTraining = new RunTrainingBar(shownGame, () => {
   if(provingGrounds.active)provingGrounds.purchasesChanged();
   else {overlay.refresh(true);update();}
-}, id => !provingGrounds.active || provingGrounds.allowsTraining(id), (held) => showHeldArcanum(ctx, held));
+}, id => !provingGrounds.active || provingGrounds.allowsTraining(id), (held) => showHeldArcanum(ctx, held, shownGame()));
 const researchToasts = new ResearchToasts(() => game.save.settings.reduceMotion);
 
 /** Saves; `seen` (while the page shows) marks the app open now, so a

@@ -608,6 +608,9 @@ An arcanum that raises the Golden Floor's bonus and chance and gives the Stellar
 **Beam**:
 One of Overseer's spotlights from the hero, turning clockwise each turn. Hits from the hero's ATK on an enemy in a beam multiply by Overseer's Bonus.
 
+**Thunderbolt**:
+An arcanum on a cooldown: its bolts fall from the board's upper edge on random enemies of the floor, and those left over with too few enemies strike again a turn at a time, until used up or no enemy remains.
+
 **Ricochet**:
 Ricochet Shot's strike: an arrow's hit springing a white line to the closest other enemies on the floor. A ricochet never sets off another.
 

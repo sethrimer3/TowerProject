@@ -8,6 +8,7 @@ import type { AppContext, PageGame } from "./app.ts";
 import type { BoardOverlay } from "./board-overlay.ts";
 import { el } from "./dom.ts";
 import { goalUnlocked } from "../goals.ts";
+import { arcanaOpen } from "../arcana/arcana.ts";
 import { showStats } from "./stats-dialog.ts";
 import { showHelp } from "./dialogs.ts";
 import { exportProfile, importProfile } from "../profile-file.ts";
@@ -24,7 +25,7 @@ const DEV = ["devMode", "freePurchases"] as const satisfies readonly SettingKey[
  * in a run. */
 const TOGGLES = [
   "attackGains", "defenseGains", "hpGains", "keyGains", "doorGains", "goldGains", "silverGains", "xpGains", "comboGains",
-  "damageVisual", "itemLabels", "hitNumbers", "enemyBars", "showPath",
+  "damageVisual", "itemLabels", "hitNumbers", "ricochetAnimation", "thunderboltAnimation", "enemyBars", "showPath",
 ] as const satisfies readonly SettingKey[];
 type PageKey = (typeof PAGE)[number] | (typeof TOGGLES)[number] | (typeof DEV)[number] | "devTools";
 
@@ -34,6 +35,8 @@ const SHOWN: Partial<Record<PageKey, (save: Save) => boolean>> = {
   fightAnimation: (save) => !!save.upgrades.instantCombat,
   damageVisual: (save) => goalUnlocked(save, "damageVisual"),
   itemLabels: (save) => goalUnlocked(save, "damageVisual"),
+  ricochetAnimation: arcanaOpen,
+  thunderboltAnimation: arcanaOpen,
   showPath: (save) => !!save.upgrades.autoClimb,
   cinematicIdle: (save) => save.settings.cinematic,
   cinematicGems: (save) => save.settings.cinematic,

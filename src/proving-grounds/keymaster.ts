@@ -4,6 +4,7 @@ import {arenaFloor,keymasterArenaFloor,ARENA_POTIONS,ARENA_SIZE,directions,key,s
 import {difficultyMultiplier} from "./catalog.ts";
 import {teleportBoss,materializeBoss} from "./boss-movement.ts";
 import type {TrialState} from "./trial.ts";
+import {heroAttackOn} from "./trial-spells.ts";
 
 export const KEYMASTER_DOORS=[{x:12,y:24},{x:24,y:12},{x:12,y:0},{x:0,y:12}] as const;
 export const DOOR_FLIGHT_MS=1100;
@@ -63,7 +64,7 @@ function fightMimic(s:TrialState,mimic:Mimic) {
     k.keys--;k.mimics=k.mimics.filter(m=>m.id!==mimic.id);
     return "One key unlocks the mimic — defeated with no damage.";
   }
-  mimic.hp=Math.max(0,mimic.hp-Math.max(1,s.player.attack));
+  mimic.hp=Math.max(0,mimic.hp-Math.max(1,heroAttackOn(s,mimic)));
   if(mimic.hp===0){k.mimics=k.mimics.filter(m=>m.id!==mimic.id);return "You defeat the mimic in combat.";}
   const damage=mimicDamage(s);s.player.hp=Math.max(0,s.player.hp-damage);
   return `The tough mimic has ${mimic.hp} HP left and bites for ${damage} damage.`;
@@ -131,7 +132,7 @@ export function keymasterStep(s:TrialState,x:number,y:number) {
     k.keys--;k.doors.push({door,elapsed:0,hit:false});
     message="Door opened. Red spirits flood out and converge on the Keymaster.";
   } else if(same({x,y},s.elemental) && !s.elemental.incorporeal) {
-    move=false;hitKeymaster(s,Math.max(1,s.player.attack),s.steps+1);
+    move=false;hitKeymaster(s,Math.max(1,heroAttackOn(s,s.elemental)),s.steps+1);
     if(s.bossHp===0){win(s);return {changed:true,message:"Trial complete — the Keymaster is defeated.",fired:false};}
     const damage=Math.max(1,Math.ceil(s.player.maxHp*.04)-Math.floor(s.player.defense*.1));
     s.player.hp=Math.max(0,s.player.hp-damage);

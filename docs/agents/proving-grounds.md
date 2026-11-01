@@ -10,8 +10,9 @@ Selecting Trial 1 — Light Elemental or Trial 2 — Keymaster opens a picker fo
 Unused keys do not bank; reload/resume does not charge, and Dev mode bypasses spending without changing the ordinary allowance.
 The controller's once-a-second `tick` refreshes an open list or finished encounter across midnight, so disabled entries/retries become available without a reload.
 The three control options share one encounter and progression: `save.provingGrounds` stores the current attempt, while ordinary Tower and Delve runs, equipment, currencies and supplies remain untouched.
-The player's current max HP, ATK and DEF are copied into the attempt, which starts at full HP; other normal-run combat systems do not apply.
+The player's current max HP, ATK and DEF are copied into the attempt, which starts at full HP; other normal-run combat systems do not apply, except the Arcana: every arcanum owned but Aurum Bloom works in a trial (arcana.md's **In a trial**).
 `session.ts` creates an isolated `Game` over a cloned profile and the live `trialBoard` so the shared HUD and run-training bar use their existing code.
+`#trial-boss-meter` takes a grid row of its own over `.board-cell` (`html.trial-running #board.active`); in `#board`'s one row it left the board none.
 Only trial stats, run-training ranks and trial Silver are copied back into the attempt; permanent currencies and the ordinary mode runs remain separate.
 Settings remain shared so normal speed and display choices persist.
 Leaving the trial or pressing Escape on its board discards the attempt and returns to the same forest square, and a reload resumes the saved attempt.
