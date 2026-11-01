@@ -81,7 +81,12 @@ test("arrows use the same arrival, with a 100ms empty screen and a finite walk",
 
 test("only adjacent unlocked screens are connected; walking along an edge never bounces", () => {
   const g = forest();
-  assert.equal(g.travelForest(-1), false);
+  assert.equal(g.travelForest(-1), true);
+  assert.equal(g.atLake, true);
+  g.forestArrivalFrame(0); g.forestArrivalFrame(500);
+  assert.equal(g.travelForest(-1), false, "the lake has no further westward exit");
+  assert.equal(g.travelForest(1), true);
+  g.forestArrivalFrame(1000); g.forestArrivalFrame(1500);
   g.selectTier(3);
   const closedRow = Array.from({ length: 11 }, (_, y) => y).find(y => g.world.tile(19, y).kind === "floor" && g.world.tile(18, y).kind === "floor");
   assert.notEqual(closedRow, undefined);

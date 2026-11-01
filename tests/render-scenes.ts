@@ -528,6 +528,28 @@ function playForestTravel(_name: string, seed: number, canvas: HTMLCanvasElement
   });
 }
 
+/** The lake is reached through the same public transition as play. */
+function playLakeside(_name: string, seed: number, canvas: HTMLCanvasElement, grab: Grab) {
+  seeded(seed, () => {
+    const g = new Game(defaults());
+    g.save.settings.reduceMotion = true;
+    g.save.settings.weatherSound = false;
+    g.newRun({ outside: true, seed: 7 });
+    g.travelForest(-1); g.forestArrivalFrame(0); g.forestArrivalFrame(1000);
+    const r = new Renderer(canvas, g);
+    r.draw(1000); grab("arrival");
+    g.walkTo(6, 7);
+    while (g.route.length) g.routeStep();
+    r.draw(1500); grab("dockGreeting");
+    g.fishermanRequested = false;
+    g.walkTo(7, 7);
+    while (g.route.length) g.routeStep();
+    r.draw(2000); grab("onDock");
+    g.save.settings.decorOff = true;
+    r.draw(2500); grab("withoutDecoration");
+  });
+}
+
 /** Every scene retains its seed, including gaps left by retired scenes. */
 export const JOBS: Job[] = [
   ...Object.keys(BOARD_SCENES).map((name) => ({ name, canvas: "board" as const, run: playBoard })),
@@ -537,6 +559,7 @@ export const JOBS: Job[] = [
   { name: "trialCamera", canvas: "board" as const, run: playTrialCamera },
   ...Object.keys(APPENDED_BOARD_SCENES).map((name) => ({ name, canvas: "board" as const, run: playBoard })),
   { name: "forestTravel", canvas: "board" as const, run: playForestTravel },
+  { name: "lakeside", canvas: "board" as const, run: playLakeside },
 ].map(({ name, canvas, run }, i) => {
   // Keep the fourth seed reserved for the retired sprite-opt-out scene.
   const seed = i + 1 + (i >= 3 ? 1 : 0) + (i >= Object.keys(BOARD_SCENES).length ? 5 : 0);

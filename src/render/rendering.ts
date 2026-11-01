@@ -1,4 +1,6 @@
 import { boardFont } from "../sprites/font.ts";
+import { LakeWorld } from "../lakeside.ts";
+import { drawLakeGround, drawLakeObjects } from "./lakeside.ts";
 import { forestArrivalPose } from "../forest-arrival.ts";
 import { drawBoardMark } from "../sprites/board-marks.ts";
 import { CHUNK, TOWER_HEIGHT, VIEWPORT_TILES } from "../config.ts";
@@ -268,6 +270,13 @@ export class Renderer {
   /** The forest clearing: its contents, the entrance, the route, the hero
    * in its grass, and the weather. */
   private drawOutside(f: FrameContext) {
+    if (this.game.world instanceof LakeWorld) {
+      drawLakeObjects(f, this.decorOn);
+      this.drawRoute(f);
+      this.drawHeroOutside(f, true);
+      this.drawWeather(f);
+      return;
+    }
     this.drawEachContents(f, f.c);
     const forest = f.look.styledSprites && this.game.world instanceof OutsideWorld && forestSpritesReady();
     if (forest) {
@@ -450,7 +459,7 @@ export class Renderer {
       ...(f.look.styledSprites && towerTileset(f.look.mode, f.look.tier) ? [`tower:${f.look.tier}`] : []),
     ].join("|");
     this.groundCache.draw(f.c, f, f.dpr, groundKey, f.now, CACHE_COLUMNS,
-      (ctx, x, y) => this.tile(ctx, f, g.world.tile(x, y), x, y, 0));
+      (ctx, x, y) => g.world instanceof LakeWorld ? drawLakeGround(ctx, x, y) : this.tile(ctx, f, g.world.tile(x, y), x, y, 0));
   }
   /** Decor over the stone (so pools and crates hide the bricks beneath
    * them), with the board's sprites mirrored in its water. */
@@ -514,6 +523,7 @@ export class Renderer {
   private forestFoliage = new ForestFoliage();
   private cloudShadows = new CloudShadows();
   private drawForestGrass(f: FrameContext, layer: "back" | "front") {
+    if (this.game.atLake) return;
     this.grass.draw(f.c, f, this.game.world, this.game.run.seed, MODES[this.game.mode].entranceX, outsideWeather(this.game.run.seed), f.now, f.dt,
       this.playerX, this.playerY, f.look.reduceMotion, layer);
   }
@@ -542,7 +552,7 @@ export class Renderer {
     this.weather.blow(g.save.settings.weatherSound && !document.hidden);
     this.weather.draw(f.c, f.width, g.run.seed, { dt: f.dt, reduceMotion: g.save.settings.reduceMotion,
       active: !g.paused && !g.fallen && !document.hidden, sound: g.save.settings.weatherSound }, seconds => {
-        if (!(g.world instanceof OutsideWorld)) return;
+        if (!(g.world instanceof OutsideWorld) || g.atLake) return;
         const visible = g.walkIn?.stage !== "gone" && (!g.forestArrival || forestArrivalPose(g.forestArrival, f.now, g.forestArrivalWalkMs).visible);
         this.cloudShadows.draw(f, g.world, this.decorOn, !!f.look.styledSprites && forestSpritesReady(), seconds, visible);
       });

@@ -163,7 +163,7 @@ const validPlayer = (p: any, width: number) =>
 const validCore = (r: any, width: number) =>
   !!r && validOutside(r) && validCounters(r) && validPlayer(r.player, r.outside ? Math.max(width, OUTSIDE_SIZE) : width) && validChanges(r.changes);
 const validDelveState = (r: any) => Number.isInteger(r.milestone) && finite(r.milestone);
-const TOWER_FIELDS = ["damaged", "enemiesLeft", "summoned", "start", "shrine"];
+const TOWER_FIELDS = ["forestArea", "damaged", "enemiesLeft", "summoned", "start", "shrine"];
 const DELVE_FIELDS = ["milestone", "tournament"];
 /** Training ranks bought in a run: known rows, each a whole number of
  * ranks, no more than the row reaches in a run with every Limit Break. */
@@ -206,6 +206,7 @@ const RUN_FIELD_CHECKS = {
   training: validRunTraining,
   cardUses: (v: unknown) => isRecord(v) && Object.entries(v).every(([id, n]) => IN_PLACE.has(id as CardId) && wholeIn(n, 1, 1e6)),
   tier: (v: unknown) => wholeIn(v, 2, TIERS),
+  forestArea: (v: unknown, r: any) => v === "lake" && r.outside === true && (r.tier ?? 1) === 1,
   // HEAL's tree raises the trained chance, up to every potion.
   percentPotions: (v: unknown) => wholeIn(v, 1, 10_000),
   chestOdds: (v: any) => isRecord(v) && Object.keys(v).length === 2 && [v.supply, v.equipment].every((n) => finite(n) && n >= 0 && n <= 100) && v.supply + v.equipment > 0,

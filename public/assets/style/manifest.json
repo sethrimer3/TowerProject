@@ -2386,6 +2386,34 @@
       "file": "equip-dawnShield.png",
       "width": 24,
       "height": 24
+    },
+    "lake-water": {
+      "file": "lake-water.png",
+      "width": 96,
+      "height": 96,
+      "tile": true
+    },
+    "lake-shore": {
+      "file": "lake-shore.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "lake-dock": {
+      "file": "lake-dock.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "lake-reeds": {
+      "file": "lake-reeds.png",
+      "width": 24,
+      "height": 36
+    },
+    "lake-fisherman": {
+      "file": "lake-fisherman.png",
+      "width": 48,
+      "height": 40
     }
   }
 }

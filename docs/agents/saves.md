@@ -81,3 +81,6 @@ The conversion uses loadout totals with the old intrinsic strength, leaves effec
 Outside Tower runs accept player columns 0–19, matching the full forest view; dungeon runs retain their 17-column validation.
 Forest arrivals are not serialized: the saved player occupies a safe, walkable landing tile throughout the 100ms pause and entrance animation.
 The forest has no persistent tile edits, so expanding its bounds needs no dungeon layout-version change or reset of existing runs.
+`run.forestArea: "lake"` keeps the lake location within the existing outside Tower I run; travelling west and back preserves its seed, health, tier and progression.
+The optional marker is accepted only outside Tower I and removed from Delve runs, unknown values and dungeon runs; old saves without it retain the ordinary clearing.
+The dock greeting request is transient and does not replay on reload, including a save on the dock.

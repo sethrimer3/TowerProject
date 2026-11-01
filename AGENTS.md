@@ -95,6 +95,7 @@ Read the area's doc before changing code there or answering questions about it; 
 - `progression.md`: enemy curves and stats, the loadout, fractions, XP and Training, the Archives, free purchases, skill trees, Equipment.
 - `economy-and-online.md`: Gems, the Shop, Gold bonuses, Spare Change and Wishing Well, the Tournament, Mail, Missions, Events and relics.
 - `rendering.md`: board drawing, lighting, decor, popups, the forest and weather, the render goldens, the Medieval and Neon themes.
+- `lakeside.md`: the lake west of Tower I, its dock and fisherman, travel, dialogue, saved location and native sprites.
 - `ui.md`: `main.ts`, pages, the HUD, dialogs, the desks and `Game`'s UI commands, board lessons, the frame loop, the UI golden.
 - `proving-grounds.md`: the forest trial entrance, tactical Light Elemental and Keymaster encounters, rendering and persistence.
 - `saves.md`: loading and decoding the save, adding save state, settings rows.
