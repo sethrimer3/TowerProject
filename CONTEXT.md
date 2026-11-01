@@ -640,7 +640,7 @@ Necrotic Frost's damage: each step of an effect's ramp is the arcanum's Arcanum 
 An arcanum on a cooldown: a vortex opening out on the floor at the hero's shot range and a random angle, standing there for a number of turns, stunning what is in it.
 
 **Vortex**:
-What Voidwell opens: a circle on the floor, placed anywhere, whole tiles or not, with its edge at most a tile past the floor's. It ends if the hero leaves the floor.
+What Voidwell opens: a circle on the floor, placed anywhere, whole tiles or not, with its edge at most a tile past the floor's as it opens. It lasts its turns, whatever floor the hero reaches.
 
 **Stunned**:
 What an enemy in a Vortex is: it doesn't move or shoot, a Fast enemy doesn't strike first and a Flying one comes down to be fought, though it still answers in a fight. A Shielded enemy's bubble still holds.

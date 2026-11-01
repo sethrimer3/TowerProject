@@ -13,6 +13,8 @@ Each arcanum names its own (`ArcanumTrigger`), since they differ from one to the
 What `turn` returns is what ran out, for `Game.endTurn` to act on.
 A cooldown upgraded while it runs counts down from no more than its new length.
 Any arcanum with a cooldown gets a bar on its run card from `ArcanaDesk.cooldown`.
+A new floor interrupts none of them: each keeps its cooldown and what it has in progress (bolts waiting, waves and the pool, fields, ghosts, a vortex) in the run or `runArcana`, which a climb doesn't touch, counting the turn that climbed; `tests/voidwell.test.ts` takes real stairs holding all of them.
+What dies with the floor left is only what lies on its tiles (`sprung`, `necro`), along with its enemies.
 A new trigger is a new member of `ArcanumTrigger` and the code that raises its event.
 
 **Buying.**
@@ -142,8 +144,7 @@ Its `Shot` carries `necro`: no art of its own in `drawVolley`, only its number a
 **Voidwell** (`src/arcana/voidwell.ts`, trigger `cooldown`; `ArcanaDesk.voidwellRule`, `Game.voidwellTurn`, `Game.vortex`) opens a vortex out on the floor that stuns what is in it.
 **Its state** is `run.voidwell` (`VoidwellRun`: `timer`, `casts`, `vortex`), in the run like Time Dilation's, so undo takes it back with what it stunned and a replay comes out the same; `ArcanaDesk.turn` leaves it out of `tickCooldowns`, and `Game.voidwellTurn` runs `stepVoidwell` in `Game.endTurn`, after Necrotic Frost's turn and before anything strikes, so a new vortex stuns that turn's shots and steps.
 `stepVoidwell` counts the vortex down and the cooldown, which starts over the moment it runs out and opens a new one in the old one's place; Duration's highest is under Cooldown's lowest, so as the tables stand they never meet.
-A vortex stands where it opened, whatever the hero does.
-It keeps the equivalent floor it opened on (`floorOf`), and `stepVoidwell` ends it on the first turn the hero stands on another: in the Tower `Game.vortex` hides it at once too, since the board it lay on is gone.
+A vortex stands where it opened, whatever the hero does, and lasts its turns onto a new floor: its coordinates carry over, so on a Tower floor it lies at the same place on the new board, and in the Delve at the same place in the world. It stuns what stands there, and placement isn't checked again.
 Switching it off clears the timer and vortex (`clearVoidwell`); `casts` stays, so the rolls go on.
 **Where it opens** (`placeVortex`) decides play, so it is exact in every engine: `UNITS`, `ANGLES` (720) directions from `pointing`, and one `voidwellRoll` (`tileRandom` by the run's seed and `casts`) picks among those whose center is allowed at `distance`, the hero's shot range (`Game.lifespringReach`: 3 tiles untrained, whether or not the hero is an Archer).
 Allowed means its edge is at most a tile past the floor's in every direction: a center between `low - 1.5 + radius` and `high + 1.5 - radius` of `Board.floorBounds`, the smallest bounds of the floor's tiles that aren't walls, by their centers (the Tower's floor, or in the Delve `floorTiles` of the hero's area and equivalent floor).

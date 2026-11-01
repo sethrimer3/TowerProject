@@ -147,7 +147,7 @@ function frostTurn(s: TrialState, a: NonNullable<TrialState["arcana"]>, rule: No
 function voidwellTurn(s: TrialState, a: NonNullable<TrialState["arcana"]>, rule: NonNullable<TrialSpells["voidwell"]>) {
   // The floor's edge lies where |dx| + |dy| / 2 is 11.5, and that measure runs Math.sqrt(1.25) to the tile.
   const limit = 11.5 - Math.sqrt(1.25) * (rule.radius - 1);
-  stepVoidwell((a.voidwell ??= {}), rule, 0, (cast) => placeVortex({
+  stepVoidwell((a.voidwell ??= {}), rule, (cast) => placeVortex({
     hero: s.player, distance: rule.reach / 100, radius: rule.radius, roll: voidwellRoll(s.seed, cast),
     bounds: { left: 1, right: 23, bottom: 1, top: 23 },
     fits: (x, y) => Math.abs(x - ELEMENTAL.x) + Math.abs(y - ELEMENTAL.y) / 2 <= limit,

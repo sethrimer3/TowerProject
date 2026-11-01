@@ -2523,18 +2523,17 @@ export class Game {
   private voidwellTurn() {
     const rule = this.arcana.voidwellRule(), p = this.run.player;
     if (!rule) return;
-    stepVoidwell((this.run.voidwell ??= {}), rule, this.floorOf(p.x, p.y), (cast) => placeVortex({
+    stepVoidwell((this.run.voidwell ??= {}), rule, (cast) => placeVortex({
       hero: p, distance: this.lifespringReach / 100, radius: rule.radius, roll: voidwellRoll(this.run.seed, cast),
       bounds: this.world.floorBounds?.(p.x, p.y) ?? { left: p.x, right: p.x, bottom: p.y, top: p.y },
     }));
   }
-  /** Voidwell's vortex while one stands on the hero's floor and it is on. A Delve vortex
-   * left behind ends with the turn that leaves its floor (`stepVoidwell`). */
+  /** Voidwell's vortex while one stands and it is on, on whatever floor the hero has reached. */
   get vortex(): VortexZone | undefined {
     const v = this.run.voidwell?.vortex;
     if (!v) return undefined;
     const rule = this.arcana.voidwellRule();
-    if (!rule || (this.mode === "tower" && v.floor !== this.run.height + 1)) return undefined;
+    if (!rule) return undefined;
     return { x: v.x, y: v.y, radius: rule.radius, wrap: this.wrap };
   }
   /** Necrotic Frost's decay as the turn ends (arcana.md): pays what it fells and returns its shots. */

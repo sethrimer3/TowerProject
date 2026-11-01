@@ -26,7 +26,7 @@ import { World } from "../src/delve/world.ts";
 const brute: Enemy = { name: "Brute", hp: 50, attack: 10, defense: 0, tier: 1, strength: "weak" };
 const bounds: FloorBounds = { left: 0, right: 16, bottom: 0, top: 16 };
 /** A vortex at (5, 5), its turns long. */
-const here = (left = 10, floor = 1): Vortex => ({ x: 5, y: 5, left, floor });
+const here = (left = 10): Vortex => ({ x: 5, y: 5, left });
 
 /** A Tower run at (3, 5), ATK 100, on plain floor holding `tiles`, holding Voidwell with a vortex at (5, 5) of 3 tiles' radius. */
 function arena(tiles: Record<string, Tile> = {}, vortex: Vortex | null = here()) {
@@ -144,23 +144,83 @@ test("in the Delve the bounds hold the hero's own tile", () => {
 
 test("the cooldown opens a vortex that stands its Duration, then ends", () => {
   const s: VoidwellRun = { timer: 2 }, rule = { duration: 3, turns: 2 }, place = () => ({ x: 1.5, y: 2.5 });
-  assert.deepEqual([stepVoidwell(s, rule, 1, place), stepVoidwell(s, rule, 1, place)], [false, true]);
-  assert.deepEqual(s.vortex, { x: 1.5, y: 2.5, left: 3, floor: 1 });
+  assert.deepEqual([stepVoidwell(s, rule, place), stepVoidwell(s, rule, place)], [false, true]);
+  assert.deepEqual(s.vortex, { x: 1.5, y: 2.5, left: 3 });
   assert.equal(s.casts, 1);
   const long = { duration: 3, turns: 100 }, t: VoidwellRun = { timer: 50, casts: 1, vortex: here(3) };
-  stepVoidwell(t, long, 1, place);
+  stepVoidwell(t, long, place);
   assert.equal(t.vortex?.left, 2);
-  stepVoidwell(t, long, 1, place);
+  stepVoidwell(t, long, place);
   assert.equal(t.vortex?.left, 1);
-  stepVoidwell(t, long, 1, place);
+  stepVoidwell(t, long, place);
   assert.equal(t.vortex, undefined);
 });
 
-test("leaving the floor ends it; the cooldown carries on", () => {
-  const s: VoidwellRun = { timer: 50, vortex: here(10, 1) };
-  stepVoidwell(s, { duration: 3, turns: 100 }, 2, () => ({ x: 0, y: 0 }));
-  assert.equal(s.vortex, undefined);
+/** A hero about to climb real stairs at (4, 5), holding every arcanum with a cooldown, each mid-way through what it does. */
+function aboutToClimb() {
+  const g = arena({ "4,5": { kind: "stairs" } });
+  for (const id of ["thunderbolt", "lifespring", "timeDilation", "phantasm", "necroticFrost"] as const) g.save.arcana.owned[id] = [0, 0, 0];
+  g.save.tower.runArcana.timers.thunderbolt = 100;
+  g.save.tower.runArcana.bolts = 2;
+  g.run.lifespring = { timer: 100, pool: 1e12 };
+  g.run.timeDilation = { timer: 100, left: 4 };
+  g.run.phantasm = { timer: 100, turns: 3, ring: 3, ghosts: [0, 1, 2] };
+  g.run.necroticFrost = { timer: 100, casts: 1, fields: [{ id: 1, angle: 9000, left: 4 }] };
+  return g;
+}
+
+test("a climb interrupts no cooldown arcanum: what each has in progress carries on, its turns counted", () => {
+  const g = aboutToClimb(), height = g.run.height;
+  assert.ok(g.move(1, 0));
+  assert.equal(g.run.height, height + 1, "it climbed");
+  assert.equal(g.world.floor, 0);
+  assert.deepEqual(g.run.voidwell!.vortex, here(9), "the vortex stands where it was, a turn shorter");
+  assert.equal(g.run.voidwell!.timer, 149);
+  assert.ok(g.vortex, "and stands on the board");
+  assert.equal(g.save.tower.runArcana.timers.thunderbolt, 99);
+  assert.equal(g.save.tower.runArcana.strikes, 1, "the bolts waiting strike on arrival");
+  assert.ok(g.volley?.shots.some((s) => s.thunderbolt), "at the new floor's enemies");
+  assert.equal(g.run.lifespring!.timer, 99);
+  assert.ok(g.run.lifespring!.pool! > 0, "the field holds");
+  assert.ok(g.lifespringField);
+  assert.equal(g.run.timeDilation!.timer, 99);
+  assert.equal(g.run.timeDilation!.left, 3);
+  assert.ok(g.dilation, "the field holds");
+  assert.equal(g.run.phantasm!.timer, 99);
+  assert.ok(g.run.phantasm!.ghosts!.length > 0, "the ring rides along");
+  assert.ok(g.phantasms);
+  assert.equal(g.run.necroticFrost!.timer, 99);
+  assert.deepEqual(g.run.necroticFrost!.fields, [{ id: 1, angle: 9000, left: 3 }]);
+  assert.ok(g.frostArea);
+  for (const { id, left } of [{ id: "voidwell", left: 149 }, { id: "thunderbolt", left: 99 }, { id: "lifespring", left: 99 }, { id: "timeDilation", left: 99 }, { id: "phantasm", left: 99 }, { id: "necroticFrost", left: 99 }] as const)
+    assert.equal(g.arcana.cooldown({ id, levels: [0, 0, 0], lent: false })!.left, left, `${id}'s bar goes on`);
+});
+
+test("a vortex carried to a new floor stuns what stands in it there, and runs out as ever", () => {
+  const g = arena({ "4,5": { kind: "stairs" } }, here(2));
+  assert.ok(g.move(1, 0));
+  assert.equal(g.run.voidwell!.vortex!.left, 1);
+  const w = g.world as RoomWorld;
+  w.cells.set("5,5", { kind: "enemy", enemy: brute });
+  assert.ok(w.tile(5, 5).enemy!.stunned);
+  Object.assign(g.run.player, { x: 12, y: 12 });
+  w.cells.set("13,12", { kind: "floor" });
+  assert.ok(g.move(1, 0));
+  assert.equal(g.run.voidwell!.vortex, undefined);
+  assert.ok(!w.tile(5, 5).enemy!.stunned);
+});
+
+test("the Delve's vortex goes on the same, wherever the hero walks", () => {
+  const s: VoidwellRun = { timer: 50, vortex: here(10) };
+  stepVoidwell(s, { duration: 3, turns: 100 }, () => ({ x: 0, y: 0 }));
+  assert.deepEqual(s.vortex, here(9));
   assert.equal(s.timer, 49);
+  const g = new Game(defaults(), random(5));
+  g.switchMode("delve");
+  g.newRun({ seed: 7 });
+  g.save.arcana.owned.voidwell = [0, 0, 0];
+  g.run.voidwell = { vortex: here() };
+  assert.deepEqual(g.vortex, { x: 5, y: 5, radius: 3, wrap: g.world.width });
 });
 
 test("switched off, the vortex and its cooldown go, and its tiles read as they were", () => {
@@ -303,7 +363,6 @@ test("a turn's activation opens it on the floor at the hero's shot range, and un
   const v = g.run.voidwell.vortex!, hero = g.run.player;
   assert.ok(v, "it opened");
   assert.equal(v.left, 15);
-  assert.equal(v.floor, g.run.height + 1);
   assert.ok(Math.abs(away(hero, v) - 3) < 1e-9);
   assert.deepEqual(g.vortex, { x: v.x, y: v.y, radius: 3, wrap: 0 });
   assert.ok(g.undo());
@@ -311,20 +370,13 @@ test("a turn's activation opens it on the floor at the hero's shot range, and un
   assert.equal(g.run.voidwell!.timer, 1);
 });
 
-test("on another Tower floor it doesn't stand", () => {
-  const g = arena();
-  assert.ok(g.vortex);
-  g.run.height++;
-  assert.equal(g.vortex, undefined);
-});
-
 test("it survives the save", () => {
   const g = arena();
   const back = decode(JSON.stringify(g.save));
   assert.deepEqual(back.tower.run!.voidwell, g.run.voidwell);
-  assert.ok(validVoidwell({ timer: 1, casts: 2, vortex: { x: 1.25, y: -0.5, left: 3, floor: 0 } }));
-  assert.ok(!validVoidwell({ vortex: { x: "a", y: 1, left: 3, floor: 0 } }));
-  assert.ok(!validVoidwell({ vortex: { x: 1, y: 1, left: 0, floor: 0 } }));
+  assert.ok(validVoidwell({ timer: 1, casts: 2, vortex: { x: 1.25, y: -0.5, left: 3 } }));
+  assert.ok(!validVoidwell({ vortex: { x: "a", y: 1, left: 3 } }));
+  assert.ok(!validVoidwell({ vortex: { x: 1, y: 1, left: 0 } }));
   assert.ok(!validVoidwell({ timer: -1 }));
 });
 
@@ -344,7 +396,7 @@ function trial(vortex: Vortex | undefined) {
 }
 
 test("in a trial, what it stuns takes no steps and its boss clock stops, but it still answers a hit", () => {
-  const s = trial({ x: 12, y: 12, left: 5, floor: 0 });
+  const s = trial({ x: 12, y: 12, left: 5 });
   assert.ok(stunnedIn(s, s.elemental));
   assert.ok(!stunnedIn(s, { x: 1, y: 12 }));
   assert.equal(foeActs(s, s.elemental, "move:boss"), false);
@@ -374,6 +426,6 @@ test("a trial's vortex opens on the arena's floor and is saved with the attempt"
   assert.equal(state.arcana.spells!.voidwell!.radius, 7);
   assert.equal(state.arcana.spells!.voidwell!.reach, 300);
   assert.equal(session.game.run.voidwell, state.arcana.voidwell);
-  assert.equal(decodeTrialArcana({ run: {}, beamTurns: 0, voidwell: { timer: 3, vortex: { x: 12.5, y: 12, left: 3, floor: 0 } } })!.voidwell!.vortex!.x, 12.5);
+  assert.equal(decodeTrialArcana({ run: {}, beamTurns: 0, voidwell: { timer: 3, vortex: { x: 12.5, y: 12, left: 3 } } })!.voidwell!.vortex!.x, 12.5);
   assert.equal(decodeTrialArcana({ run: {}, beamTurns: 0, voidwell: { vortex: "no" } })!.voidwell, undefined);
 });

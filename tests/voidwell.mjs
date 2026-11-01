@@ -22,7 +22,7 @@ try {
       for(const key of Object.keys(g.save.tutorials))g.save.tutorials[key]=true;
       g.save.upgrades.onTheJob=1;
       g.save.arcana.owned.voidwell=[5,1,0];
-      g.run.voidwell=at?{...well,vortex:{x:g.run.player.x+at.dx,y:g.run.player.y+at.dy,left:12,floor:g.run.height+1}}:well;
+      g.run.voidwell=at?{...well,vortex:{x:g.run.player.x+at.dx,y:g.run.player.y+at.dy,left:12}}:well;
       sessionStorage.setItem("wellFixture",JSON.stringify(g.save));
     },{well,at});
     await page.reload({waitUntil:"domcontentloaded"});await expect(world).toBeVisible({timeout:30000});
@@ -111,7 +111,7 @@ try {
   }
   await trial(null);
   const clear=await pixels();
-  await trial({x:12.5,y:10,left:12,floor:0});
+  await trial({x:12.5,y:10,left:12});
   await world.screenshot({path:`${OUT}/trial.png`});
   const shown=moved(clear,await pixels());
   console.log("Trial pixels the vortex changed:",shown);

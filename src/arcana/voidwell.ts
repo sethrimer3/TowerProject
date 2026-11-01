@@ -9,9 +9,9 @@ import { isRecord, wholeIn } from "../save/decode.ts";
 // exact arithmetic in every engine. This module is its rules: it reads nothing of the
 // game but what it is given.
 
-/** A vortex standing: its center in tiles, not bound to whole tiles, its turns left,
- * and the equivalent floor it opened on, which it ends on leaving. */
-export type Vortex = { x: number; y: number; left: number; floor: number };
+/** A vortex standing: its center in tiles, not bound to whole tiles, and its turns
+ * left, which a new floor doesn't interrupt. */
+export type Vortex = { x: number; y: number; left: number };
 /** What a run keeps of Voidwell, in the run so undo takes it back with what it stunned:
  * the cooldown's turns left, the activations so far, and the vortex (absent with none). */
 export type VoidwellRun = { timer?: number; casts?: number; vortex?: Vortex };
@@ -92,19 +92,19 @@ export function stunnedTile(t: Tile, x: number, y: number, vortex: (() => Vortex
   return { ...floor, kind: "enemy", enemy: { ...flyer!, stunned: true } };
 }
 
-/** One turn of Voidwell: the vortex's turns run out (and it ends if the hero has left
- * its `floor`), and the cooldown runs, restarting the moment it runs out, which opens a
- * new one in its place at where `place` says. Returns whether it did. */
-export function stepVoidwell(s: VoidwellRun, { duration, turns }: { duration: number; turns: number }, floor: number, place: (cast: number) => Point) {
+/** One turn of Voidwell: the vortex's turns run out, and the cooldown runs, restarting
+ * the moment it runs out, which opens a new one in its place at where `place` says.
+ * Returns whether it did. */
+export function stepVoidwell(s: VoidwellRun, { duration, turns }: { duration: number; turns: number }, place: (cast: number) => Point) {
   if (s.vortex) {
-    if (s.vortex.floor === floor && s.vortex.left > 1) s.vortex.left--;
+    if (s.vortex.left > 1) s.vortex.left--;
     else delete s.vortex;
   }
   const left = Math.min(s.timer ?? turns, turns) - 1;
   s.timer = left <= 0 ? turns : left;
   if (left > 0) return false;
   const cast = (s.casts = (s.casts ?? 0) + 1);
-  s.vortex = { ...place(cast), left: duration, floor };
+  s.vortex = { ...place(cast), left: duration };
   return true;
 }
 
@@ -116,5 +116,5 @@ export function clearVoidwell(s: VoidwellRun | undefined) {
 }
 
 const whole = (v: unknown) => v === undefined || wholeIn(v, 1, 1e12);
-const validVortex = (v: unknown) => isRecord(v) && Number.isFinite(v.x) && Number.isFinite(v.y) && wholeIn(v.left, 1, 1e9) && wholeIn(v.floor, 0, 1e12);
+const validVortex = (v: unknown) => isRecord(v) && Number.isFinite(v.x) && Number.isFinite(v.y) && wholeIn(v.left, 1, 1e9);
 export const validVoidwell = (v: unknown): v is VoidwellRun => isRecord(v) && whole(v.timer) && whole(v.casts) && (v.vortex === undefined || validVortex(v.vortex));

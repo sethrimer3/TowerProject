@@ -20,6 +20,7 @@ Pressing a row anywhere else shows what the arcanum does, each attribute now and
 Every arcanum you hold works at once in every Tower and Delve run, by its own trigger.
 Inside a run, the **Arcana** tab after the Training tabs shows a card for each, with its name, its value (for damage, what it deals with your ATK and crits) and a switch.
 An arcanum with a cooldown also has a bar on its card, filling as the cooldown runs down, with the turns left at its right end.
+Entering a new floor interrupts none of them: the cooldown runs on, and whatever the arcanum has in progress continues there for the turns it has left.
 You can switch them on and off up to 40 times a run, all of them together; the number left rises off the switch each time.
 Undo doesn't give a toggle back.
 An arcanum with a cooldown starts it over when switched back on.
@@ -248,7 +249,7 @@ A vortex too wide for the floor lies across its middle.
 - It still strikes back in a fight you start, and a Shielded enemy's bubble still holds, in the vortex or out.
 
 Its attribute icons stay on it, and its name and panel say Stunned.
-Leaving the floor ends the vortex.
+A vortex in progress continues on a new floor, at the same place on the board, for the turns it has left.
 Undo takes back the vortex with what it stunned.
 Switching it off loses the vortex and its cooldown.
 
