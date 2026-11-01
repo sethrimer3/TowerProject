@@ -146,7 +146,7 @@ test("undo leaves Aurum Bloom's floors as they stand, and its switch", () => {
   assert.deepEqual([g.environments.goldenFloor, g.environments.stellarFloor], [24, 10]);
 });
 
-test("a Stellar Floor shows in the All Gold Bonuses box with Aurum Bloom, and a lent one counts at its first levels", () => {
+test("a Stellar Floor shows in the All Gold Bonuses box with Aurum Bloom, and a lent one counts at its lent levels", () => {
   const g = inside();
   const lines = () => goldMultipliers(g.goldContext).filter((m) => m.id === "golden" || m.id === "stellar");
   assert.deepEqual(lines(), []);
@@ -156,7 +156,7 @@ test("a Stellar Floor shows in the All Gold Bonuses box with Aurum Bloom, and a 
   assert.deepEqual(lines().map((m) => m.factor), [5, 10]);
   const lent = inside();
   lent.towerRun.shrine = { picked: [], rolls: 0, arcana: ["aurumBloom"] };
-  assert.deepEqual(lent.arcana.aurumBloom(), { bonus: 5, chance: 5, stellar: 0.5 });
+  assert.deepEqual(lent.arcana.aurumBloom(), { bonus: 9, chance: 12, stellar: 3 });
   assert.deepEqual(valuesAt("aurumBloom", [0, 0, 0]), [5, 5, 0.5]);
 });
 

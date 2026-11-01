@@ -184,17 +184,18 @@ Aurum Bloom raises floors a trial doesn't have; every other arcanum works, and a
 `state.arcana.strikes`, the last turn's, are what `TrialRenderer` draws; it also paints the beams.
 
 **The run.**
-`ArcanaDesk.held` is what the run holds: owned at their levels, and lent at their first.
+`ArcanaDesk.held` is what the run holds: owned at their levels, and lent at `LENT_LEVELS` (one bought while lent, the better of each attribute's levels).
 `slice.runArcana` (`ArcanaRun`, `decodeArcanaRun`) sits beside the run, like `runFinds`, so undo never touches it, and `newRun` resets it: the toggles spent (`RUN_TOGGLES`, all arcana together), those off, the cooldowns left, and Thunderbolt's bolts and strikes.
 So undo takes back what a bolt did to the board but not its cooldown: the bolts are spent.
 Toggling off forgets the arcanum's cooldown, and Thunderbolt's bolts, so it starts over when turned on.
 
 **The Shrine boons.**
 `unlockArcanum`, the one `spell` boon, joins `rollOffer` at weight 20 against the trade-offs' 15 and the standard boons' 65 while `arcanaToLend` has any.
-`ShrineDesk.pick` then rolls `run.shrine.choosing` from the run's own draws (`rollArcanumChoice`), which counts as unspent and holds back further offers until `choose` moves the pick to `run.shrine.arcana`; `share` copies both to every undo snapshot, so undo never takes one back.
-Auto Pick takes the first option.
+`ShrineDesk.offer` rolls the arcanum it names, `run.shrine.lending`, from the run's own draws (`rollLending`), naming another if that one is bought while the offer waits, and rolling a new offer with none left to lend.
+`pick` moves it to `run.shrine.arcana`; `share` copies both to every undo snapshot, so undo never takes one back.
+A lent arcanum is never in `save.arcana.owned`: no upgrades, and no Arcana research exists yet, but any that comes must ask `owned`, so that a lent one opens none of it.
 It has no boon PNG: `boonIcon` gives it the Arcanite icon.
-**Augment boons** (`kind: "augment"`, one per arcanum, `augmentOf`) share that slot of the offer, each once a run and only while the run holds its arcanum, owned or lent (on or off), so holding every arcanum keeps the slot going.
+**Augment boons** (`kind: "augment"`, one per arcanum, `augmentOf`) have weight 15 of the offer's slot, taken from the standard boons' 65, each once a run and only while the run holds its arcanum, owned or lent (on or off).
 They lie in `run.shrine.picked` like any boon, so undo never takes one back, and none of them changes `boonEffects`.
 `ArcanaDesk.augmented(id)` is the one reader, and `valuesOf` the attributes as the run has them (`augmentedValues`: Ricochet Shot's ATK Mult ×2, Overseer's Bonus ×1.5, Thunderbolt's Quantity +4, Lifespring's Effect Waves +1, Time Dilation's Duration +5, Voidwell's Duration +12), read by every rule and `cardValue`; `showHeldArcanum` shows them with a Modifiers row.
 Three change what no attribute holds, each given by its rule only with the boon:

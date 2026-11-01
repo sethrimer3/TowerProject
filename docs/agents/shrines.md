@@ -34,8 +34,8 @@ Bounce Shot, Orbs and the ranged enemies' trade-off wait for what they act on.
 A pick (and the offer's draws) is copied into every undo snapshot of the run and a fall's (`ShrineDesk.share`), and `sync` rescales each, as Training bought mid-run is: undo takes back steps, never a boon.
 
 **Offers** (`rollOffer`).
-Each slot is a trade-off, a standard boon or a boon of the arcana by weights 15, 65 and 20 (the last only while an arcanum is left to lend or the run holds one to augment; its pool is the spell boon and the augment boons, each as likely as another), drawn from boons with copies left, not banned and not already offered; a kind with none left gives way to the other.
-With no arcana to lend or augment, the draws are what they always were.
+Each slot is a trade-off, a standard boon or the spell boon by weights 15, 65 and 20 (the last only while an arcanum is left to lend), and an augment boon, while one can be picked, takes 15 of the standard boons' 65, so the spell boon's and trade-offs' odds don't move; each is drawn from boons with copies left, not banned and not already offered; a kind with none left gives way to the others.
+With no augment boon open, the draws are what they always were.
 The draws come from `drawAt(seed ^ SHRINE_SALT, run.shrine.rolls++)`, so undo and a replay offer the same.
 The offer waiting is kept in `run.shrine.offer` until a pick.
 Size: 2 plus Boon Option Quantity (`offerSize`).

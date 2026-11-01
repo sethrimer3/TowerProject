@@ -247,8 +247,7 @@
   "arcana.cards": "c6faac0e117138c6",
   "arcana.toggled": "81229a27dd5ee470",
   "arcana.cardInfo": "3390219a040f7f67",
-  "arcana.boon": "d4781e09912b710e",
-  "arcana.boonChoice": "0f4dd2a1e6182e93",
+  "arcana.boon": "efecc3f61de9e30b",
   "shield.up": "2170f7ac67764b90",
   "shield.regrow": "e497dde0a29673ab",
   "lessons.autoClimb": "f3fd6f9c9da2455f",
@@ -263,5 +262,7 @@
   "lakeside.returned": "aaf9a52a095b9f14",
   "arcana.augmentOffer": "4a4b6d14ee76f4c9",
   "arcana.augmentTaken": "29c2712d6429f6a5",
-  "arcana.augmentInfo": "9697277672dfaf0c"
+  "arcana.augmentInfo": "9697277672dfaf0c",
+  "arcana.boonTaken": "951f81513aeae8d9",
+  "arcana.boonLent": "2840669883221f41"
 }

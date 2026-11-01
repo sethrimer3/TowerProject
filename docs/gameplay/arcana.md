@@ -34,11 +34,27 @@ It is ATK like any other, so the enemy's DEF still counts.
 
 In a [Proving Grounds](proving-grounds.md) trial, every arcanum you own works except Aurum Bloom, on the boss, its parts and its minions or summoned enemies, with its own toggles and cooldowns for the attempt (see [In a trial](#in-a-trial)).
 
-A Tower run's Shrines can also offer **Unlock an Arcanum**, while you don't own them all: pick it, then choose one you don't own, up to three offered, to hold at its first levels for the rest of the climb.
+A Tower run's Shrines can also offer **Unlock an Arcanum**, while you don't own them all.
+The offer names one you don't own, at random, and picking it holds that one for the rest of the climb, part way upgraded, and its [Shrine boon](#shrine-boons) can then be offered:
+
+| Arcanum | First attribute | Second | Third |
+|---|---|---|---|
+| Ricochet Shot | ×46 | 3 rebounds | 15.5% chance |
+| Thunderbolt | ×43 | 11 bolts | 110 turns |
+| Lifespring | ×46 | 2 waves | 210 turns |
+| Time Dilation | 22 turns | 40% slowdown | 120 turns |
+| Phantasm | ×43 | 5 ghosts | 130 turns |
+| Aurum Bloom | ×9.0 | +12% chance | +3% Stellar chance |
+| Necrotic Frost | ×43 | 50 turns | 90 turns |
+| Voidwell | 5 tiles | 20 turns | 130 turns |
+| Overseer | ×27.6 | 45° | 1 beam |
+
+An arcanum held this way isn't yours: it can't be upgraded and opens no research.
+Holding arcana never makes this boon rarer.
 
 ## Shrine boons
 
-While a Tower run holds an arcanum, bought or lent, its Shrines can offer one green boon that strengthens it, once a climb, as a slot of the same kind as Unlock an Arcanum.
+While a Tower run holds an arcanum, bought or lent, its Shrines can offer one green boon that strengthens it, once a climb.
 Each lasts the rest of the climb, whether the arcanum is on or off, and undo never takes one back.
 Your card and its information show what it comes to.
 

@@ -2,7 +2,7 @@
 // page, held by a run, set off by their triggers; Ricochet Shot on arrows.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ARCANA, ARCANUM_IDS, ARCANUM_PRICES, arcanaOpen, arcanumBoost, decodeArcana, decodeArcanaRun, drawOptions, redrawOptions, rerollPrice, tickCooldowns, valuesAt } from "../src/arcana/arcana.ts";
+import { ARCANA, ARCANUM_IDS, ARCANUM_PRICES, arcanaOpen, arcanumBoost, decodeArcana, decodeArcanaRun, drawOptions, LENT_LEVELS, redrawOptions, rerollPrice, tickCooldowns, valuesAt, type ArcanumId } from "../src/arcana/arcana.ts";
 import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save/save.ts";
 import { boon, rollOffer, BOON_IDS } from "../src/shrines.ts";
@@ -293,24 +293,70 @@ test("the boon offers only while an arcanum is left to lend", () => {
   assert.ok(BOON_IDS.includes("unlockArcanum"));
 });
 
-test("picking it asks which arcanum; taken, it lasts the climb at first levels and costs nothing", () => {
+test("the offer names the arcanum; picked, it lasts the climb at its lent levels, costs nothing and is never bought", () => {
   const g = shrineGame();
   offering(g);
-  assert.equal(g.shrine.pick("unlockArcanum"), true);
-  assert.equal(new Set(g.shrine.choosing).size, 3);
-  g.shrine.choosing.splice(0, 3, "ricochetShot", "aurumBloom", "overseer");
-  assert.ok(g.shrine.unspent >= 1, "the choice waits like a boon");
-  assert.deepEqual(g.shrine.offer(), [], "no other offer until it is chosen");
+  g.shrine.offer();
+  const named = g.shrine.lending!;
+  assert.ok(ARCANUM_IDS.includes(named));
+  assert.equal(g.shrine.offer().length, 2);
+  assert.equal(g.shrine.lending, named, "the same one while the offer waits");
   assert.deepEqual(g.arcana.held, []);
-  assert.equal(g.shrine.choose("ricochetShot"), true);
-  assert.deepEqual(g.shrine.arcana, ["ricochetShot"]);
-  assert.deepEqual(g.arcana.held, [{ id: "ricochetShot", levels: [0, 0, 0], lent: true }]);
-  assert.deepEqual(g.save.arcana.owned, {}, "lent, not bought");
+  assert.equal(g.shrine.pick("unlockArcanum"), true);
+  assert.deepEqual(g.shrine.arcana, [named]);
+  assert.equal(g.shrine.lending, undefined);
+  assert.deepEqual(g.arcana.held, [{ id: named, levels: LENT_LEVELS[named], lent: true }]);
+  assert.deepEqual(g.save.arcana.owned, {}, "lent, not bought: research that asks for an owned arcanum stays shut");
   g.newRun({ outside: true });
   assert.deepEqual(g.arcana.held, []);
 });
 
-test("Auto Pick takes the arcanum's first option too", () => {
+test("the lent levels are the table's", () => {
+  const lent = (id: ArcanumId) => valuesAt(id, LENT_LEVELS[id]);
+  assert.deepEqual(lent("ricochetShot"), [46, 3, 15.5]);
+  assert.deepEqual(lent("thunderbolt"), [43, 11, 110]);
+  assert.deepEqual(lent("lifespring"), [46, 2, 210]);
+  assert.deepEqual(lent("timeDilation"), [22, 40, 120]);
+  assert.deepEqual(lent("phantasm"), [43, 5, 130]);
+  assert.deepEqual(lent("aurumBloom"), [9, 12, 3]);
+  assert.deepEqual(lent("necroticFrost"), [43, 50, 90]);
+  assert.deepEqual(lent("voidwell"), [5, 20, 130]);
+  assert.deepEqual(lent("overseer"), [27.6, 45, 1]);
+});
+
+test("the spell boon's odds don't move however many arcana the run holds", () => {
+  const unlocks = (owned: readonly ArcanumId[]) => {
+    const o = { ...defaults(), arcana: { owned: Object.fromEntries(owned.map((id) => [id, [0, 0, 0]])) } };
+    return Array.from({ length: 2000 }, (_, seed) => rollOffer(seed, { picked: [], rolls: 0 }, o).includes("unlockArcanum"));
+  };
+  const none = unlocks([]);
+  assert.ok(none.includes(true));
+  for (let held = 1; held < ARCANUM_IDS.length; held++) assert.deepEqual(unlocks(ARCANUM_IDS.slice(0, held)), none, `${held} held`);
+});
+
+test("an arcanum bought while named or lent: another is named, and the better levels are held", () => {
+  const g = shrineGame();
+  offering(g);
+  g.shrine.offer();
+  const first = g.shrine.lending!;
+  g.save.arcana.owned[first] = [0, 0, 0];
+  g.shrine.offer();
+  assert.notEqual(g.shrine.lending, first);
+  const lent = g.shrine.lending!;
+  g.shrine.pick("unlockArcanum");
+  g.save.arcana.owned[lent] = [LENT_LEVELS[lent][0] + 1, 0, 0];
+  assert.deepEqual(g.arcana.held.find((h) => h.id === lent), { id: lent, levels: [LENT_LEVELS[lent][0] + 1, LENT_LEVELS[lent][1], LENT_LEVELS[lent][2]], lent: false });
+});
+
+test("an offer with nothing left to lend is rolled anew", () => {
+  const g = shrineGame();
+  for (const id of ARCANUM_IDS) g.save.arcana.owned[id] = [0, 0, 0];
+  offering(g);
+  assert.ok(!g.shrine.offer().includes("unlockArcanum"));
+  assert.equal(g.shrine.lending, undefined);
+});
+
+test("Auto Pick takes the arcanum its offer names", () => {
   const g = shrineGame();
   g.save.archives.levels.autoPickBoons = 1;
   g.save.shrines.autoPick = true;
@@ -318,5 +364,4 @@ test("Auto Pick takes the arcanum's first option too", () => {
   offering(g);
   g.shrine.pick("unlockArcanum");
   assert.equal(g.shrine.arcana.length, 1);
-  assert.deepEqual(g.shrine.choosing, []);
 });

@@ -244,9 +244,9 @@ test("a saved run's outer ghosts survive a reload", () => {
   assert.deepEqual((back.tower.run as TowerRun).shrine!.picked, ["augmentPhantasm"]);
 });
 
-test("a lent arcanum's boon works at its first levels", () => {
+test("a lent arcanum's boon works at its lent levels", () => {
   const g = runWith([], ["unlockArcanum", "augmentThunderbolt"], ["thunderbolt"]);
-  assert.equal(g.arcana.thunderbolt()!.bolts, 9);
+  assert.equal(g.arcana.thunderbolt()!.bolts, 15);
   assert.equal(g.arcana.held[0]!.lent, true);
 });
 

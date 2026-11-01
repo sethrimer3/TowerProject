@@ -7,7 +7,7 @@ A diamond over its left end shows how many boons wait to be picked, flashing as 
 Pressing the bar offers two boons (up to four with Boon Option Quantity research) to pick one, which lasts the rest of the run, and with none waiting lists the boons taken, copies added up.
 Standard boons can be taken several times (×1.20 Max HP, ×1.15 ATK, All Gold Bonuses, Shroud and Silver Bonus, ×1.75 Regen, Interest ×1.50, +5% Free Up Chance, +4 Parry %, −20% Boon Floor Requirement, +1 Max Play Speed): a multiplier's copies add up as (1 + value × copies), an addition's as value × copies, both then raised by Standard Boon Bonus research (+1% a level).
 Trade-offs, once each, give a benefit at a cost (×1.50 ATK but bosses ×8 HP, ×1.80 Gold but −70% max HP, −50% enemy HP but −90% Regen and Lifesteal, and more); Improve Trade-off Boons research raises the benefit.
-**Unlock an Arcanum** lends the climb an arcanum you don't own, your choice of up to three, while any remain ([Arcana](arcana.md)).
+**Unlock an Arcanum** lends the climb an arcanum you don't own, part way upgraded and named on the offer, while any remain ([Arcana](arcana.md)).
 **Arcana boons** appear once you hold an arcanum, bought or lent: one for each arcanum you hold, once a climb, shown in green in every list of boons ([Arcana](arcana.md#shrine-boons)).
 Boons of different types multiply each other: a trade-off's ×1.50 ATK on five ATK copies' ×1.75 makes ×2.625.
 A boon applies at once, to the hero's stats as they stand and to what it gains later; undo never takes one back.

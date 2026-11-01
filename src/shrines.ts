@@ -3,7 +3,7 @@ import type { Enemy, Tile } from "./entities.ts";
 import { snap } from "./exact.ts";
 import { PARRY_CAP } from "./combat.ts";
 import { drawAt } from "./random.ts";
-import { arcanum, ARCANUM_IDS, drawOptions, isArcanum, OFFER_SIZE, unownedArcana, type ArcanaSave, type ArcanumId } from "./arcana/arcana.ts";
+import { arcanum, ARCANUM_IDS, isArcanum, unownedArcana, type ArcanaSave, type ArcanumId } from "./arcana/arcana.ts";
 import { isRecord, whole } from "./save/decode.ts";
 
 // Shrines (docs/agents/shrines.md): once Unlock Shrines is researched, a
@@ -22,8 +22,8 @@ type StandardBoon = { kind: "standard"; name: string; max: number; math: "multip
  * Trade-off Boons research, unless `fixed`) at a cost. `label` reads the
  * benefit's strength, 1 before research. */
 type TradeoffBoon = { kind: "tradeoff"; name: string; max: 1; label: (t: number) => string; fixed?: true };
-/** A spell boon: picked, it lends the climb an arcanum the player doesn't own,
- * chosen from a few offered (`rollArcanumChoice`). */
+/** A spell boon: picked, it lends the climb the arcanum the player doesn't own
+ * that its offer names (`rollLending`). */
 type SpellBoon = { kind: "spell"; name: string; max: number; label: (t: number) => string; fixed: true };
 /** An augment boon: once a run, offered only while the run holds `arcanum`,
  * bought or lent, which it strengthens for the rest of the climb (`effect`,
@@ -284,8 +284,8 @@ export const defaultShrines = (): ShrinesSave => ({ autoPick: false, banned: [],
 /** What a Tower run keeps of its boons: those picked, in order; the draws
  * its offers have made; the offer waiting, if any; and the boons' effects
  * last applied to the hero and the enemies (`syncBoons`); the arcana its
- * spell boons lent it, and the choice of one waiting (`choosing`). */
-export type ShrineRun = { picked: BoonId[]; rolls: number; offer?: BoonId[]; arcana?: ArcanumId[]; choosing?: ArcanumId[]; applied?: Pick<BoonEffects, HeroFactor | "parryBonus" | "foes"> };
+ * spell boons lent it, and the one the waiting offer's spell boon names (`lending`). */
+export type ShrineRun = { picked: BoonId[]; rolls: number; offer?: BoonId[]; arcana?: ArcanumId[]; lending?: ArcanumId; applied?: Pick<BoonEffects, HeroFactor | "parryBonus" | "foes"> };
 
 /** The profile as offers read it. */
 export type OfferOwner = ShrineOwner & { shrines: ShrinesSave; arcana: Pick<ArcanaSave, "owned"> };
@@ -311,21 +311,22 @@ export const autoPickOpen = (o: ShrineOwner) => researched(o.archives, "autoPick
 
 /** Mixed into the run seed to start the offers' stream. */
 const SHRINE_SALT = 0x5a1e7;
-/** The chance an offer's slot is a trade-off, a standard boon or a boon of the
- * arcana (a spell or an augment boon): 15, 65 and, while one can be picked, 20. */
-const TRADEOFF_WEIGHT = 15, STANDARD_WEIGHT = 65, SPELL_WEIGHT = 20;
+/** The chance an offer's slot is a trade-off, a standard boon or the spell boon
+ * (while it can be picked): 15, 65 and 20. An augment boon, while one can be
+ * picked, takes its 15 from the standard boons' 65, so the others never move. */
+const TRADEOFF_WEIGHT = 15, STANDARD_WEIGHT = 65, SPELL_WEIGHT = 20, AUGMENT_WEIGHT = 15;
 
 /** The arcana a run's spell boon can still lend: not owned, not lent already. */
 export const arcanaToLend = (run: Pick<ShrineRun, "arcana">, o: Pick<OfferOwner, "arcana">) => unownedArcana(o.arcana).filter((id) => !run.arcana?.includes(id));
-/** Rolls the choice a spell boon gives, up to three, from the run's own stream. */
-export const rollArcanumChoice = (seed: number, run: ShrineRun, o: Pick<OfferOwner, "arcana">) =>
-  drawOptions(arcanaToLend(run, o), OFFER_SIZE, () => drawAt((seed ^ SHRINE_SALT) >>> 0, run.rolls++));
+/** Rolls the arcanum a spell boon's offer names, from the run's own stream; none with none left to lend. */
+export function rollLending(seed: number, run: ShrineRun, o: Pick<OfferOwner, "arcana">): ArcanumId | undefined {
+  const left = arcanaToLend(run, o);
+  return left[Math.floor(drawAt((seed ^ SHRINE_SALT) >>> 0, run.rolls++) * left.length)];
+}
 
 /** Rolls the run's next offer: the First Boon Choice first on the run's
- * first, then each slot a trade-off, a standard boon or a boon of the arcana
- * (15, 65 and 20, the last only while an arcanum is left to lend or the run
- * holds one to augment), drawn
- * from those with copies left, not banned and not already offered; a kind
+ * first, then each slot a trade-off, a standard boon, an augment boon or the
+ * spell boon (see the weights above), drawn from those with copies left, not banned and not already offered; a kind
  * with none left gives way to the other. The draws come from the run's own
  * stream (`run.rolls` counts them), so undo and a replay offer the same. */
 export function rollOffer(seed: number, run: ShrineRun, o: OfferOwner): BoonId[] {
@@ -339,11 +340,13 @@ export function rollOffer(seed: number, run: ShrineRun, o: OfferOwner): BoonId[]
   while (offer.length < offerSize(o)) {
     const standard = BOON_IDS.filter((id) => boon(id).kind === "standard" && open(id));
     const tradeoffs = BOON_IDS.filter((id) => boon(id).kind === "tradeoff" && open(id));
-    const spells = BOON_IDS.filter((id) => (boon(id).kind === "spell" || boon(id).kind === "augment") && open(id));
-    if (!standard.length && !tradeoffs.length && !spells.length) break;
+    const spells = BOON_IDS.filter((id) => boon(id).kind === "spell" && open(id));
+    const augments = BOON_IDS.filter((id) => boon(id).kind === "augment" && open(id));
+    if (!standard.length && !tradeoffs.length && !spells.length && !augments.length) break;
+    const standardEnd = TRADEOFF_WEIGHT + STANDARD_WEIGHT - (augments.length ? AUGMENT_WEIGHT : 0);
     const roll = draw() * (TRADEOFF_WEIGHT + STANDARD_WEIGHT + (spells.length ? SPELL_WEIGHT : 0));
-    const wanted = roll < TRADEOFF_WEIGHT ? tradeoffs : roll < TRADEOFF_WEIGHT + STANDARD_WEIGHT ? standard : spells;
-    const pool = wanted.length ? wanted : [standard, tradeoffs, spells].find((kind) => kind.length)!;
+    const wanted = roll < TRADEOFF_WEIGHT ? tradeoffs : roll < standardEnd ? standard : roll < TRADEOFF_WEIGHT + STANDARD_WEIGHT ? augments : spells;
+    const pool = wanted.length ? wanted : [standard, tradeoffs, spells, augments].find((kind) => kind.length)!;
     offer.push(pool[Math.floor(draw() * pool.length)]!);
   }
   return offer;
@@ -413,7 +416,7 @@ export function validShrineRun(r: any): r is ShrineRun {
   return isRecord(r) && validPicks(r.picked) && whole(r.rolls)
     && (r.offer === undefined || (Array.isArray(r.offer) && r.offer.every(isBoon)))
     && (r.arcana === undefined || (Array.isArray(r.arcana) && r.arcana.every(isArcanum)))
-    && (r.choosing === undefined || (Array.isArray(r.choosing) && r.choosing.every(isArcanum)))
+    && (r.lending === undefined || isArcanum(r.lending))
     && (r.applied === undefined || validApplied(r.applied));
 }
 

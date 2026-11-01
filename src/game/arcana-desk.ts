@@ -1,5 +1,5 @@
 import {
-  arcanum, arcanumBoost, arcanumPrice, augmentedValues, chargeBolts, drawOptions, FROST_AUGMENT, GOLDEN_AUGMENT, levelsOf, nextDraw, nextStep, OFFER_SIZE, ownedArcana, redrawOptions, rerollOpen, rerollPrice, RUN_TOGGLES, settleBolts, tickCooldowns, unownedArcana, valuesAt,
+  arcanum, arcanumBoost, arcanumPrice, augmentedValues, chargeBolts, drawOptions, FROST_AUGMENT, GOLDEN_AUGMENT, LENT_LEVELS, levelsOf, nextDraw, nextStep, OFFER_SIZE, ownedArcana, redrawOptions, rerollOpen, rerollPrice, RUN_TOGGLES, settleBolts, tickCooldowns, unownedArcana, valuesAt,
   type ArcanumId, type AttributeLevels,
 } from "../arcana/arcana.ts";
 import { clearLifespring, lifespringEffects, springAmplify, stepLifespring } from "../arcana/lifespring.ts";
@@ -27,7 +27,7 @@ export interface ArcanaHost extends DeskHost {
 }
 
 /** An arcanum as a run holds it: bought, or lent by a Shrine boon (`lent`, at
- * its first levels, for this climb alone). */
+ * `LENT_LEVELS`, for this climb alone). */
 export type HeldArcanum = { id: ArcanumId; levels: AttributeLevels; lent: boolean };
 /** What a purchase answers: done, or short of Arcanite, or refused. */
 export type ArcanaAnswer = "done" | "short" | "refused";
@@ -107,13 +107,17 @@ export class ArcanaDesk {
   private get runState() {
     return this.save[this.host.mode].runArcana;
   }
-  /** The arcana the run holds, bought and lent alike; none in the forest. */
+  /** The arcana the run holds, bought and lent alike; none in the forest. One
+   * bought while lent keeps the better of each attribute's levels this climb. */
   get held(): HeldArcanum[] {
     if (this.host.run.outside) return [];
     const lent = (this.host.run as TowerRun).shrine?.arcana ?? [];
     return [
-      ...this.owned.map((id) => ({ id, levels: levelsOf(this.arcana, id), lent: false })),
-      ...lent.filter((id) => !this.arcana.owned[id]).map((id) => ({ id, levels: [0, 0, 0] as AttributeLevels, lent: true })),
+      ...this.owned.map((id) => {
+        const levels = levelsOf(this.arcana, id);
+        return { id, levels: lent.includes(id) ? levels.map((level, i) => Math.max(level, LENT_LEVELS[id][i]!)) as AttributeLevels : levels, lent: false };
+      }),
+      ...lent.filter((id) => !this.arcana.owned[id]).map((id) => ({ id, levels: LENT_LEVELS[id], lent: true })),
     ];
   }
   /** Whether the run has picked `id`'s augment boon. */

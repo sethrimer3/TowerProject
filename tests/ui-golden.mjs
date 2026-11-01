@@ -1135,7 +1135,11 @@ try {
     await click("#shrine-bar");
     await shot("arcana.boon");
     await click('[data-boon="unlockArcanum"]');
-    await shot("arcana.boonChoice");
+    await click("#shrine-bar");
+    await shot("arcana.boonTaken");
+    await click("#shrine-close");
+    await click('[data-run-tab="arcana"]');
+    await shot("arcana.boonLent");
     await load("arcanaAugment");
     await click("#shrine-bar");
     await shot("arcana.augmentOffer");

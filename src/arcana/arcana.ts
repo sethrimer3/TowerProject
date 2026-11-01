@@ -318,6 +318,18 @@ export const valuesAt = (id: ArcanumId, levels: AttributeLevels): AttributeValue
   const [a, b, c] = arcanum(id).attributes;
   return [a.steps[levels[0]]![0], b.steps[levels[1]]![0], c.steps[levels[2]]![0]];
 };
+/** The levels a Shrine boon lends each arcanum at, part way up its attributes. */
+export const LENT_LEVELS: Readonly<Record<ArcanumId, AttributeLevels>> = {
+  ricochetShot: [7, 2, 7],
+  thunderbolt: [7, 6, 7],
+  lifespring: [7, 1, 9],
+  timeDilation: [17, 4, 6],
+  phantasm: [7, 2, 7],
+  aurumBloom: [5, 14, 5],
+  necroticFrost: [7, 4, 7],
+  voidwell: [10, 5, 7],
+  overseer: [14, 15, 0],
+};
 /** What each augment boon (shrines.ts) does to its arcanum's attributes. Phantasm's
  * (`OUTER_GHOSTS`), Aurum Bloom's (`GOLDEN_AUGMENT`) and Necrotic Frost's
  * (`FROST_AUGMENT`) change what no attribute holds. */

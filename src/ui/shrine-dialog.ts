@@ -3,29 +3,22 @@ import { kitIcon } from "../sprites/kit.ts";
 import { autoPickOpen, boon, boonLabel, pickedLines, type BoonId } from "../shrines.ts";
 import type { AppContext } from "./app.ts";
 import { el, shrineIcon } from "./dom.ts";
-import { arcanum, valuesAt, type ArcanumId } from "../arcana/arcana.ts";
+import { arcanum, LENT_LEVELS, valuesAt, type ArcanumId } from "../arcana/arcana.ts";
 import { ARCANUM_ICONS } from "./arcana-panel.ts";
 
 /** The run's Shrine button, pressed: with boons waiting, the offer to pick
  * one from (again while more wait); with none, the boons the run has picked
  * in a scrolling table, standard boons' copies added up. Either way, once
- * Auto Pick Boons is researched, its toggle, kept between runs. A spell boon
- * just picked first asks which arcanum to take. */
+ * Auto Pick Boons is researched, its toggle, kept between runs. */
 export function showShrine(ctx: AppContext) {
-  const shrine = ctx.game.shrine, choosing = shrine.choosing, offer = shrine.offer(), waiting = choosing.length > 0 || offer.length > 0;
+  const shrine = ctx.game.shrine, offer = shrine.offer();
   const modal = ctx.modal;
-  modal.innerHTML = (choosing.length ? choiceHtml(choosing) : offer.length ? offerHtml(ctx, offer) : pickedHtml(ctx)) + autoPickHtml(ctx) +
-    `<div class="dialog-actions"><button id="shrine-close">${waiting ? "Later" : "Close"}</button></div>`;
+  modal.innerHTML = (offer.length ? offerHtml(ctx, offer) : pickedHtml(ctx)) + autoPickHtml(ctx) +
+    `<div class="dialog-actions"><button id="shrine-close">${offer.length ? "Later" : "Close"}</button></div>`;
   if (!modal.open) modal.showModal();
   el("shrine-close").onclick = () => modal.close();
   modal.querySelectorAll<HTMLButtonElement>("[data-boon]").forEach((b) => (b.onclick = () => {
     shrine.pick(b.dataset.boon as BoonId);
-    ctx.update();
-    if (shrine.unspent) showShrine(ctx);
-    else modal.close();
-  }));
-  modal.querySelectorAll<HTMLButtonElement>("[data-lend]").forEach((b) => (b.onclick = () => {
-    shrine.choose(b.dataset.lend as ArcanumId);
     ctx.update();
     if (shrine.unspent) showShrine(ctx);
     else modal.close();
@@ -38,10 +31,10 @@ export function showShrine(ctx: AppContext) {
   };
 }
 
-/** A spell boon's choice: the arcana it can lend, at their first levels. */
-function choiceHtml(choosing: readonly ArcanumId[]) {
-  return `<small>SHRINE</small><h2>${shrineIcon("shrine-title-icon")} Choose an Arcanum</h2><p class="hint">It lasts the rest of this climb.</p>` +
-    `<div class="boon-offer">${choosing.map((id) => `<button class="boon-choice spell" data-lend="${id}">${ARCANUM_ICONS[id]}<span class="boon-choice-text"><small>${arcanum(id).name.toUpperCase()}</small><b>${arcanum(id).summary(valuesAt(id, [0, 0, 0]))}</b></span></button>`).join("")}</div>`;
+/** A spell boon in an offer: the arcanum it lends, at the levels it lends it. */
+function lendingHtml(id: BoonId, lending: ArcanumId) {
+  const def = arcanum(lending);
+  return `<button class="boon-choice spell" data-boon="${id}">${ARCANUM_ICONS[lending]}<span class="boon-choice-text"><small>UNLOCK ${def.name.toUpperCase()}</small><b>${def.summary(valuesAt(lending, LENT_LEVELS[lending]))}</b></span></button>`;
 }
 
 function offerHtml(ctx: AppContext, offer: BoonId[]) {
@@ -49,8 +42,9 @@ function offerHtml(ctx: AppContext, offer: BoonId[]) {
   return `<small>SHRINE</small><h2>${shrineIcon("shrine-title-icon")} Choose a Boon</h2>` +
     `<p class="hint">${waiting > 1 ? `${waiting} boons waiting. ` : ""}It lasts the rest of this climb.</p>` +
     `<div class="boon-offer">${offer.map((id) => {
-      const kind = boon(id).kind;
-      return `<button class="boon-choice ${kind}" data-boon="${id}">${boonIcon(id)}<span class="boon-choice-text"><small>${kind === "tradeoff" ? "TRADE-OFF" : kind === "spell" || kind === "augment" ? "ARCANUM" : "STANDARD"}</small><b>${boonLabel(id, save)}</b></span></button>`;
+      const kind = boon(id).kind, lending = ctx.game.shrine.lending;
+      if (kind === "spell" && lending) return lendingHtml(id, lending);
+      return `<button class="boon-choice ${kind}" data-boon="${id}">${boonIcon(id)}<span class="boon-choice-text"><small>${kind === "tradeoff" ? "TRADE-OFF" : kind === "augment" ? "ARCANUM" : "STANDARD"}</small><b>${boonLabel(id, save)}</b></span></button>`;
     }).join("")}</div>`;
 }
 

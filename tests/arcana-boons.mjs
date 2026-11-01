@@ -110,6 +110,23 @@ try {
     return save.tower.run.phantasm;
   });
   assert.deepEqual(shown.outer, [0, 1, 2, 3, 4]);
+
+  // Unlock an Arcanum: the offer names the arcanum and its lent values; picked, the run holds it.
+  await load("run", "medieval");
+  await page.evaluate(() => {
+    const save = JSON.parse(localStorage.getItem("towerdelve.v1"));
+    save.tower.run.shrine.offer = ["unlockArcanum", "attack"];
+    sessionStorage.setItem("__augmentFixture", JSON.stringify(save));
+  });
+  await page.reload();
+  await page.locator("#shrine-bar").click();
+  await page.screenshot({ path: `${OUT}/unlock-offer.png` });
+  const unlock = page.locator('.boon-choice[data-boon="unlockArcanum"]');
+  const named = (await unlock.locator("small").textContent()).replace("UNLOCK ", "");
+  await unlock.click();
+  await page.locator('[data-run-tab="arcana"]').click();
+  await page.screenshot({ path: `${OUT}/unlock-held.png` });
+  assert.ok((await page.locator(".arcana-card").allTextContents()).some((card) => card.toUpperCase().includes(named)), `holds ${named}`);
   assert.deepEqual(errors, []);
   console.log("arcana-boons: ok");
 } finally {

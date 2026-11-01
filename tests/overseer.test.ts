@@ -261,11 +261,11 @@ test("a save keeps the beams' turns, and drops a malformed count", () => {
   assert.equal((decode(JSON.stringify(g.save)).tower.run as TowerRun).beamTurns, undefined);
 });
 
-test("a lent Overseer works at its first levels", () => {
+test("a lent Overseer works at its lent levels", () => {
   const g = new Game(playedSave());
   g.newRun({ seed: 7 });
   (g.run as TowerRun).shrine = { picked: [], rolls: 0, arcana: ["overseer"] };
-  assert.deepEqual(g.arcana.beams, { bonus: 8, width: 30, count: 1, turns: 0 });
+  assert.deepEqual(g.arcana.beams, { bonus: 27.6, width: 45, count: 1, turns: 0 });
 });
 
 test("with Dev free purchases the Arcana tab opens with no Arcanite, and buying and upgrading cost nothing", () => {
