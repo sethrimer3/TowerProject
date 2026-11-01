@@ -11,9 +11,9 @@
  * the board, and says what happened. `Game` decides whether a turn has a
  * volley at all and applies the outcome (the hero's HP, kill pay, a fall). */
 import type { Board } from "./board.ts";
-import type { ByFoe, Enemy, Player } from "./entities.ts";
+import { point, type ByFoe, type Enemy, type Player, type Tile } from "./entities.ts";
 import type { Save } from "./save/shape.ts";
-import { breaksArmor, critAgainst, facing, guaranteedCrits, guarded, isBoss, landsSuperCrit, shieldThorn, stealCeiling, thornDamage } from "./combat.ts";
+import { attackAgainst, breaksArmor, critAgainst, facing, guaranteedCrits, guarded, isBoss, landsSuperCrit, shieldThorn, stealCeiling, thornDamage } from "./combat.ts";
 import { critRule } from "./progression/loadout.ts";
 import { foeAttack } from "./cards/foe-cards.ts";
 import { trainedAmount } from "./progression/training.ts";
@@ -22,7 +22,8 @@ import { archerClock, archerState, archerTick, arrowBoost, arrowDamage, arrowRan
 import { beamFactor, type Beams } from "./arcana/overseer.ts";
 import { boltTargets } from "./arcana/arcana.ts";
 import { fieldHit } from "./arcana/lifespring.ts";
-import { slowedCharge, slowedTickGain } from "./arcana/time-dilation.ts";
+import { slowedCharge, slowedTickGain, togetherSlow } from "./arcana/time-dilation.ts";
+import { decayed, fieldsOn, frostSlowAt, type FrostArea } from "./arcana/necrotic-frost.ts";
 import { GHOST_RADIUS, ghostDirection, ghostOffset, inBlast, loseGhost, RING_RADIUS, touchesTile, type GhostStrike, type PhantasmRun } from "./arcana/phantasm.ts";
 import { tileRandom } from "./random.ts";
 import { snap } from "./exact.ts";
@@ -47,7 +48,7 @@ const FIGHT_RICOCHET_SALT = 0x71c0d;
  * thorns cost an enemy's shooter), for an arrow (or a shot's thorns) the
  * enemy's HP before and after it out of its full HP, and the enemy it
  * felled (`fell`), which the board keeps showing until the shot lands. */
-export type Shot = { by: "hero" | "enemy"; from: { x: number; y: number }; to: { x: number; y: number }; damage: number; tick: number; shrouded?: number; shielded?: number; shieldBroke?: true; crit?: number; superCrit?: true; charge?: number; healed?: number; thorns?: number; before?: number; hp?: number; full?: number; fell?: Enemy; ricochet?: true; thunderbolt?: true; lifespring?: true; phantasm?: true };
+export type Shot = { by: "hero" | "enemy"; from: { x: number; y: number }; to: { x: number; y: number }; damage: number; tick: number; shrouded?: number; shielded?: number; shieldBroke?: true; crit?: number; superCrit?: true; charge?: number; healed?: number; thorns?: number; before?: number; hp?: number; full?: number; fell?: Enemy; ricochet?: true; thunderbolt?: true; lifespring?: true; phantasm?: true; necro?: true };
 /** Where `shot`'s target stands: the hero's tile for an enemy's shot (whose
  * thorns cost the shooter, at `from`), the enemy's for an arrow. */
 export const enemyOf = (shot: Shot) => (shot.by === "enemy" ? shot.from : shot.to);
@@ -64,9 +65,9 @@ export const THUNDERBOLT_FALL_MS = 90;
 export const THUNDERBOLT_FLASH_MS = 240;
 /** When `shot` of `volley` leaves its shooter, and when it lands: a ricochet
  * does both as the arrow it springs from lands; a thunderbolt falls from its
- * tick of the turn; Lifespring's field and Phantasm's ghosts strike at once. */
-export const landsAt = (volley: Volley, shot: Shot) => volley.at + (volley.ms * shot.tick) / TURN_TICKS + (shot.lifespring || shot.phantasm ? 0 : shot.thunderbolt ? THUNDERBOLT_FALL_MS : volley.ms * SHOT_FLIGHT);
-export const leavesAt = (volley: Volley, shot: Shot) => landsAt(volley, shot) - (shot.ricochet || shot.lifespring || shot.phantasm ? 0 : shot.thunderbolt ? THUNDERBOLT_FALL_MS : volley.ms * SHOT_FLIGHT);
+ * tick of the turn; Lifespring's field, Phantasm's ghosts and Necrotic Frost's decay strike at once. */
+export const landsAt = (volley: Volley, shot: Shot) => volley.at + (volley.ms * shot.tick) / TURN_TICKS + (shot.lifespring || shot.phantasm || shot.necro ? 0 : shot.thunderbolt ? THUNDERBOLT_FALL_MS : volley.ms * SHOT_FLIGHT);
+export const leavesAt = (volley: Volley, shot: Shot) => landsAt(volley, shot) - (shot.ricochet || shot.lifespring || shot.phantasm || shot.necro ? 0 : shot.thunderbolt ? THUNDERBOLT_FALL_MS : volley.ms * SHOT_FLIGHT);
 /** Whether every shot of `volley` has landed, and its flashes ended, by `now`. */
 export const volleyOver = (volley: Volley, now: number) => volley.shots.every((s) => now >= landsAt(volley, s) + (s.ricochet ? RICOCHET_FLASH_MS : s.thunderbolt ? THUNDERBOLT_FLASH_MS : 0));
 
@@ -103,11 +104,14 @@ export type VolleyTurn = {
   /** Time Dilation's field, if one stands: the percent it slows the cooldowns of the
    * shooters in it by, and its reach round the hero, in hundredths of a tile. */
   dilation?: { slow: number; reach: number };
+  /** Necrotic Frost's fields, if any stand: they slow the cooldowns of the shooters
+   * in them, by how many fields reach each. */
+  frost?: FrostArea;
 };
 /** An enemy an arrow felled, or the thorns of its own shot (`thorns`):
  * where, whether it fell to its first wound (an instakill), and the
  * arrow's critical applications. */
-export type VolleyKill = { enemy: Enemy; at: { x: number; y: number }; instakill: boolean; crits: number; thorns?: true; ricochet?: true; thunderbolt?: true; lifespring?: true; phantasm?: true };
+export type VolleyKill = { enemy: Enemy; at: { x: number; y: number }; instakill: boolean; crits: number; thorns?: true; ricochet?: true; thunderbolt?: true; lifespring?: true; phantasm?: true; necro?: true };
 /** What a turn's volley did: the run's volley state after it, the shots in
  * the order they fired, the hero's HP after them, whether a Ranged enemy's
  * shot got through (`hurt`), the enemy whose shot felled the hero (the
@@ -152,6 +156,11 @@ export function volleyTurn(turn: VolleyTurn): VolleyOutcome {
     const x = 100 * n.dx + walk.ux * tick, y = 100 * n.dy + walk.uy * tick;
     return x * x + y * y;
   };
+  /** The percent the fields slow what stands `x`, `y` hundredths of a tile from the hero by. */
+  const slowAt = (x: number, y: number) => {
+    const { dilation, frost } = turn;
+    return togetherSlow(dilation && x * x + y * y <= dilation.reach * dilation.reach ? dilation.slow : 0, frost ? frostSlowAt(frost, x / 100, y / 100) : 0);
+  };
   // Everything the turn's shots may reach, from anywhere along the step, found once.
   const near: Near[] = enemiesWithin(board, walk, reach + (walk.ux || walk.uy ? 150 : 0), wrap).map(({ x, y }) => {
     const dx = shortWay(walk.x - x, wrap), dy = walk.y - y;
@@ -183,7 +192,7 @@ export function volleyTurn(turn: VolleyTurn): VolleyOutcome {
   for (const [key, charge] of Object.entries(v.foes ?? {})) {
     if (watched.has(key)) continue;
     const [x, y] = key.split(",").map(Number) as [number, number], foe = shooterAt(x, y);
-    const slow = turn.dilation && inRange(shortWay(x - hero.x, wrap), y - hero.y, turn.dilation.reach) ? turn.dilation.slow : 0;
+    const slow = slowAt(100 * shortWay(x - hero.x, wrap), 100 * (y - hero.y));
     const kept = foe && held(charged(charge, slowedCharge(foeGain(foe), slow)), foeShotCost(floorOf(x, y)));
     if (kept !== undefined) foes[key] = kept;
   }
@@ -202,9 +211,9 @@ export function volleyTurn(turn: VolleyTurn): VolleyOutcome {
     const firing: { s: Shooter; e: InReach }[] = [];
     for (const s of shooters) {
       if (s.charge !== undefined) {
-        // In Time Dilation's field as the hero stands this tick, its cooldown runs slower.
-        const field = turn.dilation;
-        s.charge += field && distance(s.near, tick) <= field.reach * field.reach ? slowedTickGain(s.gain, field.slow, tick) : s.gain;
+        // In a field as the hero stands this tick, its cooldown runs slower.
+        const slow = slowAt(-(100 * s.near.dx + walk.ux * tick), -(100 * s.near.dy + walk.uy * tick));
+        s.charge += slow ? slowedTickGain(s.gain, slow, tick) : s.gain;
         if (s.charge < s.cost) continue;
       }
       const e = within(tick, s.near.shots) ? standing(s.near, tick) : undefined;
@@ -469,6 +478,41 @@ export function lifespringContact({ board, wrap, hero }: { board: Pick<Board, "t
     }
   }
   return { shots, kills, pool: left };
+}
+
+/** Necrotic Frost's decay as the turn ends: each enemy a field of `area` reaches gets
+ * that field's effect, and every effect on an enemy ticks a step further, wherever it
+ * stands now. Each step is `boost` of the hero's ATK against it, its Arcanum Damage, and
+ * Overseer's beams multiply them as the hero and they stand, all through DEF (a Shielded
+ * enemy's bubble still cutting it), with no Lifesteal and no Armor Break. An enemy takes
+ * one shot however many effects are on it. Edits the board's enemies; returns the shots and the kills. */
+export function necroDecay({ board, wrap, hero, beams, changes }: Pick<VolleyTurn, "wrap" | "hero" | "beams"> & { board: Pick<Board, "tile" | "clear" | "wound" | "markNecro">; changes: Readonly<Record<string, Tile>> }, boost: number, area: FrostArea | undefined) {
+  const shots: Shot[] = [], kills: VolleyKill[] = [], found = new Map<string, { x: number; y: number }>();
+  if (area?.fields.length) for (const { x, y } of enemiesWithin(board, hero, area.radius + area.offset + 1, wrap)) found.set(point(x, y), { x, y });
+  for (const k of Object.keys(changes)) {
+    if (!changes[k]!.necro || found.has(k)) continue;
+    const [x, y] = k.split(",").map(Number) as [number, number];
+    found.set(k, { x, y });
+  }
+  for (const to of found.values()) {
+    const { x, y } = to, tile = board.tile(x, y), enemy = foeOn(tile), dx = shortWay(x - hero.x, wrap), dy = y - hero.y;
+    if (!enemy) continue;
+    const touching = area ? fieldsOn(area, dx, dy) : [];
+    if (!touching.length && !enemy.necro) continue;
+    const { necro, units } = decayed(enemy.necro, touching);
+    const damage = guarded(snap(attackAgainst(hero, enemy) * boost * units * beamFactor(beams, TURN_TICKS, dx, dy)), enemy), left = snap(Math.max(0, enemy.hp - damage));
+    const landed: Shot = { by: "hero", from: to, to, damage, tick: TURN_TICKS, before: enemy.hp, hp: left, full: snap(enemy.hp + (tile.wound ?? 0)), necro: true };
+    if (damage > 0) shots.push(landed);
+    if (left > 0) {
+      if (damage > 0) board.wound?.(x, y, damage);
+      board.markNecro?.(x, y, necro);
+    } else {
+      board.clear(x, y);
+      landed.fell = enemy;
+      kills.push({ enemy: { ...enemy, necro }, at: to, instakill: false, crits: 0, necro: true });
+    }
+  }
+  return { shots, kills };
 }
 
 /** The Archer's arrow `shot` of the turn, fired from `from` at `tick`,

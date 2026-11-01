@@ -20,7 +20,7 @@ export type LitBoard = {
   /** Extra glows laid on the darkened ground after the objects' own (decor
    * blooms). Only called below the default brightness. */
   glow(): void;
-  /** What lies on the floor, undimmed, under the tile contents (Time Dilation's field). */
+  /** What lies on the floor, undimmed, under the tile contents (Time Dilation's and Necrotic Frost's fields). */
   underContents?(): void;
   /** Tile contents (doors, stairs, items, enemies), in screen space. */
   contents(ctx: CanvasRenderingContext2D): void;

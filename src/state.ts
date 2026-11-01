@@ -11,9 +11,10 @@ import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./cards/b
 import { BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
 import { noteGoldBoost } from "./economy/gold-boost.ts";
 import { canWarp, claimGoal, goalUnlocked, goalsWaiting } from "./goals.ts";
-import { fieldReach } from "./arcana/time-dilation.ts";
+import { fieldReach, togetherSlow } from "./arcana/time-dilation.ts";
+import { frostArea, frostSlowAt } from "./arcana/necrotic-frost.ts";
 import type { GhostStrike } from "./arcana/phantasm.ts";
-import { fightRicochet, ghostStrikes, landsAt, lifespringContact, shortWay, thunderbolts, volleyTurn, type Shot, type Volley, type VolleyTurn } from "./volley.ts";
+import { fightRicochet, ghostStrikes, landsAt, lifespringContact, necroDecay, shortWay, thunderbolts, volleyTurn, type Shot, type Volley, type VolleyTurn } from "./volley.ts";
 import { missGem } from "./economy/gems.ts";
 import { DelvePlan } from "./delve/automove.ts";
 import { defaults } from "./save/save.ts";
@@ -2427,19 +2428,21 @@ export class Game {
     this.lifespringTurn(at);
     this.arcana.timeDilationTurn();
     this.arcana.phantasmTurn();
-    const dilation = this.dilation;
+    this.arcana.frostTurn();
+    const dilation = this.dilation, frost = this.frostArea;
     // Thunderbolt strikes first, so what it fells shoots no more this turn, then the ghosts along the hero's step.
     const struck = [...(sameFloor ? sprung : []), ...this.strikeBolts(fired, beams, sameFloor ? from : undefined), ...this.strikeGhosts(beams, at, ms, sameFloor ? from : undefined)];
     if ((this.tier < 3 && !archer) || !sameFloor) {
       this.showVolley(struck, at, ms);
       this.showVolley(this.lifespringContact(), at, ms, true);
+      this.showVolley(this.decayNecro(beams), at, ms, true);
       return;
     }
     // What the hero's step brought into range meets the field before any arrow.
     const met = this.lifespringContact(from, 1);
     const v = this.run.volleys ?? { turn: 0 };
     const out = volleyTurn({ board: this.world, wrap: this.wrap, floorOf: (x, y) => this.floorOf(x, y), hero: p, from, seed: this.run.seed,
-      volleys: { ...v, turn: v.turn + 1 }, archer, ranks: { ...this.trainingNow, archives: this.save.archives }, cardCrit: this.cardCrit, handShot: this.handShot, ricochet: this.arcana.ricochet(), ...(beams ? { beams } : {}), ...(dilation ? { dilation } : {}) });
+      volleys: { ...v, turn: v.turn + 1 }, archer, ranks: { ...this.trainingNow, archives: this.save.archives }, cardCrit: this.cardCrit, handShot: this.handShot, ricochet: this.arcana.ricochet(), ...(beams ? { beams } : {}), ...(dilation ? { dilation } : {}), ...(frost ? { frost } : {}) });
     this.run.volleys = out.volleys;
     p.hp = out.hp;
     if (out.shield !== undefined) p.shield = out.shield;
@@ -2464,7 +2467,7 @@ export class Game {
       return;
     }
     // Then the Aggroed enemies close in (enemies/flying.ts), their cooldowns with them.
-    const moved = aggroTurn({ board: this.world, changes: this.run.changes, hero: p, floorOf: (x, y) => this.floorOf(x, y), lit: litTorches(this.world), foes: this.run.volleys.foes, ...(dilation ? { slowAt: (x: number, y: number) => this.slowdownAt({ x, y }) } : {}) });
+    const moved = aggroTurn({ board: this.world, changes: this.run.changes, hero: p, floorOf: (x, y) => this.floorOf(x, y), lit: litTorches(this.world), foes: this.run.volleys.foes, ...(dilation || frost ? { slowAt: (x: number, y: number) => this.slowdownAt({ x, y }) } : {}) });
     if (moved.steps.length) {
       if (moved.foes && Object.keys(moved.foes).length) this.run.volleys.foes = moved.foes;
       else delete this.run.volleys.foes;
@@ -2472,6 +2475,7 @@ export class Game {
     // What stepped up to the ring meets it now, the hero's step over.
     this.showVolley(this.strikeGhosts(beams, at, ms, undefined, TURN_TICKS), at, ms, true);
     this.showVolley(this.lifespringContact(), at, ms, true);
+    this.showVolley(this.decayNecro(beams), at, ms, true);
   }
   /** Lifespring's turn, before anything strikes (arcana.md): its cooldown, and an
    * Effect Wave hitting every enemy of the floor at once, or its field forming. */
@@ -2495,10 +2499,23 @@ export class Game {
     const rule = this.arcana.timeDilationRule();
     return rule && this.run.timeDilation?.left ? { slow: rule.slow, reach: fieldReach(this.lifespringReach, rule.effects) } : undefined;
   }
-  /** The percent Time Dilation's field slows an enemy at `at` by, the hero where it stands now. */
+  /** Necrotic Frost's fields as they lie from the hero, while any stands and it is on. */
+  get frostArea() {
+    const rule = this.arcana.frostRule(), fields = this.run.necroticFrost?.fields;
+    return rule && fields?.length ? frostArea(fields, rule.effects) : undefined;
+  }
+  /** The percent the fields slow an enemy at `at` by, the hero where it stands now. */
   private slowdownAt(at: { x: number; y: number }) {
-    const field = this.dilation, p = this.run.player;
-    return field && inShotRange(shortWay(at.x - p.x, this.wrap), at.y - p.y, field.reach) ? field.slow : 0;
+    const field = this.dilation, frost = this.frostArea, p = this.run.player, dx = shortWay(at.x - p.x, this.wrap), dy = at.y - p.y;
+    return togetherSlow(field && inShotRange(dx, dy, field.reach) ? field.slow : 0, frost ? frostSlowAt(frost, dx, dy) : 0);
+  }
+  /** Necrotic Frost's decay as the turn ends (arcana.md): pays what it fells and returns its shots. */
+  private decayNecro(beams: Beams | undefined) {
+    const rule = this.arcana.frostRule();
+    if (!rule) return [];
+    const out = necroDecay({ board: this.world, wrap: this.wrap, hero: this.run.player, changes: this.run.changes, ...(beams ? { beams } : {}) }, rule.boost, this.frostArea);
+    for (const { enemy, at: tile } of out.kills) this.message = [`Necrotic Frost · ${enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, tile, 1, false, 0)].join(" · ");
+    return out.shots;
   }
   /** Lifespring's field as the board shows it, while it is on and its pool holds. */
   get lifespringField() {
@@ -2582,8 +2599,8 @@ export class Game {
    * shown from `at` for `ms` as it fired; those the Toggles hide don't show.
    * `more`: they join what this turn already shows. */
   private showVolley(all: Shot[], at: number, ms: number, more = false) {
-    const { ricochetAnimation, thunderboltAnimation, lifespringDamage, phantasmDamage } = this.save.settings;
-    const shots = all.filter((s) => (!s.ricochet || ricochetAnimation) && (!s.thunderbolt || thunderboltAnimation) && (!s.lifespring || lifespringDamage) && (!s.phantasm || phantasmDamage));
+    const { ricochetAnimation, thunderboltAnimation, lifespringDamage, phantasmDamage, necroDamage } = this.save.settings;
+    const shots = all.filter((s) => (!s.ricochet || ricochetAnimation) && (!s.thunderbolt || thunderboltAnimation) && (!s.lifespring || lifespringDamage) && (!s.phantasm || phantasmDamage) && (!s.necro || necroDamage));
     if (!shots.length) return;
     this.volley = { at, ms, shots: more && this.volley?.at === at ? [...this.volley.shots, ...shots] : shots };
     const broke = shots.find((s) => s.shieldBroke);

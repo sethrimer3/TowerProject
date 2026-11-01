@@ -25,7 +25,7 @@ const DEV = ["devMode", "freePurchases"] as const satisfies readonly SettingKey[
  * in a run. */
 const TOGGLES = [
   "attackGains", "defenseGains", "hpGains", "keyGains", "doorGains", "goldGains", "silverGains", "xpGains", "comboGains",
-  "damageVisual", "itemLabels", "hitNumbers", "ricochetAnimation", "thunderboltAnimation", "lifespringDamage", "phantasmDamage", "phantasmAlpha", "enemyBars", "showPath",
+  "damageVisual", "itemLabels", "hitNumbers", "ricochetAnimation", "thunderboltAnimation", "lifespringDamage", "phantasmDamage", "phantasmAlpha", "necroDamage", "enemyBars", "showPath",
 ] as const satisfies readonly SettingKey[];
 type PageKey = (typeof PAGE)[number] | (typeof TOGGLES)[number] | (typeof DEV)[number] | "devTools";
 
@@ -42,6 +42,7 @@ const SHOWN: Partial<Record<PageKey, (save: Save) => boolean>> = {
   lifespringDamage: (save) => !!save.arcana.owned.lifespring || !!save.tower.run?.shrine?.arcana?.includes("lifespring"),
   phantasmDamage: phantasmUnlocked,
   phantasmAlpha: phantasmUnlocked,
+  necroDamage: (save) => !!save.arcana.owned.necroticFrost || !!save.tower.run?.shrine?.arcana?.includes("necroticFrost"),
   showPath: (save) => !!save.upgrades.autoClimb,
   cinematicIdle: (save) => save.settings.cinematic,
   cinematicGems: (save) => save.settings.cinematic,

@@ -38,6 +38,7 @@ import { drawPoof, POOF_MS } from "./effects/poof.ts";
 import { drawLifespring } from "./effects/lifespring.ts";
 import { drawDilationField } from "./effects/time-dilation.ts";
 import { drawPhantasms } from "./effects/phantasm.ts";
+import { drawFrostFields } from "./effects/necrotic-frost.ts";
 import { drawOverseerBeams } from "./effects/overseer-beams.ts";
 import { drawSmite, SMITE_MS } from "./effects/smite.ts";
 import { drawExplosion, EXPLOSION_MS } from "./effects/explosion.ts";
@@ -187,7 +188,7 @@ export class Renderer {
   draw(now: number) {
     const f = this.beginFrame(now);
     const themed = f.look.themed;
-    if (themed) drawThemedBoard(f, themed, this.enemyLunge, () => this.drawRoute(f), this.game.run.player, this.game.mode === "delve" ? this.game.world.width : 0, () => this.drawDilation(f));
+    if (themed) drawThemedBoard(f, themed, this.enemyLunge, () => this.drawRoute(f), this.game.run.player, this.game.mode === "delve" ? this.game.world.width : 0, () => this.drawFloorFields(f));
     else {
       // Ground first; in the dungeon the light then runs the frame (relief,
       // decor, shadows, contents, torches, route, hero, frame) over it.
@@ -234,9 +235,11 @@ export class Renderer {
     c.restore();
   }
   private zoomCanvas: HTMLCanvasElement | undefined;
-  /** Time Dilation's field on the floor, while one stands. */
-  private drawDilation(f: FrameContext) {
-    if (!this.game.run.outside) drawDilationField(f, this.game.dilation);
+  /** Time Dilation's and Necrotic Frost's fields on the floor, while any stands. */
+  private drawFloorFields(f: FrameContext) {
+    if (this.game.run.outside) return;
+    drawDilationField(f, this.game.dilation);
+    drawFrostFields(f, this.game.frostArea);
   }
   /** Gameplay feedback drawn over every board. */
   private drawOverlays(f: FrameContext) {
@@ -312,7 +315,7 @@ export class Renderer {
     return {
       floor: () => this.drawDecorGround(f),
       glow: () => { if (decor) this.decor.drawGlow(f.c, decor, f.darkness); },
-      underContents: () => this.drawDilation(f),
+      underContents: () => this.drawFloorFields(f),
       contents: (ctx) => this.drawEachContents(f, ctx),
       torches: () => { for (const t of f.torches) this.drawTorchSprite(f.c, f, t); },
       route: () => this.drawRoute(f),

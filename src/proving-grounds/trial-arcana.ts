@@ -1,5 +1,6 @@
 import { boltTargets, chargeBolts, decodeArcanaRun, settleBolts, tickCooldowns } from "../arcana/arcana.ts";
 import { fieldHit, lifespringEffects, springAmplify, stepLifespring, validLifespring } from "../arcana/lifespring.ts";
+import { decayed, fieldsOn, frostArea, stepFrost, validFrost, validNecro, type Necro } from "../arcana/necrotic-frost.ts";
 import { ghostDirection, ghostOffset, inBlast, loseGhost, stepPhantasm, touchesTile, validPhantasm } from "../arcana/phantasm.ts";
 import { stepDilation, validDilation } from "../arcana/time-dilation.ts";
 import { TURN_TICKS } from "../enemies/ranged.ts";
@@ -17,9 +18,10 @@ import { heroAttackOn, type TrialArcana, type TrialSpells, type TrialStrike } fr
 
 const TRIAL_RICOCHET_SALT = 0x71c0d;
 
-/** What an arcanum can strike: its tile, its HP and DEF, what a hit does to it, and
- * the saved thing it is (`foe`), which may move off the tile as a turn goes on. */
-type Target = Spot & { foe: object; hp: number; defense: number; take: (damage: number) => void };
+/** What an arcanum can strike: its tile, its HP and DEF, what a hit does to it, the
+ * saved thing it is (`foe`), which may move off the tile as a turn goes on, and its
+ * name among the attempt's foes (`key`). */
+type Target = Spot & { foe: object; key: string; hp: number; defense: number; take: (damage: number) => void };
 
 /** The boss fell to an arcanum: the same ending each encounter gives its last hit. */
 function win(s: TrialState) {
@@ -35,22 +37,22 @@ function win(s: TrialState) {
 function targets(s: TrialState): Target[] {
   if (s.room !== "arena" || s.status !== "active") return [];
   const out: Target[] = [], v = s.bossVariant, k = s.keymaster;
-  if (!s.elemental.incorporeal && s.bossHp > 0) out.push({ x: s.elemental.x, y: s.elemental.y, foe: s.elemental, hp: s.bossHp, defense: effectiveBossDef(s), take(damage) {
+  if (!s.elemental.incorporeal && s.bossHp > 0) out.push({ x: s.elemental.x, y: s.elemental.y, foe: s.elemental, key: "boss", hp: s.bossHp, defense: effectiveBossDef(s), take(damage) {
     if (v) v.damageThisRun += Math.min(s.bossHp, damage);
     s.bossHp = Math.max(0, s.bossHp - damage);
     if (!s.bossHp) win(s);
   } });
-  for (const slime of s.slimes) out.push({ x: slime.x, y: slime.y, foe: slime, hp: 1, defense: 0, take() { s.slimes = s.slimes.filter((o) => o !== slime); } });
-  for (const mimic of k?.mimics ?? []) out.push({ x: mimic.x, y: mimic.y, foe: mimic, hp: mimic.hp, defense: 0, take(damage) {
+  for (const slime of s.slimes) out.push({ x: slime.x, y: slime.y, foe: slime, key: `slime:${slime.id}`, hp: 1, defense: 0, take() { s.slimes = s.slimes.filter((o) => o !== slime); } });
+  for (const mimic of k?.mimics ?? []) out.push({ x: mimic.x, y: mimic.y, foe: mimic, key: `mimic:${mimic.id}`, hp: mimic.hp, defense: 0, take(damage) {
     mimic.hp = Math.max(0, mimic.hp - damage);
     if (!mimic.hp) k!.mimics = k!.mimics.filter((o) => o !== mimic);
   } });
   if (!v) return out;
-  for (const part of activeBossParts(v)) out.push({ x: part.x, y: part.y, foe: part, hp: part.hp, defense: part.defense, take(damage) {
+  for (const part of activeBossParts(v)) out.push({ x: part.x, y: part.y, foe: part, key: `part:${part.id}`, hp: part.hp, defense: part.defense, take(damage) {
     v.damageThisRun += Math.min(part.hp, damage);
     part.hp = Math.max(0, part.hp - damage);
   } });
-  for (const minion of v.minions) out.push({ x: minion.x, y: minion.y, foe: minion, hp: minion.hp, defense: minion.defense, take(damage) {
+  for (const minion of v.minions) out.push({ x: minion.x, y: minion.y, foe: minion, key: `minion:${minion.id}`, hp: minion.hp, defense: minion.defense, take(damage) {
     minion.hp = Math.max(0, minion.hp - damage);
     if (minion.hp) return;
     v.minions = v.minions.filter((o) => o !== minion);
@@ -117,8 +119,30 @@ function phantasmTurn(s: TrialState, a: NonNullable<TrialState["arcana"]>, rule:
   }
 }
 
+/** Necrotic Frost's part of a turn: the fields' turns and its cooldown, then its decay
+ * on all it has touched, wherever they stand now, through DEF. A boss gone incorporeal
+ * can't be struck, so its decay waits; what is on a foe that has fallen is dropped. */
+function frostTurn(s: TrialState, a: NonNullable<TrialState["arcana"]>, rule: NonNullable<TrialSpells["necroticFrost"]>, strikes: TrialStrike[]) {
+  const frost = (a.frost ??= {}), hero = s.player;
+  stepFrost(frost, rule, s.seed);
+  const area = frostArea(frost.fields ?? [], rule.effects), kept: Record<string, Necro> = a.necro?.boss ? { boss: a.necro.boss } : {};
+  for (const t of targets(s)) {
+    if (s.status !== "active") break;
+    const touching = fieldsOn(area, t.x - hero.x, t.y - hero.y), on = a.necro?.[t.key];
+    if (!touching.length && !on) continue;
+    const { necro, units } = decayed(on, touching), damage = Math.max(1, Math.round(heroAttackOn(s, t) * rule.boost * units));
+    kept[t.key] = necro;
+    t.take(damage);
+    strikes.push({ kind: "necro", from: { x: t.x, y: t.y }, to: { x: t.x, y: t.y }, damage, tick: TURN_TICKS });
+  }
+  const left = new Set(targets(s).map((t) => t.key));
+  for (const key of Object.keys(kept)) if (key !== "boss" && !left.has(key)) delete kept[key];
+  if (Object.keys(kept).length) a.necro = kept;
+  else delete a.necro;
+}
+
 /** The arcana's part of a turn the attempt just spent: a Ricochet Shot off the
- * hero's hit, the cooldowns running on, Thunderbolt's bolts, Lifespring, Phantasm, Time
+ * hero's hit, the cooldowns running on, Thunderbolt's bolts, Lifespring, Phantasm, Necrotic Frost, Time
  * Dilation's field, which holds back what comes next turn, then the beams turning.
  * An ended attempt does none of it. */
 export function trialArcanaTurn<O extends { message: string }>(s: TrialState, outcome: O): O {
@@ -147,6 +171,7 @@ export function trialArcanaTurn<O extends { message: string }>(s: TrialState, ou
   }
   if (lifespring && s.status === "active") lifespringTurn(s, a, lifespring, strikes);
   if (spells.phantasm && s.status === "active") phantasmTurn(s, a, spells.phantasm, strikes);
+  if (spells.necroticFrost && s.status === "active") frostTurn(s, a, spells.necroticFrost, strikes);
   if (spells.timeDilation && s.status === "active") stepDilation((a.dilation ??= {}), spells.timeDilation);
   if (spells.overseer) a.beamTurns++;
   a.strikes = strikes;
@@ -170,11 +195,21 @@ function decodeLag(raw: unknown) {
   return Object.keys(lag).length ? { lag } : {};
 }
 
+/** The most foes whose Necro an attempt keeps. */
+const MOST_NECRO = 1000;
+/** What the saved foes have on them, if anything. */
+function decodeNecro(raw: unknown) {
+  if (!isRecord(raw)) return {};
+  const kept = Object.entries(raw).filter(([, v]) => validNecro(v)).slice(0, MOST_NECRO);
+  return kept.length ? { necro: Object.fromEntries(kept) as Record<string, Necro> } : {};
+}
+
 /** The saved arcana of an attempt, if it has any. */
 export function decodeTrialArcana(raw: unknown): TrialArcana | undefined {
   if (!isRecord(raw)) return undefined;
   return { run: decodeArcanaRun(raw.run), beamTurns: wholeIn(raw.beamTurns, 0, 1e9) ? (raw.beamTurns as number) : 0,
     ...(validLifespring(raw.lifespring) && Object.keys(raw.lifespring).length ? { lifespring: raw.lifespring } : {}), ...(wholeIn(raw.springWaves, 1, 1e9) ? { springWaves: raw.springWaves as number } : {}),
     ...(validDilation(raw.dilation) && Object.keys(raw.dilation).length ? { dilation: raw.dilation } : {}), ...decodeTallies(raw.tallies), ...decodeLag(raw.lag),
-    ...(validPhantasm(raw.phantasm) && Object.keys(raw.phantasm).length ? { phantasm: raw.phantasm } : {}) };
+    ...(validPhantasm(raw.phantasm) && Object.keys(raw.phantasm).length ? { phantasm: raw.phantasm } : {}),
+    ...(validFrost(raw.frost) && Object.keys(raw.frost).length ? { frost: raw.frost } : {}), ...decodeNecro(raw.necro) };
 }

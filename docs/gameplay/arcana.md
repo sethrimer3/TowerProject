@@ -23,7 +23,7 @@ An arcanum with a cooldown also has a bar on its card, filling as the cooldown r
 You can switch them on and off up to 40 times a run, all of them together; the number left rises off the switch each time.
 Undo doesn't give a toggle back.
 An arcanum with a cooldown starts it over when switched back on.
-**Toggles** in Settings hide Ricochet Shot's and Thunderbolt's damage animations and, once you have them, Lifespring's and Phantasm's damage on enemies; they strike all the same.
+**Toggles** in Settings hide Ricochet Shot's and Thunderbolt's damage animations and, once you have them, Lifespring's, Phantasm's and Necrotic Frost's damage on enemies; they strike all the same.
 Once you have Phantasm, an alpha slider there, 0 to 1, sets how solid its ghosts are drawn: 0.5 at first, and at 0 you don't see them at all.
 Pressing a card anywhere else shows its stats and what modifies them.
 
@@ -198,6 +198,36 @@ Switching it off loses the ghosts and its cooldown.
 | Quantity | 3 | 6 | 4 |
 | Cooldown | 200 turns | 50 turns | 16 |
 
+## Necrotic Frost
+
+*Every x turns, a frost field of 3 tiles' radius forms round you, off center at a random angle, and moves with you for y turns. An enemy it touches is Necro: it takes decay through its DEF every turn until it falls, z% of ATK more each turn. Each field adds its own decay. Enemies in a field strike, shoot and move 25% slower, 50% in two or more.*
+Its first field comes when its first cooldown runs out, and the cooldown starts over the moment it runs out.
+Each field's center lies one tile from you, at an angle rolled when it forms, and keeps that place round you as you walk, onto the next floor too.
+It shows as a faint purple circle with a pale green ring outside a pale purple one and small bubbles popping across it, lying on the floor under items and enemies.
+
+An enemy whose tile's middle lies within a field takes its first tick of decay as the turn ends, after every shot and step, and is **Necro** from then on: its name and panel say so.
+The decay goes on every turn until the enemy falls, wherever it goes and whether or not any field still stands.
+Each tick is a step up its ramp: with an ATK Mult of 10x, it deals 10x your ATK, then 20x, then 30x.
+That is [Arcanum Damage](#in-a-run), so your crits count at their average, and Overseer's beams multiply it as the turn ends.
+It ignores DEF, though a Shielded enemy's bubble still cuts it, and it heals nothing.
+It kills like any other hit, paying what the enemy pays.
+An enemy left on a floor you have climbed from is gone, and its decay with it.
+
+**Fields stack.** Fields don't replace each other, so with a Duration past the Cooldown more than one stands at once, and with one as long as the Cooldown there is always a field.
+Each field that touches an enemy puts its own decay on it, each with its own ramp, so an enemy in two takes both.
+**The slow** is by where the enemy stands now, Necro or not: 25% in one field, 50% in two or more, however many.
+It works as Time Dilation's does, in fights, on Ranged and Flying enemies' shots and on enemies on the move, and enemy previews, the Damage Visual and Automove count fights without it.
+With Time Dilation too, each multiplies what the other leaves (50% and 50% make 75%), up to 90%.
+
+Undo takes back the fields with what they did.
+Switching it off loses the fields and its cooldown; decay already on enemies waits, and carries on up its ramp once it is back on.
+
+| Attribute | First | Highest | Levels |
+|---|---|---|---|
+| ATK Mult | 10x | 9,219x | 36 |
+| Duration | 30 turns | 100 turns | 15 |
+| Cooldown | 125 turns | 50 turns | 16 |
+
 ## In a trial
 
 Your Arcana work on what stands in a trial's arena: the boss while it is corporeal, its parts, its minions, mimics and Light Slimes.
@@ -214,4 +244,5 @@ It can defeat the boss and win the trial, and its damage counts toward Damage th
 At 75% a cooldown falls by 0.25 a turn, so a beam due in 10 turns takes 40, and any part of a turn left over counts toward the next.
 A boss's Regen isn't on a cooldown, so it isn't slowed, and an Obelisk's turn limit still counts every turn.
 **Phantasm** works as above on what stands in the arena, its ghosts striking as each turn ends, wherever you stand then.
+**Necrotic Frost** works as above on what stands in the arena, and an incorporeal boss's decay waits until it can be struck again.
 Toggles and cooldowns are the attempt's own, leave your run outside alone, and survive a reload.

@@ -24,6 +24,9 @@ export const fieldSlowdown = (attribute: number, { slowdown }: DilationEffects) 
 /** The field's reach, in hundredths of a tile, from the hero's shot range. */
 export const fieldReach = (shotRange: number, { range }: DilationEffects) => (range ? Math.floor((shotRange * (100 + range)) / 100) : shotRange);
 
+/** What slows an enemy by two kinds of field at once comes to: each multiplies what the other leaves it, up to the cap. */
+export const togetherSlow = (a: number, b: number) => (!a ? b : !b ? a : Math.min(SLOWDOWN_CAP, snap(100 - ((100 - a) * (100 - b)) / 100)));
+
 /** One turn of Time Dilation: the field's turns run out, and the cooldown runs,
  * restarting the moment it runs out. Then a new field takes the old one's place,
  * whatever it had left. Returns whether it did. */

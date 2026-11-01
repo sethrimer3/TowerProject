@@ -29,8 +29,8 @@ export function drawVolley(f: FrameContext, volleys: readonly Volley[], wrap = 0
   const early = (f.dt * 1000) / 2;
   for (const volley of volleys)
     for (const shot of volley.shots) {
-      // Lifespring's field and Phantasm's ghosts show here only as their numbers and HP bars.
-      if (shot.lifespring || shot.phantasm) continue;
+      // Lifespring's field, Phantasm's ghosts and Necrotic Frost's decay show here only as their numbers and HP bars.
+      if (shot.lifespring || shot.phantasm || shot.necro) continue;
       if (shot.ricochet) {
         if (f.now >= landsAt(volley, shot) && f.now < landsAt(volley, shot) + RICOCHET_FLASH_MS) drawRicochet(f, shot, wrap);
         continue;

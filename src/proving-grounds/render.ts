@@ -19,6 +19,8 @@ import {FIELD_GROW_MS,paintEffectWave,paintLifespring} from "../render/effects/l
 import {paintDilationField} from "../render/effects/time-dilation.ts";
 import {ghostBob,paintGhost,paintGhostBurst,GHOST_BURST_MS} from "../render/effects/phantasm.ts";
 import {ghostDirection,ghostOffset} from "../arcana/phantasm.ts";
+import {paintFrostField} from "../render/effects/necrotic-frost.ts";
+import {frostArea} from "../arcana/necrotic-frost.ts";
 import {bossClock} from "./trial-spells.ts";
 import {paintThunderbolt,paintThunderlight} from "../render/effects/thunderbolt.ts";
 import {beamDirection} from "../arcana/overseer.ts";
@@ -63,7 +65,7 @@ export class TrialRenderer {
   get settled(){return this.camera.settled;}
   tileAt(s:TrialState,u:number,v:number){return this.camera.tileAt(s,u,v);}
   draw(s: TrialState, now: number, firedAt: number, reduceMotion: boolean,
-    options: {styledSprites?:boolean;spriteAnimations?:boolean;destination?:{x:number;y:number}|null;transition?:TrialTransition;pathAhead?:readonly {dx:number;dy:number}[];hidden?:{ricochet:boolean;thunderbolt:boolean;lifespring:boolean;phantasm:boolean};phantasmAlpha?:number} = {}) {
+    options: {styledSprites?:boolean;spriteAnimations?:boolean;destination?:{x:number;y:number}|null;transition?:TrialTransition;pathAhead?:readonly {dx:number;dy:number}[];hidden?:{ricochet:boolean;thunderbolt:boolean;lifespring:boolean;phantasm:boolean;necro:boolean};phantasmAlpha?:number} = {}) {
     this.camera.update(s,now,reduceMotion,options.transition,options.pathAhead);
     const styled=true,animated=!!options.spriteAnimations;
     // Animation is presentation only; saved turns own all positions.
@@ -114,14 +116,15 @@ export class TrialRenderer {
         }
       });
     }
-    // Time Dilation's field lies on the floor, under what stands on it.
-    const dilationField=() => {
-      const rule=s.arcana?.spells?.timeDilation,at=this.camera.hero(s);
+    // Time Dilation's and Necrotic Frost's fields lie on the floor, under what stands on it.
+    const floorFields=() => {
+      const rule=s.arcana?.spells?.timeDilation,frost=s.arcana?.spells?.necroticFrost,fields=s.arcana?.frost?.fields,at=this.camera.hero(s);
       if(rule && s.arcana?.dilation?.left)paintDilationField(c,px(at.x)+12,py(at.y)+12,S*rule.reach/100,1);
+      if(frost && fields)for(const f of frostArea(fields,frost.effects).fields)paintFrostField(c,px(at.x+f.x)+12,py(at.y+f.y)+12,S*frost.effects.radius/100,1,S,now,f.id,reduceMotion);
     };
     // The Light Elemental's dark would hide it, so there it comes after the dark.
     const unlit=s.room==="arena" && !s.keymaster && !s.bossVariant;
-    if(s.room==="arena" && !unlit)dilationField();
+    if(s.room==="arena" && !unlit)floorFields();
     if (s.room === "arena") {
       if(s.keymaster) {
         for(const p of s.keymaster.drops)tile(p.x,p.y,()=>paintContents(c,{kind:"key",color:"yellow"},{...p,time:now,reduceMotion,styledSprites:styled}));
@@ -205,7 +208,7 @@ export class TrialRenderer {
         }
         d.globalCompositeOperation="source-over";
         c.drawImage(this.darkness,0,0);
-        if(unlit)dilationField();
+        if(unlit)floorFields();
         // Keep the player readable without lighting a circle of floor.
         if(!POSITION_HALOS_ENABLED) tile(hero.x,hero.y,()=>paintHero(c,this.facing,idle));
       }
@@ -293,6 +296,8 @@ export class TrialRenderer {
         if(strike.kind==="phantasm") {
           if(!reduceMotion && ghostAlpha>0 && age<GHOST_BURST_MS)tile(strike.from.x,strike.from.y,()=>paintGhostBurst(c,age/GHOST_BURST_MS,ghostAlpha));
           if(options.hidden?.phantasm || age>=RICOCHET_FLASH_MS+200)continue;
+        } else if(strike.kind==="necro") {
+          if(options.hidden?.necro || age>=RICOCHET_FLASH_MS+200)continue;
         } else if(strike.kind==="lifespring") {
           if(options.hidden?.lifespring || age>=RICOCHET_FLASH_MS+200)continue;
         } else if(strike.kind==="ricochet") {

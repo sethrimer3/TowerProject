@@ -69,6 +69,9 @@ export type Enemy = {
    * have hit it, 0 for the field alone; set by the board as it reads the tile's
    * `sprung`, never saved. */
   sprung?: number;
+  /** Necrotic Frost (arcana/necrotic-frost.ts) has touched it, the Necro attribute:
+   * each field's ticks on it; set by the board as it reads the tile's `necro`, never saved. */
+  necro?: Record<string, number>;
   /** An enemy spawned onto the floor during the run (`Game.spawnEnemy`):
    * its number among the run's spawns, which keys its loot apart from the
    * tile's (`RunPurse.killKey`); absent on enemies the floor was made with. */
@@ -113,7 +116,7 @@ export type DoorRule =
  * it fills, and a percent potion (whose tile is marked `color: "red"`, the
  * mark generation and saves keep) blue, like the Overheal bar. */
 export const potionShade = (t: Pick<Tile, "color">): "red" | "blue" => (t.color === "red" ? "blue" : "red");
-export type Tile = { kind: Kind; amount?: number; color?: KeyColor; door?: DoorRule; enemy?: Enemy; flyer?: Enemy; tier?: ChestTier; wound?: number; broken?: number; sprung?: number; chest?: Exclude<ChestKind, "plain"> };
+export type Tile = { kind: Kind; amount?: number; color?: KeyColor; door?: DoorRule; enemy?: Enemy; flyer?: Enemy; tier?: ChestTier; wound?: number; broken?: number; sprung?: number; necro?: Record<string, number>; chest?: Exclude<ChestKind, "plain"> };
 export type Point = { x: number; y: number };
 /** A stationary wall-mounted light source, anchored to a walkable floor
  * tile adjacent to a wall. Its visibility polygon is computed once (on
@@ -178,7 +181,7 @@ export type Player = {
    * its enemy stands in one. Like `comboAttack`, only the copy of the hero a
    * fight is taken with carries it (`Game.fighterAt`). */
   beamAttack?: number;
-  /** The percent Time Dilation's field slows the enemy of the fight being taken
+  /** The percent Time Dilation's and Necrotic Frost's fields slow the enemy of the fight being taken
    * by (`slowedAct` skipping its strikes). Like `beamAttack`, only the copy of the
    * hero a fight is taken with carries it (`Game.fighterAt`). */
   slowdown?: number;

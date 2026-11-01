@@ -51,7 +51,7 @@ const rule = { boost: 10, blast: BLAST, spin: SPIN };
 
 test("the catalog has the spec's tables", () => {
   const [mult, quantity, cooldown] = ARCANA.phantasm.attributes;
-  assert.deepEqual(ARCANUM_IDS.at(-1), "phantasm");
+  assert.ok(ARCANUM_IDS.includes("phantasm"));
   assert.deepEqual([mult.name, mult.steps.length, mult.steps[0], mult.steps[1], mult.steps[18], mult.steps[22], mult.steps.at(-1)], ["ATK Mult", 36, [10, 0], [11, 5], [421, 254], [838, 540], [9219, 2228]]);
   assert.deepEqual(quantity.steps, [[3, 0], [4, 50], [5, 125], [6, 250]]);
   assert.deepEqual([cooldown.name, cooldown.steps.length, cooldown.steps[0], cooldown.steps[1], cooldown.steps[2], cooldown.steps.at(-1)], ["Cooldown", 16, [200, 0], [190, 8], [180, 24], [50, 232]]);

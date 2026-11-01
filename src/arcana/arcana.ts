@@ -1,6 +1,7 @@
 import type { CritRule } from "../combat.ts";
 import { STELLAR_FACTOR } from "../environments.ts";
 import { WAVE_INTERVAL } from "./lifespring.ts";
+import { FROST_RADIUS } from "./necrotic-frost.ts";
 import { phantasmCooldown } from "./phantasm.ts";
 import { drawAt, tileRandom } from "../random.ts";
 import { isRecord, wholeIn } from "../save/decode.ts";
@@ -201,6 +202,29 @@ export const ARCANA = {
       },
     ],
     summary: ([mult, quantity, turns]) => `Every ${turns} turns, lost phantasms return until ${countOf(quantity)} ring the hero, one tile out, turning 1° clockwise each turn. One that touches an enemy's tile strikes every enemy in its blast with ${countOf(mult * 100)}% of ATK (accounts for critical chances and factors), then disappears.`,
+    damage: ([mult]) => mult,
+  },
+  necroticFrost: {
+    name: "Necrotic Frost",
+    trigger: { on: "cooldown", turns: ([, , turns]) => turns },
+    attributes: [
+      {
+        name: "ATK Mult",
+        shown: (v) => `${countOf(v)}x`,
+        steps: [[10, 0], [11, 5], [13, 11], [16, 17], [20, 23], [26, 29], [34, 35], [43, 41], [55, 47], [69, 53], [87, 61], [108, 71], [134, 84], [164, 100], [200, 120], [243, 144], [293, 174], [352, 210], [421, 252], [502, 302], [597, 362], [708, 434], [838, 525], [989, 636], [1165, 772], [1370, 938], [1608, 1134], [1886, 1360], [2209, 1616], [2585, 1902], [3021, 2228], [3776, 2594], [4720, 2800], [5900, 3006], [7375, 3212], [9219, 3418]],
+      },
+      {
+        name: "Duration",
+        shown: (v) => `${v} turns`,
+        steps: [[30, 0], [35, 10], [40, 20], [45, 35], [50, 55], [55, 100], [60, 120], [65, 150], [70, 200], [75, 260], [80, 330], [85, 410], [90, 500], [95, 600], [100, 710]],
+      },
+      {
+        name: "Cooldown",
+        shown: (v) => `${v} turns`,
+        steps: [[125, 0], [120, 8], [115, 26], [110, 44], [105, 62], [100, 80], [95, 98], [90, 116], [85, 134], [80, 152], [75, 170], [70, 188], [65, 206], [60, 224], [55, 242], [50, 260]],
+      },
+    ],
+    summary: ([mult, duration, turns]) => `Every ${turns} turns, a frost field of ${FROST_RADIUS} tiles' radius forms round the hero, off center at a random angle, and moves with it for ${duration} turns. An enemy it touches is Necro: it takes decay through its DEF every turn until it falls, ${countOf(mult * 100)}% of ATK more each turn (accounts for critical chances and factors). Each field adds its own decay. Enemies in a field strike, shoot and move 25% slower, 50% in two or more.`,
     damage: ([mult]) => mult,
   },
 } as const satisfies Record<string, ArcanumDef>;

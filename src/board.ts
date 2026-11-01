@@ -22,6 +22,8 @@ export type Board = {
   wound?(x: number, y: number, damage: number, broke?: number): void;
   /** Marks the enemy at (x, y) as Lifespring touched it (`springMark` in enemies/ranged.ts). */
   markSpring?(x: number, y: number, waves: number, broke?: number): void;
+  /** Sets what Necrotic Frost has on the enemy at (x, y) (`necroMark` in enemies/ranged.ts). */
+  markNecro?(x: number, y: number, necro: Record<string, number>): void;
   /** Present on boards that carry torches (dungeon boards; the forest
    * exterior has none). */
   torches?: Torch[];

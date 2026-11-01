@@ -6,7 +6,7 @@ import { withChest, withPotions, withTreasureFloors, type Board } from "../board
 import { breakTorch, placeTorches, torchesLeft } from "../torches.ts";
 import { tierCells, tierTile } from "../tiers.ts";
 import { fastCells } from "../enemies/fast.ts";
-import { rangedCells, springMark, wounded, woundMore } from "../enemies/ranged.ts";
+import { necroMark, rangedCells, springMark, wounded, woundMore } from "../enemies/ranged.ts";
 import { skippedTile } from "../enemies/level-skips.ts";
 import { armoredCells } from "../enemies/armored.ts";
 import { flyingCells } from "../enemies/flying.ts";
@@ -345,6 +345,10 @@ export class World implements Board {
   markSpring(x: number, y: number, waves: number, broke = 0) {
     const k = point(x, y), raw = this.changes[k] ?? this.chunks.get(Math.floor(y / CHUNK))?.get(k);
     if (raw?.kind === "enemy" || raw?.flyer) this.changes[k] = springMark(raw, waves, broke);
+  }
+  markNecro(x: number, y: number, necro: Record<string, number>) {
+    const k = point(x, y), raw = this.changes[k] ?? this.chunks.get(Math.floor(y / CHUNK))?.get(k);
+    if (raw?.kind === "enemy" || raw?.flyer) this.changes[k] = necroMark(raw, necro);
   }
   private torchAreas = new Map<number, Torch[]>();
   /** The torch list and lit tiles last worked out: the list until the areas

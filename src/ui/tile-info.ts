@@ -142,6 +142,9 @@ function enemyStats(e: Enemy, p: Player, r: CombatPrediction, gold: number, brok
     + ` · ${stat(itemSprite("upgrade_defense", "stat-sprite"), "DEF", enemyStat(e.defense), `${brokenStat(e, broken)} (<span class="hit-hurt">-${enemyStat(r.hit)}</span>)`)}${coins}</span>`;
 }
 
+/** What Necrotic Frost has left on an enemy (arcana/necrotic-frost.ts). */
+const necroLine = (e: Enemy) => (e.necro ? "<br><small>Necro: it takes more decay every turn until it falls</small>" : "");
+
 /** A Flying enemy's panel (enemies/flying.ts): its HP, its ATK with what each of
  * its shots does to the hero, its DEF with what one of the hero's arrows
  * takes off it before ATK / m and critical hits, and the Gold killing it
@@ -153,7 +156,7 @@ function flyerInfo(e: Enemy, p: Player, gold: number) {
     + ` · ${stat(itemSprite("upgrade_attack", "stat-sprite"), "ATK", enemyStat(e.attack), ` (<span class="hit-hurt">-${enemyStat(shot)}</span>)`)}`
     + ` · ${stat(itemSprite("upgrade_defense", "stat-sprite"), "DEF", enemyStat(e.defense), `${brokenStat(e)} (<span class="hit-hurt">-${enemyStat(arrow)}</span>)`)}${coins}</span>`;
   const aggro = e.aggro ? "<br><small>Aggroed: it closes in on you as fast as it shoots</small>" : "";
-  return `${line}${brokenLine(e, p)}<br><small>Flying: it shoots you from the air; only your arrows reach it, and you walk under it freely</small>${aggro}`;
+  return `${line}${brokenLine(e, p)}<br><small>Flying: it shoots you from the air; only your arrows reach it, and you walk under it freely</small>${aggro}${necroLine(e)}`;
 }
 
 /** What a Shielded enemy's bubble does to an enemy standing in it (enemies/shielded.ts). */
@@ -169,7 +172,7 @@ const DESCRIBE: Partial<Record<Kind, Describe>> = {
     const next = broken === undefined ? r : predict(p, { ...e, broken });
     return {
       title: enemyTitle(e),
-      body: enemyStats(e, p, next, gold, broken) + brokenLine(e, p, broken) + guardLine(e) + prediction(r, p, g, c) + forecast(p, e, r.impervious ? 0 : r.turns, g, !!crit),
+      body: enemyStats(e, p, next, gold, broken) + brokenLine(e, p, broken) + guardLine(e) + necroLine(e) + prediction(r, p, g, c) + forecast(p, e, r.impervious ? 0 : r.turns, g, !!crit),
     };
   },
   wall: () => ({ title: "Wall", body: "Impassable obstacle." }),

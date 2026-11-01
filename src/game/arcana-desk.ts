@@ -4,6 +4,7 @@ import {
 } from "../arcana/arcana.ts";
 import { clearLifespring, lifespringEffects, springAmplify, stepLifespring } from "../arcana/lifespring.ts";
 import type { Beams } from "../arcana/overseer.ts";
+import { clearFrost, frostEffects, stepFrost } from "../arcana/necrotic-frost.ts";
 import { clearPhantasm, phantasmCooldown, phantasmEffects, stepPhantasm } from "../arcana/phantasm.ts";
 import { clearDilation, dilationEffects, fieldSlowdown, stepDilation } from "../arcana/time-dilation.ts";
 import type { CritRule } from "../combat.ts";
@@ -134,6 +135,7 @@ export class ArcanaDesk {
       if (id === "lifespring") clearLifespring(this.host.run.lifespring);
       if (id === "timeDilation") clearDilation(this.host.run.timeDilation);
       if (id === "phantasm") clearPhantasm(this.host.run.phantasm);
+      if (id === "necroticFrost") clearFrost(this.host.run.necroticFrost);
     } else r.off = r.off.filter((o) => o !== id);
     return true;
   }
@@ -149,7 +151,7 @@ export class ArcanaDesk {
     const trigger = arcanum(id).trigger;
     if (trigger.on !== "cooldown") return undefined;
     const values = valuesAt(id, levels), turns = id === "phantasm" ? phantasmCooldown(values[2], phantasmEffects(this.save)) : trigger.turns(values);
-    const timer = id === "lifespring" ? this.host.run.lifespring?.timer : id === "timeDilation" ? this.host.run.timeDilation?.timer : id === "phantasm" ? this.host.run.phantasm?.timer : this.runState.timers[id];
+    const timer = id === "lifespring" ? this.host.run.lifespring?.timer : id === "timeDilation" ? this.host.run.timeDilation?.timer : id === "phantasm" ? this.host.run.phantasm?.timer : id === "necroticFrost" ? this.host.run.necroticFrost?.timer : this.runState.timers[id];
     return { left: Math.min(timer ?? turns, turns), turns };
   }
   /** What Ricochet Shot gives this turn's arrows (`VolleyTurn.ricochet`), if it is held and on. */
@@ -245,6 +247,19 @@ export class ArcanaDesk {
     const rule = this.phantasmRule();
     if (rule) stepPhantasm((this.host.run.phantasm ??= {}), rule);
   }
+  /** Necrotic Frost, if it is held and on: what a step of its decay multiplies the
+   * hero's ATK by, its Duration and cooldown, and its field with what raises it. */
+  frostRule() {
+    const held = this.held.find((h) => h.id === "necroticFrost" && this.isOn(h.id));
+    if (!held) return undefined;
+    const [multiplier, duration, turns] = valuesAt(held.id, held.levels);
+    return { boost: arcanumBoost(multiplier, this.host.crit), duration, turns, effects: frostEffects(this.save) };
+  }
+  /** Necrotic Frost's turn: the fields' turns and its cooldown, if it is held and on. */
+  frostTurn() {
+    const rule = this.frostRule(), run = this.host.run;
+    if (rule) stepFrost((run.necroticFrost ??= {}), rule, run.seed);
+  }
   /** An enemy Lifespring touched (an Effect Wave or the field) fell, by whatever
    * means, while it is on: it pays Health Bonus, and what its Gold and Cells are
    * raised by is returned. */
@@ -262,8 +277,8 @@ export class ArcanaDesk {
     if (this.held.some((h) => h.id === "overseer")) run.beamTurns = (run.beamTurns ?? 0) + 1;
     const active = this.held.flatMap(({ id, levels }) => {
       const trigger = arcanum(id).trigger;
-      // Lifespring, Time Dilation and Phantasm run their own, in the run: `lifespringTurn`, `timeDilationTurn`, `phantasmTurn`.
-      return trigger.on === "cooldown" && id !== "lifespring" && id !== "timeDilation" && id !== "phantasm" && this.isOn(id) ? [{ id, turns: trigger.turns(valuesAt(id, levels)) }] : [];
+      // Lifespring, Time Dilation, Phantasm and Necrotic Frost run their own, in the run: `lifespringTurn`, `timeDilationTurn`, `phantasmTurn`, `frostTurn`.
+      return trigger.on === "cooldown" && id !== "lifespring" && id !== "timeDilation" && id !== "phantasm" && id !== "necroticFrost" && this.isOn(id) ? [{ id, turns: trigger.turns(valuesAt(id, levels)) }] : [];
     });
     return tickCooldowns(active, this.runState.timers);
   }

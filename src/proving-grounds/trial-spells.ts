@@ -1,8 +1,9 @@
 import type { ArcanaRun } from "../arcana/arcana.ts";
 import type { LifespringRun, LifespringStep } from "../arcana/lifespring.ts";
 import { beamFactor, type Beams } from "../arcana/overseer.ts";
+import { frostArea, frostSlowAt, type FrostEffects, type FrostRun, type Necro } from "../arcana/necrotic-frost.ts";
 import type { PhantasmRun } from "../arcana/phantasm.ts";
-import { slowedAct, type DilationRun } from "../arcana/time-dilation.ts";
+import { slowedAct, togetherSlow, type DilationRun } from "../arcana/time-dilation.ts";
 import { snap } from "../exact.ts";
 import type { Spot } from "./arena.ts";
 import type { TrialState } from "./trial.ts";
@@ -20,30 +21,30 @@ export type TrialSpells = {
   /** `slow`: the percent its field slows what is in it by; `reach`: the field's, in hundredths of a tile. */
   timeDilation?: { duration: number; slow: number; turns: number; reach: number };
   phantasm?: { boost: number; quantity: number; turns: number; blast: number; spin: number };
+  necroticFrost?: { boost: number; duration: number; turns: number; effects: FrostEffects };
   beams?: Pick<Beams, "count" | "width" | "bonus">;
   /** Whether Overseer is held, on or off: its beams turn on either way. */
   overseer: boolean;
 };
 /** An arcanum's strike of the last turn, for the board to show. */
-export type TrialStrike = { kind: "ricochet" | "thunderbolt" | "lifespring" | "phantasm"; from: Spot; to: Spot; damage: number; tick: number };
+export type TrialStrike = { kind: "ricochet" | "thunderbolt" | "lifespring" | "phantasm" | "necro"; from: Spot; to: Spot; damage: number; tick: number };
 /** The attempt's arcana: its toggles, cooldowns and bolts, the turns Overseer's
  * beams have turned, Lifespring's state and the Effect Waves it has fired
  * (`springWaves`), and Time Dilation's: its field and cooldown (`dilation`), each
  * foe's tally on what it does (`tallies`), and how far its field has held back the
  * clocks of the boss's effects and its Blaster Turret's, in hundredths of a turn
- * (`lag`), and Phantasm's (`phantasm`), all saved with it; `spells`, what strikes this turn, `struck`, what
+ * (`lag`), Phantasm's (`phantasm`) and Necrotic Frost's: its cooldown and fields (`frost`), and what is on each foe (`necro`), all saved with it; `spells`, what strikes this turn, `struck`, what
  * the hero's step strikes, `strikes` and `springStep`, what Lifespring did last turn, aren't saved. */
-export type TrialArcana = { run: ArcanaRun; beamTurns: number; lifespring?: LifespringRun; springWaves?: number; dilation?: DilationRun; tallies?: Record<string, number>; lag?: Partial<Record<BossClock, number>>; phantasm?: PhantasmRun; spells?: TrialSpells; struck?: Spot & { foe: object }; strikes?: TrialStrike[]; springStep?: LifespringStep };
+export type TrialArcana = { run: ArcanaRun; beamTurns: number; lifespring?: LifespringRun; springWaves?: number; dilation?: DilationRun; tallies?: Record<string, number>; lag?: Partial<Record<BossClock, number>>; phantasm?: PhantasmRun; frost?: FrostRun; necro?: Record<string, Necro>; spells?: TrialSpells; struck?: Spot & { foe: object }; strikes?: TrialStrike[]; springStep?: LifespringStep };
 
 /** The clocks Time Dilation can hold back: the boss's own effects, and its Blaster Turret's. */
 export type BossClock = "boss" | "turret";
 
-/** The percent Time Dilation's field slows what stands at `at` by this turn. */
+/** The percent Time Dilation's and Necrotic Frost's fields slow what stands at `at` by this turn. */
 export function slowedAt(s: TrialState, at: Spot) {
-  const a = s.arcana, rule = a?.spells?.timeDilation;
-  if (!rule || !a?.dilation?.left) return 0;
+  const a = s.arcana, rule = a?.spells?.timeDilation, frost = a?.spells?.necroticFrost, fields = a?.frost?.fields;
   const dx = at.x - s.player.x, dy = at.y - s.player.y;
-  return (dx * dx + dy * dy) * 10_000 <= rule.reach * rule.reach ? rule.slow : 0;
+  return togetherSlow(rule && a?.dilation?.left && (dx * dx + dy * dy) * 10_000 <= rule.reach * rule.reach ? rule.slow : 0, frost && fields ? frostSlowAt(frostArea(fields, frost.effects), dx, dy) : 0);
 }
 /** Whether the foe `key`, standing at `at`, does what it is about to (a counter, a
  * bite, a step): always, unless Time Dilation's field holds it back. Its tally goes

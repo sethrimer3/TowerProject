@@ -626,8 +626,18 @@ An arcanum on a cooldown: a field round the hero as wide as its shot range, last
 **Phantasm**:
 An arcanum on a cooldown: ghosts in an evenly spaced ring one tile round the hero, turning slowly. A ghost that touches an enemy's tile strikes everything in its blast and disappears; each activation fills the ring's gaps, up to its Quantity.
 
+**Necrotic Frost**:
+An arcanum on a cooldown: a field round the hero, its center off the hero's at an angle rolled for it, moving with the hero for a number of turns. Fields stack. It slows what stands in it and leaves its effect on what it touches.
+
+**Necro**:
+The attribute of an enemy Necrotic Frost has touched, kept until it falls. Each field that touched it has put an effect on it, and every effect deals decay each turn, a step higher up its ramp, through DEF, wherever the enemy goes.
+_Avoid_: poison, frostbite
+
+**Decay**:
+Necrotic Frost's damage: each step of an effect's ramp is the arcanum's Arcanum Damage, so the first tick is one step, the next two, and so on.
+
 **Slowdown**:
-The percent Time Dilation slows what is in its field by: it acts on the rest of its chances (strikes, steps), its shots charge and a boss's effects count down that much slower. 90% at most.
+The percent Time Dilation or Necrotic Frost slows what is in its field by: it acts on the rest of its chances (strikes, steps), its shots charge and a boss's effects count down that much slower. 90% at most, the two together.
 
 **Ricochet**:
 Ricochet Shot's strike: an arrow's hit springing a white line to the closest other enemies on the floor. A ricochet never sets off another.
