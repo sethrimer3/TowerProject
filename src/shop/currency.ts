@@ -6,7 +6,7 @@ import { earn } from "../save/profile.ts";
 // own system (Gems in economy/gems.ts, Gold banked by Game); this table only reads,
 // spends and credits them, so an offer never knows where a currency lives.
 
-export type CurrencyId = "gems" | "shards" | "gold" | "medals";
+export type CurrencyId = "gems" | "arcanite" | "gold" | "medals";
 export type Currency = {
   name: string;
   /** What the currency is, for its information panel. */
@@ -24,12 +24,12 @@ export const CURRENCIES: Record<CurrencyId, Currency> = {
     spend: (save, n) => void (save.gems -= n),
     credit: (save, n) => { save.gems += n; earn(save, "gems", n); },
   },
-  shards: {
-    name: "Ascension Shards",
+  arcanite: {
+    name: "Arcanite",
     info: "A limited currency, kept between climbs. Bought in the Shop's limited packs, one of each every two weeks.",
-    balance: (save) => save.ascensionShards,
-    spend: (save, n) => void (save.ascensionShards -= n),
-    credit: (save, n) => { save.ascensionShards += n; earn(save, "ascensionShards", n); },
+    balance: (save) => save.arcanite,
+    spend: (save, n) => void (save.arcanite -= n),
+    credit: (save, n) => { save.arcanite += n; earn(save, "arcanite", n); },
   },
   gold: {
     name: "Gold",

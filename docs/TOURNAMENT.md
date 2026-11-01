@@ -9,7 +9,7 @@ Status: **the build order is built** (the rules, save and stub server, the tourn
 - A tournament opens every **Wednesday and Saturday, 00:00 to 24:00 GMT**, on the server's clock. Entries close at the end of the day; runs already inside get **4 more hours**; then the server tabulates the final results.
 - Each player belongs to one **league**: Copper, Silver, Gold, Platinum, Champion. A tournament run is a **Delve run in cave 1, 3, 5, 7 or 9** by league (shown as *Delve 1+*, *3+* …), with every enemy as strong as the next cave's (×5 in Copper, ×3 above). Every entrant plays from the **same server seeds**. The **score is the depth reached**, ranked against the league worldwide.
 - Entering costs one **Ticket**. Each new tournament grants one, with a celebration. When out of Tickets: one more for an ad (straight away with Ad-Disable), then more for **10, 20, 30 … Gems**, rising by 10 each, starting over each tournament.
-- Placement pays **Gems and Ascension Shards** in ten prize levels by global percentile, once the server finalizes the results, claimed within **24 hours** with *Claim rewards*.
+- Placement pays **Gems and Arcanite** in ten prize levels by global percentile, once the server finalizes the results, claimed within **24 hours** with *Claim rewards*.
 
 ## The tournament's timeline
 
@@ -56,7 +56,7 @@ The two zones line up with the prize levels: promotion is levels 1–3 (3% + 4% 
 
 ## Prizes
 
-**Ascension Shards** and **Gems** (`CURRENCIES`), in ten levels per league by global percentile. The page shows the player's league's top prize; **All prizes** shows every level in every league. The server will send the live table, so this one is the client's fallback and the design reference.
+**Arcanite** and **Gems** (`CURRENCIES`), in ten levels per league by global percentile. The page shows the player's league's top prize; **All prizes** shows every level in every league. The server will send the live table, so this one is the client's fallback and the design reference.
 
 | Level | Percentile | Copper | Silver | Gold | Platinum | Champion |
 |---|---|---|---|---|---|---|
@@ -71,21 +71,21 @@ The two zones line up with the prize levels: promotion is levels 1–3 (3% + 4% 
 | 9 | 52–80% | 6 ◆ 15 💎 | 13 ◆ 42 💎 | 24 ◆ 60 💎 | 30 ◆ 120 💎 | 35 ◆ 200 💎 |
 | 10 | bottom 20% | 5 ◆ 10 💎 | 12 ◆ 40 💎 | 20 ◆ 50 💎 | 20 ◆ 100 💎 | 20 ◆ 175 💎 |
 
-◆ Ascension Shards, 💎 Gems. Levels 1 and 10 are as specified; the levels between are designed to satisfy the rule below.
+◆ Arcanite, 💎 Gems. Levels 1 and 10 are as specified; the levels between are designed to satisfy the rule below.
 
 **The oscillation rule.** Moving up must never pay less than holding back. Concretely, for each currency, where *L4* is a league's level 4 (the best level outside the promotion zone), *L3* its level 3 (the worst inside it) and *Up10* the next league's level 10:
 
 - **Copper → Silver, Silver → Gold** (promotion is permanent, so a promoted player who then always finishes last stays up for good): each later tournament at the bottom of the upper league pays at least the lower league's L4: *Up10 ≥ L4*.
 - **Gold ↔ Platinum, Platinum ↔ Champion** (a player can promote, then be demoted): the two tournaments of the cycle, promoting at the lowest promotion level and then demoted from the upper league's bottom, pay at least two tournaments at the lower league's L4: *L3 + Up10 ≥ 2 × L4*.
 
-| Pair | Shards | Gems |
+| Pair | Arcanite | Gems |
 |---|---|---|
 | Copper → Silver | 12 ≥ 12 | 40 ≥ 40 |
 | Silver → Gold | 20 ≥ 20 | 50 ≥ 50 |
 | Gold ↔ Platinum | 56 + 20 = 76 ≥ 76 | 175 + 100 = 275 ≥ 220 |
 | Platinum ↔ Champion | 110 + 20 = 130 ≥ 130 | 300 + 175 = 475 ≥ 440 |
 
-Gold's and Platinum's Shards meet the rule exactly at level 4, the most it allows with their level 3; levels 2 and 5–9 don't enter the rule, so they are raised as far toward their neighbours as reads well. Every column also only rises toward level 1. `tests/tournament.test.ts` checks both properties over the table, so a retune can't break them.
+Gold's and Platinum's Arcanite meet the rule exactly at level 4, the most it allows with their level 3; levels 2 and 5–9 don't enter the rule, so they are raised as far toward their neighbours as reads well. Every column also only rises toward level 1. `tests/tournament.test.ts` checks both properties over the table, so a retune can't break them.
 
 **Consequence of the given endpoints:** Gold's bottom (20 ◆ 50 💎) is close to Silver's bottom (12 ◆ 40 💎), so Silver's levels 4–10 are squeezed between 40 and 50 Gems, and Silver's prizes jump from 50 to 100 Gems at the promotion zone. The same is true, less sharply, of Copper's Shards. Raising Gold's bottom would spread Silver's middle levels out.
 

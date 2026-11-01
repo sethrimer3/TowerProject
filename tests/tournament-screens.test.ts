@@ -87,10 +87,10 @@ test("the client claims the final prize once, after the results are final", asyn
   assert.equal(g.tournament.phase, "results");
   assert.equal(g.tournament.claimable, true);
   const scores = [...stubField(id, "copper"), 40], expected = prizeFor("copper", placeOf(scores, 40), scores.length);
-  const gems = g.save.gems, shards = g.save.ascensionShards;
+  const gems = g.save.gems, arcanite = g.save.arcanite;
   assert.deepEqual(await client.claim(), expected);
   assert.equal(g.save.gems, gems + expected.gems);
-  assert.equal(g.save.ascensionShards, shards + expected.shards);
+  assert.equal(g.save.arcanite, arcanite + expected.arcanite);
   assert.equal(g.tournament.claimable, false);
   assert.equal(await client.claim(), null, "only once");
   assert.ok(PRIZES.copper.includes(expected));

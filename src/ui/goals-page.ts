@@ -9,7 +9,7 @@ import { offer } from "../shop/offers.ts";
 import { clearedInspiration } from "../tower/area-ledger.ts";
 import { tierNumeral, tierRewardText, tierStats } from "../tiers.ts";
 import type { AppContext } from "./app.ts";
-import { el, eventIcon, gemIcon, goldIcon, medalIcon, shardIcon, shrineIcon, trophyIcon, uiSprite } from "./dom.ts";
+import { el, eventIcon, gemIcon, goldIcon, medalIcon, arcaniteIcon, shrineIcon, trophyIcon, uiSprite } from "./dom.ts";
 import { flyToPurse } from "./flourish.ts";
 import { goalRewardShown, offerShown, revealReward } from "./reward-reveal.ts";
 
@@ -26,7 +26,7 @@ const FLOOR_PX = 14;
 const GROUND_PX = 96;
 const TOP_PX = 160;
 
-const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon("gem-icon goal-icon"), shards: () => shardIcon("shard-icon goal-icon"), gold: goldIcon, medals: () => medalIcon("medal-icon goal-icon") };
+const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon("gem-icon goal-icon"), arcanite: () => arcaniteIcon("arcanite-icon goal-icon"), gold: goldIcon, medals: () => medalIcon("medal-icon goal-icon") };
 /** Each unlock's icon: Damage Prediction a cracked heart, Combat Forecast an eye over crossed blades, Attack
  * Lore an open book with a rising arrow, Warp a portal's swirl, Damage Visual a monster's tile with a red
  * number in its corner, Relative Damage Color that tile over a green-to-red bar, Equipment an anvil
@@ -109,7 +109,7 @@ const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
     `<p class="hint">A fraction of a turn left over carries to the next shot: 3 shots in 10 turns fire 4, 3 and 3 turns apart.</p>`,
   tournament: `<p>Twice a week, on Wednesday and Saturday (GMT), the Tournament opens: one Delve run from seeds every player in your league shares, among stronger enemies, scored by the depth you reach and ranked worldwide.</p>` +
     `<p>Its Hall now stands in the forest, right of the path: tap it to see when the next one opens. While one is open, the Delve opens with it: the trophy at the right leads down to its cave, and entering costs a Ticket.</p>` +
-    `<p class="hint">Each new tournament gives you a Ticket to enter. Place high to win Gems and Ascension Shards, and climb from Copper through Silver, Gold and Platinum to Champion.</p>`,
+    `<p class="hint">Each new tournament gives you a Ticket to enter. Place high to win Gems and Arcanite, and climb from Copper through Silver, Gold and Platinum to Champion.</p>`,
   events: `<p>Every two weeks an Event begins: missions released over its first eight days, each with three tiers paying Medals as you complete them.</p>` +
     `<p>The Medals an event pays count toward its relics, unique keepsakes that each give a permanent bonus. The Event Booster doubles them, and opens two premium relics.</p>` +
     `<p class="hint">Tap the pennant at the right to see the running event. The relics you own wait on the Relics screen, in the menu.</p>`,

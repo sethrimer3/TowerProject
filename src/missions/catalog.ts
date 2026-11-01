@@ -89,13 +89,13 @@ export function missionReward(save: Save, material: EquipMaterialId) {
  * week (Monday 00:00 GMT to the next): `gold` multiplies a daily mission's
  * Gold, and `training` is Training Points. */
 export const WEEKLY_REWARDS = [
-  { missions: 5, gold: 3, gems: 10, medals: 0, shards: 0, training: 1 },
-  { missions: 10, gold: 4, gems: 15, medals: 10, shards: 0, training: 1 },
-  { missions: 15, gold: 5, gems: 20, medals: 15, shards: 0, training: 1 },
-  { missions: 20, gold: 7, gems: 25, medals: 20, shards: 0, training: 1 },
-  { missions: 25, gold: 10, gems: 30, medals: 25, shards: 10, training: 1 },
-  { missions: 30, gold: 15, gems: 35, medals: 30, shards: 15, training: 1 },
-  { missions: 35, gold: 20, gems: 50, medals: 35, shards: 20, training: 1 },
+  { missions: 5, gold: 3, gems: 10, medals: 0, arcanite: 0, training: 1 },
+  { missions: 10, gold: 4, gems: 15, medals: 10, arcanite: 0, training: 1 },
+  { missions: 15, gold: 5, gems: 20, medals: 15, arcanite: 0, training: 1 },
+  { missions: 20, gold: 7, gems: 25, medals: 20, arcanite: 0, training: 1 },
+  { missions: 25, gold: 10, gems: 30, medals: 25, arcanite: 10, training: 1 },
+  { missions: 30, gold: 15, gems: 35, medals: 30, arcanite: 15, training: 1 },
+  { missions: 35, gold: 20, gems: 50, medals: 35, arcanite: 20, training: 1 },
 ] as const;
 /** The daily missions claimed that the last weekly reward needs. */
 export const WEEKLY_MAX = WEEKLY_REWARDS.at(-1)!.missions;
@@ -103,7 +103,7 @@ export const WEEKLY_MAX = WEEKLY_REWARDS.at(-1)!.missions;
 /** What weekly reward `i` pays now, by the highest tower open. */
 export function weeklyReward(save: Save, i: number) {
   const w = WEEKLY_REWARDS[i]!;
-  return { gold: w.gold * MISSION_GOLD[highestTower(save) - 1]!, gems: w.gems, medals: w.medals, shards: w.shards, training: w.training };
+  return { gold: w.gold * MISSION_GOLD[highestTower(save) - 1]!, gems: w.gems, medals: w.medals, arcanite: w.arcanite, training: w.training };
 }
 
 /** A material drawn evenly from Equipment's upgrade materials. */

@@ -59,7 +59,7 @@ function postMissedPrizes(save: Save, now: number) {
       id: mailId, sentAt, read: false, claimed: false, hidden: false,
       subject: "Your Tournament prize",
       body: `${tournamentDate(id)} · ${st.place.toLocaleString("en-US")}${ordinal(st.place)} of ${st.entrants.toLocaleString("en-US")} in the ${LEAGUE_INFO[league].name} League.\n\nYour prize wasn't claimed in time, so here it is.`,
-      items: [{ kind: "currency", currency: "shards", amount: prize.shards }, { kind: "currency", currency: "gems", amount: prize.gems }],
+      items: [{ kind: "currency", currency: "arcanite", amount: prize.arcanite }, { kind: "currency", currency: "gems", amount: prize.gems }],
     });
   }
 }

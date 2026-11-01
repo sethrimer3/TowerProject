@@ -48,6 +48,7 @@ import { ResearchToasts, researchToast, trainingToast } from "./ui/research-toas
 import { GearPage } from "./ui/gear-page.ts";
 import { DeckPage } from "./ui/deck-page.ts";
 import { RunTrainingBar } from "./ui/run-training-bar.ts";
+import { showHeldArcanum } from "./ui/arcana-panel.ts";
 import { renderBoardLesson } from "./ui/board-lesson.ts";
 import { renderSettingsPage } from "./ui/settings-page.ts";
 import { ShopPage } from "./ui/shop-page.ts";
@@ -176,7 +177,7 @@ function renderCinematicGems() {
 const runTraining = new RunTrainingBar(shownGame, () => {
   if(provingGrounds.active)provingGrounds.purchasesChanged();
   else {overlay.refresh(true);update();}
-}, id => !provingGrounds.active || provingGrounds.allowsTraining(id));
+}, id => !provingGrounds.active || provingGrounds.allowsTraining(id), (held) => showHeldArcanum(ctx, held));
 const researchToasts = new ResearchToasts(() => game.save.settings.reduceMotion);
 
 /** Saves; `seen` (while the page shows) marks the app open now, so a
@@ -295,6 +296,8 @@ function navigate(requested: string) {
   document.querySelector(".relic-pop")?.remove();
   // A newly opened Equipment screen greets the first visit to the Gear page.
   if (id === "gear" && from !== "gear" && game.notices.waiting("equipment")) gear.openEquipment();
+  // And the Arcana lesson leads to its tab.
+  else if (id === "gear" && from !== "gear" && game.arcanaLesson) gear.openArcana();
   renderer.weather.silence();
   if (isBoard(id)) {
     game.switchMode(id);

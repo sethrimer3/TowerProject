@@ -46,7 +46,7 @@ export function kept(m: MailMessage, now: number) {
 /** Whether every item in `m` is of a kind this client can grant. */
 export const known = (m: MailMessage) => m.items.every((i) => i.kind !== "unknown");
 
-const CURRENCY_IDS: readonly CurrencyId[] = ["gems", "shards", "gold", "medals"];
+const CURRENCY_IDS: readonly CurrencyId[] = ["gems", "arcanite", "gold", "medals"];
 /** The longest subject and body kept, so a message can't swell the save. */
 const SUBJECT_MAX = 200, BODY_MAX = 4000, ITEMS_MAX = 20, ID_MAX = 100;
 
@@ -62,7 +62,9 @@ export function decodeItem(raw: unknown): MailItem | null {
   if (raw.kind === "currency" || raw.kind === "tickets") {
     if (!Number.isInteger(amount) || !finite(amount) || amount <= 0) return null;
     if (raw.kind === "tickets") return { kind: "tickets", amount };
-    return CURRENCY_IDS.includes(raw.currency) ? { kind: "currency", currency: raw.currency, amount } : null;
+    // TODO: drop "shards" in a later save version (renamed Arcanite).
+    const currency = raw.currency === "shards" ? "arcanite" : raw.currency;
+    return CURRENCY_IDS.includes(currency) ? { kind: "currency", currency, amount } : null;
   }
   return { kind: "unknown" };
 }

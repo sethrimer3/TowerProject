@@ -1,5 +1,5 @@
 import type { Tile } from "../entities.ts";
-import { enemyOf, landsAt, leavesAt, SHOT_FLIGHT, volleyOver, type Shot, type Volley } from "../volley.ts";
+import { enemyOf, landsAt, leavesAt, RICOCHET_FLASH_MS, SHOT_FLIGHT, volleyOver, type Shot, type Volley } from "../volley.ts";
 import { tileCenter, type BoardTiles, type FrameContext } from "./render-frame.ts";
 import { drawKit } from "../sprites/kit.ts";
 import { arrowSprite } from "../sprites/combat.ts";
@@ -28,6 +28,10 @@ export function drawVolley(f: FrameContext, volleys: readonly Volley[], wrap = 0
   const early = (f.dt * 1000) / 2;
   for (const volley of volleys)
     for (const shot of volley.shots) {
+      if (shot.ricochet) {
+        if (f.now >= landsAt(volley, shot) && f.now < landsAt(volley, shot) + RICOCHET_FLASH_MS) drawRicochet(f, shot, wrap);
+        continue;
+      }
       const t = shotFlight(volley, shot, f.now, early);
       if (t === undefined) continue;
       const to = shot.by === "enemy" ? { x: f.playerX, y: f.playerY } : shot.to;
@@ -95,6 +99,22 @@ export class ShotsInFlight {
     }
     return shown;
   }
+}
+
+/** A ricochet: a straight white line from the enemy the arrow struck to the next. */
+function drawRicochet(f: FrameContext, shot: Shot, wrap: number) {
+  let dx = shot.to.x - shot.from.x;
+  if (wrap && Math.abs(dx) > wrap / 2) dx -= Math.sign(dx) * wrap;
+  const from = tileCenter(f, shot.from.x, shot.from.y), to = tileCenter(f, shot.from.x + dx, shot.to.y), c = f.c;
+  c.save();
+  c.strokeStyle = "#fff";
+  c.lineWidth = Math.max(1.5, f.s * 0.06);
+  c.lineCap = "round";
+  c.beginPath();
+  c.moveTo(from.x, from.y);
+  c.lineTo(to.x, to.y);
+  c.stroke();
+  c.restore();
 }
 
 function drawShot(f: FrameContext, at: { x: number; y: number }) {

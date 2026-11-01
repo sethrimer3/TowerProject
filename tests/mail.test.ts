@@ -120,7 +120,7 @@ test("a claimed message shows its week out; opening a message clears its dot and
 test("a message's items are granted once: retried, replayed, pressed twice or offline", async () => {
   const { g, client, post, down } = setup();
   post(OUTAGE);
-  post({ subject: "Tickets", body: "", items: [{ kind: "tickets", amount: 2 }, { kind: "currency", currency: "shards", amount: 3 }] });
+  post({ subject: "Tickets", body: "", items: [{ kind: "tickets", amount: 2 }, { kind: "currency", currency: "arcanite", amount: 3 }] });
   await client.refresh();
   const [tickets, outage] = g.mail.recent.map((m) => m.id) as [string, string];
   assert.equal(g.mail.recent[1]!.subject, OUTAGE.subject, "of two sent together, the later first");
@@ -142,10 +142,10 @@ test("a message's items are granted once: retried, replayed, pressed twice or of
   await client.refresh();
   assert.equal(g.mail.canClaim(outage), false, "the client's own record holds even if the server forgets");
 
-  const shards = g.save.ascensionShards;
+  const arcanite = g.save.arcanite;
   assert.ok(await client.claim(tickets));
   assert.equal(g.save.tournament.tickets, 2);
-  assert.equal(g.save.ascensionShards, shards + 3);
+  assert.equal(g.save.arcanite, arcanite + 3);
 });
 
 test("an item of a kind this client doesn't know holds the whole message back", async () => {
@@ -238,14 +238,14 @@ test("a Tournament prize left unclaimed comes as Mail as its claim window closes
   assert.equal(m!.id, `tournament:${ID}`);
   assert.equal(m!.subject, "Your Tournament prize");
   assert.match(m!.body, /^Wednesday 7 October · \d+(st|nd|rd|th) of 1,000 in the Copper League\./);
-  assert.deepEqual(m!.items, [{ kind: "currency", currency: "shards", amount: prize.shards }, { kind: "currency", currency: "gems", amount: prize.gems }]);
+  assert.deepEqual(m!.items, [{ kind: "currency", currency: "arcanite", amount: prize.arcanite }, { kind: "currency", currency: "gems", amount: prize.gems }]);
   assert.equal(g.tournament.phase, "upcoming", "the Tournament page shows only the next opening");
   assert.equal(await tournament.claim(), null, "the Tournament refuses it now");
   assert.equal(await stubTournament(() => g.save.tournament, () => FINAL + CLAIM_MS).claim(ID), null, "its server too");
-  const gems = g.save.gems, shards = g.save.ascensionShards;
+  const gems = g.save.gems, arcanite = g.save.arcanite;
   assert.ok(await client.claim(m!.id));
   assert.equal(g.save.gems, gems + prize.gems);
-  assert.equal(g.save.ascensionShards, shards + prize.shards);
+  assert.equal(g.save.arcanite, arcanite + prize.arcanite);
   await client.refresh();
   assert.equal(g.save.mail.stub.filter((x) => x.id === m!.id).length, 1, "posted once");
 });

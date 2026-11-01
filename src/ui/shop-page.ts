@@ -9,12 +9,12 @@ import { RARITIES } from "../shop/rarity.ts";
 import { stubServer, type ShopServer } from "../shop/server.ts";
 import { availableAgain, priceText, refusal, soldOut, timesBought, type Refusal } from "../shop/transactions.ts";
 import type { AppContext } from "./app.ts";
-import { el, gemIcon, goldIcon, medalIcon, shardIcon } from "./dom.ts";
+import { el, gemIcon, goldIcon, medalIcon, arcaniteIcon } from "./dom.ts";
 import { offerShown, revealReward } from "./reward-reveal.ts";
 
 /** Gem prices from this up ask the player to confirm first. */
 export const CONFIRM_GEMS = 200;
-const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon(), shards: () => shardIcon(), gold: goldIcon, medals: () => medalIcon() };
+const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon(), arcanite: () => arcaniteIcon(), gold: goldIcon, medals: () => medalIcon() };
 
 /** What `o` grants, each a large icon over its amount: a perk's Gold
  * multiplier on the coin, then the currencies. What a card shows in place

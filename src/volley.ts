@@ -28,6 +28,7 @@ const ARROW_SALT = 0xa770e;
 const ARROW_SUPER_SALT = 0x5c218;
 const MULTISHOT_SALT = 0x3a17c;
 const RAPID_FIRE_SALT = 0x5f1d3;
+const RICOCHET_SALT = 0x71c0c;
 
 /** One shot of a turn's volley, as the board shows it: a Ranged enemy's
  * at the hero, or the Archer's arrow at an enemy, flying `from` → `to`
@@ -39,7 +40,7 @@ const RAPID_FIRE_SALT = 0x5f1d3;
  * thorns cost an enemy's shooter), for an arrow (or a shot's thorns) the
  * enemy's HP before and after it out of its full HP, and the enemy it
  * felled (`fell`), which the board keeps showing until the shot lands. */
-export type Shot = { by: "hero" | "enemy"; from: { x: number; y: number }; to: { x: number; y: number }; damage: number; tick: number; shrouded?: number; shielded?: number; shieldBroke?: true; crit?: number; superCrit?: true; charge?: number; healed?: number; thorns?: number; before?: number; hp?: number; full?: number; fell?: Enemy };
+export type Shot = { by: "hero" | "enemy"; from: { x: number; y: number }; to: { x: number; y: number }; damage: number; tick: number; shrouded?: number; shielded?: number; shieldBroke?: true; crit?: number; superCrit?: true; charge?: number; healed?: number; thorns?: number; before?: number; hp?: number; full?: number; fell?: Enemy; ricochet?: true };
 /** Where `shot`'s target stands: the hero's tile for an enemy's shot (whose
  * thorns cost the shooter, at `from`), the enemy's for an arrow. */
 export const enemyOf = (shot: Shot) => (shot.by === "enemy" ? shot.from : shot.to);
@@ -48,11 +49,14 @@ export const enemyOf = (shot: Shot) => (shot.by === "enemy" ? shot.from : shot.t
  * `SHOT_FLIGHT` of a turn, so the last may land as the next turn begins. */
 export type Volley = { at: number; ms: number; shots: Shot[] };
 export const SHOT_FLIGHT = 0.5;
-/** When `shot` of `volley` leaves its shooter, and when it lands. */
-export const leavesAt = (volley: Volley, shot: Shot) => volley.at + (volley.ms * shot.tick) / TURN_TICKS;
-export const landsAt = (volley: Volley, shot: Shot) => leavesAt(volley, shot) + volley.ms * SHOT_FLIGHT;
-/** Whether every shot of `volley` has landed by `now`. */
-export const volleyOver = (volley: Volley, now: number) => volley.shots.every((s) => now >= landsAt(volley, s));
+/** How long a ricochet's line flashes as it strikes, in ms. */
+export const RICOCHET_FLASH_MS = 100;
+/** When `shot` of `volley` leaves its shooter, and when it lands: a ricochet
+ * does both as the arrow it springs from lands. */
+export const landsAt = (volley: Volley, shot: Shot) => volley.at + (volley.ms * shot.tick) / TURN_TICKS + volley.ms * SHOT_FLIGHT;
+export const leavesAt = (volley: Volley, shot: Shot) => landsAt(volley, shot) - (shot.ricochet ? 0 : volley.ms * SHOT_FLIGHT);
+/** Whether every shot of `volley` has landed, and its ricochets flashed, by `now`. */
+export const volleyOver = (volley: Volley, now: number) => volley.shots.every((s) => now >= landsAt(volley, s) + (s.ricochet ? RICOCHET_FLASH_MS : 0));
 
 /** What a turn's volley plays on: the board (its enemies wounded and
  * cleared as arrows land), whether its columns wrap (`wrap`, its width, or
@@ -68,7 +72,7 @@ export const volleyOver = (volley: Volley, now: number) => volley.shots.every((s
  * arrows (`range`) and Charged Shot (`charge`, and the enemy cards' by
  * card against theirs, `foeCharge`); none when absent. */
 export type VolleyTurn = {
-  board: Pick<Board, "tile" | "clear" | "wound">;
+  board: Pick<Board, "tile" | "clear" | "wound" | "floorEnemies">;
   wrap: number;
   floorOf: (x: number, y: number) => number;
   hero: Player;
@@ -79,11 +83,14 @@ export type VolleyTurn = {
   ranks: Pick<Save, "upgrades" | "training" | "archives">;
   cardCrit?: { chance: number; factor: number };
   handShot?: { attack: number; speed: number; boss?: number; range?: number; charge?: number; foeCharge?: ByFoe };
+  /** Ricochet Shot, held and on (game/arcana-desk.ts): what its strikes multiply
+   * the hero's ATK by, the enemies each reaches, and the percent chance. */
+  ricochet?: { boost: number; rebounds: number; chance: number };
 };
 /** An enemy an arrow felled, or the thorns of its own shot (`thorns`):
  * where, whether it fell to its first wound (an instakill), and the
  * arrow's critical applications. */
-export type VolleyKill = { enemy: Enemy; at: { x: number; y: number }; instakill: boolean; crits: number; thorns?: true };
+export type VolleyKill = { enemy: Enemy; at: { x: number; y: number }; instakill: boolean; crits: number; thorns?: true; ricochet?: true };
 /** What a turn's volley did: the run's volley state after it, the shots in
  * the order they fired, the hero's HP after them, whether a Ranged enemy's
  * shot got through (`hurt`), the enemy whose shot felled the hero (the
@@ -277,9 +284,13 @@ function arrows(turn: VolleyTurn, p: Player, v: Volleys, shots: Shot[], kills: V
     if (!target) return false;
     const shot = fired++, from = at(tick);
     const targets = multishot(shot) ? reach.filter(hurts).slice(0, trainedAmount(ranks, "multishotTargets")) : [target];
-    for (const t of targets) {
+    for (const aimed of targets) {
+      // A ricochet may have struck this target since it was aimed at.
+      const t = turn.ricochet ? inPlace(turn.board, aimed) : aimed;
+      if (!t) continue;
       const kill = arrow(turn, p, from, tick, t, crit, shot, boost(t), cards(t), snap(charging(t) * (v.waited ?? 0)), shots);
       if (kill) kills.push(kill);
+      ricochet(turn, p, t, tick, shot, shots, kills);
     }
     delete v.waited;
     return rapid ? 0 : rapidFire(shot);
@@ -295,6 +306,40 @@ function arrows(turn: VolleyTurn, p: Player, v: Volleys, shots: Shot[], kills: V
       if (clock.charge === undefined && percent > 0) v.waited = (v.waited ?? 0) + 1;
     },
   };
+}
+
+/** `e` as the board holds it now; none once it has fallen. */
+function inPlace(board: VolleyTurn["board"], e: InReach): InReach | undefined {
+  const tile = board.tile(e.x, e.y), enemy = foeOn(tile);
+  return enemy ? { ...e, tile: tile.enemy === enemy ? (tile as InReach["tile"]) : { ...tile, enemy } } : undefined;
+}
+
+/** Ricochet Shot: an arrow that struck `origin`, whatever it did to it, may
+ * spring on to the closest other enemies on the floor, however far, each a
+ * line of Arcanum Damage (its crits averaged, none rolled) less that enemy's
+ * DEF, with no Lifesteal and no Armor Break. The roll is fixed per run, turn,
+ * shot and tile, so undo and a replay agree. */
+function ricochet({ board, seed, volleys, wrap, ricochet: rule }: VolleyTurn, p: Player, { x, y }: InReach, tick: number, shot: number, shots: Shot[], kills: VolleyKill[]) {
+  if (!rule || tileRandom(x, y, (seed ^ RICOCHET_SALT ^ Math.imul(volleys.turn, 0x85ebca6b) ^ Math.imul(shot, 0xc2b2ae35)) | 0) * 100 >= rule.chance) return;
+  const d2 = (o: { x: number; y: number }) => {
+    const dx = shortWay(o.x - x, wrap), dy = o.y - y;
+    return dx * dx + dy * dy;
+  };
+  const targets = (board.floorEnemies?.(x, y) ?? []).filter((o) => o.x !== x || o.y !== y).sort((a, b) => d2(a) - d2(b) || a.y - b.y || a.x - b.x).slice(0, rule.rebounds);
+  const { armorBreak: _, ...striker } = p;
+  for (const to of targets) {
+    const tile = board.tile(to.x, to.y), enemy = foeOn(tile);
+    if (!enemy) continue;
+    const damage = Math.max(0, arrowDamage(striker, enemy, 0, 1, rule.boost)), left = snap(Math.max(0, enemy.hp - damage));
+    const landed: Shot = { by: "hero", ricochet: true, from: { x, y }, to, damage, tick, before: enemy.hp, hp: left, full: snap(enemy.hp + (tile.wound ?? 0)) };
+    shots.push(landed);
+    if (left > 0) board.wound?.(to.x, to.y, damage);
+    else {
+      board.clear(to.x, to.y);
+      landed.fell = enemy;
+      kills.push({ enemy, at: to, instakill: false, crits: 0, ricochet: true });
+    }
+  }
 }
 
 /** The Archer's arrow `shot` of the turn, fired from `from` at `tick`,

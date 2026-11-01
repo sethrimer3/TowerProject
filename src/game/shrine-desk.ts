@@ -1,9 +1,10 @@
 import type { Mode } from "../entities.ts";
 import type { TowerRun } from "../runs.ts";
 import {
-  appliedNow, appliedOf, autoChoice, autoPickOpen, boonEffects, boonsEarned, lastBoonFloor, nextBoonFloor, ranked, rescaleHero, rollOffer, sameFoes, shrinesOpen,
+  appliedNow, appliedOf, autoChoice, autoPickOpen, boon, boonEffects, boonsEarned, lastBoonFloor, nextBoonFloor, ranked, rescaleHero, rollArcanumChoice, rollOffer, sameFoes, shrinesOpen,
   type BoonId, type ShrineRun,
 } from "../shrines.ts";
+import type { ArcanumId } from "../arcana/arcana.ts";
 import type { DeskHost } from "./desk.ts";
 import { RunTimeline } from "../run-timeline.ts";
 
@@ -48,9 +49,19 @@ export class ShrineDesk {
     return this.run.shrine?.picked ?? [];
   }
 
-  /** Boons earned and not yet picked. */
+  /** Boons earned and not yet picked, and a spell boon's arcanum not yet chosen. */
   get unspent() {
-    return this.open ? Math.max(0, boonsEarned(this.floor, this.picked, this.save) - this.picked.length) : 0;
+    return this.open ? Math.max(0, boonsEarned(this.floor, this.picked, this.save) - this.picked.length) + (this.choosing.length ? 1 : 0) : 0;
+  }
+
+  /** The arcana a spell boon offers, while one waits to be chosen. */
+  get choosing(): readonly ArcanumId[] {
+    return this.run.shrine?.choosing ?? [];
+  }
+
+  /** The arcana the run's spell boons have lent it. */
+  get arcana(): readonly ArcanumId[] {
+    return this.run.shrine?.arcana ?? [];
   }
 
   /** Floors left to climb to the next boon, or null with none left to earn. */
@@ -72,10 +83,10 @@ export class ShrineDesk {
   /** The boons offered now: the offer waiting, or a new one rolled while a
    * boon is unspent. Empty with none to pick. */
   offer(): BoonId[] {
-    if (!this.unspent) return [];
+    if (!this.unspent || this.choosing.length) return [];
     const now = this.run.shrine ?? { picked: [], rolls: 0 };
     if (now.offer?.length) return now.offer;
-    const next = { picked: now.picked, rolls: now.rolls };
+    const next = this.kept({ ...now, offer: undefined });
     const offer = rollOffer(this.run.seed, next, this.save);
     this.share({ ...next, offer });
     return offer;
@@ -86,11 +97,26 @@ export class ShrineDesk {
   pick(id: BoonId) {
     const offer = this.offer();
     if (!offer.includes(id)) return false;
-    const now = this.run.shrine!;
-    this.share({ picked: [...now.picked, id], rolls: now.rolls });
+    const now = this.run.shrine!, next = this.kept({ ...now, picked: [...now.picked, id], offer: undefined });
+    if (boon(id).kind === "spell") next.choosing = rollArcanumChoice(this.run.seed, next, this.save);
+    this.share(next);
     this.sync();
     this.autoPick();
     return true;
+  }
+
+  /** Takes `id` from the spell boon's choice, for the rest of the climb. */
+  choose(id: ArcanumId) {
+    if (!this.choosing.includes(id)) return false;
+    const now = this.run.shrine!;
+    this.share(this.kept({ ...now, arcana: [...this.arcana, id], choosing: undefined }));
+    this.autoPick();
+    return true;
+  }
+
+  /** `shrine` without its empty or applied parts, as `share` takes it. */
+  private kept({ picked, rolls, offer, arcana, choosing }: ShrineRun): Omit<ShrineRun, "applied"> {
+    return { picked, rolls, ...(offer ? { offer } : {}), ...(arcana?.length ? { arcana } : {}), ...(choosing?.length ? { choosing } : {}) };
   }
 
   /** Whether Auto Pick takes the run's boons: researched and turned on. */
@@ -111,6 +137,10 @@ export class ShrineDesk {
    * or the top one. */
   autoPick() {
     while (this.autoPicks && this.unspent) {
+      if (this.choosing.length) {
+        this.choose(this.choosing[0]!);
+        continue;
+      }
       const offer = this.offer();
       if (!offer.length || !this.pick(autoChoice(offer, this.save))) break;
     }

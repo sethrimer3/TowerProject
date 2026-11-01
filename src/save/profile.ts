@@ -6,7 +6,7 @@ import { seedCardBuys } from "../cards/buys.ts";
 import { stream } from "../random.ts";
 
 /** The currencies whose lifetime earnings the player profile tallies. */
-export const LIFETIME_CURRENCIES = ["gold", "silver", "gems", "ascensionShards", "cells", "medals", "inspiration", "breakthrough", "tickets", "trialPoints"] as const;
+export const LIFETIME_CURRENCIES = ["gold", "silver", "gems", "arcanite", "cells", "medals", "inspiration", "breakthrough", "tickets", "trialPoints"] as const;
 export type LifetimeCurrency = (typeof LIFETIME_CURRENCIES)[number];
 
 /** The lifetime tallies the Settings page's Stats dialog shows: kept as
@@ -77,6 +77,7 @@ export function decodeProfile(raw: unknown): Profile {
   for (const c of LIFETIME_CURRENCIES) d.earned[c] = fraction(raw.earned?.[c], 0);
   // TODO: remove once saves from before the rename are gone.
   d.earned.breakthrough ||= fraction(raw.earned?.courage, 0);
+  d.earned.arcanite ||= fraction(raw.earned?.ascensionShards, 0);
   for (const k of ["trainingLevels", "researchLevels", "trainingGold", "researchGold", "floorsClimbed"] as const) d[k] = fraction(raw[k], 0);
   return d;
 }
@@ -89,7 +90,7 @@ export function backfillProfile(save: Save) {
   const p = save.profile, at = (c: LifetimeCurrency, held: number) => (p.earned[c] = Math.max(p.earned[c], held));
   at("gold", save.gold);
   at("gems", save.gems);
-  at("ascensionShards", save.ascensionShards);
+  at("arcanite", save.arcanite);
   at("cells", save.cells);
   at("medals", save.medals);
   at("inspiration", save.tower.inspiration);

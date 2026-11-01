@@ -55,6 +55,26 @@ export function askForGems(ctx: AppContext) {
   confirmAction(ctx, { title: "Not enough Gems", body: "Not enough gems. Go to the store?", label: "Go to Shop", cancel: "Cancel" }, () => ctx.navigate("shop"));
 }
 
+/** Offers the Shop when an Arcana purchase finds too little Arcanite held. */
+export function askForArcanite(ctx: AppContext) {
+  confirmAction(ctx, { title: "Not enough Arcanite", body: "Not enough Arcanite. Go to the store?", label: "Go to Shop", cancel: "Cancel" }, () => ctx.navigate("shop"));
+}
+
+/** A press on the backdrop (outside the dialog's box) closes the open dialog,
+ * until it closes for good. */
+export function closesOnBackdrop(modal: HTMLDialogElement) {
+  modal.onclick = (ev) => {
+    const r = modal.getBoundingClientRect();
+    if (ev.target === modal && (ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom)) modal.close();
+  };
+  const off = () => {
+    if (modal.open) return;
+    modal.onclick = null;
+    modal.removeEventListener("close", off);
+  };
+  modal.addEventListener("close", off);
+}
+
 /** How many kinds of blocker the stuck dialog lists before counting the rest. */
 const BLOCKERS_SHOWN = 4;
 

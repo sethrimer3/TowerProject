@@ -91,6 +91,8 @@ import { MailDesk } from "./game/mail-desk.ts";
 import { MissionDesk } from "./game/mission-desk.ts";
 import { EventDesk } from "./game/event-desk.ts";
 import { ShrineDesk } from "./game/shrine-desk.ts";
+import { ArcanaDesk } from "./game/arcana-desk.ts";
+import { arcanaOpen, defaultArcanaRun } from "./arcana/arcana.ts";
 import { NoticeDesk } from "./game/notice-desk.ts";
 import { boonFactor, runBoons, weakened } from "./shrines.ts";
 import { LEVEL_SKIP_KINDS, LEVEL_SKIP_ROWS, rollLevelSkip } from "./enemies/level-skips.ts";
@@ -113,7 +115,7 @@ import type { Coin, Dash, Drop, Facing, Gain, GainArt, GainStrike, Heal, ShownTu
  * which seed (rolled from the game's randomness when left out). */
 export type RunStart = { outside?: boolean; seed?: number; height?: number };
 /** A lesson shown on the board (`Game.boardLesson`). */
-export type BoardLesson = "climb" | "keys" | "autoClimbHint" | "autoClimb" | "stuck" | "enemy" | "upgrades" | "enter" | "trainingPoints" | "cards" | "delve" | "provisions" | "research" | "goals";
+export type BoardLesson = "climb" | "keys" | "autoClimbHint" | "autoClimb" | "stuck" | "enemy" | "upgrades" | "enter" | "trainingPoints" | "cards" | "delve" | "provisions" | "research" | "goals" | "arcana";
 /** The first skills the lessons lead to on the Inspiration tree, in order. */
 export type IntroSkill = "cardDoorKey" | "cardEnemy";
 export type RouteEffects = {
@@ -371,6 +373,7 @@ export class Game {
   /** The Shrines' commands: a Tower run's boons and the Shrine Boons page's
    * choices. */
   readonly shrine = new ShrineDesk(this);
+  readonly arcana = new ArcanaDesk(this);
   /** The Notices: which tabs and buttons wear a dot, and what the player
    * has been shown. */
   readonly notices = new NoticeDesk(this);
@@ -518,7 +521,8 @@ export class Game {
    * Training tab's note is dismissed (`trainingLesson`); then `cards`, which leads to the Deck to
    * spend the first card point (`cardPointsLesson`); then, in the Tower's
    * forest while a tournament opens the Delve, `delve`, until the Delve is
-   * opened; and in either forest, `provisions` (`provisionsLesson`). */
+   * opened; and in either forest, `provisions` (`provisionsLesson`), then
+   * `arcana` (`arcanaLesson`), which waits for every other lesson. */
   get boardLesson(): BoardLesson | null {
     const tower = this.mode === "tower", t = this.save.tutorials, owned = this.save.upgrades;
     if (!this.run.outside) {
@@ -537,7 +541,14 @@ export class Game {
     if (!t.training && trainingWaiting(this.save)) return "trainingPoints";
     if (this.cardPointsLesson) return "cards";
     if (tower && this.delveOpen && !t.delve) return "delve";
-    return this.provisionsLesson ? "provisions" : null;
+    if (this.provisionsLesson) return "provisions";
+    return this.arcanaLesson ? "arcana" : null;
+  }
+  /** Whether the Arcana lesson waits: in the forest, once Arcanite has been
+   * held, a hand on the Gear tab until the Arcana tab shows (which sets
+   * `save.tutorials.arcana`, `notices.shown("arcana")`). */
+  get arcanaLesson() {
+    return !!this.run.outside && !this.save.tutorials.arcana && arcanaOpen(this.save);
   }
   /** Whether the provisions lesson waits: in the forest, once a first
    * provision is open, a hand on the Gear tab until it is pressed (which
@@ -1895,6 +1906,7 @@ export class Game {
     this.slice.runCurrency = 0;
     this.slice.runRecord = false;
     this.slice.runFinds = defaultFinds();
+    this.slice.runArcana = defaultArcanaRun();
     if (this.mode === "tower") this.save.offline.climbAway = 0;
     this.warpLooted = null;
     this.stopPlay();
@@ -2337,6 +2349,7 @@ export class Game {
     this.tickBoosts();
     syncShield(this.save, this.run);
     if (tickRegrow(this.run)) this.shieldFormedAt = performance.now();
+    this.arcana.turn();
     const p = this.run.player, from = before.run.player, sameFloor = this.mode !== "tower" || before.run.height === this.run.height;
     const at = performance.now(), ms = Math.min(TURN_MS, 800 / Math.max(1, this.stepsPerSecond));
     // The board walks a single step at an even pace; anything else it snaps.
@@ -2344,7 +2357,7 @@ export class Game {
     if ((this.tier < 3 && !archer) || !sameFloor) return;
     const v = this.run.volleys ?? { turn: 0 };
     const out = volleyTurn({ board: this.world, wrap: this.wrap, floorOf: (x, y) => this.floorOf(x, y), hero: p, from, seed: this.run.seed,
-      volleys: { ...v, turn: v.turn + 1 }, archer, ranks: { ...this.trainingNow, archives: this.save.archives }, cardCrit: this.cardCrit, handShot: this.handShot });
+      volleys: { ...v, turn: v.turn + 1 }, archer, ranks: { ...this.trainingNow, archives: this.save.archives }, cardCrit: this.cardCrit, handShot: this.handShot, ricochet: this.arcana.ricochet() });
     this.run.volleys = out.volleys;
     p.hp = out.hp;
     if (out.shield !== undefined) p.shield = out.shield;
@@ -2355,8 +2368,8 @@ export class Game {
       const taken = out.shots.reduce((sum, s) => (s.by === "enemy" ? snap(sum + s.damage) : sum), 0);
       if (!out.fell) this.message = `Shot · −${wholeChange(taken)} HP`;
     }
-    for (const { enemy, at, instakill, crits, thorns } of out.kills)
-      this.message = [`${thorns ? "Thorns" : "Arrow"} · ${enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, at, 1, instakill, crits ? 1 : 0)].join(" · ");
+    for (const { enemy, at, instakill, crits, thorns, ricochet } of out.kills)
+      this.message = [`${thorns ? "Thorns" : ricochet ? "Ricochet" : "Arrow"} · ${enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, at, 1, instakill, crits ? 1 : 0)].join(" · ");
     this.showVolley(out.shots, at, ms);
     // Angel Wings raises the hero from a shot that would fell it, as from a strike.
     if (out.fell && this.wingsReady) {

@@ -94,26 +94,26 @@ test("ties share their cohort's lowest place, and a boundary tie falls to the lo
   assert.deepEqual(PRIZE_LEVEL_TOP.map((top, i) => top - (PRIZE_LEVEL_TOP[i - 1] ?? 0)), [3, 4, 6, 7, 8, 8, 8, 8, 28, 20]);
   // A sole entrant is in the top 3%.
   assert.equal(prizeLevel(1, 1), 1);
-  assert.deepEqual(prizeFor("gold", 30, 1000), { shards: 80, gems: 300 });
-  assert.deepEqual(prizeFor("gold", 31, 1000), { shards: 70, gems: 240 }, "30 ahead of 1,000 is past the top 3%");
+  assert.deepEqual(prizeFor("gold", 30, 1000), { arcanite: 80, gems: 300 });
+  assert.deepEqual(prizeFor("gold", 31, 1000), { arcanite: 70, gems: 240 }, "30 ahead of 1,000 is past the top 3%");
 });
 
 test("prizes: the specified endpoints, rising toward the top, and the oscillation rule", () => {
   const ends = (p: readonly Prize[]) => [p[9], p[0]];
-  assert.deepEqual(ends(PRIZES.copper), [{ shards: 5, gems: 10 }, { shards: 20, gems: 100 }]);
-  assert.deepEqual(ends(PRIZES.silver), [{ shards: 12, gems: 40 }, { shards: 40, gems: 200 }]);
-  assert.deepEqual(ends(PRIZES.gold), [{ shards: 20, gems: 50 }, { shards: 80, gems: 300 }]);
-  assert.deepEqual(ends(PRIZES.platinum), [{ shards: 20, gems: 100 }, { shards: 180, gems: 425 }]);
-  assert.deepEqual(ends(PRIZES.champion), [{ shards: 20, gems: 175 }, { shards: 300, gems: 550 }]);
+  assert.deepEqual(ends(PRIZES.copper), [{ arcanite: 5, gems: 10 }, { arcanite: 20, gems: 100 }]);
+  assert.deepEqual(ends(PRIZES.silver), [{ arcanite: 12, gems: 40 }, { arcanite: 40, gems: 200 }]);
+  assert.deepEqual(ends(PRIZES.gold), [{ arcanite: 20, gems: 50 }, { arcanite: 80, gems: 300 }]);
+  assert.deepEqual(ends(PRIZES.platinum), [{ arcanite: 20, gems: 100 }, { arcanite: 180, gems: 425 }]);
+  assert.deepEqual(ends(PRIZES.champion), [{ arcanite: 20, gems: 175 }, { arcanite: 300, gems: 550 }]);
   for (const league of LEAGUES) {
     const p = PRIZES[league];
     assert.equal(p.length, 10);
-    for (let i = 1; i < 10; i++) assert.ok(p[i]!.shards <= p[i - 1]!.shards && p[i]!.gems <= p[i - 1]!.gems, `${league} level ${i + 1}`);
+    for (let i = 1; i < 10; i++) assert.ok(p[i]!.arcanite <= p[i - 1]!.arcanite && p[i]!.gems <= p[i - 1]!.gems, `${league} level ${i + 1}`);
   }
   assert.deepEqual(oscillationFailures(PRIZES, (l) => LEAGUE_INFO[l].demotes), []);
   // The rule bites: one more Shard at Gold's level 4 breaks it.
-  const raised = { ...PRIZES, gold: PRIZES.gold.map((p, i) => (i === 3 ? { ...p, shards: p.shards + 1 } : p)) };
-  assert.deepEqual(oscillationFailures(raised, (l) => LEAGUE_INFO[l].demotes), ["gold → platinum shards"]);
+  const raised = { ...PRIZES, gold: PRIZES.gold.map((p, i) => (i === 3 ? { ...p, arcanite: p.arcanite + 1 } : p)) };
+  assert.deepEqual(oscillationFailures(raised, (l) => LEAGUE_INFO[l].demotes), ["gold → platinum arcanite"]);
 });
 
 test("Tickets: one free a tournament, then one for an ad, then 10, 20, 30 … Gems, starting over each tournament", () => {
@@ -219,12 +219,12 @@ test("the stand-in: entering, standings with ties, finalizing, claiming once wit
   assert.equal(g.tournament.claimable, true);
   assert.equal((await server.standing("2026-10-07"))!.final, true);
   const prize = (await server.claim("2026-10-07"))!;
-  assert.deepEqual(prize, { shards: 20, gems: 100 });
+  assert.deepEqual(prize, { arcanite: 20, gems: 100 });
   const gems = g.save.gems;
   assert.equal(g.tournament.claim("2026-10-07", prize), true);
   assert.equal(g.tournament.claim("2026-10-07", prize), false, "once");
   assert.equal(g.save.gems, gems + 100);
-  assert.equal(g.save.ascensionShards, 20);
+  assert.equal(g.save.arcanite, 20);
   assert.equal(g.tournament.claimable, false);
   assert.equal(await server.claim("2026-10-07"), null, "the stand-in reads the claim back");
   // First place in Copper plays Saturday's tournament in Silver, from Silver's seeds.

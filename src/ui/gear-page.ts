@@ -8,28 +8,32 @@ import { helpButton } from "./dialogs.ts";
 import { bombIcon, el, itemSprite, uiSprite } from "./dom.ts";
 import { priceAmount } from "./hud.ts";
 import { EquipmentPanel } from "./equipment-panel.ts";
+import { ArcanaPanel } from "./arcana-panel.ts";
+import { arcanaOpen } from "../arcana/arcana.ts";
 
 /** Each provision's picture. */
 const PROVISION_SPRITES = { heal: "potion_flat", guard: "upgrade_defense", edge: "upgrade_attack", yellowKey: "key_yellow" } as const satisfies Record<Exclude<GoldItemId, "bomb">, string>;
-type GearTab = "provisions" | "equipment";
-const TAB_NAMES: Record<GearTab, string> = { provisions: "Provisions", equipment: "Equipment" };
+type GearTab = "provisions" | "equipment" | "arcana";
+const TAB_NAMES: Record<GearTab, string> = { provisions: "Provisions", equipment: "Equipment", arcana: "Arcana" };
 
-/** The Gear page: provisions (once one is open, by its skill) and Equipment (opened by
- * Tower II's floor 60 Goal). */
+/** The Gear page: provisions (once one is open, by its skill), Equipment (opened by
+ * Tower II's floor 60 Goal) and Arcana (once Arcanite has been held). */
 export class GearPage {
   private tab: GearTab = "provisions";
   /** The provision just bought, whose icon glows and count bounces on the next render. */
   private bought: GoldItemId | null = null;
   private equipment: EquipmentPanel;
+  private arcana: ArcanaPanel;
 
   constructor(private ctx: AppContext) {
     this.equipment = new EquipmentPanel(ctx);
+    this.arcana = new ArcanaPanel(ctx, () => this.changed());
   }
 
   /** Which tabs can be opened now. */
   private open(tab: GearTab) {
     const save = this.ctx.game.save;
-    return tab === "equipment" ? save.equipment.unlocked : provisionsOpen(save);
+    return tab === "equipment" ? save.equipment.unlocked : tab === "arcana" ? arcanaOpen(save) : provisionsOpen(save);
   }
 
   /** Opens on the Equipment screen (the forest's Blacksmith, or Equipment
@@ -39,15 +43,21 @@ export class GearPage {
     this.equipment.opened();
   }
 
+  /** Opens on the Arcana screen (its lesson's hand leads here). */
+  openArcana() {
+    this.tab = "arcana";
+  }
+
   render() {
-    if (!this.open(this.tab)) this.tab = this.open("equipment") ? "equipment" : "provisions";
+    if (!this.open(this.tab)) this.tab = this.open("equipment") ? "equipment" : this.open("arcana") ? "arcana" : "provisions";
     const save = this.ctx.game.save;
     if (this.tab === "equipment") this.ctx.game.notices.shown("equipment");
-    const body = this.tab === "equipment" ? this.equipment.html() : this.provisionsHtml();
-    const tabs = (["provisions", "equipment"] as const).filter((t) => t === "equipment" || provisionsOpen(save));
+    if (this.tab === "arcana" && this.ctx.game.notices.shown("arcana")) queueMicrotask(this.ctx.update);
+    const body = this.tab === "equipment" ? this.equipment.html() : this.tab === "arcana" ? this.arcana.html() : this.provisionsHtml();
+    const tabs = (["provisions", "equipment", "arcana"] as const).filter((t) => t === "provisions" ? provisionsOpen(save) : t === "equipment" || arcanaOpen(save));
     const lockHint = (t: GearTab) => t === "equipment" ? `Claim Tower ${tierNumeral(unlockAt("equipment").tower)}'s floor ${unlockAt("equipment").floor} Goal to open Equipment` : "Locked";
     el("gear").innerHTML = `<div class="tree-tabs page-tabs gear-tabs" role="group" aria-label="Gear tabs">
-      ${tabs.map((t) => `<button data-geartab="${t}" aria-pressed="${this.tab === t}" ${this.open(t) ? "" : `disabled title="${lockHint(t)}"`}>${TAB_NAMES[t]}</button>`).join("")}
+      ${tabs.map((t) => `<button data-geartab="${t}" aria-pressed="${this.tab === t}"${t === "arcana" && this.ctx.game.notices.waiting("arcana") ? ` class="notify"` : ""} ${this.open(t) ? "" : `disabled title="${lockHint(t)}"`}>${TAB_NAMES[t]}</button>`).join("")}
     </div>
     ${body}`;
     this.bind();
@@ -56,7 +66,8 @@ export class GearPage {
       // Only the list's loadout carries Equipment's ? button.
       const help = document.getElementById("equip-help");
       if (help) help.onclick = () => this.equipment.showHelp();
-    } else el("gear-help").onclick = () => this.showHelp();
+    } else if (this.tab === "arcana") this.arcana.bind();
+    else el("gear-help").onclick = () => this.showHelp();
   }
 
   /** The Provisions screen's help, behind the ? button at its top. */

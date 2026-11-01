@@ -6,6 +6,7 @@ import { hasPointsToSpend, totalCardLevels } from "../cards/trees.ts";
 import { equipmentWaiting } from "../equipment/inventory.ts";
 import { goalsWaiting } from "../goals.ts";
 import { provisionsOpen, trainingWaiting } from "../progression/loadout.ts";
+import { arcanaOpen } from "../arcana/arcana.ts";
 import { estimatedServerTime } from "../shop/clock.ts";
 import { OFFERS } from "../shop/offers.ts";
 import { refusal } from "../shop/transactions.ts";
@@ -21,14 +22,14 @@ import type { TournamentDesk } from "./tournament-desk.ts";
  * `deck`, `shop`), the forest's Goals button, the run's Research button
  * and the hamburger (`run-menu`), and the tabs inside pages (the
  * Inspiration and Breakthrough trees', the Research page's Training tab and the
- * Gear page's Equipment tab). */
+ * Gear page's Equipment and Arcana tabs). */
 export type NoticeSpot =
   | "upgrades" | "gear" | "research" | "deck" | "shop" | "goals" | "run-research" | "run-menu"
-  | "inspiration" | "breakthrough" | "training" | "equipment";
+  | "inspiration" | "breakthrough" | "training" | "equipment" | "arcana";
 
 /** What the player can be shown, clearing the Notices it answers: a page
  * opened, or a tab inside one. */
-export type NoticeView = "upgrades" | "gear" | "equipment" | "research" | "training" | "deck" | "inspiration" | "breakthrough" | "goals";
+export type NoticeView = "upgrades" | "gear" | "equipment" | "research" | "training" | "deck" | "inspiration" | "breakthrough" | "goals" | "arcana";
 
 /** What the Notices read from the game besides the save: the desks that
  * keep their own Notices, the Archives, and whether a skill can be bought. */
@@ -59,7 +60,7 @@ export class NoticeDesk {
     const save = this.save, host = this.host;
     switch (spot) {
       case "upgrades": return this.firstInspiration || this.tree("inspiration") || this.tree("breakthrough");
-      case "gear": return this.firstGear || equipmentWaiting(save);
+      case "gear": return this.firstGear || equipmentWaiting(save) || this.firstArcana;
       // The Archives lesson's dot waits until the Research page is opened.
       case "research": return trainingWaiting(save) || (!!save.upgrades.archives && !save.tutorials.research && !save.tutorials.archives);
       case "deck": {
@@ -83,6 +84,7 @@ export class NoticeDesk {
       case "inspiration": case "breakthrough": return this.tree(spot);
       case "training": return trainingWaiting(save) && levelForXp(save.xp) > save.seen.training;
       case "equipment": return equipmentWaiting(save);
+      case "arcana": return this.firstArcana;
     }
   }
 
@@ -96,6 +98,7 @@ export class NoticeDesk {
       case "equipment": return !save.equipment.seen && (save.equipment.seen = true);
       // Opening the Goals page ends the forest's lesson leading there.
       case "goals": return !save.tutorials.goals && (save.tutorials.goals = true);
+      case "arcana": return !save.tutorials.arcana && (save.tutorials.arcana = true);
       case "research": {
         // Opening the Research page leads the Archives lesson on to its note there.
         if (save.upgrades.archives) save.tutorials.research = true;
@@ -163,6 +166,11 @@ export class NoticeDesk {
   /** A provision is open and the Gear page hasn't been opened since. */
   private get firstGear() {
     return !this.save.tutorials.gear && provisionsOpen(this.save);
+  }
+
+  /** Arcanite has been held and the Arcana tab hasn't shown since. */
+  private get firstArcana() {
+    return !this.save.tutorials.arcana && arcanaOpen(this.save);
   }
 
   /** In the forest, after a run that earned `tree`'s currency (Inspiration

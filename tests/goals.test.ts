@@ -11,7 +11,7 @@ test("every tower has a checkpoint each ten floors to 100, every 50 to 300, then
   }
   const gems = (amount: number) => ({ kind: "currency", currency: "gems", amount });
   const gold = (amount: number) => ({ kind: "currency", currency: "gold", amount });
-  const shards = (amount: number) => ({ kind: "currency", currency: "shards", amount });
+  const arcanite = (amount: number) => ({ kind: "currency", currency: "arcanite", amount });
   assert.deepEqual(CHECKPOINTS[1]!.slice(0, 8), [
     { floor: 10, reward: { kind: "unlock", unlock: "damagePrediction" }, premium: gold(100) },
     { floor: 20, reward: { kind: "unlock", unlock: "combatForecast" }, premium: gems(10) },
@@ -25,7 +25,7 @@ test("every tower has a checkpoint each ten floors to 100, every 50 to 300, then
   // Tower I's premium rewards past floor 80, by floor (floor 100's the stub's).
   assert.deepEqual(CHECKPOINTS[1]!.slice(8).map((c) => [c.floor, c.premium]), [
     [90, gems(30)], [100, gems(50)], [150, gold(15_000)], [200, gems(35)], [250, gold(30_000)], [300, gems(25)], [400, gold(100_000)],
-    [500, gems(30)], [750, gems(35)], [1000, gems(40)], [1250, gems(45)], [1500, shards(10)], [2000, gems(50)], [2500, shards(15)], [4500, shards(20)],
+    [500, gems(30)], [750, gems(35)], [1000, gems(40)], [1250, gems(45)], [1500, arcanite(10)], [2000, gems(50)], [2500, arcanite(15)], [4500, arcanite(20)],
   ]);
   assert.deepEqual(CHECKPOINTS[2]![0], { floor: 10, reward: { kind: "unlock", unlock: "relativeDamageColor" }, premium: gems(5) });
   assert.deepEqual(CHECKPOINTS[2]![1], { floor: 20, reward: { kind: "unlock", unlock: "shardAttack" }, premium: gems(10) });
@@ -37,7 +37,7 @@ test("every tower has a checkpoint each ten floors to 100, every 50 to 300, then
   assert.deepEqual(CHECKPOINTS[1]![8], { floor: 90, reward: { kind: "currency", currency: "gold", amount: 2000 }, premium: gems(30) });
   assert.deepEqual(CHECKPOINTS[1]![10]!.reward, { kind: "unlock", unlock: "researchSpeed" });
   assert.deepEqual(CHECKPOINTS[1]![11]!.reward, gems(30));
-  assert.deepEqual(CHECKPOINTS[1]!.find((c) => c.floor === 1500), { floor: 1500, reward: shards(5), premium: shards(10) }, "Tower I's floor 1,500 pays Ascension Shards");
+  assert.deepEqual(CHECKPOINTS[1]!.find((c) => c.floor === 1500), { floor: 1500, reward: arcanite(5), premium: arcanite(10) }, "Tower I's floor 1,500 pays Arcanite");
   // Tower III's first three make the hero an Archer, then open Attack Range and Attack Speed.
   assert.deepEqual(CHECKPOINTS[3]!.slice(0, 3).map((c) => c.reward), ["archerCard", "attackRange", "attackSpeed"].map((unlock) => ({ kind: "unlock", unlock })));
   assert.deepEqual(CHECKPOINTS[3]!.slice(5, 9).map((c) => c.reward), [
@@ -92,8 +92,8 @@ test("each pass covers three towers and totals its premium rewards", () => {
   assert.deepEqual(PASSES.map((p) => [p.towers, p.label]), [[[1, 2, 3], "$9.99"], [[4, 5, 6], "$19.99"], [[7, 8, 9], "$29.99"]]);
   assert.equal(passFor(5).n, 2);
   // Twenty-three checkpoints a tower, 5 Gems × n each (1,380); Tower I's are set by hand: 425 Gems (floor 100's the
-  // stub's), 146,000 Gold and 45 Ascension Shards.
-  assert.deepEqual(passTotals(PASSES[0]!), { gems: 425 + 2 * 1380, gold: 146_000, shards: 45 });
+  // stub's), 146,000 Gold and 45 Arcanite.
+  assert.deepEqual(passTotals(PASSES[0]!), { gems: 425 + 2 * 1380, gold: 146_000, arcanite: 45 });
   assert.deepEqual(passTotals(PASSES[2]!), { gems: 3 * 1380 });
 });
 

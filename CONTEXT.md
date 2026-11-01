@@ -588,9 +588,19 @@ _Avoid_: set, combo (Goldback's), stack
 The premium currency, kept between runs like Gold. Also the one lying on a run's floor now and then, collected by touching or tapping it.
 _Avoid_: diamond, crystal, premium
 
-**Ascension Shard**:
-A limited currency, kept between runs, bought in the Shop's limited packs (each at most once every two weeks). Shown as a green crystal.
-_Avoid_: shard (alone: an ATK or DEF shard is a pickup)
+**Arcanite**:
+A limited currency, kept between runs, spent on Arcana; bought in the Shop's limited packs (each at most once every two weeks) and won in tournaments. Shown as a green crystal.
+_Avoid_: shard (alone: an ATK or DEF shard is a pickup), Ascension Shard
+
+**Arcanum** (plural **Arcana**):
+A spell bought with Arcanite and kept for good, or lent to a climb by a Shrine boon, with three attributes to upgrade, set off by its own trigger in every run.
+_Avoid_: ability, power
+
+**Arcanum Damage**:
+What a damaging arcanum strikes with: its multiplier and the equipment's times the hero's ATK and the average of its crits, never rolled.
+
+**Ricochet**:
+Ricochet Shot's strike: an arrow's hit springing a white line to the closest other enemies on the floor. A ricochet never sets off another.
 
 **Medal**:
 A limited currency, kept between runs, earned from the weekly mission rewards and Events' missions. Nothing spends Medals yet. Shown as a gold disc on a red ribbon.
@@ -797,7 +807,7 @@ A small task the player is given, two every 8 hours (from 00:00 GMT), such as *A
 _Avoid_: quest, task, challenge, daily (alone)
 
 **Weekly reward**:
-One of seven prizes for every 5 daily missions claimed in the week (Monday 00:00 GMT to the next), up to 35: Gold, Gems, Medals and Ascension Shards. Each can be claimed once a week.
+One of seven prizes for every 5 daily missions claimed in the week (Monday 00:00 GMT to the next), up to 35: Gold, Gems, Medals and Arcanite. Each can be claimed once a week.
 _Avoid_: weekly mission (nothing is asked beyond the daily missions), chest
 
 ### Events

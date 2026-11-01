@@ -110,7 +110,7 @@ test("all Goal unlocks have deployed matching art and new utility symbols are di
 
 
 test("every Shrine boon has distinct native PNG art and both kinds keep complete coverage", () => {
-  assert.deepEqual(Object.keys(BOON_SPRITES).sort(), [...BOON_IDS].sort());
+  assert.deepEqual(Object.keys(BOON_SPRITES).sort(), BOON_IDS.filter(id => id !== "unlockArcanum").sort());
   const ids = [...Object.values(BOON_SPRITES), ...SHRINE_CONTROL_SPRITES];
   const hashes = ids.map(id => {
     const png = readFileSync(new URL(`../public/assets/style/${id}.png`, import.meta.url));

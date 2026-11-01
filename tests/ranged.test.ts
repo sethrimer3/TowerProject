@@ -515,3 +515,35 @@ test("Rapid Fire in a run: several arrows a turn, each leaving in turn, at most 
   assert.ok(g.undo());
   assert.equal(g.run.volleys?.rapid, 595, "undo takes the turn's Rapid Fire back");
 });
+
+test("Ricochet Shot through the game: a hit may strike the farthest enemy too, paying its kill, and undo takes it back; off, it never does", () => {
+  const play = (seed: number, off = false) => {
+    const g = arena({});
+    g.newRun({ seed });
+    g.run.tier = 3;
+    const w = g.world as RoomWorld;
+    w.cells = new Map();
+    for (let y = 0; y < 9; y++) for (let x = 0; x < 9; x++) w.cells.set(`${x},${y}`, { kind: "floor" });
+    w.cells.set("4,0", { kind: "enemy", enemy: { ...brute, hp: 5000, attack: 1 } });
+    w.cells.set("8,8", { kind: "enemy", enemy: { ...brute, hp: 1500, attack: 1 } });
+    Object.assign(g.run.player, { x: 0, y: 0, attack: 1000, defense: 0, hp: 100, maxHp: 100 });
+    archer(g);
+    g.save.arcana.owned.ricochetShot = [0, 0, 15];
+    if (off) g.arcana.toggle("ricochetShot");
+    assert.ok(g.move(1, 0));
+    return g;
+  };
+  const seeds = Array.from({ length: 60 }, (_, i) => i + 1), fired = seeds.filter((s) => play(s).volley?.shots.some((shot) => shot.ricochet));
+  assert.ok(fired.length > 5 && fired.length < 30, `27.5% of 60: ${fired.length}`);
+  const g = play(fired[0]!), line = g.volley!.shots.find((s) => s.ricochet)!;
+  assert.deepEqual([line.from, line.to, line.damage], [{ x: 4, y: 0 }, { x: 8, y: 8 }, 2000]);
+  assert.equal(g.world.tile(8, 8).kind, "floor");
+  assert.equal(g.run.kills, 1);
+  assert.match(g.message, /Ricochet · /);
+  assert.ok(g.run.changes["8,8"]);
+  assert.ok(g.undo());
+  // Undo builds the board again from its changes, none now for the tile.
+  assert.equal(g.run.changes["8,8"], undefined);
+  assert.equal(g.run.kills, 0);
+  for (const s of fired) assert.ok(!play(s, true).volley?.shots.some((shot) => shot.ricochet));
+});
