@@ -142,6 +142,30 @@ test("Health Bonus pays once an enemy a wave hit falls, up to its limit, and und
   assert.equal(capped.run.lifespring.health, 400, "5x at the most");
 });
 
+test("Health Bonus pays too for an enemy only the field touched, whether it felled it or wounded it first", () => {
+  const felled = arena([[2, 0]], 1000), { healthPerKill } = lifespringEffects(felled.save);
+  felled.run.lifespring = { pool: 5000 };
+  turn(felled);
+  assert.equal(hpAt(felled, 2, 0), undefined, "felled at once, the pool covering it");
+  assert.equal(felled.run.lifespring.pool, 4000);
+  assert.equal(felled.run.lifespring.health, healthPerKill);
+
+  const wounded = arena([[2, 0]], 1000);
+  wounded.run.lifespring = { pool: 400 };
+  turn(wounded);
+  assert.equal(hpAt(wounded, 2, 0), 600, "the field collapses, dealing what was left of its pool");
+  assert.equal(wounded.run.lifespring.pool, undefined);
+  assert.equal(wounded.run.lifespring.health, undefined, "no pay until it falls");
+  assert.equal(wounded.finds.kill(wounded.world.tile(2, 0).enemy!, { x: 2, y: 0 }, 1, false).length > 0, true);
+  assert.equal(wounded.run.lifespring.health, healthPerKill);
+});
+
+test("an untouched enemy pays no Health Bonus", () => {
+  const g = arena([[2, 0]], 1000);
+  g.finds.kill(g.world.tile(2, 0).enemy!, { x: 2, y: 0 }, 1, false);
+  assert.equal(g.run.lifespring?.health, undefined);
+});
+
 test("Gold and Cell Bonus raise a touched enemy's pay", () => {
   const g = arena([[2, 0]], 1);
   const pay = g.purse.enemyLoot({ ...brute, strength: "greaterBoss" }, 2, 0, 1, false, { gold: 3, cells: 1 });

@@ -18,8 +18,8 @@ export const TINT_TURNS = 5;
  * has added. */
 export type LifespringRun = { timer?: number; waves?: number; wait?: number; pool?: number; tint?: number; health?: number };
 
-/** What Effect Waves give, for research to raise: Health Bonus's percent of max
- * HP an enemy they hit pays when it falls and the factor it stops at, the field's
+/** What Lifespring gives, for research to raise: Health Bonus's percent of max
+ * HP an enemy a wave or the field touched pays when it falls and the factor it stops at, the field's
  * damage multiplied per wave hit (`amplify`), the factor on Gold and the
  * additional share of Cells an enemy hit pays, and the percent of DEF a wave takes off. */
 export type LifespringEffects = { healthPerKill: number; healthLimit: number; amplify: number; gold: number; cells: number; defense: number };

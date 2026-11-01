@@ -117,7 +117,7 @@ What the waves give, while Lifespring is on, by whatever means the enemy later f
 
 | Effect | Now | What it does |
 |---|---|---|
-| Health Bonus | +0.05%, up to ×5 | Each enemy a wave hit raises your max HP this run as it falls, once however many waves hit it. Pressing the Max HP card in a run shows how far it has come. |
+| Health Bonus | +0.05%, up to ×5 | Each enemy a wave or the field touched raises your max HP this run as it falls, once however often it was touched. Pressing the Max HP card in a run shows how far it has come. |
 | Damage Amplification | ×5 a wave | The field does this much more to an enemy for each wave that hit it: after two, ×10, so an enemy of 1,000 HP costs the pool 100. |
 | Gold Bonus | ×1.0 | The Gold of an enemy a wave or the field touched is multiplied. |
 | Cell Bonus | ×0 | An enemy a wave or the field touched that drops Cells drops this share more. |
@@ -128,7 +128,8 @@ Its radius is your shot range, 3 tiles until you train Attack Range, whether or 
 A new activation adds to any pool left, the rings turning blue for 5 turns to say so.
 
 Enemies inside lose HP from the pool, closest first, until the pool runs out or none are left, whatever their DEF.
-The pool pays exactly what felling each one costs (its HP left, divided by its Damage Amplification), or all it has if that is less, doing as much damage as that buys.
+An enemy the pool can pay for falls at once, and the pool pays exactly that (its HP left, divided by its Damage Amplification).
+Otherwise the field collapses, the enemy taking the damage all that is left of the pool buys.
 A Shielded enemy's bubble cuts the field's damage as it cuts your other hits.
 An enemy your step brings into range meets the field before any arrow flies at it.
 Enemies already in range, and those that stepped up to you this turn, meet it at the very end of the turn, so your shots and the rest get their chance first.

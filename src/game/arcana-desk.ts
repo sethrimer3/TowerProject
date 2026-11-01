@@ -216,13 +216,14 @@ export class ArcanaDesk {
     const s = this.host.run.lifespring;
     return { pool: s?.pool ?? 0, effects: lifespringEffects(this.save), health: 1 + (s?.health ?? 0) / 100 };
   }
-  /** An enemy Lifespring touched fell, by whatever means, while it is on: Effect
-   * Waves' hit pays Health Bonus, and what its Gold and Cells are raised by is returned. */
+  /** An enemy Lifespring touched (an Effect Wave or the field) fell, by whatever
+   * means, while it is on: it pays Health Bonus, and what its Gold and Cells are
+   * raised by is returned. */
   lifespringKill(enemy: Enemy) {
     const rule = enemy.sprung === undefined ? undefined : this.lifespringRule();
     if (!rule) return undefined;
     const { healthPerKill, healthLimit, gold, cells } = rule.effects;
-    if (enemy.sprung) boostLifespringHealth(this.host.run, healthPerKill, healthLimit);
+    boostLifespringHealth(this.host.run, healthPerKill, healthLimit);
     return { gold, cells };
   }
   /** A turn ends: Overseer's beams turn on, on or off, and each cooldown on
