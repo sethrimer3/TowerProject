@@ -372,6 +372,14 @@ try {
         s.tower.run.shieldRegrow = { left: 900, of: 1200 };
         return { save: JSON.stringify(s), targets: [] };
       })(),
+      lakeside: (() => {
+        const s = defaults(); quiet(s);
+        Object.keys(s.tutorials).forEach(k => s.tutorials[k] = true);
+        s.tutorials.enemy = false;
+        const g = new Game(s); g.newRun({ outside: true, seed: 7 });
+        g.travelForest(-1); g.forestArrivalFrame(0); g.forestArrivalFrame(1000);
+        return { save: JSON.stringify(g.save), targets: [] };
+      })(),
     };
   });
 
@@ -1130,6 +1138,19 @@ try {
     await shot("lessons.trainingAbout");
     await click("#training-lesson");
     await shot("lessons.trainingDismissed");
+  });
+
+  await section("lakeside", async () => {
+    await load("lakeside");
+    await shot("lakeside.arrival");
+    const box = await page.locator("#world").boundingBox();
+    await page.locator("#world").click({ position: { x: 6.5 * box.width / 20, y: 12.5 * box.width / 20 } });
+    await page.locator("#fisherman-close").waitFor();
+    await shot("lakeside.fisherman");
+    await click("#fisherman-close");
+    await shot("lakeside.farewell");
+    await click("#tier-next");
+    await shot("lakeside.returned");
   });
 
   // --- Compare ---

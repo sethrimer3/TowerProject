@@ -1,3 +1,4 @@
+import { LakeWorld, FISHERMAN_DIALOGUE, onDock } from "./lakeside.ts";
 import { entrance, floorFor } from "./delve/labyrinth.ts";
 import { chooseStep } from "./automation.ts";
 import { cost } from "./progression/upgrades.ts";
@@ -197,6 +198,9 @@ const DASH_ONTO = new Set<Tile["kind"]>(["key", "potion", "attack", "defense", "
 export type WalkIn = { x: number; y: number; stage: "steps" | "arch" | "gone"; since: number; then: () => void };
 export class Game {
   provingGroundsRequested = false;
+  fishermanRequested = false;
+  /** The lake belongs to Tower I, without selecting a numbered tier. */
+  get atLake() { return this.mode === "tower" && !!this.run.outside && this.run.forestArea === "lake"; }
   /** The Delve's cave entrance, entered from its forest: a tournament run
    * asked for (`enter`, which waits on the server, so `main.ts` begins it),
    * or a Ticket wanted first (`ticket`). Taken by whoever acts on it. */
@@ -458,7 +462,7 @@ export class Game {
    * forest, from the Delve's always, and from the Tower's while the Delve
    * is open. */
   get canSwapForest() {
-    return !!this.run.outside && !this.fallen && (this.mode === "delve" || this.delveOpen);
+    return !!this.run.outside && !this.atLake && !this.fallen && (this.mode === "delve" || this.delveOpen);
   }
   /** The Tournament button: to the Delve's forest, whose cave enters the
    * open tournament. False where it can't go (no tournament open, or a run
@@ -524,6 +528,7 @@ export class Game {
    * opened; and in either forest, `provisions` (`provisionsLesson`), then
    * `arcana` (`arcanaLesson`), which waits for every other lesson. */
   get boardLesson(): BoardLesson | null {
+    if (this.atLake) return null;
     const tower = this.mode === "tower", t = this.save.tutorials, owned = this.save.upgrades;
     if (!this.run.outside) {
       if (!tower || this.fallen) return null;
@@ -661,6 +666,7 @@ export class Game {
   private stopPlay() {
     this.walkIn = null;
     this.forestArrival = null;
+    this.fishermanRequested = false;
     this.route = [];
     this.fights.clear();
     this.volley = null;
@@ -684,7 +690,8 @@ export class Game {
    * those are (as the tier arrows do). */
   private forestWorld(seed: number) {
     const { tier, tiersOpen } = this.slice;
-    return new OutsideWorld(seed, this.mode, this.save.equipment.unlocked, goalUnlocked(this.save, "tournament"), tier > 1, tier < tiersOpen);
+    if (this.atLake) return new LakeWorld(seed);
+    return new OutsideWorld(seed, this.mode, this.save.equipment.unlocked, goalUnlocked(this.save, "tournament"), this.mode === "tower" || tier > 1, tier < tiersOpen);
   }
   /** Map edits saved under an older layout can't be applied to the new one:
    * they are dropped, and progress, stats and inventory are kept. */
@@ -986,7 +993,7 @@ export class Game {
   /** The forest's Enter button: the hero walks to the entrance, and the
    * run begins as it steps onto it. It ends the `enter` lesson. */
   headForEntrance() {
-    if (!this.run.outside) return false;
+    if (!this.run.outside || this.atLake) return false;
     if (this.boardLesson === "enter") this.dismissLesson();
     this.walkTo(this.rules.entranceX, ENTRANCE_Y);
     return true;
@@ -994,7 +1001,7 @@ export class Game {
   /** Goes straight in through the forest's entrance, starting the run, as
    * walking onto it does. */
   enterRun() {
-    if (!this.run.outside) return false;
+    if (!this.run.outside || this.atLake) return false;
     this.throughEntrance();
     return true;
   }
@@ -1002,6 +1009,7 @@ export class Game {
    * tournament run asked for, which spends a Ticket (or, with none held,
    * the way to get one). */
   private throughEntrance() {
+    if (this.atLake) return;
     if (this.mode === "tower") return this.walkInThen(() => this.enterFromOutside());
     this.auto = false;
     this.cancelRoute();
@@ -2215,7 +2223,7 @@ export class Game {
   /** Moves the player onto the tile and applies what standing there does. */
   private land(t: Tile, x: number, y: number, outcome: StepEffect, floorSkip = false) {
     const p = this.run.player;
-    const previousX = p.x;
+    const previousX = p.x, previousY = p.y;
     p.x = x;
     p.y = y;
     this.handRules.unmark(x, y);
@@ -2229,6 +2237,12 @@ export class Game {
         this.auto = false;
         this.cancelRoute();
         this.provingGroundsRequested = true;
+      }
+      else if (this.atLake && onDock(x, y) && !onDock(previousX, previousY)) {
+        this.auto = false;
+        this.cancelRoute();
+        this.message = FISHERMAN_DIALOGUE;
+        this.fishermanRequested = true;
       }
       else if (this.world instanceof OutsideWorld && this.world.atExit(x, y)) this.swapForest();
       else if (this.mode === "tower" && this.world instanceof OutsideWorld) {
@@ -2489,14 +2503,31 @@ export class Game {
     this.message = `${this.rules.words.tierName} ${tierNumeral(tier)} · ${tierRewardText(tier)}`;
     return true;
   }
-  /** Side arrows and walking onto a side edge take the same path to an
-   * adjacent opened forest. Prefer the same row, falling back to nearby
-   * clear grass (the crossroads always supplies a safe entry). */
+  /** Which neighbor is connected: the lake west of Tower I, Tower I east
+   * of the lake, or an adjacent opened tower. */
+  canTravelForest(direction: -1 | 1) {
+    return this.mode === "tower" && !!this.run.outside && !this.busy &&
+      (this.atLake ? direction === 1 : direction === -1 || this.slice.tier < this.slice.tiersOpen);
+  }
+  /** Arrows and walking onto a side edge share the arrival animation.
+   * Prefer the same row, falling back to connected grass near the crossing. */
   travelForest(direction: -1 | 1, row = OUTSIDE_START_Y) {
-    if (this.mode !== "tower" || this.busy || !this.selectTier(this.slice.tier + direction)) return false;
+    if (!this.canTravelForest(direction)) return false;
+    if (this.atLake) {
+      delete this.run.forestArea;
+      this.world = this.buildWorld();
+      this.message = "The path leads back to Tower I.";
+    } else if (this.slice.tier === 1 && direction === -1) {
+      this.run.forestArea = "lake";
+      this.world = this.buildWorld();
+      this.message = "A quiet lake lies beyond the trees.";
+    } else if (!this.selectTier(this.slice.tier + direction)) return false;
     const world = this.world as OutsideWorld;
     const edge = direction === 1 ? 0 : world.width - 1;
     const x = edge + direction;
+    // Validate connectivity from the crossing in either area.
+    this.run.player.x = this.atLake ? 18 : this.rules.entranceX;
+    this.run.player.y = OUTSIDE_START_Y;
     const rows = Array.from({ length: ENTRANCE_Y }, (_, y) => y).sort((a, b) => Math.abs(a - row) - Math.abs(b - row) || a - b);
     // The fresh run still starts at the crossroads. A route from there
     // rules out clear-looking grass pockets surrounded by trees.

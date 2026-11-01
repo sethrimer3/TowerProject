@@ -45,6 +45,9 @@ The startup barrier warms every forest material/object PNG; `drawForestTile` dra
 The full rectangular extent of every object clears all roads, the mode sign, entrance footprint and both building yards; crowns may overhang ordinary woodland floor.
 Plans cache by seed, mode, entrance column and road/building flags, with north-to-south ordering inside each layer and every large crown above smaller foliage.
 The active forest draws dynamic back grass, small foliage, crowns, buildings, route and hero, then the existing grass at the hero's feet and weather; dynamic grass retains its original planning, motion and interaction.
+`render/lakeside.ts` paints `LakeWorld` through the same ground cache, sampling a connected 96-pixel water panel at native density and layering the dock, existing forest trees, reeds and seated fisherman.
+Its five new native PNGs are authored in `tools/prepare-lakeside-sprites.py` using Pillow and registered in both art and startup manifests.
+Lake water and dock never receive the clearing's grass or tower-shaped cloud height map; rain and storm weather still draw, and optional reeds and small plants follow Decoration.
 Wall foliage remains with decoration off, while optional floor plants and dynamic grass follow that setting.
 The forest always uses the native kit; alternate Game themes keep their own hero art, and UI themes gate the interface independently.
 `sprites/dungeon.ts` supplies dedicated interior PNG materials: fitted Tower masonry and contiguous Delve stone/earth patches, selected with coordinate hashes independent of generation.

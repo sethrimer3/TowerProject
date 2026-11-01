@@ -121,6 +121,8 @@ Its phone/desktop screenshots are in `test-results/deck-swipes/`.
 
 `node tests/forest-travel.mjs` starts its own Vite server and tests actual clicks on the right-side path and grass, reload persistence, arrows and edge travel, the 100ms interval with no native hero draw, visible sprite motion, input locking and both entry directions at phone/desktop widths.
 Its images are in `test-results/forest-travel/`; `tests/forest-travel.test.ts` covers safe landing rows, closed edges, route termination, repeated transitions and motion settings.
+`node tests/lakeside.mjs` checks the lake's real west/east canvas routes and arrows, shared fisherman modal, dismissal, repeat visits, location reloads and unchanged tier at 390/1024 pixels, with review images in `test-results/lakeside/`.
+`tests/lakeside.test.ts` covers water/fisherman collision, seed-independent connectivity, safe round trips, progression preservation and save-marker validation; the `lakeside` render scene pins the arrival, greeting, dock and Decoration-off frames.
 The appended `forestTravel` drawing-call and pixel scenes pin both directions of the arrival and reduced motion.
 `tests/cloud-shadows.test.ts` checks wrapping cloud continuity, seeded motion, height projection, transparent silhouette gaps, layering and the paused/reduced-motion clock.
 `node tests/cloud-shadows.mjs` checks actual forest pixels at phone/desktop widths, raised versus flat surfaces, frozen time, cached height maps/readbacks, a bounded 96 × 96 overlay, camera movement and exclusion from dungeons, with review images in `test-results/cloud-shadows/`.

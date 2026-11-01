@@ -151,14 +151,14 @@ for (const mode of ["tower", "delve"] as const)
     };
     const right = g.world.width - 1;
     g.newRun({ outside: true });
-    assert.deepEqual([roadTo(0), roadTo(right)], [false, false], "one tier open: no roads out");
+    assert.deepEqual([roadTo(0), roadTo(right)], [mode === "tower", false], "Tower I has a west road to the lake even before another tier opens");
     g.save[mode].tiersOpen = 3;
     assert.ok(g.selectTier(2));
     assert.deepEqual([roadTo(0), roadTo(right)], [true, true], "the middle tier leads both ways");
     assert.ok(g.selectTier(3));
     assert.deepEqual([roadTo(0), roadTo(right)], [true, false], "the last open tier leads only back");
     assert.ok(g.selectTier(1));
-    assert.deepEqual([roadTo(0), roadTo(right)], [false, true], "the first leads only on");
+    assert.deepEqual([roadTo(0), roadTo(right)], [mode === "tower", true], "Tower I leads west to the lake and east to the next tier");
   });
 
 test("claiming the Goal that opens the next tower lays the road out to it in the forest at once", () => {

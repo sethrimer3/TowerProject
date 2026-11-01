@@ -15,6 +15,8 @@ export type Boosted = (typeof PROVISION_BOOSTS)[keyof typeof PROVISION_BOOSTS];
 /** What a run holds in either mode. */
 export type RunCore = {
   outside?: boolean;
+  /** The lake west of Tower I; omitted for the ordinary clearing. */
+  forestArea?: "lake";
   layoutVersion?: number;
   seed: number;
   player: Player;

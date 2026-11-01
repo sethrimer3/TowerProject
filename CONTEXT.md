@@ -828,6 +828,12 @@ _Avoid_: event pass, Premium Pass (the Goals' passes)
 A unique keepsake won by reaching an event's Medal milestone (premium relics only with the Event Booster), each giving a permanent bonus, each owned at most once and kept for good. Spending Medals is never needed to win one.
 _Avoid_: trophy (the Tournament's), artifact, badge
 
+**Lakeside**:
+The quiet lake west of Tower I's forest clearing, reached by its west path or left arrow and left by the east path or right arrow.
+
+**Fisherman**:
+The traveller seated on the lake's wooden dock, who greets the hero on stepping onto the dock: “Come back later, traveller...”
+
 ### The Delve
 
 **Forest sign**:

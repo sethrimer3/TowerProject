@@ -318,6 +318,7 @@ function renderXp(game: Game) {
 
 /** The board's heading: the forest's title outside, the mode's inside. */
 export function boardTitle(game: Pick<Game, "mode" | "run">) {
+  if (game.mode === "tower" && game.run.outside && game.run.forestArea === "lake") return "Lakeside";
   const words = MODES[game.mode].words;
   return game.run.outside ? words.outsideTitle : words.title;
 }
@@ -332,9 +333,9 @@ export function renderBoardHeading(game: Game, overlay: BoardOverlay) {
   text("board-title", boardTitle(game));
   if (game.run.outside) {
     const labels = { cloudy: "CLOUDY", sunny: "SUNNY", rain: "RAINING", storm: "THUNDERSTORM" };
-    text("board-subtitle", tiers ?? `FOREST CLEARING · ${labels[outsideWeather(game.run.seed)]}`);
+    text("board-subtitle", game.atLake ? `QUIET LAKE · ${labels[outsideWeather(game.run.seed)]}` : tiers ?? `FOREST CLEARING · ${labels[outsideWeather(game.run.seed)]}`);
     // The sign down the path stands where this hint would.
-    el("inspect").textContent = game.canSwapForest ? "" : words.begin;
+    el("inspect").textContent = game.atLake ? "Walk onto the dock to speak to the fisherman." : game.canSwapForest ? "" : words.begin;
   } else {
     text("board-subtitle", tiers ?? words.subtitle);
     el("inspect").textContent = "";
@@ -355,24 +356,24 @@ function tierLine(game: Game) {
   return `${MODES[game.mode].words.tierName.toUpperCase()} ${tierNumeral(slice.tier)} · ${tierRewardText(slice.tier).toUpperCase()}`;
 }
 
-/** In the Tower's forest, once a second tier is open, the arrows beside the
- * board choose the tier the next run climbs (the Delve's cave is its
- * league's). */
+/** Outside, arrows follow the west lake path or adjacent opened towers. */
 function renderTierArrows(game: Game) {
-  const slice = game.save[game.mode], shown = !!game.run.outside && game.mode === "tower" && slice.tiersOpen > 1;
+  const slice = game.save[game.mode], shown = !!game.run.outside && game.mode === "tower";
   const name = MODES[game.mode].words.tierName;
   for (const [id, to] of [["tier-prev", slice.tier - 1], ["tier-next", slice.tier + 1]] as const) {
     const button = el(id) as HTMLButtonElement;
     button.hidden = !shown;
-    button.disabled = !!game.forestArrival || to < 1 || to > slice.tiersOpen;
-    button.title = button.disabled ? "" : `${name} ${tierNumeral(to)} · ${tierRewardText(to)}`;
+    const direction = id === "tier-prev" ? -1 : 1;
+    button.disabled = shown ? !game.canTravelForest(direction) : !!game.forestArrival || to < 1 || to > slice.tiersOpen;
+    button.title = button.disabled ? "" : game.atLake ? "Tower I" : to === 0 ? "Lakeside" : `${name} ${tierNumeral(to)} · ${tierRewardText(to)}`;
+    button.setAttribute("aria-label", direction === -1 ? (shown && to === 0 ? "Go to Lakeside" : "Previous tower") : (game.atLake ? "Return to Tower I" : "Next tower"));
   }
 }
 
 /** What the board's heading shows: redrawn when it changes. */
 const headingKey = (game: Game) => {
   const slice = game.save[game.mode];
-  return `${game.mode}:${!!game.run.outside}:${slice.tier}:${slice.tiersOpen}${game.mode === "delve" ? `:${game.delveLeague}` : ""}${game.forestArrival ? ":arriving" : ""}`;
+  return `${game.mode}:${!!game.run.outside}:${slice.tier}:${slice.tiersOpen}${game.mode === "delve" ? `:${game.delveLeague}` : ""}${game.forestArrival ? ":arriving" : ""}${game.atLake ? ":lake" : ""}`;
 };
 
 /** The button's icon inside a run, by what pressing it does: text glyphs
@@ -387,7 +388,7 @@ const HAND_ICON = { play: "▶︎", pause: "❚❚" };
 function renderAutoButton(game: Game) {
   const button = el("auto"), inside = !game.run.outside, enter = el("enter-run");
   button.hidden = !inside;
-  enter.hidden = inside;
+  enter.hidden = inside || game.atLake;
   const cave = game.mode === "delve";
   if (enter.classList.contains("tournament-entry") !== cave) {
     enter.classList.toggle("tournament-entry", cave);
