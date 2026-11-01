@@ -1,4 +1,4 @@
-import { atWorst, breaksArmor, critAgainst, critMultiplier, facing, guaranteedCrits, heroHit, instakill as instakills, netDamage, parriedEstimate, parryCut, predict, raisedAttack, replies, squaredUp, struckDamage, thornDamage, thornsByStrike, type CombatPrediction, type CritRule } from "./combat.ts";
+import { atWorst, breaksArmor, critAgainst, critMultiplier, facing, guaranteedCrits, heroHit, instakill as instakills, netDamage, parriedEstimate, parryCut, predict, raisedAttack, replies, squaredUp, strikesFirst, struckDamage, thornDamage, thornsByStrike, type CombatPrediction, type CritRule } from "./combat.ts";
 import { snap } from "./exact.ts";
 import type { Enemy, Player } from "./entities.ts";
 
@@ -60,7 +60,7 @@ export function forecast(player: Player, enemy: Enemy, crit: CritRule, played = 
   const thorn = thornDamage(player, enemy), low = worst.hit, step = snap(best.hit - worst.hit);
   const thornsOver = totalThorns(player, enemy, thorn);
   // Armor Break makes every strike's outcomes different, each strike's DEF lower than the last's.
-  const breaks = breaksArmor(player, enemy), rate = player.armorBreak ?? 0, start = enemy.broken ?? 0, opening = enemy.fast ? 1 : 0;
+  const breaks = breaksArmor(player, enemy), rate = player.armorBreak ?? 0, start = enemy.broken ?? 0, opening = strikesFirst(enemy) ? 1 : 0;
   const brokenAt = (t: number) => snap(start + t * rate);
   const hits = crit.superCrit || breaks ? strikeOutcomes(player, enemy, crit, k, extra, breaks ? brokenAt(1) : undefined) : null;
   const hitsAt = (t: number) => (breaks ? strikeOutcomes(player, enemy, crit, k, extra, brokenAt(t)) : hits!);

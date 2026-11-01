@@ -13,6 +13,7 @@ import type { LifespringRun } from "./arcana/lifespring.ts";
 import type { DilationRun } from "./arcana/time-dilation.ts";
 import type { PhantasmRun } from "./arcana/phantasm.ts";
 import type { FrostRun } from "./arcana/necrotic-frost.ts";
+import type { VoidwellRun } from "./arcana/voidwell.ts";
 import type { ChestOdds, DoorOdds, Player, Tile } from "./entities.ts";
 /** A stat a provision boosts for a while. */
 export type Boosted = (typeof PROVISION_BOOSTS)[keyof typeof PROVISION_BOOSTS];
@@ -135,6 +136,9 @@ export type RunCore = {
   /** Necrotic Frost's cooldown and fields (arcana/necrotic-frost.ts), in the run so
    * undo takes them back with what they did; absent before its first turn. */
   necroticFrost?: FrostRun;
+  /** Voidwell's cooldown and vortex (arcana/voidwell.ts), in the run so undo takes
+   * them back with what they stunned; absent before its first turn. */
+  voidwell?: VoidwellRun;
   /** Ranged enemies' and the Archer's cooldowns, and the turns taken
    * inside (enemies/ranged.ts); absent until the first shot is due. */
   volleys?: Volleys;

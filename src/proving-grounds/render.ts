@@ -21,6 +21,7 @@ import {ghostBob,paintGhost,paintGhostBurst,GHOST_BURST_MS} from "../render/effe
 import {ghostDirection,ghostOffset} from "../arcana/phantasm.ts";
 import {paintFrostField} from "../render/effects/necrotic-frost.ts";
 import {frostArea} from "../arcana/necrotic-frost.ts";
+import {paintVortex} from "../render/effects/voidwell.ts";
 import {bossClock} from "./trial-spells.ts";
 import {paintThunderbolt,paintThunderlight} from "../render/effects/thunderbolt.ts";
 import {beamDirection} from "../arcana/overseer.ts";
@@ -116,8 +117,10 @@ export class TrialRenderer {
         }
       });
     }
-    // Time Dilation's and Necrotic Frost's fields lie on the floor, under what stands on it.
+    // Voidwell's vortex and Time Dilation's and Necrotic Frost's fields lie on the floor, under what stands on it.
     const floorFields=() => {
+      const well=s.arcana?.spells?.voidwell,vortex=s.arcana?.voidwell?.vortex;
+      if(well && vortex)paintVortex(c,px(vortex.x)+12,py(vortex.y)+12,S*well.radius,1,now,reduceMotion);
       const rule=s.arcana?.spells?.timeDilation,frost=s.arcana?.spells?.necroticFrost,fields=s.arcana?.frost?.fields,at=this.camera.hero(s);
       if(rule && s.arcana?.dilation?.left)paintDilationField(c,px(at.x)+12,py(at.y)+12,S*rule.reach/100,1);
       if(frost && fields)for(const f of frostArea(fields,frost.effects).fields)paintFrostField(c,px(at.x+f.x)+12,py(at.y+f.y)+12,S*frost.effects.radius/100,1,S,now,f.id,reduceMotion);

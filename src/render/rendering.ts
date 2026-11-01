@@ -39,6 +39,7 @@ import { drawLifespring } from "./effects/lifespring.ts";
 import { drawDilationField } from "./effects/time-dilation.ts";
 import { drawPhantasms } from "./effects/phantasm.ts";
 import { drawFrostFields } from "./effects/necrotic-frost.ts";
+import { drawVortex } from "./effects/voidwell.ts";
 import { drawOverseerBeams } from "./effects/overseer-beams.ts";
 import { drawSmite, SMITE_MS } from "./effects/smite.ts";
 import { drawExplosion, EXPLOSION_MS } from "./effects/explosion.ts";
@@ -235,9 +236,10 @@ export class Renderer {
     c.restore();
   }
   private zoomCanvas: HTMLCanvasElement | undefined;
-  /** Time Dilation's and Necrotic Frost's fields on the floor, while any stands. */
+  /** Voidwell's vortex and Time Dilation's and Necrotic Frost's fields on the floor, while any stands. */
   private drawFloorFields(f: FrameContext) {
     if (this.game.run.outside) return;
+    drawVortex(f, this.game.vortex);
     drawDilationField(f, this.game.dilation);
     drawFrostFields(f, this.game.frostArea);
   }

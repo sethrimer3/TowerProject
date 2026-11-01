@@ -3,7 +3,8 @@
  * hero stands under it so the hero still shows, with a wing at its top
  * right (`wingMark`). Every board draws them through `drawFlyers`, Classic
  * with its baked enemies (which wear the wing already) and each Game theme
- * with its own enemy art and this wing over it. */
+ * with its own enemy art and this wing over it. One a vortex has brought down
+ * (arcana/voidwell.ts) is drawn on its tile as any enemy, and keeps its wing. */
 import type { Tile } from "../entities.ts";
 import { forEachViewTile, toTileSpace, type FrameContext } from "./render-frame.ts";
 
@@ -31,6 +32,12 @@ export function drawFlyers(f: FrameContext, hero: { x: number; y: number }, wrap
   const c = f.c;
   forEachViewTile(f, (x, y) => {
     const t = f.world.tile(x, y);
+    if (wing && t.enemy?.flying) {
+      c.save();
+      toTileSpace(c, f, x, y);
+      wingMark(c, 16, 1);
+      c.restore();
+    }
     if (!t.flyer) return;
     c.save();
     toTileSpace(c, f, x, y);

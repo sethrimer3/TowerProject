@@ -60,7 +60,9 @@ export class TrialSession {
       if(phantasm)game.run.phantasm=state.arcana.phantasm??={};
       const necroticFrost=desk.frostRule();
       if(necroticFrost)game.run.necroticFrost=state.arcana.frost??={};
-      state.arcana.spells={ricochet:desk.ricochet(),thunderbolt:desk.thunderbolt(),lifespring:spring&&{hp:spring.hp,waves:spring.waves,turns:spring.turns,reach:game.lifespringReach},timeDilation:dilation&&{duration:dilation.duration,slow:dilation.slow,turns:dilation.turns,reach:fieldReach(game.lifespringReach,dilation.effects)},phantasm,necroticFrost,beams:beams&&{count:beams.count,width:beams.width,bonus:beams.bonus},overseer:desk.held.some(h=>h.id==="overseer")};
+      const voidwell=desk.voidwellRule();
+      if(voidwell)game.run.voidwell=state.arcana.voidwell??={};
+      state.arcana.spells={ricochet:desk.ricochet(),thunderbolt:desk.thunderbolt(),lifespring:spring&&{hp:spring.hp,waves:spring.waves,turns:spring.turns,reach:game.lifespringReach},timeDilation:dilation&&{duration:dilation.duration,slow:dilation.slow,turns:dilation.turns,reach:fieldReach(game.lifespringReach,dilation.effects)},phantasm,necroticFrost,voidwell:voidwell&&{...voidwell,reach:game.lifespringReach},beams:beams&&{count:beams.count,width:beams.width,bonus:beams.bonus},overseer:desk.held.some(h=>h.id==="overseer")};
     }
     game.save.gemDrop={...this.base.save.gemDrop};game.save.goldBoostUntil=this.base.save.goldBoostUntil;
     for(const key of ["gold","gems","arcanite","medals"] as const) game.save[key]=this.base.save[key];

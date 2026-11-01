@@ -72,6 +72,9 @@ export type Enemy = {
   /** Necrotic Frost (arcana/necrotic-frost.ts) has touched it, the Necro attribute:
    * each field's ticks on it; set by the board as it reads the tile's `necro`, never saved. */
   necro?: Record<string, number>;
+  /** It stands in Voidwell's vortex (arcana/voidwell.ts): it doesn't move or shoot, and
+   * a Fast one doesn't strike first; set by the board as it reads the tile, never saved. */
+  stunned?: true;
   /** An enemy spawned onto the floor during the run (`Game.spawnEnemy`):
    * its number among the run's spawns, which keys its loot apart from the
    * tile's (`RunPurse.killKey`); absent on enemies the floor was made with. */

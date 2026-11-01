@@ -41,6 +41,7 @@ import { validLifespring } from "../arcana/lifespring.ts";
 import { validDilation } from "../arcana/time-dilation.ts";
 import { validPhantasm } from "../arcana/phantasm.ts";
 import { validFrost, validNecro } from "../arcana/necrotic-frost.ts";
+import { validVoidwell } from "../arcana/voidwell.ts";
 import { totalCardLevels, treeNode, decodeCardTrees, pointsSpent } from "../cards/trees.ts";
 export function defaults(): Save {
   return {
@@ -244,6 +245,7 @@ const RUN_FIELD_CHECKS = {
   timeDilation: validDilation,
   phantasm: validPhantasm,
   necroticFrost: validFrost,
+  voidwell: validVoidwell,
   combo: (v: any) => isRecord(v) && wholeIn(v.next, 1, 1e9) && wholeIn(v.idle, 0, 1),
   volleys: (v: any) => isRecord(v) && wholeIn(v.turn, 0, 1e12) && (v.hero === undefined || wholeIn(v.hero, 0, 1e6)) &&
     (v.waited === undefined || wholeIn(v.waited, 1, 1e12)) && (v.rapid === undefined || wholeIn(v.rapid, 1, 1e4)) &&

@@ -145,6 +145,9 @@ function enemyStats(e: Enemy, p: Player, r: CombatPrediction, gold: number, brok
 /** What Necrotic Frost has left on an enemy (arcana/necrotic-frost.ts). */
 const necroLine = (e: Enemy) => (e.necro ? "<br><small>Necro: it takes more decay every turn until it falls</small>" : "");
 
+/** What Voidwell's vortex does to an enemy in it (arcana/voidwell.ts). */
+const stunnedLine = (e: Enemy) => (e.stunned ? "<br><small>Stunned: in the vortex it can't move, shoot or strike first, and a Flying enemy can be fought</small>" : "");
+
 /** A Flying enemy's panel (enemies/flying.ts): its HP, its ATK with what each of
  * its shots does to the hero, its DEF with what one of the hero's arrows
  * takes off it before ATK / m and critical hits, and the Gold killing it
@@ -172,7 +175,7 @@ const DESCRIBE: Partial<Record<Kind, Describe>> = {
     const next = broken === undefined ? r : predict(p, { ...e, broken });
     return {
       title: enemyTitle(e),
-      body: enemyStats(e, p, next, gold, broken) + brokenLine(e, p, broken) + guardLine(e) + necroLine(e) + prediction(r, p, g, c) + forecast(p, e, r.impervious ? 0 : r.turns, g, !!crit),
+      body: enemyStats(e, p, next, gold, broken) + brokenLine(e, p, broken) + guardLine(e) + stunnedLine(e) + necroLine(e) + prediction(r, p, g, c) + forecast(p, e, r.impervious ? 0 : r.turns, g, !!crit),
     };
   },
   wall: () => ({ title: "Wall", body: "Impassable obstacle." }),

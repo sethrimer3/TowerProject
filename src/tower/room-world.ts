@@ -8,6 +8,7 @@ import { generateTowerFloor } from "./index.ts";
 import { tierCells, tierTile } from "../tiers.ts";
 import { foeTile, type FoeRule } from "../shrines.ts";
 import { fastCells } from "../enemies/fast.ts";
+import { boundsOf, stunnedTile, type VortexZone } from "../arcana/voidwell.ts";
 import { necroMark, rangedCells, springMark, wounded, woundMore } from "../enemies/ranged.ts";
 import { skippedTile, type LevelSkips } from "../enemies/level-skips.ts";
 import { armoredCells } from "../enemies/armored.ts";
@@ -192,7 +193,14 @@ export class RoomWorld implements Board {
     const t = changed
       ? wounded(this.withBoons(withChest(changed, generated, x, y, seed, this.chestOdds)))
       : this.withBoons(withChest(withPotions(generated, x, y, seed, this.percentPotions), generated, x, y, seed, this.chestOdds));
-    return this.shield ? guardedTile(t, x, y, [this.shield], (s) => this.holds(s)) : t;
+    const stood = stunnedTile(t, x, y, this.vortex);
+    return this.shield ? guardedTile(stood, x, y, [this.shield], (s) => this.holds(s)) : stood;
+  }
+  /** The vortex standing, which `tile` reads enemies through; `Game` sets it. */
+  vortex?: () => VortexZone | undefined;
+  /** What the floor spans, walls round it left out. */
+  floorBounds() {
+    return boundsOf(this.floorTiles((t) => t.kind !== "wall"));
   }
   /** `t` as the run's Level Skips and boons make it now, read afresh since a
    * boon can change mid-run. */

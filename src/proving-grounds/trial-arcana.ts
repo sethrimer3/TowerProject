@@ -3,12 +3,13 @@ import { fieldHit, lifespringEffects, springAmplify, stepLifespring, validLifesp
 import { decayed, fieldsOn, frostArea, stepFrost, validFrost, validNecro, type Necro } from "../arcana/necrotic-frost.ts";
 import { ghostDirection, ghostOffset, inBlast, loseGhost, stepPhantasm, touchesTile, validPhantasm } from "../arcana/phantasm.ts";
 import { stepDilation, validDilation } from "../arcana/time-dilation.ts";
+import { placeVortex, stepVoidwell, validVoidwell, voidwellRoll } from "../arcana/voidwell.ts";
 import { TURN_TICKS } from "../enemies/ranged.ts";
 import { tileRandom } from "../random.ts";
 import { finite, isRecord, wholeIn } from "../save/decode.ts";
 import { activeBossParts, effectiveBossDef } from "./boss-variants.ts";
 import { difficultyMultiplier, TRIALS } from "./catalog.ts";
-import { same, type Spot } from "./arena.ts";
+import { ELEMENTAL, same, type Spot } from "./arena.ts";
 import type { TrialState } from "./trial.ts";
 import { heroAttackOn, type TrialArcana, type TrialSpells, type TrialStrike } from "./trial-spells.ts";
 
@@ -141,8 +142,20 @@ function frostTurn(s: TrialState, a: NonNullable<TrialState["arcana"]>, rule: No
   else delete a.necro;
 }
 
+/** Voidwell's part of a turn: the vortex's turns and its cooldown. A new one opens on the
+ * arena's six-sided floor, its edge at most a tile past the floor's. */
+function voidwellTurn(s: TrialState, a: NonNullable<TrialState["arcana"]>, rule: NonNullable<TrialSpells["voidwell"]>) {
+  // The floor's edge lies where |dx| + |dy| / 2 is 11.5, and that measure runs Math.sqrt(1.25) to the tile.
+  const limit = 11.5 - Math.sqrt(1.25) * (rule.radius - 1);
+  stepVoidwell((a.voidwell ??= {}), rule, 0, (cast) => placeVortex({
+    hero: s.player, distance: rule.reach / 100, radius: rule.radius, roll: voidwellRoll(s.seed, cast),
+    bounds: { left: 1, right: 23, bottom: 1, top: 23 },
+    fits: (x, y) => Math.abs(x - ELEMENTAL.x) + Math.abs(y - ELEMENTAL.y) / 2 <= limit,
+  }));
+}
+
 /** The arcana's part of a turn the attempt just spent: a Ricochet Shot off the
- * hero's hit, the cooldowns running on, Thunderbolt's bolts, Lifespring, Phantasm, Necrotic Frost, Time
+ * hero's hit, the cooldowns running on, Thunderbolt's bolts, Lifespring, Phantasm, Necrotic Frost, Voidwell, Time
  * Dilation's field, which holds back what comes next turn, then the beams turning.
  * An ended attempt does none of it. */
 export function trialArcanaTurn<O extends { message: string }>(s: TrialState, outcome: O): O {
@@ -172,6 +185,7 @@ export function trialArcanaTurn<O extends { message: string }>(s: TrialState, ou
   if (lifespring && s.status === "active") lifespringTurn(s, a, lifespring, strikes);
   if (spells.phantasm && s.status === "active") phantasmTurn(s, a, spells.phantasm, strikes);
   if (spells.necroticFrost && s.status === "active") frostTurn(s, a, spells.necroticFrost, strikes);
+  if (spells.voidwell && s.status === "active") voidwellTurn(s, a, spells.voidwell);
   if (spells.timeDilation && s.status === "active") stepDilation((a.dilation ??= {}), spells.timeDilation);
   if (spells.overseer) a.beamTurns++;
   a.strikes = strikes;
@@ -211,5 +225,6 @@ export function decodeTrialArcana(raw: unknown): TrialArcana | undefined {
     ...(validLifespring(raw.lifespring) && Object.keys(raw.lifespring).length ? { lifespring: raw.lifespring } : {}), ...(wholeIn(raw.springWaves, 1, 1e9) ? { springWaves: raw.springWaves as number } : {}),
     ...(validDilation(raw.dilation) && Object.keys(raw.dilation).length ? { dilation: raw.dilation } : {}), ...decodeTallies(raw.tallies), ...decodeLag(raw.lag),
     ...(validPhantasm(raw.phantasm) && Object.keys(raw.phantasm).length ? { phantasm: raw.phantasm } : {}),
-    ...(validFrost(raw.frost) && Object.keys(raw.frost).length ? { frost: raw.frost } : {}), ...decodeNecro(raw.necro) };
+    ...(validFrost(raw.frost) && Object.keys(raw.frost).length ? { frost: raw.frost } : {}), ...decodeNecro(raw.necro),
+    ...(validVoidwell(raw.voidwell) && Object.keys(raw.voidwell).length ? { voidwell: raw.voidwell } : {}) };
 }

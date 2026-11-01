@@ -13,6 +13,7 @@ import { noteGoldBoost } from "./economy/gold-boost.ts";
 import { canWarp, claimGoal, goalUnlocked, goalsWaiting } from "./goals.ts";
 import { fieldReach, togetherSlow } from "./arcana/time-dilation.ts";
 import { frostArea, frostSlowAt } from "./arcana/necrotic-frost.ts";
+import { placeVortex, stepVoidwell, voidwellRoll, type VortexZone } from "./arcana/voidwell.ts";
 import type { GhostStrike } from "./arcana/phantasm.ts";
 import { fightRicochet, ghostStrikes, landsAt, lifespringContact, necroDecay, shortWay, thunderbolts, volleyTurn, type Shot, type Volley, type VolleyTurn } from "./volley.ts";
 import { missGem } from "./economy/gems.ts";
@@ -50,7 +51,7 @@ import type {
 import { World, LAYOUT_VERSION } from "./delve/world.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import { chestKindAt, litTorches, type Board } from "./board.ts";
-import { COMBO_LIMIT, COMBO_PERCENT, COMBO_TURNS, critAgainst, critMultiplier, guaranteedCrits, healUpTo, instakill, landsSuperCrit, squaredUp, type CritRule, type Wings } from "./combat.ts";
+import { COMBO_LIMIT, COMBO_PERCENT, COMBO_TURNS, critAgainst, critMultiplier, guaranteedCrits, healUpTo, instakill, landsSuperCrit, squaredUp, strikesFirst, type CritRule, type Wings } from "./combat.ts";
 import { smites, type Smitten } from "./angel.ts";
 import { HEART_DOOR_HP, hpCeiling, isLethal, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardStat } from "./step-effects.ts";
 import { ENTRANCE_Y, ENTRANCE_ZOOM_MS, OUTSIDE_START_Y, OutsideWorld } from "./outside.ts";
@@ -221,7 +222,15 @@ export class Game {
   walkIn: WalkIn | null = null;
   forestArrival: ForestArrival | null = null;
   mode: Mode = "tower";
-  world!: Board;
+  private shownBoard!: Board;
+  get world(): Board {
+    return this.shownBoard;
+  }
+  /** Every board reads its enemies through the run's vortex. */
+  set world(board: Board) {
+    this.shownBoard = board;
+    board.vortex = () => this.vortex;
+  }
   run!: Run;
   route: Step[] = [];
   blocked = { x: 0, y: 0, until: 0 };
@@ -2173,7 +2182,7 @@ export class Game {
     const t = this.world.tile(dest.x, dest.y);
     // FAST ENEMY's First Strike: a Fast enemy may lose its first strike, by
     // the enemy tile's roll, so the hero strikes first (`met` fights it so).
-    const firstStrike = t.kind === "enemy" && !!t.enemy!.fast && this.tileRolls(dest.x, dest.y, FIRST_STRIKE_SALT, foeStat(this.treeBonus, t.enemy!, "FirstStrike"));
+    const firstStrike = t.kind === "enemy" && strikesFirst(t.enemy!) && this.tileRolls(dest.x, dest.y, FIRST_STRIKE_SALT, foeStat(this.treeBonus, t.enemy!, "FirstStrike"));
     const met: Tile = firstStrike ? { ...t, enemy: (({ fast: _, ...caught }) => caught)(t.enemy!) } : t;
     // The step is resolved once, before any snapshot/undo bookkeeping, so a
     // wall, lock, impervious enemy, or (automation's) declined lethal fight
@@ -2429,6 +2438,7 @@ export class Game {
     this.arcana.timeDilationTurn();
     this.arcana.phantasmTurn();
     this.arcana.frostTurn();
+    this.voidwellTurn();
     const dilation = this.dilation, frost = this.frostArea;
     // Thunderbolt strikes first, so what it fells shoots no more this turn, then the ghosts along the hero's step.
     const struck = [...(sameFloor ? sprung : []), ...this.strikeBolts(fired, beams, sameFloor ? from : undefined), ...this.strikeGhosts(beams, at, ms, sameFloor ? from : undefined)];
@@ -2467,7 +2477,7 @@ export class Game {
       return;
     }
     // Then the Aggroed enemies close in (enemies/flying.ts), their cooldowns with them.
-    const moved = aggroTurn({ board: this.world, changes: this.run.changes, hero: p, floorOf: (x, y) => this.floorOf(x, y), lit: litTorches(this.world), foes: this.run.volleys.foes, ...(dilation || frost ? { slowAt: (x: number, y: number) => this.slowdownAt({ x, y }) } : {}) });
+    const moved = aggroTurn({ board: this.world, changes: this.run.changes, hero: p, floorOf: (x, y) => this.floorOf(x, y), lit: litTorches(this.world), foes: this.run.volleys.foes, ...(dilation || frost ? { slowAt: (x: number, y: number) => this.slowdownAt({ x, y }) } : {}), ...(this.vortex ? { stunnedAt: (x: number, y: number) => !!foeOn(this.world.tile(x, y))?.stunned } : {}) });
     if (moved.steps.length) {
       if (moved.foes && Object.keys(moved.foes).length) this.run.volleys.foes = moved.foes;
       else delete this.run.volleys.foes;
@@ -2508,6 +2518,24 @@ export class Game {
   private slowdownAt(at: { x: number; y: number }) {
     const field = this.dilation, frost = this.frostArea, p = this.run.player, dx = shortWay(at.x - p.x, this.wrap), dy = at.y - p.y;
     return togetherSlow(field && inShotRange(dx, dy, field.reach) ? field.slow : 0, frost ? frostSlowAt(frost, dx, dy) : 0);
+  }
+  /** Voidwell's turn (arcana.md): its vortex's turns and its cooldown, opening a new one out on the floor. */
+  private voidwellTurn() {
+    const rule = this.arcana.voidwellRule(), p = this.run.player;
+    if (!rule) return;
+    stepVoidwell((this.run.voidwell ??= {}), rule, this.floorOf(p.x, p.y), (cast) => placeVortex({
+      hero: p, distance: this.lifespringReach / 100, radius: rule.radius, roll: voidwellRoll(this.run.seed, cast),
+      bounds: this.world.floorBounds?.(p.x, p.y) ?? { left: p.x, right: p.x, bottom: p.y, top: p.y },
+    }));
+  }
+  /** Voidwell's vortex while one stands on the hero's floor and it is on. A Delve vortex
+   * left behind ends with the turn that leaves its floor (`stepVoidwell`). */
+  get vortex(): VortexZone | undefined {
+    const v = this.run.voidwell?.vortex;
+    if (!v) return undefined;
+    const rule = this.arcana.voidwellRule();
+    if (!rule || (this.mode === "tower" && v.floor !== this.run.height + 1)) return undefined;
+    return { x: v.x, y: v.y, radius: rule.radius, wrap: this.wrap };
   }
   /** Necrotic Frost's decay as the turn ends (arcana.md): pays what it fells and returns its shots. */
   private decayNecro(beams: Beams | undefined) {

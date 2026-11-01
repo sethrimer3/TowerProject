@@ -1,5 +1,5 @@
 import { boardFont } from "../../sprites/font.ts";
-import { netDamage, PLAYED_ROUNDS, predict, type CritRule } from "../../combat.ts";
+import { netDamage, PLAYED_ROUNDS, predict, strikesFirst, type CritRule } from "../../combat.ts";
 import { forecast } from "../../crit-forecast.ts";
 import type { Enemy, Player, Tile } from "../../entities.ts";
 import { forEachViewTile, type FrameContext } from "../render-frame.ts";
@@ -52,7 +52,7 @@ export class DamagePredictions {
     if (hero !== this.hero) [this.hero, this.costs] = [hero, new Map()];
     // A boss's strength sets its thorns and the hero's boss ATK; a Fast enemy strikes first;
     // a bubble's guard cuts the hero's strikes; a wounded enemy's full HP sets its thorns.
-    const key = `${enemy.hp}|${enemy.fullHp ?? ""}|${enemy.attack}|${enemy.defense}|${enemy.strength}|${enemy.fast ? "fast" : ""}|${enemy.flying ? "flying" : ""}|${enemy.guard ?? 0}|${enemy.broken ?? 0}`;
+    const key = `${enemy.hp}|${enemy.fullHp ?? ""}|${enemy.attack}|${enemy.defense}|${enemy.strength}|${strikesFirst(enemy) ? "fast" : ""}|${enemy.flying ? "flying" : ""}|${enemy.guard ?? 0}|${enemy.broken ?? 0}`;
     let cost = this.costs.get(key);
     if (!cost) {
       // A fight of more than PLAYED_ROUNDS rounds is estimated past them, so

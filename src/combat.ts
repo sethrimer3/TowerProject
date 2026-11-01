@@ -30,6 +30,8 @@ export type CombatPrediction = {
   strikes?: number;
 };
 /** The enemy strikes a predicted fight's hero takes. */
+/** Whether `enemy` opens a fight with a strike: Fast, unless a vortex stuns it. */
+export const strikesFirst = (enemy: Pick<Enemy, "fast" | "stunned">) => !!enemy.fast && !enemy.stunned;
 export const replies = (r: CombatPrediction) => r.strikes ?? r.turns - 1 + (r.thornKill ? 1 : 0) + (r.fast ? 1 : 0);
 /** Whether the hero's first strike wins the fight, the enemy never striking. */
 export const instakill = (r: CombatPrediction) => r.turns === 1 && !r.thornKill && !r.fast;
@@ -270,7 +272,7 @@ export function predict(player: Player, enemy: Enemy, played = Infinity): Combat
   // Thorns end a fight within 200 rounds, so it is always played out; a
   // parry cuts every strike.
   // So is a fight Time Dilation slows: only the fight being taken is.
-  const thorn = thornDamage(player, enemy), cut = parryCut(player), fast = !!enemy.fast, slow = player.slowdown ?? 0;
+  const thorn = thornDamage(player, enemy), cut = parryCut(player), fast = strikesFirst(enemy), slow = player.slowdown ?? 0;
   if (thorn || slow) played = Infinity;
   // Snapped, so 10.2 HP against strikes of 1.02 takes 10, as it does played out.
   const { turns, strikes, thornKill } = thorn ? thornRounds(enemy.hp, hitAt, thorn, fast, thornsByStrike(player, enemy, thorn, cut), slow) : { turns: breaks ? brokenTurns(enemy.hp, hitAt) : Math.ceil(snap(enemy.hp / hit)), strikes: NaN, thornKill: false };
@@ -354,7 +356,7 @@ function lifestealEnding(player: Player, enemy: Enemy, hitAt: (k: number) => num
     attack = raisedAttack(attack);
     return true;
   };
-  if (enemy.fast && !reply()) return null;
+  if (strikesFirst(enemy) && !reply()) return null;
   for (let round = 0; ; round++) {
     const hit = hitAt(round);
     // Hits Armor Break makes rise are estimated as their average over the strikes left.
@@ -546,7 +548,7 @@ export function bout(player: Player, enemy: Enemy, revives?: Revival, crits?: Cr
   if (!breaksArmor(player, enemy) && heroHit(player, enemy) <= 0) return { strikes: [], duration: 0 };
   player = facing(player, enemy);
   const t = ready.opening ? openingMs(ready.opening) : 0;
-  const fight = play([], { player, enemy, revives, crits, powered, wings }, { enemyHp: enemy.hp, heroHp: player.hp, shroud: player.shroud ?? 0, shield: player.shield ?? 0, attack: enemy.attack, t, ms: FIRST_STRIKE_MS, enemyStrikes: 0, heroStrikes: 0, enemyNext: !!enemy.fast, winged: false, broken: enemy.broken ?? 0, tally: 0 });
+  const fight = play([], { player, enemy, revives, crits, powered, wings }, { enemyHp: enemy.hp, heroHp: player.hp, shroud: player.shroud ?? 0, shield: player.shield ?? 0, attack: enemy.attack, t, ms: FIRST_STRIKE_MS, enemyStrikes: 0, heroStrikes: 0, enemyNext: strikesFirst(enemy), winged: false, broken: enemy.broken ?? 0, tally: 0 });
   return ready.opening ? { ...fight, opening: { at: t, hp: enemy.hp, ...ready.opening } } : fight;
 }
 
@@ -659,7 +661,7 @@ export function resume(fight: Bout, from: number, fighters: Fighters): Bout {
   }
   const winged = kept.some((s) => s.winged);
   // The chances the enemy has had to strike: one after each hero strike and a Fast enemy's opening, less the one about to come.
-  const chances = heroStrikes + (enemy.fast ? 1 : 0) - (next.by === "enemy" ? 1 : 0);
+  const chances = heroStrikes + (strikesFirst(enemy) ? 1 : 0) - (next.by === "enemy" ? 1 : 0);
   const state = { enemyHp, heroHp: player.hp, shroud: player.shroud ?? 0, shield: player.shield ?? 0, attack, t: next.start, ms, enemyStrikes, heroStrikes, enemyNext: next.by === "enemy", winged, broken, tally: tallyAfter(chances, player.slowdown ?? 0) };
   return { ...play(kept, fighters, state), ...opening };
 }

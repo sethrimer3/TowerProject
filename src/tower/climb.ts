@@ -30,11 +30,11 @@ export class TowerClimb {
   }
 }
 
-/** Whether a floor has no enemy left. */
+/** Whether a floor has no enemy left; a Flying enemy doesn't count, even one a vortex has brought down. */
 export function noEnemies(world: RoomWorld) {
   for (const k of world.cells.keys()) {
-    const [x, y] = k.split(",").map(Number);
-    if (world.tile(x, y).kind === "enemy") return false;
+    const [x, y] = k.split(",").map(Number), t = world.tile(x, y);
+    if (t.kind === "enemy" && !t.enemy!.flying) return false;
   }
   return true;
 }

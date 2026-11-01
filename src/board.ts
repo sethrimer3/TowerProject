@@ -3,6 +3,7 @@ import type { Run } from "./runs.ts";
 import { tileRandom } from "./random.ts";
 import { environmentOn } from "./environments.ts";
 import type { Shield } from "./enemies/shielded.ts";
+import type { FloorBounds, VortexZone } from "./arcana/voidwell.ts";
 
 /** A board the player walks: the Delve labyrinth, a Tower floor, or the
  * forest outside. */
@@ -24,6 +25,12 @@ export type Board = {
   markSpring?(x: number, y: number, waves: number, broke?: number): void;
   /** Sets what Necrotic Frost has on the enemy at (x, y) (`necroMark` in enemies/ranged.ts). */
   markNecro?(x: number, y: number, necro: Record<string, number>): void;
+  /** The vortex standing, which the board's enemy tiles are read through
+   * (`stunnedTile` in arcana/voidwell.ts); `Game` sets it on every board it uses. */
+  vortex?: () => VortexZone | undefined;
+  /** What the floor (x, y) stands on spans, walls round it left out: a Tower floor's,
+   * or in the Delve its area's tiles at the same equivalent floor. */
+  floorBounds?(x: number, y: number): FloorBounds | undefined;
   /** Present on boards that carry torches (dungeon boards; the forest
    * exterior has none). */
   torches?: Torch[];

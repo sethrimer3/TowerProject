@@ -636,6 +636,16 @@ _Avoid_: poison, frostbite
 **Decay**:
 Necrotic Frost's damage: each step of an effect's ramp is the arcanum's Arcanum Damage, so the first tick is one step, the next two, and so on.
 
+**Voidwell**:
+An arcanum on a cooldown: a vortex opening out on the floor at the hero's shot range and a random angle, standing there for a number of turns, stunning what is in it.
+
+**Vortex**:
+What Voidwell opens: a circle on the floor, placed anywhere, whole tiles or not, with its edge at most a tile past the floor's. It ends if the hero leaves the floor.
+
+**Stunned**:
+What an enemy in a Vortex is: it doesn't move or shoot, a Fast enemy doesn't strike first and a Flying one comes down to be fought, though it still answers in a fight. A Shielded enemy's bubble still holds.
+_Avoid_: frozen, held
+
 **Slowdown**:
 The percent Time Dilation or Necrotic Frost slows what is in its field by: it acts on the rest of its chances (strikes, steps), its shots charge and a boss's effects count down that much slower. 90% at most, the two together.
 

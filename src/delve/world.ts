@@ -6,6 +6,7 @@ import { withChest, withPotions, withTreasureFloors, type Board } from "../board
 import { breakTorch, placeTorches, torchesLeft } from "../torches.ts";
 import { tierCells, tierTile } from "../tiers.ts";
 import { fastCells } from "../enemies/fast.ts";
+import { boundsOf, stunnedTile, type VortexZone } from "../arcana/voidwell.ts";
 import { necroMark, rangedCells, springMark, wounded, woundMore } from "../enemies/ranged.ts";
 import { skippedTile } from "../enemies/level-skips.ts";
 import { armoredCells } from "../enemies/armored.ts";
@@ -218,7 +219,14 @@ export class World implements Board {
     const k = point(x, y), changed = this.changes[k];
     const generated = chunk.get(k) ?? { kind: "wall" }, odds = this.run.chestOdds;
     const t = foeTile(changed ? wounded(this.skipped(withChest(changed, generated, x, y, this.seed, odds), x, y)) : this.skipped(withChest(withPotions(generated, x, y, this.seed, this.run.percentPotions ?? 0), generated, x, y, this.seed, odds), x, y), this.foes);
-    return this.shieldList.length ? guardedTile(t, x, y, this.shieldList, (s) => this.holds(s), this.width) : t;
+    const stood = stunnedTile(t, x, y, this.vortex);
+    return this.shieldList.length ? guardedTile(stood, x, y, this.shieldList, (s) => this.holds(s), this.width) : stood;
+  }
+  /** The vortex standing, which `tile` reads enemies through; `Game` sets it. */
+  vortex?: () => VortexZone | undefined;
+  /** What the area (x, y) stands in spans on its equivalent floor. */
+  floorBounds(x: number, y: number) {
+    return boundsOf(this.floorTiles(x, y, (t) => t.kind !== "wall"));
   }
   /** Each enemy tile's depth, kept as it is read: tiles are read every frame. */
   private enemyDepths = new Map<string, number>();

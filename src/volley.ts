@@ -192,6 +192,11 @@ export function volleyTurn(turn: VolleyTurn): VolleyOutcome {
   for (const [key, charge] of Object.entries(v.foes ?? {})) {
     if (watched.has(key)) continue;
     const [x, y] = key.split(",").map(Number) as [number, number], foe = shooterAt(x, y);
+    // Stunned in a vortex, its cooldown stands still.
+    if (foeOn(board.tile(x, y))?.stunned) {
+      foes[key] = charge;
+      continue;
+    }
     const slow = slowAt(100 * shortWay(x - hero.x, wrap), 100 * (y - hero.y));
     const kept = foe && held(charged(charge, slowedCharge(foeGain(foe), slow)), foeShotCost(floorOf(x, y)));
     if (kept !== undefined) foes[key] = kept;

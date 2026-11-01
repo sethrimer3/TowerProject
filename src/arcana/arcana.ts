@@ -227,6 +227,29 @@ export const ARCANA = {
     summary: ([mult, duration, turns]) => `Every ${turns} turns, a frost field of ${FROST_RADIUS} tiles' radius forms round the hero, off center at a random angle, and moves with it for ${duration} turns. An enemy it touches is Necro: it takes decay through its DEF every turn until it falls, ${countOf(mult * 100)}% of ATK more each turn (accounts for critical chances and factors). Each field adds its own decay. Enemies in a field strike, shoot and move 25% slower, 50% in two or more.`,
     damage: ([mult]) => mult,
   },
+  voidwell: {
+    name: "Voidwell",
+    trigger: { on: "cooldown", turns: ([, , turns]) => turns },
+    attributes: [
+      {
+        name: "Size",
+        shown: (v) => `${v.toFixed(1)} tiles`,
+        steps: [[3, 0], [3.2, 5], [3.4, 12], [3.6, 19], [3.8, 26], [4, 34], [4.2, 43], [4.4, 53], [4.6, 64], [4.8, 76], [5, 89], [5.2, 103], [5.4, 118], [5.6, 134], [5.8, 151], [6, 169], [6.2, 189], [6.4, 211], [6.6, 236], [6.8, 264], [7, 295]],
+      },
+      {
+        name: "Duration",
+        shown: (v) => `${v} turns`,
+        steps: [[15, 0], [16, 5], [17, 14], [18, 23], [19, 32], [20, 41], [21, 50], [22, 59], [23, 68], [24, 77], [25, 86], [26, 95], [27, 104], [28, 113], [29, 122], [30, 131], [31, 165], [32, 224], [33, 308], [34, 417], [35, 551], [36, 710], [37, 894], [38, 1103]],
+      },
+      {
+        name: "Cooldown",
+        shown: (v) => `${v} turns`,
+        steps: [[200, 0], [190, 10], [180, 28], [170, 46], [160, 64], [150, 82], [140, 100], [130, 118], [120, 136], [110, 154], [100, 172], [90, 190], [80, 208], [70, 226], [60, 244], [50, 262]],
+      },
+    ],
+    summary: ([size, duration, turns]) => `Every ${turns} turns, a vortex of ${size.toFixed(1)} tiles' radius opens as far from the hero as your shot range, at a random angle, for ${duration} turns. Enemies in it are stunned: they don't move or shoot, Fast enemies don't strike first, and Flying enemies come down to be fought. Shielded enemies' bubbles still hold.`,
+    effect: ([size, duration]) => `${size.toFixed(1)} tiles · ${duration} turns`,
+  },
 } as const satisfies Record<string, ArcanumDef>;
 
 export type ArcanumId = keyof typeof ARCANA;

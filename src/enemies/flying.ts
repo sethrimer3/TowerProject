@@ -92,8 +92,9 @@ export function walkToHero(board: Pick<Board, "tile" | "step" | "floor">, hero: 
  * (where every Aggroed enemy is kept, an arrow's wound having written it
  * there), the hero, each tile's equivalent floor, the tiles holding a lit
  * torch (never stepped on, so the torch stays lit), the Ranged
- * cooldowns by tile, which move with their enemies, and the percent Time
- * Dilation's field slows the enemy at a tile by, if there is a field. */
+ * cooldowns by tile, which move with their enemies, the percent Time
+ * Dilation's field slows the enemy at a tile by, if there is a field, and
+ * whether a vortex stuns it, which holds it and its stride where they are. */
 export type AggroTurn = {
   board: Pick<Board, "tile" | "step" | "floor">;
   changes: Record<string, Tile>;
@@ -102,6 +103,7 @@ export type AggroTurn = {
   lit: ReadonlySet<string>;
   foes?: Volleys["foes"];
   slowAt?: (x: number, y: number) => number;
+  stunnedAt?: (x: number, y: number) => boolean;
 };
 /** One Aggroed enemy's step: from where to where. */
 export type AggroStep = { from: Point; to: Point };
@@ -130,6 +132,7 @@ export function aggroTurn(turn: AggroTurn): { steps: AggroStep[]; foes?: Volleys
     .map((k) => ({ k, d: away.get(k) ?? Infinity, at: k.split(",").map(Number) as [number, number] }))
     .sort((a, b) => a.d - b.d || a.at[1] - b.at[1] || a.at[0] - b.at[0]);
   for (const { k, d, at: [x, y] } of order) {
+    if (turn.stunnedAt?.(x, y)) continue;
     const raw = changes[k]!, flying = raw.kind !== "enemy", e = (flying ? raw.flyer : raw.enemy)!;
     const cost = foeShotCost(turn.floorOf(x, y)), stride = (e.stride ?? 0) + slowedCharge(FOE_GAIN, turn.slowAt?.(x, y) ?? 0);
     const opens = (n: Point) => {

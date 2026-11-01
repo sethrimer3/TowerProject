@@ -66,7 +66,7 @@ export function rangedCells(cells: Map<string, Tile>, tier: number, seed: number
  * over it (`Tile.flyer`). */
 export const foeOn = (t: Tile): Enemy | undefined => (t.kind === "enemy" ? t.enemy : t.flyer);
 /** Whether `enemy` shoots the hero: a Ranged or Flying one. */
-export const shoots = (enemy: Enemy) => !!(enemy.ranged || enemy.flying);
+export const shoots = (enemy: Enemy) => !!(enemy.ranged || enemy.flying) && !enemy.stunned;
 
 /** A tile as it stands once the hero's arrows have wounded its enemy: its
  * HP less the `wound` (kept on the tile, so its full HP is HP + wound),
@@ -265,7 +265,7 @@ export function enemiesWithin(board: { tile(x: number, y: number): Tile }, at: {
       if (seen.has(k)) continue;
       seen.add(k);
       const tile = board.tile(x, y);
-      if (tile.kind === "enemy" && tile.enemy && (x !== at.x || y !== at.y)) found.push({ x, y, tile: tile as InReach["tile"], d2: dx * dx + dy * dy });
+      if (tile.kind === "enemy" && tile.enemy && (x !== at.x || y !== at.y || tile.enemy.flying)) found.push({ x, y, tile: tile as InReach["tile"], d2: dx * dx + dy * dy });
       else if (tile.flyer) found.push({ x, y, tile: { ...tile, enemy: tile.flyer }, d2: dx * dx + dy * dy });
     }
   return found.sort((a, b) => a.d2 - b.d2 || a.y - b.y || a.x - b.x);
