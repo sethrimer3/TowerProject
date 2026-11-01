@@ -18,12 +18,12 @@ export type AttributeValues = readonly [number, number, number];
 /** The level of each of an arcanum's three attributes (0 as it is bought). */
 export type AttributeLevels = [number, number, number];
 
-/** What sets an arcanum off: its own event (`shotHit`, the hero's shot
- * striking an enemy: volley.ts), a cooldown of so many turns that restarts
+/** What sets an arcanum off: its own event (`enemyHit`, the hero's shot
+ * striking an enemy or a fight it won: volley.ts), a cooldown of so many turns that restarts
  * the moment it runs out, whatever the arcanum is still doing, or nothing
  * (`always`: it works for as long as it is on). A new trigger is a new member
  * here, and the code that raises that event. */
-export type ArcanumTrigger = { on: "shotHit" } | { on: "cooldown"; turns: (values: AttributeValues) => number } | { on: "always" };
+export type ArcanumTrigger = { on: "enemyHit" } | { on: "cooldown"; turns: (values: AttributeValues) => number } | { on: "always" };
 
 export type ArcanumDef = {
   name: string;
@@ -42,7 +42,7 @@ const countOf = (n: number) => n.toLocaleString("en-US");
 export const ARCANA = {
   ricochetShot: {
     name: "Ricochet Shot",
-    trigger: { on: "shotHit" },
+    trigger: { on: "enemyHit" },
     attributes: [
       {
         name: "ATK Mult",

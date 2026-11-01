@@ -31,6 +31,8 @@ const ARROW_SUPER_SALT = 0x5c218;
 const MULTISHOT_SALT = 0x3a17c;
 const RAPID_FIRE_SALT = 0x5f1d3;
 const RICOCHET_SALT = 0x71c0c;
+/** Salts the roll of a fight's Ricochet Shot apart from an arrow's. */
+const FIGHT_RICOCHET_SALT = 0x71c0d;
 
 /** One shot of a turn's volley, as the board shows it: a Ranged enemy's
  * at the hero, or the Archer's arrow at an enemy, flying `from` → `to`
@@ -342,6 +344,22 @@ function inPlace(board: VolleyTurn["board"], e: InReach): InReach | undefined {
  * on an enemy in them (`beam`). */
 function ricochet({ board, seed, volleys, wrap, ricochet: rule }: VolleyTurn, p: Player, { x, y }: InReach, tick: number, shot: number, shots: Shot[], kills: VolleyKill[], beam: (x: number, y: number, tick: number) => number) {
   if (!rule || tileRandom(x, y, (seed ^ RICOCHET_SALT ^ Math.imul(volleys.turn, 0x85ebca6b) ^ Math.imul(shot, 0xc2b2ae35)) | 0) * 100 >= rule.chance) return;
+  rebound(board, wrap, p, { x, y }, rule, tick, beam, shots, kills);
+}
+
+/** Ricochet Shot off a fight the hero won at `at`, once however many strikes it
+ * took: the roll is fixed per run, `floor` and tile, so undo and a refight agree.
+ * Overseer's beams read as the turn begins, as the fight's did (the hero still
+ * on the tile it left). Edits the board's enemies; returns the shots and kills. */
+export function fightRicochet({ board, wrap, hero, seed, beams, ricochet: rule }: Pick<VolleyTurn, "board" | "wrap" | "hero" | "seed" | "beams" | "ricochet">, at: { x: number; y: number }, floor: number) {
+  const shots: Shot[] = [], kills: VolleyKill[] = [];
+  if (rule && tileRandom(at.x, at.y, (seed ^ FIGHT_RICOCHET_SALT ^ Math.imul(floor, 0x9e3779b1)) | 0) * 100 < rule.chance)
+    rebound(board, wrap, hero, at, rule, 1, (x, y) => beamFactor(beams, 0, shortWay(x - hero.x, wrap), y - hero.y), shots, kills);
+  return { shots, kills };
+}
+
+/** A ricochet off the enemy struck at (x, y): the `rebounds` closest others take a strike. */
+function rebound(board: VolleyTurn["board"], wrap: number, p: Player, { x, y }: { x: number; y: number }, rule: NonNullable<VolleyTurn["ricochet"]>, tick: number, beam: (x: number, y: number, tick: number) => number, shots: Shot[], kills: VolleyKill[]) {
   const d2 = (o: { x: number; y: number }) => {
     const dx = shortWay(o.x - x, wrap), dy = o.y - y;
     return dx * dx + dy * dy;

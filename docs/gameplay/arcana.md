@@ -38,6 +38,7 @@ A Tower run's Shrines can also offer **Unlock an Arcanum**, while you don't own 
 
 *x% chance on enemy hit to ricochet the shot to y additional enemies, with z% of ATK.*
 Each arrow the Archer lands rolls for it, however much damage the arrow did, and Multishot's arrows each roll.
+Each fight you win rolls for it once, as it ends, however many strikes it took.
 A ricochet flashes a white line from the enemy struck to each of the closest other enemies on the floor, at any distance, and a ricochet never sets off another.
 
 | Attribute | First | Highest | Levels |
@@ -68,7 +69,7 @@ They show as a faint brightening on the board, and go on turning while switched 
 Undo turns them back, and each run starts them over.
 
 An enemy is in a beam by the direction from you to the center of its tile, within half the beam's Angle of the beam's center.
-A fight and a Bomb read the beams as the turn begins; an arrow and a ricochet read them, and where you stand mid-step, the moment each fires.
+A fight, its ricochet and a Bomb read the beams as the turn begins; an arrow and its ricochet read them, and where you stand mid-step, the moment each fires.
 The beams can let your ATK past a DEF it couldn't otherwise pass, and then the Archer will aim there.
 The Bonus multiplies every other bonus to that ATK, and comes before the enemy's DEF.
 It doesn't touch what isn't your ATK: Thorns, which are a share of the enemy's HP, or opening doors.

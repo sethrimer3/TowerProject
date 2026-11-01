@@ -9,7 +9,7 @@ Tower and Delve runs alike hold every arcanum owned, and a Proving Grounds trial
 
 **Triggers.**
 Each arcanum names its own (`ArcanumTrigger`), since they differ from one to the next.
-`always` needs no event: the arcanum works while it is on; `shotHit` is raised in `volley.ts`; `cooldown` is a number of turns, worked by `ArcanaDesk.turn` (`Game.endTurn`) through `tickCooldowns`, restarting the moment it runs out, whatever the arcanum is still doing.
+`always` needs no event: the arcanum works while it is on; `enemyHit` is raised in `volley.ts`, by an arrow landing or a fight won; `cooldown` is a number of turns, worked by `ArcanaDesk.turn` (`Game.endTurn`) through `tickCooldowns`, restarting the moment it runs out, whatever the arcanum is still doing.
 What `turn` returns is what ran out, for `Game.endTurn` to act on.
 A cooldown upgraded while it runs counts down from no more than its new length.
 Any arcanum with a cooldown gets a bar on its run card from `ArcanaDesk.cooldown`.
@@ -30,10 +30,13 @@ No equipment raises it yet: the factor is `arcanumBoost`'s `equipment`, 1 by def
 Each arrow that lands, whatever damage it did, rolls `chance` on a `tileRandom` (`RICOCHET_SALT`, by turn, shot and tile), so undo and a replay agree.
 It then strikes the `rebounds` closest other enemies on the floor (`Board.floorEnemies`: the Tower floor's, or in the Delve the hero's area on its equivalent floor), any distance, by Euclidean distance from the enemy struck, round the wrap.
 A strike is `arrowDamage` with Arcanum Damage's boost, so it passes through DEF, Piercing, the enemy cards' ATK and a Shielded enemy's bubble, as an arrow does; it heals no Lifesteal and breaks no armor, and rolls no crit.
-Only arrows spring ricochets, so one never sets off another.
+Only arrows and fights spring ricochets, so one never sets off another.
 Its `Shot` carries `ricochet`: it lands as its arrow does (`leavesAt` equals `landsAt`), its number and HP bar rise like an arrow's, and `drawRicochet` in `render/volley-art.ts` flashes a white line from the enemy struck for `RICOCHET_FLASH_MS`, for which `volleyOver` waits.
 A kill is a `VolleyKill` marked `ricochet`, never an instakill, and pays through `finds.kill`.
 A multishot's later targets are read again from the board (`inPlace`), since a ricochet may have struck them.
+**Off a fight** (`fightRicochet`, called from `Game.enter` once `winFight` says the hero stands, before `land` clears the tile): a fight rolls once, however many strikes it took and only when won, a `tileRandom` fixed per run, floor and tile (`FIGHT_RICOCHET_SALT`), so undo and a refight agree.
+It springs from the fought enemy's tile with the same strike, Overseer's beam read as the turn begins like the fight's own; its shots wait in `Game.sprung` for `endTurn` to show at tick 1, once the fight has played, and the undo snapshot taken before the fight takes it all back.
+Previews and planners don't count it.
 
 **Aurum Bloom** (trigger `always`, given by `ArcanaDesk.aurumBloom`, its effect the run card's text) raises the floor environments: Bonus is the Golden Floor's factor it makes alone, and over Golden Floor Multiplier counts all but the ×1 they share (first level: ×5 alone, ×6 with the skill); Golden Chance to the Golden Floor's chance and Stellar Chance to the Stellar Floor's.
 None needs a Breakthrough skill or research.
@@ -76,7 +79,7 @@ Aurum Bloom raises floors a trial doesn't have; every other arcanum works, and a
 - `targets` lists what can be struck: a corporeal boss, Light Slimes, mimics, a boss's parts and its minions; an incorporeal boss is invincible, so it isn't one.
 - A hit is `max(1, round(ATK × boost × beam − DEF))`, DEF as the hero's own hits read it. It only wounds: no teleport, key drop, coin pop or counter. A slime it hits disperses, a minion it fells pays its Silver, its damage counts toward `damageThisRun`, and a boss it fells wins the attempt as the last hit would.
 - Thunderbolt follows the rules above, by `chargeBolts` and `settleBolts` on the attempt's run.
-- A trial has no arrows, so Ricochet Shot springs from the hero's hit instead, a fixed roll per seed, turn and tile, to the closest other targets (never the one struck, even if it has moved: `Target.foe`).
+- A trial has no arrows, so Ricochet Shot springs from each hit of the hero's instead, a fixed roll per seed, turn and tile, to the closest other targets (never the one struck, even if it has moved: `Target.foe`).
 - Overseer multiplies the hero's hits through `heroAttackOn` at every strike site in `trial.ts`, `keymaster.ts` and `boss-variants.ts`, and `state.arcana.beamTurns` keeps its turn. A new hit there must read it too.
 `state.arcana.strikes`, the last turn's, are what `TrialRenderer` draws; it also paints the beams.
 

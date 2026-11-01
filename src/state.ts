@@ -11,7 +11,7 @@ import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./cards/b
 import { BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
 import { noteGoldBoost } from "./economy/gold-boost.ts";
 import { canWarp, claimGoal, goalUnlocked, goalsWaiting } from "./goals.ts";
-import { landsAt, shortWay, thunderbolts, volleyTurn, type Shot, type Volley, type VolleyTurn } from "./volley.ts";
+import { fightRicochet, landsAt, shortWay, thunderbolts, volleyTurn, type Shot, type Volley, type VolleyTurn } from "./volley.ts";
 import { missGem } from "./economy/gems.ts";
 import { DelvePlan } from "./delve/automove.ts";
 import { defaults } from "./save/save.ts";
@@ -325,6 +325,8 @@ export class Game {
   /** Whether the turn under way has dashed, or won a fight, for `comboTurn`. */
   private turnDashed = false;
   private turnFought = false;
+  /** The ricochets of this turn's fights, struck already, for its volley to show. */
+  private sprung: Shot[] = [];
   /** The last step the hero took (into a fight too): the way it faces,
    * for a board whose hero turns. Right until it first steps; undo leaves it. */
   facing: Facing = { dx: 1, dy: 0 };
@@ -2229,8 +2231,18 @@ export class Game {
     if (won) {
       this.turnFought = true;
       if (this.run.combo) this.run.combo = { next: this.run.combo.next + 1, idle: 0 };
+      this.springRicochet(dest);
     }
     return won;
+  }
+  /** Ricochet Shot off the fight just won at `at` (arcana.md), before the hero
+   * steps onto its tile: pays what it fells and keeps its shots for the turn's end. */
+  private springRicochet(at: { x: number; y: number }) {
+    const beams = this.arcana.beams;
+    const out = fightRicochet({ board: this.world, wrap: this.wrap, hero: this.run.player, seed: this.run.seed, ricochet: this.arcana.ricochet(), ...(beams ? { beams } : {}) }, at, this.mode === "tower" ? this.run.height + 1 : 0);
+    this.sprung.push(...out.shots);
+    for (const { enemy, at: fell, instakill, crits } of out.kills)
+      this.message = [`Ricochet · ${enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, fell, 1, instakill, crits)].join(" · ");
   }
   /** Angel Wings raised the hero: its charge is spent for the run, and
    * Avenging Angel smites every enemy of the ranks its research has
@@ -2386,8 +2398,9 @@ export class Game {
    * is an Archer; a turn that climbs to another floor leaves its shooters
    * behind. */
   private endTurn() {
-    const before = this.turnBefore;
+    const before = this.turnBefore, sprung = this.sprung;
     this.turnBefore = null;
+    this.sprung = [];
     const archer = this.isArcher, fought = this.turnFought, dashed = this.turnDashed;
     this.turnFought = this.turnDashed = false;
     if (!before || this.run.outside || this.fallen) return;
@@ -2403,7 +2416,7 @@ export class Game {
     // The board walks a single step at an even pace; anything else it snaps.
     this.turnShown = sameFloor && Math.abs(p.x - from.x) + Math.abs(p.y - from.y) === 1 ? { at, ms, from: { x: from.x, y: from.y }, to: { x: p.x, y: p.y } } : null;
     // Thunderbolt strikes first, so what it fells shoots no more this turn.
-    const struck = this.strikeBolts(fired, beams, sameFloor ? from : undefined);
+    const struck = [...(sameFloor ? sprung : []), ...this.strikeBolts(fired, beams, sameFloor ? from : undefined)];
     if ((this.tier < 3 && !archer) || !sameFloor) {
       this.showVolley(struck, at, ms);
       return;
