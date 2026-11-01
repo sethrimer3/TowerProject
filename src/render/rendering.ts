@@ -35,6 +35,7 @@ import { goalUnlocked } from "../goals.ts";
 import { DEFEAT_MS, drawStruckDown } from "./effects/struck-down.ts";
 import { AREA_BURST_MS, drawAreaBurst, preloadAreaBurst, drawLevelUp, drawRevive, drawWingedRevive, drawWarpLoot, LEVEL_UP_MS, POINTS_MS, REVIVE_MS, WARP_LOOT_MS } from "./effects/level-up.ts";
 import { drawPoof, POOF_MS } from "./effects/poof.ts";
+import { drawLifespring } from "./effects/lifespring.ts";
 import { drawOverseerBeams } from "./effects/overseer-beams.ts";
 import { drawSmite, SMITE_MS } from "./effects/smite.ts";
 import { drawExplosion, EXPLOSION_MS } from "./effects/explosion.ts";
@@ -236,6 +237,8 @@ export class Renderer {
     // Overseer's beams lighten the board above the darkness, under everything marked on it.
     const beams = this.game.arcana.beams;
     if (beams) drawOverseerBeams(f, beams, this.game.turnClock);
+    // Lifespring's rings and Effect Waves show above the darkness too.
+    if (!this.game.run.outside) drawLifespring(f, this.game.lifespringField, this.game.springFx);
     // A Shielded enemy's bubble shows above the darkness, under the labels.
     if (!this.game.run.outside) drawShields(f, this.game.world.shields?.() ?? [], this.game.mode === "delve" ? this.game.world.width : 0);
     // Supply and Equipment Chests show their kind, opened or not.

@@ -611,6 +611,15 @@ One of Overseer's spotlights from the hero, turning clockwise each turn. Hits fr
 **Thunderbolt**:
 An arcanum on a cooldown: its bolts fall from the board's upper edge on random enemies of the floor, and those left over with too few enemies strike again a turn at a time, until used up or no enemy remains.
 
+**Lifespring**:
+An arcanum: on its cooldown, Effect Waves, then a field round the hero as wide as its shot range, spending an HP Pool on the enemies it touches.
+
+**Effect Wave**:
+One of Lifespring's rings, hitting every enemy on the floor at once for no damage and raising what the field and the enemy's fall do.
+
+**HP Pool**:
+What Lifespring's field has left to spend, added to by each activation as a multiple of ATK. It pays an enemy's remaining HP, divided by its Damage Amplification, through DEF.
+
 **Ricochet**:
 Ricochet Shot's strike: an arrow's hit springing a white line to the closest other enemies on the floor. A ricochet never sets off another.
 

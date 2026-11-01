@@ -13,14 +13,15 @@
 import type { Board } from "./board.ts";
 import type { ByFoe, Enemy, Player } from "./entities.ts";
 import type { Save } from "./save/shape.ts";
-import { breaksArmor, critAgainst, facing, guaranteedCrits, isBoss, landsSuperCrit, shieldThorn, stealCeiling, thornDamage } from "./combat.ts";
+import { breaksArmor, critAgainst, facing, guaranteedCrits, guarded, isBoss, landsSuperCrit, shieldThorn, stealCeiling, thornDamage } from "./combat.ts";
 import { critRule } from "./progression/loadout.ts";
 import { foeAttack } from "./cards/foe-cards.ts";
 import { trainedAmount } from "./progression/training.ts";
 import { researched } from "./progression/archives.ts";
-import { archerClock, archerState, archerTick, arrowBoost, arrowDamage, arrowRange, charged, enemiesWithin, FOE_REACH, foeGain, foeOn, foeShotCost, foeTickGain, held, reachTicks, shoots, shotDamage, spent, TURN_TICKS, type InReach, type Volleys } from "./enemies/ranged.ts";
+import { archerClock, archerState, archerTick, arrowBoost, arrowDamage, arrowRange, charged, enemiesWithin, FOE_REACH, within as inRange, foeGain, foeOn, foeShotCost, foeTickGain, held, reachTicks, shoots, shotDamage, spent, TURN_TICKS, type InReach, type Volleys } from "./enemies/ranged.ts";
 import { beamFactor, type Beams } from "./arcana/overseer.ts";
 import { boltTargets } from "./arcana/arcana.ts";
+import { fieldHit } from "./arcana/lifespring.ts";
 import { tileRandom } from "./random.ts";
 import { snap } from "./exact.ts";
 
@@ -44,7 +45,7 @@ const FIGHT_RICOCHET_SALT = 0x71c0d;
  * thorns cost an enemy's shooter), for an arrow (or a shot's thorns) the
  * enemy's HP before and after it out of its full HP, and the enemy it
  * felled (`fell`), which the board keeps showing until the shot lands. */
-export type Shot = { by: "hero" | "enemy"; from: { x: number; y: number }; to: { x: number; y: number }; damage: number; tick: number; shrouded?: number; shielded?: number; shieldBroke?: true; crit?: number; superCrit?: true; charge?: number; healed?: number; thorns?: number; before?: number; hp?: number; full?: number; fell?: Enemy; ricochet?: true; thunderbolt?: true };
+export type Shot = { by: "hero" | "enemy"; from: { x: number; y: number }; to: { x: number; y: number }; damage: number; tick: number; shrouded?: number; shielded?: number; shieldBroke?: true; crit?: number; superCrit?: true; charge?: number; healed?: number; thorns?: number; before?: number; hp?: number; full?: number; fell?: Enemy; ricochet?: true; thunderbolt?: true; lifespring?: true };
 /** Where `shot`'s target stands: the hero's tile for an enemy's shot (whose
  * thorns cost the shooter, at `from`), the enemy's for an arrow. */
 export const enemyOf = (shot: Shot) => (shot.by === "enemy" ? shot.from : shot.to);
@@ -61,9 +62,9 @@ export const THUNDERBOLT_FALL_MS = 90;
 export const THUNDERBOLT_FLASH_MS = 240;
 /** When `shot` of `volley` leaves its shooter, and when it lands: a ricochet
  * does both as the arrow it springs from lands; a thunderbolt falls from its
- * tick of the turn. */
-export const landsAt = (volley: Volley, shot: Shot) => volley.at + (volley.ms * shot.tick) / TURN_TICKS + (shot.thunderbolt ? THUNDERBOLT_FALL_MS : volley.ms * SHOT_FLIGHT);
-export const leavesAt = (volley: Volley, shot: Shot) => landsAt(volley, shot) - (shot.ricochet ? 0 : shot.thunderbolt ? THUNDERBOLT_FALL_MS : volley.ms * SHOT_FLIGHT);
+ * tick of the turn; Lifespring's field strikes at once as the turn ends. */
+export const landsAt = (volley: Volley, shot: Shot) => volley.at + (volley.ms * shot.tick) / TURN_TICKS + (shot.lifespring ? 0 : shot.thunderbolt ? THUNDERBOLT_FALL_MS : volley.ms * SHOT_FLIGHT);
+export const leavesAt = (volley: Volley, shot: Shot) => landsAt(volley, shot) - (shot.ricochet || shot.lifespring ? 0 : shot.thunderbolt ? THUNDERBOLT_FALL_MS : volley.ms * SHOT_FLIGHT);
 /** Whether every shot of `volley` has landed, and its flashes ended, by `now`. */
 export const volleyOver = (volley: Volley, now: number) => volley.shots.every((s) => now >= landsAt(volley, s) + (s.ricochet ? RICOCHET_FLASH_MS : s.thunderbolt ? THUNDERBOLT_FLASH_MS : 0));
 
@@ -101,7 +102,7 @@ export type VolleyTurn = {
 /** An enemy an arrow felled, or the thorns of its own shot (`thorns`):
  * where, whether it fell to its first wound (an instakill), and the
  * arrow's critical applications. */
-export type VolleyKill = { enemy: Enemy; at: { x: number; y: number }; instakill: boolean; crits: number; thorns?: true; ricochet?: true; thunderbolt?: true };
+export type VolleyKill = { enemy: Enemy; at: { x: number; y: number }; instakill: boolean; crits: number; thorns?: true; ricochet?: true; thunderbolt?: true; lifespring?: true };
 /** What a turn's volley did: the run's volley state after it, the shots in
  * the order they fired, the hero's HP after them, whether a Ranged enemy's
  * shot got through (`hurt`), the enemy whose shot felled the hero (the
@@ -401,6 +402,36 @@ export function thunderbolts(turn: Pick<VolleyTurn, "board" | "wrap" | "hero" | 
   });
   const left = board.floorEnemies?.(hero.x, hero.y).length ? rule.bolts - targets.length : 0;
   return { shots, kills, left };
+}
+
+/** Lifespring's field, the hero at its center and `reach` (hundredths of a tile)
+ * wide: the enemies in it, closest first, lose HP from `pool`, each at `rate` of its
+ * Effect Waves' hits (a Shielded enemy's bubble cutting that), passing through
+ * DEF, with no Lifesteal and no Armor Break, until the pool is spent. Given the tile
+ * the hero stepped from (`entered`), only those it just came into range of, showing at
+ * `tick`. Edits the board's enemies; returns the shots, the kills and what is left of the pool. */
+export function lifespringContact({ board, wrap, hero }: { board: Pick<Board, "tile" | "clear" | "wound" | "markSpring">; wrap: number; hero: Player }, pool: number, reach: number, rate: (waves: number) => number, entered?: { x: number; y: number }, tick = TURN_TICKS) {
+  const shots: Shot[] = [], kills: VolleyKill[] = [];
+  let left = pool;
+  for (const { x, y, tile } of enemiesWithin(board, hero, reach, wrap)) {
+    if (!left) break;
+    if (entered && inRange(shortWay(x - entered.x, wrap), y - entered.y, reach)) continue;
+    const enemy = tile.enemy, against = guarded(rate(enemy.sprung ?? 0), enemy);
+    if (against <= 0) continue;
+    const hit = fieldHit(left, enemy.hp, against), after = snap(Math.max(0, enemy.hp - hit.damage)), to = { x, y };
+    left = hit.pool;
+    const landed: Shot = { by: "hero", from: to, to, damage: hit.damage, tick, before: enemy.hp, hp: after, full: snap(enemy.hp + (tile.wound ?? 0)), lifespring: true };
+    shots.push(landed);
+    if (after > 0) {
+      board.wound?.(x, y, hit.damage);
+      board.markSpring?.(x, y, 0);
+    } else {
+      board.clear(x, y);
+      landed.fell = enemy;
+      kills.push({ enemy: { ...enemy, sprung: enemy.sprung ?? 0 }, at: to, instakill: false, crits: 0, lifespring: true });
+    }
+  }
+  return { shots, kills, pool: left };
 }
 
 /** The Archer's arrow `shot` of the turn, fired from `from` at `tick`,

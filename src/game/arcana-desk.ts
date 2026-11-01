@@ -2,13 +2,16 @@ import {
   arcanum, arcanumBoost, arcanumPrice, chargeBolts, drawOptions, levelsOf, nextDraw, nextStep, OFFER_SIZE, ownedArcana, redrawOptions, rerollOpen, rerollPrice, RUN_TOGGLES, settleBolts, tickCooldowns, unownedArcana, valuesAt,
   type ArcanumId, type AttributeLevels,
 } from "../arcana/arcana.ts";
+import { clearLifespring, lifespringEffects, springAmplify, stepLifespring } from "../arcana/lifespring.ts";
 import type { Beams } from "../arcana/overseer.ts";
 import type { CritRule } from "../combat.ts";
-import type { Mode } from "../entities.ts";
+import type { Enemy, Mode } from "../entities.ts";
 import type { FloorBloom } from "../environments.ts";
+import { boostLifespringHealth } from "../progression/hero-stats.ts";
 import { stream } from "../random.ts";
 import type { TowerRun } from "../runs.ts";
 import { CURRENCIES } from "../shop/currency.ts";
+import { snap } from "../exact.ts";
 import type { DeskHost } from "./desk.ts";
 
 /** What the Arcana desk needs from the game beyond any desk's: the mode, and
@@ -126,6 +129,7 @@ export class ArcanaDesk {
       r.off.push(id);
       delete r.timers[id];
       if (id === "thunderbolt") delete r.bolts;
+      if (id === "lifespring") clearLifespring(this.host.run.lifespring);
     } else r.off = r.off.filter((o) => o !== id);
     return true;
   }
@@ -141,7 +145,8 @@ export class ArcanaDesk {
     const trigger = arcanum(id).trigger;
     if (trigger.on !== "cooldown") return undefined;
     const turns = trigger.turns(valuesAt(id, levels));
-    return { left: Math.min(this.runState.timers[id] ?? turns, turns), turns };
+    const timer = id === "lifespring" ? this.host.run.lifespring?.timer : this.runState.timers[id];
+    return { left: Math.min(timer ?? turns, turns), turns };
   }
   /** What Ricochet Shot gives this turn's arrows (`VolleyTurn.ricochet`), if it is held and on. */
   ricochet() {
@@ -183,6 +188,43 @@ export class ArcanaDesk {
   settleBolts(left: number) {
     settleBolts(this.runState, left);
   }
+  /** Lifespring, if it is held and on: its attributes and what Effect Waves give. */
+  lifespringRule() {
+    const held = this.held.find((h) => h.id === "lifespring" && this.isOn(h.id));
+    if (!held) return undefined;
+    const [hp, waves, turns] = valuesAt(held.id, held.levels);
+    return { hp, waves, turns, effects: lifespringEffects(this.save) };
+  }
+  /** Lifespring's turn: its cooldown, and the Effect Wave or field it brings, if it is held and on. */
+  lifespringTurn() {
+    const rule = this.lifespringRule(), run = this.host.run;
+    return rule && stepLifespring((run.lifespring ??= {}), { waves: rule.waves, turns: rule.turns, amount: snap(rule.hp * run.player.attack) });
+  }
+  /** The field as the board shows it, while it is on and its pool holds. */
+  get lifespringField() {
+    const s = this.host.run.lifespring;
+    return s?.pool && this.lifespringRule() ? { tinted: !!s.tint } : undefined;
+  }
+  /** What the field multiplies its damage by against an enemy `waves` Effect Waves have hit. */
+  lifespringRate(waves: number) {
+    return springAmplify(lifespringEffects(this.save).amplify, waves);
+  }
+  /** Whether the run holds Lifespring, on or off, and what its card's information shows:
+   * the pool, what Effect Waves give, and the factor Health Bonus has reached on max HP. */
+  get lifespringStats() {
+    if (!this.held.some((h) => h.id === "lifespring")) return undefined;
+    const s = this.host.run.lifespring;
+    return { pool: s?.pool ?? 0, effects: lifespringEffects(this.save), health: 1 + (s?.health ?? 0) / 100 };
+  }
+  /** An enemy Lifespring touched fell, by whatever means, while it is on: Effect
+   * Waves' hit pays Health Bonus, and what its Gold and Cells are raised by is returned. */
+  lifespringKill(enemy: Enemy) {
+    const rule = enemy.sprung === undefined ? undefined : this.lifespringRule();
+    if (!rule) return undefined;
+    const { healthPerKill, healthLimit, gold, cells } = rule.effects;
+    if (enemy.sprung) boostLifespringHealth(this.host.run, healthPerKill, healthLimit);
+    return { gold, cells };
+  }
   /** A turn ends: Overseer's beams turn on, on or off, and each cooldown on
    * its way, restarting the moment it runs out. */
   turn() {
@@ -190,7 +232,8 @@ export class ArcanaDesk {
     if (this.held.some((h) => h.id === "overseer")) run.beamTurns = (run.beamTurns ?? 0) + 1;
     const active = this.held.flatMap(({ id, levels }) => {
       const trigger = arcanum(id).trigger;
-      return trigger.on === "cooldown" && this.isOn(id) ? [{ id, turns: trigger.turns(valuesAt(id, levels)) }] : [];
+      // Lifespring runs its own, in the run: `lifespringTurn`.
+      return trigger.on === "cooldown" && id !== "lifespring" && this.isOn(id) ? [{ id, turns: trigger.turns(valuesAt(id, levels)) }] : [];
     });
     return tickCooldowns(active, this.runState.timers);
   }

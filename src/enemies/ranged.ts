@@ -73,8 +73,8 @@ export const shoots = (enemy: Enemy) => !!(enemy.ranged || enemy.flying);
  * its full HP kept as `fullHp`, and what they have broken of its DEF
  * (Armor Break) as `broken`. */
 export const wounded = (t: Tile): Tile => {
-  if (!t.wound && !t.broken) return t;
-  const less = (e: Enemy) => ({ ...e, ...(t.wound ? { hp: snap(Math.max(0, e.hp - t.wound)), fullHp: e.fullHp ?? e.hp } : {}), ...(t.broken ? { broken: t.broken } : {}) });
+  if (!t.wound && !t.broken && t.sprung === undefined) return t;
+  const less = (e: Enemy) => ({ ...e, ...(t.wound ? { hp: snap(Math.max(0, e.hp - t.wound)), fullHp: e.fullHp ?? e.hp } : {}), ...(t.broken ? { broken: t.broken } : {}), ...(t.sprung === undefined ? {} : { sprung: t.sprung }) });
   return t.enemy ? { ...t, enemy: less(t.enemy) } : t.flyer ? { ...t, flyer: less(t.flyer) } : t;
 };
 /** `raw` (a tile as generated) with `damage` more wound (an arrow that only
@@ -84,6 +84,14 @@ export const woundMore = (raw: Tile, damage: number, broke = 0): Tile => ({
   ...raw,
   ...(raw.flyer && !raw.flyer.aggro ? { flyer: { ...raw.flyer, aggro: true as const } } : {}),
   ...(damage || raw.wound ? { wound: snap((raw.wound ?? 0) + damage) } : {}),
+  ...(broke ? { broken: snap((raw.broken ?? 0) + broke) } : {}),
+});
+/** `raw` once Lifespring has touched its enemy: `waves` more Effect Waves hit it
+ * (none for the field alone), and `broke` percent more of its DEF taken off. It
+ * is no strike, so a Flying enemy stays as it was. */
+export const springMark = (raw: Tile, waves: number, broke = 0): Tile => ({
+  ...raw,
+  sprung: (raw.sprung ?? 0) + waves,
   ...(broke ? { broken: snap((raw.broken ?? 0) + broke) } : {}),
 });
 

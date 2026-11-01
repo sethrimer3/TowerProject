@@ -25,7 +25,7 @@ const DEV = ["devMode", "freePurchases"] as const satisfies readonly SettingKey[
  * in a run. */
 const TOGGLES = [
   "attackGains", "defenseGains", "hpGains", "keyGains", "doorGains", "goldGains", "silverGains", "xpGains", "comboGains",
-  "damageVisual", "itemLabels", "hitNumbers", "ricochetAnimation", "thunderboltAnimation", "enemyBars", "showPath",
+  "damageVisual", "itemLabels", "hitNumbers", "ricochetAnimation", "thunderboltAnimation", "lifespringDamage", "enemyBars", "showPath",
 ] as const satisfies readonly SettingKey[];
 type PageKey = (typeof PAGE)[number] | (typeof TOGGLES)[number] | (typeof DEV)[number] | "devTools";
 
@@ -37,6 +37,8 @@ const SHOWN: Partial<Record<PageKey, (save: Save) => boolean>> = {
   itemLabels: (save) => goalUnlocked(save, "damageVisual"),
   ricochetAnimation: arcanaOpen,
   thunderboltAnimation: arcanaOpen,
+  // Once it is unlocked: bought, or lent to the climb by a Shrine.
+  lifespringDamage: (save) => !!save.arcana.owned.lifespring || !!save.tower.run?.shrine?.arcana?.includes("lifespring"),
   showPath: (save) => !!save.upgrades.autoClimb,
   cinematicIdle: (save) => save.settings.cinematic,
   cinematicGems: (save) => save.settings.cinematic,

@@ -20,6 +20,8 @@ export type Board = {
   /** Wounds the enemy on (x, y) by `damage` more HP (the Archer's arrows,
    * enemies/ranged.ts), on boards that hold enemies. */
   wound?(x: number, y: number, damage: number, broke?: number): void;
+  /** Marks the enemy at (x, y) as Lifespring touched it (`springMark` in enemies/ranged.ts). */
+  markSpring?(x: number, y: number, waves: number, broke?: number): void;
   /** Present on boards that carry torches (dungeon boards; the forest
    * exterior has none). */
   torches?: Torch[];

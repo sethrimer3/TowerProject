@@ -1,4 +1,5 @@
 import { boltTargets, chargeBolts, decodeArcanaRun, settleBolts, tickCooldowns } from "../arcana/arcana.ts";
+import { fieldHit, lifespringEffects, springAmplify, stepLifespring, validLifespring } from "../arcana/lifespring.ts";
 import { TURN_TICKS } from "../enemies/ranged.ts";
 import { tileRandom } from "../random.ts";
 import { isRecord, wholeIn } from "../save/decode.ts";
@@ -6,7 +7,7 @@ import { activeBossParts, effectiveBossDef } from "./boss-variants.ts";
 import { difficultyMultiplier, TRIALS } from "./catalog.ts";
 import { same, type Spot } from "./arena.ts";
 import type { TrialState } from "./trial.ts";
-import { heroAttackOn, type TrialArcana, type TrialStrike } from "./trial-spells.ts";
+import { heroAttackOn, type TrialArcana, type TrialSpells, type TrialStrike } from "./trial-spells.ts";
 
 // The arcana's turn in a trial (docs/agents/arcana.md). A hit from an arcanum
 // only wounds: it never makes a boss teleport, drop keys or pop coins, and draws
@@ -14,9 +15,9 @@ import { heroAttackOn, type TrialArcana, type TrialStrike } from "./trial-spells
 
 const TRIAL_RICOCHET_SALT = 0x71c0d;
 
-/** What an arcanum can strike: its tile, its DEF, what a hit does to it, and
+/** What an arcanum can strike: its tile, its HP and DEF, what a hit does to it, and
  * the saved thing it is (`foe`), which may move off the tile as a turn goes on. */
-type Target = Spot & { foe: object; defense: number; take: (damage: number) => void };
+type Target = Spot & { foe: object; hp: number; defense: number; take: (damage: number) => void };
 
 /** The boss fell to an arcanum: the same ending each encounter gives its last hit. */
 function win(s: TrialState) {
@@ -32,22 +33,22 @@ function win(s: TrialState) {
 function targets(s: TrialState): Target[] {
   if (s.room !== "arena" || s.status !== "active") return [];
   const out: Target[] = [], v = s.bossVariant, k = s.keymaster;
-  if (!s.elemental.incorporeal && s.bossHp > 0) out.push({ x: s.elemental.x, y: s.elemental.y, foe: s.elemental, defense: effectiveBossDef(s), take(damage) {
+  if (!s.elemental.incorporeal && s.bossHp > 0) out.push({ x: s.elemental.x, y: s.elemental.y, foe: s.elemental, hp: s.bossHp, defense: effectiveBossDef(s), take(damage) {
     if (v) v.damageThisRun += Math.min(s.bossHp, damage);
     s.bossHp = Math.max(0, s.bossHp - damage);
     if (!s.bossHp) win(s);
   } });
-  for (const slime of s.slimes) out.push({ x: slime.x, y: slime.y, foe: slime, defense: 0, take() { s.slimes = s.slimes.filter((o) => o !== slime); } });
-  for (const mimic of k?.mimics ?? []) out.push({ x: mimic.x, y: mimic.y, foe: mimic, defense: 0, take(damage) {
+  for (const slime of s.slimes) out.push({ x: slime.x, y: slime.y, foe: slime, hp: 1, defense: 0, take() { s.slimes = s.slimes.filter((o) => o !== slime); } });
+  for (const mimic of k?.mimics ?? []) out.push({ x: mimic.x, y: mimic.y, foe: mimic, hp: mimic.hp, defense: 0, take(damage) {
     mimic.hp = Math.max(0, mimic.hp - damage);
     if (!mimic.hp) k!.mimics = k!.mimics.filter((o) => o !== mimic);
   } });
   if (!v) return out;
-  for (const part of activeBossParts(v)) out.push({ x: part.x, y: part.y, foe: part, defense: part.defense, take(damage) {
+  for (const part of activeBossParts(v)) out.push({ x: part.x, y: part.y, foe: part, hp: part.hp, defense: part.defense, take(damage) {
     v.damageThisRun += Math.min(part.hp, damage);
     part.hp = Math.max(0, part.hp - damage);
   } });
-  for (const minion of v.minions) out.push({ x: minion.x, y: minion.y, foe: minion, defense: minion.defense, take(damage) {
+  for (const minion of v.minions) out.push({ x: minion.x, y: minion.y, foe: minion, hp: minion.hp, defense: minion.defense, take(damage) {
     minion.hp = Math.max(0, minion.hp - damage);
     if (minion.hp) return;
     v.minions = v.minions.filter((o) => o !== minion);
@@ -74,16 +75,38 @@ function strike(s: TrialState, t: Target, boost: number, kind: TrialStrike["kind
   strikes.push({ kind, from, to: { x: t.x, y: t.y }, damage, tick });
 }
 
+/** Lifespring's part of a turn: its cooldown, its Effect Wave or its field forming,
+ * then the field on what stands in it, closest first. Every wave counts for
+ * everything in the arena, even what came after it, and nothing there pays a
+ * kill, so its Gold, Cell and Health Bonuses find nothing to raise. */
+function lifespringTurn(s: TrialState, a: NonNullable<TrialState["arcana"]>, { hp, waves, turns, reach }: NonNullable<TrialSpells["lifespring"]>, strikes: TrialStrike[]) {
+  const spring = (a.lifespring ??= {}), hero = s.player;
+  a.springStep = stepLifespring(spring, { waves, turns, amount: hp * hero.attack });
+  if (a.springStep.wave) a.springWaves = (a.springWaves ?? 0) + 1;
+  const d2 = (t: Spot) => (t.x - hero.x) * (t.x - hero.x) + (t.y - hero.y) * (t.y - hero.y);
+  const rate = springAmplify(lifespringEffects(s).amplify, a.springWaves ?? 0);
+  const near = targets(s).filter((t) => d2(t) * 10_000 <= reach * reach).sort((p, q) => d2(p) - d2(q) || p.y - q.y || p.x - q.x);
+  for (const t of near) {
+    if (!spring.pool || s.status !== "active") break;
+    const hit = fieldHit(spring.pool, t.hp, rate), damage = Math.round(hit.damage);
+    if (hit.pool) spring.pool = hit.pool;
+    else delete spring.pool;
+    if (!damage) continue;
+    t.take(damage);
+    strikes.push({ kind: "lifespring", from: { x: t.x, y: t.y }, to: { x: t.x, y: t.y }, damage, tick: TURN_TICKS });
+  }
+}
+
 /** The arcana's part of a turn the attempt just spent: a Ricochet Shot off the
- * hero's hit, the cooldowns running on, Thunderbolt's bolts, then the beams
- * turning. An ended attempt does none of it. */
+ * hero's hit, the cooldowns running on, Thunderbolt's bolts, Lifespring, then the
+ * beams turning. An ended attempt does none of it. */
 export function trialArcanaTurn<O extends { message: string }>(s: TrialState, outcome: O): O {
   const a = s.arcana, spells = a?.spells;
   if (!a || !spells) return outcome;
   const strikes: TrialStrike[] = [], struck = a.struck;
   delete a.struck;
   if (s.status !== "active") return outcome;
-  const { ricochet, thunderbolt } = spells;
+  const { ricochet, thunderbolt, lifespring } = spells;
   if (ricochet && struck && tileRandom(struck.x, struck.y, (s.seed ^ TRIAL_RICOCHET_SALT ^ Math.imul(s.steps, 0x85ebca6b)) | 0) * 100 < ricochet.chance) {
     const d2 = (t: Spot) => (t.x - struck.x) * (t.x - struck.x) + (t.y - struck.y) * (t.y - struck.y);
     const near = targets(s).filter((t) => t.foe !== struck.foe).sort((p, q) => d2(p) - d2(q) || p.y - q.y || p.x - q.x).slice(0, ricochet.rebounds);
@@ -101,6 +124,7 @@ export function trialArcanaTurn<O extends { message: string }>(s: TrialState, ou
       settleBolts(a.run, targets(s).length ? bolts - chosen.length : 0);
     }
   }
+  if (lifespring && s.status === "active") lifespringTurn(s, a, lifespring, strikes);
   if (spells.overseer) a.beamTurns++;
   a.strikes = strikes;
   if (s.status !== "active") return { ...outcome, message: `Trial complete — ${TRIALS[s.trialId].name} falls to your Arcana.` };
@@ -110,5 +134,6 @@ export function trialArcanaTurn<O extends { message: string }>(s: TrialState, ou
 /** The saved arcana of an attempt, if it has any. */
 export function decodeTrialArcana(raw: unknown): TrialArcana | undefined {
   if (!isRecord(raw)) return undefined;
-  return { run: decodeArcanaRun(raw.run), beamTurns: wholeIn(raw.beamTurns, 0, 1e9) ? (raw.beamTurns as number) : 0 };
+  return { run: decodeArcanaRun(raw.run), beamTurns: wholeIn(raw.beamTurns, 0, 1e9) ? (raw.beamTurns as number) : 0,
+    ...(validLifespring(raw.lifespring) && Object.keys(raw.lifespring).length ? { lifespring: raw.lifespring } : {}), ...(wholeIn(raw.springWaves, 1, 1e9) ? { springWaves: raw.springWaves as number } : {}) };
 }

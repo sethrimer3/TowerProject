@@ -1,6 +1,6 @@
 # Arcana
 
-Arcana (`src/arcana/arcana.ts`, `src/game/arcana-desk.ts`, `ui/arcana-panel.ts`), their triggers, Ricochet Shot, Aurum Bloom, Overseer, Thunderbolt, their run cards, and how they work in a trial.
+Arcana (`src/arcana/arcana.ts`, `src/game/arcana-desk.ts`, `ui/arcana-panel.ts`), their triggers, Ricochet Shot, Aurum Bloom, Overseer, Thunderbolt, Lifespring, their run cards, and how they work in a trial.
 
 **What they are.**
 Spells bought with Arcanite on the Gear page's Arcana tab and kept for good, or lent to one climb by a Shrine boon.
@@ -69,7 +69,26 @@ If no enemy remains after a strike, or none stands there at all, they are wasted
 Its `Shot` carries `thunderbolt`: the ticks spread over the turn, it falls for `THUNDERBOLT_FALL_MS` and flashes for `THUNDERBOLT_FLASH_MS`, however fast the turn; number, HP bar and ghost work as an arrow's.
 **Drawing** (`render/effects/thunderbolt.ts`, used by `drawVolley` and `TrialRenderer`): `paintThunderbolt`, a hard-edged jagged white line straight down from the canvas's top, its kinks fixed by the tile and tick, and `paintThunderlight`, a pixel sprite (`LIGHT`, no glow) round the target, flipped to crackle; reduced motion shows the bolt whole and the sprite still.
 
-**Toggles.** `ricochetAnimation` and `thunderboltAnimation` (Settings' Toggles menu, once `arcanaOpen`) only hide: `Game.showVolley` leaves those shots out of the volley it shows, so no line or bolt, number or sound, and `TrialRenderer` skips them by its `hidden` option. They strike all the same.
+**Lifespring** (`src/arcana/lifespring.ts`, trigger `cooldown`; `Game.lifespringTurn` and `Game.lifespringContact`, `lifespringContact` in `volley.ts`) sets off Effect Waves, then a field with an HP Pool.
+**Its state** is `run.lifespring` (`LifespringRun`), in the run and not `runArcana`, cooldown included, so undo takes back the pool, waves and Health Bonus together with the enemies they touched, and replaying gives the same.
+`ArcanaDesk.turn` therefore leaves it out of `tickCooldowns`, and `stepLifespring` runs it instead; a climb keeps it, and switching it off clears all of it but the Health Bonus (`clearLifespring`).
+**A turn** (`Game.endTurn`): `stepLifespring` right after the cooldowns, before anything strikes, so a wave's DEF Reduction counts for that turn's bolts and shots.
+Activation queues Effect Waves; the first fires that turn, the next each `WAVE_INTERVAL` (4) turns, and the field forms one interval after the last, adding HP × the hero's ATK as it stands (no crits, no beams) to the pool, blue for `TINT_TURNS` if a pool still held.
+**An Effect Wave** marks every enemy of `Board.floorEnemies` at the hero through `Board.markSpring` (`springMark`): the tile's `sprung`, in `run.changes` beside `wound` and moving with an Aggroed enemy, read onto the enemy as `Enemy.sprung` by `wounded`, never saved on it.
+It deals no damage and wakes no Flying enemy.
+**Its reach** (`Game.lifespringReach`) is the hero's shot range, `arrowRange` of Attack Range with the hand's tree bonus, whether or not the hero is an Archer: 3 tiles untrained.
+**The field** strikes with `lifespringContact` twice a turn.
+Before `volleyTurn`, it strikes only what the hero's step brought into range (`entered`), so these enemies meet it before an arrow; only a turn with a volley needs this.
+At the very end of the turn (after the volley and `aggroTurn`), it strikes everything in range, so shots get their chance at what already stood there.
+Each pass goes closest first; `fieldHit` pays `hp / rate` from the pool, or all of it prorated, where `rate` is `springAmplify` (Damage Amplification × wave hits, 1 with none) cut by a Shielded enemy's bubble (`guarded`).
+It ignores DEF, Lifesteal and Armor Break, and reads no beams: the pool was paid in ATK when it formed.
+Its `Shot` carries `lifespring`: no art, only its number and HP bar, landing at once (`landsAt`), at tick 1 before the volley and `TURN_TICKS` at the end.
+**What Effect Waves give** comes from `lifespringEffects(save)`, the one place research will raise them: Health Bonus (`Finds.kill` → `ArcanaDesk.lifespringKill` → `boostLifespringHealth`, per enemy a wave hit however many times, its own factor on max HP through `lifespringFactor` in `heroFactor` and `rowValue`, capped at `healthLimit`), Damage Amplification, Gold and Cell Bonus (`RunPurse.enemyLoot`'s `spring`, for any enemy with `sprung` set, its Gold gated like any kill's; previews don't count them) and DEF Reduction (a percent added to `broken`).
+All of them apply only while it is on, by whatever means the enemy falls.
+**Drawing** (`render/effects/lifespring.ts`, from `drawOverlays` under the shields): `paintLifespring`, three gapped rings at 25% alpha spinning at their own speeds, their centers slightly off the hero, spreading for `FIELD_GROW_MS` from `Game.springFx.formedAt`, and `paintEffectWave`, a ring rising past the canvas's corners for `WAVE_MS`; reduced motion stills the rings and shows no waves.
+**Its card** presses to `showHeldArcanum`, adding `lifespringTables`: the HP Pool and what Effect Waves give; `RunTrainingBar.refreshTip` shows Health Bonus's factor on the Max HP card.
+
+**Toggles.** `ricochetAnimation` and `thunderboltAnimation` (Settings' Toggles menu, once `arcanaOpen`), and `lifespringDamage` (once it is owned or lent), only hide: `Game.showVolley` leaves those shots out of the volley it shows, so no line or bolt, number or sound, and `TrialRenderer` skips them by its `hidden` option. They strike all the same.
 
 **In a trial.**
 Aurum Bloom raises floors a trial doesn't have; every other arcanum works, and a lent one doesn't exist there.
@@ -79,6 +98,7 @@ Aurum Bloom raises floors a trial doesn't have; every other arcanum works, and a
 - `targets` lists what can be struck: a corporeal boss, Light Slimes, mimics, a boss's parts and its minions; an incorporeal boss is invincible, so it isn't one.
 - A hit is `max(1, round(ATK × boost × beam − DEF))`, DEF as the hero's own hits read it. It only wounds: no teleport, key drop, coin pop or counter. A slime it hits disperses, a minion it fells pays its Silver, its damage counts toward `damageThisRun`, and a boss it fells wins the attempt as the last hit would.
 - Thunderbolt follows the rules above, by `chargeBolts` and `settleBolts` on the attempt's run.
+- Lifespring runs the same `stepLifespring` on `state.arcana.lifespring`, with `game.run.lifespring` pointing at it for the card; `lifespringTurn` in `trial-arcana.ts` strikes after the bolts, reaching `spells.lifespring.reach`. `state.arcana.springWaves` counts every wave for everything in the arena, what comes later too. Nothing in a trial pays a kill, so Health, Gold and Cell Bonus find nothing to raise, and DEF Reduction isn't read.
 - A trial has no arrows, so Ricochet Shot springs from each hit of the hero's instead, a fixed roll per seed, turn and tile, to the closest other targets (never the one struck, even if it has moved: `Target.foe`).
 - Overseer multiplies the hero's hits through `heroAttackOn` at every strike site in `trial.ts`, `keymaster.ts` and `boss-variants.ts`, and `state.arcana.beamTurns` keeps its turn. A new hit there must read it too.
 `state.arcana.strikes`, the last turn's, are what `TrialRenderer` draws; it also paints the beams.
@@ -106,4 +126,4 @@ The bar shows inside a run holding any arcanum, even before On the Job.
 `enhancementsOf` gives the rows of research enhancements both information views show; none are defined yet.
 The `.arcana-attr` and `.arcana-switch` rules use two ids to beat the themes' and the sprite kit's blanket button rules.
 
-**Tests.** `tests/arcana.test.ts`, `tests/aurum-bloom.test.ts`, `tests/overseer.test.ts`, `tests/thunderbolt.test.ts` (with the arcana in trials); `node tests/thunderbolt.mjs` (dev server) checks the card's bar, real strikes' pixels, the toggle and a trial, with review images in `test-results/thunderbolt/`.
+**Tests.** `tests/arcana.test.ts`, `tests/aurum-bloom.test.ts`, `tests/overseer.test.ts`, `tests/thunderbolt.test.ts` (with the arcana in trials), `tests/lifespring.test.ts`; `node tests/lifespring.mjs` (dev server) checks the rings' pixels and its card, with review images in `test-results/lifespring/`; `node tests/thunderbolt.mjs` (dev server) checks the card's bar, real strikes' pixels, the toggle and a trial, with review images in `test-results/thunderbolt/`.

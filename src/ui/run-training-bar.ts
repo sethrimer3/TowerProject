@@ -375,7 +375,9 @@ export class RunTrainingBar {
     if (!card?.isConnected) return this.hideTip();
     const offer = runTrainingOffer(this.game.save, this.game.run, card.dataset.drill as TrainingId);
     const skips = levelSkipsOf(this.game.run, offer.row.id);
-    tip.innerHTML = `<b>${offer.row.name}</b><p>${offer.row.description}</p><small>Level ${offer.level} of ${offer.max.toLocaleString("en-US")}${offer.bought ? ` · ${offer.bought} bought this run` : ""}${skips === null ? "" : ` · ${skips.toLocaleString("en-US")} ${skips === 1 ? "floor" : "floors"} skipped this run`}</small>`;
+    // Max HP also shows how far Lifespring's Health Bonus has multiplied it.
+    const spring = offer.row.id === "hp" ? this.game.arcana.lifespringStats : undefined;
+    tip.innerHTML = `<b>${offer.row.name}</b><p>${offer.row.description}</p><small>Level ${offer.level} of ${offer.max.toLocaleString("en-US")}${offer.bought ? ` · ${offer.bought} bought this run` : ""}${skips === null ? "" : ` · ${skips.toLocaleString("en-US")} ${skips === 1 ? "floor" : "floors"} skipped this run`}${spring ? ` · Lifespring ×${Number(spring.health.toFixed(2))} of ×${spring.effects.healthLimit}` : ""}</small>`;
     tip.hidden = false;
     const box = card.getBoundingClientRect(), width = tip.offsetWidth;
     tip.style.left = `${Math.max(8, Math.min(innerWidth - width - 8, box.left + box.width / 2 - width / 2))}px`;

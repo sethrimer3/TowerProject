@@ -1,5 +1,6 @@
 import type { CritRule } from "../combat.ts";
 import { STELLAR_FACTOR } from "../environments.ts";
+import { WAVE_INTERVAL } from "./lifespring.ts";
 import { drawAt, tileRandom } from "../random.ts";
 import { isRecord, wholeIn } from "../save/decode.ts";
 
@@ -131,6 +132,29 @@ export const ARCANA = {
     ],
     summary: ([mult, bolts, turns]) => `Every ${turns} turns, ${countOf(bolts)} thunderbolts strike random enemies on the floor, with ${countOf(mult * 100)}% of ATK each (accounts for critical chances and factors). With fewer enemies than thunderbolts, the rest strike again, once a turn, until they are used up or no enemies remain on the floor.`,
     damage: ([mult]) => mult,
+  },
+  lifespring: {
+    name: "Lifespring",
+    trigger: { on: "cooldown", turns: ([, , turns]) => turns },
+    attributes: [
+      {
+        name: "HP",
+        shown: (v) => `${countOf(v)}x`,
+        steps: [[2, 0], [3, 5], [5, 11], [9, 17], [14, 23], [22, 29], [32, 35], [46, 41], [63, 47], [85, 53], [113, 61], [148, 71], [191, 84], [244, 100], [309, 120], [387, 144], [482, 174], [596, 210], [723, 254], [877, 308], [1064, 374], [1290, 452], [1569, 558], [1916, 694], [2356, 880], [2919, 1126], [3637, 1432], [4544, 1813], [5678, 2269], [7078, 2800], [9119, 3406]],
+      },
+      {
+        name: "Effect Waves",
+        shown: countOf,
+        steps: [[1, 0], [2, 200], [3, 500], [4, 850], [5, 1400]],
+      },
+      {
+        name: "Cooldown",
+        shown: (v) => `${v} turns`,
+        steps: [[300, 0], [290, 8], [280, 24], [270, 40], [260, 56], [250, 72], [240, 88], [230, 104], [220, 120], [210, 136], [200, 152], [190, 168], [180, 184], [170, 200], [160, 216], [150, 232], [140, 248], [130, 264], [120, 280], [110, 346], [100, 512], [90, 688], [80, 874], [70, 1070], [60, 1276], [50, 1492]],
+      },
+    ],
+    summary: ([hp, waves, turns]) => `Every ${turns} turns, ${waves === 1 ? "an Effect Wave hits" : `${countOf(waves)} Effect Waves, ${WAVE_INTERVAL} turns apart, hit`} every enemy on the floor. ${WAVE_INTERVAL} turns later, a field as wide as your shot range forms round the hero and adds ${countOf(hp)}x ATK to its HP Pool. The enemies it touches lose HP from the pool, closest first, through their DEF, until the pool runs out: those entering range before your shots fly, the rest at the end of the turn.`,
+    effect: ([hp, waves]) => `${countOf(hp)}x · ${countOf(waves)} ${waves === 1 ? "wave" : "waves"}`,
   },
 } as const satisfies Record<string, ArcanumDef>;
 

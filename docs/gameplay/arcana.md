@@ -23,7 +23,7 @@ An arcanum with a cooldown also has a bar on its card, filling as the cooldown r
 You can switch them on and off up to 40 times a run, all of them together; the number left rises off the switch each time.
 Undo doesn't give a toggle back.
 An arcanum with a cooldown starts it over when switched back on.
-**Toggles** in Settings hide Ricochet Shot's and Thunderbolt's damage animations; they strike all the same.
+**Toggles** in Settings hide Ricochet Shot's and Thunderbolt's damage animations and, once you have it, Lifespring's damage on enemies; they strike all the same.
 Pressing a card anywhere else shows its stats and what modifies them.
 
 **Arcanum Damage** = Arcanum Multiplier × Hero ATK × Equipment × (1 + Critical Factor × Critical Chance) × (1 + Super Crit Mult × Super Crit Chance × Critical Chance).
@@ -105,6 +105,43 @@ Undo takes back what a bolt did, but not its cooldown or the bolts spent.
 | Quantity | 5 | 20 | 16 |
 | Cooldown | 180 turns | 20 turns | 17 |
 
+## Lifespring
+
+*Every x turns, Effect Waves hit every enemy on the floor, then a field as wide as your shot range forms round you and adds y× your ATK to its HP Pool.*
+Pressing its card in a run shows the current HP Pool and what the Effect Waves give.
+
+**Effect Waves** come first, one every 4 turns, as many as its Effect Waves attribute, the first as the cooldown runs out.
+Each shows as a ring spreading from you to the board's edges, but hits every enemy on the floor at once, however far, walls or no walls.
+A wave does no damage and wakes no Flying enemy.
+What the waves give, while Lifespring is on, by whatever means the enemy later falls:
+
+| Effect | Now | What it does |
+|---|---|---|
+| Health Bonus | +0.05%, up to ×5 | Each enemy a wave hit raises your max HP this run as it falls, once however many waves hit it. Pressing the Max HP card in a run shows how far it has come. |
+| Damage Amplification | ×5 a wave | The field does this much more to an enemy for each wave that hit it: after two, ×10, so an enemy of 1,000 HP costs the pool 100. |
+| Gold Bonus | ×1.0 | The Gold of an enemy a wave or the field touched is multiplied. |
+| Cell Bonus | ×0 | An enemy a wave or the field touched that drops Cells drops this share more. |
+| DEF Reduction | 0% | Each wave takes this percent off every enemy's DEF, even below 0. |
+
+**The field** forms 4 turns after the last wave: three spinning, overlapping, faint green rings round you that spread out as it forms and stay until the pool is spent, on every floor of the run.
+Its radius is your shot range, 3 tiles until you train Attack Range, whether or not you hold the Archer; it takes no notice of walls.
+A new activation adds to any pool left, the rings turning blue for 5 turns to say so.
+
+Enemies inside lose HP from the pool, closest first, until the pool runs out or none are left, whatever their DEF.
+The pool pays exactly what felling each one costs (its HP left, divided by its Damage Amplification), or all it has if that is less, doing as much damage as that buys.
+A Shielded enemy's bubble cuts the field's damage as it cuts your other hits.
+An enemy your step brings into range meets the field before any arrow flies at it.
+Enemies already in range, and those that stepped up to you this turn, meet it at the very end of the turn, so your shots and the rest get their chance first.
+
+Undo takes back the field's damage, the pool it spent, its waves and its Health Bonus.
+Switching it off loses the pool, the waves on their way and its cooldown; the Health Bonus stays.
+
+| Attribute | First | Highest | Levels |
+|---|---|---|---|
+| HP | 2x | 9,119x | 31 |
+| Effect Waves | 1 | 5 | 5 |
+| Cooldown | 300 turns | 50 turns | 26 |
+
 ## In a trial
 
 Your Arcana work on what stands in a trial's arena: the boss while it is corporeal, its parts, its minions, mimics and Light Slimes.
@@ -116,4 +153,5 @@ It can defeat the boss and win the trial, and its damage counts toward Damage th
 **Thunderbolt** works as above, once a turn on a lone boss.
 **Ricochet Shot** springs from your own hits there, since a trial has no arrows: each hit rolls its chance, and a ricochet strikes the closest others.
 **Overseer** multiplies your hits on what stands in a beam, as the turn begins.
+**Lifespring** works as above on what stands in the arena, each wave counting for all of it, even what arrives later; a trial pays no kills, so its Health, Gold and Cell Bonuses do nothing there, and neither does DEF Reduction.
 Toggles and cooldowns are the attempt's own, leave your run outside alone, and survive a reload.

@@ -30,6 +30,8 @@ export interface FindsHost extends DeskHost {
   /** What the card trees of the run's hand give: a key's, door's or
    * shard's Gold. */
   readonly treeBonus: TreeBonus;
+  /** What Lifespring raises the kill of an enemy it touched by, paying its Health Bonus. */
+  readonly arcana: { lifespringKill(enemy: Enemy): { gold: number; cells: number } | undefined };
   /** A treasure chest's own rolls at (x, y): CHEST's Double and Triple, TORCH's Chest Cells. */
   chestRoll(x: number, y: number): ChestRoll;
   readonly missions: { record(type: MissionType, amount?: number, key?: string): void };
@@ -60,7 +62,7 @@ export class Finds {
     this.host.gainXp(enemy, floor, scale);
     // Silver belongs to the run, so it isn't gated like Gold: undo takes it back.
     const silver = purse.killSilver(enemy, floor, scale, at);
-    const { gold, cells, equipment } = purse.enemyLoot(enemy, at.x, at.y, scale, instakill);
+    const { gold, cells, equipment } = purse.enemyLoot(enemy, at.x, at.y, scale, instakill, this.host.arcana.lifespringKill(enemy));
     const cellsFound = cells ? [cellsText(cells)] : [], found = equipment.flatMap(equipmentGains);
     for (const piece of equipment) {
       if (piece.item || piece.salvaged) this.host.events.record("equipment", 1, key);

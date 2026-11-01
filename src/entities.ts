@@ -65,6 +65,10 @@ export type Enemy = {
    * the tile's `broken`), over 100 when that takes it below 0; set by the board
    * as it reads the tile (`wounded` in enemies/ranged.ts), never saved. */
   broken?: number;
+  /** Lifespring (arcana/lifespring.ts) has touched it: the Effect Waves that
+   * have hit it, 0 for the field alone; set by the board as it reads the tile's
+   * `sprung`, never saved. */
+  sprung?: number;
   /** An enemy spawned onto the floor during the run (`Game.spawnEnemy`):
    * its number among the run's spawns, which keys its loot apart from the
    * tile's (`RunPurse.killKey`); absent on enemies the floor was made with. */
@@ -109,7 +113,7 @@ export type DoorRule =
  * it fills, and a percent potion (whose tile is marked `color: "red"`, the
  * mark generation and saves keep) blue, like the Overheal bar. */
 export const potionShade = (t: Pick<Tile, "color">): "red" | "blue" => (t.color === "red" ? "blue" : "red");
-export type Tile = { kind: Kind; amount?: number; color?: KeyColor; door?: DoorRule; enemy?: Enemy; flyer?: Enemy; tier?: ChestTier; wound?: number; broken?: number; chest?: Exclude<ChestKind, "plain"> };
+export type Tile = { kind: Kind; amount?: number; color?: KeyColor; door?: DoorRule; enemy?: Enemy; flyer?: Enemy; tier?: ChestTier; wound?: number; broken?: number; sprung?: number; chest?: Exclude<ChestKind, "plain"> };
 export type Point = { x: number; y: number };
 /** A stationary wall-mounted light source, anchored to a walkable floor
  * tile adjacent to a wall. Its visibility polygon is computed once (on

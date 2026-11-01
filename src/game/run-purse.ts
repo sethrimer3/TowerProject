@@ -277,14 +277,16 @@ export class RunPurse {
    * by their Salvage chance (Instakill Salvage's too for an `instakill`),
    * and an Equipment Chest's piece by their Equipment Drop chance, once
    * Equipment is open. */
-  enemyLoot(enemy: Enemy, x: number, y: number, scale = 1, instakill = false): { gold: number; cells: number; equipment: EquipmentLoot[] } {
+  enemyLoot(enemy: Enemy, x: number, y: number, scale = 1, instakill = false, spring?: { gold: number; cells: number }): { gold: number; cells: number; equipment: EquipmentLoot[] } {
     if (!this.loot(this.killKey(enemy, x, y))) return { gold: 0, cells: 0, equipment: [] };
     // Effective or Dampen on the card that took the fight scales it; `gold`
     // then adds the tier's bonus and the other Gold multipliers.
-    const base = this.withCombo(this.killGold(enemy, instakill)), raised = scale === 1 ? base : snap(base * scale);
+    const base = this.withCombo(this.killGold(enemy, instakill)), raised = snap(base * scale * (spring?.gold ?? 1));
     const gold = this.gold(raised, this.payAt(x, y)), more = foeStat(this.tree, enemy, "Cells");
     const cells = enemy.strength === "greaterBoss" ? this.cells(scale, more) : more ? this.bankCells(snap(more * scale)) : 0;
-    return { gold, cells, equipment: this.killDrops(enemy, instakill) };
+    // Lifespring's Cell Bonus: more of the Cells an enemy it touched drops, if it drops any.
+    const extra = cells && spring?.cells ? this.bankCells(snap(cells * spring.cells)) : 0;
+    return { gold, cells: snap(cells + extra), equipment: this.killDrops(enemy, instakill) };
   }
 
   /** What the enemy cards' trees' drops find from a kill of `enemy`: each

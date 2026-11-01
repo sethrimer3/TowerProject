@@ -15,6 +15,7 @@ import { drawLightElemental, drawElementalTransit, TELEPORT_MS } from "./element
 export { drawLightElemental } from "./elemental-art.ts";
 import {TrialCamera,TRIAL_VIEW_TILES,TRIAL_TILE_SIZE,type TrialTransition} from "./camera.ts";
 import {paintOverseerBeams} from "../render/effects/overseer-beams.ts";
+import {FIELD_GROW_MS,paintEffectWave,paintLifespring} from "../render/effects/lifespring.ts";
 import {paintThunderbolt,paintThunderlight} from "../render/effects/thunderbolt.ts";
 import {beamDirection} from "../arcana/overseer.ts";
 import {RICOCHET_FLASH_MS,THUNDERBOLT_FALL_MS,THUNDERBOLT_FLASH_MS} from "../volley.ts";
@@ -58,7 +59,7 @@ export class TrialRenderer {
   get settled(){return this.camera.settled;}
   tileAt(s:TrialState,u:number,v:number){return this.camera.tileAt(s,u,v);}
   draw(s: TrialState, now: number, firedAt: number, reduceMotion: boolean,
-    options: {styledSprites?:boolean;spriteAnimations?:boolean;destination?:{x:number;y:number}|null;transition?:TrialTransition;pathAhead?:readonly {dx:number;dy:number}[];hidden?:{ricochet:boolean;thunderbolt:boolean}} = {}) {
+    options: {styledSprites?:boolean;spriteAnimations?:boolean;destination?:{x:number;y:number}|null;transition?:TrialTransition;pathAhead?:readonly {dx:number;dy:number}[];hidden?:{ricochet:boolean;thunderbolt:boolean;lifespring:boolean}} = {}) {
     this.camera.update(s,now,reduceMotion,options.transition,options.pathAhead);
     const styled=true,animated=!!options.spriteAnimations;
     // Animation is presentation only; saved turns own all positions.
@@ -259,9 +260,16 @@ export class TrialRenderer {
         }
       }
       if(s.arcana?.spells?.beams){const hero=this.camera.hero(s);paintOverseerBeams(c,px(hero.x)+12,py(hero.y)+12,SIZE*2,s.arcana.spells.beams,beamDirection(s.arcana.beamTurns)/100);}
+      if(s.arcana?.spells?.lifespring) {
+        const hero=this.camera.hero(s),spring=s.arcana.lifespring,step=s.arcana.springStep,age=reduceMotion?Infinity:now-this.strikesAt;
+        if(step?.wave)paintEffectWave(c,px(hero.x)+12,py(hero.y)+12,SIZE*1.5,age);
+        if(spring?.pool)paintLifespring(c,px(hero.x)+12,py(hero.y)+12,S*s.arcana.spells.lifespring.reach/100,reduceMotion?0:now,!!spring.tint,step?.formed?Math.max(0,Math.min(1,age/FIELD_GROW_MS)):1);
+      }
       for(const strike of this.lastStrikes??[]) {
         const age=now-this.strikesAt,to={x:px(strike.to.x)+12,y:py(strike.to.y)+12};
-        if(strike.kind==="ricochet") {
+        if(strike.kind==="lifespring") {
+          if(options.hidden?.lifespring || age>=RICOCHET_FLASH_MS+200)continue;
+        } else if(strike.kind==="ricochet") {
           if(options.hidden?.ricochet || age>=RICOCHET_FLASH_MS+200)continue;
           if(age<RICOCHET_FLASH_MS){c.save();c.strokeStyle="#fff";c.lineWidth=1.5;c.beginPath();c.moveTo(px(strike.from.x)+12,py(strike.from.y)+12);c.lineTo(to.x,to.y);c.stroke();c.restore();}
         } else {

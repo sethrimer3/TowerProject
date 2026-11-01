@@ -11,7 +11,7 @@ import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./cards/b
 import { BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
 import { noteGoldBoost } from "./economy/gold-boost.ts";
 import { canWarp, claimGoal, goalUnlocked, goalsWaiting } from "./goals.ts";
-import { fightRicochet, landsAt, shortWay, thunderbolts, volleyTurn, type Shot, type Volley, type VolleyTurn } from "./volley.ts";
+import { fightRicochet, landsAt, lifespringContact, shortWay, thunderbolts, volleyTurn, type Shot, type Volley, type VolleyTurn } from "./volley.ts";
 import { missGem } from "./economy/gems.ts";
 import { DelvePlan } from "./delve/automove.ts";
 import { defaults } from "./save/save.ts";
@@ -273,6 +273,8 @@ export class Game {
   /** The latest turn's shots (enemies/ranged.ts), for the board to fly and land;
    * undo, a new run or a mode switch clears it. */
   volley: Volley | null = null;
+  /** When Lifespring's latest Effect Waves fired and its field last formed, for the board to draw. */
+  springFx: { waves: number[]; formedAt: number } = { waves: [], formedAt: -Infinity };
   /** The latest turn's step inside a run, for the board to walk the hero
    * along as its shots leave; null when it came no single step. */
   turnShown: ShownTurn | null = null;
@@ -676,6 +678,7 @@ export class Game {
     this.route = [];
     this.fights.clear();
     this.volley = null;
+    this.springFx = { waves: [], formedAt: -Infinity };
     this.turnShown = null;
     this.turnClock = null;
     this.dropHandPlan();
@@ -2415,12 +2418,16 @@ export class Game {
     this.turnClock = { at, ms };
     // The board walks a single step at an even pace; anything else it snaps.
     this.turnShown = sameFloor && Math.abs(p.x - from.x) + Math.abs(p.y - from.y) === 1 ? { at, ms, from: { x: from.x, y: from.y }, to: { x: p.x, y: p.y } } : null;
+    this.lifespringTurn(at);
     // Thunderbolt strikes first, so what it fells shoots no more this turn.
     const struck = [...(sameFloor ? sprung : []), ...this.strikeBolts(fired, beams, sameFloor ? from : undefined)];
     if ((this.tier < 3 && !archer) || !sameFloor) {
       this.showVolley(struck, at, ms);
+      this.showVolley(this.lifespringContact(), at, ms, true);
       return;
     }
+    // What the hero's step brought into range meets the field before any arrow.
+    const met = this.lifespringContact(from, 1);
     const v = this.run.volleys ?? { turn: 0 };
     const out = volleyTurn({ board: this.world, wrap: this.wrap, floorOf: (x, y) => this.floorOf(x, y), hero: p, from, seed: this.run.seed,
       volleys: { ...v, turn: v.turn + 1 }, archer, ranks: { ...this.trainingNow, archives: this.save.archives }, cardCrit: this.cardCrit, handShot: this.handShot, ricochet: this.arcana.ricochet(), ...(beams ? { beams } : {}) });
@@ -2436,7 +2443,7 @@ export class Game {
     }
     for (const { enemy, at, instakill, crits, thorns, ricochet } of out.kills)
       this.message = [`${thorns ? "Thorns" : ricochet ? "Ricochet" : "Arrow"} · ${enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, at, 1, instakill, crits ? 1 : 0)].join(" · ");
-    this.showVolley([...struck, ...out.shots], at, ms);
+    this.showVolley([...struck, ...met, ...out.shots], at, ms);
     // Angel Wings raises the hero from a shot that would fell it, as from a strike.
     if (out.fell && this.wingsReady) {
       p.hp = p.maxHp;
@@ -2453,6 +2460,41 @@ export class Game {
       if (moved.foes && Object.keys(moved.foes).length) this.run.volleys.foes = moved.foes;
       else delete this.run.volleys.foes;
     }
+    this.showVolley(this.lifespringContact(), at, ms, true);
+  }
+  /** Lifespring's turn, before anything strikes (arcana.md): its cooldown, and an
+   * Effect Wave hitting every enemy of the floor at once, or its field forming. */
+  private lifespringTurn(at: number) {
+    const step = this.arcana.lifespringTurn(), p = this.run.player;
+    if (step?.wave) {
+      const broke = this.arcana.lifespringRule()!.effects.defense;
+      for (const { x, y } of this.world.floorEnemies?.(p.x, p.y) ?? []) this.world.markSpring?.(x, y, 1, broke);
+      this.springFx.waves = [...this.springFx.waves.slice(-3), at];
+    }
+    if (step?.formed) this.springFx.formedAt = at;
+  }
+  /** How far Lifespring's field reaches, in hundredths of a tile: the hero's shot
+   * range, Attack Range's first rank until the Archer's training raises it. */
+  get lifespringReach() {
+    return arrowRange(trainedAmount(this.trainingNow, "attackRange"), this.handShot.range);
+  }
+  /** Lifespring's field as the board shows it, while it is on and its pool holds. */
+  get lifespringField() {
+    const field = this.arcana.lifespringField;
+    return field && { ...field, reach: this.lifespringReach };
+  }
+  /** Lifespring's field: at the end of the turn, once every shot has flown and
+   * every enemy has stepped, all it touches; before the arrows (`entered`, the
+   * tile the hero stepped from; `tick`), only what the step brought into range.
+   * It pays from the pool, and its kills pay; returns its shots to show. */
+  private lifespringContact(entered?: { x: number; y: number }, tick?: number) {
+    const s = this.run.lifespring;
+    if (!s?.pool || !this.arcana.lifespringRule()) return [];
+    const out = lifespringContact({ board: this.world, wrap: this.wrap, hero: this.run.player }, s.pool, this.lifespringReach, (waves) => this.arcana.lifespringRate(waves), entered, tick);
+    if (out.pool) s.pool = out.pool;
+    else delete s.pool;
+    for (const { enemy, at: tile } of out.kills) this.message = [`Lifespring · ${enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, tile, 1, false, 0)].join(" · ");
+    return out.shots;
   }
   /** Thunderbolt's bolts of this turn (arcana.md), `fired` being the cooldowns
    * that just ran out: pays what they fell and returns their shots. */
@@ -2500,12 +2542,13 @@ export class Game {
     return world instanceof World ? Math.floor(world.depth(x, y) / 10) + 1 : this.run.height + 1;
   }
   /** The board flies the turn's shots, each leaving as far into the turn
-   * shown from `at` for `ms` as it fired; those the Toggles hide don't show. */
-  private showVolley(all: Shot[], at: number, ms: number) {
-    const { ricochetAnimation, thunderboltAnimation } = this.save.settings;
-    const shots = all.filter((s) => (!s.ricochet || ricochetAnimation) && (!s.thunderbolt || thunderboltAnimation));
+   * shown from `at` for `ms` as it fired; those the Toggles hide don't show.
+   * `more`: they join what this turn already shows. */
+  private showVolley(all: Shot[], at: number, ms: number, more = false) {
+    const { ricochetAnimation, thunderboltAnimation, lifespringDamage } = this.save.settings;
+    const shots = all.filter((s) => (!s.ricochet || ricochetAnimation) && (!s.thunderbolt || thunderboltAnimation) && (!s.lifespring || lifespringDamage));
     if (!shots.length) return;
-    this.volley = { at, ms, shots };
+    this.volley = { at, ms, shots: more && this.volley?.at === at ? [...this.volley.shots, ...shots] : shots };
     const broke = shots.find((s) => s.shieldBroke);
     if (broke) this.fights.shieldBrokeAt = landsAt(this.volley, broke);
   }

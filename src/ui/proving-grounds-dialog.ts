@@ -187,7 +187,7 @@ export class ProvingGroundsDialog {
     }
     this.renderer!.draw(s,now,this.firedAt,this.base.save.settings.reduceMotion,
       {styledSprites:usesGameSprites(this.base.save),spriteAnimations:this.base.save.settings.spriteAnimations,destination:target,
-        transition:this.base.save.settings.transition,pathAhead:this.cameraPath,hidden:{ricochet:!this.base.save.settings.ricochetAnimation,thunderbolt:!this.base.save.settings.thunderboltAnimation}});
+        transition:this.base.save.settings.transition,pathAhead:this.cameraPath,hidden:{ricochet:!this.base.save.settings.ricochetAnimation,thunderbolt:!this.base.save.settings.thunderboltAnimation,lifespring:!this.base.save.settings.lifespringDamage}});
     const view=this.renderer!.view(s),hero=this.renderer!.hero(s);
     Object.assign(this.canvas.dataset,{trialViewLeft:String(view.left),trialViewBottom:String(view.bottom),trialViewRoom:s.room,trialHeroX:String(hero.x),trialHeroY:String(hero.y),trialCameraMoving:String(!this.renderer!.settled)});
     return true;

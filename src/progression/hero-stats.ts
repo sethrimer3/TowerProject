@@ -4,6 +4,7 @@ import type { Loadout } from "./loadout.ts";
 import { boonFactor } from "../shrines.ts";
 import { badgeFactor } from "../cards/badges.ts";
 import { treeHeroFactor } from "../cards/trees.ts";
+import { lifespringFactor } from "../arcana/lifespring.ts";
 
 /** The stats the loadout carries into a run's hero, which a change to the
  * loadout moves mid-run. */
@@ -22,9 +23,9 @@ export function loadoutShift(before: Loadout, after: Loadout): StatShift {
   return shift;
 }
 
-/** What the run's boons and Max HP badge boosts multiply hero stat
- * `stat` by now. */
-export const heroFactor = (run: Run, stat: HeroStat) => boonFactor(run, stat) * badgeFactor(run, stat) * treeHeroFactor(run, stat);
+/** What the run's boons, Max HP badge boosts and Lifespring's Health Bonus
+ * multiply hero stat `stat` by now. */
+export const heroFactor = (run: Run, stat: HeroStat) => boonFactor(run, stat) * badgeFactor(run, stat) * treeHeroFactor(run, stat) * lifespringFactor(run, stat);
 
 /** Moves `run`'s hero, and the loadout it keeps, by `shift`, each stat
  * times what the run's boons and Max HP badge boosts multiply it by (as
@@ -52,9 +53,24 @@ export function shiftHero(run: Run, shift: StatShift, overheal = 1000): StatShif
  * the old, and HP with it, keeping its share; a fallen hero (0 HP) stays
  * down. Returns how far max HP moved. */
 export function boostMaxHp(run: Run, percent: number) {
-  const p = run.player, before = badgeFactor(run, "maxHp");
+  const before = badgeFactor(run, "maxHp");
   run.maxHpBoost = snap((run.maxHpBoost ?? 0) + percent);
-  const after = badgeFactor(run, "maxHp"), max = p.maxHp;
+  return rescaleMaxHp(run, before, badgeFactor(run, "maxHp"));
+}
+
+/** Lifespring's Health Bonus adds `percent` of max HP, summed into its own
+ * multiplier on it, which stops at `limit`; HP moves with it, as `boostMaxHp`'s. */
+export function boostLifespringHealth(run: Run, percent: number, limit: number) {
+  const before = lifespringFactor(run, "maxHp"), s = (run.lifespring ??= {}), health = Math.min((limit - 1) * 100, snap((s.health ?? 0) + percent));
+  if (health > 0) s.health = health;
+  return rescaleMaxHp(run, before, lifespringFactor(run, "maxHp"));
+}
+
+/** The hero's max HP (and the run's loadout's) goes from multiplier `before` to
+ * `after`, and HP with it, keeping its share; a fallen hero (0 HP) stays down.
+ * Returns how far max HP moved. */
+function rescaleMaxHp(run: Run, before: number, after: number) {
+  const p = run.player, max = p.maxHp;
   p.maxHp = snap((p.maxHp * after) / before);
   // HP Overheal holds above max keeps its share too.
   if (p.hp > 0) p.hp = Math.max(1, p.hp > max ? snap((p.hp * after) / before) : Math.min(p.maxHp, snap((p.hp * after) / before)));

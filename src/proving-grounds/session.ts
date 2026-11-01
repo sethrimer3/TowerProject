@@ -51,7 +51,9 @@ export class TrialSession {
     if(state.arcana) {
       game.run.beamTurns=state.arcana.beamTurns;
       const desk=game.arcana,beams=desk.beams;
-      state.arcana.spells={ricochet:desk.ricochet(),thunderbolt:desk.thunderbolt(),beams:beams&&{count:beams.count,width:beams.width,bonus:beams.bonus},overseer:desk.held.some(h=>h.id==="overseer")};
+      const spring=desk.lifespringRule();
+      if(spring)game.run.lifespring=state.arcana.lifespring??={};
+      state.arcana.spells={ricochet:desk.ricochet(),thunderbolt:desk.thunderbolt(),lifespring:spring&&{hp:spring.hp,waves:spring.waves,turns:spring.turns,reach:game.lifespringReach},beams:beams&&{count:beams.count,width:beams.width,bonus:beams.bonus},overseer:desk.held.some(h=>h.id==="overseer")};
     }
     game.save.gemDrop={...this.base.save.gemDrop};game.save.goldBoostUntil=this.base.save.goldBoostUntil;
     for(const key of ["gold","gems","arcanite","medals"] as const) game.save[key]=this.base.save[key];

@@ -8,7 +8,7 @@ import { generateTowerFloor } from "./index.ts";
 import { tierCells, tierTile } from "../tiers.ts";
 import { foeTile, type FoeRule } from "../shrines.ts";
 import { fastCells } from "../enemies/fast.ts";
-import { rangedCells, wounded, woundMore } from "../enemies/ranged.ts";
+import { rangedCells, springMark, wounded, woundMore } from "../enemies/ranged.ts";
 import { skippedTile, type LevelSkips } from "../enemies/level-skips.ts";
 import { armoredCells } from "../enemies/armored.ts";
 import { flyingCells } from "../enemies/flying.ts";
@@ -243,5 +243,9 @@ export class RoomWorld implements Board {
   wound(x: number, y: number, damage: number, broke = 0) {
     const k = point(x, y), raw = this.changes[k] ?? this.cells.get(k);
     if (raw?.kind === "enemy" || raw?.flyer) this.changes[k] = woundMore(raw, damage, broke);
+  }
+  markSpring(x: number, y: number, waves: number, broke = 0) {
+    const k = point(x, y), raw = this.changes[k] ?? this.cells.get(k);
+    if (raw?.kind === "enemy" || raw?.flyer) this.changes[k] = springMark(raw, waves, broke);
   }
 }

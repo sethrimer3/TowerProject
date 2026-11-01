@@ -7,6 +7,7 @@ import type { RunCore } from "../runs.ts";
 import type { Save } from "../save/shape.ts";
 import { boonFactor, runBoons } from "../shrines.ts";
 import { badgeFactor } from "../cards/badges.ts";
+import { lifespringFactor } from "../arcana/lifespring.ts";
 import { treeHeroFactor } from "../cards/trees.ts";
 import { TRAINING_GROUPS, TRAINING, TRAINING_PER_LEVEL, trainingCap, isStatRow, trained, trainingWorth, amountAt, regrowTurns, trainedAmount, trainingDef, type StatTrainingRow, type TrainingDef, type TrainingId, type TrainingRow } from "./training.ts";
 import { GOLD_SHOP, type GoldItemId } from "../economy/provisions.ts";
@@ -298,7 +299,7 @@ export const shownAmount = (value: number) => Math.round(value * 100) / 100;
 /** Where a Training row's value is read: the mode whose hero's equipment
  * counts, and a run inside, if any, whose hero's stats, ranks bought with
  * Silver and boons count too. */
-export type TrainingView = { mode: Mode; run?: Pick<RunCore, "training" | "player" | "maxHpBoost" | "cardTrees"> };
+export type TrainingView = { mode: Mode; run?: Pick<RunCore, "training" | "player" | "maxHpBoost" | "cardTrees" | "lifespring"> };
 
 /** What one more rank of `id` costs (in training points, or a trainer's
  * Gold) and does: its value now and with `count` more ranks (`rowValue`),
@@ -350,7 +351,7 @@ export function rowValue(save: Save, id: TrainingId, extra: number, view: Traini
     // too), as a run would gain them (`rankShift`).
     const stat = row.stat, ranks = save.training[id] + (run?.training?.[id] ?? 0);
     const gain = extra ? rankShift(save, view.mode, row, ranks, ranks + extra) : 0;
-    const value = run ? (run.player[stat] ?? 0) + gain * boonFactor(run, stat) * badgeFactor(run, stat) * treeHeroFactor(run, stat) : loadout(save, view.mode)[stat] + gain;
+    const value = run ? (run.player[stat] ?? 0) + gain * boonFactor(run, stat) * badgeFactor(run, stat) * treeHeroFactor(run, stat) * lifespringFactor(run, stat) : loadout(save, view.mode)[stat] + gain;
     return { unit: statUnit(stat), value: shownStat(stat, snap(value * f)) };
   }
   const ranks = save.training[id] + (run?.training?.[id] ?? 0) + extra, boons = run ? runBoons(run, save) : null;

@@ -122,6 +122,8 @@ export const SETTINGS = {
   ricochetAnimation: { kind: "toggle", default: true, page: { id: "ricochet-animation", label: "Ricochet Shot damage animations" } },
   /** Show Thunderbolt's bolts, their light and their damage (they strike all the same). */
   thunderboltAnimation: { kind: "toggle", default: true, page: { id: "thunderbolt-animation", label: "Thunderbolt damage animations" } },
+  /** Show the damage Lifespring's field deals on the enemies it touches (it deals it all the same). */
+  lifespringDamage: { kind: "toggle", default: true, page: { id: "lifespring-damage", label: "Lifespring damage on enemies" } },
   /** The XP a badge pays, and the Gold combo's "×N Gold" as it grows
    * (`Game.gain`). */
   xpGains: { kind: "toggle", default: true, page: { id: "xp-gains", label: "XP gained" } },

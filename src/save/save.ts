@@ -37,6 +37,7 @@ import { isFoeKey } from "../cards/foe-cards.ts";
 import { decodeCardXp } from "../cards/levels.ts";
 import { decodeCardBuys, defaultCardBuys } from "../cards/buys.ts";
 import { decodeArcana, decodeArcanaRun, defaultArcana, defaultArcanaRun } from "../arcana/arcana.ts";
+import { validLifespring } from "../arcana/lifespring.ts";
 import { totalCardLevels, treeNode, decodeCardTrees, pointsSpent } from "../cards/trees.ts";
 export function defaults(): Save {
   return {
@@ -118,15 +119,16 @@ const validEnemy = (e: any) =>
 const validSpawned = (e: any) => validEnemy(e) && (e.spawn !== undefined || e.strength === "greaterBoss");
 /** What the hero's arrows have taken off an enemy's DEF (Armor Break), if anything. */
 const validBroken = (v: any) => v.broken === undefined || (finite(v.broken) && v.broken > 0);
+const validSprung = (v: any) => v.sprung === undefined || wholeIn(v.sprung, 0, 1e9);
 /** An enemy the hero's arrows have wounded or broken (enemies/ranged.ts): the
  * generated or spawned enemy, kept with its wound and what they broke. */
-const validWounded = (v: any) => (v.wound === undefined || (finite(v.wound) && v.wound > 0)) && validBroken(v) && validEnemy(v.enemy);
+const validWounded = (v: any) => (v.wound === undefined || (finite(v.wound) && v.wound > 0)) && validBroken(v) && validSprung(v) && validEnemy(v.enemy);
 /** Open floor, maybe with a Flying enemy over it (enemies/flying.ts), generated
  * or moved there, kept with its wound. */
-const validFloor = (v: any) => v.flyer === undefined ? v.wound === undefined && v.broken === undefined : validEnemy(v.flyer) && (v.wound === undefined || (finite(v.wound) && v.wound > 0)) && validBroken(v);
+const validFloor = (v: any) => v.flyer === undefined ? v.wound === undefined && v.broken === undefined && v.sprung === undefined : validEnemy(v.flyer) && (v.wound === undefined || (finite(v.wound) && v.wound > 0)) && validBroken(v) && validSprung(v);
 const validChange = (v: any) =>
   (v?.kind === "floor" && validFloor(v)) || v?.kind === "wall" ||
-  (v?.kind === "enemy" && (v.wound === undefined && v.broken === undefined ? validSpawned(v.enemy) : validWounded(v))) ||
+  (v?.kind === "enemy" && (v.wound === undefined && v.broken === undefined && v.sprung === undefined ? validSpawned(v.enemy) : validWounded(v))) ||
   (v?.kind === "openedChest" && (v.tier === undefined || CHEST_TIERS.includes(v.tier))) ||
   (v?.kind === "reward" && CHEST_TIERS.includes(v.tier));
 const validChanges = (m: any) => pointMap(m, validChange);
@@ -234,6 +236,7 @@ const RUN_FIELD_CHECKS = {
   spawns: (v: unknown) => wholeIn(v, 1, 1e9),
   wingsSpent: (v: unknown) => v === true,
   beamTurns: (v: unknown) => wholeIn(v, 1, 1e12),
+  lifespring: validLifespring,
   combo: (v: any) => isRecord(v) && wholeIn(v.next, 1, 1e9) && wholeIn(v.idle, 0, 1),
   volleys: (v: any) => isRecord(v) && wholeIn(v.turn, 0, 1e12) && (v.hero === undefined || wholeIn(v.hero, 0, 1e6)) &&
     (v.waited === undefined || wholeIn(v.waited, 1, 1e12)) && (v.rapid === undefined || wholeIn(v.rapid, 1, 1e4)) &&
