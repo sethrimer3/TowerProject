@@ -65,11 +65,10 @@ export function drawKit(c: CanvasRenderingContext2D, id: string, x = 0, y = 0, w
   return true;
 }
 
-/** Theme-specific vector/text art is kept for non-default UI themes.
- * The default interface uses the PNGs decoded by bootstrap, without a
- * second loading/fallback state for each newly created control. */
-export function kitIcon(id: string, themeArt: string, className: string, overlay = "") {
-  return `<span class="sprite-icon sprite-ready ${className}" aria-hidden="true"><span class="theme-art">${themeArt}</span><img class="sprite-replacement" src="${kitUrl(id)}" alt="">${overlay}</span>`;
+/** Every UI theme shares decoded PNG subjects; live overlays stay independent.
+ * The unused art argument preserves existing callers without emitting a fallback. */
+export function kitIcon(id: string, _themeArt: string, className: string, overlay = "") {
+  return `<span class="sprite-icon sprite-ready ${className}" aria-hidden="true"><img class="sprite-replacement" src="${kitUrl(id)}" alt="">${overlay}</span>`;
 }
 
 /** A themed enemy keeps its roster identity while sharing material ramps.

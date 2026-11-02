@@ -5,7 +5,7 @@
    one gold; page titles on a wine banner in the blocky Silkscreen face,
    the rest in the small Tiny5 pixel face; notes on parchment, and bars
    filled in chunky segments. Every frame is a ten-pixel picture drawn as
-   inline SVG and stretched by `border-image` at two screen pixels a pixel,
+   native PNGs and stretched by `border-image` at two screen pixels a pixel,
    so its corners stay stepped and sharp.
    Every selector is scoped under `html.pixel` so nothing changes while the
    theme is off. Loaded after style.css and the other themes. */
@@ -43,27 +43,27 @@ html.pixel {
   --p-blue: #6fb6ff;
   --p-title: Silkscreen, Tiny5, monospace;
   /* a panel: indigo, lit along its top and left. */
-  --p-panel: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' shape-rendering='crispEdges'><path fill='%230e0b18' d='M2 0h6v1H2zM0 2h1v6H0zM9 2h1v6H9zM2 9h6v1H2zM1 1h1v1H1zM8 1h1v1H8zM1 8h1v1H1zM8 8h1v1H8z'/><path fill='%232c2950' d='M2 1h6v8H2zM1 2h8v6H1z'/><path fill='%234a4482' d='M2 1h6v1H2zM1 2h1v6H1zM2 2h1v1H2z'/><path fill='%231c1936' d='M2 8h6v1H2zM8 2h1v6H8zM7 7h1v1H7z'/></svg>");
+  --p-panel: url("../public/assets/style/theme-pixel-panel.png");
   /* a dialog: the panel framed in gold. */
-  --p-dialog: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' shape-rendering='crispEdges'><path fill='%23f2b63d' d='M2 0h6v1H2zM0 2h1v6H0zM9 2h1v6H9zM2 9h6v1H2zM1 1h1v1H1zM8 1h1v1H8zM1 8h1v1H1zM8 8h1v1H8z'/><path fill='%232c2950' d='M2 1h6v8H2zM1 2h8v6H1z'/><path fill='%234a4482' d='M2 1h6v1H2zM1 2h1v6H1zM2 2h1v1H2z'/><path fill='%231c1936' d='M2 8h6v1H2zM8 2h1v6H8zM7 7h1v1H7z'/></svg>");
+  --p-dialog: url("../public/assets/style/theme-pixel-selected.png");
   /* a button: blue, raised. */
-  --p-button: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' shape-rendering='crispEdges'><path fill='%230e0b18' d='M2 0h6v1H2zM0 2h1v6H0zM9 2h1v6H9zM2 9h6v1H2zM1 1h1v1H1zM8 1h1v1H8zM1 8h1v1H1zM8 8h1v1H8z'/><path fill='%233d63b0' d='M2 1h6v8H2zM1 2h8v6H1z'/><path fill='%237aa4ec' d='M2 1h6v1H2zM1 2h1v6H1zM2 2h1v1H2z'/><path fill='%2324407a' d='M2 8h6v1H2zM8 2h1v6H8zM7 7h1v1H7z'/></svg>");
+  --p-button: url("../public/assets/style/theme-pixel-normal.png");
   /* a button pressed in: its bevel turned over. */
-  --p-press: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' shape-rendering='crispEdges'><path fill='%230e0b18' d='M2 0h6v1H2zM0 2h1v6H0zM9 2h1v6H9zM2 9h6v1H2zM1 1h1v1H1zM8 1h1v1H8zM1 8h1v1H1zM8 8h1v1H8z'/><path fill='%232b4c8f' d='M2 1h6v8H2zM1 2h8v6H1z'/><path fill='%231b3263' d='M2 1h6v1H2zM1 2h1v6H1zM2 2h1v1H2z'/><path fill='%234f78c4' d='M2 8h6v1H2zM8 2h1v6H8zM7 7h1v1H7z'/></svg>");
+  --p-press: url("../public/assets/style/theme-pixel-pressed.png");
   /* what is chosen: gold, raised. */
-  --p-gold: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' shape-rendering='crispEdges'><path fill='%230e0b18' d='M2 0h6v1H2zM0 2h1v6H0zM9 2h1v6H9zM2 9h6v1H2zM1 1h1v1H1zM8 1h1v1H8zM1 8h1v1H1zM8 8h1v1H8z'/><path fill='%23e9a93a' d='M2 1h6v8H2zM1 2h8v6H1z'/><path fill='%23ffe08a' d='M2 1h6v1H2zM1 2h1v6H1zM2 2h1v1H2z'/><path fill='%23a8641c' d='M2 8h6v1H2zM8 2h1v6H8zM7 7h1v1H7z'/></svg>");
+  --p-gold: url("../public/assets/style/theme-pixel-selected.png");
   /* a button that can't be pressed: dull. */
-  --p-off: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' shape-rendering='crispEdges'><path fill='%230e0b18' d='M2 0h6v1H2zM0 2h1v6H0zM9 2h1v6H9zM2 9h6v1H2zM1 1h1v1H1zM8 1h1v1H8zM1 8h1v1H1zM8 8h1v1H8z'/><path fill='%2338355a' d='M2 1h6v8H2zM1 2h8v6H1z'/><path fill='%234a4670' d='M2 1h6v1H2zM1 2h1v6H1zM2 2h1v1H2z'/><path fill='%2327243f' d='M2 8h6v1H2zM8 2h1v6H8zM7 7h1v1H7z'/></svg>");
+  --p-off: url("../public/assets/style/theme-pixel-disabled.png");
   /* what is dangerous: red, raised. */
-  --p-danger: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' shape-rendering='crispEdges'><path fill='%230e0b18' d='M2 0h6v1H2zM0 2h1v6H0zM9 2h1v6H9zM2 9h6v1H2zM1 1h1v1H1zM8 1h1v1H8zM1 8h1v1H1zM8 8h1v1H8z'/><path fill='%23c23a3a' d='M2 1h6v8H2zM1 2h8v6H1z'/><path fill='%23ff7a5c' d='M2 1h6v1H2zM1 2h1v6H1zM2 2h1v1H2z'/><path fill='%237a1d26' d='M2 8h6v1H2zM8 2h1v6H8zM7 7h1v1H7z'/></svg>");
+  --p-danger: url("../public/assets/style/theme-pixel-danger.png");
   /* a field or well: dark, pressed in. */
-  --p-field: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' shape-rendering='crispEdges'><path fill='%230e0b18' d='M2 0h6v1H2zM0 2h1v6H0zM9 2h1v6H9zM2 9h6v1H2zM1 1h1v1H1zM8 1h1v1H8zM1 8h1v1H1zM8 8h1v1H8z'/><path fill='%2315122a' d='M2 1h6v8H2zM1 2h8v6H1z'/><path fill='%230a0814' d='M2 1h6v1H2zM1 2h1v6H1zM2 2h1v1H2z'/><path fill='%233a3566' d='M2 8h6v1H2zM8 2h1v6H8zM7 7h1v1H7z'/></svg>");
+  --p-field: url("../public/assets/style/theme-pixel-field.png");
   /* a note: parchment. */
-  --p-tip: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' shape-rendering='crispEdges'><path fill='%230e0b18' d='M2 0h6v1H2zM0 2h1v6H0zM9 2h1v6H9zM2 9h6v1H2zM1 1h1v1H1zM8 1h1v1H8zM1 8h1v1H1zM8 8h1v1H8z'/><path fill='%23f4e6c4' d='M2 1h6v8H2zM1 2h8v6H1z'/><path fill='%23fff8e4' d='M2 1h6v1H2zM1 2h1v6H1zM2 2h1v1H2z'/><path fill='%23d2b98a' d='M2 8h6v1H2zM8 2h1v6H8zM7 7h1v1H7z'/></svg>");
+  --p-tip: url("../public/assets/ui/frames/banner.png");
   /* a page title's banner: wine. */
-  --p-banner: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' shape-rendering='crispEdges'><path fill='%230e0b18' d='M2 0h6v1H2zM0 2h1v6H0zM9 2h1v6H9zM2 9h6v1H2zM1 1h1v1H1zM8 1h1v1H8zM1 8h1v1H1zM8 8h1v1H8z'/><path fill='%237a3352' d='M2 1h6v8H2zM1 2h8v6H1z'/><path fill='%23b55a7c' d='M2 1h6v1H2zM1 2h1v6H1zM2 2h1v1H2z'/><path fill='%234a1d33' d='M2 8h6v1H2zM8 2h1v6H8zM7 7h1v1H7z'/></svg>");
+  --p-banner: url("../public/assets/style/theme-pixel-selected.png");
   /* The night behind it all: a few pixel stars, one gold twinkle. */
-  --p-stars: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='96' height='96' shape-rendering='crispEdges'><path fill='%23f4eee0' d='M14 18h2v2h-2zM70 9h2v2h-2zM44 61h2v2h-2z'/><path fill='%238f86c9' d='M33 37h2v2h-2zM86 47h2v2h-2zM7 77h2v2h-2zM61 85h2v2h-2zM90 70h2v2h-2z'/><path fill='%23ffe08a' d='M77 31h2v2h-2zM75 33h2v2h-2zM79 33h2v2h-2zM77 35h2v2h-2zM24 88h2v2h-2z'/><path fill='%233a3566' d='M52 22h2v2h-2zM20 50h2v2h-2zM66 58h2v2h-2zM38 76h2v2h-2zM5 5h2v2H5z'/></svg>");
+  --p-stars: url("../public/assets/style/theme-orbit-stars.png");
   --gold: var(--p-gold);
   --muted: var(--p-dim);
   --line: var(--p-ink);
@@ -125,7 +125,7 @@ html.pixel ::-webkit-scrollbar-track {
 }
 html.pixel ::-webkit-scrollbar-thumb {
   border: 2px solid transparent;
-  border-image: var(--p-button) 3 fill / 6px / 0 stretch;
+  border-image: var(--p-button) 6 fill / 6px / 0 stretch;
   background: transparent;
 }
 
@@ -151,7 +151,7 @@ html.pixel .eq-loadout-head:not(#_) {
   padding: 6px 12px;
   text-align: center;
   border: 2px solid transparent;
-  border-image: var(--p-banner) 3 fill / 6px / 0 stretch;
+  border-image: var(--p-banner) 6 fill / 6px / 0 stretch;
 }
 /* A gold diamond either side of a page's title. */
 html.pixel .page-title h2:not(#_)::before,
@@ -211,7 +211,7 @@ html.pixel .inspect-box:not(#_),
 html.pixel .run-menu-frame:not(#_),
 html.pixel .inspection:not(#_) {
   border: 2px solid transparent;
-  border-image: var(--p-panel) 3 fill / 6px / 0 stretch;
+  border-image: var(--p-panel) 6 fill / 6px / 0 stretch;
 }
 html.pixel .setting:not(#_) {
   padding-inline: 10px;
@@ -222,7 +222,7 @@ html.pixel .inspection:empty:not(#_) {
 /* Dialogs: the panel framed in gold, over a darkened night. */
 html.pixel dialog:not(#_) {
   border: 2px solid transparent;
-  border-image: var(--p-dialog) 3 fill / 6px / 0 stretch;
+  border-image: var(--p-dialog) 6 fill / 6px / 0 stretch;
 }
 html.pixel dialog::backdrop {
   background: #0e0b18b0;
@@ -240,11 +240,11 @@ html.pixel input:not([type="checkbox"]:not(#_),
 [type="radio"]:not(#_),
 [type="range"]):not(#_) {
   border: 2px solid transparent;
-  border-image: var(--p-field) 3 fill / 6px / 0 stretch;
+  border-image: var(--p-field) 6 fill / 6px / 0 stretch;
 }
 /* The theme worn: its frame gold. */
 html.pixel .theme-card.worn:not(#_) {
-  border-image: var(--p-dialog) 3 fill / 6px / 0 stretch;
+  border-image: var(--p-dialog) 6 fill / 6px / 0 stretch;
 }
 /* Notes and tips: parchment, its words in ink. */
 html.pixel .board-tip:not(#_),
@@ -252,7 +252,7 @@ html.pixel .board-tip.dismissable:hover:not(#_),
 html.pixel .research-toast:not(#_),
 html.pixel .deck-tip:not(#_) {
   border: 2px solid transparent;
-  border-image: var(--p-tip) 3 fill / 6px / 0 stretch;
+  border-image: var(--p-tip) 6 fill / 6px / 0 stretch;
 }
 html.pixel .board-tip:not(#_) *:not(svg, svg *),
 html.pixel .board-tip:not(#_),
@@ -284,17 +284,17 @@ html.pixel .inventory-divider:not(#_) {
    they can't be pressed. */
 html.pixel button:not(#_) {
   border: 2px solid transparent;
-  border-image: var(--p-button) 3 fill / 6px / 0 stretch;
+  border-image: var(--p-button) 6 fill / 6px / 0 stretch;
 }
 html.pixel button:active:not(#_) {
-  border-image: var(--p-press) 3 fill / 6px / 0 stretch;
+  border-image: var(--p-press) 6 fill / 6px / 0 stretch;
 }
 html.pixel button:active:not(#_) > * {
   transform: translateY(1px);
 }
 html.pixel button.selected:not(#_),
 html.pixel button[aria-pressed="true"]:not(#_) {
-  border-image: var(--p-gold) 3 fill / 6px / 0 stretch;
+  border-image: var(--p-gold) 6 fill / 6px / 0 stretch;
 }
 html.pixel button.selected:not(#_) *:not(svg, svg *, img, canvas),
 html.pixel button.selected:not(#_),
@@ -309,7 +309,7 @@ html.pixel input:focus-visible:not(#_) {
   outline-offset: 2px;
 }
 html.pixel button:disabled:not(#_) {
-  border-image: var(--p-off) 3 fill / 6px / 0 stretch;
+  border-image: var(--p-off) 6 fill / 6px / 0 stretch;
 }
 html.pixel button:disabled:not(#_),
 html.pixel button:disabled *:not(#_) {
@@ -348,7 +348,7 @@ html.pixel nav button:not(#_) {
 }
 html.pixel nav button.selected:not(#_),
 html.pixel .training-bar button.selected:not(#_) {
-  border-image: var(--p-gold) 3 fill / 6px / 0 stretch;
+  border-image: var(--p-gold) 6 fill / 6px / 0 stretch;
 }
 
 /* Bars: a dark groove filled in chunky segments, each lit along its top;
@@ -398,7 +398,7 @@ html.pixel .short *:not(#_) {
 html.pixel #end-run.deadlocked:not(#_),
 html.pixel #stuck-end-run.deadlocked:not(#_) {
   color: var(--p-text) !important;
-  border-image: var(--p-danger) 3 fill / 6px / 0 stretch;
+  border-image: var(--p-danger) 6 fill / 6px / 0 stretch;
 }
 html.pixel .safe:not(#_),
 html.pixel .eq-result-title:not(#_) {

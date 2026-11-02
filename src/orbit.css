@@ -51,10 +51,10 @@ html.orbit {
      across the top left. */
   --o-pane: 0 0 0 1px var(--o-rim), 0 0 14px #2fa8ff26, inset 0 1px 0 #ffffff14;
   --o-light: linear-gradient(90deg, var(--o-amber) 0 26px, transparent 26px) 16px 0 / calc(100% - 32px) 2px no-repeat;
-  /* Deep space: a field of stars (`assets/theme/orbit-stars.svg`), a faint
+  /* Deep space: a field of stars (`public/assets/style/theme-orbit-stars.png`), a faint
      violet and teal nebula, then black. */
   --o-stars:
-    url("../assets/theme/orbit-stars.svg") 0 0 / 360px 360px,
+    url("../public/assets/style/theme-orbit-stars.png") 0 0 / 360px 360px,
     radial-gradient(ellipse at 85% 12%, #5a3a9a40, transparent 45%),
     radial-gradient(ellipse at 10% 90%, #1a6a8a33, transparent 50%),
     var(--o-space);

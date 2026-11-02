@@ -114,9 +114,10 @@ export class SkillTreePage {
     el("upgrades").innerHTML = `${tabs}
       <section class="skill-tree ${tree.id}"><header class="tree-heading"><h3>${tree.name} skill tree${this.helpButton(tree)}</h3></header>
       ${this.lockHtml(tree)}${introNote(this.ctx.game, tree.id)}
-      <div class="tree-viewport" id="tree-viewport" style="--column-gap:${columnGap(tree)}"><div class="tree-map${tall ? " tall" : ""}" id="tree-map" style="${tall ? `--tree-height:${treeHeight(tree)}%;--tree-rows:${treeHeight(tree)};` : ""}transform:translate(${view.x}px,${view.y}px) scale(${view.scale})"><div class="tree-layer"><svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${this.linesHtml(nodes)}</svg>
+      <div class="tree-viewport" id="tree-viewport" style="--column-gap:${columnGap(tree)}"><div class="tree-map${tall ? " tall" : ""}" id="tree-map" style="${tall ? `--tree-height:${treeHeight(tree)}%;--tree-rows:${treeHeight(tree)};` : ""}transform:translate(${view.x}px,${view.y}px) scale(${view.scale})"><div class="tree-layer"><canvas class="tree-connections" aria-hidden="true"></canvas>
       <canvas class="tree-particles" aria-hidden="true"></canvas>
       ${shown.map(n => this.nodeHtml(n)).join("")}</div></div><div class="inspect-box tree-tooltip" id="tree-tooltip" hidden></div></div></section>`;
+    this.drawConnections();
     this.bindTabs();
     if (tree.id === "inspiration" || tree.id === "breakthrough") el("tree-help").onclick = () => this.showHelp(tree.id as "inspiration" | "breakthrough");
     bindPanZoom(el("tree-viewport"), el("tree-map"), view, {
@@ -154,23 +155,40 @@ export class SkillTreePage {
   /** The lines from each skill to those it requires, lit once owned; a
    * line from a skill shown to one hidden fades away before reaching it,
    * and none is drawn between hidden skills. */
-  private linesHtml(nodes: ReturnType<typeof mapNodes>) {
-    const upgrades = this.ctx.game.save.upgrades, shown = new Set(this.visible(nodes).map(n => n.id));
-    return nodes.flatMap(n => n.requires.map(id => {
+  private drawConnections() {
+    const canvas = document.querySelector<HTMLCanvasElement>(".tree-connections");
+    if (!canvas) return;
+    const width = Math.round(canvas.clientWidth), height = Math.round(canvas.clientHeight);
+    if (!width || !height || (canvas.width === width && canvas.height === height && canvas.dataset.painted)) return;
+    canvas.width = width; canvas.height = height;
+    const c = canvas.getContext("2d");
+    if (!c) return;
+    const nodes = mapNodes(this.current()), upgrades = this.ctx.game.save.upgrades;
+    const shown = new Set(this.visible(nodes).map(n => n.id));
+    const lit = getComputedStyle(canvas).getPropertyValue("--tree-color").trim() || "#e1bb78";
+    c.imageSmoothingEnabled = false;
+    for (const node of nodes) for (const id of node.requires) {
       const parent = nodes.find(p => p.id === id);
-      if (!parent || !shown.has(id)) return "";
-      const line = `x1="${parent.x}" y1="${parent.y}" x2="${n.x}" y2="${n.y}"`;
-      if (shown.has(n.id)) return `<line ${line} class="${upgrades[id] ? "lit" : ""}"/>`;
-      // The fade is a mask: a gradient along the line, so it fades in every theme's stroke.
-      const fade = `fade-${id}-${n.id}`;
-      return `<defs><linearGradient id="${fade}-g" gradientUnits="userSpaceOnUse" ${line}><stop offset="0" stop-color="#fff"/><stop offset=".75" stop-color="#fff" stop-opacity="0"/></linearGradient>`
-        + `<mask id="${fade}" maskUnits="userSpaceOnUse" x="-10" y="-10" width="120" height="120"><rect x="-10" y="-10" width="120" height="120" fill="url(#${fade}-g)"/></mask></defs>`
-        + `<line ${line} class="fading${upgrades[id] ? " lit" : ""}" mask="url(#${fade})"/>`;
-    })).join("");
+      if (!parent || !shown.has(id)) continue;
+      const x0 = Math.round(parent.x * width / 100), y0 = Math.round(parent.y * height / 100);
+      const dx = Math.round(node.x * width / 100) - x0, dy = Math.round(node.y * height / 100) - y0;
+      const steps = Math.max(Math.abs(dx), Math.abs(dy), 1), fading = !shown.has(node.id);
+      c.fillStyle = upgrades[id] ? lit : "#46505b";
+      const thickness = upgrades[id] ? 2 : 1;
+      for (let step = 0; step <= steps; step++) {
+        const t = step / steps;
+        if (fading && t >= .75) break;
+        c.globalAlpha = fading ? Math.ceil((1 - t / .75) * 4) / 4 : 1;
+        c.fillRect(Math.round(x0 + dx * t), Math.round(y0 + dy * t), thickness, thickness);
+      }
+    }
+    c.globalAlpha = 1;
+    canvas.dataset.painted = "true";
   }
 
   /** Purchase sparkles and node glow on the particle canvas, if showing. */
   drawParticles(time: number) {
+    this.drawConnections();
     const canvas = document.querySelector<HTMLCanvasElement>(".tree-particles");
     if (!canvas) return;
     const tree = this.current();
