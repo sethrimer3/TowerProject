@@ -340,18 +340,14 @@ html.ui-sprites .page-title:not(#_) {
 }
 html.ui-sprites .page-title :is(h2, small):not(#_) { color: #10151c; text-shadow: none; }
 
-/* Sprite pairs preserve each theme's original icon. Only loaded PNGs
-   replace it, and only under the effective default sprite presentation. */
+/* PNG subjects stay visible independently of the selected frame theme. */
 .sprite-icon { position: relative; display: inline-block; vertical-align: middle; }
-.theme-art { display: contents; }
 .sprite-native { display: block; width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
 .tutorial-pointer-art { width: 100%; }
-.sprite-replacement, .sprite-card-label { display: none !important; }
-html.ui-sprites .sprite-ready > .theme-art { visibility: hidden; }
-html.ui-sprites .sprite-ready > .sprite-replacement:not(#_) {
+.sprite-card-label { display: none !important; }
+.sprite-ready > .sprite-replacement:not(#_) {
   display: block !important;
-  position: absolute;
-  inset: 0;
+  position: static;
   width: 100%;
   height: 100%;
   object-fit: contain;
@@ -707,3 +703,27 @@ html.ui-sprites #auto-speed .speed-arrow:hover:not(:disabled):not(#_) { color: #
 html.ui-sprites #currencies-open:not(#_) { color: #e1bb78; }
 html.ui-sprites .card-reveal-card:not(#_),
 html.ui-sprites .card-reveal-card:hover:not(#_) { border-radius: 0; box-shadow: none; }
+
+/* Native icons are shared by every theme; text and frame styling stay independent. */
+:where(.sprite-icon) { width: 1em; height: 1em; }
+.sprite-icon > img { image-rendering: pixelated; }
+.badge-condition { display: inline; }
+.arcanum-icon { display: inline-block; }
+.currency-chevron { width: 16px; height: 16px; }
+.hand-overflow-icon { width: 8px; height: 14px; }
+.points-arrow-icon { width: 10px; height: 12px; }
+.hand-chevron-icon { width: 10px; height: 10px; transform: rotate(180deg); }
+.deck-hand-area.collapsed .deck-hand-toggle .hand-chevron-icon { transform: none; }
+.tree-connections { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; image-rendering: pixelated; }
+[aria-expanded="true"] > .mini-icon > .menu-close-icon.sprite-ready:not(#_) { display: inline-block; }
+[aria-expanded="true"] > .mini-icon:has(> .menu-close-icon.sprite-ready) > .menu-icon:not(.menu-close-icon) { display: none; }
+
+/* Raster theme textures retain hard native texels when enlarged. */
+html body, html body::before, html body::after, html .shell, html .shell::before, html .shell::after { image-rendering: pixelated; }
+
+/* Light themes need dark live labels over their pale Arcana attribute fields. */
+html:is(.doodle, .desktop, .yang, .shiro, .system) .arcana-attr.arcana-attr:not(#_):not(#__) {
+  background: #eee0b7;
+  color: #10151c;
+}
+html:is(.doodle, .desktop, .yang, .shiro, .system) .arcana-attr :is(b, .arcana-attr-name, .arcana-attr-cost) { color: inherit; }

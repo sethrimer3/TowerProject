@@ -1,3 +1,4 @@
+import { pngIcon } from "../sprites/kit.ts";
 import { kitIcon } from "../sprites/kit.ts";
 import { askForGems, showHelp } from "./dialogs.ts";
 import { CARDS, cardBonusLines, deckCards, linkedToNext, moveCard, placeCard, type CardId, type HandKind } from "../cards/cards.ts";
@@ -37,17 +38,17 @@ type DeckDrag = { card: CardId; to: number | null; pointer: number; x: number; y
  * (null while it is over none). */
 type BadgeDrag = { badge: BadgeId; card: CardId | null; pointer: number; x: number; y: number; lifted: boolean; ghost: HTMLElement | null };
 
-const X_SVG = kitIcon("close", `<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2.5 2.5L7.5 7.5M7.5 2.5L2.5 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`, "deck-control-icon");
+const X_SVG = kitIcon("close", "", "deck-control-icon");
 /** The switch on a hand card that moves it to the other hand (Manual Hand). */
-const SWITCH_SVG = `<svg viewBox="0 0 10 10" aria-hidden="true" class="deck-control-icon"><path d="M1.8 3.2H7.8M6.2 1.5L8 3.2L6.2 4.9M8.2 6.8H2.2M3.8 5.1L2 6.8L3.8 8.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const SWITCH_SVG = pngIcon("ui-hand-swap", "deck-control-icon");
 /** The two hands' names on the Deck page. */
 const HAND_NAMES: Record<HandKind, string> = { auto: "Auto hand", manual: "Manual hand" };
 
 /** The rising arrow on a card with card points to spend. */
-const POINTS_ARROW_SVG = `<svg viewBox="0 0 10 12" aria-hidden="true"><path d="M5 1L9 6H6.4V11H3.6V6H1Z" fill="currentColor" stroke="#2a1c06" stroke-width="0.8" stroke-linejoin="round"/></svg>`;
+const POINTS_ARROW_SVG = pngIcon("ui-card-points", "points-arrow-icon");
 
 /** The chevron beside the Hand heading: pointing up while the hand shows (to collapse it), down while it is collapsed. */
-const CHEVRON_SVG = `<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2 6.5L5 3.5L8 6.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const CHEVRON_SVG = pngIcon("ui-chevron-down", "hand-chevron-icon");
 
 const ARROW_STEPS = new Map([["ArrowLeft", -1], ["ArrowRight", 1]]);
 

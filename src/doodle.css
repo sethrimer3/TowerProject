@@ -5,9 +5,8 @@
    leaves it; page titles on a stripe of bright yellow, notes on pale yellow
    sticky notes, and bars filled flat. Text in the bundled Comic Neue, a
    friendly hand-lettered face (OFL; only while worn).
-   Every frame is a 30-unit freehand box drawn as inline SVG, sliced at 10
-   and laid by `border-image`, its edge pieces repeated (`round`) so the
-   wobble keeps its size along any length.
+   Every frame is a 48 × 24 PNG with six-pixel slices, retaining
+   stepped hand-drawn contours and a quiet center.
    Every selector is scoped under `html.doodle` so nothing changes while the
    theme is off. Loaded after style.css and the other themes. */
 @font-face {
@@ -32,27 +31,27 @@ html.doodle {
   --d-green: #008000;
   --d-yellow: #ffff00;
   /* a panel: white paper in a freehand black box. */
-  --d-panel: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30'><path fill='%23fff' transform='translate(1.2 1.2)' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/><path fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/></svg>");
+  --d-panel: url("../public/assets/style/theme-doodle-panel.png");
   /* a dialog: the same box, its line thicker. */
-  --d-dialog: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30'><path fill='%23fff' transform='translate(1.2 1.2)' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/><path fill='none' stroke='%23000' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/></svg>");
+  --d-dialog: url("../public/assets/style/theme-doodle-selected.png");
   /* a button: poured pale cyan, its fill landing a little off the line. */
-  --d-button: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30'><path fill='%2380ffff' transform='translate(1.2 1.2)' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/><path fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/></svg>");
+  --d-button: url("../public/assets/style/theme-doodle-normal.png");
   /* a button pressed: deeper cyan, the fill on the line. */
-  --d-press: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30'><path fill='%2300ffff' transform='translate(0 0)' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/><path fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/></svg>");
+  --d-press: url("../public/assets/style/theme-doodle-pressed.png");
   /* what is chosen: poured pale green. */
-  --d-chosen: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30'><path fill='%2380ff80' transform='translate(1.2 1.2)' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/><path fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/></svg>");
+  --d-chosen: url("../public/assets/style/theme-doodle-selected.png");
   /* a button that can't be pressed: grey in a grey line. */
-  --d-off: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30'><path fill='%23e0e0e0' transform='translate(1.2 1.2)' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/><path fill='none' stroke='%23a0a0a0' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/></svg>");
+  --d-off: url("../public/assets/style/theme-doodle-disabled.png");
   /* what is dangerous: poured pink-red. */
-  --d-danger: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30'><path fill='%23ff8080' transform='translate(1.2 1.2)' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/><path fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/></svg>");
+  --d-danger: url("../public/assets/style/theme-doodle-danger.png");
   /* a field or well: a thinner line, the fill on it. */
-  --d-field: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30'><path fill='%23fff' transform='translate(0 0)' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/><path fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/></svg>");
+  --d-field: url("../public/assets/style/theme-doodle-field.png");
   /* a note: pale yellow, as a sticky note. */
-  --d-tip: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30'><path fill='%23ffff80' transform='translate(1.2 1.2)' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/><path fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/></svg>");
+  --d-tip: url("../public/assets/style/theme-doodle-panel.png");
   /* a page title's banner: bright yellow. */
-  --d-banner: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30'><path fill='%23ffff00' transform='translate(1.2 1.2)' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/><path fill='none' stroke='%23000' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round' d='M3 10Q2.6 3.2 10 3Q15 1.6 20 3Q27 2.4 27 10Q28.4 15 27 20Q27.6 27.4 20 27Q15 28.4 10 27Q2.4 27.6 3 20Q1.6 15 3 10Z'/></svg>");
+  --d-banner: url("../public/assets/style/theme-doodle-selected.png");
   /* The paper, with a light grey speck of the spray can now and then. */
-  --d-specks: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><g fill='%23d8d8d8'><rect x='21' y='30' width='1.5' height='1.5'/><rect x='24' y='27' width='1.5' height='1.5'/><rect x='26' y='32' width='1.5' height='1.5'/><rect x='19' y='34' width='1.5' height='1.5'/><rect x='23' y='35' width='1.5' height='1.5'/><rect x='118' y='96' width='1.5' height='1.5'/><rect x='121' y='92' width='1.5' height='1.5'/><rect x='115' y='99' width='1.5' height='1.5'/><rect x='123' y='98' width='1.5' height='1.5'/><rect x='119' y='101' width='1.5' height='1.5'/></g><path d='M80 138q4-6 8 0t8 0' fill='none' stroke='%23e4e4e4' stroke-width='1.4' stroke-linecap='round'/></svg>");
+  --d-specks: none;
   --gold: #b07800;
   --muted: var(--d-dim);
   --line: var(--d-ink);
@@ -122,7 +121,7 @@ html.doodle .eq-loadout-head:not(#_) {
   padding: 4px 12px;
   text-align: center;
   border: 3px solid transparent;
-  border-image: var(--d-banner) 10 fill / 10px / 0 round;
+  border-image: var(--d-banner) 6 fill / 10px / 0 stretch;
 }
 html.doodle .page-title small:not(#_),
 html.doodle .eyebrow:not(#_),
@@ -161,7 +160,7 @@ html.doodle .inspect-box:not(#_),
 html.doodle .run-menu-frame:not(#_),
 html.doodle .inspection:not(#_) {
   border: 3px solid transparent;
-  border-image: var(--d-panel) 10 fill / 10px / 0 round;
+  border-image: var(--d-panel) 6 fill / 10px / 0 stretch;
 }
 /* The locked deck: its empty slots faint dashed outlines on the panel, with
    no shade over them, so the notice reads on the page's own colours. */
@@ -177,7 +176,7 @@ html.doodle .inspection:empty:not(#_) {
 /* Dialogs: the box drawn thicker, over a page washed grey. */
 html.doodle dialog:not(#_) {
   border: 3px solid transparent;
-  border-image: var(--d-dialog) 10 fill / 10px / 0 round;
+  border-image: var(--d-dialog) 6 fill / 10px / 0 stretch;
 }
 html.doodle dialog::backdrop {
   background: #80808099;
@@ -195,11 +194,11 @@ html.doodle input:not([type="checkbox"]:not(#_),
 [type="radio"]:not(#_),
 [type="range"]):not(#_) {
   border: 3px solid transparent;
-  border-image: var(--d-field) 10 fill / 10px / 0 round;
+  border-image: var(--d-field) 6 fill / 10px / 0 stretch;
 }
 /* The theme worn: its box poured green. */
 html.doodle .theme-card.worn:not(#_) {
-  border-image: var(--d-chosen) 10 fill / 10px / 0 round;
+  border-image: var(--d-chosen) 6 fill / 10px / 0 stretch;
 }
 /* Notes and tips: pale yellow sticky notes. */
 html.doodle .board-tip:not(#_),
@@ -207,7 +206,7 @@ html.doodle .board-tip.dismissable:hover:not(#_),
 html.doodle .research-toast:not(#_),
 html.doodle .deck-tip:not(#_) {
   border: 3px solid transparent;
-  border-image: var(--d-tip) 10 fill / 10px / 0 round;
+  border-image: var(--d-tip) 6 fill / 10px / 0 stretch;
 }
 /* The board: a thick black line round it, as the canvas's edge. */
 html.doodle .board:not(#_) {
@@ -229,17 +228,17 @@ html.doodle .inventory-divider:not(#_) {
    grey when they can't be pressed. */
 html.doodle button:not(#_) {
   border: 3px solid transparent;
-  border-image: var(--d-button) 10 fill / 10px / 0 round;
+  border-image: var(--d-button) 6 fill / 10px / 0 stretch;
 }
 html.doodle button:active:not(#_) {
-  border-image: var(--d-press) 10 fill / 10px / 0 round;
+  border-image: var(--d-press) 6 fill / 10px / 0 stretch;
 }
 html.doodle button:active:not(#_) > * {
   transform: translate(1px, 1px);
 }
 html.doodle button.selected:not(#_),
 html.doodle button[aria-pressed="true"]:not(#_) {
-  border-image: var(--d-chosen) 10 fill / 10px / 0 round;
+  border-image: var(--d-chosen) 6 fill / 10px / 0 stretch;
 }
 html.doodle button:focus-visible:not(#_),
 html.doodle select:focus-visible:not(#_),
@@ -248,7 +247,7 @@ html.doodle input:focus-visible:not(#_) {
   outline-offset: 2px;
 }
 html.doodle button:disabled:not(#_) {
-  border-image: var(--d-off) 10 fill / 10px / 0 round;
+  border-image: var(--d-off) 6 fill / 10px / 0 stretch;
 }
 html.doodle button:disabled:not(#_),
 html.doodle button:disabled *:not(#_) {
@@ -288,7 +287,7 @@ html.doodle nav button:not(#_) {
 }
 html.doodle nav button.selected:not(#_),
 html.doodle .training-bar button.selected:not(#_) {
-  border-image: var(--d-chosen) 10 fill / 10px / 0 round;
+  border-image: var(--d-chosen) 6 fill / 10px / 0 stretch;
 }
 
 /* Bars: a white track in a black line, filled flat; HP red, XP blue, the
@@ -330,7 +329,7 @@ html.doodle .short *:not(#_) {
 /* No card can act: the button that ends the run turns red. */
 html.doodle #end-run.deadlocked:not(#_),
 html.doodle #stuck-end-run.deadlocked:not(#_) {
-  border-image: var(--d-danger) 10 fill / 10px / 0 round;
+  border-image: var(--d-danger) 6 fill / 10px / 0 stretch;
 }
 html.doodle .safe:not(#_),
 html.doodle .eq-result-title:not(#_) {

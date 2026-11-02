@@ -17,11 +17,13 @@
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <title>Tower Delve</title>
+    <link rel="preload" href="./assets/fonts/TowerPixel/TowerPixel-Regular.woff2" as="font" type="font/woff2" crossorigin />
     <style>
       body { margin: 0; background: #10151c; }
       #app[hidden], #boot-loading [hidden] { display: none !important; }
-      #boot-loading { position: fixed; inset: 0; z-index: 10000; display: grid; place-content: center; justify-items: center; gap: 18px; padding: 24px; background: #10151c; color: #eee0b7; font: 15px monospace; text-align: center; }
-      #boot-loading h1 { margin: 0; color: #e1bb78; font: bold 25px monospace; letter-spacing: 3px; }
+      #boot-loading { position: fixed; inset: 0; z-index: 10000; display: grid; place-content: center; justify-items: center; gap: 18px; padding: 24px; background: #10151c; color: #eee0b7; font: 15px "Tower Pixel", monospace; text-align: center; }
+      #boot-loading:not(.font-ready) > * { visibility: hidden; }
+      #boot-loading h1 { margin: 0; color: #e1bb78; font: bold 25px "Tower Pixel", monospace; letter-spacing: 3px; }
       #boot-loading p { max-width: 32ch; margin: 0; line-height: 1.6; }
       #boot-progress { appearance: none; width: min(240px, 75vw); height: 12px; border: 2px solid #756448; background: #1b2430; }
       #boot-progress::-webkit-progress-bar { background: #1b2430; }

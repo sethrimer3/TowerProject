@@ -2,7 +2,6 @@ import { levelProgress, MAX_BADGE_LEVEL, badgeDef, badgeLevel, badgeValue, gateS
 import { kitIcon } from "../sprites/kit.ts";
 import { RARITIES } from "../shop/rarity.ts";
 
-const STAR_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.8l3.05 6.6 7.2.8-5.36 4.9 1.5 7.1L12 17.6l-6.39 3.6 1.5-7.1L1.75 9.2l7.2-.8z"/></svg>`;
 
 /** A badge's colours, as CSS variables: its own and its rarity's. */
 export function badgeStyle(id: BadgeId) {
@@ -19,7 +18,7 @@ export function badgeGlyph(id: BadgeId) {
 }
 
 /** The star on a token's corner and the level written on it. */
-export const levelStar = (level: number) => `<span class="badge-level">${kitIcon("badge-star", STAR_SVG, "badge-star")}<b>${level}</b></span>`;
+export const levelStar = (level: number) => `<span class="badge-level">${kitIcon("badge-star", "", "badge-star")}<b>${level}</b></span>`;
 
 /** A badge's token: a rounded square in its rarity's colour with its
  * symbol, and its level on a star at the corner. */

@@ -30,6 +30,10 @@ async function boot() {
   const app = document.querySelector<HTMLElement>("#app")!;
   retry.onclick = () => location.reload();
   try {
+    // Keep the first loading-screen paint on the same face as its final one.
+    const faces = await document.fonts.load('15px "Tower Pixel"');
+    if (!faces.length) throw new Error("Loading-screen font unavailable");
+    loading.classList.add("font-ready");
     await preloadSprites((loaded, total) => {
       progress.max = total;
       progress.value = loaded;
@@ -56,6 +60,8 @@ async function boot() {
       }
     }
     setRetries(null);
+    // A failed font download must still leave an actionable recovery screen.
+    loading.classList.add("font-ready");
     message.textContent = "Unable to load the game. Check your connection and retry.";
     progress.hidden = true;
     retry.hidden = false;

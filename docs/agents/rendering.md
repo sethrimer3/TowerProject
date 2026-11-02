@@ -360,3 +360,7 @@ Ghost teleport trails, mimics and red door particles draw normally over the lit 
 
 Inspiration rewards use the dedicated `inspiration.png` blue-white spark through `INSPIRATION_SPRITE`; its native 24-pixel canvas matches the new brass/ivory `breakthrough.png` flash used by the interface.
 The generated currency source and `tools/prepare-currency-sprites.mjs` retain smaller Inspiration and larger Breakthrough footprints, binary alpha and the shared palette without changing reward amounts or timing.
+
+UI theme textures, ornaments and nine-slice frames now use native PNGs rather than linked or embedded SVG.
+The Medieval, Orbit, Glyph, Ember and Zen decorations reuse generated raster subjects; Pixel, Doodle and Murk use 48 × 24 frames with six-pixel source slices.
+Game-theme world painters and procedural spell effects are independent of this interface migration.

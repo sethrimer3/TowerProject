@@ -34,7 +34,7 @@ html.ember *:not(.badge-glyph, .badge-mark) {
 html.ember body {
   background:
     radial-gradient(ellipse at 50% 40%, transparent 40%, #000000b0 100%),
-    url("../assets/theme/ember-field.svg"),
+    url("../public/assets/style/theme-ember-runes.png"),
     #160406;
   text-shadow: 0 0 3px #ffb34799, 0 0 9px #ffb34744;
 }
