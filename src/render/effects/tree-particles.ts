@@ -188,7 +188,7 @@ function drawRays(ctx: CanvasRenderingContext2D, rays: Rays, { w, h }: Size) {
   const t = rays.age / RAYS_LIFE;
   const fade = Math.min(1, rays.age / .15) * (t < .4 ? 1 : 1 - (t - .4) / .6);
   if (fade <= 0) return;
-  const cx = rays.x*w, cy = rays.y*h, grow = 1 - (1 - t) ** 3;
+  const cx = rays.x*w, cy = rays.y*h, left = 1 - t, grow = 1 - left*left*left;
   ctx.globalCompositeOperation = 'lighter';
   const halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, 34 + 16*grow);
   halo.addColorStop(0, `rgba(255, 236, 170, ${.5*fade})`);

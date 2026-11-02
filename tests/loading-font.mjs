@@ -12,13 +12,13 @@ try {
  await page.goto(server.resolvedUrls.local[0],{waitUntil:'domcontentloaded'});
  await page.locator('#boot-loading').waitFor();
  assert.equal(await page.locator('#boot-message').isVisible(),false,'no fallback loading text during delayed font');
- assert.equal(await page.locator('#boot-loading h1').isVisible(),false,'title also waits for pixel face');
+ assert.ok(await page.locator('#boot-loading .loading-room').isVisible(),'the room builds while the font is pending');
  assert.equal(await page.locator('#app').isVisible(),false);
  releaseFont();
  await page.locator('#boot-loading.font-ready').waitFor();
  assert.ok(await page.locator('#boot-message').isVisible(),'loading text appears before artwork completes');
  assert.ok(await page.evaluate(()=>document.fonts.check('15px "Tower Pixel"')));
- for(const selector of ['#boot-message','#boot-loading h1','#boot-retry'])assert.match(await page.locator(selector).evaluate(e=>getComputedStyle(e).fontFamily),/^"Tower Pixel"/);
+ for(const selector of ['#boot-message','#boot-retry'])assert.match(await page.locator(selector).evaluate(e=>getComputedStyle(e).fontFamily),/^"Tower Pixel"/);
  assert.equal(await page.locator('#app').isVisible(),false,'font ready does not bypass artwork barrier');
  releaseArt();
  await page.locator('#boot-loading').waitFor({state:'detached',timeout:30000});

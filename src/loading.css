@@ -1,0 +1,92 @@
+/* The loading screen (src/ui/loading-screen.ts): a torchlit stone wall with
+   the loading text centred above a little tower room building itself at the
+   bottom middle. */
+#boot-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  overflow: hidden;
+  background: linear-gradient(#0009, #0009), url("../public/assets/style/theme-stone.png") 0 0 / 240px 160px, #121110;
+  color: #e6d2a6;
+  font-family: "Tower Pixel", Cinzel, serif;
+}
+.loading-stones {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+.loading-torch {
+  position: absolute;
+  /* Off the left pier's inner side (`--pier` wide, set by loading-wall.ts),
+     the backplate over the pier's outline. */
+  left: calc(var(--pier, 36px) - 3px);
+  /* Put the flame, rather than the foot of its bracket, two thirds up. */
+  top: calc(100% / 3 - 22px);
+  width: 33px;
+  height: 72px;
+  image-rendering: pixelated;
+}
+.loading-foot {
+  position: absolute;
+  left: 50%;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.loading-label {
+  font-size: 20px;
+  line-height: 27px;
+  text-align: center;
+  width: max-content;
+  max-width: min(32ch, calc(100vw - 32px));
+  text-shadow: 0 2px #0b0706, 0 0 8px #000;
+}
+.loading-dots { display: inline-block; min-width: 1.2em; text-align: left; }
+.loading-dots span {
+  visibility: hidden;
+  animation: loading-dot 1.2s steps(1, end) infinite;
+}
+.loading-dots span:nth-child(2) { animation-name: loading-dot-two; }
+.loading-dots span:nth-child(3) { animation-name: loading-dot-three; }
+@keyframes loading-dot {
+  0%, 100% { visibility: hidden; }
+  25% { visibility: visible; }
+}
+@keyframes loading-dot-two {
+  0%, 100% { visibility: hidden; }
+  50% { visibility: visible; }
+}
+@keyframes loading-dot-three {
+  0%, 100% { visibility: hidden; }
+  75% { visibility: visible; }
+}
+/* Two screen pixels an art pixel (13 tiles of 6), three on a roomy screen. */
+.loading-room {
+  width: 156px;
+  height: 166px;
+  image-rendering: pixelated;
+}
+@media (min-width: 700px) and (min-height: 700px) {
+  .loading-room { width: 234px; height: 249px; }
+}
+.loading-retry {
+  padding: 9px 22px;
+  border: 2px solid #e1bb78;
+  background: #1b2430;
+  color: #eee0b7;
+  font: inherit;
+  cursor: pointer;
+}
+.reduce-motion .loading-dots span { animation: none; visibility: visible; }
+@media (prefers-reduced-motion: reduce) {
+  .loading-dots span { animation: none; visibility: visible; }
+}
+@media (max-width: 480px) {
+  .loading-foot { bottom: calc(16px + env(safe-area-inset-bottom, 0px)); gap: 10px; }
+  .loading-label { font-size: 18px; }
+}
