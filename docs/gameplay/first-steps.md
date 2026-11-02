@@ -3,7 +3,7 @@
 ## Interface sprites
 
 The game uses matching pixel-art controls, icons, cards, heroes, enemies, pickups, terrain, buildings and dungeon decorations by default.
-A loading screen waits for the artwork and fonts before the game appears; if loading fails, use Retry after checking your connection.
+A loading screen, a little tower room building itself under the loading text, waits for the artwork and fonts before the game appears; if loading fails, use Retry after checking your connection.
 Settings offers **Animations** and **Square doors** as independent checkboxes; both start off and remember your choices.
 Animations enables matching torch frames, subtle potion bubbles, occasional key shines and a small idle motion after the hero stops.
 The skull and crossbones shown when the hero falls also uses matching PNG art, with a short animation while Animations is on.
