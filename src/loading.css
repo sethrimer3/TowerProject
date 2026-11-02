@@ -6,7 +6,7 @@
   inset: 0;
   z-index: 10000;
   overflow: hidden;
-  background: linear-gradient(#0009, #0009), url("../assets/theme/stone.svg") 0 0 / 240px 160px, #121110;
+  background: linear-gradient(#0009, #0009), url("../public/assets/style/theme-stone.png") 0 0 / 240px 160px, #121110;
   color: #e6d2a6;
   font-family: "Tower Pixel", Cinzel, serif;
 }
