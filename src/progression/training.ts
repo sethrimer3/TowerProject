@@ -252,7 +252,7 @@ export const TRAINING = [
   {
     id: "critChance", name: "Critical Chance", short: "Crit %", group: "offense", requires: "critical", cost: 1, max: 80,
     curve: { per: 100 }, scale: 100, unit: "chance", research: "critChancePercent",
-    description: "Raises the chance each of your strikes is a critical hit.",
+    description: "Raises the chance your strikes are critical hits.",
     silver: opened, gold: critTrainers,
   },
   // What a critical strike multiplies the hero's ATK by, in hundredths:
@@ -283,7 +283,7 @@ export const TRAINING = [
   // it: 0.5% a rank, 150% at its 300.
   {
     id: "armorBreak", name: "Armor Break", group: "offense", stat: "armorBreak", curve: { per: 0.5 }, requires: "armorBreak", cost: 1, max: 300,
-    description: "Each of your hits, in a fight or from an arrow, takes this share of the enemy's original DEF off it, even if the hit does no damage. Below 0 DEF, your hits deal that much extra damage.",
+    description: "Each of your hits removes this amount of the enemy's original DEF, even if the hit does no damage. Below 0 DEF, your hits deal that much extra damage.",
     silver: { prices: armorBreakSilver }, gold: { prices: armorBreakGold },
   },
   // The Archer's reach, in hundredths of a tile (a meter): 3 tiles, and 0.05 more a
@@ -291,7 +291,7 @@ export const TRAINING = [
   {
     id: "attackRange", name: "Attack Range", short: "Range", group: "offense", goal: "attackRange", cost: 1, max: 80,
     curve: { per: 5 }, base: 300, scale: 100, unit: "m",
-    description: "Raises how far the Archer's shots reach, in meters.",
+    description: "Raises how far your shots reach, in meters.",
     silver: rangePrices, gold: { growth: rangePrices.growth, start: rangePrices.base, cubic: rangePrices.cubic },
   },
   // The Archer's rate of fire, in twentieths of a shot every 10 turns: 1
@@ -299,7 +299,7 @@ export const TRAINING = [
   {
     id: "attackSpeed", name: "Attack Speed", short: "Speed", group: "offense", goal: "attackSpeed", cost: 1, max: 100,
     curve: { per: 1 }, base: 20, scale: 20, unit: "shots",
-    description: "Raises how many shots the Archer fires every 10 turns.",
+    description: "Raises how many shots you fire every 10 turns.",
     silver: speedPrices, gold: { growth: speedPrices.growth, start: speedPrices.base, cubic: speedPrices.cubic },
   },
   // What ATK / m adds to an arrow's ATK multiplier for each tile to its
@@ -310,7 +310,7 @@ export const TRAINING = [
   {
     id: "attackPerTile", name: "ATK / m", short: "ATK/m", group: "offense", goal: "attackPerTile", cost: 1, max: 200,
     curve: { per: 1002, square: -2 }, scale: 100_000, unit: "perMeter",
-    description: "Multiplies the ATK of each of the Archer's shots by more for every meter its target stands away.",
+    description: "Multiplies the ATK of each of your shots by more per meter travelled.",
     silver: perTilePrices, gold: { start: perTilePrices.base, ratio: perTilePrices.ratio, rise: perTilePrices.rise }, time: { skip: 1 },
   },
   // The chance each of the Archer's shots is a multishot, in hundredths of
@@ -320,7 +320,7 @@ export const TRAINING = [
   {
     id: "multishotChance", name: "Multishot Chance", short: "Multi %", group: "offense", goal: "multishot", cost: 1, max: 99,
     curve: { per: 50 }, scale: 100, unit: "%",
-    description: "Raises the chance each of the Archer's shots fires more than one arrow, each at another enemy in range.",
+    description: "Raises the chance each of your shots fire more than one arrow.",
     silver: multishotChancePrices, gold: { growth: multishotChancePrices.growth, start: multishotChancePrices.base, power: multishotChancePrices.power }, time: { skip: 1 },
   },
   // How many enemies a multishot fires at: 2, and one more a rank, 9 at its
@@ -328,7 +328,7 @@ export const TRAINING = [
   {
     id: "multishotTargets", name: "Multishot Targets", short: "Targets", group: "offense", goal: "multishot", cost: 1, max: 7,
     curve: { per: 1 }, base: 2, unit: "count",
-    description: "Raises how many arrows a multishot fires, one at each of that many enemies in range.",
+    description: "Raises how many arrows a multishot fires.",
     silver: multishotTargetsPrices, gold: multishotTargetsPrices, time: { each: 3600 },
   },
   // The chance each of the Archer's shots, fired while Rapid Fire isn't,
@@ -338,7 +338,7 @@ export const TRAINING = [
   {
     id: "rapidFireChance", name: "Rapid Fire Chance", short: "Rapid %", group: "offense", goal: "rapidFire", cost: 1, max: 85,
     curve: { per: 40 }, scale: 100, unit: "%",
-    description: "Raises the chance each of the Archer's shots starts Rapid Fire: shots come four times as fast for a while.",
+    description: "Raises the chance each of your shots starts Rapid Fire: shots fire four times as fast for a while.",
     silver: rapidFireChancePrices, gold: rapidFireChancePrices,
   },
   // How long Rapid Fire lasts, in hundredths of a turn: 1 turn, and 0.05
@@ -353,14 +353,14 @@ export const TRAINING = [
     // At least 1 DEF a rank: ranks 1–12 add 1 each, and the square takes
     // over from rank 13 (+2.08 and rising).
     id: "defense", name: "DEF", group: "defense", stat: "defense", curve: { per: 0, square: 1 / 12, atLeast: 1 }, cost: 1, max: 1000, breaks: 10,
-    description: "Raises DEF, taken off the damage of every enemy strike.",
+    description: "Raises DEF, reducing the damage of each enemy strike.",
     silver: cheap, gold: mildTrainers,
   },
   // The HP regained each step taken in a run.
   {
     id: "regen", name: "Regen", group: "defense", stat: "regen", curve: { per: 0.1, square: 1 / 120 }, cost: 1, max: 1000, breaks: 10, requires: "regen",
     research: "regenPercent",
-    description: "Raises the HP regained with every step taken in a climb.",
+    description: "Raises HP regained each turn.",
     silver: cheap, gold: mildTrainers,
   },
   // The damage the shroud blocks each fight.
@@ -374,20 +374,20 @@ export const TRAINING = [
   // 80th, 4.84% in all.
   {
     id: "lifesteal", name: "Lifesteal", group: "defense", stat: "lifesteal", curve: { per: 0.1005, square: -0.0005 }, cost: 1, max: 80, requires: "lifesteal",
-    description: "Raises the share of the damage each of your strikes deals that is restored to you as HP.",
+    description: "Raises HP restored based on the damage each of your strikes deals.",
     // 60 Gold for the first rank, then 60 × n × (1 + ((n − 1) / 20.5)²) for the n-th: about 1,000 for the 13th, 9,000 for the 37th and 70,000 for the 80th.
     silver: { base: 60, growth: 20.5, power: 2 }, gold: { growth: 20.5, start: 60, power: 2 },
   },
   // 1% a rank.
   {
     id: "thorns", name: "Thorn Damage", short: "Thorns", group: "defense", stat: "thorns", curve: { per: 1 }, cost: 1, max: 99, requires: "thorns",
-    description: "Each enemy strike costs the enemy this share of its max HP, half against bosses and Greater Bosses.",
+    description: "Enemies lose this percent of their max HP per strike, half against bosses.",
     silver: thornPrices, gold: { growth: thornPrices.growth, start: thornPrices.base, power: thornPrices.power },
   },
   // 0.5% a rank.
   {
     id: "parry", name: "Parry %", group: "defense", stat: "parry", curve: { per: 0.5 }, cost: 1, max: 100, requires: "parry",
-    description: "Raises how much every enemy strike's damage is cut.",
+    description: "Raises percent removed from enemy damage (after DEF).",
     silver: parryPrices, gold: { growth: parryPrices.growth, start: parryPrices.base, power: parryPrices.power },
   },
   // The chance each strike that would fell the hero revives it instead, in
@@ -404,7 +404,7 @@ export const TRAINING = [
   {
     id: "floorGold", name: "Gold / Floor", group: "utility", requires: "spareChange", cost: 1, max: 150,
     curve: { per: 1 }, base: 3, unit: "", research: "floorGold",
-    description: "Raises the Gold paid for each floor climbed for the first time in a climb.",
+    description: "Raises Gold given per floor.",
     silver: opened, gold: firmTrainers,
   },
   // The Silver each floor climbed for the first time in a run pays, before
@@ -412,7 +412,7 @@ export const TRAINING = [
   {
     id: "floorSilver", name: "Silver / Floor", group: "utility", requires: "wishingWell", cost: 1, max: 150,
     curve: { per: 4 }, unit: "", research: "floorSilver",
-    description: "Raises the Silver paid for each floor climbed for the first time in a climb.",
+    description: "Raises Silver given per floor.",
     silver: opened, gold: firmTrainers,
   },
   // Silver Bonus's multiplier on all Silver a run finds, in percent: ×1, and
@@ -420,7 +420,7 @@ export const TRAINING = [
   {
     id: "silverBonus", name: "Silver Bonus", group: "utility", requires: "wealthy", cost: 1, max: 150,
     curve: { per: 1 }, base: 100, off: 100, scale: 100, unit: "×", research: "silverBonus",
-    description: "Multiplies all Silver found in a climb.",
+    description: "Multiplies all Silver found.",
     silver: opened, gold: firmTrainers,
   },
   // Gold Bonus's multiplier on the Gold a kill, chest, item picked up or
@@ -428,7 +428,7 @@ export const TRAINING = [
   {
     id: "goldBonus", name: "Gold Bonus", group: "utility", requires: "loot", cost: 1, max: 150,
     curve: { per: 3 }, base: 100, off: 100, scale: 100, unit: "×", research: "goldBonus",
-    description: "Multiplies the Gold kills, chests, items picked up and doors opened pay in a climb, and what Floor Skip pays for them, with Gold Bonus research. Gold / Floor and Interest aren't raised.",
+    description: "Multiplies Gold found in a climb.",
     silver: opened, gold: firmTrainers,
   },
   // The Free Upgrade rows: the chance each floor passed in a run trains a
@@ -437,19 +437,19 @@ export const TRAINING = [
   {
     id: "freeOffense", name: "Free Offense Up", group: "utility", requires: "freeTraining", cost: 1, max: 100,
     curve: { per: 50 }, scale: 100, unit: "%",
-    description: "Each floor passed in a climb has a chance to train a random Offense stat one level for free, for the climb.",
+    description: "Chance to raise a random Offense stat for free each floor.",
     silver: freeUpgrades, gold: freeUpgradeTrainers,
   },
   {
     id: "freeDefense", name: "Free Defense Up", group: "utility", requires: "freeTraining", cost: 1, max: 100,
     curve: { per: 50 }, scale: 100, unit: "%",
-    description: "Each floor passed in a climb has a chance to train a random Defense stat one level for free, for the climb.",
+    description: "Chance to raise a random Defense stat for free each floor.",
     silver: freeUpgrades, gold: freeUpgradeTrainers,
   },
   {
     id: "freeUtility", name: "Free Utility Up", group: "utility", requires: "freeTraining", cost: 1, max: 100,
     curve: { per: 50 }, scale: 100, unit: "%",
-    description: "Each floor passed in a climb has a chance to train a random Utility stat one level for free, for the climb.",
+    description: "Chance to raise a random Utility stat for free each floor.",
     silver: freeUpgrades, gold: freeUpgradeTrainers,
   },
   // What a percent potion restores beyond its HP, in hundredths of a
@@ -457,7 +457,7 @@ export const TRAINING = [
   {
     id: "potion", name: "Potion %", group: "utility", requires: "recovery", cost: 1, max: 300,
     curve: { per: 25 }, base: 100, scale: 100, unit: "%",
-    description: "Percent potions restore more of your maximum HP.",
+    description: "Percent potions restore more HP.",
     silver: deep, gold: steepTrainers,
   },
   // The chance each potion that may be one is a percent potion, in
@@ -466,7 +466,7 @@ export const TRAINING = [
   {
     id: "findPotion", name: "Find Potion", group: "utility", requires: "findPotion", needs: "recovery", cost: 1, max: 72,
     curve: { per: 25 }, base: 200, cap: 2000, scale: 100, unit: "%",
-    description: "More of the potions found are percent potions.",
+    description: "More potions are percent potions.",
     silver: deep, gold: { ...steepTrainers, cubic: 25 },
   },
   // How far HP may rise above max HP once Overheal is owned, as a multiple
@@ -475,7 +475,7 @@ export const TRAINING = [
   {
     id: "overheal", name: "Overheal", group: "utility", requires: "overheal", cost: 1, max: 500,
     curve: { per: 31 }, base: 1000, off: 1000, scale: 1000, unit: "×",
-    description: "Raises how far potions, the smelt cards and badge heals can heal you above max HP.",
+    description: "Raises how high your HP can go above Max HP.",
     silver: overhealPrices, gold: overhealPrices,
   },
   // The most shield HP, in tenths of a percent of max HP: 20%, and 0.1% more a
@@ -483,14 +483,14 @@ export const TRAINING = [
   {
     id: "shieldHp", name: "Shield HP", group: "defense", requires: "heroShield", cost: 1, max: 800, raisedBy: { upgrade: "shieldLimitBreak", ranks: 1000 },
     base: 200, curve: { per: 1 }, scale: 10, unit: "%", research: "shieldHpPercent",
-    description: "Raises the most HP your shield holds, a percent of your max HP.",
+    description: "Raises the HP your shield can hold as a percent of Max HP.",
     silver: { prices: silverFrom(150, shieldHpGold) }, gold: { prices: shieldHpGold },
   },
   // The turns a broken shield takes to regrow: 1,200, and 2 fewer a rank, 600 at its 300.
   {
     id: "regrowShield", name: "Regrow Shield", short: "Regrow", group: "defense", requires: "regrowShield", cost: 1, max: 300,
     base: 1200, off: 1200, curve: { per: -2 }, unit: "wholeTurns",
-    description: "Lowers the turns your shield takes to regrow after it breaks.",
+    description: "Reduces the turns your shield takes to regrow after breaking.",
     silver: { prices: silverFrom(300, regrowShieldGold) }, gold: { prices: regrowShieldGold },
   },
   // The chance each floor new to a run leaves enemies' HP, or their ATK and
@@ -499,13 +499,13 @@ export const TRAINING = [
   {
     id: "enemyHpSkip", name: "Enemy HP Level Skip", short: "HP Skip", group: "utility", requires: "enemyHpLevelSkips", cost: 1, max: 350, raisedBy: { upgrade: "enemyLevelSkipLimitBreak", ranks: 350 },
     curve: { per: 5 }, scale: 100, unit: "chance",
-    description: "Raises the chance each new floor leaves enemies' HP where the last floor's stood. Below 10%, floors without a skip add up to a sure one.",
+    description: "Raises the chance enemies' HP doesn't increase each floor.",
     silver: { prices: levelSkipSilver }, gold: { prices: levelSkipGold },
   },
   {
     id: "enemyCombatSkip", name: "Enemy Combat Level Skip", short: "Combat Skip", group: "utility", requires: "enemyCombatLevelSkips", cost: 1, max: 350, raisedBy: { upgrade: "enemyLevelSkipLimitBreak", ranks: 350 },
     curve: { per: 5 }, scale: 100, unit: "chance",
-    description: "Raises the chance each new floor leaves enemies' ATK and DEF where the last floor's stood. Below 10%, floors without a skip add up to a sure one.",
+    description: "Raises the chance enemies' ATK and DEF don't increase each floor.",
     silver: { prices: levelSkipSilver }, gold: { prices: levelSkipGold },
   },
 ] as const satisfies readonly TrainingDef[];

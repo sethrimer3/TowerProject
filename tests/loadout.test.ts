@@ -208,19 +208,19 @@ test("descriptions are written from the grants", () => {
       blue: "+1 starting blue key",
       red: "+1 starting red key",
       quality: "+2 weapon attack and +1 armor defense",
-      undos: "Open Undo Count research in the Archives, or 4 more levels of it once Rehearsed steps has opened it",
-      combatStance: "Open the Deck, where you reorder the cards in your hand before a climb",
-      buildout: "Unlock the Deck: add its cards to your hand, or set them aside, to choose what a climb heads for",
-      inspirationUndos: "Rewind one action a climb, and open Undo Count research in the Archives, or 4 more levels of it once Echoes of time has opened it",
-      revive: "When a strike would fell you, a 0.5% chance to rise at full HP and fight on: opens Revive training",
+      undos: "Open Undo Count research, or 4 more levels of it once Rehearsed steps has opened it",
+      combatStance: "Reorder the cards in your hand before a climb",
+      buildout: "Unlock the Deck and choose which cards to put in your hand before a climb",
+      inspirationUndos: "Rewind one action a climb. Open Undo Count research",
+      revive: "Open Revive training: Fight on after a fatal strike",
     },
   );
   assert.deepEqual(GOLD_SHOP.map((g) => provisionText(g.id)), [
-    "One more elixir every climb: press it to fill HP to max HP",
-    "One more Aegis charm every climb: press it for +20% DEF for 100 turns",
-    "One more Vanguard Banner every climb: press it for +20% ATK for 100 turns",
-    "One more gold key every 100 floors of a climb, from the floor it starts on",
-    "One more Bomb every climb: press it, then an enemy's tile, to deal that enemy your ATK, critical hits counted",
+    "One more elixir every climb: use to fill HP to max",
+    "One more Aegis charm every climb: use for +20% DEF for 100 turns",
+    "One more Vanguard Banner every climb: use for +20% ATK for 100 turns",
+    "One more gold key gained every 100 floors of a climb",
+    "One more Bomb every climb: select it, then an enemy's tile, to deal your ATK as damage, critical hits counted",
   ]);
 });
 

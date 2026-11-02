@@ -47,8 +47,8 @@ test("each skill opens its research, which is priced as agreed", () => {
   assert.equal(researched(full("maxInterest"), "interestCap"), 50000);
   assert.equal(researched({ ...save.archives, levels: { maxInterest: 3 } }, "interestCap"), 350);
   // Interest %'s description names the Max Interest the Archives give now.
-  assert.match(describe(save.archives, "interest"), /up to Max Interest \(now 50 Silver a floor\)/);
-  assert.match(describe(full("maxInterest"), "interest"), /now 50,000 Silver a floor/);
+  assert.match(describe(save.archives, "interest"), /up to Max Interest \(now 50 Silver\)/);
+  assert.match(describe(full("maxInterest"), "interest"), /now 50,000 Silver/);
   assert.equal(researched(full("mug"), "instakillGold"), 300);
 });
 
