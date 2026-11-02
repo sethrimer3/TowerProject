@@ -3,6 +3,8 @@
 **Arcana** are mighty spells bought with **Arcanite** (from tournaments, Goals, weekly mission rewards and the Shop's limited packs) and kept for good.
 Once you have had any Arcanite, the Gear tab shows an **Arcana** tab, with a dot on both, and the next time you stand in the forest with no other note showing, one says *Spend Arcanite to obtain and upgrade Arcana - mighty spells that unlock new powers.*
 
+Each arcanum has a distinct pixel-art icon shared across interface themes.
+
 ## Buying and upgrading
 
 **Select Arcanum** shows what the next one costs: 5, 50, 150, 300, 800, 1,250, 1,750, 2,400 then 3,000 Arcanite, by how many you own.

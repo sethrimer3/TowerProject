@@ -2414,6 +2414,286 @@
       "file": "lake-fisherman.png",
       "width": 48,
       "height": 40
+    },
+    "arcana-ricochet-shot": {
+      "file": "arcana-ricochet-shot.png",
+      "width": 24,
+      "height": 24
+    },
+    "arcana-aurum-bloom": {
+      "file": "arcana-aurum-bloom.png",
+      "width": 24,
+      "height": 24
+    },
+    "arcana-overseer": {
+      "file": "arcana-overseer.png",
+      "width": 24,
+      "height": 24
+    },
+    "arcana-thunderbolt": {
+      "file": "arcana-thunderbolt.png",
+      "width": 24,
+      "height": 24
+    },
+    "arcana-lifespring": {
+      "file": "arcana-lifespring.png",
+      "width": 24,
+      "height": 24
+    },
+    "arcana-time-dilation": {
+      "file": "arcana-time-dilation.png",
+      "width": 24,
+      "height": 24
+    },
+    "arcana-phantasm": {
+      "file": "arcana-phantasm.png",
+      "width": 24,
+      "height": 24
+    },
+    "arcana-necrotic-frost": {
+      "file": "arcana-necrotic-frost.png",
+      "width": 24,
+      "height": 24
+    },
+    "arcana-voidwell": {
+      "file": "arcana-voidwell.png",
+      "width": 24,
+      "height": 24
+    },
+    "hud-aether-shield": {
+      "file": "hud-aether-shield.png",
+      "width": 24,
+      "height": 24
+    },
+    "ui-card-points": {
+      "file": "ui-card-points.png",
+      "width": 12,
+      "height": 12
+    },
+    "ui-auto-play": {
+      "file": "ui-auto-play.png",
+      "width": 12,
+      "height": 12
+    },
+    "ui-hand-swap": {
+      "file": "ui-hand-swap.png",
+      "width": 12,
+      "height": 12
+    },
+    "ui-chevron-left": {
+      "file": "ui-chevron-left.png",
+      "width": 12,
+      "height": 12
+    },
+    "ui-chevron-right": {
+      "file": "ui-chevron-right.png",
+      "width": 12,
+      "height": 12
+    },
+    "ui-chevron-down": {
+      "file": "ui-chevron-down.png",
+      "width": 12,
+      "height": 12
+    },
+    "theme-wood": {
+      "file": "theme-wood.png",
+      "width": 48,
+      "height": 48
+    },
+    "theme-stone": {
+      "file": "theme-stone.png",
+      "width": 48,
+      "height": 48
+    },
+    "theme-parchment": {
+      "file": "theme-parchment.png",
+      "width": 48,
+      "height": 48
+    },
+    "theme-corner-frame": {
+      "file": "theme-corner-frame.png",
+      "width": 48,
+      "height": 48
+    },
+    "theme-wax-seal": {
+      "file": "theme-wax-seal.png",
+      "width": 48,
+      "height": 48
+    },
+    "theme-divider": {
+      "file": "theme-divider.png",
+      "width": 48,
+      "height": 24
+    },
+    "theme-sigil": {
+      "file": "theme-sigil.png",
+      "width": 48,
+      "height": 48
+    },
+    "theme-orbit-stars": {
+      "file": "theme-orbit-stars.png",
+      "width": 48,
+      "height": 48
+    },
+    "theme-ember-runes": {
+      "file": "theme-ember-runes.png",
+      "width": 48,
+      "height": 48
+    },
+    "theme-glyph-runes": {
+      "file": "theme-glyph-runes.png",
+      "width": 48,
+      "height": 48
+    },
+    "theme-zen-circle": {
+      "file": "theme-zen-circle.png",
+      "width": 48,
+      "height": 48
+    },
+    "theme-vertical-ornament": {
+      "file": "theme-vertical-ornament.png",
+      "width": 48,
+      "height": 48
+    },
+    "tree-connector-straight": {
+      "file": "tree-connector-straight.png",
+      "width": 48,
+      "height": 24
+    },
+    "tree-connector-corner": {
+      "file": "tree-connector-corner.png",
+      "width": 48,
+      "height": 24
+    },
+    "tree-connector-branch": {
+      "file": "tree-connector-branch.png",
+      "width": 48,
+      "height": 24
+    },
+    "ui-badge-annotation": {
+      "file": "ui-badge-annotation.png",
+      "width": 48,
+      "height": 48
+    },
+    "theme-pixel-normal": {
+      "file": "theme-pixel-normal.png",
+      "width": 48,
+      "height": 24
+    },
+    "theme-pixel-hover": {
+      "file": "theme-pixel-hover.png",
+      "width": 48,
+      "height": 24
+    },
+    "theme-pixel-pressed": {
+      "file": "theme-pixel-pressed.png",
+      "width": 48,
+      "height": 24
+    },
+    "theme-pixel-selected": {
+      "file": "theme-pixel-selected.png",
+      "width": 48,
+      "height": 24
+    },
+    "theme-pixel-disabled": {
+      "file": "theme-pixel-disabled.png",
+      "width": 48,
+      "height": 24
+    },
+    "theme-pixel-danger": {
+      "file": "theme-pixel-danger.png",
+      "width": 48,
+      "height": 24
+    },
+    "theme-pixel-field": {
+      "file": "theme-pixel-field.png",
+      "width": 48,
+      "height": 24
+    },
+    "theme-pixel-panel": {
+      "file": "theme-pixel-panel.png",
+      "width": 48,
+      "height": 24
+    },
+    "theme-doodle-normal": {
+      "file": "theme-doodle-normal.png",
+      "width": 48,
+      "height": 24
+    },
+    "theme-doodle-hover": {
+      "file": "theme-doodle-hover.png",
+      "width": 48,
+      "height": 24
+    },
+    "theme-doodle-pressed": {
+      "file": "theme-doodle-pressed.png",
+      "width": 48,
+      "height": 24
+    },
+    "theme-doodle-selected": {
+      "file": "theme-doodle-selected.png",
+      "width": 48,
+      "height": 24
+    },
+    "theme-doodle-disabled": {
+      "file": "theme-doodle-disabled.png",
+      "width": 48,
+      "height": 24
+    },
+    "theme-doodle-danger": {
+      "file": "theme-doodle-danger.png",
+      "width": 48,
+      "height": 24
+    },
+    "theme-doodle-field": {
+      "file": "theme-doodle-field.png",
+      "width": 48,
+      "height": 24
+    },
+    "theme-doodle-panel": {
+      "file": "theme-doodle-panel.png",
+      "width": 48,
+      "height": 24
+    },
+    "theme-murk-normal": {
+      "file": "theme-murk-normal.png",
+      "width": 48,
+      "height": 24
+    },
+    "theme-murk-hover": {
+      "file": "theme-murk-hover.png",
+      "width": 48,
+      "height": 24
+    },
+    "theme-murk-pressed": {
+      "file": "theme-murk-pressed.png",
+      "width": 48,
+      "height": 24
+    },
+    "theme-murk-selected": {
+      "file": "theme-murk-selected.png",
+      "width": 48,
+      "height": 24
+    },
+    "theme-murk-disabled": {
+      "file": "theme-murk-disabled.png",
+      "width": 48,
+      "height": 24
+    },
+    "theme-murk-danger": {
+      "file": "theme-murk-danger.png",
+      "width": 48,
+      "height": 24
+    },
+    "theme-murk-field": {
+      "file": "theme-murk-field.png",
+      "width": 48,
+      "height": 24
+    },
+    "theme-murk-panel": {
+      "file": "theme-murk-panel.png",
+      "width": 48,
+      "height": 24
     }
   }
 }

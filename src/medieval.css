@@ -14,9 +14,9 @@ html.medieval {
   --brass: #b98a3e;
   --brass-hi: #f0cf86;
   --ember: #ff9a3c;
-  --wood: url("../assets/theme/wood.svg") 0 0 / 320px 80px;
-  --stone: url("../assets/theme/stone.svg") 0 0 / 240px 160px;
-  --parchment: url("../assets/theme/parchment.svg") 0 0 / 300px 300px;
+  --wood: url("../public/assets/style/theme-wood.png") 0 0 / 320px 80px;
+  --stone: url("../public/assets/style/theme-stone.png") 0 0 / 240px 160px;
+  --parchment: url("../public/assets/style/theme-parchment.png") 0 0 / 300px 300px;
   /* Four round nail-heads, one in each corner. */
   --nails: radial-gradient(circle at 6px 6px, #a7a39a 0 1.1px, #3b3833 1.7px, transparent 2.3px),
     radial-gradient(circle at calc(100% - 6px) 6px, #a7a39a 0 1.1px, #3b3833 1.7px, transparent 2.3px),
@@ -32,7 +32,7 @@ html.medieval * {
 }
 html.medieval ::-webkit-scrollbar-thumb {
   background-color: #3a2a1880;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 6 40' width='6' height='40'%3E%3Cpath d='M3 2 L4.3 11 L3 15 L1.7 11 Z' fill='%23c9a05a'/%3E%3Ccircle cx='3' cy='20' r='1.6' fill='%23c9a05a'/%3E%3Cpath d='M3 38 L4.3 29 L3 25 L1.7 29 Z' fill='%23c9a05a'/%3E%3C/svg%3E");
+  background-image: url("../public/assets/style/theme-vertical-ornament.png");
 }
 html.medieval ::-webkit-scrollbar-thumb:hover {
   background-color: #5a402080;
@@ -186,7 +186,7 @@ html.medieval .tree-heading h3::after {
   flex: 1;
   max-width: 120px;
   height: 12px;
-  background: url("../assets/theme/rule.svg") right center / auto 12px no-repeat;
+  background: url("../public/assets/style/theme-divider.png") right center / auto 12px no-repeat;
 }
 
 html.medieval .training-group::after,
@@ -297,7 +297,7 @@ html.medieval .mine-view::before {
   inset: -7px;
   z-index: 1;
   border: 16px solid transparent;
-  border-image: url("../assets/theme/frame.svg") 16 / 16px;
+  border-image: url("../public/assets/style/theme-corner-frame.png") 16 / 16px;
   pointer-events: none;
 }
 html.medieval .mine-away {
@@ -481,13 +481,13 @@ html.medieval .tree-viewport {
   border: 1px solid #3a2a18;
   border-radius: 3px;
   background:
-    url("../assets/theme/sigil.svg") center / min(92%, 440px) no-repeat,
+    url("../public/assets/style/theme-sigil.png") center / min(92%, 440px) no-repeat,
     radial-gradient(ellipse at 50% 45%, #1a1712, #08090a 75%);
   box-shadow: inset 0 0 24px #000;
 }
 html.medieval .skill-tree.stewardship .tree-viewport {
   background:
-    url("../assets/theme/sigil.svg") center / min(92%, 440px) no-repeat,
+    url("../public/assets/style/theme-sigil.png") center / min(92%, 440px) no-repeat,
     radial-gradient(ellipse at 50% 45%, #111916, #08090a 75%);
 }
 html.medieval .tree-map line {
@@ -639,7 +639,7 @@ html.medieval dialog::before {
   width: 46px;
   height: 46px;
   transform: translateX(-50%) rotate(-8deg);
-  background: url("../assets/theme/seal.svg") center / contain no-repeat;
+  background: url("../public/assets/style/theme-wax-seal.png") center / contain no-repeat;
   filter: drop-shadow(0 2px 2px #3a1a0a80);
 }
 html.medieval dialog > small {
