@@ -204,3 +204,7 @@ Outside custom themes, live water ripples/glints, falling drops, wet-foot overla
 Reveal rays, celebration/skill particles and the Equipment melt still use procedural or older icon art.
 The board route and badge annotations also retain procedural marks; letters should remain live text.
 Alternate Game themes retain their own vector/text art; retired Classic PNG directories and their loaders have been removed.
+
+The [Blacksmith effects source](../../assets/game-sprites/blacksmith-effects.png) adds four tiny flame poses and four stepped smoke clusters.
+`tools/prepare-blacksmith-sprites.mjs` exports 6-pixel fire frames, 16 × 12 smoke canvases, the original sign layer and a registered 48 × 48 building base in the shared palette with binary alpha.
+Runtime smoke opacity remains faint; the hanging sign shifts its lower rows by at most two native pixels while its top stays anchored.

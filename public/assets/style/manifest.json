@@ -2694,6 +2694,26 @@
       "file": "theme-murk-panel.png",
       "width": 48,
       "height": 24
+    },
+    "blacksmith-base": {
+      "file": "blacksmith-base.png",
+      "width": 48,
+      "height": 48
+    },
+    "blacksmith-sign": {
+      "file": "blacksmith-sign.png",
+      "width": 13,
+      "height": 15
+    },
+    "blacksmith-fire": {
+      "file": "blacksmith-fire.png",
+      "width": 24,
+      "height": 6
+    },
+    "blacksmith-smoke": {
+      "file": "blacksmith-smoke.png",
+      "width": 64,
+      "height": 12
     }
   }
 }

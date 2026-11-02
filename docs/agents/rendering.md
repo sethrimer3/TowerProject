@@ -364,3 +364,14 @@ The generated currency source and `tools/prepare-currency-sprites.mjs` retain sm
 UI theme textures, ornaments and nine-slice frames now use native PNGs rather than linked or embedded SVG.
 The Medieval, Orbit, Glyph, Ember and Zen decorations reuse generated raster subjects; Pixel, Doodle and Murk use 48 × 24 frames with six-pixel source slices.
 Game-theme world painters and procedural spell effects are independent of this interface migration.
+
+## Blacksmith ambient animation
+
+`sprites/blacksmith.ts` composes the original 48-pixel building with a four-frame fire window, a row-shifted hanging sign and three staggered chimney smoke puffs.
+The fire advances every 170 ms, the sign completes a gentle 7.2-second sway, and each smoke puff rises and fades over 7.8 seconds at no more than 6.5% opacity.
+All layer positions and sign row shifts stay on native pixels; smoke uses hard-edged PNG silhouettes without blur or baked glow.
+`drawBlacksmith` keeps the original static PNG when Animations is off, Reduce motion is on or any animation layer is unavailable.
+The forest building follows the saved Animations switch across Game themes because the building itself always uses the shared native art.
+The original building PNG, 3 × 3 footprint, collision map and Equipment interaction remain unchanged.
+`node tools/prepare-blacksmith-sprites.mjs` extracts the generated effect source, preserves the original sign pixels and registers native layers in the shared palette.
+`node tests/blacksmith-animation.mjs` checks fire changes, slow sign motion, faint smoke, the actual forest renderer and both motion preferences.

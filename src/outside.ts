@@ -5,6 +5,7 @@ import { tileRandom } from "./random.ts";
 import { MODES } from "./modes.ts";
 import { drawKit } from "./sprites/kit.ts";
 import { drawForestLandmark, drawForestSprite } from "./sprites/forest.ts";
+import { drawBlacksmithMotion } from "./sprites/blacksmith.ts";
 
 export const OUTSIDE_SIZE = 20;
 /** The gold trial square sits on open grass beside the Tower path. */
@@ -174,9 +175,10 @@ function drawTierNumeral(c: CanvasRenderingContext2D, numeral: string, x: number
 }
 
 /** Forest buildings retain their original footprints and interaction yards. */
-export function drawBlacksmith(c: CanvasRenderingContext2D, center: number, _styled = true) {
-  drawKit(c, "blacksmith", (center + BLACKSMITH.dx) * 24,
-    (OUTSIDE_SIZE - BLACKSMITH.y - BLACKSMITH.height) * 24, BLACKSMITH.width * 24, BLACKSMITH.height * 24);
+export function drawBlacksmith(c: CanvasRenderingContext2D, center: number, _styled = true, now = 0, animate = false) {
+  const x = (center + BLACKSMITH.dx) * 24, y = (OUTSIDE_SIZE - BLACKSMITH.y - BLACKSMITH.height) * 24;
+  if (animate && drawBlacksmithMotion(c, x, y, now)) return;
+  drawKit(c, "blacksmith", x, y, BLACKSMITH.width * 24, BLACKSMITH.height * 24);
 }
 export function drawTournamentHall(c: CanvasRenderingContext2D, center: number, _styled = true) {
   drawKit(c, "hall", (center + TOURNAMENT_HALL.dx) * 24,

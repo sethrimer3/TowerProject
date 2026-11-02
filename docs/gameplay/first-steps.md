@@ -6,6 +6,8 @@ The game uses matching pixel-art controls, icons, cards, heroes, enemies, pickup
 A loading screen waits for the artwork and fonts before the game appears; if loading fails, use Retry after checking your connection.
 Settings offers **Animations** and **Square doors** as independent checkboxes; both start off and remember your choices.
 Animations enables matching torch frames, subtle potion bubbles, occasional key shines and a small idle motion after the hero stops.
+In the forest, it also makes the Blacksmith’s window fire flicker, its hanging sign sway slowly and faint pixel smoke rise from the chimney.
+Reduce motion keeps the Blacksmith still.
 The skull and crossbones shown when the hero falls also uses matching PNG art, with a short animation while Animations is on.
 Reduce motion keeps these frames still; movement and combat stop the hero's idle motion.
 Outside, cloud shadows drift across the ground, trees, buildings and hero, shifting over taller surfaces.
