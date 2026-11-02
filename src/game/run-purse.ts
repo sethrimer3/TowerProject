@@ -248,7 +248,7 @@ export class RunPurse {
     return trainedAmount(this.trainingNow, "goldBonus") * researched(this.save.archives, "goldBonus") * treeFactor(this.tree, "goldBonus");
   }
 
-  /** `base` Gold raised by Gold Bonus. */
+  /** `base` raised by Gold Bonus. */
   private bonused(base: number) {
     return snap((base * this.goldBonus) / 10_000);
   }
@@ -387,14 +387,14 @@ export class RunPurse {
   }
 
   /** Spare Change: Gold for a floor climbed for the first time in the run,
-   * its Gold / Floor raised by research and the tier's bonus, and by the
+   * its Gold / Floor raised by research, Gold Bonus and the tier's bonus, and by the
    * environments of `reached`, the equivalent floor (from 1) it climbed to.
    * Gated by `key` in lootedTiles, like a
    * kill's Gold; returns what it paid. */
   floorGold(key: string, reached: number) {
     const base = trainedAmount(this.trainingNow, "floorGold");
     if (!base || !this.loot(key)) return 0;
-    return this.gold(snap(this.researched(base, "floorGold") * treeFactor(this.tree, "floorGold")), this.floorPay(reached));
+    return this.gold(this.bonused(snap(this.researched(base, "floorGold") * treeFactor(this.tree, "floorGold"))), this.floorPay(reached));
   }
 
   /** Floor Skip Reward: when Skip climbs past the floor the run stands on
@@ -472,26 +472,26 @@ export class RunPurse {
   /** Interest: for a floor climbed for the first time in the run, after
    * its Wishing Well Silver, Interest % research's share of the Silver
    * held (the run's Interest boons raising the share), up to Max
-   * Interest, then multiplied by the environments of `reached`, as all Silver
-   * found on it is. Silver Bonus doesn't raise it. Returns what it added. */
+   * Interest, then multiplied by Gold Bonus and the environments of `reached`,
+   * as all Silver found on it is. Silver Bonus doesn't raise it. Returns what it added. */
   interest(reached: number) {
     const rate = researched(this.save.archives, "interestRate") * (this.boons?.interest ?? 1);
     if (!rate) return 0;
     const held = this.run.silver ?? 0;
-    const paid = this.onFloor(Math.min(this.interestCap, snap((held * rate) / 1000)), reached);
+    const paid = this.onFloor(this.bonused(Math.min(this.interestCap, snap((held * rate) / 1000))), reached);
     if (paid > 0) this.run.silver = snap(held + paid);
     this.noteSilver(paid);
     return paid > 0 ? paid : 0;
   }
 
-  /** The most Interest a floor pays (Max Interest research), before its environments. */
+  /** The most Interest a floor pays (Max Interest research), before Gold Bonus and its environments. */
   get interestCap() {
     return researched(this.save.archives, "interestCap");
   }
 
   /** The most Interest climbing to `reached` pays. */
   maxInterest(reached: number) {
-    return this.onFloor(this.interestCap, reached);
+    return this.onFloor(this.bonused(this.interestCap), reached);
   }
 
   /** Silver `amount` with the environments of `floor`. */

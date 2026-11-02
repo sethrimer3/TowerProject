@@ -247,6 +247,19 @@ test("reach is Euclidean to the tile's center, round the Delve's wrap", () => {
   assert.ok(!stunnedTile({ kind: "enemy", enemy: brute }, 5, 5, undefined).enemy!.stunned);
 });
 
+test("a boss or Greater Boss in it is immune: not stunned, and a Flying one stays in the air", () => {
+  const zone = { x: 5, y: 5, radius: 3, wrap: 0 };
+  for (const strength of ["boss", "greaterBoss"] as const) {
+    const boss: Enemy = { ...brute, strength, fast: true };
+    assert.equal(stunnedTile({ kind: "enemy", enemy: boss }, 5, 5, () => zone).enemy!.stunned, undefined);
+    const flyer: Tile = { kind: "floor", flyer: { ...boss, flying: true } };
+    assert.equal(stunnedTile(flyer, 5, 5, () => zone), flyer);
+  }
+  const g = arena({ "4,5": { kind: "enemy", enemy: { ...brute, strength: "boss", name: "Warden" } } });
+  assert.equal(g.world.tile(4, 5).enemy!.stunned, undefined);
+  assert.doesNotMatch(tileInfo(g, 4, 5).title, /Stunned/);
+});
+
 test("a Flying enemy in it comes down, wing and all, and the hero can start a fight with it", () => {
   const flyer: Enemy = { ...brute, flying: true }, g = arena({ "4,5": { kind: "floor", flyer } });
   const t = g.world.tile(4, 5);
@@ -395,20 +408,29 @@ function trial(vortex: Vortex | undefined) {
   return s;
 }
 
-test("in a trial, what it stuns takes no steps and its boss clock stops, but it still answers a hit", () => {
+test("in a trial, what it stuns takes no steps and a turret's clock stops, but it still answers a hit", () => {
   const s = trial({ x: 12, y: 12, left: 5 });
   assert.ok(stunnedIn(s, s.elemental));
   assert.ok(!stunnedIn(s, { x: 1, y: 12 }));
-  assert.equal(foeActs(s, s.elemental, "move:boss"), false);
-  assert.equal(foeActs(s, s.elemental, "boss"), true);
+  assert.equal(foeActs(s, s.elemental, "move:minion:1"), false);
+  assert.equal(foeActs(s, s.elemental, "minion:1"), true);
   s.steps = 10;
-  const due = bossTurn(s, s.elemental);
-  assert.equal(s.arcana!.lag!.boss, 100, "a whole turn held back");
+  const due = bossTurn(s, s.elemental, "turret");
+  assert.equal(s.arcana!.lag!.turret, 100, "a whole turn held back");
   assert.equal(due(10), false, "what fell due doesn't");
   const free = trial(undefined);
   free.steps = 10;
-  assert.equal(bossTurn(free, free.elemental)(10), true);
-  assert.equal(foeActs(free, free.elemental, "move:boss"), true);
+  assert.equal(bossTurn(free, free.elemental, "turret")(10), true);
+  assert.equal(foeActs(free, free.elemental, "move:minion:1"), true);
+});
+
+test("in a trial, the boss is immune: it steps and its clock runs in a vortex", () => {
+  const s = trial({ x: 12, y: 12, left: 5 });
+  assert.ok(stunnedIn(s, s.elemental), "it stands in the vortex");
+  assert.equal(foeActs(s, s.elemental, "move:boss"), true);
+  s.steps = 10;
+  assert.equal(bossTurn(s, s.elemental)(10), true);
+  assert.equal(s.arcana!.lag?.boss, undefined);
 });
 
 test("a trial's vortex opens on the arena's floor and is saved with the attempt", () => {

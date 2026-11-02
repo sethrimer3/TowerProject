@@ -268,7 +268,7 @@ Switching it off loses the fields and its cooldown; decay already on enemies wai
 
 ## Voidwell
 
-*Every x turns, a vortex of y tiles' radius opens as far from you as your shot range, at a random angle, for z turns. Enemies in it are stunned: they don't move or shoot, Fast enemies don't strike first, and Flying enemies come down to be fought. Shielded enemies' bubbles still hold.*
+*Every x turns, a vortex of y tiles' radius opens as far from you as your shot range, at a random angle, for z turns. Enemies in it are stunned: they don't move or shoot, Fast enemies don't strike first, and Flying enemies come down to be fought. Bosses are immune, and Shielded enemies' bubbles still hold.*
 Its first vortex comes when its first cooldown runs out, and the cooldown starts over the moment it runs out.
 It shows as a see-through dark blue vortex, slowly spinning, lying on the floor under items and enemies.
 
@@ -279,7 +279,7 @@ If no angle can, as with a very long shot range, it opens as far off as still fi
 The floor comes first the other way too: beside a corner, a large vortex may open farther off than your range.
 A vortex too wide for the floor lies across its middle.
 
-**Stunned:** an enemy whose tile's middle lies within the radius, measured straight, walls or no walls, is stunned until the vortex ends or it is gone:
+**Stunned:** an enemy whose tile's middle lies within the radius, measured straight, walls or no walls, is stunned until the vortex ends or it is gone (Bosses and Greater Bosses are immune):
 - It doesn't move, and a Ranged or Flying enemy doesn't shoot, its cooldown waiting where it was.
 - A Fast enemy doesn't strike first, and enemy previews and the Damage Visual count that.
 - A Flying enemy comes down to its tile, so you can step onto it and start a fight, and your route goes round it like any other enemy. It's back in the air once the vortex ends, its wounds kept.
@@ -313,5 +313,5 @@ At 75% a cooldown falls by 0.25 a turn, so a beam due in 10 turns takes 40, and 
 A boss's Regen isn't on a cooldown, so it isn't slowed, and an Obelisk's turn limit still counts every turn.
 **Phantasm** works as above on what stands in the arena, its ghosts striking as each turn ends, wherever you stand then.
 **Necrotic Frost** works as above on what stands in the arena, and an incorporeal boss's decay waits until it can be struck again.
-**Voidwell** opens on the arena's floor, and what stands in it takes no steps, while a boss's or part's effects don't count down at all; it still answers your hits.
+**Voidwell** opens on the arena's floor, and what stands in it takes no steps, while a Blaster Turret's bolts don't count down at all; it still answers your hits. The boss is immune.
 Toggles and cooldowns are the attempt's own, leave your run outside alone, and survive a reload.

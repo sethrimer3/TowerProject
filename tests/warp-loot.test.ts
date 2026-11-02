@@ -62,6 +62,14 @@ test("the skipped floors' Silver: kills by the enemy schedule, the Wishing Well,
   const interest = skippedSilver(save, 3, 150, 100);
   assert.ok(interest > well);
   assert.ok(interest - well <= 150 * researched(save.archives, "interestCap") + 1e-6, "never more than Max Interest a floor");
+  // Gold Bonus raises the Interest and nothing else.
+  save.upgrades.loot = 1;
+  save.training.goldBonus = 100;
+  const bonused = skippedSilver(save, 3, 150, 100);
+  assert.ok(bonused > interest);
+  assert.ok(bonused - well <= 4 * 150 * researched(save.archives, "interestCap") + 1e-6, "×4, Max Interest a floor");
+  assert.equal(skippedSilver({ ...save, archives: { ...save.archives, levels: {} } }, 3, 150, 100), well, "no Interest, nothing to raise");
+  save.training.goldBonus = 0;
   // The research's percent of it, in whole Silver; none without it or on floor 1.
   assert.equal(warpLootSilver(save, 3, 150), 0);
   save.archives.levels.warpLoot = 5;

@@ -247,7 +247,7 @@ export const ARCANA = {
         steps: [[200, 0], [190, 10], [180, 28], [170, 46], [160, 64], [150, 82], [140, 100], [130, 118], [120, 136], [110, 154], [100, 172], [90, 190], [80, 208], [70, 226], [60, 244], [50, 262]],
       },
     ],
-    summary: ([size, duration, turns]) => `Every ${turns} turns, a vortex of ${size.toFixed(1)} tiles' radius opens as far from the hero as your shot range, at a random angle, for ${duration} turns. Enemies in it are stunned: they don't move or shoot, Fast enemies don't strike first, and Flying enemies come down to be fought. Shielded enemies' bubbles still hold.`,
+    summary: ([size, duration, turns]) => `Every ${turns} turns, a vortex of ${size.toFixed(1)} tiles' radius opens as far from the hero as your shot range, at a random angle, for ${duration} turns. Enemies in it are stunned: they don't move or shoot, Fast enemies don't strike first, and Flying enemies come down to be fought. Bosses are immune, and Shielded enemies' bubbles still hold.`,
     effect: ([size, duration]) => `${size.toFixed(1)} tiles · ${duration} turns`,
   },
 } as const satisfies Record<string, ArcanumDef>;

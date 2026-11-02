@@ -791,7 +791,7 @@ export const RESEARCH = {
   },
   goldBonus: {
     name: "Gold Bonus",
-    description: "Drops give more Gold.",
+    description: "Drops and floors give more Gold, and Interest pays more.",
     categories: ["economy"],
     requires: [{ upgrade: "loot" }],
     levels: hundredLevels("goldBonus", 3, STEEP_INCOME),

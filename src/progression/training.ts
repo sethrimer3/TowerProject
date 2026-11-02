@@ -423,12 +423,12 @@ export const TRAINING = [
     description: "Multiplies all Silver found.",
     silver: opened, gold: firmTrainers,
   },
-  // Gold Bonus's multiplier on the Gold a kill, chest, item picked up or
-  // door opened pays in a run, in percent: ×1, and 3% more a rank.
+  // Gold Bonus's multiplier on the Gold a kill, chest, item picked up, door
+  // opened or new floor pays in a run, and on Interest, in percent: ×1, and 3% more a rank.
   {
     id: "goldBonus", name: "Gold Bonus", group: "utility", requires: "loot", cost: 1, max: 150,
     curve: { per: 3 }, base: 100, off: 100, scale: 100, unit: "×", research: "goldBonus",
-    description: "Multiplies Gold found in a climb.",
+    description: "Multiplies Gold found in a climb, and Interest.",
     silver: opened, gold: firmTrainers,
   },
   // The Free Upgrade rows: the chance each floor passed in a run trains a

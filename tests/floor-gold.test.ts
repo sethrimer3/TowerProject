@@ -7,6 +7,7 @@ import { TRAINING, trainedAmount } from "../src/progression/training.ts";
 import { RESEARCH, researched } from "../src/progression/archives.ts";
 import { trainingStep } from "../src/progression/loadout.ts";
 import { runTrainingValue } from "../src/progression/run-training.ts";
+import { RunPurse } from "../src/game/run-purse.ts";
 import { tierGold } from "../src/tiers.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 import type { World } from "../src/delve/world.ts";
@@ -69,6 +70,30 @@ test("a floor climbed for the first time in a run pays Gold / Floor, with resear
   assert.equal(paid, 13.64);
   assert.equal(g.undo(), false, "undo stays on the floor it was taken on");
   assert.equal(g.run.height, 4);
+});
+
+test("Gold Bonus multiplies Gold / Floor", () => {
+  const g = stairs();
+  g.save.upgrades.loot = 1;
+  g.save.training.goldBonus = 10;
+  g.save.archives.levels.goldBonus = 10;
+  assert.ok(g.move(1, 0));
+  assert.equal(g.save.gold, 3 * 1.69);
+});
+
+test("Gold Bonus multiplies Interest after Max Interest stops it, and full Interest counts that", () => {
+  const g = stairs();
+  g.save.upgrades.loot = 1;
+  g.save.training.goldBonus = 10;
+  g.save.archives.levels.interest = 10;
+  const purse = new RunPurse(g.save, "tower", g.run, () => 0.5, 0);
+  g.run.silver = 1000;
+  assert.equal(purse.interest(5), 13, "1% of 1,000, ×1.3");
+  assert.equal(g.run.silver, 1013);
+  g.run.silver = 100_000;
+  assert.equal(purse.interest(5), 65, "the limit of 50, ×1.3");
+  assert.equal(purse.interestCap, 50);
+  assert.equal(purse.maxInterest(5), 65);
 });
 
 test("without Spare Change a new floor pays nothing; Silver training raises it for the run", () => {

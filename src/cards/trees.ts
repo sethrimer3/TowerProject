@@ -22,7 +22,7 @@ import type { RunCore } from "../runs.ts";
 export type TreeStat =
   /** Spare Change's Gold and Wishing Well's Silver for each floor new to the run. */
   | "floorGold" | "floorSilver"
-  /** Gold Bonus (a kill's, a chest's and Pickup Gold) and all Silver a run finds. */
+  /** Gold Bonus (a kill's, a chest's, Pickup Gold, Gold / Floor and Interest) and all Silver a run finds. */
   | "goldBonus" | "silverBonus"
   /** Each Free Upgrade group's chance a floor. */
   | "freeOffense" | "freeDefense" | "freeUtility"

@@ -49,17 +49,17 @@ export function slowedAt(s: TrialState, at: Spot) {
   const dx = at.x - s.player.x, dy = at.y - s.player.y;
   return togetherSlow(rule && a?.dilation?.left && (dx * dx + dy * dy) * 10_000 <= rule.reach * rule.reach ? rule.slow : 0, frost && fields ? frostSlowAt(frostArea(fields, frost.effects), dx, dy) : 0);
 }
-/** Whether what stands at `at` is stunned by Voidwell's vortex this turn. */
+/** Whether what stands at `at`, the boss aside (it is immune), is stunned by Voidwell's vortex this turn. */
 export function stunnedIn(s: TrialState, at: Spot) {
   const rule = s.arcana?.spells?.voidwell, v = s.arcana?.voidwell?.vortex;
   return !!rule && !!v && inVortex({ x: v.x, y: v.y, radius: rule.radius, wrap: 0 }, at.x, at.y);
 }
 /** Whether the foe `key`, standing at `at`, does what it is about to (a counter, a
  * bite, a step): always, unless a vortex stuns it, which stops its steps (`move:`
- * keys) but not its answer to a hit, or Time Dilation's field holds it back. Its tally
+ * keys, but the boss's) but not its answer to a hit, or Time Dilation's field holds it back. Its tally
  * goes on from one chance to the next, however far apart. */
 export function foeActs(s: TrialState, at: Spot, key: string) {
-  if (key.startsWith("move:") && stunnedIn(s, at)) return false;
+  if (key.startsWith("move:") && key !== "move:boss" && stunnedIn(s, at)) return false;
   const slow = slowedAt(s, at);
   if (!slow) return true;
   const tallies = (s.arcana!.tallies ??= {}), { acts, tally } = slowedAct(tallies[key] ?? 0, slow);
@@ -71,11 +71,11 @@ export function foeActs(s: TrialState, at: Spot, key: string) {
  * what Time Dilation's field has held it back. */
 export const bossClock = (s: TrialState, clock: BossClock = "boss") => s.steps * 100 - (s.arcana?.lag?.[clock] ?? 0);
 /** The turn the attempt just counted, for what stands at `at` on `clock`: its field
- * holds the clock back by its Slowdown, and a vortex stops it. Returns whether an effect every `interval`
+ * holds the clock back by its Slowdown, and a vortex stops the turret's. Returns whether an effect every `interval`
  * turns falls due this turn, `offset` turns into each: the clock passed that mark,
  * and whatever it passed by rolls on toward the next. */
 export function bossTurn(s: TrialState, at: Spot, clock: BossClock = "boss") {
-  const before = bossClock(s, clock) - 100, slow = stunnedIn(s, at) ? 100 : slowedAt(s, at);
+  const before = bossClock(s, clock) - 100, slow = clock === "turret" && stunnedIn(s, at) ? 100 : slowedAt(s, at);
   if (slow) {
     const lag = (s.arcana!.lag ??= {});
     lag[clock] = snap((lag[clock] ?? 0) + slow);

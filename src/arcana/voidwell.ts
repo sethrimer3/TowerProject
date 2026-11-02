@@ -1,3 +1,4 @@
+import { isBoss } from "../combat.ts";
 import { pointing } from "../exact.ts";
 import type { Point, Tile } from "../entities.ts";
 import { tileRandom } from "../random.ts";
@@ -81,12 +82,13 @@ export function inVortex({ x: cx, y: cy, radius, wrap }: VortexZone, x: number, 
 }
 
 /** `t` at (x, y) as a vortex makes it: an enemy in it is marked `stunned`, and a Flying
- * one comes down to its tile, where the hero can fight it. Read as the board reads the
- * tile and never saved, so the enemy is itself again once the vortex ends. */
+ * one comes down to its tile, where the hero can fight it; a boss or Greater Boss is
+ * immune. Read as the board reads the tile and never saved, so the enemy is itself again
+ * once the vortex ends. */
 export function stunnedTile(t: Tile, x: number, y: number, vortex: (() => VortexZone | undefined) | undefined): Tile {
   if (!t.enemy && !t.flyer) return t;
   const zone = vortex?.();
-  if (!zone || !inVortex(zone, x, y)) return t;
+  if (!zone || !inVortex(zone, x, y) || isBoss((t.enemy ?? t.flyer)!)) return t;
   if (t.enemy) return { ...t, enemy: { ...t.enemy, stunned: true } };
   const { flyer, ...floor } = t;
   return { ...floor, kind: "enemy", enemy: { ...flyer!, stunned: true } };

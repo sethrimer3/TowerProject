@@ -403,7 +403,7 @@ A monster that appears on a floor during a run rather than being made with it, l
 _Avoid_: summon, added enemy
 
 **Gold multiplier**:
-A factor on every Gold banked: the tower's, the Gold ad's boost or Ad-Disable (one slot), each coin pack, the themes owned, the equipment's Gold found and the run's Gold boons. The player sees them together as *All Gold Bonuses*; Gold Bonus training is none of them, since it raises only a kill's, a chest's and an item's Gold.
+A factor on every Gold banked: the tower's, the Gold ad's boost or Ad-Disable (one slot), each coin pack, the themes owned, the equipment's Gold found and the run's Gold boons. The player sees them together as *All Gold Bonuses*; Gold Bonus training is none of them, since it raises only a kill's, a chest's, an item's and a floor's Gold, and Interest.
 _Avoid_: Gold bonus (the Training row)
 
 **Silver**:
@@ -641,7 +641,7 @@ _Avoid_: poison, frostbite
 Necrotic Frost's damage: each step of an effect's ramp is the arcanum's Arcanum Damage, so the first tick is one step, the next two, and so on.
 
 **Voidwell**:
-An arcanum on a cooldown: a vortex opening out on the floor at the hero's shot range and a random angle, standing there for a number of turns, stunning what is in it.
+An arcanum on a cooldown: a vortex opening out on the floor at the hero's shot range and a random angle, standing there for a number of turns, stunning what is in it, bosses aside.
 
 **Vortex**:
 What Voidwell opens: a circle on the floor, placed anywhere, whole tiles or not, with its edge at most a tile past the floor's as it opens. It lasts its turns, whatever floor the hero reaches.
@@ -760,7 +760,7 @@ The Silver a run starting above floor 1 (a Warp, or a Retry from one) goes insid
 _Avoid_: warp bonus, skip silver
 
 **Interest**:
-Silver added on each floor climbed for the first time in a run: Interest % research's share of the Silver held, at most Max Interest's limit (50 at first).
+Silver added on each floor climbed for the first time in a run: Interest % research's share of the Silver held, at most Max Interest's limit (50 at first), then multiplied by Gold Bonus.
 _Avoid_: dividend
 
 **Floor Skip Reward**:
