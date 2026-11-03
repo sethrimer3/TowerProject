@@ -21,13 +21,13 @@ import { random } from "../src/random.ts";
 import { snap } from "../src/exact.ts";
 import { playedSave } from "./first-skills.ts";
 
-test("Badges costs 3 Breakthrough and follows Physician in the Breakthrough tree", () => {
+test("Badges costs 3 Breakthrough and follows Enemy Level Skips in the Breakthrough tree", () => {
   const g = new Game(playedSave());
   g.save.upgrades.trainers = g.save.upgrades.breakthrough = 1;
   g.save.upgrades.moveSpeed = 1;
   g.save.breakthrough = 10;
-  assert.equal(g.skills.buy("cardBadges"), false, "waits for Physician");
-  g.save.upgrades.physician = 1;
+  assert.equal(g.skills.buy("cardBadges"), false, "waits for Enemy Level Skips");
+  g.save.upgrades.physician = g.save.upgrades.overheal = g.save.upgrades.life = g.save.upgrades.enemyLevelSkips = 1;
   assert.ok(g.skills.buy("cardBadges"));
   assert.equal(g.save.breakthrough, 7);
 });

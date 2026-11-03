@@ -37,7 +37,7 @@ test("the skills: their trees, prices, places and what reveals them", () => {
   assert.deepEqual([at("enemyHpLevelSkips").x, at("enemyHpLevelSkips").y, at("enemyHpLevelSkips").requires], [10, 376, ["floorSkipReward"]]);
   assert.deepEqual([at("enemyCombatLevelSkips").x, at("enemyCombatLevelSkips").y, at("enemyCombatLevelSkips").requires], [10, 394, ["enemyHpLevelSkips"]]);
   assert.deepEqual([at("enemyLevelSkipLimitBreak").y, at("enemyLevelSkipLimitBreak").requires], [at("limitBreak1").y, ["limitBreak1"]], "splits off Limit Break 1");
-  assert.equal(at("dashBadge").y, at("keyMastery").y, "Dash Badge in line with its row");
+  assert.equal(at("dashBadge").y, at("cardBadges").y, "Dash Badge in line with Badges");
   const save = defaults();
   for (const id of ["enemyHpLevelSkips", "enemyCombatLevelSkips", "enemyLevelSkipLimitBreak"] as const) assert.ok(skillHidden(id, save.upgrades), `${id} waits on Enemy Level Skips`);
   save.upgrades.enemyLevelSkips = 1;

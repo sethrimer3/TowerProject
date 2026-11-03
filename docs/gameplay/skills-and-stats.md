@@ -14,7 +14,7 @@ Below Free Training, **Interest**, with **Max Interest** and **Mug** either side
 **Golden Floors** (3 Breakthrough, under More Wealth) opens the [Golden Floor](environments.md#golden-floor) research.
 **Offline Gold** (2 Breakthrough, down and right of Golden Floors, after it) pays Gold for time away and opens its research (see [Offline Gold](currencies-and-shop.md#offline-gold)).
 **Thorns** stands below Buy Quantity, with **Torch** (20 Inspiration) below it, a row below Floor Skip Reward.
-Torch leads three ways, each hidden until a Mastery under **Key Mastery** (1 Breakthrough, under Badges) in the Breakthrough tree is bought: down the middle Wooden Door and the door cards (**Door Mastery**, 2 Breakthrough, right of Extra Trainer under Key Mastery, after it), down to the left Find Gold Key and Key Efficiency (revealed by Key Mastery itself), then GK Siphon, BK Siphon, the key trades and the key badges (**Card Mastery**), and to the right Weak Enemy and the enemy cards (**Beast Mastery**), those two 1 Breakthrough each, split off under Key Mastery.
+Torch leads three ways, each hidden until a Mastery under **Key Mastery** (1 Breakthrough, under Badges) in the Breakthrough tree is bought: down the middle Wooden Door and the door cards (**Door Mastery**, 2 Breakthrough, right of Extra Trainer under Key Mastery, after it), down to the left Find Gold Key and Key Efficiency (revealed by Key Mastery itself), then GK Siphon, BK Siphon, the key trades and the key badges (**Card Mastery**), and to the right Weak Enemy and the enemy cards (**Beast Mastery**), those two 1 Breakthrough each, split off Key Mastery (Beast Mastery beside it, under Dash Badge).
 **Bombs** (5 Inspiration, left of Critical Prediction, after it) opens the Bomb provision (see gear-and-equipment.md).
 **Super Critical** (30 Inspiration, under Bombs) opens SCrit % and SCrit x training (see training.md).
 **Armor Break** (50 Inspiration, under Super Critical) opens Armor Break training (see training.md).
@@ -44,7 +44,7 @@ A regular potion is drawn red, like the HP bar, and a percent potion blue, like 
 
 ## Enemy Level Skips
 
-**Enemy Level Skips** (5 Breakthrough, below Life) reveals **Enemy HP Level Skips** and, below it, **Enemy Combat Level Skips** (50 Inspiration each, below Floor Skip Reward), which open the Enemy HP Level Skip and Enemy Combat Level Skip training rows in Utility.
+**Enemy Level Skips** (5 Breakthrough, below Life, leading on to Badges) reveals **Enemy HP Level Skips** and, below it, **Enemy Combat Level Skips** (50 Inspiration each, below Floor Skip Reward), which open the Enemy HP Level Skip and Enemy Combat Level Skip training rows in Utility.
 **Enemy Level Skip Limit Break** (5 Breakthrough, beside Limit Break 1, after it, hidden until Enemy Level Skips is owned) raises both rows' most from 350 levels to 700.
 Each floor new to the run, each row's chance may skip that floor: enemies from then on stand as they would one floor lower, so after 5 skips an enemy on floor 100 has floor 95's stats.
 Enemy HP Level Skip counts for enemies' HP, and Enemy Combat Level Skip for their ATK and DEF, each rolled apart.

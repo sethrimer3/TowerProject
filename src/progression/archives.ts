@@ -903,7 +903,7 @@ export const RESEARCH = {
   },
   targetMore: {
     name: "Target More",
-    description: "Regains a Target use in fewer floors.",
+    description: "Regain a Target use in fewer floors.",
     categories: ["abilities"],
     requires: [{ upgrade: "targetMore" }],
     levels: regainLevels("targetFloors", 1.1),
