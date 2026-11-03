@@ -21,6 +21,7 @@ It rejects any requests for the removed bitmap directories and checks every init
 `tests/sprite-preload.test.ts` verifies the generated inventory covers all deployed images and contains real nonempty PNGs.
 `node tests/terrain-shadows.mjs` starts its own Vite server and checks live closed/open door occlusion, hidden pickups, real crate/barrel/mushroom/torch hardware silhouettes and warm terrain-shadow cache reuse.
 Its closed/open door review images go to `test-results/terrain-shadows/`; `tests/terrain-shadows.test.ts` covers geometry invalidation, overlapping lights, exact moving-object visibility, prop feet and broken crates without a browser.
+Both shadow suites also check flying wood fragments fading out, landing and Reduce motion; the browser reads real shadow pixels and verifies silhouette reuse without persistent particle direction history.
 
 The UI suite allows up to 30 seconds for initial artwork decoding before the HUD becomes visible.
 The UI and render snapshot suites also accept `PLAYWRIGHT_EXECUTABLE_PATH` for an installed Chromium binary.

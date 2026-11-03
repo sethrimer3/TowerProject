@@ -2,6 +2,8 @@ import type { Tile } from "../../entities.ts";
 import { random } from "../../random.ts";
 import { TILE_PX, waterAt, type Crate, type DecorSource, type TileDecor } from "./decor.ts";
 import { GRASS, PixelBatch, withAlpha, WOOD } from "./decor-sprites.ts";
+import type { ShadowCaster } from "../entity-lighting.ts";
+import type { BoardView } from "../render-frame.ts";
 
 /** Decor's live state and how it reacts to the hero: crates that splinter
  * underfoot, tall grass that rustles and remembers being pushed through,
@@ -208,6 +210,28 @@ export class DecorEffects {
   }
 
   // ---------------------------------------------------------------- drawing
+
+  /** Only the larger fresh splinters cast torch shadows, fading in 650 ms.
+   * A few shared rectangles reuse the normal shadow layer and silhouettes;
+   * particle height and opacity never create new canvas bakes. */
+  shadowCasters(view: BoardView, reduceMotion: boolean): ShadowCaster[] {
+    const out: ShadowCaster[] = [];
+    if (reduceMotion) return out;
+    for (const p of this.particles) {
+      if (p.kind !== "splinter" || p.w * p.h < 2 || p.z <= 1 || p.age >= 0.65) continue;
+      const gx = Math.round(p.gx), gy = Math.round(p.gy), x = gx / TILE_PX, y = -gy / TILE_PX;
+      if (x < view.left - 1 || x > view.left + view.n + 1 || y < view.bottom - 1 || y > view.bottom + view.n + 1) continue;
+      const opacity = 0.55 * (1 - p.age / 0.65) * Math.min(1, (p.z - 1) / 3);
+      const { w, h } = p;
+      out.push({ x, y, base: h, elevation: gy - Math.round(p.gy - p.z), opacity, prop: true,
+        key: `splinter:${w},${h}`,
+        sampleX: (gx + w / 2) / TILE_PX, sampleY: 1 - (gy + h) / TILE_PX,
+        draw: (c) => { c.fillStyle = "#fff"; c.fillRect(0, 0, w, h); },
+      });
+      if (out.length === 24) break;
+    }
+    return out;
+  }
 
   /** Glowing spores, drawn as light over the darkness (`k` = glow strength). */
   drawSporeGlow(px: PixelBatch, k: number) {

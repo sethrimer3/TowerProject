@@ -19,6 +19,10 @@ export type ShadowCaster = {
   draw: (c: CanvasRenderingContext2D) => void;
   /** Foot of the object in its 24-pixel tile, for short plants and stacked boxes. */
   base?: number;
+  /** Airborne height in native pixels; keeps the shape cache independent of motion. */
+  elevation?: number;
+  /** Additional fade for short-lived physical fragments. */
+  opacity?: number;
   /** World position receiving the light, when different from the tile center. */
   sampleX?: number; sampleY?: number;
   /** Physical props cast shadows but do not receive an extra sprite glaze. */
@@ -32,7 +36,7 @@ type LightMasks = Record<SpriteDir, HTMLCanvasElement>;
  * swaying flame and its distance, the flicker, and the shadow's opacity. */
 type Shadow = { t: Torch; dx: number; dy: number; d: number; flicker: number; alpha: number };
 /** A silhouette stamped at a caster's tile. */
-type Stamp = { x: number; y: number; sil: HTMLCanvasElement; base?: number };
+type Stamp = { x: number; y: number; sil: HTMLCanvasElement; base?: number; elevation?: number };
 /** This frame's shadow layer (made on first use) and what was stamped on it. */
 type ShadowLayer = { layer: CanvasRenderingContext2D | null; stamps: Stamp[] };
 
@@ -122,7 +126,7 @@ export class EntityLighting {
     if (!sil) return true;
     cast.layer ??= this.shadowLayer(f.width);
     if (!cast.layer) return false;
-    const stamp = { x: caster.x, y: caster.y, sil, base: caster.base };
+    const stamp = { x: caster.x, y: caster.y, sil, base: caster.base, elevation: caster.elevation };
     cast.stamps.push(stamp);
     this.castShadow(f, cast.layer, stamp, shadow);
     return true;
@@ -136,7 +140,7 @@ export class EntityLighting {
     layer.globalCompositeOperation = "destination-out";
     for (const c of stamps) {
       const o = tileOrigin(f, c.x, c.y);
-      layer.setTransform(1, 0, 0, 1, o.x, o.y);
+      layer.setTransform(1, 0, 0, 1, o.x, o.y - (c.elevation ?? 0) * f.s / 24);
       layer.scale(f.s / 24, f.s / 24);
       layer.drawImage(c.sil, 0, 0);
     }
@@ -213,12 +217,12 @@ export class EntityLighting {
     light.n += Math.max(0, -toY) * amount;
     // Shadows fade more gently than the light itself so they stay readable,
     // and deepen as the room gets darker.
-    const alpha = Math.min(0.95, cfg.strength * Math.sqrt(falloff) * flicker * (1 + cfg.darkBoost * f.darkness));
+    const alpha = Math.min(0.95, cfg.strength * Math.sqrt(falloff) * flicker * (1 + cfg.darkBoost * f.darkness)) * (caster.opacity ?? 1);
     return { t, dx, dy, d, flicker, alpha };
   }
 
   /** Stamps a caster's silhouette onto the shadow layer, sheared away from the shadow's torch. */
-  private castShadow(f: FrameContext, layer: CanvasRenderingContext2D, { x, y, sil, base = 22 }: Stamp, shadow: Shadow) {
+  private castShadow(f: FrameContext, layer: CanvasRenderingContext2D, { x, y, sil, base = 22, elevation }: Stamp, shadow: Shadow) {
     const cfg = LIGHTING_CONFIG.shadow;
     const { t, dx, dy, d } = shadow;
     // Screen-space direction away from the torch (world y is up).
@@ -229,12 +233,16 @@ export class EntityLighting {
     // (up when the torch is below, down when above) plus a partial lean
     // for side light. No rotation, so nothing swings below the base.
     const lean = ux * cfg.lean;
-    const vert = this.verticalStretch(`${x},${y},${t.x},${t.y}`, uy);
+    // Fleeting airborne pieces need no persistent history keyed by their
+    // continuously changing positions. Side-lit pieces lean upward.
+    const vert = elevation === undefined ? this.verticalStretch(`${x},${y},${t.x},${t.y}`, uy)
+      : Math.abs(uy) >= cfg.minVertical ? uy : -cfg.minVertical;
     const o = tileOrigin(f, x, y);
     layer.setTransform(1, 0, 0, 1, o.x, o.y);
     layer.scale(f.s / 24, f.s / 24);
-    // Sprite point (x, y), h = base - y -> (x + h*k*lean, base + h*k*vert).
-    layer.transform(1, 0, -k * lean, -k * vert, base * k * lean, base + base * k * vert);
+    // Height above the floor includes the elevation of airborne pieces.
+    const height = base + (elevation ?? 0);
+    layer.transform(1, 0, -k * lean, -k * vert, height * k * lean, base + height * k * vert);
     layer.globalAlpha = Math.min(1, shadow.alpha);
     layer.drawImage(sil, 0, 0);
   }

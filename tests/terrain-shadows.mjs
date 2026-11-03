@@ -88,8 +88,40 @@ try {
   });
   assert.ok(masks.every(p => p.solid > 0 && p.solid < 24 * 24), "every prop has a nonrectangular physical silhouette");
   assert.equal(masks[0].flame, false, "the torch silhouette excludes the flame");
+  const fragments = await page.evaluate(async () => {
+    const { EntityLighting } = await import("/src/render/entity-lighting.ts");
+    const { DecorEffects } = await import("/src/render/decor/decor-effects.ts");
+    const cv = document.createElement("canvas"); cv.width = cv.height = 96;
+    const lighting = new EntityLighting(), effects = new DecorEffects(() => null);
+    const p = { kind: "splinter", gx: 50, gy: -38, z: 12, w: 4, h: 1, age: 0, life: 15,
+      vx: 0, vy: 0, vz: 0, color: "#81593a" };
+    effects.particles = [p];
+    const f = { c: cv.getContext("2d"), width: 96, n: 4, s: 24, left: 0, bottom: 0, now: 1000, darkness: 0,
+      playerX: 1000, playerY: 1000, heroFacing: { dx: 0, dy: -1 }, look: { reduceMotion: true },
+      world: { tile: () => ({ kind: "floor" }) },
+      torches: [{ x: 0, y: 1, active: true, baseIntensity: 0.7, lightRadius: 8,
+        visibilityPolygon: [{ x: -8, y: -8 }, { x: 8, y: -8 }, { x: 8, y: 8 }, { x: -8, y: 8 }] }],
+    };
+    const draw = (age, z = 12, reduceMotion = false) => {
+      p.age = age; p.z = z;
+      lighting.drawShadows(f, () => null, effects.shadowCasters(f, reduceMotion));
+      if (!lighting.shadows) return 0;
+      const rgba = lighting.shadows.getContext("2d").getImageData(0, 0, 96, 96).data;
+      let alpha = 0;
+      for (let i = 3; i < rgba.length; i += 4) alpha += rgba[i];
+      return alpha;
+    };
+    const fresh = draw(0), faded = draw(0.4), expired = draw(0.65), landed = draw(0.1, 0), reduced = draw(0, 12, true);
+    return { fresh, faded, expired, landed, reduced, shapes: lighting.silhouettes.size, history: lighting.shadowVertSign.size };
+  });
+  assert.ok(fragments.fresh > fragments.faded && fragments.faded > 0, "real fragment shadow pixels fade");
+  assert.equal(fragments.expired, 0);
+  assert.equal(fragments.landed, 0);
+  assert.equal(fragments.reduced, 0);
+  assert.equal(fragments.shapes, 1, "all fragment frames reuse one silhouette");
+  assert.equal(fragments.history, 0, "particle motion leaves no permanent direction history");
   assert.deepEqual(errors, []);
-  console.log("Terrain shadows: live doors, hidden items, prop silhouettes and warm caches passed.");
+  console.log("Terrain shadows: live doors, hidden items, prop silhouettes, fading fragment pixels and warm caches passed.");
 } finally {
   await browser.close();
   await server.close();

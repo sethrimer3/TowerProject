@@ -9,6 +9,7 @@ Animations enables matching torch frames, subtle potion bubbles, occasional key 
 In Classic dungeons, walls and closed doors block torchlight and cast shadows; opening a door lets the light through.
 Items, monsters, the hero, mushrooms, wooden crates, barrels, small standing plants and torch stands cast shadows only from torches that can reach them.
 Broken crates stop casting shadows, and a torch's flame never casts its own shadow.
+Larger flying crate and barrel fragments cast faint torch shadows for a moment as they scatter, fading away within about half a second.
 In the forest, it also makes the Blacksmith’s window fire flicker, its hanging sign sway slowly and faint pixel smoke rise from the chimney.
 Reduce motion keeps the Blacksmith still.
 The skull and crossbones shown when the hero falls also uses matching PNG art, with a short animation while Animations is on.

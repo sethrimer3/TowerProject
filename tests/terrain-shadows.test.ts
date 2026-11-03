@@ -6,6 +6,7 @@ import { insidePolygon, torchReaches } from "../src/render/floor-relief.ts";
 import { EntityLighting, torchShadowCaster, type ShadowCaster } from "../src/render/entity-lighting.ts";
 import { DecorLayer } from "../src/render/decor/decor-render.ts";
 import type { FrameContext } from "../src/render/render-frame.ts";
+import { DecorEffects, type Particle } from "../src/render/decor/decor-effects.ts";
 
 function room() {
   const tiles = new Map<string, Tile>();
@@ -105,4 +106,52 @@ test("crates, barrels and mushrooms have profiles matching their feet, and broke
   assert.equal(profiles[0].sampleX, 2 + 7 / 24);
   decor["effects"].isBroken = () => true;
   assert.equal(decor.shadowCasters(f).length, 1, "only the mushrooms remain");
+});
+
+const fragment = (changes: Partial<Particle> = {}): Particle => ({
+  kind: "splinter", gx: 80, gy: -85, z: 10, w: 3, h: 1, age: 0, life: 15,
+  vx: 0, vy: 0, vz: 0, color: "#81593a", ...changes,
+});
+const fragmentView = { left: 0, bottom: 0, n: 9, s: 24 };
+
+test("flying wood shadows fade quickly, track height and stop when settled or motion is reduced", () => {
+  const effects = new DecorEffects(() => null), p = fragment();
+  effects.particles = [p];
+  const first = effects.shadowCasters(fragmentView, false)[0];
+  assert.ok(first.opacity! > 0);
+  assert.equal(first.elevation, 10);
+  p.age = 0.3; p.z = 18; p.gx += 6;
+  const later = effects.shadowCasters(fragmentView, false)[0];
+  assert.ok(later.opacity! < first.opacity!);
+  assert.equal(later.elevation, 18);
+  assert.ok(later.sampleX! > first.sampleX!);
+  assert.equal(later.key, first.key, "moving/fading pieces share one shape bake");
+  assert.deepEqual(effects.shadowCasters(fragmentView, true), []);
+  p.z = 0;
+  assert.deepEqual(effects.shadowCasters(fragmentView, false), []);
+  p.z = 10; p.age = 0.65;
+  assert.deepEqual(effects.shadowCasters(fragmentView, false), [], "old debris never keeps casting");
+});
+
+test("fragment shadows have a bounded cost and exclude dust, tiny chips and offscreen debris", () => {
+  const effects = new DecorEffects(() => null);
+  effects.particles = [fragment({ kind: "dust" }), fragment({ w: 1 }), fragment({ gx: 5000 })];
+  assert.deepEqual(effects.shadowCasters(fragmentView, false), []);
+  effects.particles.push(...Array.from({ length: 80 }, () => fragment()));
+  assert.equal(effects.shadowCasters(fragmentView, false).length, 24);
+});
+
+test("fragment torch shadows obey live door occlusion and their own fade", () => {
+  const { prepare } = room(), [torch] = prepare();
+  const effects = new DecorEffects(() => null), lighting = new EntityLighting();
+  const f = { now: 0, darkness: 0, look: { reduceMotion: false } } as FrameContext;
+  const p = fragment({ gx: 5 * 24 + 10, gy: -4 * 24 + 10 });
+  effects.particles = [p];
+  const on = () => lighting["lightCaster"](f, effects.shadowCasters(fragmentView, false)[0], torch, { e: 0, w: 0, n: 0, s: 0 });
+  assert.equal(on(), null, "hidden splinters cast no torch shadow");
+  p.gx = 3 * 24 + 10;
+  const lit = on();
+  assert.ok(lit);
+  p.age = 0.4;
+  assert.ok(on()!.alpha < lit.alpha, "the cast shadow fades with its particle profile");
 });

@@ -249,7 +249,7 @@ export class DecorLayer {
         });
       }
     });
-    return out;
+    return out.concat(this.effects.shadowCasters(f.view, f.reduceMotion));
   }
 
   /** How tile (x, y)'s tall grass moves this frame. */
