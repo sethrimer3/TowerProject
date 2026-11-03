@@ -1,0 +1,633 @@
+{
+  "palette": "../../ui-sprites/palette.ppm",
+  "status": "Generated native assets; renderer integration pending.",
+  "assets": {
+    "arcana-ricochet-shot": {
+      "file": "arcana-ricochet-shot.png",
+      "width": 24,
+      "height": 24,
+      "batch": "arcana-hud"
+    },
+    "arcana-aurum-bloom": {
+      "file": "arcana-aurum-bloom.png",
+      "width": 24,
+      "height": 24,
+      "batch": "arcana-hud"
+    },
+    "arcana-overseer": {
+      "file": "arcana-overseer.png",
+      "width": 24,
+      "height": 24,
+      "batch": "arcana-hud"
+    },
+    "arcana-thunderbolt": {
+      "file": "arcana-thunderbolt.png",
+      "width": 24,
+      "height": 24,
+      "batch": "arcana-hud"
+    },
+    "arcana-lifespring": {
+      "file": "arcana-lifespring.png",
+      "width": 24,
+      "height": 24,
+      "batch": "arcana-hud"
+    },
+    "arcana-time-dilation": {
+      "file": "arcana-time-dilation.png",
+      "width": 24,
+      "height": 24,
+      "batch": "arcana-hud"
+    },
+    "arcana-phantasm": {
+      "file": "arcana-phantasm.png",
+      "width": 24,
+      "height": 24,
+      "batch": "arcana-hud"
+    },
+    "arcana-necrotic-frost": {
+      "file": "arcana-necrotic-frost.png",
+      "width": 24,
+      "height": 24,
+      "batch": "arcana-hud"
+    },
+    "arcana-voidwell": {
+      "file": "arcana-voidwell.png",
+      "width": 24,
+      "height": 24,
+      "batch": "arcana-hud"
+    },
+    "hud-aether-shield": {
+      "file": "hud-aether-shield.png",
+      "width": 24,
+      "height": 24,
+      "batch": "arcana-hud"
+    },
+    "ui-card-points": {
+      "file": "ui-card-points.png",
+      "width": 12,
+      "height": 12,
+      "batch": "arcana-hud"
+    },
+    "ui-auto-play": {
+      "file": "ui-auto-play.png",
+      "width": 12,
+      "height": 12,
+      "batch": "arcana-hud"
+    },
+    "ui-hand-swap": {
+      "file": "ui-hand-swap.png",
+      "width": 12,
+      "height": 12,
+      "batch": "arcana-hud"
+    },
+    "ui-chevron-left": {
+      "file": "ui-chevron-left.png",
+      "width": 12,
+      "height": 12,
+      "batch": "arcana-hud"
+    },
+    "ui-chevron-right": {
+      "file": "ui-chevron-right.png",
+      "width": 12,
+      "height": 12,
+      "batch": "arcana-hud"
+    },
+    "ui-chevron-down": {
+      "file": "ui-chevron-down.png",
+      "width": 12,
+      "height": 12,
+      "batch": "arcana-hud"
+    },
+    "trial-light-elemental": {
+      "file": "trial-light-elemental.png",
+      "width": 24,
+      "height": 24,
+      "batch": "trial-actors"
+    },
+    "trial-keymaster": {
+      "file": "trial-keymaster.png",
+      "width": 24,
+      "height": 24,
+      "batch": "trial-actors"
+    },
+    "trial-chest-mimic": {
+      "file": "trial-chest-mimic.png",
+      "width": 24,
+      "height": 24,
+      "batch": "trial-actors"
+    },
+    "trial-light-slime": {
+      "file": "trial-light-slime.png",
+      "width": 24,
+      "height": 24,
+      "batch": "trial-actors"
+    },
+    "trial-arcane-spire": {
+      "file": "trial-arcane-spire.png",
+      "width": 24,
+      "height": 24,
+      "batch": "trial-actors"
+    },
+    "trial-dread-obelisk": {
+      "file": "trial-dread-obelisk.png",
+      "width": 24,
+      "height": 24,
+      "batch": "trial-actors"
+    },
+    "trial-arcane-wisp": {
+      "file": "trial-arcane-wisp.png",
+      "width": 24,
+      "height": 24,
+      "batch": "trial-actors"
+    },
+    "trial-obelisk-sentry": {
+      "file": "trial-obelisk-sentry.png",
+      "width": 24,
+      "height": 24,
+      "batch": "trial-actors"
+    },
+    "trial-blaster-turret": {
+      "file": "trial-blaster-turret.png",
+      "width": 24,
+      "height": 24,
+      "batch": "trial-actors"
+    },
+    "trial-regen-conduit": {
+      "file": "trial-regen-conduit.png",
+      "width": 24,
+      "height": 24,
+      "batch": "trial-actors"
+    },
+    "trial-ward-crystal": {
+      "file": "trial-ward-crystal.png",
+      "width": 24,
+      "height": 24,
+      "batch": "trial-actors"
+    },
+    "trial-door-spirit": {
+      "file": "trial-door-spirit.png",
+      "width": 24,
+      "height": 24,
+      "batch": "trial-actors"
+    },
+    "fx-ricochet-impact": {
+      "file": "fx-ricochet-impact.png",
+      "width": 24,
+      "height": 24,
+      "batch": "spell-effects"
+    },
+    "fx-thunderbolt-segment": {
+      "file": "fx-thunderbolt-segment.png",
+      "width": 24,
+      "height": 24,
+      "batch": "spell-effects"
+    },
+    "fx-thunderbolt-impact": {
+      "file": "fx-thunderbolt-impact.png",
+      "width": 24,
+      "height": 24,
+      "batch": "spell-effects"
+    },
+    "fx-phantasm-ghost": {
+      "file": "fx-phantasm-ghost.png",
+      "width": 24,
+      "height": 24,
+      "batch": "spell-effects"
+    },
+    "fx-phantasm-burst": {
+      "file": "fx-phantasm-burst.png",
+      "width": 24,
+      "height": 24,
+      "batch": "spell-effects"
+    },
+    "fx-lifespring-wave": {
+      "file": "fx-lifespring-wave.png",
+      "width": 24,
+      "height": 24,
+      "batch": "spell-effects"
+    },
+    "fx-lifespring-field": {
+      "file": "fx-lifespring-field.png",
+      "width": 24,
+      "height": 24,
+      "batch": "spell-effects"
+    },
+    "fx-time-dilation-field": {
+      "file": "fx-time-dilation-field.png",
+      "width": 24,
+      "height": 24,
+      "batch": "spell-effects"
+    },
+    "fx-necrotic-frost-burst": {
+      "file": "fx-necrotic-frost-burst.png",
+      "width": 24,
+      "height": 24,
+      "batch": "spell-effects"
+    },
+    "fx-necrotic-frost-field": {
+      "file": "fx-necrotic-frost-field.png",
+      "width": 24,
+      "height": 24,
+      "batch": "spell-effects"
+    },
+    "fx-voidwell-vortex": {
+      "file": "fx-voidwell-vortex.png",
+      "width": 24,
+      "height": 24,
+      "batch": "spell-effects"
+    },
+    "fx-voidwell-collapse": {
+      "file": "fx-voidwell-collapse.png",
+      "width": 24,
+      "height": 24,
+      "batch": "spell-effects"
+    },
+    "fx-elemental-teleport": {
+      "file": "fx-elemental-teleport.png",
+      "width": 24,
+      "height": 24,
+      "batch": "spell-effects"
+    },
+    "fx-keymaster-teleport": {
+      "file": "fx-keymaster-teleport.png",
+      "width": 24,
+      "height": 24,
+      "batch": "spell-effects"
+    },
+    "fx-obelisk-shot": {
+      "file": "fx-obelisk-shot.png",
+      "width": 24,
+      "height": 24,
+      "batch": "spell-effects"
+    },
+    "fx-obelisk-pulse": {
+      "file": "fx-obelisk-pulse.png",
+      "width": 24,
+      "height": 24,
+      "batch": "spell-effects"
+    },
+    "fx-water-ripple-0": {
+      "file": "fx-water-ripple-0.png",
+      "width": 24,
+      "height": 24,
+      "batch": "environment-effects"
+    },
+    "fx-water-ripple-1": {
+      "file": "fx-water-ripple-1.png",
+      "width": 24,
+      "height": 24,
+      "batch": "environment-effects"
+    },
+    "fx-water-ripple-2": {
+      "file": "fx-water-ripple-2.png",
+      "width": 24,
+      "height": 24,
+      "batch": "environment-effects"
+    },
+    "fx-water-ripple-3": {
+      "file": "fx-water-ripple-3.png",
+      "width": 24,
+      "height": 24,
+      "batch": "environment-effects"
+    },
+    "fx-water-drop": {
+      "file": "fx-water-drop.png",
+      "width": 24,
+      "height": 24,
+      "batch": "environment-effects"
+    },
+    "fx-water-splash": {
+      "file": "fx-water-splash.png",
+      "width": 24,
+      "height": 24,
+      "batch": "environment-effects"
+    },
+    "fx-wet-footprints": {
+      "file": "fx-wet-footprints.png",
+      "width": 24,
+      "height": 24,
+      "batch": "environment-effects"
+    },
+    "fx-water-glint": {
+      "file": "fx-water-glint.png",
+      "width": 24,
+      "height": 24,
+      "batch": "environment-effects"
+    },
+    "fx-grass-0": {
+      "file": "fx-grass-0.png",
+      "width": 24,
+      "height": 24,
+      "batch": "environment-effects"
+    },
+    "fx-grass-1": {
+      "file": "fx-grass-1.png",
+      "width": 24,
+      "height": 24,
+      "batch": "environment-effects"
+    },
+    "fx-grass-2": {
+      "file": "fx-grass-2.png",
+      "width": 24,
+      "height": 24,
+      "batch": "environment-effects"
+    },
+    "fx-wall-corner": {
+      "file": "fx-wall-corner.png",
+      "width": 24,
+      "height": 24,
+      "batch": "environment-effects"
+    },
+    "fx-reveal-rays": {
+      "file": "fx-reveal-rays.png",
+      "width": 24,
+      "height": 24,
+      "batch": "environment-effects"
+    },
+    "fx-celebration": {
+      "file": "fx-celebration.png",
+      "width": 24,
+      "height": 24,
+      "batch": "environment-effects"
+    },
+    "fx-equipment-melt": {
+      "file": "fx-equipment-melt.png",
+      "width": 24,
+      "height": 24,
+      "batch": "environment-effects"
+    },
+    "ui-route-mark": {
+      "file": "ui-route-mark.png",
+      "width": 24,
+      "height": 24,
+      "batch": "environment-effects"
+    },
+    "theme-wood": {
+      "file": "theme-wood.png",
+      "width": 48,
+      "height": 48,
+      "batch": "theme-details",
+      "usage": "surface swatch; seamless tiling not verified"
+    },
+    "theme-stone": {
+      "file": "theme-stone.png",
+      "width": 48,
+      "height": 48,
+      "batch": "theme-details",
+      "usage": "surface swatch; seamless tiling not verified"
+    },
+    "theme-parchment": {
+      "file": "theme-parchment.png",
+      "width": 48,
+      "height": 48,
+      "batch": "theme-details",
+      "usage": "surface swatch; seamless tiling not verified"
+    },
+    "theme-corner-frame": {
+      "file": "theme-corner-frame.png",
+      "width": 48,
+      "height": 48,
+      "batch": "theme-details"
+    },
+    "theme-wax-seal": {
+      "file": "theme-wax-seal.png",
+      "width": 48,
+      "height": 48,
+      "batch": "theme-details"
+    },
+    "theme-divider": {
+      "file": "theme-divider.png",
+      "width": 48,
+      "height": 24,
+      "batch": "theme-details"
+    },
+    "theme-sigil": {
+      "file": "theme-sigil.png",
+      "width": 48,
+      "height": 48,
+      "batch": "theme-details"
+    },
+    "theme-orbit-stars": {
+      "file": "theme-orbit-stars.png",
+      "width": 48,
+      "height": 48,
+      "batch": "theme-details"
+    },
+    "theme-ember-runes": {
+      "file": "theme-ember-runes.png",
+      "width": 48,
+      "height": 48,
+      "batch": "theme-details"
+    },
+    "theme-glyph-runes": {
+      "file": "theme-glyph-runes.png",
+      "width": 48,
+      "height": 48,
+      "batch": "theme-details"
+    },
+    "theme-zen-circle": {
+      "file": "theme-zen-circle.png",
+      "width": 48,
+      "height": 48,
+      "batch": "theme-details"
+    },
+    "theme-vertical-ornament": {
+      "file": "theme-vertical-ornament.png",
+      "width": 48,
+      "height": 48,
+      "batch": "theme-details"
+    },
+    "tree-connector-straight": {
+      "file": "tree-connector-straight.png",
+      "width": 48,
+      "height": 24,
+      "batch": "theme-details"
+    },
+    "tree-connector-corner": {
+      "file": "tree-connector-corner.png",
+      "width": 48,
+      "height": 24,
+      "batch": "theme-details"
+    },
+    "tree-connector-branch": {
+      "file": "tree-connector-branch.png",
+      "width": 48,
+      "height": 24,
+      "batch": "theme-details"
+    },
+    "ui-badge-annotation": {
+      "file": "ui-badge-annotation.png",
+      "width": 48,
+      "height": 48,
+      "batch": "theme-details"
+    },
+    "theme-pixel-normal": {
+      "file": "theme-pixel-normal.png",
+      "width": 48,
+      "height": 24,
+      "batch": "theme-frames",
+      "slice": 6
+    },
+    "theme-pixel-hover": {
+      "file": "theme-pixel-hover.png",
+      "width": 48,
+      "height": 24,
+      "batch": "theme-frames",
+      "slice": 6
+    },
+    "theme-pixel-pressed": {
+      "file": "theme-pixel-pressed.png",
+      "width": 48,
+      "height": 24,
+      "batch": "theme-frames",
+      "slice": 6
+    },
+    "theme-pixel-selected": {
+      "file": "theme-pixel-selected.png",
+      "width": 48,
+      "height": 24,
+      "batch": "theme-frames",
+      "slice": 6
+    },
+    "theme-pixel-disabled": {
+      "file": "theme-pixel-disabled.png",
+      "width": 48,
+      "height": 24,
+      "batch": "theme-frames",
+      "slice": 6
+    },
+    "theme-pixel-danger": {
+      "file": "theme-pixel-danger.png",
+      "width": 48,
+      "height": 24,
+      "batch": "theme-frames",
+      "slice": 6
+    },
+    "theme-pixel-field": {
+      "file": "theme-pixel-field.png",
+      "width": 48,
+      "height": 24,
+      "batch": "theme-frames",
+      "slice": 6
+    },
+    "theme-pixel-panel": {
+      "file": "theme-pixel-panel.png",
+      "width": 48,
+      "height": 24,
+      "batch": "theme-frames",
+      "slice": 6
+    },
+    "theme-doodle-normal": {
+      "file": "theme-doodle-normal.png",
+      "width": 48,
+      "height": 24,
+      "batch": "theme-frames",
+      "slice": 6
+    },
+    "theme-doodle-hover": {
+      "file": "theme-doodle-hover.png",
+      "width": 48,
+      "height": 24,
+      "batch": "theme-frames",
+      "slice": 6
+    },
+    "theme-doodle-pressed": {
+      "file": "theme-doodle-pressed.png",
+      "width": 48,
+      "height": 24,
+      "batch": "theme-frames",
+      "slice": 6
+    },
+    "theme-doodle-selected": {
+      "file": "theme-doodle-selected.png",
+      "width": 48,
+      "height": 24,
+      "batch": "theme-frames",
+      "slice": 6
+    },
+    "theme-doodle-disabled": {
+      "file": "theme-doodle-disabled.png",
+      "width": 48,
+      "height": 24,
+      "batch": "theme-frames",
+      "slice": 6
+    },
+    "theme-doodle-danger": {
+      "file": "theme-doodle-danger.png",
+      "width": 48,
+      "height": 24,
+      "batch": "theme-frames",
+      "slice": 6
+    },
+    "theme-doodle-field": {
+      "file": "theme-doodle-field.png",
+      "width": 48,
+      "height": 24,
+      "batch": "theme-frames",
+      "slice": 6
+    },
+    "theme-doodle-panel": {
+      "file": "theme-doodle-panel.png",
+      "width": 48,
+      "height": 24,
+      "batch": "theme-frames",
+      "slice": 6
+    },
+    "theme-murk-normal": {
+      "file": "theme-murk-normal.png",
+      "width": 48,
+      "height": 24,
+      "batch": "theme-frames",
+      "slice": 6
+    },
+    "theme-murk-hover": {
+      "file": "theme-murk-hover.png",
+      "width": 48,
+      "height": 24,
+      "batch": "theme-frames",
+      "slice": 6
+    },
+    "theme-murk-pressed": {
+      "file": "theme-murk-pressed.png",
+      "width": 48,
+      "height": 24,
+      "batch": "theme-frames",
+      "slice": 6
+    },
+    "theme-murk-selected": {
+      "file": "theme-murk-selected.png",
+      "width": 48,
+      "height": 24,
+      "batch": "theme-frames",
+      "slice": 6
+    },
+    "theme-murk-disabled": {
+      "file": "theme-murk-disabled.png",
+      "width": 48,
+      "height": 24,
+      "batch": "theme-frames",
+      "slice": 6
+    },
+    "theme-murk-danger": {
+      "file": "theme-murk-danger.png",
+      "width": 48,
+      "height": 24,
+      "batch": "theme-frames",
+      "slice": 6
+    },
+    "theme-murk-field": {
+      "file": "theme-murk-field.png",
+      "width": 48,
+      "height": 24,
+      "batch": "theme-frames",
+      "slice": 6
+    },
+    "theme-murk-panel": {
+      "file": "theme-murk-panel.png",
+      "width": 48,
+      "height": 24,
+      "batch": "theme-frames",
+      "slice": 6
+    }
+  }
+}

@@ -62,12 +62,12 @@ html:is(.yang, .yin) *:not(.badge-glyph, .badge-mark) {
 /* The paper, and a faint ensō brushed in its corner. */
 html.yang body {
   background:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cpath d='M150 52A70 70 0 1 0 166 92' fill='none' stroke='%232b2a27' stroke-width='9' stroke-linecap='round' opacity='.045'/%3E%3C/svg%3E") right -60px bottom -40px / 340px no-repeat fixed,
+    url("../public/assets/style/theme-zen-circle.png") right -60px bottom -40px / 340px no-repeat fixed,
     var(--z-paper);
 }
 html.yin body {
   background:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cpath d='M150 52A70 70 0 1 0 166 92' fill='none' stroke='%23e6e0d3' stroke-width='9' stroke-linecap='round' opacity='.045'/%3E%3C/svg%3E") right -60px bottom -40px / 340px no-repeat fixed,
+    url("../public/assets/style/theme-zen-circle.png") right -60px bottom -40px / 340px no-repeat fixed,
     var(--z-paper);
 }
 /* The page's own colours give way everywhere: ink on paper, no glows, no

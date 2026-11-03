@@ -536,7 +536,8 @@ export class Renderer {
     drawEntrance(c, g.mode, MODES[g.mode].entranceX, tiers ? tierNumeral(tier) : "",
       tiers ? { text: factorText(TIER_BONUS_TENTHS[tier - 1]! / 10), coin: goldCoin() } : undefined, f.look.styledSprites);
     if (g.mode === "tower") drawProvingGrounds(c, MODES[g.mode].entranceX);
-    if (g.world instanceof OutsideWorld && g.world.blacksmith) drawBlacksmith(c, g.world.entranceX, f.look.styledSprites);
+    if (g.world instanceof OutsideWorld && g.world.blacksmith) drawBlacksmith(c, g.world.entranceX, f.look.styledSprites,
+      f.now, g.save.settings.spriteAnimations && !f.look.reduceMotion);
     if (g.world instanceof OutsideWorld && g.world.hall) drawTournamentHall(c, g.world.entranceX, f.look.styledSprites);
     c.restore();
   }

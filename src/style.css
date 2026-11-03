@@ -50,7 +50,7 @@ textarea,
 ::-webkit-scrollbar-thumb {
   min-height: 44px;
   background-color: #333c4780;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 6 40' width='6' height='40'%3E%3Cpath d='M3 2 L4.3 11 L3 15 L1.7 11 Z' fill='%237e899b'/%3E%3Ccircle cx='3' cy='20' r='1.6' fill='%237e899b'/%3E%3Cpath d='M3 38 L4.3 29 L3 25 L1.7 29 Z' fill='%237e899b'/%3E%3C/svg%3E");
+  background-image: url("../public/assets/style/theme-vertical-ornament.png");
   background-repeat: no-repeat;
   background-position: center;
   background-clip: padding-box;
@@ -2519,9 +2519,6 @@ button.training-now:has(> .train-pointer) { position: relative; overflow: visibl
 .tree-layer { position: absolute; inset: 0; }
 .tree-map.tall { height: calc(max(var(--tree-height), var(--tree-rows) * var(--tree-unit)) + 2 * var(--tree-margin)); --tree-margin: 48px; --tree-unit: 5px; }
 .tree-map.tall .tree-layer { inset: var(--tree-margin) 0; }
-.tree-map svg { position: absolute; width: 100%; height: 100%; overflow: visible; }
-.tree-map line { stroke: #46505b; stroke-width: 1; vector-effect: non-scaling-stroke; }
-.tree-map line.lit { stroke: var(--tree-color); stroke-width: 2; }
 /* A node's box is its icon alone, centred on its point where the lines meet; its
    name (and ranks) hang below it. */
 .skill-node { position: absolute; transform: translate(-50%, -50%); display: flex; align-items: center; flex-direction: column; width: 96px; border: 0; background: none; padding: 0; touch-action: none; }
@@ -2824,7 +2821,7 @@ html.reduce-motion :is(.item-icon.bought, .owned-count.bought) { animation: none
 .goals-strip.instant { transition: none; }
 .goals-scroll { flex: 0 0 100%; height: 100%; overflow-y: auto; overflow-x: hidden; }
 .goals-tower { position: relative; margin: 0 auto; width: 100%;
-  background: linear-gradient(90deg, #000a 0%, transparent 14%, transparent 86%, #000a 100%), linear-gradient(#07090d 0, transparent 120px), url("../assets/theme/stone.svg") 0 100% / 240px 160px, #15181d; }
+  background: linear-gradient(90deg, #000a 0%, transparent 14%, transparent 86%, #000a 100%), linear-gradient(#07090d 0, transparent 120px), url("../public/assets/style/theme-stone.png") 0 100% / 240px 160px, #15181d; }
 .goals-ground { position: absolute; left: 0; right: 0; bottom: 0; height: 96px; background: linear-gradient(#2b3a24, #18210f 40%, #0d1209); border-top: 2px solid #4b6a35; }
 .goals-line { position: absolute; left: 50%; width: 4px; height: calc(100% - 96px); transform: translateX(-50%); background: #2c313a; border-radius: 2px; box-shadow: 0 0 0 1px #0008; }
 .goals-line.lit { background: linear-gradient(#fff3c4, #e2b55a 30px, #c8963c); box-shadow: 0 0 8px #e2b55a99, 0 0 0 1px #0008; }
@@ -3071,7 +3068,7 @@ nav button.notify[data-count]::after {
   filter: drop-shadow(0 0 3px #ffb200) drop-shadow(0 1px 1px #000);
   animation: points-rise 1.2s ease-in-out infinite;
 }
-.card-points-mark svg { display: block; width: 100%; }
+.card-points-mark .points-arrow-icon { display: block; width: 100%; }
 @keyframes points-rise {
   0% { transform: translateY(4px); opacity: .5; }
   35%, 70% { opacity: 1; }
@@ -3129,9 +3126,9 @@ nav button.notify[data-count]::after {
 .deck-hand-head { display: flex; align-items: center; gap: 6px; margin: 0 0 8px; }
 .deck-hand-head .deck-label { margin: 0; }
 .deck-hand-toggle { display: grid; place-items: center; width: 24px; height: 24px; min-height: 0; padding: 0; border: 0; background: none; color: #e9d4ac; cursor: pointer; }
-.deck-hand-toggle svg { width: 14px; height: 14px; transition: transform 0.15s; }
+.deck-hand-toggle .hand-chevron-icon { width: 14px; height: 14px; transition: transform 0.15s; }
 .deck-hand-toggle:hover, .deck-hand-toggle:focus-visible { color: #fff; }
-.deck-hand-area.collapsed .deck-hand-toggle svg { transform: rotate(180deg); }
+.deck-hand-area.collapsed .deck-hand-toggle .hand-chevron-icon { transform: rotate(180deg); }
 .deck-hand-area.collapsed .deck-hand, .deck-hand-area.collapsed .deck-tip { display: none; }
 /* The hand's slots: as many to a row as fill the width. */
 .deck-hand {
@@ -3401,7 +3398,7 @@ nav button.notify[data-count]::after {
   color: #fff;
   box-shadow: 0 1px 4px #000c;
 }
-.deck-switch svg { width: 13px; height: 13px; }
+.deck-switch .deck-control-icon { width: 13px; height: 13px; }
 .deck-switch:not(:disabled):hover { background: #3d6bbb; color: #fff; }
 .deck-switch:disabled { background: #4b5361; border-color: #7b8494; color: #aeb5c1; cursor: default; }
 /* Hidden until its card is hovered or focused, as the X is, over a theme's

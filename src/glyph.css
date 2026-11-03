@@ -39,7 +39,7 @@ html.glyph body {
   background:
     radial-gradient(ellipse at 70% 30%, #2a0a4a99, transparent 60%),
     radial-gradient(ellipse at 20% 80%, #1c063699, transparent 55%),
-    url("../assets/theme/glyph-field.svg"),
+    url("../public/assets/style/theme-glyph-runes.png"),
     var(--g-black);
   text-shadow: 0 0 4px #ffffff55;
 }

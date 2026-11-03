@@ -1,3 +1,4 @@
+import { pngIcon } from "../sprites/kit.ts";
 import { arcanum, enhancementsOf, levelsOf, nextStep, valuesAt, type ArcanumId, type AttributeValues } from "../arcana/arcana.ts";
 import { augmentOf, boon } from "../shrines.ts";
 import type { HeldArcanum } from "../game/arcana-desk.ts";
@@ -9,15 +10,15 @@ import { shortAmount } from "../whole.ts";
 
 /** Each arcanum's picture. */
 export const ARCANUM_ICONS: Record<ArcanumId, string> = {
-  aurumBloom: `<svg class="arcanum-icon" viewBox="0 0 24 24" aria-hidden="true"><g fill="#f0c34a" stroke="#10151c" stroke-width="1.2">${[0, 60, 120, 180, 240, 300].map((turn) => `<ellipse cx="12" cy="6.2" rx="3.2" ry="5" transform="rotate(${turn} 12 12)"/>`).join("")}</g><circle cx="12" cy="12" r="3.4" fill="#fff4c2" stroke="#10151c" stroke-width="1.2"/></svg>`,
-  thunderbolt: `<svg class="arcanum-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 1.5L5 13.5h5.5L8.5 22.5 19.5 9.5h-6z" fill="#fff" stroke="#10151c" stroke-width="1.4" stroke-linejoin="miter"/></svg>`,
-  overseer: `<svg class="arcanum-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12L3 2.5h7.5zM12 12l9 9.5h-7.5z" fill="#fff4c2" stroke="#10151c" stroke-width="1.1" stroke-linejoin="round"/><path d="M3 12s3.6-5 9-5 9 5 9 5-3.6 5-9 5-9-5-9-5z" fill="#f4f7ff" stroke="#10151c" stroke-width="1.3" stroke-linejoin="round"/><circle cx="12" cy="12" r="3.2" fill="#5fb3d9" stroke="#10151c" stroke-width="1.1"/><circle cx="12" cy="12" r="1.2" fill="#10151c"/></svg>`,
-  lifespring: `<svg class="arcanum-icon" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke-linecap="butt"><circle cx="12" cy="12" r="9.6" stroke="#10151c" stroke-width="3.6"/><circle cx="12" cy="12" r="9.6" stroke="#62f29a" stroke-width="1.8" stroke-dasharray="13 2.1 9 1.7 20 1.7" /><circle cx="12" cy="12" r="6.4" stroke="#10151c" stroke-width="3.4"/><circle cx="12" cy="12" r="6.4" stroke="#b5ffd2" stroke-width="1.6" stroke-dasharray="8 1.6 11 1.8 16.8 1" stroke-dashoffset="6"/></g><path d="M12 7.6c2.4 2.8 3.3 4.3 3.3 5.7a3.3 3.3 0 0 1-6.6 0c0-1.4.9-2.9 3.3-5.7z" fill="#62f29a" stroke="#10151c" stroke-width="1.1" stroke-linejoin="round"/></svg>`,
-  timeDilation: `<svg class="arcanum-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10.2" fill="#8fd8ff" fill-opacity=".28" stroke="#10151c" stroke-width="3"/><circle cx="12" cy="12" r="10.2" fill="none" stroke="#8fd8ff" stroke-width="1.4"/><path d="M7.5 5.5h9v1.6L13 12l3.5 4.9v1.6h-9v-1.6L11 12 7.5 7.1z" fill="#f4f7ff" stroke="#10151c" stroke-width="1.2" stroke-linejoin="round"/><path d="M9.6 7.4h4.8L12 10.8zM8.9 17.2L12 14.6l3.1 2.6z" fill="#8fd8ff"/></svg>`,
-  phantasm: `<svg class="arcanum-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5c-4.6 0-7.5 3.3-7.5 7.8v11.2l2.6-2 2.4 2 2.5-2 2.5 2 2.4-2 2.6 2V10.3c0-4.5-2.9-7.8-7.500-7.800z" fill="#e8f4ff" fill-opacity=".85" stroke="#10151c" stroke-width="1.4" stroke-linejoin="round"/><circle cx="9.2" cy="10.5" r="1.7" fill="#10151c"/><circle cx="14.8" cy="10.5" r="1.7" fill="#10151c"/></svg>`,
-  necroticFrost: `<svg class="arcanum-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10.2" fill="#b48cff" fill-opacity=".3" stroke="#10151c" stroke-width="3"/><circle cx="12" cy="12" r="10.2" fill="none" stroke="#c4f5c0" stroke-width="1.3"/><circle cx="12" cy="12" r="8.4" fill="none" stroke="#d9c2ff" stroke-width="1.1"/><path d="M12 5v14M6 8.500l12 7M18 8.500l-12 7" fill="none" stroke="#10151c" stroke-width="3" stroke-linecap="round"/><path d="M12 5v14M6 8.500l12 7M18 8.500l-12 7" fill="none" stroke="#e8f4ff" stroke-width="1.4" stroke-linecap="round"/><circle cx="16.500" cy="17.500" r="1.900" fill="#c4f5c0" stroke="#10151c" stroke-width=".9"/><circle cx="7" cy="5.800" r="1.300" fill="#c4f5c0" stroke="#10151c" stroke-width=".8"/></svg>`,
-  voidwell: `<svg class="arcanum-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10.2" fill="#16276e" fill-opacity=".6" stroke="#10151c" stroke-width="3"/><circle cx="12" cy="12" r="10.2" fill="none" stroke="#3458c4" stroke-width="1.3"/><path d="M12 3.500c5 0 8.500 3.800 8.500 8.200 0 3.600-2.900 6.300-6.300 6.300-2.900 0-5-2-5-4.700 0-2.200 1.700-3.800 3.700-3.800 1.600 0 2.800 1.100 2.800 2.600" fill="none" stroke="#10151c" stroke-width="3" stroke-linecap="round"/><path d="M12 3.500c5 0 8.500 3.800 8.500 8.200 0 3.600-2.900 6.300-6.300 6.300-2.900 0-5-2-5-4.700 0-2.200 1.700-3.800 3.700-3.800 1.600 0 2.800 1.100 2.800 2.600" fill="none" stroke="#7fa0ff" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="12.700" r="1.300" fill="#03082c"/></svg>`,
-  ricochetShot: `<svg class="arcanum-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 19.5L9.5 5l5 11 7-9" fill="none" stroke="#10151c" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.5 19.5L9.5 5l5 11 7-9" fill="none" stroke="#f4f7ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9.5" cy="5" r="2.2" fill="#ff8f6b"/><circle cx="14.5" cy="16" r="2.2" fill="#ff8f6b"/><path d="M21.5 7l-.6 4-3.2-2.4z" fill="#ffd34d"/></svg>`,
+  aurumBloom: pngIcon("arcana-aurum-bloom", "arcanum-icon"),
+  thunderbolt: pngIcon("arcana-thunderbolt", "arcanum-icon"),
+  overseer: pngIcon("arcana-overseer", "arcanum-icon"),
+  lifespring: pngIcon("arcana-lifespring", "arcanum-icon"),
+  timeDilation: pngIcon("arcana-time-dilation", "arcanum-icon"),
+  phantasm: pngIcon("arcana-phantasm", "arcanum-icon"),
+  necroticFrost: pngIcon("arcana-necrotic-frost", "arcanum-icon"),
+  voidwell: pngIcon("arcana-voidwell", "arcanum-icon"),
+  ricochetShot: pngIcon("arcana-ricochet-shot", "arcanum-icon"),
 };
 
 /** The price of a purchase: its amount, then the Arcanite icon. */

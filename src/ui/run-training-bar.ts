@@ -1,3 +1,4 @@
+import { pngIcon } from "../sprites/kit.ts";
 import { MODES } from "../modes.ts";
 import type { Game } from "../state.ts";
 import { TRAINING, TRAINING_GROUPS, type TrainingId } from "../progression/training.ts";
@@ -20,7 +21,7 @@ const GROUP_ICONS: Record<Group, string> = {
 };
 const silverIcon = () => uiSprite("gold", "ui-sprite silver-sprite");
 /** The arrow on the Auto tab's cards: its hand plays by itself. */
-const AUTO_ARROW = `<svg class="auto-arrow" viewBox="0 0 10 10" aria-hidden="true"><path d="M1.5 5H8M5.5 2.5L8 5L5.5 7.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const AUTO_ARROW = pngIcon("ui-auto-play", "auto-arrow");
 /** How long the number of toggles left shows after a toggle, in ms. */
 const TOGGLES_SHOWN_MS = 900;
 /** What the bar shows in the hand's place: the hand (null), the Manual

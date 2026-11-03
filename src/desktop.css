@@ -207,7 +207,8 @@ html.desktop .event-banner::after {
   right: 4px;
   width: 50px;
   height: 14px;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='14' shape-rendering='crispEdges'%3E%3Cg id='b'%3E%3Crect width='16' height='14' fill='%230a0a0a'/%3E%3Crect width='15' height='13' fill='%23fff'/%3E%3Crect x='1' y='1' width='14' height='12' fill='%23808080'/%3E%3Crect x='1' y='1' width='13' height='11' fill='%23c0c0c0'/%3E%3C/g%3E%3Cuse href='%23b' x='16'/%3E%3Cuse href='%23b' x='34'/%3E%3Crect x='4' y='9' width='6' height='2'/%3E%3Crect x='19' y='3' width='9' height='8' fill='none' stroke='%23000'/%3E%3Crect x='19' y='3' width='9' height='2'/%3E%3Cpath d='M38 3l8 7M46 3l-8 7' stroke='%23000' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat;
+  background: url("../public/assets/style/ui-chevron-down.png") 2px 2px / 12px 10px no-repeat, url("../public/assets/style/ui-copy.png") 19px 2px / 12px 10px no-repeat, url("../public/assets/style/close.png") 36px 2px / 12px 10px no-repeat #c0c0c0;
+  image-rendering: pixelated;
 }
 html.desktop .event-banner:not(#_) {
   margin-left: 0;

@@ -208,16 +208,6 @@ const MATERIAL_ROWS: Record<EquipMaterialId, string[]> = {
   ],
 };
 
-/** A 12×12 pixel icon as an inline SVG. */
-function pixelSvg(rows: string[], className: string) {
-  let rects = "";
-  rows.forEach((row, y) => [...row].forEach((ch, x) => {
-    const fill = PALETTE[ch];
-    if (fill) rects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${fill}"/>`;
-  }));
-  return `<svg class="${className}" viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true">${rects}</svg>`;
-}
-
 /** A piece's rows, by definition id: its own, or its category's. */
 export const pieceRows = (def: string) => ITEM_ROWS[def] ?? CATEGORY_ROWS[itemDef(def)?.category ?? "weapon"];
 /** Only request PNGs that were exported, including category fallbacks for
@@ -232,19 +222,19 @@ export const iconPixels = (def: string) => pixels(pieceRows(def));
  * off the board). */
 export const materialPixels = (id: EquipMaterialId) => pixels(MATERIAL_ROWS[id]);
 /** A category's icon (the shape of its piece), for filters and empty places. */
-export const categoryIcon = (id: CategoryId, className = "equip-icon") => kitIcon(`equip-${id}`, pixelSvg(CATEGORY_ROWS[id], className), className);
+export const categoryIcon = (id: CategoryId, className = "equip-icon") => kitIcon(`equip-${id}`, "", className);
 /** A piece's own icon, by its definition id. */
-export const itemIcon = (def: string, className = "equip-icon") => kitIcon(pieceSpriteId(def), pixelSvg(pieceRows(def), className), className);
+export const itemIcon = (def: string, className = "equip-icon") => kitIcon(pieceSpriteId(def), "", className);
 /** The rows of every icon, for tests. */
 export const ICON_ROWS = { ...CATEGORY_ROWS, ...ITEM_ROWS, ...MATERIAL_ROWS };
 /** An upgrade material's icon. */
-export const materialIcon = (id: EquipMaterialId, className = "mat-icon") => kitIcon(`equip-${id}`, pixelSvg(MATERIAL_ROWS[id], className), className);
+export const materialIcon = (id: EquipMaterialId, className = "mat-icon") => kitIcon(`equip-${id}`, "", className);
 
 /** The action icons: a hammer (dismantle), three arrows into one (merge), an
  * arrow up (level up), a padlock (locked). */
 export const ACTION_ICONS = {
-  dismantle: kitIcon("hammer", `<svg class="act-icon" viewBox="0 0 12 12" shape-rendering="crispEdges" aria-hidden="true"><rect x="1" y="2" width="7" height="3" fill="#9aa3ab"/><rect x="1" y="2" width="7" height="1" fill="#e3e6e8"/><rect x="4" y="5" width="2" height="6" fill="#7a4a28"/></svg>`, "act-icon"),
-  merge: kitIcon("merge", `<svg class="act-icon" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2l4 4M10 2L6 6M6 1v5M6 6v5" stroke="#e8b84a" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M3.5 8.5L6 11l2.5-2.5" stroke="#e8b84a" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`, "act-icon"),
-  upgrade: kitIcon("arrow-up", `<svg class="act-icon" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1.5L10.5 6.5H7.6V10.5H4.4V6.5H1.5z" fill="#ffc94a" stroke="#5a3200" stroke-width="0.8" stroke-linejoin="round"/></svg>`, "act-icon"),
-  lock: kitIcon("lock", `<svg class="act-icon" viewBox="0 0 12 12" aria-hidden="true"><path d="M3.5 5.5V4a2.5 2.5 0 0 1 5 0v1.5" stroke="#e3e6e8" stroke-width="1.4" fill="none"/><rect x="2.5" y="5.5" width="7" height="5" rx="1" fill="#e8b84a"/></svg>`, "act-icon"),
+  dismantle: kitIcon("hammer", "", "act-icon"),
+  merge: kitIcon("merge", "", "act-icon"),
+  upgrade: kitIcon("arrow-up", "", "act-icon"),
+  lock: kitIcon("lock", "", "act-icon"),
 };

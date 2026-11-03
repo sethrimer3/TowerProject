@@ -5,7 +5,7 @@ Encounter keys and locked doors use the existing world painters; red door spirit
 
 The shared PNG interface and world kit is the default artwork, including for saves whose former Sprites checkbox was off.
 Settings offers independent Animations and Square doors checkboxes, both initially unchecked.
-The default Medieval and Classic interface looks use the kit; alternate UI themes retain their own controls, typography and vector/text art.
+The default Medieval and Classic interface looks use the kit; alternate UI themes retain their own frames and typography while sharing PNG icon subjects.
 Alternate Game themes keep their own dungeon and portrait art, while forest ground and landmarks use the new native PNGs.
 Bootstrap decodes the deployed art, UI stylesheet images and fonts before revealing the first painted game frame.
 Failed loads show Retry instead of exposing missing sprites or legacy substitutes.
@@ -197,7 +197,14 @@ Both use the shared native corner silhouettes, original upper-left light, three 
 
 ## Remaining sprite work
 
+The [remaining sprite batches](remaining-sprite-batches.md) provide 100 generated native PNGs for Arcana, HUD controls, trial actors, effects and theme components, with retained source sheets and reproducible export/check tools.
+The interface assets are integrated across UI themes; actor and effects assets await world-renderer integration.
+
 Outside custom themes, live water ripples/glints, falling drops, wet-foot overlays, moving tall grass and some wall-corner overlays still use procedural pixels.
 Reveal rays, celebration/skill particles and the Equipment melt still use procedural or older icon art.
 The board route and badge annotations also retain procedural marks; letters should remain live text.
 Alternate Game themes retain their own vector/text art; retired Classic PNG directories and their loaders have been removed.
+
+The [Blacksmith effects source](../../assets/game-sprites/blacksmith-effects.png) adds four tiny flame poses and four stepped smoke clusters.
+`tools/prepare-blacksmith-sprites.mjs` exports 6-pixel fire frames, 16 × 12 smoke canvases, the original sign layer and a registered 48 × 48 building base in the shared palette with binary alpha.
+Runtime smoke opacity remains faint; the hanging sign shifts its lower rows by at most two native pixels while its top stays anchored.
