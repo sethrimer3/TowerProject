@@ -162,7 +162,7 @@ The tree canvas does not change skill topology, hit targets, pan/zoom or purchas
 ## Experimental UI atlas
 
 The Visual settings checkbox `experimentalAtlas` is off by default and saves/reloads on change.
-`sprites/ui-atlas.ts` loads one generated atlas and supplies DOM background regions, direct canvas source rectangles and memoized in-memory crops for CSS nine-slicing and existing canvas consumers.
+`sprites/ui-atlas.ts` loads the UI and remaining-sprite atlases and supplies DOM background regions, direct canvas source rectangles and memoized in-memory crops for CSS nine-slicing and existing canvas consumers.
 Original UI file requests are excluded from both startup image workers and stylesheet preloading when this mode is active.
 The early class in `index.html` prevents original CSS backgrounds from loading before bootstrap starts.
 A failed atlas uses the loading barrier and exposes an explicit switch back to original sprites.

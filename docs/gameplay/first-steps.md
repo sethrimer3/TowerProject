@@ -114,5 +114,5 @@ While a Deck lesson is waiting, its tab carries a red dot.
 After a card levels up or joins the deck, the Deck tab carries one with a number until you open it: the new cards and the cards with card points to spend (see Card levels in hand-and-cards.md).
 The Upgrades tab carries one too, once the first run that earns Inspiration is over, until you open it; and whenever a run that earned Inspiration ends, the Upgrades tab and the Inspiration tab on that page carry one in the forest while you hold enough Inspiration to buy a skill there, until you look at the Inspiration tree (likewise a Tower Goal claimed, which pays a Breakthrough point, once the Breakthrough tree is open, for the Breakthrough tab); and so does the Gear tab once a first provision opens, until you open it.
 
-**Experimental Atlas feature** in Visual settings loads UI sprites from a shared atlas.
+**Experimental Atlas feature** in Visual settings loads sprites from two shared atlases.
 It starts off, remembers your choice and reloads the game when changed; turn it off to return to individual sprites.

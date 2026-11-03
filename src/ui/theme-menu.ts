@@ -1,3 +1,4 @@
+import { atlasIcon } from "../sprites/ui-atlas.ts";
 import { controlIcon } from "./control-icon.ts";
 import { CLASSIC_NAME, THEME_GOLD_TEXT, THEME_PRICE, THEMES, canBuyTheme, canWear, gameLook, themeGoldFactor, themesOf, uiLook, type ThemeId, type ThemeKind } from "../theme-collection.ts";
 import { factorText } from "../economy/gold-multipliers.ts";
@@ -44,7 +45,7 @@ function card(game: PageGame, kind: ThemeKind, look: string, name: string, id: T
     : owned ? `<button class="theme-wear" data-look="${look}">Equip</button>`
     : buyButton(game, id!);
   const perk = id ? `<small class="theme-perk">${owned ? goldIcon() + THEME_GOLD_TEXT : THEME_GOLD_TEXT + " once owned"}</small>` : `<small class="theme-perk">Always available</small>`;
-  return `<article class="theme-card${worn ? " worn" : ""}${owned ? "" : " locked"}" data-theme="${kind}-${look}"><img class="theme-preview" src="${preview(kind, look)}" alt="${name} ${HEADINGS[kind].title.replace(/s$/, "")} preview"><h3>${name}</h3>${perk}${status}</article>`;
+  return `<article class="theme-card${worn ? " worn" : ""}${owned ? "" : " locked"}" data-theme="${kind}-${look}">${atlasIcon(`assets/themes/${kind}-${look}.png`, "theme-preview") ?? `<img class="theme-preview" src="${preview(kind, look)}" alt="${name} ${HEADINGS[kind].title.replace(/s$/, "")} preview">`}<h3>${name}</h3>${perk}${status}</article>`;
 }
 
 /** A kind's theme menu, drawn into `root`: Back, the Gold every owned theme

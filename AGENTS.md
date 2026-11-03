@@ -12,8 +12,8 @@ Requires Node 22.18+ (CI uses 24). Tests and tools run `.ts` files directly via 
 
 ```sh
 npm run dev            # Vite on 127.0.0.1:5173 (PORT env overrides)
-npm run build          # regenerate UI atlas, tsc --noEmit && vite build -> dist/
-npm run sprites:atlas  # losslessly pack UI sprites; keep all original PNGs
+npm run build          # regenerate both sprite atlases, tsc --noEmit && vite build -> dist/
+npm run sprites:atlas  # losslessly pack all sprites into two atlases; keep all original PNGs
 npm test               # all tests/*.test.ts via node:test (local sample; CI=1 for CI's full size)
 node --experimental-transform-types --import ./tests/pin-random.ts --test tests/cards.test.ts                           # one file
 node --experimental-transform-types --import ./tests/pin-random.ts --test --test-name-pattern="gold formula" tests/*.test.ts  # one test

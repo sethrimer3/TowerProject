@@ -5,7 +5,7 @@ import {preview} from 'vite';
 import {chromium} from '@playwright/test';
 import {defaults} from '../src/save/save.ts';
 import {Game} from '../src/state.ts';
-const manifest=JSON.parse(readFileSync('public/assets/atlases/ui.json')),packed=new Set(Object.keys(manifest.regions));
+const manifest=JSON.parse(readFileSync('public/assets/atlases/ui.json')),world=JSON.parse(readFileSync("public/assets/atlases/world.json")),packed=new Set([...Object.keys(manifest.regions),...Object.keys(world.regions)]);
 const save=defaults();Object.keys(save.tutorials).forEach(k=>save.tutorials[k]=true);
 Object.assign(save.settings,{experimentalAtlas:true,reduceMotion:true,weatherSound:false});Object.assign(save.upgrades,{combatStance:1,buildout:1});
 const game=new Game(save);game.newRun({outside:true,seed:7});
@@ -22,7 +22,8 @@ try{
  await page.locator('[data-tab="deck"]').click();
  assert.ok(await page.locator('.atlas-region').count()>10);
  assert.equal(requests.filter(p=>p===manifest.image).length,1);
+ assert.equal(requests.filter(p=>p===world.image).length,1);
  assert.deepEqual(requests.filter(p=>packed.has(p)),[]);
  assert.deepEqual(errors,[]);
- console.log('Production /TowerProject/ path uses one atlas with no packed-original requests or load errors.');
+ console.log('Production /TowerProject/ path uses two atlases with no packed-original requests or load errors.');
 }finally{await browser.close();await new Promise(resolve=>server.httpServer.close(resolve))}
