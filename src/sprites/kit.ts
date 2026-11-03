@@ -1,5 +1,7 @@
+import { atlasIcon, atlasRegion, atlasSlice, drawAtlas, prepareUiAtlas, type AtlasCanvas } from "./ui-atlas.ts";
 /** The shared PNG kit. Images load once, keep nearest-neighbor sampling,
  * and notify cached render layers through a revision when they arrive. */
+export type SpriteImage = HTMLImageElement | AtlasCanvas;
 const BASE = (import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? "/";
 export const ICON_SPRITES = [
   "gold", "silver", "gem", "shard", "cell", "medal",
@@ -29,7 +31,7 @@ export type KitSprite = typeof ICON_SPRITES[number] | typeof WORLD_SPRITES[numbe
 export const kitUrl = (id: string) => `${BASE}assets/style/${id}.png`;
 /** Native PNG controls have one art source across UI themes. */
 export function pngIcon(id: string, className: string, alt = "") {
-  return `<span class="sprite-icon sprite-ready ${className}" aria-hidden="true"><img class="sprite-native" src="${kitUrl(id)}" alt="${alt}"></span>`;
+  return `<span class="sprite-icon sprite-ready ${className}" aria-hidden="true">${atlasIcon(`assets/style/${id}.png`, "sprite-native") ?? `<img class="sprite-native" src="${kitUrl(id)}" alt="${alt}">`}</span>`;
 }
 const images = new Map<string, HTMLImageElement>();
 let revision = 0;
@@ -37,6 +39,7 @@ const listeners = new Set<() => void>();
 export const onSpritesLoaded = (listener: () => void) => { listeners.add(listener); };
 export const spriteRevision = () => revision;
 export function kitImage(id: string) {
+  if (atlasRegion(`assets/style/${id}.png`)) return atlasSlice(`assets/style/${id}.png`);
   if (typeof Image === "undefined") return null;
   let image = images.get(id);
   if (!image) {
@@ -50,12 +53,18 @@ export function kitImage(id: string) {
 
 /** Startup shares the exact decoded images used by canvas drawing. */
 export async function preloadKitImage(id: string) {
+  if (atlasRegion(`assets/style/${id}.png`)) {
+    await prepareUiAtlas();
+    if (!atlasSlice(`assets/style/${id}.png`)) throw new Error(`Missing atlas region: ${id}`);
+    return;
+  }
   kitImage(id);
   const image = images.get(id);
   if (!image) throw new Error(`Cannot load sprite: ${id}`);
   await image.decode();
 }
 export function drawKit(c: CanvasRenderingContext2D, id: string, x = 0, y = 0, w = 24, h = w) {
+  if (atlasRegion(`assets/style/${id}.png`)) return drawAtlas(c, `assets/style/${id}.png`, x, y, w, h);
   const image = kitImage(id);
   if (!image) return false;
   c.save();
@@ -68,7 +77,7 @@ export function drawKit(c: CanvasRenderingContext2D, id: string, x = 0, y = 0, w
 /** Every UI theme shares decoded PNG subjects; live overlays stay independent.
  * The unused art argument preserves existing callers without emitting a fallback. */
 export function kitIcon(id: string, _themeArt: string, className: string, overlay = "") {
-  return `<span class="sprite-icon sprite-ready ${className}" aria-hidden="true"><img class="sprite-replacement" src="${kitUrl(id)}" alt="">${overlay}</span>`;
+  return `<span class="sprite-icon sprite-ready ${className}" aria-hidden="true">${atlasIcon(`assets/style/${id}.png`, "sprite-replacement") ?? `<img class="sprite-replacement" src="${kitUrl(id)}" alt="">`}${overlay}</span>`;
 }
 
 /** A themed enemy keeps its roster identity while sharing material ramps.

@@ -19,6 +19,7 @@ import "./pixel.css";
 import "./doodle.css";
 import "./murk.css";
 import "./ui-sprites.css";
+import "./sprites/ui-atlas.css";
 import { drawKit, onSpritesLoaded } from "./sprites/kit.ts";
 import { onSpriteFontLoaded } from "./sprites/font.ts";
 import { gameLook } from "./theme-collection.ts";

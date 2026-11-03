@@ -727,3 +727,6 @@ html:is(.doodle, .desktop, .yang, .shiro, .system) .arcana-attr.arcana-attr:not(
   color: #10151c;
 }
 html:is(.doodle, .desktop, .yang, .shiro, .system) .arcana-attr :is(b, .arcana-attr-name, .arcana-attr-cost) { color: inherit; }
+
+/* Atlas regions keep the same native icon boxes as individual PNGs. */
+.atlas-region { display: block; width: 100%; height: 100%; image-rendering: pixelated; }

@@ -1,7 +1,9 @@
 import "./style.css";
 import "./ui-sprites.css";
 import "./loading.css";
+import "./sprites/ui-atlas.css";
 import { finishInterfaceLoading, preloadSprites } from "./sprites/preload.ts";
+import { uiAtlasEnabled } from "./sprites/ui-atlas.ts";
 import { LoadingScreen } from "./ui/loading-screen.ts";
 
 // Only Reduce motion is read before the save module loads.
@@ -38,6 +40,14 @@ async function boot() {
   const loading = new LoadingScreen(root,
     () => document.documentElement.classList.contains("reduce-motion") || matchMedia("(prefers-reduced-motion: reduce)").matches);
   retry.onclick = () => location.reload();
+  const disableAtlas = document.querySelector<HTMLButtonElement>("#boot-disable-atlas")!;
+  disableAtlas.onclick = () => {
+    try {
+      const save = JSON.parse(localStorage.getItem("towerdelve.v1") ?? "null");
+      if (save?.settings) { save.settings.experimentalAtlas = false; localStorage.setItem("towerdelve.v1", JSON.stringify(save)); }
+      location.reload();
+    } catch { message.textContent = "Unable to change settings. Allow storage and retry."; }
+  };
   try {
     // Keep the first paint of the loading text on the same face as its final one.
     const faces = await document.fonts.load('15px "Tower Pixel"');
@@ -72,6 +82,7 @@ async function boot() {
     message.textContent = "Unable to load the game. Check your connection and retry.";
     root.querySelector<HTMLElement>(".loading-room")!.hidden = true;
     retry.hidden = false;
+    disableAtlas.hidden = !uiAtlasEnabled();
     root.setAttribute("role", "alert");
     root.setAttribute("aria-label", "Unable to load the game. Retry.");
   }

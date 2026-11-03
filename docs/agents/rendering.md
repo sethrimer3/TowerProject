@@ -375,3 +375,7 @@ The forest building follows the saved Animations switch across Game themes becau
 The original building PNG, 3 × 3 footprint, collision map and Equipment interaction remain unchanged.
 `node tools/prepare-blacksmith-sprites.mjs` extracts the generated effect source, preserves the original sign pixels and registers native layers in the shared palette.
 `node tests/blacksmith-animation.mjs` checks fire changes, slow sign motion, faint smoke, the actual forest renderer and both motion preferences.
+
+Experimental UI atlas mode lets `kitImage` return a memoized native canvas crop as well as an HTML image.
+Both sources carry the same native dimensions and can be passed to Canvas drawing; dungeon helper types accept this shared source without changing material selection or terrain geometry.
+`drawKit` uses the decoded atlas and source rectangle directly for packed sprites.

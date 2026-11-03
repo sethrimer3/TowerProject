@@ -17,6 +17,7 @@
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <title>Tower Delve</title>
+    <script>try { if (JSON.parse(localStorage.getItem("towerdelve.v1") || "null")?.settings?.experimentalAtlas === true) document.documentElement.classList.add("experimental-atlas"); } catch {}</script>
     <link rel="preload" href="./assets/fonts/TowerPixel/TowerPixel-Regular.woff2" as="font" type="font/woff2" crossorigin />
     <style>
       /* Before the stylesheets load: the loading screen's dark stone. */
@@ -35,6 +36,7 @@
         <span class="loading-label" id="boot-message">loading<span class="loading-dots" aria-hidden="true"><span>.</span><span>.</span><span>.</span></span></span>
         <canvas class="loading-room" aria-hidden="true"></canvas>
         <button type="button" id="boot-retry" class="loading-retry" hidden>Retry</button>
+        <button type="button" id="boot-disable-atlas" class="loading-retry" hidden>Turn off experimental Atlas</button>
       </div>
     </section>
     <div id="app" hidden aria-busy="true"></div>

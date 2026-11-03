@@ -158,3 +158,12 @@ Shared icons stay visible in every UI theme while theme frames and fonts remain 
 The tree canvas does not change skill topology, hit targets, pan/zoom or purchase behavior.
 `tools/install-interface-sprites.mjs` deploys the 56 interface assets from the remaining native batches before regenerating the preload manifest.
 `tests/png-interface.test.ts` prevents vector artwork from returning, and `node tests/png-interface.mjs` checks every UI theme at phone and desktop widths.
+
+## Experimental UI atlas
+
+The Visual settings checkbox `experimentalAtlas` is off by default and saves/reloads on change.
+`sprites/ui-atlas.ts` loads one generated atlas and supplies DOM background regions, direct canvas source rectangles and memoized in-memory crops for CSS nine-slicing and existing canvas consumers.
+Original UI file requests are excluded from both startup image workers and stylesheet preloading when this mode is active.
+The early class in `index.html` prevents original CSS backgrounds from loading before bootstrap starts.
+A failed atlas uses the loading barrier and exposes an explicit switch back to original sprites.
+The packer, preserved-source contract and tests are documented in [Experimental UI atlas](../art/ui-atlas.md).

@@ -85,3 +85,5 @@ The forest has no persistent tile edits, so expanding its bounds needs no dungeo
 `run.forestArea: "lake"` keeps the lake location within the existing outside Tower I run; travelling west and back preserves its seed, health, tier and progression.
 The optional marker is accepted only outside Tower I and removed from Delve runs, unknown values and dungeon runs; old saves without it retain the ordinary clearing.
 The dock greeting request is transient and does not replay on reload, including a save on the dock.
+
+The optional `experimentalAtlas` setting defaults to false on old saves; changing it through Visual settings saves before reloading, and importing or resetting a profile reloads when it changes the active image path.

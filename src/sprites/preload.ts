@@ -1,3 +1,4 @@
+import { atlasRegion, atlasPath, prepareUiAtlas } from "./ui-atlas.ts";
 import { SPRITE_ASSETS } from "./assets.ts";
 import { kitImage, preloadKitImage } from "./kit.ts";
 
@@ -13,11 +14,13 @@ async function decodeImage(url: string) {
 /** Decode every shipped sprite before gameplay, including later pages,
  * towers and animation frames. A failed asset keeps the loading screen up. */
 export async function preloadSprites(progress: (loaded: number, total: number) => void) {
+  await prepareUiAtlas();
+  const assets = SPRITE_ASSETS.filter(path => !atlasRegion(path));
   let next = 0, loaded = 0, failed = false;
-  progress(0, SPRITE_ASSETS.length);
+  progress(0, assets.length);
   await Promise.all(Array.from({ length: 12 }, async () => {
-    while (!failed && next < SPRITE_ASSETS.length) {
-      const path = SPRITE_ASSETS[next++];
+    while (!failed && next < assets.length) {
+      const path = assets[next++];
       try {
         if (path.startsWith("assets/style/")) {
           const id = path.slice("assets/style/".length, -4);
@@ -26,7 +29,7 @@ export async function preloadSprites(progress: (loaded: number, total: number) =
         } else {
           await decodeImage(`${BASE}${path}`);
         }
-        if (!failed) progress(++loaded, SPRITE_ASSETS.length);
+        if (!failed) progress(++loaded, assets.length);
       } catch (error) {
         failed = true;
         throw error;
@@ -43,7 +46,10 @@ export async function finishInterfaceLoading(root: HTMLElement) {
     for (const rule of [...rules]) {
       if ("cssRules" in rule) visit((rule as CSSGroupingRule).cssRules, base);
       for (const match of rule.cssText.matchAll(/url\(["']?([^"')]+)["']?\)/g)) {
-        if (/\.(png|svg|webp|jpe?g|gif)([?#]|$)/i.test(match[1])) backgrounds.add(new URL(match[1], base).href);
+        if (/\.(png|svg|webp|jpe?g|gif)([?#]|$)/i.test(match[1])) {
+          const url = new URL(match[1], base).href;
+          if (!atlasRegion(atlasPath(url) ?? "")) backgrounds.add(url);
+        }
       }
     }
   };

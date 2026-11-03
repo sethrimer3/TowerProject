@@ -1,7 +1,7 @@
 import type { Mode, Tile } from "../entities.ts";
 import { tileRandom } from "../random.ts";
 import { themeAt, type TerrainTile } from "../render/themes.ts";
-import { kitImage } from "./kit.ts";
+import { kitImage, type SpriteImage } from "./kit.ts";
 import { wallAdjacencyMask } from "../render/themes.ts";
 import { dungeonWallBands, type DungeonWallProfile } from "../render/wall-depth.ts";
 import { dungeonDetailId, type DungeonDetail } from "../render/dungeon-details.ts";
@@ -97,7 +97,7 @@ export function dungeonMaterialJoins(tile: TerrainTile, diagonals: readonly Dung
 }
 
 const materialBlends = new Map<string, HTMLCanvasElement>();
-function drawMaterialBlend(c: CanvasRenderingContext2D, image: HTMLImageElement, frame: number, mask: HTMLImageElement, maskFrame: number) {
+function drawMaterialBlend(c: CanvasRenderingContext2D, image: SpriteImage, frame: number, mask: SpriteImage, maskFrame: number) {
   if (typeof document === "undefined") return;
   const key = `${image.src}:${frame}:${maskFrame}`;
   let canvas = materialBlends.get(key);
@@ -112,7 +112,7 @@ function drawMaterialBlend(c: CanvasRenderingContext2D, image: HTMLImageElement,
   c.save(); c.imageSmoothingEnabled = false; c.drawImage(canvas, 0, 0); c.restore();
 }
 
-export function drawDungeonFrame(c: CanvasRenderingContext2D, image: HTMLImageElement, frame: number) {
+export function drawDungeonFrame(c: CanvasRenderingContext2D, image: SpriteImage, frame: number) {
   c.save(); c.imageSmoothingEnabled = false;
   c.drawImage(image, frame % 4 * 24, Math.floor(frame / 4) * 24, 24, 24, 0, 0, 24, 24);
   c.restore();
@@ -146,7 +146,7 @@ export function drawDungeonGround(c: CanvasRenderingContext2D, tile: TerrainTile
  * South-facing facades occupy eight pixels; north/side lips are shallow.
  * Everything stays inside the existing tile and collision footprint. */
 function paintDungeonGround(c: CanvasRenderingContext2D, tile: TerrainTile, diagonals: readonly DungeonDiagonal[], profile?: DungeonWallProfile,
-  detail?: DungeonDetail, detailImage?: HTMLImageElement | null) {
+  detail?: DungeonDetail, detailImage?: SpriteImage | null) {
   const { mode, height, x, y, seed } = tile, tone = themeAt(mode, height, x, y, seed).decor;
   const images = imagesFor(mode, tone, tile.tier);
   if (!images) return false;

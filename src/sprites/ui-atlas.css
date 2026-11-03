@@ -1,0 +1,211 @@
+/* Generated atlas-only CSS image sources; original files stay intact. */
+html.experimental-atlas.desktop .page-title::after,
+html.experimental-atlas.desktop .event-banner::after {
+  background: var(--atlas-0, none) 2px 2px / 12px 10px no-repeat, var(--atlas-1, none) 19px 2px / 12px 10px no-repeat, var(--atlas-2, none) 36px 2px / 12px 10px no-repeat #c0c0c0
+}
+html.experimental-atlas.doodle {
+  --d-panel: var(--atlas-3, none);
+  --d-dialog: var(--atlas-4, none);
+  --d-button: var(--atlas-5, none);
+  --d-press: var(--atlas-6, none);
+  --d-chosen: var(--atlas-4, none);
+  --d-off: var(--atlas-7, none);
+  --d-danger: var(--atlas-8, none);
+  --d-field: var(--atlas-9, none);
+  --d-tip: var(--atlas-3, none);
+  --d-banner: var(--atlas-4, none)
+}
+html.experimental-atlas.ember body {
+  background:
+    radial-gradient(ellipse at 50% 40%, transparent 40%, #000000b0 100%),
+    var(--atlas-10, none),
+    #160406
+}
+html.experimental-atlas.glyph body {
+  background:
+    radial-gradient(ellipse at 70% 30%, #2a0a4a99, transparent 60%),
+    radial-gradient(ellipse at 20% 80%, #1c063699, transparent 55%),
+    var(--atlas-11, none),
+    var(--g-black)
+}
+html.experimental-atlas #boot-loading {
+  background: linear-gradient(#0009, #0009), var(--atlas-12, none) 0 0 / 240px 160px, #121110
+}
+html.experimental-atlas.medieval {
+  --wood: var(--atlas-13, none) 0 0 / 320px 80px;
+  --stone: var(--atlas-12, none) 0 0 / 240px 160px;
+  --parchment: var(--atlas-14, none) 0 0 / 300px 300px
+}
+html.experimental-atlas.medieval ::-webkit-scrollbar-thumb {
+  background-image: var(--atlas-15, none)
+}
+html.experimental-atlas.medieval .training-group::before,
+html.experimental-atlas.medieval .training-group::after,
+html.experimental-atlas.medieval .page-title h2::before,
+html.experimental-atlas.medieval .page-title h2::after,
+html.experimental-atlas.medieval .tree-heading h3::before,
+html.experimental-atlas.medieval .tree-heading h3::after {
+  background: var(--atlas-16, none) right center / auto 12px no-repeat
+}
+html.experimental-atlas.medieval .mine-view::before {
+  border-image: var(--atlas-17, none) 16 / 16px
+}
+html.experimental-atlas.medieval .tree-viewport {
+  background:
+    var(--atlas-18, none) center / min(92%, 440px) no-repeat,
+    radial-gradient(ellipse at 50% 45%, #1a1712, #08090a 75%)
+}
+html.experimental-atlas.medieval .skill-tree.stewardship .tree-viewport {
+  background:
+    var(--atlas-18, none) center / min(92%, 440px) no-repeat,
+    radial-gradient(ellipse at 50% 45%, #111916, #08090a 75%)
+}
+html.experimental-atlas.medieval dialog::before {
+  background: var(--atlas-19, none) center / contain no-repeat
+}
+html.experimental-atlas.murk {
+  --m-panel: var(--atlas-20, none);
+  --m-dialog: var(--atlas-21, none);
+  --m-button: var(--atlas-22, none);
+  --m-press: var(--atlas-23, none);
+  --m-chosen: var(--atlas-21, none);
+  --m-off: var(--atlas-24, none);
+  --m-danger: var(--atlas-25, none);
+  --m-field: var(--atlas-26, none);
+  --m-tip: var(--atlas-20, none);
+  --m-banner: var(--atlas-21, none);
+  --m-specks: var(--atlas-27, none);
+  --m-moon: var(--atlas-22, none)
+}
+html.experimental-atlas.orbit {
+  --o-stars:
+    var(--atlas-27, none) 0 0 / 360px 360px,
+    radial-gradient(ellipse at 85% 12%, #5a3a9a40, transparent 45%),
+    radial-gradient(ellipse at 10% 90%, #1a6a8a33, transparent 50%),
+    var(--o-space)
+}
+html.experimental-atlas.pixel {
+  --p-panel: var(--atlas-28, none);
+  --p-dialog: var(--atlas-29, none);
+  --p-button: var(--atlas-30, none);
+  --p-press: var(--atlas-31, none);
+  --p-gold: var(--atlas-29, none);
+  --p-off: var(--atlas-32, none);
+  --p-danger: var(--atlas-33, none);
+  --p-field: var(--atlas-34, none);
+  --p-tip: var(--atlas-35, none);
+  --p-banner: var(--atlas-29, none);
+  --p-stars: var(--atlas-27, none)
+}
+html.experimental-atlas ::-webkit-scrollbar-thumb {
+  background-image: var(--atlas-15, none)
+}
+html.experimental-atlas .goals-tower {
+  background: linear-gradient(90deg, #000a 0%, transparent 14%, transparent 86%, #000a 100%), linear-gradient(#07090d 0, transparent 120px), var(--atlas-12, none) 0 100% / 240px 160px, #15181d
+}
+html.experimental-atlas.ui-sprites {
+  --ui-button: var(--atlas-36, none);
+  --ui-hover: var(--atlas-37, none);
+  --ui-pressed: var(--atlas-38, none);
+  --ui-selected: var(--atlas-39, none);
+  --ui-disabled: var(--atlas-40, none);
+  --ui-danger: var(--atlas-41, none);
+  --ui-panel: var(--atlas-42, none);
+  --ui-dialog: var(--atlas-43, none);
+  --ui-field: var(--atlas-44, none);
+  --ui-slider-thumb: var(--atlas-45, none);
+  --ui-slider-thumb-active: var(--atlas-46, none);
+  --ui-slider-track: var(--atlas-47, none)
+}
+html.experimental-atlas.ui-sprites body:not(#_) {
+  background: #10151c var(--atlas-48, none) repeat
+}
+html.experimental-atlas.ui-sprites :is(.deck-slot, .node-icon):not(#_) {
+  border-image: var(--atlas-49, none) 6 fill / 12px / 0 stretch
+}
+html.experimental-atlas.ui-sprites input[type="checkbox"]:not(#_) {
+  background: var(--atlas-44, none) center / 24px 24px no-repeat
+}
+html.experimental-atlas.ui-sprites input[type="checkbox"]:checked:not(#_) {
+  background-image: var(--atlas-39, none)
+}
+html.experimental-atlas.ui-sprites :is(.xp-track, .health-track, .weekly-bar, .mission-bar,
+  .research-bar, .refine-bar):not(#_) {
+  border-image: var(--atlas-50, none) 6 fill / 4px / 0 stretch
+}
+html.experimental-atlas.ui-sprites :is(.xp-track i, .weekly-bar i, .mission-bar i,
+  .research-bar i, .refine-bar span, .event-bar i):not(#_) {
+  background: var(--atlas-51, none) left top / 32px 100% repeat-x
+}
+html.experimental-atlas.ui-sprites .xp-track i:not(#_) {
+  background-image: var(--atlas-52, none)
+}
+html.experimental-atlas.ui-sprites #health:not(#_) {
+  background: var(--atlas-53, none) left top / 32px 100% repeat-x
+}
+html.experimental-atlas.ui-sprites #health-gain:not(#_) {
+  background: var(--atlas-52, none) left top / 32px 100% repeat-x
+}
+html.experimental-atlas.ui-sprites .page-title:not(#_) {
+  border-image: var(--atlas-35, none) 6 fill / 12px / 0 stretch
+}
+html.experimental-atlas.ui-sprites :is(.badge-token, .badge-mark, .hand-badge-level) {
+  --badge-frame: var(--atlas-54, none)
+}
+html.experimental-atlas.ui-sprites :is(.badge-token, .badge-mark, .hand-badge-level).rarity-rare {
+  --badge-frame: var(--atlas-55, none)
+}
+html.experimental-atlas.ui-sprites :is(.badge-token, .badge-mark, .hand-badge-level).rarity-epic {
+  --badge-frame: var(--atlas-56, none)
+}
+html.experimental-atlas.ui-sprites.medieval dialog::before {
+  background: var(--atlas-57, none) center / contain no-repeat
+}
+html.experimental-atlas.ui-sprites .forest-sign:not(#_) {
+  border-image: var(--atlas-58, none) 6 fill / 12px / 0 stretch
+}
+html.experimental-atlas.ui-sprites #deck-hand .deck-link-toggle::before {
+  background: var(--atlas-59, none) center / contain no-repeat
+}
+html.experimental-atlas.ui-sprites :is(.training-group, .page-title h2, .tree-heading h3)::before,
+html.experimental-atlas.ui-sprites :is(.training-group, .page-title h2, .tree-heading h3)::after {
+  background: var(--atlas-59, none) right center / auto 12px no-repeat
+}
+html.experimental-atlas.ui-sprites .stats .shrine-diamond:not(#_) {
+  background: var(--atlas-60, none) center / contain no-repeat
+}
+html.experimental-atlas.ui-sprites #shrine-fill:not(#_) { background: var(--atlas-61, none) left top / 32px 100% repeat-x
+}
+html.experimental-atlas.ui-sprites #shield-fill:not(#_) { background: var(--atlas-52, none) left top / 32px 100% repeat-x
+}
+html.experimental-atlas.ui-sprites #overheal-fill:not(#_) { background: var(--atlas-52, none) left top / 32px 100% repeat-x
+}
+html.experimental-atlas.ui-sprites :is(.eq-tile, .equip-icon-frame):not(#_) {
+  --equipment-frame: var(--atlas-62, none)
+}
+html.experimental-atlas.ui-sprites :is(.eq-tile, .equip-icon-frame).rar-uncommon:not(#_) { --equipment-frame: var(--atlas-63, none)
+}
+html.experimental-atlas.ui-sprites :is(.eq-tile, .equip-icon-frame).rar-rare:not(#_) { --equipment-frame: var(--atlas-64, none)
+}
+html.experimental-atlas.ui-sprites .eq-tile.eq-ghost:not(#_) { --equipment-frame: var(--atlas-65, none)
+}
+html.experimental-atlas.ui-sprites .eq-tile.selected::after {
+  border-image: var(--atlas-66, none) 6 / 6px / 0 stretch
+}
+html.experimental-atlas.ui-sprites .eq-check:not(#_) {
+  background: var(--atlas-44, none) center / 24px 24px no-repeat
+}
+html.experimental-atlas.ui-sprites :is(#health-gain, #overheal-gain):not(#_) { background: var(--atlas-67, none) left top / 32px 100% repeat-x
+}
+html.experimental-atlas.ui-sprites :is(#health-loss, #overheal-loss):not(#_) { background: var(--atlas-61, none) left top / 32px 100% repeat-x
+}
+html.experimental-atlas.yang body {
+  background:
+    var(--atlas-68, none) right -60px bottom -40px / 340px no-repeat fixed,
+    var(--z-paper)
+}
+html.experimental-atlas.yin body {
+  background:
+    var(--atlas-68, none) right -60px bottom -40px / 340px no-repeat fixed,
+    var(--z-paper)
+}

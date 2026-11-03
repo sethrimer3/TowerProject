@@ -208,3 +208,5 @@ Alternate Game themes retain their own vector/text art; retired Classic PNG dire
 The [Blacksmith effects source](../../assets/game-sprites/blacksmith-effects.png) adds four tiny flame poses and four stepped smoke clusters.
 `tools/prepare-blacksmith-sprites.mjs` exports 6-pixel fire frames, 16 × 12 smoke canvases, the original sign layer and a registered 48 × 48 building base in the shared palette with binary alpha.
 Runtime smoke opacity remains faint; the hanging sign shifts its lower rows by at most two native pixels while its top stays anchored.
+
+The optional [Experimental UI atlas](ui-atlas.md) packs UI and shared small sprites without deleting or modifying their original PNGs.

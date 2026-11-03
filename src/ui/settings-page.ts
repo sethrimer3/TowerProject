@@ -1,3 +1,4 @@
+import { uiAtlasEnabled } from "../sprites/ui-atlas.ts";
 import { controlIcon } from "./control-icon.ts";
 import { applyUiTheme } from "./medieval.ts";
 import { renderThemeMenu, themeMenuTitle, wornName } from "./theme-menu.ts";
@@ -16,7 +17,7 @@ import { exportProfile, importProfile } from "../profile-file.ts";
 /** The settings on the page, in order; each control comes from its row in
  * SETTINGS. */
 const PAGE = [
-  "spriteAnimations", "squareDoors", "transition", "fightAnimation", "brightness", "decorOff", "pixelPerfect", "batterySaver", "reduceMotion", "weatherSound",
+  "experimentalAtlas", "spriteAnimations", "squareDoors", "transition", "fightAnimation", "brightness", "decorOff", "pixelPerfect", "batterySaver", "reduceMotion", "weatherSound",
   "infoDisplay", "cinematic", "cinematicIdle", "cinematicGems",
 ] as const satisfies readonly SettingKey[];
 /** The dev section's settings, shown under Dev Mode while it is on. */
@@ -51,6 +52,7 @@ const shownOf = (keys: readonly PageKey[], save: Save) => keys.filter((key) => S
 
 /** What a change does once written, beyond saving. */
 const AFTER: Partial<Record<PageKey, (ctx: AppContext, overlay: BoardOverlay, s: Settings) => void>> = {
+  experimentalAtlas: (ctx) => { ctx.save(); location.reload(); },
   reduceMotion: (ctx) => applyUiTheme(ctx.game.save),
   // The board silences the weather itself once sound is off.
   weatherSound: (ctx) => ctx.update(),
@@ -143,7 +145,7 @@ export function renderSettingsPage(ctx: AppContext, overlay: BoardOverlay) {
     `<button class="back" id="settings-back">${controlIcon("back")} Back</button><div class="page-title"><h2>Settings</h2></div><button class="wide" id="stats-open">Stats</button>` +
     themeButtons(game) +
     `<button class="setting menu-open" id="toggles-open">Toggles<b>${controlIcon("forward")}</b></button>` +
-    shownOf(PAGE, game.save).map((key) => control(key, game) + (key === "squareDoors" ? `<p class="hint">Pixel art is the default. Other UI and Game themes use their own art.</p>` : "")).join("") +
+    shownOf(PAGE, game.save).map((key) => control(key, game) + (key === "experimentalAtlas" ? `<p class="hint">Packs UI artwork into one atlas. Changing this reloads the game.</p>` : "") + (key === "squareDoors" ? `<p class="hint">Pixel art is the default. Other UI and Game themes use their own art.</p>` : "")).join("") +
     `<p class="hint">Automation pauses outside the board tabs and while the browser is hidden. Progress saves after each action.</p>` +
     control("devTools", game) +
     (game.save.settings.devTools ? `<div class="dev-section">${DEV.map((key) => control(key, game)).join("")}${profileButtons}</div>` : "") +
@@ -188,6 +190,7 @@ function bindProfileButtons(ctx: AppContext) {
         game.replaceSave(read.save);
         applyUiTheme(game.save);
         ctx.save();
+        if (uiAtlasEnabled() !== game.save.settings.experimentalAtlas) { location.reload(); return; }
         ctx.navigate("tower");
       },
     );
@@ -225,6 +228,7 @@ function bindSettings(ctx: AppContext, overlay: BoardOverlay) {
         game.eraseAll();
         applyUiTheme(game.save);
         ctx.save();
+        if (uiAtlasEnabled() !== game.save.settings.experimentalAtlas) { location.reload(); return; }
         ctx.navigate("tower");
       },
     );
