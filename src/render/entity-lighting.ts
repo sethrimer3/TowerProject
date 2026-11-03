@@ -1,8 +1,8 @@
 import type { Tile, Torch } from "../entities.ts";
 import { LIGHTING_CONFIG, getTorchFlicker, getTorchSway } from "./lighting.ts";
-import { torchReaches } from "./floor-relief.ts";
+import { insidePolygon, torchReaches } from "./floor-relief.ts";
 import { lightFalloff } from "./torch-light.ts";
-import { paintContents, paintHero } from "./tile-painters.ts";
+import { paintContents, paintHero, paintTorch } from "./tile-painters.ts";
 import { spriteRevision } from "../sprites/kit.ts";
 import { forEachViewTile, tileOrigin, toTileSpace, type FrameContext } from "./render-frame.ts";
 
@@ -14,16 +14,38 @@ const SPRITE_DIRS: { key: SpriteDir; dx: number; dy: number }[] = [
 ];
 /** Something standing in torchlight: where it is, a cache key for its
  * sprite, and how to paint it (in tile space, onto the given context). */
-type Caster = { x: number; y: number; key: string; draw: (c: CanvasRenderingContext2D) => void; hero?: boolean };
+export type ShadowCaster = {
+  x: number; y: number; key: string;
+  draw: (c: CanvasRenderingContext2D) => void;
+  /** Foot of the object in its 24-pixel tile, for short plants and stacked boxes. */
+  base?: number;
+  /** World position receiving the light, when different from the tile center. */
+  sampleX?: number; sampleY?: number;
+  /** Physical props cast shadows but do not receive an extra sprite glaze. */
+  prop?: boolean;
+  hero?: boolean;
+};
+type Caster = ShadowCaster;
 type LitCaster = Caster & { light: Record<SpriteDir, number> };
 type LightMasks = Record<SpriteDir, HTMLCanvasElement>;
 /** The shadow torch `t` casts from a caster: the caster's offset from the
  * swaying flame and its distance, the flicker, and the shadow's opacity. */
 type Shadow = { t: Torch; dx: number; dy: number; d: number; flicker: number; alpha: number };
 /** A silhouette stamped at a caster's tile. */
-type Stamp = { x: number; y: number; sil: HTMLCanvasElement };
+type Stamp = { x: number; y: number; sil: HTMLCanvasElement; base?: number };
 /** This frame's shadow layer (made on first use) and what was stamped on it. */
 type ShadowLayer = { layer: CanvasRenderingContext2D | null; stamps: Stamp[] };
+
+/** Flames transmit light; only the stationary torch stand casts a shadow. */
+export function torchShadowCaster(t: Torch): ShadowCaster {
+  return { x: t.x, y: t.y, key: "torch-hardware", prop: true,
+    draw: (c) => {
+      paintTorch(c, t, 0, true);
+      // All animated flames share the original hardware below row 11.
+      c.clearRect(0, 0, 24, 11);
+    },
+  };
+}
 
 /** Torchlight on the things standing in it: the shadows items, enemies,
  * and the hero cast across the floor, and the warm light on their torch-
@@ -58,7 +80,7 @@ export class EntityLighting {
    * sprite silhouette is sheared away from every torch that reaches it,
    * longer the farther it stands from the flame and fainter as the light
    * falls off. Drawn to one layer so walls can be masked out cheaply. */
-  drawShadows(f: FrameContext, wallMask: () => HTMLCanvasElement | null) {
+  drawShadows(f: FrameContext, wallMask: () => HTMLCanvasElement | null, props: ShadowCaster[] = []) {
     // Swap masks immediately on a toggle or image arrival, keeping old
     // revisions out of the caches rather than accumulating one per load.
     const style = `${!!f.look.styledSprites}|${spriteRevision()}${f.look.squareDoors ? "|square" : ""}`;
@@ -71,10 +93,10 @@ export class EntityLighting {
     this.castAny = false;
     if (!f.torches.length || typeof document === "undefined") return;
     const cast: ShadowLayer = { layer: null, stamps: [] };
-    for (const caster of this.casters(f)) {
+    for (const caster of [...this.casters(f), ...props]) {
       const { light, shadows } = this.torchlightOn(f, caster);
       for (const shadow of shadows) if (!this.stampShadow(f, cast, caster, shadow)) return;
-      if (shadows.length) this.lit.push({ ...caster, hero: !!caster.hero, light });
+      if (shadows.length && !caster.prop) this.lit.push({ ...caster, hero: !!caster.hero, light });
     }
     if (cast.layer) this.finishShadows(f, cast.layer, cast.stamps, wallMask);
   }
@@ -100,7 +122,7 @@ export class EntityLighting {
     if (!sil) return true;
     cast.layer ??= this.shadowLayer(f.width);
     if (!cast.layer) return false;
-    const stamp = { x: caster.x, y: caster.y, sil };
+    const stamp = { x: caster.x, y: caster.y, sil, base: caster.base };
     cast.stamps.push(stamp);
     this.castShadow(f, cast.layer, stamp, shadow);
     return true;
@@ -168,10 +190,17 @@ export class EntityLighting {
     const cfg = LIGHTING_CONFIG.shadow, sl = LIGHTING_CONFIG.spriteLight;
     // Shadows swing gently as the flame sways.
     const sway = getTorchSway(t, f.now, f.look.reduceMotion);
-    const dx = caster.x - t.x - sway.x, dy = caster.y - t.y - sway.y;
+    const x = caster.sampleX ?? caster.x + 0.5, y = caster.sampleY ?? caster.y + 0.5;
+    const dx = x - t.x - 0.5 - sway.x, dy = y - t.y - 0.5 - sway.y;
     const d = Math.hypot(dx, dy);
     if (d < 0.5 || d >= t.lightRadius) return null;
-    if (!torchReaches(t, Math.round(caster.x), Math.round(caster.y))) return null;
+    if (!t.active || t.baseIntensity <= 0) return null;
+    // Moving sprites must use their drawn position: rounding lets a hero
+    // behind a corner cast a shadow before it has entered the torchlight.
+    const reaches = caster.sampleX === undefined && caster.sampleY === undefined && Number.isInteger(caster.x) && Number.isInteger(caster.y)
+      ? torchReaches(t, caster.x, caster.y)
+      : insidePolygon(x, y, t.visibilityPolygon ?? []);
+    if (!reaches) return null;
     const flicker = getTorchFlicker(t, f.now, f.look.reduceMotion);
     const falloff = lightFalloff(d, t.lightRadius);
     // Light on the caster: split over the sides facing the torch (screen
@@ -189,13 +218,13 @@ export class EntityLighting {
   }
 
   /** Stamps a caster's silhouette onto the shadow layer, sheared away from the shadow's torch. */
-  private castShadow(f: FrameContext, layer: CanvasRenderingContext2D, { x, y, sil }: Stamp, shadow: Shadow) {
+  private castShadow(f: FrameContext, layer: CanvasRenderingContext2D, { x, y, sil, base = 22 }: Stamp, shadow: Shadow) {
     const cfg = LIGHTING_CONFIG.shadow;
     const { t, dx, dy, d } = shadow;
     // Screen-space direction away from the torch (world y is up).
     const ux = dx / d, uy = -dy / d;
     const k = Math.min(cfg.maxLength, cfg.minLength + d * cfg.lengthPerTile) * shadow.flicker;
-    // The shadow lies on the floor: the sprite's base line (y = 22) stays
+    // The shadow lies on the floor: the sprite's base line stays
     // put and horizontal, and height above it maps to a vertical stretch
     // (up when the torch is below, down when above) plus a partial lean
     // for side light. No rotation, so nothing swings below the base.
@@ -204,8 +233,8 @@ export class EntityLighting {
     const o = tileOrigin(f, x, y);
     layer.setTransform(1, 0, 0, 1, o.x, o.y);
     layer.scale(f.s / 24, f.s / 24);
-    // Sprite point (x, y), height h = 22 - y -> (x + h*k*lean, 22 + h*k*vert).
-    layer.transform(1, 0, -k * lean, -k * vert, 22 * k * lean, 22 + 22 * k * vert);
+    // Sprite point (x, y), h = base - y -> (x + h*k*lean, base + h*k*vert).
+    layer.transform(1, 0, -k * lean, -k * vert, base * k * lean, base + base * k * vert);
     layer.globalAlpha = Math.min(1, shadow.alpha);
     layer.drawImage(sil, 0, 0);
   }
@@ -259,6 +288,11 @@ export class EntityLighting {
     toShadow(img.data);
     ctx.putImageData(img, 0, 0);
     this.silhouettes.set(key, { canvas, at: now });
+    if (this.silhouettes.size > 512) {
+      const oldest = this.silhouettes.keys().next().value!;
+      this.silhouettes.delete(oldest);
+      this.spriteLightMasks.delete(oldest);
+    }
     return canvas;
   }
 

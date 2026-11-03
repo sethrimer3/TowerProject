@@ -4,6 +4,7 @@ import { bakeTorchRelief, type BakedRelief, type ReliefSprite } from "./floor-re
 import { dungeonFloorSprite, towerTileset } from "../sprites/dungeon.ts";
 import { spriteRevision } from "../sprites/kit.ts";
 import { bakeTorchLight, type BakedLight } from "./torch-light.ts";
+import { blocksTorch } from "./terrain-shadows.ts";
 import { doorColor, doorId } from "../doors.ts";
 import type { Tile } from "../entities.ts";
 import { CHEST_LOOK } from "./chest-marks.ts";
@@ -167,7 +168,7 @@ export class LightingPass {
 
   /** Opaque squares over the wall tiles in view (see wallMaskCache). */
   wallMask(f: FrameContext) {
-    const key = `${f.left},${f.bottom},${f.s},${f.width}`;
+    const key = `${f.left},${f.bottom},${f.s},${f.width}|${f.walls.map(([x, y]) => `${x},${y}`).join(";")}`;
     const world = f.world;
     if (this.wallMaskCache?.key === key && this.wallMaskCache.world === world) return this.wallMaskCache.canvas;
     const canvas = this.wallMaskCache?.canvas ?? document.createElement("canvas");
@@ -558,7 +559,7 @@ export class LightingPass {
       if (this.bakeBudget <= 0) return null;
       this.bakeBudget--;
       const world = f.world;
-      const isWall = (x: number, y: number) => world.tile(x, y)?.kind === "wall";
+      const isWall = (x: number, y: number) => blocksTorch(world, x, y);
       const offset = LIGHTING_CONFIG.glow.swayOffset;
       const left = bakeTorchLight(t, isWall, -offset), right = bakeTorchLight(t, isWall, offset);
       bake = left && right ? { left, right } : null;

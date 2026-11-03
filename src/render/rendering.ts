@@ -12,6 +12,7 @@ import { LEAGUE_INFO } from "../tournament/leagues.ts";
 import { factorText } from "../economy/gold-multipliers.ts";
 import { drawProvingGrounds, drawBlacksmith, drawEntrance, drawTournamentHall, ENTRANCE_ZOOM_MS, OutsideWorld, OUTSIDE_SIZE, outsideWeather, roadsOf } from "../outside.ts";
 import { DecorLayer, type DecorFrame, type MirroredSprites } from "./decor/decor-render.ts";
+import { torchShadowCaster } from "./entity-lighting.ts";
 import { OutsideGrass } from "./decor/outside-grass.ts";
 import { ForestFoliage } from "./decor/forest-foliage.ts";
 import { forestSpritesReady } from "../sprites/forest.ts";
@@ -316,6 +317,10 @@ export class Renderer {
     const decor = this.decorOn ? this.decorFrame(f) : null;
     return {
       floor: () => this.drawDecorGround(f),
+      shadowCasters: () => [
+        ...(decor ? this.decor.shadowCasters(decor) : []),
+        ...(this.game.world.torches ?? []).filter((t) => t.active && t.x >= f.left - 1 && t.x <= f.left + f.n && t.y >= f.bottom - 1 && t.y <= f.bottom + f.n).map(torchShadowCaster),
+      ],
       glow: () => { if (decor) this.decor.drawGlow(f.c, decor, f.darkness); },
       underContents: () => this.drawFloorFields(f),
       contents: (ctx) => this.drawEachContents(f, ctx),

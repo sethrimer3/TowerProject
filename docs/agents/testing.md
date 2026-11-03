@@ -19,6 +19,8 @@ It also checks cards-only input authority, reloads, daily key exhaustion/refill,
 `tests/default-art-browser.mjs` starts its own Vite server and checks a delayed required sprite, hidden gameplay until decoding completes, a fully painted first board, a dropped image recovering by itself, a failing one reloading twice before Retry, Retry recovery, migration from both retired art flags, persistent independent options and UI/Game theme overrides.
 It rejects any requests for the removed bitmap directories and checks every initial DOM image is loaded before reveal.
 `tests/sprite-preload.test.ts` verifies the generated inventory covers all deployed images and contains real nonempty PNGs.
+`node tests/terrain-shadows.mjs` starts its own Vite server and checks live closed/open door occlusion, hidden pickups, real crate/barrel/mushroom/torch hardware silhouettes and warm terrain-shadow cache reuse.
+Its closed/open door review images go to `test-results/terrain-shadows/`; `tests/terrain-shadows.test.ts` covers geometry invalidation, overlapping lights, exact moving-object visibility, prop feet and broken crates without a browser.
 
 The UI suite allows up to 30 seconds for initial artwork decoding before the HUD becomes visible.
 The UI and render snapshot suites also accept `PLAYWRIGHT_EXECUTABLE_PATH` for an installed Chromium binary.

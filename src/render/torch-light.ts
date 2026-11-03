@@ -125,7 +125,7 @@ function boxPass(src: Float32Array, dst: Float32Array, { lines, len, across, alo
  * `insidePolygon`'s own sum, so counting those strictly right of a point
  * on the row judges it exactly as `insidePolygon` does, without walking
  * every edge for every sample. */
-function rowCrossings(y: number, poly: readonly { x: number; y: number }[]) {
+export function rowCrossings(y: number, poly: readonly { x: number; y: number }[]) {
   const xs: number[] = [];
   for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
     const a = poly[i]!, b = poly[j]!;

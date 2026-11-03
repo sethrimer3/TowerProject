@@ -2,7 +2,8 @@ import type { Board } from "../../board.ts";
 import type { BoardView } from "../render-frame.ts";
 import { tileRandom } from "../../random.ts";
 import { decorSourceFor, FLOWER_COLORS, TILE_PX, tileDecor, tileKey, waterAt, type DecorSource, type Flower, type Plant, type TileDecor } from "./decor.ts";
-import { DecorBaker, paintKitFlower, paintKitPlant } from "./decor-bake.ts";
+import { DecorBaker, paintKitFlower, paintKitPlant, paintPlantBody } from "./decor-bake.ts";
+import type { ShadowCaster } from "../entity-lighting.ts";
 import { DecorEffects, type EffectFrame, type TileAt } from "./decor-effects.ts";
 import { WaterReflections, type MirroredSprites, type ReflectionScene, type Wave } from "./decor-reflections.ts";
 import { kitImage, spriteRevision } from "../../sprites/kit.ts";
@@ -221,6 +222,34 @@ export class DecorLayer {
 
   private drawCratesAt(c: CanvasRenderingContext2D, [x, y, d]: DecorTile) {
     drawCrates(c, x, y, d.crates, this.effects.isBroken(this.src!.key, x, y), this.styledSprites);
+  }
+
+  /** Small solid objects use their real sprite and ground contact, never a tile-sized box. */
+  shadowCasters(f: DecorFrame): ShadowCaster[] {
+    const src = this.src, out: ShadowCaster[] = [];
+    if (!src) return out;
+    this.eachTile(f.view, (x, y, d) => {
+      if (f.tileAt(x, y).kind === "wall") return;
+      if (f.tileAt(x, y).kind === "floor" && !this.effects.isBroken(src.key, x, y))
+        for (const crate of d.crates) {
+          const base = crate.y + crate.h;
+          out.push({ x, y, base, prop: true,
+            key: `prop:${crate.kind}:${crate.x},${crate.y},${crate.w},${crate.h},${crate.lift},${crate.tone}`,
+            sampleX: x + (crate.x + crate.w / 2) / TILE_PX, sampleY: y + 1 - base / TILE_PX,
+            draw: (c) => drawCrates(c, 0, 0, [crate], false, !!f.styledSprites),
+          });
+        }
+      for (const plant of d.plants) {
+        if (plant.kind === "web" || plant.kind === "pebbles") continue;
+        const base = Math.min(TILE_PX, plant.j + 2);
+        out.push({ x, y, base, prop: true,
+          key: `plant:${plant.kind}:${plant.i},${plant.j},${plant.variant},${!!plant.glow}`,
+          sampleX: x + (plant.i + 0.5) / TILE_PX, sampleY: y + 1 - base / TILE_PX,
+          draw: (c) => paintPlantBody(c, plant, src, x, y, !!f.styledSprites),
+        });
+      }
+    });
+    return out;
   }
 
   /** How tile (x, y)'s tall grass moves this frame. */

@@ -139,6 +139,14 @@ export function paintKitPlant(c: CanvasRenderingContext2D, p: Plant) {
   return drawn;
 }
 
+/** The plant body alone, matching the ground bake, without moss, water or emitted light. */
+export function paintPlantBody(c: CanvasRenderingContext2D, p: Plant, src: DecorSource, x: number, y: number, styled = false) {
+  if (styled && paintKitPlant(c, p)) return;
+  const img = c.createImageData(TILE_PX, TILE_PX);
+  PLANTS[p.kind](new TilePixels(img.data, src, x, y, false), p);
+  c.putImageData(img, 0, 0);
+}
+
 const kitPlantId = (p: Plant) => p.kind === "mushrooms" && p.glow ? GLOWCAP_SPRITES[p.variant] : p.kind;
 export const paintKitFlower = (c: CanvasRenderingContext2D, f: Flower) => drawKit(c, FLOWER_SPRITES[f.color], f.i - 4, f.j - 4, 8, 8);
 

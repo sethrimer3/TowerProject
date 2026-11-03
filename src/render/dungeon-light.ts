@@ -1,6 +1,7 @@
 import { LIGHTING_CONFIG } from "./lighting.ts";
 import { LightingPass, type AtmosphereConfig } from "./lighting-pass.ts";
-import { EntityLighting } from "./entity-lighting.ts";
+import { EntityLighting, type ShadowCaster } from "./entity-lighting.ts";
+import { TerrainShadows } from "./terrain-shadows.ts";
 import { forEachViewTile, tileOrigin, tileTransform, type FrameContext, type GlowSource, type Rect } from "./render-frame.ts";
 
 /** A box in world pixels (24 per tile; y grows downward, so row y spans
@@ -17,6 +18,8 @@ export type Foreground = { bounds: WorldBox; draw: (ctx: CanvasRenderingContext2
 export type LitBoard = {
   /** Decor on the stone: after the torch relief, under the cast shadows. */
   floor(): void;
+  /** Physical decor and torch hardware, after any budgeted decor planning. */
+  shadowCasters?(): ShadowCaster[];
   /** Extra glows laid on the darkened ground after the objects' own (decor
    * blooms). Only called below the default brightness. */
   glow(): void;
@@ -43,12 +46,13 @@ export type LitBoard = {
  * floor, torch-cast shadows, the Brightness darkness with object glows and
  * less-darkened sprites, torchlight on sprites, the lightmap and haze, and
  * the vignette. It runs the whole dungeon frame in that order, calling back
- * into the board (a LitBoard) for what it draws in between. The two passes
- * behind it are render/lighting-pass.ts (the board's light) and
- * render/entity-lighting.ts (shadows and light on sprites). */
+ * into the board (a LitBoard) for what it draws in between. TerrainShadows
+ * shares live visibility with render/lighting-pass.ts (the board's light)
+ * and render/entity-lighting.ts (shadows and light on sprites). */
 export class DungeonLight {
   private pass = new LightingPass();
   private entities = new EntityLighting();
+  private terrain = new TerrainShadows();
 
   /** The dungeon atmosphere (tint, vignette, torch haze). */
   get atmosphere(): AtmosphereConfig {
@@ -67,9 +71,11 @@ export class DungeonLight {
 
   /** Draws the rest of the dungeon frame over the ground already on `f.c`. */
   draw(f: FrameContext, board: LitBoard) {
+    f = { ...f, torches: this.terrain.torches(f) };
     this.pass.drawTorchRelief(f);
     board.floor();
-    this.entities.drawShadows(f, () => this.pass.wallMask(f));
+    this.terrain.draw(f);
+    this.entities.drawShadows(f, () => this.pass.wallMask(f), board.shadowCasters?.());
     const spriteDark = this.drawContents(f, board);
     board.torches();
     this.pass.drawLightmap(f, this.entities.shadows);
