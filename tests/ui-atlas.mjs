@@ -15,10 +15,14 @@ try{
  page.on('pageerror',e=>errors.push(e.message));
  await page.addInitScript(()=>{globalThis.__handHeld=true;globalThis.__handStartsPaused=true;const raw=sessionStorage.getItem('__atlasFixture');if(raw){localStorage.setItem('towerdelve.v1',raw);sessionStorage.removeItem('__atlasFixture')}});
  await page.goto(server.resolvedUrls.local[0]);await page.locator('#hp').waitFor({timeout:30000});
+ assert.equal(requests.filter(p=>p===manifest.image).length,1,'fresh profile defaults to UI atlas');
+ assert.equal(requests.filter(p=>p===world.image).length,1,'fresh profile defaults to world atlas');
+ assert.deepEqual(requests.filter(p=>packed.has(p)),[]);
+ requests.length=0;
  await page.evaluate(async()=>{
   const {defaults}=await import('/src/save/save.ts'),{Game}=await import('/src/state.ts');
   const s=defaults();Object.keys(s.tutorials).forEach(k=>s.tutorials[k]=true);
-  Object.assign(s.upgrades,{combatStance:1,buildout:1});Object.assign(s.settings,{reduceMotion:true,weatherSound:false,transition:'instant'});
+  Object.assign(s.upgrades,{combatStance:1,buildout:1});Object.assign(s.settings,{reduceMotion:true,weatherSound:false,transition:'instant',experimentalAtlas:false});
   const g=new Game(s);g.newRun({outside:true,seed:7});sessionStorage.setItem('__atlasFixture',JSON.stringify(g.save));
  });
  await page.reload();await page.locator('#hp').waitFor();
@@ -38,7 +42,7 @@ try{
  const originals=await frameHashes();
 
  assert.ok(requests.some(p=>packed.has(p)),'individual UI images load when off');
- assert.ok(!requests.includes(manifest.image),'atlas is not loaded when off');
+
  await openMenu(page);await page.locator('#auto-settings').click();
  assert.equal(await page.locator('#experimental-atlas').isChecked(),false);
  requests.length=0;
@@ -95,5 +99,14 @@ try{
  assert.ok(recoveryRequests.some(p=>packed.has(p)),'explicit recovery restores original sprites');
  assert.equal(await recovery.evaluate(()=>JSON.parse(localStorage.getItem('towerdelve.v1')).settings.experimentalAtlas),false);
  await recovery.close();
+ const freshRecovery=await browser.newPage();
+ await freshRecovery.addInitScript(()=>sessionStorage.setItem('towerdelve.bootRetries','2'));
+ await freshRecovery.route('**/assets/atlases/world.png*',r=>r.abort());
+ await freshRecovery.goto(server.resolvedUrls.local[0],{waitUntil:'domcontentloaded'});
+ await freshRecovery.locator('#boot-disable-atlas').waitFor({state:'visible'});
+ await Promise.all([freshRecovery.waitForNavigation({waitUntil:'domcontentloaded'}),freshRecovery.locator('#boot-disable-atlas').click()]);
+ await freshRecovery.locator('#hp').waitFor({timeout:30000});
+ assert.equal(await freshRecovery.evaluate(()=>JSON.parse(localStorage.getItem('towerdelve.v1')).settings.experimentalAtlas),false,'fresh profile can recover from default-on atlas failure');
+ await freshRecovery.close();
  console.log(`Atlas toggle passed: ${packed.size} original images replaced by two atlases; navigation and restoring originals passed.`);
 }finally{await browser.close();await server.close()}

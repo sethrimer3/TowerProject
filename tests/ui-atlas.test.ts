@@ -20,10 +20,12 @@ for(const atlasData of [UI_ATLAS,WORLD_ATLAS])test(atlasData.image+' preserves e
   for(let y=r.y-1;y<=r.y+r.height;y++)for(let x=r.x-1;x<=r.x+r.width;x++)if(x<r.x||x>=r.x+r.width||y<r.y||y>=r.y+r.height)assert.equal(atlas.pixels[(y*atlas.width+x)*4+3],0,`${path}: transparent gutter`);
  }
 });
-test('experimental Atlas is opt-in and survives save decoding',()=>{
- const save=defaults();assert.equal(save.settings.experimentalAtlas,false);
- save.settings.experimentalAtlas=true;
- const loaded=decode(JSON.stringify(save));assert.equal(loaded.settings.experimentalAtlas,true);
+test('experimental Atlas defaults on and preserves explicit saved preferences',()=>{
+ const save=defaults();assert.equal(save.settings.experimentalAtlas,true);
+ const older=JSON.parse(JSON.stringify(save));delete older.settings.experimentalAtlas;
+ assert.equal(decode(JSON.stringify(older)).settings.experimentalAtlas,true);
+ save.settings.experimentalAtlas=false;
+ const loaded=decode(JSON.stringify(save));assert.equal(loaded.settings.experimentalAtlas,false);
 });
 
 test('both atlases cover every startup sprite exactly once',()=>{const paths=[...Object.keys(UI_ATLAS.regions),...Object.keys(WORLD_ATLAS.regions)];assert.equal(new Set(paths).size,paths.length);assert.deepEqual(paths.sort(),[...SPRITE_ASSETS].sort());});

@@ -1,6 +1,7 @@
 # Experimental UI atlas
 
-Visual settings offers **Experimental Atlas feature**, off by default.
+Visual settings offers **Experimental Atlas feature**, on by default for new profiles and saves without a stored preference.
+Existing explicit off preferences are preserved.
 Changing it saves the preference and reloads the game so the chosen image path applies before loading begins.
 All original sprites remain in their original locations and are still shipped.
 Turning the feature off restores the individual-image path.
@@ -26,6 +27,7 @@ Canvas consumers that need a standalone source receive a memoized canvas crop, n
 CSS nine-slice and repeating backgrounds receive in-memory blob surfaces cropped from the decoded UI atlas; no original frame file is requested.
 The interface-loading scan also skips packed original URLs, including development `/public/` paths.
 
+A fully packed startup inventory reports completed progress without dividing by zero.
 A failed atlas stays behind the existing loading barrier and Retry behavior instead of silently downloading the packed originals.
 The error screen additionally offers **Turn off experimental Atlas**, preserving the rest of the save and reloading through the original image path.
 Profile import or progress reset reloads if it changes the active atlas preference.

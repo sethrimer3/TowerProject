@@ -8,8 +8,8 @@ const regions: Record<string, Region> = { ...UI_ATLAS.regions, ...WORLD_ATLAS.re
 const owner = (path: string) => path in UI_ATLAS.regions ? UI_ATLAS : WORLD_ATLAS;
 const atlasUrl = (atlas: typeof ATLASES[number]) => `${BASE}${atlas.image}?v=${atlas.revision}`;
 export type AtlasCanvas = HTMLCanvasElement & { naturalWidth: number; naturalHeight: number; complete: boolean; src: string; decode: () => Promise<void> };
-let enabled = false;
-try { enabled = JSON.parse(localStorage.getItem("towerdelve.v1") ?? "null")?.settings?.experimentalAtlas === true; } catch { /* Default to individual assets for unreadable saves. */ }
+let enabled = typeof window !== "undefined" && typeof window.location !== "undefined";
+try { const saved = JSON.parse(localStorage.getItem("towerdelve.v1") ?? "null")?.settings?.experimentalAtlas; if (typeof saved === "boolean") enabled = saved; } catch { /* Keep the environment default for unreadable saves. */ }
 export const uiAtlasEnabled = () => enabled;
 export const atlasRegion = (path: string) => enabled ? regions[path] : undefined;
 export function atlasPath(url: string, base = document.baseURI) {
