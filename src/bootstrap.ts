@@ -41,10 +41,14 @@ async function boot() {
     () => document.documentElement.classList.contains("reduce-motion") || matchMedia("(prefers-reduced-motion: reduce)").matches);
   retry.onclick = () => location.reload();
   const disableAtlas = document.querySelector<HTMLButtonElement>("#boot-disable-atlas")!;
-  disableAtlas.onclick = () => {
+  disableAtlas.onclick = async () => {
     try {
-      const save = JSON.parse(localStorage.getItem("towerdelve.v1") ?? "null");
-      if (save?.settings) { save.settings.experimentalAtlas = false; localStorage.setItem("towerdelve.v1", JSON.stringify(save)); }
+      let save;
+      try { save = JSON.parse(localStorage.getItem("towerdelve.v1") ?? "null"); } catch { /* Recover an unreadable profile through defaults. */ }
+      if (!save || typeof save !== "object" || Array.isArray(save)) save = (await import("./save/save.ts")).defaults();
+      if (!save.settings || typeof save.settings !== "object") save.settings = {};
+      save.settings.experimentalAtlas = false;
+      localStorage.setItem("towerdelve.v1", JSON.stringify(save));
       location.reload();
     } catch { message.textContent = "Unable to change settings. Allow storage and retry."; }
   };

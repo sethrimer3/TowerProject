@@ -385,3 +385,6 @@ The original building PNG, 3 × 3 footprint, collision map and Equipment interac
 Experimental UI atlas mode lets `kitImage` return a memoized native canvas crop as well as an HTML image.
 Both sources carry the same native dimensions and can be passed to Canvas drawing; dungeon helper types accept this shared source without changing material selection or terrain geometry.
 `drawKit` uses the decoded atlas and source rectangle directly for packed sprites.
+
+The same experimental checkbox loads `world-atlas-data.ts` for every sprite outside the UI atlas, including full terrain and animation sheets.
+Native canvas crops retain sheet dimensions, so existing frame coordinates stay unchanged.

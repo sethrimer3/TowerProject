@@ -145,7 +145,7 @@ export function renderSettingsPage(ctx: AppContext, overlay: BoardOverlay) {
     `<button class="back" id="settings-back">${controlIcon("back")} Back</button><div class="page-title"><h2>Settings</h2></div><button class="wide" id="stats-open">Stats</button>` +
     themeButtons(game) +
     `<button class="setting menu-open" id="toggles-open">Toggles<b>${controlIcon("forward")}</b></button>` +
-    shownOf(PAGE, game.save).map((key) => control(key, game) + (key === "experimentalAtlas" ? `<p class="hint">Packs UI artwork into one atlas. Changing this reloads the game.</p>` : "") + (key === "squareDoors" ? `<p class="hint">Pixel art is the default. Other UI and Game themes use their own art.</p>` : "")).join("") +
+    shownOf(PAGE, game.save).map((key) => control(key, game) + (key === "experimentalAtlas" ? `<p class="hint">Loads artwork from sprite atlases. Changing this reloads the game.</p>` : "") + (key === "squareDoors" ? `<p class="hint">Pixel art is the default. Other UI and Game themes use their own art.</p>` : "")).join("") +
     `<p class="hint">Automation pauses outside the board tabs and while the browser is hidden. Progress saves after each action.</p>` +
     control("devTools", game) +
     (game.save.settings.devTools ? `<div class="dev-section">${DEV.map((key) => control(key, game)).join("")}${profileButtons}</div>` : "") +

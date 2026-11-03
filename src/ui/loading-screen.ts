@@ -38,6 +38,9 @@ export class LoadingScreen {
 
   /** How far the loading has come, in [0, 1]: the room builds no further. */
   progress(share: number) {
+    // An empty workload can report 0/0. Never poison the room's animation
+    // state: NaN would keep complete() waiting forever with normal motion.
+    if (!Number.isFinite(share)) return;
     this.target = Math.max(this.target, Math.min(1, share) * BEFORE_READY);
   }
 

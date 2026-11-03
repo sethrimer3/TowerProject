@@ -16,6 +16,8 @@ async function decodeImage(url: string) {
 export async function preloadSprites(progress: (loaded: number, total: number) => void) {
   await prepareUiAtlas();
   const assets = SPRITE_ASSETS.filter(path => !atlasRegion(path));
+  // A fully packed inventory still reports a finite completed progress value.
+  if (!assets.length) { progress(1, 1); return; }
   let next = 0, loaded = 0, failed = false;
   progress(0, assets.length);
   await Promise.all(Array.from({ length: 12 }, async () => {
