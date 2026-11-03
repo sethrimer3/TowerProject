@@ -167,17 +167,17 @@ export const TREES: SkillTree[] = [
     { id: "undos", icon: "↺", x: 10, y: 189, requires: ["aetherShield"] },
     // Overheal, Life (which reveals Revive and the Angel skills) and Enemy
     // Level Skips (which reveals its two skills under Floor Skip Reward) under
-    // Physician; Badges stand down and right of Physician, and Key Mastery
-    // under Badges. Beast Mastery splits off down and right of Key Mastery,
+    // Physician; Badges stand right of Enemy Level Skips, after it, and Key Mastery
+    // under Badges. Beast Mastery splits off right of Key Mastery, under Dash Badge,
     // Card Mastery down and far left of it, with Manual Hand, the second
     // hand, under Card Mastery. Card, Beast and Door Mastery reveal the
     // Inspiration tree's three paths under Torch.
     { id: "overheal", icon: "♥", x: 50, y: 85, requires: ["physician"] },
     { id: "life", icon: "✚", x: 50, y: 111, requires: ["overheal"] },
     { id: "enemyLevelSkips", icon: "↷", x: 50, y: 137, requires: ["life"] },
-    { id: "cardBadges", icon: "◪", x: 70, y: 111, requires: ["physician"] },
-    { id: "keyMastery", icon: "⚿", x: 70, y: 137, requires: ["cardBadges"] },
-    { id: "beastMastery", icon: "☠", x: 86, y: 163, requires: ["keyMastery"] },
+    { id: "cardBadges", icon: "◪", x: 70, y: 137, requires: ["enemyLevelSkips"] },
+    { id: "keyMastery", icon: "⚿", x: 70, y: 163, requires: ["cardBadges"] },
+    { id: "beastMastery", icon: "☠", x: 90, y: 163, requires: ["keyMastery"] },
     { id: "cardMastery", icon: "▤", x: 30, y: 189, requires: ["keyMastery"] },
     { id: "manualHand", icon: "⇄", x: 30, y: 215, requires: ["cardMastery"] },
     // Extra Trainer under Key Mastery, with Door Mastery to its right after
