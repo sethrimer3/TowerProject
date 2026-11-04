@@ -65,13 +65,13 @@ try {
     const modal = page.locator("#modal");
     await expect(modal).toBeVisible();
     await expect(modal.locator("h2")).toHaveText("Fisherman");
-    await expect(modal.locator("p")).toHaveText("Come back later, traveller...");
+    await expect(modal.locator("p")).toHaveText("Come back when you are level 10, traveller.");
     assert.equal(await page.evaluate(() => lakeGame.run.player.x), 13);
     assert.equal(await page.evaluate(() => lakeGame.route.length), 0);
     await page.screenshot({ path: `test-results/lakeside/dialogue-${width}.png` });
     await page.locator("#fisherman-close").click();
-    await tile(7, 7);
-    await page.waitForFunction(() => lakeGame.run.player.x === 7 && !lakeGame.route.length);
+    await page.waitForFunction(() => lakeGame.run.player.x === 14);
+    assert.deepEqual(await page.evaluate(()=>lakeGame.facing),{dx:1,dy:0});
     await expect(modal).not.toBeVisible();
     await page.locator("#world").screenshot({ path: `test-results/lakeside/dock-${width}.png` });
     await page.reload({ waitUntil: "domcontentloaded" }); await ready(); await instrument();

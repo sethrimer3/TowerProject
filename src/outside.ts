@@ -90,8 +90,8 @@ export class OutsideWorld implements Board {
     if (this.hall && within(HALL_YARD, this.entranceX, x, y)) return { kind: onTournamentHall(this.entranceX, x, y) ? "wall" : "floor" };
     return this.wooded(x, y) ? { kind: "wall" } : { kind: "floor" };
   }
-  isProvingGrounds(x: number, y: number) {
-    return this.mode === "tower" && x === this.entranceX + PROVING_GROUNDS.dx && y === PROVING_GROUNDS.y;
+  isProvingGrounds(_x: number, _y: number) {
+    return false;
   }
   /** Whether (x, y) is the Blacksmith, which a tap opens. */
   isBlacksmith(x: number, y: number) {

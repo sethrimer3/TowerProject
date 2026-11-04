@@ -5427,3 +5427,12 @@ html.trial-running :is(#focus-stat, #ignore-stat, #target-stat, #bomb-stat, #hea
 .arcana-toggles-left { position: absolute; bottom: 22px; left: 50%; font-size: 15px; font-weight: bold; color: #fff; text-shadow: 0 0 3px #000, 0 1px 2px #000; pointer-events: none; animation: arcana-toggles-rise 0.9s ease-out forwards; }
 @keyframes arcana-toggles-rise { from { transform: translate(-50%, 8px) scale(1.4); opacity: 1; } 70% { opacity: 1; } to { transform: translate(-50%, -14px) scale(1); opacity: 0; } }
 html.reduce-motion .arcana-toggles-left { animation: none; transform: translateX(-50%); }
+
+#trial-voyage, .voyage-return { position: fixed; inset: 0; z-index: 10000; }
+.voyage-return { background: #000; }
+#trial-voyage canvas { width: 100%; height: 100%; display: block; }
+.voyage-return { pointer-events: none; }
+html.trial-at-sea #modal::backdrop { background: transparent; backdrop-filter: none; }
+html.trial-at-sea #modal { position: fixed; top: auto; bottom: 12px; left: 50%; margin: 0; transform: translateX(-50%); width: min(440px, calc(100% - 24px)); max-height: 44dvh; overflow-y: auto; animation: voyage-menu-in .4s ease-out both; }
+@keyframes voyage-menu-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { html.trial-at-sea #modal { animation-name: none; } }

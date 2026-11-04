@@ -4,7 +4,7 @@ import { MAX_TRIAL_LEVEL, TRIAL_IDS, type TrialId } from "./catalog.ts";
 export {MAX_TRIAL_LEVEL} from "./catalog.ts";
 
 export const DAILY_TRIAL_KEYS = 2;
-export type SavedBossProgress = { level: number; damage: number; partDamage?: Record<string, number> };
+export type SavedBossProgress = { level: number; damage: number; maxHp?: number; partDamage?: Record<string, number> };
 export type TrialProgress = { cleared: number; claimed: number[]; savedBoss?: SavedBossProgress; multiPart?: boolean };
 export type TrialAccess = { day: number; spent: number; points:number; progress:Partial<Record<TrialId,TrialProgress>> };
 export const defaultTrialAccess = (): TrialAccess => ({day:0,spent:0,points:0,progress:{}});
@@ -23,7 +23,7 @@ export function decodeTrialAccess(raw: unknown): TrialAccess {
     if(isRecord(p.savedBoss) && wholeIn(p.savedBoss.level,1,MAX_TRIAL_LEVEL) && wholeIn(p.savedBoss.damage,0,1e12) && (p.savedBoss.damage>0 || isRecord(p.savedBoss.partDamage))) {
       const partDamage: Record<string, number> = {};
       if(isRecord(p.savedBoss.partDamage))for(const [k,v] of Object.entries(p.savedBoss.partDamage))if(wholeIn(v,1,1e12))partDamage[k]=v;
-      entry.savedBoss={level:p.savedBoss.level,damage:p.savedBoss.damage,...(Object.keys(partDamage).length?{partDamage}:{})};
+      entry.savedBoss={level:p.savedBoss.level,damage:p.savedBoss.damage,...(wholeIn(p.savedBoss.maxHp,1,1e100)?{maxHp:p.savedBoss.maxHp}:{}),...(Object.keys(partDamage).length?{partDamage}:{})};
     }
     if(p.multiPart===true)entry.multiPart=true;
     access.progress[id]=entry;

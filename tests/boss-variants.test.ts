@@ -121,7 +121,8 @@ describe("Boss Fights / Trials adjustments (Magic Tower & Obelisk)", () => {
     trialStep(s, 0, 1);
     const hpAfterHit = s.bossHp;
     assert.ok((s.purchases?.silver ?? 0) > silverBefore, "Silver coins pop out on hit for in-run stat training");
-    assert.ok(s.bossVariant!.goldEarned > goldBefore, "Gold coins pop out on hit");
+    assert.equal(s.bossVariant!.goldEarned, goldBefore, "Gold is credited only when collected");
+    assert.ok(s.bossVariant!.lastRound?.coins.some(c=>c.kind==="gold"));
     assert.ok((s.bossVariant?.lastRound?.coins.length ?? 0) >= 2, "Coin pop-out animation entries are recorded");
 
     // Taking a turn away from combat lets the boss regenerate HP
@@ -290,4 +291,44 @@ describe("Boss Fights / Trials adjustments (Magic Tower & Obelisk)", () => {
     settleTrialVictory(game.save, s);
     assert.equal(game.save.trialAccess.progress.obelisk?.savedBoss, undefined, "Saved damage is cleared when difficulty is won");
   });
+});
+
+
+it("a minion struck by the hero cannot engage a second time that turn", () => {
+  const s=startTrial({maxHp:800,attack:15,defense:8},"hybrid",["weakEnemy"],31415,2,"magic-tower");
+  enterArena(s);
+  const v=s.bossVariant!,m=v.minions[0];v.minions=[m];
+  s.player.x=m.x;s.player.y=m.y-1;
+  const hp=m.hp,heroHp=s.player.hp;
+  const strike=Math.max(1,Math.round(s.player.attack-m.defense));
+  trialStep(s,0,1);
+  assert.equal(hp-m.hp,strike);
+  assert.equal(heroHp-s.player.hp,v.lastRound!.enemyDamage);
+  assert.equal(v.lastRound!.heroDamage,strike);
+});
+
+it("collecting Gold funds training once and survives a save round trip", () => {
+  const s=startTrial({maxHp:800,attack:15,defense:8},"manual",[],31415,1,"magic-tower");
+  enterArena(s); const v=s.bossVariant!;v.minions=[];
+  v.pickups=[{id:++v.spawned,x:s.player.x,y:s.player.y,kind:"gold",amount:40}];
+  const before=s.purchases?.silver??0;
+  trialStep(s,0,0);
+  assert.equal(s.purchases!.silver,before+40);assert.equal(v.goldEarned,40);
+  const decoded=decodeTrial(JSON.parse(JSON.stringify(s)))!;
+  trialStep(decoded,0,0);
+  assert.equal(decoded.purchases!.silver,before+40);
+  assert.equal(decoded.bossVariant!.goldEarned,40);
+});
+
+it("Obelisk HP and knocked-out parts remain fixed after the character improves", () => {
+  const s=startTrial({maxHp:800,attack:15,defense:8},"manual",[],31415,1,"obelisk",{multiPart:true});
+  const v=s.bossVariant!;s.bossHp-=100;v.parts[0].hp=0;
+  const save=defaults();saveTrialDamage(save,s);
+  const access=decodeTrialAccess(JSON.parse(JSON.stringify(save.trialAccess)));
+  const next=startTrial({maxHp:1600,attack:150,defense:80},"manual",[],31415,1,"obelisk",{multiPart:true,savedBoss:access.progress.obelisk!.savedBoss});
+  assert.equal(next.bossMaxHp,s.bossMaxHp);assert.equal(next.bossHp,s.bossHp);
+  assert.equal(next.bossVariant!.parts[0].hp,0);
+  const standard=startTrial({maxHp:1600,attack:150,defense:80},"manual",[],31415,1,"obelisk",{savedBoss:access.progress.obelisk!.savedBoss});
+  saveTrialDamage(save,standard);
+  assert.equal(save.trialAccess.progress.obelisk!.savedBoss!.partDamage![v.parts[0].id],v.parts[0].maxHp);
 });

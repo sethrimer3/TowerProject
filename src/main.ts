@@ -1,5 +1,4 @@
 import { ProvingGroundsDialog } from "./ui/proving-grounds-dialog.ts";
-import { showFisherman } from "./ui/fisherman-dialog.ts";
 import { USED_PROVISIONS } from "./economy/provisions.ts";
 import type { UpgradeId } from "./progression/upgrades.ts";
 import type { TreeId } from "./progression/skill-trees.ts";
@@ -191,10 +190,6 @@ function save(seen = !document.hidden) {
 /** Refreshes the HUD from game state, saves, and asks a fallen hero's player what next. */
 function update() {
   provingGrounds.check();
-  if (game.fishermanRequested && !modal.open) {
-    game.fishermanRequested = false;
-    showFisherman(ctx);
-  }
   const shown=shownGame();
   renderPortrait();
   followMode();

@@ -32,7 +32,8 @@ Oak, birch and pine crowns span several tiles above smaller trees, bushes, ferns
 The whole 20-column Tower clearing is walkable wherever grass or dirt is clear of trees, rocks and buildings, including the path and grass on the right.
 Walk onto a left or right edge tile to enter the adjacent unlocked tower's clearing, or use the side arrow.
 Tower I's west path leads to a quiet lake with a wooden dock and a fisherman, available before Tower II opens.
-Walk onto the dock to hear him say, “Come back later, traveller...”
+Walk onto the dock to visit the fisherman.
+He asks you to come back at character level 10; from level 10 onward, he takes you out to sea to choose a trial.
 Close the dialogue with Farewell or Escape; it does not repeat while you continue along the dock, but he greets you again after you leave it and return.
 Follow the path east to return to Tower I, or use the right arrow.
 Reloading at the lake or on the dock restores your location.

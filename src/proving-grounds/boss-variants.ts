@@ -123,7 +123,7 @@ export function newBossVariant(
   options: { multiPart?: boolean; turnLimit?: number; savedBoss?: SavedBossProgress } = {},
 ): { bossHp: number; bossMaxHp: number; state: BossVariantState } {
   const factor = difficultyMultiplier(level);
-  const bossMaxHp = variantBossMaxHp(variant, player, level);
+  const bossMaxHp = (variant === "obelisk" && options.savedBoss?.level === level ? options.savedBoss.maxHp : undefined) ?? variantBossMaxHp(variant, player, level);
   const savedDamage = options.savedBoss?.level === level ? Math.max(0, options.savedBoss.damage) : 0;
   const bossHp = variant === "obelisk" ? Math.max(1, bossMaxHp - savedDamage) : bossMaxHp;
   const bossAtk = Math.max(2, Math.ceil(player.maxHp * (variant === "magic-tower" ? 0.06 : 0.05) * factor));
@@ -279,7 +279,6 @@ function popCoinsOnBossHit(s: TrialState, origin: Spot, step: number): CombatCoi
   s.purchases ??= { silver: 0, training: {} };
   s.purchases.silver += silverAmount;
   v.silverEarned += silverAmount;
-  v.goldEarned += goldAmount;
 
   const candidates = COIN_OFFSETS.map((off, i) => ({
     x: origin.x + off.x,
@@ -303,7 +302,7 @@ function popCoinsOnBossHit(s: TrialState, origin: Spot, step: number): CombatCoi
     const amount = kind === "silver" ? Math.max(10, Math.round(silverAmount * 0.5)) : goldAmount;
     pops.push({ from: { x: origin.x, y: origin.y }, to: spot, kind, amount });
     if (v.pickups.length < MAX_VARIANT_PICKUPS && !same(spot, s.player)) {
-      const existing = v.pickups.find((item) => same(item, spot) && (item.kind === "silver" || item.kind === "gold"));
+      const existing = v.pickups.find((item) => same(item, spot) && item.kind === kind);
       if (existing) existing.amount += amount;
       else v.pickups.push({ id: ++v.spawned, x: spot.x, y: spot.y, kind, amount });
     }
@@ -328,7 +327,7 @@ function roundFightMinion(s: TrialState, minion: BossMinion, step: number): { he
 }
 
 /** Minions step toward the player; if adjacent, they perform one round of combat. */
-function advanceVariantMinions(s: TrialState, step: number): { message: string; round: CombatRound | null } {
+function advanceVariantMinions(s: TrialState, step: number, engagedId?: number): { message: string; round: CombatRound | null } {
   const v = s.bossVariant!;
   const occupied = new Set<string>([
     key(s.elemental),
@@ -339,6 +338,7 @@ function advanceVariantMinions(s: TrialState, step: number): { message: string; 
   let round: CombatRound | null = null;
   for (const minion of [...v.minions].sort((a, b) => a.id - b.id)) {
     if (s.player.hp === 0) break;
+    if (minion.id === engagedId) continue;
     if (!foeActs(s, minion, `move:minion:${minion.id}`)) continue;
     occupied.delete(key(minion));
     const distances = new Map([[key(s.player), 0]]);
@@ -510,7 +510,9 @@ export function bossVariantStep(s: TrialState, x: number, y: number): { changed:
       message = `Picked up +${item.amount} Silver coins.`;
     } else if (item.kind === "gold") {
       v.goldEarned += item.amount;
-      message = `Picked up +${item.amount} Gold coins.`;
+      s.purchases ??= { silver: 0, training: {} };
+      s.purchases.silver += item.amount;
+      message = `Picked up +${item.amount} Gold coins, exchanged for ${item.amount} training Silver.`;
     } else if (item.kind === "potion") {
       const healed = Math.min(s.player.maxHp - s.player.hp, item.amount);
       s.player.hp += healed;
@@ -542,7 +544,7 @@ export function bossVariantStep(s: TrialState, x: number, y: number): { changed:
 
   // Minion movement and spawns.
   if (s.player.hp > 0 && v.minions.length > 0) {
-    const minionTurn = advanceVariantMinions(s, s.steps);
+    const minionTurn = advanceVariantMinions(s, s.steps, minion?.id);
     if (minionTurn.message && !message) message = minionTurn.message;
     if (minionTurn.round && !round) round = minionTurn.round;
   }

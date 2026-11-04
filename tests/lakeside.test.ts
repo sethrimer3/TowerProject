@@ -51,7 +51,7 @@ test("walking onto the dock stops the route and requests the exact dialogue, wit
   g.travelForest(-1); arrive(g);
   walk(g, 6, 7);
   assert.equal(g.fishermanRequested, true);
-  assert.equal(g.message, "Come back later, traveller...");
+  assert.equal(g.message, "Come back when you are level 10, traveller.");
   assert.equal(g.message, FISHERMAN_DIALOGUE);
   assert.ok(onDock(g.run.player.x, g.run.player.y));
   g.fishermanRequested = false;
@@ -111,4 +111,13 @@ test("lake location is accepted only for an outside Tower I run and all original
     assert.deepEqual([bytes.readUInt32BE(16), bytes.readUInt32BE(20)], size);
     assert.ok(inventory.includes(`assets/style/${id}.png`));
   }
+});
+
+
+test("disembarking faces inland and another dock approach requests the fisherman", () => {
+  const g=forest();g.travelForest(-1);arrive(g);walk(g,6,7);
+  g.fishermanRequested=false;g.returnFromTrials();
+  assert.deepEqual({x:g.run.player.x,y:g.run.player.y},{x:14,y:7});
+  assert.equal(onDock(14,7),false);assert.deepEqual(g.facing,{dx:1,dy:0});
+  walk(g,6,7);assert.equal(g.fishermanRequested,true);
 });

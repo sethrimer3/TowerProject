@@ -2,7 +2,7 @@ import {chromium,expect} from "@playwright/test";
 import {mkdirSync} from "node:fs";
 import {fixClock} from "./fixed-clock.mjs";
 
-const browser=await chromium.launch({headless:true,channel:process.env.PLAYWRIGHT_CHANNEL||"msedge"});
+const browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_EXECUTABLE_PATH?{executablePath:process.env.PLAYWRIGHT_EXECUTABLE_PATH}:{channel:process.env.PLAYWRIGHT_CHANNEL||"msedge"})});
 try {
   const page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1});
   await fixClock(page);page.setDefaultNavigationTimeout(120000);
@@ -47,17 +47,17 @@ try {
   await page.evaluate(async()=> {
     const {Game}=await import("/src/state.ts"),{defaults}=await import("/src/save/save.ts");
     const g=new Game(defaults());g.newRun({outside:true,seed:12});
-    g.run.player.x=10;g.run.player.y=5;g.save.settings.oneTapMove=true;
+    g.travelForest(-1);g.forestArrivalFrame(0);g.forestArrivalFrame(1000);
+    g.run.player.x=14;g.run.player.y=7;g.save.xp=6600;g.save.settings.oneTapMove=true;
     g.save.settings.reduceMotion=true;g.save.upgrades.onTheJob=1;
     g.save.upgrades.cardDoorKey=1;g.save.upgrades.cardEnemy=1;g.save.upgrades.autoClimb=1;
     g.save.hand=["stairs","door","key","monster"];
     for(const key of Object.keys(g.save.tutorials))g.save.tutorials[key]=true;
     sessionStorage.setItem("trialFixture",JSON.stringify(g.save));
   });await reload();
-  await expect(page.locator("#enter-run")).toBeVisible();
-  // Walk south across the gold square from above; the forest's help text
-  // overlays the square itself at this phone width.
-  const forest=await world.boundingBox();await world.click({position:{x:forest.width*10.5/20,y:forest.height*18.5/20}});
+  await expect(page.locator("#board-title")).toHaveText("Lakeside");
+  // Board through the fisherman at the dock.
+  const forest=await world.boundingBox();await world.click({position:{x:forest.width*6.5/20,y:forest.height*12.5/20}});
   await expect(page.locator("#trial-heading")).toHaveText("Proving Grounds Trials");
   await expect(page.locator("dialog .trial-choice")).toHaveCount(4);
   await expect(page.locator("#trial-level")).toHaveCount(0);
@@ -162,9 +162,9 @@ try {
   await page.locator("#trial-list-back").click();await expect(page.locator("dialog .trial-choice")).toHaveCount(4);
   await expect(page.locator("#trial-light-elemental")).toContainText("Next: Difficulty 6");
   await page.locator("#trial-menu-leave").click();
-  const returned=await read();expect(returned.tower.run).toEqual(tower);expect(returned.delve.run).toEqual(delve);
+  const returned=await read();expect(returned.tower.run).toEqual({...tower,player:{...tower.player,x:14,y:7}});expect(returned.delve.run).toEqual(delve);
   expect(returned.provingGrounds).toBeUndefined();expect(returned.trialAccess.points).toBe(15);
-  await expect(page.locator("#enter-run")).toBeVisible();await expect(page.locator("#trial-overlay")).toHaveCount(0);
+  await expect(page.locator("#board-title")).toHaveText("Lakeside");await expect(page.locator("#trial-overlay")).toHaveCount(0);
   expect(errors).toEqual([]);
   console.log("Trials: four boss entries, three controls, tile routes without arrows, cards-only input guard, hybrid overrides/resume, automatic shared difficulty, one-time weighted Trial Points, midnight keys, isolated purchases/runs and 320/390/1024px passed.");
 } finally {await browser.close();}
