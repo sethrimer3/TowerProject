@@ -134,3 +134,5 @@ The ray checks enforce the low final opacity cap, while `tests/soft-field.test.t
 The cloud browser flow also tests a colored reference chart through every weather: sunny/cloudy preserve it exactly without localized lighting, rain/storm affect only their sparse streaks, and cloud-shadow buffers contain neutral RGB so they cannot add a blue-gray cast.
 `tests/pixel-outlines.test.ts` checks one-pixel exterior geometry, closed holes, preserved translucent texels, hard palettes and upper-left lighting.
 `node tests/pixel-outlines.mjs` checks actual outlined PNGs, every original texel, hero facings/idle, both door styles, physical mask exclusion and zero steady sprite readbacks, with native art and phone/desktop dungeon/trial previews in `test-results/pixel-outlines/`.
+
+`node tests/trial-voyage.mjs` starts its own local Vite server and checks the level 9 rejection, level 10 departure, delayed menu, animated ocean/sail, repeat boarding, attempt entry, key spending and dock return at 390/1024 pixels.

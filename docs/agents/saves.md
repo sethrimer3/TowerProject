@@ -87,3 +87,7 @@ The optional marker is accepted only outside Tower I and removed from Delve runs
 The dock greeting request is transient and does not replay on reload, including a save on the dock.
 
 The optional `experimentalAtlas` setting defaults to false on old saves; changing it through Visual settings saves before reloading, and importing or resetting a profile reloads when it changes the active image path.
+
+Obelisk `savedBoss.maxHp` optionally anchors the HP scale across attempts, including part HP, preserving knockouts when hero ATK changes.
+Older records without it use the next attempt’s scale, then write it on settlement.
+The ocean voyage is transient; reload returns to the saved dock location or resumes an existing attempt.

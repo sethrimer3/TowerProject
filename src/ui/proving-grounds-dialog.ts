@@ -1,3 +1,6 @@
+import { TrialVoyage } from "./trial-voyage.ts";
+import { levelForXp } from "../progression/xp.ts";
+import { showFisherman } from "./fisherman-dialog.ts";
 import type {Game} from "../state.ts";
 import {activeBossParts,BEAM_INTERVAL,beamCount,beamHeadings,effectiveBossRegen,nextBeamAxis,OBELISK_SHOT_INTERVAL,OBELISK_SPECIAL_INTERVAL,slimeSpawnInterval,startTrial,trialDamageThisRun,trialDpt,trialStep,type TrialMode,type TrialState} from "../proving-grounds/trial.ts";
 import {spendTrialKey,trialKeys} from "../proving-grounds/access.ts";
@@ -26,6 +29,7 @@ const MODES=[
 /** One list entry per boss, followed by its control picker. Encounters use
  * the normal board/HUD, with shared progress and rewards across all controls. */
 export class ProvingGroundsDialog {
+  private voyage:TrialVoyage|null=null;
   private session:TrialSession|null=null;
   private renderer:TrialRenderer|null=null;
   private navigation=new TrialNavigation();
@@ -69,7 +73,10 @@ export class ProvingGroundsDialog {
         this.message="Moving to the selected tile.";this.changed();
       }
     },true);
-    modal.addEventListener("close",()=>{this.modal.classList.remove("proving-grounds-dialog");if(this.modal.getAttribute("aria-labelledby")==="trial-heading")this.modal.removeAttribute("aria-labelledby");});
+    modal.addEventListener("close",()=>{if(this.voyage) {
+      if(this.active){this.voyage.destroy();this.voyage=null;}
+      else this.voyage.close(()=>{this.voyage=null;this.base.returnFromTrials();this.save();this.changed();});
+    }this.modal.classList.remove("proving-grounds-dialog");if(this.modal.getAttribute("aria-labelledby")==="trial-heading")this.modal.removeAttribute("aria-labelledby");});
   }
   get active(){return !!this.session;}
   get viewGame(){this.session?.sync();return this.session?.game;}
@@ -86,8 +93,20 @@ export class ProvingGroundsDialog {
       this.settled=state;if(saveTrialDamage(this.base.save,state))this.save();
     }
     if(this.modal.open && this.modal.querySelector("#trial-key-balance"))this.refreshAccess();
-    if(this.active || this.modal.open)return;
-    if(this.base.provingGroundsRequested){this.base.provingGroundsRequested=false;this.openMenu();}
+    if(this.active || this.modal.open || this.voyage)return;
+    if(this.base.fishermanRequested) {
+      this.base.fishermanRequested=false;
+      this.base.auto=false;this.base.cancelRoute();
+      if(levelForXp(this.base.save.xp)<10) {
+        showFisherman({modal:this.modal});
+        this.modal.addEventListener("close",()=>{this.base.returnFromTrials();this.save();this.changed();},{once:true});
+      } else {
+        this.base.message="The fisherman takes you out to sea.";
+        this.voyage=new TrialVoyage(this.base.save.settings.reduceMotion,()=>this.openMenu());
+      }
+      return;
+    }
+    if(this.base.provingGroundsRequested){this.base.provingGroundsRequested=false;}
     else if(state)this.openTrial();
   }
   private show(html:string) {
@@ -102,7 +121,7 @@ export class ProvingGroundsDialog {
       ${TRIAL_IDS.map(id=> {
         const trial=TRIALS[id],level=nextDifficulty(this.base.save,id);
         return `<button id="trial-${id}" class="trial-choice"><b>Trial ${trial.number} — ${trial.name}</b><small>${level===null?"All difficulties cleared":`Next: Difficulty ${level} · Multiplier ×${trial.multiplier(level).toFixed(1)}`}</small><span>${clearedDifficulty(this.base.save,id)} difficulties cleared</span></button>`;
-      }).join("")}<button id="trial-menu-leave">Return to the forest</button>`);
+      }).join("")}<button id="trial-menu-leave">Return to the docks</button>`);
     for(const id of TRIAL_IDS)el(`trial-${id}`).onclick=()=>this.openDetails(id);
     el("trial-menu-leave").onclick=()=>{if(this.active)this.leave();this.modal.close();};
   }
@@ -143,7 +162,7 @@ export class ProvingGroundsDialog {
   }
   private begin(id:TrialId,mode:TrialMode) {
     const level=nextDifficulty(this.base.save,id);
-    if(level===null || !spendTrialKey(this.base.save,this.base.clock()))return false;
+    if(levelForXp(this.base.save.xp)<10 || level===null || !spendTrialKey(this.base.save,this.base.clock()))return false;
     const progress=this.base.save.trialAccess.progress[id];
     const turnLimit=researched(this.base.save.archives,"trialTurns");
     this.base.save.provingGrounds=startTrial(this.base.run.player,mode,this.base.hand,this.base.run.seed,level,id,{multiPart:!!progress?.multiPart,turnLimit,savedBoss:progress?.savedBoss});
@@ -170,6 +189,7 @@ export class ProvingGroundsDialog {
     this.lastFrame=performance.now();this.nextAutoAt=this.lastFrame+450;this.save();this.changed();this.canvas.focus();
   }
   frame(now:number) {
+    if(this.voyage)return true;
     if(!this.session)return false;
     const s=this.session.state,g=this.session.game;
     if(!this.modal.open)this.apply(advanceKeymasterEffects(s,Math.min(100,Math.max(0,now-this.lastFrame))));
@@ -267,7 +287,7 @@ export class ProvingGroundsDialog {
     });
     Object.assign(this.canvas.dataset,{trialMode:s.mode,trialLevel:String(s.level),trialRoom:s.room,trialSteps:String(s.steps),trialPhase:s.elemental.incorporeal?"incorporeal":"corporeal"});
   }
-  leave(){if(!this.active)return;if(this.session?.state)saveTrialDamage(this.base.save,this.session.state);delete this.base.save.provingGrounds;this.detach();this.save();this.changed();}
+  leave(){if(!this.active)return;if(this.session?.state)saveTrialDamage(this.base.save,this.session.state);delete this.base.save.provingGrounds;this.detach();this.base.returnFromTrials();this.save();this.changed();}
   private detach() {
     this.session=null;this.renderer=null;this.navigation.clear();document.documentElement.classList.remove("trial-running","trial-manual");el("trial-overlay")?.remove();el("board").querySelector("#trial-boss-meter")?.remove();
     for(const key of ["trialMode","trialLevel","trialRoom","trialSteps","trialPhase","trialViewLeft","trialViewBottom","trialViewRoom","trialHeroX","trialHeroY","trialCameraMoving"])delete this.canvas.dataset[key];

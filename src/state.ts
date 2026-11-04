@@ -2283,6 +2283,16 @@ export class Game {
     }
     return [CARDS.angelWings.name, ...(smote ? [`Avenging Angel · ${smote} ${smote === 1 ? "enemy" : "enemies"} smitten`] : [])];
   }
+  /** Disembark just beyond the dock, allowing the next dock tap to board again. */
+  returnFromTrials() {
+    this.auto = false;
+    this.cancelRoute();
+    if (this.atLake) {
+      Object.assign(this.run.player, { x: 14, y: 7 });
+      this.facing = { dx: 1, dy: 0 };
+      this.message = "Back at the docks.";
+    }
+  }
   /** Moves the player onto the tile and applies what standing there does. */
   private land(t: Tile, x: number, y: number, outcome: StepEffect, floorSkip = false) {
     const p = this.run.player;

@@ -11,9 +11,10 @@ Both directions reuse the existing safe arrival landing and motion settings.
 `save/save.ts` accepts the marker only on an outside Tower I run and removes it from Delve runs or invalid locations.
 
 `Game.land` checks entering the dock from a non-dock tile, stops the route and requests the fisherman dialogue.
-`main.ts` consumes the request through `ui/fisherman-dialog.ts` in the shared modal, pausing ordinary movement until Farewell or Escape closes it.
+`ProvingGroundsDialog` consumes the request, checks character level 10, and shows `ui/fisherman-dialog.ts` below that level or the animated `ui/trial-voyage.ts` scene and trials menu otherwise.
 The request is not saved; a reload on the dock preserves the hero's position without replaying the greeting.
-Leaving the dock and entering again repeats the exact line `Come back later, traveller...`.
+Below level 10 the exact line is `Come back when you are level 10, traveller.`.
+Closing the greeting or returning from trials places the hero at (14,7), facing inland, so tapping the dock boards again.
 
 `render/lakeside.ts` draws native water-panel samples and dock PNGs through the renderer's existing ground cache, then reuses forest trees and draws reeds and the seated fisherman.
 The lake skips clearing grass and the clearing-specific tower/cloud height map, retaining rain and storm weather.

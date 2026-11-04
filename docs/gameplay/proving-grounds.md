@@ -1,6 +1,9 @@
 # Proving Grounds Trials
 
-Step onto the golden square on the grass to the right of the Tower forest's path to open **Proving Grounds Trials**.
+Visit the fisherman at the docks west of Tower I to open **Proving Grounds Trials**.
+You must be character level 10 or higher to attempt a trial; before then the fisherman asks you to come back at level 10.
+A boat takes you out to sea before the trials menu appears.
+Closing the menu returns you to the shore end of the dock, facing inland; tap the dock again to revisit.
 Choose a trial, then choose **Without cards**, **Only with cards**, or **With both**.
 Each choice enters the main game screen with the same top HUD, board, bottom card bar and run-training controls as a Tower run.
 Trials use the current hero, dungeon, stairs, potion, torch and crate artwork, with the same **Animations** and **Reduce motion** settings as the Tower.
@@ -13,7 +16,7 @@ The menu shows that trial's number, next difficulty, difficulty multiplier, beam
 **Trial 1 — Light Elemental** begins in a small staging room whose staircase leads to a dark, hexagonal chamber inside a 25×25 tile square.
 The attempt uses your current max HP, ATK and DEF and starts at full health; your Tower run, currencies and supplies stay safe.
 Reloading resumes the attempt, including its training purchases.
-**Leave trial**, the HUD menu's **Leave trial**, or Escape from the board returns to the forest and discards the attempt.
+**Leave trial**, the HUD menu's **Leave trial**, or Escape from the board returns to the dock and discards the attempt.
 
 ## Choose your controls
 
@@ -170,3 +173,6 @@ When turns run out (or the run ends early), **all damage inflicted on the Obelis
 In the trial details menu for Magic Tower and Obelisk, you can switch between the **Standard Boss** (`1` / `2`) and the **Multi-Part Boss** (`1b` / `2b`).
 In the multi-part sub-variant, the boss is accompanied by three parts on the floor—**Blaster Turret** (fires periodic bolts), **Regen Conduit** (increases boss regeneration), and **Ward Crystal** (increases boss DEF and dampens your DEF)—each with its own stats.
 When you knock out a part, it stops its activity, disappears from the floor, and its HP cannot be regenerated.
+
+Collected Magic Tower Gold exchanges one for one into trial Silver for stat training; it is counted once and does not increase your permanent Gold.
+Obelisk boss and part maximum HP stay fixed between attempts at the same difficulty, so improving your character cannot revive a defeated part.

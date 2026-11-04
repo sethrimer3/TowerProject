@@ -1,7 +1,13 @@
 # Proving Grounds
 
-The gold square two columns right of the Tower forest's path on row 4 opens **Proving Grounds Trials** when entered.
-`OutsideWorld.isProvingGrounds` identifies it, `Game.land` stops the route and asks for its menu, and `ProvingGroundsDialog` owns the entrance menu, trial controls and main-board presentation.
+Trials are accessed through the fisherman at the lake west of Tower I, at character level 10 or higher.
+`Game.land` stops the route on entering the dock and requests the fisherman; `ProvingGroundsDialog` checks lifetime XP before opening the voyage or starting any attempt.
+Below level 10 the fisherman asks the hero to return at level 10.
+`ui/trial-voyage.ts` owns a transient canvas ocean, centered wooden boat, fisherman at the tiller, hero, procedural sail mesh and water streaks drifting right.
+Departure fades the dock to black over 600ms, reveals the ocean over 600ms, then waits 500ms before fading in the menu.
+Closing the menu fades back to the dock; entering an attempt removes the voyage, and leaving that attempt disembarks too.
+`Game.returnFromTrials` places the hero at (14,7), just inland of the dock facing east, so the next dock approach can board again.
+The old forest square no longer draws or opens trials.
 Only the selection menu uses the shared modal; the encounter itself uses `#world`, the normal HUD, `#hand` and `RunTrainingBar`.
 `catalog.ts` defines one entry per boss, its trial number, difficulty multiplier and first-clear reward.
 Selecting Trial 1 — Light Elemental or Trial 2 — Keymaster opens a picker for Without cards, Only with cards or With both; there is no difficulty selector.
@@ -12,13 +18,14 @@ The controller's once-a-second `tick` refreshes an open list or finished encount
 The three control options share one encounter and progression: `save.provingGrounds` stores the current attempt, while ordinary Tower and Delve runs, equipment, currencies and supplies remain untouched.
 The player's current max HP, ATK and DEF are copied into the attempt, which starts at full HP; other normal-run combat systems do not apply, except the Arcana: every arcanum owned but Aurum Bloom works in a trial (arcana.md's **In a trial**).
 Boss effects fall due by the boss clock (`bossTurn` in `trial-spells.ts`), which Time Dilation's and Necrotic Frost's fields hold back, and which otherwise is `steps`: the elemental's beams and slime releases, the Keymaster's mimic spawns and reformation, the variants' minion spawns, the Obelisk's shots and pulses, and the Blaster Turret's bolts on a clock of its own, which Voidwell's vortex stops (the boss being immune to it).
+A minion already struck by the hero is excluded from pursuit/contact combat for that turn, preventing a second round.
 Slime hops, mimic, minion and Keymaster steps keep their schedules, each foe's turn skipped by `foeActs`, and so do counters and bites.
 While a clock lags, `decodeTrial` no longer requires a beam, scorch or hop to fall on its usual turn (`held`), and `nextBeamAxis` and the HUD's countdowns (`bossDueIn`, which may read fractions) count by the clock.
 `session.ts` creates an isolated `Game` over a cloned profile and the live `trialBoard` so the shared HUD and run-training bar use their existing code.
 `#trial-boss-meter` takes a grid row of its own over `.board-cell` (`html.trial-running #board.active`); in `#board`'s one row it left the board none.
 Only trial stats, run-training ranks and trial Silver are copied back into the attempt; permanent currencies and the ordinary mode runs remain separate.
 Settings remain shared so normal speed and display choices persist.
-Leaving the trial or pressing Escape on its board discards the attempt and returns to the same forest square, and a reload resumes the saved attempt.
+Leaving the trial or pressing Escape on its board discards the attempt and returns to the dock landing, and a reload resumes the saved attempt.
 
 ## Controls and cards
 
@@ -212,3 +219,13 @@ While alive, `Blaster Turret` fires periodic bolts, `Regen Conduit` increases `e
 When a part reaches 0 HP, it stops its activity, disappears from `activeBossParts` and `trialBoard`, and its HP cannot be regenerated.
 While any trial is active, `ProvingGroundsDialog` renders `#trial-boss-meter` directly above `.board-cell` inside `#board`: a boss icon on the left, a progress bar with 10%–90% tick marks and a centered shortened HP readout (`shortAmount`), and `"Damage this run: X"` (`trialDamageThisRun`) and `"DPT: Y"` (`trialDpt`) indicators next to the bar.
 `tests/boss-variants.test.ts` covers single-round combat, constant boss ATK, card focus switching, Magic Tower regeneration and coin drops, Obelisk turn limits, `trialTurns` research, periodic shots/pulses, saved damage across runs, and multi-part boss knockout rules.
+
+## Variant persistence and coins
+
+Obelisk progress stores its original `maxHp` alongside damage and part damage, so later hero ATK increases cannot restore boss HP or revive defeated parts.
+Legacy records without max HP adopt the current scale once, then preserve it on the next settlement.
+Switching temporarily to the standard boss preserves saved part damage.
+Magic Tower Gold is counted only on collection and exchanges one for one into the trial Silver balance for stat training; it never changes permanent Gold.
+The immediate Silver award on a hit remains, in addition to collectible Silver.
+`tests/boss-variants.test.ts` checks one-round minions, Gold spending balance and persistence across character upgrades.
+`node tests/trial-voyage.mjs` checks level gating, timing, live motion, repeat boarding, attempt entry and return at phone and desktop widths.

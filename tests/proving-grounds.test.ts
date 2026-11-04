@@ -15,18 +15,12 @@ const arena = (level = 1) => {
   return s;
 };
 
-test("the golden square is open ground in the Tower forest and opens trials on entry", () => {
-  const g=new Game(defaults()); g.newRun({outside:true,seed:12});
-  const world=g.world as OutsideWorld;
-  const x=world.entranceX+PROVING_GROUNDS.dx, y=PROVING_GROUNDS.y;
-  assert.equal(world.tile(x,y).kind,"floor");
-  assert.ok(world.isProvingGrounds(x,y));
-  g.run.player.x=x-1; g.run.player.y=y;
-  g.auto=true; g.route=[{dx:1,dy:0}];
-  const gold=g.save.gold;
-  assert.ok(g.move(1,0)); assert.ok(g.provingGroundsRequested);
-  assert.equal(g.auto,false); assert.deepEqual(g.route,[]); assert.equal(g.save.gold,gold);
-  assert.equal(new OutsideWorld(12,"delve").isProvingGrounds(x,y),false);
+test("the retired forest square no longer opens trials", () => {
+  const g=new Game(defaults());g.newRun({outside:true,seed:12});
+  const world=g.world as OutsideWorld,x=world.entranceX+PROVING_GROUNDS.dx,y=PROVING_GROUNDS.y;
+  assert.equal(world.isProvingGrounds(x,y),false);
+  g.run.player.x=x-1;g.run.player.y=y;g.move(1,0);
+  assert.equal(g.provingGroundsRequested,false);
 });
 
 test("staging stairs enter a connected 25×25 hexagon with border torches and potions", () => {

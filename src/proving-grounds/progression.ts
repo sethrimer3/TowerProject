@@ -27,13 +27,14 @@ export function settleTrialVictory(save:Save,state:TrialState) {
 export function saveTrialDamage(save:Pick<Save,"trialAccess">,state:TrialState) {
   if(state.trialId!=="obelisk" || state.bossHp<=0)return false;
   const damage=Math.max(0,Math.round(state.bossMaxHp-state.bossHp));
-  const partDamage: Record<string, number> = {};
+  const previous=save.trialAccess.progress[state.trialId]?.savedBoss;
+  const partDamage: Record<string, number> = previous?.level===state.level ? {...previous.partDamage} : {};
   for(const part of state.bossVariant?.parts??[]) {
     const lost=Math.max(0,Math.round(part.maxHp-part.hp));
     if(lost>0)partDamage[part.id]=lost;
   }
   if(damage<=0 && !Object.keys(partDamage).length)return false;
   const record=save.trialAccess.progress[state.trialId]??={cleared:0,claimed:[]};
-  record.savedBoss={level:state.level,damage,...(Object.keys(partDamage).length?{partDamage}:{})};
+  record.savedBoss={level:state.level,damage,maxHp:state.bossMaxHp,...(Object.keys(partDamage).length?{partDamage}:{})};
   return true;
 }
