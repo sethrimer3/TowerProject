@@ -1,19 +1,18 @@
 import { controlIcon } from "./control-icon.ts";
-import { PREVIEW_RELICS, RELICS, type RelicDef } from "../economy/relics.ts";
-import { bonusText } from "../economy/relic-effects.ts";
+import { PREVIEW_RELICS, RARITIES, RARITY_NAMES, RELICS, type RelicDef } from "../economy/relics.ts";
+import { bonusText, relicTotals } from "../economy/relic-effects.ts";
 import type { AppContext } from "./app.ts";
+import { helpButton, showHelp } from "./dialogs.ts";
 import { el, relicIcon } from "./dom.ts";
-
-const RARITY_NAMES = { rare: "Rare", epic: "Epic" } as const;
+import { relicButton } from "./relic-pop.ts";
 
 /** The Relics screen (docs/EVENTS.md): every relic the player has won over
- * their career, small, in a grid. Pressing one, or a mouse resting on it,
- * raises it to the middle of the screen at full size with golden rays and
- * sparkles, its rarity and its bonus written under it; a press anywhere,
- * or the mouse moving off, puts it back. Opened by the Relics button in
- * the forest's menu; its X returns to whichever page opened it. In Dev
- * mode placeholder relics join the grid, so it and the pop-up can be seen
- * before any relic exists. */
+ * their career, small, in a grid for each rarity. Pressing one, or a mouse
+ * resting on it, raises it to the middle of the screen (`showRelic`). Its
+ * ? tells where relics come from and totals their bonuses. Opened by the
+ * Relics button in the forest's menu; its X returns to whichever page
+ * opened it. In Dev mode placeholder relics join the grids, so they and
+ * the pop-up can be seen before any relic exists. */
 export class RelicsPage {
   /** The page the screen was opened from, which its X returns to. */
   private from = "";
@@ -35,36 +34,32 @@ export class RelicsPage {
 
   render() {
     const relics = this.relics();
+    const cell = ([id, r]: [string, RelicDef]) =>
+      `<button class="relic-cell ${r.rarity}" data-relic="${id}" aria-label="${r.name}: ${bonusText(r.bonus)}">${relicIcon(r.rarity)}<small>${r.name}</small></button>`;
+    const section = (rarity: (typeof RARITIES)[number]) => {
+      const these = relics.filter(([, r]) => r.rarity === rarity);
+      return `<section class="relic-rarity ${rarity}" aria-label="${RARITY_NAMES[rarity]} relics"><h3>${RARITY_NAMES[rarity]}</h3>` +
+        (these.length ? `<div class="relic-grid">${these.map(cell).join("")}</div>` : `<p class="hint">None yet.</p>`) + `</section>`;
+    };
     el("relics").innerHTML =
       `<button class="missions-close" id="relics-close" aria-label="Close" title="Close">${controlIcon("close")}</button>` +
-      `<div class="page-title"><small>KEEPSAKES OF EVENTS</small><h2>Relics</h2></div>` +
-      (relics.length
-        ? `<div class="relic-grid">${relics.map(([id, r]) => `<button class="relic-cell ${r.rarity}" data-relic="${id}" aria-label="${r.name}: ${bonusText(r.bonus)}">${relicIcon(r.rarity)}<small>${r.name}</small></button>`).join("")}</div>`
-        : `<p class="hint">No relics yet. Earn Medals in Events to win them: each relic gives a permanent bonus.</p>`);
+      `<div class="page-title"><small>KEEPSAKES OF EVENTS AND TOWERS</small><h2>Relics${helpButton("About relics", "relics-help")}</h2></div>` +
+      RARITIES.map(section).join("");
     el("relics-close").onclick = () => this.ctx.navigate(this.from || "board");
-    const byId = new Map(relics);
-    el("relics").querySelectorAll<HTMLButtonElement>("[data-relic]").forEach((b) => {
-      const relic = byId.get(b.dataset.relic!)!;
-      b.onclick = () => this.pop(relic, false);
-      // A mouse resting on a relic shows it until it moves off; touch presses it.
-      b.onpointerenter = (e) => e.pointerType === "mouse" && this.pop(relic, true);
-      b.onpointerleave = (e) => e.pointerType === "mouse" && document.querySelector(".relic-pop.hover")?.remove();
-    });
+    el("relics-help").onclick = () => this.showHelp();
+    const byId = new Map(relics), reduceMotion = this.ctx.game.save.settings.reduceMotion;
+    el("relics").querySelectorAll<HTMLButtonElement>("[data-relic]").forEach((b) => relicButton(b, byId.get(b.dataset.relic!)!, reduceMotion));
   }
 
-  /** Raises `relic` to the middle of the screen at full size. One shown by
-   * a resting mouse lets presses through and goes as the mouse moves off;
-   * one pressed stays until the next press. */
-  private pop(relic: RelicDef, hover: boolean) {
-    document.querySelector(".relic-pop")?.remove();
-    const layer = document.createElement("div");
-    layer.className = `relic-pop ${relic.rarity}${hover ? " hover" : ""}${this.ctx.game.save.settings.reduceMotion ? " still" : ""}`;
-    layer.setAttribute("role", "dialog");
-    layer.setAttribute("aria-label", `${relic.name}: ${bonusText(relic.bonus)}`);
-    const sparkles = Array.from({ length: 8 }, (_, i) => `<i style="--i:${i}"></i>`).join("");
-    layer.innerHTML = `<div class="relic-pop-stage"><div class="relic-pop-rays" aria-hidden="true"></div><div class="relic-pop-sparkles" aria-hidden="true">${sparkles}</div>${relicIcon(relic.rarity, "relic-icon relic-pop-icon")}</div>` +
-      `<div class="card-reveal-text"><small>${RARITY_NAMES[relic.rarity].toUpperCase()} RELIC</small><b>${relic.name}</b><p>${bonusText(relic.bonus)}</p>${hover ? "" : "<span>Press to close</span>"}</div>`;
-    (document.querySelector("#app") ?? document.body).append(layer);
-    if (!hover) layer.onclick = () => layer.remove();
+  /** Where relics come from, and the bonuses of those owned, totalled by stat. */
+  private showHelp() {
+    const totals = relicTotals(this.ctx.game.save.relics);
+    const table = totals.length
+      ? `<table class="stats-table relic-totals"><thead><tr><th scope="col">Total bonus</th><th scope="col">Relics</th></tr></thead><tbody>` +
+        totals.map((t) => `<tr><td>${bonusText(t.bonus)}</td><td>${t.count}</td></tr>`).join("") + `</tbody></table>`
+      : `<p class="hint">No relics owned yet.</p>`;
+    showHelp(this.ctx, "KEEPSAKES", "Relics",
+      `<p>Every relic's bonus is permanent, and they all stack.</p>` +
+      `<p>Win relics by making progress in the towers' Goals and in limited-time Events.</p>` + table);
   }
 }

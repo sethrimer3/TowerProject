@@ -2842,7 +2842,7 @@ html.reduce-motion :is(.item-icon.bought, .owned-count.bought) { animation: none
 .goal-reward.standard { justify-self: end; flex-direction: row-reverse; text-align: right; }
 .goal-reward.premium { justify-self: start; border-color: #6d5a2c; background: linear-gradient(#2a2212e6, #17130be6); }
 .goal-art { position: relative; flex-shrink: 0; width: 26px; height: 26px; }
-.goal-art > .goal-icon, .goal-art > .gem-icon, .goal-art > .arcanite-icon, .goal-art > .ui-sprite.gold-icon { width: 26px; height: 26px; vertical-align: 0; }
+.goal-art > .goal-icon, .goal-art > .gem-icon, .goal-art > .arcanite-icon, .goal-art > .ui-sprite.gold-icon, .goal-art > .relic-icon { width: 26px; height: 26px; vertical-align: 0; }
 .goal-badge { position: absolute; right: -5px; bottom: -5px; width: 15px; height: 15px; }
 .goal-text { display: flex; flex-direction: column; min-width: 0; }
 .goal-text b { font-size: 10px; color: #e5d5b8; overflow-wrap: anywhere; }
@@ -4936,6 +4936,8 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
 .event-relic.reached .event-relic-art { box-shadow: 0 0 10px 3px #ffd34d88; }
 .event-relic.reached small { color: #ffe9a8; }
 .event-relics.premium .event-relic small { color: #d6b8ff; }
+/* A relic of the theme's set is a bare button, showing its name and bonus when pressed. */
+button.event-relic { min-height: 0; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; font: inherit; color: inherit; cursor: pointer; }
 .event-bar { position: relative; height: 20px; margin: 4px 18px; }
 .event-bar i { position: absolute; inset: 0 auto 0 0; height: auto; background: linear-gradient(90deg, #7a3fae, #ffd34d); }
 .event-bar-count { position: relative; display: flex; align-items: center; justify-content: center; gap: 3px; height: 100%; font-size: 11px; color: #f2f4f8; font-variant-numeric: tabular-nums; text-shadow: 0 1px 2px #000; }
@@ -4986,15 +4988,27 @@ html.reduce-motion button.mission-bar.event-claim { animation: none; }
 .store-owned .check-icon { width: 14px; height: 14px; }
 .store-theme .theme-preview { max-width: 140px; }
 .theme-more { margin-top: 10px; }
-/* The Relics screen (relics-page.ts): a grid of the relics owned, and one
-   raised to full size with rays and sparkles when pressed or hovered. */
+/* The Relics screen (relics-page.ts): a grid of the relics owned for each
+   rarity, and one raised to full size with rays and sparkles when pressed
+   or hovered (relic-pop.ts). */
 #relics .page-title { margin: 18px 44px 14px; text-align: center; }
+.relic-rarity { margin-bottom: 14px; }
+.relic-rarity h3 { margin: 0 0 6px; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
+.relic-rarity.rare h3 { color: #8fb8ff; }
+.relic-rarity.epic h3 { color: #c9a2ff; }
+.relic-rarity.legendary h3 { color: #ffd36a; }
+.relic-totals th:last-child, .relic-totals td:last-child { width: 1%; text-align: right; }
+.relic-totals td:first-child { text-align: left; white-space: normal; }
+/* The legendary pendant: the epic one turned gold, until it has art of its own
+   (outranking ui-sprites.css, which clears every sprite image's filter). */
+.relic-legendary > .sprite-replacement:not(#_):not(#__) { filter: sepia(1) saturate(2.6) hue-rotate(-6deg) brightness(1.12); }
 .relic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 8px; }
 .relic-cell { display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 0; padding: 8px 4px; border: 1px solid var(--line); border-radius: 8px; background: #151b24; }
 .relic-cell .relic-icon { width: 36px; height: 36px; }
 .relic-cell small { font-size: 9px; color: #c9d1dc; text-align: center; }
 .relic-cell.rare { border-color: #3d6fb3; }
 .relic-cell.epic { border-color: #7a4dbf; }
+.relic-cell.legendary { border-color: #b88a2e; }
 .relic-pop { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; padding: 16px; background: #04070bd9; overflow: hidden; cursor: pointer; }
 .relic-pop.hover { pointer-events: none; }
 .relic-pop-stage { position: relative; display: grid; place-items: center; }
@@ -5003,10 +5017,7 @@ html.reduce-motion button.mission-bar.event-claim { animation: none; }
 .relic-pop-sparkles { position: absolute; inset: 0; pointer-events: none; }
 .relic-pop-sparkles i { position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px; border-radius: 50%; background: #fff6cf; box-shadow: 0 0 8px 2px #ffd76a; opacity: 0; animation: relic-sparkle 1.6s calc(var(--i) * 0.2s) ease-out infinite; transform: rotate(calc(var(--i) * 45deg)); }
 .relic-pop .card-reveal-text { animation: card-text-in 0.3s 0.15s ease-out backwards; }
-.relic-pop .card-reveal-text small { color: #e9c77e; }
 .relic-pop .card-reveal-text b { color: #fbf0d4; }
-.relic-pop .card-reveal-text span { color: #8d794e; }
-.relic-pop.epic .card-reveal-text small { color: #d6b8ff; }
 .relic-pop.still .relic-pop-rays, .relic-pop.still .relic-pop-icon, .relic-pop.still .relic-pop-sparkles i, .relic-pop.still .card-reveal-text { animation: none; }
 @keyframes relic-pop-in { from { transform: scale(0.2) rotate(-12deg); opacity: 0; } }
 @keyframes relic-sparkle {

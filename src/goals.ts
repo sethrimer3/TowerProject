@@ -3,6 +3,7 @@ import { CURRENCIES, type CurrencyId } from "./shop/currency.ts";
 import { owns, type EntitlementId } from "./shop/entitlements.ts";
 import { TIERS } from "./tiers.ts";
 import { earn } from "./save/profile.ts";
+import { towerRelicId } from "./economy/relics.ts";
 
 // Goals: each tower's checkpoints, one every ten floors, each with a reward
 // the player claims once the checkpoint's floor is completed (the floor
@@ -66,11 +67,12 @@ export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   trainingDiscount: "Training Discount", cardGroups: "Card Groups", flyingEnemyCard: "Flying Enemy Card",
   warpLoot: "Warp Loot", superCriticalResearch: "Super Critical Research", aetherShield: "Unlock Aether Shield",
 };
-/** What a checkpoint pays: an unlock, the next tower opened, or an amount of a currency. */
+/** What a checkpoint pays: an unlock, the next tower opened, an amount of a currency, or a relic. */
 export type GoalReward =
   | { kind: "unlock"; unlock: GoalUnlock }
   | { kind: "tower"; tower: number }
-  | { kind: "currency"; currency: CurrencyId; amount: number };
+  | { kind: "currency"; currency: CurrencyId; amount: number }
+  | { kind: "relic"; relic: string };
 export type Checkpoint = { floor: number; reward: GoalReward; premium: GoalReward };
 
 /** Floors between checkpoints. */
@@ -84,6 +86,10 @@ const gems = (amount: number): GoalReward => ({ kind: "currency", currency: "gem
 const arcanite = (amount: number): GoalReward => ({ kind: "currency", currency: "arcanite", amount });
 
 const unlock = (unlock: GoalUnlock): GoalReward => ({ kind: "unlock", unlock });
+const relic = (tower: number, rarity: "epic" | "legendary"): GoalReward => ({ kind: "relic", relic: towerRelicId(tower, rarity) });
+/** The checkpoint floor whose rewards are the tower's relics (`TOWER_RELICS`):
+ * an epic one, and a legendary one as its premium reward. */
+export const RELIC_FLOOR = 4500;
 /** A checkpoint's rewards that differ from the stub; either left out is the stub's. */
 type CheckpointSet = Partial<Omit<Checkpoint, "floor">>;
 /** Tower I's checkpoints that differ from the stub: an unlock each, Gems,
@@ -110,7 +116,6 @@ const TOWER_ONE: Record<number, CheckpointSet> = {
   1500: { reward: arcanite(5), premium: arcanite(10) },
   2000: { premium: gems(50) },
   2500: { premium: arcanite(15) },
-  4500: { premium: arcanite(20) },
 };
 
 /** Tower II's checkpoints that differ from the stub: an unlock each, and Gold. */
@@ -172,6 +177,7 @@ function towerCheckpoints(tower: number): Checkpoint[] {
   return CHECKPOINT_FLOORS.map((floor, i) => {
     const n = i + 1, set = sets[tower]?.[floor];
     const opens = floor === TOWER_UNLOCK_FLOOR && tower < TIERS ? { kind: "tower" as const, tower: tower + 1 } : null;
+    if (floor === RELIC_FLOOR) return { floor, reward: relic(tower, "epic"), premium: relic(tower, "legendary") };
     return { floor, reward: set?.reward ?? opens ?? gold(100 * n * tower), premium: set?.premium ?? gems(5 * n) };
   });
 }
@@ -256,6 +262,7 @@ export function claimGoal(save: Save, tower: number, floor: number, premium: boo
   const reward = premium ? c.premium : c.reward;
   if (reward.kind === "currency") CURRENCIES[reward.currency].credit(save, reward.amount);
   if (reward.kind === "tower") openTower(save, reward.tower);
+  if (reward.kind === "relic" && !save.relics.includes(reward.relic)) save.relics = [...save.relics, reward.relic];
   if (!premium) {
     save.breakthrough += GOAL_BREAKTHROUGH;
     earn(save, "breakthrough", GOAL_BREAKTHROUGH);

@@ -18,6 +18,8 @@ import { materialIcon } from "./equipment-icons.ts";
 import { THEMES, TRACK_GOLD_PER_MILLE, ownsTheme, perMilleText, type ThemeId } from "../theme-collection.ts";
 import { themeGoldHtml, themeMenuTitle, themePreview } from "./theme-menu.ts";
 import { bonusText } from "../economy/relic-effects.ts";
+import { RARITY_NAMES, RELICS } from "../economy/relics.ts";
+import { relicButton } from "./relic-pop.ts";
 
 /** The Events screen's tabs: the event's missions and relics, and its Store. */
 type EventsTab = "missions" | "store";
@@ -148,10 +150,13 @@ export class EventsPage {
     const top = Math.max(...milestones.map((m) => m.medals));
     const relic = (m: RelicMilestone) => {
       const reached = milestoneReached(e, m), locked = m.premium && !events.boosted;
-      const name = `${m.premium ? "Premium " : ""}${m.rarity === "epic" ? "Epic" : "Rare"} Relic`;
+      const def = m.relic ? RELICS[m.relic] : undefined;
+      const name = def?.name ?? `${m.premium ? "Premium " : ""}${RARITY_NAMES[m.rarity]} Relic`;
       const label = `${name} at ${m.medals.toLocaleString("en-US")} Medals${reached ? " (won)" : locked ? " (Event Booster)" : ""}`;
-      return `<span class="event-relic ${m.rarity}${reached ? " reached" : ""}${locked ? " locked" : ""}" style="--at:${(100 * m.medals) / top}%" title="${label}" aria-label="${label}" role="img">` +
-        `<span class="event-relic-art">${relicIcon(m.rarity)}${reached ? checkIcon() : locked ? LOCK : ""}</span><small>${m.medals.toLocaleString("en-US")}</small></span>`;
+      // A relic of the theme's set shows its name and bonus when pressed.
+      const [tag, attrs] = def ? ["button", ` data-relic="${m.relic}"`] : ["span", ` role="img" title="${label}"`];
+      return `<${tag} class="event-relic ${m.rarity}${reached ? " reached" : ""}${locked ? " locked" : ""}" style="--at:${(100 * m.medals) / top}%" aria-label="${label}"${attrs}>` +
+        `<span class="event-relic-art">${relicIcon(m.rarity)}${reached ? checkIcon() : locked ? LOCK : ""}</span><small>${m.medals.toLocaleString("en-US")}</small></${tag}>`;
     };
     const row = (premium: boolean) => `<b class="event-row-name${premium ? " premium" : ""}">${premium ? "Event Boost Relics" : "Free Relics"}</b>` +
       `<div class="event-relics ${premium ? "premium" : "standard"}">${milestones.filter((m) => m.premium === premium).map(relic).join("")}</div>`;
@@ -254,6 +259,7 @@ export class EventsPage {
       this.tab = b.dataset.eventTab as EventsTab;
       this.render();
     }));
+    el("events").querySelectorAll<HTMLButtonElement>("[data-relic]").forEach((b) => relicButton(b, RELICS[b.dataset.relic!]!, ctx.game.save.settings.reduceMotion));
     el("events").querySelectorAll<HTMLButtonElement>("[data-store]").forEach((b) => (b.onclick = () => this.buyStore(b.dataset.store!)));
     document.getElementById("event-boost-buy")?.addEventListener("click", () => void this.buyBoost());
     el("events").querySelectorAll<HTMLButtonElement>("[data-claim]").forEach((b) => (b.onclick = () => this.claim(Number(b.dataset.claim))));

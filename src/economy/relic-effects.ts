@@ -88,6 +88,24 @@ function totals(relics: readonly string[]): Totals {
   return t;
 }
 
+/** The bonuses of `relics` summed, one for each stat or effect, in the
+ * order first owned, with how many relics give each. */
+export function relicTotals(relics: readonly string[]): { bonus: RelicBonus; count: number }[] {
+  const byKey = new Map<string, { bonus: RelicBonus; count: number }>();
+  for (const id of relics) {
+    const b = RELICS[id]?.bonus;
+    if (!b) continue;
+    const key = b.kind === "boost" ? `boost:${b.stat}` : `special:${b.effect}`, t = byKey.get(key);
+    if (!t) byKey.set(key, { bonus: { ...b }, count: 1 });
+    else {
+      t.count++;
+      if (t.bonus.kind === "boost" && b.kind === "boost") t.bonus.percent = snap(t.bonus.percent + b.percent);
+      else if (t.bonus.kind === "special" && b.kind === "special") t.bonus.amount = snap(t.bonus.amount + b.amount);
+    }
+  }
+  return [...byKey.values()];
+}
+
 /** What owns relics: a save, or the ranks a run reads (which carry them). */
 export type RelicHolder = { relics?: readonly string[] };
 

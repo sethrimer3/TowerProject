@@ -896,7 +896,10 @@ A piece of music bought in any event's Store, joining the play sequence for good
 The Gold multiplier for the themes and bonus tracks owned, their shares added: a UI theme 1%, a Game theme 2%, a track 0.8%. Classic gives none.
 
 **Relic**:
-A unique keepsake won by reaching an event's Medal milestone (premium relics only with the Event Booster), each giving a permanent bonus, each owned at most once and kept for good. Spending Medals is never needed to win one. A free relic multiplies a Training row's value; a premium relic gives what training can't. Each event theme has its own four.
+A unique keepsake won by reaching an event's Medal milestone (premium relics only with the Event Booster), or by claiming a tower's last Goal, each giving a permanent bonus, each owned at most once and kept for good. Spending Medals is never needed to win one. A free relic multiplies a Training row's value; a premium relic gives what training can't. Each event theme has its own four, and each tower two.
+
+**Relic rarity**:
+How rare a relic is: rare, epic or legendary. An event's first relic of each pair is rare and its second epic; a tower's last Goal gives an epic relic and, as its premium reward, a legendary one.
 _Avoid_: trophy (the Tournament's), artifact, badge
 
 **Lakeside**:

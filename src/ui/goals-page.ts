@@ -9,7 +9,9 @@ import { offer } from "../shop/offers.ts";
 import { clearedInspiration } from "../tower/area-ledger.ts";
 import { tierNumeral, tierRewardText, tierStats } from "../tiers.ts";
 import type { AppContext } from "./app.ts";
-import { el, eventIcon, gemIcon, goldIcon, medalIcon, arcaniteIcon, shrineIcon, trophyIcon, uiSprite } from "./dom.ts";
+import { el, eventIcon, gemIcon, goldIcon, medalIcon, arcaniteIcon, relicIcon, shrineIcon, trophyIcon, uiSprite } from "./dom.ts";
+import { RELICS } from "../economy/relics.ts";
+import { showRelic } from "./relic-pop.ts";
 import { flyToPurse } from "./flourish.ts";
 import { goalRewardShown, offerShown, revealReward } from "./reward-reveal.ts";
 
@@ -117,13 +119,15 @@ const SWIRL_MARK = kitIcon("ui-mastered", "", "goal-mark");
 const CLEARED_MARK = kitIcon("check", "", "goal-mark");
 const CHECK_ICON = kitIcon("check", "", "goal-badge");
 
-const rewardIcon = (r: GoalReward) => (r.kind === "unlock" ? UNLOCK_ICONS[r.unlock] : r.kind === "tower" ? TOWER_ICON : CURRENCY_ICONS[r.currency]());
+const rewardIcon = (r: GoalReward) =>
+  r.kind === "unlock" ? UNLOCK_ICONS[r.unlock] : r.kind === "tower" ? TOWER_ICON : r.kind === "relic" ? relicIcon(RELICS[r.relic]!.rarity) : CURRENCY_ICONS[r.currency]();
 /** An unlock's name with "Unlock" before it, once: Unlock Shrines is already named so. */
 const unlockText = (u: GoalUnlock) =>
   UNLOCK_NAMES[u].startsWith("Unlock ") ? UNLOCK_NAMES[u] : `Unlock ${u === "tournament" ? "the " : ""}${UNLOCK_NAMES[u]}`;
 const rewardText = (r: GoalReward) =>
   r.kind === "unlock" ? unlockText(r.unlock)
   : r.kind === "tower" ? `Unlock Tower ${tierNumeral(r.tower)}`
+  : r.kind === "relic" ? RELICS[r.relic]!.name
   : `${r.amount.toLocaleString("en-US")} ${CURRENCIES[r.currency].name}`;
 /** Pixels between neighbouring checkpoints, whatever floors they stand on:
  * the column spaces its checkpoints evenly (ten floors' worth), so a
@@ -299,6 +303,7 @@ export class GoalsPage {
       // An unlock pressed again shows what it does once more.
       const r = checkpoint(tower, floor)![premium ? "premium" : "reward"];
       if (r.kind === "unlock") return this.unlockTutorial(r.unlock, true);
+      if (r.kind === "relic") return showRelic(RELICS[r.relic]!, { reduceMotion: game.save.settings.reduceMotion });
       return r.kind === "tower" ? this.towerOpened(r.tower, true) : this.say("Already claimed.");
     }
     const reward = game.claimGoal(tower, floor, premium);
@@ -310,6 +315,7 @@ export class GoalsPage {
     const explain = () => {
       if (reward.kind === "unlock") this.unlockTutorial(reward.unlock);
       if (reward.kind === "tower") this.towerOpened(reward.tower);
+      if (reward.kind === "relic") showRelic(RELICS[reward.relic]!, { reduceMotion: game.save.settings.reduceMotion });
     };
     if (premium) explain();
     else flyToPurse(from, [{ html: `${uiSprite("breakthrough")}<b>+${GOAL_BREAKTHROUGH}</b>`, to: null, landed: explain }]);

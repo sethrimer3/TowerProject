@@ -1026,7 +1026,8 @@ try {
   // buttons) and its menu (Settings, Missions, Relics); the Events screen
   // (the banner, the relic track, the booster's offer, the missions, the
   // completed one last); a tier claimed, its Medals flown to the bar; the
-  // booster refused while the store is closed; and the Relics screen, empty.
+  // booster refused while the store is closed; a relic on the track pressed,
+  // showing its name and bonus; and the Relics screen, empty, and its ?.
   await section("events", "relics", async () => {
     await load("events");
     await shot("events.forest");
@@ -1035,6 +1036,11 @@ try {
     await click("#run-menu-toggle");
     await click("#events-button");
     await shot("events.page");
+    await click("#events [data-relic]");
+    await shot("events.relicPop");
+    await click(".relic-pop");
+    // Off the relic, so a resting mouse shows none in the next snapshot.
+    await page.mouse.move(0, 0);
     await click("#events [data-claim]");
     await shot("events.claimed");
     await click("#event-boost-buy");
@@ -1049,6 +1055,9 @@ try {
     await click("#events-close");
     await menuClick("#relics-button");
     await shot("relics.empty");
+    await click("#relics-help");
+    await shot("relics.help");
+    await click("#tree-help-ok");
     await click("#relics-close");
     await shot("events.closed");
   });

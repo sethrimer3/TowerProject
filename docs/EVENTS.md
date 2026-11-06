@@ -93,12 +93,32 @@ Reaching a milestone wins its relic at once, without spending anything:
 | 1,100 Medals | Premium relic 2 (epic), Event Booster only |
 
 Relics won are kept for good in `save.relics` (each owned at most once).
+Each relic has a rarity (`RelicRarity`): an event's first relic of each pair, free and premium, is **rare** and its second **epic**; a Store relic is epic; **legendary** ones come from the towers (below).
 Every event theme has four relics: two free and two premium, the second of each pair the stronger.
 Their names, what each raises and by how much are all in one place, `economy/relic-catalog.ts` (`RELIC_SETS`), by theme and the year a set begins: a later year can bring a theme new relics by adding a set, the earlier ones staying owned.
 Saves keep a relic's id (`<theme>.<year>.<place>`), so names, stats and amounts can be changed freely.
 A theme can also sell relics in its event's Store (`STORE_RELICS`, none yet).
 
-- **Free relics** raise a Training row's value by their percent: the relics on one row add into one factor, which multiplies everything else on it, so +1% on a 50% stat makes it 50.5%, and a stat can go past what training alone reaches.
+### Tower relics
+
+Every tower's last Goal, at floor 4,500, gives two relics (`TOWER_RELICS` in `relic-catalog.ts`, ids `tower.<n>.epic` and `tower.<n>.legendary`): an epic one as its reward and a legendary one as its premium reward.
+Each name starts with its tower (*T:I*, *T:II*, …), to remind the player which gave it.
+
+| Tower | Epic | Legendary |
+|---|---|---|
+| I | Cosmos Sack: +2% Gold Bonus | Spatial Ring: +5% Gold Bonus |
+| II | Cosmic Workbench: Archives research 2% faster | Chrono Gate: Archives research 5% faster |
+| III | Delver's Cloak: +2% Critical Factor | Auric Lens: +5% Critical Factor |
+| IV | Really Big Sword: +2% ATK | Axe of Duality: +5% ATK |
+| V | Monster Steaks: +2% Max HP | Orb of All: +5% Max HP |
+| VI | Death's Rival: +5% Shroud | Starcloak: +10% Shroud |
+| VII | Weapon Aura: +5% ATK / m | Stomping Boots: +10% ATK / m |
+| VIII | Lucky Blade: +5% Gold Bonus | Blueprint Engine: +10% Gold Bonus |
+| IX | Godshard: +5% Max HP | Mighty Shorts: Parry +2% |
+
+Each raises its stat as a free event relic does (below), except research speed and Parry, which work as the premium effects of those names.
+
+- **Free relics** (and the tower relics on a Training row) raise a Training row's value by their percent: the relics on one row add into one factor, which multiplies everything else on it, so +1% on a 50% stat makes it 50.5%, and a stat can go past what training alone reaches.
   On a row read as a multiplier (Gold Bonus' ×1.5), the bonus over ×1 grows (×1.505).
 - **Premium relics** give what training can't: a stat past its cap (Super Critical Chance, Parry, Lifesteal, Multishot Targets), chances (Golden, Treasure and Stellar Floors, a chest's Double or Triple, a potion healing twice, a second free upgrade), cuts (Heart Doors' drain, Wooden Doors' toll, a boss's ATK, Training's cost) or more of something (Arcana, Overheal, Revive's HP, Interest's cap, research and trainer speed, materials, XP, Arcanite).
   Their texts and where each applies are in `economy/relic-effects.ts` (`RELIC_SPECIALS`); a boss's ATK cut and the shroud's share on later strikes count in every fight's prediction and its playback alike.
@@ -133,13 +153,14 @@ The Events screen has two tabs: **Missions** (the relic track, the booster and t
 
 - **Events button** (`#events-button`, a pennant, `eventIcon` in `ui/dom.ts`): the time the event has left (*7d20h*), with a dot while a mission is new to the Events screen, has a tier to claim, or is finished and hasn't been seen moved under the rest (`EventDesk.waiting`).
   In the forest it stands in the actions column under the Tournament's; inside a run, in the run's menu.
-- **Events screen** (`ui/events-page.ts`): an X back to the page that opened it; the currencies bar over it, as over the Upgrades page; the banner (the event's name over a placeholder pennant) and the days and hours left; the Missions and Store tabs (see The Store above), Missions first each time the screen opens, holding the relic track (a bar filling with the Medals toward the relics, to the last milestone, and reading the Medals won, its free relics above and its Event Boost relics below, each row named on its left, each relic lit and checked once won, a premium one locked without the booster); the booster's offer, or that it is active; how many missions are out and when the next come; then the missions.
+- **Events screen** (`ui/events-page.ts`): an X back to the page that opened it; the currencies bar over it, as over the Upgrades page; the banner (the event's name over a placeholder pennant) and the days and hours left; the Missions and Store tabs (see The Store above), Missions first each time the screen opens, holding the relic track (a bar filling with the Medals toward the relics, to the last milestone, and reading the Medals won, its free relics above and its Event Boost relics below, each row named on its left, each relic lit and checked once won, a premium one locked without the booster, and each pressed, or a mouse resting on it, showing its name and bonus as the Relics screen does); the booster's offer, or that it is active; how many missions are out and when the next come; then the missions.
   Each mission shows what its next tier to claim asks, *X/3* (the tiers claimed) and the Medals that tier pays (doubled once boosted) at the right of its name, and its bar; new ones wear *NEW*.
   Once a tier is done, the mission's border and bar turn gold and the bar reads *Claim* followed by that tier's Medals and the Medal icon (shown there instead of beside the tier count); pressing it pays them, flying from the bar to the Medals in the banner, which count them as they land (`flyToPurse`), nothing to press away, and the mission already shows its next tier, *Claim* again if that one is done too.
   A mission whose third tier is claimed stays where it is for 2 seconds, then slides under the rest (`save.events.moved`).
-- **Relics button** (`#relics-button`) in the forest's menu, once Events are open, opens the **Relics screen** (`ui/relics-page.ts`): every relic won, small, in a grid.
-  Pressing one, or a mouse resting on it, raises it to the middle of the screen at full size with golden rays and sparkles, its rarity and bonus written under it.
-  Dev mode adds New Year's relics as placeholders, so the screen can be seen before any relic is won.
+- **Relics button** (`#relics-button`) in the forest's menu, once Events are open or a relic is owned, opens the **Relics screen** (`ui/relics-page.ts`): a section for each rarity (Rare, Epic, Legendary), each with a grid of the relics of that rarity won, small (*None yet.* while it has none).
+  Pressing one, or a mouse resting on it, raises it to the middle of the screen at full size with golden rays and sparkles, only its name and bonus written under it (`ui/relic-pop.ts`, shared with the Events screen's track and the Goals page).
+  The **?** beside the title says that every relic's bonus stacks and that relics come from progress in the towers' Goals and in limited-time Events, over a table of the relics owned's bonuses totalled by stat, with how many relics give each (`relicTotals`).
+  Dev mode adds New Year's and Tower I's relics as placeholders, so the screen can be seen before any relic is won.
 
 ### The forest's menu
 
@@ -149,5 +170,5 @@ Inside a run the menu holds Settings, Research, the Tournament's (once entered),
 ## Future
 
 - The event server: each event's missions, their release days, banner and relics.
-- Relic sprites of their own.
+- Relic sprites of their own, for the Relics screen and the Events screen; until then the legendary pendant is the epic one turned gold (`.relic-legendary`).
 - The bonus tracks, and the music that plays them.

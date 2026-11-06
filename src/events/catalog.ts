@@ -94,7 +94,10 @@ export function nextReleaseAt(id: number, ms: number) {
   return day < RELEASE_DAYS - 1 ? (firstDay(id) + Math.max(0, day) + 1) * DAY_MS : null;
 }
 
-export type RelicRarity = "rare" | "epic";
+/** How rare a relic is: an event's first relic of each pair rare, its
+ * second epic; a tower's last Goal gives an epic one, its premium reward a
+ * legendary one. */
+export type RelicRarity = "rare" | "epic" | "legendary";
 /** A medal milestone on an event's relic track: the Medals it takes (the
  * event's own, doubled once boosted), whether only the Event Booster opens
  * it, and the relic it gives (null for a stand-in, which joins no one's relics). */

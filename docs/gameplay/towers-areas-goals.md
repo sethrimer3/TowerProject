@@ -56,7 +56,9 @@ Tapping a claimed unlock shows what it does again.
 A green check beside a checkpoint marks its area cleared.
 Entering the tower from the forest always starts on floor 1.
 Every tower has its own checkpoints; once a second is open, arrows at the bottom pan between them.
-Tower I's premium rewards, floor by floor: 100 Gold, 10 Gems, 10 Gems, 300 Gold, 15 Gems, 20 Gems, 600 Gold, 30 Gems, 30 Gems, 50 Gems (floor 100), 15,000 Gold, 35 Gems, 30,000 Gold, 25 Gems, 100,000 Gold, then 30, 35, 40 and 45 Gems (floors 500 to 1,250), 10 Arcanite (floor 1,500), 50 Gems (2,000), 15 Arcanite (2,500) and 20 Arcanite (4,500).
+Tower I's premium rewards, floor by floor: 100 Gold, 10 Gems, 10 Gems, 300 Gold, 15 Gems, 20 Gems, 600 Gold, 30 Gems, 30 Gems, 50 Gems (floor 100), 15,000 Gold, 35 Gems, 30,000 Gold, 25 Gems, 100,000 Gold, then 30, 35, 40 and 45 Gems (floors 500 to 1,250), 10 Arcanite (floor 1,500), 50 Gems (2,000), and 15 Arcanite (2,500).
+Every tower's last checkpoint, floor 4,500, gives two of its own [relics](../EVENTS.md#tower-relics), named for the tower: an epic one on the left and a legendary one as its premium reward.
+Claiming one, or tapping it once claimed, shows the relic with its name and bonus.
 The other towers' rewards past their unlocks are placeholders for now (Gold on the left, 5 Gems a checkpoint on the right, rising by 5 with each); the store isn't connected yet, so only Dev mode (or its free purchases) unlocks a pass.
 The Delve has no Goals yet.
 End Climb (End Run in the Delve) shows only inside a run.

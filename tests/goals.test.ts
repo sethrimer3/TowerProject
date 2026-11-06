@@ -4,6 +4,8 @@ import { decode, defaults } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
 import { CHECKPOINTS, GOAL_BREAKTHROUGH, PASSES, canWarp, claimGoal, decodeGoals, floorsCompleted, goalState, goalsWaiting, goalUnlocked, passFor, passTotals, unlockFloor, warpUnlocked } from "../src/goals.ts";
 import { TIERS } from "../src/tiers.ts";
+import { RELICS } from "../src/economy/relics.ts";
+import { relicBoost, relicTotals } from "../src/economy/relic-effects.ts";
 
 test("every tower has a checkpoint each ten floors to 100, every 50 to 300, then 400 to 4,500; Tower I's first eight pay Damage Prediction, Combat Forecast, Attack Lore, 20 Gems, Damage Visual, the Tournament, Events and 25 Gems, its premium rewards set by hand", () => {
   for (let tower = 1; tower <= TIERS; tower++) {
@@ -25,7 +27,7 @@ test("every tower has a checkpoint each ten floors to 100, every 50 to 300, then
   // Tower I's premium rewards past floor 80, by floor (floor 100's the stub's).
   assert.deepEqual(CHECKPOINTS[1]!.slice(8).map((c) => [c.floor, c.premium]), [
     [90, gems(30)], [100, gems(50)], [150, gold(15_000)], [200, gems(35)], [250, gold(30_000)], [300, gems(25)], [400, gold(100_000)],
-    [500, gems(30)], [750, gems(35)], [1000, gems(40)], [1250, gems(45)], [1500, arcanite(10)], [2000, gems(50)], [2500, arcanite(15)], [4500, arcanite(20)],
+    [500, gems(30)], [750, gems(35)], [1000, gems(40)], [1250, gems(45)], [1500, arcanite(10)], [2000, gems(50)], [2500, arcanite(15)], [4500, { kind: "relic", relic: "tower.1.legendary" }],
   ]);
   assert.deepEqual(CHECKPOINTS[2]![0], { floor: 10, reward: { kind: "unlock", unlock: "relativeDamageColor" }, premium: gems(5) });
   assert.deepEqual(CHECKPOINTS[2]![1], { floor: 20, reward: { kind: "unlock", unlock: "shardAttack" }, premium: gems(10) });
@@ -91,10 +93,10 @@ test("Relative Damage Color is owned once Tower II's floor 10 is claimed", () =>
 test("each pass covers three towers and totals its premium rewards", () => {
   assert.deepEqual(PASSES.map((p) => [p.towers, p.label]), [[[1, 2, 3], "$9.99"], [[4, 5, 6], "$19.99"], [[7, 8, 9], "$29.99"]]);
   assert.equal(passFor(5).n, 2);
-  // Twenty-three checkpoints a tower, 5 Gems × n each (1,380); Tower I's are set by hand: 425 Gems (floor 100's the
-  // stub's), 146,000 Gold and 45 Arcanite.
-  assert.deepEqual(passTotals(PASSES[0]!), { gems: 425 + 2 * 1380, gold: 146_000, arcanite: 45 });
-  assert.deepEqual(passTotals(PASSES[2]!), { gems: 3 * 1380 });
+  // Twenty-two checkpoints a tower paying 5 Gems × n each (1,265), the last (floor 4,500) a relic; Tower I's are set
+  // by hand: 425 Gems (floor 100's the stub's), 146,000 Gold and 25 Arcanite.
+  assert.deepEqual(passTotals(PASSES[0]!), { gems: 425 + 2 * 1265, gold: 146_000, arcanite: 25 });
+  assert.deepEqual(passTotals(PASSES[2]!), { gems: 3 * 1265 });
 });
 
 test("a reward is claimed once, after its floor is completed; a premium one needs the pass", () => {
@@ -217,4 +219,24 @@ test("each standard Goal reward claimed pays one Breakthrough point besides itse
   save.entitlements.push(passFor(1).id);
   assert.ok(claimGoal(save, 1, 10, true));
   assert.equal(save.breakthrough, 2, "premium pays no point");
+});
+
+test("each tower's floor 4,500 Goal gives its epic relic, and its premium reward its legendary one, each named for the tower", () => {
+  for (let tower = 1; tower <= TIERS; tower++) {
+    const c = CHECKPOINTS[tower]!.at(-1)!;
+    assert.equal(c.floor, 4500);
+    assert.deepEqual([c.reward, c.premium], [{ kind: "relic", relic: `tower.${tower}.epic` }, { kind: "relic", relic: `tower.${tower}.legendary` }]);
+    const [epic, legendary] = [RELICS[`tower.${tower}.epic`]!, RELICS[`tower.${tower}.legendary`]!];
+    assert.deepEqual([epic.rarity, legendary.rarity, epic.tower, legendary.tower], ["epic", "legendary", tower, tower]);
+    for (const r of [epic, legendary]) assert.match(r.name, /^T:[IVX]+ /);
+  }
+  const g = new Game(defaults());
+  g.save.tower.reached = 4500;
+  assert.deepEqual(g.claimGoal(1, 4500, false), { kind: "relic", relic: "tower.1.epic" });
+  assert.equal(g.shop.buy("pass1", 0, true), null);
+  g.claimGoal(1, 4500, true);
+  assert.deepEqual(g.save.relics, ["tower.1.epic", "tower.1.legendary"]);
+  // Cosmos Sack and Spatial Ring: +2% and +5% Gold Bonus, adding into one.
+  assert.equal(relicBoost(g.save, "goldBonus"), 7);
+  assert.deepEqual(relicTotals(g.save.relics), [{ bonus: { kind: "boost", stat: "goldBonus", percent: 7 }, count: 2 }]);
 });
