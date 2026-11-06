@@ -10,8 +10,11 @@ import type { RelicBonus } from "./relic-catalog.ts";
 // ×1 that grows (×1.505). A premium relic's `amount` is what its effect's
 // text says, the relics with one effect adding.
 
-/** The premium relics' effects, each with its text for an amount. */
+/** The premium relics' effects, each with its text for an amount; `gold`
+ * (every Gold Bonus relic's, free ones' too) multiplies all Gold banked,
+ * a line of its own among the Gold multipliers (economy/gold-multipliers.ts). */
 export const RELIC_SPECIALS = {
+  gold: (a: number) => `+${a}% Gold Bonus`,
   trainerSpeed: (a: number) => `Trainers work ${a}% faster`,
   freeDouble: (a: number) => `${a}% chance a free upgrade gives 2 levels`,
   shieldRegrow: (a: number) => `Aether Shield regrows ${a}% faster`,

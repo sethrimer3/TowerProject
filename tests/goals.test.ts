@@ -5,7 +5,8 @@ import { Game } from "../src/state.ts";
 import { CHECKPOINTS, GOAL_BREAKTHROUGH, PASSES, canWarp, claimGoal, decodeGoals, floorsCompleted, goalState, goalsWaiting, goalUnlocked, passFor, passTotals, unlockFloor, warpUnlocked } from "../src/goals.ts";
 import { TIERS } from "../src/tiers.ts";
 import { RELICS } from "../src/economy/relics.ts";
-import { relicBoost, relicTotals } from "../src/economy/relic-effects.ts";
+import { relicAmount, relicTotals } from "../src/economy/relic-effects.ts";
+import { goldBanked } from "../src/economy/gold-multipliers.ts";
 
 test("every tower has a checkpoint each ten floors to 100, every 50 to 300, then 400 to 4,500; Tower I's first eight pay Damage Prediction, Combat Forecast, Attack Lore, 20 Gems, Damage Visual, the Tournament, Events and 25 Gems, its premium rewards set by hand", () => {
   for (let tower = 1; tower <= TIERS; tower++) {
@@ -236,7 +237,12 @@ test("each tower's floor 4,500 Goal gives its epic relic, and its premium reward
   assert.equal(g.shop.buy("pass1", 0, true), null);
   g.claimGoal(1, 4500, true);
   assert.deepEqual(g.save.relics, ["tower.1.epic", "tower.1.legendary"]);
-  // Cosmos Sack and Spatial Ring: +2% and +5% Gold Bonus, adding into one.
-  assert.equal(relicBoost(g.save, "goldBonus"), 7);
-  assert.deepEqual(relicTotals(g.save.relics), [{ bonus: { kind: "boost", stat: "goldBonus", percent: 7 }, count: 2 }]);
+  // Cosmos Sack and Spatial Ring: +2% and +5% Gold Bonus, adding into one
+  // factor on all Gold banked, not on the Gold Bonus row.
+  assert.equal(relicAmount(g.save, "gold"), 7);
+  assert.deepEqual(relicTotals(g.save.relics), [{ bonus: { kind: "special", effect: "gold", amount: 7 }, count: 2 }]);
+  const context = { save: g.save, mode: "tower" as const, tier: 1, now: 0 };
+  assert.equal(goldBanked(100, context).gold, 107);
+  g.save.relics = [];
+  assert.equal(goldBanked(100, context).gold, 100);
 });

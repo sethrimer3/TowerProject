@@ -16,9 +16,10 @@ import type { RelicSpecial } from "./relic-effects.ts";
 // name, a stat or an amount can change freely; changing a set's year or
 // a relic's place loses it from saves that own it.
 //
-// A `boost` relic (every free event relic) multiplies a Training row's
+// A `boost` relic (most free event relics) multiplies a Training row's
 // value by its percent, summed with the other relics on that row; a
-// `special` one (every premium event relic) gives an effect training can't (relic-effects.ts says what each does).
+// `special` one (every premium event relic, and every Gold Bonus relic,
+// whose `gold` multiplies all Gold banked) gives an effect training can't (relic-effects.ts says what each does).
 
 export type RelicBonus = { kind: "boost"; stat: TrainingId; percent: number } | { kind: "special"; effect: RelicSpecial; amount: number };
 export type RelicEntry = { name: string; bonus: RelicBonus };
@@ -43,7 +44,7 @@ export const RELIC_SETS: Readonly<Record<EventThemeId, readonly RelicSet[]>> = {
   }],
   lunarNewYear: [{
     year: 2027,
-    free: [boost("Lucky Coin", "silverBonus", 3), boost("Thousandfold Ingot", "goldBonus", 5)],
+    free: [boost("Lucky Coin", "silverBonus", 3), special("Thousandfold Ingot", "gold", 5)],
     premium: [special("Jade Abacus", "goldenFloor", 1), special("Red Envelope of Plenty", "chestDouble", 2)],
   }],
   heartbloom: [{
@@ -78,7 +79,7 @@ export const RELIC_SETS: Readonly<Record<EventThemeId, readonly RelicSet[]>> = {
   }],
   honeycomb: [{
     year: 2027,
-    free: [boost("Golden Comb", "goldBonus", 2), boost("Royal Jelly Jar", "regen", 8)],
+    free: [special("Golden Comb", "gold", 2), boost("Royal Jelly Jar", "regen", 8)],
     premium: [special("Swarmwing Stinger", "ricochet", 1), special("Hivequeen's Crown", "multishotTargets", 1)],
   }],
   fairyRing: [{
@@ -148,7 +149,7 @@ export const RELIC_SETS: Readonly<Record<EventThemeId, readonly RelicSet[]>> = {
   }],
   harvestFeast: [{
     year: 2027,
-    free: [boost("Braided Loaf Talisman", "hp", 5), boost("Overflowing Cornucopia", "goldBonus", 4)],
+    free: [boost("Braided Loaf Talisman", "hp", 5), special("Overflowing Cornucopia", "gold", 4)],
     premium: [special("Harvester's Scythe", "eliteGold", 5), special("Amber Sheaf", "aurumBloom", 10)],
   }],
   wizardsTower: [{
@@ -164,7 +165,7 @@ export const RELIC_SETS: Readonly<Record<EventThemeId, readonly RelicSet[]>> = {
   // A rare event: twice the usual rewards.
   blueMoon: [{
     year: 2027,
-    free: [boost("Moonsilver Medallion", "silverBonus", 8), boost("Rare Fortune's Wishbone", "goldBonus", 10)],
+    free: [boost("Moonsilver Medallion", "silverBonus", 8), special("Rare Fortune's Wishbone", "gold", 10)],
     premium: [special("Serendipity Stone", "chestTriple", 2), special("Genesis Fragment", "trainingCost", 5)],
   }],
 };
@@ -175,13 +176,13 @@ export const STORE_RELICS: Readonly<Partial<Record<EventThemeId, readonly StoreR
 /** The relics each tower's last Goal gives, by tower: an epic one, and a
  * legendary one as its premium reward. */
 export const TOWER_RELICS: Readonly<Record<number, { epic: RelicEntry; legendary: RelicEntry }>> = {
-  1: { epic: boost("T:I Cosmos Sack", "goldBonus", 2), legendary: boost("T:I Spatial Ring", "goldBonus", 5) },
+  1: { epic: special("T:I Cosmos Sack", "gold", 2), legendary: special("T:I Spatial Ring", "gold", 5) },
   2: { epic: special("T:II Cosmic Workbench", "researchSpeed", 2), legendary: special("T:II Chrono Gate", "researchSpeed", 5) },
   3: { epic: boost("T:III Delver's Cloak", "critFactor", 2), legendary: boost("T:III Auric Lens", "critFactor", 5) },
   4: { epic: boost("T:IV Really Big Sword", "attack", 2), legendary: boost("T:IV Axe of Duality", "attack", 5) },
   5: { epic: boost("T:V Monster Steaks", "hp", 2), legendary: boost("T:V Orb of All", "hp", 5) },
   6: { epic: boost("T:VI Death's Rival", "shroud", 5), legendary: boost("T:VI Starcloak", "shroud", 10) },
   7: { epic: boost("T:VII Weapon Aura", "attackPerTile", 5), legendary: boost("T:VII Stomping Boots", "attackPerTile", 10) },
-  8: { epic: boost("T:VIII Lucky Blade", "goldBonus", 5), legendary: boost("T:VIII Blueprint Engine", "goldBonus", 10) },
+  8: { epic: special("T:VIII Lucky Blade", "gold", 5), legendary: special("T:VIII Blueprint Engine", "gold", 10) },
   9: { epic: boost("T:IX Godshard", "hp", 5), legendary: special("T:IX Mighty Shorts", "parry", 2) },
 };

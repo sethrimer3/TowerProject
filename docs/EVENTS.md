@@ -116,13 +116,13 @@ Each name starts with its tower (*T:I*, *T:II*, …), to remind the player which
 | VIII | Lucky Blade: +5% Gold Bonus | Blueprint Engine: +10% Gold Bonus |
 | IX | Godshard: +5% Max HP | Mighty Shorts: Parry +2% |
 
-Each raises its stat as a free event relic does (below), except research speed and Parry, which work as the premium effects of those names.
+Each raises its stat as a free event relic does (below), except Gold Bonus, which multiplies all Gold banked, and research speed and Parry, which work as the premium effects of those names.
 
 - **Free relics** (and the tower relics on a Training row) raise a Training row's value by their percent: the relics on one row add into one factor, which multiplies everything else on it, so +1% on a 50% stat makes it 50.5%, and a stat can go past what training alone reaches.
-  On a row read as a multiplier (Gold Bonus' ×1.5), the bonus over ×1 grows (×1.505).
+  On a row read as a multiplier (Silver Bonus' ×1.5), the bonus over ×1 grows (×1.505).
+- **Gold Bonus relics** (free, premium or a tower's) multiply all Gold banked instead, their percents added into one factor, the *Relics* line of the All Gold Bonuses box (`gold` in `RELIC_SPECIALS`): +2% and +5% make ×1.07 on every Gold a run banks.
 - **Premium relics** give what training can't: a stat past its cap (Super Critical Chance, Parry, Lifesteal, Multishot Targets), chances (Golden, Treasure and Stellar Floors, a chest's Double or Triple, a potion healing twice, a second free upgrade), cuts (Heart Doors' drain, Wooden Doors' toll, a boss's ATK, Training's cost) or more of something (Arcana, Overheal, Revive's HP, Interest's cap, research and trainer speed, materials, XP, Arcanite).
   Their texts and where each applies are in `economy/relic-effects.ts` (`RELIC_SPECIALS`); a boss's ATK cut and the shroud's share on later strikes count in every fight's prediction and its playback alike.
-- A relic's Gold Bonus is its own factor, apart from the Event Collection's.
 
 ## The Event Booster
 
