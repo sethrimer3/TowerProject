@@ -23,13 +23,12 @@ try {
   });
   let release;
   const hold = new Promise(resolve => { release = resolve; });
-  await page.route("**/assets/style/hero-down.png", async route => { await hold; await route.continue(); });
+  await page.route("**/assets/atlases/world.png*", async route => { await hold; await route.continue(); });
   await page.goto(server.resolvedUrls.local[0], { waitUntil: "domcontentloaded" });
   assert.ok(await page.locator("#boot-loading").isVisible());
   assert.equal(await page.locator("#app").isVisible(), false, "game stays hidden while a required sprite is delayed");
   await page.screenshot({ path: "test-results/default-art/loading.png" });
   release();
-  await page.unroute("**/assets/style/hero-down.png");
   await page.locator("#hp").waitFor({ timeout: 30000 });
   assert.equal(await page.locator("#boot-loading").count(), 0);
   assert.ok(await page.locator("html").evaluate(e => e.classList.contains("ui-sprites") && e.classList.contains("game-sprites")), "new game uses pixel art without opting in");
@@ -73,26 +72,46 @@ try {
   assert.equal(await page.locator("html").evaluate(e => e.classList.contains("ui-sprites")), true);
   assert.equal(await page.locator("html").evaluate(e => e.classList.contains("game-sprites")), false);
 
-  // A load that fails once reloads by itself a second later and plays.
+  // A load that fails once (the world atlas) reloads by itself a second later and plays.
   const flaky = await browser.newPage();
   await fixClock(flaky);
   let dropped = 0;
-  await flaky.route("**/assets/style/hero-down.png", route => (dropped++ === 0 ? route.abort() : route.continue()));
+  await flaky.route("**/assets/atlases/world.png*", route => (dropped++ === 0 ? route.abort() : route.continue()));
   await flaky.goto(server.resolvedUrls.local[0], { waitUntil: "domcontentloaded" });
   await flaky.locator("#hp").waitFor({ timeout: 30000 });
   assert.equal(await flaky.locator("#boot-retry").count(), 0, "recovered without Retry");
   await flaky.close();
 
+  // A rate limit answers everything with 429 for a while, the page included:
+  // the reload waits until the page is served instead of landing on the 429 page.
+  const limited = await browser.newPage();
+  await fixClock(limited);
+  let until = 0;
+  await limited.route("**/*", (route, request) => {
+    if (!until && new URL(request.url()).pathname === "/src/main.ts") until = Date.now() + 4000;
+    return Date.now() < until ? route.fulfill({ status: 429, contentType: "text/html", body: "<h1>429 Too Many Requests</h1>" }) : route.continue();
+  });
+  await limited.goto(server.resolvedUrls.local[0], { waitUntil: "domcontentloaded" });
+  await limited.locator("#hp").waitFor({ timeout: 60000 });
+  assert.ok(until, "the limit began");
+  await limited.close();
+
   // One that keeps failing reloads twice, then offers Retry.
   const failed = await browser.newPage();
   await fixClock(failed);
   let aborted = 0;
-  await failed.route("**/assets/style/hero-down.png", route => { aborted++; return route.abort(); });
+  await failed.route("**/assets/atlases/world.png*", route => { aborted++; return route.abort(); });
   await failed.goto(server.resolvedUrls.local[0], { waitUntil: "domcontentloaded" });
   await failed.locator("#boot-retry").waitFor({ state: "visible", timeout: 30000 });
   assert.equal(aborted, 3, "the first load and two retries");
   assert.equal(await failed.locator("#app").isVisible(), false, "a failed image never exposes incomplete gameplay");
-  await failed.unroute("**/assets/style/hero-down.png");
+  await failed.unroute("**/assets/atlases/world.png*");
+  // Retry while the host isn't serving the page stays on the loading screen.
+  await failed.route("**/*", route => route.fulfill({ status: 429, body: "" }));
+  await failed.locator("#boot-retry").click();
+  await failed.waitForFunction(() => document.querySelector("#boot-message")?.textContent.includes("Retry in a minute"));
+  assert.equal(await failed.locator("#boot-retry").isVisible(), true, "Retry stays offered");
+  await failed.unroute("**/*");
   await failed.locator("#boot-retry").click();
   await failed.locator("#hp").waitFor({ timeout: 30000 });
   await failed.close();

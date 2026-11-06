@@ -12,11 +12,14 @@ try {
   document.documentElement.classList.toggle("reduce-motion", settings?.reduceMotion === true);
 } catch { /* Loading the game handles unavailable storage and malformed saves. */ }
 
-/** How many times a failed load reloads the page by itself, and how long
- * it waits first, before it offers Retry: a dropped request or a busy
- * device often loads on the next try. */
+/** How many times a failed load reloads the page by itself before it
+ * offers Retry: a dropped request or a busy device often loads on the next try. */
 const AUTO_RETRIES = 2;
-const RETRY_DELAY_MS = 1000;
+/** How long, check by check, a reload waits for the host to serve the page
+ * (six minutes in all): GitHub Pages' rate limit (HTTP 429, with no hint how
+ * long it lasts; one was seen to last over four minutes) answers every
+ * request, the page included. */
+const RELOAD_DELAYS_MS = [1000, 2000, 4000, 8000, 15000, 30000, 60000, 60000, 60000, 60000, 60000];
 /** Where the reloads so far are counted, for this tab only; cleared once the game loads. */
 const RETRIES_KEY = "towerdelve.bootRetries";
 
@@ -32,6 +35,19 @@ function setRetries(count: number | null) {
   } catch { /* Uncounted: Retry is offered at once. */ }
 }
 
+/** Whether the host serves the page right now. A reload while it doesn't
+ * lands on the host's bare error page, where nothing can recover. */
+async function pageAnswers() {
+  try { return (await fetch(location.href, { method: "HEAD", cache: "no-store" })).ok; } catch { return false; }
+}
+async function pageAnswersSoon() {
+  for (const delay of RELOAD_DELAYS_MS) {
+    await new Promise(resolve => setTimeout(resolve, delay));
+    if (await pageAnswers()) return true;
+  }
+  return false;
+}
+
 async function boot() {
   const root = document.querySelector<HTMLElement>("#boot-loading")!;
   const message = document.querySelector<HTMLElement>("#boot-message")!;
@@ -39,7 +55,12 @@ async function boot() {
   const app = document.querySelector<HTMLElement>("#app")!;
   const loading = new LoadingScreen(root,
     () => document.documentElement.classList.contains("reduce-motion") || matchMedia("(prefers-reduced-motion: reduce)").matches);
-  retry.onclick = () => location.reload();
+  const busy = "Unable to load the game. The server is busy or out of reach. Retry in a minute.";
+  const reloadIfAnswering = async () => {
+    if (await pageAnswers()) location.reload();
+    else message.textContent = busy;
+  };
+  retry.onclick = reloadIfAnswering;
   const disableAtlas = document.querySelector<HTMLButtonElement>("#boot-disable-atlas")!;
   disableAtlas.onclick = async () => {
     try {
@@ -49,7 +70,7 @@ async function boot() {
       if (!save.settings || typeof save.settings !== "object") save.settings = {};
       save.settings.experimentalAtlas = false;
       localStorage.setItem("towerdelve.v1", JSON.stringify(save));
-      location.reload();
+      await reloadIfAnswering();
     } catch { message.textContent = "Unable to change settings. Allow storage and retry."; }
   };
   try {
@@ -76,14 +97,16 @@ async function boot() {
       setRetries(tries + 1);
       if (retriesSoFar() === tries + 1) {
         message.textContent = `Loading failed. Retrying… (${tries + 1} of ${AUTO_RETRIES})`;
-        setTimeout(() => location.reload(), RETRY_DELAY_MS);
-        return;
+        if (await pageAnswersSoon()) {
+          location.reload();
+          return;
+        }
       }
     }
     setRetries(null);
     // A failed font download must still leave an actionable recovery screen.
     root.classList.add("font-ready");
-    message.textContent = "Unable to load the game. Check your connection and retry.";
+    message.textContent = busy;
     root.querySelector<HTMLElement>(".loading-room")!.hidden = true;
     retry.hidden = false;
     disableAtlas.hidden = !uiAtlasEnabled();
