@@ -3,7 +3,7 @@ import type { PriceSchedule } from "../economy/prices.ts";
 import type { GoalUnlock } from "../goals.ts";
 import type { ResearchTarget } from "./archives.ts";
 import { snap } from "../exact.ts";
-import { relicRowValue, type RelicHolder } from "../economy/relic-effects.ts";
+import { relicBoostValue, relicRowValue, type RelicHolder } from "../economy/relic-effects.ts";
 /** Training points each level earns, to spend on the hero's stats. */
 export const TRAINING_PER_LEVEL = 3;
 /** The groups the Training tab, and a run's training bar, show the rows
@@ -429,7 +429,7 @@ export const TRAINING = [
   {
     id: "goldBonus", name: "Gold Bonus", group: "utility", requires: "loot", cost: 1, max: 150,
     curve: { per: 3 }, base: 100, off: 100, scale: 100, unit: "×", research: "goldBonus",
-    description: "Multiplies Gold found in a climb, and Interest.",
+    description: "Multiplies Gold found in a climb.",
     silver: opened, gold: firmTrainers,
   },
   // The Free Upgrade rows: the chance each floor passed in a run trains a
@@ -546,6 +546,7 @@ export const amountAt = (row: TrainingDef, ranks: number) => Math.min(row.cap ??
  * `save` holds (economy/relic-effects.ts). */
 export function trainedAmount(save: { upgrades: Partial<Record<UpgradeId, number>>; training?: Partial<Record<TrainingId, number>> } & RelicHolder, id: TrainingId, ranks = save.training?.[id] ?? 0) {
   const row = trainingDef(id), needs = row.needs ?? row.requires;
-  if (needs && !save.upgrades[needs]) return row.off ?? 0;
+  // A row not yet open still takes its free relics: Silver Bonus' ×1 grows.
+  if (needs && !save.upgrades[needs]) return relicBoostValue(save, row, row.off ?? 0);
   return relicRowValue(save, row, amountAt(row, row.requires && !save.upgrades[row.requires] ? 0 : ranks));
 }

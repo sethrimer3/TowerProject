@@ -403,7 +403,7 @@ A monster that appears on a floor during a run rather than being made with it, l
 _Avoid_: summon, added enemy
 
 **Gold multiplier**:
-A factor on every Gold banked: the tower's, the Gold ad's boost or Ad-Disable (one slot), each coin pack, the Event Collection, the equipment's Gold found and the run's Gold boons. The player sees them together as *All Gold Bonuses*; Gold Bonus training is none of them, since it raises only a kill's, a chest's, an item's and a floor's Gold, and Interest.
+A factor on every Gold banked: the tower's, the Gold ad's boost or Ad-Disable (one slot), each coin pack, the Event Collection, the Gold Bonus relics, the equipment's Gold found and the run's Gold boons. The player sees them together as *All Gold Bonuses*; Gold Bonus training is none of them, since it raises only a kill's, a chest's, an item's and a floor's Gold.
 _Avoid_: Gold bonus (the Training row)
 
 **Silver**:
@@ -760,7 +760,7 @@ The Silver a run starting above floor 1 (a Warp, or a Retry from one) goes insid
 _Avoid_: warp bonus, skip silver
 
 **Interest**:
-Silver added on each floor climbed for the first time in a run: Interest % research's share of the Silver held, at most Max Interest's limit (50 at first), then multiplied by Gold Bonus.
+Silver added on each floor climbed for the first time in a run: Interest % research's share of the Silver held, at most Max Interest's limit (50 at first), then multiplied by Silver found, as all Silver is.
 _Avoid_: dividend
 
 **Floor Skip Reward**:

@@ -6,7 +6,7 @@ import { CHECKPOINTS, GOAL_BREAKTHROUGH, PASSES, canWarp, claimGoal, decodeGoals
 import { TIERS } from "../src/tiers.ts";
 import { RELICS } from "../src/economy/relics.ts";
 import { relicAmount, relicTotals } from "../src/economy/relic-effects.ts";
-import { goldBanked } from "../src/economy/gold-multipliers.ts";
+import { goldBanked, silverFound } from "../src/economy/gold-multipliers.ts";
 
 test("every tower has a checkpoint each ten floors to 100, every 50 to 300, then 400 to 4,500; Tower I's first eight pay Damage Prediction, Combat Forecast, Attack Lore, 20 Gems, Damage Visual, the Tournament, Events and 25 Gems, its premium rewards set by hand", () => {
   for (let tower = 1; tower <= TIERS; tower++) {
@@ -245,4 +245,12 @@ test("each tower's floor 4,500 Goal gives its epic relic, and its premium reward
   assert.equal(goldBanked(100, context).gold, 107);
   g.save.relics = [];
   assert.equal(goldBanked(100, context).gold, 100);
+});
+
+test("a boost relic multiplies its Training row's whole value, a row not yet open too", () => {
+  const save = defaults();
+  save.relics = ["lunarNewYear.2027.free1"]; // Lucky Coin: +3% Silver Bonus
+  assert.equal(silverFound(save, "tower", 0), 1.03, "×1 without Wealthy becomes ×1.03");
+  save.upgrades.wealthy = 1;
+  assert.equal(silverFound(save, "tower", 50), 1.545, "×1.5 becomes ×1.545, not ×1.515");
 });

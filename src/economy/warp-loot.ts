@@ -38,17 +38,16 @@ export function floorKillSilver(depth: number, tower: number) {
  * climbing it its Wishing Well Silver (Silver / Floor, raised by its
  * research, times Silver found) and Interest on the Silver held from
  * `held` (the Pocket Money the run starts with), up to Max Interest, then
- * times Gold Bonus.
+ * times Silver found.
  * Shrine boons are left out: a run starts with none. */
 export function skippedSilver(save: Pick<Save, "upgrades" | "training" | "archives" | "equipment" | "relics">, tower: number, floors: number, held = 0) {
   const found = silverFound(save, "tower", save.training.silverBonus ?? 0);
   const perFloor = (trainedAmount(save, "floorSilver") * researched(save.archives, "floorSilver")) / 100;
   const rate = researched(save.archives, "interestRate"), cap = researched(save.archives, "interestCap") * relicFactor(save, "maxInterest");
-  const bonus = (trainedAmount(save, "goldBonus") * researched(save.archives, "goldBonus")) / 10_000;
   let silver = held;
   for (let depth = 0; depth < floors; depth++) {
     silver += floorKillSilver(depth, tower) * found + perFloor * found;
-    if (rate) silver += Math.min(cap, (silver * rate) / 1000) * bonus;
+    if (rate) silver += Math.min(cap, (silver * rate) / 1000) * found;
   }
   return snap(silver - held);
 }

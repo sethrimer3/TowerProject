@@ -342,8 +342,8 @@ Below Spare Change stand three skills of 2 Inspiration each (17 down the path), 
 | Skill | Opens | Training | Research | Applies to |
 |---|---|---|---|---|
 | Wishing Well | Silver / Floor | 0 Silver, +4 a rank | +5% a level | each floor climbed above the run's highest so far (the Tower), or each new ten depth (the Delve); Silver belongs to the run, so undo takes it back with the climb |
-| Wealthy | Silver Bonus | ×1, +1% a rank | +3% a level | all Silver a run finds: kills and Silver / Floor |
-| Loot | Gold Bonus | ×1, +3% a rank | +3% a level | each kill's Gold, each item's taken off the floor, Gold / Floor and Interest, before the tier's bonus |
+| Wealthy | Silver Bonus | ×1, +1% a rank | +3% a level | all Silver a run finds: kills, Silver / Floor and Interest |
+| Loot | Gold Bonus | ×1, +3% a rank | +3% a level | each kill's Gold, each item's taken off the floor and Gold / Floor, before the tier's bonus |
 
 Training and research multiply: 30% from each makes ×1.3 × 1.3 = ×1.69 (Gold Bonus at 10 ranks and 10 levels; Silver Bonus needs 30 ranks for its 30%). Silver therefore keeps its fractions, like Gold (`snap`), shown rounded down.
 

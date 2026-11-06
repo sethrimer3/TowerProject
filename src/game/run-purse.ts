@@ -209,10 +209,16 @@ export class RunPurse {
    * Silver Bonus and, found on a Golden or Stellar Floor, `floor`, their
    * multipliers, fractions and all; returns what it added. */
   silver(base: number, floor = PLAIN_FLOOR) {
-    const silver = snap(base * silverFound(this.save, this.mode, this.trainingNow.training.silverBonus, this.boons?.silverFound) * treeFactor(this.tree, "silverBonus") * floor.golden * floor.stellar);
+    const silver = snap(base * this.silverFactor * floor.golden * floor.stellar);
     this.run.silver = snap((this.run.silver ?? 0) + silver);
     this.noteSilver(silver);
     return silver;
+  }
+
+  /** Silver found's multiplier times the card trees' Silver Bonus: what
+   * every Silver the run finds, Interest too, is multiplied by. */
+  private get silverFactor() {
+    return silverFound(this.save, this.mode, this.trainingNow.training.silverBonus, this.boons?.silverFound) * treeFactor(this.tree, "silverBonus");
   }
 
   /** `silver` found on the tile at (x, y). */
@@ -477,26 +483,26 @@ export class RunPurse {
   /** Interest: for a floor climbed for the first time in the run, after
    * its Wishing Well Silver, Interest % research's share of the Silver
    * held (the run's Interest boons raising the share), up to Max
-   * Interest, then multiplied by Gold Bonus and the environments of `reached`,
-   * as all Silver found on it is. Silver Bonus doesn't raise it. Returns what it added. */
+   * Interest, then multiplied by Silver found (`silverFactor`) and the
+   * environments of `reached`, as all Silver found on it is. Returns what it added. */
   interest(reached: number) {
     const rate = researched(this.save.archives, "interestRate") * (this.boons?.interest ?? 1);
     if (!rate) return 0;
     const held = this.run.silver ?? 0;
-    const paid = this.onFloor(this.bonused(Math.min(this.interestCap, snap((held * rate) / 1000))), reached);
+    const paid = this.onFloor(snap(Math.min(this.interestCap, snap((held * rate) / 1000)) * this.silverFactor), reached);
     if (paid > 0) this.run.silver = snap(held + paid);
     this.noteSilver(paid);
     return paid > 0 ? paid : 0;
   }
 
-  /** The most Interest a floor pays (Max Interest research), before Gold Bonus and its environments. */
+  /** The most Interest a floor pays (Max Interest research), before Silver found and its environments. */
   get interestCap() {
     return snap(researched(this.save.archives, "interestCap") * relicFactor(this.save, "maxInterest"));
   }
 
   /** The most Interest climbing to `reached` pays. */
   maxInterest(reached: number) {
-    return this.onFloor(this.bonused(this.interestCap), reached);
+    return this.onFloor(snap(this.interestCap * this.silverFactor), reached);
   }
 
   /** Silver `amount` with the environments of `floor`. */

@@ -81,11 +81,16 @@ test("Gold Bonus multiplies Gold / Floor", () => {
   assert.equal(g.save.gold, 3 * 1.69);
 });
 
-test("Gold Bonus multiplies Interest after Max Interest stops it, and full Interest counts that", () => {
+test("Silver Bonus, not Gold Bonus, multiplies Interest after Max Interest stops it, and full Interest counts that", () => {
   const g = stairs();
   g.save.upgrades.loot = 1;
   g.save.training.goldBonus = 10;
   g.save.archives.levels.interest = 10;
+  const gold = new RunPurse(g.save, "tower", g.run, () => 0.5, 0);
+  g.run.silver = 1000;
+  assert.equal(gold.interest(5), 10, "1% of 1,000: Gold Bonus is no Silver bonus");
+  g.save.upgrades.wealthy = 1;
+  g.save.training.silverBonus = 30;
   const purse = new RunPurse(g.save, "tower", g.run, () => 0.5, 0);
   g.run.silver = 1000;
   assert.equal(purse.interest(5), 13, "1% of 1,000, ×1.3");

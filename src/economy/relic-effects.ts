@@ -4,10 +4,10 @@ import { RELICS } from "./relics.ts";
 import type { RelicBonus } from "./relic-catalog.ts";
 
 // What relics do (docs/EVENTS.md). A free relic multiplies one Training
-// row's value: the relics on a row add their percents into one factor,
-// which multiplies everything else on it (+1% on a 50% stat makes 50.5%);
-// on a row read as a multiplier (Gold Bonus' ×1.5) it is the bonus over
-// ×1 that grows (×1.505). A premium relic's `amount` is what its effect's
+// row's whole value: the relics on a row add their percents into one
+// factor, which multiplies everything else on it (+1% on a 50% stat makes
+// 50.5%, and on a row read as a multiplier, Silver Bonus' ×1.5, ×1.515;
+// on a row not yet open, its ×1 becomes ×1.01). A premium relic's `amount` is what its effect's
 // text says, the relics with one effect adding.
 
 /** The premium relics' effects, each with its text for an amount; `gold`
@@ -132,14 +132,20 @@ const ROW_SPECIALS: Partial<Record<TrainingId, { effect: RelicSpecial; add?: num
   floorSilver: { effect: "spareChange" },
 };
 
+/** Training row `row`'s `value` raised by its free relics' percents, on
+ * the whole value. The hero's stats (`stat` rows) are raised in the
+ * loadout instead. */
+export function relicBoostValue(holder: RelicHolder, row: TrainingDef, value: number) {
+  const pct = holder.relics?.length && !("stat" in row) ? relicBoost(holder, row.id as TrainingId) : 0;
+  return pct ? snap((value * (100 + pct)) / 100) : value;
+}
+
 /** Training row `row`'s `value` raised by the relics owned: its free
- * relics' percents on the value (on the bonus over its `off` for a row read
- * as a multiplier), then the premium relics that add to it. The hero's
- * stats (`stat` rows) are raised in the loadout instead. */
+ * relics' percents (`relicBoostValue`), then the premium relics that add
+ * to it. */
 export function relicRowValue(holder: RelicHolder, row: TrainingDef, value: number) {
   if (!holder.relics?.length || "stat" in row) return value;
-  const pct = relicBoost(holder, row.id as TrainingId), off = row.unit === "×" ? row.off ?? 0 : 0;
-  let v = pct ? snap(off + ((value - off) * (100 + pct)) / 100) : value;
+  let v = relicBoostValue(holder, row, value);
   const special = ROW_SPECIALS[row.id as TrainingId];
   const amount = special ? relicAmount(holder, special.effect) : 0;
   if (amount) v = special!.add === undefined ? snap((v * (100 + amount)) / 100) : snap(v + amount * special!.add);

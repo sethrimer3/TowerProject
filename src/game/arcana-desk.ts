@@ -187,8 +187,8 @@ export class ArcanaDesk {
     const held = this.held.find((h) => h.id === "aurumBloom" && this.isOn(h.id));
     if (!held) return undefined;
     const [base, chance, stellar] = this.valuesOf(held);
-    // Relics raise what it makes above ×1.
-    const bonus = snap(1 + (base - 1) * relicFactor(this.save, "aurumBloom"));
+    // Relics raise the whole factor it makes.
+    const bonus = snap(base * relicFactor(this.save, "aurumBloom"));
     return { bonus, chance, stellar, ...(this.augmented(held.id) ? { golden: GOLDEN_AUGMENT } : {}) };
   }
   /** Overseer's beams (arcana/overseer.ts), if it is held and on. */
