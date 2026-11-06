@@ -2,6 +2,8 @@ import type { Save } from "../save/shape.ts";
 import { enemyFirstFloor } from "../enemies/schedule.ts";
 import { reached } from "../missions/catalog.ts";
 import { DAY_MS, gmtDay } from "../shop/clock.ts";
+import { EVENT_THEME_NAMES, eventTheme, type EventThemeId } from "./themes.ts";
+import { trackRelics } from "../economy/relics.ts";
 
 // Events (docs/EVENTS.md): fortnightly sets of missions, each with three
 // tiers paying Medals, which count toward the event's relics. All data;
@@ -98,34 +100,35 @@ export type RelicRarity = "rare" | "epic";
  * it, and the relic it gives (null for a stand-in, which joins no one's relics). */
 export type RelicMilestone = { medals: number; premium: boolean; rarity: RelicRarity; relic: string | null };
 
-/** What the server says about an event: its name, when it runs, and the
+/** What the server says about an event: its name and theme (and the
+ * year whose cycle it belongs to, events/themes.ts), when it runs, and the
  * relics its milestones give. */
-export type EventInfo = { id: number; name: string; startsAt: number; endsAt: number; milestones: readonly RelicMilestone[] };
+export type EventInfo = { id: number; name: string; theme: EventThemeId; year: number; startsAt: number; endsAt: number; milestones: readonly RelicMilestone[] };
 
-/** The stand-in's milestones: a rare and an epic relic for all, and a
- * premium one of each for the boosted. */
-export const STUB_MILESTONES: readonly RelicMilestone[] = [
-  { medals: 350, premium: false, rarity: "rare", relic: null },
-  { medals: 550, premium: true, rarity: "rare", relic: null },
-  { medals: 700, premium: false, rarity: "epic", relic: null },
-  { medals: 1100, premium: true, rarity: "epic", relic: null },
+/** The milestones of every event: a rare and an epic relic for all, and a
+ * premium one of each for the boosted; `relic` names the place in the
+ * theme's relic set (economy/relics.ts) each gives. */
+export const STUB_MILESTONES: readonly (RelicMilestone & { place: "free1" | "premium1" | "free2" | "premium2" })[] = [
+  { medals: 350, premium: false, rarity: "rare", relic: null, place: "free1" },
+  { medals: 550, premium: true, rarity: "rare", relic: null, place: "premium1" },
+  { medals: 700, premium: false, rarity: "epic", relic: null, place: "free2" },
+  { medals: 1100, premium: true, rarity: "epic", relic: null, place: "premium2" },
 ];
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-/** Event `id` as the stand-in knows it: named by its first day (GMT), with
- * placeholder relics.
- * TODO(server): the event server will give each event's name, banner, missions and the day each
- * is released, and the relics its milestones give; until then the desk draws the missions at
- * random from `EVENT_MISSIONS`. */
+/** Event `id` as the stand-in knows it: named by its theme on the
+ * calendar, with that theme's relics.
+ * TODO(server): the event server will give each event's banner, missions and the day each
+ * is released; until then the desk draws the missions at random from `EVENT_MISSIONS`. */
 export function stubEvent(id: number): EventInfo {
-  const start = new Date(eventStartsAt(id));
+  const { theme, year } = eventTheme(id), relics = trackRelics(theme, year);
   return {
     id,
-    name: `Event of ${start.getUTCDate()} ${MONTHS[start.getUTCMonth()]} ${start.getUTCFullYear()}`,
+    name: EVENT_THEME_NAMES[theme],
+    theme,
+    year,
     startsAt: eventStartsAt(id),
     endsAt: eventEndsAt(id),
-    milestones: STUB_MILESTONES,
+    milestones: STUB_MILESTONES.map(({ place, ...m }) => ({ ...m, relic: relics[place] })),
   };
 }
 

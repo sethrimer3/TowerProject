@@ -17,6 +17,7 @@ import { levelForXp } from "./xp.ts";
 import { wornEffects, type EffectTotals } from "../equipment/effects.ts";
 import { silverFound } from "../economy/gold-multipliers.ts";
 import { PIERCE_CAP } from "../equipment/balance.ts";
+import { relicAmount, relicBoost, relicCut, relicFactor, type RelicHolder } from "../economy/relic-effects.ts";
 import { RESEARCH, researched } from "./archives.ts";
 import { ranksInTraining, trainingGold } from "./training-jobs.ts";
 import { goalUnlocked, type GoalUnlock } from "../goals.ts";
@@ -115,10 +116,18 @@ function add(total: Record<Stat, number>, rows: readonly (Granting & { id: strin
 /** The stats the Archives' ATK, DEF, Max HP and Shroud research multiply,
  * and the research target each reads. */
 const STAT_RESEARCH = { attack: "attackPercent", defense: "defensePercent", maxHp: "maxHpPercent", shroud: "shroudPercent" } as const;
+/** The Training row whose free relics raise each of the hero's stats. */
+const STAT_ROWS: Partial<Record<Stat, TrainingId>> = {
+  attack: "attack", defense: "defense", maxHp: "hp", shroud: "shroud", regen: "regen", lifesteal: "lifesteal", thorns: "thorns", parry: "parry", armorBreak: "armorBreak",
+};
 /** What `stat` is multiplied by, the whole of it a run starts with and
- * so each change to it mid-run (progression/hero-stats.ts): its research's percent (1 without). */
-export const statFactor = (save: Pick<Save, "archives">, stat: Stat) =>
-  stat in STAT_RESEARCH ? researched(save.archives, STAT_RESEARCH[stat as keyof typeof STAT_RESEARCH]) / 100 : 1;
+ * so each change to it mid-run (progression/hero-stats.ts): its research's
+ * percent (1 without), times its free relics' (economy/relic-effects.ts). */
+export const statFactor = (save: Pick<Save, "archives"> & { relics?: readonly string[] }, stat: Stat) => {
+  const research = stat in STAT_RESEARCH ? researched(save.archives, STAT_RESEARCH[stat as keyof typeof STAT_RESEARCH]) / 100 : 1;
+  const row = STAT_ROWS[stat], relics = row ? relicBoost(save, row) : 0;
+  return relics ? (research * (100 + relics)) / 100 : research;
+};
 
 /** The character a run in `mode` would start with now: the baseline,
  * permanent upgrades and training, then the equipment that mode's hero
@@ -142,15 +151,15 @@ export function loadout(save: Save, mode: Mode = "tower", eq: EffectTotals = wor
     defense: researchedStat("defense", percent(plus(own.defense, eq.defense), eq.defensePct)),
     maxHp: Math.max(1, researchedStat("maxHp", percent(plus(own.maxHp, eq.maxHp), eq.maxHpPct))),
     shroud: researchedStat("shroud", plus(own.shroud, eq.shroud)),
-    regen: plus(own.regen, eq.regen),
-    lifesteal: own.lifesteal,
-    thorns: own.thorns,
+    regen: researchedStat("regen", plus(own.regen, eq.regen)),
+    lifesteal: plus(researchedStat("lifesteal", own.lifesteal), relicAmount(save, "lifesteal")),
+    thorns: researchedStat("thorns", own.thorns),
     // Parry % research is kept in tenths of a percent.
-    parry: Math.min(PARRY_CAP, snap(own.parry + researched(save.archives, "parryPercent") / 10)),
-    armorBreak: own.armorBreak,
+    parry: Math.min(PARRY_CAP, plus(researchedStat("parry", snap(own.parry + researched(save.archives, "parryPercent") / 10)), relicAmount(save, "parry"))),
+    armorBreak: researchedStat("armorBreak", own.armorBreak),
     shieldThorns: researched(save.archives, "shieldThornsPercent"),
-    bossAttack: eq.bossAttack,
-    pierce: Math.min(eq.pierce, PIERCE_CAP),
+    bossAttack: plus(eq.bossAttack, relicAmount(save, "bossAttack")),
+    pierce: plus(Math.min(eq.pierce, PIERCE_CAP), relicAmount(save, "pierce")),
     keys: { yellow: own.yellow, blue: own.blue, red: own.red },
     startKeys: { yellow: eq.yellowKeys, blue: eq.blueKeys },
     // Undo needs Rehearsed steps (its first undo) or Echoes of time: Undo
@@ -262,9 +271,17 @@ export const trainingText = (value: number, unit: string, bare = false) =>
 
 /** How much faster trainers train than at first (Faster Trainers research:
  * 0.02 a level); a rank takes its time / (1 + this). */
-export const trainingSpeed = (save: Pick<Save, "archives">) => researched(save.archives, "trainingSpeed");
+export const trainingSpeed = (save: Pick<Save, "archives"> & RelicHolder) => {
+  // Relics speed trainers up as a factor of their own.
+  const research = researched(save.archives, "trainingSpeed"), relic = relicFactor(save, "trainerSpeed");
+  return relic === 1 ? research : (1 + research) * relic - 1;
+};
 /** What Training Discount takes off a trainer's Gold, in tenths of a percent. */
-export const trainingDiscount = (save: Pick<Save, "archives">) => researched(save.archives, "trainingDiscount");
+export const trainingDiscount = (save: Pick<Save, "archives"> & RelicHolder) => {
+  // Relics' Training cost cut multiplies what Training Discount leaves.
+  const research = researched(save.archives, "trainingDiscount"), relic = relicCut(save, "trainingCost");
+  return relic === 1 ? research : 1000 - (1000 - research) * relic;
+};
 
 /** Whether `id` can take no more ranks: at its most, counting a rank a
  * trainer is training. */

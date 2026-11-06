@@ -403,7 +403,7 @@ A monster that appears on a floor during a run rather than being made with it, l
 _Avoid_: summon, added enemy
 
 **Gold multiplier**:
-A factor on every Gold banked: the tower's, the Gold ad's boost or Ad-Disable (one slot), each coin pack, the themes owned, the equipment's Gold found and the run's Gold boons. The player sees them together as *All Gold Bonuses*; Gold Bonus training is none of them, since it raises only a kill's, a chest's, an item's and a floor's Gold, and Interest.
+A factor on every Gold banked: the tower's, the Gold ad's boost or Ad-Disable (one slot), each coin pack, the Event Collection, the equipment's Gold found and the run's Gold boons. The player sees them together as *All Gold Bonuses*; Gold Bonus training is none of them, since it raises only a kill's, a chest's, an item's and a floor's Gold, and Interest.
 _Avoid_: Gold bonus (the Training row)
 
 **Silver**:
@@ -657,7 +657,7 @@ The percent Time Dilation or Necrotic Frost slows what is in its field by: it ac
 Ricochet Shot's strike: an arrow's hit springing a white line to the closest other enemies on the floor. A ricochet never sets off another.
 
 **Medal**:
-A limited currency, kept between runs, earned from the weekly mission rewards and Events' missions. Nothing spends Medals yet. Shown as a gold disc on a red ribbon.
+A limited currency, kept between runs, earned from the weekly mission rewards and Events' missions, and spent in events' Stores. Shown as a gold disc on a red ribbon.
 _Avoid_: badge (a card's token), trophy (the Tournament's)
 
 **Press** (a card):
@@ -787,15 +787,15 @@ _Avoid_: badge (a card's), attention, alert, notification
 ### Themes
 
 **UI theme**:
-A look for the page around the board: its panels, buttons and sounds. Classic is always available; Medieval is owned from the start; Neon, Terminal, Desktop, Glyph, Ember, Yang, Yin, Shiro, Kuro, Arcade, System, Orbit, Pixel, Doodle and Murk are bought (1 Gold each for now).
+A look for the page around the board: its panels, buttons and sounds. Classic is always available; Medieval is owned from the start; Neon, Terminal, Desktop, Glyph, Ember, Yang, Yin, Shiro, Kuro, Arcade, System, Orbit, Pixel, Doodle and Murk are bought in an event's Store for Medals.
 _Avoid_: skin, style
 
 **Game theme**:
-A look for the board itself: its tiles, the hero, enemies and torches. Classic is always available; Neon, Terminal, Desktop, Glyph, Ember, Yang, Yin, Shiro, Kuro, Arcade, System, Kroz, Orbit, Pixel, Doodle and Murk are bought (1 Gold each for now).
+A look for the board itself: its tiles, the hero, enemies and torches. Classic is always available; Neon, Terminal, Desktop, Glyph, Ember, Yang, Yin, Shiro, Kuro, Arcade, System, Kroz, Orbit, Pixel, Doodle and Murk are bought in an event's Store for Medals.
 _Avoid_: tileset, board skin
 
 **Owned theme**:
-A UI or Game theme the player has bought (or owns from the start), kept for good; each adds 2.5% to all Gold banked, worn or not.
+A UI or Game theme the player has bought in an event's Store, kept for good; each adds to the Event Collection's Gold, worn or not.
 _Avoid_: skin, unlocked theme
 
 ### The Shop
@@ -878,8 +878,25 @@ _Avoid_: daily mission (the 8-hourly ones), quest
 A purchase for one event that doubles every Medal it pays, those already paid too, and opens its two premium relics.
 _Avoid_: event pass, Premium Pass (the Goals' passes)
 
+**Event theme**:
+What an event is about, and its name, by the calendar: each year opens with New Year, the event holding 1 January, and runs through the same 26 themes in order, a year with a 27th event ending with the rare Blue Moon.
+_Avoid_: season
+
+**Event Store**:
+An event's second tab, selling for Medals: Gems, Arcanite and Equipment supplies (each dearer with every one bought, until the next event), the UI theme and Game theme the event features, and the bonus tracks.
+_Avoid_: shop (the Shop sells for Gems and money)
+
+**Featured theme**:
+A UI or Game theme an event's Store sells: a theme named as an event is featured only by that event; the rest take turns, one of each kind an event.
+
+**Bonus track**:
+A piece of music bought in any event's Store, joining the play sequence for good.
+
+**Event Collection**:
+The Gold multiplier for the themes and bonus tracks owned, their shares added: a UI theme 1%, a Game theme 2%, a track 0.8%. Classic gives none.
+
 **Relic**:
-A unique keepsake won by reaching an event's Medal milestone (premium relics only with the Event Booster), each giving a permanent bonus, each owned at most once and kept for good. Spending Medals is never needed to win one.
+A unique keepsake won by reaching an event's Medal milestone (premium relics only with the Event Booster), each giving a permanent bonus, each owned at most once and kept for good. Spending Medals is never needed to win one. A free relic multiplies a Training row's value; a premium relic gives what training can't. Each event theme has its own four.
 _Avoid_: trophy (the Tournament's), artifact, badge
 
 **Lakeside**:

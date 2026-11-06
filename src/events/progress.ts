@@ -43,6 +43,10 @@ export type EventsSave = {
    * undo brings a tile back but it never counts again. */
   counted: string[];
   streaks: EventStreaks;
+  /** How many of each Store currency offer the event has sold
+   * (events/store.ts), which raises its next price; a new event starts
+   * them over. */
+  bought: Record<string, number>;
 };
 
 export const COUNTED_KEPT = 2000;
@@ -51,7 +55,7 @@ const BOOSTED_KEPT = 8;
 
 export const noStreaks = (run = ""): EventStreaks => ({ run, floors: 0, hurt: false, interest: 0 });
 export const defaultEvents = (): EventsSave => ({
-  id: null, missions: [], nextId: 1, rng: null, boosted: [], seen: [], moved: [], loginDay: null, counted: [], streaks: noStreaks(),
+  id: null, missions: [], nextId: 1, rng: null, boosted: [], seen: [], moved: [], loginDay: null, counted: [], streaks: noStreaks(), bought: {},
 });
 
 /** How many of a mission's tiers are done. */
@@ -79,12 +83,12 @@ export const relicMedals = (e: EventsSave) => baseMedals(e) * (isBoosted(e) ? 2 
 export const milestoneReached = (e: EventsSave, m: RelicMilestone) => relicMedals(e) >= m.medals && (!m.premium || isBoosted(e));
 
 /** Gives the player every relic the running event's reached milestones
- * hold that they lack (a stand-in's, null, gives none). */
+ * hold that they lack (a null relic gives none). */
 export function grantRelics(save: Save) {
   const e = save.events;
   if (e.id === null) return;
   for (const m of stubEvent(e.id).milestones)
-    if (m.relic && RELICS[m.relic] && milestoneReached(e, m) && !save.relics.includes(m.relic)) save.relics.push(m.relic);
+    if (m.relic && RELICS[m.relic] && milestoneReached(e, m) && !save.relics.includes(m.relic)) save.relics = [...save.relics, m.relic];
 }
 
 /** Why the running event's booster can't be bought: none running, or
@@ -127,6 +131,8 @@ export function decodeEvents(raw: unknown): EventsSave {
   d.moved = known(raw.moved);
   d.loginDay = whole(raw.loginDay) ? raw.loginDay : null;
   d.counted = Array.isArray(raw.counted) ? raw.counted.filter((k: unknown) => typeof k === "string" && k.length < 120).slice(-COUNTED_KEPT) : [];
+  if (isRecord(raw.bought))
+    for (const [k, v] of Object.entries(raw.bought)) if (k.length < 60 && wholeIn(v, 1, 100_000)) d.bought[k] = v;
   const s = isRecord(raw.streaks) ? raw.streaks : {};
   if (typeof s.run === "string" && s.run.length < 120)
     d.streaks = { run: s.run, floors: whole(s.floors) ? s.floors : 0, hurt: s.hurt === true, interest: whole(s.interest) ? s.interest : 0 };

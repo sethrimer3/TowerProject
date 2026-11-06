@@ -1,3 +1,4 @@
+import { relicAmount, relicCut, relicFactor } from "../economy/relic-effects.ts";
 import {
   arcanum, arcanumBoost, arcanumPrice, augmentedValues, chargeBolts, drawOptions, FROST_AUGMENT, GOLDEN_AUGMENT, LENT_LEVELS, levelsOf, nextDraw, nextStep, OFFER_SIZE, ownedArcana, redrawOptions, rerollOpen, rerollPrice, RUN_TOGGLES, settleBolts, tickCooldowns, unownedArcana, valuesAt,
   type ArcanumId, type AttributeLevels,
@@ -154,10 +155,15 @@ export class ArcanaDesk {
     } else r.off = r.off.filter((o) => o !== id);
     return true;
   }
+  /** What an arcanum's damage `multiplier` multiplies the hero's ATK by:
+   * raised by crits and by relics' Arcanum Damage. */
+  private boost(multiplier: number) {
+    return arcanumBoost(multiplier, this.host.crit) * relicFactor(this.save, "arcanumDamage");
+  }
   /** What the arcanum's card reads: its damage with the hero's ATK and crits, or its own effect. */
   cardValue({ id, levels }: HeldArcanum) {
     const def = arcanum(id), values = this.valuesOf({ id, levels });
-    if (def.damage) return { damage: this.host.run.player.attack * arcanumBoost(def.damage(values), this.host.crit) };
+    if (def.damage) return { damage: this.host.run.player.attack * this.boost(def.damage(values)) * (id === "thunderbolt" ? relicFactor(this.save, "thunderbolt") : 1) };
     return { text: def.effect?.(values) ?? "" };
   }
   /** An arcanum's cooldown as its card shows it: the turns left of how many,
@@ -174,13 +180,15 @@ export class ArcanaDesk {
     const held = this.held.find((h) => h.id === "ricochetShot" && this.isOn(h.id));
     if (!held) return undefined;
     const [multiplier, rebounds, chance] = this.valuesOf(held);
-    return { boost: arcanumBoost(multiplier, this.host.crit), rebounds, chance };
+    return { boost: this.boost(multiplier), rebounds: rebounds + relicAmount(this.save, "ricochet"), chance };
   }
   /** What Aurum Bloom gives the floors' environments, if it is held and on. */
   aurumBloom(): FloorBloom | undefined {
     const held = this.held.find((h) => h.id === "aurumBloom" && this.isOn(h.id));
     if (!held) return undefined;
-    const [bonus, chance, stellar] = this.valuesOf(held);
+    const [base, chance, stellar] = this.valuesOf(held);
+    // Relics raise what it makes above ×1.
+    const bonus = snap(1 + (base - 1) * relicFactor(this.save, "aurumBloom"));
     return { bonus, chance, stellar, ...(this.augmented(held.id) ? { golden: GOLDEN_AUGMENT } : {}) };
   }
   /** Overseer's beams (arcana/overseer.ts), if it is held and on. */
@@ -196,7 +204,7 @@ export class ArcanaDesk {
     const held = this.held.find((h) => h.id === "thunderbolt" && this.isOn(h.id));
     if (!held) return undefined;
     const [multiplier, bolts, turns] = this.valuesOf(held);
-    return { boost: arcanumBoost(multiplier, this.host.crit), bolts, turns };
+    return { boost: this.boost(multiplier) * relicFactor(this.save, "thunderbolt"), bolts, turns };
   }
   /** The bolts this turn strikes with (`fired`: what `turn` says ran out), if any. */
   chargeBolts(fired: readonly ArcanumId[]) {
@@ -219,7 +227,7 @@ export class ArcanaDesk {
   /** Lifespring's turn: its cooldown, and the Effect Wave or field it brings, if it is held and on. */
   lifespringTurn() {
     const rule = this.lifespringRule(), run = this.host.run;
-    return rule && stepLifespring((run.lifespring ??= {}), { waves: rule.waves, turns: rule.turns, amount: snap(rule.hp * run.player.attack) });
+    return rule && stepLifespring((run.lifespring ??= {}), { waves: rule.waves, turns: rule.turns, amount: snap(rule.hp * run.player.attack * relicFactor(this.save, "lifespring")) });
   }
   /** The field as the board shows it, while it is on and its pool holds. */
   get lifespringField() {
@@ -241,7 +249,8 @@ export class ArcanaDesk {
   timeDilationRule() {
     const held = this.held.find((h) => h.id === "timeDilation" && this.isOn(h.id));
     if (!held) return undefined;
-    const [duration, slowdown, turns] = this.valuesOf(held), effects = dilationEffects(this.save);
+    const [base, slowdown, turns] = this.valuesOf(held), effects = dilationEffects(this.save);
+    const duration = Math.round(base * relicFactor(this.save, "timeDilation"));
     return { duration, slow: fieldSlowdown(slowdown, effects), turns, effects };
   }
   /** Time Dilation's turn: the field's turns and its cooldown, if it is held and on. */
@@ -256,7 +265,7 @@ export class ArcanaDesk {
     const held = this.held.find((h) => h.id === "phantasm" && this.isOn(h.id));
     if (!held) return undefined;
     const [multiplier, quantity, cooldown] = this.valuesOf(held), effects = phantasmEffects(this.save);
-    return { boost: arcanumBoost(multiplier, this.host.crit), quantity, turns: phantasmCooldown(cooldown, effects), blast: effects.blast, spin: effects.spin, ...(this.augmented(held.id) ? { outer: OUTER_GHOSTS } : {}) };
+    return { boost: this.boost(multiplier), quantity, turns: Math.max(1, Math.round(phantasmCooldown(cooldown, effects) * relicCut(this.save, "phantasm"))), blast: effects.blast, spin: effects.spin, ...(this.augmented(held.id) ? { outer: OUTER_GHOSTS } : {}) };
   }
   /** Phantasm's turn: the ring turning, its cooldown and the ghosts it brings back, if it is held and on. */
   phantasmTurn() {
@@ -268,8 +277,9 @@ export class ArcanaDesk {
   frostRule() {
     const held = this.held.find((h) => h.id === "necroticFrost" && this.isOn(h.id));
     if (!held) return undefined;
-    const [multiplier, duration, turns] = this.valuesOf(held), effects = frostEffects(this.save);
-    return { boost: arcanumBoost(multiplier, this.host.crit), duration, turns, effects: this.augmented(held.id) ? { ...effects, radius: effects.radius * FROST_AUGMENT } : effects };
+    const [multiplier, base, turns] = this.valuesOf(held), effects = frostEffects(this.save);
+    const duration = Math.round(base * relicFactor(this.save, "frostDuration"));
+    return { boost: this.boost(multiplier), duration, turns, effects: this.augmented(held.id) ? { ...effects, radius: effects.radius * FROST_AUGMENT } : effects };
   }
   /** Necrotic Frost's turn: the fields' turns and its cooldown, if it is held and on. */
   frostTurn() {
@@ -280,8 +290,8 @@ export class ArcanaDesk {
   voidwellRule() {
     const held = this.held.find((h) => h.id === "voidwell" && this.isOn(h.id));
     if (!held) return undefined;
-    const [radius, duration, turns] = this.valuesOf(held);
-    return { radius, duration, turns };
+    const [base, duration, turns] = this.valuesOf(held);
+    return { radius: snap(base * relicFactor(this.save, "voidwell")), duration, turns };
   }
   /** An enemy Lifespring touched (an Effect Wave or the field) fell, by whatever
    * means, while it is on: it pays Health Bonus, and what its Gold and Cells are

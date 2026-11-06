@@ -87,11 +87,14 @@ export type Save = {
   /** Arcanite: a limited currency, kept between runs, spent on Arcana; bought
    * in the Shop's limited packs and won in tournaments. */
   arcanite: number;
+  /** The part of an Arcanite relics' Arcanite earned has added toward the
+   * next (economy/relic-effects.ts `relicArcanite`), from 0 to below 1. */
+  arcaniteCarry: number;
   /** The Arcana bought, and the choice waiting (arcana/arcana.ts). */
   arcana: ArcanaSave;
   /** Medals: a limited currency, kept between runs, paid by the weekly
    * mission rewards (missions/catalog.ts) and Events' missions
-   * (events/catalog.ts); nothing spends them yet. */
+   * (events/catalog.ts), spent in events' Stores (events/store.ts). */
   medals: number;
   /** Cells: dropped by Greater Bosses, kept between runs with their
    * fractions (a badge's scale can change a drop), spent on the Archives'
@@ -237,9 +240,11 @@ export type Save = {
   /** The Shrine Boons page's choices, kept between runs (shrines.ts). */
   shrines: ShrinesSave;
   /** The UI and Game themes owned (theme-collection.ts), each once, in
-   * catalog order: Medieval from the start, the rest earned. Each pays
-   * Gold for good. */
+   * catalog order, bought in events' Stores. Each pays Gold for good. */
   themes: ThemeId[];
+  /** The bonus tracks owned (events/music.ts), each once. Each pays Gold
+   * for good. */
+  music: string[];
   /** The player profile: when it was made and its lifetime tallies, the
    * currencies earned and Training and research done (save/profile.ts). */
   profile: Profile;

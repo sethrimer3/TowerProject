@@ -64,6 +64,7 @@ function bossCuts(player: Player, enemy: Enemy) {
  * without the charge and cuts, so taking a fight through it twice changes
  * nothing more. */
 export function squaredUp(player: Player, enemy: Enemy): { player: Player; enemy: Enemy; powered: boolean; opening: { takedown: boolean; tangle: boolean } | null } {
+  enemy = lessened(player, enemy);
   if (!player.powerStrike && !player.comboAttack && !player.beamAttack && !player.takedown && !player.tangle) return { player, enemy, powered: false, opening: null };
   const { powerStrike, comboAttack, beamAttack, takedown: _, tangle: __, ...rest } = player, cut = bossCuts(player, enemy), full = enemy.fullHp ?? enemy.hp;
   const charged = powerStrike ? snap(rest.attack * POWER_FACTOR) : rest.attack, combined = comboAttack ? snap((charged * (100 + comboAttack)) / 100) : charged;
@@ -78,6 +79,10 @@ export function squaredUp(player: Player, enemy: Enemy): { player: Player; enemy
     opening: cut ? { takedown: cut.hp > 0, tangle: cut.attack > 0 } : null,
   };
 }
+/** `enemy` with relics' boss ATK cut (`bossAttackCut`) taken off a boss's
+ * or Greater Boss's ATK; itself otherwise. */
+export const lessened = (player: Player, enemy: Enemy): Enemy =>
+  player.bossAttackCut && isBoss(enemy) ? { ...enemy, attack: snap((enemy.attack * (100 - Math.min(100, player.bossAttackCut))) / 100) } : enemy;
 /** Power Strike's ATK multiplier. */
 export const POWER_FACTOR = 2;
 /** The percent more ATK a Dash Combo gives a fight, per Combo. */
@@ -89,14 +94,16 @@ export const COMBO_TURNS = 2;
 /** `player` as it stands against `enemy`: its DEF and shroud raised by the
  * card trees' percents covering it (`foeDefense`, `foeShroud`, and HEART
  * DOOR's Shroud Growth, `doorShroud`), each added into one card factor, and the enemy cards' trees' Lifesteal Overheal
- * covering it added to ENEMY's (`foeStealOverheal`); itself when none
+ * covering it added to ENEMY's (`foeStealOverheal`), and relics' share of
+ * its shroud added to its DEF (`shroudGuard`); itself when none
  * does. Fights and enemy shots take the hero through it. */
 export function facing(player: Player, enemy: Enemy): Player {
   const defense = foeAttack(player.foeDefense, enemy), shroud = snap(foeAttack(player.foeShroud, enemy) + (player.doorShroud ?? 0)), steal = foeAttack(player.foeStealOverheal, enemy);
-  if (!defense && !(shroud && player.shroud) && !steal) return player;
+  const guard = player.shroudGuard ? snap(((player.fullShroud ?? player.shroud ?? 0) * player.shroudGuard) / 100) : 0;
+  if (!defense && !(shroud && player.shroud) && !steal && !guard) return player;
   return {
     ...player,
-    ...(defense ? { defense: snap((player.defense * (100 + defense)) / 100) } : {}),
+    ...(defense || guard ? { defense: snap((player.defense * (100 + defense)) / 100 + guard) } : {}),
     ...(shroud && player.shroud ? { shroud: snap((player.shroud * (100 + shroud)) / 100) } : {}),
     ...(steal ? { stealOverheal: snap((player.stealOverheal ?? 0) + steal) } : {}),
   };
@@ -624,7 +631,7 @@ function enemyBlow(s: BoutState, player: Player, thorn: number, revives?: Reviva
   const broke = onShield && !s.shield;
   s.heroHp = snap(Math.max(0, s.heroHp - taken));
   const rolled = !s.heroHp && !!revives?.(s.enemyStrikes), winged = !s.heroHp && !rolled && !!wings && !s.winged, revived = rolled || winged;
-  if (revived) s.heroHp = player.maxHp;
+  if (revived) s.heroHp = player.reviveOverheal ? snap((player.maxHp * (100 + player.reviveOverheal)) / 100) : player.maxHp;
   if (winged) s.winged = true;
   const smote = winged && wings!.smites;
   if (smote) s.enemyHp = 0;

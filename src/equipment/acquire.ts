@@ -22,9 +22,11 @@ const pick = <T>(list: readonly T[], roll: number) => list[Math.min(list.length 
  * `PITY` in a row without a Rare is a Rare), else the rarity rates, then
  * one of the category's Uniques evenly. A Rare resets the category's pity;
  * anything else adds one. */
-export function pullOne(e: EquipmentSave, category: CategoryId, rng: () => number) {
+export function pullOne(e: EquipmentSave, category: CategoryId, rng: () => number, rareMore = 0) {
   const pity = e.pity[category] + 1 >= PITY;
-  const rarity = pity ? "rare" : rollRarity(PULL_RATES, rng());
+  // Relics' `rareMore` percent moves from Common to Rare.
+  const rates = rareMore ? { ...PULL_RATES, common: PULL_RATES.common - rareMore, rare: PULL_RATES.rare + rareMore } : PULL_RATES;
+  const rarity = pity ? "rare" : rollRarity(rates, rng());
   const def = pick(uniquesOf(category), rng());
   e.pity[category] = rarity === "rare" ? 0 : e.pity[category] + 1;
   return { item: addItem(e, def.id, rarity)!, pity };
@@ -47,10 +49,10 @@ export function withSavedStream<T>(e: EquipmentSave, seed: () => number, draw: (
  * pull's category drawn evenly first), resolved in order (pity counts
  * through them, each category its own), carrying on the saved stream. The
  * caller makes sure there is room and has taken the Gems. */
-export function pull(e: EquipmentSave, category: CategoryId | "all", count: number, seed: () => number) {
+export function pull(e: EquipmentSave, category: CategoryId | "all", count: number, seed: () => number, rareMore = 0) {
   return withSavedStream(e, seed, (rng) => {
     const results: { item: EquipItem; pity: boolean }[] = [];
-    for (let i = 0; i < count; i++) results.push(pullOne(e, category === "all" ? pick(availableCategories(e), rng()) : category, rng));
+    for (let i = 0; i < count; i++) results.push(pullOne(e, category === "all" ? pick(availableCategories(e), rng()) : category, rng, rareMore));
     return results;
   });
 }

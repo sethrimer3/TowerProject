@@ -1,3 +1,4 @@
+import { relicFactor } from "./economy/relic-effects.ts";
 import { researched } from "./progression/archives.ts";
 import { isRecord, time } from "./save/decode.ts";
 import type { Save } from "./save/shape.ts";
@@ -90,7 +91,8 @@ export function arrive(save: Save, now: number, climbing: boolean): OfflineGrant
 /** What `awayMs` offline pays now. */
 export function offlineGrant(save: Save, awayMs: number): OfflineGrant {
   const capMs = researched(save.archives, "offlineGoldMinutes") * 60_000, rgph = recentGoldPerHour(save.offline);
-  const multiplier = researched(save.archives, "offlineGoldMultiplier");
+  // Relics raise the multiplier by their percent.
+  const multiplier = snap(researched(save.archives, "offlineGoldMultiplier") * relicFactor(save, "offlineGold"));
   const gold = Math.floor((rgph * (Math.min(awayMs, capMs) / HOUR_MS) * multiplier) / 1000);
   return { awayMs, capMs, rgph, multiplier, gold: snap(gold) };
 }

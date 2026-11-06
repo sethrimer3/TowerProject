@@ -3233,7 +3233,8 @@ nav button.notify[data-count]::after {
 .archivist-rush.short b,
 .training-finish.short span,
 .buy-trainer.short,
-.gem-buy.short .price { color: #ffb0a4; }
+.gem-buy.short .price,
+.store-buy.short b { color: #ffb0a4; }
 .deck-ghost {
   position: fixed;
   left: 0;
@@ -4966,6 +4967,25 @@ button.mission-bar.event-claim span { font-size: 12px; line-height: 20px; font-w
 @keyframes event-claim-glow { 50% { box-shadow: 0 0 8px 2px #ffd34d88; } }
 html.reduce-motion button.mission-bar.event-claim { animation: none; }
 .event-new { display: inline-block; margin-right: 6px; padding: 1px 4px; border-radius: 3px; font-size: 8px; letter-spacing: 1px; color: #10161f; background: #ffd34d; vertical-align: 2px; }
+/* The Events screen's tabs and its Store. */
+.event-tabs { margin: 0 0 12px; }
+.event-store-message:empty { display: none; }
+.event-store-message { margin: 0 0 8px; font-size: 12px; color: #ffb0a4; text-align: center; }
+.store-section { margin: 0 0 14px; }
+.store-section h3 { margin: 0 0 6px; font-size: 13px; letter-spacing: 1px; color: #ffe9a8; }
+.store-row { display: grid; grid-template-columns: repeat(var(--cols, 2), minmax(0, 1fr)); gap: 6px; margin: 0 0 6px; }
+.store-offer { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; padding: 8px 6px; border: 1px solid #d9a63266; border-radius: 8px; background: linear-gradient(180deg, #221a0c, #14100a); text-align: center; }
+.store-offer > small { font-size: 10px; color: #c9bfa6; overflow-wrap: anywhere; }
+.store-offer > b { font-size: 12px; font-weight: 500; color: #fff3cf; }
+.store-reward { display: inline-flex; align-items: center; gap: 4px; font-size: 14px; }
+.store-reward :is(.gem-icon, .arcanite-icon, .mat-icon) { width: 22px; height: 22px; }
+.store-offer :is(small, .store-owned) .gold-icon { width: 12px; height: 12px; vertical-align: -2px; }
+.store-buy { display: inline-flex; align-items: center; gap: 3px; min-height: 30px; padding: 4px 10px; border: 1px solid #d9a632; border-radius: 6px; background: #3a2a10; color: #fff; }
+.store-buy .medal-icon { width: 14px; height: 14px; }
+.store-owned { display: inline-flex; align-items: center; gap: 3px; min-height: 30px; font-size: 12px; color: #9fe39a; }
+.store-owned .check-icon { width: 14px; height: 14px; }
+.store-theme .theme-preview { max-width: 140px; }
+.theme-more { margin-top: 10px; }
 /* The Relics screen (relics-page.ts): a grid of the relics owned, and one
    raised to full size with rays and sparkles when pressed or hovered. */
 #relics .page-title { margin: 18px 44px 14px; text-align: center; }

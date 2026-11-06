@@ -1040,6 +1040,12 @@ try {
     await click("#event-boost-buy");
     await page.locator("#event-boost-message:not(:empty)").waitFor();
     await shot("events.boostRefused");
+    // The Store tab: its Currencies, the event's featured themes, and Music; a
+    // Gems box pressed, bought with the Medals held or refused short of them.
+    await click('#events [data-event-tab="store"]');
+    await shot("events.store");
+    await click('#events [data-store="currency:gems"]');
+    await shot("events.storeBuy");
     await click("#events-close");
     await menuClick("#relics-button");
     await shot("relics.empty");

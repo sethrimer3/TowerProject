@@ -217,6 +217,17 @@ export type Player = {
   /** The percent of max HP Lifesteal may heal the hero above it (ENEMY's
    * Lifesteal Overheal; none when absent). */
   stealOverheal?: number;
+  /** The percent of max HP above it Revive returns the hero with (relics;
+   * none when absent). */
+  reviveOverheal?: number;
+  /** The percent a boss's or Greater Boss's ATK is cut by in every fight
+   * and shot (relics; none when absent). */
+  bossAttackCut?: number;
+  /** The percent of the hero's shroud added to its DEF against every
+   * enemy strike (relics; none when absent), of `fullShroud` when a fight
+   * resumes with only the shroud left in `shroud`. */
+  shroudGuard?: number;
+  fullShroud?: number;
   /** The percent more shroud the hero holds against every enemy for the
    * rest of the run, grown by each Heart Door's drain paid (HEART DOOR's
    * Shroud Growth); absent without it. */

@@ -67,6 +67,7 @@ import { RunTimeline } from "./run-timeline.ts";
 import { shiftHero } from "./progression/hero-stats.ts";
 import { enemyTitle } from "./enemies/scaling.ts";
 import { snap } from "./exact.ts";
+import { relicAmount, relicCut, relicFactor } from "./economy/relic-effects.ts";
 import { enemyStat, keyCount, whole, wholeChange } from "./whole.ts";
 import { MODES, milestones, type ModeProfile } from "./modes.ts";
 import { ranksInRun, runTrainingBulk, runTrainingOffer, type RunTrainingOffer } from "./progression/run-training.ts";
@@ -190,7 +191,7 @@ const PERMANENT_TILES = new Set<Tile["kind"]>(["floor", "stairs", "oneway", "ope
 /** What DOOR's Secret Knock, Door Chest and the chest's kind roll a door
  * by, KEY's Locksmith, Master Key, Key Chest and its kind a key, and
  * ENEMY's Surprise Attack and FAST ENEMY's First Strike an enemy. */
-const SECRET_KNOCK_SALT = 0x3a57e, DOOR_CHEST_SALT = 0xd00c4, DOOR_CHEST_KIND_SALT = 0xd0c4d, DOUBLE_KEY_SALT = 0xd0b1e, MASTER_KEY_SALT = 0x3a5e7,
+const POTION_TWICE_SALT = 0x907ce, SECRET_KNOCK_SALT = 0x3a57e, DOOR_CHEST_SALT = 0xd00c4, DOOR_CHEST_KIND_SALT = 0xd0c4d, DOUBLE_KEY_SALT = 0xd0b1e, MASTER_KEY_SALT = 0x3a5e7,
   KEY_CHEST_SALT = 0x6c4e5, KEY_CHEST_KIND_SALT = 0x6c4d1, SURPRISE_SALT = 0x5a7c1, FIRST_STRIKE_SALT = 0xf1257, POWER_STRIKE_SALT = 0x907e5,
   CHEST_DOUBLE_SALT = 0xc4e02, CHEST_TRIPLE_SALT = 0xc4e03, CHEST_CELLS_SALT = 0xc4ec1, DRUID_KEY_SALT = 0xd401d;
 /** What each key colour's own Master Key (GOLD, BLUE and RED KEY's trees) rolls a key of it by. */
@@ -1399,11 +1400,12 @@ export class Game {
       this.run.doorOdds = { skeleton: Math.min(100, tree.skeletonKey), lockPick: Math.min(100, tree.lockPick), ...(tree.yellowTransmute ? { transmute: Math.min(100, tree.yellowTransmute) } : {}),
         ...(tree.woodTransmute ? { wood: Math.min(100, tree.woodTransmute) } : {}), ...(tree.heartLockPick ? { heartPick: Math.min(100, tree.heartLockPick) } : {}) };
     else delete this.run.doorOdds;
-    // CHEST's Treasure Floor makes a floor's shards and potions chests as it is generated.
-    if (tree.treasureFloor) this.run.treasureFloor = Math.min(100, tree.treasureFloor);
+    // CHEST's Treasure Floor (and relics) makes a floor's shards and potions chests as it is generated.
+    const treasure = snap(tree.treasureFloor + relicAmount(this.save, "treasureFloor"));
+    if (treasure) this.run.treasureFloor = Math.min(100, treasure);
     else delete this.run.treasureFloor;
-    // Golden Floor Chance research makes floors Golden Floors, fixed for the run.
-    const golden = this.save.upgrades.goldenFloors ? Math.min(100, researched(this.save.archives, "goldenFloorChance") / 10) : 0;
+    // Golden Floor Chance research (and relics) makes floors Golden Floors, fixed for the run.
+    const golden = this.save.upgrades.goldenFloors ? Math.min(100, snap(researched(this.save.archives, "goldenFloorChance") / 10 + relicAmount(this.save, "goldenFloor"))) : 0;
     if (golden) this.run.goldenFloor = golden;
     else delete this.run.goldenFloor;
     // The hero strikes the enemies each enemy card covers harder (its tree
@@ -1418,14 +1420,24 @@ export class Game {
     const defense = { ...foeStats(tree, "Defense"), ...(tree.foeDefense ? { monster: tree.foeDefense } : {}), ...(tree.bossDefense ? { torch: tree.bossDefense } : {}) };
     const shroud = { ...foeStats(tree, "Shroud"), ...(tree.shroud ? { monster: tree.shroud } : {}), ...(tree.bossShroud ? { torch: tree.bossShroud } : {}) };
     for (const [k, v] of [["foeAttack", foes], ["foeDefense", defense], ["foeShroud", shroud], ["foeCritChance", foeStats(tree, "CritChance")],
-      ["foeCritFactor", foeStats(tree, "CritFactor")], ["foeStealOverheal", foeStats(tree, "StealOverheal")]] as const) {
+      ["foeCritFactor", this.bossCrits(foeStats(tree, "CritFactor"))], ["foeStealOverheal", foeStats(tree, "StealOverheal")]] as const) {
       if (Object.keys(v).length) (p as Record<string, unknown>)[k] = v;
       else delete p[k];
     }
     if (tree.parry) p.cardParry = tree.parry;
     else delete p.cardParry;
-    if (tree.stealOverheal) p.stealOverheal = tree.stealOverheal;
+    const stealOverheal = snap(tree.stealOverheal + relicAmount(this.save, "lifestealOverheal"));
+    if (stealOverheal) p.stealOverheal = stealOverheal;
     else delete p.stealOverheal;
+    const reviveOverheal = relicAmount(this.save, "reviveHp");
+    if (reviveOverheal) p.reviveOverheal = reviveOverheal;
+    else delete p.reviveOverheal;
+    // Relics' boss ATK cut and shroud guard (combat.ts's `lessened`, `facing`).
+    for (const [k, effect] of [["bossAttackCut", "bossAttackCut"], ["shroudGuard", "shroudGuard"]] as const) {
+      const n = relicAmount(this.save, effect);
+      if (n) p[k] = n;
+      else delete p[k];
+    }
     // ATK UP's and DEF UP's Takedown and Tangle cut a boss as a fight with it
     // begins, TORCH's a Greater Boss, and BOSS ENEMY's both (combat.ts's `squaredUp`).
     const cuts = (boss: number, greaterBoss: number, both: number) => ({ ...(boss + both ? { boss: snap(boss + both) } : {}), ...(greaterBoss + both ? { greaterBoss: snap(greaterBoss + both) } : {}) });
@@ -1485,7 +1497,9 @@ export class Game {
   }
   /** The run's environment chances as they stand: what it fixed going inside, and Aurum Bloom's while it holds it on. */
   get environments() {
-    return withBloom(this.run, this.arcana.aurumBloom());
+    // Relics add to the Stellar Floor chance Aurum Bloom gives.
+    const bloom = this.arcana.aurumBloom(), stellar = relicAmount(this.save, "stellarFloor");
+    return withBloom(this.run, bloom && stellar ? { ...bloom, stellar: snap(bloom.stellar + stellar) } : bloom);
   }
   /** Whether the tile at (x, y) stands on a Golden Floor, as the board draws it. */
   goldenAt(x: number, y: number) {
@@ -1562,7 +1576,7 @@ export class Game {
     const keyFind = found.length ? { keyFind: Object.fromEntries(found) } : {};
     const overheal = this.overheal, shieldRegen = researched(this.save.archives, "shieldRegenPercent");
     return { potionHeal, percentPotion: trainedAmount(this.trainingNow, "potion"), regen, ...(overheal > 1000 ? { overheal } : {}), ...(shieldRegen ? { shieldRegen } : {}),
-      heartToll: researched(this.save.archives, "heartToll"), keyCost: this.keyCost, ...keyFind, ...(this.doorOff ? { doorOff: this.doorOff } : {}),
+      heartToll: snap(researched(this.save.archives, "heartToll") * relicCut(this.save, "heartDoor")), ...(relicAmount(this.save, "woodenDoor") ? { woodToll: snap(100 * relicCut(this.save, "woodenDoor")) } : {}), keyCost: this.keyCost, ...keyFind, ...(this.doorOff ? { doorOff: this.doorOff } : {}),
       ...(tree.doorHeal ? { doorHeal: tree.doorHeal } : {}), ...(tree.yellowLockHeal ? { yellowLockHeal: tree.yellowLockHeal } : {}), ...(tree.keyHeal ? { keyHeal: tree.keyHeal } : {}), ...(tree.keyOverheal ? { keyOverheal: tree.keyOverheal } : {}),
       ...Object.fromEntries(KEY_ORDER.flatMap((color) => (["KeyHeal", "KeyOverheal"] as const).flatMap((part) => (keyStat(tree, color, part) ? [[`${color}${part}`, keyStat(tree, color, part)]] : [])))),
       shardAttack: researched(this.save.archives, "shardAttackPercent") * boonFactor(this.run, "attack") * treeFactor(tree, "attackShard"),
@@ -1575,7 +1589,8 @@ export class Game {
    * Silver ranks counting, 1,000 until Overheal is owned), with the card
    * trees' Overheal Max added, skill or not. */
   get overheal() {
-    return treeOverheal(trainedAmount(this.trainingNow, "overheal"), this.treeBonus);
+    // Relics raise the ceiling by their percent of max HP.
+    return snap(treeOverheal(trainedAmount(this.trainingNow, "overheal"), this.treeBonus) + relicAmount(this.save, "overheal") * 10);
   }
   /** The most HP the hero may hold now: max HP, raised by Overheal. */
   get hpCeiling() {
@@ -1634,7 +1649,7 @@ export class Game {
   /** The upgrades owned and the Training ranks that count now: the hero's
    * own, and those this run bought with Silver. */
   private get trainingNow() {
-    return { upgrades: this.save.upgrades, training: ranksInRun(this.save, this.run) };
+    return { upgrades: this.save.upgrades, training: ranksInRun(this.save, this.run), relics: this.save.relics };
   }
   /** Silver spent on run training since the page loaded, so the purse's
    * Silver rate counts only what was found (not saved). */
@@ -2091,7 +2106,8 @@ export class Game {
   gainXp(enemy: Enemy, floor: number, scale = 1) {
     // Worn Equipment's XP Gain and the card trees' (ENEMY's, and the enemy cards' covering it, added up), each its own factor.
     const bonus = this.treeBonus, xp = tierXp(this.tier, xpForKill(enemy.strength, floor)), gain = this.worn.xpGain, tree = snap(bonus.killXp + foeStat(bonus, enemy, "KillXp"));
-    const raisedXp = gain || tree ? Math.round((xp * (100 + gain) * (100 + tree)) / 10_000) : xp;
+    // Relics' XP is its own factor too.
+    const relic = relicAmount(this.save, "xp"), raisedXp = gain || tree || relic ? Math.round((xp * (100 + gain) * (100 + tree) * (100 + relic)) / 1_000_000) : xp;
     this.addXp(scale === 1 ? raisedXp : Math.round(raisedXp * scale));
   }
   /** Adds `xp` to the hero's and the run's, raising the level-up burst
@@ -2109,7 +2125,8 @@ export class Game {
   /** Card `id` gains `xp` toward its levels, each level it reaches queued
    * for the hand's animation. Undo takes it back with the move. */
   gainCardXp(id: CardId, xp: number) {
-    for (const level of addCardXp(this.save.cardXp, id, xp, cardMaxLevel(this.save.cardBuys.opened, id))) this.cardLevelUps.push({ card: id, level });
+    const more = relicAmount(this.save, "cardXp"), gained = more ? Math.round((xp * (100 + more)) / 100) : xp;
+    for (const level of addCardXp(this.save.cardXp, id, gained, cardMaxLevel(this.save.cardBuys.opened, id))) this.cardLevelUps.push({ card: id, level });
   }
   /** `floors` new floors completed: each card of the hand that never
    * activates (`PASSIVE_CARDS`), or of the Manual hand, gains one XP a floor. */
@@ -2324,7 +2341,7 @@ export class Game {
       }
       return;
     }
-    if (torch) this.finds.pickupGold(null, { x, y });
+    if (torch) this.finds.pickupGold(null, { x, y }, 0, relicAmount(this.save, "torchGold"));
     if (t.kind === "reward") {
       this.run.changes[`${x},${y}`] = { kind: "openedChest", tier: t.tier };
       this.openAreaChest(t.tier);
@@ -2810,7 +2827,8 @@ export class Game {
    * CHEST's Double and Triple (both: six times over), and TORCH's Chest Cells. */
   chestRoll(x: number, y: number) {
     const tree = this.treeBonus;
-    const multiplier = (this.tileRolls(x, y, CHEST_DOUBLE_SALT, tree.chestDouble) ? 2 : 1) * (this.tileRolls(x, y, CHEST_TRIPLE_SALT, tree.chestTriple) ? 3 : 1);
+    const multiplier = (this.tileRolls(x, y, CHEST_DOUBLE_SALT, snap(tree.chestDouble + relicAmount(this.save, "chestDouble"))) ? 2 : 1)
+      * (this.tileRolls(x, y, CHEST_TRIPLE_SALT, snap(tree.chestTriple + relicAmount(this.save, "chestTriple"))) ? 3 : 1);
     return { multiplier, cells: this.tileRolls(x, y, CHEST_CELLS_SALT, tree.chestCells) };
   }
   /** What the door `t` just opened at (x, y) may leave: DOOR's Door Chest
@@ -2843,14 +2861,22 @@ export class Game {
     this.run.changes[`${x},${y}`] = { kind: "openedChest" };
     this.finds.treasure(x, y, chestKindAt({ kind: "treasure" }, x, y, this.floorSeed ^ kindSalt, this.run.chestOdds));
   }
+  /** The enemy cards' trees' Crit Factor percents by the enemies they cover,
+   * with relics' added for bosses and Greater Bosses (BOSS ENEMY's cover). */
+  private bossCrits<T extends Partial<Record<string, number>>>(factors: T): T {
+    const more = relicAmount(this.save, "bossCrit");
+    return more ? { ...factors, bossEnemy: snap((factors.bossEnemy ?? 0) + more) } : factors;
+  }
   /** The rules a step's lucky roll adds, or null: DOOR's Secret Knock (the
    * door cards' Gold Knock, Heart Knock and Wooden Lock Pick added, for
-   * their doors) opens a door for nothing, and KEY's Locksmith makes a key two. */
+   * their doors) opens a door for nothing, KEY's Locksmith makes a key two,
+   * and a relic's chance makes a potion heal twice. */
   private luckyStep(t: Tile, x: number, y: number): Partial<StepRules> | null {
     const tree = this.treeBonus;
     if (t.kind === "door" && this.tileRolls(x, y, SECRET_KNOCK_SALT, doorStat(tree, t, "Knock"))) return { freeDoor: true };
     // The key's colour's own Locksmith adds to KEY's, one roll.
     if (t.kind === "key" && this.tileRolls(x, y, DOUBLE_KEY_SALT, snap(tree.doubleKey + keyStat(tree, t.color!, "DoubleKey")))) return { doubleKey: true };
+    if (t.kind === "potion" && this.tileRolls(x, y, POTION_TWICE_SALT, relicAmount(this.save, "potionDouble"))) return { potionTwice: true };
     return null;
   }
   /** KEY's Master Key: the key just picked up at (x, y) may open every door

@@ -1,3 +1,4 @@
+import { relicAmount } from "../economy/relic-effects.ts";
 import { TRAINING, TRAINING_GROUPS, trainedAmount, type TrainingId } from "./training.ts";
 import { heldCards, type RunCore } from "../runs.ts";
 import type { Save } from "../save/shape.ts";
@@ -47,8 +48,8 @@ function candidates(save: Pick<Save, "training" | "upgrades" | "goals">, run: Pi
  * `factors` (STAIRS' card tree) multiply each group's chance, and
  * `chances` (HEAL's and DOOR's, in hundredths of a percent) add to it, so a group may
  * give a level with no ranks of its own. */
-export function rollFreeTraining(save: Pick<Save, "training" | "upgrades" | "goals">, run: Pick<RunCore, "seed" | "freeRolls" | "training" | "hand">, boonChance = 0, factors?: Record<FreeGroup, number>, chances?: Partial<Record<FreeGroup, number>>): TrainingId[] {
-  const now = { upgrades: save.upgrades, training: ranksInRun(save, run) };
+export function rollFreeTraining(save: Pick<Save, "training" | "upgrades" | "goals" | "relics">, run: Pick<RunCore, "seed" | "freeRolls" | "training" | "hand">, boonChance = 0, factors?: Record<FreeGroup, number>, chances?: Partial<Record<FreeGroup, number>>): TrainingId[] {
+  const now = { upgrades: save.upgrades, training: ranksInRun(save, run), relics: save.relics };
   const picked: TrainingId[] = [];
   for (const group of FREE_GROUPS) {
     // A run's Free Up Chance boons add to every group's chance, in hundredths of a percent.
@@ -56,7 +57,11 @@ export function rollFreeTraining(save: Pick<Save, "training" | "upgrades" | "goa
     if (!chance || draw(run, group) * 10_000 >= chance) continue;
     const rows = candidates(save, run, group);
     if (!rows.length) continue;
-    picked.push(rows[Math.floor(draw(run, group) * rows.length)]);
+    const row = rows[Math.floor(draw(run, group) * rows.length)];
+    picked.push(row);
+    // A relic's chance (freeDouble, economy/relic-effects.ts) gives the row a second level.
+    const twice = relicAmount(save, "freeDouble");
+    if (twice && draw(run, group) * 100 < twice) picked.push(row);
   }
   return picked;
 }

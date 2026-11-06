@@ -1,3 +1,4 @@
+import { relicFactor, type RelicHolder } from "./economy/relic-effects.ts";
 import { researched, type ArchivesSave } from "./progression/archives.ts";
 import type { Enemy, Tile } from "./entities.ts";
 import { snap } from "./exact.ts";
@@ -120,8 +121,9 @@ export type BoonEffects = Record<HeroFactor, number> & {
   foes: FoeRule;
 };
 
-/** What the boons read from the profile: the research done. */
-export type ShrineOwner = { archives: ArchivesSave };
+/** What the boons read from the profile: the research done, and the
+ * relics owned. */
+export type ShrineOwner = { archives: ArchivesSave } & RelicHolder;
 
 /** Whether Shrines are researched. */
 export const shrinesOpen = (o: ShrineOwner) => researched(o.archives, "shrines") > 0;
@@ -129,7 +131,7 @@ export const shrinesOpen = (o: ShrineOwner) => researched(o.archives, "shrines")
 const standardBonus = (o: ShrineOwner) => researched(o.archives, "standardBoonBonus");
 /** How strong a trade-off's benefit is: 1, and 1% more a level of Improve
  * Trade-off Boons. */
-const tradeoffStrength = (o: ShrineOwner) => 1 + researched(o.archives, "tradeoffBonus") / 100;
+const tradeoffStrength = (o: ShrineOwner) => (1 + researched(o.archives, "tradeoffBonus") / 100) * relicFactor(o, "shrineBoons");
 
 /** How many of each boon `picked` holds. */
 export function copies(picked: readonly BoonId[]) {
@@ -145,7 +147,8 @@ export function standardTotal(id: BoonId, count: number, o: ShrineOwner) {
   const def = boon(id);
   if (def.kind !== "standard") return 0;
   if (!count) return def.math === "multiply" ? 1 : 0;
-  const bonus = 1 + standardBonus(o) / 100;
+  // Relics' Shrine boon benefits are their own factor on the bonus.
+  const bonus = (1 + standardBonus(o) / 100) * relicFactor(o, "shrineBoons");
   return def.math === "multiply" ? (1 + def.value * count) * bonus : def.value * count * bonus;
 }
 

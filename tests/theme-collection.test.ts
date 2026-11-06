@@ -4,40 +4,29 @@ import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save/save.ts";
 import { decodeSettings } from "../src/save/settings.ts";
 import { goldMultipliers, goldMultiplierTotal } from "../src/economy/gold-multipliers.ts";
-import { THEME_IDS, THEME_PRICE, canBuyTheme, gameLook, themeGoldFactor, themesOf, uiLook } from "../src/theme-collection.ts";
+import { THEME_GOLD_PER_MILLE, THEME_IDS, TRACK_GOLD_PER_MILLE, collectionGoldFactor, gameLook, grantTheme, themesOf, uiLook } from "../src/theme-collection.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 
-test("a new hero owns the Medieval UI theme and wears it, on the Classic board", () => {
+test("a new hero owns no theme and wears Classic, page and board", () => {
   const save = defaults();
-  assert.deepEqual(save.themes, ["medievalUi"]);
-  assert.equal(uiLook(save), "medieval");
+  assert.deepEqual(save.themes, []);
+  assert.equal(uiLook(save), "classic");
   assert.equal(gameLook(save), "classic");
 });
 
-test("Neon, Terminal, Desktop, Glyph, Ember, Yang, Yin, Shiro, Kuro, Arcade, System, Orbit, Pixel, Doodle and Murk are each a UI theme and a Game theme, each bought on its own for 1 Gold", () => {
-  assert.deepEqual(themesOf("ui"), ["medievalUi", "neonUi", "terminalUi", "desktopUi", "glyphUi", "emberUi", "yangUi", "yinUi", "shiroUi", "kuroUi", "arcadeUi", "systemUi", "orbitUi", "pixelUi", "doodleUi", "murkUi"]);
-  assert.deepEqual(themesOf("game"), ["neonGame", "terminalGame", "desktopGame", "glyphGame", "emberGame", "yangGame", "yinGame", "shiroGame", "kuroGame", "arcadeGame", "systemGame", "krozGame", "orbitGame", "pixelGame", "doodleGame", "murkGame"]);
-  assert.deepEqual(THEME_PRICE, { currency: "gold", amount: 1 });
+test("every theme but Classic is a UI or Game theme, earned only in an event's Store", () => {
+  assert.ok(themesOf("ui").includes("medievalUi"), "Medieval is one to earn");
+  assert.equal(themesOf("ui").length + themesOf("game").length, THEME_IDS.length);
   const save = defaults();
   save.tower.reached = 1000;
   save.delve.reached = 1000;
   const g = new Game(save);
   assert.deepEqual(g.themes.claim(), [], "climbing earns none");
-  save.gold = 0;
-  assert.equal(canBuyTheme(save, "neonUi"), false, "no Gold");
-  assert.equal(g.themes.buy("neonUi"), false);
-  save.gold = 2.5;
-  assert.ok(g.themes.buy("systemGame"));
-  assert.equal(save.gold, 1.5, "1 Gold paid");
-  assert.ok(g.themes.buy("neonUi"));
-  assert.deepEqual(save.themes, ["medievalUi", "neonUi", "systemGame"], "kept in catalog order");
-  assert.equal(g.themes.buy("neonUi"), false, "each is bought once");
-  assert.equal(g.themes.buy("medievalUi"), false, "Medieval is owned from the start");
-  assert.equal(save.gold, 0.5);
-  assert.equal(g.themes.buy("terminalUi"), false, "short of 1 Gold");
-  save.settings.freePurchases = true;
-  assert.ok(g.themes.buy("terminalUi"), "free purchases pay nothing");
-  assert.equal(save.gold, 0.5);
+  assert.equal("buy" in g.themes, false, "the Themes page sells none");
+  grantTheme(save, "systemGame");
+  grantTheme(save, "neonUi");
+  grantTheme(save, "neonUi");
+  assert.deepEqual(save.themes, ["neonUi", "systemGame"], "each once, in catalog order");
 });
 
 test("Dev mode owns every theme", () => {
@@ -45,7 +34,7 @@ test("Dev mode owns every theme", () => {
   const g = new Game(save);
   g.setDevMode(true);
   const fresh = g.themes.claim();
-  assert.deepEqual(fresh, THEME_IDS.filter((id) => id !== "medievalUi"), "each announced once");
+  assert.deepEqual(fresh, THEME_IDS, "each announced once");
   assert.deepEqual(save.themes, THEME_IDS);
   assert.deepEqual(g.themes.claim(), []);
   assert.equal(new Game(defaults()).themes.claim().length, 0, "none without Dev mode");
@@ -55,7 +44,7 @@ test("the Terminal UI theme is worn once owned", () => {
   const save = defaults();
   const g = new Game(save);
   assert.equal(g.themes.wear("ui", "terminal"), false, "not owned yet");
-  assert.equal(uiLook(save), "medieval");
+  assert.equal(uiLook(save), "classic");
   save.themes.push("terminalUi");
   assert.ok(g.themes.wear("ui", "terminal"));
   assert.equal(uiLook(save), "terminal");
@@ -110,15 +99,20 @@ test("a theme chosen but not owned shows Classic until it is bought", () => {
   assert.equal(gameLook(save), "neon");
 });
 
-test("each theme owned adds 2.5% to all Gold banked", () => {
+test("the Event Collection: each UI theme, Game theme and bonus track owned adds its share to all Gold banked", () => {
   const save = defaults();
-  assert.equal(themeGoldFactor(save), 1.025);
+  const collection = (s: typeof save) => goldMultipliers({ save: s, mode: "tower", tier: 1, now: 0 }).find((m) => m.id === "collection")!;
+  assert.equal(collection(save).factor, null, "none owned: Inactive");
+  save.themes = ["neonUi", "neonGame"];
+  const both = (1000 + THEME_GOLD_PER_MILLE.ui + THEME_GOLD_PER_MILLE.game) / 1000;
+  assert.equal(collectionGoldFactor(save), both);
+  assert.deepEqual(collection(save), { id: "collection", name: "Event Collection", factor: both });
+  save.music = ["track"];
+  assert.equal(collectionGoldFactor(save), (1000 + THEME_GOLD_PER_MILLE.ui + THEME_GOLD_PER_MILLE.game + TRACK_GOLD_PER_MILLE) / 1000, "a track's share adds in");
+  save.music = [];
   save.themes = [...THEME_IDS];
-  assert.equal(themeGoldFactor(save), 1.8);
-  const themes = (s: typeof save) => goldMultipliers({ save: s, mode: "tower", tier: 1, now: 0 }).find((m) => m.id === "themes")!;
-  assert.deepEqual(themes(save), { id: "themes", name: "Themes owned (32)", factor: 1.8 });
-  assert.equal(goldMultiplierTotal(goldMultipliers({ save, mode: "tower", tier: 1, now: 0 })), 1.8);
-  assert.equal(themes({ ...save, themes: [] }).factor, null, "none owned: Inactive");
+  const all = collectionGoldFactor(save);
+  assert.equal(goldMultiplierTotal(goldMultipliers({ save, mode: "tower", tier: 1, now: 0 })), all);
 
   // Banking: a kill's Gold with no theme and with all of them.
   const killGold = (themes: typeof save.themes) => {
@@ -131,22 +125,22 @@ test("each theme owned adds 2.5% to all Gold banked", () => {
     assert.ok(g.move(1, 0));
     return g.save.gold - before;
   };
-  const none = killGold([]), all = killGold([...THEME_IDS]);
+  const none = killGold([]), owned = killGold([...THEME_IDS]);
   assert.ok(none > 0);
-  assert.ok(Math.abs(all - none * 1.8) < 1e-9, `${all} is ${none} × 1.8`);
+  assert.ok(Math.abs(owned - none * all) < 1e-9, `${owned} is ${none} × ${all}`);
 });
 
-test("saves keep their themes, always with Medieval", () => {
+test("saves keep their themes", () => {
   const save = defaults();
   save.themes = ["medievalUi", "neonGame"];
   assert.deepEqual(decode(JSON.stringify(save)).themes, ["medievalUi", "neonGame"]);
   const raw = JSON.parse(JSON.stringify(save));
   raw.themes = ["neonGame", "bogus", "neonGame"];
-  assert.deepEqual(decode(JSON.stringify(raw)).themes, ["medievalUi", "neonGame"]);
+  assert.deepEqual(decode(JSON.stringify(raw)).themes, ["neonGame"]);
   delete raw.themes;
-  assert.deepEqual(decode(JSON.stringify(raw)).themes, ["medievalUi"], "an old save gets Medieval");
+  assert.deepEqual(decode(JSON.stringify(raw)).themes, [], "none without");
 });
 
-test("a new save starts in Medieval", () => {
-  assert.equal(decodeSettings({}).uiTheme, "medieval");
+test("a new save starts in Classic", () => {
+  assert.equal(decodeSettings({}).uiTheme, "classic");
 });

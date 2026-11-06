@@ -212,12 +212,13 @@ The walk in through the entrance (`Game.walkIn`, set only when `Game.animatesEnt
 `tests/outside.test.ts` covers its turns.
 
 **Themes** come in two kinds (`src/theme-collection.ts`, `THEMES`): a UI theme dresses the page around the board (setting `uiTheme`: `classic`, `medieval`, `neon`, `terminal`, `desktop`, `glyph`, `ember`, `yang`, `yin`, `shiro`, `kuro`, `arcade`, `system`, `orbit`, `pixel`, `doodle` or `murk`), a Game theme redraws the board itself, its tiles, hero, enemies and torches (setting `gameTheme`: `classic`, `neon`, `terminal`, `desktop`, `glyph`, `ember`, `yang`, `yin`, `shiro`, `kuro`, `arcade`, `system`, `kroz`, `orbit`, `pixel`, `doodle` or `murk`).
-Classic is each kind's free look; every other theme is owned once bought (`save.themes`, `decodeThemes`): Medieval (UI) from the start (`starting`), every other for `THEME_PRICE`, 1 Gold, the one price for all in one currency (`CurrencyId`, spent through `CURRENCIES`), so moving themes to another currency is that line.
-`game.themes.buy` (`ThemeDesk`, `game/theme-desk.ts`) (`buyTheme`, `canBuyTheme`) pays it, nothing with free purchases on.
+Classic is each kind's free look; every other theme is owned once bought in an event's Store (`save.themes`, `decodeThemes`, `grantTheme`; events/store.ts, see docs/EVENTS.md), and a new hero owns none.
 In Dev mode every theme is owned: `game.themes.claim`, run by `main.ts`'s `update`, gives the ones not owned yet (`grantAllThemes`) and announces each with a toast (`themeToast` in `ui/theme-menu.ts`); without Dev mode it gives none.
-Each theme owned adds 2.5% to all Gold banked (`themeGoldFactor`, in `RunPurse.gold` and the Gold bonuses' list).
+Each theme owned adds its kind's share to the Event Collection's Gold (`THEME_GOLD_PER_MILLE`: a UI theme 1%, a Game theme 2%, beside the bonus tracks' `TRACK_GOLD_PER_MILLE`, `collectionGoldFactor`, in `RunPurse.gold` and the Gold bonuses' list).
+The Settings page's theme menus (`ui/theme-menu.ts`) show Classic and the themes owned, and say more come from events' Stores.
+A theme added later gives its `since` day, so it joins the Stores' rotation from then on without changing what earlier events featured.
 The look worn is `uiLook` / `gameLook`: the chosen one while owned, else Classic, so an old save that chose Neon before owning it shows Classic until it does.
-A new hero starts in Medieval.
+A new hero starts in Classic.
 The Settings page's UI Themes and Game Themes buttons open each kind's menu (`ui/theme-menu.ts`, `renderThemeMenu`, drawn into the Settings page): a card per choice with its preview (`public/assets/themes/<kind>-<look>.png`, screenshots of the game in that look), name, Gold, and Equip (`game.themes.wear`), Equipped, or Buy with the price as the currency's icon and amount (disabled while short of it); `tests/theme-collection.test.ts` covers buying, Dev mode, ownership and the Gold.
 
 **Medieval UI theme** is ported from the TowerDefense repo: `src/medieval.css` is its `theme.css` with every selector scoped under `html.medieval` (regenerate by re-scoping, never hand-edit selectors unscoped), loaded after `style.css`, with textures in `assets/theme/`.

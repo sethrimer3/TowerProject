@@ -244,7 +244,8 @@ export class FightPlayback<S extends FoughtStep> {
       shroud = snap(Math.max(0, shroud - (s.shrouded ?? 0)));
       shield = snap(Math.max(0, shield - (s.shielded ?? 0)));
     }
-    fight.bout = resume(fight.bout, from, { player: { ...this.host.fighterAt(fight.to), hp, shroud, ...(p.shield === undefined ? {} : { shield }) }, enemy: fight.enemy, revives: this.revival(fight.to), crits: this.critRolls(fight.to, fight.enemy), wings: this.host.wingsFor(fight.enemy) });
+    const fighter = this.host.fighterAt(fight.to);
+    fight.bout = resume(fight.bout, from, { player: { ...fighter, hp, shroud, ...(fighter.shroudGuard ? { fullShroud: fighter.shroud ?? 0 } : {}), ...(p.shield === undefined ? {} : { shield }) }, enemy: fight.enemy, revives: this.revival(fight.to), crits: this.critRolls(fight.to, fight.enemy), wings: this.host.wingsFor(fight.enemy) });
     this.showRevivals(fight.start, fight.bout);
     this.showBreak(fight.start, fight.bout);
     this.restate(fight.outcome, fight.bout);

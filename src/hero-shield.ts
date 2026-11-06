@@ -1,4 +1,5 @@
 import { snap } from "./exact.ts";
+import { relicCut } from "./economy/relic-effects.ts";
 import { researched } from "./progression/archives.ts";
 import { ranksInRun } from "./progression/run-training.ts";
 import { regrowTurns, trainedAmount, type TrainingId } from "./progression/training.ts";
@@ -9,12 +10,12 @@ type Ranks = Partial<Record<TrainingId, number>>;
 
 /** The most HP the Aether Shield holds for a hero of `maxHp`: Shield HP's share
  * of it (kept in tenths of a percent), times its research. */
-export const shieldCapacity = (save: Pick<Save, "upgrades" | "archives">, ranks: Ranks, maxHp: number) =>
-  snap((maxHp * trainedAmount({ upgrades: save.upgrades, training: ranks }, "shieldHp") * researched(save.archives, "shieldHpPercent")) / 100_000);
+export const shieldCapacity = (save: Pick<Save, "upgrades" | "archives" | "relics">, ranks: Ranks, maxHp: number) =>
+  snap((maxHp * trainedAmount({ upgrades: save.upgrades, training: ranks, relics: save.relics }, "shieldHp") * researched(save.archives, "shieldHpPercent")) / 100_000);
 
 /** The turns a shield breaking now would take to regrow. */
-export const regrowNow = (save: Pick<Save, "upgrades" | "archives">, ranks: Ranks) =>
-  regrowTurns(trainedAmount({ upgrades: save.upgrades, training: ranks }, "regrowShield"), researched(save.archives, "regrowTurns"));
+export const regrowNow = (save: Pick<Save, "upgrades" | "archives" | "relics">, ranks: Ranks) =>
+  Math.max(1, Math.round(regrowTurns(trainedAmount({ upgrades: save.upgrades, training: ranks }, "regrowShield"), researched(save.archives, "regrowTurns")) * relicCut(save, "shieldRegrow")));
 
 /** Brings `run`'s shield up to what is owned now: its first shield comes full,
  * more capacity comes with the shield to fill it (unless it is down), and less

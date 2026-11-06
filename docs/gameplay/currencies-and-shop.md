@@ -28,12 +28,14 @@ Undo never brings a collected Gem back or takes one away.
 Under the currencies, in the forest and inside a run, in the Tower and the Delve alike, a Gem button offers **7 Gems**, marked Claim (for watching an ad, once ads are hooked up; for now pressing it pays them, in a burst of blue glints); it hides once claimed and comes back 10 minutes later.
 Inside a run a **×1.5 Gold** ad button stands beside it: each claim (again, no ad plays yet) stores 20 minutes of real time in which all Gold found is multiplied by 1.5, claimable again and again up to two hours stored (the button closes while it holds more than an hour and fifty minutes); while it lasts the button glows and shows the time left, and with none stored it reads *Inactive*.
 Permanent Ad-Disable's ×1.5 Gold takes the same slot: while the boost runs, the boost counts instead, so the two never stack.
-Inside a run the height column shows every Gold multiplier multiplied together, and pressing it lists them in the *All Gold Bonuses* box: the tower's, the ads' slot, each Coin Pack, the themes owned, the equipment's Gold found, the Shrine boons and, once Golden Floors is owned, the Golden Floor line (the hero's floor's [Golden Floor Multiplier](environments.md#golden-floor), Inactive off one); every Gold the run banks is what it found times that total.
+Inside a run the height column shows every Gold multiplier multiplied together, and pressing it lists them in the *All Gold Bonuses* box: the tower's, the ads' slot, each Coin Pack, the Event Collection, the equipment's Gold found, the Shrine boons and, once Golden Floors is owned, the Golden Floor line (the hero's floor's [Golden Floor Multiplier](environments.md#golden-floor), Inactive off one); every Gold the run banks is what it found times that total.
 When the boost ran during a run, its end dialog adds a line for it, such as *50 Gold × 1.5 boost = 75 Gold*.
 
 ## Themes
 
-Settings' UI Themes and Game Themes menus sell every theme but Medieval (owned from the start) for **1 Gold** each, bought with the Buy button on its card; each theme owned adds 2.5% to all Gold banked for good, worn or not.
+Themes are bought only in the Store of limited-time [Events](../EVENTS.md#the-store), each event featuring one UI theme (250 Medals) and one Game theme (450 Medals); Classic is every hero's from the start.
+Each theme owned adds to all Gold banked for good, worn or not: a UI theme +1%, a Game theme +2%, in the *Event Collection* line with the bonus tracks' +0.8% each.
+Settings' UI Themes and Game Themes menus show Classic and the themes owned, to wear.
 Dev mode owns every theme.
 
 ## Offline Gold

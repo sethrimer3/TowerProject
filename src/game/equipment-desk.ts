@@ -1,3 +1,4 @@
+import { relicAmount } from "../economy/relic-effects.ts";
 import type { Mode } from "../entities.ts";
 import { stream } from "../random.ts";
 import { CRAFT_MATERIAL, EQUIP_RARITIES, pullGems, type PullCount } from "../equipment/balance.ts";
@@ -165,7 +166,7 @@ export class EquipmentDesk {
     const all = category === "all", refusal = this.pullRefusal(count, all);
     if (refusal) return refusal;
     if (!this.host.free) this.save.gems -= pullGems(count, all);
-    const pulled: Pulled[] = pull(this.e, category, count, stream("equipment"));
+    const pulled: Pulled[] = pull(this.e, category, count, stream("equipment"), relicAmount(this.host.save, "rarePull"));
     this.host.eventDone("equipment", pulled.length);
     if (!this.e.autoSalvage) return pulled;
     const commons = pulled.filter((p) => p.item.rarity === "common");

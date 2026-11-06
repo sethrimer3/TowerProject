@@ -1,6 +1,6 @@
 # Events
 
-Status: **built, on a stand-in server** (`src/events/`, `src/economy/relics.ts`, `game/event-desk.ts`, `ui/events-page.ts`, `ui/relics-page.ts`, `tests/events.test.ts`).
+Status: **built, on a stand-in server** (`src/events/`, `src/economy/relics.ts`, `relic-catalog.ts`, `relic-effects.ts`, `game/event-desk.ts`, `ui/events-page.ts`, `ui/relics-page.ts`, `tests/events.test.ts`, `tests/event-store.test.ts`).
 Events are fortnightly sets of challenges whose missions pay **Medals**; the Medals an event pays count toward its **relics**, unique keepsakes that each give a permanent bonus.
 Events open by claiming Tower I's floor 70 Goal (the `events` `GoalUnlock`); nothing counts before then.
 
@@ -12,6 +12,17 @@ Events open by claiming Tower I's floor 70 Goal (the `events` `GoalUnlock`); not
   The last 6 days bring none, leaving time to finish them.
 - Missions stay until the event ends; a new event starts over with new missions (Medals already claimed are kept).
 - A player who opens Events mid-event gets the missions released so far.
+
+## Themes
+
+Every event wears a theme, by the calendar (`events/themes.ts`), which names it.
+Each year opens with **New Year**, the event holding 1 January, and the rest follow in this order, one an event, the same every year:
+
+New Year, Blizzard, Lunar New Year, Heartbloom, Aurora, Spring Rain, Jester's Revel, Dragon's Hatchery, Cherry Blossom, Honeycomb, Fairy Ring, Sunken Kingdom, Midsummer, Ember, Sandstorm, Neon, Orbit, Tempest, Crystal Caverns, Autumn Wood, Spider's Lair, Haunted Keep, Arcade, Harvest Feast, Wizard's Tower, Longest Night.
+
+- 26 fortnights make 364 days, so about one year in seven holds a 27th event: the rare **Blue Moon**, just before the next New Year, its relics twice as strong.
+- A holiday's event holds its day in most years, a few days either side in the rest.
+- The first public event is New Year 2027, from 28 December 2026; events before it count back through the cycle, so none is ever without a theme.
 
 ## Missions
 
@@ -63,11 +74,11 @@ The rest are drawn among (`DRAWN_MISSIONS`):
 The event server will say each event's name, banner, missions and the day each is released, and the relics its milestones give (`TODO(server)` at `stubEvent` in `events/catalog.ts`).
 Until then:
 
-- Each event is named by its first day: *Event of 5 Oct 2026*.
+- Each event is named by its theme on the calendar.
 - Missions are drawn at random from the table above (`EventDesk.release`), each kind at most once an event, from a stream saved with the profile (`save.events.rng`, seeded once from `stream("events")`), so a reload never redraws them.
 - Only what the player can work on now is drawn: strong and elite enemies once their first floor is reached (as the daily missions do), Equipment and merging once Equipment is open, critical hits with Critical, free upgrades with Free Training, max Interest with Interest.
   With 16 kinds to draw from and 17 places to fill, an event can't hold all 21 yet, and a player with fewer kinds open gets fewer; a place left empty fills as soon as a kind opens.
-- The relics are placeholders (`STUB_MILESTONES`, `relic: null`) and join no one's relics.
+- Its milestones give its theme's relics (`STUB_MILESTONES`, `trackRelics`).
 
 ## Relics and the track
 
@@ -81,8 +92,17 @@ Reaching a milestone wins its relic at once, without spending anything:
 | 700 Medals | Relic 2 (epic) |
 | 1,100 Medals | Premium relic 2 (epic), Event Booster only |
 
-Relics won are kept for good in `save.relics` (`economy/relics.ts`: `RELICS`, each a name, rarity and bonus; each owned at most once).
-**TODO:** no relic is defined yet; relics, their bonuses (such as +2% ATK or +5% Max HP) and their sprites come in a later task, and `grantRelics` will hand them out from the server's milestones.
+Relics won are kept for good in `save.relics` (each owned at most once).
+Every event theme has four relics: two free and two premium, the second of each pair the stronger.
+Their names, what each raises and by how much are all in one place, `economy/relic-catalog.ts` (`RELIC_SETS`), by theme and the year a set begins: a later year can bring a theme new relics by adding a set, the earlier ones staying owned.
+Saves keep a relic's id (`<theme>.<year>.<place>`), so names, stats and amounts can be changed freely.
+A theme can also sell relics in its event's Store (`STORE_RELICS`, none yet).
+
+- **Free relics** raise a Training row's value by their percent: the relics on one row add into one factor, which multiplies everything else on it, so +1% on a 50% stat makes it 50.5%, and a stat can go past what training alone reaches.
+  On a row read as a multiplier (Gold Bonus' ×1.5), the bonus over ×1 grows (×1.505).
+- **Premium relics** give what training can't: a stat past its cap (Super Critical Chance, Parry, Lifesteal, Multishot Targets), chances (Golden, Treasure and Stellar Floors, a chest's Double or Triple, a potion healing twice, a second free upgrade), cuts (Heart Doors' drain, Wooden Doors' toll, a boss's ATK, Training's cost) or more of something (Arcana, Overheal, Revive's HP, Interest's cap, research and trainer speed, materials, XP, Arcanite).
+  Their texts and where each applies are in `economy/relic-effects.ts` (`RELIC_SPECIALS`); a boss's ATK cut and the shroud's share on later strikes count in every fight's prediction and its playback alike.
+- A relic's Gold Bonus is its own factor, apart from the Event Collection's.
 
 ## The Event Booster
 
@@ -95,17 +115,31 @@ A Shop offer (`eventBoost`, $9.99, sku `event_booster`, sold on the Events page,
 It is real money: until the store is connected it is granted only in Dev mode or with free purchases.
 The events boosted are kept by Erase All (`save.events.boosted`), since they were paid for.
 
+## The Store
+
+The Events screen has two tabs: **Missions** (the relic track, the booster and the missions) and **Store**, which sells for Medals (`events/store.ts`):
+
+- **Currencies**: 150 Gems and 15 Arcanite on one row, 40 Medals each; then one box an Equipment supply, 250 for 30 Medals.
+  Each bought raises its price (25 Medals for Gems and Arcanite, 5 for a supply), until the next event starts every price over (`save.events.bought`).
+- **Themes**: one UI theme (250 Medals) and one Game theme (450 Medals), each bought once for good, adding +1% and +2% to all Gold banked (the *Event Collection*).
+  An event named as a theme features that theme, and no other event does; the others take turns, each kind on its own, one an event.
+  A theme added later joins the turns from its `since` day on, leaving what earlier events featured as it was.
+- **Music**: bonus tracks, sold in every event, each joining the play sequence for good and adding +0.8% to all Gold banked (`events/music.ts`).
+  None yet: the section reads *Come back in the future for new songs!*
+- Classic, each kind's free look, is every hero's from the start and pays nothing.
+- A price short of Medals turns red; pressing it says the missions pay more.
+
 ## Screens
 
 - **Events button** (`#events-button`, a pennant, `eventIcon` in `ui/dom.ts`): the time the event has left (*7d20h*), with a dot while a mission is new to the Events screen, has a tier to claim, or is finished and hasn't been seen moved under the rest (`EventDesk.waiting`).
   In the forest it stands in the actions column under the Tournament's; inside a run, in the run's menu.
-- **Events screen** (`ui/events-page.ts`): an X back to the page that opened it; the currencies bar over it, as over the Upgrades page; the banner (the event's name over a placeholder pennant) and the days and hours left; the relic track (a bar filling with the Medals toward the relics, to the last milestone, and reading the Medals won, its free relics above and its Event Boost relics below, each row named on its left, each relic lit and checked once won, a premium one locked without the booster); the booster's offer, or that it is active; how many missions are out and when the next come; then the missions.
+- **Events screen** (`ui/events-page.ts`): an X back to the page that opened it; the currencies bar over it, as over the Upgrades page; the banner (the event's name over a placeholder pennant) and the days and hours left; the Missions and Store tabs (see The Store above), Missions first each time the screen opens, holding the relic track (a bar filling with the Medals toward the relics, to the last milestone, and reading the Medals won, its free relics above and its Event Boost relics below, each row named on its left, each relic lit and checked once won, a premium one locked without the booster); the booster's offer, or that it is active; how many missions are out and when the next come; then the missions.
   Each mission shows what its next tier to claim asks, *X/3* (the tiers claimed) and the Medals that tier pays (doubled once boosted) at the right of its name, and its bar; new ones wear *NEW*.
   Once a tier is done, the mission's border and bar turn gold and the bar reads *Claim* followed by that tier's Medals and the Medal icon (shown there instead of beside the tier count); pressing it pays them, flying from the bar to the Medals in the banner, which count them as they land (`flyToPurse`), nothing to press away, and the mission already shows its next tier, *Claim* again if that one is done too.
   A mission whose third tier is claimed stays where it is for 2 seconds, then slides under the rest (`save.events.moved`).
 - **Relics button** (`#relics-button`) in the forest's menu, once Events are open, opens the **Relics screen** (`ui/relics-page.ts`): every relic won, small, in a grid.
   Pressing one, or a mouse resting on it, raises it to the middle of the screen at full size with golden rays and sparkles, its rarity and bonus written under it.
-  Dev mode adds two placeholder relics, so the screen can be seen before any relic exists.
+  Dev mode adds New Year's relics as placeholders, so the screen can be seen before any relic is won.
 
 ### The forest's menu
 
@@ -115,5 +149,5 @@ Inside a run the menu holds Settings, Research, the Tournament's (once entered),
 ## Future
 
 - The event server: each event's missions, their release days, banner and relics.
-- Relic definitions, bonuses and sprites, and their bonuses applied.
-- Ways to spend Medals.
+- Relic sprites of their own.
+- The bonus tracks, and the music that plays them.

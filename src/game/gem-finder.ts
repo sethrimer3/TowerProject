@@ -1,3 +1,4 @@
+import { relicFactor } from "../economy/relic-effects.ts";
 import type { Board } from "../board.ts";
 import { VIEWPORT_TILES } from "../config.ts";
 import type { Mode } from "../entities.ts";
@@ -71,7 +72,7 @@ export class GemFinder {
     save.gems++;
     earn(save, "gems", 1);
     save[this.host.mode].runFinds.gems++;
-    collectedGem(save.gemDrop, this.host.clock());
+    collectedGem(save.gemDrop, this.host.clock(), relicFactor(save, "floorGems"));
     this.host.eventDone("floatingGems", 1);
     this.sparkle = { x: gem.x, y: gem.y, at: performance.now() };
     this.host.gain(gem.x, gem.y, "+1 Gem", { gem: true });

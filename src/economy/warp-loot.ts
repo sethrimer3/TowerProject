@@ -1,3 +1,4 @@
+import { relicFactor } from "./relic-effects.ts";
 import { TOWER_SECTION } from "../config.ts";
 import { silverForKill } from "./kill-pay.ts";
 import { trainedAmount } from "../progression/training.ts";
@@ -39,10 +40,10 @@ export function floorKillSilver(depth: number, tower: number) {
  * `held` (the Pocket Money the run starts with), up to Max Interest, then
  * times Gold Bonus.
  * Shrine boons are left out: a run starts with none. */
-export function skippedSilver(save: Pick<Save, "upgrades" | "training" | "archives" | "equipment">, tower: number, floors: number, held = 0) {
+export function skippedSilver(save: Pick<Save, "upgrades" | "training" | "archives" | "equipment" | "relics">, tower: number, floors: number, held = 0) {
   const found = silverFound(save, "tower", save.training.silverBonus ?? 0);
   const perFloor = (trainedAmount(save, "floorSilver") * researched(save.archives, "floorSilver")) / 100;
-  const rate = researched(save.archives, "interestRate"), cap = researched(save.archives, "interestCap");
+  const rate = researched(save.archives, "interestRate"), cap = researched(save.archives, "interestCap") * relicFactor(save, "maxInterest");
   const bonus = (trainedAmount(save, "goldBonus") * researched(save.archives, "goldBonus")) / 10_000;
   let silver = held;
   for (let depth = 0; depth < floors; depth++) {
@@ -54,7 +55,7 @@ export function skippedSilver(save: Pick<Save, "upgrades" | "training" | "archiv
 
 /** The Silver Warp Loot adds to a run starting on floor `floors` + 1: its
  * research's percent of `skippedSilver`, in whole Silver. */
-export function warpLootSilver(save: Pick<Save, "upgrades" | "training" | "archives" | "equipment">, tower: number, floors: number, held = 0) {
+export function warpLootSilver(save: Pick<Save, "upgrades" | "training" | "archives" | "equipment" | "relics">, tower: number, floors: number, held = 0) {
   const percent = researched(save.archives, "warpLoot");
   return percent && floors > 0 ? Math.floor((skippedSilver(save, tower, floors, held) * percent) / 100) : 0;
 }

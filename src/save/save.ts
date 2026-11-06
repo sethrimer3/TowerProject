@@ -26,6 +26,7 @@ import { decodeMail, defaultMail } from "../mail/progress.ts";
 import { decodeMissions, defaultMissions } from "../missions/progress.ts";
 import { decodeEvents, defaultEvents } from "../events/progress.ts";
 import { decodeRelics } from "../economy/relics.ts";
+import { decodeMusic } from "../events/music.ts";
 import { decodeShrines, defaultShrines, validShrineRun } from "../shrines.ts";
 import { decodeThemes, defaultThemes } from "../theme-collection.ts";
 import { isTournamentRun } from "../tournament/run.ts";
@@ -51,6 +52,7 @@ export function defaults(): Save {
     breakthrough: 0,
     gems: 0,
     arcanite: 0,
+    arcaniteCarry: 0,
     arcana: defaultArcana(),
     medals: 0,
     cells: 0,
@@ -99,6 +101,7 @@ export function defaults(): Save {
     relics: [],
     shrines: defaultShrines(),
     themes: defaultThemes(),
+    music: [],
     profile: defaultProfile(),
     offline: defaultOffline(),
     trialAccess: defaultTrialAccess(),
@@ -164,6 +167,7 @@ const validPlayer = (p: any, width: number) =>
   (p.pierce === undefined || (finite(p.pierce) && p.pierce >= 0 && p.pierce <= 100)) &&
   (p.stealOverheal === undefined || (finite(p.stealOverheal) && p.stealOverheal >= 0)) &&
   (p.doorShroud === undefined || (finite(p.doorShroud) && p.doorShroud >= 0)) &&
+  [p.reviveOverheal, p.bossAttackCut, p.shroudGuard].every((n) => n === undefined || (finite(n) && n >= 0 && n <= 100)) &&
   (p.powerStrike === undefined || p.powerStrike === true) &&
   [p.takedown, p.tangle].every((cuts) => cuts === undefined || (isRecord(cuts) && Object.entries(cuts).every(([k, n]) => (k === "boss" || k === "greaterBoss") && finite(n) && n >= 0))) &&
   [p.foeAttack, p.foeDefense, p.foeShroud, p.foeCritChance, p.foeCritFactor, p.foeStealOverheal].every((m) => m === undefined || (isRecord(m) && Object.entries(m).every(([id, v]) => isFoeKey(id) && finite(v) && (v as number) >= 0))) &&
@@ -376,6 +380,7 @@ function decodeProgress(s: any, d: Save, undoCapacity: number) {
   d.gems = count(s.gems, d.gems);
   // TODO: drop `ascensionShards` in a later save version (renamed Arcanite).
   d.arcanite = count(s.arcanite ?? s.ascensionShards, d.arcanite);
+  d.arcaniteCarry = typeof s.arcaniteCarry === "number" && s.arcaniteCarry >= 0 && s.arcaniteCarry < 1 ? s.arcaniteCarry : 0;
   d.medals = count(s.medals, d.medals);
   d.cells = fraction(s.cells, d.cells);
   d.gemDrop = decodeGemDrop(s.gemDrop);
@@ -524,6 +529,7 @@ export function decode(raw: string | null): Save {
     d.shrines = decodeShrines(s.shrines);
     d.arcana = decodeArcana(s.arcana);
     d.themes = decodeThemes(s.themes);
+    d.music = decodeMusic(s.music);
     const trial = decodeTrial(s.provingGrounds);
     d.trialAccess = decodeTrialAccess(s.trialAccess);
     if (trial) d.provingGrounds = trial;

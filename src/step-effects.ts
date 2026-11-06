@@ -75,6 +75,9 @@ export type StepRules = {
   /** The percent of its toll a Heart Door drains (Heart Door Resilience
    * research), 100 when absent. */
   heartToll?: number;
+  /** The percent of its durability breaking a Wooden Door takes (relics),
+   * 100 when absent. */
+  woodToll?: number;
   /** How much of a key each key colour a door takes costs, in tenths of a
    * percent (Key Efficiency research), 1,000 when absent. */
   keyCost?: number;
@@ -90,6 +93,9 @@ export type StepRules = {
    * Secret Knock, which `Game` rolls for the step it takes; previews and
    * planners never count on it). */
   freeDoor?: true;
+  /** The potion stepped onto heals twice (a relic's chance, which `Game`
+   * rolls for the step it takes). */
+  potionTwice?: true;
   /** The percent of max HP each key picked up heals, up to max HP (KEY's
    * Key Heal), then the percent of the Overheal ceiling, up to it (Key
    * Overheal); none when absent. */
@@ -172,7 +178,8 @@ export function resolveStep(player: Player, tile: Tile, rules: StepRules = BASE_
       // again (each its own factor), a key colour's tree its colour's key.
       if (rules.freeDoor) effect.free = true;
       const off = doorDiscount(tile, rules.doorOff);
-      const keyScale = doorKeyScale(tile, (scale * (rules.keyCost ?? 1000)) / 1000, rules.doorOff), tollScale = snap(scale * off.toll);
+      const keyScale = doorKeyScale(tile, (scale * (rules.keyCost ?? 1000)) / 1000, rules.doorOff);
+      const tollScale = snap((scale * off.toll * (doorRule(tile).type === "wood" ? rules.woodToll ?? 100 : 100)) / 100);
       const cost = rules.freeDoor ? [] : doorCost(tile, player, keyScale, tollScale);
       if (cost === null) return { blocked: "locked" };
       for (const color of cost) next.keys[color] = snap(next.keys[color] - keyNeed(keyScale, color));
@@ -216,7 +223,7 @@ export function resolveStep(player: Player, tile: Tile, rules: StepRules = BASE_
       break;
     }
     case "potion": {
-      const heal = scaled(potionRestores(tile, next.maxHp, rules));
+      const heal = scaled(potionRestores(tile, next.maxHp, rules)) * (rules.potionTwice ? 2 : 1);
       effect.healed = snap(healUpTo(next.hp, heal, hpCeiling(next.maxHp, rules)) - next.hp);
       next.hp = snap(next.hp + effect.healed);
       break;

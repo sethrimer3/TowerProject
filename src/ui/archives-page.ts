@@ -454,7 +454,7 @@ export class ArchivesPanel {
     const level = researchLevel(a, id), next = nextLevel(a, id, save.upgrades), state = status(save, id);
     let detail = "", price = "", action: string;
     if (next) {
-      const ms = duration(a, next), share = a.progress[id] ?? 0;
+      const ms = duration(a, next, save), share = a.progress[id] ?? 0;
       const target = next.effect.target, shown = (archives: ArchivesSave) => RESEARCH_TARGETS[target].shown(targetValue(save, target, archives));
       // The Research button shows the Gold; without it, the price does.
       const gold = state === "available" ? "" : `${uiSprite("gold", "stat-sprite")} ${priceAmount(researchPrice(a, next))} · `;

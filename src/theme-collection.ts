@@ -1,12 +1,12 @@
 import type { Save } from "./save/shape.ts";
 import { snap } from "./exact.ts";
-import { CURRENCIES, type CurrencyId } from "./shop/currency.ts";
 
 // Themes the player collects (CONTEXT.md: UI theme, Game theme). A UI theme
 // dresses the page around the board; a Game theme redraws the board itself
 // (tiles, the hero, enemies, torches). Each kind has a free Classic look
-// that is always there; every other theme is owned once bought
-// (`save.themes`, all of them in Dev mode), and each owned pays Gold for good.
+// that is always there; every other theme is owned once bought in an
+// event's Store for Medals (events/store.ts; `save.themes`, all of them in
+// Dev mode), and each owned pays Gold for good (`collectionGoldFactor`).
 
 export type ThemeKind = "ui" | "game";
 /** The looks of each kind, as the `uiTheme` and `gameTheme` settings hold
@@ -21,16 +21,14 @@ export type ThemeDef = {
   kind: ThemeKind;
   look: UiLook | GameLook;
   name: string;
-  /** Owned by every hero from the start, never bought. */
-  starting?: true;
+  /** The GMT day (`YYYY-MM-DD`) a theme added after the Event Stores
+   * opened joins their rotation, from the event running then on
+   * (events/store.ts); without it, from the first. */
+  since?: string;
 };
 
-/** What every theme not owned from the start costs. One price for all, in
- * one currency, so moving themes to another currency is this line. */
-export const THEME_PRICE: { currency: CurrencyId; amount: number } = { currency: "gold", amount: 1 };
-
 export const THEMES: Readonly<Record<ThemeId, ThemeDef>> = {
-  medievalUi: { kind: "ui", look: "medieval", name: "Medieval", starting: true },
+  medievalUi: { kind: "ui", look: "medieval", name: "Medieval" },
   neonUi: { kind: "ui", look: "neon", name: "Neon" },
   terminalUi: { kind: "ui", look: "terminal", name: "Terminal" },
   desktopUi: { kind: "ui", look: "desktop", name: "Desktop" },
@@ -64,8 +62,6 @@ export const THEMES: Readonly<Record<ThemeId, ThemeDef>> = {
   murkGame: { kind: "game", look: "murk", name: "Murk" },
 };
 export const THEME_IDS = Object.keys(THEMES) as ThemeId[];
-/** The themes every hero owns from the start. */
-const STARTING: readonly ThemeId[] = THEME_IDS.filter((id) => THEMES[id].starting);
 
 /** The free look of each kind, never owned and paying nothing. */
 export const CLASSIC_NAME = "Classic";
@@ -74,13 +70,19 @@ export const CLASSIC_NAME = "Classic";
  * then its themes. */
 export const themesOf = (kind: ThemeKind) => THEME_IDS.filter((id) => THEMES[id].kind === kind);
 
-/** Gold banked rises by this share, in thousandths, for each theme owned. */
-export const THEME_GOLD_PER_MILLE = 25;
-/** What every Gold banked is multiplied by for the themes owned: ×1.025 a
- * theme. */
-export const themeGoldFactor = (save: Pick<Save, "themes">) => snap((1000 + THEME_GOLD_PER_MILLE * save.themes.length) / 1000);
-/** One theme's Gold as the player sees it: "+2.5% Gold". */
-export const THEME_GOLD_TEXT = `+${THEME_GOLD_PER_MILLE / 10}% Gold`;
+/** Gold banked rises by this share, in thousandths, for each theme owned,
+ * by its kind. */
+export const THEME_GOLD_PER_MILLE: Readonly<Record<ThemeKind, number>> = { ui: 10, game: 20 };
+/** And by this for each bonus track owned (events/music.ts). */
+export const TRACK_GOLD_PER_MILLE = 8;
+/** A share in thousandths as the player sees it: "+0.8%". */
+export const perMilleText = (perMille: number) => `+${perMille / 10}%`;
+
+/** What every Gold banked is multiplied by for the Event Collection: the
+ * themes and bonus tracks owned, their shares added (a separate factor
+ * from relics' Gold Bonus). */
+export const collectionGoldFactor = (save: Pick<Save, "themes" | "music">) =>
+  snap((1000 + save.themes.reduce((sum, id) => sum + THEME_GOLD_PER_MILLE[THEMES[id].kind], 0) + TRACK_GOLD_PER_MILLE * save.music.length) / 1000);
 
 export const ownsTheme = (save: Pick<Save, "themes">, id: ThemeId) => save.themes.includes(id);
 
@@ -102,17 +104,9 @@ export const uiLook = (save: Pick<Save, "themes" | "settings">): UiLook =>
 export const gameLook = (save: Pick<Save, "themes" | "settings">): GameLook =>
   canWear(save, "game", save.settings.gameTheme) ? save.settings.gameTheme : "classic";
 
-/** Whether the save can pay for a theme it doesn't own (free purchases
- * pay nothing). */
-export const canBuyTheme = (save: Save, id: ThemeId) =>
-  !ownsTheme(save, id) && (save.settings.freePurchases || CURRENCIES[THEME_PRICE.currency].balance(save) >= THEME_PRICE.amount);
-
-/** Buys a theme the save doesn't own; false when it can't. */
-export function buyTheme(save: Save, id: ThemeId) {
-  if (!canBuyTheme(save, id)) return false;
-  if (!save.settings.freePurchases) CURRENCIES[THEME_PRICE.currency].spend(save, THEME_PRICE.amount);
-  save.themes = THEME_IDS.filter((t) => ownsTheme(save, t) || t === id);
-  return true;
+/** Gives the save theme `id` (bought in an event's Store). */
+export function grantTheme(save: Pick<Save, "themes">, id: ThemeId) {
+  if (!ownsTheme(save, id)) save.themes = THEME_IDS.filter((t) => ownsTheme(save, t) || t === id);
 }
 
 /** Gives the save every theme it doesn't own yet (Dev mode); returns them,
@@ -123,10 +117,10 @@ export function grantAllThemes(save: Pick<Save, "themes">): ThemeId[] {
   return fresh;
 }
 
-/** The saved themes: known ids, each once, in catalog order, always with
- * those every hero starts with. */
+/** The saved themes: known ids, each once, in catalog order. */
 export function decodeThemes(raw: unknown): ThemeId[] {
   const saved = Array.isArray(raw) ? raw : [];
-  return THEME_IDS.filter((id) => STARTING.includes(id) || saved.includes(id));
+  return THEME_IDS.filter((id) => saved.includes(id));
 }
-export const defaultThemes = (): ThemeId[] => [...STARTING];
+/** A new hero owns no theme: Classic is always there. */
+export const defaultThemes = (): ThemeId[] => [];

@@ -3,6 +3,7 @@ import { ENEMY_GOLD, FAST_GOLD, PICKUP_GOLD, RANGED_GOLD, SHIELDED_GOLD, ARMORED
 import { trainedAmount } from "../progression/training.ts";
 import type { RoomWorld } from "../tower/room-world.ts";
 import { snap } from "../exact.ts";
+import { relicAmount, relicFactor } from "../economy/relic-effects.ts";
 import { averageGold, rollGold } from "../economy/loot.ts";
 import { pickupGold } from "../doors.ts";
 import { litTorches } from "../board.ts";
@@ -95,7 +96,7 @@ export class RunPurse {
 
   /** The upgrades owned and the Training ranks that count now. */
   private get trainingNow() {
-    return { upgrades: this.save.upgrades, training: ranksInRun(this.save, this.run) };
+    return { upgrades: this.save.upgrades, training: ranksInRun(this.save, this.run), relics: this.save.relics };
   }
 
   /** `base` raised by the research `target`'s percent. */
@@ -268,7 +269,9 @@ export class RunPurse {
     const tree = this.tree, own = foeStat(tree, enemy, "Gold") + (instakill ? foeStat(tree, enemy, "InstakillGold") : 0);
     const more = snap(tree.foeGold + (enemy.strength === "greaterBoss" ? tree.bossGold : 0) + own);
     const foe = this.run.outside ? 1 : foeGold(heldCards(this.run), enemy, more);
-    return foe === 1 ? gold : snap(gold * foe);
+    // Relics raise strong and elite enemies' Gold.
+    const relic = enemy.strength === "strong" || enemy.strength === "elite" ? relicFactor(this.save, "eliteGold") : 1;
+    return foe === 1 && relic === 1 ? gold : snap(gold * foe * relic);
   }
 
   /** An enemy's Gold (by its strength), a Greater Boss's Cells and those the
@@ -294,7 +297,7 @@ export class RunPurse {
   private killDrops(enemy: Enemy, instakill: boolean): EquipmentLoot[] {
     if (!this.save.equipment.unlocked) return [];
     const tree = this.tree, found: EquipmentLoot[] = [];
-    const material = snap(foeStat(tree, enemy, "Material") + (instakill ? foeStat(tree, enemy, "InstakillMaterial") : 0)), piece = foeStat(tree, enemy, "Equipment");
+    const material = snap(foeStat(tree, enemy, "Material") + (instakill ? foeStat(tree, enemy, "InstakillMaterial") : 0)), piece = snap(foeStat(tree, enemy, "Equipment") * relicFactor(this.save, "equipmentDrops"));
     if (material && this.equipmentRng() * 100 < material) found.push(this.chestEquipment("supply"));
     if (piece && this.equipmentRng() * 100 < piece) found.push(this.chestEquipment("equipment"));
     return found;
@@ -357,7 +360,9 @@ export class RunPurse {
   private chestEquipment(kind: "supply" | "equipment", times = 1): EquipmentLoot {
     const e = this.save.equipment;
     if (kind === "supply") {
-      const rolled = rollSupplies(this.tier, this.worn.materialFind, this.equipmentRng);
+      // Relics' materials found multiply the equipment's.
+      const find = this.worn.materialFind, relic = relicFactor(this.save, "materials");
+      const rolled = rollSupplies(this.tier, relic === 1 ? find : snap((100 + find) * relic - 100), this.equipmentRng);
       const materials = times === 1 ? rolled : { ...rolled, quantity: rolled.quantity * times };
       e.materials[materials.id] += materials.quantity;
       tallyIn(this.slice.runFinds.materials, materials.id, materials.quantity);
@@ -382,7 +387,7 @@ export class RunPurse {
   /** A treasure chest's Gold `base` raised by Gold Bonus, then by CHEST's
    * tree's percent. */
   private chestGold(base: number) {
-    const gold = this.bonused(base), more = this.tree.chestGold;
+    const gold = this.bonused(base), more = snap(this.tree.chestGold + relicAmount(this.save, "chestGold"));
     return more ? snap((gold * (100 + more)) / 100) : gold;
   }
 
@@ -486,7 +491,7 @@ export class RunPurse {
 
   /** The most Interest a floor pays (Max Interest research), before Gold Bonus and its environments. */
   get interestCap() {
-    return researched(this.save.archives, "interestCap");
+    return snap(researched(this.save.archives, "interestCap") * relicFactor(this.save, "maxInterest"));
   }
 
   /** The most Interest climbing to `reached` pays. */

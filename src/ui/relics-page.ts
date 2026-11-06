@@ -1,5 +1,6 @@
 import { controlIcon } from "./control-icon.ts";
 import { PREVIEW_RELICS, RELICS, type RelicDef } from "../economy/relics.ts";
+import { bonusText } from "../economy/relic-effects.ts";
 import type { AppContext } from "./app.ts";
 import { el, relicIcon } from "./dom.ts";
 
@@ -38,7 +39,7 @@ export class RelicsPage {
       `<button class="missions-close" id="relics-close" aria-label="Close" title="Close">${controlIcon("close")}</button>` +
       `<div class="page-title"><small>KEEPSAKES OF EVENTS</small><h2>Relics</h2></div>` +
       (relics.length
-        ? `<div class="relic-grid">${relics.map(([id, r]) => `<button class="relic-cell ${r.rarity}" data-relic="${id}" aria-label="${r.name}: ${r.effect}">${relicIcon(r.rarity)}<small>${r.name}</small></button>`).join("")}</div>`
+        ? `<div class="relic-grid">${relics.map(([id, r]) => `<button class="relic-cell ${r.rarity}" data-relic="${id}" aria-label="${r.name}: ${bonusText(r.bonus)}">${relicIcon(r.rarity)}<small>${r.name}</small></button>`).join("")}</div>`
         : `<p class="hint">No relics yet. Earn Medals in Events to win them: each relic gives a permanent bonus.</p>`);
     el("relics-close").onclick = () => this.ctx.navigate(this.from || "board");
     const byId = new Map(relics);
@@ -59,10 +60,10 @@ export class RelicsPage {
     const layer = document.createElement("div");
     layer.className = `relic-pop ${relic.rarity}${hover ? " hover" : ""}${this.ctx.game.save.settings.reduceMotion ? " still" : ""}`;
     layer.setAttribute("role", "dialog");
-    layer.setAttribute("aria-label", `${relic.name}: ${relic.effect}`);
+    layer.setAttribute("aria-label", `${relic.name}: ${bonusText(relic.bonus)}`);
     const sparkles = Array.from({ length: 8 }, (_, i) => `<i style="--i:${i}"></i>`).join("");
     layer.innerHTML = `<div class="relic-pop-stage"><div class="relic-pop-rays" aria-hidden="true"></div><div class="relic-pop-sparkles" aria-hidden="true">${sparkles}</div>${relicIcon(relic.rarity, "relic-icon relic-pop-icon")}</div>` +
-      `<div class="card-reveal-text"><small>${RARITY_NAMES[relic.rarity].toUpperCase()} RELIC</small><b>${relic.name}</b><p>${relic.effect}</p>${hover ? "" : "<span>Press to close</span>"}</div>`;
+      `<div class="card-reveal-text"><small>${RARITY_NAMES[relic.rarity].toUpperCase()} RELIC</small><b>${relic.name}</b><p>${bonusText(relic.bonus)}</p>${hover ? "" : "<span>Press to close</span>"}</div>`;
     (document.querySelector("#app") ?? document.body).append(layer);
     if (!hover) layer.onclick = () => layer.remove();
   }

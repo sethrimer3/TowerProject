@@ -96,10 +96,11 @@ function isNewFloor(drop: GemDrop, at: GemFloor) {
 }
 
 /** The Gem was collected: none lies out, and the next waits out the cooldown. */
-export function collectedGem(drop: GemDrop, now: number) {
+export function collectedGem(drop: GemDrop, now: number, often = 1) {
   drop.out = null;
   drop.wait = 0;
-  drop.readyAt = now + GEM_COOLDOWN_MS;
+  // Gems appearing `often` times as often wait that much less.
+  drop.readyAt = now + Math.round(GEM_COOLDOWN_MS / often);
 }
 
 /** Tiles a hero can walk through to reach the Gem's tile. */
