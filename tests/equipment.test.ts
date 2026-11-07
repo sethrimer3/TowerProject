@@ -13,7 +13,7 @@ import {
   CATEGORIES, CATEGORY_IDS, EQUIP_MATERIALS, EQUIP_MATERIAL_IDS, ITEMS, itemDef, materialOf, materialsOf, STARTER_CATEGORIES, standardOf, uniquesOf,
 } from "../src/equipment/catalog.ts";
 import {
-  EQUIPMENT_CAPACITY, PITY, PULL_GEMS, PULL_RATES, pullGems, RARITY_TIERS, STARS, TOP_LEVEL,
+  BOSS_DROPS, EQUIPMENT_CAPACITY, PITY, PULL_GEMS, PULL_RATES, pullGems, RARITY_TIERS, STARS, TOP_LEVEL,
   upgradeGold, upgradeMaterial, type EquipRarity,
 } from "../src/equipment/balance.ts";
 import {
@@ -226,18 +226,25 @@ test("Auto-salvage dismantles Common chest pieces and keeps the rest, and is sav
   assert.equal(keepDrop(e, { def: "knightsSword", rarity: "common", category: "weapon" }).item?.rarity, "common");
 });
 
-test("kills drop no Equipment without an enemy card's tree, a boss or a Greater Boss neither, once Equipment is open", () => {
-  const s = defaults();
-  s.equipment.unlocked = true;
-  const g = new Game(s, seq([0]));
-  g.newRun({ seed: 3, height: 9 });
-  const purse = (g as any).purse;
-  for (const strength of ["weak", "elite", "boss", "greaterBoss"] as const) {
-    const loot = purse.enemyLoot(enemy(strength), 4, strength.length);
-    assert.deepEqual(loot.equipment, []);
+test("bosses and Greater Bosses drop materials (1.5%) and a Standard piece (0.5%); other kills nothing without an enemy card's tree", () => {
+  assert.deepEqual(BOSS_DROPS, { material: 1.5, equipment: 0.5 });
+  const kill = (strength: Enemy["strength"], roll: number, unlocked = true) => {
+    const s = defaults();
+    s.equipment.unlocked = unlocked;
+    const g = new Game(s, seq([roll]));
+    g.newRun({ seed: 3, height: 9 });
+    return { loot: (g as any).purse.enemyLoot(enemy(strength), 4, strength.length), e: g.save.equipment };
+  };
+  for (const strength of ["weak", "elite"] as const) assert.deepEqual(kill(strength, 0).loot.equipment, []);
+  for (const strength of ["boss", "greaterBoss"] as const) {
+    const { loot, e } = kill(strength, 0.004);
+    assert.deepEqual(loot.equipment.map((l: any) => [!!l.materials, !!(l.item || l.salvaged)]), [[true, false], [false, true]], `${strength}: under both chances`);
+    assert.ok(Object.values(e.materials).some((n) => n > 0) && e.items.length === 1);
+    assert.equal(itemDef(e.items[0].def)!.class, "standard", "a Standard piece, as an Equipment Chest holds");
+    assert.deepEqual(kill(strength, 0.01).loot.equipment.map((l: any) => !!l.materials), [true], "under 1.5% only: materials");
+    assert.deepEqual(kill(strength, 0.015).loot.equipment, [], "1.5% and up: nothing");
+    assert.deepEqual(kill(strength, 0, false).loot.equipment, [], "nothing before Equipment opens");
   }
-  assert.equal(g.save.equipment.items.length, 0);
-  assert.ok(Object.values(g.save.equipment.materials).every((n) => n === 0), "and no upgrade materials");
 });
 
 // --- Gem pulls ---

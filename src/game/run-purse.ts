@@ -17,7 +17,7 @@ import { wornEffects } from "../equipment/effects.ts";
 import { keepDrop, rollChestPiece, rollSupplies } from "../equipment/acquire.ts";
 import type { EquipItem } from "../equipment/inventory.ts";
 import { CATEGORIES, type EquipMaterialId } from "../equipment/catalog.ts";
-import { EQUIP_RARITIES, rarityRank, STANDARD_DROP_TOP, type EquipRarity } from "../equipment/balance.ts";
+import { BOSS_DROPS, EQUIP_RARITIES, rarityRank, STANDARD_DROP_TOP, type EquipRarity } from "../equipment/balance.ts";
 import { runBoons } from "../shrines.ts";
 import { earn } from "../save/profile.ts";
 import { notesOf, tallyIn } from "../run-notes.ts";
@@ -299,12 +299,14 @@ export class RunPurse {
     return { gold, cells: snap(cells + extra), equipment: this.killDrops(enemy, instakill) };
   }
 
-  /** What the enemy cards' trees' drops find from a kill of `enemy`: each
-   * chance rolled on Equipment's stream, only when there is one. */
+  /** What a kill of `enemy` drops: a boss's or Greater Boss's own chances
+   * (`BOSS_DROPS`) and the enemy cards' trees', added together, each
+   * rolled on Equipment's stream, only when there is one. */
   private killDrops(enemy: Enemy, instakill: boolean): EquipmentLoot[] {
     if (!this.save.equipment.unlocked) return [];
-    const tree = this.tree, found: EquipmentLoot[] = [];
-    const material = snap(foeStat(tree, enemy, "Material") + (instakill ? foeStat(tree, enemy, "InstakillMaterial") : 0)), piece = snap(foeStat(tree, enemy, "Equipment") * relicFactor(this.save, "equipmentDrops"));
+    const tree = this.tree, found: EquipmentLoot[] = [], boss = enemy.strength === "boss" || enemy.strength === "greaterBoss";
+    const material = snap((boss ? BOSS_DROPS.material : 0) + foeStat(tree, enemy, "Material") + (instakill ? foeStat(tree, enemy, "InstakillMaterial") : 0));
+    const piece = snap(((boss ? BOSS_DROPS.equipment : 0) + foeStat(tree, enemy, "Equipment")) * relicFactor(this.save, "equipmentDrops"));
     if (material && this.equipmentRng() * 100 < material) found.push(this.chestEquipment("supply"));
     if (piece && this.equipmentRng() * 100 < piece) found.push(this.chestEquipment("equipment"));
     return found;

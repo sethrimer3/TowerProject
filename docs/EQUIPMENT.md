@@ -10,7 +10,7 @@
 - The moment it opens inside a run, a golden burst reads *EQUIPMENT UNLOCKED · A Blacksmith opens in the forest*, and the status line says so. Back in the forest, a dialog explains it once and offers to visit the Blacksmith.
 - From then on the **Blacksmith** stands in the forest clearing, up and left of the path (a stone forge with a red banner bearing a breastplate). Tapping it opens the Equipment screen. Before the unlock it isn't there at all.
 - The Gear tab opens with Equipment even with no provision open (only its Equipment tab then), and wears a dot until the Equipment screen is first seen.
-- Once Equipment is open, the Chest card's Equipment Chests and Supply Chests hold Standard pieces and upgrade materials (sections 11 and 12); kills drop neither.
+- Once Equipment is open, the Chest card's Equipment Chests and Supply Chests hold Standard pieces and upgrade materials (sections 11 and 12), and bosses and Greater Bosses may drop either (section 11); other kills drop neither without an enemy card's tree.
 
 ## 2. Loadouts
 
@@ -243,7 +243,8 @@ At most **500** pieces (`EQUIPMENT_CAPACITY`). An Equipment Chest's piece that f
 
 ## 11. Equipment Chests (Standard pieces)
 
-Kills drop no equipment. While the run's hand holds the **Chest** card, each treasure chest, once Equipment is open and in either mode, has a **0.5%** chance of being an **Equipment Chest**, which holds a Standard piece beside its Gold (`EQUIPMENT_CHEST_RARITY`, `rollChestPiece`). Each physical chest pays once (`lootedTiles`, so undo can't farm it).
+A boss or Greater Boss killed once Equipment is open has a **0.5%** chance to drop a Standard piece and a **1.5%** chance to drop upgrade materials, each rolled as an Equipment or a Supply Chest's contents are (`BOSS_DROPS`, added to the enemy cards' trees' chances in `RunPurse.killDrops`); other kills drop them only with an enemy card's tree.
+While the run's hand holds the **Chest** card, each treasure chest, once Equipment is open and in either mode, has a **0.5%** chance of being an **Equipment Chest**, which holds a Standard piece beside its Gold (`EQUIPMENT_CHEST_RARITY`, `rollChestPiece`). Each physical chest pays once (`lootedTiles`, so undo can't farm it).
 
 | Common | Uncommon | Rare |
 |---:|---:|---:|
@@ -257,7 +258,7 @@ The rates are low on purpose, to be raised by upgrades later.
 
 ## 12. Supply Chests (upgrade materials)
 
-Kills drop no upgrade materials. While the run's hand holds the **Chest** card, each treasure chest, once Equipment is open, has a **1.5%** chance of being a **Supply Chest** (fixed as its floor is generated, as in section 11), which holds upgrade materials of one category at random beside its Gold.
+Beside bosses' drops (section 11), while the run's hand holds the **Chest** card, each treasure chest, once Equipment is open, has a **1.5%** chance of being a **Supply Chest** (fixed as its floor is generated, as in section 11), which holds upgrade materials of one category at random beside its Gold.
 
 It holds **5** in tower I and **2** more in each tower after (7 in tower II, 9 in tower III; `SUPPLY_CHEST_MATERIALS`), the Delve's numbered delves alike, raised by Material Find (rounded down, never below the base).
 
@@ -412,10 +413,6 @@ A slot's screen shows CURRENT, the NEW CANDIDATES with Keep Current, *Refinement
 ## 16. Approved next steps
 
 Agreed with the designer and not built yet, in the order they are planned.
-
-### Boss drops
-
-Bosses and Greater Bosses: a 1.5% chance to drop upgrade materials and 0.5% to drop a Standard piece, each rolled as a Supply or Equipment Chest's contents are.
 
 ### The substat catalogue
 

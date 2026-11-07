@@ -119,6 +119,10 @@ export const substatCap = (rarity: EquipRarity): EquipRarity => (rarity === "com
  * rarity weights. */
 export const SUPPLY_CHEST_MATERIALS = { base: 5, perTower: 2 };
 export const EQUIPMENT_CHEST_RARITY: Partial<Record<EquipRarity, number>> = { common: 67, uncommon: 30, rare: 3 };
+/** A boss's or Greater Boss's kill, once Equipment is open: the percent
+ * chances it drops a Supply Chest's materials and an Equipment Chest's
+ * piece, each rolled as those chests' contents are. */
+export const BOSS_DROPS = { material: 1.5, equipment: 0.5 };
 
 /** The Gem pull: its price for one and for ten (ten resolve one by one),
  * the rarity weights in percent, and pity: the pull that would make
