@@ -36,6 +36,15 @@ A partial run takes a fraction of the full suite's time, which is about 45s for 
 - A new UI section starts with its own `load(fixture)`, is wrapped in `section("<prefix>", …)` naming the prefixes of its snapshots, and must pass when run alone (`ONLY=<prefix>`).
   A section must not depend on state that an earlier section leaves behind.
 
+## Where a run's output goes
+
+Each run of a browser golden writes what it captured (UI HTML, the render frames that changed or all of them when recording) to a folder of its own, `test-results/<suite>-runs/<label>/` (`tests/results-dirs.mjs`).
+The label is the snapshot build's source stamp, so a run on unchanged code and a run with a change land in different folders and neither overwrites the other; `RUN_LABEL=<name>` names a run instead.
+A run of the same code again reuses its folder (a partial run adds to it).
+A recorded run (`UPDATE_GOLDEN=1`) becomes the baseline (`test-results/<suite>-baseline.txt` names its folder; a partial recording adds its keys to the baseline there is), and later runs print each mismatch's first difference, or differing pixels, against it; `test-results/<suite>-latest.txt` names the last run's folder.
+The newest six runs of a suite are kept, and the baseline whatever its age.
+`npm run test:compare-runs -- <ui|render> [a] [b]` (`tests/compare-runs.mjs`) compares two runs file by file, each a label, `baseline` or `latest` (by default the baseline against the latest), listing the keys whose output differs and those only one has.
+
 Typical uses:
 - After a full run fails, fix the cause and run `ONLY=failed npm run test:render` until it passes.
 - For a change that touches one page or scene, run that prefix alone while you iterate, then the full suite once before committing.
@@ -45,10 +54,11 @@ How:
 1.
 **Refactor (no visible change intended):** re-record nothing.
 Every golden must still match after the change.
-The browser goldens' hashes are machine-specific, so if one fails, record it on the unchanged code (save your change as a patch file, `git diff > change.patch`, and set it aside rather than stashing, since the stash is shared between worktrees; record with `UPDATE_GOLDEN=1`, or `ONLY=failed UPDATE_GOLDEN=1` for only the keys that failed), restore the change, and compare again (`ONLY=failed`); only a failure then is yours.
+The browser goldens' hashes are machine-specific, so if one fails, record it on the unchanged code (commit your change on your branch and check out its base, or save it as a patch file, `git diff > change.patch`, and set it aside rather than stashing, since the stash is shared between worktrees; record with `UPDATE_GOLDEN=1`, or `ONLY=failed UPDATE_GOLDEN=1` for only the keys that failed), restore the change, and compare again (`ONLY=failed`); only a failure then is yours.
+The baseline run and the run with the change keep their own folders, so `npm run test:compare-runs -- ui` lists exactly what the change moved; put the committed golden back (`git checkout -- tests/fixtures/`) before recording the keys your change moves.
 A UI hash that flips between two values from one machine to the next usually measures text at a fractional font size (`smaller`, an `em` of an odd size): text engines disagree slightly on its width, and a box placed by its own size (the inspect box is centred on its tile) moves with it, so give that text a whole-pixel size rather than re-recording.
 2.
-**Intended change:** make it, run `npm test` (and the browser goldens if visuals or UI changed) and check that only the keys the change should touch fail; for pixels, look at the PNGs in `test-results/render*/`.
+**Intended change:** make it, run `npm test` (and the browser goldens if visuals or UI changed) and check that only the keys the change should touch fail; for pixels, look at the PNGs in the run's folder beside the baseline's (`test-results/render-runs/`).
 Then re-record those goldens with `UPDATE_GOLDEN=1` (a browser suite's own keys only: `ONLY=<prefixes> UPDATE_GOLDEN=1`; one Node file: `UPDATE_GOLDEN=1 node --experimental-transform-types --import ./tests/pin-random.ts --test tests/<name>.test.ts`), commit the fixtures in the same commit, and say in the message which goldens were re-recorded and why.
 3.
 The browser goldens build and serve their own copy of the app (no dev server needed) and aren't run by CI; when visuals or UI change, run them yourself.

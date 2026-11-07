@@ -22,6 +22,7 @@ npm run test:render    # board screenshot hashes vs tests/fixtures/render.golden
 npm run test:ui        # page/HUD/dialog HTML hashes vs tests/fixtures/ui.golden.json (builds and serves its own copy; no dev server)
 npm run test:snapshots # both of the above side by side on one build (tests/snapshot-suites.mjs): the wall time of the slower one
 ONLY=rich.goals,floor. npm run test:ui  # only those key prefixes; ONLY=failed reruns last failures; with UPDATE_GOLDEN=1 records just them (docs/agents/goldens.md)
+npm run test:compare-runs -- ui        # each browser golden run keeps its own folder (test-results/<suite>-runs/); list what differs between the baseline and the latest run
 npm run test:proving   # Proving Grounds browser flow (needs npm run dev)
 ```
 

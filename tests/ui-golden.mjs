@@ -3,9 +3,10 @@
 // a scripted walk clicks through every page, subtab, tooltip and dialog, and
 // after each step the normalized `#app` HTML is hashed against
 // tests/fixtures/ui.golden.json. Regenerate with UPDATE_GOLDEN=1 on the code
-// *before* a UI refactor, then run without it after. Baseline HTML goes to
-// test-results/ui-golden/ and current HTML to test-results/ui/, and the first
-// differing line is printed for any mismatch. It runs against the snapshot
+// *before* a UI refactor, then run without it after. Each run's HTML goes to a
+// folder of its own, test-results/ui-runs/<source stamp>/, a recorded run's
+// being the baseline later runs print the first differing line against
+// (tests/results-dirs.mjs; tests/compare-runs.mjs compares two runs). It runs against the snapshot
 // build through `vite preview` (tests/snapshot-preview.mjs; `npm run test:ui`
 // builds it first).
 // ONLY=<key prefixes> (or ONLY=failed) walks only the sections that can make
@@ -17,12 +18,12 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { bounded, startPreview } from "./snapshot-preview.mjs";
 import { openMenu } from "./run-menu.mjs";
 import { goldenFilter, NOTHING_MATCHED } from "./golden-filter.mjs";
+import { resultsDirs } from "./results-dirs.mjs";
 
 const UPDATE = process.env.UPDATE_GOLDEN === "1";
 const GOLDEN = new URL("./fixtures/ui.golden.json", import.meta.url);
-const BASELINE_DIR = "test-results/ui-golden";
-const OUT_DIR = "test-results/ui";
 const filter = goldenFilter("ui");
+const { out: OUT_DIR, baseline: BASELINE_DIR } = resultsDirs("ui", { update: UPDATE || !existsSync(GOLDEN), partial: filter.active });
 const server = await startPreview(4190);
 const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH } : { channel: process.env.PLAYWRIGHT_CHANNEL || "msedge" }) });
 let exitCode = 1;
@@ -1223,7 +1224,7 @@ try {
     for (const k of changed) {
       const base = `${BASELINE_DIR}/${k}.html`;
       let detail = "no local baseline HTML to compare";
-      if (existsSync(base) && shots[k]) {
+      if (BASELINE_DIR && existsSync(base) && shots[k]) {
         const a = readFileSync(base, "utf8"), b = shots[k];
         let i = 0;
         while (i < a.length && a[i] === b[i]) i++;
@@ -1233,7 +1234,7 @@ try {
     }
     if (changed.length) {
       failed = true;
-      console.error(`${changed.length} UI snapshots changed; see ${OUT_DIR}/ vs ${BASELINE_DIR}/`);
+      console.error(`${changed.length} UI snapshots changed; see ${OUT_DIR}/${BASELINE_DIR ? ` vs ${BASELINE_DIR}/` : " (no baseline recorded on this machine)"}`);
     } else {
       console.log(`All ${Object.keys(hashes).length} UI snapshots${filter.describe} match the golden hashes (${createHash("sha256").update(JSON.stringify(hashes)).digest("hex").slice(0, 8)}).`);
     }

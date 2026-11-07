@@ -8,24 +8,25 @@
 // otherwise move them there partway through, after enough pixel reads), so
 // runs agree exactly; pixels can still differ between browsers and machines,
 // so regenerate it with UPDATE_GOLDEN=1 on the code *before* a refactor, then
-// run without it after. Baseline PNGs go to test-results/render-golden/ and
-// current ones to test-results/render/, with a pixel-difference count for any
-// mismatch. It runs against the snapshot build through `vite preview`
+// run without it after. Each run's PNGs go to a folder of its own,
+// test-results/render-runs/<source stamp>/, a recorded run's being the
+// baseline later runs count each mismatch's differing pixels against
+// (tests/results-dirs.mjs; tests/compare-runs.mjs compares two runs). It runs against the snapshot build through `vite preview`
 // (tests/snapshot-preview.mjs; `npm run test:render` builds it first).
 // ONLY=<key prefixes> (or ONLY=failed) draws only the scenes that can make a
 // matching frame and compares or records only those (tests/golden-filter.mjs).
 import { chromium } from "@playwright/test";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { bounded, startPreview } from "./snapshot-preview.mjs";
 import { fixClock } from "./fixed-clock.mjs";
 import { goldenFilter, NOTHING_MATCHED } from "./golden-filter.mjs";
+import { resultsDirs } from "./results-dirs.mjs";
 
 const UPDATE = process.env.UPDATE_GOLDEN === "1";
 const GOLDEN = new URL("./fixtures/render.golden.json", import.meta.url);
-const BASELINE_DIR = "test-results/render-golden";
-const OUT_DIR = "test-results/render";
 const filter = goldenFilter("render");
+const { out: OUT_DIR, baseline: BASELINE_DIR } = resultsDirs("render", { update: UPDATE || !existsSync(GOLDEN), partial: filter.active });
 
 const server = await startPreview(4180);
 const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH } : { channel: process.env.PLAYWRIGHT_CHANNEL || "msedge" }) });
@@ -143,8 +144,7 @@ try {
   const png = (dataUrl) => Buffer.from(dataUrl.split(",")[1], "base64");
   const hashes = Object.fromEntries(Object.entries(shots).map(([k, v]) => [k, v.hash]));
   // Only the frames that changed (every frame when recording) come back as
-  // PNGs; clear the old ones so what is here is this run's.
-  rmSync(OUT_DIR, { recursive: true, force: true });
+  // PNGs, into this run's own folder (started empty unless partial).
   mkdirSync(OUT_DIR, { recursive: true });
   for (const [k, v] of Object.entries(shots)) if (v.png) writeFileSync(`${OUT_DIR}/${k}.png`, png(v.png));
 
@@ -164,7 +164,7 @@ try {
     for (const k of changed) {
       const base = `${BASELINE_DIR}/${k}.png`;
       let detail = "no local baseline PNG to compare";
-      if (existsSync(base) && shots[k]) {
+      if (BASELINE_DIR && existsSync(base) && shots[k]) {
         const diff = await page.evaluate(async ([a, b]) => {
           const load = async (src) => { const img = new Image(); img.src = src; await img.decode(); return img; };
           const [x, y] = await Promise.all([load(a), load(b)]);
@@ -183,7 +183,7 @@ try {
       console.error(`${k}: ${golden[k] ?? "missing"} -> ${hashes[k] ?? "missing"} (${detail})`);
     }
     if (changed.length) {
-      throw Error(`${changed.length} render frames changed; see ${OUT_DIR}/ vs ${BASELINE_DIR}/`);
+      throw Error(`${changed.length} render frames changed; see ${OUT_DIR}/${BASELINE_DIR ? ` vs ${BASELINE_DIR}/` : " (no baseline recorded on this machine)"}`);
     }
     console.log(`All ${Object.keys(hashes).length} render frames${filter.describe} match the golden hashes (${createHash("sha256").update(JSON.stringify(hashes)).digest("hex").slice(0, 8)}).`);
   }
