@@ -1,15 +1,14 @@
 // The effects an item's effect slots can hold: static data only (saves name
 // an effect by id and keep its rarity). Each effect belongs to a family, and
 // each category rolls from its families' effects, so a chestplate rolls
-// defence and a pair of boots movement. An effect's value grows with the
-// item's level and is multiplied by the effect's own rarity's power, never
-// above the item's (`maxEffect`). Slot effects are deliberately smaller than
-// an item's intrinsic lines (catalog.ts), so a Unique keeps its identity.
-// See docs/EQUIPMENT.md.
+// defence and a pair of boots movement. An effect's value is its base
+// times its own rarity's substat power (`SUBSTAT_POWER`), never above the
+// item's (`substatCap`); leveling the item raises only its main effect
+// (main-effect.ts), never a substat. See docs/EQUIPMENT.md.
 import type { Mode } from "../entities.ts";
 import { snap } from "../exact.ts";
 import { EFFECTS, type CategoryId, type EffectKind } from "./catalog.ts";
-import { rarityRank, RARITY_TIERS, type EquipRarity } from "./balance.ts";
+import { rarityRank, SUBSTAT_POWER, type EquipRarity } from "./balance.ts";
 
 export type FamilyId = "might" | "guard" | "vitality" | "recovery" | "mobility" | "fortune" | "lore";
 export const FAMILIES: Record<FamilyId, { name: string; theme: string }> = {
@@ -36,8 +35,8 @@ export const CATEGORY_FAMILIES: Record<CategoryId, readonly FamilyId[]> = {
   amulet: ["vitality", "recovery", "lore"],
 };
 
-/** One slot effect: `base` at level 1 and `perLevel` more each level
- * after, times its rarity's power. With `mode`, it counts only in that
+/** One slot effect: `base` (`perLevel` is kept for the substat catalogue's
+ * next pass and unused), times its rarity's substat power. With `mode`, it counts only in that
  * mode's loadout (and is a little stronger for it). */
 export type SlotEffectDef = { id: string; name: string; family: FamilyId; kind: EffectKind; base: number; perLevel: number; mode?: Mode };
 const fx = (id: string, name: string, family: FamilyId, kind: EffectKind, base: number, perLevel: number, mode?: Mode): SlotEffectDef =>
@@ -80,12 +79,13 @@ export const inPool = (category: CategoryId, id: string) => {
   return !!d && CATEGORY_FAMILIES[category].includes(d.family);
 };
 
-/** An effect's value at its `rarity` on an item at `level`, on the snap
- * grid (whole kinds round down). */
-export function slotValue(def: SlotEffectDef, rarity: EquipRarity, level: number) {
-  const raw = snap((def.base + def.perLevel * (level - 1)) * RARITY_TIERS[rarity].power);
+/** An effect's value at its `rarity`, on the snap grid (whole kinds round
+ * down). */
+export function slotValue(def: SlotEffectDef, rarity: EquipRarity) {
+  const raw = snap(def.base * SUBSTAT_POWER[rarity]);
   return EFFECTS[def.kind].whole ? Math.floor(raw) : raw;
 }
 const NUMERALS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"];
-/** "Fleetness II": the effect's name and its rarity as a numeral. */
-export const slotEffectName = (def: SlotEffectDef, rarity: EquipRarity) => `${def.name} ${NUMERALS[rarityRank(rarity)]}`;
+/** "Fleetness II": the effect's name and its rarity as a numeral, I for
+ * Uncommon (the lowest a substat comes in). */
+export const slotEffectName = (def: SlotEffectDef, rarity: EquipRarity) => `${def.name} ${NUMERALS[Math.max(0, rarityRank(rarity) - 1)]}`;

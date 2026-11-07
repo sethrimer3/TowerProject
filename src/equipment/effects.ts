@@ -5,9 +5,9 @@
 import type { Mode } from "../entities.ts";
 import type { Save } from "../save/shape.ts";
 import { snap } from "../exact.ts";
-import { EFFECTS, itemDef, type EffectKind, type EffectLine } from "./catalog.ts";
-import { atLeast, RARITY_TIERS, type EquipRarity } from "./balance.ts";
-import { findItem, type EquipItem, type EquipmentSave } from "./inventory.ts";
+import { EFFECTS, type EffectKind } from "./catalog.ts";
+import { categoryOf, findItem, type EquipItem, type EquipmentSave } from "./inventory.ts";
+import { efficiency, mainEffect, withEfficiency } from "./main-effect.ts";
 import { slotValue } from "./slot-effects.ts";
 import { slotEffects } from "./slots.ts";
 
@@ -15,35 +15,33 @@ export type EffectTotals = Record<EffectKind, number>;
 const KINDS = Object.keys(EFFECTS) as EffectKind[];
 export const noEffects = (): EffectTotals => Object.fromEntries(KINDS.map((k) => [k, 0])) as EffectTotals;
 
-/** A line's value at `rarity` and `level`: (base + perLevel × (level − 1))
- * × the rarity's power, on the snap grid; whole kinds round down. A fixed
- * line is its base. */
-export function lineValue(line: EffectLine, rarity: EquipRarity, level: number) {
-  const raw = line.fixed ? line.base : snap((line.base + (line.perLevel ?? 0) * (level - 1)) * RARITY_TIERS[rarity].power);
-  return EFFECTS[line.kind].whole ? Math.floor(raw) : raw;
+/** A piece's main effect as worn beside a Chestplate of `eff` efficiency
+ * (its own Chestplate's efficiency never raises its own max HP). */
+export function pieceMain(item: EquipItem, eff = 0) {
+  const category = categoryOf(item), main = mainEffect({ category, rarity: item.rarity, level: item.level, stars: item.stars });
+  if (!main) return null;
+  return { kind: main.kind, value: category === "chestplate" ? main.value : withEfficiency(main.value, eff) };
 }
-/** Whether `line` is active at `rarity`. */
-export const lineOpen = (line: EffectLine, rarity: EquipRarity) => atLeast(rarity, line.from ?? "common");
+/** A piece's efficiency, if it is a Chestplate. */
+export const pieceEfficiency = (item: EquipItem) => efficiency({ category: categoryOf(item), rarity: item.rarity, level: item.level, stars: item.stars });
 
-/** An item's lines at its rarity and level: each with its value and
- * whether its rarity has opened it yet. */
-export function itemLines(item: Pick<EquipItem, "def" | "rarity" | "level">) {
-  return itemDef(item.def)!.effects.map((line) => ({ line, open: lineOpen(line, item.rarity), value: lineValue(line, item.rarity, item.level) }));
-}
+/** The pieces `mode`'s loadout wears. */
+export const wornPieces = (e: EquipmentSave, mode: Mode) =>
+  Object.values(e.equipped[mode]).map((id) => (id ? findItem(e, id) : undefined)).filter((i): i is EquipItem => !!i);
 
-/** Everything `mode`'s loadout does, each kind summed: lines open at their
- * piece's rarity and the effects its open slots hold, each for that mode
- * (a Tower-only one adds nothing in the Delve). */
-export function equipmentEffects(e: EquipmentSave, mode: Mode, legacyChestplates = false): EffectTotals {
+/** Everything `mode`'s loadout does, each kind summed: each piece's main
+ * effect (the worn Chestplate's efficiency raising the others') and the
+ * effects its open slots hold, each for that mode (a Tower-only one adds
+ * nothing in the Delve). */
+export function equipmentEffects(e: EquipmentSave, mode: Mode): EffectTotals {
   const totals = noEffects();
   if (!e.unlocked) return totals;
-  for (const id of Object.values(e.equipped[mode])) {
-    const item = id && findItem(e, id);
-    if (!item) continue;
-    for (const { line, open, value } of itemLines(item))
-      if (open && (!line.mode || line.mode === mode)) totals[line.kind] = snap(totals[line.kind] + value * (legacyChestplates && itemDef(item.def)!.category === "chestplate" ? .5 : 1));
+  const worn = wornPieces(e, mode), eff = worn.reduce((n, i) => n + pieceEfficiency(i), 0);
+  for (const item of worn) {
+    const main = pieceMain(item, eff);
+    if (main) totals[main.kind] = snap(totals[main.kind] + main.value);
     for (const { def, rarity } of slotEffects(item))
-      if (!def.mode || def.mode === mode) totals[def.kind] = snap(totals[def.kind] + slotValue(def, rarity, item.level));
+      if (!def.mode || def.mode === mode) totals[def.kind] = snap(totals[def.kind] + slotValue(def, rarity));
   }
   return totals;
 }

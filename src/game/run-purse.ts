@@ -17,7 +17,7 @@ import { wornEffects } from "../equipment/effects.ts";
 import { keepDrop, rollChestPiece, rollSupplies } from "../equipment/acquire.ts";
 import type { EquipItem } from "../equipment/inventory.ts";
 import { CATEGORIES, type EquipMaterialId } from "../equipment/catalog.ts";
-import { EQUIP_RARITIES, type EquipRarity } from "../equipment/balance.ts";
+import { EQUIP_RARITIES, rarityRank, STANDARD_DROP_TOP, type EquipRarity } from "../equipment/balance.ts";
 import { runBoons } from "../shrines.ts";
 import { earn } from "../save/profile.ts";
 import { notesOf, tallyIn } from "../run-notes.ts";
@@ -45,8 +45,9 @@ export const PLAIN_ROLL: ChestRoll = { multiplier: 1, cells: false };
 /** What a floor's environments multiply the Gold and Silver found on it by. */
 type FloorPay = { golden: number; stellar: number };
 const PLAIN_FLOOR: FloorPay = { golden: 1, stellar: 1 };
-/** The Equipment rarity a tier above `r` (a Rare stays Rare). */
-const rarityAbove = (r: EquipRarity): EquipRarity => EQUIP_RARITIES[Math.min(EQUIP_RARITIES.length - 1, EQUIP_RARITIES.indexOf(r) + 1)];
+/** The Equipment rarity a tier above `r`, as high as a Standard piece drops
+ * (a Rare stays Rare). */
+const rarityAbove = (r: EquipRarity): EquipRarity => EQUIP_RARITIES[Math.min(rarityRank(STANDARD_DROP_TOP), rarityRank(r) + 1)];
 
 /** What a run finds: Gold, banked in the save as it is found, and Silver,
  * which belongs to the run. Gold paid for a physical kill, chest or floor

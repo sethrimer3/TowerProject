@@ -39,7 +39,6 @@ Craft, level, Refine and Improve use every input in the category recipe; salvage
 | Ring | Whetstone + Quilted Padding | Future; legacy owned Ring below the grid |
 
 The Craft view makes a Common Standard for 25 of every input, without Gold or Gems; full inventories and locked categories refuse before any payment.
-Chestplate intrinsic bases and per-level growth are twice their former values, giving superior effects for the four-resource recipe.
 Gem pulls and Equipment Chests choose only open categories; Supply Chests and mission rewards choose only the four base resources.
 Old five removed material balances split into their recipe's two inputs, preserving every unit; owned equipment, slots, levels and loadouts remain.
 
@@ -47,42 +46,109 @@ Each category's icon (on filters and empty slots), each piece's icon (every Uniq
 
 ## 4. Rarity
 
-Rarity always shows as a word and a letter mark (C, U, R) beside its colour, and its border thickens with it, so it never depends on colour alone. Powers and colours come from the Shop's rarity table (`shop/rarity.ts`), so Epic and above can be added as rows later.
+Rarity always shows as a word and a letter mark (C, U, R, E, L, M, A) beside its colour, and its border thickens with it, so it never depends on colour alone.
+Names and colours come from the Shop's rarity table (`shop/rarity.ts`); everything else is a row of `RARITY_TIERS` in `balance.ts`.
 
-| Rarity | Mark | Power (every scaling line ×) | Max level | Merge | Dismantle returns |
-|---|---|---:|---:|---|---:|
-| Common | C | 1 | 20 | never (worn as is or salvaged) | 5 |
-| Uncommon | U | 1.25 | 40 | 3 → 1 Rare | 20 |
-| Rare | R | 1.6 | 60 | top (for now) | 75 |
+| Rarity | Mark | Max level | Merges into | Recipe | Dismantle returns |
+|---|---|---:|---|---|---:|
+| Common | C | 20 | never (worn as is or salvaged) | — | 5 |
+| Uncommon | U | 40 | Rare | 3 of the piece | 20 |
+| Rare | R | 60 | Epic | 3 of the piece | 75 |
+| Epic | E | 80 | Legendary | 2 of the piece + 1 more of its category | 250 |
+| Legendary | L | 120 | Mythic (Uniques only) | 2 of the piece + 1 more of its category | 900 |
+| Mythic | M | 160 | Ancestral | 2 of the piece | 3,000 |
+| Ancestral | A | 200 | Stars instead | Ancestral + 1 Legendary of the piece = one Star | 10,000 |
 
-Common pieces never merge (`next` is null, so `mergeFodder` offers none and `merge` refuses them as `unmergeable`): they are only worn as they are or salvaged, and Uncommon comes only from drops and pulls; Common Standards can also be crafted.
-
+Common pieces never merge (their tier's `merge` is null): they are only worn as they are or salvaged, thinning the drop pool and giving material.
+**Standard** pieces drop only up to Rare (`STANDARD_DROP_TOP`) and merge no higher than Legendary (`STANDARD_TOP`), so a Standard's cap is 120.
 A Unique piece dismantles for twice its rarity's amount (`UNIQUE_SALVAGE`), since it was bought with Gems.
 
-Higher rarity raises the power of every line, opens the lines marked for it (each Unique opens one at Uncommon and one at Rare; Standard pieces too), and raises the level cap; leveling past the old cap then opens another **effect slot** (section 15):
+**Stars** (`STARS`): an Ancestral piece takes up to five, each a merge with one Legendary copy of the same piece.
+Each Star raises the level cap by 20 (to 300 at five) and multiplies the piece's main effect: ×1.04, ×1.08, ×1.12, ×1.16 and ×1.20 at one to five Stars.
+A Star shows beside the rarity (*Ancestral ★3*) and on the tile.
 
-| Rarity | Level range | Effect slots available | Slot opens at | Maximum effect rarity |
-|---|---|---:|---:|---|
-| Common | 1–20 | 1 | Level 1 | Common |
-| Uncommon | 1–40 | 2 | Level 21 | Uncommon |
-| Rare | 1–60 | 3 | Level 41 | Rare |
+## 5. What a piece does
 
-Each rarity's row in `RARITY_TIERS` holds its cap (`maxLevel`), the level its slot opens at (`slotLevel`, one past the cap below) and its `maxEffect`; `openSlots(rarity, level)` counts the slots from the table, so a rarity added later (Epic with a cap of 80, say) opens a fourth slot at 61 with no other change.
+A piece has two layers: its **main effect**, which only leveling raises, and its **substats**, rolled into slots its level opens (section 15).
 
-## 5. Effects
+### Main effect
 
-Each line of an item is `(base + perLevel × (level − 1)) × rarity power`, kept on the game's snap grid (millionths); a *fixed* line ignores both (Bloodprice Blade's drawback). Keys and Dash tiles count whole units only (rounded down). All effects are deterministic: no random rolls, affixes, dodge or crits.
+Each starting category raises one percent (`MAIN_EFFECTS` in `equipment/main-effect.ts`):
+
+| Category | Main effect | Schedule |
+|---|---|---|
+| Sword | ATK % | Strike |
+| Shield | DEF % | Strike |
+| Helmet | Arcanum Damage % | Arcana |
+| Boots | Gold found % | Gold |
+| Chestplate | max HP % (Strike), and an **efficiency** (Gold) that multiplies the other four worn pieces' main effects | Strike and Gold |
+
+A main effect is its rarity's base at level 0, plus each band of ten levels' step, each step split evenly over its ten levels (level 1 adds a tenth of the first step), all multiplied by the piece's Stars.
+The future corner categories have no main effect yet.
+
+| Rarity | Strike base (ATK, DEF, max HP) | Arcana base | Gold base (Gold found, efficiency) |
+|---|---:|---:|---:|
+| Common | 1% | 3% | 1% |
+| Uncommon | 2% | 5% | 1.2% |
+| Rare | 3% | 8% | 1.5% |
+| Epic | 7% | 12% | 1.8% |
+| Legendary | 13% | 20% | 2.5% |
+| Mythic | 20% | 30% | 3.2% |
+| Ancestral | 30% | 40% | 4% |
+
+Each band's step, added on top of the levels before it (Arcana's steps are the Strike steps ×1.2):
+
+| Up to level | Strike step | Strike total | Gold step | Gold total |
+|---:|---:|---:|---:|---:|
+| 10 | 2 | 2 | 1.2 | 1.2 |
+| 20 | 3 | 5 | 1.5 | 2.7 |
+| 30 | 4 | 9 | 1.8 | 4.5 |
+| 40 | 6 | 15 | 2.4 | 6.9 |
+| 50 | 7 | 22 | 3 | 9.9 |
+| 60 | 8 | 30 | 3.4 | 13.3 |
+| 70 | 12 | 42 | 3.8 | 17.1 |
+| 80 | 16 | 58 | 4.2 | 21.3 |
+| 90 | 24 | 82 | 4.8 | 26.1 |
+| 100 | 30 | 112 | 5.4 | 31.5 |
+| 110 | 60 | 172 | 6 | 37.5 |
+| 120 | 80 | 252 | 6.5 | 44 |
+| 130 | 90 | 342 | 7 | 51 |
+| 140 | 100 | 442 | 8 | 59 |
+| 150 | 110 | 552 | 9 | 68 |
+| 160 | 140 | 692 | 10 | 78 |
+| 170 | 170 | 862 | 11 | 89 |
+| 180 | 190 | 1,052 | 12 | 101 |
+| 190 | 210 | 1,262 | 13 | 114 |
+| 200 | 230 | 1,492 | 14 | 128 |
+| 210 | 240 | 1,732 | 15 | 143 |
+| 220 | 250 | 1,982 | 16 | 159 |
+| 230 | 260 | 2,242 | 17 | 176 |
+| 240 | 270 | 2,512 | 18 | 194 |
+| 250 | 280 | 2,792 | 19 | 213 |
+| 260 | 290 | 3,082 | 20 | 233 |
+| 270 | 300 | 3,382 | 21 | 254 |
+| 280 | 310 | 3,692 | 22 | 276 |
+| 290 | 320 | 4,012 | 23 | 299 |
+| 300 | 330 | 4,342 | 24 | 323 |
+
+For example, a Common Sword at level 1 gives +1.2% ATK, and Common Boots at level 5 +1.6% Gold found.
+A worn Chestplate's efficiency raises the other worn pieces' main effects by its percent (a Rare plate at level 20, 4.2%, makes a sword's +5% ATK +5.21%); it never raises its own max HP, and it doesn't raise substats.
+
+### Where effects are read
+
+Main effects and substats add into the same totals, each kind summed (`equipmentEffects` in `equipment/effects.ts`), and are read where they apply:
 
 | Effect | Read by |
 |---|---|
 | ATK, DEF, max HP (flat, then percent of the total) | `loadout` (flat after training, percent of that, then provisions) |
+| Arcanum Damage | `ArcanaDesk.boost`, as `arcanumBoost`'s equipment factor |
 | Shroud, Regen | `loadout` |
 | Gold / blue keys each run | `startingHero` (only as a run starts) |
 | ATK against bosses | `attackAgainst` in `combat.ts` (bosses and Greater Bosses) |
 | HP from potions | `Game.stepRules` (raises the Potion HP percent) |
 | Max HP healed after each victory | `StepRules.victoryHeal` → `healAfterVictory` in `step-effects.ts` |
 | Max HP healed on each new floor | `Game.floorHeal` (a Tower floor first reached, each new Delve equivalent floor) |
-| Gold / Silver found | `RunPurse.gold` / `RunPurse.silver` |
+| Gold / Silver found | `RunPurse.gold` / `RunPurse.silver` (the Gold multipliers' *Gold Found*) |
 | XP from kills | `Game.gainXp` |
 | Upgrade materials from Supply Chests | `RunPurse.treasure` |
 | Supply and Equipment Chest chance | `Game.dealHand` (the run's `chestOdds`, section 11) |
@@ -90,141 +156,90 @@ Each line of an item is `(base + perLevel × (level − 1)) × rarity power`, ke
 | Movement speed | `Game.moveRate` (the hand's and Automove's steps a second) |
 | Tiles a Dash crosses | `Game.dashTiles` (also lets the hand dash without the Dash skill) |
 
-A line marked *(Tower only)* or *(Delve only)* counts only in that mode's loadout. Effects stack lightly across categories (a ring's ATK % multiplies the weapon's flat ATK, two heals both heal); there are no set bonuses.
+A substat marked *(Tower only)* or *(Delve only)* counts only in that mode's loadout.
 
 ## 6. Catalogue
 
-Each category has one **Standard** piece (from bosses) and three **Unique** pieces (from Gem pulls only), each with a distinct identity. Values below are at level 1; *Growth* is each line's per-level gain, in order, before the rarity's power.
+Each category has one **Standard** piece (from Equipment Chests and crafting) and three **Unique** pieces (from Gem pulls only).
+A definition is only a name, a category, a class and an identity line: what it does comes from its category's main effect and its substats.
+The Uniques' own powers, and two more Standard pieces a category, are the next steps (section 16).
 
-### Weapons
-
-| Piece | Class | Identity | Common, level 1 | Uncommon, level 1 | Rare, level 1 | Growth a level (each line, before rarity) |
-|---|---|---|---|---|---|---|
-| Knight's Sword | Standard | Reliable raw ATK | +3 ATK | +3.75 ATK; +2.5% ATK | +4.8 ATK; +3.2% ATK; +1.6 DEF | 0.5 / 0.1 / 0.25 |
-| Kingsbane | Unique | Boss slayer: hits bosses harder, and finds more Supply and Equipment Chests | +2 ATK; +10% ATK against bosses | +2.5 ATK; +12.5% ATK against bosses; +1.88% ATK | +3.2 ATK; +16% ATK against bosses; +2.4% ATK; +8% Supply and Equipment Chest chance | 0.3 / 0.25 / 0.08 / 0.1 |
-| Reaper's Scythe | Unique | Clears floors for profit: more XP and Silver from every kill | +2 ATK; +5% XP from kills | +2.5 ATK; +6.25% XP from kills; +6.25% Silver found | +3.2 ATK; +8% XP from kills; +8% Silver found; 0.8% of max HP healed after each victory | 0.3 / 0.2 / 0.2 / 0.01 |
-| Bloodprice Blade | Unique | High risk: the most ATK of any weapon, paid for in max HP | +8% ATK; −10% max HP | +10% ATK; −10% max HP; +3.75 ATK | +12.8% ATK; −10% max HP; +4.8 ATK; 2.4% of max HP healed after each victory | 0.2 / fixed / 0.5 / 0.03 |
-
-### Shields
-
-| Piece | Class | Identity | Common, level 1 | Uncommon, level 1 | Rare, level 1 | Growth a level (each line, before rarity) |
-|---|---|---|---|---|---|---|
-| Iron Shield | Standard | Reliable DEF and protection | +2 DEF | +2.5 DEF; +3.75 shroud (damage blocked each fight) | +3.2 DEF; +4.8 shroud (damage blocked each fight); +3.2% DEF | 0.4 / 0.5 / 0.1 |
-| Warden's Shield | Unique | Blocks the first blows | +5 shroud (damage blocked each fight) | +6.25 shroud (damage blocked each fight); +2.5 DEF | +8 shroud (damage blocked each fight); +3.2 DEF; +4.8% DEF | 1 / 0.3 / 0.1 |
-| Bulwark Shield | Unique | Steady defense and vitality | +3 DEF | +3.75 DEF; +18.75 max HP | +4.8 DEF; +24 max HP; +4.8% DEF | 0.5 / 3 / 0.1 |
-| Dawn Shield | Unique | Regains health between battles | +1 DEF; 2% of max HP healed on each new floor | +1.25 DEF; 2.5% of max HP healed on each new floor; +18.75 max HP | +1.6 DEF; 3.2% of max HP healed on each new floor; +24 max HP; +4.8 shroud (damage blocked each fight) | 0.25 / 0.05 / 3 / 0.6 |
-
-### Chestplates
-
-| Piece | Class | Identity | Common, level 1 | Uncommon, level 1 | Rare, level 1 | Growth a level (each line, before rarity) |
-|---|---|---|---|---|---|---|
-| Steel Cuirass | Standard | Superior DEF and vitality | +4 DEF | +5 DEF; +5% DEF | +6.4 DEF; +6.4% DEF; +64 max HP | 0.8 / 0.2 / 8 |
-| Bastion Plate | Unique | Raw defense: DEF, more DEF, then a shroud for the first blows | +6 DEF | +7.5 DEF; +7.5% DEF | +9.6 DEF; +9.6% DEF; +16 shroud (damage blocked each fight) | 1 / 0.24 / 2 |
-| Giant's Hauberk | Unique | A deep pool of HP to outlast long fights | +60 max HP | +75 max HP; +10% max HP | +96 max HP; +12.8% max HP; +6.4 DEF | 12 / 0.24 / 0.6 |
-| Verdant Mail | Unique | Sustain: regains HP as the hero walks and climbs | +1 HP regained each step; +2 DEF | +1.25 HP regained each step; +2.5 DEF; 5% of max HP healed on each new floor | +1.6 HP regained each step; +3.2 DEF; 6.4% of max HP healed on each new floor; 3.2% of max HP healed after each victory | 0.1 / 0.4 / 0.1 / 0.04 |
-
-### Helmets
-
-| Piece | Class | Identity | Common, level 1 | Uncommon, level 1 | Rare, level 1 | Growth a level (each line, before rarity) |
-|---|---|---|---|---|---|---|
-| Iron Helm | Standard | Reliable max HP and DEF | +15 max HP | +18.75 max HP; +1.25 DEF | +24 max HP; +1.6 DEF; +4.8 shroud (damage blocked each fight) | 3 / 0.25 / 0.5 |
-| Sentinel's Visor | Unique | Blocks the first blows of every fight | +6 shroud (damage blocked each fight) | +7.5 shroud (damage blocked each fight); +2.5% DEF | +9.6 shroud (damage blocked each fight); +3.2% DEF; +4.8% max HP | 1.2 / 0.08 / 0.1 |
-| Scholar's Circlet | Unique | Levels the hero faster, for more training points | +8% XP from kills | +10% XP from kills; +18.75 max HP | +12.8% XP from kills; +24 max HP; +8% Silver found | 0.3 / 3 / 0.2 |
-| Miner's Helm | Unique | Made for the Delve: heals on new floors and digs up more there | +10 max HP; 3% of max HP healed on each new floor (Delve only) | +12.5 max HP; 3.75% of max HP healed on each new floor (Delve only); +12.5% XP from kills (Delve only) | +16 max HP; 4.8% of max HP healed on each new floor (Delve only); +16% XP from kills (Delve only); +16% upgrade materials from Supply Chests (Delve only) | 2 / 0.06 / 0.3 / 0.3 |
-
-### Gloves
-
-| Piece | Class | Identity | Common, level 1 | Uncommon, level 1 | Rare, level 1 | Growth a level (each line, before rarity) |
-|---|---|---|---|---|---|---|
-| Leather Gauntlets | Standard | Reliable ATK and DEF | +2 ATK | +2.5 ATK; +1.25 DEF | +3.2 ATK; +1.6 DEF; +3.2% ATK | 0.3 / 0.2 / 0.08 |
-| Brawler's Wraps | Unique | More ATK, and a little life back from every win | +3 ATK | +3.75 ATK; +3.75% ATK | +4.8 ATK; +4.8% ATK; 0.8% of max HP healed after each victory | 0.45 / 0.1 / 0.02 |
-| Locksmith's Gloves | Unique | Keys: starts every run with spare gold keys | +1 gold key each run | +1 gold key each run; +1.25 DEF | +1 gold key each run; +1.6 DEF; +1 blue key each run | 0.04 / 0.2 / fixed |
-| Alchemist's Gloves | Unique | Potions: every potion heals more | +10% HP from potions | +12.5% HP from potions; +12.5 max HP | +16% HP from potions; +16 max HP; +0.48 HP regained each step | 0.4 / 2 / 0.03 |
-
-### Boots
-
-| Piece | Class | Identity | Common, level 1 | Uncommon, level 1 | Rare, level 1 | Growth a level (each line, before rarity) |
-|---|---|---|---|---|---|---|
-| Traveler's Boots | Standard | Reliable DEF and a little speed | +1 DEF | +1.25 DEF; +6.25% movement speed | +1.6 DEF; +8% movement speed; +24 max HP | 0.25 / 0.15 / 3 |
-| Fleetstep Boots | Unique | Raw speed: the hand walks faster everywhere | +10% movement speed | +12.5% movement speed; +1.25 DEF | +16% movement speed; +1.6 DEF; +1 tile a Dash crosses | 0.4 / 0.2 / fixed |
-| Pathfinder's Treads | Unique | Automation: each Dash crosses more empty floor | +1 tile a Dash crosses | +1 tile a Dash crosses; +6.25% movement speed | +1 tile a Dash crosses; +8% movement speed; 1.6% of max HP healed on each new floor | 0.05 / 0.2 / 0.03 |
-| Delver's Greaves | Unique | Made for the Delve: faster, and healed by each new depth | +15% movement speed (Delve only); 2% of max HP healed on each new floor (Delve only) | +18.75% movement speed (Delve only); 2.5% of max HP healed on each new floor (Delve only); +6.25% Gold found (Delve only) | +24% movement speed (Delve only); 3.2% of max HP healed on each new floor (Delve only); +8% Gold found (Delve only); +1 tile a Dash crosses (Delve only) | 0.5 / 0.05 / 0.2 / 0.03 |
-
-### Capes
-
-| Piece | Class | Identity | Common, level 1 | Uncommon, level 1 | Rare, level 1 | Growth a level (each line, before rarity) |
-|---|---|---|---|---|---|---|
-| Wool Cloak | Standard | Reliable max HP and a little DEF | +10 max HP | +12.5 max HP; +1.25 DEF | +16 max HP; +1.6 DEF; +4.8% Gold found | 2 / 0.2 / 0.1 |
-| Magpie's Mantle | Unique | Wealth: more Gold, then Silver, from everything found | +8% Gold found | +10% Gold found; +6.25% Silver found | +12.8% Gold found; +8% Silver found; +16 Silver at the start of each run | 0.3 / 0.2 / 1 |
-| Gatherer's Shroud | Unique | Materials: more upgrade materials, and more Supply and Equipment Chests | +10% upgrade materials from Supply Chests | +12.5% upgrade materials from Supply Chests; +2.5% Supply and Equipment Chest chance | +16% upgrade materials from Supply Chests; +3.2% Supply and Equipment Chest chance; +6.4% Gold found | 0.4 / 0.05 / 0.1 |
-| Pilgrim's Cape | Unique | A steady climb: heals on every new floor | 3% of max HP healed on each new floor | 3.75% of max HP healed on each new floor; +6.25% HP from potions | 4.8% of max HP healed on each new floor; +8% HP from potions; +4.8% max HP | 0.08 / 0.2 / 0.08 |
-
-### Belts
-
-| Piece | Class | Identity | Common, level 1 | Uncommon, level 1 | Rare, level 1 | Growth a level (each line, before rarity) |
-|---|---|---|---|---|---|---|
-| Leather Belt | Standard | Reliable max HP | +20 max HP | +25 max HP; +6.25% HP from potions | +32 max HP; +8% HP from potions; +1.6 DEF | 4 / 0.2 / 0.25 |
-| Provisioner's Belt | Unique | Potions: the strongest potion bonus | +15% HP from potions | +18.75% HP from potions; +6.25 Silver at the start of each run | +24% HP from potions; +8 Silver at the start of each run; +0.48 HP regained each step | 0.5 / 0.5 / 0.04 |
-| Champion's Girdle | Unique | Max HP that grows with everything else | +4% max HP | +5% max HP; +25 max HP | +6.4% max HP; +32 max HP; +4.8 shroud (damage blocked each fight) | 0.12 / 4 / 0.6 |
-| Merchant's Sash | Unique | Silver: buys run training from the first floor | +15 Silver at the start of each run | +18.75 Silver at the start of each run; +6.25% Silver found | +24 Silver at the start of each run; +8% Silver found; +4.8% Gold found | 1.5 / 0.2 / 0.1 |
-
-### Rings
-
-| Piece | Class | Identity | Common, level 1 | Uncommon, level 1 | Rare, level 1 | Growth a level (each line, before rarity) |
-|---|---|---|---|---|---|---|
-| Silver Band | Standard | A little of every percentage | +1.5% ATK | +1.88% ATK; +1.88% DEF | +2.4% ATK; +2.4% DEF; +2.4% max HP | 0.06 / 0.06 / 0.06 |
-| Ring of Fury | Unique | Offense in percent: scales with every point of ATK | +3% ATK | +3.75% ATK; +5% ATK against bosses | +4.8% ATK; +6.4% ATK against bosses; 0.8% of max HP healed after each victory | 0.1 / 0.15 / 0.01 |
-| Ring of Warding | Unique | Defense in percent: scales with every point of DEF | +3% DEF | +3.75% DEF; +3.75 shroud (damage blocked each fight) | +4.8% DEF; +4.8 shroud (damage blocked each fight); +3.2% max HP | 0.1 / 0.6 / 0.06 |
-| Spire Signet | Unique | Made for the Tower: ATK and DEF there, and more Supply and Equipment Chests | +2.5% ATK (Tower only); +2.5% DEF (Tower only) | +3.13% ATK (Tower only); +3.13% DEF (Tower only); +6.25% Gold found (Tower only) | +4% ATK (Tower only); +4% DEF (Tower only); +8% Gold found (Tower only); +4.8% Supply and Equipment Chest chance (Tower only) | 0.08 / 0.08 / 0.2 / 0.05 |
-
-### Amulets
-
-| Piece | Class | Identity | Common, level 1 | Uncommon, level 1 | Rare, level 1 | Growth a level (each line, before rarity) |
-|---|---|---|---|---|---|---|
-| Amber Pendant | Standard | Max HP in percent, and a little Regen | +1.5% max HP | +1.88% max HP; +0.25 HP regained each step | +2.4% max HP; +0.32 HP regained each step; +4.8% XP from kills | 0.06 / 0.02 / 0.1 |
-| Heart of the Grove | Unique | Regeneration: the most HP back with every step | +0.6 HP regained each step | +0.75 HP regained each step; +3.75% max HP | +0.96 HP regained each step; +4.8% max HP; 3.2% of max HP healed on each new floor | 0.06 / 0.1 / 0.05 |
-| Sage's Locket | Unique | Learning: more XP, then more materials and Silver | +10% XP from kills | +12.5% XP from kills; +6.25% upgrade materials from Supply Chests | +16% XP from kills; +8% upgrade materials from Supply Chests; +8% Silver found | 0.35 / 0.2 / 0.2 |
-| Phoenix Talisman | Unique | Rises from each fight: heals a share of max HP after every win | 1.5% of max HP healed after each victory | 1.88% of max HP healed after each victory; +25 max HP | 2.4% of max HP healed after each victory; +32 max HP; +0.48 HP regained each step | 0.03 / 4 / 0.03 |
+| Category | Standard | Uniques |
+|---|---|---|
+| Sword | Knight's Sword | Kingsbane, Reaper's Scythe, Bloodprice Blade |
+| Shield | Iron Shield | Warden's Shield, Bulwark Shield, Dawn Shield |
+| Chestplate | Steel Cuirass | Bastion Plate, Giant's Hauberk, Verdant Mail |
+| Helmet | Iron Helm | Sentinel's Visor, Scholar's Circlet, Miner's Helm |
+| Boots | Traveler's Boots | Fleetstep Boots, Pathfinder's Treads, Delver's Greaves |
+| Gloves | Leather Gauntlets | Brawler's Wraps, Locksmith's Gloves, Alchemist's Gloves |
+| Cape | Wool Cloak | Magpie's Mantle, Gatherer's Shroud, Pilgrim's Cape |
+| Belt | Leather Belt | Provisioner's Belt, Champion's Girdle, Merchant's Sash |
+| Ring | Silver Band | Ring of Fury, Ring of Warding, Spire Signet |
+| Amulet | Amber Pendant | Heart of the Grove, Sage's Locket, Phoenix Talisman |
 
 ## 7. Leveling
 
-Raising a piece one level costs Gold and the listed amount of every input in its recipe:
+A piece starts at **level 0**.
+Reaching level L costs Gold and that many of every input in its recipe (`upgradeGold`, `upgradeMaterial` in `balance.ts`), linear between the listed points:
 
-- Gold: `5 × L × (L + 9)`
-- Material: `⌈L × (L + 10) / 20⌉`
+| Reaching level | Gold each level |
+|---|---|
+| 1–10 | 2,000 × L (2,000 to 20,000) |
+| 11–20 | 25k to 70k |
+| 21–30 | 80k to 170k |
+| 31–40 | 200k to 515k |
+| 41–50 | 590k to 1.4m |
+| 51–60 | 2.2m to 4m |
+| 61–70 | 6m to 42m |
+| 71–80 | 50m to 140m |
+| 81–90 | 160m to 300m |
+| 91–100 | 320m to 500m |
+| 101–110 | 1b to 2.8b |
+| 111–120 | 3b to 12b |
+| 121–130 | 14b to 23b |
+| 131–140 | 24b to 42b |
+| 141–150 | 50b to 500b |
+| 151–160 | 550b to 1t |
+| 161, 162, 171, 181, 191 | 10t, 60t, 510t, 1.01q, 1.51q |
+| 201, 221, 241, 261, 281, 300 | 2.5q, 265q, 1Q, 106Q, 411Q, 886Q |
 
-where `L` is the current level. Both rise smoothly with the square of the level.
+(q is a quadrillion, 10¹⁵; Q a quintillion, 10¹⁸.)
 
-| Level | Gold | Material |
-|---|---|---|
-| 1 → 2 | 50 | 1 |
-| 2 → 3 | 110 | 2 |
-| 5 → 6 | 350 | 4 |
-| 10 → 11 | 950 | 10 |
-| 20 → 21 | 2,900 | 30 |
-| 30 → 31 | 5,850 | 60 |
-| 40 → 41 | 9,800 | 100 |
-| 50 → 51 | 14,750 | 150 |
-| 59 → 60 | 20,060 | 204 |
+| Reaching level | Material of each input |
+|---|---|
+| 1–60 | ⌈L × (L + 10) / 20⌉ (1, 10 at 10, 30 at 20, 100 at 40, 210 at 60) |
+| 101, 161, 201, 221 | 1,000, 5,000, 10,000, 15,000 |
+| 241, 261, 281, 300 | 20,000, 30,000, 40,000, 49,500 |
 
-From level 1, reaching level 20 costs 20,900 Gold and 225 material; level 40, 137,800 Gold and 1,430; level 60, 430,700 Gold and 4,415. The Item view levels by 1, by 10, or as far as the Gold and material allow (Max).
+A Chestplate pays its material four times over (four inputs) and a future corner piece twice.
+From level 0, reaching level 20 costs 585,000 Gold and 255 material; 60, 46.4m and 4,625; 120, 102b and 61,492; 200, 41.6q and 504,325; 300, about 1.9 × 10²² and 3.18m.
+The Item view levels by 1, by 10, or as far as the Gold and material allow (Max).
 
-**Investment** is recorded on each piece (`spent`: the Gold and material leveling it cost) for a future equipment reset; there is no reset yet. Dismantling never returns it, and a merge's used-up copies lose theirs (the merge dialog warns when a copy was leveled).
+**Investment** is recorded on each piece (`spent`: the Gold and material leveling it cost) for a future equipment reset; there is no reset yet.
+Dismantling never returns it, and a merge's used-up pieces lose theirs (the merge dialog warns when one was leveled).
 
 ## 8. Merging
 
-Three pieces of the **same definition and rarity** make one of the next rarity. In the Assemble view the player chooses the piece to keep (the target), shown beside the copies to use up with the result it makes: it moves up a rarity **keeping its level**, lock, loadouts, investment, **effect slots, their effects and their Refinement** (nothing is rerolled: the new rarity raises the cap, lets its slots hold rarer effects, and opens the next slot once leveled past the old cap); the player picks the two copies used up (the two lowest-level unprotected ones are picked to start). Locked or worn copies are never offered; the target itself may be locked or worn. Assemble lists every piece with enough copies ready (its tab wears an *N* while one is), and ends on a full-screen *Assemble Complete!* with the piece made.
-**Auto-assemble**, beside *Choose the piece to keep*, lists every merge the inventory makes at once, each checked by default: no piece in two merges, worn pieces left out altogether, a locked piece only ever kept, and each merge keeping the best piece left (locked first, then the highest level) and using up the lowest-level copies. Its Assemble makes those left checked, without the melt, and ends on one *Assemble Complete!* showing them all; its ✕ or a press outside it cancels. A merge's result never joins another in the same list: pressing again offers merges at the new rarity.
+A merge follows the target's recipe (`mergePlan` in `inventory.ts`, section 4).
+In the Assemble view the player chooses the piece to keep (the target), shown beside the pieces to use up with the result it makes: it moves up a rarity (or gains a Star) **keeping its level**, lock, loadouts, investment, **substat slots, their effects and their Refinement** (nothing is rerolled: the new rarity raises the cap and lets its slots hold rarer substats, so leveling on opens more slots).
+The pieces used up start chosen (`defaultFodder`): the lowest-level copies of the piece, then, for Epic and Legendary, the category's cheapest other piece at that rarity (a Standard before a Unique, the lowest level first), so Standard pieces serve as fodder for Uniques.
+The player may swap any of them; the recipe needs at least its copies of the piece itself (`fodderFits`).
+Locked or worn pieces are never offered; the target itself may be locked or worn.
+Assemble lists every piece with enough pieces ready (its tab wears an *N* while one is), and ends on a full-screen *Assemble Complete!* with the piece made.
+**Auto-assemble**, beside *Choose the piece to keep*, lists every rarity merge the inventory makes at once, each checked by default: no piece in two merges, worn pieces left out altogether, a locked piece only ever kept, and each merge keeping the best piece left (best rarity, then locked, then the highest level) and using up `defaultFodder`'s pieces.
+It never offers a Star, which is the player's own choice.
+Its Assemble makes those left checked, without the melt, and ends on one *Assemble Complete!* showing them all; its ✕ or a press outside it cancels.
+A merge's result never joins another in the same list: pressing again offers merges at the new rarity.
 
 ## 9. Dismantling
 
-Dismantling breaks pieces into their recipe's first base resource (section 4 amounts). From the List view's Select mode (any number of pieces, across categories) or its Salvage quick buttons (every unprotected piece of a rarity). The confirmation shows the count, the rarities, the materials returned, and a warning for valuable pieces (Rare, Unique or leveled). Locked and worn pieces can't be selected or dismantled; unlock or take them off first. The materials gained rise from their balances (*+20*).
+Dismantling breaks pieces into their recipe's first base resource (section 4 amounts). From the List view's Select mode (any number of pieces, across categories) or its Salvage quick buttons (every unprotected piece of a rarity). The confirmation shows the count, the rarities, the materials returned, and a warning for valuable pieces (Rare or above, Unique or leveled). Locked and worn pieces can't be selected or dismantled; unlock or take them off first. The materials gained rise from their balances (*+20*).
 
-The Salvage section also holds the **Auto-salvage common drops** toggle (`save.equipment.autoSalvage`, off by default, kept between sessions): while it is on, a Common piece an Equipment Chest holds is dismantled at once into its material (`keepDrop`) instead of joining the inventory, and the status line says *Auto-salvaged · +5 …* (on the board, the material rises as its icon with its count). A Gem pull's Common pieces are dismantled the same way once pulled (`EquipmentDesk.pull`): the result screen still shows each, dimmed, with the material it returned. Uncommon and Rare pieces are always kept.
+The Salvage section also holds the **Auto-salvage common drops** toggle (`save.equipment.autoSalvage`, off by default, kept between sessions): while it is on, a Common piece an Equipment Chest holds is dismantled at once into its material (`keepDrop`) instead of joining the inventory, and the status line says *Auto-salvaged · +5 …* (on the board, the material rises as its icon with its count). A Gem pull's Common pieces are dismantled the same way once pulled (`EquipmentDesk.pull`): the result screen still shows each, dimmed, with the material it returned. Pieces above Common are always kept.
 
 ## 10. Inventory
 
-At most **500** pieces (`EQUIPMENT_CAPACITY`). An Equipment Chest's piece that finds the inventory full is dismantled at once into its material; a Gem pull needs room for every piece it brings. The List view shows the loadout (five starting slots in a plus: Helmet top, Shield left, Chestplate center, Sword right and Boots below; later corners stay empty until opened and legacy owned Rings sit below; the Tower/Delve switch at its top left; an empty slot shows only its category below) over the inventory as a grid of square tiles. It filters by category and by rarity together, sorts by rarity, level, category, newest or name, and selects several pieces at once to dismantle or (two) to compare. Each tile shows the icon on its rarity's colour, the rarity mark, the level, a check when the loadout shown wears it, a lock, and a star for a Unique; tapping it opens the piece.
+At most **500** pieces (`EQUIPMENT_CAPACITY`). An Equipment Chest's piece that finds the inventory full is dismantled at once into its material; a Gem pull needs room for every piece it brings. The List view shows the loadout (five starting slots in a plus: Helmet top, Shield left, Chestplate center, Sword right and Boots below; later corners stay empty until opened and legacy owned Rings sit below; the Tower/Delve switch at its top left; an empty slot shows only its category below) over the inventory as a grid of square tiles. It filters by category and by rarity together, sorts by rarity, level, category, newest or name, and selects several pieces at once to dismantle or (two) to compare. Each tile shows the icon on its rarity's colour, the rarity mark (with *★n* beside it for an Ancestral piece's Stars), the level, a check when the loadout shown wears it, a lock, and a star mark for a Unique; tapping it opens the piece.
 
 ## 11. Equipment Chests (Standard pieces)
 
@@ -236,7 +251,7 @@ Kills drop no equipment. While the run's hand holds the **Chest** card, each tre
 
 The category is even among the open categories.
 
-A chest's kind is fixed as its floor is generated, not as it opens. As the run goes inside, it fixes its odds (`run.chestOdds`, set by `Game.dealHand`): the hand's Chest card's 0.5% and 1.5%, each raised by the worn **Supply and Equipment Chest chance** (`chestFind`: Kingsbane, Gatherer's Shroud, Spire Signet and the Bounty slot effect; +5% makes 0.5% into 0.525%). Each treasure tile's fixed number (`chestKindAt` in `board.ts`, from the floor's seed and the tile) under the Equipment Chest's chance makes one, then under both chances a Supply Chest, so higher odds only ever add more. The board shows a Supply Chest with a light blue glow and one star in its tile's upper-left corner, and an Equipment Chest with a purple glow and two stars, and both stay on the floor once it is opened (`render/chest-marks.ts`).
+A chest's kind is fixed as its floor is generated, not as it opens. As the run goes inside, it fixes its odds (`run.chestOdds`, set by `Game.dealHand`): the hand's Chest card's 0.5% and 1.5%, each raised by the worn **Supply and Equipment Chest chance** (`chestFind`: the Bounty substat; +5% makes 0.5% into 0.525%). Each treasure tile's fixed number (`chestKindAt` in `board.ts`, from the floor's seed and the tile) under the Equipment Chest's chance makes one, then under both chances a Supply Chest, so higher odds only ever add more. The board shows a Supply Chest with a light blue glow and one star in its tile's upper-left corner, and an Equipment Chest with a purple glow and two stars, and both stay on the floor once it is opened (`render/chest-marks.ts`).
 
 The rates are low on purpose, to be raised by upgrades later.
 
@@ -270,95 +285,177 @@ The Acquire view pulls in one chosen category, or of **all types** for 10% less 
 | Field | Holds |
 |---|---|
 | `unlocked`, `seen` | Opened (by Tower II's floor 60 Goal); the Equipment screen seen (the Gear dot) |
-| `items` | Each piece: `id` (`e1`, `e2` …, never reused), `def` (catalogue id), `rarity`, `level`, `locked?`, `spent?` (Gold and material invested), `slots` (one per slot opened: `effect?`, `rarity?`, `refinement?`, `choicesUsed?`, `offer?`) |
+| `items` | Each piece: `id` (`e1`, `e2` …, never reused), `def` (catalogue id), `rarity`, `stars?` (1–5, Ancestral only), `level` (from 0), `locked?`, `spent?` (Gold and material invested), `slots` (one per slot opened: `effect?`, `rarity?`, `refinement?`, `choicesUsed?`, `offer?`) |
 | `equipped.tower`, `equipped.delve` | Category → item id, per mode |
 | `materials` | The four base resource balances |
 | `pity` | Pulls since the last Rare, per category |
-| `nextId`, `rng` | The next item id; the stream pulls and effect candidates draw from |
+| `nextId`, `rng` | The next item id; the stream pulls and substat candidates draw from |
 
-No catalogue data (names, effects) is saved. Decoding drops unknown definitions and rarities, duplicate ids and pieces past the capacity, clamps levels to the rarity's cap, keeps loadouts to owned pieces of the right category, and resets anything malformed to its default. Saves from before Equipment load with it closed and empty (opened by claiming Tower II's floor 60 Goal); the old crafted-equipment fields are dropped. Pieces saved before effect slots get an empty slot for each their rarity and level have opened, each ready for its free first roll; a slot's effect is dropped if its category can no longer hold it or another slot holds it, its rarity is clamped to the item's, and Choices spent beyond those earned are dropped.
+No catalogue data (names, effects) is saved.
+Decoding drops unknown definitions and rarities, duplicate ids and pieces past the capacity, keeps Stars only on Ancestral pieces, clamps levels to the piece's cap, keeps loadouts to owned pieces of the right category, and resets anything malformed to its default.
+Saves from before Equipment load with it closed and empty (opened by claiming Tower II's floor 60 Goal); the old crafted-equipment fields are dropped.
+A piece keeps a slot for each its level has opened, each empty one ready for its free first roll; a slot's substat is dropped if its category can no longer hold it or another slot holds it, its rarity is clamped to the piece's (a Common one, from before substats had no Common, comes back Uncommon), and Choices spent beyond those earned are dropped.
 
-## 15. Effect slots and Refinement
+## 15. Substats and Refinement
 
-An item has two layers. Its **intrinsic** lines (sections 5 and 6) are fixed by its definition: its base stats and, for a Unique, its signature ability. Its **effect slots** are its own: secondary bonuses opened by rarity and level and chosen by the player, so two copies of the same piece share an identity but can grow different bonuses. Slot effects are kept to about half an intrinsic line's strength, so a Unique's specialization always leads.
+A piece's **substats** are its own: bonuses in slots its level opens, chosen by the player, so two copies of the same piece share a main effect but can grow different substats.
+Leveling never raises a substat; rarity does.
 
-**The loop.** Obtain a piece, level it, reach its rarity's cap, merge three copies into the next rarity (from Uncommon up), level past the old cap, open another slot, refine it, and repeat.
+**The loop.** Obtain a piece, level it, reach its rarity's cap, merge into the next rarity (from Uncommon up), level on, open another slot, refine it, and repeat.
+
+### Slots
+
+| Level | Slots open |
+|---:|---:|
+| 1 | 1 |
+| 41 | 2 |
+| 61 | 3 |
+| 81 | 4 |
+| 121 | 5 |
+| 161 | 6 |
+| 201 | 7 |
+| 241 | 8 |
+
+`openSlots(level)` counts them from `SUBSTAT_SLOT_LEVELS`.
+A Common piece (never past 20) only ever has one, a Standard piece (never past Legendary's 120) four, and a Unique all eight; the item view lists only the slots a piece can reach (`reachableLevel`), each closed one with the level it opens at and the rarity (and Stars) that level needs.
 
 ### Effects and pools
 
-Each effect (`SLOT_EFFECTS` in `equipment/slot-effects.ts`) has an id, a name, a family, the effect kind it adds to (read where section 5 says), its value at level 1 and per level, and optionally a mode. Its value is `(base + perLevel × (level − 1)) × its rarity's power`, so a rarer version of an effect is the same effect, stronger and scaling faster; its name carries its rarity as a numeral (Fleetness I, II, III). Each category rolls from its families (`CATEGORY_FAMILIES`):
+Each substat (`SLOT_EFFECTS` in `equipment/slot-effects.ts`) has an id, a name, a family, the effect kind it adds to (read where section 5 says), its base value and optionally a mode.
+Its value is `base × its rarity's substat power` (`SUBSTAT_POWER`: Uncommon ×1, Rare ×1.5, Epic ×2.25, Legendary ×3.5, Mythic ×5, Ancestral ×7.5); its name carries its rarity as a numeral (Fleetness I at Uncommon, II at Rare …).
+Substats have no Common: a piece's slots hold substats up to its own rarity (`substatCap`), a Common piece's Uncommon.
+Each category rolls from its families (`CATEGORY_FAMILIES`):
 
-| Effect | Family | What it does (level 1, Common) | Per level | At level 60, Rare |
-|---|---|---|---:|---|
-| Keen Edge | Might | +1.5 ATK | 0.25 | +26 ATK |
-| Ferocity | Might | +1% ATK | 0.04 | +5.38% ATK |
-| Piercing | Might | 2% of enemy DEF ignored | 0.05 | 7.92% of enemy DEF ignored |
-| Giantslayer | Might | +4% ATK against bosses | 0.12 | +17.73% ATK against bosses |
-| Bulwark | Guard | +1 DEF | 0.2 | +20.48 DEF |
-| Fortitude | Guard | +1% DEF | 0.04 | +5.38% DEF |
-| Warding | Guard | +3 shroud (damage blocked each fight) | 0.5 | +52 shroud (damage blocked each fight) |
-| Vigor | Vitality | +50 max HP | 10 | +1024 max HP |
-| Constitution | Vitality | +1% max HP | 0.04 | +5.38% max HP |
-| Mending | Vitality | +0.2 HP regained each step | 0.02 | +2.21 HP regained each step |
-| Second Wind | Recovery | 0.3% of max HP healed after each victory | 0.01 | 1.42% of max HP healed after each victory |
-| Fresh Air | Recovery | 1% of max HP healed on each new floor | 0.03 | 4.43% of max HP healed on each new floor |
-| Tonic | Recovery | +4% HP from potions | 0.15 | +20.56% HP from potions |
-| Fleetness | Mobility | +3% movement speed | 0.1 | +14.24% movement speed |
-| Spire Stride | Mobility | +5% movement speed (Tower only) | 0.15 | +22.16% movement speed |
-| Deep Stride | Mobility | +5% movement speed (Delve only) | 0.15 | +22.16% movement speed |
-| Prospector | Fortune | +2% Gold found | 0.08 | +10.75% Gold found |
-| Silver Tongue | Fortune | +2% Silver found | 0.08 | +10.75% Silver found |
-| Scavenger | Fortune | +3% upgrade materials from Supply Chests | 0.12 | +16.13% upgrade materials from Supply Chests |
-| Bounty | Fortune | +1% Supply and Equipment Chest chance | 0.03 | +4.43% Supply and Equipment Chest chance |
-| Purse Strings | Fortune | +3 Silver at the start of each run | 0.3 | +33.12 Silver at the start of each run |
-| Studious | Lore | +2% XP from kills | 0.08 | +10.75% XP from kills |
-| Spire Scholar | Lore | +3.5% XP from kills (Tower only) | 0.12 | +16.93% XP from kills |
-| Deep Scholar | Lore | +3.5% XP from kills (Delve only) | 0.12 | +16.93% XP from kills |
-
-| Category | Families | Effects |
+| Substat | Family | Base (Uncommon) |
 |---|---|---|
-| Weapon | Might, Lore | 7 |
-| Shield | Guard, Vitality | 6 |
-| Chestplate | Guard, Vitality | 6 |
-| Helmet | Guard, Vitality, Lore | 9 |
-| Gloves | Might, Recovery | 7 |
-| Boots | Mobility, Recovery, Guard | 9 |
-| Cape | Fortune, Guard | 8 |
-| Belt | Vitality, Recovery, Fortune | 11 |
-| Ring | Might, Guard, Vitality | 10 |
-| Amulet | Vitality, Recovery, Lore | 9 |
+| Keen Edge | Might | +1.5 ATK |
+| Ferocity | Might | +1% ATK |
+| Piercing | Might | 2% of enemy DEF ignored |
+| Giantslayer | Might | +4% ATK against bosses |
+| Bulwark | Guard | +1 DEF |
+| Fortitude | Guard | +1% DEF |
+| Warding | Guard | +3 shroud (damage blocked each fight) |
+| Vigor | Vitality | +50 max HP |
+| Constitution | Vitality | +1% max HP |
+| Mending | Vitality | +0.2 HP regained each step |
+| Second Wind | Recovery | 0.3% of max HP healed after each victory |
+| Fresh Air | Recovery | 1% of max HP healed on each new floor |
+| Tonic | Recovery | +4% HP from potions |
+| Fleetness | Mobility | +3% movement speed |
+| Spire Stride | Mobility | +5% movement speed (Tower only) |
+| Deep Stride | Mobility | +5% movement speed (Delve only) |
+| Prospector | Fortune | +2% Gold found |
+| Silver Tongue | Fortune | +2% Silver found |
+| Scavenger | Fortune | +3% upgrade materials from Supply Chests |
+| Bounty | Fortune | +1% Supply and Equipment Chest chance |
+| Purse Strings | Fortune | +3 Silver at the start of each run |
+| Studious | Lore | +2% XP from kills |
+| Spire Scholar | Lore | +3.5% XP from kills (Tower only) |
+| Deep Scholar | Lore | +3.5% XP from kills (Delve only) |
 
-**Piercing** is the one new effect kind: a share of the enemy's DEF the hero's strikes ignore (`defenseAgainst` in `combat.ts`), at most 50% (`PIERCE_CAP`). It changes each strike by a fixed amount, so the forecast and the fight still agree; there is no crit, dodge or other chance in any slot effect.
+| Category | Families |
+|---|---|
+| Weapon | Might, Lore |
+| Shield | Guard, Vitality |
+| Chestplate | Guard, Vitality |
+| Helmet | Guard, Vitality, Lore |
+| Gloves | Might, Recovery |
+| Boots | Mobility, Recovery, Guard |
+| Cape | Fortune, Guard |
+| Belt | Vitality, Recovery, Fortune |
+| Ring | Might, Guard, Vitality |
+| Amulet | Vitality, Recovery, Lore |
+
+This table is the old pool, carried over until the approved substat catalogue replaces it (section 16).
+**Piercing** is a share of the enemy's DEF the hero's strikes ignore (`defenseAgainst` in `combat.ts`), at most 50% (`PIERCE_CAP`).
 
 ### Rolling
 
-A candidate's rarity is rolled by `EFFECT_RARITY_WEIGHTS` (Common 70, Uncommon 25, Rare 5), among the rarities up to the item's `maxEffect` (the weights of those allowed are rescaled), so a Common item rolls only Common effects. An offer is `EFFECT_CANDIDATES` (3) different effects from the pool, never one another slot of the item holds. Rolls draw from the save's Equipment stream, and an offer is saved with its slot until the player answers it, so reloading can't reroll.
+A candidate's rarity is rolled by `SUBSTAT_RARITY_WEIGHTS` (Uncommon 61.2%, Rare 25%, Epic 10%, Legendary 2.5%, Mythic 1%, Ancestral 0.3%), among the rarities up to the piece's (the weights of those allowed are rescaled).
+An offer is `EFFECT_CANDIDATES` (3) different substats from the pool, never one another slot of the piece holds.
+Rolls draw from the save's Equipment stream, and an offer is saved with its slot until the player answers it, so reloading can't reroll.
 
 - **First roll (free).** A newly opened slot offers 3 candidates at no cost; the player takes one. It rolls once: asking again shows the same offer.
-- **Refine (paid).** On a slot holding an effect: pay the cost, and 3 new candidates appear beside the **current** effect, which stays. The player takes one, or **Keep Current**. Nothing is lost by keeping: the Refine still counts. A slot can hold one offer at a time.
-- **Improve (paid).** The current effect, one rarity higher, up to the item's `maxEffect`: deterministic, for `IMPROVE_COST_FACTOR` (3) Refines' worth. After a merge, this is how an effect chosen at the old rarity rises.
+- **Refine (paid).** On a slot holding a substat: pay the cost, and 3 new candidates appear beside the **current** one, which stays. The player takes one, or **Keep Current**. Nothing is lost by keeping: the Refine still counts. A slot can hold one offer at a time.
+- **Improve (paid).** The current substat, one rarity higher, up to the piece's: deterministic, for `IMPROVE_COST_FACTOR` (3) Refines' worth. After a merge, this is how a substat chosen at the old rarity rises.
 
-| Item rarity | Refine cost | Improve cost |
-|---|---|---|
-| Common | 1,000 Gold + 10 material | 3,000 Gold + 30 material |
-| Uncommon | 5,000 Gold + 40 material | 15,000 Gold + 120 material |
-| Rare | 20,000 Gold + 120 material | 60,000 Gold + 360 material |
+| Piece rarity | Refine cost |
+|---|---|
+| Common | 1,000 Gold + 10 material |
+| Uncommon | 5,000 Gold + 40 material |
+| Rare | 20,000 Gold + 120 material |
+| Epic | 2m Gold + 400 material |
+| Legendary | 100m Gold + 1,200 material |
+| Mythic | 10b Gold + 4,000 material |
+| Ancestral | 1t Gold + 12,000 material |
 
-The material is the item's category's (`REFINE_COST`).
+The material is every input of the piece's category's recipe (`REFINE_COST`); Improve costs three times as much.
+Epic and above are placeholders, to be tuned with the substat catalogue.
 
 ### Refinement and milestones
 
-Every paid Refine adds one to that slot's **Refinement** (`slot.refinement`), which only ever rises: it is saved with the slot, kept through merges, and never taken back for keeping the current effect.
+Every paid Refine adds one to that slot's **Refinement** (`slot.refinement`), which only ever rises: it is saved with the slot, kept through merges, and never taken back for keeping the current substat.
 
 | Refinement | Milestone |
 |---|---|
-| Every 5th (5, 15, 25 …) | The offer's first candidate is at the item's highest effect rarity (`REFINE_GUARANTEE_EVERY`) |
+| Every 5th (5, 15, 25 …) | The offer's first candidate is at the piece's highest substat rarity (`REFINE_GUARANTEE_EVERY`) |
 | Every 10th (10, 20 …) | The same guarantee, and a **Choice** (`REFINE_CHOICE_EVERY`) |
 
-A **Choice** picks any effect of the slot's pool (less those its other slots hold) at the item's highest effect rarity, outright. Choices are earned per slot (`⌊refinement / 10⌋`, less `choicesUsed`) and kept until spent. This is the deterministic endpoint: luck decides how soon a slot holds the effect wanted, and ten Refines guarantee it at the top rarity, however unlucky the rolls.
+A **Choice** picks any substat of the slot's pool (less those its other slots hold) at the piece's highest substat rarity, outright.
+Choices are earned per slot (`⌊refinement / 10⌋`, less `choicesUsed`) and kept until spent.
 
 ### Screens
 
-The item view shows its rarity, level and cap, what the next rarity brings (*Uncommon raises the level cap to 40; Level 21 then opens effect slot 2*), its intrinsic lines, and each slot: its effect and value, its Refinement and Choices, a free roll for a new slot, or *Unlocks at Level 41 · needs Rare* for one not open yet. A slot's screen shows CURRENT, the NEW CANDIDATES with Keep Current, *Refinement: 7 / 10* and the next milestone, and Refine, Improve and Use a Choice (which lists the pool by family). 
+The item view shows its rarity (and Stars), level and cap, what merging next raises the cap to, its main effect now and at the next level, and each slot it can reach: its substat and value, its Refinement and Choices, a free roll for a new slot, or *Unlocks at Level 41 · needs Rare* for one not open yet.
+A slot's screen shows CURRENT, the NEW CANDIDATES with Keep Current, *Refinement: 7 / 10* and the next milestone, and Refine, Improve and Use a Choice (which lists the pool by family).
 
-**Every number in this section is a balancing parameter, not a design constraint**: slot levels and caps, candidate count, rarity weights, costs, milestone spacing, effect values and families are all one-line edits in `balance.ts` and `slot-effects.ts`.
+## 16. Approved next steps
+
+Agreed with the designer and not built yet, in the order they are planned.
+
+### Boss drops
+
+Bosses and Greater Bosses: a 1.5% chance to drop upgrade materials and 0.5% to drop a Standard piece, each rolled as a Supply or Equipment Chest's contents are.
+
+### The substat catalogue
+
+Substats become percentages only (no flat ATK or DEF), each category's own focus, replacing section 15's pool:
+
+- **Sword (Offense):** ATK %, Piercing, ATK against bosses, crit chance, crit factor, Super Crit chance, Super Crit factor, Armor Break, Combo ATK, Attack Range, Attack Speed, ATK / m, Charged Shot charge, Multishot Chance, Multishot Targets (+1 at Mythic, +2 at Ancestral; Mythic and up), Rapid Fire Chance, Rapid Fire Duration.
+- **Shield (Defense):** DEF %, shroud %, max HP %, Regen %, Thorn Damage, Parry % (+1 point at Uncommon, then +2, 3, 4, 5 and 8, not by substat power), Overheal ceiling, Lifesteal (Bloodthirst), Second Wind (3 points of max HP after each victory), Fresh Air (5 points on each new floor), HP from potions, Shield HP, Regrow Shield turns, Shield Regen (+10%), Shield Thorns.
+- **Helmet (Arcana):** Arcanum Damage, and each attribute of each arcanum as its own substat (Ricochet Shot ATK Mult, Chance and Rebounds; Aurum Bloom Bonus, Golden and Stellar Chance; Overseer Bonus, Angle and beams; Thunderbolt ATK Mult, bolts and Cooldown; Lifespring HP, Effect Waves and Cooldown; Time Dilation Duration, Slowdown and Cooldown; Phantasm ATK Mult, ghosts and Cooldown; Necrotic Frost ATK Mult, Duration and Cooldown; Voidwell Size, Duration and Cooldown). Discrete counts roll only from a higher rarity (bolts and ghosts from Epic, Rebounds and Effect Waves from Legendary, beams from Mythic). Slots roll from every arcanum, owned or not.
+- **Boots (Utility):** Gold found, Gold from kills, Gold from pickups, Silver found, Interest, gold, blue and red Key Efficiency (red from Rare), the chance each floor of each Free Upgrade row (+1, 2, 4, 6, 8, 10 from Uncommon to Ancestral) and of each Enemy Level Skip (+1, 2, 3, 4, 6, 8).
+- **Chestplate (Efficiency and speed):** XP, movement speed, trainer speed, Archives research speed, enemy drop chance, Supply and Equipment Chest chance, Supply Chest materials, offline Gold, free run-training level chance, Dash tiles (+1 at Uncommon, +1 each rarity above) and End Rush tiles (the same).
+
+### The catalogue and Gem pulls
+
+- Ring is removed. Each starting category gets three Standard pieces (Sword: Knight's Sword, Squire's Blade, Steel Broadsword; Shield: Iron Shield, Oaken Buckler, Kite Shield; Chestplate: Steel Cuirass, Scale Mail, Ringmail Vest; Helmet: Iron Helm, Acolyte's Hood, Great Helm; Boots: Traveler's Boots, Ranger's Boots, Riding Boots), distinct for merging and with no ability of their own, and three Uniques, below.
+- Gem pull rates: Common 60%, Uncommon 29%, Rare 8%, Epic 2.5%, Legendary 0.5%. Common to Rare bring Standard pieces, Epic and Legendary Uniques. Pity: the 120th pull without an Epic or better is an Epic Unique; pulls of all categories keep a pity count of their own. Relics' rare-pull bonus moves to Epic.
+- Each category's pulls, and pulls of all categories, each draw from a saved stream of their own, for the profile's lifetime; substat rolls from another.
+- A rates dialog beside the Gem buttons: each rarity's chance and its share of each named piece. Once the player owns a five-Star Ancestral piece, each piece gets a toggle to leave it out of future draws (turned off by default for a piece when its first five-Star copy is made); its share goes evenly to the rest. When every piece of a category is maxed and left out, buying that category's pulls warns and asks the player to turn some back on.
+
+### Unique powers
+
+Each Unique's power grows with its rarity (Epic, Legendary, Mythic, Ancestral):
+
+| Unique | Power |
+|---|---|
+| Raptor Blade (Sword) | Super Crit chance +5, 7, 10, 14; a Super Crit makes the next 5 shots Super Crits |
+| Kinetic Mallet (Sword) | +1, 2, 3, 4 turns to the window that keeps a Combo going |
+| Soul Reaper (Sword) | 5, 8, 11, 15% chance to mark a non-boss enemy for death (rolled per enemy from the run seed): its first hit destroys it |
+| Zenith Guard (Shield) | Regen heals into Overheal, up to 25, 50, 75, 100% of the room between max HP and the Overheal ceiling |
+| Cradle of Life (Shield) | Aether Shield HP and Shield Regen ×1.25, 1.5, 2, 2.5 |
+| Amber Prison (Shield) | A shot that doesn't kill slows its enemy (Slowdown, movement too) and cuts its ATK by 1, 1.5, 2, 2.5% a hit, stacking to 50% |
+| Chrono Strider (Boots) | A potion taken cuts every arcanum's cooldown but Necrotic Frost's by 10, 13, 17, 20 turns; Aurum Bloom's Golden Chance +5, 10, 15, 20 points; every arcanum cooldown −5, 8, 11, 15% |
+| Jackpot Spurs (Boots) | Gold ×(1 + n × 3, 5, 7, 10%), n the free-upgrade rolls that came up on the floor (maxed rows counted), its own compounding factor |
+| Hoarder Greaves (Boots) | ATK × 1.25, 1.5, 2, 2.5 × (1 + log₁₀ of the keys held, every colour together), ×1 with none, on an exact logarithm |
+| Lich King's Crown (Helmet) | 1, 2, 3, 4 ghosts rush each boss (Greater Bosses too) as it comes in shot range, at Phantasm's first-level ATK Mult |
+| Psionic Tempest (Helmet) | Ricochet Shot hits its first target too, 15, 30, 45, 60% of the time |
+| Challenger's Defiance (Helmet) | Overseer turns to stay on a boss; while a boss (not a Greater Boss) is on the floor, ATK against every other enemy ×2, 4, 7, 15 |
+| Equilibrium Tether (Chestplate) | ATK, DEF, max HP and Regen each count as ⌈pool ÷ 4⌉ ranks: the pool is their ranks at the start of the run plus 1, 2, 3, 4 for each rank bought or given free in the run on any row, past the rows' most if need be |
+| Mobius Cipher (Chestplate) | Each pickup adds 0.005, 0.01, 0.015, 0.02 to that kind's yield in the run (potions, chests' Gold, ATK shards, DEF shards, each key colour apart) |
+| Mirror Vault (Chestplate) | Damage taken (HP or Aether Shield) stores in a Retribution pool at ×1, 2, 3, 4, taken off the next shots' or first strikes' enemies after their own damage, the rest kept |
+
+### The corner categories (a spec for later)
+
+Gloves (between Sword and Boots), Belt (Sword and Helmet), Cape (Shield and Boots) and Amulet (Shield and Helmet) sit in the plus's corners, each levelled with its two neighbours' materials (twice a starting piece's material and Gold, half a Chestplate's), each with half of each neighbour's main effect, and substats that join the two (kills dropping bonus loot, +1 Phantasm ghost, and the like).

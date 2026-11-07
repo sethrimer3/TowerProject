@@ -185,14 +185,18 @@ test("evenly spread training alone still beats both modes' normal enemies at flo
 test("gear adds flat bonuses, then its percentages of the total, fractions kept; provisions add nothing", () => {
   const s = defaults();
   s.equipment.unlocked = true;
-  // Uncommon (×1.25): +3.75 ATK and +2.5% ATK; +75 max HP and +10% max HP.
-  s.equipment.equipped.tower.weapon = addItem(s.equipment, "knightsSword", "uncommon")!.id;
+  // An Uncommon sword at level 1: +2.2% ATK, raised 1.2% by the Uncommon plate's efficiency, and a Rare Keen Edge's +2.25 ATK;
+  // the plate's own +2% max HP.
+  const sword = addItem(s.equipment, "knightsSword", "uncommon")!;
+  sword.level = 1;
+  sword.slots = [{ effect: "keenEdge", rarity: "rare" }];
+  s.equipment.equipped.tower.weapon = sword.id;
   s.equipment.equipped.tower.chestplate = addItem(s.equipment, "giantsHauberk", "uncommon")!.id;
   Object.assign(s.provisions, { edge: 1, guard: 2, heal: 1 });
   const l = loadout(s);
-  assert.equal(l.attack, 14.09375, "(10 + 3.75) × 1.025");
+  assert.equal(l.attack, 12.522734, "(10 + 2.25) × 1.022264");
   assert.equal(l.defense, 0);
-  assert.equal(l.maxHp, 192.5, "175 × 1.10");
+  assert.equal(l.maxHp, 102, "100 × 1.02");
   // The Delve's hero wears nothing yet.
   assert.equal(loadout(s, "delve").attack, 10);
 });
@@ -268,7 +272,7 @@ test("Extra Key opens the Gold Key provision, which adds no key to the loadout",
   assert.equal(loadout(s).keys.yellow, keys, "its keys come during a run");
 });
 
-/** Opens Equipment and adds a Common Knight's Sword (+3 ATK at level 1). */
+/** Opens Equipment and adds a Common Knight's Sword (+1% ATK at level 0). */
 function armoury(g: Game) {
   const e = g.save.equipment;
   e.unlocked = true;
@@ -283,8 +287,8 @@ test("changing gear mid-run keeps the ATK gathered", () => {
   g.run.player.attack += 2; // an attack shard picked up
   const sword = armoury(g);
   assert.ok(g.equipment.equip("tower", sword));
-  assert.equal(g.run.player.attack, 15);
-  assert.deepEqual(g.run.loadout, { attack: 13, defense: 0, maxHp: 100 });
+  assert.equal(g.run.player.attack, 12.1);
+  assert.deepEqual(g.run.loadout, { attack: 10.1, defense: 0, maxHp: 100 });
   g.equipment.unequip("tower", "weapon");
   assert.equal(g.run.player.attack, 12);
   assert.deepEqual(g.run.loadout, { attack: 10, defense: 0, maxHp: 100 });
@@ -298,7 +302,7 @@ test("a gear change reaches a run still outside, which starts at its new full HP
   e.unlocked = true;
   g.equipment.equip("tower", addItem(e, "knightsSword", "common")!.id);
   g.equipment.equip("tower", addItem(e, "giantsHauberk", "common")!.id);
-  assert.deepEqual([g.run.player.attack, g.run.player.maxHp, g.run.player.hp], [13, 160, 160]);
+  assert.deepEqual([g.run.player.attack, g.run.player.maxHp, g.run.player.hp], [10.101, 101, 101], "+1% ATK raised 1% by the plate's efficiency, and the plate's +1% max HP");
 });
 
 test("ATK, DEF, Max HP, Regen and Shroud train to 1,000 levels, and each Limit Break owned raises that by 500, Shroud's but by the first eight", () => {

@@ -9,6 +9,8 @@ import { pull, rollChestPiece, rollSupplies } from "../src/equipment/acquire.ts"
 import { firstRoll, takeCandidate, refine, improve } from "../src/equipment/slots.ts";
 import { random } from "../src/random.ts";
 import { loadout } from "../src/progression/loadout.ts";
+import { wornEffects } from "../src/equipment/effects.ts";
+import { snap } from "../src/exact.ts";
 
 const game = () => { const g = new Game(defaults()); g.save.equipment.unlocked = true; return g; };
 const stock = (g: Game, amount = 10000) => { for (const m of EQUIP_MATERIAL_IDS) g.save.equipment.materials[m] = amount; };
@@ -45,7 +47,7 @@ test("crafting pays every input atomically, supports full and free inventories, 
   assert.ok(typeof g.equipment.craft("cape") !== "string");
   assert.equal(e.materials.rivets, 0); assert.equal(e.materials.padding, 0);
   assert.equal(e.materials.whetstone, CRAFT_MATERIAL); assert.equal(e.materials.hobnails, CRAFT_MATERIAL);
-  assert.equal(cape.level, 1);
+  assert.equal(cape.level, 0);
   g.save.settings.devMode = true; g.save.settings.freePurchases = true;
   for (const m of EQUIP_MATERIAL_IDS) e.materials[m] = 0;
   assert.ok(typeof g.equipment.craft("shield") !== "string");
@@ -91,38 +93,15 @@ test("old materials convert without losing units; owned future categories and lo
   assert.deepEqual(defaultEquipment().categories, defaults().equipment.categories);
 });
 
-test("the all-resource chestplate gives superior defense, while shield and sword occupy independent slots", () => {
-  const s = defaults(), e = s.equipment; e.unlocked = true; const base = loadout(s);
+test("each starting category raises its own percent, and the Chestplate's efficiency raises the others'", () => {
+  const s = defaults(), e = s.equipment; e.unlocked = true;
   const sword = addItem(e, "knightsSword", "common")!, shield = addItem(e, "ironShield", "common")!;
   const plate = addItem(e, "steelCuirass", "common")!;
-  e.equipped.tower = { weapon: sword.id, shield: shield.id, chestplate: plate.id };
-  assert.equal(loadout(s).attack, base.attack + 3);
-  assert.equal(loadout(s).defense, base.defense + 6);
-  assert.equal(itemDef(plate.def)!.effects[0].base, 2 * itemDef(shield.def)!.effects[0].base);
-});
-
-test("old chestplates update a run and its undo history once, keeping damage and collected stats", () => {
-  for (const [rarity,before,after] of [["common",130,160],["uncommon",144.375,192.5]] as const) {
-    const s = defaults(); s.upgrades.inspirationUndos = 1; s.equipment.unlocked = true;
-    const armor = addItem(s.equipment, "giantsHauberk", rarity)!;
-    s.equipment.equipped.tower.chestplate = armor.id;
-    const g = new Game(s); g.newRun({seed:7}); g.move(0,1);
-    assert.equal(s.tower.history.length,1);
-    const raw = JSON.parse(JSON.stringify(s));
-    delete raw.equipment.categories; // Before shared recipes and superior chestplates.
-    for (const run of [raw.tower.run,...raw.tower.history.map(h=>h.run)]) {
-      run.player.maxHp=before;run.player.hp=before;run.loadout.maxHp=before;
-    }
-    raw.tower.run.player.hp=before-20;raw.tower.run.player.attack+=2;
-    const migrated=decode(JSON.stringify(raw));
-    assert.equal(migrated.tower.run!.player.maxHp,after);
-    assert.equal(migrated.tower.run!.player.hp,after-20,"the same 20 HP of damage is retained");
-    assert.equal(migrated.tower.run!.player.attack,12,"collected ATK remains");
-    assert.equal(migrated.tower.history[0].run.player.maxHp,after);
-    assert.deepEqual(decode(JSON.stringify(migrated)),migrated,"the conversion runs only once");
-    const resumed=new Game(migrated);resumed.equipment.unequip("tower","chestplate");
-    assert.equal(resumed.run.player.maxHp,100,"taking off the armor returns the original base HP");
-    assert.equal(resumed.run.player.attack,12);
-    assert.ok(resumed.undo());assert.equal(resumed.run.player.maxHp,100);
-  }
+  e.equipped.tower = { weapon: sword.id, shield: shield.id };
+  let worn = wornEffects(s, "tower");
+  assert.deepEqual([worn.attackPct, worn.defensePct, worn.maxHpPct], [1, 1, 0], "+1% each at Common, level 0");
+  e.equipped.tower.chestplate = plate.id;
+  worn = wornEffects(s, "tower");
+  assert.deepEqual([worn.attackPct, worn.defensePct, worn.maxHpPct], [1.01, 1.01, 1], "the plate's 1% efficiency raises the others, and its own max HP is 1%");
+  assert.equal(loadout(s).maxHp, snap(loadout(defaults()).maxHp * 1.01));
 });

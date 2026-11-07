@@ -61,7 +61,7 @@ test("free purchases: equipment levels and Gem pulls cost nothing, and caps stil
   const g = new Game(freeSave()), e = g.save.equipment;
   e.unlocked = true;
   const sword = addItem(e, "knightsSword", "common")!;
-  assert.equal(g.equipment.levelUp(sword.id, 100), 19, "up to Common's level 20");
+  assert.equal(g.equipment.levelUp(sword.id, 100), 20, "from level 0 up to Common's 20");
   assert.equal(g.equipment.levelUp(sword.id), "maxed");
   assert.equal(sword.spent, undefined, "nothing invested");
   assert.equal(g.save.gold, 0);

@@ -7,14 +7,14 @@ import { random } from "../src/random.ts";
 import { CATEGORY_IDS, type CategoryId } from "../src/equipment/catalog.ts";
 import {
   EFFECT_CANDIDATES, EQUIP_RARITIES, openSlots, RARITY_TIERS, rarityRank, REFINE_CHOICE_EVERY, REFINE_COST, REFINE_GUARANTEE_EVERY,
-  type EquipRarity,
+  SUBSTAT_POWER, SUBSTAT_RARITIES, SUBSTAT_SLOT_LEVELS, substatCap, type EquipRarity,
 } from "../src/equipment/balance.ts";
 import {
   addItem, decodeEquipment, defaultEquipment, equip, findItem, levelUp, merge, setLocked, type EquipItem, type EquipmentSave,
 } from "../src/equipment/inventory.ts";
-import { CATEGORY_FAMILIES, effectPool, FAMILIES, SLOT_EFFECTS, slotEffectDef, slotValue } from "../src/equipment/slot-effects.ts";
+import { CATEGORY_FAMILIES, effectPool, FAMILIES, SLOT_EFFECTS, slotEffectDef, slotEffectName, slotValue } from "../src/equipment/slot-effects.ts";
 import {
-  choicesLeft, firstRoll, improve, improveCost, keepCurrent, nextMilestone, refine, rollCandidates, spendChoice, takeCandidate,
+  choicesLeft, firstRoll, improve, improveCost, keepCurrent, nextMilestone, refine, rollCandidates, slotPlan, spendChoice, takeCandidate,
 } from "../src/equipment/slots.ts";
 import { equipmentEffects } from "../src/equipment/effects.ts";
 import type { Enemy } from "../src/entities.ts";
@@ -25,7 +25,7 @@ const seed = random(7);
 /** A piece of `def` at `rarity` and `level`, its slots filled as leveling would. */
 function piece(e: EquipmentSave, def: string, rarity: EquipRarity, level: number) {
   const item = addItem(e, def, rarity)!;
-  levelUp(e, rich(), item.id, level - 1, true);
+  if (level) levelUp(e, rich(), item.id, level, true);
   return item;
 }
 /** Gives slot `index` its first effect: the first candidate of its free roll. */
@@ -40,21 +40,17 @@ const stock = (e: EquipmentSave) => {
 
 // --- Rarity, levels and slots ---
 
-test("each rarity's slot opens one level past the cap below, and holds effects up to its own rarity", () => {
-  EQUIP_RARITIES.forEach((r, i) => {
-    const t = RARITY_TIERS[r];
-    assert.equal(t.slotLevel, i ? RARITY_TIERS[EQUIP_RARITIES[i - 1]].maxLevel + 1 : 1, r);
-    assert.equal(t.maxEffect, r);
-    assert.ok(t.slotLevel <= t.maxLevel, `${r}'s slot is reachable`);
-    // At its own cap an item has a slot for every rarity up to its own.
-    assert.equal(openSlots(r, t.maxLevel), i + 1, r);
-  });
-  // The breakpoints: Common to 20 has one, Uncommon two from 21, Rare three from 41.
-  assert.equal(openSlots("common", 1), 1);
-  assert.equal(openSlots("uncommon", 20), 1);
-  assert.equal(openSlots("uncommon", 21), 2);
-  assert.equal(openSlots("rare", 40), 2);
-  assert.equal(openSlots("rare", 41), 3);
+test("substat slots open by level alone: one at 1, then at 41, 61, 81, 121, 161, 201 and 241", () => {
+  assert.deepEqual(SUBSTAT_SLOT_LEVELS, [1, 41, 61, 81, 121, 161, 201, 241]);
+  assert.deepEqual([0, 1, 40, 41, 60, 61, 80, 81, 120, 121, 160, 161, 200, 201, 240, 241, 300].map(openSlots), [0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8]);
+  assert.equal(openSlots(RARITY_TIERS.legendary.maxLevel), 4, "a Standard piece at its Legendary cap has four");
+  assert.equal(openSlots(300), 8, "a five-Star Ancestral all eight");
+  assert.equal(addItem(open(), "knightsSword", "rare")!.slots.length, 0, "a new piece, at level 0, has none");
+  // Substats have no Common: a Common piece's are Uncommon, the rest up to the piece's own.
+  assert.deepEqual(SUBSTAT_RARITIES, EQUIP_RARITIES.slice(1));
+  assert.equal(substatCap("common"), "uncommon");
+  for (const r of SUBSTAT_RARITIES) assert.equal(substatCap(r), r);
+  assert.deepEqual([SUBSTAT_POWER.uncommon, SUBSTAT_POWER.rare], [1, 1.5]);
 });
 
 test("a piece can't level past its rarity's cap", () => {
@@ -66,13 +62,13 @@ test("a piece can't level past its rarity's cap", () => {
   assert.equal(item.slots.length, 1);
 });
 
-test("leveling past the old cap opens the next slot", () => {
+test("leveling to 41 opens the second slot", () => {
   const e = open();
   stock(e);
-  const item = piece(e, "travelersBoots", "uncommon", 20);
+  const item = piece(e, "travelersBoots", "rare", 40);
   assert.equal(item.slots.length, 1);
   levelUp(e, rich(), item.id, 1, false);
-  assert.equal(item.level, 21);
+  assert.equal(item.level, 41);
   assert.equal(item.slots.length, 2);
   assert.deepEqual(item.slots[1], {}, "an empty slot, ready for its free roll");
 });
@@ -88,7 +84,7 @@ test("merging keeps effects, Refinement and the lock; leveling past the old cap 
   }
   setLocked(e, target.id, true);
   const before = structuredClone(target.slots);
-  const copies = [addItem(e, "travelersBoots", "uncommon")!, addItem(e, "travelersBoots", "uncommon")!];
+  const copies = [piece(e, "travelersBoots", "uncommon", 1), piece(e, "travelersBoots", "uncommon", 1)];
   copies.forEach((c) => settle(e, c, 0));
   merge(e, target.id, copies.map((c) => c.id));
   assert.equal(target.rarity, "rare");
@@ -97,7 +93,7 @@ test("merging keeps effects, Refinement and the lock; leveling past the old cap 
   assert.deepEqual(target.slots, before, "effects and Refinement untouched by the merge");
   assert.equal(target.slots[0].refinement, 3);
   levelUp(e, rich(), target.id, 1, false);
-  assert.equal(target.slots.length, 3);
+  assert.equal(target.slots.length, 2);
   assert.deepEqual(target.slots[0], before[0]);
 });
 
@@ -109,7 +105,7 @@ test("every category rolls only from its families, with room for a full offer be
   assert.equal(new Set(SLOT_EFFECTS.map((d) => d.id)).size, SLOT_EFFECTS.length, "ids are unique");
   for (const c of CATEGORY_IDS) {
     const pool = effectPool(c);
-    assert.ok(pool.length >= EFFECT_CANDIDATES + EQUIP_RARITIES.length - 1, `${c} has ${pool.length}`);
+    assert.ok(pool.length >= EFFECT_CANDIDATES, `${c} has ${pool.length}`);
     for (const d of pool) assert.ok(CATEGORY_FAMILIES[c].includes(d.family));
   }
   // A chestplate never rolls movement, and boots always can.
@@ -121,11 +117,11 @@ test("candidates are different effects from the pool, never rarer than the item,
   for (const rarity of EQUIP_RARITIES) {
     const e = open();
     stock(e);
-    const item = piece(e, "silverBand", rarity, RARITY_TIERS[rarity].maxLevel);
+    const item = piece(e, "silverBand", rarity, 41);
     for (let i = 0; i < item.slots.length; i++) settle(e, item, i);
     const rng = random(99);
     const seen = new Set<EquipRarity>();
-    for (let n = 0; n < 300; n++) {
+    for (let n = 0; n < 3000; n++) {
       const index = n % item.slots.length;
       const offer = rollCandidates(item, index, false, rng);
       assert.equal(offer.length, EFFECT_CANDIDATES);
@@ -134,11 +130,12 @@ test("candidates are different effects from the pool, never rarer than the item,
       for (const c of offer) {
         assert.ok(effectPool("ring").some((d) => d.id === c.effect), c.effect);
         assert.ok(!others.includes(c.effect), "not held by another slot");
-        assert.ok(rarityRank(c.rarity) <= rarityRank(rarity), `${c.rarity} on ${rarity}`);
+        assert.ok(rarityRank(c.rarity) <= rarityRank(substatCap(rarity)), `${c.rarity} on ${rarity}`);
+        assert.notEqual(c.rarity, "common", "no substat is Common");
         seen.add(c.rarity);
       }
     }
-    assert.equal(seen.size, rarityRank(rarity) + 1, `${rarity} rolls every rarity up to its own`);
+    assert.equal(seen.size, rarityRank(substatCap(rarity)), `${rarity} rolls every substat rarity up to its own`);
   }
 });
 
@@ -159,7 +156,7 @@ test("a new slot's first roll is free, offers three, and is rolled only once", (
   assert.equal(item.slots[0].refinement, undefined, "the free roll is no Refine");
   assert.equal(purse.gold, 0);
   assert.equal(firstRoll(e, item.id, 0, seed), "chosen");
-  assert.equal(firstRoll(e, item.id, 1, seed), "closed", "slot 2 isn't open at Common");
+  assert.equal(firstRoll(e, item.id, 1, seed), "closed", "slot 2 isn't open at level 1");
 });
 
 test("a paid Refine never replaces the effect held: keeping it costs nothing more, and Refinement still rises", () => {
@@ -199,7 +196,7 @@ test("an empty slot can't be Refined before its first choice", () => {
 test("Refinement survives saving and loading, offers too, so reloading never rerolls", () => {
   const e = open();
   stock(e);
-  const item = piece(e, "silverBand", "uncommon", 30);
+  const item = piece(e, "silverBand", "rare", 41);
   settle(e, item, 0);
   settle(e, item, 1);
   for (let i = 0; i < 4; i++) {
@@ -218,12 +215,12 @@ test("Refinement survives saving and loading, offers too, so reloading never rer
 // --- Milestones and the deterministic endpoint ---
 
 test("every fifth Refine guarantees a candidate at the item's highest effect rarity", () => {
-  // With a stream that always rolls Common, only the guarantee makes a Rare.
+  // With a stream that always rolls the lowest rarity, only the guarantee makes a Rare.
   const e = open();
   const item = piece(e, "silverBand", "rare", 1);
   settle(e, item, 0);
   const low = () => 0;
-  assert.ok(rollCandidates(item, 0, false, low).every((c) => c.rarity === "common"));
+  assert.ok(rollCandidates(item, 0, false, low).every((c) => c.rarity === "uncommon"));
   const sure = rollCandidates(item, 0, true, low);
   assert.equal(sure[0].rarity, "rare");
   // Through Refine: the 5th and 10th offers each lead with a Rare.
@@ -241,7 +238,7 @@ test("every fifth Refine guarantees a candidate at the item's highest effect rar
 test("every tenth Refine earns a Choice: any effect of the pool at the item's top rarity, so any effect is reachable", () => {
   const e = open();
   stock(e);
-  const item = piece(e, "pathfinderTreads", "rare", 41);
+  const item = piece(e, "pathfinderTreads", "legendary", 61);
   settle(e, item, 0);
   settle(e, item, 1);
   settle(e, item, 2);
@@ -253,7 +250,7 @@ test("every tenth Refine earns a Choice: any effect of the pool at the item's to
   assert.equal(choicesLeft(item.slots[2]), 1);
   const others = [item.slots[0].effect, item.slots[1].effect];
   const wanted = effectPool("boots").find((d) => !others.includes(d.id) && d.id !== item.slots[2].effect)!;
-  assert.deepEqual(spendChoice(e, item.id, 2, wanted.id), { effect: wanted.id, rarity: "rare" });
+  assert.deepEqual(spendChoice(e, item.id, 2, wanted.id), { effect: wanted.id, rarity: "legendary" });
   assert.equal(item.slots[2].effect, wanted.id);
   assert.equal(choicesLeft(item.slots[2]), 0);
   assert.equal(item.slots[2].refinement, REFINE_CHOICE_EVERY, "spending a Choice takes no Refinement away");
@@ -270,27 +267,29 @@ test("every tenth Refine earns a Choice: any effect of the pool at the item's to
 test("Improve raises the effect held one rarity, up to the item's, for its cost", () => {
   const e = open();
   stock(e);
-  const item = piece(e, "silverBand", "rare", 1);
+  const item = piece(e, "silverBand", "epic", 1);
   settle(e, item, 0);
-  item.slots[0].rarity = "common";
+  item.slots[0].rarity = "uncommon";
   const cost = improveCost(item);
   const purse = { gold: cost.gold * 2 };
-  assert.equal(improve(e, purse, item.id, 0, false), "uncommon");
   assert.equal(improve(e, purse, item.id, 0, false), "rare");
+  assert.equal(improve(e, purse, item.id, 0, false), "epic");
   assert.equal(purse.gold, 0);
   assert.equal(improve(e, rich(), item.id, 0, false), "top");
-  // On an Uncommon item it stops at Uncommon.
-  const u = piece(e, "silverBand", "uncommon", 1);
-  settle(e, u, 0);
-  u.slots[0].rarity = "uncommon";
-  assert.equal(improve(e, rich(), u.id, 0, false), "top");
+  // On an Uncommon item it stops at Uncommon, and on a Common one too.
+  for (const r of ["uncommon", "common"] as const) {
+    const u = piece(e, "silverBand", r, 1);
+    settle(e, u, 0);
+    u.slots[0].rarity = "uncommon";
+    assert.equal(improve(e, rich(), u.id, 0, false), "top", r);
+  }
 });
 
 test("taking a candidate another slot holds now is refused", () => {
   const e = open();
-  const item = piece(e, "silverBand", "uncommon", 21);
+  const item = piece(e, "silverBand", "rare", 41);
   settle(e, item, 0);
-  item.slots[1].offer = [{ effect: item.slots[0].effect!, rarity: "common" }];
+  item.slots[1].offer = [{ effect: item.slots[0].effect!, rarity: "uncommon" }];
   assert.equal(takeCandidate(e, item.id, 1, 0), "pick");
 });
 
@@ -301,23 +300,23 @@ test("worn slot effects add to the loadout, each in its own mode", () => {
   save.equipment = open();
   const ring = piece(save.equipment, "silverBand", "rare", 41);
   ring.slots[0] = { effect: "keenEdge", rarity: "rare" };
-  ring.slots[1] = { effect: "vigor", rarity: "common" };
-  ring.slots[2] = {};
+  ring.slots[1] = { effect: "vigor", rarity: "uncommon" };
   const base = loadout(save, "tower");
   equip(save.equipment, "tower", ring.id);
   const worn = loadout(save, "tower");
-  const atk = slotValue(slotEffectDef("keenEdge")!, "rare", 41);
-  assert.ok(worn.attack > base.attack + atk, "the intrinsic lines and the slot both count");
+  const atk = slotValue(slotEffectDef("keenEdge")!, "rare");
+  assert.equal(atk, 1.5 * 1.5, "Rare is ×1.5, whatever the piece's level");
+  assert.equal(worn.attack, base.attack + atk, "the slot's ATK counts");
   equip(save.equipment, "delve", ring.id);
   const before = loadout(save, "delve").attack;
-  ring.slots[0] = { effect: "keenEdge", rarity: "common" };
+  ring.slots[0] = { effect: "keenEdge", rarity: "uncommon" };
   assert.ok(loadout(save, "delve").attack < before, "a lower effect rarity is weaker");
   // A Tower-only effect adds nothing in the Delve.
   const boots = piece(save.equipment, "travelersBoots", "common", 1);
-  boots.slots[0] = { effect: "spireStride", rarity: "common" };
+  boots.slots[0] = { effect: "spireStride", rarity: "uncommon" };
   equip(save.equipment, "tower", boots.id);
   equip(save.equipment, "delve", boots.id);
-  assert.equal(equipmentEffects(save.equipment, "tower").moveSpeed, slotValue(slotEffectDef("spireStride")!, "common", 1));
+  assert.equal(equipmentEffects(save.equipment, "tower").moveSpeed, slotValue(slotEffectDef("spireStride")!, "uncommon"));
   assert.equal(equipmentEffects(save.equipment, "delve").moveSpeed, 0);
 });
 
@@ -330,7 +329,7 @@ test("Piercing ignores a share of enemy DEF, and stays deterministic", () => {
   const save = defaults();
   save.equipment = open();
   const sword = piece(save.equipment, "knightsSword", "common", 1);
-  sword.slots[0] = { effect: "piercing", rarity: "common" };
+  sword.slots[0] = { effect: "piercing", rarity: "uncommon" };
   equip(save.equipment, "tower", sword.id);
   assert.equal(loadout(save, "tower").pierce, 2);
 });
@@ -348,7 +347,7 @@ test("pieces saved before effect slots load with empty slots for their rarity an
     equipped: { tower: { weapon: "e2" }, delve: {} },
   };
   const e = decodeEquipment(raw);
-  assert.deepEqual(e.items.map((i) => i.slots.length), [1, 2, 3]);
+  assert.deepEqual(e.items.map((i) => i.slots.length), [1, 1, 2]);
   assert.ok(e.items.every((i) => i.slots.every((s) => !s.effect && !s.offer)));
   assert.equal(e.equipped.tower.weapon, "e2", "nothing else changes");
   assert.equal(findItem(e, "e2")!.locked, true);
@@ -359,24 +358,28 @@ test("pieces saved before effect slots load with empty slots for their rarity an
 test("decoding clamps an effect's rarity to the item's and drops effects its category can't hold or that repeat", () => {
   const e = decodeEquipment({
     unlocked: true,
-    items: [{ id: "e1", def: "travelersBoots", rarity: "uncommon", level: 30, slots: [
-      { effect: "fleetness", rarity: "rare", refinement: 12, choicesUsed: 5 },
+    items: [{ id: "e1", def: "travelersBoots", rarity: "rare", level: 45, slots: [
+      { effect: "fleetness", rarity: "epic", refinement: 12, choicesUsed: 5 },
       { effect: "fleetness", rarity: "common", refinement: 3 },
-    ] }, { id: "e2", def: "travelersBoots", rarity: "common", level: 3, slots: [{ effect: "keenEdge", rarity: "common" }] }],
+      { effect: "tonic", rarity: "rare" },
+    ] }, { id: "e2", def: "travelersBoots", rarity: "common", level: 3, slots: [{ effect: "keenEdge", rarity: "common" }] },
+    { id: "e3", def: "travelersBoots", rarity: "common", level: 3, slots: [{ effect: "fleetness", rarity: "common" }] }],
   });
-  const [a, b] = e.items;
-  assert.deepEqual(a.slots[0], { effect: "fleetness", rarity: "uncommon", refinement: 12 }, "rarity clamped; more Choices spent than earned dropped");
+  const [a, b, c] = e.items;
+  assert.deepEqual(a.slots[0], { effect: "fleetness", rarity: "rare", refinement: 12 }, "rarity clamped; more Choices spent than earned dropped");
   assert.deepEqual(a.slots[1], { refinement: 3 }, "a repeated effect goes, its Refinement stays");
+  assert.equal(a.slots.length, 2, "no more slots than its level opens");
   assert.deepEqual(b.slots[0], {}, "a weapon's effect isn't the boots'");
+  assert.deepEqual(c.slots[0], { effect: "fleetness", rarity: "uncommon" }, "a Common substat, from before they had none, comes back Uncommon");
 });
 
-test("a rarity added later opens its slot one level past the cap below it, with no other change", () => {
-  // The table drives everything: each rarity's slot level is the cap below
-  // plus one, so a fourth rarity whose cap is 80 would open slot 4 at 61.
-  const levels = EQUIP_RARITIES.map((r) => RARITY_TIERS[r].slotLevel);
-  const caps = EQUIP_RARITIES.map((r) => RARITY_TIERS[r].maxLevel);
-  assert.deepEqual(levels.slice(1), caps.slice(0, -1).map((c) => c + 1));
-  const top = EQUIP_RARITIES[EQUIP_RARITIES.length - 1];
-  assert.equal(openSlots(top, RARITY_TIERS[top].maxLevel), EQUIP_RARITIES.length);
-  for (const c of CATEGORY_IDS as readonly CategoryId[]) assert.ok(effectPool(c).length >= EQUIP_RARITIES.length + EFFECT_CANDIDATES - 1);
+test("a piece lists only the slots it can ever reach, and a substat's numeral starts at I for Uncommon", () => {
+  const e = open();
+  assert.equal(slotPlan(addItem(e, "knightsSword", "common")!).length, 1, "a Common piece never merges past level 20");
+  assert.equal(slotPlan(addItem(e, "knightsSword", "uncommon")!).length, 4, "a Standard piece reaches Legendary's 120");
+  assert.equal(slotPlan(addItem(e, "kingsbane", "epic")!).length, 8, "a Unique reaches 300");
+  const plan = slotPlan(addItem(e, "kingsbane", "epic")!);
+  assert.deepEqual(plan.map((p) => p.needs && [p.needs.rarity, p.needs.stars]), [null, null, null, ["legendary", 0], ["mythic", 0], ["ancestral", 0], ["ancestral", 1], ["ancestral", 3]]);
+  const def = slotEffectDef("keenEdge")!;
+  assert.deepEqual(["uncommon", "rare", "ancestral"].map((r) => slotEffectName(def, r as EquipRarity)), ["Keen Edge I", "Keen Edge II", "Keen Edge VI"]);
 });

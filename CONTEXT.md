@@ -74,7 +74,7 @@ Making a Common Standard piece by spending every upgrade material in its recipe.
 _Avoid_: Assemble (raising rarity by consuming copies)
 
 **Merge**:
-Three copies of a piece at one rarity (Uncommon or above; Common pieces never merge) becoming one of the next rarity; the chosen target keeps its level. The Equipment screen calls it **Assemble**.
+Copies of a piece at one rarity becoming one of the next rarity (Uncommon or above; Common pieces never merge): three copies to make a Rare or an Epic, two and one more piece of the category to make a Legendary or a Mythic, two to make an Ancestral; the chosen target keeps its level. The Equipment screen calls it **Assemble**.
 _Avoid_: fuse, combine
 
 **Dismantle**:
@@ -84,13 +84,21 @@ _Avoid_: salvage (used only for the amount returned, and in **Auto-salvage**: th
 **Pity**:
 The count, per category, of Gem pulls since the last Rare; the 100th without one is a Rare.
 
-**Intrinsic line**:
-One of a piece's fixed effects, set by its definition (its base stats and a Unique's signature ability).
-_Avoid_: affix, base effect
+**Star**:
+A step past Ancestral, made by merging a Legendary copy into an Ancestral piece: each raises its level cap by 20 and its main effect by 4% of itself, up to five.
+_Avoid_: ascension, awakening
 
-**Effect slot**:
-A place on a piece for one chosen effect, opened by its rarity and level (one per rarity, at one level past the cap below).
-_Avoid_: socket, affix, prefix, suffix
+**Main effect**:
+The one bonus leveling a piece raises, set by its category: a Sword's ATK, a Shield's DEF, a Helmet's Arcanum Damage, Boots' Gold found, a Chestplate's max HP.
+_Avoid_: base stat, intrinsic line (the per-piece lines it replaced)
+
+**Efficiency** (Chestplate):
+A worn Chestplate's second main effect: a percent the other worn pieces' main effects are raised by.
+
+**Substat**:
+A chosen bonus in one of a piece's slots, opened by its level, Uncommon to Ancestral but never rarer than the piece; its value comes from its rarity, never the piece's level.
+Code and older docs call its slot an **effect slot**.
+_Avoid_: affix, socket, prefix, suffix
 
 **Refine**:
 Paying to roll new candidates for an effect slot beside the effect it holds, which stays unless the player takes one.
@@ -101,7 +109,7 @@ A slot's count of Refines, which only rises; its milestones guarantee a top-rari
 _Avoid_: pity (the Gem pulls' count)
 
 **Choice**:
-A Refinement milestone's reward: any effect of the slot's pool, at the piece's highest effect rarity, taken outright.
+A Refinement milestone's reward: any substat of the slot's pool, at the piece's highest substat rarity, taken outright.
 
 **Improve**:
 Raising the effect a slot holds one rarity, up to the piece's own.

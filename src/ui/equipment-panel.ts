@@ -6,13 +6,13 @@ import {
 } from "../equipment/catalog.ts";
 import {
   CRAFT_MATERIAL, EFFECT_CANDIDATES, EQUIP_RARITIES, EQUIPMENT_CAPACITY, PITY, PULL_ALL_DISCOUNT, PULL_GEMS, PULL_RATES, pullGems, RARITY_TIERS, rarityRank, REFINE_CHOICE_EVERY, REFINE_GUARANTEE_EVERY,
-  type EquipRarity, type PullCount,
+  STARS, starPercent, type EquipRarity, type PullCount,
 } from "../equipment/balance.ts";
 import {
-  autoMerges, availableCategories, categoryOpen, categoryOf, findItem, isProtected, levelCost, maxLevel, mergeFodder, openSlotCount, salvageTotals, wornIn,
-  type EffectChoice, type EffectSlot, type EquipItem,
+  autoMerges, availableCategories, categoryOpen, categoryOf, defaultFodder, findItem, fodderFits, isProtected, isUnique, levelCap, levelCost, maxLevel, mergeFodder, mergePlan,
+  openSlotCount, salvageTotals, wornIn, type EffectChoice, type EffectSlot, type EquipItem, type MergePlan,
 } from "../equipment/inventory.ts";
-import { effectText, equipmentEffects, itemLines, lineValue } from "../equipment/effects.ts";
+import { effectText, equipmentEffects, pieceEfficiency, pieceMain } from "../equipment/effects.ts";
 import { FAMILIES, slotEffectDef, slotEffectName, slotValue } from "../equipment/slot-effects.ts";
 import {
   choicesLeft, effectCap, improveCost, nextMilestone, refineCost, slotEffects, slotPlan, slotPool, type SlotRefusal,
@@ -43,7 +43,15 @@ const idNumber = (item: EquipItem) => Number(item.id.slice(1));
 const nameOf = (item: EquipItem) => itemDef(item.def)!.name;
 /** "a Rare", "an Uncommon". */
 const article = (word: string) => `${/^[AEIOU]/.test(word) ? "an" : "a"} ${word}`;
-const rarityTag = (r: EquipRarity) => `<span class="rarity-tag rar-${r}">${RARITY_TIERS[r].name}</span>`;
+const rarityTag = (r: EquipRarity, stars = 0) => `<span class="rarity-tag rar-${r}">${RARITY_TIERS[r].name}${stars ? ` ★${stars}` : ""}</span>`;
+/** "Ancestral ★2", "Epic". */
+const rarityName = (item: Pick<EquipItem, "rarity" | "stars">) => `${RARITY_TIERS[item.rarity].name}${item.stars ? ` ★${item.stars}` : ""}`;
+/** A piece's main effect (and a Chestplate's efficiency) in words, at its
+ * own rarity and level, before any worn Chestplate's efficiency. */
+function mainLines(item: EquipItem) {
+  const main = pieceMain(item), eff = pieceEfficiency(item);
+  return [...(main ? [effectText(main.kind, main.value)] : []), ...(eff ? [`+${String(Math.round(eff * 100) / 100)}% to the other worn pieces' main effects`] : [])];
+}
 const matAmount = (id: EquipMaterialId, n: number) => `${materialIcon(id)}<b>${currencyAmount(n)}</b>`;
 /** The starting plus, with the Cape above the Shield and left of the Helmet.
  * Future corner slots stay empty until opened; owned legacy Rings sit below. */
@@ -107,9 +115,9 @@ export class EquipmentPanel {
    * mark, its level, a check when the shown loadout wears it, a lock. */
   private tile(item: EquipItem, attr: string, extra = "") {
     const def = itemDef(item.def)!, worn = this.e.equipped[this.mode][def.category] === item.id;
-    const label = `${def.name}, ${RARITY_TIERS[item.rarity].name}, Level ${item.level}${worn ? `, worn in the ${MODE_NAMES[this.mode]}` : ""}${item.locked ? ", locked" : ""}`;
+    const label = `${def.name}, ${rarityName(item)}, Level ${item.level}${worn ? `, worn in the ${MODE_NAMES[this.mode]}` : ""}${item.locked ? ", locked" : ""}`;
     return `<button class="eq-tile rar-${item.rarity}${extra}" data-${attr}="${item.id}" title="${label}" aria-label="${label}">${itemIcon(def.id, "eq-tile-icon")}
-      <span class="eq-tile-mark">${RARITY_TIERS[item.rarity].mark}</span><span class="eq-tile-level">${item.level}</span>
+      <span class="eq-tile-mark">${RARITY_TIERS[item.rarity].mark}${item.stars ? `<span class="eq-tile-stars">★${item.stars}</span>` : ""}</span><span class="eq-tile-level">${item.level}</span>
       ${worn ? kitIcon("ui-equip-worn", "✓", "eq-tile-worn") : ""}${item.locked ? `<span class="eq-tile-lock">${ACTION_ICONS.lock}</span>` : ""}${def.class === "unique" ? kitIcon("ui-equip-unique", "★", "eq-tile-unique") : ""}</button>`;
   }
   /** An empty place for a piece of `category`, its icon dimmed. */
@@ -199,29 +207,49 @@ export class EquipmentPanel {
     return `<details class="eq-salvage"${this.salvageOpen ? " open" : ""}><summary>${ACTION_ICONS.dismantle} Salvage</summary><div class="equip-quick">${quick}</div>${toggle}<p class="hint">While on, a ${RARITY_TIERS.common.name} piece an Equipment Chest holds, or a Gem pull brings, is dismantled at once into its material instead of joining the inventory.</p></details>`;
   }
 
-  // --- Assemble: three alike into the next rarity ---
+  // --- Assemble: pieces alike into the next rarity, or a Star ---
 
-  /** Every piece with enough unprotected copies to assemble, best first. */
+  /** Every piece with enough unprotected pieces to assemble, best first. */
   private mergeable() {
-    return this.e.items.filter((i) => RARITY_TIERS[i.rarity].next && mergeFodder(this.e, i).length >= RARITY_TIERS[i.rarity].merge - 1)
+    return this.e.items.filter((i) => { const plan = mergePlan(i); return !!plan && fodderFits(i, plan, defaultFodder(this.e, i)); })
       .sort((a, b) => rarityRank(b.rarity) - rarityRank(a.rarity) || b.level - a.level || idNumber(a) - idNumber(b));
   }
 
-  /** Starts assembling `id`: the piece kept, with its lowest-level copies
-   * chosen to use up. */
+  /** Starts assembling `id`: the piece kept, with the pieces `defaultFodder`
+   * would use up already chosen. */
   private assemble(id: string) {
     const item = findItem(this.e, id);
-    if (!item || !RARITY_TIERS[item.rarity].next) return;
+    if (!item || !mergePlan(item)) return;
     this.target = id;
-    this.copies = mergeFodder(this.e, item).slice(0, RARITY_TIERS[item.rarity].merge - 1).map((i) => i.id);
+    this.copies = defaultFodder(this.e, item).map((i) => i.id);
     this.view = "assemble";
+  }
+
+  /** The recipe in words: "2× Kingsbane Epic + 1× any Epic Sword → 1×
+   * Kingsbane Legendary", or the Star a Legendary copy adds. */
+  private formulaHtml(target: EquipItem, plan: MergePlan) {
+    const name = (r: EquipRarity, stars = 0) => `<span class="rar-${r} eq-need-name">${nameOf(target)}</span> ${rarityTag(r, stars)}`;
+    const arrow = `<span class="eq-formula-arrow">→</span>`;
+    if (plan.kind === "star") return `${name("ancestral", target.stars ?? 0)} + ${name(STARS.fodder)} ${arrow} ${name("ancestral", plan.stars)}`;
+    const any = plan.any ? ` + <b>${plan.any}×</b> any ${rarityTag(target.rarity)} ${CATEGORIES[categoryOf(target)].name}` : "";
+    return `<b>${plan.same}×</b> ${name(target.rarity)}${any} ${arrow} <b>1×</b> ${name(plan.next)}`;
+  }
+
+  /** What the merge changes: the rarity or Stars, the level cap, the main effect. */
+  private mergeHint(target: EquipItem, plan: MergePlan) {
+    const after: EquipItem = plan.kind === "star" ? { ...target, stars: plan.stars } : { ...target, rarity: plan.next };
+    const main = (i: EquipItem) => mainLines(i)[0] ?? "";
+    const was = main(target), now = main(after);
+    const effect = was && now !== was ? ` Main effect ${was} → ${now}.` : "";
+    if (plan.kind === "star") return `${rarityTag("ancestral", target.stars ?? 0)} → ${rarityTag("ancestral", plan.stars)}: level cap ${maxLevel(target)} → ${maxLevel(after)}, main effect ×${starPercent(plan.stars) / 100}.${effect}`;
+    return `${rarityTag(target.rarity)} Lv ${target.level} → ${rarityTag(plan.next)} Lv ${target.level} (up to ${levelCap(plan.next)}).${effect}`;
   }
 
   /** The result above its inputs (the piece kept, plus the copies used up),
    * what is still needed, and below it the pieces to choose from. */
   private assembleHtml() {
-    const target = this.target ? findItem(this.e, this.target) : undefined;
-    if (!target || !RARITY_TIERS[target.rarity].next) {
+    const target = this.target ? findItem(this.e, this.target) : undefined, plan = target && mergePlan(target);
+    if (!target || !plan) {
       this.target = null;
       const ready = this.mergeable();
       const list = ready.length ? `<div class="eq-grid">${ready.map((i) => this.tile(i, "eq-target")).join("")}</div>`
@@ -230,23 +258,26 @@ export class EquipmentPanel {
       return `<div class="eq-assemble"><div class="eq-recipe"><span class="eq-inputs">${this.inputsHtml([empty, empty, empty])}</span><span class="eq-arrow" aria-hidden="true">${controlIcon("forward", "▶")}</span><span class="eq-tile eq-ghost eq-result-slot" aria-hidden="true">?</span></div>
         <div class="eq-need-row"><p class="eq-need">Choose the piece to keep</p><button id="eq-auto-asm"${autoMerges(this.e).length ? "" : " disabled"}>${ACTION_ICONS.merge} Auto-assemble</button></div></div><h3 class="eq-section">List</h3>${list}${this.assembleActions(false)}`;
     }
-    const t = RARITY_TIERS[target.rarity], next = t.next!, need = t.merge - 1, category = categoryOf(target);
+    const need = plan.need, category = categoryOf(target);
     const fodder = mergeFodder(this.e, target), copies = this.copies.map((id) => fodder.find((i) => i.id === id)).filter((i): i is EquipItem => !!i);
-    const result = { ...target, rarity: next };
+    const result: EquipItem = plan.kind === "star" ? { ...target, stars: plan.stars } : { ...target, rarity: plan.next };
     const inputs = this.inputsHtml([this.tile(target, "eq-untarget", " eq-kept"),
       ...Array.from({ length: need }, (_, k) => copies[k] ? this.tile(copies[k], "eq-unpick") : this.ghost(category))]);
-    const unlocks = itemDef(target.def)!.effects.filter((l) => l.from === next).map((l) => effectText(l.kind, lineValue(l, next, target.level), l.mode));
-    const lost = copies.filter((i) => i.level > 1 || i.spent);
-    const warning = lost.length ? `<p class="warning">⚠ ${lost.length === 1 ? "One copy has" : `${lost.length} copies have`} been leveled: what was put into ${lost.length === 1 ? "it" : "them"} (${currencyAmount(lost.reduce((n, i) => n + (i.spent?.gold ?? 0), 0))} Gold, ${lost.reduce((n, i) => n + (i.spent?.material ?? 0), 0)} material) is lost.</p>` : "";
-    const blocked = this.e.items.filter((i) => i.id !== target.id && i.def === target.def && i.rarity === target.rarity && isProtected(this.e, i));
+    const lost = copies.filter((i) => i.spent);
+    const warning = lost.length ? `<p class="warning">⚠ ${lost.length === 1 ? "One piece has" : `${lost.length} pieces have`} been leveled: what was put into ${lost.length === 1 ? "it" : "them"} (${currencyAmount(lost.reduce((n, i) => n + (i.spent?.gold ?? 0), 0))} Gold, ${lost.reduce((n, i) => n + (i.spent?.material ?? 0), 0)} material) is lost.</p>` : "";
+    const ready = fodderFits(target, plan, copies);
+    const blocked = this.e.items.filter((i) => i.id !== target.id && isProtected(this.e, i) && (plan.kind === "star"
+      ? i.def === target.def && i.rarity === STARS.fodder
+      : i.rarity === target.rarity && (plan.any ? categoryOf(i) === category : i.def === target.def)));
     const left = fodder.filter((i) => !this.copies.includes(i.id));
-    const list = left.length ? `<div class="eq-grid">${left.map((i) => this.tile(i, "eq-pick")).join("")}</div>` : `<p class="hint">No other copies left to choose.</p>`;
-    return `<div class="eq-assemble"><p class="eq-formula"><b>${t.merge}×</b> <span class="rar-${target.rarity} eq-need-name">${nameOf(target)}</span> ${rarityTag(target.rarity)} <span class="eq-formula-arrow">→</span> <b>1×</b> <span class="rar-${next} eq-need-name">${nameOf(target)}</span> ${rarityTag(next)}</p>
-      <div class="eq-recipe"><span class="eq-inputs">${inputs}</span><span class="eq-arrow" aria-hidden="true">${controlIcon("forward", "▶")}</span>${this.tile(result as EquipItem, "eq-result", " eq-result-slot")}</div>
-      <p class="eq-need">${copies.length + 1} of ${t.merge} pieces chosen${copies.length === need ? ": ready to assemble" : `: choose ${need - copies.length} more below`}</p></div>
-      <p class="hint">${rarityTag(target.rarity)} Lv ${target.level} → ${rarityTag(next)} Lv ${target.level} (up to ${RARITY_TIERS[next].maxLevel}); leveling it to ${RARITY_TIERS[next].slotLevel} opens effect slot ${rarityRank(next) + 1}.${unlocks.length ? ` Unlocks: ${unlocks.join(" · ")}.` : ""}</p>
+    const list = left.length ? `<div class="eq-grid">${left.map((i) => this.tile(i, "eq-pick")).join("")}</div>` : `<p class="hint">No other pieces left to choose.</p>`;
+    const sameNote = plan.kind === "rarity" && plan.any && copies.length === need && !ready ? `: ${plan.same - 1} must be ${nameOf(target)}` : "";
+    return `<div class="eq-assemble"><p class="eq-formula">${this.formulaHtml(target, plan)}</p>
+      <div class="eq-recipe"><span class="eq-inputs">${inputs}</span><span class="eq-arrow" aria-hidden="true">${controlIcon("forward", "▶")}</span>${this.tile(result, "eq-result", " eq-result-slot")}</div>
+      <p class="eq-need">${copies.length + 1} of ${need + 1} pieces chosen${ready ? ": ready to assemble" : copies.length < need ? `: choose ${need - copies.length} more below` : sameNote}</p></div>
+      <p class="hint">${this.mergeHint(target, plan)}</p>
       ${warning}${blocked.length ? `<p class="hint">Not offered (locked or worn): ${blocked.map((i) => `${nameOf(i)} Lv ${i.level}`).join(", ")}.</p>` : ""}
-      <h3 class="eq-section">List</h3>${list}${this.assembleActions(copies.length === need)}`;
+      <h3 class="eq-section">List</h3>${list}${this.assembleActions(ready)}`;
   }
 
   /** The pieces going in, numbered 1 to 3 and joined by +. */
@@ -282,9 +313,9 @@ export class EquipmentPanel {
     if (!merges.length) return;
     const { modal } = this.ctx;
     const rows = merges.map((m, k) => {
-      const target = findItem(this.e, m.target)!, next = RARITY_TIERS[target.rarity].next!;
+      const target = findItem(this.e, m.target)!, plan = mergePlan(target)!, next = plan.kind === "rarity" ? plan.next : target.rarity;
       const fodder = m.fodder.map((id) => findItem(this.e, id)!);
-      const lost = fodder.some((i) => i.level > 1 || i.spent) ? ` <span class="warning" title="A copy used up has been leveled: what was put into it is lost">⚠</span>` : "";
+      const lost = fodder.some((i) => i.spent) ? ` <span class="warning" title="A piece used up has been leveled: what was put into it is lost">⚠</span>` : "";
       return `<li><label class="eq-auto-row"><input type="checkbox" data-eq-auto="${k}" checked>
         <span class="equip-icon-frame rar-${target.rarity}">${itemIcon(target.def)}</span>
         <span class="eq-auto-text"><strong class="rar-${target.rarity} eq-need-name">${nameOf(target)}</strong>
@@ -350,7 +381,7 @@ export class EquipmentPanel {
     const off = `<span class="pull-off">−${PULL_ALL_DISCOUNT}%</span>`;
     const cats = `<button class="pull-cat pull-all" data-eq-pullcat="all" aria-pressed="${all}">${off}<span class="pull-all-icons">${availableCategories(this.e).slice(0, 4).map((id) => categoryIcon(id)).join("")}</span><span>All types</span><small>Discounted</small></button>`
       + availableCategories(this.e).map((id) => `<button class="pull-cat" data-eq-pullcat="${id}" aria-pressed="${c === id}">${categoryIcon(id)}<span>${CATEGORIES[id].name}</span><small>${this.e.pity[id]}/${PITY}</small></button>`).join("");
-    const rates = EQUIP_RARITIES.map((r) => `${rarityTag(r)} ${PULL_RATES[r]}%`).join(" ");
+    const rates = EQUIP_RARITIES.filter((r) => PULL_RATES[r]).map((r) => `${rarityTag(r)} ${PULL_RATES[r]}%`).join(" ");
     const button = (n: PullCount) => {
       const price = pullGems(n, all), short = !this.game.free && gems < price;
       const was = all ? `<s class="was">${PULL_GEMS[n]}</s> ` : "";
@@ -440,7 +471,8 @@ export class EquipmentPanel {
       eqUntarget: () => { this.target = null; this.rerender(); },
       eqPick: (v) => {
         const target = this.target ? findItem(this.e, this.target) : undefined;
-        if (target && this.copies.length < RARITY_TIERS[target.rarity].merge - 1) this.copies.push(v);
+        const plan = target && mergePlan(target);
+        if (plan && this.copies.length < plan.need) this.copies.push(v);
         this.rerender();
       },
       eqUnpick: (v) => { this.copies = this.copies.filter((id) => id !== v); this.rerender(); },
@@ -466,8 +498,10 @@ export class EquipmentPanel {
    * the page's heading. */
   showHelp() {
     const salvage = EQUIP_RARITIES.map((r) => `${RARITY_TIERS[r].name} ${RARITY_TIERS[r].salvage}`).join(" · ");
+    const caps = EQUIP_RARITIES.map((r) => `${RARITY_TIERS[r].name} ${RARITY_TIERS[r].maxLevel}`).join(" · ");
     showHelp(this.ctx, "GEAR", "Equipment", `<p><b>Wearing.</b> Each hero wears one piece of each kind; the Tower and the Delve keep separate loadouts. Tap a piece to equip, level or lock it. Start with Helmet, Shield, Chestplate, Sword and Boots. Other slots await future unlocks. Equipment Chests hold unlocked Standard pieces; Gem pulls bring unlocked Unique ones.</p>
-      <p><b>Craft.</b> Craft Common Standard pieces with four base resources. Helmets use Padding, Shields Rivets, Swords Whetstones and Boots Hobnails. Chestplates use all four and have superior intrinsic effects. Later pieces combine two resources, such as Rivets and Padding for a Cape. Leveling and Refinement use the same recipes.</p><p><b>Assemble.</b> Three copies of a piece at the same rarity (Uncommon or above; Common pieces never merge) make one of the next rarity, with a higher level cap. The piece kept keeps its level, effect slots and Refinement; what was put into the others is lost. Locked and worn copies don't count. Auto-assemble lists every merge your unworn pieces make at once, to make all you leave checked.</p>
+      <p><b>Leveling.</b> Pieces start at level 0. Leveling raises only the piece's main effect: Swords ATK, Shields DEF, Helmets Arcanum Damage, Boots Gold found and Chestplates max HP, and a Chestplate also raises the other worn pieces' main effects. Each rarity has its level cap (${caps}); each Star adds ${STARS.levels}, up to ${levelCap("ancestral", STARS.most)}. Substat slots open at levels 1, 41, 61, 81, 121, 161, 201 and 241.</p>
+      <p><b>Craft.</b> Craft Common Standard pieces with four base resources. Helmets use Padding, Shields Rivets, Swords Whetstones and Boots Hobnails. Chestplates use all four. Later pieces combine two resources, such as Rivets and Padding for a Cape. Leveling and Refinement use the same recipes.</p><p><b>Assemble.</b> Three copies of a piece make one of the next rarity from Uncommon to Rare and Rare to Epic; two copies and one more piece of its category at the same rarity from Epic to Legendary and Legendary to Mythic; two Mythic copies make an Ancestral. An Ancestral and a Legendary copy of it add a Star (up to ${STARS.most}), each raising the main effect by ${STARS.boost}% of itself. Common pieces never merge, and Standard pieces go no higher than Legendary. The piece kept keeps its level, substat slots and Refinement; what was put into the others is lost. Locked and worn pieces don't count. Auto-assemble lists every rarity merge your unworn pieces make at once, to make all you leave checked.</p>
       <p><b>Acquire.</b> Each pull brings a Unique piece at a rolled rarity, of the chosen category, or of a random one for ${PULL_ALL_DISCOUNT}% less. The ${PITY}th pull in a row without a Rare in a category is a Rare.</p>
       <p><b>Salvage.</b> Dismantling turns a piece into its recipe's first base resource (${salvage}; Unique twice that), not returning upgrades. Locked and worn pieces are never included; press Select to choose pieces one by one. With Auto-salvage on, Common pieces Equipment Chests hold are dismantled as they are found, and those Gem pulls bring once pulled.</p>`);
   }
@@ -491,18 +525,19 @@ export class EquipmentPanel {
     modal.innerHTML = `<div class="equip-detail"><button id="eq-close" class="dialog-x" aria-label="Close" title="Close">${controlIcon("close")}</button>
       <small>${CATEGORIES[def.category].name.toUpperCase()} · ${def.class === "unique" ? "UNIQUE" : "STANDARD"}</small>
       <h2 class="equip-title"><span class="equip-icon-frame rar-${item.rarity}">${itemIcon(def.id)}</span>${def.name}</h2>
-      <p class="item-meta">${rarityTag(item.rarity)} Level ${item.level}/${maxLevel(item)}</p>${this.progressHtml(item)}<p class="item-identity">${def.identity}.</p>
-      <h3 class="equip-heading">Intrinsic</h3><ul class="effect-list">${this.intrinsicHtml(item)}</ul>
-      <h3 class="equip-heading">Effect slots</h3>${this.slotsHtml(item)}${this.compareWorn(item)}${this.levelHtml(item)}${this.notesHtml(item)}
+      <p class="item-meta">${rarityTag(item.rarity, item.stars)} Level ${item.level}/${maxLevel(item)}</p>${this.progressHtml(item)}<p class="item-identity">${def.identity}.</p>
+      <h3 class="equip-heading">Main effect</h3><ul class="effect-list">${this.mainHtml(item)}</ul>
+      <h3 class="equip-heading">Substats</h3>${this.slotsHtml(item)}${this.compareWorn(item)}${this.levelHtml(item)}${this.notesHtml(item)}
       ${this.itemActionsHtml(item)}</div>`;
     modal.showModal();
     this.bindItem(item);
   }
 
-  /** The piece's own effects, those its rarity hasn't opened yet with the rarity that opens them. */
-  private intrinsicHtml(item: EquipItem) {
-    return itemLines(item).map(({ line, open, value }) =>
-      `<li class="${open ? "" : "locked-line"}">${open ? "" : `<span class="unlock-at">${RARITY_TIERS[line.from!].name}:</span> `}${effectText(line.kind, open ? value : lineValue(line, line.from!, item.level), line.mode)}</li>`).join("");
+  /** What leveling the piece raises, now and at the next level. */
+  private mainHtml(item: EquipItem) {
+    const now = mainLines(item), next = item.level < maxLevel(item) ? mainLines({ ...item, level: item.level + 1 }) : [];
+    if (!now.length) return `<li class="locked-line">None yet.</li>`;
+    return now.map((text, k) => `<li>${text}${next[k] ? ` <small class="unlock-at">(next level ${next[k]})</small>` : ""}</li>`).join("");
   }
 
   /** What the next level costs and the buttons that buy it, or, at the
@@ -514,8 +549,16 @@ export class EquipmentPanel {
       return `<p class="level-cost">Next level: ${this.costText(cost, mat)}</p>
         <div class="dialog-actions"><button id="eq-level"${off}>${ACTION_ICONS.upgrade} Level up</button><button id="eq-level10"${off}>+10</button><button id="eq-levelmax"${off}>Max</button></div>`;
     }
-    const tier = RARITY_TIERS[item.rarity], next = tier.next && RARITY_TIERS[tier.next];
-    return `<p class="hint">At ${tier.name}'s highest level.${next ? ` Merge to ${next.name} to raise it to ${next.maxLevel} and open effect slot ${rarityRank(tier.next!) + 1} at Level ${next.slotLevel}.` : ""}</p>`;
+    return `<p class="hint">At ${rarityName(item)}'s highest level.${this.nextStepText(item)}</p>`;
+  }
+
+  /** What merging next does for `item`'s cap, in words (" Merge to Epic to
+   * raise its cap to 80."), or nothing at the top. */
+  private nextStepText(item: EquipItem) {
+    const plan = mergePlan(item);
+    if (!plan) return "";
+    if (plan.kind === "star") return ` A ${RARITY_TIERS[STARS.fodder].name} copy adds Star ${plan.stars}, raising its cap to ${levelCap("ancestral", plan.stars)}.`;
+    return ` Merge to ${RARITY_TIERS[plan.next].name} to raise its cap to ${levelCap(plan.next)}.`;
   }
 
   /** What has been spent on the piece, and why it can't be used up, if it can't. */
@@ -531,8 +574,8 @@ export class EquipmentPanel {
     const equipButtons = (this.game.tournament.unlocked ? (["tower", "delve"] as const) : (["tower"] as const)).map((m) => worn.includes(m)
       ? `<button data-eq-off="${m}">Take off (${MODE_NAMES[m]})</button>`
       : `<button data-eq-on="${m}">Equip (${MODE_NAMES[m]})</button>`).join("");
-    const tier = RARITY_TIERS[item.rarity], fodder = mergeFodder(this.e, item);
-    const mergeButton = tier.next ? `<button id="eq-merge"${fodder.length >= tier.merge - 1 ? "" : " disabled"} title="Needs ${tier.merge - 1} more unlocked, unworn copies">${ACTION_ICONS.merge} Assemble (${fodder.length}/${tier.merge - 1})</button>` : "";
+    const plan = mergePlan(item), chosen = plan ? defaultFodder(this.e, item) : [];
+    const mergeButton = plan ? `<button id="eq-merge"${fodderFits(item, plan, chosen) ? "" : " disabled"} title="Needs ${plan.need} more unlocked, unworn pieces">${ACTION_ICONS.merge} ${plan.kind === "star" ? "Add a Star" : "Assemble"} (${chosen.length}/${plan.need})</button>` : "";
     const dismantle = isProtected(this.e, item) ? "" : `<button id="eq-dismantle" class="danger">${ACTION_ICONS.dismantle} Dismantle</button>`;
     return `<div class="equip-actions"><div class="equip-actions-row">${equipButtons}</div><div class="equip-actions-row"><button id="eq-lock">${ACTION_ICONS.lock} ${item.locked ? "Unlock" : "Lock"}</button>${mergeButton}${dismantle}</div></div>`;
   }
@@ -562,29 +605,27 @@ export class EquipmentPanel {
     return this.game.free || (this.game.save.gold >= c.gold && hasMaterials(this.e.materials, category, c.material));
   }
 
-  /** Where `item` stands on its way up: the level cap, and what the next
-   * rarity opens (a higher cap and another effect slot). */
+  /** Where `item` stands on its way up: what merging next raises its cap to. */
   private progressHtml(item: EquipItem) {
-    const next = RARITY_TIERS[item.rarity].next;
-    if (!next && item.rarity === "common") return `<p class="hint">${RARITY_TIERS.common.name} pieces can't be merged: wear them as they are, or salvage them.</p>`;
-    if (!next) return `<p class="hint">Top rarity: every effect slot opens by leveling.</p>`;
-    const t = RARITY_TIERS[next];
-    return `<p class="hint">Next rarity: ${rarityTag(next)} raises the level cap to ${t.maxLevel}; Level ${t.slotLevel} then opens effect slot ${rarityRank(next) + 1}.</p>`;
+    if (item.rarity === "common") return `<p class="hint">${RARITY_TIERS.common.name} pieces can't be merged: wear them as they are, or salvage them.</p>`;
+    const step = this.nextStepText(item);
+    if (step) return `<p class="hint">${step.trim()}</p>`;
+    return `<p class="hint">${item.rarity === "ancestral" ? "Every Star added: its cap can rise no higher." : `${isUnique(item) ? "Top rarity" : `Standard pieces go no higher than ${RARITY_TIERS[item.rarity].name}`}.`}</p>`;
   }
 
   /** An effect at a rarity on `item`: its name, rarity and what it does there. */
   private choiceHtml(item: EquipItem, choice: EffectChoice) {
     const def = slotEffectDef(choice.effect)!;
-    return `<strong>${slotEffectName(def, choice.rarity)}</strong> ${rarityTag(choice.rarity)} <span class="slot-text">${effectText(def.kind, slotValue(def, choice.rarity, item.level), def.mode)}</span>`;
+    return `<strong>${slotEffectName(def, choice.rarity)}</strong> ${rarityTag(choice.rarity)} <span class="slot-text">${effectText(def.kind, slotValue(def, choice.rarity), def.mode)}</span>`;
   }
 
   /** The item's effect slots: each open one's effect (or its free first
    * roll), its Refinement, and each locked one's requirement. */
   private slotsHtml(item: EquipItem) {
-    return `<ul class="slot-list">${slotPlan(item).map(({ index, rarity, level, open, slot }) => {
-      const head = `<small>EFFECT SLOT ${index + 1}</small>`;
+    return `<ul class="slot-list">${slotPlan(item).map(({ index, level, open, needs: req, slot }) => {
+      const head = `<small>SUBSTAT ${index + 1}</small>`;
       if (!open || !slot) {
-        const needs = rarityRank(item.rarity) < rarityRank(rarity) ? ` · needs ${rarityTag(rarity)}` : "";
+        const needs = req ? ` · needs ${rarityTag(req.rarity, req.stars)}` : "";
         return `<li class="slot-row slot-locked">${head}<span>Unlocks at Level ${level}${needs}</span></li>`;
       }
       if (!slot.effect || !slot.rarity) {
@@ -691,8 +732,9 @@ export class EquipmentPanel {
   private compareTable(a: EquipItem, b: EquipItem) {
     const sum = (i: EquipItem) => {
       const t = new Map<string, number>();
-      for (const { line, open, value } of itemLines(i)) if (open) t.set(`${line.kind}|${line.mode ?? ""}`, (t.get(`${line.kind}|${line.mode ?? ""}`) ?? 0) + value);
-      for (const { def, rarity } of slotEffects(i)) t.set(`${def.kind}|${def.mode ?? ""}`, (t.get(`${def.kind}|${def.mode ?? ""}`) ?? 0) + slotValue(def, rarity, i.level));
+      const main = pieceMain(i);
+      if (main) t.set(`${main.kind}|`, main.value);
+      for (const { def, rarity } of slotEffects(i)) t.set(`${def.kind}|${def.mode ?? ""}`, (t.get(`${def.kind}|${def.mode ?? ""}`) ?? 0) + slotValue(def, rarity));
       return t;
     };
     const ta = sum(a), tb = sum(b), keys = [...new Set([...ta.keys(), ...tb.keys()])];
@@ -700,7 +742,7 @@ export class EquipmentPanel {
       const [kind, mode] = key.split("|");
       return t.has(key) ? effectText(kind as never, t.get(key)!, (mode || undefined) as Mode | undefined) : "—";
     };
-    const head = (i: EquipItem) => `${nameOf(i)}<br>${rarityTag(i.rarity)} Lv ${i.level}`;
+    const head = (i: EquipItem) => `${nameOf(i)}<br>${rarityTag(i.rarity, i.stars)} Lv ${i.level}`;
     return `<table class="compare-table"><thead><tr><th>${head(a)}</th><th>${head(b)}</th></tr></thead><tbody>${keys.map((k) => `<tr><td>${cell(ta, k)}</td><td>${cell(tb, k)}</td></tr>`).join("")}</tbody></table>`;
   }
 
@@ -720,8 +762,8 @@ export class EquipmentPanel {
     if (!items.length) return;
     const totals = salvageTotals(this.e, items.map((i) => i.id));
     const byRarity = EQUIP_RARITIES.map((r) => [r, items.filter((i) => i.rarity === r).length] as const).filter(([, n]) => n);
-    const valuable = items.filter((i) => i.rarity === "rare" || itemDef(i.def)!.class === "unique" || i.level > 1);
-    const warn = valuable.length ? `<p class="warning">⚠ Includes ${valuable.length} valuable piece${valuable.length === 1 ? "" : "s"} (Rare, Unique or leveled): ${valuable.slice(0, 4).map((i) => `${nameOf(i)} ${RARITY_TIERS[i.rarity].name} Lv ${i.level}`).join(", ")}${valuable.length > 4 ? " …" : ""}. Upgrades are not returned.</p>` : "";
+    const valuable = items.filter((i) => rarityRank(i.rarity) >= rarityRank("rare") || isUnique(i) || i.level > 0);
+    const warn = valuable.length ? `<p class="warning">⚠ Includes ${valuable.length} valuable piece${valuable.length === 1 ? "" : "s"} (Rare or above, Unique or leveled): ${valuable.slice(0, 4).map((i) => `${nameOf(i)} ${rarityName(i)} Lv ${i.level}`).join(", ")}${valuable.length > 4 ? " …" : ""}. Upgrades are not returned.</p>` : "";
     const { modal } = this.ctx;
     modal.innerHTML = `<small>${ACTION_ICONS.dismantle} SALVAGE</small><h2>Dismantle ${items.length} piece${items.length === 1 ? "" : "s"}?</h2>
       <p>${byRarity.map(([r, n]) => `${n} ${rarityTag(r)}`).join(" ")}</p>

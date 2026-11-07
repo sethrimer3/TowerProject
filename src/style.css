@@ -2612,11 +2612,15 @@ button.training-now:has(> .train-pointer) { position: relative; overflow: visibl
 .rar-common { --rar: #9aa3ab; }
 .rar-uncommon { --rar: #5fc46a; }
 .rar-rare { --rar: #5aa6ff; }
+.rar-epic { --rar: #b46cff; }
+.rar-legendary { --rar: #ffb43a; }
+.rar-mythic { --rar: #ff5a5a; }
+.rar-ancestral { --rar: #5ef0e0; }
 .rarity-tag { display: inline-block; padding: 1px 5px; border: 1px solid var(--rar); border-radius: 3px; color: var(--rar); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; }
-.rarity-tag.rar-rare { border-width: 2px; }
+.rarity-tag:is(.rar-rare, .rar-epic, .rar-legendary, .rar-mythic, .rar-ancestral) { border-width: 2px; }
 .equip-icon-frame { position: relative; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 40px; height: 40px; border: 1px solid var(--rar, #36414f); border-radius: 4px; background: #0d131c; }
 .equip-icon-frame.rar-uncommon { border-width: 2px; }
-.equip-icon-frame.rar-rare { border-width: 3px; box-shadow: 0 0 6px #5aa6ff66; }
+.equip-icon-frame:is(.rar-rare, .rar-epic, .rar-legendary, .rar-mythic, .rar-ancestral) { border-width: 3px; box-shadow: 0 0 6px color-mix(in srgb, var(--rar) 40%, transparent); }
 .rarity-mark { position: absolute; right: -4px; bottom: -4px; min-width: 14px; height: 14px; border-radius: 3px; background: var(--rar); color: #0b0f15; font-size: 9px; font-weight: 700; line-height: 14px; text-align: center; }
 .item-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-size: 10px; color: #aab6c6; margin: 2px 0; }
 .equip-heading .act-icon, #gear h3 .equip-icon { width: 18px; height: 18px; }
@@ -2643,7 +2647,7 @@ button.training-now:has(> .train-pointer) { position: relative; overflow: visibl
 .slot-current, .slot-offer, .refine-progress { margin: 6px 0; text-align: left; font-size: 11px; }
 .slot-current small, .slot-offer small, .refine-progress small { font-size: 8px; color: #9aaabd; letter-spacing: 1px; }
 .slot-candidate { display: block; width: 100%; margin: 4px 0; text-align: left; border: 1px solid var(--rar); }
-.slot-candidate.rar-rare { border-width: 2px; }
+.slot-candidate:is(.rar-rare, .rar-epic, .rar-legendary, .rar-mythic, .rar-ancestral) { border-width: 2px; }
 .refine-bar { height: 6px; border: 1px solid #36414f; border-radius: 3px; overflow: hidden; }
 .refine-bar span { display: block; height: 100%; background: #c9a24a; }
 .compare-box { margin: 8px 0; padding: 6px; border: 1px solid #36414f; border-radius: 5px; }
@@ -2679,7 +2683,8 @@ button.training-now:has(> .train-pointer) { position: relative; overflow: visibl
 .eq-views button[aria-pressed="true"] { background: #ff9a3c; border-color: #b35a10; color: #2a170a; box-shadow: inset 0 -4px 0 #d9781e; }
 .eq-new { position: absolute; top: -7px; right: -5px; min-width: 16px; padding: 1px 3px; border: 1px solid #fff; border-radius: 3px; background: #e0402c; color: #fff; font-size: 10px; line-height: 1.2; }
 .eq-tile { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 100%; aspect-ratio: 1; min-width: 0; padding: 0; border: 3px solid var(--rar, #36414f); border-radius: 3px; background: color-mix(in srgb, var(--rar, #36414f) 38%, #0d121a); box-shadow: inset 0 0 0 1px #0006; }
-.eq-tile.rar-rare { box-shadow: inset 0 0 0 1px #0006, 0 0 8px #5aa6ff66; }
+.eq-tile:is(.rar-rare, .rar-epic, .rar-legendary, .rar-mythic, .rar-ancestral) { box-shadow: inset 0 0 0 1px #0006, 0 0 8px color-mix(in srgb, var(--rar) 40%, transparent); }
+.eq-tile-stars { margin-left: 1px; color: #ffe27a; font-size: 8px; }
 .eq-tile-icon { width: 70%; height: 70%; image-rendering: pixelated; }
 .eq-tile-mark { position: absolute; top: 1px; right: 3px; color: #fff; font-size: 9px; font-weight: 700; text-shadow: 0 0 2px #000, 0 0 2px #000; }
 .eq-tile-level { position: absolute; bottom: 1px; right: 3px; color: #fff; font-size: 10px; font-weight: 700; text-shadow: 0 0 2px #000, 0 0 2px #000; }
@@ -2706,7 +2711,7 @@ button.eq-mode:hover { border-color: #e8b84a; }
 .eq-slots { display: grid; grid-template-columns: repeat(3, minmax(0, 92px)); justify-content: center; gap: 10px 14px; padding: 12px 8px; border-radius: 6px; background: radial-gradient(ellipse at 50% 50%, #2e3270 0, #1d2050 45%, transparent 75%); }
 .eq-slot { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
 .eq-slot .eq-tile { width: 100%; max-width: 76px; }
-.eq-slot.rar-rare .eq-tile, .eq-slot.rar-uncommon .eq-tile { box-shadow: inset 0 0 0 1px #0006, 0 0 10px color-mix(in srgb, var(--rar) 55%, transparent); }
+.eq-slot:is(.rar-uncommon, .rar-rare, .rar-epic, .rar-legendary, .rar-mythic, .rar-ancestral) .eq-tile { box-shadow: inset 0 0 0 1px #0006, 0 0 10px color-mix(in srgb, var(--rar) 55%, transparent); }
 .eq-slot-name { max-width: 100%; overflow: hidden; color: #8f95c8; font-size: 9px; letter-spacing: .5px; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
 .eq-slot-name[class*="rar-"] { color: color-mix(in srgb, var(--rar) 70%, #fff); }
 .eq-totals { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 6px; margin: 10px 0 0; padding: 0; list-style: none; }

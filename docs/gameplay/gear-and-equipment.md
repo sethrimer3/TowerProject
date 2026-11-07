@@ -32,24 +32,29 @@ Initially, only Helmet (top), Shield (left), Chestplate (center), Sword (right) 
 Other categories have no unlock schedule yet; existing owned categories remain open.
 The hero wears one piece in each open category; the inventory (up to 500 pieces) is shared, and the Tower's and the Delve's heroes each wear their own loadout.
 Each Unique piece (and the Silver Band) has its own pixel icon, so pieces of one category tell apart at a glance.
-Pieces come in Common, Uncommon and Rare, shown by word, letter and colour.
-With Settings → **Sprites** on, the three rarities have matching pixel-art PNG frames, empty slots have recessed frames, selected pieces have brass corner marks, and worn and Unique pieces have PNG symbols.
+Pieces come in Common, Uncommon, Rare, Epic, Legendary, Mythic and Ancestral, shown by word, letter (C, U, R, E, L, M, A) and colour, and an Ancestral piece can carry up to five Stars (*Ancestral ★3*).
+With Settings → **Sprites** on, Common, Uncommon and Rare have matching pixel-art PNG frames (Epic and above wear the Rare frame in their own colour for now), empty slots have recessed frames, selected pieces have brass corner marks, and worn and Unique pieces have PNG symbols.
 Names, rarity letters and levels remain readable text; Sprites defaults to off and non-default UI themes supply their own look.
 Standard pieces come from Equipment Chests or the Craft view; the three Unique pieces of each category come only from Gem pulls (20 Gems, or 200 for ten, in one category; or 10% less, 18 and 180, for a piece of any unlocked category; 72% Common, 25% Uncommon, 3% Rare, and the 100th pull in a row without a Rare in a category is a Rare).
 There are four equipment resources: Quilted Padding for Helmets, Iron Rivets for Shields, Whetstones for Swords, and Hobnails for Boots.
 Crafting a Common Standard costs 25 of each resource in its recipe, without Gold or Gems.
-Chestplates require all four resources and have twice their former intrinsic effect values and growth, making them superior armor.
+Chestplates require all four resources.
 Other pieces combine two base resources: a Cape above the Shield and left of the Helmet uses Rivets and Padding.
-Leveling, Refine and Improve require every input in the same recipe; leveling also costs Gold and stops at the rarity's cap (20, 40, 60).
+A piece starts at level 0, and leveling raises only its **main effect**: Swords ATK, Shields DEF, Helmets Arcanum Damage and Boots Gold found, each a percent that starts at its rarity's base (+1% ATK at Common, +30% at Ancestral) and grows with every level.
+A Chestplate raises max HP the same way, and its efficiency also raises the other worn pieces' main effects by a smaller percent; each Star multiplies a piece's main effect by 1.04 more (×1.20 at five).
+Leveling, Refine and Improve require every input in the same recipe; leveling also costs Gold (2,000 for level 1, rising to quintillions near 300) and stops at the rarity's cap: Common 20, Uncommon 40, Rare 60, Epic 80, Legendary 120, Mythic 160, Ancestral 200, and 20 more for each Star, up to 300.
 Supply Chests and mission rewards pay only the four base resources, and Equipment Chests and Gem pulls only produce unlocked categories.
 Old material balances convert into the corresponding base resources without losing units.
 Kills drop neither pieces nor materials: with the Chest card in the hand, a treasure chest may be a Supply Chest (upgrade materials) or an Equipment Chest (a Standard piece, up to Rare); see [The hand and cards](hand-and-cards.md#card-bonuses).
-Three copies of a piece at Uncommon or above assemble into the next rarity (Common pieces never merge: wear them as they are or salvage them), keeping the level of the one you choose (Assemble shows *3× → 1×* with the three pieces going in, numbered, beside the result; pressing Assemble melts them into glowing pixel slag that flows together and rises into the new piece, then *Assemble Complete!*).
-**Auto-assemble**, beside *Choose the piece to keep*, lists every merge your pieces make at once, each checked: worn pieces take no part, a locked piece is only ever the one kept, and each merge keeps the highest-level piece and uses up the lowest-level copies.
+Pieces assemble into the next rarity, keeping the level of the one you choose: three copies of an Uncommon or Rare piece; two copies of an Epic or Legendary piece and one more piece of its category at that rarity (a Standard piece serves, and is chosen first); two Mythic copies make an Ancestral; and an Ancestral piece with a Legendary copy of itself gains a Star.
+Common pieces never merge (wear them as they are or salvage them), and Standard pieces go no higher than Legendary.
+Assemble shows the recipe in words with the pieces going in, numbered, beside the result; pressing Assemble melts them into glowing pixel slag that flows together and rises into the new piece, then *Assemble Complete!*.
+**Auto-assemble**, beside *Choose the piece to keep*, lists every rarity merge your pieces make at once (never a Star), each checked: worn pieces take no part, a locked piece is only ever the one kept, and each merge keeps the highest-level piece and uses up the lowest-level copies and the cheapest third piece.
 Uncheck any to leave them out, then Assemble makes the rest at once, without the melt; the ✕ or a press outside the list cancels.
 Dismantling breaks unwanted pieces into their recipe's first base resource, never returning what leveling cost.
 Locked and worn pieces are never dismantled or merged away.
-Besides its fixed lines, each piece has **effect slots**: one at Common, a second from level 21 (so Uncommon and above) and a third from level 41 (Rare), each holding an effect from its category's pool, never rarer than the piece.
-A new slot's first roll is free (choose one of three); after that, **Refine** pays for three new candidates beside the current effect, which stays unless you take one, and every Refine counts toward that slot's Refinement: every fifth guarantees a top-rarity candidate and every tenth earns a Choice of any effect outright.
-Merging keeps a piece's effects and Refinement.
+Each piece also has **substats**, in slots its level opens: at levels 1, 41, 61, 81, 121, 161, 201 and 241 (a Standard piece reaches four, a Unique all eight), each holding a substat from its category's pool, Uncommon to Ancestral but never rarer than the piece.
+A substat doesn't grow with the piece's level; a rarer one is stronger (Rare ×1.5 an Uncommon's).
+A new slot's first roll is free (choose one of three); after that, **Refine** pays for three new candidates beside the current substat, which stays unless you take one, and every Refine counts toward that slot's Refinement: every fifth guarantees a top-rarity candidate and every tenth earns a Choice of any substat outright.
+Merging keeps a piece's substats and Refinement.
 See [docs/EQUIPMENT.md](../EQUIPMENT.md).

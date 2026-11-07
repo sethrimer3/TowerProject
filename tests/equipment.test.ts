@@ -13,14 +13,16 @@ import {
   CATEGORIES, CATEGORY_IDS, EQUIP_MATERIALS, EQUIP_MATERIAL_IDS, ITEMS, itemDef, materialOf, materialsOf, STARTER_CATEGORIES, standardOf, uniquesOf,
 } from "../src/equipment/catalog.ts";
 import {
-  EQUIPMENT_CAPACITY, PITY, PULL_GEMS, PULL_RATES, pullGems, RARITY_TIERS,
-  upgradeGold, upgradeMaterial,
+  EQUIPMENT_CAPACITY, PITY, PULL_GEMS, PULL_RATES, pullGems, RARITY_TIERS, STARS, TOP_LEVEL,
+  upgradeGold, upgradeMaterial, type EquipRarity,
 } from "../src/equipment/balance.ts";
 import {
-  addItem, autoMerges, decodeEquipment, defaultEquipment, dismantle, equip, isProtected, levelUp, merge, mergeFodder, salvageTotals,
-  setLocked, unequip, type EquipmentSave,
+  addItem, autoMerges, decodeEquipment, defaultEquipment, defaultFodder, dismantle, equip, isProtected, levelUp, maxLevel, merge, mergeFodder, mergePlan,
+  salvageTotals, setLocked, unequip, type EquipmentSave,
 } from "../src/equipment/inventory.ts";
-import { lineValue, effectText } from "../src/equipment/effects.ts";
+import { effectText, equipmentEffects } from "../src/equipment/effects.ts";
+import { efficiency, mainEffect } from "../src/equipment/main-effect.ts";
+import { snap } from "../src/exact.ts";
 import { keepDrop, pull, pullOne, rollRarity } from "../src/equipment/acquire.ts";
 import { ICON_ROWS, pieceRows } from "../src/ui/equipment-icons.ts";
 import type { Enemy } from "../src/entities.ts";
@@ -45,11 +47,6 @@ test("ten categories share four base resources, each with a Standard piece and t
   }
   assert.equal(new Set(ITEMS.map((i) => i.id)).size, ITEMS.length, "ids are unique");
   assert.equal(new Set(ITEMS.map((i) => i.name)).size, ITEMS.length, "names are unique");
-  for (const item of ITEMS) {
-    assert.ok(item.effects.some((l) => !l.from || l.from === "common"), `${item.id} does something at Common`);
-    for (const r of ["uncommon", "rare"] as const)
-      assert.ok(item.class === "standard" || item.effects.some((l) => l.from === r), `${item.id} opens a line at ${r}`);
-  }
 });
 
 test("each icon is a 12×12 grid", () => {
@@ -67,17 +64,50 @@ test("every piece wears its own icon, each Unique one of its own", () => {
     for (const row of rows) for (const ch of row) assert.ok(ch === "." || ch === "#" || /[a-z]/.test(ch), `${id} uses a known colour`);
 });
 
-test("lines grow with level and rarity power; fixed lines don't; whole kinds round down", () => {
-  const sword = standardOf("weapon").effects[0]; // +3 ATK, +0.5 a level
-  assert.equal(lineValue(sword, "common", 1), 3);
-  assert.equal(lineValue(sword, "common", 11), 8);
-  assert.equal(lineValue(sword, "uncommon", 1), 3.75);
-  assert.equal(lineValue(sword, "rare", 1), 4.8);
-  const blood = ITEMS.find((i) => i.id === "bloodpriceBlade")!.effects.find((l) => l.fixed)!;
-  assert.equal(lineValue(blood, "rare", 60), -10, "a drawback never grows");
-  const keys = ITEMS.find((i) => i.id === "locksmithsGloves")!.effects[0];
-  assert.equal(lineValue(keys, "common", 20), 1, "1.76 keys is one key");
-  assert.equal(effectText("attack", 3.75), "+3.75 ATK");
+test("main effects: the rarity's base at level 0, then each band of ten split evenly; Stars raise the whole", () => {
+  const sword = (rarity: EquipRarity, level: number, stars = 0) => mainEffect({ category: "weapon", rarity, level, stars })!.value;
+  assert.equal(sword("common", 0), 1);
+  assert.equal(sword("common", 1), 1.2, "a tenth of the first band's 2%");
+  assert.equal(sword("common", 10), 3);
+  assert.equal(sword("common", 20), 6, "5% from levels to 20");
+  assert.equal(sword("rare", 60), 33, "30% from levels to 60");
+  assert.equal(sword("epic", 75), 7 + 42 + 8, "half of the 70s' 16%");
+  assert.equal(sword("ancestral", 300, 5), snap((30 + 4342) * 1.2), "every band, then ×1.20 for five Stars");
+  assert.equal(sword("ancestral", 200, 1), snap((30 + 1492) * 1.04));
+  assert.equal(mainEffect({ category: "weapon", rarity: "common", level: 0 })!.kind, "attackPct");
+  assert.equal(mainEffect({ category: "shield", rarity: "legendary", level: 10 })!.value, 15);
+  assert.equal(mainEffect({ category: "helmet", rarity: "common", level: 10 })!.value, 5.4, "Arcanum Damage's steps are 20% larger");
+  assert.equal(mainEffect({ category: "helmet", rarity: "ancestral", level: 0 })!.kind, "arcanumDamage");
+  assert.equal(mainEffect({ category: "boots", rarity: "common", level: 5 })!.value, 1.6, "0.6% from five levels");
+  assert.equal(mainEffect({ category: "boots", rarity: "mythic", level: 300 })!.value, snap(3.2 + 323));
+  assert.equal(mainEffect({ category: "chestplate", rarity: "rare", level: 20 })!.value, 8, "a Chestplate's max HP runs on the ATK curve");
+  assert.equal(efficiency({ category: "chestplate", rarity: "rare", level: 20 }), 4.2, "and its efficiency on the Gold curve");
+  assert.equal(efficiency({ category: "weapon", rarity: "rare", level: 20 }), 0);
+  assert.equal(mainEffect({ category: "cape", rarity: "rare", level: 20 }), null, "the future corners have none yet");
+  assert.equal(effectText("arcanumDamage", 5.4), "+5.4% Arcanum Damage");
+});
+
+test("a worn Chestplate's efficiency raises the other worn pieces' main effects, not its own", () => {
+  const e = open();
+  const sword = addItem(e, "knightsSword", "rare")!, plate = addItem(e, "steelCuirass", "rare")!;
+  sword.level = 10; plate.level = 20;
+  e.equipped.tower = { weapon: sword.id, chestplate: plate.id };
+  const worn = equipmentEffects(e, "tower");
+  assert.equal(worn.attackPct, snap((3 + 2) * 1.042));
+  assert.equal(worn.maxHpPct, 8);
+});
+
+test("Gold and material to reach each level follow the agreed schedules", () => {
+  assert.deepEqual([1, 5, 10].map(upgradeGold), [2000, 10000, 20000]);
+  assert.deepEqual([11, 15, 20, 21, 50, 51, 60].map(upgradeGold), [25000, 45000, 70000, 80000, 1.4e6, 2.2e6, 4e6]);
+  assert.deepEqual([160, 161, 162, 171, 181, 191, 201].map(upgradeGold), [1e12, 10e12, 60e12, 510e12, 1.01e15, 1.51e15, 2.5e15]);
+  assert.deepEqual([221, 241, 261, 281, 300].map(upgradeGold), [265e15, 1e18, 106e18, 411e18, 886e18]);
+  assert.equal(upgradeGold(166), 10e12 + 50e12 + 4 * 50e12, "linear between the listed levels");
+  assert.deepEqual([1, 10, 20, 40, 60].map(upgradeMaterial), [1, 10, 30, 100, 210], "⌈L × (L + 10) / 20⌉ to level 60");
+  assert.deepEqual([101, 161, 201, 221, 241, 261, 281, 300].map(upgradeMaterial), [1000, 5000, 10000, 15000, 20000, 30000, 40000, 49500]);
+  assert.equal(upgradeMaterial(80), 595, "bending upward between 60 and 101");
+  for (let l = 2; l <= TOP_LEVEL; l++) assert.ok(upgradeMaterial(l) >= upgradeMaterial(l - 1), `materials never fall at ${l}`);
+  assert.equal(TOP_LEVEL, 300);
 });
 
 // --- Saves ---
@@ -118,7 +148,9 @@ test("decoding drops unknown pieces, clamps levels to the cap, and keeps loadout
     items: [
       { id: "e1", def: "knightsSword", rarity: "common", level: 99 },
       { id: "e2", def: "nope", rarity: "common", level: 1 },
-      { id: "e3", def: "silverBand", rarity: "legendary", level: 1 },
+      { id: "e3", def: "silverBand", rarity: "golden", level: 1 },
+      { id: "e5", def: "kingsbane", rarity: "ancestral", stars: 3, level: 999 },
+      { id: "e6", def: "kingsbane", rarity: "mythic", stars: 3, level: 0 },
       { id: "e1", def: "silverBand", rarity: "common", level: 1 },
       { id: "e4", def: "silverBand", rarity: "common", level: 1 },
     ],
@@ -127,12 +159,12 @@ test("decoding drops unknown pieces, clamps levels to the cap, and keeps loadout
     materials: { amber: -3, silk: 4 },
   };
   const e = decodeEquipment(raw);
-  assert.deepEqual(e.items.map((i) => [i.id, i.level]), [["e1", 20], ["e4", 1]]);
+  assert.deepEqual(e.items.map((i) => [i.id, i.level, i.stars]), [["e1", 20, undefined], ["e5", 260, 3], ["e6", 0, undefined], ["e4", 1, undefined]], "Stars only on Ancestral pieces, the cap raised by them");
   assert.deepEqual(e.equipped, { tower: { weapon: "e1" }, delve: { ring: "e4" } });
   assert.deepEqual([e.pity.weapon, e.pity.ring], [0, 12]);
   assert.deepEqual([e.materials.padding, e.materials.rivets], [2, 2]);
   assert.ok(!("silk" in e.materials) && !("amber" in e.materials));
-  assert.equal(e.nextId, 5, "never reuses an id");
+  assert.equal(e.nextId, 7, "never reuses an id");
 });
 
 // --- Unlock and the Blacksmith ---
@@ -319,9 +351,10 @@ test("leveling costs the curve's Gold and material, stops at the cap, and record
   const e = open(), purse = { gold: 1e9 }, mat = materialOf("boots");
   e.materials[mat] = 1e6;
   const boots = addItem(e, "travelersBoots", "common")!;
+  assert.equal(boots.level, 0, "a piece starts at level 0");
   assert.equal(levelUp(e, purse, boots.id, 1, false), 1);
   assert.deepEqual([purse.gold, e.materials[mat]], [1e9 - upgradeGold(1), 1e6 - upgradeMaterial(1)]);
-  assert.equal(levelUp(e, purse, boots.id, 100, false), RARITY_TIERS.common.maxLevel - 2);
+  assert.equal(levelUp(e, purse, boots.id, 100, false), RARITY_TIERS.common.maxLevel - 1);
   assert.equal(boots.level, RARITY_TIERS.common.maxLevel);
   assert.equal(levelUp(e, purse, boots.id, 1, false), "maxed");
   assert.equal(boots.spent!.gold, 1e9 - purse.gold);
@@ -353,7 +386,50 @@ test("merging takes exactly two other copies, raises the chosen target's rarity 
   assert.equal(e.items.length, before - 2);
   assert.ok(!e.items.some((i) => i.id === b.id || i.id === d.id));
   const r = addItem(e, "ringOfWarding", "rare")!;
-  assert.equal(merge(e, r.id, []), "unmergeable", "Rare is the top for now");
+  assert.equal(merge(e, r.id, []), "count", "Rare merges on, into Epic");
+});
+
+test("Epic and Legendary take two copies and one more piece of the category; Mythic two copies; Ancestral takes Stars", () => {
+  const e = open();
+  const [a, b] = [0, 1].map(() => addItem(e, "kingsbane", "epic")!);
+  const other = addItem(e, "reapersScythe", "epic")!, std = addItem(e, "knightsSword", "epic")!, shield = addItem(e, "wardensShield", "epic")!;
+  addItem(e, "kingsbane", "legendary");
+  a.level = 70;
+  assert.deepEqual(mergePlan(a), { kind: "rarity", next: "legendary", same: 2, any: 1, need: 2 });
+  assert.deepEqual(mergeFodder(e, a).map((i) => i.id), [b.id, std.id, other.id], "its copies first, then the category's others, Standard before Unique");
+  assert.deepEqual(defaultFodder(e, a).map((i) => i.id), [b.id, std.id], "a Standard piece is the cheapest fodder");
+  assert.equal(merge(e, a.id, [other.id, std.id]), "mismatch", "one copy of the piece itself is needed");
+  assert.equal(merge(e, a.id, [b.id, shield.id]), "mismatch", "the third piece is of the same category");
+  assert.ok(typeof merge(e, a.id, [b.id, other.id]) !== "string", "a Unique of the category serves as the third");
+  assert.deepEqual([a.rarity, a.level], ["legendary", 70]);
+  // Legendary to Mythic, the same way.
+  const [c, d] = [0, 1].map(() => addItem(e, "kingsbane", "legendary")!);
+  assert.ok(typeof merge(e, a.id, [c.id, d.id]) !== "string", "two more copies serve too");
+  assert.equal(a.rarity, "mythic");
+  // Mythic to Ancestral: two copies, nothing else.
+  const m = addItem(e, "kingsbane", "mythic")!;
+  assert.deepEqual(mergePlan(a), { kind: "rarity", next: "ancestral", same: 2, any: 0, need: 1 });
+  assert.ok(typeof merge(e, a.id, [m.id]) !== "string");
+  assert.deepEqual([a.rarity, a.stars, maxLevel(a)], ["ancestral", undefined, 200]);
+  // Each Star: one Legendary copy of the same piece, up to five.
+  for (let star = 1; star <= STARS.most; star++) {
+    assert.equal(merge(e, a.id, [addItem(e, "reapersScythe", "legendary")!.id]), "mismatch", "only its own definition");
+    assert.ok(typeof merge(e, a.id, [addItem(e, "kingsbane", "legendary")!.id]) !== "string");
+    assert.deepEqual([a.stars, maxLevel(a)], [star, 200 + 20 * star]);
+  }
+  assert.equal(mergePlan(a), null, "five Stars is the top");
+  assert.equal(merge(e, a.id, [addItem(e, "kingsbane", "legendary")!.id]), "unmergeable");
+});
+
+test("Standard pieces merge up to Legendary and no higher; Rare takes three copies into Epic", () => {
+  const e = open();
+  const [a, b, c] = [0, 1, 2].map(() => addItem(e, "knightsSword", "rare")!);
+  assert.ok(typeof merge(e, a.id, [b.id, c.id]) !== "string");
+  assert.equal(a.rarity, "epic");
+  const [d, f] = [0, 1].map(() => addItem(e, "knightsSword", "epic")!);
+  assert.ok(typeof merge(e, a.id, [d.id, f.id]) !== "string");
+  assert.deepEqual([a.rarity, maxLevel(a), mergePlan(a)], ["legendary", 120, null]);
+  assert.equal(merge(e, a.id, [addItem(e, "knightsSword", "legendary")!.id, addItem(e, "knightsSword", "legendary")!.id]), "unmergeable");
 });
 
 test("Auto-assemble offers every merge at once, none sharing a piece, leaving worn pieces out and locked ones only kept", () => {
@@ -373,6 +449,17 @@ test("Auto-assemble offers every merge at once, none sharing a piece, leaving wo
   for (const m of merges) assert.ok(typeof merge(e, m.target, m.fodder) !== "string", "each merge still stands after those before it");
   assert.deepEqual([worn, locked, a].map((i) => i.rarity), ["uncommon", "rare", "rare"]);
   assert.deepEqual(autoMerges(e), [], "nothing left to assemble");
+});
+
+test("Auto-assemble fills an Epic recipe's third place with the category's cheapest piece, and never offers a Star", () => {
+  const e = open();
+  const [a, b] = [0, 1].map(() => addItem(e, "kingsbane", "epic")!);
+  const std = addItem(e, "knightsSword", "epic")!;
+  a.level = 9;
+  const anc = addItem(e, "reapersScythe", "ancestral")!;
+  addItem(e, "reapersScythe", "legendary");
+  assert.deepEqual(autoMerges(e), [{ target: a.id, fodder: [b.id, std.id] }]);
+  assert.equal(mergePlan(anc)?.kind, "star");
 });
 
 test("Common pieces never merge: they are only worn as they are or salvaged", () => {
@@ -417,26 +504,43 @@ test("worn stats are derived: equip, unequip, reload and mode switches never cou
   g.newRun({ seed: 9 });
   const base = g.run.player.attack;
   const sword = addItem(s.equipment, "knightsSword", "common")!;
+  g.equipment.equip("tower", sword.id);
+  const worn = g.run.player.attack;
+  assert.equal(worn, loadout(s, "tower").attack, "the run takes the loadout's ATK");
+  assert.equal(worn, snap(base * 1.01), "+1% ATK at Common, level 0");
   for (let i = 0; i < 5; i++) {
     g.equipment.equip("tower", sword.id);
     g.equipment.equip("tower", sword.id);
-    assert.equal(g.run.player.attack, base + 3);
+    assert.equal(g.run.player.attack, worn);
     g.equipment.unequip("tower", "weapon");
     assert.equal(g.run.player.attack, base);
   }
   g.equipment.equip("tower", sword.id);
   const reloaded = new Game(decode(JSON.stringify(g.save)));
-  assert.equal(reloaded.run.player.attack, base + 3, "a reload keeps the run's stats as they were");
-  assert.equal(loadout(reloaded.save, "tower").attack, loadout(defaults()).attack + 3);
+  assert.equal(reloaded.run.player.attack, worn, "a reload keeps the run's stats as they were");
   reloaded.switchMode("delve");
   reloaded.switchMode("tower");
-  assert.equal(reloaded.run.player.attack, base + 3);
+  assert.equal(reloaded.run.player.attack, worn);
   assert.equal(loadout(reloaded.save, "delve").attack, loadout(defaults()).attack, "the Delve's hero wears its own");
   // Leveling the worn piece shifts the run by just the difference.
   reloaded.save.gold = 1e6;
   reloaded.save.equipment.materials.whetstone = 1e3;
-  reloaded.equipment.levelUp(sword.id, 2);
-  assert.equal(reloaded.run.player.attack, base + 4);
+  reloaded.equipment.levelUp(sword.id, 5);
+  assert.equal(reloaded.run.player.attack, loadout(reloaded.save, "tower").attack);
+  assert.equal(reloaded.run.player.attack, snap(base * 1.02), "+2% at level 5");
+});
+
+test("the worn Helmet's Arcanum Damage raises what arcana strike for", () => {
+  const s = defaults();
+  s.equipment.unlocked = true;
+  const g = new Game(s);
+  g.newRun({ seed: 9 });
+  const boost = (g.arcana as any).boost.bind(g.arcana);
+  const plain = boost(2);
+  const helm = addItem(s.equipment, "ironHelm", "rare")!;
+  helm.level = 10;
+  g.equipment.equip("tower", helm.id);
+  assert.equal(boost(2), (plain * (100 + 8 + 2.4)) / 100);
 });
 
 test("a Delve loadout reaches the Delve run and not the Tower's", () => {
@@ -449,8 +553,8 @@ test("a Delve loadout reaches the Delve run and not the Tower's", () => {
   g.switchMode("delve");
   g.newRun({ seed: 2 });
   const delve = g.run.player.defense;
-  g.equipment.equip("delve", addItem(s.equipment, "steelCuirass", "common")!.id);
-  assert.equal(g.run.player.defense, delve + 4);
+  g.equipment.equip("delve", addItem(s.equipment, "ironShield", "common")!.id);
+  assert.equal(g.run.player.defense, snap(delve * 1.01));
   g.switchMode("tower");
   assert.equal(g.run.player.defense, tower);
 });
@@ -465,11 +569,14 @@ test("Boss ATK raises the hero's strikes on bosses only", () => {
 test("victory heal restores a share of max HP after a won fight", () => {
   const s = defaults();
   s.equipment.unlocked = true;
-  s.equipment.equipped.tower.amulet = addItem(s.equipment, "phoenixTalisman", "common")!.id;
+  const amulet = addItem(s.equipment, "phoenixTalisman", "rare")!;
+  amulet.level = 1;
+  amulet.slots = [{ effect: "secondWind", rarity: "rare" }];
+  s.equipment.equipped.tower.amulet = amulet.id;
   const g = new Game(s);
   g.newRun({ seed: 4 });
-  assert.equal(g.stepRules.victoryHeal, 1.5);
+  assert.equal(g.stepRules.victoryHeal, 0.45);
   const player = { ...g.run.player, hp: 50, maxHp: 100, attack: 50, defense: 50 };
   const next = resolveStep(player, { kind: "enemy", enemy: { name: "E", hp: 10, attack: 1, defense: 0, strength: "weak" } } as never, g.stepRules);
-  assert.equal(next.player.hp, 51.5);
+  assert.equal(next.player.hp, 50.45);
 });

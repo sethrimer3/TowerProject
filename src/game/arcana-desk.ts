@@ -12,6 +12,7 @@ import { clearVoidwell } from "../arcana/voidwell.ts";
 import type { CritRule } from "../combat.ts";
 import type { Enemy, Mode } from "../entities.ts";
 import type { FloorBloom } from "../environments.ts";
+import { wornEffects } from "../equipment/effects.ts";
 import { boostLifespringHealth } from "../progression/hero-stats.ts";
 import { stream } from "../random.ts";
 import type { TowerRun } from "../runs.ts";
@@ -156,9 +157,10 @@ export class ArcanaDesk {
     return true;
   }
   /** What an arcanum's damage `multiplier` multiplies the hero's ATK by:
-   * raised by crits and by relics' Arcanum Damage. */
+   * raised by crits, by the worn Helmet's Arcanum Damage and by relics'. */
   private boost(multiplier: number) {
-    return arcanumBoost(multiplier, this.host.crit) * relicFactor(this.save, "arcanumDamage");
+    const worn = wornEffects(this.save, this.host.mode).arcanumDamage;
+    return arcanumBoost(multiplier, this.host.crit, (100 + worn) / 100) * relicFactor(this.save, "arcanumDamage");
   }
   /** What the arcanum's card reads: its damage with the hero's ATK and crits, or its own effect. */
   cardValue({ id, levels }: HeldArcanum) {

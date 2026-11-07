@@ -4,9 +4,6 @@
 // name items by definition id only, so this catalogue can change without
 // touching saved equipment. Balance numbers (rarity caps, costs, drop and
 // pull rates) live in `balance.ts`; see docs/EQUIPMENT.md.
-import type { Mode } from "../entities.ts";
-import type { EquipRarity } from "./balance.ts";
-
 /** Slots retained by the catalogue, including future unlocks. */
 export type CategoryId = "weapon" | "shield" | "chestplate" | "helmet" | "gloves" | "boots" | "cape" | "belt" | "ring" | "amulet";
 export const CATEGORY_IDS: readonly CategoryId[] = ["weapon", "shield", "chestplate", "helmet", "gloves", "boots", "cape", "belt", "ring", "amulet"];
@@ -53,7 +50,7 @@ export function baseMaterial(id: unknown): EquipMaterialId | undefined {
 }
 
 /** What an item can do, each read in one place: the loadout (stats, shroud,
- * Regen, starting keys), combat (`bossAttack`, `pierce`), the step rules (healing),
+ * Regen, starting keys), the Arcana desk (`arcanumDamage`), combat (`bossAttack`, `pierce`), the step rules (healing),
  * the run's chests (`chestFind`, as it goes inside), the run's purse (Gold, Silver, materials), the hero's XP, and
  * movement. Percent kinds are in percent (5 is +5%). */
 export type EffectKind =
@@ -61,7 +58,7 @@ export type EffectKind =
   | "shroud" | "regen" | "yellowKeys" | "blueKeys" | "bossAttack" | "pierce"
   | "potionHeal" | "victoryHeal" | "floorHeal"
   | "goldFind" | "silverFind" | "xpGain" | "materialFind" | "chestFind" | "startSilver"
-  | "moveSpeed" | "dashTiles";
+  | "moveSpeed" | "dashTiles" | "arcanumDamage";
 
 /** How an effect reads: its words after the number, whether the number is a
  * percent, whether it counts in whole units only (keys, Dash tiles) and
@@ -91,117 +88,68 @@ export const EFFECTS: Record<EffectKind, EffectText> = {
   startSilver: { words: "Silver at the start of each climb" },
   moveSpeed: { words: "movement speed", percent: true },
   dashTiles: { words: "tile a Dash crosses", plural: "tiles a Dash crosses", whole: true },
+  arcanumDamage: { words: "Arcanum Damage", percent: true },
 };
 
-/** One line of an item's effects: `base` at level 1, `perLevel` more each
- * level after, both multiplied by the rarity's power, from rarity `from`
- * on (Common when absent). A `fixed` line (a drawback) ignores level and
- * rarity. With `mode`, it counts only in that mode's loadout. */
-export type EffectLine = { kind: EffectKind; base: number; perLevel?: number; from?: EquipRarity; mode?: Mode; fixed?: true };
-
 /** Standard pieces come from Equipment Chests; Unique pieces come from Gem pulls and
- * each carries a specialised ability. Both level, merge and salvage alike. */
+ * each carries a specialised ability. Both level, merge and salvage alike;
+ * what leveling raises is the category's main effect (main-effect.ts). */
 export type ItemClass = "standard" | "unique";
-export type ItemDef = { id: string; name: string; category: CategoryId; class: ItemClass; identity: string; effects: EffectLine[] };
-
-const line = (kind: EffectKind, base: number, perLevel = 0, more: Omit<EffectLine, "kind" | "base" | "perLevel"> = {}): EffectLine =>
-  ({ kind, base, ...(perLevel ? { perLevel } : {}), ...more });
-const U = { from: "uncommon" } as const, R = { from: "rare" } as const;
-const TOWER = { mode: "tower" } as const, DELVE = { mode: "delve" } as const;
+export type ItemDef = { id: string; name: string; category: CategoryId; class: ItemClass; identity: string };
 
 /** Every equipment definition, by category: the Standard piece first, then
  * the three Uniques. */
 export const ITEMS: readonly ItemDef[] = [
   // Weapons
-  { id: "knightsSword", name: "Knight's Sword", category: "weapon", class: "standard", identity: "Reliable raw ATK",
-    effects: [line("attack", 3, 0.5), line("attackPct", 2, 0.1, U), line("defense", 1, 0.25, R)] },
-  { id: "kingsbane", name: "Kingsbane", category: "weapon", class: "unique", identity: "Boss slayer: hits bosses harder, and finds more Supply and Equipment Chests",
-    effects: [line("attack", 2, 0.3), line("bossAttack", 10, 0.25), line("attackPct", 1.5, 0.08, U), line("chestFind", 5, 0.1, R)] },
-  { id: "reapersScythe", name: "Reaper's Scythe", category: "weapon", class: "unique", identity: "Clears floors for profit: more XP and Silver from every kill",
-    effects: [line("attack", 2, 0.3), line("xpGain", 5, 0.2), line("silverFind", 5, 0.2, U), line("victoryHeal", 0.5, 0.01, R)] },
-  { id: "bloodpriceBlade", name: "Bloodprice Blade", category: "weapon", class: "unique", identity: "High risk: the most ATK of any weapon, paid for in max HP",
-    effects: [line("attackPct", 8, 0.2), line("maxHpPct", -10, 0, { fixed: true }), line("attack", 3, 0.5, U), line("victoryHeal", 1.5, 0.03, R)] },
+  { id: "knightsSword", name: "Knight's Sword", category: "weapon", class: "standard", identity: "Reliable raw ATK" },
+  { id: "kingsbane", name: "Kingsbane", category: "weapon", class: "unique", identity: "Boss slayer: hits bosses harder, and finds more Supply and Equipment Chests" },
+  { id: "reapersScythe", name: "Reaper's Scythe", category: "weapon", class: "unique", identity: "Clears floors for profit: more XP and Silver from every kill" },
+  { id: "bloodpriceBlade", name: "Bloodprice Blade", category: "weapon", class: "unique", identity: "High risk: the most ATK of any weapon, paid for in max HP" },
   // Shields
-  { id: "ironShield", name: "Iron Shield", category: "shield", class: "standard", identity: "Reliable DEF and protection",
-    effects: [line("defense", 2, 0.4), line("shroud", 3, 0.5, U), line("defensePct", 2, 0.1, R)] },
-  { id: "wardensShield", name: "Warden's Shield", category: "shield", class: "unique", identity: "Blocks the first blows",
-    effects: [line("shroud", 5, 1), line("defense", 2, 0.3, U), line("defensePct", 3, 0.1, R)] },
-  { id: "bulwarkShield", name: "Bulwark Shield", category: "shield", class: "unique", identity: "Steady defense and vitality",
-    effects: [line("defense", 3, 0.5), line("maxHp", 15, 3, U), line("defensePct", 3, 0.1, R)] },
-  { id: "dawnShield", name: "Dawn Shield", category: "shield", class: "unique", identity: "Regains health between battles",
-    effects: [line("defense", 1, 0.25), line("floorHeal", 2, 0.05), line("maxHp", 15, 3, U), line("shroud", 3, 0.6, R)] },
+  { id: "ironShield", name: "Iron Shield", category: "shield", class: "standard", identity: "Reliable DEF and protection" },
+  { id: "wardensShield", name: "Warden's Shield", category: "shield", class: "unique", identity: "Blocks the first blows" },
+  { id: "bulwarkShield", name: "Bulwark Shield", category: "shield", class: "unique", identity: "Steady defense and vitality" },
+  { id: "dawnShield", name: "Dawn Shield", category: "shield", class: "unique", identity: "Regains health between battles" },
   // Chestplates
-  { id: "steelCuirass", name: "Steel Cuirass", category: "chestplate", class: "standard", identity: "Superior DEF and vitality",
-    effects: [line("defense", 4, 0.8), line("defensePct", 4, 0.2, U), line("maxHp", 40, 8, R)] },
-  { id: "bastionPlate", name: "Bastion Plate", category: "chestplate", class: "unique", identity: "Raw defense: DEF, more DEF, then a shroud for the first blows",
-    effects: [line("defense", 6, 1), line("defensePct", 6, 0.24, U), line("shroud", 10, 2, R)] },
-  { id: "giantsHauberk", name: "Giant's Hauberk", category: "chestplate", class: "unique", identity: "A deep pool of HP to outlast long fights",
-    effects: [line("maxHp", 60, 12), line("maxHpPct", 8, 0.24, U), line("defense", 4, 0.6, R)] },
-  { id: "verdantMail", name: "Verdant Mail", category: "chestplate", class: "unique", identity: "Sustain: regains HP as the hero walks and climbs",
-    effects: [line("regen", 1, 0.1), line("defense", 2, 0.4), line("floorHeal", 4, 0.1, U), line("victoryHeal", 2, 0.04, R)] },
+  { id: "steelCuirass", name: "Steel Cuirass", category: "chestplate", class: "standard", identity: "Superior DEF and vitality" },
+  { id: "bastionPlate", name: "Bastion Plate", category: "chestplate", class: "unique", identity: "Raw defense: DEF, more DEF, then a shroud for the first blows" },
+  { id: "giantsHauberk", name: "Giant's Hauberk", category: "chestplate", class: "unique", identity: "A deep pool of HP to outlast long fights" },
+  { id: "verdantMail", name: "Verdant Mail", category: "chestplate", class: "unique", identity: "Sustain: regains HP as the hero walks and climbs" },
   // Helmets
-  { id: "ironHelm", name: "Iron Helm", category: "helmet", class: "standard", identity: "Reliable max HP and DEF",
-    effects: [line("maxHp", 15, 3), line("defense", 1, 0.25, U), line("shroud", 3, 0.5, R)] },
-  { id: "sentinelVisor", name: "Sentinel's Visor", category: "helmet", class: "unique", identity: "Blocks the first blows of every fight",
-    effects: [line("shroud", 6, 1.2), line("defensePct", 2, 0.08, U), line("maxHpPct", 3, 0.1, R)] },
-  { id: "scholarsCirclet", name: "Scholar's Circlet", category: "helmet", class: "unique", identity: "Levels the hero faster, for more training points",
-    effects: [line("xpGain", 8, 0.3), line("maxHp", 15, 3, U), line("silverFind", 5, 0.2, R)] },
-  { id: "minersHelm", name: "Miner's Helm", category: "helmet", class: "unique", identity: "Made for the Delve: heals on new floors and digs up more there",
-    effects: [line("maxHp", 10, 2), line("floorHeal", 3, 0.06, DELVE), line("xpGain", 10, 0.3, { ...U, ...DELVE }), line("materialFind", 10, 0.3, { ...R, ...DELVE })] },
+  { id: "ironHelm", name: "Iron Helm", category: "helmet", class: "standard", identity: "Reliable max HP and DEF" },
+  { id: "sentinelVisor", name: "Sentinel's Visor", category: "helmet", class: "unique", identity: "Blocks the first blows of every fight" },
+  { id: "scholarsCirclet", name: "Scholar's Circlet", category: "helmet", class: "unique", identity: "Levels the hero faster, for more training points" },
+  { id: "minersHelm", name: "Miner's Helm", category: "helmet", class: "unique", identity: "Made for the Delve: heals on new floors and digs up more there" },
   // Gloves
-  { id: "leatherGauntlets", name: "Leather Gauntlets", category: "gloves", class: "standard", identity: "Reliable ATK and DEF",
-    effects: [line("attack", 2, 0.3), line("defense", 1, 0.2, U), line("attackPct", 2, 0.08, R)] },
-  { id: "brawlersWraps", name: "Brawler's Wraps", category: "gloves", class: "unique", identity: "More ATK, and a little life back from every win",
-    effects: [line("attack", 3, 0.45), line("attackPct", 3, 0.1, U), line("victoryHeal", 0.5, 0.02, R)] },
-  { id: "locksmithsGloves", name: "Locksmith's Gloves", category: "gloves", class: "unique", identity: "Keys: starts every climb with spare gold keys",
-    effects: [line("yellowKeys", 1, 0.04), line("defense", 1, 0.2, U), line("blueKeys", 1, 0, { ...R, fixed: true })] },
-  { id: "alchemistsGloves", name: "Alchemist's Gloves", category: "gloves", class: "unique", identity: "Potions: every potion heals more",
-    effects: [line("potionHeal", 10, 0.4), line("maxHp", 10, 2, U), line("regen", 0.3, 0.03, R)] },
+  { id: "leatherGauntlets", name: "Leather Gauntlets", category: "gloves", class: "standard", identity: "Reliable ATK and DEF" },
+  { id: "brawlersWraps", name: "Brawler's Wraps", category: "gloves", class: "unique", identity: "More ATK, and a little life back from every win" },
+  { id: "locksmithsGloves", name: "Locksmith's Gloves", category: "gloves", class: "unique", identity: "Keys: starts every climb with spare gold keys" },
+  { id: "alchemistsGloves", name: "Alchemist's Gloves", category: "gloves", class: "unique", identity: "Potions: every potion heals more" },
   // Boots
-  { id: "travelersBoots", name: "Traveler's Boots", category: "boots", class: "standard", identity: "Reliable DEF and a little speed",
-    effects: [line("defense", 1, 0.25), line("moveSpeed", 5, 0.15, U), line("maxHp", 15, 3, R)] },
-  { id: "fleetstepBoots", name: "Fleetstep Boots", category: "boots", class: "unique", identity: "Raw speed: the hand walks faster everywhere",
-    effects: [line("moveSpeed", 10, 0.4), line("defense", 1, 0.2, U), line("dashTiles", 1, 0, { ...R, fixed: true })] },
-  { id: "pathfinderTreads", name: "Pathfinder's Treads", category: "boots", class: "unique", identity: "Automation: each Dash crosses more empty floor",
-    effects: [line("dashTiles", 1, 0.05), line("moveSpeed", 5, 0.2, U), line("floorHeal", 1, 0.03, R)] },
-  { id: "delversGreaves", name: "Delver's Greaves", category: "boots", class: "unique", identity: "Made for the Delve: faster, and healed by each new depth",
-    effects: [line("moveSpeed", 15, 0.5, DELVE), line("floorHeal", 2, 0.05, DELVE), line("goldFind", 5, 0.2, { ...U, ...DELVE }), line("dashTiles", 1, 0.03, { ...R, ...DELVE })] },
+  { id: "travelersBoots", name: "Traveler's Boots", category: "boots", class: "standard", identity: "Reliable DEF and a little speed" },
+  { id: "fleetstepBoots", name: "Fleetstep Boots", category: "boots", class: "unique", identity: "Raw speed: the hand walks faster everywhere" },
+  { id: "pathfinderTreads", name: "Pathfinder's Treads", category: "boots", class: "unique", identity: "Automation: each Dash crosses more empty floor" },
+  { id: "delversGreaves", name: "Delver's Greaves", category: "boots", class: "unique", identity: "Made for the Delve: faster, and healed by each new depth" },
   // Capes
-  { id: "woolCloak", name: "Wool Cloak", category: "cape", class: "standard", identity: "Reliable max HP and a little DEF",
-    effects: [line("maxHp", 10, 2), line("defense", 1, 0.2, U), line("goldFind", 3, 0.1, R)] },
-  { id: "magpieMantle", name: "Magpie's Mantle", category: "cape", class: "unique", identity: "Wealth: more Gold, then Silver, from everything found",
-    effects: [line("goldFind", 8, 0.3), line("silverFind", 5, 0.2, U), line("startSilver", 10, 1, R)] },
-  { id: "gatherersShroud", name: "Gatherer's Shroud", category: "cape", class: "unique", identity: "Materials: more upgrade materials, and more Supply and Equipment Chests",
-    effects: [line("materialFind", 10, 0.4), line("chestFind", 2, 0.05, U), line("goldFind", 4, 0.1, R)] },
-  { id: "pilgrimsCape", name: "Pilgrim's Cape", category: "cape", class: "unique", identity: "A steady climb: heals on every new floor",
-    effects: [line("floorHeal", 3, 0.08), line("potionHeal", 5, 0.2, U), line("maxHpPct", 3, 0.08, R)] },
+  { id: "woolCloak", name: "Wool Cloak", category: "cape", class: "standard", identity: "Reliable max HP and a little DEF" },
+  { id: "magpieMantle", name: "Magpie's Mantle", category: "cape", class: "unique", identity: "Wealth: more Gold, then Silver, from everything found" },
+  { id: "gatherersShroud", name: "Gatherer's Shroud", category: "cape", class: "unique", identity: "Materials: more upgrade materials, and more Supply and Equipment Chests" },
+  { id: "pilgrimsCape", name: "Pilgrim's Cape", category: "cape", class: "unique", identity: "A steady climb: heals on every new floor" },
   // Belts
-  { id: "leatherBelt", name: "Leather Belt", category: "belt", class: "standard", identity: "Reliable max HP",
-    effects: [line("maxHp", 20, 4), line("potionHeal", 5, 0.2, U), line("defense", 1, 0.25, R)] },
-  { id: "provisionersBelt", name: "Provisioner's Belt", category: "belt", class: "unique", identity: "Potions: the strongest potion bonus",
-    effects: [line("potionHeal", 15, 0.5), line("startSilver", 5, 0.5, U), line("regen", 0.3, 0.04, R)] },
-  { id: "championsGirdle", name: "Champion's Girdle", category: "belt", class: "unique", identity: "Max HP that grows with everything else",
-    effects: [line("maxHpPct", 4, 0.12), line("maxHp", 20, 4, U), line("shroud", 3, 0.6, R)] },
-  { id: "merchantsSash", name: "Merchant's Sash", category: "belt", class: "unique", identity: "Silver: buys climb training from the first floor",
-    effects: [line("startSilver", 15, 1.5), line("silverFind", 5, 0.2, U), line("goldFind", 3, 0.1, R)] },
+  { id: "leatherBelt", name: "Leather Belt", category: "belt", class: "standard", identity: "Reliable max HP" },
+  { id: "provisionersBelt", name: "Provisioner's Belt", category: "belt", class: "unique", identity: "Potions: the strongest potion bonus" },
+  { id: "championsGirdle", name: "Champion's Girdle", category: "belt", class: "unique", identity: "Max HP that grows with everything else" },
+  { id: "merchantsSash", name: "Merchant's Sash", category: "belt", class: "unique", identity: "Silver: buys climb training from the first floor" },
   // Rings
-  { id: "silverBand", name: "Silver Band", category: "ring", class: "standard", identity: "A little of every percentage",
-    effects: [line("attackPct", 1.5, 0.06), line("defensePct", 1.5, 0.06, U), line("maxHpPct", 1.5, 0.06, R)] },
-  { id: "ringOfFury", name: "Ring of Fury", category: "ring", class: "unique", identity: "Offense in percent: scales with every point of ATK",
-    effects: [line("attackPct", 3, 0.1), line("bossAttack", 4, 0.15, U), line("victoryHeal", 0.5, 0.01, R)] },
-  { id: "ringOfWarding", name: "Ring of Warding", category: "ring", class: "unique", identity: "Defense in percent: scales with every point of DEF",
-    effects: [line("defensePct", 3, 0.1), line("shroud", 3, 0.6, U), line("maxHpPct", 2, 0.06, R)] },
-  { id: "spireSignet", name: "Spire Signet", category: "ring", class: "unique", identity: "Made for the Tower: ATK and DEF there, and more Supply and Equipment Chests",
-    effects: [line("attackPct", 2.5, 0.08, TOWER), line("defensePct", 2.5, 0.08, TOWER), line("goldFind", 5, 0.2, { ...U, ...TOWER }), line("chestFind", 3, 0.05, { ...R, ...TOWER })] },
+  { id: "silverBand", name: "Silver Band", category: "ring", class: "standard", identity: "A little of every percentage" },
+  { id: "ringOfFury", name: "Ring of Fury", category: "ring", class: "unique", identity: "Offense in percent: scales with every point of ATK" },
+  { id: "ringOfWarding", name: "Ring of Warding", category: "ring", class: "unique", identity: "Defense in percent: scales with every point of DEF" },
+  { id: "spireSignet", name: "Spire Signet", category: "ring", class: "unique", identity: "Made for the Tower: ATK and DEF there, and more Supply and Equipment Chests" },
   // Amulets
-  { id: "amberPendant", name: "Amber Pendant", category: "amulet", class: "standard", identity: "Max HP in percent, and a little Regen",
-    effects: [line("maxHpPct", 1.5, 0.06), line("regen", 0.2, 0.02, U), line("xpGain", 3, 0.1, R)] },
-  { id: "heartOfTheGrove", name: "Heart of the Grove", category: "amulet", class: "unique", identity: "Regeneration: the most HP back with every step",
-    effects: [line("regen", 0.6, 0.06), line("maxHpPct", 3, 0.1, U), line("floorHeal", 2, 0.05, R)] },
-  { id: "sagesLocket", name: "Sage's Locket", category: "amulet", class: "unique", identity: "Learning: more XP, then more materials and Silver",
-    effects: [line("xpGain", 10, 0.35), line("materialFind", 5, 0.2, U), line("silverFind", 5, 0.2, R)] },
-  { id: "phoenixTalisman", name: "Phoenix Talisman", category: "amulet", class: "unique", identity: "Rises from each fight: heals a share of max HP after every win",
-    effects: [line("victoryHeal", 1.5, 0.03), line("maxHp", 20, 4, U), line("regen", 0.3, 0.03, R)] },
+  { id: "amberPendant", name: "Amber Pendant", category: "amulet", class: "standard", identity: "Max HP in percent, and a little Regen" },
+  { id: "heartOfTheGrove", name: "Heart of the Grove", category: "amulet", class: "unique", identity: "Regeneration: the most HP back with every step" },
+  { id: "sagesLocket", name: "Sage's Locket", category: "amulet", class: "unique", identity: "Learning: more XP, then more materials and Silver" },
+  { id: "phoenixTalisman", name: "Phoenix Talisman", category: "amulet", class: "unique", identity: "Rises from each fight: heals a share of max HP after every win" },
 ];
 
 export type ItemId = string;

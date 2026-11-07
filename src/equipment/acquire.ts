@@ -25,7 +25,7 @@ const pick = <T>(list: readonly T[], roll: number) => list[Math.min(list.length 
 export function pullOne(e: EquipmentSave, category: CategoryId, rng: () => number, rareMore = 0) {
   const pity = e.pity[category] + 1 >= PITY;
   // Relics' `rareMore` percent moves from Common to Rare.
-  const rates = rareMore ? { ...PULL_RATES, common: PULL_RATES.common - rareMore, rare: PULL_RATES.rare + rareMore } : PULL_RATES;
+  const rates = rareMore ? { ...PULL_RATES, common: PULL_RATES.common! - rareMore, rare: PULL_RATES.rare! + rareMore } : PULL_RATES;
   const rarity = pity ? "rare" : rollRarity(rates, rng());
   const def = pick(uniquesOf(category), rng());
   e.pity[category] = rarity === "rare" ? 0 : e.pity[category] + 1;

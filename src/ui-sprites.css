@@ -561,6 +561,8 @@ html.ui-sprites :is(.eq-tile, .equip-icon-frame):not(#_) {
 }
 html.ui-sprites :is(.eq-tile, .equip-icon-frame).rar-uncommon:not(#_) { --equipment-frame: url("../public/assets/style/ui-equip-frame-uncommon.png"); }
 html.ui-sprites :is(.eq-tile, .equip-icon-frame).rar-rare:not(#_) { --equipment-frame: url("../public/assets/style/ui-equip-frame-rare.png"); }
+/* TODO: Epic and above borrow the Rare frame until their own PNGs are drawn; the --rar colour tells them apart. */
+html.ui-sprites :is(.eq-tile, .equip-icon-frame):is(.rar-epic, .rar-legendary, .rar-mythic, .rar-ancestral):not(#_) { --equipment-frame: url("../public/assets/style/ui-equip-frame-rare.png"); }
 html.ui-sprites .eq-tile.eq-ghost:not(#_) { --equipment-frame: url("../public/assets/style/ui-equip-frame-empty.png"); background: #10151c; }
 html.ui-sprites .eq-tile.selected:not(#_) { outline: none; }
 html.ui-sprites .eq-tile.selected:focus-visible:not(#_) { outline: 2px solid #e1bb78; outline-offset: 3px; }
@@ -602,6 +604,10 @@ html.ui-sprites :is(.rarity-tag, .rarity-mark, .eq-input-n):not(#_) { border-rad
 html.ui-sprites .rar-common { --rar: #b8c2bb; }
 html.ui-sprites .rar-uncommon { --rar: #a7bd75; }
 html.ui-sprites .rar-rare { --rar: #88c5db; }
+html.ui-sprites .rar-epic { --rar: #b48ad6; }
+html.ui-sprites .rar-legendary { --rar: #e1bb78; }
+html.ui-sprites .rar-mythic { --rar: #d98579; }
+html.ui-sprites .rar-ancestral { --rar: #8fdccf; }
 html.ui-sprites .eq-ghost .eq-tile-icon.sprite-ready { filter: none; }
 html.ui-sprites .eq-totals li:not(#_) {
   border: 1px solid transparent;
