@@ -1,7 +1,7 @@
 import { relicAmount } from "../economy/relic-effects.ts";
 import type { Mode } from "../entities.ts";
 import { stream } from "../random.ts";
-import { CRAFT_MATERIAL, EQUIP_RARITIES, pullGems, type PullCount } from "../equipment/balance.ts";
+import { CRAFT_MATERIAL, EQUIP_RARITIES, pullPrice, type PullCount } from "../equipment/balance.ts";
 import { itemDef, materialOf, hasMaterials, spendMaterials, type CategoryId, type EquipMaterialId } from "../equipment/catalog.ts";
 import { canPull, drawTogglesOpen, pull } from "../equipment/acquire.ts";
 import {
@@ -15,9 +15,10 @@ import { affordsGems, type DeskHost } from "./desk.ts";
 /** Why a Gem pull was refused: `excluded` when every Unique it could bring
  * is left out of draws. */
 export type PullRefusal = "locked" | "gems" | "room" | "excluded";
-/** One piece a Gem pull brought: whether pity made it, and, when
- * Auto-salvage dismantled it once pulled, the material it returned. */
-export type Pulled = { item: EquipItem; pity: boolean; salvaged?: { id: EquipMaterialId; quantity: number } };
+/** One piece a Gem pull brought: whether pity made it, whether it was the
+ * welcome's sure Epic Unique (`sure`), and, when Auto-salvage dismantled it
+ * once pulled, the material it returned. */
+export type Pulled = { item: EquipItem; pity: boolean; sure?: true; salvaged?: { id: EquipMaterialId; quantity: number } };
 
 /** The Equipment screen's commands (the Gear page's Equipment tab, and the
  * forest's Blacksmith): leveling, merging, dismantling, locking, the two
@@ -155,13 +156,18 @@ export class EquipmentDesk {
     return result;
   }
 
+  /** What `count` pulls of `key` take now: Equipment Tickets first, as far
+   * as they go, then Gems for the rest (nothing with Dev free purchases). */
+  pullPrice(count: PullCount, key: PullKey) {
+    return this.host.free ? { tickets: 0, gems: 0 } : pullPrice(count, key === "all", this.e.tickets);
+  }
   /** Whether `count` pulls of `key` (a category, or all) can be made now,
    * or why not. */
   pullRefusal(count: PullCount, key: PullKey): PullRefusal | null {
     if (!this.open) return "locked";
     if (roomLeft(this.e) < count) return "room";
     if (!canPull(this.e, key)) return "excluded";
-    return affordsGems(this.host, pullGems(count, key === "all")) ? null : "gems";
+    return affordsGems(this.host, this.pullPrice(count, key).gems) ? null : "gems";
   }
   /** Leaves Unique `def` out of future Gem pulls, or puts it back: only
    * once the draw toggles show (a five-Star piece owned). */
@@ -172,16 +178,19 @@ export class EquipmentDesk {
     return true;
   }
   /** `count` Gem pulls in `category`, or of every category at a discount
-   * (`"all"`), paid in Gems and resolved one by one (pity counting through
-   * them): Standard pieces at Common to Rare, Uniques at Epic and Legendary.
-   * With Auto-salvage on, each Common piece pulled is then dismantled into
-   * its material. */
+   * (`"all"`), paid with Equipment Tickets as far as they go and Gems for
+   * the rest (`pullPrice`), and resolved one by one (pity counting through
+   * them): Standard pieces at Common to Rare, Uniques at Epic and Legendary;
+   * one of the welcome's ticket pulls a sure Epic Unique. With Auto-salvage
+   * on, each Common piece pulled is then dismantled into its material. */
   pull(category: CategoryId | "all", count: PullCount): Pulled[] | PullRefusal {
     if (category !== "all" && !categoryOpen(this.e, category)) return "locked";
-    const all = category === "all", refusal = this.pullRefusal(count, category);
+    const refusal = this.pullRefusal(count, category);
     if (refusal) return refusal;
-    if (!this.host.free) this.save.gems -= pullGems(count, all);
-    const pulled: Pulled[] = pull(this.e, category, count, stream("equipment"), relicAmount(this.host.save, "rarePull"));
+    const price = this.pullPrice(count, category);
+    this.e.tickets -= price.tickets;
+    this.save.gems -= price.gems;
+    const pulled: Pulled[] = pull(this.e, category, count, stream("equipment"), relicAmount(this.host.save, "rarePull"), price.tickets);
     this.host.eventDone("equipment", pulled.length);
     if (!this.e.autoSalvage) return pulled;
     const commons = pulled.filter((p) => p.item.rarity === "common");

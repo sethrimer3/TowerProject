@@ -9,7 +9,7 @@ import { snap } from "../exact.ts";
 import { CATEGORIES, CATEGORY_IDS, EQUIP_MATERIAL_IDS, itemDef, materialOf, hasMaterials, spendMaterials, STARTER_CATEGORIES, type CategoryId, type EquipMaterialId } from "./catalog.ts";
 import {
   EFFECT_CANDIDATES, EQUIP_RARITIES, EQUIPMENT_CAPACITY, openSlots, PITY, RARITY_TIERS, rarityRank, REFINE_CHOICE_EVERY, STANDARD_TOP, STARS,
-  SUBSTAT_SLOT_LEVELS, substatCap, UNIQUE_SALVAGE, upgradeGold, upgradeMaterial, type EquipRarity,
+  SUBSTAT_SLOT_LEVELS, substatCap, UNIQUE_SALVAGE, upgradeGold, upgradeMaterial, WELCOME_TICKETS, type EquipRarity,
 } from "./balance.ts";
 import { inPool, rollsAt, slotEffectDef } from "./slot-effects.ts";
 
@@ -76,13 +76,28 @@ export type EquipmentSave = {
   /** The player's choice to salvage Common chest pieces into their material
    * as they drop, instead of keeping them (the Salvage section's toggle). */
   autoSalvage: boolean;
+  /** Equipment Tickets held: each pays for one Gem pull in place of its Gems. */
+  tickets: number;
+  /** How many of the welcome's ticket pulls are left (`WELCOME_TICKETS` when
+   * Equipment opens), and whether their sure Epic Unique is still to come. */
+  welcome: { left: number; epic: boolean };
 };
 
 const zeroes = <K extends string>(keys: readonly K[]) => Object.fromEntries(keys.map((k) => [k, 0])) as Record<K, number>;
 export const defaultEquipment = (): EquipmentSave => ({
   unlocked: false, seen: false, categories: CATEGORY_IDS.filter(c => STARTER_CATEGORIES.includes(c)), items: [], equipped: { tower: {}, delve: {} },
   materials: zeroes(EQUIP_MATERIAL_IDS), pity: zeroes(PULL_KEYS), nextId: 1, streams: {}, drawOff: [], maxed: [], autoSalvage: false,
+  tickets: 0, welcome: { left: 0, epic: false },
 });
+
+/** Opens Equipment, and the first time gives its `WELCOME_TICKETS`
+ * Equipment Tickets, one of whose pulls is sure to be an Epic Unique. */
+export function openEquipment(e: EquipmentSave) {
+  if (e.unlocked) return;
+  e.unlocked = true;
+  e.tickets += WELCOME_TICKETS;
+  e.welcome = { left: WELCOME_TICKETS, epic: true };
+}
 
 // --- Reading ---
 
@@ -440,6 +455,9 @@ export function decodeEquipment(raw: unknown): EquipmentSave {
   e.drawOff = uniques(raw.drawOff);
   e.maxed = uniques(raw.maxed);
   e.autoSalvage = raw.autoSalvage === true;
+  if (wholeIn(raw.tickets, 0, Number.MAX_SAFE_INTEGER)) e.tickets = raw.tickets;
+  const welcome = isRecord(raw.welcome) ? raw.welcome : {};
+  if (wholeIn(welcome.left, 0, WELCOME_TICKETS)) e.welcome = { left: welcome.left, epic: welcome.left > 0 && welcome.epic === true };
   return e;
 }
 

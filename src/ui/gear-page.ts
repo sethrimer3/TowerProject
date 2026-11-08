@@ -51,7 +51,8 @@ export class GearPage {
   render() {
     if (!this.open(this.tab)) this.tab = this.open("equipment") ? "equipment" : this.open("arcana") ? "arcana" : "provisions";
     const save = this.ctx.game.save;
-    if (this.tab === "equipment") this.ctx.game.notices.shown("equipment");
+    // The first look at Equipment opens with its welcome.
+    if (this.tab === "equipment" && this.ctx.game.notices.shown("equipment")) queueMicrotask(() => { this.ctx.save(); this.equipment.showWelcome(); });
     if (this.tab === "arcana" && this.ctx.game.notices.shown("arcana")) queueMicrotask(this.ctx.update);
     const body = this.tab === "equipment" ? this.equipment.html() : this.tab === "arcana" ? this.arcana.html() : this.provisionsHtml();
     const tabs = (["provisions", "equipment", "arcana"] as const).filter((t) => t === "provisions" ? provisionsOpen(save) : t === "equipment" || arcanaOpen(save));

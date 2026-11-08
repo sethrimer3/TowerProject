@@ -920,15 +920,19 @@ try {
     await click("#cancel");
   });
 
-  // Equipment: claimed from Tower I's floor 60 Goal, opened through the
-  // claim's Visit the Blacksmith, then each view, an item, a merge, a
-  // dismantle and a ×10 pull.
+  // Equipment: claimed from Tower II's floor 60 Goal, opened through the
+  // claim's Visit the Blacksmith (its welcome first), then each view, an
+  // item, a merge, a dismantle and a ×10 pull (paid with the welcome's
+  // Equipment Tickets).
   await section("equipment", async () => {
     await load("equipment");
     await click("#section-pick");
     await click('[data-goal="2:60:0"]');
     await shot("equipment.claimed");
     await click("#unlock-visit");
+    // The first look opens with the welcome: its tickets, rates and pity.
+    await shot("equipment.welcome");
+    await click("#eq-welcome-later");
     await shot("equipment.loadout");
     await click('[data-eq-view="craft"]');
     await shot("equipment.craft");

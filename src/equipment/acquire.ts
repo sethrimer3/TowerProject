@@ -6,7 +6,7 @@
 import { random } from "../random.ts";
 import { EQUIP_MATERIAL_IDS, STARTER_CATEGORIES, materialOf, standardsOf, uniquesOf, type CategoryId, type EquipMaterialId, type ItemDef } from "./catalog.ts";
 import {
-  atLeast, EQUIP_RARITIES, EQUIPMENT_CHEST_RARITY, PITY, PITY_RARITY, PULL_RATES, SUPPLY_CHEST_MATERIALS, UNIQUE_PULL_FROM,
+  atLeast, EQUIP_RARITIES, EQUIPMENT_CHEST_RARITY, PITY, PITY_RARITY, PULL_RATES, SUPPLY_CHEST_MATERIALS, UNIQUE_PULL_FROM, WELCOME_RARITY,
   type EquipRarity,
 } from "./balance.ts";
 import { addItem, availableCategories, salvageOf, type EquipItem, type EquipmentSave, type PullKey, type StreamKey } from "./inventory.ts";
@@ -41,10 +41,11 @@ const ratesWith = (more: number) => (more ? { ...PULL_RATES, common: PULL_RATES.
  * (for an Epic or Legendary, among those with a Unique left in draws); then
  * a Standard piece of it evenly at Common to Rare, or a Unique left in
  * draws at Epic and Legendary. An Epic or better resets the pull's pity;
- * anything else adds one. */
-export function pullOne(e: EquipmentSave, key: PullKey, rng: () => number, epicMore = 0) {
-  const pity = e.pity[key] + 1 >= PITY;
-  const rarity = pity ? PITY_RARITY : rollRarity(ratesWith(epicMore), rng());
+ * anything else adds one. `sure` makes it an Epic Unique however it rolls
+ * (the welcome's ticket pull). */
+export function pullOne(e: EquipmentSave, key: PullKey, rng: () => number, epicMore = 0, sure = false) {
+  const pity = !sure && e.pity[key] + 1 >= PITY;
+  const rarity = sure ? WELCOME_RARITY : pity ? PITY_RARITY : rollRarity(ratesWith(epicMore), rng());
   const unique = atLeast(rarity, UNIQUE_PULL_FROM);
   const categories = landsIn(e, key, unique), category = pick(categories.length ? categories : landsIn(e, key, false), rng());
   const choices: ItemDef[] = unique ? drawnUniques(e, category) : standardsOf(category);
@@ -85,12 +86,21 @@ export function withSavedStream<T>(e: EquipmentSave, key: StreamKey, seed: () =>
 }
 /** `count` pulls of `key` (a category, or all open categories), resolved in
  * order (pity counting through them), carrying on that key's saved stream.
- * The caller makes sure there is room, that the pulls can bring something
- * (`canPull`), and has taken the Gems. */
-export function pull(e: EquipmentSave, key: PullKey, count: number, seed: () => number, epicMore = 0) {
+ * The first `tickets` are paid with Equipment Tickets: while the welcome's
+ * ticket pulls last, the one it lands on is a sure Epic Unique (`sure`),
+ * each left as likely as any other to be it. The caller makes sure there is
+ * room, that the pulls can bring something (`canPull`), and has taken the
+ * tickets and Gems. */
+export function pull(e: EquipmentSave, key: PullKey, count: number, seed: () => number, epicMore = 0, tickets = 0) {
   return withSavedStream(e, key, seed, (rng) => {
-    const results: { item: EquipItem; pity: boolean }[] = [];
-    for (let i = 0; i < count; i++) results.push(pullOne(e, key, rng, epicMore));
+    const results: { item: EquipItem; pity: boolean; sure?: true }[] = [];
+    for (let i = 0; i < count; i++) {
+      const welcome = i < tickets && e.welcome.left > 0;
+      const sure = welcome && e.welcome.epic && (e.welcome.left === 1 || rng() * e.welcome.left < 1);
+      if (welcome) e.welcome = { left: e.welcome.left - 1, epic: e.welcome.epic && !sure };
+      const result = pullOne(e, key, rng, epicMore, sure);
+      results.push(sure ? { ...result, sure: true } : result);
+    }
     return results;
   });
 }

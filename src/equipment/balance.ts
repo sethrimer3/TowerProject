@@ -138,6 +138,16 @@ export const PULL_ALL_DISCOUNT = 10;
  * `PULL_ALL_DISCOUNT`. */
 export const pullGems = (count: PullCount, all = false) =>
   all ? (PULL_GEMS[count] * (100 - PULL_ALL_DISCOUNT)) / 100 : PULL_GEMS[count];
+/** Equipment Tickets: opening Equipment gives `WELCOME_TICKETS`, and one of
+ * the first that many ticket pulls is sure to be an Epic Unique. */
+export const WELCOME_TICKETS = 10;
+export const WELCOME_RARITY: EquipRarity = "epic";
+/** What `count` pulls take when `held` Equipment Tickets are held: a ticket
+ * each, as far as they go, in place of that pull's share of the Gems. */
+export function pullPrice(count: PullCount, all: boolean, held: number) {
+  const tickets = Math.max(0, Math.min(held, count));
+  return { tickets, gems: (pullGems(count, all) * (count - tickets)) / count };
+}
 export const PULL_RATES: Partial<Record<EquipRarity, number>> = { common: 60, uncommon: 29, rare: 8, epic: 2.5, legendary: 0.5 };
 export const UNIQUE_PULL_FROM: EquipRarity = "epic";
 export const PITY = 120;

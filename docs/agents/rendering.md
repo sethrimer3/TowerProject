@@ -118,6 +118,7 @@ The styled decor bake skips core walls so moss cannot repaint their flat interio
 `paintGround` returns after drawing these native tiles, so old procedural quoins cannot add off-palette corners over the new walls.
 Startup preloads every material group, and `spriteRevision` also refreshes ground caches in isolated renderer tests.
 `dungeonFloorSprite` extracts each selected native floor frame once for first-section torch relief; `render/floor-relief.ts` accepts image or canvas sources, and `LightingPass` invalidates its torch bakes when kit style or image revision changes.
+`LightingPass` bakes at most two torch lights or reliefs a frame (`bakeBudget`); a door opening beside a torch gives it a fresh copy (`TerrainShadows.torches`) and undo rebuilds the board, so until a copy's bake is ready the torch draws the last one baked at its spot on that floor (`lastBakes`, keyed by the board's seed and room), never going dark for a frame.
 Changing Game themes on a live renderer therefore restores matching terrain and floor relief; all other lighting and decor retain their existing placement and behavior.
 The water mirror receives the effective board-art key too, refreshing cached walls, hero and torch snapshots immediately when sprites or board art change.
 `tools/prepare-dungeon-sprites.mjs` extracts the material components, assembles connected walls and edge masks, and maps all twenty biome variations into the existing palette.

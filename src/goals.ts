@@ -4,6 +4,7 @@ import { owns, type EntitlementId } from "./shop/entitlements.ts";
 import { TIERS } from "./tiers.ts";
 import { earn } from "./save/profile.ts";
 import { towerRelicId } from "./economy/relics.ts";
+import { openEquipment } from "./equipment/inventory.ts";
 
 // Goals: each tower's checkpoints, one every ten floors, each with a reward
 // the player claims once the checkpoint's floor is completed (the floor
@@ -268,8 +269,9 @@ export function claimGoal(save: Save, tower: number, floor: number, premium: boo
     earn(save, "breakthrough", GOAL_BREAKTHROUGH);
   }
   // Equipment keeps its own flag, which a save that claimed it before it
-  // moved to Tower II may already hold.
-  if (reward.kind === "unlock" && reward.unlock === "equipment") save.equipment.unlocked = true;
+  // moved to Tower II may already hold. Opening it gives its welcome's
+  // Equipment Tickets.
+  if (reward.kind === "unlock" && reward.unlock === "equipment") openEquipment(save.equipment);
   ((premium ? save.goals.premium : save.goals.claimed)[tower] ??= []).push(floor);
   return reward;
 }

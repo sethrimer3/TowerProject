@@ -739,11 +739,14 @@ h1 span {
 .gold-stat b { color: #ffd86b; }
 .combo-stat b { color: #ff9d6b; }
 .gem-icon,
-.arcanite-icon {
+.arcanite-icon,
+.equip-ticket-icon {
   width: 1em;
   height: 1em;
   vertical-align: -0.15em;
 }
+/* An Equipment Ticket wears the Tournament's ticket tinted cool blue. */
+.equip-ticket-icon { flex-shrink: 0; filter: hue-rotate(170deg) saturate(1.2); }
 /* The Gems an ad pays, with a small "Claim" under them. */
 .gem-ad {
   display: flex;
@@ -2683,6 +2686,11 @@ button.training-now:has(> .train-pointer) { position: relative; overflow: visibl
 .pull-pool .equip-icon { flex: none; width: 24px; height: 24px; }
 .pull-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
 .pull-buttons button { padding: 10px 6px; font-size: 12px; }
+.pull-buttons .pull-plus { margin: 0 2px; color: #8b98aa; }
+/* The welcome to Equipment: its rarity table. */
+.eq-welcome-rates { width: 100%; margin: 6px 0; border-collapse: collapse; font-size: 12px; text-align: left; }
+.eq-welcome-rates th, .eq-welcome-rates td { padding: 3px 6px; border-bottom: 1px solid #ffffff14; }
+.eq-welcome-rates td:nth-child(2) { text-align: right; font-variant-numeric: tabular-nums; }
 /* Equipment screen: the loadout ring over a grid of tiles, the views' tabs
    along the bottom, Assemble's recipe and the full-screen results. */
 .eq-screen { min-height: 40vh; }

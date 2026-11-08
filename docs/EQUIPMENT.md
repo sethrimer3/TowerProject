@@ -6,7 +6,8 @@
 
 ## 1. Unlock
 
-- Equipment opens by claiming Tower II's **floor 60** checkpoint reward on the Goals screen (the `equipment` unlock in `goals.ts`; `claimGoal` sets `save.equipment.unlocked`). The claim's dialog offers *Visit the Blacksmith*. Reaching a floor opens nothing by itself.
+- Equipment opens by claiming Tower II's **floor 60** checkpoint reward on the Goals screen (the `equipment` unlock in `goals.ts`; `claimGoal` calls `openEquipment`, which sets `save.equipment.unlocked` and gives the welcome's 10 Equipment Tickets, section 13). The claim's dialog offers *Visit the Blacksmith*. Reaching a floor opens nothing by itself.
+- The first time the Equipment screen opens (`seen`), a welcome dialog (`EquipmentPanel.showWelcome`) explains that tickets and Gems buy pulls, shows the rarity chances and pity, and urges spending the tickets and wearing what they bring; its *To Acquire* opens the pulls.
 - The moment it opens inside a run, a golden burst reads *EQUIPMENT UNLOCKED · A Blacksmith opens in the forest*, and the status line says so. Back in the forest, a dialog explains it once and offers to visit the Blacksmith.
 - From then on the **Blacksmith** stands in the forest clearing, up and left of the path (a stone forge with a red banner bearing a breastplate). Tapping it opens the Equipment screen. Before the unlock it isn't there at all.
 - The Gear tab opens with Equipment even with no provision open (only its Equipment tab then), and wears a dot until the Equipment screen is first seen.
@@ -304,6 +305,13 @@ The first five-Star copy made of a Unique leaves it out at once (`save.equipment
 When every Unique a pull could bring is left out, buying it is refused (`excluded`): a dialog says every Unique of that type is maxed and left out, and offers Rates to turn some back on.
 The buttons always look active; short of Gems, the price turns red and a press offers the Shop.
 
+**Equipment Tickets** (`save.equipment.tickets`): each pays for one pull, in any category or of all types, in place of its Gems.
+Opening Equipment gives 10 (`WELCOME_TICKETS`, `openEquipment`); nothing else gives them yet.
+A pull uses the tickets held first, one a pull, and Gems for the rest at that pull's price per pull (`pullPrice`: ×10 of all types with 3 tickets is 3 tickets and 126 Gems); its button shows both (ticket icon and count, then *+* and the Gems), and the Acquire tab wears the count held.
+One of the first 10 ticket pulls (`save.equipment.welcome`: how many are left and whether the sure one is still to come) is a sure Epic Unique of the pull's category (a random open one for all types), marked *Sure* on the result: each ticket pull left is as likely as any other to be it, drawn from the pull's saved stream, and the last one left always is.
+It counts as an Epic for pity; every other ticket pull rolls the usual rates.
+Gem pulls never touch the welcome, and with Dev free purchases no tickets are spent.
+
 ## 14. Save shape
 
 `save.equipment` (`decodeEquipment` in `equipment/inventory.ts`):
@@ -318,6 +326,9 @@ The buttons always look active; short of Gems, the price turns red and a press o
 | `nextId` | The next item id |
 | `streams` | Where each saved stream stands: each category's pulls, `all`, `substats` |
 | `drawOff`, `maxed` | The Uniques left out of Gem pulls; those a five-Star copy has been made of |
+| `autoSalvage` | Whether Common chest and pull pieces are dismantled as they come |
+| `tickets` | Equipment Tickets held |
+| `welcome` | `left`: the welcome's ticket pulls still to make (0–10); `epic`: whether its sure Epic Unique is still to come |
 
 No catalogue data (names, effects) is saved.
 Decoding drops unknown definitions and rarities, duplicate ids and pieces past the capacity, keeps Stars only on Ancestral pieces, clamps levels to the piece's cap, keeps loadouts to owned pieces of the right category, and resets anything malformed to its default.

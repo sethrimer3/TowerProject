@@ -148,6 +148,20 @@ export class LightingPass {
   private reliefStyle = "";
   /** Torch bakes cost a few ms each; spread them over frames on room entry. */
   private bakeBudget = 0;
+  /** The last light and relief baked at each torch spot on the current
+   * floor. A door opening beside a torch gives it a fresh copy
+   * (terrain-shadows.ts), and undo rebuilds the board, so its bake may wait
+   * for budget; until it's ready the torch keeps its old light instead of
+   * going dark for a frame. */
+  private lastBakes: { floor: unknown; light: Map<string, { left: BakedLight; right: BakedLight } | null>; relief: Map<string, { left: BakedRelief; right: BakedRelief } | null> } =
+    { floor: null, light: new Map(), relief: new Map() };
+  private lastBakesOn(world: unknown) {
+    // A board regenerated for the same floor (undo) keeps them; any other board starts afresh.
+    const w = world as { seed?: unknown; room?: unknown } | null;
+    const floor = typeof w?.seed === "number" ? `${w.seed}:${String(w.room)}` : world;
+    if (this.lastBakes.floor !== floor) this.lastBakes = { floor, light: new Map(), relief: new Map() };
+    return this.lastBakes;
+  }
 
   /** Resets the per-frame torch-baking budget. */
   startFrame() {
@@ -187,7 +201,8 @@ export class LightingPass {
   drawTorchRelief(f: FrameContext) {
     if (!f.look.styledSprites) return;
     const style = `kit:${spriteRevision()}${towerTileset(f.look.mode, f.look.tier) ? `|tower:${f.look.tier}` : ""}`;
-    if (style !== this.reliefStyle) { this.reliefStyle = style; this.reliefBakes = new WeakMap(); }
+    if (style !== this.reliefStyle) { this.reliefStyle = style; this.reliefBakes = new WeakMap(); this.lastBakesOn(f.world).relief.clear(); }
+    const last = this.lastBakesOn(f.world).relief;
     const c = f.c;
     const cfg = LIGHTING_CONFIG.relief;
     const floorSprite = (x: number, y: number) => f.world.tile(x, y)?.kind === "wall" ? null
@@ -195,7 +210,9 @@ export class LightingPass {
     c.save();
     c.imageSmoothingEnabled = false;
     for (const t of f.torches) {
-      const bake = this.reliefBake(t, floorSprite);
+      const spot = `${t.x},${t.y}`, fresh = this.reliefBake(t, floorSprite);
+      if (fresh !== undefined) last.set(spot, fresh);
+      const bake = fresh === undefined ? last.get(spot) : fresh;
       if (!bake) continue;
       // Brightness follows the flicker, amplified so it reads on the floor;
       // the two nudged bakes cross-fade with the flame's lean.
@@ -552,11 +569,13 @@ export class LightingPass {
     layers.wall.drawImage(sprite, cx - rwx, wy - rw, rwx * 2, rw * 2);
   }
 
-  /** The torch's baked light field (see render/torch-light.ts), created on first use. */
+  /** The torch's baked light field (see render/torch-light.ts), created on
+   * first use; while it waits for budget, the last one baked at its spot. */
   private torchBake(f: FrameContext, t: Torch) {
+    const last = this.lastBakesOn(f.world).light, spot = `${t.x},${t.y}`;
     let bake = this.torchBakes.get(t);
     if (bake === undefined) {
-      if (this.bakeBudget <= 0) return null;
+      if (this.bakeBudget <= 0) return last.get(spot) ?? null;
       this.bakeBudget--;
       const world = f.world;
       const isWall = (x: number, y: number) => blocksTorch(world, x, y);
@@ -564,6 +583,7 @@ export class LightingPass {
       const left = bakeTorchLight(t, isWall, -offset), right = bakeTorchLight(t, isWall, offset);
       bake = left && right ? { left, right } : null;
       this.torchBakes.set(t, bake);
+      last.set(spot, bake);
     }
     return bake;
   }

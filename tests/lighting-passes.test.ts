@@ -353,3 +353,30 @@ test("dungeon lighting passes and visibility polygons match the golden", () => {
   for (const key of Object.keys(golden)) assert.deepEqual(actual[key], golden[key], `${key} diverges`);
   assert.deepEqual(Object.keys(actual), Object.keys(golden));
 });
+
+test("a torch keeps its light while its fresh copy waits to bake (a door opened beside it, or undo)", () => {
+  startScene();
+  // A floor with more torches than one frame's bake budget.
+  const room = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((r) => new RoomWorld(11, r, {})).find((w) => w.torches.filter((t) => t.active).length >= 3)!;
+  assert.ok(room, "a floor with three torches");
+  const torches = room.torches.filter((t) => t.active);
+  const pass = new LightingPass() as unknown as { startFrame(): void; torchBake(f: FrameContext, t: Torch): unknown };
+  const f = { world: room } as FrameContext;
+  const frame = (list: Torch[]) => { pass.startFrame(); return list.map((t) => pass.torchBake(f, t)); };
+  // Warm: a few frames bake every torch.
+  for (let i = 0; i < torches.length; i++) frame(torches);
+  assert.ok(frame(torches).every(Boolean));
+  // Every torch is replaced at once: the first frame still lights each.
+  const copies = torches.map((t) => ({ ...t }));
+  assert.ok(frame(copies).every(Boolean), "no torch goes dark for a frame");
+  // Undo rebuilds the same floor's board: still lit.
+  const rebuilt = new RoomWorld(11, room.room, {});
+  const g = { world: rebuilt } as FrameContext;
+  pass.startFrame();
+  assert.ok(rebuilt.torches.filter((t) => t.active).every((t) => pass.torchBake(g, t)), "the same floor rebuilt keeps its light");
+  // Another floor's torches never borrow this one's light: with no budget
+  // left, they wait for their own bakes.
+  const other = new RoomWorld(12, room.room, {}), h = { world: other } as FrameContext;
+  (pass as unknown as { bakeBudget: number }).bakeBudget = 0;
+  assert.ok(other.torches.filter((t) => t.active).every((t) => pass.torchBake(h, t) === null), "a new floor bakes its own");
+});

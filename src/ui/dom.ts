@@ -90,6 +90,10 @@ export const shrineIcon = (className = "shrine-icon") =>
 /** A Tournament Ticket: a gold stub with notched ends and a perforation. */
 export const ticketIcon = (className = "ticket-icon") =>
   kitIcon("ticket", "", className);
+/** An Equipment Ticket: the Tournament's ticket, tinted cool blue so the two
+ * never pass for each other. */
+export const equipTicketIcon = (className = "equip-ticket-icon") =>
+  kitIcon("ticket", "", className);
 /** An envelope: Mail. */
 export const mailIcon = (className = "mail-icon") =>
   kitIcon("mail", "", className);

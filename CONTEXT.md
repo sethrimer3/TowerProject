@@ -94,6 +94,10 @@ _Avoid_: salvage (used only for the amount returned, and in **Auto-salvage**: th
 **Pity**:
 The count, per category and for pulls of all types apart, of Gem pulls since the last Epic or better; the 120th without one is an Epic Unique.
 
+**Equipment Ticket**:
+A currency that pays for one Gem pull in place of its Gems; opening Equipment gives ten, one of whose pulls is a sure Epic Unique.
+_Avoid_: Ticket (the Tournament's entry), pull token
+
 **Left out of draws**:
 A Unique the player has removed from future Gem pulls (once a five-Star piece is owned; a piece's first five-Star copy does it at once), its share going to the rest.
 

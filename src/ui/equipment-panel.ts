@@ -19,7 +19,7 @@ import {
 } from "../equipment/slots.ts";
 import type { AppContext } from "./app.ts";
 import { askForGems, helpButton, showHelp } from "./dialogs.ts";
-import { el, gemIcon, riseFrom, uiSprite } from "./dom.ts";
+import { el, equipTicketIcon, gemIcon, riseFrom, uiSprite } from "./dom.ts";
 import { currencyAmount, devAmount, priceAmount } from "./hud.ts";
 import { ACTION_ICONS, categoryIcon, itemIcon, materialIcon } from "./equipment-icons.ts";
 import { playSlagMerge } from "./slag-merge.ts";
@@ -108,7 +108,7 @@ export class EquipmentPanel {
     const ready = this.mergeable().length > 0;
     return `${this.materialsHtml()}<div class="eq-screen">${body}</div>
       <div class="eq-views" role="group" aria-label="Equipment views">${VIEWS.map((v) =>
-        `<button data-eq-view="${v.id}" aria-pressed="${this.view === v.id}">${v.name}${v.id === "assemble" && ready ? `<span class="eq-new" title="A piece is ready to assemble">N</span>` : ""}</button>`).join("")}</div>`;
+        `<button data-eq-view="${v.id}" aria-pressed="${this.view === v.id}">${v.name}${v.id === "assemble" && ready ? `<span class="eq-new" title="A piece is ready to assemble">N</span>` : ""}${v.id === "pulls" && this.e.tickets ? `<span class="eq-new" title="Equipment Tickets to spend">${this.e.tickets}</span>` : ""}</button>`).join("")}</div>`;
   }
 
   /** The four material balances, and Gold, always in sight. */
@@ -391,10 +391,20 @@ export class EquipmentPanel {
       + availableCategories(this.e).map((id) => `<button class="pull-cat" data-eq-pullcat="${id}" aria-pressed="${c === id}">${categoryIcon(id)}<span>${CATEGORIES[id].name}</span><small>${this.e.pity[id]}/${PITY}</small></button>`).join("");
     const rates = pullRates(this.e, c, this.epicMore).map(({ rarity, chance }) => `${rarityTag(rarity)} ${chance}%`).join(" ");
     const button = (n: PullCount) => {
-      const price = pullGems(n, all), short = !this.game.free && gems < price;
-      const was = all ? `<s class="was">${PULL_GEMS[n]}</s> ` : "";
-      return `<button class="gem-buy${short ? " short" : ""}" data-eq-pull="${n}">Pull ×${n} · ${gemIcon()} ${was}<span class="price">${price}</span></button>`;
+      const paid = this.game.equipment.pullPrice(n, c);
+      if (!paid.tickets) {
+        const price = pullGems(n, all), short = !this.game.free && gems < price;
+        const was = all ? `<s class="was">${PULL_GEMS[n]}</s> ` : "";
+        return `<button class="gem-buy${short ? " short" : ""}" data-eq-pull="${n}">Pull ×${n} · ${gemIcon()} ${was}<span class="price">${price}</span></button>`;
+      }
+      // Tickets first, then Gems for the pulls they don't cover.
+      const short = gems < paid.gems, rest = n - paid.tickets;
+      const was = all && paid.gems ? `<s class="was">${(PULL_GEMS[n] * rest) / n}</s> ` : "";
+      const gemPart = paid.gems ? `<span class="pull-plus">+</span>${gemIcon()} ${was}<span class="price">${paid.gems}</span>` : "";
+      const label = `Pull ×${n} for ${paid.tickets} Equipment Ticket${paid.tickets === 1 ? "" : "s"}${paid.gems ? ` and ${paid.gems} Gems` : ""}`;
+      return `<button class="gem-buy${short ? " short" : ""}" data-eq-pull="${n}" aria-label="${label}" title="${label}">Pull ×${n} · ${equipTicketIcon()}<b>${paid.tickets}</b>${gemPart}</button>`;
     };
+    const tickets = this.e.tickets ? ` · ${equipTicketIcon()} ${this.e.tickets} Equipment Ticket${this.e.tickets === 1 ? "" : "s"}` : "";
     const pity = `Pity ${this.e.pity[c]}/${PITY}: the ${PITY}th pull without an Epic or better brings an Epic Unique.`;
     const box = all
       ? `<h3>All types ${off}</h3><p class="hint">Rates: ${rates} · ${pity}</p>`
@@ -402,7 +412,7 @@ export class EquipmentPanel {
         <p class="hint">Common to Rare bring a ${CATEGORIES[c].name} Standard piece, Epic and Legendary a Unique. Rates: ${rates} · ${pity}</p>`;
     return `<div class="pull-cats">${cats}</div>
       <div class="pull-box${all ? " pull-box-all" : ""}">${box}
-      <div class="pull-buttons">${button(1)}${button(10)}<button class="pull-rates" id="eq-rates" aria-label="Draw rates">Rates</button></div><p class="hint">${gemIcon()} ${devAmount(this.game, gems)} held</p></div>`;
+      <div class="pull-buttons">${button(1)}${button(10)}<button class="pull-rates" id="eq-rates" aria-label="Draw rates">Rates</button></div><p class="hint">${gemIcon()} ${devAmount(this.game, gems)}${tickets} held</p></div>`;
   }
 
   /** Relics' Epic chance more, which moves from Common. */
@@ -466,21 +476,23 @@ export class EquipmentPanel {
     const top = best && rarityRank(best) >= rarityRank("epic") ? result.filter((r) => r.item.rarity === best).length : 0;
     const c = this.pullCategory;
     const salvaged = new Map(result.filter((r) => r.salvaged).map((r) => [r.item.id, r.salvaged!]));
-    const notes = [`Pity now ${this.e.pity[c]}/${PITY}.`, ...(salvaged.size ? [`Auto-salvage dismantled ${salvaged.size} Common piece${salvaged.size === 1 ? "" : "s"}.`] : [])];
+    const sure = result.filter((r) => r.sure).map((r) => r.item.id);
+    const notes = [...(sure.length ? ["One of your first ticket pulls: a sure Epic Unique. Wear it from List!"] : []),
+      `Pity now ${this.e.pity[c]}/${PITY}.`, ...(salvaged.size ? [`Auto-salvage dismantled ${salvaged.size} Common piece${salvaged.size === 1 ? "" : "s"}.`] : [])];
     this.showResult(top ? `${top} ${RARITY_TIERS[best!].name}!` : "Pull Complete!", result.map((r) => r.item), result.filter((r) => r.pity).map((r) => r.item.id),
-      notes.join(" "), salvaged);
+      notes.join(" "), salvaged, sure);
   }
 
   /** The full screen shown after an assemble or a pull: what came of it,
    * each piece with its name and rarity (and, for one Auto-salvage
    * dismantled, the material it returned), and OK. */
-  private showResult(title: string, items: EquipItem[], pity: string[] = [], note = "", salvaged = new Map<string, { id: EquipMaterialId; quantity: number }>()) {
+  private showResult(title: string, items: EquipItem[], pity: string[] = [], note = "", salvaged = new Map<string, { id: EquipMaterialId; quantity: number }>(), sure: string[] = []) {
     const { modal } = this.ctx;
     const salvage = (id: string) => {
       const s = salvaged.get(id);
       return s ? `<span class="eq-result-salvaged">${materialIcon(s.id)} Salvaged +${s.quantity} ${EQUIP_MATERIALS[s.id].name}</span>` : "";
     };
-    const cards = items.map((item) => `<div class="eq-result-item${salvaged.has(item.id) ? " salvaged" : ""}">${this.tile(item, "eq-shown")}<strong>${nameOf(item)}</strong>${rarityTag(item.rarity)}${pity.includes(item.id) ? `<small>Pity</small>` : ""}${salvage(item.id)}</div>`).join("");
+    const cards = items.map((item) => `<div class="eq-result-item${salvaged.has(item.id) ? " salvaged" : ""}">${this.tile(item, "eq-shown")}<strong>${nameOf(item)}</strong>${rarityTag(item.rarity)}${pity.includes(item.id) ? `<small>Pity</small>` : ""}${sure.includes(item.id) ? `<small>Sure</small>` : ""}${salvage(item.id)}</div>`).join("");
     modal.classList.add("eq-result");
     modal.innerHTML = `<h2 class="eq-result-title">${title}</h2><div class="eq-result-items">${cards}</div>${note ? `<p class="hint">${note}</p>` : ""}<div class="dialog-actions"><button id="eq-ok" class="eq-go">OK</button></div>`;
     modal.addEventListener("close", () => modal.classList.remove("eq-result"), { once: true });
@@ -556,8 +568,33 @@ export class EquipmentPanel {
     showHelp(this.ctx, "GEAR", "Equipment", `<p><b>Wearing.</b> Each hero wears one piece of each kind; the Tower and the Delve keep separate loadouts. Tap a piece to equip, level or lock it. Start with Helmet, Shield, Chestplate, Sword and Boots. Other slots await future unlocks. Each category has three Standard pieces, from Equipment Chests, crafting and Gem pulls, and three Uniques, from Gem pulls only.</p>
       <p><b>Leveling.</b> Pieces start at level 0. Leveling raises only the piece's main effect: Swords ATK, Shields DEF, Helmets Arcanum Damage, Boots Gold found and Chestplates max HP, and a Chestplate also raises the other worn pieces' main effects. Each rarity has its level cap (${caps}); each Star adds ${STARS.levels}, up to ${levelCap("ancestral", STARS.most)}. Substat slots open at levels 1, 41, 61, 81, 121, 161, 201 and 241.</p>
       <p><b>Craft.</b> Craft Common Standard pieces with four base resources. Helmets use Padding, Shields Rivets, Swords Whetstones and Boots Hobnails. Chestplates use all four. Later pieces combine two resources, such as Rivets and Padding for an Amulet. Leveling and Refinement use the same recipes.</p><p><b>Assemble.</b> Three copies of a piece make one of the next rarity from Uncommon to Rare and Rare to Epic; two copies and one more piece of its category at the same rarity from Epic to Legendary and Legendary to Mythic; two Mythic copies make an Ancestral. An Ancestral and a Legendary copy of it add a Star (up to ${STARS.most}), each raising the main effect by ${STARS.boost}% of itself. Common pieces never merge, and Standard pieces go no higher than Legendary. The piece kept keeps its level, substat slots and Refinement; what was put into the others is lost. Locked and worn pieces don't count. Auto-assemble lists every rarity merge your unworn pieces make at once, to make all you leave checked.</p>
-      <p><b>Acquire.</b> Each pull brings a piece at a rolled rarity, of the chosen category, or of a random one for ${PULL_ALL_DISCOUNT}% less: a Standard piece at Common, Uncommon or Rare, a Unique at Epic or Legendary. The ${PITY}th pull in a row without an Epic or better brings an Epic Unique; each category and pulls of all types count their own. Rates, beside the buttons, shows each piece's chance; once you own a five-Star piece, it lets you leave Uniques out of future pulls.</p>
+      <p><b>Acquire.</b> Each pull brings a piece at a rolled rarity, of the chosen category, or of a random one for ${PULL_ALL_DISCOUNT}% less: a Standard piece at Common, Uncommon or Rare, a Unique at Epic or Legendary. The ${PITY}th pull in a row without an Epic or better brings an Epic Unique; each category and pulls of all types count their own. An Equipment Ticket pays for one pull in place of its Gems: pulls use tickets first, then Gems for the rest. Rates, beside the buttons, shows each piece's chance; once you own a five-Star piece, it lets you leave Uniques out of future pulls.</p>
       <p><b>Salvage.</b> Dismantling turns a piece into its recipe's first base resource (${salvage}; Unique twice that), not returning upgrades. Locked and worn pieces are never included; press Select to choose pieces one by one. With Auto-salvage on, Common pieces Equipment Chests hold are dismantled as they are found, and those Gem pulls bring once pulled.</p>`);
+  }
+
+  /** The welcome on first opening Equipment: what tickets and Gems buy, the
+   * rarity chances, pity, and a push to spend the tickets and wear what
+   * they bring. Its Acquire button leads to the pulls. */
+  showWelcome() {
+    const { modal } = this.ctx, held = this.e.tickets;
+    const rows = pullRates(this.e, "all", this.epicMore).map(({ rarity, chance }) =>
+      `<tr><th>${rarityTag(rarity)}</th><td>${chance}%</td><td>${rarityRank(rarity) >= rarityRank("epic") ? "a Unique" : "a Standard piece"}</td></tr>`).join("");
+    const tickets = held
+      ? `<p>The Blacksmith gives you ${equipTicketIcon()} <b>${held}</b> Equipment Ticket${held === 1 ? "" : "s"}. Each pays for one pull in place of its Gems; pulls use your tickets first, then Gems for the rest.${this.e.welcome.epic ? ` One of your first ${this.e.welcome.left} ticket pulls is sure to bring an Epic Unique.` : ""}</p>`
+      : `<p>Each pull costs ${gemIcon()} Gems; an Equipment Ticket pays for one in place of its Gems.</p>`;
+    modal.innerHTML = `<small>EQUIPMENT</small><h2>Equip your hero</h2>${tickets}
+      <p>Each pull in Acquire brings a piece at a rolled rarity:</p>
+      <table class="eq-welcome-rates"><tbody>${rows}</tbody></table>
+      <p><b>Pity.</b> The ${PITY}th pull in a row without an Epic or better is sure to bring an Epic Unique. Each category, and pulls of all types, counts its own.</p>
+      <p class="hint">Spend your tickets, then tap the pieces they bring in List to wear them: each raises your stats, and Uniques bring powers of their own.</p>
+      <div class="dialog-actions"><button id="eq-welcome-later">Later</button><button id="eq-welcome-go" class="eq-go">To Acquire</button></div>`;
+    if (!modal.open) modal.showModal();
+    el("eq-welcome-later").onclick = () => modal.close();
+    el("eq-welcome-go").onclick = () => {
+      modal.close();
+      this.view = "pulls";
+      this.rerender();
+    };
   }
 
   private rerender() {
