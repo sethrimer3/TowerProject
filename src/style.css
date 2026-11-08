@@ -635,7 +635,8 @@ h1 span {
 .gold-bonus { display: inline-flex; align-items: center; gap: 2px; padding: 0; min-height: 0; border: 0; background: none; color: #ffe1a1; font-size: 11px; font-weight: 700; cursor: pointer; }
 .gold-bonus .ui-sprite { width: 12px; height: 12px; }
 /* The breakdown box, over the middle of the screen: a press anywhere closes it. */
-.gold-bonus-layer { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 16px; cursor: pointer; }
+/* No tap highlight: on phones the whole-screen layer would flash as the press closes it. */
+.gold-bonus-layer { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 16px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .gold-bonus-box { position: relative; width: min(320px, 100%); padding: 16px 18px 14px; border: 1px solid #d9b45a; border-radius: 10px; background: #12161dee; box-shadow: 0 0 24px #000c, 0 0 12px #ffd86b33; color: #e9e1c8; }
 .gold-bonus-x { position: absolute; top: 8px; right: 10px; font-size: 14px; color: #a8afbc; }
 .gold-bonus-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
@@ -648,7 +649,7 @@ h1 span {
 .base-enemy { display: flex; justify-content: center; flex-wrap: wrap; gap: 1px 5px; min-height: 0; padding: 0; border: 0; background: none; font: inherit; font-size: 9px; line-height: 1.2; color: #c9cfda; white-space: nowrap; cursor: pointer; }
 /* Pressed, every enemy the floor can roll, over the middle of the screen: a
    press on its X or outside it closes it, and the game plays on behind. */
-.enemy-odds-layer { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.enemy-odds-layer { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 16px; -webkit-tap-highlight-color: transparent; }
 .enemy-odds-box { position: relative; width: min(420px, 100%); max-height: 100%; overflow: auto; padding: 14px 14px 12px; border: 1px solid #8a93a6; border-radius: 10px; background: #12161dee; box-shadow: 0 0 24px #000c; color: #e1e5ee; }
 .enemy-odds-box h2 { margin: 0 28px 8px 0; font-size: 16px; font-weight: 600; }
 .enemy-odds-x { position: absolute; top: 6px; right: 6px; min-width: 28px; min-height: 28px; padding: 0; border: 0; background: none; color: #a8afbc; font-size: 15px; cursor: pointer; }
@@ -1246,7 +1247,7 @@ html.reduce-motion #stuck-end-run.lesson-flash { animation: none; }
   background: #10151fe0;
   border: 1px solid #454e5f;
   border-radius: 4px;
-  padding: 6px 9px;
+  padding: 8px 11px;
   font-size: 10px;
   line-height: 1.5;
   color: #c7cedb;

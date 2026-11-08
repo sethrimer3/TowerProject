@@ -62,6 +62,8 @@ html.ui-sprites :is(.stats, .card, .upgrade, .shop, .theme-card, .weekly,
   text-shadow: none;
 }
 html.ui-sprites .tournament-tickets:not(#_) { padding: 10px 18px; }
+/* The tile tip's frame is 12px wide: room inside it for the text. */
+html.ui-sprites .inspect-box:not(#_) { padding: 12px 15px; }
 html.ui-sprites label.setting:not(#_) {
   padding-inline: 14px;
   margin-block: 4px;

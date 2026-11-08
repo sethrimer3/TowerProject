@@ -55,7 +55,8 @@ export function decodeOffline(raw: unknown): OfflineSave {
       .slice(-RECENT_CLIMBS)
       .map((c) => ({ gold: c.gold, ms: c.ms }));
   const g = raw.grant;
-  if (isRecord(g) && (["awayMs", "capMs", "rgph", "multiplier", "gold"] as const).every((k) => amount(g[k]) !== null))
+  // A grant that pays nothing (saved before such grants were dropped) isn't owed.
+  if (isRecord(g) && (["awayMs", "capMs", "rgph", "multiplier", "gold"] as const).every((k) => amount(g[k]) !== null) && (g.gold as number) > 0)
     d.grant = { awayMs: g.awayMs, capMs: g.capMs, rgph: g.rgph, multiplier: g.multiplier, gold: g.gold };
   return d;
 }
@@ -78,13 +79,18 @@ export function recentGoldPerHour(o: OfflineSave) {
 /** The app starts at `now`: the time since it was last seen open, if a
  * minute or more, is time offline. It is left out of the Tower climb under
  * way (`climbing`), and, once Offline Gold is owned, owes a grant (unless
- * one is owed already). Returns the grant owed, if any. */
+ * one is owed already) if it pays any Gold: a 0% multiplier or no Recent
+ * Gold per Hour owes nothing, so no dialog shows. Returns the grant owed,
+ * if any. */
 export function arrive(save: Save, now: number, climbing: boolean): OfflineGrant | null {
   const o = save.offline, away = o.seenAt ? now - o.seenAt : 0;
   o.seenAt = now;
   if (away >= OFFLINE_MIN_MS) {
     if (climbing) o.climbAway += away;
-    if (save.upgrades.offlineGold && !o.grant) o.grant = offlineGrant(save, away);
+    if (save.upgrades.offlineGold && !o.grant) {
+      const grant = offlineGrant(save, away);
+      if (grant.gold > 0) o.grant = grant;
+    }
   }
   return o.grant;
 }

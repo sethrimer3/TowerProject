@@ -56,9 +56,12 @@ test("time away under a minute is no time offline; Offline Gold is owed only wit
   assert.equal(save.offline.seenAt, T0 + OFFLINE_MIN_MS - 1);
   assert.equal(arrive(save, save.offline.seenAt + HOUR, false), null, "nothing owed without the skill");
   save.upgrades.offlineGold = 1;
-  assert.deepEqual(arrive(save, save.offline.seenAt + HOUR, false), { awayMs: HOUR, capMs: 2 * HOUR, rgph: 10_000, multiplier: 0, gold: 0 }, "0% at first");
-  save.offline.grant = null;
+  assert.equal(arrive(save, save.offline.seenAt + HOUR, false), null, "nothing owed at 0%, so no dialog shows");
+  assert.equal(save.offline.grant, null);
   save.archives.levels.offlineGoldMultiplier = 100;
+  save.offline.climbs = [];
+  assert.equal(arrive(save, save.offline.seenAt + HOUR, false), null, "nothing owed with no Recent Gold per Hour");
+  recordClimb(save.offline, 10_000, HOUR);
   save.archives.levels.offlineGoldDuration = 60;
   const grant = arrive(save, save.offline.seenAt + 20 * HOUR, false)!;
   assert.equal(grant.capMs, 12 * HOUR);
@@ -88,6 +91,9 @@ test("the offline save decodes defensively", () => {
   assert.deepEqual(decodeOffline("nope"), defaults().offline);
   const d = decodeOffline({ seenAt: -5, climbs: [{ gold: 5, ms: 0 }, { gold: -1, ms: 5 }, { gold: 2, ms: 9 }, "x"], climbAway: 7, grant: { gold: 1 } });
   assert.deepEqual(d, { seenAt: 0, climbs: [{ gold: 2, ms: 9 }], climbAway: 7, grant: null });
+  const zero = { awayMs: 1, capMs: 1, rgph: 1, multiplier: 0, gold: 0 };
+  assert.equal(decodeOffline({ grant: zero }).grant, null, "a grant paying nothing isn't owed");
+  assert.deepEqual(decodeOffline({ grant: { ...zero, multiplier: 5, gold: 3 } }).grant, { ...zero, multiplier: 5, gold: 3 });
 });
 
 test("the Stats table shows Recent Gold per Hour, shortened, after the Gold earned", () => {
