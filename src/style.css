@@ -4175,10 +4175,13 @@ nav.in-run.drilling .run-drills {
 .run-drills .drill-buy { position: relative; }
 .drill-count { position: absolute; left: 3px; bottom: 1px; font-size: 8px; line-height: 1; color: #f3ead8; opacity: 0.85; pointer-events: none; }
 /* Not enough Silver: the card's text and the price stay clear, and only the
-   outlines and the button's face fade. At its highest: the card and its Max
+   outlines and the button's face fade; the button's border darkens in every
+   theme (the two ids beat the themes' blanket button rules; the sprite kit
+   swaps its frame for the dark one). At its highest: the card and its Max
    in gold, set apart from the rows still to train. */
 .drill-card.short { border-color: #2c3440; }
 .run-drills .drill-card.short .drill-buy { opacity: 1; border-color: #333b47; background: #121821; color: #e8dfcf; }
+.run-drills .drill-card.short .drill-buy:not(#_):not(#__) { border-color: #00000099; --ui-face: var(--ui-disabled); }
 .drill-card.maxed { border-color: #d9a632; background: linear-gradient(#3a2c10, #1f1808); box-shadow: inset 0 0 6px #ffd34d40; }
 .drill-card.maxed .drill-name { color: #ffd34d; }
 .drill-card.maxed .drill-value { color: #ffe9a8; }
@@ -4914,7 +4917,9 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
 .event-banner { position: relative; display: grid; justify-items: center; margin: 4px 40px 12px; padding: 14px 12px 10px; border: 1px solid #6b4a8a; border-radius: 10px; background: radial-gradient(circle at 50% 0%, #4a2a5e, #1a1424 70%); overflow: hidden; }
 .event-banner-art { position: absolute; inset: 0; display: grid; place-items: center; opacity: 0.16; pointer-events: none; }
 .event-banner-icon { width: 120px; height: 120px; }
-.event-banner .page-title { position: relative; margin: 0; text-align: center; }
+/* Room at the title's sides, so a theme's frame round it (the sprite kit's
+   banner) clears the event's name. */
+.event-banner .page-title { position: relative; max-width: 100%; box-sizing: border-box; margin: 0; padding-inline: 20px; text-align: center; }
 .event-banner .page-title h2 { font-size: 20px; }
 .event-banner-foot { position: relative; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 12px; margin-top: 4px; }
 .event-held { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border: 1px solid #6b4a8a; border-radius: 10px; background: #1a1424cc; font-size: 12px; color: #fff3cf; font-variant-numeric: tabular-nums; }
