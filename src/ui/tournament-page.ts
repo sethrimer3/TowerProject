@@ -182,18 +182,19 @@ export class TournamentPage {
     this.ctx.update();
   }
 
-  /** Every league's ten prize levels, the player's league first, the
-   * promotion and demotion zones marked. */
+  /** Every league's ten prize levels, each a collapsible section: the
+   * player's league first and open, the rest closed, the promotion and
+   * demotion zones marked. */
   private showPrizes() {
     const { modal, game } = this.ctx, mine = game.save.tournament.league, table = game.tournament.info?.prizes ?? PRIZES;
     const order = [mine, ...LEAGUES.filter((l) => l !== mine)];
     const league = (l: League) =>
-      `<section class="prize-league${l === mine ? " mine" : ""}"><h3>${leagueTrophy(l, "league-trophy small")}${LEAGUE_INFO[l].name}<small>${caveLabel(l)}</small></h3><table class="prize-table"><tbody>${table[l]
+      `<details class="prize-league${l === mine ? " mine" : ""}"${l === mine ? " open" : ""}><summary>${leagueTrophy(l, "league-trophy small")}${LEAGUE_INFO[l].name}<small>${caveLabel(l)}</small></summary><table class="prize-table"><tbody>${table[l]
         .map((p, i) => {
           const zone = i < 3 && l !== "champion" ? "promote" : i === 9 && LEAGUE_INFO[l].demotes ? "demote" : "";
           return `<tr class="${zone}"><td>${i + 1}</td><td>${levelShare(i)}</td><td>${prizeHtml(p)}</td></tr>`;
         })
-        .join("")}</tbody></table></section>`;
+        .join("")}</tbody></table></details>`;
     modal.innerHTML = `<small>TOURNAMENT</small><h2>All prizes</h2><p class="hint"><span class="zone promote">Green</span>: promoted a league. <span class="zone demote">Red</span>: demoted (Platinum and Champion only).</p><div class="prize-leagues">${order.map(league).join("")}</div><div class="dialog-actions"><button id="prizes-ok">Close</button></div>`;
     modal.showModal();
     el("prizes-ok").onclick = () => modal.close();

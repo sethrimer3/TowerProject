@@ -61,6 +61,7 @@ html.ui-sprites :is(.stats, .card, .upgrade, .shop, .theme-card, .weekly,
   color: #eee0b7;
   text-shadow: none;
 }
+html.ui-sprites .tournament-tickets:not(#_) { padding: 10px 18px; }
 html.ui-sprites label.setting:not(#_) {
   padding-inline: 14px;
   margin-block: 4px;
