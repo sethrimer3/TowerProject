@@ -13,7 +13,9 @@ export const BEAM_TURN = 400;
 
 /** Overseer's beams in a run: how many, each one's width in degrees, the ATK
  * multiplier, and the turns the run has finished (`run.beamTurns`). */
-export type Beams = { count: number; width: number; bonus: number; turns: number };
+export type Beams = { count: number; width: number; bonus: number; turns: number; aim?: number };
+/** Where the first beam points: held on `aim` (Challenger's Defiance), else turning. */
+export const beamsDirection = (beams: Pick<Beams, "turns" | "aim">, tick = 0) => beams.aim ?? beamDirection(beams.turns, tick);
 
 /** Where the first beam points `tick` ticks into the turn after `turns` finished
  * turns, in hundredths of a degree clockwise from straight up the board. */
@@ -25,7 +27,7 @@ export const beamDirection = (turns: number, tick = 0) => (turns * BEAM_TURN + (
  * them all, since they all start there. */
 export function inBeams(beams: Beams, tick: number, dx: number, dy: number) {
   if (!dx && !dy) return true;
-  const spacing = 360 / beams.count, off = ((bearing(dx, dy) - beamDirection(beams.turns, tick) / 100) % spacing + spacing) % spacing;
+  const spacing = 360 / beams.count, off = ((bearing(dx, dy) - beamsDirection(beams, tick) / 100) % spacing + spacing) % spacing;
   return Math.min(off, spacing - off) <= beams.width / 2;
 }
 

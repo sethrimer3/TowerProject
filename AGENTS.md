@@ -22,6 +22,7 @@ npm run test:render    # board screenshot hashes vs tests/fixtures/render.golden
 npm run test:ui        # page/HUD/dialog HTML hashes vs tests/fixtures/ui.golden.json (builds and serves its own copy; no dev server)
 npm run test:snapshots # both of the above side by side on one build (tests/snapshot-suites.mjs): the wall time of the slower one
 ONLY=rich.goals,floor. npm run test:ui  # only those key prefixes; ONLY=failed reruns last failures; with UPDATE_GOLDEN=1 records just them (docs/agents/goldens.md)
+npm run test:compare-runs -- ui        # each browser golden run keeps its own folder (test-results/<suite>-runs/); list what differs between the baseline and the latest run
 npm run test:proving   # Proving Grounds browser flow (needs npm run dev)
 ```
 
@@ -39,7 +40,7 @@ npm run test:proving   # Proving Grounds browser flow (needs npm run dev)
 
 ## Architecture
 
-`src/bootstrap.ts` waits for decoded artwork and fonts behind the loading screen before `main.ts` paints and starts gameplay; a failure reloads the page by itself twice, a second apart, then offers Retry, and `npm run sprites:manifest` maintains the complete preload inventory.
+`src/bootstrap.ts` waits for decoded artwork and fonts behind the loading screen before `main.ts` paints and starts gameplay; a failure reloads the page by itself twice, each once a `HEAD` request finds the host serving the page again, then offers Retry, and `npm run sprites:manifest` maintains the complete preload inventory.
 
 **Modes.** The modes are `tower` and `delve` (unlocked by upgrade).
 Tower and Delve share the tab bar's one board button (`data-tab="board"`, wearing the active mode's art); the only way between them is the **forest sign** (`Game.swapForest`: in the Tower's forest while the Delve is open, which is only while a tournament is open for entry (`Game.delveOpen`), and always in the Delve's, tapped, `#forest-sign`, which `BoardOverlay.placeSign` keeps over the path, or walked onto, the path's foot, `OutsideWorld.atExit`), which leaves the hero at the forest's start tile and arrives at the other's (`switchMode(next, outside)` starts a mode with no run in its forest).

@@ -21,7 +21,7 @@ export function startingHero(save: Save, mode: Mode) {
   // Only a hero with a shroud, Regen, Lifesteal, Thorn Damage, Parry %, Armor Break, Shield Thorns, a boss bonus or Piercing carries one.
   const extras = { ...(shroud ? { shroud } : {}), ...(regen ? { regen } : {}), ...(lifesteal ? { lifesteal } : {}), ...(thorns ? { thorns } : {}), ...(parry ? { parry } : {}), ...(armorBreak ? { armorBreak } : {}), ...(shieldThorns ? { shieldThorns } : {}), ...(bossAttack ? { bossAttack } : {}), ...(pierce ? { pierce } : {}) };
   // A hero with the Shield starts every run with it full.
-  const shieldMax = save.upgrades.heroShield ? shieldCapacity(save, save.training, maxHp) : undefined;
+  const shieldMax = save.upgrades.heroShield ? shieldCapacity(save, save.training, maxHp, mode) : undefined;
   return {
     player: { x: MODES[mode].entranceX, y: 0, hp: maxHp, maxHp, attack, defense, ...extras, ...(shieldMax === undefined ? {} : { shield: shieldMax, shieldMax }), keys } as Player,
     loadout: { attack, defense, maxHp, ...extras },
@@ -63,7 +63,7 @@ export function changeLoadout(save: Save, change: () => boolean | void) {
       const keys = copy.player.keys;
       for (const color of KEY_COLORS) keys[color] = Math.max(0, keys[color] + after.keys[color] - before[i].keys[color]);
     }
-    syncShield(save, run);
+    syncShield(save, run, mode);
   });
   readyForestRuns(save);
   return true;

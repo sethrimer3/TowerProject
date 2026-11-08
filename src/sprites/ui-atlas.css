@@ -187,6 +187,8 @@ html.experimental-atlas.ui-sprites :is(.eq-tile, .equip-icon-frame).rar-uncommon
 }
 html.experimental-atlas.ui-sprites :is(.eq-tile, .equip-icon-frame).rar-rare:not(#_) { --equipment-frame: var(--atlas-64, none)
 }
+html.experimental-atlas.ui-sprites :is(.eq-tile, .equip-icon-frame):is(.rar-epic, .rar-legendary, .rar-mythic, .rar-ancestral):not(#_) { --equipment-frame: var(--atlas-64, none)
+}
 html.experimental-atlas.ui-sprites .eq-tile.eq-ghost:not(#_) { --equipment-frame: var(--atlas-65, none)
 }
 html.experimental-atlas.ui-sprites .eq-tile.selected::after {

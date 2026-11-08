@@ -20,9 +20,10 @@
  * mid-turn. Each tile's roll is a fixed number of the run seed, the floor
  * and the tile (`RANGED_SALT`). */
 import type { Enemy, Player, Tile } from "../entities.ts";
-import { attackAgainst, brokenAfter, critMultiplier, defenseAgainst, facing, guarded, parryCut, struckDamage } from "../combat.ts";
+import { attackAgainst, brokenAfter, critMultiplier, defenseAgainst, facing, guarded, parryCut, struckDamage, lessened } from "../combat.ts";
 import { fastShare, mayBeFast } from "./fast.ts";
 import { snap } from "../exact.ts";
+import { AMBER_MOST } from "../equipment/powers.ts";
 import { tileRandom } from "../random.ts";
 
 const RANGED_SALT = 0x4a2c3;
@@ -73,18 +74,20 @@ export const shoots = (enemy: Enemy) => !!(enemy.ranged || enemy.flying) && !ene
  * its full HP kept as `fullHp`, and what they have broken of its DEF
  * (Armor Break) as `broken`. */
 export const wounded = (t: Tile): Tile => {
-  if (!t.wound && !t.broken && t.sprung === undefined && !t.necro) return t;
-  const less = (e: Enemy) => ({ ...e, ...(t.wound ? { hp: snap(Math.max(0, e.hp - t.wound)), fullHp: e.fullHp ?? e.hp } : {}), ...(t.broken ? { broken: t.broken } : {}), ...(t.sprung === undefined ? {} : { sprung: t.sprung }), ...(t.necro ? { necro: t.necro } : {}) });
+  if (!t.wound && !t.broken && t.sprung === undefined && !t.necro && !t.amber) return t;
+  const less = (e: Enemy) => ({ ...e, ...(t.wound ? { hp: snap(Math.max(0, e.hp - t.wound)), fullHp: e.fullHp ?? e.hp } : {}), ...(t.broken ? { broken: t.broken } : {}), ...(t.sprung === undefined ? {} : { sprung: t.sprung }), ...(t.necro ? { necro: t.necro } : {}), ...(t.amber ? { amber: t.amber } : {}) });
   return t.enemy ? { ...t, enemy: less(t.enemy) } : t.flyer ? { ...t, flyer: less(t.flyer) } : t;
 };
 /** `raw` (a tile as generated) with `damage` more wound (an arrow that only
- * wears down DEF adds none) and `broke` percent more of its DEF broken. A
- * Flying enemy struck becomes Aggroed (enemies/flying.ts). */
-export const woundMore = (raw: Tile, damage: number, broke = 0): Tile => ({
+ * wears down DEF adds none), `broke` percent more of its DEF broken and
+ * `amber` percent more of Amber Prison's, up to `AMBER_MOST`. A Flying enemy
+ * struck becomes Aggroed (enemies/flying.ts). */
+export const woundMore = (raw: Tile, damage: number, broke = 0, amber = 0): Tile => ({
   ...raw,
   ...(raw.flyer && !raw.flyer.aggro ? { flyer: { ...raw.flyer, aggro: true as const } } : {}),
   ...(damage || raw.wound ? { wound: snap((raw.wound ?? 0) + damage) } : {}),
   ...(broke ? { broken: snap((raw.broken ?? 0) + broke) } : {}),
+  ...(amber ? { amber: Math.min(AMBER_MOST, snap((raw.amber ?? 0) + amber)) } : {}),
 });
 /** `raw` once Lifespring has touched its enemy: `waves` more Effect Waves hit it
  * (none for the field alone), and `broke` percent more of its DEF taken off. It
@@ -216,6 +219,7 @@ export const FOE_REACH = { scale: 36, limit: (range: number) => 25 * range * ran
  * shroud against it count (`facing`). */
 export function shotDamage(player: Player, enemy: Enemy) {
   player = facing(player, enemy);
+  enemy = lessened(player, enemy);
   const struck = struckDamage(enemy.attack, player.defense, parryCut(player));
   const shrouded = Math.min(player.shroud ?? 0, struck), rest = snap(struck - shrouded), shielded = Math.min(player.shield ?? 0, rest);
   return { damage: snap(rest - shielded), shrouded, ...(shielded ? { shielded } : {}) };

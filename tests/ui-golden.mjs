@@ -3,9 +3,10 @@
 // a scripted walk clicks through every page, subtab, tooltip and dialog, and
 // after each step the normalized `#app` HTML is hashed against
 // tests/fixtures/ui.golden.json. Regenerate with UPDATE_GOLDEN=1 on the code
-// *before* a UI refactor, then run without it after. Baseline HTML goes to
-// test-results/ui-golden/ and current HTML to test-results/ui/, and the first
-// differing line is printed for any mismatch. It runs against the snapshot
+// *before* a UI refactor, then run without it after. Each run's HTML goes to a
+// folder of its own, test-results/ui-runs/<source stamp>/, a recorded run's
+// being the baseline later runs print the first differing line against
+// (tests/results-dirs.mjs; tests/compare-runs.mjs compares two runs). It runs against the snapshot
 // build through `vite preview` (tests/snapshot-preview.mjs; `npm run test:ui`
 // builds it first).
 // ONLY=<key prefixes> (or ONLY=failed) walks only the sections that can make
@@ -17,12 +18,12 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { bounded, startPreview } from "./snapshot-preview.mjs";
 import { openMenu } from "./run-menu.mjs";
 import { goldenFilter, NOTHING_MATCHED } from "./golden-filter.mjs";
+import { resultsDirs } from "./results-dirs.mjs";
 
 const UPDATE = process.env.UPDATE_GOLDEN === "1";
 const GOLDEN = new URL("./fixtures/ui.golden.json", import.meta.url);
-const BASELINE_DIR = "test-results/ui-golden";
-const OUT_DIR = "test-results/ui";
 const filter = goldenFilter("ui");
+const { out: OUT_DIR, baseline: BASELINE_DIR } = resultsDirs("ui", { update: UPDATE || !existsSync(GOLDEN), partial: filter.active });
 const server = await startPreview(4190);
 const browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH } : { channel: process.env.PLAYWRIGHT_CHANNEL || "msedge" }) });
 let exitCode = 1;
@@ -198,13 +199,13 @@ try {
         const item = (id, def, rarity, level, extra) => ({ id, def, rarity, level, slots: [], ...extra });
         Object.assign(s.equipment, {
           items: [
-            item("e1", "knightsSword", "uncommon", 12, { spent: { gold: 3300, material: 70 }, slots: [{ effect: "keenEdge", rarity: "common", refinement: 7 }] }),
+            item("e1", "knightsSword", "uncommon", 12, { spent: { gold: 3300, material: 70 }, slots: [{ effect: "ferocity", rarity: "uncommon", refinement: 7 }] }),
             item("e2", "knightsSword", "uncommon", 1), item("e3", "knightsSword", "uncommon", 4), item("e4", "knightsSword", "uncommon", 1),
-            item("e5", "ringOfFury", "rare", 1, { locked: true }), item("e6", "steelCuirass", "common", 3), item("e7", "bastionPlate", "uncommon", 1),
+            item("e5", "zenithGuard", "rare", 1, { locked: true }), item("e6", "steelCuirass", "common", 3), item("e7", "equilibriumTether", "uncommon", 1),
           ],
-          equipped: { tower: { weapon: "e1", ring: "e5" }, delve: {} },
+          equipped: { tower: { weapon: "e1", shield: "e5" }, delve: {} },
           materials: { ...s.equipment.materials, whetstone: 40, rivets: 12, amber: 3 },
-          pity: { ...s.equipment.pity, ring: 97 },
+          pity: { ...s.equipment.pity, shield: 117 },
           nextId: 8,
         });
       }),
@@ -972,8 +973,11 @@ try {
     await shot("equipment.merged");
     await click("#eq-ok");
     await click('[data-eq-view="pulls"]');
-    await click('[data-eq-pullcat="ring"]');
+    await click('[data-eq-pullcat="shield"]');
     await shot("equipment.pulls");
+    await click("#eq-rates");
+    await shot("equipment.rates");
+    await click("#eq-close");
     await click('[data-eq-pull="10"]');
     await shot("equipment.pulled");
     await click("#eq-ok");
@@ -1032,7 +1036,8 @@ try {
   // buttons) and its menu (Settings, Missions, Relics); the Events screen
   // (the banner, the relic track, the booster's offer, the missions, the
   // completed one last); a tier claimed, its Medals flown to the bar; the
-  // booster refused while the store is closed; and the Relics screen, empty.
+  // booster refused while the store is closed; a relic on the track pressed,
+  // showing its name and bonus; and the Relics screen, empty, and its ?.
   await section("events", "relics", async () => {
     await load("events");
     await shot("events.forest");
@@ -1041,14 +1046,28 @@ try {
     await click("#run-menu-toggle");
     await click("#events-button");
     await shot("events.page");
+    await click("#events [data-relic]");
+    await shot("events.relicPop");
+    await click(".relic-pop");
+    // Off the relic, so a resting mouse shows none in the next snapshot.
+    await page.mouse.move(0, 0);
     await click("#events [data-claim]");
     await shot("events.claimed");
     await click("#event-boost-buy");
     await page.locator("#event-boost-message:not(:empty)").waitFor();
     await shot("events.boostRefused");
+    // The Store tab: its Currencies, the event's featured themes, and Music; a
+    // Gems box pressed, bought with the Medals held or refused short of them.
+    await click('#events [data-event-tab="store"]');
+    await shot("events.store");
+    await click('#events [data-store="currency:gems"]');
+    await shot("events.storeBuy");
     await click("#events-close");
     await menuClick("#relics-button");
     await shot("relics.empty");
+    await click("#relics-help");
+    await shot("relics.help");
+    await click("#tree-help-ok");
     await click("#relics-close");
     await shot("events.closed");
   });
@@ -1214,7 +1233,7 @@ try {
     for (const k of changed) {
       const base = `${BASELINE_DIR}/${k}.html`;
       let detail = "no local baseline HTML to compare";
-      if (existsSync(base) && shots[k]) {
+      if (BASELINE_DIR && existsSync(base) && shots[k]) {
         const a = readFileSync(base, "utf8"), b = shots[k];
         let i = 0;
         while (i < a.length && a[i] === b[i]) i++;
@@ -1224,7 +1243,7 @@ try {
     }
     if (changed.length) {
       failed = true;
-      console.error(`${changed.length} UI snapshots changed; see ${OUT_DIR}/ vs ${BASELINE_DIR}/`);
+      console.error(`${changed.length} UI snapshots changed; see ${OUT_DIR}/${BASELINE_DIR ? ` vs ${BASELINE_DIR}/` : " (no baseline recorded on this machine)"}`);
     } else {
       console.log(`All ${Object.keys(hashes).length} UI snapshots${filter.describe} match the golden hashes (${createHash("sha256").update(JSON.stringify(hashes)).digest("hex").slice(0, 8)}).`);
     }

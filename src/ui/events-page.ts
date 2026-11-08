@@ -6,11 +6,30 @@ import { offer } from "../shop/offers.ts";
 import { stubServer, type ShopServer } from "../shop/server.ts";
 import { shortCountdown } from "../tournament/schedule.ts";
 import type { AppContext } from "./app.ts";
-import { checkIcon, el, eventIcon, medalIcon, relicIcon } from "./dom.ts";
+import { arcaniteIcon, checkIcon, el, eventIcon, gemIcon, goldIcon, medalIcon, relicIcon } from "./dom.ts";
 import { flyToPurse } from "./flourish.ts";
 import { currencyAmount } from "./hud.ts";
 import { heldAmount } from "./currencies-dialog.ts";
 import { offerShown, revealReward } from "./reward-reveal.ts";
+import { CURRENCY_ROWS, THEME_MEDALS, storeRelics, type CurrencyOffer, type StoreItem } from "../events/store.ts";
+import { BONUS_TRACKS } from "../events/music.ts";
+import { EQUIP_MATERIALS } from "../equipment/catalog.ts";
+import { materialIcon } from "./equipment-icons.ts";
+import { THEMES, TRACK_GOLD_PER_MILLE, ownsTheme, perMilleText, type ThemeId } from "../theme-collection.ts";
+import { themeGoldHtml, themeMenuTitle, themePreview } from "./theme-menu.ts";
+import { bonusText } from "../economy/relic-effects.ts";
+import { RARITY_NAMES, RELICS } from "../economy/relics.ts";
+import { relicButton } from "./relic-pop.ts";
+
+/** The Events screen's tabs: the event's missions and relics, and its Store. */
+type EventsTab = "missions" | "store";
+const TAB_NAMES: Record<EventsTab, string> = { missions: "Missions", store: "Store" };
+/** A Store item as its button's `data-store` holds it. */
+const itemKey = (item: StoreItem) => `${item.kind}:${item.id}`;
+const itemOf = (key: string): StoreItem => {
+  const at = key.indexOf(":");
+  return { kind: key.slice(0, at), id: key.slice(at + 1) } as StoreItem;
+};
 
 /** How long a mission whose last tier is claimed stays where it is before it
  * moves under the rest (ms). */
@@ -38,6 +57,7 @@ export class EventsPage {
   /** The timer moving completed missions under the rest. */
   private moving: ReturnType<typeof setTimeout> | null = null;
   private busy = false;
+  private tab: EventsTab = "missions";
 
   constructor(private ctx: AppContext, private server: ShopServer = stubServer) {}
 
@@ -45,6 +65,7 @@ export class EventsPage {
   open(from: string) {
     const events = this.ctx.game.events;
     this.from = from;
+    this.tab = "missions";
     events.refresh();
     const seen = new Set(this.ctx.game.save.events.seen);
     this.fresh = new Set(events.missions.filter((m) => !seen.has(m.id)).map((m) => m.id));
@@ -59,7 +80,7 @@ export class EventsPage {
 
   private state() {
     const e = this.ctx.game.save.events;
-    return JSON.stringify([e.id, e.missions, e.moved, this.ctx.game.events.boosted]);
+    return JSON.stringify([e.id, e.missions, e.moved, this.ctx.game.events.boosted, this.tab]);
   }
 
   /** Every second while the screen shows: the countdowns, or the whole
@@ -90,10 +111,12 @@ export class EventsPage {
       `<button class="missions-close" id="events-close" aria-label="Close" title="Close">${controlIcon("close")}</button>` +
       `<header class="event-banner"><span class="event-banner-art" aria-hidden="true">${eventIcon("event-icon event-banner-icon")}</span>` +
       `<div class="page-title"><small>EVENT</small><h2>${info.name}</h2></div><div class="event-banner-foot"><p class="event-ends" id="event-ends">${this.endsText()}</p>${this.heldHtml()}</div></header>` +
-      this.track(info.milestones) +
-      this.boost() +
-      `<p class="missions-next" id="event-next">${this.nextText()}</p>` +
-      (order.length ? `<ul class="mission-list event-missions">${order.map((m) => this.missionHtml(m)).join("")}</ul>` : `<p class="hint">The event's missions come soon.</p>`);
+      `<div class="tree-tabs page-tabs event-tabs" role="group" aria-label="Event tabs">${(["missions", "store"] as const).map((t) => `<button data-event-tab="${t}" aria-pressed="${this.tab === t}">${TAB_NAMES[t]}</button>`).join("")}</div>` +
+      (this.tab === "store" ? this.storeHtml() :
+        this.track(info.milestones) +
+        this.boost() +
+        `<p class="missions-next" id="event-next">${this.nextText()}</p>` +
+        (order.length ? `<ul class="mission-list event-missions">${order.map((m) => this.missionHtml(m)).join("")}</ul>` : `<p class="hint">The event's missions come soon.</p>`));
     this.bind();
     if (before) this.slide(before);
     this.scheduleMove();
@@ -127,10 +150,13 @@ export class EventsPage {
     const top = Math.max(...milestones.map((m) => m.medals));
     const relic = (m: RelicMilestone) => {
       const reached = milestoneReached(e, m), locked = m.premium && !events.boosted;
-      const name = `${m.premium ? "Premium " : ""}${m.rarity === "epic" ? "Epic" : "Rare"} Relic`;
+      const def = m.relic ? RELICS[m.relic] : undefined;
+      const name = def?.name ?? `${m.premium ? "Premium " : ""}${RARITY_NAMES[m.rarity]} Relic`;
       const label = `${name} at ${m.medals.toLocaleString("en-US")} Medals${reached ? " (won)" : locked ? " (Event Booster)" : ""}`;
-      return `<span class="event-relic ${m.rarity}${reached ? " reached" : ""}${locked ? " locked" : ""}" style="--at:${(100 * m.medals) / top}%" title="${label}" aria-label="${label}" role="img">` +
-        `<span class="event-relic-art">${relicIcon(m.rarity)}${reached ? checkIcon() : locked ? LOCK : ""}</span><small>${m.medals.toLocaleString("en-US")}</small></span>`;
+      // A relic of the theme's set shows its name and bonus when pressed.
+      const [tag, attrs] = def ? ["button", ` data-relic="${m.relic}"`] : ["span", ` role="img" title="${label}"`];
+      return `<${tag} class="event-relic ${m.rarity}${reached ? " reached" : ""}${locked ? " locked" : ""}" style="--at:${(100 * m.medals) / top}%" aria-label="${label}"${attrs}>` +
+        `<span class="event-relic-art">${relicIcon(m.rarity)}${reached ? checkIcon() : locked ? LOCK : ""}</span><small>${m.medals.toLocaleString("en-US")}</small></${tag}>`;
     };
     const row = (premium: boolean) => `<b class="event-row-name${premium ? " premium" : ""}">${premium ? "Event Boost Relics" : "Free Relics"}</b>` +
       `<div class="event-relics ${premium ? "premium" : "standard"}">${milestones.filter((m) => m.premium === premium).map(relic).join("")}</div>`;
@@ -168,9 +194,73 @@ export class EventsPage {
       `<div class="event-mission-head"><b class="mission-text">${fresh}${def.text(target)}</b><span class="event-tier"><small>${m.claimed}/${TIERS}</small>${reward}</span></div>${bar}</div></li>`;
   }
 
+  /** The Store tab: Currencies (Gems and Arcanite, then each Equipment
+   * supply, dearer with each bought this event), the event's featured
+   * themes, any relics its theme sells, and the bonus tracks. */
+  private storeHtml() {
+    const game = this.ctx.game, featured = game.events.featured;
+    const currencies = CURRENCY_ROWS.map((row) => `<div class="store-row" style="--cols:${row.length}">${row.map((o) => this.currencyHtml(o)).join("")}</div>`).join("");
+    const themes = (["ui", "game"] as const).map((kind) => featured[kind]).filter((id): id is ThemeId => id !== null).map((id) => this.themeHtml(id)).join("");
+    const relics = storeRelics(game.save.events.id ?? 0);
+    const relicsHtml = relics.length
+      ? `<section class="store-section"><h3>Relics</h3><div class="store-row" style="--cols:${Math.min(2, relics.length)}">${relics.map((r) =>
+        `<div class="store-offer store-relic">${relicIcon("epic")}<b>${r.relic.name}</b><small>${bonusText(r.relic.bonus)}</small>${this.buyButton({ kind: "relic", id: r.id }, r.relic.name)}</div>`).join("")}</div></section>`
+      : "";
+    const tracks = BONUS_TRACKS.length
+      ? `<div class="store-row" style="--cols:2">${BONUS_TRACKS.map((t) => `<div class="store-offer store-track"><b>${t.name}</b><small>${perMilleText(TRACK_GOLD_PER_MILLE)}${goldIcon()}</small>${this.buyButton({ kind: "track", id: t.id }, t.name)}</div>`).join("")}</div>`
+      : `<p class="hint">Come back in the future for new songs!</p>`;
+    return `<p class="event-store-message" id="event-store-message" aria-live="polite"></p>` +
+      `<section class="store-section"><h3>Currencies</h3>${currencies}<p class="hint">Each bought raises its price, until the next event.</p></section>` +
+      `<section class="store-section"><h3>Themes</h3><div class="store-row" style="--cols:2">${themes}</div></section>` +
+      relicsHtml +
+      `<section class="store-section"><h3>Music</h3><p class="hint">Bonus tracks join the music for good, each adding ${perMilleText(TRACK_GOLD_PER_MILLE)}${goldIcon()}.</p>${tracks}</section>`;
+  }
+
+  /** A Currencies offer: what it gives and its price now. */
+  private currencyHtml(o: CurrencyOffer) {
+    const icon = o.reward.kind === "material" ? materialIcon(o.reward.material) : o.reward.currency === "gems" ? gemIcon() : arcaniteIcon();
+    const name = o.reward.kind === "material" ? EQUIP_MATERIALS[o.reward.material].name : o.reward.currency === "gems" ? "Gems" : "Arcanite";
+    return `<div class="store-offer"><span class="store-reward">${icon}<b>${o.amount.toLocaleString("en-US")}</b></span><small>${name}</small>${this.buyButton({ kind: "currency", id: o.id }, `${o.amount} ${name}`)}</div>`;
+  }
+
+  /** A featured theme: its preview, name, kind and Gold, and its price, or Owned. */
+  private themeHtml(id: ThemeId) {
+    const t = THEMES[id], kind = themeMenuTitle(t.kind).replace(/s$/, "");
+    const status = ownsTheme(this.ctx.game.save, id) ? `<span class="store-owned">${checkIcon()} Owned</span>` : this.buyButton({ kind: "theme", id }, `the ${t.name} ${kind}`, THEME_MEDALS[t.kind]);
+    return `<div class="store-offer store-theme">${themePreview(t.kind, t.look, t.name)}<b>${t.name}</b><small>${kind} · ${themeGoldHtml(id)}</small>${status}</div>`;
+  }
+
+  /** A Store item's Buy button, its price in Medals (only the price turns
+   * red while the Medals held fall short), or Owned once it can't be bought. */
+  private buyButton(item: StoreItem, what: string, shown?: number) {
+    const price = this.ctx.game.events.price(item) ?? shown;
+    if (price === undefined) return `<span class="store-owned">${checkIcon()} Owned</span>`;
+    const save = this.ctx.game.save, short = !save.settings.freePurchases && save.medals < price;
+    return `<button type="button" class="store-buy${short ? " short" : ""}" data-store="${itemKey(item)}" aria-label="Buy ${what} for ${price} Medals">${medalIcon()} <b>${price.toLocaleString("en-US")}</b></button>`;
+  }
+
+  /** Buys a Store item; short of Medals, says where they come from. */
+  private buyStore(key: string) {
+    const game = this.ctx.game;
+    if (!game.events.buy(itemOf(key))) {
+      const message = document.getElementById("event-store-message");
+      if (message) message.textContent = "Not enough Medals. The event's missions pay more.";
+      return;
+    }
+    this.ctx.save();
+    this.ctx.update();
+    this.render();
+  }
+
   private bind() {
     const ctx = this.ctx;
     el("events-close").onclick = () => ctx.navigate(this.from || "board");
+    el("events").querySelectorAll<HTMLButtonElement>("[data-event-tab]").forEach((b) => (b.onclick = () => {
+      this.tab = b.dataset.eventTab as EventsTab;
+      this.render();
+    }));
+    el("events").querySelectorAll<HTMLButtonElement>("[data-relic]").forEach((b) => relicButton(b, RELICS[b.dataset.relic!]!, ctx.game.save.settings.reduceMotion));
+    el("events").querySelectorAll<HTMLButtonElement>("[data-store]").forEach((b) => (b.onclick = () => this.buyStore(b.dataset.store!)));
     document.getElementById("event-boost-buy")?.addEventListener("click", () => void this.buyBoost());
     el("events").querySelectorAll<HTMLButtonElement>("[data-claim]").forEach((b) => (b.onclick = () => this.claim(Number(b.dataset.claim))));
   }

@@ -59,7 +59,7 @@ export const SETTINGS = {
    * wobbly outlines with muted fills on dusky paper under a scribbled moon)
    * once owned. Chosen on the Settings page's UI Themes menu, not a row of its
    * own; a new hero starts in Medieval. */
-  uiTheme: { kind: "choice", default: "medieval", choices: [["classic", "Classic"], ["medieval", "Medieval"], ["neon", "Neon"], ["terminal", "Terminal"], ["desktop", "Desktop"], ["glyph", "Glyph"], ["ember", "Ember"], ["yang", "Yang"], ["yin", "Yin"], ["shiro", "Shiro"], ["kuro", "Kuro"], ["arcade", "Arcade"], ["system", "System"], ["orbit", "Orbit"], ["pixel", "Pixel"], ["doodle", "Doodle"], ["murk", "Murk"]] },
+  uiTheme: { kind: "choice", default: "classic", choices: [["classic", "Classic"], ["medieval", "Medieval"], ["neon", "Neon"], ["terminal", "Terminal"], ["desktop", "Desktop"], ["glyph", "Glyph"], ["ember", "Ember"], ["yang", "Yang"], ["yin", "Yin"], ["shiro", "Shiro"], ["kuro", "Kuro"], ["arcade", "Arcade"], ["system", "System"], ["orbit", "Orbit"], ["pixel", "Pixel"], ["doodle", "Doodle"], ["murk", "Murk"]] },
   /** The Game theme the dungeon is drawn in: Classic, or Neon, Terminal
    * (a green-phosphor text dungeon), Desktop (an old desktop computer's
    * mine-sweeping field), Glyph (a many-coloured neon ASCII dungeon on

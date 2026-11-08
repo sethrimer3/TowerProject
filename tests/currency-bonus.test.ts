@@ -93,7 +93,9 @@ test("the Training tab's values count research, equipment and Silver Bonus; a ru
   // The equipment the mode's hero wears counts: a sword raises the Tower's ATK row, not the Delve's.
   save.equipment.unlocked = true;
   const bare = step("attack", { mode: "tower" });
-  save.equipment.equipped.tower.weapon = addItem(save.equipment, "knightsSword", "common")!.id;
+  const sword = addItem(save.equipment, "knightsSword", "legendary")!;
+  sword.level = 120;
+  save.equipment.equipped.tower.weapon = sword.id;
   assert.ok(step("attack", { mode: "tower" })[0]! > bare[0]!);
   assert.deepEqual(step("attack", { mode: "delve" }), bare);
   // Inside a run: the hero's own stat (what it found) moved by a rank, and the ranks bought with Silver.

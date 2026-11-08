@@ -14,6 +14,7 @@ import {
 import { postStubMail } from "../mail/server.ts";
 import type { DeskHost } from "./desk.ts";
 import { earn } from "../save/profile.ts";
+import { buyStoreItem, featuredThemes, storePrice, type StoreItem } from "../events/store.ts";
 
 /** mulberry32's step: each draw moves the state on by this much. */
 const STEP = 0x6d2b79f5;
@@ -86,6 +87,24 @@ export class EventDesk {
     earn(this.host.save, "medals", medals);
     grantRelics(this.host.save);
     return medals;
+  }
+
+  /** The themes the running event's Store features. */
+  get featured() {
+    return featuredThemes(eventAt(this.now));
+  }
+
+  /** What Store `item` costs now in Medals, or null when it can't be bought. */
+  price(item: StoreItem) {
+    this.refresh();
+    return storePrice(this.host.save, item);
+  }
+
+  /** Buys Store `item` for Medals; false when it can't be bought or the
+   * Medals held fall short. */
+  buy(item: StoreItem) {
+    this.refresh();
+    return this.unlocked && buyStoreItem(this.host.save, item);
   }
 
   /** The Events page has shown every mission. */

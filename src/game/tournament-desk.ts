@@ -1,3 +1,4 @@
+import { relicArcanite } from "../economy/relic-effects.ts";
 import { goalUnlocked } from "../goals.ts";
 import { confirmServerTime, estimatedServerTime } from "../shop/clock.ts";
 import { CURRENCIES } from "../shop/currency.ts";
@@ -211,7 +212,7 @@ export class TournamentDesk {
   /** Pays the prize the server granted for tournament `id`, once. */
   claim(id: string, prize: Prize) {
     if (this.t.claimed.includes(id)) return false;
-    CURRENCIES.arcanite.credit(this.host.save, prize.arcanite);
+    CURRENCIES.arcanite.credit(this.host.save, relicArcanite(this.host.save, prize.arcanite));
     CURRENCIES.gems.credit(this.host.save, prize.gems);
     this.t.claimed = [...this.t.claimed, id].slice(-CLAIMS_KEPT);
     this.host.message = `+${prize.gems} Gems, +${prize.arcanite} Arcanite`;

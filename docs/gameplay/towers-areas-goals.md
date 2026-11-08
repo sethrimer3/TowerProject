@@ -46,7 +46,7 @@ Tower II's floor 90 opens **Card Groups** on the Deck page (see [Card Groups](ha
 Tower III's floor 10 adds the **Archer** card to the deck: while the hand holds it, the hero is an **Archer**, its arrows shooting the closest monster in reach every 10 turns, and floors 20 and 30 open the **Attack Range** and **Attack Speed** Training rows that improve them ([Fights](fights.md#the-archer)).
 Floor 50 opens the **ATK / m** Training row (arrows strike harder the further off their target), floor 60 the Archives' **Charged Shot** research (an arrow that waits ready grows stronger), floor 70 the **Multishot Chance** and **Multishot Targets** Training rows (a shot may fire at several enemies at once), and floor 80 the **Rapid Fire Chance** and **Rapid Fire Duration** Training rows (a shot may make the arrows come four times as fast for a few turns); floor 90 pays 30 Gems.
 Tower III's floor 150 opens the Archives' **Warp Loot** research: a run that starts above floor 1 (a Warp, or a Retry from one) goes inside with a share of the Silver its skipped floors would have paid, 2% a level for 50 levels, up to all of it, and *WARP LOOT* bursts over the hero with the Silver added.
-The skipped floors' Silver is estimated as the run begins, from the training and research it starts with: each floor's monsters by the usual mix of strengths (and the boss on every tenth floor), the Wishing Well's Silver / Floor, both raised by Silver found, and Interest on the Silver held, up to Max Interest a floor, then raised by Gold Bonus.
+The skipped floors' Silver is estimated as the run begins, from the training and research it starts with: each floor's monsters by the usual mix of strengths (and the boss on every tenth floor), the Wishing Well's Silver / Floor, both raised by Silver found, and Interest on the Silver held, up to Max Interest a floor, then raised by Silver found too.
 Its levels cost Dash's Gold for the first 25 (250 Gold for the first, 105 billion for the 25th), then 40% more each (about 470 trillion for the 50th), and take Dash's time in all, spread over the 50 (26 minutes for the first, 4 days for the 25th, 76 days for the 50th).
 The name under the hero's portrait follows: a Wayfarer, a Pathfinder once Tower II is open, an Archer while the hand holds the Archer card.
 Tower V's floor 10 adds the **Flying Enemy** card to the deck ([The hand](hand-and-cards.md)).
@@ -56,7 +56,9 @@ Tapping a claimed unlock shows what it does again.
 A green check beside a checkpoint marks its area cleared.
 Entering the tower from the forest always starts on floor 1.
 Every tower has its own checkpoints; once a second is open, arrows at the bottom pan between them.
-Tower I's premium rewards, floor by floor: 100 Gold, 10 Gems, 10 Gems, 300 Gold, 15 Gems, 20 Gems, 600 Gold, 30 Gems, 30 Gems, 50 Gems (floor 100), 15,000 Gold, 35 Gems, 30,000 Gold, 25 Gems, 100,000 Gold, then 30, 35, 40 and 45 Gems (floors 500 to 1,250), 10 Arcanite (floor 1,500), 50 Gems (2,000), 15 Arcanite (2,500) and 20 Arcanite (4,500).
+Tower I's premium rewards, floor by floor: 100 Gold, 10 Gems, 10 Gems, 300 Gold, 15 Gems, 20 Gems, 600 Gold, 30 Gems, 30 Gems, 50 Gems (floor 100), 15,000 Gold, 35 Gems, 30,000 Gold, 25 Gems, 100,000 Gold, then 30, 35, 40 and 45 Gems (floors 500 to 1,250), 10 Arcanite (floor 1,500), 50 Gems (2,000), and 15 Arcanite (2,500).
+Every tower's last checkpoint, floor 4,500, gives two of its own [relics](../EVENTS.md#tower-relics), named for the tower: an epic one on the left and a legendary one as its premium reward.
+Claiming one, or tapping it once claimed, shows the relic with its name and bonus.
 The other towers' rewards past their unlocks are placeholders for now (Gold on the left, 5 Gems a checkpoint on the right, rising by 5 with each); the store isn't connected yet, so only Dev mode (or its free purchases) unlocks a pass.
 The Delve has no Goals yet.
 End Climb (End Run in the Delve) shows only inside a run.

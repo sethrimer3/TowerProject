@@ -47,7 +47,10 @@ function runWith(setup: Setup | null) {
   if (setup.mantle) {
     const e = save.equipment;
     e.unlocked = true;
-    equip(e, "tower", addItem(e, "magpieMantle", "rare")!.id);
+    const mantle = addItem(e, "magpieMantle", "rare")!;
+    mantle.level = 41;
+    mantle.slots = [{ effect: "prospector", rarity: "rare" }, { effect: "silverTongue", rarity: "rare" }];
+    equip(e, "tower", mantle.id);
     assert.ok(wornEffects(save, "tower").goldFind > 0 && wornEffects(save, "tower").silverFind > 0);
   }
   const run = g.run as TowerRun;

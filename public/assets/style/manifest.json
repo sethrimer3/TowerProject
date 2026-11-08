@@ -667,58 +667,8 @@
       "width": 24,
       "height": 24
     },
-    "equip-ring": {
-      "file": "equip-ring.png",
-      "width": 24,
-      "height": 24
-    },
     "equip-amulet": {
       "file": "equip-amulet.png",
-      "width": 24,
-      "height": 24
-    },
-    "equip-kingsbane": {
-      "file": "equip-kingsbane.png",
-      "width": 24,
-      "height": 24
-    },
-    "equip-reapersScythe": {
-      "file": "equip-reapersScythe.png",
-      "width": 24,
-      "height": 24
-    },
-    "equip-bloodpriceBlade": {
-      "file": "equip-bloodpriceBlade.png",
-      "width": 24,
-      "height": 24
-    },
-    "equip-bastionPlate": {
-      "file": "equip-bastionPlate.png",
-      "width": 24,
-      "height": 24
-    },
-    "equip-giantsHauberk": {
-      "file": "equip-giantsHauberk.png",
-      "width": 24,
-      "height": 24
-    },
-    "equip-verdantMail": {
-      "file": "equip-verdantMail.png",
-      "width": 24,
-      "height": 24
-    },
-    "equip-sentinelVisor": {
-      "file": "equip-sentinelVisor.png",
-      "width": 24,
-      "height": 24
-    },
-    "equip-scholarsCirclet": {
-      "file": "equip-scholarsCirclet.png",
-      "width": 24,
-      "height": 24
-    },
-    "equip-minersHelm": {
-      "file": "equip-minersHelm.png",
       "width": 24,
       "height": 24
     },
@@ -734,21 +684,6 @@
     },
     "equip-alchemistsGloves": {
       "file": "equip-alchemistsGloves.png",
-      "width": 24,
-      "height": 24
-    },
-    "equip-fleetstepBoots": {
-      "file": "equip-fleetstepBoots.png",
-      "width": 24,
-      "height": 24
-    },
-    "equip-pathfinderTreads": {
-      "file": "equip-pathfinderTreads.png",
-      "width": 24,
-      "height": 24
-    },
-    "equip-delversGreaves": {
-      "file": "equip-delversGreaves.png",
       "width": 24,
       "height": 24
     },
@@ -779,26 +714,6 @@
     },
     "equip-merchantsSash": {
       "file": "equip-merchantsSash.png",
-      "width": 24,
-      "height": 24
-    },
-    "equip-silverBand": {
-      "file": "equip-silverBand.png",
-      "width": 24,
-      "height": 24
-    },
-    "equip-ringOfFury": {
-      "file": "equip-ringOfFury.png",
-      "width": 24,
-      "height": 24
-    },
-    "equip-ringOfWarding": {
-      "file": "equip-ringOfWarding.png",
-      "width": 24,
-      "height": 24
-    },
-    "equip-spireSignet": {
-      "file": "equip-spireSignet.png",
       "width": 24,
       "height": 24
     },
@@ -2372,21 +2287,6 @@
       "width": 24,
       "height": 24
     },
-    "equip-wardensShield": {
-      "file": "equip-wardensShield.png",
-      "width": 24,
-      "height": 24
-    },
-    "equip-bulwarkShield": {
-      "file": "equip-bulwarkShield.png",
-      "width": 24,
-      "height": 24
-    },
-    "equip-dawnShield": {
-      "file": "equip-dawnShield.png",
-      "width": 24,
-      "height": 24
-    },
     "lake-water": {
       "file": "lake-water.png",
       "width": 96,
@@ -2714,6 +2614,131 @@
       "file": "blacksmith-smoke.png",
       "width": 64,
       "height": 12
+    },
+    "equip-squiresBlade": {
+      "file": "equip-squiresBlade.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-steelBroadsword": {
+      "file": "equip-steelBroadsword.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-raptorBlade": {
+      "file": "equip-raptorBlade.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-kineticMallet": {
+      "file": "equip-kineticMallet.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-soulReaper": {
+      "file": "equip-soulReaper.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-oakenBuckler": {
+      "file": "equip-oakenBuckler.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-kiteShield": {
+      "file": "equip-kiteShield.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-zenithGuard": {
+      "file": "equip-zenithGuard.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-cradleOfLife": {
+      "file": "equip-cradleOfLife.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-amberPrison": {
+      "file": "equip-amberPrison.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-scaleMail": {
+      "file": "equip-scaleMail.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-ringmailVest": {
+      "file": "equip-ringmailVest.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-equilibriumTether": {
+      "file": "equip-equilibriumTether.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-mobiusCipher": {
+      "file": "equip-mobiusCipher.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-mirrorVault": {
+      "file": "equip-mirrorVault.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-acolytesHood": {
+      "file": "equip-acolytesHood.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-greatHelm": {
+      "file": "equip-greatHelm.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-lichKingsCrown": {
+      "file": "equip-lichKingsCrown.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-psionicTempest": {
+      "file": "equip-psionicTempest.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-challengersDefiance": {
+      "file": "equip-challengersDefiance.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-rangersBoots": {
+      "file": "equip-rangersBoots.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-ridingBoots": {
+      "file": "equip-ridingBoots.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-chronoStrider": {
+      "file": "equip-chronoStrider.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-jackpotSpurs": {
+      "file": "equip-jackpotSpurs.png",
+      "width": 24,
+      "height": 24
+    },
+    "equip-hoarderGreaves": {
+      "file": "equip-hoarderGreaves.png",
+      "width": 24,
+      "height": 24
     },
     "delve-enemy-attackHeavy-weak-ordinary": {
       "file": "delve-enemy-attackHeavy-weak-ordinary.png",

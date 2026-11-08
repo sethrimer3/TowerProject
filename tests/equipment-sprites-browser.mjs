@@ -32,8 +32,8 @@ try {
     Object.assign(s.equipment, { unlocked: true, seen: true, items: [
       item("e1", "knightsSword", "uncommon", 12), item("e2", "knightsSword", "uncommon", 1),
       item("e3", "knightsSword", "uncommon", 4), item("e4", "knightsSword", "uncommon", 1),
-      item("e5", "ringOfFury", "rare", 1, { locked: true }), item("e6", "steelCuirass", "common", 3),
-    ], equipped: { tower: { weapon: "e1", ring: "e5" }, delve: {} }, nextId: 7 });
+      item("e5", "zenithGuard", "rare", 1, { locked: true }), item("e6", "steelCuirass", "common", 3),
+    ], equipped: { tower: { weapon: "e1", shield: "e5" }, delve: {} }, nextId: 7 });
     Object.keys(s.equipment.materials).forEach(k => s.equipment.materials[k] = 1000);
     const g = new Game(s); g.newRun({ outside: true, seed: 7 });
     sessionStorage.setItem("__equipmentSpriteFixture", JSON.stringify(g.save));

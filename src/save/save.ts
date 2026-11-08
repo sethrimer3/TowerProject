@@ -12,7 +12,6 @@ import { UPGRADES, type UpgradeId } from "../progression/upgrades.ts";
 import type { AutomoveMemory, DelveRun, Fall, MoveSnapshot, Run, TowerRun } from "../runs.ts";
 import type { ModeSave, Save } from "./shape.ts";
 import { decodeEquipment, defaultEquipment } from "../equipment/inventory.ts";
-import { upgradeLegacyChestplateRuns } from "../equipment/legacy-chestplates.ts";
 import { decodeSettings, defaultSettings } from "./settings.ts";
 import { keepUndos, loadout } from "../progression/loadout.ts";
 import { BASE_HAND, CARD_IDS, HAND_SLOT_GEMS, IN_PLACE, MAX_HAND_SLOTS, MAX_MANUAL_SLOTS, deckCards, handSlots, keptLinks, manualSlots, type CardId, type CardLink } from "../cards/cards.ts";
@@ -26,6 +25,7 @@ import { decodeMail, defaultMail } from "../mail/progress.ts";
 import { decodeMissions, defaultMissions } from "../missions/progress.ts";
 import { decodeEvents, defaultEvents } from "../events/progress.ts";
 import { decodeRelics } from "../economy/relics.ts";
+import { decodeMusic } from "../events/music.ts";
 import { decodeShrines, defaultShrines, validShrineRun } from "../shrines.ts";
 import { decodeThemes, defaultThemes } from "../theme-collection.ts";
 import { isTournamentRun } from "../tournament/run.ts";
@@ -38,6 +38,7 @@ import { decodeCardXp } from "../cards/levels.ts";
 import { decodeCardBuys, defaultCardBuys } from "../cards/buys.ts";
 import { decodeArcana, decodeArcanaRun, defaultArcana, defaultArcanaRun } from "../arcana/arcana.ts";
 import { validLifespring } from "../arcana/lifespring.ts";
+import { AMBER_MOST, validGearRun } from "../equipment/powers.ts";
 import { validDilation } from "../arcana/time-dilation.ts";
 import { validPhantasm } from "../arcana/phantasm.ts";
 import { validFrost, validNecro } from "../arcana/necrotic-frost.ts";
@@ -51,6 +52,7 @@ export function defaults(): Save {
     breakthrough: 0,
     gems: 0,
     arcanite: 0,
+    arcaniteCarry: 0,
     arcana: defaultArcana(),
     medals: 0,
     cells: 0,
@@ -99,6 +101,7 @@ export function defaults(): Save {
     relics: [],
     shrines: defaultShrines(),
     themes: defaultThemes(),
+    music: [],
     profile: defaultProfile(),
     offline: defaultOffline(),
     trialAccess: defaultTrialAccess(),
@@ -124,16 +127,18 @@ const validSpawned = (e: any) => validEnemy(e) && (e.spawn !== undefined || e.st
 /** What the hero's arrows have taken off an enemy's DEF (Armor Break), if anything. */
 const validBroken = (v: any) => v.broken === undefined || (finite(v.broken) && v.broken > 0);
 /** What Lifespring and Necrotic Frost have marked an enemy's tile with, if anything. */
-const validMarks = (v: any) => (v.sprung === undefined || wholeIn(v.sprung, 0, 1e9)) && (v.necro === undefined || validNecro(v.necro));
+const validMarks = (v: any) => (v.sprung === undefined || wholeIn(v.sprung, 0, 1e9)) && (v.necro === undefined || validNecro(v.necro)) && (v.amber === undefined || (finite(v.amber) && v.amber > 0 && v.amber <= AMBER_MOST));
+/** Whether a tile holds none of what the hero's arrows and the arcana leave on an enemy. */
+const unmarked = (v: any) => v.wound === undefined && v.broken === undefined && v.sprung === undefined && v.necro === undefined && v.amber === undefined;
 /** An enemy the hero's arrows have wounded or broken (enemies/ranged.ts): the
  * generated or spawned enemy, kept with its wound and what they broke. */
 const validWounded = (v: any) => (v.wound === undefined || (finite(v.wound) && v.wound > 0)) && validBroken(v) && validMarks(v) && validEnemy(v.enemy);
 /** Open floor, maybe with a Flying enemy over it (enemies/flying.ts), generated
  * or moved there, kept with its wound. */
-const validFloor = (v: any) => v.flyer === undefined ? v.wound === undefined && v.broken === undefined && v.sprung === undefined && v.necro === undefined : validEnemy(v.flyer) && (v.wound === undefined || (finite(v.wound) && v.wound > 0)) && validBroken(v) && validMarks(v);
+const validFloor = (v: any) => v.flyer === undefined ? unmarked(v) : validEnemy(v.flyer) && (v.wound === undefined || (finite(v.wound) && v.wound > 0)) && validBroken(v) && validMarks(v);
 const validChange = (v: any) =>
   (v?.kind === "floor" && validFloor(v)) || v?.kind === "wall" ||
-  (v?.kind === "enemy" && (v.wound === undefined && v.broken === undefined && v.sprung === undefined && v.necro === undefined ? validSpawned(v.enemy) : validWounded(v))) ||
+  (v?.kind === "enemy" && (unmarked(v) ? validSpawned(v.enemy) : validWounded(v))) ||
   (v?.kind === "openedChest" && (v.tier === undefined || CHEST_TIERS.includes(v.tier))) ||
   (v?.kind === "reward" && CHEST_TIERS.includes(v.tier));
 const validChanges = (m: any) => pointMap(m, validChange);
@@ -164,6 +169,7 @@ const validPlayer = (p: any, width: number) =>
   (p.pierce === undefined || (finite(p.pierce) && p.pierce >= 0 && p.pierce <= 100)) &&
   (p.stealOverheal === undefined || (finite(p.stealOverheal) && p.stealOverheal >= 0)) &&
   (p.doorShroud === undefined || (finite(p.doorShroud) && p.doorShroud >= 0)) &&
+  [p.reviveOverheal, p.bossAttackCut, p.shroudGuard].every((n) => n === undefined || (finite(n) && n >= 0 && n <= 100)) &&
   (p.powerStrike === undefined || p.powerStrike === true) &&
   [p.takedown, p.tangle].every((cuts) => cuts === undefined || (isRecord(cuts) && Object.entries(cuts).every(([k, n]) => (k === "boss" || k === "greaterBoss") && finite(n) && n >= 0))) &&
   [p.foeAttack, p.foeDefense, p.foeShroud, p.foeCritChance, p.foeCritFactor, p.foeStealOverheal].every((m) => m === undefined || (isRecord(m) && Object.entries(m).every(([id, v]) => isFoeKey(id) && finite(v) && (v as number) >= 0))) &&
@@ -246,7 +252,9 @@ const RUN_FIELD_CHECKS = {
   phantasm: validPhantasm,
   necroticFrost: validFrost,
   voidwell: validVoidwell,
-  combo: (v: any) => isRecord(v) && wholeIn(v.next, 1, 1e9) && wholeIn(v.idle, 0, 1),
+  // Kinetic Mallet keeps a combo going up to 4 turns more.
+  combo: (v: any) => isRecord(v) && wholeIn(v.next, 1, 1e9) && wholeIn(v.idle, 0, 5),
+  gear: validGearRun,
   volleys: (v: any) => isRecord(v) && wholeIn(v.turn, 0, 1e12) && (v.hero === undefined || wholeIn(v.hero, 0, 1e6)) &&
     (v.waited === undefined || wholeIn(v.waited, 1, 1e12)) && (v.rapid === undefined || wholeIn(v.rapid, 1, 1e4)) &&
     (v.foes === undefined || pointMap(v.foes, (n) => wholeIn(n, 0, 1e6))),
@@ -376,6 +384,7 @@ function decodeProgress(s: any, d: Save, undoCapacity: number) {
   d.gems = count(s.gems, d.gems);
   // TODO: drop `ascensionShards` in a later save version (renamed Arcanite).
   d.arcanite = count(s.arcanite ?? s.ascensionShards, d.arcanite);
+  d.arcaniteCarry = typeof s.arcaniteCarry === "number" && s.arcaniteCarry >= 0 && s.arcaniteCarry < 1 ? s.arcaniteCarry : 0;
   d.medals = count(s.medals, d.medals);
   d.cells = fraction(s.cells, d.cells);
   d.gemDrop = decodeGemDrop(s.gemDrop);
@@ -524,6 +533,7 @@ export function decode(raw: string | null): Save {
     d.shrines = decodeShrines(s.shrines);
     d.arcana = decodeArcana(s.arcana);
     d.themes = decodeThemes(s.themes);
+    d.music = decodeMusic(s.music);
     const trial = decodeTrial(s.provingGrounds);
     d.trialAccess = decodeTrialAccess(s.trialAccess);
     if (trial) d.provingGrounds = trial;
@@ -557,8 +567,6 @@ export function decode(raw: string | null): Save {
     // TODO: remove once saves from before the rename are gone.
     d.treeNotices.breakthrough ||= s.treeNotices?.courage === true;
     d.seen = decodeSeen(s.seen, d);
-    // TODO: remove once saves from before shared recipes are retired.
-    if (isRecord(s.equipment) && !Object.hasOwn(s.equipment, "categories")) upgradeLegacyChestplateRuns(d);
     d.profile = decodeProfile(s.profile);
     backfillProfile(d);
     d.offline = decodeOffline(s.offline);

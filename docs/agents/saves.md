@@ -77,8 +77,8 @@ Equipment stores `categories` alongside its four base material balances.
 `decodeEquipment` always opens the five starter types and retains valid explicit unlocks and owned categories, preserving legacy loadouts without inventing future gates.
 Legacy Leather, Silk, Buckles, Moonstone and Amber balances split into their two recipe inputs, assigning any odd remainder to the first input and capping safely; subsequent saves omit the obsolete keys.
 Saved missions using a removed material keep their progress and reward amount, converted by `baseMaterial` to a base resource.
-Legacy saves with no Equipment category list also apply the chestplate balance change to both modes' heroes and every undo/fall copy via `upgradeLegacyChestplateRuns`, keeping damage, pickups and boons and preventing a later unequip from subtracting too much.
-The conversion uses loadout totals with the old intrinsic strength, leaves effect slots unchanged, and runs only before the category list is first saved.
+A piece saves its rarity, Stars (Ancestral only), level from 0 and its substat slots; decoding keeps Stars only on Ancestral pieces, clamps the level to the piece's cap, keeps a slot for each level opened, and drops a substat its category's pool no longer holds (its Refinement kept), clamping its rarity between the substat's lowest and the piece's.
+A run already in progress keeps the equipment stats it started with until a change to what is worn shifts it by the difference (`changeLoadout`); nothing converts it.
 
 Outside Tower runs accept player columns 0–19, matching the full forest view; dungeon runs retain their 17-column validation.
 Forest arrivals are not serialized: the saved player occupies a safe, walkable landing tile throughout the 100ms pause and entrance animation.

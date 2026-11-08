@@ -10,6 +10,7 @@
  * live in enemies/ranged.ts; this module plays a whole turn of them, in order, on
  * the board, and says what happened. `Game` decides whether a turn has a
  * volley at all and applies the outcome (the hero's HP, kill pay, a fall). */
+import type { GearTotals } from "./equipment/gear-rows.ts";
 import type { Board } from "./board.ts";
 import { point, type ByFoe, type Enemy, type Player, type Tile } from "./entities.ts";
 import type { Save } from "./save/shape.ts";
@@ -37,6 +38,8 @@ const RAPID_FIRE_SALT = 0x5f1d3;
 const RICOCHET_SALT = 0x71c0c;
 /** Salts the roll of a fight's Ricochet Shot apart from an arrow's. */
 const FIGHT_RICOCHET_SALT = 0x71c0d;
+/** Psionic Tempest's roll for a ricochet to strike its first target too. */
+const TEMPEST_SALT = 0x71c0e;
 
 /** One shot of a turn's volley, as the board shows it: a Ranged enemy's
  * at the hero, or the Archer's arrow at an enemy, flying `from` → `to`
@@ -93,12 +96,22 @@ export type VolleyTurn = {
   seed: number;
   volleys: Volleys;
   archer: boolean;
-  ranks: Pick<Save, "upgrades" | "training" | "archives">;
+  ranks: Pick<Save, "upgrades" | "training" | "archives"> & { gear?: GearTotals };
   cardCrit?: { chance: number; factor: number };
   handShot?: { attack: number; speed: number; boss?: number; range?: number; charge?: number; foeCharge?: ByFoe };
   /** Ricochet Shot, held and on (game/arcana-desk.ts): what its strikes multiply
    * the hero's ATK by, the enemies each reaches, and the percent chance. */
-  ricochet?: { boost: number; rebounds: number; chance: number };
+  ricochet?: { boost: number; rebounds: number; chance: number; self?: number };
+  /** The worn Uniques' powers on the turn's arrows (equipment/powers.ts): whether
+   * Soul Reaper has marked the enemy at (x, y) for death (an arrow destroys it),
+   * what ATK is multiplied by against the enemy at (x, y) (Hoarder Greaves,
+   * Challenger's Defiance), Amber Prison's percent per arrow that doesn't kill,
+   * and Mirror Vault's Retribution, which the first arrow to leave its enemy
+   * standing spends (what is left of it kept in `pool`). None when absent. */
+  doomed?: (x: number, y: number) => boolean;
+  attackAt?: (x: number, y: number) => number;
+  amber?: number;
+  retribution?: { pool: number };
   /** Overseer's beams, held and on, as the turn begins (arcana/overseer.ts). */
   beams?: Beams;
   /** Time Dilation's field, if one stands: the percent it slows the cooldowns of the
@@ -197,7 +210,7 @@ export function volleyTurn(turn: VolleyTurn): VolleyOutcome {
       foes[key] = charge;
       continue;
     }
-    const slow = slowAt(100 * shortWay(x - hero.x, wrap), 100 * (y - hero.y));
+    const slow = togetherSlow(slowAt(100 * shortWay(x - hero.x, wrap), 100 * (y - hero.y)), foe?.amber ?? 0);
     const kept = foe && held(charged(charge, slowedCharge(foeGain(foe), slow)), foeShotCost(floorOf(x, y)));
     if (kept !== undefined) foes[key] = kept;
   }
@@ -217,7 +230,7 @@ export function volleyTurn(turn: VolleyTurn): VolleyOutcome {
     for (const s of shooters) {
       if (s.charge !== undefined) {
         // In a field as the hero stands this tick, its cooldown runs slower.
-        const slow = slowAt(-(100 * s.near.dx + walk.ux * tick), -(100 * s.near.dy + walk.uy * tick));
+        const slow = togetherSlow(slowAt(-(100 * s.near.dx + walk.ux * tick), -(100 * s.near.dy + walk.uy * tick)), foeOn(board.tile(s.near.x, s.near.y))?.amber ?? 0);
         s.charge += slow ? slowedTickGain(s.gain, slow, tick) : s.gain;
         if (s.charge < s.cost) continue;
       }
@@ -232,7 +245,9 @@ export function volleyTurn(turn: VolleyTurn): VolleyOutcome {
         s.charge = undefined;
         continue;
       }
-      const { damage, shrouded, shielded = 0 } = shotDamage(hero, e.tile.enemy), onShield = (hero.shield ?? 0) > 0;
+      // Amber Prison weakens the shot.
+      const shooter = e.tile.enemy, weak = shooter.amber ? { ...shooter, attack: snap((shooter.attack * (100 - shooter.amber)) / 100) } : shooter;
+      const { damage, shrouded, shielded = 0 } = shotDamage(hero, weak), onShield = (hero.shield ?? 0) > 0;
       s.charge = spent(s.charge, s.cost);
       hero.hp = snap(Math.max(0, hero.hp - damage));
       if (onShield) hero.shield = snap(hero.shield! - shielded);
@@ -294,7 +309,7 @@ function heroAt(w: Walk, tick: number, wrap: number) {
  * arrow's boost by where its target and the hero stand the tick it fires
  * (`beam`), so they too decide what it can hurt. `end` keeps the clock. */
 function arrows(turn: VolleyTurn, p: Player, v: Volleys, shots: Shot[], kills: VolleyKill[], beam: (x: number, y: number, tick: number) => number, inReach: (tick: number) => InReach[], at: (tick: number) => { x: number; y: number }) {
-  const { ranks } = turn, perTile = trainedAmount(ranks, "attackPerTile"), percent = researched(ranks.archives, "chargedShotPercent");
+  const { ranks } = turn, perTile = trainedAmount(ranks, "attackPerTile"), percent = (researched(ranks.archives, "chargedShotPercent") * (100 + (ranks.gear?.chargedShot ?? 0))) / 100;
   const shotAtk = turn.handShot?.attack ?? 0, bossAtk = turn.handShot?.boss ?? 0, base = trainedAmount(ranks, "attackSpeed");
   const speed = turn.handShot?.speed ? snap(base * (1 + turn.handShot.speed / 100)) : base;
   const charge = turn.handShot?.charge ?? 0, foeCharge = turn.handShot?.foeCharge;
@@ -304,7 +319,7 @@ function arrows(turn: VolleyTurn, p: Player, v: Volleys, shots: Shot[], kills: V
     return more ? snap((percent * (100 + more)) / 100) : percent;
   };
   const boost = (e: InReach, tick: number) => {
-    const raised = arrowBoost(perTile, e.d2, charging(e), v.waited ?? 0), factor = beam(e.x, e.y, tick);
+    const raised = arrowBoost(perTile, e.d2, charging(e), v.waited ?? 0), factor = beam(e.x, e.y, tick) * (turn.attackAt?.(e.x, e.y) ?? 1);
     return factor === 1 ? raised : snap(raised * factor);
   };
   // The cards' Shot ATK adds to the enemy cards' ATK, one factor for the hand.
@@ -367,6 +382,9 @@ function inPlace(board: VolleyTurn["board"], e: InReach): InReach | undefined {
  * on an enemy in them (`beam`). */
 function ricochet({ board, seed, volleys, wrap, ricochet: rule }: VolleyTurn, p: Player, { x, y }: InReach, tick: number, shot: number, shots: Shot[], kills: VolleyKill[], beam: (x: number, y: number, tick: number) => number) {
   if (!rule || tileRandom(x, y, (seed ^ RICOCHET_SALT ^ Math.imul(volleys.turn, 0x85ebca6b) ^ Math.imul(shot, 0xc2b2ae35)) | 0) * 100 >= rule.chance) return;
+  // Psionic Tempest: by its own roll, the enemy the arrow struck takes a strike too, if it stands.
+  if (rule.self && tileRandom(x, y, (seed ^ TEMPEST_SALT ^ Math.imul(volleys.turn, 0x85ebca6b) ^ Math.imul(shot, 0xc2b2ae35)) | 0) * 100 < rule.self)
+    arcaneStrike(board, p, { x, y }, snap(rule.boost * beam(x, y, tick)), { from: { x, y }, tick, ricochet: true }, shots, kills);
   rebound(board, wrap, p, { x, y }, rule, tick, beam, shots, kills);
 }
 
@@ -407,6 +425,16 @@ function arcaneStrike(board: VolleyTurn["board"], p: Player, to: { x: number; y:
     landed.fell = enemy;
     kills.push({ enemy, at: to, instakill: false, crits: 0, ...(how.ricochet ? { ricochet: true as const } : how.phantasm ? { phantasm: true as const } : { thunderbolt: true as const }) });
   }
+}
+
+/** Lich King's Crown's ghosts rushing the boss at `to`: `ghosts` strikes,
+ * each an arcanum's at `boost` (Phantasm's ATK Mult, its first level), with
+ * Overseer's beam as the hero and they stand as the turn begins; they stop
+ * once it falls. Edits the board's enemies; returns the shots and kills. */
+export function ghostRush({ board, wrap, hero, beams }: Pick<VolleyTurn, "board" | "wrap" | "hero" | "beams">, to: { x: number; y: number }, ghosts: number, boost: number) {
+  const shots: Shot[] = [], kills: VolleyKill[] = [], factor = beamFactor(beams, 0, shortWay(to.x - hero.x, wrap), to.y - hero.y);
+  for (let i = 0; i < ghosts && !kills.length; i++) arcaneStrike(board, hero, to, snap(boost * factor), { from: to, tick: TURN_TICKS, phantasm: true }, shots, kills);
+  return { shots, kills };
 }
 
 /** A turn's Thunderbolt: up to `bolts` random enemies of the floor the hero
@@ -527,7 +555,7 @@ export function necroDecay({ board, wrap, hero, beams, changes }: Pick<VolleyTur
  * clears it from the board and is returned as a kill. An arrow with a
  * `charge` (the percent Charged Shot added to its ATK) above 0 carries it,
  * for its glow and gold outline. */
-function arrow({ board, seed, volleys }: VolleyTurn, p: Player, from: { x: number; y: number }, tick: number, { x, y, tile }: InReach, crit: ReturnType<typeof critRule>, shot: number, boost: number, cards: number, charge: number, shots: Shot[]): VolleyKill | undefined {
+function arrow({ board, seed, volleys, doomed, amber, retribution }: VolleyTurn, p: Player, from: { x: number; y: number }, tick: number, { x, y, tile }: InReach, crit: ReturnType<typeof critRule>, shot: number, boost: number, cards: number, charge: number, shots: Shot[]): VolleyKill | undefined {
   const enemy = tile.enemy;
   let applications = 0, superCrit = false;
   crit = critAgainst(crit, p, enemy);
@@ -536,14 +564,20 @@ function arrow({ board, seed, volleys }: VolleyTurn, p: Player, from: { x: numbe
     applications = sure + (tileRandom(x, y, (seed ^ ARROW_SALT ^ Math.imul(volleys.turn, 0x85ebca6b) ^ Math.imul(shot, 0xc2b2ae35)) | 0) * 100 < rest ? 1 : 0);
     superCrit = applications > 0 && landsSuperCrit(crit, tileRandom(x, y, (seed ^ ARROW_SALT ^ ARROW_SUPER_SALT ^ Math.imul(volleys.turn, 0x85ebca6b) ^ Math.imul(shot, 0xc2b2ae35)) | 0));
   }
-  const damage = Math.max(0, arrowDamage(p, enemy, applications, crit?.factor ?? 1, boost, cards, superCrit ? crit!.superCrit!.factor : 1)), left = snap(Math.max(0, enemy.hp - damage));
+  const struck = Math.max(0, arrowDamage(p, enemy, applications, crit?.factor ?? 1, boost, cards, superCrit ? crit!.superCrit!.factor : 1));
+  // Soul Reaper's mark: an arrow that lands destroys the enemy.
+  const own = doomed?.(x, y) ? Math.max(struck, enemy.hp) : struck, after = snap(Math.max(0, enemy.hp - own));
+  // Mirror Vault: Retribution comes off after the arrow's own damage.
+  const paid = retribution && retribution.pool > 0 && after > 0 ? Math.min(retribution.pool, after) : 0;
+  if (paid) retribution!.pool = snap(retribution!.pool - paid);
+  const damage = paid ? snap(own + paid) : own, left = snap(Math.max(0, enemy.hp - damage));
   const healed = p.lifesteal ? snap(Math.min(stealCeiling(facing(p, enemy)) - p.hp, (damage * p.lifesteal) / 100)) : 0;
   if (healed > 0) p.hp = snap(p.hp + healed);
   const landed: Shot = { by: "hero", from, to: { x, y }, damage, tick, ...(applications ? { crit: applications } : {}), ...(superCrit ? { superCrit: true as const } : {}), ...(charge > 0 ? { charge } : {}), ...(healed > 0 ? { healed } : {}),
     before: enemy.hp, hp: left, full: snap(enemy.hp + (tile.wound ?? 0)) };
   shots.push(landed);
   if (left > 0) {
-    board.wound?.(x, y, damage, breaksArmor(p, enemy) ? p.armorBreak : 0);
+    board.wound?.(x, y, damage, breaksArmor(p, enemy) ? p.armorBreak : 0, amber ?? 0);
     return undefined;
   }
   board.clear(x, y);

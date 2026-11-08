@@ -4,6 +4,7 @@ import { CARDS } from "../cards/cards.ts";
 import type { CardId } from "../cards/cards.ts";
 import { LIMIT_BREAKS } from "../progression/training.ts";
 import type { UpgradeId } from "../progression/upgrades.ts";
+import type { RelicRarity } from "../events/catalog.ts";
 
 /** Small DOM, number and sprite helpers shared by every page. */
 
@@ -66,11 +67,11 @@ export const missionIcon = (className = "mission-icon") =>
 export const eventIcon = (className = "event-icon") =>
   kitIcon("event", "", className);
 /** A relic: a jewel in a gold setting on a chain, its stone the rarity's
- * colour (rare blue, epic purple), with matching PNG pendants. */
-export const relicIcon = (rarity: "rare" | "epic", className = "relic-icon") => {
-  const [stone, glint] = rarity === "epic" ? ["#9b4dff", "#e6c8ff"] : ["#3d8bff", "#c8e2ff"];
-  return kitIcon(`relic-${rarity}`, "", className);
-};
+ * colour (rare blue, epic purple, legendary gold), with matching PNG
+ * pendants. The legendary one wears the epic pendant turned gold
+ * (`.relic-legendary` in style.css) until it has art of its own. */
+export const relicIcon = (rarity: RelicRarity, className = "relic-icon") =>
+  rarity === "legendary" ? kitIcon("relic-epic", "", `${className} relic-legendary`) : kitIcon(`relic-${rarity}`, "", className);
 /** A plain check mark: a weekly reward claimed. */
 export const checkIcon = (className = "check-icon") =>
   kitIcon("check", "", className);

@@ -69,12 +69,22 @@ export type StepRules = {
   /** How far potions may heal above max HP (Overheal training), as a
    * multiple of max HP in thousandths: 1,000 (none above) when absent. */
   overheal?: number;
+  /** The percent of the room between max HP and the Overheal ceiling Regen
+   * may heal into (Zenith Guard, equipment/powers.ts); none when absent. */
+  regenOverheal?: number;
+  /** What each kind of pickup yields more for the run (Mobius Cipher,
+   * equipment/powers.ts): a potion's heal, a shard's stat, a key's worth,
+   * each a factor; 1 when absent. */
+  yields?: Partial<Record<"potion" | "attack" | "defense" | KeyColor, number>>;
   /** The percent of max HP the hero regains after each fight it wins
    * (equipment), before the step's Regen. */
   victoryHeal?: number;
   /** The percent of its toll a Heart Door drains (Heart Door Resilience
    * research), 100 when absent. */
   heartToll?: number;
+  /** The percent of its durability breaking a Wooden Door takes (relics),
+   * 100 when absent. */
+  woodToll?: number;
   /** How much of a key each key colour a door takes costs, in tenths of a
    * percent (Key Efficiency research), 1,000 when absent. */
   keyCost?: number;
@@ -90,6 +100,9 @@ export type StepRules = {
    * Secret Knock, which `Game` rolls for the step it takes; previews and
    * planners never count on it). */
   freeDoor?: true;
+  /** The potion stepped onto heals twice (a relic's chance, which `Game`
+   * rolls for the step it takes). */
+  potionTwice?: true;
   /** The percent of max HP each key picked up heals, up to max HP (KEY's
    * Key Heal), then the percent of the Overheal ceiling, up to it (Key
    * Overheal); none when absent. */
@@ -172,7 +185,8 @@ export function resolveStep(player: Player, tile: Tile, rules: StepRules = BASE_
       // again (each its own factor), a key colour's tree its colour's key.
       if (rules.freeDoor) effect.free = true;
       const off = doorDiscount(tile, rules.doorOff);
-      const keyScale = doorKeyScale(tile, (scale * (rules.keyCost ?? 1000)) / 1000, rules.doorOff), tollScale = snap(scale * off.toll);
+      const keyScale = doorKeyScale(tile, (scale * (rules.keyCost ?? 1000)) / 1000, rules.doorOff);
+      const tollScale = snap((scale * off.toll * (doorRule(tile).type === "wood" ? rules.woodToll ?? 100 : 100)) / 100);
       const cost = rules.freeDoor ? [] : doorCost(tile, player, keyScale, tollScale);
       if (cost === null) return { blocked: "locked" };
       for (const color of cost) next.keys[color] = snap(next.keys[color] - keyNeed(keyScale, color));
@@ -201,7 +215,7 @@ export function resolveStep(player: Player, tile: Tile, rules: StepRules = BASE_
     }
     case "key": {
       const found = rules.keyFind?.[tile.color!] ?? 0, one = found ? snap((scaled(1) * (100 + found)) / 100) : scaled(1);
-      const amount = rules.doubleKey ? snap(2 * one) : one;
+      const amount = snap((rules.doubleKey ? 2 * one : one) * (rules.yields?.[tile.color!] ?? 1));
       next.keys[tile.color!] = snap(next.keys[tile.color!] + amount);
       if (amount !== 1) effect.keyAmount = amount;
       // KEY's Key Heal up to max HP, then its Key Overheal up to the Overheal ceiling, the key's colour's tree's adding.
@@ -216,16 +230,16 @@ export function resolveStep(player: Player, tile: Tile, rules: StepRules = BASE_
       break;
     }
     case "potion": {
-      const heal = scaled(potionRestores(tile, next.maxHp, rules));
+      const heal = snap(scaled(potionRestores(tile, next.maxHp, rules)) * (rules.potionTwice ? 2 : 1) * (rules.yields?.potion ?? 1));
       effect.healed = snap(healUpTo(next.hp, heal, hpCeiling(next.maxHp, rules)) - next.hp);
       next.hp = snap(next.hp + effect.healed);
       break;
     }
     case "attack":
-      next.attack = snap(next.attack + scaled(shardStat(tile, rules)));
+      next.attack = snap(next.attack + scaled(shardStat(tile, rules)) * (rules.yields?.attack ?? 1));
       break;
     case "defense":
-      next.defense = snap(next.defense + scaled(shardStat(tile, rules)));
+      next.defense = snap(next.defense + scaled(shardStat(tile, rules)) * (rules.yields?.defense ?? 1));
       break;
   }
   // Regen comes after the step's fight, door or pickup.
@@ -241,8 +255,14 @@ export const healAfterVictory = (hp: number, maxHp: number, rules: StepRules) =>
 
 /** `hp` after a step's Regen under `rules`, up to `maxHp`; a fallen hero
  * (0 HP) regains nothing. */
-export const regenerate = (hp: number, maxHp: number, rules: StepRules) =>
-  rules.regen && hp > 0 && hp < maxHp ? snap(Math.min(maxHp, hp + rules.regen)) : hp;
+export const regenerate = (hp: number, maxHp: number, rules: StepRules) => {
+  const top = regenCeiling(maxHp, rules);
+  return rules.regen && hp > 0 && hp < top ? snap(Math.min(top, hp + rules.regen)) : hp;
+};
+/** The most HP Regen heals up to: max HP, or with Zenith Guard its share of
+ * the way on to the Overheal ceiling. */
+export const regenCeiling = (maxHp: number, rules: StepRules) =>
+  rules.regenOverheal ? snap(maxHp + ((hpCeiling(maxHp, rules) - maxHp) * rules.regenOverheal) / 100) : maxHp;
 
 /** A standing `shield` after a step's Shield Regen, its share of the step's
  * Regen, up to `max`; one down regains nothing, and one above max keeps what it has. */

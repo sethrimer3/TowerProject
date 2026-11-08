@@ -89,13 +89,13 @@ function play(inputs: Spec[], result: Spec, skipAt = Infinity) {
 }
 
 const swords: Spec[] = Array.from({ length: 3 }, () => ({ def: "knightsSword", rarity: "uncommon" }));
-const rings: Spec[] = Array.from({ length: 2 }, () => ({ def: "ringOfFury", rarity: "common" }));
+const rings: Spec[] = Array.from({ length: 2 }, () => ({ def: "zenithGuard", rarity: "common" }));
 
 test("the assemble's melt draws as its golden records", () => {
   const got = {
     swords: play(swords, { def: "knightsSword", rarity: "rare" }),
-    rings: play(rings, { def: "ringOfFury", rarity: "uncommon" }),
-    swordIntoPlate: play(swords.slice(0, 1), { def: "bastionPlate", rarity: "rare" }),
+    rings: play(rings, { def: "zenithGuard", rarity: "uncommon" }),
+    swordIntoPlate: play(swords.slice(0, 1), { def: "equilibriumTether", rarity: "rare" }),
     skipped: play(swords, { def: "knightsSword", rarity: "rare" }, 100),
   };
   if (process.env.UPDATE_GOLDEN || !existsSync(GOLDEN)) writeFileSync(GOLDEN, JSON.stringify(got, null, 2) + "\n");

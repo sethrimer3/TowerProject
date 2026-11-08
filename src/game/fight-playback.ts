@@ -1,4 +1,4 @@
-import { bout, critAgainst, DEFEAT_MS, guaranteedCrits, landsSuperCrit, heroHpAfter, heroHpDuring, resume, REVIVE_PAUSE_MS, revivals, shieldDuring, summarize, type Bout, type CritRule, type Crits, type Revival, type Wings } from "../combat.ts";
+import { bout, chainedCrits, critAgainst, DEFEAT_MS, guaranteedCrits, landsSuperCrit, heroHpAfter, heroHpDuring, resume, REVIVE_PAUSE_MS, revivals, shieldDuring, summarize, type Bout, type CritRule, type Crits, type Revival, type Wings } from "../combat.ts";
 import type { Enemy, Mode, Player } from "../entities.ts";
 import type { Run } from "../runs.ts";
 import { snap } from "../exact.ts";
@@ -22,13 +22,35 @@ export interface FightHost {
   /** Angel Wings' charge against `enemy`, while it is ready (`Game.wingsReady`). */
   wingsFor(enemy: Enemy): Wings | undefined;
   readonly animatesFights: boolean;
+  /** Raptor Blade's chain, while it is worn: the strikes a Super Crit makes
+   * Super Crits after it, and those still owed from the fights before. */
+  readonly superChain?: { length: number; carried: number };
 }
 
 /** A step into an enemy as fight playback carries it: what it resolved to
  * (made to end as the fight was played), where the enemy stands, and the
  * hero's critical strikes in it as played, and whether Angel Wings raised
  * the hero in it. */
-export type FoughtStep = { outcome: StepEffect; dest: { x: number; y: number }; crits?: number; winged?: boolean };
+export type FoughtStep = { outcome: StepEffect; dest: { x: number; y: number }; crits?: number; winged?: boolean; played?: Played };
+/** What a fight played out leaves the worn Uniques' powers (equipment/powers.ts):
+ * Raptor Blade's Super Crits still owed (`chain`), the damage the hero took
+ * to HP and the Aether Shield (`taken`) and the Retribution the first strike
+ * spent (`retributed`). */
+export type Played = { chain?: number; taken: number; retributed: number };
+/** What `fight` leaves the powers, its crits being `crits`. */
+function playedOf(fight: Bout, crits: Crits | undefined): Played {
+  let taken = 0, retributed = 0, strikes = 0;
+  for (const s of fight.strikes) {
+    if (s.by === "enemy") taken = snap(taken + s.damage + (s.shielded ?? 0));
+    else {
+      strikes++;
+      retributed = snap(retributed + (s.retribution ?? 0));
+    }
+  }
+  return { ...(crits?.chainLeft ? { chain: crits.chainLeft(strikes) } : {}), taken, retributed };
+}
+/** Whether the hero taken into a fight carries a power the fight must be played out for. */
+const carriesPower = (p: Player) => p.retribution !== undefined || !!p.amber;
 
 /** Salts the run seed for Revive's rolls, apart from the world's own. */
 const REVIVE_SALT = 0x7e51e;
@@ -91,13 +113,14 @@ export class FightPlayback<S extends FoughtStep> {
       enemy = caught;
     }
     const lethal = isLethal(outcome), revive = lethal ? this.revival(step.dest) : undefined, wings = lethal ? this.host.wingsFor(enemy) : undefined;
-    const crits = this.critRolls(step.dest, enemy);
-    if (!this.playsFights && !revive && !wings && !crits) return this.take(step, 0);
-    const fight = bout(this.host.fighterAt(step.dest), enemy, revive, crits, wings), start = performance.now(), rose = revivals(fight).length;
+    const crits = this.critRolls(step.dest, enemy), fighter = this.host.fighterAt(step.dest), powered = carriesPower(fighter);
+    if (!this.playsFights && !revive && !wings && !crits && !powered) return this.take(step, 0);
+    const fight = bout(fighter, enemy, revive, crits, wings), start = performance.now(), rose = revivals(fight).length;
     step.crits = critHits(fight);
     step.winged = winged(fight);
-    // Critical strikes, and a smite, change how long the fight lasts, so it ends as it was played.
-    if (crits || smote(fight)) this.restate(outcome, fight);
+    step.played = playedOf(fight, crits);
+    // Critical strikes, a smite and the Uniques' powers change how the fight goes, so it ends as it was played.
+    if (crits || smote(fight) || powered) this.restate(outcome, fight);
     else if (rose) {
       const rules = this.host.stepRules;
       outcome.player.hp = regenerate(healAfterVictory(afterExtra(heroHpAfter(fight, p.hp), outcome.extraDamage, p.maxHp), p.maxHp, rules), p.maxHp, rules);
@@ -120,7 +143,10 @@ export class FightPlayback<S extends FoughtStep> {
     // The same fight, so the board shows it as it plays out.
     const encounter: Encounter = Object.assign(this.shown, { enemy, outcome: step.outcome, settle: () => {
       // Training bought as it plays out replays the rest: count the crits as played.
-      if (!encounter.summary) step.crits = critHits(encounter.bout);
+      if (!encounter.summary) {
+        step.crits = critHits(encounter.bout);
+        step.played = playedOf(encounter.bout, this.critRolls(encounter.to, enemy));
+      }
       step.winged = winged(encounter.bout);
       this.take(step, revivals(encounter.bout).length);
     } });
@@ -179,8 +205,11 @@ export class FightPlayback<S extends FoughtStep> {
     if (!rule) return this.surprised ? { factor: 1, applications: () => 0, ...first } : undefined;
     const floor = mode === "tower" ? run.height + 1 : 0, seed = run.seed ^ CRIT_SALT ^ Math.imul(floor, 0x9e3779b1);
     const sure = guaranteedCrits(rule.chance), rest = snap(rule.chance - 100 * sure);
-    return { factor: rule.factor, applications: (strike) => sure + (tileRandom(at.x, at.y, (seed ^ Math.imul(strike + 1, 0x85ebca6b)) | 0) * 100 < rest ? 1 : 0),
+    const crits: Crits = { factor: rule.factor, applications: (strike) => sure + (tileRandom(at.x, at.y, (seed ^ Math.imul(strike + 1, 0x85ebca6b)) | 0) * 100 < rest ? 1 : 0),
       ...(rule.superCrit ? { superFactor: rule.superCrit.factor, superCrit: (strike: number) => landsSuperCrit(rule, tileRandom(at.x, at.y, (seed ^ SUPER_SALT ^ Math.imul(strike + 1, 0x85ebca6b)) | 0)) } : {}), ...first };
+    // Raptor Blade: a Super Crit makes the strikes after it Super Crits, owed on from fight to fight.
+    const chain = this.host.superChain;
+    return chain && crits.superCrit ? chainedCrits(crits, chain.length, chain.carried) : crits;
   }
   /** Settles the fight being played out, as if it had played to the end.
    * Returns whether there was one. */
@@ -244,7 +273,8 @@ export class FightPlayback<S extends FoughtStep> {
       shroud = snap(Math.max(0, shroud - (s.shrouded ?? 0)));
       shield = snap(Math.max(0, shield - (s.shielded ?? 0)));
     }
-    fight.bout = resume(fight.bout, from, { player: { ...this.host.fighterAt(fight.to), hp, shroud, ...(p.shield === undefined ? {} : { shield }) }, enemy: fight.enemy, revives: this.revival(fight.to), crits: this.critRolls(fight.to, fight.enemy), wings: this.host.wingsFor(fight.enemy) });
+    const fighter = this.host.fighterAt(fight.to);
+    fight.bout = resume(fight.bout, from, { player: { ...fighter, hp, shroud, ...(fighter.shroudGuard ? { fullShroud: fighter.shroud ?? 0 } : {}), ...(p.shield === undefined ? {} : { shield }) }, enemy: fight.enemy, revives: this.revival(fight.to), crits: this.critRolls(fight.to, fight.enemy), wings: this.host.wingsFor(fight.enemy) });
     this.showRevivals(fight.start, fight.bout);
     this.showBreak(fight.start, fight.bout);
     this.restate(fight.outcome, fight.bout);

@@ -48,7 +48,7 @@ _Avoid_: fullscreen, zen mode, screensaver
 
 **Equipment**:
 The pieces a hero wears, one per open category, opened by claiming Tower II's floor 60 Goal.
-Helmet, Shield, Chestplate, Sword and Boots start open; Gloves, Cape, Belt, Ring and Amulet await later unlocks.
+Helmet, Shield, Chestplate, Sword and Boots start open; Gloves, Cape, Belt and Amulet await later unlocks.
 Kept in one shared inventory between runs.
 _Avoid_: gear (the Gear page and its provisions), items (pickups on the board)
 
@@ -57,12 +57,22 @@ The pieces one mode's hero wears; the Tower and the Delve each have their own, d
 _Avoid_: build, set
 
 **Standard piece**:
-A category's plain piece, held by Equipment Chests or crafted once its category is open.
+One of a category's plain pieces (three in each starting category), held by Equipment Chests, crafted, or brought by a Gem pull's Common to Rare.
 _Avoid_: common item (Common is a rarity)
 
 **Unique piece**:
-One of a category's three named pieces with a specialised ability, from Gem pulls only.
+One of a category's three named pieces with a power of its own, from a Gem pull's Epic or Legendary only.
 _Avoid_: legendary, artifact
+
+**Power**:
+What a Unique piece does beyond its main effect and substats, stronger at each rarity from Epic up.
+_Avoid_: ability, perk
+
+**Marked for death**:
+An enemy Soul Reaper has marked: the hero's first strike or arrow destroys it.
+
+**Retribution**:
+Mirror Vault's store of the damage the hero has taken, multiplied, struck back after a fight's first strike or an arrow.
 
 **Upgrade material**:
 One of four shared equipment resources: Whetstone, Iron Rivets, Quilted Padding and Hobnails, held by Supply Chests and returned by dismantling.
@@ -74,7 +84,7 @@ Making a Common Standard piece by spending every upgrade material in its recipe.
 _Avoid_: Assemble (raising rarity by consuming copies)
 
 **Merge**:
-Three copies of a piece at one rarity (Uncommon or above; Common pieces never merge) becoming one of the next rarity; the chosen target keeps its level. The Equipment screen calls it **Assemble**.
+Copies of a piece at one rarity becoming one of the next rarity (Uncommon or above; Common pieces never merge): three copies to make a Rare or an Epic, two and one more piece of the category to make a Legendary or a Mythic, two to make an Ancestral; the chosen target keeps its level. The Equipment screen calls it **Assemble**.
 _Avoid_: fuse, combine
 
 **Dismantle**:
@@ -82,15 +92,26 @@ Breaking pieces into their upgrade material.
 _Avoid_: salvage (used only for the amount returned, and in **Auto-salvage**: the player's toggle that dismantles Common chest pieces as they are found), destroy
 
 **Pity**:
-The count, per category, of Gem pulls since the last Rare; the 100th without one is a Rare.
+The count, per category and for pulls of all types apart, of Gem pulls since the last Epic or better; the 120th without one is an Epic Unique.
 
-**Intrinsic line**:
-One of a piece's fixed effects, set by its definition (its base stats and a Unique's signature ability).
-_Avoid_: affix, base effect
+**Left out of draws**:
+A Unique the player has removed from future Gem pulls (once a five-Star piece is owned; a piece's first five-Star copy does it at once), its share going to the rest.
 
-**Effect slot**:
-A place on a piece for one chosen effect, opened by its rarity and level (one per rarity, at one level past the cap below).
-_Avoid_: socket, affix, prefix, suffix
+**Star**:
+A step past Ancestral, made by merging a Legendary copy into an Ancestral piece: each raises its level cap by 20 and its main effect by 4% of itself, up to five.
+_Avoid_: ascension, awakening
+
+**Main effect**:
+The one bonus leveling a piece raises, set by its category: a Sword's ATK, a Shield's DEF, a Helmet's Arcanum Damage, Boots' Gold found, a Chestplate's max HP.
+_Avoid_: base stat, intrinsic line (the per-piece lines it replaced)
+
+**Efficiency** (Chestplate):
+A worn Chestplate's second main effect: a percent the other worn pieces' main effects are raised by.
+
+**Substat**:
+A chosen bonus in one of a piece's slots, opened by its level, Uncommon to Ancestral but never rarer than the piece; its value comes from its rarity, never the piece's level.
+Code and older docs call its slot an **effect slot**.
+_Avoid_: affix, socket, prefix, suffix
 
 **Refine**:
 Paying to roll new candidates for an effect slot beside the effect it holds, which stays unless the player takes one.
@@ -101,7 +122,7 @@ A slot's count of Refines, which only rises; its milestones guarantee a top-rari
 _Avoid_: pity (the Gem pulls' count)
 
 **Choice**:
-A Refinement milestone's reward: any effect of the slot's pool, at the piece's highest effect rarity, taken outright.
+A Refinement milestone's reward: any substat of the slot's pool, at the piece's highest substat rarity, taken outright.
 
 **Improve**:
 Raising the effect a slot holds one rarity, up to the piece's own.
@@ -403,7 +424,7 @@ A monster that appears on a floor during a run rather than being made with it, l
 _Avoid_: summon, added enemy
 
 **Gold multiplier**:
-A factor on every Gold banked: the tower's, the Gold ad's boost or Ad-Disable (one slot), each coin pack, the themes owned, the equipment's Gold found and the run's Gold boons. The player sees them together as *All Gold Bonuses*; Gold Bonus training is none of them, since it raises only a kill's, a chest's, an item's and a floor's Gold, and Interest.
+A factor on every Gold banked: the tower's, the Gold ad's boost or Ad-Disable (one slot), each coin pack, the Event Collection, the Gold Bonus relics, the equipment's Gold found and the run's Gold boons. The player sees them together as *All Gold Bonuses*; Gold Bonus training is none of them, since it raises only a kill's, a chest's, an item's and a floor's Gold.
 _Avoid_: Gold bonus (the Training row)
 
 **Silver**:
@@ -657,7 +678,7 @@ The percent Time Dilation or Necrotic Frost slows what is in its field by: it ac
 Ricochet Shot's strike: an arrow's hit springing a white line to the closest other enemies on the floor. A ricochet never sets off another.
 
 **Medal**:
-A limited currency, kept between runs, earned from the weekly mission rewards and Events' missions. Nothing spends Medals yet. Shown as a gold disc on a red ribbon.
+A limited currency, kept between runs, earned from the weekly mission rewards and Events' missions, and spent in events' Stores. Shown as a gold disc on a red ribbon.
 _Avoid_: badge (a card's token), trophy (the Tournament's)
 
 **Press** (a card):
@@ -760,7 +781,7 @@ The Silver a run starting above floor 1 (a Warp, or a Retry from one) goes insid
 _Avoid_: warp bonus, skip silver
 
 **Interest**:
-Silver added on each floor climbed for the first time in a run: Interest % research's share of the Silver held, at most Max Interest's limit (50 at first), then multiplied by Gold Bonus.
+Silver added on each floor climbed for the first time in a run: Interest % research's share of the Silver held, at most Max Interest's limit (50 at first), then multiplied by Silver found, as all Silver is.
 _Avoid_: dividend
 
 **Floor Skip Reward**:
@@ -787,15 +808,15 @@ _Avoid_: badge (a card's), attention, alert, notification
 ### Themes
 
 **UI theme**:
-A look for the page around the board: its panels, buttons and sounds. Classic is always available; Medieval is owned from the start; Neon, Terminal, Desktop, Glyph, Ember, Yang, Yin, Shiro, Kuro, Arcade, System, Orbit, Pixel, Doodle and Murk are bought (1 Gold each for now).
+A look for the page around the board: its panels, buttons and sounds. Classic is always available; Medieval is owned from the start; Neon, Terminal, Desktop, Glyph, Ember, Yang, Yin, Shiro, Kuro, Arcade, System, Orbit, Pixel, Doodle and Murk are bought in an event's Store for Medals.
 _Avoid_: skin, style
 
 **Game theme**:
-A look for the board itself: its tiles, the hero, enemies and torches. Classic is always available; Neon, Terminal, Desktop, Glyph, Ember, Yang, Yin, Shiro, Kuro, Arcade, System, Kroz, Orbit, Pixel, Doodle and Murk are bought (1 Gold each for now).
+A look for the board itself: its tiles, the hero, enemies and torches. Classic is always available; Neon, Terminal, Desktop, Glyph, Ember, Yang, Yin, Shiro, Kuro, Arcade, System, Kroz, Orbit, Pixel, Doodle and Murk are bought in an event's Store for Medals.
 _Avoid_: tileset, board skin
 
 **Owned theme**:
-A UI or Game theme the player has bought (or owns from the start), kept for good; each adds 2.5% to all Gold banked, worn or not.
+A UI or Game theme the player has bought in an event's Store, kept for good; each adds to the Event Collection's Gold, worn or not.
 _Avoid_: skin, unlocked theme
 
 ### The Shop
@@ -878,8 +899,28 @@ _Avoid_: daily mission (the 8-hourly ones), quest
 A purchase for one event that doubles every Medal it pays, those already paid too, and opens its two premium relics.
 _Avoid_: event pass, Premium Pass (the Goals' passes)
 
+**Event theme**:
+What an event is about, and its name, by the calendar: each year opens with New Year, the event holding 1 January, and runs through the same 26 themes in order, a year with a 27th event ending with the rare Blue Moon.
+_Avoid_: season
+
+**Event Store**:
+An event's second tab, selling for Medals: Gems, Arcanite and Equipment supplies (each dearer with every one bought, until the next event), the UI theme and Game theme the event features, and the bonus tracks.
+_Avoid_: shop (the Shop sells for Gems and money)
+
+**Featured theme**:
+A UI or Game theme an event's Store sells: a theme named as an event is featured only by that event; the rest take turns, one of each kind an event.
+
+**Bonus track**:
+A piece of music bought in any event's Store, joining the play sequence for good.
+
+**Event Collection**:
+The Gold multiplier for the themes and bonus tracks owned, their shares added: a UI theme 1%, a Game theme 2%, a track 0.8%. Classic gives none.
+
 **Relic**:
-A unique keepsake won by reaching an event's Medal milestone (premium relics only with the Event Booster), each giving a permanent bonus, each owned at most once and kept for good. Spending Medals is never needed to win one.
+A unique keepsake won by reaching an event's Medal milestone (premium relics only with the Event Booster), or by claiming a tower's last Goal, each giving a permanent bonus, each owned at most once and kept for good. Spending Medals is never needed to win one. A free relic multiplies a Training row's value; a premium relic gives what training can't. Each event theme has its own four, and each tower two.
+
+**Relic rarity**:
+How rare a relic is: rare, epic or legendary. An event's first relic of each pair is rare and its second epic; a tower's last Goal gives an epic relic and, as its premium reward, a legendary one.
 _Avoid_: trophy (the Tournament's), artifact, badge
 
 **Lakeside**:

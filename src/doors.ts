@@ -90,7 +90,10 @@ export type DoorKind = "yellow" | "heart" | "wood";
  * `woodKeys` and `woodToll`, of a Wooden Door's key and of the HP breaking
  * it takes (WOODEN DOOR's tree). Each adds into a kind's own as one card
  * factor. */
-export type DoorDiscounts = Partial<Record<DoorKind | "all" | "plain" | "hearts" | "woodKeys" | "woodToll" | `${KeyColor}Key`, number>>;
+/** Each kind of door's percent off, and each key colour's: the card trees'
+ * (`${color}Key`) and the worn Key Efficiency substats' (`${color}Gear`),
+ * which multiply each other. */
+export type DoorDiscounts = Partial<Record<DoorKind | "all" | "plain" | "hearts" | "woodKeys" | "woodToll" | `${KeyColor}Key` | `${KeyColor}Gear`, number>>;
 /** What `off` multiplies the door `tile`'s keys and its HP toll by: 1 for
  * each it leaves alone. */
 export function doorDiscount(tile: Tile, off?: DoorDiscounts): { keys: number; toll: number } {
@@ -103,8 +106,8 @@ export function doorDiscount(tile: Tile, off?: DoorDiscounts): { keys: number; t
  * colour costs alike. */
 export function doorKeyScale(tile: Tile, base: number, off?: DoorDiscounts): KeyScale {
   const keys = base * doorDiscount(tile, off).keys;
-  if (!off || !KEY_ORDER.some((color) => off[`${color}Key`])) return snap(keys);
-  const cut = (color: KeyColor) => (100 - Math.min(100, off[`${color}Key`] ?? 0)) / 100;
+  if (!off || !KEY_ORDER.some((color) => off[`${color}Key`] || off[`${color}Gear`])) return snap(keys);
+  const cut = (color: KeyColor) => ((100 - Math.min(100, off[`${color}Key`] ?? 0)) / 100) * ((100 - Math.min(100, off[`${color}Gear`] ?? 0)) / 100);
   return { yellow: snap(keys * cut("yellow")), blue: snap(keys * cut("blue")), red: snap(keys * cut("red")) };
 }
 function discountOf(tile: Tile, off: DoorDiscounts): { keys: number; toll: number } {

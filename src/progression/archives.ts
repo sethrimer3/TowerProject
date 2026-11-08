@@ -1,3 +1,5 @@
+import { bestWorn } from "../equipment/effects.ts";
+import { relicFactor, type RelicHolder } from "../economy/relic-effects.ts";
 import { IGNORE_PER_RUN, REGAIN_FLOORS, TARGET_PER_RUN } from "../config.ts";
 import { levelForXp } from "./xp.ts";
 import type { UpgradeId } from "./upgrades.ts";
@@ -1028,7 +1030,7 @@ export function defaultArchives(): ArchivesSave {
 
 /** What the Archives read from the rest of the profile (a `Save`), and
  * the Gold and Gems they spend. */
-export type ArchivesOwner = {
+export type ArchivesOwner = RelicHolder & {
   archives: ArchivesSave;
   gold: number;
   /** Gems, which hire archivists. */
@@ -1081,9 +1083,11 @@ export const withNextLevel = (a: ArchivesSave, id: ResearchId): ArchivesSave =>
   ({ ...a, levels: { ...a.levels, [id]: researchLevel(a, id) + 1 } });
 
 /** How long `level` takes with the research speed the Archives have now,
- * in ms. The definition keeps its own hours. */
-export const duration = (a: ArchivesSave, level: ResearchLevel) =>
-  Math.round((level.hours * 3_600_000) / (1 + researched(a, "researchSpeed")));
+ * in ms, the relics' and the worn Scholarship substats' (either loadout's,
+ * the more) raising it. The definition keeps its own hours; a job under
+ * way keeps the time it started with. */
+export const duration = (a: ArchivesSave, level: ResearchLevel, owner?: RelicHolder & Partial<Pick<Save, "equipment">>) =>
+  Math.round((level.hours * 3_600_000) / ((1 + researched(a, "researchSpeed")) * relicFactor(owner ?? {}, "researchSpeed") * (owner?.equipment ? (100 + bestWorn({ equipment: owner.equipment }, "researchSpeed")) / 100 : 1)));
 
 /** The Gold `level` costs with the Research Cost Discount the Archives have
  * now. The definition keeps its own Gold. */
@@ -1139,7 +1143,7 @@ export function startResearch(o: ArchivesOwner, slot: number, id: ResearchId, no
 }
 function begin(o: ArchivesOwner, slot: number, id: ResearchId, now: number) {
   const a = o.archives, level = nextLevel(a, id)!, free = o.settings.freePurchases;
-  const ms = free ? 0 : duration(a, level), paid = free ? 0 : price(a, level);
+  const ms = free ? 0 : duration(a, level, o), paid = free ? 0 : price(a, level);
   const done = a.progress[id] ?? 0;
   delete a.progress[id];
   o.gold -= paid;

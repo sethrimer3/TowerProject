@@ -14,7 +14,10 @@ test("UI sprites follow the selected theme and are restored by reset", () => {
     } } },
   });
   try {
+    // Medieval, earned in an event's Store, wears the sprites as Classic does.
     const save = defaults();
+    save.themes.push("medievalUi");
+    save.settings.uiTheme = "medieval";
     applyUiTheme(save);
     assert.ok(classes.has("medieval"));
     assert.ok(classes.has("ui-sprites"));

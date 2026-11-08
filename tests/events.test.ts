@@ -1,3 +1,5 @@
+import { EVENT_THEME_NAMES, eventTheme } from "../src/events/themes.ts";
+import { RELICS } from "../src/economy/relics.ts";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
@@ -60,9 +62,11 @@ test("the schedule: fortnightly events from Monday 00:00 GMT, 7 missions on the 
   assert.equal(nextReleaseAt(id, START + HOUR), START + DAY_MS);
   assert.equal(nextReleaseAt(id, START + 6 * DAY_MS + HOUR), START + 7 * DAY_MS);
   assert.equal(nextReleaseAt(id, START + 7 * DAY_MS), null, "nothing new for the last six days");
-  // The stand-in names it by its first day, with placeholder relics.
-  assert.equal(stubEvent(id).name, `Event of ${new Date(START).getUTCDate()} ${new Date(START).toUTCString().slice(8, 11)} ${new Date(START).getUTCFullYear()}`);
-  assert.ok(stubEvent(id).milestones.every((m) => m.relic === null));
+  // The stand-in names it by its theme on the calendar, with that theme's relics.
+  const info = stubEvent(id);
+  assert.equal(info.name, EVENT_THEME_NAMES[eventTheme(id).theme]);
+  assert.ok(info.milestones.every((m) => m.relic && RELICS[m.relic]?.theme === info.theme));
+  assert.deepEqual(info.milestones.map((m) => RELICS[m.relic!]!.premium), info.milestones.map((m) => m.premium));
   assert.deepEqual(STUB_MILESTONES.map((m) => [m.medals, m.premium]), [[350, false], [550, true], [700, false], [1100, true]]);
   assert.deepEqual([...TIER_MEDALS], [10, 15, 20]);
 });

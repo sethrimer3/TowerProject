@@ -18,7 +18,7 @@ Read chances from `Game.environments` or the purse, never `run.goldenFloor` alon
 Together they are a floor's `FloorPay` (`floorPay`, `payAt`, `payHere`), and on a floor with both they multiply.
 `RunPurse.gold(found, pay)` hands it to `goldBanked` as `GoldContext.golden` and `stellar`, factors among the Gold multipliers, so each find is multiplied once: kills, chests (Double and Triple included), Pickup Gold and the previews by the find's tile, Gold Touch and smelts by the hero's, Spare Change by the floor reached (`floorGold(key, reached)`) and Floor Skip Reward by the floor skipped.
 `RunPurse.silver(base, pay)` multiplies Silver alike: kills (`killSilver`'s `at`), chests, doors and pickups by the find's tile (`silverAt`), Silver Touch and smelts by the hero's (`silverHere`), Wishing Well and Interest by the floor reached (`floorSilver(reached)`, `interest(reached)`).
-Interest stops at Max Interest before Gold Bonus and the environments multiply it, and the Events' full-Interest check reads `maxInterest(reached)` for that.
+Interest stops at Max Interest before Silver found and the environments multiply it, and the Events' full-Interest check reads `maxInterest(reached)` for that.
 End-of-run Gold and Warp Loot's Silver have no floor and aren't multiplied.
 `Game.goldContext` passes the hero's floor's factors, so the All Gold Bonuses box and the HUD's total show a Golden Floor line once `goldenFloors` or Aurum Bloom is owned and a Stellar Floor line with Aurum Bloom (Inactive off one).
 

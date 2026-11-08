@@ -14,6 +14,7 @@ import type { DilationRun } from "./arcana/time-dilation.ts";
 import type { PhantasmRun } from "./arcana/phantasm.ts";
 import type { FrostRun } from "./arcana/necrotic-frost.ts";
 import type { VoidwellRun } from "./arcana/voidwell.ts";
+import type { GearRun } from "./equipment/powers.ts";
 import type { ChestOdds, DoorOdds, Player, Tile } from "./entities.ts";
 /** A stat a provision boosts for a while. */
 export type Boosted = (typeof PROVISION_BOOSTS)[keyof typeof PROVISION_BOOSTS];
@@ -195,6 +196,11 @@ export type RunCore = {
    * would have (`next`) and the turns since the last fight (`idle`); absent
    * with none. Undo takes it back with the run. */
   combo?: { next: number; idle: number };
+  /** What the worn Uniques' powers keep for the run (equipment/powers.ts):
+   * Super Crits owed, Retribution, Free Upgrade rolls won on the floor,
+   * pickups counted, bosses rushed; absent with none. Undo takes it back
+   * with the run. */
+  gear?: GearRun;
 };
 /** A Tower ascent. */
 export type TowerRun = RunCore & {

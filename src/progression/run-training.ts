@@ -1,3 +1,4 @@
+import { relicCut, type RelicHolder } from "../economy/relic-effects.ts";
 import { schedulePrice } from "../economy/prices.ts";
 import { trainingDef, TRAINING, trainingCap, type TrainingId, type TrainingRow } from "./training.ts";
 import type { Mode } from "../entities.ts";
@@ -13,7 +14,12 @@ import { rowValue, runTrainingOpen } from "./loadout.ts";
 /** What the rank after `bought` ranks bought this run costs in Silver, on
  * the row's `silver` schedule: its base, and for the k-th rank after it `step + k` more than the
  * one before, `step` rising by `growth` every five, summed here at once. */
-export const silverPrice = (id: TrainingId, bought: number) => schedulePrice(trainingDef(id).silver, bought);
+/** Row `id`'s Silver price for its next rank in a run, after `bought`,
+ * less relics' Training cost cut (`cut`, rounded up). */
+export const silverPrice = (id: TrainingId, bought: number, cut = 1) => {
+  const price = schedulePrice(trainingDef(id).silver, bought);
+  return cut === 1 ? price : Math.ceil(price * cut);
+};
 
 /** The highest level `row` reaches in a run: its cap with the Limit Breaks
  * owned, as on the Training tab. */
@@ -38,18 +44,18 @@ export function ranksInRun(save: Pick<Save, "training">, run: Pick<RunCore, "tra
  * and is maxed. */
 export type RunTrainingOffer = ReturnType<typeof runTrainingOffer>;
 
-export function runTrainingOffer(save: Pick<Save, "training" | "upgrades" | "goals">, run: Pick<RunCore, "training" | "hand">, id: TrainingId) {
+export function runTrainingOffer(save: Pick<Save, "training" | "upgrades" | "goals"> & RelicHolder, run: Pick<RunCore, "training" | "hand">, id: TrainingId) {
   const row = TRAINING.find((t) => t.id === id)!, bought = boughtInRun(run, id);
   const level = save.training[id] + bought, max = runTrainingMax(row, save);
-  return { row, bought, level, max, price: silverPrice(id, bought), open: runTrainingOpen(row, save, heldCards(run)), maxed: level >= max };
+  return { row, bought, level, max, price: silverPrice(id, bought, relicCut(save, "trainingCost")), open: runTrainingOpen(row, save, heldCards(run)), maxed: level >= max };
 }
 
 /** What one press of `id`'s price buys in `run` at Buy Quantity `q`: the
  * ranks (up to its most) and their Silver, and whether `silver` pays for
  * them. */
-export function runTrainingBulk(save: Pick<Save, "training" | "upgrades" | "goals">, run: Pick<RunCore, "training" | "hand">, id: TrainingId, q: BuyQuantity, silver: number) {
+export function runTrainingBulk(save: Pick<Save, "training" | "upgrades" | "goals"> & RelicHolder, run: Pick<RunCore, "training" | "hand">, id: TrainingId, q: BuyQuantity, silver: number) {
   const offer = runTrainingOffer(save, run, id);
-  return bulkBuy(q, Math.max(0, offer.max - offer.level), (k) => silverPrice(id, offer.bought + k), silver);
+  return bulkBuy(q, Math.max(0, offer.max - offer.level), (k) => silverPrice(id, offer.bought + k, relicCut(save, "trainingCost")), silver);
 }
 
 /** What row `id` stands at in `run` now, as the run's cards show it: the

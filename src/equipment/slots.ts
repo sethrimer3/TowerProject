@@ -1,5 +1,5 @@
 // Effect slots and Refinement: what an item's slots hold and every change to
-// them. A slot opens as the item's rarity and level allow (`openSlots`), and
+// them. A slot opens as the item's level reaches its level (`openSlots`), and
 // its first roll is free: a few candidates from the category's pool, one of
 // which the player takes. After that, a paid Refine rolls new candidates
 // beside the effect held, which stays unless the player takes one, and
@@ -11,23 +11,24 @@
 // Pure functions over the save; the game's EquipmentDesk wraps them.
 import { snap } from "../exact.ts";
 import {
-  EFFECT_CANDIDATES, EFFECT_RARITY_WEIGHTS, EQUIP_RARITIES, IMPROVE_COST_FACTOR, RARITY_TIERS, rarityRank, REFINE_CHOICE_EVERY,
-  REFINE_COST, REFINE_GUARANTEE_EVERY, type EquipRarity,
+  EFFECT_CANDIDATES, EQUIP_RARITIES, IMPROVE_COST_FACTOR, rarityRank, REFINE_CHOICE_EVERY, REFINE_COST, REFINE_GUARANTEE_EVERY,
+  SUBSTAT_RARITIES, SUBSTAT_RARITY_WEIGHTS, SUBSTAT_SLOT_LEVELS, substatCap, type EquipRarity,
 } from "./balance.ts";
-import { effectPool, inPool, slotEffectDef } from "./slot-effects.ts";
-import { categoryOf, findItem, openSlotCount, type EffectChoice, type EffectSlot, type EquipItem, type EquipmentSave } from "./inventory.ts";
+import { effectPool, inPool, rollsAt, slotEffectDef } from "./slot-effects.ts";
+import { categoryOf, findItem, maxLevel, openSlotCount, rarityFor, reachableLevel, type EffectChoice, type EffectSlot, type EquipItem, type EquipmentSave } from "./inventory.ts";
 import { materialOf, hasMaterials, spendMaterials } from "./catalog.ts";
 import { rollRarity, withSavedStream } from "./acquire.ts";
 
 /** The rarest effect `item`'s slots may hold. */
-export const effectCap = (item: Pick<EquipItem, "rarity">) => RARITY_TIERS[item.rarity].maxEffect;
+export const effectCap = (item: Pick<EquipItem, "rarity">) => substatCap(item.rarity);
 
-/** Each slot `item` will ever have, in order: open or not, the level it
- * opens at and the rarity it needs. */
+/** Each slot `item` can ever have (those its class and rarity can reach),
+ * in order: open or not, the level it opens at, and, past the piece's cap,
+ * the rarity (and Stars) that level needs. */
 export function slotPlan(item: EquipItem) {
-  const open = openSlotCount(item);
-  return EQUIP_RARITIES.map((rarity, index) => ({
-    index, rarity, level: RARITY_TIERS[rarity].slotLevel, open: index < open,
+  const open = openSlotCount(item), reach = reachableLevel(item);
+  return SUBSTAT_SLOT_LEVELS.filter((level) => level <= reach).map((level, index) => ({
+    index, level, open: index < open, needs: level > maxLevel(item) ? rarityFor(level) : null,
     slot: index < open ? item.slots[index] : undefined,
   }));
 }
@@ -52,22 +53,24 @@ export function improveCost(item: EquipItem) {
   return { ...c, gold: c.gold * IMPROVE_COST_FACTOR, material: c.material * IMPROVE_COST_FACTOR };
 }
 
-/** The effects slot `index` may be offered: the category's pool less those
- * the item's other open slots hold. */
+/** The substats slot `index` may be offered: the category's pool less those
+ * the item's other open slots hold, and less those that only come in a
+ * rarity above the item's. */
 export function slotPool(item: EquipItem, index: number) {
-  const others = new Set(item.slots.slice(0, openSlotCount(item)).filter((_, i) => i !== index).map((s) => s.effect));
-  return effectPool(categoryOf(item)).filter((d) => !others.has(d.id));
+  const others = new Set(item.slots.slice(0, openSlotCount(item)).filter((_, i) => i !== index).map((s) => s.effect)), cap = effectCap(item);
+  return effectPool(categoryOf(item)).filter((d) => !others.has(d.id) && rollsAt(d, cap));
 }
 
 /** `EFFECT_CANDIDATES` different effects for slot `index`, each at a
- * rarity rolled by `EFFECT_RARITY_WEIGHTS` up to the item's cap; with
+ * rarity rolled by `SUBSTAT_RARITY_WEIGHTS` up to the item's cap; with
  * `guaranteed`, the first is at the cap. */
 export function rollCandidates(item: EquipItem, index: number, guaranteed: boolean, rng: () => number): EffectChoice[] {
   const cap = effectCap(item), left = slotPool(item, index);
-  const weights = Object.fromEntries(EQUIP_RARITIES.filter((r) => rarityRank(r) <= rarityRank(cap)).map((r) => [r, EFFECT_RARITY_WEIGHTS[r]]));
   const offer: EffectChoice[] = [];
   while (offer.length < EFFECT_CANDIDATES && left.length) {
     const [def] = left.splice(Math.min(left.length - 1, Math.floor(rng() * left.length)), 1);
+    // Its rarity: among those from its own lowest up to the item's, at their weights.
+    const weights = Object.fromEntries(SUBSTAT_RARITIES.filter((r) => rarityRank(r) <= rarityRank(cap) && rollsAt(def, r)).map((r) => [r, SUBSTAT_RARITY_WEIGHTS[r]]));
     const rarity = guaranteed && !offer.length ? cap : rollRarity(weights, rng());
     offer.push({ effect: def.id, rarity });
   }
@@ -102,7 +105,7 @@ export function firstRoll(e: EquipmentSave, id: string, index: number, seed: () 
   const { item, slot } = found;
   if (slot.effect) return "chosen";
   if (slot.offer) return "offered";
-  slot.offer = withSavedStream(e, seed, (rng) => rollCandidates(item, index, false, rng));
+  slot.offer = withSavedStream(e, "substats", seed, (rng) => rollCandidates(item, index, false, rng));
   return slot.offer;
 }
 
@@ -120,7 +123,7 @@ export function refine(e: EquipmentSave, purse: { gold: number }, id: string, in
   if (unpaid) return unpaid;
   slot.refinement = (slot.refinement ?? 0) + 1;
   const guaranteed = slot.refinement % REFINE_GUARANTEE_EVERY === 0;
-  slot.offer = withSavedStream(e, seed, (rng) => rollCandidates(item, index, guaranteed, rng));
+  slot.offer = withSavedStream(e, "substats", seed, (rng) => rollCandidates(item, index, guaranteed, rng));
   return slot.offer;
 }
 

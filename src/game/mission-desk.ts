@@ -1,3 +1,4 @@
+import { relicArcanite } from "../economy/relic-effects.ts";
 import type { Mode } from "../entities.ts";
 import { snap } from "../exact.ts";
 import { random, stream } from "../random.ts";
@@ -168,12 +169,13 @@ export class MissionDesk {
     save.gold = snap(save.gold + r.gold);
     save.gems += r.gems;
     save.medals += r.medals;
-    save.arcanite += r.arcanite;
+    const arcanite = relicArcanite(save, r.arcanite);
+    save.arcanite += arcanite;
     save.bonusTrainingPoints += r.training;
     earn(save, "gold", r.gold);
     earn(save, "gems", r.gems);
     earn(save, "medals", r.medals);
-    earn(save, "arcanite", r.arcanite);
+    earn(save, "arcanite", arcanite);
     this.host.message = `Weekly reward · ${WEEKLY_REWARDS[i]!.missions} missions`;
     return { ...r };
   }
