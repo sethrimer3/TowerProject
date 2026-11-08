@@ -93,6 +93,7 @@ Reaching a milestone wins its relic at once, without spending anything:
 | 1,100 Medals | Premium relic 2 (epic), Event Booster only |
 
 Relics won are kept for good in `save.relics` (each owned at most once).
+Each of the 126 current relics has its own pixel sprite matching its name and event theme or tower reward, shared by the collection, event track, Store, Goals and enlarged preview.
 Each relic has a rarity (`RelicRarity`): an event's first relic of each pair, free and premium, is **rare** and its second **epic**; a Store relic is epic; **legendary** ones come from the towers (below).
 Every event theme has four relics: two free and two premium, the second of each pair the stronger.
 Their names, what each raises and by how much are all in one place, `economy/relic-catalog.ts` (`RELIC_SETS`), by theme and the year a set begins: a later year can bring a theme new relics by adding a set, the earlier ones staying owned.
@@ -170,5 +171,4 @@ Inside a run the menu holds Settings, Research, the Tournament's (once entered),
 ## Future
 
 - The event server: each event's missions, their release days, banner and relics.
-- Relic sprites of their own, for the Relics screen and the Events screen; until then the legendary pendant is the epic one turned gold (`.relic-legendary`).
 - The bonus tracks, and the music that plays them.

@@ -35,7 +35,7 @@ export class RelicsPage {
   render() {
     const relics = this.relics();
     const cell = ([id, r]: [string, RelicDef]) =>
-      `<button class="relic-cell ${r.rarity}" data-relic="${id}" aria-label="${r.name}: ${bonusText(r.bonus)}">${relicIcon(r.rarity)}<small>${r.name}</small></button>`;
+      `<button class="relic-cell ${r.rarity}" data-relic="${id}" aria-label="${r.name}: ${bonusText(r.bonus)}">${relicIcon(r)}<small>${r.name}</small></button>`;
     const section = (rarity: (typeof RARITIES)[number]) => {
       const these = relics.filter(([, r]) => r.rarity === rarity);
       return `<section class="relic-rarity ${rarity}" aria-label="${RARITY_NAMES[rarity]} relics"><h3>${RARITY_NAMES[rarity]}</h3>` +

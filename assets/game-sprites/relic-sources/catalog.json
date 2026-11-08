@@ -1,0 +1,758 @@
+[
+  {
+    "id": "newYear.2027.free1",
+    "name": "Firstlight Lantern",
+    "rarity": "rare",
+    "theme": "newYear"
+  },
+  {
+    "id": "newYear.2027.premium1",
+    "name": "Chronomancer's Hourglass",
+    "rarity": "rare",
+    "theme": "newYear"
+  },
+  {
+    "id": "newYear.2027.free2",
+    "name": "Bell of the Final Toll",
+    "rarity": "epic",
+    "theme": "newYear"
+  },
+  {
+    "id": "newYear.2027.premium2",
+    "name": "Dawnbreak Relic",
+    "rarity": "epic",
+    "theme": "newYear"
+  },
+  {
+    "id": "blizzard.2027.free1",
+    "name": "Frostveil Mantle",
+    "rarity": "rare",
+    "theme": "blizzard"
+  },
+  {
+    "id": "blizzard.2027.premium1",
+    "name": "Rimeguard Sigil",
+    "rarity": "rare",
+    "theme": "blizzard"
+  },
+  {
+    "id": "blizzard.2027.free2",
+    "name": "Glacier's Tear",
+    "rarity": "epic",
+    "theme": "blizzard"
+  },
+  {
+    "id": "blizzard.2027.premium2",
+    "name": "Absolute Zero Seal",
+    "rarity": "epic",
+    "theme": "blizzard"
+  },
+  {
+    "id": "lunarNewYear.2027.free1",
+    "name": "Lucky Coin",
+    "rarity": "rare",
+    "theme": "lunarNewYear"
+  },
+  {
+    "id": "lunarNewYear.2027.premium1",
+    "name": "Jade Abacus",
+    "rarity": "rare",
+    "theme": "lunarNewYear"
+  },
+  {
+    "id": "lunarNewYear.2027.free2",
+    "name": "Thousandfold Ingot",
+    "rarity": "epic",
+    "theme": "lunarNewYear"
+  },
+  {
+    "id": "lunarNewYear.2027.premium2",
+    "name": "Red Envelope of Plenty",
+    "rarity": "epic",
+    "theme": "lunarNewYear"
+  },
+  {
+    "id": "heartbloom.2027.free1",
+    "name": "Rosethorn Locket",
+    "rarity": "rare",
+    "theme": "heartbloom"
+  },
+  {
+    "id": "heartbloom.2027.premium1",
+    "name": "Twinned Soul Pendant",
+    "rarity": "rare",
+    "theme": "heartbloom"
+  },
+  {
+    "id": "heartbloom.2027.free2",
+    "name": "Lovers' Keepsake",
+    "rarity": "epic",
+    "theme": "heartbloom"
+  },
+  {
+    "id": "heartbloom.2027.premium2",
+    "name": "Crimson Oath Chalice",
+    "rarity": "epic",
+    "theme": "heartbloom"
+  },
+  {
+    "id": "aurora.2027.free1",
+    "name": "Polar Prism",
+    "rarity": "rare",
+    "theme": "aurora"
+  },
+  {
+    "id": "aurora.2027.premium1",
+    "name": "Borealis Brazier",
+    "rarity": "rare",
+    "theme": "aurora"
+  },
+  {
+    "id": "aurora.2027.free2",
+    "name": "Shimmering Ribbon",
+    "rarity": "epic",
+    "theme": "aurora"
+  },
+  {
+    "id": "aurora.2027.premium2",
+    "name": "Celestial Dewdrop",
+    "rarity": "epic",
+    "theme": "aurora"
+  },
+  {
+    "id": "springRain.2027.free1",
+    "name": "Raindrop Phial",
+    "rarity": "rare",
+    "theme": "springRain"
+  },
+  {
+    "id": "springRain.2027.premium1",
+    "name": "Rainmaker's Gourd",
+    "rarity": "rare",
+    "theme": "springRain"
+  },
+  {
+    "id": "springRain.2027.free2",
+    "name": "Cloudburst Flask",
+    "rarity": "epic",
+    "theme": "springRain"
+  },
+  {
+    "id": "springRain.2027.premium2",
+    "name": "Verdant Lifeseed",
+    "rarity": "epic",
+    "theme": "springRain"
+  },
+  {
+    "id": "jestersRevel.2027.free1",
+    "name": "Jester's Loaded Die",
+    "rarity": "rare",
+    "theme": "jestersRevel"
+  },
+  {
+    "id": "jestersRevel.2027.premium1",
+    "name": "Gilded Paradox",
+    "rarity": "rare",
+    "theme": "jestersRevel"
+  },
+  {
+    "id": "jestersRevel.2027.free2",
+    "name": "Trickster's Purse",
+    "rarity": "epic",
+    "theme": "jestersRevel"
+  },
+  {
+    "id": "jestersRevel.2027.premium2",
+    "name": "Last Laugh of Creation",
+    "rarity": "epic",
+    "theme": "jestersRevel"
+  },
+  {
+    "id": "dragonsHatchery.2027.free1",
+    "name": "Scaleshell Buckler",
+    "rarity": "rare",
+    "theme": "dragonsHatchery"
+  },
+  {
+    "id": "dragonsHatchery.2027.premium1",
+    "name": "Speckled Egg Clutch",
+    "rarity": "rare",
+    "theme": "dragonsHatchery"
+  },
+  {
+    "id": "dragonsHatchery.2027.free2",
+    "name": "Wyrmling Claw",
+    "rarity": "epic",
+    "theme": "dragonsHatchery"
+  },
+  {
+    "id": "dragonsHatchery.2027.premium2",
+    "name": "Dragonheart Reliquary",
+    "rarity": "epic",
+    "theme": "dragonsHatchery"
+  },
+  {
+    "id": "cherryBlossom.2027.free1",
+    "name": "Petalwind Sash",
+    "rarity": "rare",
+    "theme": "cherryBlossom"
+  },
+  {
+    "id": "cherryBlossom.2027.premium1",
+    "name": "Scroll of Four Seasons",
+    "rarity": "rare",
+    "theme": "cherryBlossom"
+  },
+  {
+    "id": "cherryBlossom.2027.free2",
+    "name": "Blossom Blade Tassel",
+    "rarity": "epic",
+    "theme": "cherryBlossom"
+  },
+  {
+    "id": "cherryBlossom.2027.premium2",
+    "name": "Everbloom Branch",
+    "rarity": "epic",
+    "theme": "cherryBlossom"
+  },
+  {
+    "id": "honeycomb.2027.free1",
+    "name": "Golden Comb",
+    "rarity": "rare",
+    "theme": "honeycomb"
+  },
+  {
+    "id": "honeycomb.2027.premium1",
+    "name": "Swarmwing Stinger",
+    "rarity": "rare",
+    "theme": "honeycomb"
+  },
+  {
+    "id": "honeycomb.2027.free2",
+    "name": "Royal Jelly Jar",
+    "rarity": "epic",
+    "theme": "honeycomb"
+  },
+  {
+    "id": "honeycomb.2027.premium2",
+    "name": "Hivequeen's Crown",
+    "rarity": "epic",
+    "theme": "honeycomb"
+  },
+  {
+    "id": "fairyRing.2027.free1",
+    "name": "Toadstool Trinket",
+    "rarity": "rare",
+    "theme": "fairyRing"
+  },
+  {
+    "id": "fairyRing.2027.premium1",
+    "name": "Changeling's Mirror",
+    "rarity": "rare",
+    "theme": "fairyRing"
+  },
+  {
+    "id": "fairyRing.2027.free2",
+    "name": "Feywild Circlet",
+    "rarity": "epic",
+    "theme": "fairyRing"
+  },
+  {
+    "id": "fairyRing.2027.premium2",
+    "name": "Fae Court's Bargain",
+    "rarity": "epic",
+    "theme": "fairyRing"
+  },
+  {
+    "id": "sunkenKingdom.2027.free1",
+    "name": "Coral Tiara",
+    "rarity": "rare",
+    "theme": "sunkenKingdom"
+  },
+  {
+    "id": "sunkenKingdom.2027.premium1",
+    "name": "Drowned Captain's Ledger",
+    "rarity": "rare",
+    "theme": "sunkenKingdom"
+  },
+  {
+    "id": "sunkenKingdom.2027.free2",
+    "name": "Tidal Sovereign's Pearl",
+    "rarity": "epic",
+    "theme": "sunkenKingdom"
+  },
+  {
+    "id": "sunkenKingdom.2027.premium2",
+    "name": "Leviathan's Fang",
+    "rarity": "epic",
+    "theme": "sunkenKingdom"
+  },
+  {
+    "id": "midsummer.2027.free1",
+    "name": "Blazing Amulet",
+    "rarity": "rare",
+    "theme": "midsummer"
+  },
+  {
+    "id": "midsummer.2027.premium1",
+    "name": "Longest Day Sundial",
+    "rarity": "rare",
+    "theme": "midsummer"
+  },
+  {
+    "id": "midsummer.2027.free2",
+    "name": "Solstice Garland",
+    "rarity": "epic",
+    "theme": "midsummer"
+  },
+  {
+    "id": "midsummer.2027.premium2",
+    "name": "Zenith Aegis",
+    "rarity": "epic",
+    "theme": "midsummer"
+  },
+  {
+    "id": "ember.2027.free1",
+    "name": "Ashen Core",
+    "rarity": "rare",
+    "theme": "ember"
+  },
+  {
+    "id": "ember.2027.premium1",
+    "name": "Forgefire Brand",
+    "rarity": "rare",
+    "theme": "ember"
+  },
+  {
+    "id": "ember.2027.free2",
+    "name": "Lava Spiked Vambrace",
+    "rarity": "epic",
+    "theme": "ember"
+  },
+  {
+    "id": "ember.2027.premium2",
+    "name": "Molten Crucible",
+    "rarity": "epic",
+    "theme": "ember"
+  },
+  {
+    "id": "sandstorm.2027.free1",
+    "name": "Sandwrap Scarf",
+    "rarity": "rare",
+    "theme": "sandstorm"
+  },
+  {
+    "id": "sandstorm.2027.premium1",
+    "name": "Destiny's Broken Compass",
+    "rarity": "rare",
+    "theme": "sandstorm"
+  },
+  {
+    "id": "sandstorm.2027.free2",
+    "name": "Mirage Lens",
+    "rarity": "epic",
+    "theme": "sandstorm"
+  },
+  {
+    "id": "sandstorm.2027.premium2",
+    "name": "Dune Scarab Ram",
+    "rarity": "epic",
+    "theme": "sandstorm"
+  },
+  {
+    "id": "neon.2027.free1",
+    "name": "Glowshard Visor",
+    "rarity": "rare",
+    "theme": "neon"
+  },
+  {
+    "id": "neon.2027.premium1",
+    "name": "Splitbeam Emitter",
+    "rarity": "rare",
+    "theme": "neon"
+  },
+  {
+    "id": "neon.2027.free2",
+    "name": "Laserline Bracers",
+    "rarity": "epic",
+    "theme": "neon"
+  },
+  {
+    "id": "neon.2027.premium2",
+    "name": "Retrowave Reactor",
+    "rarity": "epic",
+    "theme": "neon"
+  },
+  {
+    "id": "orbit.2027.free1",
+    "name": "Meteorite Spearhead",
+    "rarity": "rare",
+    "theme": "orbit"
+  },
+  {
+    "id": "orbit.2027.premium1",
+    "name": "Astral Conduit",
+    "rarity": "rare",
+    "theme": "orbit"
+  },
+  {
+    "id": "orbit.2027.free2",
+    "name": "Comet-Tail Pennant",
+    "rarity": "epic",
+    "theme": "orbit"
+  },
+  {
+    "id": "orbit.2027.premium2",
+    "name": "Silent Singularity",
+    "rarity": "epic",
+    "theme": "orbit"
+  },
+  {
+    "id": "tempest.2027.free1",
+    "name": "Stormcaller's Horn",
+    "rarity": "rare",
+    "theme": "tempest"
+  },
+  {
+    "id": "tempest.2027.premium1",
+    "name": "Eye of the Hurricane",
+    "rarity": "rare",
+    "theme": "tempest"
+  },
+  {
+    "id": "tempest.2027.free2",
+    "name": "Galeborn Torc",
+    "rarity": "epic",
+    "theme": "tempest"
+  },
+  {
+    "id": "tempest.2027.premium2",
+    "name": "Thunder Titan's Anvil",
+    "rarity": "epic",
+    "theme": "tempest"
+  },
+  {
+    "id": "crystalCaverns.2027.free1",
+    "name": "Quartz Ward",
+    "rarity": "rare",
+    "theme": "crystalCaverns"
+  },
+  {
+    "id": "crystalCaverns.2027.premium1",
+    "name": "Geode of Hidden Facets",
+    "rarity": "rare",
+    "theme": "crystalCaverns"
+  },
+  {
+    "id": "crystalCaverns.2027.free2",
+    "name": "Amethyst Spur",
+    "rarity": "epic",
+    "theme": "crystalCaverns"
+  },
+  {
+    "id": "crystalCaverns.2027.premium2",
+    "name": "Glimmerdeep Font",
+    "rarity": "epic",
+    "theme": "crystalCaverns"
+  },
+  {
+    "id": "autumnWood.2027.free1",
+    "name": "Fallen Leaf Brooch",
+    "rarity": "rare",
+    "theme": "autumnWood"
+  },
+  {
+    "id": "autumnWood.2027.premium1",
+    "name": "Elder Oak Acorn",
+    "rarity": "rare",
+    "theme": "autumnWood"
+  },
+  {
+    "id": "autumnWood.2027.free2",
+    "name": "Russet Barkplate",
+    "rarity": "epic",
+    "theme": "autumnWood"
+  },
+  {
+    "id": "autumnWood.2027.premium2",
+    "name": "Squirrel King's Hoard",
+    "rarity": "epic",
+    "theme": "autumnWood"
+  },
+  {
+    "id": "spidersLair.2027.free1",
+    "name": "Venomtip Dagger",
+    "rarity": "rare",
+    "theme": "spidersLair"
+  },
+  {
+    "id": "spidersLair.2027.premium1",
+    "name": "Bloodsucker's Mandible",
+    "rarity": "rare",
+    "theme": "spidersLair"
+  },
+  {
+    "id": "spidersLair.2027.free2",
+    "name": "Broodmother's Silk",
+    "rarity": "epic",
+    "theme": "spidersLair"
+  },
+  {
+    "id": "spidersLair.2027.premium2",
+    "name": "Dreadweaver's Gaze",
+    "rarity": "epic",
+    "theme": "spidersLair"
+  },
+  {
+    "id": "hauntedKeep.2027.free1",
+    "name": "Ghostwick Candle",
+    "rarity": "rare",
+    "theme": "hauntedKeep"
+  },
+  {
+    "id": "hauntedKeep.2027.premium1",
+    "name": "Sleepless Lamp",
+    "rarity": "rare",
+    "theme": "hauntedKeep"
+  },
+  {
+    "id": "hauntedKeep.2027.free2",
+    "name": "Wraithlord's Fingerbone",
+    "rarity": "epic",
+    "theme": "hauntedKeep"
+  },
+  {
+    "id": "hauntedKeep.2027.premium2",
+    "name": "Hollow Doorknocker",
+    "rarity": "epic",
+    "theme": "hauntedKeep"
+  },
+  {
+    "id": "arcade.2027.free1",
+    "name": "Bonus Stage Token",
+    "rarity": "rare",
+    "theme": "arcade"
+  },
+  {
+    "id": "arcade.2027.premium1",
+    "name": "High Score Joystick",
+    "rarity": "rare",
+    "theme": "arcade"
+  },
+  {
+    "id": "arcade.2027.free2",
+    "name": "Power Pellet Charm",
+    "rarity": "epic",
+    "theme": "arcade"
+  },
+  {
+    "id": "arcade.2027.premium2",
+    "name": "Combo Gauntlet",
+    "rarity": "epic",
+    "theme": "arcade"
+  },
+  {
+    "id": "harvestFeast.2027.free1",
+    "name": "Braided Loaf Talisman",
+    "rarity": "rare",
+    "theme": "harvestFeast"
+  },
+  {
+    "id": "harvestFeast.2027.premium1",
+    "name": "Harvester's Scythe",
+    "rarity": "rare",
+    "theme": "harvestFeast"
+  },
+  {
+    "id": "harvestFeast.2027.free2",
+    "name": "Overflowing Cornucopia",
+    "rarity": "epic",
+    "theme": "harvestFeast"
+  },
+  {
+    "id": "harvestFeast.2027.premium2",
+    "name": "Amber Sheaf",
+    "rarity": "epic",
+    "theme": "harvestFeast"
+  },
+  {
+    "id": "wizardsTower.2027.free1",
+    "name": "Apprentice's Wand",
+    "rarity": "rare",
+    "theme": "wizardsTower"
+  },
+  {
+    "id": "wizardsTower.2027.premium1",
+    "name": "Spellbinder's Grimoire",
+    "rarity": "rare",
+    "theme": "wizardsTower"
+  },
+  {
+    "id": "wizardsTower.2027.free2",
+    "name": "Archmage's Robe",
+    "rarity": "epic",
+    "theme": "wizardsTower"
+  },
+  {
+    "id": "wizardsTower.2027.premium2",
+    "name": "Codex of Unmaking",
+    "rarity": "epic",
+    "theme": "wizardsTower"
+  },
+  {
+    "id": "longestNight.2027.free1",
+    "name": "Starlit Diadem",
+    "rarity": "rare",
+    "theme": "longestNight"
+  },
+  {
+    "id": "longestNight.2027.premium1",
+    "name": "Midwinter Gift Casket",
+    "rarity": "rare",
+    "theme": "longestNight"
+  },
+  {
+    "id": "longestNight.2027.free2",
+    "name": "Winter Bulwark",
+    "rarity": "epic",
+    "theme": "longestNight"
+  },
+  {
+    "id": "longestNight.2027.premium2",
+    "name": "Umbral Coronet",
+    "rarity": "epic",
+    "theme": "longestNight"
+  },
+  {
+    "id": "blueMoon.2027.free1",
+    "name": "Moonsilver Medallion",
+    "rarity": "rare",
+    "theme": "blueMoon"
+  },
+  {
+    "id": "blueMoon.2027.premium1",
+    "name": "Serendipity Stone",
+    "rarity": "rare",
+    "theme": "blueMoon"
+  },
+  {
+    "id": "blueMoon.2027.free2",
+    "name": "Rare Fortune's Wishbone",
+    "rarity": "epic",
+    "theme": "blueMoon"
+  },
+  {
+    "id": "blueMoon.2027.premium2",
+    "name": "Genesis Fragment",
+    "rarity": "epic",
+    "theme": "blueMoon"
+  },
+  {
+    "id": "tower.1.epic",
+    "name": "T:I Cosmos Sack",
+    "rarity": "epic",
+    "tower": 1
+  },
+  {
+    "id": "tower.1.legendary",
+    "name": "T:I Spatial Ring",
+    "rarity": "legendary",
+    "tower": 1
+  },
+  {
+    "id": "tower.2.epic",
+    "name": "T:II Cosmic Workbench",
+    "rarity": "epic",
+    "tower": 2
+  },
+  {
+    "id": "tower.2.legendary",
+    "name": "T:II Chrono Gate",
+    "rarity": "legendary",
+    "tower": 2
+  },
+  {
+    "id": "tower.3.epic",
+    "name": "T:III Delver's Cloak",
+    "rarity": "epic",
+    "tower": 3
+  },
+  {
+    "id": "tower.3.legendary",
+    "name": "T:III Auric Lens",
+    "rarity": "legendary",
+    "tower": 3
+  },
+  {
+    "id": "tower.4.epic",
+    "name": "T:IV Really Big Sword",
+    "rarity": "epic",
+    "tower": 4
+  },
+  {
+    "id": "tower.4.legendary",
+    "name": "T:IV Axe of Duality",
+    "rarity": "legendary",
+    "tower": 4
+  },
+  {
+    "id": "tower.5.epic",
+    "name": "T:V Monster Steaks",
+    "rarity": "epic",
+    "tower": 5
+  },
+  {
+    "id": "tower.5.legendary",
+    "name": "T:V Orb of All",
+    "rarity": "legendary",
+    "tower": 5
+  },
+  {
+    "id": "tower.6.epic",
+    "name": "T:VI Death's Rival",
+    "rarity": "epic",
+    "tower": 6
+  },
+  {
+    "id": "tower.6.legendary",
+    "name": "T:VI Starcloak",
+    "rarity": "legendary",
+    "tower": 6
+  },
+  {
+    "id": "tower.7.epic",
+    "name": "T:VII Weapon Aura",
+    "rarity": "epic",
+    "tower": 7
+  },
+  {
+    "id": "tower.7.legendary",
+    "name": "T:VII Stomping Boots",
+    "rarity": "legendary",
+    "tower": 7
+  },
+  {
+    "id": "tower.8.epic",
+    "name": "T:VIII Lucky Blade",
+    "rarity": "epic",
+    "tower": 8
+  },
+  {
+    "id": "tower.8.legendary",
+    "name": "T:VIII Blueprint Engine",
+    "rarity": "legendary",
+    "tower": 8
+  },
+  {
+    "id": "tower.9.epic",
+    "name": "T:IX Godshard",
+    "rarity": "epic",
+    "tower": 9
+  },
+  {
+    "id": "tower.9.legendary",
+    "name": "T:IX Mighty Shorts",
+    "rarity": "legendary",
+    "tower": 9
+  }
+]

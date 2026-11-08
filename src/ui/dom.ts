@@ -1,4 +1,5 @@
 import { ITEM_KIT } from "../sprites/items.ts";
+import { relicSpriteId } from "../sprites/relics.ts";
 import { BREAKTHROUGH_SPRITE, INSPIRATION_SPRITE, kitIcon, pngIcon } from "../sprites/kit.ts";
 import { CARDS } from "../cards/cards.ts";
 import type { CardId } from "../cards/cards.ts";
@@ -66,12 +67,15 @@ export const missionIcon = (className = "mission-icon") =>
 /** A pennant on a pole bearing a star: Events. */
 export const eventIcon = (className = "event-icon") =>
   kitIcon("event", "", className);
-/** A relic: a jewel in a gold setting on a chain, its stone the rarity's
- * colour (rare blue, epic purple, legendary gold), with matching PNG
- * pendants. The legendary one wears the epic pendant turned gold
- * (`.relic-legendary` in style.css) until it has art of its own. */
-export const relicIcon = (rarity: RelicRarity, className = "relic-icon") =>
-  rarity === "legendary" ? kitIcon("relic-epic", "", `${className} relic-legendary`) : kitIcon(`relic-${rarity}`, "", className);
+/** Named relics use their catalog artwork; generic navigation and unknown
+ * future relics retain the rarity pendant. Only the generic legendary
+ * pendant is recolored, so actual tower rewards keep their material colors. */
+export const relicIcon = (relic: RelicRarity | { name: string; rarity: RelicRarity }, className = "relic-icon") => {
+  const id = typeof relic === "string" ? undefined : relicSpriteId(relic);
+  if (id) return kitIcon(id, "", className);
+  const rarity = typeof relic === "string" ? relic : relic.rarity;
+  return rarity === "legendary" ? kitIcon("relic-epic", "", `${className} relic-legendary`) : kitIcon(`relic-${rarity}`, "", className);
+};
 /** A plain check mark: a weekly reward claimed. */
 export const checkIcon = (className = "check-icon") =>
   kitIcon("check", "", className);

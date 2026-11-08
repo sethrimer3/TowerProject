@@ -1,6 +1,6 @@
 {
   "image": "assets/atlases/ui.png",
-  "revision": "007f0506818696cc",
+  "revision": "d954265d0bea82b0",
   "width": 1024,
   "height": 1024,
   "padding": 2,
@@ -260,8 +260,8 @@
     "assets/style/barrel-broken.png": {
       "width": 12,
       "height": 12,
-      "x": 242,
-      "y": 586
+      "x": 750,
+      "y": 670
     },
     "assets/style/barrel.png": {
       "width": 24,
@@ -698,164 +698,164 @@
     "assets/style/combat-armor.png": {
       "width": 9,
       "height": 8,
-      "x": 728,
-      "y": 586
+      "x": 216,
+      "y": 698
     },
     "assets/style/combat-arrow-e.png": {
       "width": 16,
       "height": 16,
-      "x": 814,
-      "y": 558
+      "x": 310,
+      "y": 670
     },
     "assets/style/combat-arrow-n.png": {
       "width": 16,
       "height": 16,
-      "x": 834,
-      "y": 558
+      "x": 330,
+      "y": 670
     },
     "assets/style/combat-arrow-ne.png": {
       "width": 16,
       "height": 16,
-      "x": 854,
-      "y": 558
+      "x": 350,
+      "y": 670
     },
     "assets/style/combat-arrow-nw.png": {
       "width": 16,
       "height": 16,
-      "x": 874,
-      "y": 558
+      "x": 370,
+      "y": 670
     },
     "assets/style/combat-arrow-s.png": {
       "width": 16,
       "height": 16,
-      "x": 894,
-      "y": 558
+      "x": 390,
+      "y": 670
     },
     "assets/style/combat-arrow-se.png": {
       "width": 16,
       "height": 16,
-      "x": 914,
-      "y": 558
+      "x": 410,
+      "y": 670
     },
     "assets/style/combat-arrow-sw.png": {
       "width": 16,
       "height": 16,
-      "x": 934,
-      "y": 558
+      "x": 430,
+      "y": 670
     },
     "assets/style/combat-arrow-w.png": {
       "width": 16,
       "height": 16,
-      "x": 954,
-      "y": 558
+      "x": 450,
+      "y": 670
     },
     "assets/style/combat-charged-e.png": {
       "width": 16,
       "height": 16,
-      "x": 974,
-      "y": 558
+      "x": 470,
+      "y": 670
     },
     "assets/style/combat-charged-n.png": {
       "width": 16,
       "height": 16,
-      "x": 994,
-      "y": 558
+      "x": 490,
+      "y": 670
     },
     "assets/style/combat-charged-ne.png": {
       "width": 16,
       "height": 16,
-      "x": 2,
-      "y": 586
+      "x": 510,
+      "y": 670
     },
     "assets/style/combat-charged-nw.png": {
       "width": 16,
       "height": 16,
-      "x": 22,
-      "y": 586
+      "x": 530,
+      "y": 670
     },
     "assets/style/combat-charged-s.png": {
       "width": 16,
       "height": 16,
-      "x": 42,
-      "y": 586
+      "x": 550,
+      "y": 670
     },
     "assets/style/combat-charged-se.png": {
       "width": 16,
       "height": 16,
-      "x": 62,
-      "y": 586
+      "x": 570,
+      "y": 670
     },
     "assets/style/combat-charged-sw.png": {
       "width": 16,
       "height": 16,
-      "x": 82,
-      "y": 586
+      "x": 590,
+      "y": 670
     },
     "assets/style/combat-charged-w.png": {
       "width": 16,
       "height": 16,
-      "x": 102,
-      "y": 586
+      "x": 610,
+      "y": 670
     },
     "assets/style/combat-chest-equipment.png": {
       "width": 20,
       "height": 10,
-      "x": 674,
-      "y": 586
+      "x": 162,
+      "y": 698
     },
     "assets/style/combat-chest-supply.png": {
       "width": 10,
       "height": 10,
-      "x": 698,
-      "y": 586
+      "x": 186,
+      "y": 698
     },
     "assets/style/combat-fast.png": {
       "width": 12,
       "height": 8,
-      "x": 712,
-      "y": 586
+      "x": 200,
+      "y": 698
     },
     "assets/style/combat-mark-blocked.png": {
       "width": 12,
       "height": 12,
-      "x": 258,
-      "y": 586
+      "x": 766,
+      "y": 670
     },
     "assets/style/combat-mark-ignore.png": {
       "width": 16,
       "height": 16,
-      "x": 122,
-      "y": 586
+      "x": 630,
+      "y": 670
     },
     "assets/style/combat-mark-skip.png": {
       "width": 12,
       "height": 12,
-      "x": 274,
-      "y": 586
+      "x": 782,
+      "y": 670
     },
     "assets/style/combat-mark-target.png": {
       "width": 16,
       "height": 16,
-      "x": 142,
-      "y": 586
+      "x": 650,
+      "y": 670
     },
     "assets/style/combat-ranged.png": {
       "width": 9,
       "height": 8,
-      "x": 741,
-      "y": 586
+      "x": 229,
+      "y": 698
     },
     "assets/style/combat-rank-down.png": {
       "width": 7,
       "height": 6,
-      "x": 779,
-      "y": 586
+      "x": 267,
+      "y": 698
     },
     "assets/style/combat-rank-up.png": {
       "width": 7,
       "height": 6,
-      "x": 790,
-      "y": 586
+      "x": 278,
+      "y": 698
     },
     "assets/style/combat-shield-48.png": {
       "width": 48,
@@ -872,20 +872,20 @@
     "assets/style/combat-shot.png": {
       "width": 8,
       "height": 8,
-      "x": 767,
-      "y": 586
+      "x": 255,
+      "y": 698
     },
     "assets/style/combat-wing.png": {
       "width": 9,
       "height": 8,
-      "x": 754,
-      "y": 586
+      "x": 242,
+      "y": 698
     },
     "assets/style/crate-broken.png": {
       "width": 12,
       "height": 12,
-      "x": 290,
-      "y": 586
+      "x": 798,
+      "y": 670
     },
     "assets/style/crate.png": {
       "width": 24,
@@ -2204,8 +2204,8 @@
     "assets/style/fern.png": {
       "width": 12,
       "height": 12,
-      "x": 306,
-      "y": 586
+      "x": 814,
+      "y": 670
     },
     "assets/style/focus.png": {
       "width": 24,
@@ -2486,8 +2486,8 @@
     "assets/style/mushrooms.png": {
       "width": 12,
       "height": 12,
-      "x": 322,
-      "y": 586
+      "x": 830,
+      "y": 670
     },
     "assets/style/orc.png": {
       "width": 24,
@@ -2504,8 +2504,8 @@
     "assets/style/pebbles.png": {
       "width": 12,
       "height": 12,
-      "x": 338,
-      "y": 586
+      "x": 846,
+      "y": 670
     },
     "assets/style/play.png": {
       "width": 24,
@@ -2537,131 +2537,887 @@
       "x": 534,
       "y": 530
     },
-    "assets/style/relic-epic.png": {
+    "assets/style/relic-arcade-2027-free1.png": {
       "width": 24,
       "height": 24,
       "x": 562,
       "y": 530
     },
-    "assets/style/relic-rare.png": {
+    "assets/style/relic-arcade-2027-free2.png": {
       "width": 24,
       "height": 24,
       "x": 590,
       "y": 530
     },
-    "assets/style/ring.png": {
+    "assets/style/relic-arcade-2027-premium1.png": {
       "width": 24,
       "height": 24,
       "x": 618,
       "y": 530
     },
-    "assets/style/scroll.png": {
+    "assets/style/relic-arcade-2027-premium2.png": {
       "width": 24,
       "height": 24,
       "x": 646,
       "y": 530
     },
-    "assets/style/settings-cog.png": {
+    "assets/style/relic-aurora-2027-free1.png": {
       "width": 24,
       "height": 24,
       "x": 674,
       "y": 530
     },
-    "assets/style/shard.png": {
+    "assets/style/relic-aurora-2027-free2.png": {
       "width": 24,
       "height": 24,
       "x": 702,
       "y": 530
     },
-    "assets/style/shield.png": {
+    "assets/style/relic-aurora-2027-premium1.png": {
       "width": 24,
       "height": 24,
       "x": 730,
       "y": 530
     },
-    "assets/style/shrine-auto.png": {
+    "assets/style/relic-aurora-2027-premium2.png": {
       "width": 24,
       "height": 24,
       "x": 758,
       "y": 530
     },
-    "assets/style/shrine-ban.png": {
+    "assets/style/relic-autumnWood-2027-free1.png": {
       "width": 24,
       "height": 24,
       "x": 786,
       "y": 530
     },
-    "assets/style/shrine-count.png": {
+    "assets/style/relic-autumnWood-2027-free2.png": {
       "width": 24,
       "height": 24,
       "x": 814,
       "y": 530
     },
-    "assets/style/shrine-fill.png": {
-      "width": 16,
-      "height": 4,
-      "x": 801,
-      "y": 586
-    },
-    "assets/style/shrine-grip.png": {
+    "assets/style/relic-autumnWood-2027-premium1.png": {
       "width": 24,
       "height": 24,
       "x": 842,
       "y": 530
     },
-    "assets/style/shrine.png": {
+    "assets/style/relic-autumnWood-2027-premium2.png": {
       "width": 24,
       "height": 24,
       "x": 870,
       "y": 530
     },
-    "assets/style/silver.png": {
+    "assets/style/relic-blizzard-2027-free1.png": {
       "width": 24,
       "height": 24,
       "x": 898,
       "y": 530
     },
-    "assets/style/skeleton.png": {
+    "assets/style/relic-blizzard-2027-free2.png": {
       "width": 24,
       "height": 24,
       "x": 926,
       "y": 530
     },
-    "assets/style/slime.png": {
+    "assets/style/relic-blizzard-2027-premium1.png": {
       "width": 24,
       "height": 24,
       "x": 954,
       "y": 530
     },
-    "assets/style/spore.png": {
+    "assets/style/relic-blizzard-2027-premium2.png": {
       "width": 24,
       "height": 24,
       "x": 982,
       "y": 530
     },
-    "assets/style/sprout.png": {
-      "width": 12,
-      "height": 12,
-      "x": 354,
-      "y": 586
-    },
-    "assets/style/stairs.png": {
+    "assets/style/relic-blueMoon-2027-free1.png": {
       "width": 24,
       "height": 24,
       "x": 2,
       "y": 558
     },
-    "assets/style/sword.png": {
+    "assets/style/relic-blueMoon-2027-free2.png": {
       "width": 24,
       "height": 24,
       "x": 30,
       "y": 558
     },
-    "assets/style/target.png": {
+    "assets/style/relic-blueMoon-2027-premium1.png": {
       "width": 24,
       "height": 24,
       "x": 58,
       "y": 558
+    },
+    "assets/style/relic-blueMoon-2027-premium2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 86,
+      "y": 558
+    },
+    "assets/style/relic-cherryBlossom-2027-free1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 114,
+      "y": 558
+    },
+    "assets/style/relic-cherryBlossom-2027-free2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 142,
+      "y": 558
+    },
+    "assets/style/relic-cherryBlossom-2027-premium1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 170,
+      "y": 558
+    },
+    "assets/style/relic-cherryBlossom-2027-premium2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 198,
+      "y": 558
+    },
+    "assets/style/relic-crystalCaverns-2027-free1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 226,
+      "y": 558
+    },
+    "assets/style/relic-crystalCaverns-2027-free2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 254,
+      "y": 558
+    },
+    "assets/style/relic-crystalCaverns-2027-premium1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 282,
+      "y": 558
+    },
+    "assets/style/relic-crystalCaverns-2027-premium2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 310,
+      "y": 558
+    },
+    "assets/style/relic-dragonsHatchery-2027-free1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 338,
+      "y": 558
+    },
+    "assets/style/relic-dragonsHatchery-2027-free2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 366,
+      "y": 558
+    },
+    "assets/style/relic-dragonsHatchery-2027-premium1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 394,
+      "y": 558
+    },
+    "assets/style/relic-dragonsHatchery-2027-premium2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 422,
+      "y": 558
+    },
+    "assets/style/relic-ember-2027-free1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 450,
+      "y": 558
+    },
+    "assets/style/relic-ember-2027-free2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 478,
+      "y": 558
+    },
+    "assets/style/relic-ember-2027-premium1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 506,
+      "y": 558
+    },
+    "assets/style/relic-ember-2027-premium2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 534,
+      "y": 558
+    },
+    "assets/style/relic-epic.png": {
+      "width": 24,
+      "height": 24,
+      "x": 562,
+      "y": 558
+    },
+    "assets/style/relic-fairyRing-2027-free1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 590,
+      "y": 558
+    },
+    "assets/style/relic-fairyRing-2027-free2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 618,
+      "y": 558
+    },
+    "assets/style/relic-fairyRing-2027-premium1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 646,
+      "y": 558
+    },
+    "assets/style/relic-fairyRing-2027-premium2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 674,
+      "y": 558
+    },
+    "assets/style/relic-harvestFeast-2027-free1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 702,
+      "y": 558
+    },
+    "assets/style/relic-harvestFeast-2027-free2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 730,
+      "y": 558
+    },
+    "assets/style/relic-harvestFeast-2027-premium1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 758,
+      "y": 558
+    },
+    "assets/style/relic-harvestFeast-2027-premium2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 786,
+      "y": 558
+    },
+    "assets/style/relic-hauntedKeep-2027-free1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 814,
+      "y": 558
+    },
+    "assets/style/relic-hauntedKeep-2027-free2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 842,
+      "y": 558
+    },
+    "assets/style/relic-hauntedKeep-2027-premium1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 870,
+      "y": 558
+    },
+    "assets/style/relic-hauntedKeep-2027-premium2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 898,
+      "y": 558
+    },
+    "assets/style/relic-heartbloom-2027-free1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 926,
+      "y": 558
+    },
+    "assets/style/relic-heartbloom-2027-free2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 954,
+      "y": 558
+    },
+    "assets/style/relic-heartbloom-2027-premium1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 982,
+      "y": 558
+    },
+    "assets/style/relic-heartbloom-2027-premium2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 2,
+      "y": 586
+    },
+    "assets/style/relic-honeycomb-2027-free1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 30,
+      "y": 586
+    },
+    "assets/style/relic-honeycomb-2027-free2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 58,
+      "y": 586
+    },
+    "assets/style/relic-honeycomb-2027-premium1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 86,
+      "y": 586
+    },
+    "assets/style/relic-honeycomb-2027-premium2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 114,
+      "y": 586
+    },
+    "assets/style/relic-jestersRevel-2027-free1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 142,
+      "y": 586
+    },
+    "assets/style/relic-jestersRevel-2027-free2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 170,
+      "y": 586
+    },
+    "assets/style/relic-jestersRevel-2027-premium1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 198,
+      "y": 586
+    },
+    "assets/style/relic-jestersRevel-2027-premium2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 226,
+      "y": 586
+    },
+    "assets/style/relic-longestNight-2027-free1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 254,
+      "y": 586
+    },
+    "assets/style/relic-longestNight-2027-free2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 282,
+      "y": 586
+    },
+    "assets/style/relic-longestNight-2027-premium1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 310,
+      "y": 586
+    },
+    "assets/style/relic-longestNight-2027-premium2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 338,
+      "y": 586
+    },
+    "assets/style/relic-lunarNewYear-2027-free1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 366,
+      "y": 586
+    },
+    "assets/style/relic-lunarNewYear-2027-free2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 394,
+      "y": 586
+    },
+    "assets/style/relic-lunarNewYear-2027-premium1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 422,
+      "y": 586
+    },
+    "assets/style/relic-lunarNewYear-2027-premium2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 450,
+      "y": 586
+    },
+    "assets/style/relic-midsummer-2027-free1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 478,
+      "y": 586
+    },
+    "assets/style/relic-midsummer-2027-free2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 506,
+      "y": 586
+    },
+    "assets/style/relic-midsummer-2027-premium1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 534,
+      "y": 586
+    },
+    "assets/style/relic-midsummer-2027-premium2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 562,
+      "y": 586
+    },
+    "assets/style/relic-neon-2027-free1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 590,
+      "y": 586
+    },
+    "assets/style/relic-neon-2027-free2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 618,
+      "y": 586
+    },
+    "assets/style/relic-neon-2027-premium1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 646,
+      "y": 586
+    },
+    "assets/style/relic-neon-2027-premium2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 674,
+      "y": 586
+    },
+    "assets/style/relic-newYear-2027-free1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 702,
+      "y": 586
+    },
+    "assets/style/relic-newYear-2027-free2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 730,
+      "y": 586
+    },
+    "assets/style/relic-newYear-2027-premium1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 758,
+      "y": 586
+    },
+    "assets/style/relic-newYear-2027-premium2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 786,
+      "y": 586
+    },
+    "assets/style/relic-orbit-2027-free1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 814,
+      "y": 586
+    },
+    "assets/style/relic-orbit-2027-free2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 842,
+      "y": 586
+    },
+    "assets/style/relic-orbit-2027-premium1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 870,
+      "y": 586
+    },
+    "assets/style/relic-orbit-2027-premium2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 898,
+      "y": 586
+    },
+    "assets/style/relic-rare.png": {
+      "width": 24,
+      "height": 24,
+      "x": 926,
+      "y": 586
+    },
+    "assets/style/relic-sandstorm-2027-free1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 954,
+      "y": 586
+    },
+    "assets/style/relic-sandstorm-2027-free2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 982,
+      "y": 586
+    },
+    "assets/style/relic-sandstorm-2027-premium1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 2,
+      "y": 614
+    },
+    "assets/style/relic-sandstorm-2027-premium2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 30,
+      "y": 614
+    },
+    "assets/style/relic-spidersLair-2027-free1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 58,
+      "y": 614
+    },
+    "assets/style/relic-spidersLair-2027-free2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 86,
+      "y": 614
+    },
+    "assets/style/relic-spidersLair-2027-premium1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 114,
+      "y": 614
+    },
+    "assets/style/relic-spidersLair-2027-premium2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 142,
+      "y": 614
+    },
+    "assets/style/relic-springRain-2027-free1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 170,
+      "y": 614
+    },
+    "assets/style/relic-springRain-2027-free2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 198,
+      "y": 614
+    },
+    "assets/style/relic-springRain-2027-premium1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 226,
+      "y": 614
+    },
+    "assets/style/relic-springRain-2027-premium2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 254,
+      "y": 614
+    },
+    "assets/style/relic-sunkenKingdom-2027-free1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 282,
+      "y": 614
+    },
+    "assets/style/relic-sunkenKingdom-2027-free2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 310,
+      "y": 614
+    },
+    "assets/style/relic-sunkenKingdom-2027-premium1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 338,
+      "y": 614
+    },
+    "assets/style/relic-sunkenKingdom-2027-premium2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 366,
+      "y": 614
+    },
+    "assets/style/relic-tempest-2027-free1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 394,
+      "y": 614
+    },
+    "assets/style/relic-tempest-2027-free2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 422,
+      "y": 614
+    },
+    "assets/style/relic-tempest-2027-premium1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 450,
+      "y": 614
+    },
+    "assets/style/relic-tempest-2027-premium2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 478,
+      "y": 614
+    },
+    "assets/style/relic-tower-1-epic.png": {
+      "width": 24,
+      "height": 24,
+      "x": 506,
+      "y": 614
+    },
+    "assets/style/relic-tower-1-legendary.png": {
+      "width": 24,
+      "height": 24,
+      "x": 534,
+      "y": 614
+    },
+    "assets/style/relic-tower-2-epic.png": {
+      "width": 24,
+      "height": 24,
+      "x": 562,
+      "y": 614
+    },
+    "assets/style/relic-tower-2-legendary.png": {
+      "width": 24,
+      "height": 24,
+      "x": 590,
+      "y": 614
+    },
+    "assets/style/relic-tower-3-epic.png": {
+      "width": 24,
+      "height": 24,
+      "x": 618,
+      "y": 614
+    },
+    "assets/style/relic-tower-3-legendary.png": {
+      "width": 24,
+      "height": 24,
+      "x": 646,
+      "y": 614
+    },
+    "assets/style/relic-tower-4-epic.png": {
+      "width": 24,
+      "height": 24,
+      "x": 674,
+      "y": 614
+    },
+    "assets/style/relic-tower-4-legendary.png": {
+      "width": 24,
+      "height": 24,
+      "x": 702,
+      "y": 614
+    },
+    "assets/style/relic-tower-5-epic.png": {
+      "width": 24,
+      "height": 24,
+      "x": 730,
+      "y": 614
+    },
+    "assets/style/relic-tower-5-legendary.png": {
+      "width": 24,
+      "height": 24,
+      "x": 758,
+      "y": 614
+    },
+    "assets/style/relic-tower-6-epic.png": {
+      "width": 24,
+      "height": 24,
+      "x": 786,
+      "y": 614
+    },
+    "assets/style/relic-tower-6-legendary.png": {
+      "width": 24,
+      "height": 24,
+      "x": 814,
+      "y": 614
+    },
+    "assets/style/relic-tower-7-epic.png": {
+      "width": 24,
+      "height": 24,
+      "x": 842,
+      "y": 614
+    },
+    "assets/style/relic-tower-7-legendary.png": {
+      "width": 24,
+      "height": 24,
+      "x": 870,
+      "y": 614
+    },
+    "assets/style/relic-tower-8-epic.png": {
+      "width": 24,
+      "height": 24,
+      "x": 898,
+      "y": 614
+    },
+    "assets/style/relic-tower-8-legendary.png": {
+      "width": 24,
+      "height": 24,
+      "x": 926,
+      "y": 614
+    },
+    "assets/style/relic-tower-9-epic.png": {
+      "width": 24,
+      "height": 24,
+      "x": 954,
+      "y": 614
+    },
+    "assets/style/relic-tower-9-legendary.png": {
+      "width": 24,
+      "height": 24,
+      "x": 982,
+      "y": 614
+    },
+    "assets/style/relic-wizardsTower-2027-free1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 2,
+      "y": 642
+    },
+    "assets/style/relic-wizardsTower-2027-free2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 30,
+      "y": 642
+    },
+    "assets/style/relic-wizardsTower-2027-premium1.png": {
+      "width": 24,
+      "height": 24,
+      "x": 58,
+      "y": 642
+    },
+    "assets/style/relic-wizardsTower-2027-premium2.png": {
+      "width": 24,
+      "height": 24,
+      "x": 86,
+      "y": 642
+    },
+    "assets/style/ring.png": {
+      "width": 24,
+      "height": 24,
+      "x": 114,
+      "y": 642
+    },
+    "assets/style/scroll.png": {
+      "width": 24,
+      "height": 24,
+      "x": 142,
+      "y": 642
+    },
+    "assets/style/settings-cog.png": {
+      "width": 24,
+      "height": 24,
+      "x": 170,
+      "y": 642
+    },
+    "assets/style/shard.png": {
+      "width": 24,
+      "height": 24,
+      "x": 198,
+      "y": 642
+    },
+    "assets/style/shield.png": {
+      "width": 24,
+      "height": 24,
+      "x": 226,
+      "y": 642
+    },
+    "assets/style/shrine-auto.png": {
+      "width": 24,
+      "height": 24,
+      "x": 254,
+      "y": 642
+    },
+    "assets/style/shrine-ban.png": {
+      "width": 24,
+      "height": 24,
+      "x": 282,
+      "y": 642
+    },
+    "assets/style/shrine-count.png": {
+      "width": 24,
+      "height": 24,
+      "x": 310,
+      "y": 642
+    },
+    "assets/style/shrine-fill.png": {
+      "width": 16,
+      "height": 4,
+      "x": 289,
+      "y": 698
+    },
+    "assets/style/shrine-grip.png": {
+      "width": 24,
+      "height": 24,
+      "x": 338,
+      "y": 642
+    },
+    "assets/style/shrine.png": {
+      "width": 24,
+      "height": 24,
+      "x": 366,
+      "y": 642
+    },
+    "assets/style/silver.png": {
+      "width": 24,
+      "height": 24,
+      "x": 394,
+      "y": 642
+    },
+    "assets/style/skeleton.png": {
+      "width": 24,
+      "height": 24,
+      "x": 422,
+      "y": 642
+    },
+    "assets/style/slime.png": {
+      "width": 24,
+      "height": 24,
+      "x": 450,
+      "y": 642
+    },
+    "assets/style/spore.png": {
+      "width": 24,
+      "height": 24,
+      "x": 478,
+      "y": 642
+    },
+    "assets/style/sprout.png": {
+      "width": 12,
+      "height": 12,
+      "x": 862,
+      "y": 670
+    },
+    "assets/style/stairs.png": {
+      "width": 24,
+      "height": 24,
+      "x": 506,
+      "y": 642
+    },
+    "assets/style/sword.png": {
+      "width": 24,
+      "height": 24,
+      "x": 534,
+      "y": 642
+    },
+    "assets/style/target.png": {
+      "width": 24,
+      "height": 24,
+      "x": 562,
+      "y": 642
     },
     "assets/style/theme-corner-frame.png": {
       "width": 48,
@@ -2882,14 +3638,14 @@
     "assets/style/ticket.png": {
       "width": 24,
       "height": 24,
-      "x": 86,
-      "y": 558
+      "x": 590,
+      "y": 642
     },
     "assets/style/torch.png": {
       "width": 24,
       "height": 24,
-      "x": 114,
-      "y": 558
+      "x": 618,
+      "y": 642
     },
     "assets/style/tower.png": {
       "width": 48,
@@ -2918,26 +3674,26 @@
     "assets/style/troll.png": {
       "width": 24,
       "height": 24,
-      "x": 142,
-      "y": 558
+      "x": 646,
+      "y": 642
     },
     "assets/style/trophy.png": {
       "width": 24,
       "height": 24,
-      "x": 170,
-      "y": 558
+      "x": 674,
+      "y": 642
     },
     "assets/style/tuft.png": {
       "width": 12,
       "height": 12,
-      "x": 370,
-      "y": 586
+      "x": 878,
+      "y": 670
     },
     "assets/style/ui-auto-play.png": {
       "width": 12,
       "height": 12,
-      "x": 386,
-      "y": 586
+      "x": 894,
+      "y": 670
     },
     "assets/style/ui-badge-annotation.png": {
       "width": 48,
@@ -2948,248 +3704,248 @@
     "assets/style/ui-card-points.png": {
       "width": 12,
       "height": 12,
-      "x": 402,
-      "y": 586
+      "x": 910,
+      "y": 670
     },
     "assets/style/ui-chevron-down.png": {
       "width": 12,
       "height": 12,
-      "x": 418,
-      "y": 586
+      "x": 926,
+      "y": 670
     },
     "assets/style/ui-chevron-left.png": {
       "width": 12,
       "height": 12,
-      "x": 434,
-      "y": 586
+      "x": 942,
+      "y": 670
     },
     "assets/style/ui-chevron-right.png": {
       "width": 12,
       "height": 12,
-      "x": 450,
-      "y": 586
+      "x": 958,
+      "y": 670
     },
     "assets/style/ui-control-back.png": {
       "width": 12,
       "height": 12,
-      "x": 466,
-      "y": 586
+      "x": 974,
+      "y": 670
     },
     "assets/style/ui-control-check.png": {
       "width": 12,
       "height": 12,
-      "x": 482,
-      "y": 586
+      "x": 990,
+      "y": 670
     },
     "assets/style/ui-control-close.png": {
       "width": 12,
       "height": 12,
-      "x": 498,
-      "y": 586
+      "x": 1006,
+      "y": 670
     },
     "assets/style/ui-control-down.png": {
       "width": 12,
       "height": 12,
-      "x": 514,
-      "y": 586
+      "x": 2,
+      "y": 698
     },
     "assets/style/ui-control-forward.png": {
       "width": 12,
       "height": 12,
-      "x": 530,
-      "y": 586
+      "x": 18,
+      "y": 698
     },
     "assets/style/ui-control-lock.png": {
       "width": 12,
       "height": 12,
-      "x": 546,
-      "y": 586
+      "x": 34,
+      "y": 698
     },
     "assets/style/ui-control-star.png": {
       "width": 24,
       "height": 24,
-      "x": 198,
-      "y": 558
+      "x": 702,
+      "y": 642
     },
     "assets/style/ui-control-swap.png": {
       "width": 12,
       "height": 12,
-      "x": 562,
-      "y": 586
+      "x": 50,
+      "y": 698
     },
     "assets/style/ui-control-up.png": {
       "width": 12,
       "height": 12,
-      "x": 578,
-      "y": 586
+      "x": 66,
+      "y": 698
     },
     "assets/style/ui-copy.png": {
       "width": 24,
       "height": 24,
-      "x": 226,
-      "y": 558
+      "x": 730,
+      "y": 642
     },
     "assets/style/ui-crown.png": {
       "width": 24,
       "height": 24,
-      "x": 254,
-      "y": 558
+      "x": 758,
+      "y": 642
     },
     "assets/style/ui-duplicate.png": {
       "width": 24,
       "height": 24,
-      "x": 282,
-      "y": 558
+      "x": 786,
+      "y": 642
     },
     "assets/style/ui-equip-frame-common.png": {
       "width": 24,
       "height": 24,
-      "x": 310,
-      "y": 558
+      "x": 814,
+      "y": 642
     },
     "assets/style/ui-equip-frame-empty.png": {
       "width": 24,
       "height": 24,
-      "x": 338,
-      "y": 558
+      "x": 842,
+      "y": 642
     },
     "assets/style/ui-equip-frame-rare.png": {
       "width": 24,
       "height": 24,
-      "x": 366,
-      "y": 558
+      "x": 870,
+      "y": 642
     },
     "assets/style/ui-equip-frame-selection.png": {
       "width": 24,
       "height": 24,
-      "x": 394,
-      "y": 558
+      "x": 898,
+      "y": 642
     },
     "assets/style/ui-equip-frame-uncommon.png": {
       "width": 24,
       "height": 24,
-      "x": 422,
-      "y": 558
+      "x": 926,
+      "y": 642
     },
     "assets/style/ui-equip-salvage.png": {
       "width": 12,
       "height": 12,
-      "x": 594,
-      "y": 586
+      "x": 82,
+      "y": 698
     },
     "assets/style/ui-equip-unique.png": {
       "width": 12,
       "height": 12,
-      "x": 610,
-      "y": 586
+      "x": 98,
+      "y": 698
     },
     "assets/style/ui-equip-worn.png": {
       "width": 12,
       "height": 12,
-      "x": 626,
-      "y": 586
+      "x": 114,
+      "y": 698
     },
     "assets/style/ui-fill-gain.png": {
       "width": 16,
       "height": 4,
-      "x": 821,
-      "y": 586
+      "x": 309,
+      "y": 698
     },
     "assets/style/ui-hand-swap.png": {
       "width": 12,
       "height": 12,
-      "x": 642,
-      "y": 586
+      "x": 130,
+      "y": 698
     },
     "assets/style/ui-link.png": {
       "width": 24,
       "height": 24,
-      "x": 450,
-      "y": 558
+      "x": 954,
+      "y": 642
     },
     "assets/style/ui-mastered.png": {
       "width": 24,
       "height": 24,
-      "x": 478,
-      "y": 558
+      "x": 982,
+      "y": 642
     },
     "assets/style/ui-menu-close.png": {
       "width": 24,
       "height": 24,
-      "x": 506,
-      "y": 558
+      "x": 2,
+      "y": 670
     },
     "assets/style/ui-menu.png": {
       "width": 24,
       "height": 24,
-      "x": 534,
-      "y": 558
+      "x": 30,
+      "y": 670
     },
     "assets/style/ui-revive.png": {
       "width": 24,
       "height": 24,
-      "x": 562,
-      "y": 558
+      "x": 58,
+      "y": 670
     },
     "assets/style/ui-seal.png": {
       "width": 24,
       "height": 24,
-      "x": 590,
-      "y": 558
+      "x": 86,
+      "y": 670
     },
     "assets/style/ui-sign.png": {
       "width": 24,
       "height": 24,
-      "x": 618,
-      "y": 558
+      "x": 114,
+      "y": 670
     },
     "assets/style/ui-skeleton-key.png": {
       "width": 24,
       "height": 24,
-      "x": 646,
-      "y": 558
+      "x": 142,
+      "y": 670
     },
     "assets/style/ui-slider-thumb-active.png": {
       "width": 24,
       "height": 24,
-      "x": 674,
-      "y": 558
+      "x": 170,
+      "y": 670
     },
     "assets/style/ui-slider-thumb.png": {
       "width": 24,
       "height": 24,
-      "x": 702,
-      "y": 558
+      "x": 198,
+      "y": 670
     },
     "assets/style/ui-slider-track.png": {
       "width": 48,
       "height": 12,
-      "x": 162,
-      "y": 586
+      "x": 670,
+      "y": 670
     },
     "assets/style/ui-ward.png": {
       "width": 24,
       "height": 24,
-      "x": 730,
-      "y": 558
+      "x": 226,
+      "y": 670
     },
     "assets/style/undo.png": {
       "width": 24,
       "height": 24,
-      "x": 758,
-      "y": 558
+      "x": 254,
+      "y": 670
     },
     "assets/style/web.png": {
       "width": 12,
       "height": 12,
-      "x": 658,
-      "y": 586
+      "x": 146,
+      "y": 698
     },
     "assets/style/wraith.png": {
       "width": 24,
       "height": 24,
-      "x": 786,
-      "y": 558
+      "x": 282,
+      "y": 670
     },
     "assets/ui/frames/banner.png": {
       "width": 48,
@@ -3248,20 +4004,20 @@
     "assets/ui/frames/fill-blue.png": {
       "width": 16,
       "height": 4,
-      "x": 841,
-      "y": 586
+      "x": 329,
+      "y": 698
     },
     "assets/ui/frames/fill-green.png": {
       "width": 16,
       "height": 4,
-      "x": 861,
-      "y": 586
+      "x": 349,
+      "y": 698
     },
     "assets/ui/frames/fill-red.png": {
       "width": 16,
       "height": 4,
-      "x": 881,
-      "y": 586
+      "x": 369,
+      "y": 698
     },
     "assets/ui/frames/panel.png": {
       "width": 48,
@@ -3278,8 +4034,8 @@
     "assets/ui/frames/surface.png": {
       "width": 24,
       "height": 12,
-      "x": 214,
-      "y": 586
+      "x": 722,
+      "y": 670
     },
     "assets/ui/frames/track.png": {
       "width": 48,

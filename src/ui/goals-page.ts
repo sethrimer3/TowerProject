@@ -120,7 +120,7 @@ const CLEARED_MARK = kitIcon("check", "", "goal-mark");
 const CHECK_ICON = kitIcon("check", "", "goal-badge");
 
 const rewardIcon = (r: GoalReward) =>
-  r.kind === "unlock" ? UNLOCK_ICONS[r.unlock] : r.kind === "tower" ? TOWER_ICON : r.kind === "relic" ? relicIcon(RELICS[r.relic]!.rarity) : CURRENCY_ICONS[r.currency]();
+  r.kind === "unlock" ? UNLOCK_ICONS[r.unlock] : r.kind === "tower" ? TOWER_ICON : r.kind === "relic" ? relicIcon(RELICS[r.relic]!) : CURRENCY_ICONS[r.currency]();
 /** An unlock's name with "Unlock" before it, once: Unlock Shrines is already named so. */
 const unlockText = (u: GoalUnlock) =>
   UNLOCK_NAMES[u].startsWith("Unlock ") ? UNLOCK_NAMES[u] : `Unlock ${u === "tournament" ? "the " : ""}${UNLOCK_NAMES[u]}`;

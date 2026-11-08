@@ -14,7 +14,7 @@ export function showRelic(relic: RelicDef, { hover = false, reduceMotion = false
   layer.setAttribute("role", "dialog");
   layer.setAttribute("aria-label", `${relic.name}: ${bonusText(relic.bonus)}`);
   const sparkles = Array.from({ length: 8 }, (_, i) => `<i style="--i:${i}"></i>`).join("");
-  layer.innerHTML = `<div class="relic-pop-stage"><div class="relic-pop-rays" aria-hidden="true"></div><div class="relic-pop-sparkles" aria-hidden="true">${sparkles}</div>${relicIcon(relic.rarity, "relic-icon relic-pop-icon")}</div>` +
+  layer.innerHTML = `<div class="relic-pop-stage"><div class="relic-pop-rays" aria-hidden="true"></div><div class="relic-pop-sparkles" aria-hidden="true">${sparkles}</div>${relicIcon(relic, "relic-icon relic-pop-icon")}</div>` +
     `<div class="card-reveal-text"><b>${relic.name}</b><p>${bonusText(relic.bonus)}</p></div>`;
   (document.querySelector("#app") ?? document.body).append(layer);
   if (!hover) layer.onclick = () => layer.remove();

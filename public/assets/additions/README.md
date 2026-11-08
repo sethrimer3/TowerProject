@@ -5,6 +5,7 @@ Read atlas.json for named regions; coordinates start at the top left, exclude th
 Use nearest-neighbor sampling at integer scales.
 
 100 relics are an art library, numbered in source reading order; no names, rarities, bonuses or ownership rules are assigned.
+These early concept relics are superseded in gameplay by the exact catalog artwork and preview in `../relics/`.
 The remaining art comprises Trial Points, 12 skill symbols, five event pennants, and ten Standard equipment pieces.
 Event pennants are reusable themes, not scheduled events.
 These files are not wired to gameplay yet and do not replace existing art.

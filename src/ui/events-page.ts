@@ -156,7 +156,7 @@ export class EventsPage {
       // A relic of the theme's set shows its name and bonus when pressed.
       const [tag, attrs] = def ? ["button", ` data-relic="${m.relic}"`] : ["span", ` role="img" title="${label}"`];
       return `<${tag} class="event-relic ${m.rarity}${reached ? " reached" : ""}${locked ? " locked" : ""}" style="--at:${(100 * m.medals) / top}%" aria-label="${label}"${attrs}>` +
-        `<span class="event-relic-art">${relicIcon(m.rarity)}${reached ? checkIcon() : locked ? LOCK : ""}</span><small>${m.medals.toLocaleString("en-US")}</small></${tag}>`;
+        `<span class="event-relic-art">${relicIcon(def ?? m.rarity)}${reached ? checkIcon() : locked ? LOCK : ""}</span><small>${m.medals.toLocaleString("en-US")}</small></${tag}>`;
     };
     const row = (premium: boolean) => `<b class="event-row-name${premium ? " premium" : ""}">${premium ? "Event Boost Relics" : "Free Relics"}</b>` +
       `<div class="event-relics ${premium ? "premium" : "standard"}">${milestones.filter((m) => m.premium === premium).map(relic).join("")}</div>`;
@@ -204,7 +204,7 @@ export class EventsPage {
     const relics = storeRelics(game.save.events.id ?? 0);
     const relicsHtml = relics.length
       ? `<section class="store-section"><h3>Relics</h3><div class="store-row" style="--cols:${Math.min(2, relics.length)}">${relics.map((r) =>
-        `<div class="store-offer store-relic">${relicIcon("epic")}<b>${r.relic.name}</b><small>${bonusText(r.relic.bonus)}</small>${this.buyButton({ kind: "relic", id: r.id }, r.relic.name)}</div>`).join("")}</div></section>`
+        `<div class="store-offer store-relic">${relicIcon(RELICS[r.id] ?? "epic")}<b>${r.relic.name}</b><small>${bonusText(r.relic.bonus)}</small>${this.buyButton({ kind: "relic", id: r.id }, r.relic.name)}</div>`).join("")}</div></section>`
       : "";
     const tracks = BONUS_TRACKS.length
       ? `<div class="store-row" style="--cols:2">${BONUS_TRACKS.map((t) => `<div class="store-offer store-track"><b>${t.name}</b><small>${perMilleText(TRACK_GOLD_PER_MILLE)}${goldIcon()}</small>${this.buyButton({ kind: "track", id: t.id }, t.name)}</div>`).join("")}</div>`

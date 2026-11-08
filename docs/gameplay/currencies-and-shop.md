@@ -3,6 +3,9 @@
 Inspiration uses a small blue-white spark, while Breakthrough uses a larger ivory-and-brass starburst.
 These distinct symbols appear wherever their balances, skill trees and rewards are shown.
 
+The [relic collection](../EVENTS.md#relics-and-the-track) uses individual pixel artwork for every named relic, including legendary tower rewards.
+The same artifact appears in its reward display and enlarged preview.
+
 ## Gems
 
 **Gems** are the premium currency, kept between runs like Gold.

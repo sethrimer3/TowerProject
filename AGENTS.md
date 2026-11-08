@@ -109,6 +109,8 @@ Read the area's doc before changing code there or answering questions about it; 
 
 ## Conventions
 
+- Deliver completed changes on `main`: merge the latest remote changes, run the relevant checks, and push to `origin/main`.
+  The user has requested this as the default delivery workflow.
 - Keep this file and the topic docs current.
   When a change adds, renames, or removes modules, alters architecture or generation invariants, changes commands/scripts or test setup, or changes save rules, update the topic doc for its area in the same change, and this file only for what every task needs (commands, the core architecture, invariants, conventions).
   A new area gets its own topic doc and a line in the list above naming what it covers.

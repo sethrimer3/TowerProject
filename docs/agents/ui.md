@@ -1,5 +1,7 @@
 # Pages and HUD
 
+Named relics use the exact catalog PNG through `relicIcon(relic)` in the collection, event track/store, Goals and `showRelic`; generic navigation still passes a rarity and receives its pendant.
+
 Settings includes the always-visible Legacy Enemies toggle, default off, restoring the old ordinary enemy art and names without restarting a run.
 Enemy inspection and combat messages resolve the new bestiary through `enemies/roster.ts` with the current saved preference.
 

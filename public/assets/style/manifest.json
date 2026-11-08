@@ -3369,6 +3369,636 @@
       "file": "delve-enemy-defenseHeavy-greaterBoss-aggroed.png",
       "width": 24,
       "height": 24
+    },
+    "relic-newYear-2027-free1": {
+      "file": "relic-newYear-2027-free1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-newYear-2027-premium1": {
+      "file": "relic-newYear-2027-premium1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-newYear-2027-free2": {
+      "file": "relic-newYear-2027-free2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-newYear-2027-premium2": {
+      "file": "relic-newYear-2027-premium2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-blizzard-2027-free1": {
+      "file": "relic-blizzard-2027-free1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-blizzard-2027-premium1": {
+      "file": "relic-blizzard-2027-premium1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-blizzard-2027-free2": {
+      "file": "relic-blizzard-2027-free2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-blizzard-2027-premium2": {
+      "file": "relic-blizzard-2027-premium2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-lunarNewYear-2027-free1": {
+      "file": "relic-lunarNewYear-2027-free1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-lunarNewYear-2027-premium1": {
+      "file": "relic-lunarNewYear-2027-premium1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-lunarNewYear-2027-free2": {
+      "file": "relic-lunarNewYear-2027-free2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-lunarNewYear-2027-premium2": {
+      "file": "relic-lunarNewYear-2027-premium2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-heartbloom-2027-free1": {
+      "file": "relic-heartbloom-2027-free1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-heartbloom-2027-premium1": {
+      "file": "relic-heartbloom-2027-premium1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-heartbloom-2027-free2": {
+      "file": "relic-heartbloom-2027-free2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-heartbloom-2027-premium2": {
+      "file": "relic-heartbloom-2027-premium2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-aurora-2027-free1": {
+      "file": "relic-aurora-2027-free1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-aurora-2027-premium1": {
+      "file": "relic-aurora-2027-premium1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-aurora-2027-free2": {
+      "file": "relic-aurora-2027-free2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-aurora-2027-premium2": {
+      "file": "relic-aurora-2027-premium2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-springRain-2027-free1": {
+      "file": "relic-springRain-2027-free1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-springRain-2027-premium1": {
+      "file": "relic-springRain-2027-premium1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-springRain-2027-free2": {
+      "file": "relic-springRain-2027-free2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-springRain-2027-premium2": {
+      "file": "relic-springRain-2027-premium2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-jestersRevel-2027-free1": {
+      "file": "relic-jestersRevel-2027-free1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-jestersRevel-2027-premium1": {
+      "file": "relic-jestersRevel-2027-premium1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-jestersRevel-2027-free2": {
+      "file": "relic-jestersRevel-2027-free2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-jestersRevel-2027-premium2": {
+      "file": "relic-jestersRevel-2027-premium2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-dragonsHatchery-2027-free1": {
+      "file": "relic-dragonsHatchery-2027-free1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-dragonsHatchery-2027-premium1": {
+      "file": "relic-dragonsHatchery-2027-premium1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-dragonsHatchery-2027-free2": {
+      "file": "relic-dragonsHatchery-2027-free2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-dragonsHatchery-2027-premium2": {
+      "file": "relic-dragonsHatchery-2027-premium2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-cherryBlossom-2027-free1": {
+      "file": "relic-cherryBlossom-2027-free1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-cherryBlossom-2027-premium1": {
+      "file": "relic-cherryBlossom-2027-premium1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-cherryBlossom-2027-free2": {
+      "file": "relic-cherryBlossom-2027-free2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-cherryBlossom-2027-premium2": {
+      "file": "relic-cherryBlossom-2027-premium2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-honeycomb-2027-free1": {
+      "file": "relic-honeycomb-2027-free1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-honeycomb-2027-premium1": {
+      "file": "relic-honeycomb-2027-premium1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-honeycomb-2027-free2": {
+      "file": "relic-honeycomb-2027-free2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-honeycomb-2027-premium2": {
+      "file": "relic-honeycomb-2027-premium2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-fairyRing-2027-free1": {
+      "file": "relic-fairyRing-2027-free1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-fairyRing-2027-premium1": {
+      "file": "relic-fairyRing-2027-premium1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-fairyRing-2027-free2": {
+      "file": "relic-fairyRing-2027-free2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-fairyRing-2027-premium2": {
+      "file": "relic-fairyRing-2027-premium2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-sunkenKingdom-2027-free1": {
+      "file": "relic-sunkenKingdom-2027-free1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-sunkenKingdom-2027-premium1": {
+      "file": "relic-sunkenKingdom-2027-premium1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-sunkenKingdom-2027-free2": {
+      "file": "relic-sunkenKingdom-2027-free2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-sunkenKingdom-2027-premium2": {
+      "file": "relic-sunkenKingdom-2027-premium2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-midsummer-2027-free1": {
+      "file": "relic-midsummer-2027-free1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-midsummer-2027-premium1": {
+      "file": "relic-midsummer-2027-premium1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-midsummer-2027-free2": {
+      "file": "relic-midsummer-2027-free2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-midsummer-2027-premium2": {
+      "file": "relic-midsummer-2027-premium2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-ember-2027-free1": {
+      "file": "relic-ember-2027-free1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-ember-2027-premium1": {
+      "file": "relic-ember-2027-premium1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-ember-2027-free2": {
+      "file": "relic-ember-2027-free2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-ember-2027-premium2": {
+      "file": "relic-ember-2027-premium2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-sandstorm-2027-free1": {
+      "file": "relic-sandstorm-2027-free1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-sandstorm-2027-premium1": {
+      "file": "relic-sandstorm-2027-premium1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-sandstorm-2027-free2": {
+      "file": "relic-sandstorm-2027-free2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-sandstorm-2027-premium2": {
+      "file": "relic-sandstorm-2027-premium2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-neon-2027-free1": {
+      "file": "relic-neon-2027-free1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-neon-2027-premium1": {
+      "file": "relic-neon-2027-premium1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-neon-2027-free2": {
+      "file": "relic-neon-2027-free2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-neon-2027-premium2": {
+      "file": "relic-neon-2027-premium2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-orbit-2027-free1": {
+      "file": "relic-orbit-2027-free1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-orbit-2027-premium1": {
+      "file": "relic-orbit-2027-premium1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-orbit-2027-free2": {
+      "file": "relic-orbit-2027-free2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-orbit-2027-premium2": {
+      "file": "relic-orbit-2027-premium2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-tempest-2027-free1": {
+      "file": "relic-tempest-2027-free1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-tempest-2027-premium1": {
+      "file": "relic-tempest-2027-premium1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-tempest-2027-free2": {
+      "file": "relic-tempest-2027-free2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-tempest-2027-premium2": {
+      "file": "relic-tempest-2027-premium2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-crystalCaverns-2027-free1": {
+      "file": "relic-crystalCaverns-2027-free1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-crystalCaverns-2027-premium1": {
+      "file": "relic-crystalCaverns-2027-premium1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-crystalCaverns-2027-free2": {
+      "file": "relic-crystalCaverns-2027-free2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-crystalCaverns-2027-premium2": {
+      "file": "relic-crystalCaverns-2027-premium2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-autumnWood-2027-free1": {
+      "file": "relic-autumnWood-2027-free1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-autumnWood-2027-premium1": {
+      "file": "relic-autumnWood-2027-premium1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-autumnWood-2027-free2": {
+      "file": "relic-autumnWood-2027-free2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-autumnWood-2027-premium2": {
+      "file": "relic-autumnWood-2027-premium2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-spidersLair-2027-free1": {
+      "file": "relic-spidersLair-2027-free1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-spidersLair-2027-premium1": {
+      "file": "relic-spidersLair-2027-premium1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-spidersLair-2027-free2": {
+      "file": "relic-spidersLair-2027-free2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-spidersLair-2027-premium2": {
+      "file": "relic-spidersLair-2027-premium2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-hauntedKeep-2027-free1": {
+      "file": "relic-hauntedKeep-2027-free1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-hauntedKeep-2027-premium1": {
+      "file": "relic-hauntedKeep-2027-premium1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-hauntedKeep-2027-free2": {
+      "file": "relic-hauntedKeep-2027-free2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-hauntedKeep-2027-premium2": {
+      "file": "relic-hauntedKeep-2027-premium2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-arcade-2027-free1": {
+      "file": "relic-arcade-2027-free1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-arcade-2027-premium1": {
+      "file": "relic-arcade-2027-premium1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-arcade-2027-free2": {
+      "file": "relic-arcade-2027-free2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-arcade-2027-premium2": {
+      "file": "relic-arcade-2027-premium2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-harvestFeast-2027-free1": {
+      "file": "relic-harvestFeast-2027-free1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-harvestFeast-2027-premium1": {
+      "file": "relic-harvestFeast-2027-premium1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-harvestFeast-2027-free2": {
+      "file": "relic-harvestFeast-2027-free2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-harvestFeast-2027-premium2": {
+      "file": "relic-harvestFeast-2027-premium2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-wizardsTower-2027-free1": {
+      "file": "relic-wizardsTower-2027-free1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-wizardsTower-2027-premium1": {
+      "file": "relic-wizardsTower-2027-premium1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-wizardsTower-2027-free2": {
+      "file": "relic-wizardsTower-2027-free2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-wizardsTower-2027-premium2": {
+      "file": "relic-wizardsTower-2027-premium2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-longestNight-2027-free1": {
+      "file": "relic-longestNight-2027-free1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-longestNight-2027-premium1": {
+      "file": "relic-longestNight-2027-premium1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-longestNight-2027-free2": {
+      "file": "relic-longestNight-2027-free2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-longestNight-2027-premium2": {
+      "file": "relic-longestNight-2027-premium2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-blueMoon-2027-free1": {
+      "file": "relic-blueMoon-2027-free1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-blueMoon-2027-premium1": {
+      "file": "relic-blueMoon-2027-premium1.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-blueMoon-2027-free2": {
+      "file": "relic-blueMoon-2027-free2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-blueMoon-2027-premium2": {
+      "file": "relic-blueMoon-2027-premium2.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-tower-1-epic": {
+      "file": "relic-tower-1-epic.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-tower-1-legendary": {
+      "file": "relic-tower-1-legendary.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-tower-2-epic": {
+      "file": "relic-tower-2-epic.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-tower-2-legendary": {
+      "file": "relic-tower-2-legendary.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-tower-3-epic": {
+      "file": "relic-tower-3-epic.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-tower-3-legendary": {
+      "file": "relic-tower-3-legendary.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-tower-4-epic": {
+      "file": "relic-tower-4-epic.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-tower-4-legendary": {
+      "file": "relic-tower-4-legendary.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-tower-5-epic": {
+      "file": "relic-tower-5-epic.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-tower-5-legendary": {
+      "file": "relic-tower-5-legendary.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-tower-6-epic": {
+      "file": "relic-tower-6-epic.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-tower-6-legendary": {
+      "file": "relic-tower-6-legendary.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-tower-7-epic": {
+      "file": "relic-tower-7-epic.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-tower-7-legendary": {
+      "file": "relic-tower-7-legendary.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-tower-8-epic": {
+      "file": "relic-tower-8-epic.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-tower-8-legendary": {
+      "file": "relic-tower-8-legendary.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-tower-9-epic": {
+      "file": "relic-tower-9-epic.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-tower-9-legendary": {
+      "file": "relic-tower-9-legendary.png",
+      "width": 24,
+      "height": 24
     }
   }
 }
