@@ -75,6 +75,9 @@ export type Enemy = {
   /** It stands in Voidwell's vortex (arcana/voidwell.ts): it doesn't move or shoot, and
    * a Fast one doesn't strike first; set by the board as it reads the tile, never saved. */
   stunned?: true;
+  /** Amber Prison has weakened and slowed it (equipment/powers.ts), in percent;
+   * set by the board as it reads the tile's `amber`, never saved. */
+  amber?: number;
   /** An enemy spawned onto the floor during the run (`Game.spawnEnemy`):
    * its number among the run's spawns, which keys its loot apart from the
    * tile's (`RunPurse.killKey`); absent on enemies the floor was made with. */
@@ -119,7 +122,7 @@ export type DoorRule =
  * it fills, and a percent potion (whose tile is marked `color: "red"`, the
  * mark generation and saves keep) blue, like the Overheal bar. */
 export const potionShade = (t: Pick<Tile, "color">): "red" | "blue" => (t.color === "red" ? "blue" : "red");
-export type Tile = { kind: Kind; amount?: number; color?: KeyColor; door?: DoorRule; enemy?: Enemy; flyer?: Enemy; tier?: ChestTier; wound?: number; broken?: number; sprung?: number; necro?: Record<string, number>; chest?: Exclude<ChestKind, "plain"> };
+export type Tile = { kind: Kind; amount?: number; color?: KeyColor; door?: DoorRule; enemy?: Enemy; flyer?: Enemy; tier?: ChestTier; wound?: number; broken?: number; sprung?: number; necro?: Record<string, number>; amber?: number; chest?: Exclude<ChestKind, "plain"> };
 export type Point = { x: number; y: number };
 /** A stationary wall-mounted light source, anchored to a walkable floor
  * tile adjacent to a wall. Its visibility polygon is computed once (on
@@ -188,6 +191,15 @@ export type Player = {
    * by (`slowedAct` skipping its strikes). Like `beamAttack`, only the copy of the
    * hero a fight is taken with carries it (`Game.fighterAt`). */
   slowdown?: number;
+  /** Mirror Vault's Retribution (equipment/powers.ts): the damage the fight's
+   * first strike takes off its enemy after its own, as much as is left of it
+   * (`bout`); absent unless it is worn. Like `beamAttack`, only the copy of
+   * the hero a fight is taken with carries it (`Game.fighterAt`). */
+  retribution?: number;
+  /** Amber Prison's percent (equipment/powers.ts): what each strike that
+   * doesn't kill cuts its enemy's damage and speed by, up to `AMBER_MOST`;
+   * absent unless it is worn. Only the copy a fight is taken with carries it. */
+  amber?: number;
   /** The percent of a boss's or a Greater Boss's max HP (`takedown`: ATK
    * UP's Takedown, TORCH's Greater Takedown) and ATK (`tangle`: DEF UP's
    * Tangle, TORCH's Greater Tangle) taken off as a fight with it begins, by

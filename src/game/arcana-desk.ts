@@ -13,6 +13,7 @@ import type { CritRule } from "../combat.ts";
 import type { Enemy, Mode } from "../entities.ts";
 import type { FloorBloom } from "../environments.ts";
 import { arcanaWithGear, wornEffects } from "../equipment/effects.ts";
+import { powerOf } from "../equipment/powers.ts";
 import { boostLifespringHealth } from "../progression/hero-stats.ts";
 import { stream } from "../random.ts";
 import type { TowerRun } from "../runs.ts";
@@ -26,6 +27,8 @@ import type { DeskHost } from "./desk.ts";
 export interface ArcanaHost extends DeskHost {
   readonly mode: Mode;
   readonly crit: CritRule | undefined;
+  /** Where Challenger's Defiance turns Overseer's first beam, in hundredths of a degree, while it does. */
+  readonly bossAim?: number;
 }
 
 /** An arcanum as a run holds it: bought, or lent by a Shrine boon (`lent`, at
@@ -186,8 +189,8 @@ export class ArcanaDesk {
   ricochet() {
     const held = this.held.find((h) => h.id === "ricochetShot" && this.isOn(h.id));
     if (!held) return undefined;
-    const [multiplier, rebounds, chance] = this.valuesOf(held);
-    return { boost: this.boost(multiplier), rebounds: rebounds + relicAmount(this.save, "ricochet"), chance };
+    const [multiplier, rebounds, chance] = this.valuesOf(held), self = powerOf(wornEffects(this.save, this.host.mode), "psionicTempest", "chance");
+    return { boost: this.boost(multiplier), rebounds: rebounds + relicAmount(this.save, "ricochet"), chance, ...(self ? { self } : {}) };
   }
   /** What Aurum Bloom gives the floors' environments, if it is held and on. */
   aurumBloom(): FloorBloom | undefined {
@@ -202,8 +205,13 @@ export class ArcanaDesk {
   get beams(): Beams | undefined {
     const held = this.held.find((h) => h.id === "overseer" && this.isOn(h.id));
     if (!held) return undefined;
-    const [bonus, width, count] = this.valuesOf(held);
-    return { bonus, width, count, turns: this.host.run.beamTurns ?? 0 };
+    const [bonus, width, count] = this.valuesOf(held), aim = this.host.bossAim;
+    return { bonus, width, count, turns: this.host.run.beamTurns ?? 0, ...(aim === undefined ? {} : { aim }) };
+  }
+  /** What Lich King's Crown's ghosts multiply the hero's ATK by: Phantasm's
+   * ATK Mult at its first level, raised as an arcanum's damage is, owned or not. */
+  ghostBoost() {
+    return this.boost(valuesAt("phantasm", [0, 0, 0])[0]!);
   }
   /** Thunderbolt, if it is held and on: what its strikes multiply the hero's
    * ATK by, the bolts of one trigger, and its cooldown. */
@@ -309,6 +317,21 @@ export class ArcanaDesk {
     const { healthPerKill, healthLimit, gold, cells } = rule.effects;
     boostLifespringHealth(this.host.run, healthPerKill, healthLimit);
     return { gold, cells };
+  }
+  /** Chrono Strider's potion: every cooldown of the arcana held and on, but
+   * Necrotic Frost's, `turns` nearer running out, down to its last turn. */
+  cutCooldowns(turns: number) {
+    const run = this.host.run, cut = (timer: number | undefined, full: number) => Math.max(1, Math.min(timer ?? full, full) - turns);
+    for (const held of this.held) {
+      const shown = this.cooldown(held);
+      if (!shown || held.id === "necroticFrost" || !this.isOn(held.id)) continue;
+      const left = cut(shown.left, shown.turns);
+      if (held.id === "lifespring") { if (run.lifespring) run.lifespring.timer = left; }
+      else if (held.id === "timeDilation") (run.timeDilation ??= {}).timer = left;
+      else if (held.id === "phantasm") (run.phantasm ??= {}).timer = left;
+      else if (held.id === "voidwell") (run.voidwell ??= {}).timer = left;
+      else this.runState.timers[held.id] = left;
+    }
   }
   /** A turn ends: Overseer's beams turn on, on or off, and each cooldown on
    * its way, restarting the moment it runs out. */

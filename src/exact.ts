@@ -70,3 +70,20 @@ export function pointing(degrees: number) {
  * or difference of them is snapped back onto the grid, so 0.1 + 0.2 is 0.3
  * and a fight's forecast and the fight played out agree to the last strike. */
 export const snap = (n: number) => Math.round(n * 1e6) / 1e6;
+
+const LN10 = 2.302585092994046;
+/** The base-10 logarithm of `x` (> 0): its powers of ten taken out, the rest
+ * square-rooted down near 1, then the atanh series, so the same bits come out
+ * in every engine (`Math.log10` may differ in the last one). */
+export function log10(x: number) {
+  if (!(x > 0)) return -Infinity;
+  let tens = 0;
+  while (x >= 10) { x /= 10; tens++; }
+  while (x < 1) { x *= 10; tens--; }
+  let halvings = 0;
+  while (x > 1.01) { x = Math.sqrt(x); halvings++; }
+  const y = (x - 1) / (x + 1), y2 = y * y;
+  let sum = 0;
+  for (let k = 15; k >= 1; k -= 2) sum = 1 / k + y2 * sum;
+  return tens + (2 * y * sum * intPow(2, halvings)) / LN10;
+}

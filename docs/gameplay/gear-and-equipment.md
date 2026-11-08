@@ -60,4 +60,20 @@ Every substat is a percent, points of a chance or a whole count, never a flat st
 A substat doesn't grow with the piece's level; a rarer one is stronger (Rare ×1.5 an Uncommon's).
 A new slot's first roll is free (choose one of three); after that, **Refine** pays for three new candidates beside the current substat, which stays unless you take one, and every Refine counts toward that slot's Refinement: every fifth guarantees a top-rarity candidate and every tenth earns a Choice of any substat outright.
 Merging keeps a piece's substats and Refinement.
+Each Unique also has a **power** of its own, stronger at each rarity from Epic to Ancestral (Stars raise its main effect, not its power); its piece's page shows it, and the loadout's summary lists those worn:
+- Raptor Blade: more Super Crit chance, and a Super Crit makes the next 5 strikes Super Crits, carried from fight to fight.
+- Kinetic Mallet: a Dash Combo lasts more turns without a fight.
+- Soul Reaper: some enemies (never bosses) are marked for death, the same ones however often you retry: your first strike or arrow destroys them.
+- Zenith Guard: Regen heals on past max HP, part of the way to the Overheal ceiling.
+- Cradle of Life: a stronger Aether Shield that regains more.
+- Amber Prison: each hit that doesn't kill weakens its enemy's blows and slows its strikes, shots and steps, up to half.
+- Equilibrium Tether: ATK, DEF, max HP and Regen each count a quarter of their ranks together, and every rank trained in a climb, on any row, adds to all four.
+- Mobius Cipher: every potion, chest, shard and key you pick up makes the next of its kind yield more for the rest of the run.
+- Mirror Vault: damage you take is stored as Retribution, multiplied, and struck back after your next fight's first strike or your next arrow.
+- Lich King's Crown: ghosts rush every boss as it comes in shot range.
+- Psionic Tempest: Ricochet Shot sometimes strikes the enemy its arrow hit too.
+- Challenger's Defiance: Overseer's beam stays on a boss, and while a boss stands on the floor you strike the other enemies far harder.
+- Chrono Strider: arcana cool down faster, each potion takes turns off their cooldowns, and Aurum Bloom finds more Golden Floors.
+- Jackpot Spurs: more Gold for each Free Upgrade that came up on the floor.
+- Hoarder Greaves: more ATK the more keys you hold.
 See [docs/EQUIPMENT.md](../EQUIPMENT.md).

@@ -111,6 +111,11 @@ import { LEAGUE_INFO, type League } from "./tournament/leagues.ts";
 import { runStream, tournamentScore, type TournamentRun } from "./tournament/run.ts";
 import type { TournamentInfo } from "./tournament/server.ts";
 import { raised, wornEffects } from "./equipment/effects.ts";
+import { hoardFactor, jackpotFactor, powerOf, TETHER_ROWS, yieldFactor, type GearRun, type YieldKind } from "./equipment/powers.ts";
+import type { Played } from "./game/fight-playback.ts";
+import { heroHit, isBoss } from "./combat.ts";
+import { bearing } from "./exact.ts";
+import { ghostRush } from "./volley.ts";
 import { RARITY_TIERS, type EquipRarity } from "./equipment/balance.ts";
 import { EQUIP_MATERIALS, EQUIP_MATERIAL_IDS, itemDef, type EquipMaterialId } from "./equipment/catalog.ts";
 import { readyForestRuns, startingHero } from "./game/hero-sync.ts";
@@ -170,6 +175,8 @@ const AUTO_CLIMB_HINT_HEIGHT = 3;
 const TURN_MS = 220;
 /** Salts the run seed for Find Gold Key's roll on each new floor. */
 const YELLOW_KEY_SALT = 0x6e11a;
+/** Salts the run seed for Soul Reaper's marks. */
+const REAPER_SALT = 0x50a1e;
 /** Salt a Bomb's critical and Super Critical rolls. */
 const BOMB_SALT = 0xb0b1c, BOMB_SUPER_SALT = 0xb0b5c;
 /** Salt the run seed for the traders' and smelts' Floor Key rolls on each new floor. */
@@ -179,7 +186,7 @@ const FLOOR_KEY_SALT: Record<KeyColor, number> = { yellow: 0x9f10e, blue: 0xb1f1
  * the hero's critical strikes in it as played (`crits`) and whether it
  * began with ENEMY's Surprise Attack (`surprise`) or a Fast enemy lost its
  * first strike to FAST ENEMY's First Strike (`firstStrike`). */
-type TakenStep = { tile: Tile; outcome: StepEffect; dest: { x: number; y: number }; track: boolean; quiet?: boolean; crits?: number; winged?: boolean; surprise?: true; firstStrike?: true; card: CardStep };
+type TakenStep = { tile: Tile; outcome: StepEffect; dest: { x: number; y: number }; track: boolean; quiet?: boolean; crits?: number; winged?: boolean; played?: Played; surprise?: true; firstStrike?: true; card: CardStep };
 /** How the hand's turn takes a step: Effective or Dampen on a card's last
  * step (`scale`, what its target's effect is multiplied by; 1 on every
  * other step), Skip on STAIRS succeeding (`floorSkip`: the climb goes up
@@ -1213,9 +1220,82 @@ export class Game {
   /** The hero as it takes the fight at `to`, the step's tile: with Overseer's
    * beams as the turn begins on that tile, a copy carrying their ATK as well. */
   fighterAt(to: { x: number; y: number }): Player {
-    const factor = this.beamFactorAt(to), slow = this.slowdownAt(to);
-    if (factor === 1 && !slow) return this.fighter;
-    return { ...this.fighter, ...(factor === 1 ? {} : { beamAttack: factor }), ...(slow ? { slowdown: slow } : {}) };
+    const factor = this.beamFactorAt(to), slow = this.slowdownAt(to), worn = this.worn;
+    // The Uniques' powers: Hoarder Greaves' and Challenger's Defiance's ATK, Mirror Vault's Retribution, Amber Prison's percent.
+    const gear = this.gearAttackAt(to.x, to.y), mirror = powerOf(worn, "mirrorVault", "factor"), amber = powerOf(worn, "amberPrison", "perHit");
+    if (factor === 1 && !slow && gear === 1 && !mirror && !amber) return this.fighter;
+    const hero = this.fighter;
+    return { ...hero, ...(gear === 1 ? {} : { attack: snap(hero.attack * gear) }), ...(factor === 1 ? {} : { beamAttack: factor }), ...(slow ? { slowdown: slow } : {}),
+      ...(mirror ? { retribution: this.run.gear?.retribution ?? 0 } : {}), ...(amber ? { amber } : {}) };
+  }
+  /** What the worn Uniques multiply ATK by against the enemy at (x, y):
+   * Hoarder Greaves' by the keys held, and Challenger's Defiance's while a
+   * boss (not a Greater Boss) stands on the hero's floor and this one isn't a boss. */
+  private gearAttackAt(x: number, y: number) {
+    const worn = this.worn, keys = this.run.player.keys;
+    const hoard = hoardFactor(powerOf(worn, "hoarderGreaves", "factor"), snap(keys.yellow + keys.blue + keys.red));
+    const defiance = powerOf(worn, "challengersDefiance", "factor"), foe = defiance ? foeOn(this.world.tile(x, y)) : undefined;
+    const defied = !!foe && !isBoss(foe) && this.floorBosses.some((b) => b.enemy.strength === "boss");
+    return defied ? snap(hoard * defiance) : hoard;
+  }
+  /** The bosses and Greater Bosses on the floor the hero stands on. */
+  private get floorBosses() {
+    const p = this.run.player;
+    return (this.world.floorEnemies?.(p.x, p.y) ?? []).flatMap(({ x, y }) => {
+      const enemy = foeOn(this.world.tile(x, y));
+      return enemy && isBoss(enemy) ? [{ x, y, enemy }] : [];
+    });
+  }
+  /** Where Challenger's Defiance turns Overseer's first beam, while it is worn
+   * and a boss stands on the hero's floor: at the closest one, in hundredths
+   * of a degree clockwise from straight up the board. */
+  get bossAim(): number | undefined {
+    if (!powerOf(this.worn, "challengersDefiance", "factor")) return undefined;
+    const p = this.run.player;
+    const near = this.floorBosses.map((b) => ({ dx: shortWay(b.x - p.x, this.wrap), dy: b.y - p.y })).filter((d) => d.dx || d.dy)
+      .sort((a, b) => a.dx * a.dx + a.dy * a.dy - (b.dx * b.dx + b.dy * b.dy) || a.dy - b.dy || a.dx - b.dx)[0];
+    return near ? Math.round(bearing(near.dx, near.dy) * 100) % 36_000 : undefined;
+  }
+  /** Whether Soul Reaper has marked the enemy at (x, y) for death: a fixed
+   * roll per run, floor and the tile the enemy was made on, so undo can't
+   * roll it again; never a boss. */
+  doomedAt(x: number, y: number) {
+    const chance = powerOf(this.worn, "soulReaper", "chance"), enemy = chance ? foeOn(this.world.tile(x, y)) : undefined;
+    if (!enemy || isBoss(enemy)) return false;
+    const [hx, hy] = enemy.home ? enemy.home.split(",").map(Number) as [number, number] : [x, y];
+    return tileRandom(hx, hy, (this.run.seed ^ REAPER_SALT ^ Math.imul(this.floorOf(x, y), 0x9e3779b1) ^ Math.imul(enemy.spawn ?? 0, 0x85ebca6b)) | 0) * 100 < chance;
+  }
+  /** Raptor Blade's chain for the fight about to be taken, while it is worn. */
+  get superChain() {
+    const length = powerOf(this.worn, "raptorBlade", "chain");
+    return length ? { length, carried: this.run.gear?.chain ?? 0 } : undefined;
+  }
+  /** What a won fight leaves the powers: Raptor Blade's Super Crits still
+   * owed, and Mirror Vault's Retribution, less what the first strike spent
+   * and more the damage taken, multiplied. */
+  private afterFight(played: Played | undefined) {
+    if (!played) return;
+    if (this.superChain) this.setGearRun("chain", played.chain || undefined);
+    const mirror = powerOf(this.worn, "mirrorVault", "factor");
+    if (mirror) this.setGearRun("retribution", snap(Math.max(0, (this.run.gear?.retribution ?? 0) - played.retributed) + played.taken * mirror) || undefined);
+  }
+  /** Lich King's Crown's ghosts, as a turn ends: each boss on the hero's floor
+   * that has come in shot range, once, takes them; pays what they fell and
+   * returns their shots. */
+  private crownGhosts(beams: Beams | undefined) {
+    const ghosts = powerOf(this.worn, "lichKingsCrown", "ghosts");
+    if (!ghosts || this.run.outside) return [];
+    const p = this.run.player, reach = this.lifespringReach, rushed = this.run.gear?.rushed ?? [], shots: Shot[] = [];
+    for (const { x, y, enemy } of this.floorBosses) {
+      const key = `${enemy.home ?? `${x},${y}`}${enemy.spawn === undefined ? "" : `:${enemy.spawn}`}`;
+      if (rushed.includes(key) || !inShotRange(shortWay(x - p.x, this.wrap), y - p.y, reach)) continue;
+      rushed.push(key);
+      const out = ghostRush({ board: this.world, wrap: this.wrap, hero: p, ...(beams ? { beams } : {}) }, { x, y }, ghosts, this.arcana.ghostBoost());
+      shots.push(...out.shots);
+      for (const { enemy: fell, at } of out.kills) this.message = [`Lich King's Crown · ${enemyTitle(fell)} defeated`, ...this.finds.kill(fell, at, 1, false, 0)].join(" · ");
+    }
+    if (shots.length) this.setGearRun("rushed", [...rushed]);
+    return shots;
   }
   /** What Overseer's beams, as the turn begins, multiply ATK by against `to`. */
   private beamFactorAt(to: { x: number; y: number }) {
@@ -1246,7 +1326,8 @@ export class Game {
     if (fought) return;
     if (run.combo) {
       const idle = run.combo.idle + 1;
-      if (idle < COMBO_TURNS) run.combo = { ...run.combo, idle };
+      // Kinetic Mallet keeps it going longer.
+      if (idle < COMBO_TURNS + powerOf(this.worn, "kineticMallet", "turns")) run.combo = { ...run.combo, idle };
       else delete run.combo;
     }
     if (dashed && !run.combo && this.save.upgrades.dashCombo && this.besideEnemy) run.combo = { next: 1, idle: 1 };
@@ -1493,7 +1574,8 @@ export class Game {
     const bloom = this.arcana.owned.includes("aurumBloom") || !!this.arcana.aurumBloom();
     const golden = this.save.upgrades.goldenFloors || bloom ? (floor ? purse.golden(floor) : 1) : undefined;
     const stellar = bloom ? (floor ? purse.stellar(floor) : 1) : undefined;
-    return { save: this.save, mode: this.mode, tier: this.tier, now: this.clock(), shrine: this.shrine.open ? this.boons?.gold ?? 1 : undefined, golden, stellar };
+    const jackpot = jackpotFactor(this.worn, this.run.gear);
+    return { save: this.save, mode: this.mode, tier: this.tier, now: this.clock(), shrine: this.shrine.open ? this.boons?.gold ?? 1 : undefined, golden, stellar, ...(jackpot === undefined ? {} : { jackpot }) };
   }
   /** The run's environment chances as they stand: what it fixed going inside, and Aurum Bloom's while it holds it on. */
   get environments() {
@@ -1559,6 +1641,34 @@ export class Game {
   get worn() {
     return wornEffects(this.save, this.mode);
   }
+  /** Sets (or, with undefined, clears) one of the run's `GearRun` fields. */
+  private setGearRun<K extends keyof GearRun>(key: K, value: GearRun[K] | undefined) {
+    const gear: GearRun = { ...this.run.gear };
+    if (value === undefined) delete gear[key];
+    else gear[key] = value;
+    if (Object.keys(gear).length) this.run.gear = gear;
+    else delete this.run.gear;
+  }
+  /** Mobius Cipher's yields on the pickups a step takes now, each kind's
+   * factor from those already picked up this run; none unless it is worn. */
+  private get pickupYields() {
+    const per = powerOf(this.worn, "mobiusCipher", "perPickup"), picked = this.run.gear?.yields;
+    if (!per || !picked) return undefined;
+    const kinds = (["potion", "attack", "defense", ...KEY_ORDER] as const).filter((k) => picked[k]);
+    return kinds.length ? Object.fromEntries(kinds.map((k) => [k, yieldFactor(per, picked[k])])) : undefined;
+  }
+  /** What the powers make of a pickup just taken: Mobius Cipher counts it
+   * for its kind, and Chrono Strider's potion speeds the arcana. */
+  private pickedUp(t: Tile) {
+    const worn = this.worn, kind: YieldKind | undefined = t.kind === "potion" ? "potion" : t.kind === "treasure" ? "chestGold" : t.kind === "attack" || t.kind === "defense" ? t.kind : t.kind === "key" ? t.color : undefined;
+    if (kind && powerOf(worn, "mobiusCipher", "perPickup")) {
+      const yields = { ...this.run.gear?.yields };
+      yields[kind] = (yields[kind] ?? 0) + 1;
+      this.setGearRun("yields", yields);
+    }
+    const cut = t.kind === "potion" ? powerOf(worn, "chronoStrider", "potionCut") : 0;
+    if (cut) this.arcana.cutCooldowns(cut);
+  }
   /** What research changes about stepping now: the step rules every move,
    * preview, inspect box and planner resolves with. */
   get stepRules(): StepRules {
@@ -1574,8 +1684,11 @@ export class Game {
       return n ? [[color, n] as const] : [];
     });
     const keyFind = found.length ? { keyFind: Object.fromEntries(found) } : {};
-    const overheal = this.overheal, shieldRegen = raised(researched(this.save.archives, "shieldRegenPercent"), this.worn.shieldRegenPct);
+    // Cradle of Life multiplies Shield Regen, Zenith Guard lets Regen into Overheal, Mobius Cipher raises pickups.
+    const cradle = powerOf(worn, "cradleOfLife", "factor") || 1, zenith = powerOf(worn, "zenithGuard", "share"), yields = this.pickupYields;
+    const overheal = this.overheal, shieldRegen = snap(raised(researched(this.save.archives, "shieldRegenPercent"), worn.shieldRegenPct) * cradle);
     return { potionHeal, percentPotion: trainedAmount(this.trainingNow, "potion"), regen, ...(overheal > 1000 ? { overheal } : {}), ...(shieldRegen ? { shieldRegen } : {}),
+      ...(zenith && overheal > 1000 ? { regenOverheal: zenith } : {}), ...(yields ? { yields } : {}),
       heartToll: snap(researched(this.save.archives, "heartToll") * relicCut(this.save, "heartDoor")), ...(relicAmount(this.save, "woodenDoor") ? { woodToll: snap(100 * relicCut(this.save, "woodenDoor")) } : {}), keyCost: this.keyCost, ...keyFind, ...(this.doorOff ? { doorOff: this.doorOff } : {}),
       ...(tree.doorHeal ? { doorHeal: tree.doorHeal } : {}), ...(tree.yellowLockHeal ? { yellowLockHeal: tree.yellowLockHeal } : {}), ...(tree.keyHeal ? { keyHeal: tree.keyHeal } : {}), ...(tree.keyOverheal ? { keyOverheal: tree.keyOverheal } : {}),
       ...Object.fromEntries(KEY_ORDER.flatMap((color) => (["KeyHeal", "KeyOverheal"] as const).flatMap((part) => (keyStat(tree, color, part) ? [[`${color}${part}`, keyStat(tree, color, part)]] : [])))),
@@ -2204,13 +2317,18 @@ export class Game {
     // FAST ENEMY's First Strike: a Fast enemy may lose its first strike, by
     // the enemy tile's roll, so the hero strikes first (`met` fights it so).
     const firstStrike = t.kind === "enemy" && strikesFirst(t.enemy!) && this.tileRolls(dest.x, dest.y, FIRST_STRIKE_SALT, foeStat(this.treeBonus, t.enemy!, "FirstStrike"));
-    const met: Tile = firstStrike ? { ...t, enemy: (({ fast: _, ...caught }) => caught)(t.enemy!) } : t;
+    let met: Tile = firstStrike ? { ...t, enemy: (({ fast: _, ...caught }) => caught)(t.enemy!) } : t;
     // The step is resolved once, before any snapshot/undo bookkeeping, so a
     // wall, lock, impervious enemy, or (automation's) declined lethal fight
     // never touches history, damages the player, alters the enemy, or ends the run.
     const rules: StepRules = { ...this.stepRules, ...(regen ? {} : { regen: 0 }), ...(card.scale !== undefined && card.scale !== 1 ? { scale: card.scale } : {}) };
     // A fight is taken with a Dash Combo's ATK and Overseer's beams; previews and planners go without.
     const hero = t.kind === "enemy" ? this.fighterAt(dest) : p;
+    // Soul Reaper's mark: the hero's first hit destroys it (an impervious enemy stays so).
+    if (t.kind === "enemy" && this.doomedAt(dest.x, dest.y)) {
+      const hit = heroHit(hero, met.enemy!);
+      if (hit > 0) met = { ...met, enemy: { ...met.enemy!, hp: Math.min(met.enemy!.hp, hit) } };
+    }
     const resolved = resolveStep(hero, met, rules);
     if (resolved.blocked) return this.rejectStep(resolved, t, dest.x, dest.y);
     // DOOR's Secret Knock: a door the hero can open may open for nothing;
@@ -2249,7 +2367,7 @@ export class Game {
   }
   /** Commits a resolved step: undo history, stats, and the door or fight on
    * the way in. Returns false when the player fell. */
-  private enter({ tile: t, outcome, dest, track, quiet, crits, winged, surprise, firstStrike }: TakenStep, revived: number) {
+  private enter({ tile: t, outcome, dest, track, quiet, crits, winged, surprise, firstStrike, played }: TakenStep, revived: number) {
     const before = this.snapshot();
     this.turnBefore ??= before;
     if (track) this.remember(quiet ? { ...before, quiet: true } : before);
@@ -2271,6 +2389,7 @@ export class Game {
     if (won) {
       this.turnFought = true;
       if (this.run.combo) this.run.combo = { next: this.run.combo.next + 1, idle: 0 };
+      this.afterFight(played);
       this.springRicochet(dest);
     }
     return won;
@@ -2352,6 +2471,7 @@ export class Game {
       return;
     }
     this.finds.pickup(t, x, y, outcome);
+    this.pickedUp(t);
     this.consumeTile(t, x, y);
     if (t.kind === "attack") this.chargePowerStrike(x, y);
     if (t.kind === "door") this.doorOpened(x, y, t, !!outcome.free);
@@ -2475,16 +2595,23 @@ export class Game {
     const struck = [...(sameFloor ? sprung : []), ...this.strikeBolts(fired, beams, sameFloor ? from : undefined), ...this.strikeGhosts(beams, at, ms, sameFloor ? from : undefined)];
     if ((this.tier < 3 && !archer) || !sameFloor) {
       this.showVolley(struck, at, ms);
+      if (sameFloor) this.showVolley(this.crownGhosts(beams), at, ms, true);
       this.showVolley(this.lifespringContact(), at, ms, true);
       this.showVolley(this.decayNecro(beams), at, ms, true);
       return;
     }
     // What the hero's step brought into range meets the field before any arrow.
     const met = this.lifespringContact(from, 1);
-    const v = this.run.volleys ?? { turn: 0 };
+    const v = this.run.volleys ?? { turn: 0 }, retribution = { pool: this.run.gear?.retribution ?? 0 };
     const out = volleyTurn({ board: this.world, wrap: this.wrap, floorOf: (x, y) => this.floorOf(x, y), hero: p, from, seed: this.run.seed,
-      volleys: { ...v, turn: v.turn + 1 }, archer, ranks: { ...this.trainingNow, archives: this.save.archives }, cardCrit: this.cardCrit, handShot: this.handShot, ricochet: this.arcana.ricochet(), ...(beams ? { beams } : {}), ...(dilation ? { dilation } : {}), ...(frost ? { frost } : {}) });
+      volleys: { ...v, turn: v.turn + 1 }, archer, ranks: { ...this.trainingNow, archives: this.save.archives }, cardCrit: this.cardCrit, handShot: this.handShot, ricochet: this.arcana.ricochet(), ...(beams ? { beams } : {}), ...(dilation ? { dilation } : {}), ...(frost ? { frost } : {}), ...this.volleyPowers(retribution) });
     this.run.volleys = out.volleys;
+    // Mirror Vault: what the arrows spent of Retribution goes, the shots' damage comes in, multiplied.
+    const mirror = powerOf(this.worn, "mirrorVault", "factor");
+    if (mirror) {
+      const taken = out.shots.reduce((n, s) => (s.by === "enemy" ? snap(n + s.damage + (s.shielded ?? 0)) : n), 0);
+      this.setGearRun("retribution", snap(retribution.pool + taken * mirror) || undefined);
+    }
     p.hp = out.hp;
     if (out.shield !== undefined) p.shield = out.shield;
     startRegrow(this.save, this.run, this.mode);
@@ -2508,11 +2635,12 @@ export class Game {
       return;
     }
     // Then the Aggroed enemies close in (enemies/flying.ts), their cooldowns with them.
-    const moved = aggroTurn({ board: this.world, changes: this.run.changes, hero: p, floorOf: (x, y) => this.floorOf(x, y), lit: litTorches(this.world), foes: this.run.volleys.foes, ...(dilation || frost ? { slowAt: (x: number, y: number) => this.slowdownAt({ x, y }) } : {}), ...(this.vortex ? { stunnedAt: (x: number, y: number) => !!foeOn(this.world.tile(x, y))?.stunned } : {}) });
+    const moved = aggroTurn({ board: this.world, changes: this.run.changes, hero: p, floorOf: (x, y) => this.floorOf(x, y), lit: litTorches(this.world), foes: this.run.volleys.foes, ...(dilation || frost || powerOf(this.worn, "amberPrison", "perHit") ? { slowAt: (x: number, y: number) => togetherSlow(this.slowdownAt({ x, y }), foeOn(this.world.tile(x, y))?.amber ?? 0) } : {}), ...(this.vortex ? { stunnedAt: (x: number, y: number) => !!foeOn(this.world.tile(x, y))?.stunned } : {}) });
     if (moved.steps.length) {
       if (moved.foes && Object.keys(moved.foes).length) this.run.volleys.foes = moved.foes;
       else delete this.run.volleys.foes;
     }
+    this.showVolley(this.crownGhosts(beams), at, ms, true);
     // What stepped up to the ring meets it now, the hero's step over.
     this.showVolley(this.strikeGhosts(beams, at, ms, undefined, TURN_TICKS), at, ms, true);
     this.showVolley(this.lifespringContact(), at, ms, true);
@@ -2985,11 +3113,15 @@ export class Game {
    * together (`freeTrained`). */
   private freeTrain(floors: number) {
     const given: TrainingId[] = [];
-    for (let f = 0; f < floors; f++)
-      for (const id of rollFreeTraining(this.save, this.run, this.boons?.freeUp ?? 0, freeUpFactors(this.treeBonus), this.freeChances)) {
+    for (let f = 0; f < floors; f++) {
+      // Jackpot Spurs counts the rolls won on the floor the climb comes to.
+      const won = { rolls: 0 };
+      for (const id of rollFreeTraining(this.save, this.run, this.boons?.freeUp ?? 0, freeUpFactors(this.treeBonus), this.freeChances, won)) {
         this.giveFreeLevel(id);
         given.push(id);
       }
+      if (f === floors - 1) this.setGearRun("frees", won.rolls || undefined);
+    }
     if (given.length) this.freeTrained = { lines: freeTrainingLines(given), at: performance.now() };
     this.events.record("freeUpgrades", given.length);
   }
@@ -3257,9 +3389,40 @@ export class Game {
   /** What a rank bought for the run changes now: a stat, or the chance of
    * percent potions. Returns the max HP it added. */
   private applyRunTraining({ row, level }: RunTrainingOffer) {
-    if (isStatRow(row)) return this.raiseRunStat(row, level);
+    // Equilibrium Tether: every rank adds to the tethered rows' pool, which they share, instead of raising its own.
+    const tethered = this.tetherShift();
+    if (tethered !== undefined && (TETHER_ROWS as readonly string[]).includes(row.id)) return tethered;
+    if (isStatRow(row)) return snap(this.raiseRunStat(row, level) + (tethered ?? 0));
+    if (tethered !== undefined) {
+      if (row.id === "findPotion") this.raisePercentPotions();
+      return tethered;
+    }
     if (row.id === "findPotion") this.raisePercentPotions();
     return 0;
+  }
+  /** Equilibrium Tether, while worn, for the rank just trained in the run:
+   * ATK, DEF, max HP and Regen move from the rank the pool gave them before it
+   * to the rank it gives them now. Returns the max HP it added; undefined
+   * unless it is worn. */
+  private tetherShift() {
+    const worn = this.worn, per = powerOf(worn, "equilibriumTether", "perRank");
+    if (!per) return undefined;
+    const ranks = Object.values(this.run.training ?? {}).reduce((n, k) => n + (k ?? 0), 0);
+    const from = loadout(this.save, this.mode, worn, per * (ranks - 1)), to = loadout(this.save, this.mode, worn, per * ranks);
+    const shift = { attack: snap(to.attack - from.attack), defense: snap(to.defense - from.defense), maxHp: snap(to.maxHp - from.maxHp), regen: snap(to.regen - from.regen) };
+    return shiftHero(this.run, shift, this.overheal).maxHp ?? 0;
+  }
+  /** What the worn Uniques give the turn's arrows (`VolleyTurn`): Soul Reaper's
+   * marks, Hoarder Greaves' and Challenger's Defiance's ATK, Amber Prison's
+   * percent and Mirror Vault's Retribution. */
+  private volleyPowers(retribution: { pool: number }): Partial<VolleyTurn> {
+    const worn = this.worn, amber = powerOf(worn, "amberPrison", "perHit");
+    return {
+      ...(powerOf(worn, "soulReaper", "chance") ? { doomed: (x: number, y: number) => this.doomedAt(x, y) } : {}),
+      ...(powerOf(worn, "hoarderGreaves", "factor") || powerOf(worn, "challengersDefiance", "factor") ? { attackAt: (x: number, y: number) => this.gearAttackAt(x, y) } : {}),
+      ...(amber ? { amber } : {}),
+      ...(powerOf(worn, "mirrorVault", "factor") ? { retribution } : {}),
+    };
   }
   /** Whether Training can be bought for the run now: On the Job owned,
    * inside a run, and no fight shown in summary rounds. */

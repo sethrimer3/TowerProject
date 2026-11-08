@@ -15,6 +15,7 @@ import { schedulePrice } from "../economy/prices.ts";
 import { UPGRADES, type UpgradeId } from "./upgrades.ts";
 import { levelForXp } from "./xp.ts";
 import { wornEffects, type EffectTotals } from "../equipment/effects.ts";
+import { TETHER_ROWS, tetherRank } from "../equipment/powers.ts";
 import { silverFound } from "../economy/gold-multipliers.ts";
 import { PIERCE_CAP } from "../equipment/balance.ts";
 import { relicAmount, relicBoost, relicCut, relicFactor, type RelicHolder } from "../economy/relic-effects.ts";
@@ -135,10 +136,13 @@ export const statFactor = (save: Pick<Save, "archives"> & { relics?: readonly st
  * the whole of ATK, DEF, max HP and shroud then multiplied by their
  * research (`statFactor`). Provisions add nothing here: each is a use the
  * run carries (`Game.useProvision`). */
-export function loadout(save: Save, mode: Mode = "tower", eq: EffectTotals = wornEffects(save, mode)): Loadout {
+export function loadout(save: Save, mode: Mode = "tower", eq: EffectTotals = wornEffects(save, mode), tethered = 0): Loadout {
   const own = { ...BASE, yellow: 0, blue: 0, red: 0 };
   add(own, UPGRADES, save.upgrades);
-  for (const row of TRAINING) if (isStatRow(row)) own[row.stat] += trained(row, save.training[row.id]);
+  // Equilibrium Tether: ATK, DEF, max HP and Regen each count a quarter of their ranks together, and `tethered` more, on past their highest.
+  const tether = eq.equilibriumTether ? tetherRank(save.training, tethered) : undefined;
+  const ranksOf = (row: TrainingRow) => (tether !== undefined && (TETHER_ROWS as readonly string[]).includes(row.id) ? tether : save.training[row.id]);
+  for (const row of TRAINING) if (isStatRow(row)) own[row.stat] += trained(row, ranksOf(row));
   // A drawback (Bloodprice Blade's max HP) never takes a stat below zero, or max HP below 1.
   const percent = (base: number, pct: number) => (pct ? snap(Math.max(0, (base * (100 + pct)) / 100)) : base);
   const plus = (base: number, more: number) => (more ? snap(base + more) : base);

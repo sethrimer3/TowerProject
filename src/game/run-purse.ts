@@ -14,6 +14,7 @@ import { MODES, type ModeProfile } from "../modes.ts";
 import { ranksInRun } from "../progression/run-training.ts";
 import { goldBanked, silverFound, type GoldContext } from "../economy/gold-multipliers.ts";
 import { raised, wornEffects } from "../equipment/effects.ts";
+import { jackpotFactor, powerOf, yieldFactor } from "../equipment/powers.ts";
 import { keepDrop, rollChestPiece, rollSupplies } from "../equipment/acquire.ts";
 import type { EquipItem } from "../equipment/inventory.ts";
 import { CATEGORIES, type EquipMaterialId } from "../equipment/catalog.ts";
@@ -135,7 +136,8 @@ export class RunPurse {
   /** What the Gold multipliers read for this run (`economy/gold-multipliers.ts`),
    * for Gold found where the floor pays `floor`. */
   private goldContext(floor = PLAIN_FLOOR): GoldContext {
-    return { save: this.save, mode: this.mode, tier: this.tier, now: this.now, shrine: this.boons?.gold, ...floor };
+    const jackpot = jackpotFactor(this.worn, this.run.gear);
+    return { save: this.save, mode: this.mode, tier: this.tier, now: this.now, shrine: this.boons?.gold, ...floor, ...(jackpot === undefined ? {} : { jackpot }) };
   }
 
   /** The run's environment chances, Aurum Bloom's added. */
@@ -406,7 +408,9 @@ export class RunPurse {
    * tree's percent. */
   private chestGold(base: number) {
     const gold = this.bonused(base), more = snap(this.tree.chestGold + relicAmount(this.save, "chestGold"));
-    return more ? snap((gold * (100 + more)) / 100) : gold;
+    // Mobius Cipher: each chest opened this run raises the next one's Gold.
+    const cipher = yieldFactor(powerOf(this.worn, "mobiusCipher", "perPickup"), this.run.gear?.yields?.chestGold);
+    return snap((more ? (gold * (100 + more)) / 100 : gold) * cipher);
   }
 
   /** Spare Change: Gold for a floor climbed for the first time in the run,

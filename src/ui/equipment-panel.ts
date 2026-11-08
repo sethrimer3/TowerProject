@@ -25,6 +25,8 @@ import { ACTION_ICONS, categoryIcon, itemIcon, materialIcon } from "./equipment-
 import { playSlagMerge } from "./slag-merge.ts";
 import { drawTogglesOpen, pullRates } from "../equipment/acquire.ts";
 import { relicAmount } from "../economy/relic-effects.ts";
+import { isPower, POWER_TEXT, powerTier } from "../equipment/powers.ts";
+import { isPowerKind } from "../equipment/catalog.ts";
 import { kitIcon } from "../sprites/kit.ts";
 
 /** The Equipment screen's views, chosen by the tabs along its bottom: the
@@ -151,7 +153,9 @@ export class EquipmentPanel {
       ? `<button class="eq-mode" data-eq-mode="${other}" title="Showing the ${MODE_NAMES[this.mode]} loadout: switch to the ${MODE_NAMES[other]}'s">${uiSprite(this.mode)}<span>${MODE_NAMES[this.mode]}</span><b aria-hidden="true">${controlIcon("swap")}</b></button>`
       : `<span class="eq-mode">${uiSprite(this.mode)}<span>${MODE_NAMES[this.mode]}</span></span>`;
     const totals = equipmentEffects(this.e, this.mode), lines = (Object.entries(totals) as [keyof typeof totals, number][]).filter(([, v]) => v);
-    const summary = lines.length ? `<ul class="eq-totals">${lines.map(([k, v]) => `<li>${effectText(k, v)}</li>`).join("")}</ul>` : `<p class="eq-totals-empty">Nothing worn yet.</p>`;
+    // A power reads as its piece's name and its words.
+    const line = ([k, v]: [keyof typeof totals, number]) => (isPowerKind(k) ? `<li><strong>${itemDef(k)!.name}</strong>: ${POWER_TEXT[k](v)}</li>` : `<li>${effectText(k, v)}</li>`);
+    const summary = lines.length ? `<ul class="eq-totals">${lines.map(line).join("")}</ul>` : `<p class="eq-totals-empty">Nothing worn yet.</p>`;
     const copy = delve ? `<button class="link-button eq-copy" data-eq-copy="${other}">Copy the ${MODE_NAMES[other]}'s</button>` : "";
     return `<div class="eq-loadout" aria-label="${MODE_NAMES[this.mode]} loadout"><div class="eq-loadout-head">${switcher}<h3>Loadout${helpButton("How Equipment works", "equip-help")}</h3>${copy}</div>
       <div class="eq-slots">${slots}</div>${summary}</div>`;
@@ -575,7 +579,7 @@ export class EquipmentPanel {
     modal.innerHTML = `<div class="equip-detail"><button id="eq-close" class="dialog-x" aria-label="Close" title="Close">${controlIcon("close")}</button>
       <small>${CATEGORIES[def.category].name.toUpperCase()} · ${def.class === "unique" ? "UNIQUE" : "STANDARD"}</small>
       <h2 class="equip-title"><span class="equip-icon-frame rar-${item.rarity}">${itemIcon(def.id)}</span>${def.name}</h2>
-      <p class="item-meta">${rarityTag(item.rarity, item.stars)} Level ${item.level}/${maxLevel(item)}</p>${this.progressHtml(item)}<p class="item-identity">${def.identity}.</p>
+      <p class="item-meta">${rarityTag(item.rarity, item.stars)} Level ${item.level}/${maxLevel(item)}</p>${this.progressHtml(item)}<p class="item-identity">${def.identity}.</p>${def.class === "unique" && isPower(def.id) ? `<h3 class="equip-heading">Power</h3><p class="item-power">${POWER_TEXT[def.id](powerTier(item.rarity))}.</p>` : ""}
       <h3 class="equip-heading">Main effect</h3><ul class="effect-list">${this.mainHtml(item)}</ul>
       <h3 class="equip-heading">Substats</h3>${this.slotsHtml(item)}${this.compareWorn(item)}${this.levelHtml(item)}${this.notesHtml(item)}
       ${this.itemActionsHtml(item)}</div>`;

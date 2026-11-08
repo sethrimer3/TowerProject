@@ -38,6 +38,7 @@ import { decodeCardXp } from "../cards/levels.ts";
 import { decodeCardBuys, defaultCardBuys } from "../cards/buys.ts";
 import { decodeArcana, decodeArcanaRun, defaultArcana, defaultArcanaRun } from "../arcana/arcana.ts";
 import { validLifespring } from "../arcana/lifespring.ts";
+import { AMBER_MOST, validGearRun } from "../equipment/powers.ts";
 import { validDilation } from "../arcana/time-dilation.ts";
 import { validPhantasm } from "../arcana/phantasm.ts";
 import { validFrost, validNecro } from "../arcana/necrotic-frost.ts";
@@ -126,16 +127,18 @@ const validSpawned = (e: any) => validEnemy(e) && (e.spawn !== undefined || e.st
 /** What the hero's arrows have taken off an enemy's DEF (Armor Break), if anything. */
 const validBroken = (v: any) => v.broken === undefined || (finite(v.broken) && v.broken > 0);
 /** What Lifespring and Necrotic Frost have marked an enemy's tile with, if anything. */
-const validMarks = (v: any) => (v.sprung === undefined || wholeIn(v.sprung, 0, 1e9)) && (v.necro === undefined || validNecro(v.necro));
+const validMarks = (v: any) => (v.sprung === undefined || wholeIn(v.sprung, 0, 1e9)) && (v.necro === undefined || validNecro(v.necro)) && (v.amber === undefined || (finite(v.amber) && v.amber > 0 && v.amber <= AMBER_MOST));
+/** Whether a tile holds none of what the hero's arrows and the arcana leave on an enemy. */
+const unmarked = (v: any) => v.wound === undefined && v.broken === undefined && v.sprung === undefined && v.necro === undefined && v.amber === undefined;
 /** An enemy the hero's arrows have wounded or broken (enemies/ranged.ts): the
  * generated or spawned enemy, kept with its wound and what they broke. */
 const validWounded = (v: any) => (v.wound === undefined || (finite(v.wound) && v.wound > 0)) && validBroken(v) && validMarks(v) && validEnemy(v.enemy);
 /** Open floor, maybe with a Flying enemy over it (enemies/flying.ts), generated
  * or moved there, kept with its wound. */
-const validFloor = (v: any) => v.flyer === undefined ? v.wound === undefined && v.broken === undefined && v.sprung === undefined && v.necro === undefined : validEnemy(v.flyer) && (v.wound === undefined || (finite(v.wound) && v.wound > 0)) && validBroken(v) && validMarks(v);
+const validFloor = (v: any) => v.flyer === undefined ? unmarked(v) : validEnemy(v.flyer) && (v.wound === undefined || (finite(v.wound) && v.wound > 0)) && validBroken(v) && validMarks(v);
 const validChange = (v: any) =>
   (v?.kind === "floor" && validFloor(v)) || v?.kind === "wall" ||
-  (v?.kind === "enemy" && (v.wound === undefined && v.broken === undefined && v.sprung === undefined && v.necro === undefined ? validSpawned(v.enemy) : validWounded(v))) ||
+  (v?.kind === "enemy" && (unmarked(v) ? validSpawned(v.enemy) : validWounded(v))) ||
   (v?.kind === "openedChest" && (v.tier === undefined || CHEST_TIERS.includes(v.tier))) ||
   (v?.kind === "reward" && CHEST_TIERS.includes(v.tier));
 const validChanges = (m: any) => pointMap(m, validChange);
@@ -249,7 +252,9 @@ const RUN_FIELD_CHECKS = {
   phantasm: validPhantasm,
   necroticFrost: validFrost,
   voidwell: validVoidwell,
-  combo: (v: any) => isRecord(v) && wholeIn(v.next, 1, 1e9) && wholeIn(v.idle, 0, 1),
+  // Kinetic Mallet keeps a combo going up to 4 turns more.
+  combo: (v: any) => isRecord(v) && wholeIn(v.next, 1, 1e9) && wholeIn(v.idle, 0, 5),
+  gear: validGearRun,
   volleys: (v: any) => isRecord(v) && wholeIn(v.turn, 0, 1e12) && (v.hero === undefined || wholeIn(v.hero, 0, 1e6)) &&
     (v.waited === undefined || wholeIn(v.waited, 1, 1e12)) && (v.rapid === undefined || wholeIn(v.rapid, 1, 1e4)) &&
     (v.foes === undefined || pointMap(v.foes, (n) => wholeIn(n, 0, 1e6))),

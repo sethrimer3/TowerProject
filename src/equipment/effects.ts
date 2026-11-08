@@ -5,7 +5,8 @@
 import type { Mode } from "../entities.ts";
 import type { Save } from "../save/shape.ts";
 import { snap } from "../exact.ts";
-import { ARCANA_RAISES, EFFECTS, type EffectKind } from "./catalog.ts";
+import { ARCANA_RAISES, EFFECTS, itemDef, type EffectKind } from "./catalog.ts";
+import { isPower, powerOf, powerTier } from "./powers.ts";
 import type { ArcanumId } from "../arcana/arcana.ts";
 import { categoryOf, findItem, type EquipItem, type EquipmentSave } from "./inventory.ts";
 import { efficiency, mainEffect, withEfficiency } from "./main-effect.ts";
@@ -43,7 +44,12 @@ export function equipmentEffects(e: EquipmentSave, mode: Mode): EffectTotals {
     if (main) totals[main.kind] = snap(totals[main.kind] + main.value);
     for (const { def, rarity } of slotEffects(item))
       if (!def.mode || def.mode === mode) totals[def.kind] = snap(totals[def.kind] + slotValue(def, rarity));
+    // A Unique's power: its tier, under its own id.
+    if (itemDef(item.def)?.class === "unique" && isPower(item.def)) totals[item.def] = Math.max(totals[item.def], powerTier(item.rarity));
   }
+  // Raptor Blade's Super Crit chance adds to the substats'.
+  const raptor = powerOf(totals, "raptorBlade", "superCrit");
+  if (raptor) totals.superCritChance = snap(totals.superCritChance + raptor);
   return totals;
 }
 /** The worn equipment's effects in `mode`, read from the save. */
@@ -59,11 +65,14 @@ export const bestWorn = (save: Pick<Save, "equipment">, kind: EffectKind) =>
  * points of Slowdown, whole counts, or a cooldown cut by a percent (to a
  * whole turn, at least 1). */
 export function arcanaWithGear<T extends readonly number[]>(worn: EffectTotals, id: ArcanumId, values: T): T {
-  const raises = ARCANA_RAISES.filter((r) => r.id === id && worn[r.kind]);
-  if (!raises.length) return values;
+  // Chrono Strider's Haste cuts every cooldown, its Golden Chance raises Aurum Bloom's.
+  const haste = powerOf(worn, "chronoStrider", "haste"), golden = id === "aurumBloom" ? powerOf(worn, "chronoStrider", "golden") : 0;
+  const raises = ARCANA_RAISES.filter((r) => r.id === id && (worn[r.kind] || (haste && r.raise === "cut")));
+  if (!raises.length && !golden) return values;
   const out = [...values];
+  if (golden) out[1] = snap(out[1]! + golden);
   for (const { index, kind, raise, name } of raises) {
-    const n = worn[kind], v = out[index]!;
+    const n = snap(worn[kind] + (raise === "cut" ? haste : 0)), v = out[index]!;
     out[index] = raise === "count" ? v + Math.floor(n) : raise === "points" ? snap(v + n)
       : raise === "cut" ? Math.max(1, Math.round((v * (100 - Math.min(100, n))) / 100))
       : name.endsWith("Duration") ? Math.round((v * (100 + n)) / 100) : snap((v * (100 + n)) / 100);

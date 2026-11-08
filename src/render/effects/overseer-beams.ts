@@ -20,7 +20,8 @@ export function shownTick(clock: ShownClock | null, now: number, reduceMotion: b
 export function drawOverseerBeams(f: FrameContext, beams: Beams, clock: ShownClock | null) {
   const { x, y } = tileCenter(f, f.playerX, f.playerY);
   // `turns` has already counted the turn being shown; with none shown, the last tick is the next turn's start.
-  const degrees = beams.turns ? beamDirection(beams.turns - 1, shownTick(clock, f.now, f.look.reduceMotion)) / 100 : 0;
+  // Held on a boss by Challenger's Defiance, they don't turn.
+  const degrees = beams.aim !== undefined ? beams.aim / 100 : beams.turns ? beamDirection(beams.turns - 1, shownTick(clock, f.now, f.look.reduceMotion)) / 100 : 0;
   paintOverseerBeams(f.c, x, y, f.width * 2, beams, degrees);
 }
 

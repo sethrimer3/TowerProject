@@ -344,11 +344,11 @@ export class World implements Board {
     return found;
   }
   /** The enemy as generated keeps its wound, and what is broken of its DEF, in the changes. */
-  wound(x: number, y: number, damage: number, broke = 0) {
+  wound(x: number, y: number, damage: number, broke = 0, amber = 0) {
     const t = this.tile(x, y);
     if (t.kind !== "enemy" && !t.flyer) return;
     const k = point(x, y), raw = this.changes[k] ?? this.chunks.get(Math.floor(y / CHUNK))?.get(k);
-    if (raw?.kind === "enemy" || raw?.flyer) this.changes[k] = woundMore(raw, damage, broke);
+    if (raw?.kind === "enemy" || raw?.flyer) this.changes[k] = woundMore(raw, damage, broke, amber);
   }
   markSpring(x: number, y: number, waves: number, broke = 0) {
     const k = point(x, y), raw = this.changes[k] ?? this.chunks.get(Math.floor(y / CHUNK))?.get(k);

@@ -173,7 +173,7 @@ Each mode's hero counts only what it wears; what works between runs counts the m
 ## 6. Catalogue
 
 Each starting category has three **Standard** pieces (from Equipment Chests, crafting and a Gem pull's Common to Rare), distinct for merging and with no ability of their own, and three **Unique** pieces (from a Gem pull's Epic and Legendary only).
-A definition is only a name, a category, a class and an identity line: what it does comes from its category's main effect and its substats, and, for a Unique, its power (section 16, next).
+A definition is only a name, a category, a class and an identity line: what it does comes from its category's main effect and its substats, and, for a Unique, its power (section 16).
 The future corners keep one Standard piece and three Uniques until they are designed.
 
 | Category | Standard | Uniques |
@@ -476,32 +476,75 @@ Choices are earned per slot (`⌊refinement / 10⌋`, less `choicesUsed`) and ke
 The item view shows its rarity (and Stars), level and cap, what merging next raises the cap to, its main effect now and at the next level, and each slot it can reach: its substat and value, its Refinement and Choices, a free roll for a new slot, or *Unlocks at Level 41 · needs Rare* for one not open yet.
 A slot's screen shows CURRENT, the NEW CANDIDATES with Keep Current, *Refinement: 7 / 10* and the next milestone, and Refine, Improve and Use a Choice (which lists the pool by family).
 
-## 16. Approved next steps
+## 16. Unique powers
 
-Agreed with the designer and not built yet, in the order they are planned.
+A Unique's power grows with its rarity: Epic, Legendary, Mythic, Ancestral (`POWERS` in `src/equipment/powers.ts`).
+Stars raise a piece's main effect, not its power.
+A worn Unique puts its power's tier (1 at Epic to 4 at Ancestral) into the worn effects under its own id (`equipmentEffects`), and `powerOf(worn, id, field)` reads the number.
+The Equipment screen shows each piece's power in words (`POWER_TEXT`), and the loadout's summary lists the powers worn.
+What a power keeps for a run is `run.gear` (`GearRun`), in the run so undo takes it back: Super Crits owed, Retribution, Free Upgrade rolls won, pickups counted and bosses rushed.
 
-### Unique powers
+| Unique | Power | Read in |
+|---|---|---|
+| Raptor Blade (Sword) | Super Crit chance +5, 7, 10, 14 (with the Super Critical skill); a Super Crit of its own makes the next 5 strikes Super Crits, owed on from fight to fight (`run.gear.chain`); a chained strike starts no chain | `equipmentEffects`, `chainedCrits`, `FightPlayback.critRolls`, `Game.afterFight` |
+| Kinetic Mallet (Sword) | +1, 2, 3, 4 turns a Dash Combo keeps going without a fight | `Game.comboTurn` |
+| Soul Reaper (Sword) | 5, 8, 11, 15% of enemies but bosses are marked for death, a fixed roll per run, floor and tile the enemy was made on; the hero's first strike or arrow destroys a marked enemy | `Game.doomedAt`, `Game.move`, `VolleyTurn.doomed` |
+| Zenith Guard (Shield) | Regen heals into Overheal, up to 25, 50, 75, 100% of the room between max HP and the Overheal ceiling | `StepRules.regenOverheal`, `regenCeiling` |
+| Cradle of Life (Shield) | Aether Shield HP and Shield Regen ×1.25, 1.5, 2, 2.5, each its own factor | `shieldCapacity`, `Game.stepRules` |
+| Amber Prison (Shield) | Each hit that doesn't kill (a strike, or an arrow, marked on the tile as `amber`) cuts its enemy's ATK and slows it by 1, 1.5, 2, 2.5%, up to 50% (`AMBER_MOST`); the slowing joins the fields' (`togetherSlow`) for its strikes, shots and Aggroed steps | `bout`, `woundMore`, `volleyTurn`, `Game` Aggro `slowAt` |
+| Equilibrium Tether (Chestplate) | ATK, DEF, max HP and Regen each count as ⌈pool ÷ 4⌉ ranks, the pool their four ranks together plus 1, 2, 3, 4 for each rank trained in the run (bought or free) on any row, on past their highest; a rank of one of the four goes only to the pool | `loadout`'s `tethered`, `tetherRank`, `Game.tetherShift` |
+| Mobius Cipher (Chestplate) | Each pickup adds 0.005, 0.01, 0.015, 0.02 to its kind's yield for the run: potions, a chest's Gold, ATK shards, DEF shards and each key colour apart (keys in fractions) | `Game.pickedUp`, `StepRules.yields`, `RunPurse.chestGold` |
+| Mirror Vault (Chestplate) | Damage the hero takes to HP or the Aether Shield (strikes and shots) goes into Retribution ×1, 2, 3, 4; a fight's first strike, or the turn's first arrow to leave its enemy standing, takes Retribution off after its own damage, as much as the enemy has left, the rest kept | `bout`, `arrow`, `Game.afterFight`, `Game.endTurn` |
+| Lich King's Crown (Helmet) | 1, 2, 3, 4 ghosts rush each boss or Greater Boss once, as the turn it comes in shot range ends, each Phantasm's first-level ATK Mult, owned or not (`run.gear.rushed`) | `Game.crownGhosts`, `ghostRush`, `ArcanaDesk.ghostBoost` |
+| Psionic Tempest (Helmet) | A Ricochet Shot off an arrow strikes the enemy the arrow struck too, 15, 30, 45, 60% of the time, by a roll of its own | `ricochet` in `volley.ts` |
+| Challenger's Defiance (Helmet) | Overseer's first beam holds on the closest boss of the hero's floor (`Beams.aim`); while a boss (not a Greater Boss) stands there, ATK against every other enemy ×2, 4, 7, 15, strikes and arrows | `Game.bossAim`, `beamsDirection`, `Game.gearAttackAt` |
+| Chrono Strider (Boots) | A potion taken brings every arcanum's cooldown but Necrotic Frost's 10, 13, 17, 20 turns nearer (to its last turn at most); Aurum Bloom's Golden Chance +5, 10, 15, 20 points; Haste cuts every arcanum's cooldown by 5, 8, 11, 15% | `ArcanaDesk.cutCooldowns`, `arcanaWithGear` |
+| Jackpot Spurs (Boots) | Gold found ×(1 + n × 3, 5, 7, 10%), n the Free Upgrade rolls won on the last floor new to the run, rows already at their highest counted; its own factor and line in All Gold Bonuses | `rollFreeTraining`'s `won`, `jackpotFactor`, `goldMultipliers` |
+| Hoarder Greaves (Boots) | ATK × 1.25, 1.5, 2, 2.5 × (1 + log₁₀ of the keys held, every colour together), at least the factor with under one key, ×1 with none; strikes and arrows; `log10` in `exact.ts` gives the same bits in every engine | `hoardFactor`, `Game.gearAttackAt` |
 
-Each Unique's power grows with its rarity (Epic, Legendary, Mythic, Ancestral):
+Previews and planners read the plain hero, as with crits and the Dash Combo: Hoarder Greaves', Challenger's Defiance's and Soul Reaper's fights are resolved with them (`Game.fighterAt`), and a fight carrying Retribution or Amber Prison is always played out and ends as played (`FightPlayback.restate`).
+Limits as built: Raptor Blade's chain counts fight strikes, not arrows; Soul Reaper's mark falls to the hero's strikes and arrows, not to arcana; equipping or taking off Equilibrium Tether in a run moves only the ranks the run began with.
 
-| Unique | Power |
+## 17. The corner categories (a spec, not built)
+
+Gloves, Belt, Cape and Amulet sit in the plus's corners, each between the two starting pieces it joins.
+None is built: this is the design to build them from.
+
+### Place, materials and cost
+
+| Corner | Joins | Place | Materials |
+|---|---|---|---|
+| Amulet | Shield and Helmet | Top left | Iron Rivets + Quilted Padding |
+| Belt | Sword and Helmet | Top right | Whetstone + Quilted Padding |
+| Cape | Shield and Boots | Bottom left | Iron Rivets + Hobnails |
+| Gloves | Sword and Boots | Bottom right | Whetstone + Hobnails |
+
+A corner piece levels at twice a starting piece's Gold and twice its material, of each of its two materials: half a Chestplate's, which takes all four.
+It crafts, dismantles and merges as a starting piece does, with its two materials wherever a starting piece takes its one.
+
+### Main effect
+
+A corner's main effect is half of each neighbour's at the same rarity, level and Stars, both together (`MAIN_EFFECTS` scaled by ½):
+
+| Corner | Main effect |
 |---|---|
-| Raptor Blade (Sword) | Super Crit chance +5, 7, 10, 14; a Super Crit makes the next 5 shots Super Crits |
-| Kinetic Mallet (Sword) | +1, 2, 3, 4 turns to the window that keeps a Combo going |
-| Soul Reaper (Sword) | 5, 8, 11, 15% chance to mark a non-boss enemy for death (rolled per enemy from the run seed): its first hit destroys it |
-| Zenith Guard (Shield) | Regen heals into Overheal, up to 25, 50, 75, 100% of the room between max HP and the Overheal ceiling |
-| Cradle of Life (Shield) | Aether Shield HP and Shield Regen ×1.25, 1.5, 2, 2.5 |
-| Amber Prison (Shield) | A shot that doesn't kill slows its enemy (Slowdown, movement too) and cuts its ATK by 1, 1.5, 2, 2.5% a hit, stacking to 50% |
-| Chrono Strider (Boots) | A potion taken cuts every arcanum's cooldown but Necrotic Frost's by 10, 13, 17, 20 turns; Aurum Bloom's Golden Chance +5, 10, 15, 20 points; every arcanum cooldown −5, 8, 11, 15% |
-| Jackpot Spurs (Boots) | Gold ×(1 + n × 3, 5, 7, 10%), n the free-upgrade rolls that came up on the floor (maxed rows counted), its own compounding factor |
-| Hoarder Greaves (Boots) | ATK × 1.25, 1.5, 2, 2.5 × (1 + log₁₀ of the keys held, every colour together), ×1 with none, on an exact logarithm |
-| Lich King's Crown (Helmet) | 1, 2, 3, 4 ghosts rush each boss (Greater Bosses too) as it comes in shot range, at Phantasm's first-level ATK Mult |
-| Psionic Tempest (Helmet) | Ricochet Shot hits its first target too, 15, 30, 45, 60% of the time |
-| Challenger's Defiance (Helmet) | Overseer turns to stay on a boss; while a boss (not a Greater Boss) is on the floor, ATK against every other enemy ×2, 4, 7, 15 |
-| Equilibrium Tether (Chestplate) | ATK, DEF, max HP and Regen each count as ⌈pool ÷ 4⌉ ranks: the pool is their ranks at the start of the run plus 1, 2, 3, 4 for each rank bought or given free in the run on any row, past the rows' most if need be |
-| Mobius Cipher (Chestplate) | Each pickup adds 0.005, 0.01, 0.015, 0.02 to that kind's yield in the run (potions, chests' Gold, ATK shards, DEF shards, each key colour apart) |
-| Mirror Vault (Chestplate) | Damage taken (HP or Aether Shield) stores in a Retribution pool at ×1, 2, 3, 4, taken off the next shots' or first strikes' enemies after their own damage, the rest kept |
+| Amulet | ½ Shield's DEF % and ½ Helmet's Arcanum Damage |
+| Belt | ½ Sword's ATK % and ½ Helmet's Arcanum Damage |
+| Cape | ½ Shield's DEF % and ½ Boots' Gold found |
+| Gloves | ½ Sword's ATK % and ½ Boots' Gold found |
 
-### The corner categories (a spec for later)
+The worn Chestplate's efficiency raises both halves, as it raises any piece's main effect.
 
-Gloves (between Sword and Boots), Belt (Sword and Helmet), Cape (Shield and Boots) and Amulet (Shield and Helmet) sit in the plus's corners, each levelled with its two neighbours' materials (twice a starting piece's material and Gold, half a Chestplate's), each with half of each neighbour's main effect, and substats that join the two (kills dropping bonus loot, +1 Phantasm ghost, and the like).
+### Substats
+
+A corner rolls from both its neighbours' families together (`CATEGORY_FAMILIES`: Amulet defense and arcana, Belt offense and arcana, Cape defense and utility, Gloves offense and utility), at the same slots, rarities and power as any piece, plus synergy substats of its own that join the two:
+
+| Corner | Synergy substats (proposals) |
+|---|---|
+| Amulet | +1 Phantasm ghost; Lifespring's HP Pool heals the Aether Shield too; Necrotic Frost's fields cut enemy ATK |
+| Belt | Arcana strikes can crit (rolled, not averaged); +1 Thunderbolt bolt on a kill; Ricochet Shot's ATK Mult raised by Combo ATK |
+| Cape | Each key picked up regains Shield HP; Shield Regen counts on dashed tiles; Gold from kills while the shield stands |
+| Gloves | Kills drop bonus loot (a share of a chest's Gold); Super Crits pay Gold; Free Offense Up rolls also roll Free Utility Up |
+
+Their values, rarities and steps are set when they are built.
+Each still opens by an unlock of its own (none yet: `categoryOpen`).

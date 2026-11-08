@@ -64,6 +64,16 @@ _Avoid_: common item (Common is a rarity)
 One of a category's three named pieces with a power of its own, from a Gem pull's Epic or Legendary only.
 _Avoid_: legendary, artifact
 
+**Power**:
+What a Unique piece does beyond its main effect and substats, stronger at each rarity from Epic up.
+_Avoid_: ability, perk
+
+**Marked for death**:
+An enemy Soul Reaper has marked: the hero's first strike or arrow destroys it.
+
+**Retribution**:
+Mirror Vault's store of the damage the hero has taken, multiplied, struck back after a fight's first strike or an arrow.
+
 **Upgrade material**:
 One of four shared equipment resources: Whetstone, Iron Rivets, Quilted Padding and Hobnails, held by Supply Chests and returned by dismantling.
 A piece's recipe uses one, two or all four for crafting, leveling and Refinement.

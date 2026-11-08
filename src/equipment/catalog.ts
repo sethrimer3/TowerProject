@@ -5,6 +5,7 @@
 // touching saved equipment. Balance numbers (rarity caps, costs, drop and
 // pull rates) live in `balance.ts`; see docs/EQUIPMENT.md.
 import type { ArcanumId } from "../arcana/arcana.ts";
+import { POWER_IDS, type PowerId } from "./powers.ts";
 
 /** Slots retained by the catalogue, including future unlocks. */
 export type CategoryId = "weapon" | "shield" | "chestplate" | "helmet" | "gloves" | "boots" | "cape" | "belt" | "amulet";
@@ -80,7 +81,9 @@ export type EffectKind =
   | "freeOffenseChance" | "freeDefenseChance" | "freeUtilityChance" | "hpSkipChance" | "combatSkipChance"
   // Efficiency
   | "trainerSpeed" | "researchSpeed" | "dropChance" | "offlineGold" | "freeUpChance" | "endRushTiles"
-  | ArcanaKind;
+  | ArcanaKind
+  // A worn Unique's power, its tier (1 at Epic to 4 at Ancestral; equipment/powers.ts)
+  | PowerId;
 
 /** Each arcanum's attributes' names, as `ARCANA` (arcana/arcana.ts) has them. */
 const ARCANA_ATTRIBUTES: Record<ArcanumId, { name: string; attributes: readonly [string, string, string] }> = {
@@ -181,7 +184,11 @@ export const EFFECTS: Record<EffectKind, EffectText> = {
   freeUpChance: { words: "chance of each free Training level", percent: true },
   endRushTiles: { words: "tile End Rush crosses", plural: "tiles End Rush crosses", whole: true },
   ...(Object.fromEntries(ARCANA_RAISES.map((r) => [r.kind, arcanaText(r.raise, r.name)])) as Record<ArcanaKind, EffectText>),
+  // Powers read as their own words (POWER_TEXT), never as a number.
+  ...(Object.fromEntries(POWER_IDS.map((id) => [id, { words: "power", whole: true }])) as Record<PowerId, EffectText>),
 };
+/** Whether `kind` is a Unique's power rather than an effect with a number. */
+export const isPowerKind = (kind: EffectKind): kind is PowerId => (POWER_IDS as readonly string[]).includes(kind);
 
 /** Standard pieces come from Equipment Chests; Unique pieces come from Gem pulls and
  * each carries a specialised ability. Both level, merge and salvage alike;
