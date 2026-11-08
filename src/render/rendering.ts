@@ -503,7 +503,7 @@ export class Renderer {
     const s = f.s, n = f.n;
     const animated = !!f.look.spriteAnimations && !f.look.reduceMotion;
     return {
-      style: `${!!f.look.styledSprites}|${f.look.styledSprites ? spriteRevision() : 0}${f.look.squareDoors ? "|square" : ""}${f.look.spriteAnimations ? "|animated" : ""}${f.look.styledSprites && towerTileset(f.look.mode, f.look.tier) ? `|tower:${f.look.tier}` : ""}`,
+      style: `${!!f.look.legacyEnemies}|${!!f.look.styledSprites}|${f.look.styledSprites ? spriteRevision() : 0}${f.look.squareDoors ? "|square" : ""}${f.look.spriteAnimations ? "|animated" : ""}${f.look.styledSprites && towerTileset(f.look.mode, f.look.tier) ? `|tower:${f.look.tier}` : ""}`,
       tile: (ctx, t, x, y, layer) => this.tile(ctx, f, t, x, y, layer),
       contentFrame: animated ? (t, x, y) => pickupAnimationFrame(t, x, y, f.now, f.look.seed) : undefined,
       torches: f.torches.map((t) => ({
@@ -768,6 +768,7 @@ export class Renderer {
       reduceMotion: g.save.settings.reduceMotion,
       styledSprites: !!g.run.outside || usesGameSprites(g.save),
       spriteAnimations: usesGameSprites(g.save) && g.save.settings.spriteAnimations,
+      legacyEnemies: g.save.settings.legacyEnemies,
       squareDoors: usesGameSprites(g.save) && g.save.settings.squareDoors,
       themed: g.run.outside ? null : this.themed,
       golden: g.environments.goldenFloor && !g.run.outside ? (x, y) => g.goldenAt(x, y) : undefined,

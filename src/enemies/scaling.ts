@@ -1,74 +1,13 @@
 import type { EnemyStrength, EnemyProfile } from "../entities.ts";
 import { enemyStats, floorsAhead } from "./curves.ts";
 import { enemyFirstFloor } from "./schedule.ts";
+import { TOWER_ZONE_ENEMIES, TOWER_ZONE_FLOORS } from "./legacy-roster.ts";
+import { rosterEntry, type RosterEnemy } from "./roster.ts";
 
 export { GREATER_BOSS_OVER_BOSS } from "./curves.ts";
 export type TowerEnemyProfile = EnemyProfile;
 
-export type TowerEnemyDefinition = {
-  name: string;
-  profile: TowerEnemyProfile;
-};
-
-/** How many floors each Tower zone (one roster) spans. */
-export const TOWER_ZONE_FLOORS = 10;
-
-/** Ten-room Tower zones: who stands on a floor, by profile. Their stats come
- * from the Tower's enemy curve (enemies/curves.ts); the roster repeats every
- * `TOWER_CYCLE_FLOORS` rooms, each tower starting one zone further along
- * (`towerZoneIndex`). */
-export const TOWER_ZONE_ENEMIES: readonly (readonly TowerEnemyDefinition[])[] = [
-  [
-    { name: "Goblin", profile: "attackHeavy" },
-    { name: "Thief", profile: "balanced" },
-    { name: "Iron Knight", profile: "defenseHeavy" },
-  ],
-  [
-    { name: "Bat", profile: "attackHeavy" },
-    { name: "Slime", profile: "balanced" },
-    { name: "Stone Warden", profile: "defenseHeavy" },
-  ],
-  [
-    { name: "Assassin", profile: "attackHeavy" },
-    { name: "Skeleton", profile: "balanced" },
-    { name: "Golem", profile: "defenseHeavy" },
-  ],
-  [
-    { name: "Mage", profile: "attackHeavy" },
-    { name: "Orc", profile: "balanced" },
-    { name: "Gargoyle", profile: "defenseHeavy" },
-  ],
-  [
-    { name: "Berserker", profile: "attackHeavy" },
-    { name: "Ogre", profile: "balanced" },
-    { name: "Demon", profile: "defenseHeavy" },
-  ],
-  [
-    { name: "Cultist", profile: "attackHeavy" },
-    { name: "Crystal Savant", profile: "balanced" },
-    { name: "Amethyst Golem", profile: "defenseHeavy" },
-  ],
-  [
-    { name: "Drowned Marauder", profile: "attackHeavy" },
-    { name: "Temple Wraith", profile: "balanced" },
-    { name: "Coral Knight", profile: "defenseHeavy" },
-  ],
-  [
-    { name: "Sporeling", profile: "attackHeavy" },
-    { name: "Troll", profile: "balanced" },
-    { name: "Spore Colossus", profile: "defenseHeavy" },
-  ],
-  [
-    { name: "Shadow Stalker", profile: "attackHeavy" },
-    { name: "Obsidian Revenant", profile: "balanced" },
-    { name: "Blackstone Colossus", profile: "defenseHeavy" },
-  ],
-  [
-    { name: "Starfire Adept", profile: "attackHeavy" },
-    { name: "Dragon Whelp", profile: "balanced" },
-    { name: "Celestial Guardian", profile: "defenseHeavy" },
-  ],
-] as const;
+export { TOWER_ZONE_ENEMIES, TOWER_ZONE_FLOORS, DELVE_ENEMY_NAMES, type TowerEnemyDefinition } from "./legacy-roster.ts";
 
 /** How many floors pass before the roster repeats: one of every zone. */
 export const TOWER_CYCLE_FLOORS = TOWER_ZONE_FLOORS * TOWER_ZONE_ENEMIES.length;
@@ -108,17 +47,13 @@ export function strengthOnFloor(asked: EnemyStrength, floor: number, tower = 1):
 /** Weak, strong and elite enemies and bosses say so before their name. */
 const RANK: Record<EnemyStrength, string> = { weak: "Weak ", normal: "", strong: "Strong ", elite: "Elite ", boss: "Boss ", greaterBoss: "Greater Boss " };
 /** What the game calls an enemy: its name, after its strength unless it
- * is a normal one, and after "Stunned", "Necro", "Flying", "Fast", "Ranged", "Shielded" and "Armored"
+ * is a normal one, and after "Stunned", "Necro", "Aggroed", "Flying", "Fast", "Ranged", "Shielded" and "Armored"
  * when it is. */
-export const enemyTitle = (e: { name: string; strength?: EnemyStrength; stunned?: true; necro?: object; flying?: true; fast?: true; ranged?: true; shielded?: true; armored?: true }) =>
-  (e.stunned ? "Stunned " : "") + (e.necro ? "Necro " : "") + (e.flying ? "Flying " : "") + (e.fast ? "Fast " : "") + (e.ranged ? "Ranged " : "") + (e.shielded ? "Shielded " : "") + (e.armored ? "Armored " : "") + (e.strength ? RANK[e.strength] : "") + e.name;
+export const enemyTitle = (e: RosterEnemy & { stunned?: true; necro?: object }, legacy = false) =>
+  (e.stunned ? "Stunned " : "") + (e.necro ? "Necro " : "") + (e.aggro && !legacy ? "Aggroed " : "") + (e.flying ? "Flying " : "") + (e.fast ? "Fast " : "") + (e.ranged ? "Ranged " : "") + (e.shielded ? "Shielded " : "") + (e.armored ? "Armored " : "") + (e.strength ? RANK[e.strength] : "") + (rosterEntry(e, legacy)?.name ?? e.name);
 
 /** The tier an enemy of each strength carries, in both modes. */
 export const enemyTier = (strength: EnemyStrength) => STRENGTH_TIER[strength];
-
-/** The Delve's enemy kinds, one per population an area can hold. Each has
- * its own procedural body (render/tile-painters.ts), since none has sprite art. */
-export const DELVE_ENEMY_NAMES = ["Cinder slime", "Bone sentinel", "Dusk wing", "Ash warden"];
 
 /** A Tower enemy of the given strength and profile for floor `room` of
  * tower `tower`, from that tower's enemy curve, before its stat factor

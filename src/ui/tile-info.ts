@@ -174,7 +174,7 @@ const DESCRIBE: Partial<Record<Kind, Describe>> = {
     // A fight being played out has its own next hit, from what it has broken so far.
     const next = broken === undefined ? r : predict(p, { ...e, broken });
     return {
-      title: enemyTitle(e),
+      title: enemyTitle(e, g.save.settings.legacyEnemies),
       body: enemyStats(e, p, next, gold, broken) + brokenLine(e, p, broken) + guardLine(e) + stunnedLine(e) + necroLine(e) + prediction(r, p, g, c) + forecast(p, e, r.impervious ? 0 : r.turns, g, !!crit),
     };
   },
@@ -228,7 +228,7 @@ const DESCRIBE: Partial<Record<Kind, Describe>> = {
 export function tileInfo(g: Board, x: number, y: number): TileInfo {
   const t = g.world.tile(x, y);
   const describe = DESCRIBE[t.kind];
-  if (t.flyer) return { color: KIND_COLORS.enemy!, title: enemyTitle(t.flyer), body: flyerInfo(t.flyer, g.run.player, g.run.outside ? 0 : g.enemyGold(x, y)) };
+  if (t.flyer) return { color: KIND_COLORS.enemy!, title: enemyTitle(t.flyer, g.save.settings.legacyEnemies), body: flyerInfo(t.flyer, g.run.player, g.run.outside ? 0 : g.enemyGold(x, y)) };
   if (t.kind === "door") return { color: doorColor(t), ...describe!(t, g.run.player, g, { x, y }) };
   // A floor tile holding a lit torch is the torch.
   if (t.kind === "floor" && litTorches(g.world).has(point(x, y)))

@@ -1,5 +1,8 @@
 # Tower generation
 
+The generated enemy names remain stable internal legacy identities from `enemies/legacy-roster.ts` so saved maps and deterministic generation remain compatible.
+The default names and Classic sprites are selected at presentation time by `enemies/roster.ts` from strength, traits and stat profile; Legacy Enemies restores the old presentation without changing generation.
+
 How a Tower floor is built (`src/tower/`): the planning pipeline, door and key schedules, forks, embedding, the enemy schedule and stage, bosses, early-floor rules, and their tests.
 
 **Tower** (`src/tower/`, entered via `RoomWorld` in `tower/room-world.ts`, which caches each floor's torches and the last four floors generated (`generateTowerRoom`, by seed, room and tier, each caller handed its own copy of the map), so an undo or reload doesn't generate the floor again; `rollUnguardedLoot` lives in `tower/index.ts`): each floor is a self-contained 17×17 board (15×15 interior), deterministic for `(seed, room)`.

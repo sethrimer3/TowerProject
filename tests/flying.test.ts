@@ -53,7 +53,7 @@ test("lifting leaves the board alone below the fifth tier", () => {
 });
 
 test("Flying enemies say so first, and pay the Ranged enemy's Gold", () => {
-  assert.equal(enemyTitle({ name: "Bat", strength: "strong", flying: true }), "Flying Strong Bat");
+  assert.equal(enemyTitle({ name: "Bat", strength: "strong", flying: true }, true), "Flying Strong Bat");
   const { flying: _, ...grounded } = bat;
   const flyer = arena({ "1,0": bat }).enemyGold(1, 0), plain = arena({ "1,0": grounded }).enemyGold(1, 0), ranged = arena({ "1,0": { ...grounded, ranged: true } }).enemyGold(1, 0);
   assert.ok(flyer > plain, "more than the same enemy on the ground");
@@ -264,7 +264,9 @@ test("a Flying enemy that has moved keeps its loot key, so undo and a kill elsew
 test("the inspect panel names a Flying enemy, its shots and arrows, and that only arrows reach it", () => {
   const g = arena({ "2,0": { ...bat, aggro: true } });
   const info = tileInfo(g, 2, 0);
-  assert.equal(info.title, "Flying Bat");
+  assert.equal(info.title, "Aggroed Flying Tunnel Drake Hound");
+  g.save.settings.legacyEnemies = true;
+  assert.equal(tileInfo(g, 2, 0).title, "Flying Bat");
   assert.match(info.body, /only your arrows reach it/);
   assert.match(info.body, /Aggroed/);
 });

@@ -83,8 +83,8 @@ test("Delve VI has Armored enemies too, Delve V none", () => {
 });
 
 test("Armored says so before its strength", () => {
-  assert.equal(enemyTitle({ name: "Bat", strength: "strong", armored: true }), "Armored Strong Bat");
-  assert.equal(enemyTitle({ name: "Bat", strength: "elite", flying: true, fast: true, armored: true }), "Flying Fast Armored Elite Bat");
+  assert.equal(enemyTitle({ name: "Bat", strength: "strong", armored: true }, true), "Armored Strong Bat");
+  assert.equal(enemyTitle({ name: "Bat", strength: "elite", flying: true, fast: true, armored: true }, true), "Flying Fast Armored Elite Bat");
 });
 
 test("the Iron Knight keeps the art drawn for it", () => {

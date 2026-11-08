@@ -1,5 +1,16 @@
 # Fights
 
+## Enemy appearances
+
+The default bestiary has 126 dungeon creatures: six strengths, seven appearances (ordinary, Fast, Ranged, Shielded, Flying, Armored and Aggroed), and three stat profiles.
+Attack-heavy enemies emphasize fangs, claws and weapons; balanced enemies are dungeon dwellers such as oozes and ratfolk; defense-heavy enemies have shells, stone bodies and heavy armor.
+Higher strengths grow larger and more ornate.
+An enemy with several traits keeps all of them; its body follows Aggroed, Flying, Shielded, Armored, Ranged, then Fast, and the board still shows its other trait effects and marks.
+Aggroed is the pursuit state a Flying enemy enters after being wounded, rather than an extra spawn roll.
+Settings → Legacy Enemies restores the previous names and Classic sprites.
+Switching rosters changes neither fights nor rewards and works on an existing run.
+Other Game themes retain their own drawing styles, and trial bosses retain their dedicated designs.
+
 ## Rising ATK
 
 Fights loosen the classic Magic Tower rule that DEF equal to a monster's ATK makes it harmless: after every round of a fight the monster's ATK rises by 1% (rounded down), and by at least 1.

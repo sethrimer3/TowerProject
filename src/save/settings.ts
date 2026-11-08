@@ -13,6 +13,7 @@ export type Setting = Toggle | Choice | Range;
  * setting is one row here. Rows are in saved key order. */
 export const SETTINGS = {
   experimentalAtlas: { kind: "toggle", default: true, page: { id: "experimental-atlas", label: "Experimental Atlas feature" } },
+  legacyEnemies: { kind: "toggle", default: false, page: { id: "legacy-enemies", label: "Legacy Enemies" } },
   spriteAnimations: { kind: "toggle", default: false, page: { id: "sprite-animations", label: "Animations" } },
   squareDoors: { kind: "toggle", default: false, page: { id: "square-doors", label: "Square doors" } },
   weatherSound: { kind: "toggle", default: true, page: { id: "weather-sound", label: "Weather sounds" } },

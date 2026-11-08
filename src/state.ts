@@ -1158,7 +1158,7 @@ export class Game {
     this.handRules.skipRolled();
     this.world.clear(x, y);
     this.vanished = { x, y, at: performance.now() };
-    this.message = `Skip · ${t.kind === "enemy" ? enemyTitle(t.enemy!) : SKIPPED_NAMES[t.kind] ?? "the target"} vanished`;
+    this.message = `Skip · ${t.kind === "enemy" ? this.enemyTitle(t.enemy!) : SKIPPED_NAMES[t.kind] ?? "the target"} vanished`;
   }
   /** Dash: the first step toward a new target, onto an empty tile, goes on
    * along the path in the same step across up to `tiles` more empty tiles
@@ -1811,10 +1811,10 @@ export class Game {
     this.gain(x, y, `−${wholeChange(Math.min(damage, enemy.hp))}`, null, undefined, "hit", superCrit ? "superCrit" : applications ? "crit" : undefined);
     if (enemy.hp > damage) {
       this.world.wound?.(x, y, damage);
-      this.message = `Bomb · ${enemyTitle(enemy)} −${wholeChange(damage)} HP`;
+      this.message = `Bomb · ${this.enemyTitle(enemy)} −${wholeChange(damage)} HP`;
     } else {
       this.world.clear(x, y);
-      this.message = [`Bomb · ${enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, { x, y }, 1, false, applications ? 1 : 0)].join(" · ");
+      this.message = [`Bomb · ${this.enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, { x, y }, 1, false, applications ? 1 : 0)].join(" · ");
     }
     // The hand plans again, round what the Bomb left.
     this.cardPlan = null;
@@ -2147,11 +2147,11 @@ export class Game {
   private fallIn(before: MoveSnapshot, enemy: Enemy) {
     this.run.player.hp = 0;
     this.fights.strikeDown();
-    this.timeline.fall(before, enemyTitle(enemy));
+    this.timeline.fall(before, this.enemyTitle(enemy));
     this.route = [];
     this.auto = false;
     this.dropHandPlan();
-    this.message = `Fallen in combat against ${enemyTitle(enemy)}.`;
+    this.message = `Fallen in combat against ${this.enemyTitle(enemy)}.`;
   }
   /** Inside a run the hero is still standing in: not in the forest, not
    * fallen. */
@@ -2261,7 +2261,7 @@ export class Game {
     const out = fightRicochet({ board: this.world, wrap: this.wrap, hero: this.run.player, seed: this.run.seed, ricochet: this.arcana.ricochet(), ...(beams ? { beams } : {}) }, at, this.mode === "tower" ? this.run.height + 1 : 0);
     this.sprung.push(...out.shots);
     for (const { enemy, at: fell, instakill, crits } of out.kills)
-      this.message = [`Ricochet · ${enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, fell, 1, instakill, crits)].join(" · ");
+      this.message = [`Ricochet · ${this.enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, fell, 1, instakill, crits)].join(" · ");
   }
   /** Angel Wings raised the hero: its charge is spent for the run, and
    * Avenging Angel smites every enemy of the ranks its research has
@@ -2416,7 +2416,7 @@ export class Game {
       this.fallIn(before, enemy);
       return false;
     }
-    this.message = [fightText(fight), ...this.finds.kill(enemy, at, fight.scale ?? 1, !!fight.instakill, fight.crits)].join(" · ");
+    this.message = [fightText(fight, this.save.settings.legacyEnemies), ...this.finds.kill(enemy, at, fight.scale ?? 1, !!fight.instakill, fight.crits)].join(" · ");
     return true;
   }
   /** The end of a turn inside a run (a step, or a whole dash): its shots
@@ -2474,7 +2474,7 @@ export class Game {
       if (!out.fell) this.message = `Shot · −${wholeChange(taken)} HP`;
     }
     for (const { enemy, at, instakill, crits, thorns, ricochet } of out.kills)
-      this.message = [`${thorns ? "Thorns" : ricochet ? "Ricochet" : "Arrow"} · ${enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, at, 1, instakill, crits ? 1 : 0)].join(" · ");
+      this.message = [`${thorns ? "Thorns" : ricochet ? "Ricochet" : "Arrow"} · ${this.enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, at, 1, instakill, crits ? 1 : 0)].join(" · ");
     this.showVolley([...struck, ...met, ...out.shots], at, ms);
     // Angel Wings raises the hero from a shot that would fell it, as from a strike.
     if (out.fell && this.wingsReady) {
@@ -2483,7 +2483,7 @@ export class Game {
       this.message = this.spendWings().join(" · ");
     } else if (out.fell) {
       this.fallIn(before, out.fell);
-      this.message = `Shot down by ${enemyTitle(out.fell)}.`;
+      this.message = `Shot down by ${this.enemyTitle(out.fell)}.`;
       return;
     }
     // Then the Aggroed enemies close in (enemies/flying.ts), their cooldowns with them.
@@ -2551,7 +2551,7 @@ export class Game {
     const rule = this.arcana.frostRule();
     if (!rule) return [];
     const out = necroDecay({ board: this.world, wrap: this.wrap, hero: this.run.player, changes: this.run.changes, ...(beams ? { beams } : {}) }, rule.boost, this.frostArea);
-    for (const { enemy, at: tile } of out.kills) this.message = [`Necrotic Frost · ${enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, tile, 1, false, 0)].join(" · ");
+    for (const { enemy, at: tile } of out.kills) this.message = [`Necrotic Frost · ${this.enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, tile, 1, false, 0)].join(" · ");
     return out.shots;
   }
   /** Lifespring's field as the board shows it, while it is on and its pool holds. */
@@ -2569,7 +2569,7 @@ export class Game {
     const out = lifespringContact({ board: this.world, wrap: this.wrap, hero: this.run.player }, s.pool, this.lifespringReach, (waves) => this.arcana.lifespringRate(waves), entered, tick);
     if (out.pool) s.pool = out.pool;
     else delete s.pool;
-    for (const { enemy, at: tile } of out.kills) this.message = [`Lifespring · ${enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, tile, 1, false, 0)].join(" · ");
+    for (const { enemy, at: tile } of out.kills) this.message = [`Lifespring · ${this.enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, tile, 1, false, 0)].join(" · ");
     return out.shots;
   }
   /** Phantasm's ghosts as the board shows them, while any are out and it is on. */
@@ -2584,7 +2584,7 @@ export class Game {
     const rule = this.arcana.phantasmRule(), s = this.run.phantasm;
     if (!rule || !(s?.ghosts?.length || s?.outer?.length)) return [];
     const out = ghostStrikes({ board: this.world, wrap: this.wrap, hero: this.run.player, ...(from ? { from } : {}), ...(beams ? { beams } : {}) }, rule, s, first);
-    for (const { enemy, at: tile } of out.kills) this.message = [`Phantasm · ${enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, tile, 1, false, 0)].join(" · ");
+    for (const { enemy, at: tile } of out.kills) this.message = [`Phantasm · ${this.enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, tile, 1, false, 0)].join(" · ");
     if (out.struck.length) this.ghostFx = [...this.ghostFx.slice(-11), ...out.struck.map((g) => ({ ...g, at: at + (ms * g.tick) / TURN_TICKS }))];
     return out.shots;
   }
@@ -2596,7 +2596,7 @@ export class Game {
     const out = thunderbolts({ board: this.world, wrap: this.wrap, hero: this.run.player, ...(from ? { from } : {}), seed: this.run.seed, ...(beams ? { beams } : {}) }, rule);
     this.arcana.settleBolts(out.left);
     for (const { enemy, at, instakill, crits } of out.kills)
-      this.message = [`Thunderbolt · ${enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, at, 1, instakill, crits)].join(" · ");
+      this.message = [`Thunderbolt · ${this.enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, at, 1, instakill, crits)].join(" · ");
     return out.shots;
   }
   /** A turn the hero holds its ground (FLYING ENEMY with a Flying enemy in
@@ -3250,6 +3250,7 @@ export class Game {
     if (grant && grant.gold > 0) CURRENCIES.gold.credit(this.save, grant.gold);
     return grant?.gold ?? 0;
   }
+  private enemyTitle(enemy: Enemy) { return enemyTitle(enemy, this.save.settings.legacyEnemies); }
   /** The wall clock the Archives' research runs on (ms); tests set it. */
   clock: () => number = () => Date.now();
   /** Records a potion's heal of `n` HP, already applied, where the hero stands. */
@@ -3275,8 +3276,8 @@ function lockedBy(t: Tile, color: KeyColor) {
 }
 
 /** How the status line opens on a fight won. */
-function fightText(fight: FightEnd): string {
-  return [...(fight.openers ?? []), wonText(fight)].join(" · ");
+function fightText(fight: FightEnd, legacy = false): string {
+  return [...(fight.openers ?? []), wonText(fight, legacy)].join(" · ");
 }
 /** What opened a fight of `player` against `enemy`, as the status line
  * names it: ENEMY's Surprise Attack (`surprise`), FAST ENEMY's First
@@ -3292,8 +3293,8 @@ function fightOpeners(player: Player, enemy: Enemy, surprise: boolean, firstStri
     ...(cut?.tangle ? [`${greater}Tangle`] : []),
   ];
 }
-function wonText({ enemy, damage, revived }: FightEnd) {
-  if (revived) return `Revived · ${enemyTitle(enemy)} defeated`;
-  return damage ? `−${wholeChange(damage)} HP · ${enemyTitle(enemy)} defeated` : "Unscathed victory";
+function wonText({ enemy, damage, revived }: FightEnd, legacy = false) {
+  if (revived) return `Revived · ${enemyTitle(enemy, legacy)} defeated`;
+  return damage ? `−${wholeChange(damage)} HP · ${enemyTitle(enemy, legacy)} defeated` : "Unscathed victory";
 }
 

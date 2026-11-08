@@ -481,10 +481,16 @@ try {
       await tapTile(x, y);
       await shot(`${prefix}.tap.${x}.${y}`);
     }
-    // Tap the same tile twice: the first previews, the second walks (inside
-    // a run only in Dev mode; otherwise it says the hand moves the hero).
-    await tapTile(8, 2);
-    await tapTile(8, 2);
+    if (prefix === "dev") {
+      // Always exercise a manual step and Undo, independently of which tile
+      // the preceding inspection tour last selected.
+      await page.evaluate(() => document.activeElement?.blur());
+      await page.keyboard.press("ArrowUp");
+    } else {
+      // Outside Dev mode, a confirming tap explains that the hand moves.
+      await tapTile(8, 2);
+      await tapTile(8, 2);
+    }
     await shot(`${prefix}.walked`);
     if (await page.locator("#undo:not([disabled])").count()) {
       await click("#undo");

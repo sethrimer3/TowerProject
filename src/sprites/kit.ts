@@ -1,3 +1,5 @@
+import { rosterEntry } from "../enemies/roster.ts";
+import type { Enemy } from "../entities.ts";
 import { atlasIcon, atlasRegion, atlasSlice, drawAtlas, prepareUiAtlas, type AtlasCanvas } from "./ui-atlas.ts";
 /** The shared PNG kit. Images load once, keep nearest-neighbor sampling,
  * and notify cached render layers through a revision when they arrive. */
@@ -82,8 +84,12 @@ export function kitIcon(id: string, _themeArt: string, className: string, overla
 
 /** A themed enemy keeps its roster identity while sharing material ramps.
  * The named silhouettes cover every existing Tower and Delve enemy. */
-export function kitEnemy(name: string): string {
-  const n = name.toLowerCase();
+export function kitEnemy(enemy: string | Enemy, legacy = false): string {
+  if (typeof enemy !== "string") {
+    const entry = rosterEntry(enemy, legacy);
+    if (entry) return entry.id;
+  }
+  const n = (typeof enemy === "string" ? enemy : enemy.name).toLowerCase();
   // The Iron Knight wears the art it was drawn for under its old name.
   if (n === "iron knight") return "enemy-armored-knight";
   const slug = n.replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");

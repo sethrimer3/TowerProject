@@ -37,7 +37,7 @@ test("a Greater Boss has twice a boss's HP, ATK and DEF, and twice its rewards",
     assert.equal(greater.hp, boss.hp * GREATER_BOSS_OVER_BOSS);
     assert.equal(greater.attack, boss.attack * GREATER_BOSS_OVER_BOSS);
     assert.equal(greater.defense, boss.defense * GREATER_BOSS_OVER_BOSS);
-    assert.equal(enemyTitle(greater), `Greater Boss ${boss.name}`);
+    assert.equal(enemyTitle(greater, true), `Greater Boss ${boss.name}`);
   }
   assert.equal(GREATER_BOSS_OVER_BOSS, 2);
   assert.equal(ENEMY_GOLD.greaterBoss, 2 * ENEMY_GOLD.boss);

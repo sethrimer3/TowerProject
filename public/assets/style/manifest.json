@@ -2714,6 +2714,636 @@
       "file": "blacksmith-smoke.png",
       "width": 64,
       "height": 12
+    },
+    "delve-enemy-attackHeavy-weak-ordinary": {
+      "file": "delve-enemy-attackHeavy-weak-ordinary.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-weak-fast": {
+      "file": "delve-enemy-attackHeavy-weak-fast.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-weak-ranged": {
+      "file": "delve-enemy-attackHeavy-weak-ranged.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-weak-shielded": {
+      "file": "delve-enemy-attackHeavy-weak-shielded.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-weak-flying": {
+      "file": "delve-enemy-attackHeavy-weak-flying.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-weak-armored": {
+      "file": "delve-enemy-attackHeavy-weak-armored.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-weak-aggroed": {
+      "file": "delve-enemy-attackHeavy-weak-aggroed.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-normal-ordinary": {
+      "file": "delve-enemy-attackHeavy-normal-ordinary.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-normal-fast": {
+      "file": "delve-enemy-attackHeavy-normal-fast.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-normal-ranged": {
+      "file": "delve-enemy-attackHeavy-normal-ranged.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-normal-shielded": {
+      "file": "delve-enemy-attackHeavy-normal-shielded.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-normal-flying": {
+      "file": "delve-enemy-attackHeavy-normal-flying.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-normal-armored": {
+      "file": "delve-enemy-attackHeavy-normal-armored.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-normal-aggroed": {
+      "file": "delve-enemy-attackHeavy-normal-aggroed.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-strong-ordinary": {
+      "file": "delve-enemy-attackHeavy-strong-ordinary.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-strong-fast": {
+      "file": "delve-enemy-attackHeavy-strong-fast.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-strong-ranged": {
+      "file": "delve-enemy-attackHeavy-strong-ranged.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-strong-shielded": {
+      "file": "delve-enemy-attackHeavy-strong-shielded.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-strong-flying": {
+      "file": "delve-enemy-attackHeavy-strong-flying.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-strong-armored": {
+      "file": "delve-enemy-attackHeavy-strong-armored.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-strong-aggroed": {
+      "file": "delve-enemy-attackHeavy-strong-aggroed.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-elite-ordinary": {
+      "file": "delve-enemy-attackHeavy-elite-ordinary.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-elite-fast": {
+      "file": "delve-enemy-attackHeavy-elite-fast.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-elite-ranged": {
+      "file": "delve-enemy-attackHeavy-elite-ranged.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-elite-shielded": {
+      "file": "delve-enemy-attackHeavy-elite-shielded.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-elite-flying": {
+      "file": "delve-enemy-attackHeavy-elite-flying.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-elite-armored": {
+      "file": "delve-enemy-attackHeavy-elite-armored.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-elite-aggroed": {
+      "file": "delve-enemy-attackHeavy-elite-aggroed.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-boss-ordinary": {
+      "file": "delve-enemy-attackHeavy-boss-ordinary.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-boss-fast": {
+      "file": "delve-enemy-attackHeavy-boss-fast.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-boss-ranged": {
+      "file": "delve-enemy-attackHeavy-boss-ranged.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-boss-shielded": {
+      "file": "delve-enemy-attackHeavy-boss-shielded.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-boss-flying": {
+      "file": "delve-enemy-attackHeavy-boss-flying.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-boss-armored": {
+      "file": "delve-enemy-attackHeavy-boss-armored.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-boss-aggroed": {
+      "file": "delve-enemy-attackHeavy-boss-aggroed.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-greaterBoss-ordinary": {
+      "file": "delve-enemy-attackHeavy-greaterBoss-ordinary.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-greaterBoss-fast": {
+      "file": "delve-enemy-attackHeavy-greaterBoss-fast.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-greaterBoss-ranged": {
+      "file": "delve-enemy-attackHeavy-greaterBoss-ranged.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-greaterBoss-shielded": {
+      "file": "delve-enemy-attackHeavy-greaterBoss-shielded.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-greaterBoss-flying": {
+      "file": "delve-enemy-attackHeavy-greaterBoss-flying.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-greaterBoss-armored": {
+      "file": "delve-enemy-attackHeavy-greaterBoss-armored.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-attackHeavy-greaterBoss-aggroed": {
+      "file": "delve-enemy-attackHeavy-greaterBoss-aggroed.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-weak-ordinary": {
+      "file": "delve-enemy-balanced-weak-ordinary.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-weak-fast": {
+      "file": "delve-enemy-balanced-weak-fast.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-weak-ranged": {
+      "file": "delve-enemy-balanced-weak-ranged.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-weak-shielded": {
+      "file": "delve-enemy-balanced-weak-shielded.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-weak-flying": {
+      "file": "delve-enemy-balanced-weak-flying.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-weak-armored": {
+      "file": "delve-enemy-balanced-weak-armored.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-weak-aggroed": {
+      "file": "delve-enemy-balanced-weak-aggroed.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-normal-ordinary": {
+      "file": "delve-enemy-balanced-normal-ordinary.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-normal-fast": {
+      "file": "delve-enemy-balanced-normal-fast.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-normal-ranged": {
+      "file": "delve-enemy-balanced-normal-ranged.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-normal-shielded": {
+      "file": "delve-enemy-balanced-normal-shielded.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-normal-flying": {
+      "file": "delve-enemy-balanced-normal-flying.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-normal-armored": {
+      "file": "delve-enemy-balanced-normal-armored.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-normal-aggroed": {
+      "file": "delve-enemy-balanced-normal-aggroed.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-strong-ordinary": {
+      "file": "delve-enemy-balanced-strong-ordinary.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-strong-fast": {
+      "file": "delve-enemy-balanced-strong-fast.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-strong-ranged": {
+      "file": "delve-enemy-balanced-strong-ranged.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-strong-shielded": {
+      "file": "delve-enemy-balanced-strong-shielded.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-strong-flying": {
+      "file": "delve-enemy-balanced-strong-flying.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-strong-armored": {
+      "file": "delve-enemy-balanced-strong-armored.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-strong-aggroed": {
+      "file": "delve-enemy-balanced-strong-aggroed.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-elite-ordinary": {
+      "file": "delve-enemy-balanced-elite-ordinary.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-elite-fast": {
+      "file": "delve-enemy-balanced-elite-fast.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-elite-ranged": {
+      "file": "delve-enemy-balanced-elite-ranged.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-elite-shielded": {
+      "file": "delve-enemy-balanced-elite-shielded.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-elite-flying": {
+      "file": "delve-enemy-balanced-elite-flying.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-elite-armored": {
+      "file": "delve-enemy-balanced-elite-armored.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-elite-aggroed": {
+      "file": "delve-enemy-balanced-elite-aggroed.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-boss-ordinary": {
+      "file": "delve-enemy-balanced-boss-ordinary.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-boss-fast": {
+      "file": "delve-enemy-balanced-boss-fast.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-boss-ranged": {
+      "file": "delve-enemy-balanced-boss-ranged.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-boss-shielded": {
+      "file": "delve-enemy-balanced-boss-shielded.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-boss-flying": {
+      "file": "delve-enemy-balanced-boss-flying.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-boss-armored": {
+      "file": "delve-enemy-balanced-boss-armored.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-boss-aggroed": {
+      "file": "delve-enemy-balanced-boss-aggroed.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-greaterBoss-ordinary": {
+      "file": "delve-enemy-balanced-greaterBoss-ordinary.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-greaterBoss-fast": {
+      "file": "delve-enemy-balanced-greaterBoss-fast.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-greaterBoss-ranged": {
+      "file": "delve-enemy-balanced-greaterBoss-ranged.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-greaterBoss-shielded": {
+      "file": "delve-enemy-balanced-greaterBoss-shielded.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-greaterBoss-flying": {
+      "file": "delve-enemy-balanced-greaterBoss-flying.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-greaterBoss-armored": {
+      "file": "delve-enemy-balanced-greaterBoss-armored.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-balanced-greaterBoss-aggroed": {
+      "file": "delve-enemy-balanced-greaterBoss-aggroed.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-weak-ordinary": {
+      "file": "delve-enemy-defenseHeavy-weak-ordinary.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-weak-fast": {
+      "file": "delve-enemy-defenseHeavy-weak-fast.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-weak-ranged": {
+      "file": "delve-enemy-defenseHeavy-weak-ranged.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-weak-shielded": {
+      "file": "delve-enemy-defenseHeavy-weak-shielded.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-weak-flying": {
+      "file": "delve-enemy-defenseHeavy-weak-flying.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-weak-armored": {
+      "file": "delve-enemy-defenseHeavy-weak-armored.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-weak-aggroed": {
+      "file": "delve-enemy-defenseHeavy-weak-aggroed.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-normal-ordinary": {
+      "file": "delve-enemy-defenseHeavy-normal-ordinary.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-normal-fast": {
+      "file": "delve-enemy-defenseHeavy-normal-fast.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-normal-ranged": {
+      "file": "delve-enemy-defenseHeavy-normal-ranged.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-normal-shielded": {
+      "file": "delve-enemy-defenseHeavy-normal-shielded.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-normal-flying": {
+      "file": "delve-enemy-defenseHeavy-normal-flying.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-normal-armored": {
+      "file": "delve-enemy-defenseHeavy-normal-armored.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-normal-aggroed": {
+      "file": "delve-enemy-defenseHeavy-normal-aggroed.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-strong-ordinary": {
+      "file": "delve-enemy-defenseHeavy-strong-ordinary.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-strong-fast": {
+      "file": "delve-enemy-defenseHeavy-strong-fast.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-strong-ranged": {
+      "file": "delve-enemy-defenseHeavy-strong-ranged.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-strong-shielded": {
+      "file": "delve-enemy-defenseHeavy-strong-shielded.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-strong-flying": {
+      "file": "delve-enemy-defenseHeavy-strong-flying.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-strong-armored": {
+      "file": "delve-enemy-defenseHeavy-strong-armored.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-strong-aggroed": {
+      "file": "delve-enemy-defenseHeavy-strong-aggroed.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-elite-ordinary": {
+      "file": "delve-enemy-defenseHeavy-elite-ordinary.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-elite-fast": {
+      "file": "delve-enemy-defenseHeavy-elite-fast.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-elite-ranged": {
+      "file": "delve-enemy-defenseHeavy-elite-ranged.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-elite-shielded": {
+      "file": "delve-enemy-defenseHeavy-elite-shielded.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-elite-flying": {
+      "file": "delve-enemy-defenseHeavy-elite-flying.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-elite-armored": {
+      "file": "delve-enemy-defenseHeavy-elite-armored.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-elite-aggroed": {
+      "file": "delve-enemy-defenseHeavy-elite-aggroed.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-boss-ordinary": {
+      "file": "delve-enemy-defenseHeavy-boss-ordinary.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-boss-fast": {
+      "file": "delve-enemy-defenseHeavy-boss-fast.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-boss-ranged": {
+      "file": "delve-enemy-defenseHeavy-boss-ranged.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-boss-shielded": {
+      "file": "delve-enemy-defenseHeavy-boss-shielded.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-boss-flying": {
+      "file": "delve-enemy-defenseHeavy-boss-flying.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-boss-armored": {
+      "file": "delve-enemy-defenseHeavy-boss-armored.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-boss-aggroed": {
+      "file": "delve-enemy-defenseHeavy-boss-aggroed.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-greaterBoss-ordinary": {
+      "file": "delve-enemy-defenseHeavy-greaterBoss-ordinary.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-greaterBoss-fast": {
+      "file": "delve-enemy-defenseHeavy-greaterBoss-fast.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-greaterBoss-ranged": {
+      "file": "delve-enemy-defenseHeavy-greaterBoss-ranged.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-greaterBoss-shielded": {
+      "file": "delve-enemy-defenseHeavy-greaterBoss-shielded.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-greaterBoss-flying": {
+      "file": "delve-enemy-defenseHeavy-greaterBoss-flying.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-greaterBoss-armored": {
+      "file": "delve-enemy-defenseHeavy-greaterBoss-armored.png",
+      "width": 24,
+      "height": 24
+    },
+    "delve-enemy-defenseHeavy-greaterBoss-aggroed": {
+      "file": "delve-enemy-defenseHeavy-greaterBoss-aggroed.png",
+      "width": 24,
+      "height": 24
     }
   }
 }

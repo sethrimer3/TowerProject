@@ -1,5 +1,19 @@
 # Rendering
 
+`enemies/roster.ts` defines the default bestiary: 126 named creatures, six strengths × seven appearances (ordinary and six traits) × three stat profiles.
+`enemies/legacy-roster.ts` retains the former Tower and Delve identities for save/generation compatibility and the Legacy Enemies setting.
+`rosterEntry` selects a presentation from the enemy's actual profile, strength and traits, with precedence Aggroed, Flying, Shielded, Armored, Ranged, Fast, ordinary; additional trait mechanics and marks remain active.
+Trials retain their dedicated actors and sprites.
+`tools/prepare-enemy-sprites.mjs` exports the three retained source sheets to 126 individual palette-matched, binary-alpha 24 × 24 PNGs, with increasing footprints by strength, then packs a review atlas and labeled preview in `public/assets/enemy-roster/`.
+`npm run sprites:atlas` also packs the individual enemy PNGs into the runtime UI atlas and registers them for preloading.
+Board content, smite, popups, sprite lighting and silhouette caches receive the saved roster preference; labels use that same preference without changing saved enemy identities or combat statistics.
+`tests/enemy-roster.test.ts` verifies the full roster, legacy names, saved preference, shared palette and lossless atlas regions.
+`node tests/enemy-roster.mjs` starts its own Vite server and checks persisted toggles, both image-loading modes and live board/cache switching, then saves bestiary and Settings screenshots under `test-results/enemy-roster/`.
+
+The additions art library lives in `public/assets/additions/`: 100 unassigned relic designs, Trial Points, twelve skill icons, five event pennants and ten Standard equipment icons.
+`node tools/prepare-additions-sprites.mjs` exports the retained sources in `assets/game-sprites/additions-sources/` to individual transparent 24-pixel PNGs, then packs their exact pixels into a padded 512 × 256 atlas with named regions in `atlas.json`.
+This library is not connected to gameplay; relic numbers identify artwork only and assign no names, rarities or bonuses.
+
 **Default shared PNG kit.** `sprites/style.ts` selects the native kit for Classic; alternate Game themes retain their own renderers.
 `BoardLook.styledSprites` passes this choice to tiles, pickups, all named enemies, four-direction heroes, torches, rising rewards and forest buildings.
 `sprites/options.ts` provides six full-tile square door PNGs and a four-frame torch strip, controlled by the saved `squareDoors` and `spriteAnimations` settings only while the effective Game kit is active.

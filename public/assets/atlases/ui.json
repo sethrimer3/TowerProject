@@ -1,6 +1,6 @@
 {
   "image": "assets/atlases/ui.png",
-  "revision": "d205ac297a516cad",
+  "revision": "b803dc5db3ed7051",
   "width": 1024,
   "height": 1024,
   "padding": 2,
@@ -260,8 +260,8 @@
     "assets/style/barrel-broken.png": {
       "width": 12,
       "height": 12,
-      "x": 610,
-      "y": 474
+      "x": 102,
+      "y": 586
     },
     "assets/style/barrel.png": {
       "width": 24,
@@ -698,164 +698,164 @@
     "assets/style/combat-armor.png": {
       "width": 9,
       "height": 8,
-      "x": 72,
-      "y": 502
+      "x": 588,
+      "y": 586
     },
     "assets/style/combat-arrow-e.png": {
       "width": 16,
       "height": 16,
-      "x": 170,
-      "y": 474
+      "x": 674,
+      "y": 558
     },
     "assets/style/combat-arrow-n.png": {
       "width": 16,
       "height": 16,
-      "x": 190,
-      "y": 474
+      "x": 694,
+      "y": 558
     },
     "assets/style/combat-arrow-ne.png": {
       "width": 16,
       "height": 16,
-      "x": 210,
-      "y": 474
+      "x": 714,
+      "y": 558
     },
     "assets/style/combat-arrow-nw.png": {
       "width": 16,
       "height": 16,
-      "x": 230,
-      "y": 474
+      "x": 734,
+      "y": 558
     },
     "assets/style/combat-arrow-s.png": {
       "width": 16,
       "height": 16,
-      "x": 250,
-      "y": 474
+      "x": 754,
+      "y": 558
     },
     "assets/style/combat-arrow-se.png": {
       "width": 16,
       "height": 16,
-      "x": 270,
-      "y": 474
+      "x": 774,
+      "y": 558
     },
     "assets/style/combat-arrow-sw.png": {
       "width": 16,
       "height": 16,
-      "x": 290,
-      "y": 474
+      "x": 794,
+      "y": 558
     },
     "assets/style/combat-arrow-w.png": {
       "width": 16,
       "height": 16,
-      "x": 310,
-      "y": 474
+      "x": 814,
+      "y": 558
     },
     "assets/style/combat-charged-e.png": {
       "width": 16,
       "height": 16,
-      "x": 330,
-      "y": 474
+      "x": 834,
+      "y": 558
     },
     "assets/style/combat-charged-n.png": {
       "width": 16,
       "height": 16,
-      "x": 350,
-      "y": 474
+      "x": 854,
+      "y": 558
     },
     "assets/style/combat-charged-ne.png": {
       "width": 16,
       "height": 16,
-      "x": 370,
-      "y": 474
+      "x": 874,
+      "y": 558
     },
     "assets/style/combat-charged-nw.png": {
       "width": 16,
       "height": 16,
-      "x": 390,
-      "y": 474
+      "x": 894,
+      "y": 558
     },
     "assets/style/combat-charged-s.png": {
       "width": 16,
       "height": 16,
-      "x": 410,
-      "y": 474
+      "x": 914,
+      "y": 558
     },
     "assets/style/combat-charged-se.png": {
       "width": 16,
       "height": 16,
-      "x": 430,
-      "y": 474
+      "x": 934,
+      "y": 558
     },
     "assets/style/combat-charged-sw.png": {
       "width": 16,
       "height": 16,
-      "x": 450,
-      "y": 474
+      "x": 954,
+      "y": 558
     },
     "assets/style/combat-charged-w.png": {
       "width": 16,
       "height": 16,
-      "x": 470,
-      "y": 474
+      "x": 974,
+      "y": 558
     },
     "assets/style/combat-chest-equipment.png": {
       "width": 20,
       "height": 10,
-      "x": 18,
-      "y": 502
+      "x": 534,
+      "y": 586
     },
     "assets/style/combat-chest-supply.png": {
       "width": 10,
       "height": 10,
-      "x": 42,
-      "y": 502
+      "x": 558,
+      "y": 586
     },
     "assets/style/combat-fast.png": {
       "width": 12,
       "height": 8,
-      "x": 56,
-      "y": 502
+      "x": 572,
+      "y": 586
     },
     "assets/style/combat-mark-blocked.png": {
       "width": 12,
       "height": 12,
-      "x": 626,
-      "y": 474
+      "x": 118,
+      "y": 586
     },
     "assets/style/combat-mark-ignore.png": {
       "width": 16,
       "height": 16,
-      "x": 490,
-      "y": 474
+      "x": 994,
+      "y": 558
     },
     "assets/style/combat-mark-skip.png": {
       "width": 12,
       "height": 12,
-      "x": 642,
-      "y": 474
+      "x": 134,
+      "y": 586
     },
     "assets/style/combat-mark-target.png": {
       "width": 16,
       "height": 16,
-      "x": 510,
-      "y": 474
+      "x": 2,
+      "y": 586
     },
     "assets/style/combat-ranged.png": {
       "width": 9,
       "height": 8,
-      "x": 85,
-      "y": 502
+      "x": 601,
+      "y": 586
     },
     "assets/style/combat-rank-down.png": {
       "width": 7,
       "height": 6,
-      "x": 123,
-      "y": 502
+      "x": 639,
+      "y": 586
     },
     "assets/style/combat-rank-up.png": {
       "width": 7,
       "height": 6,
-      "x": 134,
-      "y": 502
+      "x": 650,
+      "y": 586
     },
     "assets/style/combat-shield-48.png": {
       "width": 48,
@@ -872,20 +872,20 @@
     "assets/style/combat-shot.png": {
       "width": 8,
       "height": 8,
-      "x": 111,
-      "y": 502
+      "x": 627,
+      "y": 586
     },
     "assets/style/combat-wing.png": {
       "width": 9,
       "height": 8,
-      "x": 98,
-      "y": 502
+      "x": 614,
+      "y": 586
     },
     "assets/style/crate-broken.png": {
       "width": 12,
       "height": 12,
-      "x": 658,
-      "y": 474
+      "x": 150,
+      "y": 586
     },
     "assets/style/crate.png": {
       "width": 24,
@@ -905,689 +905,1445 @@
       "x": 86,
       "y": 334
     },
-    "assets/style/demon.png": {
+    "assets/style/delve-enemy-attackHeavy-boss-aggroed.png": {
       "width": 24,
       "height": 24,
       "x": 114,
       "y": 334
+    },
+    "assets/style/delve-enemy-attackHeavy-boss-armored.png": {
+      "width": 24,
+      "height": 24,
+      "x": 142,
+      "y": 334
+    },
+    "assets/style/delve-enemy-attackHeavy-boss-fast.png": {
+      "width": 24,
+      "height": 24,
+      "x": 170,
+      "y": 334
+    },
+    "assets/style/delve-enemy-attackHeavy-boss-flying.png": {
+      "width": 24,
+      "height": 24,
+      "x": 198,
+      "y": 334
+    },
+    "assets/style/delve-enemy-attackHeavy-boss-ordinary.png": {
+      "width": 24,
+      "height": 24,
+      "x": 226,
+      "y": 334
+    },
+    "assets/style/delve-enemy-attackHeavy-boss-ranged.png": {
+      "width": 24,
+      "height": 24,
+      "x": 254,
+      "y": 334
+    },
+    "assets/style/delve-enemy-attackHeavy-boss-shielded.png": {
+      "width": 24,
+      "height": 24,
+      "x": 282,
+      "y": 334
+    },
+    "assets/style/delve-enemy-attackHeavy-elite-aggroed.png": {
+      "width": 24,
+      "height": 24,
+      "x": 310,
+      "y": 334
+    },
+    "assets/style/delve-enemy-attackHeavy-elite-armored.png": {
+      "width": 24,
+      "height": 24,
+      "x": 338,
+      "y": 334
+    },
+    "assets/style/delve-enemy-attackHeavy-elite-fast.png": {
+      "width": 24,
+      "height": 24,
+      "x": 366,
+      "y": 334
+    },
+    "assets/style/delve-enemy-attackHeavy-elite-flying.png": {
+      "width": 24,
+      "height": 24,
+      "x": 394,
+      "y": 334
+    },
+    "assets/style/delve-enemy-attackHeavy-elite-ordinary.png": {
+      "width": 24,
+      "height": 24,
+      "x": 422,
+      "y": 334
+    },
+    "assets/style/delve-enemy-attackHeavy-elite-ranged.png": {
+      "width": 24,
+      "height": 24,
+      "x": 450,
+      "y": 334
+    },
+    "assets/style/delve-enemy-attackHeavy-elite-shielded.png": {
+      "width": 24,
+      "height": 24,
+      "x": 478,
+      "y": 334
+    },
+    "assets/style/delve-enemy-attackHeavy-greaterBoss-aggroed.png": {
+      "width": 24,
+      "height": 24,
+      "x": 506,
+      "y": 334
+    },
+    "assets/style/delve-enemy-attackHeavy-greaterBoss-armored.png": {
+      "width": 24,
+      "height": 24,
+      "x": 534,
+      "y": 334
+    },
+    "assets/style/delve-enemy-attackHeavy-greaterBoss-fast.png": {
+      "width": 24,
+      "height": 24,
+      "x": 562,
+      "y": 334
+    },
+    "assets/style/delve-enemy-attackHeavy-greaterBoss-flying.png": {
+      "width": 24,
+      "height": 24,
+      "x": 590,
+      "y": 334
+    },
+    "assets/style/delve-enemy-attackHeavy-greaterBoss-ordinary.png": {
+      "width": 24,
+      "height": 24,
+      "x": 618,
+      "y": 334
+    },
+    "assets/style/delve-enemy-attackHeavy-greaterBoss-ranged.png": {
+      "width": 24,
+      "height": 24,
+      "x": 646,
+      "y": 334
+    },
+    "assets/style/delve-enemy-attackHeavy-greaterBoss-shielded.png": {
+      "width": 24,
+      "height": 24,
+      "x": 674,
+      "y": 334
+    },
+    "assets/style/delve-enemy-attackHeavy-normal-aggroed.png": {
+      "width": 24,
+      "height": 24,
+      "x": 702,
+      "y": 334
+    },
+    "assets/style/delve-enemy-attackHeavy-normal-armored.png": {
+      "width": 24,
+      "height": 24,
+      "x": 730,
+      "y": 334
+    },
+    "assets/style/delve-enemy-attackHeavy-normal-fast.png": {
+      "width": 24,
+      "height": 24,
+      "x": 758,
+      "y": 334
+    },
+    "assets/style/delve-enemy-attackHeavy-normal-flying.png": {
+      "width": 24,
+      "height": 24,
+      "x": 786,
+      "y": 334
+    },
+    "assets/style/delve-enemy-attackHeavy-normal-ordinary.png": {
+      "width": 24,
+      "height": 24,
+      "x": 814,
+      "y": 334
+    },
+    "assets/style/delve-enemy-attackHeavy-normal-ranged.png": {
+      "width": 24,
+      "height": 24,
+      "x": 842,
+      "y": 334
+    },
+    "assets/style/delve-enemy-attackHeavy-normal-shielded.png": {
+      "width": 24,
+      "height": 24,
+      "x": 870,
+      "y": 334
+    },
+    "assets/style/delve-enemy-attackHeavy-strong-aggroed.png": {
+      "width": 24,
+      "height": 24,
+      "x": 898,
+      "y": 334
+    },
+    "assets/style/delve-enemy-attackHeavy-strong-armored.png": {
+      "width": 24,
+      "height": 24,
+      "x": 926,
+      "y": 334
+    },
+    "assets/style/delve-enemy-attackHeavy-strong-fast.png": {
+      "width": 24,
+      "height": 24,
+      "x": 954,
+      "y": 334
+    },
+    "assets/style/delve-enemy-attackHeavy-strong-flying.png": {
+      "width": 24,
+      "height": 24,
+      "x": 982,
+      "y": 334
+    },
+    "assets/style/delve-enemy-attackHeavy-strong-ordinary.png": {
+      "width": 24,
+      "height": 24,
+      "x": 2,
+      "y": 362
+    },
+    "assets/style/delve-enemy-attackHeavy-strong-ranged.png": {
+      "width": 24,
+      "height": 24,
+      "x": 30,
+      "y": 362
+    },
+    "assets/style/delve-enemy-attackHeavy-strong-shielded.png": {
+      "width": 24,
+      "height": 24,
+      "x": 58,
+      "y": 362
+    },
+    "assets/style/delve-enemy-attackHeavy-weak-aggroed.png": {
+      "width": 24,
+      "height": 24,
+      "x": 86,
+      "y": 362
+    },
+    "assets/style/delve-enemy-attackHeavy-weak-armored.png": {
+      "width": 24,
+      "height": 24,
+      "x": 114,
+      "y": 362
+    },
+    "assets/style/delve-enemy-attackHeavy-weak-fast.png": {
+      "width": 24,
+      "height": 24,
+      "x": 142,
+      "y": 362
+    },
+    "assets/style/delve-enemy-attackHeavy-weak-flying.png": {
+      "width": 24,
+      "height": 24,
+      "x": 170,
+      "y": 362
+    },
+    "assets/style/delve-enemy-attackHeavy-weak-ordinary.png": {
+      "width": 24,
+      "height": 24,
+      "x": 198,
+      "y": 362
+    },
+    "assets/style/delve-enemy-attackHeavy-weak-ranged.png": {
+      "width": 24,
+      "height": 24,
+      "x": 226,
+      "y": 362
+    },
+    "assets/style/delve-enemy-attackHeavy-weak-shielded.png": {
+      "width": 24,
+      "height": 24,
+      "x": 254,
+      "y": 362
+    },
+    "assets/style/delve-enemy-balanced-boss-aggroed.png": {
+      "width": 24,
+      "height": 24,
+      "x": 282,
+      "y": 362
+    },
+    "assets/style/delve-enemy-balanced-boss-armored.png": {
+      "width": 24,
+      "height": 24,
+      "x": 310,
+      "y": 362
+    },
+    "assets/style/delve-enemy-balanced-boss-fast.png": {
+      "width": 24,
+      "height": 24,
+      "x": 338,
+      "y": 362
+    },
+    "assets/style/delve-enemy-balanced-boss-flying.png": {
+      "width": 24,
+      "height": 24,
+      "x": 366,
+      "y": 362
+    },
+    "assets/style/delve-enemy-balanced-boss-ordinary.png": {
+      "width": 24,
+      "height": 24,
+      "x": 394,
+      "y": 362
+    },
+    "assets/style/delve-enemy-balanced-boss-ranged.png": {
+      "width": 24,
+      "height": 24,
+      "x": 422,
+      "y": 362
+    },
+    "assets/style/delve-enemy-balanced-boss-shielded.png": {
+      "width": 24,
+      "height": 24,
+      "x": 450,
+      "y": 362
+    },
+    "assets/style/delve-enemy-balanced-elite-aggroed.png": {
+      "width": 24,
+      "height": 24,
+      "x": 478,
+      "y": 362
+    },
+    "assets/style/delve-enemy-balanced-elite-armored.png": {
+      "width": 24,
+      "height": 24,
+      "x": 506,
+      "y": 362
+    },
+    "assets/style/delve-enemy-balanced-elite-fast.png": {
+      "width": 24,
+      "height": 24,
+      "x": 534,
+      "y": 362
+    },
+    "assets/style/delve-enemy-balanced-elite-flying.png": {
+      "width": 24,
+      "height": 24,
+      "x": 562,
+      "y": 362
+    },
+    "assets/style/delve-enemy-balanced-elite-ordinary.png": {
+      "width": 24,
+      "height": 24,
+      "x": 590,
+      "y": 362
+    },
+    "assets/style/delve-enemy-balanced-elite-ranged.png": {
+      "width": 24,
+      "height": 24,
+      "x": 618,
+      "y": 362
+    },
+    "assets/style/delve-enemy-balanced-elite-shielded.png": {
+      "width": 24,
+      "height": 24,
+      "x": 646,
+      "y": 362
+    },
+    "assets/style/delve-enemy-balanced-greaterBoss-aggroed.png": {
+      "width": 24,
+      "height": 24,
+      "x": 674,
+      "y": 362
+    },
+    "assets/style/delve-enemy-balanced-greaterBoss-armored.png": {
+      "width": 24,
+      "height": 24,
+      "x": 702,
+      "y": 362
+    },
+    "assets/style/delve-enemy-balanced-greaterBoss-fast.png": {
+      "width": 24,
+      "height": 24,
+      "x": 730,
+      "y": 362
+    },
+    "assets/style/delve-enemy-balanced-greaterBoss-flying.png": {
+      "width": 24,
+      "height": 24,
+      "x": 758,
+      "y": 362
+    },
+    "assets/style/delve-enemy-balanced-greaterBoss-ordinary.png": {
+      "width": 24,
+      "height": 24,
+      "x": 786,
+      "y": 362
+    },
+    "assets/style/delve-enemy-balanced-greaterBoss-ranged.png": {
+      "width": 24,
+      "height": 24,
+      "x": 814,
+      "y": 362
+    },
+    "assets/style/delve-enemy-balanced-greaterBoss-shielded.png": {
+      "width": 24,
+      "height": 24,
+      "x": 842,
+      "y": 362
+    },
+    "assets/style/delve-enemy-balanced-normal-aggroed.png": {
+      "width": 24,
+      "height": 24,
+      "x": 870,
+      "y": 362
+    },
+    "assets/style/delve-enemy-balanced-normal-armored.png": {
+      "width": 24,
+      "height": 24,
+      "x": 898,
+      "y": 362
+    },
+    "assets/style/delve-enemy-balanced-normal-fast.png": {
+      "width": 24,
+      "height": 24,
+      "x": 926,
+      "y": 362
+    },
+    "assets/style/delve-enemy-balanced-normal-flying.png": {
+      "width": 24,
+      "height": 24,
+      "x": 954,
+      "y": 362
+    },
+    "assets/style/delve-enemy-balanced-normal-ordinary.png": {
+      "width": 24,
+      "height": 24,
+      "x": 982,
+      "y": 362
+    },
+    "assets/style/delve-enemy-balanced-normal-ranged.png": {
+      "width": 24,
+      "height": 24,
+      "x": 2,
+      "y": 390
+    },
+    "assets/style/delve-enemy-balanced-normal-shielded.png": {
+      "width": 24,
+      "height": 24,
+      "x": 30,
+      "y": 390
+    },
+    "assets/style/delve-enemy-balanced-strong-aggroed.png": {
+      "width": 24,
+      "height": 24,
+      "x": 58,
+      "y": 390
+    },
+    "assets/style/delve-enemy-balanced-strong-armored.png": {
+      "width": 24,
+      "height": 24,
+      "x": 86,
+      "y": 390
+    },
+    "assets/style/delve-enemy-balanced-strong-fast.png": {
+      "width": 24,
+      "height": 24,
+      "x": 114,
+      "y": 390
+    },
+    "assets/style/delve-enemy-balanced-strong-flying.png": {
+      "width": 24,
+      "height": 24,
+      "x": 142,
+      "y": 390
+    },
+    "assets/style/delve-enemy-balanced-strong-ordinary.png": {
+      "width": 24,
+      "height": 24,
+      "x": 170,
+      "y": 390
+    },
+    "assets/style/delve-enemy-balanced-strong-ranged.png": {
+      "width": 24,
+      "height": 24,
+      "x": 198,
+      "y": 390
+    },
+    "assets/style/delve-enemy-balanced-strong-shielded.png": {
+      "width": 24,
+      "height": 24,
+      "x": 226,
+      "y": 390
+    },
+    "assets/style/delve-enemy-balanced-weak-aggroed.png": {
+      "width": 24,
+      "height": 24,
+      "x": 254,
+      "y": 390
+    },
+    "assets/style/delve-enemy-balanced-weak-armored.png": {
+      "width": 24,
+      "height": 24,
+      "x": 282,
+      "y": 390
+    },
+    "assets/style/delve-enemy-balanced-weak-fast.png": {
+      "width": 24,
+      "height": 24,
+      "x": 310,
+      "y": 390
+    },
+    "assets/style/delve-enemy-balanced-weak-flying.png": {
+      "width": 24,
+      "height": 24,
+      "x": 338,
+      "y": 390
+    },
+    "assets/style/delve-enemy-balanced-weak-ordinary.png": {
+      "width": 24,
+      "height": 24,
+      "x": 366,
+      "y": 390
+    },
+    "assets/style/delve-enemy-balanced-weak-ranged.png": {
+      "width": 24,
+      "height": 24,
+      "x": 394,
+      "y": 390
+    },
+    "assets/style/delve-enemy-balanced-weak-shielded.png": {
+      "width": 24,
+      "height": 24,
+      "x": 422,
+      "y": 390
+    },
+    "assets/style/delve-enemy-defenseHeavy-boss-aggroed.png": {
+      "width": 24,
+      "height": 24,
+      "x": 450,
+      "y": 390
+    },
+    "assets/style/delve-enemy-defenseHeavy-boss-armored.png": {
+      "width": 24,
+      "height": 24,
+      "x": 478,
+      "y": 390
+    },
+    "assets/style/delve-enemy-defenseHeavy-boss-fast.png": {
+      "width": 24,
+      "height": 24,
+      "x": 506,
+      "y": 390
+    },
+    "assets/style/delve-enemy-defenseHeavy-boss-flying.png": {
+      "width": 24,
+      "height": 24,
+      "x": 534,
+      "y": 390
+    },
+    "assets/style/delve-enemy-defenseHeavy-boss-ordinary.png": {
+      "width": 24,
+      "height": 24,
+      "x": 562,
+      "y": 390
+    },
+    "assets/style/delve-enemy-defenseHeavy-boss-ranged.png": {
+      "width": 24,
+      "height": 24,
+      "x": 590,
+      "y": 390
+    },
+    "assets/style/delve-enemy-defenseHeavy-boss-shielded.png": {
+      "width": 24,
+      "height": 24,
+      "x": 618,
+      "y": 390
+    },
+    "assets/style/delve-enemy-defenseHeavy-elite-aggroed.png": {
+      "width": 24,
+      "height": 24,
+      "x": 646,
+      "y": 390
+    },
+    "assets/style/delve-enemy-defenseHeavy-elite-armored.png": {
+      "width": 24,
+      "height": 24,
+      "x": 674,
+      "y": 390
+    },
+    "assets/style/delve-enemy-defenseHeavy-elite-fast.png": {
+      "width": 24,
+      "height": 24,
+      "x": 702,
+      "y": 390
+    },
+    "assets/style/delve-enemy-defenseHeavy-elite-flying.png": {
+      "width": 24,
+      "height": 24,
+      "x": 730,
+      "y": 390
+    },
+    "assets/style/delve-enemy-defenseHeavy-elite-ordinary.png": {
+      "width": 24,
+      "height": 24,
+      "x": 758,
+      "y": 390
+    },
+    "assets/style/delve-enemy-defenseHeavy-elite-ranged.png": {
+      "width": 24,
+      "height": 24,
+      "x": 786,
+      "y": 390
+    },
+    "assets/style/delve-enemy-defenseHeavy-elite-shielded.png": {
+      "width": 24,
+      "height": 24,
+      "x": 814,
+      "y": 390
+    },
+    "assets/style/delve-enemy-defenseHeavy-greaterBoss-aggroed.png": {
+      "width": 24,
+      "height": 24,
+      "x": 842,
+      "y": 390
+    },
+    "assets/style/delve-enemy-defenseHeavy-greaterBoss-armored.png": {
+      "width": 24,
+      "height": 24,
+      "x": 870,
+      "y": 390
+    },
+    "assets/style/delve-enemy-defenseHeavy-greaterBoss-fast.png": {
+      "width": 24,
+      "height": 24,
+      "x": 898,
+      "y": 390
+    },
+    "assets/style/delve-enemy-defenseHeavy-greaterBoss-flying.png": {
+      "width": 24,
+      "height": 24,
+      "x": 926,
+      "y": 390
+    },
+    "assets/style/delve-enemy-defenseHeavy-greaterBoss-ordinary.png": {
+      "width": 24,
+      "height": 24,
+      "x": 954,
+      "y": 390
+    },
+    "assets/style/delve-enemy-defenseHeavy-greaterBoss-ranged.png": {
+      "width": 24,
+      "height": 24,
+      "x": 982,
+      "y": 390
+    },
+    "assets/style/delve-enemy-defenseHeavy-greaterBoss-shielded.png": {
+      "width": 24,
+      "height": 24,
+      "x": 2,
+      "y": 418
+    },
+    "assets/style/delve-enemy-defenseHeavy-normal-aggroed.png": {
+      "width": 24,
+      "height": 24,
+      "x": 30,
+      "y": 418
+    },
+    "assets/style/delve-enemy-defenseHeavy-normal-armored.png": {
+      "width": 24,
+      "height": 24,
+      "x": 58,
+      "y": 418
+    },
+    "assets/style/delve-enemy-defenseHeavy-normal-fast.png": {
+      "width": 24,
+      "height": 24,
+      "x": 86,
+      "y": 418
+    },
+    "assets/style/delve-enemy-defenseHeavy-normal-flying.png": {
+      "width": 24,
+      "height": 24,
+      "x": 114,
+      "y": 418
+    },
+    "assets/style/delve-enemy-defenseHeavy-normal-ordinary.png": {
+      "width": 24,
+      "height": 24,
+      "x": 142,
+      "y": 418
+    },
+    "assets/style/delve-enemy-defenseHeavy-normal-ranged.png": {
+      "width": 24,
+      "height": 24,
+      "x": 170,
+      "y": 418
+    },
+    "assets/style/delve-enemy-defenseHeavy-normal-shielded.png": {
+      "width": 24,
+      "height": 24,
+      "x": 198,
+      "y": 418
+    },
+    "assets/style/delve-enemy-defenseHeavy-strong-aggroed.png": {
+      "width": 24,
+      "height": 24,
+      "x": 226,
+      "y": 418
+    },
+    "assets/style/delve-enemy-defenseHeavy-strong-armored.png": {
+      "width": 24,
+      "height": 24,
+      "x": 254,
+      "y": 418
+    },
+    "assets/style/delve-enemy-defenseHeavy-strong-fast.png": {
+      "width": 24,
+      "height": 24,
+      "x": 282,
+      "y": 418
+    },
+    "assets/style/delve-enemy-defenseHeavy-strong-flying.png": {
+      "width": 24,
+      "height": 24,
+      "x": 310,
+      "y": 418
+    },
+    "assets/style/delve-enemy-defenseHeavy-strong-ordinary.png": {
+      "width": 24,
+      "height": 24,
+      "x": 338,
+      "y": 418
+    },
+    "assets/style/delve-enemy-defenseHeavy-strong-ranged.png": {
+      "width": 24,
+      "height": 24,
+      "x": 366,
+      "y": 418
+    },
+    "assets/style/delve-enemy-defenseHeavy-strong-shielded.png": {
+      "width": 24,
+      "height": 24,
+      "x": 394,
+      "y": 418
+    },
+    "assets/style/delve-enemy-defenseHeavy-weak-aggroed.png": {
+      "width": 24,
+      "height": 24,
+      "x": 422,
+      "y": 418
+    },
+    "assets/style/delve-enemy-defenseHeavy-weak-armored.png": {
+      "width": 24,
+      "height": 24,
+      "x": 450,
+      "y": 418
+    },
+    "assets/style/delve-enemy-defenseHeavy-weak-fast.png": {
+      "width": 24,
+      "height": 24,
+      "x": 478,
+      "y": 418
+    },
+    "assets/style/delve-enemy-defenseHeavy-weak-flying.png": {
+      "width": 24,
+      "height": 24,
+      "x": 506,
+      "y": 418
+    },
+    "assets/style/delve-enemy-defenseHeavy-weak-ordinary.png": {
+      "width": 24,
+      "height": 24,
+      "x": 534,
+      "y": 418
+    },
+    "assets/style/delve-enemy-defenseHeavy-weak-ranged.png": {
+      "width": 24,
+      "height": 24,
+      "x": 562,
+      "y": 418
+    },
+    "assets/style/delve-enemy-defenseHeavy-weak-shielded.png": {
+      "width": 24,
+      "height": 24,
+      "x": 590,
+      "y": 418
+    },
+    "assets/style/demon.png": {
+      "width": 24,
+      "height": 24,
+      "x": 618,
+      "y": 418
     },
     "assets/style/door-steel.png": {
       "width": 24,
       "height": 24,
-      "x": 142,
-      "y": 334
+      "x": 646,
+      "y": 418
     },
     "assets/style/door-wood.png": {
       "width": 24,
       "height": 24,
-      "x": 170,
-      "y": 334
+      "x": 674,
+      "y": 418
     },
     "assets/style/dragon.png": {
       "width": 24,
       "height": 24,
-      "x": 198,
-      "y": 334
+      "x": 702,
+      "y": 418
     },
     "assets/style/enemy-amethyst-golem.png": {
       "width": 24,
       "height": 24,
-      "x": 226,
-      "y": 334
+      "x": 730,
+      "y": 418
     },
     "assets/style/enemy-armored-knight.png": {
       "width": 24,
       "height": 24,
-      "x": 254,
-      "y": 334
+      "x": 758,
+      "y": 418
     },
     "assets/style/enemy-assassin.png": {
       "width": 24,
       "height": 24,
-      "x": 282,
-      "y": 334
+      "x": 786,
+      "y": 418
     },
     "assets/style/enemy-bat.png": {
       "width": 24,
       "height": 24,
-      "x": 310,
-      "y": 334
+      "x": 814,
+      "y": 418
     },
     "assets/style/enemy-berserker.png": {
       "width": 24,
       "height": 24,
-      "x": 338,
-      "y": 334
+      "x": 842,
+      "y": 418
     },
     "assets/style/enemy-blackstone-colossus.png": {
       "width": 24,
       "height": 24,
-      "x": 366,
-      "y": 334
+      "x": 870,
+      "y": 418
     },
     "assets/style/enemy-celestial-guardian.png": {
       "width": 24,
       "height": 24,
-      "x": 394,
-      "y": 334
+      "x": 898,
+      "y": 418
     },
     "assets/style/enemy-coral-knight.png": {
       "width": 24,
       "height": 24,
-      "x": 422,
-      "y": 334
+      "x": 926,
+      "y": 418
     },
     "assets/style/enemy-crystal-savant.png": {
       "width": 24,
       "height": 24,
-      "x": 450,
-      "y": 334
+      "x": 954,
+      "y": 418
     },
     "assets/style/enemy-cultist.png": {
       "width": 24,
       "height": 24,
-      "x": 478,
-      "y": 334
+      "x": 982,
+      "y": 418
     },
     "assets/style/enemy-demon.png": {
       "width": 24,
       "height": 24,
-      "x": 506,
-      "y": 334
+      "x": 2,
+      "y": 446
     },
     "assets/style/enemy-dragon-whelp.png": {
       "width": 24,
       "height": 24,
-      "x": 534,
-      "y": 334
+      "x": 30,
+      "y": 446
     },
     "assets/style/enemy-drowned-marauder.png": {
       "width": 24,
       "height": 24,
-      "x": 562,
-      "y": 334
+      "x": 58,
+      "y": 446
     },
     "assets/style/enemy-gargoyle.png": {
       "width": 24,
       "height": 24,
-      "x": 590,
-      "y": 334
+      "x": 86,
+      "y": 446
     },
     "assets/style/enemy-goblin.png": {
       "width": 24,
       "height": 24,
-      "x": 618,
-      "y": 334
+      "x": 114,
+      "y": 446
     },
     "assets/style/enemy-golem.png": {
       "width": 24,
       "height": 24,
-      "x": 646,
-      "y": 334
+      "x": 142,
+      "y": 446
     },
     "assets/style/enemy-mage.png": {
       "width": 24,
       "height": 24,
-      "x": 674,
-      "y": 334
+      "x": 170,
+      "y": 446
     },
     "assets/style/enemy-obsidian-revenant.png": {
       "width": 24,
       "height": 24,
-      "x": 702,
-      "y": 334
+      "x": 198,
+      "y": 446
     },
     "assets/style/enemy-ogre.png": {
       "width": 24,
       "height": 24,
-      "x": 730,
-      "y": 334
+      "x": 226,
+      "y": 446
     },
     "assets/style/enemy-orc.png": {
       "width": 24,
       "height": 24,
-      "x": 758,
-      "y": 334
+      "x": 254,
+      "y": 446
     },
     "assets/style/enemy-shadow-stalker.png": {
       "width": 24,
       "height": 24,
-      "x": 786,
-      "y": 334
+      "x": 282,
+      "y": 446
     },
     "assets/style/enemy-skeleton.png": {
       "width": 24,
       "height": 24,
-      "x": 814,
-      "y": 334
+      "x": 310,
+      "y": 446
     },
     "assets/style/enemy-slime.png": {
       "width": 24,
       "height": 24,
-      "x": 842,
-      "y": 334
+      "x": 338,
+      "y": 446
     },
     "assets/style/enemy-spore-colossus.png": {
       "width": 24,
       "height": 24,
-      "x": 870,
-      "y": 334
+      "x": 366,
+      "y": 446
     },
     "assets/style/enemy-sporeling.png": {
       "width": 24,
       "height": 24,
-      "x": 898,
-      "y": 334
+      "x": 394,
+      "y": 446
     },
     "assets/style/enemy-starfire-adept.png": {
       "width": 24,
       "height": 24,
-      "x": 926,
-      "y": 334
+      "x": 422,
+      "y": 446
     },
     "assets/style/enemy-stone-warden.png": {
       "width": 24,
       "height": 24,
-      "x": 954,
-      "y": 334
+      "x": 450,
+      "y": 446
     },
     "assets/style/enemy-temple-wraith.png": {
       "width": 24,
       "height": 24,
-      "x": 982,
-      "y": 334
+      "x": 478,
+      "y": 446
     },
     "assets/style/enemy-thief.png": {
       "width": 24,
       "height": 24,
-      "x": 2,
-      "y": 362
+      "x": 506,
+      "y": 446
     },
     "assets/style/enemy-troll.png": {
       "width": 24,
       "height": 24,
-      "x": 30,
-      "y": 362
+      "x": 534,
+      "y": 446
     },
     "assets/style/equip-alchemistsGloves.png": {
       "width": 24,
       "height": 24,
-      "x": 58,
-      "y": 362
+      "x": 562,
+      "y": 446
     },
     "assets/style/equip-amber.png": {
       "width": 24,
       "height": 24,
-      "x": 86,
-      "y": 362
+      "x": 590,
+      "y": 446
     },
     "assets/style/equip-amulet.png": {
       "width": 24,
       "height": 24,
-      "x": 114,
-      "y": 362
+      "x": 618,
+      "y": 446
     },
     "assets/style/equip-bastionPlate.png": {
       "width": 24,
       "height": 24,
-      "x": 142,
-      "y": 362
+      "x": 646,
+      "y": 446
     },
     "assets/style/equip-belt.png": {
       "width": 24,
       "height": 24,
-      "x": 170,
-      "y": 362
+      "x": 674,
+      "y": 446
     },
     "assets/style/equip-bloodpriceBlade.png": {
       "width": 24,
       "height": 24,
-      "x": 198,
-      "y": 362
+      "x": 702,
+      "y": 446
     },
     "assets/style/equip-boots.png": {
       "width": 24,
       "height": 24,
-      "x": 226,
-      "y": 362
+      "x": 730,
+      "y": 446
     },
     "assets/style/equip-brawlersWraps.png": {
       "width": 24,
       "height": 24,
-      "x": 254,
-      "y": 362
+      "x": 758,
+      "y": 446
     },
     "assets/style/equip-buckles.png": {
       "width": 24,
       "height": 24,
-      "x": 282,
-      "y": 362
+      "x": 786,
+      "y": 446
     },
     "assets/style/equip-bulwarkShield.png": {
       "width": 24,
       "height": 24,
-      "x": 310,
-      "y": 362
+      "x": 814,
+      "y": 446
     },
     "assets/style/equip-cape.png": {
       "width": 24,
       "height": 24,
-      "x": 338,
-      "y": 362
+      "x": 842,
+      "y": 446
     },
     "assets/style/equip-championsGirdle.png": {
       "width": 24,
       "height": 24,
-      "x": 366,
-      "y": 362
+      "x": 870,
+      "y": 446
     },
     "assets/style/equip-chestplate.png": {
       "width": 24,
       "height": 24,
-      "x": 394,
-      "y": 362
+      "x": 898,
+      "y": 446
     },
     "assets/style/equip-dawnShield.png": {
       "width": 24,
       "height": 24,
-      "x": 422,
-      "y": 362
+      "x": 926,
+      "y": 446
     },
     "assets/style/equip-delversGreaves.png": {
       "width": 24,
       "height": 24,
-      "x": 450,
-      "y": 362
+      "x": 954,
+      "y": 446
     },
     "assets/style/equip-fleetstepBoots.png": {
       "width": 24,
       "height": 24,
-      "x": 478,
-      "y": 362
+      "x": 982,
+      "y": 446
     },
     "assets/style/equip-gatherersShroud.png": {
       "width": 24,
       "height": 24,
-      "x": 506,
-      "y": 362
+      "x": 2,
+      "y": 474
     },
     "assets/style/equip-giantsHauberk.png": {
       "width": 24,
       "height": 24,
-      "x": 534,
-      "y": 362
+      "x": 30,
+      "y": 474
     },
     "assets/style/equip-gloves.png": {
       "width": 24,
       "height": 24,
-      "x": 562,
-      "y": 362
+      "x": 58,
+      "y": 474
     },
     "assets/style/equip-heartOfTheGrove.png": {
       "width": 24,
       "height": 24,
-      "x": 590,
-      "y": 362
+      "x": 86,
+      "y": 474
     },
     "assets/style/equip-helmet.png": {
       "width": 24,
       "height": 24,
-      "x": 618,
-      "y": 362
+      "x": 114,
+      "y": 474
     },
     "assets/style/equip-hobnails.png": {
       "width": 24,
       "height": 24,
-      "x": 646,
-      "y": 362
+      "x": 142,
+      "y": 474
     },
     "assets/style/equip-kingsbane.png": {
       "width": 24,
       "height": 24,
-      "x": 674,
-      "y": 362
+      "x": 170,
+      "y": 474
     },
     "assets/style/equip-leather.png": {
       "width": 24,
       "height": 24,
-      "x": 702,
-      "y": 362
+      "x": 198,
+      "y": 474
     },
     "assets/style/equip-locksmithsGloves.png": {
       "width": 24,
       "height": 24,
-      "x": 730,
-      "y": 362
+      "x": 226,
+      "y": 474
     },
     "assets/style/equip-magpieMantle.png": {
       "width": 24,
       "height": 24,
-      "x": 758,
-      "y": 362
+      "x": 254,
+      "y": 474
     },
     "assets/style/equip-merchantsSash.png": {
       "width": 24,
       "height": 24,
-      "x": 786,
-      "y": 362
+      "x": 282,
+      "y": 474
     },
     "assets/style/equip-minersHelm.png": {
       "width": 24,
       "height": 24,
-      "x": 814,
-      "y": 362
+      "x": 310,
+      "y": 474
     },
     "assets/style/equip-moonstone.png": {
       "width": 24,
       "height": 24,
-      "x": 842,
-      "y": 362
+      "x": 338,
+      "y": 474
     },
     "assets/style/equip-padding.png": {
       "width": 24,
       "height": 24,
-      "x": 870,
-      "y": 362
+      "x": 366,
+      "y": 474
     },
     "assets/style/equip-pathfinderTreads.png": {
       "width": 24,
       "height": 24,
-      "x": 898,
-      "y": 362
+      "x": 394,
+      "y": 474
     },
     "assets/style/equip-phoenixTalisman.png": {
       "width": 24,
       "height": 24,
-      "x": 926,
-      "y": 362
+      "x": 422,
+      "y": 474
     },
     "assets/style/equip-pilgrimsCape.png": {
       "width": 24,
       "height": 24,
-      "x": 954,
-      "y": 362
+      "x": 450,
+      "y": 474
     },
     "assets/style/equip-provisionersBelt.png": {
       "width": 24,
       "height": 24,
-      "x": 982,
-      "y": 362
+      "x": 478,
+      "y": 474
     },
     "assets/style/equip-reapersScythe.png": {
       "width": 24,
       "height": 24,
-      "x": 2,
-      "y": 390
+      "x": 506,
+      "y": 474
     },
     "assets/style/equip-ring.png": {
       "width": 24,
       "height": 24,
-      "x": 30,
-      "y": 390
+      "x": 534,
+      "y": 474
     },
     "assets/style/equip-ringOfFury.png": {
       "width": 24,
       "height": 24,
-      "x": 58,
-      "y": 390
+      "x": 562,
+      "y": 474
     },
     "assets/style/equip-ringOfWarding.png": {
       "width": 24,
       "height": 24,
-      "x": 86,
-      "y": 390
+      "x": 590,
+      "y": 474
     },
     "assets/style/equip-rivets.png": {
       "width": 24,
       "height": 24,
-      "x": 114,
-      "y": 390
+      "x": 618,
+      "y": 474
     },
     "assets/style/equip-sagesLocket.png": {
       "width": 24,
       "height": 24,
-      "x": 142,
-      "y": 390
+      "x": 646,
+      "y": 474
     },
     "assets/style/equip-scholarsCirclet.png": {
       "width": 24,
       "height": 24,
-      "x": 170,
-      "y": 390
+      "x": 674,
+      "y": 474
     },
     "assets/style/equip-sentinelVisor.png": {
       "width": 24,
       "height": 24,
-      "x": 198,
-      "y": 390
+      "x": 702,
+      "y": 474
     },
     "assets/style/equip-shield.png": {
       "width": 24,
       "height": 24,
-      "x": 226,
-      "y": 390
+      "x": 730,
+      "y": 474
     },
     "assets/style/equip-silk.png": {
       "width": 24,
       "height": 24,
-      "x": 254,
-      "y": 390
+      "x": 758,
+      "y": 474
     },
     "assets/style/equip-silverBand.png": {
       "width": 24,
       "height": 24,
-      "x": 282,
-      "y": 390
+      "x": 786,
+      "y": 474
     },
     "assets/style/equip-spireSignet.png": {
       "width": 24,
       "height": 24,
-      "x": 310,
-      "y": 390
+      "x": 814,
+      "y": 474
     },
     "assets/style/equip-verdantMail.png": {
       "width": 24,
       "height": 24,
-      "x": 338,
-      "y": 390
+      "x": 842,
+      "y": 474
     },
     "assets/style/equip-wardensShield.png": {
       "width": 24,
       "height": 24,
-      "x": 366,
-      "y": 390
+      "x": 870,
+      "y": 474
     },
     "assets/style/equip-weapon.png": {
       "width": 24,
       "height": 24,
-      "x": 394,
-      "y": 390
+      "x": 898,
+      "y": 474
     },
     "assets/style/equip-whetstone.png": {
       "width": 24,
       "height": 24,
-      "x": 422,
-      "y": 390
+      "x": 926,
+      "y": 474
     },
     "assets/style/event.png": {
       "width": 24,
       "height": 24,
-      "x": 450,
-      "y": 390
+      "x": 954,
+      "y": 474
     },
     "assets/style/fern.png": {
       "width": 12,
       "height": 12,
-      "x": 674,
-      "y": 474
+      "x": 166,
+      "y": 586
     },
     "assets/style/focus.png": {
       "width": 24,
       "height": 24,
-      "x": 478,
-      "y": 390
+      "x": 982,
+      "y": 474
     },
     "assets/style/gem.png": {
       "width": 24,
       "height": 24,
-      "x": 506,
-      "y": 390
+      "x": 2,
+      "y": 502
     },
     "assets/style/gift.png": {
       "width": 24,
       "height": 24,
-      "x": 534,
-      "y": 390
+      "x": 30,
+      "y": 502
     },
     "assets/style/gloves.png": {
       "width": 24,
       "height": 24,
-      "x": 562,
-      "y": 390
+      "x": 58,
+      "y": 502
     },
     "assets/style/goal-attack-lore.png": {
       "width": 24,
       "height": 24,
-      "x": 590,
-      "y": 390
+      "x": 86,
+      "y": 502
     },
     "assets/style/goal-attack-per-tile.png": {
       "width": 24,
       "height": 24,
-      "x": 618,
-      "y": 390
+      "x": 114,
+      "y": 502
     },
     "assets/style/goal-attack-range.png": {
       "width": 24,
       "height": 24,
-      "x": 646,
-      "y": 390
+      "x": 142,
+      "y": 502
     },
     "assets/style/goal-attack-speed.png": {
       "width": 24,
       "height": 24,
-      "x": 674,
-      "y": 390
+      "x": 170,
+      "y": 502
     },
     "assets/style/goal-badge-slots.png": {
       "width": 24,
       "height": 24,
-      "x": 702,
-      "y": 390
+      "x": 198,
+      "y": 502
     },
     "assets/style/goal-card-groups.png": {
       "width": 24,
       "height": 24,
-      "x": 730,
-      "y": 390
+      "x": 226,
+      "y": 502
     },
     "assets/style/goal-charged-shot.png": {
       "width": 24,
       "height": 24,
-      "x": 758,
-      "y": 390
+      "x": 254,
+      "y": 502
     },
     "assets/style/goal-combat-forecast.png": {
       "width": 24,
       "height": 24,
-      "x": 786,
-      "y": 390
+      "x": 282,
+      "y": 502
     },
     "assets/style/goal-damage-prediction.png": {
       "width": 24,
       "height": 24,
-      "x": 814,
-      "y": 390
+      "x": 310,
+      "y": 502
     },
     "assets/style/goal-damage-visual.png": {
       "width": 24,
       "height": 24,
-      "x": 842,
-      "y": 390
+      "x": 338,
+      "y": 502
     },
     "assets/style/goal-equipment.png": {
       "width": 24,
       "height": 24,
-      "x": 870,
-      "y": 390
+      "x": 366,
+      "y": 502
     },
     "assets/style/goal-multishot.png": {
       "width": 24,
       "height": 24,
-      "x": 898,
-      "y": 390
+      "x": 394,
+      "y": 502
     },
     "assets/style/goal-note-taking.png": {
       "width": 24,
       "height": 24,
-      "x": 926,
-      "y": 390
+      "x": 422,
+      "y": 502
     },
     "assets/style/goal-parry.png": {
       "width": 24,
       "height": 24,
-      "x": 954,
-      "y": 390
+      "x": 450,
+      "y": 502
     },
     "assets/style/goal-rapid-fire.png": {
       "width": 24,
       "height": 24,
-      "x": 982,
-      "y": 390
+      "x": 478,
+      "y": 502
     },
     "assets/style/goal-relative-damage.png": {
       "width": 24,
       "height": 24,
-      "x": 2,
-      "y": 418
+      "x": 506,
+      "y": 502
     },
     "assets/style/goal-shard-attack.png": {
       "width": 24,
       "height": 24,
-      "x": 30,
-      "y": 418
+      "x": 534,
+      "y": 502
     },
     "assets/style/goal-shard-defense.png": {
       "width": 24,
       "height": 24,
-      "x": 58,
-      "y": 418
+      "x": 562,
+      "y": 502
     },
     "assets/style/goal-training-discount.png": {
       "width": 24,
       "height": 24,
-      "x": 86,
-      "y": 418
+      "x": 590,
+      "y": 502
     },
     "assets/style/goal-warp-loot.png": {
       "width": 24,
       "height": 24,
-      "x": 114,
-      "y": 418
+      "x": 618,
+      "y": 502
     },
     "assets/style/goal-warp.png": {
       "width": 24,
       "height": 24,
-      "x": 142,
-      "y": 418
+      "x": 646,
+      "y": 502
     },
     "assets/style/goblin.png": {
       "width": 24,
       "height": 24,
-      "x": 170,
-      "y": 418
+      "x": 674,
+      "y": 502
     },
     "assets/style/gold.png": {
       "width": 24,
       "height": 24,
-      "x": 198,
-      "y": 418
+      "x": 702,
+      "y": 502
     },
     "assets/style/golem.png": {
       "width": 24,
       "height": 24,
-      "x": 226,
-      "y": 418
+      "x": 730,
+      "y": 502
     },
     "assets/style/hall.png": {
       "width": 48,
@@ -1598,284 +2354,284 @@
     "assets/style/hammer.png": {
       "width": 24,
       "height": 24,
-      "x": 254,
-      "y": 418
+      "x": 758,
+      "y": 502
     },
     "assets/style/heart.png": {
       "width": 24,
       "height": 24,
-      "x": 282,
-      "y": 418
+      "x": 786,
+      "y": 502
     },
     "assets/style/helmet.png": {
       "width": 24,
       "height": 24,
-      "x": 310,
-      "y": 418
+      "x": 814,
+      "y": 502
     },
     "assets/style/hourglass.png": {
       "width": 24,
       "height": 24,
-      "x": 338,
-      "y": 418
+      "x": 842,
+      "y": 502
     },
     "assets/style/hud-aether-shield.png": {
       "width": 24,
       "height": 24,
-      "x": 366,
-      "y": 418
+      "x": 870,
+      "y": 502
     },
     "assets/style/ignore.png": {
       "width": 24,
       "height": 24,
-      "x": 394,
-      "y": 418
+      "x": 898,
+      "y": 502
     },
     "assets/style/inspiration.png": {
       "width": 24,
       "height": 24,
-      "x": 422,
-      "y": 418
+      "x": 926,
+      "y": 502
     },
     "assets/style/key-blue.png": {
       "width": 24,
       "height": 24,
-      "x": 450,
-      "y": 418
+      "x": 954,
+      "y": 502
     },
     "assets/style/key-red.png": {
       "width": 24,
       "height": 24,
-      "x": 478,
-      "y": 418
+      "x": 982,
+      "y": 502
     },
     "assets/style/key-yellow.png": {
       "width": 24,
       "height": 24,
-      "x": 506,
-      "y": 418
+      "x": 2,
+      "y": 530
     },
     "assets/style/knight.png": {
       "width": 24,
       "height": 24,
-      "x": 534,
-      "y": 418
+      "x": 30,
+      "y": 530
     },
     "assets/style/lock.png": {
       "width": 24,
       "height": 24,
-      "x": 562,
-      "y": 418
+      "x": 58,
+      "y": 530
     },
     "assets/style/mage.png": {
       "width": 24,
       "height": 24,
-      "x": 590,
-      "y": 418
+      "x": 86,
+      "y": 530
     },
     "assets/style/mail.png": {
       "width": 24,
       "height": 24,
-      "x": 618,
-      "y": 418
+      "x": 114,
+      "y": 530
     },
     "assets/style/medal.png": {
       "width": 24,
       "height": 24,
-      "x": 646,
-      "y": 418
+      "x": 142,
+      "y": 530
     },
     "assets/style/merge.png": {
       "width": 24,
       "height": 24,
-      "x": 674,
-      "y": 418
+      "x": 170,
+      "y": 530
     },
     "assets/style/mission.png": {
       "width": 24,
       "height": 24,
-      "x": 702,
-      "y": 418
+      "x": 198,
+      "y": 530
     },
     "assets/style/mushrooms.png": {
       "width": 12,
       "height": 12,
-      "x": 690,
-      "y": 474
+      "x": 182,
+      "y": 586
     },
     "assets/style/orc.png": {
       "width": 24,
       "height": 24,
-      "x": 730,
-      "y": 418
+      "x": 226,
+      "y": 530
     },
     "assets/style/pause.png": {
       "width": 24,
       "height": 24,
-      "x": 758,
-      "y": 418
+      "x": 254,
+      "y": 530
     },
     "assets/style/pebbles.png": {
       "width": 12,
       "height": 12,
-      "x": 706,
-      "y": 474
+      "x": 198,
+      "y": 586
     },
     "assets/style/play.png": {
       "width": 24,
       "height": 24,
-      "x": 786,
-      "y": 418
+      "x": 282,
+      "y": 530
     },
     "assets/style/pointer.png": {
       "width": 24,
       "height": 24,
-      "x": 814,
-      "y": 418
+      "x": 310,
+      "y": 530
     },
     "assets/style/potion-blue.png": {
       "width": 24,
       "height": 24,
-      "x": 842,
-      "y": 418
+      "x": 338,
+      "y": 530
     },
     "assets/style/potion-red.png": {
       "width": 24,
       "height": 24,
-      "x": 870,
-      "y": 418
+      "x": 366,
+      "y": 530
     },
     "assets/style/redo.png": {
       "width": 24,
       "height": 24,
-      "x": 898,
-      "y": 418
+      "x": 394,
+      "y": 530
     },
     "assets/style/relic-epic.png": {
       "width": 24,
       "height": 24,
-      "x": 926,
-      "y": 418
+      "x": 422,
+      "y": 530
     },
     "assets/style/relic-rare.png": {
       "width": 24,
       "height": 24,
-      "x": 954,
-      "y": 418
+      "x": 450,
+      "y": 530
     },
     "assets/style/ring.png": {
       "width": 24,
       "height": 24,
-      "x": 982,
-      "y": 418
+      "x": 478,
+      "y": 530
     },
     "assets/style/scroll.png": {
       "width": 24,
       "height": 24,
-      "x": 2,
-      "y": 446
+      "x": 506,
+      "y": 530
     },
     "assets/style/settings-cog.png": {
       "width": 24,
       "height": 24,
-      "x": 30,
-      "y": 446
+      "x": 534,
+      "y": 530
     },
     "assets/style/shard.png": {
       "width": 24,
       "height": 24,
-      "x": 58,
-      "y": 446
+      "x": 562,
+      "y": 530
     },
     "assets/style/shield.png": {
       "width": 24,
       "height": 24,
-      "x": 86,
-      "y": 446
+      "x": 590,
+      "y": 530
     },
     "assets/style/shrine-auto.png": {
       "width": 24,
       "height": 24,
-      "x": 114,
-      "y": 446
+      "x": 618,
+      "y": 530
     },
     "assets/style/shrine-ban.png": {
       "width": 24,
       "height": 24,
-      "x": 142,
-      "y": 446
+      "x": 646,
+      "y": 530
     },
     "assets/style/shrine-count.png": {
       "width": 24,
       "height": 24,
-      "x": 170,
-      "y": 446
+      "x": 674,
+      "y": 530
     },
     "assets/style/shrine-fill.png": {
       "width": 16,
       "height": 4,
-      "x": 145,
-      "y": 502
+      "x": 661,
+      "y": 586
     },
     "assets/style/shrine-grip.png": {
       "width": 24,
       "height": 24,
-      "x": 198,
-      "y": 446
+      "x": 702,
+      "y": 530
     },
     "assets/style/shrine.png": {
       "width": 24,
       "height": 24,
-      "x": 226,
-      "y": 446
+      "x": 730,
+      "y": 530
     },
     "assets/style/silver.png": {
       "width": 24,
       "height": 24,
-      "x": 254,
-      "y": 446
+      "x": 758,
+      "y": 530
     },
     "assets/style/skeleton.png": {
       "width": 24,
       "height": 24,
-      "x": 282,
-      "y": 446
+      "x": 786,
+      "y": 530
     },
     "assets/style/slime.png": {
       "width": 24,
       "height": 24,
-      "x": 310,
-      "y": 446
+      "x": 814,
+      "y": 530
     },
     "assets/style/spore.png": {
       "width": 24,
       "height": 24,
-      "x": 338,
-      "y": 446
+      "x": 842,
+      "y": 530
     },
     "assets/style/sprout.png": {
       "width": 12,
       "height": 12,
-      "x": 722,
-      "y": 474
+      "x": 214,
+      "y": 586
     },
     "assets/style/stairs.png": {
       "width": 24,
       "height": 24,
-      "x": 366,
-      "y": 446
+      "x": 870,
+      "y": 530
     },
     "assets/style/sword.png": {
       "width": 24,
       "height": 24,
-      "x": 394,
-      "y": 446
+      "x": 898,
+      "y": 530
     },
     "assets/style/target.png": {
       "width": 24,
       "height": 24,
-      "x": 422,
-      "y": 446
+      "x": 926,
+      "y": 530
     },
     "assets/style/theme-corner-frame.png": {
       "width": 48,
@@ -2096,14 +2852,14 @@
     "assets/style/ticket.png": {
       "width": 24,
       "height": 24,
-      "x": 450,
-      "y": 446
+      "x": 954,
+      "y": 530
     },
     "assets/style/torch.png": {
       "width": 24,
       "height": 24,
-      "x": 478,
-      "y": 446
+      "x": 982,
+      "y": 530
     },
     "assets/style/tower.png": {
       "width": 48,
@@ -2132,26 +2888,26 @@
     "assets/style/troll.png": {
       "width": 24,
       "height": 24,
-      "x": 506,
-      "y": 446
+      "x": 2,
+      "y": 558
     },
     "assets/style/trophy.png": {
       "width": 24,
       "height": 24,
-      "x": 534,
-      "y": 446
+      "x": 30,
+      "y": 558
     },
     "assets/style/tuft.png": {
       "width": 12,
       "height": 12,
-      "x": 738,
-      "y": 474
+      "x": 230,
+      "y": 586
     },
     "assets/style/ui-auto-play.png": {
       "width": 12,
       "height": 12,
-      "x": 754,
-      "y": 474
+      "x": 246,
+      "y": 586
     },
     "assets/style/ui-badge-annotation.png": {
       "width": 48,
@@ -2162,248 +2918,248 @@
     "assets/style/ui-card-points.png": {
       "width": 12,
       "height": 12,
-      "x": 770,
-      "y": 474
+      "x": 262,
+      "y": 586
     },
     "assets/style/ui-chevron-down.png": {
       "width": 12,
       "height": 12,
-      "x": 786,
-      "y": 474
+      "x": 278,
+      "y": 586
     },
     "assets/style/ui-chevron-left.png": {
       "width": 12,
       "height": 12,
-      "x": 802,
-      "y": 474
+      "x": 294,
+      "y": 586
     },
     "assets/style/ui-chevron-right.png": {
       "width": 12,
       "height": 12,
-      "x": 818,
-      "y": 474
+      "x": 310,
+      "y": 586
     },
     "assets/style/ui-control-back.png": {
       "width": 12,
       "height": 12,
-      "x": 834,
-      "y": 474
+      "x": 326,
+      "y": 586
     },
     "assets/style/ui-control-check.png": {
       "width": 12,
       "height": 12,
-      "x": 850,
-      "y": 474
+      "x": 342,
+      "y": 586
     },
     "assets/style/ui-control-close.png": {
       "width": 12,
       "height": 12,
-      "x": 866,
-      "y": 474
+      "x": 358,
+      "y": 586
     },
     "assets/style/ui-control-down.png": {
       "width": 12,
       "height": 12,
-      "x": 882,
-      "y": 474
+      "x": 374,
+      "y": 586
     },
     "assets/style/ui-control-forward.png": {
       "width": 12,
       "height": 12,
-      "x": 898,
-      "y": 474
+      "x": 390,
+      "y": 586
     },
     "assets/style/ui-control-lock.png": {
       "width": 12,
       "height": 12,
-      "x": 914,
-      "y": 474
+      "x": 406,
+      "y": 586
     },
     "assets/style/ui-control-star.png": {
       "width": 24,
       "height": 24,
-      "x": 562,
-      "y": 446
+      "x": 58,
+      "y": 558
     },
     "assets/style/ui-control-swap.png": {
       "width": 12,
       "height": 12,
-      "x": 930,
-      "y": 474
+      "x": 422,
+      "y": 586
     },
     "assets/style/ui-control-up.png": {
       "width": 12,
       "height": 12,
-      "x": 946,
-      "y": 474
+      "x": 438,
+      "y": 586
     },
     "assets/style/ui-copy.png": {
       "width": 24,
       "height": 24,
-      "x": 590,
-      "y": 446
+      "x": 86,
+      "y": 558
     },
     "assets/style/ui-crown.png": {
       "width": 24,
       "height": 24,
-      "x": 618,
-      "y": 446
+      "x": 114,
+      "y": 558
     },
     "assets/style/ui-duplicate.png": {
       "width": 24,
       "height": 24,
-      "x": 646,
-      "y": 446
+      "x": 142,
+      "y": 558
     },
     "assets/style/ui-equip-frame-common.png": {
       "width": 24,
       "height": 24,
-      "x": 674,
-      "y": 446
+      "x": 170,
+      "y": 558
     },
     "assets/style/ui-equip-frame-empty.png": {
       "width": 24,
       "height": 24,
-      "x": 702,
-      "y": 446
+      "x": 198,
+      "y": 558
     },
     "assets/style/ui-equip-frame-rare.png": {
       "width": 24,
       "height": 24,
-      "x": 730,
-      "y": 446
+      "x": 226,
+      "y": 558
     },
     "assets/style/ui-equip-frame-selection.png": {
       "width": 24,
       "height": 24,
-      "x": 758,
-      "y": 446
+      "x": 254,
+      "y": 558
     },
     "assets/style/ui-equip-frame-uncommon.png": {
       "width": 24,
       "height": 24,
-      "x": 786,
-      "y": 446
+      "x": 282,
+      "y": 558
     },
     "assets/style/ui-equip-salvage.png": {
       "width": 12,
       "height": 12,
-      "x": 962,
-      "y": 474
+      "x": 454,
+      "y": 586
     },
     "assets/style/ui-equip-unique.png": {
       "width": 12,
       "height": 12,
-      "x": 978,
-      "y": 474
+      "x": 470,
+      "y": 586
     },
     "assets/style/ui-equip-worn.png": {
       "width": 12,
       "height": 12,
-      "x": 994,
-      "y": 474
+      "x": 486,
+      "y": 586
     },
     "assets/style/ui-fill-gain.png": {
       "width": 16,
       "height": 4,
-      "x": 165,
-      "y": 502
+      "x": 681,
+      "y": 586
     },
     "assets/style/ui-hand-swap.png": {
       "width": 12,
       "height": 12,
-      "x": 1010,
-      "y": 474
+      "x": 502,
+      "y": 586
     },
     "assets/style/ui-link.png": {
       "width": 24,
       "height": 24,
-      "x": 814,
-      "y": 446
+      "x": 310,
+      "y": 558
     },
     "assets/style/ui-mastered.png": {
       "width": 24,
       "height": 24,
-      "x": 842,
-      "y": 446
+      "x": 338,
+      "y": 558
     },
     "assets/style/ui-menu-close.png": {
       "width": 24,
       "height": 24,
-      "x": 870,
-      "y": 446
+      "x": 366,
+      "y": 558
     },
     "assets/style/ui-menu.png": {
       "width": 24,
       "height": 24,
-      "x": 898,
-      "y": 446
+      "x": 394,
+      "y": 558
     },
     "assets/style/ui-revive.png": {
       "width": 24,
       "height": 24,
-      "x": 926,
-      "y": 446
+      "x": 422,
+      "y": 558
     },
     "assets/style/ui-seal.png": {
       "width": 24,
       "height": 24,
-      "x": 954,
-      "y": 446
+      "x": 450,
+      "y": 558
     },
     "assets/style/ui-sign.png": {
       "width": 24,
       "height": 24,
-      "x": 982,
-      "y": 446
+      "x": 478,
+      "y": 558
     },
     "assets/style/ui-skeleton-key.png": {
       "width": 24,
       "height": 24,
-      "x": 2,
-      "y": 474
+      "x": 506,
+      "y": 558
     },
     "assets/style/ui-slider-thumb-active.png": {
       "width": 24,
       "height": 24,
-      "x": 30,
-      "y": 474
+      "x": 534,
+      "y": 558
     },
     "assets/style/ui-slider-thumb.png": {
       "width": 24,
       "height": 24,
-      "x": 58,
-      "y": 474
+      "x": 562,
+      "y": 558
     },
     "assets/style/ui-slider-track.png": {
       "width": 48,
       "height": 12,
-      "x": 530,
-      "y": 474
+      "x": 22,
+      "y": 586
     },
     "assets/style/ui-ward.png": {
       "width": 24,
       "height": 24,
-      "x": 86,
-      "y": 474
+      "x": 590,
+      "y": 558
     },
     "assets/style/undo.png": {
       "width": 24,
       "height": 24,
-      "x": 114,
-      "y": 474
+      "x": 618,
+      "y": 558
     },
     "assets/style/web.png": {
       "width": 12,
       "height": 12,
-      "x": 2,
-      "y": 502
+      "x": 518,
+      "y": 586
     },
     "assets/style/wraith.png": {
       "width": 24,
       "height": 24,
-      "x": 142,
-      "y": 474
+      "x": 646,
+      "y": 558
     },
     "assets/ui/frames/banner.png": {
       "width": 48,
@@ -2462,20 +3218,20 @@
     "assets/ui/frames/fill-blue.png": {
       "width": 16,
       "height": 4,
-      "x": 185,
-      "y": 502
+      "x": 701,
+      "y": 586
     },
     "assets/ui/frames/fill-green.png": {
       "width": 16,
       "height": 4,
-      "x": 205,
-      "y": 502
+      "x": 721,
+      "y": 586
     },
     "assets/ui/frames/fill-red.png": {
       "width": 16,
       "height": 4,
-      "x": 225,
-      "y": 502
+      "x": 741,
+      "y": 586
     },
     "assets/ui/frames/panel.png": {
       "width": 48,
@@ -2492,8 +3248,8 @@
     "assets/ui/frames/surface.png": {
       "width": 24,
       "height": 12,
-      "x": 582,
-      "y": 474
+      "x": 74,
+      "y": 586
     },
     "assets/ui/frames/track.png": {
       "width": 48,

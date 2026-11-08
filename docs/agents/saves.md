@@ -26,6 +26,7 @@ What undo never takes back sits beside the run in the mode's slice, `runFinds` (
 The run decoder drops malformed notes (`validNotes`) and `decodeFinds` reads the finds; kills, chests, XP, Gold and the run's currency come from what the run already kept.
 `tests/run-notes.test.ts` covers them.
 Player settings are the exception: each is one row in `SETTINGS` (`src/save/settings.ts`: its default, the values a save may hold, and its control on the Settings page), from which the `Settings` type, the defaults and the decoder all come, so every setting is always present and readers never re-default it.
+`legacyEnemies` defaults false and restores the former ordinary Tower/Delve enemy names and Classic sprites when enabled; it changes presentation only, so existing maps, combat, progression, drops and undo histories need no migration.
 Rows are in saved key order; the page lists its own order.
 A `range` row keeps whole numbers unless its `step` is under 1, when a saved value is kept to that step (`phantasmAlpha`).
 Pixel art is the default; the old `uiSprites` and `spritesOff` fields are ignored and dropped by the settings decoder.

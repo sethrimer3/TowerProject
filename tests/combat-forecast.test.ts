@@ -86,11 +86,11 @@ test("critical strikes count in the enemy panel's prediction only with Critical 
 
 test("an enemy's title puts its strength before its name, unless it is a normal one", () => {
   const e = (strength: Enemy["strength"]) => ({ name: "Slime", strength });
-  assert.equal(enemyTitle(e("weak")), "Weak Slime");
-  assert.equal(enemyTitle(e("normal")), "Slime");
-  assert.equal(enemyTitle(e("strong")), "Strong Slime");
-  assert.equal(enemyTitle(e("elite")), "Elite Slime");
-  assert.equal(enemyTitle(e("boss")), "Boss Slime");
+  assert.equal(enemyTitle(e("weak"), true), "Weak Slime");
+  assert.equal(enemyTitle(e("normal"), true), "Slime");
+  assert.equal(enemyTitle(e("strong"), true), "Strong Slime");
+  assert.equal(enemyTitle(e("elite"), true), "Elite Slime");
+  assert.equal(enemyTitle(e("boss"), true), "Boss Slime");
 });
 
 test("the door panel shows what opening it takes under Key Efficiency and Heart Door Resilience", () => {

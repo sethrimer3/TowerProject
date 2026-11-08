@@ -580,7 +580,7 @@ function paintSpentTile(c: CanvasRenderingContext2D, f: FrameContext, p: Popup, 
   const look = f.look;
   if (art.spent) c.translate(4, 0);
   if (look.themed) look.themed.contents(c, art.tile);
-  else paintContents(c, art.tile, { x: p.x, y: p.y, time: f.now, reduceMotion: look.reduceMotion, lifted: true, styledSprites: look.styledSprites });
+  else paintContents(c, art.tile, { x: p.x, y: p.y, time: f.now, reduceMotion: look.reduceMotion, lifted: true, legacyEnemies: look.legacyEnemies, styledSprites: look.styledSprites });
   if (!art.spent) return;
   c.translate(-4, 0);
   mark(c, "−", { x: 3, y: 12 }, { color: SPENT_COLOR, size: 14, styled: look.styledSprites });

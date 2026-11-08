@@ -33,6 +33,7 @@ export type BoardLook = {
   styledSprites?: boolean;
   spriteAnimations?: boolean;
   squareDoors?: boolean;
+  legacyEnemies?: boolean;
   reduceMotion: boolean;
   /** How the Game theme worn draws the board, or null for the lit
    * Classic art (always outside: the forest keeps its art), so what rises
@@ -47,7 +48,7 @@ type TileWorld = { tile(x: number, y: number): Tile | undefined };
  * per-tile variation), the time (for sparkles), and which art to use.
  * `lifted` items are off the ground (a reward rising from its tile), so they
  * cast no ground shadow. */
-export type TileArt = { x: number; y: number; time: number; reduceMotion: boolean; lifted?: boolean; styledSprites?: boolean; squareDoors?: boolean; spriteAnimations?: boolean; seed?: number; outline?: boolean };
+export type TileArt = { x: number; y: number; time: number; reduceMotion: boolean; lifted?: boolean; styledSprites?: boolean; squareDoors?: boolean; spriteAnimations?: boolean; legacyEnemies?: boolean; seed?: number; outline?: boolean };
 
 /** Paints one tile. Layer 0 is the ground (terrain), layer 1 whatever stands
  * on it (items, doors, enemies...). Returns false while ground art is still
@@ -56,7 +57,7 @@ export function paintTile(c: CanvasRenderingContext2D, world: TileWorld, t: Tile
   if (look.outside) return layer !== 0 || drawForestTile(c, t, { x, y, seed: look.seed, center: look.entranceX, roads: look.roads });
   if (layer === 0) return paintGround(c, world, t, x, y, look);
   if (t.kind === "wall" || t.kind === "floor") return true;
-  paintContents(c, t, { x, y, time, reduceMotion: look.reduceMotion, styledSprites: look.styledSprites, squareDoors: look.squareDoors, spriteAnimations: look.spriteAnimations, seed: look.seed });
+  paintContents(c, t, { x, y, time, reduceMotion: look.reduceMotion, styledSprites: look.styledSprites, squareDoors: look.squareDoors, spriteAnimations: look.spriteAnimations, seed: look.seed, legacyEnemies: look.legacyEnemies });
   return true;
 }
 
@@ -106,7 +107,7 @@ export function gild(c: CanvasRenderingContext2D, look: GoldenLook) {
 
 /** Classic contents always use the decoded PNG kit; themes paint their own contents. */
 export function paintContents(c: CanvasRenderingContext2D, t: Tile, art: TileArt) {
-  if (t.kind === "enemy") { paintEnemy(c, t); return; }
+  if (t.kind === "enemy") { paintEnemy(c, t, art.legacyEnemies); return; }
   if (art.squareDoors && t.kind === "door") { drawSquareDoor(c, t, art.outline !== false); return; }
   paintKitContents(c, t, art.outline !== false);
   if (art.spriteAnimations && !art.reduceMotion && !art.lifted) drawPickupAnimation(c, t, art.x, art.y, art.time, art.seed);
@@ -166,12 +167,12 @@ const bakedEnemies = new Map<string, HTMLCanvasElement>();
 // A body may arrive before its small marks. Re-bake when either loads.
 onSpritesLoaded(() => bakedEnemies.clear());
 
-export function paintEnemy(c: CanvasRenderingContext2D, t: Tile) {
+export function paintEnemy(c: CanvasRenderingContext2D, t: Tile, legacy = false) {
   const e = t.enemy!;
   groundShadow(c, 12, 21, 8, 2.6, 0.4);
-  const key = `${e.name}|${e.tier}|${e.strength}|${e.fast}|${e.ranged}|${e.flying}|${e.armored}`;
+  const key = `${kitEnemy(e, legacy)}|${e.profile}|${e.shielded}|${e.aggro}|${e.name}|${e.tier}|${e.strength}|${e.fast}|${e.ranged}|${e.flying}|${e.armored}`;
   let baked = bakedEnemies.get(key);
-  if (!baked) bakedEnemies.set(key, (baked = bakeEnemy(e)));
+  if (!baked) bakedEnemies.set(key, (baked = bakeEnemy(e, legacy)));
   c.drawImage(baked, -ENEMY_MARGIN, -ENEMY_MARGIN);
 }
 
@@ -179,9 +180,9 @@ export function paintEnemy(c: CanvasRenderingContext2D, t: Tile) {
  * wider than the tile on every side. The rings go on from the outside in,
  * each cutting out what lies inside it first, so every band keeps exactly
  * its own opacity; the sprite goes on last. */
-function bakeEnemy(e: Enemy) {
+function bakeEnemy(e: Enemy, legacy: boolean) {
   const m = ENEMY_MARGIN, body = square(24), bc = body.getContext("2d")!;
-  drawKit(bc, kitEnemy(e.name));
+  drawKit(bc, kitEnemy(e, legacy));
   const out = square(24 + 2 * m), oc = out.getContext("2d")!;
   const look = ENEMY_LOOK[e.strength];
   for (const ring of [...look.rings, ENEMY_OUTLINE]) {

@@ -109,8 +109,8 @@ test("a shot takes DEF then the shroud, cut by Parry %; an arrow is one strike l
 });
 
 test("Ranged enemies say so before their strength and name, after Fast", () => {
-  assert.equal(enemyTitle({ name: "Goblin", strength: "elite", ranged: true }), "Ranged Elite Goblin");
-  assert.equal(enemyTitle({ name: "Goblin", strength: "normal", fast: true, ranged: true }), "Fast Ranged Goblin");
+  assert.equal(enemyTitle({ name: "Goblin", strength: "elite", ranged: true }, true), "Ranged Elite Goblin");
+  assert.equal(enemyTitle({ name: "Goblin", strength: "normal", fast: true, ranged: true }, true), "Fast Ranged Goblin");
 });
 
 /** A Tower III run inside on an open 9×9 floor, the hero at (0, 0), with

@@ -1,5 +1,8 @@
 # Pages and HUD
 
+Settings includes the always-visible Legacy Enemies toggle, default off, restoring the old ordinary enemy art and names without restarting a run.
+Enemy inspection and combat messages resolve the new bestiary through `enemies/roster.ts` with the current saved preference.
+
 **PNG UI sprites.** `ui-sprites.css`, imported after the theme styles, skins buttons, panels, dialogs, fields, checkboxes, bars, banners and slots with the shared PNG kit in `public/assets/ui/frames/`.
 Every rule is scoped to `html.ui-sprites`, selected by the default Medieval/Classic UI theme rather than a saved opt-in switch.
 Animations and Square doors are always-visible independent settings, initially unchecked and saved immediately.

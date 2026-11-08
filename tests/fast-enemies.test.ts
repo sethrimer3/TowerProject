@@ -150,9 +150,9 @@ test("the crit forecast and Damage Visual count a Fast enemy's opening strike: n
 });
 
 test("Fast enemies say so before their strength and name", () => {
-  assert.equal(enemyTitle({ name: "Goblin", strength: "elite", fast: true }), "Fast Elite Goblin");
-  assert.equal(enemyTitle({ name: "Goblin", strength: "normal", fast: true }), "Fast Goblin");
-  assert.equal(enemyTitle({ name: "Goblin", strength: "normal" }), "Goblin");
+  assert.equal(enemyTitle({ name: "Goblin", strength: "elite", fast: true }, true), "Fast Elite Goblin");
+  assert.equal(enemyTitle({ name: "Goblin", strength: "normal", fast: true }, true), "Fast Goblin");
+  assert.equal(enemyTitle({ name: "Goblin", strength: "normal" }, true), "Goblin");
 });
 
 /** A Tower run inside on an open 5×5 floor, the hero at (0, 0) and `foe` beside it. */

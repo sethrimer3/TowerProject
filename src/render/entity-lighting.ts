@@ -87,7 +87,7 @@ export class EntityLighting {
   drawShadows(f: FrameContext, wallMask: () => HTMLCanvasElement | null, props: ShadowCaster[] = []) {
     // Swap masks immediately on a toggle or image arrival, keeping old
     // revisions out of the caches rather than accumulating one per load.
-    const style = `${!!f.look.styledSprites}|${spriteRevision()}${f.look.squareDoors ? "|square" : ""}`;
+    const style = `${!!f.look.legacyEnemies}|${!!f.look.styledSprites}|${spriteRevision()}${f.look.squareDoors ? "|square" : ""}`;
     if (style !== this.spriteState) {
       this.spriteState = style;
       this.silhouettes.clear();
@@ -169,15 +169,15 @@ export class EntityLighting {
 
   /** Items and enemies in view, then the hero. */
   private casters(f: FrameContext): Caster[] {
-    const { reduceMotion, styledSprites, squareDoors } = f.look;
+    const { reduceMotion, styledSprites, squareDoors, legacyEnemies } = f.look;
     const casters: Caster[] = [];
     forEachViewTile(f, (x, y) => {
       const t = f.world.tile(x, y);
       if (!SHADOW_CASTERS.has(t.kind)) return;
       casters.push({
         x, y,
-        key: `${t.kind}|${t.color}|${t.tier}|${t.enemy?.name ?? ""}|${t.enemy?.tier}|${t.enemy?.strength}|${styledSprites ? `|kit|${t.enemy?.fast}|${t.enemy?.ranged}|${t.enemy?.flying}|${t.enemy?.armored}` : ""}`,
-        draw: (c) => paintContents(c, t, { x, y, time: f.now, reduceMotion, styledSprites, squareDoors, outline: false }),
+        key: `${legacyEnemies}|${t.enemy?.profile}|${t.enemy?.aggro}|${t.enemy?.shielded}|${t.kind}|${t.color}|${t.tier}|${t.enemy?.name ?? ""}|${t.enemy?.tier}|${t.enemy?.strength}|${styledSprites ? `|kit|${t.enemy?.fast}|${t.enemy?.ranged}|${t.enemy?.flying}|${t.enemy?.armored}` : ""}`,
+        draw: (c) => paintContents(c, t, { x, y, time: f.now, reduceMotion, styledSprites, squareDoors, legacyEnemies, outline: false }),
       });
     });
     casters.push({

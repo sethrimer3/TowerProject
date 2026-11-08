@@ -1,0 +1,1133 @@
+{
+  "image": "atlas.png",
+  "width": 512,
+  "height": 256,
+  "padding": 2,
+  "nativeSize": 24,
+  "sprites": {
+    "relic-001": {
+      "file": "individual/relic-001.png",
+      "x": 2,
+      "y": 2,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-002": {
+      "file": "individual/relic-002.png",
+      "x": 30,
+      "y": 2,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-003": {
+      "file": "individual/relic-003.png",
+      "x": 58,
+      "y": 2,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-004": {
+      "file": "individual/relic-004.png",
+      "x": 86,
+      "y": 2,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-005": {
+      "file": "individual/relic-005.png",
+      "x": 114,
+      "y": 2,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-006": {
+      "file": "individual/relic-006.png",
+      "x": 142,
+      "y": 2,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-007": {
+      "file": "individual/relic-007.png",
+      "x": 170,
+      "y": 2,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-008": {
+      "file": "individual/relic-008.png",
+      "x": 198,
+      "y": 2,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-009": {
+      "file": "individual/relic-009.png",
+      "x": 226,
+      "y": 2,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-010": {
+      "file": "individual/relic-010.png",
+      "x": 254,
+      "y": 2,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-011": {
+      "file": "individual/relic-011.png",
+      "x": 282,
+      "y": 2,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-012": {
+      "file": "individual/relic-012.png",
+      "x": 310,
+      "y": 2,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-013": {
+      "file": "individual/relic-013.png",
+      "x": 338,
+      "y": 2,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-014": {
+      "file": "individual/relic-014.png",
+      "x": 366,
+      "y": 2,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-015": {
+      "file": "individual/relic-015.png",
+      "x": 394,
+      "y": 2,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-016": {
+      "file": "individual/relic-016.png",
+      "x": 422,
+      "y": 2,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-017": {
+      "file": "individual/relic-017.png",
+      "x": 450,
+      "y": 2,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-018": {
+      "file": "individual/relic-018.png",
+      "x": 478,
+      "y": 2,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-019": {
+      "file": "individual/relic-019.png",
+      "x": 2,
+      "y": 30,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-020": {
+      "file": "individual/relic-020.png",
+      "x": 30,
+      "y": 30,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-021": {
+      "file": "individual/relic-021.png",
+      "x": 58,
+      "y": 30,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-022": {
+      "file": "individual/relic-022.png",
+      "x": 86,
+      "y": 30,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-023": {
+      "file": "individual/relic-023.png",
+      "x": 114,
+      "y": 30,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-024": {
+      "file": "individual/relic-024.png",
+      "x": 142,
+      "y": 30,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-025": {
+      "file": "individual/relic-025.png",
+      "x": 170,
+      "y": 30,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-026": {
+      "file": "individual/relic-026.png",
+      "x": 198,
+      "y": 30,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-027": {
+      "file": "individual/relic-027.png",
+      "x": 226,
+      "y": 30,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-028": {
+      "file": "individual/relic-028.png",
+      "x": 254,
+      "y": 30,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-029": {
+      "file": "individual/relic-029.png",
+      "x": 282,
+      "y": 30,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-030": {
+      "file": "individual/relic-030.png",
+      "x": 310,
+      "y": 30,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-031": {
+      "file": "individual/relic-031.png",
+      "x": 338,
+      "y": 30,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-032": {
+      "file": "individual/relic-032.png",
+      "x": 366,
+      "y": 30,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-033": {
+      "file": "individual/relic-033.png",
+      "x": 394,
+      "y": 30,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-034": {
+      "file": "individual/relic-034.png",
+      "x": 422,
+      "y": 30,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-035": {
+      "file": "individual/relic-035.png",
+      "x": 450,
+      "y": 30,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-036": {
+      "file": "individual/relic-036.png",
+      "x": 478,
+      "y": 30,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-037": {
+      "file": "individual/relic-037.png",
+      "x": 2,
+      "y": 58,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-038": {
+      "file": "individual/relic-038.png",
+      "x": 30,
+      "y": 58,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-039": {
+      "file": "individual/relic-039.png",
+      "x": 58,
+      "y": 58,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-040": {
+      "file": "individual/relic-040.png",
+      "x": 86,
+      "y": 58,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-041": {
+      "file": "individual/relic-041.png",
+      "x": 114,
+      "y": 58,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-042": {
+      "file": "individual/relic-042.png",
+      "x": 142,
+      "y": 58,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-043": {
+      "file": "individual/relic-043.png",
+      "x": 170,
+      "y": 58,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-044": {
+      "file": "individual/relic-044.png",
+      "x": 198,
+      "y": 58,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-045": {
+      "file": "individual/relic-045.png",
+      "x": 226,
+      "y": 58,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-046": {
+      "file": "individual/relic-046.png",
+      "x": 254,
+      "y": 58,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-047": {
+      "file": "individual/relic-047.png",
+      "x": 282,
+      "y": 58,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-048": {
+      "file": "individual/relic-048.png",
+      "x": 310,
+      "y": 58,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-049": {
+      "file": "individual/relic-049.png",
+      "x": 338,
+      "y": 58,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-050": {
+      "file": "individual/relic-050.png",
+      "x": 366,
+      "y": 58,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-051": {
+      "file": "individual/relic-051.png",
+      "x": 394,
+      "y": 58,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-052": {
+      "file": "individual/relic-052.png",
+      "x": 422,
+      "y": 58,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-053": {
+      "file": "individual/relic-053.png",
+      "x": 450,
+      "y": 58,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-054": {
+      "file": "individual/relic-054.png",
+      "x": 478,
+      "y": 58,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-055": {
+      "file": "individual/relic-055.png",
+      "x": 2,
+      "y": 86,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-056": {
+      "file": "individual/relic-056.png",
+      "x": 30,
+      "y": 86,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-057": {
+      "file": "individual/relic-057.png",
+      "x": 58,
+      "y": 86,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-058": {
+      "file": "individual/relic-058.png",
+      "x": 86,
+      "y": 86,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-059": {
+      "file": "individual/relic-059.png",
+      "x": 114,
+      "y": 86,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-060": {
+      "file": "individual/relic-060.png",
+      "x": 142,
+      "y": 86,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-061": {
+      "file": "individual/relic-061.png",
+      "x": 170,
+      "y": 86,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-062": {
+      "file": "individual/relic-062.png",
+      "x": 198,
+      "y": 86,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-063": {
+      "file": "individual/relic-063.png",
+      "x": 226,
+      "y": 86,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-064": {
+      "file": "individual/relic-064.png",
+      "x": 254,
+      "y": 86,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-065": {
+      "file": "individual/relic-065.png",
+      "x": 282,
+      "y": 86,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-066": {
+      "file": "individual/relic-066.png",
+      "x": 310,
+      "y": 86,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-067": {
+      "file": "individual/relic-067.png",
+      "x": 338,
+      "y": 86,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-068": {
+      "file": "individual/relic-068.png",
+      "x": 366,
+      "y": 86,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-069": {
+      "file": "individual/relic-069.png",
+      "x": 394,
+      "y": 86,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-070": {
+      "file": "individual/relic-070.png",
+      "x": 422,
+      "y": 86,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-071": {
+      "file": "individual/relic-071.png",
+      "x": 450,
+      "y": 86,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-072": {
+      "file": "individual/relic-072.png",
+      "x": 478,
+      "y": 86,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-073": {
+      "file": "individual/relic-073.png",
+      "x": 2,
+      "y": 114,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-074": {
+      "file": "individual/relic-074.png",
+      "x": 30,
+      "y": 114,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-075": {
+      "file": "individual/relic-075.png",
+      "x": 58,
+      "y": 114,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-076": {
+      "file": "individual/relic-076.png",
+      "x": 86,
+      "y": 114,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-077": {
+      "file": "individual/relic-077.png",
+      "x": 114,
+      "y": 114,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-078": {
+      "file": "individual/relic-078.png",
+      "x": 142,
+      "y": 114,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-079": {
+      "file": "individual/relic-079.png",
+      "x": 170,
+      "y": 114,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-080": {
+      "file": "individual/relic-080.png",
+      "x": 198,
+      "y": 114,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-081": {
+      "file": "individual/relic-081.png",
+      "x": 226,
+      "y": 114,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-082": {
+      "file": "individual/relic-082.png",
+      "x": 254,
+      "y": 114,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-083": {
+      "file": "individual/relic-083.png",
+      "x": 282,
+      "y": 114,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-084": {
+      "file": "individual/relic-084.png",
+      "x": 310,
+      "y": 114,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-085": {
+      "file": "individual/relic-085.png",
+      "x": 338,
+      "y": 114,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-086": {
+      "file": "individual/relic-086.png",
+      "x": 366,
+      "y": 114,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-087": {
+      "file": "individual/relic-087.png",
+      "x": 394,
+      "y": 114,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-088": {
+      "file": "individual/relic-088.png",
+      "x": 422,
+      "y": 114,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-089": {
+      "file": "individual/relic-089.png",
+      "x": 450,
+      "y": 114,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-090": {
+      "file": "individual/relic-090.png",
+      "x": 478,
+      "y": 114,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-091": {
+      "file": "individual/relic-091.png",
+      "x": 2,
+      "y": 142,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-092": {
+      "file": "individual/relic-092.png",
+      "x": 30,
+      "y": 142,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-093": {
+      "file": "individual/relic-093.png",
+      "x": 58,
+      "y": 142,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-094": {
+      "file": "individual/relic-094.png",
+      "x": 86,
+      "y": 142,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-095": {
+      "file": "individual/relic-095.png",
+      "x": 114,
+      "y": 142,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-096": {
+      "file": "individual/relic-096.png",
+      "x": 142,
+      "y": 142,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-097": {
+      "file": "individual/relic-097.png",
+      "x": 170,
+      "y": 142,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-098": {
+      "file": "individual/relic-098.png",
+      "x": 198,
+      "y": 142,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-099": {
+      "file": "individual/relic-099.png",
+      "x": 226,
+      "y": 142,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "relic-100": {
+      "file": "individual/relic-100.png",
+      "x": 254,
+      "y": 142,
+      "width": 24,
+      "height": 24,
+      "category": "relic",
+      "status": "art-only; gameplay definition pending"
+    },
+    "currency-trial-points": {
+      "file": "individual/currency-trial-points.png",
+      "x": 282,
+      "y": 142,
+      "width": 24,
+      "height": 24,
+      "category": "currency"
+    },
+    "skill-armor-break": {
+      "file": "individual/skill-armor-break.png",
+      "x": 310,
+      "y": 142,
+      "width": 24,
+      "height": 24,
+      "category": "skill"
+    },
+    "skill-aether-shield": {
+      "file": "individual/skill-aether-shield.png",
+      "x": 338,
+      "y": 142,
+      "width": 24,
+      "height": 24,
+      "category": "skill"
+    },
+    "skill-hero-shield": {
+      "file": "individual/skill-hero-shield.png",
+      "x": 366,
+      "y": 142,
+      "width": 24,
+      "height": 24,
+      "category": "skill"
+    },
+    "skill-shield-thorns": {
+      "file": "individual/skill-shield-thorns.png",
+      "x": 394,
+      "y": 142,
+      "width": 24,
+      "height": 24,
+      "category": "skill"
+    },
+    "skill-regrow-shield": {
+      "file": "individual/skill-regrow-shield.png",
+      "x": 422,
+      "y": 142,
+      "width": 24,
+      "height": 24,
+      "category": "skill"
+    },
+    "skill-shield-regen": {
+      "file": "individual/skill-shield-regen.png",
+      "x": 450,
+      "y": 142,
+      "width": 24,
+      "height": 24,
+      "category": "skill"
+    },
+    "skill-super-critical": {
+      "file": "individual/skill-super-critical.png",
+      "x": 478,
+      "y": 142,
+      "width": 24,
+      "height": 24,
+      "category": "skill"
+    },
+    "skill-offline-gold": {
+      "file": "individual/skill-offline-gold.png",
+      "x": 2,
+      "y": 170,
+      "width": 24,
+      "height": 24,
+      "category": "skill"
+    },
+    "skill-dash-combo": {
+      "file": "individual/skill-dash-combo.png",
+      "x": 30,
+      "y": 170,
+      "width": 24,
+      "height": 24,
+      "category": "skill"
+    },
+    "skill-enemy-level-skips": {
+      "file": "individual/skill-enemy-level-skips.png",
+      "x": 58,
+      "y": 170,
+      "width": 24,
+      "height": 24,
+      "category": "skill"
+    },
+    "skill-enemy-hp-level-skips": {
+      "file": "individual/skill-enemy-hp-level-skips.png",
+      "x": 86,
+      "y": 170,
+      "width": 24,
+      "height": 24,
+      "category": "skill"
+    },
+    "skill-enemy-combat-level-skips": {
+      "file": "individual/skill-enemy-combat-level-skips.png",
+      "x": 114,
+      "y": 170,
+      "width": 24,
+      "height": 24,
+      "category": "skill"
+    },
+    "event-star": {
+      "file": "individual/event-star.png",
+      "x": 142,
+      "y": 170,
+      "width": 24,
+      "height": 24,
+      "category": "event"
+    },
+    "event-harvest": {
+      "file": "individual/event-harvest.png",
+      "x": 170,
+      "y": 170,
+      "width": 24,
+      "height": 24,
+      "category": "event"
+    },
+    "event-battle": {
+      "file": "individual/event-battle.png",
+      "x": 198,
+      "y": 170,
+      "width": 24,
+      "height": 24,
+      "category": "event"
+    },
+    "event-frost": {
+      "file": "individual/event-frost.png",
+      "x": 226,
+      "y": 170,
+      "width": 24,
+      "height": 24,
+      "category": "event"
+    },
+    "event-sun": {
+      "file": "individual/event-sun.png",
+      "x": 254,
+      "y": 170,
+      "width": 24,
+      "height": 24,
+      "category": "event"
+    },
+    "equip-knightsSword": {
+      "file": "individual/equip-knightsSword.png",
+      "x": 282,
+      "y": 170,
+      "width": 24,
+      "height": 24,
+      "category": "equip"
+    },
+    "equip-ironShield": {
+      "file": "individual/equip-ironShield.png",
+      "x": 310,
+      "y": 170,
+      "width": 24,
+      "height": 24,
+      "category": "equip"
+    },
+    "equip-steelCuirass": {
+      "file": "individual/equip-steelCuirass.png",
+      "x": 338,
+      "y": 170,
+      "width": 24,
+      "height": 24,
+      "category": "equip"
+    },
+    "equip-ironHelm": {
+      "file": "individual/equip-ironHelm.png",
+      "x": 366,
+      "y": 170,
+      "width": 24,
+      "height": 24,
+      "category": "equip"
+    },
+    "equip-leatherGauntlets": {
+      "file": "individual/equip-leatherGauntlets.png",
+      "x": 394,
+      "y": 170,
+      "width": 24,
+      "height": 24,
+      "category": "equip"
+    },
+    "equip-travelersBoots": {
+      "file": "individual/equip-travelersBoots.png",
+      "x": 422,
+      "y": 170,
+      "width": 24,
+      "height": 24,
+      "category": "equip"
+    },
+    "equip-woolCloak": {
+      "file": "individual/equip-woolCloak.png",
+      "x": 450,
+      "y": 170,
+      "width": 24,
+      "height": 24,
+      "category": "equip"
+    },
+    "equip-leatherBelt": {
+      "file": "individual/equip-leatherBelt.png",
+      "x": 478,
+      "y": 170,
+      "width": 24,
+      "height": 24,
+      "category": "equip"
+    },
+    "equip-silverBand": {
+      "file": "individual/equip-silverBand.png",
+      "x": 2,
+      "y": 198,
+      "width": 24,
+      "height": 24,
+      "category": "equip"
+    },
+    "equip-amberPendant": {
+      "file": "individual/equip-amberPendant.png",
+      "x": 30,
+      "y": 198,
+      "width": 24,
+      "height": 24,
+      "category": "equip"
+    }
+  }
+}
