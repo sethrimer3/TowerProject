@@ -2834,7 +2834,7 @@ html.reduce-motion :is(.item-icon.bought, .owned-count.bought) { animation: none
 .goals-strip.instant { transition: none; }
 .goals-scroll { flex: 0 0 100%; height: 100%; overflow-y: auto; overflow-x: hidden; }
 .goals-tower { position: relative; margin: 0 auto; width: 100%;
-  background: linear-gradient(90deg, #000a 0%, transparent 14%, transparent 86%, #000a 100%), linear-gradient(#07090d 0, transparent 120px), url("../public/assets/style/theme-stone.png") 0 100% / 240px 160px, #15181d; }
+  background: linear-gradient(90deg, #000a 0%, transparent 14%, transparent 86%, #000a 100%), linear-gradient(#07090d 0, transparent 120px), linear-gradient(#07090db3, #07090db3), url("../public/assets/style/theme-stone.png") 0 100% / 240px 160px, #15181d; }
 .goals-ground { position: absolute; left: 0; right: 0; bottom: 0; height: 96px; background: linear-gradient(#2b3a24, #18210f 40%, #0d1209); border-top: 2px solid #4b6a35; }
 .goals-line { position: absolute; left: 50%; width: 4px; height: calc(100% - 96px); transform: translateX(-50%); background: #2c313a; border-radius: 2px; box-shadow: 0 0 0 1px #0008; }
 .goals-line.lit { background: linear-gradient(#fff3c4, #e2b55a 30px, #c8963c); box-shadow: 0 0 8px #e2b55a99, 0 0 0 1px #0008; }
@@ -2860,8 +2860,11 @@ html.reduce-motion :is(.item-icon.bought, .owned-count.bought) { animation: none
 .goal-text { display: flex; flex-direction: column; min-width: 0; }
 .goal-text b { font-size: 10px; color: #e5d5b8; overflow-wrap: anywhere; }
 .goal-text small { font-size: 7px; letter-spacing: .5px; color: #8e9aab; text-transform: uppercase; }
-.goal-reward.locked, .goal-reward.needsPass, .goal-reward.claimed { opacity: .55; }
-.goal-reward.claimed .goal-text b { color: #9fb5a4; }
+.goal-reward.locked, .goal-reward.needsPass { opacity: .55; }
+.goal-reward.claimed { opacity: 1; }
+.goal-reward.claimed .goal-art { opacity: .7; }
+.goal-reward.claimed .goal-text b { color: #b8c2bb; }
+.goal-reward.claimed .goal-text small { color: #9fb5a4; }
 .goal-reward.ready { border-color: #f1d69b; box-shadow: 0 0 10px #f1d69b66; opacity: 1; }
 .goal-reward.ready .goal-text b { color: #fff3c4; }
 .goal-reward.ready .goal-text small { color: #f1d69b; }

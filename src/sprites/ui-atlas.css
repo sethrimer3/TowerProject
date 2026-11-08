@@ -101,7 +101,7 @@ html.experimental-atlas ::-webkit-scrollbar-thumb {
   background-image: var(--atlas-15, none)
 }
 html.experimental-atlas .goals-tower {
-  background: linear-gradient(90deg, #000a 0%, transparent 14%, transparent 86%, #000a 100%), linear-gradient(#07090d 0, transparent 120px), var(--atlas-12, none) 0 100% / 240px 160px, #15181d
+  background: linear-gradient(90deg, #000a 0%, transparent 14%, transparent 86%, #000a 100%), linear-gradient(#07090d 0, transparent 120px), linear-gradient(#07090db3, #07090db3), var(--atlas-12, none) 0 100% / 240px 160px, #15181d
 }
 html.experimental-atlas.ui-sprites {
   --ui-button: var(--atlas-36, none);

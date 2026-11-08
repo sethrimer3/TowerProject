@@ -1,5 +1,7 @@
 # Pages and HUD
 
+The Goals wall keeps its stone texture under a dark overlay; claimed rewards mute their artwork rather than fading the whole button, so their names and Claimed labels remain readable.
+
 Named relics use the exact catalog PNG through `relicIcon(relic)` in the collection, event track/store, Goals and `showRelic`; generic navigation still passes a rarity and receives its pendant.
 
 Settings includes the always-visible Legacy Enemies toggle, default off, restoring the old ordinary enemy art and names without restarting a run.
