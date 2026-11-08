@@ -201,11 +201,11 @@ try {
           items: [
             item("e1", "knightsSword", "uncommon", 12, { spent: { gold: 3300, material: 70 }, slots: [{ effect: "ferocity", rarity: "uncommon", refinement: 7 }] }),
             item("e2", "knightsSword", "uncommon", 1), item("e3", "knightsSword", "uncommon", 4), item("e4", "knightsSword", "uncommon", 1),
-            item("e5", "ringOfFury", "rare", 1, { locked: true }), item("e6", "steelCuirass", "common", 3), item("e7", "bastionPlate", "uncommon", 1),
+            item("e5", "zenithGuard", "rare", 1, { locked: true }), item("e6", "steelCuirass", "common", 3), item("e7", "equilibriumTether", "uncommon", 1),
           ],
-          equipped: { tower: { weapon: "e1", ring: "e5" }, delve: {} },
+          equipped: { tower: { weapon: "e1", shield: "e5" }, delve: {} },
           materials: { ...s.equipment.materials, whetstone: 40, rivets: 12, amber: 3 },
-          pity: { ...s.equipment.pity, ring: 97 },
+          pity: { ...s.equipment.pity, shield: 117 },
           nextId: 8,
         });
       }),
@@ -967,8 +967,11 @@ try {
     await shot("equipment.merged");
     await click("#eq-ok");
     await click('[data-eq-view="pulls"]');
-    await click('[data-eq-pullcat="ring"]');
+    await click('[data-eq-pullcat="shield"]');
     await shot("equipment.pulls");
+    await click("#eq-rates");
+    await shot("equipment.rates");
+    await click("#eq-close");
     await click('[data-eq-pull="10"]');
     await shot("equipment.pulled");
     await click("#eq-ok");

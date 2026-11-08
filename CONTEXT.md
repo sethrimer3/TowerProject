@@ -48,7 +48,7 @@ _Avoid_: fullscreen, zen mode, screensaver
 
 **Equipment**:
 The pieces a hero wears, one per open category, opened by claiming Tower II's floor 60 Goal.
-Helmet, Shield, Chestplate, Sword and Boots start open; Gloves, Cape, Belt, Ring and Amulet await later unlocks.
+Helmet, Shield, Chestplate, Sword and Boots start open; Gloves, Cape, Belt and Amulet await later unlocks.
 Kept in one shared inventory between runs.
 _Avoid_: gear (the Gear page and its provisions), items (pickups on the board)
 
@@ -57,11 +57,11 @@ The pieces one mode's hero wears; the Tower and the Delve each have their own, d
 _Avoid_: build, set
 
 **Standard piece**:
-A category's plain piece, held by Equipment Chests or crafted once its category is open.
+One of a category's plain pieces (three in each starting category), held by Equipment Chests, crafted, or brought by a Gem pull's Common to Rare.
 _Avoid_: common item (Common is a rarity)
 
 **Unique piece**:
-One of a category's three named pieces with a specialised ability, from Gem pulls only.
+One of a category's three named pieces with a power of its own, from a Gem pull's Epic or Legendary only.
 _Avoid_: legendary, artifact
 
 **Upgrade material**:
@@ -82,7 +82,10 @@ Breaking pieces into their upgrade material.
 _Avoid_: salvage (used only for the amount returned, and in **Auto-salvage**: the player's toggle that dismantles Common chest pieces as they are found), destroy
 
 **Pity**:
-The count, per category, of Gem pulls since the last Rare; the 100th without one is a Rare.
+The count, per category and for pulls of all types apart, of Gem pulls since the last Epic or better; the 120th without one is an Epic Unique.
+
+**Left out of draws**:
+A Unique the player has removed from future Gem pulls (once a five-Star piece is owned; a piece's first five-Star copy does it at once), its share going to the rest.
 
 **Star**:
 A step past Ancestral, made by merging a Legendary copy into an Ancestral piece: each raises its level cap by 20 and its main effect by 4% of itself, up to five.

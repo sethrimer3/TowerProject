@@ -26,7 +26,7 @@ try {
       Object.assign(s.settings,{reduceMotion:true,transition:"instant",weatherSound:false});
       Object.keys(s.equipment.materials).forEach(k=>s.equipment.materials[k]=100);
       if(missing)s.equipment.materials.whetstone=0;
-      if(legacy)for(const def of ["woolCloak","wardensShield","bulwarkShield","dawnShield"])s.equipment.items.push({id:`e${s.equipment.nextId++}`,def,rarity:"common",level:1,slots:[{}]});
+      if(legacy)for(const def of ["woolCloak","amberPrison","cradleOfLife","zenithGuard"])s.equipment.items.push({id:`e${s.equipment.nextId++}`,def,rarity:"common",level:1,slots:[{}]});
       const g=new Game(s);g.newRun({outside:true,seed:7});
       sessionStorage.setItem("equipmentRecipeFixture",JSON.stringify(g.save));
     },{legacy,missing,theme});

@@ -125,8 +125,10 @@ export const EQUIPMENT_CHEST_RARITY: Partial<Record<EquipRarity, number>> = { co
 export const BOSS_DROPS = { material: 1.5, equipment: 0.5 };
 
 /** The Gem pull: its price for one and for ten (ten resolve one by one),
- * the rarity weights in percent, and pity: the pull that would make
- * `PITY` in a row without a Rare in its category is a Rare. */
+ * the rarity weights in percent (Common to Rare bring a Standard piece,
+ * `UNIQUE_PULL_FROM` and up a Unique), and pity: the pull that would make
+ * `PITY` in a row without an Epic or better, in its category or in pulls of
+ * all categories (each counted apart), is an Epic Unique. */
 export const PULL_GEMS = { 1: 20, 10: 200 } as const;
 export type PullCount = keyof typeof PULL_GEMS;
 /** Pulls of all categories at once (each pull's category drawn evenly) cost
@@ -136,8 +138,10 @@ export const PULL_ALL_DISCOUNT = 10;
  * `PULL_ALL_DISCOUNT`. */
 export const pullGems = (count: PullCount, all = false) =>
   all ? (PULL_GEMS[count] * (100 - PULL_ALL_DISCOUNT)) / 100 : PULL_GEMS[count];
-export const PULL_RATES: Partial<Record<EquipRarity, number>> = { common: 72, uncommon: 25, rare: 3 };
-export const PITY = 100;
+export const PULL_RATES: Partial<Record<EquipRarity, number>> = { common: 60, uncommon: 29, rare: 8, epic: 2.5, legendary: 0.5 };
+export const UNIQUE_PULL_FROM: EquipRarity = "epic";
+export const PITY = 120;
+export const PITY_RARITY: EquipRarity = "epic";
 
 /** Substat slots: how many candidates each roll offers. */
 export const EFFECT_CANDIDATES = 3;

@@ -73,15 +73,15 @@ const v3 = () => ({
     // e1 and e2 as saved before effect slots; e3 with them.
     items: [
       { id: "e1", def: "knightsSword", rarity: "uncommon", level: 7, spent: { gold: 840, material: 14 } },
-      { id: "e2", def: "ringOfFury", rarity: "rare", level: 1, locked: true },
-      { id: "e3", def: "fleetstepBoots", rarity: "uncommon", level: 25, slots: [
+      { id: "e2", def: "zenithGuard", rarity: "rare", level: 1, locked: true },
+      { id: "e3", def: "chronoStrider", rarity: "uncommon", level: 25, slots: [
         { effect: "fleetness", rarity: "uncommon", refinement: 12, choicesUsed: 1 },
         { offer: [{ effect: "freshAir", rarity: "common" }, { effect: "bulwark", rarity: "uncommon" }] },
       ] },
     ],
-    equipped: { tower: { weapon: "e1", armor: "missing" }, delve: { weapon: "e1", ring: "e2" } },
+    equipped: { tower: { weapon: "e1", armor: "missing" }, delve: { weapon: "e1", shield: "e2" } },
     materials: { ...defaultEquipment().materials, whetstone: 12, amber: 3 },
-    pity: { ...defaultEquipment().pity, ring: 41 },
+    pity: { ...defaultEquipment().pity, shield: 41 },
   },
 });
 
@@ -169,7 +169,7 @@ const EDGES: [string, unknown[]][] = [
   ["provisions.heal", [999, 1000]],
   ["upgrades.undos", [0, 5, 99]],
   ["equipment.items.0.level", [0, 40, 41, 2.5]],
-  ["equipment.items.0.def", ["nope", "kingsbane"]],
+  ["equipment.items.0.def", ["nope", "raptorBlade"]],
   ["equipment.items.0.rarity", ["epic", "common"]],
   ["equipment.items.0.id", ["", "x1", "e2"]],
   ["equipment.items.0.spent.gold", [-1, 1.5]],
@@ -181,8 +181,8 @@ const EDGES: [string, unknown[]][] = [
   ["equipment.items.2.slots.1.offer.1.rarity", ["rare"]],
   ["equipment.items.2.level", [20, 41]],
   ["equipment.equipped.tower.weapon", ["e2", "e9"]],
-  ["equipment.equipped.delve.ring", ["e1"]],
-  ["equipment.pity.ring", [99, 100, -1, 3.5]],
+  ["equipment.equipped.delve.shield", ["e1"]],
+  ["equipment.pity.shield", [99, 100, -1, 3.5]],
   ["equipment.materials.amber", [-5, 1.5]],
   ["equipment.nextId", [0, 2]],
   ["outside:tower.run.player.y", [11, 12]],
@@ -279,9 +279,9 @@ test("decode keeps a valid v3 save's progress and clamps settings", () => {
   assert.deepEqual([d.goals.mastered, d.goals.cleared], [{ 1: [10, 20] }, { 1: [10, 110] }]);
   assert.deepEqual(d.tower.run?.changes["4,5"], { kind: "reward", tier: "silver" });
   assert.ok(!("rewards" in d.tower.run!));
-  assert.deepEqual(d.equipment.equipped, { tower: { weapon: "e1" }, delve: { weapon: "e1", ring: "e2" } });
+  assert.deepEqual(d.equipment.equipped, { tower: { weapon: "e1" }, delve: { weapon: "e1", shield: "e2" } });
   assert.deepEqual(d.equipment.items.map((i) => [i.id, i.level, !!i.locked]), [["e1", 7, false], ["e2", 1, true], ["e3", 25, false]]);
-  assert.equal(d.equipment.pity.ring, 41);
+  assert.equal(d.equipment.pity.shield, 41);
 });
 
 test("decode keeps the Tournament's save and a tournament run inside a cave not yet opened", () => {

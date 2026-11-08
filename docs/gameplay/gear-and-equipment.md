@@ -31,15 +31,17 @@ A **Blacksmith** then stands in the forest, up and left of the path; tapping it 
 Initially, only Helmet (top), Shield (left), Chestplate (center), Sword (right) and Boots (bottom) are open.
 Other categories have no unlock schedule yet; existing owned categories remain open.
 The hero wears one piece in each open category; the inventory (up to 500 pieces) is shared, and the Tower's and the Delve's heroes each wear their own loadout.
-Each Unique piece (and the Silver Band) has its own pixel icon, so pieces of one category tell apart at a glance.
+Each piece has its own pixel icon, so pieces of one category tell apart at a glance.
 Pieces come in Common, Uncommon, Rare, Epic, Legendary, Mythic and Ancestral, shown by word, letter (C, U, R, E, L, M, A) and colour, and an Ancestral piece can carry up to five Stars (*Ancestral ★3*).
 With Settings → **Sprites** on, Common, Uncommon and Rare have matching pixel-art PNG frames (Epic and above wear the Rare frame in their own colour for now), empty slots have recessed frames, selected pieces have brass corner marks, and worn and Unique pieces have PNG symbols.
 Names, rarity letters and levels remain readable text; Sprites defaults to off and non-default UI themes supply their own look.
-Standard pieces come from Equipment Chests or the Craft view; the three Unique pieces of each category come only from Gem pulls (20 Gems, or 200 for ten, in one category; or 10% less, 18 and 180, for a piece of any unlocked category; 72% Common, 25% Uncommon, 3% Rare, and the 100th pull in a row without a Rare in a category is a Rare).
+Each starting category has three Standard pieces, from Equipment Chests, the Craft view or Gem pulls, and three Uniques, from Gem pulls only.
+A Gem pull (20 Gems, or 200 for ten, in one category; or 10% less, 18 and 180, for a piece of any unlocked category) is 60% Common, 29% Uncommon and 8% Rare, each a Standard piece, and 2.5% Epic and 0.5% Legendary, each a Unique; the 120th pull in a row without an Epic or better is an Epic Unique, each category and pulls of all types counting their own.
+**Rates**, beside the buttons, shows each piece's chance; once you own a five-Star piece it lets you leave Uniques out of future pulls (a piece's first five-Star copy leaves it out at once), and pulls whose every Unique is left out can't be bought until you turn some back on.
 There are four equipment resources: Quilted Padding for Helmets, Iron Rivets for Shields, Whetstones for Swords, and Hobnails for Boots.
 Crafting a Common Standard costs 25 of each resource in its recipe, without Gold or Gems.
 Chestplates require all four resources.
-Other pieces combine two base resources: a Cape above the Shield and left of the Helmet uses Rivets and Padding.
+The future corner pieces each combine their two neighbours' resources: an Amulet between the Shield and the Helmet uses Rivets and Padding.
 A piece starts at level 0, and leveling raises only its **main effect**: Swords ATK, Shields DEF, Helmets Arcanum Damage and Boots Gold found, each a percent that starts at its rarity's base (+1% ATK at Common, +30% at Ancestral) and grows with every level.
 A Chestplate raises max HP the same way, and its efficiency also raises the other worn pieces' main effects by a smaller percent; each Star multiplies a piece's main effect by 1.04 more (×1.20 at five).
 Leveling, Refine and Improve require every input in the same recipe; leveling also costs Gold (2,000 for level 1, rising to quintillions near 300) and stops at the rarity's cap: Common 20, Uncommon 40, Rare 60, Epic 80, Legendary 120, Mythic 160, Ancestral 200, and 20 more for each Star, up to 300.

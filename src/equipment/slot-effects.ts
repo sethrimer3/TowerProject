@@ -36,7 +36,6 @@ export const CATEGORY_FAMILIES: Record<CategoryId, readonly FamilyId[]> = {
   belt: ["offense", "arcana"],
   cape: ["defense", "utility"],
   amulet: ["defense", "arcana"],
-  ring: ["offense", "defense"],
 };
 
 /** One substat: `base` at Uncommon, times its rarity's substat power, or

@@ -105,7 +105,7 @@ export function firstRoll(e: EquipmentSave, id: string, index: number, seed: () 
   const { item, slot } = found;
   if (slot.effect) return "chosen";
   if (slot.offer) return "offered";
-  slot.offer = withSavedStream(e, seed, (rng) => rollCandidates(item, index, false, rng));
+  slot.offer = withSavedStream(e, "substats", seed, (rng) => rollCandidates(item, index, false, rng));
   return slot.offer;
 }
 
@@ -123,7 +123,7 @@ export function refine(e: EquipmentSave, purse: { gold: number }, id: string, in
   if (unpaid) return unpaid;
   slot.refinement = (slot.refinement ?? 0) + 1;
   const guaranteed = slot.refinement % REFINE_GUARANTEE_EVERY === 0;
-  slot.offer = withSavedStream(e, seed, (rng) => rollCandidates(item, index, guaranteed, rng));
+  slot.offer = withSavedStream(e, "substats", seed, (rng) => rollCandidates(item, index, guaranteed, rng));
   return slot.offer;
 }
 

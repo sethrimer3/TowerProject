@@ -16,7 +16,7 @@ function armed(attack = 200) {
   save.training.attack = attack;
   const e = save.equipment;
   e.unlocked = true;
-  equip(e, "tower", addItem(e, "bloodpriceBlade", "common")!.id);
+  equip(e, "tower", addItem(e, "kineticMallet", "common")!.id);
   const g = new Game(save);
   g.newRun({ seed: 5 });
   g.run.silver = 1e6;

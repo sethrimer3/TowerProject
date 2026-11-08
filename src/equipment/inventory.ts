@@ -43,6 +43,12 @@ export type EquipItem = {
   slots: EffectSlot[];
 };
 export type Loadout = Partial<Record<CategoryId, string>>;
+/** What a Gem pull is made in: one category, or all open categories. */
+export type PullKey = CategoryId | "all";
+/** Equipment's saved random streams: each pull key's, and the substat rolls'. */
+export type StreamKey = PullKey | "substats";
+export const PULL_KEYS: readonly PullKey[] = [...CATEGORY_IDS, "all"];
+export const STREAM_KEYS: readonly StreamKey[] = [...PULL_KEYS, "substats"];
 export type EquipmentSave = {
   /** Set by claiming Tower II's floor-60 Goal (goals.ts). */
   unlocked: boolean;
@@ -55,12 +61,18 @@ export type EquipmentSave = {
    * and one piece may be worn in both. */
   equipped: Record<Mode, Loadout>;
   materials: Record<EquipMaterialId, number>;
-  /** Gem pulls in a row without a Rare, by category. */
-  pity: Record<CategoryId, number>;
+  /** Gem pulls in a row without an Epic or better, by category, and pulls of all categories apart. */
+  pity: Record<PullKey, number>;
   /** The number the next item's id takes. */
   nextId: number;
-  /** Where the Gem pulls' stream stands (null until the first pull). */
-  rng: number | null;
+  /** Where each saved stream stands (each category's pulls, pulls of all
+   * categories, the substat rolls), absent until it is first drawn from. */
+  streams: Partial<Record<StreamKey, number>>;
+  /** The Uniques the player has left out of future Gem pulls. */
+  drawOff: string[];
+  /** The Uniques a five-Star copy has been made of, once each: the first
+   * leaves its piece out of draws. */
+  maxed: string[];
   /** The player's choice to salvage Common chest pieces into their material
    * as they drop, instead of keeping them (the Salvage section's toggle). */
   autoSalvage: boolean;
@@ -69,7 +81,7 @@ export type EquipmentSave = {
 const zeroes = <K extends string>(keys: readonly K[]) => Object.fromEntries(keys.map((k) => [k, 0])) as Record<K, number>;
 export const defaultEquipment = (): EquipmentSave => ({
   unlocked: false, seen: false, categories: CATEGORY_IDS.filter(c => STARTER_CATEGORIES.includes(c)), items: [], equipped: { tower: {}, delve: {} },
-  materials: zeroes(EQUIP_MATERIAL_IDS), pity: zeroes(CATEGORY_IDS), nextId: 1, rng: null, autoSalvage: false,
+  materials: zeroes(EQUIP_MATERIAL_IDS), pity: zeroes(PULL_KEYS), nextId: 1, streams: {}, drawOff: [], maxed: [], autoSalvage: false,
 });
 
 // --- Reading ---
@@ -231,6 +243,11 @@ export function merge(e: EquipmentSave, targetId: string, fodder: string[]): Equ
   e.items = e.items.filter((i) => !unique.has(i.id));
   if (plan.kind === "star") target.stars = plan.stars;
   else target.rarity = plan.next;
+  // The first five-Star copy of a piece leaves it out of future Gem pulls.
+  if (target.stars === STARS.most && !e.maxed.includes(target.def)) {
+    e.maxed.push(target.def);
+    if (!e.drawOff.includes(target.def)) e.drawOff.push(target.def);
+  }
   return target;
 }
 
@@ -415,10 +432,13 @@ export function decodeEquipment(raw: unknown): EquipmentSave {
     if (!wholeIn(amount, 0, Number.MAX_SAFE_INTEGER)) continue;
     inputs.forEach((m, i) => { e.materials[m] = Math.min(Number.MAX_SAFE_INTEGER, e.materials[m] + Math.floor(amount / inputs.length) + (i < amount % inputs.length ? 1 : 0)); });
   }
-  for (const c of CATEGORY_IDS) if (isRecord(raw.pity) && wholeIn(raw.pity[c], 0, PITY - 1)) e.pity[c] = raw.pity[c];
+  for (const k of PULL_KEYS) if (isRecord(raw.pity) && wholeIn(raw.pity[k], 0, PITY - 1)) e.pity[k] = raw.pity[k];
   const highest = e.items.reduce((n, i) => Math.max(n, Number(i.id.slice(1))), 0);
   e.nextId = Math.max(highest + 1, wholeIn(raw.nextId, 1, 1e9) ? raw.nextId : 1);
-  if (wholeIn(raw.rng, 0, 4294967295)) e.rng = raw.rng;
+  for (const k of STREAM_KEYS) if (isRecord(raw.streams) && wholeIn(raw.streams[k], 0, 4294967295)) e.streams[k] = raw.streams[k];
+  const uniques = (v: unknown) => Array.isArray(v) ? [...new Set(v.filter((id): id is string => typeof id === "string" && itemDef(id)?.class === "unique"))] : [];
+  e.drawOff = uniques(raw.drawOff);
+  e.maxed = uniques(raw.maxed);
   e.autoSalvage = raw.autoSalvage === true;
   return e;
 }

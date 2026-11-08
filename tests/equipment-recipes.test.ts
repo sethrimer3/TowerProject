@@ -22,7 +22,7 @@ test("starting acquisition pools contain exactly the five plus-shaped categories
   g.save.gems = 1000;
   const before = structuredClone(e);
   assert.equal(g.equipment.pull("cape", 1), "locked");
-  assert.equal(g.equipment.craft("cape"), "locked");
+  assert.equal(g.equipment.craft("woolCloak"), "locked");
   assert.deepEqual(e, before); assert.equal(g.save.gems, 1000);
   const drawn = pull(e, "all", 100, rng);
   assert.deepEqual(new Set(drawn.map(p => itemDef(p.item.def)!.category)), new Set(STARTER_CATEGORIES));
@@ -36,24 +36,25 @@ test("crafting pays every input atomically, supports full and free inventories, 
   const g = game(), e = g.save.equipment;
   stock(g, CRAFT_MATERIAL); e.materials.hobnails--;
   const before = structuredClone(e);
-  assert.equal(g.equipment.craft("chestplate"), "material"); assert.deepEqual(e, before);
+  assert.equal(g.equipment.craft("steelCuirass"), "material"); assert.deepEqual(e, before);
   e.materials.hobnails++;
-  const item = g.equipment.craft("chestplate");
-  assert.ok(typeof item !== "string"); assert.equal(item.def, "steelCuirass");
+  const item = g.equipment.craft("scaleMail");
+  assert.ok(typeof item !== "string"); assert.equal(item.def, "scaleMail", "any of a category's Standard pieces is crafted");
+  assert.equal(g.equipment.craft("raptorBlade"), "locked", "never a Unique");
   assert.ok(Object.values(e.materials).every(n => n === 0)); assert.equal(g.save.gems, 0);
   const cape = addItem(e, "woolCloak", "common")!;
-  assert.deepEqual(materialsOf("cape"), ["rivets", "padding"]);
+  assert.deepEqual(materialsOf("cape"), ["rivets", "hobnails"], "a Cape joins the Shield and the Boots");
   stock(g, CRAFT_MATERIAL);
-  assert.ok(typeof g.equipment.craft("cape") !== "string");
-  assert.equal(e.materials.rivets, 0); assert.equal(e.materials.padding, 0);
-  assert.equal(e.materials.whetstone, CRAFT_MATERIAL); assert.equal(e.materials.hobnails, CRAFT_MATERIAL);
+  assert.ok(typeof g.equipment.craft("woolCloak") !== "string");
+  assert.equal(e.materials.rivets, 0); assert.equal(e.materials.hobnails, 0);
+  assert.equal(e.materials.whetstone, CRAFT_MATERIAL); assert.equal(e.materials.padding, CRAFT_MATERIAL);
   assert.equal(cape.level, 0);
   g.save.settings.devMode = true; g.save.settings.freePurchases = true;
   for (const m of EQUIP_MATERIAL_IDS) e.materials[m] = 0;
-  assert.ok(typeof g.equipment.craft("shield") !== "string");
+  assert.ok(typeof g.equipment.craft("ironShield") !== "string");
   assert.ok(Object.values(e.materials).every(n => n === 0));
   while (e.items.length < 500) addItem(e, "ironShield", "common");
-  assert.equal(g.equipment.craft("shield"), "room");
+  assert.equal(g.equipment.craft("ironShield"), "room");
 });
 
 test("multi-resource leveling, Refine and Improve refuse missing inputs without partial payment", () => {

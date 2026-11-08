@@ -5,9 +5,10 @@
 // touching saved equipment. Balance numbers (rarity caps, costs, drop and
 // pull rates) live in `balance.ts`; see docs/EQUIPMENT.md.
 import type { ArcanumId } from "../arcana/arcana.ts";
+
 /** Slots retained by the catalogue, including future unlocks. */
-export type CategoryId = "weapon" | "shield" | "chestplate" | "helmet" | "gloves" | "boots" | "cape" | "belt" | "ring" | "amulet";
-export const CATEGORY_IDS: readonly CategoryId[] = ["weapon", "shield", "chestplate", "helmet", "gloves", "boots", "cape", "belt", "ring", "amulet"];
+export type CategoryId = "weapon" | "shield" | "chestplate" | "helmet" | "gloves" | "boots" | "cape" | "belt" | "amulet";
+export const CATEGORY_IDS: readonly CategoryId[] = ["weapon", "shield", "chestplate", "helmet", "gloves", "boots", "cape", "belt", "amulet"];
 export const STARTER_CATEGORIES: readonly CategoryId[] = ["helmet", "shield", "chestplate", "weapon", "boots"];
 
 /** Four base resources; recipes refer to these instead of separate currencies. */
@@ -15,16 +16,16 @@ export type EquipMaterialId = "whetstone" | "rivets" | "padding" | "hobnails";
 export const EQUIP_MATERIAL_IDS: readonly EquipMaterialId[] = ["padding", "rivets", "whetstone", "hobnails"];
 export type CategoryDef = { name: string; plural: string; role: string; materials: readonly EquipMaterialId[] };
 export const CATEGORIES: Record<CategoryId, CategoryDef> = {
-  weapon: { name: "Sword", plural: "Swords", role: "Offense: ATK, boss fights and what kills pay", materials: ["whetstone"] },
-  shield: { name: "Shield", plural: "Shields", role: "Guard: DEF and protection from the first blow", materials: ["rivets"] },
-  chestplate: { name: "Chestplate", plural: "Chestplates", role: "Superior armor: stronger defense, vitality and sustain", materials: ["rivets", "padding", "whetstone", "hobnails"] },
-  helmet: { name: "Helmet", plural: "Helmets", role: "The first blow: shroud, and what each fight teaches", materials: ["padding"] },
-  gloves: { name: "Gloves", plural: "Gloves", role: "Handling: ATK, keys and potions", materials: ["padding", "whetstone"] },
-  boots: { name: "Boots", plural: "Boots", role: "Movement: speed, Dash and fresh floors", materials: ["hobnails"] },
-  cape: { name: "Cape", plural: "Capes", role: "Fortune: Gold, Silver and materials", materials: ["rivets", "padding"] },
-  belt: { name: "Belt", plural: "Belts", role: "Provisions: potions, max HP and Silver", materials: ["rivets", "hobnails"] },
-  ring: { name: "Ring", plural: "Rings", role: "Power: percentages of ATK, DEF and max HP", materials: ["whetstone", "padding"] },
-  amulet: { name: "Amulet", plural: "Amulets", role: "Life: max HP, regeneration and healing", materials: ["whetstone", "hobnails"] },
+  weapon: { name: "Sword", plural: "Swords", role: "Offense: ATK, crits and the Archer's shots", materials: ["whetstone"] },
+  shield: { name: "Shield", plural: "Shields", role: "Defense: DEF, max HP, healing and the Aether Shield", materials: ["rivets"] },
+  chestplate: { name: "Chestplate", plural: "Chestplates", role: "Efficiency: max HP, the other pieces' main effects, speed and drops", materials: ["rivets", "padding", "whetstone", "hobnails"] },
+  helmet: { name: "Helmet", plural: "Helmets", role: "Arcana: Arcanum Damage and every arcanum's attributes", materials: ["padding"] },
+  boots: { name: "Boots", plural: "Boots", role: "Utility: Gold, Silver, keys, Free Upgrades and Level Skips", materials: ["hobnails"] },
+  // The future corners: each between two starting pieces, levelled with both their materials.
+  gloves: { name: "Gloves", plural: "Gloves", role: "Offense and Utility", materials: ["whetstone", "hobnails"] },
+  belt: { name: "Belt", plural: "Belts", role: "Offense and Arcana", materials: ["whetstone", "padding"] },
+  cape: { name: "Cape", plural: "Capes", role: "Defense and Utility", materials: ["rivets", "hobnails"] },
+  amulet: { name: "Amulet", plural: "Amulets", role: "Defense and Arcana", materials: ["rivets", "padding"] },
 };
 export type EquipMaterialDef = { name: string; category: CategoryId; description: string };
 export const EQUIP_MATERIALS: Record<EquipMaterialId, EquipMaterialDef> = {
@@ -188,55 +189,62 @@ export const EFFECTS: Record<EffectKind, EffectText> = {
 export type ItemClass = "standard" | "unique";
 export type ItemDef = { id: string; name: string; category: CategoryId; class: ItemClass; identity: string };
 
-/** Every equipment definition, by category: the Standard piece first, then
- * the three Uniques. */
+/** Every equipment definition, by category: in each starting category three
+ * Standard pieces (distinct for merging, none with an ability of its own)
+ * and three Uniques, whose powers grow with their rarity; the future
+ * corners keep one Standard and three Uniques until they are designed. */
 export const ITEMS: readonly ItemDef[] = [
-  // Weapons
-  { id: "knightsSword", name: "Knight's Sword", category: "weapon", class: "standard", identity: "Reliable raw ATK" },
-  { id: "kingsbane", name: "Kingsbane", category: "weapon", class: "unique", identity: "Boss slayer: hits bosses harder, and finds more Supply and Equipment Chests" },
-  { id: "reapersScythe", name: "Reaper's Scythe", category: "weapon", class: "unique", identity: "Clears floors for profit: more XP and Silver from every kill" },
-  { id: "bloodpriceBlade", name: "Bloodprice Blade", category: "weapon", class: "unique", identity: "High risk: the most ATK of any weapon, paid for in max HP" },
+  // Swords
+  { id: "knightsSword", name: "Knight's Sword", category: "weapon", class: "standard", identity: "A knight's trusted blade" },
+  { id: "squiresBlade", name: "Squire's Blade", category: "weapon", class: "standard", identity: "A light blade for a first campaign" },
+  { id: "steelBroadsword", name: "Steel Broadsword", category: "weapon", class: "standard", identity: "A broad, heavy edge" },
+  { id: "raptorBlade", name: "Raptor Blade", category: "weapon", class: "unique", identity: "More Super Crits, and a Super Crit makes the next shots Super Crits" },
+  { id: "kineticMallet", name: "Kinetic Mallet", category: "weapon", class: "unique", identity: "Keeps a Combo going longer between fights" },
+  { id: "soulReaper", name: "Soul Reaper", category: "weapon", class: "unique", identity: "Marks enemies for death: the first hit destroys them" },
   // Shields
-  { id: "ironShield", name: "Iron Shield", category: "shield", class: "standard", identity: "Reliable DEF and protection" },
-  { id: "wardensShield", name: "Warden's Shield", category: "shield", class: "unique", identity: "Blocks the first blows" },
-  { id: "bulwarkShield", name: "Bulwark Shield", category: "shield", class: "unique", identity: "Steady defense and vitality" },
-  { id: "dawnShield", name: "Dawn Shield", category: "shield", class: "unique", identity: "Regains health between battles" },
+  { id: "ironShield", name: "Iron Shield", category: "shield", class: "standard", identity: "Plain iron, dependable" },
+  { id: "oakenBuckler", name: "Oaken Buckler", category: "shield", class: "standard", identity: "A small round shield of banded oak" },
+  { id: "kiteShield", name: "Kite Shield", category: "shield", class: "standard", identity: "A tall shield that covers from shoulder to shin" },
+  { id: "zenithGuard", name: "Zenith Guard", category: "shield", class: "unique", identity: "Regen heals past max HP, into Overheal" },
+  { id: "cradleOfLife", name: "Cradle of Life", category: "shield", class: "unique", identity: "A stronger Aether Shield that regains more" },
+  { id: "amberPrison", name: "Amber Prison", category: "shield", class: "unique", identity: "Shots that don't kill slow their enemy and weaken its blows" },
   // Chestplates
-  { id: "steelCuirass", name: "Steel Cuirass", category: "chestplate", class: "standard", identity: "Superior DEF and vitality" },
-  { id: "bastionPlate", name: "Bastion Plate", category: "chestplate", class: "unique", identity: "Raw defense: DEF, more DEF, then a shroud for the first blows" },
-  { id: "giantsHauberk", name: "Giant's Hauberk", category: "chestplate", class: "unique", identity: "A deep pool of HP to outlast long fights" },
-  { id: "verdantMail", name: "Verdant Mail", category: "chestplate", class: "unique", identity: "Sustain: regains HP as the hero walks and climbs" },
+  { id: "steelCuirass", name: "Steel Cuirass", category: "chestplate", class: "standard", identity: "Polished steel plate" },
+  { id: "scaleMail", name: "Scale Mail", category: "chestplate", class: "standard", identity: "Overlapping bronze scales" },
+  { id: "ringmailVest", name: "Ringmail Vest", category: "chestplate", class: "standard", identity: "Iron rings sewn to a padded vest" },
+  { id: "equilibriumTether", name: "Equilibrium Tether", category: "chestplate", class: "unique", identity: "Balances ATK, DEF, max HP and Regen, and each rank bought in a climb counts for all four" },
+  { id: "mobiusCipher", name: "Mobius Cipher", category: "chestplate", class: "unique", identity: "Every pickup makes the next of its kind yield more" },
+  { id: "mirrorVault", name: "Mirror Vault", category: "chestplate", class: "unique", identity: "Damage taken is stored and struck back at enemies" },
   // Helmets
-  { id: "ironHelm", name: "Iron Helm", category: "helmet", class: "standard", identity: "Reliable max HP and DEF" },
-  { id: "sentinelVisor", name: "Sentinel's Visor", category: "helmet", class: "unique", identity: "Blocks the first blows of every fight" },
-  { id: "scholarsCirclet", name: "Scholar's Circlet", category: "helmet", class: "unique", identity: "Levels the hero faster, for more training points" },
-  { id: "minersHelm", name: "Miner's Helm", category: "helmet", class: "unique", identity: "Made for the Delve: heals on new floors and digs up more there" },
-  // Gloves
+  { id: "ironHelm", name: "Iron Helm", category: "helmet", class: "standard", identity: "A sturdy iron cap" },
+  { id: "acolytesHood", name: "Acolyte's Hood", category: "helmet", class: "standard", identity: "A hood worn by those who study the arcana" },
+  { id: "greatHelm", name: "Great Helm", category: "helmet", class: "standard", identity: "A heavy helm that hides the whole face" },
+  { id: "lichKingsCrown", name: "Lich King's Crown", category: "helmet", class: "unique", identity: "Ghosts rush every boss that comes in shot range" },
+  { id: "psionicTempest", name: "Psionic Tempest", category: "helmet", class: "unique", identity: "Ricochet Shot may strike its first target too" },
+  { id: "challengersDefiance", name: "Challenger's Defiance", category: "helmet", class: "unique", identity: "Overseer stays on a boss, and other enemies fall far faster while one stands" },
+  // Boots
+  { id: "travelersBoots", name: "Traveler's Boots", category: "boots", class: "standard", identity: "Worn leather for a long road" },
+  { id: "rangersBoots", name: "Ranger's Boots", category: "boots", class: "standard", identity: "Soft boots for quiet steps" },
+  { id: "ridingBoots", name: "Riding Boots", category: "boots", class: "standard", identity: "Tall boots made for the saddle" },
+  { id: "chronoStrider", name: "Chrono Strider", category: "boots", class: "unique", identity: "Arcana cool down faster, and each potion speeds them more" },
+  { id: "jackpotSpurs", name: "Jackpot Spurs", category: "boots", class: "unique", identity: "More Gold for every free upgrade on the floor" },
+  { id: "hoarderGreaves", name: "Hoarder Greaves", category: "boots", class: "unique", identity: "More ATK the more keys are held" },
+  // Gloves (between Sword and Boots)
   { id: "leatherGauntlets", name: "Leather Gauntlets", category: "gloves", class: "standard", identity: "Reliable ATK and DEF" },
   { id: "brawlersWraps", name: "Brawler's Wraps", category: "gloves", class: "unique", identity: "More ATK, and a little life back from every win" },
   { id: "locksmithsGloves", name: "Locksmith's Gloves", category: "gloves", class: "unique", identity: "Keys: starts every climb with spare gold keys" },
   { id: "alchemistsGloves", name: "Alchemist's Gloves", category: "gloves", class: "unique", identity: "Potions: every potion heals more" },
-  // Boots
-  { id: "travelersBoots", name: "Traveler's Boots", category: "boots", class: "standard", identity: "Reliable DEF and a little speed" },
-  { id: "fleetstepBoots", name: "Fleetstep Boots", category: "boots", class: "unique", identity: "Raw speed: the hand walks faster everywhere" },
-  { id: "pathfinderTreads", name: "Pathfinder's Treads", category: "boots", class: "unique", identity: "Automation: each Dash crosses more empty floor" },
-  { id: "delversGreaves", name: "Delver's Greaves", category: "boots", class: "unique", identity: "Made for the Delve: faster, and healed by each new depth" },
-  // Capes
+  // Capes (between Shield and Boots)
   { id: "woolCloak", name: "Wool Cloak", category: "cape", class: "standard", identity: "Reliable max HP and a little DEF" },
   { id: "magpieMantle", name: "Magpie's Mantle", category: "cape", class: "unique", identity: "Wealth: more Gold, then Silver, from everything found" },
   { id: "gatherersShroud", name: "Gatherer's Shroud", category: "cape", class: "unique", identity: "Materials: more upgrade materials, and more Supply and Equipment Chests" },
   { id: "pilgrimsCape", name: "Pilgrim's Cape", category: "cape", class: "unique", identity: "A steady climb: heals on every new floor" },
-  // Belts
+  // Belts (between Sword and Helmet)
   { id: "leatherBelt", name: "Leather Belt", category: "belt", class: "standard", identity: "Reliable max HP" },
   { id: "provisionersBelt", name: "Provisioner's Belt", category: "belt", class: "unique", identity: "Potions: the strongest potion bonus" },
   { id: "championsGirdle", name: "Champion's Girdle", category: "belt", class: "unique", identity: "Max HP that grows with everything else" },
   { id: "merchantsSash", name: "Merchant's Sash", category: "belt", class: "unique", identity: "Silver: buys climb training from the first floor" },
-  // Rings
-  { id: "silverBand", name: "Silver Band", category: "ring", class: "standard", identity: "A little of every percentage" },
-  { id: "ringOfFury", name: "Ring of Fury", category: "ring", class: "unique", identity: "Offense in percent: scales with every point of ATK" },
-  { id: "ringOfWarding", name: "Ring of Warding", category: "ring", class: "unique", identity: "Defense in percent: scales with every point of DEF" },
-  { id: "spireSignet", name: "Spire Signet", category: "ring", class: "unique", identity: "Made for the Tower: ATK and DEF there, and more Supply and Equipment Chests" },
-  // Amulets
+  // Amulets (between Shield and Helmet)
   { id: "amberPendant", name: "Amber Pendant", category: "amulet", class: "standard", identity: "Max HP in percent, and a little Regen" },
   { id: "heartOfTheGrove", name: "Heart of the Grove", category: "amulet", class: "unique", identity: "Regeneration: the most HP back with every step" },
   { id: "sagesLocket", name: "Sage's Locket", category: "amulet", class: "unique", identity: "Learning: more XP, then more materials and Silver" },
@@ -247,7 +255,8 @@ export type ItemId = string;
 const BY_ID = new Map(ITEMS.map((d) => [d.id, d]));
 /** The definition `id` names, or undefined for one the catalogue no longer has. */
 export const itemDef = (id: string): ItemDef | undefined => BY_ID.get(id);
-/** The Standard piece of each category, which Equipment Chests hold. */
-export const standardOf = (category: CategoryId) => ITEMS.find((d) => d.category === category && d.class === "standard")!;
-/** The Unique pieces of a category, which its Gem pulls choose among. */
+/** A category's Standard pieces, which Equipment Chests, crafting and a Gem
+ * pull's Common to Rare hold, evenly. */
+export const standardsOf = (category: CategoryId) => ITEMS.filter((d) => d.category === category && d.class === "standard");
+/** The Unique pieces of a category, which a Gem pull's Epic and Legendary choose among. */
 export const uniquesOf = (category: CategoryId) => ITEMS.filter((d) => d.category === category && d.class === "unique");

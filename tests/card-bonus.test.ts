@@ -7,7 +7,7 @@ import { CARD_IDS, cardBonus, cardBonusLines, handBonus } from "../src/cards/car
 import { RunPurse } from "../src/game/run-purse.ts";
 import { rollChestPiece, rollSupplies } from "../src/equipment/acquire.ts";
 import { EQUIPMENT_CHEST_RARITY, SUPPLY_CHEST_MATERIALS } from "../src/equipment/balance.ts";
-import { itemDef, standardOf } from "../src/equipment/catalog.ts";
+import { itemDef, standardsOf } from "../src/equipment/catalog.ts";
 import { addItem } from "../src/equipment/inventory.ts";
 import { equipmentEffects } from "../src/equipment/effects.ts";
 import { chestKindAt } from "../src/board.ts";
@@ -238,7 +238,7 @@ test("an Equipment Chest's piece is Standard, at 67% Common, 30% Uncommon and 3%
   const rarity = (roll: number) => rollChestPiece(() => roll).rarity;
   assert.deepEqual([0, 0.669, 0.67, 0.969, 0.97, 0.999].map(rarity), ["common", "common", "uncommon", "uncommon", "rare", "rare"]);
   const piece = rollChestPiece(() => 0);
-  assert.equal(piece.def, standardOf(piece.category).id);
+  assert.ok(standardsOf(piece.category).some((d) => d.id === piece.def), "one of its category's Standard pieces");
 });
 
 test("a Supply Chest holds 5 materials in tower I and 2 more each tower after, raised by Material Find", () => {

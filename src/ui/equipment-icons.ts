@@ -2,8 +2,9 @@ import { kitIcon } from "../sprites/kit.ts";
 import { itemDef, type CategoryId, type EquipMaterialId } from "../equipment/catalog.ts";
 
 // Pixel icons for Equipment, drawn as inline SVG from 12×12 rows so they
-// stay crisp at any size: one per category, one per Unique piece (and the
-// Silver Band) and one per upgrade material, in
+// stay crisp at any size: one per category, one per piece but each
+// starting category's first Standard (which wears its category's), and one
+// per upgrade material, in
 // a shared palette with a dark outline. A row of six is the left half of a
 // symmetric icon, mirrored to twelve.
 
@@ -55,17 +56,15 @@ const CATEGORY_ROWS: Record<CategoryId, string[]> = {
     "............", "............", "............", "############", "#bbb#gggg#b#", "#lll#g##g#l#",
     "#bbb#gggg#b#", "############", "............", "............", "............", "............",
   ],
-  ring: mirrored([
-    "......", "....##", "...#cc", "...#cw", "..####", ".#gg##", ".#g#..", ".#g#..", ".#g#..", ".#gg##", "..#ggg", "...###",
-  ]),
   amulet: mirrored([
     ".#....", "..#...", "...#..", "....#.", "....##", "...#aa", "..#aao", "..#aaa", "..#aaa", "...#aa", "....##", "......",
   ]),
 };
 
-/** Each Unique piece's own icon (and the Silver Band's), by definition id;
- * every other Standard piece wears its category's. */
-const ITEM_ROWS: Record<string, string[]> = {
+/** Drawn pieces the catalogue's icons are made from: the future corners'
+ * Uniques as they are, and the pieces the starting categories' new
+ * Uniques are recoloured from. */
+const DRAWN: Record<string, string[]> = {
   wardensShield: mirrored([
     ".#####", "#ygggg", "#gssss", "#gswww", "#gswgg", "#gswgw", "#gswgw", ".#swgg", ".#swww", "..#sww", "...#sw", "....##",
   ]),
@@ -159,22 +158,6 @@ const ITEM_ROWS: Record<string, string[]> = {
     "............", "............", "############", "#vvvv#ww#vv#", "#qqqq#vv#qq#", "####vv#vv###",
     "...#vv#vv#..", "..#vq#.#vq#.", "..#q#...#q#.", "..##.....##.", "............", "............",
   ],
-  silverBand: [
-    "............", "............", "............", "...######...", "..#wsssssw#.", ".#ws####sw#.",
-    ".#s#....#s#.", ".#s#....#s#.", ".#d#....#d#.", ".#dd####dd#.", "..#dddddd#..", "...######...",
-  ],
-  ringOfFury: [
-    ".....##.....", "....#oo#....", "...#prrp#...", "...#rrrr#...", "..########..", ".#gg####gg#.",
-    ".#g#....#g#.", ".#g#....#g#.", ".#g#....#g#.", ".#gg####gg#.", "..#gggggg#..", "...######...",
-  ],
-  ringOfWarding: [
-    "...######...", "..#ucwwcu#..", "..#ucccu#...", "...#ucu#....", "..#s#u#s#...", ".#ss####ss#.",
-    ".#s#....#s#.", ".#s#....#s#.", ".#d#....#d#.", ".#dd####dd#.", "..#dddddd#..", "...######...",
-  ],
-  spireSignet: [
-    "............", ".##########.", ".#ggkggkgg#.", ".#ggkkkkgg#.", ".#ggkyykgg#.", ".##########.",
-    ".#g#....#g#.", ".#g#....#g#.", ".#g#....#g#.", ".#gg####gg#.", "..#gggggg#..", "...######...",
-  ],
   heartOfTheGrove: [
     ".#........#.", "..#......#..", "...#....#...", "....#..#....", ".....##.....", "..###..###..",
     ".#iie##eef#.", "#iieeeeeeef#", "#ieeeeeeeef#", ".#eeeeeeef#.", "..#eeeeef#..", "...######...",
@@ -206,6 +189,53 @@ const MATERIAL_ROWS: Record<EquipMaterialId, string[]> = {
     "............", ".###....###.", "#wsd#..#wsd#", ".#s#....#s#.", ".#s#....#s#.", "..#......#..",
     "....###.....", "...#wsd#....", "....#s#.....", "....#s#.....", ".....#......", "............",
   ],
+};
+
+/** `rows` with each letter of `map` swapped for its colour letter. */
+const recolor = (rows: string[], map: Record<string, string>) => rows.map((r) => [...r].map((c) => map[c] ?? c).join(""));
+/** A hammer, for the Kinetic Mallet. */
+const MALLET = [
+  "............", ".##########.", "#sswwwwwwss#", "#sdwccccwds#", "#sswwwwwwss#", ".####lb####.",
+  "....#bl#....", "....#bl#....", "....#lb#....", "....#bl#....", "...#gggg#...", "...######...",
+];
+const C = CATEGORY_ROWS, D = DRAWN;
+/** Each piece's own icon, by definition id: every Unique's, and in the
+ * starting categories every Standard's but the first, which wears its
+ * category's; the new pieces are recoloured from drawn ones. */
+const ITEM_ROWS: Record<string, string[]> = {
+  // Swords
+  squiresBlade: recolor(C.weapon, { w: "t", s: "l" }),
+  steelBroadsword: recolor(C.weapon, { w: "m", s: "n", g: "s", y: "w" }),
+  raptorBlade: D.bloodpriceBlade,
+  kineticMallet: MALLET,
+  soulReaper: D.reapersScythe,
+  // Shields
+  oakenBuckler: recolor(C.shield, { s: "b", w: "l", g: "t" }),
+  kiteShield: recolor(C.shield, { w: "p", s: "r", g: "y" }),
+  zenithGuard: D.dawnShield,
+  cradleOfLife: recolor(D.bulwarkShield, { s: "f", w: "i" }),
+  amberPrison: recolor(D.wardensShield, { s: "a", w: "o" }),
+  // Chestplates
+  scaleMail: recolor(C.chestplate, { w: "t", s: "l" }),
+  ringmailVest: recolor(C.chestplate, { w: "s", s: "d" }),
+  equilibriumTether: D.bastionPlate,
+  mobiusCipher: recolor(D.verdantMail, { i: "c", e: "u", f: "z" }),
+  mirrorVault: recolor(D.giantsHauberk, { s: "m", d: "n" }),
+  // Helmets
+  acolytesHood: recolor(C.helmet, { w: "v", s: "q" }),
+  greatHelm: recolor(C.helmet, { w: "s", s: "d" }),
+  lichKingsCrown: recolor(D.scholarsCirclet, { g: "v", y: "i", c: "i", w: "x" }),
+  psionicTempest: recolor(D.sentinelVisor, { w: "c", s: "u", p: "m", r: "n", k: "z" }),
+  challengersDefiance: recolor(D.minersHelm, { g: "r", y: "p", w: "o", l: "d" }),
+  // Boots
+  rangersBoots: recolor(C.boots, { l: "e", t: "i", b: "f" }),
+  ridingBoots: recolor(C.boots, { l: "k", t: "s", b: "d" }),
+  chronoStrider: D.fleetstepBoots,
+  jackpotSpurs: recolor(D.delversGreaves, { w: "y", s: "g", d: "l", a: "r" }),
+  hoarderGreaves: recolor(D.pathfinderTreads, { x: "y", e: "g", f: "l" }),
+  // The future corners' Uniques
+  ...Object.fromEntries(["brawlersWraps", "locksmithsGloves", "alchemistsGloves", "magpieMantle", "gatherersShroud", "pilgrimsCape",
+    "provisionersBelt", "championsGirdle", "merchantsSash", "heartOfTheGrove", "sagesLocket", "phoenixTalisman"].map((id) => [id, D[id]!])),
 };
 
 /** A piece's rows, by definition id: its own, or its category's. */

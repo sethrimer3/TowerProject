@@ -2672,6 +2672,14 @@ button.training-now:has(> .train-pointer) { position: relative; overflow: visibl
 .pull-box { padding: 8px 10px; border: 1px solid #6b5a35; border-radius: 5px; background: #16202c; }
 .pull-pool { margin: 4px 0; padding: 0; list-style: none; text-align: left; font-size: 11px; line-height: 1.5; }
 .pull-pool li { display: flex; align-items: center; gap: 6px; margin: 3px 0; }
+.pull-off-draw { opacity: 0.45; }
+.pull-rates { flex: 0 0 auto; }
+.pull-rate-table { width: 100%; border-collapse: collapse; font-size: 11px; text-align: left; }
+.pull-rate-table th, .pull-rate-table td { padding: 2px 4px; }
+.pull-rate-pieces { margin: 0 0 6px; padding: 0 0 0 8px; list-style: none; }
+.pull-rate-pieces li { display: flex; align-items: center; gap: 6px; margin: 2px 0; }
+.pull-rate-pieces li span { flex: 1; min-width: 0; }
+.pull-rate-pieces .equip-icon { width: 18px; height: 18px; }
 .pull-pool .equip-icon { flex: none; width: 24px; height: 24px; }
 .pull-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
 .pull-buttons button { padding: 10px 6px; font-size: 12px; }
@@ -5398,7 +5406,6 @@ html.trial-running :is(#focus-stat, #ignore-stat, #target-stat, #bomb-stat, #hea
 
 /* Four base materials and a plus-shaped starting loadout. */
 .eq-slot-reserved { visibility: hidden; pointer-events: none; }
-.eq-slot-ring { grid-column: 2; }
 .eq-views { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .eq-crafts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr)); gap: 10px; }
 .eq-craft { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px; border: 1px solid #526071; text-align: center; min-width: 0; }

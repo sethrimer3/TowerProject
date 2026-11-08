@@ -46,12 +46,12 @@ test("each starting category rolls from its own family, Uncommon values at ×1, 
 
 test("a substat that only rolls from a higher rarity never reaches a lower piece, and rolls at its own rarity or above", () => {
   const e = { ...opened().equipment };
-  const epic = addItem(e, "kingsbane", "epic")!, rare = addItem(e, "knightsSword", "rare")!;
+  const epic = addItem(e, "raptorBlade", "epic")!, rare = addItem(e, "knightsSword", "rare")!;
   epic.level = rare.level = 1;
   epic.slots = [{}];
   rare.slots = [{}];
   assert.ok(!slotPool(rare, 0).some((d) => d.id === "volley"), "Volley is Mythic and up");
-  const helm = addItem(e, "sentinelVisor", "epic")!;
+  const helm = addItem(e, "psionicTempest", "epic")!;
   helm.level = 1;
   helm.slots = [{}];
   assert.ok(slotPool(helm, 0).some((d) => d.id === "thunderbolt1"));

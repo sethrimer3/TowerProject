@@ -32,17 +32,18 @@ Craft, level, Refine and Improve use every input in the category recipe; salvage
 | Sword | Whetstone | Right |
 | Boots | Hobnails | Bottom |
 | Chestplate | Iron Rivets + Quilted Padding + Whetstone + Hobnails | Center |
-| Cape | Iron Rivets + Quilted Padding | Future top left |
-| Gloves | Quilted Padding + Whetstone | Future top right |
-| Belt | Iron Rivets + Hobnails | Future bottom left |
-| Amulet | Whetstone + Hobnails | Future bottom right |
-| Ring | Whetstone + Quilted Padding | Future; legacy owned Ring below the grid |
+| Amulet | Iron Rivets + Quilted Padding (Shield and Helmet) | Future top left |
+| Belt | Whetstone + Quilted Padding (Sword and Helmet) | Future top right |
+| Cape | Iron Rivets + Hobnails (Shield and Boots) | Future bottom left |
+| Gloves | Whetstone + Hobnails (Sword and Boots) | Future bottom right |
 
-The Craft view makes a Common Standard for 25 of every input, without Gold or Gems; full inventories and locked categories refuse before any payment.
+There is no Ring: saved Rings, and loadouts wearing one, are dropped as unknown pieces.
+
+The Craft view makes a Common of any of an open category's Standard pieces for 25 of every input, without Gold or Gems; full inventories and locked categories refuse before any payment.
 Gem pulls and Equipment Chests choose only open categories; Supply Chests and mission rewards choose only the four base resources.
 Old five removed material balances split into their recipe's two inputs, preserving every unit; owned equipment, slots, levels and loadouts remain.
 
-Each category's icon (on filters and empty slots), each piece's icon (every Unique and the Silver Band its own, so pieces of a category tell apart at a glance; the other Standard pieces wear their category's), each material's icon, and the dismantle (hammer), merge (three arrows into one), level up (arrow) and lock icons are 12 × 12 pixel art drawn as inline SVG (`ui/equipment-icons.ts`).
+Each category's icon (on filters and empty slots), each piece's icon (every piece its own, so pieces of a category tell apart at a glance: the first Standard piece of a starting category wears its category's, the others are recoloured from it, and the new Uniques reuse or recolour earlier drawings; their 24 × 24 PNGs sit in `public/assets/style/equip-<id>.png`), each material's icon, and the dismantle (hammer), merge (three arrows into one), level up (arrow) and lock icons are 12 × 12 pixel art drawn as inline SVG (`ui/equipment-icons.ts`).
 
 ## 4. Rarity
 
@@ -171,21 +172,20 @@ Each mode's hero counts only what it wears; what works between runs counts the m
 
 ## 6. Catalogue
 
-Each category has one **Standard** piece (from Equipment Chests and crafting) and three **Unique** pieces (from Gem pulls only).
-A definition is only a name, a category, a class and an identity line: what it does comes from its category's main effect and its substats.
-The Uniques' own powers, and two more Standard pieces a category, are the next steps (section 16).
+Each starting category has three **Standard** pieces (from Equipment Chests, crafting and a Gem pull's Common to Rare), distinct for merging and with no ability of their own, and three **Unique** pieces (from a Gem pull's Epic and Legendary only).
+A definition is only a name, a category, a class and an identity line: what it does comes from its category's main effect and its substats, and, for a Unique, its power (section 16, next).
+The future corners keep one Standard piece and three Uniques until they are designed.
 
 | Category | Standard | Uniques |
 |---|---|---|
-| Sword | Knight's Sword | Kingsbane, Reaper's Scythe, Bloodprice Blade |
-| Shield | Iron Shield | Warden's Shield, Bulwark Shield, Dawn Shield |
-| Chestplate | Steel Cuirass | Bastion Plate, Giant's Hauberk, Verdant Mail |
-| Helmet | Iron Helm | Sentinel's Visor, Scholar's Circlet, Miner's Helm |
-| Boots | Traveler's Boots | Fleetstep Boots, Pathfinder's Treads, Delver's Greaves |
+| Sword | Knight's Sword, Squire's Blade, Steel Broadsword | Raptor Blade, Kinetic Mallet, Soul Reaper |
+| Shield | Iron Shield, Oaken Buckler, Kite Shield | Zenith Guard, Cradle of Life, Amber Prison |
+| Chestplate | Steel Cuirass, Scale Mail, Ringmail Vest | Equilibrium Tether, Mobius Cipher, Mirror Vault |
+| Helmet | Iron Helm, Acolyte's Hood, Great Helm | Lich King's Crown, Psionic Tempest, Challenger's Defiance |
+| Boots | Traveler's Boots, Ranger's Boots, Riding Boots | Chrono Strider, Jackpot Spurs, Hoarder Greaves |
 | Gloves | Leather Gauntlets | Brawler's Wraps, Locksmith's Gloves, Alchemist's Gloves |
 | Cape | Wool Cloak | Magpie's Mantle, Gatherer's Shroud, Pilgrim's Cape |
 | Belt | Leather Belt | Provisioner's Belt, Champion's Girdle, Merchant's Sash |
-| Ring | Silver Band | Ring of Fury, Ring of Warding, Spire Signet |
 | Amulet | Amber Pendant | Heart of the Grove, Sage's Locket, Phoenix Talisman |
 
 ## 7. Leveling
@@ -250,7 +250,7 @@ The Salvage section also holds the **Auto-salvage common drops** toggle (`save.e
 
 ## 10. Inventory
 
-At most **500** pieces (`EQUIPMENT_CAPACITY`). An Equipment Chest's piece that finds the inventory full is dismantled at once into its material; a Gem pull needs room for every piece it brings. The List view shows the loadout (five starting slots in a plus: Helmet top, Shield left, Chestplate center, Sword right and Boots below; later corners stay empty until opened and legacy owned Rings sit below; the Tower/Delve switch at its top left; an empty slot shows only its category below) over the inventory as a grid of square tiles. It filters by category and by rarity together, sorts by rarity, level, category, newest or name, and selects several pieces at once to dismantle or (two) to compare. Each tile shows the icon on its rarity's colour, the rarity mark (with *★n* beside it for an Ancestral piece's Stars), the level, a check when the loadout shown wears it, a lock, and a star mark for a Unique; tapping it opens the piece.
+At most **500** pieces (`EQUIPMENT_CAPACITY`). An Equipment Chest's piece that finds the inventory full is dismantled at once into its material; a Gem pull needs room for every piece it brings. The List view shows the loadout (five starting slots in a plus: Helmet top, Shield left, Chestplate center, Sword right and Boots below; each future corner between the two it joins, empty until opened; the Tower/Delve switch at its top left; an empty slot shows only its category below) over the inventory as a grid of square tiles. It filters by category and by rarity together, sorts by rarity, level, category, newest or name, and selects several pieces at once to dismantle or (two) to compare. Each tile shows the icon on its rarity's colour, the rarity mark (with *★n* beside it for an Ancestral piece's Stars), the level, a check when the loadout shown wears it, a lock, and a star mark for a Unique; tapping it opens the piece.
 
 ## 11. Equipment Chests (Standard pieces)
 
@@ -261,7 +261,7 @@ While the run's hand holds the **Chest** card, each treasure chest, once Equipme
 |---:|---:|---:|
 | 67% | 30% | 3% |
 
-The category is even among the open categories.
+The category is even among the open categories, and the piece even among its Standard pieces.
 
 A chest's kind is fixed as its floor is generated, not as it opens. As the run goes inside, it fixes its odds (`run.chestOdds`, set by `Game.dealHand`): the hand's Chest card's 0.5% and 1.5%, each raised by the worn **Supply and Equipment Chest chance** (`chestFind`: the Treasure Sense substat; +5% makes 0.5% into 0.525%). Each treasure tile's fixed number (`chestKindAt` in `board.ts`, from the floor's seed and the tile) under the Equipment Chest's chance makes one, then under both chances a Supply Chest, so higher odds only ever add more. The board shows a Supply Chest with a light blue glow and one star in its tile's upper-left corner, and an Equipment Chest with a purple glow and two stars, and both stay on the floor once it is opened (`render/chest-marks.ts`).
 
@@ -273,22 +273,36 @@ Beside bosses' drops (section 11), while the run's hand holds the **Chest** card
 
 It holds **5** in tower I and **2** more in each tower after (7 in tower II, 9 in tower III; `SUPPLY_CHEST_MATERIALS`), the Delve's numbered delves alike, raised by Material Find (rounded down, never below the base).
 
-## 13. Gem pulls (Unique pieces)
+## 13. Gem pulls
 
-The Acquire view pulls in one chosen category, or of **all types** for 10% less (`PULL_ALL_DISCOUNT`): each pull brings one of its category's three Uniques, evenly, at a rolled rarity, an all-types pull drawing its category evenly from the open categories first. The pieces pulled show on a full-screen result.
+The Acquire view pulls in one chosen category, or of **all types** for 10% less (`PULL_ALL_DISCOUNT`).
+Each pull rolls its rarity first: at Common, Uncommon or Rare it brings one of its category's Standard pieces, evenly; at Epic or Legendary one of its Uniques, evenly among those left in draws (`pullOne`).
+An all-types pull draws its category evenly from the open categories first (for an Epic or Legendary, among those with a Unique left in draws).
+The pieces pulled show on a full-screen result, titled by the best Epic or Legendary among them.
 
 | Pull | Price |
 |---|---:|
 | ×1 | 20 Gems (all types: 18) |
 | ×10 | 200 Gems (all types: 180) |
 
-| Rarity | Rate |
-|---|---:|
-| Common | 72% |
-| Uncommon | 25% |
-| Rare | 3% |
+| Rarity | Rate | Brings |
+|---|---:|---|
+| Common | 60% | a Standard piece |
+| Uncommon | 29% | a Standard piece |
+| Rare | 8% | a Standard piece |
+| Epic | 2.5% | a Unique |
+| Legendary | 0.5% | a Unique |
 
-**Pity** is counted per category (`save.equipment.pity`; an all-types pull counts toward the category it lands in): the 100th pull in a row without a Rare in that category is a Rare, and any Rare (natural or pity) starts the count over. A ×10 resolves its pulls one at a time, so pity can land mid-way; all ten show together in one results view, pity Rares marked. The count shows on each category's button and in the pool box. Pulls draw from the save's own stream (`save.equipment.rng`, seeded once from `stream("equipment")`), so reloading can't reroll them. The buttons always look active; short of Gems, the price turns red and a press offers the Shop.
+Relics' Gem pull bonus moves its percent from Common to Epic.
+**Pity** (`save.equipment.pity`) is counted per category, and for pulls of all types on a count of its own: the 120th pull in a row without an Epic or better is an Epic Unique, and any Epic or Legendary (natural or pity) starts the count over.
+A ×10 resolves its pulls one at a time, so pity can land mid-way; all ten show together in one results view, pity pieces marked.
+The count shows on each pull button and in the pool box.
+**Streams.** Each category's pulls, pulls of all types and the substat rolls each draw from a saved stream of their own (`save.equipment.streams`, each seeded once from `stream("equipment")` and carried on by `withSavedStream` for the profile's life), so reloading can't reroll them and pulling one kind never shifts another's.
+**Rates**, beside the buttons, lists each rarity's chance and each named piece's share of it (`pullRates`).
+Once the player owns a five-Star piece (`drawTogglesOpen`), each Unique there gets a box to leave it out of future pulls (`save.equipment.drawOff`, `EquipmentDesk.setDrawn`): its share goes evenly to the others of its rarity.
+The first five-Star copy made of a Unique leaves it out at once (`save.equipment.maxed` records that it happened, so it happens once).
+When every Unique a pull could bring is left out, buying it is refused (`excluded`): a dialog says every Unique of that type is maxed and left out, and offers Rates to turn some back on.
+The buttons always look active; short of Gems, the price turns red and a press offers the Shop.
 
 ## 14. Save shape
 
@@ -300,8 +314,10 @@ The Acquire view pulls in one chosen category, or of **all types** for 10% less 
 | `items` | Each piece: `id` (`e1`, `e2` …, never reused), `def` (catalogue id), `rarity`, `stars?` (1–5, Ancestral only), `level` (from 0), `locked?`, `spent?` (Gold and material invested), `slots` (one per slot opened: `effect?`, `rarity?`, `refinement?`, `choicesUsed?`, `offer?`) |
 | `equipped.tower`, `equipped.delve` | Category → item id, per mode |
 | `materials` | The four base resource balances |
-| `pity` | Pulls since the last Rare, per category |
-| `nextId`, `rng` | The next item id; the stream pulls and substat candidates draw from |
+| `pity` | Pulls since the last Epic or better, per category and for all types (`all`) |
+| `nextId` | The next item id |
+| `streams` | Where each saved stream stands: each category's pulls, `all`, `substats` |
+| `drawOff`, `maxed` | The Uniques left out of Gem pulls; those a five-Star copy has been made of |
 
 No catalogue data (names, effects) is saved.
 Decoding drops unknown definitions and rarities, duplicate ids and pieces past the capacity, keeps Stars only on Ancestral pieces, clamps levels to the piece's cap, keeps loadouts to owned pieces of the right category, and resets anything malformed to its default.
@@ -463,13 +479,6 @@ A slot's screen shows CURRENT, the NEW CANDIDATES with Keep Current, *Refinement
 ## 16. Approved next steps
 
 Agreed with the designer and not built yet, in the order they are planned.
-
-### The catalogue and Gem pulls
-
-- Ring is removed. Each starting category gets three Standard pieces (Sword: Knight's Sword, Squire's Blade, Steel Broadsword; Shield: Iron Shield, Oaken Buckler, Kite Shield; Chestplate: Steel Cuirass, Scale Mail, Ringmail Vest; Helmet: Iron Helm, Acolyte's Hood, Great Helm; Boots: Traveler's Boots, Ranger's Boots, Riding Boots), distinct for merging and with no ability of their own, and three Uniques, below.
-- Gem pull rates: Common 60%, Uncommon 29%, Rare 8%, Epic 2.5%, Legendary 0.5%. Common to Rare bring Standard pieces, Epic and Legendary Uniques. Pity: the 120th pull without an Epic or better is an Epic Unique; pulls of all categories keep a pity count of their own. Relics' rare-pull bonus moves to Epic.
-- Each category's pulls, and pulls of all categories, each draw from a saved stream of their own, for the profile's lifetime; substat rolls from another.
-- A rates dialog beside the Gem buttons: each rarity's chance and its share of each named piece. Once the player owns a five-Star Ancestral piece, each piece gets a toggle to leave it out of future draws (turned off by default for a piece when its first five-Star copy is made); its share goes evenly to the rest. When every piece of a category is maxed and left out, buying that category's pulls warns and asks the player to turn some back on.
 
 ### Unique powers
 

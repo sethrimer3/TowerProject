@@ -191,7 +191,7 @@ test("gear adds flat bonuses, then its percentages of the total, fractions kept;
   sword.level = 1;
   sword.slots = [{ effect: "ferocity", rarity: "rare" }];
   s.equipment.equipped.tower.weapon = sword.id;
-  s.equipment.equipped.tower.chestplate = addItem(s.equipment, "giantsHauberk", "uncommon")!.id;
+  s.equipment.equipped.tower.chestplate = addItem(s.equipment, "mirrorVault", "uncommon")!.id;
   Object.assign(s.provisions, { edge: 1, guard: 2, heal: 1 });
   const l = loadout(s);
   assert.equal(l.attack, 10.67264, "10 × (1 + 2.2264% + 4.5%)");
@@ -301,7 +301,7 @@ test("a gear change reaches a run still outside, which starts at its new full HP
   const e = g.save.equipment;
   e.unlocked = true;
   g.equipment.equip("tower", addItem(e, "knightsSword", "common")!.id);
-  g.equipment.equip("tower", addItem(e, "giantsHauberk", "common")!.id);
+  g.equipment.equip("tower", addItem(e, "mirrorVault", "common")!.id);
   assert.deepEqual([g.run.player.attack, g.run.player.maxHp, g.run.player.hp], [10.101, 101, 101], "+1% ATK raised 1% by the plate's efficiency, and the plate's +1% max HP");
 });
 

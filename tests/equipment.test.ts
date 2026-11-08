@@ -10,10 +10,10 @@ import { loadout } from "../src/progression/loadout.ts";
 import { predict } from "../src/combat.ts";
 import { resolveStep } from "../src/step-effects.ts";
 import {
-  CATEGORIES, CATEGORY_IDS, EQUIP_MATERIALS, EQUIP_MATERIAL_IDS, ITEMS, itemDef, materialOf, materialsOf, STARTER_CATEGORIES, standardOf, uniquesOf,
+  CATEGORIES, CATEGORY_IDS, EQUIP_MATERIALS, EQUIP_MATERIAL_IDS, ITEMS, itemDef, materialOf, materialsOf, STARTER_CATEGORIES, standardsOf, uniquesOf,
 } from "../src/equipment/catalog.ts";
 import {
-  BOSS_DROPS, EQUIPMENT_CAPACITY, PITY, PULL_GEMS, PULL_RATES, pullGems, RARITY_TIERS, STARS, TOP_LEVEL,
+  BOSS_DROPS, EQUIPMENT_CAPACITY, PITY, PULL_GEMS, PULL_RATES, pullGems, RARITY_TIERS, rarityRank, STARS, TOP_LEVEL,
   upgradeGold, upgradeMaterial, type EquipRarity,
 } from "../src/equipment/balance.ts";
 import {
@@ -23,7 +23,7 @@ import {
 import { effectText, equipmentEffects } from "../src/equipment/effects.ts";
 import { efficiency, mainEffect } from "../src/equipment/main-effect.ts";
 import { snap } from "../src/exact.ts";
-import { keepDrop, pull, pullOne, rollRarity } from "../src/equipment/acquire.ts";
+import { drawTogglesOpen, keepDrop, pull, pullOne, pullRates, rollRarity } from "../src/equipment/acquire.ts";
 import { ICON_ROWS, pieceRows } from "../src/ui/equipment-icons.ts";
 import type { Enemy } from "../src/entities.ts";
 
@@ -36,12 +36,13 @@ const seq = (values: number[]) => {
 
 // --- Catalogue ---
 
-test("ten categories share four base resources, each with a Standard piece and three Uniques", () => {
-  assert.equal(CATEGORY_IDS.length, 10);
+test("nine categories share four base resources; each starting one has three Standard pieces and three Uniques", () => {
+  assert.equal(CATEGORY_IDS.length, 9);
+  assert.ok(!(CATEGORY_IDS as readonly string[]).includes("ring"), "Ring is gone");
   assert.equal(EQUIP_MATERIAL_IDS.length, 4);
   assert.deepEqual(new Set(CATEGORY_IDS.map(materialOf)).size, 4, "only four resource types");
   for (const c of CATEGORY_IDS) {
-    assert.equal(standardOf(c).class, "standard");
+    assert.equal(standardsOf(c).length, STARTER_CATEGORIES.includes(c) ? 3 : 1, c);
     assert.equal(uniquesOf(c).length, 3, c);
     assert.ok(materialsOf(c).every(m => EQUIP_MATERIAL_IDS.includes(m)));
   }
@@ -128,7 +129,7 @@ test("a new save starts with Equipment closed and empty; old saves load with it"
 test("equipment round-trips through a save: ids, rarity, level, loadouts, locks, materials, pity and investment", () => {
   const s = defaults(), e = s.equipment;
   e.unlocked = true;
-  const a = addItem(e, "kingsbane", "rare")!, b = addItem(e, "steelCuirass", "common")!;
+  const a = addItem(e, "raptorBlade", "rare")!, b = addItem(e, "steelCuirass", "common")!;
   e.materials.whetstone = 999;
   s.gold = 1e6;
   levelUp(e, s, a.id, 5, false);
@@ -136,10 +137,10 @@ test("equipment round-trips through a save: ids, rarity, level, loadouts, locks,
   equip(e, "tower", a.id);
   equip(e, "delve", b.id);
   e.pity.helmet = 57;
-  pull(e, "ring", 3, seq([0.5]));
+  pull(e, "shield", 3, seq([0.5]));
   const loaded = decode(JSON.stringify(s)).equipment;
   assert.deepEqual(loaded, e);
-  assert.ok(!JSON.stringify(loaded).includes("Kingsbane"), "no catalogue data saved");
+  assert.ok(!JSON.stringify(loaded).includes("Raptor Blade"), "no catalogue data saved");
 });
 
 test("decoding drops unknown pieces, clamps levels to the cap, and keeps loadouts to owned pieces of the right category", () => {
@@ -148,20 +149,20 @@ test("decoding drops unknown pieces, clamps levels to the cap, and keeps loadout
     items: [
       { id: "e1", def: "knightsSword", rarity: "common", level: 99 },
       { id: "e2", def: "nope", rarity: "common", level: 1 },
-      { id: "e3", def: "silverBand", rarity: "golden", level: 1 },
-      { id: "e5", def: "kingsbane", rarity: "ancestral", stars: 3, level: 999 },
-      { id: "e6", def: "kingsbane", rarity: "mythic", stars: 3, level: 0 },
-      { id: "e1", def: "silverBand", rarity: "common", level: 1 },
-      { id: "e4", def: "silverBand", rarity: "common", level: 1 },
+      { id: "e3", def: "kiteShield", rarity: "golden", level: 1 },
+      { id: "e5", def: "raptorBlade", rarity: "ancestral", stars: 3, level: 999 },
+      { id: "e6", def: "raptorBlade", rarity: "mythic", stars: 3, level: 0 },
+      { id: "e1", def: "kiteShield", rarity: "common", level: 1 },
+      { id: "e4", def: "kiteShield", rarity: "common", level: 1 },
     ],
-    equipped: { tower: { weapon: "e1", ring: "e1", helmet: "e2" }, delve: { ring: "e4" } },
-    pity: { weapon: PITY, ring: 12 },
+    equipped: { tower: { weapon: "e1", shield: "e1", helmet: "e2" }, delve: { shield: "e4" } },
+    pity: { weapon: PITY, shield: 12 },
     materials: { amber: -3, silk: 4 },
   };
   const e = decodeEquipment(raw);
   assert.deepEqual(e.items.map((i) => [i.id, i.level, i.stars]), [["e1", 20, undefined], ["e5", 260, 3], ["e6", 0, undefined], ["e4", 1, undefined]], "Stars only on Ancestral pieces, the cap raised by them");
-  assert.deepEqual(e.equipped, { tower: { weapon: "e1" }, delve: { ring: "e4" } });
-  assert.deepEqual([e.pity.weapon, e.pity.ring], [0, 12]);
+  assert.deepEqual(e.equipped, { tower: { weapon: "e1" }, delve: { shield: "e4" } });
+  assert.deepEqual([e.pity.weapon, e.pity.shield], [0, 12]);
   assert.deepEqual([e.materials.padding, e.materials.rivets], [2, 2]);
   assert.ok(!("silk" in e.materials) && !("amber" in e.materials));
   assert.equal(e.nextId, 7, "never reuses an id");
@@ -207,8 +208,8 @@ const enemy = (strength: Enemy["strength"]): Enemy => ({ name: "Test", hp: 10, a
 
 test("a full inventory salvages a chest's piece at once", () => {
   const e = open();
-  for (let i = 0; i < EQUIPMENT_CAPACITY; i++) addItem(e, "silverBand", "common");
-  assert.equal(addItem(e, "silverBand", "common"), null);
+  for (let i = 0; i < EQUIPMENT_CAPACITY; i++) addItem(e, "kiteShield", "common");
+  assert.equal(addItem(e, "kiteShield", "common"), null);
   const kept = keepDrop(e, { def: "knightsSword", rarity: "uncommon", category: "weapon" });
   assert.deepEqual([kept.item, kept.salvaged, e.materials.whetstone], [null, RARITY_TIERS.uncommon.salvage, RARITY_TIERS.uncommon.salvage]);
 });
@@ -249,7 +250,9 @@ test("bosses and Greater Bosses drop materials (1.5%) and a Standard piece (0.5%
 
 // --- Gem pulls ---
 
-test("pulls cost 20 and 200 Gems, need room, and bring only the category's Uniques", () => {
+const isUnique = (def: string) => itemDef(def)!.class === "unique";
+
+test("pulls cost 20 and 200 Gems, need room, and bring the category's Standard pieces at Common to Rare, its Uniques at Epic and Legendary", () => {
   const g = new Game(defaults());
   assert.equal(g.equipment.pull("weapon", 1), "locked");
   g.save.equipment.unlocked = true;
@@ -261,9 +264,12 @@ test("pulls cost 20 and 200 Gems, need room, and bring only the category's Uniqu
   const ten = g.equipment.pull("weapon", 10);
   assert.ok(Array.isArray(ten) && ten.length === 10);
   assert.equal(g.save.gems, 10);
-  for (const { item } of [...one, ...ten]) assert.ok(uniquesOf("weapon").some((d) => d.id === item.def));
+  for (const { item } of [...one, ...ten]) {
+    assert.equal(itemDef(item.def)!.category, "weapon");
+    assert.equal(isUnique(item.def), rarityRank(item.rarity) >= rarityRank("epic"), `${item.def} at ${item.rarity}`);
+  }
   assert.equal(g.equipment.pull("weapon", 1), "gems");
-  for (let i = g.save.equipment.items.length; i < EQUIPMENT_CAPACITY - 5; i++) addItem(g.save.equipment, "silverBand", "common");
+  for (let i = g.save.equipment.items.length; i < EQUIPMENT_CAPACITY - 5; i++) addItem(g.save.equipment, "kiteShield", "common");
   g.save.gems = 1000;
   assert.equal(g.equipment.pull("weapon", 10), "room");
   assert.equal(g.save.gems, 1000, "a refused pull takes nothing");
@@ -286,10 +292,10 @@ test("with Auto-salvage on, a pull's Common pieces are dismantled once pulled", 
   for (const p of pulled) assert.equal(!!p.salvaged, p.item.rarity === "common");
   assert.deepEqual(e.items.map((i) => i.id), pulled.filter((p) => p.item.rarity !== "common").map((p) => p.item.id));
   assert.equal(e.materials.whetstone, commons.reduce((n, p) => n + p.salvaged!.quantity, 0));
-  assert.equal(commons[0].salvaged!.quantity, RARITY_TIERS.common.salvage * 2, "a Unique salvages for twice a Standard's");
+  assert.equal(commons[0].salvaged!.quantity, RARITY_TIERS.common.salvage, "a Common pulled is a Standard piece");
 });
 
-test("pulls of all types cost 10% less and bring Uniques of every category", () => {
+test("pulls of all types cost 10% less, reach every open category, and keep a pity count of their own", () => {
   assert.equal(pullGems(1, true), 18);
   assert.equal(pullGems(10, true), 180);
   const g = new Game(defaults());
@@ -299,57 +305,120 @@ test("pulls of all types cost 10% less and bring Uniques of every category", () 
   assert.equal(g.save.gems, 0);
   const items = pulled.flatMap((r) => (Array.isArray(r) ? r.map((x) => x.item) : assert.fail(String(r))));
   assert.equal(items.length, 61);
-  assert.ok(items.every((i) => itemDef(i.def)!.class === "unique"));
   assert.deepEqual(new Set(items.map((i) => itemDef(i.def)!.category)), new Set(STARTER_CATEGORIES), "all-type pulls reach only the five starting categories");
-  // Each category's pity counts its own pulls since its last Rare.
-  const since = Object.fromEntries(CATEGORY_IDS.map((c) => [c, 0]));
-  for (const i of items) { const c = itemDef(i.def)!.category; since[c] = i.rarity === "rare" ? 0 : since[c] + 1; }
-  assert.deepEqual(g.save.equipment.pity, since);
+  let since = 0;
+  for (const i of items) since = rarityRank(i.rarity) >= rarityRank("epic") ? 0 : since + 1;
+  assert.equal(g.save.equipment.pity.all, since, "pulls of all types count their own pity");
+  for (const c of CATEGORY_IDS) assert.equal(g.save.equipment.pity[c], 0, "and leave each category's alone");
   assert.equal(g.equipment.pull("all", 1), "gems");
 });
 
 test("pull rarities follow the configured rates", () => {
-  assert.deepEqual(PULL_RATES, { common: 72, uncommon: 25, rare: 3 });
-  assert.equal(rollRarity(PULL_RATES, 0.71), "common");
-  assert.equal(rollRarity(PULL_RATES, 0.72), "uncommon");
-  assert.equal(rollRarity(PULL_RATES, 0.969), "uncommon");
-  assert.equal(rollRarity(PULL_RATES, 0.97), "rare");
-  const e = open(), counts = { common: 0, uncommon: 0, rare: 0 };
+  assert.deepEqual(PULL_RATES, { common: 60, uncommon: 29, rare: 8, epic: 2.5, legendary: 0.5 });
+  assert.equal(rollRarity(PULL_RATES, 0.599), "common");
+  assert.equal(rollRarity(PULL_RATES, 0.6), "uncommon");
+  assert.equal(rollRarity(PULL_RATES, 0.889), "uncommon");
+  assert.equal(rollRarity(PULL_RATES, 0.89), "rare");
+  assert.equal(rollRarity(PULL_RATES, 0.97), "epic");
+  assert.equal(rollRarity(PULL_RATES, 0.995), "legendary");
+  const e = open(), counts: Record<string, number> = { common: 0, uncommon: 0, rare: 0, epic: 0, legendary: 0 };
   for (let i = 0; i < 300; i++) {
     for (const { item } of pull(e, "boots", 10, () => 0.25)) counts[item.rarity]++;
     e.items = [];
   }
-  assert.ok(Math.abs(counts.common / 3000 - 0.72) < 0.03 && Math.abs(counts.uncommon / 3000 - 0.25) < 0.03, JSON.stringify(counts));
+  assert.ok(Math.abs(counts.common / 3000 - 0.6) < 0.03 && Math.abs(counts.uncommon / 3000 - 0.29) < 0.03 && Math.abs(counts.rare / 3000 - 0.08) < 0.02, JSON.stringify(counts));
 });
 
-test("pity: the 100th pull in a row without a Rare is Rare, per category, counted through a ×10", () => {
+test("pity: the 120th pull in a row without an Epic or better is an Epic Unique, per category, counted through a ×10", () => {
+  assert.equal(PITY, 120);
   const e = open();
-  e.pity.cape = PITY - 5;
-  const rolls = pull(e, "cape", 10, () => 0.5); // the stream's first draw seeds it
-  // Without a natural Rare, pull 5 of the ten is the pity Rare, and the count starts over.
+  e.pity.boots = PITY - 5;
+  const rolls = pull(e, "boots", 10, () => 0.5);
   const pityAt = rolls.findIndex((r) => r.pity);
-  assert.ok(pityAt <= 4, "the pity Rare comes by the fifth pull");
-  assert.equal(rolls[pityAt].item.rarity, "rare");
+  assert.ok(pityAt >= 0 && pityAt <= 4, "the pity Epic comes by the fifth pull");
+  assert.equal(rolls[pityAt].item.rarity, "epic");
+  assert.ok(isUnique(rolls[pityAt].item.def));
   assert.equal(e.pity.weapon, 0, "other categories keep their own count");
   const forced = open();
-  forced.pity.belt = PITY - 1;
-  assert.deepEqual(pullOne(forced, "belt", seq([0])).item.rarity, "rare", "even on a Common roll");
-  assert.equal(forced.pity.belt, 0);
+  forced.pity.helmet = PITY - 1;
+  const p = pullOne(forced, "helmet", seq([0]));
+  assert.deepEqual([p.item.rarity, isUnique(p.item.def)], ["epic", true], "even on a Common roll");
+  assert.equal(forced.pity.helmet, 0);
   const natural = open();
-  natural.pity.belt = 50;
-  pullOne(natural, "belt", seq([0.99, 0]));
-  assert.equal(natural.pity.belt, 0, "a natural Rare resets it");
-  pullOne(natural, "belt", seq([0, 0]));
-  assert.equal(natural.pity.belt, 1);
+  natural.pity.helmet = 50;
+  pullOne(natural, "helmet", seq([0.999, 0, 0]));
+  assert.equal(natural.pity.helmet, 0, "a natural Legendary resets it");
+  pullOne(natural, "helmet", seq([0.9, 0, 0]));
+  assert.equal(natural.pity.helmet, 1, "a Rare doesn't");
 });
 
-test("pulls carry on a saved stream, so reloading can't reroll them", () => {
+test("relics' bonus moves Gem pull chance from Common to Epic", () => {
+  const e = open();
+  const rows = pullRates(e, "weapon", 1);
+  assert.deepEqual(rows.map((r) => [r.rarity, r.chance]), [["common", 59], ["uncommon", 29], ["rare", 8], ["epic", 3.5], ["legendary", 0.5]]);
+});
+
+test("each category's pulls, pulls of all types and substat rolls keep saved streams of their own, so reloading can't reroll them", () => {
   const a = open(), b = open();
-  pull(a, "amulet", 1, () => 0.3);
-  b.rng = a.rng;
-  const next = pull(a, "amulet", 10, () => 0.9).map((r) => r.item.def + r.item.rarity);
-  const again = pull(decodeEquipment(JSON.parse(JSON.stringify(b))), "amulet", 10, () => 0.1).map((r) => r.item.def + r.item.rarity);
+  pull(a, "boots", 1, () => 0.3);
+  b.streams = { ...a.streams };
+  const next = pull(a, "boots", 10, () => 0.9).map((r) => r.item.def + r.item.rarity);
+  const again = pull(decodeEquipment(JSON.parse(JSON.stringify(b))), "boots", 10, () => 0.1).map((r) => r.item.def + r.item.rarity);
   assert.deepEqual(next, again);
+  // Pulling in one category leaves every other stream where it stood.
+  const c = open();
+  pull(c, "weapon", 1, () => 0.3);
+  pull(c, "all", 1, () => 0.6);
+  const before = { ...c.streams };
+  pull(c, "helmet", 10, () => 0.7);
+  assert.deepEqual([c.streams.weapon, c.streams.all, c.streams.substats], [before.weapon, before.all, undefined]);
+  assert.ok(c.streams.helmet !== undefined);
+});
+
+test("the draw rates divide each rarity among the named pieces, and a Unique left out gives its share to the rest", () => {
+  const e = open();
+  const rows = pullRates(e, "shield");
+  const share = (rarity: string, def: string) => rows.find((r) => r.rarity === rarity)!.pieces.find((p) => p.def === def)!.chance;
+  assert.equal(share("common", "kiteShield"), 20, "60% among three Standard pieces");
+  assert.equal(share("epic", "zenithGuard"), 2.5 / 3);
+  e.drawOff = ["zenithGuard"];
+  const left = pullRates(e, "shield");
+  const after = (def: string) => left.find((r) => r.rarity === "epic")!.pieces.find((p) => p.def === def)!.chance;
+  assert.deepEqual([after("zenithGuard"), after("amberPrison"), after("cradleOfLife")], [0, 1.25, 1.25]);
+  const all = pullRates(open(), "all");
+  assert.equal(all.find((r) => r.rarity === "common")!.pieces.length, 15, "all types: every open category's three");
+  assert.ok(Math.abs(all.find((r) => r.rarity === "legendary")!.pieces.reduce((n, p) => n + p.chance, 0) - 0.5) < 1e-9);
+});
+
+test("the first five-Star copy of a Unique leaves it out of draws; toggles show once a five-Star piece is owned; every Unique left out refuses the pulls", () => {
+  const g = new Game(defaults());
+  const e = g.save.equipment;
+  e.unlocked = true;
+  g.save.gems = 1000;
+  assert.equal(g.equipment.setDrawn("raptorBlade", false), false, "no toggles before a five-Star piece");
+  const a = addItem(e, "raptorBlade", "ancestral")!;
+  a.stars = 4;
+  merge(e, a.id, [addItem(e, "raptorBlade", "legendary")!.id]);
+  assert.equal(a.stars, 5);
+  assert.deepEqual([e.maxed, e.drawOff], [["raptorBlade"], ["raptorBlade"]]);
+  assert.equal(drawTogglesOpen(e), true);
+  assert.ok(g.equipment.setDrawn("raptorBlade", true));
+  assert.deepEqual(e.drawOff, []);
+  // A second five-Star copy leaves the player's choice alone.
+  const b = addItem(e, "raptorBlade", "ancestral")!;
+  b.stars = 4;
+  merge(e, b.id, [addItem(e, "raptorBlade", "legendary")!.id]);
+  assert.deepEqual(e.drawOff, []);
+  for (const d of uniquesOf("weapon")) g.equipment.setDrawn(d.id, false);
+  assert.equal(g.equipment.pull("weapon", 1), "excluded");
+  assert.equal(g.save.gems, 1000);
+  assert.ok(Array.isArray(g.equipment.pull("shield", 1)), "other categories still pull");
+  assert.deepEqual(decodeEquipment(JSON.parse(JSON.stringify(e))).drawOff, e.drawOff);
+  // All types never land an Epic or Legendary in a category with every Unique left out.
+  for (let i = 0; i < 200; i++) {
+    const r = pullOne(e, "all", Math.random);
+    if (isUnique(r.item.def)) assert.notEqual(itemDef(r.item.def)!.category, "weapon");
+  }
 });
 
 // --- Leveling, merging, dismantling ---
@@ -373,13 +442,13 @@ test("leveling costs the curve's Gold and material, stops at the cap, and record
 
 test("merging takes exactly two other copies, raises the chosen target's rarity and keeps its level", () => {
   const e = open();
-  const [a, b, c, d] = [0, 1, 2, 3].map(() => addItem(e, "ringOfWarding", "uncommon")!);
+  const [a, b, c, d] = [0, 1, 2, 3].map(() => addItem(e, "amberPrison", "uncommon")!);
   a.level = 29;
   equip(e, "tower", a.id);
   setLocked(e, a.id, true);
   b.level = 4;
-  addItem(e, "ringOfWarding", "rare");
-  addItem(e, "silverBand", "uncommon");
+  addItem(e, "amberPrison", "rare");
+  addItem(e, "kiteShield", "uncommon");
   assert.deepEqual(mergeFodder(e, a).map((i) => i.id), [c.id, d.id, b.id], "same piece and rarity, lowest level first");
   assert.equal(merge(e, a.id, [b.id]), "count");
   assert.equal(merge(e, a.id, [b.id, b.id]), "count");
@@ -389,18 +458,18 @@ test("merging takes exactly two other copies, raises the chosen target's rarity 
   const before = e.items.length;
   const merged = merge(e, a.id, [b.id, d.id]);
   assert.ok(typeof merged !== "string");
-  assert.deepEqual([merged.id, merged.rarity, merged.level, merged.locked, e.equipped.tower.ring], [a.id, "rare", 29, true, a.id]);
+  assert.deepEqual([merged.id, merged.rarity, merged.level, merged.locked, e.equipped.tower.shield], [a.id, "rare", 29, true, a.id]);
   assert.equal(e.items.length, before - 2);
   assert.ok(!e.items.some((i) => i.id === b.id || i.id === d.id));
-  const r = addItem(e, "ringOfWarding", "rare")!;
+  const r = addItem(e, "amberPrison", "rare")!;
   assert.equal(merge(e, r.id, []), "count", "Rare merges on, into Epic");
 });
 
 test("Epic and Legendary take two copies and one more piece of the category; Mythic two copies; Ancestral takes Stars", () => {
   const e = open();
-  const [a, b] = [0, 1].map(() => addItem(e, "kingsbane", "epic")!);
-  const other = addItem(e, "reapersScythe", "epic")!, std = addItem(e, "knightsSword", "epic")!, shield = addItem(e, "wardensShield", "epic")!;
-  addItem(e, "kingsbane", "legendary");
+  const [a, b] = [0, 1].map(() => addItem(e, "raptorBlade", "epic")!);
+  const other = addItem(e, "soulReaper", "epic")!, std = addItem(e, "knightsSword", "epic")!, shield = addItem(e, "amberPrison", "epic")!;
+  addItem(e, "raptorBlade", "legendary");
   a.level = 70;
   assert.deepEqual(mergePlan(a), { kind: "rarity", next: "legendary", same: 2, any: 1, need: 2 });
   assert.deepEqual(mergeFodder(e, a).map((i) => i.id), [b.id, std.id, other.id], "its copies first, then the category's others, Standard before Unique");
@@ -410,22 +479,22 @@ test("Epic and Legendary take two copies and one more piece of the category; Myt
   assert.ok(typeof merge(e, a.id, [b.id, other.id]) !== "string", "a Unique of the category serves as the third");
   assert.deepEqual([a.rarity, a.level], ["legendary", 70]);
   // Legendary to Mythic, the same way.
-  const [c, d] = [0, 1].map(() => addItem(e, "kingsbane", "legendary")!);
+  const [c, d] = [0, 1].map(() => addItem(e, "raptorBlade", "legendary")!);
   assert.ok(typeof merge(e, a.id, [c.id, d.id]) !== "string", "two more copies serve too");
   assert.equal(a.rarity, "mythic");
   // Mythic to Ancestral: two copies, nothing else.
-  const m = addItem(e, "kingsbane", "mythic")!;
+  const m = addItem(e, "raptorBlade", "mythic")!;
   assert.deepEqual(mergePlan(a), { kind: "rarity", next: "ancestral", same: 2, any: 0, need: 1 });
   assert.ok(typeof merge(e, a.id, [m.id]) !== "string");
   assert.deepEqual([a.rarity, a.stars, maxLevel(a)], ["ancestral", undefined, 200]);
   // Each Star: one Legendary copy of the same piece, up to five.
   for (let star = 1; star <= STARS.most; star++) {
-    assert.equal(merge(e, a.id, [addItem(e, "reapersScythe", "legendary")!.id]), "mismatch", "only its own definition");
-    assert.ok(typeof merge(e, a.id, [addItem(e, "kingsbane", "legendary")!.id]) !== "string");
+    assert.equal(merge(e, a.id, [addItem(e, "soulReaper", "legendary")!.id]), "mismatch", "only its own definition");
+    assert.ok(typeof merge(e, a.id, [addItem(e, "raptorBlade", "legendary")!.id]) !== "string");
     assert.deepEqual([a.stars, maxLevel(a)], [star, 200 + 20 * star]);
   }
   assert.equal(mergePlan(a), null, "five Stars is the top");
-  assert.equal(merge(e, a.id, [addItem(e, "kingsbane", "legendary")!.id]), "unmergeable");
+  assert.equal(merge(e, a.id, [addItem(e, "raptorBlade", "legendary")!.id]), "unmergeable");
 });
 
 test("Standard pieces merge up to Legendary and no higher; Rare takes three copies into Epic", () => {
@@ -441,12 +510,12 @@ test("Standard pieces merge up to Legendary and no higher; Rare takes three copi
 
 test("Auto-assemble offers every merge at once, none sharing a piece, leaving worn pieces out and locked ones only kept", () => {
   const e = open();
-  const [worn, locked, a, b, c, d, f] = [0, 1, 2, 3, 4, 5, 6].map(() => addItem(e, "ringOfWarding", "uncommon")!);
+  const [worn, locked, a, b, c, d, f] = [0, 1, 2, 3, 4, 5, 6].map(() => addItem(e, "amberPrison", "uncommon")!);
   equip(e, "tower", worn.id);
   setLocked(e, locked.id, true);
   [worn.level, locked.level, a.level, b.level, c.level, d.level, f.level] = [40, 3, 9, 1, 5, 2, 7];
-  addItem(e, "silverBand", "uncommon");
-  addItem(e, "silverBand", "uncommon");
+  addItem(e, "kiteShield", "uncommon");
+  addItem(e, "kiteShield", "uncommon");
   [0, 1, 2].map(() => addItem(e, "knightsSword", "common"));
   const merges = autoMerges(e);
   assert.deepEqual(merges, [
@@ -460,18 +529,18 @@ test("Auto-assemble offers every merge at once, none sharing a piece, leaving wo
 
 test("Auto-assemble fills an Epic recipe's third place with the category's cheapest piece, and never offers a Star", () => {
   const e = open();
-  const [a, b] = [0, 1].map(() => addItem(e, "kingsbane", "epic")!);
+  const [a, b] = [0, 1].map(() => addItem(e, "raptorBlade", "epic")!);
   const std = addItem(e, "knightsSword", "epic")!;
   a.level = 9;
-  const anc = addItem(e, "reapersScythe", "ancestral")!;
-  addItem(e, "reapersScythe", "legendary");
+  const anc = addItem(e, "soulReaper", "ancestral")!;
+  addItem(e, "soulReaper", "legendary");
   assert.deepEqual(autoMerges(e), [{ target: a.id, fodder: [b.id, std.id] }]);
   assert.equal(mergePlan(anc)?.kind, "star");
 });
 
 test("Common pieces never merge: they are only worn as they are or salvaged", () => {
   const e = open();
-  const [a, b, c] = [0, 1, 2].map(() => addItem(e, "ringOfWarding", "common")!);
+  const [a, b, c] = [0, 1, 2].map(() => addItem(e, "amberPrison", "common")!);
   assert.deepEqual(mergeFodder(e, a), [], "no Common piece is a merge candidate");
   assert.equal(merge(e, a.id, [b.id, c.id]), "unmergeable");
   assert.deepEqual(e.items.map((i) => i.rarity), ["common", "common", "common"]);
@@ -479,7 +548,7 @@ test("Common pieces never merge: they are only worn as they are or salvaged", ()
 
 test("dismantling returns the rarity's salvage (Uniques twice), never the investment, and never takes protected pieces", () => {
   const e = open();
-  const common = addItem(e, "knightsSword", "common")!, rare = addItem(e, "kingsbane", "rare")!, worn = addItem(e, "knightsSword", "uncommon")!;
+  const common = addItem(e, "knightsSword", "common")!, rare = addItem(e, "raptorBlade", "rare")!, worn = addItem(e, "knightsSword", "uncommon")!;
   common.level = 15;
   common.spent = { gold: 9999, material: 400 };
   equip(e, "delve", worn.id);
