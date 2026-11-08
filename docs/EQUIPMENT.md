@@ -488,7 +488,7 @@ What a power keeps for a run is `run.gear` (`GearRun`), in the run so undo takes
 |---|---|---|
 | Raptor Blade (Sword) | Super Crit chance +5, 7, 10, 14 (with the Super Critical skill); a Super Crit of its own makes the next 5 strikes Super Crits, owed on from fight to fight (`run.gear.chain`); a chained strike starts no chain | `equipmentEffects`, `chainedCrits`, `FightPlayback.critRolls`, `Game.afterFight` |
 | Kinetic Mallet (Sword) | +1, 2, 3, 4 turns a Dash Combo keeps going without a fight | `Game.comboTurn` |
-| Soul Reaper (Sword) | 5, 8, 11, 15% of enemies but bosses are marked for death, a fixed roll per run, floor and tile the enemy was made on; the hero's first strike or arrow destroys a marked enemy | `Game.doomedAt`, `Game.move`, `VolleyTurn.doomed` |
+| Soul Reaper (Sword) | 5, 8, 11, 15% of enemies but bosses are marked for death, a fixed roll per run, floor and tile the enemy was made on, shown by a red X in its tile's bottom-left corner (`Game.doomedTiles`, `Renderer.drawDoomMarks`); the hero's first strike or arrow destroys a marked enemy | `Game.doomedAt`, `Game.move`, `VolleyTurn.doomed` |
 | Zenith Guard (Shield) | Regen heals into Overheal, up to 25, 50, 75, 100% of the room between max HP and the Overheal ceiling | `StepRules.regenOverheal`, `regenCeiling` |
 | Cradle of Life (Shield) | Aether Shield HP and Shield Regen ×1.25, 1.5, 2, 2.5, each its own factor | `shieldCapacity`, `Game.stepRules` |
 | Amber Prison (Shield) | Each hit that doesn't kill (a strike, or an arrow, marked on the tile as `amber`) cuts its enemy's ATK and slows it by 1, 1.5, 2, 2.5%, up to 50% (`AMBER_MOST`); the slowing joins the fields' (`togetherSlow`) for its strikes, shots and Aggroed steps | `bout`, `woundMore`, `volleyTurn`, `Game` Aggro `slowAt` |
@@ -503,7 +503,8 @@ What a power keeps for a run is `run.gear` (`GearRun`), in the run so undo takes
 | Hoarder Greaves (Boots) | ATK × 1.25, 1.5, 2, 2.5 × (1 + log₁₀ of the keys held, every colour together), at least the factor with under one key, ×1 with none; strikes and arrows; `log10` in `exact.ts` gives the same bits in every engine | `hoardFactor`, `Game.gearAttackAt` |
 
 Previews and planners read the plain hero, as with crits and the Dash Combo: Hoarder Greaves', Challenger's Defiance's and Soul Reaper's fights are resolved with them (`Game.fighterAt`), and a fight carrying Retribution or Amber Prison is always played out and ends as played (`FightPlayback.restate`).
-Limits as built: Raptor Blade's chain counts fight strikes, not arrows; Soul Reaper's mark falls to the hero's strikes and arrows, not to arcana; equipping or taking off Equilibrium Tether in a run moves only the ranks the run began with.
+Limits as built: Raptor Blade's chain counts fight strikes, not arrows; Soul Reaper's mark falls to the hero's strikes and arrows, not to arcana.
+Equipment can't be put on or taken off during a run, so a run's powers (Equilibrium Tether's pool among them) stand as it went inside; arcana can be toggled on and off in a run but not changed, so Chrono Strider's potion cut and Haste work on the arcana the run holds, a toggled-off one forgetting its cooldown as always.
 
 ## 17. The corner categories (a spec, not built)
 

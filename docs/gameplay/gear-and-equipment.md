@@ -63,7 +63,7 @@ Merging keeps a piece's substats and Refinement.
 Each Unique also has a **power** of its own, stronger at each rarity from Epic to Ancestral (Stars raise its main effect, not its power); its piece's page shows it, and the loadout's summary lists those worn:
 - Raptor Blade: more Super Crit chance, and a Super Crit makes the next 5 strikes Super Crits, carried from fight to fight.
 - Kinetic Mallet: a Dash Combo lasts more turns without a fight.
-- Soul Reaper: some enemies (never bosses) are marked for death, the same ones however often you retry: your first strike or arrow destroys them.
+- Soul Reaper: some enemies (never bosses) are marked for death with a red X in their tile's corner, the same ones however often you retry: your first strike or arrow destroys them.
 - Zenith Guard: Regen heals on past max HP, part of the way to the Overheal ceiling.
 - Cradle of Life: a stronger Aether Shield that regains more.
 - Amber Prison: each hit that doesn't kill weakens its enemy's blows and slows its strikes, shots and steps, up to half.

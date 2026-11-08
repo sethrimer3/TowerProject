@@ -266,6 +266,7 @@ export class Renderer {
     if (!this.game.run.outside) this.bossFlash.draw(f, this.game.run.seed, this.game.run.height, f.look.reduceMotion);
     this.drawSkipMarks(f);
     this.drawBadgeMarks(f);
+    this.drawDoomMarks(f);
     this.drawChargeMarks(f);
     this.drawBlockedMark(f);
     // A Gem shines above the darkness, so it can be seen and tapped.
@@ -668,6 +669,30 @@ export class Renderer {
         c.fillStyle = color;
         c.fillText(glyph, x, y);
       }
+    c.restore();
+  }
+  /** Soul Reaper's mark (equipment/powers.ts): a red X, outlined in black, in
+   * the bottom-left corner of each enemy marked for death, the corner the
+   * enemies' own marks leave free, in every theme. */
+  private drawDoomMarks(f: FrameContext) {
+    const marked = this.game.doomedTiles;
+    if (!marked.length) return;
+    const c = f.c, s = f.s, r = s * 0.11;
+    c.save();
+    c.lineCap = "square";
+    for (const { x: wx, y: wy } of marked) {
+      const x = (wx - f.left) * s + s * 0.17, y = (f.n - 1 - (wy - f.bottom)) * s + s * 0.83;
+      for (const [color, width] of [["#000", Math.max(3, s * 0.12)], ["#e8303a", Math.max(1.5, s * 0.06)]] as const) {
+        c.strokeStyle = color;
+        c.lineWidth = width;
+        c.beginPath();
+        c.moveTo(x - r, y - r);
+        c.lineTo(x + r, y + r);
+        c.moveTo(x + r, y - r);
+        c.lineTo(x - r, y + r);
+        c.stroke();
+      }
+    }
     c.restore();
   }
   /** Ignore's marks: a red ⊘ over each tile ignored on this floor; and

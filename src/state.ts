@@ -1259,6 +1259,13 @@ export class Game {
   /** Whether Soul Reaper has marked the enemy at (x, y) for death: a fixed
    * roll per run, floor and the tile the enemy was made on, so undo can't
    * roll it again; never a boss. */
+  /** The enemies Soul Reaper has marked for death on the hero's floor, for the
+   * board's X; none unless it is worn, or outside. */
+  get doomedTiles(): { x: number; y: number }[] {
+    if (this.run.outside || !powerOf(this.worn, "soulReaper", "chance")) return [];
+    const p = this.run.player;
+    return (this.world.floorEnemies?.(p.x, p.y) ?? []).filter(({ x, y }) => this.doomedAt(x, y));
+  }
   doomedAt(x: number, y: number) {
     const chance = powerOf(this.worn, "soulReaper", "chance"), enemy = chance ? foeOn(this.world.tile(x, y)) : undefined;
     if (!enemy || isBoss(enemy)) return false;

@@ -195,12 +195,14 @@ test("Challenger's Defiance holds Overseer's beams on a boss", () => {
 test("Soul Reaper marks the same enemies however often it is asked, never a boss", () => {
   const s = opened(), g = new Game(s);
   g.newRun({ seed: 11 });
+  assert.deepEqual(g.doomedTiles, [], "no marks unless it is worn");
   wear(s.equipment, "soulReaper", "ancestral");
   const world = (g as any).world, p = g.run.player;
   const enemies = (world.floorEnemies?.(p.x, p.y) ?? []) as { x: number; y: number }[];
   const marks = enemies.map(({ x, y }) => g.doomedAt(x, y));
   assert.deepEqual(enemies.map(({ x, y }) => g.doomedAt(x, y)), marks);
   for (const [i, { x, y }] of enemies.entries()) if (world.tile(x, y).enemy?.strength === "boss") assert.equal(marks[i], false);
+  assert.deepEqual(g.doomedTiles, enemies.filter((_, i) => marks[i]), "the board marks exactly those with an X");
   assert.equal(POWERS.soulReaper.chance[3], 15);
 });
 
