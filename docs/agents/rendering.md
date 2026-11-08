@@ -8,6 +8,7 @@ Retained sources and their authored catalog are in `assets/game-sprites/relic-so
 `tests/relic-sprites.test.ts` checks full catalog coverage, fallbacks, unique pixels, palette, alpha, padding and lossless regions; `node tests/relic-sprites.mjs` checks collection and popup art for each rarity in both image-loading modes without changing ownership.
 
 `enemies/roster.ts` defines the default bestiary: 126 named creatures, six strengths × seven appearances (ordinary and six traits) × three stat profiles.
+Every default creature faces screen-down in the same elevated front perspective as `hero-down.png`; the standalone bestiary preview embeds that player sprite as its camera reference.
 `enemies/legacy-roster.ts` retains the former Tower and Delve identities for save/generation compatibility and the Legacy Enemies setting.
 `rosterEntry` selects a presentation from the enemy's actual profile, strength and traits, with precedence Aggroed, Flying, Shielded, Armored, Ranged, Fast, ordinary; additional trait mechanics and marks remain active.
 Trials retain their dedicated actors and sprites.

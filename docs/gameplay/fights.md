@@ -5,6 +5,7 @@
 The default bestiary has 126 dungeon creatures: six strengths, seven appearances (ordinary, Fast, Ranged, Shielded, Flying, Armored and Aggroed), and three stat profiles.
 Attack-heavy enemies emphasize fangs, claws and weapons; balanced enemies are dungeon dwellers such as oozes and ratfolk; defense-heavy enemies have shells, stone bodies and heavy armor.
 Higher strengths grow larger and more ornate.
+Creatures face down the screen in the same view from above and in front as the downward-facing hero.
 An enemy with several traits keeps all of them; its body follows Aggroed, Flying, Shielded, Armored, Ranged, then Fast, and the board still shows its other trait effects and marks.
 Aggroed is the pursuit state a Flying enemy enters after being wounded, rather than an extra spawn roll.
 Settings → Legacy Enemies restores the previous names and Classic sprites.

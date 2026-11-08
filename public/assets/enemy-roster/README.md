@@ -1,21 +1,12 @@
-# Tower Delve bestiary
+# Enemy artwork
 
-126 distinct creatures: six strengths × seven appearances × three stat profiles.
-The seven appearances are ordinary, Fast, Ranged, Shielded, Flying, Armored and Aggroed.
-Attack-heavy creatures emphasize claws, fangs and weapons; balanced creatures are dungeon dwellers; defense-heavy creatures have shells, stone and armor.
+All 126 default enemies use the downward-facing player's elevated front camera.
+Show the front of faces and bodies together with the tops of heads, shoulders, shells and backs.
+Running and charging creatures still face straight toward the bottom of the screen, with no left/right yaw.
+The preview includes the actual player sprite at the same display scale for comparison.
+The exporter locates transparent gutters to keep wide wings and shoulder armor intact.
 
-Every creature has an individual transparent 24 × 24 PNG in `../style/`, named by its ID in `atlas.json`.
-`atlas.png` is a lossless 512 × 256 review atlas with two pixels of transparent padding around each region.
-`atlas.json` gives each name, strength, trait, profile, individual file and region in pixels measured from the top left.
-`preview.html` is a standalone labeled gallery with its artwork embedded, shown at 4× native size.
-Use nearest-neighbor sampling and integer scales.
-
-The production build also includes these sprites in `../atlases/ui.png`, with coordinates in `../atlases/ui.json`.
-The new roster is the default; Settings → Legacy Enemies restores the previous ordinary Tower/Delve art and names.
-Trial bosses retain their dedicated designs; other Game themes retain their own drawing styles.
-Combat, generation and saved-map identities are unchanged.
-Multi-trait bodies use precedence Aggroed, Flying, Shielded, Armored, Ranged, Fast, ordinary; all mechanics and other trait markers remain active.
-Some combinations, such as Fast bosses, are available artwork but are not introduced into the spawn schedule.
-
-Regenerate the individual PNGs and review atlas from the retained source sheets with `node --experimental-transform-types tools/prepare-enemy-sprites.mjs` from the repository root.
-Rebuild the runtime atlas with `npm run sprites:atlas`.
+Individual transparent 24 × 24 PNGs live in `../style/` with IDs and padded atlas regions in `atlas.json`.
+Regenerate the PNGs, review atlas and preview from the retained source sheets with `node --experimental-transform-types tools/prepare-enemy-sprites.mjs` from the repository root.
+Then run `npm run sprites:atlas` to rebuild the runtime atlas.
+Names, profiles, traits, strength progression and the Legacy Enemies setting are unchanged.

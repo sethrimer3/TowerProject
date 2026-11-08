@@ -15,6 +15,8 @@ The former Sprites and Turn off board sprites settings, old PNG directories and 
 
 Use the [source atlas](../../assets/ui-sprites/source-atlas.png) as the visual reference for additional components.
 Keep the shared [27-color palette](../../assets/ui-sprites/palette.ppm), upper-left light, charcoal outlines, stepped corners, restrained brass trim and quiet slate interiors.
+Default enemies share the elevated front camera of the downward-facing player (`public/assets/style/hero-down.png`): faces and chests are visible together with the tops of heads, shoulders, shells and backs.
+Enemies face straight toward the bottom of the screen, including running and charging poses; avoid sideways profiles, left/right turns, isometric yaw, full overhead views and flat eye-level portraits.
 Frames are 48 × 24 native pixels with six-pixel edge slices. Ordinary buttons display a six-pixel edge and compact controls a three-pixel edge; reserve that same width as a real border so trim never covers labels or icons. Larger panels can display the slices at 2×.
 Keep typography and values as live DOM or Canvas text; never bake labels into an asset. The active kit uses the original local Tower Pixel face, with editable square-pixel matrices, distinct lowercase and tabular digits; UI and Game themes gate it independently.
 The native grid is enforced during export with nearest-neighbor sampling, binary alpha, palette remapping and no dithering.

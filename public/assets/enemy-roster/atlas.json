@@ -3,6 +3,7 @@
   "width": 512,
   "height": 256,
   "padding": 2,
+  "camera": "elevated-front-facing-down",
   "regions": {
     "delve-enemy-attackHeavy-weak-ordinary": {
       "id": "delve-enemy-attackHeavy-weak-ordinary",
