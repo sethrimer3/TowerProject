@@ -115,6 +115,11 @@ function shardGain(t: Tile, p: Player, g: Board, stat: "attack" | "defense") {
 const stat = (icon: string, label: string, value: string, extra = "") =>
   `<span class="enemy-stat">${icon.replace('alt=""', `alt="${label}"`)} ${value}${extra}</span>`;
 
+/** An enemy's stats, one a line in the pop-up; the " · " between them is
+ * hidden there, but keeps the status row's one line of plain text apart. */
+const statLines = (...stats: string[]) =>
+  `<span class="enemy-stats">${stats.filter(Boolean).join(`<span class="stat-sep"> · </span><br>`)}</span>`;
+
 /** What Armor Break has taken off `e`'s DEF so far (`broken`: a fight being
  * played out counted), to go after its DEF. */
 const brokenStat = (e: Enemy, broken = e.broken ?? 0) => (broken ? ` (<span class="hit-heal">-${enemyStat(snap(defenseBroken(e, broken)))}</span>)` : "");
@@ -136,10 +141,12 @@ function enemyStats(e: Enemy, p: Player, r: CombatPrediction, gold: number, brok
   const taken = struckDamage(e.attack, p.defense, parryCut(p)), healed = p.lifesteal ? lifestealHeal(p, r.hit) : 0;
   const hurt = `<span class="hit-hurt">-${enemyStat(taken)}</span>`;
   const heal = healed ? ` <span class="hit-heal">+${enemyStat(healed)}</span>` : "";
-  const coins = gold ? ` · ${stat(goldIcon(), "Gold", `<span class="hit-gold">${enemyStat(gold)}</span>`)}` : "";
-  return `<span>${stat(uiSprite("health", "stat-sprite"), "HP", enemyStat(e.hp))}`
-    + ` · ${stat(itemSprite("upgrade_attack", "stat-sprite"), "ATK", enemyStat(e.attack), ` (${hurt}${heal})`)}`
-    + ` · ${stat(itemSprite("upgrade_defense", "stat-sprite"), "DEF", enemyStat(e.defense), `${brokenStat(e, broken)} (<span class="hit-hurt">-${enemyStat(r.hit)}</span>)`)}${coins}</span>`;
+  return statLines(
+    stat(uiSprite("health", "stat-sprite"), "HP", enemyStat(e.hp)),
+    stat(itemSprite("upgrade_attack", "stat-sprite"), "ATK", enemyStat(e.attack), ` (${hurt}${heal})`),
+    stat(itemSprite("upgrade_defense", "stat-sprite"), "DEF", enemyStat(e.defense), `${brokenStat(e, broken)} (<span class="hit-hurt">-${enemyStat(r.hit)}</span>)`),
+    gold ? stat(goldIcon(), "Gold", `<span class="hit-gold">${enemyStat(gold)}</span>`) : "",
+  );
 }
 
 /** What Necrotic Frost has left on an enemy (arcana/necrotic-frost.ts). */
@@ -154,10 +161,12 @@ const stunnedLine = (e: Enemy) => (e.stunned ? "<br><small>Stunned: in the vorte
  * would bank; then that only arrows reach it, and whether it is Aggroed. */
 function flyerInfo(e: Enemy, p: Player, gold: number) {
   const shot = shotDamage(p, e).damage, arrow = Math.max(0, arrowDamage(p, e));
-  const coins = gold ? ` · ${stat(goldIcon(), "Gold", `<span class="hit-gold">${enemyStat(gold)}</span>`)}` : "";
-  const line = `<span>${stat(uiSprite("health", "stat-sprite"), "HP", enemyStat(e.hp))}`
-    + ` · ${stat(itemSprite("upgrade_attack", "stat-sprite"), "ATK", enemyStat(e.attack), ` (<span class="hit-hurt">-${enemyStat(shot)}</span>)`)}`
-    + ` · ${stat(itemSprite("upgrade_defense", "stat-sprite"), "DEF", enemyStat(e.defense), `${brokenStat(e)} (<span class="hit-hurt">-${enemyStat(arrow)}</span>)`)}${coins}</span>`;
+  const line = statLines(
+    stat(uiSprite("health", "stat-sprite"), "HP", enemyStat(e.hp)),
+    stat(itemSprite("upgrade_attack", "stat-sprite"), "ATK", enemyStat(e.attack), ` (<span class="hit-hurt">-${enemyStat(shot)}</span>)`),
+    stat(itemSprite("upgrade_defense", "stat-sprite"), "DEF", enemyStat(e.defense), `${brokenStat(e)} (<span class="hit-hurt">-${enemyStat(arrow)}</span>)`),
+    gold ? stat(goldIcon(), "Gold", `<span class="hit-gold">${enemyStat(gold)}</span>`) : "",
+  );
   const aggro = e.aggro ? "<br><small>Aggroed: it closes in on you as fast as it shoots</small>" : "";
   return `${line}${brokenLine(e, p)}<br><small>Flying: it shoots you from the air; only your arrows reach it, and you walk under it freely</small>${aggro}${necroLine(e)}`;
 }

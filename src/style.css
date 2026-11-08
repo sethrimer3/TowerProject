@@ -1277,11 +1277,14 @@ html.reduce-motion #stuck-end-run.lesson-flash { animation: none; }
 .inspect-box .forecast {
   color: #a9c4ee;
 }
-/* An enemy's stat line: each stat's icon and value, then per strike what
-   gets through to each side (light red) and what Lifesteal heals (light
-   blue), and its Gold drop. */
+/* An enemy's stats, one a line: each stat's icon and value, then per strike
+   what gets through to each side (light red) and what Lifesteal heals (light
+   blue), and its Gold drop. The " · " between them is for the status row. */
 .inspect-box .enemy-stat {
   white-space: nowrap;
+}
+.inspect-box .stat-sep {
+  display: none;
 }
 .inspect-box .enemy-stat .stat-sprite,
 .inspect-box .enemy-stat .gold-icon {

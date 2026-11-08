@@ -45,7 +45,7 @@ Undo during a fight takes back the whole fight.
 ## Monsters and their pay
 
 A monster's inspect panel, and the messages about its fight, put its strength before its name (Weak, Strong, Elite or Boss), unless it is a normal one.
-Its inspect panel shows its HP, ATK and DEF as icons, each beside its value.
+Its inspect panel shows its HP, ATK and DEF as icons, each beside its value, and the Gold it would pay, each on a line of its own (the status row keeps them on one line).
 After its ATK, in brackets, comes what each of its strikes does to the hero, in light red (after DEF and Parry %), and with Lifesteal what each of the hero's strikes heals, in light blue: *(-4 +1.4)*.
 After its DEF, in light red, comes what each of the hero's strikes takes off it (Piercing and Giantslayer counted, crits not).
 Last comes the Gold killing it would bank, in yellow (every Gold bonus counted, and the Mug bonus when the hero's first strike fells it; none once it has paid).
