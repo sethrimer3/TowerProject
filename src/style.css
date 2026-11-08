@@ -2842,7 +2842,7 @@ html.reduce-motion :is(.item-icon.bought, .owned-count.bought) { animation: none
 .goals-strip.instant { transition: none; }
 .goals-scroll { flex: 0 0 100%; height: 100%; overflow-y: auto; overflow-x: hidden; }
 .goals-tower { position: relative; margin: 0 auto; width: 100%;
-  background: linear-gradient(90deg, #000a 0%, transparent 14%, transparent 86%, #000a 100%), linear-gradient(#07090d 0, transparent 120px), linear-gradient(#07090db3, #07090db3), url("../public/assets/style/theme-stone.png") 0 100% / 240px 160px, #15181d; }
+  background: linear-gradient(90deg, #000a 0%, transparent 14%, transparent 86%, #000a 100%), linear-gradient(#07090d 0, transparent 120px), linear-gradient(#07090db3, #07090db3), url("../public/assets/style/goals-wall.png") 0 100% / 288px 288px, #15181d; }
 .goals-ground { position: absolute; left: 0; right: 0; bottom: 0; height: 96px; background: linear-gradient(#2b3a24, #18210f 40%, #0d1209); border-top: 2px solid #4b6a35; }
 .goals-line { position: absolute; left: 50%; width: 4px; height: calc(100% - 96px); transform: translateX(-50%); background: #2c313a; border-radius: 2px; box-shadow: 0 0 0 1px #0008; }
 .goals-line.lit { background: linear-gradient(#fff3c4, #e2b55a 30px, #c8963c); box-shadow: 0 0 8px #e2b55a99, 0 0 0 1px #0008; }

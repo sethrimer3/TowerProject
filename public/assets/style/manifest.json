@@ -3999,6 +3999,12 @@
       "file": "relic-tower-9-legendary.png",
       "width": 24,
       "height": 24
+    },
+    "goals-wall": {
+      "file": "goals-wall.png",
+      "width": 96,
+      "height": 96,
+      "tile": true
     }
   }
 }

@@ -1,6 +1,8 @@
 # Pages and HUD
 
-The Goals wall keeps its stone texture under a dark overlay; claimed rewards mute their artwork rather than fading the whole button, so their names and Claimed labels remain readable.
+The Goals wall repeats the opaque 96 × 96 `goals-wall.png` masonry tile at a uniform 3× scale under a dark overlay; it has no transparent outer padding.
+`node tools/prepare-goals-wall.mjs` copies the connected Tower masonry into a dedicated UI asset and registers it for the runtime atlas, without altering dungeon art.
+Claimed rewards mute their artwork rather than fading the whole button, so their names and Claimed labels remain readable.
 
 Named relics use the exact catalog PNG through `relicIcon(relic)` in the collection, event track/store, Goals and `showRelic`; generic navigation still passes a rarity and receives its pendant.
 

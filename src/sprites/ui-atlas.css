@@ -101,113 +101,113 @@ html.experimental-atlas ::-webkit-scrollbar-thumb {
   background-image: var(--atlas-15, none)
 }
 html.experimental-atlas .goals-tower {
-  background: linear-gradient(90deg, #000a 0%, transparent 14%, transparent 86%, #000a 100%), linear-gradient(#07090d 0, transparent 120px), linear-gradient(#07090db3, #07090db3), var(--atlas-12, none) 0 100% / 240px 160px, #15181d
+  background: linear-gradient(90deg, #000a 0%, transparent 14%, transparent 86%, #000a 100%), linear-gradient(#07090d 0, transparent 120px), linear-gradient(#07090db3, #07090db3), var(--atlas-36, none) 0 100% / 288px 288px, #15181d
 }
 html.experimental-atlas.ui-sprites {
-  --ui-button: var(--atlas-36, none);
-  --ui-hover: var(--atlas-37, none);
-  --ui-pressed: var(--atlas-38, none);
-  --ui-selected: var(--atlas-39, none);
-  --ui-disabled: var(--atlas-40, none);
-  --ui-danger: var(--atlas-41, none);
-  --ui-panel: var(--atlas-42, none);
-  --ui-dialog: var(--atlas-43, none);
-  --ui-field: var(--atlas-44, none);
-  --ui-slider-thumb: var(--atlas-45, none);
-  --ui-slider-thumb-active: var(--atlas-46, none);
-  --ui-slider-track: var(--atlas-47, none)
+  --ui-button: var(--atlas-37, none);
+  --ui-hover: var(--atlas-38, none);
+  --ui-pressed: var(--atlas-39, none);
+  --ui-selected: var(--atlas-40, none);
+  --ui-disabled: var(--atlas-41, none);
+  --ui-danger: var(--atlas-42, none);
+  --ui-panel: var(--atlas-43, none);
+  --ui-dialog: var(--atlas-44, none);
+  --ui-field: var(--atlas-45, none);
+  --ui-slider-thumb: var(--atlas-46, none);
+  --ui-slider-thumb-active: var(--atlas-47, none);
+  --ui-slider-track: var(--atlas-48, none)
 }
 html.experimental-atlas.ui-sprites body:not(#_) {
-  background: #10151c var(--atlas-48, none) repeat
+  background: #10151c var(--atlas-49, none) repeat
 }
 html.experimental-atlas.ui-sprites :is(.deck-slot, .node-icon):not(#_) {
-  border-image: var(--atlas-49, none) 6 fill / 12px / 0 stretch
+  border-image: var(--atlas-50, none) 6 fill / 12px / 0 stretch
 }
 html.experimental-atlas.ui-sprites input[type="checkbox"]:not(#_) {
-  background: var(--atlas-44, none) center / 24px 24px no-repeat
+  background: var(--atlas-45, none) center / 24px 24px no-repeat
 }
 html.experimental-atlas.ui-sprites input[type="checkbox"]:checked:not(#_) {
-  background-image: var(--atlas-39, none)
+  background-image: var(--atlas-40, none)
 }
 html.experimental-atlas.ui-sprites :is(.xp-track, .health-track, .weekly-bar, .mission-bar,
   .research-bar, .refine-bar):not(#_) {
-  border-image: var(--atlas-50, none) 6 fill / 4px / 0 stretch
+  border-image: var(--atlas-51, none) 6 fill / 4px / 0 stretch
 }
 html.experimental-atlas.ui-sprites :is(.xp-track i, .weekly-bar i, .mission-bar i,
   .research-bar i, .refine-bar span, .event-bar i):not(#_) {
-  background: var(--atlas-51, none) left top / 32px 100% repeat-x
+  background: var(--atlas-52, none) left top / 32px 100% repeat-x
 }
 html.experimental-atlas.ui-sprites .xp-track i:not(#_) {
-  background-image: var(--atlas-52, none)
+  background-image: var(--atlas-53, none)
 }
 html.experimental-atlas.ui-sprites #health:not(#_) {
-  background: var(--atlas-53, none) left top / 32px 100% repeat-x
+  background: var(--atlas-54, none) left top / 32px 100% repeat-x
 }
 html.experimental-atlas.ui-sprites #health-gain:not(#_) {
-  background: var(--atlas-52, none) left top / 32px 100% repeat-x
+  background: var(--atlas-53, none) left top / 32px 100% repeat-x
 }
 html.experimental-atlas.ui-sprites .page-title:not(#_) {
   border-image: var(--atlas-35, none) 6 fill / 12px / 0 stretch
 }
 html.experimental-atlas.ui-sprites :is(.badge-token, .badge-mark, .hand-badge-level) {
-  --badge-frame: var(--atlas-54, none)
-}
-html.experimental-atlas.ui-sprites :is(.badge-token, .badge-mark, .hand-badge-level).rarity-rare {
   --badge-frame: var(--atlas-55, none)
 }
-html.experimental-atlas.ui-sprites :is(.badge-token, .badge-mark, .hand-badge-level).rarity-epic {
+html.experimental-atlas.ui-sprites :is(.badge-token, .badge-mark, .hand-badge-level).rarity-rare {
   --badge-frame: var(--atlas-56, none)
 }
+html.experimental-atlas.ui-sprites :is(.badge-token, .badge-mark, .hand-badge-level).rarity-epic {
+  --badge-frame: var(--atlas-57, none)
+}
 html.experimental-atlas.ui-sprites.medieval dialog::before {
-  background: var(--atlas-57, none) center / contain no-repeat
+  background: var(--atlas-58, none) center / contain no-repeat
 }
 html.experimental-atlas.ui-sprites .forest-sign:not(#_) {
-  border-image: var(--atlas-58, none) 6 fill / 12px / 0 stretch
+  border-image: var(--atlas-59, none) 6 fill / 12px / 0 stretch
 }
 html.experimental-atlas.ui-sprites #deck-hand .deck-link-toggle::before {
-  background: var(--atlas-59, none) center / contain no-repeat
+  background: var(--atlas-60, none) center / contain no-repeat
 }
 html.experimental-atlas.ui-sprites :is(.training-group, .page-title h2, .tree-heading h3)::before,
 html.experimental-atlas.ui-sprites :is(.training-group, .page-title h2, .tree-heading h3)::after {
-  background: var(--atlas-59, none) right center / auto 12px no-repeat
+  background: var(--atlas-60, none) right center / auto 12px no-repeat
 }
 html.experimental-atlas.ui-sprites .stats .shrine-diamond:not(#_) {
-  background: var(--atlas-60, none) center / contain no-repeat
+  background: var(--atlas-61, none) center / contain no-repeat
 }
-html.experimental-atlas.ui-sprites #shrine-fill:not(#_) { background: var(--atlas-61, none) left top / 32px 100% repeat-x
+html.experimental-atlas.ui-sprites #shrine-fill:not(#_) { background: var(--atlas-62, none) left top / 32px 100% repeat-x
 }
-html.experimental-atlas.ui-sprites #shield-fill:not(#_) { background: var(--atlas-52, none) left top / 32px 100% repeat-x
+html.experimental-atlas.ui-sprites #shield-fill:not(#_) { background: var(--atlas-53, none) left top / 32px 100% repeat-x
 }
-html.experimental-atlas.ui-sprites #overheal-fill:not(#_) { background: var(--atlas-52, none) left top / 32px 100% repeat-x
+html.experimental-atlas.ui-sprites #overheal-fill:not(#_) { background: var(--atlas-53, none) left top / 32px 100% repeat-x
 }
 html.experimental-atlas.ui-sprites :is(.eq-tile, .equip-icon-frame):not(#_) {
-  --equipment-frame: var(--atlas-62, none)
+  --equipment-frame: var(--atlas-63, none)
 }
-html.experimental-atlas.ui-sprites :is(.eq-tile, .equip-icon-frame).rar-uncommon:not(#_) { --equipment-frame: var(--atlas-63, none)
+html.experimental-atlas.ui-sprites :is(.eq-tile, .equip-icon-frame).rar-uncommon:not(#_) { --equipment-frame: var(--atlas-64, none)
 }
-html.experimental-atlas.ui-sprites :is(.eq-tile, .equip-icon-frame).rar-rare:not(#_) { --equipment-frame: var(--atlas-64, none)
+html.experimental-atlas.ui-sprites :is(.eq-tile, .equip-icon-frame).rar-rare:not(#_) { --equipment-frame: var(--atlas-65, none)
 }
-html.experimental-atlas.ui-sprites :is(.eq-tile, .equip-icon-frame):is(.rar-epic, .rar-legendary, .rar-mythic, .rar-ancestral):not(#_) { --equipment-frame: var(--atlas-64, none)
+html.experimental-atlas.ui-sprites :is(.eq-tile, .equip-icon-frame):is(.rar-epic, .rar-legendary, .rar-mythic, .rar-ancestral):not(#_) { --equipment-frame: var(--atlas-65, none)
 }
-html.experimental-atlas.ui-sprites .eq-tile.eq-ghost:not(#_) { --equipment-frame: var(--atlas-65, none)
+html.experimental-atlas.ui-sprites .eq-tile.eq-ghost:not(#_) { --equipment-frame: var(--atlas-66, none)
 }
 html.experimental-atlas.ui-sprites .eq-tile.selected::after {
-  border-image: var(--atlas-66, none) 6 / 6px / 0 stretch
+  border-image: var(--atlas-67, none) 6 / 6px / 0 stretch
 }
 html.experimental-atlas.ui-sprites .eq-check:not(#_) {
-  background: var(--atlas-44, none) center / 24px 24px no-repeat
+  background: var(--atlas-45, none) center / 24px 24px no-repeat
 }
-html.experimental-atlas.ui-sprites :is(#health-gain, #overheal-gain):not(#_) { background: var(--atlas-67, none) left top / 32px 100% repeat-x
+html.experimental-atlas.ui-sprites :is(#health-gain, #overheal-gain):not(#_) { background: var(--atlas-68, none) left top / 32px 100% repeat-x
 }
-html.experimental-atlas.ui-sprites :is(#health-loss, #overheal-loss):not(#_) { background: var(--atlas-61, none) left top / 32px 100% repeat-x
+html.experimental-atlas.ui-sprites :is(#health-loss, #overheal-loss):not(#_) { background: var(--atlas-62, none) left top / 32px 100% repeat-x
 }
 html.experimental-atlas.yang body {
   background:
-    var(--atlas-68, none) right -60px bottom -40px / 340px no-repeat fixed,
+    var(--atlas-69, none) right -60px bottom -40px / 340px no-repeat fixed,
     var(--z-paper)
 }
 html.experimental-atlas.yin body {
   background:
-    var(--atlas-68, none) right -60px bottom -40px / 340px no-repeat fixed,
+    var(--atlas-69, none) right -60px bottom -40px / 340px no-repeat fixed,
     var(--z-paper)
 }

@@ -501,6 +501,7 @@ export const SPRITE_ASSETS = [
   "assets/style/goal-training-discount.png",
   "assets/style/goal-warp-loot.png",
   "assets/style/goal-warp.png",
+  "assets/style/goals-wall.png",
   "assets/style/goblin.png",
   "assets/style/gold.png",
   "assets/style/golem.png",
