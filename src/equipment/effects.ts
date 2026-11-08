@@ -5,7 +5,8 @@
 import type { Mode } from "../entities.ts";
 import type { Save } from "../save/shape.ts";
 import { snap } from "../exact.ts";
-import { EFFECTS, type EffectKind } from "./catalog.ts";
+import { ARCANA_RAISES, EFFECTS, type EffectKind } from "./catalog.ts";
+import type { ArcanumId } from "../arcana/arcana.ts";
 import { categoryOf, findItem, type EquipItem, type EquipmentSave } from "./inventory.ts";
 import { efficiency, mainEffect, withEfficiency } from "./main-effect.ts";
 import { slotValue } from "./slot-effects.ts";
@@ -47,6 +48,28 @@ export function equipmentEffects(e: EquipmentSave, mode: Mode): EffectTotals {
 }
 /** The worn equipment's effects in `mode`, read from the save. */
 export const wornEffects = (save: Pick<Save, "equipment">, mode: Mode) => equipmentEffects(save.equipment, mode);
+/** What either mode's loadout gives of `kind`, the more of the two: for what
+ * works between runs (trainers, research, Offline Gold), which belongs to
+ * neither hero. */
+export const bestWorn = (save: Pick<Save, "equipment">, kind: EffectKind) =>
+  Math.max(wornEffects(save, "tower")[kind], wornEffects(save, "delve")[kind]);
+
+/** An arcanum's attribute `values` as the worn Helmet substats raise them
+ * (`ArcanaKind`): a percent of it (a turn count rounded to whole turns),
+ * points of Slowdown, whole counts, or a cooldown cut by a percent (to a
+ * whole turn, at least 1). */
+export function arcanaWithGear<T extends readonly number[]>(worn: EffectTotals, id: ArcanumId, values: T): T {
+  const raises = ARCANA_RAISES.filter((r) => r.id === id && worn[r.kind]);
+  if (!raises.length) return values;
+  const out = [...values];
+  for (const { index, kind, raise, name } of raises) {
+    const n = worn[kind], v = out[index]!;
+    out[index] = raise === "count" ? v + Math.floor(n) : raise === "points" ? snap(v + n)
+      : raise === "cut" ? Math.max(1, Math.round((v * (100 - Math.min(100, n))) / 100))
+      : name.endsWith("Duration") ? Math.round((v * (100 + n)) / 100) : snap((v * (100 + n)) / 100);
+  }
+  return out as unknown as T;
+}
 
 /** `base` raised by `percent` (5 is +5%), on the snap grid. */
 export const raised = (base: number, percent: number) => (percent ? snap((base * (100 + percent)) / 100) : base);

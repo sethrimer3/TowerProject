@@ -4,6 +4,7 @@ import type { GoalUnlock } from "../goals.ts";
 import type { ResearchTarget } from "./archives.ts";
 import { snap } from "../exact.ts";
 import { relicBoostValue, relicRowValue, type RelicHolder } from "../economy/relic-effects.ts";
+import { gearRowValue, type GearTotals } from "../equipment/gear-rows.ts";
 /** Training points each level earns, to spend on the hero's stats. */
 export const TRAINING_PER_LEVEL = 3;
 /** The groups the Training tab, and a run's training bar, show the rows
@@ -543,10 +544,11 @@ export const amountAt = (row: TrainingDef, ranks: number) => Math.min(row.cap ??
  * at `ranks` (the ranks `save` holds; a run's `trainingNow` counts those
  * bought with Silver): `off` until its `needs` upgrade is owned, and its
  * ranks counted only once its `requires` is; then raised by the relics
- * `save` holds (economy/relic-effects.ts). */
-export function trainedAmount(save: { upgrades: Partial<Record<UpgradeId, number>>; training?: Partial<Record<TrainingId, number>> } & RelicHolder, id: TrainingId, ranks = save.training?.[id] ?? 0) {
+ * `save` holds (economy/relic-effects.ts) and, once open, by the worn
+ * equipment it carries (`gear`, equipment/gear-rows.ts). */
+export function trainedAmount(save: { upgrades: Partial<Record<UpgradeId, number>>; training?: Partial<Record<TrainingId, number>>; gear?: GearTotals } & RelicHolder, id: TrainingId, ranks = save.training?.[id] ?? 0) {
   const row = trainingDef(id), needs = row.needs ?? row.requires;
   // A row not yet open still takes its free relics: Silver Bonus' ×1 grows.
   if (needs && !save.upgrades[needs]) return relicBoostValue(save, row, row.off ?? 0);
-  return relicRowValue(save, row, amountAt(row, row.requires && !save.upgrades[row.requires] ? 0 : ranks));
+  return gearRowValue(save.gear, id, relicRowValue(save, row, amountAt(row, row.requires && !save.upgrades[row.requires] ? 0 : ranks)));
 }

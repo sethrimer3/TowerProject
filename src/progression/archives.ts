@@ -1,3 +1,4 @@
+import { bestWorn } from "../equipment/effects.ts";
 import { relicFactor, type RelicHolder } from "../economy/relic-effects.ts";
 import { IGNORE_PER_RUN, REGAIN_FLOORS, TARGET_PER_RUN } from "../config.ts";
 import { levelForXp } from "./xp.ts";
@@ -1082,9 +1083,11 @@ export const withNextLevel = (a: ArchivesSave, id: ResearchId): ArchivesSave =>
   ({ ...a, levels: { ...a.levels, [id]: researchLevel(a, id) + 1 } });
 
 /** How long `level` takes with the research speed the Archives have now,
- * in ms. The definition keeps its own hours. */
-export const duration = (a: ArchivesSave, level: ResearchLevel, relics?: RelicHolder) =>
-  Math.round((level.hours * 3_600_000) / ((1 + researched(a, "researchSpeed")) * relicFactor(relics ?? {}, "researchSpeed")));
+ * in ms, the relics' and the worn Scholarship substats' (either loadout's,
+ * the more) raising it. The definition keeps its own hours; a job under
+ * way keeps the time it started with. */
+export const duration = (a: ArchivesSave, level: ResearchLevel, owner?: RelicHolder & Partial<Pick<Save, "equipment">>) =>
+  Math.round((level.hours * 3_600_000) / ((1 + researched(a, "researchSpeed")) * relicFactor(owner ?? {}, "researchSpeed") * (owner?.equipment ? (100 + bestWorn({ equipment: owner.equipment }, "researchSpeed")) / 100 : 1)));
 
 /** The Gold `level` costs with the Research Cost Discount the Archives have
  * now. The definition keeps its own Gold. */

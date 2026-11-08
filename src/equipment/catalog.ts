@@ -4,6 +4,7 @@
 // name items by definition id only, so this catalogue can change without
 // touching saved equipment. Balance numbers (rarity caps, costs, drop and
 // pull rates) live in `balance.ts`; see docs/EQUIPMENT.md.
+import type { ArcanumId } from "../arcana/arcana.ts";
 /** Slots retained by the catalogue, including future unlocks. */
 export type CategoryId = "weapon" | "shield" | "chestplate" | "helmet" | "gloves" | "boots" | "cape" | "belt" | "ring" | "amulet";
 export const CATEGORY_IDS: readonly CategoryId[] = ["weapon", "shield", "chestplate", "helmet", "gloves", "boots", "cape", "belt", "ring", "amulet"];
@@ -49,16 +50,64 @@ export function baseMaterial(id: unknown): EquipMaterialId | undefined {
   return typeof id === "string" && Object.hasOwn(legacy, id) ? legacy[id] : undefined;
 }
 
+/** An arcanum's attribute a Helmet substat raises: the arcanum and the
+ * attribute's place (0 to 2, as `ARCANA` lists them). */
+export type ArcanaKind = `arcanum:${ArcanumId}:${0 | 1 | 2}`;
 /** What an item can do, each read in one place: the loadout (stats, shroud,
- * Regen, starting keys), the Arcana desk (`arcanumDamage`), combat (`bossAttack`, `pierce`), the step rules (healing),
- * the run's chests (`chestFind`, as it goes inside), the run's purse (Gold, Silver, materials), the hero's XP, and
- * movement. Percent kinds are in percent (5 is +5%). */
+ * Regen, starting keys, Thorns, Parry, Lifesteal, Armor Break, Shield
+ * Thorns), the Training rows equipment raises (`trainedAmount`'s `gear`:
+ * crits, the Archer's rows, the Aether Shield, Overheal), the Arcana desk
+ * (`arcanumDamage` and each `ArcanaKind`), combat (`bossAttack`, `pierce`,
+ * `comboAttack`), the step rules (healing, Key Efficiency, Shield Regen),
+ * the run's chests and drops, the run's purse (Gold, Silver, Interest,
+ * materials), the hero's XP, movement and Dash, Free Upgrades and Enemy
+ * Level Skips, and the trainers', the Archives' and Offline Gold's time and
+ * pay. Percent kinds are in percent (5 is +5%). */
 export type EffectKind =
   | "attack" | "defense" | "maxHp" | "attackPct" | "defensePct" | "maxHpPct"
   | "shroud" | "regen" | "yellowKeys" | "blueKeys" | "bossAttack" | "pierce"
   | "potionHeal" | "victoryHeal" | "floorHeal"
   | "goldFind" | "silverFind" | "xpGain" | "materialFind" | "chestFind" | "startSilver"
-  | "moveSpeed" | "dashTiles" | "arcanumDamage";
+  | "moveSpeed" | "dashTiles" | "arcanumDamage"
+  // Offense
+  | "critChance" | "critFactor" | "superCritChance" | "superCritFactor" | "armorBreakPct" | "comboAttack"
+  | "attackRange" | "attackSpeed" | "attackPerTile" | "chargedShot" | "multishotChance" | "multishotTargets" | "rapidFireChance" | "rapidFireDuration"
+  // Defense
+  | "shroudPct" | "regenPct" | "thornsPct" | "parry" | "overhealPct" | "lifesteal" | "shieldHpPct" | "regrowCut" | "shieldRegenPct" | "shieldThornsPct"
+  // Utility
+  | "killGold" | "pickupGold" | "interestPct" | "yellowKeyCut" | "blueKeyCut" | "redKeyCut"
+  | "freeOffenseChance" | "freeDefenseChance" | "freeUtilityChance" | "hpSkipChance" | "combatSkipChance"
+  // Efficiency
+  | "trainerSpeed" | "researchSpeed" | "dropChance" | "offlineGold" | "freeUpChance" | "endRushTiles"
+  | ArcanaKind;
+
+/** Each arcanum's attributes' names, as `ARCANA` (arcana/arcana.ts) has them. */
+const ARCANA_ATTRIBUTES: Record<ArcanumId, { name: string; attributes: readonly [string, string, string] }> = {
+  ricochetShot: { name: "Ricochet Shot", attributes: ["ATK Mult", "Rebounds", "Chance"] },
+  aurumBloom: { name: "Aurum Bloom", attributes: ["Bonus", "Golden Chance", "Stellar Chance"] },
+  overseer: { name: "Overseer", attributes: ["Bonus", "Angle", "Quantity"] },
+  thunderbolt: { name: "Thunderbolt", attributes: ["ATK Mult", "Quantity", "Cooldown"] },
+  lifespring: { name: "Lifespring", attributes: ["HP", "Effect Waves", "Cooldown"] },
+  timeDilation: { name: "Time Dilation", attributes: ["Duration", "Slowdown", "Cooldown"] },
+  phantasm: { name: "Phantasm", attributes: ["ATK Mult", "Quantity", "Cooldown"] },
+  necroticFrost: { name: "Necrotic Frost", attributes: ["ATK Mult", "Duration", "Cooldown"] },
+  voidwell: { name: "Voidwell", attributes: ["Size", "Duration", "Cooldown"] },
+};
+/** How a Helmet substat raises an arcanum's attribute: by a percent of it,
+ * by points (Slowdown), by whole counts (Rebounds, beams, bolts, Effect
+ * Waves, ghosts), or by cutting it (a cooldown, in percent). */
+export type ArcanaRaise = "percent" | "points" | "count" | "cut";
+const raiseOf = (name: string): ArcanaRaise =>
+  name === "Cooldown" ? "cut" : name === "Slowdown" ? "points" : name === "Rebounds" || name === "Quantity" || name === "Effect Waves" ? "count" : "percent";
+/** Every arcanum attribute a Helmet substat raises, with its kind, words and how. */
+export const ARCANA_RAISES = (Object.keys(ARCANA_ATTRIBUTES) as ArcanumId[]).flatMap((id) =>
+  ARCANA_ATTRIBUTES[id].attributes.map((attribute, index) => ({
+    id, index: index as 0 | 1 | 2, kind: `arcanum:${id}:${index}` as ArcanaKind, raise: raiseOf(attribute),
+    name: `${ARCANA_ATTRIBUTES[id].name} ${attribute}`,
+  })));
+const arcanaText = (raise: ArcanaRaise, name: string): EffectText =>
+  raise === "count" ? { words: name, whole: true } : raise === "points" ? { words: `${name} (points)`, percent: true }
+    : raise === "cut" ? { words: name, percent: true, lead: "−" } : { words: name, percent: true };
 
 /** How an effect reads: its words after the number, whether the number is a
  * percent, whether it counts in whole units only (keys, Dash tiles) and
@@ -89,6 +138,48 @@ export const EFFECTS: Record<EffectKind, EffectText> = {
   moveSpeed: { words: "movement speed", percent: true },
   dashTiles: { words: "tile a Dash crosses", plural: "tiles a Dash crosses", whole: true },
   arcanumDamage: { words: "Arcanum Damage", percent: true },
+  critChance: { words: "crit chance", percent: true },
+  critFactor: { words: "crit factor", percent: true },
+  superCritChance: { words: "Super Crit chance", percent: true },
+  superCritFactor: { words: "Super Crit factor", percent: true },
+  armorBreakPct: { words: "Armor Break", percent: true },
+  comboAttack: { words: "Combo ATK", percent: true },
+  attackRange: { words: "Attack Range", percent: true },
+  attackSpeed: { words: "Attack Speed", percent: true },
+  attackPerTile: { words: "ATK / m", percent: true },
+  chargedShot: { words: "Charged Shot charge", percent: true },
+  multishotChance: { words: "Multishot Chance", percent: true },
+  multishotTargets: { words: "Multishot Target", plural: "Multishot Targets", whole: true },
+  rapidFireChance: { words: "Rapid Fire Chance", percent: true },
+  rapidFireDuration: { words: "Rapid Fire Duration", percent: true },
+  shroudPct: { words: "shroud", percent: true },
+  regenPct: { words: "Regen", percent: true },
+  thornsPct: { words: "Thorn Damage", percent: true },
+  parry: { words: "Parry", percent: true },
+  overhealPct: { words: "Overheal ceiling", percent: true },
+  lifesteal: { words: "Lifesteal", percent: true },
+  shieldHpPct: { words: "Shield HP", percent: true },
+  regrowCut: { words: "turns for the Aether Shield to regrow", percent: true, lead: "−" },
+  shieldRegenPct: { words: "Shield Regen", percent: true },
+  shieldThornsPct: { words: "Shield Thorns", percent: true },
+  killGold: { words: "Gold from kills", percent: true },
+  pickupGold: { words: "Gold from pickups", percent: true },
+  interestPct: { words: "Interest", percent: true },
+  yellowKeyCut: { words: "of each gold key a door takes", percent: true, lead: "−" },
+  blueKeyCut: { words: "of each blue key a door takes", percent: true, lead: "−" },
+  redKeyCut: { words: "of each red key a door takes", percent: true, lead: "−" },
+  freeOffenseChance: { words: "Free Offense Up chance each floor", percent: true },
+  freeDefenseChance: { words: "Free Defense Up chance each floor", percent: true },
+  freeUtilityChance: { words: "Free Utility Up chance each floor", percent: true },
+  hpSkipChance: { words: "Enemy HP Level Skip chance", percent: true },
+  combatSkipChance: { words: "Enemy Combat Level Skip chance", percent: true },
+  trainerSpeed: { words: "trainer speed", percent: true },
+  researchSpeed: { words: "Archives research speed", percent: true },
+  dropChance: { words: "enemy drop chance", percent: true },
+  offlineGold: { words: "Offline Gold", percent: true },
+  freeUpChance: { words: "chance of each free Training level", percent: true },
+  endRushTiles: { words: "tile End Rush crosses", plural: "tiles End Rush crosses", whole: true },
+  ...(Object.fromEntries(ARCANA_RAISES.map((r) => [r.kind, arcanaText(r.raise, r.name)])) as Record<ArcanaKind, EffectText>),
 };
 
 /** Standard pieces come from Equipment Chests; Unique pieces come from Gem pulls and

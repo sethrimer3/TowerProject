@@ -14,7 +14,7 @@ import {
   EFFECT_CANDIDATES, EQUIP_RARITIES, IMPROVE_COST_FACTOR, rarityRank, REFINE_CHOICE_EVERY, REFINE_COST, REFINE_GUARANTEE_EVERY,
   SUBSTAT_RARITIES, SUBSTAT_RARITY_WEIGHTS, SUBSTAT_SLOT_LEVELS, substatCap, type EquipRarity,
 } from "./balance.ts";
-import { effectPool, inPool, slotEffectDef } from "./slot-effects.ts";
+import { effectPool, inPool, rollsAt, slotEffectDef } from "./slot-effects.ts";
 import { categoryOf, findItem, maxLevel, openSlotCount, rarityFor, reachableLevel, type EffectChoice, type EffectSlot, type EquipItem, type EquipmentSave } from "./inventory.ts";
 import { materialOf, hasMaterials, spendMaterials } from "./catalog.ts";
 import { rollRarity, withSavedStream } from "./acquire.ts";
@@ -53,11 +53,12 @@ export function improveCost(item: EquipItem) {
   return { ...c, gold: c.gold * IMPROVE_COST_FACTOR, material: c.material * IMPROVE_COST_FACTOR };
 }
 
-/** The effects slot `index` may be offered: the category's pool less those
- * the item's other open slots hold. */
+/** The substats slot `index` may be offered: the category's pool less those
+ * the item's other open slots hold, and less those that only come in a
+ * rarity above the item's. */
 export function slotPool(item: EquipItem, index: number) {
-  const others = new Set(item.slots.slice(0, openSlotCount(item)).filter((_, i) => i !== index).map((s) => s.effect));
-  return effectPool(categoryOf(item)).filter((d) => !others.has(d.id));
+  const others = new Set(item.slots.slice(0, openSlotCount(item)).filter((_, i) => i !== index).map((s) => s.effect)), cap = effectCap(item);
+  return effectPool(categoryOf(item)).filter((d) => !others.has(d.id) && rollsAt(d, cap));
 }
 
 /** `EFFECT_CANDIDATES` different effects for slot `index`, each at a
@@ -65,10 +66,11 @@ export function slotPool(item: EquipItem, index: number) {
  * `guaranteed`, the first is at the cap. */
 export function rollCandidates(item: EquipItem, index: number, guaranteed: boolean, rng: () => number): EffectChoice[] {
   const cap = effectCap(item), left = slotPool(item, index);
-  const weights = Object.fromEntries(SUBSTAT_RARITIES.filter((r) => rarityRank(r) <= rarityRank(cap)).map((r) => [r, SUBSTAT_RARITY_WEIGHTS[r]]));
   const offer: EffectChoice[] = [];
   while (offer.length < EFFECT_CANDIDATES && left.length) {
     const [def] = left.splice(Math.min(left.length - 1, Math.floor(rng() * left.length)), 1);
+    // Its rarity: among those from its own lowest up to the item's, at their weights.
+    const weights = Object.fromEntries(SUBSTAT_RARITIES.filter((r) => rarityRank(r) <= rarityRank(cap) && rollsAt(def, r)).map((r) => [r, SUBSTAT_RARITY_WEIGHTS[r]]));
     const rarity = guaranteed && !offer.length ? cap : rollRarity(weights, rng());
     offer.push({ effect: def.id, rarity });
   }

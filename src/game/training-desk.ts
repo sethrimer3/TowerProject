@@ -1,3 +1,4 @@
+import { bestWorn } from "../equipment/effects.ts";
 import { trainingCap, TRAINING, trainingDef, type TrainingId } from "../progression/training.ts";
 import { snap } from "../exact.ts";
 import { TRAINING_RESET_GEMS } from "../economy/gems.ts";
@@ -143,8 +144,10 @@ export class TrainingDesk {
 
   /** Pays `gold` and starts a trainer on the next `ranks` ranks of `id` at
    * `now`: their base time `ms` less the stat's time credit, then the time
-   * bank (each used up first), divided by the batch's `speed`. */
-  private start(id: TrainingId, ranks: number, gold: number, ms: number, speed: number, now: number) {
+   * bank (each used up first), divided by the batch's `speed`, which the
+   * worn Drillmaster substats raise (either loadout's, the more) as it starts. */
+  private start(id: TrainingId, ranks: number, gold: number, ms: number, batch: number, now: number) {
+    const speed = snap((batch * (100 + bestWorn(this.save, "trainerSpeed"))) / 100);
     const save = this.save, { fromCredit, fromBank, used, work } = batchWork(ms, speed, save.trainingCredit[id], save.trainingBank);
     save.gold = snap(save.gold - gold);
     tally(save, "trainingGold", gold);

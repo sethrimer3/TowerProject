@@ -199,7 +199,7 @@ try {
         const item = (id, def, rarity, level, extra) => ({ id, def, rarity, level, slots: [], ...extra });
         Object.assign(s.equipment, {
           items: [
-            item("e1", "knightsSword", "uncommon", 12, { spent: { gold: 3300, material: 70 }, slots: [{ effect: "keenEdge", rarity: "common", refinement: 7 }] }),
+            item("e1", "knightsSword", "uncommon", 12, { spent: { gold: 3300, material: 70 }, slots: [{ effect: "ferocity", rarity: "uncommon", refinement: 7 }] }),
             item("e2", "knightsSword", "uncommon", 1), item("e3", "knightsSword", "uncommon", 4), item("e4", "knightsSword", "uncommon", 1),
             item("e5", "ringOfFury", "rare", 1, { locked: true }), item("e6", "steelCuirass", "common", 3), item("e7", "bastionPlate", "uncommon", 1),
           ],

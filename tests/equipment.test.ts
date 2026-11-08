@@ -582,8 +582,8 @@ test("victory heal restores a share of max HP after a won fight", () => {
   s.equipment.equipped.tower.amulet = amulet.id;
   const g = new Game(s);
   g.newRun({ seed: 4 });
-  assert.equal(g.stepRules.victoryHeal, 0.45);
+  assert.equal(g.stepRules.victoryHeal, 4.5);
   const player = { ...g.run.player, hp: 50, maxHp: 100, attack: 50, defense: 50 };
   const next = resolveStep(player, { kind: "enemy", enemy: { name: "E", hp: 10, attack: 1, defense: 0, strength: "weak" } } as never, g.stepRules);
-  assert.equal(next.player.hp, 50.45);
+  assert.equal(next.player.hp, 54.5);
 });

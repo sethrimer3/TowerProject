@@ -12,7 +12,7 @@ import { clearVoidwell } from "../arcana/voidwell.ts";
 import type { CritRule } from "../combat.ts";
 import type { Enemy, Mode } from "../entities.ts";
 import type { FloorBloom } from "../environments.ts";
-import { wornEffects } from "../equipment/effects.ts";
+import { arcanaWithGear, wornEffects } from "../equipment/effects.ts";
 import { boostLifespringHealth } from "../progression/hero-stats.ts";
 import { stream } from "../random.ts";
 import type { TowerRun } from "../runs.ts";
@@ -126,9 +126,14 @@ export class ArcanaDesk {
   augmented(id: ArcanumId) {
     return !!(this.host.run as TowerRun).shrine?.picked.includes(augmentOf(id));
   }
-  /** `held`'s attribute values as the run has them: its levels', and its augment boon's. */
+  /** `held`'s attribute values as the run has them: its levels', its augment
+   * boon's, and the worn Helmet substats'. */
   valuesOf({ id, levels }: Pick<HeldArcanum, "id" | "levels">) {
-    return this.augmented(id) ? augmentedValues(id, valuesAt(id, levels)) : valuesAt(id, levels);
+    return this.withGear(id, this.augmented(id) ? augmentedValues(id, valuesAt(id, levels)) : valuesAt(id, levels));
+  }
+  /** `values` raised by the Helmet substats the mode's hero wears. */
+  private withGear<T extends readonly number[]>(id: ArcanumId, values: T): T {
+    return arcanaWithGear(wornEffects(this.save, this.host.mode), id, values);
   }
   isOn(id: ArcanumId) {
     return !this.runState.off.includes(id);
@@ -173,7 +178,7 @@ export class ArcanaDesk {
   cooldown({ id, levels }: HeldArcanum) {
     const trigger = arcanum(id).trigger;
     if (trigger.on !== "cooldown") return undefined;
-    const values = valuesAt(id, levels), turns = id === "phantasm" ? phantasmCooldown(values[2], phantasmEffects(this.save)) : trigger.turns(values);
+    const values = this.withGear(id, valuesAt(id, levels)), turns = id === "phantasm" ? phantasmCooldown(values[2], phantasmEffects(this.save)) : trigger.turns(values);
     const timer = id === "lifespring" ? this.host.run.lifespring?.timer : id === "timeDilation" ? this.host.run.timeDilation?.timer : id === "phantasm" ? this.host.run.phantasm?.timer : id === "necroticFrost" ? this.host.run.necroticFrost?.timer : id === "voidwell" ? this.host.run.voidwell?.timer : this.runState.timers[id];
     return { left: Math.min(timer ?? turns, turns), turns };
   }
@@ -313,7 +318,7 @@ export class ArcanaDesk {
     const active = this.held.flatMap(({ id, levels }) => {
       const trigger = arcanum(id).trigger;
       // Lifespring, Time Dilation, Phantasm, Necrotic Frost and Voidwell run their own, in the run: `lifespringTurn`, `timeDilationTurn`, `phantasmTurn`, `frostTurn`, `Game.voidwellTurn`.
-      return trigger.on === "cooldown" && id !== "lifespring" && id !== "timeDilation" && id !== "phantasm" && id !== "necroticFrost" && id !== "voidwell" && this.isOn(id) ? [{ id, turns: trigger.turns(valuesAt(id, levels)) }] : [];
+      return trigger.on === "cooldown" && id !== "lifespring" && id !== "timeDilation" && id !== "phantasm" && id !== "necroticFrost" && id !== "voidwell" && this.isOn(id) ? [{ id, turns: trigger.turns(this.withGear(id, valuesAt(id, levels))) }] : [];
     });
     return tickCooldowns(active, this.runState.timers);
   }

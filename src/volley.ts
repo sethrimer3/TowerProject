@@ -10,6 +10,7 @@
  * live in enemies/ranged.ts; this module plays a whole turn of them, in order, on
  * the board, and says what happened. `Game` decides whether a turn has a
  * volley at all and applies the outcome (the hero's HP, kill pay, a fall). */
+import type { GearTotals } from "./equipment/gear-rows.ts";
 import type { Board } from "./board.ts";
 import { point, type ByFoe, type Enemy, type Player, type Tile } from "./entities.ts";
 import type { Save } from "./save/shape.ts";
@@ -93,7 +94,7 @@ export type VolleyTurn = {
   seed: number;
   volleys: Volleys;
   archer: boolean;
-  ranks: Pick<Save, "upgrades" | "training" | "archives">;
+  ranks: Pick<Save, "upgrades" | "training" | "archives"> & { gear?: GearTotals };
   cardCrit?: { chance: number; factor: number };
   handShot?: { attack: number; speed: number; boss?: number; range?: number; charge?: number; foeCharge?: ByFoe };
   /** Ricochet Shot, held and on (game/arcana-desk.ts): what its strikes multiply
@@ -294,7 +295,7 @@ function heroAt(w: Walk, tick: number, wrap: number) {
  * arrow's boost by where its target and the hero stand the tick it fires
  * (`beam`), so they too decide what it can hurt. `end` keeps the clock. */
 function arrows(turn: VolleyTurn, p: Player, v: Volleys, shots: Shot[], kills: VolleyKill[], beam: (x: number, y: number, tick: number) => number, inReach: (tick: number) => InReach[], at: (tick: number) => { x: number; y: number }) {
-  const { ranks } = turn, perTile = trainedAmount(ranks, "attackPerTile"), percent = researched(ranks.archives, "chargedShotPercent");
+  const { ranks } = turn, perTile = trainedAmount(ranks, "attackPerTile"), percent = (researched(ranks.archives, "chargedShotPercent") * (100 + (ranks.gear?.chargedShot ?? 0))) / 100;
   const shotAtk = turn.handShot?.attack ?? 0, bossAtk = turn.handShot?.boss ?? 0, base = trainedAmount(ranks, "attackSpeed");
   const speed = turn.handShot?.speed ? snap(base * (1 + turn.handShot.speed / 100)) : base;
   const charge = turn.handShot?.charge ?? 0, foeCharge = turn.handShot?.foeCharge;

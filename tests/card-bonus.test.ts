@@ -222,13 +222,13 @@ test("a run fixes its chest odds as it goes inside: the CHEST card's, raised by 
   assert.deepEqual(raisedBy, { supply: snap((1.5 * (100 + find)) / 100), equipment: snap((0.5 * (100 + find)) / 100) });
 });
 
-/** A save wearing an Uncommon Gatherer's Shroud in the Tower, with a Bounty substat. */
+/** A save wearing an Uncommon Steel Cuirass in the Tower, with a Treasure Sense substat. */
 function defaultsWithShroud() {
   const s = playedSave();
   s.equipment.unlocked = true;
-  const item = addItem(s.equipment, "gatherersShroud", "uncommon")!;
+  const item = addItem(s.equipment, "steelCuirass", "uncommon")!;
   item.level = 1;
-  item.slots = [{ effect: "bounty", rarity: "uncommon" }];
+  item.slots = [{ effect: "treasureSense", rarity: "uncommon" }];
   s.equipment.equipped.tower[itemDef(item.def)!.category] = item.id;
   return s.equipment;
 }

@@ -37,7 +37,7 @@ const SORTS: { id: SortKey; name: string }[] = [
 const MODE_NAMES: Record<Mode, string> = { tower: "Tower", delve: "Delve" };
 /** Why a slot command was refused, for the player. */
 const REFUSALS: Partial<Record<SlotRefusal, string>> = {
-  gold: "Not enough Gold.", material: "Not enough material.", offered: "Choose a candidate or keep the current effect first.",
+  gold: "Not enough Gold.", material: "Not enough material.", offered: "Choose a candidate or keep the current substat first.",
 };
 const idNumber = (item: EquipItem) => Number(item.id.slice(1));
 const nameOf = (item: EquipItem) => itemDef(item.def)!.name;
@@ -639,7 +639,7 @@ export class EquipmentPanel {
   /** What a Refinement milestone brings, in words. */
   private milestoneText(item: EquipItem, reward: "choice" | "guarantee") {
     const cap = RARITY_TIERS[effectCap(item)].name;
-    return reward === "choice" ? `a Choice: any effect, ${cap}` : `a guaranteed ${cap} candidate`;
+    return reward === "choice" ? `a Choice: any substat, ${cap}` : `a guaranteed ${cap} candidate`;
   }
 
   /** One slot's screen: the effect held (CURRENT), any candidates on offer,
@@ -649,8 +649,8 @@ export class EquipmentPanel {
     if (!item || !slot || index >= openSlotCount(item)) return;
     const { modal } = this.ctx;
     const current = slot.effect && slot.rarity ? `<div class="slot-current"><small>CURRENT</small><p>${this.choiceHtml(item, { effect: slot.effect, rarity: slot.rarity })}</p></div>` : "";
-    const first = !slot.effect && !slot.offer ? `<p class="hint">This slot's first roll is free: ${EFFECT_CANDIDATES} candidates from the ${CATEGORIES[categoryOf(item)].name.toLowerCase()}'s effects; take the one you like.</p><div class="dialog-actions"><button id="eq-first">Roll (free)</button></div>` : "";
-    modal.innerHTML = `<small>${nameOf(item).toUpperCase()} · EFFECT SLOT ${index + 1}</small><h2>${slot.effect ? "Refine" : "New effect slot"}</h2>
+    const first = !slot.effect && !slot.offer ? `<p class="hint">This slot's first roll is free: ${EFFECT_CANDIDATES} candidates from the ${CATEGORIES[categoryOf(item)].name.toLowerCase()}'s substats; take the one you like.</p><div class="dialog-actions"><button id="eq-first">Roll (free)</button></div>` : "";
+    modal.innerHTML = `<small>${nameOf(item).toUpperCase()} · SUBSTAT ${index + 1}</small><h2>${slot.effect ? "Refine" : "New substat slot"}</h2>
       ${note ? `<p class="warning">${note}</p>` : ""}${current}${this.offerHtml(item, slot)}${first}${this.refinementHtml(item, slot)}${this.slotActionsHtml(item, slot)}
       <div class="dialog-actions"><button id="eq-back">Back</button></div>`;
     if (!modal.open) modal.showModal();
@@ -694,7 +694,7 @@ export class EquipmentPanel {
       <div class="dialog-actions"><button id="eq-refine"${this.affords(rc, mat) ? "" : " disabled"}>Refine</button>
       ${canImprove ? `<button id="eq-improve"${this.affords(ic, mat) ? "" : " disabled"} title="${this.costText(ic, mat).replace(/<[^>]+>/g, "")}">Improve to ${RARITY_TIERS[EQUIP_RARITIES[rarityRank(slot.rarity!) + 1]].name}</button>` : ""}
       ${choicesLeft(slot) ? `<button id="eq-choice">Use a Choice (${choicesLeft(slot)})</button>` : ""}</div>
-      ${canImprove ? `<p class="hint">Improve: the same effect one rarity higher, for ${this.costText(ic, mat)}.</p>` : ""}`;
+      ${canImprove ? `<p class="hint">Improve: the same substat one rarity higher, for ${this.costText(ic, mat)}.</p>` : ""}`;
   }
 
   /** Spending a Choice: every effect the slot may hold, by family, at the
@@ -704,7 +704,7 @@ export class EquipmentPanel {
     if (!item) return;
     const { modal } = this.ctx, cap = effectCap(item), pool = slotPool(item, index);
     const families = [...new Set(pool.map((d) => d.family))];
-    modal.innerHTML = `<small>${nameOf(item).toUpperCase()} · EFFECT SLOT ${index + 1}</small><h2>Use a Choice</h2>
+    modal.innerHTML = `<small>${nameOf(item).toUpperCase()} · SUBSTAT ${index + 1}</small><h2>Use a Choice</h2>
       <p class="hint">Take any of these at ${rarityTag(cap)}. Any candidates on offer go.</p>
       ${families.map((f) => `<h3 class="equip-heading">${FAMILIES[f].name}</h3>${pool.filter((d) => d.family === f).map((d) =>
         `<button class="slot-candidate rar-${cap}" data-eq-exact="${d.id}">${this.choiceHtml(item, { effect: d.id, rarity: cap })}</button>`).join("")}`).join("")}

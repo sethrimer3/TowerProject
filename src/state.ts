@@ -766,7 +766,7 @@ export class Game {
     if (levelForXp(snapshot.xp) < levelForXp(this.save.xp)) this.levelUpAt = -Infinity;
     this.fights.forgetMarks();
     this.shieldFormedAt = -Infinity;
-    syncShield(this.save, this.run);
+    syncShield(this.save, this.run, this.mode);
     this.dashedTo = null;
     this.areaBursts = [];
     this.warpLooted = null;
@@ -1208,7 +1208,7 @@ export class Game {
    * (`squaredUp`). */
   get fighter(): Player {
     const p = this.run.player, combo = this.run.combo;
-    return combo ? { ...p, comboAttack: Math.min(combo.next, COMBO_LIMIT) * COMBO_PERCENT } : p;
+    return combo ? { ...p, comboAttack: snap((Math.min(combo.next, COMBO_LIMIT) * COMBO_PERCENT * (100 + this.worn.comboAttack)) / 100) } : p;
   }
   /** The hero as it takes the fight at `to`, the step's tile: with Overseer's
    * beams as the turn begins on that tile, a copy carrying their ATK as well. */
@@ -1265,7 +1265,7 @@ export class Game {
    * `dashTiles`, End Rush's research on STAIRS (toward the stairs, or the
    * Delve's climb), and its Dash badge's value. They add up. */
   dashFor(id: CardId) {
-    const end = id === "stairs" && this.save.upgrades.endRush ? researched(this.save.archives, "endRushTiles") : 0;
+    const end = id === "stairs" ? (this.save.upgrades.endRush ? researched(this.save.archives, "endRushTiles") : 0) + this.worn.endRushTiles : 0;
     const badge = badgeOn(this.run.badges, id, "dash");
     return this.dashTiles + end + (badge ? badgeValue("dash", badge.level) : 0);
   }
@@ -1574,7 +1574,7 @@ export class Game {
       return n ? [[color, n] as const] : [];
     });
     const keyFind = found.length ? { keyFind: Object.fromEntries(found) } : {};
-    const overheal = this.overheal, shieldRegen = researched(this.save.archives, "shieldRegenPercent");
+    const overheal = this.overheal, shieldRegen = raised(researched(this.save.archives, "shieldRegenPercent"), this.worn.shieldRegenPct);
     return { potionHeal, percentPotion: trainedAmount(this.trainingNow, "potion"), regen, ...(overheal > 1000 ? { overheal } : {}), ...(shieldRegen ? { shieldRegen } : {}),
       heartToll: snap(researched(this.save.archives, "heartToll") * relicCut(this.save, "heartDoor")), ...(relicAmount(this.save, "woodenDoor") ? { woodToll: snap(100 * relicCut(this.save, "woodenDoor")) } : {}), keyCost: this.keyCost, ...keyFind, ...(this.doorOff ? { doorOff: this.doorOff } : {}),
       ...(tree.doorHeal ? { doorHeal: tree.doorHeal } : {}), ...(tree.yellowLockHeal ? { yellowLockHeal: tree.yellowLockHeal } : {}), ...(tree.keyHeal ? { keyHeal: tree.keyHeal } : {}), ...(tree.keyOverheal ? { keyOverheal: tree.keyOverheal } : {}),
@@ -1639,6 +1639,9 @@ export class Game {
     if (tree.plainDoorCost) doors.plain = tree.plainDoorCost;
     if (tree.heartDoorCost) doors.hearts = tree.heartDoorCost;
     for (const color of KEY_ORDER) if (keyStat(tree, color, "DoorCost")) doors[`${color}Key`] = keyStat(tree, color, "DoorCost");
+    // The worn Key Efficiency substats cut each colour's keys again, a kind of their own.
+    const worn = this.worn;
+    for (const color of KEY_ORDER) if (worn[`${color}KeyCut`]) doors[`${color}Gear`] = worn[`${color}KeyCut`];
     return Object.keys(doors).length ? doors : undefined;
   }
   /** Where the Training tab reads its rows' values: this mode's hero, and
@@ -1647,9 +1650,10 @@ export class Game {
     return this.run.outside ? { mode: this.mode } : { mode: this.mode, run: this.run };
   }
   /** The upgrades owned and the Training ranks that count now: the hero's
-   * own, and those this run bought with Silver. */
+   * own, and those this run bought with Silver; and what the mode's hero
+   * wears, which raises some rows (equipment/gear-rows.ts). */
   private get trainingNow() {
-    return { upgrades: this.save.upgrades, training: ranksInRun(this.save, this.run), relics: this.save.relics };
+    return { upgrades: this.save.upgrades, training: ranksInRun(this.save, this.run), relics: this.save.relics, gear: this.worn };
   }
   /** Silver spent on run training since the page loaded, so the purse's
    * Silver rate counts only what was found (not saved). */
@@ -2252,7 +2256,7 @@ export class Game {
     // A door's Door Heal comes after its drain, which is shown as it was.
     const drained = snap(this.run.player.hp - outcome.player.hp + (t.kind === "door" ? outcome.healed : 0));
     this.applyStats(outcome.player);
-    startRegrow(this.save, this.run);
+    startRegrow(this.save, this.run, this.mode);
     if (t.kind === "door") this.finds.door(t, outcome, drained, dest);
     if (t.kind !== "enemy") return true;
     const extra = outcome.extraDamage ?? 0, p = this.run.player, openers = fightOpeners(p, t.enemy!, !!surprise, !!firstStrike);
@@ -2452,7 +2456,7 @@ export class Game {
     if (!before || this.run.outside || this.fallen) return;
     this.comboTurn(fought, dashed);
     this.tickBoosts();
-    syncShield(this.save, this.run);
+    syncShield(this.save, this.run, this.mode);
     if (tickRegrow(this.run)) this.shieldFormedAt = performance.now();
     const beams = this.arcana.beams;
     const fired = this.arcana.turn();
@@ -2483,7 +2487,7 @@ export class Game {
     this.run.volleys = out.volleys;
     p.hp = out.hp;
     if (out.shield !== undefined) p.shield = out.shield;
-    startRegrow(this.save, this.run);
+    startRegrow(this.save, this.run, this.mode);
     if (out.hurt) {
       this.markDamaged();
       this.events.hurt(this.mode, this.run.seed);
@@ -2783,7 +2787,7 @@ export class Game {
   private forestKey = (tier: number) => `${this.mode}:${tier}`;
   private enterFromOutside() {
     this.forestSeeds.clear();
-    syncShield(this.save, this.run);
+    syncShield(this.save, this.run, this.mode);
     const p = this.run.player;
     this.run.outside = false;
     this.run.notes = newNotes(this.clock());
@@ -2957,10 +2961,23 @@ export class Game {
     this.finds.coins(at, gold, silver, false);
   }
   /** Enemy Level Skips for `floors` floors new to the run, one after another,
-   * each kind at the chance its row gives now. */
+   * each kind at the chance its row gives now, the worn substats' points added. */
   private rollLevelSkips(floors: number) {
+    const worn = this.worn, gear = { hp: worn.hpSkipChance, combat: worn.combatSkipChance };
     for (let f = 0; f < floors; f++)
-      for (const kind of LEVEL_SKIP_KINDS) rollLevelSkip(this.run, kind, trainedAmount(this.trainingNow, LEVEL_SKIP_ROWS[kind]));
+      for (const kind of LEVEL_SKIP_KINDS) rollLevelSkip(this.run, kind, snap(trainedAmount(this.trainingNow, LEVEL_SKIP_ROWS[kind]) + gear[kind] * 100));
+  }
+  /** What each Free Upgrade group's chance gains, in hundredths of a percent:
+   * the card trees' and the worn substats' (each group's own, and Windfall's
+   * for all three), added up; undefined with none. */
+  private get freeChances() {
+    const trees = freeUpChances(this.treeBonus) ?? {}, worn = this.worn;
+    const gear = { offense: worn.freeOffenseChance, defense: worn.freeDefenseChance, utility: worn.freeUtilityChance };
+    const chances = Object.fromEntries((["offense", "defense", "utility"] as const).flatMap((group) => {
+      const n = snap((trees[group] ?? 0) + (gear[group] + worn.freeUpChance) * 100);
+      return n ? [[group, n]] : [];
+    }));
+    return Object.keys(chances).length ? chances : undefined;
   }
   /** Free Training for `floors` floors passed, one after another: the
    * levels each floor's rolls give (`rollFreeTraining`) join the run's
@@ -2969,7 +2986,7 @@ export class Game {
   private freeTrain(floors: number) {
     const given: TrainingId[] = [];
     for (let f = 0; f < floors; f++)
-      for (const id of rollFreeTraining(this.save, this.run, this.boons?.freeUp ?? 0, freeUpFactors(this.treeBonus), freeUpChances(this.treeBonus))) {
+      for (const id of rollFreeTraining(this.save, this.run, this.boons?.freeUp ?? 0, freeUpFactors(this.treeBonus), this.freeChances)) {
         this.giveFreeLevel(id);
         given.push(id);
       }
@@ -3233,7 +3250,7 @@ export class Game {
     // Undo takes the ranks back, so only the run's most bought counts.
     const bought = Object.values(this.run.training ?? {}).reduce((n, k) => n + (k ?? 0), 0);
     this.missions.mark("runTraining", this.mode, this.run.seed, bought);
-    syncShield(this.save, this.run);
+    syncShield(this.save, this.run, this.mode);
     this.afterPlayerAction();
     return true;
   }

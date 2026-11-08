@@ -11,7 +11,7 @@ import {
   EFFECT_CANDIDATES, EQUIP_RARITIES, EQUIPMENT_CAPACITY, openSlots, PITY, RARITY_TIERS, rarityRank, REFINE_CHOICE_EVERY, STANDARD_TOP, STARS,
   SUBSTAT_SLOT_LEVELS, substatCap, UNIQUE_SALVAGE, upgradeGold, upgradeMaterial, type EquipRarity,
 } from "./balance.ts";
-import { inPool } from "./slot-effects.ts";
+import { inPool, rollsAt, slotEffectDef } from "./slot-effects.ts";
 
 /** An effect a slot holds or is offered: its id (slot-effects.ts) and rarity. */
 export type EffectChoice = { effect: string; rarity: EquipRarity };
@@ -326,12 +326,17 @@ export function unequip(e: EquipmentSave, mode: Mode, category: CategoryId) {
 const validItem = (i: any): i is EquipItem =>
   isRecord(i) && typeof i.id === "string" && /^e\d{1,9}$/.test(i.id) && typeof i.def === "string" && !!itemDef(i.def) &&
   EQUIP_RARITIES.includes(i.rarity) && wholeIn(i.level, 0, Number.MAX_SAFE_INTEGER);
-/** A saved substat: an effect of the category's pool, at a rarity no
- * higher than the piece allows (a Common one, from before substats had no
+/** A saved substat: one of the category's pool that the piece's rarity
+ * allows, at a rarity no higher than the piece's and no lower than the
+ * substat's own lowest (a Common one, from before substats had no
  * Common, comes back Uncommon). */
-const decodeChoice = (c: any, cap: EquipRarity, category: CategoryId): EffectChoice | null =>
-  isRecord(c) && typeof c.effect === "string" && inPool(category, c.effect) && EQUIP_RARITIES.includes(c.rarity)
-    ? { effect: c.effect, rarity: rarityRank(c.rarity) > rarityRank(cap) ? cap : c.rarity === "common" ? "uncommon" : c.rarity } : null;
+function decodeChoice(c: any, cap: EquipRarity, category: CategoryId): EffectChoice | null {
+  if (!isRecord(c) || typeof c.effect !== "string" || !inPool(category, c.effect) || !EQUIP_RARITIES.includes(c.rarity)) return null;
+  const def = slotEffectDef(c.effect)!;
+  if (!rollsAt(def, cap)) return null;
+  const rarity: EquipRarity = rarityRank(c.rarity) > rarityRank(cap) ? cap : rollsAt(def, c.rarity) ? c.rarity : (def.from ?? "uncommon");
+  return { effect: c.effect, rarity };
+}
 /** An item's saved slots: an effect still in its category's pool, at a
  * rarity no higher than the item allows, never the same effect in two
  * slots; Refinement and Choices spent as whole counts; an offer of known

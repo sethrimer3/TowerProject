@@ -1,3 +1,4 @@
+import { bestWorn } from "./equipment/effects.ts";
 import { relicFactor } from "./economy/relic-effects.ts";
 import { researched } from "./progression/archives.ts";
 import { isRecord, time } from "./save/decode.ts";
@@ -92,7 +93,8 @@ export function arrive(save: Save, now: number, climbing: boolean): OfflineGrant
 export function offlineGrant(save: Save, awayMs: number): OfflineGrant {
   const capMs = researched(save.archives, "offlineGoldMinutes") * 60_000, rgph = recentGoldPerHour(save.offline);
   // Relics raise the multiplier by their percent.
-  const multiplier = snap(researched(save.archives, "offlineGoldMultiplier") * relicFactor(save, "offlineGold"));
+  // The worn Idle Hands substats raise it, a kind of their own.
+  const multiplier = snap((researched(save.archives, "offlineGoldMultiplier") * relicFactor(save, "offlineGold") * (100 + bestWorn(save, "offlineGold"))) / 100);
   const gold = Math.floor((rgph * (Math.min(awayMs, capMs) / HOUR_MS) * multiplier) / 1000);
   return { awayMs, capMs, rgph, multiplier, gold: snap(gold) };
 }

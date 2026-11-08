@@ -155,8 +155,19 @@ Main effects and substats add into the same totals, each kind summed (`equipment
 | Silver at the start of each run | `Game.dealHand` (beside Pocket Money) |
 | Movement speed | `Game.moveRate` (the hand's and Automove's steps a second) |
 | Tiles a Dash crosses | `Game.dashTiles` (also lets the hand dash without the Dash skill) |
+| Shroud, Regen, Thorn Damage, Armor Break, Shield Thorns %; Parry and Lifesteal points | `loadout` |
+| Crit and Super Crit chance and factor, Attack Range, Attack Speed, ATK / m, Multishot, Rapid Fire, Shield HP, Regrow Shield, Overheal | `trainedAmount`'s `gear` (`equipment/gear-rows.ts`), from `Game.trainingNow` and the Aether Shield's `shieldCapacity` and `regrowNow` |
+| Charged Shot's charge | `volley.ts` (its research's percent) |
+| Combo ATK | `Game.fighter` |
+| Each arcanum's attributes | `ArcanaDesk.valuesOf`, its cooldowns too (`arcanaWithGear`) |
+| Shield Regen | `Game.stepRules` |
+| Gold from kills and from pickups, Interest, drop chances | `RunPurse` (`killGold`, `pickupGold`, `interest`, `killDrops`) |
+| Key Efficiency by colour | `Game.doorOff` (`${color}Gear`, multiplying the trees' `${color}Key` in `doorKeyScale`) |
+| Free Upgrade and Level Skip chances | `Game.freeChances` and `Game.rollLevelSkips` |
+| End Rush tiles | `Game.dashFor` |
+| Trainer speed, research speed, Offline Gold | `TrainingDesk`'s batch start, `duration` in `archives.ts`, `offlineGrant` (each `bestWorn`) |
 
-A substat marked *(Tower only)* or *(Delve only)* counts only in that mode's loadout.
+Each mode's hero counts only what it wears; what works between runs counts the more of the two loadouts (section 15).
 
 ## 6. Catalogue
 
@@ -252,7 +263,7 @@ While the run's hand holds the **Chest** card, each treasure chest, once Equipme
 
 The category is even among the open categories.
 
-A chest's kind is fixed as its floor is generated, not as it opens. As the run goes inside, it fixes its odds (`run.chestOdds`, set by `Game.dealHand`): the hand's Chest card's 0.5% and 1.5%, each raised by the worn **Supply and Equipment Chest chance** (`chestFind`: the Bounty substat; +5% makes 0.5% into 0.525%). Each treasure tile's fixed number (`chestKindAt` in `board.ts`, from the floor's seed and the tile) under the Equipment Chest's chance makes one, then under both chances a Supply Chest, so higher odds only ever add more. The board shows a Supply Chest with a light blue glow and one star in its tile's upper-left corner, and an Equipment Chest with a purple glow and two stars, and both stay on the floor once it is opened (`render/chest-marks.ts`).
+A chest's kind is fixed as its floor is generated, not as it opens. As the run goes inside, it fixes its odds (`run.chestOdds`, set by `Game.dealHand`): the hand's Chest card's 0.5% and 1.5%, each raised by the worn **Supply and Equipment Chest chance** (`chestFind`: the Treasure Sense substat; +5% makes 0.5% into 0.525%). Each treasure tile's fixed number (`chestKindAt` in `board.ts`, from the floor's seed and the tile) under the Equipment Chest's chance makes one, then under both chances a Supply Chest, so higher odds only ever add more. The board shows a Supply Chest with a light blue glow and one star in its tile's upper-left corner, and an Equipment Chest with a purple glow and two stars, and both stay on the floor once it is opened (`render/chest-marks.ts`).
 
 The rates are low on purpose, to be raised by upgrades later.
 
@@ -322,52 +333,91 @@ A Common piece (never past 20) only ever has one, a Standard piece (never past L
 
 ### Effects and pools
 
-Each substat (`SLOT_EFFECTS` in `equipment/slot-effects.ts`) has an id, a name, a family, the effect kind it adds to (read where section 5 says), its base value and optionally a mode.
-Its value is `base × its rarity's substat power` (`SUBSTAT_POWER`: Uncommon ×1, Rare ×1.5, Epic ×2.25, Legendary ×3.5, Mythic ×5, Ancestral ×7.5); its name carries its rarity as a numeral (Fleetness I at Uncommon, II at Rare …).
-Substats have no Common: a piece's slots hold substats up to its own rarity (`substatCap`), a Common piece's Uncommon.
-Each category rolls from its families (`CATEGORY_FAMILIES`):
+Each substat (`SLOT_EFFECTS` in `equipment/slot-effects.ts`) has an id, a name, a family, the effect kind it adds to (read where section 5 says), its base value, and optionally its own value at each rarity (`values`) and the lowest rarity it rolls at (`from`).
+Its value is `base × its rarity's substat power` (`SUBSTAT_POWER`: Uncommon ×1, Rare ×1.5, Epic ×2.25, Legendary ×3.5, Mythic ×5, Ancestral ×7.5), or its own value at that rarity; its name carries its rarity as a numeral (Ferocity I at Uncommon, II at Rare …).
+Substats have no Common: a piece's slots hold substats up to its own rarity (`substatCap`, a Common piece's Uncommon), and a substat with a `from` rolls only on a piece of that rarity or above, never below it.
+No substat is a flat stat: each is a percent, points of a chance, or a whole count, so it stays worth having however strong the hero grows.
+Each starting category rolls from its own family (`CATEGORY_FAMILIES`); the future corners roll from both their neighbours' until their own synergy substats are written.
 
-| Substat | Family | Base (Uncommon) |
+**Offense** (Swords):
+
+| Substat | Raises | Uncommon |
 |---|---|---|
-| Keen Edge | Might | +1.5 ATK |
-| Ferocity | Might | +1% ATK |
-| Piercing | Might | 2% of enemy DEF ignored |
-| Giantslayer | Might | +4% ATK against bosses |
-| Bulwark | Guard | +1 DEF |
-| Fortitude | Guard | +1% DEF |
-| Warding | Guard | +3 shroud (damage blocked each fight) |
-| Vigor | Vitality | +50 max HP |
-| Constitution | Vitality | +1% max HP |
-| Mending | Vitality | +0.2 HP regained each step |
-| Second Wind | Recovery | 0.3% of max HP healed after each victory |
-| Fresh Air | Recovery | 1% of max HP healed on each new floor |
-| Tonic | Recovery | +4% HP from potions |
-| Fleetness | Mobility | +3% movement speed |
-| Spire Stride | Mobility | +5% movement speed (Tower only) |
-| Deep Stride | Mobility | +5% movement speed (Delve only) |
-| Prospector | Fortune | +2% Gold found |
-| Silver Tongue | Fortune | +2% Silver found |
-| Scavenger | Fortune | +3% upgrade materials from Supply Chests |
-| Bounty | Fortune | +1% Supply and Equipment Chest chance |
-| Purse Strings | Fortune | +3 Silver at the start of each run |
-| Studious | Lore | +2% XP from kills |
-| Spire Scholar | Lore | +3.5% XP from kills (Tower only) |
-| Deep Scholar | Lore | +3.5% XP from kills (Delve only) |
+| Ferocity | ATK | +3% |
+| Piercing | enemy DEF ignored (at most 50%) | 3 points |
+| Giantslayer | ATK against bosses | +8% |
+| Keen Eye | crit chance | +2 points |
+| Brutality | crit factor | +5% of it |
+| Deadeye | Super Crit chance | +1 point |
+| Devastation | Super Crit factor | +5% of it |
+| Sunder | Armor Break | +5% of it |
+| Momentum | each Combo's ATK | +5% of it |
+| Far Reach | Attack Range | +5% |
+| Quickdraw | Attack Speed | +4% |
+| Long Shot | ATK / m | +5% of it |
+| Steady Aim | Charged Shot's charge each turn | +5% of it |
+| Scattershot | Multishot Chance | +1 point |
+| Volley | Multishot Targets | +1 at Mythic, +2 at Ancestral (Mythic and up) |
+| Hair Trigger | Rapid Fire Chance | +1 point |
+| Frenzy | Rapid Fire Duration | +5% |
 
-| Category | Families |
-|---|---|
-| Weapon | Might, Lore |
-| Shield | Guard, Vitality |
-| Chestplate | Guard, Vitality |
-| Helmet | Guard, Vitality, Lore |
-| Gloves | Might, Recovery |
-| Boots | Mobility, Recovery, Guard |
-| Cape | Fortune, Guard |
-| Belt | Vitality, Recovery, Fortune |
-| Ring | Might, Guard, Vitality |
-| Amulet | Vitality, Recovery, Lore |
+**Defense** (Shields):
 
-This table is the old pool, carried over until the approved substat catalogue replaces it (section 16).
+| Substat | Raises | Uncommon |
+|---|---|---|
+| Fortitude | DEF | +3% |
+| Warding | shroud | +5% |
+| Constitution | max HP | +3% |
+| Mending | Regen | +3% |
+| Thorns | Thorn Damage | +5% of it |
+| Deflection | Parry % (at most 98%) | +1 point (then 2, 3, 4, 5 and 8, not by power) |
+| Overflow | Overheal ceiling | +3% |
+| Bloodthirst | Lifesteal | +0.2 points |
+| Second Wind | max HP healed after each victory | 3 points |
+| Fresh Air | max HP healed on each new floor | 5 points |
+| Tonic | HP from potions | +5% |
+| Aegis | Aether Shield HP | +5% |
+| Rebuild | turns the Aether Shield takes to regrow | −3% (its floor of 150 still holds) |
+| Shield Regen | Shield Regen | +10% of it |
+| Shield Thorns | Shield Thorns | +5% of it |
+
+**Arcana** (Helmets): **Sorcery**, +4% Arcanum Damage, and one substat for each attribute of each arcanum (27): +5% of an ATK Mult, Chance, Bonus, Angle, HP, Size or Duration (a Duration rounded to whole turns), +5 points of Time Dilation's Slowdown (the 90% cap still holds), −2% of a Cooldown (to whole turns, at least 1), and whole counts that roll only from a higher rarity, 1 there and 1 more each rarity above: Thunderbolt's bolts and Phantasm's ghosts from Epic, Ricochet Shot's Rebounds and Lifespring's Effect Waves from Legendary, Overseer's beams from Mythic.
+Slots roll from every arcanum, owned or not.
+
+**Utility** (Boots):
+
+| Substat | Raises | Uncommon |
+|---|---|---|
+| Prospector | Gold found | +3% |
+| Bounty | Gold from kills | +3% |
+| Pickpocket | Gold from items taken off the floor | +3% |
+| Silver Tongue | Silver found | +3% |
+| Interest | Interest's share of the Silver held | +3% |
+| Locksmith | each gold key a door takes | −2% |
+| Bluesmith | each blue key a door takes | −2% |
+| Redsmith | each red key a door takes (Rare and up) | −2% |
+| Free Offense, Free Defense, Free Utility | that group's Free Upgrade chance each floor | +1, 2, 4, 6, 8, 10 points from Uncommon to Ancestral |
+| HP Skip, Combat Skip | that Enemy Level Skip's chance each floor | +1, 2, 3, 4, 6, 8 points from Uncommon to Ancestral |
+
+**Efficiency** (Chestplates):
+
+| Substat | Raises | Uncommon |
+|---|---|---|
+| Studious | XP from kills | +3% |
+| Fleetness | movement speed | +3% |
+| Drillmaster | trainer speed (a batch's speedup as it starts) | +3% |
+| Scholarship | Archives research speed (as a project starts) | +3% |
+| Fortune's Eye | kills' material and piece drop chances | +2% of them |
+| Treasure Sense | Supply and Equipment Chest chance | +2% |
+| Scavenger | upgrade materials from Supply Chests | +4% |
+| Idle Hands | Offline Gold | +3% |
+| Windfall | every Free Upgrade group's chance each floor | +1 point |
+| Automaton | tiles a Dash crosses | +1 at Uncommon, +1 each rarity above |
+| Sprinter | tiles End Rush crosses on STAIRS (skill or not) | +1 at Uncommon, +1 each rarity above |
+
+Equipment is a kind of bonus of its own, so a substat's percent multiplies the other kinds' (the card trees', relics', research), and its points add to a chance.
+What works between runs (Drillmaster, Scholarship, Idle Hands) counts the more of the two loadouts' (`bestWorn`), and shortens only jobs started while it is worn.
+Training rows the hero's substats raise (crits, Super Crits, the Archer's rows, the Aether Shield, Overheal) take them through `trainedAmount`'s `gear` (`equipment/gear-rows.ts`), only once the row is open.
 **Piercing** is a share of the enemy's DEF the hero's strikes ignore (`defenseAgainst` in `combat.ts`), at most 50% (`PIERCE_CAP`).
 
 ### Rolling
@@ -391,7 +441,7 @@ Rolls draw from the save's Equipment stream, and an offer is saved with its slot
 | Ancestral | 1t Gold + 12,000 material |
 
 The material is every input of the piece's category's recipe (`REFINE_COST`); Improve costs three times as much.
-Epic and above are placeholders, to be tuned with the substat catalogue.
+Epic and above are placeholders, to be tuned in play.
 
 ### Refinement and milestones
 
@@ -413,16 +463,6 @@ A slot's screen shows CURRENT, the NEW CANDIDATES with Keep Current, *Refinement
 ## 16. Approved next steps
 
 Agreed with the designer and not built yet, in the order they are planned.
-
-### The substat catalogue
-
-Substats become percentages only (no flat ATK or DEF), each category's own focus, replacing section 15's pool:
-
-- **Sword (Offense):** ATK %, Piercing, ATK against bosses, crit chance, crit factor, Super Crit chance, Super Crit factor, Armor Break, Combo ATK, Attack Range, Attack Speed, ATK / m, Charged Shot charge, Multishot Chance, Multishot Targets (+1 at Mythic, +2 at Ancestral; Mythic and up), Rapid Fire Chance, Rapid Fire Duration.
-- **Shield (Defense):** DEF %, shroud %, max HP %, Regen %, Thorn Damage, Parry % (+1 point at Uncommon, then +2, 3, 4, 5 and 8, not by substat power), Overheal ceiling, Lifesteal (Bloodthirst), Second Wind (3 points of max HP after each victory), Fresh Air (5 points on each new floor), HP from potions, Shield HP, Regrow Shield turns, Shield Regen (+10%), Shield Thorns.
-- **Helmet (Arcana):** Arcanum Damage, and each attribute of each arcanum as its own substat (Ricochet Shot ATK Mult, Chance and Rebounds; Aurum Bloom Bonus, Golden and Stellar Chance; Overseer Bonus, Angle and beams; Thunderbolt ATK Mult, bolts and Cooldown; Lifespring HP, Effect Waves and Cooldown; Time Dilation Duration, Slowdown and Cooldown; Phantasm ATK Mult, ghosts and Cooldown; Necrotic Frost ATK Mult, Duration and Cooldown; Voidwell Size, Duration and Cooldown). Discrete counts roll only from a higher rarity (bolts and ghosts from Epic, Rebounds and Effect Waves from Legendary, beams from Mythic). Slots roll from every arcanum, owned or not.
-- **Boots (Utility):** Gold found, Gold from kills, Gold from pickups, Silver found, Interest, gold, blue and red Key Efficiency (red from Rare), the chance each floor of each Free Upgrade row (+1, 2, 4, 6, 8, 10 from Uncommon to Ancestral) and of each Enemy Level Skip (+1, 2, 3, 4, 6, 8).
-- **Chestplate (Efficiency and speed):** XP, movement speed, trainer speed, Archives research speed, enemy drop chance, Supply and Equipment Chest chance, Supply Chest materials, offline Gold, free run-training level chance, Dash tiles (+1 at Uncommon, +1 each rarity above) and End Rush tiles (the same).
 
 ### The catalogue and Gem pulls
 

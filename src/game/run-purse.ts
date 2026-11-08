@@ -13,7 +13,7 @@ import type { Save } from "../save/shape.ts";
 import { MODES, type ModeProfile } from "../modes.ts";
 import { ranksInRun } from "../progression/run-training.ts";
 import { goldBanked, silverFound, type GoldContext } from "../economy/gold-multipliers.ts";
-import { wornEffects } from "../equipment/effects.ts";
+import { raised, wornEffects } from "../equipment/effects.ts";
 import { keepDrop, rollChestPiece, rollSupplies } from "../equipment/acquire.ts";
 import type { EquipItem } from "../equipment/inventory.ts";
 import { CATEGORIES, type EquipMaterialId } from "../equipment/catalog.ts";
@@ -97,7 +97,7 @@ export class RunPurse {
 
   /** The upgrades owned and the Training ranks that count now. */
   private get trainingNow() {
-    return { upgrades: this.save.upgrades, training: ranksInRun(this.save, this.run), relics: this.save.relics };
+    return { upgrades: this.save.upgrades, training: ranksInRun(this.save, this.run), relics: this.save.relics, gear: this.worn };
   }
 
   /** `base` raised by the research `target`'s percent. */
@@ -278,7 +278,9 @@ export class RunPurse {
     const foe = this.run.outside ? 1 : foeGold(heldCards(this.run), enemy, more);
     // Relics raise strong and elite enemies' Gold.
     const relic = enemy.strength === "strong" || enemy.strength === "elite" ? relicFactor(this.save, "eliteGold") : 1;
-    return foe === 1 && relic === 1 ? gold : snap(gold * foe * relic);
+    // The worn Bounty substats raise every kill's Gold, a kind of their own.
+    const worn = (100 + this.worn.killGold) / 100;
+    return foe === 1 && relic === 1 && worn === 1 ? gold : snap(gold * foe * relic * worn);
   }
 
   /** An enemy's Gold (by its strength), a Greater Boss's Cells and those the
@@ -305,8 +307,10 @@ export class RunPurse {
   private killDrops(enemy: Enemy, instakill: boolean): EquipmentLoot[] {
     if (!this.save.equipment.unlocked) return [];
     const tree = this.tree, found: EquipmentLoot[] = [], boss = enemy.strength === "boss" || enemy.strength === "greaterBoss";
-    const material = snap((boss ? BOSS_DROPS.material : 0) + foeStat(tree, enemy, "Material") + (instakill ? foeStat(tree, enemy, "InstakillMaterial") : 0));
-    const piece = snap(((boss ? BOSS_DROPS.equipment : 0) + foeStat(tree, enemy, "Equipment")) * relicFactor(this.save, "equipmentDrops"));
+    // The worn Fortune's Eye substats raise both chances, a kind of their own.
+    const eye = (100 + this.worn.dropChance) / 100;
+    const material = snap(((boss ? BOSS_DROPS.material : 0) + foeStat(tree, enemy, "Material") + (instakill ? foeStat(tree, enemy, "InstakillMaterial") : 0)) * eye);
+    const piece = snap(((boss ? BOSS_DROPS.equipment : 0) + foeStat(tree, enemy, "Equipment")) * relicFactor(this.save, "equipmentDrops") * eye);
     if (material && this.equipmentRng() * 100 < material) found.push(this.chestEquipment("supply"));
     if (piece && this.equipmentRng() * 100 < piece) found.push(this.chestEquipment("equipment"));
     return found;
@@ -336,8 +340,13 @@ export class RunPurse {
    * paid. */
   pickupGold(x: number, y: number, base: number, more = 0) {
     if (!base || !this.loot(this.pickupKey(x, y))) return 0;
-    const gold = this.bonused(base);
+    const gold = this.withPickpocket(this.bonused(base));
     return this.gold(more ? snap((gold * (100 + more)) / 100) : gold, this.payAt(x, y));
+  }
+
+  /** `gold` an item taken off the floor pays, raised by the worn Pickpocket substats. */
+  private withPickpocket(gold: number) {
+    return raised(gold, this.worn.pickupGold);
   }
 
   /** What gates an item's Gold at (x, y), apart from a kill's or chest's
@@ -432,7 +441,7 @@ export class RunPurse {
         if (t.kind === "enemy" || t.kind === "treasure") {
           if (this.loot(this.lootKey(x, y))) gold = t.kind === "enemy" ? this.killGold(t.enemy!) : chest;
         } else if (ITEMS.has(t.kind) || (t.kind === "floor" && torches.has(point(x, y)))) {
-          if (this.loot(this.pickupKey(x, y))) gold = this.bonused(pickupGold(t.kind === "floor" ? null : t));
+          if (this.loot(this.pickupKey(x, y))) gold = this.withPickpocket(this.bonused(pickupGold(t.kind === "floor" ? null : t)));
         }
         found = snap(found + gold);
       }
@@ -489,7 +498,8 @@ export class RunPurse {
    * Interest, then multiplied by Silver found (`silverFactor`) and the
    * environments of `reached`, as all Silver found on it is. Returns what it added. */
   interest(reached: number) {
-    const rate = researched(this.save.archives, "interestRate") * (this.boons?.interest ?? 1);
+    // The worn Interest substats raise the share, a kind of their own.
+    const rate = (researched(this.save.archives, "interestRate") * (this.boons?.interest ?? 1) * (100 + this.worn.interestPct)) / 100;
     if (!rate) return 0;
     const held = this.run.silver ?? 0;
     const paid = this.onFloor(snap(Math.min(this.interestCap, snap((held * rate) / 1000)) * this.silverFactor), reached);

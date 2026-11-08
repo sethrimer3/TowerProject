@@ -185,16 +185,16 @@ test("evenly spread training alone still beats both modes' normal enemies at flo
 test("gear adds flat bonuses, then its percentages of the total, fractions kept; provisions add nothing", () => {
   const s = defaults();
   s.equipment.unlocked = true;
-  // An Uncommon sword at level 1: +2.2% ATK, raised 1.2% by the Uncommon plate's efficiency, and a Rare Keen Edge's +2.25 ATK;
+  // An Uncommon sword at level 1: +2.2% ATK, raised 1.2% by the Uncommon plate's efficiency, and a Rare Ferocity's +4.5% ATK;
   // the plate's own +2% max HP.
   const sword = addItem(s.equipment, "knightsSword", "uncommon")!;
   sword.level = 1;
-  sword.slots = [{ effect: "keenEdge", rarity: "rare" }];
+  sword.slots = [{ effect: "ferocity", rarity: "rare" }];
   s.equipment.equipped.tower.weapon = sword.id;
   s.equipment.equipped.tower.chestplate = addItem(s.equipment, "giantsHauberk", "uncommon")!.id;
   Object.assign(s.provisions, { edge: 1, guard: 2, heal: 1 });
   const l = loadout(s);
-  assert.equal(l.attack, 12.522734, "(10 + 2.25) × 1.022264");
+  assert.equal(l.attack, 10.67264, "10 × (1 + 2.2264% + 4.5%)");
   assert.equal(l.defense, 0);
   assert.equal(l.maxHp, 102, "100 × 1.02");
   // The Delve's hero wears nothing yet.
