@@ -106,6 +106,9 @@ export type Save = {
   /** When the Gold ad's boost (Gold found ×1.5) runs out, as a wall-clock
    * timestamp (ms): `economy/gold-boost.ts`. */
   goldBoostUntil: number;
+  /** The ad series: ads watched toward its prizes, those claimed, and the
+   * Gold boost and Ad-Disable discount they give (`ads/series.ts`). */
+  ads: import("../ads/series.ts").AdsSave;
   gold: number;
   provisions: Record<GoldItemId, number>;
   xp: number;

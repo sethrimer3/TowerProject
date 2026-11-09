@@ -31,7 +31,10 @@ import { bindInput } from "./input.ts";
 import { FrameLoop } from "./frame-loop.ts";
 import { installDebugHooks } from "./debug-hooks.ts";
 import { isBoard, type AppContext, type Tab } from "./ui/app.ts";
-import { el, ticketIcon } from "./ui/dom.ts";
+import { el, gemIcon, goldIcon, ticketIcon } from "./ui/dom.ts";
+import { AdsWatch } from "./ui/ads-watch.ts";
+import { AD_GEMS } from "./economy/gems.ts";
+import { GOLD_BOOST_FACTOR, GOLD_BOOST_MS } from "./economy/gold-boost.ts";
 import { buildShell } from "./ui/shell.ts";
 import { drawSelectsUnder } from "./ui/game-select.ts";
 import { BoardOverlay } from "./ui/board-overlay.ts";
@@ -123,6 +126,7 @@ const ctx: AppContext = {
   renderPage,
   navigate,
   confirm: (prompt, action) => confirmAction(ctx, prompt, action),
+  watchAd: (shown, grant) => adsWatch.watch(shown, grant),
 };
 // The run's notes (Note Taking), opened from the floor number or the run's summary.
 const runNotes = new RunNotesDialog(ctx);
@@ -145,6 +149,7 @@ const research = new ResearchPage(ctx);
 const gear = new GearPage(ctx);
 const deck = new DeckPage(ctx);
 const shop = new ShopPage(ctx);
+const adsWatch = new AdsWatch(ctx, shop);
 const goals = new GoalsPage(ctx);
 const missions = new MissionsPage(ctx);
 const events = new EventsPage(ctx);
@@ -410,13 +415,15 @@ for (const [id, step] of [["tier-prev", -1], ["tier-next", 1]] as const)
     update();
   };
 for (const id of ["gem-ad", "cinematic-gems"])
-  el(id).onclick = () => {
-    if (!game.gemFinder.claimAd()) return;
-    if (!game.save.settings.reduceMotion) gemSparkle(el(id));
-    save();
-    update();
-    renderCinematicGems();
-  };
+  el(id).onclick = () =>
+    adsWatch.watch({ amount: String(AD_GEMS), icon: gemIcon(), label: `${AD_GEMS} Gems` }, () => {
+      if (!game.gemFinder.claimAd()) return false;
+      if (!game.save.settings.reduceMotion) gemSparkle(el(id));
+      save();
+      update();
+      renderCinematicGems();
+      return true;
+    });
 // Cinematic mode's gear: back to the whole page, on Settings.
 el("cinematic-gear").onclick = () => navigate("settings");
 // Any input lights a dimmed board and restarts cinematic mode's idle clock;
@@ -429,12 +436,14 @@ window.addEventListener("pointerup", (e) => {
 window.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && cinematic.active) cinematic.exit();
 });
-el("gold-ad").onclick = () => {
-  if (!game.gemFinder.claimGoldAd()) return;
-  if (!game.save.settings.reduceMotion) goldSparkle(el("gold-ad"));
-  save();
-  update();
-};
+el("gold-ad").onclick = () =>
+  adsWatch.watch({ amount: `×${GOLD_BOOST_FACTOR}`, icon: goldIcon(), label: `Gold ×${GOLD_BOOST_FACTOR} for ${GOLD_BOOST_MS / 60_000} more minutes` }, () => {
+    if (!game.gemFinder.claimGoldAd()) return false;
+    if (!game.save.settings.reduceMotion) goldSparkle(el("gold-ad"));
+    save();
+    update();
+    return true;
+  });
 el("gold-bonus").onclick = () => toggleGoldBonusBox(game);
 el("base-enemy").onclick = () => toggleEnemyOddsBox(game);
 el("currencies-open").onclick = () => showCurrencies(modal, game);

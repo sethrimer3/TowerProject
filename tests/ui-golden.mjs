@@ -605,7 +605,10 @@ try {
   }
   async function dialogsTour(prefix) {
     // Inside a run the ad's Gems stand under the purse, beside the Gold ad.
+    // Pressed, they open Ads Watch; its Watch button plays the ad and pays.
     await click("#gem-ad");
+    await shot(`${prefix}.adsWatch`);
+    await click("#ads-watch");
     await shot(`${prefix}.adGems`);
     // The hamburger opens the run's menu over the stats, and closes it.
     await click("#run-menu-toggle");

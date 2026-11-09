@@ -19,9 +19,9 @@ const LEGENDARY_STARS = 14;
  * bought at once show which of the ten is up, with a Skip button, and end
  * on all ten together. A press anywhere goes on; with Reduce motion on,
  * everything appears still. The last screen offers `again`, the same
- * purchase once more. */
-export function revealBuys(buys: readonly CardBuy[], reduceMotion: boolean, again?: DrawAgain) {
-  if (!buys.length) return;
+ * purchase once more; `onDone` runs once the last screen is pressed away. */
+export function revealBuys(buys: readonly CardBuy[], reduceMotion: boolean, again?: DrawAgain, onDone?: () => void) {
+  if (!buys.length) return onDone?.();
   const layer = document.createElement("div");
   layer.className = `badge-reveal card-buy-reveal${reduceMotion ? " still" : ""}`;
   layer.setAttribute("role", "dialog");
@@ -29,7 +29,10 @@ export function revealBuys(buys: readonly CardBuy[], reduceMotion: boolean, agai
   layer.setAttribute("aria-label", buys.length > 1 ? `${buys.length} cards bought` : "Card bought");
   (document.querySelector("#app") ?? document.body).append(layer);
   let shown = 0, summary = false;
-  const close = () => layer.remove();
+  const close = () => {
+    layer.remove();
+    onDone?.();
+  };
   const next = () => {
     if (summary || (buys.length === 1 && shown >= 1)) return close();
     if (shown >= buys.length) return showSummary();

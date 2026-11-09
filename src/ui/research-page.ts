@@ -141,7 +141,7 @@ export class ResearchPage {
       }
       this.render();
     });
-    document.querySelector<HTMLButtonElement>("#boost-claim")?.addEventListener("click", () => this.saveAfter(training.claimBoost()));
+    document.querySelector<HTMLButtonElement>("#boost-claim")?.addEventListener("click", () => this.watchBoost());
     this.onEach("data-cancel", (id) => this.withRefund(() => training.cancel(id)));
     this.onEach("data-finish", (id) => {
       const game = this.ctx.game;
@@ -218,6 +218,15 @@ export class ResearchPage {
 
   /** After a command: saved and the HUD refreshed when it went through,
    * and the tab drawn again either way. */
+  /** The boost's ad button: an hour more of ×2 training, once the ad is watched. */
+  private watchBoost() {
+    this.ctx.watchAd({ amount: "+1h", icon: `<b class="boost-rate">×${BOOST_RATE}</b>`, label: `training ×${BOOST_RATE} for an hour more` }, () => {
+      const done = this.ctx.game.training.claimBoost();
+      this.saveAfter(done);
+      return done;
+    });
+  }
+
   private saveAfter(done: boolean) {
     if (done) {
       this.ctx.save();
@@ -493,7 +502,7 @@ export class ResearchPage {
     this.moveTraining();
     const boost = document.getElementById("training-boost");
     if (boost) boost.outerHTML = this.boostHtml();
-    document.querySelector<HTMLButtonElement>("#boost-claim")?.addEventListener("click", () => this.saveAfter(game.training.claimBoost()));
+    document.querySelector<HTMLButtonElement>("#boost-claim")?.addEventListener("click", () => this.watchBoost());
   }
 
   /** Moves the timers of the ranks in training on, with the Gems that

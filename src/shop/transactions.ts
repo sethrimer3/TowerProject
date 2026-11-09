@@ -4,6 +4,7 @@ import { DAY_MS, gmtDay } from "./clock.ts";
 import { grant, grantRefusal, itemName } from "./items.ts";
 import { HISTORY_KEPT, type Transaction } from "./ledger.ts";
 import { CATEGORIES, unmet, type Price, type ShopOffer } from "./offers.ts";
+import { priceOf } from "./discounts.ts";
 
 // A purchase is one transaction: every check is made before anything
 // changes, then the price is paid, the item granted, the transaction
@@ -35,7 +36,7 @@ export const soldOut = (save: Save, offer: ShopOffer, now: number) =>
 
 /** Why `offer` can't be bought at `now` paid by `payment`, or null when it can. */
 export function refusal(save: Save, offer: ShopOffer, now: number, payment: Payment = "price"): Refusal | null {
-  return unavailable(save, offer, now) ?? unpaid(save, offer, payment);
+  return unavailable(save, offer, now) ?? unpaid(save, offer, payment, now);
 }
 
 /** Why `offer` isn't for sale at `now`: locked, outside its dates, a store
@@ -51,8 +52,9 @@ function unavailable(save: Save, offer: ShopOffer, now: number): Refusal | null 
 
 /** Why `payment` doesn't pay for `offer`: real money the store hasn't
  * confirmed, or a currency short; null when it pays (always, free). */
-function unpaid(save: Save, { price }: ShopOffer, payment: Payment): Refusal | null {
+function unpaid(save: Save, offer: ShopOffer, payment: Payment, now: number): Refusal | null {
   if (payment === "free") return null;
+  const price = priceOf(save, offer, now);
   if (price.kind === "money") return payment === "store" ? null : "unpaid";
   return price.kind === "currency" && CURRENCIES[price.currency].balance(save) < price.amount ? "short" : null;
 }
@@ -67,11 +69,12 @@ export function priceText(price: Price): string {
   }
 }
 
-/** Buys `offer` at `now`: its refusal, or the transaction made. */
+/** Buys `offer` at `now`, at its price then (a discount's while one
+ * runs): its refusal, or the transaction made. */
 export function purchase(save: Save, offer: ShopOffer, now: number, payment: Payment = "price"): Refusal | Transaction {
   const refused = refusal(save, offer, now, payment);
   if (refused) return refused;
-  const item = offer.item!, price = offer.price;
+  const item = offer.item!, price = priceOf(save, offer, now);
   if (payment === "price" && price.kind === "currency") CURRENCIES[price.currency].spend(save, price.amount);
   grant(save, item, offer.quantity);
   const t: Transaction = { at: now, offer: offer.id, item: itemName(item), price: payment === "free" ? "Dev: free" : priceText(price) };

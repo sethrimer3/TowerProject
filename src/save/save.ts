@@ -16,6 +16,7 @@ import { decodeSettings, defaultSettings } from "./settings.ts";
 import { keepUndos, loadout } from "../progression/loadout.ts";
 import { BASE_HAND, CARD_IDS, HAND_SLOT_GEMS, IN_PLACE, MAX_HAND_SLOTS, MAX_MANUAL_SLOTS, deckCards, handSlots, keptLinks, manualSlots, type CardId, type CardLink } from "../cards/cards.ts";
 import { decodeGemDrop, defaultGemDrop } from "../economy/gems.ts";
+import { decodeAds, defaultAds } from "../ads/series.ts";
 import { decodeArchives, defaultArchives, researched } from "../progression/archives.ts";
 import { adsOff, BOOST_FOREVER, decodeEntitlements, permanentBoost } from "../shop/entitlements.ts";
 import { decodeShop, defaultShop } from "../shop/ledger.ts";
@@ -58,6 +59,7 @@ export function defaults(): Save {
     cells: 0,
     gemDrop: defaultGemDrop(),
     goldBoostUntil: 0,
+    ads: defaultAds(),
     gold: 0,
     provisions: Object.fromEntries(
       GOLD_SHOP.map((g) => [g.id, 0]),
@@ -389,6 +391,7 @@ function decodeProgress(s: any, d: Save, undoCapacity: number) {
   d.cells = fraction(s.cells, d.cells);
   d.gemDrop = decodeGemDrop(s.gemDrop);
   d.goldBoostUntil = count(s.goldBoostUntil, 0, Number.MAX_SAFE_INTEGER);
+  d.ads = decodeAds(s.ads);
   for (const g of GOLD_SHOP) d.provisions[g.id] = count(s.provisions?.[g.id], d.provisions[g.id], 999);
   d.xp = count(s.xp, d.xp);
   d.bonusTrainingPoints = count(s.bonusTrainingPoints, d.bonusTrainingPoints);

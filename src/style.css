@@ -4409,6 +4409,109 @@ dialog .shop-rewards { justify-content: center; margin: 4px 0 10px; }
 .shop-guaranteed b { color: #ecd19d; }
 .shop-history { margin-top: 10px; font-size: 11px; color: var(--muted); }
 .shop-history ul { padding-left: 18px; line-height: 1.7; }
+/* The Ads Watch dialog: the ad series' bar of prizes, scrolling sideways,
+ * the offer the ad button made with its golden Watch button, and
+ * Permanent Ad-Disable as the Shop sells it. */
+dialog.ads-watch-dialog { width: min(440px, calc(100vw - 32px)); }
+.ads-scroll { overflow-x: auto; overflow-y: hidden; margin: 6px -4px 2px; padding: 4px 4px 6px; overscroll-behavior-x: contain; }
+.ads-bar { display: grid; grid-template-rows: auto auto auto; row-gap: 4px; align-items: end; }
+.ads-prize:not(#_) {
+  grid-row: 1;
+  justify-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  position: relative;
+  width: 64px;
+  height: 70px;
+  padding: 4px 2px;
+  border: 1px solid #36404f;
+  border-radius: 6px;
+  background: #121923;
+  color: #99a8bd;
+  line-height: 1.05;
+}
+.ads-prize b { font-size: 14px; color: #c9d2de; }
+.ads-prize small { font-size: 8px; letter-spacing: .5px; text-transform: uppercase; }
+.ads-prize .gem-icon, .ads-prize .gold-icon, .ads-prize .ad-icon, .ads-prize .deck-icon { width: 24px; height: 24px; }
+.ads-prize.locked { opacity: .55; }
+.ads-prize:disabled { cursor: default; }
+/* A prize reached and waiting: lit up, its outline and background glowing. */
+.ads-prize.ready:not(#_) {
+  border-color: #ffd86b;
+  background: radial-gradient(circle at 50% 40%, #6b5216, #2a2110 75%);
+  box-shadow: 0 0 10px #ffd86b99, inset 0 0 8px #ffd86b55;
+  color: #ffe9ad;
+  cursor: pointer;
+}
+.ads-prize.ready b { color: #fff3cf; }
+/* Above the themes' button boards (medieval.css, the kit's), which these boxes keep off. */
+:root:not(.reduce-motion) .ads-prize.ready { animation: ads-prize-lit 1.4s ease-in-out infinite; }
+@keyframes ads-prize-lit { 50% { box-shadow: 0 0 16px #ffd86bcc, inset 0 0 10px #ffd86b77; } }
+.ads-prize.claimed:not(#_) { opacity: .6; border-color: #3b5a3a; }
+.ads-prize-check { position: absolute; top: 2px; right: 2px; width: 14px; height: 14px; }
+.ads-track { grid-row: 2; display: flex; align-items: center; height: 26px; }
+.ads-play { flex: none; display: flex; align-items: center; justify-content: center; width: 40px; }
+.ads-play .ad-icon { width: 26px; height: 26px; filter: drop-shadow(0 0 4px #ffd86b88); }
+.ads-rail { position: relative; flex: none; height: 12px; border: 1px solid #4a3d22; border-radius: 6px; background: #0d1118; overflow: hidden; }
+.ads-fill { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, #b8862c, #ffd86b); box-shadow: 0 0 8px #ffd86b88; }
+.ads-mark { grid-row: 3; justify-self: center; font-size: 10px; color: var(--muted); }
+.ads-mark.reached { color: #ffd86b; }
+.ads-status { margin: 4px 0 10px; font-size: 11px; color: #99a8bd; text-align: center; }
+.ads-status b { color: #ffd86b; }
+/* The offer the ad button made: a shining box, the Watch button under it. */
+.ads-offer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
+  margin: 0 auto 12px;
+  max-width: 260px;
+  padding: 12px;
+  border: 1px solid #d9b45a;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #2c2414, #151a22 60%, #2c2414);
+  box-shadow: 0 0 14px #ffd86b55, inset 0 0 12px #ffd86b22;
+}
+.ads-offer::before {
+  content: "";
+  position: absolute;
+  inset: -50% auto -50% -60%;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, #fff6d533, transparent);
+  transform: rotate(20deg);
+  pointer-events: none;
+}
+:root:not(.reduce-motion) .ads-offer::before { animation: ads-shine 2.6s ease-in-out infinite; }
+@keyframes ads-shine { to { left: 130%; } }
+.ads-offer-prize { display: flex; align-items: center; gap: 6px; font-size: 26px; color: #fff3cf; }
+.ads-offer-prize .gem-icon, .ads-offer-prize .gold-icon, .ads-offer-prize .ticket-icon { width: 30px; height: 30px; }
+.ads-offer-prize .boost-rate { font-size: 22px; color: #9fe6a0; }
+.ads-watch:not(#_) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 140px;
+  min-height: 38px;
+  border: 1px solid #ffd86b;
+  border-radius: 6px;
+  background: linear-gradient(#f3c75a, #b8862c);
+  color: #2a1d05;
+  font-weight: 700;
+  font-size: 15px;
+  box-shadow: 0 0 10px #ffd86b77;
+}
+.ads-watch .ad-icon { width: 20px; height: 20px; }
+.ads-watch:disabled:not(#_) { background: #3a3324; border-color: #5c4c2a; color: #8d794e; box-shadow: none; }
+.ads-shop { margin-bottom: 4px; }
+.ads-shop .shop-card-face { pointer-events: none; }
+.shop-discount { font-size: 11px; color: #7ff07a; }
+.shop-discount s { color: var(--muted); }
+.ads-owned { font-size: 11px; color: #9fe6a0; text-align: center; }
 /* What a stopped trainer gives back, rising from the Gold and from its
  * row's time to the next rank (`riseFrom`). */
 .rise-pop {

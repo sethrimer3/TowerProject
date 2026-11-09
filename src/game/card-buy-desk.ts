@@ -36,6 +36,12 @@ export class CardBuyDesk {
     const refusal = this.refusal(count);
     if (refusal) return refusal;
     if (!this.host.free) this.save.gems -= CARD_BUY_GEMS[count];
+    return this.give(count);
+  }
+
+  /** Up to `count` card buys for nothing (a prize's), as many as the
+   * deck's trees have room for, carrying on the profile's stream. */
+  give(count: number): CardBuy[] {
     return buyCards(this.save.cardBuys, deckCards(this.save.upgrades, this.save.goals), count, stream("cardBuys"));
   }
 }

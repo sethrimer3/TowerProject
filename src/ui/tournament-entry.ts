@@ -70,10 +70,14 @@ export class TournamentEntry {
     if (!get) return;
     get.onclick = () => {
       if (next === "gems" && short) return askForGems(this.ctx);
-      const got = next === "ad" ? desk.takeAdTicket() : desk.buyGemTicket();
+      const take = (got: boolean) => {
+        this.ctx.update();
+        if (got) void this.begin();
+        return got;
+      };
       modal.close();
-      this.ctx.update();
-      if (got) void this.begin();
+      if (next === "ad") return this.ctx.watchAd({ amount: "1", icon: ticketIcon(), label: "1 Ticket" }, () => take(desk.takeAdTicket()));
+      take(desk.buyGemTicket());
     };
   }
 

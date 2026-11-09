@@ -428,7 +428,7 @@ A monster that appears on a floor during a run rather than being made with it, l
 _Avoid_: summon, added enemy
 
 **Gold multiplier**:
-A factor on every Gold banked: the tower's, the Gold ad's boost or Ad-Disable (one slot), each coin pack, the Event Collection, the Gold Bonus relics, the equipment's Gold found and the run's Gold boons. The player sees them together as *All Gold Bonuses*; Gold Bonus training is none of them, since it raises only a kill's, a chest's, an item's and a floor's Gold.
+A factor on every Gold banked: the tower's, the Gold ad's boost or Ad-Disable (one slot), the Ad Reward while it runs, each coin pack, the Event Collection, the Gold Bonus relics, the equipment's Gold found and the run's Gold boons. The player sees them together as *All Gold Bonuses*; Gold Bonus training is none of them, since it raises only a kill's, a chest's, an item's and a floor's Gold.
 _Avoid_: Gold bonus (the Training row)
 
 **Silver**:
@@ -836,6 +836,14 @@ _Avoid_: product, listing, deal
 **Entitlement**:
 A permanent perk bought once, such as a coin pack's Gold multiplier or Ad-Disable's permanent ×2 training. Erasing progress keeps it.
 _Avoid_: unlock (a skill bought with Inspiration or Breakthrough), perk
+
+**Ad series**:
+The bar of prizes ads fill, shown in the *Ads Watch* dialog an ad button opens until Ad-Disable is owned: a prize every five ads, each claimed by pressing it, the bar starting again the week after its last prize is claimed.
+_Avoid_: ad streak, ad pass
+
+**Ad Reward**:
+The ad series' Gold prize: a Gold multiplier of its own (×2 or ×3 for an hour or two), multiplying with every other, Ad-Disable and the coin packs included.
+_Avoid_: Ad Boost (the Gold ad's ×1.5)
 
 **Shop day**:
 The day as the Shop counts it, from 00:00 to 00:00 GMT on the server's clock. A daily offer, such as the Daily Free Gems, can be claimed once each Shop day, and changing the device's clock never brings a new one.

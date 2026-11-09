@@ -34,6 +34,30 @@ Permanent Ad-Disable's ×1.5 Gold takes the same slot: while the boost runs, the
 Inside a run the height column shows every Gold multiplier multiplied together, and pressing it lists them in the *All Gold Bonuses* box: the tower's, the ads' slot, each Coin Pack, the Event Collection, the Relics (every Gold Bonus relic owned, their percents added), the equipment's Gold found, the Shrine boons and, once Golden Floors is owned, the Golden Floor line (the hero's floor's [Golden Floor Multiplier](environments.md#golden-floor), Inactive off one); every Gold the run banks is what it found times that total.
 When the boost ran during a run, its end dialog adds a line for it, such as *50 Gold × 1.5 boost = 75 Gold*.
 
+### Ads Watch
+
+Until Permanent Ad-Disable is owned, pressing any ad button (the Gems', the Gold ad's, Training's boost or the tournament's ad Ticket) first opens the **Ads Watch** dialog.
+At its top a bar of prizes scrolls sideways, an ad's play mark at its left end, and every ad watched moves it on; a prize waits every 5 ads:
+
+| Ads | Prize |
+|---|---|
+| 5 | Gold ×2 for 1 hour |
+| 10 | 30 Gems |
+| 15 | Gold ×3 for 1 hour |
+| 20 | 40 Gems |
+| 25 | Gold ×3 for 2 hours |
+| 30 | 50 Gems |
+| 35 | 3 card draws (each as a card bought on the Deck page; 20 Gems for any the deck has no room for) |
+| 40 | Permanent Ad-Disable 50% off in the Shop for 24 hours |
+
+Under the bar, a shining box shows what the pressed button offers (*7* and a Gem), with a golden **Watch** button: it closes the dialog, plays the ad (none plays yet: it pays at once) and pays the offer.
+An ad that reaches a prize opens the dialog again, its Watch button closed, since the ad was just watched.
+A prize reached glows until pressed; pressing it claims it, celebrated in the middle of the screen until a press anywhere, then the dialog comes back.
+The Gold prizes are their own *Ad Reward* line in *All Gold Bonuses*, multiplying with every other bonus; won while another runs, the stronger runs first and the other waits, so no time is lost.
+Buying Ad-Disable or a Coin Pack while one runs keeps it running until its time is up.
+Under the offer, Permanent Ad-Disable is sold as on the Shop page, with its buy button; during its discount both show the old price struck through and the time left.
+The bar never resets until it is full, so prizes left on it wait as long as needed; once every prize is claimed it stays full, reading *The prize row resets in 2D:05H:13M*, until Monday 00:00 GMT, and the next ad starts it again.
+
 ## Themes
 
 Themes are bought only in the Store of limited-time [Events](../EVENTS.md#the-store), each event featuring one UI theme (250 Medals) and one Game theme (450 Medals); Classic is every hero's from the start.

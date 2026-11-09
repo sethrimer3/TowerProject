@@ -21,7 +21,7 @@ This document is the reference for the Shop's design: what Version 1 does, how i
 
    | Offer | Does | Default price |
    |---|---|---|
-   | Permanent Ad-Disable | No ads (the ad Gem button just pays, and the in-run Gold ad goes, with any boost time it stored, the Gem button taking its place); the trainers' ×2 boost for good, with no ad; ×1.5 Gold | $9.95 |
+   | Permanent Ad-Disable | No ads (the ad Gem button just pays, and the in-run Gold ad goes, with any boost time it stored, the Gem button taking its place); the trainers' ×2 boost for good, with no ad; ×1.5 Gold | $9.95 ($4.95 for 24 hours as the ad series' last prize: see [Ads Watch](gameplay/currencies-and-shop.md#ads-watch)) |
    | Special Coin Pack | 150 Gems; ×2 Gold, on all Gold earned; training ×2 for good, multiplying with the boost and the Premium Coin Pack | $9.95 |
    | Premium Coin Pack | 750 Gems; ×3 Gold, multiplying with ×2 and every other bonus; training ×3 for good, multiplying with the boost and the Special Coin Pack (×12 with all three training packs) | $29.95 |
 
@@ -112,4 +112,4 @@ None of these is built yet; the model leaves room for each.
 - **More categories**: Featured, Equipment (Modules, Weapons, Armor), Resources, Consumables, Special and History, as tabs once there are enough of them; some gated by tier rewards (*Reach Tower 8 to unlock*).
 - **Notifications**: *NEW*, *SALE*, *EXPIRING* and *FREE* tags on the Shop button and on cards, cleared once seen or claimed.
 - **Connected purchases**: restoring entitlements from the store's receipts, and asking the server for the time, the prices and the limited offers.
-- **Ads**: when ads exist, Ad-Disable (`adsOff`) skips them wherever they would play, such as the ad Gem button.
+- **Ads**: until Ad-Disable (`adsOff`) is owned, every ad button opens the Ads Watch dialog (`ui/ads-watch.ts`) before its ad plays; with it, the button pays at once.

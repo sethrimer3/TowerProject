@@ -2,8 +2,9 @@ import { controlIcon } from "./control-icon.ts";
 import { whole } from "../whole.ts";
 import { CURRENCIES, type CurrencyId } from "../shop/currency.ts";
 import { estimatedServerTime } from "../shop/clock.ts";
-import { CATEGORIES, OFFERS, offer, requirementText, unmet, type CategoryId, type ShopOffer } from "../shop/offers.ts";
+import { CATEGORIES, OFFERS, offer, requirementText, unmet, type CategoryId, type OfferId, type ShopOffer } from "../shop/offers.ts";
 import { ENTITLEMENTS } from "../shop/entitlements.ts";
+import { discountOn, priceOf } from "../shop/discounts.ts";
 import { itemCurrencies } from "../shop/items.ts";
 import { RARITIES } from "../shop/rarity.ts";
 import { stubServer, type ShopServer } from "../shop/server.ts";
@@ -108,9 +109,9 @@ export class ShopPage {
     this.bind();
   }
 
-  /** What `o` costs, with the server's price for a real-money offer. */
-  private priceLabel(o: ShopOffer) {
-    const p = o.price;
+  /** What `o` costs now (a discount's price while one runs), with the
+   * server's price for a real-money offer. */
+  private priceLabel(o: ShopOffer, p = priceOf(this.ctx.game.save, o, this.now)) {
     if (p.kind === "money") return this.prices[p.sku] ?? p.label;
     if (p.kind === "currency") return `${CURRENCY_ICONS[p.currency]()} ${p.amount.toLocaleString("en-US")}`;
     return priceText(p);
@@ -145,10 +146,29 @@ export class ShopPage {
     return o.period === 1 && o.price.kind === "free" && !refusal(this.ctx.game.save, o, this.now);
   }
 
+  /** A discount running on `o`: the price before it struck through, how
+   * much off, and the time it has left. */
+  private discount(o: ShopOffer) {
+    const d = discountOn(this.ctx.game.save, o, this.now);
+    if (!d || soldOut(this.ctx.game.save, o, this.now)) return "";
+    return `<small class="shop-discount"><s>${this.priceLabel(o, o.price)}</s> <b>${d.percent}% off</b> · <span data-countdown="discount:${o.id}">${countdown(d.until - this.now)}</span></small>`;
+  }
+
+  /** Sets a discount's countdown, `span` (on a card `offerCard` drew), at `now`. */
+  tickCountdown(span: HTMLElement, now: number) {
+    const o = offer(span.dataset.countdown!.replace("discount:", ""))!;
+    span.textContent = countdown((discountOn(this.ctx.game.save, o, now)?.until ?? now) - now);
+  }
+
+  /** Offer `id`'s card as the page shows it, for a dialog to show too. */
+  offerCard(id: OfferId) {
+    return this.card(offer(id)!);
+  }
+
   private card(o: ShopOffer) {
     const r = RARITIES[o.rarity], a = this.action(o), ends = o.endTime !== undefined && o.endTime > this.now;
     return `<article class="shop-card${o.category === "limited" ? " shop-banner" : ""}" style="--rarity: ${r.color}">
-      <button class="shop-card-face" data-detail="${o.id}" aria-label="${o.name}: details"><small class="shop-rarity">${r.displayName}</small><b class="shop-name">${o.name}</b>${o.badge ? `<span class="shop-badge">${o.badge}</span>` : ""}${rewards(o)}${o.effects.length ? `<span class="shop-effects">${o.effects.join(" · ")}</span>` : ""}${ends ? `<small class="shop-expires">Expires in <span data-countdown="${o.id}">${countdown(o.endTime! - this.now)}</span></small>` : ""}</button>
+      <button class="shop-card-face" data-detail="${o.id}" aria-label="${o.name}: details"><small class="shop-rarity">${r.displayName}</small><b class="shop-name">${o.name}</b>${o.badge ? `<span class="shop-badge">${o.badge}</span>` : ""}${rewards(o)}${o.effects.length ? `<span class="shop-effects">${o.effects.join(" · ")}</span>` : ""}${this.discount(o)}${ends ? `<small class="shop-expires">Expires in <span data-countdown="${o.id}">${countdown(o.endTime! - this.now)}</span></small>` : ""}</button>
       <button class="shop-buy${this.waiting(o) ? " notify" : ""}" data-buy="${o.id}" ${a.disabled ? "disabled" : ""}>${a.label}</button>${a.why ? `<small class="shop-why">${a.why}</small>` : ""}</article>`;
   }
 
@@ -170,12 +190,15 @@ export class ShopPage {
    * once an offer's period turns or an offer ends. */
   tick() {
     const save = this.ctx.game.save, now = this.now, periodic = OFFERS.filter((o) => o.period);
-    const turned = periodic.some((o) => soldOut(save, o, now) !== !!document.querySelector(`[data-countdown="again:${o.id}"]`));
-    const ended = OFFERS.some((o) => o.endTime !== undefined && o.endTime <= now && document.querySelector(`[data-countdown="${o.id}"]`));
-    if (turned || ended) return this.render();
-    document.querySelectorAll<HTMLElement>("[data-countdown]").forEach((span) => {
+    const turned = periodic.some((o) => soldOut(save, o, now) !== !!document.querySelector(`#shop [data-countdown="again:${o.id}"]`));
+    const ended = OFFERS.some((o) => o.endTime !== undefined && o.endTime <= now && document.querySelector(`#shop [data-countdown="${o.id}"]`));
+    const discounted = OFFERS.some((o) => !discountOn(save, o, now) && document.querySelector(`#shop [data-countdown="discount:${o.id}"]`));
+    if (turned || ended || discounted) return this.render();
+    document.querySelectorAll<HTMLElement>("#shop [data-countdown]").forEach((span) => {
       const id = span.dataset.countdown!;
-      span.textContent = countdown(id.startsWith("again:") ? availableAgain(save, offer(id.slice(6))!) - now : offer(id)!.endTime! - now);
+      span.textContent = countdown(id.startsWith("again:") ? availableAgain(save, offer(id.slice(6))!) - now
+        : id.startsWith("discount:") ? (discountOn(save, offer(id.slice(9))!, now)?.until ?? now) - now
+        : offer(id)!.endTime! - now);
     });
   }
 
@@ -211,16 +234,28 @@ export class ShopPage {
   }
 
   /** Buys `o`: a store link opens the store; a real-money offer goes
-   * through the store first (Dev free purchases skip it); then the server
-   * confirms the time and the game makes the transaction. */
-  private async buy(o: ShopOffer) {
-    if (o.price.kind === "store") return this.server.openStore(o.price.url);
-    if (this.busy) return;
+   * through the store first (at its price now, a discount's while one
+   * runs; Dev free purchases skip it); then the server confirms the time
+   * and the game makes the transaction. What was bought rises to the
+   * screen's middle, and `after` runs once it is pressed away, or at once
+   * when nothing was bought. Returns what the page says of it. */
+  async buy(o: ShopOffer, after?: () => void): Promise<string> {
+    if (o.price.kind === "store") {
+      this.server.openStore(o.price.url);
+      after?.();
+      return "";
+    }
+    if (this.busy) {
+      after?.();
+      return "";
+    }
     this.busy = true;
+    let shown = false;
     try {
       let paid = false;
-      if (o.price.kind === "money" && !this.ctx.game.free) {
-        paid = await this.server.purchase(o.price.sku);
+      const price = priceOf(this.ctx.game.save, o, this.now);
+      if (price.kind === "money" && !this.ctx.game.free) {
+        paid = await this.server.purchase(price.sku);
         if (!paid) return this.say("The store isn't open yet.");
       }
       // A store payment is granted even offline: the store has the money.
@@ -229,15 +264,19 @@ export class ShopPage {
       const refused = this.ctx.game.shop.buy(o.id, now, paid);
       this.say(refused ? REFUSALS[refused] : `${o.name}: ${o.price.kind === "free" ? "claimed" : "purchased"}!`);
       this.ctx.update();
-      const shown = refused ? null : offerShown(o);
-      if (shown) revealReward(shown, this.ctx.game.save.settings.reduceMotion);
+      const reward = refused ? null : offerShown(o);
+      if (reward) revealReward(reward, this.ctx.game.save.settings.reduceMotion, after);
+      shown = !!reward;
+      return this.message;
     } finally {
       this.busy = false;
       this.render();
+      if (!shown) after?.();
     }
   }
 
   private say(message: string) {
     this.message = message;
+    return message;
   }
 }

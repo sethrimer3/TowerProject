@@ -89,6 +89,7 @@ import { GemFinder } from "./game/gem-finder.ts";
 import { BadgeDesk } from "./game/badge-desk.ts";
 import { CardTreeDesk } from "./game/card-tree-desk.ts";
 import { CardBuyDesk } from "./game/card-buy-desk.ts";
+import { AdDesk } from "./game/ad-desk.ts";
 import { HandRules } from "./cards/hand-rules.ts";
 import { RunPurse, type EquipmentLoot } from "./game/run-purse.ts";
 import { EquipmentDesk } from "./game/equipment-desk.ts";
@@ -392,6 +393,7 @@ export class Game {
   readonly cardTrees = new CardTreeDesk(this);
   /** The Deck page's card buys: Gems for levels opened on the deck's trees. */
   readonly cardBuys = new CardBuyDesk(this);
+  readonly ads = new AdDesk(this, this.cardBuys);
   /** What the hand's cards may do now: their badges' rules and marks,
    * Ignore's tiles and the cards that act in place; where the hand plans
    * from. */

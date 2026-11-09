@@ -1,5 +1,6 @@
 import type { Game } from "../state.ts";
 import type { ConfirmPrompt } from "./dialogs.ts";
+import type { AdGrant, AdOffer } from "./ads-watch.ts";
 
 /** Every page. Tower and Delve both show the board (the tab bar's one
  * mode button, `board`, opens the active mode's). */
@@ -15,7 +16,7 @@ export type PageGame = Readonly<Pick<Game, "mode" | "run" | "world" | "save" | "
     Game,
     | "undo" | "acceptDefeat" | "stuckReport" | "cardText" | "retry" | "retryHeight" | "eraseAll" | "replaceSave" | "finish" | "setDevMode"
     | "claimGoal" | "warp" | "clock" | "toDelveForest" | "finishArchivesLesson" | "finishTrainingLesson"
-    | "training" | "skills" | "shop" | "themes" | "research" | "deck" | "cardTrees" | "cardBuys" | "badges" | "gear" | "equipment" | "tournament" | "mail" | "missions" | "events" | "shrine" | "notices"
+    | "training" | "skills" | "shop" | "ads" | "themes" | "research" | "deck" | "cardTrees" | "cardBuys" | "badges" | "gear" | "equipment" | "tournament" | "mail" | "missions" | "events" | "shrine" | "notices"
   >;
 
 /** What pages and dialogs need from the app around them. */
@@ -32,4 +33,8 @@ export interface AppContext {
   navigate(tab: string): void;
   /** Shows a confirm dialog that runs `action` if the player confirms. */
   confirm(prompt: ConfirmPrompt, action: () => void): void;
+  /** An ad button pressed: the Ads Watch dialog offers `shown`, and `grant`
+   * pays it once the ad is watched; with Ad-Disable owned, `grant` pays at
+   * once (ui/ads-watch.ts). */
+  watchAd(shown: AdOffer, grant: AdGrant): void;
 }
