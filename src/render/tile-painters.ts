@@ -173,7 +173,10 @@ export function paintEnemy(c: CanvasRenderingContext2D, t: Tile, legacy = false)
   const key = `${kitEnemy(e, legacy)}|${e.profile}|${e.shielded}|${e.aggro}|${e.name}|${e.tier}|${e.strength}|${e.fast}|${e.ranged}|${e.flying}|${e.armored}`;
   let baked = bakedEnemies.get(key);
   if (!baked) bakedEnemies.set(key, (baked = bakeEnemy(e, legacy)));
+  c.save();
+  c.imageSmoothingEnabled = false;
   c.drawImage(baked, -ENEMY_MARGIN, -ENEMY_MARGIN);
+  c.restore();
 }
 
 /** An enemy with its glow, outline, chevrons and a Fast enemy's mark, on a canvas ENEMY_MARGIN

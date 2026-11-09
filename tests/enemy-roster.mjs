@@ -44,6 +44,24 @@ try {
       const c=document.createElement('canvas');c.width=c.height=40;const ctx=c.getContext('2d');
       const capture=legacy=>{ctx.clearRect(0,0,40,40);ctx.save();ctx.translate(8,8);paintEnemy(ctx,{kind:'enemy',enemy:e},legacy);ctx.restore();return c.toDataURL();};
       const modern=capture(false),legacy=capture(true),modernAgain=capture(false);
+      // Compare the actual cached-enemy blit with an explicit nearest-neighbor
+      // reference at fractional board scales, including inherited smoothing.
+      const sampling=[];
+      for(const scale of [1,1.25,1.5])for(const legacy of [false,true])for(const inherited of [false,true]) {
+        const canvas=document.createElement('canvas');canvas.width=canvas.height=96;
+        const target=canvas.getContext('2d');target.setTransform(scale,0,0,scale,8.25,8.5);
+        target.imageSmoothingEnabled=inherited;
+        const blit=target.drawImage.bind(target);let smooth,expected;
+        target.drawImage=(source,...args)=>{
+          smooth=target.imageSmoothingEnabled;
+          const reference=document.createElement('canvas');reference.width=reference.height=96;
+          const rc=reference.getContext('2d');rc.putImageData(target.getImageData(0,0,96,96),0,0);
+          rc.setTransform(target.getTransform());rc.imageSmoothingEnabled=false;rc.drawImage(source,...args);
+          expected=reference.toDataURL();blit(source,...args);
+        };
+        paintEnemy(target,{kind:'enemy',enemy:e},legacy);
+        sampling.push({scale,legacy,inherited,smooth,matches:canvas.toDataURL()===expected,restored:target.imageSmoothingEnabled===inherited});
+      }
       const save=defaults();save.settings.reduceMotion=true;save.settings.decorOff=true;
       const game=new Game(save);game.newRun({outside:false,seed:321});
       game.run.changes[`${game.run.player.x},${game.run.player.y+1}`]={kind:'enemy',enemy:e};
@@ -52,10 +70,15 @@ try {
       const frame=legacy=>{save.settings.legacyEnemies=legacy;for(let i=0;i<5;i++)renderer.draw(1000);return board.toDataURL();};
       const boardModern=frame(false),boardLegacy=frame(true),boardAgain=frame(false);
       const preserved=run===JSON.stringify(game.run);board.remove();
-      return {modern,legacy,modernAgain,boardModern,boardLegacy,boardAgain,preserved,name:enemyTitle(e),oldName:enemyTitle(e,true)};
+      return {modern,legacy,modernAgain,boardModern,boardLegacy,boardAgain,preserved,sampling,name:enemyTitle(e),oldName:enemyTitle(e,true)};
     });
     assert.notEqual(drawn.modern,drawn.legacy,'rosters must render different silhouettes');
     assert.equal(drawn.modern,drawn.modernAgain,'switching restores exact modern pixels');
+    for(const sample of drawn.sampling) {
+      assert.equal(sample.smooth,false,`cached enemy must disable smoothing: ${JSON.stringify(sample)}`);
+      assert.ok(sample.matches,`cached enemy must match nearest-neighbor pixels: ${JSON.stringify(sample)}`);
+      assert.ok(sample.restored,'enemy drawing must restore the caller’s canvas state');
+    }
     assert.notEqual(drawn.boardModern,drawn.boardLegacy,'the live board must invalidate cached contents and lighting');
     assert.equal(drawn.boardModern,drawn.boardAgain,'the live board must restore modern content and lighting');
     assert.ok(drawn.preserved,'switching must not mutate the saved run');

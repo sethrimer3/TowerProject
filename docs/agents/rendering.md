@@ -15,8 +15,10 @@ Trials retain their dedicated actors and sprites.
 `tools/prepare-enemy-sprites.mjs` exports the three retained source sheets to 126 individual palette-matched, binary-alpha 24 × 24 PNGs, with increasing footprints by strength, then packs a review atlas and labeled preview in `public/assets/enemy-roster/`.
 `npm run sprites:atlas` also packs the individual enemy PNGs into the runtime UI atlas and registers them for preloading.
 Board content, smite, popups, sprite lighting and silhouette caches receive the saved roster preference; labels use that same preference without changing saved enemy identities or combat statistics.
+The cached enemy canvas is blitted with image smoothing disabled, preserving hard sprite pixels at fractional board scales and restoring the caller's canvas state afterwards.
 `tests/enemy-roster.test.ts` verifies the full roster, legacy names, saved preference, shared palette and lossless atlas regions.
 `node tests/enemy-roster.mjs` starts its own Vite server and checks persisted toggles, both image-loading modes and live board/cache switching, then saves bestiary and Settings screenshots under `test-results/enemy-roster/`.
+It also compares cached enemy draws with a nearest-neighbor pixel reference at 1×, 1.25× and 1.5× scales, for both rosters and inherited smoothing states.
 
 The additions art library lives in `public/assets/additions/`: 100 unassigned relic designs, Trial Points, twelve skill icons, five event pennants and ten Standard equipment icons.
 `node tools/prepare-additions-sprites.mjs` exports the retained sources in `assets/game-sprites/additions-sources/` to individual transparent 24-pixel PNGs, then packs their exact pixels into a padded 512 × 256 atlas with named regions in `atlas.json`.
