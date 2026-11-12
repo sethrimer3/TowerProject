@@ -8,12 +8,14 @@ const server = await createServer({ server: { host: "127.0.0.1", port: 5201 }, l
 await server.listen();
 const browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH || "/usr/bin/chromium" });
 mkdirSync("test-results/tower-tiers", { recursive: true });
+const towers=[2,3,4,5,6,7,8,9];
 try {
   const page = await browser.newPage({ viewport: { width: 1100, height: 1000 } });
   await fixClock(page);
   const errors = []; page.on("pageerror", e => errors.push(e.message));
   await page.addInitScript(() => {
     globalThis.__handHeld = true; globalThis.__handStartsPaused = true;
+    localStorage.setItem("towerdelve.v1",JSON.stringify({settings:{experimentalAtlas:false}}));
     const getContext = HTMLCanvasElement.prototype.getContext;
     HTMLCanvasElement.prototype.getContext = function(type, options) {
       return getContext.call(this, type, type === "2d" ? { ...options, willReadFrequently: true } : options);
@@ -21,7 +23,7 @@ try {
   });
   let release; const requested = new Promise(resolve => { release = resolve; });
   await page.route("**/dungeon-tower-2-floor.png", route => release(route));
-  await page.goto(server.resolvedUrls.local[0]); await page.locator("#hp").waitFor();
+  await page.goto(server.resolvedUrls.local[0],{waitUntil:"domcontentloaded"});
   const paint = () => page.evaluate(async () => {
     const { drawDungeonGround } = await import("/src/sprites/dungeon.ts");
     const c = document.createElement("canvas").getContext("2d"); c.canvas.width = c.canvas.height = 24;
@@ -33,17 +35,18 @@ try {
   assert.equal(await paint(), false, "floors and walls switch as one complete material group");
   await route.fulfill({ path: resolve("public/assets/style/dungeon-tower-2-floor.png"), contentType: "image/png" });
   await page.unroute("**/dungeon-tower-2-floor.png");
+  await page.locator("#hp").waitFor();
   await page.waitForFunction(async () => {
     const { drawDungeonGround } = await import("/src/sprites/dungeon.ts");
     const c = document.createElement("canvas").getContext("2d"); c.canvas.width = c.canvas.height = 24;
-    return [2, 3].map(tier => drawDungeonGround(c, { mode: "tower", tier, height: 0, seed: 0, x: 0, y: 0, wall: false, empty: true })).every(Boolean);
+    return [2,3,4,5,6,7,8,9].map(tier => drawDungeonGround(c, { mode: "tower", tier, height: 0, seed: 0, x: 0, y: 0, wall: false, empty: true })).every(Boolean);
   });
   const native = await page.evaluate(async () => {
     const { drawDungeonGround, dungeonFloorSprite, drawDungeonFrame } = await import("/src/sprites/dungeon.ts");
     const { kitImage } = await import("/src/sprites/kit.ts");
     const c = document.createElement("canvas").getContext("2d"); c.canvas.width = c.canvas.height = 96;
     const read = () => [...c.getImageData(0, 0, 96, 96).data];
-    return [2, 3].map(tier => {
+    return [2,3,4,5,6,7,8,9].map(tier => {
       c.clearRect(0, 0, 96, 96);
       for (let row = 0; row < 4; row++) for (let col = 0; col < 4; col++) {
         c.save(); c.translate(col * 24, row * 24);
@@ -77,7 +80,7 @@ try {
     assert.ok(set.core, "both materials recede to the same near-black core");
     for (const corner of set.corners) { assert.ok(corner.opaque >= 5); assert.equal(corner.outside, 0); }
   }
-  for (const width of [390, 1100]) for (const tier of [2, 3]) {
+  for (const width of [390, 1100]) for (const tier of towers) {
     await page.setViewportSize({ width, height: 1000 });
     const result = await page.evaluate(async ({ tier, width }) => {
       const { towerTierSpriteScene } = await import("/tests/render-scenes.ts"), { Renderer } = await import("/src/render/rendering.ts");
@@ -91,7 +94,8 @@ try {
       const requested = [], RealImage = window.Image;
       window.Image = function(...args) { const image = new RealImage(...args); requested.push(image); return image; }; window.Image.prototype = RealImage.prototype;
       const renderer = new Renderer(canvas, g); let now = 1000;
-      const draw = () => { for (let i = 0; i < 30; i++) renderer.draw(now += 100); };
+      // Reduce motion is on: three frames settle the static camera and draw caches.
+      const draw = () => { for (let i = 0; i < 3; i++) renderer.draw(now += 100); };
       const settle = async () => { for (let i = 0; i < 16; i++) {
         const count = requested.length;
         await Promise.all(requested.map(image => image.complete ? null : new Promise(resolve => { image.addEventListener("load", resolve, { once: true }); image.addEventListener("error", resolve, { once: true }); })));
@@ -141,8 +145,9 @@ try {
   await page.locator("#tier-art").screenshot({ path: "test-results/tower-tiers/native-materials.png" });
   const failed = await browser.newPage();
   await fixClock(failed);
+  await failed.addInitScript(()=>localStorage.setItem("towerdelve.v1",JSON.stringify({settings:{experimentalAtlas:false}})));
   await failed.route("**/dungeon-tower-3-walls.png", route => route.abort());
-  await failed.goto(server.resolvedUrls.local[0]);
+  await failed.goto(server.resolvedUrls.local[0],{waitUntil:"domcontentloaded"});
   const fallback = await failed.evaluate(async () => {
     const { drawDungeonGround } = await import("/src/sprites/dungeon.ts"), { paintTile } = await import("/src/render/tile-painters.ts");
     const c = document.createElement("canvas").getContext("2d"); c.canvas.width = c.canvas.height = 24;
@@ -152,7 +157,7 @@ try {
       { ...tile, outside: false, entranceX: 8, styledSprites: true, reduceMotion: true, themed: null });
     return { ready, opaque: [...c.getImageData(0, 0, 24, 24).data].filter((v, i) => i % 4 === 3 && v === 255).length };
   });
-  assert.equal(fallback.ready, false); assert.equal(fallback.opaque, 576); await failed.close();
+  assert.equal(fallback.ready, false); assert.equal(fallback.opaque, 0, "missing art remains unpainted behind the startup barrier; no procedural fallback"); await failed.close();
   assert.deepEqual(errors, []);
-  console.log("Tower II/III literal floor panels, relief, corner footprints, black cores, late/failed loads, phone/desktop scenes, live tier caches, themes, reload and theme restoration pass.");
+  console.log("Tower II–IX literal floor panels, relief, corner footprints, black cores, late/failed loads, phone/desktop scenes, live tier caches, themes, reload and theme restoration pass.");
 } finally { await browser.close(); await server.close(); }

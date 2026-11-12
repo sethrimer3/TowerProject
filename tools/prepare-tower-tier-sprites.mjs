@@ -1,4 +1,4 @@
-// Export original Tower II/III materials into the existing native wall layout.
+// Export original Tower II–IX materials into the existing native wall layout.
 // Only the corner silhouettes are shared; every visible texel comes from
 // the corresponding tier's generated material source.
 import { execFileSync } from "node:child_process";
@@ -15,6 +15,12 @@ const manifest = JSON.parse(readFileSync(join(out, "manifest.json"), "utf8"));
 const sets = [
   { tier: 2, floor: ["29251f", "493a2c", "80603d"], cap: ["493a2c", "80603d", "b28a52"], body: ["29251f", "493a2c", "80603d"], dark: ["10151c", "29251f", "493a2c"], face: ["29251f", "493a2c", "80603d", "b28a52", "e1bb78"] },
   { tier: 3, floor: ["1b2430", "293543", "3e4c59", "80608e"], cap: ["293543", "3e4c59", "80608e"], body: ["1b2430", "293543", "3e4c59"], dark: ["10151c", "1b2430", "293543"], face: ["10151c", "1b2430", "293543", "3e4c59", "63717b", "80608e"] },
+  { tier: 4, floor: ["10151c", "283b2c", "3c5837", "668348"], cap: ["283b2c", "668348", "a7bd75"], body: ["10151c", "283b2c", "3c5837"], dark: ["10151c", "1b2430", "283b2c"], face: ["10151c", "283b2c", "3c5837", "668348", "a7bd75"] },
+  { tier: 5, floor: ["382027", "693239", "a6544e"], cap: ["693239", "a6544e", "d68a86"], body: ["382027", "693239", "a6544e"], dark: ["10151c", "382027", "693239"], face: ["10151c", "382027", "693239", "a6544e", "d68a86"] },
+  { tier: 6, floor: ["16303d", "315363", "54879a"], cap: ["315363", "54879a", "88c5db"], body: ["16303d", "315363", "54879a"], dark: ["10151c", "16303d", "315363"], face: ["10151c", "16303d", "315363", "54879a", "88c5db"] },
+  { tier: 7, floor: ["293543", "63717b", "8b9a9d", "b8c2bb"], cap: ["63717b", "b8c2bb", "eee0b7"], body: ["293543", "63717b", "8b9a9d"], dark: ["1b2430", "293543", "3e4c59"], face: ["293543", "63717b", "8b9a9d", "b8c2bb", "eee0b7"] },
+  { tier: 8, floor: ["29251f", "493a2c", "80603d"], cap: ["493a2c", "80603d", "e1bb78"], body: ["29251f", "493a2c", "80603d"], dark: ["10151c", "29251f", "493a2c"], face: ["10151c", "29251f", "493a2c", "80603d", "b28a52", "e1bb78"] },
+  { tier: 9, floor: ["1b2430", "293543", "3e4c59", "80608e"], cap: ["293543", "80608e", "8b9a9d"], body: ["1b2430", "293543", "80608e"], dark: ["10151c", "1b2430", "293543"], face: ["10151c", "1b2430", "293543", "3e4c59", "80608e", "8b9a9d"] },
 ];
 function palette(name, colors) {
   const path = join(scratch, `${name}.ppm`);
@@ -28,8 +34,18 @@ function recolor(input, output, from, to) {
   run([...args, "-strip", `PNG32:${output}`]);
 }
 try {
-  for (const set of sets) {
-    const source = join(root, `assets/game-sprites/tower-${set.tier}-materials.png`);
+  const selected = process.argv.slice(2).map(Number);
+  if (selected.some(t => !sets.some(s => s.tier === t))) throw Error("Expected tower numbers 2–9");
+  for (const set of sets.filter(s => !selected.length || selected.includes(s.tier))) {
+    let source = join(root, `assets/game-sprites/tower-${set.tier}-materials.png`);
+    if (set.tier >= 4) {
+      const atlas = join(root, "assets/game-sprites/tower-4-9-materials.png");
+      const [w, h] = run(["identify", "-format", "%w %h", atlas]).toString().split(" ").map(Number);
+      const index = set.tier - 4, cw = w / 3, ch = h / 2;
+      if (!Number.isInteger(cw) || !Number.isInteger(ch)) throw Error("Expected a 3×2 source grid");
+      source = p(`source-${set.tier}`);
+      run([atlas, "-crop", `${cw}x${ch}+${index % 3 * cw}+${Math.floor(index / 3) * ch}`, "+repage", "-strip", `PNG32:${source}`]);
+    }
     const [width, height] = run(["identify", "-format", "%w %h", source]).toString().split(" ").map(Number);
     const halfW = Math.floor(width / 2), halfH = Math.floor(height / 2);
     const extract = (name, col, row, w, h, colors) => run([source, "-crop", `${halfW}x${halfH}+${col * halfW}+${row * halfH}`, "+repage",
@@ -38,8 +54,8 @@ try {
     extract("cap-field", 1, 0, 96, 96, set.cap);
     extract("face-field", 0, 1, 96, 32, set.face);
     // Sample the authored ledge's top face without the empty strip gutters.
-    const rimY = halfH + Math.round(halfH * (set.tier === 2 ? .022 : .043));
-    run([source, "-crop", `${halfW - 12}x${Math.round(halfH * (set.tier === 2 ? .065 : .045))}+${halfW + 6}+${rimY}`, "+repage",
+    const rimY = halfH + Math.round(halfH * (set.tier >= 4 ? .075 : set.tier === 2 ? .022 : .043));
+    run([source, "-crop", `${halfW - 12}x${Math.round(halfH * (set.tier >= 4 ? .04 : set.tier === 2 ? .065 : .045))}+${halfW + 6}+${rimY}`, "+repage",
       "-alpha", "off", "-filter", "point", "-resize", "96x3!", "+dither", "-remap", palette("rim", set.face), "-alpha", "on", "-strip", `PNG32:${p("rim-field")}`]);
     const floorId = `dungeon-tower-${set.tier}-floor`;
     run([p("floor"), "-strip", `PNG32:${join(out, `${floorId}.png`)}`]);
@@ -83,5 +99,5 @@ try {
     manifest.assets[wallId] = { file: `${wallId}.png`, width: 96, height: 720, tile: true };
   }
   writeFileSync(join(out, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
-  console.log("Prepared one native floor-and-wall material set each for Tower II and Tower III.");
+  console.log("Prepared the requested native Tower II–IX floor-and-wall material sets.");
 } finally { rmSync(scratch, { recursive: true, force: true }); }

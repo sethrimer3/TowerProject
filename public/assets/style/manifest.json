@@ -4005,6 +4005,78 @@
       "width": 96,
       "height": 96,
       "tile": true
+    },
+    "dungeon-tower-4-floor": {
+      "file": "dungeon-tower-4-floor.png",
+      "width": 96,
+      "height": 96,
+      "tile": true
+    },
+    "dungeon-tower-4-walls": {
+      "file": "dungeon-tower-4-walls.png",
+      "width": 96,
+      "height": 720,
+      "tile": true
+    },
+    "dungeon-tower-5-floor": {
+      "file": "dungeon-tower-5-floor.png",
+      "width": 96,
+      "height": 96,
+      "tile": true
+    },
+    "dungeon-tower-5-walls": {
+      "file": "dungeon-tower-5-walls.png",
+      "width": 96,
+      "height": 720,
+      "tile": true
+    },
+    "dungeon-tower-6-floor": {
+      "file": "dungeon-tower-6-floor.png",
+      "width": 96,
+      "height": 96,
+      "tile": true
+    },
+    "dungeon-tower-6-walls": {
+      "file": "dungeon-tower-6-walls.png",
+      "width": 96,
+      "height": 720,
+      "tile": true
+    },
+    "dungeon-tower-7-floor": {
+      "file": "dungeon-tower-7-floor.png",
+      "width": 96,
+      "height": 96,
+      "tile": true
+    },
+    "dungeon-tower-7-walls": {
+      "file": "dungeon-tower-7-walls.png",
+      "width": 96,
+      "height": 720,
+      "tile": true
+    },
+    "dungeon-tower-8-floor": {
+      "file": "dungeon-tower-8-floor.png",
+      "width": 96,
+      "height": 96,
+      "tile": true
+    },
+    "dungeon-tower-8-walls": {
+      "file": "dungeon-tower-8-walls.png",
+      "width": 96,
+      "height": 720,
+      "tile": true
+    },
+    "dungeon-tower-9-floor": {
+      "file": "dungeon-tower-9-floor.png",
+      "width": 96,
+      "height": 96,
+      "tile": true
+    },
+    "dungeon-tower-9-walls": {
+      "file": "dungeon-tower-9-walls.png",
+      "width": 96,
+      "height": 720,
+      "tile": true
     }
   }
 }

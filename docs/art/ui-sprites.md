@@ -192,7 +192,7 @@ The [Tower floor source](../../assets/game-sprites/tower-floor.png) supplies one
 The sixteen native frames retain their spatial relationship across tile boundaries, including under doors and pickups; the shared material palette and upper-left lighting stay fixed.
 The [Tower II material source](../../assets/game-sprites/tower-2-materials.png) supplies limestone ashlar, rectangular paving, south-facing facades and coping.
 The [Tower III material source](../../assets/game-sprites/tower-3-materials.png) supplies vertical basalt masonry, octagonal paving with square insets, facades and coping.
-Run `node tools/prepare-tower-tier-sprites.mjs` to export one 96 × 96 floor panel and one 96 × 720 connected-wall atlas for each tower, with one fixed palette per set rather than biome recolors.
+Run `node tools/prepare-tower-tier-sprites.mjs` to export one 96 × 96 floor panel and one 96 × 720 connected-wall atlas for each of Towers II–IX, with one fixed palette per set rather than biome recolors.
 Both use the shared native corner silhouettes, original upper-left light, three wall shade levels and flat black interior cores; visible texels come from the new sources.
 `tests/default-art-browser.mjs` starts its own server to check the startup barrier, delayed and failed downloads, Retry, first-frame painting, Settings persistence, old-save migration and independent theme overrides.
 `tests/sprite-options.test.ts` checks full-tile door coverage and stationary torch hardware, timing and reduced motion.
@@ -212,3 +212,8 @@ The [Blacksmith effects source](../../assets/game-sprites/blacksmith-effects.png
 Runtime smoke opacity remains faint; the hanging sign shifts its lower rows by at most two native pixels while its top stays anchored.
 
 The optional [Experimental UI atlas](ui-atlas.md) packs UI and shared small sprites without deleting or modifying their original PNGs.
+
+The [Tower IV–IX material source](../../assets/game-sprites/tower-4-9-materials.png) is a 3×2 grid of distinct material designs, with IV/V/VI above VII/VIII/IX.
+Each cell has floor, wall-top, facade and coping quadrants in that order.
+Native exports retain only the shared 27 colors, binary alpha and upper-left light; wall joins, corner silhouettes and black cores retain their existing geometry.
+IV uses green polygon cobbles, V red herringbone brick, VI blue diamond paving, VII pale marble squares, VIII brass-inlaid umber stone and IX triangular violet crystal masonry.

@@ -136,3 +136,7 @@ The cloud browser flow also tests a colored reference chart through every weathe
 `node tests/pixel-outlines.mjs` checks actual outlined PNGs, every original texel, hero facings/idle, both door styles, physical mask exclusion and zero steady sprite readbacks, with native art and phone/desktop dungeon/trial previews in `test-results/pixel-outlines/`.
 
 `node tests/trial-voyage.mjs` starts its own local Vite server and checks the level 9 rejection, level 10 departure, delayed menu, animated ocean/sail, repeat boarding, attempt entry, key spending and dock return at 390/1024 pixels.
+
+`tests/tower-tier-sprites.test.ts` checks every dedicated Tower II–IX material, including palette membership, binary alpha, collision-corner silhouettes and black cores.
+`node tests/tower-tier-sprites-browser.mjs` checks all eight sets at phone and desktop widths, literal floor panels, floor relief, tier switching, alternate themes, reloads and delayed/failed loads.
+The appended `spriteTowerFour` through `spriteTowerNine` render scenes keep all older scene seeds fixed.

@@ -317,10 +317,10 @@ const STELLAR_BOARD_SCENES: Record<string, () => BoardScene> = {
 };
 
 /** One fixed material identity for each later Tower, on real tier geometry. */
-export function towerTierSpriteScene(tier: 2 | 3): BoardScene {
+export function towerTierSpriteScene(tier: number): BoardScene {
   const save = defaults();
   Object.assign(save.settings, { brightness: 75, reduceMotion: true });
-  save.tower.tiersOpen = 3; save.tower.tier = tier;
+  save.tower.tiersOpen = Math.max(3, tier); save.tower.tier = tier;
   const g = new Game(save); g.newRun({ seed: 1103 });
   for (let i = 0; i < 3; i++) g.advanceTowerRoom();
   return { g };
@@ -349,7 +349,7 @@ export function forestSpriteScene(mode: "tower" | "delve", settings: Record<stri
  * scene, mid-strike), and later frames once the camera has caught up. */
 function playBoard(name: string, seed: number, canvas: HTMLCanvasElement, grab: Grab) {
   seeded(seed, () => {
-    const scene = (BOARD_SCENES[name] ?? LATER_BOARD_SCENES[name] ?? APPENDED_BOARD_SCENES[name] ?? STELLAR_BOARD_SCENES[name])(), g = scene.g;
+    const scene = (BOARD_SCENES[name] ?? LATER_BOARD_SCENES[name] ?? APPENDED_BOARD_SCENES[name] ?? STELLAR_BOARD_SCENES[name] ?? NEW_TOWER_SCENES[name])(), g = scene.g;
     quiet(g);
     const r = new Renderer(canvas, g);
     for (let t = 1000; t <= 1400; t += 50) r.draw(t);
@@ -562,6 +562,9 @@ function playLakeside(_name: string, seed: number, canvas: HTMLCanvasElement, gr
   });
 }
 
+const NEW_TOWER_SCENES: Record<string, () => BoardScene> = Object.fromEntries(
+  ["Four", "Five", "Six", "Seven", "Eight", "Nine"].map((word,i)=>[`spriteTower${word}`,()=>towerTierSpriteScene(i+4)]),
+);
 /** Every scene retains its seed, including gaps left by retired scenes. */
 export const JOBS: Job[] = [
   ...Object.keys(BOARD_SCENES).map((name) => ({ name, canvas: "board" as const, run: playBoard })),
@@ -573,6 +576,7 @@ export const JOBS: Job[] = [
   { name: "forestTravel", canvas: "board" as const, run: playForestTravel },
   { name: "lakeside", canvas: "board" as const, run: playLakeside },
   ...Object.keys(STELLAR_BOARD_SCENES).map((name) => ({ name, canvas: "board" as const, run: playBoard })),
+  ...Object.keys(NEW_TOWER_SCENES).map((name) => ({ name, canvas: "board" as const, run: playBoard })),
 ].map(({ name, canvas, run }, i) => {
   // Keep the fourth seed reserved for the retired sprite-opt-out scene.
   const seed = i + 1 + (i >= 3 ? 1 : 0) + (i >= Object.keys(BOARD_SCENES).length ? 5 : 0);

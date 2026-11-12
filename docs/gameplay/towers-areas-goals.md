@@ -9,6 +9,7 @@ In Towers I to IV the monsters' HP and ATK climb faster from floor 11, to about 
 Each pays more Gold: ×2 in Tower II, ×3.1 in III, ×4.3 in IV, then ×5.6, ×7, ×8.5, ×10.1 and ×11.8 in IX; and its kills pay XP times the same factor as the monsters' stats (×5 in Tower II, ×20 in III …), so the hero levels faster too.
 Silver stays the same, so a run buys about the same run training, while potions stay the same too (only upgrades will raise those).
 ATK and DEF shards raise their stat by 1 in Tower I and by 2.75 times as much in each tower after (2.75 in II, 7.56 in III, …).
+Each tower has its own interior artwork: Tower I’s masonry, II’s limestone, III’s basalt, IV’s overgrown blocks, V’s red brick, VI’s blue stone, VII’s marble, VIII’s brass-inlaid stone and IX’s violet crystal.
 The floors are laid out as in Tower I, but blue, red and Heart Doors (and blue and red keys) come earlier in each tower.
 Once a second one is open, arrows on either side of the board in the Tower's forest choose which the next run enters; its numeral glows over the doorway, and the board's subtitle names it with its Gold & XP bonus.
 The Delve's forest has no arrows: it always shows the cave its tournament run will play, its league's (*Delve 3+* in Silver).

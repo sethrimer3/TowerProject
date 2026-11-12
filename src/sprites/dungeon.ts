@@ -1,3 +1,4 @@
+import { TIERS } from "../tiers.ts";
 import type { Mode, Tile } from "../entities.ts";
 import { tileRandom } from "../random.ts";
 import { themeAt, type TerrainTile } from "../render/themes.ts";
@@ -45,9 +46,9 @@ export function dungeonFloorFrame(x: number, y: number, seed: number) {
 }
 
 export const towerFloorAtlasId = (tone: number) => `dungeon-floor-masonry-${tone}`;
-/** Towers II and III each keep one material set throughout the climb. */
-export const towerTileset = (mode: Mode, tier = 1): 2 | 3 | undefined => mode === "tower" && (tier === 2 || tier === 3) ? tier : undefined;
-export const towerTierAtlasId = (tier: 2 | 3, part: "floor" | "walls") => `dungeon-tower-${tier}-${part}`;
+/** Each later tower keeps its own material set throughout the climb. */
+export const towerTileset = (mode: Mode, tier = 1): number | undefined => mode === "tower" && Number.isInteger(tier) && tier >= 2 && tier <= TIERS ? tier : undefined;
+export const towerTierAtlasId = (tier: number, part: "floor" | "walls") => `dungeon-tower-${tier}-${part}`;
 /** One connected 4×4 paving panel, phased per run without rotating the light.
  * World north is +y, while PNG rows increase toward screen south. */
 export function towerFloorFrame(x: number, y: number, seed: number) {

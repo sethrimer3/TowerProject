@@ -80,10 +80,14 @@ Tower floors instead use ten dedicated 96 × 96 `dungeon-floor-masonry-*` PNG pa
 `towerFloorFrame` selects neighboring frames by world coordinates and a seeded phase, reversing world y into screen rows and wrapping negative coordinates correctly without rotating the upper-left light.
 The complete panel loads with its material group, and floor relief samples the same selected PNG texels; Delve retains its existing material floor variants.
 `tools/prepare-tower-floors.mjs` exports the generated `assets/game-sprites/tower-floor.png` into four quiet shared-palette colors per biome, preserving the full field instead of independently sampling tile textures.
-Towers II and III instead each use one fixed floor-and-wall material set at every height: warm limestone ashlar and rectangular paving for II, cool blue-violet basalt and octagonal paving with small square insets for III.
-`towerTileset` selects only these two numbered Tower tiers; Tower I, later tiers, Delve, forests, non-Classic Game themes keep their existing art.
+Towers II–IX each use one fixed floor-and-wall material set at every height.
+II retains warm limestone and rectangular paving; III retains basalt and octagonal paving.
+IV uses overgrown green polygon cobbles and broad blocks, V wine-red herringbone brick, VI blue lozenge paving and long cut-stone courses, VII pale marble squares, VIII umber geometric paving and brass-inlaid blocks, and IX triangular violet crystal masonry.
+`towerTileset` selects numbered Towers II–IX; Tower I, Delve, forests and non-Classic Game themes keep their existing art.
 Each set has one 96 × 96 connected floor PNG and one 96 × 720 wall PNG with the existing six variants, sixteen neighbor masks, native corners and shade frames.
-`tools/prepare-tower-tier-sprites.mjs` extracts the original `assets/game-sprites/tower-2-materials.png` and `tower-3-materials.png` into the shared palette with fixed upper-left lighting.
+`tools/prepare-tower-tier-sprites.mjs` extracts the original Tower II/III sources and the 3×2 `assets/game-sprites/tower-4-9-materials.png` source atlas into the shared palette with fixed upper-left lighting.
+Pass optional tower numbers, such as `node tools/prepare-tower-tier-sprites.mjs 4 5 6 7 8 9`, to regenerate only those sets; no arguments rebuilds II–IX.
+The source atlas orders IV, V, VI across the top and VII, VIII, IX across the bottom; each cell contains floor, wall top, south facade and coping quadrants.
 The wall-corner alpha footprints are shared, while visible corner texels come from the new material; these tiers omit the older biome-specific wall motifs.
 `BoardLook.tier` passes the run's saved number into `TerrainTile`, material selection and floor relief; ground, native wall, relief and water-reflection caches include the effective tileset so a reused renderer switches immediately.
 The shared contact shadows and continuous shade contours remain in place, and both new wall sets recede to the same flat black core.
