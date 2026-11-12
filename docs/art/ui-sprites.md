@@ -222,3 +222,13 @@ The [experimental material source](../../assets/game-sprites/experimental-materi
 Each column has the same floor/wall-top/facade/coping quadrants as the tower sources.
 Run `node tools/prepare-tower-tier-sprites.mjs --experimental` to reproduce their six native PNGs, then `npm run sprites:atlas` to register and pack them.
 These shared-palette materials are available only in Tileset Lab; they do not replace any tower art.
+
+## Seamless floor contract
+
+Every 96×96 paving panel must repeat seamlessly across both axes, including the outer join between neighboring 4×4 panels.
+Source-sheet borders are not floor mortar and must never be deployed as a rectangular frame around a repeat.
+`tools/seamless-floor.mjs` authors periodic native geometry from each material’s existing palette: staggered slabs, flagstones, toroidal polygon cobbles, herringbone bricks, diamonds, marble insets, geometric inlay, triangles, riveted plates, mosaic diamonds and hexagons.
+It keeps upper-left hard-step bevels and sparse wear clusters and never interpolates colors or mirrors the lighting.
+Both floor exporters run this step before saving the floor panel or legacy floor frames in a wall atlas.
+Inspect at least a 3×3 repeated field at native size and nearest-neighbor enlargement before approving a floor; an isolated swatch cannot reveal this defect.
+Walls, corner footprints and the black core retain their existing artwork.

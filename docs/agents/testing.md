@@ -144,3 +144,6 @@ The appended `spriteTowerFour` through `spriteTowerNine` render scenes keep all 
 `tests/tileset-lab.test.ts` verifies the twelve-slide catalog, preview-only material selection, experimental PNG dimensions/palette/alpha and connected example-room geometry.
 `node tests/tileset-lab.mjs` starts its own Vite server and checks all twelve distinct slides at phone/desktop widths, exact pixel restoration, arrow/keyboard wrapping, clipboard labels, return navigation and unchanged run/currency/settings saves.
 Review screenshots are saved under `test-results/tileset-lab/`.
+
+`tests/floor-seams.test.ts` checks all 21 playable and experimental floor panels for dark rectangular border strips, abnormal horizontal/vertical wrap jumps, opaque pixels and exact shared-palette membership.
+The browser room and tileset slideshow suites cover reconstruction, negative coordinates and cached material switching with the same corrected floor PNGs.

@@ -1,5 +1,6 @@
-// Keep the complete authored paving field: splitting independent swatches
-// would break the large slabs and staggered joints at tile boundaries.
+import { finishSeamlessFloor } from "./seamless-floor.mjs";
+// Keep native 4×4 panels, but rebuild their paving with periodic geometry
+// so the outer panel edges connect as cleanly as the inner tile cuts.
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -15,6 +16,7 @@ try {
   writeFileSync(palette, `P3\n4 1\n255\n${colors.flatMap(c => [0, 2, 4].map(i => parseInt(c.slice(i, i + 2), 16))).join(" ")}\n`);
   run([join(root, "assets/game-sprites/tower-floor.png"), "-alpha", "off", "-filter", "point", "-resize", "96x96!",
     "+dither", "-remap", palette, "-alpha", "on", "-strip", `PNG32:${base}`]);
+  finishSeamlessFloor(base,"flagstones");
   const manifest = JSON.parse(readFileSync(join(out, "manifest.json"), "utf8"));
   for (const [tone, ramp] of tones.entries()) {
     const id = `dungeon-floor-masonry-${tone}`;

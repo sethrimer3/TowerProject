@@ -32,7 +32,7 @@ try {
     const id=await room.getAttribute('data-example');
     await expect(page.locator('#tileset-loading')).toBeHidden();
     hashes.set(id,await room.evaluate(c=>c.toDataURL()));
-    if(id.startsWith('EXP-'))await page.screenshot({path:`test-results/tileset-lab/${id}-${width}.png`});
+    await page.screenshot({path:`test-results/tileset-lab/${id}-${width}.png`});
     await page.locator('#tileset-next').click();
   }
   assert.equal(hashes.size,12);assert.equal(new Set(hashes.values()).size,12,'each slide has distinct rendered materials');

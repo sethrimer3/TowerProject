@@ -1,6 +1,7 @@
+import { finishSeamlessFloor } from "./seamless-floor.mjs";
 // Export original Tower II–IX materials into the existing native wall layout.
-// Only the corner silhouettes are shared; every visible texel comes from
-// the corresponding tier's generated material source.
+// Wall texels retain the authored material source and shared corner silhouettes.
+// Floors use periodic native geometry in that material's palette.
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -63,6 +64,9 @@ try {
     const extract = (name, col, row, w, h, colors) => run([source, "-crop", `${halfW}x${halfH}+${col * halfW}+${row * halfH}`, "+repage",
       "-alpha", "off", "-filter", "point", "-resize", `${w}x${h}!`, "+dither", "-remap", palette(name, colors), "-alpha", "on", "-strip", `PNG32:${p(name)}`]);
     extract("floor", 0, 0, 96, 96, set.floor);
+    const style = set.lab ? {iron:"iron",tideglass:"mosaic",reliquary:"hexagons"}[set.lab]
+      : {2:"slabs",3:"octagons",4:"cobbles",5:"herringbone",6:"diamonds",7:"marble",8:"inlay",9:"triangles"}[set.tier];
+    finishSeamlessFloor(p("floor"),style);
     extract("cap-field", 1, 0, 96, 96, set.cap);
     extract("face-field", 0, 1, 96, 32, set.face);
     // Sample the authored ledge's top face without the empty strip gutters.

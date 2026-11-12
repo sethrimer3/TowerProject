@@ -66,3 +66,5 @@ End Climb (End Run in the Delve) shows only inside a run.
 
 With Settings → **Sprites** on, Goal rewards and their locked, claimed, mastered and cleared marks use matching pixel-art PNGs.
 The option defaults to off, and non-default UI themes supply their own look; reward names, amounts and floor numbers stay live text.
+
+Tower paving repeats continuously across the floor, including the joins between its larger panels.

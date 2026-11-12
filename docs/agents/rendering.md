@@ -79,7 +79,10 @@ Twenty-one 96 × 720 atlases contain four 24-pixel floors, six versions of all s
 Tower floors instead use ten dedicated 96 × 96 `dungeon-floor-masonry-*` PNG panels that mix large slabs and smaller bricks across a connected 4 × 4 tile field.
 `towerFloorFrame` selects neighboring frames by world coordinates and a seeded phase, reversing world y into screen rows and wrapping negative coordinates correctly without rotating the upper-left light.
 The complete panel loads with its material group, and floor relief samples the same selected PNG texels; Delve retains its existing material floor variants.
-`tools/prepare-tower-floors.mjs` exports the generated `assets/game-sprites/tower-floor.png` into four quiet shared-palette colors per biome, preserving the full field instead of independently sampling tile textures.
+`tools/prepare-tower-floors.mjs` reads the authored floor palette and exports periodic flagstone geometry into the existing biome ramps.
+`tools/seamless-floor.mjs` constructs every floor pattern on a 96-pixel torus before the panel is split into its sixteen native frames.
+Stone shapes, polygon cells, chips and bevels wrap across both panel edges, with no source-sheet border pixels, blending, mirroring or runtime seam overlays.
+A fixed interior phase avoids placing an entire mortar course on the panel boundary.
 Towers II–IX each use one fixed floor-and-wall material set at every height.
 II retains warm limestone and rectangular paving; III retains basalt and octagonal paving.
 IV uses overgrown green polygon cobbles and broad blocks, V wine-red herringbone brick, VI blue lozenge paving and long cut-stone courses, VII pale marble squares, VIII umber geometric paving and brass-inlaid blocks, and IX triangular violet crystal masonry.
