@@ -4077,6 +4077,42 @@
       "width": 96,
       "height": 720,
       "tile": true
+    },
+    "dungeon-lab-iron-floor": {
+      "file": "dungeon-lab-iron-floor.png",
+      "width": 96,
+      "height": 96,
+      "tile": true
+    },
+    "dungeon-lab-iron-walls": {
+      "file": "dungeon-lab-iron-walls.png",
+      "width": 96,
+      "height": 720,
+      "tile": true
+    },
+    "dungeon-lab-tideglass-floor": {
+      "file": "dungeon-lab-tideglass-floor.png",
+      "width": 96,
+      "height": 96,
+      "tile": true
+    },
+    "dungeon-lab-tideglass-walls": {
+      "file": "dungeon-lab-tideglass-walls.png",
+      "width": 96,
+      "height": 720,
+      "tile": true
+    },
+    "dungeon-lab-reliquary-floor": {
+      "file": "dungeon-lab-reliquary-floor.png",
+      "width": 96,
+      "height": 96,
+      "tile": true
+    },
+    "dungeon-lab-reliquary-walls": {
+      "file": "dungeon-lab-reliquary-walls.png",
+      "width": 96,
+      "height": 720,
+      "tile": true
     }
   }
 }

@@ -1,3 +1,4 @@
+import { renderTilesetLab } from "./tileset-lab.ts";
 import { uiAtlasEnabled } from "../sprites/ui-atlas.ts";
 import { controlIcon } from "./control-icon.ts";
 import { applyUiTheme } from "./medieval.ts";
@@ -106,7 +107,7 @@ function control(key: PageKey, game: PageGame): string {
 
 /** The menu open over the Settings page, if any (a theme menu, or the
  * Toggles): kept while the page redraws, closed by its Back. */
-let menu: ThemeKind | "toggles" | null = null;
+let menu: ThemeKind | "toggles" | "tilesets" | null = null;
 
 /** The buttons that open each kind's theme menu, naming the look worn. */
 const themeButtons = (game: PageGame) =>
@@ -117,6 +118,10 @@ const themeButtons = (game: PageGame) =>
  * menus, display and control options, and erase. */
 export function renderSettingsPage(ctx: AppContext, overlay: BoardOverlay) {
   const { game } = ctx;
+  if (menu === "tilesets") {
+    renderTilesetLab(el("settings"),()=>{menu=null;ctx.renderPage();});
+    return;
+  }
   if (menu === "toggles") {
     const keys = shownOf(TOGGLES, game.save);
     el("settings").innerHTML =
@@ -143,7 +148,8 @@ export function renderSettingsPage(ctx: AppContext, overlay: BoardOverlay) {
   }
   el("settings").innerHTML =
     `<button class="back" id="settings-back">${controlIcon("back")} Back</button><div class="page-title"><h2>Settings</h2></div><button class="wide" id="stats-open">Stats</button>` +
-    themeButtons(game) +
+    `<h3 class="settings-visual-title">Visual Settings</h3>` + themeButtons(game) +
+    `<button class="setting menu-open" id="tileset-lab-open">Tileset Lab<b>${controlIcon("forward")}</b></button>` +
     `<button class="setting menu-open" id="toggles-open">Toggles<b>${controlIcon("forward")}</b></button>` +
     shownOf(PAGE, game.save).map((key) => control(key, game) + (key === "experimentalAtlas" ? `<p class="hint">Loads artwork from sprite atlases. Changing this reloads the game.</p>` : "") + (key === "squareDoors" ? `<p class="hint">Pixel art is the default. Other UI and Game themes use their own art.</p>` : "")).join("") +
     `<p class="hint">Automation pauses outside the board tabs and while the browser is hidden. Progress saves after each action.</p>` +
@@ -201,6 +207,7 @@ function bindSettings(ctx: AppContext, overlay: BoardOverlay) {
   const { game } = ctx;
   el("settings-back").onclick = () => ctx.navigate(game.mode);
   el("stats-open").onclick = () => showStats(ctx);
+  el("tileset-lab-open").onclick = () => {menu="tilesets";ctx.renderPage();};
   document.querySelectorAll<HTMLButtonElement>(".theme-open").forEach((b) => {
     b.onclick = () => {
       menu = b.dataset.kind as ThemeKind;

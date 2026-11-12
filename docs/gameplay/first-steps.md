@@ -121,3 +121,11 @@ The Upgrades tab carries one too, once the first run that earns Inspiration is o
 
 **Experimental Atlas feature** in Visual settings loads sprites from two shared atlases and is on by default.
 It starts off, remembers your choice and reloads the game when changed; turn it off to return to individual sprites.
+
+### Preview experimental tilesets
+
+Open **Settings → Visual Settings → Tileset Lab** to compare three experimental designs with the nine current tower tilesets.
+Every slide shows the same example room, hero and props; the preview never changes your run or equipped theme.
+Use the left/right buttons or arrow keys to move between slides, and Home/End to jump to the first/last.
+Copy example name gives you an ID such as **EXP-A: Iron Citadel** to share through Discord or text.
+There are no in-game votes; Back or Escape returns to Visual Settings.

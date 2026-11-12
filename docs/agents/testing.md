@@ -140,3 +140,7 @@ The cloud browser flow also tests a colored reference chart through every weathe
 `tests/tower-tier-sprites.test.ts` checks every dedicated Tower II–IX material, including palette membership, binary alpha, collision-corner silhouettes and black cores.
 `node tests/tower-tier-sprites-browser.mjs` checks all eight sets at phone and desktop widths, literal floor panels, floor relief, tier switching, alternate themes, reloads and delayed/failed loads.
 The appended `spriteTowerFour` through `spriteTowerNine` render scenes keep all older scene seeds fixed.
+
+`tests/tileset-lab.test.ts` verifies the twelve-slide catalog, preview-only material selection, experimental PNG dimensions/palette/alpha and connected example-room geometry.
+`node tests/tileset-lab.mjs` starts its own Vite server and checks all twelve distinct slides at phone/desktop widths, exact pixel restoration, arrow/keyboard wrapping, clipboard labels, return navigation and unchanged run/currency/settings saves.
+Review screenshots are saved under `test-results/tileset-lab/`.

@@ -179,3 +179,13 @@ Original UI file requests are excluded from both startup image workers and style
 The early class in `index.html` prevents original CSS backgrounds from loading before bootstrap starts.
 A failed atlas uses the loading barrier and exposes an explicit switch back to original sprites.
 The packer, preserved-source contract and tests are documented in [Experimental UI atlas](../art/ui-atlas.md).
+
+## Tileset Lab
+
+The Visual Settings section always offers Tileset Lab, including to players without Dev Mode.
+`settings-page.ts` keeps its `tilesets` submenu transient; `ui/tileset-lab.ts` presents nine current tower references and three experimental designs with stable IDs EXP-A, EXP-B and EXP-C.
+The initial slide is EXP-A, and previous/next buttons and Left/Right wrap through all twelve slides; Home/End jump to the endpoints and Escape or Back returns to Visual Settings.
+The hand and run-training controls hide only while this submenu is visible.
+`src/tileset-lab.ts` defines the catalog and one fixed 13×13 example room, hero, torches and props; it never constructs or mutates a Game, changes equipped themes or writes save state.
+The preview uses native Classic art independently of the equipped Game theme, with static poses and identical scene conditions on every slide.
+Copy example name copies its stable ID and name for feedback through Discord or text; there is no voting collection or tally.

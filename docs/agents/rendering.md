@@ -424,3 +424,8 @@ Native canvas crops retain sheet dimensions, so existing frame coordinates stay 
 The fisherman’s trial voyage uses `ui/trial-voyage.ts`, a transient full-screen canvas with a centered wooden hull, procedural cloth strips, and rightward moving ocean streaks.
 Reduce motion freezes scene movement; the timed black fades and 500ms menu delay remain.
 The retired forest trial square is no longer painted.
+
+The Tileset Lab passes an explicit `DungeonTileset` floor/wall pair to `drawDungeonGround` for experiments.
+The override is never selected by `towerTileset`, so experimental material IDs cannot affect real Tower or Delve runs.
+Native wall-cache keys include both override image IDs, preserving exact appearance when moving between experiments and back to a current tower reference.
+The showcase reuses the connected-wall, corner, depth-band and actor painters over a fixed room; it uses no gameplay RNG or animation loop after the art is ready.

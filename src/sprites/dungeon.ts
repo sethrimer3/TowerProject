@@ -67,13 +67,16 @@ export function dungeonDiagonals(world: { tile(x: number, y: number): Tile | und
   });
 }
 
-function imagesFor(mode: Mode, tone: number, tier = 1) {
+/** Explicit preview materials; ordinary runs never select these. */
+export type DungeonTileset = { floor: string; walls: string };
+
+function imagesFor(mode: Mode, tone: number, tier = 1, preview?: DungeonTileset) {
   const set = towerTileset(mode, tier);
-  const ids = mode === "tower" ? [set ? towerTierAtlasId(set, "walls") : dungeonAtlasId("masonry", tone), DUNGEON_EDGE_ATLAS]
+  const ids = mode === "tower" ? [preview?.walls ?? (set ? towerTierAtlasId(set, "walls") : dungeonAtlasId("masonry", tone)), DUNGEON_EDGE_ATLAS]
     : [dungeonAtlasId("stone", tone), "dungeon-earth", DUNGEON_EDGE_ATLAS];
   // Request the complete group even when the first image is delayed.
   ids.push(DUNGEON_INFILL_ATLAS, DUNGEON_BLEND_ATLAS);
-  if (mode === "tower") ids.push(set ? towerTierAtlasId(set, "floor") : towerFloorAtlasId(tone));
+  if (mode === "tower") ids.push(preview?.floor ?? (set ? towerTierAtlasId(set, "floor") : towerFloorAtlasId(tone)));
   const images = ids.map(kitImage);
   const shared = mode === "tower" ? 2 : 3;
   return images.every(Boolean) ? { surface: images[0]!, earth: images[mode === "delve" ? 1 : 0]!,
@@ -122,20 +125,20 @@ export function drawDungeonFrame(c: CanvasRenderingContext2D, image: SpriteImage
 const wallImages = new Map<string, HTMLCanvasElement>();
 /** Compose at native resolution before scaling: clipping directly into a
  * fractional-size ground cache can leave hairlines between pixel clusters. */
-export function drawDungeonGround(c: CanvasRenderingContext2D, tile: TerrainTile, diagonals: readonly DungeonDiagonal[] = [], profile?: DungeonWallProfile, detail?: DungeonDetail): boolean {
-  if (!tile.wall || !profile || profile.depth === 2 || typeof document === "undefined") return paintDungeonGround(c, tile, diagonals, profile);
+export function drawDungeonGround(c: CanvasRenderingContext2D, tile: TerrainTile, diagonals: readonly DungeonDiagonal[] = [], profile?: DungeonWallProfile, detail?: DungeonDetail, preview?: DungeonTileset): boolean {
+  if (!tile.wall || !profile || profile.depth === 2 || typeof document === "undefined") return paintDungeonGround(c, tile, diagonals, profile, undefined, undefined, preview);
   const tone = themeAt(tile.mode, tile.height, tile.x, tile.y, tile.seed).decor;
   const set = towerTileset(tile.mode, tile.tier);
-  const detailImage = detail && !set ? kitImage(dungeonDetailId(dungeonMaterial(tile.mode, tile.x, tile.y, tile.seed), tone)) : null;
+  const detailImage = detail && !set && !preview ? kitImage(dungeonDetailId(dungeonMaterial(tile.mode, tile.x, tile.y, tile.seed), tone)) : null;
   const n = tile.neighbors;
   const key = [tile.mode, tone, tile.seed, tile.x, tile.y,
     n?.northWall, n?.eastWall, n?.southWall, n?.westWall, diagonals.join(","), profile.openings,
-    detailImage ? `${detail!.variant},${detail!.half}` : "", ...(set ? [set] : [])].join(":");
+    detailImage ? `${detail!.variant},${detail!.half}` : "", ...(set ? [set] : []), ...(preview ? [preview.floor, preview.walls] : [])].join(":");
   let canvas = wallImages.get(key);
   if (!canvas) {
     canvas = document.createElement("canvas"); canvas.width = canvas.height = 24;
     const ctx = canvas.getContext("2d");
-    if (!ctx || !paintDungeonGround(ctx, tile, diagonals, profile, detailImage ? detail : undefined, detailImage)) return false;
+    if (!ctx || !paintDungeonGround(ctx, tile, diagonals, profile, detailImage ? detail : undefined, detailImage, preview)) return false;
     if (wallImages.size >= 512) wallImages.clear();
     wallImages.set(key, canvas);
   }
@@ -147,9 +150,9 @@ export function drawDungeonGround(c: CanvasRenderingContext2D, tile: TerrainTile
  * South-facing facades occupy eight pixels; north/side lips are shallow.
  * Everything stays inside the existing tile and collision footprint. */
 function paintDungeonGround(c: CanvasRenderingContext2D, tile: TerrainTile, diagonals: readonly DungeonDiagonal[], profile?: DungeonWallProfile,
-  detail?: DungeonDetail, detailImage?: SpriteImage | null) {
+  detail?: DungeonDetail, detailImage?: SpriteImage | null, preview?: DungeonTileset) {
   const { mode, height, x, y, seed } = tile, tone = themeAt(mode, height, x, y, seed).decor;
-  const images = imagesFor(mode, tone, tile.tier);
+  const images = imagesFor(mode, tone, tile.tier, preview);
   if (!images) return false;
   const material = dungeonMaterial(mode, x, y, seed);
   const image = !tile.wall && images.floor ? images.floor : material === "earth" ? images.earth : images.surface;

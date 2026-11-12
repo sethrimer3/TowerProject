@@ -22,6 +22,11 @@ const sets = [
   { tier: 8, floor: ["29251f", "493a2c", "80603d"], cap: ["493a2c", "80603d", "e1bb78"], body: ["29251f", "493a2c", "80603d"], dark: ["10151c", "29251f", "493a2c"], face: ["10151c", "29251f", "493a2c", "80603d", "b28a52", "e1bb78"] },
   { tier: 9, floor: ["1b2430", "293543", "3e4c59", "80608e"], cap: ["293543", "80608e", "8b9a9d"], body: ["1b2430", "293543", "80608e"], dark: ["10151c", "1b2430", "293543"], face: ["10151c", "1b2430", "293543", "3e4c59", "80608e", "8b9a9d"] },
 ];
+const experimentalSets = [
+  { tier: 0, lab: "iron", column: 0, floor: ["10151c", "1b2430", "293543", "3e4c59"], cap: ["293543", "63717b", "b28a52"], body: ["1b2430", "293543", "493a2c"], dark: ["10151c", "1b2430", "29251f"], face: ["10151c", "293543", "3e4c59", "63717b", "80603d", "e1bb78"] },
+  { tier: 0, lab: "tideglass", column: 1, floor: ["16303d", "315363", "3c5837", "54879a"], cap: ["315363", "54879a", "a7bd75"], body: ["16303d", "315363", "3c5837"], dark: ["10151c", "16303d", "283b2c"], face: ["10151c", "16303d", "315363", "54879a", "668348", "b8c2bb"] },
+  { tier: 0, lab: "reliquary", column: 2, floor: ["493a2c", "80603d", "b8c2bb", "eee0b7"], cap: ["63717b", "b8c2bb", "eee0b7"], body: ["3e4c59", "63717b", "8b9a9d"], dark: ["1b2430", "293543", "3e4c59"], face: ["293543", "693239", "63717b", "8b9a9d", "b8c2bb", "eee0b7"] },
+];
 function palette(name, colors) {
   const path = join(scratch, `${name}.ppm`);
   writeFileSync(path, `P3\n${colors.length} 1\n255\n${colors.flatMap(c => [0, 2, 4].map(i => parseInt(c.slice(i, i + 2), 16))).join(" ")}\n`);
@@ -34,11 +39,18 @@ function recolor(input, output, from, to) {
   run([...args, "-strip", `PNG32:${output}`]);
 }
 try {
-  const selected = process.argv.slice(2).map(Number);
+  const experimental = process.argv.includes("--experimental");
+  const selected = process.argv.slice(2).filter(arg=>arg!=="--experimental").map(Number);
   if (selected.some(t => !sets.some(s => s.tier === t))) throw Error("Expected tower numbers 2–9");
-  for (const set of sets.filter(s => !selected.length || selected.includes(s.tier))) {
+  for (const set of experimental ? experimentalSets : sets.filter(s => !selected.length || selected.includes(s.tier))) {
     let source = join(root, `assets/game-sprites/tower-${set.tier}-materials.png`);
-    if (set.tier >= 4) {
+    if (set.lab) {
+      const atlas = join(root, "assets/game-sprites/experimental-materials.png");
+      const [w,h] = run(["identify", "-format", "%w %h", atlas]).toString().split(" ").map(Number);
+      if (w % 3) throw Error("Expected three source columns");
+      source = p(`source-${set.lab}`);
+      run([atlas, "-crop", `${w/3}x${h}+${set.column*w/3}+0`, "+repage", "-strip", `PNG32:${source}`]);
+    } else if (set.tier >= 4) {
       const atlas = join(root, "assets/game-sprites/tower-4-9-materials.png");
       const [w, h] = run(["identify", "-format", "%w %h", atlas]).toString().split(" ").map(Number);
       const index = set.tier - 4, cw = w / 3, ch = h / 2;
@@ -54,10 +66,11 @@ try {
     extract("cap-field", 1, 0, 96, 96, set.cap);
     extract("face-field", 0, 1, 96, 32, set.face);
     // Sample the authored ledge's top face without the empty strip gutters.
-    const rimY = halfH + Math.round(halfH * (set.tier >= 4 ? .075 : set.tier === 2 ? .022 : .043));
-    run([source, "-crop", `${halfW - 12}x${Math.round(halfH * (set.tier >= 4 ? .04 : set.tier === 2 ? .065 : .045))}+${halfW + 6}+${rimY}`, "+repage",
+    const rimY = halfH + Math.round(halfH * (set.lab ? .045 : set.tier >= 4 ? .075 : set.tier === 2 ? .022 : .043));
+    run([source, "-crop", `${halfW - 12}x${Math.round(halfH * (set.lab ? .055 : set.tier >= 4 ? .04 : set.tier === 2 ? .065 : .045))}+${halfW + 6}+${rimY}`, "+repage",
       "-alpha", "off", "-filter", "point", "-resize", "96x3!", "+dither", "-remap", palette("rim", set.face), "-alpha", "on", "-strip", `PNG32:${p("rim-field")}`]);
-    const floorId = `dungeon-tower-${set.tier}-floor`;
+    const prefix = set.lab ? `dungeon-lab-${set.lab}` : `dungeon-tower-${set.tier}`;
+    const floorId = `${prefix}-floor`;
     run([p("floor"), "-strip", `PNG32:${join(out, `${floorId}.png`)}`]);
     manifest.assets[floorId] = { file: `${floorId}.png`, width: 96, height: 96, tile: true };
     const frames = [];
@@ -94,10 +107,10 @@ try {
     for (let v = 0; v < 6; v++) frames.push(p(`dark-${v}`));
     const core = p("core"); run(["-size", "24x24", "canvas:#0c1016", "-strip", `PNG32:${core}`]);
     for (let i = 0; i < 4; i++) frames.push(core);
-    const wallId = `dungeon-tower-${set.tier}-walls`;
+    const wallId = `${prefix}-walls`;
     run(["montage", ...frames, "-tile", "4x30", "-geometry", "24x24+0+0", "-background", "none", "-strip", `PNG32:${join(out, `${wallId}.png`)}`]);
     manifest.assets[wallId] = { file: `${wallId}.png`, width: 96, height: 720, tile: true };
   }
   writeFileSync(join(out, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
-  console.log("Prepared the requested native Tower II–IX floor-and-wall material sets.");
+  console.log(experimental ? "Prepared three experimental floor-and-wall material sets." : "Prepared the requested native Tower II–IX floor-and-wall material sets.");
 } finally { rmSync(scratch, { recursive: true, force: true }); }

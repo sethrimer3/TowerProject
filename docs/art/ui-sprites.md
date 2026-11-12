@@ -217,3 +217,8 @@ The [Tower IV–IX material source](../../assets/game-sprites/tower-4-9-material
 Each cell has floor, wall-top, facade and coping quadrants in that order.
 Native exports retain only the shared 27 colors, binary alpha and upper-left light; wall joins, corner silhouettes and black cores retain their existing geometry.
 IV uses green polygon cobbles, V red herringbone brick, VI blue diamond paving, VII pale marble squares, VIII brass-inlaid umber stone and IX triangular violet crystal masonry.
+
+The [experimental material source](../../assets/game-sprites/experimental-materials.png) contains three columns: Iron Citadel, Tideglass Mosaic and Bone Reliquary.
+Each column has the same floor/wall-top/facade/coping quadrants as the tower sources.
+Run `node tools/prepare-tower-tier-sprites.mjs --experimental` to reproduce their six native PNGs, then `npm run sprites:atlas` to register and pack them.
+These shared-palette materials are available only in Tileset Lab; they do not replace any tower art.

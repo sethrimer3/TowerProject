@@ -5602,3 +5602,21 @@ html.trial-at-sea #modal::backdrop { background: transparent; backdrop-filter: n
 html.trial-at-sea #modal { position: fixed; top: auto; bottom: 12px; left: 50%; margin: 0; transform: translateX(-50%); width: min(440px, calc(100% - 24px)); max-height: 44dvh; overflow-y: auto; animation: voyage-menu-in .4s ease-out both; }
 @keyframes voyage-menu-in { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { html.trial-at-sea #modal { animation-name: none; } }
+
+/* A fixed room for comparing current and experimental art. */
+.settings-visual-title { margin: 20px 0 10px; }
+.tileset-lab { width: 100%; max-width: 650px; margin: 0 auto; }
+.tileset-lab-heading { min-height: 108px; text-align: center; }
+.tileset-lab-heading small { color: #e1bb78; letter-spacing: .08em; }
+.tileset-lab-heading h3 { margin: 7px 0; font-size: 1.15rem; }
+.tileset-lab-heading p { margin: 8px 0 16px; font-size: .85rem; line-height: 1.5; }
+.tileset-stage { position: relative; background: #0c1016; border: 2px solid #63717b; }
+#tileset-room { display: block; width: 100%; height: auto; aspect-ratio: 1; image-rendering: pixelated; }
+#tileset-loading { position: absolute; inset: 45% 0 auto; text-align: center; color: #eee0b7; }
+.tileset-navigation { display: grid; grid-template-columns: 64px 1fr 64px; gap: 12px; align-items: center; margin: 14px 0; text-align: center; }
+.tileset-navigation button { min-width: 48px; min-height: 48px; font-size: 1.4rem; }
+.tileset-lab .hint { line-height: 1.6; }
+/* Presentation pages keep the run's hand and training controls out of screenshots. */
+html:has(#settings.active .tileset-lab) .shell > nav,
+html:has(#settings.active .tileset-lab) #training-bar { display: none !important; }
+.tileset-stage { max-width: min(100%, calc(100dvh - 380px)); margin-inline: auto; }
