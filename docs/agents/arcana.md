@@ -7,6 +7,11 @@ Spells bought with Arcanite on the Gear page's Arcana tab and kept for good, or 
 Each is one row of `ARCANA`: its name, its `trigger`, three `attributes` (each a table of `steps`, value and Arcanite cost, the first free), its `summary`, and either `damage` (what its Arcanum Damage multiplies by) or `effect` (its run card's text).
 Tower and Delve runs alike hold every arcanum owned, and a Proving Grounds trial every one but Aurum Bloom (see **In a trial**).
 
+**Visual proposals.**
+Settings → Visual Settings → Arcana Effects Lab compares the existing painters with isolated pixel-art proposals for all nine Arcana.
+The Before view calls the current effect functions, including the current absence of a dedicated Aurum Bloom effect; After is preview-only and does not alter Tower, Delve or trial combat.
+The shared fixture and playback controls are documented in [UI](ui.md#arcana-effects-lab).
+
 **Triggers.**
 Each arcanum names its own (`ArcanumTrigger`), since they differ from one to the next.
 `always` needs no event: the arcanum works while it is on; `enemyHit` is raised in `volley.ts`, by an arrow landing or a fight won; `cooldown` is a number of turns, worked by `ArcanaDesk.turn` (`Game.endTurn`) through `tickCooldowns`, restarting the moment it runs out, whatever the arcanum is still doing.

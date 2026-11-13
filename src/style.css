@@ -5620,3 +5620,25 @@ html.trial-at-sea #modal { position: fixed; top: auto; bottom: 12px; left: 50%; 
 html:has(#settings.active .tileset-lab) .shell > nav,
 html:has(#settings.active .tileset-lab) #training-bar { display: none !important; }
 .tileset-stage { max-width: min(100%, calc(100dvh - 380px)); margin-inline: auto; }
+
+/* Arcana proposals share a room and animation clock with the current effects. */
+.arcana-lab { max-width: 1100px; margin: 0 auto; }
+.shell:has(#settings.active .arcana-lab) { width: min(100%, 1150px); max-width: none; }
+.arcana-lab-heading { text-align: center; }
+.arcana-lab-heading small { color: #e1bb78; }
+.arcana-lab-heading h3 { margin: 8px 0; }
+.arcana-lab-heading p { min-height: 2.8em; line-height: 1.5; }
+.arcana-comparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.arcana-comparison figure { min-width: 0; margin: 0; border: 2px solid #63717b; background: #0c1016; }
+.arcana-comparison figcaption { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px; padding: 10px; color: #eee0b7; }
+.arcana-comparison figcaption span { color: #b8c2bb; font-size: .8rem; }
+.arcana-comparison canvas { display: block; width: 100%; height: auto; aspect-ratio: 1; image-rendering: pixelated; }
+.arcana-playback { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.arcana-playback button { min-height: 44px; min-width: 88px; }
+#arcana-time { margin-left: auto; font-variant-numeric: tabular-nums; }
+.arcana-scrub-label { display: block; margin: 14px 0 0; }
+#arcana-scrub { display: block; width: 100%; min-height: 44px; margin: 0 0 14px; accent-color: #e1bb78; }
+.arcana-lab .hint { line-height: 1.6; }
+html:has(#settings.active .arcana-lab) .shell > nav,
+html:has(#settings.active .arcana-lab) #training-bar { display: none !important; }
+@media (max-width: 700px) { .arcana-comparison { grid-template-columns: 1fr; } }

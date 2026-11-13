@@ -189,3 +189,18 @@ The hand and run-training controls hide only while this submenu is visible.
 `src/tileset-lab.ts` defines the catalog and one fixed 13×13 example room, hero, torches and props; it never constructs or mutates a Game, changes equipped themes or writes save state.
 The preview uses native Classic art independently of the equipped Game theme, with static poses and identical scene conditions on every slide.
 Copy example name copies its stable ID and name for feedback through Discord or text; there is no voting collection or tally.
+
+## Arcana Effects Lab
+
+Visual Settings also offers Arcana Effects Lab to every player, without requiring Arcana unlocks or Dev Mode.
+`src/arcana-lab.ts` lists all nine comparisons with stable `ARC-<arcanumId>` names and a shared presentation clock.
+`ui/arcana-lab-scene.ts` caches one native room and its actors, calls the existing production painters for Before, and draws experimental After effects from `render/effects/arcana-pixel-preview.ts` at the same time and coordinates.
+The proposals use opaque shared-palette pixels on the 24-pixel tile grid; production renderers and gameplay rules do not select them.
+Aurum Bloom has no dedicated current animation, and its slide explicitly identifies the proposed gold-petal burst as new.
+`ui/arcana-lab.ts` owns transient slide, playback and scrub state, with synchronized canvases beside each other on desktop and stacked on phones.
+Short impact flashes are slowed equally on both sides to one-third speed for review; Pause, Restart and a labeled timeline allow inspecting an exact frame.
+The saved Reduce motion setting or the operating system preference starts the screen paused; enabling the system preference during playback pauses it too, and an explicit Play remains available.
+Previous/next and arrow keys wrap, Home/End select endpoints, slider arrow keys scrub, and Back or Escape returns to Visual Settings.
+Playback suspends while the document is hidden and releases its animation frame and listeners when the screen is replaced or closed.
+The preview constructs no Game and never changes saves, purchases, unlocks, themes or the paused run; Copy example name supports external feedback without collecting votes.
+`node tests/arcana-lab.mjs` checks all comparisons, synchronized playback, deterministic scrubbing, keyboard/clipboard controls, motion preferences and run isolation at phone and desktop widths.

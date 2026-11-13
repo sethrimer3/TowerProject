@@ -129,3 +129,14 @@ Every slide shows the same example room, hero and props; the preview never chang
 Use the left/right buttons or arrow keys to move between slides, and Home/End to jump to the first/last.
 Copy example name gives you an ID such as **EXP-A: Iron Citadel** to share through Discord or text.
 There are no in-game votes; Back or Escape returns to Visual Settings.
+
+### Compare Arcana effects
+
+Open **Settings → Visual Settings → Arcana Effects Lab** to compare the current effects with pixel-art proposals for all nine Arcana.
+Before and After show the same room and animation time, beside each other on desktop and stacked on phones.
+Use the arrows to browse, Pause to hold the animation, the timeline to inspect a frame, and Restart to replay from the beginning.
+Short impact flashes play at one-third speed on both sides to make them easier to compare.
+Reduce motion starts the examples paused; you can still choose Play or inspect frames with the timeline.
+Aurum Bloom currently has no dedicated animation; its After example proposes a new gold-petal burst.
+These examples leave your active run and equipped effects unchanged, and require no purchases or unlocks.
+Copy example name gives you a stable ID and name to share through Discord or text; Back or Escape returns to Visual Settings.
