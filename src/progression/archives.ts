@@ -184,6 +184,8 @@ export const RESEARCH_TARGETS = {
   boonRanks: { name: "Boons Ranked", base: 0, shown: count },
   /** Whether the run's notes can be read (run-notes.ts): tap the floor number. */
   runNotes: { name: "Climb Notes", base: 0, shown: opened },
+  /** Whether a daily mission can be rerolled for Gems (game/mission-desk.ts). */
+  missionReroll: { name: "Mission Reroll", base: 0, shown: opened },
   /** Badges each card can hold. */
   badgeSlots: { name: "Badge Slots", base: 1, shown: count },
   /** Turns allowed per Obelisk boss trial run before the encounter ends. */
@@ -762,6 +764,14 @@ export const RESEARCH = {
     requires: [{ upgrade: "archives" }, { goalUnlock: "noteTaking" }],
     // 100,000 Gold and 2 days.
     levels: [levelOf("runNotes", 1, 100_000, 2 * 24 * 60)],
+  },
+  rerollMission: {
+    name: "Reroll Daily Mission",
+    description: "Swap a daily mission for a different one, for 5 Gems.",
+    categories: ["qualityOfLife"],
+    requires: [{ upgrade: "archives" }, { goalUnlock: "rerollMission" }],
+    // 20,000,000 Gold and 1d 15h 59m.
+    levels: [levelOf("missionReroll", 1, 20e6, 39 * 60 + 59)],
   },
   pocketMoney: {
     name: "Pocket Money",

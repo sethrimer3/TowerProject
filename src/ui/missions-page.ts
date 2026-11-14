@@ -1,11 +1,12 @@
 import { controlIcon } from "./control-icon.ts";
 import { EQUIP_MATERIALS, type EquipMaterialId } from "../equipment/catalog.ts";
 import type { MissionPayout } from "../game/mission-desk.ts";
-import { MISSION_CAPACITY, MISSIONS, missionReward, WEEKLY_MAX, WEEKLY_REWARDS, weeklyReward } from "../missions/catalog.ts";
+import { MISSION_CAPACITY, MISSION_REROLL_GEMS, MISSIONS, missionReward, WEEKLY_MAX, WEEKLY_REWARDS, weeklyReward } from "../missions/catalog.ts";
 import { isComplete, nextPeriodAt, weekEndsAt, type Mission } from "../missions/progress.ts";
 import { shortCountdown } from "../tournament/schedule.ts";
 import type { AppContext } from "./app.ts";
-import { checkIcon, el, gemIcon, giftIcon, goldIcon, medalIcon, pointsIcon, arcaniteIcon } from "./dom.ts";
+import { checkIcon, el, gemIcon, giftIcon, goldIcon, medalIcon, pointsIcon, arcaniteIcon, redoIcon } from "./dom.ts";
+import { askForGems } from "./dialogs.ts";
 import { materialIcon } from "./equipment-icons.ts";
 import { currencyAmount, holdAmount } from "./hud.ts";
 import { flyToPurse, type Flight } from "./flourish.ts";
@@ -72,7 +73,7 @@ export class MissionsPage {
 
   private state() {
     const m = this.ctx.game.save.missions;
-    return JSON.stringify([m.list, this.ctx.game.missions.week, this.ctx.game.save.tower.tiersOpen]);
+    return JSON.stringify([m.list, this.ctx.game.missions.week, this.ctx.game.save.tower.tiersOpen, this.ctx.game.missions.rerollOpen]);
   }
 
   /** Every second while the screen shows: the countdowns, or the whole
@@ -136,8 +137,10 @@ export class MissionsPage {
     const rewards = amount(gemIcon(), r.gems, "Gems") + amount(goldIcon(), r.gold, "Gold") +
       (r.materials ? amount(materialIcon(r.material), r.materials, EQUIP_MATERIALS[r.material].name) : "");
     const bar = `<div class="mission-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${def.target}" aria-valuenow="${m.progress}"><i style="width:${(100 * m.progress) / def.target}%"></i><span>${complete ? "Complete!" : `${m.progress}/${def.target}`}</span></div>`;
+    const reroll = `Reroll for ${MISSION_REROLL_GEMS} Gems`;
     return `<li class="mission${complete ? " complete" : ""}"><div class="mission-body"><b class="mission-text">${def.text}</b><div class="mission-rewards">${rewards}</div>${bar}</div>` +
-      (complete ? `<button class="mission-claim" data-claim="${m.id}">Claim</button>` : "") + `</li>`;
+      (complete ? `<button class="mission-claim" data-claim="${m.id}">Claim</button>` : "") +
+      (this.ctx.game.missions.canReroll(m.id) ? `<button type="button" class="mission-reroll" data-reroll="${m.id}" aria-label="${reroll}" title="${reroll}">${redoIcon()}</button>` : "") + `</li>`;
   }
 
   private bind() {
@@ -150,10 +153,34 @@ export class MissionsPage {
       this.claimed();
       flyToPurse(from, flights);
     }));
+    el("missions").querySelectorAll<HTMLButtonElement>("[data-reroll]").forEach((b) => (b.onclick = () => this.reroll(Number(b.dataset.reroll))));
     el("missions").querySelectorAll<HTMLButtonElement>("[data-weekly]").forEach((b) => (b.onclick = () => {
       const i = Number(b.dataset.weekly), paid = game.missions.claimWeekly(i);
       if (paid) this.claimed(...weeklyShown(paid, WEEKLY_REWARDS[i]!.missions));
     }));
+  }
+
+  /** Asks before spending Gems to reroll mission `id` (offering the Shop
+   * when they're short), then rerolls it. */
+  private reroll(id: number) {
+    const ctx = this.ctx, game = ctx.game, mission = game.missions.list.find((m) => m.id === id);
+    if (!mission || !game.missions.canReroll(id)) return;
+    if (!game.free && game.save.gems < MISSION_REROLL_GEMS) return askForGems(ctx);
+    const price = `${gemIcon()} <b>${MISSION_REROLL_GEMS}</b>`;
+    ctx.confirm(
+      {
+        title: "Reroll mission?",
+        body: `Spend ${price} to swap <b>${MISSIONS[mission.type].text}</b> for a different mission. Its progress is lost.`,
+        label: `Reroll · ${price}`,
+        cancel: "Cancel",
+        aria: `Reroll for ${MISSION_REROLL_GEMS} Gems`,
+      },
+      () => {
+        if (!game.missions.reroll(id)) return;
+        ctx.update();
+        this.render();
+      },
+    );
   }
 
   /** A reward claimed: saved, redrawn, and each of `shown` risen to the

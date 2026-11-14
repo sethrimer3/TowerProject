@@ -68,6 +68,10 @@ export const MISSION_EVERY_MS = 8 * 3_600_000;
 export const MISSIONS_PER_GRANT = 2;
 export const MISSION_CAPACITY = 8;
 
+/** Gems a reroll costs, once Reroll Daily Mission is researched: an
+ * incomplete mission swapped for one of a kind no current mission is. */
+export const MISSION_REROLL_GEMS = 5;
+
 /** Gems each completed mission pays. */
 export const MISSION_GEMS = 3;
 /** Gold each completed mission pays, by the highest tower open (1 to 9). */

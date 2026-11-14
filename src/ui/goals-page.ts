@@ -96,6 +96,8 @@ const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
     `<p class="hint">With the Chest card in your hand, a treasure chest may now be a Supply Chest, holding upgrade materials, or an Equipment Chest, holding a piece of equipment.</p>`,
   noteTaking: `<p>Note Taking opens in the Archives: research it, and tap the floor number during a climb to read the climb's notes, kept as you play: its time, steps, kills, keys, doors, chests and loot.</p>` +
     `<p class="hint">The notes stay open while the climb plays on, and copy to paste elsewhere. The climb's summary opens them too.</p>`,
+  rerollMission: `<p>Reroll Daily Mission opens in the Archives: research it, and each daily mission not yet complete gets a looping arrow on the Missions screen. Press it to spend 5 Gems swapping the mission for a different one.</p>` +
+    `<p class="hint">The new mission is never one already on your list. Its progress starts over.</p>`,
   researchSpeed: `<p>Research Speed opens in the Archives: train the archivists to read faster, and every research, those under way included, takes less time.</p>`,
   badgeSlots: `<p>Badge Slots opens in the Archives: research it, and each card holds one more badge a level. Drag a badge onto a card on the Deck page to fill its next slot; on a card with every slot full, it takes the bottom slot's place.</p>` +
     `<p class="hint">Badges that can't work together can't share a card: a key colour's &lt; gate with its ≥ gate (GK &lt; with GK ≥), or Effective with Dampen.</p>`,

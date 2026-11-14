@@ -24,5 +24,5 @@ export const GOAL_SPRITES = {
   noteTaking: "goal-note-taking", tournament: "trophy", events: "event", researchSpeed: "hourglass",
   damagePrediction: "goal-damage-prediction", combatForecast: "goal-combat-forecast", attackLore: "goal-attack-lore",
   warp: "goal-warp", parryPercent: "goal-parry", equipment: "goal-equipment",
-  damageVisual: "goal-damage-visual", relativeDamageColor: "goal-relative-damage",
+  damageVisual: "goal-damage-visual", relativeDamageColor: "goal-relative-damage", rerollMission: "redo",
 } satisfies Record<GoalUnlock, string>;

@@ -20,13 +20,14 @@ import { tierHighest } from "./floor-tip.ts";
 /** The modal dialogs opened from the HUD, all sharing `ctx.modal`. */
 
 /** A confirm dialog's text: `label` names the confirm button and `cancel`
- * the one that backs out. */
-export type ConfirmPrompt = { title: string; body: string; label: string; cancel: string };
+ * the one that backs out; `aria`, when given, is the confirm button's
+ * `aria-label` (naming the currency a price shows only as its icon). */
+export type ConfirmPrompt = { title: string; body: string; label: string; cancel: string; aria?: string };
 
 /** Asks the player to confirm `action`. */
-export function confirmAction(ctx: AppContext, { title, body, label, cancel }: ConfirmPrompt, action: () => void) {
+export function confirmAction(ctx: AppContext, { title, body, label, cancel, aria }: ConfirmPrompt, action: () => void) {
   const modal = ctx.modal;
-  modal.innerHTML = `<small>${boardTitle(ctx.game)}</small><h2>${title}</h2><p>${body}</p><div class="dialog-actions"><button id="cancel">${cancel}</button><button id="confirm">${label}</button></div>`;
+  modal.innerHTML = `<small>${boardTitle(ctx.game)}</small><h2>${title}</h2><p>${body}</p><div class="dialog-actions"><button id="cancel">${cancel}</button><button id="confirm"${aria ? ` aria-label="${aria}"` : ""}>${label}</button></div>`;
   modal.showModal();
   el("cancel").onclick = () => modal.close();
   el("confirm").onclick = () => {

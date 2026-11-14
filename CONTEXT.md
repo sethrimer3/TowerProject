@@ -912,6 +912,10 @@ _Avoid_: letter, post
 A small task the player is given, two every 8 hours (from 00:00 GMT), such as *Advance 10 floors*. The list holds up to eight, those completed and waiting to be claimed included, never two incomplete of a kind, and never one asking for something not yet unlocked. They never expire, and progress counts across runs. A completed one is claimed for Gems, Gold and an equipment material.
 _Avoid_: quest, task, challenge, daily (alone)
 
+**Reroll**:
+Swapping an incomplete daily mission for a fresh one of a kind not on the list, for 5 Gems, once the Archives' Reroll Daily Mission is researched.
+_Avoid_: refresh, skip, redraw
+
 **Weekly reward**:
 One of seven prizes for every 5 daily missions claimed in the week (Monday 00:00 GMT to the next), up to 35: Gold, Gems, Medals and Arcanite. Each can be claimed once a week.
 _Avoid_: weekly mission (nothing is asked beyond the daily missions), chest

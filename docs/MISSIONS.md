@@ -50,6 +50,13 @@ Claiming a completed mission removes it and pays (`missionReward`):
 - **Gold** by the highest tower open: 100 / 1,000 / 10,000 / 30,000 / 100,000 / 300,000 / 1,000,000 / 3,000,000 / 10,000,000 (`MISSION_GOLD`).
 - **One equipment upgrade material**, the kind drawn when the mission was given, by the highest tower open: 0 / 3 / 5 / 8 / 12 / 15 / 20 / 25 / 30 (`MISSION_MATERIALS`).
 
+### Rerolling
+
+Once the Archives' **Reroll Daily Mission** is researched (opened by Tower IV's floor 30 Goal), each mission not yet complete shows a looping arrow (`MissionDesk.canReroll`).
+Pressing it asks to spend **5 Gems** (`MISSION_REROLL_GEMS`); short of Gems, it offers the Shop instead.
+Confirmed, the mission becomes a fresh one in its place on the list (`MissionDesk.reroll`): a kind the player can work on now and that no mission on the list is (complete ones waiting to be claimed included), its progress at 0 and its material drawn again, from the same saved stream.
+A complete mission can't be rerolled, and no arrow shows while every kind offered is already on the list.
+
 ## Weekly rewards
 
 Every 5 daily missions **claimed** in the week (counted as each is claimed, not when it reaches its target) opens a reward, up to 35.

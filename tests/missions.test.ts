@@ -4,7 +4,7 @@ import { Game } from "../src/state.ts";
 import { defaults, load } from "../src/save/save.ts";
 import { SAVE_KEY } from "../src/config.ts";
 import {
-  MISSION_CAPACITY, MISSION_EVERY_MS, MISSION_GOLD, MISSION_MATERIALS, MISSION_TYPES, MISSIONS,
+  MISSION_CAPACITY, MISSION_EVERY_MS, MISSION_REROLL_GEMS, MISSION_GOLD, MISSION_MATERIALS, MISSION_TYPES, MISSIONS,
   WEEKLY_MAX, WEEKLY_REWARDS, weeklyReward, type MissionType,
 } from "../src/missions/catalog.ts";
 import { decodeMissions, defaultMissions, isComplete, missionPeriod, missionWeek, weekEndsAt } from "../src/missions/progress.ts";
@@ -13,6 +13,8 @@ import { keyFirstFloor } from "../src/key-schedule.ts";
 import { DAY_MS } from "../src/shop/clock.ts";
 import { CURRENCIES } from "../src/shop/currency.ts";
 import { trainingPoints } from "../src/progression/loadout.ts";
+import { missing, RESEARCH, status } from "../src/progression/archives.ts";
+import { unlockAt } from "../src/goals.ts";
 import type { Enemy, Tile } from "../src/entities.ts";
 import type { Save } from "../src/save/shape.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
@@ -301,4 +303,55 @@ test("missions save and load, and malformed state is dropped", () => {
 test("every mission type is listed with a target", () => {
   assert.deepEqual(MISSION_TYPES, ["floors", "bosses", "train", "basic", "strong", "elite", "potions", "badge", "runTraining", "blueKeys", "redKeys", "provisions"]);
   assert.deepEqual(MISSION_TYPES.map((t) => MISSIONS[t].target), [10, 3, 1, 50, 30, 10, 20, 1, 10, 10, 5, 1]);
+});
+
+test("Reroll Daily Mission: Tower IV's floor 30 Goal opens a one-level project for 20,000,000 Gold and 1d 15h 59m", () => {
+  assert.deepEqual(unlockAt("rerollMission"), { tower: 4, floor: 30 });
+  const def = RESEARCH.rerollMission;
+  assert.equal(def.levels.length, 1);
+  assert.equal(def.levels[0]!.gold, 20_000_000);
+  assert.equal(def.levels[0]!.hours * 60, 39 * 60 + 59);
+  assert.deepEqual(def.requires, [{ upgrade: "archives" }, { goalUnlock: "rerollMission" }]);
+  const save = defaults();
+  save.upgrades.archives = 1;
+  assert.deepEqual(missing(save, "rerollMission"), [{ goalUnlock: "rerollMission" }]);
+  save.goals.claimed[4] = [30];
+  assert.equal(status(save, "rerollMission"), "available");
+});
+
+test("a reroll costs 5 Gems, only once researched, and always rolls a kind no current mission is", () => {
+  const g = gameAt(MONDAY + HOUR);
+  withMissions(g, "floors", "bosses", "train", "basic");
+  g.save.missions.list[3]!.progress = MISSIONS.basic.target;
+  g.save.gems = 100;
+  assert.equal(g.missions.canReroll(1), false, "not before the research");
+  assert.equal(g.missions.reroll(1), false);
+  g.save.archives.levels.rerollMission = 1;
+  assert.equal(g.missions.canReroll(4), false, "a complete mission waits to be claimed instead");
+  for (let i = 0; i < 20; i++) {
+    const before = g.missions.list.map((m) => m.type), id = g.missions.list[0]!.id;
+    g.save.missions.list[0]!.progress = 1;
+    assert.ok(g.missions.reroll(id));
+    const after = g.missions.list[0]!;
+    assert.ok(!before.includes(after.type), `${after.type} is not one of ${before}`);
+    assert.equal(after.progress, 0);
+    assert.notEqual(after.id, id);
+    assert.ok(MISSIONS[after.type].offered(g.save));
+    assert.deepEqual(g.missions.list.slice(1).map((m) => m.type), before.slice(1), "the rest stay as they were");
+  }
+  assert.equal(g.save.gems, 100 - 20 * MISSION_REROLL_GEMS);
+  g.save.gems = MISSION_REROLL_GEMS - 1;
+  assert.equal(g.missions.reroll(g.missions.list[0]!.id), false, "Gems short");
+  assert.equal(g.save.gems, MISSION_REROLL_GEMS - 1);
+});
+
+test("a reroll is refused while every kind offered is already on the list", () => {
+  const g = gameAt(MONDAY + HOUR);
+  const offered = MISSION_TYPES.filter((t) => MISSIONS[t].offered(g.save));
+  withMissions(g, ...offered);
+  g.save.archives.levels.rerollMission = 1;
+  g.save.gems = 100;
+  assert.equal(g.missions.canReroll(1), false);
+  assert.equal(g.missions.reroll(1), false);
+  assert.equal(g.save.gems, 100);
 });

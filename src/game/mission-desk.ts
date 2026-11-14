@@ -4,11 +4,12 @@ import { snap } from "../exact.ts";
 import { random, stream } from "../random.ts";
 import { estimatedServerTime } from "../shop/clock.ts";
 import {
-  MISSION_CAPACITY, MISSION_TYPES, MISSIONS, MISSIONS_PER_GRANT, WEEKLY_REWARDS,
+  MISSION_CAPACITY, MISSION_REROLL_GEMS, MISSION_TYPES, MISSIONS, MISSIONS_PER_GRANT, WEEKLY_REWARDS,
   missionReward, randomMaterial, weeklyReward, type MissionType,
 } from "../missions/catalog.ts";
 import { COUNTED_KEPT, MARKS_KEPT, isComplete, missionPeriod, missionWeek, type Mission, type MissionsSave } from "../missions/progress.ts";
-import type { DeskHost } from "./desk.ts";
+import { researched } from "../progression/archives.ts";
+import { affordsGems, type DeskHost } from "./desk.ts";
 import { earn } from "../save/profile.ts";
 
 /** mulberry32's step: each draw moves the state on by this much. */
@@ -111,6 +112,41 @@ export class MissionDesk {
     let used = 0;
     draw(() => (used++, rng()));
     m.rng = (state + Math.imul(used, STEP)) >>> 0;
+  }
+
+  /** Whether Reroll Daily Mission is researched. */
+  get rerollOpen() {
+    return researched(this.host.save.archives, "missionReroll") > 0;
+  }
+
+  /** The kinds mission `id` could be rerolled into: offered, and of no
+   * kind on the list, itself and complete missions included. */
+  private rerollTypes(id: number) {
+    const m = this.m, mission = m.list.find((x) => x.id === id);
+    if (!mission || isComplete(mission)) return [];
+    const taken = new Set(m.list.map((x) => x.type));
+    return MISSION_TYPES.filter((t) => !taken.has(t) && MISSIONS[t].offered(this.host.save));
+  }
+
+  /** Whether mission `id` can be rerolled at all, Gems aside: the research
+   * done, the mission incomplete, and some other kind to roll. */
+  canReroll(id: number) {
+    return this.rerollOpen && this.rerollTypes(id).length > 0;
+  }
+
+  /** Rerolls incomplete mission `id` for `MISSION_REROLL_GEMS`: it becomes a
+   * fresh mission, in the same place on the list, of a kind no current
+   * mission is, with its material drawn again, from the missions' saved
+   * stream. False when it can't be, or the Gems are short. */
+  reroll(id: number) {
+    if (!this.canReroll(id) || !affordsGems(this.host, MISSION_REROLL_GEMS)) return false;
+    const m = this.m, types = this.rerollTypes(id), i = m.list.findIndex((x) => x.id === id);
+    if (!this.host.free) this.host.save.gems -= MISSION_REROLL_GEMS;
+    this.drawing((rng) => {
+      const type = types[Math.min(types.length - 1, Math.floor(rng() * types.length))]!;
+      m.list[i] = { id: m.nextId++, type, progress: 0, material: randomMaterial(rng) };
+    });
+    return true;
   }
 
   /** Counts `amount` toward the incomplete mission of `type`, if the player

@@ -30,6 +30,8 @@ import { openEquipment } from "./equipment/inventory.ts";
  * that raises Parry %), and the Shrines' research: Unlock Shrines (Tower II
  * floor 150), First Boon Choice (floor 250), Improve Trade-off Boons (floor
  * 400), Auto Pick Boons and Boon Option Quantity (Tower IV floors 50 and 80),
+ * Reroll Daily Mission (Tower IV floor 30: the Archives' project that lets
+ * a daily mission be swapped for another for Gems, game/mission-desk.ts),
  * Ban Boons (Tower V floor 40) and Auto Pick Ranking (Tower VI floor 10),
  * Badge Slots (Tower VI floor 50: the Archives' project that lets each
  * card hold more badges), Note Taking (Tower I floor 250: the Archives'
@@ -55,7 +57,7 @@ export type GoalUnlock =
   | "shardAttack" | "shardDefense" | "parryPercent"
   | "shrines" | "firstBoonChoice" | "improveTradeoffs" | "autoPickBoons" | "boonOptions" | "banBoons" | "autoPickRanking"
   | "badgeSlots" | "noteTaking" | "archerCard" | "attackRange" | "attackSpeed" | "attackPerTile" | "chargedShot" | "multishot" | "rapidFire"
-  | "trainingDiscount" | "cardGroups" | "flyingEnemyCard" | "warpLoot" | "superCriticalResearch" | "aetherShield";
+  | "trainingDiscount" | "cardGroups" | "flyingEnemyCard" | "warpLoot" | "superCriticalResearch" | "aetherShield" | "rerollMission";
 export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   damagePrediction: "Damage Prediction", combatForecast: "Combat Forecast", attackLore: "Attack Lore", warp: "Warp", damageVisual: "Damage Visual",
   relativeDamageColor: "Relative Damage Color", equipment: "Equipment", tournament: "Tournament", events: "Events",
@@ -67,6 +69,7 @@ export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   archerCard: "Archer Card", attackRange: "Attack Range", attackSpeed: "Attack Speed", attackPerTile: "ATK / m", chargedShot: "Charged Shot", multishot: "Multishot", rapidFire: "Rapid Fire",
   trainingDiscount: "Training Discount", cardGroups: "Card Groups", flyingEnemyCard: "Flying Enemy Card",
   warpLoot: "Warp Loot", superCriticalResearch: "Super Critical Research", aetherShield: "Unlock Aether Shield",
+  rerollMission: "Reroll Daily Mission",
 };
 /** What a checkpoint pays: an unlock, the next tower opened, an amount of a currency, or a relic. */
 export type GoalReward =
@@ -148,6 +151,7 @@ const TOWER_THREE: Record<number, CheckpointSet> = {
 };
 /** Tower IV's checkpoints that differ from the stub. */
 const TOWER_FOUR: Record<number, CheckpointSet> = {
+  30: { reward: unlock("rerollMission") },
   50: { reward: unlock("autoPickBoons") },
   80: { reward: unlock("boonOptions") },
 };
