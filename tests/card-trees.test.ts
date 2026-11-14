@@ -46,8 +46,7 @@ test("every card tree holds 10 levels from the start and opens to 60 with card b
     const ids = nodes!.map((n) => n.id);
     assert.equal(new Set(ids).size, ids.length, `${card}'s node ids are its own`);
     nodes!.forEach((n, i) => n.after === undefined || assert.ok(ids.slice(0, i).includes(n.after), `${card}.${n.id} comes after its parent`));
-    // Only common nodes hold levels from the start; GEM's second Gem XP is a common one card buys open, holding none.
-    for (const n of nodes!) assert.equal(n.levels > 0, n.rarity === "common" && `${card}.${n.id}` !== "gem.gemXp2", `${card}.${n.id}: only common nodes hold levels from the start`);
+    for (const n of nodes!) assert.equal(n.levels > 0, n.rarity === "common", `${card}.${n.id}: only common nodes hold levels from the start`);
   }
   const stairs = CARD_TREES.stairs!;
   assert.deepEqual(stairs.map((n) => [n.id, n.rarity, n.after ?? null]), [

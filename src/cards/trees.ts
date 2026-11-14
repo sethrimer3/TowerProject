@@ -580,8 +580,8 @@ export const CARD_TREES: Partial<Record<CardId, readonly CardTreeNode[]>> = {
     { id: "double", stats: { chestDouble: 3 }, rarity: "epic", levels: 0, max: 5, after: "equipmentChance" },
     { id: "triple", stats: { chestTriple: 2 }, rarity: "legendary", levels: 0, max: 5, after: "double" },
   ],
-  // GEM's: two commons holding all ten of the card's first levels, then ten levels of each rarity, branching,
-  // and a common track of its own that common card buys open (it holds none from the start).
+  // GEM's: three common tracks holding the card's first ten levels between them (Gem XP standing alone),
+  // then ten levels of each rarity, branching. Gem XP comes before Gem XP II, so it is named first.
   gem: [
     common("gemBank", { gemBank: 1 }, 1, 1),
     { id: "bankSpeed", stats: { gemBankSpeed: 15 }, rarity: "uncommon", levels: 0, max: 2, after: "gemBank" },
@@ -589,10 +589,11 @@ export const CARD_TREES: Partial<Record<CardId, readonly CardTreeNode[]>> = {
     { id: "bankSpeed2", stats: { gemBankSpeed: 15 }, rarity: "rare", levels: 0, max: 1, after: "goldenGem" },
     { id: "chestGems", stats: { chestGem: 1 }, rarity: "epic", levels: 0, max: 5, after: "bankSpeed2" },
     { id: "bankSpeed3", stats: { gemBankSpeed: 15 }, rarity: "legendary", levels: 0, max: 2, after: "chestGems" },
-    common("gemChance", { gemChance: 0.25 }, 9, 9),
-    { id: "gemXp", stats: { gemXp: 100 }, rarity: "uncommon", levels: 0, max: 4, after: "gemChance" },
-    { id: "bankSpeed4", stats: { gemBankSpeed: 15 }, rarity: "rare", levels: 0, max: 3, after: "gemXp" },
-    { id: "bossGem", stats: { bossGem: 1 }, rarity: "rare", levels: 0, max: 4, after: "gemXp" },
+    common("gemChance", { gemChance: 0.25 }, 4, 9),
+    common("gemXp", { gemXp: 100 }, 5, 10),
+    { id: "gemXp2", stats: { gemXp: 100 }, rarity: "uncommon", levels: 0, max: 4, after: "gemChance" },
+    { id: "bankSpeed4", stats: { gemBankSpeed: 15 }, rarity: "rare", levels: 0, max: 3, after: "gemXp2" },
+    { id: "bossGem", stats: { bossGem: 1 }, rarity: "rare", levels: 0, max: 4, after: "gemXp2" },
     { id: "moreGems", stats: { adGems: 1 }, rarity: "epic", levels: 0, max: 1, after: "bossGem" },
     { id: "gemBank2", stats: { gemBank: 1 }, rarity: "legendary", levels: 0, max: 3, after: "moreGems" },
     { id: "gemBank3", stats: { gemBank: 1 }, rarity: "uncommon", levels: 0, max: 1, after: "gemChance" },
@@ -600,7 +601,6 @@ export const CARD_TREES: Partial<Record<CardId, readonly CardTreeNode[]>> = {
     { id: "bankSpeed5", stats: { gemBankSpeed: 15 }, rarity: "epic", levels: 0, max: 4, after: "moreGems2" },
     { id: "stellarGem", stats: { stellarGem: 1 }, rarity: "legendary", levels: 0, max: 3, after: "bankSpeed5" },
     { id: "gemChance2", stats: { gemChance: 1 }, rarity: "legendary", levels: 0, max: 2, after: "bankSpeed5" },
-    common("gemXp2", { gemXp: 100 }, 0, 10),
   ],
 };
 
