@@ -170,7 +170,7 @@ const TOWER_FOUR: Record<number, CheckpointSet> = {
   30: { reward: unlock("rerollMission"), premium: gold(150_000) },
   50: { reward: unlock("autoPickBoons") },
   80: { reward: unlock("boonOptions") },
-  200: { reward: unlock("aurumBloomResearch") },
+  200: { reward: unlock("aurumBloomResearch"), premium: gold(1_500_000) },
 };
 /** Tower V's checkpoints that differ from the stub. */
 const TOWER_FIVE: Record<number, CheckpointSet> = {
