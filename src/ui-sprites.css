@@ -92,7 +92,7 @@ html.ui-sprites :is(.hint, .item-meta, .item-identity, .level-cost):not(#_) { co
 /* Keep picture buttons (cards, map markers and skill nodes) intact, and small icon buttons bare: a frame on them looks busy. */
 html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-tile, .deck-add, .deck-card, .deck-entry-art,
   .card-reveal-card, .forest-sign, .forest-building, .mission-bar, .mission-reroll, .weekly-box, .deck-hand-toggle, .deck-switch, .hand-kinds button, #shrine-bar, #forest-sign, .ug-node, .ct-row-main,
-  #currencies-open, #auto-speed .speed-arrow, .event-relic, .ads-prize, .ads-watch)):not(#_) {
+  #currencies-open, #auto-speed .speed-arrow, .event-relic, .ads-prize, .ads-watch, .review-prompt)):not(#_) {
   border-color: transparent;
   border-image: var(--ui-face) 6 fill / 12px / 0 stretch;
   border-radius: 0;
@@ -105,7 +105,7 @@ html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-til
 }
 html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-tile, .deck-add, .deck-card, .deck-entry-art,
   .card-reveal-card, .forest-sign, .forest-building, .mission-bar, .mission-reroll, .weekly-box, .badge-pick, .deck-link-toggle, .deck-hand-toggle, .deck-switch, .hand-kinds button,
-  #shrine-bar, #forest-sign, .ug-node, .ct-row-main, #currencies-open, #auto-speed .speed-arrow, .event-relic, .ads-prize, .ads-watch)):not(#_) {
+  #shrine-bar, #forest-sign, .ug-node, .ct-row-main, #currencies-open, #auto-speed .speed-arrow, .event-relic, .ads-prize, .ads-watch, .review-prompt)):not(#_) {
   border-width: 6px;
   border-style: solid;
   border-image-width: 6px;
@@ -636,6 +636,7 @@ html.ui-sprites .eq-arrow:not(#_) {
 html.ui-sprites .ui-control-icon.sprite-ready { width: 12px; height: 12px; vertical-align: middle; }
 html.ui-sprites .eq-arrow > .ui-control-icon.sprite-ready { width: 24px; height: 24px; }
 html.ui-sprites .ui-control-icon.reward-reveal-star.sprite-ready { width: 72px; height: 72px; text-shadow: none; }
+html.ui-sprites .ui-control-icon.review-star.sprite-ready { width: 28px; height: 28px; }
 html.ui-sprites .reward-reveal .card-reveal-text :is(p, span):not(#_) { color: #b8c2bb; text-shadow: none; }
 html.ui-sprites .reward-reveal .card-reveal-text b:not(#_) { color: #eee0b7; text-shadow: none; }
 html.ui-sprites .reward-reveal .card-reveal-text small:not(#_) { color: #e1bb78; text-shadow: none; }

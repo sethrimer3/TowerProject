@@ -5,6 +5,7 @@ import type { Game } from "../state.ts";
 import type { Renderer } from "../render/rendering.ts";
 import { levelForXp, xpForLevel } from "../progression/xp.ts";
 import { USED_PROVISIONS, provisionBoost } from "../economy/provisions.ts";
+import { reviewDue } from "../review-prompt.ts";
 import { provisionsOpen, researchOpen } from "../progression/loadout.ts";
 import { arcanaOpen } from "../arcana/arcana.ts";
 import { outsideWeather } from "../outside.ts";
@@ -192,6 +193,7 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay,
   renderUndo(game);
   renderModeTab(game);
   renderForestSign(game);
+  el("review-prompt").hidden = !(game.run.outside && reviewDue(game.save.review, game.save.tower.tiersOpen));
   renderRunButtons(game);
   renderTabs(game);
 }

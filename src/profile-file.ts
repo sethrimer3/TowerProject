@@ -9,7 +9,7 @@ export const PROFILE_FORMAT = "tower-delve-profile";
 
 /** The save's fields, by the section of the file each goes in. */
 export const PROFILE_SECTIONS = {
-  profile: ["profile", "offline", "tutorials", "seen", "treeNotices"],
+  profile: ["profile", "offline", "tutorials", "seen", "treeNotices", "review"],
   settings: ["settings", "themes", "music"],
   currencies: ["gold", "gems", "breakthrough", "arcanite", "arcaniteCarry", "medals", "cells", "xp", "goldBoostUntil", "ads", "gemDrop"],
   deck: ["hand", "cardLinks", "handSlots", "manualHand", "manualSlots", "cardXp", "cardTrees", "cardBuys", "badges"],

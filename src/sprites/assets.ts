@@ -793,6 +793,7 @@ export const SPRITE_ASSETS = [
   "assets/style/ui-mastered.png",
   "assets/style/ui-menu-close.png",
   "assets/style/ui-menu.png",
+  "assets/style/ui-play-store.png",
   "assets/style/ui-revive.png",
   "assets/style/ui-seal.png",
   "assets/style/ui-sign.png",

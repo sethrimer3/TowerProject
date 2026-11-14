@@ -26,6 +26,7 @@ import { decodeMail, defaultMail } from "../mail/progress.ts";
 import { decodeMissions, defaultMissions } from "../missions/progress.ts";
 import { decodeEvents, defaultEvents } from "../events/progress.ts";
 import { decodeRelics } from "../economy/relics.ts";
+import { decodeReview, defaultReview } from "../review-prompt.ts";
 import { decodeMusic } from "../events/music.ts";
 import { decodeShrines, defaultShrines, validShrineRun } from "../shrines.ts";
 import { decodeThemes, defaultThemes } from "../theme-collection.ts";
@@ -103,6 +104,7 @@ export function defaults(): Save {
     missions: defaultMissions(),
     events: defaultEvents(),
     relics: [],
+    review: defaultReview(),
     shrines: defaultShrines(),
     themes: defaultThemes(),
     music: [],
@@ -537,6 +539,7 @@ export function decode(raw: string | null): Save {
     d.missions = decodeMissions(s.missions);
     d.events = decodeEvents(s.events);
     d.relics = decodeRelics(s.relics);
+    d.review = decodeReview(s.review);
     d.shrines = decodeShrines(s.shrines);
     d.arcana = decodeArcana(s.arcana);
     d.themes = decodeThemes(s.themes);

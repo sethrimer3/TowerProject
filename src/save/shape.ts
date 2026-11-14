@@ -1,4 +1,5 @@
 /** The shape of the save: each mode's slice (`ModeSave`) and everything kept between runs (`Save`). save/save.ts loads and decodes it. */
+import type { ReviewSave } from "../review-prompt.ts";
 import type { TrainingJob, TrainingPaid } from "../progression/training-jobs.ts";
 import type { TierRecord } from "../tiers.ts";
 import type { ThemeId } from "../theme-collection.ts";
@@ -245,6 +246,8 @@ export type Save = {
   events: EventsSave;
   /** The relics owned, by id (economy/relics.ts), each once, kept between runs. */
   relics: string[];
+  /** The Review Prompt's button: when it was last pressed, and whether it is done with (review-prompt.ts). */
+  review: ReviewSave;
   /** The Shrine Boons page's choices, kept between runs (shrines.ts). */
   shrines: ShrinesSave;
   /** The UI and Game themes owned (theme-collection.ts), each once, in

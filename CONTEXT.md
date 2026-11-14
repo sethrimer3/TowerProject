@@ -846,6 +846,10 @@ _Avoid_: obstacle, deadlock cause
 A dot on a tab or button saying something new waits there for the player: a skill to buy, a card new to the deck, a level-up's points, a reward to claim. Showing the player what it points at clears it until the next thing new.
 _Avoid_: badge (a card's), attention, alert, notification
 
+**Review Prompt**:
+The Play Store button over the forest's top-left corner, once a new tower opens, asking the player to rate the game: Review, Later (back once the next tower opens) or Never.
+_Avoid_: rating popup, review nag
+
 ### Themes
 
 **UI theme**:

@@ -511,10 +511,10 @@ html.medieval .skill-node:active:not(:disabled) {
   box-shadow: none;
   transform: translate(-50%, -50%);
 }
-/* The Deck page's Hand chevron, the Events track's relics and a daily mission's reroll stay bare: a board on so small a button looks busy. */
-html.medieval :is(.deck-hand-toggle, button.event-relic, .mission-reroll),
-html.medieval :is(.deck-hand-toggle, button.event-relic, .mission-reroll):hover,
-html.medieval :is(.deck-hand-toggle, button.event-relic, .mission-reroll):active:not(:disabled) {
+/* The Deck page's Hand chevron, the Events track's relics, a daily mission's reroll and the forest's review button stay bare: a board on so small a button looks busy. */
+html.medieval :is(.deck-hand-toggle, button.event-relic, .mission-reroll, .review-prompt),
+html.medieval :is(.deck-hand-toggle, button.event-relic, .mission-reroll, .review-prompt):hover,
+html.medieval :is(.deck-hand-toggle, button.event-relic, .mission-reroll, .review-prompt):active:not(:disabled) {
   background: none;
   border: 0;
   box-shadow: none;

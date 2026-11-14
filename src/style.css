@@ -875,6 +875,16 @@ canvas {
   box-shadow: 0 3px 0 #2b1a0a, 0 4px 10px #000a, 0 0 12px #ffc94a40;
 }
 .forest-sign[hidden] { display: none; }
+/* The Review Prompt's button (review-dialog.ts): the Play Store mark, bare, over the forest's top-left corner, above a board lesson's note (.board-tip, z-index 30). */
+.review-prompt { position: absolute; z-index: 31; top: 8px; left: 8px; display: grid; place-items: center; width: 40px; height: 40px; min-height: 0; padding: 0; border: 0; background: none; box-shadow: none; cursor: pointer; filter: drop-shadow(0 2px 3px #000c); animation: review-bob 2.4s ease-in-out infinite; }
+.review-prompt[hidden] { display: none; }
+.review-prompt .review-prompt-icon, .review-prompt .review-prompt-icon > * { display: block; width: 36px; height: 36px; image-rendering: pixelated; }
+.review-prompt:hover, .review-prompt:focus-visible { filter: drop-shadow(0 0 6px #ffe1a1cc); }
+@keyframes review-bob { 50% { translate: 0 -3px; } }
+html.reduce-motion .review-prompt { animation: none; }
+.review-stars { display: flex; justify-content: center; gap: 6px; margin: 4px 0 8px; }
+.review-stars .review-star, .review-stars .review-star > * { display: block; width: 28px; height: 28px; image-rendering: pixelated; }
+.review-actions { justify-content: center; }
 .forest-sign .sign-icon img { display: block; width: calc(var(--tile, 24px) * 2.2); height: calc(var(--tile, 24px) * 2.2); image-rendering: pixelated; }
 .forest-sign .sign-arrow img { display: block; width: var(--tile, 24px); height: var(--tile, 24px); }
 .forest-sign:hover { border-color: #d8b572; }
@@ -5400,10 +5410,10 @@ html.cinematic .shell {
   box-shadow: none !important;
   --board-cap: 100vmax;
 }
-html.cinematic :is(#stats, #currencies, nav, #training-bar, #drill-tip, #card-tip, .research-toast, #status-row, #inspect, #tile-highlight, .inspect-box, #free-training-box, .tier-arrow, #forest-sign, #density-label, .board-tip, .forest-pointer, .job-pointer) {
+html.cinematic :is(#stats, #currencies, nav, #training-bar, #drill-tip, #card-tip, .research-toast, #status-row, #inspect, #tile-highlight, .inspect-box, #free-training-box, .tier-arrow, #forest-sign, #review-prompt, #density-label, .board-tip, .forest-pointer, .job-pointer) {
   display: none !important;
 }
-#board.walking-in :is(#inspect, #tile-highlight, .inspect-box, #free-training-box, .tier-arrow, #forest-sign, #density-label, .board-tip, .forest-pointer, .job-pointer) {
+#board.walking-in :is(#inspect, #tile-highlight, .inspect-box, #free-training-box, .tier-arrow, #forest-sign, #review-prompt, #density-label, .board-tip, .forest-pointer, .job-pointer) {
   display: none !important;
 }
 html.cinematic .board-cell {
@@ -5551,7 +5561,7 @@ html.trial-running #board.active { grid-template-rows: auto minmax(0, 1fr); }
 #trial-overlay .trial-actions button { padding: 4px 7px; min-height: 28px; font-size: 10px; }
 html.trial-manual #hand .hand-card { position: relative; cursor: default; }
 html.trial-manual #hand .hand-card::after { content: ""; position: absolute; inset: 4px; z-index: 8; pointer-events: none; background: linear-gradient(48deg, transparent 46%, #ed4539 47% 53%, transparent 54%), linear-gradient(-48deg, transparent 46%, #ed4539 47% 53%, transparent 54%); filter: drop-shadow(0 1px 1px #000); }
-html.trial-running :is(#focus-stat, #ignore-stat, #target-stat, #bomb-stat, #heal-stat, #edge-stat, #guard-stat, #undo, #forest-sign, .tier-arrow) { display: none !important; }
+html.trial-running :is(#focus-stat, #ignore-stat, #target-stat, #bomb-stat, #heal-stat, #edge-stat, #guard-stat, #undo, #forest-sign, #review-prompt, .tier-arrow) { display: none !important; }
 .proving-grounds-dialog #trial-difficulty { color: #f3dc9c; font-size: .95rem; }
 .proving-grounds-dialog #trial-reward { font-size: .8rem; line-height: 1.5; }
 .proving-grounds-dialog .trial-points { color: #b9d6e4; }

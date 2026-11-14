@@ -4128,6 +4128,11 @@
       "width": 96,
       "height": 720,
       "tile": true
+    },
+    "ui-play-store": {
+      "file": "ui-play-store.png",
+      "width": 24,
+      "height": 24
     }
   }
 }

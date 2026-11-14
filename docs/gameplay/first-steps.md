@@ -98,6 +98,12 @@ A forest run's hero starts partway up the path.
 The dirt path has patches of packed earth, gravel, pebbles, cracks, scuffs and fallen leaves, with grass along its edges; these details do not change where the hero can walk.
 Reloading mid-Delve-run opens the Delve where it was.
 
+## Rating the game
+
+Once a new tower opens, a Play Store button stands over the forest's top-left corner every time the hero is in the forest, until it is tapped.
+Tapped, it asks *Enjoying the game? Post a review!* under five stars: **Review** opens the game's Play Store page to rate it, **Later** (or closing the dialog) brings the button back once the next tower opens, and **Never** stops it showing.
+After Review or Never the button never shows again.
+
 ## Moving by hand
 
 In the forest before a run, a tap on an open tile walks straight to it, and a tap anywhere in the Tower's arch walks to the entrance under it, beginning a climb.

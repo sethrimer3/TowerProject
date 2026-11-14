@@ -33,6 +33,7 @@ import { installDebugHooks } from "./debug-hooks.ts";
 import { isBoard, type AppContext, type Tab } from "./ui/app.ts";
 import { el, gemIcon, goldIcon, ticketIcon } from "./ui/dom.ts";
 import { AdsWatch } from "./ui/ads-watch.ts";
+import { showReviewPrompt } from "./ui/review-dialog.ts";
 import { GOLD_BOOST_FACTOR, GOLD_BOOST_MS } from "./economy/gold-boost.ts";
 import { buildShell } from "./ui/shell.ts";
 import { drawSelectsUnder } from "./ui/game-select.ts";
@@ -521,6 +522,14 @@ el("mail-button").onclick = () => {
 el("run-research").onclick = () => {
   closeRunMenu();
   navigate("research");
+};
+// The forest's review button: the Review Prompt's dialog.
+el("review-prompt").onclick = () => {
+  overlay.hide();
+  showReviewPrompt(ctx, () => {
+    save();
+    update();
+  });
 };
 // The forest's sign: down the path to the other mode's forest.
 el("forest-sign").onclick = () => {
