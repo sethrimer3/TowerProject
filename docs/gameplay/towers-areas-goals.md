@@ -52,6 +52,8 @@ Its levels cost Dash's Gold for the first 25 (250 Gold for the first, 105 billio
 The name under the hero's portrait follows: a Wayfarer, a Pathfinder once Tower II is open, an Archer while the hand holds the Archer card.
 Tower IV's floor 30 opens the Archives' **Reroll Daily Mission** research: one level, 20,000,000 Gold and 1 day 15 hours 59 minutes.
 Once it is researched, each daily mission not yet complete has a looping arrow on the Missions screen; pressing it asks to spend 5 Gems, then swaps the mission for a different one, never of a kind already on the list, its progress starting over (see [Missions](../MISSIONS.md#rerolling)).
+Tower III's floor 400 opens the Archives' **Overseer Zap** research: 18 levels, 200 million Gold and 6 days 16 hours for the first, about 5.5 billion Gold and 29 days for the last, each taking a turn off the cooldown of a Thunderbolt that Overseer's beams call down on an enemy in them ([Arcana](arcana.md#overseer-zap)); its premium reward is 5,000,000 Gold.
+Tower IV's floor 30 premium reward is 150,000 Gold.
 Tower V's floor 10 adds the **Flying Enemy** card to the deck ([The hand](hand-and-cards.md)).
 Tower V's floor 30 opens the Archives' **Parry %** research (once the Parry skill is owned): +0.2% Parry % a level for 50 levels (5,000 Gold and 53 minutes for the first, about 6 billion Gold and 87 hours for the last), taking effect the moment a level completes; however it is raised, a parry cuts a strike's damage by at most 98%.
 Floor 100's checkpoint in Towers I to VIII unlocks the next tower (and the Delve's cave of the same number); beating floor 100's boss makes it claimable.
@@ -62,7 +64,7 @@ Every tower has its own checkpoints; once a second is open, arrows at the bottom
 Tower I's premium rewards, floor by floor: 100 Gold, 10 Gems, 10 Gems, 300 Gold, 15 Gems, 20 Gems, 600 Gold, 30 Gems, 30 Gems, 50 Gems (floor 100), 15,000 Gold, 35 Gems, 30,000 Gold, 25 Gems, 100,000 Gold, then 30, 35, 40 and 45 Gems (floors 500 to 1,250), 10 Arcanite (floor 1,500), 50 Gems (2,000), and 15 Arcanite (2,500).
 Every tower's last checkpoint, floor 4,500, gives two of its own [relics](../EVENTS.md#tower-relics), named for the tower: an epic one on the left and a legendary one as its premium reward.
 Claiming one, or tapping it once claimed, shows the relic with its name and bonus.
-The other towers' rewards past their unlocks are placeholders for now (Gold on the left, 5 Gems a checkpoint on the right, rising by 5 with each); the store isn't connected yet, so only Dev mode (or its free purchases) unlocks a pass.
+The other towers' rewards past their unlocks are placeholders for now (Gold on the left, 5 Gems a checkpoint on the right, rising by 5 with each, but for the two premium rewards above); the store isn't connected yet, so only Dev mode (or its free purchases) unlocks a pass.
 The Delve has no Goals yet.
 End Climb (End Run in the Delve) shows only inside a run.
 

@@ -1,4 +1,5 @@
-import { boltTargets, chargeBolts, decodeArcanaRun, settleBolts, tickCooldowns } from "../arcana/arcana.ts";
+import { boltTargets, chargeBolts, chargeZap, decodeArcanaRun, settleBolts, settleZap, tickCooldowns, ZAP_SALT } from "../arcana/arcana.ts";
+import { inBeams } from "../arcana/overseer.ts";
 import { fieldHit, lifespringEffects, springAmplify, stepLifespring, validLifespring } from "../arcana/lifespring.ts";
 import { decayed, fieldsOn, frostArea, stepFrost, validFrost, validNecro, type Necro } from "../arcana/necrotic-frost.ts";
 import { ghostDirection, ghostOffset, inBlast, loseGhost, stepPhantasm, touchesTile, validPhantasm } from "../arcana/phantasm.ts";
@@ -155,7 +156,7 @@ function voidwellTurn(s: TrialState, a: NonNullable<TrialState["arcana"]>, rule:
 }
 
 /** The arcana's part of a turn the attempt just spent: a Ricochet Shot off the
- * hero's hit, the cooldowns running on, Thunderbolt's bolts, Lifespring, Phantasm, Necrotic Frost, Voidwell, Time
+ * hero's hit, the cooldowns running on, Thunderbolt's bolts, Overseer Zap, Lifespring, Phantasm, Necrotic Frost, Voidwell, Time
  * Dilation's field, which holds back what comes next turn, then the beams turning.
  * An ended attempt does none of it. */
 export function trialArcanaTurn<O extends { message: string }>(s: TrialState, outcome: O): O {
@@ -181,6 +182,13 @@ export function trialArcanaTurn<O extends { message: string }>(s: TrialState, ou
       });
       settleBolts(a.run, targets(s).length ? bolts - chosen.length : 0);
     }
+  }
+  if (spells.zap && spells.beams && s.status === "active" && chargeZap(a.run, spells.zap.turns)) {
+    // Overseer Zap: one bolt on a random foe in the beams as the turn begins, as `heroAttackOn` reads them, half way through the turn.
+    const beams = { ...spells.beams, turns: a.beamTurns }, hero = s.player;
+    const [t] = boltTargets(targets(s).filter((t) => inBeams(beams, 0, t.x - hero.x, t.y - hero.y)), 1, s.seed, (a.run.zaps ?? 0) + 1, ZAP_SALT);
+    if (t) strike(s, t, spells.zap.boost, "thunderbolt", t, TURN_TICKS / 2, strikes);
+    settleZap(a.run, !!t);
   }
   if (lifespring && s.status === "active") lifespringTurn(s, a, lifespring, strikes);
   if (spells.phantasm && s.status === "active") phantasmTurn(s, a, spells.phantasm, strikes);

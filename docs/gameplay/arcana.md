@@ -123,6 +123,16 @@ Beams spread evenly: 2 are 180° apart, 3 are 120° and 4 are 90°.
 | Angle | 30° | 90° | 61 |
 | Quantity | 1 | 4 | 4 |
 
+### Overseer Zap
+
+Tower III's floor 400 Goal opens the Archives' **Overseer Zap** research.
+Once its first level is done, every few turns a Thunderbolt strikes one random enemy standing in Overseer's beams, at any distance.
+The Archives show its cooldown as 20 turns before the first level; the first level makes it 19, and each of the 18 levels takes off another turn, down to 2.
+It strikes as hard as one of Thunderbolt's bolts, at the levels you hold Thunderbolt at (switched off or not), or at Thunderbolt's first level if you don't hold it, multiplied by Overseer's Bonus, and looks the same.
+The cooldown runs only while Overseer is on; switching Overseer off forgets it.
+If no enemy is in a beam when it is due, it waits, and strikes on the first turn one is.
+It works in a trial too.
+
 ## Thunderbolt
 
 *Every x turns, y thunderbolts strike random enemies on the floor, with z% of ATK each.*
@@ -307,6 +317,7 @@ An incorporeal boss can't be struck.
 An arcanum's hit only wounds: it never makes a boss teleport, drop keys or pop coins, and draws no counter.
 It can defeat the boss and win the trial, and its damage counts toward Damage this run.
 **Thunderbolt** works as above, once a turn on a lone boss.
+**Overseer Zap** works as above, striking what stands in a beam as the turn begins.
 **Ricochet Shot** springs from your own hits there, since a trial has no arrows: each hit rolls its chance, and a ricochet strikes the closest others.
 **Overseer** multiplies your hits on what stands in a beam, as the turn begins.
 **Lifespring** works as above on what stands in the arena, each wave counting for all of it, even what arrives later; a trial pays no kills, so its Health, Gold and Cell Bonuses do nothing there, and neither does DEF Reduction.

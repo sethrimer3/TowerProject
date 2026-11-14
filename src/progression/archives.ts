@@ -186,6 +186,9 @@ export const RESEARCH_TARGETS = {
   runNotes: { name: "Climb Notes", base: 0, shown: opened },
   /** Whether a daily mission can be rerolled for Gems (game/mission-desk.ts). */
   missionReroll: { name: "Mission Reroll", base: 0, shown: opened },
+  /** Turns between Overseer Zap's strikes (game/arcana-desk.ts), 20 less
+   * one a level; no strike before the first level. */
+  overseerZapTurns: { name: "Zap Cooldown", base: 20, shown: (n: number) => `${n} turns` },
   /** Badges each card can hold. */
   badgeSlots: { name: "Badge Slots", base: 1, shown: count },
   /** Turns allowed per Obelisk boss trial run before the encounter ends. */
@@ -301,6 +304,18 @@ const REGROW_SHIELD_SECONDS = [49980, 70200, 98580, 138420, 194340, 272940, 3342
 const SHIELD_REGEN_SECONDS = [99960, 120060, 141360, 167880, 207120];
 const SHIELD_THORNS_SECONDS = [99960, 124382, 151721, 186672, 238595];
 const shieldSkillLevels = (target: ResearchTarget, seconds: readonly number[]) => seconds.map((s, i): ResearchLevel => ({ gold: (i + 1) * 1e9, hours: s / 3600, effect: { target, op: "add", value: 1 } }));
+
+/** Overseer Zap research: one turn off its cooldown a level, for 18 levels,
+ * from 20 turns (no strike before the first level) to 2: each level's Gold,
+ * and its time as days, hours and minutes. */
+const OVERSEER_ZAP_GOLD = [
+  200_000_000, 200_313_514, 200_854_054, 202_551_351, 207_502_703, 219_286_486, 243_329_730, 287_156_757, 360_659_459,
+  476_367_568, 649_686_486, 899_091_892, 1_246_380_469, 1_716_892_188, 2_339_679_844, 3_147_731_875, 4_178_160_938, 5_472_394_380,
+];
+const OVERSEER_ZAP_TIMES: readonly [days: number, hours: number, minutes: number][] = [
+  [6, 16, 0], [7, 0, 21], [7, 8, 53], [7, 17, 54], [8, 3, 49], [8, 15, 6], [9, 4, 17], [9, 19, 58], [10, 14, 49],
+  [11, 13, 31], [12, 16, 49], [14, 1, 30], [15, 16, 23], [17, 14, 21], [19, 20, 18], [22, 11, 9], [25, 11, 54], [28, 23, 32],
+];
 
 /** Offline Gold Multiplier research (+0.5% of the Recent Gold per Hour a
  * level, 5 tenths, for 100 levels, from 10% to 60%): Critical Chance's Gold and hours. */
@@ -884,6 +899,16 @@ export const RESEARCH = {
     categories: ["economy"],
     requires: [{ upgrade: "archives" }, { goalUnlock: "warpLoot" }],
     levels: warpLootLevels(),
+  },
+  overseerZap: {
+    name: "Overseer Zap",
+    description: "Overseer's beams call down a Thunderbolt on an enemy every few turns.",
+    categories: ["offense"],
+    requires: [{ upgrade: "archives" }, { goalUnlock: "overseerZap" }],
+    levels: OVERSEER_ZAP_GOLD.map((gold, i) => {
+      const [days, hours, minutes] = OVERSEER_ZAP_TIMES[i]!;
+      return levelOf("overseerZapTurns", -1, gold, (days * 24 + hours) * 60 + minutes);
+    }),
   },
   mug: {
     name: "Mug",

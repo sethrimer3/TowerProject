@@ -45,7 +45,9 @@ import { openEquipment } from "./equipment/inventory.ts";
  * a shot fire at several enemies) and Rapid Fire (floor 80: the Training
  * rows that may make the Archer fire four times as fast for a while) and
  * Warp Loot (floor 150: the Archives' project that starts a Warp run with
- * a share of the skipped floors' Silver, economy/warp-loot.ts), and Tower II's Training Discount (floor
+ * a share of the skipped floors' Silver, economy/warp-loot.ts) and Overseer
+ * Zap (floor 400: the Archives' project that has Overseer's beams call down
+ * a Thunderbolt every few turns, docs/agents/arcana.md), and Tower II's Training Discount (floor
  * 80: the Archives' project that cuts a trainer's Gold) and Card Groups
  * (floor 90: the Deck links neighbouring cards of the hand into a group
  * whose cards share one priority, cards/cards.ts), and Tower V's Flying Enemy
@@ -57,7 +59,7 @@ export type GoalUnlock =
   | "shardAttack" | "shardDefense" | "parryPercent"
   | "shrines" | "firstBoonChoice" | "improveTradeoffs" | "autoPickBoons" | "boonOptions" | "banBoons" | "autoPickRanking"
   | "badgeSlots" | "noteTaking" | "archerCard" | "attackRange" | "attackSpeed" | "attackPerTile" | "chargedShot" | "multishot" | "rapidFire"
-  | "trainingDiscount" | "cardGroups" | "flyingEnemyCard" | "warpLoot" | "superCriticalResearch" | "aetherShield" | "rerollMission";
+  | "trainingDiscount" | "cardGroups" | "flyingEnemyCard" | "warpLoot" | "superCriticalResearch" | "aetherShield" | "rerollMission" | "overseerZap";
 export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   damagePrediction: "Damage Prediction", combatForecast: "Combat Forecast", attackLore: "Attack Lore", warp: "Warp", damageVisual: "Damage Visual",
   relativeDamageColor: "Relative Damage Color", equipment: "Equipment", tournament: "Tournament", events: "Events",
@@ -69,7 +71,7 @@ export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   archerCard: "Archer Card", attackRange: "Attack Range", attackSpeed: "Attack Speed", attackPerTile: "ATK / m", chargedShot: "Charged Shot", multishot: "Multishot", rapidFire: "Rapid Fire",
   trainingDiscount: "Training Discount", cardGroups: "Card Groups", flyingEnemyCard: "Flying Enemy Card",
   warpLoot: "Warp Loot", superCriticalResearch: "Super Critical Research", aetherShield: "Unlock Aether Shield",
-  rerollMission: "Reroll Daily Mission",
+  rerollMission: "Reroll Daily Mission", overseerZap: "Overseer Zap",
 };
 /** What a checkpoint pays: an unlock, the next tower opened, an amount of a currency, or a relic. */
 export type GoalReward =
@@ -148,10 +150,11 @@ const TOWER_THREE: Record<number, CheckpointSet> = {
   80: { reward: unlock("rapidFire") },
   90: { reward: gems(30) },
   150: { reward: unlock("warpLoot") },
+  400: { reward: unlock("overseerZap"), premium: gold(5_000_000) },
 };
 /** Tower IV's checkpoints that differ from the stub. */
 const TOWER_FOUR: Record<number, CheckpointSet> = {
-  30: { reward: unlock("rerollMission") },
+  30: { reward: unlock("rerollMission"), premium: gold(150_000) },
   50: { reward: unlock("autoPickBoons") },
   80: { reward: unlock("boonOptions") },
 };

@@ -17,6 +17,8 @@ import type { TrialState } from "./trial.ts";
 export type TrialSpells = {
   ricochet?: { boost: number; rebounds: number; chance: number };
   thunderbolt?: { boost: number; bolts: number; turns: number };
+  /** Overseer Zap, once researched while Overseer is held and on: its cooldown, and its strike's share of ATK before the beams. */
+  zap?: { boost: number; turns: number };
   /** `reach`: the field's, in hundredths of a tile. */
   lifespring?: { hp: number; waves: number; turns: number; reach: number };
   /** `slow`: the percent its field slows what is in it by; `reach`: the field's, in hundredths of a tile. */

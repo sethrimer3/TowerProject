@@ -20,8 +20,8 @@ import { foeAttack } from "./cards/foe-cards.ts";
 import { trainedAmount } from "./progression/training.ts";
 import { researched } from "./progression/archives.ts";
 import { archerClock, archerState, archerTick, arrowBoost, arrowDamage, arrowRange, charged, enemiesWithin, FOE_REACH, within as inRange, foeGain, foeOn, foeShotCost, foeTickGain, held, reachTicks, shoots, shotDamage, spent, TURN_TICKS, type InReach, type Volleys } from "./enemies/ranged.ts";
-import { beamFactor, type Beams } from "./arcana/overseer.ts";
-import { boltTargets } from "./arcana/arcana.ts";
+import { beamFactor, inBeams, type Beams } from "./arcana/overseer.ts";
+import { boltTargets, ZAP_SALT } from "./arcana/arcana.ts";
 import { fieldHit } from "./arcana/lifespring.ts";
 import { slowedCharge, slowedTickGain, togetherSlow } from "./arcana/time-dilation.ts";
 import { decayed, fieldsOn, frostSlowAt, type FrostArea } from "./arcana/necrotic-frost.ts";
@@ -452,6 +452,22 @@ export function thunderbolts(turn: Pick<VolleyTurn, "board" | "wrap" | "hero" | 
   });
   const left = board.floorEnemies?.(hero.x, hero.y).length ? rule.bolts - targets.length : 0;
   return { shots, kills, left };
+}
+
+/** The tick Overseer Zap's bolt falls, half way through the turn. */
+export const ZAP_TICK = TURN_TICKS / 2;
+/** Overseer Zap: one bolt on a random enemy of the floor the hero stands on
+ * that is in Overseer's beams at `ZAP_TICK` (`boltTargets`, fixed by the run and
+ * `strike`), as Thunderbolt strikes, `boost` multiplied by the beams' Bonus.
+ * None in the beams, none strikes. Edits the board's enemies; returns the shots and kills. */
+export function overseerZap(turn: Pick<VolleyTurn, "board" | "wrap" | "hero" | "from" | "seed" | "beams">, rule: { boost: number; strike: number }) {
+  const { board, wrap, hero, seed, beams } = turn, shots: Shot[] = [], kills: VolleyKill[] = [];
+  if (!beams) return { shots, kills };
+  const at = heroAt(walkOf(turn), ZAP_TICK, wrap);
+  const inside = (board.floorEnemies?.(hero.x, hero.y) ?? []).filter(({ x, y }) => inBeams(beams, ZAP_TICK, shortWay(x - at.x, wrap), y - at.y));
+  const [target] = boltTargets(inside, 1, seed, rule.strike, ZAP_SALT);
+  if (target) arcaneStrike(board, hero, target, snap(rule.boost * beams.bonus), { from: { x: target.x, y: target.y }, tick: ZAP_TICK, thunderbolt: true }, shots, kills);
+  return { shots, kills };
 }
 
 /** How far from a tile's center its corner lies, rounded up: the farthest a ghost can touch it from. */

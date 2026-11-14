@@ -1,6 +1,6 @@
 import { relicAmount, relicCut, relicFactor } from "../economy/relic-effects.ts";
 import {
-  arcanum, arcanumBoost, arcanumPrice, augmentedValues, chargeBolts, drawOptions, FROST_AUGMENT, GOLDEN_AUGMENT, LENT_LEVELS, levelsOf, nextDraw, nextStep, OFFER_SIZE, ownedArcana, redrawOptions, rerollOpen, rerollPrice, RUN_TOGGLES, settleBolts, tickCooldowns, unownedArcana, valuesAt,
+  arcanum, arcanumBoost, arcanumPrice, augmentedValues, chargeBolts, chargeZap, drawOptions, FROST_AUGMENT, GOLDEN_AUGMENT, LENT_LEVELS, levelsOf, nextDraw, nextStep, OFFER_SIZE, ownedArcana, redrawOptions, rerollOpen, rerollPrice, RUN_TOGGLES, settleBolts, settleZap, tickCooldowns, unownedArcana, valuesAt,
   type ArcanumId, type AttributeLevels,
 } from "../arcana/arcana.ts";
 import { clearLifespring, lifespringEffects, springAmplify, stepLifespring } from "../arcana/lifespring.ts";
@@ -15,6 +15,7 @@ import type { FloorBloom } from "../environments.ts";
 import { arcanaWithGear, wornEffects } from "../equipment/effects.ts";
 import { powerOf } from "../equipment/powers.ts";
 import { boostLifespringHealth } from "../progression/hero-stats.ts";
+import { researched, RESEARCH_TARGETS } from "../progression/archives.ts";
 import { stream } from "../random.ts";
 import type { TowerRun } from "../runs.ts";
 import { CURRENCIES } from "../shop/currency.ts";
@@ -156,6 +157,7 @@ export class ArcanaDesk {
       r.off.push(id);
       delete r.timers[id];
       if (id === "thunderbolt") delete r.bolts;
+      if (id === "overseer") delete r.zap;
       if (id === "lifespring") clearLifespring(this.host.run.lifespring);
       if (id === "timeDilation") clearDilation(this.host.run.timeDilation);
       if (id === "phantasm") clearPhantasm(this.host.run.phantasm);
@@ -231,6 +233,27 @@ export class ArcanaDesk {
   /** Keeps the bolts a strike left for the next turn. */
   settleBolts(left: number) {
     settleBolts(this.runState, left);
+  }
+  /** Overseer Zap, once researched while Overseer is held and on: the turns
+   * between strikes, and what a strike multiplies the hero's ATK by before the
+   * beam's Bonus: Thunderbolt's, as the run holds it (on or off), or its first
+   * level's without it. */
+  zapRule() {
+    if (!this.beams) return undefined;
+    const turns = researched(this.save.archives, "overseerZapTurns");
+    if (turns >= RESEARCH_TARGETS.overseerZapTurns.base) return undefined;
+    const bolt = this.held.find((h) => h.id === "thunderbolt");
+    const [multiplier] = this.valuesOf({ id: "thunderbolt", levels: bolt?.levels ?? [0, 0, 0] });
+    return { turns: Math.max(1, turns), boost: this.boost(multiplier) * relicFactor(this.save, "thunderbolt") };
+  }
+  /** Overseer Zap's cooldown one turn on: the strike it calls for once ready (`strike` fixes its target), if any. */
+  chargeZap() {
+    const rule = this.zapRule();
+    return rule && chargeZap(this.runState, rule.turns) ? { boost: rule.boost, strike: (this.runState.zaps ?? 0) + 1 } : undefined;
+  }
+  /** After a turn Overseer Zap was ready: whether its strike landed. */
+  settleZap(struck: boolean) {
+    settleZap(this.runState, struck);
   }
   /** Lifespring, if it is held and on: its attributes and what Effect Waves give. */
   lifespringRule() {

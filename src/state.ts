@@ -15,7 +15,7 @@ import { fieldReach, togetherSlow } from "./arcana/time-dilation.ts";
 import { frostArea, frostSlowAt } from "./arcana/necrotic-frost.ts";
 import { placeVortex, stepVoidwell, voidwellRoll, type VortexZone } from "./arcana/voidwell.ts";
 import type { GhostStrike } from "./arcana/phantasm.ts";
-import { fightRicochet, ghostStrikes, landsAt, lifespringContact, necroDecay, shortWay, thunderbolts, volleyTurn, type Shot, type Volley, type VolleyTurn } from "./volley.ts";
+import { fightRicochet, ghostStrikes, landsAt, lifespringContact, necroDecay, overseerZap, shortWay, thunderbolts, volleyTurn, type Shot, type Volley, type VolleyTurn } from "./volley.ts";
 import { missGem } from "./economy/gems.ts";
 import { DelvePlan } from "./delve/automove.ts";
 import { defaults } from "./save/save.ts";
@@ -2608,8 +2608,8 @@ export class Game {
     this.arcana.frostTurn();
     this.voidwellTurn();
     const dilation = this.dilation, frost = this.frostArea;
-    // Thunderbolt strikes first, so what it fells shoots no more this turn, then the ghosts along the hero's step.
-    const struck = [...(sameFloor ? sprung : []), ...this.strikeBolts(fired, beams, sameFloor ? from : undefined), ...this.strikeGhosts(beams, at, ms, sameFloor ? from : undefined)];
+    // Thunderbolt and Overseer Zap strike first, so what they fell shoots no more this turn, then the ghosts along the hero's step.
+    const struck = [...(sameFloor ? sprung : []), ...this.strikeBolts(fired, beams, sameFloor ? from : undefined), ...this.strikeZap(beams, sameFloor ? from : undefined), ...this.strikeGhosts(beams, at, ms, sameFloor ? from : undefined)];
     if ((this.tier < 3 && !archer) || !sameFloor) {
       this.showVolley(struck, at, ms);
       if (sameFloor) this.showVolley(this.crownGhosts(beams), at, ms, true);
@@ -2756,6 +2756,16 @@ export class Game {
   }
   /** Thunderbolt's bolts of this turn (arcana.md), `fired` being the cooldowns
    * that just ran out: pays what they fell and returns their shots. */
+  /** Overseer Zap's turn: its cooldown on, and its bolt once ready, if an enemy stands in the beams. */
+  private strikeZap(beams: Beams | undefined, from: { x: number; y: number } | undefined) {
+    const rule = this.arcana.chargeZap();
+    if (!rule) return [];
+    const out = overseerZap({ board: this.world, wrap: this.wrap, hero: this.run.player, ...(from ? { from } : {}), seed: this.run.seed, ...(beams ? { beams } : {}) }, rule);
+    this.arcana.settleZap(out.shots.length > 0);
+    for (const { enemy, at, instakill, crits } of out.kills)
+      this.message = [`Overseer Zap · ${this.enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, at, 1, instakill, crits)].join(" · ");
+    return out.shots;
+  }
   private strikeBolts(fired: readonly ArcanumId[], beams: Beams | undefined, from: { x: number; y: number } | undefined) {
     const rule = this.arcana.chargeBolts(fired);
     if (!rule) return [];

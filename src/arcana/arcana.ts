@@ -274,8 +274,10 @@ export const defaultArcana = (): ArcanaSave => ({ owned: {}, offer: [], rng: nul
 /** What a run keeps of its arcana beside it, so undo never touches them: the
  * toggles spent, those switched off, the turns each cooldown has left, and
  * Thunderbolt's bolts still to strike and the turns it has struck (`strikes`,
- * which fixes each turn's random targets). */
-export type ArcanaRun = { toggles: number; off: ArcanumId[]; timers: Partial<Record<ArcanumId, number>>; bolts?: number; strikes?: number };
+ * which fixes each turn's random targets), and Overseer Zap's turns left
+ * (`zap`, 0 while it waits for an enemy in the beams, none for a full
+ * cooldown) and the strikes it has made (`zaps`, which fixes each one's target). */
+export type ArcanaRun = { toggles: number; off: ArcanumId[]; timers: Partial<Record<ArcanumId, number>>; bolts?: number; strikes?: number; zap?: number; zaps?: number };
 export const defaultArcanaRun = (): ArcanaRun => ({ toggles: 0, off: [], timers: {} });
 
 type Owned = Pick<ArcanaSave, "owned">;
@@ -381,11 +383,26 @@ const THUNDERBOLT_SALT = 0x7b017;
 /** Thunderbolt's targets, one bolt each: up to `bolts` of `enemies`, each as
  * likely as any other, fixed by the run and the turn it strikes (`strike`), so
  * undo and a replay agree. Each draws its key first, whatever order they come in. */
-export function boltTargets<T extends { x: number; y: number }>(enemies: readonly T[], bolts: number, seed: number, strike: number): T[] {
-  const salted = (seed ^ THUNDERBOLT_SALT ^ Math.imul(strike, 0x85ebca6b)) | 0;
+export function boltTargets<T extends { x: number; y: number }>(enemies: readonly T[], bolts: number, seed: number, strike: number, salt = THUNDERBOLT_SALT): T[] {
+  const salted = (seed ^ salt ^ Math.imul(strike, 0x85ebca6b)) | 0;
   return enemies.map((enemy) => ({ enemy, key: tileRandom(enemy.x, enemy.y, salted) }))
     .sort((a, b) => a.key - b.key || a.enemy.y - b.enemy.y || a.enemy.x - b.enemy.x)
     .slice(0, bolts).map(({ enemy }) => enemy);
+}
+/** Salts a run's seed for Overseer Zap's target. */
+export const ZAP_SALT = 0x2a9e5;
+/** Overseer Zap's cooldown, `turns` long, one turn on: whether it is ready.
+ * Once ready it stays so until a strike lands (`settleZap`). A cooldown cut
+ * by research while it ran counts down from no more than its new length. */
+export function chargeZap(run: ArcanaRun, turns: number) {
+  run.zap = Math.max(0, Math.min(run.zap ?? turns, turns) - 1);
+  return run.zap === 0;
+}
+/** After a turn Overseer Zap was ready: a strike starts the cooldown over and counts. */
+export function settleZap(run: ArcanaRun, struck: boolean) {
+  if (!struck) return;
+  delete run.zap;
+  run.zaps = (run.zaps ?? 0) + 1;
 }
 /** The bolts this turn strikes with: those left from the last trigger, and a
  * new trigger's `quantity` if its cooldown just ran out. Counts the strike. */
@@ -437,5 +454,7 @@ export function decodeArcanaRun(raw: unknown): ArcanaRun {
   }
   if (wholeIn(raw.bolts, 1, 1e9)) d.bolts = raw.bolts as number;
   if (wholeIn(raw.strikes, 1, 1e9)) d.strikes = raw.strikes as number;
+  if (wholeIn(raw.zap, 0, 1e9)) d.zap = raw.zap as number;
+  if (wholeIn(raw.zaps, 1, 1e9)) d.zaps = raw.zaps as number;
   return d;
 }
