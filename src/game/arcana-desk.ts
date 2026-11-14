@@ -1,7 +1,7 @@
 import { relicAmount, relicCut, relicFactor } from "../economy/relic-effects.ts";
 import {
   arcanum, arcanumBoost, arcanumPrice, augmentedValues, chargeBolts, chargeZap, drawOptions, FROST_AUGMENT, GOLDEN_AUGMENT, LENT_LEVELS, levelsOf, nextDraw, nextStep, OFFER_SIZE, ownedArcana, redrawOptions, rerollOpen, rerollPrice, RUN_TOGGLES, settleBolts, settleZap, tickCooldowns, unownedArcana, valuesAt,
-  type ArcanumId, type AttributeLevels,
+  type ArcanumId, type AttributeLevels, type AttributeValues,
 } from "../arcana/arcana.ts";
 import { clearLifespring, lifespringEffects, springAmplify, stepLifespring } from "../arcana/lifespring.ts";
 import type { Beams } from "../arcana/overseer.ts";
@@ -131,9 +131,16 @@ export class ArcanaDesk {
     return !!(this.host.run as TowerRun).shrine?.picked.includes(augmentOf(id));
   }
   /** `held`'s attribute values as the run has them: its levels', its augment
-   * boon's, and the worn Helmet substats'. */
+   * boon's, its research's and the worn Helmet substats'. */
   valuesOf({ id, levels }: Pick<HeldArcanum, "id" | "levels">) {
-    return this.withGear(id, this.augmented(id) ? augmentedValues(id, valuesAt(id, levels)) : valuesAt(id, levels));
+    return this.withGear(id, this.withResearch(id, this.augmented(id) ? augmentedValues(id, valuesAt(id, levels)) : valuesAt(id, levels)));
+  }
+  /** `values` raised by the Archives: Aurum Bloom Bonus adds to Aurum Bloom's
+   * Bonus (in hundredths) and Aurum Bloom Chance to its Golden Chance. */
+  private withResearch(id: ArcanumId, values: AttributeValues): AttributeValues {
+    if (id !== "aurumBloom") return values;
+    const [bonus, chance, stellar] = values, archives = this.save.archives;
+    return [snap(bonus + researched(archives, "aurumBloomBonus") / 100), snap(chance + researched(archives, "aurumBloomChance")), stellar];
   }
   /** `values` raised by the Helmet substats the mode's hero wears. */
   private withGear<T extends readonly number[]>(id: ArcanumId, values: T): T {

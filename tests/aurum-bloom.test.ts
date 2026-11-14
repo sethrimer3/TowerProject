@@ -13,6 +13,8 @@ import { snap } from "../src/exact.ts";
 import { defaults } from "../src/save/save.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 import type { Enemy } from "../src/entities.ts";
+import { RESEARCH, RESEARCH_TARGETS } from "../src/progression/archives.ts";
+import { unlockAt } from "../src/goals.ts";
 
 const FLOORS = Array.from({ length: 2000 }, (_, i) => i + 1);
 const foe = { strength: "normal", hp: 1, attack: 1, defense: 0 } as Enemy;
@@ -216,4 +218,41 @@ test("about one tile in ten shows a star at any moment, each wherever it fell, a
   assert.equal(spots.size, showing);
   assert.ok(starHue(1000) !== starHue(0));
   assert.ok(starHue(3000) < 1e-9, "the hue comes round");
+});
+
+test("Tower IV's floor 200 Goal opens Aurum Bloom Bonus (25 levels) and Aurum Bloom Chance (20), on the spec's schedule", () => {
+  assert.deepEqual(unlockAt("aurumBloomResearch"), { tower: 4, floor: 200 });
+  const minutes = (id: "aurumBloomBonus" | "aurumBloomChance", i: number) => Math.round(RESEARCH[id].levels.at(i)!.hours * 60);
+  const ends = [
+    ["aurumBloomBonus", 25, 15, 26_190_000_000, (64 * 24 + 20) * 60 + 50],
+    ["aurumBloomChance", 20, 1, 8_840_000_000, (32 * 24 + 11) * 60 + 40],
+  ] as const;
+  for (const [id, length, value, lastGold, lastMinutes] of ends) {
+    const project = RESEARCH[id];
+    assert.ok(project.requires.some((r) => "goalUnlock" in r && r.goalUnlock === "aurumBloomResearch"), id);
+    assert.equal(project.categories[0], "arcana", id);
+    assert.deepEqual([project.levels.length, project.levels[0]!.gold, minutes(id, 0), project.levels.at(-1)!.gold, minutes(id, -1)], [length, 1_000_000, 40 * 60, lastGold, lastMinutes], id);
+    assert.ok(project.levels.every((l) => l.effect.value === value), id);
+  }
+  assert.equal(RESEARCH.aurumBloomBonus.levels[9]!.gold, 277_370_000);
+  assert.equal(minutes("aurumBloomBonus", 9), (6 * 24 + 13) * 60 + 31);
+  assert.deepEqual([RESEARCH_TARGETS.aurumBloomBonus.shown(375), RESEARCH_TARGETS.aurumBloomChance.shown(20)], ["+3.75×", "+20%"]);
+});
+
+test("Aurum Bloom's research adds to its Bonus and Golden Chance, owned or lent, and only while it is on", () => {
+  const g = inside();
+  g.save.arcana.owned.aurumBloom = [0, 0, 0];
+  assert.deepEqual(g.arcana.aurumBloom(), { bonus: 5, chance: 5, stellar: 0.5 });
+  Object.assign(g.save.archives.levels, { aurumBloomBonus: 1, aurumBloomChance: 1 });
+  assert.deepEqual(g.arcana.aurumBloom(), { bonus: 5.15, chance: 6, stellar: 0.5 });
+  Object.assign(g.save.archives.levels, { aurumBloomBonus: 25, aurumBloomChance: 20 });
+  assert.deepEqual(g.arcana.aurumBloom(), { bonus: 8.75, chance: 25, stellar: 0.5 });
+  assert.equal(g.arcana.cardValue({ id: "aurumBloom", levels: [0, 0, 0] }).text, "8.8× · +25.0% · 0.5% Stellar");
+  assert.ok(g.arcana.toggle("aurumBloom"));
+  assert.equal(g.arcana.aurumBloom(), undefined);
+
+  const lent = inside();
+  lent.towerRun.shrine = { picked: [], rolls: 0, arcana: ["aurumBloom"] };
+  Object.assign(lent.save.archives.levels, { aurumBloomBonus: 2, aurumBloomChance: 3 });
+  assert.deepEqual(lent.arcana.aurumBloom(), { bonus: 9.3, chance: 15, stellar: 3 });
 });

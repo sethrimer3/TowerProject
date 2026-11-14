@@ -90,7 +90,7 @@ A ricochet flashes a white line from the enemy struck to each of the closest oth
 ## Aurum Bloom
 
 *Adds x% chance each floor is a Golden Floor and raises its bonus to y× (Golden Floors and its research add to that), and z% chance each floor is a Stellar Floor, which multiplies its Gold and Silver by 10×.*
-It works for as long as it is on, in every floor it reaches, and a level bought counts at once; it needs no research.
+It works for as long as it is on, in every floor it reaches, and a level bought counts at once; it needs no research, though [research](#aurum-bloom-research) raises it.
 Its first level alone makes a ×5 [Golden Floor](environments.md#golden-floor) at 5%.
 The Golden Floors skill adds 1 to that, making ×6 (it is ×2 without Aurum Bloom), and Golden Floor research adds its levels and its chance on top.
 Its Stellar Chance adds to any other chance of a [Stellar Floor](environments.md#stellar-floor).
@@ -100,6 +100,16 @@ Its Stellar Chance adds to any other chance of a [Stellar Floor](environments.md
 | Bonus | 5.0× | 21.0× | 21 |
 | Golden Chance | 5.0% | 24.0% | 39 |
 | Stellar Chance | 0.5% | 10.0% | 20 |
+
+### Aurum Bloom research
+
+Tower IV's floor 200 Goal opens two projects in the Archives' **Arcana** section, each adding to one of its attributes for good, mid-run too, and to one lent by a Shrine boon as well.
+Aurum Bloom's information, in the Arcana menu and from its card in a run, has a Research box with what each has reached, and its card and attributes count them.
+
+| Project | Each level | Highest | Levels |
+|---|---|---|---|
+| Aurum Bloom Bonus | +0.15× on Bonus | +3.75× | 25 |
+| Aurum Bloom Chance | +1% on Golden Chance | +20% | 20 |
 
 ## Overseer
 

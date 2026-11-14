@@ -674,6 +674,9 @@ _Avoid_: boss heal, boss flask
 **Lifespring Research**:
 The four Archives projects that raise what Lifespring's Effect Waves give: Lifespring Health (its Health Bonus's limit), Gold Bonus, Damage Amplifier and Cell Bonus.
 
+**Aurum Bloom Research**:
+The two Archives projects that raise Aurum Bloom: Aurum Bloom Bonus (adding to its Bonus) and Aurum Bloom Chance (adding to its Golden Chance).
+
 **Lifespring**:
 An arcanum: on its cooldown, Effect Waves, then a field round the hero as wide as its shot range, spending an HP Pool on the enemies it touches.
 

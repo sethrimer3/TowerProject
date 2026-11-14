@@ -205,6 +205,10 @@ export const RESEARCH_TARGETS = {
   lifespringAmplify: { name: "Damage Amplification", base: 50, shown: (n: number) => `×${n / 10}` },
   /** Lifespring's Cell Bonus, in tenths: ×1 untrained (no Cells more), ×0.1 more a level. */
   lifespringCells: { name: "Cell Bonus", base: 10, shown: (n: number) => `×${n / 10}` },
+  /** What Aurum Bloom's Bonus gains (ArcanaDesk.valuesOf), in hundredths: none untrained, ×0.15 more a level. */
+  aurumBloomBonus: { name: "Bonus", base: 0, shown: (n: number) => `+${(n / 100).toFixed(2)}×` },
+  /** What Aurum Bloom's Golden Chance gains (ArcanaDesk.valuesOf), in whole percent: none untrained, 1 more a level. */
+  aurumBloomChance: { name: "Golden Chance", base: 0, shown: (n: number) => `+${n}%` },
   /** Badges each card can hold. */
   badgeSlots: { name: "Badge Slots", base: 1, shown: count },
   /** Turns allowed per Obelisk boss trial run before the encounter ends. */
@@ -387,6 +391,19 @@ const LIFESPRING_CELLS_GOLD = [
 const LIFESPRING_CELLS_TIMES: readonly [days: number, hours: number, minutes: number, seconds: number][] = [
   [3, 5, 46, 39], [3, 15, 6, 39], [4, 1, 33, 51], [4, 13, 16, 19], [5, 2, 23, 5], [5, 17, 4, 15], [6, 9, 31, 10], [7, 3, 56, 30], [8, 0, 34, 29], [8, 23, 41, 2],
   [10, 1, 33, 57], [11, 6, 33, 13], [12, 15, 1, 13], [14, 3, 22, 58], [15, 20, 6, 31], [17, 17, 43, 18], [19, 20, 48, 30], [22, 6, 1, 31], [24, 22, 6, 30], [27, 21, 52, 53],
+];
+/** Aurum Bloom Bonus research: ×0.15 more on Aurum Bloom's Bonus a level, for
+ * 25 levels, to +3.75; Aurum Bloom Chance's 20 levels (+1% Golden Chance a
+ * level) are its first 20 levels' Gold and times. */
+const AURUM_BLOOM_GOLD = [
+  1_000_000, 1_310_000, 1_850_000, 3_550_000, 8_500_000, 20_290_000, 44_330_000, 88_160_000, 161_660_000, 277_370_000,
+  450_680_000, 700_090_000, 1_050_000_000, 1_520_000_000, 2_140_000_000, 2_950_000_000, 3_980_000_000, 5_270_000_000, 6_880_000_000, 8_840_000_000,
+  11_220_000_000, 14_080_000_000, 17_480_000_000, 21_490_000_000, 26_190_000_000,
+];
+const AURUM_BLOOM_TIMES: readonly [days: number, hours: number, minutes: number][] = [
+  [1, 16, 0], [2, 0, 21], [2, 8, 53], [2, 17, 54], [3, 3, 49], [3, 15, 6], [4, 4, 17], [4, 19, 58], [5, 14, 49], [6, 13, 31],
+  [7, 16, 49], [9, 1, 30], [10, 16, 23], [12, 14, 21], [14, 20, 18], [17, 11, 9], [20, 11, 54], [23, 23, 32], [27, 23, 6], [32, 11, 40],
+  [37, 14, 19], [43, 8, 12], [49, 18, 27], [56, 22, 16], [64, 20, 50],
 ];
 /** A schedule's level `i` of `target`, adding `value`, at its listed Gold and
  * days, hours and minutes (and seconds, where it lists them). */
@@ -1020,6 +1037,20 @@ export const RESEARCH = {
     categories: ["arcana", "economy"],
     requires: [{ upgrade: "archives" }, { goalUnlock: "lifespringResearch" }],
     levels: scheduled("lifespringCells", 1, LIFESPRING_CELLS_GOLD, LIFESPRING_CELLS_TIMES),
+  },
+  aurumBloomBonus: {
+    name: "Aurum Bloom Bonus",
+    description: "Aurum Bloom raises a Golden Floor's bonus further.",
+    categories: ["arcana", "economy"],
+    requires: [{ upgrade: "archives" }, { goalUnlock: "aurumBloomResearch" }],
+    levels: scheduled("aurumBloomBonus", 15, AURUM_BLOOM_GOLD, AURUM_BLOOM_TIMES),
+  },
+  aurumBloomChance: {
+    name: "Aurum Bloom Chance",
+    description: "Aurum Bloom makes more floors Golden.",
+    categories: ["arcana", "economy"],
+    requires: [{ upgrade: "archives" }, { goalUnlock: "aurumBloomResearch" }],
+    levels: scheduled("aurumBloomChance", 1, AURUM_BLOOM_GOLD.slice(0, 20), AURUM_BLOOM_TIMES.slice(0, 20)),
   },
   bossPotion: {
     name: "Boss Potion Drop",

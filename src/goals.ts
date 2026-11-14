@@ -57,7 +57,9 @@ import { openEquipment } from "./equipment/inventory.ts";
  * whose cards share one priority, cards/cards.ts), and Tower V's Flying Enemy
  * Card (floor 10: the FLYING ENEMY card joins the deck, `GOAL_CARDS` in
  * cards/cards.ts) and Super Critical Research (floor 200: the Archives'
- * two Super Critical projects, which need the skill too), and Tower VII's
+ * two Super Critical projects, which need the skill too), and Tower IV's
+ * Aurum Bloom Research (floor 200: the Archives' Aurum Bloom Bonus and
+ * Chance, adding to its Bonus and Golden Chance, ArcanaDesk.valuesOf), and Tower VII's
  * Overseer Coin Bonus (floor 80: the Archives' project that multiplies the
  * Gold of enemies killed in Overseer's beams, Game.spotlightGold). */
 export type GoalUnlock =
@@ -66,7 +68,7 @@ export type GoalUnlock =
   | "shrines" | "firstBoonChoice" | "improveTradeoffs" | "autoPickBoons" | "boonOptions" | "banBoons" | "autoPickRanking"
   | "badgeSlots" | "noteTaking" | "archerCard" | "attackRange" | "attackSpeed" | "attackPerTile" | "chargedShot" | "multishot" | "rapidFire"
   | "trainingDiscount" | "cardGroups" | "flyingEnemyCard" | "warpLoot" | "superCriticalResearch" | "aetherShield" | "rerollMission" | "overseerZap" | "overseerGold"
-  | "bossPotion" | "lifespringResearch";
+  | "bossPotion" | "lifespringResearch" | "aurumBloomResearch";
 export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   damagePrediction: "Damage Prediction", combatForecast: "Combat Forecast", attackLore: "Attack Lore", warp: "Warp", damageVisual: "Damage Visual",
   relativeDamageColor: "Relative Damage Color", equipment: "Equipment", tournament: "Tournament", events: "Events",
@@ -80,6 +82,7 @@ export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   warpLoot: "Warp Loot", superCriticalResearch: "Super Critical Research", aetherShield: "Unlock Aether Shield",
   rerollMission: "Reroll Daily Mission", overseerZap: "Overseer Zap",
   overseerGold: "Overseer Coin Bonus", bossPotion: "Boss Potion Drop", lifespringResearch: "Lifespring Research",
+  aurumBloomResearch: "Aurum Bloom Research",
 };
 /** What a checkpoint pays: an unlock, the next tower opened, an amount of a currency, or a relic. */
 export type GoalReward =
@@ -167,6 +170,7 @@ const TOWER_FOUR: Record<number, CheckpointSet> = {
   30: { reward: unlock("rerollMission"), premium: gold(150_000) },
   50: { reward: unlock("autoPickBoons") },
   80: { reward: unlock("boonOptions") },
+  200: { reward: unlock("aurumBloomResearch") },
 };
 /** Tower V's checkpoints that differ from the stub. */
 const TOWER_FIVE: Record<number, CheckpointSet> = {

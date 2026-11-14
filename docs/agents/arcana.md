@@ -47,6 +47,8 @@ Previews and planners don't count it.
 
 **Aurum Bloom** (trigger `always`, given by `ArcanaDesk.aurumBloom`, its effect the run card's text) raises the floor environments: Bonus is the Golden Floor's factor it makes alone, and over Golden Floor Multiplier counts all but the ×1 they share (first level: ×5 alone, ×6 with the skill); Golden Chance to the Golden Floor's chance and Stellar Chance to the Stellar Floor's.
 None needs a Breakthrough skill or research.
+**Its research** (Tower IV's floor 200 Goal, `aurumBloomResearch`, opens two projects in the Archives' Arcana category): `aurumBloomBonus` (hundredths, 0 + 15 a level, 25 levels) adds to Bonus and `aurumBloomChance` (whole percent, 0 + 1, 20 levels) to Golden Chance, in `ArcanaDesk.valuesOf` (`withResearch`, after the augment boon and before the Helmet's substats), so the card, `aurumBloom()` and the relic factor on its Bonus all see them, owned or lent; read as used, so a level done mid-run counts at once.
+`arcanumResearch` in `ui/arcana-panel.ts` adds a Research box with each project's value to its information (`ARCANUM_RESEARCH`, shared with Lifespring's).
 It holds nothing in the run: see `withBloom` in environments.md.
 
 **Overseer** (`src/arcana/overseer.ts`, trigger `always`, given by `ArcanaDesk.beams`, its effect the run card's text) sends out Quantity beams, spread evenly round the hero, each Angle degrees wide, and multiplies the hero's ATK by Bonus on hits on enemies in them.
