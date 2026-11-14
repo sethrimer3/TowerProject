@@ -15,15 +15,16 @@ const MINUTE = 60 * 1000;
 /** Every node of GEM's tree at its most levels. */
 const maxed = () => Object.fromEntries(CARD_TREES.gem!.map((n) => [n.id, n.max]));
 
-test("GEM's tree: two commons holding its first ten levels, then ten levels of each rarity, as specified", () => {
+test("GEM's tree: two commons holding its first ten levels, ten levels of each rarity, and a common Gem XP card buys open", () => {
   const nodes = CARD_TREES.gem!;
   const levels = (rarity: string) => nodes.filter((n) => n.rarity === rarity).reduce((a, n) => a + n.max, 0);
-  assert.deepEqual(["common", "uncommon", "rare", "epic", "legendary"].map(levels), [10, 10, 10, 10, 10]);
+  assert.deepEqual(["common", "uncommon", "rare", "epic", "legendary"].map(levels), [20, 10, 10, 10, 10]);
+  assert.deepEqual(nodes.filter((n) => !n.after).map((n) => n.id), ["gemBank", "gemChance", "gemXp2"], "three tracks, the second Gem XP on its own");
   assert.deepEqual(nodes.filter((n) => n.levels).map((n) => [n.id, n.levels]), [["gemBank", 1], ["gemChance", 9]]);
   // At its most: a bank of five more, 12 Bank Speed levels (3 minutes), 3 Gems more a reward.
   const bonus = treeBonus({ gem: maxed() });
   assert.deepEqual([bonus.gemBank, bonus.gemBankSpeed, bonus.adGems, bonus.goldenGem, bonus.stellarGem, bonus.chestGem, bonus.gemChance, bonus.bossGem, bonus.gemXp],
-    [5, 180, 3, 3, 3, 5, 4.25, 4, 400]);
+    [5, 180, 3, 3, 3, 5, 4.25, 4, 1400]);
   assert.deepEqual(adTerms(bonus), { cap: 6, cooldown: 7 * MINUTE, gems: 9 });
 });
 

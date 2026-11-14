@@ -580,7 +580,8 @@ export const CARD_TREES: Partial<Record<CardId, readonly CardTreeNode[]>> = {
     { id: "double", stats: { chestDouble: 3 }, rarity: "epic", levels: 0, max: 5, after: "equipmentChance" },
     { id: "triple", stats: { chestTriple: 2 }, rarity: "legendary", levels: 0, max: 5, after: "double" },
   ],
-  // GEM's: two commons holding all ten of the card's first levels, then ten levels of each rarity, branching.
+  // GEM's: two commons holding all ten of the card's first levels, then ten levels of each rarity, branching,
+  // and a common track of its own that common card buys open (it holds none from the start).
   gem: [
     common("gemBank", { gemBank: 1 }, 1, 1),
     { id: "bankSpeed", stats: { gemBankSpeed: 15 }, rarity: "uncommon", levels: 0, max: 2, after: "gemBank" },
@@ -599,6 +600,7 @@ export const CARD_TREES: Partial<Record<CardId, readonly CardTreeNode[]>> = {
     { id: "bankSpeed5", stats: { gemBankSpeed: 15 }, rarity: "epic", levels: 0, max: 4, after: "moreGems2" },
     { id: "stellarGem", stats: { stellarGem: 1 }, rarity: "legendary", levels: 0, max: 3, after: "bankSpeed5" },
     { id: "gemChance2", stats: { gemChance: 1 }, rarity: "legendary", levels: 0, max: 2, after: "bankSpeed5" },
+    common("gemXp2", { gemXp: 100 }, 0, 10),
   ],
 };
 
