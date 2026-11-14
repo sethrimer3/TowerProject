@@ -56,24 +56,22 @@ test("time away under a minute is no time offline; Offline Gold is owed only wit
   assert.equal(save.offline.seenAt, T0 + OFFLINE_MIN_MS - 1);
   assert.equal(arrive(save, save.offline.seenAt + HOUR, false), null, "nothing owed without the skill");
   save.upgrades.offlineGold = 1;
-  assert.equal(arrive(save, save.offline.seenAt + HOUR, false), null, "nothing owed at 0%, so no dialog shows");
+  save.offline.climbs = [];
+  assert.equal(arrive(save, save.offline.seenAt + HOUR, false), null, "nothing owed with no Recent Gold per Hour, so no dialog shows");
   assert.equal(save.offline.grant, null);
   save.archives.levels.offlineGoldMultiplier = 100;
-  save.offline.climbs = [];
-  assert.equal(arrive(save, save.offline.seenAt + HOUR, false), null, "nothing owed with no Recent Gold per Hour");
   recordClimb(save.offline, 10_000, HOUR);
   save.archives.levels.offlineGoldDuration = 60;
   const grant = arrive(save, save.offline.seenAt + 20 * HOUR, false)!;
   assert.equal(grant.capMs, 12 * HOUR);
-  assert.equal(grant.multiplier, 500);
-  assert.equal(grant.gold, 60_000, "12 hours at half of 10,000 an hour");
+  assert.equal(grant.multiplier, 600);
+  assert.equal(grant.gold, 72_000, "12 hours at 60% of 10,000 an hour");
   assert.equal(arrive(save, save.offline.seenAt + HOUR, false), grant, "a grant owed stays until claimed");
 });
 
 test("claiming Offline Gold banks it once, and it survives a reload unclaimed", () => {
   const save = defaults();
   save.upgrades.offlineGold = 1;
-  save.archives.levels.offlineGoldMultiplier = 20;
   recordClimb(save.offline, 5000, HOUR);
   save.offline.seenAt = T0;
   const g = new Game(decode(JSON.stringify(save)));
@@ -121,7 +119,7 @@ test("Offline Gold follows Golden Floors for 2 Breakthrough and opens its two re
   }
 });
 
-test("Offline Gold Multiplier runs 0% to 50% on Critical Chance's prices; Duration 2 to 12 hours, 1.02 times dearer a level", () => {
+test("Offline Gold Multiplier runs 10% to 60% on Critical Chance's prices; Duration 2 to 12 hours, 1.02 times dearer a level", () => {
   const multiplier = research("offlineGoldMultiplier").levels, duration = research("offlineGoldDuration").levels, crit = research("critChance").levels;
   assert.equal(multiplier.length, 100);
   assert.deepEqual(multiplier.map((l) => [l.gold, l.hours]), crit.map((l) => [l.gold, l.hours]));
@@ -131,10 +129,10 @@ test("Offline Gold Multiplier runs 0% to 50% on Critical Chance's prices; Durati
     assert.equal(l.hours, multiplier[i]!.hours * intPow(1.02, i));
   });
   const a = defaults().archives;
-  assert.equal(researched(a, "offlineGoldMultiplier"), 0);
+  assert.equal(researched(a, "offlineGoldMultiplier"), 100);
   assert.equal(researched(a, "offlineGoldMinutes"), 120);
   a.levels.offlineGoldMultiplier = 100;
   a.levels.offlineGoldDuration = 60;
-  assert.equal(researched(a, "offlineGoldMultiplier"), 500);
+  assert.equal(researched(a, "offlineGoldMultiplier"), 600);
   assert.equal(researched(a, "offlineGoldMinutes"), 720);
 });

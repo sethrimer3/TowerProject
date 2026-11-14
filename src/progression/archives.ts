@@ -124,8 +124,8 @@ export const RESEARCH_TARGETS = {
    * Floor, in tenths, from ×2. */
   goldenFloorMultiplier: { name: "Golden Floor Multiplier", base: 20, shown: (n: number) => `×${n / 10}` },
   /** The share of the Recent Gold per Hour that each hour offline pays,
-   * in tenths of a percent (offline-gold.ts), from 0. */
-  offlineGoldMultiplier: { name: "Offline Gold Multiplier", base: 0, shown: tenths },
+   * in tenths of a percent (offline-gold.ts), from 10%. */
+  offlineGoldMultiplier: { name: "Offline Gold Multiplier", base: 100, shown: tenths },
   /** The most minutes offline that Offline Gold pays for, from 2 hours. */
   offlineGoldMinutes: { name: "Offline Gold Duration", base: 120, shown: hoursMinutes },
   /** The chance, in tenths of a percent, that a new floor climbed hands
@@ -301,7 +301,7 @@ const SHIELD_THORNS_SECONDS = [99960, 124382, 151721, 186672, 238595];
 const shieldSkillLevels = (target: ResearchTarget, seconds: readonly number[]) => seconds.map((s, i): ResearchLevel => ({ gold: (i + 1) * 1e9, hours: s / 3600, effect: { target, op: "add", value: 1 } }));
 
 /** Offline Gold Multiplier research (+0.5% of the Recent Gold per Hour a
- * level, 5 tenths, for 100 levels, to 50%): Critical Chance's Gold and hours. */
+ * level, 5 tenths, for 100 levels, from 10% to 60%): Critical Chance's Gold and hours. */
 const offlineMultiplierLevels = () => critLevels("offlineGoldMultiplier").map((level): ResearchLevel => ({
   ...level, effect: { target: "offlineGoldMultiplier", op: "add", value: 5 },
 }));

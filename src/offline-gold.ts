@@ -79,7 +79,7 @@ export function recentGoldPerHour(o: OfflineSave) {
 /** The app starts at `now`: the time since it was last seen open, if a
  * minute or more, is time offline. It is left out of the Tower climb under
  * way (`climbing`), and, once Offline Gold is owned, owes a grant (unless
- * one is owed already) if it pays any Gold: a 0% multiplier or no Recent
+ * one is owed already) if it pays any Gold: no Recent
  * Gold per Hour owes nothing, so no dialog shows. Returns the grant owed,
  * if any. */
 export function arrive(save: Save, now: number, climbing: boolean): OfflineGrant | null {
