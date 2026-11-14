@@ -10,7 +10,7 @@ import { badgeFactor } from "../cards/badges.ts";
 import { lifespringFactor } from "../arcana/lifespring.ts";
 import { treeHeroFactor } from "../cards/trees.ts";
 import { TRAINING_GROUPS, TRAINING, TRAINING_PER_LEVEL, trainingCap, isStatRow, trained, trainingWorth, amountAt, regrowTurns, trainedAmount, trainingDef, type StatTrainingRow, type TrainingDef, type TrainingId, type TrainingRow } from "./training.ts";
-import { GOLD_SHOP, type GoldItemId } from "../economy/provisions.ts";
+import { GOLD_SHOP, boostText, provisionBoost, type GoldItemId } from "../economy/provisions.ts";
 import { schedulePrice } from "../economy/prices.ts";
 import { UPGRADES, type UpgradeId } from "./upgrades.ts";
 import { levelForXp } from "./xp.ts";
@@ -199,8 +199,15 @@ export function upgradeText(id: UpgradeId) {
   return u.description ?? describeGrants(u.grants!, u.words);
 }
 
-/** A provision's description. */
-export const provisionText = (id: GoldItemId) => GOLD_SHOP.find((g) => g.id === id)!.description;
+/** A provision's description; given the Archives, a boosting provision's
+ * gives what its research has it give now. */
+export function provisionText(id: GoldItemId, archives?: Save["archives"]) {
+  if (archives && (id === "edge" || id === "guard")) {
+    const { percent, turns } = provisionBoost(archives, id);
+    return boostText(id, percent, turns);
+  }
+  return GOLD_SHOP.find((g) => g.id === id)!.description;
+}
 
 /** Whether provision `id` shows and sells: the skill it `requires` is owned. */
 export function provisionOpen(save: Pick<Save, "upgrades">, id: GoldItemId) {

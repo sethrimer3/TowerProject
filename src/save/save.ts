@@ -3,7 +3,7 @@ import { defaultTrialAccess, decodeTrialAccess } from "../proving-grounds/access
 import { TRAINER_GEMS, trainingSlots, type TrainingJob, type TrainingPaid } from "../progression/training-jobs.ts";
 import { count, dropInvalid, finite, fraction, isRecord, wholeIn } from "./decode.ts";
 import { TIERS } from "../tiers.ts";
-import { GOLD_SHOP, PROVISION_BOOST_TURNS, USED_PROVISIONS } from "../economy/provisions.ts";
+import { GOLD_SHOP, PROVISION_BOOST_MAX_TURNS, USED_PROVISIONS } from "../economy/provisions.ts";
 import { SAVE_KEY, TOWER_WIDTH, WIDTH } from "../config.ts";
 import { OUTSIDE_SIZE } from "../outside.ts";
 import { TRAINING, TRAINING_GROUPS, amountAt, trainingCeiling, trainingDef, type TrainingGroup } from "../progression/training.ts";
@@ -214,7 +214,7 @@ const RUN_FIELD_CHECKS = {
   targetUsed: (v: unknown) => wholeIn(v, 0, 99),
   bombsUsed: (v: unknown) => wholeIn(v, 0, 999),
   provisionsUsed: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, n]) => (USED_PROVISIONS as readonly string[]).includes(k) && wholeIn(n, 1, 999)),
-  boosts: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, b]: [string, any]) => (k === "attack" || k === "defense") && isRecord(b) && finite(b.amount) && b.amount >= 0 && wholeIn(b.turns, 1, PROVISION_BOOST_TURNS)),
+  boosts: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, b]: [string, any]) => (k === "attack" || k === "defense") && isRecord(b) && finite(b.amount) && b.amount >= 0 && wholeIn(b.turns, 1, PROVISION_BOOST_MAX_TURNS)),
   keyFloor: (v: unknown) => wholeIn(v, 0, 1e9),
   undosUsed: (v: unknown) => wholeIn(v, 0, 99),
   regain: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, n]) => ["ignore", "target"].includes(k) && wholeIn(n, 1, 1e6)),

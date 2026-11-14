@@ -2,7 +2,7 @@ import { kitIcon, pngIcon } from "../sprites/kit.ts";
 import { bombIcon, CART_ICON, ENTER_ICON, eventIcon, relicIcon, shrineIcon, gemIcon, goldIcon, arcaniteIcon, itemSprite, mailIcon, medalIcon, missionIcon, NAV_TABS, RESEARCH_ICON, trophyIcon, uiSprite } from "./dom.ts";
 import { AD_GEMS } from "../economy/gems.ts";
 import { GOLD_BOOST_FACTOR } from "../economy/gold-boost.ts";
-import { PROVISION_BOOST_PERCENT, PROVISION_BOOST_TURNS, type UsedProvision } from "../economy/provisions.ts";
+import type { UsedProvision } from "../economy/provisions.ts";
 
 /** The currencies held, down the left rail above the ad's Gems: Gems, then
  * (in the forest) Arcanite and Medals, then Gold, then the run's Silver. */
@@ -42,11 +42,11 @@ const NAV = `<nav aria-label="Main navigation">${NAV_TABS
 const TRAINING_BAR = `<div id="training-bar" class="training-bar" role="group" aria-label="Training for this climb" hidden></div><div id="drill-tip" class="drill-tip" role="tooltip" hidden></div>`;
 /** Focus uses left, before the potions: a lightning bolt and the count. */
 /** The Traveler's elixir, Vanguard Banner and Aegis charm uses left: each a
- * button that uses one at once. */
+ * button that uses one at once (the HUD sets the boosts' titles, from their research). */
 const PROVISION_BUTTONS = [
   ["heal", "potion_flat", "Traveler's elixir: press to fill HP to max HP"],
-  ["edge", "upgrade_attack", `Vanguard Banner: press for +${PROVISION_BOOST_PERCENT}% ATK for ${PROVISION_BOOST_TURNS} turns`],
-  ["guard", "upgrade_defense", `Aegis charm: press for +${PROVISION_BOOST_PERCENT}% DEF for ${PROVISION_BOOST_TURNS} turns`],
+  ["edge", "upgrade_attack", "Vanguard Banner: press to raise ATK for a while"],
+  ["guard", "upgrade_defense", "Aegis charm: press to raise DEF for a while"],
 ] as const satisfies readonly (readonly [UsedProvision, ...string[]])[];
 const PROVISION_BUTTONS_HTML = PROVISION_BUTTONS.map(([id, sprite, title]) =>
   `<button type="button" id="${id}-stat" class="focus-stat charge-stat provision-stat" hidden title="${title}">${itemSprite(sprite, "charge-icon")}<b id="${id}-left">0</b></button>`).join("");

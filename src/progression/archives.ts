@@ -156,6 +156,14 @@ export const RESEARCH_TARGETS = {
   endRushTiles: { name: "Tiles Rushed to the Stairs", base: 0, shown: count },
   /** How many of a Dash's dashed tiles regain HP by Regen, once Dash Regen is owned. */
   dashRegenSteps: { name: "Dashed Steps with Regen", base: 0, shown: count },
+  /** The percent a Vanguard Banner raises ATK by, from 20 (`PROVISION_BOOST_PERCENT`). */
+  vanguardBannerPercent: { name: "Vanguard Banner ATK", base: 20, shown: (n: number) => `+${n}%` },
+  /** The turns a Vanguard Banner's boost lasts, from 50 (`PROVISION_BOOST_TURNS`). */
+  vanguardBannerTurns: { name: "Vanguard Banner Turns", base: 50, shown: count },
+  /** The percent an Aegis charm raises DEF by, from 20 (`PROVISION_BOOST_PERCENT`). */
+  aegisCharmPercent: { name: "Aegis Charm DEF", base: 20, shown: (n: number) => `+${n}%` },
+  /** The turns an Aegis charm's boost lasts, from 50 (`PROVISION_BOOST_TURNS`). */
+  aegisCharmTurns: { name: "Aegis Charm Turns", base: 50, shown: count },
   /** The enemy ranks Angel Wings' rising smites (angel.ts), one more a level. */
   avengingAngel: { name: "Smites", base: 0, shown: smittenText },
   /** Buy quantities opened past x1: x5, x10, x100, then Max. */
@@ -489,6 +497,18 @@ const dashLevels = (target: ResearchTarget) => Array.from({ length: 25 }, (_, i)
   gold: 250 * (i + 1) * intPow(2, i),
   hours: 1.75 * (i + 1) * intPow(1.2, i),
   effect: { target, op: "add", value: 1 },
+}));
+
+/** A boosting provision's research (the Vanguard Banner's and Aegis
+ * charm's Multiplier, +10 points a level for 28 levels, and Duration, +10
+ * turns a level for 25): Dash's Gold (250 × n × 2^(n−1)), its time growing
+ * 18% a level rather than 20% (1.75 × n × 1.18^(n−1) hours: 1 hour 45
+ * minutes at level 1, about 97 days at 25 and 178 days at 28; Gold about
+ * 105 billion at 25 and 940 billion at 28). */
+const boostLevels = (target: ResearchTarget, length: number) => Array.from({ length }, (_, i): ResearchLevel => ({
+  gold: 250 * (i + 1) * intPow(2, i),
+  hours: 1.75 * (i + 1) * intPow(1.18, i),
+  effect: { target, op: "add", value: 10 },
 }));
 
 /** Dash Regen: +1 dashed step with Regen a level, for 35 levels, in all
@@ -838,6 +858,34 @@ export const RESEARCH = {
     categories: ["abilities"],
     requires: [{ upgrade: "dashRegen" }],
     levels: dashRegenLevels(),
+  },
+  vanguardBannerMultiplier: {
+    name: "Vanguard Banner Multiplier",
+    description: "Each Vanguard Banner raises ATK by 10 points more.",
+    categories: ["offense"],
+    requires: [{ upgrade: "whetstoneProvision" }],
+    levels: boostLevels("vanguardBannerPercent", 28),
+  },
+  vanguardBannerDuration: {
+    name: "Vanguard Banner Duration",
+    description: "Each Vanguard Banner lasts 10 turns more.",
+    categories: ["offense"],
+    requires: [{ upgrade: "whetstoneProvision" }],
+    levels: boostLevels("vanguardBannerTurns", 25),
+  },
+  aegisCharmMultiplier: {
+    name: "Aegis Charm Multiplier",
+    description: "Each Aegis charm raises DEF by 10 points more.",
+    categories: ["defense"],
+    requires: [{ upgrade: "aegisProvision" }],
+    levels: boostLevels("aegisCharmPercent", 28),
+  },
+  aegisCharmDuration: {
+    name: "Aegis Charm Duration",
+    description: "Each Aegis charm lasts 10 turns more.",
+    categories: ["defense"],
+    requires: [{ upgrade: "aegisProvision" }],
+    levels: boostLevels("aegisCharmTurns", 25),
   },
   undoCount: {
     name: "Undo Count",

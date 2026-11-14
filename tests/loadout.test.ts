@@ -221,8 +221,8 @@ test("descriptions are written from the grants", () => {
   );
   assert.deepEqual(GOLD_SHOP.map((g) => provisionText(g.id)), [
     "One more elixir every climb: use to fill HP to max",
-    "One more Aegis charm every climb: use for +20% DEF for 100 turns",
-    "One more Vanguard Banner every climb: use for +20% ATK for 100 turns",
+    "One more Aegis charm every climb: use for +20% DEF for 50 turns",
+    "One more Vanguard Banner every climb: use for +20% ATK for 50 turns",
     "One more gold key gained every 100 floors of a climb",
     "One more Bomb every climb: select it, then an enemy's tile, to deal your ATK as damage, critical hits counted",
   ]);

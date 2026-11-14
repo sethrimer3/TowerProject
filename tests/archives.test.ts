@@ -498,3 +498,19 @@ test("Training Discount opens with Tower II's floor 80 Goal: 99 levels of 0.5% o
   save.archives.levels.trainingDiscount = 99;
   assert.equal(researched(save.archives, "trainingDiscount"), 495, "49.5% off, in tenths of a percent");
 });
+
+test("the Vanguard Banner's and Aegis charm's Multiplier and Duration open with their skills, on Dash's Gold with time growing 18% a level", () => {
+  const save = defaults();
+  const ids = ["vanguardBannerMultiplier", "vanguardBannerDuration", "aegisCharmMultiplier", "aegisCharmDuration"] as const;
+  for (const id of ids) assert.equal(status(save, id), "locked", id);
+  save.upgrades.whetstoneProvision = 1;
+  save.upgrades.aegisProvision = 1;
+  for (const id of ids) assert.equal(status(save, id), "available", id);
+  assert.deepEqual(ids.map((id) => RESEARCH[id].levels.length), [28, 25, 28, 25]);
+  assert.deepEqual(RESEARCH.aegisCharmDuration.levels.map((l) => l.gold), RESEARCH.endRush.levels.map((l) => l.gold));
+  assert.deepEqual(RESEARCH.vanguardBannerMultiplier.levels.slice(0, 2).map((l) => [l.gold, l.hours]), [[250, 1.75], [1000, 1.75 * 2 * 1.18]]);
+  for (const [id, target, top] of [["vanguardBannerMultiplier", "vanguardBannerPercent", 300], ["vanguardBannerDuration", "vanguardBannerTurns", 300], ["aegisCharmMultiplier", "aegisCharmPercent", 300], ["aegisCharmDuration", "aegisCharmTurns", 300]] as const) {
+    save.archives.levels[id] = RESEARCH[id].levels.length;
+    assert.equal(researched(save.archives, target), top, `${id} at its last level`);
+  }
+});

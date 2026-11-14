@@ -4,7 +4,7 @@ import { amountUnit, enemyStat, keyCount, shortAmount, stepsIn, whole, wholeHp }
 import type { Game } from "../state.ts";
 import type { Renderer } from "../render/rendering.ts";
 import { levelForXp, xpForLevel } from "../progression/xp.ts";
-import { USED_PROVISIONS } from "../economy/provisions.ts";
+import { USED_PROVISIONS, provisionBoost } from "../economy/provisions.ts";
 import { provisionsOpen, researchOpen } from "../progression/loadout.ts";
 import { arcanaOpen } from "../arcana/arcana.ts";
 import { outsideWeather } from "../outside.ts";
@@ -722,6 +722,11 @@ function renderCharges(game: Game) {
     button.classList.toggle("boosting", !!boost);
     text(`${id}-left`, left);
     button.setAttribute("aria-label", `${name}: ${left} left${boost ? `, active for ${boost.turns} more turn${boost.turns === 1 ? "" : "s"}` : ""}`);
+    if (id !== "heal") {
+      const { percent, turns } = provisionBoost(game.save.archives, id);
+      const title = `${name}: press for +${percent}% ${id === "edge" ? "ATK" : "DEF"} for ${turns} turns`;
+      if (button.title !== title) button.title = title;
+    }
   }
 }
 

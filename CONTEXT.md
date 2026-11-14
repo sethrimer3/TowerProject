@@ -758,7 +758,7 @@ Sending the hero inside a run to a tile the player taps, ahead of the hand, unti
 _Avoid_: waypoint, goto
 
 **Boost**:
-A Vanguard Banner's or Aegis charm's raise of ATK or DEF by 20% for 100 turns of a run, the hero glowing red or blue while it lasts; undo never takes it away.
+A Vanguard Banner's or Aegis charm's raise of ATK or DEF by 20% for 50 turns of a run (more of both with its Archives research), the hero glowing red or blue while it lasts; undo never takes it away.
 _Avoid_: buff
 
 **Bomb**:

@@ -116,7 +116,7 @@ export class GearPage {
       const owned = game.save.provisions[item.id], price = provisionPrice(game.save, item.id), just = item.id === bought ? " bought" : "";
       // The count owned, in a circle at the icon's foot.
       const count = owned ? `<b class="owned-count${just}" title="${whole(owned)} owned" aria-label="${whole(owned)} owned">${whole(owned)}</b>` : "";
-      return `<article class="card provision"><div class="item-icon${just}">${provisionSprite(item.id)}${count}</div><div class="provision-text"><h3>${item.name}</h3><p>${provisionText(item.id)}</p></div><button data-gold="${item.id}" ${price > game.save.gold && !game.free ? "disabled" : ""}>Buy · ${uiSprite("gold", "stat-sprite")} ${priceAmount(price)}</button></article>`;
+      return `<article class="card provision"><div class="item-icon${just}">${provisionSprite(item.id)}${count}</div><div class="provision-text"><h3>${item.name}</h3><p>${provisionText(item.id, game.save.archives)}</p></div><button data-gold="${item.id}" ${price > game.save.gold && !game.free ? "disabled" : ""}>Buy · ${uiSprite("gold", "stat-sprite")} ${priceAmount(price)}</button></article>`;
     }).join("")}`;
   }
 }

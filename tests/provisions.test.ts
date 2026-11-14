@@ -67,22 +67,37 @@ test("a Traveler's elixir fills HP to max HP, and none is spent while HP is full
 });
 
 for (const [id, stat] of [["edge", "attack"], ["guard", "defense"]] as const)
-  test(`${id === "edge" ? "a Whetstone" : "an Aegis charm"} raises ${stat} by 20% for 100 turns, and can't be used while one is going on`, () => {
+  test(`${id === "edge" ? "a Whetstone" : "an Aegis charm"} raises ${stat} by 20% for 50 turns, and can't be used while one is going on`, () => {
     const g = withProvisions({ [id]: 2 });
     assert.equal(g.useProvision(id), "used");
     assert.equal(g.run.player[stat], 12);
-    assert.deepEqual(g.boostOf(id), { amount: 2, turns: 100 });
+    assert.deepEqual(g.boostOf(id), { amount: 2, turns: 50 });
     assert.equal(g.useProvision(id), "active");
     assert.equal(g.provisionsLeft(id), 1, "a refusal costs nothing");
-    turns(g, 99);
-    assert.equal(g.run.player[stat], 12, "still on after 99 turns");
+    turns(g, 49);
+    assert.equal(g.run.player[stat], 12, "still on after 49 turns");
     assert.equal(g.boostOf(id)?.turns, 1);
     turns(g, 1);
-    assert.equal(g.run.player[stat], 10, "gone after the 100th");
+    assert.equal(g.run.player[stat], 10, "gone after the 50th");
     assert.equal(g.boostOf(id), undefined);
     assert.equal(g.useProvision(id), "used", "and another can go on");
     assert.equal(g.run.player[stat], 12);
   });
+
+test("a boost's Multiplier and Duration research count from the next one used", () => {
+  const g = withProvisions({ edge: 2, guard: 1 });
+  g.save.archives.levels.vanguardBannerMultiplier = 3; // +20% → +50%
+  g.save.archives.levels.vanguardBannerDuration = 25; // 50 → 300 turns
+  g.save.archives.levels.aegisCharmMultiplier = 28; // +300%
+  assert.equal(g.useProvision("edge"), "used");
+  assert.deepEqual(g.boostOf("edge"), { amount: 5, turns: 300 });
+  assert.equal(g.useProvision("guard"), "used");
+  assert.deepEqual(g.boostOf("guard"), { amount: 30, turns: 50 });
+  g.save.archives.levels.vanguardBannerDuration = 0;
+  assert.equal(g.boostOf("edge")?.turns, 300, "a boost going on keeps what it started with");
+  const s = decode(JSON.stringify(g.save));
+  assert.deepEqual(s.tower.run!.boosts?.attack, { amount: 5, turns: 300 }, "the longest boost saves");
+});
 
 test("undo gives no use back and keeps a boost counting down", () => {
   const g = withProvisions({ edge: 1, heal: 1 });
@@ -96,14 +111,14 @@ test("undo gives no use back and keeps a boost counting down", () => {
   assert.equal(g.provisionsLeft("edge"), 0);
   assert.equal(g.provisionsLeft("heal"), 0);
   assert.equal(g.run.player.attack, 12, "the boost is still on");
-  assert.equal(g.boostOf("edge")?.turns, 95, "with the turns it had left");
+  assert.equal(g.boostOf("edge")?.turns, 45, "with the turns it had left");
   assert.equal(g.run.player.hp, 100, "and the heal kept");
 });
 
 test("a boost that ran out stays out through undo", () => {
   const g = withProvisions({ guard: 1 });
   g.useProvision("guard");
-  turns(g, 100);
+  turns(g, 50);
   assert.equal(g.run.player.defense, 10);
   assert.ok(g.undo());
   assert.equal(g.run.player.defense, 10, "the turn before it ran out comes back without it");
@@ -116,7 +131,7 @@ test("what a run spent and has going on saves", () => {
   g.useProvision("heal");
   const run = decode(JSON.stringify(g.save)).tower.run!;
   assert.deepEqual(run.provisionsUsed, { guard: 1, heal: 1 });
-  assert.deepEqual(run.boosts, { defense: { amount: 2, turns: 100 } });
+  assert.deepEqual(run.boosts, { defense: { amount: 2, turns: 50 } });
 });
 
 test("the Gold Key gives a gold key for each owned on the run's first floor, then every 100 floors, a floor skipped past counting", () => {

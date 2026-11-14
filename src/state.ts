@@ -29,7 +29,7 @@ import { routeTo, type Step } from "./pathfinding.ts";
 import { TOWER_START_X, TOWER_SECTION } from "./config.ts";
 import { xpForKill, levelForXp } from "./progression/xp.ts";
 import { TRAINING_PER_LEVEL, isStatRow, trainedAmount, type TrainingId, type StatTrainingRow } from "./progression/training.ts";
-import { PROVISION_BOOSTS, PROVISION_BOOST_PERCENT, PROVISION_BOOST_TURNS, PROVISION_KEY_FLOORS, type UsedProvision } from "./economy/provisions.ts";
+import { PROVISION_BOOSTS, PROVISION_KEY_FLOORS, provisionBoost, type UsedProvision } from "./economy/provisions.ts";
 import type { Save, ModeSave } from "./save/shape.ts";
 import type {
   Boosted,
@@ -1831,7 +1831,7 @@ export class Game {
   /** Uses provision `id` at once, after any fight still playing out: the
    * Traveler's elixir fills HP to max HP (`full`, and kept, when HP is
    * there already), and a Vanguard Banner or Aegis charm raises ATK or DEF by
-   * `PROVISION_BOOST_PERCENT` for `PROVISION_BOOST_TURNS` turns (`active`,
+   * the percent, for the turns, its research gives now (`provisionBoost`; `active`,
    * and kept, while one is going on). It is no turn of its own, and undo
    * never takes it back: the heal and the boost reach every copy of the
    * run undo holds, and the use spent rides onto the run undo restores
@@ -1851,13 +1851,14 @@ export class Game {
     } else {
       const stat = PROVISION_BOOSTS[id];
       if (this.run.boosts?.[stat]) return "active";
-      const amount = snap((p[stat] * PROVISION_BOOST_PERCENT) / 100), word = stat === "attack" ? "ATK" : "DEF";
+      const { percent, turns } = provisionBoost(this.save.archives, id);
+      const amount = snap((p[stat] * percent) / 100), word = stat === "attack" ? "ATK" : "DEF";
       for (const run of copies) {
         run.player[stat] = snap(run.player[stat] + amount);
-        run.boosts = { ...run.boosts, [stat]: { amount, turns: PROVISION_BOOST_TURNS } };
+        run.boosts = { ...run.boosts, [stat]: { amount, turns } };
       }
       this.gain(p.x, p.y, `+${wholeChange(amount)} ${word}`, { tile: { kind: stat } });
-      this.message = `${id === "edge" ? "Vanguard Banner" : "Aegis charm"} · +${PROVISION_BOOST_PERCENT}% ${word} for ${PROVISION_BOOST_TURNS} turns`;
+      this.message = `${id === "edge" ? "Vanguard Banner" : "Aegis charm"} · +${percent}% ${word} for ${turns} turns`;
     }
     for (const run of copies) run.provisionsUsed = { ...run.provisionsUsed, [id]: (run.provisionsUsed?.[id] ?? 0) + 1 };
     this.countProvisionsUsed();
