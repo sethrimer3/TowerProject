@@ -3997,7 +3997,7 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .archives-ambient { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; border-radius: inherit; pointer-events: none; }
 /* One archivist a row; an idle one opens Select Research when pressed. */
 .archivists { display: grid; grid-template-columns: 1fr; gap: 6px; }
-.archivist { display: flex; flex-direction: column; gap: 5px; min-width: 0; padding: 7px 8px; border: 1px solid #3d4858; border-radius: 7px; background: #111925; font-size: 11px; }
+.archivist { display: flex; flex-direction: column; gap: 5px; min-width: 0; padding: 9px 11px; border: 1px solid #3d4858; border-radius: 7px; background: #111925; font-size: 11px; }
 .archivist small { font-size: 9px; letter-spacing: 2px; color: #8793a2; }
 .archivist b { color: #e3d2ad; font-weight: 500; }
 .archivist p { margin: 0; color: #b7c0cc; }
@@ -4030,12 +4030,12 @@ dialog.dismiss-anywhere { cursor: pointer; }
 .research-filters { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 6px; }
 .research-filters input, .research-filters select { min-width: 0; padding: 8px; border: 1px solid #445062; border-radius: 4px; background: #1b2533; color: #d8d6d0; font: inherit; font-size: 11px; }
 .research-list { display: grid; gap: 6px; }
-.research { padding: 5px 9px; border: 1px solid #3d4858; border-radius: 7px; background: #111925; font-size: 11px; }
+.research { padding: 8px 11px; border: 1px solid #3d4858; border-radius: 7px; background: #111925; font-size: 11px; }
 .research-group { margin: 6px 0 0; color: #d8b572; font-size: 10px; font-weight: 500; letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid #3d4858; padding-bottom: 2px; }
 .research-group:first-child { margin-top: 0; }
 .research.active { border-color: #6e9a70; }
 /* Research at its most levels: a gold box. */
-.research.completed { border: 2px solid #e8c25a; padding: 4px 8px; background: #1d1a10; box-shadow: 0 0 6px rgba(232, 194, 90, 0.35); }
+.research.completed { border: 2px solid #e8c25a; padding: 7px 10px; background: #1d1a10; box-shadow: 0 0 6px rgba(232, 194, 90, 0.35); }
 .research-hide-done { grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; color: #d8d6d0; font-size: 11px; letter-spacing: 1px; }
 .research-hide-done input { width: 16px; height: 16px; margin: 0; }
 .research.locked { opacity: 0.6; }
