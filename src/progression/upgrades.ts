@@ -164,6 +164,7 @@ export const UPGRADES = [
     max: 1,
     currency: "breakthrough",
   },
+  { id: "gemCard", name: "Gem Card", description: "Add the GEM card to your deck", card: "gem", base: 2, max: 1, currency: "breakthrough" },
   {
     id: "cardMastery",
     name: "Card Mastery",

@@ -83,6 +83,7 @@ export const CARDS = {
   flyingEnemy: { name: "Flying Enemy", text: "Move toward the closest Flying enemy your shots can hurt, stopping once one is in Attack Range.", bonus: { shot: { attack: 5, speed: 5 }, ...FOE } },
   archer: { name: "Archer", text: "Never moves you. While in hand, fire at the closest enemy in Attack Range.", bonus: { boss: { attack: 5 } } },
   angelWings: { name: "Angel Wings", text: "Never moves you. While in hand, a strike that would fell you and that Revive doesn't save raises you at full HP instead. Limited use." },
+  gem: { name: "Gem", text: "Move toward the closest Gem lying on the floor. Gains XP from each Gem you collect; its upgrades count while it is in either hand." },
 } as const;
 export type CardId = keyof typeof CARDS;
 export const CARD_IDS = Object.keys(CARDS) as CardId[];
@@ -358,6 +359,8 @@ export type HandAt = Position & {
   /** For each card of the hand, whether it is linked to the next (Card
    * Groups, `linkedToNext`): the cards of a group share one priority. */
   links?: readonly boolean[];
+  /** The tiles (`point`) Gems lie on: GEM's targets. None when absent. */
+  gems?: ReadonlySet<string>;
   /** How far the Archer's arrows reach, in hundredths of a tile, and the
    * board's wrap (its width in the Delve, else 0): FLYING ENEMY plans by
    * them. Absent while the hero can't shoot, when that card can't act. */
@@ -458,6 +461,8 @@ const WANTS: Record<CardId, (t: Tile, at: HandAt, rules: CardRules | undefined, 
   archer: never,
   // Never moves the hero: it only raises it, once a run, while held.
   angelWings: never,
+  // A Gem lying on the floor: not a tile of the board, but a mark over a plain one.
+  gem: (_t, at, _rules, r) => !!at.gems?.has(point(r.x, r.y)),
   chest: (t) => t.kind === "treasure" || t.kind === "reward",
   blueSiphon: never,
   blueTrader: never,

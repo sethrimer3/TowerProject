@@ -1123,7 +1123,7 @@ export class Game {
     // The card's last step onto its target: Skip may make it vanish (or, on
     // the Tower's stairs, climb two floors), and Effective or Dampen scale it.
     const last = !this.cardPlan, rolls = last && this.handRules.rollsSkip(id, step.x, step.y), skips = rolls && this.handRules.skipHits(id);
-    if (skips && this.world.tile(step.x, step.y).kind !== "stairs") {
+    if (skips && this.world.tile(step.x, step.y).kind !== "stairs" && !this.gemFinder.gemAt(step.x, step.y)) {
       this.vanish(step.x, step.y);
       if (id === this.run.focused) this.run.focused = undefined;
       return;
@@ -1367,8 +1367,7 @@ export class Game {
   /** Whether (x, y) is empty floor a dash may cross: nothing on it, no torch
    * and no Gem (with `anyKind`, only those last two). */
   private emptyAt(x: number, y: number, anyKind = false) {
-    const gem = this.gemFinder.gem;
-    return (anyKind || this.world.tile(x, y).kind === "floor") && !(gem && gem.x === x && gem.y === y) &&
+    return (anyKind || this.world.tile(x, y).kind === "floor") && !this.gemFinder.gemAt(x, y) &&
       !this.world.torches?.some((t) => t.active && t.x === x && t.y === y);
   }
   /** Drops the committed path when its card's gate badge no longer holds
@@ -2098,8 +2097,9 @@ export class Game {
   /** Starts a new run in this mode, rolling its seed unless `start` gives
    * one, on the first floor unless it gives a `height` (a Warp). */
   newRun({ outside = false, seed = Math.floor(this.rng() * 2 ** 32), height = 0 }: RunStart = {}) {
-    // A Gem the last run left lying on a floor is missed.
+    // A Gem the last run left lying on a floor is missed (the GEM card's gone for good).
     if (this.save.gemDrop.out?.mode === this.mode) missGem(this.save.gemDrop);
+    this.save.gemDrop.extra = this.save.gemDrop.extra.filter((gem) => gem.mode !== this.mode);
     this.armed = null;
     this.heldPlay = null;
     this.timeline.reset();
@@ -2254,6 +2254,13 @@ export class Game {
     const more = relicAmount(this.save, "cardXp"), gained = more ? Math.round((xp * (100 + more)) / 100) : xp;
     for (const level of addCardXp(this.save.cardXp, id, gained, cardMaxLevel(this.save.cardBuys.opened, id))) this.cardLevelUps.push({ card: id, level });
   }
+  /** Card `id` gains `xp` as `gainCardXp` does, but for good: undo never
+   * takes it back, as it never brings back the Gem it was gained from. */
+  keepCardXp(id: CardId, xp: number) {
+    const before = this.save.cardXp[id] ?? 0;
+    this.gainCardXp(id, xp);
+    this.timeline.keepCardXp(id, (this.save.cardXp[id] ?? 0) - before);
+  }
   /** `floors` new floors completed: each card of the hand that never
    * activates (`PASSIVE_CARDS`), or of the Manual hand, gains one XP a floor. */
   private passiveCardXp(floors: number) {
@@ -2370,7 +2377,8 @@ export class Game {
     if (notes) notes.steps++;
     this.land(step.tile, step.dest.x, step.dest.y, step.outcome, step.card.floorSkip);
     this.startSpeedLesson();
-    this.gemFinder.step();
+    // GEM's last step onto a Gem: a badge's Effective or Dampen scales what it pays.
+    this.gemFinder.step(step.card.scale ?? 1);
     if (!step.card.hold) this.endTurn();
     return true;
   }
@@ -2497,7 +2505,7 @@ export class Game {
     if (this.mode !== "tower" || !(world instanceof RoomWorld)) return;
     const run = this.towerRun;
     if (!callsGreaterBoss(world, run.summoned)) return;
-    const gem = this.gemFinder.gem, at = greaterBossSpot(world, gem ? [run.player, gem] : [run.player]);
+    const at = greaterBossSpot(world, [run.player, ...this.gemFinder.gems]);
     if (!at) return;
     run.summoned = [...(run.summoned ?? []), world.room];
     this.spawnEnemy(at, greaterBoss(world));

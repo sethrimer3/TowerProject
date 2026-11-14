@@ -9,7 +9,7 @@ import type { KeyColor } from "../entities.ts";
 import { CARD_RARITY_NAMES, type CardRarity } from "../cards/rarity.ts";
 import { rarityFrameHtml, rarityStarsHtml } from "./card-level-marks.ts";
 import { snap } from "../exact.ts";
-import { cardArt, cellIcon, itemSprite, uiSprite, type UiSprite } from "./dom.ts";
+import { cardArt, cellIcon, gemIcon, itemSprite, uiSprite, type UiSprite } from "./dom.ts";
 import type { GraphNode } from "./upgrade-graph.ts";
 
 /** The id of a tree's root node: the card itself. */
@@ -110,6 +110,8 @@ const STAT_NAMES: Record<TreeStat, string> = {
   chestGold: "Chest Gold", chestSilver: "Chest Silver", chestCells: "Chest Cells", supplyChance: "Supply Chests", equipmentChance: "Equipment Chests",
   treasureFloor: "Treasure Floor", rarityUp: "Rarity Up", chestDouble: "Double", chestTriple: "Triple",
   shotAttack: "Shot ATK", bossShotAttack: "Boss Shot", shotSpeed: "Shot Speed", shotRange: "Range", chargeShot: "Charge Shot",
+  gemBank: "Gem Bank", gemBankSpeed: "Gem Bank Speed", adGems: "More Gems", goldenGem: "Golden Gem", stellarGem: "Stellar Gem Chance",
+  chestGem: "Gems in Chests", gemChance: "Gem Chance", bossGem: "Boss Gem Drop", gemXp: "Gem XP",
 };
 
 /** Names of nodes raising more than one stat, short enough to sit under them. */
@@ -269,6 +271,15 @@ const STAT_TEXT: Record<TreeStat, (n: string) => string> = {
   shotSpeed: (n) => `+${n}% Attack Speed`,
   shotRange: (n) => `+${n}% Attack Range for your arrows`,
   chargeShot: (n) => `+${n}% Charged Shot`,
+  gemBank: (n) => `+${n} reward${n === "1" ? "" : "s"} the Gem button banks: unclaimed, it goes on banking one each cooldown until full, a claim taking them all`,
+  gemBankSpeed: (n) => `−${n} seconds off the Gem button's cooldown`,
+  adGems: (n) => `+${n} Gem${n === "1" ? "" : "s"} each reward the Gem button pays`,
+  goldenGem: (n) => `${n}% chance a Gem appearing in a climb is a Golden Gem, worth 5 Gems and 5 card XP`,
+  stellarGem: (n) => `${n}% chance a Golden Gem is a Stellar Gem instead, worth 25 Gems and 25 card XP`,
+  chestGem: (n) => `${n}% chance a treasure chest holds a Gem`,
+  gemChance: (n) => `${n}% chance of a Gem of its own on each new floor, in a side room where there is one; missed, it is gone`,
+  bossGem: (n) => `${n}% chance a boss or Greater Boss drops a Gem`,
+  gemXp: (n) => `+${n}% card XP from each Gem collected`,
 };
 
 /** How a stat's amount reads: a bonus added (`+%`, or `+` for a count),
@@ -326,6 +337,8 @@ const STAT_LINES: Record<TreeStat, [string, Unit]> = {
   chestGold: ["Chest Gold", "+%"], chestSilver: ["Silver per chest", "+"], chestCells: ["Chest Cells chance", "%"], supplyChance: ["Supply Chest chance", "+%"], equipmentChance: ["Equipment Chest chance", "+%"],
   treasureFloor: ["Treasure Floor chance", "%"], rarityUp: ["Rarity Up chance", "%"], chestDouble: ["Double chance", "%"], chestTriple: ["Triple chance", "%"],
   shotAttack: ["Shot ATK", "+%"], bossShotAttack: ["Shot ATK vs bosses", "+%"], shotSpeed: ["Attack Speed", "+%"], shotRange: ["Attack Range", "+%"], chargeShot: ["Charged Shot", "+%"],
+  gemBank: ["Gem rewards banked", "+"], gemBankSpeed: ["Seconds off the Gem cooldown", "+"], adGems: ["Gems a reward", "+"], goldenGem: ["Golden Gem chance", "%"], stellarGem: ["Stellar Gem chance", "%"],
+  chestGem: ["Gem in a chest chance", "%"], gemChance: ["Gem a floor chance", "%"], bossGem: ["Boss Gem chance", "%"], gemXp: ["Card XP a Gem", "+%"],
 };
 
 /** Each stat's icon on its node. */
@@ -368,6 +381,8 @@ const STAT_ICONS: Record<TreeStat, () => string> = {
   chestSilver: silver, chestCells: () => cellIcon(), treasureFloor: () => itemSprite("chest_treasure"), rarityUp: () => itemSprite("chest_gold"),
   chestDouble: () => itemSprite("chest_treasure_open"), chestTriple: () => itemSprite("chest_treasure_open"),
   shotAttack: ui("attack"), bossShotAttack: ui("attack"), shotSpeed: ui("arrow-right"), shotRange: ui("arrow-right"), chargeShot: ui("attack"),
+  gemBank: () => gemIcon("ui-sprite"), gemBankSpeed: ui("arrow-up"), adGems: () => gemIcon("ui-sprite"), goldenGem: () => gemIcon("ui-sprite golden-gem-sprite"), stellarGem: () => gemIcon("ui-sprite stellar-gem-sprite"),
+  chestGem: () => itemSprite("chest_treasure"), gemChance: () => gemIcon("ui-sprite"), bossGem: ui("attack"), gemXp: ui("inspiration"),
 };
 
 const ROMAN = ["", "", " II", " III", " IV", " V"];

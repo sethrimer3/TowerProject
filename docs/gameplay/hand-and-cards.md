@@ -22,6 +22,19 @@ It can't act unless the hand holds Archer too.
 While it is in the hand it also gives the arrows +5% Shot ATK and +5% Attack Speed.
 Tower III's floor 10 Goal adds **Archer** to the deck, a plain wooden bow on its face: it never moves the hero, but while the run's hand holds it the hero is an Archer, firing arrows at the closest monster in reach ([The Archer](fights.md#the-archer)), and the Archer's Training rows can be raised with Silver in the run.
 
+## The Gem card
+
+**Gem Card** (2 Breakthrough, under Offline Gold in the Breakthrough tree) adds **Gem** to the deck: it heads for the closest Gem lying on the floor.
+It gains no XP from activating; instead it gains XP each time the hero collects a Gem in a run while a hand holds it (1 for a Gem, 5 for a Golden Gem, 25 for a Stellar Gem, each raised by Gem XP), and undo never takes that XP back, as it never brings the Gem back.
+An Effective or Dampen badge on it scales the Gems its last step collects; parts of a Gem carry over, unseen, to the next Gem found.
+A Skip badge never makes a Gem vanish.
+
+Its tree's upgrades count while either hand (the Auto hand or the Manual hand) holds it, in the forest as well as in a climb (a climb keeps the levels it went in with):
+- **Gem Bank** (common, 1 level) banks a reward more on the [Gem button](currencies-and-shop.md#ad-rewards); under it, **Gem Bank Speed** (uncommon, 2 levels: 15 seconds off the button's cooldown a level) and **Golden Gem** (uncommon, 3 levels: +1% a level that a Gem appearing in a climb, the cooldown's included, is golden, worth 5 Gems), then Gem Bank Speed (rare, 1), **Gems in Chests** (epic, 5 levels: +1% a level that a treasure chest holds a Gem, golden or stellar by the same chances) and Gem Bank Speed (legendary, 2).
+- **Gem Chance** (common, 9 levels: +0.25% a level of a Gem of its own on each new floor, besides the cooldown's, in a side room where there is one; missed, it is gone for good, and a floor can hold more than one Gem); under it **Gem XP** (uncommon, 4 levels: +100% card XP a Gem a level), with Gem Bank Speed (rare, 3) and **Boss Gem Drop** (rare, 4 levels: +1% a level that a boss or Greater Boss drops a Gem on its tile) under it, then **More Gems** (epic, 1: +1 Gem each reward the Gem button pays) and Gem Bank (legendary, 3); and Gem Bank (uncommon, 1), then More Gems (rare, 2), Gem Bank Speed (epic, 4), and under it **Stellar Gem Chance** (legendary, 3 levels: +1% a level that a Golden Gem is stellar instead, worth 25 Gems and twinkling) and Gem Chance (legendary, 2 levels: +1% a level).
+
+Its commons hold all their levels from the start, so its max level reaches 50, not 60.
+
 ## The Manual hand
 
 Once Manual Hand is owned, a slider over the Deck page's hand switches between the **Auto** hand (the hand the rest of this page describes) and the **Manual** hand.

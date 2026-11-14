@@ -74,7 +74,8 @@ export class CardActivation {
   activate(card: number, key: string) {
     const { held, run } = this.host, id = held[card];
     if (!id || !this.host.playing) return;
-    this.host.gainCardXp(id, 1);
+    // GEM gains its XP from the Gems collected instead (GemFinder).
+    if (id !== "gem") this.host.gainCardXp(id, 1);
     // HEAL's tree: each potion it reaches boosts max HP for the run, as the
     // Max HP badge does.
     const boost = id === "heal" ? treeBonus(run.cardTrees).potionMaxHp : 0;

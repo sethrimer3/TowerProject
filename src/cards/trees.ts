@@ -161,7 +161,18 @@ export type TreeStat =
    * boss or Greater Boss, to their boss bonus), Attack Speed, added to the
    * cards' (Shot Speed), Attack Range (Range, the arrows' only), and
    * Charged Shot's percent a turn waited (Charge Shot). */
-  | "shotAttack" | "bossShotAttack" | "shotSpeed" | "shotRange" | "chargeShot";
+  | "shotAttack" | "bossShotAttack" | "shotSpeed" | "shotRange" | "chargeShot"
+  /** GEM's, all flat but Gem XP: rewards more the ad button's bank holds
+   * (Gem Bank), seconds off its cooldown (Gem Bank Speed) and Gems more
+   * each reward pays (More Gems); the percent chances a Gem appearing is
+   * golden (Golden Gem), a golden one stellar (Stellar Gem Chance), a
+   * treasure chest holds a Gem (Gems in Chests), each floor new to the run
+   * has one of its own (Gem Chance) and a boss or Greater Boss drops one
+   * (Boss Gem Drop); and percent more GEM card XP from each Gem (Gem XP). */
+  | GemStat;
+/** The GEM card's stats (`TreeStat`'s last line). */
+export const GEM_STATS = ["gemBank", "gemBankSpeed", "adGems", "goldenGem", "stellarGem", "chestGem", "gemChance", "bossGem", "gemXp"] as const;
+export type GemStat = (typeof GEM_STATS)[number];
 
 /** What a key colour's own stats (GOLD, BLUE and RED KEY's trees) raise,
  * for keys of that colour only, each named `${colour}${part}`: Key Heal and
@@ -271,7 +282,7 @@ export function foeStats(bonus: TreeBonus, part: FoePart): Partial<Record<FoeTre
 export const FLAT_STATS: ReadonlySet<TreeStat> = new Set<TreeStat>(["floorHeal", "overhealMax", "stairSkip", "potionMaxHp", "potionSilver", "freeOffenseChance", "freeDefenseChance", "freeUtilityChance",
   "doorSilver", "doorHeal", "skeletonKey", "lockPick", "secretKnock", "doorChest", "yellowLockHeal", "yellowTransmute", "woodTransmute", "heartLockPick", "heartShroud", "druidKey", ...doorLockStats(["Silver", "Chest", "Knock"]), "keyChest", "keyHeal", "keyOverheal", "keySilver", "doubleKey", "masterKey", "surpriseAttack", "foeAttackCut", "stealOverheal", "parry", "reviveChance",
   "attackShardSilver", "defenseShardSilver", "powerStrike", "takedown", "tangle", "greaterTakedown", "greaterTangle", "bossCells", "chestSilver", "chestCells", "supplyChance", "equipmentChance", "treasureFloor", "rarityUp", "chestDouble", "chestTriple", ...colorKeyStats(FLAT_KEY_PARTS), ...tradeStats(["TradeFreeUtility", "Forge", "Smelter"]),
-  ...smeltStats(["SmeltGold", "SmeltHeal", "SmeltSilver", "SmeltFree", "SmeltMaster"]), "keySmelter", ...foeCardStats(FLAT_FOE_PARTS)]);
+  ...smeltStats(["SmeltGold", "SmeltHeal", "SmeltSilver", "SmeltFree", "SmeltMaster"]), "keySmelter", ...foeCardStats(FLAT_FOE_PARTS), ...GEM_STATS.filter((s) => s !== "gemXp")]);
 
 /** One node of a card's tree: the stats each of its levels raises, its
  * rarity, how many levels it holds from the start (`levels`: 0 for a node
@@ -569,6 +580,26 @@ export const CARD_TREES: Partial<Record<CardId, readonly CardTreeNode[]>> = {
     { id: "double", stats: { chestDouble: 3 }, rarity: "epic", levels: 0, max: 5, after: "equipmentChance" },
     { id: "triple", stats: { chestTriple: 2 }, rarity: "legendary", levels: 0, max: 5, after: "double" },
   ],
+  // GEM's: two commons holding all ten of the card's first levels, then ten levels of each rarity, branching.
+  gem: [
+    common("gemBank", { gemBank: 1 }, 1, 1),
+    { id: "bankSpeed", stats: { gemBankSpeed: 15 }, rarity: "uncommon", levels: 0, max: 2, after: "gemBank" },
+    { id: "goldenGem", stats: { goldenGem: 1 }, rarity: "uncommon", levels: 0, max: 3, after: "gemBank" },
+    { id: "bankSpeed2", stats: { gemBankSpeed: 15 }, rarity: "rare", levels: 0, max: 1, after: "goldenGem" },
+    { id: "chestGems", stats: { chestGem: 1 }, rarity: "epic", levels: 0, max: 5, after: "bankSpeed2" },
+    { id: "bankSpeed3", stats: { gemBankSpeed: 15 }, rarity: "legendary", levels: 0, max: 2, after: "chestGems" },
+    common("gemChance", { gemChance: 0.25 }, 9, 9),
+    { id: "gemXp", stats: { gemXp: 100 }, rarity: "uncommon", levels: 0, max: 4, after: "gemChance" },
+    { id: "bankSpeed4", stats: { gemBankSpeed: 15 }, rarity: "rare", levels: 0, max: 3, after: "gemXp" },
+    { id: "bossGem", stats: { bossGem: 1 }, rarity: "rare", levels: 0, max: 4, after: "gemXp" },
+    { id: "moreGems", stats: { adGems: 1 }, rarity: "epic", levels: 0, max: 1, after: "bossGem" },
+    { id: "gemBank2", stats: { gemBank: 1 }, rarity: "legendary", levels: 0, max: 3, after: "moreGems" },
+    { id: "gemBank3", stats: { gemBank: 1 }, rarity: "uncommon", levels: 0, max: 1, after: "gemChance" },
+    { id: "moreGems2", stats: { adGems: 1 }, rarity: "rare", levels: 0, max: 2, after: "gemBank3" },
+    { id: "bankSpeed5", stats: { gemBankSpeed: 15 }, rarity: "epic", levels: 0, max: 4, after: "moreGems2" },
+    { id: "stellarGem", stats: { stellarGem: 1 }, rarity: "legendary", levels: 0, max: 3, after: "bankSpeed5" },
+    { id: "gemChance2", stats: { gemChance: 1 }, rarity: "legendary", levels: 0, max: 2, after: "bankSpeed5" },
+  ],
 };
 
 /** The Gems a card's respec costs: every point spent on its tree comes
@@ -702,7 +733,7 @@ const NO_BONUS = Object.freeze(Object.fromEntries(
     ...colorKeyStats(COLOR_KEY_PARTS), ...tradeStats(TRADE_PARTS), ...smeltStats(SMELT_PARTS), "keySmelter", ...foeCardStats(FOE_PARTS), "maxHp", "foeAttack", "foeDefense", "foeGold", "foeSilver", "critChance", "critFactor", "killXp", "surpriseAttack", "foeAttackCut", "stealOverheal", "moreEnemies", "attackShard", "defenseShard", "attackShardGold", "defenseShardGold",
     "attackShardSilver", "defenseShardSilver", "powerStrike", "takedown", "tangle", "greaterTakedown", "greaterTangle",
     "bossAttack", "bossDefense", "bossShroud", "bossGold", "bossCells", "chestGold", "chestSilver", "chestCells", "supplyChance", "equipmentChance", "treasureFloor", "rarityUp", "chestDouble", "chestTriple",
-    "shotAttack", "bossShotAttack", "shotSpeed", "shotRange", "chargeShot"].map((s) => [s, 0]),
+    "shotAttack", "bossShotAttack", "shotSpeed", "shotRange", "chargeShot", ...GEM_STATS].map((s) => [s, 0]),
 )) as TreeBonus;
 /** What the trees in `levels` (a run's `cardTrees`) give, added up. */
 export function treeBonus(levels: CardTreeLevels | undefined): TreeBonus {

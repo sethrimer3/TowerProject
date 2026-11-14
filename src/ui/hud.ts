@@ -838,7 +838,40 @@ export function renderAdButton(game: Game) {
   el("section-pick").hidden = inside;
   button.classList.toggle("waiting", !game.gemFinder.adReady);
   button.disabled = !game.gemFinder.adReady;
+  renderGemBank(game);
   renderGoldAd(game, inside);
+}
+
+/** Whether the Gem button's bank was full when last drawn, so the chime
+ * plays once as it fills. */
+let bankWasFull = false;
+/** The Gem buttons (under the purse, and cinematic mode's) as the GEM
+ * card's Gem Bank has them: the Gems every banked reward pays together;
+ * with a bank, a blue fill rising across the button from the first reward
+ * banked to the last, and a gold outline once it is full. */
+function renderGemBank(game: Game) {
+  // Waiting, the button (hidden) keeps the next reward's Gems.
+  const bank = game.gemFinder.adBank, banking = bank.cap > 1, gems = bank.gems || bank.each, label = `Claim ${gems} Gems`;
+  for (const id of ["gem-ad", "cinematic-gems"]) {
+    const button = el(id);
+    const amount = button.querySelector(".gem-ad-amount b");
+    if (amount && amount.textContent !== String(gems)) amount.textContent = String(gems);
+    button.classList.toggle("banking", banking);
+    button.classList.toggle("full", banking && bank.full);
+    if (banking) button.style.setProperty("--fill", bank.fill.toFixed(4));
+    else if (button.style.getPropertyValue("--fill")) button.style.removeProperty("--fill");
+    if (button.title !== label) {
+      button.title = label;
+      button.setAttribute("aria-label", label);
+    }
+  }
+  const full = banking && bank.full;
+  // TODO(sfx): play the bank-full chime (`settings.gemBankChime`) as it
+  // fills, once the game has sound effects.
+  if (full && !bankWasFull && game.save.settings.gemBankChime) {
+    /* the chime goes here */
+  }
+  bankWasFull = full;
 }
 
 /** Boost time left, short enough for the narrow button: 18m, 1h40m. */

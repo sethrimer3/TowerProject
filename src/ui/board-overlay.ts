@@ -56,14 +56,13 @@ export class BoardOverlay {
   tap(x: number, y: number) {
     // A Gem is collected wherever the hero stands, and flies to the purse,
     // which counts it as it lands.
-    const gem = this.game.gemFinder.gem;
-    if (gem?.x === x && gem.y === y) {
+    if (this.game.gemFinder.gemAt(x, y)) {
       const release = holdAmount("gems");
-      this.game.gemFinder.collectAt(x, y);
+      const paid = this.game.gemFinder.collectAt(x, y) ?? 0;
       this.hide();
       const { left, top, s, frameRect } = this.tileRect(x, y);
       flyToPurse(new DOMRect(frameRect.left + left, frameRect.top + top, s, s), [
-        { html: `${gemIcon()}<b>+1</b>`, to: document.querySelector(".purse .gem-stat"), landed: () => (release(), this.update()) },
+        { html: `${gemIcon()}<b>+${paid}</b>`, to: document.querySelector(".purse .gem-stat"), landed: () => (release(), this.update()) },
       ]);
       return;
     }

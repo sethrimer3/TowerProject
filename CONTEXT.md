@@ -44,6 +44,21 @@ _Avoid_: run stats, run log
 Inside a run, the board alone on the screen, every control, stat and menu hidden, the hero playing on. A setting allows it; a pinch in (or two idle minutes, dimming the board) enters it, and a pinch out, three quick taps or the gear a tap shows leaves it. Never saved.
 _Avoid_: fullscreen, zen mode, screensaver
 
+### Gems
+
+**Gem Card**:
+The Breakthrough skill that adds the GEM card to the deck. The card heads for Gems lying on the floor, gains XP only from Gems collected, and its tree's upgrades count while either hand holds it.
+
+**Golden Gem**:
+A Gem that appeared golden (the Gem card's Golden Gem chance), worth 5 Gems and 5 card XP.
+
+**Stellar Gem**:
+A Golden Gem that turned stellar (the Gem card's Stellar Gem Chance), worth 25 Gems and 25 card XP, twinkling where it lies.
+
+**Gem Bank**:
+The rewards the Gem button holds unclaimed, one more banked each cooldown until it is full; a claim takes them all and never resets the time tallied toward the next.
+_Avoid_: stack, stockpile
+
 ### Equipment
 
 **Equipment**:

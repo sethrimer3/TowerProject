@@ -270,9 +270,9 @@ export class Renderer {
     this.drawChargeMarks(f);
     this.drawBlockedMark(f);
     // A Gem shines above the darkness, so it can be seen and tapped.
-    const gem = this.game.gemFinder.gem, sparkle = this.game.gemFinder.sparkle;
-    if (gem) drawGem(f, gem.x, gem.y);
-    if (sparkle) drawGemSparkle(f, sparkle.x, sparkle.y, f.now - sparkle.at);
+    const sparkle = this.game.gemFinder.sparkle;
+    for (const gem of this.game.gemFinder.gems) drawGem(f, gem.x, gem.y, gem.kind);
+    if (sparkle) drawGemSparkle(f, sparkle.x, sparkle.y, f.now - sparkle.at, sparkle.kind);
     // A Stellar Floor's stars pass over all that stands on it, under what rises off it.
     if (!this.game.run.outside && this.game.environments.stellarFloor) drawStellarStars(f, (x, y) => this.game.stellarAt(x, y));
     drawVolley(f, this.inFlight.volleys, this.game.mode === "delve" ? this.game.world.width : 0);

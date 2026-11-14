@@ -942,6 +942,11 @@
       "width": 48,
       "height": 64
     },
+    "card-gem": {
+      "file": "card-gem.png",
+      "width": 48,
+      "height": 64
+    },
     "badge-hp": {
       "file": "badge-hp.png",
       "width": 24,

@@ -6,6 +6,7 @@ import type { Mode } from "../entities.ts";
 import type { Run } from "../runs.ts";
 import type { Save } from "../save/shape.ts";
 import { snap } from "../exact.ts";
+import { point } from "../entities.ts";
 import { MODES, type ModeProfile } from "../modes.ts";
 import { drawAt } from "../random.ts";
 import { smeltStat, tradeStat, treeBonus } from "./trees.ts";
@@ -33,6 +34,8 @@ export interface HandHost {
   readonly hpCeiling: number;
   /** Overheal now, in thousandths of max HP (`Game.overheal`). */
   readonly overheal: number;
+  /** The Gems lying on the hero's floor: GEM's targets. */
+  readonly gemFinder: { readonly gems: readonly { x: number; y: number }[] };
 }
 
 /** What the hand's cards may do now (the hand rules): their badges' rules
@@ -65,6 +68,10 @@ export class HandRules implements HandAt {
   }
   get overheal() {
     return this.host.overheal;
+  }
+  /** The tiles Gems lie on, GEM's targets (`HandAt.gems`). */
+  get gems(): ReadonlySet<string> {
+    return new Set(this.host.gemFinder.gems.map((g) => point(g.x, g.y)));
   }
   /** For each card of the hand, whether it is linked to the next (Card
    * Groups): the run's links, or in the forest the saved ones. */

@@ -25,10 +25,14 @@ Stepping on it, or tapping it anywhere on the board, collects it in a sparkle fo
 A tapped Gem flies to the Gems in your purse, which count it as it lands.
 A Gem left on a floor the hero leaves, or in a run that ends, is gone, and another appears 3 new floors later, again and again until one is collected (that count carries into the next run).
 Undo never brings a collected Gem back or takes one away.
+The [Gem card](hand-and-cards.md#the-gem-card) adds more Gems while either hand holds it: Golden and Stellar Gems, Gems of its own on new floors, from bosses and in chests.
 
 ## Ad rewards
 
-Under the currencies, in the forest and inside a run, in the Tower and the Delve alike, a Gem button offers **7 Gems**, marked Claim (for watching an ad, once ads are hooked up; for now pressing it pays them, in a burst of blue glints); it hides once claimed and comes back 10 minutes later.
+Under the currencies, in the forest and inside a run, in the Tower and the Delve alike, a Gem button offers **6 Gems**, marked Claim (for watching an ad, once ads are hooked up; for now pressing it pays them, in a burst of blue glints); it hides once claimed and comes back 10 minutes later.
+With the Gem card's **Gem Bank**, the button keeps banking a reward each cooldown while it goes unclaimed, until its bank is full, and shows them all together (*12* for two rewards of 6); a claim takes every reward banked, and never resets the time already tallied toward the next (with a 10-minute cooldown, a claim 5 minutes after the button appears brings it back 5 minutes later).
+While it banks, a blue fill rises across the button, from empty as it appears to full as the bank fills, and once full its outline turns gold.
+Settings then offers **Notification chime when the Gem bank is full**, on by default (silent for now: the game has no sound effects yet).
 Inside a run a **×1.5 Gold** ad button stands beside it: each claim (again, no ad plays yet) stores 20 minutes of real time in which all Gold found is multiplied by 1.5, claimable again and again up to two hours stored (the button closes while it holds more than an hour and fifty minutes); while it lasts the button glows and shows the time left, and with none stored it reads *Inactive*.
 Permanent Ad-Disable's ×1.5 Gold takes the same slot: while the boost runs, the boost counts instead, so the two never stack.
 Inside a run the height column shows every Gold multiplier multiplied together, and pressing it lists them in the *All Gold Bonuses* box: the tower's, the ads' slot, each Coin Pack, the Event Collection, the Relics (every Gold Bonus relic owned, their percents added), the equipment's Gold found, the Shrine boons and, once Golden Floors is owned, the Golden Floor line (the hero's floor's [Golden Floor Multiplier](environments.md#golden-floor), Inactive off one); every Gold the run banks is what it found times that total.
@@ -50,7 +54,7 @@ At its top a bar of prizes scrolls sideways, an ad's play mark at its left end, 
 | 35 | 3 card draws (each as a card bought on the Deck page; 20 Gems for any the deck has no room for) |
 | 40 | Permanent Ad-Disable 50% off in the Shop for 24 hours |
 
-Under the bar, a shining box shows what the pressed button offers (*7* and a Gem), with a golden **Watch** button: it closes the dialog, plays the ad (none plays yet: it pays at once) and pays the offer.
+Under the bar, a shining box shows what the pressed button offers (*6* and a Gem, or every reward the Gem Bank holds), with a golden **Watch** button: it closes the dialog, plays the ad (none plays yet: it pays at once) and pays the offer.
 An ad that reaches a prize opens the dialog again, its Watch button closed, since the ad was just watched.
 A prize reached glows until pressed; pressing it claims it, celebrated in the middle of the screen until a press anywhere, then the dialog comes back.
 The Gold prizes are their own *Ad Reward* line in *All Gold Bonuses*, multiplying with every other bonus; won while another runs, the stronger runs first and the other waits, so no time is lost.
@@ -70,7 +74,7 @@ Dev mode owns every theme.
 Each Tower climb, as it ends, keeps the Gold it found and the real time it took (less any time the app was closed during it); Delve runs don't count.
 The last ten give the **Recent Gold per Hour**: their Gold over their time, so a long climb weighs more than a short one.
 The Settings page's Stats dialog shows it after the Gold earned, shortened (*12.3K*).
-**Offline Gold** (2 Breakthrough, down and right of Golden Floors, beside Aether Shield) pays Gold for the time the app was closed.
+**Offline Gold** (2 Breakthrough, down and right of Golden Floors, beside Rehearsed steps, with Gem Card under it) pays Gold for the time the app was closed.
 Starting the app again after a minute or more away (less is no time away) opens the *Offline Gold* dialog, pausing a climb in progress: the time away and the most that pays (*03h:10m offline (of 02h:00m max)*), and the sum, *Recent 12.3K × 02h:00m × 10.0% = 2.46K*.
 Time away that pays nothing (a 0% Offline Gold Multiplier, or no Recent Gold per Hour yet) opens no dialog.
 **Claim** banks the Gold, rains coins down the screen, and plays the climb on.

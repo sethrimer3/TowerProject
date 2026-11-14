@@ -96,6 +96,7 @@ export const SPRITE_ASSETS = [
   "assets/style/card-exchange.png",
   "assets/style/card-fastEnemy.png",
   "assets/style/card-flyingEnemy.png",
+  "assets/style/card-gem.png",
   "assets/style/card-heal.png",
   "assets/style/card-heartDoor.png",
   "assets/style/card-key.png",

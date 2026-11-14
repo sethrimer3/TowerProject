@@ -4,7 +4,7 @@
 Turn it on with **Cinematic mode** on the Settings page; two options appear under it.
 Inside a run, pinch the board in with two fingers (drawn together, as when zooming a photo out) to enter it; on a computer, hold Ctrl and scroll down over the board.
 With **Cinematic mode after 2 minutes idle** on, it also enters on its own after two minutes without a tap, key or scroll while the hand plays, and dims the board against screen burn-in; any input lights it again.
-With **Show the Gem button in cinematic mode** on, the ad's 7 Gems stay in the top left corner while they can be claimed.
+With **Show the Gem button in cinematic mode** on, the ad's Gems stay in the top left corner while they can be claimed.
 Tapping a floating Gem on the board collects it without leaving.
 Any other tap shows a gear in the top right corner for a few seconds; pressing it leaves for the Settings page.
 To leave, pinch the board out (fingers spread apart), tap three times quickly, press Escape, or hold Ctrl and scroll up.

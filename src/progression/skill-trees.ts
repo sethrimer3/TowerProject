@@ -154,16 +154,17 @@ export const TREES: SkillTree[] = [
     { id: "endRush", icon: "⇶", x: 90, y: 85, requires: ["dash"] },
     { id: "dashRegen", icon: "⇶", x: 90, y: 111, requires: ["endRush"] },
     { id: "dashBadge", icon: "◪", x: 90, y: 137, requires: ["dashRegen", "cardBadges"] },
-    // Golden Floors, then Rehearsed steps and Aether Shield, straight down
-    // under More Wealth (under Path to Wealth), then Echoes of time down and
-    // left of Aether Shield, clear of Card Mastery: the Golden Floors' research,
-    // the undos, and what reveals the Inspiration tree's Shield path. Offline
-    // Gold splits off down and right of Golden Floors, beside Aether Shield.
+    // Golden Floors under More Wealth (under Path to Wealth), then two ways
+    // down from it: Rehearsed Steps down and left, with Aether Shield and
+    // Echoes of Time straight under it (the undos, and what reveals the
+    // Inspiration tree's Shield path), and Offline Gold down and right,
+    // with Gem Card under it, above Card Mastery.
     { id: "moreWealth", icon: "¤", x: 18, y: 85, requires: ["pathToWealth"] },
     { id: "goldenFloors", icon: "¤", x: 18, y: 111, requires: ["moreWealth"] },
-    { id: "offlineGold", icon: "¤", x: 38, y: 163, requires: ["goldenFloors"] },
-    { id: "inspirationUndos", icon: "↺", x: 18, y: 137, requires: ["goldenFloors"] },
-    { id: "aetherShield", icon: "◯", x: 18, y: 163, requires: ["inspirationUndos"] },
+    { id: "offlineGold", icon: "¤", x: 30, y: 137, requires: ["goldenFloors"] },
+    { id: "gemCard", icon: "◆", x: 30, y: 163, requires: ["offlineGold"] },
+    { id: "inspirationUndos", icon: "↺", x: 10, y: 137, requires: ["goldenFloors"] },
+    { id: "aetherShield", icon: "◯", x: 10, y: 163, requires: ["inspirationUndos"] },
     { id: "undos", icon: "↺", x: 10, y: 189, requires: ["aetherShield"] },
     // Overheal, Life (which reveals Revive and the Angel skills) and Enemy
     // Level Skips (which reveals its two skills under Floor Skip Reward) under

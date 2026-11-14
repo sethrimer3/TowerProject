@@ -766,6 +766,14 @@ h1 span {
 .gem-ad .gem-icon { width: 16px; height: 16px; }
 .gem-ad small { font-size: 7px; line-height: 1; letter-spacing: .45px; }
 .gem-ad.waiting { visibility: hidden; }
+/* With the GEM card's Gem Bank: a blue fill rising across the button as
+   its bank fills (--fill, 0 to 1), and a gold outline once it is full. */
+.gem-ad.banking { position: relative; isolation: isolate; }
+.gem-ad.banking::before { content: ""; position: absolute; inset: 0; width: calc(var(--fill, 0) * 100%); background: #3d8cff66; z-index: -1; pointer-events: none; }
+.gem-ad.banking.full:not(#_) { box-shadow: 0 0 0 2px #f2c94c, 0 0 7px #ffd86b99; }
+/* Golden and Stellar Gems' icons, tinted from the Gem's until their own sprites are made. */
+.golden-gem-sprite { filter: sepia(1) saturate(5) hue-rotate(-12deg) brightness(1.15); }
+.stellar-gem-sprite { filter: hue-rotate(80deg) saturate(1.5) brightness(1.15); }
 /* Ad controls stack below the purse, with room for their whole labels. */
 .ad-row { display: flex; flex-direction: column; gap: 3px; }
 .ad-row > .gem-ad { flex: 1; min-width: 0; }

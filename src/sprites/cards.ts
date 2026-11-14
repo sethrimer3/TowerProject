@@ -48,4 +48,5 @@ export const CARD_SPRITE_LAYERS = {
   flyingEnemy: [subject("bat")],
   archer: [subject("archer")],
   angelWings: [subject("combat-wing"), mark("heart")],
+  gem: [subject("gem")],
 } satisfies Record<CardId, CardSpriteLayer[]>;

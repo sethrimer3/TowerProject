@@ -20,7 +20,7 @@ import { exportProfile, importProfile } from "../profile-file.ts";
  * SETTINGS. */
 const PAGE = [
   "experimentalAtlas", "legacyEnemies", "spriteAnimations", "squareDoors", "transition", "fightAnimation", "brightness", "decorOff", "pixelPerfect", "batterySaver", "reduceMotion", "weatherSound",
-  "infoDisplay", "cinematic", "cinematicIdle", "cinematicGems",
+  "infoDisplay", "cinematic", "cinematicIdle", "cinematicGems", "gemBankChime",
 ] as const satisfies readonly SettingKey[];
 /** The dev section's settings, shown under Dev Mode while it is on. */
 const DEV = ["devMode", "freePurchases"] as const satisfies readonly SettingKey[];
@@ -49,6 +49,8 @@ const SHOWN: Partial<Record<PageKey, (save: Save) => boolean>> = {
   showPath: (save) => !!save.upgrades.autoClimb,
   cinematicIdle: (save) => save.settings.cinematic,
   cinematicGems: (save) => save.settings.cinematic,
+  // Once the GEM card's Gem Bank holds a level.
+  gemBankChime: (save) => !!save.cardTrees.gem?.gemBank,
 };
 const shownOf = (keys: readonly PageKey[], save: Save) => keys.filter((key) => SHOWN[key]?.(save) ?? true);
 

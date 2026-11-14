@@ -33,7 +33,6 @@ import { installDebugHooks } from "./debug-hooks.ts";
 import { isBoard, type AppContext, type Tab } from "./ui/app.ts";
 import { el, gemIcon, goldIcon, ticketIcon } from "./ui/dom.ts";
 import { AdsWatch } from "./ui/ads-watch.ts";
-import { AD_GEMS } from "./economy/gems.ts";
 import { GOLD_BOOST_FACTOR, GOLD_BOOST_MS } from "./economy/gold-boost.ts";
 import { buildShell } from "./ui/shell.ts";
 import { drawSelectsUnder } from "./ui/game-select.ts";
@@ -390,7 +389,7 @@ for (const id of USED_PROVISIONS)
  * it; else where a readied Ignore, Target or Bomb goes, else the overlay's. */
 function boardTap(x: number, y: number) {
   if (cinematic.active) {
-    if (!game.gemFinder.collectAt(x, y)) cinematic.tap();
+    if (game.gemFinder.collectAt(x, y) === null) cinematic.tap();
     return;
   }
   if (!game.armed) return overlay.tap(x, y);
@@ -415,8 +414,10 @@ for (const [id, step] of [["tier-prev", -1], ["tier-next", 1]] as const)
     update();
   };
 for (const id of ["gem-ad", "cinematic-gems"])
-  el(id).onclick = () =>
-    adsWatch.watch({ amount: String(AD_GEMS), icon: gemIcon(), label: `${AD_GEMS} Gems` }, () => {
+  el(id).onclick = () => {
+    // Every reward the bank holds, paid at once.
+    const gems = game.gemFinder.adBank.gems;
+    adsWatch.watch({ amount: String(gems), icon: gemIcon(), label: `${gems} Gems` }, () => {
       if (!game.gemFinder.claimAd()) return false;
       if (!game.save.settings.reduceMotion) gemSparkle(el(id));
       save();
@@ -424,6 +425,7 @@ for (const id of ["gem-ad", "cinematic-gems"])
       renderCinematicGems();
       return true;
     });
+  };
 // Cinematic mode's gear: back to the whole page, on Settings.
 el("cinematic-gear").onclick = () => navigate("settings");
 // Any input lights a dimmed board and restarts cinematic mode's idle clock;

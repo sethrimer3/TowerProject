@@ -4,7 +4,7 @@ A second pool of health that takes enemy strikes and shots before your HP, and r
 
 ## Unlocking it
 
-**Aether Shield** (5 Breakthrough, between Rehearsed steps and Echoes of time) reveals four Inspiration skills, split off Torch to the right.
+**Aether Shield** (5 Breakthrough, straight under Rehearsed steps, above Echoes of time) reveals four Inspiration skills, split off Torch to the right.
 
 | Skill | Inspiration | Opens |
 |---|---|---|

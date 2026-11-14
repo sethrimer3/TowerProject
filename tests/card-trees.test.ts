@@ -39,10 +39,11 @@ function allOpened(card: CardId): CardOpened {
 }
 
 test("every card tree holds 10 levels from the start and opens to 60 with card buys, each node after one of its own tree", () => {
-  assert.deepEqual(Object.keys(CARD_TREES), ["stairs", "heal", "door", "key", "yellowDoor", "heartDoor", "woodenDoor", "yellowKey", "blueKey", "redKey", "blueTrader", "redTrader", "keyToHp", "smeltBlue", "smeltRed", "monster", "weakEnemy", "baseEnemy", "strongEnemy", "eliteEnemy", "bossEnemy", "nonBossEnemy", "fastEnemy", "flyingEnemy", "archer", "atkUp", "defUp", "torch", "chest"]);
+  assert.deepEqual(Object.keys(CARD_TREES), ["stairs", "heal", "door", "key", "yellowDoor", "heartDoor", "woodenDoor", "yellowKey", "blueKey", "redKey", "blueTrader", "redTrader", "keyToHp", "smeltBlue", "smeltRed", "monster", "weakEnemy", "baseEnemy", "strongEnemy", "eliteEnemy", "bossEnemy", "nonBossEnemy", "fastEnemy", "flyingEnemy", "archer", "atkUp", "defUp", "torch", "chest", "gem"]);
   for (const [card, nodes] of Object.entries(CARD_TREES)) {
     assert.equal(nodes!.reduce((a, n) => a + n.levels, 0), BASE_MAX_LEVEL, `${card} starts at 10`);
-    assert.equal(nodes!.reduce((a, n) => a + n.max, 0), MAX_CARD_LEVEL, `${card}'s whole tree`);
+    // GEM's commons hold all their levels from the start, so common card buys open none: it tops out at 50.
+    assert.equal(nodes!.reduce((a, n) => a + n.max, 0), card === "gem" ? 50 : MAX_CARD_LEVEL, `${card}'s whole tree`);
     const ids = nodes!.map((n) => n.id);
     assert.equal(new Set(ids).size, ids.length, `${card}'s node ids are its own`);
     nodes!.forEach((n, i) => n.after === undefined || assert.ok(ids.slice(0, i).includes(n.after), `${card}.${n.id} comes after its parent`));

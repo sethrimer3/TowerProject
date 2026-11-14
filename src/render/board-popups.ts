@@ -6,7 +6,7 @@ import { landsAt, type Volley } from "../volley.ts";
 import { OPENING_SHRINK_MS } from "../combat.ts";
 import { snap } from "../exact.ts";
 import { paintContents } from "./tile-painters.ts";
-import { paintGem } from "./effects/gem-art.ts";
+import { drawGemArt } from "./effects/gem-art.ts";
 import { RARITY_TIERS } from "../equipment/balance.ts";
 import { iconPixels, materialPixels, pieceSpriteId } from "../ui/equipment-icons.ts";
 import { drawKit, INSPIRATION_SPRITE, kitImage } from "../sprites/kit.ts";
@@ -516,10 +516,7 @@ function paintArt(c: CanvasRenderingContext2D, f: FrameContext, p: Popup & { gai
   // A multiplier flashes on its own (`drawFlash`).
   if ("multiplier" in art) return;
   if ("tile" in art) return paintSpentTile(c, f, p, art);
-  if ("gem" in art) {
-    if (!(f.look.styledSprites && drawKit(c, "gem"))) paintGem(c, f.now, true);
-    return;
-  }
+  if ("gem" in art) return drawGemArt(c, art.kind ?? "plain", f.now, true, !!f.look.styledSprites);
   if ("cell" in art) {
     // The amount, then the Cell: "+3 ▲" in place of "+3 Cells".
     if (!(f.look.styledSprites && drawKit(c, "cell"))) paintCell(c);

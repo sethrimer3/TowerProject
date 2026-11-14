@@ -3,6 +3,8 @@ import type { ModeSave, Save } from "./save/shape.ts";
 import type { MoveSnapshot, Run } from "./runs.ts";
 import { keepUndos } from "./progression/loadout.ts";
 import { MODES } from "./modes.ts";
+import type { CardId } from "./cards/cards.ts";
+import { MAX_CARD_XP } from "./cards/levels.ts";
 
 /** What undo can take a run back to, kept in the mode's slice of the save:
  * the run's undo history (a snapshot before each move, as many as the run
@@ -97,6 +99,16 @@ export class RunTimeline<R extends Run = Run> {
     carry(this.run, "boosts", boosts);
     slice.history = keepUndos(slice.history, this.undosLeft);
     return fall ? "fall" : "move";
+  }
+
+  /** Card `id` gained `xp` that undo must not take back (a Gem's, which
+   * undo never brings back): every snapshot undo or a fall may restore
+   * holds it too. */
+  keepCardXp(id: CardId, xp: number) {
+    if (xp <= 0) return;
+    const slice = this.slice;
+    for (const s of [...slice.history, ...(slice.fall ? [slice.fall.snapshot] : [])])
+      if (s.cardXp) s.cardXp[id] = Math.min(MAX_CARD_XP, (s.cardXp[id] ?? 0) + xp);
   }
 
   /** The live run and every copy of it undo or a fall may restore, so a

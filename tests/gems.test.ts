@@ -139,7 +139,7 @@ function arena(edit?: (g: Game) => void) {
 test("in a run, a Gem turns up on the floor, and touching it pays one and starts the cooldown; undo can't bring it back", () => {
   const g = arena();
   g.move(1, 0);
-  const gem = g.gemFinder.gem!;
+  const gem = g.gemFinder.gems[0]!;
   assert.ok(gem, "a Gem on the run's first floor");
   assert.equal(g.world.tile(gem.x, gem.y).kind, "floor");
   assert.notDeepEqual([gem.x, gem.y], [g.run.player.x, g.run.player.y]);
@@ -148,48 +148,48 @@ test("in a run, a Gem turns up on the floor, and touching it pays one and starts
   path(gem.x > 1 ? 1 : -1, 0, Math.abs(gem.x - 1));
   path(0, 1, gem.y);
   assert.equal(g.save.gems, 1);
-  assert.equal(g.gemFinder.gem, null);
+  assert.deepEqual(g.gemFinder.gems, []);
   assert.equal(g.save.gemDrop.readyAt, 1_000_000 + GEM_COOLDOWN_MS);
   assert.ok(g.gemFinder.sparkle && g.gains.some((x) => x.text === "+1 Gem"));
   assert.ok(g.undo());
   assert.equal(g.save.gems, 1, "undo leaves the Gem paid");
-  assert.equal(g.gemFinder.gem, null, "and doesn't put it back");
+  assert.deepEqual(g.gemFinder.gems, [], "and doesn't put it back");
 });
 
 test("a Gem is collected by tapping it from anywhere on the board", () => {
   const g = arena();
   g.move(0, 1);
-  const gem = g.gemFinder.gem!;
-  assert.equal(g.gemFinder.collectAt(gem.x === 2 ? 3 : 2, 2), false, "no Gem there");
-  assert.ok(g.gemFinder.collectAt(gem.x, gem.y));
+  const gem = g.gemFinder.gems[0]!;
+  assert.equal(g.gemFinder.collectAt(gem.x === 2 ? 3 : 2, 2), null, "no Gem there");
+  assert.equal(g.gemFinder.collectAt(gem.x, gem.y), 1);
   assert.equal(g.save.gems, 1);
-  assert.equal(g.gemFinder.collectAt(gem.x, gem.y), false, "only once");
+  assert.equal(g.gemFinder.collectAt(gem.x, gem.y), null, "only once");
 });
 
 test("a Gem left on a floor or in an ended run is missed, and owed three new floors on", () => {
   const g = arena();
   g.move(1, 0);
-  assert.ok(g.gemFinder.gem);
+  assert.ok(g.gemFinder.gems.length);
   g.finish("Ended");
   assert.equal(g.save.gemDrop.out, null);
   assert.equal(g.save.gemDrop.wait, GEM_MISSED_FLOORS, "owed into the next run");
   assert.equal(decode(JSON.stringify(g.save)).gemDrop.wait, GEM_MISSED_FLOORS);
 });
 
-test("the ad's Gems: seven, then ten minutes before the next", () => {
+test("the ad's Gems: six, then ten minutes before the next", () => {
   const g = arena();
   let now = 5_000_000;
   g.clock = () => now;
   assert.ok(g.gemFinder.adReady, "ready on a new profile");
   assert.ok(g.gemFinder.claimAd());
   assert.equal(g.save.gems, AD_GEMS);
-  assert.equal(AD_GEMS, 7);
+  assert.equal(AD_GEMS, 6);
   assert.equal(g.gemFinder.claimAd(), false);
   now += AD_COOLDOWN_MS - 1;
   assert.equal(g.gemFinder.adReady, false);
   now += 1;
   assert.ok(g.gemFinder.claimAd());
-  assert.equal(g.save.gems, 14);
+  assert.equal(g.save.gems, 12);
   assert.equal(AD_COOLDOWN_MS, 10 * MINUTE);
 });
 

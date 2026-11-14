@@ -9,6 +9,7 @@ import { RESEARCH } from "../src/progression/archives.ts";
 import { GOLD_SHOP } from "../src/economy/provisions.ts";
 import { provisionOpen } from "../src/progression/loadout.ts";
 import { TRAINER_GEMS, nextTrainerGems, trainingSlots } from "../src/progression/training-jobs.ts";
+import { upgradeCards } from "../src/cards/cards.ts";
 test("fresh progression gates Delve, currencies, Breakthrough root, and Legacy", () => {
   const g = new Game(defaults());
   g.save.tower.inspiration = 100;
@@ -230,13 +231,15 @@ test("Bombs (5 Inspiration) stands left of Critical Prediction in the Inspiratio
   save.upgrades.bombs = 1;
   assert.ok(provisionOpen(save, "bomb"));
 });
-test("Golden Floors (3 Breakthrough), then Rehearsed steps and Echoes of time straight down under More Wealth, Offline Gold (2) beside Echoes of time; Manual Hand (1) after Card Mastery; Key Mastery (1) under Badges reveals Find Gold Key and Key Efficiency, now in the Inspiration tree (10 each), and Card and Beast Mastery split off it", () => {
+test("Golden Floors (3 Breakthrough) under More Wealth, then Rehearsed steps down and left with Aether Shield and Echoes of time straight under it, Offline Gold (2) down and right with Gem Card (2) under it; Manual Hand (1) after Card Mastery; Key Mastery (1) under Badges reveals Find Gold Key and Key Efficiency, now in the Inspiration tree (10 each), and Card and Beast Mastery split off it", () => {
   const breakthrough = TREES.find((t) => t.id === "breakthrough")!;
   const at = (id: string) => breakthrough.nodes.find((n) => n.id === id)!;
-  assert.deepEqual(["goldenFloors", "inspirationUndos", "aetherShield", "undos"].map((id) => [at(id).x, at(id).y, at(id).requires]), [[18, 111, ["moreWealth"]], [18, 137, ["goldenFloors"]], [18, 163, ["inspirationUndos"]], [10, 189, ["aetherShield"]]], "Golden Floors, Rehearsed steps and Aether Shield straight down under More Wealth, Echoes of time after them");
+  assert.deepEqual(["goldenFloors", "inspirationUndos", "aetherShield", "undos"].map((id) => [at(id).x, at(id).y, at(id).requires]), [[18, 111, ["moreWealth"]], [10, 137, ["goldenFloors"]], [10, 163, ["inspirationUndos"]], [10, 189, ["aetherShield"]]], "Golden Floors under More Wealth, Rehearsed steps down and left of it, Aether Shield and Echoes of time straight under that");
   assert.deepEqual([at("manualHand").x, at("manualHand").y, at("manualHand").requires], [30, 215, ["cardMastery"]], "Manual Hand below and after Card Mastery");
   assert.equal(cost("goldenFloors", 0), 3, "Golden Floors costs 3 Breakthrough");
-  assert.deepEqual([at("offlineGold").x, at("offlineGold").y, at("offlineGold").requires, cost("offlineGold", 0)], [38, 163, ["goldenFloors"], 2], "Offline Gold (2) splits off after Golden Floors, beside Aether Shield");
+  assert.deepEqual([at("offlineGold").x, at("offlineGold").y, at("offlineGold").requires, cost("offlineGold", 0)], [30, 137, ["goldenFloors"], 2], "Offline Gold (2) splits off down and right of Golden Floors, beside Rehearsed steps");
+  assert.deepEqual([at("gemCard").x, at("gemCard").y, at("gemCard").requires, cost("gemCard", 0)], [30, 163, ["offlineGold"], 2], "Gem Card (2) under Offline Gold");
+  assert.deepEqual(upgradeCards("gemCard"), ["gem"], "Gem Card adds the GEM card to the deck");
   assert.deepEqual([at("moreWealth").x, at("moreWealth").y, at("moreWealth").requires], [18, 85, ["pathToWealth"]], "More Wealth under Path to Wealth");
   assert.deepEqual([at("overheal").x, at("overheal").y, at("overheal").requires], [50, 85, ["physician"]], "Overheal between Physician and Life");
   assert.deepEqual([at("life").x, at("life").y, at("life").requires], [50, 111, ["overheal"]], "Life under Overheal");

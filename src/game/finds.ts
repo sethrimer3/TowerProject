@@ -39,6 +39,8 @@ export interface FindsHost extends DeskHost {
   gain(x: number, y: number, text: string, art?: GainArt | null, drop?: Drop, kind?: "door"): void;
   gainXp(enemy: Enemy, floor: number, scale?: number): void;
   recordHeal(n: number): void;
+  /** The GEM card's Gems from a boss's kill and a chest's opening. */
+  readonly gemFinder: { bossDrop(enemy: Enemy, at: { x: number; y: number }, killKey: string): void; chestDrop(x: number, y: number): void };
 }
 
 /** What the run finds as it plays: a kill, an item taken, a chest or a door
@@ -56,8 +58,10 @@ export class Finds {
   kill(enemy: Enemy, at: { x: number; y: number }, scale: number, instakill: boolean, crits?: number) {
     const { run, mode } = this.host, rules: ModeProfile = MODES[mode];
     run.kills++;
-    const purse = this.host.purse, key = `${mode}:${purse.killKey(enemy, at.x, at.y)}`;
+    const purse = this.host.purse, killKey = purse.killKey(enemy, at.x, at.y), key = `${mode}:${killKey}`;
     this.countKill(enemy, key);
+    // GEM's Boss Gem Drop.
+    this.host.gemFinder.bossDrop(enemy, at, killKey);
     const floor = rules.equivalentFloor(rules.progressAt(run, at.y));
     this.host.gainXp(enemy, floor, scale);
     // Silver belongs to the run, so it isn't gated like Gold: undo takes it back.
@@ -147,6 +151,8 @@ export class Finds {
   treasure(x: number, y: number, kind: ChestKind) {
     const host = this.host, roll = host.chestRoll(x, y);
     host.run.treasures++;
+    // GEM's Gems in Chests.
+    host.gemFinder.chestDrop(x, y);
     host.events.record("chests", 1, this.missionKey({ x, y }));
     // CHEST's tree finds Silver with each chest, as HEAL's does with each potion (undo takes it back with the run).
     const silverFound = host.treeBonus.chestSilver, silver = silverFound ? host.purse.silverAt(snap(silverFound * roll.multiplier), x, y) : 0;
