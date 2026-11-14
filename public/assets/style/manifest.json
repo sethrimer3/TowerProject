@@ -2380,6 +2380,16 @@
       "width": 12,
       "height": 12
     },
+    "ui-auto-train-on": {
+      "file": "ui-auto-train-on.png",
+      "width": 12,
+      "height": 12
+    },
+    "ui-auto-train-off": {
+      "file": "ui-auto-train-off.png",
+      "width": 12,
+      "height": 12
+    },
     "ui-hand-swap": {
       "file": "ui-hand-swap.png",
       "width": 12,

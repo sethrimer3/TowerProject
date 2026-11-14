@@ -454,6 +454,10 @@ _Avoid_: coins, run gold
 Training levels bought with Silver inside a run, on top of the hero's own, lasting only for that run. Opened by the Inspiration skill On the Job.
 _Avoid_: drills, run upgrades, temporary training
 
+**Auto-Train**:
+Run training bought by itself as each floor begins, the cheapest next level first, from the rows and Training groups the player has switched on, until the Silver runs short. Opened by the Breakthrough skill of that name.
+_Avoid_: auto-buy, auto-upgrade
+
 **Free level**:
 A level of run training given for nothing on a floor passed, by a Free Upgrade row (opened by the Inspiration skill Free Training): it costs no Silver but counts as bought, so the row's next Silver level costs a step more.
 _Avoid_: bonus level, free upgrade

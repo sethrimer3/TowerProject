@@ -65,3 +65,33 @@ export function runTrainingBulk(save: Pick<Save, "training" | "upgrades" | "goal
 export function runTrainingValue(save: Save, run: Pick<RunCore, "training" | "player" | "maxHpBoost" | "lifespring">, id: TrainingId, mode: Mode = "tower") {
   return rowValue(save, id, 0, { mode, run });
 }
+
+/** The save's parts Auto-Train reads: the skill and its switches, and what
+ * a row's offer reads. */
+type AutoTrainSave = Pick<Save, "training" | "upgrades" | "goals" | "runAutoTrain" | "runAutoTrainGroups"> & RelicHolder;
+
+/** Whether Auto-Train buys row `id` as a floor begins: the skill owned,
+ * the row switched on, and its Training group switched on too. */
+export function autoTrains(save: AutoTrainSave, id: TrainingId) {
+  return !!save.upgrades.autoTrain && save.runAutoTrain.includes(id) && save.runAutoTrainGroups.includes(trainingDef(id).group);
+}
+
+/** Auto-Train's purchases as a floor begins, in order: the cheapest next
+ * rank of the rows it buys (open, not at their highest; the Training
+ * table's order breaks a tie), one after another, each with the Silver
+ * left, until none is affordable. */
+export function autoTrainPicks(save: AutoTrainSave, run: Pick<RunCore, "training" | "hand">, silver: number) {
+  const picks: { id: TrainingId; price: number }[] = [], training = { ...run.training };
+  const sim = { ...run, training }, rows = TRAINING.filter((t) => autoTrains(save, t.id));
+  for (;;) {
+    let best: { id: TrainingId; price: number } | null = null;
+    for (const row of rows) {
+      const offer = runTrainingOffer(save, sim, row.id);
+      if (offer.open && !offer.maxed && (!best || offer.price < best.price)) best = { id: row.id, price: offer.price };
+    }
+    if (!best || best.price > silver) return picks;
+    picks.push(best);
+    silver -= best.price;
+    training[best.id] = (training[best.id] ?? 0) + 1;
+  }
+}

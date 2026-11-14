@@ -70,7 +70,7 @@ import { snap } from "./exact.ts";
 import { relicAmount, relicCut, relicFactor } from "./economy/relic-effects.ts";
 import { enemyStat, keyCount, whole, wholeChange } from "./whole.ts";
 import { MODES, milestones, type ModeProfile } from "./modes.ts";
-import { ranksInRun, runTrainingBulk, runTrainingOffer, type RunTrainingOffer } from "./progression/run-training.ts";
+import { autoTrainPicks, ranksInRun, runTrainingBulk, runTrainingOffer, type RunTrainingOffer } from "./progression/run-training.ts";
 import type { BuyQuantity } from "./progression/buy-quantity.ts";
 import { critRule, loadout, provisionsOpen, rankShift, trainingPoints, trainingWaiting, type TrainingView } from "./progression/loadout.ts";
 import { researched } from "./progression/archives.ts";
@@ -2952,6 +2952,7 @@ export class Game {
     this.dropHandPlan();
     this.feedback(this.rules.words.enter);
     this.gemFinder.step();
+    this.autoTrain();
   }
   /** Whether the door or key at (x, y) on this floor rolls under `chance`
    * percent (DOOR's Secret Knock and Door Chest, KEY's Locksmith and Master
@@ -3065,7 +3066,8 @@ export class Game {
     if (!(world instanceof World)) return;
     // The world keeps the run's milestone and floor itself; the gate's
     // new floor puts the passage out of undo's reach (`afterStep`).
-    if (t.kind === "oneway" && world.cross(x, y)) {
+    const crossed = t.kind === "oneway" && world.cross(x, y);
+    if (crossed) {
       this.forgetLabyrinth();
       this.route = [];
       this.feedback(`Depth ${world.milestone * 100} · the passage seals behind you.`);
@@ -3080,6 +3082,8 @@ export class Game {
     this.payDelveFloors(floorBefore, { x, y });
     world.maintain(y);
     this.recordProgress();
+    // A milestone gate begins the Delve's next floor, with the Silver it paid.
+    if (crossed) this.autoTrain();
   }
   /** Each new equivalent floor past `floorBefore` is the Delve's floor
    * climbed (Spare Change, Wishing Well), keyed off the labyrinth's columns
@@ -3244,6 +3248,7 @@ export class Game {
     else if (this.save.tutorials.chamber) this.message = "A new chamber opens.";
     else this.feedback("A new chamber opens.");
     this.finds.coins(p, snap(gold + skipGold), silver, false);
+    this.autoTrain();
   }
   /** Stands on the floor the climb just reached. */
   private enterTowerFloor(board: RoomWorld) {
@@ -3383,25 +3388,43 @@ export class Game {
     const bulk = runTrainingBulk(this.save, this.run, id, quantity, this.free ? Infinity : this.silver);
     if (!bulk.affordable) return false;
     this.remember(this.snapshot());
+    const hpGain = this.takeRunRanks(id, bulk.count, bulk.cost);
+    // A fight playing out goes on with the stats (or Revive) bought.
+    if (isStatRow(first.row) || id === "revive") this.fights.retrain(hpGain);
+    this.message = `${first.row.name} trained for this ${MODES[this.mode].words.run} · level ${first.level + bulk.count}`;
+    this.afterPlayerAction();
+    return true;
+  }
+  /** Pays `cost` Silver (none with Dev free purchases) for `count` ranks
+   * of `id` for the run and applies them; returns the max HP they added. */
+  private takeRunRanks(id: TrainingId, count: number, cost: number) {
     if (!this.free) {
-      this.run.silver = snap(this.silver - bulk.cost);
-      this.silverSpent = snap(this.silverSpent + bulk.cost);
+      this.run.silver = snap(this.silver - cost);
+      this.silverSpent = snap(this.silverSpent + cost);
     }
     let hpGain = 0;
-    for (let i = 0; i < bulk.count; i++) {
+    for (let i = 0; i < count; i++) {
       const offer = runTrainingOffer(this.save, this.run, id);
       this.run.training = { ...this.run.training, [id]: offer.bought + 1 };
       hpGain = snap(hpGain + this.applyRunTraining(offer));
     }
-    // A fight playing out goes on with the stats (or Revive) bought.
-    if (isStatRow(first.row) || id === "revive") this.fights.retrain(hpGain);
-    this.message = `${first.row.name} trained for this ${MODES[this.mode].words.run} · level ${first.level + bulk.count}`;
     // Undo takes the ranks back, so only the run's most bought counts.
     const bought = Object.values(this.run.training ?? {}).reduce((n, k) => n + (k ?? 0), 0);
     this.missions.mark("runTraining", this.mode, this.run.seed, bought);
     syncShield(this.save, this.run, this.mode);
-    this.afterPlayerAction();
-    return true;
+    return hpGain;
+  }
+  /** Auto-Train as a floor begins (a run going inside, each Tower floor,
+   * each Delve milestone gate): buys the cheapest next rank of the rows
+   * switched on, one after another, until the Silver runs short. It is part
+   * of arriving, before the floor's first turn, so undo never takes it back
+   * on its own. Not with Dev free purchases, which would buy every row to
+   * its highest. */
+  private autoTrain() {
+    if (!this.save.upgrades.autoTrain || this.free || !this.mayTrainInRun) return;
+    const picks = autoTrainPicks(this.save, this.run, this.silver);
+    // The floor's own news keeps the status line: the cards show the ranks.
+    for (const { id, price } of picks) this.takeRunRanks(id, 1, price);
   }
   /** What a rank bought for the run changes now: a stat, or the chance of
    * percent potions. Returns the max HP it added. */

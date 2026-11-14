@@ -166,7 +166,8 @@ export const TREES: SkillTree[] = [
     { id: "inspirationUndos", icon: "↺", x: 10, y: 137, requires: ["goldenFloors"] },
     { id: "aetherShield", icon: "◯", x: 10, y: 163, requires: ["inspirationUndos"] },
     { id: "undos", icon: "↺", x: 10, y: 189, requires: ["aetherShield"] },
-    // Overheal, Life (which reveals Revive and the Angel skills) and Enemy
+    // Overheal, Life (which reveals Revive and the Angel skills, with
+    // Auto-Train to its right) and Enemy
     // Level Skips (which reveals its two skills under Floor Skip Reward) under
     // Physician; Badges stand right of Enemy Level Skips, after it, and Key Mastery
     // under Badges. Beast Mastery splits off right of Key Mastery, under Dash Badge,
@@ -175,6 +176,8 @@ export const TREES: SkillTree[] = [
     // Inspiration tree's three paths under Torch.
     { id: "overheal", icon: "♥", x: 50, y: 85, requires: ["physician"] },
     { id: "life", icon: "✚", x: 50, y: 111, requires: ["overheal"] },
+    // Auto-Train right of Life: the run's Training bought each floor.
+    { id: "autoTrain", icon: "⇧", x: 70, y: 111, requires: ["life"] },
     { id: "enemyLevelSkips", icon: "↷", x: 50, y: 137, requires: ["life"] },
     { id: "cardBadges", icon: "◪", x: 70, y: 137, requires: ["enemyLevelSkips"] },
     { id: "keyMastery", icon: "⚿", x: 70, y: 163, requires: ["cardBadges"] },

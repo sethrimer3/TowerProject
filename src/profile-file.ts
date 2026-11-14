@@ -14,7 +14,7 @@ export const PROFILE_SECTIONS = {
   currencies: ["gold", "gems", "breakthrough", "arcanite", "arcaniteCarry", "medals", "cells", "xp", "goldBoostUntil", "ads", "gemDrop"],
   deck: ["hand", "cardLinks", "handSlots", "manualHand", "manualSlots", "cardXp", "cardTrees", "cardBuys", "badges"],
   upgrades: ["upgrades", "relics", "shrines"],
-  training: ["bonusTrainingPoints", "training", "trainingPaid", "trainerRanks", "trainingJobs", "trainingAuto", "trainingCredit", "trainingBank", "trainingBoostUntil", "trainers"],
+  training: ["bonusTrainingPoints", "training", "trainingPaid", "trainerRanks", "trainingJobs", "trainingAuto", "runAutoTrain", "runAutoTrainGroups", "trainingCredit", "trainingBank", "trainingBoostUntil", "trainers"],
   research: ["archives"],
   premium: ["entitlements", "shop"],
   gear: ["provisions", "equipment", "arcana"],

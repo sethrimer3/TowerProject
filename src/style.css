@@ -4172,6 +4172,9 @@ nav.in-run.drilling .run-drills {
   cursor: help;
   scroll-snap-align: start;
 }
+/* Auto-Train's arrow in the top-left corner of a row it buys each floor. */
+.drill-card { position: relative; }
+.drill-card .auto-mark { position: absolute; left: 2px; top: 2px; width: 9px; height: 9px; pointer-events: none; filter: drop-shadow(0 0 1px #000); }
 .drill-name { font-size: 10px; color: #efd496; letter-spacing: 0.5px; white-space: nowrap; }
 .drill-value { font-size: 14px; line-height: 1.1; color: #eee5d4; }
 /* Written over the nav's tab buttons, which the cards sit among: the
@@ -4281,6 +4284,14 @@ nav.in-run.drilling .run-drills {
 .training-bar .tab-icon { position: relative; display: block; flex: none; }
 .training-bar .auto-arrow { position: absolute; right: -5px; bottom: -3px; width: 12px; height: 12px; color: #fff; filter: drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000); }
 .training-bar button:disabled { opacity: 0.4; }
+/* Auto-Train's mark on a group button, in its top-left corner: a green up
+   arrow while it buys from the group each floor, a red one crossed out
+   while it doesn't. */
+.training-bar button[data-run-group] { position: relative; }
+.training-bar .auto-badge { position: absolute; left: 2px; top: 2px; width: 11px; height: 11px; pointer-events: none; filter: drop-shadow(0 0 1px #000); }
+.training-bar .auto-badge[hidden], .drill-card .auto-mark[hidden] { display: none; }
+.training-bar .auto-badge .auto-icon, .drill-card .auto-mark .auto-icon { display: block; width: 100%; height: 100%; }
+.training-bar .auto-badge .sprite-native, .drill-card .auto-mark .sprite-native { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
 /* Buy Quantity: how many ranks a Training press buys, at the bar's right. */
 .run-buy-quantity { display: flex; flex-shrink: 0; margin-left: auto; }
 .run-buy-quantity[hidden] { display: none; }
@@ -4329,6 +4340,10 @@ button.game-select-button { display: inline-flex; align-items: center; justify-c
   pointer-events: none;
 }
 .drill-tip[hidden] { display: none; }
+/* Details a press opened take presses, for Auto-Train's switch. */
+.drill-tip.pinned { pointer-events: auto; }
+.drill-tip .auto-train-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; color: #d8dee8; }
+.drill-tip .auto-note { display: block; margin-top: 4px; color: #e8a46a; }
 .drill-tip b { color: #efd496; font-family: Cinzel, Georgia, serif; }
 .drill-tip p { margin: 4px 0; }
 .drill-tip small { color: #8f9bac; }

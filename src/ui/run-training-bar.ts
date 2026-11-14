@@ -2,7 +2,7 @@ import { pngIcon } from "../sprites/kit.ts";
 import { MODES } from "../modes.ts";
 import type { Game } from "../state.ts";
 import { TRAINING, TRAINING_GROUPS, type TrainingId } from "../progression/training.ts";
-import { runTrainingBulk, runTrainingOffer, runTrainingValue } from "../progression/run-training.ts";
+import { autoTrains, runTrainingBulk, runTrainingOffer, runTrainingValue } from "../progression/run-training.ts";
 import { bindBuyQuantity, buyQuantityHtml, runCount } from "./buy-quantity-select.ts";
 import { trainingText, runTrainingOpen } from "../progression/loadout.ts";
 import { arcaniteIcon, DECK_ICON, el, itemSprite, POINTER_SVG, uiSprite } from "./dom.ts";
@@ -22,6 +22,9 @@ const GROUP_ICONS: Record<Group, string> = {
 const silverIcon = () => uiSprite("gold", "ui-sprite silver-sprite");
 /** The arrow on the Auto tab's cards: its hand plays by itself. */
 const AUTO_ARROW = pngIcon("ui-auto-play", "auto-arrow");
+/** Auto-Train's marks: a green up arrow where it buys (a group switched
+ * on, a row it buys), a red one crossed out on a group switched off. */
+const AUTO_ON = pngIcon("ui-auto-train-on", "auto-icon"), AUTO_OFF = pngIcon("ui-auto-train-off", "auto-icon");
 /** How long the number of toggles left shows after a toggle, in ms. */
 const TOGGLES_SHOWN_MS = 900;
 /** What the bar shows in the hand's place: the hand (null), the Manual
@@ -77,12 +80,37 @@ export class RunTrainingBar {
       if (button && !button.disabled) this.select((button.dataset.runGroup as Group | undefined) ?? (button.dataset.runTab === "manual" || button.dataset.runTab === "arcana" ? button.dataset.runTab : null));
     };
     this.bindCards(el("run-drills"));
+    // The details' Auto-Train switch.
+    el("drill-tip").onclick = (e) => {
+      const toggle = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-auto-train]");
+      if (!toggle) return;
+      this.game.training.toggleRunAuto(toggle.dataset.autoTrain as TrainingId);
+      this.changed();
+      this.refreshTip();
+    };
+    // A press anywhere but the cards and their details closes the details a press opened.
+    document.addEventListener("pointerdown", (e) => {
+      if (!this.tipPressed || !this.tipFor) return;
+      const target = e.target as Node;
+      if (!el("drill-tip").contains(target) && !el("run-drills").contains(target)) this.hideTip();
+    });
+  }
+
+  /** Whether Auto-Train is owned, so its switches and marks show. */
+  private get autoTrainOwned() {
+    return !!this.game.save.upgrades.autoTrain;
   }
 
   /** Shows `group` (or the Manual hand) in the hand's place, or the hand
    * for none; in the lesson, going back to the hand from a group opened
    * finishes it. */
   private select(group: Open) {
+    // With Auto-Train, pressing the open group's button again switches its
+    // auto-training on or off.
+    if (group === this.open && this.group && this.autoTrainOwned) {
+      this.game.training.toggleRunAutoGroup(this.group);
+      return this.changed();
+    }
     if (group === this.open) return;
     this.open = group;
     if (this.lesson && this.group) this.triedGroup = true;
@@ -107,21 +135,23 @@ export class RunTrainingBar {
       const card = target.closest<HTMLElement>(".drill-card");
       if (!card) return;
       if (card === this.tipFor && this.tipPressed) return this.hideTip();
-      this.showTip(card);
-      this.tipPressed = true;
+      this.showTip(card, true);
     };
     cards.addEventListener("pointerover", (e) => {
-      if (e.pointerType !== "mouse") return;
+      if (e.pointerType !== "mouse" || this.tipPressed) return;
       const card = (e.target as HTMLElement).closest<HTMLElement>(".drill-card:not(.arcana-card)");
       if (card && card !== this.tipFor) this.showTip(card);
     });
     // A mouse leaving the card hides its details, even into the strip's
     // empty space past the last card.
+    // Details a press opened stay, so their switch can be reached.
     cards.addEventListener("pointerout", (e) => {
-      if (e.pointerType !== "mouse" || !this.tipFor) return;
+      if (e.pointerType !== "mouse" || !this.tipFor || this.tipPressed) return;
       if (!this.tipFor.contains(e.relatedTarget as Node | null)) this.hideTip();
     });
-    cards.addEventListener("pointerleave", () => this.hideTip());
+    cards.addEventListener("pointerleave", () => {
+      if (!this.tipPressed) this.hideTip();
+    });
     cards.addEventListener("scroll", () => this.hideTip());
     // With no scrollbar shown, a mouse wheel scrolls the cards sideways.
     cards.addEventListener("wheel", (e) => {
@@ -207,7 +237,30 @@ export class RunTrainingBar {
       b.title = open ? `${TRAINING_GROUPS[group]} training for this ${MODES[this.game.mode].words.run}, with Silver` : `No ${TRAINING_GROUPS[group]} training unlocked yet`;
       b.classList.toggle("selected", group === this.open);
       b.setAttribute("aria-pressed", String(group === this.open));
+      this.renderBadge(b, group);
     });
+  }
+
+  /** A group button's Auto-Train mark in its top-left corner, once the
+   * skill is owned: a green up arrow while it buys from that group, a red
+   * one crossed out while it doesn't. */
+  private renderBadge(b: HTMLButtonElement, group: Group) {
+    const owned = this.autoTrainOwned, on = owned && this.game.training.runAutoGroupOn(group);
+    let badge = b.querySelector<HTMLElement>(".auto-badge");
+    if (!owned) {
+      if (badge) b.setAttribute("aria-label", TRAINING_GROUPS[group]);
+      return void badge?.remove();
+    }
+    if (!badge) {
+      b.insertAdjacentHTML("beforeend", `<span class="auto-badge"></span>`);
+      badge = b.querySelector<HTMLElement>(".auto-badge")!;
+    }
+    if (badge.dataset.on !== String(on)) {
+      badge.dataset.on = String(on);
+      badge.innerHTML = on ? AUTO_ON : AUTO_OFF;
+    }
+    b.setAttribute("aria-label", `${TRAINING_GROUPS[group]}, Auto-Train ${on ? "on" : "off"}`);
+    if (owned && group === this.open) b.title = `Auto-Train ${on ? "buys" : "skips"} ${TRAINING_GROUPS[group]} each floor: press again to turn it ${on ? "off" : "on"}`;
   }
 
   /** The Buy Quantity dropdown, built again only when its choices change. */
@@ -228,12 +281,14 @@ export class RunTrainingBar {
 
   /** The open group's cards, built again only when its rows change. */
   private renderCards(rows: TrainingId[]) {
-    if (rows.join() !== this.shown) {
-      this.shown = rows.join();
+    // Built again too as Auto-Train is bought, for its marks.
+    const key = rows.join() + (this.autoTrainOwned ? ":auto" : "");
+    if (key !== this.shown) {
+      this.shown = key;
       this.hideTip();
       el("run-drills").innerHTML = rows.map((id) => {
         const row = TRAINING.find((t) => t.id === id)!;
-        return `<div class="drill-card" role="listitem" data-drill="${id}"><b class="drill-name">${"short" in row ? row.short : row.name}</b><span class="drill-value"></span><button type="button" class="drill-buy" data-run-train="${id}"></button></div>`;
+        return `<div class="drill-card" role="listitem" data-drill="${id}">${this.autoTrainOwned ? `<span class="auto-mark" hidden>${AUTO_ON}</span>` : ""}<b class="drill-name">${"short" in row ? row.short : row.name}</b><span class="drill-value"></span><button type="button" class="drill-buy" data-run-train="${id}"></button></div>`;
       }).join("");
     }
     for (const id of rows) this.fill(id);
@@ -351,6 +406,9 @@ export class RunTrainingBar {
     const short = !offer.maxed && !bulk.affordable;
     card.classList.toggle("short", short);
     card.classList.toggle("maxed", offer.maxed);
+    // Auto-Train's arrow on a row it buys each floor (its switch and its group's on).
+    const mark = card.querySelector<HTMLElement>(".auto-mark");
+    if (mark) mark.hidden = !autoTrains(game.save, id);
     // Range, Speed, ATK / m and Targets without their units, which their tooltips give, so the value fits the card.
     card.querySelector(".drill-value")!.textContent = trainingText(value, unit, true);
     const buy = card.querySelector<HTMLButtonElement>(".drill-buy")!;
@@ -364,9 +422,10 @@ export class RunTrainingBar {
     buy.setAttribute("aria-label", offer.maxed ? `${offer.row.name} is at its highest level` : `Train ${offer.row.name} for this ${MODES[this.game.mode].words.run}, ${bulk.count === 1 ? "one rank" : `${bulk.count} ranks`}, for ${bulk.cost} Silver`);
   }
 
-  private showTip(card: HTMLElement) {
+  /** Shows `card`'s details; `pressed`, they stay until pressed away. */
+  private showTip(card: HTMLElement, pressed = false) {
     this.tipFor = card;
-    this.tipPressed = false;
+    this.tipPressed = pressed;
     this.refreshTip();
   }
   /** The card's name, what it trains, its level of the most it reaches and,
@@ -378,14 +437,25 @@ export class RunTrainingBar {
     const skips = levelSkipsOf(this.game.run, offer.row.id);
     // Max HP also shows how far Lifespring's Health Bonus has multiplied it.
     const spring = offer.row.id === "hp" ? this.game.arcana.lifespringStats : undefined;
-    tip.innerHTML = `<b>${offer.row.name}</b><p>${offer.row.description}</p><small>Level ${offer.level} of ${offer.max.toLocaleString("en-US")}${offer.bought ? ` · ${offer.bought} bought this run` : ""}${skips === null ? "" : ` · ${skips.toLocaleString("en-US")} ${skips === 1 ? "floor" : "floors"} skipped this run`}${spring ? ` · Lifespring ×${Number(spring.health.toFixed(2))} of ×${spring.effects.healthLimit}` : ""}</small>`;
+    tip.innerHTML = `<b>${offer.row.name}</b><p>${offer.row.description}</p><small>Level ${offer.level} of ${offer.max.toLocaleString("en-US")}${offer.bought ? ` · ${offer.bought} bought this run` : ""}${skips === null ? "" : ` · ${skips.toLocaleString("en-US")} ${skips === 1 ? "floor" : "floors"} skipped this run`}${spring ? ` · Lifespring ×${Number(spring.health.toFixed(2))} of ×${spring.effects.healthLimit}` : ""}</small>${this.autoSwitch(offer.row.id)}`;
+    // Details a press opened take presses, for their switch.
+    tip.classList.toggle("pinned", this.tipPressed);
     tip.hidden = false;
     const box = card.getBoundingClientRect(), width = tip.offsetWidth;
     tip.style.left = `${Math.max(8, Math.min(innerWidth - width - 8, box.left + box.width / 2 - width / 2))}px`;
     tip.style.top = `${Math.max(8, box.top - tip.offsetHeight - 8)}px`;
   }
+  /** The details' Auto-Train switch for row `id`, once the skill is owned:
+   * on, the row is bought each floor while its group's switch is on too. */
+  private autoSwitch(id: TrainingId) {
+    if (!this.autoTrainOwned) return "";
+    const on = this.game.training.runAutoOn(id), group = TRAINING.find((t) => t.id === id)!.group;
+    const note = on && !this.game.training.runAutoGroupOn(group) ? `<small class="auto-note">${TRAINING_GROUPS[group]} is off: press its button again to turn it on.</small>` : "";
+    return `<div class="auto-train-row"><button type="button" class="arcana-switch" role="switch" data-auto-train="${id}" aria-checked="${on}" aria-label="Auto-train each floor"><i></i></button><span>Auto-train each floor</span></div>${note}`;
+  }
   private hideTip() {
     this.tipFor = null;
+    this.tipPressed = false;
     el("drill-tip").hidden = true;
   }
 }

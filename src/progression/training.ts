@@ -10,6 +10,7 @@ export const TRAINING_PER_LEVEL = 3;
 /** The groups the Training tab, and a run's training bar, show the rows
  * in, in order. */
 export const TRAINING_GROUPS = { offense: "Offense", defense: "Defense", utility: "Utility" } as const;
+export type TrainingGroup = keyof typeof TRAINING_GROUPS;
 export type TrainingId = (typeof TRAINING)[number]["id"];
 export type TrainingRow = (typeof TRAINING)[number];
 /** The Limit Break skills, in the order the chain buys them. */

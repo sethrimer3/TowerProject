@@ -1,5 +1,5 @@
 import { bestWorn } from "../equipment/effects.ts";
-import { trainingCap, TRAINING, trainingDef, type TrainingId } from "../progression/training.ts";
+import { trainingCap, TRAINING, trainingDef, type TrainingGroup, type TrainingId } from "../progression/training.ts";
 import { snap } from "../exact.ts";
 import { TRAINING_RESET_GEMS } from "../economy/gems.ts";
 import { batchSpeedup, bulkBuy, openQuantities, type BuyQuantity } from "../progression/buy-quantity.ts";
@@ -166,6 +166,27 @@ export class TrainingDesk {
   setAutoContinue(id: TrainingId, on: boolean) {
     const auto = this.save.trainingAuto.filter((a) => a !== id);
     this.save.trainingAuto = on ? [...auto, id] : auto;
+  }
+
+  /** Whether Auto-Train's switch for row `id` is on (its group may still be off). */
+  runAutoOn(id: TrainingId) {
+    return this.save.runAutoTrain.includes(id);
+  }
+  /** Turns Auto-Train's switch for row `id` over; it lasts from run to run. */
+  toggleRunAuto(id: TrainingId) {
+    const on = this.runAutoOn(id), rows = this.save.runAutoTrain.filter((a) => a !== id);
+    this.save.runAutoTrain = on ? rows : [...rows, id];
+    return !on;
+  }
+  /** Whether Auto-Train buys from Training group `group` at all. */
+  runAutoGroupOn(group: TrainingGroup) {
+    return this.save.runAutoTrainGroups.includes(group);
+  }
+  /** Turns Auto-Train's switch for Training group `group` over. */
+  toggleRunAutoGroup(group: TrainingGroup) {
+    const on = this.runAutoGroupOn(group), groups = this.save.runAutoTrainGroups.filter((g) => g !== group);
+    this.save.runAutoTrainGroups = on ? groups : [...groups, group];
+    return !on;
   }
 
   /** Starts the next batch of `id`, as many ranks as the last (fewer near

@@ -6,7 +6,7 @@ import { TIERS } from "../tiers.ts";
 import { GOLD_SHOP, PROVISION_BOOST_TURNS, USED_PROVISIONS } from "../economy/provisions.ts";
 import { SAVE_KEY, TOWER_WIDTH, WIDTH } from "../config.ts";
 import { OUTSIDE_SIZE } from "../outside.ts";
-import { TRAINING, amountAt, trainingCeiling, trainingDef } from "../progression/training.ts";
+import { TRAINING, TRAINING_GROUPS, amountAt, trainingCeiling, trainingDef, type TrainingGroup } from "../progression/training.ts";
 import { LEVEL_SKIP_SURE } from "../enemies/level-skips.ts";
 import { UPGRADES, type UpgradeId } from "../progression/upgrades.ts";
 import type { AutomoveMemory, DelveRun, Fall, MoveSnapshot, Run, TowerRun } from "../runs.ts";
@@ -71,6 +71,8 @@ export function defaults(): Save {
     trainerRanks: Object.fromEntries(TRAINING.map((t) => [t.id, 0])) as Save["trainerRanks"],
     trainingJobs: [],
     trainingAuto: [],
+    runAutoTrain: [],
+    runAutoTrainGroups: [],
     trainingBank: 0,
     trainingCredit: Object.fromEntries(TRAINING.map((t) => [t.id, 0])) as Save["trainingCredit"],
     trainingBoostUntil: 0,
@@ -411,6 +413,8 @@ function decodeTraining(s: any, d: Save) {
   d.trainers = count(s.trainers, d.trainers, TRAINER_GEMS.length);
   d.trainingJobs = decodeTrainingJobs(s.trainingJobs, trainingSlots(d));
   d.trainingAuto = TRAINING.filter((t) => Array.isArray(s.trainingAuto) && s.trainingAuto.includes(t.id)).map((t) => t.id);
+  d.runAutoTrain = TRAINING.filter((t) => Array.isArray(s.runAutoTrain) && s.runAutoTrain.includes(t.id)).map((t) => t.id);
+  d.runAutoTrainGroups = (Object.keys(TRAINING_GROUPS) as TrainingGroup[]).filter((g) => Array.isArray(s.runAutoTrainGroups) && s.runAutoTrainGroups.includes(g));
   // Times in ms: credit can run to months, and the boost's end is a timestamp.
   for (const t of TRAINING) d.trainingCredit[t.id] = count(s.trainingCredit?.[t.id], 0, Number.MAX_SAFE_INTEGER);
   d.trainingBank = count(s.trainingBank, 0, Number.MAX_SAFE_INTEGER);

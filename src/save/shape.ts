@@ -10,7 +10,7 @@ import type { BadgesSave } from "../cards/badges.ts";
 import type { CardBuysSave } from "../cards/buys.ts";
 import type { CardTreeLevels } from "../cards/trees.ts";
 import type { GoldItemId } from "../economy/provisions.ts";
-import type { TrainingId } from "../progression/training.ts";
+import type { TrainingGroup, TrainingId } from "../progression/training.ts";
 import type { UpgradeId } from "../progression/upgrades.ts";
 import type { EquipmentSave } from "../equipment/inventory.ts";
 import type { GemDrop } from "../economy/gems.ts";
@@ -131,6 +131,11 @@ export type Save = {
   /** Stats whose trainer starts the next rank as soon as one is done, when
    * the Gold is there (the Training tab's auto-continue boxes). */
   trainingAuto: TrainingId[];
+  /** Auto-Train's switches, kept from run to run: the rows bought with
+   * the run's Silver as each floor begins, and the Training groups switched
+   * on (a row counts only while its group is on too). */
+  runAutoTrain: TrainingId[];
+  runAutoTrainGroups: TrainingGroup[];
   /** Each stat's time credit: training time (ms) given back when its rank
    * in training was stopped (by hand, or bought with points) or the stat
    * reset, taken off that stat's next ranks until it is used up. */

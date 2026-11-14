@@ -33,6 +33,14 @@ Each level after costs more than the last by a step plus the levels already boug
 A row goes no higher than its most on the Training tab (1,000 for ATK, DEF, Regen, Max HP and Shroud, raised by 500 for each **Limit Break** owned, to 6,000 with all ten, 5,000 for Shroud, which only the first eight raise; 350 for Enemy HP Level Skip and Enemy Combat Level Skip (700 with **Enemy Level Skip Limit Break**), 300 for Potion %, 150 for Gold / Floor, Silver / Floor, Silver Bonus, Gold Bonus and Crit x, 80 for Crit % and Attack Range, 99 for Revive and Thorn Damage, 100 for Attack Speed, 200 for ATK / m, 99 for Multishot Chance, 7 for Multishot Targets, 85 for Rapid Fire Chance, 99 for Rapid Fire Duration, 100 for Parry %, 80 for Lifesteal, 72 for Find Potion, 100 for the Free Offense, Defense and Utility Up rows).
 A row at its most shows no values, only its name and level, a Max where the trainer's price stood, and its reset at the right edge.
 Each purchase is a turn of its own: undo takes it back, Silver and all.
+
+**Auto-Train** (2 Breakthrough, right of Life) buys a run's training by itself.
+Each card's details then hold an **Auto-train each floor** switch, and a card switched on wears a small green arrow in its top-left corner while its group is on too.
+Each group's button wears a mark in its top-left corner: a green up arrow while Auto-Train buys from that group, a red arrow crossed out while it doesn't (every group starts off); pressing the group's button while it is already open turns it on or off.
+As each floor begins (a run going inside, each new Tower floor, each Delve milestone gate), Auto-Train buys the cheapest next level among the rows switched on in groups switched on, one level at a time and the cheapest again after each, until the Silver left pays for none (a tie goes to the row listed first).
+Its purchases are part of arriving on the floor, so undo doesn't take them back.
+The switches last from run to run.
+Details a press opened stay open, so the switch can be reached, until the card is pressed again or a press lands elsewhere.
 A level can be bought while a fight plays out too (not one shown as a summary): it counts from the fight's next strike, so ATK bought makes the hero's next strikes harder, DEF softens the monster's next strikes, and max HP raises the HP left at once, which can turn a losing fight around.
 The first run after On the Job is bought teaches the bar: a note over the hand explains spending Silver on upgrades for the run, and a pointing hand bounces over a group's button until the player opens a group and presses Hand to bring the cards back; while the Auto-Climb lesson's note shows, it waits until that note is dismissed.
 

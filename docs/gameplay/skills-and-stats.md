@@ -44,6 +44,7 @@ A regular potion is drawn red, like the HP bar, and a percent potion blue, like 
 
 ## Enemy Level Skips
 
+**Auto-Train** (2 Breakthrough, right of Life) buys the run's training with Silver as each floor begins, from the rows and groups switched on (see Training).
 **Enemy Level Skips** (5 Breakthrough, below Life, leading on to Badges) reveals **Enemy HP Level Skips** and, below it, **Enemy Combat Level Skips** (50 Inspiration each, below Floor Skip Reward), which open the Enemy HP Level Skip and Enemy Combat Level Skip training rows in Utility.
 **Enemy Level Skip Limit Break** (5 Breakthrough, beside Limit Break 1, after it, hidden until Enemy Level Skips is owned) raises both rows' most from 350 levels to 700.
 Each floor new to the run, each row's chance may skip that floor: enemies from then on stand as they would one floor lower, so after 5 skips an enemy on floor 100 has floor 95's stats.

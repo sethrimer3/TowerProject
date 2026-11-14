@@ -760,6 +760,8 @@ export const SPRITE_ASSETS = [
   "assets/style/trophy.png",
   "assets/style/tuft.png",
   "assets/style/ui-auto-play.png",
+  "assets/style/ui-auto-train-off.png",
+  "assets/style/ui-auto-train-on.png",
   "assets/style/ui-badge-annotation.png",
   "assets/style/ui-card-points.png",
   "assets/style/ui-chevron-down.png",
