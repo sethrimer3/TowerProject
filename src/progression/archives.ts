@@ -34,6 +34,7 @@ export const RESEARCH_CATEGORIES = {
   economy: "Economy",
   equipment: "Equipment",
   shrines: "Shrines",
+  arcana: "Arcana",
   special: "Special",
 } as const;
 export type ResearchCategory = keyof typeof RESEARCH_CATEGORIES;
@@ -189,6 +190,9 @@ export const RESEARCH_TARGETS = {
   /** Turns between Overseer Zap's strikes (game/arcana-desk.ts), 20 less
    * one a level; no strike before the first level. */
   overseerZapTurns: { name: "Zap Cooldown", base: 20, shown: (n: number) => `${n} turns` },
+  /** What the Gold of an enemy killed in Overseer's beams is multiplied by
+   * (Game.spotlightGold), in tenths: ×1 before the first level, ×0.1 more a level. */
+  overseerGold: { name: "Spotlight Gold", base: 10, shown: (n: number) => `×${n / 10}` },
   /** Badges each card can hold. */
   badgeSlots: { name: "Badge Slots", base: 1, shown: count },
   /** Turns allowed per Obelisk boss trial run before the encounter ends. */
@@ -316,6 +320,23 @@ const OVERSEER_ZAP_TIMES: readonly [days: number, hours: number, minutes: number
   [6, 16, 0], [7, 0, 21], [7, 8, 53], [7, 17, 54], [8, 3, 49], [8, 15, 6], [9, 4, 17], [9, 19, 58], [10, 14, 49],
   [11, 13, 31], [12, 16, 49], [14, 1, 30], [15, 16, 23], [17, 14, 21], [19, 20, 18], [22, 11, 9], [25, 11, 54], [28, 23, 32],
 ];
+/** Overseer Coin Bonus research: ×0.1 more Gold a level for enemies killed in
+ * Overseer's beams, for 20 levels, from ×1.1 to ×3: each level's Gold, and
+ * its time as days, hours and minutes. */
+const OVERSEER_GOLD_GOLD = [
+  20_000_000, 21_410_000, 23_120_000, 26_630_000, 35_837_838, 58_248_649, 106_162_162, 197_870_270, 358_875_676, 623_091_892,
+  1_030_000_000, 1_640_000_000, 2_520_000_000, 3_750_000_000, 5_410_000_000, 7_630_000_000, 10_520_000_000, 14_240_000_000, 18_940_000_000, 24_800_000_000,
+];
+const OVERSEER_GOLD_TIMES: readonly [days: number, hours: number, minutes: number][] = [
+  [1, 15, 59], [2, 0, 21], [2, 8, 53], [2, 17, 54], [3, 3, 49], [3, 15, 6], [4, 4, 17], [4, 19, 58], [5, 14, 49], [6, 13, 31],
+  [7, 16, 49], [9, 1, 30], [10, 16, 23], [12, 14, 21], [14, 20, 18], [17, 11, 9], [20, 11, 54], [23, 23, 32], [27, 23, 6], [32, 11, 40],
+];
+/** A schedule's level `i` of `target`, adding `value`, at its listed Gold and days, hours and minutes. */
+const scheduled = (target: ResearchTarget, value: number, gold: readonly number[], times: readonly (readonly [number, number, number])[]) =>
+  gold.map((g, i) => {
+    const [days, hours, minutes] = times[i]!;
+    return levelOf(target, value, g, (days * 24 + hours) * 60 + minutes);
+  });
 
 /** Offline Gold Multiplier research (+0.5% of the Recent Gold per Hour a
  * level, 5 tenths, for 100 levels, from 10% to 60%): Critical Chance's Gold and hours. */
@@ -903,12 +924,16 @@ export const RESEARCH = {
   overseerZap: {
     name: "Overseer Zap",
     description: "Overseer's beams call down a Thunderbolt on an enemy every few turns.",
-    categories: ["offense"],
+    categories: ["arcana", "offense"],
     requires: [{ upgrade: "archives" }, { goalUnlock: "overseerZap" }],
-    levels: OVERSEER_ZAP_GOLD.map((gold, i) => {
-      const [days, hours, minutes] = OVERSEER_ZAP_TIMES[i]!;
-      return levelOf("overseerZapTurns", -1, gold, (days * 24 + hours) * 60 + minutes);
-    }),
+    levels: scheduled("overseerZapTurns", -1, OVERSEER_ZAP_GOLD, OVERSEER_ZAP_TIMES),
+  },
+  overseerGold: {
+    name: "Overseer Coin Bonus",
+    description: "Enemies killed in Overseer's spotlight drop more Gold, however they were killed.",
+    categories: ["arcana", "economy"],
+    requires: [{ upgrade: "archives" }, { goalUnlock: "overseerGold" }],
+    levels: scheduled("overseerGold", 1, OVERSEER_GOLD_GOLD, OVERSEER_GOLD_TIMES),
   },
   mug: {
     name: "Mug",

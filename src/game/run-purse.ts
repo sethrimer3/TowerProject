@@ -193,10 +193,11 @@ export class RunPurse {
 
   /** The Gold a kill of `enemy` at (x, y) would bank, as `enemyLoot` pays
    * it (Goldback's combo counted, a card's Effective or Dampen not): none
-   * once its tile is looted. Changes nothing. */
-  killGoldPreview(enemy: Enemy, x: number, y: number, instakill = false) {
+   * once its tile is looted; `spotlight`, Overseer Coin Bonus's factor at
+   * the tile. Changes nothing. */
+  killGoldPreview(enemy: Enemy, x: number, y: number, instakill = false, spotlight = 1) {
     if (this.slice.lootedTiles[this.killKey(enemy, x, y)]) return 0;
-    return goldBanked(snap(this.killGold(enemy, instakill) * (this.run.goldCombo ?? 1)), this.goldContext(this.payAt(x, y))).gold;
+    return goldBanked(snap(this.killGold(enemy, instakill) * (this.run.goldCombo ?? 1) * spotlight), this.goldContext(this.payAt(x, y))).gold;
   }
 
   /** The Gold a kill of `enemy` on the hero's floor banks now, wherever it
@@ -290,12 +291,13 @@ export class RunPurse {
    * Equipment, once per physical kill: a Supply Chest's upgrade materials
    * by their Salvage chance (Instakill Salvage's too for an `instakill`),
    * and an Equipment Chest's piece by their Equipment Drop chance, once
-   * Equipment is open. */
-  enemyLoot(enemy: Enemy, x: number, y: number, scale = 1, instakill = false, spring?: { gold: number; cells: number }): { gold: number; cells: number; equipment: EquipmentLoot[] } {
+   * Equipment is open. `spotlight` is Overseer Coin Bonus's factor for a
+   * kill in Overseer's beams (`Game.spotlightGold`), its Gold alone. */
+  enemyLoot(enemy: Enemy, x: number, y: number, scale = 1, instakill = false, spring?: { gold: number; cells: number }, spotlight = 1): { gold: number; cells: number; equipment: EquipmentLoot[] } {
     if (!this.loot(this.killKey(enemy, x, y))) return { gold: 0, cells: 0, equipment: [] };
     // Effective or Dampen on the card that took the fight scales it; `gold`
     // then adds the tier's bonus and the other Gold multipliers.
-    const base = this.withCombo(this.killGold(enemy, instakill)), raised = snap(base * scale * (spring?.gold ?? 1));
+    const base = this.withCombo(this.killGold(enemy, instakill)), raised = snap(base * scale * (spring?.gold ?? 1) * spotlight);
     const gold = this.gold(raised, this.payAt(x, y)), more = foeStat(this.tree, enemy, "Cells");
     const cells = enemy.strength === "greaterBoss" ? this.cells(scale, more) : more ? this.bankCells(snap(more * scale)) : 0;
     // Lifespring's Cell Bonus: more of the Cells an enemy it touched drops, if it drops any.

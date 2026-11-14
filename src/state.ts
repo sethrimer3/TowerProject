@@ -101,7 +101,7 @@ import { ShrineDesk } from "./game/shrine-desk.ts";
 import { ArcanaDesk } from "./game/arcana-desk.ts";
 import { arcanaOpen, defaultArcanaRun, type ArcanumId } from "./arcana/arcana.ts";
 import type { Beams } from "./arcana/overseer.ts";
-import { beamFactor } from "./arcana/overseer.ts";
+import { beamFactor, inBeams } from "./arcana/overseer.ts";
 import { NoticeDesk } from "./game/notice-desk.ts";
 import { boonFactor, runBoons, weakened } from "./shrines.ts";
 import { LEVEL_SKIP_KINDS, LEVEL_SKIP_ROWS, rollLevelSkip } from "./enemies/level-skips.ts";
@@ -1310,6 +1310,16 @@ export class Game {
   private beamFactorAt(to: { x: number; y: number }) {
     const p = this.run.player;
     return beamFactor(this.arcana.beams, 0, shortWay(to.x - p.x, this.wrap), to.y - p.y);
+  }
+  /** What Overseer Coin Bonus multiplies the Gold of a kill at `at` by:
+   * its research's factor while `at` lies in Overseer's beams as the turn
+   * begins (the same test as their ATK), however the enemy was killed, else 1.
+   * Read when the kill is paid, so a level finished mid-run counts at once. */
+  spotlightGold(at: { x: number; y: number }) {
+    const tenths = researched(this.save.archives, "overseerGold"), beams = this.arcana.beams;
+    if (tenths === 10 || !beams) return 1;
+    const p = this.run.player;
+    return inBeams(beams, 0, shortWay(at.x - p.x, this.wrap), at.y - p.y) ? tenths / 10 : 1;
   }
   /** The Dash Combo the meter shows: the next fight's while a fight plays
    * out (it is that fight's), otherwise the last fight's, so 0 until a fight
@@ -2836,7 +2846,7 @@ export class Game {
    * the hero's first strike ending it), or 0 once its tile is looted. */
   enemyGold(x: number, y: number, instakill = false) {
     const e = foeOn(this.world.tile(x, y));
-    return e ? this.purse.killGoldPreview(e, x, y, instakill) : 0;
+    return e ? this.purse.killGoldPreview(e, x, y, instakill, this.spotlightGold({ x, y })) : 0;
   }
   /** What the floor the hero stands on can roll (`enemies/odds.ts`): each
    * strength's chance, stats and Gold, and each trait's chance, for the

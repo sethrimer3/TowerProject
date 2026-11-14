@@ -53,13 +53,15 @@ import { openEquipment } from "./equipment/inventory.ts";
  * whose cards share one priority, cards/cards.ts), and Tower V's Flying Enemy
  * Card (floor 10: the FLYING ENEMY card joins the deck, `GOAL_CARDS` in
  * cards/cards.ts) and Super Critical Research (floor 200: the Archives'
- * two Super Critical projects, which need the skill too). */
+ * two Super Critical projects, which need the skill too), and Tower VII's
+ * Overseer Coin Bonus (floor 80: the Archives' project that multiplies the
+ * Gold of enemies killed in Overseer's beams, Game.spotlightGold). */
 export type GoalUnlock =
   | "damagePrediction" | "combatForecast" | "attackLore" | "warp" | "damageVisual" | "relativeDamageColor" | "equipment" | "tournament" | "events" | "researchSpeed"
   | "shardAttack" | "shardDefense" | "parryPercent"
   | "shrines" | "firstBoonChoice" | "improveTradeoffs" | "autoPickBoons" | "boonOptions" | "banBoons" | "autoPickRanking"
   | "badgeSlots" | "noteTaking" | "archerCard" | "attackRange" | "attackSpeed" | "attackPerTile" | "chargedShot" | "multishot" | "rapidFire"
-  | "trainingDiscount" | "cardGroups" | "flyingEnemyCard" | "warpLoot" | "superCriticalResearch" | "aetherShield" | "rerollMission" | "overseerZap";
+  | "trainingDiscount" | "cardGroups" | "flyingEnemyCard" | "warpLoot" | "superCriticalResearch" | "aetherShield" | "rerollMission" | "overseerZap" | "overseerGold";
 export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   damagePrediction: "Damage Prediction", combatForecast: "Combat Forecast", attackLore: "Attack Lore", warp: "Warp", damageVisual: "Damage Visual",
   relativeDamageColor: "Relative Damage Color", equipment: "Equipment", tournament: "Tournament", events: "Events",
@@ -72,6 +74,7 @@ export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   trainingDiscount: "Training Discount", cardGroups: "Card Groups", flyingEnemyCard: "Flying Enemy Card",
   warpLoot: "Warp Loot", superCriticalResearch: "Super Critical Research", aetherShield: "Unlock Aether Shield",
   rerollMission: "Reroll Daily Mission", overseerZap: "Overseer Zap",
+  overseerGold: "Overseer Coin Bonus",
 };
 /** What a checkpoint pays: an unlock, the next tower opened, an amount of a currency, or a relic. */
 export type GoalReward =
@@ -170,6 +173,10 @@ const TOWER_SIX: Record<number, CheckpointSet> = {
   10: { reward: unlock("autoPickRanking") },
   50: { reward: unlock("badgeSlots") },
 };
+/** Tower VII's checkpoints that differ from the stub. */
+const TOWER_SEVEN: Record<number, CheckpointSet> = {
+  80: { reward: unlock("overseerGold"), premium: arcanite(20) },
+};
 /** Tower VIII's checkpoints that differ from the stub. */
 const TOWER_EIGHT: Record<number, CheckpointSet> = {
   10: { reward: unlock("aetherShield") },
@@ -181,7 +188,7 @@ export const TOWER_UNLOCK_FLOOR = 100;
  * TODO: the stub rewards (100 Gold × checkpoint number × tower, 5 Gems × checkpoint number
  * premium) are placeholders, to be tuned. */
 function towerCheckpoints(tower: number): Checkpoint[] {
-  const sets: Record<number, Record<number, CheckpointSet>> = { 1: TOWER_ONE, 2: TOWER_TWO, 3: TOWER_THREE, 4: TOWER_FOUR, 5: TOWER_FIVE, 6: TOWER_SIX, 8: TOWER_EIGHT };
+  const sets: Record<number, Record<number, CheckpointSet>> = { 1: TOWER_ONE, 2: TOWER_TWO, 3: TOWER_THREE, 4: TOWER_FOUR, 5: TOWER_FIVE, 6: TOWER_SIX, 7: TOWER_SEVEN, 8: TOWER_EIGHT };
   return CHECKPOINT_FLOORS.map((floor, i) => {
     const n = i + 1, set = sets[tower]?.[floor];
     const opens = floor === TOWER_UNLOCK_FLOOR && tower < TIERS ? { kind: "tower" as const, tower: tower + 1 } : null;

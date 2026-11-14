@@ -7,6 +7,8 @@ import { askForArcanite, closesOnBackdrop, confirmAction, helpButton, showHelp }
 import { arcaniteIcon, el } from "./dom.ts";
 import { priceAmount } from "./hud.ts";
 import { shortAmount } from "../whole.ts";
+import { researched } from "../progression/archives.ts";
+import type { Save } from "../save/shape.ts";
 
 /** Each arcanum's picture. */
 export const ARCANUM_ICONS: Record<ArcanumId, string> = {
@@ -29,9 +31,15 @@ const boxedTable = (heading: string, rows: readonly (readonly [string, string])[
   ? `<div class="arcana-box"><h3>${heading}</h3><table class="arcana-table"><tbody>${rows.map(([name, value]) => `<tr><td>${name}</td><td>${value}</td></tr>`).join("")}</tbody></table></div>`
   : "";
 
+/** What research adds to an arcanum's summary: Overseer Coin Bonus's Gold, once researched. */
+function researchedText(id: ArcanumId, values: AttributeValues, save: Save) {
+  const tenths = id === "overseer" ? researched(save.archives, "overseerGold") : 10;
+  return tenths > 10 ? ` Enemies killed in ${values[2] === 1 ? "it" : "them"} drop ×${tenths / 10} Gold.` : "";
+}
+
 /** The top of an arcanum's information: its name, its icon, what it does. */
-const aboutHtml = (id: ArcanumId, values: AttributeValues) =>
-  `<h2>${arcanum(id).name}</h2><div class="arcana-info-icon">${ARCANUM_ICONS[id]}</div><p>${arcanum(id).summary(values)}</p>`;
+const aboutHtml = (id: ArcanumId, values: AttributeValues, save: Save) =>
+  `<h2>${arcanum(id).name}</h2><div class="arcana-info-icon">${ARCANUM_ICONS[id]}</div><p>${arcanum(id).summary(values)}${researchedText(id, values, save)}</p>`;
 
 /** The Gear page's Arcana tab: the button that opens a choice of arcana, and
  * each one bought in a row of its attributes to upgrade. */
@@ -107,7 +115,7 @@ export class ArcanaPanel {
  * now and at its next level, and what research has added to it. */
 function showArcanum(ctx: AppContext, id: ArcanumId) {
   const levels = levelsOf(ctx.game.save.arcana, id), modal = ctx.modal;
-  modal.innerHTML = `<div class="arcana-info">${aboutHtml(id, valuesAt(id, levels))}<table class="arcana-table"><thead><tr><th>Attribute</th><th>Now</th><th>Next</th></tr></thead><tbody>${arcanum(id).attributes.map((a, i) => {
+  modal.innerHTML = `<div class="arcana-info">${aboutHtml(id, valuesAt(id, levels), ctx.game.save)}<table class="arcana-table"><thead><tr><th>Attribute</th><th>Now</th><th>Next</th></tr></thead><tbody>${arcanum(id).attributes.map((a, i) => {
     const next = nextStep(id, i, levels[i]!);
     return `<tr><td>${a.name}</td><td>${a.shown(a.steps[levels[i]!]![0])}</td><td>${next ? a.shown(next.value) : "Max"}</td></tr>`;
   }).join("")}</tbody></table>${boxedTable("Enhancements", enhancementsOf(id, ctx.game.save))}</div>`;
@@ -142,7 +150,7 @@ export function showHeldArcanum(ctx: AppContext, { id, levels, lent }: HeldArcan
     ...(crit?.superCrit ? [["Super Crit Chance", percent(crit.superCrit.chance)], ["Super Crit Mult", factor(crit.superCrit.factor)]] as [string, string][] : []),
     ["Arcanum Damage", shortAmount(value.damage ?? 0)],
   ] : [];
-  modal.innerHTML = `<div class="arcana-info">${aboutHtml(id, values)}${lent ? `<p class="hint">A Shrine boon lends it for this climb.</p>` : ""}<table class="arcana-table"><tbody>${def.attributes.map((a, i) => `<tr><td>${a.name}</td><td>${a.shown(values[i]!)}</td></tr>`).join("")}</tbody></table>${id === "lifespring" ? lifespringTables(game.arcana) : ""}${boxedTable("Modifiers", [...modifiers, ...augmented, ...enhancementsOf(id, game.save)])}</div>`;
+  modal.innerHTML = `<div class="arcana-info">${aboutHtml(id, values, game.save)}${lent ? `<p class="hint">A Shrine boon lends it for this climb.</p>` : ""}<table class="arcana-table"><tbody>${def.attributes.map((a, i) => `<tr><td>${a.name}</td><td>${a.shown(values[i]!)}</td></tr>`).join("")}</tbody></table>${id === "lifespring" ? lifespringTables(game.arcana) : ""}${boxedTable("Modifiers", [...modifiers, ...augmented, ...enhancementsOf(id, game.save)])}</div>`;
   modal.showModal();
   closesOnBackdrop(modal);
 }

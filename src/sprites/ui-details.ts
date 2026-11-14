@@ -25,5 +25,5 @@ export const GOAL_SPRITES = {
   damagePrediction: "goal-damage-prediction", combatForecast: "goal-combat-forecast", attackLore: "goal-attack-lore",
   warp: "goal-warp", parryPercent: "goal-parry", equipment: "goal-equipment",
   damageVisual: "goal-damage-visual", relativeDamageColor: "goal-relative-damage", rerollMission: "redo",
-  overseerZap: "arcana-overseer",
+  overseerZap: "arcana-overseer", overseerGold: "arcana-overseer",
 } satisfies Record<GoalUnlock, string>;

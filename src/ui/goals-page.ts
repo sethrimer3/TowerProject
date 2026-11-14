@@ -100,6 +100,8 @@ const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
     `<p class="hint">The new mission is never one already on your list. Its progress starts over.</p>`,
   overseerZap: `<p>Overseer Zap opens in the Archives: research it, and every few turns a Thunderbolt strikes a random enemy standing in Overseer's beams, as hard as Thunderbolt strikes, multiplied by Overseer's Bonus.</p>` +
     `<p class="hint">Its first level brings the cooldown to 19 turns, and each level after takes off another. Without Thunderbolt, the strike is as hard as Thunderbolt's first level.</p>`,
+  overseerGold: `<p>Overseer Coin Bonus opens in the Archives: research it, and enemies killed while they stand in Overseer's beams drop more Gold, whatever killed them.</p>` +
+    `<p class="hint">Each level adds ×0.1, from ×1.1 at the first to ×3 at the twentieth. Overseer must be held and on.</p>`,
   researchSpeed: `<p>Research Speed opens in the Archives: train the archivists to read faster, and every research, those under way included, takes less time.</p>`,
   badgeSlots: `<p>Badge Slots opens in the Archives: research it, and each card holds one more badge a level. Drag a badge onto a card on the Deck page to fill its next slot; on a card with every slot full, it takes the bottom slot's place.</p>` +
     `<p class="hint">Badges that can't work together can't share a card: a key colour's &lt; gate with its ≥ gate (GK &lt; with GK ≥), or Effective with Dampen.</p>`,

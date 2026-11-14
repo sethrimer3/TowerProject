@@ -82,6 +82,13 @@ Its `Shot` carries `thunderbolt`: the ticks spread over the turn, it falls for `
 Like the bolts, it lies in `runArcana`, so undo never refunds it, and toggling Overseer off forgets it.
 `tests/overseer-zap.test.ts` covers it.
 
+**Overseer Coin Bonus** (research, `overseerGold` in `progression/archives.ts`, in tenths from 10: +1 a level for 20 levels, opened by Tower VII's floor 80 Goal) multiplies a kill's Gold: `Game.spotlightGold(at)` gives its factor while Overseer is held and on and `at` lies in the beams as the turn begins, seen from where the hero stands (`inBeams` at tick 0, the test their ATK uses, so a fight counts by the enemy's tile, not the one the hero steps onto), else 1.
+`Finds.kill`, which every kill goes through (fights, arrows, Ricochet, Thunderbolt and Overseer Zap, Bomb, Necrotic Frost, Lifespring, Phantasm, the Crown's ghosts), passes it to `RunPurse.enemyLoot`, which multiplies the kill's Gold alone (not its Silver, Cells or drops), a kind of its own; `Game.enemyGold` passes it to `killGoldPreview`.
+It is read when the kill is paid, so a level done mid-run counts at once and undo can't roll it back; the All Gold Bonuses box leaves it out, since it depends on the tile.
+Once a level is done, Overseer's information adds "Enemies killed in them drop ×N Gold" (`researchedText` in `ui/arcana-panel.ts`).
+The Archives list both Overseer projects under the **Arcana** category (`RESEARCH_CATEGORIES`), the home of research that improves an arcanum.
+`tests/overseer.test.ts` covers it.
+
 **Lifespring** (`src/arcana/lifespring.ts`, trigger `cooldown`; `Game.lifespringTurn` and `Game.lifespringContact`, `lifespringContact` in `volley.ts`) sets off Effect Waves, then a field with an HP Pool.
 **Its state** is `run.lifespring` (`LifespringRun`), in the run and not `runArcana`, cooldown included, so undo takes back the pool, waves and Health Bonus together with the enemies they touched, and replaying gives the same.
 `ArcanaDesk.turn` therefore leaves it out of `tickCooldowns`, and `stepLifespring` runs it instead; a climb keeps it, and switching it off clears all of it but the Health Bonus (`clearLifespring`).

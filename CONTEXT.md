@@ -663,6 +663,10 @@ An arcanum on a cooldown: its bolts fall from the board's upper edge on random e
 Research that has Overseer's beams call down one Thunderbolt on a random enemy in them each time its cooldown runs out, as hard as Thunderbolt strikes times Overseer's Bonus.
 _Avoid_: zap bolt, beam strike
 
+**Overseer Coin Bonus**:
+Research that multiplies the Gold of an enemy killed while it stands in Overseer's beams, whatever killed it; its factor is the **Spotlight Gold**.
+_Avoid_: beam Gold, spotlight bounty
+
 **Lifespring**:
 An arcanum: on its cooldown, Effect Waves, then a field round the hero as wide as its shot range, spending an HP Pool on the enemies it touches.
 

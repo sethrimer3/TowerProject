@@ -133,6 +133,15 @@ The cooldown runs only while Overseer is on; switching Overseer off forgets it.
 If no enemy is in a beam when it is due, it waits, and strikes on the first turn one is.
 It works in a trial too.
 
+### Overseer Coin Bonus
+
+Tower VII's floor 80 Goal opens the Archives' **Overseer Coin Bonus** research.
+Enemies killed while they stand in Overseer's beams drop more Gold, whatever killed them: your strike, an arrow, a Thunderbolt or any other arcanum.
+Each of its 20 levels adds ×0.1, from ×1.1 at the first to ×3 at the last; it raises only their Gold, not their Silver or Cells.
+An enemy counts if it stands in a beam as the turn begins, the same test as Overseer's Bonus, so it needs Overseer held and on.
+Once researched, Overseer's information says how much more Gold they drop.
+Both Overseer projects are listed in the Archives' **Arcana** section.
+
 ## Thunderbolt
 
 *Every x turns, y thunderbolts strike random enemies on the floor, with z% of ATK each.*

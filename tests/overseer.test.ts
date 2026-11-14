@@ -16,6 +16,8 @@ import { volleyTurn, type VolleyTurn } from "../src/volley.ts";
 import type { Enemy, Player, Tile } from "../src/entities.ts";
 import type { TowerRun } from "../src/runs.ts";
 import { playedSave } from "./first-skills.ts";
+import { checkpoint } from "../src/goals.ts";
+import { RESEARCH, researched } from "../src/progression/archives.ts";
 
 const rat = (hp = 50, over: Partial<Enemy> = {}): Enemy => ({ name: "rat", hp, attack: 1, defense: 0, tier: 0, strength: "normal", ...over });
 const beams = (over: Partial<Beams> = {}): Beams => ({ count: 1, width: 30, bonus: 8, turns: 0, ...over });
@@ -280,4 +282,47 @@ test("with Dev free purchases the Arcana tab opens with no Arcanite, and buying 
   assert.equal(g.save.arcanite, 0);
   g.save.settings.freePurchases = false;
   assert.equal(g.arcana.upgrade(id!, 0), "short");
+});
+
+/** The Gold the hero banks killing an 80 HP rat east of it in `corridor`, Overseer at `levels`, with `research` levels of Overseer Coin Bonus. */
+function killGold(levels: [number, number, number], research: number, on = true) {
+  const g = corridor({ 1: foe(80) }, levels);
+  if (research) g.save.archives.levels.overseerGold = research;
+  if (!on) g.arcana.toggle("overseer");
+  const before = g.save.gold, preview = g.enemyGold(1, 0);
+  assert.ok(g.move(1, 0));
+  const gold = g.save.gold - before;
+  assert.ok(Math.abs(gold - preview) < 1e-9, "the preview pays what the kill does");
+  return gold;
+}
+
+test("Overseer Coin Bonus multiplies the Gold of a kill in the beams, and only there", () => {
+  const plain = killGold([0, 0, 3], 0);
+  assert.ok(plain > 0);
+  assert.ok(Math.abs(killGold([0, 0, 3], 5) - plain * 1.5) < 1e-9, "five levels: ×1.5");
+  assert.ok(Math.abs(killGold([0, 0, 3], 20) - plain * 3) < 1e-9, "twenty: ×3");
+  assert.equal(killGold([0, 0, 0], 5), plain, "one beam points north, the enemy lies east");
+  assert.equal(killGold([0, 0, 3], 5, false), plain, "Overseer off: no beams");
+});
+
+test("Overseer Coin Bonus counts wherever in the beams the kill lies, however it was killed", () => {
+  const g = corridor({});
+  assert.equal(g.spotlightGold({ x: 9, y: 0 }), 1, "no research yet");
+  g.save.archives.levels.overseerGold = 3;
+  assert.equal(g.spotlightGold({ x: 9, y: 0 }), 1.3, "far off down the eastern beam");
+  g.run.beamTurns = 11;
+  assert.equal(g.spotlightGold({ x: 9, y: 0 }), 1, "44 degrees on, between beams");
+});
+
+test("Tower VII's floor 80 Goal opens Overseer Coin Bonus, in the Arcana section beside Overseer Zap", () => {
+  assert.deepEqual(checkpoint(7, 80), { floor: 80, reward: { kind: "unlock", unlock: "overseerGold" }, premium: { kind: "currency", currency: "arcanite", amount: 20 } });
+  const project = RESEARCH.overseerGold;
+  assert.ok(project.requires.some((r) => "goalUnlock" in r && r.goalUnlock === "overseerGold"));
+  assert.equal(project.levels.length, 20);
+  assert.deepEqual([project.levels[0]!.gold, project.levels[0]!.hours * 60, project.levels[19]!.gold, project.levels[19]!.hours * 60], [20e6, 39 * 60 + 59, 24.8e9, (32 * 24 + 11) * 60 + 40]);
+  const s = defaults();
+  s.archives.levels.overseerGold = 20;
+  assert.equal(researched(s.archives, "overseerGold"), 30);
+  assert.equal(project.categories[0], "arcana");
+  assert.equal(RESEARCH.overseerZap.categories[0], "arcana");
 });
