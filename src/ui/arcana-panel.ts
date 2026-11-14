@@ -7,7 +7,7 @@ import { askForArcanite, closesOnBackdrop, confirmAction, helpButton, showHelp }
 import { arcaniteIcon, el } from "./dom.ts";
 import { priceAmount } from "./hud.ts";
 import { shortAmount } from "../whole.ts";
-import { researched } from "../progression/archives.ts";
+import { RESEARCH, RESEARCH_TARGETS, researched } from "../progression/archives.ts";
 import type { Save } from "../save/shape.ts";
 
 /** Each arcanum's picture. */
@@ -36,6 +36,12 @@ function researchedText(id: ArcanumId, values: AttributeValues, save: Save) {
   const tenths = id === "overseer" ? researched(save.archives, "overseerGold") : 10;
   return tenths > 10 ? ` Enemies killed in ${values[2] === 1 ? "it" : "them"} drop ×${tenths / 10} Gold.` : "";
 }
+
+/** The Archives' projects that raise what Lifespring gives. */
+const LIFESPRING_RESEARCH = ["lifespringHealth", "lifespringGold", "lifespringAmplify", "lifespringCells"] as const;
+/** Lifespring's Research box: what each of its projects has reached, untrained values included. */
+const lifespringResearch = (save: Save) =>
+  boxedTable("Research", LIFESPRING_RESEARCH.map((id) => [RESEARCH[id].name, RESEARCH_TARGETS[id].shown(researched(save.archives, id))]));
 
 /** The top of an arcanum's information: its name, its icon, what it does. */
 const aboutHtml = (id: ArcanumId, values: AttributeValues, save: Save) =>
@@ -118,7 +124,7 @@ function showArcanum(ctx: AppContext, id: ArcanumId) {
   modal.innerHTML = `<div class="arcana-info">${aboutHtml(id, valuesAt(id, levels), ctx.game.save)}<table class="arcana-table"><thead><tr><th>Attribute</th><th>Now</th><th>Next</th></tr></thead><tbody>${arcanum(id).attributes.map((a, i) => {
     const next = nextStep(id, i, levels[i]!);
     return `<tr><td>${a.name}</td><td>${a.shown(a.steps[levels[i]!]![0])}</td><td>${next ? a.shown(next.value) : "Max"}</td></tr>`;
-  }).join("")}</tbody></table>${boxedTable("Enhancements", enhancementsOf(id, ctx.game.save))}</div>`;
+  }).join("")}</tbody></table>${id === "lifespring" ? lifespringResearch(ctx.game.save) : ""}${boxedTable("Enhancements", enhancementsOf(id, ctx.game.save))}</div>`;
   modal.showModal();
   closesOnBackdrop(modal);
 }
@@ -132,7 +138,7 @@ function lifespringTables(desk: AppContext["game"]["arcana"]) {
     ["Health Bonus", `+${healthPerKill}% max HP a kill, ${factor(stats.health)} of ${factor(healthLimit)}`],
     ["Damage Amplification", `${factor(amplify)} a wave`],
     ["Gold Bonus", factor(gold)],
-    ["Cell Bonus", factor(cells)],
+    ["Cell Bonus", factor(1 + cells)],
     ["DEF Reduction", `${Number(defense.toFixed(2))}%`],
   ]);
 }
@@ -150,7 +156,7 @@ export function showHeldArcanum(ctx: AppContext, { id, levels, lent }: HeldArcan
     ...(crit?.superCrit ? [["Super Crit Chance", percent(crit.superCrit.chance)], ["Super Crit Mult", factor(crit.superCrit.factor)]] as [string, string][] : []),
     ["Arcanum Damage", shortAmount(value.damage ?? 0)],
   ] : [];
-  modal.innerHTML = `<div class="arcana-info">${aboutHtml(id, values, game.save)}${lent ? `<p class="hint">A Shrine boon lends it for this climb.</p>` : ""}<table class="arcana-table"><tbody>${def.attributes.map((a, i) => `<tr><td>${a.name}</td><td>${a.shown(values[i]!)}</td></tr>`).join("")}</tbody></table>${id === "lifespring" ? lifespringTables(game.arcana) : ""}${boxedTable("Modifiers", [...modifiers, ...augmented, ...enhancementsOf(id, game.save)])}</div>`;
+  modal.innerHTML = `<div class="arcana-info">${aboutHtml(id, values, game.save)}${lent ? `<p class="hint">A Shrine boon lends it for this climb.</p>` : ""}<table class="arcana-table"><tbody>${def.attributes.map((a, i) => `<tr><td>${a.name}</td><td>${a.shown(values[i]!)}</td></tr>`).join("")}</tbody></table>${id === "lifespring" ? lifespringTables(game.arcana) + lifespringResearch(game.save) : ""}${boxedTable("Modifiers", [...modifiers, ...augmented, ...enhancementsOf(id, game.save)])}</div>`;
   modal.showModal();
   closesOnBackdrop(modal);
 }

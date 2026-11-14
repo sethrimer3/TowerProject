@@ -193,6 +193,18 @@ export const RESEARCH_TARGETS = {
   /** What the Gold of an enemy killed in Overseer's beams is multiplied by
    * (Game.spotlightGold), in tenths: ×1 before the first level, ×0.1 more a level. */
   overseerGold: { name: "Spotlight Gold", base: 10, shown: (n: number) => `×${n / 10}` },
+  /** Whether each boss killed (a Greater Boss aside) gives the hero a percent
+   * potion, drunk at once (Finds.bossPotion). */
+  bossPotion: { name: "Boss Potion Drop", base: 0, shown: (n: number) => (n ? "On" : "Off") },
+  /** The factor on max HP Lifespring's Health Bonus stops at
+   * (`lifespringEffects`), in percent: 500 untrained, 25 more a level. */
+  lifespringHealth: { name: "Health Bonus Limit", base: 500, shown: (n: number) => `${n}%` },
+  /** Lifespring's Gold Bonus, in hundredths: ×1.5 untrained, ×0.05 more a level. */
+  lifespringGold: { name: "Gold Bonus", base: 150, shown: (n: number) => `×${n / 100}` },
+  /** Lifespring's Damage Amplification a wave, in tenths: ×5 untrained, ×1.5 more a level. */
+  lifespringAmplify: { name: "Damage Amplification", base: 50, shown: (n: number) => `×${n / 10}` },
+  /** Lifespring's Cell Bonus, in tenths: ×1 untrained (no Cells more), ×0.1 more a level. */
+  lifespringCells: { name: "Cell Bonus", base: 10, shown: (n: number) => `×${n / 10}` },
   /** Badges each card can hold. */
   badgeSlots: { name: "Badge Slots", base: 1, shown: count },
   /** Turns allowed per Obelisk boss trial run before the encounter ends. */
@@ -331,11 +343,57 @@ const OVERSEER_GOLD_TIMES: readonly [days: number, hours: number, minutes: numbe
   [1, 15, 59], [2, 0, 21], [2, 8, 53], [2, 17, 54], [3, 3, 49], [3, 15, 6], [4, 4, 17], [4, 19, 58], [5, 14, 49], [6, 13, 31],
   [7, 16, 49], [9, 1, 30], [10, 16, 23], [12, 14, 21], [14, 20, 18], [17, 11, 9], [20, 11, 54], [23, 23, 32], [27, 23, 6], [32, 11, 40],
 ];
-/** A schedule's level `i` of `target`, adding `value`, at its listed Gold and days, hours and minutes. */
-const scheduled = (target: ResearchTarget, value: number, gold: readonly number[], times: readonly (readonly [number, number, number])[]) =>
+/** Lifespring Health research: +25% on the Health Bonus's limit a level, for
+ * 30 levels, from 525% to 1,250%: each level's Gold, and its time as days,
+ * hours, minutes and seconds. */
+const LIFESPRING_HEALTH_GOLD = [
+  250_000, 560_000, 1_100_000, 2_800_000, 7_750_000, 19_540_000, 43_580_000, 87_410_000, 160_910_000, 276_620_000,
+  334_620_000, 347_440_000, 363_460_000, 383_110_000, 406_870_000, 435_210_000, 468_640_000, 507_670_000, 552_830_000, 604_680_000,
+  663_770_000, 730_690_000, 806_040_000, 890_410_000, 984_430_000, 1_090_000_000, 1_200_000_000, 1_330_000_000, 1_470_000_000, 1_620_000_000,
+];
+const LIFESPRING_HEALTH_TIMES: readonly [days: number, hours: number, minutes: number, seconds: number][] = [
+  [0, 19, 59, 59], [1, 4, 21, 9], [1, 12, 53, 11], [1, 21, 54, 33], [2, 7, 49, 19], [2, 19, 6, 5], [3, 8, 17, 16], [3, 23, 58, 44], [4, 18, 49, 30], [5, 17, 31, 29],
+  [7, 4, 48, 55], [7, 14, 48, 11], [8, 1, 1, 58], [8, 11, 30, 53], [8, 22, 15, 35], [9, 9, 16, 39], [9, 20, 34, 39], [10, 8, 10, 10], [10, 20, 3, 42], [11, 8, 15, 49],
+  [11, 20, 46, 59], [12, 9, 37, 43], [12, 22, 48, 31], [13, 12, 19, 49], [14, 2, 12, 6], [14, 16, 25, 49], [15, 7, 1, 25], [15, 21, 59, 19], [16, 13, 19, 57], [17, 5, 3, 44],
+];
+/** Lifespring Gold Bonus research: ×0.05 more a level, for 20 levels, from ×1.55 to ×2.5. */
+const LIFESPRING_GOLD_GOLD = [
+  250_000, 560_000, 1_100_000, 2_800_000, 7_750_000, 19_540_000, 43_580_000, 87_410_000, 160_910_000, 276_620_000,
+  449_930_000, 699_340_000, 1_050_000_000, 1_520_000_000, 2_140_000_000, 2_950_000_000, 3_980_000_000, 5_270_000_000, 6_880_000_000, 8_840_000_000,
+];
+const LIFESPRING_GOLD_TIMES: readonly [days: number, hours: number, minutes: number, seconds: number][] = [
+  [0, 20, 0, 0], [1, 4, 21, 9], [1, 12, 53, 11], [1, 21, 54, 33], [2, 7, 49, 19], [2, 19, 6, 5], [3, 8, 17, 16], [3, 23, 58, 44], [4, 18, 49, 30], [5, 17, 31, 29],
+  [6, 20, 49, 19], [8, 5, 30, 9], [9, 20, 23, 37], [11, 18, 21, 37], [14, 0, 18, 17], [16, 15, 9, 51], [19, 15, 54, 39], [23, 3, 32, 57], [27, 3, 6, 55], [31, 15, 40, 37],
+];
+/** Lifespring Damage Amplifier research: ×1.5 more a wave a level, for 30 levels, from ×6.5 to ×50. */
+const LIFESPRING_AMPLIFY_GOLD = [
+  100_000_000_000, 150_000_000_000, 225_000_000_000, 337_500_000_000, 506_250_000_000,
+  759_380_000_000, 1_140_000_000_000, 1_710_000_000_000, 2_560_000_000_000, 3_840_000_000_000,
+  5_770_000_000_000, 8_650_000_000_000, 12_970_000_000_000, 19_460_000_000_000, 29_190_000_000_000,
+  43_790_000_000_000, 65_680_000_000_000, 98_530_000_000_000, 147_790_000_000_000, 221_680_000_000_000,
+  332_530_000_000_000, 498_790_000_000_000, 748_180_000_000_000, 1_120_000_000_000_000, 1_680_000_000_000_000,
+  2_530_000_000_000_000, 3_790_000_000_000_000, 5_680_000_000_000_000, 8_520_000_000_000_000, 12_780_000_000_000_000,
+];
+const LIFESPRING_AMPLIFY_TIMES: readonly [days: number, hours: number, minutes: number, seconds: number][] = [
+  [8, 8, 0, 0], [9, 8, 0, 0], [10, 10, 52, 48], [11, 16, 59, 8], [13, 2, 42, 13], [14, 16, 28, 6], [16, 10, 45, 52], [18, 10, 8, 10], [20, 15, 11, 33], [23, 2, 36, 56],
+  [25, 21, 10, 10], [28, 23, 42, 35], [32, 11, 11, 42], [36, 8, 41, 54], [40, 17, 25, 20], [45, 14, 42, 47], [51, 2, 4, 43], [57, 5, 12, 29], [64, 1, 59, 35], [71, 18, 33, 8],
+  [80, 9, 15, 31], [90, 0, 46, 11], [100, 20, 3, 43], [112, 22, 28, 10], [126, 11, 43, 33], [141, 16, 0, 47], [158, 16, 0, 52], [177, 16, 58, 34], [199, 0, 46, 25], [222, 21, 59, 11],
+];
+/** Lifespring Cell Bonus research: ×0.1 more Cells a level, for 20 levels, from ×1.1 to ×3. */
+const LIFESPRING_CELLS_GOLD = [
+  1_000_000_000, 1_500_000_000, 2_250_000_000, 3_380_000_000, 5_060_000_000, 7_590_000_000, 11_390_000_000, 17_090_000_000, 25_630_000_000, 38_440_000_000,
+  57_670_000_000, 86_500_000_000, 129_750_000_000, 194_620_000_000, 291_930_000_000, 437_890_000_000, 656_840_000_000, 985_260_000_000, 1_480_000_000_000, 2_220_000_000_000,
+];
+const LIFESPRING_CELLS_TIMES: readonly [days: number, hours: number, minutes: number, seconds: number][] = [
+  [3, 5, 46, 39], [3, 15, 6, 39], [4, 1, 33, 51], [4, 13, 16, 19], [5, 2, 23, 5], [5, 17, 4, 15], [6, 9, 31, 10], [7, 3, 56, 30], [8, 0, 34, 29], [8, 23, 41, 2],
+  [10, 1, 33, 57], [11, 6, 33, 13], [12, 15, 1, 13], [14, 3, 22, 58], [15, 20, 6, 31], [17, 17, 43, 18], [19, 20, 48, 30], [22, 6, 1, 31], [24, 22, 6, 30], [27, 21, 52, 53],
+];
+/** A schedule's level `i` of `target`, adding `value`, at its listed Gold and
+ * days, hours and minutes (and seconds, where it lists them). */
+const scheduled = (target: ResearchTarget, value: number, gold: readonly number[], times: readonly (readonly number[])[]) =>
   gold.map((g, i) => {
-    const [days, hours, minutes] = times[i]!;
-    return levelOf(target, value, g, (days * 24 + hours) * 60 + minutes);
+    const [days = 0, hours = 0, minutes = 0, seconds = 0] = times[i]!;
+    return levelOf(target, value, g, (days * 24 + hours) * 60 + minutes + seconds / 60);
   });
 
 /** Offline Gold Multiplier research (+0.5% of the Recent Gold per Hour a
@@ -934,6 +992,41 @@ export const RESEARCH = {
     categories: ["arcana", "economy"],
     requires: [{ upgrade: "archives" }, { goalUnlock: "overseerGold" }],
     levels: scheduled("overseerGold", 1, OVERSEER_GOLD_GOLD, OVERSEER_GOLD_TIMES),
+  },
+  lifespringHealth: {
+    name: "Lifespring Health",
+    description: "The Max HP bonus from enemies Lifespring touched rises higher before it stops.",
+    categories: ["arcana", "defense"],
+    requires: [{ upgrade: "archives" }, { goalUnlock: "lifespringResearch" }],
+    levels: scheduled("lifespringHealth", 25, LIFESPRING_HEALTH_GOLD, LIFESPRING_HEALTH_TIMES),
+  },
+  lifespringGold: {
+    name: "Lifespring Gold Bonus",
+    description: "Enemies hit by Effect Waves or Lifespring's field drop more Gold.",
+    categories: ["arcana", "economy"],
+    requires: [{ upgrade: "archives" }, { goalUnlock: "lifespringResearch" }],
+    levels: scheduled("lifespringGold", 5, LIFESPRING_GOLD_GOLD, LIFESPRING_GOLD_TIMES),
+  },
+  lifespringAmplify: {
+    name: "Lifespring Damage Amplifier",
+    description: "Each Effect Wave that hits an enemy raises the damage Lifespring's field does to it further.",
+    categories: ["arcana", "offense"],
+    requires: [{ upgrade: "archives" }, { goalUnlock: "lifespringResearch" }],
+    levels: scheduled("lifespringAmplify", 15, LIFESPRING_AMPLIFY_GOLD, LIFESPRING_AMPLIFY_TIMES),
+  },
+  lifespringCells: {
+    name: "Lifespring Cell Bonus",
+    description: "Enemies hit by Effect Waves or Lifespring's field drop more of their Cells.",
+    categories: ["arcana", "economy"],
+    requires: [{ upgrade: "archives" }, { goalUnlock: "lifespringResearch" }],
+    levels: scheduled("lifespringCells", 1, LIFESPRING_CELLS_GOLD, LIFESPRING_CELLS_TIMES),
+  },
+  bossPotion: {
+    name: "Boss Potion Drop",
+    description: "Each boss you defeat drops a percent potion, drunk at once wherever you stand.",
+    categories: ["defense"],
+    requires: [{ upgrade: "archives" }, { goalUnlock: "bossPotion" }],
+    levels: [levelOf("bossPotion", 1, 1e9, 11667)],
   },
   mug: {
     name: "Mug",

@@ -1,6 +1,6 @@
 import { boltTargets, chargeBolts, chargeZap, decodeArcanaRun, settleBolts, settleZap, tickCooldowns, ZAP_SALT } from "../arcana/arcana.ts";
 import { inBeams } from "../arcana/overseer.ts";
-import { fieldHit, lifespringEffects, springAmplify, stepLifespring, validLifespring } from "../arcana/lifespring.ts";
+import { fieldHit, springAmplify, stepLifespring, validLifespring } from "../arcana/lifespring.ts";
 import { decayed, fieldsOn, frostArea, stepFrost, validFrost, validNecro, type Necro } from "../arcana/necrotic-frost.ts";
 import { ghostDirection, ghostOffset, inBlast, loseGhost, stepPhantasm, touchesTile, validPhantasm } from "../arcana/phantasm.ts";
 import { stepDilation, validDilation } from "../arcana/time-dilation.ts";
@@ -85,12 +85,12 @@ function strike(s: TrialState, t: Target, boost: number, kind: TrialStrike["kind
  * then the field on what stands in it, closest first. Every wave counts for
  * everything in the arena, even what came after it, and nothing there pays a
  * kill, so its Gold, Cell and Health Bonuses find nothing to raise. */
-function lifespringTurn(s: TrialState, a: NonNullable<TrialState["arcana"]>, { hp, waves, turns, reach }: NonNullable<TrialSpells["lifespring"]>, strikes: TrialStrike[]) {
+function lifespringTurn(s: TrialState, a: NonNullable<TrialState["arcana"]>, { hp, waves, turns, reach, amplify }: NonNullable<TrialSpells["lifespring"]>, strikes: TrialStrike[]) {
   const spring = (a.lifespring ??= {}), hero = s.player;
   a.springStep = stepLifespring(spring, { waves, turns, amount: hp * hero.attack });
   if (a.springStep.wave) a.springWaves = (a.springWaves ?? 0) + 1;
   const d2 = (t: Spot) => (t.x - hero.x) * (t.x - hero.x) + (t.y - hero.y) * (t.y - hero.y);
-  const rate = springAmplify(lifespringEffects(s).amplify, a.springWaves ?? 0);
+  const rate = springAmplify(amplify, a.springWaves ?? 0);
   const near = targets(s).filter((t) => d2(t) * 10_000 <= reach * reach).sort((p, q) => d2(p) - d2(q) || p.y - q.y || p.x - q.x);
   for (const t of near) {
     if (!spring.pool || s.status !== "active") break;

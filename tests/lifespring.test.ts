@@ -13,6 +13,8 @@ import { trialArcanaTurn } from "../src/proving-grounds/trial-arcana.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 import type { Enemy } from "../src/entities.ts";
 import type { TowerRun } from "../src/runs.ts";
+import { checkpoint } from "../src/goals.ts";
+import { RESEARCH, type ResearchId } from "../src/progression/archives.ts";
 
 const brute: Enemy = { name: "Brute", hp: 1000, attack: 0, defense: 5000, tier: 1, strength: "weak" };
 
@@ -227,4 +229,73 @@ test("in a trial its waves amplify the field on what stands in the arena", () =>
   session.sync();
   const back = decodeTrial(JSON.parse(JSON.stringify(state)));
   assert.equal(back?.arcana?.springWaves, 1);
+});
+
+test("Tower III's floor 250 Goal opens the four Lifespring projects, at the spec's ends", () => {
+  assert.deepEqual(checkpoint(3, 250), { floor: 250, reward: { kind: "unlock", unlock: "lifespringResearch" }, premium: { kind: "currency", currency: "gold", amount: 1_000_000 } });
+  const minutes = (id: ResearchId, i: number) => Math.round(RESEARCH[id].levels.at(i)!.hours * 3600);
+  const ends: [ResearchId, number, number, number, number, number][] = [
+    ["lifespringHealth", 30, 250_000, (19 * 60 + 59) * 60 + 59, 1.62e9, ((17 * 24 + 5) * 60 + 3) * 60 + 44],
+    ["lifespringGold", 20, 250_000, 20 * 3600, 8.84e9, ((31 * 24 + 15) * 60 + 40) * 60 + 37],
+    ["lifespringAmplify", 30, 1e11, (8 * 24 + 8) * 3600, 1.278e16, ((222 * 24 + 21) * 60 + 59) * 60 + 11],
+    ["lifespringCells", 20, 1e9, ((3 * 24 + 5) * 60 + 46) * 60 + 39, 2.22e12, ((27 * 24 + 21) * 60 + 52) * 60 + 53],
+  ];
+  for (const [id, length, firstGold, firstSeconds, lastGold, lastSeconds] of ends) {
+    const project = RESEARCH[id];
+    assert.ok(project.requires.some((r) => "goalUnlock" in r && r.goalUnlock === "lifespringResearch"), id);
+    assert.equal(project.categories[0], "arcana", id);
+    assert.deepEqual([project.levels.length, project.levels[0]!.gold, minutes(id, 0), project.levels.at(-1)!.gold, minutes(id, -1)], [length, firstGold, firstSeconds, lastGold, lastSeconds], id);
+  }
+});
+
+test("research raises what Lifespring gives: Gold ×1.5 untrained, up to ×12.5 Health, ×50 a wave, ×2.5 Gold and ×3 Cells", () => {
+  const s = defaults();
+  assert.deepEqual(lifespringEffects(s), { healthPerKill: 0.05, healthLimit: 5, amplify: 5, gold: 1.5, cells: 0, defense: 0 });
+  Object.assign(s.archives.levels, { lifespringHealth: 1, lifespringGold: 1, lifespringAmplify: 1, lifespringCells: 1 });
+  assert.deepEqual(lifespringEffects(s), { healthPerKill: 0.05, healthLimit: 5.25, amplify: 6.5, gold: 1.55, cells: 0.1, defense: 0 });
+  Object.assign(s.archives.levels, { lifespringHealth: 30, lifespringGold: 20, lifespringAmplify: 30, lifespringCells: 20 });
+  assert.deepEqual(lifespringEffects(s), { healthPerKill: 0.05, healthLimit: 12.5, amplify: 50, gold: 2.5, cells: 2, defense: 0 });
+
+  const capped = arena([[2, 0]], 1);
+  capped.save.archives.levels.lifespringHealth = 30;
+  capped.run.lifespring = { pool: 100, health: 399.99 };
+  capped.world.markSpring?.(2, 0, 1);
+  turn(capped);
+  assert.equal(capped.run.lifespring.health, 400.04, "researched, the limit is past 5x");
+});
+
+test("a kill a wave touched pays Lifespring's Gold Bonus, ×1.5 untrained", () => {
+  const killed = (sprung: boolean, levels = 0) => {
+    const g = arena([[2, 0]], 1);
+    g.save.archives.levels.lifespringGold = levels;
+    if (sprung) g.world.markSpring?.(2, 0, 1);
+    const before = g.save.gold;
+    g.finds.kill(g.world.tile(2, 0).enemy!, { x: 2, y: 0 }, 1, false);
+    return g.save.gold - before;
+  };
+  const plain = killed(false);
+  assert.ok(plain > 0);
+  assert.ok(Math.abs(killed(true) - plain * 1.5) < 1e-9);
+  assert.ok(Math.abs(killed(true, 20) - plain * 2.5) < 1e-9);
+});
+
+test("in a trial the researched Damage Amplifier counts too", () => {
+  const base = new Game(defaults(), random(5));
+  base.newRun({ outside: true, seed: 12 });
+  base.save.arcana.owned.lifespring = [0, 0, 0];
+  base.save.archives.levels.lifespringAmplify = 1;
+  Object.assign(base.run.player, { attack: 100, hp: 1000, maxHp: 1000 });
+  const state = startTrial(base.run.player, "manual", [], 12, 1, "light-elemental");
+  base.save.provingGrounds = state;
+  new TrialSession(base, state);
+  assert.equal(state.arcana?.spells?.lifespring?.amplify, 6.5);
+  state.room = "arena";
+  Object.assign(state.player, { x: 2, y: 12 });
+  Object.assign(state, { status: "active", bossHp: 1000 });
+  Object.assign(state.elemental, { x: 3, y: 12, incorporeal: false });
+  state.arcana!.lifespring = { timer: 1 };
+  trialArcanaTurn(state, { message: "" });
+  state.arcana!.lifespring.pool = 10;
+  trialArcanaTurn(state, { message: "" });
+  assert.equal(state.bossHp, 935, "6.5x");
 });

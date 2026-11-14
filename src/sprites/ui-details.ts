@@ -26,4 +26,5 @@ export const GOAL_SPRITES = {
   warp: "goal-warp", parryPercent: "goal-parry", equipment: "goal-equipment",
   damageVisual: "goal-damage-visual", relativeDamageColor: "goal-relative-damage", rerollMission: "redo",
   overseerZap: "arcana-overseer", overseerGold: "arcana-overseer",
+  bossPotion: "potion-blue", lifespringResearch: "arcana-lifespring",
 } satisfies Record<GoalUnlock, string>;

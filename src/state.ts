@@ -3519,11 +3519,12 @@ export class Game {
   private enemyTitle(enemy: Enemy) { return enemyTitle(enemy, this.save.settings.legacyEnemies); }
   /** The wall clock the Archives' research runs on (ms); tests set it. */
   clock: () => number = () => Date.now();
-  /** Records a potion's heal of `n` HP, already applied, where the hero stands. */
-  recordHeal(n: number) {
+  /** Records a potion's heal of `n` HP, already applied, rising at `at`:
+   * where the hero stands, unless given (a boss's potion, where it fell). */
+  recordHeal(n: number, at: { x: number; y: number } = this.run.player) {
     if (n <= 0) return;
     const p = this.run.player;
-    this.lastHeal = { from: p.hp - n, to: p.hp, x: p.x, y: p.y, id: (this.lastHeal?.id ?? 0) + 1 };
+    this.lastHeal = { from: p.hp - n, to: p.hp, x: at.x, y: at.y, id: (this.lastHeal?.id ?? 0) + 1 };
   }
 }
 

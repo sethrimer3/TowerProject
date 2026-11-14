@@ -47,7 +47,11 @@ import { openEquipment } from "./equipment/inventory.ts";
  * Warp Loot (floor 150: the Archives' project that starts a Warp run with
  * a share of the skipped floors' Silver, economy/warp-loot.ts) and Overseer
  * Zap (floor 400: the Archives' project that has Overseer's beams call down
- * a Thunderbolt every few turns, docs/agents/arcana.md), and Tower II's Training Discount (floor
+ * a Thunderbolt every few turns, docs/agents/arcana.md), Boss Potion Drop
+ * (floor 200: the Archives' project that has each boss give the hero a
+ * percent potion, Finds.bossPotion) and Lifespring Research (floor 250: the
+ * Archives' four Lifespring projects, raising what `lifespringEffects`
+ * gives), and Tower II's Training Discount (floor
  * 80: the Archives' project that cuts a trainer's Gold) and Card Groups
  * (floor 90: the Deck links neighbouring cards of the hand into a group
  * whose cards share one priority, cards/cards.ts), and Tower V's Flying Enemy
@@ -61,7 +65,8 @@ export type GoalUnlock =
   | "shardAttack" | "shardDefense" | "parryPercent"
   | "shrines" | "firstBoonChoice" | "improveTradeoffs" | "autoPickBoons" | "boonOptions" | "banBoons" | "autoPickRanking"
   | "badgeSlots" | "noteTaking" | "archerCard" | "attackRange" | "attackSpeed" | "attackPerTile" | "chargedShot" | "multishot" | "rapidFire"
-  | "trainingDiscount" | "cardGroups" | "flyingEnemyCard" | "warpLoot" | "superCriticalResearch" | "aetherShield" | "rerollMission" | "overseerZap" | "overseerGold";
+  | "trainingDiscount" | "cardGroups" | "flyingEnemyCard" | "warpLoot" | "superCriticalResearch" | "aetherShield" | "rerollMission" | "overseerZap" | "overseerGold"
+  | "bossPotion" | "lifespringResearch";
 export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   damagePrediction: "Damage Prediction", combatForecast: "Combat Forecast", attackLore: "Attack Lore", warp: "Warp", damageVisual: "Damage Visual",
   relativeDamageColor: "Relative Damage Color", equipment: "Equipment", tournament: "Tournament", events: "Events",
@@ -74,7 +79,7 @@ export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   trainingDiscount: "Training Discount", cardGroups: "Card Groups", flyingEnemyCard: "Flying Enemy Card",
   warpLoot: "Warp Loot", superCriticalResearch: "Super Critical Research", aetherShield: "Unlock Aether Shield",
   rerollMission: "Reroll Daily Mission", overseerZap: "Overseer Zap",
-  overseerGold: "Overseer Coin Bonus",
+  overseerGold: "Overseer Coin Bonus", bossPotion: "Boss Potion Drop", lifespringResearch: "Lifespring Research",
 };
 /** What a checkpoint pays: an unlock, the next tower opened, an amount of a currency, or a relic. */
 export type GoalReward =
@@ -153,6 +158,8 @@ const TOWER_THREE: Record<number, CheckpointSet> = {
   80: { reward: unlock("rapidFire") },
   90: { reward: gems(30) },
   150: { reward: unlock("warpLoot") },
+  200: { reward: unlock("bossPotion") },
+  250: { reward: unlock("lifespringResearch"), premium: gold(1_000_000) },
   400: { reward: unlock("overseerZap"), premium: gold(5_000_000) },
 };
 /** Tower IV's checkpoints that differ from the stub. */

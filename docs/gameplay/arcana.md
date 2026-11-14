@@ -178,8 +178,8 @@ What the waves give, while Lifespring is on, by whatever means the enemy later f
 |---|---|---|
 | Health Bonus | +0.05%, up to ×5 | Each enemy a wave or the field touched raises your max HP this run as it falls, once however often it was touched. Pressing the Max HP card in a run shows how far it has come. |
 | Damage Amplification | ×5 a wave | The field does this much more to an enemy for each wave that hit it: after two, ×10, so an enemy of 1,000 HP costs the pool 100. |
-| Gold Bonus | ×1.0 | The Gold of an enemy a wave or the field touched is multiplied. |
-| Cell Bonus | ×0 | An enemy a wave or the field touched that drops Cells drops this share more. |
+| Gold Bonus | ×1.5 | The Gold of an enemy a wave or the field touched is multiplied. |
+| Cell Bonus | ×1 | The Cells of an enemy a wave or the field touched, if it drops any, are multiplied. |
 | DEF Reduction | 0% | Each wave takes this percent off every enemy's DEF, even below 0. |
 
 **The field** forms 4 turns after the last wave: three spinning, overlapping, faint green rings round you that spread out as it forms and stay until the pool is spent, on every floor of the run.
@@ -201,6 +201,20 @@ Switching it off loses the pool, the waves on their way and its cooldown; the He
 | HP | 2x | 9,119x | 31 |
 | Effect Waves | 1 | 5 | 5 |
 | Cooldown | 300 turns | 50 turns | 26 |
+
+### Lifespring research
+
+Tower III's floor 250 Goal opens four projects in the Archives' **Arcana** section, each raising one of the effects above for good, mid-run too.
+Lifespring's information, in the Arcana menu and from its card in a run, has a Research box with what each has reached.
+
+| Project | Untrained | Each level | Highest | Levels |
+|---|---|---|---|---|
+| Lifespring Health | Health Bonus up to ×5 | +25% on its limit | ×12.5 | 30 |
+| Lifespring Gold Bonus | ×1.5 | +×0.05 | ×2.5 | 20 |
+| Lifespring Damage Amplifier | ×5 a wave | +×1.5 a wave | ×50 a wave | 30 |
+| Lifespring Cell Bonus | ×1 | +×0.1 | ×3 | 20 |
+
+Damage Amplifier counts in the Proving Grounds' trials too.
 
 ## Time Dilation
 

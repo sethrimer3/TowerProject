@@ -102,6 +102,10 @@ const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
     `<p class="hint">Its first level brings the cooldown to 19 turns, and each level after takes off another. Without Thunderbolt, the strike is as hard as Thunderbolt's first level.</p>`,
   overseerGold: `<p>Overseer Coin Bonus opens in the Archives: research it, and enemies killed while they stand in Overseer's beams drop more Gold, whatever killed them.</p>` +
     `<p class="hint">Each level adds ×0.1, from ×1.1 at the first to ×3 at the twentieth. Overseer must be held and on.</p>`,
+  bossPotion: `<p>Boss Potion Drop opens in the Archives: research it, and each boss you defeat drops a percent potion that you drink at once, wherever you stand.</p>` +
+    `<p class="hint">It heals as a percent potion picked up would, Potion % and HEAL's tree included.</p>`,
+  lifespringResearch: `<p>Lifespring Research opens four projects in the Archives' Arcana section: Lifespring Health raises the limit of its Health Bonus, Lifespring Gold Bonus and Lifespring Cell Bonus raise the Gold and Cells of enemies it touched, and Lifespring Damage Amplifier makes each Effect Wave count for more against its field.</p>` +
+    `<p class="hint">Lifespring's information shows what each has reached, in the Arcana menu and in a run.</p>`,
   researchSpeed: `<p>Research Speed opens in the Archives: train the archivists to read faster, and every research, those under way included, takes less time.</p>`,
   badgeSlots: `<p>Badge Slots opens in the Archives: research it, and each card holds one more badge a level. Drag a badge onto a card on the Deck page to fill its next slot; on a card with every slot full, it takes the bottom slot's place.</p>` +
     `<p class="hint">Badges that can't work together can't share a card: a key colour's &lt; gate with its ≥ gate (GK &lt; with GK ≥), or Effective with Dampen.</p>`,

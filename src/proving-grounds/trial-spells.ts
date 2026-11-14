@@ -19,8 +19,8 @@ export type TrialSpells = {
   thunderbolt?: { boost: number; bolts: number; turns: number };
   /** Overseer Zap, once researched while Overseer is held and on: its cooldown, and its strike's share of ATK before the beams. */
   zap?: { boost: number; turns: number };
-  /** `reach`: the field's, in hundredths of a tile. */
-  lifespring?: { hp: number; waves: number; turns: number; reach: number };
+  /** `reach`: the field's, in hundredths of a tile; `amplify`: its Damage Amplification a wave, as researched. */
+  lifespring?: { hp: number; waves: number; turns: number; reach: number; amplify: number };
   /** `slow`: the percent its field slows what is in it by; `reach`: the field's, in hundredths of a tile. */
   timeDilation?: { duration: number; slow: number; turns: number; reach: number };
   phantasm?: { boost: number; quantity: number; turns: number; blast: number; spin: number };

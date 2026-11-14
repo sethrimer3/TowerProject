@@ -667,6 +667,13 @@ _Avoid_: zap bolt, beam strike
 Research that multiplies the Gold of an enemy killed while it stands in Overseer's beams, whatever killed it; its factor is the **Spotlight Gold**.
 _Avoid_: beam Gold, spotlight bounty
 
+**Boss Potion Drop**:
+Research that has each boss killed (not a Greater Boss) give the hero a percent potion, drunk at once wherever it stands.
+_Avoid_: boss heal, boss flask
+
+**Lifespring Research**:
+The four Archives projects that raise what Lifespring's Effect Waves give: Lifespring Health (its Health Bonus's limit), Gold Bonus, Damage Amplifier and Cell Bonus.
+
 **Lifespring**:
 An arcanum: on its cooldown, Effect Waves, then a field round the hero as wide as its shot range, spending an HP Pool on the enemies it touches.
 

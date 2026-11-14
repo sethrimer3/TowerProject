@@ -1,5 +1,6 @@
 import { snap } from "../exact.ts";
 import { isRecord, wholeIn } from "../save/decode.ts";
+import { researched, type ArchivesSave } from "../progression/archives.ts";
 
 // Lifespring (docs/agents/arcana.md): its cooldown sets off Effect Waves, one
 // every few turns, each hitting every enemy on the floor at once, then a field
@@ -18,12 +19,22 @@ export const TINT_TURNS = 5;
  * has added. */
 export type LifespringRun = { timer?: number; waves?: number; wait?: number; pool?: number; tint?: number; health?: number };
 
-/** What Lifespring gives, for research to raise: Health Bonus's percent of max
+/** What Lifespring gives, as its research has raised it: Health Bonus's percent of max
  * HP an enemy a wave or the field touched pays when it falls and the factor it stops at, the field's
  * damage multiplied per wave hit (`amplify`), the factor on Gold and the
  * additional share of Cells an enemy hit pays, and the percent of DEF a wave takes off. */
 export type LifespringEffects = { healthPerKill: number; healthLimit: number; amplify: number; gold: number; cells: number; defense: number };
-export const lifespringEffects = (_save: unknown): LifespringEffects => ({ healthPerKill: 0.05, healthLimit: 5, amplify: 5, gold: 1, cells: 0, defense: 0 });
+/** Lifespring's effects with the Archives as `save.archives` has them: Lifespring
+ * Health, Gold Bonus, Damage Amplifier and Cell Bonus each raise theirs
+ * (`RESEARCH_TARGETS`, in whole percent, hundredths or tenths, so the sums stay exact). */
+export const lifespringEffects = ({ archives }: { archives: ArchivesSave }): LifespringEffects => ({
+  healthPerKill: 0.05,
+  healthLimit: researched(archives, "lifespringHealth") / 100,
+  amplify: researched(archives, "lifespringAmplify") / 10,
+  gold: researched(archives, "lifespringGold") / 100,
+  cells: (researched(archives, "lifespringCells") - 10) / 10,
+  defense: 0,
+});
 
 /** What the field multiplies its damage by against an enemy `waves` Effect Waves have hit. */
 export const springAmplify = (amplify: number, waves: number) => (waves > 0 ? amplify * waves : 1);

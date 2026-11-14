@@ -11,7 +11,9 @@ import type { MissionType } from "../missions/catalog.ts";
 import { MODES, type ModeProfile } from "../modes.ts";
 import { noteKey, notesOf, tallyIn } from "../run-notes.ts";
 import type { Drop, GainArt } from "../shown.ts";
-import { HEART_DOOR_HP, shardStat, type StepEffect, type StepRules } from "../step-effects.ts";
+import { HEART_DOOR_HP, hpCeiling, potionRestores, shardStat, type StepEffect, type StepRules } from "../step-effects.ts";
+import { healUpTo } from "../combat.ts";
+import { researched } from "../progression/archives.ts";
 import { enemyStat, keyCount, wholeChange } from "../whole.ts";
 import type { DeskHost } from "./desk.ts";
 import type { ChestRoll, EquipmentLoot, RunPurse } from "./run-purse.ts";
@@ -40,10 +42,14 @@ export interface FindsHost extends DeskHost {
   readonly events: { record(type: EventMissionType, amount?: number, key?: string): void };
   gain(x: number, y: number, text: string, art?: GainArt | null, drop?: Drop, kind?: "door"): void;
   gainXp(enemy: Enemy, floor: number, scale?: number): void;
-  recordHeal(n: number): void;
+  /** Records a heal of `n` HP, already applied, rising at `at` (where the hero stands, unless given). */
+  recordHeal(n: number, at?: { x: number; y: number }): void;
   /** The GEM card's Gems from a boss's kill and a chest's opening. */
   readonly gemFinder: { bossDrop(enemy: Enemy, at: { x: number; y: number }, killKey: string): void; chestDrop(x: number, y: number): void };
 }
+
+/** The percent potion Boss Potion Drop gives. */
+const BOSS_POTION: Tile = { kind: "potion", color: "red" };
 
 /** What the run finds as it plays: a kill, an item taken, a chest or a door
  * opened. Each is paid through the purse (`RunPurse`, which gates Gold so
@@ -69,7 +75,7 @@ export class Finds {
     // Silver belongs to the run, so it isn't gated like Gold: undo takes it back.
     const silver = purse.killSilver(enemy, floor, scale, at);
     const { gold, cells, equipment } = purse.enemyLoot(enemy, at.x, at.y, scale, instakill, this.host.arcana.lifespringKill(enemy), this.host.spotlightGold(at));
-    const cellsFound = cells ? [cellsText(cells)] : [], found = equipment.flatMap(equipmentGains);
+    const cellsFound = cells ? [cellsText(cells)] : [], found = equipment.flatMap(equipmentGains), healed = this.bossPotion(enemy);
     for (const piece of equipment) {
       if (piece.item || piece.salvaged) this.host.events.record("equipment", 1, key);
       if (piece.item) this.host.save[mode].runFinds.equipment++;
@@ -80,7 +86,9 @@ export class Finds {
       { text: `+${wholeChange(silver)} Silver`, art: { coin: "silver" } },
       ...cellsFound.map((text) => ({ text, art: { cell: true as const } })),
       ...found,
+      ...(healed ? [{ text: `+${wholeChange(healed)} HP`, art: { tile: { ...BOSS_POTION } } }] : []),
     ], gold ? 1 : 0);
+    if (healed) this.host.recordHeal(healed, at);
     // A weak enemy card's Instakill Vigor boosts max HP for the run, as HEAL's Potion Vigor does.
     const vigor = instakill ? foeStat(this.host.treeBonus, enemy, "InstakillMaxHp") : 0;
     if (vigor) {
@@ -88,7 +96,19 @@ export class Finds {
       this.host.gain(at.x, at.y, `+${vigor}% max HP`, { heart: true, raised: true });
     }
     if (crits) this.host.events.record("crits", crits, key);
-    return [...coinsText(gold, silver), ...cellsFound, ...found.map((g) => g.text)];
+    return [...coinsText(gold, silver), ...cellsFound, ...found.map((g) => g.text), ...(healed ? [`Boss Potion +${wholeChange(healed)} HP`] : [])];
+  }
+  /** Boss Potion Drop, once researched: a boss's kill (a Greater Boss's
+   * aside) gives the hero a percent potion, drunk at once wherever it
+   * stands, healing as one picked up would (Potion %, HEAL's tree and
+   * equipment's potion yield), up to the Overheal ceiling. Returns the HP healed. */
+  private bossPotion(enemy: Enemy) {
+    const p = this.host.run.player, rules = this.host.stepRules;
+    if (enemy.strength !== "boss" || p.hp <= 0 || !researched(this.host.save.archives, "bossPotion")) return 0;
+    const heal = snap(potionRestores(BOSS_POTION, p.maxHp, rules) * (rules.yields?.potion ?? 1));
+    const healed = snap(healUpTo(p.hp, heal, hpCeiling(p.maxHp, rules)) - p.hp);
+    p.hp = snap(p.hp + healed);
+    return healed;
   }
   /** A kill counts toward the missions and the Event for its strength, once
    * a `key` (the mode and the kill's loot key). */
