@@ -53,10 +53,10 @@ The name under the hero's portrait follows: a Wayfarer, a Pathfinder once Tower 
 Tower IV's floor 30 opens the Archives' **Reroll Daily Mission** research: one level, 20,000,000 Gold and 1 day 15 hours 59 minutes.
 Once it is researched, each daily mission not yet complete has a looping arrow on the Missions screen; pressing it asks to spend 5 Gems, then swaps the mission for a different one, never of a kind already on the list, its progress starting over (see [Missions](../MISSIONS.md#rerolling)).
 Tower III's floor 200 opens the Archives' **Boss Potion Drop** research: one level, 1 billion Gold and 11,667 minutes (about 8 days 2 hours); once done, each boss you defeat drops a percent potion you drink at once, wherever you stand, healing as one picked up would.
-Tower III's floor 250 opens the Archives' four **Lifespring** projects (Health, Gold Bonus, Damage Amplifier and Cell Bonus, [Arcana](arcana.md#lifespring-research)); its premium reward is 1,000,000 Gold.
+Tower III's floor 250 opens the Archives' four **Lifespring** projects (Health, Gold Bonus, Damage Amplifier and Cell Bonus, [Arcana](arcana.md#lifespring-research)); its premium reward is 2,000,000 Gold.
 Tower IV's floor 70 opens two Archives projects in its Equipment section (its premium reward 500,000 Gold): **Common Drop Chance** (10 levels, 5 million Gold and 4 days 4 hours for the first, 7.32 billion and 8 days 5 hours for the last), each adding 0.1%, up to 1%, to a boss's chance of dropping a Common piece of equipment, and **Daily Mission Materials** (50 levels, 1.2 million Gold and 1 day 9 hours for the first, 352.9 billion and 12 days 8 hours for the last), each adding one upgrade material to what every daily mission pays ([Missions](../MISSIONS.md)).
-Tower IV's floor 200 opens the Archives' two **Aurum Bloom** projects: Aurum Bloom Bonus (25 levels, +0.15 on its Bonus each) and Aurum Bloom Chance (20 levels, +1% on its Golden Chance each), 1 million Gold and 1 day 16 hours for the first level of each ([Arcana](arcana.md#aurum-bloom-research)); its premium reward is 1,500,000 Gold.
-Tower III's floor 400 opens the Archives' **Overseer Zap** research: 18 levels, 200 million Gold and 6 days 16 hours for the first, about 5.5 billion Gold and 29 days for the last, each taking a turn off the cooldown of a Thunderbolt that Overseer's beams call down on an enemy in them ([Arcana](arcana.md#overseer-zap)); its premium reward is 5,000,000 Gold.
+Tower IV's floor 200 opens the Archives' two **Aurum Bloom** projects: Aurum Bloom Bonus (25 levels, +0.15 on its Bonus each) and Aurum Bloom Chance (20 levels, +1% on its Golden Chance each), 1 million Gold and 1 day 16 hours for the first level of each ([Arcana](arcana.md#aurum-bloom-research)); its premium reward is 2,000,000 Gold.
+Tower III's floor 400 opens the Archives' **Overseer Zap** research: 18 levels, 200 million Gold and 6 days 16 hours for the first, about 5.5 billion Gold and 29 days for the last, each taking a turn off the cooldown of a Thunderbolt that Overseer's beams call down on an enemy in them ([Arcana](arcana.md#overseer-zap)); its premium reward is 10,000,000 Gold.
 Tower IV's floor 30 premium reward is 150,000 Gold.
 Tower VII's floor 80 opens the Archives' **Overseer Coin Bonus** research: 20 levels, 20 million Gold and 1 day 16 hours for the first, 24.8 billion Gold and 32 days 12 hours for the last, each adding ×0.1 to the Gold of enemies killed in Overseer's beams, up to ×3 ([Arcana](arcana.md#overseer-coin-bonus)); its premium reward is 20 Arcanite.
 Tower V's floor 10 adds the **Flying Enemy** card to the deck ([The hand](hand-and-cards.md)).
@@ -67,10 +67,11 @@ Tapping a claimed unlock shows what it does again.
 A green check beside a checkpoint marks its area cleared.
 Entering the tower from the forest always starts on floor 1.
 Every tower has its own checkpoints; once a second is open, arrows at the bottom pan between them.
-Tower I's premium rewards, floor by floor: 100 Gold, 10 Gems, 10 Gems, 300 Gold, 15 Gems, 20 Gems, 600 Gold, 30 Gems, 30 Gems, 50 Gems (floor 100), 15,000 Gold, 35 Gems, 30,000 Gold, 25 Gems, 100,000 Gold, then 30, 35, 40 and 45 Gems (floors 500 to 1,250), 10 Arcanite (floor 1,500), 50 Gems (2,000), and 15 Arcanite (2,500).
+Tower I's premium rewards, floor by floor: 100 Gold, 10 Gems, 10 Gems, 300 Gold, 15 Gems, 20 Gems, 600 Gold, 30 Gems, 30 Gems, 30 Gems (floor 100), 15,000 Gold, 35 Gems, 50,000 Gold, 40 Gems, 200,000 Gold, then 45, 50, 55 and 60 Gems (floors 500 to 1,250), 10 Arcanite (floor 1,500), 70 Gems (2,000), and 15 Arcanite (2,500).
 Every tower's last checkpoint, floor 4,500, gives two of its own [relics](../EVENTS.md#tower-relics), named for the tower: an epic one on the left and a legendary one as its premium reward.
 Claiming one, or tapping it once claimed, shows the relic with its name and bonus.
-The other towers' rewards past their unlocks are placeholders for now (Gold on the left, 5 Gems a checkpoint on the right, rising by 5 with each, but for the premium rewards above); the store isn't connected yet, so only Dev mode (or its free purchases) unlocks a pass.
+Every checkpoint in every tower pays a set reward and premium reward of its own: Gold, Gems or Arcanite where it unlocks nothing, and the amounts grow from tower to tower.
+The store isn't connected yet, so only Dev mode (or its free purchases) unlocks a pass.
 The Delve has no Goals yet.
 End Climb (End Run in the Delve) shows only inside a run.
 

@@ -44,7 +44,7 @@ const zaps = (shots: readonly Shot[] | undefined) => (shots ?? []).filter((s) =>
 
 test("Tower III's floor 400 opens it, and the Goals pay the premium rewards asked for", () => {
   assert.deepEqual(checkpoint(3, 400)?.reward, { kind: "unlock", unlock: "overseerZap" });
-  assert.deepEqual(checkpoint(3, 400)?.premium, { kind: "currency", currency: "gold", amount: 5_000_000 });
+  assert.deepEqual(checkpoint(3, 400)?.premium, { kind: "currency", currency: "gold", amount: 10_000_000 });
   assert.deepEqual(checkpoint(4, 30)?.premium, { kind: "currency", currency: "gold", amount: 150_000 });
   assert.deepEqual(RESEARCH.overseerZap.requires, [{ upgrade: "archives" }, { goalUnlock: "overseerZap" }]);
 });

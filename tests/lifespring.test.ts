@@ -232,7 +232,7 @@ test("in a trial its waves amplify the field on what stands in the arena", () =>
 });
 
 test("Tower III's floor 250 Goal opens the four Lifespring projects, at the spec's ends", () => {
-  assert.deepEqual(checkpoint(3, 250), { floor: 250, reward: { kind: "unlock", unlock: "lifespringResearch" }, premium: { kind: "currency", currency: "gold", amount: 1_000_000 } });
+  assert.deepEqual(checkpoint(3, 250), { floor: 250, reward: { kind: "unlock", unlock: "lifespringResearch" }, premium: { kind: "currency", currency: "gold", amount: 2_000_000 } });
   const minutes = (id: ResearchId, i: number) => Math.round(RESEARCH[id].levels.at(i)!.hours * 3600);
   const ends: [ResearchId, number, number, number, number, number][] = [
     ["lifespringHealth", 30, 250_000, (19 * 60 + 59) * 60 + 59, 1.62e9, ((17 * 24 + 5) * 60 + 3) * 60 + 44],

@@ -112,10 +112,10 @@ const relic = (tower: number, rarity: "epic" | "legendary"): GoalReward => ({ ki
 /** The checkpoint floor whose rewards are the tower's relics (`TOWER_RELICS`):
  * an epic one, and a legendary one as its premium reward. */
 export const RELIC_FLOOR = 4500;
-/** A checkpoint's rewards that differ from the stub; either left out is the stub's. */
-type CheckpointSet = Partial<Omit<Checkpoint, "floor">>;
-/** Tower I's checkpoints that differ from the stub: an unlock each, Gems,
- * Gold and Arcanite, and its premium rewards. */
+const opens = (tower: number): GoalReward => ({ kind: "tower", tower });
+/** A checkpoint's two rewards. */
+type CheckpointSet = Omit<Checkpoint, "floor">;
+/** Tower I's checkpoints, every floor but the relics' (`RELIC_FLOOR`). */
 const TOWER_ONE: Record<number, CheckpointSet> = {
   10: { reward: unlock("damagePrediction"), premium: gold(100) },
   20: { reward: unlock("combatForecast"), premium: gems(10) },
@@ -126,93 +126,233 @@ const TOWER_ONE: Record<number, CheckpointSet> = {
   70: { reward: unlock("events"), premium: gold(600) },
   80: { reward: gems(25), premium: gems(30) },
   90: { reward: gold(2000), premium: gems(30) },
+  100: { reward: opens(2), premium: gems(30) },
   150: { reward: unlock("researchSpeed"), premium: gold(15_000) },
   200: { reward: gems(30), premium: gems(35) },
-  250: { reward: unlock("noteTaking"), premium: gold(30_000) },
-  300: { premium: gems(25) },
-  400: { premium: gold(100_000) },
-  500: { premium: gems(30) },
-  750: { premium: gems(35) },
-  1000: { premium: gems(40) },
-  1250: { premium: gems(45) },
+  250: { reward: unlock("noteTaking"), premium: gold(50_000) },
+  300: { reward: gems(30), premium: gems(40) },
+  400: { reward: gold(100_000), premium: gold(200_000) },
+  500: { reward: gems(35), premium: gems(45) },
+  750: { reward: gems(40), premium: gems(50) },
+  1000: { reward: gems(45), premium: gems(55) },
+  1250: { reward: gems(50), premium: gems(60) },
   1500: { reward: arcanite(5), premium: arcanite(10) },
-  2000: { premium: gems(50) },
-  2500: { premium: arcanite(15) },
+  2000: { reward: gems(55), premium: gems(70) },
+  2500: { reward: arcanite(10), premium: arcanite(15) },
 };
 
-/** Tower II's checkpoints that differ from the stub: an unlock each, and Gold. */
+/** Tower II's checkpoints. */
 const TOWER_TWO: Record<number, CheckpointSet> = {
-  10: { reward: unlock("relativeDamageColor") },
-  20: { reward: unlock("shardAttack") },
-  30: { reward: unlock("shardDefense") },
-  40: { reward: unlock("warp") },
-  50: { reward: gems(25) },
-  60: { reward: unlock("equipment") },
-  70: { reward: gold(10000) },
-  80: { reward: unlock("trainingDiscount") },
-  90: { reward: unlock("cardGroups") },
-  150: { reward: unlock("shrines") },
-  250: { reward: unlock("firstBoonChoice") },
-  400: { reward: unlock("improveTradeoffs") },
+  10: { reward: unlock("relativeDamageColor"), premium: gold(2000) },
+  20: { reward: unlock("shardAttack"), premium: gems(15) },
+  30: { reward: unlock("shardDefense"), premium: gems(20) },
+  40: { reward: unlock("warp"), premium: gold(4000) },
+  50: { reward: gems(25), premium: gems(30) },
+  60: { reward: unlock("equipment"), premium: gold(5000) },
+  70: { reward: gold(10000), premium: gold(15000) },
+  80: { reward: unlock("trainingDiscount"), premium: gold(25000) },
+  90: { reward: unlock("cardGroups"), premium: gold(50000) },
+  100: { reward: opens(3), premium: gems(35) },
+  150: { reward: unlock("shrines"), premium: gold(200_000) },
+  200: { reward: gems(35), premium: gems(40) },
+  250: { reward: unlock("firstBoonChoice"), premium: gold(400_000) },
+  300: { reward: gems(40), premium: gems(45) },
+  400: { reward: unlock("improveTradeoffs"), premium: gold(6_000_000) },
+  500: { reward: gems(40), premium: gems(50) },
+  750: { reward: gems(45), premium: gems(60) },
+  1000: { reward: gems(50), premium: gems(65) },
+  1250: { reward: arcanite(10), premium: arcanite(15) },
+  1500: { reward: arcanite(10), premium: arcanite(25) },
+  2000: { reward: gems(60), premium: gems(80) },
+  2500: { reward: arcanite(15), premium: arcanite(20) },
 };
-/** Tower III's checkpoints that differ from the stub. */
+/** Tower III's checkpoints. */
 const TOWER_THREE: Record<number, CheckpointSet> = {
-  10: { reward: unlock("archerCard") },
-  20: { reward: unlock("attackRange") },
-  30: { reward: unlock("attackSpeed") },
-  50: { reward: unlock("attackPerTile") },
-  60: { reward: unlock("chargedShot") },
-  70: { reward: unlock("multishot") },
-  80: { reward: unlock("rapidFire") },
-  90: { reward: gems(30) },
-  150: { reward: unlock("warpLoot") },
-  200: { reward: unlock("bossPotion") },
-  250: { reward: unlock("lifespringResearch"), premium: gold(1_000_000) },
-  400: { reward: unlock("overseerZap"), premium: gold(5_000_000) },
+  10: { reward: unlock("archerCard"), premium: gold(20_000) },
+  20: { reward: unlock("attackRange"), premium: gems(20) },
+  30: { reward: unlock("attackSpeed"), premium: gems(20) },
+  40: { reward: gems(25), premium: gold(50_000) },
+  50: { reward: unlock("attackPerTile"), premium: gems(25) },
+  60: { reward: unlock("chargedShot"), premium: gold(100_000) },
+  70: { reward: unlock("multishot"), premium: gems(30) },
+  80: { reward: unlock("rapidFire"), premium: gold(200_000) },
+  90: { reward: gems(30), premium: gems(40) },
+  100: { reward: opens(4), premium: gems(45) },
+  150: { reward: unlock("warpLoot"), premium: gold(500_000) },
+  200: { reward: unlock("bossPotion"), premium: gold(1_000_000) },
+  250: { reward: unlock("lifespringResearch"), premium: gold(2_000_000) },
+  300: { reward: gold(2_500_000), premium: gold(5_000_000) },
+  400: { reward: unlock("overseerZap"), premium: gold(10_000_000) },
+  500: { reward: gems(40), premium: arcanite(55) },
+  750: { reward: gems(50), premium: gems(65) },
+  1000: { reward: arcanite(15), premium: arcanite(20) },
+  1250: { reward: gems(60), premium: gems(75) },
+  1500: { reward: arcanite(20), premium: arcanite(25) },
+  2000: { reward: gems(70), premium: gems(90) },
+  2500: { reward: arcanite(25), premium: arcanite(30) },
 };
-/** Tower IV's checkpoints that differ from the stub. */
+/** Tower IV's checkpoints. */
 const TOWER_FOUR: Record<number, CheckpointSet> = {
+  10: { reward: gold(100_000), premium: gold(150_000) },
+  20: { reward: gems(25), premium: gems(30) },
   30: { reward: unlock("rerollMission"), premium: gold(150_000) },
-  50: { reward: unlock("autoPickBoons") },
+  40: { reward: gems(30), premium: gems(40) },
+  50: { reward: unlock("autoPickBoons"), premium: gold(300_000) },
+  60: { reward: gems(40), premium: gems(50) },
   70: { reward: unlock("dropResearch"), premium: gold(500_000) },
-  80: { reward: unlock("boonOptions") },
-  200: { reward: unlock("aurumBloomResearch"), premium: gold(1_500_000) },
+  80: { reward: unlock("boonOptions"), premium: gold(750_000) },
+  90: { reward: gems(45), premium: gems(55) },
+  100: { reward: opens(5), premium: gems(50) },
+  150: { reward: gold(1_000_000), premium: gold(1_500_000) },
+  200: { reward: unlock("aurumBloomResearch"), premium: gold(2_000_000) },
+  250: { reward: gems(45), premium: gems(60) },
+  300: { reward: gold(6_000_000), premium: gold(12_000_000) },
+  400: { reward: gems(50), premium: gems(65) },
+  500: { reward: gems(55), premium: arcanite(20) },
+  750: { reward: gems(60), premium: gems(75) },
+  1000: { reward: arcanite(20), premium: arcanite(25) },
+  1250: { reward: gems(70), premium: gems(85) },
+  1500: { reward: arcanite(25), premium: arcanite(30) },
+  2000: { reward: gems(80), premium: gems(100) },
+  2500: { reward: arcanite(30), premium: arcanite(35) },
 };
-/** Tower V's checkpoints that differ from the stub. */
+/** Tower V's checkpoints. */
 const TOWER_FIVE: Record<number, CheckpointSet> = {
-  10: { reward: unlock("flyingEnemyCard") },
-  30: { reward: unlock("parryPercent") },
-  40: { reward: unlock("banBoons") },
+  10: { reward: unlock("flyingEnemyCard"), premium: gold(500_000) },
+  20: { reward: gems(30), premium: gems(35) },
+  30: { reward: unlock("parryPercent"), premium: gold(1_000_000) },
+  40: { reward: unlock("banBoons"), premium: gems(40) },
+  50: { reward: gold(2_000_000), premium: gold(5_000_000) },
+  60: { reward: gems(40), premium: gems(50) },
+  70: { reward: gold(3_000_000), premium: gold(6_000_000) },
+  80: { reward: gems(45), premium: gems(55) },
+  90: { reward: gold(4_000_000), premium: gold(8_000_000) },
+  100: { reward: opens(6), premium: gems(55) },
   150: { reward: unlock("voidwellResearch"), premium: gold(10_000_000) },
-  200: { reward: unlock("superCriticalResearch") },
+  200: { reward: unlock("superCriticalResearch"), premium: gold(20_000_000) },
+  250: { reward: gems(50), premium: gems(65) },
+  300: { reward: gold(15_000_000), premium: gold(30_000_000) },
+  400: { reward: gems(60), premium: gems(80) },
   500: { reward: unlock("extraVoidwell"), premium: gold(50_000_000) },
+  750: { reward: gems(70), premium: gems(90) },
+  1000: { reward: arcanite(25), premium: arcanite(30) },
+  1250: { reward: gems(80), premium: gems(95) },
+  1500: { reward: arcanite(30), premium: arcanite(35) },
+  2000: { reward: gems(90), premium: gems(110) },
+  2500: { reward: arcanite(35), premium: arcanite(40) },
 };
-/** Tower VI's checkpoints that differ from the stub. */
+/** Tower VI's checkpoints. */
 const TOWER_SIX: Record<number, CheckpointSet> = {
-  10: { reward: unlock("autoPickRanking") },
-  50: { reward: unlock("badgeSlots") },
+  10: { reward: unlock("autoPickRanking"), premium: gold(1_000_000) },
+  20: { reward: gems(35), premium: gems(40) },
+  30: { reward: gold(2_000_000), premium: gold(4_000_000) },
+  40: { reward: gems(35), premium: gems(45) },
+  50: { reward: unlock("badgeSlots"), premium: gold(5_000_000) },
+  60: { reward: gems(40), premium: gems(50) },
+  70: { reward: gold(5_000_000), premium: gold(10_000_000) },
+  80: { reward: gems(45), premium: gems(55) },
+  90: { reward: gold(8_000_000), premium: gold(15_000_000) },
+  100: { reward: opens(7), premium: gems(60) },
+  150: { reward: gold(10_000_000), premium: gold(20_000_000) },
+  200: { reward: gems(50), premium: gems(60) },
+  250: { reward: gems(55), premium: gems(70) },
+  300: { reward: gold(20_000_000), premium: gold(40_000_000) },
+  400: { reward: gems(65), premium: arcanite(20) },
+  500: { reward: gems(70), premium: gems(80) },
+  750: { reward: gold(25_000_000), premium: gold(50_000_000) },
+  1000: { reward: arcanite(30), premium: arcanite(35) },
+  1250: { reward: gems(90), premium: gems(100) },
+  1500: { reward: arcanite(30), premium: arcanite(35) },
+  2000: { reward: gems(100), premium: gems(120) },
+  2500: { reward: arcanite(40), premium: arcanite(45) },
 };
-/** Tower VII's checkpoints that differ from the stub. */
+/** Tower VII's checkpoints. */
 const TOWER_SEVEN: Record<number, CheckpointSet> = {
+  10: { reward: gold(4_000_000), premium: gold(8_000_000) },
+  20: { reward: gems(40), premium: gems(50) },
+  30: { reward: gold(5_000_000), premium: gold(10_000_000) },
+  40: { reward: gems(45), premium: gems(55) },
+  50: { reward: gold(7_500_000), premium: gold(15_000_000) },
+  60: { reward: arcanite(10), premium: arcanite(15) },
+  70: { reward: gold(10_000_000), premium: gold(20_000_000) },
   80: { reward: unlock("overseerGold"), premium: arcanite(20) },
+  90: { reward: gold(12_500_000), premium: gold(25_000_000) },
+  100: { reward: opens(8), premium: gems(60) },
+  150: { reward: gems(50), premium: gems(60) },
+  200: { reward: gems(55), premium: gems(65) },
+  250: { reward: gems(55), premium: gems(70) },
+  300: { reward: gems(60), premium: gems(75) },
+  400: { reward: arcanite(10), premium: arcanite(20) },
+  500: { reward: gems(70), premium: gems(90) },
+  750: { reward: arcanite(15), premium: arcanite(25) },
+  1000: { reward: gems(80), premium: gems(100) },
+  1250: { reward: arcanite(20), premium: arcanite(30) },
+  1500: { reward: gems(90), premium: gems(120) },
+  2000: { reward: arcanite(35), premium: arcanite(40) },
+  2500: { reward: arcanite(45), premium: arcanite(50) },
 };
-/** Tower VIII's checkpoints that differ from the stub. */
+/** Tower VIII's checkpoints. */
 const TOWER_EIGHT: Record<number, CheckpointSet> = {
-  10: { reward: unlock("aetherShield") },
+  10: { reward: unlock("aetherShield"), premium: gold(50_000_000) },
+  20: { reward: gems(45), premium: gems(55) },
+  30: { reward: arcanite(10), premium: arcanite(10) },
+  40: { reward: gems(50), premium: gems(60) },
+  50: { reward: gold(50_000_000), premium: gold(75_000_000) },
+  60: { reward: gems(55), premium: gems(70) },
+  70: { reward: gold(100_000_000), premium: gold(150_000_000) },
+  80: { reward: arcanite(15), premium: arcanite(15) },
+  90: { reward: gems(60), premium: gems(80) },
+  100: { reward: opens(9), premium: gems(80) },
+  150: { reward: gems(65), premium: gems(85) },
+  200: { reward: arcanite(15), premium: arcanite(20) },
+  250: { reward: gems(70), premium: gems(90) },
+  300: { reward: gold(200_000_000), premium: gold(400_000_000) },
+  400: { reward: gems(75), premium: gems(95) },
+  500: { reward: arcanite(20), premium: arcanite(25) },
+  750: { reward: gems(85), premium: gems(110) },
+  1000: { reward: arcanite(25), premium: arcanite(30) },
+  1250: { reward: gems(90), premium: gems(120) },
+  1500: { reward: arcanite(30), premium: arcanite(35) },
+  2000: { reward: gems(100), premium: gems(130) },
+  2500: { reward: arcanite(50), premium: arcanite(55) },
+};
+/** Tower IX's checkpoints: the last tower, so floor 100 opens none. */
+const TOWER_NINE: Record<number, CheckpointSet> = {
+  10: { reward: gold(100_000_000), premium: gold(200_000_000) },
+  20: { reward: gems(50), premium: gems(60) },
+  30: { reward: arcanite(10), premium: arcanite(10) },
+  40: { reward: gems(55), premium: gems(65) },
+  50: { reward: gold(150_000_000), premium: gold(300_000_000) },
+  60: { reward: gems(60), premium: gems(75) },
+  70: { reward: gold(200_000_000), premium: gold(400_000_000) },
+  80: { reward: arcanite(15), premium: arcanite(20) },
+  90: { reward: gems(65), premium: gems(85) },
+  100: { reward: gold(250_000_000), premium: gems(90) },
+  150: { reward: gems(75), premium: gems(95) },
+  200: { reward: arcanite(25), premium: arcanite(30) },
+  250: { reward: gems(80), premium: gems(100) },
+  300: { reward: gold(500_000_000), premium: gold(1_000_000_000) },
+  400: { reward: gems(85), premium: gems(105) },
+  500: { reward: arcanite(30), premium: arcanite(35) },
+  750: { reward: gems(95), premium: gems(120) },
+  1000: { reward: arcanite(35), premium: arcanite(40) },
+  1250: { reward: gems(100), premium: gems(130) },
+  1500: { reward: arcanite(40), premium: arcanite(45) },
+  2000: { reward: gems(120), premium: gems(150) },
+  2500: { reward: arcanite(55), premium: arcanite(60) },
 };
 /** The checkpoint floor whose reward opens the next tower. */
 export const TOWER_UNLOCK_FLOOR = 100;
 
-/** A tower's checkpoints, lowest first.
- * TODO: the stub rewards (100 Gold × checkpoint number × tower, 5 Gems × checkpoint number
- * premium) are placeholders, to be tuned. */
+/** A tower's checkpoints, lowest first: its table's, and the relics at
+ * `RELIC_FLOOR`. Every other floor must be in the table. */
 function towerCheckpoints(tower: number): Checkpoint[] {
-  const sets: Record<number, Record<number, CheckpointSet>> = { 1: TOWER_ONE, 2: TOWER_TWO, 3: TOWER_THREE, 4: TOWER_FOUR, 5: TOWER_FIVE, 6: TOWER_SIX, 7: TOWER_SEVEN, 8: TOWER_EIGHT };
-  return CHECKPOINT_FLOORS.map((floor, i) => {
-    const n = i + 1, set = sets[tower]?.[floor];
-    const opens = floor === TOWER_UNLOCK_FLOOR && tower < TIERS ? { kind: "tower" as const, tower: tower + 1 } : null;
+  const sets: Record<number, Record<number, CheckpointSet>> = { 1: TOWER_ONE, 2: TOWER_TWO, 3: TOWER_THREE, 4: TOWER_FOUR, 5: TOWER_FIVE, 6: TOWER_SIX, 7: TOWER_SEVEN, 8: TOWER_EIGHT, 9: TOWER_NINE };
+  return CHECKPOINT_FLOORS.map((floor) => {
     if (floor === RELIC_FLOOR) return { floor, reward: relic(tower, "epic"), premium: relic(tower, "legendary") };
-    return { floor, reward: set?.reward ?? opens ?? gold(100 * n * tower), premium: set?.premium ?? gems(5 * n) };
+    const set = sets[tower]?.[floor];
+    if (!set) throw new Error(`Tower ${tower} has no rewards for floor ${floor}`);
+    return { floor, ...set };
   });
 }
 
