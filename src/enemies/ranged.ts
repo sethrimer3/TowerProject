@@ -74,8 +74,8 @@ export const shoots = (enemy: Enemy) => !!(enemy.ranged || enemy.flying) && !ene
  * its full HP kept as `fullHp`, and what they have broken of its DEF
  * (Armor Break) as `broken`. */
 export const wounded = (t: Tile): Tile => {
-  if (!t.wound && !t.broken && t.sprung === undefined && !t.necro && !t.amber) return t;
-  const less = (e: Enemy) => ({ ...e, ...(t.wound ? { hp: snap(Math.max(0, e.hp - t.wound)), fullHp: e.fullHp ?? e.hp } : {}), ...(t.broken ? { broken: t.broken } : {}), ...(t.sprung === undefined ? {} : { sprung: t.sprung }), ...(t.necro ? { necro: t.necro } : {}), ...(t.amber ? { amber: t.amber } : {}) });
+  if (!t.wound && !t.broken && t.sprung === undefined && !t.necro && !t.amber && !t.bolted) return t;
+  const less = (e: Enemy) => ({ ...e, ...(t.wound ? { hp: snap(Math.max(0, e.hp - t.wound)), fullHp: e.fullHp ?? e.hp } : {}), ...(t.broken ? { broken: t.broken } : {}), ...(t.sprung === undefined ? {} : { sprung: t.sprung }), ...(t.necro ? { necro: t.necro } : {}), ...(t.amber ? { amber: t.amber } : {}), ...(t.bolted ? { bolted: t.bolted } : {}) });
   return t.enemy ? { ...t, enemy: less(t.enemy) } : t.flyer ? { ...t, flyer: less(t.flyer) } : t;
 };
 /** `raw` (a tile as generated) with `damage` more wound (an arrow that only
@@ -97,6 +97,9 @@ export const springMark = (raw: Tile, waves: number, broke = 0): Tile => ({
   sprung: (raw.sprung ?? 0) + waves,
   ...(broke ? { broken: snap((raw.broken ?? 0) + broke) } : {}),
 });
+
+/** `raw` once a Thunderbolt bolt has hit its enemy (Thunderbolt Amplifier): one bolt more. */
+export const boltMark = (raw: Tile): Tile => ({ ...raw, bolted: (raw.bolted ?? 0) + 1 });
 
 /** `raw` with what Necrotic Frost has on its enemy now. It moves with the tile, as a wound does. */
 export const necroMark = (raw: Tile, necro: Record<string, number>): Tile => ({ ...raw, necro });

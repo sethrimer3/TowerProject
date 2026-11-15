@@ -7,7 +7,7 @@ import { breakTorch, placeTorches, torchesLeft } from "../torches.ts";
 import { tierCells, tierTile } from "../tiers.ts";
 import { fastCells } from "../enemies/fast.ts";
 import { boundsOf, stunnedTile, type VortexZone } from "../arcana/voidwell.ts";
-import { necroMark, rangedCells, springMark, wounded, woundMore } from "../enemies/ranged.ts";
+import { boltMark, necroMark, rangedCells, springMark, wounded, woundMore } from "../enemies/ranged.ts";
 import { skippedTile } from "../enemies/level-skips.ts";
 import { armoredCells } from "../enemies/armored.ts";
 import { flyingCells } from "../enemies/flying.ts";
@@ -349,6 +349,10 @@ export class World implements Board {
     if (t.kind !== "enemy" && !t.flyer) return;
     const k = point(x, y), raw = this.changes[k] ?? this.chunks.get(Math.floor(y / CHUNK))?.get(k);
     if (raw?.kind === "enemy" || raw?.flyer) this.changes[k] = woundMore(raw, damage, broke, amber);
+  }
+  markBolt(x: number, y: number) {
+    const k = point(x, y), raw = this.changes[k] ?? this.chunks.get(Math.floor(y / CHUNK))?.get(k);
+    if (raw?.kind === "enemy" || raw?.flyer) this.changes[k] = boltMark(raw);
   }
   markSpring(x: number, y: number, waves: number, broke = 0) {
     const k = point(x, y), raw = this.changes[k] ?? this.chunks.get(Math.floor(y / CHUNK))?.get(k);

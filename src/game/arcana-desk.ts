@@ -223,19 +223,22 @@ export class ArcanaDesk {
     return this.boost(valuesAt("phantasm", [0, 0, 0])[0]!);
   }
   /** Thunderbolt, if it is held and on: what its strikes multiply the hero's
-   * ATK by, the bolts of one trigger, and its cooldown. */
+   * ATK by, the bolts of one trigger, its cooldown, and what research adds,
+   * read as it strikes: Thunderbolt Amplifier's share a hit (`amplify`, tenths
+   * of a percent) and Thunderbolt Expansion's radius (`radius`, tenths of a tile). */
   thunderbolt() {
     const held = this.held.find((h) => h.id === "thunderbolt" && this.isOn(h.id));
     if (!held) return undefined;
-    const [multiplier, bolts, turns] = this.valuesOf(held);
-    return { boost: this.boost(multiplier) * relicFactor(this.save, "thunderbolt"), bolts, turns };
+    const [multiplier, bolts, turns] = this.valuesOf(held), archives = this.save.archives;
+    const amplify = researched(archives, "thunderboltAmplify"), radius = researched(archives, "thunderboltExpansion");
+    return { boost: this.boost(multiplier) * relicFactor(this.save, "thunderbolt"), bolts, turns, ...(amplify ? { amplify } : {}), ...(radius ? { radius } : {}) };
   }
   /** The bolts this turn strikes with (`fired`: what `turn` says ran out), if any. */
   chargeBolts(fired: readonly ArcanumId[]) {
     const rule = this.thunderbolt();
     if (!rule) return undefined;
     const { bolts, strike } = chargeBolts(this.runState, rule.bolts, fired.includes("thunderbolt"));
-    return bolts ? { boost: rule.boost, bolts, strike } : undefined;
+    return bolts ? { ...rule, bolts, strike } : undefined;
   }
   /** Keeps the bolts a strike left for the next turn. */
   settleBolts(left: number) {

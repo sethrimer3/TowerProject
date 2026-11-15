@@ -16,7 +16,7 @@ Below Free Training, **Interest**, with **Max Interest** and **Mug** either side
 Under it stand **Aether Shield** (see [Aether Shield](aether-shield.md)), then **Phoenix Spark** and **Echoes of time** (see [Phoenix Spark](runs.md#phoenix-spark)).
 **Offline Gold** (2 Breakthrough, down and right of Golden Floors, after it) pays Gold for time away and opens its research (see [Offline Gold](currencies-and-shop.md#offline-gold)).
 **Thorns** stands below Buy Quantity, with **Torch** (20 Inspiration) below it, a row below Floor Skip Reward.
-Torch leads three ways, each hidden until a Mastery under **Key Mastery** (1 Breakthrough, under Badges) in the Breakthrough tree is bought: down the middle Wooden Door and the door cards (**Door Mastery**, 2 Breakthrough, right of Extra Trainer under Key Mastery, after it), down to the left Find Gold Key and Key Efficiency (revealed by Key Mastery itself), then GK Siphon, BK Siphon, the key trades and the key badges (**Card Mastery**), and to the right Weak Enemy and the enemy cards (**Beast Mastery**), those two 1 Breakthrough each, split off Key Mastery (Beast Mastery beside it, under Dash Badge).
+Torch leads three ways, each hidden until a Mastery under **Key Mastery** (1 Breakthrough, under Badges) in the Breakthrough tree is bought: down the middle Wooden Door and the door cards (**Door Mastery**, 2 Breakthrough, left of Extra Trainer, after it), down to the left Find Gold Key and Key Efficiency (revealed by Key Mastery itself), then GK Siphon, BK Siphon, the key trades and the key badges (**Card Mastery**, straight under Key Mastery), and to the right Weak Enemy and the enemy cards (**Beast Mastery**), those two 1 Breakthrough each, split off Key Mastery (Beast Mastery beside it, under Dash Badge).
 **Bombs** (5 Inspiration, left of Critical Prediction, after it) opens the Bomb provision (see gear-and-equipment.md).
 **Super Critical** (30 Inspiration, under Bombs) opens SCrit % and SCrit x training (see training.md).
 **Armor Break** (50 Inspiration, under Super Critical) opens Armor Break training (see training.md).
@@ -117,8 +117,9 @@ Parries are certain, so forecasts, the inspect panel, the monster's damage numbe
 
 ## Arcana research
 
-Below **Extra Trainer** in the Breakthrough tree, six skills (5 Breakthrough each) open the Arcana's research in the Archives ([Arcana](arcana.md)).
+Below **Extra Trainer** in the Breakthrough tree, seven skills (5 Breakthrough each) open the Arcana's research in the Archives ([Arcana](arcana.md)).
 **Lifespring Research** (below Extra Trainer, after it) opens the four Lifespring projects.
+**Thunderbolt Research** (left of Lifespring Research, also after Extra Trainer) opens Thunderbolt Amplifier and Thunderbolt Expansion.
 **Overseer Zap** (down and right of Lifespring Research, after it) opens Overseer Zap research, and **Overseer Gold Bonus** (right of Overseer Zap, after it) Overseer Gold Bonus research.
 **Aurum Bloom Research** (below Lifespring Research, after it) opens the two Aurum Bloom projects.
 **Voidwell Research** (down and right of Aurum Bloom Research, after it) opens Voidwell Damage and Voidwell Gold Bonus, and **Extra Voidwell** (right of Voidwell Research, after it) Extra Voidwell research.

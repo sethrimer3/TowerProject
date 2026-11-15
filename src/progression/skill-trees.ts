@@ -158,7 +158,7 @@ export const TREES: SkillTree[] = [
     // down from it: Esoteric Training down and left, with Aether Shield
     // (what reveals the Inspiration tree's Shield path), Phoenix Spark and
     // Echoes of Time (its charges) straight under it, and Offline Gold down
-    // and right, with Gem Card under it, above Card Mastery.
+    // and right, with Gem Card under it, above Door Mastery.
     { id: "moreWealth", icon: "¤", x: 18, y: 85, requires: ["pathToWealth"] },
     { id: "goldenFloors", icon: "¤", x: 18, y: 111, requires: ["moreWealth"] },
     { id: "offlineGold", icon: "¤", x: 30, y: 137, requires: ["goldenFloors"] },
@@ -178,8 +178,8 @@ export const TREES: SkillTree[] = [
     // Level Skips (which reveals its two skills under Floor Skip Reward) under
     // Physician; Badges stand right of Enemy Level Skips, after it, and Key Mastery
     // under Badges. Beast Mastery splits off right of Key Mastery, under Dash Badge,
-    // Card Mastery down and far left of it, with Manual Hand, the second
-    // hand, under Card Mastery. Card, Beast and Door Mastery reveal the
+    // Card Mastery straight under it, with Manual Hand, the second hand,
+    // under Card Mastery. Card, Beast and Door Mastery reveal the
     // Inspiration tree's three paths under Torch.
     { id: "overheal", icon: "♥", x: 50, y: 85, requires: ["physician"] },
     { id: "life", icon: "✚", x: 50, y: 111, requires: ["overheal"] },
@@ -189,17 +189,19 @@ export const TREES: SkillTree[] = [
     { id: "cardBadges", icon: "◪", x: 70, y: 137, requires: ["enemyLevelSkips"] },
     { id: "keyMastery", icon: "⚿", x: 70, y: 163, requires: ["cardBadges"] },
     { id: "beastMastery", icon: "☠", x: 90, y: 163, requires: ["keyMastery"] },
-    { id: "cardMastery", icon: "▤", x: 30, y: 189, requires: ["keyMastery"] },
-    { id: "manualHand", icon: "⇄", x: 30, y: 213, requires: ["cardMastery"] },
-    // Extra Trainer under Key Mastery, with Door Mastery to its right after
-    // it, which reveals the Inspiration tree's door path under Torch. Then
-    // the Arcana's research below Extra Trainer: Lifespring Research, with
-    // Overseer Zap down and right of it and Overseer Gold Bonus right of
-    // that, then Aurum Bloom Research, with Voidwell Research down and right
-    // of it and Extra Voidwell right of that.
+    { id: "cardMastery", icon: "▤", x: 70, y: 189, requires: ["keyMastery"] },
+    { id: "manualHand", icon: "⇄", x: 70, y: 213, requires: ["cardMastery"] },
+    // Extra Trainer down and left of Key Mastery, with Door Mastery to its
+    // left after it, which reveals the Inspiration tree's door path under
+    // Torch. Then the Arcana's research below Extra Trainer: Lifespring
+    // Research, with Thunderbolt Research left of it (also after Extra
+    // Trainer), Overseer Zap down and right of it and Overseer Gold Bonus
+    // right of that, then Aurum Bloom Research, with Voidwell Research down
+    // and right of it and Extra Voidwell right of that.
     { id: "extraTrainer", icon: "⚔", x: 50, y: 189, requires: ["keyMastery"] },
-    { id: "doorMastery", icon: "⚿", x: 78, y: 189, requires: ["extraTrainer"] },
+    { id: "doorMastery", icon: "⚿", x: 30, y: 189, requires: ["extraTrainer"] },
     { id: "lifespringResearch", icon: "✚", x: 50, y: 213, requires: ["extraTrainer"] },
+    { id: "thunderboltResearch", icon: "↯", x: 30, y: 213, requires: ["extraTrainer"] },
     { id: "overseerZapResearch", icon: "↯", x: 70, y: 237, requires: ["lifespringResearch"] },
     { id: "overseerGoldResearch", icon: "¤", x: 90, y: 237, requires: ["overseerZapResearch"] },
     { id: "aurumBloomResearch", icon: "¤", x: 50, y: 237, requires: ["lifespringResearch"] },

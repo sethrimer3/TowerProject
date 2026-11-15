@@ -6,6 +6,7 @@ import { ghostDirection, ghostOffset, inBlast, loseGhost, stepPhantasm, touchesT
 import { stepDilation, validDilation } from "../arcana/time-dilation.ts";
 import { inVortex, placeVortices, stepVoidwell, validVoidwell, voidwellRoll } from "../arcana/voidwell.ts";
 import { TURN_TICKS } from "../enemies/ranged.ts";
+import { boltAmplified, inBoltSplash } from "../volley.ts";
 import { tileRandom } from "../random.ts";
 import { finite, isRecord, wholeIn } from "../save/decode.ts";
 import { activeBossParts, effectiveBossDef } from "./boss-variants.ts";
@@ -75,10 +76,26 @@ export function noteStrike(s: TrialState, x: number, y: number) {
 }
 
 /** An arcanum's hit on `t`: its share of ATK, Overseer's beams and all, less its DEF. At least 1, as the hero's own hits. */
-function strike(s: TrialState, t: Target, boost: number, kind: TrialStrike["kind"], from: Spot, tick: number, strikes: TrialStrike[]) {
+function strike(s: TrialState, t: Target, boost: number, kind: TrialStrike["kind"], from: Spot, tick: number, strikes: TrialStrike[], splash = false) {
   const damage = Math.max(1, Math.round(heroAttackOn(s, t) * boost - t.defense));
   t.take(damage);
-  strikes.push({ kind, from, to: { x: t.x, y: t.y }, damage, tick });
+  strikes.push({ kind, from, to: { x: t.x, y: t.y }, damage, tick, ...(splash ? { splash: true as const } : {}) });
+}
+
+/** A Thunderbolt bolt on `t`, as in the Tower (`thunderbolts` in volley.ts):
+ * raised by Thunderbolt Amplifier for each bolt that has hit it before (counted
+ * in `bolted` by its key), and with Thunderbolt Expansion on every other foe
+ * within its radius at the same boost. */
+function boltStrike(s: TrialState, a: NonNullable<TrialState["arcana"]>, t: Target, rule: NonNullable<TrialSpells["thunderbolt"]>, tick: number, strikes: TrialStrike[]) {
+  const radius = rule.radius ?? 0, amplify = rule.amplify ?? 0;
+  const splashed = radius ? targets(s).filter((o) => o.foe !== t.foe && inBoltSplash(o.x - t.x, o.y - t.y, radius)) : [];
+  const boost = rule.boost * boltAmplified(amplify, a.bolted?.[t.key] ?? 0);
+  strike(s, t, boost, "thunderbolt", t, tick, strikes);
+  if (amplify) {
+    a.bolted ??= {};
+    a.bolted[t.key] = (a.bolted[t.key] ?? 0) + 1;
+  }
+  for (const o of splashed) if (s.status === "active") strike(s, o, boost, "thunderbolt", { x: t.x, y: t.y }, tick, strikes, true);
 }
 
 /** Lifespring's part of a turn: its cooldown, its Effect Wave or its field forming,
@@ -193,7 +210,7 @@ export function trialArcanaTurn<O extends { message: string }>(s: TrialState, ou
       const chosen = boltTargets(targets(s), bolts, s.seed, turn);
       chosen.forEach((t, i) => {
         if (s.status !== "active") return;
-        strike(s, t, thunderbolt.boost, "thunderbolt", t, 1 + Math.floor((i * (TURN_TICKS - 1)) / chosen.length), strikes);
+        boltStrike(s, a, t, thunderbolt, 1 + Math.floor((i * (TURN_TICKS - 1)) / chosen.length), strikes);
       });
       settleBolts(a.run, targets(s).length ? bolts - chosen.length : 0);
     }
@@ -233,6 +250,13 @@ function decodeLag(raw: unknown) {
   return Object.keys(lag).length ? { lag } : {};
 }
 
+/** The bolts that have hit each saved foe, if any. */
+function decodeBolted(raw: unknown) {
+  if (!isRecord(raw)) return {};
+  const kept = Object.entries(raw).filter(([, v]) => wholeIn(v, 1, 1e9)).slice(0, MOST_TALLIES);
+  return kept.length ? { bolted: Object.fromEntries(kept) as Record<string, number> } : {};
+}
+
 /** The most foes whose Necro an attempt keeps. */
 const MOST_NECRO = 1000;
 /** What the saved foes have on them, if anything. */
@@ -249,6 +273,6 @@ export function decodeTrialArcana(raw: unknown): TrialArcana | undefined {
     ...(validLifespring(raw.lifespring) && Object.keys(raw.lifespring).length ? { lifespring: raw.lifespring } : {}), ...(wholeIn(raw.springWaves, 1, 1e9) ? { springWaves: raw.springWaves as number } : {}),
     ...(validDilation(raw.dilation) && Object.keys(raw.dilation).length ? { dilation: raw.dilation } : {}), ...decodeTallies(raw.tallies), ...decodeLag(raw.lag),
     ...(validPhantasm(raw.phantasm) && Object.keys(raw.phantasm).length ? { phantasm: raw.phantasm } : {}),
-    ...(validFrost(raw.frost) && Object.keys(raw.frost).length ? { frost: raw.frost } : {}), ...decodeNecro(raw.necro),
+    ...(validFrost(raw.frost) && Object.keys(raw.frost).length ? { frost: raw.frost } : {}), ...decodeNecro(raw.necro), ...decodeBolted(raw.bolted),
     ...(validVoidwell(raw.voidwell) && Object.keys(raw.voidwell).length ? { voidwell: raw.voidwell } : {}) };
 }

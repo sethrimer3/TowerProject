@@ -39,6 +39,7 @@ function researchedText(id: ArcanumId, values: AttributeValues, save: Save) {
 
 /** The Archives' projects that raise what an arcanum gives. */
 const ARCANUM_RESEARCH: Partial<Record<ArcanumId, readonly (keyof typeof RESEARCH & keyof typeof RESEARCH_TARGETS)[]>> = {
+  thunderbolt: ["thunderboltAmplify", "thunderboltExpansion"],
   lifespring: ["lifespringHealth", "lifespringGold", "lifespringAmplify", "lifespringCells"],
   aurumBloom: ["aurumBloomBonus", "aurumBloomChance"],
   voidwell: ["voidwellDamage", "voidwellGold", "extraVoidwell"],

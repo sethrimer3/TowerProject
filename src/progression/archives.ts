@@ -195,6 +195,12 @@ export const RESEARCH_TARGETS = {
   runNotes: { name: "Climb Notes", base: 0, shown: opened },
   /** Whether a daily mission can be rerolled for Gems (game/mission-desk.ts). */
   missionReroll: { name: "Mission Reroll", base: 0, shown: opened },
+  /** What each earlier Thunderbolt hit on an enemy adds to the next bolt's
+   * damage to it (ArcanaDesk.thunderbolt), in tenths of a percent: none untrained. */
+  thunderboltAmplify: { name: "Amplification", base: 0, shown: (n: number) => `+${n / 10}% a hit` },
+  /** How far round its target a Thunderbolt's damage reaches (ArcanaDesk.thunderbolt),
+   * in tenths of a tile: none untrained. */
+  thunderboltExpansion: { name: "Strike Radius", base: 0, shown: (n: number) => (n ? `${n / 10} ${n === 10 ? "tile" : "tiles"}` : "None") },
   /** Turns between Overseer Zap's strikes (game/arcana-desk.ts), 20 less
    * one a level; no strike before the first level. */
   overseerZapTurns: { name: "Zap Cooldown", base: 20, shown: (n: number) => `${n} turns` },
@@ -345,6 +351,30 @@ const SHIELD_REGEN_SECONDS = [99960, 120060, 141360, 167880, 207120];
 const SHIELD_THORNS_SECONDS = [99960, 124382, 151721, 186672, 238595];
 const shieldSkillLevels = (target: ResearchTarget, seconds: readonly number[]) => seconds.map((s, i): ResearchLevel => ({ gold: (i + 1) * 1e9, hours: s / 3600, effect: { target, op: "add", value: 1 } }));
 
+/** Thunderbolt Amplifier research: what each earlier bolt hit on an enemy adds
+ * to the next bolt's damage to it, in tenths of a percent: 2.5% at the first
+ * level, 1.5% more each level after, for 25 levels, to 38.5%: each level's
+ * Gold, and its time as days, hours and minutes. */
+const THUNDERBOLT_AMPLIFY_GOLD = [
+  500_000, 860_000, 1_450_000, 3_200_000, 8_200_000, 20_040_000, 44_130_000, 88_010_000, 161_560_000, 277_320_000,
+  450_680_000, 700_140_000, 1_050_000_000, 1_520_000_000, 2_140_000_000, 2_950_000_000, 3_980_000_000, 5_270_000_000, 6_880_000_000, 8_840_000_000,
+  11_220_000_000, 14_080_000_000, 17_480_000_000, 21_490_000_000, 26_190_000_000,
+];
+const THUNDERBOLT_AMPLIFY_TIMES: readonly [days: number, hours: number, minutes: number][] = [
+  [0, 19, 59], [1, 4, 21], [1, 12, 53], [1, 21, 54], [2, 7, 49], [2, 19, 6], [3, 8, 17], [3, 23, 58], [4, 18, 49], [5, 17, 31],
+  [6, 20, 49], [8, 5, 30], [9, 20, 23], [11, 18, 21], [14, 0, 18], [16, 15, 9], [19, 15, 54], [23, 3, 32], [27, 3, 6], [31, 15, 40],
+  [36, 18, 19], [42, 12, 12], [48, 22, 27], [56, 2, 16], [64, 0, 50],
+];
+/** Thunderbolt Expansion research: the radius round a bolt's target that its
+ * damage also reaches, in tenths of a tile: 1 tile at the first level (the four
+ * orthogonal neighbours), half a tile more each level after, for 5 levels, to 3. */
+const THUNDERBOLT_EXPANSION_GOLD = [900_000, 2_950_000, 12_130_000, 77_430_000, 301_670_000];
+const THUNDERBOLT_EXPANSION_TIMES: readonly [days: number, hours: number, minutes: number][] = [
+  [0, 22, 13], [1, 21, 46], [2, 21, 10], [3, 21, 42], [5, 13, 42],
+];
+/** A schedule whose first level adds `first` and every later one `value`. */
+const scheduledFrom = (target: ResearchTarget, first: number, value: number, gold: readonly number[], times: readonly (readonly number[])[]) =>
+  scheduled(target, value, gold, times).map((level, i) => (i ? level : { ...level, effect: { ...level.effect, value: first } }));
 /** Overseer Zap research: one turn off its cooldown a level, for 18 levels,
  * from 20 turns (no strike before the first level) to 2: each level's Gold,
  * and its time as days, hours and minutes. */
@@ -1094,6 +1124,20 @@ export const RESEARCH = {
     categories: ["economy"],
     requires: [{ upgrade: "archives" }, { goalUnlock: "warpLoot" }],
     levels: warpLootLevels(),
+  },
+  thunderboltAmplify: {
+    name: "Thunderbolt Amplifier",
+    description: "Each thunderbolt hit on an enemy amplifies the damage of the next bolt to hit it.",
+    categories: ["arcana", "offense"],
+    requires: [{ upgrade: "archives" }, { upgrade: "thunderboltResearch" }],
+    levels: scheduledFrom("thunderboltAmplify", 25, 15, THUNDERBOLT_AMPLIFY_GOLD, THUNDERBOLT_AMPLIFY_TIMES),
+  },
+  thunderboltExpansion: {
+    name: "Thunderbolt Expansion",
+    description: "Thunderbolts also strike the enemies round their target with the same damage.",
+    categories: ["arcana", "offense"],
+    requires: [{ upgrade: "archives" }, { upgrade: "thunderboltResearch" }],
+    levels: scheduledFrom("thunderboltExpansion", 10, 5, THUNDERBOLT_EXPANSION_GOLD, THUNDERBOLT_EXPANSION_TIMES),
   },
   overseerZap: {
     name: "Overseer Zap",

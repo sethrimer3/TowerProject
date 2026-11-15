@@ -72,6 +72,9 @@ export type Enemy = {
   /** Necrotic Frost (arcana/necrotic-frost.ts) has touched it, the Necro attribute:
    * each field's ticks on it; set by the board as it reads the tile's `necro`, never saved. */
   necro?: Record<string, number>;
+  /** The Thunderbolt bolts that have hit it (Thunderbolt Amplifier, arcana/arcana.ts);
+   * set by the board as it reads the tile's `bolted`, never saved. */
+  bolted?: number;
   /** It stands in Voidwell's vortex (arcana/voidwell.ts): it doesn't move or shoot, and
    * a Fast one doesn't strike first; set by the board as it reads the tile, never saved. */
   stunned?: true;
@@ -117,12 +120,13 @@ export type DoorRule =
  * here (enemies/ranged.ts); the board reads its HP that much lower. `broken`:
  * the percent of that enemy's DEF they have taken off it (Armor Break). `flyer`: the
  * Flying enemy hovering over this open floor tile (enemies/flying.ts), which the
- * hero walks under; its wound is the tile's `wound`. */
+ * hero walks under; its wound is the tile's `wound`. `bolted`: the Thunderbolt
+ * bolts that have hit the enemy here, which Thunderbolt Amplifier reads. */
 /** The colour a potion is drawn in: a regular potion red, like the HP bar
  * it fills, and a percent potion (whose tile is marked `color: "red"`, the
  * mark generation and saves keep) blue, like the Overheal bar. */
 export const potionShade = (t: Pick<Tile, "color">): "red" | "blue" => (t.color === "red" ? "blue" : "red");
-export type Tile = { kind: Kind; amount?: number; color?: KeyColor; door?: DoorRule; enemy?: Enemy; flyer?: Enemy; tier?: ChestTier; wound?: number; broken?: number; sprung?: number; necro?: Record<string, number>; amber?: number; chest?: Exclude<ChestKind, "plain"> };
+export type Tile = { kind: Kind; amount?: number; color?: KeyColor; door?: DoorRule; enemy?: Enemy; flyer?: Enemy; tier?: ChestTier; wound?: number; broken?: number; sprung?: number; necro?: Record<string, number>; amber?: number; bolted?: number; chest?: Exclude<ChestKind, "plain"> };
 export type Point = { x: number; y: number };
 /** A stationary wall-mounted light source, anchored to a walkable floor
  * tile adjacent to a wall. Its visibility polygon is computed once (on

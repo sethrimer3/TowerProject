@@ -16,7 +16,8 @@ import type { TrialState } from "./trial.ts";
 /** The arcana held and on, as the desk gives them. */
 export type TrialSpells = {
   ricochet?: { boost: number; rebounds: number; chance: number };
-  thunderbolt?: { boost: number; bolts: number; turns: number };
+  /** `amplify`: Thunderbolt Amplifier's share a hit, in tenths of a percent; `radius`: Thunderbolt Expansion's, in tenths of a tile. */
+  thunderbolt?: { boost: number; bolts: number; turns: number; amplify?: number; radius?: number };
   /** Overseer Zap, once researched while Overseer is held and on: its cooldown, and its strike's share of ATK before the beams. */
   zap?: { boost: number; turns: number };
   /** `reach`: the field's, in hundredths of a tile; `amplify`: its Damage Amplification a wave, as researched. */
@@ -34,15 +35,15 @@ export type TrialSpells = {
   overseer: boolean;
 };
 /** An arcanum's strike of the last turn, for the board to show. */
-export type TrialStrike = { kind: "ricochet" | "thunderbolt" | "lifespring" | "phantasm" | "necro" | "voidwell"; from: Spot; to: Spot; damage: number; tick: number };
+export type TrialStrike = { kind: "ricochet" | "thunderbolt" | "lifespring" | "phantasm" | "necro" | "voidwell"; from: Spot; to: Spot; damage: number; tick: number; splash?: true };
 /** The attempt's arcana: its toggles, cooldowns and bolts, the turns Overseer's
  * beams have turned, Lifespring's state and the Effect Waves it has fired
  * (`springWaves`), and Time Dilation's: its field and cooldown (`dilation`), each
  * foe's tally on what it does (`tallies`), and how far its field has held back the
  * clocks of the boss's effects and its Blaster Turret's, in hundredths of a turn
- * (`lag`), Phantasm's (`phantasm`) and Necrotic Frost's: its cooldown and fields (`frost`), and what is on each foe (`necro`), and Voidwell's cooldown and vortex (`voidwell`), all saved with it; `spells`, what strikes this turn, `struck`, what
+ * (`lag`), Phantasm's (`phantasm`) and Necrotic Frost's: its cooldown and fields (`frost`), and what is on each foe (`necro`), and Voidwell's cooldown and vortex (`voidwell`), and the Thunderbolt bolts that have hit each foe (`bolted`, Thunderbolt Amplifier), all saved with it; `spells`, what strikes this turn, `struck`, what
  * the hero's step strikes, `strikes` and `springStep`, what Lifespring did last turn, aren't saved. */
-export type TrialArcana = { run: ArcanaRun; beamTurns: number; lifespring?: LifespringRun; springWaves?: number; dilation?: DilationRun; tallies?: Record<string, number>; lag?: Partial<Record<BossClock, number>>; phantasm?: PhantasmRun; frost?: FrostRun; necro?: Record<string, Necro>; voidwell?: VoidwellRun; spells?: TrialSpells; struck?: Spot & { foe: object }; strikes?: TrialStrike[]; springStep?: LifespringStep };
+export type TrialArcana = { run: ArcanaRun; beamTurns: number; lifespring?: LifespringRun; springWaves?: number; dilation?: DilationRun; tallies?: Record<string, number>; lag?: Partial<Record<BossClock, number>>; phantasm?: PhantasmRun; frost?: FrostRun; necro?: Record<string, Necro>; voidwell?: VoidwellRun; bolted?: Record<string, number>; spells?: TrialSpells; struck?: Spot & { foe: object }; strikes?: TrialStrike[]; springStep?: LifespringStep };
 
 /** The clocks Time Dilation can hold back: the boss's own effects, and its Blaster Turret's. */
 export type BossClock = "boss" | "turret";

@@ -54,7 +54,7 @@ const TEMPEST_SALT = 0x71c0e;
  * felled (`fell`), which the board keeps showing until the shot lands. An
  * enemy's shot Phoenix Spark shrugged off (`sparked`) does nothing.
  */
-export type Shot = { by: "hero" | "enemy"; from: { x: number; y: number }; to: { x: number; y: number }; damage: number; tick: number; shrouded?: number; shielded?: number; shieldBroke?: true; sparked?: true; crit?: number; superCrit?: true; charge?: number; healed?: number; thorns?: number; before?: number; hp?: number; full?: number; fell?: Enemy; ricochet?: true; thunderbolt?: true; lifespring?: true; phantasm?: true; necro?: true; voidwell?: true };
+export type Shot = { by: "hero" | "enemy"; from: { x: number; y: number }; to: { x: number; y: number }; damage: number; tick: number; shrouded?: number; shielded?: number; shieldBroke?: true; sparked?: true; crit?: number; superCrit?: true; charge?: number; healed?: number; thorns?: number; before?: number; hp?: number; full?: number; fell?: Enemy; ricochet?: true; thunderbolt?: true; splash?: true; lifespring?: true; phantasm?: true; necro?: true; voidwell?: true };
 /** Where `shot`'s target stands: the hero's tile for an enemy's shot (whose
  * thorns cost the shooter, at `from`), the enemy's for an arrow. */
 export const enemyOf = (shot: Shot) => (shot.by === "enemy" ? shot.from : shot.to);
@@ -424,7 +424,7 @@ function rebound(board: VolleyTurn["board"], wrap: number, p: Player, { x, y }: 
 /** An arcanum's strike on the enemy at `to`, if one stands there: Arcanum Damage
  * (`boost`, its crits averaged and none rolled) as an arrow's less DEF, with no
  * Lifesteal and no Armor Break. Marked as what struck it (`how`), its kill too. */
-function arcaneStrike(board: VolleyTurn["board"], p: Player, to: { x: number; y: number }, boost: number, how: Pick<Shot, "from" | "tick" | "ricochet" | "thunderbolt" | "phantasm">, shots: Shot[], kills: VolleyKill[]) {
+function arcaneStrike(board: VolleyTurn["board"], p: Player, to: { x: number; y: number }, boost: number, how: Pick<Shot, "from" | "tick" | "ricochet" | "thunderbolt" | "splash" | "phantasm">, shots: Shot[], kills: VolleyKill[]) {
   const tile = board.tile(to.x, to.y), enemy = foeOn(tile);
   if (!enemy) return;
   const { armorBreak: _, ...striker } = p;
@@ -449,18 +449,36 @@ export function ghostRush({ board, wrap, hero, beams }: Pick<VolleyTurn, "board"
   return { shots, kills };
 }
 
+/** Whether an enemy `dx`, `dy` tiles from a bolt's target lies within
+ * Thunderbolt Expansion's `radius` (tenths of a tile) of it, the target aside:
+ * 1 tile reaches the four orthogonal tiles, 1.5 the diagonals, 2.5 a knight's move. */
+export const inBoltSplash = (dx: number, dy: number, radius: number) => (dx || dy ? (dx * dx + dy * dy) * 100 <= radius * radius : false);
+/** What Thunderbolt Amplifier multiplies a bolt by on an enemy `bolted` bolts
+ * have hit before: `amplify` (tenths of a percent) more for each, added. */
+export const boltAmplified = (amplify: number, bolted: number) => snap(1 + (amplify * bolted) / 1000);
+
 /** A turn's Thunderbolt: up to `bolts` random enemies of the floor the hero
  * stands on (`boltTargets`) take a bolt each, their ticks spread over the turn;
  * those left over strike next turn, unless no enemy remains to strike. Overseer's
- * beams multiply a bolt as the hero and they stand the tick it falls. Edits the
- * board's enemies; returns the shots, the kills and the bolts left. */
-export function thunderbolts(turn: Pick<VolleyTurn, "board" | "wrap" | "hero" | "from" | "seed" | "beams">, rule: { boost: number; bolts: number; strike: number }) {
+ * beams multiply a bolt as the hero and they stand the tick it falls, and
+ * Thunderbolt Amplifier (`amplify`) by the bolts that have hit its target
+ * before, which the board counts (`markBolt`). Thunderbolt Expansion (`radius`)
+ * strikes the floor's enemies round the target at the same boost, each through
+ * its own DEF, a `splash` shot that draws no bolt and adds no hit to their count.
+ * Edits the board's enemies; returns the shots, the kills and the bolts left. */
+export function thunderbolts(turn: Pick<VolleyTurn, "wrap" | "hero" | "from" | "seed" | "beams"> & { board: VolleyTurn["board"] & Pick<Board, "markBolt"> }, rule: { boost: number; bolts: number; strike: number; amplify?: number; radius?: number }) {
   const { board, wrap, hero, seed, beams } = turn, walk = walkOf(turn), shots: Shot[] = [], kills: VolleyKill[] = [];
   const targets = boltTargets(board.floorEnemies?.(hero.x, hero.y) ?? [], rule.bolts, seed, rule.strike);
   targets.forEach(({ x, y }, i) => {
     const tick = 1 + Math.floor((i * (TURN_TICKS - 1)) / targets.length), at = heroAt(walk, tick, wrap);
     const factor = beamFactor(beams, tick, shortWay(x - at.x, wrap), y - at.y);
-    arcaneStrike(board, hero, { x, y }, snap(rule.boost * factor), { from: { x, y }, tick, thunderbolt: true }, shots, kills);
+    const bolted = rule.amplify ? (foeOn(board.tile(x, y))?.bolted ?? 0) : 0;
+    const boost = snap(rule.boost * factor * boltAmplified(rule.amplify ?? 0, bolted));
+    const radius = rule.radius ?? 0;
+    const splashed = radius ? (board.floorEnemies?.(hero.x, hero.y) ?? []).filter((e) => inBoltSplash(shortWay(e.x - x, wrap), e.y - y, radius)) : [];
+    arcaneStrike(board, hero, { x, y }, boost, { from: { x, y }, tick, thunderbolt: true }, shots, kills);
+    if (rule.amplify) board.markBolt?.(x, y);
+    for (const e of splashed) arcaneStrike(board, hero, { x: e.x, y: e.y }, boost, { from: { x, y }, tick, thunderbolt: true, splash: true }, shots, kills);
   });
   const left = board.floorEnemies?.(hero.x, hero.y).length ? rule.bolts - targets.length : 0;
   return { shots, kills, left };

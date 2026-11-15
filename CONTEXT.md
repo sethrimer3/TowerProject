@@ -659,6 +659,14 @@ One of Overseer's spotlights from the hero, turning clockwise each turn. Hits fr
 **Thunderbolt**:
 An arcanum on a cooldown: its bolts fall from the board's upper edge on random enemies of the floor, and those left over with too few enemies strike again a turn at a time, until used up or no enemy remains.
 
+**Thunderbolt Amplifier**:
+Research that has each Thunderbolt bolt hit on an enemy raise the next bolt's damage to that same enemy, the share a hit added up over every earlier hit.
+_Avoid_: bolt stacks, thunder charge
+
+**Thunderbolt Expansion**:
+Research that has each Thunderbolt bolt also strike the enemies within its radius of the target, with the same damage; that **splash** shows the strike on each, with no bolt of its own.
+_Avoid_: bolt AOE, chain lightning
+
 **Overseer Zap**:
 Research that has Overseer's beams call down one Thunderbolt on a random enemy in them each time its cooldown runs out, as hard as Thunderbolt strikes times Overseer's Bonus.
 _Avoid_: zap bolt, beam strike

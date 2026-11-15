@@ -312,7 +312,7 @@ export class TrialRenderer {
           const delayed=age-(strike.tick/100)*160;
           if(options.hidden?.thunderbolt || delayed<0 || delayed>=THUNDERBOLT_FALL_MS+THUNDERBOLT_FLASH_MS)continue;
           c.save();
-          paintThunderbolt(c,to.x,to.y,reduceMotion?1:delayed/THUNDERBOLT_FALL_MS,strike.to.x,strike.to.y,strike.tick,S);
+          if(!strike.splash)paintThunderbolt(c,to.x,to.y,reduceMotion?1:delayed/THUNDERBOLT_FALL_MS,strike.to.x,strike.to.y,strike.tick,S);
           if(delayed>=THUNDERBOLT_FALL_MS || reduceMotion){c.translate(to.x-12,to.y-12);paintThunderlight(c,reduceMotion?0:delayed);}
           c.restore();
         }

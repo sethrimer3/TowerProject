@@ -131,7 +131,8 @@ function drawThunderbolt(f: FrameContext, shot: Shot, age: number, wrap: number)
   const x = f.playerX + shortWay(shot.to.x - f.playerX, wrap), { x: cx, y: bottom } = tileCenter(f, x, shot.to.y), c = f.c;
   if (bottom < 0) return;
   c.save();
-  paintThunderbolt(c, cx, bottom, f.look.reduceMotion ? 1 : age / THUNDERBOLT_FALL_MS, shot.to.x, shot.to.y, shot.tick, f.s);
+  // A Thunderbolt Expansion splash shows only the strike on its enemy, no bolt of its own.
+  if (!shot.splash) paintThunderbolt(c, cx, bottom, f.look.reduceMotion ? 1 : age / THUNDERBOLT_FALL_MS, shot.to.x, shot.to.y, shot.tick, f.s);
   if (age >= THUNDERBOLT_FALL_MS || f.look.reduceMotion) {
     c.setTransform(tileTransform(f, x, shot.to.y));
     paintThunderlight(c, f.look.reduceMotion ? 0 : age);
