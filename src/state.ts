@@ -13,9 +13,9 @@ import { noteGoldBoost } from "./economy/gold-boost.ts";
 import { canWarp, claimGoal, goalUnlocked, goalsWaiting } from "./goals.ts";
 import { fieldReach, togetherSlow } from "./arcana/time-dilation.ts";
 import { frostArea, frostSlowAt } from "./arcana/necrotic-frost.ts";
-import { placeVortex, stepVoidwell, voidwellRoll, type VortexZone } from "./arcana/voidwell.ts";
+import { inVortex, placeVortices, stepVoidwell, voidwellRoll, type VortexZone } from "./arcana/voidwell.ts";
 import type { GhostStrike } from "./arcana/phantasm.ts";
-import { fightRicochet, ghostStrikes, landsAt, lifespringContact, necroDecay, overseerZap, shortWay, thunderbolts, volleyTurn, type Shot, type Volley, type VolleyTurn } from "./volley.ts";
+import { fightRicochet, ghostStrikes, landsAt, lifespringContact, necroDecay, overseerZap, shortWay, thunderbolts, voidwellDamage, volleyTurn, type Shot, type Volley, type VolleyTurn } from "./volley.ts";
 import { missGem } from "./economy/gems.ts";
 import { DelvePlan } from "./delve/automove.ts";
 import { defaults } from "./save/save.ts";
@@ -2626,6 +2626,7 @@ export class Game {
       if (sameFloor) this.showVolley(this.crownGhosts(beams), at, ms, true);
       this.showVolley(this.lifespringContact(), at, ms, true);
       this.showVolley(this.decayNecro(beams), at, ms, true);
+      this.showVolley(this.voidwellStrike(), at, ms, true);
       return;
     }
     // What the hero's step brought into range meets the field before any arrow.
@@ -2673,6 +2674,7 @@ export class Game {
     this.showVolley(this.strikeGhosts(beams, at, ms, undefined, TURN_TICKS), at, ms, true);
     this.showVolley(this.lifespringContact(), at, ms, true);
     this.showVolley(this.decayNecro(beams), at, ms, true);
+    this.showVolley(this.voidwellStrike(), at, ms, true);
   }
   /** Lifespring's turn, before anything strikes (arcana.md): its cooldown, and an
    * Effect Wave hitting every enemy of the floor at once, or its field forming. */
@@ -2710,8 +2712,8 @@ export class Game {
   private voidwellTurn() {
     const rule = this.arcana.voidwellRule(), p = this.run.player;
     if (!rule) return;
-    stepVoidwell((this.run.voidwell ??= {}), rule, (cast) => placeVortex({
-      hero: p, distance: this.lifespringReach / 100, radius: rule.radius, roll: voidwellRoll(this.run.seed, cast),
+    stepVoidwell((this.run.voidwell ??= {}), rule, (cast) => placeVortices({
+      hero: p, distance: this.lifespringReach / 100, radius: rule.radius, roll: voidwellRoll(this.run.seed, cast), twin: rule.twin,
       bounds: this.world.floorBounds?.(p.x, p.y) ?? { left: p.x, right: p.x, bottom: p.y, top: p.y },
     }));
   }
@@ -2721,7 +2723,23 @@ export class Game {
     if (!v) return undefined;
     const rule = this.arcana.voidwellRule();
     if (!rule) return undefined;
-    return { x: v.x, y: v.y, radius: rule.radius, wrap: this.wrap };
+    return { x: v.x, y: v.y, radius: rule.radius, wrap: this.wrap, ...(v.twin ? { twin: v.twin } : {}) };
+  }
+  /** Voidwell Damage as the turn ends (arcana.md), read from the Archives as it strikes,
+   * so a level finished mid-run counts at once: pays what it fells and returns its shots. */
+  private voidwellStrike() {
+    const zone = this.vortex, rate = researched(this.save.archives, "voidwellDamage");
+    if (!zone || !rate) return [];
+    const out = voidwellDamage({ board: this.world, wrap: this.wrap }, zone, rate);
+    for (const { enemy, at: tile } of out.kills) this.message = [`Voidwell · ${this.enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, tile, 1, false, 0)].join(" · ");
+    return out.shots;
+  }
+  /** What Voidwell Gold Bonus multiplies the Gold of a kill at `at` by: its research's
+   * factor while `at` lies in a vortex, however the enemy was killed, bosses
+   * included, else 1. Read when the kill is paid. */
+  voidwellGold(at: { x: number; y: number }) {
+    const tenths = researched(this.save.archives, "voidwellGold"), zone = tenths === 10 ? undefined : this.vortex;
+    return zone && inVortex(zone, at.x, at.y) ? tenths / 10 : 1;
   }
   /** Necrotic Frost's decay as the turn ends (arcana.md): pays what it fells and returns its shots. */
   private decayNecro(beams: Beams | undefined) {
@@ -2824,8 +2842,8 @@ export class Game {
    * shown from `at` for `ms` as it fired; those the Toggles hide don't show.
    * `more`: they join what this turn already shows. */
   private showVolley(all: Shot[], at: number, ms: number, more = false) {
-    const { ricochetAnimation, thunderboltAnimation, lifespringDamage, phantasmDamage, necroDamage } = this.save.settings;
-    const shots = all.filter((s) => (!s.ricochet || ricochetAnimation) && (!s.thunderbolt || thunderboltAnimation) && (!s.lifespring || lifespringDamage) && (!s.phantasm || phantasmDamage) && (!s.necro || necroDamage));
+    const { ricochetAnimation, thunderboltAnimation, lifespringDamage, phantasmDamage, necroDamage, voidwellDamage } = this.save.settings;
+    const shots = all.filter((s) => (!s.ricochet || ricochetAnimation) && (!s.thunderbolt || thunderboltAnimation) && (!s.lifespring || lifespringDamage) && (!s.phantasm || phantasmDamage) && (!s.necro || necroDamage) && (!s.voidwell || voidwellDamage));
     if (!shots.length) return;
     this.volley = { at, ms, shots: more && this.volley?.at === at ? [...this.volley.shots, ...shots] : shots };
     const broke = shots.find((s) => s.shieldBroke);
@@ -2847,7 +2865,7 @@ export class Game {
    * the hero's first strike ending it), or 0 once its tile is looted. */
   enemyGold(x: number, y: number, instakill = false) {
     const e = foeOn(this.world.tile(x, y));
-    return e ? this.purse.killGoldPreview(e, x, y, instakill, this.spotlightGold({ x, y })) : 0;
+    return e ? this.purse.killGoldPreview(e, x, y, instakill, snap(this.spotlightGold({ x, y }) * this.voidwellGold({ x, y }))) : 0;
   }
   /** What the floor the hero stands on can roll (`enemies/odds.ts`): each
    * strength's chance, stats and Gold, and each trait's chance, for the

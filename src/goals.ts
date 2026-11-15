@@ -57,7 +57,10 @@ import { openEquipment } from "./equipment/inventory.ts";
  * whose cards share one priority, cards/cards.ts), and Tower V's Flying Enemy
  * Card (floor 10: the FLYING ENEMY card joins the deck, `GOAL_CARDS` in
  * cards/cards.ts) and Super Critical Research (floor 200: the Archives'
- * two Super Critical projects, which need the skill too), and Tower IV's
+ * two Super Critical projects, which need the skill too), Voidwell Research
+ * (floor 150: the Archives' Voidwell Damage and Gold Bonus, Game.voidwellDamage
+ * and Game.zoneGold) and Extra Voidwell (floor 500: the Archives' project that
+ * opens a second vortex opposite the first, placeVortices), and Tower IV's
  * Aurum Bloom Research (floor 200: the Archives' Aurum Bloom Bonus and
  * Chance, adding to its Bonus and Golden Chance, ArcanaDesk.valuesOf), and Tower VII's
  * Overseer Coin Bonus (floor 80: the Archives' project that multiplies the
@@ -68,7 +71,7 @@ export type GoalUnlock =
   | "shrines" | "firstBoonChoice" | "improveTradeoffs" | "autoPickBoons" | "boonOptions" | "banBoons" | "autoPickRanking"
   | "badgeSlots" | "noteTaking" | "archerCard" | "attackRange" | "attackSpeed" | "attackPerTile" | "chargedShot" | "multishot" | "rapidFire"
   | "trainingDiscount" | "cardGroups" | "flyingEnemyCard" | "warpLoot" | "superCriticalResearch" | "aetherShield" | "rerollMission" | "overseerZap" | "overseerGold"
-  | "bossPotion" | "lifespringResearch" | "aurumBloomResearch";
+  | "bossPotion" | "lifespringResearch" | "aurumBloomResearch" | "voidwellResearch" | "extraVoidwell";
 export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   damagePrediction: "Damage Prediction", combatForecast: "Combat Forecast", attackLore: "Attack Lore", warp: "Warp", damageVisual: "Damage Visual",
   relativeDamageColor: "Relative Damage Color", equipment: "Equipment", tournament: "Tournament", events: "Events",
@@ -82,7 +85,7 @@ export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   warpLoot: "Warp Loot", superCriticalResearch: "Super Critical Research", aetherShield: "Unlock Aether Shield",
   rerollMission: "Reroll Daily Mission", overseerZap: "Overseer Zap",
   overseerGold: "Overseer Coin Bonus", bossPotion: "Boss Potion Drop", lifespringResearch: "Lifespring Research",
-  aurumBloomResearch: "Aurum Bloom Research",
+  aurumBloomResearch: "Aurum Bloom Research", voidwellResearch: "Voidwell Research", extraVoidwell: "Extra Voidwell",
 };
 /** What a checkpoint pays: an unlock, the next tower opened, an amount of a currency, or a relic. */
 export type GoalReward =
@@ -177,7 +180,9 @@ const TOWER_FIVE: Record<number, CheckpointSet> = {
   10: { reward: unlock("flyingEnemyCard") },
   30: { reward: unlock("parryPercent") },
   40: { reward: unlock("banBoons") },
+  150: { reward: unlock("voidwellResearch"), premium: gold(10_000_000) },
   200: { reward: unlock("superCriticalResearch") },
+  500: { reward: unlock("extraVoidwell"), premium: gold(50_000_000) },
 };
 /** Tower VI's checkpoints that differ from the stub. */
 const TOWER_SIX: Record<number, CheckpointSet> = {

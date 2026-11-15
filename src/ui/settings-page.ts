@@ -12,6 +12,7 @@ import type { BoardOverlay } from "./board-overlay.ts";
 import { el } from "./dom.ts";
 import { goalUnlocked } from "../goals.ts";
 import { arcanaOpen } from "../arcana/arcana.ts";
+import { researched } from "../progression/archives.ts";
 import { showStats } from "./stats-dialog.ts";
 import { showHelp } from "./dialogs.ts";
 import { exportProfile, importProfile } from "../profile-file.ts";
@@ -28,9 +29,14 @@ const DEV = ["devMode", "freePurchases"] as const satisfies readonly SettingKey[
  * in a run. */
 const TOGGLES = [
   "attackGains", "defenseGains", "hpGains", "keyGains", "doorGains", "goldGains", "silverGains", "xpGains", "comboGains",
-  "damageVisual", "itemLabels", "hitNumbers", "ricochetAnimation", "thunderboltAnimation", "lifespringDamage", "phantasmDamage", "phantasmAlpha", "necroDamage", "enemyBars", "showPath",
+  "damageVisual", "itemLabels", "hitNumbers", "enemyBars", "showPath",
 ] as const satisfies readonly SettingKey[];
-type PageKey = (typeof PAGE)[number] | (typeof TOGGLES)[number] | (typeof DEV)[number] | "devTools";
+/** The Toggles menu's Arcana group, below the rest, collapsed until opened: how
+ * the board shows what the arcana do. */
+const ARCANA_TOGGLES = [
+  "ricochetAnimation", "thunderboltAnimation", "lifespringDamage", "phantasmDamage", "phantasmAlpha", "necroDamage", "voidwellDamage",
+] as const satisfies readonly SettingKey[];
+type PageKey = (typeof PAGE)[number] | (typeof TOGGLES)[number] | (typeof ARCANA_TOGGLES)[number] | (typeof DEV)[number] | "devTools";
 
 const phantasmUnlocked = (save: Save) => !!save.arcana.owned.phantasm || !!save.tower.run?.shrine?.arcana?.includes("phantasm");
 /** Settings that stay off the page until the upgrade (or the setting)
@@ -46,6 +52,8 @@ const SHOWN: Partial<Record<PageKey, (save: Save) => boolean>> = {
   phantasmDamage: phantasmUnlocked,
   phantasmAlpha: phantasmUnlocked,
   necroDamage: (save) => !!save.arcana.owned.necroticFrost || !!save.tower.run?.shrine?.arcana?.includes("necroticFrost"),
+  // Once Voidwell Damage has a level: only then does Voidwell strike.
+  voidwellDamage: (save) => researched(save.archives, "voidwellDamage") > 0,
   showPath: (save) => !!save.upgrades.autoClimb,
   cinematicIdle: (save) => save.settings.cinematic,
   cinematicGems: (save) => save.settings.cinematic,
@@ -111,6 +119,8 @@ function control(key: PageKey, game: PageGame): string {
 /** The menu open over the Settings page, if any (a theme menu, or the
  * Toggles): kept while the page redraws, closed by its Back. */
 let menu: ThemeKind | "toggles" | "tilesets" | "arcanaEffects" | null = null;
+/** Whether the Toggles menu's Arcana group is open, kept while the page redraws. */
+let arcanaTogglesOpen = false;
 
 /** The buttons that open each kind's theme menu, naming the look worn. */
 const themeButtons = (game: PageGame) =>
@@ -130,15 +140,18 @@ export function renderSettingsPage(ctx: AppContext, overlay: BoardOverlay) {
     return;
   }
   if (menu === "toggles") {
-    const keys = shownOf(TOGGLES, game.save);
+    const keys = shownOf(TOGGLES, game.save), arcana = shownOf(ARCANA_TOGGLES, game.save);
     el("settings").innerHTML =
       `<button class="back" id="toggles-back">${controlIcon("back")} Settings</button><div class="page-title"><small>WHAT THE BOARD SHOWS IN A RUN</small><h2>Toggles</h2></div>` +
-      keys.map((key) => control(key, game)).join("");
+      keys.map((key) => control(key, game)).join("") +
+      (arcana.length ? `<details class="toggle-group" id="arcana-toggles"${arcanaTogglesOpen ? " open" : ""}><summary>Arcana</summary>${arcana.map((key) => control(key, game)).join("")}</details>` : "");
+    const group = document.getElementById("arcana-toggles") as HTMLDetailsElement | null;
+    if (group) group.ontoggle = () => { arcanaTogglesOpen = group.open; };
     el("toggles-back").onclick = () => {
       menu = null;
       ctx.renderPage();
     };
-    bindControls(ctx, overlay, keys);
+    bindControls(ctx, overlay, [...keys, ...arcana]);
     return;
   }
   if (menu) {

@@ -11,14 +11,15 @@ import { isRecord, wholeIn } from "../save/decode.ts";
 // game but what it is given.
 
 /** A vortex standing: its center in tiles, not bound to whole tiles, and its turns
- * left, which a new floor doesn't interrupt. */
-export type Vortex = { x: number; y: number; left: number };
+ * left, which a new floor doesn't interrupt; with Extra Voidwell, its `twin`'s
+ * center, opposite it across the hero as they opened, lasting as long. */
+export type Vortex = { x: number; y: number; left: number; twin?: Point };
 /** What a run keeps of Voidwell, in the run so undo takes it back with what it stunned:
  * the cooldown's turns left, the activations so far, and the vortex (absent with none). */
 export type VoidwellRun = { timer?: number; casts?: number; vortex?: Vortex };
-/** A vortex as the board reads it: its center, radius in tiles, and the width the
- * board's columns wrap by (0: none). */
-export type VortexZone = { x: number; y: number; radius: number; wrap: number };
+/** A vortex as the board reads it: its center, radius in tiles, the width the
+ * board's columns wrap by (0: none), and its twin's center, if it has one. */
+export type VortexZone = { x: number; y: number; radius: number; wrap: number; twin?: Point };
 /** The tiles a floor spans, by their centers. */
 export type FloorBounds = { left: number; right: number; bottom: number; top: number };
 
@@ -46,20 +47,9 @@ export function boundsOf(tiles: readonly Point[]): FloorBounds | undefined {
  * direction (and, given `fits`, anywhere it says). If no angle does, the distance
  * shrinks until one does, or, if the hero stands too far from any place it fits, grows
  * to the nearest. A vortex too wide for the floor lies across its middle. */
-export function placeVortex({ hero, distance, radius, bounds, roll, fits }: { hero: Point; distance: number; radius: number; bounds: FloorBounds; roll: number; fits?: (x: number, y: number) => boolean }): Point {
-  // A tile's center lies half a tile inside the floor's edge.
-  const span = (low: number, high: number) => {
-    const min = low - 1.5 + radius, max = high + 1.5 - radius;
-    return min <= max ? [min, max] as const : [(low + high) / 2, (low + high) / 2] as const;
-  };
-  const [minX, maxX] = span(bounds.left, bounds.right), [minY, maxY] = span(bounds.bottom, bounds.top);
-  const allowed = (x: number, y: number) => x >= minX && x <= maxX && y >= minY && y <= maxY && (!fits || fits(x, y));
-  const at = (d: number) => {
-    const open = UNITS.filter((u) => allowed(hero.x + u.x * d, hero.y + u.y * d));
-    if (!open.length) return undefined;
-    const u = open[Math.floor(roll * open.length)]!;
-    return { x: hero.x + u.x * d, y: hero.y + u.y * d };
-  };
+export function placeVortex({ hero, distance, radius, bounds, roll, fits }: Placing): Point {
+  const { minX, maxX, minY, maxY, allowed } = allowedCenters(radius, bounds, fits);
+  const at = (d: number) => openAt(hero, d, roll, allowed);
   const farX = Math.max(Math.abs(minX - hero.x), Math.abs(maxX - hero.x)), farY = Math.max(Math.abs(minY - hero.y), Math.abs(maxY - hero.y));
   const farthest = Math.sqrt(farX * farX + farY * farY);
   for (let d = Math.min(distance, farthest); d > 0; d -= DISTANCE_STEP) {
@@ -74,11 +64,58 @@ export function placeVortex({ hero, distance, radius, bounds, roll, fits }: { he
   return { x: Math.min(maxX, Math.max(minX, hero.x)), y: Math.min(maxY, Math.max(minY, hero.y)) };
 }
 
+/** What placing a vortex goes by. */
+type Placing = { hero: Point; distance: number; radius: number; bounds: FloorBounds; roll: number; fits?: (x: number, y: number) => boolean };
+
+/** Where a vortex's center may lie: its edge at most a tile past the floor's (a tile's
+ * center lies half a tile inside the floor's edge), across the middle of an axis it is
+ * too wide for, and wherever `fits` says. */
+function allowedCenters(radius: number, bounds: FloorBounds, fits?: (x: number, y: number) => boolean) {
+  const span = (low: number, high: number) => {
+    const min = low - 1.5 + radius, max = high + 1.5 - radius;
+    return min <= max ? [min, max] as const : [(low + high) / 2, (low + high) / 2] as const;
+  };
+  const [minX, maxX] = span(bounds.left, bounds.right), [minY, maxY] = span(bounds.bottom, bounds.top);
+  const allowed = (x: number, y: number) => x >= minX && x <= maxX && y >= minY && y <= maxY && (!fits || fits(x, y));
+  return { minX, maxX, minY, maxY, allowed };
+}
+
+/** The `roll`'s pick of the places `d` tiles from `hero`, at the angles `allowed` keeps. */
+function openAt(hero: Point, d: number, roll: number, allowed: (x: number, y: number) => boolean): Point | undefined {
+  const open = UNITS.filter((u) => allowed(hero.x + u.x * d, hero.y + u.y * d));
+  if (!open.length) return undefined;
+  const u = open[Math.floor(roll * open.length)]!;
+  return { x: hero.x + u.x * d, y: hero.y + u.y * d };
+}
+
+/** Where Voidwell opens: one vortex as `placeVortex` places it, and with `twin` (Extra
+ * Voidwell) a second at the point opposite it across the hero. If that point isn't
+ * allowed, the pair turns, at the same distance, to the `roll`'s pick of the angles
+ * where both are; if there is none, the first stays and its twin lies opposite it all
+ * the same, past the floor's edge if it must. */
+export function placeVortices({ twin, ...placing }: Placing & { twin?: boolean }): Point & { twin?: Point } {
+  const first = placeVortex(placing);
+  if (!twin) return first;
+  const { hero, radius, bounds, roll, fits } = placing, { allowed } = allowedCenters(radius, bounds, fits);
+  const opposite = (p: Point) => ({ x: hero.x * 2 - p.x, y: hero.y * 2 - p.y });
+  const mirror = opposite(first);
+  if (allowed(mirror.x, mirror.y)) return { ...first, twin: mirror };
+  const dx = first.x - hero.x, dy = first.y - hero.y;
+  const paired = openAt(hero, Math.sqrt(dx * dx + dy * dy), roll, (x, y) => {
+    const o = opposite({ x, y });
+    return allowed(x, y) && allowed(o.x, o.y);
+  });
+  return paired ? { ...paired, twin: opposite(paired) } : { ...first, twin: mirror };
+}
+
 /** Whether the tile at (x, y) lies in `zone`, by Euclidean distance from the vortex's
- * center to the tile's, round the wrap. */
-export function inVortex({ x: cx, y: cy, radius, wrap }: VortexZone, x: number, y: number) {
-  const across = x - cx, dx = wrap && Math.abs(across) > wrap / 2 ? across - Math.sign(across) * wrap : across, dy = y - cy;
-  return dx * dx + dy * dy <= radius * radius;
+ * center (or its twin's) to the tile's, round the wrap. */
+export function inVortex({ x: cx, y: cy, radius, wrap, twin }: VortexZone, x: number, y: number) {
+  const near = (px: number, py: number) => {
+    const across = x - px, dx = wrap && Math.abs(across) > wrap / 2 ? across - Math.sign(across) * wrap : across, dy = y - py;
+    return dx * dx + dy * dy <= radius * radius;
+  };
+  return near(cx, cy) || (!!twin && near(twin.x, twin.y));
 }
 
 /** `t` at (x, y) as a vortex makes it: an enemy in it is marked `stunned`, and a Flying
@@ -97,7 +134,7 @@ export function stunnedTile(t: Tile, x: number, y: number, vortex: (() => Vortex
 /** One turn of Voidwell: the vortex's turns run out, and the cooldown runs, restarting
  * the moment it runs out, which opens a new one in its place at where `place` says.
  * Returns whether it did. */
-export function stepVoidwell(s: VoidwellRun, { duration, turns }: { duration: number; turns: number }, place: (cast: number) => Point) {
+export function stepVoidwell(s: VoidwellRun, { duration, turns }: { duration: number; turns: number }, place: (cast: number) => Point & { twin?: Point }) {
   if (s.vortex) {
     if (s.vortex.left > 1) s.vortex.left--;
     else delete s.vortex;
@@ -118,5 +155,6 @@ export function clearVoidwell(s: VoidwellRun | undefined) {
 }
 
 const whole = (v: unknown) => v === undefined || wholeIn(v, 1, 1e12);
-const validVortex = (v: unknown) => isRecord(v) && Number.isFinite(v.x) && Number.isFinite(v.y) && wholeIn(v.left, 1, 1e9);
+const validPoint = (v: unknown) => isRecord(v) && Number.isFinite(v.x) && Number.isFinite(v.y);
+const validVortex = (v: unknown) => isRecord(v) && validPoint(v) && wholeIn(v.left, 1, 1e9) && (v.twin === undefined || validPoint(v.twin));
 export const validVoidwell = (v: unknown): v is VoidwellRun => isRecord(v) && whole(v.timer) && whole(v.casts) && (v.vortex === undefined || validVortex(v.vortex));

@@ -26,7 +26,7 @@ Entering a new floor interrupts none of them: the cooldown runs on, and whatever
 You can switch them on and off up to 40 times a run, all of them together; the number left rises off the switch each time.
 Undo doesn't give a toggle back.
 An arcanum with a cooldown starts it over when switched back on.
-**Toggles** in Settings hide Ricochet Shot's and Thunderbolt's damage animations and, once you have them, Lifespring's, Phantasm's and Necrotic Frost's damage on enemies; they strike all the same.
+**Toggles** in Settings, in their collapsible **Arcana** group, hide Ricochet Shot's and Thunderbolt's damage animations and, once you have them, Lifespring's, Phantasm's and Necrotic Frost's damage on enemies, and once Voidwell Damage is researched, Voidwell's; they strike all the same.
 Once you have Phantasm, an alpha slider there, 0 to 1, sets how solid its ghosts are drawn: 0.5 at first, and at 0 you don't see them at all.
 Pressing a card anywhere else shows its stats and what modifies them.
 
@@ -341,6 +341,30 @@ Switching it off loses the vortex and its cooldown.
 | Duration | 15 turns | 38 turns | 24 |
 | Cooldown | 200 turns | 50 turns | 16 |
 
+### Voidwell research
+
+Tower V's floor 150 Goal opens two projects in the Archives' **Arcana** section, and its floor 500 Goal a third; each counts for good, mid-run too, while Voidwell is held and on.
+Voidwell's information, in the Arcana menu and from its card in a run, has a Research box with what each has reached.
+
+| Project | Each level | Highest | Levels |
+|---|---|---|---|
+| Voidwell Damage | 0.2% of total HP a turn | 2% | 10 |
+| Voidwell Gold Bonus | ×0.5 Gold | ×11 | 20 |
+| Extra Voidwell | a second vortex | | 1 |
+
+**Voidwell Damage:** at the end of each turn, every enemy in a vortex loses that percent of its total HP (its full HP, wounds and all), whatever its DEF, and a Shielded enemy's bubble doesn't cut it, so at 2% fifty turns fell any enemy.
+Bosses and Greater Bosses are immune.
+Its numbers show over each enemy it strikes, with its HP bar; Settings' Toggles can hide them, and it strikes all the same.
+What it fells pays as any kill does.
+Undo takes back what it struck.
+
+**Voidwell Gold Bonus:** an enemy killed while it stands in a vortex drops more Gold, however it was killed, bosses included, since it goes by where the enemy stands, not by the stun.
+It multiplies the other Gold bonuses, and raises only Gold, not Silver or Cells.
+
+**Extra Voidwell:** each activation opens a second vortex with the first, at the point opposite it across you, with the same size and turns.
+If the floor stops that point, the pair turns, at the same distance from you, until both fit; if no turn fits both (as in a corner), the first opens as ever and the second opposite it all the same, past the floor's edge.
+An enemy in both is stunned and struck once.
+
 ## In a trial
 
 Your Arcana work on what stands in a trial's arena: the boss while it is corporeal, its parts, its minions, mimics and Light Slimes.
@@ -359,5 +383,5 @@ At 75% a cooldown falls by 0.25 a turn, so a beam due in 10 turns takes 40, and 
 A boss's Regen isn't on a cooldown, so it isn't slowed, and an Obelisk's turn limit still counts every turn.
 **Phantasm** works as above on what stands in the arena, its ghosts striking as each turn ends, wherever you stand then.
 **Necrotic Frost** works as above on what stands in the arena, and an incorporeal boss's decay waits until it can be struck again.
-**Voidwell** opens on the arena's floor, and what stands in it takes no steps, while a Blaster Turret's bolts don't count down at all; it still answers your hits. The boss is immune.
+**Voidwell** opens on the arena's floor (with its twin, once Extra Voidwell is researched; Voidwell Damage and Gold Bonus don't count there), and what stands in it takes no steps, while a Blaster Turret's bolts don't count down at all; it still answers your hits. The boss is immune.
 Toggles and cooldowns are the attempt's own, leave your run outside alone, and survive a reload.

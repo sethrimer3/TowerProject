@@ -677,6 +677,13 @@ The four Archives projects that raise what Lifespring's Effect Waves give: Lifes
 **Aurum Bloom Research**:
 The two Archives projects that raise Aurum Bloom: Aurum Bloom Bonus (adding to its Bonus) and Aurum Bloom Chance (adding to its Golden Chance).
 
+**Voidwell Research**:
+The two Archives projects that raise Voidwell: Voidwell Damage (a percent of total HP off each enemy in a vortex a turn) and Voidwell Gold Bonus (more Gold for enemies killed in one).
+
+**Extra Voidwell**:
+Research that has Voidwell open a second vortex, its **twin**, opposite the first across the hero.
+_Avoid_: double vortex, second well
+
 **Lifespring**:
 An arcanum: on its cooldown, Effect Waves, then a field round the hero as wide as its shot range, spending an HP Pool on the enemies it touches.
 

@@ -4,7 +4,7 @@ import { fieldHit, springAmplify, stepLifespring, validLifespring } from "../arc
 import { decayed, fieldsOn, frostArea, stepFrost, validFrost, validNecro, type Necro } from "../arcana/necrotic-frost.ts";
 import { ghostDirection, ghostOffset, inBlast, loseGhost, stepPhantasm, touchesTile, validPhantasm } from "../arcana/phantasm.ts";
 import { stepDilation, validDilation } from "../arcana/time-dilation.ts";
-import { placeVortex, stepVoidwell, validVoidwell, voidwellRoll } from "../arcana/voidwell.ts";
+import { placeVortices, stepVoidwell, validVoidwell, voidwellRoll } from "../arcana/voidwell.ts";
 import { TURN_TICKS } from "../enemies/ranged.ts";
 import { tileRandom } from "../random.ts";
 import { finite, isRecord, wholeIn } from "../save/decode.ts";
@@ -144,12 +144,13 @@ function frostTurn(s: TrialState, a: NonNullable<TrialState["arcana"]>, rule: No
 }
 
 /** Voidwell's part of a turn: the vortex's turns and its cooldown. A new one opens on the
- * arena's six-sided floor, its edge at most a tile past the floor's. */
+ * arena's six-sided floor, its edge at most a tile past the floor's, with its twin
+ * opposite it across the hero once Extra Voidwell is researched. */
 function voidwellTurn(s: TrialState, a: NonNullable<TrialState["arcana"]>, rule: NonNullable<TrialSpells["voidwell"]>) {
   // The floor's edge lies where |dx| + |dy| / 2 is 11.5, and that measure runs Math.sqrt(1.25) to the tile.
   const limit = 11.5 - Math.sqrt(1.25) * (rule.radius - 1);
-  stepVoidwell((a.voidwell ??= {}), rule, (cast) => placeVortex({
-    hero: s.player, distance: rule.reach / 100, radius: rule.radius, roll: voidwellRoll(s.seed, cast),
+  stepVoidwell((a.voidwell ??= {}), rule, (cast) => placeVortices({
+    hero: s.player, distance: rule.reach / 100, radius: rule.radius, roll: voidwellRoll(s.seed, cast), twin: rule.twin,
     bounds: { left: 1, right: 23, bottom: 1, top: 23 },
     fits: (x, y) => Math.abs(x - ELEMENTAL.x) + Math.abs(y - ELEMENTAL.y) / 2 <= limit,
   }));

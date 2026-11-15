@@ -87,6 +87,8 @@ try {
   // The Toggles menu holds its toggle, and it saves.
   await page.evaluate(()=>document.getElementById("auto-settings").click());
   await page.locator("#toggles-open").click();
+  // It sits in the Arcana group, closed until opened.
+  await page.locator("#arcana-toggles summary").click();
   await expect(page.locator("#necro-damage")).toBeChecked();
   await page.locator("#settings").screenshot({path:`${OUT}/toggles.png`});
   await page.locator("#necro-damage").uncheck();

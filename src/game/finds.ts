@@ -36,6 +36,8 @@ export interface FindsHost extends DeskHost {
   readonly arcana: { lifespringKill(enemy: Enemy): { gold: number; cells: number } | undefined };
   /** What Overseer Coin Bonus multiplies the Gold of a kill at `at` by: 1 outside Overseer's beams. */
   spotlightGold(at: { x: number; y: number }): number;
+  /** What Voidwell Gold Bonus multiplies the Gold of a kill at `at` by: 1 outside a vortex. */
+  voidwellGold(at: { x: number; y: number }): number;
   /** A treasure chest's own rolls at (x, y): CHEST's Double and Triple, TORCH's Chest Cells. */
   chestRoll(x: number, y: number): ChestRoll;
   readonly missions: { record(type: MissionType, amount?: number, key?: string): void };
@@ -74,7 +76,7 @@ export class Finds {
     this.host.gainXp(enemy, floor, scale);
     // Silver belongs to the run, so it isn't gated like Gold: undo takes it back.
     const silver = purse.killSilver(enemy, floor, scale, at);
-    const { gold, cells, equipment } = purse.enemyLoot(enemy, at.x, at.y, scale, instakill, this.host.arcana.lifespringKill(enemy), this.host.spotlightGold(at));
+    const { gold, cells, equipment } = purse.enemyLoot(enemy, at.x, at.y, scale, instakill, this.host.arcana.lifespringKill(enemy), snap(this.host.spotlightGold(at) * this.host.voidwellGold(at)));
     const cellsFound = cells ? [cellsText(cells)] : [], found = equipment.flatMap(equipmentGains), healed = this.bossPotion(enemy);
     for (const piece of equipment) {
       if (piece.item || piece.salvaged) this.host.events.record("equipment", 1, key);

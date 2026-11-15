@@ -26,7 +26,7 @@ export type TrialSpells = {
   phantasm?: { boost: number; quantity: number; turns: number; blast: number; spin: number };
   necroticFrost?: { boost: number; duration: number; turns: number; effects: FrostEffects };
   /** `radius`: its vortex's, in tiles; `reach`: how far from the hero it opens, in hundredths of a tile. */
-  voidwell?: { radius: number; duration: number; turns: number; reach: number };
+  voidwell?: { radius: number; duration: number; turns: number; reach: number; twin?: boolean };
   beams?: Pick<Beams, "count" | "width" | "bonus">;
   /** Whether Overseer is held, on or off: its beams turn on either way. */
   overseer: boolean;
@@ -54,7 +54,7 @@ export function slowedAt(s: TrialState, at: Spot) {
 /** Whether what stands at `at`, the boss aside (it is immune), is stunned by Voidwell's vortex this turn. */
 export function stunnedIn(s: TrialState, at: Spot) {
   const rule = s.arcana?.spells?.voidwell, v = s.arcana?.voidwell?.vortex;
-  return !!rule && !!v && inVortex({ x: v.x, y: v.y, radius: rule.radius, wrap: 0 }, at.x, at.y);
+  return !!rule && !!v && inVortex({ x: v.x, y: v.y, radius: rule.radius, wrap: 0, ...(v.twin ? { twin: v.twin } : {}) }, at.x, at.y);
 }
 /** Whether the foe `key`, standing at `at`, does what it is about to (a counter, a
  * bite, a step): always, unless a vortex stuns it, which stops its steps (`move:`

@@ -41,6 +41,7 @@ function researchedText(id: ArcanumId, values: AttributeValues, save: Save) {
 const ARCANUM_RESEARCH: Partial<Record<ArcanumId, readonly (keyof typeof RESEARCH & keyof typeof RESEARCH_TARGETS)[]>> = {
   lifespring: ["lifespringHealth", "lifespringGold", "lifespringAmplify", "lifespringCells"],
   aurumBloom: ["aurumBloomBonus", "aurumBloomChance"],
+  voidwell: ["voidwellDamage", "voidwellGold", "extraVoidwell"],
 };
 /** An arcanum's Research box: what each of its projects has reached, untrained values included; none without projects. */
 const arcanumResearch = (id: ArcanumId, save: Save) =>

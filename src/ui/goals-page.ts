@@ -106,6 +106,9 @@ const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
     `<p class="hint">It heals as a percent potion picked up would, Potion % and HEAL's tree included.</p>`,
   lifespringResearch: `<p>Lifespring Research opens four projects in the Archives' Arcana section: Lifespring Health raises the limit of its Health Bonus, Lifespring Gold Bonus and Lifespring Cell Bonus raise the Gold and Cells of enemies it touched, and Lifespring Damage Amplifier makes each Effect Wave count for more against its field.</p>` +
     `<p class="hint">Lifespring's information shows what each has reached, in the Arcana menu and in a run.</p>`,
+  voidwellResearch: `<p>Voidwell Research opens two projects in the Archives' Arcana section: Voidwell Damage takes 0.2% a level of their total HP off the enemies in its vortex each turn, up to 2% (Bosses and Greater Bosses are immune), and Voidwell Gold Bonus raises the Gold of enemies killed in a vortex by ×0.5 a level, up to ×11, however they were killed, bosses included.</p>` +
+    `<p class="hint">They count while Voidwell is held and on. Its information shows what each has reached, and Settings' Toggles can hide its damage numbers.</p>`,
+  extraVoidwell: `<p>Extra Voidwell opens in the Archives' Arcana section: once researched, Voidwell opens two vortices at a time, opposite each other across you, each with the same stats.</p>`,
   aurumBloomResearch: `<p>Aurum Bloom Research opens two projects in the Archives' Arcana section: Aurum Bloom Bonus adds ×0.15 a level to Aurum Bloom's Bonus, up to +3.75, and Aurum Bloom Chance adds 1% a level to its Golden Chance, up to +20%.</p>` +
     `<p class="hint">They count while Aurum Bloom is held and on. Its information shows what each has reached.</p>`,
   researchSpeed: `<p>Research Speed opens in the Archives: train the archivists to read faster, and every research, those under way included, takes less time.</p>`,

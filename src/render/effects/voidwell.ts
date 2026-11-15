@@ -45,9 +45,11 @@ export function paintVortex(c: CanvasRenderingContext2D, x: number, y: number, r
   c.restore();
 }
 
-/** What the board shows of Voidwell: the vortex where it opened, while one stands. */
+/** What the board shows of Voidwell: the vortex where it opened, and its twin, while one stands. */
 export function drawVortex(f: FrameContext, zone: VortexZone | undefined) {
   if (!zone) return;
-  const { x, y } = tileCenter(f, f.playerX + shortWay(zone.x - f.playerX, zone.wrap), zone.y);
-  paintVortex(f.c, x, y, f.s * zone.radius, Math.max(1, f.s / 24), f.now, f.look.reduceMotion);
+  for (const center of zone.twin ? [zone, zone.twin] : [zone]) {
+    const { x, y } = tileCenter(f, f.playerX + shortWay(center.x - f.playerX, zone.wrap), center.y);
+    paintVortex(f.c, x, y, f.s * zone.radius, Math.max(1, f.s / 24), f.now, f.look.reduceMotion);
+  }
 }

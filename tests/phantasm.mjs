@@ -90,6 +90,8 @@ try {
   // The Toggles menu holds the toggle and the slider, and the slider saves.
   await page.evaluate(()=>document.getElementById("auto-settings").click());
   await page.locator("#toggles-open").click();
+  // It sits in the Arcana group, closed until opened.
+  await page.locator("#arcana-toggles summary").click();
   await expect(page.locator("#phantasm-damage")).toBeChecked();
   const slider=page.locator("#phantasm-alpha");
   await expect(slider).toHaveValue("0.5");

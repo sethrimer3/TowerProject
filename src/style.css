@@ -1809,6 +1809,20 @@ dialog > small {
   font-size: 12px;
 }
 
+/* The Toggles menu's collapsible groups (the Arcana's), below its other rows. */
+.toggle-group > summary {
+  padding: 20px 0;
+  border-bottom: 1px solid #36404f;
+  color: #e5d5b8;
+  font-size: 13px;
+  cursor: pointer;
+}
+.toggle-group > .setting {
+  margin-left: 16px;
+  padding-left: 12px;
+  border-left: 2px solid #3e4c59;
+}
+
 /* The Settings page's dev section, under Dev Mode while it is on. */
 .dev-section {
   margin-left: 16px;

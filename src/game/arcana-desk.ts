@@ -331,12 +331,13 @@ export class ArcanaDesk {
     const rule = this.frostRule(), run = this.host.run;
     if (rule) stepFrost((run.necroticFrost ??= {}), rule, run.seed);
   }
-  /** Voidwell, if it is held and on: its vortex's radius in tiles, its Duration and cooldown. */
+  /** Voidwell, if it is held and on: its vortex's radius in tiles, its Duration and
+   * cooldown, and whether Extra Voidwell opens a twin with each (`twin`). */
   voidwellRule() {
     const held = this.held.find((h) => h.id === "voidwell" && this.isOn(h.id));
     if (!held) return undefined;
     const [base, duration, turns] = this.valuesOf(held);
-    return { radius: snap(base * relicFactor(this.save, "voidwell")), duration, turns };
+    return { radius: snap(base * relicFactor(this.save, "voidwell")), duration, turns, twin: researched(this.save.archives, "extraVoidwell") > 0 };
   }
   /** An enemy Lifespring touched (an Effect Wave or the field) fell, by whatever
    * means, while it is on: it pays Health Bonus, and what its Gold and Cells are

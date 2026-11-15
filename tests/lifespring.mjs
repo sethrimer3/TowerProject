@@ -89,6 +89,8 @@ try {
   // The Toggles row shows once it is held.
   await page.evaluate(()=>document.querySelector("#auto-settings").click());
   await page.locator("#toggles-open").click();
+  // It sits in the Arcana group, closed until opened.
+  await page.locator("#arcana-toggles summary").click();
   await expect(page.getByText("Lifespring damage on enemies")).toBeVisible();
   expect(errors).toEqual([]);
   console.log("ok");

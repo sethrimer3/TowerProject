@@ -339,6 +339,9 @@ Tower IV's floor 200 Goal opens the Archives' two Aurum Bloom projects, their Go
 
 Tower III's floor 400 Goal opens the Archives' Overseer Zap research: 18 levels, each taking a turn off its cooldown, from 20 (no strike before the first level) to 2. Their Gold and times are listed by hand: 200,000,000 Gold and 6d 16h 0m for the first, 476,367,568 and 11d 13h 31m for the 10th, 5,472,394,380 and 28d 23h 32m for the 18th.
 
+Tower V's floor 150 Goal opens the Archives' Voidwell Damage and Voidwell Gold Bonus research (its premium reward 10,000,000 Gold), their Gold and times listed by hand: Voidwell Damage, 10 levels of 0.2% of an enemy's total HP a turn, to 2%, 20,000,000 Gold and 1d 15h 59m for the first to 300,870,000 and 6d 13h 31m for the 10th (820,520,000 Gold in all); Voidwell Gold Bonus, 20 levels of ×0.5, from ×1.5 to ×11, on the same times and 20,000,000 Gold for the first, 623,091,892 for the 10th and 24,800,000,000 and 32d 11h 40m for the 20th.
+Its floor 500 Goal opens Extra Voidwell (its premium reward 50,000,000 Gold): one level, 15,000,000,000 Gold and 17d 8h 39m.
+
 Tower VII's floor 80 Goal opens the Archives' Overseer Coin Bonus research (its premium reward 20 Arcanite): 20 levels, each adding ×0.1 to the Gold of enemies killed in Overseer's beams, from ×1.1 to ×3. Their Gold and times are listed by hand: 20,000,000 Gold and 1d 15h 59m for the first, 623,091,892 and 6d 13h 31m for the 10th, 24,800,000,000 and 32d 11h 40m for the 20th (91,951,246,487 Gold and 214d 1h 19m in all).
 
 Tower IV's floor 30 Goal opens the Archives' Reroll Daily Mission research: one level, 20,000,000 Gold and 2,399 minutes (1 day 15 hours 59 minutes), before Research Cost Discount and Research Speed, which lets an incomplete daily mission be swapped for a different one for 5 Gems (docs/MISSIONS.md).

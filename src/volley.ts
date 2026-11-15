@@ -25,6 +25,7 @@ import { boltTargets, ZAP_SALT } from "./arcana/arcana.ts";
 import { fieldHit } from "./arcana/lifespring.ts";
 import { slowedCharge, slowedTickGain, togetherSlow } from "./arcana/time-dilation.ts";
 import { decayed, fieldsOn, frostSlowAt, type FrostArea } from "./arcana/necrotic-frost.ts";
+import { inVortex, type VortexZone } from "./arcana/voidwell.ts";
 import { GHOST_RADIUS, ghostDirection, ghostOffset, ghostsOut, inBlast, loseGhost, outerDirection, OUTER_RADIUS, RING_RADIUS, touchesTile, type GhostStrike, type PhantasmRun } from "./arcana/phantasm.ts";
 import { tileRandom } from "./random.ts";
 import { snap } from "./exact.ts";
@@ -51,7 +52,7 @@ const TEMPEST_SALT = 0x71c0e;
  * thorns cost an enemy's shooter), for an arrow (or a shot's thorns) the
  * enemy's HP before and after it out of its full HP, and the enemy it
  * felled (`fell`), which the board keeps showing until the shot lands. */
-export type Shot = { by: "hero" | "enemy"; from: { x: number; y: number }; to: { x: number; y: number }; damage: number; tick: number; shrouded?: number; shielded?: number; shieldBroke?: true; crit?: number; superCrit?: true; charge?: number; healed?: number; thorns?: number; before?: number; hp?: number; full?: number; fell?: Enemy; ricochet?: true; thunderbolt?: true; lifespring?: true; phantasm?: true; necro?: true };
+export type Shot = { by: "hero" | "enemy"; from: { x: number; y: number }; to: { x: number; y: number }; damage: number; tick: number; shrouded?: number; shielded?: number; shieldBroke?: true; crit?: number; superCrit?: true; charge?: number; healed?: number; thorns?: number; before?: number; hp?: number; full?: number; fell?: Enemy; ricochet?: true; thunderbolt?: true; lifespring?: true; phantasm?: true; necro?: true; voidwell?: true };
 /** Where `shot`'s target stands: the hero's tile for an enemy's shot (whose
  * thorns cost the shooter, at `from`), the enemy's for an arrow. */
 export const enemyOf = (shot: Shot) => (shot.by === "enemy" ? shot.from : shot.to);
@@ -69,8 +70,8 @@ export const THUNDERBOLT_FLASH_MS = 240;
 /** When `shot` of `volley` leaves its shooter, and when it lands: a ricochet
  * does both as the arrow it springs from lands; a thunderbolt falls from its
  * tick of the turn; Lifespring's field, Phantasm's ghosts and Necrotic Frost's decay strike at once. */
-export const landsAt = (volley: Volley, shot: Shot) => volley.at + (volley.ms * shot.tick) / TURN_TICKS + (shot.lifespring || shot.phantasm || shot.necro ? 0 : shot.thunderbolt ? THUNDERBOLT_FALL_MS : volley.ms * SHOT_FLIGHT);
-export const leavesAt = (volley: Volley, shot: Shot) => landsAt(volley, shot) - (shot.ricochet || shot.lifespring || shot.phantasm || shot.necro ? 0 : shot.thunderbolt ? THUNDERBOLT_FALL_MS : volley.ms * SHOT_FLIGHT);
+export const landsAt = (volley: Volley, shot: Shot) => volley.at + (volley.ms * shot.tick) / TURN_TICKS + (shot.lifespring || shot.phantasm || shot.necro || shot.voidwell ? 0 : shot.thunderbolt ? THUNDERBOLT_FALL_MS : volley.ms * SHOT_FLIGHT);
+export const leavesAt = (volley: Volley, shot: Shot) => landsAt(volley, shot) - (shot.ricochet || shot.lifespring || shot.phantasm || shot.necro || shot.voidwell ? 0 : shot.thunderbolt ? THUNDERBOLT_FALL_MS : volley.ms * SHOT_FLIGHT);
 /** Whether every shot of `volley` has landed, and its flashes ended, by `now`. */
 export const volleyOver = (volley: Volley, now: number) => volley.shots.every((s) => now >= landsAt(volley, s) + (s.ricochet ? RICOCHET_FLASH_MS : s.thunderbolt ? THUNDERBOLT_FLASH_MS : 0));
 
@@ -124,7 +125,7 @@ export type VolleyTurn = {
 /** An enemy an arrow felled, or the thorns of its own shot (`thorns`):
  * where, whether it fell to its first wound (an instakill), and the
  * arrow's critical applications. */
-export type VolleyKill = { enemy: Enemy; at: { x: number; y: number }; instakill: boolean; crits: number; thorns?: true; ricochet?: true; thunderbolt?: true; lifespring?: true; phantasm?: true; necro?: true };
+export type VolleyKill = { enemy: Enemy; at: { x: number; y: number }; instakill: boolean; crits: number; thorns?: true; ricochet?: true; thunderbolt?: true; lifespring?: true; phantasm?: true; necro?: true; voidwell?: true };
 /** What a turn's volley did: the run's volley state after it, the shots in
  * the order they fired, the hero's HP after them, whether a Ranged enemy's
  * shot got through (`hurt`), the enemy whose shot felled the hero (the
@@ -562,6 +563,37 @@ export function necroDecay({ board, wrap, hero, beams, changes }: Pick<VolleyTur
       kills.push({ enemy: { ...enemy, necro }, at: to, instakill: false, crits: 0, necro: true });
     }
   }
+  return { shots, kills };
+}
+
+/** Voidwell Damage's turn (arcana.md): every enemy in the vortex, or its twin, a boss
+ * or Greater Boss aside, loses `rate` hundredths of a percent of its total HP (its HP
+ * now and its wounds), with no DEF, Shielded bubble, Lifesteal or Armor Break, so at 2%
+ * 50 turns fell it, whatever it is. An enemy in both is struck once. Edits the board's
+ * enemies; returns the shots and the kills. */
+export function voidwellDamage({ board, wrap }: { board: Pick<Board, "tile" | "clear" | "wound">; wrap: number }, zone: VortexZone, rate: number) {
+  const shots: Shot[] = [], kills: VolleyKill[] = [], seen = new Set<string>(), reach = Math.ceil(zone.radius);
+  if (rate <= 0) return { shots, kills };
+  for (const c of zone.twin ? [zone, zone.twin] : [zone])
+    for (let y = Math.floor(c.y) - reach; y <= Math.ceil(c.y) + reach; y++)
+      for (let across = Math.floor(c.x) - reach; across <= Math.ceil(c.x) + reach; across++) {
+        const x = wrap ? ((across % wrap) + wrap) % wrap : across, k = point(x, y);
+        if (seen.has(k)) continue;
+        seen.add(k);
+        const tile = board.tile(x, y), enemy = foeOn(tile);
+        if (!enemy || isBoss(enemy) || !inVortex(zone, x, y)) continue;
+        const full = snap(enemy.hp + (tile.wound ?? 0)), damage = snap((full * rate) / 10000), after = snap(enemy.hp - damage);
+        // What rounding leaves of the last turn's share is no HP at all.
+        const left = after > full * 1e-9 ? after : 0, to = { x, y };
+        const landed: Shot = { by: "hero", from: to, to, damage: snap(enemy.hp - left), tick: TURN_TICKS, before: enemy.hp, hp: left, full, voidwell: true };
+        shots.push(landed);
+        if (left > 0) board.wound?.(x, y, landed.damage);
+        else {
+          board.clear(x, y);
+          landed.fell = enemy;
+          kills.push({ enemy, at: to, instakill: false, crits: 0, voidwell: true });
+        }
+      }
   return { shots, kills };
 }
 

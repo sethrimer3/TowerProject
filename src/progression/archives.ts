@@ -217,6 +217,14 @@ export const RESEARCH_TARGETS = {
   aurumBloomBonus: { name: "Bonus", base: 0, shown: (n: number) => `+${(n / 100).toFixed(2)}×` },
   /** What Aurum Bloom's Golden Chance gains (ArcanaDesk.valuesOf), in whole percent: none untrained, 1 more a level. */
   aurumBloomChance: { name: "Golden Chance", base: 0, shown: (n: number) => `+${n}%` },
+  /** What Voidwell takes off each enemy in its vortex a turn (Game.voidwellDamage),
+   * in hundredths of a percent of its total HP: none untrained, 0.2% more a level. */
+  voidwellDamage: { name: "Damage", base: 0, shown: (n: number) => `${(n / 100).toFixed(2)}%` },
+  /** What the Gold of an enemy killed in Voidwell's vortex is multiplied by
+   * (Game.zoneGold), in tenths: ×1 before the first level, ×0.5 more a level. */
+  voidwellGold: { name: "Gold Bonus", base: 10, shown: (n: number) => `×${n / 10}` },
+  /** Whether Voidwell opens a second vortex opposite the first (ArcanaDesk.voidwellRule). */
+  extraVoidwell: { name: "Extra Voidwell", base: 0, shown: (n: number) => (n ? "On" : "Off") },
   /** Badges each card can hold. */
   badgeSlots: { name: "Badge Slots", base: 1, shown: count },
   /** Turns allowed per Obelisk boss trial run before the encounter ends. */
@@ -412,6 +420,21 @@ const AURUM_BLOOM_TIMES: readonly [days: number, hours: number, minutes: number]
   [1, 16, 0], [2, 0, 21], [2, 8, 53], [2, 17, 54], [3, 3, 49], [3, 15, 6], [4, 4, 17], [4, 19, 58], [5, 14, 49], [6, 13, 31],
   [7, 16, 49], [9, 1, 30], [10, 16, 23], [12, 14, 21], [14, 20, 18], [17, 11, 9], [20, 11, 54], [23, 23, 32], [27, 23, 6], [32, 11, 40],
   [37, 14, 19], [43, 8, 12], [49, 18, 27], [56, 22, 16], [64, 20, 50],
+];
+/** Voidwell Damage research: 0.2% more of an enemy's total HP a turn a level,
+ * for 10 levels, to 2%, so 50 turns fell any enemy it reaches. */
+const VOIDWELL_DAMAGE_GOLD = [
+  20_000_000, 20_810_000, 21_850_000, 24_050_000, 29_500_000, 41_790_000, 66_330_000, 110_660_000, 184_660_000, 300_870_000,
+];
+/** Voidwell Gold Bonus research: ×0.5 more Gold a level, for 20 levels, to ×11. */
+const VOIDWELL_GOLD_GOLD = [
+  20_000_000, 21_410_000, 23_120_000, 26_630_000, 35_837_838, 58_248_649, 106_162_162, 197_870_270, 358_875_676, 623_091_892,
+  1_030_000_000, 1_640_000_000, 2_520_000_000, 3_750_000_000, 5_410_000_000, 7_630_000_000, 10_520_000_000, 14_240_000_000, 18_940_000_000, 24_800_000_000,
+];
+/** Both Voidwell projects' times; Voidwell Damage takes the first 10. */
+const VOIDWELL_TIMES: readonly [days: number, hours: number, minutes: number][] = [
+  [1, 15, 59], [2, 0, 21], [2, 8, 53], [2, 17, 54], [3, 3, 49], [3, 15, 6], [4, 4, 17], [4, 19, 58], [5, 14, 49], [6, 13, 31],
+  [7, 16, 49], [9, 1, 30], [10, 16, 23], [12, 14, 21], [14, 20, 18], [17, 11, 9], [20, 11, 54], [23, 23, 32], [27, 23, 6], [32, 11, 40],
 ];
 /** A schedule's level `i` of `target`, adding `value`, at its listed Gold and
  * days, hours and minutes (and seconds, where it lists them). */
@@ -1099,6 +1122,27 @@ export const RESEARCH = {
     categories: ["arcana", "economy"],
     requires: [{ upgrade: "archives" }, { goalUnlock: "aurumBloomResearch" }],
     levels: scheduled("aurumBloomChance", 1, AURUM_BLOOM_GOLD.slice(0, 20), AURUM_BLOOM_TIMES.slice(0, 20)),
+  },
+  voidwellDamage: {
+    name: "Voidwell Damage",
+    description: "Each turn, Voidwell takes a percent of their total HP off the enemies in its vortex. Bosses and Greater Bosses are immune.",
+    categories: ["arcana", "offense"],
+    requires: [{ upgrade: "archives" }, { goalUnlock: "voidwellResearch" }],
+    levels: scheduled("voidwellDamage", 20, VOIDWELL_DAMAGE_GOLD, VOIDWELL_TIMES.slice(0, 10)),
+  },
+  voidwellGold: {
+    name: "Voidwell Gold Bonus",
+    description: "Enemies killed in Voidwell's vortex drop more Gold, however they were killed, bosses included.",
+    categories: ["arcana", "economy"],
+    requires: [{ upgrade: "archives" }, { goalUnlock: "voidwellResearch" }],
+    levels: scheduled("voidwellGold", 5, VOIDWELL_GOLD_GOLD, VOIDWELL_TIMES),
+  },
+  extraVoidwell: {
+    name: "Extra Voidwell",
+    description: "Voidwell opens a second vortex with each one, opposite it across you, with the same stats.",
+    categories: ["arcana", "abilities"],
+    requires: [{ upgrade: "archives" }, { goalUnlock: "extraVoidwell" }],
+    levels: scheduled("extraVoidwell", 1, [15_000_000_000], [[17, 8, 39]]),
   },
   bossPotion: {
     name: "Boss Potion Drop",
