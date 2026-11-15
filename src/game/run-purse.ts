@@ -15,7 +15,7 @@ import { ranksInRun } from "../progression/run-training.ts";
 import { goldBanked, silverFound, type GoldContext } from "../economy/gold-multipliers.ts";
 import { raised, wornEffects } from "../equipment/effects.ts";
 import { jackpotFactor, powerOf, yieldFactor } from "../equipment/powers.ts";
-import { keepDrop, rollChestPiece, rollSupplies } from "../equipment/acquire.ts";
+import { keepDrop, rollChestPiece, rollCommonPiece, rollSupplies } from "../equipment/acquire.ts";
 import type { EquipItem } from "../equipment/inventory.ts";
 import { CATEGORIES, type EquipMaterialId } from "../equipment/catalog.ts";
 import { BOSS_DROPS, EQUIP_RARITIES, rarityRank, STANDARD_DROP_TOP, type EquipRarity } from "../equipment/balance.ts";
@@ -306,8 +306,9 @@ export class RunPurse {
   }
 
   /** What a kill of `enemy` drops: a boss's or Greater Boss's own chances
-   * (`BOSS_DROPS`) and the enemy cards' trees', added together, each
-   * rolled on Equipment's stream, only when there is one. */
+   * (`BOSS_DROPS`) and the enemy cards' trees', added together, and a
+   * boss's Common piece by Common Drop Chance research, each rolled on
+   * Equipment's stream, only when there is one. */
   private killDrops(enemy: Enemy, instakill: boolean): EquipmentLoot[] {
     if (!this.save.equipment.unlocked) return [];
     const tree = this.tree, found: EquipmentLoot[] = [], boss = enemy.strength === "boss" || enemy.strength === "greaterBoss";
@@ -317,6 +318,8 @@ export class RunPurse {
     const piece = snap(((boss ? BOSS_DROPS.equipment : 0) + foeStat(tree, enemy, "Equipment")) * relicFactor(this.save, "equipmentDrops") * eye);
     if (material && this.equipmentRng() * 100 < material) found.push(this.chestEquipment("supply"));
     if (piece && this.equipmentRng() * 100 < piece) found.push(this.chestEquipment("equipment"));
+    const common = boss ? snap((researched(this.save.archives, "commonDrop") / 10) * relicFactor(this.save, "equipmentDrops") * eye) : 0;
+    if (common && this.equipmentRng() * 100 < common) found.push(this.keepPiece(rollCommonPiece(this.equipmentRng, this.save.equipment.categories)));
     return found;
   }
 
@@ -391,8 +394,12 @@ export class RunPurse {
       return { materials, item: null, salvaged: null };
     }
     const rolled = rollChestPiece(this.equipmentRng, e.categories), up = this.tree.rarityUp;
-    const drop = up && this.equipmentRng() * 100 < up ? { ...rolled, rarity: rarityAbove(rolled.rarity) } : rolled;
-    const kept = keepDrop(e, drop), material = CATEGORIES[drop.category].materials[0];
+    return this.keepPiece(up && this.equipmentRng() * 100 < up ? { ...rolled, rarity: rarityAbove(rolled.rarity) } : rolled);
+  }
+
+  /** A dropped piece kept (or salvaged into its category's material). */
+  private keepPiece(drop: Parameters<typeof keepDrop>[1]): EquipmentLoot {
+    const e = this.save.equipment, kept = keepDrop(e, drop), material = CATEGORIES[drop.category].materials[0];
     if (!kept.item) tallyIn(this.slice.runFinds.materials, material, kept.salvaged);
     return { materials: null, item: kept.item, salvaged: kept.item ? null : { id: material, quantity: kept.salvaged, auto: kept.auto } };
   }

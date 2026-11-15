@@ -256,6 +256,7 @@ At most **500** pieces (`EQUIPMENT_CAPACITY`). An Equipment Chest's piece that f
 ## 11. Equipment Chests (Standard pieces)
 
 A boss or Greater Boss killed once Equipment is open has a **0.5%** chance to drop a Standard piece and a **1.5%** chance to drop upgrade materials, each rolled as an Equipment or a Supply Chest's contents are (`BOSS_DROPS`, added to the enemy cards' trees' chances in `RunPurse.killDrops`); other kills drop them only with an enemy card's tree.
+Once the Archives' **Common Drop Chance** research (opened by Tower IV's floor 70 Goal) has a level, a boss or Greater Boss also has a separate roll, 0.1% a level up to 1% at 10, for a **Common** Standard piece of a random unlocked category (`rollCommonPiece`), raised by the same relics and Fortune's Eye substats as the piece's chance; Chest's Rarity Up never touches it.
 While the run's hand holds the **Chest** card, each treasure chest, once Equipment is open and in either mode, has a **0.5%** chance of being an **Equipment Chest**, which holds a Standard piece beside its Gold (`EQUIPMENT_CHEST_RARITY`, `rollChestPiece`). Each physical chest pays once (`lootedTiles`, so undo can't farm it).
 
 | Common | Uncommon | Rare |

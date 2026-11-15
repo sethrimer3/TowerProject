@@ -1,3 +1,4 @@
+import { researched } from "../progression/archives.ts";
 import type { Mode } from "../entities.ts";
 import type { Save } from "../save/shape.ts";
 import { MODES } from "../modes.ts";
@@ -83,10 +84,11 @@ export const MISSION_MATERIALS = [0, 3, 5, 8, 12, 15, 20, 25, 30] as const;
 /** The highest tower open (1 to 9). */
 export const highestTower = (save: Save) => Math.min(MISSION_GOLD.length, Math.max(1, save.tower.tiersOpen));
 
-/** What a daily mission pays now, by the highest tower open. */
+/** What a daily mission pays now, by the highest tower open, its materials
+ * raised by Daily Mission Materials research. */
 export function missionReward(save: Save, material: EquipMaterialId) {
-  const tower = highestTower(save);
-  return { gems: MISSION_GEMS, gold: MISSION_GOLD[tower - 1]!, material, materials: MISSION_MATERIALS[tower - 1]! };
+  const tower = highestTower(save), materials = MISSION_MATERIALS[tower - 1]! + researched(save.archives, "missionMaterials");
+  return { gems: MISSION_GEMS, gold: MISSION_GOLD[tower - 1]!, material, materials };
 }
 
 /** The weekly rewards, one for every 5 daily missions claimed in the

@@ -113,6 +113,13 @@ export function rollChestPiece(rng: () => number, categories: readonly CategoryI
   return { def: pick(standardsOf(category), rng()).id, rarity, category };
 }
 
+/** A Common Standard piece of a random category, as Common Drop Chance
+ * research has a boss drop. */
+export function rollCommonPiece(rng: () => number, categories: readonly CategoryId[] = STARTER_CATEGORIES) {
+  const category = pick(categories, rng());
+  return { def: pick(standardsOf(category), rng()).id, rarity: "common" as const, category };
+}
+
 /** Takes an Equipment Chest's piece into the inventory, or salvages it at
  * once into its material: a Common one while the player has Auto-salvage on
  * (`auto`), any one when the inventory is full. */

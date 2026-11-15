@@ -225,6 +225,10 @@ export const RESEARCH_TARGETS = {
   voidwellGold: { name: "Gold Bonus", base: 10, shown: (n: number) => `×${n / 10}` },
   /** Whether Voidwell opens a second vortex opposite the first (ArcanaDesk.voidwellRule). */
   extraVoidwell: { name: "Extra Voidwell", base: 0, shown: (n: number) => (n ? "On" : "Off") },
+  /** A boss's chance of a Common piece (RunPurse.killDrops), in tenths of a percent: none untrained. */
+  commonDrop: { name: "Common Drop Chance", base: 0, shown: tenths },
+  /** Upgrade materials each daily mission pays more (missionReward): none untrained. */
+  missionMaterials: { name: "Mission Materials", base: 0, shown: (n: number) => `+${n}` },
   /** Badges each card can hold. */
   badgeSlots: { name: "Badge Slots", base: 1, shown: count },
   /** Turns allowed per Obelisk boss trial run before the encounter ends. */
@@ -435,6 +439,30 @@ const VOIDWELL_GOLD_GOLD = [
 const VOIDWELL_TIMES: readonly [days: number, hours: number, minutes: number][] = [
   [1, 15, 59], [2, 0, 21], [2, 8, 53], [2, 17, 54], [3, 3, 49], [3, 15, 6], [4, 4, 17], [4, 19, 58], [5, 14, 49], [6, 13, 31],
   [7, 16, 49], [9, 1, 30], [10, 16, 23], [12, 14, 21], [14, 20, 18], [17, 11, 9], [20, 11, 54], [23, 23, 32], [27, 23, 6], [32, 11, 40],
+];
+/** Common Drop Chance research: +0.1% a level on a boss's chance of a
+ * Common piece, for 10 levels, to 1%. */
+const COMMON_DROP_GOLD = [
+  5_000_000, 40_000_000, 114_250_000, 282_700_000, 610_030_000, 1_170_000_000, 2_030_000_000, 3_290_000_000, 5_020_000_000, 7_320_000_000,
+];
+const COMMON_DROP_TIMES: readonly [days: number, hours: number, minutes: number][] = [
+  [4, 4, 0], [4, 12, 21], [4, 20, 50], [5, 5, 39], [5, 14, 58], [6, 1, 1], [6, 12, 0], [7, 0, 10], [7, 13, 45], [8, 5, 0],
+];
+/** Daily Mission Materials research: one upgrade material more a daily
+ * mission a level, for 50 levels, to 50. */
+const MISSION_MATERIALS_GOLD = [
+  1_200_000, 4_200_000, 25_200_000, 82_200_000, 192_300_000, 376_300_000, 649_300_000, 1_030_000_000, 1_500_000_000, 2_100_000_000,
+  3_000_000_000, 3_900_000_000, 5_100_000_000, 6_500_000_000, 8_200_000_000, 10_100_000_000, 12_200_000_000, 14_700_000_000, 17_500_000_000, 20_500_000_000,
+  24_000_000_000, 27_700_000_000, 31_900_000_000, 36_500_000_000, 41_400_000_000, 46_800_000_000, 52_700_000_000, 59_050_000_000, 65_800_000_000, 73_100_000_000,
+  81_000_000_000, 89_300_000_000, 98_300_000_000, 107_800_000_000, 117_900_000_000, 128_600_000_000, 139_900_000_000, 151_900_000_000, 164_600_000_000, 177_900_000_000,
+  192_000_000_000, 206_700_000_000, 222_200_000_000, 238_500_000_000, 255_500_000_000, 273_300_000_000, 292_010_000_000, 311_400_000_000, 331_700_000_000, 352_900_000_000,
+];
+const MISSION_MATERIALS_TIMES: readonly [days: number, hours: number, minutes: number][] = [
+  [1, 9, 19], [1, 10, 11], [1, 11, 6], [1, 12, 6], [1, 13, 12], [1, 14, 25], [1, 15, 46], [1, 17, 14], [1, 18, 51], [1, 20, 37],
+  [1, 22, 33], [2, 0, 38], [2, 2, 53], [2, 5, 20], [2, 7, 57], [2, 10, 45], [2, 13, 45], [2, 16, 57], [2, 20, 21], [2, 23, 57],
+  [3, 3, 46], [3, 7, 48], [3, 12, 4], [3, 16, 33], [3, 21, 15], [4, 2, 12], [4, 7, 23], [4, 12, 48], [4, 18, 28], [5, 0, 23],
+  [5, 6, 32], [5, 12, 58], [5, 19, 38], [6, 2, 34], [6, 9, 47], [6, 17, 15], [7, 0, 59], [7, 9, 0], [7, 17, 18], [8, 1, 52],
+  [8, 10, 43], [8, 19, 52], [9, 5, 17], [9, 15, 1], [10, 1, 2], [10, 11, 20], [10, 21, 57], [11, 8, 52], [11, 20, 5], [12, 7, 36],
 ];
 /** A schedule's level `i` of `target`, adding `value`, at its listed Gold and
  * days, hours and minutes (and seconds, where it lists them). */
@@ -1143,6 +1171,20 @@ export const RESEARCH = {
     categories: ["arcana", "abilities"],
     requires: [{ upgrade: "archives" }, { goalUnlock: "extraVoidwell" }],
     levels: scheduled("extraVoidwell", 1, [15_000_000_000], [[17, 8, 39]]),
+  },
+  commonDrop: {
+    name: "Common Drop Chance",
+    description: "Each boss you defeat may drop a Common piece of equipment.",
+    categories: ["equipment"],
+    requires: [{ upgrade: "archives" }, { goalUnlock: "dropResearch" }],
+    levels: scheduled("commonDrop", 1, COMMON_DROP_GOLD, COMMON_DROP_TIMES),
+  },
+  missionMaterials: {
+    name: "Daily Mission Materials",
+    description: "Each daily mission pays more upgrade materials.",
+    categories: ["equipment"],
+    requires: [{ upgrade: "archives" }, { goalUnlock: "dropResearch" }],
+    levels: scheduled("missionMaterials", 1, MISSION_MATERIALS_GOLD, MISSION_MATERIALS_TIMES),
   },
   bossPotion: {
     name: "Boss Potion Drop",

@@ -945,6 +945,10 @@ _Avoid_: quest, task, challenge, daily (alone)
 Swapping an incomplete daily mission for a fresh one of a kind not on the list, for 5 Gems, once the Archives' Reroll Daily Mission is researched.
 _Avoid_: refresh, skip, redraw
 
+**Common Drop Chance**:
+An Archives research (opened by Tower IV's floor 70 Goal) giving each boss killed its own chance, 0.1% a level up to 1%, to drop a Common piece of equipment, beside its usual drops.
+_Avoid_: common drop rate, boss gear chance
+
 **Weekly reward**:
 One of seven prizes for every 5 daily missions claimed in the week (Monday 00:00 GMT to the next), up to 35: Gold, Gems, Medals and Arcanite. Each can be claimed once a week.
 _Avoid_: weekly mission (nothing is asked beyond the daily missions), chest

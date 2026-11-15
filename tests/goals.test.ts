@@ -96,11 +96,11 @@ test("each pass covers three towers and totals its premium rewards", () => {
   assert.equal(passFor(5).n, 2);
   // Twenty-two checkpoints a tower paying 5 Gems × n each (1,265), the last (floor 4,500) a relic; Tower I's are set
   // by hand: 425 Gems (floor 100's the stub's), 146,000 Gold and 25 Arcanite. Tower III's floor 400 (the 15th) pays
-  // 5,000,000 Gold and its floor 250 (the 13th) 1,000,000 Gold, Tower IV's floor 30 (the 3rd) 150,000 Gold and its floor 200 (the 12th)
+  // 5,000,000 Gold and its floor 250 (the 13th) 1,000,000 Gold, Tower IV's floor 30 (the 3rd) 150,000 Gold, floor 70 (the 7th) 500,000 Gold and floor 200 (the 12th)
   // 1,500,000 Gold, Tower V's floor 150 (the 11th) 10,000,000 Gold and its floor 500 (the 16th) 50,000,000 Gold, and
   // Tower VII's floor 80 (the 8th) 20 Arcanite, in place of their Gems.
   assert.deepEqual(passTotals(PASSES[0]!), { gems: 425 + 2 * 1265 - 75 - 65, gold: 6_146_000, arcanite: 25 });
-  assert.deepEqual(passTotals(PASSES[1]!), { gems: 3 * 1265 - 15 - 60 - 55 - 80, gold: 61_650_000 });
+  assert.deepEqual(passTotals(PASSES[1]!), { gems: 3 * 1265 - 15 - 60 - 55 - 80 - 35, gold: 62_150_000 });
   assert.deepEqual(passTotals(PASSES[2]!), { gems: 3 * 1265 - 40, arcanite: 20 });
 });
 

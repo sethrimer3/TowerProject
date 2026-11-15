@@ -48,7 +48,7 @@ Claiming a completed mission removes it and pays (`missionReward`):
 
 - **3 Gems**.
 - **Gold** by the highest tower open: 100 / 1,000 / 10,000 / 30,000 / 100,000 / 300,000 / 1,000,000 / 3,000,000 / 10,000,000 (`MISSION_GOLD`).
-- **One equipment upgrade material**, the kind drawn when the mission was given, by the highest tower open: 0 / 3 / 5 / 8 / 12 / 15 / 20 / 25 / 30 (`MISSION_MATERIALS`).
+- **One equipment upgrade material**, the kind drawn when the mission was given, by the highest tower open: 0 / 3 / 5 / 8 / 12 / 15 / 20 / 25 / 30 (`MISSION_MATERIALS`), and one more for each level of the Archives' **Daily Mission Materials** research (50 levels, up to 50 more; opened by Tower IV's floor 70 Goal).
 
 ### Rerolling
 
