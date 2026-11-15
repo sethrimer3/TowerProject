@@ -190,7 +190,7 @@ export class ArcanaDesk {
   cooldown({ id, levels }: HeldArcanum) {
     const trigger = arcanum(id).trigger;
     if (trigger.on !== "cooldown") return undefined;
-    const values = this.withGear(id, valuesAt(id, levels)), turns = id === "phantasm" ? phantasmCooldown(values[2], phantasmEffects(this.save)) : trigger.turns(values);
+    const values = this.withGear(id, valuesAt(id, levels)), turns = id === "phantasm" ? phantasmCooldown(values[2], this.phantasmEffects()) : trigger.turns(values);
     const timer = id === "lifespring" ? this.host.run.lifespring?.timer : id === "timeDilation" ? this.host.run.timeDilation?.timer : id === "phantasm" ? this.host.run.phantasm?.timer : id === "necroticFrost" ? this.host.run.necroticFrost?.timer : id === "voidwell" ? this.host.run.voidwell?.timer : this.runState.timers[id];
     return { left: Math.min(timer ?? turns, turns), turns };
   }
@@ -312,8 +312,13 @@ export class ArcanaDesk {
   phantasmRule() {
     const held = this.held.find((h) => h.id === "phantasm" && this.isOn(h.id));
     if (!held) return undefined;
-    const [multiplier, quantity, cooldown] = this.valuesOf(held), effects = phantasmEffects(this.save);
-    return { boost: this.boost(multiplier), quantity, turns: Math.max(1, Math.round(phantasmCooldown(cooldown, effects) * relicCut(this.save, "phantasm"))), blast: effects.blast, spin: effects.spin, ...(this.augmented(held.id) ? { outer: OUTER_GHOSTS } : {}) };
+    const [multiplier, quantity, cooldown] = this.valuesOf(held), effects = this.phantasmEffects();
+    return { boost: this.boost(multiplier), quantity, turns: Math.max(1, Math.round(phantasmCooldown(cooldown, effects) * relicCut(this.save, "phantasm"))), blast: effects.blast, spin: effects.spin, ...(effects.drain ? { drain: effects.drain } : {}), ...(effects.stun ? { stun: effects.stun } : {}), ...(this.augmented(held.id) ? { outer: OUTER_GHOSTS } : {}) };
+  }
+  /** What Phantasm's research gives it, read as it strikes, never copied into the run. */
+  private phantasmEffects() {
+    const archives = this.save.archives;
+    return phantasmEffects({ drain: researched(archives, "phantasmBlast"), spin: researched(archives, "phantasmSpin"), stun: researched(archives, "phantasmStun") });
   }
   /** Phantasm's turn: the ring turning, its cooldown and the ghosts it brings back, if it is held and on. */
   phantasmTurn() {

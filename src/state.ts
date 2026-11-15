@@ -6,7 +6,7 @@ import { CARDS, cardText, dealCard, deckCards, explainStuck, handSlots, handBonu
 import { addCardXp, PASSIVE_CARDS } from "./cards/levels.ts";
 import { KEY_COLORS, cardMaxLevel, compounded, doorStat, foeCardStat, foeStat, foeStats, keyStat, freeUpChances, freeUpFactors, hasPointsToSpend, pointsLeft, runCardTrees, runFoeCut, treeBonus, treeFactor, treeOverheal, type FoeTreeCard, type TreeBonus } from "./cards/trees.ts";
 import { aggroTurn } from "./enemies/flying.ts";
-import { arrowRange, foeOn, TURN_TICKS, within as inShotRange } from "./enemies/ranged.ts";
+import { arrowRange, foeOn, stunWorn, TURN_TICKS, within as inShotRange } from "./enemies/ranged.ts";
 import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./cards/badges.ts";
 import { BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
 import { noteGoldBoost } from "./economy/gold-boost.ts";
@@ -47,6 +47,7 @@ import type {
   ChestOdds,
   KeyColor,
 } from "./entities.ts";
+import { isStunned } from "./entities.ts";
 import { World, LAYOUT_VERSION } from "./delve/world.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import { chestKindAt, litTorches, type Board } from "./board.ts";
@@ -2532,6 +2533,7 @@ export class Game {
     if ((this.tier < 3 && !archer) || !sameFloor) {
       this.showVolley(struck, at, ms);
       if (sameFloor) this.showVolley(this.crownGhosts(beams), at, ms, true);
+      this.wearStuns();
       this.showVolley(this.lifespringContact(), at, ms, true);
       this.showVolley(this.decayNecro(beams), at, ms, true);
       this.showVolley(this.voidwellStrike(), at, ms, true);
@@ -2578,11 +2580,13 @@ export class Game {
       return;
     }
     // Then the Aggroed enemies close in (enemies/flying.ts), their cooldowns with them.
-    const moved = aggroTurn({ board: this.world, changes: this.run.changes, hero: p, floorOf: (x, y) => this.floorOf(x, y), lit: litTorches(this.world), foes: this.run.volleys.foes, ...(dilation || frost || powerOf(this.worn, "amberPrison", "perHit") ? { slowAt: (x: number, y: number) => togetherSlow(this.slowdownAt({ x, y }), foeOn(this.world.tile(x, y))?.amber ?? 0) } : {}), ...(this.vortex ? { stunnedAt: (x: number, y: number) => !!foeOn(this.world.tile(x, y))?.stunned } : {}) });
+    const moved = aggroTurn({ board: this.world, changes: this.run.changes, hero: p, floorOf: (x, y) => this.floorOf(x, y), lit: litTorches(this.world), foes: this.run.volleys.foes, ...(dilation || frost || powerOf(this.worn, "amberPrison", "perHit") ? { slowAt: (x: number, y: number) => togetherSlow(this.slowdownAt({ x, y }), foeOn(this.world.tile(x, y))?.amber ?? 0) } : {}), stunnedAt: (x: number, y: number) => { const foe = foeOn(this.world.tile(x, y)); return !!foe && isStunned(foe); } });
     if (moved.steps.length) {
       if (moved.foes && Object.keys(moved.foes).length) this.run.volleys.foes = moved.foes;
       else delete this.run.volleys.foes;
     }
+    // The enemies stunned have sat out this turn: each stun a turn shorter.
+    this.wearStuns();
     this.showVolley(this.crownGhosts(beams), at, ms, true);
     // What stepped up to the ring meets it now, the hero's step over.
     this.showVolley(this.strikeGhosts(beams, at, ms, undefined, TURN_TICKS), at, ms, true);
@@ -2623,6 +2627,13 @@ export class Game {
     return togetherSlow(field && inShotRange(dx, dy, field.reach) ? field.slow : 0, frost ? frostSlowAt(frost, dx, dy) : 0);
   }
   /** Voidwell's turn (arcana.md): its vortex's turns and its cooldown, opening a new one out on the floor. */
+  /** Phantasm Stun's countdown, once the stunned enemies have sat out a turn: each stun on
+   * the run's tiles a turn shorter, gone at none. One set after this, as the turn ends,
+   * holds its enemy through the whole of its next turn. */
+  private wearStuns() {
+    const changes = this.run.changes;
+    for (const k of Object.keys(changes)) if (changes[k]!.stun) changes[k] = stunWorn(changes[k]!);
+  }
   private voidwellTurn() {
     const rule = this.arcana.voidwellRule(), p = this.run.player;
     if (!rule) return;

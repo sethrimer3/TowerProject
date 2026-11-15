@@ -291,7 +291,7 @@ const TOWER_SEVEN: Record<number, CheckpointSet> = {
 const TOWER_EIGHT: Record<number, CheckpointSet> = {
   10: { reward: unlock("aetherShield"), premium: gold(50_000_000) },
   20: { reward: gems(45), premium: gems(55) },
-  30: { reward: arcanite(10), premium: arcanite(10) },
+  30: { reward: breakthrough(5), premium: arcanite(10) },
   40: { reward: gems(50), premium: gems(60) },
   50: { reward: gold(50_000_000), premium: gold(75_000_000) },
   60: { reward: gems(55), premium: gems(70) },

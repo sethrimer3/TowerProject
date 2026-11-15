@@ -707,6 +707,17 @@ An arcanum on a cooldown: a field round the hero as wide as its shot range, last
 **Phantasm**:
 An arcanum on a cooldown: ghosts in an evenly spaced ring one tile round the hero, turning slowly. A ghost that touches an enemy's tile strikes everything in its blast and disappears; each activation fills the ring's gaps, up to its Quantity.
 
+**Phantasm Drain Radius**:
+Research that has a Phantasm ghost's strike also hit every enemy within its radius of each enemy tile the ghost touched.
+_Avoid_: ghost AOE, ghost splash
+
+**Phantasm Rotation Speed**:
+Research that turns Phantasm's ring faster; a ghost strikes whatever it sweeps over between one turn and the next.
+
+**Stun** (Phantasm):
+What Phantasm Stun research leaves on an enemy a ghost's strike hits: for its turns left it doesn't move or shoot, its cooldowns stand still, and a fight skips that many of its strikes. Voidwell's vortex also stuns, but only while the enemy stands in it.
+_Avoid_: daze, freeze
+
 **Necrotic Frost**:
 An arcanum on a cooldown: a field round the hero, its center off the hero's at an angle rolled for it, moving with the hero for a number of turns. Fields stack. It slows what stands in it and leaves its effect on what it touches.
 

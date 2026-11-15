@@ -153,7 +153,9 @@ function enemyStats(e: Enemy, p: Player, r: CombatPrediction, gold: number, brok
 const necroLine = (e: Enemy) => (e.necro ? "<br><small>Necro: it takes more decay every turn until it falls</small>" : "");
 
 /** What Voidwell's vortex does to an enemy in it (arcana/voidwell.ts). */
-const stunnedLine = (e: Enemy) => (e.stunned ? "<br><small>Stunned: in the vortex it can't move, shoot or strike first, and a Flying enemy can be fought</small>" : "");
+const stunnedLine = (e: Enemy) =>
+  (e.stunned ? "<br><small>Stunned: in the vortex it can't move, shoot or strike first, and a Flying enemy can be fought</small>" : "")
+  + (e.stun ? `<br><small>Stunned ${e.stun === 1 ? "1 turn" : `${e.stun} turns`}: it can't move or shoot, and a fight skips its first ${e.stun === 1 ? "strike" : `${e.stun} strikes`}</small>` : "");
 
 /** A Flying enemy's panel (enemies/flying.ts): its HP, its ATK with what each of
  * its shots does to the hero, its DEF with what one of the hero's arrows

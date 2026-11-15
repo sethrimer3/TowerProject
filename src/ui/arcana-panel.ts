@@ -31,8 +31,10 @@ const boxedTable = (heading: string, rows: readonly (readonly [string, string])[
   ? `<div class="arcana-box"><h3>${heading}</h3><table class="arcana-table"><tbody>${rows.map(([name, value]) => `<tr><td>${name}</td><td>${value}</td></tr>`).join("")}</tbody></table></div>`
   : "";
 
-/** What research adds to an arcanum's summary: Overseer Gold Bonus's Gold, once researched. */
+/** What research adds to an arcanum's summary: Overseer Gold Bonus's Gold and Phantasm Rotation Speed's turning, once researched. */
 function researchedText(id: ArcanumId, values: AttributeValues, save: Save) {
+  const spin = id === "phantasm" ? researched(save.archives, "phantasmSpin") : 100;
+  if (spin !== 100) return ` Research turns the ring ${spin / 100}° a turn instead.`;
   const tenths = id === "overseer" ? researched(save.archives, "overseerGold") : 10;
   return tenths > 10 ? ` Enemies killed in ${values[2] === 1 ? "it" : "them"} drop ×${tenths / 10} Gold.` : "";
 }
@@ -40,6 +42,7 @@ function researchedText(id: ArcanumId, values: AttributeValues, save: Save) {
 /** The Archives' projects that raise what an arcanum gives. */
 const ARCANUM_RESEARCH: Partial<Record<ArcanumId, readonly (keyof typeof RESEARCH & keyof typeof RESEARCH_TARGETS)[]>> = {
   thunderbolt: ["thunderboltAmplify", "thunderboltExpansion"],
+  phantasm: ["phantasmBlast", "phantasmSpin", "phantasmStun"],
   lifespring: ["lifespringHealth", "lifespringGold", "lifespringAmplify", "lifespringCells"],
   aurumBloom: ["aurumBloomBonus", "aurumBloomChance"],
   voidwell: ["voidwellDamage", "voidwellGold", "extraVoidwell"],

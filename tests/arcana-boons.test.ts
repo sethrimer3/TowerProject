@@ -173,7 +173,7 @@ test("Phantasm's augment fills an outer ring of five with every activation, the 
 });
 
 test("the outer ring turns the other way, a tile farther out, evenly spaced", () => {
-  const spin = phantasmEffects(null).spin;
+  const spin = phantasmEffects().spin;
   assert.equal(outerDirection(0, 0, spin), 0);
   assert.equal(outerDirection(1, 0, spin), 36_000 - spin);
   assert.equal(outerDirection(0, 1, spin), 7200);
@@ -200,7 +200,7 @@ function board(spots: readonly (readonly [number, number])[]) {
   } as unknown as VolleyTurn["board"];
 }
 const hero = { x: 4, y: 4, attack: 100, defense: 0, hp: 100, maxHp: 100 } as Player;
-const rule = { boost: 10, blast: phantasmEffects(null).blast, spin: phantasmEffects(null).spin };
+const rule = { boost: 10, blast: phantasmEffects().blast, spin: phantasmEffects().spin };
 
 test("an outer ghost strikes what it touches two tiles out, and only it is lost", () => {
   // Straight up the board two tiles: under the outer ring's first ghost, out of the inner ring's reach.

@@ -202,6 +202,15 @@ export const RESEARCH_TARGETS = {
   /** How far round its target a Thunderbolt's damage reaches (ArcanaDesk.thunderbolt),
    * in tenths of a tile: none untrained. */
   thunderboltExpansion: { name: "Strike Radius", base: 0, shown: (n: number) => (n ? `${n / 10} ${n === 10 ? "tile" : "tiles"}` : "None") },
+  /** How far round each enemy a Phantasm ghost touches its strike's damage reaches
+   * (`phantasmEffects`' `drain`), in tenths of a tile: none untrained. */
+  phantasmBlast: { name: "Drain Radius", base: 0, shown: (n: number) => (n ? `${n / 10} ${n === 10 ? "tile" : "tiles"}` : "None") },
+  /** How far Phantasm's ring turns each turn (`phantasmEffects`), in hundredths
+   * of a degree: 1° untrained. */
+  phantasmSpin: { name: "Rotation Speed", base: 100, shown: (n: number) => `${n / 100}° a turn` },
+  /** The turns a Phantasm ghost's strike stuns what it hits (`phantasmEffects`;
+   * half that, rounded down, on a Greater Boss): none untrained. */
+  phantasmStun: { name: "Stun", base: 0, shown: (n: number) => (n ? `${n} ${n === 1 ? "turn" : "turns"}` : "None") },
   /** Turns between Overseer Zap's strikes (game/arcana-desk.ts), 20 less
    * one a level; no strike before the first level. */
   overseerZapTurns: { name: "Zap Cooldown", base: 20, shown: (n: number) => `${n} turns` },
@@ -373,6 +382,22 @@ const THUNDERBOLT_EXPANSION_GOLD = [900_000, 2_950_000, 12_130_000, 77_430_000, 
 const THUNDERBOLT_EXPANSION_TIMES: readonly [days: number, hours: number, minutes: number][] = [
   [0, 22, 13], [1, 21, 46], [2, 21, 10], [3, 21, 42], [5, 13, 42],
 ];
+/** Phantasm Drain Radius research: the radius round a ghost's strike that its
+ * damage reaches, in tenths of a tile: 1 tile at the first level (the four
+ * orthogonal neighbours), half a tile more each level after, for 7 levels, to 4;
+ * Thunderbolt Expansion's Gold and times, and two levels more. */
+const PHANTASM_BLAST_GOLD = [...THUNDERBOLT_EXPANSION_GOLD, 2_140_000_000, 6_880_000_000];
+const PHANTASM_BLAST_TIMES: readonly [days: number, hours: number, minutes: number][] = [...THUNDERBOLT_EXPANSION_TIMES, [6, 20, 49], [8, 5, 30]];
+/** Phantasm Rotation Speed research: half a degree more a turn a level, for 20
+ * levels, from 1.5° to 11°; Thunderbolt Amplifier's first 20 times, the first a minute longer. */
+const PHANTASM_SPIN_GOLD = [
+  250_000, 560_000, 1_100_000, 2_800_000, 7_750_000, 19_540_000, 43_580_000, 87_410_000, 160_910_000, 276_620_000,
+  449_930_000, 699_340_000, 1_050_000_000, 1_520_000_000, 2_140_000_000, 2_950_000_000, 3_980_000_000, 5_270_000_000, 6_880_000_000, 8_840_000_000,
+];
+const PHANTASM_SPIN_TIMES: readonly (readonly number[])[] = [[0, 20, 0], ...THUNDERBOLT_AMPLIFY_TIMES.slice(1, 20)];
+/** Phantasm Stun research: a turn more of stun a level, for 3 levels. */
+const PHANTASM_STUN_GOLD = [50_000_000, 250_000_000, 1_250_000_000];
+const PHANTASM_STUN_TIMES: readonly [days: number, hours: number, minutes: number][] = [[3, 19, 5], [7, 5, 25], [13, 21, 19]];
 /** A schedule whose first level adds `first` and every later one `value`. */
 const scheduledFrom = (target: ResearchTarget, first: number, value: number, gold: readonly number[], times: readonly (readonly number[])[]) =>
   scheduled(target, value, gold, times).map((level, i) => (i ? level : { ...level, effect: { ...level.effect, value: first } }));
@@ -1139,6 +1164,27 @@ export const RESEARCH = {
     categories: ["arcana", "offense"],
     requires: [{ upgrade: "archives" }, { upgrade: "thunderboltResearch" }],
     levels: scheduledFrom("thunderboltExpansion", 10, 5, THUNDERBOLT_EXPANSION_GOLD, THUNDERBOLT_EXPANSION_TIMES),
+  },
+  phantasmBlast: {
+    name: "Phantasm Drain Radius",
+    description: "A Phantasm ghost's strike also damages every enemy within its radius.",
+    categories: ["arcana", "offense"],
+    requires: [{ upgrade: "archives" }, { upgrade: "phantasmResearch" }],
+    levels: scheduledFrom("phantasmBlast", 10, 5, PHANTASM_BLAST_GOLD, PHANTASM_BLAST_TIMES),
+  },
+  phantasmSpin: {
+    name: "Phantasm Rotation Speed",
+    description: "Phantasm's ghosts circle the hero faster, striking whatever they sweep over.",
+    categories: ["arcana", "offense"],
+    requires: [{ upgrade: "archives" }, { upgrade: "phantasmResearch" }],
+    levels: scheduled("phantasmSpin", 50, PHANTASM_SPIN_GOLD, PHANTASM_SPIN_TIMES),
+  },
+  phantasmStun: {
+    name: "Phantasm Stun",
+    description: "Enemies a Phantasm ghost's strike hits are stunned: they don't move or shoot, and skip strikes in a fight.",
+    categories: ["arcana", "offense"],
+    requires: [{ upgrade: "archives" }, { upgrade: "phantasmResearch" }],
+    levels: scheduled("phantasmStun", 1, PHANTASM_STUN_GOLD, PHANTASM_STUN_TIMES),
   },
   overseerZap: {
     name: "Overseer Zap",

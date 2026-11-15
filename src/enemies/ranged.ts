@@ -19,7 +19,7 @@
  * cooldown starts over from that tick; Rapid Fire too starts and ends
  * mid-turn. Each tile's roll is a fixed number of the run seed, the floor
  * and the tile (`RANGED_SALT`). */
-import type { Enemy, Player, Tile } from "../entities.ts";
+import { isStunned, type Enemy, type Player, type Tile } from "../entities.ts";
 import { attackAgainst, brokenAfter, critMultiplier, defenseAgainst, facing, guarded, parryCut, struckDamage, lessened } from "../combat.ts";
 import { fastShare, mayBeFast } from "./fast.ts";
 import { snap } from "../exact.ts";
@@ -66,16 +66,16 @@ export function rangedCells(cells: Map<string, Tile>, tier: number, seed: number
 /** The enemy a tile holds: one standing on it, or a Flying one hovering
  * over it (`Tile.flyer`). */
 export const foeOn = (t: Tile): Enemy | undefined => (t.kind === "enemy" ? t.enemy : t.flyer);
-/** Whether `enemy` shoots the hero: a Ranged or Flying one. */
-export const shoots = (enemy: Enemy) => !!(enemy.ranged || enemy.flying) && !enemy.stunned;
+/** Whether `enemy` shoots the hero: a Ranged or Flying one, unless a vortex or a Phantasm stun holds it. */
+export const shoots = (enemy: Enemy) => !!(enemy.ranged || enemy.flying) && !isStunned(enemy);
 
 /** A tile as it stands once the hero's arrows have wounded its enemy: its
  * HP less the `wound` (kept on the tile, so its full HP is HP + wound),
  * its full HP kept as `fullHp`, and what they have broken of its DEF
  * (Armor Break) as `broken`. */
 export const wounded = (t: Tile): Tile => {
-  if (!t.wound && !t.broken && t.sprung === undefined && !t.necro && !t.amber && !t.bolted) return t;
-  const less = (e: Enemy) => ({ ...e, ...(t.wound ? { hp: snap(Math.max(0, e.hp - t.wound)), fullHp: e.fullHp ?? e.hp } : {}), ...(t.broken ? { broken: t.broken } : {}), ...(t.sprung === undefined ? {} : { sprung: t.sprung }), ...(t.necro ? { necro: t.necro } : {}), ...(t.amber ? { amber: t.amber } : {}), ...(t.bolted ? { bolted: t.bolted } : {}) });
+  if (!t.wound && !t.broken && t.sprung === undefined && !t.necro && !t.amber && !t.bolted && !t.stun) return t;
+  const less = (e: Enemy) => ({ ...e, ...(t.wound ? { hp: snap(Math.max(0, e.hp - t.wound)), fullHp: e.fullHp ?? e.hp } : {}), ...(t.broken ? { broken: t.broken } : {}), ...(t.sprung === undefined ? {} : { sprung: t.sprung }), ...(t.necro ? { necro: t.necro } : {}), ...(t.amber ? { amber: t.amber } : {}), ...(t.bolted ? { bolted: t.bolted } : {}), ...(t.stun ? { stun: t.stun } : {}) });
   return t.enemy ? { ...t, enemy: less(t.enemy) } : t.flyer ? { ...t, flyer: less(t.flyer) } : t;
 };
 /** `raw` (a tile as generated) with `damage` more wound (an arrow that only
@@ -100,6 +100,13 @@ export const springMark = (raw: Tile, waves: number, broke = 0): Tile => ({
 
 /** `raw` once a Thunderbolt bolt has hit its enemy (Thunderbolt Amplifier): one bolt more. */
 export const boltMark = (raw: Tile): Tile => ({ ...raw, bolted: (raw.bolted ?? 0) + 1 });
+/** `raw` once a Phantasm ghost's strike stuns its enemy for `turns`: a stun already on it starts over. */
+export const stunMark = (raw: Tile, turns: number): Tile => ({ ...raw, stun: turns });
+/** `raw` a turn on: its stun a turn shorter, gone at none. */
+export function stunWorn(raw: Tile): Tile {
+  const { stun, ...rest } = raw;
+  return stun && stun > 1 ? { ...rest, stun: stun - 1 } : rest;
+}
 
 /** `raw` with what Necrotic Frost has on its enemy now. It moves with the tile, as a wound does. */
 export const necroMark = (raw: Tile, necro: Record<string, number>): Tile => ({ ...raw, necro });

@@ -12,7 +12,7 @@
  * volley at all and applies the outcome (the hero's HP, kill pay, a fall). */
 import type { GearTotals } from "./equipment/gear-rows.ts";
 import type { Board } from "./board.ts";
-import { point, type ByFoe, type Enemy, type Player, type Tile } from "./entities.ts";
+import { isStunned, point, type ByFoe, type Enemy, type Player, type Tile } from "./entities.ts";
 import type { Save } from "./save/shape.ts";
 import { attackAgainst, breaksArmor, critAgainst, facing, guaranteedCrits, guarded, isBoss, landsSuperCrit, shieldThorn, stealCeiling, thornDamage } from "./combat.ts";
 import { critRule } from "./progression/loadout.ts";
@@ -26,7 +26,7 @@ import { fieldHit } from "./arcana/lifespring.ts";
 import { slowedCharge, slowedTickGain, togetherSlow } from "./arcana/time-dilation.ts";
 import { decayed, fieldsOn, frostSlowAt, type FrostArea } from "./arcana/necrotic-frost.ts";
 import { inVortex, type VortexZone } from "./arcana/voidwell.ts";
-import { GHOST_RADIUS, ghostDirection, ghostOffset, ghostsOut, inBlast, loseGhost, outerDirection, OUTER_RADIUS, RING_RADIUS, touchesTile, type GhostStrike, type PhantasmRun } from "./arcana/phantasm.ts";
+import { GHOST_RADIUS, ghostDirection, ghostOffset, ghostsOut, inBlast, loseGhost, outerDirection, OUTER_RADIUS, RING_RADIUS, stunFor, touchesTile, type GhostStrike, type PhantasmRun } from "./arcana/phantasm.ts";
 import { tileRandom } from "./random.ts";
 import { snap } from "./exact.ts";
 
@@ -211,8 +211,9 @@ export function volleyTurn(turn: VolleyTurn): VolleyOutcome {
   for (const [key, charge] of Object.entries(v.foes ?? {})) {
     if (watched.has(key)) continue;
     const [x, y] = key.split(",").map(Number) as [number, number], foe = shooterAt(x, y);
-    // Stunned in a vortex, its cooldown stands still.
-    if (foeOn(board.tile(x, y))?.stunned) {
+    // Stunned in a vortex or by a ghost, its cooldown stands still.
+    const still = foeOn(board.tile(x, y));
+    if (still && isStunned(still)) {
       foes[key] = charge;
       continue;
     }
@@ -506,26 +507,33 @@ const TILE_CORNER = 0.7072;
 
 /** Phantasm's ghosts along the hero's walk, tick by tick from `first`: a ghost whose
  * body touches an enemy's tile is gone, and that enemy, any other whose tile it
- * touches and any within its blast of it take a strike of Arcanum Damage, walls or no
- * walls. Overseer's beams multiply each as the hero and they stand that tick. Edits
+ * touches, any within its blast of it and any within Phantasm Drain Radius (`drain`)
+ * of a tile it touches take a strike of Arcanum Damage, walls or no walls. Overseer's beams multiply each as the hero and they stand that tick, and
+ * Phantasm Stun (`stun`) stuns each one left standing for that many turns (`stunFor`).
+ * The ticks sweep each ghost along the arc it turns that turn, however fast. Edits
  * the ghosts and the board's enemies; returns the shots, the kills and where each struck. */
-export function ghostStrikes(turn: Pick<VolleyTurn, "board" | "wrap" | "hero" | "from" | "beams">, rule: { boost: number; blast: number; spin: number }, s: PhantasmRun, first = 1) {
+export function ghostStrikes(turn: Pick<VolleyTurn, "wrap" | "hero" | "from" | "beams"> & { board: VolleyTurn["board"] & Pick<Board, "markStun"> }, rule: { boost: number; blast: number; spin: number; drain?: number; stun?: number }, s: PhantasmRun, first = 1) {
   const shots: Shot[] = [], kills: VolleyKill[] = [], struck: GhostStrike[] = [], { board, wrap, hero, beams } = turn;
   if (!ghostsOut(s).length) return { shots, kills, struck };
   const walk = walkOf(turn), step = walk.ux || walk.uy ? 1 : 0, ring = s.ring ?? s.ghosts?.length ?? 1, turns = (s.turns ?? 1) - 1;
-  const reach = Math.ceil(100 * ((s.outer ? OUTER_RADIUS : RING_RADIUS) + step + Math.max(GHOST_RADIUS + TILE_CORNER, rule.blast)));
+  const reach = Math.ceil(100 * ((s.outer ? OUTER_RADIUS : RING_RADIUS) + step + Math.max(GHOST_RADIUS + TILE_CORNER + (rule.drain ?? 0), rule.blast)));
   let foes = enemiesWithin(board, walk, reach, wrap).map(({ x, y }) => ({ x, y, dx: shortWay(x - walk.x, wrap), dy: y - walk.y }));
   for (let tick = first; tick <= TURN_TICKS && foes.length && (s.ghosts || s.outer); tick++)
     for (const { slot, outer } of ghostsOut(s)) {
       const direction = outer ? outerDirection(turns, slot, rule.spin, tick) : ghostDirection(turns, slot, ring, rule.spin, tick);
       const radius = outer ? OUTER_RADIUS : RING_RADIUS, off = ghostOffset(direction, radius);
       const gx = (walk.ux * tick) / TURN_TICKS + off.x, gy = (walk.uy * tick) / TURN_TICKS + off.y;
-      if (!foes.some((f) => touchesTile(f.dx - gx, f.dy - gy))) continue;
+      const touched = foes.filter((f) => touchesTile(f.dx - gx, f.dy - gy));
+      if (!touched.length) continue;
       loseGhost(s, slot, outer);
       struck.push({ tick, x: walk.x + gx, y: walk.y + gy, direction, radius });
       const at = heroAt(walk, tick, wrap);
-      for (const f of foes.filter((f) => touchesTile(f.dx - gx, f.dy - gy) || inBlast(f.dx - gx, f.dy - gy, rule.blast)))
+      const drain = rule.drain ?? 0, drained = (f: (typeof foes)[number]) => !!drain && touched.some((t) => inBlast(f.dx - t.dx, f.dy - t.dy, drain));
+      for (const f of foes.filter((f) => touched.includes(f) || inBlast(f.dx - gx, f.dy - gy, rule.blast) || drained(f))) {
         arcaneStrike(board, hero, { x: f.x, y: f.y }, snap(rule.boost * beamFactor(beams, tick, shortWay(f.x - at.x, wrap), f.y - at.y)), { from: { x: f.x, y: f.y }, tick, phantasm: true }, shots, kills);
+        const standing = rule.stun ? foeOn(board.tile(f.x, f.y)) : undefined, turns = standing ? stunFor(rule.stun!, standing.strength) : 0;
+        if (turns) board.markStun?.(f.x, f.y, turns);
+      }
       foes = foes.filter((f) => foeOn(board.tile(f.x, f.y)));
     }
   return { shots, kills, struck };

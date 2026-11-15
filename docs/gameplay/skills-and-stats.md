@@ -117,9 +117,10 @@ Parries are certain, so forecasts, the inspect panel, the monster's damage numbe
 
 ## Arcana research
 
-Below **Extra Trainer** in the Breakthrough tree, seven skills (5 Breakthrough each) open the Arcana's research in the Archives ([Arcana](arcana.md)).
+Below **Extra Trainer** in the Breakthrough tree, eight skills (5 Breakthrough each) open the Arcana's research in the Archives ([Arcana](arcana.md)).
 **Lifespring Research** (below Extra Trainer, after it) opens the four Lifespring projects.
 **Thunderbolt Research** (left of Lifespring Research, also after Extra Trainer) opens Thunderbolt Amplifier and Thunderbolt Expansion.
+**Phantasm Research** (down and left of Lifespring Research, after it) opens Phantasm Drain Radius, Phantasm Rotation Speed and Phantasm Stun.
 **Overseer Zap** (down and right of Lifespring Research, after it) opens Overseer Zap research, and **Overseer Gold Bonus** (right of Overseer Zap, after it) Overseer Gold Bonus research.
 **Aurum Bloom Research** (below Lifespring Research, after it) opens the two Aurum Bloom projects.
 **Voidwell Research** (down and right of Aurum Bloom Research, after it) opens Voidwell Damage and Voidwell Gold Bonus, and **Extra Voidwell** (right of Voidwell Research, after it) Extra Voidwell research.

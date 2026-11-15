@@ -121,19 +121,24 @@ function lifespringTurn(s: TrialState, a: NonNullable<TrialState["arcana"]>, { h
 }
 
 /** Phantasm's part of a turn: the ring turning, its cooldown and the ghosts it
- * brings back, then each ghost on what it touches as the turn ends, a trial's turn
- * having no ticks. */
+ * brings back, then each ghost on what it touches along the arc it turned, the
+ * hero standing where the turn ends it, a trial's turn having no walk. */
 function phantasmTurn(s: TrialState, a: NonNullable<TrialState["arcana"]>, rule: NonNullable<TrialSpells["phantasm"]>, strikes: TrialStrike[]) {
   const ghosts = (a.phantasm ??= {}), hero = s.player;
   stepPhantasm(ghosts, rule);
   const ring = ghosts.ring;
   for (const slot of ghosts.ghosts ?? []) {
     if (s.status !== "active") return;
-    const off = ghostOffset(ghostDirection(ghosts.turns! - 1, slot, ring!, rule.spin, TURN_TICKS)), at = { x: hero.x + off.x, y: hero.y + off.y };
     const near = targets(s);
-    if (!near.some((t) => touchesTile(t.x - at.x, t.y - at.y))) continue;
+    let at: { x: number; y: number } | undefined;
+    for (let tick = 1; tick <= TURN_TICKS && !at; tick++) {
+      const off = ghostOffset(ghostDirection(ghosts.turns! - 1, slot, ring!, rule.spin, tick)), there = { x: hero.x + off.x, y: hero.y + off.y };
+      if (near.some((t) => touchesTile(t.x - there.x, t.y - there.y))) at = there;
+    }
+    if (!at) continue;
     loseGhost(ghosts, slot);
-    for (const t of near.filter((t) => touchesTile(t.x - at.x, t.y - at.y) || inBlast(t.x - at.x, t.y - at.y, rule.blast)))
+    const touched = near.filter((t) => touchesTile(t.x - at!.x, t.y - at!.y)), drain = rule.drain ?? 0;
+    for (const t of near.filter((t) => touched.includes(t) || inBlast(t.x - at!.x, t.y - at!.y, rule.blast) || (drain && touched.some((o) => inBlast(t.x - o.x, t.y - o.y, drain)))))
       if (s.status === "active") strike(s, t, rule.boost, "phantasm", at, TURN_TICKS, strikes);
   }
 }

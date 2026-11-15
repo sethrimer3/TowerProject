@@ -195,13 +195,15 @@ export const TREES: SkillTree[] = [
     // left after it, which reveals the Inspiration tree's door path under
     // Torch. Then the Arcana's research below Extra Trainer: Lifespring
     // Research, with Thunderbolt Research left of it (also after Extra
-    // Trainer), Overseer Zap down and right of it and Overseer Gold Bonus
-    // right of that, then Aurum Bloom Research, with Voidwell Research down
-    // and right of it and Extra Voidwell right of that.
+    // Trainer), Phantasm Research down and left of it, Overseer Zap down and
+    // right of it and Overseer Gold Bonus right of that, then Aurum Bloom
+    // Research, with Voidwell Research down and right of it and Extra
+    // Voidwell right of that.
     { id: "extraTrainer", icon: "⚔", x: 50, y: 189, requires: ["keyMastery"] },
     { id: "doorMastery", icon: "⚿", x: 30, y: 189, requires: ["extraTrainer"] },
     { id: "lifespringResearch", icon: "✚", x: 50, y: 213, requires: ["extraTrainer"] },
     { id: "thunderboltResearch", icon: "↯", x: 30, y: 213, requires: ["extraTrainer"] },
+    { id: "phantasmResearch", icon: "☁", x: 30, y: 237, requires: ["lifespringResearch"] },
     { id: "overseerZapResearch", icon: "↯", x: 70, y: 237, requires: ["lifespringResearch"] },
     { id: "overseerGoldResearch", icon: "¤", x: 90, y: 237, requires: ["overseerZapResearch"] },
     { id: "aurumBloomResearch", icon: "¤", x: 50, y: 237, requires: ["lifespringResearch"] },

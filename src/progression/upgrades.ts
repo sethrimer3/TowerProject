@@ -41,6 +41,7 @@ export const UPGRADES = [
   // The Arcana's research, opened in the Breakthrough tree under Extra Trainer.
   { id: "lifespringResearch", name: "Lifespring Research", description: "Open Lifespring Health, Lifespring Gold Bonus, Lifespring Damage Amplifier and Lifespring Cell Bonus research", base: 5, max: 1, currency: "breakthrough" },
   { id: "thunderboltResearch", name: "Thunderbolt Research", description: "Open Thunderbolt Amplifier and Thunderbolt Expansion research", base: 5, max: 1, currency: "breakthrough" },
+  { id: "phantasmResearch", name: "Phantasm Research", description: "Open Phantasm Drain Radius, Phantasm Rotation Speed and Phantasm Stun research", base: 5, max: 1, currency: "breakthrough" },
   { id: "overseerZapResearch", name: "Overseer Zap", description: "Open Overseer Zap research: Overseer's beams call down a Thunderbolt every few turns", base: 5, max: 1, currency: "breakthrough" },
   { id: "overseerGoldResearch", name: "Overseer Gold Bonus", description: "Open Overseer Gold Bonus research: enemies killed in Overseer's beams drop more Gold", base: 5, max: 1, currency: "breakthrough" },
   { id: "aurumBloomResearch", name: "Aurum Bloom Research", description: "Open Aurum Bloom Bonus and Aurum Bloom Chance research", base: 5, max: 1, currency: "breakthrough" },

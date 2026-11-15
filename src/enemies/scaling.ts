@@ -49,8 +49,8 @@ const RANK: Record<EnemyStrength, string> = { weak: "Weak ", normal: "", strong:
 /** What the game calls an enemy: its name, after its strength unless it
  * is a normal one, and after "Stunned", "Necro", "Aggroed", "Flying", "Fast", "Ranged", "Shielded" and "Armored"
  * when it is. */
-export const enemyTitle = (e: RosterEnemy & { stunned?: true; necro?: object }, legacy = false) =>
-  (e.stunned ? "Stunned " : "") + (e.necro ? "Necro " : "") + (e.aggro && !legacy ? "Aggroed " : "") + (e.flying ? "Flying " : "") + (e.fast ? "Fast " : "") + (e.ranged ? "Ranged " : "") + (e.shielded ? "Shielded " : "") + (e.armored ? "Armored " : "") + (e.strength ? RANK[e.strength] : "") + (rosterEntry(e, legacy)?.name ?? e.name);
+export const enemyTitle = (e: RosterEnemy & { stunned?: true; stun?: number; necro?: object }, legacy = false) =>
+  (e.stunned || e.stun ? "Stunned " : "") + (e.necro ? "Necro " : "") + (e.aggro && !legacy ? "Aggroed " : "") + (e.flying ? "Flying " : "") + (e.fast ? "Fast " : "") + (e.ranged ? "Ranged " : "") + (e.shielded ? "Shielded " : "") + (e.armored ? "Armored " : "") + (e.strength ? RANK[e.strength] : "") + (rosterEntry(e, legacy)?.name ?? e.name);
 
 /** The tier an enemy of each strength carries, in both modes. */
 export const enemyTier = (strength: EnemyStrength) => STRENGTH_TIER[strength];

@@ -27,7 +27,7 @@ export type CombatPrediction = {
   fast?: true;
   /** The shield left once the fight is over, for a hero with one up. */
   shieldAfter?: number;
-  /** The enemy strikes the hero takes, when Time Dilation's field skips some. */
+  /** The enemy strikes the hero takes, when Time Dilation's field or a Phantasm stun skips some. */
   strikes?: number;
 };
 /** The enemy strikes a predicted fight's hero takes. */
@@ -304,14 +304,15 @@ export function predict(player: Player, enemy: Enemy, played = Infinity): Combat
   // Thorns end a fight within 200 rounds, so it is always played out; a
   // parry cuts every strike.
   // So is a fight Time Dilation slows: only the fight being taken is.
-  const thorn = thornDamage(player, enemy), cut = parryCut(player), fast = strikesFirst(enemy), slow = player.slowdown ?? 0;
+  // A Phantasm stun skips the enemy's first strikes (a Fast one's opening among them).
+  const thorn = thornDamage(player, enemy), cut = parryCut(player), opens = strikesFirst(enemy), slow = player.slowdown ?? 0, stun = enemy.stun ?? 0, fast = opens && !stun;
   if (thorn || slow) played = Infinity;
   // Snapped, so 10.2 HP against strikes of 1.02 takes 10, as it does played out.
-  const { turns, strikes, thornKill } = thorn ? thornRounds(enemy.hp, hitAt, thorn, fast, thornsByStrike(player, enemy, thorn, cut), slow) : { turns: breaks ? brokenTurns(enemy.hp, hitAt) : Math.ceil(snap(enemy.hp / hit)), strikes: NaN, thornKill: false };
+  const { turns, strikes, thornKill } = thorn ? thornRounds(enemy.hp, hitAt, thorn, opens, thornsByStrike(player, enemy, thorn, cut), slow, stun) : { turns: breaks ? brokenTurns(enemy.hp, hitAt) : Math.ceil(snap(enemy.hp / hit)), strikes: NaN, thornKill: false };
   // The shroud takes the first of it, whichever strikes that falls on, and the shield what is left of that.
-  const shroud = player.shroud ?? 0, shield = player.shield ?? 0, struck = thorn ? strikes : actsOf(turns - 1 + (fast ? 1 : 0), slow);
+  const shroud = player.shroud ?? 0, shield = player.shield ?? 0, struck = thorn ? strikes : actsOf(Math.max(0, turns - 1 + (opens ? 1 : 0) - stun), slow);
   const shieldLeft = shield ? { shieldAfter: snap(Math.max(0, shield - Math.max(0, damageTaken(enemy.attack, player.defense, struck, played, cut) - shroud))) } : {};
-  const ended = { ...(thornKill ? { thornKill: true as const } : {}), ...(fast ? { fast: true as const } : {}), ...(slow ? { strikes: struck } : {}), ...shieldLeft };
+  const ended = { ...(thornKill ? { thornKill: true as const } : {}), ...(fast ? { fast: true as const } : {}), ...(slow || stun ? { strikes: struck } : {}), ...shieldLeft };
   if (player.lifesteal) {
     const hpAfter = lifestealEnding(player, enemy, hitAt, played, thorn, cut);
     if (hpAfter !== null) return { impervious: false, hit, turns, damage: snap(Math.max(0, player.hp - hpAfter)), survivable: true, requiredAttack: 0, hpAfter, ...ended };
@@ -332,9 +333,14 @@ export function predict(player: Player, enemy: Enemy, played = Infinity): Combat
  * its number and each of the enemy's costing it `thorn`, played as `bout` plays them (a
  * `fast` enemy striking first, `slow` percent Slowdown skipping some of its strikes): the hero's strikes (`turns`), the enemy's
  * (`strikes`), and whether the enemy's thorns felled it. */
-function thornRounds(hp: number, hitAt: (k: number) => number, thorn: number, fast = false, thornAt: (k: number) => number = () => thorn, slow = 0) {
-  let strikes = 0, tally = 0;
+function thornRounds(hp: number, hitAt: (k: number) => number, thorn: number, fast = false, thornAt: (k: number) => number = () => thorn, slow = 0, stun = 0) {
+  let strikes = 0, tally = 0, skip = stun;
   const lands = () => {
+    // A Phantasm stun sits out the enemy's first strikes, before Time Dilation's tally counts any.
+    if (skip) {
+      skip--;
+      return false;
+    }
     if (!slow) return true;
     const next = slowedAct(tally, slow);
     tally = next.tally;
@@ -370,10 +376,14 @@ export const stealCeiling = (player: Player) => (player.stealOverheal ? snap((pl
  * nothing), so the two end alike, and past `played` rounds estimates the
  * rest (`lifestealEstimate`). */
 function lifestealEnding(player: Player, enemy: Enemy, hitAt: (k: number) => number, played = Infinity, thorn = 0, cut = 0) {
-  let hp = player.hp, enemyHp = enemy.hp, attack = enemy.attack, shroud = player.shroud ?? 0, shield = player.shield ?? 0, tally = 0;
+  let hp = player.hp, enemyHp = enemy.hp, attack = enemy.attack, shroud = player.shroud ?? 0, shield = player.shield ?? 0, tally = 0, skip = enemy.stun ?? 0;
   const slow = player.slowdown ?? 0;
-  // The enemy's strike, unless Time Dilation skips it, then its thorns and its ATK rising: false once the hero falls.
+  // The enemy's strike, unless a Phantasm stun or Time Dilation skips it, then its thorns and its ATK rising: false once the hero falls.
   const reply = () => {
+    if (skip) {
+      skip--;
+      return true;
+    }
     if (slow) {
       const next = slowedAct(tally, slow);
       tally = next.tally;
@@ -588,7 +598,7 @@ export function bout(player: Player, enemy: Enemy, revives?: Revival, crits?: Cr
   if (!breaksArmor(player, enemy) && heroHit(player, enemy) <= 0) return { strikes: [], duration: 0 };
   player = facing(player, enemy);
   const t = ready.opening ? openingMs(ready.opening) : 0;
-  const fight = play([], { player, enemy, revives, crits, powered, wings, sparks }, { enemyHp: enemy.hp, heroHp: player.hp, shroud: player.shroud ?? 0, shield: player.shield ?? 0, attack: enemy.attack, t, ms: FIRST_STRIKE_MS, enemyStrikes: 0, heroStrikes: 0, enemyNext: strikesFirst(enemy), winged: false, sparked: 0, broken: enemy.broken ?? 0, tally: 0, amber: enemy.amber ?? 0 });
+  const fight = play([], { player, enemy, revives, crits, powered, wings, sparks }, { enemyHp: enemy.hp, heroHp: player.hp, shroud: player.shroud ?? 0, shield: player.shield ?? 0, attack: enemy.attack, t, ms: FIRST_STRIKE_MS, enemyStrikes: 0, heroStrikes: 0, enemyNext: strikesFirst(enemy), winged: false, sparked: 0, broken: enemy.broken ?? 0, tally: 0, amber: enemy.amber ?? 0, stun: enemy.stun ?? 0 });
   return ready.opening ? { ...fight, opening: { at: t, hp: enemy.hp, ...ready.opening } } : fight;
 }
 
@@ -596,9 +606,9 @@ export function bout(player: Player, enemy: Enemy, revives?: Revival, crits?: Cr
  * left of the shroud, the enemy's ATK, when the strike swings and how long
  * it takes, the enemy's strikes so far, whose strike it is, whether
  * Angel Wings has raised the hero in it, the Phoenix Spark charges it has
- * spent, the percent of the enemy's DEF broken so far, and Time Dilation's
- * tally on the enemy's strikes. */
-type BoutState = { enemyHp: number; heroHp: number; shroud: number; shield: number; attack: number; t: number; ms: number; enemyStrikes: number; heroStrikes: number; enemyNext: boolean; winged: boolean; sparked: number; broken: number; tally: number; amber: number };
+ * spent, the percent of the enemy's DEF broken so far, Time Dilation's
+ * tally on the enemy's strikes, and the strikes a Phantasm stun has yet to skip. */
+type BoutState = { enemyHp: number; heroHp: number; shroud: number; shield: number; attack: number; t: number; ms: number; enemyStrikes: number; heroStrikes: number; enemyNext: boolean; winged: boolean; sparked: number; broken: number; tally: number; amber: number; stun: number };
 
 /** A strike before it is timed. */
 type Blow = Omit<Strike, "start" | "at" | "end">;
@@ -639,6 +649,11 @@ function play(strikes: Strike[], { player, enemy, revives, crits, powered, wings
       if (!s.enemyHp) break;
     }
     s.enemyNext = false;
+    // A Phantasm stun skips the enemy's strike while it lasts, a Fast one's opening too.
+    if (s.stun) {
+      s.stun--;
+      continue;
+    }
     // Time Dilation's field may skip the enemy's strike: the hero's next comes on (Amber Prison's slowing too).
     const slowed = togetherSlow(slow, s.amber);
     if (slowed) {
@@ -720,8 +735,8 @@ export function resume(fight: Bout, from: number, fighters: Fighters): Bout {
   }
   const winged = kept.some((s) => s.winged), sparked = kept.filter((s) => s.sparked).length;
   // The chances the enemy has had to strike: one after each hero strike and a Fast enemy's opening, less the one about to come.
-  const chances = heroStrikes + (strikesFirst(enemy) ? 1 : 0) - (next.by === "enemy" ? 1 : 0);
-  const state = { enemyHp, heroHp: player.hp, shroud: player.shroud ?? 0, shield: player.shield ?? 0, attack, t: next.start, ms, enemyStrikes, heroStrikes, enemyNext: next.by === "enemy", winged, sparked, broken, tally: tallyAfter(chances, togetherSlow(player.slowdown ?? 0, amber)), amber };
+  const opened = heroStrikes + (strikesFirst(enemy) ? 1 : 0) - (next.by === "enemy" ? 1 : 0), stun = Math.max(0, (enemy.stun ?? 0) - opened), chances = Math.max(0, opened - (enemy.stun ?? 0));
+  const state = { enemyHp, heroHp: player.hp, shroud: player.shroud ?? 0, shield: player.shield ?? 0, attack, t: next.start, ms, enemyStrikes, heroStrikes, enemyNext: next.by === "enemy", winged, sparked, broken, tally: tallyAfter(chances, togetherSlow(player.slowdown ?? 0, amber)), amber, stun };
   return { ...play(kept, fighters, state), ...opening };
 }
 

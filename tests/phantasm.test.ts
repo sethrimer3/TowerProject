@@ -17,7 +17,7 @@ import type { RoomWorld } from "../src/tower/room-world.ts";
 import type { Enemy, Player, Tile } from "../src/entities.ts";
 
 const brute: Enemy = { name: "Brute", hp: 1_000_000, attack: 0, defense: 0, tier: 1, strength: "weak" };
-const SPIN = phantasmEffects(null).spin, BLAST = phantasmEffects(null).blast;
+const SPIN = phantasmEffects().spin, BLAST = phantasmEffects().blast;
 
 /** A Tower run on an open floor holding `spots` enemies, holding Phantasm at `levels`, the hero at (4, 4). */
 function arena(spots: readonly (readonly [number, number])[], levels: [number, number, number] = [0, 0, 0], hp = 1_000_000) {

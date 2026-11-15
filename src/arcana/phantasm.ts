@@ -28,10 +28,19 @@ export type GhostStrike = { tick: number; x: number; y: number; direction: numbe
 /** A ghost out: its slot, and whether it rides the outer ring. */
 export type Ghost = { slot: number; outer: boolean };
 
-/** What research adds to it, for labs to raise: the blast's radius in tiles, how
- * far the ring turns each turn in hundredths of a degree, and the turns off its cooldown. */
-export type PhantasmEffects = { blast: number; spin: number; cooldown: number };
-export const phantasmEffects = (_save: unknown): PhantasmEffects => ({ blast: 0.1, spin: 100, cooldown: 0 });
+/** What it does, with what research adds: the blast's radius round the ghost in
+ * tiles, the Drain Radius round each enemy tile it touches in tiles (none
+ * without Phantasm Drain Radius), how far the ring turns each turn in hundredths
+ * of a degree, the turns off its cooldown, and the turns a strike stuns what it
+ * hits (none without Phantasm Stun). */
+export type PhantasmEffects = { blast: number; drain: number; spin: number; cooldown: number; stun: number };
+/** Its effects from what the Archives have researched: Phantasm Drain Radius
+ * (`drain`, tenths of a tile), Phantasm Rotation Speed (`spin`, hundredths of a
+ * degree, 1° untrained) and Phantasm Stun (`stun`, turns). */
+export const phantasmEffects = ({ drain = 0, spin = 100, stun = 0 }: { drain?: number; spin?: number; stun?: number } = {}): PhantasmEffects =>
+  ({ blast: 0.1, drain: drain / 10, spin, cooldown: 0, stun });
+/** The turns a strike stuns an enemy for: `stun`, or half of it on a Greater Boss, rounded down. */
+export const stunFor = (stun: number, strength: string | undefined) => (strength === "greaterBoss" ? Math.floor(stun / 2) : stun);
 
 /** Its cooldown from the attribute and what research takes off, never under the cap. */
 export const phantasmCooldown = (attribute: number, { cooldown }: Pick<PhantasmEffects, "cooldown"> = { cooldown: 0 }) => Math.max(COOLDOWN_CAP, attribute - cooldown);
@@ -54,7 +63,9 @@ export function touchesTile(dx: number, dy: number) {
   const x = Math.max(0, Math.abs(dx) - 0.5), y = Math.max(0, Math.abs(dy) - 0.5);
   return x * x + y * y < GHOST_RADIUS * GHOST_RADIUS;
 }
-/** Whether what lies `dx`, `dy` from a ghost's center is within its blast, by Euclidean distance. */
+/** Whether what lies `dx`, `dy` from a ghost's center is within its blast, by Euclidean
+ * distance; from a tile it touched, whether it is within the Drain Radius `blast`
+ * (whole tiles apart, so exact: 1 the four orthogonal tiles, 1.5 the diagonals too, 2.5 a knight's move). */
 export const inBlast = (dx: number, dy: number, blast: number) => dx * dx + dy * dy <= blast * blast;
 
 /** Takes the ghost in `slot` out of its ring. */

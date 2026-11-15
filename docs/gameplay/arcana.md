@@ -293,6 +293,38 @@ Switching it off loses the ghosts and its cooldown.
 | Quantity | 3 | 6 | 4 |
 | Cooldown | 200 turns | 50 turns | 16 |
 
+### Phantasm research
+
+The Breakthrough skill **Phantasm Research** (5 Breakthrough, down and left of Lifespring Research, after it) opens three projects in the Archives' **Arcana** section, each counting for good, mid-run too.
+**Phantasm Drain Radius** (7 levels) has a ghost's strike also hit every enemy within its radius of each enemy tile the ghost touched: 1 tile at the first level (the four tiles beside it), 1.5 (the diagonals too), 2, 2.5 (a knight's move away), 3, 3.5 and 4 at the 7th.
+Each takes the strike's damage less its own DEF.
+**Phantasm Rotation Speed** (20 levels) turns the ring faster: 1.5° a turn at the first level, half a degree more each level after, to 11° at the 20th.
+A ghost strikes whatever tile it sweeps over along the way from one turn to the next, however fast it turns.
+**Phantasm Stun** (3 levels) stuns every enemy a ghost's strike hits and leaves standing, for 1 turn at the first level, 2 and 3 at the 3rd (half as long on a Greater Boss, rounded down: none at the first level).
+A stunned enemy doesn't move or shoot, and its cooldowns stand still.
+Fight one while it is stunned and it skips as many of its strikes as it has turns of stun left, a Fast enemy's opening strike among them; the inspect panel, the damage numbers and the forecast count them.
+Stunning it again starts its stun over.
+A stun struck as you step lasts through the turn it is struck in; one struck as the turn ends lasts through the whole of the next.
+The stun works in the Tower and the Delve, not in the Proving Grounds.
+
+| Level | Drain Radius | Gold | Time | Rotation Speed | Gold | Time |
+|---|---|---|---|---|---|---|
+| 1 | 1 tile | 900,000 | 0d 22h 13m | 1.5° | 250,000 | 0d 20h 0m |
+| 2 | 1.5 tiles | 2,950,000 | 1d 21h 46m | 2° | 560,000 | 1d 4h 21m |
+| 3 | 2 tiles | 12,130,000 | 2d 21h 10m | 2.5° | 1,100,000 | 1d 12h 53m |
+| 4 | 2.5 tiles | 77,430,000 | 3d 21h 42m | 3° | 2,800,000 | 1d 21h 54m |
+| 5 | 3 tiles | 301,670,000 | 5d 13h 42m | 3.5° | 7,750,000 | 2d 7h 49m |
+| 6 | 3.5 tiles | 2,140,000,000 | 6d 20h 49m | 4° | 19,540,000 | 2d 19h 6m |
+| 7 | 4 tiles | 6,880,000,000 | 8d 5h 30m | 4.5° | 43,580,000 | 3d 8h 17m |
+| 10 | | | | 6° | 276,620,000 | 5d 17h 31m |
+| 20 | | | | 11° | 8,840,000,000 | 31d 15h 40m |
+
+| Level | Stun | Gold | Time |
+|---|---|---|---|
+| 1 | 1 turn | 50,000,000 | 3d 19h 5m |
+| 2 | 2 turns | 250,000,000 | 7d 5h 25m |
+| 3 | 3 turns | 1,250,000,000 | 13d 21h 19m |
+
 ## Necrotic Frost
 
 *Every x turns, a frost field of 3 tiles' radius forms round you, off center at a random angle, and moves with you for y turns. An enemy it touches is Necro: it takes decay through its DEF every turn until it falls, z% of ATK more each turn. Each field adds its own decay. Enemies in a field strike, shoot and move 25% slower, 50% in two or more.*
@@ -390,7 +422,7 @@ It can defeat the boss and win the trial, and its damage counts toward Damage th
 **Time Dilation** works as above on everything in the field: its tally for a counter or bite goes on from one of your hits to the next, a scheduled step or hop is skipped the same way, and a boss's or part's effects count down slower while it stands in the field.
 At 75% a cooldown falls by 0.25 a turn, so a beam due in 10 turns takes 40, and any part of a turn left over counts toward the next.
 A boss's Regen isn't on a cooldown, so it isn't slowed, and an Obelisk's turn limit still counts every turn.
-**Phantasm** works as above on what stands in the arena, its ghosts striking as each turn ends, wherever you stand then.
+**Phantasm** works as above on what stands in the arena, its ghosts striking as each turn ends, wherever you stand then, along the arc they turned; its Drain Radius and Rotation Speed count there, its Stun doesn't.
 **Necrotic Frost** works as above on what stands in the arena, and an incorporeal boss's decay waits until it can be struck again.
 **Voidwell** opens on the arena's floor (with its twin, once Extra Voidwell is researched), and what stands in it takes no steps, while a Blaster Turret's bolts don't count down at all; it still answers your hits. The boss is immune.
 Voidwell Damage strikes everything in a vortex but the boss itself: its minions and parts, the Keymaster's mimics and light slimes, a share of their total HP rounded up, at least 1. Voidwell Gold Bonus raises the Gold coins the Magic Tower pops when what you hit stands in a vortex.

@@ -24,7 +24,7 @@ export type TrialSpells = {
   lifespring?: { hp: number; waves: number; turns: number; reach: number; amplify: number };
   /** `slow`: the percent its field slows what is in it by; `reach`: the field's, in hundredths of a tile. */
   timeDilation?: { duration: number; slow: number; turns: number; reach: number };
-  phantasm?: { boost: number; quantity: number; turns: number; blast: number; spin: number };
+  phantasm?: { boost: number; quantity: number; turns: number; blast: number; spin: number; drain?: number };
   necroticFrost?: { boost: number; duration: number; turns: number; effects: FrostEffects };
   /** `radius`: its vortex's, in tiles; `reach`: how far from the hero it opens, in hundredths of a tile;
    * `twin`, Extra Voidwell; `damage`, Voidwell Damage, in hundredths of a percent of total HP a turn;
