@@ -147,6 +147,9 @@ const SKILL_DETAIL_SPRITES: Partial<Record<UpgradeId, string>> = {
   renownCrown: "ui-crown",
   enemyLevelSkips: "badge-skip", enemyHpLevelSkips: "boon-enemy-hp-regen", enemyCombatLevelSkips: "boon-enemy-attack",
   avengingAngel: "combat-wing",
+  lifespringResearch: "arcana-lifespring", aurumBloomResearch: "arcana-aurum-bloom",
+  overseerZapResearch: "arcana-overseer", overseerGoldResearch: "arcana-overseer",
+  voidwellResearch: "arcana-voidwell", extraVoidwellResearch: "arcana-voidwell",
 };
 /** The forest's Enter button: an arrow going up into an arched doorway. */
 export const ENTER_ICON = kitIcon("tower", "", "enter-icon");

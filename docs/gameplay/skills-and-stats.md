@@ -48,7 +48,7 @@ A regular potion is drawn red, like the HP bar, and a percent potion blue, like 
 
 **Auto-Train** (2 Breakthrough, right of Life) buys the run's training with Silver as each floor begins, from the rows and groups switched on (see Training).
 **Enemy Level Skips** (5 Breakthrough, below Life, leading on to Badges) reveals **Enemy HP Level Skips** and, below it, **Enemy Combat Level Skips** (50 Inspiration each, below Floor Skip Reward), which open the Enemy HP Level Skip and Enemy Combat Level Skip training rows in Utility.
-**Enemy Level Skip Limit Break** (5 Breakthrough, beside Limit Break 1, after it, hidden until Enemy Level Skips is owned) raises both rows' most from 350 levels to 700.
+**Enemy Level Skip Limit Break** (5 Breakthrough, right of Limit Break 1, after it, hidden until Enemy Level Skips is owned) raises both rows' most from 350 levels to 700.
 Each floor new to the run, each row's chance may skip that floor: enemies from then on stand as they would one floor lower, so after 5 skips an enemy on floor 100 has floor 95's stats.
 Enemy HP Level Skip counts for enemies' HP, and Enemy Combat Level Skip for their ATK and DEF, each rolled apart.
 A Delve rolls for each equivalent floor, and each skip applies to every enemy on the board, those in view included.
@@ -114,3 +114,12 @@ Thorns are certain, so every forecast, Automove and the hand count them.
 A Ranged monster's shots are parried the same way.
 In an animated fight the hero gives way a little from a strike it parries; in a summary only the damage shows it.
 Parries are certain, so forecasts, the inspect panel, the monster's damage number, Automove and the hand all count them.
+
+## Arcana research
+
+Below **Extra Trainer** in the Breakthrough tree, six skills (5 Breakthrough each) open the Arcana's research in the Archives ([Arcana](arcana.md)).
+**Lifespring Research** (below Extra Trainer, after it) opens the four Lifespring projects.
+**Overseer Zap** (down and right of Lifespring Research, after it) opens Overseer Zap research, and **Overseer Gold Bonus** (right of Overseer Zap, after it) Overseer Gold Bonus research.
+**Aurum Bloom Research** (below Lifespring Research, after it) opens the two Aurum Bloom projects.
+**Voidwell Research** (down and right of Aurum Bloom Research, after it) opens Voidwell Damage and Voidwell Gold Bonus, and **Extra Voidwell** (right of Voidwell Research, after it) Extra Voidwell research.
+**Limit Break 1** comes after Aurum Bloom Research, a row below it.

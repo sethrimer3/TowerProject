@@ -45,28 +45,18 @@ import { openEquipment } from "./equipment/inventory.ts";
  * a shot fire at several enemies) and Rapid Fire (floor 80: the Training
  * rows that may make the Archer fire four times as fast for a while) and
  * Warp Loot (floor 150: the Archives' project that starts a Warp run with
- * a share of the skipped floors' Silver, economy/warp-loot.ts) and Overseer
- * Zap (floor 400: the Archives' project that has Overseer's beams call down
- * a Thunderbolt every few turns, docs/agents/arcana.md), Boss Potion Drop
+ * a share of the skipped floors' Silver, economy/warp-loot.ts) and Boss Potion Drop
  * (floor 200: the Archives' project that has each boss give the hero a
- * percent potion, Finds.bossPotion) and Lifespring Research (floor 250: the
- * Archives' four Lifespring projects, raising what `lifespringEffects`
- * gives), and Tower II's Training Discount (floor
+ * percent potion, Finds.bossPotion), and Tower II's Training Discount (floor
  * 80: the Archives' project that cuts a trainer's Gold) and Card Groups
  * (floor 90: the Deck links neighbouring cards of the hand into a group
  * whose cards share one priority, cards/cards.ts), and Tower V's Flying Enemy
  * Card (floor 10: the FLYING ENEMY card joins the deck, `GOAL_CARDS` in
  * cards/cards.ts) and Super Critical Research (floor 200: the Archives'
- * two Super Critical projects, which need the skill too), Voidwell Research
- * (floor 150: the Archives' Voidwell Damage and Gold Bonus, Game.voidwellDamage
- * and Game.zoneGold) and Extra Voidwell (floor 500: the Archives' project that
- * opens a second vortex opposite the first, placeVortices), and Tower IV's
+ * two Super Critical projects, which need the skill too), and Tower IV's
  * Drop & Material Research (floor 70: the Archives' Common Drop Chance, a
  * boss's chance of a Common piece, RunPurse.killDrops, and Daily Mission
- * Materials, missionReward) and Aurum Bloom Research (floor 200: the Archives' Aurum Bloom Bonus and
- * Chance, adding to its Bonus and Golden Chance, ArcanaDesk.valuesOf), and Tower VII's
- * Overseer Coin Bonus (floor 80: the Archives' project that multiplies the
- * Gold of enemies killed in Overseer's beams, Game.spotlightGold), and Tower VI's
+ * Materials, missionReward), and Tower VI's
  * Esoteric Research (floor 150: every Archives project of 100 or 150 levels
  * opens its last 50, maxLevel in progression/archives.ts). */
 export type GoalUnlock =
@@ -74,8 +64,8 @@ export type GoalUnlock =
   | "shardAttack" | "shardDefense" | "parryPercent"
   | "shrines" | "firstBoonChoice" | "improveTradeoffs" | "autoPickBoons" | "boonOptions" | "banBoons" | "autoPickRanking"
   | "badgeSlots" | "noteTaking" | "archerCard" | "attackRange" | "attackSpeed" | "attackPerTile" | "chargedShot" | "multishot" | "rapidFire"
-  | "trainingDiscount" | "cardGroups" | "flyingEnemyCard" | "warpLoot" | "superCriticalResearch" | "aetherShield" | "rerollMission" | "overseerZap" | "overseerGold"
-  | "bossPotion" | "lifespringResearch" | "aurumBloomResearch" | "voidwellResearch" | "extraVoidwell" | "dropResearch" | "esotericResearch";
+  | "trainingDiscount" | "cardGroups" | "flyingEnemyCard" | "warpLoot" | "superCriticalResearch" | "aetherShield" | "rerollMission"
+  | "bossPotion" | "dropResearch" | "esotericResearch";
 export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   damagePrediction: "Damage Prediction", combatForecast: "Combat Forecast", attackLore: "Attack Lore", warp: "Warp", damageVisual: "Damage Visual",
   relativeDamageColor: "Relative Damage Color", equipment: "Equipment", tournament: "Tournament", events: "Events",
@@ -87,16 +77,18 @@ export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   archerCard: "Archer Card", attackRange: "Attack Range", attackSpeed: "Attack Speed", attackPerTile: "ATK / m", chargedShot: "Charged Shot", multishot: "Multishot", rapidFire: "Rapid Fire",
   trainingDiscount: "Training Discount", cardGroups: "Card Groups", flyingEnemyCard: "Flying Enemy Card",
   warpLoot: "Warp Loot", superCriticalResearch: "Super Critical Research", aetherShield: "Unlock Aether Shield",
-  rerollMission: "Reroll Daily Mission", overseerZap: "Overseer Zap",
-  overseerGold: "Overseer Coin Bonus", bossPotion: "Boss Potion Drop", lifespringResearch: "Lifespring Research",
-  aurumBloomResearch: "Aurum Bloom Research", voidwellResearch: "Voidwell Research", extraVoidwell: "Extra Voidwell", dropResearch: "Drop & Material Research",
+  rerollMission: "Reroll Daily Mission", bossPotion: "Boss Potion Drop", dropResearch: "Drop & Material Research",
   esotericResearch: "Esoteric Research",
 };
-/** What a checkpoint pays: an unlock, the next tower opened, an amount of a currency, or a relic. */
+/** What a checkpoint pays: an unlock, the next tower opened, an amount of a
+ * currency or of Breakthrough points, or a relic. A `breakthrough` reward is
+ * the checkpoint's own, paid besides the point every standard reward pays
+ * (`GOAL_BREAKTHROUGH`). */
 export type GoalReward =
   | { kind: "unlock"; unlock: GoalUnlock }
   | { kind: "tower"; tower: number }
   | { kind: "currency"; currency: CurrencyId; amount: number }
+  | { kind: "breakthrough"; amount: number }
   | { kind: "relic"; relic: string };
 export type Checkpoint = { floor: number; reward: GoalReward; premium: GoalReward };
 
@@ -109,6 +101,7 @@ export const CHECKPOINT_FLOORS: readonly number[] = [10, 20, 30, 40, 50, 60, 70,
 const gold = (amount: number): GoalReward => ({ kind: "currency", currency: "gold", amount });
 const gems = (amount: number): GoalReward => ({ kind: "currency", currency: "gems", amount });
 const arcanite = (amount: number): GoalReward => ({ kind: "currency", currency: "arcanite", amount });
+const breakthrough = (amount: number): GoalReward => ({ kind: "breakthrough", amount });
 
 const unlock = (unlock: GoalUnlock): GoalReward => ({ kind: "unlock", unlock });
 const relic = (tower: number, rarity: "epic" | "legendary"): GoalReward => ({ kind: "relic", relic: towerRelicId(tower, rarity) });
@@ -183,9 +176,9 @@ const TOWER_THREE: Record<number, CheckpointSet> = {
   100: { reward: opens(4), premium: gems(45) },
   150: { reward: unlock("warpLoot"), premium: gold(500_000) },
   200: { reward: unlock("bossPotion"), premium: gold(1_000_000) },
-  250: { reward: unlock("lifespringResearch"), premium: gold(2_000_000) },
+  250: { reward: breakthrough(5), premium: gold(2_000_000) },
   300: { reward: gold(2_500_000), premium: gold(5_000_000) },
-  400: { reward: unlock("overseerZap"), premium: gold(10_000_000) },
+  400: { reward: breakthrough(5), premium: gold(10_000_000) },
   500: { reward: gems(40), premium: arcanite(15) },
   750: { reward: gems(50), premium: gems(65) },
   1000: { reward: arcanite(15), premium: arcanite(20) },
@@ -207,7 +200,7 @@ const TOWER_FOUR: Record<number, CheckpointSet> = {
   90: { reward: gems(45), premium: gems(55) },
   100: { reward: opens(5), premium: gems(50) },
   150: { reward: gold(1_000_000), premium: gold(1_500_000) },
-  200: { reward: unlock("aurumBloomResearch"), premium: gold(2_000_000) },
+  200: { reward: breakthrough(5), premium: gold(2_000_000) },
   250: { reward: gems(45), premium: gems(60) },
   300: { reward: gold(6_000_000), premium: gold(12_000_000) },
   400: { reward: gems(50), premium: gems(65) },
@@ -231,12 +224,12 @@ const TOWER_FIVE: Record<number, CheckpointSet> = {
   80: { reward: gems(45), premium: gems(55) },
   90: { reward: gold(4_000_000), premium: gold(8_000_000) },
   100: { reward: opens(6), premium: gems(55) },
-  150: { reward: unlock("voidwellResearch"), premium: gold(10_000_000) },
+  150: { reward: breakthrough(5), premium: gold(10_000_000) },
   200: { reward: unlock("superCriticalResearch"), premium: gold(20_000_000) },
   250: { reward: gems(50), premium: gems(65) },
   300: { reward: gold(15_000_000), premium: gold(30_000_000) },
   400: { reward: gems(60), premium: gems(80) },
-  500: { reward: unlock("extraVoidwell"), premium: gold(50_000_000) },
+  500: { reward: breakthrough(5), premium: gold(50_000_000) },
   750: { reward: gems(70), premium: gems(90) },
   1000: { reward: arcanite(25), premium: arcanite(30) },
   1250: { reward: gems(80), premium: gems(95) },
@@ -278,7 +271,7 @@ const TOWER_SEVEN: Record<number, CheckpointSet> = {
   50: { reward: gold(7_500_000), premium: gold(15_000_000) },
   60: { reward: arcanite(10), premium: arcanite(15) },
   70: { reward: gold(10_000_000), premium: gold(20_000_000) },
-  80: { reward: unlock("overseerGold"), premium: arcanite(20) },
+  80: { reward: breakthrough(5), premium: arcanite(20) },
   90: { reward: gold(12_500_000), premium: gold(25_000_000) },
   100: { reward: opens(8), premium: gems(60) },
   150: { reward: gems(50), premium: gems(60) },
@@ -438,6 +431,10 @@ export function claimGoal(save: Save, tower: number, floor: number, premium: boo
   if (!c || !canClaimGoal(save, tower, floor, premium)) return null;
   const reward = premium ? c.premium : c.reward;
   if (reward.kind === "currency") CURRENCIES[reward.currency].credit(save, reward.amount);
+  if (reward.kind === "breakthrough") {
+    save.breakthrough += reward.amount;
+    earn(save, "breakthrough", reward.amount);
+  }
   if (reward.kind === "tower") openTower(save, reward.tower);
   if (reward.kind === "relic" && !save.relics.includes(reward.relic)) save.relics = [...save.relics, reward.relic];
   if (!premium) {

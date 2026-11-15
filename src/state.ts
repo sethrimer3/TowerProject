@@ -1244,7 +1244,7 @@ export class Game {
     const p = this.run.player;
     return beamFactor(this.arcana.beams, 0, shortWay(to.x - p.x, this.wrap), to.y - p.y);
   }
-  /** What Overseer Coin Bonus multiplies the Gold of a kill at `at` by:
+  /** What Overseer Gold Bonus multiplies the Gold of a kill at `at` by:
    * its research's factor while `at` lies in Overseer's beams as the turn
    * begins (the same test as their ATK), however the enemy was killed, else 1.
    * Read when the kill is paid, so a level finished mid-run counts at once. */

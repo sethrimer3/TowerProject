@@ -663,9 +663,9 @@ An arcanum on a cooldown: its bolts fall from the board's upper edge on random e
 Research that has Overseer's beams call down one Thunderbolt on a random enemy in them each time its cooldown runs out, as hard as Thunderbolt strikes times Overseer's Bonus.
 _Avoid_: zap bolt, beam strike
 
-**Overseer Coin Bonus**:
+**Overseer Gold Bonus**:
 Research that multiplies the Gold of an enemy killed while it stands in Overseer's beams, whatever killed it; its factor is the **Spotlight Gold**.
-_Avoid_: beam Gold, spotlight bounty
+_Avoid_: Overseer Coin Bonus, beam Gold, spotlight bounty
 
 **Boss Potion Drop**:
 Research that has each boss killed (not a Greater Boss) give the hero a percent potion, drunk at once wherever it stands.

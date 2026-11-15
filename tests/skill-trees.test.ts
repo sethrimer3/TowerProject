@@ -159,7 +159,7 @@ test("a tree taller than its view places its nodes on a taller map", () => {
   assert.equal(treeHeight(inspiration), 552);
   assert.ok(inspiration.nodes.every((n) => n.y > 0 && n.y < treeHeight(inspiration)), "every node on the map");
   assert.equal(mapNodes(inspiration).find((n) => n.id === "recovery")!.y, (232 * 100) / 552);
-  assert.equal(treeHeight(TREES.find((t) => t.id === "breakthrough")!), 490);
+  assert.equal(treeHeight(TREES.find((t) => t.id === "breakthrough")!), 514);
   assert.ok(TREES.slice(2).every((t) => treeHeight(t) === 100 && mapNodes(t).every((n, i) => n.y === t.nodes[i].y)), "other trees fit one view");
 });
 test("Movement Speed research lets the run's arrows go one step a second faster a level", () => {
@@ -234,9 +234,9 @@ test("Bombs (5 Inspiration) stands left of Critical Prediction in the Inspiratio
 test("Golden Floors (3 Breakthrough) under More Wealth, then Esoteric Training (2) down and left with Aether Shield, Phoenix Spark and Echoes of time straight under it, Offline Gold (2) down and right with Gem Card (2) under it; Manual Hand (1) after Card Mastery; Key Mastery (1) under Badges reveals Find Gold Key and Key Efficiency, now in the Inspiration tree (10 each), and Card and Beast Mastery split off it", () => {
   const breakthrough = TREES.find((t) => t.id === "breakthrough")!;
   const at = (id: string) => breakthrough.nodes.find((n) => n.id === id)!;
-  assert.deepEqual(["goldenFloors", "esotericTraining", "aetherShield", "phoenixSpark", "undos"].map((id) => [at(id).x, at(id).y, at(id).requires]), [[18, 111, ["moreWealth"]], [10, 137, ["goldenFloors"]], [10, 163, ["esotericTraining"]], [10, 189, ["aetherShield"]], [10, 215, ["phoenixSpark"]]], "Golden Floors under More Wealth, Esoteric Training down and left of it, Aether Shield, Phoenix Spark and Echoes of time straight under that");
+  assert.deepEqual(["goldenFloors", "esotericTraining", "aetherShield", "phoenixSpark", "undos"].map((id) => [at(id).x, at(id).y, at(id).requires]), [[18, 111, ["moreWealth"]], [10, 137, ["goldenFloors"]], [10, 163, ["esotericTraining"]], [10, 189, ["aetherShield"]], [10, 213, ["phoenixSpark"]]], "Golden Floors under More Wealth, Esoteric Training down and left of it, Aether Shield, Phoenix Spark and Echoes of time straight under that");
   assert.equal(cost("esotericTraining", 0), 2, "Esoteric Training costs 2 Breakthrough");
-  assert.deepEqual([at("manualHand").x, at("manualHand").y, at("manualHand").requires], [30, 215, ["cardMastery"]], "Manual Hand below and after Card Mastery");
+  assert.deepEqual([at("manualHand").x, at("manualHand").y, at("manualHand").requires], [30, 213, ["cardMastery"]], "Manual Hand below and after Card Mastery, on Lifespring Research's row");
   assert.equal(cost("goldenFloors", 0), 3, "Golden Floors costs 3 Breakthrough");
   assert.deepEqual([at("offlineGold").x, at("offlineGold").y, at("offlineGold").requires, cost("offlineGold", 0)], [30, 137, ["goldenFloors"], 2], "Offline Gold (2) splits off down and right of Golden Floors, beside Esoteric Training");
   assert.deepEqual([at("gemCard").x, at("gemCard").y, at("gemCard").requires, cost("gemCard", 0)], [30, 163, ["offlineGold"], 2], "Gem Card (2) under Offline Gold");
@@ -273,10 +273,10 @@ test("Golden Floors (3 Breakthrough) under More Wealth, then Esoteric Training (
   assert.deepEqual([at("doorMastery").x, at("doorMastery").y, at("doorMastery").requires], [78, 189, ["extraTrainer"]], "Door Mastery right of Extra Trainer, after it");
   assert.deepEqual([UPGRADES.find((u) => u.id === "doorMastery")!.currency, cost("doorMastery", 0)], ["breakthrough", cost("keyMastery", 0) + 1], "Door Mastery costs one more than Key Mastery");
 });
-test("Extra Trainer stands under Key Mastery, Ignore below it, costs 5 Breakthrough and adds a training slot", () => {
+test("Extra Trainer stands under Key Mastery, Lifespring Research below it, costs 5 Breakthrough and adds a training slot", () => {
   const at = (id: string) => TREES.find((t) => t.id === "breakthrough")!.nodes.find((n) => n.id === id)!;
   assert.deepEqual([at("extraTrainer").x, at("extraTrainer").y, at("extraTrainer").requires], [50, 189, ["keyMastery"]]);
-  assert.deepEqual([at("ignore").x, at("ignore").y, at("ignore").requires], [50, 213, ["extraTrainer"]], "Ignore below it, after it");
+  assert.deepEqual([at("lifespringResearch").x, at("lifespringResearch").y, at("lifespringResearch").requires], [50, 213, ["extraTrainer"]], "Lifespring Research below it, after it");
   assert.deepEqual([UPGRADES.find((u) => u.id === "extraTrainer")!.currency, cost("extraTrainer", 0)], ["breakthrough", 5]);
   const save = defaults();
   assert.equal(trainingSlots(save), 1);
@@ -353,11 +353,11 @@ test("a tree's column gap is the least distance across between two nodes in one 
   assert.equal(columnGap({ ...tree("breakthrough"), nodes: [tree("breakthrough").nodes[0]] }), 100, "no row holds two");
 });
 
-test("Limit Break 1 to 10 (5 Breakthrough each) run straight down under Ignore More, each needing the one before", () => {
-  const nodes = TREES.find((t) => t.id === "breakthrough")!.nodes, base = nodes.find((n) => n.id === "ignoreMore")!;
+test("Limit Break 1 to 10 (5 Breakthrough each) run straight down under Aurum Bloom Research, a row clear of it, each needing the one before", () => {
+  const nodes = TREES.find((t) => t.id === "breakthrough")!.nodes, base = nodes.find((n) => n.id === "aurumBloomResearch")!;
   LIMIT_BREAKS.forEach((id, i) => {
     const n = nodes.find((m) => m.id === id)!;
-    assert.deepEqual([n.x, n.y, n.requires], [base.x, base.y + 24 * (i + 1), [i ? LIMIT_BREAKS[i - 1] : "ignoreMore"]], id);
+    assert.deepEqual([n.x, n.y, n.requires], [base.x, base.y + 24 * (i + 2), [i ? LIMIT_BREAKS[i - 1] : "aurumBloomResearch"]], id);
     assert.deepEqual([UPGRADES.find((u) => u.id === id)!.currency, cost(id, 0)], ["breakthrough", 5], id);
   });
 });
@@ -417,4 +417,23 @@ test("Life (2 Breakthrough), between Overheal and Key Mastery, reveals Revive, t
   assert.ok(skillAvailable("angelWings", upgrades) && !skillAvailable("avengingAngel", upgrades));
   upgrades.angelWings = 1;
   assert.ok(skillAvailable("avengingAngel", upgrades));
+});
+
+test("the Arcana's research (5 Breakthrough each) stands under Extra Trainer: Lifespring then Aurum Bloom down the middle, Overseer Zap and Voidwell off them down and right, each with its leaf to its right; the run's charges under Echoes of time", () => {
+  const nodes = TREES.find((t) => t.id === "breakthrough")!.nodes;
+  const at = (id: string) => nodes.find((n) => n.id === id)!;
+  const where = (id: string) => [at(id).x, at(id).y, at(id).requires];
+  assert.deepEqual(
+    ["lifespringResearch", "overseerZapResearch", "overseerGoldResearch", "aurumBloomResearch", "voidwellResearch", "extraVoidwellResearch"].map(where),
+    [[50, 213, ["extraTrainer"]], [70, 237, ["lifespringResearch"]], [90, 237, ["overseerZapResearch"]], [50, 237, ["lifespringResearch"]], [70, 261, ["aurumBloomResearch"]], [90, 261, ["voidwellResearch"]]]);
+  for (const id of ["lifespringResearch", "overseerZapResearch", "overseerGoldResearch", "aurumBloomResearch", "voidwellResearch", "extraVoidwellResearch"] as const) {
+    const row = UPGRADES.find((u) => u.id === id)!;
+    assert.deepEqual([row.currency, row.max, cost(id, 0)], ["breakthrough", 1, 5], id);
+  }
+  assert.ok(["overseerGoldResearch", "extraVoidwellResearch"].every((id) => !nodes.some((n) => n.requires.includes(id as UpgradeId))), "the second Overseer and Voidwell nodes are leaves");
+  assert.equal(UPGRADES.find((u) => u.id === "overseerGoldResearch")!.name, "Overseer Gold Bonus");
+  assert.deepEqual(["ignore", "target", "ignoreMore", "targetMore"].map(where), [[10, 261, ["undos"]], [30, 261, ["ignore"]], [10, 285, ["ignore"]], [30, 285, ["target"]]]);
+  assert.deepEqual([where("enemyLevelSkipLimitBreak"), where("shieldLimitBreak")], [[70, 285, ["limitBreak1"]], [70, 309, ["limitBreak2"]]]);
+  const spots = nodes.map((n) => `${n.x},${n.y}`);
+  assert.equal(new Set(spots).size, spots.length, "no two nodes share a spot");
 });

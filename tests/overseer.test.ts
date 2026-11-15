@@ -279,7 +279,7 @@ test("with Dev free purchases the Arcana tab opens with no Arcanite, and buying 
   assert.equal(g.arcana.upgrade(id!, 0), "short");
 });
 
-/** The Gold the hero banks killing an 80 HP rat east of it in `corridor`, Overseer at `levels`, with `research` levels of Overseer Coin Bonus. */
+/** The Gold the hero banks killing an 80 HP rat east of it in `corridor`, Overseer at `levels`, with `research` levels of Overseer Gold Bonus. */
 function killGold(levels: [number, number, number], research: number, on = true) {
   const g = corridor({ 1: foe(80) }, levels);
   if (research) g.save.archives.levels.overseerGold = research;
@@ -291,7 +291,7 @@ function killGold(levels: [number, number, number], research: number, on = true)
   return gold;
 }
 
-test("Overseer Coin Bonus multiplies the Gold of a kill in the beams, and only there", () => {
+test("Overseer Gold Bonus multiplies the Gold of a kill in the beams, and only there", () => {
   const plain = killGold([0, 0, 3], 0);
   assert.ok(plain > 0);
   assert.ok(Math.abs(killGold([0, 0, 3], 5) - plain * 1.5) < 1e-9, "five levels: ×1.5");
@@ -300,7 +300,7 @@ test("Overseer Coin Bonus multiplies the Gold of a kill in the beams, and only t
   assert.equal(killGold([0, 0, 3], 5, false), plain, "Overseer off: no beams");
 });
 
-test("Overseer Coin Bonus counts wherever in the beams the kill lies, however it was killed", () => {
+test("Overseer Gold Bonus counts wherever in the beams the kill lies, however it was killed", () => {
   const g = corridor({});
   assert.equal(g.spotlightGold({ x: 9, y: 0 }), 1, "no research yet");
   g.save.archives.levels.overseerGold = 3;
@@ -309,10 +309,11 @@ test("Overseer Coin Bonus counts wherever in the beams the kill lies, however it
   assert.equal(g.spotlightGold({ x: 9, y: 0 }), 1, "44 degrees on, between beams");
 });
 
-test("Tower VII's floor 80 Goal opens Overseer Coin Bonus, in the Arcana section beside Overseer Zap", () => {
-  assert.deepEqual(checkpoint(7, 80), { floor: 80, reward: { kind: "unlock", unlock: "overseerGold" }, premium: { kind: "currency", currency: "arcanite", amount: 20 } });
+test("the Breakthrough skill Overseer Gold Bonus opens its research, in the Arcana section beside Overseer Zap; Tower VII's floor 80 Goal pays 5 Breakthrough", () => {
+  assert.deepEqual(checkpoint(7, 80), { floor: 80, reward: { kind: "breakthrough", amount: 5 }, premium: { kind: "currency", currency: "arcanite", amount: 20 } });
   const project = RESEARCH.overseerGold;
-  assert.ok(project.requires.some((r) => "goalUnlock" in r && r.goalUnlock === "overseerGold"));
+  assert.equal(project.name, "Overseer Gold Bonus");
+  assert.ok(project.requires.some((r) => "upgrade" in r && r.upgrade === "overseerGoldResearch"));
   assert.equal(project.levels.length, 20);
   assert.deepEqual([project.levels[0]!.gold, project.levels[0]!.hours * 60, project.levels[19]!.gold, project.levels[19]!.hours * 60], [20e6, 39 * 60 + 59, 24.8e9, (32 * 24 + 11) * 60 + 40]);
   const s = defaults();

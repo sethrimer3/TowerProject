@@ -192,7 +192,7 @@ export class RunPurse {
 
   /** The Gold a kill of `enemy` at (x, y) would bank, as `enemyLoot` pays
    * it (Goldback's combo counted, a card's Effective or Dampen not): none
-   * once its tile is looted; `spotlight`, Overseer Coin Bonus's factor at
+   * once its tile is looted; `spotlight`, Overseer Gold Bonus's factor at
    * the tile. Changes nothing. */
   killGoldPreview(enemy: Enemy, x: number, y: number, instakill = false, spotlight = 1) {
     if (this.slice.lootedTiles[this.killKey(enemy, x, y)]) return 0;
@@ -290,7 +290,7 @@ export class RunPurse {
    * Equipment, once per physical kill: a Supply Chest's upgrade materials
    * by their Salvage chance (Instakill Salvage's too for an `instakill`),
    * and an Equipment Chest's piece by their Equipment Drop chance, once
-   * Equipment is open. `spotlight` is Overseer Coin Bonus's factor for a
+   * Equipment is open. `spotlight` is Overseer Gold Bonus's factor for a
    * kill in Overseer's beams (`Game.spotlightGold`), its Gold alone. */
   enemyLoot(enemy: Enemy, x: number, y: number, scale = 1, instakill = false, spring?: { gold: number; cells: number }, spotlight = 1): { gold: number; cells: number; equipment: EquipmentLoot[] } {
     if (!this.loot(this.killKey(enemy, x, y))) return { gold: 0, cells: 0, equipment: [] };

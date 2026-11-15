@@ -136,7 +136,7 @@ export const TREES: SkillTree[] = [
     { id: "keyLessBadges", icon: "⚿", x: 30, y: 502, requires: ["redSiphon"] },
     { id: "keyAtLeastBadges", icon: "⚿", x: 30, y: 520, requires: ["keyLessBadges"] },
   ] },
-  { id: "breakthrough", name: "Breakthrough", currency: "breakthrough", gate: "breakthrough", description: "Earn a Breakthrough point for each Tower Goal you claim.", height: 490, unlocks: true, nodes: [
+  { id: "breakthrough", name: "Breakthrough", currency: "breakthrough", gate: "breakthrough", description: "Earn a Breakthrough point for each Tower Goal you claim.", height: 514, unlocks: true, nodes: [
     // Quest for Knowledge first: it reveals the Inspiration tree's Archives
     // and everything under them (but Pocket Money's and Greater Heal's sides,
     // which Path to Wealth and Physician reveal, and the paths More Wealth
@@ -166,7 +166,13 @@ export const TREES: SkillTree[] = [
     { id: "esotericTraining", icon: "⇑", x: 10, y: 137, requires: ["goldenFloors"] },
     { id: "aetherShield", icon: "◯", x: 10, y: 163, requires: ["esotericTraining"] },
     { id: "phoenixSpark", icon: "✦", x: 10, y: 189, requires: ["aetherShield"] },
-    { id: "undos", icon: "↺", x: 10, y: 215, requires: ["phoenixSpark"] },
+    { id: "undos", icon: "↺", x: 10, y: 213, requires: ["phoenixSpark"] },
+    // The run's charges under Echoes of Time, a row clear of it: Ignore, with
+    // Target to its right, each with the skill that regains it below.
+    { id: "ignore", icon: "⊘", x: 10, y: 261, requires: ["undos"] },
+    { id: "target", icon: "⌖", x: 30, y: 261, requires: ["ignore"] },
+    { id: "ignoreMore", icon: "⊘", x: 10, y: 285, requires: ["ignore"] },
+    { id: "targetMore", icon: "⌖", x: 30, y: 285, requires: ["target"] },
     // Overheal, Life (which reveals Revive and the Angel skills, with
     // Auto-Train to its right) and Enemy
     // Level Skips (which reveals its two skills under Floor Skip Reward) under
@@ -184,32 +190,36 @@ export const TREES: SkillTree[] = [
     { id: "keyMastery", icon: "⚿", x: 70, y: 163, requires: ["cardBadges"] },
     { id: "beastMastery", icon: "☠", x: 90, y: 163, requires: ["keyMastery"] },
     { id: "cardMastery", icon: "▤", x: 30, y: 189, requires: ["keyMastery"] },
-    { id: "manualHand", icon: "⇄", x: 30, y: 215, requires: ["cardMastery"] },
+    { id: "manualHand", icon: "⇄", x: 30, y: 213, requires: ["cardMastery"] },
     // Extra Trainer under Key Mastery, with Door Mastery to its right after
     // it, which reveals the Inspiration tree's door path under Torch. Then
-    // the run's charges below Extra Trainer: Ignore, with Target to its
-    // right, each with the skill that regains it below.
+    // the Arcana's research below Extra Trainer: Lifespring Research, with
+    // Overseer Zap down and right of it and Overseer Gold Bonus right of
+    // that, then Aurum Bloom Research, with Voidwell Research down and right
+    // of it and Extra Voidwell right of that.
     { id: "extraTrainer", icon: "⚔", x: 50, y: 189, requires: ["keyMastery"] },
     { id: "doorMastery", icon: "⚿", x: 78, y: 189, requires: ["extraTrainer"] },
-    { id: "ignore", icon: "⊘", x: 50, y: 213, requires: ["extraTrainer"] },
-    { id: "target", icon: "⌖", x: 78, y: 213, requires: ["ignore"] },
-    { id: "ignoreMore", icon: "⊘", x: 50, y: 237, requires: ["ignore"] },
-    { id: "targetMore", icon: "⌖", x: 78, y: 237, requires: ["target"] },
-    // Limit Break 1 to 10 straight down under Ignore More, each requiring the
-    // one before, Enemy Level Skip Limit Break split off the first, and Shield
-    // Limit Break off the second.
-    { id: "limitBreak1", icon: "⇑", x: 50, y: 261, requires: ["ignoreMore"] },
-    { id: "enemyLevelSkipLimitBreak", icon: "⇑", x: 30, y: 261, requires: ["limitBreak1"], reveal: "enemyLevelSkips" },
-    { id: "limitBreak2", icon: "⇑", x: 50, y: 285, requires: ["limitBreak1"] },
-    { id: "shieldLimitBreak", icon: "⇑", x: 78, y: 285, requires: ["limitBreak2"], reveal: "aetherShield" },
-    { id: "limitBreak3", icon: "⇑", x: 50, y: 309, requires: ["limitBreak2"] },
-    { id: "limitBreak4", icon: "⇑", x: 50, y: 333, requires: ["limitBreak3"] },
-    { id: "limitBreak5", icon: "⇑", x: 50, y: 357, requires: ["limitBreak4"] },
-    { id: "limitBreak6", icon: "⇑", x: 50, y: 381, requires: ["limitBreak5"] },
-    { id: "limitBreak7", icon: "⇑", x: 50, y: 405, requires: ["limitBreak6"] },
-    { id: "limitBreak8", icon: "⇑", x: 50, y: 429, requires: ["limitBreak7"] },
-    { id: "limitBreak9", icon: "⇑", x: 50, y: 453, requires: ["limitBreak8"] },
-    { id: "limitBreak10", icon: "⇑", x: 50, y: 477, requires: ["limitBreak9"] },
+    { id: "lifespringResearch", icon: "✚", x: 50, y: 213, requires: ["extraTrainer"] },
+    { id: "overseerZapResearch", icon: "↯", x: 70, y: 237, requires: ["lifespringResearch"] },
+    { id: "overseerGoldResearch", icon: "¤", x: 90, y: 237, requires: ["overseerZapResearch"] },
+    { id: "aurumBloomResearch", icon: "¤", x: 50, y: 237, requires: ["lifespringResearch"] },
+    { id: "voidwellResearch", icon: "◎", x: 70, y: 261, requires: ["aurumBloomResearch"] },
+    { id: "extraVoidwellResearch", icon: "◎", x: 90, y: 261, requires: ["voidwellResearch"] },
+    // Limit Break 1 to 10 straight down under Aurum Bloom Research, a row
+    // clear of it, each requiring the one before, Enemy Level Skip Limit
+    // Break split off right of the first, and Shield Limit Break off the second.
+    { id: "limitBreak1", icon: "⇑", x: 50, y: 285, requires: ["aurumBloomResearch"] },
+    { id: "enemyLevelSkipLimitBreak", icon: "⇑", x: 70, y: 285, requires: ["limitBreak1"], reveal: "enemyLevelSkips" },
+    { id: "limitBreak2", icon: "⇑", x: 50, y: 309, requires: ["limitBreak1"] },
+    { id: "shieldLimitBreak", icon: "⇑", x: 70, y: 309, requires: ["limitBreak2"], reveal: "aetherShield" },
+    { id: "limitBreak3", icon: "⇑", x: 50, y: 333, requires: ["limitBreak2"] },
+    { id: "limitBreak4", icon: "⇑", x: 50, y: 357, requires: ["limitBreak3"] },
+    { id: "limitBreak5", icon: "⇑", x: 50, y: 381, requires: ["limitBreak4"] },
+    { id: "limitBreak6", icon: "⇑", x: 50, y: 405, requires: ["limitBreak5"] },
+    { id: "limitBreak7", icon: "⇑", x: 50, y: 429, requires: ["limitBreak6"] },
+    { id: "limitBreak8", icon: "⇑", x: 50, y: 453, requires: ["limitBreak7"] },
+    { id: "limitBreak9", icon: "⇑", x: 50, y: 477, requires: ["limitBreak8"] },
+    { id: "limitBreak10", icon: "⇑", x: 50, y: 501, requires: ["limitBreak9"] },
   ] },
   { id: "wayfinding", name: "Wayfinding", currency: "breakthrough", gate: null, description: "Teach Delve Automove to explore, compare routes and preserve resources.", nodes: [
     { id: "aiMemory", icon: "◇", x: 50, y: 20, requires: [] },

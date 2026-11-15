@@ -98,23 +98,12 @@ const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
     `<p class="hint">The notes stay open while the climb plays on, and copy to paste elsewhere. The climb's summary opens them too.</p>`,
   rerollMission: `<p>Reroll Daily Mission opens in the Archives: research it, and each daily mission not yet complete gets a looping arrow on the Missions screen. Press it to spend 5 Gems swapping the mission for a different one.</p>` +
     `<p class="hint">The new mission is never one already on your list. Its progress starts over.</p>`,
-  overseerZap: `<p>Overseer Zap opens in the Archives: research it, and every few turns a Thunderbolt strikes a random enemy standing in Overseer's beams, as hard as Thunderbolt strikes, multiplied by Overseer's Bonus.</p>` +
-    `<p class="hint">Its first level brings the cooldown to 19 turns, and each level after takes off another. Without Thunderbolt, the strike is as hard as Thunderbolt's first level.</p>`,
-  overseerGold: `<p>Overseer Coin Bonus opens in the Archives: research it, and enemies killed while they stand in Overseer's beams drop more Gold, whatever killed them.</p>` +
-    `<p class="hint">Each level adds ×0.1, from ×1.1 at the first to ×3 at the twentieth. Overseer must be held and on.</p>`,
   bossPotion: `<p>Boss Potion Drop opens in the Archives: research it, and each boss you defeat drops a percent potion that you drink at once, wherever you stand.</p>` +
     `<p class="hint">It heals as a percent potion picked up would, Potion % and HEAL's tree included.</p>`,
-  lifespringResearch: `<p>Lifespring Research opens four projects in the Archives' Arcana section: Lifespring Health raises the limit of its Health Bonus, Lifespring Gold Bonus and Lifespring Cell Bonus raise the Gold and Cells of enemies it touched, and Lifespring Damage Amplifier makes each Effect Wave count for more against its field.</p>` +
-    `<p class="hint">Lifespring's information shows what each has reached, in the Arcana menu and in a run.</p>`,
-  voidwellResearch: `<p>Voidwell Research opens two projects in the Archives' Arcana section: Voidwell Damage takes 0.2% a level of their total HP off the enemies in its vortex each turn, up to 2% (Bosses and Greater Bosses are immune), and Voidwell Gold Bonus raises the Gold of enemies killed in a vortex by ×0.5 a level, up to ×11, however they were killed, bosses included.</p>` +
-    `<p class="hint">They count while Voidwell is held and on. Its information shows what each has reached, and Settings' Toggles can hide its damage numbers.</p>`,
-  extraVoidwell: `<p>Extra Voidwell opens in the Archives' Arcana section: once researched, Voidwell opens two vortices at a time, opposite each other across you, each with the same stats.</p>`,
   esotericResearch: `<p>Esoteric Research opens the last 50 levels of every Archives project that has 100 or 150, such as Research Speed, Potion HP and the ATK, DEF and Max HP projects.</p>` +
     `<p class="hint">Until it is claimed, those projects stop 50 levels short of their full length.</p>`,
   dropResearch: `<p>Drop & Material Research opens two projects in the Archives' Equipment section: Common Drop Chance gives each boss you defeat a chance, 0.1% a level up to 1%, to drop a Common piece of equipment, and Daily Mission Materials adds one upgrade material a level, up to 50, to what each daily mission pays.</p>` +
     `<p class="hint">The Common piece is rolled on its own, beside the boss's usual drops.</p>`,
-  aurumBloomResearch: `<p>Aurum Bloom Research opens two projects in the Archives' Arcana section: Aurum Bloom Bonus adds ×0.15 a level to Aurum Bloom's Bonus, up to +3.75, and Aurum Bloom Chance adds 1% a level to its Golden Chance, up to +20%.</p>` +
-    `<p class="hint">They count while Aurum Bloom is held and on. Its information shows what each has reached.</p>`,
   researchSpeed: `<p>Research Speed opens in the Archives: train the archivists to read faster, and every research, those under way included, takes less time.</p>`,
   badgeSlots: `<p>Badge Slots opens in the Archives: research it, and each card holds one more badge a level. Drag a badge onto a card on the Deck page to fill its next slot; on a card with every slot full, it takes the bottom slot's place.</p>` +
     `<p class="hint">Badges that can't work together can't share a card: a key colour's &lt; gate with its ≥ gate (GK &lt; with GK ≥), or Effective with Dampen.</p>`,
@@ -138,8 +127,11 @@ const SWIRL_MARK = kitIcon("ui-mastered", "", "goal-mark");
 const CLEARED_MARK = kitIcon("check", "", "goal-mark");
 const CHECK_ICON = kitIcon("check", "", "goal-badge");
 
+/** A checkpoint's Breakthrough points: the Breakthrough tree's own icon. */
+const BREAKTHROUGH_ICON = uiSprite("breakthrough", "ui-sprite goal-icon");
 const rewardIcon = (r: GoalReward) =>
-  r.kind === "unlock" ? UNLOCK_ICONS[r.unlock] : r.kind === "tower" ? TOWER_ICON : r.kind === "relic" ? relicIcon(RELICS[r.relic]!) : CURRENCY_ICONS[r.currency]();
+  r.kind === "unlock" ? UNLOCK_ICONS[r.unlock] : r.kind === "tower" ? TOWER_ICON : r.kind === "relic" ? relicIcon(RELICS[r.relic]!)
+  : r.kind === "breakthrough" ? BREAKTHROUGH_ICON : CURRENCY_ICONS[r.currency]();
 /** An unlock's name with "Unlock" before it, once: Unlock Shrines is already named so. */
 const unlockText = (u: GoalUnlock) =>
   UNLOCK_NAMES[u].startsWith("Unlock ") ? UNLOCK_NAMES[u] : `Unlock ${u === "tournament" ? "the " : ""}${UNLOCK_NAMES[u]}`;
@@ -147,6 +139,7 @@ const rewardText = (r: GoalReward) =>
   r.kind === "unlock" ? unlockText(r.unlock)
   : r.kind === "tower" ? `Unlock Tower ${tierNumeral(r.tower)}`
   : r.kind === "relic" ? RELICS[r.relic]!.name
+  : r.kind === "breakthrough" ? `${r.amount} Breakthrough`
   : `${r.amount.toLocaleString("en-US")} ${CURRENCIES[r.currency].name}`;
 /** Pixels between neighbouring checkpoints, whatever floors they stand on:
  * the column spaces its checkpoints evenly (ten floors' worth), so a

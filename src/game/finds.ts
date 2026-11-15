@@ -34,7 +34,7 @@ export interface FindsHost extends DeskHost {
   readonly treeBonus: TreeBonus;
   /** What Lifespring raises the kill of an enemy it touched by, paying its Health Bonus. */
   readonly arcana: { lifespringKill(enemy: Enemy): { gold: number; cells: number } | undefined };
-  /** What Overseer Coin Bonus multiplies the Gold of a kill at `at` by: 1 outside Overseer's beams. */
+  /** What Overseer Gold Bonus multiplies the Gold of a kill at `at` by: 1 outside Overseer's beams. */
   spotlightGold(at: { x: number; y: number }): number;
   /** What Voidwell Gold Bonus multiplies the Gold of a kill at `at` by: 1 outside a vortex. */
   voidwellGold(at: { x: number; y: number }): number;

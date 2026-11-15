@@ -5,7 +5,7 @@ import { ENTITLEMENTS } from "../shop/entitlements.ts";
 import { bundleAmounts } from "../shop/items.ts";
 import type { ShopOffer } from "../shop/offers.ts";
 import type { MailItem } from "../mail/message.ts";
-import { gemIcon, goldIcon, medalIcon, arcaniteIcon, ticketIcon } from "./dom.ts";
+import { gemIcon, goldIcon, medalIcon, arcaniteIcon, ticketIcon, uiSprite } from "./dom.ts";
 
 /** A reward to celebrate: its icon, the amount beside it (a currency's
  * "+250"), the line over its name, and what it does. A `permanent` one, an
@@ -72,7 +72,9 @@ export function offerShown(o: ShopOffer): RewardShown | null {
 /** What a Goals reward just claimed shows: only currency, since unlocks and
  * towers open their own dialogs. */
 export const goalRewardShown = (r: GoalReward): RewardShown | null =>
-  r.kind === "currency" ? currencyShown(r.currency, r.amount, "GOAL REWARD") : null;
+  r.kind === "currency" ? currencyShown(r.currency, r.amount, "GOAL REWARD")
+  : r.kind === "breakthrough" ? { icon: uiSprite("breakthrough"), amount: `+${r.amount}`, kicker: "GOAL REWARD", name: "Breakthrough", permanent: false }
+  : null;
 
 /** What a message's items just claimed show: the first, the rest written
  * under its name, as a bundle shows. */

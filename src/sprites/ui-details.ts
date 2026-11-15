@@ -25,8 +25,6 @@ export const GOAL_SPRITES = {
   damagePrediction: "goal-damage-prediction", combatForecast: "goal-combat-forecast", attackLore: "goal-attack-lore",
   warp: "goal-warp", parryPercent: "goal-parry", equipment: "goal-equipment",
   damageVisual: "goal-damage-visual", relativeDamageColor: "goal-relative-damage", rerollMission: "redo",
-  overseerZap: "arcana-overseer", overseerGold: "arcana-overseer",
-  bossPotion: "potion-blue", lifespringResearch: "arcana-lifespring",
-  aurumBloomResearch: "arcana-aurum-bloom", voidwellResearch: "arcana-voidwell", extraVoidwell: "arcana-voidwell", dropResearch: "goal-equipment",
+  bossPotion: "potion-blue", dropResearch: "goal-equipment",
   esotericResearch: "hourglass",
 } satisfies Record<GoalUnlock, string>;

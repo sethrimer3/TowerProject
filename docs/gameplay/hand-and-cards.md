@@ -337,8 +337,8 @@ A press plans the card whatever a gate badge on it says.
 
 ## Ignore and Target
 
-Below Extra Trainer, under Key Mastery in the Breakthrough tree, four skills (Ignore and Target 3 Breakthrough each, Ignore More and Target More 4) give the run more of a say.
-**Ignore** (below Extra Trainer, after it) adds a button beside the potions, a red ⊘ with the uses left: press it, then tap a tile, and no card's path (nor Target's) steps on that tile for the rest of the floor, marked with a red ⊘.
+Below Echoes of time, under Phoenix Spark in the Breakthrough tree, four skills (Ignore and Target 3 Breakthrough each, Ignore More and Target More 4) give the run more of a say.
+**Ignore** (below Echoes of time, after it) adds a button beside the potions, a red ⊘ with the uses left: press it, then tap a tile, and no card's path (nor Target's) steps on that tile for the rest of the floor, marked with a red ⊘.
 A run gets 1 use, and **Ignore Count** research adds one a level, up to 10.
 A wall, the hero's own tile or one already ignored costs nothing, and pressing the button again puts it away.
 **Ignore More** (below Ignore) regains a spent Ignore use every 100 new floors a run climbs (new equivalent floors in the Delve); the count waits while Ignore is full, and its Archives research, **Ignore More**, takes a floor off the wait a level, down to every 10 floors.

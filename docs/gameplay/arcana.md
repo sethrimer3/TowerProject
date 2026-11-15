@@ -102,7 +102,7 @@ Its Stellar Chance adds to any other chance of a [Stellar Floor](environments.md
 
 ### Aurum Bloom research
 
-Tower IV's floor 200 Goal opens two projects in the Archives' **Arcana** section, each adding to one of its attributes for good, mid-run too, and to one lent by a Shrine boon as well.
+The Breakthrough skill **Aurum Bloom Research** (5 Breakthrough) opens two projects in the Archives' **Arcana** section, each adding to one of its attributes for good, mid-run too, and to one lent by a Shrine boon as well.
 Aurum Bloom's information, in the Arcana menu and from its card in a run, has a Research box with what each has reached, and its card and attributes count them.
 
 | Project | Each level | Highest | Levels |
@@ -133,7 +133,7 @@ Beams spread evenly: 2 are 180° apart, 3 are 120° and 4 are 90°.
 
 ### Overseer Zap
 
-Tower III's floor 400 Goal opens the Archives' **Overseer Zap** research.
+The Breakthrough skill **Overseer Zap** (5 Breakthrough) opens the Archives' **Overseer Zap** research.
 Once its first level is done, every few turns a Thunderbolt strikes one random enemy standing in Overseer's beams, at any distance.
 The Archives show its cooldown as 20 turns before the first level; the first level makes it 19, and each of the 18 levels takes off another turn, down to 2.
 It strikes as hard as one of Thunderbolt's bolts, at the levels you hold Thunderbolt at (switched off or not), or at Thunderbolt's first level if you don't hold it, multiplied by Overseer's Bonus, and looks the same.
@@ -141,9 +141,9 @@ The cooldown runs only while Overseer is on; switching Overseer off forgets it.
 If no enemy is in a beam when it is due, it waits, and strikes on the first turn one is.
 It works in a trial too.
 
-### Overseer Coin Bonus
+### Overseer Gold Bonus
 
-Tower VII's floor 80 Goal opens the Archives' **Overseer Coin Bonus** research.
+The Breakthrough skill **Overseer Gold Bonus** (5 Breakthrough, right of Overseer Zap, after it) opens the Archives' **Overseer Gold Bonus** research.
 Enemies killed while they stand in Overseer's beams drop more Gold, whatever killed them: your strike, an arrow, a Thunderbolt or any other arcanum.
 Each of its 20 levels adds ×0.1, from ×1.1 at the first to ×3 at the last; it raises only their Gold, not their Silver or Cells.
 An enemy counts if it stands in a beam as the turn begins, the same test as Overseer's Bonus, so it needs Overseer held and on.
@@ -210,7 +210,7 @@ Switching it off loses the pool, the waves on their way and its cooldown; the He
 
 ### Lifespring research
 
-Tower III's floor 250 Goal opens four projects in the Archives' **Arcana** section, each raising one of the effects above for good, mid-run too.
+The Breakthrough skill **Lifespring Research** (5 Breakthrough) opens four projects in the Archives' **Arcana** section, each raising one of the effects above for good, mid-run too.
 Lifespring's information, in the Arcana menu and from its card in a run, has a Research box with what each has reached.
 
 | Project | Untrained | Each level | Highest | Levels |
@@ -335,7 +335,7 @@ Switching it off loses the vortex and its cooldown.
 
 ### Voidwell research
 
-Tower V's floor 150 Goal opens two projects in the Archives' **Arcana** section, and its floor 500 Goal a third; each counts for good, mid-run too, while Voidwell is held and on.
+The Breakthrough skill **Voidwell Research** (5 Breakthrough) opens two projects in the Archives' **Arcana** section, and **Extra Voidwell** (5 Breakthrough, right of it, after it) a third; each counts for good, mid-run too, while Voidwell is held and on.
 Voidwell's information, in the Arcana menu and from its card in a run, has a Research box with what each has reached.
 
 | Project | Each level | Highest | Levels |

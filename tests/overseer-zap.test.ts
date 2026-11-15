@@ -42,11 +42,11 @@ function turn(g: Game) {
 }
 const zaps = (shots: readonly Shot[] | undefined) => (shots ?? []).filter((s) => s.thunderbolt);
 
-test("Tower III's floor 400 opens it, and the Goals pay the premium rewards asked for", () => {
-  assert.deepEqual(checkpoint(3, 400)?.reward, { kind: "unlock", unlock: "overseerZap" });
+test("the Breakthrough skill Overseer Zap opens it, Tower III's floor 400 pays 5 Breakthrough, and the Goals pay the premium rewards asked for", () => {
+  assert.deepEqual(checkpoint(3, 400)?.reward, { kind: "breakthrough", amount: 5 });
   assert.deepEqual(checkpoint(3, 400)?.premium, { kind: "currency", currency: "gold", amount: 10_000_000 });
   assert.deepEqual(checkpoint(4, 30)?.premium, { kind: "currency", currency: "gold", amount: 150_000 });
-  assert.deepEqual(RESEARCH.overseerZap.requires, [{ upgrade: "archives" }, { goalUnlock: "overseerZap" }]);
+  assert.deepEqual(RESEARCH.overseerZap.requires, [{ upgrade: "archives" }, { upgrade: "overseerZapResearch" }]);
 });
 
 test("its research holds the spec's 18 levels, and shows a 20-turn cooldown before the first", () => {

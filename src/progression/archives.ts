@@ -356,7 +356,7 @@ const OVERSEER_ZAP_TIMES: readonly [days: number, hours: number, minutes: number
   [6, 16, 0], [7, 0, 21], [7, 8, 53], [7, 17, 54], [8, 3, 49], [8, 15, 6], [9, 4, 17], [9, 19, 58], [10, 14, 49],
   [11, 13, 31], [12, 16, 49], [14, 1, 30], [15, 16, 23], [17, 14, 21], [19, 20, 18], [22, 11, 9], [25, 11, 54], [28, 23, 32],
 ];
-/** Overseer Coin Bonus research: ×0.1 more Gold a level for enemies killed in
+/** Overseer Gold Bonus research: ×0.1 more Gold a level for enemies killed in
  * Overseer's beams, for 20 levels, from ×1.1 to ×3: each level's Gold, and
  * its time as days, hours and minutes. */
 const OVERSEER_GOLD_GOLD = [
@@ -1099,77 +1099,77 @@ export const RESEARCH = {
     name: "Overseer Zap",
     description: "Overseer's beams call down a Thunderbolt on an enemy every few turns.",
     categories: ["arcana", "offense"],
-    requires: [{ upgrade: "archives" }, { goalUnlock: "overseerZap" }],
+    requires: [{ upgrade: "archives" }, { upgrade: "overseerZapResearch" }],
     levels: scheduled("overseerZapTurns", -1, OVERSEER_ZAP_GOLD, OVERSEER_ZAP_TIMES),
   },
   overseerGold: {
-    name: "Overseer Coin Bonus",
+    name: "Overseer Gold Bonus",
     description: "Enemies killed in Overseer's spotlight drop more Gold, however they were killed.",
     categories: ["arcana", "economy"],
-    requires: [{ upgrade: "archives" }, { goalUnlock: "overseerGold" }],
+    requires: [{ upgrade: "archives" }, { upgrade: "overseerGoldResearch" }],
     levels: scheduled("overseerGold", 1, OVERSEER_GOLD_GOLD, OVERSEER_GOLD_TIMES),
   },
   lifespringHealth: {
     name: "Lifespring Health",
     description: "The Max HP bonus from enemies Lifespring touched rises higher before it stops.",
     categories: ["arcana", "defense"],
-    requires: [{ upgrade: "archives" }, { goalUnlock: "lifespringResearch" }],
+    requires: [{ upgrade: "archives" }, { upgrade: "lifespringResearch" }],
     levels: scheduled("lifespringHealth", 25, LIFESPRING_HEALTH_GOLD, LIFESPRING_HEALTH_TIMES),
   },
   lifespringGold: {
     name: "Lifespring Gold Bonus",
     description: "Enemies hit by Effect Waves or Lifespring's field drop more Gold.",
     categories: ["arcana", "economy"],
-    requires: [{ upgrade: "archives" }, { goalUnlock: "lifespringResearch" }],
+    requires: [{ upgrade: "archives" }, { upgrade: "lifespringResearch" }],
     levels: scheduled("lifespringGold", 5, LIFESPRING_GOLD_GOLD, LIFESPRING_GOLD_TIMES),
   },
   lifespringAmplify: {
     name: "Lifespring Damage Amplifier",
     description: "Each Effect Wave that hits an enemy raises the damage Lifespring's field does to it further.",
     categories: ["arcana", "offense"],
-    requires: [{ upgrade: "archives" }, { goalUnlock: "lifespringResearch" }],
+    requires: [{ upgrade: "archives" }, { upgrade: "lifespringResearch" }],
     levels: scheduled("lifespringAmplify", 15, LIFESPRING_AMPLIFY_GOLD, LIFESPRING_AMPLIFY_TIMES),
   },
   lifespringCells: {
     name: "Lifespring Cell Bonus",
     description: "Enemies hit by Effect Waves or Lifespring's field drop more of their Cells.",
     categories: ["arcana", "economy"],
-    requires: [{ upgrade: "archives" }, { goalUnlock: "lifespringResearch" }],
+    requires: [{ upgrade: "archives" }, { upgrade: "lifespringResearch" }],
     levels: scheduled("lifespringCells", 1, LIFESPRING_CELLS_GOLD, LIFESPRING_CELLS_TIMES),
   },
   aurumBloomBonus: {
     name: "Aurum Bloom Bonus",
     description: "Aurum Bloom raises a Golden Floor's bonus further.",
     categories: ["arcana", "economy"],
-    requires: [{ upgrade: "archives" }, { goalUnlock: "aurumBloomResearch" }],
+    requires: [{ upgrade: "archives" }, { upgrade: "aurumBloomResearch" }],
     levels: scheduled("aurumBloomBonus", 15, AURUM_BLOOM_GOLD, AURUM_BLOOM_TIMES),
   },
   aurumBloomChance: {
     name: "Aurum Bloom Chance",
     description: "Aurum Bloom makes more floors Golden.",
     categories: ["arcana", "economy"],
-    requires: [{ upgrade: "archives" }, { goalUnlock: "aurumBloomResearch" }],
+    requires: [{ upgrade: "archives" }, { upgrade: "aurumBloomResearch" }],
     levels: scheduled("aurumBloomChance", 1, AURUM_BLOOM_GOLD.slice(0, 20), AURUM_BLOOM_TIMES.slice(0, 20)),
   },
   voidwellDamage: {
     name: "Voidwell Damage",
     description: "Each turn, Voidwell takes a percent of their total HP off the enemies in its vortex. Bosses and Greater Bosses are immune.",
     categories: ["arcana", "offense"],
-    requires: [{ upgrade: "archives" }, { goalUnlock: "voidwellResearch" }],
+    requires: [{ upgrade: "archives" }, { upgrade: "voidwellResearch" }],
     levels: scheduled("voidwellDamage", 20, VOIDWELL_DAMAGE_GOLD, VOIDWELL_TIMES.slice(0, 10)),
   },
   voidwellGold: {
     name: "Voidwell Gold Bonus",
     description: "Enemies killed in Voidwell's vortex drop more Gold, however they were killed, bosses included.",
     categories: ["arcana", "economy"],
-    requires: [{ upgrade: "archives" }, { goalUnlock: "voidwellResearch" }],
+    requires: [{ upgrade: "archives" }, { upgrade: "voidwellResearch" }],
     levels: scheduled("voidwellGold", 5, VOIDWELL_GOLD_GOLD, VOIDWELL_TIMES),
   },
   extraVoidwell: {
     name: "Extra Voidwell",
     description: "Voidwell opens a second vortex with each one, opposite it across you, with the same stats.",
     categories: ["arcana", "abilities"],
-    requires: [{ upgrade: "archives" }, { goalUnlock: "extraVoidwell" }],
+    requires: [{ upgrade: "archives" }, { upgrade: "extraVoidwellResearch" }],
     levels: scheduled("extraVoidwell", 1, [15_000_000_000], [[17, 8, 39]]),
   },
   commonDrop: {

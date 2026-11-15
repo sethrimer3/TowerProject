@@ -34,11 +34,11 @@ function arena(tiles: Record<string, Tile> = {}, vortex: Vortex | null = { x: 5,
 }
 const minutes = (hours: number) => Math.round(hours * 60);
 
-test("Tower V's floor 150 Goal opens Voidwell Damage and Gold Bonus, and its floor 500 Extra Voidwell, each with its premium Gold", () => {
-  assert.deepEqual(checkpoint(5, 150), { floor: 150, reward: { kind: "unlock", unlock: "voidwellResearch" }, premium: { kind: "currency", currency: "gold", amount: 10_000_000 } });
-  assert.deepEqual(checkpoint(5, 500), { floor: 500, reward: { kind: "unlock", unlock: "extraVoidwell" }, premium: { kind: "currency", currency: "gold", amount: 50_000_000 } });
-  for (const [id, unlock] of [["voidwellDamage", "voidwellResearch"], ["voidwellGold", "voidwellResearch"], ["extraVoidwell", "extraVoidwell"]] as const) {
-    assert.ok(RESEARCH[id].requires.some((r) => "goalUnlock" in r && r.goalUnlock === unlock), id);
+test("the Breakthrough skills Voidwell Research and Extra Voidwell open Voidwell Damage and Gold Bonus and Extra Voidwell; Tower V's floors 150 and 500 pay 5 Breakthrough, each with its premium Gold", () => {
+  assert.deepEqual(checkpoint(5, 150), { floor: 150, reward: { kind: "breakthrough", amount: 5 }, premium: { kind: "currency", currency: "gold", amount: 10_000_000 } });
+  assert.deepEqual(checkpoint(5, 500), { floor: 500, reward: { kind: "breakthrough", amount: 5 }, premium: { kind: "currency", currency: "gold", amount: 50_000_000 } });
+  for (const [id, unlock] of [["voidwellDamage", "voidwellResearch"], ["voidwellGold", "voidwellResearch"], ["extraVoidwell", "extraVoidwellResearch"]] as const) {
+    assert.ok(RESEARCH[id].requires.some((r) => "upgrade" in r && r.upgrade === unlock), id);
     assert.equal(RESEARCH[id].categories[0], "arcana", id);
   }
 });

@@ -14,7 +14,7 @@ import { defaults } from "../src/save/save.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 import type { Enemy } from "../src/entities.ts";
 import { RESEARCH, RESEARCH_TARGETS } from "../src/progression/archives.ts";
-import { unlockAt } from "../src/goals.ts";
+import { checkpoint } from "../src/goals.ts";
 
 const FLOORS = Array.from({ length: 2000 }, (_, i) => i + 1);
 const foe = { strength: "normal", hp: 1, attack: 1, defense: 0 } as Enemy;
@@ -203,8 +203,8 @@ test("about one tile in ten shows a star at any moment, each wherever it fell, a
   assert.ok(starHue(3000) < 1e-9, "the hue comes round");
 });
 
-test("Tower IV's floor 200 Goal opens Aurum Bloom Bonus (25 levels) and Aurum Bloom Chance (20), on the spec's schedule", () => {
-  assert.deepEqual(unlockAt("aurumBloomResearch"), { tower: 4, floor: 200 });
+test("the Breakthrough skill Aurum Bloom Research opens Aurum Bloom Bonus (25 levels) and Aurum Bloom Chance (20), on the spec's schedule; Tower IV's floor 200 Goal pays 5 Breakthrough", () => {
+  assert.deepEqual(checkpoint(4, 200)?.reward, { kind: "breakthrough", amount: 5 });
   const minutes = (id: "aurumBloomBonus" | "aurumBloomChance", i: number) => Math.round(RESEARCH[id].levels.at(i)!.hours * 60);
   const ends = [
     ["aurumBloomBonus", 25, 15, 26_190_000_000, (64 * 24 + 20) * 60 + 50],
@@ -212,7 +212,7 @@ test("Tower IV's floor 200 Goal opens Aurum Bloom Bonus (25 levels) and Aurum Bl
   ] as const;
   for (const [id, length, value, lastGold, lastMinutes] of ends) {
     const project = RESEARCH[id];
-    assert.ok(project.requires.some((r) => "goalUnlock" in r && r.goalUnlock === "aurumBloomResearch"), id);
+    assert.ok(project.requires.some((r) => "upgrade" in r && r.upgrade === "aurumBloomResearch"), id);
     assert.equal(project.categories[0], "arcana", id);
     assert.deepEqual([project.levels.length, project.levels[0]!.gold, minutes(id, 0), project.levels.at(-1)!.gold, minutes(id, -1)], [length, 1_000_000, 40 * 60, lastGold, lastMinutes], id);
     assert.ok(project.levels.every((l) => l.effect.value === value), id);

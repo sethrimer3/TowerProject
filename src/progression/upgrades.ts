@@ -38,6 +38,13 @@ export const UPGRADES = [
   { id: "shieldLimitBreak", name: "Shield Limit Break", description: "Raise the max training level of Shield HP to 1,800", base: 5, max: 1, currency: "breakthrough" },
   { id: "life", name: "Life", description: "Reveal revive skills in the Inspiration tree", base: 2, max: 1, currency: "breakthrough" },
   { id: "autoTrain", name: "Auto-Train", description: "Automatically buy stats during a run. Click stats and categories to toggle upgrading each floor.", base: 2, max: 1, currency: "breakthrough" },
+  // The Arcana's research, opened in the Breakthrough tree under Extra Trainer.
+  { id: "lifespringResearch", name: "Lifespring Research", description: "Open Lifespring Health, Lifespring Gold Bonus, Lifespring Damage Amplifier and Lifespring Cell Bonus research", base: 5, max: 1, currency: "breakthrough" },
+  { id: "overseerZapResearch", name: "Overseer Zap", description: "Open Overseer Zap research: Overseer's beams call down a Thunderbolt every few turns", base: 5, max: 1, currency: "breakthrough" },
+  { id: "overseerGoldResearch", name: "Overseer Gold Bonus", description: "Open Overseer Gold Bonus research: enemies killed in Overseer's beams drop more Gold", base: 5, max: 1, currency: "breakthrough" },
+  { id: "aurumBloomResearch", name: "Aurum Bloom Research", description: "Open Aurum Bloom Bonus and Aurum Bloom Chance research", base: 5, max: 1, currency: "breakthrough" },
+  { id: "voidwellResearch", name: "Voidwell Research", description: "Open Voidwell Damage and Voidwell Gold Bonus research", base: 5, max: 1, currency: "breakthrough" },
+  { id: "extraVoidwellResearch", name: "Extra Voidwell", description: "Open Extra Voidwell research: Voidwell opens a second vortex opposite the first", base: 5, max: 1, currency: "breakthrough" },
   { id: "esotericTraining", name: "Esoteric Training", description: "Raise the most training levels of ATK, DEF, Max HP, Regen and Shroud by 500", base: 2, max: 1, currency: "breakthrough" },
   {
     id: "undos",
