@@ -454,8 +454,9 @@ export function ghostRush({ board, wrap, hero, beams }: Pick<VolleyTurn, "board"
  * 1 tile reaches the four orthogonal tiles, 1.5 the diagonals, 2.5 a knight's move. */
 export const inBoltSplash = (dx: number, dy: number, radius: number) => (dx || dy ? (dx * dx + dy * dy) * 100 <= radius * radius : false);
 /** What Thunderbolt Amplifier multiplies a bolt by on an enemy `bolted` bolts
- * have hit before: `amplify` (tenths of a percent) more for each, added. */
-export const boltAmplified = (amplify: number, bolted: number) => snap(1 + (amplify * bolted) / 1000);
+ * have hit before: `amplify` (in tenths, ×2.5 is 25) for each, added, as
+ * Lifespring's Damage Amplification is (`springAmplify`); ×1 before any hit. */
+export const boltAmplified = (amplify: number, bolted: number) => (amplify && bolted > 0 ? snap((amplify * bolted) / 10) : 1);
 
 /** A turn's Thunderbolt: up to `bolts` random enemies of the floor the hero
  * stands on (`boltTargets`) take a bolt each, their ticks spread over the turn;

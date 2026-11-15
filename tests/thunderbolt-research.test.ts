@@ -41,9 +41,9 @@ test("both projects run on the spec's schedules and values", () => {
     s.archives.levels[id] = i + 1;
     return researched(s.archives, id);
   });
-  assert.deepEqual(values("thunderboltAmplify", 25).filter((_, i) => [0, 1, 2, 24].includes(i)), [25, 40, 55, 385], "2.5%, 4%, 5.5% … 38.5%");
+  assert.deepEqual(values("thunderboltAmplify", 25).filter((_, i) => [0, 1, 2, 24].includes(i)), [25, 40, 55, 385], "×2.5, ×4, ×5.5 … ×38.5");
   assert.deepEqual(values("thunderboltExpansion", 5), [10, 15, 20, 25, 30]);
-  assert.equal(shown("thunderboltAmplify"), "+38.5% a hit");
+  assert.equal(shown("thunderboltAmplify"), "×38.5 a hit");
   s.archives.levels.thunderboltExpansion = 1;
   assert.equal(shown("thunderboltExpansion"), "1 tile");
   s.archives.levels.thunderboltExpansion = 0;
@@ -58,7 +58,8 @@ test("the splash reaches the orthogonal tiles at 1, the diagonals at 1.5, a knig
   };
   assert.deepEqual([10, 15, 20, 25, 30].map(reach), [4, 8, 12, 20, 28]);
   assert.equal(inBoltSplash(0, 0, 30), false, "never the target itself");
-  assert.equal(boltAmplified(25, 4), 1.1);
+  assert.deepEqual([0, 1, 2, 4].map((n) => boltAmplified(25, n)), [1, 2.5, 5, 10], "×1 before any hit, then ×2.5 for each, added");
+  assert.equal(boltAmplified(0, 4), 1, "unresearched");
 });
 
 /** A Tower run on an open floor holding `spots` enemies, holding Thunderbolt, with `research` done. */
@@ -84,7 +85,7 @@ test("Thunderbolt Amplifier raises each bolt on an enemy by every bolt that hit 
   g.save.tower.runArcana.timers.thunderbolt = 1;
   const damage: number[] = [];
   for (let i = 0; i < 5; i++) damage.push(...turn(g).map((s) => s.damage));
-  assert.deepEqual(damage, [1000, 1025, 1050, 1075, 1100], "five bolts, one a turn, each 2.5% more than the last");
+  assert.deepEqual(damage, [1000, 2500, 5000, 7500, 10000], "five bolts, one a turn: ×1, then ×2.5 for each earlier hit");
   assert.equal(g.world.tile(4, 4).enemy!.bolted, 5);
   g.save.tower.run = g.towerRun;
   const back = decode(JSON.stringify(g.save));
@@ -143,7 +144,7 @@ test("in a trial, the boss's bolts amplify by its key and a saved attempt keeps 
     assert.ok(trialStep(state, 0, 0).changed);
     hp.push(state.bossHp);
   }
-  assert.deepEqual(hp.map((n, i) => (i ? hp[i - 1]! - n : 0)).slice(1), [1000, 1025, 1050]);
+  assert.deepEqual(hp.map((n, i) => (i ? hp[i - 1]! - n : 0)).slice(1), [1000, 2500, 5000]);
   assert.equal(state.arcana!.bolted!.boss, 3);
   assert.equal(decodeTrial(JSON.parse(JSON.stringify(state)))!.arcana!.bolted!.boss, 3);
 });

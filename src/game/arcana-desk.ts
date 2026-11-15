@@ -224,8 +224,8 @@ export class ArcanaDesk {
   }
   /** Thunderbolt, if it is held and on: what its strikes multiply the hero's
    * ATK by, the bolts of one trigger, its cooldown, and what research adds,
-   * read as it strikes: Thunderbolt Amplifier's share a hit (`amplify`, tenths
-   * of a percent) and Thunderbolt Expansion's radius (`radius`, tenths of a tile). */
+   * read as it strikes: Thunderbolt Amplifier's factor a hit (`amplify`, in
+   * tenths) and Thunderbolt Expansion's radius (`radius`, tenths of a tile). */
   thunderbolt() {
     const held = this.held.find((h) => h.id === "thunderbolt" && this.isOn(h.id));
     if (!held) return undefined;

@@ -16,7 +16,7 @@ import type { TrialState } from "./trial.ts";
 /** The arcana held and on, as the desk gives them. */
 export type TrialSpells = {
   ricochet?: { boost: number; rebounds: number; chance: number };
-  /** `amplify`: Thunderbolt Amplifier's share a hit, in tenths of a percent; `radius`: Thunderbolt Expansion's, in tenths of a tile. */
+  /** `amplify`: Thunderbolt Amplifier's factor a hit, in tenths; `radius`: Thunderbolt Expansion's, in tenths of a tile. */
   thunderbolt?: { boost: number; bolts: number; turns: number; amplify?: number; radius?: number };
   /** Overseer Zap, once researched while Overseer is held and on: its cooldown, and its strike's share of ATK before the beams. */
   zap?: { boost: number; turns: number };

@@ -174,20 +174,20 @@ Bolts still waiting follow you to the next floor, and switching it off loses the
 ### Thunderbolt research
 
 The Breakthrough skill **Thunderbolt Research** (5 Breakthrough, left of Lifespring Research, after Extra Trainer) opens two projects in the Archives' **Arcana** section, each counting for good, mid-run too, for Thunderbolt's own bolts (not Overseer Zap's).
-**Thunderbolt Amplifier** (25 levels) makes each bolt that hits an enemy raise the damage of the next bolt to hit that same enemy: 2.5% for each earlier hit at the first level, 1.5% more each level after, to 38.5% at the 25th, added up over every hit (at 2.5%, the fifth bolt on an enemy deals 10% more than the first).
+**Thunderbolt Amplifier** (25 levels) makes each bolt that hits an enemy multiply the damage of the bolts after it on that same enemy: ×2.5 for each earlier hit at the first level, ×1.5 more each level after, to ×38.5 at the 25th, added up over every hit (at ×2.5, an enemy's first bolt deals ×1, its second ×2.5, its third ×5, its fifth ×10).
 The count stays with the enemy, wherever it moves, for the rest of the run.
 **Thunderbolt Expansion** (5 levels) has each bolt also strike every enemy on the floor within its radius of the target, with the same damage, less each one's own DEF: 1 tile at the first level (the four tiles beside it), 1.5 (the diagonals too), 2, 2.5 (a knight's move away) and 3 at the 5th.
 Each enemy it reaches shows the bolt's strike, with no bolt of its own, and those hits don't count toward the Amplifier.
 
 | Level | Amplifier | Gold | Time | Expansion | Gold | Time |
 |---|---|---|---|---|---|---|
-| 1 | 2.5% | 500,000 | 0d 19h 59m | 1 tile | 900,000 | 0d 22h 13m |
-| 2 | 4% | 860,000 | 1d 4h 21m | 1.5 tiles | 2,950,000 | 1d 21h 46m |
-| 3 | 5.5% | 1,450,000 | 1d 12h 53m | 2 tiles | 12,130,000 | 2d 21h 10m |
-| 4 | 7% | 3,200,000 | 1d 21h 54m | 2.5 tiles | 77,430,000 | 3d 21h 42m |
-| 5 | 8.5% | 8,200,000 | 2d 7h 49m | 3 tiles | 301,670,000 | 5d 13h 42m |
-| 10 | 16% | 277,320,000 | 5d 17h 31m | | | |
-| 25 | 38.5% | 26,190,000,000 | 64d 0h 50m | | | |
+| 1 | ×2.5 | 500,000 | 0d 19h 59m | 1 tile | 900,000 | 0d 22h 13m |
+| 2 | ×4 | 860,000 | 1d 4h 21m | 1.5 tiles | 2,950,000 | 1d 21h 46m |
+| 3 | ×5.5 | 1,450,000 | 1d 12h 53m | 2 tiles | 12,130,000 | 2d 21h 10m |
+| 4 | ×7 | 3,200,000 | 1d 21h 54m | 2.5 tiles | 77,430,000 | 3d 21h 42m |
+| 5 | ×8.5 | 8,200,000 | 2d 7h 49m | 3 tiles | 301,670,000 | 5d 13h 42m |
+| 10 | ×16 | 277,320,000 | 5d 17h 31m | | | |
+| 25 | ×38.5 | 26,190,000,000 | 64d 0h 50m | | | |
 
 ## Lifespring
 

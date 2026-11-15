@@ -660,7 +660,7 @@ One of Overseer's spotlights from the hero, turning clockwise each turn. Hits fr
 An arcanum on a cooldown: its bolts fall from the board's upper edge on random enemies of the floor, and those left over with too few enemies strike again a turn at a time, until used up or no enemy remains.
 
 **Thunderbolt Amplifier**:
-Research that has each Thunderbolt bolt hit on an enemy raise the next bolt's damage to that same enemy, the share a hit added up over every earlier hit.
+Research that has each Thunderbolt bolt hit on an enemy multiply the damage of later bolts on that same enemy, its factor a hit added up over every earlier hit.
 _Avoid_: bolt stacks, thunder charge
 
 **Thunderbolt Expansion**:

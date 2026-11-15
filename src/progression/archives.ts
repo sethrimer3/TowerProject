@@ -195,9 +195,10 @@ export const RESEARCH_TARGETS = {
   runNotes: { name: "Climb Notes", base: 0, shown: opened },
   /** Whether a daily mission can be rerolled for Gems (game/mission-desk.ts). */
   missionReroll: { name: "Mission Reroll", base: 0, shown: opened },
-  /** What each earlier Thunderbolt hit on an enemy adds to the next bolt's
-   * damage to it (ArcanaDesk.thunderbolt), in tenths of a percent: none untrained. */
-  thunderboltAmplify: { name: "Amplification", base: 0, shown: (n: number) => `+${n / 10}% a hit` },
+  /** What each earlier Thunderbolt hit on an enemy multiplies the next bolt's
+   * damage to it by, added over the hits (ArcanaDesk.thunderbolt, `boltAmplified`),
+   * in tenths: none untrained. */
+  thunderboltAmplify: { name: "Amplification", base: 0, shown: (n: number) => (n ? `×${n / 10} a hit` : "None") },
   /** How far round its target a Thunderbolt's damage reaches (ArcanaDesk.thunderbolt),
    * in tenths of a tile: none untrained. */
   thunderboltExpansion: { name: "Strike Radius", base: 0, shown: (n: number) => (n ? `${n / 10} ${n === 10 ? "tile" : "tiles"}` : "None") },
@@ -351,10 +352,10 @@ const SHIELD_REGEN_SECONDS = [99960, 120060, 141360, 167880, 207120];
 const SHIELD_THORNS_SECONDS = [99960, 124382, 151721, 186672, 238595];
 const shieldSkillLevels = (target: ResearchTarget, seconds: readonly number[]) => seconds.map((s, i): ResearchLevel => ({ gold: (i + 1) * 1e9, hours: s / 3600, effect: { target, op: "add", value: 1 } }));
 
-/** Thunderbolt Amplifier research: what each earlier bolt hit on an enemy adds
- * to the next bolt's damage to it, in tenths of a percent: 2.5% at the first
- * level, 1.5% more each level after, for 25 levels, to 38.5%: each level's
- * Gold, and its time as days, hours and minutes. */
+/** Thunderbolt Amplifier research: what each earlier bolt hit on an enemy
+ * multiplies the next bolt's damage to it by, added over the hits, in tenths:
+ * ×2.5 at the first level, ×1.5 more each level after, for 25 levels, to ×38.5:
+ * each level's Gold, and its time as days, hours and minutes. */
 const THUNDERBOLT_AMPLIFY_GOLD = [
   500_000, 860_000, 1_450_000, 3_200_000, 8_200_000, 20_040_000, 44_130_000, 88_010_000, 161_560_000, 277_320_000,
   450_680_000, 700_140_000, 1_050_000_000, 1_520_000_000, 2_140_000_000, 2_950_000_000, 3_980_000_000, 5_270_000_000, 6_880_000_000, 8_840_000_000,
