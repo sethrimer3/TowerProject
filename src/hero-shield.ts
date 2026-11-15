@@ -28,7 +28,7 @@ export const regrowNow = (save: Pick<Save, "upgrades" | "archives" | "relics" | 
 /** Brings `run`'s shield up to what is owned now: its first shield comes full,
  * more capacity comes with the shield to fill it (unless it is down), and less
  * leaves what it holds, above max. Works from the capacity `run.player`
- * last had, so a run undo brings back catches up the same way. */
+ * last had. */
 export function syncShield(save: Save, run: Run, mode: Mode) {
   const p = run.player;
   if (!save.upgrades.heroShield) return;

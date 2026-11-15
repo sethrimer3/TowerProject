@@ -155,17 +155,18 @@ export const TREES: SkillTree[] = [
     { id: "dashRegen", icon: "⇶", x: 90, y: 111, requires: ["endRush"] },
     { id: "dashBadge", icon: "◪", x: 90, y: 137, requires: ["dashRegen", "cardBadges"] },
     // Golden Floors under More Wealth (under Path to Wealth), then two ways
-    // down from it: Rehearsed Steps down and left, with Aether Shield and
-    // Echoes of Time straight under it (the undos, and what reveals the
-    // Inspiration tree's Shield path), and Offline Gold down and right,
-    // with Gem Card under it, above Card Mastery.
+    // down from it: Esoteric Training down and left, with Aether Shield
+    // (what reveals the Inspiration tree's Shield path), Phoenix Spark and
+    // Echoes of Time (its charges) straight under it, and Offline Gold down
+    // and right, with Gem Card under it, above Card Mastery.
     { id: "moreWealth", icon: "¤", x: 18, y: 85, requires: ["pathToWealth"] },
     { id: "goldenFloors", icon: "¤", x: 18, y: 111, requires: ["moreWealth"] },
     { id: "offlineGold", icon: "¤", x: 30, y: 137, requires: ["goldenFloors"] },
     { id: "gemCard", icon: "◆", x: 30, y: 163, requires: ["offlineGold"] },
-    { id: "inspirationUndos", icon: "↺", x: 10, y: 137, requires: ["goldenFloors"] },
-    { id: "aetherShield", icon: "◯", x: 10, y: 163, requires: ["inspirationUndos"] },
-    { id: "undos", icon: "↺", x: 10, y: 189, requires: ["aetherShield"] },
+    { id: "esotericTraining", icon: "⇑", x: 10, y: 137, requires: ["goldenFloors"] },
+    { id: "aetherShield", icon: "◯", x: 10, y: 163, requires: ["esotericTraining"] },
+    { id: "phoenixSpark", icon: "✦", x: 10, y: 189, requires: ["aetherShield"] },
+    { id: "undos", icon: "↺", x: 10, y: 215, requires: ["phoenixSpark"] },
     // Overheal, Life (which reveals Revive and the Angel skills, with
     // Auto-Train to its right) and Enemy
     // Level Skips (which reveals its two skills under Floor Skip Reward) under

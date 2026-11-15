@@ -15,7 +15,6 @@ import { playedSave } from "./first-skills.ts";
  * `levels` Dash research levels done. */
 function corridor(levels: number, skill = true) {
   const g = new Game(playedSave());
-  g.save.upgrades.inspirationUndos = 1; // undo needs Rehearsed steps
   if (skill) g.save.upgrades.dash = 1;
   if (levels) g.save.archives.levels.dash = levels;
   const w = g.world as RoomWorld;
@@ -51,7 +50,6 @@ test("the first step toward a new target dashes across empty tiles, stopping bef
   assert.equal(g.dashTiles, 3);
   g.autoTurn();
   assert.deepEqual(at(g), [4, 0], "with no tile left it stops on the tile before the key");
-  assert.equal(g.save.tower.history.length, 1, "the dash is one undo");
   assert.deepEqual(g.dash?.tiles, [0, 1, 2, 3].map((x) => ({ x, y: 0, dx: 1, dy: 0 })), "the tiles it dashed off, in order, each with its step");
   assert.deepEqual(g.dash?.end, { x: 4, y: 0, dx: 1, dy: 0 }, "and the empty tile it landed on, with the step onto it");
   g.autoTurn();
@@ -68,10 +66,6 @@ test("a dash with a tile left ends on its target item, taking it", () => {
   assert.equal((g.world as RoomWorld).tile(5, 0).kind, "floor");
   assert.deepEqual(g.dash?.tiles.map((t) => t.x), [0, 1, 2, 3, 4]);
   assert.equal(g.dash?.end, undefined, "no echo on the item's tile");
-  assert.equal(g.save.tower.history.length, 1, "still one undo");
-  assert.ok(g.undo());
-  assert.deepEqual(at(g), [0, 0], "undo takes the dash and the key back whole");
-  assert.equal(g.run.player.keys.yellow, keys);
 });
 
 test("a dash ending on its item scales it with Effective, and stops before it with Skip", () => {
@@ -97,13 +91,6 @@ test("a dash crosses an opened chest, and stops before a monster", () => {
   m.run.hand = ["monster"];
   m.autoTurn();
   assert.deepEqual(at(m), [4, 0], "a fight is a step of its own");
-});
-
-test("undo takes a dash back whole", () => {
-  const g = corridor(10);
-  g.autoTurn();
-  assert.ok(g.undo());
-  assert.deepEqual(at(g), [0, 0]);
 });
 
 test("each Dash level adds a tile dashed across, after the step's own", () => {
@@ -189,9 +176,6 @@ test("End Rush adds its levels to STAIRS's dash toward the stairs", () => {
   assert.equal(g.dashFor("stairs"), 5);
   g.autoTurn();
   assert.deepEqual(at(g), [6, 0], "2 + 3 tiles after the step's own, stopping before the stairs");
-  assert.equal(g.save.tower.history.length, 1, "still one undo");
-  assert.ok(g.undo());
-  assert.deepEqual(at(g), [0, 0]);
 });
 
 test("End Rush works without Dash research, and only on STAIRS", () => {

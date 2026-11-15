@@ -62,7 +62,7 @@ function observe(g: Game, action: unknown, result: unknown, preview: unknown) {
     player: r.player, kills: r.kills, treasures: r.treasures, height: r.height, floor: r.floor,
     outside: !!r.outside, ...(g.mode === "tower" ? { damaged: r.damaged } : {}),
     gold: g.save.gold, xp: g.save.xp, looted: Object.keys(g.save[g.mode].lootedTiles).length,
-    history: g.save[g.mode].history.length, changes: Object.keys(r.changes).length,
+    changes: Object.keys(r.changes).length,
   });
 }
 
@@ -70,7 +70,6 @@ function trace(mode: Mode, seed: number, smartAi: boolean): string[] {
   const rng = mulberry32(seed);
   const save = playedSave();
   save.upgrades.breakthrough = 1;
-  save.upgrades.inspirationUndos = 1;
   // Five ranks of DEF training (a new hero has none), so runs last long
   // enough to reach the stairs.
   save.training.defense = 5;

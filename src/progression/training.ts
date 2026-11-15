@@ -17,6 +17,9 @@ export type TrainingRow = (typeof TRAINING)[number];
 export const LIMIT_BREAKS = ["limitBreak1", "limitBreak2", "limitBreak3", "limitBreak4", "limitBreak5", "limitBreak6", "limitBreak7", "limitBreak8", "limitBreak9", "limitBreak10"] as const satisfies readonly UpgradeId[];
 /** Training levels each Limit Break adds to the cap of a row it raises. */
 export const LIMIT_BREAK_RANKS = 500;
+/** Esoteric Training: the 500 more ranks of ATK, DEF, Max HP, Regen and
+ * Shroud (500 each to begin with) the Breakthrough skill opens. */
+const ESOTERIC = { upgrade: "esotericTraining", ranks: 500 } as const;
 /** The Limit Breaks that raise `row`'s cap: its first `breaks` of them. */
 const breaksOf = (row: TrainingRow) => ("breaks" in row ? row.breaks : 0);
 /** The most levels `row` trains to with `upgrades` owned: its `max`,
@@ -241,12 +244,12 @@ export type TrainingDef = {
  * Parry %'s, a flat percent a rank, and DEF's first twelve, 1 each. */
 export const TRAINING = [
   {
-    id: "hp", name: "Max HP", group: "defense", stat: "maxHp", curve: { per: 10, square: 1 }, cost: 1, max: 1000, breaks: 10,
+    id: "hp", name: "Max HP", group: "defense", stat: "maxHp", curve: { per: 10, square: 1 }, cost: 1, max: 500, breaks: 10, raisedBy: ESOTERIC,
     description: "Raises maximum HP.",
     silver: vital, gold: gentleTrainers,
   },
   {
-    id: "attack", name: "ATK", group: "offense", stat: "attack", curve: { per: 1, square: 0.2 }, cost: 1, max: 1000, breaks: 10,
+    id: "attack", name: "ATK", group: "offense", stat: "attack", curve: { per: 1, square: 0.2 }, cost: 1, max: 500, breaks: 10, raisedBy: ESOTERIC,
     description: "Raises ATK, the damage each strike deals before the enemy's DEF.",
     silver: cheap, gold: mildTrainers,
   },
@@ -355,20 +358,20 @@ export const TRAINING = [
   {
     // At least 1 DEF a rank: ranks 1–12 add 1 each, and the square takes
     // over from rank 13 (+2.08 and rising).
-    id: "defense", name: "DEF", group: "defense", stat: "defense", curve: { per: 0, square: 1 / 12, atLeast: 1 }, cost: 1, max: 1000, breaks: 10,
+    id: "defense", name: "DEF", group: "defense", stat: "defense", curve: { per: 0, square: 1 / 12, atLeast: 1 }, cost: 1, max: 500, breaks: 10, raisedBy: ESOTERIC,
     description: "Raises DEF, reducing the damage of each enemy strike.",
     silver: cheap, gold: mildTrainers,
   },
   // The HP regained each step taken in a run.
   {
-    id: "regen", name: "Regen", group: "defense", stat: "regen", curve: { per: 0.1, square: 1 / 120 }, cost: 1, max: 1000, breaks: 10, requires: "regen",
+    id: "regen", name: "Regen", group: "defense", stat: "regen", curve: { per: 0.1, square: 1 / 120 }, cost: 1, max: 500, breaks: 10, raisedBy: ESOTERIC, requires: "regen",
     research: "regenPercent",
     description: "Raises HP regained each turn.",
     silver: cheap, gold: mildTrainers,
   },
   // The damage the shroud blocks each fight.
   {
-    id: "shroud", name: "Shroud", group: "defense", stat: "shroud", curve: { per: 5, square: 0.1, fourth: 0.0000064 }, cost: 1, max: 1000, breaks: 8, requires: "shroud",
+    id: "shroud", name: "Shroud", group: "defense", stat: "shroud", curve: { per: 5, square: 0.1, fourth: 0.0000064 }, cost: 1, max: 500, breaks: 8, raisedBy: ESOTERIC, requires: "shroud",
     description: "Raises the damage the shroud blocks at the start of every fight.",
     silver: vital, gold: { ...gentleTrainers, cubic: 700 },
   },

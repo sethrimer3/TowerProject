@@ -5,7 +5,7 @@ import { MISSION_CAPACITY, MISSION_EVERY_MS, MISSIONS, MISSION_TYPES, WEEKLY_MAX
 
 // The missions' saved state (`save.missions`): the player's list, when
 // missions were last given, the week's tally of missions claimed and its
-// rewards claimed, and what has already counted, so undo can't count it twice.
+// rewards claimed, and what has already counted, so nothing counts twice.
 
 export type Mission = {
   id: number;
@@ -29,15 +29,14 @@ export type MissionsSave = {
    * claimed in it, and the weekly rewards claimed (by index). */
   week: { id: number; missions: number; claimed: number[] };
   /** Kills and pickups already counted (`type:mode:loot key`), the latest
-   * `COUNTED_KEPT`: undo brings the tile back but it never counts again. */
+   * `COUNTED_KEPT`: a tile counted never counts again. */
   counted: string[];
-  /** The most counted so far in a run (`type:mode:seed`), for what undo
-   * takes back (run training, Focus): only a rise past it counts. */
+  /** The most counted so far in a run (`type:mode:seed`), for what a run
+   * tallies (run training, Focus): only a rise past it counts. */
   marks: Record<string, number>;
 };
 
-/** The most kills and pickups remembered as counted: far more than a run's
- * undo can bring back. */
+/** The most kills and pickups remembered as counted. */
 export const COUNTED_KEPT = 2000;
 /** The most runs' marks kept. */
 export const MARKS_KEPT = 20;

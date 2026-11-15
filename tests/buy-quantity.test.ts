@@ -59,10 +59,9 @@ test("training points buy the chosen quantity at once, showing the value they re
   assert.equal(trainingPoints(g.save).left, 0);
 });
 
-test("Silver buys the chosen quantity for the run, its prices summed, as one undo", () => {
+test("Silver buys the chosen quantity for the run, its prices summed", () => {
   const g = withQuantity(4);
   g.save.upgrades.onTheJob = 1;
-  g.save.upgrades.inspirationUndos = 1;
   const w = g.world as RoomWorld;
   w.cells = new Map();
   for (let y = 0; y < 5; y++) for (let x = 0; x < 5; x++) w.cells.set(`${x},${y}`, { kind: "floor" });
@@ -76,7 +75,5 @@ test("Silver buys the chosen quantity for the run, its prices summed, as one und
   assert.ok(g.run.player.maxHp > hp);
   const max = runTrainingBulk(g.save, g.run, "hp", "max", g.silver);
   assert.ok(max.count >= 1 && max.cost <= g.silver && max.cost + silverPrice("hp", 5 + max.count) > g.silver);
-  assert.ok(g.undo());
-  assert.deepEqual([g.run.training?.hp ?? 0, g.silver, g.run.player.maxHp], [0, 100, hp], "one undo takes all five back");
   assert.equal(g.trainInRun("hp", 100), false, "refused without the Silver for them all");
 });

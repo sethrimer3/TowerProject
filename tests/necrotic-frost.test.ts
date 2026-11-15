@@ -29,7 +29,6 @@ const area = (...fields: FrostField[]) => frostArea(fields, frostEffects(null));
 /** A Tower run at the origin, ATK 100, on plain floor holding `tiles`, holding Necrotic Frost. */
 function arena(tiles: Record<string, Tile> = {}, levels: [number, number, number] = [0, 0, 0]) {
   const s = defaults();
-  s.upgrades.inspirationUndos = 1;
   const g = new Game(s, random(5));
   g.newRun({ seed: 7 });
   lay(g, tiles);
@@ -266,21 +265,18 @@ test("a kill pays like any other, off the tile, and the toggle only hides its nu
   assert.ok(!hidden.volley?.shots.some((s) => s.necro));
 });
 
-test("undo takes back the field, the decay and the mark; a refight comes out the same", () => {
+test("a replay of the same run lays the same field and decay", () => {
   const g = arena(standing(3, 0));
   g.run.necroticFrost = { timer: 1 };
   turn(g);
   const fields = g.run.necroticFrost!.fields!;
   assert.equal(fields.length, 1);
   const after = hpAt(g, 3, 0);
-  g.undo();
-  lay(g, standing(3, 0));
-  assert.deepEqual(g.run.necroticFrost, { timer: 1 });
-  assert.equal(hpAt(g, 3, 0), brute.hp);
-  assert.equal(g.world.tile(3, 0).enemy!.necro, undefined);
-  turn(g);
-  assert.deepEqual(g.run.necroticFrost!.fields, fields, "the same angle");
-  assert.equal(hpAt(g, 3, 0), after);
+  const again = arena(standing(3, 0));
+  again.run.necroticFrost = { timer: 1 };
+  turn(again);
+  assert.deepEqual(again.run.necroticFrost!.fields, fields, "the same angle");
+  assert.equal(hpAt(again, 3, 0), after);
 });
 
 test("switching it off loses the fields and cooldown; the decay waits, and goes on when it is back", () => {

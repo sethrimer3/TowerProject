@@ -9,27 +9,26 @@ Movement transitions can be set to **Smooth** (default), **Fast**, or **Off (ins
 This controls camera and player interpolation on both axes, including Proving Grounds boss trials; Reduce motion overrides it with instant movement.
 Trials use the Delve's follow camera with a dead zone and path look-ahead by default, keeping their view bounded around the arena with room for its controls.
 
-## Undo
+## Phoenix Spark
 
-**Undo** restores one move (a tapped route counts as a single move), including combat, pickups, gear, keys, doors, torches put out, and the XP a kill paid (with any level it reached), but only on the floor you stand on: climbing a Tower floor forgets the history (the Tower's stairs only lead up, and a floor left behind is gone for the run), as does crossing one of the Delve's floor lines (each ten depth, either way) or a milestone gate.
-A step onto empty floor is seldom worth resuming at, so undoing one goes on back past every empty step before it, and the move before them that did something, to just before that move (a fight, a pickup, a door, a card's activation or training bought).
-It cancels any queued route.
-Undos are a limited resource, like Ignore and Target: each run has a number of them to spend, shown on the Undo button, and one spent never comes back, whatever the run does after it.
-The history holds no more moves than the run has undos left.
-A game update that reshapes the floors forgets the history, in the Tower as in the Delve, since the moves it held were made on the old layout.
-A new profile has no undo, and the button stays hidden until **Rehearsed steps** (1 Breakthrough, down and left of Golden Floors, under More Wealth, under Path to Wealth, in the Breakthrough tree, above Aether Shield and Echoes of time) gives the first undo a run (or Echoes of time and a level of Undo Count do); each level of **Undo Count** research in the Archives adds one a run: Rehearsed steps opens four levels of it and **Echoes of time** (Breakthrough, after Rehearsed steps) four more, either opening it first, up to 9 a run.
+There is no undo: a move, once made, stands.
+**Phoenix Spark** (1 Breakthrough, in the Breakthrough tree, under Aether Shield, above Echoes of time) instead shrugs off a hit that would defeat the hero, by itself: the hit does nothing at all (no HP, shroud or Aether Shield lost), and the fight goes on.
+It acts only once every revival has been tried and failed: Revive's roll first, then Angel Wings, then Phoenix Spark.
+A monster's strike and a Ranged or Flying enemy's shot are both hits it can save the hero from.
+As it acts, a skull inside a red "no" circle flashes over the hero's head for a second, the fight pausing meanwhile, and the status line names it.
+Its charges are a limited resource, like Ignore and Target: each run has a number of them, shown beside the board, and one spent never comes back.
+The skill gives one charge a run; each level of **Phoenix Spark Count** research in the Archives adds one: Phoenix Spark opens four levels of it and **Echoes of time** (Breakthrough, after Phoenix Spark) four more, either opening it first, up to 9 a run.
 Each counts the moment it's bought or completed, in a run already under way too; a new run starts with them all.
-History persists across refreshes.
 
 ## How a run ends
 
-Every way a run ends goes through one dialog, which says what brought it up and shows the same totals of what the run obtained: the floor reached, the tower's highest floor (the same *Max Floor* the floor number's tip shows, this run included), and the Gold, the Inspiration (in the Tower) and the XP earned in this run, the first two with their icons, not the amounts held (undo takes a kill's XP back from it, as from the hero).
+Every way a run ends goes through one dialog, which says what brought it up and shows the same totals of what the run obtained: the floor reached, the tower's highest floor (the same *Max Floor* the floor number's tip shows, this run included), and the Gold, the Inspiration (in the Tower) and the XP earned in this run, the first two with their icons, not the amounts held.
 Pressing **End Climb** (End Run in the Delve) asks whether to end the climb (or, when no card in the hand can act, says so first), with **End Climb** and **Keep climbing** (End Run and Keep delving in the Delve).
 When the hero falls in a fight, the run waits at 0 HP with the hand paused, a skull and crossbones burns in a red glow over the hero's head for two and a half seconds, and then the dialog, headed **Fallen in combat**, names the monster.
-It must be answered: **Undo** (once Rehearsed steps has unlocked undo, while the run has an undo left and a move to take back; without it the dialog doesn't mention undo) spends one to take the fight back and leaves the hand paused; **Return to entrance** ends the run, pays what it still owes, and returns to the forest for the next run.
+It must be answered: **Return to entrance** ends the run, pays what it still owes, and returns to the forest for the next run.
 Headed **Regroup and try again**, the dialog says the Tower (or Delve) will shift to a new layout for the next run and invites the player to look over and spend what this one earned.
 The dialog comes back after a refresh until it is answered.
-Rewards are credited as they are earned and never rolled back, so taking a fight back cannot duplicate them.
+Rewards are credited as they are earned and never rolled back.
 Ending a run with End Climb (End Run) goes straight back to the forest once confirmed.
 Gold is banked the moment it is found and kept however the run ends: the stats show the Gold held, and the run's end dialog and the message after the run say how much the run found.
 
@@ -50,7 +49,7 @@ Once any [Floor Environment](environments.md) has a chance, a last table lists e
 They list the tower, the floor reached and the current floor, the real time since the run went inside, the steps taken, chests opened, enemies defeated and XP earned, the keys obtained by colour and the doors opened by kind, the Gold, Silver and Inspiration (in the Tower) found, the materials found, and the potions, ATK and DEF shards, Gems, Cells and equipment picked up, each group under its heading.
 They refresh as the run goes, and the X at their top right closes them.
 The copy button beside the X puts them in the clipboard as text, to paste elsewhere.
-Undo takes back what it takes back from the run (steps, keys, doors, pickups and Silver), never what was found for good (Gold, materials, Cells, Gems and equipment).
+They count what the run holds (steps, keys, doors, pickups and Silver) and what it found for good (Gold, materials, Cells, Gems and equipment).
 Nor does it take back a provision used (an elixir, a Vanguard Banner, an Aegis charm): the use stays spent, the heal stays, and a boost keeps counting down its turns.
 The run's end dialog has a Run Notes button at the end of its totals, which opens them over it.
 The Settings page's Stats dialog has the same copy button.
@@ -60,7 +59,7 @@ Its tallies are rounded down, and shortened from a million (1.23M).
 ## Rewards and purchases
 
 Rewards are credited as you climb (Inspiration for each Tower floor completed beyond your highest, paid as you climb its stairs, and 10 for each area cleared; past floor 100 a point takes 10 floors, past floor 1,000 100 floors, and past floor 10,000 they stop; the Delve's depth pays none, and only scores a tournament), so ending a run simply starts a fresh one.
-A run still in the forest takes everything bought there at once (skills, training, gear, provisions and research); skills bought while another run is inside apply to that run from its next ascent; Wayfinder, Revive, and undo-capacity upgrades unlock immediately.
+A run still in the forest takes everything bought there at once (skills, training, gear, provisions and research); skills bought while another run is inside apply to that run from its next ascent; Wayfinder, Revive, and Phoenix Spark charges unlock immediately.
 In the forest, Automove still avoids lethal fights; it and the hand pause off the board, in dialogs, and when hidden.
 No offline progress is calculated.
 
@@ -71,8 +70,8 @@ The Settings button in the stats opens the Settings page at any time, with a Bac
 
 ## Movement Speed and Dash
 
-**Movement Speed** (1 Breakthrough, under Quest for Knowledge at the top of the Breakthrough tree) opens the Archives' **Movement Speed** research (six levels, priced and timed like Undo Count's first six: 500 Gold and 8 hours, up to 8,000 Gold and 48 hours), each level letting the run's speed arrows go one step a second faster: 4, then 5, up to 9.
-**Dash** (1 Breakthrough, after Movement Speed, right of Physician) opens the Archives' **Dash** research: each of its 25 levels lets the hand's first step toward a new target dash across one more empty tile (or chest already opened) in the same step (one turn, one undo), stopping on the tile before anything else (an item, a door, a monster, the stairs, a torch or a Gem), except that a dash with a tile left ends on the item its card is heading for, taking it (scaled by an Effective or Dampen badge as usual; with a Skip badge it stops before the item, which Skip rolls for on its own step); faint echoes of the hero appear on each tile it dashed off, and on the empty tile it landed on, one after another, and fade in the same order within half a second.
+**Movement Speed** (1 Breakthrough, under Quest for Knowledge at the top of the Breakthrough tree) opens the Archives' **Movement Speed** research (six levels, priced and timed like Phoenix Spark Count's first six: 500 Gold and 8 hours, up to 8,000 Gold and 48 hours), each level letting the run's speed arrows go one step a second faster: 4, then 5, up to 9.
+**Dash** (1 Breakthrough, after Movement Speed, right of Physician) opens the Archives' **Dash** research: each of its 25 levels lets the hand's first step toward a new target dash across one more empty tile (or chest already opened) in the same step (one turn), stopping on the tile before anything else (an item, a door, a monster, the stairs, a torch or a Gem), except that a dash with a tile left ends on the item its card is heading for, taking it (scaled by an Effective or Dampen badge as usual; with a Skip badge it stops before the item, which Skip rolls for on its own step); faint echoes of the hero appear on each tile it dashed off, and on the empty tile it landed on, one after another, and fade in the same order within half a second.
 Level n costs 250 × n × 2^(n−1) Gold and takes 1.75 × n × 1.2^(n−1) hours (250 Gold and 1.75 hours first; about 105 billion Gold and 145 days at level 25).
 A dashed turn regains HP by Regen once, on its first step, not on the tiles it dashes across.
 **Dash Combo** (1 Breakthrough, down and left of Dash) rewards chaining fights.
@@ -83,7 +82,7 @@ Two turns without a fight end it, and a run's end does too.
 Only a dash starts a combo; a dash on a combo's last turn that lands beside an enemy starts a new one at 1.
 While the Combo is 1 or more, the sword and **x Combo** show under the currencies in the run.
 It counts only in the fight itself: Damage Visual, the inspect panel and the hand's plans leave it out, so a chained fight can end better than its label says, and can get past a DEF they call impervious.
-Arrows and enemy shots don't count it, and undo takes it back with the step.
+Arrows and enemy shots don't count it.
 **Dash Regen** (1 Breakthrough, below End Rush, above Dash Badge) opens the Archives' **Dash Regen** research: each of its 35 levels lets one more of a dash's first dashed tiles regain HP by Regen too.
 It costs the same in all as Dash, about 201 billion Gold and 697 days, spread more gently: level n takes n × 1.6^(n−1) shares of the Gold and n × 1.12^(n−1) shares of the time (about 260 Gold and 1.4 hours first, 79 billion Gold and 97 days at level 35), so each level after the first is cheaper and quicker than Dash's.
 
@@ -97,10 +96,10 @@ Materials, Cells, Gems and Free Training's levels always show.
 The **Dev Mode** toggle near the bottom shows the testing tools under it while it is on, and turning it off turns them off; it grants nothing itself.
 Its first, **Unlimited currency**, is the Dev mode these pages speak of: unlimited currency, every floor section and mode unlocked.
 **Free purchases** is a lighter tool for testing: it unlocks nothing, but every purchase (skills, Training, provisions, research and archivists) goes through whatever you have and costs nothing, and research completes the moment it starts.
-Under them, **Export profile** downloads a text file (JSON, in sections: profile, settings, currencies, deck, upgrades, training, research, premium, gear, towers, goals, online) of everything kept between runs, headed by its save version; a run in progress, its undo history and a Proving Grounds attempt aren't in it.
+Under them, **Export profile** downloads a text file (JSON, in sections: profile, settings, currencies, deck, upgrades, training, research, premium, gear, towers, goals, online) of everything kept between runs, headed by its save version; a run in progress and a Proving Grounds attempt aren't in it.
 **Import profile** loads such a file over the whole profile, after a confirm: both current runs end, and anything the file leaves out starts afresh.
 In the forest **Enter**, an arrow going into an arch, stands under Goals beside the tower's number: one press walks the hero to the entrance, and the run begins as the hero steps onto it.
 Reaching the entrance's steps, the hero walks in: a turn later it steps up into the dark of the arch (or the cave's mouth), a turn after that it is gone inside, and the view closes in on that spot for a second, until it fills the board, before the first floor shows.
 With Reduce Motion or Instant transitions, the floor shows as soon as the hero is gone.
-Nothing else moves, and Undo waits, while the hero walks in.
+Nothing else moves while the hero walks in.
 Inside a run the button under Settings plays and pauses the hand.

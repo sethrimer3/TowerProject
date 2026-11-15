@@ -46,7 +46,7 @@ export function drawStruckDown(f: FrameContext, age: number) {
 }
 
 /** Two bones crossed behind the skull, each with a knobbed end. */
-function crossbones(c: CanvasRenderingContext2D) {
+export function crossbones(c: CanvasRenderingContext2D) {
   c.lineCap = "round";
   for (const side of [-1, 1]) {
     const [x0, y0, x1, y1] = [-9 * side, -2, 9 * side, 11];
@@ -76,7 +76,7 @@ function crossbones(c: CanvasRenderingContext2D) {
 
 /** The skull: a round crown over a narrower jaw, dark red eyes, a nose
  * and teeth. */
-function skull(c: CanvasRenderingContext2D) {
+export function skull(c: CanvasRenderingContext2D) {
   c.beginPath();
   c.arc(0, -1, 7, Math.PI * 0.8, Math.PI * 2.2);
   c.lineTo(4.2, 8);

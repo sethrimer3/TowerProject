@@ -9,11 +9,10 @@ import { OUTSIDE_SIZE } from "../outside.ts";
 import { TRAINING, TRAINING_GROUPS, amountAt, trainingCeiling, trainingDef, type TrainingGroup } from "../progression/training.ts";
 import { LEVEL_SKIP_SURE } from "../enemies/level-skips.ts";
 import { UPGRADES, type UpgradeId } from "../progression/upgrades.ts";
-import type { AutomoveMemory, DelveRun, Fall, MoveSnapshot, Run, TowerRun } from "../runs.ts";
+import type { AutomoveMemory, DelveRun, Fall, Run, TowerRun } from "../runs.ts";
 import type { ModeSave, Save } from "./shape.ts";
 import { decodeEquipment, defaultEquipment } from "../equipment/inventory.ts";
 import { decodeSettings, defaultSettings } from "./settings.ts";
-import { keepUndos, loadout } from "../progression/loadout.ts";
 import { BASE_HAND, CARD_IDS, HAND_SLOT_GEMS, IN_PLACE, MAX_HAND_SLOTS, MAX_MANUAL_SLOTS, deckCards, handSlots, keptLinks, manualSlots, type CardId, type CardLink } from "../cards/cards.ts";
 import { decodeGemDrop, defaultGemDrop } from "../economy/gems.ts";
 import { decodeAds, defaultAds } from "../ads/series.ts";
@@ -49,8 +48,8 @@ import { totalCardLevels, treeNode, decodeCardTrees, pointsSpent } from "../card
 export function defaults(): Save {
   return {
     version: 4,
-    tower: { run: null, history: [], fall: null, best: 0, reached: 0, inspiration: 0, lootedTiles: {}, runGold: 0, runFinds: defaultFinds(), runArcana: defaultArcanaRun(), runBoostGold: null, runCurrency: 0, runRecord: false, tier: 1, tiersOpen: 1, tierRecords: {} },
-    delve: { run: null, history: [], fall: null, best: 0, reached: 0, lootedTiles: {}, runGold: 0, runFinds: defaultFinds(), runArcana: defaultArcanaRun(), runBoostGold: null, runCurrency: 0, runRecord: false, memory: { known: {}, visited: {} }, tier: 1, tiersOpen: 1, tierRecords: {} },
+    tower: { run: null, fall: null, best: 0, reached: 0, inspiration: 0, lootedTiles: {}, runGold: 0, runFinds: defaultFinds(), runArcana: defaultArcanaRun(), runBoostGold: null, runCurrency: 0, runRecord: false, tier: 1, tiersOpen: 1, tierRecords: {} },
+    delve: { run: null, fall: null, best: 0, reached: 0, lootedTiles: {}, runGold: 0, runFinds: defaultFinds(), runArcana: defaultArcanaRun(), runBoostGold: null, runCurrency: 0, runRecord: false, memory: { known: {}, visited: {} }, tier: 1, tiersOpen: 1, tierRecords: {} },
     breakthrough: 0,
     gems: 0,
     arcanite: 0,
@@ -218,7 +217,7 @@ const RUN_FIELD_CHECKS = {
   provisionsUsed: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, n]) => (USED_PROVISIONS as readonly string[]).includes(k) && wholeIn(n, 1, 999)),
   boosts: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, b]: [string, any]) => (k === "attack" || k === "defense") && isRecord(b) && finite(b.amount) && b.amount >= 0 && wholeIn(b.turns, 1, PROVISION_BOOST_MAX_TURNS)),
   keyFloor: (v: unknown) => wholeIn(v, 0, 1e9),
-  undosUsed: (v: unknown) => wholeIn(v, 0, 99),
+  sparksUsed: (v: unknown) => wholeIn(v, 0, 99),
   regain: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, n]) => ["ignore", "target"].includes(k) && wholeIn(n, 1, 1e6)),
   ignored: (v: any) => isRecord(v) && wholeIn(v.floor, 0, 1e6) && Array.isArray(v.tiles) && v.tiles.every((t: unknown) => typeof t === "string" && POINT_KEY.test(t)),
   targeted: (v: unknown) => typeof v === "string" && POINT_KEY.test(v),
@@ -296,32 +295,12 @@ function decodeDelveRun(r: any): DelveRun | null {
 }
 
 // --- Mode slices ---
-type DecodedMode<R extends Run> = Pick<ModeSave<R>, "run" | "history" | "fall" | "lootedTiles" | "runGold" | "runBoostGold" | "runCurrency" | "runRecord" | "runFinds" | "runArcana">;
+type DecodedMode<R extends Run> = Pick<ModeSave<R>, "run" | "fall" | "lootedTiles" | "runGold" | "runBoostGold" | "runCurrency" | "runRecord" | "runFinds" | "runArcana">;
 type RunDecoder<R extends Run> = (raw: any) => R | null;
-const validSnapshot = (value: any) => !!value && finite(value.best) && finite(value.xp);
-function snapshot<R extends Run>(value: any, decodeRun: RunDecoder<R>): MoveSnapshot<R> | null {
-  if (!validSnapshot(value)) return null;
-  const run = decodeRun(value.run);
-  return run ? { run, best: value.best, xp: Math.floor(value.xp), ...(finite(value.silver) ? { silver: fraction(value.silver, 0) } : {}), ...(isRecord(value.cardXp) ? { cardXp: decodeCardXp(value.cardXp) } : {}), ...(value.quiet === true ? { quiet: true as const } : {}) } : null;
-}
-/** Whether an undo snapshot belongs to `run`: its seed and layout. */
-const sameRun = <R extends Run>(item: MoveSnapshot<R> | null, run: Run): item is MoveSnapshot<R> =>
-  !!item && item.run.seed === run.seed && item.run.layoutVersion === run.layoutVersion;
-/** Undo history only survives for the same seed and layout as the live run,
- * and holds no more moves than the run has undos left. */
-function decodeHistory<R extends Run>(raw: any, run: R, undoCapacity: number, decodeRun: RunDecoder<R>): MoveSnapshot<R>[] {
-  if (!Array.isArray(raw)) return [];
-  return keepUndos(raw, undoCapacity - (run.undosUsed ?? 0))
-    .map((item) => snapshot(item, decodeRun))
-    .filter((item): item is MoveSnapshot<R> => sameRun(item, run));
-}
-/** A fall is kept only beside a run whose hero lies fallen, from the same
- * run and layout. */
-function decodeFall<R extends Run>(raw: any, run: R, decodeRun: RunDecoder<R>): Fall<R> | null {
+/** A fall is kept only beside a run whose hero lies fallen. */
+function decodeFall(raw: any, run: Run): Fall | null {
   if (run.outside || run.player.hp > 0) return null;
-  const item = snapshot(raw?.snapshot, decodeRun);
-  if (!sameRun(item, run)) return null;
-  return { snapshot: item, by: typeof raw.by === "string" ? raw.by : "" };
+  return { by: typeof raw?.by === "string" ? raw.by : "" };
 }
 /** Automove's memory, each half kept only when every entry is well formed. */
 function decodeMemory(raw: any): AutomoveMemory {
@@ -337,12 +316,11 @@ function decodeLootedTiles(raw: any): Record<string, true> {
       if (/^-?\d+:(-?\d+:)?-?\d+,-?\d+(:\w+)?$/.test(key)) lootedTiles[key] = true;
   return lootedTiles;
 }
-function decodeMode<R extends Run>(s: any, undoCapacity: number, decodeRun: RunDecoder<R>): DecodedMode<R> {
+function decodeMode<R extends Run>(s: any, decodeRun: RunDecoder<R>): DecodedMode<R> {
   const run = decodeRun(s?.run);
   return {
     run,
-    history: run ? decodeHistory(s.history, run, undoCapacity, decodeRun) : [],
-    fall: run ? decodeFall(s.fall, run, decodeRun) : null,
+    fall: run ? decodeFall(s.fall, run) : null,
     lootedTiles: decodeLootedTiles(s?.lootedTiles),
     runGold: run ? fraction(s.runGold, 0) : 0,
     runBoostGold: run && s.runBoostGold !== null && s.runBoostGold !== undefined ? fraction(s.runBoostGold, 0) : null,
@@ -354,7 +332,6 @@ function decodeMode<R extends Run>(s: any, undoCapacity: number, decodeRun: RunD
 }
 function applyMode<R extends Run>(slice: ModeSave<R>, decoded: DecodedMode<R>) {
   slice.run = decoded.run;
-  slice.history = decoded.history;
   slice.fall = decoded.fall;
   slice.lootedTiles = decoded.lootedTiles;
   slice.runGold = decoded.runGold;
@@ -370,6 +347,8 @@ function decodeUpgrades(raw: any, d: Save) {
   for (const u of UPGRADES) d.upgrades[u.id] = count(raw?.[u.id], d.upgrades[u.id], u.max);
   // TODO: remove once saves from before the rename are gone (Into the depths).
   d.upgrades.breakthrough ||= count(raw?.delve, 0, 1);
+  // TODO: remove once saves from before the rename are gone (Rehearsed steps became Phoenix Spark).
+  d.upgrades.phoenixSpark ||= count(raw?.inspirationUndos, 0, 1);
   // A save from before the first skills (Door & Key, Enemy, Auto-Climb) that
   // owns Combat Stance, which now follows them, owns them too, so its hand
   // keeps DOOR, KEY and ENEMY and plays by itself. TODO: drop in a later save version.
@@ -385,7 +364,7 @@ function decodeUpgrades(raw: any, d: Save) {
   d.upgrades.doorMastery ||= Math.min(1, d.upgrades.cardWoodenDoor + d.upgrades.cardYellowDoor + d.upgrades.heartDoorResilience + d.upgrades.cardHeartDoor);
   d.upgrades.beastMastery ||= Math.min(1, d.upgrades.cardWeakEnemy);
 }
-function decodeProgress(s: any, d: Save, undoCapacity: number) {
+function decodeProgress(s: any, d: Save) {
   d.gold = fraction(s.gold, d.gold);
   d.gems = count(s.gems, d.gems);
   // TODO: drop `ascensionShards` in a later save version (renamed Arcanite).
@@ -401,8 +380,8 @@ function decodeProgress(s: any, d: Save, undoCapacity: number) {
   d.bonusTrainingPoints = count(s.bonusTrainingPoints, d.bonusTrainingPoints);
   decodeTraining(s, d);
   decodeModeRecords(s.tower ?? {}, s.delve ?? {}, d, s);
-  applyMode(d.tower, decodeMode(s.tower, undoCapacity, decodeTowerRun));
-  applyMode(d.delve, decodeMode(s.delve, undoCapacity, decodeDelveRun));
+  applyMode(d.tower, decodeMode(s.tower, decodeTowerRun));
+  applyMode(d.delve, decodeMode(s.delve, decodeDelveRun));
   d.delve.memory = decodeMemory(s.delve?.memory);
 }
 /** The hero's Training: ranks, what they were paid with, the ranks trainers
@@ -485,7 +464,7 @@ function decodeTierRecords(raw: Record<string, any>, slice: TieredSlice) {
 /** Whether `key` names an opened tier other than the one selected. */
 const isOtherTier = (key: string, slice: TieredSlice) =>
   /^[1-9]$/.test(key) && Number(key) <= slice.tiersOpen && Number(key) !== slice.tier;
-type VersionStep = (s: any, d: Save, undoCapacity: number) => void;
+type VersionStep = (s: any, d: Save) => void;
 /** What each save version carries beyond upgrades and settings. A Map, so
  * lookups match versions strictly (no "3" or prototype keys). */
 const VERSION_STEPS = new Map<unknown, VersionStep[]>([
@@ -525,11 +504,9 @@ export function decode(raw: string | null): Save {
   try {
     const s = JSON.parse(raw ?? "null") ?? {};
     decodeUpgrades(s.upgrades, d);
-    // Undo capacity counts Undo Count research, so the Archives come first.
     d.archives = decodeArchives(s.archives);
-    const { undoCapacity } = loadout(d);
     d.settings = decodeSettings(s.settings);
-    for (const step of VERSION_STEPS.get(s.version) ?? []) step(s, d, undoCapacity);
+    for (const step of VERSION_STEPS.get(s.version) ?? []) step(s, d);
     d.equipment = decodeEquipment(s.equipment);
     d.entitlements = decodeEntitlements(s.entitlements);
     d.shop = decodeShop(s.shop);

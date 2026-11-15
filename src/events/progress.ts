@@ -40,7 +40,7 @@ export type EventsSave = {
   /** The GMT day a login last counted. */
   loginDay: number | null;
   /** What has already counted (`type:key`), the latest `COUNTED_KEPT`:
-   * undo brings a tile back but it never counts again. */
+   * a tile counted never counts again. */
   counted: string[];
   streaks: EventStreaks;
   /** How many of each Store currency offer the event has sold

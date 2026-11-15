@@ -6,7 +6,6 @@ import {
 } from "../shrines.ts";
 import type { ArcanumId } from "../arcana/arcana.ts";
 import type { DeskHost } from "./desk.ts";
-import { RunTimeline } from "../run-timeline.ts";
 
 /** What the Shrine desk needs from the game beyond any desk's: the mode,
  * and word that the run's boons changed its enemies or hero, so the board
@@ -19,9 +18,7 @@ export interface ShrineHost extends DeskHost {
 /** The Shrines' commands (shrines.ts): a Tower run's boons earned, offered
  * and picked, Auto Pick, and the Shrine Boons page's choices.
  *
- * A pick is kept by the run and by every undo snapshot of it (and a fall's),
- * as Training bought mid-run is, so undo takes back steps but never a boon;
- * and each of them has its hero's stats moved to what the boons now apply
+ * A pick is kept by the run, and its hero's stats are moved to what the boons now apply
  * (`sync`), research completed mid-run included. */
 export class ShrineDesk {
   constructor(private readonly host: ShrineHost) {}
@@ -142,18 +139,18 @@ export class ShrineDesk {
     }
   }
 
-  /** The run, and each undo snapshot of it and a fall's, takes the boons
-   * and draws `core` holds. */
+  /** The run takes the boons and draws `core` holds. */
   private share(core: Omit<ShrineRun, "applied">) {
     for (const run of this.runs()) run.shrine = { ...core, ...(core.offer ? { offer: [...core.offer] } : {}), picked: [...core.picked], ...(run.shrine?.applied ? { applied: run.shrine.applied } : {}) };
   }
 
-  /** The live Tower run and every copy of it undo or a fall may restore. */
+  /** The live Tower run, if any. */
   private runs(): TowerRun[] {
-    return new RunTimeline<TowerRun>(this.save, "tower").runs();
+    const run = this.save.tower.run;
+    return run ? [run] : [];
   }
 
-  /** Moves the run's hero (and each undo snapshot's) to what its boons
+  /** Moves the run's hero to what its boons
    * apply with the research done now, and tells the game when its enemies
    * or hero changed. Nothing outside a Tower run or before a boon. */
   sync() {

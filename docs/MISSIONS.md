@@ -35,11 +35,11 @@ Strong and elite enemies and Buy 1 badge are offered only once possible, so no n
 ### What counts
 
 - **Floors:** each floor climbed for the first time in a run (the Tower's run `maxHeight`; the Delve's new equivalent floors), a floor Skip climbs past included.
-- **Kills** by strength, **potions** and **blue and red keys** picked up: each tile once (`save.missions.counted`, keyed by mode and the mode's loot key), so undo bringing a tile back never counts it twice.
+- **Kills** by strength, **potions** and **blue and red keys** picked up: each tile once (`save.missions.counted`, keyed by mode and the mode's loot key), so a tile never counts twice.
 - **Training:** each rank bought with training points, or finished by a trainer (`TrainingDesk`).
 - **Badges:** each badge drawn (`BadgeDesk.draw`).
-- **Run training:** what undo can take back counts only past the most the run has had (`save.missions.marks`, by mode and run seed).
-- **Provisions:** each elixir, Vanguard Banner or Aegis charm pressed and each Bomb thrown, counted like run training (`Game.countProvisionsUsed`), since undo takes a throw back; the Gold Key, which uses itself, never counts.
+- **Run training:** counts only past the most the run has had (`save.missions.marks`, by mode and run seed).
+- **Provisions:** each elixir, Vanguard Banner or Aegis charm pressed and each Bomb thrown, counted like run training (`Game.countProvisionsUsed`); the Gold Key, which uses itself, never counts.
 - Tournament runs count like any other.
 
 ### Reward

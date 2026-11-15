@@ -70,16 +70,13 @@ test("currencies earned count toward the profile, and spending never takes them 
   assert.deepEqual([e.gems, e.gold, e.arcanite, e.medals, e.inspiration, e.breakthrough], [10, 100, 2, 5, 3, 1]);
 });
 
-test("Gold and Silver a run finds count toward the profile, and undo takes the Silver back", () => {
+test("Gold and Silver a run finds count toward the profile", () => {
   const { g } = game();
   g.newRun({ seed: 7 });
-  const before = g.snapshot(), purse = new RunPurse(g.save, g.mode, g.run, () => 0.5);
+  const purse = new RunPurse(g.save, g.mode, g.run, () => 0.5);
   const gold = purse.gold(40), silver = purse.silver(25);
   assert.equal(g.save.profile.earned.gold, gold);
   assert.equal(g.save.profile.earned.silver, silver);
-  g.restore(before);
-  assert.equal(g.save.profile.earned.silver, 0, "the Silver went with the run");
-  assert.equal(g.save.profile.earned.gold, gold, "Gold is banked, so undo keeps it");
 });
 
 test("Training counts each rank gained and the trainers' Gold, less what comes back", () => {

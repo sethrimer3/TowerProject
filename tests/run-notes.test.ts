@@ -11,7 +11,6 @@ import { elapsed, notesResearched, notesSections, notesText } from "../src/ui/ru
 /** A Delve corridor down column 15, walked in Dev mode, with undo. */
 function corridor() {
   const g = new Game(defaults());
-  g.save.upgrades.inspirationUndos = 1;
   g.save.settings.devMode = true;
   g.save.upgrades.breakthrough = 1;
   g.switchMode("delve");
@@ -46,7 +45,7 @@ test("Note Taking: Tower I's floor 250 Goal opens it, and one level costs 100,00
   assert.equal(notesResearched(save), true);
 });
 
-test("a run's notes count steps, keys, doors and pickups, and undo takes them back", () => {
+test("a run's notes count steps, keys, doors and pickups", () => {
   const g = corridor();
   g.run.changes["15,1"] = { kind: "key", color: "red" };
   g.run.changes["15,2"] = { kind: "potion" };
@@ -59,18 +58,14 @@ test("a run's notes count steps, keys, doors and pickups, and undo takes them ba
   assert.deepEqual(notes.doors, { "Red Door": 1 });
   assert.equal(notes.potions, 1);
   assert.equal(notes.attackShards, 1);
-  g.undo();
-  assert.equal(g.run.notes!.attackShards, 0, "undo takes back the shard with the run");
-  assert.ok(g.run.notes!.steps < 5);
 });
 
-test("finds that undo never takes back stay counted beside the run, and a new run starts them over", () => {
+test("finds stay counted beside the run, and a new run starts them over", () => {
   const g = corridor();
   g.save.delve.runFinds.materials.ironBar = 3;
   g.save.delve.runFinds.gems = 1;
   g.run.changes["15,1"] = { kind: "key", color: "yellow" };
   walk(g, 1);
-  g.undo();
   assert.equal(g.save.delve.runFinds.materials.ironBar, 3);
   g.newRun({ outside: true });
   assert.deepEqual(g.save.delve.runFinds, { materials: {}, cells: 0, gems: 0, equipment: 0 });
@@ -125,13 +120,10 @@ test("the purse notes the Silver found in the run, and a Supply Chest's material
   const g = new Game(defaults());
   g.save.equipment.unlocked = true;
   g.newRun({ seed: 7 });
-  const before = g.snapshot(), purse = new RunPurse(g.save, g.mode, g.run, () => 0);
+  const purse = new RunPurse(g.save, g.mode, g.run, () => 0);
   const silver = purse.silver(25);
   assert.equal(g.run.notes!.silver, silver);
   const loot = purse.treasure(3, 3, "supply")!;
   const m = loot.equipment!.materials!;
   assert.equal(g.save.tower.runFinds.materials[m.id], m.quantity);
-  g.restore(before);
-  assert.equal(g.run.notes!.silver, 0, "the Silver went with the run");
-  assert.ok(Object.keys(g.save.tower.runFinds.materials).length, "the materials stay found");
 });

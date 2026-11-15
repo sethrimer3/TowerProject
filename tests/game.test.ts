@@ -106,7 +106,6 @@ test("automation avoids lethal fights; a manual death waits on the player, and a
   assert.equal(g.fallen, false);
   g.move(0, 1, true);
   assert.ok(g.fallen);
-  assert.equal(g.undo(), false, "no undo to take it back");
   assert.ok(g.acceptDefeat());
   assert.ok(g.run.outside);
   assert.equal(g.save.delve.run?.player.y, OUTSIDE_START_Y, "the next run waits partway up the forest path");

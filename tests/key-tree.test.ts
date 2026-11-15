@@ -27,7 +27,6 @@ function lay(g: Game, ...tiles: Tile[]) {
  * with `tiles` beside it from (1, 0) on. */
 function beside(trees: CardTreeLevels, tiles: Tile[] = [key], player: Partial<Player> = {}) {
   const s = defaults();
-  s.upgrades.inspirationUndos = 1;
   const g = new Game(s);
   g.newRun({ seed: 7 });
   g.run.cardTrees = trees;
@@ -100,12 +99,11 @@ test("KEY's Locksmith makes a key two, by the key's own roll", () => {
   const plain = beside({});
   assert.ok(plain.move(1, 0));
   assert.equal(plain.run.player.keys.yellow, 1);
-  // Undo and the same key rolls the same.
+  // The same key rolls the same.
   const some = beside({ key: { locksmith: 50 } }), first = (some.move(1, 0), some.run.player.keys.yellow);
-  assert.ok(some.undo());
-  lay(some, key);
-  assert.ok(some.move(1, 0));
-  assert.equal(some.run.player.keys.yellow, first);
+  const again = beside({ key: { locksmith: 50 } });
+  assert.ok(again.move(1, 0));
+  assert.equal(again.run.player.keys.yellow, first);
 });
 
 test("KEY's Master Key opens every door on a Tower floor as its key is picked up, each paying as a door opened for nothing", () => {
@@ -124,15 +122,6 @@ test("KEY's Master Key opens every door on a Tower floor as its key is picked up
   for (const at of [{ x: 2, y: 0 }, { x: 3, y: 0 }, { x: 0, y: 1 }]) assert.ok(g.gains.some((gain) => gain.x === at.x && gain.y === at.y && /Gold/.test(gain.text)), `Gold at ${at.x},${at.y}`);
   assert.equal(g.gains.filter((gain) => /Silver/.test(gain.text)).length, 3);
   assert.equal(g.run.player.hp, 56, "three Door Heals, no toll or drain");
-  // Undo takes it all back, and the doors' Gold can't pay twice.
-  const paid = g.save.gold;
-  assert.ok(g.undo());
-  assert.equal(g.run.player.hp, 50);
-  lay(g, key, keyed(["red"]), wood);
-  (g.world as RoomWorld).cells.set("0,1", keyed(["yellow", "blue"], true));
-  assert.ok(g.move(1, 0));
-  assert.equal(g.save.gold, paid);
-  assert.equal(g.run.player.hp, 56);
   assert.ok(g.move(1, 0) && g.move(1, 0), "the hero walks through");
 });
 
@@ -161,11 +150,9 @@ test("KEY's Key Chest leaves an opened treasure chest where a key lay, paid, by 
   const plain = beside({});
   assert.ok(plain.move(1, 0));
   assert.equal(plain.world.tile(1, 0).kind, "floor");
-  // Undo and the same key rolls the same, paying nothing again.
-  const some = beside({ key: { keyChest: 250 } }), first = (some.move(1, 0), some.world.tile(1, 0).kind), gold = some.save.gold;
-  assert.ok(some.undo());
-  lay(some, key);
-  assert.ok(some.move(1, 0));
-  assert.equal(some.world.tile(1, 0).kind, first);
-  assert.equal(some.save.gold, gold);
+  // The same key rolls the same.
+  const some = beside({ key: { keyChest: 250 } }), first = (some.move(1, 0), some.world.tile(1, 0).kind);
+  const again = beside({ key: { keyChest: 250 } });
+  assert.ok(again.move(1, 0));
+  assert.equal(again.world.tile(1, 0).kind, first);
 });

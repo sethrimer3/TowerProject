@@ -82,6 +82,10 @@ test("trainers train past 350 once the Limit Break is owned, and past a Limit Br
   assert.equal(g.training.batch("enemyHpSkip", 1).count, 0, "at its most");
   save.upgrades.enemyLevelSkipLimitBreak = 1;
   assert.equal(g.training.batch("enemyHpSkip", 1).count, 1);
+  save.training.attack = 500;
+  assert.equal(g.training.batch("attack", 1).count, 0);
+  save.upgrades.esotericTraining = 1;
+  assert.equal(g.training.batch("attack", 1).count, 1);
   save.training.attack = 1000;
   assert.equal(g.training.batch("attack", 1).count, 0);
   save.upgrades.limitBreak1 = 1;

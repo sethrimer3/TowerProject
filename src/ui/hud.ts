@@ -190,7 +190,7 @@ export function renderHud(game: Game, renderer: Renderer, overlay: BoardOverlay,
   if (options.manual && !options.hand) renderHand(game, game.manualHand, game.hand.length);
   else renderHand(game, options.hand);
   text("density-label", `${renderer.density} × ${renderer.density}`);
-  renderUndo(game);
+  renderSparks(game);
   renderModeTab(game);
   renderForestSign(game);
   el("review-prompt").hidden = !(game.run.outside && reviewDue(game.save.review, game.save.tower.tiersOpen));
@@ -643,7 +643,7 @@ function renderHealthGain(game: Game, span: number) {
   if (!heal || heal.id === shownHeal) return;
   shownHeal = heal.id;
   // Only the heal the HUD is looking at now fills up; one from before a
-  // reload, a new run or an undo is simply there.
+  // reload or a new run is simply there.
   if (heal.to !== game.run.player.hp || game.fights.encounter) return;
   const max = game.run.player.maxHp, over = heal.to > max;
   const [from, healed, across] = over ? [Math.max(heal.from, max) - max, heal.to - Math.max(heal.from, max), span] : [heal.from, heal.to - heal.from, max];
@@ -924,16 +924,14 @@ function renderStatus(game: Game, overlay: BoardOverlay) {
   text("message", game.paused ? "Paused · take a breath." : overlay.statusLine() ?? game.message);
 }
 
-/** The undo item in the run's limited-use list and how many undos the run
- * has left (spent ones never come back). */
-function renderUndo(game: Game) {
-  const undo = el("undo") as HTMLButtonElement,
-    left = game.undosLeft;
-  text("undo-state", left);
-  undo.setAttribute("aria-label", `Undo (${left}/${game.undoCapacity})`);
-  undo.disabled = !game.canUndo;
-  // Undo needs Rehearsed steps, or Echoes of time and Undo Count research.
-  undo.hidden = !game.undoCapacity;
+/** Phoenix Spark in the run's limited-use list: the charges the run has
+ * left (spent ones never come back). It acts by itself, so it is no button. */
+function renderSparks(game: Game) {
+  const spark = el("spark-stat"), left = game.sparksLeft;
+  text("spark-left", left);
+  spark.setAttribute("aria-label", `Phoenix Spark (${left}/${game.sparks})`);
+  // Phoenix Spark, or Echoes of time and Phoenix Spark Count research, give charges.
+  spark.hidden = !game.sparks;
 }
 
 /** The tab bar's mode button wears the active mode's art and name. */

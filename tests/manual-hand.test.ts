@@ -65,7 +65,7 @@ test("deck cards go into either hand, never both; STAIRS never leaves the Auto h
  * hand, with Max HP training to siphon. */
 function corridor(edit: (save: Save) => void = () => {}) {
   const save = playedSave();
-  for (const id of ["keySiphon", "manualHand", "inspirationUndos"] as const) save.upgrades[id] = 1;
+  for (const id of ["keySiphon", "manualHand"] as const) save.upgrades[id] = 1;
   save.training.hp = 3;
   save.hand = ["stairs"];
   save.manualHand = ["keySiphon"];

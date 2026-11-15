@@ -8,8 +8,8 @@
  * pay none, as most past floor 1,000 and all past 10,000 do, is never
  * cleared, so it gets no chest and no burst; the climb
  * keeps only that of the floors left behind, `run.enemiesLeft`). Each is paid the moment it
- * is earned and recorded for good, by tower, in `save.goals`, so undo,
- * reloads and later runs never pay it twice. A chest for each then stands
+ * is earned and recorded for good, by tower, in `save.goals`, so reloads
+ * and later runs never pay it twice. A chest for each then stands
  * in front of the hero on the new floor; it is a `reward` tile in the
  * floor's changes, and opening it pays nothing more, only shows the reward. */
 import type { ChestTier, Tile } from "../entities.ts";

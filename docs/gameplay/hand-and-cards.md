@@ -9,12 +9,12 @@ Inside a Tower or Delve run, your **hand** of cards moves the hero instead; taps
 A new profile's hand is its whole deck, one card: **Stairs** (the stairs up; in the Delve, the highest open tile it can reach above any row reached this run, however far off screen, which its card text mentions only once the Tournament, whose runs the Delve plays, is unlocked).
 The Inspiration tree opens with three skills down its middle, 1 Inspiration each, every other skill hanging below them: **Door & Key** adds **Door** (a door you hold the keys for, or a Wooden Door you can break down) and **Key** (the closest key of any colour) to the deck and to the hand, after Stairs; **Enemy**, below it, adds **Enemy** (any enemy that can be fought, even a lethal one) to the deck and the hand, after Door and Key; and **Auto-Climb**, below Enemy, lets the hand play by itself (see How the hand plays).
 A card those skills add goes into the hand only while it has room; Door & Key's two cards rise onto the screen one after the other, Door first.
-Six more cards join the deck from the Inspiration tree: **Heal** (a potion; the Heal skill, 3 Inspiration, below Regen), **Gold Key** (a gold key, never a blue or red one; the Gold Key skill, 3 Inspiration, down and right of Buy Quantity), **ATK Up** (an ATK pickup; the ATK Up skill, 5 Inspiration, left of Trainers), **DEF Up** (a DEF pickup; the DEF Up skill, 5 Inspiration, left of ATK Up) and **Blue Key** (a blue key; the Blue Key skill, 5 Inspiration, after Gold Key, under it), and **GK Siphon** (the GK Siphon skill, 5 Inspiration, below Torch in the tree's middle path), which moves nowhere: when its turn comes it trades Max HP training levels, for the rest of the run only, for a gold key, the hero losing the max HP those levels give and standing still for the turn (undo takes it back).
+Six more cards join the deck from the Inspiration tree: **Heal** (a potion; the Heal skill, 3 Inspiration, below Regen), **Gold Key** (a gold key, never a blue or red one; the Gold Key skill, 3 Inspiration, down and right of Buy Quantity), **ATK Up** (an ATK pickup; the ATK Up skill, 5 Inspiration, left of Trainers), **DEF Up** (a DEF pickup; the DEF Up skill, 5 Inspiration, left of ATK Up) and **Blue Key** (a blue key; the Blue Key skill, 5 Inspiration, after Gold Key, under it), and **GK Siphon** (the GK Siphon skill, 5 Inspiration, below Torch in the tree's middle path), which moves nowhere: when its turn comes it trades Max HP training levels, for the rest of the run only, for a gold key, the hero losing the max HP those levels give and standing still for the turn.
 The first use in a run takes 1 level, the second 2, the third 3, and so on, and its card's tooltip in the run says how many times it has been used.
 Its levels are the hero's own Max HP ranks and any bought with Silver that run; without enough left for its next use it greys out in the hand and is skipped, so where it sits in the hand decides when it fires.
 Below Torch, the three paths add twenty more (20 Inspiration each unless said): down the middle, two rows under Torch, **Wooden Door** (a Wooden Door you hold a key for, or can break down and survive), then below it **Gold Door** (5; a single gold door, while you hold a gold key; a Wooden Door is DOOR's) and **Heart Door** (10, below Heart Door Resilience, which stands below Gold Door; a Heart Door); to the right, **Weak Enemy**, with **Elite Enemy**, then **Boss Enemy** (a boss or a Greater Boss) and **Non-Boss Enemy** (40; any enemy but a boss or a Greater Boss), to its right and down, and **Base Enemy** (neither weak, strong, elite nor a boss) under it, with **Fast Enemy** (a Fast enemy, of any strength) under Base Enemy and **Strong Enemy** beside that, each heading for the closest enemy of its strength that can be fought, down to the left, after Find Gold Key, Key Efficiency and GK Siphon, **BK Siphon** and **RK Siphon** (GK Siphon's twins: DEF or ATK training levels for a blue or red key, each counting its own uses; RK Siphon under Red Key, under BK Siphon, with Key < Badges and Key ≥ Badges below it), **Smelt GK** (a gold key for 10% of max HP; the Smelt Gold Key skill, down and left of BK Siphon), **GK -> BK** (3 gold keys for a blue key, while 3 are held; below Smelt Gold Key), then down under it **Smelt BK** (a blue key for 30% of max HP; the Smelt Blue Key skill), **BK -> RK** (30; 3 blue keys for a red key, while 3 are held) and **Smelt RK** (30; a red key for 90% of max HP; the Smelt Red Key skill), each smelt healing past max HP up to the Overheal ceiling, and only while its whole heal fits under it, and **Red Key** (a red key); and on the wealth path, under Interest, **Chest** (a closed treasure chest or area reward chest), then **Torch** (the closest lit torch, putting it out) and Floor Skip Reward under it.
-Below Torch, straight down, **Limit Break 1** to **10** (50 Inspiration each, each after the one before) raise how far ATK, DEF, Max HP, Regen and Shroud train, 500 levels each (see [Training](training.md)).
-Two skills on that path open research instead: **Heart Door Resilience** (below Gold Door, with Heart Door below it) opens research making every Heart Door drain 5% less of your HP a level, for ten levels, and **Floor Skip Reward** (below Chest, right of Torch) opens research that, when the Skip badge on STAIRS climbs past a Tower floor, pays 10% a level (up to 110%) of the Gold that floor's battles and chests held; both are priced and timed like Undo Count (500 Gold and 8 hours, each level 8 hours more and 500 × n Gold more than the one before), with two and three more levels.
+Below Torch, straight down, **Limit Break 1** to **10** (50 Inspiration each, each after the one before) raise how far ATK, DEF, Max HP, Regen and Shroud train, 500 levels each, on top of the Breakthrough skill **Esoteric Training**'s 500 (see [Training](training.md)).
+Two skills on that path open research instead: **Heart Door Resilience** (below Gold Door, with Heart Door below it) opens research making every Heart Door drain 5% less of your HP a level, for ten levels, and **Floor Skip Reward** (below Chest, right of Torch) opens research that, when the Skip badge on STAIRS climbs past a Tower floor, pays 10% a level (up to 110%) of the Gold that floor's battles and chests held; both are priced and timed like Phoenix Spark Count (500 Gold and 8 hours, each level 8 hours more and 500 × n Gold more than the one before), with two and three more levels.
 The siphons and trades move nowhere, like GK Siphon, and grey out while they can't act.
 **Manual Hand** (1 Breakthrough, after Card Mastery in the Breakthrough tree) opens a second hand, the [Manual hand](#the-manual-hand).
 Tower V's floor 10 Goal adds **Flying Enemy** to the deck: it heads for the closest Flying monster the Archer's arrows can hurt, stops as soon as one is within the Attack Range, and holds its ground there, a turn at a time, while one is, the arrows doing the work; once none is in reach, the hand moves on.
@@ -25,7 +25,7 @@ Tower III's floor 10 Goal adds **Archer** to the deck, a plain wooden bow on its
 ## The Gem card
 
 **Gem Card** (2 Breakthrough, under Offline Gold in the Breakthrough tree) adds **Gem** to the deck: it heads for the closest Gem lying on the floor.
-It gains no XP from activating; instead it gains XP each time the hero collects a Gem in a run while a hand holds it (1 for a Gem, 5 for a Golden Gem, 25 for a Stellar Gem, each raised by Gem XP), and undo never takes that XP back, as it never brings the Gem back.
+It gains no XP from activating; instead it gains XP each time the hero collects a Gem in a run while a hand holds it (1 for a Gem, 5 for a Golden Gem, 25 for a Stellar Gem, each raised by Gem XP).
 An Effective or Dampen badge on it scales the Gems its last step collects; parts of a Gem carry over, unseen, to the next Gem found.
 A Skip badge never makes a Gem vanish.
 
@@ -83,7 +83,7 @@ Whatever you do next (training for the run, Ignore, and later skills) checks the
 
 ## Play, pause and speed
 
-The play/pause button (where Automove was, showing ▶ while paused and ❚❚ while playing, with the hero's movement speed under it, *3x* for 3 steps a second) pauses the hand to look around, and undo pauses it too.
+The play/pause button (where Automove was, showing ▶ while paused and ❚❚ while playing, with the hero's movement speed under it, *3x* for 3 steps a second) pauses the hand to look around.
 The ‹ and › arrows either side of the speed (a press anywhere on its side of the row counts) slow and speed the hero a step a second at a time, from 0 to 3 (more with research; › closes at the most allowed): slowing to 0 pauses the hand, and playing it again starts at 1.
 A new hero walks at 2; once Door & Key is owned, ten steps into a Tower run's first floor the game pauses once, a pointing hand under ›, until the player speeds up to 3, then plays on (a hero already at 3 never sees it).
 The forest's Automove keeps the speed last set in a run, but never walks slower than 3.
@@ -180,7 +180,7 @@ Points are spent in the forest; inside a run the tree only shows.
   Cost: −1% of each key every door takes (common, 5 levels, up to 10; it leaves the HP a door takes alone), then **Door Heal**, a heal of 0.5% of max HP on opening each door, after a Heart Door's drain, up to max HP (uncommon), **Skeleton Key**, +1% chance each colour door on a floor is generated a Wooden Door instead (rare), **Lock Pick**, +1% chance each door of two or three colours is generated without its rarest lock, red before blue, so a yellow-blue door is a gold door (epic), and **Secret Knock**, +1% chance a door you can open opens for nothing: no keys, no HP drained and no toll (legendary), each up to 5 levels.
   The free Utility chance adds to Free Utility's and counts without it trained.
   A Door Chest pays as a treasure chest does (a Supply or Equipment Chest at the run's odds).
-  Skeleton Key and Lock Pick remake a floor's doors as the floor is first made, Skeleton Key first; Secret Knock and Door Chest roll for each door once, so undo can't roll a door again, and a card heading for a door still counts on paying for it.
+  Skeleton Key and Lock Pick remake a floor's doors as the floor is first made, Skeleton Key first; Secret Knock and Door Chest roll for each door once, and a card heading for a door still counts on paying for it.
 - **Gold Door** has two tracks for doors with a gold lock (a door needing a gold key, alone or with other colours; not a Steel Door, which takes any key), each rising one rarity an upgrade, and opens to 60 levels.
   Gold: +2% Gold from doors with a gold lock (common, 5 levels, up to 10), then +0.1 Silver from each opened (uncommon), +1% Gold Bonus (rare), +0.5% chance of a free Utility level each floor (epic), and **Gold Door Chest**, +0.2% chance an opened door with a gold lock leaves an opened treasure chest (legendary), each up to 5 levels.
   Cost: −1% of each gold key a door takes (common, 5 levels, up to 10; Gold Key's own cut, on any door), then **Gold Door Heal**, a heal of 0.5% of max HP on opening each door with a gold lock, after a Heart Door's drain (uncommon), **Gold Door Transmute**, +4% chance each Wooden and Steel Door on a floor is generated a Gold Door instead, keeping a Heart Door's drain (rare), **Gold Lock Pick**, +1% Lock Pick chance, which never takes a gold lock (epic), and **Gold Knock**, +1% chance a door with a gold lock you can open opens for nothing (legendary), each up to 5 levels.
@@ -201,7 +201,7 @@ Points are spent in the forest; inside a run the tree only shows.
   Keys: +1% more each key of every colour (common, 4 levels, up to 5), then −1% of the key or HP each Wooden and Steel Door takes (uncommon), −1% of the keys and HP each Heart Door takes (rare), **Locksmith**, +1% chance a key picked up is two (epic), and **Master Key**, +0.2% chance a key picked up opens every door on its floor at once (legendary), each up to 5 levels.
   Master Key's doors open for nothing, each paying as a door opened does: its Gold, Door's Door Silver and Door Heal, and a Door Chest roll.
   In the Delve, a key's floor is the doors of its area at the same equivalent floor.
-  Locksmith, Key Chest and Master Key roll for each key once, so undo can't roll a key again.
+  Locksmith, Key Chest and Master Key roll for each key once.
 - **Gold Key** has three tracks for gold keys, each rising one rarity an upgrade, and opens to 60 levels.
   Heal: 1% of max HP healed with each gold key picked up (common, 2 levels, up to 5), then 1% of the HP ceiling, Overheal included (uncommon), each up to 5 levels.
   Gold: +2% Gold from each gold key (common, 4 levels, up to 5), then +0.1 Silver from each gold key picked up (uncommon), +1% Gold Bonus (rare), +0.5% chance of a free Utility level each floor (epic), and +0.2% chance a gold key picked up leaves an opened treasure chest (legendary), each up to 5 levels.
@@ -221,7 +221,7 @@ Points are spent in the forest; inside a run the tree only shows.
   GK -> BK's Efficiency: −1% of the gold keys each trade takes (common, 5 levels, up to 10: at −10% a trade takes 2.7 gold keys), then −1% of each blue key a door takes (uncommon), **Extra Blue Key**, +1% chance of a blue key on each floor new to the run (rare), **Blue Forge**, +2% chance a trade gives a second blue key (epic), and **Master Blue Smelter**, +2% chance a Blue Forge gives a third (legendary), each up to 5 levels.
   BK -> RK's are the same for red keys, each level of its Keys track worth more: +1% more each red key, +3% Gold, +0.2 Silver, +2% Gold Bonus and +2% Free Utility; its Efficiency track's −1% of the blue keys a trade takes, −1% of each red key a door takes, +1% Extra Red Key, +2% **Red Forge** and +2% **Master Red Smelter**.
   Their key finds, Gold, Silver and door cuts add to Blue and Red Key's own, as one amount, and their Free Utility counts without Free Utility trained.
-  A trade needs only the keys it takes, so with Efficiency it trades with fewer than 3 held, and the card's text names the keys it takes: inside a run by the upgrades the run went in with, in the forest by those the next run takes; Forge, Smelter and Free Utility roll once a trade, so undo can't roll a trade again, and Effective and Dampen scale the keys a Forge gives as they do the first.
+  A trade needs only the keys it takes, so with Efficiency it trades with fewer than 3 held, and the card's text names the keys it takes: inside a run by the upgrades the run went in with, in the forest by those the next run takes; Forge, Smelter and Free Utility roll once a trade, and Effective and Dampen scale the keys a Forge gives as they do the first.
   Extra Blue and Red Key come as a floor is first reached, as Find Gold Key does.
 - **Smelt GK**, **Smelt BK** and **Smelt RK** have two tracks each, for the key they smelt, each rising one rarity an upgrade, and open to 60 levels.
   Smelt GK's Smelting: +0.2 Gold from each smelt (common, 5 levels, up to 10), then +2% of max HP healed by each smelt (uncommon), +0.1 Silver from each smelt (rare), +1% Gold Bonus (epic), and **Free Defense**, +2% chance of a free Defense level with each smelt (legendary), each up to 5 levels.
@@ -230,14 +230,14 @@ Points are spent in the forest; inside a run the tree only shows.
   Smelt RK's: +0.6 Gold, +18% of max HP healed, +0.3 Silver, +3% Gold Bonus, and **Free Upgrades**, +2% chance of a free level of each group (Offense, Defense and Utility, each rolled apart); its Efficiency track's **Extra Red Key** and **Master Red Smelter**.
   A smelt's Gold is raised by Gold Bonus; Key Smelter counts every smelt card's levels together and works on any smelt, and with a Master Smelter's hit too, the Gold is six times over.
   Their door cuts and Extra Keys add to the key cards' and the traders' own, as one amount, and their free levels count without Free Upgrade trained.
-  A smelt needs only the key it takes, and the card's text names that and its heal, as a trader's does; its rolls are fixed for each smelt, so undo can't roll a smelt again, and its Gold is paid once, as a badge's is; Effective and Dampen scale its heal, Gold and Silver.
+  A smelt needs only the key it takes, and the card's text names that and its heal, as a trader's does; its rolls are fixed for each smelt, and its Gold is paid once, as a badge's is; Effective and Dampen scale its heal, Gold and Silver.
 - **Enemy** has three tracks, each rising one rarity an upgrade, and opens to 60 levels.
   Attack: +2% ATK against every enemy (common, 4 levels, up to 5), then +1% Crit % chance (uncommon), +2% Crit x factor (rare), +2% XP from every kill (epic), and **Surprise Attack**, +5% chance the first strike of a fight right after a Dash deals twice your ATK (legendary), each up to 5 levels.
   Defense: +2% DEF against every enemy (common, 3 levels, up to 5), then +2% shroud against every enemy (uncommon), **Weaken**, −1% ATK for every enemy (rare), and **Lifesteal Overheal**, Lifesteal healing up to 5% above max HP (epic), each up to 5 levels.
   Gold: +1% Gold from every kill (common, 3 levels, up to 5), then +1% Silver from every kill (uncommon) and +2% more enemies of every strength on each floor (rare), each up to 5 levels.
   Crit % and Crit x are raised by their share, as their research raises them, so they need the Critical skill and Crit % trained.
   Weaken multiplies every enemy's ATK, as the enemies show it, fight it and shoot with it: 5 levels make it 95%.
-  A Dash stops short of an enemy, and the fight you step into from there on the next turn is a surprise: Surprise Attack rolls once for each enemy's tile, so undo can't roll it again.
+  A Dash stops short of an enemy, and the fight you step into from there on the next turn is a surprise: Surprise Attack rolls once for each enemy's tile.
   A Surprise Attack's first strike rises in a gold outline, as a fully charged arrow's does.
   A Fast enemy caught by one loses its first strike: you strike first.
 - **Weak Enemy**, **Base Enemy**, **Strong Enemy**, **Elite Enemy**, **Boss Enemy**, **Non-Boss Enemy**, **Fast Enemy** and **Flying Enemy** each have a tree whose upgrades work only against the enemies the card heads for (Boss Enemy's against bosses and Greater Bosses alike), but where an upgrade says every enemy; **Archer**'s tree works against every enemy.
@@ -273,16 +273,16 @@ Points are spent in the forest; inside a run the tree only shows.
   Two cards covering one enemy add their upgrades: Weak Enemy's +20% more weak enemies and Non-Boss Enemy's +15% make 35% more, and their Gold, ATK and the rest add up the same way.
   Their Gold, ATK, DEF, shroud, Crit and XP percents add to the card's own +5% and to Enemy's like ones, as one card factor.
   Their Silver adds to each kill's before Silver Bonus, their Surprise Attack and Lifesteal Overheal to Enemy's, and their Free Upgrade chances to the other cards'.
-  Salvage drops a Supply Chest's upgrade materials, and Equipment Drop an Equipment Chest's piece, once Equipment is open; each kill rolls them once, so undo can't roll them again.
+  Salvage drops a Supply Chest's upgrade materials, and Equipment Drop an Equipment Chest's piece, once Equipment is open; each kill rolls them once.
   More enemies on each floor are added as More Enemies adds them, counted from those generated there.
   Shot ATK and Shot Speed add to the cards' own Shot ATK and Attack Speed, and the boss Shot ATK to Archer's +5% for bosses.
   Range lengthens only your arrows' reach: a Ranged enemy's stays five sixths of your Attack Range without it.
   Charge Shot raises Charged Shot's percent for each turn an arrow waits, so it does nothing until Charged Shot is researched; Archer's and Flying Enemy's add up against a Flying enemy.
-  First Strike rolls once for each Fast enemy's tile, so undo can't roll it again.
+  First Strike rolls once for each Fast enemy's tile.
 - **ATK Up** has two tracks, each rising one rarity an upgrade, and opens to 60 levels.
   Shards: +2% from each ATK shard (common, 5 levels, up to 10), then +3% more (uncommon), +2% Crit % chance (rare), +1% chance of a free Offense level each floor, trained or not (epic), and **Power Strike**, +1% chance an ATK shard taken charges your next fight with twice your ATK (legendary), each up to 5 levels.
   Gold: +10% Gold from each ATK shard (common, 5 levels, up to 10), then +0.1 Silver from each ATK shard taken (uncommon), +1% Silver Bonus (rare), +2% Gold Bonus (epic), and **Takedown**, a boss losing 5% of its max HP as a fight with it begins (legendary), each up to 5 levels.
-  A charged Power Strike waits for the next fight, every strike of it rising in a gold outline, and the shard rolls it once, so undo can't roll it again.
+  A charged Power Strike waits for the next fight, every strike of it rising in a gold outline, and the shard rolls it once.
 - **DEF Up** has the same two tracks for DEF, and opens to 60 levels.
   Shards: +2% from each DEF shard (common, 5 levels, up to 10), then +3% more (uncommon), +10% Regen (rare), +1% chance of a free Defense level each floor, trained or not (epic), and +1% Parry, parried with Parry % or without it (legendary), each up to 5 levels.
   Gold: +10% Gold from each DEF shard (common, 5 levels, up to 10), then +0.1 Silver from each DEF shard taken (uncommon), +1% Silver Bonus (rare), +2% Gold Bonus (epic), and **Tangle**, a boss losing 3% of its ATK as a fight with it begins (legendary), each up to 5 levels.
@@ -298,7 +298,7 @@ Points are spent in the forest; inside a run the tree only shows.
   Gold: +3% Gold from treasure chests (uncommon), +1 Silver from each chest opened, before Silver Bonus (rare), **Treasure Floor**, +0.5% chance each floor is one whose ATK and DEF shards and potions are all treasure chests (epic), and **Rarity Up**, +1% chance an Equipment Chest's piece is a rarity higher (legendary), each up to 5 levels.
   Chests: +0.2% Supply Chest chance (uncommon, 10 levels, up to 3.5% with the card's own), +0.1% Equipment Chest chance (rare, 10 levels, up to 1.5%), **Double**, +3% chance a chest pays twice over (epic), and **Triple**, +2% chance it pays three times over (legendary), each up to 5 levels unless said.
   Double and Triple multiply a chest's Gold, Silver and a Supply Chest's materials, and an Equipment Chest gives that many pieces; a large ×2 or ×3 flashes over the chest, ×6 when both roll.
-  Each chest rolls Double, Triple and Chest Cells once, and each floor Treasure Floor once (in the Delve, each equivalent floor), so undo can't roll them again.
+  Each chest rolls Double, Triple and Chest Cells once, and each floor Treasure Floor once (in the Delve, each equivalent floor).
 
 ## Card buys
 
@@ -334,7 +334,6 @@ While a pressed card is still on its way, no other card can be pressed: it flash
 A card with no path also says *No open path exists.* over itself for 3 seconds, or until the next press anywhere.
 Without Auto-Climb, the hero waits for a card to be pressed before moving; its golden waiting pulse is temporarily disabled.
 A press plans the card whatever a gate badge on it says.
-Undo brings back the pressed card of the moment it returns to.
 
 ## Ignore and Target
 
@@ -347,7 +346,7 @@ A wall, the hero's own tile or one already ignored costs nothing, and pressing t
 A tile out of reach costs nothing; one that becomes out of reach on the way loses the Target.
 A run gets 1 use, and **Target Count** research adds one a level, up to 5 (10 million, 100 million, 1 billion and 10 billion Gold).
 **Target More** (below Target) regains Target uses the same way.
-The two regain projects each take 90 levels (100 floors down to 10), level n taking n²/10 hours (6 minutes at level 1, 34 days at 90, about 2.8 years in all): Undo Count's Gold raised 5% compounding a level for Ignore More and 10% for Target More.
+The two regain projects each take 90 levels (100 floors down to 10), level n taking n²/10 hours (6 minutes at level 1, 34 days at 90, about 2.8 years in all): Phoenix Spark Count's Gold raised 5% compounding a level for Ignore More and 10% for Target More.
 
 ## Badges
 
@@ -366,8 +365,8 @@ Tokens move only in the forest; a run keeps the badges it went in with.
 
 ## What badges do
 
-A card **activates** when it reaches its target (or, like GK Siphon, acts in place): **Max HP** boosts max HP by 0.01–0.07%, **HP %** heals 1–7% of max HP, **Silver Touch** pays 1–7 Silver (Silver bonuses apply), **Gold Touch** 1–7 Gold, and **Goldback** the same on the hand's last card only (Gold bonuses and the tower's apply; each target pays its Gold once, so undo can't repeat it), and **XP** pays 1, 4, 9 … 49 XP, rising with the floor as a kill's XP does.
-Max HP's boosts add up for the rest of the run into one multiplier on max HP (two boosts of 0.07% make ×1.0014), which also multiplies all max HP gained later in the run (training, gear), so the Training card's Max HP shows it too; each boost raises HP by the same ratio, keeping its share of max HP, and undo takes it back.
+A card **activates** when it reaches its target (or, like GK Siphon, acts in place): **Max HP** boosts max HP by 0.01–0.07%, **HP %** heals 1–7% of max HP, **Silver Touch** pays 1–7 Silver (Silver bonuses apply), **Gold Touch** 1–7 Gold, and **Goldback** the same on the hand's last card only (Gold bonuses and the tower's apply; each target pays its Gold once), and **XP** pays 1, 4, 9 … 49 XP, rising with the floor as a kill's XP does.
+Max HP's boosts add up for the rest of the run into one multiplier on max HP (two boosts of 0.07% make ×1.0014), which also multiplies all max HP gained later in the run (training, gear), so the Training card's Max HP shows it too; each boost raises HP by the same ratio, keeping its share of max HP.
 Gates keep their card from acting while their condition fails: **HP <** (HP below 100, 90, 75, 50, 35, 20 or 5% of max HP), **GK <**, **BK <** and **RK <** (holding fewer than 10, 8, 6, 4, 3, 2 or 1 yellow, blue or red keys; drawn only once the Inspiration skill **Key < Badges**, 50 Inspiration beside Gold Door, is owned), and **GK ≥**, **BK ≥** and **RK ≥** (holding at least 1 to 7 of them; drawn only once **Key ≥ Badges**, 50 Inspiration beside Key < Badges, is owned); a Focus overrides a gate.
 **Stairward** has its card pick the target with the shortest walk on to the stairs (in the Delve, the highest), and **Skip Open Nodes** has it pass over any door or monster that opens no new ground, marking each with a violet X for the rest of the floor; each works on one floor in every 7 (level 1) to every floor (level 7).
 **Charge** lets its card's path go through up to 1–7 monsters (lethal ones too, as the hand always may) and doors whose keys the hero holds, fighting and opening them on the way to its target.
@@ -375,4 +374,4 @@ Gates keep their card from acting while their condition fails: **HP <** (HP belo
 With Settings → **Sprites** on, cards use distinct pixel-art PNG faces and badges use matching symbols, rarity frames and level stars in the Deck, hand and draw reveals.
 Names, levels and gate signs remain readable text; the default setting is off, and a non-default UI theme supplies its own look.
 
-The same optional sprite kit covers the compact Ignore, Target, Bomb, Undo and Play/Pause controls, with their uses and movement speed kept as live text.
+The same optional sprite kit covers the compact Ignore, Target, Bomb and Play/Pause controls, with their uses and movement speed kept as live text.

@@ -34,7 +34,6 @@ test("Gold found while the boost lasts is multiplied by 1.5", () => {
   const save = defaults();
   // No theme's Gold, so these figures are the boost's alone.
   save.themes = [];
-  save.upgrades.inspirationUndos = 1;
   const g = new Game(save);
   let now = 5_000_000;
   g.clock = () => now;

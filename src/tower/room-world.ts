@@ -74,7 +74,7 @@ export function generateTowerRoom(
   // Each caller gets a map of its own, free to edit; the tiles are shared.
   return new Map(cells);
 }
-/** The last few floors generated, by seed, room number and tier: an undo or
+/** The last few floors generated, by seed, room number and tier: a
  * reload rebuilds the floor it stands on, and generating one is slow. */
 const towerRooms = new Map<string, Map<string, Tile>>();
 const towerTorchCaches = new Map<string, Torch[]>();

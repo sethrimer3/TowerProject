@@ -52,9 +52,8 @@ const rarityAbove = (r: EquipRarity): EquipRarity => EQUIP_RARITIES[Math.min(rar
 
 /** What a run finds: Gold, banked in the save as it is found, and Silver,
  * which belongs to the run. Gold paid for a physical kill, chest or floor
- * is gated by the mode's `lootedTiles` (outside the run), so undo can bring
- * the enemy or chest back but never pays for it twice; Silver isn't, since
- * undo takes it back with the run. */
+ * is gated by the mode's `lootedTiles` (outside the run), so it is never
+ * paid twice; Silver isn't, since it belongs to the run. */
 export class RunPurse {
   constructor(
     private readonly save: Save,
@@ -236,7 +235,7 @@ export class RunPurse {
   }
 
   /** Silver found counts toward the profile's lifetime Silver and the
-   * run's notes, both taken back by undo. */
+   * run's notes. */
   private noteSilver(silver: number) {
     earn(this.save, "silver", silver);
     const notes = notesOf(this.run);
@@ -343,7 +342,7 @@ export class RunPurse {
   /** Gold for an item taken off the floor at (x, y), or a door opened
    * there: `base` (`pickupGold`) raised by Gold Bonus and by `more` percent
    * (a card tree's, for keys or doors), then the tier's bonus, once per tile
-   * (gated like a kill's Gold, so undo can't pay it twice). Returns what it
+   * (gated like a kill's Gold, so it is never paid twice). Returns what it
    * paid. */
   pickupGold(x: number, y: number, base: number, more = 0) {
     if (!base || !this.loot(this.pickupKey(x, y))) return 0;
@@ -463,7 +462,7 @@ export class RunPurse {
 
   /** Goldback's combo: `amount` times the multiplier its activations
    * tallied since the last Gold the run found, which is then used up. Only
-   * a kill's or a chest's Gold, once paid (undo can't pay it again),
+   * a kill's or a chest's Gold, once paid,
    * spends it. */
   private withCombo(amount: number) {
     const combo = this.run.goldCombo;
@@ -474,8 +473,7 @@ export class RunPurse {
 
   /** A card badge's Gold (Gold Touch) for a card reaching its
    * target, with the tier's bonus and the hero's floor's environments'
-   * multipliers: once per target (`key`, in lootedTiles), since undo can't
-   * take Gold back. Returns what it paid. */
+   * multipliers: once per target (`key`, in lootedTiles). Returns what it paid. */
   badgeGold(key: string, amount: number) {
     if (!this.loot(key)) return 0;
     return this.gold(amount, this.payHere);
@@ -483,8 +481,7 @@ export class RunPurse {
 
   /** A smelt's Gold (Smelt GK's, BK's and RK's trees): `base` raised by
    * Gold Bonus, `times` over (Key Smelter, Master Smelter), with the tier's
-   * bonus and the hero's floor's environments' multipliers, once per smelt (`key`, in lootedTiles), since undo can't take
-   * Gold back. Returns what it paid. */
+   * bonus and the hero's floor's environments' multipliers, once per smelt (`key`, in lootedTiles). Returns what it paid. */
   smeltGold(key: string, base: number, times: number) {
     if (!base || !this.loot(key)) return 0;
     return this.gold(snap(this.bonused(base) * times), this.payHere);

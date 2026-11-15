@@ -8,11 +8,11 @@ import type { TournamentSeeds } from "./server.ts";
 // A tournament run (docs/TOURNAMENT.md): a Delve run in the league's cave,
 // played from the seeds every entrant of the league shares, among enemies
 // stronger than the cave's own. What it carries is saved on the run, so
-// undo and reloads keep it.
+// reloads keep it.
 
 /** What a tournament run carries: the tournament and league it was entered
  * in, the server's entry id, the shared seeds, how many numbers each of the
- * run's own chance streams has drawn (so undo takes draws back and a reload
+ * run's own chance streams has drawn (so a reload
  * carries on where it stopped), and where the player came from (the mode
  * and the Delve tier selected), which the forest returns to afterwards. */
 export type TournamentRun = {

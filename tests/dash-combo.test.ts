@@ -17,7 +17,6 @@ const foe = (hp?: number): Tile => ({ kind: "enemy", enemy: rat(hp) });
  * research are owned, and Dash Combo unless `skill` is false. */
 function corridor(cells: Record<number, Tile>, skill = true) {
   const g = new Game(playedSave());
-  g.save.upgrades.inspirationUndos = 1;
   g.save.upgrades.dash = 1;
   g.save.archives.levels.dash = 25;
   if (skill) g.save.upgrades.dashCombo = 1;
@@ -142,15 +141,6 @@ test("previews and planners don't count the combo: the step does, even past an i
   assert.ok(predict(g.fighter, armored.enemy!).impervious === false, "the fight has it");
   step(g);
   assert.equal(g.world.tile(1, 0).kind, "floor");
-});
-
-test("undo takes the combo back with the run", () => {
-  const g = corridor({ 1: foe(), 3: foe() });
-  g.run.combo = { next: 2, idle: 0 };
-  step(g);
-  assert.equal(g.run.combo?.next, 3);
-  g.undo();
-  assert.deepEqual(g.run.combo, { next: 2, idle: 0 });
 });
 
 test("the combo carries across a Tower floor and ends with the run", () => {

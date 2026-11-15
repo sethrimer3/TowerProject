@@ -65,7 +65,6 @@ test("the ANGEL WINGS card comes with its skill and never activates", () => {
  * `others` standing beside the corridor, which `floorEnemies` reports. */
 function arena(seed: number, { held = true, level = 0, others = [] as [number, number, Enemy][] } = {}) {
   const g = new Game(defaults());
-  g.save.upgrades.inspirationUndos = 1;
   g.save.upgrades.breakthrough = 1;
   g.save.settings.devMode = true;
   g.save.upgrades.angelWings = 1;
@@ -91,7 +90,7 @@ function stand(g: Game, others: [number, number, Enemy][]) {
   g.world.floorEnemies = () => [{ x: 15, y: 2 }, ...others.map(([x, y]) => ({ x, y }))].filter(({ x, y }) => g.world.tile(x, y).kind === "enemy");
 }
 
-test("in play, Angel Wings held raises the hero once a run; undo gives the charge back", () => {
+test("in play, Angel Wings held raises the hero once a run", () => {
   const g = arena(1);
   assert.ok(g.wingsReady);
   g.move(0, 1);
@@ -100,9 +99,6 @@ test("in play, Angel Wings held raises the hero once a run; undo gives the charg
   assert.ok(!g.wingsReady, "spent for the run");
   assert.equal(g.fights.wingedAt.length, 1, "the board shows its wings");
   assert.match(g.message, /^Angel Wings · Revived · Brute defeated/);
-  assert.ok(g.undo());
-  assert.ok(g.wingsReady, "the fight undone gives the charge back");
-  assert.equal(g.fights.wingedAt.length, 0);
   // Without the card in hand, the hero falls.
   const bare = arena(1, { held: false });
   assert.ok(!bare.wingsReady);
@@ -126,8 +122,6 @@ test("Avenging Angel: Angel Wings' raising smites every enemy of the ranks resea
   assert.deepEqual(g.smitten.map((s) => [s.x, s.y]), [[14, 3], [16, 3]], "each slashed and gone in a poof");
   assert.match(g.message, /Avenging Angel · 2 enemies smitten/);
   assert.ok(g.save.gold >= gold);
-  assert.ok(g.undo());
-  assert.equal(g.smitten.length, 0);
   // The Brute itself is standard: at level 2 its fight ends as the wings raise the hero.
   const all = arena(2, { level: 5, others });
   all.move(0, 1);

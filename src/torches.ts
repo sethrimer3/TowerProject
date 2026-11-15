@@ -95,7 +95,7 @@ export function placeTorches(cells: Map<string, Tile>, area: TorchArea): Torch[]
 
 /** A board's own copies of the torches `placed` on it, each lit unless the
  * run's changes hold its tile: a torch put out leaves its tile in the
- * changes (`breakTorch`), so undo and a reload bring back just the torches
+ * changes (`breakTorch`), so a reload brings back just the torches
  * the run had lit. */
 export const torchesLeft = (placed: readonly Torch[], changes: Record<string, Tile>): Torch[] =>
   placed.map((t) => ({ ...t, active: !changes[point(t.x, t.y)] }));

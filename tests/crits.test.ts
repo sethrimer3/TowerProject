@@ -167,7 +167,6 @@ test("labels show the damage to expect, coloured as usual", () => {
 /** A Delve run with the hero two tiles below a Brute in a walled corridor. */
 function arena(seed: number, chance: number, factorRanks = 20) {
   const g = new Game(defaults());
-  g.save.upgrades.inspirationUndos = 1;
   g.save.upgrades.breakthrough = 1;
   g.save.upgrades.critical = 1;
   g.save.training.critChance = chance;
@@ -196,10 +195,9 @@ test("in play, crits land by a fixed roll per run, tile and strike: the same fig
     const lived = !g.fallen;
     if (lived) won++;
     else fell++;
-    assert.ok(g.undo());
-    guard(g);
-    g.move(0, 1);
-    assert.equal(!g.fallen, lived, `seed ${seed}: the same ending`);
+    const again = arena(seed, 15);
+    again.move(0, 1);
+    assert.equal(!again.fallen, lived, `seed ${seed}: the same ending`);
     // 100% and a x3.2 factor beat it in two strikes, whatever the seed; 0% never does.
     const sure = arena(seed, 100);
     sure.move(0, 1);

@@ -16,8 +16,8 @@ export type Profile = {
   /** When the profile was made (wall clock, ms); 0 until the app stamps it. */
   createdAt: number;
   /** Each currency earned over the profile's life: found, won, claimed or
-   * bought (nothing spent is taken off). Silver found in a run is taken
-   * back by undo, with the run. */
+   * bought (nothing spent is taken off). Silver found in a run counts as
+   * it is found. */
   earned: Record<LifetimeCurrency, number>;
   /** Training ranks gained, by training points or trainers (a reset never
    * takes them off). */

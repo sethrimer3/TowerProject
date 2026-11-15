@@ -54,7 +54,7 @@ test("the charges' research: counts to 10 and 5 uses, and regains down to every 
   assert.deepEqual(RESEARCH.targetCount.levels.map((l) => l.gold), [10_000_000, 100_000_000, 1_000_000_000, 10_000_000_000]);
   assert.equal(researched({ ...defaults().archives, levels: { targetCount: 4 } }, "targetPerRun"), 5);
   assert.equal(researched({ ...defaults().archives, levels: { ignoreCount: 9 } }, "ignorePerRun"), 10);
-  const ignore = RESEARCH.ignoreCount.levels.map((l) => l.gold), undo = RESEARCH.undoCount.levels.map((l) => l.gold);
+  const ignore = RESEARCH.ignoreCount.levels.map((l) => l.gold), undo = RESEARCH.sparkCount.levels.map((l) => l.gold);
   for (let i = 1; i < ignore.length; i++) {
     if (i < undo.length) assert.ok(ignore[i] / ignore[i - 1] > undo[i] / undo[i - 1], "steeper than Undo Count");
     assert.ok(ignore[i] / ignore[i - 1] < 10, "less steep than Target Count");

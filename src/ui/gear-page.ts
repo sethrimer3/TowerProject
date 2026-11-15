@@ -74,7 +74,7 @@ export class GearPage {
   /** The Provisions screen's help, behind the ? button at its top. */
   private showHelp() {
     const modal = this.ctx.modal;
-    modal.innerHTML = `<small>GEAR</small><h2>Provisions</h2><p>Provisions are bought with Gold and kept for good: each one you own is one use in every climb, pressed from its button beside the board when you need it. A Gold Key uses itself.</p><p>Undo never gives a use back, and a boost keeps counting down through it.</p><p class="hint">Each one bought makes the next of its kind cost a hundred times more.</p><div class="dialog-actions"><button id="gear-help-ok">Got it</button></div>`;
+    modal.innerHTML = `<small>GEAR</small><h2>Provisions</h2><p>Provisions are bought with Gold and kept for good: each one you own is one use in every climb, pressed from its button beside the board when you need it. A Gold Key uses itself.</p><p class="hint">Each one bought makes the next of its kind cost a hundred times more.</p><div class="dialog-actions"><button id="gear-help-ok">Got it</button></div>`;
     modal.showModal();
     el("gear-help-ok").onclick = () => modal.close();
   }

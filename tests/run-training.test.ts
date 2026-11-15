@@ -11,7 +11,6 @@ import type { RoomWorld } from "../src/tower/room-world.ts";
 /** A Tower run inside on an open 5×5 floor, with undo, On the Job and `silver` to spend. */
 function arena(silver: number, edit?: (g: Game) => void) {
   const g = new Game(defaults());
-  g.save.upgrades.inspirationUndos = 1;
   g.save.upgrades.onTheJob = 1;
   g.save.xp = xpForLevel(10);
   edit?.(g);
@@ -55,7 +54,7 @@ test("Silver prices start at the row's base and rise by a step plus the ranks bo
   assert.ok(trainingDef("hp").silver.base < trainingDef("floorGold").silver.base, "Max HP costs least");
 });
 
-test("training for the run spends Silver and raises the stat at once; undo takes it back", () => {
+test("training for the run spends Silver and raises the stat at once", () => {
   const g = arena(100);
   const attack = g.run.player.attack, level = levelForXp(g.save.xp), row = TRAINING.find((t) => t.id === "attack")!;
   assert.ok(g.trainInRun("attack"));
@@ -65,10 +64,6 @@ test("training for the run spends Silver and raises the stat at once; undo takes
   assert.equal(runTrainingOffer(g.save, g.run, "attack").level, 1);
   assert.equal(runTrainingOffer(g.save, g.run, "attack").price, 7, "the next costs more");
   assert.equal(g.save.training.attack, 0, "the hero's own training is untouched");
-  assert.ok(g.undo());
-  assert.equal(g.run.player.attack, attack);
-  assert.equal(g.silver, 100);
-  assert.equal(runTrainingOffer(g.save, g.run, "attack").level, 0);
 });
 
 test("maximum HP bought for the run comes with the HP to fill it", () => {
@@ -116,6 +111,7 @@ test("a row reaches no higher in a run than its most on the Training tab, or the
   assert.equal(g.run.percentPotions, 2000, "the run's potions at once");
   assert.equal((g.world as RoomWorld).percentPotions, 2000, "on the floor stood on too");
   for (const id of LIMIT_BREAKS) g.save.upgrades[id] = 1;
+  g.save.upgrades.esotericTraining = 1;
   g.save.training.hp = 5999;
   assert.ok(g.trainInRun("hp"));
   assert.equal(g.trainInRun("hp"), false, "6,000 is Max HP's most, with every Limit Break");
@@ -179,7 +175,4 @@ test("training bought while a fight plays out counts in it from the next strike"
   assert.equal(g.run.player.hp, end);
   assert.deepEqual([g.run.player.maxHp, g.run.player.attack], [maxHp, attack], "the stats bought are kept once it counts");
   assert.equal(g.run.kills, 1);
-  // Undo takes the fight back first, with the training still bought.
-  g.undo();
-  assert.deepEqual([g.run.player.maxHp, g.run.player.attack, g.run.kills], [maxHp, attack, 0]);
 });

@@ -18,7 +18,7 @@ export type Heard = {
  * once it fells the enemy, by a strike or its thorns), each shot an arrow
  * striking (and a fall when it fells its target), the hero struck down a
  * fall, and each Bomb a blast. Nothing already over when it is first heard
- * plays, so opening the game or undoing replays nothing. */
+ * plays, so opening the game replays nothing. */
 export class BoardSounds {
   private fight: ShownFight | null = null;
   private landed = 0;

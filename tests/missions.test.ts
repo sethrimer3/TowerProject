@@ -135,19 +135,13 @@ test("each locked mission is offered once what it needs is unlocked", () => {
   assert.ok(MISSIONS.elite.offered(delve));
 });
 
-test("kills count by strength, once a tile, so undo can't count one twice", () => {
+test("kills count by strength, once a tile", () => {
   const g = gameAt(MONDAY);
-  g.save.upgrades.inspirationUndos = 1;
   withMissions(g, "basic", "strong", "elite", "bosses");
   const tiles: Tile[] = (["normal", "weak", "strong", "elite", "boss", "greaterBoss"] as const).map((s) => ({ kind: "enemy", enemy: enemy(s) }));
   corridor(g, ...tiles);
   assert.ok(g.move(1, 0));
   assert.equal(progress(g, "basic"), 1);
-  // Undo brings the enemy back (the board is rebuilt: lay the corridor again).
-  assert.ok(g.undo());
-  corridor(g, ...tiles);
-  assert.ok(g.move(1, 0));
-  assert.equal(progress(g, "basic"), 1, "the same kill again counts nothing");
   for (let i = 0; i < 5; i++) assert.ok(g.move(1, 0));
   assert.deepEqual(["basic", "strong", "elite", "bosses"].map((t) => progress(g, t as MissionType)), [2, 1, 1, 2]);
 });
@@ -168,18 +162,14 @@ test("potions and blue and red keys count when picked up; floors as they are cli
   assert.equal(progress(g, "floors"), 1);
 });
 
-test("run training counts only past the most the run has had, so undo can't farm them", () => {
+test("run training counts only past the most the run has had", () => {
   const g = gameAt(MONDAY);
   g.save.upgrades.onTheJob = 1;
-  g.save.upgrades.inspirationUndos = 1;
   withMissions(g, "runTraining");
   g.run.silver = 1e6;
   assert.ok(g.trainInRun("attack"));
   assert.ok(g.trainInRun("attack"));
   assert.equal(progress(g, "runTraining"), 2);
-  assert.ok(g.undo());
-  assert.ok(g.trainInRun("attack"));
-  assert.equal(progress(g, "runTraining"), 2, "the rank undone and bought again counts once");
   assert.ok(g.trainInRun("defense"));
   assert.equal(progress(g, "runTraining"), 3);
   // The marks are per run: a new run's purchases count from nothing.

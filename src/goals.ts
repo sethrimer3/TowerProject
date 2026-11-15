@@ -66,14 +66,16 @@ import { openEquipment } from "./equipment/inventory.ts";
  * Materials, missionReward) and Aurum Bloom Research (floor 200: the Archives' Aurum Bloom Bonus and
  * Chance, adding to its Bonus and Golden Chance, ArcanaDesk.valuesOf), and Tower VII's
  * Overseer Coin Bonus (floor 80: the Archives' project that multiplies the
- * Gold of enemies killed in Overseer's beams, Game.spotlightGold). */
+ * Gold of enemies killed in Overseer's beams, Game.spotlightGold), and Tower VI's
+ * Esoteric Research (floor 150: every Archives project of 100 or 150 levels
+ * opens its last 50, maxLevel in progression/archives.ts). */
 export type GoalUnlock =
   | "damagePrediction" | "combatForecast" | "attackLore" | "warp" | "damageVisual" | "relativeDamageColor" | "equipment" | "tournament" | "events" | "researchSpeed"
   | "shardAttack" | "shardDefense" | "parryPercent"
   | "shrines" | "firstBoonChoice" | "improveTradeoffs" | "autoPickBoons" | "boonOptions" | "banBoons" | "autoPickRanking"
   | "badgeSlots" | "noteTaking" | "archerCard" | "attackRange" | "attackSpeed" | "attackPerTile" | "chargedShot" | "multishot" | "rapidFire"
   | "trainingDiscount" | "cardGroups" | "flyingEnemyCard" | "warpLoot" | "superCriticalResearch" | "aetherShield" | "rerollMission" | "overseerZap" | "overseerGold"
-  | "bossPotion" | "lifespringResearch" | "aurumBloomResearch" | "voidwellResearch" | "extraVoidwell" | "dropResearch";
+  | "bossPotion" | "lifespringResearch" | "aurumBloomResearch" | "voidwellResearch" | "extraVoidwell" | "dropResearch" | "esotericResearch";
 export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   damagePrediction: "Damage Prediction", combatForecast: "Combat Forecast", attackLore: "Attack Lore", warp: "Warp", damageVisual: "Damage Visual",
   relativeDamageColor: "Relative Damage Color", equipment: "Equipment", tournament: "Tournament", events: "Events",
@@ -88,6 +90,7 @@ export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   rerollMission: "Reroll Daily Mission", overseerZap: "Overseer Zap",
   overseerGold: "Overseer Coin Bonus", bossPotion: "Boss Potion Drop", lifespringResearch: "Lifespring Research",
   aurumBloomResearch: "Aurum Bloom Research", voidwellResearch: "Voidwell Research", extraVoidwell: "Extra Voidwell", dropResearch: "Drop & Material Research",
+  esotericResearch: "Esoteric Research",
 };
 /** What a checkpoint pays: an unlock, the next tower opened, an amount of a currency, or a relic. */
 export type GoalReward =
@@ -183,7 +186,7 @@ const TOWER_THREE: Record<number, CheckpointSet> = {
   250: { reward: unlock("lifespringResearch"), premium: gold(2_000_000) },
   300: { reward: gold(2_500_000), premium: gold(5_000_000) },
   400: { reward: unlock("overseerZap"), premium: gold(10_000_000) },
-  500: { reward: gems(40), premium: arcanite(55) },
+  500: { reward: gems(40), premium: arcanite(15) },
   750: { reward: gems(50), premium: gems(65) },
   1000: { reward: arcanite(15), premium: arcanite(20) },
   1250: { reward: gems(60), premium: gems(75) },
@@ -253,7 +256,7 @@ const TOWER_SIX: Record<number, CheckpointSet> = {
   80: { reward: gems(45), premium: gems(55) },
   90: { reward: gold(8_000_000), premium: gold(15_000_000) },
   100: { reward: opens(7), premium: gems(60) },
-  150: { reward: gold(10_000_000), premium: gold(20_000_000) },
+  150: { reward: unlock("esotericResearch"), premium: gold(20_000_000) },
   200: { reward: gems(50), premium: gems(60) },
   250: { reward: gems(55), premium: gems(70) },
   300: { reward: gold(20_000_000), premium: gold(40_000_000) },

@@ -14,8 +14,7 @@ import { isRecord, wholeIn } from "../save/decode.ts";
  * left, which a new floor doesn't interrupt; with Extra Voidwell, its `twin`'s
  * center, opposite it across the hero as they opened, lasting as long. */
 export type Vortex = { x: number; y: number; left: number; twin?: Point };
-/** What a run keeps of Voidwell, in the run so undo takes it back with what it stunned:
- * the cooldown's turns left, the activations so far, and the vortex (absent with none). */
+/** What a run keeps of Voidwell, in the run: the cooldown's turns left, the activations so far, and the vortex (absent with none). */
 export type VoidwellRun = { timer?: number; casts?: number; vortex?: Vortex };
 /** A vortex as the board reads it: its center, radius in tiles, the width the
  * board's columns wrap by (0: none), and its twin's center, if it has one. */

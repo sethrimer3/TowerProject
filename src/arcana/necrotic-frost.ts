@@ -19,8 +19,7 @@ const FROST_SALT = 0xf205;
 /** A field standing: its number among the run's activations, where it lies from the
  * hero in hundredths of a degree clockwise from straight up the board, and its turns left. */
 export type FrostField = { id: number; angle: number; left: number };
-/** What a run keeps of Necrotic Frost, in the run so undo takes it back with what it
- * did: the cooldown's turns left, the activations so far, and the fields standing
+/** What a run keeps of Necrotic Frost, in the run: the cooldown's turns left, the activations so far, and the fields standing
  * (absent with none). */
 export type FrostRun = { timer?: number; casts?: number; fields?: FrostField[] };
 /** What is on an enemy: for each field that has touched it, by that field's `id`,

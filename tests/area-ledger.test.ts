@@ -103,7 +103,6 @@ test("the Goals save keeps areas by tower: mastered at checkpoints, cleared on a
 
 test("climbing onto an area's first floor pays at once; opening the chest shows it and pays nothing more", () => {
   const g = new Game(defaults());
-  g.save.upgrades.inspirationUndos = 1; // undo needs Rehearsed steps
   g.loadMode();
   const run = g.towerRun;
   // Floors 1 to 9 behind the hero, cleared; floor 10 cleared under it.
@@ -123,9 +122,6 @@ test("climbing onto an area's first floor pays at once; opening the chest shows 
   assert.ok(g.move(0, 1, true));
   assert.deepEqual(g.areaBursts.map((b) => b.reward), ["mastered"]);
   assert.equal(g.save.tower.inspiration, paid, "the chest pays nothing more");
-  g.undo();
-  assert.deepEqual(g.areaBursts, []);
-  assert.equal(g.save.tower.inspiration, paid, "undo never takes an area's reward back");
   assert.ok(areaMastered(g.save, 1, 10));
 });
 

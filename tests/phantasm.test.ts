@@ -22,7 +22,6 @@ const SPIN = phantasmEffects(null).spin, BLAST = phantasmEffects(null).blast;
 /** A Tower run on an open floor holding `spots` enemies, holding Phantasm at `levels`, the hero at (4, 4). */
 function arena(spots: readonly (readonly [number, number])[], levels: [number, number, number] = [0, 0, 0], hp = 1_000_000) {
   const save = defaults();
-  save.upgrades.inspirationUndos = 1;
   const g = new Game(save, random(5));
   g.newRun({ seed: 7 });
   const w = g.world as RoomWorld;
@@ -205,18 +204,15 @@ test("Arcanum Damage averages crits, as the card shows", () => {
   assert.equal(arcanumBoost(10, crit), 10 * (1 + 2 * 0.5) * (1 + 5 * 0.1 * 0.5));
 });
 
-test("undo takes back the ghosts with what they struck, and the hidden toggle only hides", () => {
+test("the hidden toggle only hides the ghosts' strikes", () => {
   const g = arena([[5, 5]]);
   g.run.phantasm = { timer: 100, turns: 1, ring: 3, ghosts: [0, 1, 2] };
-  const before = g.world.tile(5, 5).enemy!.hp, changes = structuredClone(g.run.changes);
+  const before = g.world.tile(5, 5).enemy!.hp;
   g.save.settings.phantasmDamage = false;
   assert.ok(g.move(1, 0));
   assert.ok((g.volley?.shots ?? []).every((s) => !s.phantasm), "hidden");
   assert.deepEqual(g.run.phantasm!.ghosts, [1, 2]);
   assert.ok(g.world.tile(5, 5).enemy!.hp < before, "struck all the same");
-  g.undo();
-  assert.deepEqual(g.run.phantasm, { timer: 100, turns: 1, ring: 3, ghosts: [0, 1, 2] });
-  assert.deepEqual(g.run.changes, changes);
 });
 
 test("from the turn's last tick, only what touches the ring where the hero ended strikes", () => {

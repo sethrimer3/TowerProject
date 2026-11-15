@@ -173,7 +173,7 @@ test("Movement Speed research lets the run's arrows go one step a second faster 
   assert.equal(g.stepsPerSecond, 9);
   assert.equal(decode(JSON.stringify(g.save)).settings.speed, 9);
   // Priced and timed like Undo Count's first six levels.
-  assert.deepEqual(RESEARCH.moveSpeed.levels, RESEARCH.undoCount.levels.slice(0, 6).map((l) => ({ ...l, effect: { ...l.effect, target: "moveSpeed" } })));
+  assert.deepEqual(RESEARCH.moveSpeed.levels, RESEARCH.sparkCount.levels.slice(0, 6).map((l) => ({ ...l, effect: { ...l.effect, target: "moveSpeed" } })));
   assert.deepEqual(RESEARCH.moveSpeed.requires, [{ upgrade: "moveSpeed" }]);
 });
 test("Inspiration tree: Heal follows Regen, Critical leads to Breakthrough, and the Archives (5) follow it", () => {
@@ -231,13 +231,14 @@ test("Bombs (5 Inspiration) stands left of Critical Prediction in the Inspiratio
   save.upgrades.bombs = 1;
   assert.ok(provisionOpen(save, "bomb"));
 });
-test("Golden Floors (3 Breakthrough) under More Wealth, then Rehearsed steps down and left with Aether Shield and Echoes of time straight under it, Offline Gold (2) down and right with Gem Card (2) under it; Manual Hand (1) after Card Mastery; Key Mastery (1) under Badges reveals Find Gold Key and Key Efficiency, now in the Inspiration tree (10 each), and Card and Beast Mastery split off it", () => {
+test("Golden Floors (3 Breakthrough) under More Wealth, then Esoteric Training (2) down and left with Aether Shield, Phoenix Spark and Echoes of time straight under it, Offline Gold (2) down and right with Gem Card (2) under it; Manual Hand (1) after Card Mastery; Key Mastery (1) under Badges reveals Find Gold Key and Key Efficiency, now in the Inspiration tree (10 each), and Card and Beast Mastery split off it", () => {
   const breakthrough = TREES.find((t) => t.id === "breakthrough")!;
   const at = (id: string) => breakthrough.nodes.find((n) => n.id === id)!;
-  assert.deepEqual(["goldenFloors", "inspirationUndos", "aetherShield", "undos"].map((id) => [at(id).x, at(id).y, at(id).requires]), [[18, 111, ["moreWealth"]], [10, 137, ["goldenFloors"]], [10, 163, ["inspirationUndos"]], [10, 189, ["aetherShield"]]], "Golden Floors under More Wealth, Rehearsed steps down and left of it, Aether Shield and Echoes of time straight under that");
+  assert.deepEqual(["goldenFloors", "esotericTraining", "aetherShield", "phoenixSpark", "undos"].map((id) => [at(id).x, at(id).y, at(id).requires]), [[18, 111, ["moreWealth"]], [10, 137, ["goldenFloors"]], [10, 163, ["esotericTraining"]], [10, 189, ["aetherShield"]], [10, 215, ["phoenixSpark"]]], "Golden Floors under More Wealth, Esoteric Training down and left of it, Aether Shield, Phoenix Spark and Echoes of time straight under that");
+  assert.equal(cost("esotericTraining", 0), 2, "Esoteric Training costs 2 Breakthrough");
   assert.deepEqual([at("manualHand").x, at("manualHand").y, at("manualHand").requires], [30, 215, ["cardMastery"]], "Manual Hand below and after Card Mastery");
   assert.equal(cost("goldenFloors", 0), 3, "Golden Floors costs 3 Breakthrough");
-  assert.deepEqual([at("offlineGold").x, at("offlineGold").y, at("offlineGold").requires, cost("offlineGold", 0)], [30, 137, ["goldenFloors"], 2], "Offline Gold (2) splits off down and right of Golden Floors, beside Rehearsed steps");
+  assert.deepEqual([at("offlineGold").x, at("offlineGold").y, at("offlineGold").requires, cost("offlineGold", 0)], [30, 137, ["goldenFloors"], 2], "Offline Gold (2) splits off down and right of Golden Floors, beside Esoteric Training");
   assert.deepEqual([at("gemCard").x, at("gemCard").y, at("gemCard").requires, cost("gemCard", 0)], [30, 163, ["offlineGold"], 2], "Gem Card (2) under Offline Gold");
   assert.deepEqual(upgradeCards("gemCard"), ["gem"], "Gem Card adds the GEM card to the deck");
   assert.deepEqual([at("moreWealth").x, at("moreWealth").y, at("moreWealth").requires], [18, 85, ["pathToWealth"]], "More Wealth under Path to Wealth");

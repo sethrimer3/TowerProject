@@ -28,4 +28,5 @@ export const GOAL_SPRITES = {
   overseerZap: "arcana-overseer", overseerGold: "arcana-overseer",
   bossPotion: "potion-blue", lifespringResearch: "arcana-lifespring",
   aurumBloomResearch: "arcana-aurum-bloom", voidwellResearch: "arcana-voidwell", extraVoidwell: "arcana-voidwell", dropResearch: "goal-equipment",
+  esotericResearch: "hourglass",
 } satisfies Record<GoalUnlock, string>;

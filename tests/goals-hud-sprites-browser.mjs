@@ -104,7 +104,7 @@ try {
   // Enter walks the hero to the entrance; the run begins as it arrives.
   await page.locator("#enter-run").waitFor({ state: "hidden" });
   await ready("#stats");
-  for (const [selector, id] of [["#focus-stat", "focus"], ["#ignore-stat", "ignore"], ["#target-stat", "target"], ["#undo", "undo"]]) {
+  for (const [selector, id] of [["#focus-stat", "focus"], ["#ignore-stat", "ignore"], ["#target-stat", "target"], ["#spark-stat", "ui-revive"]]) {
     assert.ok(await page.locator(`${selector} .sprite-replacement[src$="/${id}.png"]`).isVisible());
     assert.ok(await page.locator(`${selector} b`).textContent());
   }

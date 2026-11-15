@@ -13,7 +13,6 @@ import { MURK } from "../src/render/boards/murk-board.ts";
  * a wall at (3, 2) and an enemy at (2, 3). */
 function room() {
   const g = new Game(defaults());
-  g.save.upgrades.inspirationUndos = 1; // undo needs Rehearsed steps
   const w = g.world as RoomWorld;
   w.cells = new Map();
   for (let x = 0; x < 5; x++) for (let y = 0; y < 5; y++) w.cells.set(`${x},${y}`, { kind: "floor" });
@@ -25,7 +24,7 @@ function room() {
   return g;
 }
 
-test("the hero faces its last step: right until it moves, into a fight too, not a refused step, and undo leaves it", () => {
+test("the hero faces its last step: right until it moves, into a fight too, not a refused step", () => {
   const g = room();
   assert.deepEqual(g.facing, { dx: 1, dy: 0 }, "right before any step");
   assert.ok(g.move(-1, 0));
@@ -40,8 +39,6 @@ test("the hero faces its last step: right until it moves, into a fight too, not 
   assert.ok(g.move(1, 0));
   assert.ok(g.move(0, 1), "into the enemy");
   assert.deepEqual(g.facing, { dx: 0, dy: 1 }, "facing the enemy it fought");
-  assert.ok(g.undo());
-  assert.deepEqual(g.facing, { dx: 0, dy: 1 }, "undo doesn't turn it");
 });
 
 /** How the Arcade hero is painted: whether mirrored, and whether its eyes

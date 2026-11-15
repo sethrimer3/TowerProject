@@ -84,7 +84,6 @@ test("the board's lines: +N and each row's short name, in the order given", () =
 /** A Tower run inside, the hero beside the stairs, with every Free Upgrade row at 100. */
 function stairs(seed: number) {
   const save = owned({ freeOffense: 100, freeDefense: 100, freeUtility: 100 });
-  save.upgrades.inspirationUndos = 1;
   const g = new Game(save);
   g.newRun({ seed });
   (g as unknown as { enterFromOutside(): void }).enterFromOutside();

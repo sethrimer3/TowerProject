@@ -21,7 +21,6 @@ const brute: Enemy = { name: "Brute", hp: 1000, attack: 0, defense: 5000, tier: 
 /** A Tower run on an open floor holding `spots` enemies of `hp` HP, holding Lifespring. */
 function arena(spots: readonly (readonly [number, number])[], hp = 1000, defense = brute.defense) {
   const s = defaults();
-  s.upgrades.inspirationUndos = 1;
   const g = new Game(s, random(5));
   g.newRun({ seed: 7 });
   const w = g.world as RoomWorld;
@@ -121,7 +120,7 @@ test("what the step brings into range meets the field before an arrow; what stoo
   assert.ok(stood.length >= 2 && !stood[0]!.lifespring && stood.at(-1)!.lifespring, "the arrow, then the field");
 });
 
-test("Health Bonus pays once an enemy a wave hit falls, up to its limit, and undo takes it back", () => {
+test("Health Bonus pays once an enemy a wave hit falls, up to its limit", () => {
   const g = arena([[2, 0]], 1000), { healthPerKill } = lifespringEffects(g.save);
   g.run.lifespring = { timer: 1 };
   turn(g);
@@ -131,11 +130,6 @@ test("Health Bonus pays once an enemy a wave hit falls, up to its limit, and und
   assert.equal(g.run.lifespring.health, healthPerKill);
   assert.ok(Math.abs(g.run.player.maxHp - hp * (1 + healthPerKill / 100)) < 1e-6);
   assert.equal(g.arcana.lifespringStats!.health, 1 + healthPerKill / 100);
-  assert.ok(g.undo());
-  assert.equal(g.run.lifespring?.health, undefined);
-  assert.equal(g.run.lifespring?.pool, 10_000, "the pool comes back with the enemy");
-  assert.equal(hpAt(g, 2, 0), 1000);
-  assert.equal(g.run.player.maxHp, hp);
 
   const capped = arena([[2, 0]], 1);
   capped.run.lifespring = { pool: 100, health: 399.99 };

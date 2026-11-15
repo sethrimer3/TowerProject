@@ -19,7 +19,6 @@ function lay(g: Game, foe: Tile) {
  * with ATK 10, `foe` two tiles off. */
 function withBombs(bombs: number, foe: Tile = slime(30)) {
   const s = playedSave();
-  s.upgrades.inspirationUndos = 1;
   s.upgrades.bombs = 1;
   s.provisions.bomb = bombs;
   const g = new Game(s);
@@ -66,7 +65,7 @@ test("a Bomb deals the enemy on its tile the hero's ATK, its DEF no help, and go
   assert.deepEqual(decode(JSON.stringify(g.save)).tower.run!.bombsUsed, 1, "it saves");
 });
 
-test("a Bomb that fells its enemy clears it and pays the kill, once though undo takes the Bomb back", () => {
+test("a Bomb that fells its enemy clears it and pays the kill", () => {
   const g = withBombs(1, slime(10));
   const kills = g.run.kills, gold = g.save.gold;
   g.arm("bomb");
@@ -76,13 +75,7 @@ test("a Bomb that fells its enemy clears it and pays the kill, once though undo 
   assert.match(g.message, /Bomb · .* defeated/);
   const paid = g.save.gold;
   assert.ok(paid >= gold);
-  assert.ok(g.undo());
-  lay(g, slime(10));
-  assert.equal(g.bombsLeft, 1, "undo gives the Bomb back");
-  assert.equal(g.world.tile(3, 0).kind, "enemy");
-  g.arm("bomb");
-  assert.equal(g.useArmed(3, 0), "used");
-  assert.equal(g.save.gold, paid, "the kill's Gold isn't paid twice");
+  assert.equal(g.bombsLeft, 0, "the Bomb is spent");
 });
 
 test("a Bomb bought inside a run is thrown in it at once", () => {

@@ -51,8 +51,10 @@ const TEMPEST_SALT = 0x71c0e;
  * applications, the HP an arrow's Lifesteal restored, what the hero's
  * thorns cost an enemy's shooter), for an arrow (or a shot's thorns) the
  * enemy's HP before and after it out of its full HP, and the enemy it
- * felled (`fell`), which the board keeps showing until the shot lands. */
-export type Shot = { by: "hero" | "enemy"; from: { x: number; y: number }; to: { x: number; y: number }; damage: number; tick: number; shrouded?: number; shielded?: number; shieldBroke?: true; crit?: number; superCrit?: true; charge?: number; healed?: number; thorns?: number; before?: number; hp?: number; full?: number; fell?: Enemy; ricochet?: true; thunderbolt?: true; lifespring?: true; phantasm?: true; necro?: true; voidwell?: true };
+ * felled (`fell`), which the board keeps showing until the shot lands. An
+ * enemy's shot Phoenix Spark shrugged off (`sparked`) does nothing.
+ */
+export type Shot = { by: "hero" | "enemy"; from: { x: number; y: number }; to: { x: number; y: number }; damage: number; tick: number; shrouded?: number; shielded?: number; shieldBroke?: true; sparked?: true; crit?: number; superCrit?: true; charge?: number; healed?: number; thorns?: number; before?: number; hp?: number; full?: number; fell?: Enemy; ricochet?: true; thunderbolt?: true; lifespring?: true; phantasm?: true; necro?: true; voidwell?: true };
 /** Where `shot`'s target stands: the hero's tile for an enemy's shot (whose
  * thorns cost the shooter, at `from`), the enemy's for an arrow. */
 export const enemyOf = (shot: Shot) => (shot.by === "enemy" ? shot.from : shot.to);
@@ -121,6 +123,9 @@ export type VolleyTurn = {
   /** Necrotic Frost's fields, if any stand: they slow the cooldowns of the shooters
    * in them, by how many fields reach each. */
   frost?: FrostArea;
+  /** Phoenix Spark's charges left: each shrugs off a shot that would fell
+   * the hero. None when absent. */
+  sparks?: number;
 };
 /** An enemy an arrow felled, or the thorns of its own shot (`thorns`):
  * where, whether it fell to its first wound (an instakill), and the
@@ -129,9 +134,9 @@ export type VolleyKill = { enemy: Enemy; at: { x: number; y: number }; instakill
 /** What a turn's volley did: the run's volley state after it, the shots in
  * the order they fired, the hero's HP after them, whether a Ranged enemy's
  * shot got through (`hurt`), the enemy whose shot felled the hero (the
- * turn then ends at that tick), and the enemies the arrows and thorns
- * felled, in order. */
-export type VolleyOutcome = { volleys: Volleys; shots: Shot[]; hp: number; shield?: number; hurt: boolean; fell?: Enemy; kills: VolleyKill[] };
+ * turn then ends at that tick), the Phoenix Spark charges its shots
+ * spent (`sparked`), and the enemies the arrows and thorns felled, in order. */
+export type VolleyOutcome = { volleys: Volleys; shots: Shot[]; hp: number; shield?: number; hurt: boolean; fell?: Enemy; sparked?: number; kills: VolleyKill[] };
 
 /** The hero's walk over the turn: the tile it starts from and its step;
  * none when it stood still or came farther than a step (a dash, a floor's
@@ -223,7 +228,7 @@ export function volleyTurn(turn: VolleyTurn): VolleyOutcome {
     return beamFactor(turn.beams, tick, shortWay(x - at.x, wrap), y - at.y);
   };
   const archer = turn.archer ? arrows(turn, hero, v, shots, kills, beam, (tick) => near.filter((n) => within(tick, n.arrows)).map((n) => standing(n, tick)).filter((e): e is InReach => !!e).sort(byDistance), (tick) => heroAt(walk, tick, wrap)) : undefined;
-  let fell: Enemy | undefined, hurt = false;
+  let fell: Enemy | undefined, hurt = false, sparked = 0;
   for (let tick = 1; tick <= TURN_TICKS && !fell; tick++) {
     archer?.tick(tick);
     // Then each shooter whose cooldown is ready this tick, closest first.
@@ -250,6 +255,12 @@ export function volleyTurn(turn: VolleyTurn): VolleyOutcome {
       const shooter = e.tile.enemy, weak = shooter.amber ? { ...shooter, attack: snap((shooter.attack * (100 - shooter.amber)) / 100) } : shooter;
       const { damage, shrouded, shielded = 0 } = shotDamage(hero, weak), onShield = (hero.shield ?? 0) > 0;
       s.charge = spent(s.charge, s.cost);
+      // Phoenix Spark shrugs off a shot that would fell the hero.
+      if (damage >= hero.hp && sparked < (turn.sparks ?? 0)) {
+        sparked++;
+        shots.push({ by: "enemy", from: { x: e.x, y: e.y }, to: { x: hero.x, y: hero.y }, damage: 0, tick, sparked: true });
+        continue;
+      }
       hero.hp = snap(Math.max(0, hero.hp - damage));
       if (onShield) hero.shield = snap(hero.shield! - shielded);
       const shot: Shot = { by: "enemy", from: { x: e.x, y: e.y }, to: { x: hero.x, y: hero.y }, damage, tick, ...(shrouded ? { shrouded } : {}), ...(shielded ? { shielded } : {}), ...(onShield && !hero.shield ? { shieldBroke: true as const } : {}) };
@@ -266,7 +277,7 @@ export function volleyTurn(turn: VolleyTurn): VolleyOutcome {
   for (const s of shooters) if (s.charge !== undefined && shooterAt(s.near.x, s.near.y)) foes[s.key] = s.charge;
   if (Object.keys(foes).length) v.foes = foes;
   else delete v.foes;
-  return { volleys: v, shots, hp: hero.hp, ...(hero.shield === undefined ? {} : { shield: hero.shield }), hurt, ...(fell ? { fell } : {}), kills };
+  return { volleys: v, shots, hp: hero.hp, ...(hero.shield === undefined ? {} : { shield: hero.shield }), hurt, ...(fell ? { fell } : {}), ...(sparked ? { sparked } : {}), kills };
 }
 
 /** Thorns: a shot the hero lived through costs its shooter `e` the hero's
@@ -379,7 +390,7 @@ function inPlace(board: VolleyTurn["board"], e: InReach): InReach | undefined {
  * spring on to the closest other enemies on the floor, however far, each a
  * line of Arcanum Damage (its crits averaged, none rolled) less that enemy's
  * DEF, with no Lifesteal and no Armor Break. The roll is fixed per run, turn,
- * shot and tile, so undo and a replay agree. Overseer's beams multiply a strike
+ * shot and tile, so a replay agrees. Overseer's beams multiply a strike
  * on an enemy in them (`beam`). */
 function ricochet({ board, seed, volleys, wrap, ricochet: rule }: VolleyTurn, p: Player, { x, y }: InReach, tick: number, shot: number, shots: Shot[], kills: VolleyKill[], beam: (x: number, y: number, tick: number) => number) {
   if (!rule || tileRandom(x, y, (seed ^ RICOCHET_SALT ^ Math.imul(volleys.turn, 0x85ebca6b) ^ Math.imul(shot, 0xc2b2ae35)) | 0) * 100 >= rule.chance) return;
@@ -390,7 +401,7 @@ function ricochet({ board, seed, volleys, wrap, ricochet: rule }: VolleyTurn, p:
 }
 
 /** Ricochet Shot off a fight the hero won at `at`, once however many strikes it
- * took: the roll is fixed per run, `floor` and tile, so undo and a refight agree.
+ * took: the roll is fixed per run, `floor` and tile, so a replay agrees.
  * Overseer's beams read as the turn begins, as the fight's did (the hero still
  * on the tile it left). Edits the board's enemies; returns the shots and kills. */
 export function fightRicochet({ board, wrap, hero, seed, beams, ricochet: rule }: Pick<VolleyTurn, "board" | "wrap" | "hero" | "seed" | "beams" | "ricochet">, at: { x: number; y: number }, floor: number) {

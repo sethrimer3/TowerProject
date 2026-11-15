@@ -69,13 +69,13 @@ test('a forked pocket is reached by either lane and by nothing else', () => {
   }
   assert.ok(forks > 20, `only ${forks} forked pockets`);
 });
-test('milestone crossing seals behind the player, persists, and prevents undo across the seal', () => {
+test('milestone crossing seals behind the player and persists', () => {
   const g = new Game(defaults()); g.save.upgrades.breakthrough = 1; g.switchMode('delve');
   g.newRun({ seed: 42 });
   const gate = region(42, 0).gate;
   Object.assign(g.run.player, { x: gate.x, y: gate.y - 1 });
   assert.ok(g.move(0, 1)); assert.equal(g.run.height, 100); assert.equal(g.run.milestone, 1);
-  assert.equal(g.world.tile(gate.x, gate.y - 1).kind, 'wall'); assert.equal(g.undo(), false);
+  assert.equal(g.world.tile(gate.x, gate.y - 1).kind, 'wall');
   assert.ok(g.move(0, 1)); assert.equal(g.world.step(gate.x, gate.y + 1, 0, -1), null);
   const restored = new Game(decode(JSON.stringify(g.save))); restored.switchMode('delve');
   assert.equal(restored.run.milestone, 1);
@@ -92,30 +92,5 @@ test('torches sit on plain floor, once, even where areas interlock', () => {
     const w = new World({ seed, changes: {}, floor: 0, milestone: 0 }), spots = w.torches.map(t => point(t.x, t.y));
     assert.equal(new Set(spots).size, spots.length);
     for (const t of w.torches) assert.equal(w.tile(t.x, t.y).kind, 'floor', `torch at ${t.x},${t.y}`);
-  }
-});
-
-test('undo stays on its equivalent floor: a step across a floor line (each ten depth) forgets the history', () => {
-  const g = new Game(defaults());
-  g.save.upgrades.breakthrough = g.save.upgrades.inspirationUndos = 1;
-  g.switchMode('delve');
-  g.newRun({ seed: 42 });
-  (g as unknown as { enterFromOutside(): void }).enterFromOutside();
-  const world = g.world as World, floorAt = (x: number, y: number) => Math.floor(world.depth(x, y) / 10);
-  const plain = (x: number, y: number) => world.tile(x, y).kind === 'floor';
-  // Two pairs of plain floor tiles side by side: one across a line, one not.
-  let across: number[] | undefined, within: number[] | undefined;
-  for (const key of region(42, 0).metadata.keys()) {
-    const [x, y] = key.split(',').map(Number);
-    if (!plain(x, y) || !plain(x, y + 1) || world.step(x, y, 0, 1)?.y !== y + 1) continue;
-    if (floorAt(x, y) !== floorAt(x, y + 1)) across ??= [x, y];
-    else within ??= [x, y];
-  }
-  assert.ok(across && within, 'the labyrinth has both');
-  for (const [[x, y], undoes] of [[within!, true], [across!, false]] as const) {
-    g.save.delve.history = [];
-    Object.assign(g.run.player, { x, y });
-    assert.ok(g.move(0, 1));
-    assert.equal(g.undo(), undoes, undoes ? 'a step on the floor can be undone' : 'a step across the line cannot');
   }
 });

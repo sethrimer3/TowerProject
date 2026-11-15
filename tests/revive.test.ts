@@ -59,7 +59,6 @@ test("Revive is a 10 Inspiration skill below Parry, and the Breakthrough tree no
  * corridor, 100 HP and 12 ATK, with Revive trained to `ranks`. */
 function arena(seed: number, ranks: number | null) {
   const g = new Game(defaults());
-  g.save.upgrades.inspirationUndos = 1;
   g.save.upgrades.breakthrough = 1;
   g.save.settings.devMode = true;
   if (ranks !== null) {
@@ -83,7 +82,7 @@ function guard(g: Game) {
   g.world.tile = (x, y) => (x === 15 && y === 2 && g.run.kills === 0 ? foe : tile(x, y));
 }
 
-test("in play, a lethal fight revives the hero by a fixed roll per run, tile and strike, so undo can't fish for one", () => {
+test("in play, a lethal fight revives the hero by a fixed roll per run, tile and strike", () => {
   let revived = 0, fell = 0;
   for (let seed = 1; seed <= 40; seed++) {
     const g = arena(seed, 99);
@@ -93,11 +92,10 @@ test("in play, a lethal fight revives the hero by a fixed roll per run, tile and
       assert.equal(g.fights.revivedAt.length, 0);
       assert.equal(g.fights.struckDown.length, 1, "a skull rises over the fallen hero");
       assert.ok(g.fights.defeatShownUntil > performance.now(), "and the defeat dialog waits for it");
-      // Taken back and fought again, the fight ends the same way.
-      assert.ok(g.undo());
-      guard(g);
-      g.move(0, 1);
-      assert.ok(g.fallen, `seed ${seed}: the same fall again`);
+      // Fought again, the fight ends the same way.
+      const again = arena(seed, 99);
+      again.move(0, 1);
+      assert.ok(again.fallen, `seed ${seed}: the same fall again`);
       continue;
     }
     revived++;
@@ -106,11 +104,9 @@ test("in play, a lethal fight revives the hero by a fixed roll per run, tile and
     assert.equal(g.run.kills, 1);
     assert.equal(g.fights.revivedAt.length, 1);
     assert.match(g.message, /^Revived · Brute defeated/);
-    assert.ok(g.undo());
-    assert.deepEqual([g.fights.revivedAt.length, g.fights.struckDown.length], [0, 0], "undo puts out the skull and the fire");
-    guard(g);
-    g.move(0, 1);
-    assert.ok(!g.fallen && g.run.player.hp === 100, `seed ${seed}: the same revival again`);
+    const again = arena(seed, 99);
+    again.move(0, 1);
+    assert.ok(!again.fallen && again.run.player.hp === 100, `seed ${seed}: the same revival again`);
     // Played out strike by strike, a skull rises when the revival lands, and
     // the fire once it is over; the fight goes on after both.
     const shown = arena(seed, 99);

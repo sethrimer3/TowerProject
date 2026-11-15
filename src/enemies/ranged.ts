@@ -245,8 +245,7 @@ export function arrowDamage(player: Player, enemy: Enemy, applications = 0, fact
 export const arrowBoost = (perTile: number, d2: number, percent: number, waited: number) =>
   snap((1 + (perTile * Math.sqrt(d2)) / 100_000) * (1 + (percent * waited) / 100));
 
-/** The Ranged and Archer state a run keeps, so undo takes it back with the
- * run: the turns taken inside (each shot's rolls are fixed by it), the
+/** The Ranged and Archer state a run keeps: the turns taken inside (each shot's rolls are fixed by it), the
  * Archer's charge, the turns its ready arrow has waited unfired (`waited`,
  * counted once Charged Shot is researched), the hundredths of a turn of
  * Rapid Fire left (`rapid`), and each Ranged enemy's charge that has shot

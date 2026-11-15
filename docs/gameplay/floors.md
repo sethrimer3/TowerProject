@@ -33,7 +33,7 @@ Every item a run takes off the floor pays Gold: 1 for a potion, an ATK or DEF sh
 Keys pay by colour, 1 for gold, 2 for blue and 3 for red, and a door opened pays its keys' colours added up (a Gold + Blue Door 3, a Triune Door 6).
 Gold Bonus training and research multiply it, as they do a kill's Gold and the whole of a treasure chest's Gold, and the tower's Gold bonus comes on top.
 They multiply Gold / Floor too, and the Silver Interest pays, after Max Interest stops it, so Interest can pay more than that limit.
-Its coin rises over the item as it is picked up, beside the key or HP a door takes; each tile pays once a run, so undo can't pay it again.
+Its coin rises over the item as it is picked up, beside the key or HP a door takes; each tile pays once a run.
 Settings can turn off each kind of these rising gains: item pickups, what doors take, Gold and Silver.
 
 ## The first floors

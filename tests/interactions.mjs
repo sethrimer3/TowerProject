@@ -81,9 +81,8 @@ const scene = await page.evaluate(async () => {
 const { key, door, enemy } = scene;
 /** A fresh run on the chosen seed with the player at (x, y) and `open` /
  * `closed` tiles forced to floor / wall. */
-const place = (s, { seed, x, y, open = [], closed = [], stats = {}, undo = false }) => {
+const place = (s, { seed, x, y, open = [], closed = [], stats = {} }) => {
   s.upgrades.breakthrough = 1;
-  if (undo) s.upgrades.inspirationUndos = 1;
   // A settled camera keeps tap positions deterministic.
   s.settings.transition = "instant";
   const r = s.delve.run;
@@ -97,7 +96,6 @@ const place = (s, { seed, x, y, open = [], closed = [], stats = {}, undo = false
   for (const [cx, cy] of closed) r.changes[`${cx},${cy}`] = { kind: "wall" };
   // A save whose hero has more HP than its max is dropped as corrupt.
   Object.assign(r.player, { x, y, hp: 120, maxHp: 120, attack: 12, defense: 5, keys: { yellow: 0, blue: 0, red: 0 } }, stats);
-  s.delve.history = [];
   s.delve.fall = null;
 };
 
@@ -108,7 +106,7 @@ await page.locator("#forest-sign").click();
 
 // Swipes in all four directions, below the key.
 await fixture(place, {
-  seed: scene.seed, x: key.x, y: key.y - 2, undo: true,
+  seed: scene.seed, x: key.x, y: key.y - 2,
   open: [[key.x - 1, key.y - 2], [key.x, key.y - 2], [key.x, key.y - 1]],
 });
 await swipe(-1, 0);
@@ -120,14 +118,10 @@ await expect.poll(async () => (await player()).y).toBe(key.y - 1);
 await swipe(0, 1);
 await expect.poll(async () => (await player()).y).toBe(key.y - 2);
 
-// Tapping walks to the key and picks it up; undo takes back the whole
-// tapped route, which counts as one move.
+// Tapping walks to the key and picks it up.
 await tap(key.x, key.y);
 await expect.poll(async () => (await player()).y).toBe(key.y);
 await expect.poll(async () => (await player()).keys.yellow).toBe(1);
-await page.locator("#undo").click();
-await expect.poll(async () => (await player()).y).toBe(key.y - 2);
-await expect.poll(async () => (await player()).keys.yellow).toBe(0);
 
 // Without a key, a route to a room sealed behind the door stops in front of it.
 await fixture(place, {
@@ -141,27 +135,20 @@ await expect(page.locator("#message")).toContainText("Requires gold key.");
 await page.screenshot({ path: "test-results/blocked-door.png", fullPage: true });
 
 // A lethal fight leaves the hero fallen: the defeat dialog survives a
-// refresh, and Undo takes the fight back.
+// refresh, and accepting defeat ends the run and returns to the forest.
 const weak = {
   seed: scene.seed, x: enemy.x, y: enemy.y - 2,
   open: [[enemy.x, enemy.y - 2], [enemy.x, enemy.y - 1]],
   // Enough ATK to get past its DEF (a hero who can't hurt it is refused the fight).
   stats: { hp: 1, attack: 5, defense: 0 },
-  undo: true,
 };
 await fixture(place, weak);
 await swipe(0, -1);
 await swipe(0, -1);
-await expect(page.locator("#defeat-undo")).toBeVisible();
+await expect(page.locator("#defeat-accept")).toBeVisible();
 await expect.poll(async () => (await player()).hp).toBe(0);
 await page.reload();
-await expect(page.locator("#defeat-undo")).toBeVisible();
-await page.locator("#defeat-undo").click();
-await expect.poll(async () => (await player()).y).toBe(enemy.y - 1);
-await expect.poll(async () => (await player()).hp).toBe(1);
-await expect.poll(async () => (await saved()).delve.fall).toBe(null);
-// Accepting defeat ends the run and returns to the forest.
-await swipe(0, -1);
+await expect(page.locator("#defeat-accept")).toBeVisible();
 await page.locator("#defeat-accept").click();
 await expect.poll(async () => (await saved()).delve.run.outside).toBe(true);
 await expect.poll(async () => (await saved()).delve.fall).toBe(null);
@@ -173,10 +160,8 @@ await fixture(place, { seed: scene.seed, x: 29, y: 0, open: [[0, 0], [29, 0]] })
 await page.screenshot({ path: "test-results/wrap-opening.png", fullPage: true });
 await swipe(1, 0);
 await expect.poll(async () => (await player()).x).toBe(0);
-await page.locator("#undo").click();
-await expect.poll(async () => (await player()).x).toBe(29);
 if (errors.length) throw Error(errors.join("\n"));
 console.log(
-  `Four swipe directions, tap path/pickup, undo, locked-door stop, death reset, the defeat dialog across a refresh, and edge wrap passed (seed ${scene.seed}).`,
+  `Four swipe directions, tap path/pickup, locked-door stop, death reset, the defeat dialog across a refresh, and edge wrap passed (seed ${scene.seed}).`,
 );
 await browser.close();

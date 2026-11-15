@@ -33,7 +33,6 @@ export class TrialSession {
       hand:[...state.hand],silver:state.purchases.silver,training:{...state.purchases.training},
       loadout:{attack:state.player.attack,defense:state.player.defense,maxHp:state.player.maxHp}};
     game.run=run; game.save.tower.run=run; game.world=trialBoard(state);
-    game.save.tower.history=[];
     const train=game.trainInRun.bind(game);
     game.trainInRun=(...args)=> {
       if(state.status!=="active" || !TRIAL_TRAINING.has(args[0]) || !train(...args)) return false;

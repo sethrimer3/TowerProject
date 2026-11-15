@@ -10,8 +10,7 @@ import { ranksInRun, runTrainingMax } from "./run-training.ts";
  * one Skip climbs past too) may train a stat a level for free, for the run,
  * once for each group whose Free Upgrade row has ranks. A free level is
  * added to the run's training (`run.training`) like a rank bought with
- * Silver, so it raises that row's Silver price a step just the same, and
- * undo takes it back with the run. */
+ * Silver, so it raises that row's Silver price a step just the same. */
 
 export type FreeGroup = keyof typeof TRAINING_GROUPS;
 /** The groups in the order a floor rolls them. */

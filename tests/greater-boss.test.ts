@@ -17,7 +17,6 @@ import { tileInfo } from "../src/ui/tile-info.ts";
 function besideLastTorch(seed = 3, undos = false) {
   const g = new Game(defaults());
   g.save.settings.devMode = true;
-  if (undos) g.save.upgrades.inspirationUndos = 1;
   g.newRun({ outside: true, seed });
   assert.ok(g.enterRun());
   const world = g.world as RoomWorld;
@@ -65,18 +64,7 @@ test("putting out a floor's last torch calls a Greater Boss in front of the stai
   assert.equal(greaterBosses(loaded.run.changes).length, 1);
 });
 
-test("undo takes the Greater Boss back, and the next step calls it again", () => {
-  const { g, dx, dy } = besideLastTorch(4, true);
-  g.stepManually(dx, dy);
-  assert.equal(greaterBosses(g.run.changes).length, 1);
-  assert.ok(g.undo());
-  assert.equal(greaterBosses(g.run.changes).length, 0);
-  assert.equal(g.summoned, null);
-  g.stepManually(dx, dy);
-  assert.equal(greaterBosses(g.run.changes).length, 1, "undo relights just the last torch, so putting it out calls it again");
-});
-
-test("a torch put out stays out through a reload, and undo lights it again", () => {
+test("a torch put out stays out through a reload", () => {
   const { g, dx, dy } = besideLastTorch(6, true);
   const at = { x: g.run.player.x + dx, y: g.run.player.y + dy };
   const lit = (game: Game) => (game.world.torches ?? []).filter((t) => t.active).map((t) => `${t.x},${t.y}`);
@@ -84,9 +72,6 @@ test("a torch put out stays out through a reload, and undo lights it again", () 
   g.stepManually(dx, dy);
   assert.deepEqual(lit(g), []);
   assert.deepEqual(lit(new Game(decode(JSON.stringify(g.save)))), [], "the save keeps every torch put out");
-  assert.ok(g.undo());
-  assert.deepEqual(lit(g), [`${at.x},${at.y}`], "undo brings back only the torch the step put out");
-  assert.deepEqual(lit(new Game(decode(JSON.stringify(g.save)))), [`${at.x},${at.y}`]);
 });
 
 test("a floor with a torch still lit calls none", () => {
@@ -136,15 +121,10 @@ test("every enemy spawned mid-run pays its own loot, once, even on a tile alread
   }
 });
 
-test("a spawn undone and made again keeps its number, so it can't pay twice", () => {
+test("a spawn is numbered among the run's spawns, so it can't pay twice", () => {
   const { g, dx, dy } = besideLastTorch(4, true);
   g.stepManually(dx, dy);
   const [[, first]] = greaterBosses(g.run.changes) as [[string, Tile]];
   assert.equal(first.enemy!.spawn, 0);
-  assert.ok(g.undo());
-  assert.equal(g.run.spawns, undefined);
-  g.stepManually(dx, dy);
-  const [[, again]] = greaterBosses(g.run.changes) as [[string, Tile]];
-  assert.equal(again.enemy!.spawn, 0);
   assert.equal(g.run.spawns, 1);
 });

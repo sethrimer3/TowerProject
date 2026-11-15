@@ -63,7 +63,6 @@ test("the decoder keeps known cards' whole XP, level 60's at most, and drops the
  * gold key at (2, 0), and the hero at its west end holding `hand`. */
 function corridor(hand: CardId[], edit: (save: Save) => void = () => {}) {
   const save = playedSave();
-  save.upgrades.inspirationUndos = 1;
   save.upgrades.keySiphon = 1;
   save.training.hp = 3;
   edit(save);
@@ -92,21 +91,10 @@ test("a card gains an XP each time it activates: on reaching its target, and act
   assert.equal(siphon.save.cardXp.keySiphon, 1);
 });
 
-test("undo takes an activation's XP back", () => {
-  const g = corridor(["keySiphon", "stairs"]);
-  g.autoTurn();
-  assert.equal(g.save.cardXp.keySiphon, 1);
-  assert.ok(g.undo());
-  assert.equal(g.save.cardXp.keySiphon, undefined);
-});
-
-test("a level reached is queued for the hand's animation, and undo empties the queue", () => {
+test("a level reached is queued for the hand's animation", () => {
   const g = corridor(["keySiphon", "stairs"], (s) => (s.cardXp = { keySiphon: 99 }));
   g.autoTurn();
   assert.deepEqual(g.cardLevelUps, [{ card: "keySiphon", level: 1 }]);
-  assert.ok(g.undo());
-  assert.deepEqual(g.cardLevelUps, []);
-  assert.equal(g.save.cardXp.keySiphon, 99);
 });
 
 test("ARCHER, which never activates, gains an XP a new floor: two for a floor Skip climbs past", () => {

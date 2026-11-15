@@ -259,23 +259,3 @@ test("an arcanum in a run with no shrine (a Delve run) is never augmented", () =
   assert.equal(g.arcana.augmented("thunderbolt"), false);
   assert.equal(g.arcana.thunderbolt()!.bolts, 5);
 });
-
-test("undo takes back a step, never an augment boon", () => {
-  const save = defaults();
-  save.archives.levels = { ...save.archives.levels, unlockShrines: 1 };
-  save.upgrades.inspirationUndos = 1;
-  save.arcana.owned.thunderbolt = [0, 0, 0];
-  const g = new Game(save, random(5));
-  g.newRun({ seed: 7 });
-  const run = g.run as TowerRun;
-  run.maxHeight = 200;
-  run.shrine = { picked: [], rolls: 0, offer: ["augmentThunderbolt", "attack"] };
-  const p = run.player, w = g.world as RoomWorld;
-  w.cells.set(`${p.x + 1},${p.y}`, { kind: "floor" });
-  g.move(1, 0);
-  assert.ok(g.shrine.pick("augmentThunderbolt"));
-  assert.equal(g.arcana.thunderbolt()!.bolts, 9);
-  assert.ok(g.undo());
-  assert.deepEqual((g.run as TowerRun).shrine!.picked, ["augmentThunderbolt"]);
-  assert.equal(g.arcana.thunderbolt()!.bolts, 9);
-});

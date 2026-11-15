@@ -8,12 +8,13 @@ import { defaults } from "../src/save/save.ts";
 import { chooseStep } from "../src/automation.ts";
 import type { Mode, Tile } from "../src/entities.ts";
 
-// Characterization trace for the run bookkeeping around a step: undo, Revive,
-// reloading a mode, cleared rooms and area reward chests. Seeded Tower and
-// Delve runs mix Automove and random moves with undos, reloads and cleared
-// rooms, and every action's observable state is hashed against a golden file.
+// Characterization trace for the run bookkeeping around a step: Phoenix
+// Spark, Revive, reloading a mode, cleared rooms and area reward chests.
+// Seeded Tower and Delve runs mix Automove and random moves with deadly
+// ambushes, reloads and cleared rooms, and every action's observable state is
+// hashed against a golden file.
 // Regenerate (only when a gameplay change is intended) with UPDATE_GOLDEN=1.
-const GOLDEN = new URL("./fixtures/undo-clear-trace.golden.json", import.meta.url);
+const GOLDEN = new URL("./fixtures/spark-clear-trace.golden.json", import.meta.url);
 const STEPS = 400;
 
 function mulberry32(seed: number) {
@@ -53,8 +54,7 @@ function ambush(g: Game, [dx, dy]: readonly number[]) {
 }
 
 /** Plants a key, a door the player can open, or an enemy that hurts without
- * killing beside the player and walks onto it, so undo has damage and spent
- * keys to carry over. */
+ * killing beside the player and walks onto it. */
 function tussle(g: Game, rng: () => number, [dx, dy]: readonly number[]) {
   const p = g.run.player, dest = g.world.step(p.x, p.y, dx, dy);
   if (!dest || g.run.outside || g.world.tile(dest.x, dest.y).kind !== "floor") return null;
@@ -88,7 +88,7 @@ function observe(g: Game, action: unknown, result: unknown) {
     ...(g.mode === "tower" ? { damaged: r.damaged } : {}),
     areas: g.save.goals, shards: g.save.tower.inspiration, essence: g.save.breakthrough,
     gold: g.save.gold, reached: slice.reached, best: slice.best,
-    history: slice.history.length, fall: !!slice.fall,
+    sparksUsed: r.sparksUsed ?? 0, fall: !!slice.fall,
     changes: r.changes, floors: r.floors ?? null, route: g.route.length, auto: g.auto, paused: g.paused,
     blocked: g.blocked.until, brokenTorches: (g.world.torches ?? []).filter((t) => !t.active).length,
   });
@@ -102,10 +102,10 @@ function trace(mode: Mode, seed: number): string[] {
     const save = defaults();
     save.tutorials.climb = true;
     save.upgrades.breakthrough = 1;
-    save.upgrades.inspirationUndos = 1;
+    save.upgrades.phoenixSpark = 1;
     save.upgrades.undos = 1;
-    // Every Undo Count level, so a run has nine undos to spend.
-    save.archives.levels.undoCount = 8;
+    // Every Phoenix Spark Count level, so a run has nine charges to spend.
+    save.archives.levels.sparkCount = 8;
     save.upgrades.revive = 1;
     const g = new Game(save, rng);
     g.switchMode(mode);
@@ -115,15 +115,15 @@ function trace(mode: Mode, seed: number): string[] {
       let action: unknown, result: unknown;
       const roll = rng();
       if (g.fallen) {
-        // A fallen hero's fight is undone, or defeat is accepted
-        // and the player walks on from the forest, or a fresh run starts.
+        // Defeat is accepted and the player walks on from the forest, or a
+        // fresh run starts.
         action = "fallen";
-        if (roll < 0.5) result = g.undo();
-        else if (roll < 0.8) result = g.acceptDefeat();
+        if (roll < 0.6) result = g.acceptDefeat();
         else result = (g.acceptDefeat(), g.newRun(), "new");
       } else if (roll < 0.15) {
-        action = "undo";
-        result = g.undo();
+        // A deadly fight, which Phoenix Spark shrugs off while charges last.
+        action = "ambush";
+        result = ambush(g, DIRS[Math.floor(rng() * 4)]);
       } else if (roll < 0.2) {
         // Some reloads find the run saved under an older layout.
         action = "reload";
@@ -140,12 +140,6 @@ function trace(mode: Mode, seed: number): string[] {
       } else if (roll < 0.36) {
         action = "ambush";
         result = ambush(g, DIRS[Math.floor(rng() * 4)]);
-      } else if (roll < 0.38) {
-        // Undo from the pause menu lifts the pause.
-        action = "paused undo";
-        g.paused = true;
-        result = g.undo();
-        if (!result) g.paused = false;
       } else if (roll < 0.44) {
         action = "tussle";
         result = tussle(g, rng, DIRS[Math.floor(rng() * 4)]);
@@ -173,7 +167,7 @@ const SCENARIOS: [Mode, number][] = [
   ["tower", 11], ["tower", 12], ["tower", 13], ["tower", 16], ["tower", 17], ["tower", 18], ["delve", 14], ["delve", 15],
 ];
 
-test("undo, revive, reloads and room clears match the recorded trace", () => {
+test("Phoenix Spark, revive, reloads and room clears match the recorded trace", () => {
   const actual = Object.fromEntries(SCENARIOS.map(([m, s]) => [`${m}:${s}`, trace(m, s)]));
   if (process.env.UPDATE_GOLDEN || !existsSync(GOLDEN)) {
     writeFileSync(GOLDEN, JSON.stringify(actual, null, 1) + "\n");

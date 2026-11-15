@@ -8,8 +8,7 @@ import { bulkBuy, type BuyQuantity } from "./buy-quantity.ts";
 import { rowValue, runTrainingOpen } from "./loadout.ts";
 
 /** Run training: Training ranks bought with Silver inside a run, on top of
- * the hero's own, lasting only for that run (`run.training`, so undo takes
- * a purchase back with the rest of the run). */
+ * the hero's own, lasting only for that run (`run.training`). */
 
 /** What the rank after `bought` ranks bought this run costs in Silver, on
  * the row's `silver` schedule: its base, and for the k-th rank after it `step + k` more than the

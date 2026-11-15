@@ -24,7 +24,6 @@ function arena(size = 5) {
   const g = new Game(taught());
   // No theme's Gold, so these figures are the mechanic's alone (theme-collection.test.ts covers it).
   g.save.themes = [];
-  g.save.upgrades.inspirationUndos = 1; // undo needs Rehearsed steps
   const w = g.world as RoomWorld;
   w.cells = new Map();
   for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) w.cells.set(`${x},${y}`, { kind: "floor" });
@@ -84,11 +83,9 @@ test("pausing the hand keeps its path and the card that led, and playing on foll
   assert.deepEqual(g.cardPlan?.path, path.slice(1));
 });
 
-test("undo pauses the hand and drops its path", () => {
+test("toggling the hand says whether it plays or waits", () => {
   const g = arena();
-  g.autoTurn();
-  assert.ok(g.undo());
-  assert.ok(!g.auto && g.cardPlan === null && g.activeCard === null);
+  g.auto = false;
   g.toggleAuto();
   assert.ok(g.auto);
   assert.equal(g.message, "The hand takes over.");
@@ -359,7 +356,7 @@ test("buying Door & Key, then Enemy, deals their cards into the hand after STAIR
   assert.ok(g.skills.buy("autoClimb"));
   assert.ok(g.autoClimbs);
 });
-test("a beaten enemy pays Gold by its strength, once, whatever undo does", () => {
+test("a beaten enemy pays Gold by its strength", () => {
   for (const [strength, gold] of [["weak", 1], ["normal", 1], ["strong", 2], ["elite", 4]] as const) {
     const g = arena();
     g.save.settings.devMode = true;
@@ -369,12 +366,6 @@ test("a beaten enemy pays Gold by its strength, once, whatever undo does", () =>
     assert.ok(g.stepManually(1, 0));
     assert.equal(g.save.gold, gold, strength);
     assert.equal(g.save.tower.runGold, gold);
-    g.undo();
-    // Undo rebuilds the real floor; lay the arena, enemy and all, back.
-    (g.world as RoomWorld).cells = new Map(cells);
-    assert.equal(g.run.player.x, 0);
-    assert.ok(g.stepManually(1, 0));
-    assert.equal(g.save.gold, gold, "undo never pays twice");
   }
 });
 
@@ -389,7 +380,7 @@ test("silver: 1 for a weak enemy, rising 0.1 a floor to floor 201 and 0.05 a flo
   for (let f = 1; f < 400; f++) assert.ok(silverForKill("weak", f) > silverForKill("weak", f - 1), `rises every floor (${f})`);
 });
 
-test("a beaten enemy pays silver into the run, and undo takes it back", () => {
+test("a beaten enemy pays silver into the run", () => {
   const g = arena();
   g.save.settings.devMode = true;
   g.run.height = 10;
@@ -401,8 +392,6 @@ test("a beaten enemy pays silver into the run, and undo takes it back", () => {
   assert.equal(g.run.silver, 12, "floor 11: 4 × 3 for a strong enemy");
   assert.ok(g.gains.some((gain) => gain.text === "+12 Silver"), "it rises off the enemy's tile");
   assert.equal(new Game(decode(JSON.stringify(g.save))).silver, 12, "saved with the run");
-  g.undo();
-  assert.equal(g.silver, 0, "undo takes the kill's silver back");
   g.newRun({ outside: true, seed: 1 });
   assert.equal(g.silver, 0, "a new run starts with none");
 });
@@ -417,24 +406,6 @@ test("ending a run keeps the Gold found in it and says how much", () => {
   assert.equal(g.save.gold, 40, "Gold is banked as it is found, and stays");
   assert.match(g.message, /12 Gold kept/);
   assert.equal(g.save.tower.runGold, 0, "the next run starts finding afresh");
-});
-
-test("undo stays on the floor it was taken on: climbing forgets the history", () => {
-  const save = defaults();
-  save.upgrades.inspirationUndos = 1;
-  save.archives.levels.undoCount = 4;
-  const g = new Game(save);
-  g.run.height = 3;
-  const w = g.world as RoomWorld;
-  w.cells = new Map([["0,0", { kind: "floor" }], ["1,0", { kind: "floor" }], ["2,0", { kind: "stairs" }]]);
-  Object.assign(g.run.player, { x: 0, y: 0 });
-  assert.ok(g.move(1, 0));
-  assert.equal(save.tower.history.length, 1, "a step on the floor can be undone");
-  assert.ok(g.move(1, 0));
-  assert.equal(g.run.height, 4);
-  assert.equal(save.tower.history.length, 0);
-  assert.equal(g.undo(), false, "the climb can't be undone");
-  assert.equal(g.run.height, 4);
 });
 
 test("a new game's first run holds a hand of STAIRS alone until STAIRS is pressed, then walks at 2x", () => {

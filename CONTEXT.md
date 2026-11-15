@@ -23,7 +23,7 @@ A chest set in front of the hero on the first floor of the next area for each ar
 _Avoid_: clear chest, reward chest
 
 **Area ledger**:
-The lifetime record, by tower, of the areas mastered and cleared, so each pays exactly once however the run is undone, revived, reloaded or replaced.
+The lifetime record, by tower, of the areas mastered and cleared, so each pays exactly once however the run is revived, reloaded or replaced.
 _Avoid_: tower log, reward log
 
 ### The player
@@ -37,7 +37,7 @@ A text file of everything the player keeps between runs (no run in progress), in
 _Avoid_: backup, save file (the stored save also holds the runs)
 
 **Run Notes**:
-A run's trivia, kept as it plays: the tower and floor reached, its real time, steps, kills, keys and doors by kind, chests, and what it found (Gold, Silver, Inspiration or Breakthrough, materials and other loot). Note Taking research opens them, from the floor number during a run or the run's end dialog, and they copy as text. Undo takes back what the run itself holds, never what was found for good.
+A run's trivia, kept as it plays: the tower and floor reached, its real time, steps, kills, keys and doors by kind, chests, and what it found (Gold, Silver, Inspiration or Breakthrough, materials and other loot). Note Taking research opens them, from the floor number during a run or the run's end dialog, and they copy as text.
 _Avoid_: run stats, run log
 
 **Cinematic mode**:
@@ -291,7 +291,7 @@ _Avoid_: combat animation, pending fight
 A fight settled at once (Animate fights off, once Instant Combat is owned), shown afterwards as one strike each way: all the damage the hero dealt rising off the enemy and all it took rising off the hero. An enemy that falls shows nothing, since it plainly lost all its HP. A revival ends a round, and the next begins once the revival's fire is out.
 
 **Fallen**:
-The hero lost a fight: the run waits at 0 HP, the hand paused, until the player takes the fight back (Undo, spending one) or accepts defeat, which ends the run and returns to the forest.
+The hero lost a fight: the run waits at 0 HP, the hand paused, until the player accepts defeat, which ends the run and returns to the forest.
 _Avoid_: dead, game over
 
 **Gain**:
@@ -305,7 +305,7 @@ _Avoid_: item Gold, floor Gold (that is Gold / Floor)
 ### The character
 
 **Loadout**:
-What the character starts a run with: ATK, DEF, max HP, shroud, Regen, keys and how many undos each run has. It comes from the baseline, the upgrades bought, the training bought and the equipped gear.
+What the character starts a run with: ATK, DEF, max HP, shroud, Regen, keys and how many Phoenix Spark charges each run has. It comes from the baseline, the upgrades bought, the training bought and the equipped gear.
 _Avoid_: base stats, starting stats
 
 **Level**:
@@ -447,7 +447,7 @@ A factor on every Gold banked: the tower's, the Gold ad's boost or Ad-Disable (o
 _Avoid_: Gold bonus (the Training row)
 
 **Silver**:
-The currency of a single run: each monster beaten pays some, more on higher floors and for stronger monsters (and each new floor, with Wishing Well), and it is spent only inside that run, on run training. Undo takes it back with the kill, and it is gone when the run ends.
+The currency of a single run: each monster beaten pays some, more on higher floors and for stronger monsters (and each new floor, with Wishing Well), and it is spent only inside that run, on run training. It is gone when the run ends.
 _Avoid_: coins, run gold
 
 **Run training**:
@@ -584,7 +584,7 @@ A treasure chest that, through the Chest card's bonus, also holds Equipment upgr
 A treasure chest that, through the Chest card's bonus, also holds a Standard piece of equipment, Common, Uncommon or Rare; marked by a purple glow and two stars, settled as its floor is made.
 
 **Hand**:
-The cards the player sets up before a run, in priority order, in four slots (five with Larger Hand, and more bought with Gems); it always holds the STAIRS card. Called the **Auto hand** beside the Manual hand. Inside a run the hand moves the hero, and the player can't: the first card that can act (or Card Group, as one) picks its closest target, and the hero follows the shortest path there a step at a time before the hand chooses again. The player can pause it, and undo pauses it. Each run keeps the hand as ordered when it went inside.
+The cards the player sets up before a run, in priority order, in four slots (five with Larger Hand, and more bought with Gems); it always holds the STAIRS card. Called the **Auto hand** beside the Manual hand. Inside a run the hand moves the hero, and the player can't: the first card that can act (or Card Group, as one) picks its closest target, and the hero follows the shortest path there a step at a time before the hand chooses again. The player can pause it. Each run keeps the hand as ordered when it went inside.
 _Avoid_: loadout (what the character starts a run with)
 
 **Manual hand**:
@@ -744,13 +744,9 @@ Door & Key, Enemy and Auto-Climb, the three 1-Inspiration skills at the top of t
 One of a run's limited uses of Ignore or Target. Each regains a use every so many new floors climbed once its regain skill (Ignore More, Target More) is owned.
 _Avoid_: token, mana
 
-**Undo**:
-Taking back the last move on the floor the hero stands on. A run has a limited number of undos (Rehearsed steps, Echoes of time and Undo Count research set how many), and one spent never comes back during that run.
-_Avoid_: rewind, history slot
-
-**Run timeline**:
-What undo can take a run back to: the moves held on the floor the hero stands on, and while the hero lies fallen, the run just before that fight.
-_Avoid_: undo stack, history (alone)
+**Phoenix Spark**:
+A charge that shrugs off one hit that would defeat the hero, doing nothing at all, once every revival (Revive, Angel Wings) has failed. A run has a limited number (the Phoenix Spark skill, Echoes of time and Phoenix Spark Count research set how many), and one spent never comes back during that run. There is no undo: a move, once made, stands.
+_Avoid_: undo, rewind, extra life
 
 **Hand rules**:
 What the hand's cards may do now: their badges' rules and marks, Ignore's tiles, and whether a card that acts in place can act. The hand plans from them; the hand's turn applies what they decide.
@@ -765,7 +761,7 @@ Sending the hero inside a run to a tile the player taps, ahead of the hand, unti
 _Avoid_: waypoint, goto
 
 **Boost**:
-A Vanguard Banner's or Aegis charm's raise of ATK or DEF by 20% for 50 turns of a run (more of both with its Archives research), the hero glowing red or blue while it lasts; undo never takes it away.
+A Vanguard Banner's or Aegis charm's raise of ATK or DEF by 20% for 50 turns of a run (more of both with its Archives research), the hero glowing red or blue while it lasts.
 _Avoid_: buff
 
 **Bomb**:
@@ -793,7 +789,7 @@ An upgrade of a card tree no card buy of its rarity has opened yet; it takes no 
 _Avoid_: locked upgrade (locked means waiting on the upgrade before it)
 
 **Card XP**:
-What raises a card's level: one each time the card activates in a run, or, for a card that never activates (Archer), one for each floor completed for the first time in the run while the hand holds it. Undo takes it back with the move.
+What raises a card's level: one each time the card activates in a run, or, for a card that never activates (Archer), one for each floor completed for the first time in the run while the hand holds it.
 
 **Card point**:
 What each card level gives the card, to spend on its own card tree. Not the character's training points.
@@ -1004,7 +1000,7 @@ The sign at the foot of each forest's path while the Delve is open (a tournament
 _Avoid_: Delve tab, mode switch
 
 **Automove memory**:
-What Delve Automove has seen of the labyrinth during this run, and how often the player has stood on each tile. Undo leaves it as it is, since what was seen stays seen; it is forgotten when a run enters the labyrinth, when a milestone gate seals behind the player, and when the layout changes.
+What Delve Automove has seen of the labyrinth during this run, and how often the player has stood on each tile. It is forgotten when a run enters the labyrinth, when a milestone gate seals behind the player, and when the layout changes.
 _Avoid_: known tiles, visit map
 
 - **Proving Grounds**: trials entered through the golden square outside the Tower.

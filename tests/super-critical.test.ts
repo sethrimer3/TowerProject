@@ -186,7 +186,6 @@ test("without Super Critical the forecast is unchanged by the rule's shape", () 
 /** A Tower run on seed 7, the hero with ATK 10, with Bombs and certain crits. */
 function bomber(superChance: number) {
   const s = playedSave();
-  s.upgrades.inspirationUndos = 1;
   s.upgrades.bombs = 1;
   s.upgrades.critical = 1;
   s.upgrades.superCritical = 1;
@@ -207,7 +206,7 @@ function lay(g: Game) {
   (g.world as RoomWorld).cells = new Map<string, Tile>([["0,0", { kind: "floor" }], ["1,0", { kind: "floor" }], ["3,0", tile]]);
 }
 
-test("a Bomb rolls critical and Super Critical hits, the same again after undo", () => {
+test("a Bomb rolls critical and Super Critical hits, the same again for the same run", () => {
   // Crit % 80 × 3 (research): 240%, so two applications are certain.
   const g = bomber(0), { factor, chance } = g.crit!;
   assert.ok(chance >= 200);
@@ -217,13 +216,11 @@ test("a Bomb rolls critical and Super Critical hits, the same again after undo",
   assert.ok(dealt >= 10 * (1 + 2 * (factor - 1)), `${dealt} counts the certain crits`);
   assert.ok(g.gains.some((gain) => gain.strike === "crit"));
 
-  // Taken back and thrown again, the Bomb's rolls land the same.
-  g.undo();
-  assert.equal(g.run.bombsUsed ?? 0, 0);
-  lay(g);
-  g.arm("bomb");
-  assert.equal(g.useArmed(3, 0), "used");
-  assert.equal(100000 - g.world.tile(3, 0).enemy!.hp, dealt);
+  // Thrown again in the same run, the Bomb's rolls land the same.
+  const again = bomber(0);
+  again.arm("bomb");
+  assert.equal(again.useArmed(3, 0), "used");
+  assert.equal(100000 - again.world.tile(3, 0).enemy!.hp, dealt);
 });
 
 test("a Bomb with a certain Super Critical chance multiplies by its factor and says so", () => {

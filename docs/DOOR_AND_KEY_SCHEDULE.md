@@ -88,7 +88,6 @@ A wooden door opens with any one key: the cheapest held, gold before blue before
 | When breaking would bring HP to 0 | The door refuses, like a blocked step. Planners and the hand treat it as closed. Breaking never kills. |
 | Revive | Doesn't apply (not a fight). |
 | Effective / Dampen badges | Scale the HP cost as they scale a fight's damage, and the key cost as now. |
-| Undo | One step, as for any door. |
 | Shown | Inspect: *Wooden Door*, *Durability 38*, and without a key *Break: HP 100 → 62* (or that the hero is too weak to break it). Damage Visual shows the HP cost on the door while the hero holds no key, red when it would fell the hero. Breaking it raises the HP lost as a heart, as a Heart Door's toll does, with no fight animation; like that toll, it never costs an area's mastery. |
 | Cards | DOOR and WOODEN DOOR (was STEEL DOOR) head for a Wooden Door the hero holds a key for or can break down and survive, so the starting hand breaks one down when no key is held. |
 
@@ -278,7 +277,7 @@ Tower keys per lock now sit near their aims; before the coverage cap, gold ran 0
 After each phase: re-run the census and bump `TOWER_LAYOUT_VERSION`. Phase 3 also bumps the Delve's `LAYOUT_VERSION`, because its steel doors become wooden.
 
 Goldens re-recorded, as they fail:
-- **Phases 2–4:** `tower-layout`, `tower-planning`, `tower-forks`, `world-boards`, `decor-plan`, `step-trace`, `undo-clear-trace`, `tower-automation`, `render-calls`, `render.golden.json`, `ui.golden.json`.
+- **Phases 2–4:** `tower-layout`, `tower-planning`, `tower-forks`, `world-boards`, `decor-plan`, `step-trace`, `spark-clear-trace`, `tower-automation`, `render-calls`, `render.golden.json`, `ui.golden.json`.
 - **Phase 3 also:** `delve-labyrinth`, `delve-automove`, `tournament-trace`, `save-decode` (renamed card ids).
 - **Phase 5:** the Delve goldens again.
 

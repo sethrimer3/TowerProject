@@ -11,8 +11,8 @@ Most tests here are characterization goldens (`tests/fixtures/*.golden.json`): t
 | Board drawing code (`render/rendering.ts`, `render/tile-painters.ts`, lighting, decor, route line) | `render-calls`, `render.golden.json`, and the module's own golden (`lighting-passes`, `art-modules`, `outdoor-art`) |
 | A Game theme board (`*-board.ts` but Classic's) | `themed-boards` (every board's contents, heart, torches, hero, ground and `over`, call by call), and `theme-popups` if what rises off the board changes |
 | Native terrain art (`sprites/dungeon.ts`) | `render-calls`, `render.golden.json` |
-| World or content generation (Tower floors, Delve labyrinth, decor plans) | the generation golden (`tower-layout`, `tower-planning`, `delve-labyrinth`, `decor-plan`, `world-boards`), then every golden that plays on those boards (`step-trace`, `undo-clear-trace`, `tower-automation`, `delve-automove`, `render-calls`, `render.golden.json`); saved maps change, so also bump `LAYOUT_VERSION` |
-| Gameplay rules or balance (`progression/upgrades.ts`, `progression/training.ts`, `economy/kill-pay.ts`, `step-effects.ts`, enemies, pickups) | `step-trace`, `undo-clear-trace`, `tower-automation`, `delve-automove`, `tournament-trace` as they fail |
+| World or content generation (Tower floors, Delve labyrinth, decor plans) | the generation golden (`tower-layout`, `tower-planning`, `delve-labyrinth`, `decor-plan`, `world-boards`), then every golden that plays on those boards (`step-trace`, `spark-clear-trace`, `tower-automation`, `delve-automove`, `render-calls`, `render.golden.json`); saved maps change, so also bump `LAYOUT_VERSION` |
+| Gameplay rules or balance (`progression/upgrades.ts`, `progression/training.ts`, `economy/kill-pay.ts`, `step-effects.ts`, enemies, pickups) | `step-trace`, `spark-clear-trace`, `tower-automation`, `delve-automove`, `tournament-trace` as they fail |
 | The assemble's melt (`ui/slag-merge.ts`) | `slag-merge` |
 | UI text, pages, HUD or dialogs | `ui.golden.json` (`npm run test:ui`) |
 | Save format | `save-decode` |

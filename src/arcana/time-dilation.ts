@@ -9,8 +9,7 @@ import { isRecord, wholeIn } from "../save/decode.ts";
 /** The highest Slowdown, whatever raises it. */
 export const SLOWDOWN_CAP = 90;
 
-/** What a run keeps of Time Dilation, in the run so undo takes it back with what
- * it slowed: the cooldown's turns left, and the turns the field has left (absent
+/** What a run keeps of Time Dilation, in the run: the cooldown's turns left, and the turns the field has left (absent
  * while there is none). */
 export type DilationRun = { timer?: number; left?: number };
 

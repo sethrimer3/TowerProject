@@ -254,7 +254,6 @@ function floor(rows: string[]) {
   const g = new Game(playedSave());
   // No theme's Gold, so these figures are the mechanic's alone (theme-collection.test.ts covers it).
   g.save.themes = [];
-  g.save.upgrades.inspirationUndos = 1;
   g.save.upgrades.cardBadges = 1;
   const w = g.world as RoomWorld, height = rows.length;
   w.cells = new Map();
@@ -368,7 +367,7 @@ test("a card's badges work together: every reward pays, and any gate closes it",
   assert.deepEqual(h.handRules.cardRules("atkUp"), { stairward: true, closed: false });
 });
 
-test("Gold Touch pays once a target, even after undo", () => {
+test("Gold Touch pays once a target", () => {
   const g = floor(["@.A.K"]);
   g.run.hand = ["atkUp", "key"];
   badge(g, "atkUp", "goldTouch", 5);
@@ -376,9 +375,6 @@ test("Gold Touch pays once a target, even after undo", () => {
   turns(g, 2);
   // The ATK shard pays its own 1 Gold as well.
   assert.equal(g.save.gold, gold + 5 + 1);
-  assert.ok(g.undo());
-  turns(g, 1);
-  assert.equal(g.save.gold, gold + 5 + 1, "taking the step again pays nothing more");
 });
 
 test("Goldback tallies a linear combo on the hand's last card, which the next Gold found uses up", () => {
@@ -392,8 +388,6 @@ test("Goldback tallies a linear combo on the hand's last card, which the next Go
   turns(back, 2);
   assert.equal(back.run.goldCombo, 4, "KEY is: level 3 adds x4");
   assert.equal(back.save.gold, before + 2, "the badge itself pays no Gold: only the shard and key picked up, 1 each, which the combo leaves alone");
-  assert.ok(back.undo());
-  assert.equal(back.run.goldCombo, undefined, "undo takes the activation back");
 });
 
 test("Goldback's combo multiplies the next kill's Gold once, and is then spent", () => {
@@ -412,20 +406,6 @@ test("Goldback's combo multiplies the next kill's Gold once, and is then spent",
   assert.ok(Math.abs(boosted.first - plain.first * 5) < 1e-6, "the first Gold is x5");
   assert.equal(boosted.second, plain.second, "the next is not");
   assert.equal(boosted.left, undefined);
-});
-
-test("undo takes back the HP, Silver and XP an activation paid", () => {
-  const g = floor(["@.A"]);
-  g.run.hand = ["atkUp"];
-  g.run.player.hp = 40;
-  badge(g, "atkUp", "hp", 3);
-  g.autoTurn();
-  const hp = g.run.player.hp, silver = g.silver, xp = g.save.xp;
-  g.autoTurn();
-  assert.equal(g.run.player.hp, snap(hp * 1.0003));
-  assert.equal(g.run.maxHpBoost, 0.03);
-  assert.ok(g.undo());
-  assert.deepEqual([g.run.player.hp, g.silver, g.save.xp, g.run.maxHpBoost], [hp, silver, xp, undefined]);
 });
 
 test("Stairward picks the target with the shortest walk on to the stairs, then rests for its cooldown", () => {
@@ -541,7 +521,7 @@ test("Effective makes the card's target stronger: more heal, a fraction more key
   assert.equal(m.silver, snapped(plain.silver * 1.35), "Silver rises with it");
 });
 
-test("Effective's added damage can fell the hero; undo takes the fight back", () => {
+test("Effective's added damage can fell the hero", () => {
   const plain = floor(["@.B"]);
   plain.run.hand = ["monster"];
   turns(plain, 2);
@@ -553,8 +533,6 @@ test("Effective's added damage can fell the hero; undo takes the fight back", ()
   g.run.player.hp = lost + 1;
   turns(g, 2);
   assert.ok(g.fallen, "the extra damage fells the hero");
-  assert.ok(g.undo());
-  assert.equal(g.run.player.hp, lost + 1);
 });
 
 test("Dampen makes the target weaker: a fraction of a key, a gentler Heart Door and fight", () => {
@@ -633,7 +611,7 @@ test("stuck with a ?, the nearest becomes ! and the card heads for it; stepping 
   assert.equal(g.run.player.keys.yellow, 2, "stuck again, the last ? becomes ! too");
 });
 
-test("Skip may make the card's target vanish without effect, the same after undo, with no limit a floor", () => {
+test("Skip may make the card's target vanish without effect, the same for the same seed, with no limit a floor", () => {
   const make = (seed: number) => {
     const g = floor(["@.B.B"]);
     g.run.hand = ["monster"];
@@ -650,9 +628,6 @@ test("Skip may make the card's target vanish without effect, the same after undo
   assert.deepEqual([g.run.player.hp, g.run.kills, g.silver], [g.run.player.maxHp, 0, 0], "without a fight or its rewards");
   assert.equal(g.run.changes["2,0"]?.kind, "floor");
   assert.equal(g.run.skipRolls, 1);
-  assert.ok(g.undo());
-  assert.equal(g.run.changes["2,0"], undefined, "undo brings the monster back");
-  assert.equal(g.run.skipRolls, undefined, "and takes its roll back");
   assert.ok(make(seed).vanished, "the same seed and tile roll the same");
   assert.equal(g.handRules.cardRules("monster"), undefined, "nothing closes it for the floor");
   assert.ok(!g.handRules.cardResting("monster"));

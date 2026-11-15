@@ -69,7 +69,6 @@ test("importing a file gives back everything kept between runs, and no run", () 
   assert.equal(exportProfile(save, NOW), text);
   assert.equal(save.tower.run, null);
   assert.equal(save.delve.run, null);
-  assert.deepEqual(save.tower.history, []);
   assert.equal(save.provingGrounds, undefined);
 });
 

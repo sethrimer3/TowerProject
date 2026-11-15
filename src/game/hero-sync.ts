@@ -4,7 +4,6 @@ import type { Save } from "../save/shape.ts";
 import { loadout } from "../progression/loadout.ts";
 import { MODES } from "../modes.ts";
 import { loadoutShift, shiftHero } from "../progression/hero-stats.ts";
-import { RunTimeline } from "../run-timeline.ts";
 import { trainedAmount } from "../progression/training.ts";
 import { ranksInRun } from "../progression/run-training.ts";
 import { treeBonus, treeOverheal } from "../cards/trees.ts";
@@ -46,9 +45,7 @@ export function readyForestRuns(save: Save) {
  * ATK/DEF gathered from items and boosts going on are kept,
  * and a run still in the forest takes everything owned now. More max HP
  * comes with the HP to fill it (`shiftHero`). Each mode's run
- * follows its own loadout (its hero's equipment). The run's undo history
- * (and a fall's snapshot) shifts with it, so undo never takes back what was
- * bought, only the steps. `change` returning false changes nothing;
+ * follows its own loadout (its hero's equipment). `change` returning false changes nothing;
  * returns whether it went through. */
 export function changeLoadout(save: Save, change: () => boolean | void) {
   const before = BOTH_MODES.map((mode) => loadout(save, mode));
@@ -57,12 +54,10 @@ export function changeLoadout(save: Save, change: () => boolean | void) {
     const run = save[mode].run;
     if (!run || run.outside) return;
     const after = loadout(save, mode), shift = loadoutShift(before[i], after);
-    for (const copy of new RunTimeline(save, mode).runs()) {
-      shiftHero(copy, shift, treeOverheal(trainedAmount({ upgrades: save.upgrades, training: ranksInRun(save, copy) }, "overheal"), treeBonus(copy.cardTrees)));
-      // Keys the loadout adds come into the hand at once.
-      const keys = copy.player.keys;
-      for (const color of KEY_COLORS) keys[color] = Math.max(0, keys[color] + after.keys[color] - before[i].keys[color]);
-    }
+    shiftHero(run, shift, treeOverheal(trainedAmount({ upgrades: save.upgrades, training: ranksInRun(save, run) }, "overheal"), treeBonus(run.cardTrees)));
+    // Keys the loadout adds come into the hand at once.
+    const keys = run.player.keys;
+    for (const color of KEY_COLORS) keys[color] = Math.max(0, keys[color] + after.keys[color] - before[i].keys[color]);
     syncShield(save, run, mode);
   });
   readyForestRuns(save);

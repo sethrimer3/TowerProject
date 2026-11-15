@@ -52,8 +52,8 @@ test("the tree: Red Key under Blue Key, Thorns between Buy Quantity and Torch, a
     [[70, 376, ["cardTorch"]], [70, 394, ["heroShield"]], [90, 376, ["heroShield"]], [90, 394, ["regrowShield"]]]);
   assert.deepEqual(["heroShield", "shieldThorns", "regrowShield", "shieldRegen"].map((id) => cost(id as "heroShield", 0)), [10, 15, 10, 15]);
   const breakthrough = TREES.find((t) => t.id === "breakthrough")!, node = (id: string) => breakthrough.nodes.find((n) => n.id === id)!;
-  assert.deepEqual([node("aetherShield").requires, cost("aetherShield", 0)], [["inspirationUndos"], 5]);
-  assert.deepEqual(node("undos").requires, ["aetherShield"], "Echoes of time follows it");
+  assert.deepEqual([node("aetherShield").requires, cost("aetherShield", 0)], [["esotericTraining"], 5]);
+  assert.deepEqual(node("phoenixSpark").requires, ["aetherShield"], "Phoenix Spark follows it");
   assert.deepEqual([node("shieldLimitBreak").requires, cost("shieldLimitBreak", 0)], [["limitBreak2"], 5]);
   const upgrades = { ...defaults().upgrades, trainers: 1, questForKnowledge: 1 };
   assert.ok(skillHidden("heroShield", upgrades));
@@ -222,9 +222,8 @@ test("a run starts with the shield full; none is carried without the skill", () 
   assert.ok(!("shield" in plain.run.player) && !("shieldMax" in plain.run.player) && !("shieldThorns" in plain.run.player));
 });
 
-test("broken, it regrows turn by turn and reforms full; undo and a reload keep the countdown", () => {
+test("broken, it regrows turn by turn and reforms full; a reload keeps the countdown", () => {
   const g = arena({ ...brute, hp: 1, attack: 1, defense: 0 }), p = () => g.run.player;
-  g.save.upgrades.inspirationUndos = 1;
   p().shield = 0;
   assert.equal(g.run.shieldRegrow, undefined);
   g.move(1, 0);
@@ -234,8 +233,6 @@ test("broken, it regrows turn by turn and reforms full; undo and a reload keep t
   const saved = decode(JSON.stringify(g.save));
   assert.deepEqual(saved.tower.run!.shieldRegrow, { left: 1198, of: 1200 });
   assert.equal(saved.tower.run!.player.shield, 0);
-  assert.ok(g.undo());
-  assert.deepEqual(g.run.shieldRegrow, { left: 1199, of: 1200 }, "undo takes a turn back");
   g.run.shieldRegrow = { left: 1, of: 1200 };
   openFloor(g);
   g.move(0, 1);

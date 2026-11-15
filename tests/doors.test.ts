@@ -53,7 +53,7 @@ test("Heart Door Resilience research shrinks a Heart Door's toll 5% a level, for
   assert.equal(hpAfter(50), 51, "half the toll at level 10");
   assert.equal(hpAfter(50, 0.8), 61, "after Dampen's scale");
   const levels = RESEARCH.heartDoorResilience.levels;
-  assert.deepEqual(levels.map((l) => l.gold), RESEARCH.undoCount.levels.concat({ gold: 18_500 } as never, { gold: 23_000 } as never).map((l) => l.gold));
+  assert.deepEqual(levels.map((l) => l.gold), RESEARCH.sparkCount.levels.concat({ gold: 18_500 } as never, { gold: 23_000 } as never).map((l) => l.gold));
   assert.deepEqual(levels.map((l) => l.hours), Array.from({ length: 10 }, (_, i) => 8 * (i + 1)));
   assert.deepEqual(RESEARCH.heartDoorResilience.requires, [{ upgrade: "heartDoorResilience" }]);
   const g = new Game(playedSave());

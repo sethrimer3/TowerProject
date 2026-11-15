@@ -28,7 +28,7 @@ export const PROFILE_SECTIONS = {
 export const UNSECTIONED = ["version", "provingGrounds"] as const satisfies readonly (keyof Save)[];
 
 /** What each mode's slice keeps between runs: its records, tiers and
- * currency. The rest (the run, its undo history and fall, the tiles it
+ * currency. The rest (the run and its fall, the tiles it
  * looted, what it has found so far, the Delve's Automove memory) is the
  * run's. */
 export const KEPT_SLICE = ["best", "reached", "tier", "tiersOpen", "tierRecords"] as const satisfies readonly (keyof ModeSave)[];

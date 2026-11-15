@@ -124,7 +124,6 @@ test("Gem Chance's Gem lies in a side room where there is one: furthest off the 
 /** A 5 × 5 open floor with the stairs in its far corner, the hero at its first corner, holding GEM. */
 function arena(cardTrees: Record<string, number>) {
   const g = new Game(defaults());
-  g.save.upgrades.inspirationUndos = 1;
   g.save.upgrades.gemCard = 1;
   const w = g.world as RoomWorld;
   w.cells = new Map();
@@ -138,7 +137,7 @@ function arena(cardTrees: Record<string, number>) {
   return g;
 }
 
-test("Gem Chance lays a Gem of its own on a new floor beside the cooldown's; GEM heads for them and gains XP from each, which undo keeps", () => {
+test("Gem Chance lays a Gem of its own on a new floor beside the cooldown's; GEM heads for them and gains XP from each", () => {
   const g = arena({ gemChance2: 100, gemXp: 4 });
   assert.ok(g.move(1, 0));
   const gems = g.gemFinder.gems;
@@ -152,9 +151,6 @@ test("Gem Chance lays a Gem of its own on a new floor beside the cooldown's; GEM
   assert.equal(g.save.gems, 1);
   assert.equal(g.save.cardXp.gem, 5, "Gem XP: 1 XP and 400% more");
   assert.equal(g.gemFinder.gems.length, 1);
-  assert.ok(g.undo());
-  assert.equal(g.save.cardXp.gem, 5, "undo keeps the XP, as it keeps the Gem");
-  assert.equal(g.save.gems, 1);
 });
 
 test("Gem Chance's Gem missed is gone for good; GEM gains no XP from activating, only from Gems", () => {

@@ -17,7 +17,6 @@ const boss: Enemy = { name: "Warden", hp: 1, attack: 0, defense: 0, tier: 1, str
 /** A Tower run on an open floor with `enemy` east of the hero, at 100 of 1,000 HP, Boss Potion Drop researched if `researched`. */
 function arena(enemy: Enemy, researched = true) {
   const s = defaults();
-  s.upgrades.inspirationUndos = 1;
   if (researched) s.archives.levels.bossPotion = 1;
   const g = new Game(s, random(5));
   g.newRun({ seed: 7 });
@@ -37,14 +36,12 @@ test("Tower III's floor 200 Goal opens Boss Potion Drop: one level, 1 billion Go
   assert.deepEqual([project.levels[0]!.gold, Math.round(project.levels[0]!.hours * 60)], [1e9, 11667]);
 });
 
-test("a boss's kill heals the hero as a percent potion would, rising where it fell, and undo takes it back", () => {
+test("a boss's kill heals the hero as a percent potion would, rising where it fell", () => {
   const g = arena(boss), heal = potionRestores({ kind: "potion", color: "red" }, 1000, g.stepRules);
   assert.ok(heal > 0);
   assert.ok(g.move(1, 0));
   assert.equal(g.run.player.hp, 100 + heal);
   assert.deepEqual([g.lastHeal?.from, g.lastHeal?.to, g.lastHeal?.x, g.lastHeal?.y], [100, 100 + heal, 1, 0]);
-  assert.ok(g.undo());
-  assert.equal(g.run.player.hp, 100);
 });
 
 test("no potion from a Greater Boss, an ordinary enemy, or before the research", () => {

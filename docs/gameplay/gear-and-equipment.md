@@ -11,18 +11,17 @@ A **Traveler's elixir** fills HP to max HP, the HP bar filling up to it; with HP
 A **Vanguard Banner** raises ATK by 20% for the next 50 turns, and an **Aegis charm** raises DEF by 20% for the next 50 turns; while one is on, the hero glows red (the Vanguard Banner) or blue (the Aegis charm), its button is lit, and another of the same kind can't be used until it runs out.
 Once its skill is owned, each opens two Archives projects: **Vanguard Banner Multiplier** and **Aegis Charm Multiplier** (+10 points a level for 28 levels, up to +300%) and **Vanguard Banner Duration** and **Aegis Charm Duration** (+10 turns a level for 25 levels, up to 300 turns), 250 Gold and 1 hour 45 minutes for the first level, each level after doubling the Gold and growing the time; a level counts from the next one used, and one already on keeps what it started with.
 A boost adds 20% of the stat as it was when pressed, and takes that much back off when it runs out.
-Undo never gives a use back and never takes an effect away: a heal stays healed, and a boost keeps counting down, as if no turn had been undone.
 Uses come back only with the next run.
 The tab has a **?** at the top that explains provisions (your Gold shows in the currencies bar above); each provision's icon carries the number owned in a circle at its bottom right, which bounces as you buy one, and its **Buy** button stands at the row's right.
 Every provision costs 100 Gold, and each one after a hundred times the last (10,000, 1,000,000, 100,000,000 …).
 Provisions bought before they became uses (when they gave starting stats) were reset to none.
 Once **Extra Key** (1 Breakthrough, after Movement Speed in the Breakthrough tree) is owned, Provisions also sell a **Gold Key**, which uses itself: each owned gives a run one gold key on the floor it starts on, and again on the first floor 100 or more floors past the last that gave them (floor 1, then 101, 201 …; a floor Skip climbs past still counts, so the next floor gives them).
 In the Delve, floors are its equivalent floors.
-The keys come as a floor begins, so undo can't take them back.
+The keys come as a floor begins.
 Once the Inspiration skill **Bombs** (5 Inspiration, left of Critical Prediction) is owned, Provisions also sell **Bombs**: each one owned is a Bomb every run carries.
 Its button shows the Bombs left: press it, then tap an enemy, and the Bomb explodes on its tile, dealing that enemy your ATK, critical and Super Critical hits rolled as for a strike (its DEF doesn't reduce it).
 An enemy the Bomb fells is cleared and pays out as if you had beaten it; a tap on a tile with no enemy uses no Bomb, and pressing the button again puts the Bomb away.
-Unlike the other provisions, throwing a Bomb is a turn of its own, so undo takes it back, Bomb included, without paying the kill twice.
+Unlike the other provisions, throwing a Bomb is a turn of its own.
 Bombs used come back only with the next run.
 
 ## Equipment

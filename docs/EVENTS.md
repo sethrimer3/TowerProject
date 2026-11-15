@@ -63,9 +63,9 @@ The rest are drawn among (`DRAWN_MISSIONS`):
 | Get X free upgrades | 3k, 6k, 15k | each level Free Training gives |
 | Earn max Interest X floors in a row | 60, 300, 500 | the run's floors in a row paying the most Interest (`best`) |
 
-- **Once a tile:** kills and pickups are keyed by mode and loot key (`save.events.counted`), so undo bringing a tile back never counts it twice.
+- **Once a tile:** kills and pickups are keyed by mode and loot key (`save.events.counted`), so a tile never counts twice.
 - **Streaks** (`save.events.streaks`) belong to one run (mode and seed) and start over with the next.
-  A fight costing HP breaks the floors without damage from the floor it was on; undo doesn't take that back.
+  A fight costing HP breaks the floors without damage from the floor it was on.
   Floors count as each is climbed for the first time in the run, a floor Skip climbs past included; the Delve counts its equivalent floors.
 - Tournament runs count like any other.
 

@@ -24,7 +24,6 @@ Inside a run, the **Arcana** tab after the Training tabs shows a card for each, 
 An arcanum with a cooldown also has a bar on its card, filling as the cooldown runs down, with the turns left at its right end.
 Entering a new floor interrupts none of them: the cooldown runs on, and whatever the arcanum has in progress continues there for the turns it has left.
 You can switch them on and off up to 40 times a run, all of them together; the number left rises off the switch each time.
-Undo doesn't give a toggle back.
 An arcanum with a cooldown starts it over when switched back on.
 **Toggles** in Settings, in their collapsible **Arcana** group, hide Ricochet Shot's and Thunderbolt's damage animations and, once you have them, Lifespring's, Phantasm's and Necrotic Frost's damage on enemies, and once Voidwell Damage is researched, Voidwell's; they strike all the same.
 Once you have Phantasm, an alpha slider there, 0 to 1, sets how solid its ghosts are drawn: 0.5 at first, and at 0 you don't see them at all.
@@ -57,7 +56,7 @@ Holding arcana never makes this boon rarer.
 ## Shrine boons
 
 While a Tower run holds an arcanum, bought or lent, its Shrines can offer one green boon that strengthens it, once a climb.
-Each lasts the rest of the climb, whether the arcanum is on or off, and undo never takes one back.
+Each lasts the rest of the climb, whether the arcanum is on or off.
 Your card and its information show what it comes to.
 
 | Arcanum | Boon | What it does |
@@ -116,7 +115,6 @@ Aurum Bloom's information, in the Arcana menu and from its card in a run, has a 
 *Spotlight beams shine out from the hero, turning 4° clockwise each turn. Enemies in them take the Bonus × your ATK on hits from your ATK.*
 The beams start with the first pointing straight up, and turn smoothly through each turn: they stop for nothing, including walls, and reach the edges of the area.
 They show as a faint brightening on the board, and go on turning while switched off.
-Undo turns them back, and each run starts them over.
 
 An enemy is in a beam by the direction from you to the center of its tile, within half the beam's Angle of the beam's center.
 A fight, its ricochet and a Bomb read the beams as the turn begins; an arrow and its ricochet read them, and where you stand mid-step, the moment each fires.
@@ -166,7 +164,6 @@ It kills like any other hit, paying what the enemy pays, and heals nothing.
 With fewer enemies than bolts, the rest strike again next turn, each enemy at most once a turn, until they are used up or no enemies remain on the floor: any left then are wasted.
 If the cooldown runs out meanwhile, its bolts join those still waiting.
 Bolts still waiting follow you to the next floor, and switching it off loses them.
-Undo takes back what a bolt did, but not its cooldown or the bolts spent.
 
 | Attribute | First | Highest | Levels |
 |---|---|---|---|
@@ -203,7 +200,6 @@ A Shielded enemy's bubble cuts the field's damage as it cuts your other hits.
 An enemy your step brings into range meets the field before any arrow flies at it.
 Enemies already in range, and those that stepped up to you this turn, meet it at the very end of the turn, so your shots and the rest get their chance first.
 
-Undo takes back the field's damage, the pool it spent, its waves and its Health Bonus.
 Switching it off loses the pool, the waves on their way and its cooldown; the Health Bonus stays.
 
 | Attribute | First | Highest | Levels |
@@ -246,7 +242,6 @@ Enemy previews, the Damage Visual and Automove count fights without the field, s
 **A Ranged or Flying enemy** in the field recharges its shot that much slower, as you stand each moment of the turn, and one already ready still fires.
 **An enemy on the move** takes longer between steps: at 30%, each takes 1 / 0.7 times as many turns; at 90%, ten times as many.
 
-Undo takes back the field with what it slowed.
 Switching it off loses the field and its cooldown.
 
 | Attribute | First | Highest | Levels |
@@ -272,7 +267,6 @@ Each takes [Arcanum Damage](#in-a-run) less its DEF, and Overseer's beams multip
 It kills like any other hit, paying what the enemy pays, and heals nothing.
 
 Ghosts strike along your step before your arrows fly, and those an enemy has stepped up to strike at the end of the turn.
-Undo takes back the ghosts with what they struck.
 Switching it off loses the ghosts and its cooldown.
 
 | Attribute | First | Highest | Levels |
@@ -302,7 +296,6 @@ Each field that touches an enemy puts its own decay on it, each with its own ram
 It works as Time Dilation's does, in fights, on Ranged and Flying enemies' shots and on enemies on the move, and enemy previews, the Damage Visual and Automove count fights without it.
 With Time Dilation too, each multiplies what the other leaves (50% and 50% make 75%), up to 90%.
 
-Undo takes back the fields with what they did.
 Switching it off loses the fields and its cooldown; decay already on enemies waits, and carries on up its ramp once it is back on.
 
 | Attribute | First | Highest | Levels |
@@ -332,7 +325,6 @@ A vortex too wide for the floor lies across its middle.
 
 Its attribute icons stay on it, and its name and panel say Stunned.
 A vortex in progress continues on a new floor, at the same place on the board, for the turns it has left.
-Undo takes back the vortex with what it stunned.
 Switching it off loses the vortex and its cooldown.
 
 | Attribute | First | Highest | Levels |
@@ -356,7 +348,6 @@ Voidwell's information, in the Arcana menu and from its card in a run, has a Res
 Bosses and Greater Bosses are immune.
 Its numbers show over each enemy it strikes, with its HP bar; Settings' Toggles can hide them, and it strikes all the same.
 What it fells pays as any kill does.
-Undo takes back what it struck.
 
 **Voidwell Gold Bonus:** an enemy killed while it stands in a vortex drops more Gold, however it was killed, bosses included, since it goes by where the enemy stands, not by the stun.
 It multiplies the other Gold bonuses, and raises only Gold, not Silver or Cells.

@@ -60,8 +60,8 @@ const settings = {
 const v3 = () => ({
   version: 4,
   gold: 120.7, xp: 44, provisions: { ...defaults().provisions },
-  upgrades: { ...defaults().upgrades, undos: 1, inspirationUndos: 1, delve: 1 },
-  archives: { ...defaults().archives, levels: { undoCount: 3 } },
+  upgrades: { ...defaults().upgrades, undos: 1, phoenixSpark: 1, delve: 1 },
+  archives: { ...defaults().archives, levels: { sparkCount: 3 } },
   settings,
   tower: {
     ...mode(towerRun), inspiration: 17,
@@ -271,9 +271,6 @@ test("decode keeps a valid v3 save's progress and clamps settings", () => {
   assert.equal(d.settings.brightness, 55);
   assert.equal(d.settings.infoDisplay, "popup");
   assert.equal(d.tower.run?.seed, 1234);
-  // Capacity is Rehearsed steps' 1 + Undo Count's 3 = 4; mismatched seed/layout snapshots drop out.
-  assert.equal(d.tower.history.length, 2);
-  assert.deepEqual(d.tower.history.map((h) => h.xp), [0, 0]);
   assert.equal(d.tower.fall, null, "a fall is kept only beside a fallen hero");
   assert.deepEqual(Object.keys(d.tower.lootedTiles).sort(), ["-1:-2:-3,-4", "1234:2:3,4", "1234:3,4"]);
   assert.deepEqual([d.goals.mastered, d.goals.cleared], [{ 1: [10, 20] }, { 1: [10, 110] }]);

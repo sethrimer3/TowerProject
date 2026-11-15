@@ -54,9 +54,9 @@ const formatDate = (at: number) => {
   return `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())} ${two(d.getHours())}:${two(d.getMinutes())}`;
 };
 /** `target`'s total with the Archives as `archives`, as the game reads it:
- * Undo Count from the loadout's own undos, the rest from their base. */
+ * Phoenix Spark Count from the loadout's own charges, the rest from their base. */
 const targetValue = (save: Save, target: ResearchTarget, archives: ArchivesSave) =>
-  target === "undoCapacity" ? loadout({ ...save, archives }).undoCapacity : researched(archives, target);
+  target === "sparks" ? loadout({ ...save, archives }).sparks : researched(archives, target);
 const requirementText =(r: ResearchRequirement) =>
   "upgrade" in r ? UPGRADES.find((u) => u.id === r.upgrade)!.name
   : "anyUpgrade" in r ? r.anyUpgrade.map((id) => UPGRADES.find((u) => u.id === id)!.name).join(" or ")
@@ -379,7 +379,7 @@ export class ArchivesPanel {
    * its levels so far give. */
   private showAbout(id: ResearchId) {
     const save = this.ctx.game.save, a = save.archives, def = research(id), target = def.levels[0].effect.target;
-    const now = `Level ${researchLevel(a, id)} / ${maxLevel(id, save.upgrades)} · ${RESEARCH_TARGETS[target].name}: ${RESEARCH_TARGETS[target].shown(targetValue(save, target, a))}`;
+    const now = `Level ${researchLevel(a, id)} / ${maxLevel(id, save)} · ${RESEARCH_TARGETS[target].name}: ${RESEARCH_TARGETS[target].shown(targetValue(save, target, a))}`;
     showHelp(this.ctx, "ARCHIVES", def.name, `<p>${describe(a, id)}</p><p class="research-about-now">${now}</p>`);
   }
 
@@ -409,7 +409,7 @@ export class ArchivesPanel {
   /** What the level being researched changes, as before → after, to sit
    * below its archivist's bar; nothing once the project is complete. */
   private changeHtml(id: ResearchId) {
-    const save = this.ctx.game.save, a = save.archives, next = nextLevel(a, id, save.upgrades);
+    const save = this.ctx.game.save, a = save.archives, next = nextLevel(a, id, save);
     if (!next) return "";
     const target = next.effect.target, shown = (archives: ArchivesSave) => RESEARCH_TARGETS[target].shown(targetValue(save, target, archives));
     return `<span class="archivist-change"><span class="training-box">${shown(a)}</span><span class="training-arrow" aria-hidden="true">→</span><span class="training-box next">${shown(withNextLevel(a, id))}</span></span>`;
@@ -451,7 +451,7 @@ export class ArchivesPanel {
    * left, in pale green. */
   private researchHtml(id: ResearchId) {
     const save = this.ctx.game.save, a = save.archives, def = research(id);
-    const level = researchLevel(a, id), next = nextLevel(a, id, save.upgrades), state = status(save, id);
+    const level = researchLevel(a, id), next = nextLevel(a, id, save), state = status(save, id);
     let detail = "", price = "", action: string;
     if (next) {
       const ms = duration(a, next, save), share = a.progress[id] ?? 0;
@@ -471,7 +471,7 @@ export class ArchivesPanel {
       const why = this.picking === null ? "Choose an archivist first." : cannotSwitch(save, this.picking, id);
       action = `<button data-research="${id}" aria-label="Research ${def.name} for ${currencyAmount(researchPrice(a, next!))} Gold" ${why ? `disabled title="${why}"` : ""}><span class="research-gold">${uiSprite("gold", "stat-sprite")} ${priceAmount(researchPrice(a, next!))}</span></button>`;
     }
-    return `<article class="research ${state}" role="listitem"><div class="research-head"><b>${def.name}</b><button class="tree-help research-about" data-about="${id}" aria-label="About ${def.name}" title="About ${def.name}">?</button><small>LEVEL ${level} / ${maxLevel(id, save.upgrades)}</small></div>
+    return `<article class="research ${state}" role="listitem"><div class="research-head"><b>${def.name}</b><button class="tree-help research-about" data-about="${id}" aria-label="About ${def.name}" title="About ${def.name}">?</button><small>LEVEL ${level} / ${maxLevel(id, save)}</small></div>
       <div class="research-next">${detail}<span class="research-action">${price}${action}</span></div></article>`;
   }
 

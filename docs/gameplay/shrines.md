@@ -10,7 +10,7 @@ Trade-offs, once each, give a benefit at a cost (×1.50 ATK but bosses ×8 HP, �
 **Unlock an Arcanum** lends the climb an arcanum you don't own, part way upgraded and named on the offer, while any remain ([Arcana](arcana.md)).
 **Arcana boons** appear once you hold an arcanum, bought or lent: one for each arcanum you hold, once a climb, shown in green in every list of boons ([Arcana](arcana.md#shrine-boons)).
 Boons of different types multiply each other: a trade-off's ×1.50 ATK on five ATK copies' ×1.75 makes ×2.625.
-A boon applies at once, to the hero's stats as they stand and to what it gains later; undo never takes one back.
+A boon applies at once, to the hero's stats as they stand and to what it gains later.
 Taking a Boon Floor Requirement boon shortens the whole schedule, so several boons can come due at once.
 More research, each opened by a later Goal: Floors Required (one floor fewer a level), First Boon Choice (a standard boon heading each run's first offer), Auto Pick Boons (the run takes the top boon itself; toggled in the Shrine bar's list), Ban Boons and Auto Pick Ranking, set on the forest menu's **Shrine Boons** page.
 The Delve has no shrines.

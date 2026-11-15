@@ -171,17 +171,6 @@ test("the Toggles hide its animation, and it strikes all the same", () => {
   assert.equal(g.world.tile(4, 4).wound, 1000);
 });
 
-test("undo takes its strike back, and the cooldown stays where it went", () => {
-  const g = arena([[4, 4]]);
-  g.save.upgrades.inspirationUndos = 1;
-  ready(g);
-  turn(g);
-  assert.ok(g.run.changes["4,4"]);
-  assert.ok(g.undo());
-  assert.equal(g.run.changes["4,4"], undefined);
-  assert.equal(g.save.tower.runArcana.timers.thunderbolt, 180);
-});
-
 test("it works in the Delve too, on the hero's area of its equivalent floor", () => {
   const g = new Game(defaults(), random(5));
   g.save.arcana.owned.thunderbolt = [0, 0, 0];

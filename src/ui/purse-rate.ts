@@ -27,8 +27,8 @@ export class RateTally {
     this.samples = [];
   }
 
-  /** The rise per minute, never below 0 (undo can take back what was
-   * found), or null before there are two samples. */
+  /** The rise per minute, never below 0, or null before there are two
+   * samples. */
   get perMinute() {
     const first = this.samples[0], last = this.samples.at(-1);
     if (!first || !last || last === first) return null;

@@ -206,7 +206,7 @@ export class BoardPopups {
     this.numbers = this.numbers.filter((p) => now < p.start + POPUP_MS);
   }
   private strike(fight: ShownFight | null, now: number) {
-    // No fight (a new run, undo) clears every bar.
+    // No fight (a new run) clears every bar.
     if (!fight) this.fights = [];
     else if (fight !== this.fights.at(-1)?.fight) this.fights.push({ fight, landed: 0 });
     for (const shown of this.fights) this.land(shown, now);
@@ -229,7 +229,7 @@ export class BoardPopups {
    * enemy's shot cost the hero (with the shroud's share beside it), when it
    * cost any, over the hero, and its thorns over the shooter, with its HP
    * bar; an arrow's damage over the enemy, with its HP bar, and its
-   * Lifesteal over the hero. Undo (no volley) clears the bars. */
+   * Lifesteal over the hero. No volley clears the bars. */
   private shots(volley: Volley | null) {
     if (volley === this.volley) return;
     this.volley = volley;

@@ -18,7 +18,6 @@ test("the Tower's entrance walks the hero in: up into the arch, gone, then in on
   assert.ok(g.run.outside);
   // Nothing else moves the hero meanwhile.
   assert.equal(g.stepManually(0, -1), false);
-  assert.equal(g.undo(), false);
   assert.ok(g.walkInTurn(100));
   assert.equal(g.walkIn?.stage, "arch");
   assert.ok(g.walkInTurn(200));
@@ -43,14 +42,12 @@ test("the Tower's entrance walks the hero in: up into the arch, gone, then in on
 });
 
 for (const mode of ["tower", "delve"] as const) {
-  test(`${mode}: death, forest persistence, entry and Undo preserve progression`, () => {
+  test(`${mode}: death, forest persistence and entry preserve progression`, () => {
     const g = new Game(defaults());
-    g.save.upgrades.inspirationUndos = 1; // undo needs Rehearsed steps
     g.save.upgrades.breakthrough = 1;
     g.switchMode(mode);
-    const before = g.snapshot();
     // Lethal but damageable (low defense so it's not impervious), on the
-    // board as it stands (undo builds it again).
+    // board as it stands.
     const guard = () => {
       const originalTile = g.world.tile.bind(g.world);
       g.world.tile = (x, y) => y === 1 && x === g.run.player.x
@@ -60,12 +57,6 @@ for (const mode of ["tower", "delve"] as const) {
     guard();
     g.move(0, 1);
     assert.ok(g.fallen);
-    assert.ok(g.undo());
-    // The damage stays on the floor's record, as after any undo, and the undo is spent.
-    const undone = { ...before.run, undosUsed: 1 };
-    assert.deepEqual(g.run, mode === "tower" ? { ...undone, damaged: true } : undone);
-    guard();
-    g.move(0, 1);
     assert.ok(g.acceptDefeat());
     assert.ok(g.run.outside);
     assert.ok(g.world instanceof OutsideWorld);
@@ -77,7 +68,6 @@ for (const mode of ["tower", "delve"] as const) {
     assert.ok(loaded.world instanceof OutsideWorld);
     assert.equal(loaded.run.player.y, OUTSIDE_START_Y + 1);
     assert.equal(outsideWeather(loaded.run.seed), outsideWeather(g.run.seed));
-    const beforeWalk = loaded.run.player.y;
     loaded.walkTo(loaded.run.player.x, ENTRANCE_Y);
     assert.ok(loaded.route.length);
     for (let i = 0; i < 20 && loaded.route.length; i++) loaded.routeStep();
@@ -87,13 +77,6 @@ for (const mode of ["tower", "delve"] as const) {
     assert.equal(loaded.run.height, 0);
     assert.equal(loaded.run.player.y, 0);
     assert.equal(loaded.run.kills, 0);
-    // A tap-to-walk route is one undo step, however many tiles it crossed.
-    assert.ok(loaded.undo());
-    assert.ok(loaded.world instanceof OutsideWorld);
-    assert.equal(loaded.run.player.y, beforeWalk);
-    loaded.walkTo(loaded.run.player.x, ENTRANCE_Y);
-    for (let i = 0; i < 20 && loaded.route.length; i++) loaded.routeStep();
-    assert.equal(loaded.run.outside, false);
   });
   test(`${mode}: automation finds the forest entrance without farming height`, () => {
     const g = new Game(defaults()); g.save.upgrades.breakthrough = 1; g.switchMode(mode); g.newRun({ outside: true });

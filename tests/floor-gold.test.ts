@@ -19,7 +19,6 @@ function stairs(tier = 1) {
   save.themes = [];
   save.tower.tiersOpen = save.tower.tier = tier;
   save.upgrades.spareChange = 1;
-  save.upgrades.inspirationUndos = 1;
   const g = new Game(save);
   g.run.height = 3;
   standBeside(g);
@@ -68,8 +67,6 @@ test("a floor climbed for the first time in a run pays Gold / Floor, with resear
   const paid = tierGold(3, 4 * 1.1);
   assert.equal(g.save.gold, paid);
   assert.equal(paid, 13.64);
-  assert.equal(g.undo(), false, "undo stays on the floor it was taken on");
-  assert.equal(g.run.height, 4);
 });
 
 test("Gold Bonus multiplies Gold / Floor", () => {

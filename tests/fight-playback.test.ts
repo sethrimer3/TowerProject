@@ -22,7 +22,6 @@ const foe = (over: Partial<Enemy> = {}): Enemy => ({ name: "Slime", hp: 30, atta
  * stairs in the far corner and an enemy that keeps the floor from clearing. */
 function arena(east: Tile, animate = true) {
   const g = new Game(defaults());
-  g.save.upgrades.inspirationUndos = 1; // undo needs Rehearsed steps
   g.fights.playsFights = true;
   g.save.settings.fightAnimation = animate;
   // Only Instant Combat lets fights settle at once.
@@ -147,14 +146,6 @@ test("a fight played out waits beside the enemy, then counts exactly like one se
   assert.deepEqual(played.run, instant.run);
   assert.equal(played.message, instant.message);
   assert.deepEqual([played.run.player.x, played.world.tile(1, 0).kind], [1, "floor"]);
-});
-
-test("undo during a fight takes the whole fight back", () => {
-  const g = arena({ kind: "enemy", enemy: foe() }), hp = g.run.player.hp;
-  g.move(1, 0);
-  assert.ok(g.undo());
-  assert.equal(g.fights.encounter, null);
-  assert.deepEqual([g.run.player.x, g.run.player.hp, g.run.kills], [0, hp, 0]);
 });
 
 test("a fight the hero loses leaves it fallen only once it has played out", () => {
@@ -385,8 +376,6 @@ test("a fight lost at once raises a summary over both, and the enemy's bar shows
   assert.ok(taken >= 100, "every strike it took, the last one in full");
   assert.deepEqual(numbers(popups).map((d) => `${d.x}:${d.text}`), [`1:${dealt}`, `0:${taken}`]);
   assert.deepEqual(enemyBar(g.fights.shown!, now + 60_000), { hp: 600 - dealt, alpha: 1 });
-  assert.ok(g.undo());
-  assert.equal(g.fights.shown, null, "undo takes the bar away");
 });
 
 test("the enemy's HP bar stays off the board while its Toggle is off", () => {

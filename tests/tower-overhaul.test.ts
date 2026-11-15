@@ -52,7 +52,7 @@ function deadlockGame(): Game {
 
 // ---------- Combat: impervious vs lethal ----------
 
-test("impervious enemy blocks manual movement harmlessly: no combat, no damage, no undo consumed, run continues", () => {
+test("impervious enemy blocks manual movement harmlessly: no combat, no damage, run continues", () => {
   const g = deadlockGame();
   // A second, genuinely reachable pickup proves the run legitimately
   // continues afterward (isn't merely un-terminated by coincidence) —
@@ -60,12 +60,10 @@ test("impervious enemy blocks manual movement harmlessly: no combat, no damage, 
   g.run.changes[point(TOWER_START_X - 1, 0)] = { kind: "defense" };
   g.run.changes[point(TOWER_START_X + 1, 0)] = { kind: "enemy", enemy: IMPERVIOUS };
   const startX = g.run.player.x,
-    hpBefore = g.run.player.hp,
-    historyBefore = g.save.tower.history.length;
+    hpBefore = g.run.player.hp;
   assert.equal(g.move(1, 0, true), false); // manual (force) attempt
   assert.equal(g.run.player.hp, hpBefore);
   assert.equal(g.run.player.x, startX);
-  assert.equal(g.save.tower.history.length, historyBefore);
   assert.equal(g.fallen, false);
   assert.deepEqual(
     (g.world as RoomWorld).tile(TOWER_START_X + 1, 0).enemy,

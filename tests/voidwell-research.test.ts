@@ -22,7 +22,6 @@ const bounds: FloorBounds = { left: 0, right: 16, bottom: 0, top: 16 };
 /** A Tower run at (3, 5), ATK 100, on plain floor holding `tiles`, holding Voidwell with a vortex at (5, 5) of 3 tiles' radius. */
 function arena(tiles: Record<string, Tile> = {}, vortex: Vortex | null = { x: 5, y: 5, left: 100 }) {
   const s = defaults();
-  s.upgrades.inspirationUndos = 1;
   const g = new Game(s, random(5));
   g.newRun({ seed: 7 });
   const w = g.world as RoomWorld;
@@ -72,7 +71,7 @@ test("each turn, what stands in the vortex loses its share of its total HP, the 
   assert.match(g.message ?? "", /Voidwell · .* defeated/);
 });
 
-test("a level finished mid-run counts at once, and undo takes back what it struck", () => {
+test("a level finished mid-run counts at once", () => {
   const g = arena({ "5,5": { kind: "enemy", enemy: brute } });
   assert.ok(g.move(1, 0));
   assert.equal(g.world.tile(5, 5).enemy!.hp, 50, "no research, no damage");
@@ -82,8 +81,6 @@ test("a level finished mid-run counts at once, and undo takes back what it struc
   assert.equal(g.world.tile(5, 5).enemy!.hp, 49.5, "1% of 50");
   assert.notDeepEqual(g.run.changes, edits, "kept in the run's edits");
   assert.ok(g.volley?.shots.some((s) => s.voidwell && s.damage === 0.5), "shown");
-  assert.ok(g.undo());
-  assert.deepEqual(g.run.changes, edits, "undo takes the wound back");
 });
 
 test("the Toggles' Voidwell damage hides its numbers; it strikes all the same", () => {

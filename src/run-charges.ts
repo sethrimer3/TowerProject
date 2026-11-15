@@ -7,7 +7,7 @@ import type { Run } from "./runs.ts";
 // regain skill is owned (Ignore More, Target More), comes back one
 // use every so many new floors climbed. The run keeps only what the player
 // did (uses spent) and the floors counted toward the next regain, so research
-// completed mid-run counts at once and undo never rolls it back.
+// completed mid-run counts at once.
 
 export type Charge = "ignore" | "target";
 export const CHARGES: readonly Charge[] = ["ignore", "target"];

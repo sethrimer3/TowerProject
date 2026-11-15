@@ -72,7 +72,7 @@ export class ShotsInFlight {
   private ghosts = new Map<string, Tile>();
   private wrap = 0;
   private boards = new WeakMap<BoardTiles, BoardTiles>();
-  /** Takes the game's latest volley (none: undo or a new board drops them
+  /** Takes the game's latest volley (none: a new board drops them
    * all) and lets go of those landed by `now`. */
   update(latest: Volley | null, now: number, wrap: number) {
     if (latest !== this.seen) {

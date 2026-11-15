@@ -528,6 +528,9 @@ export const DEFEAT_MS = 2500;
 /** How long a fight waits after a strike that revives the hero: the skull,
  * then the revival's fire, before its next strike (or summary round). */
 export const REVIVE_PAUSE_MS = DEFEAT_MS + REVIVE_MS;
+/** How long Phoenix Spark's skull in its "no" circle shows over the hero,
+ * and so how long a fight waits after a strike it shrugged off. */
+export const SPARK_MS = 1000;
 
 /** One strike of a fight: who struck, for how much, when it swings (`start`
  * to `end`, in ms from the fight's start) and lands (`at`), and the HP the
@@ -544,8 +547,11 @@ export const REVIVE_PAUSE_MS = DEFEAT_MS + REVIVE_MS;
  * (`thorns`), leaving it `thornHp`. A hero strike that wears down the enemy's
  * DEF (Armor Break) carries the percent of it now broken (`broken`). A revival Angel Wings gave (`winged`)
  * may smite the enemy too (`smote`, Avenging Angel), ending the fight with
- * it at 0 HP (`thornHp`, as thorns that fell it leave it). */
-export type Strike = { by: "hero" | "enemy"; damage: number; retribution?: number; crit?: number; superCrit?: true; pronounced?: true; broken?: number; heroHp?: number; healed?: number; shrouded?: number; shielded?: number; shieldBroke?: true; revived?: true; winged?: true; smote?: true; parried?: true; thorns?: number; thornHp?: number; start: number; at: number; end: number; hp: number };
+ * it at 0 HP (`thornHp`, as thorns that fell it leave it). A strike that
+ * would have felled the hero, which no revival saved, and that Phoenix
+ * Spark shrugged off (`sparked`) does nothing at all: no damage, the shroud
+ * and the shield as they were. */
+export type Strike = { by: "hero" | "enemy"; damage: number; retribution?: number; crit?: number; superCrit?: true; pronounced?: true; broken?: number; heroHp?: number; healed?: number; shrouded?: number; shielded?: number; shieldBroke?: true; revived?: true; winged?: true; smote?: true; sparked?: true; parried?: true; thorns?: number; thornHp?: number; start: number; at: number; end: number; hp: number };
 /** A fight's opening, before the hero's first strike: a boss's Takedown
  * (`takedown`) and Tangle (`tangle`) shown over it, its HP left `hp` from
  * `at` ms in. */
@@ -572,24 +578,27 @@ export type Wings = { smites: boolean };
  * the prediction (or at 0 in a fight the hero loses), unless `revives`
  * raises the hero at full HP from a strike that would fell it: the fight
  * then goes on from the next round, the enemy as it was, once the skull
- * and the revival's fire are over (`REVIVE_PAUSE_MS`). A hero with Parry %
- * parries every strike. */
-export function bout(player: Player, enemy: Enemy, revives?: Revival, crits?: Crits, wings?: Wings): Bout {
+ * and the revival's fire are over (`REVIVE_PAUSE_MS`). A strike that would
+ * fell the hero and that no revival saves spends one of `sparks` (Phoenix
+ * Spark's charges) instead, doing nothing, and the fight goes on once its
+ * mark is over (`SPARK_MS`). A hero with Parry % parries every strike. */
+export function bout(player: Player, enemy: Enemy, revives?: Revival, crits?: Crits, wings?: Wings, sparks = 0): Bout {
   const ready = squaredUp(player, enemy), powered = ready.powered;
   ({ player, enemy } = ready);
   if (!breaksArmor(player, enemy) && heroHit(player, enemy) <= 0) return { strikes: [], duration: 0 };
   player = facing(player, enemy);
   const t = ready.opening ? openingMs(ready.opening) : 0;
-  const fight = play([], { player, enemy, revives, crits, powered, wings }, { enemyHp: enemy.hp, heroHp: player.hp, shroud: player.shroud ?? 0, shield: player.shield ?? 0, attack: enemy.attack, t, ms: FIRST_STRIKE_MS, enemyStrikes: 0, heroStrikes: 0, enemyNext: strikesFirst(enemy), winged: false, broken: enemy.broken ?? 0, tally: 0, amber: enemy.amber ?? 0 });
+  const fight = play([], { player, enemy, revives, crits, powered, wings, sparks }, { enemyHp: enemy.hp, heroHp: player.hp, shroud: player.shroud ?? 0, shield: player.shield ?? 0, attack: enemy.attack, t, ms: FIRST_STRIKE_MS, enemyStrikes: 0, heroStrikes: 0, enemyNext: strikesFirst(enemy), winged: false, sparked: 0, broken: enemy.broken ?? 0, tally: 0, amber: enemy.amber ?? 0 });
   return ready.opening ? { ...fight, opening: { at: t, hp: enemy.hp, ...ready.opening } } : fight;
 }
 
 /** Where a fight stands before its next strike: each side's HP, what is
  * left of the shroud, the enemy's ATK, when the strike swings and how long
  * it takes, the enemy's strikes so far, whose strike it is, whether
- * Angel Wings has raised the hero in it, the percent of the enemy's DEF
- * broken so far, and Time Dilation's tally on the enemy's strikes. */
-type BoutState = { enemyHp: number; heroHp: number; shroud: number; shield: number; attack: number; t: number; ms: number; enemyStrikes: number; heroStrikes: number; enemyNext: boolean; winged: boolean; broken: number; tally: number; amber: number };
+ * Angel Wings has raised the hero in it, the Phoenix Spark charges it has
+ * spent, the percent of the enemy's DEF broken so far, and Time Dilation's
+ * tally on the enemy's strikes. */
+type BoutState = { enemyHp: number; heroHp: number; shroud: number; shield: number; attack: number; t: number; ms: number; enemyStrikes: number; heroStrikes: number; enemyNext: boolean; winged: boolean; sparked: number; broken: number; tally: number; amber: number };
 
 /** A strike before it is timed. */
 type Blow = Omit<Strike, "start" | "at" | "end">;
@@ -597,11 +606,11 @@ type Blow = Omit<Strike, "start" | "at" | "end">;
 /** The two sides of a fight, and whether a strike that would fell the
  * hero revives it instead, the hero's critical strikes, whether Power
  * Strike doubles them (`powered`, already in the hero's ATK; `bout` sets it),
- * and Angel Wings' charge, if ready. */
-export type Fighters = { player: Player; enemy: Enemy; revives?: Revival; crits?: Crits; powered?: boolean; wings?: Wings };
+ * Angel Wings' charge, if ready, and Phoenix Spark's charges left. */
+export type Fighters = { player: Player; enemy: Enemy; revives?: Revival; crits?: Crits; powered?: boolean; wings?: Wings; sparks?: number };
 
 /** Plays a fight on from `state`, after the strikes already in `strikes`. */
-function play(strikes: Strike[], { player, enemy, revives, crits, powered, wings }: Fighters, state: BoutState): Bout {
+function play(strikes: Strike[], { player, enemy, revives, crits, powered, wings, sparks = 0 }: Fighters, state: BoutState): Bout {
   const hit = heroHit(player, enemy), breaks = breaksArmor(player, enemy), thorn = thornDamage(player, enemy), slow = player.slowdown ?? 0, s = { ...state };
   // Each strike keeps its fields in the same order: its blow, its timing, then the HP left.
   const strike = ({ hp, ...blow }: Blow) => {
@@ -637,9 +646,10 @@ function play(strikes: Strike[], { player, enemy, revives, crits, powered, wings
       s.tally = next.tally;
       if (!next.acts) continue;
     }
-    const blow = enemyBlow(s, player, thorn, revives, wings);
+    const blow = enemyBlow(s, player, thorn, revives, wings, sparks);
     strike(blow);
     if (blow.revived) s.t += REVIVE_PAUSE_MS;
+    if (blow.sparked) s.t += SPARK_MS;
     if (!s.heroHp || !s.enemyHp) break;
     s.attack = raisedAttack(s.attack);
     s.ms = Math.max(FASTEST_STRIKE_MS, s.ms * STRIKE_SPEEDUP);
@@ -650,14 +660,23 @@ function play(strikes: Strike[], { player, enemy, revives, crits, powered, wings
 /** The enemy strikes the hero in `s`: a parried strike's damage is cut, the
  * shroud takes what it can, the rest comes off the hero's HP, and a strike
  * that would fell the hero may revive it at full HP (Revive, or else Angel
- * Wings, once, which may smite the enemy). A strike the hero lives through
- * costs the enemy `thorn` HP. */
-function enemyBlow(s: BoutState, player: Player, thorn: number, revives?: Revival, wings?: Wings): Blow {
+ * Wings, once, which may smite the enemy), or failing those, while the
+ * fight has spent fewer than `sparks`, Phoenix Spark shrugs it off: it does
+ * nothing at all. A strike the hero lives through costs the enemy `thorn` HP. */
+function enemyBlow(s: BoutState, player: Player, thorn: number, revives?: Revival, wings?: Wings, sparks = 0): Blow {
   const cut = parryCut(player), parried = cut > 0;
   // Amber Prison weakens its blows.
   const struck = struckDamage(s.amber ? snap((s.attack * (100 - s.amber)) / 100) : s.attack, player.defense, cut), shrouded = Math.min(s.shroud, struck), rest = snap(struck - shrouded);
   // What gets past the shroud comes off the Aether Shield first.
   const onShield = s.shield > 0, shielded = Math.min(s.shield, rest), taken = snap(rest - shielded);
+  // Phoenix Spark, once Revive's roll and Angel Wings have failed.
+  if (taken >= s.heroHp && s.sparked < sparks && !(wings && !s.winged) && !revives?.(s.enemyStrikes)) {
+    s.sparked++;
+    s.enemyStrikes++;
+    const thorns = thorn && s.enemyHp ? (onShield ? shieldThorn(player, thorn) : thorn) : 0;
+    if (thorns) s.enemyHp = snap(Math.max(0, s.enemyHp - thorns));
+    return { by: "enemy", damage: 0, sparked: true, ...(parried ? { parried: true as const } : {}), ...(thorns ? { thorns, thornHp: s.enemyHp } : {}), hp: s.heroHp };
+  }
   s.shroud = snap(s.shroud - shrouded);
   s.shield = snap(s.shield - shielded);
   const broke = onShield && !s.shield;
@@ -699,10 +718,10 @@ export function resume(fight: Bout, from: number, fighters: Fighters): Bout {
     attack = raisedAttack(attack);
     ms = Math.max(FASTEST_STRIKE_MS, ms * STRIKE_SPEEDUP);
   }
-  const winged = kept.some((s) => s.winged);
+  const winged = kept.some((s) => s.winged), sparked = kept.filter((s) => s.sparked).length;
   // The chances the enemy has had to strike: one after each hero strike and a Fast enemy's opening, less the one about to come.
   const chances = heroStrikes + (strikesFirst(enemy) ? 1 : 0) - (next.by === "enemy" ? 1 : 0);
-  const state = { enemyHp, heroHp: player.hp, shroud: player.shroud ?? 0, shield: player.shield ?? 0, attack, t: next.start, ms, enemyStrikes, heroStrikes, enemyNext: next.by === "enemy", winged, broken, tally: tallyAfter(chances, togetherSlow(player.slowdown ?? 0, amber)), amber };
+  const state = { enemyHp, heroHp: player.hp, shroud: player.shroud ?? 0, shield: player.shield ?? 0, attack, t: next.start, ms, enemyStrikes, heroStrikes, enemyNext: next.by === "enemy", winged, sparked, broken, tally: tallyAfter(chances, togetherSlow(player.slowdown ?? 0, amber)), amber };
   return { ...play(kept, fighters, state), ...opening };
 }
 
@@ -750,7 +769,7 @@ function withStrike(round: Round, s: Strike, t: number): Round {
   }
   // A summary round shows no parries, only the damage they left.
   const prev = round.enemy, shrouded = snap((prev?.shrouded ?? 0) + (s.shrouded ?? 0)), shielded = snap((prev?.shielded ?? 0) + (s.shielded ?? 0)), thorns = snap((prev?.thorns ?? 0) + (s.thorns ?? 0)), thornHp = s.thornHp ?? prev?.thornHp;
-  return { ...round, enemy: { by: "enemy", damage: snap((prev?.damage ?? 0) + s.damage), ...(shrouded ? { shrouded } : {}), ...(shielded ? { shielded } : {}), ...(prev?.shieldBroke || s.shieldBroke ? { shieldBroke: true as const } : {}), ...(s.revived ? { revived: true as const } : {}), ...(s.winged ? { winged: true as const } : {}), ...(s.smote ? { smote: true as const } : {}), ...(thorns ? { thorns, thornHp } : {}), hp: s.hp, ...at } };
+  return { ...round, enemy: { by: "enemy", damage: snap((prev?.damage ?? 0) + s.damage), ...(shrouded ? { shrouded } : {}), ...(shielded ? { shielded } : {}), ...(prev?.shieldBroke || s.shieldBroke ? { shieldBroke: true as const } : {}), ...(s.revived ? { revived: true as const } : {}), ...(s.winged ? { winged: true as const } : {}), ...(s.smote ? { smote: true as const } : {}), ...(prev?.sparked || s.sparked ? { sparked: true as const } : {}), ...(thorns ? { thorns, thornHp } : {}), hp: s.hp, ...at } };
 }
 
 /** The hero's HP once the fight is over, from `hp` at its start. */
@@ -758,6 +777,8 @@ export const heroHpAfter = (fight: Bout, hp: number) => heroHpDuring(fight, hp, 
 /** When each of the fight's revivals lands (its skull rising, its fire
  * following `DEFEAT_MS` later), in ms from its start. */
 export const revivals = (fight: Bout) => fight.strikes.filter((s) => s.revived).map((s) => s.at);
+/** When each strike Phoenix Spark shrugged off lands, in ms from the fight's start. */
+export const sparkings = (fight: Bout) => fight.strikes.filter((s) => s.sparked).map((s) => s.at);
 
 /** The shield left `elapsed` ms into a fight that began with `shield` of it. */
 export function shieldDuring(fight: Bout, shield: number, elapsed: number) {

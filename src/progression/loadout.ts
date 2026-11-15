@@ -42,7 +42,7 @@ export const runTrainingOpen = (row: TrainingRow, save: Pick<Save, "upgrades" | 
 
 /** What one rank of an upgrade adds to a character. */
 export type Grants = Partial<Record<Stat, number>>;
-export type Stat = "attack" | "defense" | "maxHp" | "shroud" | "regen" | "lifesteal" | "thorns" | "parry" | "armorBreak" | "yellow" | "blue" | "red" | "undos";
+export type Stat = "attack" | "defense" | "maxHp" | "shroud" | "regen" | "lifesteal" | "thorns" | "parry" | "armorBreak" | "yellow" | "blue" | "red" | "sparks";
 
 /** The character a run starts with. */
 export type Loadout = {
@@ -71,12 +71,14 @@ export type Loadout = {
   /** Keys the equipment worn hands a run as it starts (on top of `keys`):
    * kept apart so changing equipment never adds keys to a run inside. */
   startKeys: { yellow: number; blue: number };
-  undoCapacity: number;
+  /** Phoenix Spark's charges a run starts with: each shrugs off one hit
+   * that would defeat the hero. */
+  sparks: number;
 };
 
 /** Every character's baseline: 10 ATK; no DEF; 100 HP; no shroud (Shroud
- * gives the first point); no Regen; no undo (Rehearsed steps gives the first). */
-const BASE = { attack: 10, defense: 0, maxHp: 100, shroud: 0, regen: 0, lifesteal: 0, thorns: 0, parry: 0, armorBreak: 0, undos: 0 };
+ * gives the first point); no Regen; no Phoenix Spark charge (the skill gives the first). */
+const BASE = { attack: 10, defense: 0, maxHp: 100, shroud: 0, regen: 0, lifesteal: 0, thorns: 0, parry: 0, armorBreak: 0, sparks: 0 };
 
 const WORDS: Record<Stat, string> = {
   attack: "starting attack",
@@ -91,20 +93,17 @@ const WORDS: Record<Stat, string> = {
   yellow: "starting gold key",
   blue: "starting blue key",
   red: "starting red key",
-  undos: "additional undo",
+  sparks: "Phoenix Spark charge",
 };
 
 type Granting = { grants?: Grants };
 
-/** The most undos a run can have, with every upgrade that adds one
- * at its highest level and every level of Undo Count. */
-const UNDO_CAP = UPGRADES.reduce(
-  (cap, u: Granting & { max: number }) => cap + (u.grants?.undos ?? 0) * u.max,
-  BASE.undos + RESEARCH.undoCount.levels.length,
+/** The most Phoenix Spark charges a run can have, with every upgrade that
+ * adds one at its highest level and every level of Phoenix Spark Count. */
+const SPARK_CAP = UPGRADES.reduce(
+  (cap, u: Granting & { max: number }) => cap + (u.grants?.sparks ?? 0) * u.max,
+  BASE.sparks + RESEARCH.sparkCount.levels.length,
 );
-/** The last `capacity` snapshots of an undo history (none at 0, where
- * `slice(-0)` would keep them all). */
-export const keepUndos = <T>(history: T[], capacity: number) => (capacity > 0 ? history.slice(-capacity) : []);
 const grantsOf = (row: Granting): Grants => row.grants ?? {};
 
 /** Adds `ranks` of each row's grants to `total`. */
@@ -167,9 +166,9 @@ export function loadout(save: Save, mode: Mode = "tower", eq: EffectTotals = wor
     pierce: plus(Math.min(eq.pierce, PIERCE_CAP), relicAmount(save, "pierce")),
     keys: { yellow: own.yellow, blue: own.blue, red: own.red },
     startKeys: { yellow: eq.yellowKeys, blue: eq.blueKeys },
-    // Undo needs Rehearsed steps (its first undo) or Echoes of time: Undo
-    // Count research, which either opens, stores the rest.
-    undoCapacity: save.upgrades.inspirationUndos || save.upgrades.undos ? researched(save.archives, "undoCapacity", own.undos) : 0,
+    // Phoenix Spark gives the first charge; Phoenix Spark Count research,
+    // which it or Echoes of time opens, adds the rest.
+    sparks: save.upgrades.phoenixSpark || save.upgrades.undos ? researched(save.archives, "sparks", own.sparks) : 0,
   };
 }
 
@@ -186,8 +185,8 @@ export function rankShift(save: Save, mode: Mode, row: StatTrainingRow, from: nu
 export function describeGrants(grants: Grants, words: Partial<Record<Stat, string>> = {}) {
   return (Object.entries(grants) as [Stat, number][])
     .map(([stat, n]) =>
-      stat === "undos"
-        ? `${n === 1 ? "One" : n} ${words.undos ?? WORDS.undos}${n === 1 ? "" : "s"} a climb (up to ${UNDO_CAP})`
+      stat === "sparks"
+        ? `${n === 1 ? "One" : n} ${words.sparks ?? WORDS.sparks}${n === 1 ? "" : "s"} a run (up to ${SPARK_CAP})`
         : `+${n} ${words[stat] ?? WORDS[stat]}`)
     .join(" and ");
 }
@@ -222,7 +221,7 @@ export const provisionPrice = (save: Pick<Save, "provisions">, id: GoldItemId) =
 /** Training points: earned per level and by the weekly mission rewards
  * (`bonusTrainingPoints`), spent on ranks of training bought with them
  * (`trainingPaid`; trainers' ranks cost Gold instead). `left` never goes
- * below zero, even if undo takes back a level already spent. */
+ * below zero. */
 export function trainingPoints(save: Pick<Save, "xp" | "trainingPaid"> & Partial<Pick<Save, "bonusTrainingPoints">>) {
   const earned = TRAINING_PER_LEVEL * levelForXp(save.xp) + (save.bonusTrainingPoints ?? 0),
     spent = TRAINING.reduce((sum, t) => sum + save.trainingPaid[t.id].points, 0);

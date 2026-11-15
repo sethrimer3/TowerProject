@@ -19,7 +19,6 @@ const lay = (g: Game, door: Tile) => ((g.world as RoomWorld).cells = new Map([["
  * with `door` beside it at (1, 0). */
 function beside(door: Tile, trees: CardTreeLevels, player: Partial<Player> = {}) {
   const s = defaults();
-  s.upgrades.inspirationUndos = 1;
   const g = new Game(s);
   g.newRun({ seed: 7 });
   g.run.cardTrees = trees;

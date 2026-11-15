@@ -55,7 +55,7 @@ const BOSS_POTION: Tile = { kind: "potion", color: "red" };
 
 /** What the run finds as it plays: a kill, an item taken, a chest or a door
  * opened. Each is paid through the purse (`RunPurse`, which gates Gold so
- * undo can't pay it twice), rises off the board as gains, counts toward the
+ * it is never paid twice), rises off the board as gains, counts toward the
  * missions, the Event and the run's notes, and is named on the status line.
  * The game decides when (a fight won, an arrow's kill, a step landed). */
 export class Finds {
@@ -74,7 +74,7 @@ export class Finds {
     this.host.gemFinder.bossDrop(enemy, at, killKey);
     const floor = rules.equivalentFloor(rules.progressAt(run, at.y));
     this.host.gainXp(enemy, floor, scale);
-    // Silver belongs to the run, so it isn't gated like Gold: undo takes it back.
+    // Silver belongs to the run, so it isn't gated like Gold.
     const silver = purse.killSilver(enemy, floor, scale, at);
     const { gold, cells, equipment } = purse.enemyLoot(enemy, at.x, at.y, scale, instakill, this.host.arcana.lifespringKill(enemy), snap(this.host.spotlightGold(at) * this.host.voidwellGold(at)));
     const cellsFound = cells ? [cellsText(cells)] : [], found = equipment.flatMap(equipmentGains), healed = this.bossPotion(enemy);
@@ -169,8 +169,8 @@ export class Finds {
     else if (t.kind === "attack") notes.attackShards++;
     else if (t.kind === "defense") notes.defenseShards++;
   }
-  /** A treasure chest: counted, and paid once per physical chest (undo and
-   * reopening can't pay it again). It may be a Supply or Equipment Chest
+  /** A treasure chest: counted, and paid once per physical chest (reopening
+   * can't pay it again). It may be a Supply or Equipment Chest
    * (`kind`, fixed as its floor was generated under the run's `chestOdds`). */
   treasure(x: number, y: number, kind: ChestKind) {
     const host = this.host, roll = host.chestRoll(x, y);
@@ -178,7 +178,7 @@ export class Finds {
     // GEM's Gems in Chests.
     host.gemFinder.chestDrop(x, y);
     host.events.record("chests", 1, this.missionKey({ x, y }));
-    // CHEST's tree finds Silver with each chest, as HEAL's does with each potion (undo takes it back with the run).
+    // CHEST's tree finds Silver with each chest, as HEAL's does with each potion.
     const silverFound = host.treeBonus.chestSilver, silver = silverFound ? host.purse.silverAt(snap(silverFound * roll.multiplier), x, y) : 0;
     const loot = host.purse.treasure(x, y, kind, roll);
     if (!loot) {
@@ -239,7 +239,7 @@ export class Finds {
     drops.forEach(({ text, art }, i) => this.host.gain(at.x, at.y, text, art, { row: top - i, with: i > 0 }));
   }
   /** What a kill or pickup at `at` counts as for the missions: the mode
-   * and its loot key, so undo bringing the tile back can't count it again. */
+   * and its loot key, so a tile never counts twice. */
   private missionKey(at: { x: number; y: number }) {
     const { mode, run } = this.host;
     const rules: ModeProfile = MODES[mode];

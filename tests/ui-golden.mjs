@@ -125,7 +125,7 @@ try {
     };
     const rich = (s) => {
       quiet(s);
-      Object.assign(s.upgrades, { breakthrough: 1, questForKnowledge: 1, moveSpeed: 1, legacy: 1, revive: 1, combatStance: 1, buildout: 1, largerHand: 1, cardHeal: 1, bombs: 1, archives: 1, inspirationUndos: 1, greaterHeal: 1, recovery: 1, findPotion: 1, shroud: 1, undos: 1, extraKey: 1, elixirProvision: 1, whetstoneProvision: 1, aegisProvision: 1, trainers: 1, cardBlueKey: 1, pathToWealth: 1, physician: 1 });
+      Object.assign(s.upgrades, { breakthrough: 1, questForKnowledge: 1, moveSpeed: 1, legacy: 1, revive: 1, combatStance: 1, buildout: 1, largerHand: 1, cardHeal: 1, bombs: 1, archives: 1, phoenixSpark: 1, greaterHeal: 1, recovery: 1, findPotion: 1, shroud: 1, undos: 1, extraKey: 1, elixirProvision: 1, whetstoneProvision: 1, aegisProvision: 1, trainers: 1, cardBlueKey: 1, pathToWealth: 1, physician: 1 });
       s.breakthrough = 37;
       s.tower.inspiration = 21;
       s.gold = 480;
@@ -177,7 +177,6 @@ try {
         s.settings.infoDisplay = "status";
       }, 25),
       // Built last, so the fixtures above keep their run seeds.
-      fallenUndo: fallen((s) => { s.upgrades.inspirationUndos = 1; }),
       fallenBare: fallen(),
       // In the forest with Badges: a few owned, two on cards.
       badges: forest((s) => {
@@ -483,7 +482,7 @@ try {
       await shot(`${prefix}.tap.${x}.${y}`);
     }
     if (prefix === "dev") {
-      // Always exercise a manual step and Undo, independently of which tile
+      // Always exercise a manual step, independently of which tile
       // the preceding inspection tour last selected.
       await page.evaluate(() => document.activeElement?.blur());
       await page.keyboard.press("ArrowUp");
@@ -493,10 +492,6 @@ try {
       await tapTile(8, 2);
     }
     await shot(`${prefix}.walked`);
-    if (await page.locator("#undo:not([disabled])").count()) {
-      await click("#undo");
-      await shot(`${prefix}.undone`);
-    }
   }
   /** Drags the hand's card in slot `from` onto slot `to` on the Deck page. */
   async function dragCard(from, to) {
@@ -793,12 +788,8 @@ try {
     if (await page.locator(".enemy-odds-layer").count()) throw Error("the enemy stats box stayed open");
   });
 
-  // A fallen hero: the defeat dialog, with an undo or without.
+  // A fallen hero: the defeat dialog.
   await section("fallen", async () => {
-    await load("fallenUndo");
-    await shot("fallen.undo");
-    await click("#defeat-undo");
-    await shot("fallen.undo.undone");
     await load("fallenBare");
     await shot("fallen.bare");
     await click("#defeat-accept");

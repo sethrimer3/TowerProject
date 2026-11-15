@@ -65,9 +65,9 @@ export const RESEARCH_TARGETS = {
   targetFloors: { name: "Floors per Target", base: REGAIN_FLOORS, shown: count },
   /** The run's speed arrows' most steps a second, once Movement Speed is owned. */
   moveSpeed: { name: "Steps / Sec", base: 3, shown: count },
-  /** Undos a run has to spend, once Rehearsed steps has given the first;
-   * its base is the loadout's own undos, so the Archives page reads it there. */
-  undoCapacity: { name: "Undos per Climb", base: 0, shown: count },
+  /** Phoenix Spark charges a run has, once the skill has given the first;
+   * its base is the loadout's own charges, so the Archives page reads it there. */
+  sparks: { name: "Phoenix Sparks per Run", base: 0, shown: count },
   /** The percent of its HP a potion restores, from 100 (red potions aside). */
   potionHeal: { name: "Potion Healing", base: 100, shown: percent },
   /** The percent of its Regen training a step regains, from 100. */
@@ -259,11 +259,11 @@ export type ResearchDefinition = {
   /** Level 1 first; the project's maximum level is its length. */
   levels: ResearchLevel[];
   /** When set, only `levels` of them are open for each of `upgrades`
-   * owned (Undo Count: 4 for each of Rehearsed steps and Echoes of time). */
+   * owned (Phoenix Spark Count: 4 for each of Phoenix Spark and Echoes of time). */
   levelsPer?: { upgrades: UpgradeId[]; levels: number };
 };
 
-/** Undo Count: +1 to `target` a level, for nine levels
+/** Phoenix Spark Count: +1 to `target` a level, for nine levels
  * (Movement Speed takes the first six; Heart Door Resilience, −5% a level,
  * ten, and Floor Skip Reward, +10% a level, eleven). Level 1 costs 500 Gold
  * and takes 8 hours; each level after takes 8 hours more, and costs 500 × n
@@ -599,7 +599,7 @@ const warpLootLevels = (): ResearchLevel[] => {
 
 /** Max Interest's limits by level, up from 50 Silver a floor. */
 const INTEREST_CAPS = [100, 200, 350, 500, 750, 1000, 1500, 2000, 2750, 3750, 5000, 6500, 8250, 10000, 12500, 15000, 20000, 25000, 35000, 50000];
-/** Max Interest: Undo Count's schedule (500 × (1 + n(n+1)/2) Gold, 8 × n
+/** Max Interest: Phoenix Spark Count's schedule (500 × (1 + n(n+1)/2) Gold, 8 × n
  * hours) with its Gold raised 20% compounding a level, to the nearest 100
  * (500 Gold at level 1, about 3 million at 20 and 11.5 million in all). At
  * the full limit each level pays back its Gold in 10 floors at first and in
@@ -619,7 +619,7 @@ const BUY_QUANTITY_LEVELS: [gold: number, hours: number][] = [[1000, 4], [5000, 
 const AVENGING_ANGEL_LEVELS = BUY_QUANTITY_LEVELS.map(([gold, hours]): ResearchLevel => ({ gold: gold * 10, hours, effect: { target: "avengingAngel", op: "add", value: 1 } }));
 
 /** Ignore More and Target More: one floor fewer to regain a use a level,
- * for 90 levels (100 floors down to 10). Undo Count's Gold (500 ×
+ * for 90 levels (100 floors down to 10). Phoenix Spark Count's Gold (500 ×
  * (1 + n(n−1)/2) at level n), plus `cubic` × n³, raised `growth`
  * compounding a level, to the nearest 100 (Ignore More: ×1.05 a level,
  * 2.1 billion in all; Target More: ×1.1, 85.4 billion), and n² / 10
@@ -630,7 +630,7 @@ const regainLevels = (target: ResearchTarget, growth: number, cubic = 0) => Arra
   effect: { target, op: "add", value: -1 },
 }));
 /** Ignore Count: +1 Ignore use a level, for nine levels (1 use up to 10).
- * Steeper than Undo Count, less than Target Count: 100,000 Gold at level
+ * Steeper than Phoenix Spark Count, less than Target Count: 100,000 Gold at level
  * 1, five times as much each level (39 billion at 9, 48.8 billion in all),
  * and 12 × n hours (540 in all). */
 const ignoreCountLevels = () => Array.from({ length: 9 }, (_, i): ResearchLevel => ({
@@ -938,13 +938,13 @@ export const RESEARCH = {
     requires: [{ upgrade: "aegisProvision" }],
     levels: boostLevels("aegisCharmTurns", 25),
   },
-  undoCount: {
-    name: "Undo Count",
-    description: "Each climb has one more undo.",
+  sparkCount: {
+    name: "Phoenix Spark Count",
+    description: "Each run has one more Phoenix Spark charge.",
     categories: ["abilities"],
-    requires: [{ anyUpgrade: ["inspirationUndos", "undos"] }],
-    levels: countLevels("undoCapacity", 8),
-    levelsPer: { upgrades: ["inspirationUndos", "undos"], levels: 4 },
+    requires: [{ anyUpgrade: ["phoenixSpark", "undos"] }],
+    levels: countLevels("sparks", 8),
+    levelsPer: { upgrades: ["phoenixSpark", "undos"], levels: 4 },
   },
   fasterTrainers: {
     name: "Faster Trainers",
@@ -1369,17 +1369,27 @@ export type ArchivesOwner = RelicHolder & {
 };
 
 export const researchLevel = (a: ArchivesSave, id: ResearchId) => a.levels[id] ?? 0;
-/** The most levels of `id` open with `upgrades` owned: all of them, or
- * `levelsPer` for each of its upgrades owned. Without `upgrades`, all. */
-export function maxLevel(id: ResearchId, upgrades?: Record<UpgradeId, number>) {
-  const def = research(id), per = def.levelsPer;
-  if (!per || !upgrades) return def.levels.length;
-  return Math.min(def.levels.length, per.levels * per.upgrades.filter((u) => upgrades[u] > 0).length);
+/** Levels a project of `ESOTERIC_LENGTHS` levels keeps closed until Tower
+ * VI's floor 150 Goal, Esoteric Research, is claimed. */
+export const ESOTERIC_LEVELS = 50;
+const ESOTERIC_LENGTHS: readonly number[] = [100, 150];
+/** What decides how many of a project's levels are open: the skills owned
+ * and the Goals claimed. */
+export type LevelOwner = Pick<Save, "upgrades" | "goals">;
+/** The most levels of `id` open to `owner`: all of them, or `levelsPer`
+ * for each of its upgrades owned, and for a project of 100 or 150 levels,
+ * `ESOTERIC_LEVELS` fewer until Esoteric Research is claimed. Without
+ * `owner`, all. */
+export function maxLevel(id: ResearchId, owner?: LevelOwner) {
+  const def = research(id), per = def.levelsPer, length = def.levels.length;
+  if (!owner) return length;
+  const open = ESOTERIC_LENGTHS.includes(length) && !goalUnlocked(owner, "esotericResearch") ? length - ESOTERIC_LEVELS : length;
+  return per ? Math.min(open, per.levels * per.upgrades.filter((u) => owner.upgrades[u] > 0).length) : open;
 }
 /** The level `id` would research next, or undefined once it is complete
- * (or, given the `upgrades` owned, once every level they open is). */
-export const nextLevel = (a: ArchivesSave, id: ResearchId, upgrades?: Record<UpgradeId, number>): ResearchLevel | undefined =>
-  researchLevel(a, id) < maxLevel(id, upgrades) ? research(id).levels[researchLevel(a, id)] : undefined;
+ * (or, given its `owner`, once every level open to it is). */
+export const nextLevel = (a: ArchivesSave, id: ResearchId, owner?: LevelOwner): ResearchLevel | undefined =>
+  researchLevel(a, id) < maxLevel(id, owner) ? research(id).levels[researchLevel(a, id)] : undefined;
 
 /** `base` (the base `RESEARCH_TARGETS` declares for `target`, unless given)
  * changed by every completed research level aimed at `target`. */
@@ -1430,7 +1440,7 @@ export type ResearchStatus = "locked" | "available" | "active" | "completed";
 export function status(o: ArchivesOwner, id: ResearchId): ResearchStatus {
   if (activeSlot(o.archives, id) >= 0) return "active";
   if (missing(o, id).length) return "locked";
-  return nextLevel(o.archives, id, o.upgrades) ? "available" : "completed";
+  return nextLevel(o.archives, id, o) ? "available" : "completed";
 }
 
 /** How many projects are completed (at their most levels open, each in a
@@ -1443,7 +1453,7 @@ export const jobProgress = (job: ResearchJob, now: number) =>
 
 /** Why `id` can't start in `slot` now, or null when it can. */
 export function cannotStart(o: ArchivesOwner, slot: number, id: ResearchId): string | null {
-  const a = o.archives, level = nextLevel(a, id, o.upgrades);
+  const a = o.archives, level = nextLevel(a, id, o);
   if (!a.slots[slot] || a.slots[slot].job) return "That archivist is busy.";
   if (!level) return "Research complete.";
   if (activeSlot(a, id) >= 0) return "Already being researched.";
@@ -1607,7 +1617,8 @@ const isLevelOf = (id: ResearchId, n: unknown): n is number => wholeIn(n, 1, res
 export function decodeArchives(raw: any): ArchivesSave {
   const a = defaultArchives();
   if (!isRecord(raw)) return a;
-  if (isRecord(raw.levels)) decodeLevels(raw.levels, a);
+  // TODO: drop once saves made before Phoenix Spark are gone (Undo Count became Phoenix Spark Count).
+  if (isRecord(raw.levels)) decodeLevels({ sparkCount: raw.levels.undoCount, ...raw.levels }, a);
   if (isRecord(raw.progress)) decodeKeptProgress(raw.progress, a);
   if (validSlotCount(raw.slots)) a.slots = decodeSlots(raw.slots, a);
   if (Array.isArray(raw.history)) a.history = decodeHistory(raw.history);

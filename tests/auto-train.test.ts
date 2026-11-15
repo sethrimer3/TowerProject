@@ -51,9 +51,8 @@ test("Auto-Train skips a row switched off, a group switched off, and buys nothin
   assert.deepEqual(autoTrainPicks(save, run, 100), []);
 });
 
-test("each new Tower floor auto-trains with the Silver held, and undo on the floor keeps those ranks", () => {
+test("each new Tower floor auto-trains with the Silver held", () => {
   const g = new Game(autoSave());
-  g.save.upgrades.inspirationUndos = 1;
   (g.world as RoomWorld).cells = new Map([["0,0", { kind: "floor" }], ["1,0", { kind: "stairs" }]]);
   Object.assign(g.run.player, { x: 0, y: 0 });
   g.run.silver = 30;
@@ -63,12 +62,6 @@ test("each new Tower floor auto-trains with the Silver held, and undo on the flo
   assert.ok(g.run.player.attack > attack, "the ranks raise the stats at once");
   const cheapest = Math.min(runTrainingOffer(g.save, g.run, "hp").price, runTrainingOffer(g.save, g.run, "attack").price);
   assert.ok(g.silver < cheapest, "it stops only when the next rank is out of reach");
-  // A step on the new floor, then undo: the floor's start keeps the ranks.
-  const bought = { ...g.run.training };
-  (g.world as RoomWorld).cells = new Map([[`${g.run.player.x},${g.run.player.y}`, { kind: "floor" }], [`${g.run.player.x + 1},${g.run.player.y}`, { kind: "floor" }]]);
-  assert.ok(g.move(1, 0));
-  assert.ok(g.undo());
-  assert.deepEqual(g.run.training, bought);
 });
 
 test("Auto-Train's switches last from run to run and through a save, and unknown ones are dropped", () => {

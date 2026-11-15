@@ -20,7 +20,6 @@ const lay = (g: Game, door: Tile) => ((g.world as RoomWorld).cells = new Map([["
  * with `door` beside it at (1, 0). */
 function beside(door: Tile, trees: CardTreeLevels, player: Partial<Player> = {}) {
   const s = playedSave();
-  s.upgrades.inspirationUndos = 1;
   const g = new Game(s);
   g.newRun({ seed: 7 });
   g.run.cardTrees = trees;
@@ -75,12 +74,11 @@ test("DOOR's Secret Knock opens a door the hero can open for nothing: no keys, n
   const plain = beside(keyed(["yellow"]), {});
   assert.ok(plain.move(1, 0));
   assert.equal(plain.run.player.keys.yellow, 1, "without the node, the key is spent");
-  // A door's roll is its tile's: undo and the same door rolls the same.
+  // A door's roll is its tile's: the same door rolls the same.
   const some = beside(keyed(["yellow"]), { door: { secretKnock: 50 } }), first = (some.move(1, 0), some.run.player.keys.yellow);
-  assert.ok(some.undo());
-  lay(some, keyed(["yellow"]));
-  assert.ok(some.move(1, 0));
-  assert.equal(some.run.player.keys.yellow, first);
+  const again = beside(keyed(["yellow"]), { door: { secretKnock: 50 } });
+  assert.ok(again.move(1, 0));
+  assert.equal(again.run.player.keys.yellow, first);
 });
 
 test("DOOR's Door Chest leaves an opened treasure chest where the door stood, its loot paid once", () => {
@@ -90,12 +88,6 @@ test("DOOR's Door Chest leaves an opened treasure chest where the door stood, it
   assert.equal(g.world.tile(1, 0).kind, "openedChest");
   assert.equal(g.run.treasures, 1);
   assert.ok(g.save.gold > gold, "the chest's Gold");
-  assert.ok(g.undo());
-  lay(g, keyed(["yellow"]));
-  assert.equal(g.world.tile(1, 0).kind, "door");
-  const paid = g.save.gold;
-  assert.ok(g.move(1, 0));
-  assert.equal(g.save.gold, paid, "undo can't pay the chest twice");
   const none = beside(keyed(["yellow"]), {});
   assert.ok(none.move(1, 0));
   assert.equal(none.world.tile(1, 0).kind, "floor");

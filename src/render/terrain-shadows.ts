@@ -40,7 +40,7 @@ type Geometry = { key: string; torch: Torch };
 
 /** Shared live visibility for terrain, relief, sprite lighting and cast shadows.
  * Stable Torch copies keep all downstream WeakMap bakes warm.
- * Only a changed blocking tile replaces a copy (doors opening, undo, or a
+ * Only a changed blocking tile replaces a copy (doors opening, or a
  * Delve gate closing); pickups and enemy wounds leave it alone. */
 export class TerrainShadows {
   private world: BoardTiles | null = null;

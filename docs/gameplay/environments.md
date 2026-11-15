@@ -2,7 +2,7 @@
 
 A floor may be given an environment: a rule for the whole floor, which changes how it looks, what it holds or what it pays.
 In the Delve, each equivalent floor rolls its own.
-Each environment has its own chance, fixed for a run as it goes inside, and is rolled once for each floor, so a floor has its environments from the moment it is generated and undo can't roll them again.
+Each environment has its own chance, fixed for a run as it goes inside, and is rolled once for each floor, so a floor has its environments from the moment it is generated.
 What [Aurum Bloom](arcana.md#aurum-bloom) adds is the exception: it counts for as long as the arcanum is on and at the level it is now, so switching it can turn a floor Golden or Stellar under the hero's feet.
 Environments overlap: a floor can have several at once.
 A floor with none is a plain floor.
@@ -19,7 +19,7 @@ Interest is multiplied after Max Interest stops it, so a Golden Floor can pay mo
 The multiplier counts once for each find, whatever else raises it, and the All Gold Bonuses box shows it as the Golden Floor line while the hero stands on one.
 A Golden Floor that is also a Treasure Floor makes its many chests worth all the more.
 
-**Golden Floors** (3 Breakthrough, under More Wealth, above Rehearsed steps) opens two Archives projects:
+**Golden Floors** (3 Breakthrough, under More Wealth, above Esoteric Training) opens two Archives projects:
 - **Golden Floor Chance**: +0.5% chance each floor is a Golden Floor a level, for 60 levels, up to 30%. A climb keeps the chance it went inside with, so a level done mid-climb counts from the next.
 - **Golden Floor Multiplier**: ×2 at first, +×0.1 a level, for 80 levels, up to ×10. A level done mid-climb counts at once.
 

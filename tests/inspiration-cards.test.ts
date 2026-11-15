@@ -79,7 +79,6 @@ const enemy = (strength: EnemyStrength): Tile => ({ kind: "enemy", enemy: { name
  * at x = 6 and `side` tiles in the pockets above it (row 1). */
 function floor(side: Record<number, Tile>, edit: (save: Save) => void = () => {}) {
   const save = playedSave();
-  save.upgrades.inspirationUndos = 1;
   edit(save);
   const g = new Game(save);
   g.newRun({ seed: 7 });
@@ -210,8 +209,6 @@ for (const [card, id, color] of [["blueSiphon", "defense", "blue"], ["redSiphon"
     g.autoTurn();
     assert.ok(near(p[id], stat - trained(row(id), 3)), "the second takes two");
     assert.equal(g.handRules.canAct(card), false, "none left for a third");
-    assert.ok(g.undo());
-    assert.equal(g.handRules.cardUses(card), 1, "undo takes a use back");
     assert.equal(g.save.training[id], 3, "the hero's own training is untouched");
   });
 }
@@ -226,8 +223,6 @@ test("GK -> BK trades 3 gold keys for a blue key, while 3 are held", () => {
   g.autoTurn();
   assert.deepEqual([p.keys.yellow, p.keys.blue], [1, 2]);
   assert.equal(g.handRules.canAct("blueTrader"), false);
-  assert.ok(g.undo());
-  assert.deepEqual([g.run.player.keys.yellow, g.run.player.keys.blue], [4, 1], "undo takes a trade back");
 });
 
 test("BK -> RK trades 3 blue keys for a red key, while 3 are held", () => {
@@ -238,8 +233,6 @@ test("BK -> RK trades 3 blue keys for a red key, while 3 are held", () => {
   g.autoTurn();
   assert.deepEqual([p.x, p.keys.yellow, p.keys.blue, p.keys.red], [6, 5, 1, 1]);
   assert.equal(g.handRules.canAct("redTrader"), false);
-  assert.ok(g.undo());
-  assert.deepEqual([g.run.player.keys.blue, g.run.player.keys.red], [4, 0], "undo takes a trade back");
 });
 
 test("Smelt GK trades a gold key for 10% of max HP, only while that much is missing", () => {

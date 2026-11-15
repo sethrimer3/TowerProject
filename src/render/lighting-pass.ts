@@ -150,13 +150,13 @@ export class LightingPass {
   private bakeBudget = 0;
   /** The last light and relief baked at each torch spot on the current
    * floor. A door opening beside a torch gives it a fresh copy
-   * (terrain-shadows.ts), and undo rebuilds the board, so its bake may wait
+   * (terrain-shadows.ts), and a reload rebuilds the board, so its bake may wait
    * for budget; until it's ready the torch keeps its old light instead of
    * going dark for a frame. */
   private lastBakes: { floor: unknown; light: Map<string, { left: BakedLight; right: BakedLight } | null>; relief: Map<string, { left: BakedRelief; right: BakedRelief } | null> } =
     { floor: null, light: new Map(), relief: new Map() };
   private lastBakesOn(world: unknown) {
-    // A board regenerated for the same floor (undo) keeps them; any other board starts afresh.
+    // A board regenerated for the same floor (a reload) keeps them; any other board starts afresh.
     const w = world as { seed?: unknown; room?: unknown } | null;
     const floor = typeof w?.seed === "number" ? `${w.seed}:${String(w.room)}` : world;
     if (this.lastBakes.floor !== floor) this.lastBakes = { floor, light: new Map(), relief: new Map() };

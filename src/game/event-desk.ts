@@ -205,7 +205,7 @@ Your Medals weren't claimed in time, so here they are.`,
 
   /** Counts `amount` toward the event's mission of `type`, if it has one. A
    * `key` (a kill or pickup's `mode:loot key`, a tournament's id) counts
-   * only once, so undo bringing the tile back can't count it again. */
+   * only once. */
   record(type: EventMissionType, amount = 1, key?: string) {
     const m = amount > 0 ? this.current(type) : undefined;
     if (!m) return;
@@ -252,7 +252,7 @@ Your Medals weren't claimed in time, so here they are.`,
   }
 
   /** A fight cost the hero HP: the floor it stands on breaks the run's
-   * floors without damage. Undo doesn't take it back. */
+   * floors without damage. */
   hurt(mode: Mode, seed: number) {
     if (this.unlocked) this.streaks(mode, seed).hurt = true;
   }

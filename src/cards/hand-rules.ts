@@ -16,7 +16,7 @@ import { boughtInRun } from "../progression/run-training.ts";
 const SKIP_SALT = 0x5c1b7;
 
 /** What the hand rules read from the game, each time (an erase replaces
- * the save, and undo or a mode change the run): the save, the active run
+ * the save, and a new run or a mode change the run): the save, the active run
  * and its board, the mode, the hand, Key Efficiency's cost and the door
  * cards' discounts. */
 export interface HandHost {
@@ -42,7 +42,7 @@ export interface HandHost {
  * and the marks and cooldowns they keep by floor, Skip's stream of rolls,
  * the tiles Ignore marked, and whether a card that acts in place can act.
  * It is where the hand plans from (`HandAt`): `planHand`, `planTarget` and
- * `explainStuck` take it. Everything it keeps lives in the run, so undo and
+ * `explainStuck` take it. Everything it keeps lives in the run, so
  * reloads keep it; inside the forest no badge has a rule. */
 export class HandRules implements HandAt {
   constructor(private readonly host: HandHost) {}

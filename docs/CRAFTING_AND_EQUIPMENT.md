@@ -442,7 +442,7 @@ When this design is implemented, the feature is complete only if all of the foll
 - [ ] Crafting consumes the documented bars/common parts and any optional gems/rare parts.
 - [ ] Crafted items retain their individual enhancement rolls/material choices.
 - [ ] Salvaging returns only bars/common parts until recovery research is unlocked.
-- [ ] Salvaging cannot duplicate resources through rounding, undo, reload, or repeated actions.
+- [ ] Salvaging cannot duplicate resources through rounding, reload, or repeated actions.
 - [ ] Clear-reward chests remain separate from generated treasure chests.
 
 ---

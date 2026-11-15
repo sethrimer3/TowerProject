@@ -162,19 +162,16 @@ test("a page over the board pauses the hand, and leaving it plays on as it was",
   assert.ok(!g.auto);
 });
 
-test("training bought mid-run reaches the run's hero and undo keeps it", () => {
+test("training bought mid-run reaches the run's hero", () => {
   const s = defaults();
   s.tutorials.climb = true;
-  s.upgrades.inspirationUndos = 1;
   s.xp = xpForLevel(10);
   const g = new Game(s);
-  // A step to undo, then a rank of ATK bought while the run goes on.
+  // A step, then a rank of ATK bought while the run goes on.
   const step = [[0, 1], [1, 0], [-1, 0]].find(([dx, dy]) => g.world.tile(g.run.player.x + dx, g.run.player.y + dy).kind === "floor")!;
   assert.ok(g.move(step[0], step[1], true));
   const attack = g.run.player.attack;
   assert.ok(trainNow(g, "attack"));
   const trained = g.run.player.attack;
   assert.ok(trained > attack, "the rank reaches the run at once");
-  assert.ok(g.undo());
-  assert.equal(g.run.player.attack, trained, "undo takes back the step, not the rank");
 });

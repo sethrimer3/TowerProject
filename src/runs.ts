@@ -1,4 +1,4 @@
-/** A run in either mode (`RunCore`, `TowerRun`, `DelveRun`), Automove's memory beside it, and undo's snapshots and the fall. */
+/** A run in either mode (`RunCore`, `TowerRun`, `DelveRun`), Automove's memory beside it, and the fall. */
 import type { ShrineRun } from "./shrines.ts";
 import type { CardId, CardLink } from "./cards/cards.ts";
 import type { RunBadges } from "./cards/badges.ts";
@@ -44,14 +44,12 @@ export type RunCore = {
   manual?: CardId[];
   /** The hand's links (Card Groups) as they were when the run went inside. */
   links?: CardLink[];
-  /** Silver held: earned from enemies and spent inside this run only, so
-   * undo takes it back with the rest of the run. */
+  /** Silver held: earned from enemies and spent inside this run only. */
   silver?: number;
-  /** XP earned from kills this run, for the run's end dialog; undo takes
-   * it back with the rest of the run, as it does the hero's XP. */
+  /** XP earned from kills this run, for the run's end dialog. */
   xp?: number;
   /** The run's notes (run-notes.ts): its start, steps, keys, doors,
-   * pickups and Silver found; undo takes them back with the run. */
+   * pickups and Silver found. */
   notes?: RunNotes;
   /** Ignore and Target uses spent this run. What is left is what a run
    * gets now less these, so a count research level completed mid-run counts
@@ -63,22 +61,19 @@ export type RunCore = {
   bombsUsed?: number;
   /** Provisions used this run (Traveler's elixir, Vanguard Banner, Aegis charm):
    * a run has one use for each owned, so what is left is those less
-   * these. Undo never gives one back: the count rides onto the run it
-   * restores. */
+   * these. */
   provisionsUsed?: Partial<Record<UsedProvision, number>>;
   /** The Vanguard Banner's and Aegis charm's boosts going on: the ATK or DEF
-   * each added to the hero (on every copy of the run undo holds, so undo
-   * never takes it away) and the turns it has left. Undo carries these
-   * onto the run it restores, so a boost keeps counting down. */
+   * each added to the hero and the turns it has left. */
   boosts?: Partial<Record<Boosted, { amount: number; turns: number }>>;
   /** The floor (`MODES[mode].floorOf`, from 0) the Gold Key provisions
    * last handed the run their keys on: the next come `PROVISION_KEY_FLOORS`
    * floors on. */
   keyFloor?: number;
-  /** Undos spent this run. A run has as many as the loadout's undo
-   * capacity, and one spent never comes back, so what is left is that
-   * capacity less these (undo carries the count onto the run it restores). */
-  undosUsed?: number;
+  /** Phoenix Spark charges spent this run. A run has as many as the
+   * loadout's `sparks`, and one spent never comes back, so what is left is
+   * those less these. */
+  sparksUsed?: number;
   /** New floors counted toward each charge's next regained use (Ignore
    * More, Target More; run-charges.ts), while it is below full. */
   regain?: Partial<Record<"ignore" | "target", number>>;
@@ -123,22 +118,22 @@ export type RunCore = {
    * absent for the first. */
   tier?: number;
   /** The turns Overseer's beams have turned this run (arcana/overseer.ts),
-   * in the run so undo turns them back; absent before the first. */
+   * absent before the first. */
   beamTurns?: number;
   /** Lifespring's cooldown, waves, HP Pool and Health Bonus (arcana/lifespring.ts),
-   * in the run so undo takes them back with what they did; absent before its first turn. */
+   * absent before its first turn. */
   lifespring?: LifespringRun;
-  /** Time Dilation's cooldown and field (arcana/time-dilation.ts), in the run so
-   * undo takes them back with what they slowed; absent before its first turn. */
+  /** Time Dilation's cooldown and field (arcana/time-dilation.ts); absent
+   * before its first turn. */
   timeDilation?: DilationRun;
-  /** Phantasm's cooldown, turning and ghosts (arcana/phantasm.ts), in the run so
-   * undo takes them back with what they struck; absent before its first turn. */
+  /** Phantasm's cooldown, turning and ghosts (arcana/phantasm.ts); absent
+   * before its first turn. */
   phantasm?: PhantasmRun;
-  /** Necrotic Frost's cooldown and fields (arcana/necrotic-frost.ts), in the run so
-   * undo takes them back with what they did; absent before its first turn. */
+  /** Necrotic Frost's cooldown and fields (arcana/necrotic-frost.ts);
+   * absent before its first turn. */
   necroticFrost?: FrostRun;
-  /** Voidwell's cooldown and vortex (arcana/voidwell.ts), in the run so undo takes
-   * them back with what they stunned; absent before its first turn. */
+  /** Voidwell's cooldown and vortex (arcana/voidwell.ts); absent before its
+   * first turn. */
   voidwell?: VoidwellRun;
   /** Ranged enemies' and the Archer's cooldowns, and the turns taken
    * inside (enemies/ranged.ts); absent until the first shot is due. */
@@ -167,17 +162,15 @@ export type RunCore = {
    * its stream, which starts from the run seed (progression/free-training.ts). */
   freeRolls?: Partial<Record<"offense" | "defense" | "utility", number>>;
   /** The broken shield's regrow: the turns left and the turns it began with
-   * (hero-shield.ts); absent while the shield stands. Undo takes it back with
-   * the run. */
+   * (hero-shield.ts); absent while the shield stands. */
   shieldRegrow?: { left: number; of: number };
   /** Each Enemy Level Skip kind's skips, draws and chance added up
-   * (enemies/level-skips.ts), absent until it first draws. Undo takes them
-   * back with the run, and a floor passed again draws the same. */
+   * (enemies/level-skips.ts), absent until it first draws. A floor passed
+   * again draws the same. */
   levelSkips?: LevelSkips;
   /** How many enemies the run has spawned onto its floors
    * (`Game.spawnEnemy`), each numbered by the count before it; absent with
-   * none. Undo takes it back with the run, so a spawn undone and made again
-   * gets the same number. */
+   * none. */
   spawns?: number;
   /** Goldback's combo: the multiplier its activations have tallied for the
    * next Gold the run finds (each adds its value), used up by that Gold;
@@ -185,21 +178,18 @@ export type RunCore = {
   goldCombo?: number;
   /** The Max HP badge's boosts this run, in percent of max HP, summed:
    * the hero's max HP is 1 + this / 100 times what it would be without
-   * them (`badgeFactor`); absent with none. Undo takes it back with the
-   * run. */
+   * them (`badgeFactor`); absent with none. */
   maxHpBoost?: number;
   /** Whether Angel Wings has raised the hero this run, spending its
-   * charge; absent until it has. Undo takes it back with the run, so the
-   * fight that spent it, undone, leaves it ready again. */
+   * charge; absent until it has. */
   wingsSpent?: true;
   /** The Dash Combo going on (`Game.comboTurn`): the Combo the next fight
    * would have (`next`) and the turns since the last fight (`idle`); absent
-   * with none. Undo takes it back with the run. */
+   * with none. */
   combo?: { next: number; idle: number };
   /** What the worn Uniques' powers keep for the run (equipment/powers.ts):
    * Super Crits owed, Retribution, Free Upgrade rolls won on the floor,
-   * pickups counted, bosses rushed; absent with none. Undo takes it back
-   * with the run. */
+   * pickups counted, bosses rushed; absent with none. */
   gear?: GearRun;
 };
 /** A Tower ascent. */
@@ -233,16 +223,11 @@ export type DelveRun = RunCore & {
 };
 /** What Delve Automove has seen of the descent in the labyrinth, and how
  * often the player has stood on each tile. It is kept beside the run, not
- * in it, so undo never copies or rewinds it. */
+ * in it. */
 export type AutomoveMemory = { known: Record<string, true>; visited: Record<string, number> };
 export type Run = TowerRun | DelveRun;
 /** Every card a run holds: its hand's, then its Manual hand's. */
 export const heldCards = (run: Pick<RunCore, "hand" | "manual">): CardId[] => [...(run.hand ?? []), ...(run.manual ?? [])];
-/** An undo point: the run, the best and XP then, the lifetime Silver then
- * (`silver`, absent in a snapshot older than the profile), since undo
- * takes back the Silver found after it, and each card's XP then (`cardXp`,
- * absent in a snapshot older than card levels). */
-export type MoveSnapshot<R extends Run = Run> = { run: R; best: number; xp: number; silver?: number; cardXp?: Partial<Record<CardId, number>>; quiet?: true };
-/** A hero fallen in a fight, waiting for the player to undo it or accept
- * defeat: the run just before that fight, and the enemy that won it. */
-export type Fall<R extends Run = Run> = { snapshot: MoveSnapshot<R>; by: string };
+/** A hero fallen in a fight, waiting for the player to accept defeat: the
+ * enemy that won it. */
+export type Fall = { by: string };

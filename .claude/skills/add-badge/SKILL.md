@@ -36,7 +36,7 @@ Make a **card matrix**: one row per badge, one column per card in `CARDS`, and i
 - **Bosses and structure.** Bosses, the Greater Boss, boss floors (`isBossFloor`), sections, the `AreaLedger` judgement, tier gates. Default: a badge never bypasses something meant to block the way up.
 - **Per floor in the Delve.** Default: `HandRules.floor` (the equivalent floor), as cooldowns already use.
 - **Greying and recovery.** When the card greys out, what greys it (the HUD's `unable`), and whether `handStuck` brings it back.
-- **Chance and undo.** Default: a roll is a fixed `tileRandom` number per run seed, floor, tile and badge, so undo can't reroll it. Per-run state lives in the run (with a `dropInvalid` decoder) so undo rewinds it.
+- **Chance.** Default: a roll is a fixed `tileRandom` number per run seed, floor, tile and badge, so a replay rolls it the same. Per-run state lives in the run (with a `dropInvalid` decoder).
 - **Marks on the board.** Which symbol goes where, when it's removed, and whether it's saved.
 - **Dev grant.** Whether Dev mode's grant (`setDevMode`) owns this badge at max copies, and the skills that open the Badges box (if the user mentions a button that doesn't exist, say so and propose the closest real one).
 
@@ -66,9 +66,9 @@ Follow `AGENTS.md`. The points that matter most for badges:
 
 - Work in an isolated worktree, cherry-pick onto `main`, push, and clean up.
 - Add the new rows at the end of their rarity's group in `BADGES`. The draw picks evenly within a rarity, so a new row changes which badge a given seed draws. Expect `tests/badges.test.ts`'s draw expectations to change, and update them on purpose.
-- Planning rules go through `CardRules` and `planHand`. Step outcomes go through `resolveStep` / `StepRules`, never a separate path in `Game`. Rewards go through `activate` and the `RunPurse`, so undo and the `lootedTiles` gate keep working.
-- Runs with no badge must play exactly as before. `step-trace`, `undo-clear-trace`, `tower-automation` and `delve-automove` must still match. If one fails, the badge leaked into the plain path.
-- Add one test per behaviour to `tests/badges.test.ts`, covering the card matrix's interesting cells, undo, the per-floor limits and the Dev grant.
+- Planning rules go through `CardRules` and `planHand`. Step outcomes go through `resolveStep` / `StepRules`, never a separate path in `Game`. Rewards go through `activate` and the `RunPurse`, so the `lootedTiles` gate keeps working.
+- Runs with no badge must play exactly as before. `step-trace`, `spark-clear-trace`, `tower-automation` and `delve-automove` must still match. If one fails, the badge leaked into the plain path.
+- Add one test per behaviour to `tests/badges.test.ts`, covering the card matrix's interesting cells, the per-floor limits and the Dev grant.
 - Re-record only what the change should move: `ui.golden.json` if the Deck page or HUD shows it (`npm run test:ui`, recorded on the unchanged code first), `render-calls` / `render.golden.json` for new board marks or animations, and `save-decode` if `BadgesSave` or the run's saved fields change.
 - Update the "Card badges" passage in `docs/agents/hand-and-automation.md`, and add any new domain term to `CONTEXT.md`.
 - Run `npm test` and `npm run build`, then commit with the re-recorded goldens and the reason for each.

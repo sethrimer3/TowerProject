@@ -193,15 +193,12 @@ function climbing(floor: number, levels: Partial<Record<ResearchId, number>> = {
   return g;
 }
 
-test("a run picks an offered boon: the hero's stats change, and undo keeps the boon", () => {
+test("a run picks an offered boon: the hero's stats change", () => {
   const g = climbing(200);
   assert.equal(g.shrine.unspent, 1);
   assert.equal(g.shrine.floorsToNext, 200);
   const offer = g.shrine.offer();
   assert.equal(offer.length, 2);
-  // Take a step so there is something to undo, with an undo to spend.
-  g.save.upgrades.inspirationUndos = 1;
-  g.save.tower.history.push(g.snapshot());
   const attack = g.run.player.attack, maxHp = g.run.player.maxHp;
   const id = offer[0]!;
   assert.ok(g.shrine.pick(id));
@@ -211,9 +208,6 @@ test("a run picks an offered boon: the hero's stats change, and undo keeps the b
   const e = boonEffects([id], g.save);
   assert.equal(g.run.player.attack, Math.round(attack * e.attack * 1e6) / 1e6);
   assert.equal(g.run.player.maxHp, Math.round(maxHp * e.maxHp * 1e6) / 1e6);
-  assert.ok(g.undo());
-  assert.deepEqual((g.run as TowerRun).shrine!.picked, [id]);
-  assert.equal(g.run.player.attack, Math.round(attack * e.attack * 1e6) / 1e6);
 });
 
 test("the Shrine bar fills from the latest boon's floor to the next's", () => {

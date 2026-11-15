@@ -27,8 +27,7 @@ export type ModeProfile<R extends Run = Run> = {
   equivalentFloor(progress: number): number;
   /** The progress loot at row `y` of the run's board is measured at. */
   progressAt(run: R, y: number): number;
-  /** The equivalent floor the run's hero stands on, from the run alone
-   * (undo never leaves it: run-timeline.ts). */
+  /** The equivalent floor the run's hero stands on, from the run alone. */
   floorOf(run: R): number;
   /** The board's width, and the column a run enters at from the forest. */
   width: number;
@@ -39,7 +38,7 @@ export type ModeProfile<R extends Run = Run> = {
   board(run: R): Board;
   /** Gold paid when a run ends. */
   endGold(run: R): number;
-  /** Keys a kill or treasure so it pays out once, whatever undo does. */
+  /** Keys a kill or treasure so it pays out once. */
   lootKey(run: R, x: number, y: number): string;
   words: {
     /** What the progress count measures. */

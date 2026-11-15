@@ -4,7 +4,7 @@ A second pool of health that takes enemy strikes and shots before your HP, and r
 
 ## Unlocking it
 
-**Aether Shield** (5 Breakthrough, straight under Rehearsed steps, above Echoes of time) reveals four Inspiration skills, split off Torch to the right.
+**Aether Shield** (5 Breakthrough, straight under Esoteric Training, above Phoenix Spark and Echoes of time) reveals four Inspiration skills, split off Torch to the right.
 
 | Skill | Inspiration | Opens |
 |---|---|---|
@@ -19,7 +19,7 @@ It stays hidden until Aether Shield is owned.
 ## How it works
 
 A climb starts with the shield full, in the Tower and the Delve alike.
-It keeps what it holds from fight to fight and floor to floor, and undo takes back what it lost with the rest of the step.
+It keeps what it holds from fight to fight and floor to floor.
 
 Each enemy strike or shot comes off DEF, then Parry %, then Shroud, then the shield, and only what is left comes off HP.
 Door tolls go straight to your HP: a Heart Door's price is the same with a shield.

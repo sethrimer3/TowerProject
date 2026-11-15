@@ -24,7 +24,6 @@ A Gem now and then lies on a floor: on the next new floor a run reaches (a Tower
 Stepping on it, or tapping it anywhere on the board, collects it in a sparkle for 1 Gem, and the next can't appear for 30 minutes (on the real clock).
 A tapped Gem flies to the Gems in your purse, which count it as it lands.
 A Gem left on a floor the hero leaves, or in a run that ends, is gone, and another appears 3 new floors later, again and again until one is collected (that count carries into the next run).
-Undo never brings a collected Gem back or takes one away.
 The [Gem card](hand-and-cards.md#the-gem-card) adds more Gems while either hand holds it: Golden and Stellar Gems, Gems of its own on new floors, from bosses and in chests.
 
 ## Ad rewards
@@ -74,7 +73,7 @@ Dev mode owns every theme.
 Each Tower climb, as it ends, keeps the Gold it found and the real time it took (less any time the app was closed during it); Delve runs don't count.
 The last ten give the **Recent Gold per Hour**: their Gold over their time, so a long climb weighs more than a short one.
 The Settings page's Stats dialog shows it after the Gold earned, shortened (*12.3K*).
-**Offline Gold** (2 Breakthrough, down and right of Golden Floors, beside Rehearsed steps, with Gem Card under it) pays Gold for the time the app was closed.
+**Offline Gold** (2 Breakthrough, down and right of Golden Floors, beside Esoteric Training, with Gem Card under it) pays Gold for the time the app was closed.
 Starting the app again after a minute or more away (less is no time away) opens the *Offline Gold* dialog, pausing a climb in progress: the time away and the most that pays (*03h:10m offline (of 02h:00m max)*), and the sum, *Recent 12.3K × 02h:00m × 10.0% = 2.46K*.
 Time away that pays nothing (no Recent Gold per Hour yet) opens no dialog.
 **Claim** banks the Gold, rains coins down the screen, and plays the climb on.

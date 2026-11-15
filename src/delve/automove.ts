@@ -13,7 +13,7 @@ const dirs = [[0, 1], [-1, 0], [1, 0], [0, -1]];
 export type Decision = { x: number; y: number; utility: number; travel: number; damage: number; keys: number; reward: number; frontier: boolean; deadEnd: boolean };
 type Commitment = { run: Run; from: string; route: string[]; target: string };
 /** What Automove carries between steps and never saves: the route it
- * committed to (dropped once the run is replaced, as undo does) and the
+ * committed to (dropped once the run is replaced) and the
  * decision points it weighed last. A Game holds one. */
 export class DelvePlan {
   commitment?: Commitment;

@@ -24,7 +24,7 @@ Stepping into a monster plays the fight out: the hero waits on its own tile and 
 From the hero's first strike, the monster's HP shows in a red bar above it, draining with each strike and fading once the monster falls.
 **Instant Combat** (1 Breakthrough, left of Movement Speed in the Breakthrough tree) adds **Animate fights** to Settings (hidden until then, and on): turned off, each fight counts at once, in one step, and shows as a summary.
 A monster that falls raises nothing (it plainly lost all its HP), and only the damage the hero took rises off the hero.
-A fight the hero loses raises the damage each way at once, and the monster's HP bar stays, showing what it has left, so you can judge whether to undo.
+A fight the hero loses raises the damage each way at once, and the monster's HP bar stays, showing what it has left, so you can see how far it was from winning.
 A revival shows the fight up to it the same way, and once its golden fire is out the rest of the fight follows as another summary.
 While a fight plays out, the HP bar's red already shows the HP the fight will leave, and the HP still to be lost shows in purple just past it, shrinking as each strike lands.
 A potion's heal shows in blue past the HP before it, and the red fills over the blue in a second.
@@ -41,7 +41,6 @@ A door raises each key it took with a minus sign, and a Heart Door, which needs 
 Taking the stairs snaps the hero straight onto the new floor.
 The white arrival flash and decorative player and staircase halos are temporarily disabled; their blue pixel outlines remain visible.
 While the hero stands on the board's bottom row the status line over it turns half see-through.
-Undo during a fight takes back the whole fight.
 
 ## Monsters and their pay
 
@@ -57,7 +56,7 @@ Every shot fires a share of the way through a turn, as the hero walks its step: 
 A monster both Fast and Ranged readies its shot twice as fast: 5 turns at first, half the wait on every floor.
 Its shot always hits: its ATK less DEF, cut by Parry % when parried, the shroud (whole for every shot) taking what it can of the rest; the damage rises over the hero.
 A shot the hero lives through costs the shooter the hero's thorns (see [Skills and stats](skills-and-stats.md)), which rise in yellow over it with its HP bar, and a shooter its thorns fell counts as any other kill.
-A shot that costs HP costs the area's mastery, and one that leaves the hero no HP fells it, as a lost fight does (one undo takes the step back).
+A shot that costs HP costs the area's mastery, and one that leaves the hero no HP fells it, as a lost fight does (Angel Wings, then a Phoenix Spark charge, may save the hero first).
 The hand and Automove don't plan around shots.
 Shots resolve in the order they fire through the turn: a monster an arrow fells shoots no more, and a shot that fells the hero ends the turn there; when the hero's arrow and a monster's shot are ready at the same moment, the arrow lands first.
 A dash is one turn, taken all at once: its shots fire from where it stops.
@@ -77,7 +76,7 @@ The bubble reaches a tile at first (the four beside it), half a tile more every 
 A Shielded monster with no other in its bubble may bring standard monsters in front of it, nearer the way in (more often further up, one certain for each 100% the chance reaches), which may be Fast or Ranged as any other.
 A Shielded monster pays 1 Gold more.
 Every monster beaten pays Gold by its strength: none for a weak one, 1 for a normal one, 2 for a strong one, 4 for an elite one and 5 for a boss.
-The stats show the Gold found so far this run beside ATK and DEF; undo never takes Gold back, so it never lowers the count.
+The stats show the Gold found so far this run beside ATK and DEF.
 
 ## The Archer
 
@@ -86,7 +85,7 @@ Without the card in the hand no arrow flies, and the Archer's Training rows (Att
 The card gives its arrows +5% ATK against a boss or Greater Boss.
 The moment its arrow is ready, it shoots the closest monster within its Attack Range (3 m to begin with, walls and doors no obstacle) that an arrow can hurt; the arrow flies from where the hero is then, partway through its step perhaps.
 An arrow deals one of the hero's strikes: ATK (raised against bosses, critical hits rolled) less the monster's DEF, Piercing counted, healing by Lifesteal; its damage rises over the monster, whose HP bar shows what it has left.
-A wounded monster keeps its wound, so the fight that follows is shorter, and the wound counts in its inspect panel and damage number; undo takes an arrow back with the step.
+A wounded monster keeps its wound, so the fight that follows is shorter, and the wound counts in its inspect panel and damage number.
 An arrow that fells a monster pays the kill as a fight would; one that fells an unwounded monster with a single arrow is an instakill, as Mug pays it.
 Only Ranged and Flying monsters shoot back: the rest strike only when the hero fights them.
 The arrow is ready every 10 turns from the moment it last fired (Attack Speed: 1 shot every 10 turns, more with training); a ready arrow with no monster in reach waits, and fires the moment one comes in reach, from where the hero is then.

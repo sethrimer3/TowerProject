@@ -12,9 +12,9 @@ import { playedSave } from "./first-skills.ts";
 
 const hpRow = TRAINING.find((t) => t.id === "hp")! as StatTrainingRow;
 
-test("Rehearsed steps costs 1 Breakthrough; Lifesteal (5) follows the Archives, Buy Quantity (5) Lifesteal, Thorns (10) Buy Quantity, GK Siphon (5) Key Efficiency, Regen Research (10) Shroud", () => {
-  assert.equal(cost("inspirationUndos", 0), 1);
-  assert.equal(UPGRADES.find((u) => u.id === "inspirationUndos")!.currency, "breakthrough");
+test("Phoenix Spark costs 1 Breakthrough; Lifesteal (5) follows the Archives, Buy Quantity (5) Lifesteal, Thorns (10) Buy Quantity, GK Siphon (5) Key Efficiency, Regen Research (10) Shroud", () => {
+  assert.equal(cost("phoenixSpark", 0), 1);
+  assert.equal(UPGRADES.find((u) => u.id === "phoenixSpark")!.currency, "breakthrough");
   const g = new Game(playedSave());
   g.save.tower.inspiration = 1000;
   g.save.upgrades.questForKnowledge = g.save.upgrades.pathToWealth = g.save.upgrades.physician = g.save.upgrades.keyMastery = g.save.upgrades.cardMastery = 1;
@@ -62,7 +62,6 @@ test("Regen research: +3% Regen a level, priced and timed like Potion HP, needin
 function corridor(ranks: number, edit: (save: Save) => void = () => {}) {
   const save = playedSave();
   save.upgrades.keySiphon = 1;
-  save.upgrades.inspirationUndos = 1;
   save.training.hp = ranks;
   edit(save);
   const g = new Game(save);
@@ -91,7 +90,6 @@ test("GK SIPHON trades Max HP training levels for a gold key without moving, one
   assert.ok(near(p.maxHp, maxHp - top), "the first use takes one level");
   assert.equal(g.run.loadout!.maxHp, p.maxHp);
   assert.ok(p.hp <= p.maxHp, "HP falls with max HP");
-  assert.equal(g.save.tower.history.length, 1, "a turn of its own");
   assert.deepEqual([g.handRules.siphonLevel("keySiphon"), g.handRules.siphonCost("keySiphon")], [2, 2]);
   g.autoTurn();
   assert.equal(p.keys.yellow, keys + 2);
@@ -119,15 +117,10 @@ test("HP below the new max stays as it was", () => {
   assert.equal(p.hp, 5);
 });
 
-test("undo takes a siphon back, and the next run starts with its max HP whole", () => {
+test("the next run starts with its max HP whole after a siphon", () => {
   const g = corridor(1);
-  const maxHp = g.run.player.maxHp;
   g.autoTurn();
   assert.equal(g.handRules.cardUses("keySiphon"), 1);
-  assert.ok(g.undo());
-  assert.equal(g.run.player.maxHp, maxHp);
-  assert.equal(g.run.cardUses, undefined);
-  g.autoTurn();
   g.newRun({ seed: 8 });
   assert.equal(g.run.player.maxHp, loadout(g.save).maxHp);
   assert.equal(g.handRules.siphonLevel("keySiphon"), 1);

@@ -42,7 +42,7 @@ export const STELLAR_FACTOR = 10;
 export type FloorBloom = { bonus: number; chance: number; stellar: number; golden?: number };
 
 /** `run`'s chances with `bloom`'s added. They are read, never saved, so a
- * toggle or a level counts at once and undo can't touch them. */
+ * toggle or a level counts at once. */
 export const withBloom = (run: EnvironmentRun, bloom: FloorBloom | undefined): EnvironmentRun =>
   bloom ? { seed: run.seed, treasureFloor: run.treasureFloor, goldenFloor: (run.goldenFloor ?? 0) + bloom.chance, stellarFloor: (run.stellarFloor ?? 0) + bloom.stellar } : run;
 

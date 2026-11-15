@@ -94,7 +94,7 @@ test("max HP changing keeps HP above it within the new Overheal ceiling", () => 
 /** A Game on a cleared floor with Overheal owned and trained `ranks`. */
 function overhealGame(ranks: number, edit: (s: Save) => void = () => {}) {
   const s = playedSave();
-  Object.assign(s.upgrades, { overheal: 1, inspirationUndos: 1 });
+  Object.assign(s.upgrades, { overheal: 1 });
   s.training.overheal = ranks;
   edit(s);
   const g = new Game(s);
@@ -115,8 +115,6 @@ test("the game reads Overheal at the step: a potion drunk at full HP rises above
   p.hp = p.maxHp;
   assert.ok(g.move(0, 1));
   assert.equal(g.run.player.hp, p.maxHp + POTION_HEAL);
-  assert.ok(g.undo());
-  assert.equal(g.run.player.hp, g.run.player.maxHp, "undo takes the heal back");
   // Up to the ceiling only.
   const full = overhealGame(100);
   (full.world as RoomWorld).cells.set("6,1", { kind: "potion", color: "red" });

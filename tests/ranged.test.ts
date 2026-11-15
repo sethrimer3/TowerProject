@@ -117,8 +117,6 @@ test("Ranged enemies say so before their strength and name, after Fast", () => {
  * `foes` placed by tile. */
 function arena(foes: Record<string, Enemy>, over: Partial<Player> = {}) {
   const save = defaults();
-  // An undo, to take a turn back.
-  save.upgrades.inspirationUndos = 1;
   const g = new Game(save);
   g.save.themes = [];
   g.run.tier = 3;
@@ -131,7 +129,7 @@ function arena(foes: Record<string, Enemy>, over: Partial<Player> = {}) {
 }
 const shooter: Enemy = { name: "Archer", hp: 50, attack: 7, defense: 0, tier: 3, strength: "normal", ranged: true };
 
-test("a Ranged enemy shoots once the hero steps into its 2.5 tiles, every 10 turns after; undo takes the shot back", () => {
+test("a Ranged enemy shoots once the hero steps into its 2.5 tiles, every 10 turns after", () => {
   const g = arena({ "4,0": shooter });
   assert.ok(g.move(1, 0));
   assert.equal(g.run.player.hp, 100, "3 tiles away: out of reach");
@@ -150,20 +148,14 @@ test("a Ranged enemy shoots once the hero steps into its 2.5 tiles, every 10 tur
   }
   assert.deepEqual(hps, [93, 93, 93, 93, 93, 93, 93, 93, 93, 86]);
   assert.equal(g.towerRun.damaged, true, "a shot that costs HP costs the area's mastery");
-  const hp = g.run.player.hp;
-  assert.ok(g.undo());
-  assert.ok(g.run.player.hp >= hp);
-  assert.equal(g.volley, null);
 });
 
-test("a shot that fells the hero leaves it fallen, and one undo takes the step back", () => {
+test("a shot that fells the hero leaves it fallen", () => {
   const g = arena({ "3,0": { ...shooter, attack: 500 } });
   assert.ok(g.move(1, 0));
   assert.equal(g.run.player.hp, 0);
   assert.ok(g.fallen);
   assert.match(g.message, /Shot down by Ranged Archer/);
-  assert.ok(g.undo());
-  assert.deepEqual([g.run.player.x, g.run.player.hp], [0, 100]);
 });
 
 test("no shots below the third tier, and the Archer shoots only once its Goal is claimed", () => {
@@ -196,9 +188,6 @@ test("the Archer shoots the closest enemy within 3 tiles every 10 turns, woundin
   }
   assert.ok(g.move(-1, 0));
   assert.equal(g.world.tile(4, 0).enemy!.hp, 1000);
-  // Undo takes the arrow back with the step.
-  assert.ok(g.undo());
-  assert.equal(g.world.tile(4, 0).enemy!.hp, 2000);
 });
 
 test("an arrow that fells an unwounded enemy pays the kill as an instakill; a ready arrow waits for a target", () => {
@@ -334,8 +323,6 @@ test("Charged Shot: each turn the ready arrow waits unfired adds its percent to 
   // Two turns waited, at 10% a turn.
   assert.deepEqual(g.volley?.shots.map((s) => [s.damage, s.charge]), [[1200, 20]]);
   assert.equal(g.run.volleys?.waited, undefined, "fired: the wait starts over");
-  assert.ok(g.undo());
-  assert.equal(g.run.volleys?.waited, 2, "undo takes the arrow back, and the wait with it");
   const plain = archer(arena({ "6,0": { ...brute, hp: 9000 } }, { attack: 1000 }));
   for (let i = 0; i < 2; i++) assert.ok(plain.move(1, 0));
   assert.equal(plain.run.volleys?.waited, undefined);
@@ -407,7 +394,7 @@ test("Multishot Chance and Targets: 0.5% a rank to 49.5% at 99, and 2 targets to
   assert.deepEqual(Array.from({ length: 7 }, (_, k) => silverPrice("multishotTargets", k)), [450, 2000, 5000, 12_500, 40_000, 120_000, 350_000]);
 });
 
-test("a multishot fires one charge at up to Multishot Targets of the closest enemies an arrow can hurt, each with its own ATK / m; undo takes them all back", () => {
+test("a multishot fires one charge at up to Multishot Targets of the closest enemies an arrow can hurt, each with its own ATK / m", () => {
   const foes = { "2,1": { ...brute, hp: 3000, defense: 5000 }, "3,0": { ...brute, hp: 3000 }, "1,2": { ...brute, hp: 3000 }, "4,0": { ...brute, hp: 3000 }, "1,3": { ...brute, hp: 3000 } };
   const shots = (targets: number) => {
     const g = archer(arena(foes, { attack: 1000 }));
@@ -426,9 +413,6 @@ test("a multishot fires one charge at up to Multishot Targets of the closest ene
   assert.deepEqual(shots(0).volley?.shots.map((s) => [s.to, s.damage]), [[{ x: 3, y: 0 }, 1020], [{ x: 1, y: 2 }, 1020]]);
   const g = shots(7);
   assert.deepEqual(g.volley?.shots.map((s) => [s.to, s.damage]), [[{ x: 3, y: 0 }, 1020], [{ x: 1, y: 2 }, 1020], [{ x: 4, y: 0 }, 1030], [{ x: 1, y: 3 }, 1030]], "fewer enemies than targets: one arrow each");
-  assert.ok(g.undo());
-  assert.deepEqual([g.run.volleys, g.volley], [{ turn: 0, hero: ARROW_COST - TURN_TICKS * trainedAmount(g.save, "attackSpeed") }, null], "the arrows and their charge taken back");
-  for (const [x, y] of [[3, 0], [1, 2], [4, 0], [1, 3]] as const) assert.equal(g.world.tile(x, y).wound, undefined);
   const single = archer(arena(foes, { attack: 1000 }));
   assert.ok(single.move(1, 0));
   assert.equal(single.volley?.shots.length, 1, "no Multishot Chance: one arrow");
@@ -495,7 +479,7 @@ test("Rapid Fire fires four times as fast from the shot that starts it; what's l
   assert.deepEqual(archerTurn({ charge: ARROW_COST - 100 * TURN_TICKS }, 100, () => 250).clock, { charge: 0, rapid: 250 }, "a shot at the turn's end starts it for the turns after");
 });
 
-test("Rapid Fire in a run: several arrows a turn, each leaving in turn, at most one start per window; undo takes it back", () => {
+test("Rapid Fire in a run: several arrows a turn, each leaving in turn, at most one start per window", () => {
   const g = archer(arena({ "3,0": { ...brute, hp: 1e7, attack: 1 } }, { attack: 1000 }));
   g.save.goals.claimed[3] = [10, 80];
   g.save.training.attackSpeed = 100;
@@ -512,11 +496,9 @@ test("Rapid Fire in a run: several arrows a turn, each leaving in turn, at most 
   // 120 twentieths × 4 a hundredth: an arrow every 41⅔ hundredths, from an empty charge.
   assert.deepEqual(shots.map((s) => s.tick), [42, 84]);
   assert.equal(g.run.volleys?.rapid, 495);
-  assert.ok(g.undo());
-  assert.equal(g.run.volleys?.rapid, 595, "undo takes the turn's Rapid Fire back");
 });
 
-test("Ricochet Shot through the game: a hit may strike the farthest enemy too, paying its kill, and undo takes it back; off, it never does", () => {
+test("Ricochet Shot through the game: a hit may strike the farthest enemy too, paying its kill; off, it never does", () => {
   const play = (seed: number, off = false) => {
     const g = arena({});
     g.newRun({ seed });
@@ -541,14 +523,10 @@ test("Ricochet Shot through the game: a hit may strike the farthest enemy too, p
   assert.equal(g.run.kills, 1);
   assert.match(g.message, /Ricochet · /);
   assert.ok(g.run.changes["8,8"]);
-  assert.ok(g.undo());
-  // Undo builds the board again from its changes, none now for the tile.
-  assert.equal(g.run.changes["8,8"], undefined);
-  assert.equal(g.run.kills, 0);
   for (const s of fired) assert.ok(!play(s, true).volley?.shots.some((shot) => shot.ricochet));
 });
 
-test("a won fight springs Ricochet Shot once, however many strikes it took, and undo takes it back", () => {
+test("a won fight springs Ricochet Shot once, however many strikes it took", () => {
   const play = (seed: number, off = false, attack = 10) => {
     const g = arena({});
     g.newRun({ seed });
@@ -573,9 +551,6 @@ test("a won fight springs Ricochet Shot once, however many strikes it took, and 
   assert.equal(g.world.tile(4, 0).enemy!.hp, 4980);
   assert.equal(g.world.tile(8, 8).enemy!.hp, 5000);
   assert.ok(g.run.changes["4,0"]);
-  assert.ok(g.undo());
-  // Undo builds the board again from its changes, none now for the tile.
-  assert.equal(g.run.changes["4,0"], undefined);
   // A fight played out on the board strikes nothing until it settles.
   const played = arena({});
   played.fights.playsFights = true;

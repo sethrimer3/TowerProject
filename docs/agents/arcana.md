@@ -34,15 +34,15 @@ It is this average, never rolled, and is what a damaging arcanum's card shows.
 No equipment raises it yet: the factor is `arcanumBoost`'s `equipment`, 1 by default.
 
 **Ricochet Shot** (`ricochet` in `volley.ts`, given `VolleyTurn.ricochet` by `ArcanaDesk.ricochet`).
-Each arrow that lands, whatever damage it did, rolls `chance` on a `tileRandom` (`RICOCHET_SALT`, by turn, shot and tile), so undo and a replay agree.
+Each arrow that lands, whatever damage it did, rolls `chance` on a `tileRandom` (`RICOCHET_SALT`, by turn, shot and tile), so a replay agrees.
 It then strikes the `rebounds` closest other enemies on the floor (`Board.floorEnemies`: the Tower floor's, or in the Delve the hero's area on its equivalent floor), any distance, by Euclidean distance from the enemy struck, round the wrap.
 A strike is `arrowDamage` with Arcanum Damage's boost, so it passes through DEF, Piercing, the enemy cards' ATK and a Shielded enemy's bubble, as an arrow does; it heals no Lifesteal and breaks no armor, and rolls no crit.
 Only arrows and fights spring ricochets, so one never sets off another.
 Its `Shot` carries `ricochet`: it lands as its arrow does (`leavesAt` equals `landsAt`), its number and HP bar rise like an arrow's, and `drawRicochet` in `render/volley-art.ts` flashes a white line from the enemy struck for `RICOCHET_FLASH_MS`, for which `volleyOver` waits.
 A kill is a `VolleyKill` marked `ricochet`, never an instakill, and pays through `finds.kill`.
 A multishot's later targets are read again from the board (`inPlace`), since a ricochet may have struck them.
-**Off a fight** (`fightRicochet`, called from `Game.enter` once `winFight` says the hero stands, before `land` clears the tile): a fight rolls once, however many strikes it took and only when won, a `tileRandom` fixed per run, floor and tile (`FIGHT_RICOCHET_SALT`), so undo and a refight agree.
-It springs from the fought enemy's tile with the same strike, Overseer's beam read as the turn begins like the fight's own; its shots wait in `Game.sprung` for `endTurn` to show at tick 1, once the fight has played, and the undo snapshot taken before the fight takes it all back.
+**Off a fight** (`fightRicochet`, called from `Game.enter` once `winFight` says the hero stands, before `land` clears the tile): a fight rolls once, however many strikes it took and only when won, a `tileRandom` fixed per run, floor and tile (`FIGHT_RICOCHET_SALT`), so a refight agrees.
+It springs from the fought enemy's tile with the same strike, Overseer's beam read as the turn begins like the fight's own; its shots wait in `Game.sprung` for `endTurn` to show at tick 1, once the fight has played.
 Previews and planners don't count it.
 
 **Aurum Bloom** (trigger `always`, given by `ArcanaDesk.aurumBloom`, its effect the run card's text) raises the floor environments: Bonus is the Golden Floor's factor it makes alone, and over Golden Floor Multiplier counts all but the ×1 they share (first level: ×5 alone, ×6 with the skill); Golden Chance to the Golden Floor's chance and Stellar Chance to the Stellar Floor's.
@@ -55,7 +55,7 @@ It holds nothing in the run: see `withBloom` in environments.md.
 Quantity's table starts at a free 1 beam, with 2, 3 and 4 the priced levels.
 They take no notice of walls or distance.
 **Their direction** (`beamDirection`) is whole hundredths of a degree clockwise from straight up the board, starting at 0: `BEAM_TURN` (4 degrees) a turn and a hundredth of that a tick.
-`run.beamTurns` counts the turns finished; `ArcanaDesk.turn` raises it in `Game.endTurn` while the run holds Overseer, on or off, whether or not the turn has a volley, and since it lies in the run, undo turns the beams back and a new run starts them at 0.
+`run.beamTurns` counts the turns finished; `ArcanaDesk.turn` raises it in `Game.endTurn` while the run holds Overseer, on or off, whether or not the turn has a volley, and since it lies in the run, a new run starts them at 0.
 A dash is one turn; a Bomb's throw, no `endTurn`, is none.
 **Being in a beam** (`inBeams`) compares the angle from the hero to the center of the enemy's tile with the nearest beam's center: at most half the Angle counts, the edge included, and the hero's own spot (a Flying enemy overhead) is in them all.
 It decides play, so the angle comes from `bearing` in `src/exact.ts`, an arctangent of `+ - * /` and `Math.sqrt`, never `Math.atan2`.
@@ -81,18 +81,18 @@ Its `Shot` carries `thunderbolt`: the ticks spread over the turn, it falls for `
 **Overseer Zap** (research, `overseerZapTurns` in `progression/archives.ts`: 20 less a turn a level, opened by Tower III's floor 400 Goal) gives `ArcanaDesk.zapRule` once a level is done while Overseer is held and on: its turns, and a boost of Thunderbolt's ATK Mult as the run holds it (on or off; `valuesOf` its levels, or its first level's unheld) with Arcanum Damage and the Thunderbolt relic.
 `Game.strikeZap`, after `strikeBolts` in `endTurn`, calls `ArcanaDesk.chargeZap` (`chargeZap`: `runArcana.zap` counts down, a cut cooldown capped, and holds at 0 once ready), then `overseerZap` in `volley.ts`: one `boltTargets` pick (`ZAP_SALT`, `runArcana.zaps` + 1) among the floor's enemies in the beams at `ZAP_TICK` (half way through the turn, the hero as it stands then), struck by `arcaneStrike` at the boost × the beams' Bonus, a `Shot` and kill marked `thunderbolt`, so it draws, hides and pays as a bolt does.
 `settleZap` restarts the cooldown and counts `zaps` only when it struck; with no enemy in the beams it waits ready.
-Like the bolts, it lies in `runArcana`, so undo never refunds it, and toggling Overseer off forgets it.
+Like the bolts, it lies in `runArcana`, and toggling Overseer off forgets it.
 `tests/overseer-zap.test.ts` covers it.
 
 **Overseer Coin Bonus** (research, `overseerGold` in `progression/archives.ts`, in tenths from 10: +1 a level for 20 levels, opened by Tower VII's floor 80 Goal) multiplies a kill's Gold: `Game.spotlightGold(at)` gives its factor while Overseer is held and on and `at` lies in the beams as the turn begins, seen from where the hero stands (`inBeams` at tick 0, the test their ATK uses, so a fight counts by the enemy's tile, not the one the hero steps onto), else 1.
 `Finds.kill`, which every kill goes through (fights, arrows, Ricochet, Thunderbolt and Overseer Zap, Bomb, Necrotic Frost, Lifespring, Phantasm, the Crown's ghosts), passes it to `RunPurse.enemyLoot`, which multiplies the kill's Gold alone (not its Silver, Cells or drops), a kind of its own; `Game.enemyGold` passes it to `killGoldPreview`.
-It is read when the kill is paid, so a level done mid-run counts at once and undo can't roll it back; the All Gold Bonuses box leaves it out, since it depends on the tile.
+It is read when the kill is paid, so a level done mid-run counts at once; the All Gold Bonuses box leaves it out, since it depends on the tile.
 Once a level is done, Overseer's information adds "Enemies killed in them drop ×N Gold" (`researchedText` in `ui/arcana-panel.ts`).
 The Archives list both Overseer projects under the **Arcana** category (`RESEARCH_CATEGORIES`), the home of research that improves an arcanum.
 `tests/overseer.test.ts` covers it.
 
 **Lifespring** (`src/arcana/lifespring.ts`, trigger `cooldown`; `Game.lifespringTurn` and `Game.lifespringContact`, `lifespringContact` in `volley.ts`) sets off Effect Waves, then a field with an HP Pool.
-**Its state** is `run.lifespring` (`LifespringRun`), in the run and not `runArcana`, cooldown included, so undo takes back the pool, waves and Health Bonus together with the enemies they touched, and replaying gives the same.
+**Its state** is `run.lifespring` (`LifespringRun`), in the run and not `runArcana`, cooldown included, and replaying gives the same.
 `ArcanaDesk.turn` therefore leaves it out of `tickCooldowns`, and `stepLifespring` runs it instead; a climb keeps it, and switching it off clears all of it but the Health Bonus (`clearLifespring`).
 **A turn** (`Game.endTurn`): `stepLifespring` right after the cooldowns, before anything strikes, so a wave's DEF Reduction counts for that turn's bolts and shots.
 Activation queues Effect Waves; the first fires that turn, the next each `WAVE_INTERVAL` (4) turns, and the field forms one interval after the last, adding HP × the hero's ATK as it stands (no crits, no beams) to the pool, blue for `TINT_TURNS` if a pool still held.
@@ -114,7 +114,7 @@ Read as each is used, so a level done mid-run counts at once.
 `lifespringResearch` in `ui/arcana-panel.ts` adds a Research box with each target's value (`RESEARCH_TARGETS[id].shown`) to Lifespring's information, both `showArcanum` (the Arcana menu) and `showHeldArcanum` (its card).
 
 **Time Dilation** (`src/arcana/time-dilation.ts`, trigger `cooldown`; `ArcanaDesk.timeDilationRule`, `Game.dilation`) sets a field round the hero for Duration turns, slowing the enemies in it by Slowdown.
-**Its state** is `run.timeDilation` (`DilationRun`: `timer` and `left`), in the run like Lifespring's, so undo takes the field back with what it slowed and a refight comes out the same; `ArcanaDesk.turn` leaves it out of `tickCooldowns`, and `timeDilationTurn` runs `stepDilation` in `Game.endTurn`, just after Lifespring's turn, so a new field counts for that turn's shots.
+**Its state** is `run.timeDilation` (`DilationRun`: `timer` and `left`), in the run like Lifespring's, so a refight comes out the same; `ArcanaDesk.turn` leaves it out of `tickCooldowns`, and `timeDilationTurn` runs `stepDilation` in `Game.endTurn`, just after Lifespring's turn, so a new field counts for that turn's shots.
 `stepDilation` counts the field down and the cooldown, which starts over the moment it runs out and sets `left` to Duration, whatever was left: nothing stacks, and a Duration past the Cooldown makes it constant.
 A field set in one turn's `endTurn` slows that turn's shots and steps and the next Duration fights.
 Switching it off clears both (`clearDilation`).
@@ -131,7 +131,7 @@ Thorns, Bombs and arrows at the enemy don't read it; a Shielded enemy's bubble i
 `DungeonLight` calls `LitBoard.underContents` after the darkness and just before the contents (the Classic board), and `drawThemedBoard` takes the same hook, so it lies on the floor under items and enemies and isn't dimmed; it isn't baked into the ground cache.
 
 **Phantasm** (`src/arcana/phantasm.ts`, trigger `cooldown`; `ArcanaDesk.phantasmRule`, `Game.strikeGhosts`, `ghostStrikes` in `volley.ts`) keeps ghosts in a ring round the hero.
-**Its state** is `run.phantasm` (`PhantasmRun`: `timer`, `turns`, `ring`, `ghosts`, and `outer` for its augment boon: see **The Shrine boons**), in the run like Lifespring's, so undo takes the ghosts back with what they struck and a replay comes out the same; `ArcanaDesk.turn` leaves it out of `tickCooldowns`, and `phantasmTurn` runs `stepPhantasm` in `Game.endTurn`, after Time Dilation's turn.
+**Its state** is `run.phantasm` (`PhantasmRun`: `timer`, `turns`, `ring`, `ghosts`, and `outer` for its augment boon: see **The Shrine boons**), in the run like Lifespring's, so a replay comes out the same; `ArcanaDesk.turn` leaves it out of `tickCooldowns`, and `phantasmTurn` runs `stepPhantasm` in `Game.endTurn`, after Time Dilation's turn.
 `stepPhantasm` counts `turns` (the ring's turning) and the cooldown, which starts over the moment it runs out and fills every slot, `ring` set to Quantity, so a Quantity bought since spaces the whole ring anew.
 A ghost lost keeps its slot empty; the others don't close up.
 Switching it off clears all but `turns` (`clearPhantasm`).
@@ -144,7 +144,7 @@ Its `Shot` carries `phantasm`: no art of its own in `drawVolley`, only its numbe
 **Drawing** (`drawPhantasms`, `render/effects/phantasm.ts`, in `drawOverlays`, above the darkness): `paintGhost`, a pixel ghost half a tile wide, one path a colour so it blends evenly at the `phantasmAlpha` setting, round the hero as drawn and turning by `Game.turnClock`. `Game.ghostFx` keeps each strike: the ghost shows until the moment it struck, then `paintGhostBurst`, a fading ring where it was. Reduced motion stills the bob and shows no burst.
 
 **Necrotic Frost** (`src/arcana/necrotic-frost.ts`, trigger `cooldown`; `ArcanaDesk.frostRule`, `Game.frostArea`, `Game.decayNecro`, `necroDecay` in `volley.ts`) sets stacking fields round the hero, which slow what stands in them and leave a decay on what they touch.
-**Its state** is `run.necroticFrost` (`FrostRun`: `timer`, `casts`, `fields`), in the run like Time Dilation's, so undo takes it back with what it did and a replay comes out the same; `ArcanaDesk.turn` leaves it out of `tickCooldowns`, and `frostTurn` runs `stepFrost` in `Game.endTurn`, after Phantasm's turn.
+**Its state** is `run.necroticFrost` (`FrostRun`: `timer`, `casts`, `fields`), in the run like Time Dilation's, so a replay comes out the same; `ArcanaDesk.turn` leaves it out of `tickCooldowns`, and `frostTurn` runs `stepFrost` in `Game.endTurn`, after Phantasm's turn.
 `stepFrost` counts each field's `left` down and the cooldown, which starts over the moment it runs out and adds a field, keeping those still standing, so a Duration as long as the Cooldown is constant, and a longer one overlaps.
 **A field** (`FrostField`) is its `id` (`casts` at its making), its `left`, and its `angle`: whole hundredths of a degree, a `tileRandom` by the run's seed and that id.
 Where it lies decides play, so `frostArea` takes its offset (`offset`, 1 tile) from `pointing`, relative to the hero, so it moves with the hero, onto the next floor too.
@@ -165,7 +165,7 @@ Its `Shot` carries `necro`: no art of its own in `drawVolley`, only its number a
 **Drawing** (`render/effects/necrotic-frost.ts`): `drawFrostFields`, `paintFrostField`, through the same `underContents` hook as Time Dilation's, so it lies over the baked floor and under items and enemies: a `#b48cff` disc at 20% alpha, a pale green ring at its edge and a pale purple one just inside, then `paintBubbles`, `BUBBLES` a field, each from `now` and `tileRandom` alone, nothing kept and no stream drawn on, growing and then popping into a fading ring. Reduced motion shows no bubbles.
 
 **Voidwell** (`src/arcana/voidwell.ts`, trigger `cooldown`; `ArcanaDesk.voidwellRule`, `Game.voidwellTurn`, `Game.vortex`) opens a vortex out on the floor that stuns what is in it.
-**Its state** is `run.voidwell` (`VoidwellRun`: `timer`, `casts`, `vortex`), in the run like Time Dilation's, so undo takes it back with what it stunned and a replay comes out the same; `ArcanaDesk.turn` leaves it out of `tickCooldowns`, and `Game.voidwellTurn` runs `stepVoidwell` in `Game.endTurn`, after Necrotic Frost's turn and before anything strikes, so a new vortex stuns that turn's shots and steps.
+**Its state** is `run.voidwell` (`VoidwellRun`: `timer`, `casts`, `vortex`), in the run like Time Dilation's, so a replay comes out the same; `ArcanaDesk.turn` leaves it out of `tickCooldowns`, and `Game.voidwellTurn` runs `stepVoidwell` in `Game.endTurn`, after Necrotic Frost's turn and before anything strikes, so a new vortex stuns that turn's shots and steps.
 `stepVoidwell` counts the vortex down and the cooldown, which starts over the moment it runs out and opens a new one in the old one's place; Duration's highest is under Cooldown's lowest, so as the tables stand they meet only with the augment boon at both tables' ends (50 and 50), and then the new vortex takes over as the old one ends.
 A vortex stands where it opened, whatever the hero does, and lasts its turns onto a new floor: its coordinates carry over, so on a Tower floor it lies at the same place on the new board, and in the Delve at the same place in the world. It stuns what stands there, and placement isn't checked again.
 Switching it off clears the timer and vortex (`clearVoidwell`); `casts` stays, so the rolls go on.
@@ -185,7 +185,7 @@ Two readers keep its `flying` in mind: `noEnemies` doesn't count it, as it doesn
 
 What it leaves alone: a stunned enemy still replies in a fight, the Shielded bubble holds, Armored's DEF and Fast's raised ATK stay in its stats, its attribute icons and kill pay stay, and the enemy cards still read its attributes.
 **Its research** (Tower V's floor 150 Goal, `voidwellResearch`, opens `voidwellDamage` and `voidwellGold`; its floor 500 Goal, `extraVoidwell`, the project of that name; all in the Archives' Arcana category, their Gold and times listed by hand, `VOIDWELL_TIMES` shared) is read where it is used, never copied into the run:
-- **Voidwell Damage** (`voidwellDamage`, hundredths of a percent, 0 + 20 a level, 10 levels): `Game.voidwellStrike`, the last thing `Game.endTurn` shows (after Necrotic Frost's decay, in both its branches), calls `voidwellDamage` (`volley.ts`) on `Game.vortex`: every enemy (`foeOn`, a flyer too) on a tile `inVortex` of either center, a boss or Greater Boss aside, takes `full × rate / 10000`, `full` being its HP and the tile's `wound`, with no DEF, `guarded`, Lifesteal or Armor Break, so 50 turns at 2% fell anything; what rounding leaves under `full × 1e-9` counts as none. An enemy in both vortices is struck once (`seen`). Its `Shot` carries `voidwell` (no art in `drawVolley`, landing at once at `TURN_TICKS`, like Necrotic Frost's) and its kills go through `finds.kill`; the board's `wound` keeps it in `run.changes`, so undo takes it back.
+- **Voidwell Damage** (`voidwellDamage`, hundredths of a percent, 0 + 20 a level, 10 levels): `Game.voidwellStrike`, the last thing `Game.endTurn` shows (after Necrotic Frost's decay, in both its branches), calls `voidwellDamage` (`volley.ts`) on `Game.vortex`: every enemy (`foeOn`, a flyer too) on a tile `inVortex` of either center, a boss or Greater Boss aside, takes `full × rate / 10000`, `full` being its HP and the tile's `wound`, with no DEF, `guarded`, Lifesteal or Armor Break, so 50 turns at 2% fell anything; what rounding leaves under `full × 1e-9` counts as none. An enemy in both vortices is struck once (`seen`). Its `Shot` carries `voidwell` (no art in `drawVolley`, landing at once at `TURN_TICKS`, like Necrotic Frost's) and its kills go through `finds.kill`; the board's `wound` keeps it in `run.changes`.
 - **Voidwell Gold Bonus** (`voidwellGold`, tenths from 10, + 5 a level, 20 levels): `Game.voidwellGold(at)` gives its factor while `at` lies `inVortex` of `Game.vortex` (by place, not stun, so a boss counts), else 1; `Finds.kill` and `Game.enemyGold` multiply it with Overseer's `spotlightGold` into the `spotlight` factor `RunPurse.enemyLoot` and `killGoldPreview` apply to the kill's Gold alone.
 - **Extra Voidwell** (`extraVoidwell`, one level): `voidwellRule` gives `twin`, and `placeVortices` places the pair: `placeVortex`'s place, its twin the point opposite across the hero (`2 × hero − first`) if `allowedCenters` allows it; else (the hero beside a wall or in a corner) `widestPair`: at the same distance, the roll's pick of the pairs of allowed angles lying widest apart seen from the hero, if at least `NARROWEST_PAIR` (30 degrees, 60 of `ANGLES`), so along a wall they lie opposite each other along it and in a corner at the two ends of its arc; the distance shrinks by `DISTANCE_STEP` until a pair fits, and failing all, the first and its mirror past the edge. `Vortex.twin` is saved with it (`validVoidwell` checks it) and lasts as long; `Game.vortex` and `stunnedIn` pass it into `VortexZone.twin`, which `inVortex` tests beside the center, so the stun, the damage and the Gold all reach it; `drawVortex` and the trial's renderer paint both. A trial places the pair too (`TrialSpells.voidwell.twin`), and `voidwellRule`'s `damage` and `gold` reach it as `TrialSpells.voidwell.damage` and `.gold`.
 Voidwell's information gains a Research box (`ARCANUM_RESEARCH` in `ui/arcana-panel.ts`). `tests/voidwell-research.test.ts` covers them.
@@ -215,18 +215,17 @@ Aurum Bloom raises floors a trial doesn't have; every other arcanum works, and a
 
 **The run.**
 `ArcanaDesk.held` is what the run holds: owned at their levels, and lent at `LENT_LEVELS` (one bought while lent, the better of each attribute's levels).
-`slice.runArcana` (`ArcanaRun`, `decodeArcanaRun`) sits beside the run, like `runFinds`, so undo never touches it, and `newRun` resets it: the toggles spent (`RUN_TOGGLES`, all arcana together), those off, the cooldowns left, Thunderbolt's bolts and strikes, and Overseer Zap's countdown and strikes (`zap`, `zaps`).
-So undo takes back what a bolt did to the board but not its cooldown: the bolts are spent.
+`slice.runArcana` (`ArcanaRun`, `decodeArcanaRun`) sits beside the run, like `runFinds`, and `newRun` resets it: the toggles spent (`RUN_TOGGLES`, all arcana together), those off, the cooldowns left, Thunderbolt's bolts and strikes, and Overseer Zap's countdown and strikes (`zap`, `zaps`).
 Toggling off forgets the arcanum's cooldown, and Thunderbolt's bolts, so it starts over when turned on.
 
 **The Shrine boons.**
 `unlockArcanum`, the one `spell` boon, joins `rollOffer` at weight 20 against the trade-offs' 15 and the standard boons' 65 while `arcanaToLend` has any.
 `ShrineDesk.offer` rolls the arcanum it names, `run.shrine.lending`, from the run's own draws (`rollLending`), naming another if that one is bought while the offer waits, and rolling a new offer with none left to lend.
-`pick` moves it to `run.shrine.arcana`; `share` copies both to every undo snapshot, so undo never takes one back.
+`pick` moves it to `run.shrine.arcana`; `share` copies both into the run.
 A lent arcanum is never in `save.arcana.owned`: no upgrades, and no Arcana research exists yet, but any that comes must ask `owned`, so that a lent one opens none of it.
 It has no boon PNG: `boonIcon` gives it the Arcanite icon.
 **Augment boons** (`kind: "augment"`, one per arcanum, `augmentOf`) have weight 15 of the offer's slot, taken from the standard boons' 65, each once a run and only while the run holds its arcanum, owned or lent (on or off).
-They lie in `run.shrine.picked` like any boon, so undo never takes one back, and none of them changes `boonEffects`.
+They lie in `run.shrine.picked` like any boon, and none of them changes `boonEffects`.
 `ArcanaDesk.augmented(id)` is the one reader, and `valuesOf` the attributes as the run has them (`augmentedValues`: Ricochet Shot's ATK Mult ×2, Overseer's Bonus ×1.5, Thunderbolt's Quantity +4, Lifespring's Effect Waves +1, Time Dilation's Duration +5, Voidwell's Duration +12), read by every rule and `cardValue`; `showHeldArcanum` shows them with a Modifiers row.
 Three change what no attribute holds, each given by its rule only with the boon:
 - Aurum Bloom: `FloorBloom.golden` (`GOLDEN_AUGMENT`, ×1.5) multiplies `RunPurse.golden`'s whole factor (environments.md); its chances don't move.

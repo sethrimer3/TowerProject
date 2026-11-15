@@ -1,7 +1,6 @@
 import { keyCount, whole, wholeChange, wholeHp } from "../whole.ts";
 import { GOLD_BOOST_FACTOR } from "../economy/gold-boost.ts";
 import { MODES } from "../modes.ts";
-import { loadout } from "../progression/loadout.ts";
 import { CARDS, type Blocker } from "../cards/cards.ts";
 import { attackAgainst, defenseAgainst } from "../combat.ts";
 import { doorBlockedMessage, doorRule, KEY_NAMES, KEY_ORDER } from "../doors.ts";
@@ -130,8 +129,7 @@ type RunEndCause = "fallen" | "stuck" | "chosen";
 
 /** The run's end dialog, one for every way a run ends: it says what brought
  * it up, shows the same totals of what the run obtained, and asks what next.
- * A fallen hero must answer it (undo the fight, once undo is unlocked and
- * one is left, or return to the entrance), after which the forest fades in from
+ * A fallen hero must answer it (return to the entrance, or retry), after which the forest fades in from
  * black; otherwise the player ends the run or keeps going. Once Note
  * Taking is researched, a button at the end of its totals opens the run's
  * notes over it. */
@@ -247,30 +245,22 @@ export class RunEndDialog {
     const kept = "Milestone rewards and the Gold found are already saved.";
     const stats = this.stats();
     if (cause === "fallen") {
-      const undos = game.canUndo ? game.undosLeft : 0, by = slice.fall?.by;
-      // Undo goes unmentioned until Rehearsed steps unlocks it.
-      const takeBack = !loadout(game.save).undoCapacity ? ""
-        : undos ? `<p>Undo takes back the fight, and the hand waits for you.</p>`
-        : `<p class="hint">No undo is left to take the fight back.</p>`;
-      const button = undos ? `<button id="defeat-undo">Undo (${undos} left)</button>` : "";
+      const by = slice.fall?.by;
       // Encourages another run: the next one is a new layout, and what this one earned can make the hero stronger.
       const again = `<p>Look over what this ${words.run} earned, spend it to grow stronger, and try again: the ${words.tierName} will shift to a new layout for your next ${words.run}.</p>`;
-      modal.innerHTML = `<span class="summary-icon">${uiSprite("revive")}</span><small>FALLEN IN COMBAT</small><h2>Regroup and try again.</h2><p>${by ? `Felled by ${by}` : "Felled"} at ${where}. ${kept}</p>${stats}${again}${takeBack}<div class="dialog-actions">${button}<button id="defeat-accept">Return to entrance</button>${this.retryButton("defeat-retry")}</div>`;
+      modal.innerHTML = `<span class="summary-icon">${uiSprite("revive")}</span><small>FALLEN IN COMBAT</small><h2>Regroup and try again.</h2><p>${by ? `Felled by ${by}` : "Felled"} at ${where}. ${kept}</p>${stats}${again}<div class="dialog-actions"><button id="defeat-accept">Return to entrance</button>${this.retryButton("defeat-retry")}</div>`;
       modal.showModal();
       this.bindNotes();
-      // Undo, or else return to the entrance: however the dialog closes,
+      // Retry, or else return to the entrance: however the dialog closes,
       // even dismissed by the browser itself (a phone's Back, or coming back
       // to the tab, can close it past the cancel guard), the hero never stays
       // fallen on the floor with no dialog to answer.
-      let undoing = false, retrying = false;
-      const undo = document.querySelector<HTMLButtonElement>("#defeat-undo");
-      if (undo) undo.onclick = () => ((undoing = true), modal.close());
+      let retrying = false;
       el("defeat-accept").onclick = () => modal.close();
       const retry = document.querySelector<HTMLButtonElement>("#defeat-retry");
       if (retry) retry.onclick = () => ((retrying = true), modal.close());
       modal.addEventListener("close", () => {
-        if (undoing) game.undo();
-        else if (retrying) {
+        if (retrying) {
           if (game.retry("Fallen in combat")) this.fadeInFromBlack();
         } else if (game.acceptDefeat()) this.fadeInFromBlack();
         ctx.navigate(game.mode);

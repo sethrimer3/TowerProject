@@ -271,7 +271,7 @@ export const RUN_TOGGLES = 40;
 export type ArcanaSave = { owned: Partial<Record<ArcanumId, AttributeLevels>>; offer: ArcanumId[]; rng: number | null; rolls: number };
 export const defaultArcana = (): ArcanaSave => ({ owned: {}, offer: [], rng: null, rolls: 0 });
 
-/** What a run keeps of its arcana beside it, so undo never touches them: the
+/** What a run keeps of its arcana beside it: the
  * toggles spent, those switched off, the turns each cooldown has left, and
  * Thunderbolt's bolts still to strike and the turns it has struck (`strikes`,
  * which fixes each turn's random targets), and Overseer Zap's turns left
@@ -382,7 +382,7 @@ export function tickCooldowns(active: readonly { id: ArcanumId; turns: number }[
 const THUNDERBOLT_SALT = 0x7b017;
 /** Thunderbolt's targets, one bolt each: up to `bolts` of `enemies`, each as
  * likely as any other, fixed by the run and the turn it strikes (`strike`), so
- * undo and a replay agree. Each draws its key first, whatever order they come in. */
+ * a replay agrees. Each draws its key first, whatever order they come in. */
 export function boltTargets<T extends { x: number; y: number }>(enemies: readonly T[], bolts: number, seed: number, strike: number, salt = THUNDERBOLT_SALT): T[] {
   const salted = (seed ^ salt ^ Math.imul(strike, 0x85ebca6b)) | 0;
   return enemies.map((enemy) => ({ enemy, key: tileRandom(enemy.x, enemy.y, salted) }))

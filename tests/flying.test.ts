@@ -65,7 +65,6 @@ test("Flying enemies say so first, and pay the Ranged enemy's Gold", () => {
  * `foes` by tile (a Flying one over open floor) and `walls`. */
 function arena(foes: Record<string, Enemy>, over: Partial<Player> = {}, walls: string[] = []) {
   const save = playedSave();
-  save.upgrades.inspirationUndos = 1;
   const g = new Game(save);
   g.save.themes = [];
   g.run.tier = 5;

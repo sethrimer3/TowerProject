@@ -52,13 +52,13 @@ const PROVISION_BUTTONS_HTML = PROVISION_BUTTONS.map(([id, sprite, title]) =>
   `<button type="button" id="${id}-stat" class="focus-stat charge-stat provision-stat" hidden title="${title}">${itemSprite(sprite, "charge-icon")}<b id="${id}-left">0</b></button>`).join("");
 /** Ignore and Target uses left, after Focus, and the Bombs left: each a
  * button that readies it for the next board tap; then the provisions used
- * at a press (`PROVISION_BUTTONS`); then Undo, a button that takes the
- * last turn back, with the undos the run has left. */
+ * at a press (`PROVISION_BUTTONS`); then Phoenix Spark's charges left,
+ * which spend themselves. */
 const CHARGE_BUTTONS = `<button type="button" id="ignore-stat" class="focus-stat charge-stat" hidden title="Ignore: press, then tap a tile the hero won't step on this floor">${kitIcon("ignore", "", "charge-icon")}<b id="ignore-left">0</b></button>` +
   `<button type="button" id="target-stat" class="focus-stat charge-stat" hidden title="Target: press, then tap a tile to send the hero there">${kitIcon("target", "", "charge-icon")}<b id="target-left">0</b></button>` +
   `<button type="button" id="bomb-stat" class="focus-stat charge-stat" hidden title="Bomb: press, then tap an enemy to deal it your ATK">${bombIcon("charge-icon")}<b id="bomb-left">0</b></button>` +
   PROVISION_BUTTONS_HTML +
-  `<button type="button" id="undo" class="focus-stat charge-stat" hidden title="Undo: take back the last turn">${kitIcon("undo", "", "charge-icon")}<b id="undo-state">0</b></button>`;
+  `<span id="spark-stat" class="focus-stat spark-stat" role="img" hidden title="Phoenix Spark: shrugs off a hit that would defeat you, after every revival has failed">${uiSprite("revive", "charge-icon")}<b id="spark-left">0</b></span>`;
 /** Cinematic mode's own buttons (`cinematic.ts`), all else hidden: the gear
  * a tap shows, which leaves it for Settings, and with its option on the
  * ad's Gems while they can be claimed. */

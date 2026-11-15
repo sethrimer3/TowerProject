@@ -31,7 +31,6 @@ const here = (left = 10): Vortex => ({ x: 5, y: 5, left });
 /** A Tower run at (3, 5), ATK 100, on plain floor holding `tiles`, holding Voidwell with a vortex at (5, 5) of 3 tiles' radius. */
 function arena(tiles: Record<string, Tile> = {}, vortex: Vortex | null = here()) {
   const s = defaults();
-  s.upgrades.inspirationUndos = 1;
   const g = new Game(s, random(5));
   g.newRun({ seed: 7 });
   const w = g.world as RoomWorld;
@@ -369,7 +368,7 @@ test("a Shielded enemy's bubble still guards what the vortex stuns", () => {
   assert.ok(t.enemy!.guard, "the bubble cuts the fight with it");
 });
 
-test("a turn's activation opens it on the floor at the hero's shot range, and undo takes it back", () => {
+test("a turn's activation opens it on the floor at the hero's shot range", () => {
   const g = arena({}, null);
   g.run.voidwell = { timer: 1 };
   assert.ok(g.move(1, 0));
@@ -378,9 +377,6 @@ test("a turn's activation opens it on the floor at the hero's shot range, and un
   assert.equal(v.left, 15);
   assert.ok(Math.abs(away(hero, v) - 3) < 1e-9);
   assert.deepEqual(g.vortex, { x: v.x, y: v.y, radius: 3, wrap: 0 });
-  assert.ok(g.undo());
-  assert.equal(g.run.voidwell!.vortex, undefined);
-  assert.equal(g.run.voidwell!.timer, 1);
 });
 
 test("it survives the save", () => {

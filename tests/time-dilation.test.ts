@@ -185,7 +185,6 @@ function lay(g: Game, tiles: Record<string, Tile> = {}) {
 /** A Tower floor of plain floor holding `tiles`, and `g`'s hero at the origin with Time Dilation. */
 function arena(tiles: Record<string, Tile> = {}, levels: [number, number, number] = [0, 0, 0]) {
   const s = defaults();
-  s.upgrades.inspirationUndos = 1;
   const g = new Game(s, random(5));
   g.newRun({ seed: 7 });
   lay(g, tiles);
@@ -214,19 +213,13 @@ test("a run: the first field comes when its cooldown runs out, and the card's ba
   assert.equal(g.arcana.cooldown(held)!.left, 175);
 });
 
-test("a run: undo takes the field back; switching it off loses it; a reload keeps it", () => {
+test("a run: switching it off loses the field; a reload keeps it", () => {
   const g = arena();
   g.run.timeDilation = { timer: 1 };
   turn(g);
   assert.ok(g.dilation);
   assert.equal(g.save.tower.run!.timeDilation!.left, 5);
   assert.deepEqual(decode(JSON.stringify(g.save)).tower.run!.timeDilation, { timer: 180, left: 5 });
-  g.undo();
-  assert.equal(g.dilation, undefined);
-  assert.deepEqual(g.run.timeDilation, { timer: 1 });
-  lay(g);
-  turn(g);
-  assert.ok(g.dilation);
   g.arcana.toggle("timeDilation");
   assert.equal(g.dilation, undefined);
   assert.deepEqual(g.run.timeDilation, {});
@@ -235,7 +228,7 @@ test("a run: undo takes the field back; switching it off loses it; a reload keep
   assert.equal(g.arcana.cooldown(g.arcana.held[0]!)!.left, 180);
 });
 
-test("a run: the fight in the field skips strikes; undo and a refight agree; previews count the plain hero", () => {
+test("a run: the fight in the field skips strikes; a refight agrees; previews count the plain hero", () => {
   const tough = { ...rat, hp: 400, attack: 50 };
   const g = arena({ "1,0": { kind: "enemy", enemy: tough } }, [0, 6, 0]);
   const unslowed = predict(g.run.player, tough).damage;
@@ -250,11 +243,11 @@ test("a run: the fight in the field skips strikes; undo and a refight agree; pre
   g.run.hand = ["monster"];
   assert.ok(g.move(1, 0), g.message);
   assert.equal(g.run.player.hp, hp - expected);
-  g.undo();
-  assert.equal(g.run.player.hp, hp);
-  lay(g, { "1,0": { kind: "enemy", enemy: tough } });
-  assert.ok(g.move(1, 0), g.message);
-  assert.equal(g.run.player.hp, hp - expected);
+  const again = arena({ "1,0": { kind: "enemy", enemy: tough } }, [0, 6, 0]);
+  again.run.timeDilation = { timer: 100, left: 3 };
+  again.run.hand = ["monster"];
+  assert.ok(again.move(1, 0), again.message);
+  assert.equal(again.run.player.hp, hp - expected);
 });
 
 test("reach: Euclidean from the hero, its shot range, the base without an Archer", () => {

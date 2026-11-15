@@ -5575,7 +5575,7 @@ html.trial-running #board.active { grid-template-rows: auto minmax(0, 1fr); }
 #trial-overlay .trial-actions button { padding: 4px 7px; min-height: 28px; font-size: 10px; }
 html.trial-manual #hand .hand-card { position: relative; cursor: default; }
 html.trial-manual #hand .hand-card::after { content: ""; position: absolute; inset: 4px; z-index: 8; pointer-events: none; background: linear-gradient(48deg, transparent 46%, #ed4539 47% 53%, transparent 54%), linear-gradient(-48deg, transparent 46%, #ed4539 47% 53%, transparent 54%); filter: drop-shadow(0 1px 1px #000); }
-html.trial-running :is(#focus-stat, #ignore-stat, #target-stat, #bomb-stat, #heal-stat, #edge-stat, #guard-stat, #undo, #forest-sign, #review-prompt, .tier-arrow) { display: none !important; }
+html.trial-running :is(#focus-stat, #ignore-stat, #target-stat, #bomb-stat, #heal-stat, #edge-stat, #guard-stat, #spark-stat, #forest-sign, #review-prompt, .tier-arrow) { display: none !important; }
 .proving-grounds-dialog #trial-difficulty { color: #f3dc9c; font-size: .95rem; }
 .proving-grounds-dialog #trial-reward { font-size: .8rem; line-height: 1.5; }
 .proving-grounds-dialog .trial-points { color: #b9d6e4; }

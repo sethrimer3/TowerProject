@@ -151,7 +151,7 @@ export class MissionDesk {
 
   /** Counts `amount` toward the incomplete mission of `type`, if the player
    * has one. A `key` (a kill or pickup's `mode:loot key`) counts only once,
-   * so undo bringing the tile back can't count it again. */
+   * so a tile never counts twice. */
   record(type: MissionType, amount = 1, key?: string) {
     const m = this.m, mission = m.list.find((x) => x.type === type && !isComplete(x));
     if (!mission || amount <= 0) return;
@@ -166,7 +166,7 @@ export class MissionDesk {
 
   /** Counts what a run has done in all (`total`: run training ranks bought,
    * Focus used) toward `type`: only the rise past the most it has counted
-   * for the run (`mode` and `seed`), since undo takes such things back. */
+   * for the run (`mode` and `seed`). */
   mark(type: MissionType, mode: Mode, seed: number, total: number) {
     const m = this.m, key = `${type}:${mode}:${seed}`, before = m.marks[key] ?? 0;
     if (total <= before) return;

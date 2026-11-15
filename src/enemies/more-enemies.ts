@@ -8,7 +8,7 @@ import { random } from "../random.ts";
 // and more loot to win. Runs without the badge never come here, so their
 // floors, saved maps and goldens are unchanged. Everything it decides comes
 // from its own stream, seeded by the run seed and the floor, so a floor
-// comes out the same whenever it is rebuilt (reload, undo, climbing back).
+// comes out the same whenever it is rebuilt (reload, climbing back).
 
 /** The strengths a floor can hold more of (a Greater Boss is summoned, never generated). */
 export type ExtraStrength = Exclude<EnemyStrength, "greaterBoss">;

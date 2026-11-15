@@ -37,7 +37,6 @@ import type {
   RunCore,
   TowerRun,
   DelveRun,
-  MoveSnapshot,
 } from "./runs.ts";
 import type {
   Tile,
@@ -63,7 +62,6 @@ import { strengthOdds, traitOdds, type OddsSource } from "./enemies/odds.ts";
 import { STEPS_PER_FLOOR } from "./enemies/curves.ts";
 import { switchTier, tierNumeral, tierRewardText, tierXp } from "./tiers.ts";
 import type { GoldContext } from "./economy/gold-multipliers.ts";
-import { RunTimeline } from "./run-timeline.ts";
 import { shiftHero } from "./progression/hero-stats.ts";
 import { enemyTitle } from "./enemies/scaling.ts";
 import { snap } from "./exact.ts";
@@ -176,6 +174,8 @@ const AUTO_CLIMB_HINT_HEIGHT = 3;
 const TURN_MS = 220;
 /** Salts the run seed for Find Gold Key's roll on each new floor. */
 const YELLOW_KEY_SALT = 0x6e11a;
+/** What the status line calls a hit Phoenix Spark shrugged off. */
+const PHOENIX_SPARK = "Phoenix Spark";
 /** Salts the run seed for Soul Reaper's marks. */
 const REAPER_SALT = 0x50a1e;
 /** Salt a Bomb's critical and Super Critical rolls. */
@@ -183,11 +183,11 @@ const BOMB_SALT = 0xb0b1c, BOMB_SUPER_SALT = 0xb0b5c;
 /** Salt the run seed for the traders' and smelts' Floor Key rolls on each new floor. */
 const FLOOR_KEY_SALT: Record<KeyColor, number> = { yellow: 0x9f10e, blue: 0xb1f10, red: 0x4ef10 };
 /** A step resolved and about to be taken: the tile stepped onto, what it
- * does, where it is, whether it goes in the undo history, and for a fight
- * the hero's critical strikes in it as played (`crits`) and whether it
+ * does, where it is, and for a fight the hero's critical strikes in it as
+ * played (`crits`), the Phoenix Spark charges it spent (`sparked`) and whether it
  * began with ENEMY's Surprise Attack (`surprise`) or a Fast enemy lost its
  * first strike to FAST ENEMY's First Strike (`firstStrike`). */
-type TakenStep = { tile: Tile; outcome: StepEffect; dest: { x: number; y: number }; track: boolean; quiet?: boolean; crits?: number; winged?: boolean; played?: Played; surprise?: true; firstStrike?: true; card: CardStep };
+type TakenStep = { tile: Tile; outcome: StepEffect; dest: { x: number; y: number }; crits?: number; winged?: boolean; sparked?: number; played?: Played; surprise?: true; firstStrike?: true; card: CardStep };
 /** How the hand's turn takes a step: Effective or Dampen on a card's last
  * step (`scale`, what its target's effect is multiplied by; 1 on every
  * other step), Skip on STAIRS succeeding (`floorSkip`: the climb goes up
@@ -289,10 +289,10 @@ export class Game {
    * ("+1 ATK"), and when (`performance.now()`). */
   freeTrained: { lines: string[]; at: number } | null = null;
   /** Each card level reached since the board last took them, oldest
-   * first, for the hand's level-up animation; emptied by undo. */
+   * first, for the hand's level-up animation. */
   cardLevelUps: { card: CardId; level: number }[] = [];
   /** The latest turn's shots (enemies/ranged.ts), for the board to fly and land;
-   * undo, a new run or a mode switch clears it. */
+   * a new run or a mode switch clears it. */
   volley: Volley | null = null;
   /** When Lifespring's latest Effect Waves fired and its field last formed, for the board to draw. */
   springFx: { waves: number[]; formedAt: number } = { waves: [], formedAt: -Infinity };
@@ -303,42 +303,42 @@ export class Game {
   turnShown: ShownTurn | null = null;
   /** The clock of the latest turn, however far it came, which Overseer's beams turn by as drawn. */
   turnClock: ShownClock | null = null;
-  /** The snapshot from before the turn being taken, for a shot that fells
-   * the hero. */
-  private turnBefore: MoveSnapshot | null = null;
+  /** Where the hero stood, and on which floor, as the turn being taken
+   * began: its shots fly along the step from there. */
+  private turnFrom: { x: number; y: number; height: number } | null = null;
   /** The last potion that healed, picked up or crafted: the HP it healed
    * from and to, where the hero stood, and a number that grows with each, so
    * the HP bar can fill up to it and the board raise the HP healed. */
   lastHeal: Heal | null = null;
   /** When the hero last reached a new level (performance.now()), for the
-   * board's level-up burst; -Infinity once undo takes the level back. */
+   * board's level-up burst. */
   levelUpAt = -Infinity;
   /** When the Aether Shield last reformed (performance.now()), for the board's
-   * growing bubble and sparkles; undo forgets it. */
+   * growing bubble and sparkles. */
   shieldFormedAt = -Infinity;
   /** The training points the latest level-up earned, which the board
    * raises over the hero once its burst is over. */
   levelUpPoints = 0;
   /** The area rewards whose chests were opened, each with when its golden
    * burst starts (performance.now()): a chest opened while another's burst
-   * plays waits for it to end. Emptied by undo. */
+   * plays waits for it to end. */
   areaBursts: { reward: AreaReward; inspiration: number; at: number }[] = [];
   /** The Silver Warp Loot added to the run as it went inside, and when
    * (performance.now()), for the board's burst over the hero; null when
-   * it added under 1. Cleared by undo and a new run. */
+   * it added under 1. Cleared by a new run. */
   warpLooted: { silver: number; at: number } | null = null;
   /** When Equipment opened (performance.now()), for the
    * board's burst. */
   /** Where a Greater Boss last appeared, and when (performance.now()), for
-   * the board's poof; cleared by undo. */
+   * the board's poof. */
   summoned: { x: number; y: number; at: number } | null = null;
   /** The enemies Avenging Angel last smote, for the board's slashes and
-   * poofs; cleared by undo. */
+   * poofs. */
   smitten: Smitten[] = [];
   /** Where the last Bomb went off and when (performance time), for its explosion. */
   bombed: { x: number; y: number; at: number } | null = null;
   /** Where Skip last made a card's target vanish, and when
-   * (performance.now()), for the board's poof; cleared by undo. */
+   * (performance.now()), for the board's poof. */
   vanished: { x: number; y: number; at: number } | null = null;
   /** The latest dash: the tiles the hero dashed off, in order, and when
    * (performance.now()), for the board's fading echoes of the hero. */
@@ -353,7 +353,7 @@ export class Game {
   /** The ricochets of this turn's fights, struck already, for its volley to show. */
   private sprung: Shot[] = [];
   /** The last step the hero took (into a fight too): the way it faces,
-   * for a board whose hero turns. Right until it first steps; undo leaves it. */
+   * for a board whose hero turns. Right until it first steps. */
   facing: Facing = { dx: 1, dy: 0 };
   /** Delve Automove's committed route and last weighed decisions. */
   readonly delvePlan = new DelvePlan();
@@ -428,21 +428,14 @@ export class Game {
   get free() {
     return this.save.settings.freePurchases;
   }
-  /** Undos a run has in all: spent ones never come back. */
-  get undoCapacity() {
-    return loadout(this.save, this.mode).undoCapacity;
+  /** Phoenix Spark's charges a run has in all: spent ones never come back. */
+  get sparks() {
+    return loadout(this.save, this.mode).sparks;
   }
-  /** What undo can take this mode's run back to (run-timeline.ts). */
-  private get timeline() {
-    return new RunTimeline(this.save, this.mode, () => this.undoCapacity);
-  }
-  /** Undos the run has left to spend. */
-  get undosLeft() {
-    return this.timeline.undosLeft;
-  }
-  /** Whether undo can take a move back: one is left and a move is held. */
-  get canUndo() {
-    return this.timeline.canUndo;
+  /** Phoenix Spark's charges the run has left to spend (in the forest, all
+   * the next run will have: only a run inside spends them). */
+  get sparksLeft() {
+    return Math.max(0, this.sparks - (this.run.sparksUsed ?? 0));
   }
   /** Grants unlimited currency, the first 250 floors, and every game mode.
    * Reversible: turning Dev Mode back off leaves the grants in place, since
@@ -737,7 +730,6 @@ export class Game {
   }
   /** Returns the player to their section's entrance on the new labyrinth. */
   private reshapeDelve(run: DelveRun) {
-    this.timeline.reset();
     run.layoutVersion = LAYOUT_VERSION;
     run.changes = {};
     run.milestone = Math.floor(run.height / 100);
@@ -749,7 +741,6 @@ export class Game {
   }
   /** The floor's geometry changed: stand at its entrance. */
   private reshapeTower(run: TowerRun) {
-    this.timeline.reset();
     run.layoutVersion = TOWER_LAYOUT_VERSION;
     run.changes = {};
     run.player.x = TOWER_START_X;
@@ -761,57 +752,6 @@ export class Game {
     this.recordProgress();
     this.purse.gold(this.rules.endGold(this.run));
     return record;
-  }
-  snapshot(): MoveSnapshot {
-    return this.timeline.snapshot();
-  }
-  restore(snapshot: MoveSnapshot) {
-    // The snapshot's board brings back any chest it had; area rewards are
-    // paid when earned, so opening one again pays nothing.
-    this.adoptRun(this.rewound(snapshot.run));
-    // Lifetime achievements are never rolled back by movement undo, but XP
-    // (and any level it reached) is: the kill it paid for is undone.
-    this.recordProgress();
-    if (levelForXp(snapshot.xp) < levelForXp(this.save.xp)) this.levelUpAt = -Infinity;
-    this.fights.forgetMarks();
-    this.shieldFormedAt = -Infinity;
-    syncShield(this.save, this.run, this.mode);
-    this.dashedTo = null;
-    this.areaBursts = [];
-    this.warpLooted = null;
-    this.summoned = null;
-    this.smitten = [];
-    this.vanished = null;
-    this.bombed = null;
-    this.save.xp = snapshot.xp;
-    // Card XP too: the activation or floor it paid for is undone.
-    if (snapshot.cardXp) this.save.cardXp = { ...snapshot.cardXp };
-    this.cardLevelUps = [];
-    // The Silver found since is taken back with the run, so it was never earned.
-    if (snapshot.silver !== undefined) this.save.profile.earned.silver = Math.min(this.save.profile.earned.silver, snapshot.silver);
-    // Undo pauses the hand, so the player can act before it carries on.
-    this.auto = false;
-    this.stopPlay();
-    this.paused = false;
-  }
-  /** A copy of an earlier state of the run, on the same floor (a Tower
-   * floor's climb forgets the history). Damage taken in this area stays on
-   * record, so undo never wins back the chance to master it. */
-  private rewound(past: Run): Run {
-    const run = structuredClone(past);
-    if (this.mode === "tower" && this.towerRun.damaged) (run as TowerRun).damaged = true;
-    return run;
-  }
-  undo() {
-    if (this.walkIn) return false;
-    // A fight still playing out counts first, so undo takes it back.
-    this.fights.finish();
-    this.armed = null;
-    // Fallen, undo spends one and takes back the fight the hero fell in.
-    const undone = this.timeline.undo(this.fallen, (snapshot) => this.restore(snapshot));
-    if (!undone) return false;
-    this.feedback(undone === "fall" ? "Fatal fight undone · the hand waits" : "Move undone");
-    return true;
   }
   /** Accepts the hero's defeat: the run ends and pays out, and the next one
    * waits in the forest. */
@@ -889,8 +829,6 @@ export class Game {
       this.reject(x, y, "No route to that space.");
       return;
     }
-    // The whole tap-to-walk route counts as a single undo step, not one per tile.
-    if (route.length) this.remember(this.snapshot());
     this.route = route;
     this.message = route.length ? "Walking to destination." : "Already here.";
   }
@@ -1129,11 +1067,11 @@ export class Game {
       return;
     }
     // A dash is one turn: its shots come once it stops.
-    const moved = this.move(step.dx, step.dy, true, true, true, { scale: last ? this.handRules.scaleOf(id) : 1, floorSkip: skips, hold: dashes });
+    const moved = this.move(step.dx, step.dy, true, true, { scale: last ? this.handRules.scaleOf(id) : 1, floorSkip: skips, hold: dashes });
     // The board changes only as the hero moves, so a refused step means the
     // plan is stale: drop it and let the next turn choose again.
     if (!moved) {
-      this.turnBefore = null;
+      this.turnFrom = null;
       return void (this.cardPlan = null);
     }
     const dashed = dashes ? this.dashOn(plan, id, { ...from, dx: step.dx, dy: step.dy }, dash) : true;
@@ -1147,8 +1085,7 @@ export class Game {
     // Its arrival counts as its activation toward its level.
     if (id === "flyingEnemy") return this.gainCardXp(id, 1);
     const fight = this.fights.encounter;
-    // A roll counts once the step is in the undo history (after a fight,
-    // once it settles), so undo takes it back with the step.
+    // A roll counts once the step is taken (after a fight, once it settles).
     if (!fight) {
       if (rolls) this.handRules.skipRolled();
       return this.activation.activate(plan.card, key);
@@ -1160,11 +1097,9 @@ export class Game {
       this.activation.activate(plan.card, key);
     };
   }
-  /** Skip: the card's target at (x, y) vanishes in a puff, without effect.
-   * A turn of its own, so undo brings it back. */
+  /** Skip: the card's target at (x, y) vanishes in a puff, without effect. */
   private vanish(x: number, y: number) {
     const t = this.world.tile(x, y);
-    this.remember(this.snapshot());
     this.handRules.skipRolled();
     this.world.clear(x, y);
     this.vanished = { x, y, at: performance.now() };
@@ -1176,7 +1111,7 @@ export class Game {
    * unless that is the card's target item and a tile of the dash is left:
    * then it ends on the item, taking it (Effective or Dampen scaling it as
    * on any card's last step; with Skip, which may make it vanish, it stops
-   * before it, so the item's own step rolls). One turn and one undo.
+   * before it, so the item's own step rolls). One turn.
    * Dashed steps skip Regen but for the first `dashRegenSteps`.
    * Returns false when a step was refused, leaving the target unreached. */
   private dashOn(plan: CardPlan, id: CardId, from: Dash["tiles"][number], dash: number) {
@@ -1185,7 +1120,7 @@ export class Game {
     const regenerating = this.dashRegenSteps, regen = () => dash - left < regenerating;
     for (; left > 0 && plan.path.length && this.dashable(plan.path[0].x, plan.path[0].y); left--) {
       const at = { x: p.x, y: p.y }, next = plan.path.shift()!;
-      if (!this.move(next.dx, next.dy, true, false, regen(), { hold: true })) {
+      if (!this.move(next.dx, next.dy, true, regen(), { hold: true })) {
         plan.path = [];
         moved = false;
         break;
@@ -1197,12 +1132,10 @@ export class Game {
     if (moved && left > 0 && target && DASH_ONTO.has(this.world.tile(target.x, target.y).kind) && !this.handRules.rollsSkip(id, target.x, target.y)) {
       const at = { x: p.x, y: p.y };
       plan.path.shift();
-      moved = this.move(target.dx, target.dy, true, false, regen(), { scale: this.handRules.scaleOf(id), hold: true });
+      moved = this.move(target.dx, target.dy, true, regen(), { scale: this.handRules.scaleOf(id), hold: true });
       if (moved) {
         tiles.push({ ...at, dx: target.dx, dy: target.dy });
         onItem = true;
-        // Taking the item makes the dash a turn undo stops at.
-        this.timeline.eventful();
       }
     }
     this.cardPlan = plan.path.length ? plan : null;
@@ -1259,8 +1192,8 @@ export class Game {
     return near ? Math.round(bearing(near.dx, near.dy) * 100) % 36_000 : undefined;
   }
   /** Whether Soul Reaper has marked the enemy at (x, y) for death: a fixed
-   * roll per run, floor and the tile the enemy was made on, so undo can't
-   * roll it again; never a boss. */
+   * roll per run, floor and the tile the enemy was made on, so a replay
+   * marks the same; never a boss. */
   /** The enemies Soul Reaper has marked for death on the hero's floor, for the
    * board's X; none unless it is worn, or outside. */
   get doomedTiles(): { x: number; y: number }[] {
@@ -1832,20 +1765,17 @@ export class Game {
    * Traveler's elixir fills HP to max HP (`full`, and kept, when HP is
    * there already), and a Vanguard Banner or Aegis charm raises ATK or DEF by
    * the percent, for the turns, its research gives now (`provisionBoost`; `active`,
-   * and kept, while one is going on). It is no turn of its own, and undo
-   * never takes it back: the heal and the boost reach every copy of the
-   * run undo holds, and the use spent rides onto the run undo restores
-   * (`RunTimeline.undo`). */
+   * and kept, while one is going on). It is no turn of its own. */
   useProvision(id: UsedProvision): "used" | "full" | "active" | "spent" | "unavailable" {
     if (!this.save.provisions[id] || this.run.outside || this.fallen) return "unavailable";
     if (this.provisionsLeft(id) < 1) return "spent";
     this.fights.finish();
     if (this.fallen) return "unavailable";
-    const p = this.run.player, copies = this.timeline.runs();
+    const run = this.run, p = run.player;
     if (id === "heal") {
       if (p.hp >= p.maxHp) return "full";
       const healed = snap(p.maxHp - p.hp);
-      for (const run of copies) if (run.player.hp > 0) run.player.hp = Math.max(run.player.hp, run.player.maxHp);
+      p.hp = p.maxHp;
       this.recordHeal(healed);
       this.message = "Traveler's elixir · HP full";
     } else {
@@ -1853,14 +1783,12 @@ export class Game {
       if (this.run.boosts?.[stat]) return "active";
       const { percent, turns } = provisionBoost(this.save.archives, id);
       const amount = snap((p[stat] * percent) / 100), word = stat === "attack" ? "ATK" : "DEF";
-      for (const run of copies) {
-        run.player[stat] = snap(run.player[stat] + amount);
-        run.boosts = { ...run.boosts, [stat]: { amount, turns } };
-      }
+      p[stat] = snap(p[stat] + amount);
+      run.boosts = { ...run.boosts, [stat]: { amount, turns } };
       this.gain(p.x, p.y, `+${wholeChange(amount)} ${word}`, { tile: { kind: stat } });
       this.message = `${id === "edge" ? "Vanguard Banner" : "Aegis charm"} · +${percent}% ${word} for ${turns} turns`;
     }
-    for (const run of copies) run.provisionsUsed = { ...run.provisionsUsed, [id]: (run.provisionsUsed?.[id] ?? 0) + 1 };
+    run.provisionsUsed = { ...run.provisionsUsed, [id]: (run.provisionsUsed?.[id] ?? 0) + 1 };
     this.countProvisionsUsed();
     // The hand plans again, with the hero as it is now.
     this.cardPlan = null;
@@ -1868,32 +1796,29 @@ export class Game {
     return "used";
   }
   /** Counts the provisions the run has used, Bombs thrown too, toward the
-   * missions: undo takes a throw back, so only the run's most counts. */
+   * missions: the run's most counts. */
   private countProvisionsUsed() {
     const run = this.run, used = Object.values(run.provisionsUsed ?? {}).reduce((n, k) => n + (k ?? 0), 0);
     this.missions.mark("provisions", this.mode, run.seed, used + (run.bombsUsed ?? 0));
   }
   /** A turn taken counts down the boosts going on; one run out takes the
-   * ATK or DEF it added back off the hero, on every copy of the run undo
-   * holds, as it went on. */
+   * ATK or DEF it added back off the hero. */
   private tickBoosts() {
-    const boosts = this.run.boosts;
+    const run = this.run, boosts = run.boosts;
     if (!boosts) return;
     for (const stat of Object.keys(boosts) as Boosted[]) {
       const boost = boosts[stat]!;
       if (--boost.turns > 0) continue;
-      for (const run of this.timeline.runs()) {
-        run.player[stat] = snap(Math.max(0, run.player[stat] - boost.amount));
-        delete run.boosts?.[stat];
-        if (run.boosts && !Object.keys(run.boosts).length) delete run.boosts;
-      }
+      run.player[stat] = snap(Math.max(0, run.player[stat] - boost.amount));
+      delete boosts[stat];
     }
+    if (!Object.keys(boosts).length) delete run.boosts;
   }
   /** The Gold Key provisions on floor `floor` (from 0, `MODES[mode].floorOf`)
    * reached: a gold key for each owned, on the floor the run goes inside
    * on and then on the first floor `PROVISION_KEY_FLOORS` or more past the
    * last that gave them, so a floor climbed past still counts. They come
-   * as a floor begins, which undo never goes back past. */
+   * as a floor begins. */
   private provisionKeys(floor: number) {
     const owned = this.save.provisions.yellowKey, run = this.run;
     if (!owned || (run.keyFloor !== undefined && floor < run.keyFloor + PROVISION_KEY_FLOORS)) return;
@@ -1943,8 +1868,7 @@ export class Game {
   /** A Bomb going off on (x, y): the enemy there (or a Flying one over it)
    * takes the hero's ATK, multiplied by Overseer's beams if it lies in one,
    * critical and Super Critical rolls counted, its DEF no help, and falls to it as to an arrow, paid as a kill. A tile with no enemy takes no Bomb. The throw is a turn
-   * of its own, so undo takes it back, and its kill's Gold can't be paid
-   * twice. A fight still playing out counts first. */
+   * of its own. A fight still playing out counts first. */
   private bombTile(x: number, y: number): "used" | "invalid" | "unavailable" {
     this.fights.finish();
     if (this.fallen) {
@@ -1953,7 +1877,6 @@ export class Game {
     }
     const enemy = foeOn(this.world.tile(x, y));
     if (!enemy) return "invalid";
-    this.remember(this.snapshot());
     this.run.bombsUsed = (this.run.bombsUsed ?? 0) + 1;
     this.countProvisionsUsed();
     this.armed = null;
@@ -1973,8 +1896,7 @@ export class Game {
     return "used";
   }
   /** What the Bomb just thrown at `enemy` on (x, y) deals: its rolls are a
-   * fixed number per run, tile and Bomb, so undoing the throw and throwing it
-   * again lands the same. */
+   * fixed number per run, tile and Bomb, so a replay lands the same. */
   private bombStrike(x: number, y: number, enemy: Enemy) {
     const { player, seed, bombsUsed } = this.run, crit = critAgainst(this.crit, player, enemy), attack = snap(player.attack * this.beamFactorAt({ x, y }));
     if (!crit) return { damage: attack, applications: 0, superCrit: false };
@@ -2101,7 +2023,7 @@ export class Game {
   routeStep() {
     const step = this.route.shift();
     if (!step) return false;
-    const result = this.move(step.dx, step.dy, true, false);
+    const result = this.move(step.dx, step.dy, true);
     if (!result) this.route = [];
     return result;
   }
@@ -2113,7 +2035,7 @@ export class Game {
     this.save.gemDrop.extra = this.save.gemDrop.extra.filter((gem) => gem.mode !== this.mode);
     this.armed = null;
     this.heldPlay = null;
-    this.timeline.reset();
+    this.slice.fall = null;
     this.slice.runGold = 0;
     this.slice.runBoostGold = null;
     this.slice.runCurrency = 0;
@@ -2260,17 +2182,10 @@ export class Game {
     }
   }
   /** Card `id` gains `xp` toward its levels, each level it reaches queued
-   * for the hand's animation. Undo takes it back with the move. */
+   * for the hand's animation. */
   gainCardXp(id: CardId, xp: number) {
     const more = relicAmount(this.save, "cardXp"), gained = more ? Math.round((xp * (100 + more)) / 100) : xp;
     for (const level of addCardXp(this.save.cardXp, id, gained, cardMaxLevel(this.save.cardBuys.opened, id))) this.cardLevelUps.push({ card: id, level });
-  }
-  /** Card `id` gains `xp` as `gainCardXp` does, but for good: undo never
-   * takes it back, as it never brings back the Gem it was gained from. */
-  keepCardXp(id: CardId, xp: number) {
-    const before = this.save.cardXp[id] ?? 0;
-    this.gainCardXp(id, xp);
-    this.timeline.keepCardXp(id, (this.save.cardXp[id] ?? 0) - before);
   }
   /** `floors` new floors completed: each card of the hand that never
    * activates (`PASSIVE_CARDS`), or of the Manual hand, gains one XP a floor. */
@@ -2304,11 +2219,11 @@ export class Game {
     this.message = `${reason}${record ? " · a new record" : ""}${whole(gold) ? ` · ${whole(gold)} Gold kept` : ""}. ${this.rules.words.begin}`;
   }
   /** The hero fell in a fight: the run waits at 0 HP, the hand paused, for
-   * the player to undo the fight or accept defeat. */
-  private fallIn(before: MoveSnapshot, enemy: Enemy) {
+   * the player to accept defeat. */
+  private fallIn(enemy: Enemy) {
     this.run.player.hp = 0;
     this.fights.strikeDown();
-    this.timeline.fall(before, this.enemyTitle(enemy));
+    this.slice.fall = { by: this.enemyTitle(enemy) };
     this.route = [];
     this.auto = false;
     this.dropHandPlan();
@@ -2320,7 +2235,7 @@ export class Game {
     return !this.run.outside && !this.fallen;
   }
   /** The hero fell in the fight just taken: the run waits at 0 HP, the hand
-   * paused, until the player undoes that fight or accepts defeat. */
+   * paused, until the player accepts defeat. */
   get fallen() {
     return !this.run.outside && this.run.player.hp <= 0;
   }
@@ -2332,7 +2247,7 @@ export class Game {
    * its first step (past its first `dashRegenSteps`), so a dashed turn
    * regains HP once (and once more for each of those). The hand's turn says
    * how a card takes it (`card`). */
-  move(dx: number, dy: number, force = true, track = true, regen = true, card: CardStep = {}) {
+  move(dx: number, dy: number, force = true, regen = true, card: CardStep = {}) {
     if (!this.canStep(dx, dy)) return false;
     const p = this.run.player,
       dest = this.world.step(p.x, p.y, dx, dy);
@@ -2345,9 +2260,9 @@ export class Game {
     // the enemy tile's roll, so the hero strikes first (`met` fights it so).
     const firstStrike = t.kind === "enemy" && strikesFirst(t.enemy!) && this.tileRolls(dest.x, dest.y, FIRST_STRIKE_SALT, foeStat(this.treeBonus, t.enemy!, "FirstStrike"));
     let met: Tile = firstStrike ? { ...t, enemy: (({ fast: _, ...caught }) => caught)(t.enemy!) } : t;
-    // The step is resolved once, before any snapshot/undo bookkeeping, so a
-    // wall, lock, impervious enemy, or (automation's) declined lethal fight
-    // never touches history, damages the player, alters the enemy, or ends the run.
+    // The step is resolved once, before anything is taken, so a wall, lock,
+    // impervious enemy, or (automation's) declined lethal fight never
+    // damages the player, alters the enemy, or ends the run.
     const rules: StepRules = { ...this.stepRules, ...(regen ? {} : { regen: 0 }), ...(card.scale !== undefined && card.scale !== 1 ? { scale: card.scale } : {}) };
     // A fight is taken with a Dash Combo's ATK and Overseer's beams; previews and planners go without.
     const hero = t.kind === "enemy" ? this.fighterAt(dest) : p;
@@ -2366,7 +2281,7 @@ export class Game {
       this.feedback("Lethal encounter. Inspect the enemy before proceeding.");
       return false;
     }
-    const step: TakenStep = { tile: t, outcome, dest, track, quiet: this.emptyAt(dest.x, dest.y), card };
+    const step: TakenStep = { tile: t, outcome, dest, card };
     this.facing = { dx, dy };
     // ENEMY's Surprise Attack, and the enemy cards' covering the enemy, added
     // into one chance: the fight a Dash stopped before, by the enemy tile's roll.
@@ -2381,7 +2296,7 @@ export class Game {
   /** Takes a resolved step: in through its door or fight, then onto the tile. */
   private take(step: TakenStep, revived = 0) {
     if (!this.enter(step, revived)) {
-      this.turnBefore = null;
+      this.turnFrom = null;
       return false;
     }
     const notes = notesOf(this.run);
@@ -2393,12 +2308,10 @@ export class Game {
     if (!step.card.hold) this.endTurn();
     return true;
   }
-  /** Commits a resolved step: undo history, stats, and the door or fight on
-   * the way in. Returns false when the player fell. */
-  private enter({ tile: t, outcome, dest, track, quiet, crits, winged, surprise, firstStrike, played }: TakenStep, revived: number) {
-    const before = this.snapshot();
-    this.turnBefore ??= before;
-    if (track) this.remember(quiet ? { ...before, quiet: true } : before);
+  /** Commits a resolved step: stats, and the door or fight on the way in.
+   * Returns false when the player fell. */
+  private enter({ tile: t, outcome, dest, crits, winged, sparked, surprise, firstStrike, played }: TakenStep, revived: number) {
+    this.turnFrom ??= this.standing();
     // A door's Door Heal comes after its drain, which is shown as it was.
     const drained = snap(this.run.player.hp - outcome.player.hp + (t.kind === "door" ? outcome.healed : 0));
     this.applyStats(outcome.player);
@@ -2412,8 +2325,10 @@ export class Game {
     if (extra > 0 && p.hp > 0) this.gain(p.x, p.y, `−${wholeChange(extra)} HP`, { heart: true }, undefined, "hit");
     else if (extra < 0) this.recordHeal(-extra);
     const angel = winged ? this.spendWings(dest) : [];
-    const won = this.winFight({ enemy: t.enemy!, damage: snap(outcome.combat!.damage + extra), at: dest, revived, scale: outcome.scale, instakill: instakill(outcome.combat!), crits, openers }, before);
-    if (won && angel.length) this.message = [...angel, this.message].join(" · ");
+    if (sparked) this.spendSparks(sparked);
+    const won = this.winFight({ enemy: t.enemy!, damage: snap(outcome.combat!.damage + extra), at: dest, revived, scale: outcome.scale, instakill: instakill(outcome.combat!), crits, openers });
+    const saved = [...angel, ...(sparked ? [PHOENIX_SPARK] : [])];
+    if (won && saved.length) this.message = [...saved, this.message].join(" · ");
     if (won) {
       this.turnFought = true;
       if (this.run.combo) this.run.combo = { next: this.run.combo.next + 1, idle: 0 };
@@ -2450,6 +2365,16 @@ export class Game {
       smote++;
     }
     return [CARDS.angelWings.name, ...(smote ? [`Avenging Angel · ${smote} ${smote === 1 ? "enemy" : "enemies"} smitten`] : [])];
+  }
+  /** Phoenix Spark shrugged off `n` hits that would have felled the hero:
+   * its charges are spent for the run. */
+  private spendSparks(n: number) {
+    this.run.sparksUsed = (this.run.sparksUsed ?? 0) + n;
+  }
+  /** Where the hero stands now, and on which floor. */
+  private standing() {
+    const p = this.run.player;
+    return { x: p.x, y: p.y, height: this.run.height };
   }
   /** Disembark just beyond the dock, allowing the next dock tap to board again. */
   returnFromTrials() {
@@ -2536,10 +2461,6 @@ export class Game {
   private afterStep(t: Tile, x: number, y: number, floorSkip = false) {
     if (this.mode === "delve") this.afterDelveStep(t, x, y);
     else if (t.kind === "stairs") this.advanceTowerRoom(floorSkip);
-    // Undo stays on the floor it was taken on: a step onto another (a
-    // Tower's stairs, a Delve floor line or milestone gate either way)
-    // forgets the history.
-    this.timeline.standOn();
   }
   private rejectStep(outcome: StepBlocked, t: Tile, x: number, y: number): false {
     if (outcome.blocked === "wall") this.reject(x, y, "A wall blocks the way.");
@@ -2548,19 +2469,6 @@ export class Game {
       this.reject(x, y, `Impervious — requires ${outcome.combat.requiredAttack} more ATK`);
     }
     return false;
-  }
-  private remember(snapshot: MoveSnapshot) {
-    this.timeline.remember(snapshot);
-  }
-  /** A turn of its own begins (a card acting in place): undo can take it
-   * back. */
-  rememberTurn() {
-    this.remember(this.snapshot());
-  }
-  /** The step being taken pays out (a card activating), so it is a turn
-   * undo stops at. */
-  eventful() {
-    this.timeline.eventful();
   }
   /** Copies resolved stats onto the live player, keeping its object identity. */
   private applyStats(next: Player) {
@@ -2577,12 +2485,12 @@ export class Game {
   }
   /** Settles a fight whose damage is already applied. Returns false when
    * the player fell. */
-  private winFight(fight: FightEnd, before: MoveSnapshot) {
+  private winFight(fight: FightEnd) {
     const { enemy, at } = fight;
     if (fight.damage > 0) this.markDamaged();
     if (fight.damage > 0) this.events.hurt(this.mode, this.run.seed);
     if (this.run.player.hp <= 0) {
-      this.fallIn(before, enemy);
+      this.fallIn(enemy);
       return false;
     }
     this.message = [fightText(fight, this.save.settings.legacyEnemies), ...this.finds.kill(enemy, at, fight.scale ?? 1, !!fight.instakill, fight.crits)].join(" · ");
@@ -2596,19 +2504,19 @@ export class Game {
    * is an Archer; a turn that climbs to another floor leaves its shooters
    * behind. */
   private endTurn() {
-    const before = this.turnBefore, sprung = this.sprung;
-    this.turnBefore = null;
+    const from = this.turnFrom, sprung = this.sprung;
+    this.turnFrom = null;
     this.sprung = [];
     const archer = this.isArcher, fought = this.turnFought, dashed = this.turnDashed;
     this.turnFought = this.turnDashed = false;
-    if (!before || this.run.outside || this.fallen) return;
+    if (!from || this.run.outside || this.fallen) return;
     this.comboTurn(fought, dashed);
     this.tickBoosts();
     syncShield(this.save, this.run, this.mode);
     if (tickRegrow(this.run)) this.shieldFormedAt = performance.now();
     const beams = this.arcana.beams;
     const fired = this.arcana.turn();
-    const p = this.run.player, from = before.run.player, sameFloor = this.mode !== "tower" || before.run.height === this.run.height;
+    const p = this.run.player, sameFloor = this.mode !== "tower" || from.height === this.run.height;
     const at = performance.now(), ms = Math.min(TURN_MS, 800 / Math.max(1, this.stepsPerSecond));
     this.turnClock = { at, ms };
     // The board walks a single step at an even pace; anything else it snaps.
@@ -2633,7 +2541,7 @@ export class Game {
     const met = this.lifespringContact(from, 1);
     const v = this.run.volleys ?? { turn: 0 }, retribution = { pool: this.run.gear?.retribution ?? 0 };
     const out = volleyTurn({ board: this.world, wrap: this.wrap, floorOf: (x, y) => this.floorOf(x, y), hero: p, from, seed: this.run.seed,
-      volleys: { ...v, turn: v.turn + 1 }, archer, ranks: { ...this.trainingNow, archives: this.save.archives }, cardCrit: this.cardCrit, handShot: this.handShot, ricochet: this.arcana.ricochet(), ...(beams ? { beams } : {}), ...(dilation ? { dilation } : {}), ...(frost ? { frost } : {}), ...this.volleyPowers(retribution) });
+      volleys: { ...v, turn: v.turn + 1 }, sparks: this.wingsReady ? 0 : this.sparksLeft, archer, ranks: { ...this.trainingNow, archives: this.save.archives }, cardCrit: this.cardCrit, handShot: this.handShot, ricochet: this.arcana.ricochet(), ...(beams ? { beams } : {}), ...(dilation ? { dilation } : {}), ...(frost ? { frost } : {}), ...this.volleyPowers(retribution) });
     this.run.volleys = out.volleys;
     // Mirror Vault: what the arrows spent of Retribution goes, the shots' damage comes in, multiplied.
     const mirror = powerOf(this.worn, "mirrorVault", "factor");
@@ -2653,13 +2561,19 @@ export class Game {
     for (const { enemy, at, instakill, crits, thorns, ricochet } of out.kills)
       this.message = [`${thorns ? "Thorns" : ricochet ? "Ricochet" : "Arrow"} · ${this.enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, at, 1, instakill, crits ? 1 : 0)].join(" · ");
     this.showVolley([...struck, ...met, ...out.shots], at, ms);
+    // Phoenix Spark shrugged off the shots that would have felled the hero.
+    if (out.sparked) {
+      this.spendSparks(out.sparked);
+      this.fights.spark();
+      this.message = [PHOENIX_SPARK, this.message].join(" · ");
+    }
     // Angel Wings raises the hero from a shot that would fell it, as from a strike.
     if (out.fell && this.wingsReady) {
       p.hp = p.maxHp;
       this.fights.raise();
       this.message = this.spendWings().join(" · ");
     } else if (out.fell) {
-      this.fallIn(before, out.fell);
+      this.fallIn(out.fell);
       this.message = `Shot down by ${this.enemyTitle(out.fell)}.`;
       return;
     }
@@ -2805,12 +2719,10 @@ export class Game {
     return out.shots;
   }
   /** A turn the hero holds its ground (FLYING ENEMY with a Flying enemy in
-   * reach): no step, so no Regen, but a turn all the same, which the undo
-   * history keeps quietly and the volley ends. */
+   * reach): no step, so no Regen, but a turn all the same, which the volley
+   * ends. */
   private holdTurn() {
-    const before = this.snapshot();
-    this.turnBefore = before;
-    this.remember({ ...before, quiet: true });
+    this.turnFrom = this.standing();
     this.message = `${CARDS.flyingEnemy.name} · holding ground`;
     this.endTurn();
   }
@@ -2995,8 +2907,8 @@ export class Game {
   }
   /** Whether the door or key at (x, y) on this floor rolls under `chance`
    * percent (DOOR's Secret Knock and Door Chest, KEY's Locksmith and Master
-   * Key): by its tile's fixed number, each roll its own `salt`, so undo
-   * can't roll it again. */
+   * Key): by its tile's fixed number, each roll its own `salt`, so a
+   * replay rolls the same. */
   private tileRolls(x: number, y: number, salt: number, chance: number) {
     return !!chance && tileRandom(x, y, this.floorSeed ^ salt) * 100 < chance;
   }
@@ -3095,16 +3007,14 @@ export class Game {
     else if (!PERMANENT_TILES.has(t.kind)) this.world.clear(x, y);
   }
   /** Clears Automove's memory when the labyrinth behind it is gone: a Delve
-   * run entering it (a death sends the player to the forest first, so
-   * undo keeps the memory), a sealed milestone gate, or a reshaped layout. */
+   * run entering it, a sealed milestone gate, or a reshaped layout. */
   private forgetLabyrinth() {
     if (this.mode === "delve") this.save.delve.memory = { known: {}, visited: {} };
   }
   private afterDelveStep(t: Tile, x: number, y: number) {
     const world = this.world;
     if (!(world instanceof World)) return;
-    // The world keeps the run's milestone and floor itself; the gate's
-    // new floor puts the passage out of undo's reach (`afterStep`).
+    // The world keeps the run's milestone and floor itself.
     const crossed = t.kind === "oneway" && world.cross(x, y);
     if (crossed) {
       this.forgetLabyrinth();
@@ -3188,8 +3098,7 @@ export class Game {
   /** Free levels from a trade or a smelt (the traders' Free Utility, the
    * smelts' Free Defense, Offense and Upgrades), each of a group, its pick
    * choosing its row (`freeLevelRow`): they join the run's training as a
-   * floor's do, announced the same way. A trade or smelt can be undone, so
-   * they count toward no Event. */
+   * floor's do, announced the same way. They count toward no Event. */
   trainFree(levels: readonly (readonly [FreeGroup, number])[]) {
     const given: TrainingId[] = [];
     for (const [group, pick] of levels) {
@@ -3208,8 +3117,8 @@ export class Game {
   }
   /** Find Gold Key: on floor `floor` climbed for the first time in the
    * run, a gold key under the research's chance. The roll is a fixed
-   * number per run seed and floor, so undo and a replay find the same
-   * keys, and more research only ever adds some. */
+   * number per run seed and floor, so a replay finds the same keys, and
+   * more research only ever adds some. */
   private findYellowKey(floor: number, at: { x: number; y: number }) {
     const chance = researched(this.save.archives, "yellowKeyChance");
     if (!chance || tileRandom(-1, floor, (this.run.seed ^ YELLOW_KEY_SALT) | 0) * 1000 >= chance) return;
@@ -3338,7 +3247,7 @@ export class Game {
   private get rules(): ModeProfile {
     return MODES[this.mode];
   }
-  /** The current mode's save slice: its run, undo history and records. */
+  /** The current mode's save slice: its run and records. */
   private get slice(): ModeSave {
     return this.save[this.mode];
   }
@@ -3414,8 +3323,7 @@ export class Game {
   }
   /** Buys ranks of Training `id` for this run with its Silver, one or as
    * many as Buy Quantity `quantity` takes (`runTrainingBulk`): they count
-   * from the next turn on, until the run ends. Each purchase is a turn of
-   * its own, so undo takes it back. Bought while a fight plays out, they
+   * from the next turn on, until the run ends. Bought while a fight plays out, they
    * count in that fight from its next strike (`fights.retrain`). Refused
    * before On the Job is owned, during a fight shown in summary rounds, for
    * a row whose upgrade isn't owned or at its highest, or without the
@@ -3426,7 +3334,6 @@ export class Game {
     if (!first.open || first.maxed) return false;
     const bulk = runTrainingBulk(this.save, this.run, id, quantity, this.free ? Infinity : this.silver);
     if (!bulk.affordable) return false;
-    this.remember(this.snapshot());
     const hpGain = this.takeRunRanks(id, bulk.count, bulk.cost);
     // A fight playing out goes on with the stats (or Revive) bought.
     if (isStatRow(first.row) || id === "revive") this.fights.retrain(hpGain);
@@ -3447,7 +3354,7 @@ export class Game {
       this.run.training = { ...this.run.training, [id]: offer.bought + 1 };
       hpGain = snap(hpGain + this.applyRunTraining(offer));
     }
-    // Undo takes the ranks back, so only the run's most bought counts.
+    // The run's most bought counts.
     const bought = Object.values(this.run.training ?? {}).reduce((n, k) => n + (k ?? 0), 0);
     this.missions.mark("runTraining", this.mode, this.run.seed, bought);
     syncShield(this.save, this.run, this.mode);
@@ -3456,8 +3363,7 @@ export class Game {
   /** Auto-Train as a floor begins (a run going inside, each Tower floor,
    * each Delve milestone gate): buys the cheapest next rank of the rows
    * switched on, one after another, until the Silver runs short. It is part
-   * of arriving, before the floor's first turn, so undo never takes it back
-   * on its own. Not with Dev free purchases, which would buy every row to
+   * of arriving, before the floor's first turn. Not with Dev free purchases, which would buy every row to
    * its highest. */
   private autoTrain() {
     if (!this.save.upgrades.autoTrain || this.free || !this.mayTrainInRun) return;

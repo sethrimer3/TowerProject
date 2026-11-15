@@ -16,7 +16,6 @@ function lay(g: Game) {
  * (0, 0) with ATK and DEF 10 and HP 40 of 100. */
 function withProvisions(provisions: Partial<Game["save"]["provisions"]>) {
   const s = defaults();
-  s.upgrades.inspirationUndos = 1;
   Object.assign(s.provisions, provisions);
   const g = new Game(s);
   g.newRun({ seed: 7 });
@@ -99,29 +98,11 @@ test("a boost's Multiplier and Duration research count from the next one used", 
   assert.deepEqual(s.tower.run!.boosts?.attack, { amount: 5, turns: 300 }, "the longest boost saves");
 });
 
-test("undo gives no use back and keeps a boost counting down", () => {
-  const g = withProvisions({ edge: 1, heal: 1 });
-  turns(g, 1);
-  assert.equal(g.useProvision("edge"), "used");
-  g.run.player.hp = 30;
-  assert.equal(g.useProvision("heal"), "used");
-  turns(g, 5);
-  assert.ok(g.undo());
-  lay(g);
-  assert.equal(g.provisionsLeft("edge"), 0);
-  assert.equal(g.provisionsLeft("heal"), 0);
-  assert.equal(g.run.player.attack, 12, "the boost is still on");
-  assert.equal(g.boostOf("edge")?.turns, 45, "with the turns it had left");
-  assert.equal(g.run.player.hp, 100, "and the heal kept");
-});
-
-test("a boost that ran out stays out through undo", () => {
+test("a boost that ran out takes its DEF back off the hero", () => {
   const g = withProvisions({ guard: 1 });
   g.useProvision("guard");
   turns(g, 50);
   assert.equal(g.run.player.defense, 10);
-  assert.ok(g.undo());
-  assert.equal(g.run.player.defense, 10, "the turn before it ran out comes back without it");
   assert.equal(g.boostOf("guard"), undefined);
 });
 

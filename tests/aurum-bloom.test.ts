@@ -131,23 +131,6 @@ for (const mode of ["tower", "delve"] as const)
     assert.deepEqual(g.environments.stellarFloor, 10);
   });
 
-test("undo leaves Aurum Bloom's floors as they stand, and its switch", () => {
-  const g = inside();
-  g.save.upgrades.inspirationUndos = 1;
-  g.newRun({ seed: 7 });
-  g.save.arcana.owned.aurumBloom = [0, 38, 19];
-  const w = g.world as RoomWorld;
-  w.cells = new Map();
-  for (let y = 0; y < 9; y++) for (let x = 0; x < 9; x++) w.cells.set(`${x},${y}`, { kind: "floor" });
-  Object.assign(g.run.player, { x: 0, y: 0, hp: 100, maxHp: 100 });
-  assert.ok(g.move(1, 0));
-  assert.ok(g.arcana.toggle("aurumBloom"));
-  assert.ok(g.undo());
-  assert.equal(g.environments.stellarFloor, undefined, "still off");
-  assert.ok(g.arcana.toggle("aurumBloom"));
-  assert.deepEqual([g.environments.goldenFloor, g.environments.stellarFloor], [24, 10]);
-});
-
 test("a Stellar Floor shows in the All Gold Bonuses box with Aurum Bloom, and a lent one counts at its lent levels", () => {
   const g = inside();
   const lines = () => goldMultipliers(g.goldContext).filter((m) => m.id === "golden" || m.id === "stellar");

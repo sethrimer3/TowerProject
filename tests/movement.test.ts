@@ -11,7 +11,6 @@ import { WIDTH } from "../src/config.ts";
 import { levelForXp, xpForLevel } from "../src/progression/xp.ts";
 function corridor() {
   const g = new Game(defaults());
-  g.save.upgrades.inspirationUndos = 1; // undo needs Rehearsed steps
   // Inside a run only Dev mode lets the player walk; these test walking.
   g.save.settings.devMode = true;
   g.save.upgrades.breakthrough = 1;
@@ -51,7 +50,6 @@ test("missing key walks to door, stops, and places feedback on the door", () => 
   assert.equal(g.run.player.y, 2);
   assert.deepEqual([g.blocked.x, g.blocked.y], [15, 3]);
   assert.ok(g.blocked.until > performance.now());
-  assert.equal(g.save.delve.history.length, 1);
 });
 test("unreachable wall target does not move; accessible detour beats missing-key route", () => {
   const g = corridor();
@@ -65,65 +63,7 @@ test("unreachable wall target does not move; accessible detour beats missing-key
   assert.equal(g.run.player.y, 5);
   assert.equal(g.world.tile(15, 2).kind, "door");
 });
-test("undo restores combat, health, drops, equipment, door keys and score; a run's five undos never come back", () => {
-  const g = corridor();
-  g.save.archives.levels.undoCount = 4;
-  g.run.changes["15,1"] = enemy;
-  g.run.changes["15,2"] = { kind: "treasure" };
-  g.run.changes["15,3"] = { kind: "key", color: "yellow" };
-  g.run.changes["15,4"] = { kind: "door", color: "yellow" };
-  g.run.changes["15,5"] = { kind: "potion" };
-  const initial = structuredClone(g.run);
-  for (let i = 0; i < 5; i++) assert.ok(g.move(0, 1));
-  assert.equal(g.save.delve.history.length, 5);
-  for (let i = 0; i < 5; i++) assert.ok(g.undo());
-  assert.deepEqual(g.run, { ...initial, undosUsed: 5 }, "everything back but the undos spent");
-  assert.equal(g.save.delve.best, (g.world as World).depth(15, 5));
-  assert.equal(g.undo(), false);
-  for (let i = 0; i < 6; i++) g.move(0, 1);
-  assert.equal(g.save.delve.history.length, 0, "turns taken after give no undo back");
-  assert.equal(g.undosLeft, 0);
-  assert.equal(g.undo(), false);
-});
-test("undos spent are the run's: research raises what is left, and a new run starts full", () => {
-  const g = corridor();
-  g.save.archives.levels.undoCount = 1;
-  g.move(0, 1);
-  assert.ok(g.undo());
-  g.move(0, 1);
-  g.move(0, 1);
-  assert.equal(g.undosLeft, 1);
-  assert.equal(g.save.delve.history.length, 1, "the history holds no more moves than undos left");
-  assert.ok(g.undo());
-  assert.equal(g.undo(), false);
-  g.move(0, 1);
-  g.save.archives.levels.undoCount = 2;
-  assert.equal(g.undosLeft, 1, "a level completed mid-run counts at once");
-  g.move(0, 1);
-  assert.ok(g.undo());
-  assert.equal(decode(JSON.stringify(g.save)).delve.run?.undosUsed, 3, "kept across a reload");
-  g.finish("test");
-  g.newRun();
-  assert.equal(g.undosLeft, 3, "a new run has them all");
-});
-test("undo goes on back past steps onto empty floor, to before the last move that did something", () => {
-  const g = corridor();
-  g.save.archives.levels.undoCount = 4;
-  g.run.changes["15,2"] = { kind: "potion" };
-  assert.ok(g.move(0, 1)); // onto empty floor
-  const beforePotion = structuredClone(g.run);
-  for (let i = 0; i < 4; i++) assert.ok(g.move(0, 1)); // the potion, then three empty steps
-  assert.ok(g.undo());
-  assert.deepEqual(g.run, { ...beforePotion, undosUsed: 1 }, "the three empty steps and the potion's step taken back at once");
-  assert.ok(g.undo());
-  assert.equal(g.run.player.y, 0, "an empty step with nothing before it is taken back alone");
-  assert.equal(g.undo(), false);
-  assert.ok(g.move(0, 1));
-  assert.ok(g.move(0, 1));
-  assert.ok(g.undo());
-  assert.equal(g.run.player.y, 1, "the potion's step alone, when it was the last");
-});
-test("a fatal fight stops a walked route; accepting defeat starts the next run, with nothing to undo", () => {
+test("a fatal fight stops a walked route; accepting defeat starts the next run", () => {
   const g = corridor();
   g.run.changes["15,2"] = doom;
   const seed = g.run.seed;
@@ -134,35 +74,26 @@ test("a fatal fight stops a walked route; accepting defeat starts the next run, 
   assert.ok(g.acceptDefeat());
   assert.notEqual(g.run.seed, seed);
   assert.equal(g.run.player.y, OUTSIDE_START_Y);
-  assert.equal(g.save.delve.history.length, 0);
-  assert.equal(g.undo(), false);
   assert.equal(g.save.breakthrough, 0);
 });
-test("a fallen hero waits: undo spends one to take the fight back, and the hand stays paused", () => {
+test("a fallen hero waits, the hand paused, for the player to accept defeat", () => {
   const g = corridor();
   g.move(0, 1);
   g.move(0, 1);
   g.run.changes["15,3"] = doom;
-  const before = structuredClone(g.run);
   g.move(0, 1);
   assert.ok(g.fallen);
   assert.equal(g.run.player.hp, 0);
   assert.equal(g.save.delve.fall?.by, "Doom");
   assert.equal(g.move(0, -1), false, "a fallen hero takes no step");
-  const undos = g.save.delve.history.length;
-  assert.ok(g.undo());
-  assert.deepEqual(g.run, { ...before, undosUsed: 1 });
-  assert.equal(g.save.delve.history.length, undos - 1, "one undo spent");
-  assert.equal(g.undosLeft, 0, "and it is gone for the run");
-  assert.ok(!g.fallen && !g.auto && g.save.delve.fall === null);
+  assert.ok(!g.auto);
   assert.equal(g.save.breakthrough, 0);
 });
-test("a fallen hero, and the fight to take back, persist safely across refresh", () => {
+test("a fallen hero persists safely across refresh", () => {
   const g = corridor();
   // Saved changes hold only terrain, so the enemy stands on the live board.
   const tile = g.world.tile.bind(g.world);
   g.world.tile = (x, y) => (x === 15 && y === 1 ? doom : tile(x, y));
-  const before = structuredClone(g.run);
   g.move(0, 1);
   assert.ok(g.fallen);
   const saved = decode(JSON.stringify(g.save));
@@ -170,16 +101,15 @@ test("a fallen hero, and the fight to take back, persist safely across refresh",
   const loaded = new Game(saved);
   loaded.switchMode("delve");
   assert.ok(loaded.fallen && !loaded.auto);
-  assert.ok(loaded.undo());
-  assert.deepEqual(loaded.run, { ...before, undosUsed: 1 });
+  assert.ok(loaded.acceptDefeat());
   const corrupt = JSON.parse(JSON.stringify(g.save));
-  corrupt.delve.fall = { snapshot: null };
-  assert.equal(decode(JSON.stringify(corrupt)).delve.fall, null);
+  corrupt.delve.fall = { by: 7 };
+  assert.deepEqual(decode(JSON.stringify(corrupt)).delve.fall, { by: "" }, "a fall's enemy is a name or none");
   const alive = JSON.parse(JSON.stringify(g.save));
   alive.delve.run.player.hp = 5;
   assert.equal(decode(JSON.stringify(alive)).delve.fall, null, "a fall only beside a fallen hero");
 });
-test("paired horizontal openings wrap, use destination locks, and undo correctly", () => {
+test("paired horizontal openings wrap and use destination locks", () => {
   const g = corridor();
   g.run.player.x = 29;
   g.run.player.y = 4;
@@ -191,9 +121,7 @@ test("paired horizontal openings wrap, use destination locks, and undo correctly
   assert.ok(g.move(1, 0));
   assert.equal(g.run.player.x, 0);
   assert.equal(g.run.player.keys.red, 0);
-  g.undo();
-  assert.equal(g.run.player.x, 29);
-  assert.equal(g.run.player.keys.red, 1);
+  g.run.player.x = 29;
   g.run.changes["0,4"] = { kind: "wall" };
   assert.equal(g.move(1, 0), false);
   g.run.changes["0,4"] = { kind: "floor" };
@@ -212,19 +140,4 @@ test("generated boundaries are closed and sparse region snapshots stay connected
     }
     assert.equal(reachable(full, '15,0', undefined, WIDTH).size, [...full.values()].filter(t => t.kind !== 'wall').length);
   }
-});
-test("undoing a kill takes back its XP and the level it reached", () => {
-  const g = corridor();
-  g.run.changes["15,1"] = enemy;
-  g.save.xp = xpForLevel(1) - 1;
-  assert.ok(g.move(0, 1));
-  assert.equal(levelForXp(g.save.xp), 1);
-  assert.ok(g.levelUpAt > -Infinity);
-  assert.equal(g.levelUpPoints, 3, "the board raises the training points earned");
-  assert.ok(g.undo());
-  assert.equal(g.save.xp, xpForLevel(1) - 1);
-  assert.equal(g.levelUpAt, -Infinity);
-  // The kill pays its XP again when retaken.
-  assert.ok(g.move(0, 1));
-  assert.equal(levelForXp(g.save.xp), 1);
 });

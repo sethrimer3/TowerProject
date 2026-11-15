@@ -4,14 +4,12 @@ import { snap } from "./exact.ts";
 
 // Run Notes: the trivia a run keeps for the Note Taking research's dialog
 // (ui/run-notes-dialog.ts), counted on every run whether or not it is
-// researched, so the notes are whole the moment it completes. What undo
-// takes back with the run (steps, keys, doors, pickups, Silver) is kept in
-// the run (`run.notes`); what undo never takes back (materials, Cells, Gems,
-// equipment, like the Gold in `runGold`) is kept beside it, in the mode's
-// `runFinds`, so a kill fought again after an undo, which pays nothing
-// twice, isn't counted twice either.
+// researched, so the notes are whole the moment it completes. What belongs
+// to the run (steps, keys, doors, pickups, Silver) is kept in the run
+// (`run.notes`); what it finds for good (materials, Cells, Gems, equipment,
+// like the Gold in `runGold`) is kept beside it, in the mode's `runFinds`.
 
-/** The notes kept in the run, so undo takes them back with it. */
+/** The notes kept in the run. */
 export type RunNotes = {
   /** When the run went inside (wall clock, ms). */
   startedAt: number;
@@ -28,7 +26,7 @@ export type RunNotes = {
   silver: number;
 };
 
-/** The finds kept beside the run, which undo never takes back. */
+/** The finds kept beside the run. */
 export type RunFinds = {
   /** Equipment's upgrade materials and historical finds, by id. */
   materials: Record<string, number>;

@@ -48,8 +48,8 @@ type Open = Group | "manual" | "arcana" | null;
 export class RunTrainingBar {
   /** The group shown in the hand's place, if any: none is the Hand tab. */
   private open: Open = null;
-  /** The run the tabs were last drawn for, by mode and seed (undo puts a
-   * copy of the run in its place): a new one starts on Hand. */
+  /** The run the tabs were last drawn for, by mode and seed: a new one
+   * starts on Hand. */
   private run = "";
   /** The rows the cards were last built for. */
   private shown = "";

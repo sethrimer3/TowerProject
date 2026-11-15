@@ -18,25 +18,25 @@ import { snap } from "../src/exact.ts";
 
 test("a new character starts at 10 ATK, 0 DEF, 100 HP, no shroud, no Regen, no keys and no undo", () => {
   assert.deepEqual(loadout(defaults()), {
-    attack: 10, defense: 0, maxHp: 100, shroud: 0, regen: 0, lifesteal: 0, thorns: 0, parry: 0, armorBreak: 0, shieldThorns: 0, bossAttack: 0, pierce: 0, keys: { yellow: 0, blue: 0, red: 0 }, startKeys: { yellow: 0, blue: 0 }, undoCapacity: 0,
+    attack: 10, defense: 0, maxHp: 100, shroud: 0, regen: 0, lifesteal: 0, thorns: 0, parry: 0, armorBreak: 0, shieldThorns: 0, bossAttack: 0, pierce: 0, keys: { yellow: 0, blue: 0, red: 0 }, startKeys: { yellow: 0, blue: 0 }, sparks: 0,
   });
 });
 
-test("Rehearsed steps gives the first undo; Echoes of time gives none, only research", () => {
+test("Phoenix Spark gives the first charge; Echoes of time gives none, only research", () => {
   const s = defaults();
-  s.archives.levels.undoCount = 3;
-  assert.equal(loadout(s).undoCapacity, 0, "research needs one of the two skills");
+  s.archives.levels.sparkCount = 3;
+  assert.equal(loadout(s).sparks, 0, "research needs one of the two skills");
   s.upgrades.undos = 1;
-  assert.equal(loadout(s).undoCapacity, 3, "Echoes of time alone: research only");
-  s.upgrades.inspirationUndos = 1;
-  assert.equal(loadout(s).undoCapacity, 1 + 3, "Undo Count research adds to Rehearsed steps' undo");
+  assert.equal(loadout(s).sparks, 3, "Echoes of time alone: research only");
+  s.upgrades.phoenixSpark = 1;
+  assert.equal(loadout(s).sparks, 1 + 3, "Phoenix Spark Count research adds to Phoenix Spark's charge");
 });
 
 test("each rank of an upgrade adds its grant", () => {
   const s = defaults();
   Object.assign(s.upgrades, {
     combatStance: 1, buildout: 1, quality: 1,
-    yellow: 1, blue: 2, red: 3, undos: 1, inspirationUndos: 1, shroud: 1,
+    yellow: 1, blue: 2, red: 3, undos: 1, phoenixSpark: 1, shroud: 1,
   });
   assert.deepEqual(loadout(s), {
     attack: 10 + 2,
@@ -53,7 +53,7 @@ test("each rank of an upgrade adds its grant", () => {
     pierce: 0,
     keys: { yellow: 1, blue: 2, red: 3 },
     startKeys: { yellow: 0, blue: 0 },
-    undoCapacity: 1,
+    sparks: 1,
   });
 });
 
@@ -206,16 +206,16 @@ test("descriptions are written from the grants", () => {
   assert.deepEqual(
     { yellow: text.yellow, blue: text.blue, red: text.red,
       quality: text.quality, undos: text.undos, combatStance: text.combatStance, buildout: text.buildout,
-      inspirationUndos: text.inspirationUndos, revive: text.revive },
+      phoenixSpark: text.phoenixSpark, revive: text.revive },
     {
       yellow: "+1 starting gold key",
       blue: "+1 starting blue key",
       red: "+1 starting red key",
       quality: "+2 weapon attack and +1 armor defense",
-      undos: "Open Undo Count research, or 4 more levels of it once Rehearsed steps has opened it",
+      undos: "Open Phoenix Spark Count research, or 4 more levels of it once Phoenix Spark has opened it",
       combatStance: "Reorder the cards in your hand before a climb",
       buildout: "Unlock the Deck and choose which cards to put in your hand before a climb",
-      inspirationUndos: "Rewind one action a climb. Open Undo Count research",
+      phoenixSpark: "Once a run, shrug off a hit that would defeat you, after every revival has failed. Open Phoenix Spark Count research",
       revive: "Open Revive training: Fight on after a fatal strike",
     },
   );
@@ -305,9 +305,11 @@ test("a gear change reaches a run still outside, which starts at its new full HP
   assert.deepEqual([g.run.player.attack, g.run.player.maxHp, g.run.player.hp], [10.101, 101, 101], "+1% ATK raised 1% by the plate's efficiency, and the plate's +1% max HP");
 });
 
-test("ATK, DEF, Max HP, Regen and Shroud train to 1,000 levels, and each Limit Break owned raises that by 500, Shroud's but by the first eight", () => {
+test("ATK, DEF, Max HP, Regen and Shroud train to 500 levels, 1,000 with Esoteric Training, and each Limit Break owned raises that by 500, Shroud's but by the first eight", () => {
   const save = defaults();
   const caps = () => (["attack", "defense", "hp", "regen", "shroud"] as const).map((id) => trainingCap(TRAINING.find((t) => t.id === id)!, save.upgrades));
+  assert.deepEqual(caps(), [500, 500, 500, 500, 500]);
+  save.upgrades.esotericTraining = 1;
   assert.deepEqual(caps(), [1000, 1000, 1000, 1000, 1000]);
   assert.equal(trainingCap(TRAINING.find((t) => t.id === "lifesteal")!, save.upgrades), 80, "rows without breaks keep their most");
   save.upgrades.limitBreak1 = 1;
@@ -319,11 +321,15 @@ test("ATK, DEF, Max HP, Regen and Shroud train to 1,000 levels, and each Limit B
 
 test("a rank can't be trained past the cap, and a saved rank above it is kept until Limit Breaks raise the cap to it", () => {
   const save = defaults();
-  save.training.attack = 999;
+  save.training.attack = 499;
+  assert.equal(trainingFull(save, "attack"), false);
+  save.training.attack = 500;
+  assert.equal(trainingFull(save, "attack"), true, "500 without Esoteric Training or a Limit Break");
+  assert.equal(trainingBulk(save, "attack", "max").count, 0);
+  save.upgrades.esotericTraining = 1;
   assert.equal(trainingFull(save, "attack"), false);
   save.training.attack = 1000;
   assert.equal(trainingFull(save, "attack"), true, "1,000 without a Limit Break");
-  assert.equal(trainingBulk(save, "attack", "max").count, 0);
   save.upgrades.limitBreak1 = 1;
   assert.equal(trainingFull(save, "attack"), false);
   const raw: any = defaults();

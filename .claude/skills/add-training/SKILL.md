@@ -67,7 +67,7 @@ Work in an isolated worktree, cherry-pick onto `main`, push and clean up, per th
 - `research`, if a research target multiplies it.
 - The Training tab, the run's card and what a rank adds then need nothing more. Read the amount with `trainedAmount(game.trainingNow, id)` where the effect applies (the hero's ranks plus the run's Silver ranks, `ranksInRun`), never `save.training` alone, so ranks bought in the run count.
 
-**Read it when it's used.** Undo and Revive restore copies of the run, so read the value at the moment it applies (as `game.stepRules` does for Potion %), not copied into the run when bought. A value fixed as the run goes inside (Find Potion's `run.percentPotions`) also needs `trainInRun` to update it when a Silver rank is bought mid-run.
+**Read it when it's used.** Read the value at the moment it applies (as `game.stepRules` does for Potion %), not copied into the run when bought. A value fixed as the run goes inside (Find Potion's `run.percentPotions`) also needs `trainInRun` to update it when a Silver rank is bought mid-run.
 
 **Gold and time curves.** Give the row its `gold` curve (`TrainingDef` requires one, so the build fails without it); `trainingGold` reads it, and a new shape of Gold curve widens `TrainerCurve` and `trainingGold` alone. Every row shares `trainingSeconds`; a row with its own time curve makes `trainingMs` take the row, updating its callers (`trainingPrices` in `progression/loadout.ts`; `start`, `continueAfter` and `toNextRank` in `game/training-desk.ts`). A refund returns what the job recorded as paid, so cancel and reset need no change.
 
@@ -77,6 +77,6 @@ Work in an isolated worktree, cherry-pick onto `main`, push and clean up, per th
 
 **Docs.** `docs/gameplay/training.md` (the Training tab paragraph and the run training caps sentence), `docs/PROGRESSION_AND_DIFFICULTY.md` (training and run training prices), `CONTEXT.md` (the Training point entry lists the rows), `docs/agents/progression.md` (the caps list, and any mechanism added).
 
-**Goldens.** The Training tab shows the row, so `ui.golden.json` changes (record it on the unchanged code first, per `docs/agents/goldens.md`); a new row changes the saved records, so `save-decode` changes. A combat or currency effect can move `step-trace`, `undo-clear-trace`, `tower-automation` and `delve-automove`. Check only the expected keys changed before re-recording, and name them in the commit message.
+**Goldens.** The Training tab shows the row, so `ui.golden.json` changes (record it on the unchanged code first, per `docs/agents/goldens.md`); a new row changes the saved records, so `save-decode` changes. A combat or currency effect can move `step-trace`, `spark-clear-trace`, `tower-automation` and `delve-automove`. Check only the expected keys changed before re-recording, and name them in the commit message.
 
 Run the area's tests, then `CI=1 npm test` and `npm run build`. Finish with a short report: the final spec values, what was verified, and which goldens were re-recorded and why.

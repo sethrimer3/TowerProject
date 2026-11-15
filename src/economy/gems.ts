@@ -31,8 +31,7 @@ const MOST_EXTRA = 32;
 /** A Gem lying on a floor: the run (by mode and seed) and the floor it lies
  * on, its tile, and its kind (plain when absent). */
 export type GemSpot = { mode: Mode; seed: number; floor: number; x: number; y: number; kind?: Exclude<GemKind, "plain"> };
-/** Where the Gems found in runs stand. None of it belongs to a run, so undo
- * never brings a collected Gem back or takes one away. */
+/** Where the Gems found in runs stand. None of it belongs to a run. */
 export type GemDrop = {
   /** When a Gem may next appear on a new floor (wall clock, ms): the last
    * one collected, plus the cooldown. */
@@ -46,7 +45,7 @@ export type GemDrop = {
    * drop): gone, never owed again, once the hero leaves their floor. */
   extra: GemSpot[];
   /** The furthest floor each mode's run has reached, so only a new one
-   * counts (not a floor gone back to, nor one reached again after undo). */
+   * counts (not a floor gone back to). */
   reached: Record<Mode, { seed: number; floor: number } | null>;
   /** When the ad button's next reward is banked (wall clock, ms): it shows
    * once one is. */

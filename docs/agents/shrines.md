@@ -8,7 +8,7 @@ A boon lasts the rest of the run.
 The Delve has none: `ShrineDesk.open`, `Game.boons` and `RunPurse.boons` all test the mode.
 
 **The schedule** (`boonsEarned`, `nextBoonFloor`, `floorsFor`).
-The boons a run has earned are worked out from its highest floor reached (by number, `maxHeight + 1`) and its picks, never counted as it climbs, so undo can't earn one twice.
+The boons a run has earned are worked out from its highest floor reached (by number, `maxHeight + 1`) and its picks, never counted as it climbs, so a floor never earns one twice.
 Boon k is earned on the floor that is the sum of the first k intervals; each interval is `floor((base − Floors Required research) × (10,000 − floorReq) / 10,000)`, at least 1, where `base` is 200 for boons 1–20, 250 to 30, 300 to 40, then 350 (`baseFloors`), and `floorReq` is the Boon Floor Requirement boons' total in hundredths of a percent (whole numbers, so the schedule is exact).
 The schedule is recomputed every time, so a Boon Floor Requirement boon can earn several boons at once.
 Unspent = earned − picked (`ShrineDesk.unspent`).
@@ -30,13 +30,13 @@ Bounce Shot, Orbs and the ranged enemies' trade-off wait for what they act on.
   `Game.boonsChanged` sets it on the board and drops the hand's plan.
 - Economy: `RunPurse` (Gold banked, Silver found, kill Silver, Silver / Floor, Interest's rate); the Gold multipliers' Shrine Boons line (`GoldContext.shrine`, from `Game.goldContext` and `RunPurse`); Free Up Chance (`rollFreeTraining`'s `boonChance`); Max Play Speed (`Game.maxSpeed`, scaled by SBB, so it may be fractional).
 
-**Undo.**
-A pick (and the offer's draws) is copied into every undo snapshot of the run and a fall's (`ShrineDesk.share`), and `sync` rescales each, as Training bought mid-run is: undo takes back steps, never a boon.
+**The run's picks.**
+A pick (and the offer's draws) is kept in the run (`ShrineDesk.share`), and `sync` rescales its hero, as Training bought mid-run is.
 
 **Offers** (`rollOffer`).
 Each slot is a trade-off, a standard boon or the spell boon by weights 15, 65 and 20 (the last only while an arcanum is left to lend), and an augment boon, while one can be picked, takes 15 of the standard boons' 65, so the spell boon's and trade-offs' odds don't move; each is drawn from boons with copies left, not banned and not already offered; a kind with none left gives way to the others.
 With no augment boon open, the draws are what they always were.
-The draws come from `drawAt(seed ^ SHRINE_SALT, run.shrine.rolls++)`, so undo and a replay offer the same.
+The draws come from `drawAt(seed ^ SHRINE_SALT, run.shrine.rolls++)`, so a replay offers the same.
 The offer waiting is kept in `run.shrine.offer` until a pick.
 Size: 2 plus Boon Option Quantity (`offerSize`).
 The run's first offer starts with the First Boon Choice when researched, set and not banned (`firstChoice`).

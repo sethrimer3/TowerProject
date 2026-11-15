@@ -43,10 +43,6 @@ export interface ActivationHost extends DeskHost {
   /** Free levels for the run, each of a group, its pick (in [0, 1))
    * choosing its row (`Game.trainFree`). */
   trainFree(levels: readonly (readonly [FreeGroup, number])[]): void;
-  /** A turn of its own begins: undo can take it back. */
-  rememberTurn(): void;
-  /** The step being taken pays out, so it is a turn undo stops at. */
-  eventful(): void;
 }
 
 /** Salt the run seed for a trader's rolls on each trade: its Forge, its
@@ -69,8 +65,7 @@ export class CardActivation {
 
   /** Card `card` of the hand (or past it, of the Manual hand) activates: it gains an XP toward its level,
    * and each of its badges pays what it gives, top slot first. Gold is paid once per target (`key`, gated by
-   * lootedTiles like a kill's), since undo can't take it back; HP, Silver
-   * and XP are the run's or in its undo snapshot. */
+   * lootedTiles like a kill's); HP, Silver and XP are the run's. */
   activate(card: number, key: string) {
     const { held, run } = this.host, id = held[card];
     if (!id || !this.host.playing) return;
@@ -81,8 +76,6 @@ export class CardActivation {
     const boost = id === "heal" ? treeBonus(run.cardTrees).potionMaxHp : 0;
     const badges = badgesOn(run.badges, id);
     if (!badges.length && !boost) return;
-    // Paying out makes the step it ends a turn undo stops at.
-    this.host.eventful();
     if (boost) this.treeMaxHp(boost);
     for (const badge of badges) this.payBadge(card, key, badge);
   }
@@ -104,8 +97,7 @@ export class CardActivation {
       case "goldback":
         // The hand's last card only: never one of the Manual hand's.
         if (card !== hand.length - 1) return;
-        // The combo is the run's, so undo takes an activation back; the
-        // next Gold found spends it (RunPurse).
+        // The combo is the run's; the next Gold found spends it (RunPurse).
         run.goldCombo = (run.goldCombo ?? 0) + v;
         // Drawn as "×2" and the Gold coin.
         return host.gain(p.x, p.y, `×${run.goldCombo} Gold`, { coin: "gold" }, undefined, "combo");
@@ -132,12 +124,10 @@ export class CardActivation {
     this.host.recordHeal(healed);
     this.host.message = `${BADGES[id].name} · +${wholeChange(healed)} HP`;
   }
-  /** A card that acts in place takes its turn, with no step: a turn of its
-   * own, so undo takes it back. Effective and Dampen scale what it gives
-   * (`scale`), never what it costs. */
+  /** A card that acts in place takes its turn, with no step. Effective and
+   * Dampen scale what it gives (`scale`), never what it costs. */
   actInPlace(card: CardId, scale = 1) {
     const host = this.host, run = host.run, p = run.player;
-    host.rememberTurn();
     if (isSiphon(card)) this.siphon(card, scale);
     else if (isTrader(card)) this.trade(card, scale);
     else if (isSmelt(card)) this.smelt(card, scale);
@@ -147,8 +137,8 @@ export class CardActivation {
    * tree's Gold and Silver; the Gold twice over under Key Smelter's chance
    * and three times under its Master Smelter's (six when both hit), and
    * under its Smelt Free chance a free level of each group it gives. Each
-   * rolls a fixed number per run seed, colour and use, so undo can't roll a
-   * smelt again, and its Gold is paid once per use (`smeltGold`). */
+   * rolls a fixed number per run seed, colour and use, so a replay rolls a
+   * smelt the same, and its Gold is paid once per use (`smeltGold`). */
   private smelt(card: SmeltCard, scale: number) {
     const host = this.host, rules = host.handRules, run = host.run, p = run.player, tree = treeBonus(run.cardTrees);
     const color = SMELTS[card].color, keys = rules.smeltCost(card), use = rules.cardUses(card);
@@ -174,7 +164,7 @@ export class CardActivation {
    * colour, a second under its tree's Forge chance and, when the Forge
    * gives one, a third under its Smelter's; and under its Free Utility
    * chance, a free Utility level. Each rolls a fixed number per run seed
-   * and use, so undo can't roll a trade again. */
+   * and use, so a replay rolls a trade the same. */
   private trade(card: TraderCard, scale: number) {
     const host = this.host, run = host.run, p = run.player, tree = treeBonus(run.cardTrees);
     const { from, to } = TRADERS[card], keys = host.handRules.tradeCost(card), use = host.handRules.cardUses(card);

@@ -26,21 +26,20 @@ import type { MissionsSave } from "../missions/progress.ts";
 import type { EventsSave } from "../events/progress.ts";
 import type { Profile } from "./profile.ts";
 import type { OfflineSave } from "../offline-gold.ts";
-import type { TowerRun, DelveRun, AutomoveMemory, Run, MoveSnapshot, Fall } from "../runs.ts";
+import type { TowerRun, DelveRun, AutomoveMemory, Run, Fall } from "../runs.ts";
 export type ModeSave<R extends Run = Run> = {
-  history: MoveSnapshot<R>[];
   /** Set while the run's hero lies fallen (a run inside at 0 HP). */
-  fall: Fall<R> | null;
+  fall: Fall | null;
   best: number;
   reached: number;
   run: R | null;
   /** Keys of `${seed}:${x},${y}` (delve) or `${seed}:${height}:${x},${y}`
    * (tower) for every enemy kill / treasure chest that has already paid out
-   * persistent rewards, kept outside `run` so it survives movement undo and
-   * blocks the same physical kill/chest from paying out twice. */
+   * persistent rewards, kept outside `run` so it blocks the same physical
+   * kill/chest from paying out twice. */
   lootedTiles: Record<string, true>;
   /** Gold picked up during the current run, kept outside `run` like
-   * `lootedTiles`, since undo never takes Gold back. */
+   * `lootedTiles`. */
   runGold: number;
   /** The Gold the current run found while the Gold ad's boost lasted,
    * before the boost (it banked `GOLD_BOOST_FACTOR` times this), or null
@@ -50,12 +49,12 @@ export type ModeSave<R extends Run = Run> = {
    * earned during the current run, from milestones and areas cleared, kept
    * beside `runGold`. */
   runCurrency: number;
-  /** What the current run found that undo never takes back (materials,
+  /** What the current run found for good (materials,
    * Cells, Gems, equipment), for its notes (run-notes.ts), kept beside
    * `runGold`. */
   runFinds: RunFinds;
   /** What the current run has done with its arcana (arcana/arcana.ts), kept
-   * beside `runGold`, so undo never gives a toggle back. */
+   * beside `runGold`. */
   runArcana: ArcanaRun;
   /** Whether the current run has climbed past the tier's record (`reached`
    * as the run began), for the run's end dialog. */
@@ -102,7 +101,7 @@ export type Save = {
    * Speed Ups (progression/speed-ups.ts). */
   cells: number;
   /** Where the Gems found on floors and the ad button's stand: never part
-   * of a run, so undo can't touch them. */
+   * of a run. */
   gemDrop: GemDrop;
   /** When the Gold ad's boost (Gold found ×1.5) runs out, as a wall-clock
    * timestamp (ms): `economy/gold-boost.ts`. */
@@ -163,7 +162,7 @@ export type Save = {
    * dropped once either card moves out of place (cards/cards.ts). */
   cardLinks: CardLink[];
   /** Each card's XP toward its levels (cards/levels.ts), gained in runs;
-   * a card with none is left out. Undo takes back what a move gained. */
+   * a card with none is left out. */
   cardXp: Partial<Record<CardId, number>>;
   /** The card points spent on each card's tree, by node (cards/trees.ts);
    * a card with none is left out. Spent and respecced in the forest only. */

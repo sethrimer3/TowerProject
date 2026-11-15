@@ -40,7 +40,7 @@ try {
         Object.assign(s.upgrades, { archives: 1, ignore: 1, target: 1, undos: 1, shroud: 1 });
         Object.assign(s.provisions, { bomb: 1, heal: 1, edge: 1, guard: 1 });
         s.archives.levels.unlockShrines = 1;
-        s.archives.levels.undoCount = 2;
+        s.archives.levels.sparkCount = 2;
         s.xp = xpForLevel(31) + 200;
         Object.assign(g.run.player, { hp: 1603, maxHp: 1603, attack: 360, defense: 175, shroud: 371, keys: { yellow: 33, blue: 12, red: 4 } });
         g.run.shrine = { picked: [], rolls: 0, offer: ["attack", "goldMaxHp"] };

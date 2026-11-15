@@ -5,9 +5,9 @@ Environments (`src/environments.ts`) are rules a whole floor (in the Delve, each
 `environmentOn(id, seed, floor, chance)` compares the floor's own fixed number (`tileRandom(floor, 0, seed ^ salt)`) with the chance, so a floor has its environments from the moment it is generated, a higher chance only ever adds floors, and the environments roll apart and overlap freely; `hasEnvironment(run, id, floor)` reads the run's chance, and `possibleEnvironments(run)` lists those with one above none.
 Floors are numbered from 1 as `Game.floorOf(x, y)` numbers a tile's: the Tower's `run.height + 1`, the Delve's `depth / 10 + 1`.
 
-What a run's own trees and research give is fixed as it goes inside (`Game.dealHand`, both modes) and saved in the run: `run.treasureFloor` (CHEST's tree) and `run.goldenFloor` (Golden Floor Chance research, whose target `goldenFloorChance` counts tenths of a percent, once the Breakthrough skill `goldenFloors` is owned), so undo can't change it.
+What a run's own trees and research give is fixed as it goes inside (`Game.dealHand`, both modes) and saved in the run: `run.treasureFloor` (CHEST's tree) and `run.goldenFloor` (Golden Floor Chance research, whose target `goldenFloorChance` counts tenths of a percent, once the Breakthrough skill `goldenFloors` is owned).
 **Aurum Bloom** (`docs/agents/arcana.md`) adds to the Golden Floor's chance and gives the Stellar Floor's, and isn't saved in the run: `withBloom(run, bloom)` adds `ArcanaDesk.aurumBloom()` as the chances are read (`Game.environments`, and `RunPurse` by its `bloom`).
-So switching it, a level bought mid-run or a Shrine lending it counts at once, and since its levels, its switch and the loan all outlive undo, undo can't change these either.
+So switching it, a level bought mid-run or a Shrine lending it counts at once, and its levels, its switch and the loan all outlive the run.
 Read chances from `Game.environments` or the purse, never `run.goldenFloor` alone.
 
 **Treasure Floor** changes generation: `withTreasureFloors` in `board.ts` (through `isTreasureFloor`, the environment's roll, salt unchanged) makes a Treasure Floor's shards and potions treasure chests in `RoomWorld`'s constructor and the Delve `World`'s `chunk` (see hand-and-automation.md).

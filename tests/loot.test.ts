@@ -69,9 +69,8 @@ test("kills drop none of the old crafting materials, in either mode", () => {
   assert.ok(Object.values(delve.save.equipment.materials).every((n) => n === 0));
 });
 
-test("undo/reopen the same treasure chest cannot duplicate its Gold", () => {
+test("reopening the same treasure chest cannot duplicate its Gold", () => {
   const g = new Game(defaults());
-  g.save.upgrades.inspirationUndos = 1; // undo needs Rehearsed steps
   const w = g.world as RoomWorld;
   w.cells = new Map();
   for (let y = 0; y < 5; y++) for (let x = 0; x < 5; x++) w.cells.set(`${x},${y}`, { kind: "floor" });
@@ -79,22 +78,17 @@ test("undo/reopen the same treasure chest cannot duplicate its Gold", () => {
   w.cells.set("4,4", { kind: "stairs" });
   g.run.changes["1,0"] = { kind: "treasure" };
   g.run.player.x = 0; g.run.player.y = 0;
-  const before = g.snapshot();
   g.move(1, 0);
   const goldAfterFirst = g.save.gold;
   assert.equal(g.world.tile(1, 0).kind, "openedChest");
-  assert.ok(g.undo());
-  assert.equal(g.world.tile(1, 0).kind, "treasure", "undo restores the closed chest state");
-  g.move(1, 0);
-  assert.equal(g.world.tile(1, 0).kind, "openedChest");
   for (let i = 0; i < 5; i++) {
-    g.restore(before);
-    w.cells.set("1,0", { kind: "treasure" });
+    g.move(-1, 0);
+    g.run.changes["1,0"] = { kind: "treasure" };
     g.move(1, 0);
   }
   assert.equal(g.save.gold, goldAfterFirst, "lootedTiles blocks every re-grant for this physical chest");
   assert.ok(goldAfterFirst > 0);
-  assert.equal(g.save.tower.runGold, goldAfterFirst, "the run's Gold counts the chest once and undo keeps it");
+  assert.equal(g.save.tower.runGold, goldAfterFirst, "the run's Gold counts the chest once");
   g.newRun();
   assert.equal(g.save.tower.runGold, 0, "a new run starts its Gold count afresh");
 });

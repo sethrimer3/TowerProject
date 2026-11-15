@@ -11,7 +11,7 @@ type Smelt = "keyToHp" | "smeltBlue" | "smeltRed";
  * `trees`, the hero at 1 HP holding `keys`; undo owned. */
 function smelting(trees: CardTreeLevels, keys: { yellow: number; blue: number; red: number }) {
   const save = playedSave();
-  Object.assign(save.upgrades, { inspirationUndos: 1, loot: 1 });
+  Object.assign(save.upgrades, { loot: 1 });
   const g = new Game(save);
   g.newRun({ seed: 7 });
   g.run.hand = ["keyToHp", "smeltBlue", "smeltRed"];
@@ -62,16 +62,13 @@ test("Smelt Heal raises the percent of max HP a smelt heals", () => {
   assert.equal(g.run.player.hp, 1 + (max * 20) / 100);
 });
 
-test("a smelt pays its tree's Gold and Silver, its Gold once a use whatever undo does", () => {
+test("a smelt pays its tree's Gold and Silver, its Gold once a use", () => {
   const g = smelting({ keyToHp: { gold: 5, silver: 5 } }, { yellow: 2, blue: 0, red: 0 });
   const gold = g.save.gold, silver = g.run.silver ?? 0;
   g.activation.actInPlace("keyToHp");
   const paid = g.save.gold - gold;
   assert.ok(paid > 0, "Gold paid");
   assert.ok((g.run.silver ?? 0) > silver, "Silver found");
-  assert.ok(g.undo());
-  g.activation.actInPlace("keyToHp");
-  assert.equal(g.save.gold - gold, paid, "the same smelt again pays no Gold twice");
   g.activation.actInPlace("keyToHp");
   assert.ok(g.save.gold - gold > paid, "the next smelt pays its own");
   assert.equal(smeltGold("keyToHp", {}), 0, "no Smelt Gold, no Gold");
@@ -86,7 +83,7 @@ test("Key Smelter doubles a smelt's Gold, its Master Smelter triples it, and bot
   near(smeltGold("smeltBlue", { smeltBlue: { gold: 5 }, smeltRed: { master: 50 } }), plain);
 });
 
-test("a smelt's rolls are fixed by the run seed and use: undo can't roll them again", () => {
+test("a smelt's rolls are fixed by the run seed and use", () => {
   const trees = { keyToHp: { free: 25 } };
   const given = (g: Game) => Object.values(g.run.training ?? {}).reduce((a, n) => a + n, 0);
   const got: number[] = [];
@@ -100,10 +97,11 @@ test("a smelt's rolls are fixed by the run seed and use: undo can't roll them ag
   assert.ok(got.includes(0) && got.includes(1), "a 50% Free Defense both hits and misses over 20 smelts");
   for (let i = 0; i < 20; i++) {
     const again = smelting(trees, { yellow: 20, blue: 0, red: 0 });
-    for (let j = 0; j < i; j++) again.activation.actInPlace("keyToHp");
+    for (let j = 0; j < i; j++) {
+      again.run.player.hp = 1;
+      again.activation.actInPlace("keyToHp");
+    }
     again.run.player.hp = 1;
-    again.activation.actInPlace("keyToHp");
-    assert.ok(again.undo());
     const before = given(again);
     again.activation.actInPlace("keyToHp");
     assert.equal(given(again) - before, got[i], `smelt ${i} again`);

@@ -117,7 +117,6 @@ function facingEnemy() {
   // No theme's Gold, so these figures are the mechanic's alone (theme-collection.test.ts covers it).
   g.save.themes = [];
   g.save.settings.devMode = true;
-  g.save.upgrades.inspirationUndos = 1;
   g.run.height = 10;
   (g.world as RoomWorld).cells = new Map<string, any>([["0,0", { kind: "floor" }],
     ["1,0", { kind: "enemy", enemy: { name: "Cinder slime", hp: 1, attack: 0, defense: 0, tier: 1, strength: "strong" } }]]);
@@ -142,7 +141,7 @@ test("every item taken off the floor pays Gold, a key or door by its colours, ra
   const g = facingEnemy(), s = g.save, w = g.world as RoomWorld;
   s.upgrades.loot = 1;
   s.training.goldBonus = s.archives.levels.goldBonus = 10;
-  const cells = w.cells = new Map<string, any>([["0,0", { kind: "floor" }], ["1,0", { kind: "key", color: "red" }],
+  w.cells = new Map<string, any>([["0,0", { kind: "floor" }], ["1,0", { kind: "key", color: "red" }],
     ["2,0", { kind: "door", door: { type: "keys", keys: ["yellow", "blue", "red"], mode: "all" } }], ["3,0", { kind: "floor" }], ["4,0", { kind: "potion" }]]);
   w.torches = [{ x: 3, y: 0, active: true }, { x: 0, y: 1, active: true }] as RoomWorld["torches"];
   Object.assign(g.run.player.keys, { yellow: 1, blue: 1 });
@@ -155,10 +154,6 @@ test("every item taken off the floor pays Gold, a key or door by its colours, ra
     assert.ok(Math.abs(s.gold - gold - paid[x - 1]) < 1e-9, `step ${x}`);
     gold = s.gold;
   }
-  assert.ok(g.undo());
-  (g.world as RoomWorld).cells = cells; // Undo builds the floor again from its seed.
-  assert.ok(g.stepManually(1, 0));
-  assert.equal(s.gold, gold, "undo can't pay a potion again");
 });
 
 test("a treasure chest's Gold, its 1 for opening counted, takes Gold Bonus; an area chest pays no Gold", () => {
@@ -190,7 +185,6 @@ function stairs(tier = 1) {
   save.themes = [];
   save.tower.tiersOpen = save.tower.tier = tier;
   save.upgrades.wishingWell = 1;
-  save.upgrades.inspirationUndos = 1;
   const g = new Game(save);
   g.run.height = g.run.maxHeight = 3;
   standBeside(g);
@@ -210,8 +204,6 @@ test("a new Tower floor pays Silver / Floor, with research and Silver Bonus but 
   assert.ok(g.move(1, 0));
   assert.equal(g.run.height, 4);
   assert.equal(g.silver, 4.84, "4 × 1.1 × 1.1");
-  assert.equal(g.undo(), false, "the climb can't be undone");
-  assert.equal(g.silver, 4.84);
 });
 
 test("a floor already reached this run pays no Silver; Silver training raises it for the run", () => {

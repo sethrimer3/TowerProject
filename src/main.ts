@@ -564,12 +564,6 @@ el("speed-up").onclick = () => {
   game.changeSpeed(1);
   update();
 };
-el("undo").onclick = () => {
-  if(provingGrounds.active)return;
-  overlay.hide();
-  game.undo();
-  update();
-};
 document
   .querySelectorAll<HTMLButtonElement>("[data-tab]")
   .forEach((b) => (b.onclick = () => navigate(b.dataset.tab!)));

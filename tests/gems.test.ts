@@ -124,7 +124,6 @@ test("a Gem lies out of the way: off the paths between the hero and the targets,
 /** A Tower run on an open 5×5 floor, stairs in the far corner. */
 function arena(edit?: (g: Game) => void) {
   const g = new Game(defaults());
-  g.save.upgrades.inspirationUndos = 1;
   edit?.(g);
   const w = g.world as RoomWorld;
   w.cells = new Map();
@@ -136,7 +135,7 @@ function arena(edit?: (g: Game) => void) {
   return g;
 }
 
-test("in a run, a Gem turns up on the floor, and touching it pays one and starts the cooldown; undo can't bring it back", () => {
+test("in a run, a Gem turns up on the floor, and touching it pays one and starts the cooldown", () => {
   const g = arena();
   g.move(1, 0);
   const gem = g.gemFinder.gems[0]!;
@@ -151,9 +150,6 @@ test("in a run, a Gem turns up on the floor, and touching it pays one and starts
   assert.deepEqual(g.gemFinder.gems, []);
   assert.equal(g.save.gemDrop.readyAt, 1_000_000 + GEM_COOLDOWN_MS);
   assert.ok(g.gemFinder.sparkle && g.gains.some((x) => x.text === "+1 Gem"));
-  assert.ok(g.undo());
-  assert.equal(g.save.gems, 1, "undo leaves the Gem paid");
-  assert.deepEqual(g.gemFinder.gems, [], "and doesn't put it back");
 });
 
 test("a Gem is collected by tapping it from anywhere on the board", () => {

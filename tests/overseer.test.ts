@@ -163,7 +163,6 @@ function lay(g: Game, cells: Record<number, Tile>) {
  * 10, holding Overseer at these levels (four beams, one due east, by default). */
 function corridor(cells: Record<number, Tile>, levels: [number, number, number] = [0, 0, 3]) {
   const s = playedSave();
-  s.upgrades.inspirationUndos = 1;
   s.arcana.owned.overseer = levels;
   const g = new Game(s);
   g.newRun({ seed: 7 });
@@ -204,7 +203,7 @@ test("the beams multiply a Dash Combo's ATK, and get a fight past an impervious 
   assert.equal(g.world.tile(1, 0).kind, "floor");
 });
 
-test("every turn turns the beams, on or off, however far it came; undo turns them back", () => {
+test("every turn turns the beams, on or off, however far it came", () => {
   const g = corridor({ 3: { kind: "stairs" } });
   assert.ok(g.move(1, 0));
   assert.equal(g.run.beamTurns, 1, "with no volley to play");
@@ -214,11 +213,7 @@ test("every turn turns the beams, on or off, however far it came; undo turns the
   assert.equal(g.arcana.beams, undefined);
   assert.ok(g.move(1, 0));
   assert.equal(g.run.beamTurns, 2, "off, they go on turning");
-  g.undo();
-  assert.equal(g.run.beamTurns, 1);
-  lay(g, { 3: { kind: "stairs" } });
   g.arcana.toggle("overseer");
-  assert.ok(g.move(1, 0));
   assert.ok(g.move(1, 0));
   assert.equal(g.run.height, 1, "climbed");
   assert.equal(g.run.beamTurns, 3, "a climb is a turn too");

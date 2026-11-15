@@ -233,48 +233,48 @@ test("Potion HP: +20% a level for 100 levels; quick first levels, then 100m + mÂ
   assert.deepEqual(RESEARCH.potionHp.categories, ["defense"]);
 });
 
-test("Undo Count needs Rehearsed steps or Echoes of time, costs what Heart Door Resilience does, and each level stores one more undo at once", () => {
+test("Phoenix Spark Count needs Phoenix Spark or Echoes of time, costs what Heart Door Resilience does, and each level adds a charge at once", () => {
   const save = owner();
   const g = new Game(save);
   g.clock = () => T0;
   assert.deepEqual(
-    RESEARCH.undoCount.levels.map(({ gold, hours }) => [gold, hours]),
+    RESEARCH.sparkCount.levels.map(({ gold, hours }) => [gold, hours]),
     RESEARCH.heartDoorResilience.levels.slice(0, 8).map(({ gold, hours }) => [gold, hours]),
   );
-  assert.equal(status(save, "undoCount"), "locked");
-  assert.equal(g.research.start(0, "undoCount"), false);
-  save.upgrades.inspirationUndos = 1;
-  assert.equal(g.undoCapacity, 1);
-  assert.ok(g.research.start(0, "undoCount"));
+  assert.equal(status(save, "sparkCount"), "locked");
+  assert.equal(g.research.start(0, "sparkCount"), false);
+  save.upgrades.phoenixSpark = 1;
+  assert.equal(g.sparks, 1);
+  assert.ok(g.research.start(0, "sparkCount"));
   g.clock = () => T0 + 8 * HOUR;
   assert.equal(g.research.settle().length, 1);
-  assert.equal(g.undoCapacity, 2);
-  save.archives.levels.undoCount = 4;
-  assert.equal(g.undoCapacity, 1 + 4);
+  assert.equal(g.sparks, 2);
+  save.archives.levels.sparkCount = 4;
+  assert.equal(g.sparks, 1 + 4);
 });
 
-test("Undo Count opens 4 levels for each of Rehearsed steps and Echoes of time owned, either first", () => {
-  for (const first of ["inspirationUndos", "undos"] as const) {
+test("Phoenix Spark Count opens 4 levels for each of Phoenix Spark and Echoes of time owned, either first", () => {
+  for (const first of ["phoenixSpark", "undos"] as const) {
     const save = owner();
     const g = new Game(save);
     g.clock = () => T0;
     save.upgrades[first] = 1;
-    assert.equal(maxLevel("undoCount", save.upgrades), 4, first);
-    assert.equal(status(save, "undoCount"), "available");
-    save.archives.levels.undoCount = 4;
-    assert.equal(status(save, "undoCount"), "completed", "4 levels with one skill");
-    assert.equal(g.research.start(0, "undoCount"), false);
-    save.upgrades[first === "undos" ? "inspirationUndos" : "undos"] = 1;
-    assert.equal(maxLevel("undoCount", save.upgrades), 8);
-    assert.ok(g.research.start(0, "undoCount"), "the second skill opens 4 more");
+    assert.equal(maxLevel("sparkCount", save), 4, first);
+    assert.equal(status(save, "sparkCount"), "available");
+    save.archives.levels.sparkCount = 4;
+    assert.equal(status(save, "sparkCount"), "completed", "4 levels with one skill");
+    assert.equal(g.research.start(0, "sparkCount"), false);
+    save.upgrades[first === "undos" ? "phoenixSpark" : "undos"] = 1;
+    assert.equal(maxLevel("sparkCount", save), 8);
+    assert.ok(g.research.start(0, "sparkCount"), "the second skill opens 4 more");
   }
-  // Echoes of time alone stores no undo until research does.
+  // Echoes of time alone gives no charge until research does.
   const save = owner();
   save.upgrades.undos = 1;
   const g = new Game(save);
-  assert.equal(g.undoCapacity, 0);
-  save.archives.levels.undoCount = 2;
-  assert.equal(g.undoCapacity, 2);
+  assert.equal(g.sparks, 0);
+  save.archives.levels.sparkCount = 2;
+  assert.equal(g.sparks, 2);
 });
 
 test("Potion HP needs Greater Heal, and every level strengthens potions at once, mid-run too", () => {
@@ -346,9 +346,8 @@ test("Parry % opens with Parry and Tower V's floor 30 Goal, adds 0.2% Parry % a 
   assert.equal(loadout(save).parry, 60, "+10% at level 50");
   save.archives.levels.parry = 3;
   assert.equal(loadout(save).parry, 50.6, "tenths keep the sum exact");
-  // A level completed mid-run reaches the hero at once, and undo keeps it.
+  // A level completed mid-run reaches the hero at once.
   save.archives.levels = {};
-  save.upgrades.inspirationUndos = 1;
   const g = new Game(save);
   g.clock = () => T0;
   g.newRun({ seed: 5 });
@@ -358,8 +357,6 @@ test("Parry % opens with Parry and Tower V's floor 30 Goal, adds 0.2% Parry % a 
   g.research.settle();
   assert.equal(save.archives.levels.parry, 1);
   assert.equal(g.run.player.parry, 50.2, "inside the run already");
-  assert.ok(g.undo());
-  assert.equal(g.run.player.parry, 50.2, "undo takes back the step, not the research");
 });
 
 test("the Game's research commands need the Archives skill", () => {

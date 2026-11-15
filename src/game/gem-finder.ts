@@ -33,8 +33,8 @@ export interface GemHost extends DeskHost {
   /** The cards of the run's hand and Manual hand. */
   readonly held: readonly CardId[];
   gain(x: number, y: number, text: string, art: GainArt | null): void;
-  /** Card `id` gains `xp` that undo never takes back, as it never brings a Gem back. */
-  keepCardXp(id: CardId, xp: number): void;
+  /** Card `id` gains `xp` toward its levels. */
+  gainCardXp(id: CardId, xp: number): void;
 }
 
 /** Salts the run seed for where a Gem lies on a floor. */
@@ -56,8 +56,7 @@ const tilePart = (x: number, y: number) => Math.imul(x + 1, 0x85ebca6b) ^ Math.i
 /** Gems found on the floors and the ad's Gems: where the Gems on the board
  * lie, collecting them, the GEM card's Gems (Gem Chance, a boss's drop, a
  * chest's, golden and stellar ones), the ad button's bank, and the
- * cooldowns between them (`save.gemDrop`, never part of a run, so undo
- * can't touch them). */
+ * cooldowns between them (`save.gemDrop`, never part of a run). */
 export class GemFinder {
   /** Where and when (performance.now()) the latest Gem was collected, and
    * its kind, for the board's sparkle. */
@@ -137,8 +136,8 @@ export class GemFinder {
     return rollGemKind(bonus.goldenGem, bonus.stellarGem, random(run.seed ^ GOLDEN_SALT ^ salt), random(run.seed ^ STELLAR_SALT ^ salt));
   }
 
-  /** Whether the once-only roll `key` (in the mode's looted tiles, which
-   * undo leaves alone) is still to come, marking it rolled. */
+  /** Whether the once-only roll `key` (in the mode's looted tiles) is
+   * still to come, marking it rolled. */
   private firstRoll(key: string) {
     const looted = this.host.save[this.host.mode].lootedTiles;
     if (looted[key]) return false;
@@ -188,7 +187,7 @@ export class GemFinder {
     save[this.host.mode].runFinds.gems += gems;
     this.host.eventDone("floatingGems", 1);
     // GEM gains its XP from each Gem collected, Gem XP raising it.
-    if (this.host.held.includes("gem")) this.host.keepCardXp("gem", Math.round(value * treeFactor(this.host.treeBonus, "gemXp")));
+    if (this.host.held.includes("gem")) this.host.gainCardXp("gem", Math.round(value * treeFactor(this.host.treeBonus, "gemXp")));
     this.sparkle = { x, y, at: performance.now(), kind };
     this.host.gain(x, y, gemText(gems, kind), { gem: true, ...(kind === "plain" ? {} : { kind }) });
     return gems;

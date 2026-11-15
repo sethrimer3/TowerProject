@@ -12,6 +12,8 @@ A skill you can't yet afford, once pressed, says how many more Inspiration point
 Greater Heal and the skills under it stay hidden until the Breakthrough skill **Physician** (1 Breakthrough, below Movement Speed) is bought, and Pocket Money and the skills under it until **Path to Wealth** (1 Breakthrough, left of Physician).
 Below Free Training, **Interest**, with **Max Interest** and **Mug** either side under it (10 Inspiration each), and Chest and Floor Skip Reward under them, wait besides on **More Wealth** (1 Breakthrough, under Path to Wealth).
 **Golden Floors** (3 Breakthrough, under More Wealth) opens the [Golden Floor](environments.md#golden-floor) research.
+**Esoteric Training** (2 Breakthrough, down and left of Golden Floors) raises how far ATK, DEF, Max HP, Regen and Shroud train from 500 levels to 1,000 (see [Training](training.md)).
+Under it stand **Aether Shield** (see [Aether Shield](aether-shield.md)), then **Phoenix Spark** and **Echoes of time** (see [Phoenix Spark](runs.md#phoenix-spark)).
 **Offline Gold** (2 Breakthrough, down and right of Golden Floors, after it) pays Gold for time away and opens its research (see [Offline Gold](currencies-and-shop.md#offline-gold)).
 **Thorns** stands below Buy Quantity, with **Torch** (20 Inspiration) below it, a row below Floor Skip Reward.
 Torch leads three ways, each hidden until a Mastery under **Key Mastery** (1 Breakthrough, under Badges) in the Breakthrough tree is bought: down the middle Wooden Door and the door cards (**Door Mastery**, 2 Breakthrough, right of Extra Trainer under Key Mastery, after it), down to the left Find Gold Key and Key Efficiency (revealed by Key Mastery itself), then GK Siphon, BK Siphon, the key trades and the key badges (**Card Mastery**), and to the right Weak Enemy and the enemy cards (**Beast Mastery**), those two 1 Breakthrough each, split off Key Mastery (Beast Mastery beside it, under Dash Badge).
@@ -24,7 +26,7 @@ Below the Archives in the Inspiration tree, which grows taller than the screen a
 
 **Pocket Money** (1 Inspiration, after the Archives) opens the Archives' **Pocket Money** research: every run goes inside with 5 more Silver in hand a level, for 100 levels, priced and timed like Potion HP.
 **Spare Change** (3 Inspiration, below Pocket Money) makes every floor climbed for the first time in a run pay Gold: in the Tower each staircase taken up for the first time that run, in the Delve each new ten depth.
-It pays 3 Gold, and 1 more for each rank of the **Gold / Floor** training it opens (Utility, 1 training point a rank, or Silver inside a run), times Gold Bonus and the tower's Gold bonus; undo never makes a floor pay twice.
+It pays 3 Gold, and 1 more for each rank of the **Gold / Floor** training it opens (Utility, 1 training point a rank, or Silver inside a run), times Gold Bonus and the tower's Gold bonus.
 It also opens the Archives' **Gold / Floor** research (listed last), +5% of that Gold a level for 100 levels, priced and timed like Potion HP.
 Below it, three more skills (2 Inspiration each) each open a Utility training row (1 point a rank, or Silver inside a run) and Archives research of the same name (100 levels, priced and timed like Gold / Floor): **Wealthy** opens **Silver Bonus**, which multiplies all Silver a run finds, Interest included (×1, +1% a rank, and +3% a research level, the two multiplied: 30% of each makes ×1.69); **Loot** opens **Gold Bonus**, which multiplies the same way but +3% a rank, before the tower's Gold bonus, each kill's Gold, a treasure chest's Gold, the Gold every item taken off the floor or door opened pays, what Floor Skip pays for them and Gold / Floor (see [Floors](floors.md#what-the-floor-pays)); **Wishing Well** opens **Silver / Floor**: every floor climbed for the first time in a run (above the run's highest, in the Tower) pays 4 Silver a rank (none before the first), +5% a research level, then Silver Bonus (its training and research).
 
@@ -83,7 +85,7 @@ The first four levels are quick (15 seconds for 10 Gold, 1 minute for 25, 5 minu
 
 **Revive** (10 Inspiration, below Parry, hidden until **Life**, 2 Breakthrough, under Overheal, is owned) gives each monster's strike that would fell the hero a 0.5% chance to raise it at full HP instead: the skull of a defeat burns over the hero first (its HP shown at 0), then it rises in a smaller golden blaze like a level-up's, under a beam of white and golden light that a few small white angel wings flutter down and fade from, and once that is over the fight goes on from the next round, the monster as hurt and as fierce as it was, and a later strike that would fell the hero again rolls again.
 It opens Revive training, 1 training point a rank, each adding 0.5%, up to 50% at 99 ranks.
-Each strike's roll is fixed for that run, floor and tile, so undoing a fight and fighting it again ends the same way.
+Each strike's roll is fixed for that run, floor and tile, so the same fight fought again ends the same way.
 Forecasts, Automove and the hand still treat such a fight as lost.
 
 ## Angel Wings and Avenging Angel
@@ -92,7 +94,6 @@ Forecasts, Automove and the hand still treat such a fight as lost.
 It never moves the hero: while either hand holds it, once a climb, a monster's strike (or shot) that would fell the hero and that Revive doesn't save raises it at full HP instead.
 While its charge is ready, a small wing shows in the top-left corner of the hero's portrait.
 Its raising looks like Revive's, broader, with "ANGEL WINGS", a great pair of wings spreading behind the hero and a flurry of small wings fluttering down the beam.
-Undoing the fight that spent it gives the charge back.
 
 **Avenging Angel** (10 Inspiration, under Angel Wings) opens Avenging Angel research in the Archives (Defense), five levels at 10,000, 50,000, 250,000, 500,000 and 1,000,000 Gold, taking 4, 12, 24, 36 and 48 hours.
 When Angel Wings raises the hero, every monster left on the floor (in the Delve, the hero's equivalent floor of its area) of a rank the research has learned falls at once: weak at level 1, then standard, strong, elite, and at level 5 bosses and Greater Bosses.

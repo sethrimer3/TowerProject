@@ -10,7 +10,7 @@ import { playedSave } from "./first-skills.ts";
  * train. */
 function trading(trees: CardTreeLevels, keys: { yellow: number; blue: number; red: number }) {
   const save = playedSave();
-  Object.assign(save.upgrades, { inspirationUndos: 1, loot: 1 });
+  Object.assign(save.upgrades, { loot: 1 });
   const g = new Game(save);
   g.newRun({ seed: 7 });
   g.run.hand = ["blueTrader", "redTrader"];
@@ -54,7 +54,7 @@ test("Forge gives a second key on a trade, and Master Smelter a third when the F
   assert.equal(plain.run.player.keys.red, 1, "no Forge, so no Smelter");
 });
 
-test("a trade's rolls are fixed by the run seed and use: undo can't roll them again", () => {
+test("a trade's rolls are fixed by the run seed and use", () => {
   const g = trading({ blueTrader: { forge: 25 } }, { yellow: 60, blue: 0, red: 0 });
   const got: number[] = [];
   for (let i = 0; i < 20; i++) {
@@ -63,12 +63,10 @@ test("a trade's rolls are fixed by the run seed and use: undo can't roll them ag
     got.push(g.run.player.keys.blue - before);
   }
   assert.ok(got.includes(1) && got.includes(2), "a 50% Forge both hits and misses over 20 trades");
-  // Each trade undone and made again gives what it gave.
+  // Each trade made again in the same run gives what it gave.
   for (let i = 0; i < 20; i++) {
     const again = trading({ blueTrader: { forge: 25 } }, { yellow: 60, blue: 0, red: 0 });
     for (let j = 0; j < i; j++) again.activation.actInPlace("blueTrader");
-    again.activation.actInPlace("blueTrader");
-    assert.ok(again.undo());
     const before = again.run.player.keys.blue;
     again.activation.actInPlace("blueTrader");
     assert.equal(again.run.player.keys.blue - before, got[i], `trade ${i} again`);

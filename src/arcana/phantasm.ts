@@ -19,8 +19,7 @@ export const OUTER_GHOSTS = 5, OUTER_RADIUS = 2;
 /** The radius of a ghost's body, in tiles: half a tile wide. */
 export const GHOST_RADIUS = 0.25;
 
-/** What a run keeps of Phantasm, in the run so undo takes it back with what it
- * struck: the cooldown's turns left, the turns its ring has turned, how many slots
+/** What a run keeps of Phantasm, in the run: the cooldown's turns left, the turns its ring has turned, how many slots
  * the ring was laid out with, the slots still holding a ghost, and those of the
  * augment boon's outer ring (each absent with none). */
 export type PhantasmRun = { timer?: number; turns?: number; ring?: number; ghosts?: number[]; outer?: number[] };

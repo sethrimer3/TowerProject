@@ -94,7 +94,7 @@ test("each pass covers three towers and totals its premium rewards", () => {
   assert.deepEqual(PASSES.map((p) => [p.towers, p.label]), [[[1, 2, 3], "$9.99"], [[4, 5, 6], "$19.99"], [[7, 8, 9], "$29.99"]]);
   assert.equal(passFor(5).n, 2);
   // Every premium reward is set by hand in its tower's table; floor 4,500's is a relic, counted in no currency.
-  assert.deepEqual(passTotals(PASSES[0]!), { gold: 25_837_000, gems: 1350, arcanite: 215 });
+  assert.deepEqual(passTotals(PASSES[0]!), { gold: 25_837_000, gems: 1350, arcanite: 175 });
   assert.deepEqual(passTotals(PASSES[1]!), { gold: 292_850_000, gems: 1965, arcanite: 350 });
   assert.deepEqual(passTotals(PASSES[2]!), { gold: 2_653_000_000, gems: 2795, arcanite: 630 });
 });

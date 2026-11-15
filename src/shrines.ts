@@ -11,7 +11,7 @@ import { isRecord, whole } from "./save/decode.ts";
 // Tower run earns a boon every so many floors, and the player picks each
 // from a few offered. A boon lasts the rest of the run. Which boons a run
 // has earned is worked out from the highest floor it has reached and what
-// it picked, never counted as it climbs, so undo can't earn one twice and a
+// it picked, never counted as it climbs, so a floor never earns one twice and a
 // boon that shortens the schedule earns, at once, every boon the floor has
 // now passed. The Delve has no shrines.
 
@@ -331,7 +331,7 @@ export function rollLending(seed: number, run: ShrineRun, o: Pick<OfferOwner, "a
  * first, then each slot a trade-off, a standard boon, an augment boon or the
  * spell boon (see the weights above), drawn from those with copies left, not banned and not already offered; a kind
  * with none left gives way to the other. The draws come from the run's own
- * stream (`run.rolls` counts them), so undo and a replay offer the same. */
+ * stream (`run.rolls` counts them), so a replay offers the same. */
 export function rollOffer(seed: number, run: ShrineRun, o: OfferOwner): BoonId[] {
   const n = copies(run.picked), banned = bans(o), offer: BoonId[] = [];
   const lendable = arcanaToLend(run, o).length > 0;

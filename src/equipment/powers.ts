@@ -80,7 +80,7 @@ export const POWER_TEXT: Record<PowerId, (t: number) => string> = {
   hoarderGreaves: (t) => `ATK ×${POWERS.hoarderGreaves.factor[t - 1]} × (1 + log₁₀ of the keys held), with any key`,
 };
 
-/** What a run keeps for the Uniques' powers, in the run so undo takes it back:
+/** What a run keeps for the Uniques' powers, in the run:
  * Raptor Blade's Super Crits still owed (`chain`), Mirror Vault's Retribution
  * pool, Jackpot Spurs' Free Upgrade rolls won on the last floor new to the
  * run (`frees`), Mobius Cipher's pickups of each kind (`yields`), and the bosses

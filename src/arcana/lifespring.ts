@@ -12,7 +12,7 @@ export const WAVE_INTERVAL = 4;
 /** The turns the rings stay blue once a new activation adds to a pool not yet spent. */
 export const TINT_TURNS = 5;
 
-/** What a run keeps of Lifespring, in the run so undo takes it all back: the
+/** What a run keeps of Lifespring, in the run: the
  * cooldown's turns left, the Effect Waves still to come and the turns until the
  * next of them or the field (`wait`, absent while none is under way), the HP
  * Pool, the turns the rings stay blue, and the percent of max HP its Health Bonus
