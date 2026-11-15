@@ -715,7 +715,7 @@ _Avoid_: ghost AOE, ghost splash
 Research that turns Phantasm's ring faster; a ghost strikes whatever it sweeps over between one turn and the next.
 
 **Stun** (Phantasm):
-What Phantasm Stun research leaves on an enemy a ghost's strike hits: for its turns left it doesn't move or shoot, its cooldowns stand still, and a fight skips that many of its strikes. Voidwell's vortex also stuns, but only while the enemy stands in it.
+What Phantasm Stun research leaves on an enemy a ghost's strike hits: for its turns left it doesn't move or shoot, its cooldowns stand still, and a fight skips that many of its strikes; in a trial a stunned boss's schedule stands still too. Voidwell's vortex also stuns, but only while the enemy stands in it.
 _Avoid_: daze, freeze
 
 **Necrotic Frost**:

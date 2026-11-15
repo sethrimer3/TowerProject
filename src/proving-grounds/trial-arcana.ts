@@ -2,7 +2,7 @@ import { boltTargets, chargeBolts, chargeZap, decodeArcanaRun, settleBolts, sett
 import { inBeams } from "../arcana/overseer.ts";
 import { fieldHit, springAmplify, stepLifespring, validLifespring } from "../arcana/lifespring.ts";
 import { decayed, fieldsOn, frostArea, stepFrost, validFrost, validNecro, type Necro } from "../arcana/necrotic-frost.ts";
-import { ghostDirection, ghostOffset, inBlast, loseGhost, stepPhantasm, touchesTile, validPhantasm } from "../arcana/phantasm.ts";
+import { ghostDirection, ghostOffset, inBlast, loseGhost, stepPhantasm, stunFor, touchesTile, validPhantasm } from "../arcana/phantasm.ts";
 import { stepDilation, validDilation } from "../arcana/time-dilation.ts";
 import { inVortex, placeVortices, stepVoidwell, validVoidwell, voidwellRoll } from "../arcana/voidwell.ts";
 import { TURN_TICKS } from "../enemies/ranged.ts";
@@ -120,6 +120,17 @@ function lifespringTurn(s: TrialState, a: NonNullable<TrialState["arcana"]>, { h
   }
 }
 
+/** Phantasm Stun's countdown, once the foes have had their turn: each stun a turn
+ * shorter, gone at none, and a fallen foe's dropped. One struck after, as this turn
+ * ends, holds its foe through the whole of the next. */
+function wearStuns(s: TrialState, a: NonNullable<TrialState["arcana"]>) {
+  if (!a.stuns) return;
+  const standing = new Set(["boss", ...targets(s).map((t) => t.key)]);
+  const left = Object.entries(a.stuns).filter(([key, n]) => n > 1 && standing.has(key)).map(([key, n]) => [key, n - 1] as const);
+  if (left.length) a.stuns = Object.fromEntries(left);
+  else delete a.stuns;
+}
+
 /** Phantasm's part of a turn: the ring turning, its cooldown and the ghosts it
  * brings back, then each ghost on what it touches along the arc it turned, the
  * hero standing where the turn ends it, a trial's turn having no walk. */
@@ -138,8 +149,13 @@ function phantasmTurn(s: TrialState, a: NonNullable<TrialState["arcana"]>, rule:
     if (!at) continue;
     loseGhost(ghosts, slot);
     const touched = near.filter((t) => touchesTile(t.x - at!.x, t.y - at!.y)), drain = rule.drain ?? 0;
-    for (const t of near.filter((t) => touched.includes(t) || inBlast(t.x - at!.x, t.y - at!.y, rule.blast) || (drain && touched.some((o) => inBlast(t.x - o.x, t.y - o.y, drain)))))
-      if (s.status === "active") strike(s, t, rule.boost, "phantasm", at, TURN_TICKS, strikes);
+    for (const t of near.filter((t) => touched.includes(t) || inBlast(t.x - at!.x, t.y - at!.y, rule.blast) || (drain && touched.some((o) => inBlast(t.x - o.x, t.y - o.y, drain))))) {
+      if (s.status !== "active") continue;
+      strike(s, t, rule.boost, "phantasm", at, TURN_TICKS, strikes);
+      // Phantasm Stun on what still stands: the boss half as long, as a Greater Boss.
+      const turns = rule.stun && s.status === "active" && targets(s).some((o) => o.key === t.key) ? stunFor(rule.stun, t.key === "boss" ? "greaterBoss" : undefined) : 0;
+      if (turns) (a.stuns ??= {})[t.key] = turns;
+    }
   }
 }
 
@@ -228,6 +244,7 @@ export function trialArcanaTurn<O extends { message: string }>(s: TrialState, ou
     settleZap(a.run, !!t);
   }
   if (lifespring && s.status === "active") lifespringTurn(s, a, lifespring, strikes);
+  wearStuns(s, a);
   if (spells.phantasm && s.status === "active") phantasmTurn(s, a, spells.phantasm, strikes);
   if (spells.necroticFrost && s.status === "active") frostTurn(s, a, spells.necroticFrost, strikes);
   if (spells.voidwell && s.status === "active") voidwellTurn(s, a, spells.voidwell);
@@ -262,6 +279,13 @@ function decodeBolted(raw: unknown) {
   return kept.length ? { bolted: Object.fromEntries(kept) as Record<string, number> } : {};
 }
 
+/** Each saved foe's turns of Phantasm stun left, if any. */
+function decodeStuns(raw: unknown) {
+  if (!isRecord(raw)) return {};
+  const kept = Object.entries(raw).filter(([, v]) => wholeIn(v, 1, 1e3)).slice(0, MOST_TALLIES);
+  return kept.length ? { stuns: Object.fromEntries(kept) as Record<string, number> } : {};
+}
+
 /** The most foes whose Necro an attempt keeps. */
 const MOST_NECRO = 1000;
 /** What the saved foes have on them, if anything. */
@@ -278,6 +302,6 @@ export function decodeTrialArcana(raw: unknown): TrialArcana | undefined {
     ...(validLifespring(raw.lifespring) && Object.keys(raw.lifespring).length ? { lifespring: raw.lifespring } : {}), ...(wholeIn(raw.springWaves, 1, 1e9) ? { springWaves: raw.springWaves as number } : {}),
     ...(validDilation(raw.dilation) && Object.keys(raw.dilation).length ? { dilation: raw.dilation } : {}), ...decodeTallies(raw.tallies), ...decodeLag(raw.lag),
     ...(validPhantasm(raw.phantasm) && Object.keys(raw.phantasm).length ? { phantasm: raw.phantasm } : {}),
-    ...(validFrost(raw.frost) && Object.keys(raw.frost).length ? { frost: raw.frost } : {}), ...decodeNecro(raw.necro), ...decodeBolted(raw.bolted),
+    ...(validFrost(raw.frost) && Object.keys(raw.frost).length ? { frost: raw.frost } : {}), ...decodeNecro(raw.necro), ...decodeBolted(raw.bolted), ...decodeStuns(raw.stuns),
     ...(validVoidwell(raw.voidwell) && Object.keys(raw.voidwell).length ? { voidwell: raw.voidwell } : {}) };
 }

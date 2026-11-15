@@ -305,7 +305,7 @@ A stunned enemy doesn't move or shoot, and its cooldowns stand still.
 Fight one while it is stunned and it skips as many of its strikes as it has turns of stun left, a Fast enemy's opening strike among them; the inspect panel, the damage numbers and the forecast count them.
 Stunning it again starts its stun over.
 A stun struck as you step lasts through the turn it is struck in; one struck as the turn ends lasts through the whole of the next.
-The stun works in the Tower and the Delve, not in the Proving Grounds.
+In the Proving Grounds a stunned foe doesn't step, hop, bite or answer your hits, and a stunned boss's schedule (its beams, releases, spawns and shots) stands still; a boss is stunned half as long, as a Greater Boss is, and its parts and the other foes for the full stun.
 
 | Level | Drain Radius | Gold | Time | Rotation Speed | Gold | Time |
 |---|---|---|---|---|---|---|
@@ -422,7 +422,7 @@ It can defeat the boss and win the trial, and its damage counts toward Damage th
 **Time Dilation** works as above on everything in the field: its tally for a counter or bite goes on from one of your hits to the next, a scheduled step or hop is skipped the same way, and a boss's or part's effects count down slower while it stands in the field.
 At 75% a cooldown falls by 0.25 a turn, so a beam due in 10 turns takes 40, and any part of a turn left over counts toward the next.
 A boss's Regen isn't on a cooldown, so it isn't slowed, and an Obelisk's turn limit still counts every turn.
-**Phantasm** works as above on what stands in the arena, its ghosts striking as each turn ends, wherever you stand then, along the arc they turned; its Drain Radius and Rotation Speed count there, its Stun doesn't.
+**Phantasm** works as above on what stands in the arena, its ghosts striking as each turn ends, wherever you stand then, along the arc they turned; its research counts there too (see [Phantasm research](#phantasm-research)).
 **Necrotic Frost** works as above on what stands in the arena, and an incorporeal boss's decay waits until it can be struck again.
 **Voidwell** opens on the arena's floor (with its twin, once Extra Voidwell is researched), and what stands in it takes no steps, while a Blaster Turret's bolts don't count down at all; it still answers your hits. The boss is immune.
 Voidwell Damage strikes everything in a vortex but the boss itself: its minions and parts, the Keymaster's mimics and light slimes, a share of their total HP rounded up, at least 1. Voidwell Gold Bonus raises the Gold coins the Magic Tower pops when what you hit stands in a vortex.

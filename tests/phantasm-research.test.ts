@@ -15,6 +15,9 @@ import { phantasmEffects, stunFor } from "../src/arcana/phantasm.ts";
 import { bout, heroHpAfter, instakill, predict, replies } from "../src/combat.ts";
 import { shoots } from "../src/enemies/ranged.ts";
 import type { Enemy, Player, Tile } from "../src/entities.ts";
+import { TrialSession } from "../src/proving-grounds/session.ts";
+import { decodeTrial, startTrial, trialStep } from "../src/proving-grounds/trial.ts";
+import { bossClock, bossTurn, foeActs } from "../src/proving-grounds/trial-spells.ts";
 
 type Phantasmic = "phantasmBlast" | "phantasmSpin" | "phantasmStun";
 const brute: Enemy = { name: "Brute", hp: 1_000_000, attack: 0, defense: 0, tier: 1, strength: "weak" };
@@ -188,4 +191,52 @@ test("a fight with a stunned enemy skips as many of its strikes as its stun has 
   const fastOne = { ...e, hp: 12, fast: true as const };
   assert.equal(instakill(predict(fighter(), fastOne)), false);
   assert.equal(instakill(predict(fighter(), { ...fastOne, stun: 1 })), true, "a stun sits out a Fast enemy's opening");
+});
+
+/** A Light Elemental trial in its arena, holding Phantasm with `research` done, the hero at `at` and one ghost out. */
+function trialArena(research: Partial<Record<Phantasmic, number>>, at: { x: number; y: number }, trial: "light-elemental" | "keymaster" = "light-elemental") {
+  const base = new Game(defaults(), random(5));
+  base.newRun({ outside: true, seed: 12 });
+  base.save.arcana.owned.phantasm = [0, 0, 0];
+  Object.assign(base.save.archives.levels, research);
+  Object.assign(base.run.player, { attack: 100, hp: 1000, maxHp: 1000 });
+  const state = startTrial(base.run.player, "manual", [], 12, 1, trial, {});
+  base.save.provingGrounds = state;
+  const session = new TrialSession(base, state);
+  state.room = "arena";
+  Object.assign(state.player, at);
+  Object.assign(state.elemental, { x: at.x, y: at.y + 1 });
+  state.bossHp = state.bossMaxHp = 1_000_000;
+  session.sync();
+  state.arcana!.phantasm = { timer: 100, turns: 1, ring: 1, ghosts: [0] };
+  return state;
+}
+
+test("in a trial, a ghost's strike stuns lesser foes for the full stun and the boss half as long, holding their turns and the boss clock", () => {
+  // The ghost at rest rides a tile above the hero, onto the Keymaster at (12, 12); a mimic stands beside it.
+  const state = trialArena({ phantasmStun: 3, phantasmBlast: 1 }, { x: 12, y: 11 }, "keymaster");
+  Object.assign(state.keymaster!, { spawned: 1, mimics: [{ id: 1, x: 13, y: 12, hp: 1_000_000, maxHp: 1_000_000 }] });
+  assert.ok(trialStep(state, 0, 0).changed);
+  assert.deepEqual(state.arcana!.stuns, { boss: 1, "mimic:1": 3 }, "3 turns, the boss half of it, rounded down");
+  assert.equal(foeActs(state, state.elemental, "boss"), false, "no counter");
+  assert.equal(foeActs(state, state.elemental, "move:boss"), false, "no step");
+  assert.equal(foeActs(state, state.keymaster!.mimics[0]!, "mimic:1"), false, "no bite");
+  assert.equal(foeActs(state, state.keymaster!.mimics[0]!, "move:mimic:1"), false, "no step");
+  const clock = bossClock(state);
+  bossTurn(state, state.elemental);
+  assert.equal(bossClock(state), clock - 100, "the boss clock stands still for the turn");
+  assert.deepEqual(decodeTrial(JSON.parse(JSON.stringify(state)))!.arcana!.stuns, { boss: 1, "mimic:1": 3 }, "saved with the attempt");
+  assert.ok(trialStep(state, 0, 0).changed);
+  assert.deepEqual(state.arcana!.stuns, { "mimic:1": 2 }, "each a turn shorter, the boss's gone");
+  assert.equal(foeActs(state, state.elemental, "boss"), true);
+});
+
+test("in a trial, the 1-turn stun leaves the boss free, and unresearched nothing is stunned", () => {
+  const one = trialArena({ phantasmStun: 1 }, { x: 12, y: 11 });
+  assert.ok(trialStep(one, 0, 0).changed);
+  assert.equal(one.arcana!.stuns, undefined);
+  const none = trialArena({}, { x: 12, y: 11 });
+  assert.ok(trialStep(none, 0, 0).changed);
+  assert.equal(none.arcana!.phantasm!.ghosts, undefined, "the ghost struck");
+  assert.equal(none.arcana!.stuns, undefined);
 });

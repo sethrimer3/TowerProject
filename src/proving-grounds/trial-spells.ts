@@ -24,7 +24,7 @@ export type TrialSpells = {
   lifespring?: { hp: number; waves: number; turns: number; reach: number; amplify: number };
   /** `slow`: the percent its field slows what is in it by; `reach`: the field's, in hundredths of a tile. */
   timeDilation?: { duration: number; slow: number; turns: number; reach: number };
-  phantasm?: { boost: number; quantity: number; turns: number; blast: number; spin: number; drain?: number };
+  phantasm?: { boost: number; quantity: number; turns: number; blast: number; spin: number; drain?: number; stun?: number };
   necroticFrost?: { boost: number; duration: number; turns: number; effects: FrostEffects };
   /** `radius`: its vortex's, in tiles; `reach`: how far from the hero it opens, in hundredths of a tile;
    * `twin`, Extra Voidwell; `damage`, Voidwell Damage, in hundredths of a percent of total HP a turn;
@@ -41,9 +41,9 @@ export type TrialStrike = { kind: "ricochet" | "thunderbolt" | "lifespring" | "p
  * (`springWaves`), and Time Dilation's: its field and cooldown (`dilation`), each
  * foe's tally on what it does (`tallies`), and how far its field has held back the
  * clocks of the boss's effects and its Blaster Turret's, in hundredths of a turn
- * (`lag`), Phantasm's (`phantasm`) and Necrotic Frost's: its cooldown and fields (`frost`), and what is on each foe (`necro`), and Voidwell's cooldown and vortex (`voidwell`), and the Thunderbolt bolts that have hit each foe (`bolted`, Thunderbolt Amplifier), all saved with it; `spells`, what strikes this turn, `struck`, what
+ * (`lag`), Phantasm's (`phantasm`) and Necrotic Frost's: its cooldown and fields (`frost`), and what is on each foe (`necro`), and Voidwell's cooldown and vortex (`voidwell`), the Thunderbolt bolts that have hit each foe (`bolted`, Thunderbolt Amplifier), and each foe's turns of Phantasm stun left (`stuns`, Phantasm Stun), all saved with it; `spells`, what strikes this turn, `struck`, what
  * the hero's step strikes, `strikes` and `springStep`, what Lifespring did last turn, aren't saved. */
-export type TrialArcana = { run: ArcanaRun; beamTurns: number; lifespring?: LifespringRun; springWaves?: number; dilation?: DilationRun; tallies?: Record<string, number>; lag?: Partial<Record<BossClock, number>>; phantasm?: PhantasmRun; frost?: FrostRun; necro?: Record<string, Necro>; voidwell?: VoidwellRun; bolted?: Record<string, number>; spells?: TrialSpells; struck?: Spot & { foe: object }; strikes?: TrialStrike[]; springStep?: LifespringStep };
+export type TrialArcana = { run: ArcanaRun; beamTurns: number; lifespring?: LifespringRun; springWaves?: number; dilation?: DilationRun; tallies?: Record<string, number>; lag?: Partial<Record<BossClock, number>>; phantasm?: PhantasmRun; frost?: FrostRun; necro?: Record<string, Necro>; voidwell?: VoidwellRun; bolted?: Record<string, number>; stuns?: Record<string, number>; spells?: TrialSpells; struck?: Spot & { foe: object }; strikes?: TrialStrike[]; springStep?: LifespringStep };
 
 /** The clocks Time Dilation can hold back: the boss's own effects, and its Blaster Turret's. */
 export type BossClock = "boss" | "turret";
@@ -69,11 +69,17 @@ export function voidwellGoldAt(s: TrialState, at: Spot) {
   const tenths = s.arcana?.spells?.voidwell?.gold ?? 10, zone = tenths === 10 ? undefined : trialVortex(s);
   return zone && inVortex(zone, at.x, at.y) ? tenths / 10 : 1;
 }
+/** Whether the foe `key` (by `Target.key`: `boss`, `slime:<id>` …) has turns of a Phantasm stun left. */
+export const phantasmStunned = (s: TrialState, key: string) => !!s.arcana?.stuns?.[key];
+/** The foe a boss clock belongs to, whose Phantasm stun holds it. */
+const CLOCK_FOE: Record<BossClock, string> = { boss: "boss", turret: "part:turret" };
 /** Whether the foe `key`, standing at `at`, does what it is about to (a counter, a
- * bite, a step): always, unless a vortex stuns it, which stops its steps (`move:`
- * keys, but the boss's) but not its answer to a hit, or Time Dilation's field holds it back. Its tally
- * goes on from one chance to the next, however far apart. */
+ * bite, a step): always, unless a Phantasm stun holds it, which stops all of it, or a
+ * vortex stuns it, which stops its steps (`move:` keys, but the boss's) but not its
+ * answer to a hit, or Time Dilation's field holds it back. Its tally goes on from one
+ * chance to the next, however far apart. */
 export function foeActs(s: TrialState, at: Spot, key: string) {
+  if (phantasmStunned(s, key.startsWith("move:") ? key.slice(5) : key)) return false;
   if (key.startsWith("move:") && key !== "move:boss" && stunnedIn(s, at)) return false;
   const slow = slowedAt(s, at);
   if (!slow) return true;
@@ -86,11 +92,12 @@ export function foeActs(s: TrialState, at: Spot, key: string) {
  * what Time Dilation's field has held it back. */
 export const bossClock = (s: TrialState, clock: BossClock = "boss") => s.steps * 100 - (s.arcana?.lag?.[clock] ?? 0);
 /** The turn the attempt just counted, for what stands at `at` on `clock`: its field
- * holds the clock back by its Slowdown, and a vortex stops the turret's. Returns whether an effect every `interval`
+ * holds the clock back by its Slowdown, a vortex stops the turret's, and a Phantasm stun on
+ * its foe (the boss, or the Blaster Turret) stops it while it lasts. Returns whether an effect every `interval`
  * turns falls due this turn, `offset` turns into each: the clock passed that mark,
  * and whatever it passed by rolls on toward the next. */
 export function bossTurn(s: TrialState, at: Spot, clock: BossClock = "boss") {
-  const before = bossClock(s, clock) - 100, slow = clock === "turret" && stunnedIn(s, at) ? 100 : slowedAt(s, at);
+  const before = bossClock(s, clock) - 100, slow = phantasmStunned(s, CLOCK_FOE[clock]) || (clock === "turret" && stunnedIn(s, at)) ? 100 : slowedAt(s, at);
   if (slow) {
     const lag = (s.arcana!.lag ??= {});
     lag[clock] = snap((lag[clock] ?? 0) + slow);
