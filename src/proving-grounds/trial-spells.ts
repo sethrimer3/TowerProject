@@ -4,7 +4,7 @@ import { beamFactor, type Beams } from "../arcana/overseer.ts";
 import { frostArea, frostSlowAt, type FrostEffects, type FrostRun, type Necro } from "../arcana/necrotic-frost.ts";
 import type { PhantasmRun } from "../arcana/phantasm.ts";
 import { slowedAct, togetherSlow, type DilationRun } from "../arcana/time-dilation.ts";
-import { inVortex, type VoidwellRun } from "../arcana/voidwell.ts";
+import { inVortex, type VoidwellRun, type VortexZone } from "../arcana/voidwell.ts";
 import { snap } from "../exact.ts";
 import type { Spot } from "./arena.ts";
 import type { TrialState } from "./trial.ts";
@@ -25,14 +25,16 @@ export type TrialSpells = {
   timeDilation?: { duration: number; slow: number; turns: number; reach: number };
   phantasm?: { boost: number; quantity: number; turns: number; blast: number; spin: number };
   necroticFrost?: { boost: number; duration: number; turns: number; effects: FrostEffects };
-  /** `radius`: its vortex's, in tiles; `reach`: how far from the hero it opens, in hundredths of a tile. */
-  voidwell?: { radius: number; duration: number; turns: number; reach: number; twin?: boolean };
+  /** `radius`: its vortex's, in tiles; `reach`: how far from the hero it opens, in hundredths of a tile;
+   * `twin`, Extra Voidwell; `damage`, Voidwell Damage, in hundredths of a percent of total HP a turn;
+   * `gold`, Voidwell Gold Bonus, in tenths (10: none). */
+  voidwell?: { radius: number; duration: number; turns: number; reach: number; twin?: boolean; damage?: number; gold?: number };
   beams?: Pick<Beams, "count" | "width" | "bonus">;
   /** Whether Overseer is held, on or off: its beams turn on either way. */
   overseer: boolean;
 };
 /** An arcanum's strike of the last turn, for the board to show. */
-export type TrialStrike = { kind: "ricochet" | "thunderbolt" | "lifespring" | "phantasm" | "necro"; from: Spot; to: Spot; damage: number; tick: number };
+export type TrialStrike = { kind: "ricochet" | "thunderbolt" | "lifespring" | "phantasm" | "necro" | "voidwell"; from: Spot; to: Spot; damage: number; tick: number };
 /** The attempt's arcana: its toggles, cooldowns and bolts, the turns Overseer's
  * beams have turned, Lifespring's state and the Effect Waves it has fired
  * (`springWaves`), and Time Dilation's: its field and cooldown (`dilation`), each
@@ -51,10 +53,20 @@ export function slowedAt(s: TrialState, at: Spot) {
   const dx = at.x - s.player.x, dy = at.y - s.player.y;
   return togetherSlow(rule && a?.dilation?.left && (dx * dx + dy * dy) * 10_000 <= rule.reach * rule.reach ? rule.slow : 0, frost && fields ? frostSlowAt(frostArea(fields, frost.effects), dx, dy) : 0);
 }
+/** Voidwell's vortex (and its twin) while one stands and it is held and on. */
+export function trialVortex(s: TrialState): VortexZone | undefined {
+  const rule = s.arcana?.spells?.voidwell, v = s.arcana?.voidwell?.vortex;
+  return rule && v ? { x: v.x, y: v.y, radius: rule.radius, wrap: 0, ...(v.twin ? { twin: v.twin } : {}) } : undefined;
+}
 /** Whether what stands at `at`, the boss aside (it is immune), is stunned by Voidwell's vortex this turn. */
 export function stunnedIn(s: TrialState, at: Spot) {
-  const rule = s.arcana?.spells?.voidwell, v = s.arcana?.voidwell?.vortex;
-  return !!rule && !!v && inVortex({ x: v.x, y: v.y, radius: rule.radius, wrap: 0, ...(v.twin ? { twin: v.twin } : {}) }, at.x, at.y);
+  const zone = trialVortex(s);
+  return !!zone && inVortex(zone, at.x, at.y);
+}
+/** What Voidwell Gold Bonus multiplies the Gold dropped at `at` by: its factor while `at` lies in a vortex, the boss's own tile too, else 1. */
+export function voidwellGoldAt(s: TrialState, at: Spot) {
+  const tenths = s.arcana?.spells?.voidwell?.gold ?? 10, zone = tenths === 10 ? undefined : trialVortex(s);
+  return zone && inVortex(zone, at.x, at.y) ? tenths / 10 : 1;
 }
 /** Whether the foe `key`, standing at `at`, does what it is about to (a counter, a
  * bite, a step): always, unless a vortex stuns it, which stops its steps (`move:`

@@ -66,7 +66,7 @@ export class TrialRenderer {
   get settled(){return this.camera.settled;}
   tileAt(s:TrialState,u:number,v:number){return this.camera.tileAt(s,u,v);}
   draw(s: TrialState, now: number, firedAt: number, reduceMotion: boolean,
-    options: {styledSprites?:boolean;spriteAnimations?:boolean;destination?:{x:number;y:number}|null;transition?:TrialTransition;pathAhead?:readonly {dx:number;dy:number}[];hidden?:{ricochet:boolean;thunderbolt:boolean;lifespring:boolean;phantasm:boolean;necro:boolean};phantasmAlpha?:number} = {}) {
+    options: {styledSprites?:boolean;spriteAnimations?:boolean;destination?:{x:number;y:number}|null;transition?:TrialTransition;pathAhead?:readonly {dx:number;dy:number}[];hidden?:{ricochet:boolean;thunderbolt:boolean;lifespring:boolean;phantasm:boolean;necro:boolean;voidwell?:boolean};phantasmAlpha?:number} = {}) {
     this.camera.update(s,now,reduceMotion,options.transition,options.pathAhead);
     const styled=true,animated=!!options.spriteAnimations;
     // Animation is presentation only; saved turns own all positions.
@@ -301,6 +301,8 @@ export class TrialRenderer {
           if(options.hidden?.phantasm || age>=RICOCHET_FLASH_MS+200)continue;
         } else if(strike.kind==="necro") {
           if(options.hidden?.necro || age>=RICOCHET_FLASH_MS+200)continue;
+        } else if(strike.kind==="voidwell") {
+          if(options.hidden?.voidwell || age>=RICOCHET_FLASH_MS+200)continue;
         } else if(strike.kind==="lifespring") {
           if(options.hidden?.lifespring || age>=RICOCHET_FLASH_MS+200)continue;
         } else if(strike.kind==="ricochet") {

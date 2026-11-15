@@ -4,7 +4,7 @@ import { ARENA_POTIONS, ARENA_SIZE, ELEMENTAL, arenaFloor, directions, key, same
 import { difficultyMultiplier } from "./catalog.ts";
 import type { SavedBossProgress } from "./access.ts";
 import type { TrialState } from "./trial.ts";
-import { bossClock, bossTurn, foeActs, heroAttackOn } from "./trial-spells.ts";
+import { bossClock, bossTurn, foeActs, heroAttackOn, voidwellGoldAt } from "./trial-spells.ts";
 
 export const OBELISK_DEFAULT_TURNS = 100;
 export const OBELISK_SHOT_INTERVAL = 3;
@@ -269,13 +269,14 @@ export function enterBossVariant(s: TrialState): { changed: boolean; message: st
   };
 }
 
-/** Pops Gold and Silver coins out of the boss when damaged in Magic Tower. */
+/** Pops Gold and Silver coins out of the boss when damaged in Magic Tower; Voidwell
+ * Gold Bonus raises the Gold coin's while `origin` lies in a vortex. */
 function popCoinsOnBossHit(s: TrialState, origin: Spot, step: number): CombatCoinPop[] {
   const v = s.bossVariant!;
   if (v.variant !== "magic-tower") return [];
   const factor = difficultyMultiplier(s.level);
   const silverAmount = Math.max(20, Math.round(30 * factor));
-  const goldAmount = Math.max(8, Math.round(12 * factor));
+  const goldAmount = Math.round(Math.max(8, Math.round(12 * factor)) * voidwellGoldAt(s, origin));
   s.purchases ??= { silver: 0, training: {} };
   s.purchases.silver += silverAmount;
   v.silverEarned += silverAmount;

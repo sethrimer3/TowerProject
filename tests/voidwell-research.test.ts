@@ -11,6 +11,10 @@ import { decode, defaults } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 import { voidwellDamage } from "../src/volley.ts";
+import { TrialSession } from "../src/proving-grounds/session.ts";
+import { startTrial, trialStep, type TrialState } from "../src/proving-grounds/trial.ts";
+import { voidwellGoldAt } from "../src/proving-grounds/trial-spells.ts";
+import { ELEMENTAL } from "../src/proving-grounds/arena.ts";
 
 const brute: Enemy = { name: "Brute", hp: 50, attack: 10, defense: 0, tier: 1, strength: "weak" };
 const bounds: FloorBounds = { left: 0, right: 16, bottom: 0, top: 16 };
@@ -121,7 +125,7 @@ test("Voidwell Gold Bonus multiplies the Gold of a kill in a vortex, however it 
   assert.equal(g.voidwellGold({ x: 6, y: 5 }), 1, "switched off, no vortex");
 });
 
-test("Extra Voidwell's twin opens opposite across the hero, turning the pair where the floor stops it, else past the edge", () => {
+test("Extra Voidwell's twin opens opposite across the hero, or, where the floor stops that, as wide apart as fits", () => {
   const hero = { x: 8, y: 8 };
   for (let i = 0; i < 40; i++) {
     const at = placeVortices({ hero, distance: 3, radius: 3, bounds, roll: i / 40, twin: true });
@@ -136,10 +140,84 @@ test("Extra Voidwell's twin opens opposite across the hero, turning the pair whe
     assert.ok(Math.abs(twin!.x - (6 - x)) < 1e-9 && Math.abs(twin!.y - (16 - y)) < 1e-9);
     for (const c of [{ x, y }, twin!]) assert.ok(c.x >= 1.5 - 1e-9 && c.x <= 14.5 + 1e-9, `${c.x}`);
   }
-  // In a corner no pair fits: the first stays on the floor, its twin opposite it, past the edge.
-  const corner = { x: 1, y: 1 }, { x, y, twin } = placeVortices({ hero: corner, distance: 3, radius: 3, bounds, roll: 0.3, twin: true });
-  assert.ok(x >= 1.5 && y >= 1.5);
-  assert.deepEqual(twin, { x: 2 - x, y: 2 - y });
+  // In a corner no opposite pair fits: the two take the ends of the corner's arc, both on the floor, at the same distance.
+  const corner = { x: 1, y: 1 };
+  for (const roll of [0, 0.3, 0.99]) {
+    const { x, y, twin } = placeVortices({ hero: corner, distance: 3, radius: 3, bounds, roll, twin: true });
+    for (const c of [{ x, y }, twin!]) {
+      assert.ok(c.x >= 1.5 - 1e-9 && c.y >= 1.5 - 1e-9, `${c.x},${c.y} on the floor`);
+      assert.ok(Math.abs(Math.hypot(c.x - 1, c.y - 1) - 3) < 1e-9);
+    }
+    const apart = Math.acos(((x - 1) * (twin!.x - 1) + (y - 1) * (twin!.y - 1)) / 9) * 180 / Math.PI;
+    assert.ok(apart >= 30 && apart <= 90, `${apart} degrees apart`);
+    assert.ok(apart > 69.9, "as wide as the corner allows: 10 to 80 degrees");
+  }
+  // A corner too tight for 30 degrees at its range draws them in until it isn't.
+  const tight = placeVortices({ hero: corner, distance: 3, radius: 4, bounds, roll: 0.5, twin: true });
+  const [r1, r2] = [Math.hypot(tight.x - 1, tight.y - 1), Math.hypot(tight.twin!.x - 1, tight.twin!.y - 1)];
+  assert.ok(Math.abs(r1 - r2) < 1e-9);
+  assert.ok(Math.acos(((tight.x - 1) * (tight.twin!.x - 1) + (tight.y - 1) * (tight.twin!.y - 1)) / (r1 * r2)) * 180 / Math.PI >= 30 - 1e-9);
+});
+
+/** A trial attempt in the arena with Voidwell held, its research as given, a vortex
+ * of 3 tiles at `vortex`, and the hero at (2, 12). */
+function trial(trialId: TrialState["trialId"], research: Record<string, number>, vortex = { x: 5, y: 5, left: 50 }) {
+  const base = new Game(defaults(), random(5));
+  base.newRun({ outside: true, seed: 12 });
+  base.save.arcana.owned.voidwell = [0, 0, 0];
+  Object.assign(base.save.archives.levels, research);
+  Object.assign(base.run.player, { attack: 100, hp: 1000, maxHp: 1000 });
+  const state = startTrial(base.run.player, "manual", [], 12, 1, trialId);
+  base.save.provingGrounds = state;
+  const session = new TrialSession(base, state);
+  state.room = "arena";
+  state.player.x = 2;
+  state.player.y = 12;
+  state.arcana!.voidwell = { timer: 150, casts: 1, vortex };
+  session.sync();
+  return { session, state };
+}
+const wait = (s: TrialState) => assert.ok(trialStep(s, 0, 0).changed);
+
+test("in a trial, Voidwell Damage strikes the boss's minions and parts, mimics and slimes in the vortex, never the boss", () => {
+  const { state } = trial("obelisk", { voidwellDamage: 10 });
+  const v = state.bossVariant!;
+  v.minions.push({ id: 90, name: "Obelisk Sentry", x: 5, y: 5, hp: 120, maxHp: 120, attack: 1, defense: 50 }, { id: 91, name: "Obelisk Sentry", x: 20, y: 12, hp: 120, maxHp: 120, attack: 1, defense: 0 });
+  v.spawned = 91;
+  state.arcana!.voidwell!.vortex = { x: 5, y: 5, left: 50, twin: { x: ELEMENTAL.x, y: ELEMENTAL.y } };
+  const boss = state.bossHp;
+  wait(state);
+  assert.equal(v.minions.find((m) => m.id === 90)!.hp, 120 - 3, "2% of 120, rounded up, DEF or no DEF");
+  assert.equal(v.minions.find((m) => m.id === 91)!.hp, 120, "outside, untouched");
+  assert.equal(state.bossHp, boss, "the boss is immune, in the twin or not");
+  assert.ok(state.arcana!.strikes!.some((s) => s.kind === "voidwell" && s.damage === 3));
+  for (let i = 0; i < 39; i++) wait(state);
+  assert.ok(!v.minions.some((m) => m.id === 90), "felled within 50 turns");
+
+  const keymaster = trial("keymaster", { voidwellDamage: 1 }).state, k = keymaster.keymaster!;
+  k.mimics.push({ id: 1, x: 5, y: 5, hp: 40, maxHp: 40 });
+  k.spawned = 1;
+  wait(keymaster);
+  assert.equal(k.mimics[0]!.hp, 39, "0.2% of 40, rounded up to 1");
+
+  const none = trial("keymaster", {}).state;
+  none.keymaster!.mimics.push({ id: 1, x: 5, y: 5, hp: 40, maxHp: 40 });
+  wait(none);
+  assert.equal(none.keymaster!.mimics[0]!.hp, 40, "unresearched, it only stuns");
+});
+
+test("in a trial, Voidwell Gold Bonus raises the Gold coins Magic Tower drops from within a vortex", () => {
+  const goldPopped = (research: Record<string, number>, vortex: { x: number; y: number }) => {
+    const { state } = trial("magic-tower", research, { ...vortex, left: 50 });
+    Object.assign(state.player, { x: ELEMENTAL.x, y: ELEMENTAL.y - 1 });
+    trialStep(state, 0, 1);
+    return state.bossVariant!.lastRound!.coins.find((c) => c.kind === "gold")!.amount;
+  };
+  const plain = goldPopped({}, ELEMENTAL);
+  assert.equal(goldPopped({ voidwellGold: 2 }, ELEMENTAL), plain * 2, "×2 with the boss in it");
+  assert.equal(goldPopped({ voidwellGold: 2 }, { x: 3, y: 12 }), plain, "the boss outside it");
+  const { state } = trial("magic-tower", { voidwellGold: 20 });
+  assert.deepEqual([voidwellGoldAt(state, { x: 5, y: 5 }), voidwellGoldAt(state, { x: 20, y: 12 })], [11, 1]);
 });
 
 test("researched, each activation opens the twin, which stuns and lasts as the first does, and it survives the save", () => {

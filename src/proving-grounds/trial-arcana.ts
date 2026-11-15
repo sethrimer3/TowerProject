@@ -4,7 +4,7 @@ import { fieldHit, springAmplify, stepLifespring, validLifespring } from "../arc
 import { decayed, fieldsOn, frostArea, stepFrost, validFrost, validNecro, type Necro } from "../arcana/necrotic-frost.ts";
 import { ghostDirection, ghostOffset, inBlast, loseGhost, stepPhantasm, touchesTile, validPhantasm } from "../arcana/phantasm.ts";
 import { stepDilation, validDilation } from "../arcana/time-dilation.ts";
-import { placeVortices, stepVoidwell, validVoidwell, voidwellRoll } from "../arcana/voidwell.ts";
+import { inVortex, placeVortices, stepVoidwell, validVoidwell, voidwellRoll } from "../arcana/voidwell.ts";
 import { TURN_TICKS } from "../enemies/ranged.ts";
 import { tileRandom } from "../random.ts";
 import { finite, isRecord, wholeIn } from "../save/decode.ts";
@@ -12,7 +12,7 @@ import { activeBossParts, effectiveBossDef } from "./boss-variants.ts";
 import { difficultyMultiplier, TRIALS } from "./catalog.ts";
 import { ELEMENTAL, same, type Spot } from "./arena.ts";
 import type { TrialState } from "./trial.ts";
-import { heroAttackOn, type TrialArcana, type TrialSpells, type TrialStrike } from "./trial-spells.ts";
+import { heroAttackOn, trialVortex, type TrialArcana, type TrialSpells, type TrialStrike } from "./trial-spells.ts";
 
 // The arcana's turn in a trial (docs/agents/arcana.md). A hit from an arcanum
 // only wounds: it never makes a boss teleport, drop keys or pop coins, and draws
@@ -20,10 +20,10 @@ import { heroAttackOn, type TrialArcana, type TrialSpells, type TrialStrike } fr
 
 const TRIAL_RICOCHET_SALT = 0x71c0d;
 
-/** What an arcanum can strike: its tile, its HP and DEF, what a hit does to it, the
- * saved thing it is (`foe`), which may move off the tile as a turn goes on, and its
- * name among the attempt's foes (`key`). */
-type Target = Spot & { foe: object; key: string; hp: number; defense: number; take: (damage: number) => void };
+/** What an arcanum can strike: its tile, its HP, total HP (`full`) and DEF, what a hit
+ * does to it, the saved thing it is (`foe`), which may move off the tile as a turn goes
+ * on, and its name among the attempt's foes (`key`). */
+type Target = Spot & { foe: object; key: string; hp: number; full: number; defense: number; take: (damage: number) => void };
 
 /** The boss fell to an arcanum: the same ending each encounter gives its last hit. */
 function win(s: TrialState) {
@@ -39,22 +39,22 @@ function win(s: TrialState) {
 function targets(s: TrialState): Target[] {
   if (s.room !== "arena" || s.status !== "active") return [];
   const out: Target[] = [], v = s.bossVariant, k = s.keymaster;
-  if (!s.elemental.incorporeal && s.bossHp > 0) out.push({ x: s.elemental.x, y: s.elemental.y, foe: s.elemental, key: "boss", hp: s.bossHp, defense: effectiveBossDef(s), take(damage) {
+  if (!s.elemental.incorporeal && s.bossHp > 0) out.push({ x: s.elemental.x, y: s.elemental.y, foe: s.elemental, key: "boss", hp: s.bossHp, full: s.bossMaxHp, defense: effectiveBossDef(s), take(damage) {
     if (v) v.damageThisRun += Math.min(s.bossHp, damage);
     s.bossHp = Math.max(0, s.bossHp - damage);
     if (!s.bossHp) win(s);
   } });
-  for (const slime of s.slimes) out.push({ x: slime.x, y: slime.y, foe: slime, key: `slime:${slime.id}`, hp: 1, defense: 0, take() { s.slimes = s.slimes.filter((o) => o !== slime); } });
-  for (const mimic of k?.mimics ?? []) out.push({ x: mimic.x, y: mimic.y, foe: mimic, key: `mimic:${mimic.id}`, hp: mimic.hp, defense: 0, take(damage) {
+  for (const slime of s.slimes) out.push({ x: slime.x, y: slime.y, foe: slime, key: `slime:${slime.id}`, hp: 1, full: 1, defense: 0, take() { s.slimes = s.slimes.filter((o) => o !== slime); } });
+  for (const mimic of k?.mimics ?? []) out.push({ x: mimic.x, y: mimic.y, foe: mimic, key: `mimic:${mimic.id}`, hp: mimic.hp, full: mimic.maxHp, defense: 0, take(damage) {
     mimic.hp = Math.max(0, mimic.hp - damage);
     if (!mimic.hp) k!.mimics = k!.mimics.filter((o) => o !== mimic);
   } });
   if (!v) return out;
-  for (const part of activeBossParts(v)) out.push({ x: part.x, y: part.y, foe: part, key: `part:${part.id}`, hp: part.hp, defense: part.defense, take(damage) {
+  for (const part of activeBossParts(v)) out.push({ x: part.x, y: part.y, foe: part, key: `part:${part.id}`, hp: part.hp, full: part.maxHp, defense: part.defense, take(damage) {
     v.damageThisRun += Math.min(part.hp, damage);
     part.hp = Math.max(0, part.hp - damage);
   } });
-  for (const minion of v.minions) out.push({ x: minion.x, y: minion.y, foe: minion, key: `minion:${minion.id}`, hp: minion.hp, defense: minion.defense, take(damage) {
+  for (const minion of v.minions) out.push({ x: minion.x, y: minion.y, foe: minion, key: `minion:${minion.id}`, hp: minion.hp, full: minion.maxHp, defense: minion.defense, take(damage) {
     minion.hp = Math.max(0, minion.hp - damage);
     if (minion.hp) return;
     v.minions = v.minions.filter((o) => o !== minion);
@@ -156,6 +156,20 @@ function voidwellTurn(s: TrialState, a: NonNullable<TrialState["arcana"]>, rule:
   }));
 }
 
+/** Voidwell Damage's part of a turn, once the vortex has stepped: everything in it but
+ * the boss itself (slimes, mimics, the boss's parts, minions) loses its share of its
+ * total HP, rounded up, with no DEF, so at 2% 50 turns fell it. */
+function voidwellStrikes(s: TrialState, rate: number, strikes: TrialStrike[]) {
+  const zone = trialVortex(s);
+  if (!zone) return;
+  for (const t of targets(s)) {
+    if (t.key === "boss" || !inVortex(zone, t.x, t.y) || s.status !== "active") continue;
+    const damage = Math.min(t.hp, Math.ceil((t.full * rate) / 10000));
+    t.take(damage);
+    strikes.push({ kind: "voidwell", from: { x: t.x, y: t.y }, to: { x: t.x, y: t.y }, damage, tick: TURN_TICKS });
+  }
+}
+
 /** The arcana's part of a turn the attempt just spent: a Ricochet Shot off the
  * hero's hit, the cooldowns running on, Thunderbolt's bolts, Overseer Zap, Lifespring, Phantasm, Necrotic Frost, Voidwell, Time
  * Dilation's field, which holds back what comes next turn, then the beams turning.
@@ -195,6 +209,7 @@ export function trialArcanaTurn<O extends { message: string }>(s: TrialState, ou
   if (spells.phantasm && s.status === "active") phantasmTurn(s, a, spells.phantasm, strikes);
   if (spells.necroticFrost && s.status === "active") frostTurn(s, a, spells.necroticFrost, strikes);
   if (spells.voidwell && s.status === "active") voidwellTurn(s, a, spells.voidwell);
+  if (spells.voidwell?.damage && s.status === "active") voidwellStrikes(s, spells.voidwell.damage, strikes);
   if (spells.timeDilation && s.status === "active") stepDilation((a.dilation ??= {}), spells.timeDilation);
   if (spells.overseer) a.beamTurns++;
   a.strikes = strikes;

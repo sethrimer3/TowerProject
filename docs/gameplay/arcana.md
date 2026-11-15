@@ -362,7 +362,7 @@ Undo takes back what it struck.
 It multiplies the other Gold bonuses, and raises only Gold, not Silver or Cells.
 
 **Extra Voidwell:** each activation opens a second vortex with the first, at the point opposite it across you, with the same size and turns.
-If the floor stops that point, the pair turns, at the same distance from you, until both fit; if no turn fits both (as in a corner), the first opens as ever and the second opposite it all the same, past the floor's edge.
+If the floor stops that point, as beside a wall or in a corner, the two open at the same distance from you as far apart as the floor allows, at least 30 degrees apart seen from you: along a wall, opposite each other along it; in a corner, at the two ends of the corner's arc. If even 30 degrees don't fit at your range, they open nearer you until they do.
 An enemy in both is stunned and struck once.
 
 ## In a trial
@@ -383,5 +383,6 @@ At 75% a cooldown falls by 0.25 a turn, so a beam due in 10 turns takes 40, and 
 A boss's Regen isn't on a cooldown, so it isn't slowed, and an Obelisk's turn limit still counts every turn.
 **Phantasm** works as above on what stands in the arena, its ghosts striking as each turn ends, wherever you stand then.
 **Necrotic Frost** works as above on what stands in the arena, and an incorporeal boss's decay waits until it can be struck again.
-**Voidwell** opens on the arena's floor (with its twin, once Extra Voidwell is researched; Voidwell Damage and Gold Bonus don't count there), and what stands in it takes no steps, while a Blaster Turret's bolts don't count down at all; it still answers your hits. The boss is immune.
+**Voidwell** opens on the arena's floor (with its twin, once Extra Voidwell is researched), and what stands in it takes no steps, while a Blaster Turret's bolts don't count down at all; it still answers your hits. The boss is immune.
+Voidwell Damage strikes everything in a vortex but the boss itself: its minions and parts, the Keymaster's mimics and light slimes, a share of their total HP rounded up, at least 1. Voidwell Gold Bonus raises the Gold coins the Magic Tower pops when what you hit stands in a vortex.
 Toggles and cooldowns are the attempt's own, leave your run outside alone, and survive a reload.

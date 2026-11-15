@@ -29,6 +29,9 @@ const VOIDWELL_SALT = 0x701d;
 const ANGLES = 720;
 /** How far the distance changes at a time, in tiles, when no angle fits. */
 const DISTANCE_STEP = 0.25;
+/** The narrowest angle a vortex and its twin may lie apart, seen from the hero, in
+ * `ANGLES`' steps: 30 degrees. */
+const NARROWEST_PAIR = ANGLES / 12;
 /** The unit vectors of `ANGLES`, in the same bits in every engine. */
 const UNITS = Array.from({ length: ANGLES }, (_, i) => pointing((i * 360) / ANGLES));
 
@@ -88,24 +91,42 @@ function openAt(hero: Point, d: number, roll: number, allowed: (x: number, y: nu
   return { x: hero.x + u.x * d, y: hero.y + u.y * d };
 }
 
+/** The `roll`'s pick of the pairs of places `d` tiles from `hero`, at angles `allowed`
+ * keeps, that lie the widest apart, seen from the hero, if that is at least
+ * `NARROWEST_PAIR`: opposite each other where the floor allows it, else the two ends
+ * of the arc that fits (beside a wall, along it; in a corner, the corner's arc). */
+function widestPair(hero: Point, d: number, roll: number, allowed: (x: number, y: number) => boolean): (Point & { twin: Point }) | undefined {
+  const open = UNITS.flatMap((u, i) => (allowed(hero.x + u.x * d, hero.y + u.y * d) ? [i] : []));
+  let widest = NARROWEST_PAIR, pairs: [number, number][] = [];
+  for (let a = 0; a < open.length; a++)
+    for (let b = a + 1; b < open.length; b++) {
+      const apart = open[b]! - open[a]!, angle = Math.min(apart, ANGLES - apart);
+      if (angle > widest) [widest, pairs] = [angle, [[open[a]!, open[b]!]]];
+      else if (angle === widest) pairs.push([open[a]!, open[b]!]);
+    }
+  if (!pairs.length) return undefined;
+  const [a, b] = pairs[Math.floor(roll * pairs.length)]!, at = (i: number) => ({ x: hero.x + UNITS[i]!.x * d, y: hero.y + UNITS[i]!.y * d });
+  return { ...at(a), twin: at(b) };
+}
+
 /** Where Voidwell opens: one vortex as `placeVortex` places it, and with `twin` (Extra
  * Voidwell) a second at the point opposite it across the hero. If that point isn't
- * allowed, the pair turns, at the same distance, to the `roll`'s pick of the angles
- * where both are; if there is none, the first stays and its twin lies opposite it all
- * the same, past the floor's edge if it must. */
+ * allowed (the hero beside a wall or in a corner), the two lie at the same distance
+ * as wide apart as the floor allows, at least 30 degrees, the hero between them (the
+ * distance shrinking until they can); failing that, the first stays and its twin lies
+ * opposite it all the same, past the floor's edge. */
 export function placeVortices({ twin, ...placing }: Placing & { twin?: boolean }): Point & { twin?: Point } {
   const first = placeVortex(placing);
   if (!twin) return first;
   const { hero, radius, bounds, roll, fits } = placing, { allowed } = allowedCenters(radius, bounds, fits);
-  const opposite = (p: Point) => ({ x: hero.x * 2 - p.x, y: hero.y * 2 - p.y });
-  const mirror = opposite(first);
+  const mirror = { x: hero.x * 2 - first.x, y: hero.y * 2 - first.y };
   if (allowed(mirror.x, mirror.y)) return { ...first, twin: mirror };
   const dx = first.x - hero.x, dy = first.y - hero.y;
-  const paired = openAt(hero, Math.sqrt(dx * dx + dy * dy), roll, (x, y) => {
-    const o = opposite({ x, y });
-    return allowed(x, y) && allowed(o.x, o.y);
-  });
-  return paired ? { ...paired, twin: opposite(paired) } : { ...first, twin: mirror };
+  for (let d = Math.sqrt(dx * dx + dy * dy); d > 0; d -= DISTANCE_STEP) {
+    const pair = widestPair(hero, d, roll, allowed);
+    if (pair) return pair;
+  }
+  return { ...first, twin: mirror };
 }
 
 /** Whether the tile at (x, y) lies in `zone`, by Euclidean distance from the vortex's
