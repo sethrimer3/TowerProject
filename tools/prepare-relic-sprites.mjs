@@ -6,7 +6,8 @@ import { RELICS } from '../src/economy/relics.ts';
 
 const sources='assets/game-sprites/relic-sources';
 const authored=JSON.parse(readFileSync(`${sources}/catalog.json`));
-if(authored.length!==Object.keys(RELICS).length)throw Error('Relic catalog changed; author the missing sprites before exporting.');
+// The Shop's relics are drawn by tools/prepare-shop-sprites.mjs, run after this.
+if(authored.length!==Object.keys(RELICS).filter(id=>!RELICS[id].shop).length)throw Error('Relic catalog changed; author the missing sprites before exporting.');
 const dir='public/assets/style', review='public/assets/relics';
 mkdirSync(review,{recursive:true});
 const manifest=JSON.parse(readFileSync(`${dir}/manifest.json`));

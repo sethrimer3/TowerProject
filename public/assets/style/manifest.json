@@ -4133,6 +4133,26 @@
       "file": "ui-play-store.png",
       "width": 24,
       "height": 24
+    },
+    "vip": {
+      "file": "vip.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-shop-researcher": {
+      "file": "relic-shop-researcher.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-shop-trainer": {
+      "file": "relic-shop-trainer.png",
+      "width": 24,
+      "height": 24
+    },
+    "relic-shop-stellar": {
+      "file": "relic-shop-stellar.png",
+      "width": 24,
+      "height": 24
     }
   }
 }

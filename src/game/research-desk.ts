@@ -1,3 +1,4 @@
+import { premiumArchivists } from "../shop/entitlements.ts";
 import { RESEARCH, RESEARCH_IDS, cancelResearch, researchCompleted, status, hastenResearch, hireArchivist, settleArchives, startResearch, switchResearch, type ResearchId, type ResearchRecord } from "../progression/archives.ts";
 import { finishGems } from "../progression/training-jobs.ts";
 import { queueNextSpeedUp, speedUpCells, startSpeedUp, type SpeedUpFactor, type SpeedUpHours } from "../progression/speed-ups.ts";
@@ -126,7 +127,7 @@ export class ResearchDesk {
   }
 
   hire() {
-    return this.open && hireArchivist(this.save);
+    return this.open && hireArchivist(this.save, premiumArchivists(this.save));
   }
 
   /** Completes the research that the clock has reached, saying so in the

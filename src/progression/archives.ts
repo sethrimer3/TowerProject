@@ -1826,11 +1826,13 @@ function nextEvent(a: ArchivesSave, now: number) {
   return next;
 }
 
-/** The Gems the next archivist costs, or undefined when all are hired. */
-export const nextArchivistPrice = (a: ArchivesSave): number | undefined => ARCHIVISTS.prices[a.slots.length - ARCHIVISTS.start];
-/** Hires the next archivist for its Gems. */
-export function hireArchivist(o: ArchivesOwner) {
-  const price = nextArchivistPrice(o.archives);
+/** The Gems the next archivist costs, or undefined when all are hired;
+ * `extra` slots (the Shop's: shop/entitlements.ts `premiumArchivists`)
+ * come beside those Gems hire and don't count toward their prices. */
+export const nextArchivistPrice = (a: ArchivesSave, extra = 0): number | undefined => ARCHIVISTS.prices[a.slots.length - ARCHIVISTS.start - extra];
+/** Hires the next archivist for its Gems, with `extra` slots from the Shop. */
+export function hireArchivist(o: ArchivesOwner, extra = 0) {
+  const price = nextArchivistPrice(o.archives, extra);
   if (price === undefined) return false;
   if (!o.settings.freePurchases) {
     if (o.gems < price) return false;
@@ -1850,20 +1852,20 @@ const isLevelOf = (id: ResearchId, n: unknown): n is number => wholeIn(n, 1, res
 /** The saved Archives, each part kept when it is well formed: completed
  * levels within each project's maximum, a job only for the level after the
  * completed one and no project in two slots, and kept progress under 1. */
-export function decodeArchives(raw: any): ArchivesSave {
+export function decodeArchives(raw: any, extra = 0): ArchivesSave {
   const a = defaultArchives();
   if (!isRecord(raw)) return a;
   // TODO: drop once saves made before Phoenix Spark are gone (Undo Count became Phoenix Spark Count).
   if (isRecord(raw.levels)) decodeLevels({ sparkCount: raw.levels.undoCount, ...raw.levels }, a);
   if (isRecord(raw.progress)) decodeKeptProgress(raw.progress, a);
-  if (validSlotCount(raw.slots)) a.slots = decodeSlots(raw.slots, a);
+  if (validSlotCount(raw.slots, extra)) a.slots = decodeSlots(raw.slots, a);
   if (Array.isArray(raw.history)) a.history = decodeHistory(raw.history);
   return a;
 }
 
-/** As many archivists' slots as can be hired. */
-const validSlotCount = (slots: unknown): slots is any[] =>
-  Array.isArray(slots) && slots.length >= ARCHIVISTS.start && slots.length <= ARCHIVISTS.maximum;
+/** As many archivists' slots as can be hired, with `extra` from the Shop. */
+const validSlotCount = (slots: unknown, extra: number): slots is any[] =>
+  Array.isArray(slots) && slots.length >= ARCHIVISTS.start && slots.length <= ARCHIVISTS.maximum + extra;
 
 function decodeLevels(levels: Record<string, any>, a: ArchivesSave) {
   for (const id of RESEARCH_IDS) if (isLevelOf(id, levels[id])) a.levels[id] = levels[id];

@@ -1,6 +1,6 @@
 import { ITEM_KIT } from "../sprites/items.ts";
 import { relicSpriteId } from "../sprites/relics.ts";
-import { BREAKTHROUGH_SPRITE, INSPIRATION_SPRITE, kitIcon, pngIcon } from "../sprites/kit.ts";
+import { BREAKTHROUGH_SPRITE, INSPIRATION_SPRITE, VIP_SPRITE, kitIcon, pngIcon } from "../sprites/kit.ts";
 import { CARDS } from "../cards/cards.ts";
 import type { CardId } from "../cards/cards.ts";
 import { LIMIT_BREAKS } from "../progression/training.ts";
@@ -61,6 +61,9 @@ export const cellIcon = (className = "cell-icon") =>
 /** A Medal: a gold disc with a star, hung from a red ribbon. */
 export const medalIcon = (className = "medal-icon") =>
   kitIcon("medal", "", className);
+/** A brass crown: VIP Points. */
+export const vipIcon = (className = "vip-icon") =>
+  kitIcon(VIP_SPRITE, "", className);
 /** A check mark in a rounded box: Missions. */
 export const missionIcon = (className = "mission-icon") =>
   kitIcon("mission", "", className);

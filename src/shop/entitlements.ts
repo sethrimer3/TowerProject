@@ -5,7 +5,7 @@ import type { Save } from "../save/shape.ts";
 // game reads what they do through the functions here.
 // TODO: once the store is connected, restore them from its receipts.
 
-export type EntitlementId = "adFree" | "coins2" | "coins3" | "pass1" | "pass2" | "pass3";
+export type EntitlementId = "adFree" | "coins2" | "coins3" | "pass1" | "pass2" | "pass3" | "researcher" | "trainer" | "stellar";
 export type Entitlement = {
   name: string;
   /** Multiplies every Gold the hero banks; all of them multiply together. */
@@ -18,6 +18,12 @@ export type Entitlement = {
   /** Training goes this many times as fast for good, on top of the boost;
    * all of them multiply together. */
   trainingRate?: number;
+  /** Archivists' slots it adds beyond those Gems hire (progression/archives.ts). */
+  archivists?: number;
+  /** Trainers it adds (progression/training-jobs.ts `trainingSlots`). */
+  trainers?: number;
+  /** The unique relic it gives (economy/relic-catalog.ts `SHOP_RELICS`). */
+  relic?: string;
 };
 
 export const ENTITLEMENTS: Record<EntitlementId, Entitlement> = {
@@ -29,6 +35,10 @@ export const ENTITLEMENTS: Record<EntitlementId, Entitlement> = {
   pass1: { name: "Premium Pass 1", goldFactor: 1 },
   pass2: { name: "Premium Pass 2", goldFactor: 1 },
   pass3: { name: "Premium Pass 3", goldFactor: 1 },
+  // The Premium Offers (shop/offers.ts), each with its unique relic.
+  researcher: { name: "Extra Researcher", goldFactor: 1, archivists: 1, relic: "shop.researcher" },
+  trainer: { name: "Extra Trainer", goldFactor: 1, trainers: 1, relic: "shop.trainer" },
+  stellar: { name: "Stellar Bundle", goldFactor: 1, relic: "shop.stellar" },
 };
 export const ENTITLEMENT_IDS = Object.keys(ENTITLEMENTS) as EntitlementId[];
 
@@ -47,6 +57,12 @@ export const permanentBoost = (save: Owner) => owned(save).some((e) => e.permane
  * with the Special Coin Pack, ×3 with the Premium Coin Pack, ×6 with both
  * (×12 with Ad-Disable's permanent boost too). */
 export const trainingRate = (save: Owner) => owned(save).reduce((r, e) => r * (e.trainingRate ?? 1), 1);
+/** Archivists' slots the entitlements add, beyond those Gems hire. */
+export const premiumArchivists = (save: Owner) => owned(save).reduce((n, e) => n + (e.archivists ?? 0), 0);
+/** Trainers the entitlements add. */
+export const premiumTrainers = (save: Owner) => owned(save).reduce((n, e) => n + (e.trainers ?? 0), 0);
+/** The relics the entitlements give. */
+export const entitlementRelics = (save: Owner) => owned(save).flatMap((e) => (e.relic ? [e.relic] : []));
 /** The boost's end while it runs for good: never. */
 export const BOOST_FOREVER = Number.MAX_SAFE_INTEGER;
 

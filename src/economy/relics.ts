@@ -1,6 +1,6 @@
 import type { RelicRarity } from "../events/catalog.ts";
 import type { EventThemeId } from "../events/themes.ts";
-import { RELIC_SETS, STORE_RELICS, TOWER_RELICS, type RelicBonus, type RelicSet } from "./relic-catalog.ts";
+import { RELIC_SETS, SHOP_RELICS, STORE_RELICS, TOWER_RELICS, type RelicBonus, type RelicSet } from "./relic-catalog.ts";
 
 // Relics (docs/EVENTS.md): unique keepsakes from Events and each tower's
 // last Goal, each giving a
@@ -8,9 +8,12 @@ import { RELIC_SETS, STORE_RELICS, TOWER_RELICS, type RelicBonus, type RelicSet 
 // and bonuses live in relic-catalog.ts, what the bonuses do in
 // relic-effects.ts.
 
-/** A relic: its name, rarity, whether a premium reward gives it, and the
- * event theme or the tower it comes from. */
-export type RelicDef = { name: string; rarity: RelicRarity; premium: boolean; theme?: EventThemeId; tower?: number; bonus: RelicBonus };
+/** A relic: its name, rarity, whether a premium reward gives it, the
+ * event theme or the tower it comes from (or the Shop: `shop`), its bonus
+ * and any more it gives (`also`; `relicBonuses` lists them all). */
+export type RelicDef = { name: string; rarity: RelicRarity; premium: boolean; theme?: EventThemeId; tower?: number; shop?: true; bonus: RelicBonus; also?: readonly RelicBonus[] };
+/** Every bonus `relic` gives, its first first. */
+export const relicBonuses = (relic: Pick<RelicDef, "bonus" | "also">): readonly RelicBonus[] => (relic.also ? [relic.bonus, ...relic.also] : [relic.bonus]);
 
 /** The places in a set, in the order its track gives them. */
 const PLACES = ["free1", "premium1", "free2", "premium2"] as const;
@@ -22,6 +25,8 @@ const rarityAt = (place: Place): RelicRarity => (place.endsWith("1") ? "rare" : 
 export const relicId = (theme: EventThemeId, year: number, place: string) => `${theme}.${year}.${place}`;
 /** The id of the relic `tower`'s last Goal gives: its epic reward, or its legendary premium one. */
 export const towerRelicId = (tower: number, rarity: "epic" | "legendary") => `tower.${tower}.${rarity}`;
+/** The id of the relic the Shop's Premium Offer `offer` gives. */
+export const shopRelicId = (offer: string) => `shop.${offer}`;
 
 /** The rarities, least first, as the Relics screen shows them. */
 export const RARITIES: readonly RelicRarity[] = ["rare", "epic", "legendary"];
@@ -38,6 +43,8 @@ export const RELICS: Readonly<Record<string, RelicDef>> = Object.fromEntries([
     list.map((s, i) => [relicId(theme, s.year, `store${i + 1}`), { name: s.relic.name, rarity: "epic" as const, premium: false, theme, bonus: s.relic.bonus }] as const)),
   ...Object.entries(TOWER_RELICS).flatMap(([tower, r]) => (["epic", "legendary"] as const).map((rarity) =>
     [towerRelicId(Number(tower), rarity), { name: r[rarity].name, rarity, premium: rarity === "legendary", tower: Number(tower), bonus: r[rarity].bonus }] as const)),
+  ...Object.entries(SHOP_RELICS).map(([offer, { name, bonuses: [bonus, ...also] }]) =>
+    [shopRelicId(offer), { name, rarity: "legendary" as const, premium: true, shop: true as const, bonus, ...(also.length ? { also } : {}) }] as const),
 ]);
 
 /** The relic set an event of `theme` in the cycle of `year` gives: the

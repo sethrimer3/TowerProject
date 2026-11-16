@@ -1,5 +1,5 @@
 import type { RelicDef } from "../economy/relics.ts";
-import { bonusText } from "../economy/relic-effects.ts";
+import { relicText } from "../economy/relic-effects.ts";
 import { relicIcon } from "./dom.ts";
 
 /** Raises `relic` to the middle of the screen at full size, with golden
@@ -12,10 +12,10 @@ export function showRelic(relic: RelicDef, { hover = false, reduceMotion = false
   const layer = document.createElement("div");
   layer.className = `relic-pop ${relic.rarity}${hover ? " hover" : ""}${reduceMotion ? " still" : ""}`;
   layer.setAttribute("role", "dialog");
-  layer.setAttribute("aria-label", `${relic.name}: ${bonusText(relic.bonus)}`);
+  layer.setAttribute("aria-label", `${relic.name}: ${relicText(relic)}`);
   const sparkles = Array.from({ length: 8 }, (_, i) => `<i style="--i:${i}"></i>`).join("");
   layer.innerHTML = `<div class="relic-pop-stage"><div class="relic-pop-rays" aria-hidden="true"></div><div class="relic-pop-sparkles" aria-hidden="true">${sparkles}</div>${relicIcon(relic, "relic-icon relic-pop-icon")}</div>` +
-    `<div class="card-reveal-text"><b>${relic.name}</b><p>${bonusText(relic.bonus)}</p></div>`;
+    `<div class="card-reveal-text"><b>${relic.name}</b><p>${relicText(relic)}</p></div>`;
   (document.querySelector("#app") ?? document.body).append(layer);
   if (!hover) layer.onclick = () => layer.remove();
 }

@@ -28,7 +28,9 @@ export const DETAIL_SPRITES = [
 export const NAMED_ENEMY_SPRITES = ["amethyst-golem", "armored-knight", "assassin", "bat", "berserker", "blackstone-colossus", "celestial-guardian", "coral-knight", "crystal-savant", "cultist", "demon", "dragon-whelp", "drowned-marauder", "gargoyle", "goblin", "golem", "mage", "obsidian-revenant", "ogre", "orc", "shadow-stalker", "skeleton", "slime", "spore-colossus", "sporeling", "starfire-adept", "stone-warden", "temple-wraith", "thief", "troll"] as const;
 /** A compact blue spark and a larger brass/ivory flash on equal native canvases. */
 export const INSPIRATION_SPRITE = "inspiration", BREAKTHROUGH_SPRITE = "breakthrough";
-export const CURRENCY_ICON_SPRITES = [INSPIRATION_SPRITE,BREAKTHROUGH_SPRITE] as const;
+/** A brass crown set with garnets and sapphires: VIP Points (tools/prepare-shop-sprites.mjs). */
+export const VIP_SPRITE = "vip";
+export const CURRENCY_ICON_SPRITES = [INSPIRATION_SPRITE,BREAKTHROUGH_SPRITE,VIP_SPRITE] as const;
 export type KitSprite = typeof ICON_SPRITES[number] | typeof WORLD_SPRITES[number] | typeof CONTROL_SPRITES[number] | typeof DETAIL_SPRITES[number] | typeof CURRENCY_ICON_SPRITES[number];
 export const kitUrl = (id: string) => `${BASE}assets/style/${id}.png`;
 /** Native PNG controls have one art source across UI themes. */

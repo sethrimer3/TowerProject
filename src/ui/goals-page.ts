@@ -5,11 +5,11 @@ import { GOAL_BREAKTHROUGH, CHECKPOINT_EVERY, CHECKPOINT_FLOORS, CHECKPOINTS, UN
 import { CURRENCIES, type CurrencyId } from "../shop/currency.ts";
 import { owns } from "../shop/entitlements.ts";
 import { stubServer, type ShopServer } from "../shop/server.ts";
-import { offer } from "../shop/offers.ts";
+import { money, offer } from "../shop/offers.ts";
 import { clearedInspiration } from "../tower/area-ledger.ts";
 import { tierNumeral, tierRewardText, tierStats } from "../tiers.ts";
 import type { AppContext } from "./app.ts";
-import { el, eventIcon, gemIcon, goldIcon, medalIcon, arcaniteIcon, relicIcon, shrineIcon, trophyIcon, uiSprite } from "./dom.ts";
+import { el, eventIcon, gemIcon, goldIcon, medalIcon, arcaniteIcon, relicIcon, vipIcon, shrineIcon, trophyIcon, uiSprite } from "./dom.ts";
 import { RELICS } from "../economy/relics.ts";
 import { showRelic } from "./relic-pop.ts";
 import { flyToPurse } from "./flourish.ts";
@@ -28,7 +28,7 @@ const FLOOR_PX = 14;
 const GROUND_PX = 96;
 const TOP_PX = 160;
 
-const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon("gem-icon goal-icon"), arcanite: () => arcaniteIcon("arcanite-icon goal-icon"), gold: goldIcon, medals: () => medalIcon("medal-icon goal-icon") };
+const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon("gem-icon goal-icon"), arcanite: () => arcaniteIcon("arcanite-icon goal-icon"), gold: goldIcon, medals: () => medalIcon("medal-icon goal-icon"), vip: () => vipIcon("vip-icon goal-icon") };
 /** Each unlock's icon: Damage Prediction a cracked heart, Combat Forecast an eye over crossed blades, Attack
  * Lore an open book with a rising arrow, Warp a portal's swirl, Damage Visual a monster's tile with a red
  * number in its corner, Relative Damage Color that tile over a green-to-red bar, Equipment an anvil
@@ -383,7 +383,7 @@ export class GoalsPage {
       `<p>${owned ? "Yours: every" : "Unlocks every"} premium reward in Towers ${names}, claimed as you reach each checkpoint.</p>` +
       `<div class="pass-totals">${amounts}</div>` +
       `<p class="goals-message" id="pass-message" aria-live="polite"></p>` +
-      `<div class="dialog-actions"><button id="pass-close">${owned ? "Close" : "Not now"}</button>${owned ? "" : `<button id="pass-buy">Unlock · ${pass.label}</button>`}</div>`;
+      `<div class="dialog-actions"><button id="pass-close">${owned ? "Close" : "Not now"}</button>${owned ? "" : `<button id="pass-buy">Unlock · ${money(pass.sku, pass.dollars).label}</button>`}</div>`;
     modal.showModal();
     el("pass-close").onclick = () => modal.close();
     if (!owned) el("pass-buy").onclick = () => void this.buyPass(pass);

@@ -22,7 +22,7 @@ const gemOffer = (amount: number): ShopOffer => ({
 test("the catalog: the Arcanite packs, one-time packs, the daily Gems, the Gem packs, the Premium Passes and the Event Booster at their default prices", () => {
   const shown = OFFERS.map((o) => [o.id, o.price.kind === "money" ? o.price.label : o.price.kind]);
   assert.deepEqual(shown, [
-    ["shards300", "$29.99"], ["shards750", "$59.99"], ["adFree", "$9.95"], ["coins2", "$9.95"], ["coins3", "$29.95"], ["dailyGems", "free"],
+    ["shards300", "$29.99"], ["shards750", "$59.99"], ["researcher", "$9.99"], ["trainer", "$9.99"], ["stellar", "$9.99"], ["adFree", "$9.95"], ["coins2", "$9.95"], ["coins3", "$29.95"], ["dailyGems", "free"],
     ["gems250", "$4.99"], ["gems550", "$9.99"], ["gems1150", "$19.99"], ["gems2500", "$39.99"], ["gems7500", "$99.99"],
     ["pass1", "$9.99"], ["pass2", "$19.99"], ["pass3", "$29.99"], ["eventBoost", "$9.99"],
   ]);

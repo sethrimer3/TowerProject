@@ -2,6 +2,7 @@ import type { Save } from "../save/shape.ts";
 import { CURRENCIES, type CurrencyId } from "./currency.ts";
 import { ENTITLEMENTS, owns, type EntitlementId } from "./entitlements.ts";
 import { boostEvent, boostRefusal } from "../events/progress.ts";
+import { settlePerks } from "./perks.ts";
 
 // What an offer grants. Granting hands the item to the system that owns it
 // (a currency's balance, the save's entitlements); the Shop keeps no copy.
@@ -37,7 +38,12 @@ export function grantRefusal(save: Save, item: ShopItem): "owned" | "locked" | n
 /** Hands `quantity` of `item` to its owner. */
 export function grant(save: Save, item: ShopItem, quantity: number) {
   for (const [c, n] of itemCurrencies(item)) CURRENCIES[c].credit(save, n * quantity);
-  if (item.kind === "entitlement") save.entitlements.push(item.id);
+  if (item.kind === "entitlement") {
+    save.entitlements.push(item.id);
+    // Its archivists join those already hired; its relic is the player's.
+    for (let i = 0; i < (ENTITLEMENTS[item.id].archivists ?? 0); i++) save.archives.slots.push({ autoContinue: false });
+    settlePerks(save);
+  }
   if (item.kind === "eventBoost") boostEvent(save);
 }
 

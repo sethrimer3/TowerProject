@@ -17,7 +17,15 @@ This document is the reference for the Shop's design: what Version 1 does, how i
    | 750 Arcanite Pack | 750 Arcanite + 600 Gems | $59.99 |
 
    **Arcanite** are a limited currency, kept between runs (`save.arcanite`), with a green crystal icon wherever they are shown: after Gems in the currencies bar of the Upgrades, Research, Deck and Gear pages, in the Shop's currencies, and in the forest's purse under Gems (the purse's lines close up there to make room). Nothing spends them yet. An offer can also be a banner that only opens the store (*Go to store*), and an offer with an end time shows *Expires in hh:mm:ss*, and it can't be bought once that time has passed, whatever the page still shows.
-3. **One-Time Offers** not yet owned. Each can be bought once, with real money; prices come from the server, with these defaults until it answers:
+3. **Premium Offers**: one offer at a time, the next appearing once it is bought (`premiumOffer`); once all are, the section reads *Thanks for your support! More offers to come in the future.* Each is bought once, and what it gives is kept by Erase All and given again on every load (`settlePerks` in `shop/perks.ts`):
+
+   | Offer | Grants | Default price |
+   |---|---|---|
+   | Extra Researcher | +1 archivist slot (beside the four Gems hire, not counted in their prices); the legendary relic Archivist Badge: +5% research speed | $9.99 |
+   | Extra Trainer | +1 trainer; the legendary relic Training Accolade: trainers 5% faster, +10% XP | $9.99 |
+   | Stellar Bundle | 500 Gems; the legendary relic Astral Ribbon: +1% Stellar Floor chance, +1% Stellar Gem chance | $9.99 |
+
+4. **One-Time Offers** not yet owned. Each can be bought once, with real money; prices come from the server, with these defaults until it answers:
 
    | Offer | Does | Default price |
    |---|---|---|
@@ -26,7 +34,7 @@ This document is the reference for the Shop's design: what Version 1 does, how i
    | Premium Coin Pack | 750 Gems; ×3 Gold, multiplying with ×2 and every other bonus; training ×3 for good, multiplying with the boost and the Special Coin Pack (×12 with all three training packs) | $29.95 |
 
    A line under them says *All coin bonuses are multiplicative and apply forever.* The Gold bonuses multiply each other: all three make ×9. They apply to every Gold the hero banks in the Tower and the Delve (kills, treasure, Spare Change, the end of a run).
-4. **Gems**, in two columns:
+5. **Gems**, in two columns:
 
    | Column 1 | Column 2 |
    |---|---|
@@ -34,8 +42,12 @@ This document is the reference for the Shop's design: what Version 1 does, how i
    | 250 Gem Pack: $4.99 | 2,500 Gem Pack: $39.99 (25% bonus!) |
    | 550 Gem Pack: $9.99 (10% bonus!) | 7,500 Gem Pack: $99.99 (50% bonus!) |
 
-5. **Owned**: the one-time offers already bought move to the bottom, marked *Owned*.
-6. **Purchase history**: every transaction, shown only in Dev mode.
+6. **Owned**: the one-time and Premium Offers already bought move to the bottom, marked *Owned*.
+7. **Purchase history**: every transaction, shown only in Dev mode.
+
+### VIP Points
+
+Every real-money purchase pays **VIP Points** (`save.vip`, a `CURRENCIES` row with a brass crown icon), a fixed amount for its price: each money `Price` carries its `vip`, 6 for each dollar of its base price in US dollars, rounded to the dollar (`money(sku, dollars)` and `VIP_PER_DOLLAR` in `offers.ts`). The amount belongs to the price, not to what the store charges, so a store selling in another currency pays the same; a discount is its own price, so the half-price Ad-Disable ($4.95) pays 30. `purchase` credits them with the item, Dev free purchases included; free claims and currency prices pay none. Each card shows its price's points as a tile beside what it grants. Erase All keeps them, and nothing spends them yet.
 
 Each card shows what its offer grants as large icons, each over its amount (`rewards` in `ui/shop-page.ts`, read from the offer's item): a one-time pack's Gold multiplier on the Gold coin (*×2*), then the currencies, never written out, and its other effects in a few words (*×2 training speed forever*). Tapping a card shows its details without buying: its rarity, its guaranteed effects, the quantity, the price, the balance left after a currency price, and its purchase limit. A card's own button buys it. A Gem price of 200 or more asks for confirmation first. When an offer can't be afforded, what the player has is written under its button (*You have 312 Gems*). A Gem price stays pressable and prominent, as every Gem purchase in the game does: pressing it short of Gems says so and scrolls to the Gem packs. Any other currency's button is disabled. A category can be gated by progress; a locked one shows *🔒 Name* and what unlocks it (*Reach Tower VIII to unlock.*) instead of disappearing.
 
@@ -58,8 +70,9 @@ Offers, items, currencies, entitlements, the ledger and the Shop's clock are sep
 | `currency.ts` | The currencies offers can be priced in or grant (`CURRENCIES`: Gems, Arcanite, Gold): how each is read, spent and credited. |
 | `rarity.ts` | `RARITIES`, from Common to Ancestral: display name, colour, power multiplier and drop weight, as data. |
 | `items.ts` | What an offer grants (`ShopItem`: an amount of a currency, a `bundle` of several currencies, an entitlement, or the running Event's booster, `eventBoost`, bought once an event and sold on the Events page in the `passes` category: docs/EVENTS.md), checking it can be granted before anything is paid, and granting it to its owner. |
-| `entitlements.ts` | The permanent perks (`ENTITLEMENTS`), saved in `save.entitlements`, and what the game reads from them: `goldFactor` (read by `RunPurse.gold` in `game/run-purse.ts`), `permanentBoost` (the training boost's end is set to never) and `adsOff`. The Premium Passes (`pass1` to `pass3`) are entitlements too, read by the Goals screen (`goals.ts`) and sold from it as the `passes` category, which the Shop page doesn't list. Erasing progress keeps them. |
-| `offers.ts` | The `ShopOffer` model and the catalog (`OFFERS`), the categories and their requirements. |
+| `entitlements.ts` | The permanent perks (`ENTITLEMENTS`), saved in `save.entitlements`, and what the game reads from them: `goldFactor` (read by `RunPurse.gold` in `game/run-purse.ts`), `permanentBoost` (the training boost's end is set to never), `adsOff`, and the Premium Offers' `premiumArchivists`, `premiumTrainers` (read by `trainingSlots`) and `entitlementRelics`. The Premium Passes (`pass1` to `pass3`) are entitlements too, read by the Goals screen (`goals.ts`) and sold from it as the `passes` category, which the Shop page doesn't list. Erasing progress keeps them. |
+| `offers.ts` | The `ShopOffer` model and the catalog (`OFFERS`), the categories and their requirements, real-money prices with their VIP Points (`money`), and the Premium Offer showing (`premiumOffer`). |
+| `perks.ts` | `settlePerks`: hands the entitlements' relics and archivist slots to their owners where missing, on every load and after Erase All. |
 | `ledger.ts` | The Shop's saved state, `save.shop`: purchase counts per offer (with the Shop day of the last, so the count of an offer with a period starts again), the transaction history (the last 100) and the last confirmed server time. |
 | `clock.ts` | The Shop day (`gmtDay`), recording a confirmed server time, and the estimate between confirmations. |
 | `transactions.ts` | `purchase`: one transaction, all or nothing. |
@@ -71,7 +84,7 @@ Offers, items, currencies, entitlements, the ledger and the Shop's clock are sep
 
 1. checks the offer: its category's and its own requirements, start and end times, whether it only opens the store, its purchase limit, whether its item can be granted (an entitlement not already owned), and its payment (a real-money offer only once the store confirmed it; a currency price only if it can be afforded);
 2. pays the price;
-3. grants the item to its owner;
+3. grants the item to its owner (a Premium Offer's archivist slot and relic among it), and pays a real-money price's VIP Points;
 4. records the transaction;
 5. counts the purchase against the offer.
 

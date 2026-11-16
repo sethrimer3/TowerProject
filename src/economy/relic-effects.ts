@@ -1,6 +1,6 @@
 import { trainingDef, type TrainingDef, type TrainingId } from "../progression/training.ts";
 import { snap } from "../exact.ts";
-import { RELICS } from "./relics.ts";
+import { RELICS, relicBonuses, type RelicDef } from "./relics.ts";
 import type { RelicBonus } from "./relic-catalog.ts";
 
 // What relics do (docs/EVENTS.md). A free relic multiplies one Training
@@ -37,6 +37,7 @@ export const RELIC_SPECIALS = {
   lifesteal: (a: number) => `Lifesteal +${a}%`,
   treasureFloor: (a: number) => `Treasure Floor chance +${a}%`,
   stellarFloor: (a: number) => `Stellar Floor chance +${a}%`,
+  stellarGem: (a: number) => `Stellar Gem chance +${a}%`,
   bossAttack: (a: number) => `+${a}% ATK against bosses`,
   bossCrit: (a: number) => `Critical hits on bosses deal ${a}% more damage`,
   bossAttackCut: (a: number) => `Reduce boss ATK by ${a}%`,
@@ -73,6 +74,8 @@ export type RelicSpecial = keyof typeof RELIC_SPECIALS;
 
 /** A relic's bonus as the player reads it: "+4% Regen", "Trainers work 3% faster". */
 export const bonusText = (b: RelicBonus) => b.kind === "boost" ? `+${b.percent}% ${trainingDef(b.stat).name}` : RELIC_SPECIALS[b.effect](b.amount);
+/** Every bonus `relic` gives as the player reads them, one after another. */
+export const relicText = (relic: Pick<RelicDef, "bonus" | "also">) => relicBonuses(relic).map(bonusText).join(" · ");
 
 type Totals = { boosts: Partial<Record<TrainingId, number>>; specials: Partial<Record<RelicSpecial, number>> };
 /** Each relics list's totals, recounted when it changes length (relics are
@@ -83,9 +86,11 @@ function totals(relics: readonly string[]): Totals {
   if (hit && hit.length === relics.length) return hit.totals;
   const t: Totals = { boosts: {}, specials: {} };
   for (const id of relics) {
-    const b = RELICS[id]?.bonus;
-    if (b?.kind === "boost") t.boosts[b.stat] = (t.boosts[b.stat] ?? 0) + b.percent;
-    else if (b) t.specials[b.effect] = (t.specials[b.effect] ?? 0) + b.amount;
+    const def = RELICS[id];
+    for (const b of def ? relicBonuses(def) : []) {
+      if (b.kind === "boost") t.boosts[b.stat] = (t.boosts[b.stat] ?? 0) + b.percent;
+      else t.specials[b.effect] = (t.specials[b.effect] ?? 0) + b.amount;
+    }
   }
   cache.set(relics, { length: relics.length, totals: t });
   return t;
@@ -95,9 +100,7 @@ function totals(relics: readonly string[]): Totals {
  * order first owned, with how many relics give each. */
 export function relicTotals(relics: readonly string[]): { bonus: RelicBonus; count: number }[] {
   const byKey = new Map<string, { bonus: RelicBonus; count: number }>();
-  for (const id of relics) {
-    const b = RELICS[id]?.bonus;
-    if (!b) continue;
+  for (const b of relics.flatMap((id) => (RELICS[id] ? relicBonuses(RELICS[id]!) : []))) {
     const key = b.kind === "boost" ? `boost:${b.stat}` : `special:${b.effect}`, t = byKey.get(key);
     if (!t) byKey.set(key, { bonus: { ...b }, count: 1 });
     else {

@@ -96,6 +96,10 @@ export type Save = {
    * mission rewards (missions/catalog.ts) and Events' missions
    * (events/catalog.ts), spent in events' Stores (events/store.ts). */
   medals: number;
+  /** VIP Points: paid by every real-money Shop purchase, a fixed amount
+   * for its price (shop/offers.ts `Price`), kept by Erase All; nothing
+   * spends them yet. */
+  vip: number;
   /** Cells: dropped by Greater Bosses, kept between runs with their
    * fractions (a badge's scale can change a drop), spent on the Archives'
    * Speed Ups (progression/speed-ups.ts). */

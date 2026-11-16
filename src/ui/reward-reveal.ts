@@ -5,14 +5,15 @@ import { ENTITLEMENTS } from "../shop/entitlements.ts";
 import { bundleAmounts } from "../shop/items.ts";
 import type { ShopOffer } from "../shop/offers.ts";
 import type { MailItem } from "../mail/message.ts";
-import { gemIcon, goldIcon, medalIcon, arcaniteIcon, ticketIcon, uiSprite } from "./dom.ts";
+import { gemIcon, goldIcon, medalIcon, arcaniteIcon, relicIcon, ticketIcon, uiSprite, vipIcon } from "./dom.ts";
+import { RELICS } from "../economy/relics.ts";
 
 /** A reward to celebrate: its icon, the amount beside it (a currency's
  * "+250"), the line over its name, and what it does. A `permanent` one, an
  * unlock bought for good, turns golden rays behind it; currency doesn't. */
 export type RewardShown = { icon: string; amount?: string; kicker: string; name: string; text?: string; permanent: boolean };
 
-const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon(), arcanite: () => arcaniteIcon(), gold: goldIcon, medals: () => medalIcon() };
+const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon(), arcanite: () => arcaniteIcon(), gold: goldIcon, medals: () => medalIcon(), vip: () => vipIcon() };
 
 /** Celebrates a reward the way a new card is: it rises from below the screen
  * to its middle, with what it is written underneath, and a press claims it
@@ -63,8 +64,8 @@ export function offerShown(o: ShopOffer): RewardShown | null {
   }
   if (item.kind === "eventBoost")
     return { icon: medalIcon(), amount: "×2", kicker: "PURCHASED", name: o.name, text: o.effects.join(" · "), permanent: true };
-  const factor = ENTITLEMENTS[item.id].goldFactor;
-  const icon = factor > 1 ? goldIcon() : controlIcon("star", "★", "reward-reveal-star");
+  const factor = ENTITLEMENTS[item.id].goldFactor, relic = ENTITLEMENTS[item.id].relic;
+  const icon = factor > 1 ? goldIcon() : relic && RELICS[relic] ? relicIcon(RELICS[relic]!) : controlIcon("star", "★", "reward-reveal-star");
   const gained = bundleAmounts(item.amounts).map(([c, n]) => `+${(n * o.quantity).toLocaleString("en-US")} ${CURRENCIES[c].name}`);
   return { icon, amount: factor > 1 ? `×${factor}` : undefined, kicker: "UNLOCKED FOR GOOD", name: o.name, text: [...o.effects, ...gained].join(" · "), permanent: true };
 }

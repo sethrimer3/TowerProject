@@ -2,7 +2,8 @@ import { controlIcon } from "./control-icon.ts";
 import { whole } from "../whole.ts";
 import { CURRENCIES, type CurrencyId } from "../shop/currency.ts";
 import { estimatedServerTime } from "../shop/clock.ts";
-import { CATEGORIES, OFFERS, offer, requirementText, unmet, type CategoryId, type OfferId, type ShopOffer } from "../shop/offers.ts";
+import { CATEGORIES, OFFERS, offer, premiumOffer, requirementText, unmet, type CategoryId, type OfferId, type Price, type ShopOffer } from "../shop/offers.ts";
+import { RELICS } from "../economy/relics.ts";
 import { ENTITLEMENTS } from "../shop/entitlements.ts";
 import { discountOn, priceOf } from "../shop/discounts.ts";
 import { itemCurrencies } from "../shop/items.ts";
@@ -10,22 +11,26 @@ import { RARITIES } from "../shop/rarity.ts";
 import { stubServer, type ShopServer } from "../shop/server.ts";
 import { availableAgain, priceText, refusal, soldOut, timesBought, type Refusal } from "../shop/transactions.ts";
 import type { AppContext } from "./app.ts";
-import { el, gemIcon, goldIcon, medalIcon, arcaniteIcon } from "./dom.ts";
+import { el, gemIcon, goldIcon, medalIcon, arcaniteIcon, relicIcon, vipIcon } from "./dom.ts";
 import { offerShown, revealReward } from "./reward-reveal.ts";
 
 /** Gem prices from this up ask the player to confirm first. */
 export const CONFIRM_GEMS = 200;
-const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon(), arcanite: () => arcaniteIcon(), gold: goldIcon, medals: () => medalIcon() };
+const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon(), arcanite: () => arcaniteIcon(), gold: goldIcon, medals: () => medalIcon(), vip: () => vipIcon() };
 
 /** What `o` grants, each a large icon over its amount: a perk's Gold
- * multiplier on the coin, then the currencies. What a card shows in place
- * of writing them out. */
-function rewards(o: ShopOffer) {
+ * multiplier on the coin, its relic, then the currencies, and the VIP
+ * Points its real-money price pays (`price`, a discount's while one runs).
+ * What a card shows in place of writing them out. */
+function rewards(o: ShopOffer, price: Price = o.price) {
   const tile = (icon: string, amount: string, label: string) => `<span class="shop-reward" aria-label="${label}">${icon}<b>${amount}</b></span>`;
-  const factor = o.item?.kind === "entitlement" ? ENTITLEMENTS[o.item.id].goldFactor : 1;
+  const perk = o.item?.kind === "entitlement" ? ENTITLEMENTS[o.item.id] : undefined, factor = perk?.goldFactor ?? 1;
+  const relic = perk?.relic ? RELICS[perk.relic] : undefined;
   const tiles = [
     ...(factor > 1 ? [tile(goldIcon(), `×${factor}`, `×${factor} Gold forever`)] : []),
+    ...(relic ? [tile(relicIcon(relic), "", relic.name)] : []),
     ...itemCurrencies(o.item).map(([c, n]) => tile(CURRENCY_ICONS[c](), n.toLocaleString("en-US"), `${n.toLocaleString("en-US")} ${CURRENCIES[c].name}`)),
+    ...(price.kind === "money" ? [tile(vipIcon(), `+${price.vip}`, `${price.vip} VIP Points`)] : []),
   ];
   return tiles.length ? `<span class="shop-rewards">${tiles.join("")}</span>` : "";
 }
@@ -90,7 +95,7 @@ export class ShopPage {
 
   render() {
     const save = this.ctx.game.save;
-    const owned = (o: ShopOffer) => o.category === "special" && soldOut(save, o, this.now);
+    const owned = (o: ShopOffer) => (o.category === "special" || o.category === "premium") && soldOut(save, o, this.now);
     const section = (id: CategoryId, offers: ShopOffer[], extra = "") => {
       const c = CATEGORIES[id], locked = unmet(save, c.requires);
       if (locked) return `<section class="shop-section locked"><h3>${controlIcon("lock")} ${c.name}</h3><p class="hint">${requirementText(locked)}</p></section>`;
@@ -102,11 +107,19 @@ export class ShopPage {
       `<button class="back" id="shop-back">${controlIcon("back")} Back</button><div class="page-title"><small>SUPPLIES FOR THE ASCENT</small><h2>Shop</h2></div>` +
       `<p class="shop-message" id="shop-message" aria-live="polite">${this.message}</p>` +
       section("limited", of("limited")) +
+      this.premium() +
       section("special", of("special").filter((o) => !owned(o))) +
       section("gems", of("gems"), "shop-columns") +
       (ownedOffers.length ? `<section class="shop-section shop-owned"><h3>Owned</h3><div class="shop-grid">${ownedOffers.map((o) => this.card(o)).join("")}</div></section>` : "") +
       this.history();
     this.bind();
+  }
+
+  /** The Premium Offers: the next not yet bought, or thanks once all are. */
+  private premium() {
+    const o = premiumOffer(this.ctx.game.save);
+    return `<section class="shop-section shop-premium"><h3>${CATEGORIES.premium.name}</h3>` +
+      (o ? `<div class="shop-grid">${this.card(o)}</div>` : `<p class="shop-thanks">Thanks for your support! More offers to come in the future.</p>`) + `</section>`;
   }
 
   /** What `o` costs now (a discount's price while one runs), with the
@@ -168,7 +181,7 @@ export class ShopPage {
   private card(o: ShopOffer) {
     const r = RARITIES[o.rarity], a = this.action(o), ends = o.endTime !== undefined && o.endTime > this.now;
     return `<article class="shop-card${o.category === "limited" ? " shop-banner" : ""}" style="--rarity: ${r.color}">
-      <button class="shop-card-face" data-detail="${o.id}" aria-label="${o.name}: details"><small class="shop-rarity">${r.displayName}</small><b class="shop-name">${o.name}</b>${o.badge ? `<span class="shop-badge">${o.badge}</span>` : ""}${rewards(o)}${o.effects.length ? `<span class="shop-effects">${o.effects.join(" · ")}</span>` : ""}${this.discount(o)}${ends ? `<small class="shop-expires">Expires in <span data-countdown="${o.id}">${countdown(o.endTime! - this.now)}</span></small>` : ""}</button>
+      <button class="shop-card-face" data-detail="${o.id}" aria-label="${o.name}: details"><small class="shop-rarity">${r.displayName}</small><b class="shop-name">${o.name}</b>${o.badge ? `<span class="shop-badge">${o.badge}</span>` : ""}${rewards(o, priceOf(this.ctx.game.save, o, this.now))}${o.effects.length ? `<span class="shop-effects">${o.effects.join(" · ")}</span>` : ""}${this.discount(o)}${ends ? `<small class="shop-expires">Expires in <span data-countdown="${o.id}">${countdown(o.endTime! - this.now)}</span></small>` : ""}</button>
       <button class="shop-buy${this.waiting(o) ? " notify" : ""}" data-buy="${o.id}" ${a.disabled ? "disabled" : ""}>${a.label}</button>${a.why ? `<small class="shop-why">${a.why}</small>` : ""}</article>`;
   }
 
@@ -212,7 +225,7 @@ export class ShopPage {
       lines.push(`After: ${whole(c.balance(save) - o.price.amount).toLocaleString("en-US")} ${c.name}`);
     }
     if (o.purchaseLimit !== null) lines.push(`Purchased ${timesBought(save, o, this.now)}/${o.purchaseLimit}${o.period === 1 ? " today" : o.period ? `, one every ${o.period} days` : ""}`);
-    modal.innerHTML = `<small style="color: ${r.color}">${r.displayName.toUpperCase()}</small><h2>${o.name}</h2><p class="shop-guaranteed"><b>Guaranteed</b></p>${rewards(o)}${o.effects.length ? `<p class="shop-guaranteed">${o.effects.join("<br>")}</p>` : ""}<p>${lines.join("<br>")}</p>${a.why ? `<p class="shop-why">${a.why}</p>` : ""}<div class="dialog-actions"><button id="cancel">Cancel</button><button id="confirm" ${a.disabled ? "disabled" : ""}>${a.label}</button></div>`;
+    modal.innerHTML = `<small style="color: ${r.color}">${r.displayName.toUpperCase()}</small><h2>${o.name}</h2><p class="shop-guaranteed"><b>Guaranteed</b></p>${rewards(o, priceOf(save, o, this.now))}${o.effects.length ? `<p class="shop-guaranteed">${o.effects.join("<br>")}</p>` : ""}<p>${lines.join("<br>")}</p>${a.why ? `<p class="shop-why">${a.why}</p>` : ""}<div class="dialog-actions"><button id="cancel">Cancel</button><button id="confirm" ${a.disabled ? "disabled" : ""}>${a.label}</button></div>`;
     modal.showModal();
     el("cancel").onclick = () => modal.close();
     el("confirm").onclick = () => {

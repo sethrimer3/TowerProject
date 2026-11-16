@@ -9,6 +9,7 @@ import { aggroTurn } from "./enemies/flying.ts";
 import { arrowRange, foeOn, stunWorn, TURN_TICKS, within as inShotRange } from "./enemies/ranged.ts";
 import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./cards/badges.ts";
 import { BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
+import { settlePerks } from "./shop/perks.ts";
 import { noteGoldBoost } from "./economy/gold-boost.ts";
 import { canWarp, claimGoal, goalUnlocked, goalsWaiting } from "./goals.ts";
 import { fieldReach, togetherSlow } from "./arcana/time-dilation.ts";
@@ -2028,9 +2029,11 @@ export class Game {
     // What was bought in the Shop, and its record, outlast the progress, as
     // does Mail, which is the server's (and so what was claimed from it),
     // and the Event Boosters bought.
-    const { entitlements, shop, mail, events } = this.save;
-    this.save = { ...defaults(), entitlements, shop, mail };
+    // VIP Points, paid by purchases, stay too, and the perks bought are given again.
+    const { entitlements, shop, mail, events, vip } = this.save;
+    this.save = { ...defaults(), entitlements, shop, mail, vip };
     this.save.events.boosted = events.boosted;
+    settlePerks(this.save);
     if (permanentBoost(this.save)) this.save.trainingBoostUntil = BOOST_FOREVER;
     stampProfile(this.save, this.clock());
     this.mode = "tower";

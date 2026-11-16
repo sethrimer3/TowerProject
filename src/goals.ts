@@ -361,11 +361,11 @@ export const checkpoint = (tower: number, floor: number) => CHECKPOINTS[tower]?.
 
 /** Each Premium Pass: the three towers it opens premium rewards in, and
  * its price (the store prices it by `sku` once connected). */
-export type Pass = { id: EntitlementId; n: number; towers: number[]; sku: string; label: string };
+export type Pass = { id: EntitlementId; n: number; towers: number[]; sku: string; dollars: number };
 export const PASSES: readonly Pass[] = [
-  { id: "pass1", n: 1, towers: [1, 2, 3], sku: "premium_pass_1", label: "$9.99" },
-  { id: "pass2", n: 2, towers: [4, 5, 6], sku: "premium_pass_2", label: "$19.99" },
-  { id: "pass3", n: 3, towers: [7, 8, 9], sku: "premium_pass_3", label: "$29.99" },
+  { id: "pass1", n: 1, towers: [1, 2, 3], sku: "premium_pass_1", dollars: 9.99 },
+  { id: "pass2", n: 2, towers: [4, 5, 6], sku: "premium_pass_2", dollars: 19.99 },
+  { id: "pass3", n: 3, towers: [7, 8, 9], sku: "premium_pass_3", dollars: 29.99 },
 ];
 /** The pass whose set holds `tower`. */
 export const passFor = (tower: number) => PASSES.find((p) => p.towers.includes(tower))!;

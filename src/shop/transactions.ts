@@ -77,6 +77,8 @@ export function purchase(save: Save, offer: ShopOffer, now: number, payment: Pay
   const item = offer.item!, price = priceOf(save, offer, now);
   if (payment === "price" && price.kind === "currency") CURRENCIES[price.currency].spend(save, price.amount);
   grant(save, item, offer.quantity);
+  // A real-money purchase pays its price's VIP Points.
+  if (price.kind === "money") CURRENCIES.vip.credit(save, price.vip);
   const t: Transaction = { at: now, offer: offer.id, item: itemName(item), price: payment === "free" ? "Dev: free" : priceText(price) };
   save.shop.history.push(t);
   save.shop.history.splice(0, Math.max(0, save.shop.history.length - HISTORY_KEPT));

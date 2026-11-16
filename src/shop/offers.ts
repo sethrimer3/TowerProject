@@ -11,28 +11,39 @@ import type { RarityId } from "./rarity.ts";
 
 /** What an offer costs: a currency, nothing, real money (the store prices
  * it by `sku`; `label` until the server answers), or nothing here at all:
- * the offer only opens the store. */
+ * the offer only opens the store. A real-money price pays its `vip`
+ * VIP Points with the purchase, whatever currency the store charges in. */
 export type Price =
   | { kind: "currency"; currency: CurrencyId; amount: number }
   | { kind: "free" }
-  | { kind: "money"; sku: string; label: string }
+  | { kind: "money"; sku: string; label: string; vip: number }
   | { kind: "store"; url: string };
+
+/** VIP Points a real-money price pays for each dollar of its base price
+ * (US dollars, rounded to the whole dollar): $9.99 pays 60. */
+export const VIP_PER_DOLLAR = 6;
+/** A real-money price of `dollars` (its base price, as sold in US
+ * dollars), with the VIP Points it pays. */
+export const money = (sku: string, dollars: number): Price & { kind: "money" } =>
+  ({ kind: "money", sku, label: `$${dollars.toFixed(2)}`, vip: Math.round(dollars) * VIP_PER_DOLLAR });
 
 /** A progression gate on a category or offer. */
 export type Requirement = { kind: "tier"; mode: Mode; tier: number };
 
-export type CategoryId = "limited" | "special" | "gems" | "passes";
+export type CategoryId = "limited" | "premium" | "special" | "gems" | "passes";
 /** A category: its heading, what opens it, and a line under its offers. */
 export type Category = { name: string; requires?: Requirement[]; note?: string };
 export const CATEGORIES: Record<CategoryId, Category> = {
   limited: { name: "Limited Offers" },
+  // Shown one at a time, in order: the next once one is bought.
+  premium: { name: "Premium Offers" },
   special: { name: "One-Time Offers", note: "All coin bonuses are multiplicative and apply forever." },
   gems: { name: "Gems" },
   // Sold from the Goals and Events screens, not the Shop page.
   passes: { name: "Premium Passes" },
 };
 
-export type OfferId = "shards300" | "shards750" | "adFree" | "coins2" | "coins3" | "dailyGems" | "gems250" | "gems550" | "gems1150" | "gems2500" | "gems7500" | "pass1" | "pass2" | "pass3" | "eventBoost";
+export type OfferId = "shards300" | "shards750" | "researcher" | "trainer" | "stellar" | "adFree" | "coins2" | "coins3" | "dailyGems" | "gems250" | "gems550" | "gems1150" | "gems2500" | "gems7500" | "pass1" | "pass2" | "pass3" | "eventBoost";
 export type ShopOffer = {
   id: OfferId;
   name: string;
@@ -61,61 +72,82 @@ export type ShopOffer = {
 };
 
 /** A limited pack of Arcanite with Gems beside them, once a fortnight. */
-const arcanitePack = (id: OfferId, arcanite: number, gems: number, sku: string, label: string, rarity: RarityId): ShopOffer => ({
+const arcanitePack = (id: OfferId, arcanite: number, gems: number, sku: string, dollars: number, rarity: RarityId): ShopOffer => ({
   id, name: `${arcanite} Arcanite Pack`, category: "limited", item: { kind: "bundle", amounts: { arcanite, gems } }, quantity: 1,
-  price: { kind: "money", sku, label }, rarity, purchaseLimit: 1, period: SHARD_PACK_DAYS,
+  price: money(sku, dollars), rarity, purchaseLimit: 1, period: SHARD_PACK_DAYS,
   effects: ["Every two weeks"], tags: ["limited"],
 });
 /** Shop days between purchases of each Arcanite pack. */
 export const SHARD_PACK_DAYS = 14;
 
-const gemPack = (id: OfferId, gems: number, sku: string, label: string, rarity: RarityId, badge?: string): ShopOffer => ({
+const gemPack = (id: OfferId, gems: number, sku: string, dollars: number, rarity: RarityId, badge?: string): ShopOffer => ({
   id, name: `${gems.toLocaleString("en-US")} Gem Pack`, category: "gems", item: { kind: "currency", currency: "gems", amount: gems }, quantity: 1,
-  price: { kind: "money", sku, label }, rarity, purchaseLimit: null, effects: [], badge, tags: [],
+  price: money(sku, dollars), rarity, purchaseLimit: null, effects: [], badge, tags: [],
 });
 
 /** Every offer, in the order the page shows each category's. */
 export const OFFERS: readonly ShopOffer[] = [
-  arcanitePack("shards300", 300, 250, "shards_300", "$29.99", "legendary"),
-  arcanitePack("shards750", 750, 600, "shards_750", "$59.99", "mythic"),
+  arcanitePack("shards300", 300, 250, "shards_300", 29.99, "legendary"),
+  arcanitePack("shards750", 750, 600, "shards_750", 59.99, "mythic"),
+  // The Premium Offers, shown one at a time in this order (`premiumOffer`).
+  {
+    id: "researcher", name: "Extra Researcher", category: "premium", item: { kind: "entitlement", id: "researcher" }, quantity: 1,
+    price: money("extra_researcher", 9.99), rarity: "legendary", purchaseLimit: 1,
+    effects: ["+1 archivist slot", "Unique legendary relic: Archivist Badge, +5% research speed"], tags: ["oneTime"],
+  },
+  {
+    id: "trainer", name: "Extra Trainer", category: "premium", item: { kind: "entitlement", id: "trainer" }, quantity: 1,
+    price: money("extra_trainer", 9.99), rarity: "legendary", purchaseLimit: 1,
+    effects: ["+1 trainer", "Unique legendary relic: Training Accolade, +5% training speed and +10% XP gain"], tags: ["oneTime"],
+  },
+  {
+    id: "stellar", name: "Stellar Bundle", category: "premium", item: { kind: "entitlement", id: "stellar", amounts: { gems: 500 } }, quantity: 1,
+    price: money("stellar_bundle", 9.99), rarity: "legendary", purchaseLimit: 1,
+    effects: ["Unique legendary relic: Astral Ribbon, +1% Stellar Floors and +1% Stellar Gems"], tags: ["oneTime"],
+  },
   {
     id: "adFree", name: "Permanent Ad-Disable", category: "special", item: { kind: "entitlement", id: "adFree" }, quantity: 1,
-    price: { kind: "money", sku: "ad_free", label: "$9.95" }, rarity: "epic", purchaseLimit: 1,
+    price: money("ad_free", 9.95), rarity: "epic", purchaseLimit: 1,
     effects: ["No ads", "×2 training speed forever"], tags: ["oneTime"],
   },
   {
     id: "coins2", name: "Special Coin Pack", category: "special", item: { kind: "entitlement", id: "coins2", amounts: { gems: 150 } }, quantity: 1,
-    price: { kind: "money", sku: "coins_x2", label: "$9.95" }, rarity: "epic", purchaseLimit: 1,
+    price: money("coins_x2", 9.95), rarity: "epic", purchaseLimit: 1,
     effects: ["×2 training speed forever"], tags: ["oneTime"],
   },
   {
     id: "coins3", name: "Premium Coin Pack", category: "special", item: { kind: "entitlement", id: "coins3", amounts: { gems: 750 } }, quantity: 1,
-    price: { kind: "money", sku: "coins_x3", label: "$29.95" }, rarity: "legendary", purchaseLimit: 1,
+    price: money("coins_x3", 29.95), rarity: "legendary", purchaseLimit: 1,
     effects: ["×3 training speed forever"], tags: ["oneTime"],
   },
   {
     id: "dailyGems", name: "Daily Free Gems", category: "gems", item: { kind: "currency", currency: "gems", amount: 25 }, quantity: 1,
     price: { kind: "free" }, rarity: "common", purchaseLimit: 1, period: 1, effects: ["Free daily, 00:00 GMT"], tags: ["free"],
   },
-  gemPack("gems250", 250, "gems_250", "$4.99", "common"),
-  gemPack("gems550", 550, "gems_550", "$9.99", "uncommon", "10% bonus!"),
-  gemPack("gems1150", 1150, "gems_1150", "$19.99", "rare", "15% bonus!"),
-  gemPack("gems2500", 2500, "gems_2500", "$39.99", "epic", "25% bonus!"),
-  gemPack("gems7500", 7500, "gems_7500", "$99.99", "legendary", "50% bonus!"),
+  gemPack("gems250", 250, "gems_250", 4.99, "common"),
+  gemPack("gems550", 550, "gems_550", 9.99, "uncommon", "10% bonus!"),
+  gemPack("gems1150", 1150, "gems_1150", 19.99, "rare", "15% bonus!"),
+  gemPack("gems2500", 2500, "gems_2500", 39.99, "epic", "25% bonus!"),
+  gemPack("gems7500", 7500, "gems_7500", 99.99, "legendary", "50% bonus!"),
   ...PASSES.map((p): ShopOffer => ({
     id: p.id as OfferId, name: `Premium Pass ${p.n}`, category: "passes", item: { kind: "entitlement", id: p.id }, quantity: 1,
-    price: { kind: "money", sku: p.sku, label: p.label }, rarity: "legendary", purchaseLimit: 1,
+    price: money(p.sku, p.dollars), rarity: "legendary", purchaseLimit: 1,
     effects: [`Premium rewards in Towers ${p.towers.map(tierNumeral).join(", ")}`], tags: ["oneTime"],
   })),
   // Once each event, sold on the Events page.
   {
     id: "eventBoost", name: "Event Booster", category: "passes", item: { kind: "eventBoost" }, quantity: 1,
-    price: { kind: "money", sku: "event_booster", label: "$9.99" }, rarity: "epic", purchaseLimit: null,
+    price: money("event_booster", 9.99), rarity: "epic", purchaseLimit: null,
     effects: ["Double this event's Medals", "Opens its premium relics"], tags: ["event"],
   },
 ];
 
 export const offer = (id: string) => OFFERS.find((o) => o.id === id);
+
+/** The Premium Offer the Shop shows now: the first of them not yet
+ * bought, or none once all are. */
+export const premiumOffer = (save: Pick<Save, "shop">) =>
+  OFFERS.find((o) => o.category === "premium" && !save.shop.counts[o.id]?.n);
 
 /** Whether `save` meets `r`. */
 export const requirementMet = (save: Save, r: Requirement) => save[r.mode].tiersOpen >= r.tier;

@@ -1,0 +1,113 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { Game } from "../src/state.ts";
+import { decode, defaults } from "../src/save/save.ts";
+import { DAY_MS } from "../src/shop/clock.ts";
+import { OFFERS, offer, premiumOffer, type OfferId } from "../src/shop/offers.ts";
+import { priceOf } from "../src/shop/discounts.ts";
+import { ARCHIVISTS, nextArchivistPrice } from "../src/progression/archives.ts";
+import { trainingSlots } from "../src/progression/training-jobs.ts";
+import { premiumArchivists } from "../src/shop/entitlements.ts";
+import { RELICS } from "../src/economy/relics.ts";
+import { relicAmount, relicText, relicTotals } from "../src/economy/relic-effects.ts";
+
+/** Noon GMT on some day, a real timestamp. */
+const NOON = 20_500 * DAY_MS + DAY_MS / 2;
+/** Buys real-money offer `id` as the store confirms it. */
+const buy = (g: Game, id: OfferId) => assert.equal(g.shop.buy(id, NOON, true), null, id);
+
+test("every real-money offer pays 6 VIP Points for each dollar of its base price", () => {
+  const vip = Object.fromEntries(OFFERS.flatMap((o) => (o.price.kind === "money" ? [[o.id, o.price.vip]] : [])));
+  assert.deepEqual(vip, {
+    shards300: 180, shards750: 360, researcher: 60, trainer: 60, stellar: 60, adFree: 60, coins2: 60, coins3: 180,
+    gems250: 30, gems550: 60, gems1150: 120, gems2500: 240, gems7500: 600, pass1: 60, pass2: 120, pass3: 180, eventBoost: 60,
+  });
+});
+
+test("a purchase pays its price's VIP Points; the half-price Ad-Disable pays 30; free claims pay none", () => {
+  const g = new Game(defaults());
+  buy(g, "gems550");
+  buy(g, "gems250");
+  assert.equal(g.save.vip, 90);
+  assert.equal(g.shop.buy("dailyGems", NOON), null);
+  assert.equal(g.save.vip, 90, "the Daily Free Gems pay none");
+  g.save.ads.discountUntil = NOON + DAY_MS;
+  assert.deepEqual(priceOf(g.save, offer("adFree")!, NOON), { kind: "money", sku: "ad_free_half", label: "$4.95", vip: 30 });
+  buy(g, "adFree");
+  assert.equal(g.save.vip, 120, "$4.95 pays 30");
+  assert.equal(g.shop.buy("gems250", NOON, false), "unpaid", "an unconfirmed payment pays nothing");
+  assert.equal(g.save.vip, 120);
+});
+
+test("VIP Points are saved, never negative, and outlast Erase All", () => {
+  const g = new Game(defaults());
+  buy(g, "gems7500");
+  assert.equal(decode(JSON.stringify(g.save)).vip, 600);
+  assert.equal(decode(JSON.stringify({ ...g.save, vip: -5 })).vip, 0);
+  g.eraseAll();
+  assert.equal(g.save.vip, 600);
+});
+
+test("the Premium Offers come one at a time, in order, until none is left", () => {
+  const g = new Game(defaults());
+  assert.equal(premiumOffer(g.save)?.id, "researcher");
+  buy(g, "researcher");
+  assert.equal(premiumOffer(g.save)?.id, "trainer");
+  buy(g, "trainer");
+  assert.equal(premiumOffer(g.save)?.id, "stellar");
+  buy(g, "stellar");
+  assert.equal(premiumOffer(g.save), undefined);
+  assert.equal(g.shop.buy("stellar", NOON, true), "limit", "each is bought once");
+  assert.equal(g.save.vip, 180);
+});
+
+test("Extra Researcher adds an archivist beside those Gems hire, and its relic speeds research", () => {
+  const g = new Game(defaults());
+  g.save.gems = 100;
+  assert.ok(g.research.hire() || !g.research.open, "hire one with Gems where the Archives are open");
+  const before = g.save.archives.slots.length, price = nextArchivistPrice(g.save.archives);
+  buy(g, "researcher");
+  assert.equal(g.save.archives.slots.length, before + 1);
+  assert.equal(nextArchivistPrice(g.save.archives, premiumArchivists(g.save)), price, "the Gem prices go on where they were");
+  assert.ok(g.save.relics.includes("shop.researcher"));
+  assert.equal(relicAmount(g.save, "researchSpeed"), 5);
+  // All Gem archivists can still be hired, and the save keeps the extra slot.
+  g.save.archives.slots.length = 0;
+  for (let i = 0; i < ARCHIVISTS.maximum + 1; i++) g.save.archives.slots.push({ autoContinue: false });
+  assert.equal(decode(JSON.stringify(g.save)).archives.slots.length, ARCHIVISTS.maximum + 1);
+});
+
+test("Extra Trainer adds a trainer, and its relic speeds trainers and raises XP", () => {
+  const g = new Game(defaults()), slots = trainingSlots(g.save);
+  buy(g, "trainer");
+  assert.equal(trainingSlots(g.save), slots + 1);
+  assert.equal(relicAmount(g.save, "trainerSpeed"), 5);
+  assert.equal(relicAmount(g.save, "xp"), 10);
+  assert.equal(relicText(RELICS["shop.trainer"]!), "Trainers work 5% faster · XP earned +10%");
+  assert.deepEqual(relicTotals(g.save.relics).map((t) => t.count), [1, 1], "each bonus totalled on its own line");
+});
+
+test("Stellar Bundle pays 500 Gems and its relic raises Stellar Floors and Stellar Gems", () => {
+  const g = new Game(defaults());
+  buy(g, "stellar");
+  assert.equal(g.save.gems, 500);
+  assert.equal(relicAmount(g.save, "stellarFloor"), 1);
+  assert.equal(relicAmount(g.save, "stellarGem"), 1);
+  assert.equal(RELICS["shop.stellar"]!.rarity, "legendary");
+});
+
+test("what the Premium Offers gave comes back on load and after Erase All", () => {
+  const g = new Game(defaults());
+  for (const id of ["researcher", "trainer", "stellar"] as const) buy(g, id);
+  const save = JSON.parse(JSON.stringify(g.save));
+  save.relics = [];
+  save.archives.slots = [{ autoContinue: false }];
+  const back = decode(JSON.stringify(save));
+  assert.deepEqual([...back.relics].sort(), ["shop.researcher", "shop.stellar", "shop.trainer"]);
+  assert.equal(back.archives.slots.length, ARCHIVISTS.start + 1);
+  g.eraseAll();
+  assert.deepEqual([...g.save.relics].sort(), ["shop.researcher", "shop.stellar", "shop.trainer"]);
+  assert.equal(g.save.archives.slots.length, ARCHIVISTS.start + 1);
+  assert.equal(trainingSlots(g.save), trainingSlots(defaults()) + 1);
+  assert.equal(g.save.gems, 0, "the Gems were spent progress");
+});

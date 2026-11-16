@@ -102,7 +102,7 @@ test("Relative Damage Color is owned once Tower II's floor 10 is claimed", () =>
 });
 
 test("each pass covers three towers and totals its premium rewards", () => {
-  assert.deepEqual(PASSES.map((p) => [p.towers, p.label]), [[[1, 2, 3], "$9.99"], [[4, 5, 6], "$19.99"], [[7, 8, 9], "$29.99"]]);
+  assert.deepEqual(PASSES.map((p) => [p.towers, p.dollars]), [[[1, 2, 3], 9.99], [[4, 5, 6], 19.99], [[7, 8, 9], 29.99]]);
   assert.equal(passFor(5).n, 2);
   // Every premium reward is set by hand in its tower's table; floor 4,500's is a relic, counted in no currency.
   assert.deepEqual(passTotals(PASSES[0]!), { gold: 25_837_000, gems: 1350, arcanite: 175 });

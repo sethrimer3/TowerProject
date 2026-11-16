@@ -1,6 +1,7 @@
 import { curvePrice, risingPrice } from "../economy/prices.ts";
 import type { TrainerCurve, TrainerTime, TrainingId } from "./training.ts";
 import { halfPow } from "../exact.ts";
+import { premiumTrainers, type EntitlementId } from "../shop/entitlements.ts";
 
 // A Training rank is bought one of two ways: with training points, which
 // count at once, or with Gold paid to a trainer, which takes time on the
@@ -110,7 +111,8 @@ export const jobInvested = (job: TrainingJob, left: number) => Math.round(job.us
 
 /** How many stats can be in training at once: the first slot, one for
  * each trainer bought, and one for the Extra Trainer skill. */
-export const trainingSlots = (save: { trainers: number; upgrades: { extraTrainer: number } }) => TRAINING_SLOTS + save.trainers + save.upgrades.extraTrainer;
+export const trainingSlots = (save: { trainers: number; upgrades: { extraTrainer: number }; entitlements?: EntitlementId[] }) =>
+  TRAINING_SLOTS + save.trainers + save.upgrades.extraTrainer + (save.entitlements ? premiumTrainers({ entitlements: save.entitlements }) : 0);
 /** The Gems the next trainer costs, or null once every one is bought. */
 export const nextTrainerGems = (save: { trainers: number }) => TRAINER_GEMS[save.trainers] ?? null;
 /** What each item maxed takes off its tab's Gem rushes, in tenths of a

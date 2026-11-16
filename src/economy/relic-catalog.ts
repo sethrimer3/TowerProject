@@ -11,8 +11,11 @@ import type { RelicSpecial } from "./relic-effects.ts";
 // Goal gives a relic too, an epic one and, as its premium reward, a
 // legendary one (`TOWER_RELICS`), named for the tower that gives it.
 //
+// The Shop's Premium Offers each give a unique legendary relic of their
+// own (`SHOP_RELICS`), which may give more than one bonus.
+//
 // A relic's id is `<theme>.<year>.<place>` (a tower's
-// `tower.<n>.<rarity>`) and is what saves keep, so a
+// `tower.<n>.<rarity>`, the Shop's `shop.<offer>`) and is what saves keep, so a
 // name, a stat or an amount can change freely; changing a set's year or
 // a relic's place loses it from saves that own it.
 //
@@ -175,6 +178,14 @@ export const STORE_RELICS: Readonly<Partial<Record<EventThemeId, readonly StoreR
 
 /** The relics each tower's last Goal gives, by tower: an epic one, and a
  * legendary one as its premium reward. */
+/** The unique legendary relics the Shop's Premium Offers give, by offer
+ * (shop/entitlements.ts names each one's relic), each with its bonuses. */
+export const SHOP_RELICS: Readonly<Record<string, { name: string; bonuses: readonly [RelicBonus, ...RelicBonus[]] }>> = {
+  researcher: { name: "Archivist Badge", bonuses: [{ kind: "special", effect: "researchSpeed", amount: 5 }] },
+  trainer: { name: "Training Accolade", bonuses: [{ kind: "special", effect: "trainerSpeed", amount: 5 }, { kind: "special", effect: "xp", amount: 10 }] },
+  stellar: { name: "Astral Ribbon", bonuses: [{ kind: "special", effect: "stellarFloor", amount: 1 }, { kind: "special", effect: "stellarGem", amount: 1 }] },
+};
+
 export const TOWER_RELICS: Readonly<Record<number, { epic: RelicEntry; legendary: RelicEntry }>> = {
   1: { epic: special("T:I Cosmos Sack", "gold", 2), legendary: special("T:I Spatial Ring", "gold", 5) },
   2: { epic: special("T:II Cosmic Workbench", "researchSpeed", 2), legendary: special("T:II Chrono Gate", "researchSpeed", 5) },

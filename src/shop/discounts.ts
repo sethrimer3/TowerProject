@@ -1,5 +1,5 @@
 import type { Save } from "../save/shape.ts";
-import type { Price, ShopOffer } from "./offers.ts";
+import { money, type Price, type ShopOffer } from "./offers.ts";
 
 // Discounts: an offer sold for less for a while. Today only one: the ad
 // series' last prize (ads/series.ts), Permanent Ad-Disable at half price
@@ -10,7 +10,7 @@ import type { Price, ShopOffer } from "./offers.ts";
 export type Discount = { percent: number; until: number; price: Price };
 
 /** Permanent Ad-Disable's price while the ad series' discount runs. */
-const AD_FREE_HALF: Price = { kind: "money", sku: "ad_free_half", label: "$4.95" };
+const AD_FREE_HALF: Price = money("ad_free_half", 4.95);
 
 /** The discount on `o` at `now` (server time), or null with none. */
 export function discountOn(save: Pick<Save, "ads">, o: ShopOffer, now: number): Discount | null {

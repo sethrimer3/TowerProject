@@ -4431,6 +4431,10 @@ button.game-select-button { display: inline-flex; align-items: center; justify-c
 .shop-rewards { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 2px 0; }
 .shop-reward { display: inline-flex; flex-direction: column; align-items: center; gap: 1px; min-width: 44px; }
 .shop-reward .gem-icon, .shop-reward .arcanite-icon, .shop-reward .gold-icon { width: 34px; height: 34px; filter: drop-shadow(0 0 5px color-mix(in srgb, var(--rarity, #8fe6ff) 45%, transparent)); }
+.shop-reward .relic-icon { width: 34px; height: 34px; }
+.shop-reward .vip-icon { width: 24px; height: 24px; }
+.shop-reward:has(.vip-icon) b { font-size: 12px; color: #e1bb78; }
+.shop-thanks { margin: 4px 0 0; padding: 14px 12px; text-align: center; color: #eee0b7; border: 1px solid color-mix(in srgb, #e1bb78 45%, transparent); border-radius: 8px; }
 .shop-reward b { font-size: 16px; color: #f3e2bd; }
 dialog .shop-rewards { justify-content: center; margin: 4px 0 10px; }
 .shop-expires { font-size: 10px; color: #ff9a6a; }
@@ -5016,6 +5020,8 @@ html.reduce-motion .rise-pop { animation-name: rise-pop-still; }
 /* Medals (a limited currency): in the forest's purse once held, the
    currencies bar, and wherever a reward pays them. */
 .medal-icon { width: 1em; height: 1em; vertical-align: -0.15em; }
+.vip-icon { width: 1em; height: 1em; vertical-align: -0.15em; }
+.reward-reveal-prize .vip-icon, .goal-art > .vip-icon { width: 72px; height: 72px; }
 .purse .medal-icon { width: 18px; height: 18px; flex: none; }
 .medal-stat b { color: #d4b8ff; }
 .currency.medal-currency { color: #d4b8ff; }

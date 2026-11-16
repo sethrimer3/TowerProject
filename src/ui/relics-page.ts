@@ -1,6 +1,6 @@
 import { controlIcon } from "./control-icon.ts";
 import { PREVIEW_RELICS, RARITIES, RARITY_NAMES, RELICS, type RelicDef } from "../economy/relics.ts";
-import { bonusText, relicTotals } from "../economy/relic-effects.ts";
+import { bonusText, relicText, relicTotals } from "../economy/relic-effects.ts";
 import type { AppContext } from "./app.ts";
 import { helpButton, showHelp } from "./dialogs.ts";
 import { el, relicIcon } from "./dom.ts";
@@ -35,7 +35,7 @@ export class RelicsPage {
   render() {
     const relics = this.relics();
     const cell = ([id, r]: [string, RelicDef]) =>
-      `<button class="relic-cell ${r.rarity}" data-relic="${id}" aria-label="${r.name}: ${bonusText(r.bonus)}">${relicIcon(r)}<small>${r.name}</small></button>`;
+      `<button class="relic-cell ${r.rarity}" data-relic="${id}" aria-label="${r.name}: ${relicText(r)}">${relicIcon(r)}<small>${r.name}</small></button>`;
     const section = (rarity: (typeof RARITIES)[number]) => {
       const these = relics.filter(([, r]) => r.rarity === rarity);
       return `<section class="relic-rarity ${rarity}" aria-label="${RARITY_NAMES[rarity]} relics"><h3>${RARITY_NAMES[rarity]}</h3>` +

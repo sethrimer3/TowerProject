@@ -531,6 +531,14 @@ _Avoid_: attack breakpoint
 A one-time purchase that opens the premium checkpoint rewards in one set of three towers (I–III, IV–VI or VII–IX).
 _Avoid_: battle pass, season pass
 
+**VIP Points**:
+A currency every real-money Shop purchase pays, a fixed amount for its price (6 for each dollar of its base price, whatever currency the store charges), kept for good, Erase All included. Shown as a brass crown; nothing spends them yet.
+_Avoid_: loyalty points, VIP level
+
+**Premium Offer**:
+One of the Shop's one-time real-money offers shown one at a time, in order, under Premium Offers: each grants a perk (an archivist slot, a trainer, Gems) and a unique legendary relic. Once all are bought, the section thanks the player instead.
+_Avoid_: premium pack (the Coin Packs are One-Time Offers)
+
 **Breakthrough**:
 The currency of new limits: one point for each Tower Goal reward claimed (a premium reward pays none), spent in the Breakthrough tree and the trees it opens. Also the Inspiration skill that opens that tree.
 _Avoid_: courage, essence

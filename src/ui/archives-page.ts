@@ -1,3 +1,4 @@
+import { premiumArchivists } from "../shop/entitlements.ts";
 import { controlIcon } from "./control-icon.ts";
 import {
   RESEARCH, RESEARCH_CATEGORIES, RESEARCH_IDS, RESEARCH_TARGETS, activeSlot, cannotSwitch, describe, duration, jobProgress, price as researchPrice,
@@ -349,13 +350,13 @@ export class ArchivesPanel {
 
   /** Whether the Gems held fall short of the next archivist. */
   private hireShort() {
-    const game = this.ctx.game, price = nextArchivistPrice(game.save.archives);
+    const game = this.ctx.game, price = nextArchivistPrice(game.save.archives, premiumArchivists(game.save));
     return price !== undefined && !game.free && game.save.gems < price;
   }
   /** Asks before spending Gems on the next archivist, or offers the Shop
    * when too few are held. */
   private hire(act: (done: boolean) => void) {
-    const game = this.ctx.game, price = nextArchivistPrice(game.save.archives);
+    const game = this.ctx.game, price = nextArchivistPrice(game.save.archives, premiumArchivists(game.save));
     if (price === undefined) return;
     if (this.hireShort()) return askForGems(this.ctx);
     this.ctx.confirm(
@@ -387,7 +388,7 @@ export class ArchivesPanel {
    * the next one to hire. */
   private archivistsHtml() {
     const game = this.ctx.game, a = game.save.archives, now = game.clock();
-    const price = nextArchivistPrice(a);
+    const price = nextArchivistPrice(a, premiumArchivists(game.save));
     // The hired archivists, then the next one for hire, if any; none beyond it.
     return Array.from({ length: a.slots.length + (price === undefined ? 0 : 1) }, (_, i) => {
       const slot = a.slots[i], title = `<small>ARCHIVIST ${i + 1}</small>`;
