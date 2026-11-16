@@ -18,7 +18,7 @@ import type { Enemy, Player, Tile } from "../src/entities.ts";
 const brute: Enemy = { name: "Brute", hp: 1_000_000, attack: 0, defense: 0, tier: 1, strength: "weak" };
 const minutes = (hours: number) => Math.round(hours * 60);
 
-test("the Breakthrough skill Thunderbolt Research opens both projects, left of Lifespring Research after Extra Trainer; Tower VII's floor 30 pays 5 Breakthrough", () => {
+test("the Breakthrough skill Thunderbolt Research opens both projects, left of Lifespring Research after Extra Trainer; Tower VII's floor 30 pays 4 Breakthrough", () => {
   const skill = UPGRADES.find((u) => u.id === "thunderboltResearch")!;
   assert.deepEqual([skill.base, skill.max, skill.currency], [5, 1, "breakthrough"]);
   const nodes = TREES.find((t) => t.id === "breakthrough")!.nodes, at = (id: string) => nodes.find((n) => n.id === id)!;
@@ -28,7 +28,7 @@ test("the Breakthrough skill Thunderbolt Research opens both projects, left of L
     assert.ok(RESEARCH[id].requires.some((r) => "upgrade" in r && r.upgrade === "thunderboltResearch"), id);
     assert.equal(RESEARCH[id].categories[0], "arcana", id);
   }
-  assert.deepEqual(checkpoint(7, 30), { floor: 30, reward: { kind: "breakthrough", amount: 5 }, premium: { kind: "currency", currency: "gold", amount: 10_000_000 } });
+  assert.deepEqual(checkpoint(7, 30), { floor: 30, reward: { kind: "breakthrough", amount: 4 }, premium: { kind: "currency", currency: "gold", amount: 10_000_000 } });
 });
 
 test("both projects run on the spec's schedules and values", () => {

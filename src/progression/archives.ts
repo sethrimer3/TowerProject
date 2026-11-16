@@ -228,6 +228,15 @@ export const RESEARCH_TARGETS = {
   /** What the hero's ATK is multiplied by on a shocked enemy, in hundredths: ×1.10
    * before Shock Multiplier's first level. */
   shockMultiplier: { name: "Shock Multiplier", base: 110, shown: (n: number) => `×${(n / 100).toFixed(2)}` },
+  /** The turns research adds to Time Dilation's Duration (ArcanaDesk.timeDilationRule), before relics multiply it: none untrained. */
+  dilationDuration: { name: "Duration", base: 0, shown: (n: number) => `+${n} ${n === 1 ? "turn" : "turns"}` },
+  /** What research adds to Time Dilation's field past the hero's shot range (`fieldReach`), in tenths of a tile: none untrained. */
+  dilationRange: { name: "Field Range", base: 0, shown: (n: number) => `+${n / 10} tiles` },
+  /** Whether Time Dilation's field cuts the damage that strikes the hero (`Player.dilationGuard`). */
+  dilationGuard: { name: "Damage Reduction", base: 0, shown: (n: number) => (n ? "Unlocked" : "Locked") },
+  /** The percent Time Dilation's Damage Reduction cuts what strikes the hero by, in tenths
+   * of a percent: 10% before Time Dilation Reduction %'s first level. */
+  dilationGuardPercent: { name: "Reduction", base: 100, shown: (n: number) => `${(n / 10).toFixed(2)}%` },
   /** Turns between Overseer Zap's strikes (game/arcana-desk.ts), 20 less
    * one a level; no strike before the first level. */
   overseerZapTurns: { name: "Zap Cooldown", base: 20, shown: (n: number) => `${n} turns` },
@@ -1289,6 +1298,38 @@ export const RESEARCH = {
     categories: ["arcana", "offense"],
     requires: [{ upgrade: "archives" }, { upgrade: "ricochetShockResearch" }, { research: "ricochetShock", level: 1 }],
     levels: scheduled("shockMultiplier", 4, SHOCK_GOLD.slice(0, SHOCK_MULTIPLIER_LEVELS), SHOCK_TIMES.slice(0, SHOCK_MULTIPLIER_LEVELS)),
+  },
+  dilationDuration: {
+    name: "Time Dilation Duration",
+    description: "Time Dilation's field lasts longer.",
+    categories: ["arcana", "defense"],
+    requires: [{ upgrade: "archives" }, { upgrade: "timeDilationResearch" }],
+    // A turn more a level, for 30 levels: Necrotic Freeze Chance's Gold and times.
+    levels: scheduled("dilationDuration", 1, FREEZE_CHANCE_GOLD, FREEZE_CHANCE_TIMES),
+  },
+  dilationRange: {
+    name: "Time Dilation Range",
+    description: "Time Dilation's field reaches further past the hero's shot range.",
+    categories: ["arcana", "defense"],
+    requires: [{ upgrade: "archives" }, { upgrade: "timeDilationResearch" }],
+    // 0.3 tiles more a level, for 20 levels, to 6 tiles: Shock Chance's first 20 levels' Gold and times.
+    levels: scheduled("dilationRange", 3, SHOCK_GOLD.slice(0, 20), SHOCK_TIMES.slice(0, 20)),
+  },
+  dilationGuard: {
+    name: "Time Dilation Damage Reduction",
+    description: "While Time Dilation's field stands, the damage that strikes the hero is cut by 10%, after Parry and DEF, before Shroud.",
+    categories: ["arcana", "defense"],
+    requires: [{ upgrade: "archives" }, { upgrade: "timeDilationResearch" }],
+    // 750,000 Gold and 0d 16h 39m.
+    levels: [levelOf("dilationGuard", 1, 750_000, 16 * 60 + 39)],
+  },
+  dilationGuardPercent: {
+    name: "Time Dilation Reduction %",
+    description: "Time Dilation's Damage Reduction cuts more of the damage that strikes the hero.",
+    categories: ["arcana", "defense"],
+    requires: [{ upgrade: "archives" }, { upgrade: "timeDilationResearch" }, { research: "dilationGuard", level: 1 }],
+    // 0.5% more a level, for 30 levels, from 10% to 25%: Necrotic Freeze Chance's Gold and times.
+    levels: scheduled("dilationGuardPercent", 5, FREEZE_CHANCE_GOLD, FREEZE_CHANCE_TIMES),
   },
   overseerZap: {
     name: "Overseer Zap",

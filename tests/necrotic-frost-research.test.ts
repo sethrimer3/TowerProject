@@ -24,7 +24,7 @@ const minutes = (hours: number) => Math.round(hours * 60);
 /** A field whose center lies one tile east of the hero's. */
 const east = (id = 1, left = 50): FrostField => ({ id, angle: 9000, left });
 
-test("the Breakthrough skill Necrotic Frost Research (5) opens all four projects, down and right of Extra Trainer; Manual Hand moves right of Card Mastery; Tower VIII's floor 60 pays 5 Breakthrough", () => {
+test("the Breakthrough skill Necrotic Frost Research (5) opens all four projects, down and right of Extra Trainer; Manual Hand moves right of Card Mastery; Tower VIII's floor 60 pays 4 Breakthrough", () => {
   const skill = UPGRADES.find((u) => u.id === "necroticFrostResearch")!;
   assert.deepEqual([skill.base, skill.max, skill.currency], [5, 1, "breakthrough"]);
   const nodes = TREES.find((t) => t.id === "breakthrough")!.nodes, at = (id: string) => nodes.find((n) => n.id === id)!;
@@ -38,7 +38,7 @@ test("the Breakthrough skill Necrotic Frost Research (5) opens all four projects
   }
   for (const id of ["necroFreezeChance", "necroFreezeTurns"] as const)
     assert.ok(RESEARCH[id].requires.some((r) => "research" in r && r.research === "necroFreeze" && r.level === 1), `${id} waits for Necrotic Freeze`);
-  assert.deepEqual(checkpoint(8, 60), { floor: 60, reward: { kind: "breakthrough", amount: 5 }, premium: { kind: "currency", currency: "gems", amount: 70 } });
+  assert.deepEqual(checkpoint(8, 60), { floor: 60, reward: { kind: "breakthrough", amount: 4 }, premium: { kind: "currency", currency: "gems", amount: 70 } });
 });
 
 test("all four projects run on the spec's schedules and values", () => {

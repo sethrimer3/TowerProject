@@ -26,7 +26,7 @@ test("Thorns sits between Buy Quantity and Torch, Parry between Regen Research a
     const u = UPGRADES.find((u) => u.id === id)!;
     assert.deepEqual([u.currency, u.base, u.max], ["inspiration", 10, 1], id);
   }
-  assert.deepEqual([node("thorns").requires, node("cardTorch").requires], [["buyQuantity"], ["thorns"]]);
+  assert.deepEqual([node("thorns").requires, node("arcanaResearch").requires, node("cardTorch").requires], [["buyQuantity"], ["thorns"], ["arcanaResearch"]], "Arcana Research between Thorns and Torch");
   assert.deepEqual([node("parry").requires, node("revive").requires], [["regenResearch"], ["parry"]]);
   const g = new Game(playedSave());
   g.save.tower.inspiration = 1000;

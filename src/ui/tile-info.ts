@@ -3,7 +3,7 @@ import type { Enemy, Kind, Player, Tile } from "../entities.ts";
 import { enemyTitle } from "../enemies/scaling.ts";
 import type { Game, RouteEffects } from "../state.ts";
 import { POTION_HEAL, potionRestores, resolveStep, shardStat } from "../step-effects.ts";
-import { attackForFewerHits, brokenAfter, defenseAgainst, defenseBroken, instakill, lifestealHeal, netDamage, parryCut, predict, struckDamage, type CombatPrediction } from "../combat.ts";
+import { attackForFewerHits, brokenAfter, defenseAgainst, defenseBroken, instakill, lifestealHeal, netDamage, strikeCut, predict, struckDamage, type CombatPrediction } from "../combat.ts";
 import { forecast as critForecast, type CritForecast } from "../crit-forecast.ts";
 import { arrowDamage, shotDamage } from "../enemies/ranged.ts";
 import { goalUnlocked } from "../goals.ts";
@@ -138,7 +138,7 @@ function brokenLine(e: Enemy, p: Player, broken = e.broken ?? 0) {
  * hero's strikes heals beside it), its DEF with what each of the hero's
  * strikes takes off it, and the Gold killing it would bank. */
 function enemyStats(e: Enemy, p: Player, r: CombatPrediction, gold: number, broken?: number) {
-  const taken = struckDamage(e.attack, p.defense, parryCut(p)), healed = p.lifesteal ? lifestealHeal(p, r.hit) : 0;
+  const taken = struckDamage(e.attack, p.defense, strikeCut(p)), healed = p.lifesteal ? lifestealHeal(p, r.hit) : 0;
   const hurt = `<span class="hit-hurt">-${enemyStat(taken)}</span>`;
   const heal = healed ? ` <span class="hit-heal">+${enemyStat(healed)}</span>` : "";
   return statLines(

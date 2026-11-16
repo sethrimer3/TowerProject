@@ -304,13 +304,17 @@ export class ArcanaDesk {
     const s = this.host.run.lifespring;
     return { pool: s?.pool ?? 0, effects: lifespringEffects(this.save), health: 1 + (s?.health ?? 0) / 100 };
   }
-  /** Time Dilation, if it is held and on: its attributes, Slowdown with what raises it. */
+  /** Time Dilation, if it is held and on: its attributes, Slowdown with what raises it,
+   * Time Dilation Duration's turns added before relics multiply its Duration, Time
+   * Dilation Range's reach, and once Damage Reduction is researched the percent it
+   * cuts what strikes the hero by (`guard`), all read from the Archives as it acts. */
   timeDilationRule() {
     const held = this.held.find((h) => h.id === "timeDilation" && this.isOn(h.id));
     if (!held) return undefined;
-    const [base, slowdown, turns] = this.valuesOf(held), effects = dilationEffects(this.save);
-    const duration = Math.round(base * relicFactor(this.save, "timeDilation"));
-    return { duration, slow: fieldSlowdown(slowdown, effects), turns, effects };
+    const archives = this.save.archives, [base, slowdown, turns] = this.valuesOf(held), effects = dilationEffects({ range: researched(archives, "dilationRange") });
+    const duration = Math.round((base + researched(archives, "dilationDuration")) * relicFactor(this.save, "timeDilation"));
+    const guard = researched(archives, "dilationGuard") ? { guard: researched(archives, "dilationGuardPercent") / 10 } : {};
+    return { duration, slow: fieldSlowdown(slowdown, effects), turns, effects, ...guard };
   }
   /** Time Dilation's turn: the field's turns and its cooldown, if it is held and on. */
   timeDilationTurn() {

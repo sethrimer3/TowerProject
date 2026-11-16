@@ -21,7 +21,7 @@ const brute: Enemy = { name: "Brute", hp: 1_000_000, attack: 0, defense: 0, tier
 const minutes = (hours: number) => Math.round(hours * 60);
 type ShockId = "ricochetShock" | "shockChance" | "shockMultiplier";
 
-test("the Breakthrough skill Ricochet Shock Research opens all three projects, left of Extra Trainer after it; Door Mastery moves left of Key Mastery; Tower IX's floor 30 pays 5 Breakthrough", () => {
+test("the Breakthrough skill Ricochet Shock Research opens all three projects, left of Extra Trainer after it; Door Mastery moves left of Key Mastery; Tower IX's floor 30 pays 4 Breakthrough", () => {
   const skill = UPGRADES.find((u) => u.id === "ricochetShockResearch")!;
   assert.deepEqual([skill.base, skill.max, skill.currency], [5, 1, "breakthrough"]);
   const nodes = TREES.find((t) => t.id === "breakthrough")!.nodes, at = (id: string) => nodes.find((n) => n.id === id)!;
@@ -34,7 +34,7 @@ test("the Breakthrough skill Ricochet Shock Research opens all three projects, l
   }
   for (const id of ["shockChance", "shockMultiplier"] as const)
     assert.ok(RESEARCH[id].requires.some((r) => "research" in r && r.research === "ricochetShock" && r.level === 1), `${id} waits on Ricochet Shock`);
-  assert.deepEqual(checkpoint(9, 30), { floor: 30, reward: { kind: "breakthrough", amount: 5 }, premium: { kind: "currency", currency: "arcanite", amount: 10 } });
+  assert.deepEqual(checkpoint(9, 30), { floor: 30, reward: { kind: "breakthrough", amount: 4 }, premium: { kind: "currency", currency: "arcanite", amount: 10 } });
 });
 
 test("the projects run on the spec's schedules and values", () => {

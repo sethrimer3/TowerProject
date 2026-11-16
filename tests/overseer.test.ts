@@ -309,8 +309,8 @@ test("Overseer Gold Bonus counts wherever in the beams the kill lies, however it
   assert.equal(g.spotlightGold({ x: 9, y: 0 }), 1, "44 degrees on, between beams");
 });
 
-test("the Breakthrough skill Overseer Gold Bonus opens its research, in the Arcana section beside Overseer Zap; Tower VII's floor 80 Goal pays 5 Breakthrough", () => {
-  assert.deepEqual(checkpoint(7, 80), { floor: 80, reward: { kind: "breakthrough", amount: 5 }, premium: { kind: "currency", currency: "arcanite", amount: 20 } });
+test("the Breakthrough skill Overseer Gold Bonus opens its research, in the Arcana section beside Overseer Zap; Tower VII's floor 80 Goal pays 4 Breakthrough", () => {
+  assert.deepEqual(checkpoint(7, 80), { floor: 80, reward: { kind: "breakthrough", amount: 4 }, premium: { kind: "currency", currency: "arcanite", amount: 20 } });
   const project = RESEARCH.overseerGold;
   assert.equal(project.name, "Overseer Gold Bonus");
   assert.ok(project.requires.some((r) => "upgrade" in r && r.upgrade === "overseerGoldResearch"));

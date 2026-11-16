@@ -129,6 +129,12 @@ export const PARRY_CAP = 98;
  * HEAL's tree's added to it), at most `PARRY_CAP`. A hero
  * with any Parry % parries every strike, so every prediction counts it. */
 export const parryCut = (player: Player) => Math.min(snap((player.parry ?? 0) + (player.cardParry ?? 0)), PARRY_CAP);
+/** The percent every enemy strike's damage past DEF is cut by: the parry's, then
+ * Time Dilation's Damage Reduction (`Player.dilationGuard`) of what the parry leaves. */
+export function strikeCut(player: Player) {
+  const parry = parryCut(player), guard = player.dilationGuard ?? 0;
+  return guard ? snap(100 - ((100 - parry) * (100 - guard)) / 100) : parry;
+}
 /** What a strike on the Aether Shield costs the enemy, of the `thorn` a strike
  * on the hero would: the share Shield Thorns gives, nothing without it. */
 export const shieldThorn = (player: Player, thorn: number) => snap((thorn * (player.shieldThorns ?? 0)) / 100);
@@ -310,7 +316,7 @@ export function predict(player: Player, enemy: Enemy, played = Infinity): Combat
   // parry cuts every strike.
   // So is a fight Time Dilation slows: only the fight being taken is.
   // A Phantasm stun skips the enemy's first strikes (a Fast one's opening among them).
-  const thorn = thornDamage(player, enemy), cut = parryCut(player), opens = strikesFirst(enemy), slow = player.slowdown ?? 0, stun = enemy.stun ?? 0, fast = opens && !stun;
+  const thorn = thornDamage(player, enemy), cut = strikeCut(player), opens = strikesFirst(enemy), slow = player.slowdown ?? 0, stun = enemy.stun ?? 0, fast = opens && !stun;
   if (thorn || slow) played = Infinity;
   // Snapped, so 10.2 HP against strikes of 1.02 takes 10, as it does played out.
   const { turns, strikes, thornKill } = thorn ? thornRounds(enemy.hp, hitAt, thorn, opens, thornsByStrike(player, enemy, thorn, cut), slow, stun) : { turns: breaks ? brokenTurns(enemy.hp, hitAt) : Math.ceil(snap(enemy.hp / hit)), strikes: NaN, thornKill: false };
@@ -684,7 +690,7 @@ function play(strikes: Strike[], { player, enemy, revives, crits, powered, wings
  * fight has spent fewer than `sparks`, Phoenix Spark shrugs it off: it does
  * nothing at all. A strike the hero lives through costs the enemy `thorn` HP. */
 function enemyBlow(s: BoutState, player: Player, thorn: number, revives?: Revival, wings?: Wings, sparks = 0): Blow {
-  const cut = parryCut(player), parried = cut > 0;
+  const cut = strikeCut(player), parried = parryCut(player) > 0;
   // Amber Prison weakens its blows.
   const struck = struckDamage(s.amber ? snap((s.attack * (100 - s.amber)) / 100) : s.attack, player.defense, cut), shrouded = Math.min(s.shroud, struck), rest = snap(struck - shrouded);
   // What gets past the shroud comes off the Aether Shield first.

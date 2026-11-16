@@ -708,6 +708,10 @@ What Lifespring's field has left to spend, added to by each activation as a mult
 **Time Dilation**:
 An arcanum on a cooldown: a field round the hero as wide as its shot range, lasting a number of turns, in which enemies are slowed. A new field replaces the old one.
 
+**Damage Reduction** (Time Dilation's):
+Research that cuts the damage of every enemy strike and shot on the hero by a percent while a Time Dilation field stands, after DEF and Parry, before the shroud. It is not a parry.
+_Avoid_: dilation armor, slow shield
+
 **Phantasm**:
 An arcanum on a cooldown: ghosts in an evenly spaced ring one tile round the hero, turning slowly. A ghost that touches an enemy's tile strikes everything in its blast and disappears; each activation fills the ring's gaps, up to its Quantity.
 

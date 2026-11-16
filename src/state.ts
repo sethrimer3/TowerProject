@@ -1158,8 +1158,14 @@ export class Game {
    * `attackAgainst` reads on a shocked enemy. Previews and planners take the
    * plain hero, the worst case. */
   get striker(): Player {
-    const shock = this.arcana.shock;
-    return shock ? { ...this.run.player, shock: shock.factor } : this.run.player;
+    const shock = this.arcana.shock, guard = this.dilationGuard;
+    return shock || guard ? { ...this.run.player, ...(shock ? { shock: shock.factor } : {}), ...(guard ? { dilationGuard: guard } : {}) } : this.run.player;
+  }
+  /** The percent Time Dilation's Damage Reduction cuts what strikes the hero by
+   * (`Player.dilationGuard`): while its field stands, once researched; else 0. */
+  get dilationGuard() {
+    const guard = this.arcana.timeDilationRule()?.guard;
+    return guard && this.run.timeDilation?.left ? guard : 0;
   }
   /** The enemies of the floor the hero stands on that Ricochet Shock has
    * shocked, for the board to mark. */
@@ -1170,14 +1176,15 @@ export class Game {
   }
   /** The hero as it takes the fight at `to`, the step's tile: with Overseer's
    * beams as the turn begins on that tile, a copy carrying their ATK as well,
-   * and Shock Multiplier's once Ricochet Shock is researched. */
+   * Shock Multiplier's once Ricochet Shock is researched, and Time Dilation's
+   * Damage Reduction while its field stands. */
   fighterAt(to: { x: number; y: number }): Player {
-    const factor = this.beamFactorAt(to), slow = this.slowdownAt(to), worn = this.worn, shock = this.arcana.shock?.factor;
+    const factor = this.beamFactorAt(to), slow = this.slowdownAt(to), worn = this.worn, shock = this.arcana.shock?.factor, guard = this.dilationGuard;
     // The Uniques' powers: Hoarder Greaves' and Challenger's Defiance's ATK, Mirror Vault's Retribution, Amber Prison's percent.
     const gear = this.gearAttackAt(to.x, to.y), mirror = powerOf(worn, "mirrorVault", "factor"), amber = powerOf(worn, "amberPrison", "perHit");
-    if (factor === 1 && !slow && gear === 1 && !mirror && !amber && !shock) return this.fighter;
+    if (factor === 1 && !slow && gear === 1 && !mirror && !amber && !shock && !guard) return this.fighter;
     const hero = this.fighter;
-    return { ...hero, ...(gear === 1 ? {} : { attack: snap(hero.attack * gear) }), ...(factor === 1 ? {} : { beamAttack: factor }), ...(slow ? { slowdown: slow } : {}), ...(shock ? { shock } : {}),
+    return { ...hero, ...(gear === 1 ? {} : { attack: snap(hero.attack * gear) }), ...(factor === 1 ? {} : { beamAttack: factor }), ...(slow ? { slowdown: slow } : {}), ...(shock ? { shock } : {}), ...(guard ? { dilationGuard: guard } : {}),
       ...(mirror ? { retribution: this.run.gear?.retribution ?? 0 } : {}), ...(amber ? { amber } : {}) };
   }
   /** What the worn Uniques multiply ATK by against the enemy at (x, y):

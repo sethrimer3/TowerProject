@@ -1,4 +1,4 @@
-import { atWorst, breaksArmor, critAgainst, critMultiplier, facing, guaranteedCrits, heroHit, instakill as instakills, netDamage, parriedEstimate, parryCut, predict, raisedAttack, replies, squaredUp, strikesFirst, struckDamage, thornDamage, thornsByStrike, type CombatPrediction, type CritRule } from "./combat.ts";
+import { atWorst, breaksArmor, critAgainst, critMultiplier, facing, guaranteedCrits, heroHit, instakill as instakills, netDamage, parriedEstimate, strikeCut, predict, raisedAttack, replies, squaredUp, strikesFirst, struckDamage, thornDamage, thornsByStrike, type CombatPrediction, type CritRule } from "./combat.ts";
 import { snap } from "./exact.ts";
 import type { Enemy, Player } from "./entities.ts";
 
@@ -90,7 +90,7 @@ export function forecast(player: Player, enemy: Enemy, crit: CritRule, played = 
  * Aether Shield takes them (`thornsByStrike`). */
 function totalThorns(player: Player, enemy: Enemy, thorn: number) {
   if (!player.shield || !thorn) return (r: number) => r * thorn;
-  const at = thornsByStrike(facing(player, enemy), enemy, thorn, parryCut(player)), sums = [0];
+  const at = thornsByStrike(facing(player, enemy), enemy, thorn, strikeCut(player)), sums = [0];
   return (r: number) => {
     while (sums.length <= r) sums.push(snap(sums.at(-1)! + at(sums.length - 1)));
     return sums[r]!;
@@ -103,7 +103,7 @@ function totalThorns(player: Player, enemy: Enemy, thorn: number) {
  * `played` and estimated past them. */
 function damageByStrikes(player: Player, enemy: Enemy, most: number, played: number, thornsOver: (r: number) => number, hits: { mean: number; top: number }) {
   // The Aether Shield takes what gets past the shroud, as the shroud does.
-  const sums: number[] = [0], shroud = (player.shroud ?? 0) + (player.shield ?? 0), fatal = player.hp + shroud, defense = player.defense, cut = parryCut(player);
+  const sums: number[] = [0], shroud = (player.shroud ?? 0) + (player.shield ?? 0), fatal = player.hp + shroud, defense = player.defense, cut = strikeCut(player);
   // Lifesteal: each of the hero's `t` strikes restores that share of its
   // whole damage, overkill and all: on average the `mean` hit, but at least
   // the enemy's HP its thorns left and at most every strike the `top` hit.

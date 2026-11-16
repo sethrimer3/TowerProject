@@ -79,15 +79,15 @@ test("Dev free purchases claim a goal before its floor is completed, but never t
   assert.equal(g.claimGoal(1, 40, true), null, "the premium one still needs its pass");
 });
 
-test("a checkpoint whose reward is 5 Breakthrough pays them besides the standard reward's usual point", () => {
+test("a checkpoint whose reward is 4 Breakthrough pays them besides the standard reward's usual point", () => {
   const g = new Game(defaults());
   g.newRun({ outside: true });
   g.save.settings.freePurchases = true;
   const before = g.save.breakthrough;
-  assert.deepEqual(g.claimGoal(3, 250, false), { kind: "breakthrough", amount: 5 });
-  assert.equal(g.save.breakthrough, before + 5 + GOAL_BREAKTHROUGH);
-  for (const [tower, floor] of [[3, 400], [4, 200], [5, 150], [5, 500], [7, 80]] as const)
-    assert.deepEqual(CHECKPOINTS[tower]!.find((c) => c.floor === floor)!.reward, { kind: "breakthrough", amount: 5 }, `Tower ${tower} floor ${floor}`);
+  assert.deepEqual(g.claimGoal(3, 250, false), { kind: "breakthrough", amount: 4 });
+  assert.equal(g.save.breakthrough, before + 4 + GOAL_BREAKTHROUGH);
+  for (const [tower, floor] of [[3, 400], [4, 200], [5, 150], [5, 500], [7, 30], [7, 80], [8, 30], [8, 60], [9, 30], [9, 80]] as const)
+    assert.deepEqual(CHECKPOINTS[tower]!.find((c) => c.floor === floor)!.reward, { kind: "breakthrough", amount: 4 }, `Tower ${tower} floor ${floor}`);
 });
 
 test("Relative Damage Color is owned once Tower II's floor 10 is claimed", () => {

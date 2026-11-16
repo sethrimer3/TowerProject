@@ -45,6 +45,7 @@ const ARCANUM_RESEARCH: Partial<Record<ArcanumId, readonly (keyof typeof RESEARC
   thunderbolt: ["thunderboltAmplify", "thunderboltExpansion"],
   phantasm: ["phantasmBlast", "phantasmSpin", "phantasmStun"],
   necroticFrost: ["frostRadius", "necroFreeze", "necroFreezeChance", "necroFreezeTurns"],
+  timeDilation: ["dilationDuration", "dilationRange", "dilationGuard", "dilationGuardPercent"],
   lifespring: ["lifespringHealth", "lifespringGold", "lifespringAmplify", "lifespringCells"],
   aurumBloom: ["aurumBloomBonus", "aurumBloomChance"],
   voidwell: ["voidwellDamage", "voidwellGold", "extraVoidwell"],

@@ -288,6 +288,24 @@ Switching it off loses the field and its cooldown.
 | Slowdown | 20% | 75% | 12 |
 | Cooldown | 180 turns | 60 turns | 13 |
 
+### Time Dilation research
+
+The Breakthrough skill **Time Dilation Research** (5 Breakthrough, right of Necrotic Frost Research, after it) opens four projects in the Archives' **Arcana** section, each counting for good, mid-run too.
+**Time Dilation Duration** (30 levels) adds a turn to the field's Duration a level, before relics raise it.
+**Time Dilation Range** (20 levels) adds 0.3 tiles a level to the field's radius past your shot range, to 6 tiles more at the 20th.
+**Time Dilation Damage Reduction** (1 level, 750,000 Gold and 0d 16h 39m) cuts the damage of every enemy strike and shot on you by 10% while a field stands, after DEF and Parry, before the shroud; it doesn't count as a parry.
+Like the field's slowdown, the fight preview, the Damage Visual and Automove leave it out, so they show the worst case, and a trial's fights don't use it.
+Once Damage Reduction is done, **Time Dilation Reduction %** (30 levels) raises the cut by 0.5% a level, to 25%.
+
+| Level | Duration | Reduction | Gold | Time | Range | Gold | Time |
+|---|---|---|---|---|---|---|---|
+| 1 | +1 turn | 10.50% | 250,000 | 0d 19h 59m | +0.3 tiles | 250,000 | 0d 20h 0m |
+| 2 | +2 turns | 11.00% | 285,000 | 0d 23h 21m | +0.6 tiles | 560,000 | 1d 4h 21m |
+| 5 | +5 turns | 12.50% | 4,230,000 | 1d 11h 49m | +1.5 tiles | 7,750,000 | 2d 7h 49m |
+| 10 | +10 turns | 15.00% | 127,310,000 | 3d 20h 31m | +3 tiles | 276,620,000 | 5d 17h 31m |
+| 20 | +20 turns | 20.00% | 3,150,000,000 | 27d 16h 40m | +6 tiles | 8,840,000,000 | 31d 15h 40m |
+| 30 | +30 turns | 25.00% | 19,420,000,000 | 111d 6h 28m | | | |
+
 ## Phantasm
 
 *Every x turns, lost phantasms return until y ring you, one tile out, turning 1° clockwise each turn. One that touches an enemy's tile strikes every enemy in its blast with z% of ATK, then disappears.*

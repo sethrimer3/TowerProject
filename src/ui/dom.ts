@@ -123,7 +123,7 @@ const SKILL_UI_SPRITES: Partial<Record<UpgradeId, UiSprite>> = {
   revive: "revive", life: "health", overheal: "health", spareChange: "gold", loot: "gold", floorSkipReward: "gold", mug: "gold", legacy: "tower", quality: "tower",
   wisdomFocus: "settings", wisdomMemory: "undo", wisdomSight: "upgrades",
   renownBanner: "tower", renownOath: "defense", renownCrown: "gear", armorBreak: "defense",
-  enemyLevelSkipLimitBreak: "arrow-up", shieldLimitBreak: "arrow-up",
+  enemyLevelSkipLimitBreak: "arrow-up", shieldLimitBreak: "arrow-up", limitBreaks: "arrow-up",
   aetherShield: "defense", heroShield: "defense", shieldThorns: "defense", regrowShield: "defense", shieldRegen: "health",
   ...Object.fromEntries(LIMIT_BREAKS.map((id) => [id, "arrow-up"])),
 };
@@ -149,7 +149,7 @@ const SKILL_DETAIL_SPRITES: Partial<Record<UpgradeId, string>> = {
   avengingAngel: "combat-wing",
   lifespringResearch: "arcana-lifespring", aurumBloomResearch: "arcana-aurum-bloom",
   thunderboltResearch: "arcana-thunderbolt", phantasmResearch: "arcana-phantasm", necroticFrostResearch: "arcana-necrotic-frost",
-  ricochetShockResearch: "arcana-ricochet-shot",
+  ricochetShockResearch: "arcana-ricochet-shot", timeDilationResearch: "arcana-time-dilation", arcanaResearch: "arcana-overseer",
   overseerZapResearch: "arcana-overseer", overseerGoldResearch: "arcana-overseer",
   voidwellResearch: "arcana-voidwell", extraVoidwellResearch: "arcana-voidwell",
 };

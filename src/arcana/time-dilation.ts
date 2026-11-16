@@ -13,15 +13,15 @@ export const SLOWDOWN_CAP = 90;
  * while there is none). */
 export type DilationRun = { timer?: number; left?: number };
 
-/** What research adds to it, for labs to raise: percent added to Slowdown, and the
- * percent more range the field has over the hero's shot range. */
+/** What research adds to it: percent added to Slowdown (none yet), and the
+ * tenths of a tile the field reaches past the hero's shot range (Time Dilation Range). */
 export type DilationEffects = { slowdown: number; range: number };
-export const dilationEffects = (_save: unknown): DilationEffects => ({ slowdown: 0, range: 0 });
+export const dilationEffects = ({ range = 0 }: { range?: number } = {}): DilationEffects => ({ slowdown: 0, range });
 
 /** The field's Slowdown, in percent: its attribute and what research adds, up to the cap. */
 export const fieldSlowdown = (attribute: number, { slowdown }: DilationEffects) => Math.min(SLOWDOWN_CAP, snap(attribute + slowdown));
-/** The field's reach, in hundredths of a tile, from the hero's shot range. */
-export const fieldReach = (shotRange: number, { range }: DilationEffects) => (range ? Math.floor((shotRange * (100 + range)) / 100) : shotRange);
+/** The field's reach, in hundredths of a tile: the hero's shot range and what research adds past it. */
+export const fieldReach = (shotRange: number, { range }: DilationEffects) => shotRange + range * 10;
 
 /** What slows an enemy by two kinds of field at once comes to: each multiplies what the other leaves it, up to the cap. */
 export const togetherSlow = (a: number, b: number) => (!a ? b : !b ? a : Math.min(SLOWDOWN_CAP, snap(100 - ((100 - a) * (100 - b)) / 100)));

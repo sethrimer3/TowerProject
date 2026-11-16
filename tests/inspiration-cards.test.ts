@@ -43,7 +43,7 @@ test("each card node costs its price, waits for the node above it and adds its c
   g.save.upgrades.questForKnowledge = g.save.upgrades.pathToWealth = g.save.upgrades.physician = g.save.upgrades.keyMastery = g.save.upgrades.moreWealth = g.save.upgrades.cardMastery = g.save.upgrades.beastMastery = g.save.upgrades.doorMastery = 1; // the Archives and the tree under them revealed
   g.save.upgrades.pocketMoney = g.save.upgrades.spareChange = g.save.upgrades.wishingWell = g.save.upgrades.freeTraining = g.save.upgrades.interest = 1; // the wealth path down to Interest, above Chest
   g.save.breakthrough = 100;
-  for (const id of ["combatStance", "buildout", "trainers", "largerHand", "shroud", "critical", "breakthrough", "archives", "lifesteal", "buyQuantity", "cardYellowKey", "cardBlueKey", "thorns", "cardTorch", "findYellowKey", "keyEfficiency", "keySiphon"] as const) assert.ok(g.skills.buy(id));
+  for (const id of ["combatStance", "buildout", "trainers", "largerHand", "shroud", "critical", "breakthrough", "archives", "lifesteal", "buyQuantity", "cardYellowKey", "cardBlueKey", "thorns", "arcanaResearch", "cardTorch", "findYellowKey", "keyEfficiency", "keySiphon"] as const) assert.ok(g.skills.buy(id));
   const nodes = TREES.find((t) => t.id === "inspiration")!.nodes;
   for (const [id, price, requires, card] of NODES) {
     assert.deepEqual(nodes.find((n) => n.id === id)!.requires, [requires], id);

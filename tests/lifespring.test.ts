@@ -225,8 +225,8 @@ test("in a trial its waves amplify the field on what stands in the arena", () =>
   assert.equal(back?.arcana?.springWaves, 1);
 });
 
-test("the Breakthrough skill Lifespring Research opens the four Lifespring projects, at the spec's ends; Tower III's floor 250 Goal pays 5 Breakthrough", () => {
-  assert.deepEqual(checkpoint(3, 250), { floor: 250, reward: { kind: "breakthrough", amount: 5 }, premium: { kind: "currency", currency: "gold", amount: 2_000_000 } });
+test("the Breakthrough skill Lifespring Research opens the four Lifespring projects, at the spec's ends; Tower III's floor 250 Goal pays 4 Breakthrough", () => {
+  assert.deepEqual(checkpoint(3, 250), { floor: 250, reward: { kind: "breakthrough", amount: 4 }, premium: { kind: "currency", currency: "gold", amount: 2_000_000 } });
   const minutes = (id: ResearchId, i: number) => Math.round(RESEARCH[id].levels.at(i)!.hours * 3600);
   const ends: [ResearchId, number, number, number, number, number][] = [
     ["lifespringHealth", 30, 250_000, (19 * 60 + 59) * 60 + 59, 1.62e9, ((17 * 24 + 5) * 60 + 3) * 60 + 44],

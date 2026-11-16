@@ -42,8 +42,8 @@ function turn(g: Game) {
 }
 const zaps = (shots: readonly Shot[] | undefined) => (shots ?? []).filter((s) => s.thunderbolt);
 
-test("the Breakthrough skill Overseer Zap opens it, Tower III's floor 400 pays 5 Breakthrough, and the Goals pay the premium rewards asked for", () => {
-  assert.deepEqual(checkpoint(3, 400)?.reward, { kind: "breakthrough", amount: 5 });
+test("the Breakthrough skill Overseer Zap opens it, Tower III's floor 400 pays 4 Breakthrough, and the Goals pay the premium rewards asked for", () => {
+  assert.deepEqual(checkpoint(3, 400)?.reward, { kind: "breakthrough", amount: 4 });
   assert.deepEqual(checkpoint(3, 400)?.premium, { kind: "currency", currency: "gold", amount: 10_000_000 });
   assert.deepEqual(checkpoint(4, 30)?.premium, { kind: "currency", currency: "gold", amount: 150_000 });
   assert.deepEqual(RESEARCH.overseerZap.requires, [{ upgrade: "archives" }, { upgrade: "overseerZapResearch" }]);

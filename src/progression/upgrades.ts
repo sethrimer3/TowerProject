@@ -44,6 +44,7 @@ export const UPGRADES = [
   { id: "phantasmResearch", name: "Phantasm Research", description: "Open Phantasm Drain Radius, Phantasm Rotation Speed and Phantasm Stun research", base: 5, max: 1, currency: "breakthrough" },
   { id: "necroticFrostResearch", name: "Necrotic Frost Research", description: "Open Frost Radius and Necrotic Freeze research", base: 5, max: 1, currency: "breakthrough" },
   { id: "ricochetShockResearch", name: "Ricochet Shock Research", description: "Open Ricochet Shock, Shock Chance and Shock Multiplier research", base: 5, max: 1, currency: "breakthrough" },
+  { id: "timeDilationResearch", name: "Time Dilation Research", description: "Open Time Dilation Duration, Time Dilation Range and Time Dilation Damage Reduction research", base: 5, max: 1, currency: "breakthrough" },
   { id: "overseerZapResearch", name: "Overseer Zap", description: "Open Overseer Zap research: Overseer's beams call down a Thunderbolt every few turns", base: 5, max: 1, currency: "breakthrough" },
   { id: "overseerGoldResearch", name: "Overseer Gold Bonus", description: "Open Overseer Gold Bonus research: enemies killed in Overseer's beams drop more Gold", base: 5, max: 1, currency: "breakthrough" },
   { id: "aurumBloomResearch", name: "Aurum Bloom Research", description: "Open Aurum Bloom Bonus and Aurum Bloom Chance research", base: 5, max: 1, currency: "breakthrough" },
@@ -612,6 +613,11 @@ export const UPGRADES = [
   { id: "regrowShield", name: "Regrow Shield", description: "Open Regrow Shield training", base: 10, max: 1, currency: "inspiration" },
   { id: "shieldRegen", name: "Shield Regen", description: "Open Shield Regen research", base: 15, max: 1, currency: "inspiration" },
   { id: "cardTorch", name: "Torch", description: "Add the TORCH card to your deck", card: "torch", base: 20, max: 1, currency: "inspiration" },
+  // Between Thorns and Torch: Arcana Research reveals the Arcana's research
+  // under Extra Trainer in the Breakthrough tree, and Limit Break, after it,
+  // the Limit Breaks under Aurum Bloom Research.
+  { id: "arcanaResearch", name: "Arcana Research", description: "Reveal the Arcana's research in the Breakthrough tree", base: 20, max: 1, currency: "inspiration" },
+  { id: "limitBreaks", name: "Limit Break", description: "Reveal the Limit Breaks in the Breakthrough tree", base: 20, max: 1, currency: "inspiration" },
   // Limit Break 1 to 10, a chain under Torch: each raises the most levels of
   // the Training rows with `breaks` (LIMIT_BREAK_RANKS, trainingCap).
   { id: "limitBreak1", name: "Limit Break 1", description: "Raise the most training levels of ATK, DEF, Max HP, Regen and Shroud by 500", base: 5, max: 1, currency: "breakthrough" },

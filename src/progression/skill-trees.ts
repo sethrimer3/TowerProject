@@ -67,7 +67,12 @@ export const TREES: SkillTree[] = [
     { id: "cardBlueKey", icon: "⚿", x: 70, y: 304, requires: ["cardYellowKey"] },
     { id: "cardRedKey", icon: "⚿", x: 70, y: 322, requires: ["cardBlueKey"] },
     { id: "thorns", icon: "✥", x: 50, y: 322, requires: ["buyQuantity"] },
-    { id: "cardTorch", icon: "☼", x: 50, y: 376, requires: ["thorns"] },
+    // Arcana Research between Thorns and Torch, revealing the Breakthrough
+    // tree's Arcana research under Extra Trainer, with Limit Break to its
+    // right after it, revealing the Breakthrough tree's Limit Breaks.
+    { id: "arcanaResearch", icon: "✧", x: 50, y: 349, requires: ["thorns"] },
+    { id: "limitBreaks", icon: "⇑", x: 70, y: 349, requires: ["arcanaResearch"] },
+    { id: "cardTorch", icon: "☼", x: 50, y: 376, requires: ["arcanaResearch"] },
     // The Shield path splits off Torch to the right, revealed by Aether Shield
     // (in the Breakthrough tree): Shield, with Shield Thorns under it, then
     // Regrow Shield to its right, with Shield Regen under that.
@@ -196,16 +201,20 @@ export const TREES: SkillTree[] = [
     // of Key Mastery, with Ricochet Shock Research to its left after it.
     // Then the Arcana's research below Extra Trainer: Lifespring Research,
     // with Thunderbolt Research left of it and Necrotic Frost Research right
-    // of it (both also after Extra Trainer), Phantasm Research down and left
+    // of it (both also after Extra Trainer) and Time Dilation Research right
+    // of Necrotic Frost Research, after it, Phantasm Research down and left
     // of it, Overseer Zap down and right of it and Overseer Gold Bonus right
     // of that, then Aurum Bloom Research, with Voidwell Research down and
-    // right of it and Extra Voidwell right of that.
+    // right of it and Extra Voidwell right of that. All the Arcana's research
+    // after Extra Trainer stays hidden until the Inspiration tree's Arcana
+    // Research is owned.
     { id: "doorMastery", icon: "⚿", x: 50, y: 163, requires: ["keyMastery"] },
     { id: "extraTrainer", icon: "⚔", x: 50, y: 189, requires: ["keyMastery"] },
-    { id: "ricochetShockResearch", icon: "↯", x: 30, y: 189, requires: ["extraTrainer"] },
-    { id: "lifespringResearch", icon: "✚", x: 50, y: 213, requires: ["extraTrainer"] },
-    { id: "thunderboltResearch", icon: "↯", x: 30, y: 213, requires: ["extraTrainer"] },
-    { id: "necroticFrostResearch", icon: "❄", x: 70, y: 213, requires: ["extraTrainer"] },
+    { id: "ricochetShockResearch", icon: "↯", x: 30, y: 189, requires: ["extraTrainer"], reveal: "arcanaResearch" },
+    { id: "lifespringResearch", icon: "✚", x: 50, y: 213, requires: ["extraTrainer"], reveal: "arcanaResearch" },
+    { id: "thunderboltResearch", icon: "↯", x: 30, y: 213, requires: ["extraTrainer"], reveal: "arcanaResearch" },
+    { id: "necroticFrostResearch", icon: "❄", x: 70, y: 213, requires: ["extraTrainer"], reveal: "arcanaResearch" },
+    { id: "timeDilationResearch", icon: "⧗", x: 90, y: 213, requires: ["necroticFrostResearch"] },
     { id: "phantasmResearch", icon: "☁", x: 30, y: 237, requires: ["lifespringResearch"] },
     { id: "overseerZapResearch", icon: "↯", x: 70, y: 237, requires: ["lifespringResearch"] },
     { id: "overseerGoldResearch", icon: "¤", x: 90, y: 237, requires: ["overseerZapResearch"] },
@@ -214,8 +223,9 @@ export const TREES: SkillTree[] = [
     { id: "extraVoidwellResearch", icon: "◎", x: 90, y: 261, requires: ["voidwellResearch"] },
     // Limit Break 1 to 10 straight down under Aurum Bloom Research, a row
     // clear of it, each requiring the one before, Enemy Level Skip Limit
-    // Break split off right of the first, and Shield Limit Break off the second.
-    { id: "limitBreak1", icon: "⇑", x: 50, y: 285, requires: ["aurumBloomResearch"] },
+    // Break split off right of the first, and Shield Limit Break off the
+    // second, all hidden until the Inspiration tree's Limit Break is owned.
+    { id: "limitBreak1", icon: "⇑", x: 50, y: 285, requires: ["aurumBloomResearch"], reveal: "limitBreaks" },
     { id: "enemyLevelSkipLimitBreak", icon: "⇑", x: 70, y: 285, requires: ["limitBreak1"], reveal: "enemyLevelSkips" },
     { id: "limitBreak2", icon: "⇑", x: 50, y: 309, requires: ["limitBreak1"] },
     { id: "shieldLimitBreak", icon: "⇑", x: 70, y: 309, requires: ["limitBreak2"], reveal: "aetherShield" },

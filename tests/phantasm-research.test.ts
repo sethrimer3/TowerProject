@@ -44,7 +44,7 @@ function board(spots: readonly (readonly [number, number])[], over: Partial<Enem
 }
 const struckAt = (out: ReturnType<typeof ghostStrikes>) => out.shots.map((s) => `${s.to.x},${s.to.y}`).sort();
 
-test("the Breakthrough skill Phantasm Research opens all three projects, down and left of Lifespring Research; Tower VIII's floor 30 pays 5 Breakthrough", () => {
+test("the Breakthrough skill Phantasm Research opens all three projects, down and left of Lifespring Research; Tower VIII's floor 30 pays 4 Breakthrough", () => {
   const skill = UPGRADES.find((u) => u.id === "phantasmResearch")!;
   assert.deepEqual([skill.base, skill.max, skill.currency], [5, 1, "breakthrough"]);
   const nodes = TREES.find((t) => t.id === "breakthrough")!.nodes, at = (id: string) => nodes.find((n) => n.id === id)!;
@@ -55,7 +55,7 @@ test("the Breakthrough skill Phantasm Research opens all three projects, down an
     assert.ok(RESEARCH[id].requires.some((r) => "upgrade" in r && r.upgrade === "phantasmResearch"), id);
     assert.equal(RESEARCH[id].categories[0], "arcana", id);
   }
-  assert.deepEqual(checkpoint(8, 30), { floor: 30, reward: { kind: "breakthrough", amount: 5 }, premium: { kind: "currency", currency: "arcanite", amount: 10 } });
+  assert.deepEqual(checkpoint(8, 30), { floor: 30, reward: { kind: "breakthrough", amount: 4 }, premium: { kind: "currency", currency: "arcanite", amount: 10 } });
 });
 
 test("all three projects run on the spec's schedules and values", () => {

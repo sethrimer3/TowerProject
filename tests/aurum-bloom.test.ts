@@ -203,8 +203,8 @@ test("about one tile in ten shows a star at any moment, each wherever it fell, a
   assert.ok(starHue(3000) < 1e-9, "the hue comes round");
 });
 
-test("the Breakthrough skill Aurum Bloom Research opens Aurum Bloom Bonus (25 levels) and Aurum Bloom Chance (20), on the spec's schedule; Tower IV's floor 200 Goal pays 5 Breakthrough", () => {
-  assert.deepEqual(checkpoint(4, 200)?.reward, { kind: "breakthrough", amount: 5 });
+test("the Breakthrough skill Aurum Bloom Research opens Aurum Bloom Bonus (25 levels) and Aurum Bloom Chance (20), on the spec's schedule; Tower IV's floor 200 Goal pays 4 Breakthrough", () => {
+  assert.deepEqual(checkpoint(4, 200)?.reward, { kind: "breakthrough", amount: 4 });
   const minutes = (id: "aurumBloomBonus" | "aurumBloomChance", i: number) => Math.round(RESEARCH[id].levels.at(i)!.hours * 60);
   const ends = [
     ["aurumBloomBonus", 25, 15, 26_190_000_000, (64 * 24 + 20) * 60 + 50],

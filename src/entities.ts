@@ -214,6 +214,12 @@ export type Player = {
    * by (`slowedAct` skipping its strikes). Like `beamAttack`, only the copy of the
    * hero a fight is taken with carries it (`Game.fighterAt`). */
   slowdown?: number;
+  /** The percent Time Dilation's Damage Reduction cuts every enemy strike and
+   * shot on the hero by, after Parry and DEF, before the shroud (`strikeCut`),
+   * while its field stands. Like `shock`, only the copies of the hero that
+   * fight and are shot carry it (`Game.fighterAt`, `Game.striker`), so previews
+   * and planners count the plain hero, the worst case. */
+  dilationGuard?: number;
   /** Mirror Vault's Retribution (equipment/powers.ts): the damage the fight's
    * first strike takes off its enemy after its own, as much as is left of it
    * (`bout`); absent unless it is worn. Like `beamAttack`, only the copy of

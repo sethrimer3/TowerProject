@@ -4,10 +4,11 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { ARCANA } from "../src/arcana/arcana.ts";
 import { actsOf, clearDilation, fieldReach, fieldSlowdown, SLOWDOWN_CAP, slowedAct, slowedCharge, slowedTickGain, stepDilation, tallyAfter, validDilation, type DilationRun } from "../src/arcana/time-dilation.ts";
-import { bout, heroHpAfter, predict, replies, resume } from "../src/combat.ts";
+import { bout, heroHpAfter, predict, replies, resume, strikeCut, struckDamage } from "../src/combat.ts";
+import { snap } from "../src/exact.ts";
 import type { Enemy, Player, Tile } from "../src/entities.ts";
 import { aggroTurn } from "../src/enemies/flying.ts";
-import { FOE_GAIN, foeShotCost, foeTickGain } from "../src/enemies/ranged.ts";
+import { FOE_GAIN, foeShotCost, foeTickGain, shotDamage } from "../src/enemies/ranged.ts";
 import { random } from "../src/random.ts";
 import { decodeTrial, startTrial, trialStep, type TrialState } from "../src/proving-grounds/trial.ts";
 import { decodeTrialArcana } from "../src/proving-grounds/trial-arcana.ts";
@@ -43,12 +44,12 @@ test("its tables hold the spec's ends, sizes and prices", () => {
   assert.equal(ARCANA.timeDilation.trigger.on, "cooldown");
 });
 
-test("Slowdown and reach: research adds, up to 90%", () => {
+test("Slowdown and reach: research adds, up to 90%; reach by tiles", () => {
   assert.equal(fieldSlowdown(75, { slowdown: 0, range: 0 }), 75);
   assert.equal(fieldSlowdown(75, { slowdown: 10, range: 0 }), 85);
   assert.equal(fieldSlowdown(75, { slowdown: 40, range: 0 }), SLOWDOWN_CAP);
   assert.equal(fieldReach(300, { slowdown: 0, range: 0 }), 300);
-  assert.equal(fieldReach(300, { slowdown: 0, range: 50 }), 450);
+  assert.equal(fieldReach(300, { slowdown: 0, range: 3 }), 330, "Time Dilation Range: tenths of a tile past the shot range");
 });
 
 test("the spec's examples: which strikes land", () => {
@@ -211,6 +212,35 @@ test("a run: the first field comes when its cooldown runs out, and the card's ba
   turn(g);
   assert.equal(g.dilation, undefined, "over after five");
   assert.equal(g.arcana.cooldown(held)!.left, 175);
+});
+
+test("research: Duration adds turns, Range adds tiles, Damage Reduction cuts strikes and shots while the field stands", () => {
+  const g = arena({}, [0, 2, 0]);
+  g.save.archives.levels = { ...g.save.archives.levels, dilationDuration: 3, dilationRange: 2 };
+  const rule = g.arcana.timeDilationRule()!;
+  assert.equal(rule.duration, 5 + 3);
+  assert.equal(rule.guard, undefined, "no reduction before Damage Reduction");
+  g.run.timeDilation = { timer: 100, left: 3 };
+  assert.equal(g.dilation!.reach, 300 + 60);
+  assert.equal(g.dilationGuard, 0);
+  g.save.archives.levels.dilationGuard = 1;
+  assert.equal(g.dilationGuard, 10);
+  g.save.archives.levels.dilationGuardPercent = 30;
+  assert.equal(g.dilationGuard, 25);
+  assert.equal(g.striker.dilationGuard, 25);
+  assert.equal(g.fighterAt({ x: 1, y: 0 }).dilationGuard, 25);
+  assert.equal(g.run.player.dilationGuard, undefined, "only the copies carry it");
+  delete g.run.timeDilation.left;
+  assert.equal(g.dilationGuard, 0, "no field, no reduction");
+  // After Parry and DEF, before the shroud: 100 ATK less 20 DEF, half parried, a quarter of that off, then 10 shroud.
+  const guarded: Player = { ...hero, defense: 20, parry: 50, shroud: 10, dilationGuard: 25 }, brute = { ...rat, hp: 1_000_000, attack: 100 };
+  assert.equal(strikeCut(guarded), 62.5);
+  assert.equal(struckDamage(brute.attack, guarded.defense, strikeCut(guarded)), 30);
+  assert.equal(shotDamage(guarded, brute).damage, 20);
+  const strike = bout({ ...guarded, attack: 1 }, brute).strikes.find((s) => s.by === "enemy")!;
+  assert.equal(snap(strike.damage + (strike.shrouded ?? 0)), 30);
+  assert.ok(strike.parried, "still a parry");
+  assert.equal(bout({ ...guarded, parry: 0, attack: 1 }, brute).strikes.find((s) => s.by === "enemy")!.parried, undefined, "the reduction alone isn't a parry");
 });
 
 test("a run: switching it off loses the field; a reload keeps it", () => {

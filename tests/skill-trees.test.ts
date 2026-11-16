@@ -89,7 +89,7 @@ test("Shroud follows Trainers and Larger Hand, ahead of Critical; Greater Heal, 
   assert.deepEqual([at("buyQuantity").x, at("buyQuantity").y, at("buyQuantity").requires], [50, 268, ["lifesteal"]], "Buy Quantity sits under Lifesteal");
   assert.deepEqual([at("lifesteal").x, at("lifesteal").y, at("lifesteal").requires], [50, 232, ["archives"]], "Lifesteal sits under the Archives");
   assert.deepEqual([at("thorns").x, at("thorns").y, at("thorns").requires], [50, 322, ["buyQuantity"]], "Thorns sits between Buy Quantity and Torch");
-  assert.deepEqual([at("cardTorch").x, at("cardTorch").y, at("cardTorch").requires], [50, 376, ["thorns"]], "Torch sits under Thorns, a row below Floor Skip Reward");
+  assert.deepEqual([at("cardTorch").x, at("cardTorch").y, at("cardTorch").requires], [50, 376, ["arcanaResearch"]], "Torch sits under Arcana Research, under Thorns, a row below Floor Skip Reward");
   assert.deepEqual(["findYellowKey", "keyEfficiency", "keySiphon", "blueSiphon"].map((id) => [at(id).x, at(id).y, at(id).requires, at(id).reveal]),
     [[30, 394, ["cardTorch"], "keyMastery"], [30, 412, ["findYellowKey"], "keyMastery"], [30, 430, ["keyEfficiency"], "cardMastery"], [30, 448, ["keySiphon"], "cardMastery"]], "Find Gold Key, Key Efficiency (revealed by Key Mastery) and GK Siphon (by Card Mastery) between Torch and BK Siphon");
   assert.deepEqual(["cardRedKey", "redSiphon", "keyLessBadges", "keyAtLeastBadges"].map((id) => [at(id).x, at(id).y, at(id).requires]), [[70, 322, ["cardBlueKey"]], [30, 484, ["blueSiphon"]], [30, 502, ["redSiphon"]], [30, 520, ["keyLessBadges"]]], "Red Key under Blue Key; RK Siphon, then the key badges, down under BK Siphon");

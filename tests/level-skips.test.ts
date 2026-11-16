@@ -44,7 +44,7 @@ test("the skills: their trees, prices, places and what reveals them", () => {
   for (const id of ["enemyHpLevelSkips", "enemyLevelSkipLimitBreak"] as const) assert.equal(skillHidden(id, save.upgrades), skillHidden(at(id).requires[0]!, save.upgrades), `${id} then shows with what it requires`);
   // Bought in order, each opens the next.
   save.upgrades.breakthrough = save.upgrades.trainers = 1;
-  for (const id of ["questForKnowledge", "moveSpeed", "physician", "pathToWealth", "moreWealth", "overheal", "life", "ignoreMore", "ignore", "extraTrainer", "keyMastery", "cardBadges", "archives"] as const) save.upgrades[id] = 1;
+  for (const id of ["questForKnowledge", "moveSpeed", "physician", "pathToWealth", "moreWealth", "overheal", "life", "ignoreMore", "ignore", "extraTrainer", "keyMastery", "cardBadges", "archives", "arcanaResearch", "limitBreaks"] as const) save.upgrades[id] = 1;
   assert.equal(skillAvailable("enemyLevelSkipLimitBreak", save.upgrades), false, "waits on Limit Break 1");
   save.upgrades.limitBreak1 = 1;
   assert.equal(skillAvailable("enemyLevelSkipLimitBreak", save.upgrades), true);
