@@ -7,6 +7,7 @@ Floors are numbered from 1 as `Game.floorOf(x, y)` numbers a tile's: the Tower's
 
 What a run's own trees and research give is fixed as it goes inside (`Game.dealHand`, both modes) and saved in the run: `run.treasureFloor` (CHEST's tree) and `run.goldenFloor` (Golden Floor Chance research, whose target `goldenFloorChance` counts tenths of a percent, once the Breakthrough skill `goldenFloors` is owned).
 **Aurum Bloom** (`docs/agents/arcana.md`) adds to the Golden Floor's chance and gives the Stellar Floor's, and isn't saved in the run: `withBloom(run, bloom)` adds `ArcanaDesk.aurumBloom()` as the chances are read (`Game.environments`, and `RunPurse` by its `bloom`).
+The relics' Stellar Floor chance (the `stellarFloor` effect: Astral Conduit, Astral Ribbon) adds its points on top, Aurum Bloom held or not: both read `floorChances(run, bloom, stellar)`, and the Gold bonuses list the Stellar Floor line once either gives a chance.
 So switching it, a level bought mid-run or a Shrine lending it counts at once, and its levels, its switch and the loan all outlive the run.
 Read chances from `Game.environments` or the purse, never `run.goldenFloor` alone.
 

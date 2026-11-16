@@ -10,42 +10,44 @@ import { trainingSlots } from "../src/progression/training-jobs.ts";
 import { premiumArchivists } from "../src/shop/entitlements.ts";
 import { RELICS } from "../src/economy/relics.ts";
 import { relicAmount, relicText, relicTotals } from "../src/economy/relic-effects.ts";
+import { floorChances } from "../src/environments.ts";
+import { rollGemKind } from "../src/economy/gems.ts";
 
 /** Noon GMT on some day, a real timestamp. */
 const NOON = 20_500 * DAY_MS + DAY_MS / 2;
 /** Buys real-money offer `id` as the store confirms it. */
 const buy = (g: Game, id: OfferId) => assert.equal(g.shop.buy(id, NOON, true), null, id);
 
-test("every real-money offer pays 6 VIP Points for each dollar of its base price", () => {
+test("every real-money offer pays 16 VIP Points for each dollar of its base price", () => {
   const vip = Object.fromEntries(OFFERS.flatMap((o) => (o.price.kind === "money" ? [[o.id, o.price.vip]] : [])));
   assert.deepEqual(vip, {
-    shards300: 180, shards750: 360, researcher: 60, trainer: 60, stellar: 60, adFree: 60, coins2: 60, coins3: 180,
-    gems250: 30, gems550: 60, gems1150: 120, gems2500: 240, gems7500: 600, pass1: 60, pass2: 120, pass3: 180, eventBoost: 60,
+    shards300: 480, shards750: 960, researcher: 160, trainer: 160, stellar: 160, adFree: 160, coins2: 160, coins3: 480,
+    gems250: 80, gems550: 160, gems1150: 320, gems2500: 640, gems7500: 1600, pass1: 160, pass2: 320, pass3: 480, eventBoost: 160,
   });
 });
 
-test("a purchase pays its price's VIP Points; the half-price Ad-Disable pays 30; free claims pay none", () => {
+test("a purchase pays its price's VIP Points; the half-price Ad-Disable pays 80; free claims pay none", () => {
   const g = new Game(defaults());
   buy(g, "gems550");
   buy(g, "gems250");
-  assert.equal(g.save.vip, 90);
+  assert.equal(g.save.vip, 240);
   assert.equal(g.shop.buy("dailyGems", NOON), null);
-  assert.equal(g.save.vip, 90, "the Daily Free Gems pay none");
+  assert.equal(g.save.vip, 240, "the Daily Free Gems pay none");
   g.save.ads.discountUntil = NOON + DAY_MS;
-  assert.deepEqual(priceOf(g.save, offer("adFree")!, NOON), { kind: "money", sku: "ad_free_half", label: "$4.95", vip: 30 });
+  assert.deepEqual(priceOf(g.save, offer("adFree")!, NOON), { kind: "money", sku: "ad_free_half", label: "$4.95", vip: 80 });
   buy(g, "adFree");
-  assert.equal(g.save.vip, 120, "$4.95 pays 30");
+  assert.equal(g.save.vip, 320, "$4.95 pays 80");
   assert.equal(g.shop.buy("gems250", NOON, false), "unpaid", "an unconfirmed payment pays nothing");
-  assert.equal(g.save.vip, 120);
+  assert.equal(g.save.vip, 320);
 });
 
 test("VIP Points are saved, never negative, and outlast Erase All", () => {
   const g = new Game(defaults());
   buy(g, "gems7500");
-  assert.equal(decode(JSON.stringify(g.save)).vip, 600);
+  assert.equal(decode(JSON.stringify(g.save)).vip, 1600);
   assert.equal(decode(JSON.stringify({ ...g.save, vip: -5 })).vip, 0);
   g.eraseAll();
-  assert.equal(g.save.vip, 600);
+  assert.equal(g.save.vip, 1600);
 });
 
 test("the Premium Offers come one at a time, in order, until none is left", () => {
@@ -58,7 +60,7 @@ test("the Premium Offers come one at a time, in order, until none is left", () =
   buy(g, "stellar");
   assert.equal(premiumOffer(g.save), undefined);
   assert.equal(g.shop.buy("stellar", NOON, true), "limit", "each is bought once");
-  assert.equal(g.save.vip, 180);
+  assert.equal(g.save.vip, 480);
 });
 
 test("Extra Researcher adds an archivist beside those Gems hire, and its relic speeds research", () => {
@@ -110,4 +112,25 @@ test("what the Premium Offers gave comes back on load and after Erase All", () =
   assert.equal(g.save.archives.slots.length, ARCHIVISTS.start + 1);
   assert.equal(trainingSlots(g.save), trainingSlots(defaults()) + 1);
   assert.equal(g.save.gems, 0, "the Gems were spent progress");
+});
+
+test("the relics' Stellar Floor chance adds points of its own, without Aurum Bloom", () => {
+  const g = new Game(defaults());
+  g.newRun();
+  assert.equal(g.environments.stellarFloor ?? 0, 0);
+  buy(g, "stellar");
+  assert.equal(g.environments.stellarFloor, 1, "+1 point, Aurum Bloom not held");
+  assert.deepEqual(floorChances({ seed: 1, stellarFloor: 2 }, { bonus: 2, chance: 3, stellar: 4 }, 1.5), { seed: 1, treasureFloor: undefined, goldenFloor: 3, stellarFloor: 7.5 }, "added to the run's and Aurum Bloom's");
+  assert.notEqual(g.goldContext.stellar, undefined, "the Gold bonuses list the Stellar Floor");
+});
+
+test("the relics' Stellar Gem chance rolls on any Gem, and adds to a Golden Gem's", () => {
+  const sure = () => 0, never = () => 0.999;
+  assert.equal(rollGemKind(0, 0, never, sure, 1), "stellar", "a plain Gem turns stellar on the relics' chance alone");
+  assert.equal(rollGemKind(0, 0, never, () => 0.015, 1), "plain", "at 1.5%, past 1%");
+  assert.equal(rollGemKind(100, 2, sure, () => 0.025, 1), "stellar", "a golden one at 2 + 1 points");
+  assert.equal(rollGemKind(100, 2, sure, () => 0.035, 1), "golden");
+  let drawn = 0;
+  rollGemKind(0, 50, never, () => (drawn++, 0));
+  assert.equal(drawn, 0, "without the relics, a plain Gem rolls no stellar chance, as before");
 });

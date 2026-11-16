@@ -91,11 +91,13 @@ function gemOut(o: any): GemSpot | null {
 export const gemValue = (gem: Pick<GemSpot, "kind">) => GEM_VALUE[gem.kind ?? "plain"];
 
 /** A Gem's kind, rolled as it appears: golden at `golden` percent (from
- * `goldenRng`), then a golden one stellar at `stellar` percent (from
- * `stellarRng`), each its own sequence. */
-export function rollGemKind(golden: number, stellar: number, goldenRng: () => number, stellarRng: () => number): GemKind {
-  if (!(golden > 0) || goldenRng() * 100 >= golden) return "plain";
-  return stellar > 0 && stellarRng() * 100 < stellar ? "stellar" : "golden";
+ * `goldenRng`), then stellar (from `stellarRng`): a golden one at `stellar`
+ * plus `anyStellar` percent, any other at `anyStellar` (the relics' Stellar
+ * Gem chance, which needs no Golden Gem), each its own sequence. */
+export function rollGemKind(golden: number, stellar: number, goldenRng: () => number, stellarRng: () => number, anyStellar = 0): GemKind {
+  const kind = golden > 0 && goldenRng() * 100 < golden ? "golden" : "plain";
+  const chance = (kind === "golden" ? stellar : 0) + anyStellar;
+  return chance > 0 && stellarRng() * 100 < chance ? "stellar" : kind;
 }
 /** `spot` as it lies, of kind `kind`. */
 export const ofKind = <T extends object>(spot: T, kind: GemKind): T & Pick<GemSpot, "kind"> => (kind === "plain" ? spot : { ...spot, kind });

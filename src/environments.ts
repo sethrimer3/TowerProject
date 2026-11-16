@@ -1,4 +1,5 @@
 import { tileRandom } from "./random.ts";
+import { snap } from "./exact.ts";
 
 // Floor Environments: rules a whole floor (in the Delve, each equivalent
 // floor) may be given, each at its own chance. Each rolls the floor's own
@@ -45,6 +46,14 @@ export type FloorBloom = { bonus: number; chance: number; stellar: number; golde
  * toggle or a level counts at once. */
 export const withBloom = (run: EnvironmentRun, bloom: FloorBloom | undefined): EnvironmentRun =>
   bloom ? { seed: run.seed, treasureFloor: run.treasureFloor, goldenFloor: (run.goldenFloor ?? 0) + bloom.chance, stellarFloor: (run.stellarFloor ?? 0) + bloom.stellar } : run;
+
+/** `run`'s chances as a floor rolls them: Aurum Bloom's added (`withBloom`),
+ * and `stellar`, the relics' Stellar Floor chance, added in points whether
+ * Aurum Bloom is held or not. */
+export const floorChances = (run: EnvironmentRun, bloom: FloorBloom | undefined, stellar = 0): EnvironmentRun => {
+  const chances = withBloom(run, bloom);
+  return stellar > 0 ? { ...chances, stellarFloor: snap((chances.stellarFloor ?? 0) + stellar) } : chances;
+};
 
 /** Whether equivalent floor `floor` (from 1) of a run seeded `seed` has
  * environment `id` at `chance` percent: the floor's own fixed number, so a

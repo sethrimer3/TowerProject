@@ -20,8 +20,8 @@ export type Price =
   | { kind: "store"; url: string };
 
 /** VIP Points a real-money price pays for each dollar of its base price
- * (US dollars, rounded to the whole dollar): $9.99 pays 60. */
-export const VIP_PER_DOLLAR = 6;
+ * (US dollars, rounded to the whole dollar): $9.99 pays 160. */
+export const VIP_PER_DOLLAR = 16;
 /** A real-money price of `dollars` (its base price, as sold in US
  * dollars), with the VIP Points it pays. */
 export const money = (sku: string, dollars: number): Price & { kind: "money" } =>

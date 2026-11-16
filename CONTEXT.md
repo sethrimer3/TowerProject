@@ -532,7 +532,7 @@ A one-time purchase that opens the premium checkpoint rewards in one set of thre
 _Avoid_: battle pass, season pass
 
 **VIP Points**:
-A currency every real-money Shop purchase pays, a fixed amount for its price (6 for each dollar of its base price, whatever currency the store charges), kept for good, Erase All included. Shown as a brass crown; nothing spends them yet.
+A currency every real-money Shop purchase pays, a fixed amount for its price (16 for each dollar of its base price, whatever currency the store charges), kept for good, Erase All included. Shown as a brass crown; nothing spends them yet.
 _Avoid_: loyalty points, VIP level
 
 **Premium Offer**:

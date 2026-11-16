@@ -76,7 +76,7 @@ import { critRule, loadout, provisionsOpen, rankShift, trainingPoints, trainingW
 import { researched } from "./progression/archives.ts";
 import { arrive, recordClimb, type OfflineGrant } from "./offline-gold.ts";
 import { CURRENCIES } from "./shop/currency.ts";
-import { ENVIRONMENTS, hasEnvironment, possibleEnvironments, withBloom, type EnvironmentId } from "./environments.ts";
+import { ENVIRONMENTS, floorChances, hasEnvironment, possibleEnvironments, type EnvironmentId } from "./environments.ts";
 import { chargesLeft, chargesPerRun, climbFloor, spendCharge, type Charge } from "./run-charges.ts";
 import { TrainingDesk } from "./game/training-desk.ts";
 import { ShopDesk } from "./game/shop-desk.ts";
@@ -1549,15 +1549,13 @@ export class Game {
     const p = this.run.player, purse = this.purse, floor = this.run.outside ? 0 : this.floorOf(p.x, p.y);
     const bloom = this.arcana.owned.includes("aurumBloom") || !!this.arcana.aurumBloom();
     const golden = this.save.upgrades.goldenFloors || bloom ? (floor ? purse.golden(floor) : 1) : undefined;
-    const stellar = bloom ? (floor ? purse.stellar(floor) : 1) : undefined;
+    const stellar = bloom || relicAmount(this.save, "stellarFloor") > 0 ? (floor ? purse.stellar(floor) : 1) : undefined;
     const jackpot = jackpotFactor(this.worn, this.run.gear);
     return { save: this.save, mode: this.mode, tier: this.tier, now: this.clock(), shrine: this.shrine.open ? this.boons?.gold ?? 1 : undefined, golden, stellar, ...(jackpot === undefined ? {} : { jackpot }) };
   }
-  /** The run's environment chances as they stand: what it fixed going inside, and Aurum Bloom's while it holds it on. */
+  /** The run's environment chances as they stand: what it fixed going inside, Aurum Bloom's while it holds it on, and the relics' Stellar Floor chance. */
   get environments() {
-    // Relics add to the Stellar Floor chance Aurum Bloom gives.
-    const bloom = this.arcana.aurumBloom(), stellar = relicAmount(this.save, "stellarFloor");
-    return withBloom(this.run, bloom && stellar ? { ...bloom, stellar: snap(bloom.stellar + stellar) } : bloom);
+    return floorChances(this.run, this.arcana.aurumBloom(), relicAmount(this.save, "stellarFloor"));
   }
   /** Whether the tile at (x, y) stands on a Golden Floor, as the board draws it. */
   goldenAt(x: number, y: number) {

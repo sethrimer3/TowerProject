@@ -24,7 +24,7 @@ import { earn } from "../save/profile.ts";
 import { notesOf, tallyIn } from "../run-notes.ts";
 import { foeGold } from "../cards/foe-cards.ts";
 import { foeStat, treeBonus, treeFactor } from "../cards/trees.ts";
-import { hasEnvironment, STELLAR_FACTOR, withBloom, type FloorBloom } from "../environments.ts";
+import { floorChances, hasEnvironment, STELLAR_FACTOR, type FloorBloom } from "../environments.ts";
 
 /** The tiles whose Pickup Gold a skipped floor counts, beside its lit torches. */
 const ITEMS: ReadonlySet<Tile["kind"]> = new Set(["key", "potion", "attack", "defense", "door"]);
@@ -139,9 +139,9 @@ export class RunPurse {
     return { save: this.save, mode: this.mode, tier: this.tier, now: this.now, shrine: this.boons?.gold, ...floor, ...(jackpot === undefined ? {} : { jackpot }) };
   }
 
-  /** The run's environment chances, Aurum Bloom's added. */
+  /** The run's environment chances, Aurum Bloom's and the relics' added. */
   private get environments() {
-    return withBloom(this.run, this.bloom);
+    return floorChances(this.run, this.bloom, relicAmount(this.save, "stellarFloor"));
   }
 
   /** The factor on Gold and Silver found on equivalent floor `floor` (from 1)
