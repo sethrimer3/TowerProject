@@ -194,7 +194,7 @@ Copy example name copies its stable ID and name for feedback through Discord or 
 ## Arcana Effects Lab
 
 Visual Settings also offers Arcana Effects Lab to every player, without requiring Arcana unlocks or Dev Mode.
-`src/arcana-lab.ts` lists all nine comparisons with stable `ARC-<arcanumId>` names and a shared presentation clock.
+`src/arcana-lab.ts` lists nine base comparisons and six research comparisons with stable `ARC-<exampleId>` names and a shared presentation clock.
 `ui/arcana-lab-scene.ts` caches one native room and its actors, calls the existing production painters for Before, and draws experimental After effects from `render/effects/arcana-pixel-preview.ts` at the same time and coordinates.
 The proposals use opaque shared-palette pixels on the 24-pixel tile grid; production renderers and gameplay rules do not select them.
 Aurum Bloom has no dedicated current animation, and its slide explicitly identifies the proposed gold-petal burst as new.
@@ -205,3 +205,7 @@ Previous/next and arrow keys wrap, Home/End select endpoints, slider arrow keys 
 Playback suspends while the document is hidden and releases its animation frame and listeners when the screen is replaced or closed.
 The preview constructs no Game and never changes saves, purchases, unlocks, themes or the paused run; Copy example name supports external feedback without collecting votes.
 `node tests/arcana-lab.mjs` checks all comparisons, synchronized playback, deterministic scrubbing, keyboard/clipboard controls, motion preferences and run isolation at phone and desktop widths.
+
+The Arcana Effects Lab research slides cover Phantasm Stun, Necrotic Freeze, Voidwell Damage, Extra Voidwell, Overseer Zap and Thunderbolt Expansion.
+Each keeps the current field or reused impact in Before and shows proposed status markers, damage pulses, twin pixel vortices, targeting marks or splash rings in After.
+Research previews use the same pause, replay, scrub and copy controls and never enable research or alter combat.

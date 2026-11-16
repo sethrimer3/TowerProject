@@ -2,22 +2,26 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { ARCANA } from "../src/arcana/arcana.ts";
-import { ARCANA_EXAMPLES, arcanaExampleIndex, ARCANA_LAB_STILL, arcanaBurstAge } from "../src/arcana-lab.ts";
+import { ARCANA_EXAMPLES, ARCANA_RESEARCH_EXAMPLES, arcanaExampleIndex, arcanaExampleStill, ARCANA_LAB_STILL, arcanaBurstAge } from "../src/arcana-lab.ts";
 import { paintPixelArcana } from "../src/render/effects/arcana-pixel-preview.ts";
 
 function pixels(id: typeof ARCANA_EXAMPLES[number]["id"], time: number) {
   const calls: (string | number)[][] = [];
-  const c = { fillStyle: "", save() {}, restore() {}, fillRect(...box: number[]) { calls.push([this.fillStyle, ...box]); } };
+  const c = { fillStyle: "", save() {}, restore() {}, translate() {}, fillRect(...box: number[]) { calls.push([this.fillStyle, ...box]); } };
   paintPixelArcana(c as unknown as CanvasRenderingContext2D, id, time);
   return calls;
 }
 
 test("every arcanum has a named comparison and navigation wraps", () => {
-  assert.deepEqual(ARCANA_EXAMPLES.map(e => e.id).sort(), Object.keys(ARCANA).sort());
-  for (const ex of ARCANA_EXAMPLES) assert.equal(ex.name, ARCANA[ex.id].name);
-  assert.equal(arcanaExampleIndex(-1), 8); assert.equal(arcanaExampleIndex(9), 0);
+  assert.deepEqual(ARCANA_EXAMPLES.filter(e => !ARCANA_RESEARCH_EXAMPLES.some(r => r.id === e.id)).map(e => e.id).sort(), Object.keys(ARCANA).sort());
+  assert.equal(new Set(ARCANA_EXAMPLES.map(e => e.id)).size, 15);
+  assert.equal(arcanaExampleIndex(-1), 14); assert.equal(arcanaExampleIndex(15), 0);
   assert.equal(arcanaBurstAge(ARCANA_LAB_STILL), 50);
   assert.equal(arcanaBurstAge(ARCANA_LAB_STILL + 2400), 50);
+  for (const ex of ARCANA_RESEARCH_EXAMPLES) {
+    const age = arcanaBurstAge(arcanaExampleStill(ex.id));
+    assert.ok(age >= 90 && age < 330, "research opens on a visible impact frame, including with reduced motion");
+  }
 });
 
 test("all proposals use deterministic opaque palette pixels on the native grid", () => {
@@ -42,4 +46,13 @@ test("moving proposals advance while fields retain stable boundaries and impacts
   assert.deepEqual(pixels("timeDilation", 150), pixels("timeDilation", 1800));
   assert.deepEqual(pixels("thunderbolt", 1200), []);
   assert.deepEqual(pixels("ricochetShot", 1200), []);
+});
+
+// Research visuals must add feedback beyond their parent effect.
+test("research previews add visible feedback and animate independently", () => {
+  for (const ex of ARCANA_RESEARCH_EXAMPLES) {
+    assert.notDeepEqual(pixels(ex.id, 150), pixels(ex.id, 650), ex.id);
+  }
+  assert.notDeepEqual(pixels("thunderboltExpansion", 450), pixels("thunderbolt", 450));
+  assert.notDeepEqual(pixels("overseerZap", 450), pixels("thunderbolt", 450));
 });

@@ -1,4 +1,4 @@
-import { ARCANA_EXAMPLES, ARCANA_LAB_DURATION, ARCANA_LAB_STILL, arcanaExampleIndex } from "../arcana-lab.ts";
+import { ARCANA_EXAMPLES, ARCANA_LAB_DURATION, ARCANA_LAB_STILL, arcanaExampleIndex, arcanaExampleStill } from "../arcana-lab.ts";
 import { ArcanaLabScene } from "./arcana-lab-scene.ts";
 import { controlIcon } from "./control-icon.ts";
 import { copyText } from "./run-notes-dialog.ts";
@@ -56,7 +56,7 @@ export function renderArcanaLab(root: HTMLElement, reduceMotion: boolean, back: 
   cleanups.set(root, dispose); observer.observe(root, { childList: true, attributes: true, attributeFilter: ["class", "hidden"] });
   const show = (index: number) => {
     selected = arcanaExampleIndex(index); const ex = ARCANA_EXAMPLES[selected];
-    time = ARCANA_LAB_STILL; last = 0; painted = -1;
+    time = arcanaExampleStill(ex.id); last = 0; painted = -1;
     find("arcana-example-id").textContent = `ARC-${ex.id} · EXPERIMENTAL`;
     find("arcana-example-name").textContent = ex.name; find("arcana-example-change").textContent = ex.change;
     find("arcana-counter").textContent = `${selected + 1} / ${ARCANA_EXAMPLES.length}`;

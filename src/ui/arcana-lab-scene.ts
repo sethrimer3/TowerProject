@@ -1,5 +1,4 @@
-import type { ArcanumId } from "../arcana/arcana.ts";
-import { ARCANA_LAB_CENTER as C, ARCANA_LAB_RADIUS as R, ARCANA_LAB_SIZE as SIZE, ARCANA_LAB_TARGET as TARGET, arcanaBurstAge } from "../arcana-lab.ts";
+import { ARCANA_LAB_CENTER as C, ARCANA_LAB_RADIUS as R, ARCANA_LAB_SIZE as SIZE, ARCANA_LAB_TARGET as TARGET, ARCANA_LAB_SPLASH as SPLASH, ARCANA_LAB_TWINS, arcanaBurstAge, type ArcanaExampleId } from "../arcana-lab.ts";
 import type { Tile } from "../entities.ts";
 import { drawDungeonGround, dungeonDiagonals } from "../sprites/dungeon.ts";
 import { kitImage } from "../sprites/kit.ts";
@@ -18,13 +17,20 @@ import { paintPixelArcana } from "../render/effects/arcana-pixel-preview.ts";
 
 const SEED = 1103, N = SIZE / 24;
 const floor = (x: number, y: number): Tile => ({ kind: x <= 0 || y <= 0 || x >= N - 1 || y >= N - 1 ? "wall" : "floor" });
-const underActors = (id: ArcanumId) => id === "voidwell" || id === "necroticFrost" || id === "timeDilation";
+const underActors = (id: ArcanaExampleId) => id === "voidwell" || id === "necroticFrost" || id === "timeDilation" || id === "extraVoidwell";
 
 /** The before view uses the real current effect painters at the shared fixture coordinates. */
-export function paintCurrentArcana(c: CanvasRenderingContext2D, id: ArcanumId, time: number) {
+export function paintCurrentArcana(c: CanvasRenderingContext2D, id: ArcanaExampleId, time: number) {
   const age = arcanaBurstAge(time);
   c.save();
-  if (id === "voidwell") paintVortex(c, C, C, R, 1, time, false);
+  if (id === "extraVoidwell") for (const p of ARCANA_LAB_TWINS) paintVortex(c, p.x, p.y, 42, 1, time, false);
+  else if (id === "phantasmStun") paintCurrentArcana(c, "phantasm", time);
+  else if (id === "overseerZap" || id === "thunderboltExpansion") {
+    paintCurrentArcana(c, "thunderbolt", time);
+    if (id === "thunderboltExpansion" && age >= 90 && age < 330) {
+      c.translate(SPLASH.x - 12, SPLASH.y - 12); paintThunderlight(c, age);
+    }
+  } else if (id === "voidwell") paintVortex(c, C, C, R, 1, time, false);
   else if (id === "necroticFrost") paintFrostField(c, C, C, R, 1, 24, time, 1, false);
   else if (id === "lifespring") paintLifespring(c, C, C, R, time, false);
   else if (id === "timeDilation") paintDilationField(c, C, C, R, 1);
@@ -76,15 +82,27 @@ export class ArcanaLabScene {
     this.loaded = ready;
     return ready;
   }
-  draw(before: HTMLCanvasElement, after: HTMLCanvasElement, id: ArcanumId, time: number) {
+  draw(before: HTMLCanvasElement, after: HTMLCanvasElement, id: ArcanaExampleId, time: number) {
     const ready = this.prepare();
     for (const [canvas, paint] of [[before, paintCurrentArcana], [after, paintPixelArcana]] as const) {
       if (canvas.width !== SIZE * 2 || canvas.height !== SIZE * 2) canvas.width = canvas.height = SIZE * 2;
       const c = canvas.getContext("2d")!;
       c.setTransform(2, 0, 0, 2, 0, 0); c.imageSmoothingEnabled = false;
       c.drawImage(this.ground, 0, 0);
+      // Research variants retain their existing floor field beneath the actors.
+      if (id === "voidwellDamage") paint(c, "voidwell", time);
+      if (id === "necroFreeze") paint(c, "necroticFrost", time);
       if (underActors(id)) paint(c, id, time);
       c.drawImage(this.actors, 0, 0);
+      if (id === "thunderboltExpansion") {
+        c.save(); c.translate(SPLASH.x - 12, SPLASH.y - 12);
+        paintContents(c, { kind: "enemy", enemy: { name: "Skeleton", hp: 20, attack: 5, defense: 1, tier: 0, strength: "normal" } }, { x: 8, y: 4, time: 0, styledSprites: true, reduceMotion: true }); c.restore();
+      }
+      if (id === "overseerZap") {
+        const aim = Math.atan2(TARGET.x - C, C - TARGET.y) * 180 / Math.PI;
+        if (paint === paintCurrentArcana) paintOverseerBeams(c, C, C, SIZE * 2, { count: 3, width: 24 }, aim);
+        else paintPixelArcana(c, "overseer", aim / 360 * 12000);
+      }
       if (!underActors(id)) paint(c, id, time);
     }
     return ready;

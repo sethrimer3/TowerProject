@@ -1,5 +1,4 @@
-import type { ArcanumId } from "../../arcana/arcana.ts";
-import { ARCANA_LAB_CENTER as C, ARCANA_LAB_RADIUS as R, ARCANA_LAB_TARGET as TARGET, arcanaBurstAge } from "../../arcana-lab.ts";
+import { ARCANA_LAB_CENTER as C, ARCANA_LAB_RADIUS as R, ARCANA_LAB_TARGET as TARGET, ARCANA_LAB_SPLASH as SPLASH, ARCANA_LAB_TWINS, arcanaBurstAge, type ArcanaExampleId } from "../../arcana-lab.ts";
 
 // Opaque shared-palette pixels, integer geometry, no gradients or smoothing.
 const P = { dark: "#10151c", slate: "#1b2430", blueDark: "#16303d", blue: "#315363", cyan: "#54879a", ice: "#88c5db",
@@ -41,11 +40,8 @@ function ghost(c: CanvasRenderingContext2D, x: number, y: number, frame: number)
   dot(c, { x: x - 2, y: y - 1 }, P.dark); dot(c, { x: x + 2, y: y - 1 }, P.dark);
 }
 
-/** Experimental drawing only; production effects continue using their existing painters. */
-export function paintPixelArcana(c: CanvasRenderingContext2D, id: ArcanumId, time: number) {
-  const tick = Math.floor(time / 100), now = tick * 100, spin = now / 9000 * TAU, age = arcanaBurstAge(time);
-  c.save(); c.imageSmoothingEnabled = false;
-  if (id === "voidwell") {
+function vortex(c: CanvasRenderingContext2D, R: number, time: number) {
+  const spin = Math.floor(time / 100) * 100 / 9000 * TAU;
     disc(c, C, C, R, P.blue); disc(c, C, C, R - 2, P.blueDark);
     disc(c, C, C, R * .67, P.slate); disc(c, C, C, R * .32, P.dark);
     ring(c, C, C, R, P.cyan);
@@ -57,6 +53,42 @@ export function paintPixelArcana(c: CanvasRenderingContext2D, id: ArcanumId, tim
         line(c, previous, next, P.cyan, 2); previous = next;
       }
     }
+}
+
+/** Experimental drawing only; production effects continue using their existing painters. */
+export function paintPixelArcana(c: CanvasRenderingContext2D, id: ArcanaExampleId, time: number) {
+  const tick = Math.floor(time / 100), now = tick * 100, spin = now / 9000 * TAU, age = arcanaBurstAge(time);
+  c.save(); c.imageSmoothingEnabled = false;
+  if (id === "extraVoidwell") {
+    for (const p of ARCANA_LAB_TWINS) {
+      c.save(); c.translate(p.x - C, p.y - C); vortex(c, 42, time); c.restore();
+    }
+  } else if (id === "phantasmStun") {
+    paintPixelArcana(c, "phantasm", time);
+    for (let i = 0; i < 3; i++) { const p = at(now / 900 + i / 3 * TAU, 9, TARGET.x, TARGET.y - 16); spark(c, p.x, p.y, P.purple, 2); }
+  } else if (id === "necroFreeze") {
+    const spread = Math.min(9, 3 + Math.floor(age / 30));
+    for (const dx of [-9, 0, 9]) {
+      line(c, { x: TARGET.x + dx, y: TARGET.y + 10 }, { x: TARGET.x + dx - 3, y: TARGET.y - spread }, P.blue, 3);
+      line(c, { x: TARGET.x + dx - 1, y: TARGET.y + 8 }, { x: TARGET.x + dx - 3, y: TARGET.y - spread }, P.ice);
+    }
+    ring(c, TARGET.x, TARGET.y, 13, P.cyan, 1, tick / 4 + .1);
+  } else if (id === "voidwellDamage") {
+    for (let i = 0; i < 5; i++) {
+      const p = at(i / 5 * TAU + .4, 18 - tick % 12, TARGET.x, TARGET.y);
+      spark(c, p.x, p.y, P.purple, 2);
+    }
+  } else if (id === "overseerZap") {
+    paintPixelArcana(c, "thunderbolt", time);
+    ring(c, TARGET.x, TARGET.y, 14, P.gold, 1, tick / 6 + .1);
+  } else if (id === "thunderboltExpansion") {
+    paintPixelArcana(c, "thunderbolt", time);
+    if (age >= 90 && age < 330) {
+      ring(c, TARGET.x, TARGET.y, Math.round((age - 90) / 240 * 48), P.ice);
+      spark(c, SPLASH.x, SPLASH.y, P.ice, 5);
+    }
+  } else if (id === "voidwell") {
+    vortex(c, R, time);
   } else if (id === "necroticFrost") {
     ring(c, C, C, R, P.lime); ring(c, C, C, R - 3, P.purple);
     for (let i = 0; i < 12; i++) {
