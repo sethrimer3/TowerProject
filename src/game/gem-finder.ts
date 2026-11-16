@@ -1,4 +1,5 @@
 import { relicAmount, relicFactor } from "../economy/relic-effects.ts";
+import { snap } from "../exact.ts";
 import type { Board } from "../board.ts";
 import { VIEWPORT_TILES } from "../config.ts";
 import type { Enemy, Mode } from "../entities.ts";
@@ -133,8 +134,9 @@ export class GemFinder {
    * of golden, then Stellar Gem Chance's of stellar, each its own roll. */
   private kindOf(from: GemFrom, x: number, y: number): GemKind {
     const { run } = this.host, bonus = this.host.treeBonus, salt = FROM_SALT[from] ^ floorPart(this.floor) ^ tilePart(x, y);
-    // The relics' Stellar Gem chance rolls on every Gem, golden or not.
-    return rollGemKind(bonus.goldenGem, bonus.stellarGem, random(run.seed ^ GOLDEN_SALT ^ salt), random(run.seed ^ STELLAR_SALT ^ salt), relicAmount(this.host.save, "stellarGem"));
+    // The relics' Stellar Gem chance adds its points to Stellar Gem Chance, for Golden Gems.
+    const stellar = snap(bonus.stellarGem + relicAmount(this.host.save, "stellarGem"));
+    return rollGemKind(bonus.goldenGem, stellar, random(run.seed ^ GOLDEN_SALT ^ salt), random(run.seed ^ STELLAR_SALT ^ salt));
   }
 
   /** Whether the once-only roll `key` (in the mode's looted tiles) is

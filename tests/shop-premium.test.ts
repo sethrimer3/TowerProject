@@ -11,7 +11,6 @@ import { premiumArchivists } from "../src/shop/entitlements.ts";
 import { RELICS } from "../src/economy/relics.ts";
 import { relicAmount, relicText, relicTotals } from "../src/economy/relic-effects.ts";
 import { floorChances } from "../src/environments.ts";
-import { rollGemKind } from "../src/economy/gems.ts";
 
 /** Noon GMT on some day, a real timestamp. */
 const NOON = 20_500 * DAY_MS + DAY_MS / 2;
@@ -124,13 +123,19 @@ test("the relics' Stellar Floor chance adds points of its own, without Aurum Blo
   assert.notEqual(g.goldContext.stellar, undefined, "the Gold bonuses list the Stellar Floor");
 });
 
-test("the relics' Stellar Gem chance rolls on any Gem, and adds to a Golden Gem's", () => {
-  const sure = () => 0, never = () => 0.999;
-  assert.equal(rollGemKind(0, 0, never, sure, 1), "stellar", "a plain Gem turns stellar on the relics' chance alone");
-  assert.equal(rollGemKind(0, 0, never, () => 0.015, 1), "plain", "at 1.5%, past 1%");
-  assert.equal(rollGemKind(100, 2, sure, () => 0.025, 1), "stellar", "a golden one at 2 + 1 points");
-  assert.equal(rollGemKind(100, 2, sure, () => 0.035, 1), "golden");
-  let drawn = 0;
-  rollGemKind(0, 50, never, () => (drawn++, 0));
-  assert.equal(drawn, 0, "without the relics, a plain Gem rolls no stellar chance, as before");
+test("the relics' Stellar Gem chance adds its points to a Golden Gem's Stellar Gem Chance only", () => {
+  const g = new Game(defaults());
+  g.newRun();
+  buy(g, "stellar");
+  const finder = g.gemFinder as unknown as { kindOf(from: string, x: number, y: number): string };
+  const host = (g.gemFinder as unknown as { host: { treeBonus: Record<string, number> } }).host;
+  // No Golden Gem chance: every Gem stays plain, the relic notwithstanding.
+  const kinds = new Set(Array.from({ length: 200 }, (_, i) => finder.kindOf("chance", i % 15, Math.floor(i / 15))));
+  assert.deepEqual([...kinds], ["plain"]);
+  // Every Gem golden and no Stellar Gem Chance of the tree's: the relic's 1 point alone turns some stellar.
+  Object.defineProperty(host, "treeBonus", { value: { ...host.treeBonus, goldenGem: 100, stellarGem: 0 }, configurable: true });
+  const rolled = Array.from({ length: 2000 }, (_, i) => finder.kindOf("chance", i % 40, Math.floor(i / 40)));
+  const stellar = rolled.filter((k) => k === "stellar").length;
+  assert.ok(stellar > 0 && stellar < 60, `about 1% stellar: ${stellar}`);
+  assert.ok(rolled.every((k) => k !== "plain"));
 });
