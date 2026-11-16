@@ -1,3 +1,4 @@
+import { championValue, isChampion } from "../shop/champion.ts";
 import { researched } from "../progression/archives.ts";
 import { trainedAmount } from "../progression/training.ts";
 import type { Mode } from "../entities.ts";
@@ -14,7 +15,7 @@ import { relicAmount, relicFactor } from "./relic-effects.ts";
 /** One Gold multiplier: a factor on every Gold banked, its name as the
  * player sees it, and its factor, or null while it isn't applied (the
  * player sees "Inactive"). `id` names it for the code. */
-export type GoldMultiplier = { id: "tower" | "ads" | "adPrize" | EntitlementId | "collection" | "relics" | "gear" | "jackpot" | "boons" | "golden" | "stellar"; name: string; factor: number | null };
+export type GoldMultiplier = { id: "tower" | "ads" | "adPrize" | EntitlementId | "champion" | "collection" | "relics" | "gear" | "jackpot" | "boons" | "golden" | "stellar"; name: string; factor: number | null };
 
 /** What the Gold multipliers read: the save, the mode whose hero's
  * equipment counts, the tier, the wall clock (ms, for the Gold ad's boost),
@@ -24,7 +25,7 @@ export type GoldMultiplier = { id: "tower" | "ads" | "adPrize" | EntitlementId |
  * the Gold found (`golden`: 1 off a Golden Floor; undefined shows no Golden
  * Floor line), and with Aurum Bloom, a Stellar Floor's (`stellar`, the same). */
 export type GoldContext = {
-  save: Pick<Save, "goldBoostUntil" | "ads" | "entitlements" | "themes" | "music" | "equipment" | "relics">;
+  save: Pick<Save, "goldBoostUntil" | "ads" | "entitlements" | "themes" | "music" | "equipment" | "relics" | "vip">;
   mode: Mode;
   tier: number;
   now: number;
@@ -38,7 +39,7 @@ export type GoldContext = {
 /** Every Gold multiplier, in the order the All Gold Bonuses box lists
  * them: the tower's, the ads' one line (the Gold ad's boost while it runs,
  * else Ad-Disable), the ad series' Gold prize while it runs (its own
- * factor, kept when a permanent offer is bought), each Coin Pack (the Shop's `goldFactor`s), the Event
+ * factor, kept when a permanent offer is bought), each Gold bundle (the Shop's `goldFactor`s), the Event
  * Collection (the themes and bonus tracks owned), the relics' Gold Bonus (their percents
  * added), the mode's equipment's Gold found, the run's
  * Gold boons, a Golden Floor's multiplier and a Stellar Floor's. Paying (`goldBanked`) and the box read this one list, so
@@ -52,6 +53,9 @@ export function goldMultipliers({ save, mode, tier, now, shrine, golden, stellar
     : { id: "ads", name: "Disable ads", factor: owns(save, "adFree") ? ENTITLEMENTS.adFree.goldFactor : null };
   const prize = adGoldFactor(save.ads.gold, now);
   const adPrize: GoldMultiplier[] = prize > 1 ? [{ id: "adPrize", name: "Ad Reward", factor: prize }] : [];
+  // Champion Status's Club tier, listed only for a Champion.
+  const club = championValue(save, "gold");
+  const champion: GoldMultiplier[] = isChampion(save) ? [{ id: "champion", name: "Champion's Club", factor: club ? (100 + club) / 100 : null }] : [];
   const owned = save.themes.length + save.music.length;
   const collection: GoldMultiplier = { id: "collection", name: "Event Collection", factor: owned ? collectionGoldFactor(save) : null };
   const relics: GoldMultiplier = { id: "relics", name: "Relics", factor: relicAmount(save, "gold") ? relicFactor(save, "gold") : null };
@@ -64,7 +68,7 @@ export function goldMultipliers({ save, mode, tier, now, shrine, golden, stellar
     ...(golden === undefined ? [] : [{ id: "golden" as const, name: "Golden Floor", factor: golden === 1 ? null : golden }]),
     ...(stellar === undefined ? [] : [{ id: "stellar" as const, name: "Stellar Floor", factor: stellar === 1 ? null : stellar }]),
   ];
-  return [{ id: "tower", name: "Tower Multiplier", factor: TIER_BONUS_TENTHS[tier - 1]! / 10 }, ads, ...adPrize, ...packs, collection, relics, gear, ...spurs, ...boons, ...floor];
+  return [{ id: "tower", name: "Tower Multiplier", factor: TIER_BONUS_TENTHS[tier - 1]! / 10 }, ads, ...adPrize, ...packs, ...champion, collection, relics, gear, ...spurs, ...boons, ...floor];
 }
 
 /** The multipliers applied, multiplied together (unrounded: `factorText`
@@ -90,7 +94,10 @@ export const factorText = (factor: number) => `×${Number(factor.toFixed(3))}`;
  * times the run's Silver Bonus boons (`boon`), raised by the Silver found
  * of the equipment `mode`'s hero wears. Paying (`RunPurse.silver`) and
  * the Training rows read it. */
-export function silverFound(save: Pick<Save, "upgrades" | "archives" | "equipment">, mode: Mode, ranks: number, boon = 1) {
+export function silverFound(save: Pick<Save, "upgrades" | "archives" | "equipment"> & Partial<Pick<Save, "entitlements" | "vip">>, mode: Mode, ranks: number, boon = 1) {
   const bonus = trainedAmount(save, "silverBonus", ranks);
-  return (((bonus * researched(save.archives, "silverBonus")) / 10_000) * boon * (100 + wornEffects(save, mode).silverFind)) / 100;
+  // Champion Status's Club tier is a factor of its own.
+  const club = save.entitlements && save.vip !== undefined ? championValue({ entitlements: save.entitlements, vip: save.vip }, "silver") : 0;
+  const found = (((bonus * researched(save.archives, "silverBonus")) / 10_000) * boon * (100 + wornEffects(save, mode).silverFind)) / 100;
+  return club ? (found * (100 + club)) / 100 : found;
 }

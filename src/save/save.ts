@@ -19,6 +19,7 @@ import { decodeAds, defaultAds } from "../ads/series.ts";
 import { decodeArchives, defaultArchives, researched } from "../progression/archives.ts";
 import { adsOff, BOOST_FOREVER, decodeEntitlements, permanentBoost, premiumArchivists } from "../shop/entitlements.ts";
 import { settlePerks } from "../shop/perks.ts";
+import { decodeChampion, defaultChampion } from "../shop/champion.ts";
 import { decodeShop, defaultShop } from "../shop/ledger.ts";
 import { decodeGoals, defaultGoals } from "../goals.ts";
 import { decodeTournament, defaultTournament } from "../tournament/progress.ts";
@@ -58,6 +59,7 @@ export function defaults(): Save {
     arcana: defaultArcana(),
     medals: 0,
     vip: 0,
+    champion: defaultChampion(),
     cells: 0,
     gemDrop: defaultGemDrop(),
     goldBoostUntil: 0,
@@ -374,6 +376,7 @@ function decodeProgress(s: any, d: Save) {
   d.arcaniteCarry = typeof s.arcaniteCarry === "number" && s.arcaniteCarry >= 0 && s.arcaniteCarry < 1 ? s.arcaniteCarry : 0;
   d.medals = count(s.medals, d.medals);
   d.vip = count(s.vip, d.vip);
+  d.champion = decodeChampion(s.champion);
   d.cells = fraction(s.cells, d.cells);
   d.gemDrop = decodeGemDrop(s.gemDrop);
   d.goldBoostUntil = count(s.goldBoostUntil, 0, Number.MAX_SAFE_INTEGER);

@@ -9,6 +9,7 @@ This document is the reference for the Shop's design: what Version 1 does, how i
 ### The page, top to bottom
 
 1. **Currencies**: the pages' currencies bar (Gold, Gems and Arcanite held), as on the other pages that spend them; its chevron opens every currency held.
+   For a Champion, **Champion Status** follows (see [Champion Status](#champion-status-and-the-champions-club)): a green banner reading *Champion Status* between two gold stars, *Thanks for your support! Enjoy!* under it, the Champion's tier and VIP Points earned (the crown icon), and the **Champion's Club** button.
 2. **Limited Offers**, in two columns: the Arcanite packs, each bought at most once every two weeks (14 Shop days from the day of its last purchase; until then its button reads *Purchased* with *Next in 13d hh:mm:ss* under it):
 
    | Offer | Grants | Default price |
@@ -17,7 +18,7 @@ This document is the reference for the Shop's design: what Version 1 does, how i
    | 750 Arcanite Pack | 750 Arcanite + 600 Gems | $59.99 |
 
    **Arcanite** are a limited currency, kept between runs (`save.arcanite`), with a green crystal icon wherever they are shown: after Gems in the currencies bar of the Upgrades, Research, Deck and Gear pages, in the Shop's currencies, and in the forest's purse under Gems (the purse's lines close up there to make room). Nothing spends them yet. An offer can also be a banner that only opens the store (*Go to store*), and an offer with an end time shows *Expires in hh:mm:ss*, and it can't be bought once that time has passed, whatever the page still shows.
-3. **Premium Offers**: one offer at a time, the next appearing once it is bought (`premiumOffer`); once all are, the section reads *Thanks for your support! More offers to come in the future.* Each is bought once, and what it gives is kept by Erase All and given again on every load (`settlePerks` in `shop/perks.ts`):
+3. **Premium Offers**: one offer at a time (two for a Champion), the next appearing once one is bought (`premiumOffers`); once all are, the section reads *Thanks for your support! More offers to come in the future.* Each is bought once, and what it gives is kept by Erase All and given again on every load (`settlePerks` in `shop/perks.ts`):
 
    | Offer | Grants | Default price |
    |---|---|---|
@@ -30,10 +31,12 @@ This document is the reference for the Shop's design: what Version 1 does, how i
    | Offer | Does | Default price |
    |---|---|---|
    | Permanent Ad-Disable | No ads (the ad Gem button just pays, and the in-run Gold ad goes, with any boost time it stored, the Gem button taking its place); the trainers' ×2 boost for good, with no ad; ×1.5 Gold | $9.95 ($4.95 for 24 hours as the ad series' last prize: see [Ads Watch](gameplay/currencies-and-shop.md#ads-watch)) |
-   | Special Coin Pack | 150 Gems; ×2 Gold, on all Gold earned; training ×2 for good, multiplying with the boost and the Premium Coin Pack | $9.95 |
-   | Premium Coin Pack | 750 Gems; ×3 Gold, multiplying with ×2 and every other bonus; training ×3 for good, multiplying with the boost and the Special Coin Pack (×12 with all three training packs) | $29.95 |
+   | Special Gold Bundle | 150 Gems; ×2 Gold, on all Gold earned; training ×2 for good, multiplying with the boost and the Champion's Bundle | $9.95 |
+   | Champion's Bundle | 750 Gems; ×3 Gold, multiplying with ×2 and every other bonus; training ×3 for good, multiplying with the boost and the Special Gold Bundle (×12 with all three training packs); Champion Status (below) | $29.95 |
 
-   A line under them says *All coin bonuses are multiplicative and apply forever.* The Gold bonuses multiply each other: all three make ×9. They apply to every Gold the hero banks in the Tower and the Delve (kills, treasure, Spare Change, the end of a run).
+   The Champion's Bundle can be bought only once both Permanent Ad-Disable and the Special Gold Bundle are (`after` on its offer, the `after` refusal): until then its price button is greyed out, with *Available once Permanent Ad-Disable and the Special Gold Bundle are purchased.* under it.
+
+   A line under them says *All Gold bonuses are multiplicative and apply forever.* The Gold bonuses multiply each other: all three make ×9. They apply to every Gold the hero banks in the Tower and the Delve (kills, treasure, Spare Change, the end of a run).
 5. **Gems**, in two columns:
 
    | Column 1 | Column 2 |
@@ -47,11 +50,47 @@ This document is the reference for the Shop's design: what Version 1 does, how i
 
 ### VIP Points
 
-Every real-money purchase pays **VIP Points** (`save.vip`, a `CURRENCIES` row with a brass crown icon), a fixed amount for its price: each money `Price` carries its `vip`, 16 for each dollar of its base price in US dollars, rounded to the dollar (`money(sku, dollars)` and `VIP_PER_DOLLAR` in `offers.ts`). The amount belongs to the price, not to what the store charges, so a store selling in another currency pays the same; a discount is its own price, so the half-price Ad-Disable ($4.95) pays 80. `purchase` credits them with the item, Dev free purchases included; free claims and currency prices pay none. Each card shows its price's points as a tile beside what it grants. Erase All keeps them, and nothing spends them yet.
+Every real-money purchase pays **VIP Points** (`save.vip`, a `CURRENCIES` row with a brass crown icon), a fixed amount for its price: each money `Price` carries its `vip`, 16 for each dollar of its base price in US dollars, rounded to the dollar (`money(sku, dollars)` and `VIP_PER_DOLLAR` in `offers.ts`). The amount belongs to the price, not to what the store charges, so a store selling in another currency pays the same; a discount is its own price, so the half-price Ad-Disable ($4.95) pays 80. `purchase` credits them with the item, Dev free purchases included; free claims and currency prices pay none. They show only to a Champion: then each card shows its price's points as a tile beside what it grants, the banner shows the total earned, and the currencies list has a row for them. Erase All keeps them, and nothing spends them: the total earned sets the Champion's tier.
 
 Each card shows what its offer grants as large icons, each over its amount (`rewards` in `ui/shop-page.ts`, read from the offer's item): a one-time pack's Gold multiplier on the Gold coin (*×2*), then the currencies, never written out, and its other effects in a few words (*×2 training speed forever*). Tapping a card shows its details without buying: its rarity, its guaranteed effects, the quantity, the price, the balance left after a currency price, and its purchase limit. A card's own button buys it. A Gem price of 200 or more asks for confirmation first. When an offer can't be afforded, what the player has is written under its button (*You have 312 Gems*). A Gem price stays pressable and prominent, as every Gem purchase in the game does: pressing it short of Gems says so and scrolls to the Gem packs. Any other currency's button is disabled. A category can be gated by progress; a locked one shows *🔒 Name* and what unlocks it (*Reach Tower VIII to unlock.*) instead of disappearing.
 
 The Shop button shows a dot while the Daily Free Gems can be claimed.
+
+### Champion Status and the Champion's Club
+
+Owning the Champion's Bundle makes the player a **Champion** (`shop/champion.ts`, `isChampion`). The bundle itself gives, for good:
+
+- ×2 the most offline time Offline Gold pays (and Offline Gems), and Offline Gold even without the Offline Gold skill;
+- +25% XP from kills, a factor of its own;
+- the unique legendary relic **Founder's Cape**: +5% ATK and +5% DEF (`shop.coins3`);
+- −20 s off the ad Gem button's cooldown;
+- **Daily Training Points**: 3 Training Points to claim on the Training page once each Shop day (00:00 GMT); the button shows *Claim* and the points, then the countdown to the next and the points; the Club's tiers may multiply a claim;
+- the next two Premium Offers shown instead of one;
+- the Champion's Club, whose tiers raise permanent bonuses as VIP Points are earned.
+
+**The Champion's Club** (the button under the banner) lists every tier and what it gives: those reached in white with a check, their bonuses at their current values; the rest in grey at their first value. Each tier's bonus starts at its tier and grows by its step for every tier reached past it, up to its cap, and counts even where the research, skill or card it adds to isn't open yet.
+
+| Tier | VIP Points | Bonus (step a later tier, cap) |
+|---|---|---|
+| Base | the bundle | +5% Offline Gold rate (+2%, 95%); Offline Gems 5% (+2%, 50%) |
+| 1 | 960 | 12% chance of ×2 Daily Training Points (+6%, 78%) |
+| 2 | 1,440 | −10 s Gem button cooldown (−5 s, −60 s) |
+| 3 | 2,080 | +5% Gold (+3%) |
+| 4 | 2,880 | +10% Silver (+5%) |
+| 5 | 3,920 | +5% Golden Gem chance (+3%, 30%) |
+| 6 | 5,360 | +2 Gem button bank (+1, 9) |
+| 7 | 7,440 | 16% chance of ×3 Daily Training Points (+8%, 64%) |
+| 8 | 9,920 | +2 Gems from the Gem button (+1, 7) |
+| 9 | 12,480 | +1% Stellar Floor chance (+1%, 8%) |
+| 10 | 16,000 | +1 Dash tile, +1 End Rush tile (+1 End Rush) |
+| 11 | 21,600 | 10% chance of ×5 Daily Training Points (+2%, 20%) |
+| 12 | 28,800 | +0.5% Gem chance a floor (+0.25%, 2%) |
+| 13 | 37,200 | 0.25% chance a Gem button reward pays 100 Gems (+0.25%, 2%) |
+| 14+ | 46,800, then every 9,600 | a One Piece Ticket each |
+
+A Daily Training Points claim rolls ×5 at its chance, else ×3 at its, else ×2 at its. Offline Gems are the Offline Gems share of the Gems the Recent Floors per Minute (each Tower climb's new floors over its time, kept with the Recent Gold per Hour) would have found in the time paid: the floors' Gem timer (one a cooldown, a floor at most) and Gem chance, each at its kinds' average worth. The Club's Gold is its own line in the Gold multipliers (*Champion's Club*), and its Silver a factor of its own on Silver found.
+
+The Tier 14+ row shows how many **One Piece Tickets** the tiers have opened and how many were claimed, with a Claim button while one waits (the Club button wears a dot then). A ticket, held in `save.champion.tickets`, is redeemed on the Equipment page's Acquire view: its box opens a list of every Unique of the open categories, and the one chosen comes at Ancestral with five Stars, leaving future Gem pulls like a five-Star copy merged. The currencies list shows One Piece Tickets once one has been claimed.
 
 ### The Shop day and server time
 

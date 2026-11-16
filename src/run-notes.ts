@@ -24,6 +24,8 @@ export type RunNotes = {
   defenseShards: number;
   /** Silver found (spending never takes it off). */
   silver: number;
+  /** Tower floors new to the climb (Offline Gems' Recent Floors per Minute). */
+  floors?: number;
 };
 
 /** The finds kept beside the run. */

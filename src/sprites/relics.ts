@@ -644,6 +644,11 @@ export const RELIC_ART = {
     "id": "relic-shop-stellar",
     "name": "Astral Ribbon",
     "rarity": "legendary"
+  },
+  "shop.coins3": {
+    "id": "relic-shop-coins3",
+    "name": "Founder's Cape",
+    "rarity": "legendary"
   }
 } as const;
 

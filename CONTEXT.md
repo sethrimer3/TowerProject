@@ -532,12 +532,36 @@ A one-time purchase that opens the premium checkpoint rewards in one set of thre
 _Avoid_: battle pass, season pass
 
 **VIP Points**:
-A currency every real-money Shop purchase pays, a fixed amount for its price (16 for each dollar of its base price, whatever currency the store charges), kept for good, Erase All included. Shown as a brass crown; nothing spends them yet.
+A currency every real-money Shop purchase pays, a fixed amount for its price (16 for each dollar of its base price, whatever currency the store charges), kept for good, Erase All included. Shown as a brass crown, to a Champion only; nothing spends them: the total earned sets the Champion tier.
 _Avoid_: loyalty points, VIP level
+
+**Champion**:
+A player who owns the Champion's Bundle, the Shop's top One-Time Offer (bought after Permanent Ad-Disable and the Special Gold Bundle): Champion Status gives its own perks and opens the Champion's Club.
+_Avoid_: founder, VIP
+
+**Champion's Club**:
+The Shop's list of Champion tiers and what each gives, opened from the Champion Status banner.
+_Avoid_: Founders Lounge, VIP club
+
+**Champion tier**:
+How far a Champion's VIP Points earned in all reach: the Base Tier with the bundle, Tiers 1 to 13 at set points, then one every 9,600. Each tier's bonus grows with every tier past it, up to its cap.
+_Avoid_: VIP level, star rank
+
+**Daily Training Points**:
+A Champion's Training Points, claimed once each Shop day on the Training page, sometimes multiplied by the Champion tiers' chances.
+_Avoid_: daily bonus
+
+**One Piece Ticket**:
+A ticket each Champion tier from 14 gives, claimed in the Champion's Club and redeemed on the Equipment page for a five-Star Unique of the player's choice.
+_Avoid_: legendary ticket, free piece
+
+**Offline Gems**:
+A Champion's Gems for time away: a share of what the Recent Floors per Minute would have found.
+_Avoid_: idle Gems
 
 **Premium Offer**:
 One of the Shop's one-time real-money offers shown one at a time, in order, under Premium Offers: each grants a perk (an archivist slot, a trainer, Gems) and a unique legendary relic. Once all are bought, the section thanks the player instead.
-_Avoid_: premium pack (the Coin Packs are One-Time Offers)
+_Avoid_: premium pack, Value Pack (the Gold bundles are One-Time Offers)
 
 **Breakthrough**:
 The currency of new limits: one point for each Tower Goal reward claimed (a premium reward pays none), spent in the Breakthrough tree and the trees it opens. Also the Inspiration skill that opens that tree.

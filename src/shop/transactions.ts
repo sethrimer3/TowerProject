@@ -3,7 +3,7 @@ import { CURRENCIES } from "./currency.ts";
 import { DAY_MS, gmtDay } from "./clock.ts";
 import { grant, grantRefusal, itemName } from "./items.ts";
 import { HISTORY_KEPT, type Transaction } from "./ledger.ts";
-import { CATEGORIES, unmet, type Price, type ShopOffer } from "./offers.ts";
+import { bought, CATEGORIES, unmet, type Price, type ShopOffer } from "./offers.ts";
 import { priceOf } from "./discounts.ts";
 
 // A purchase is one transaction: every check is made before anything
@@ -17,7 +17,7 @@ import { priceOf } from "./discounts.ts";
 export type Payment = "price" | "store" | "free";
 
 /** Why an offer can't be bought. */
-export type Refusal = "locked" | "notStarted" | "expired" | "storeLink" | "limit" | "owned" | "unpaid" | "short";
+export type Refusal = "locked" | "after" | "notStarted" | "expired" | "storeLink" | "limit" | "owned" | "unpaid" | "short";
 
 /** Times `offer` has been bought this period: ever, or for one with a
  * `period`, since its last purchase's Shop day until `period` days on. */
@@ -47,7 +47,7 @@ function unavailable(save: Save, offer: ShopOffer, now: number): Refusal | null 
   if (now >= (offer.endTime ?? Infinity)) return "expired";
   if (!offer.item) return "storeLink";
   if (soldOut(save, offer, now)) return "limit";
-  return grantRefusal(save, offer.item);
+  return grantRefusal(save, offer.item) ?? (offer.after?.some((id) => !bought(save, id)) ? "after" : null);
 }
 
 /** Why `payment` doesn't pay for `offer`: real money the store hasn't

@@ -1,7 +1,7 @@
 import { hoursMinutes } from "../progression/archives.ts";
 import type { OfflineGrant } from "../offline-gold.ts";
 import { shortAmount } from "../whole.ts";
-import { goldIcon } from "./dom.ts";
+import { gemIcon, goldIcon } from "./dom.ts";
 
 const short = (n: number) => shortAmount(Math.floor(n), 1000);
 
@@ -13,8 +13,9 @@ export function showOfflineGold(modal: HTMLDialogElement, grant: OfflineGrant, c
   const paidMinutes = Math.min(grant.awayMs, grant.capMs) / 60_000;
   modal.innerHTML = `<div class="offline-gold"><small>WELCOME BACK</small><h2>Offline Gold</h2>
     <p class="offline-time">${hoursMinutes(grant.awayMs / 60_000)} offline (of ${hoursMinutes(grant.capMs / 60_000)} max)</p>
-    <p class="offline-sum">Recent <b>${short(grant.rgph)}</b> ${goldIcon()} × ${hoursMinutes(paidMinutes)} × <b>${(grant.multiplier / 10).toFixed(1)}%</b> = <b>${short(grant.gold)}</b> ${goldIcon()}</p>
-    <div class="dialog-actions"><button id="offline-claim" aria-label="Claim ${grant.gold.toLocaleString("en-US")} Gold">Claim</button></div></div>`;
+    ${grant.gold > 0 ? `<p class="offline-sum">Recent <b>${short(grant.rgph)}</b> ${goldIcon()} × ${hoursMinutes(paidMinutes)} × <b>${(grant.multiplier / 10).toFixed(1)}%</b> = <b>${short(grant.gold)}</b> ${goldIcon()}</p>` : ""}
+    ${grant.gems > 0 ? `<p class="offline-sum">Offline Gems: <b>${grant.gems.toLocaleString("en-US")}</b> ${gemIcon()}</p>` : ""}
+    <div class="dialog-actions"><button id="offline-claim" aria-label="Claim ${[grant.gold > 0 ? `${grant.gold.toLocaleString("en-US")} Gold` : "", grant.gems > 0 ? `${grant.gems.toLocaleString("en-US")} Gems` : ""].filter(Boolean).join(" and ")}">Claim</button></div></div>`;
   let claimed = false;
   const done = () => {
     if (claimed) return;

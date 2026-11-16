@@ -1,5 +1,6 @@
 import { controlIcon } from "./control-icon.ts";
-import { cellIcon, el, equipTicketIcon, gemIcon, goldIcon, medalIcon, pointsIcon, arcaniteIcon, ticketIcon, uiSprite, vipIcon } from "./dom.ts";
+import { cellIcon, el, equipTicketIcon, gemIcon, goldIcon, medalIcon, onePieceIcon, pointsIcon, arcaniteIcon, ticketIcon, uiSprite, vipIcon } from "./dom.ts";
+import { isChampion } from "../shop/champion.ts";
 import { materialIcon } from "./equipment-icons.ts";
 import { EQUIP_MATERIALS, EQUIP_MATERIAL_IDS } from "../equipment/catalog.ts";
 import { trainingPoints } from "../progression/loadout.ts";
@@ -15,8 +16,8 @@ export const heldAmount = (game: Pick<Game, "save">, n: number) => game.save.set
 export type CurrencyRow = { id: string; icon: string; name: string; value: string; exact: string };
 
 /** Every currency the player holds, in the dialog's order: Gold, Gems,
- * Arcanite, Medals, VIP Points, the run's Silver, Training Points, Inspiration
- * and Breakthrough, then Cells, Tournament and Equipment Tickets and each Equipment material. Each shows
+ * Arcanite, Medals, VIP Points (for a Champion), the run's Silver, Training Points, Inspiration
+ * and Breakthrough, then Cells, Tournament, Equipment and One Piece Tickets (once one is had) and each Equipment material. Each shows
  * once the system behind it is open (all of them in Dev mode), so the list
  * never names what the player hasn't reached. */
 export function currencyRows(game: Game): CurrencyRow[] {
@@ -27,7 +28,7 @@ export function currencyRows(game: Game): CurrencyRow[] {
     [true, "gems", gemIcon(), "Gems", save.gems],
     [true, "arcanite", arcaniteIcon(), "Arcanite", save.arcanite],
     [true, "medals", medalIcon(), "Medals", save.medals],
-    [true, "vip", vipIcon(), "VIP Points", save.vip],
+    [isChampion(save), "vip", vipIcon(), "VIP Points", save.vip],
     [!outside || silver > 0, "silver", uiSprite("gold", "ui-sprite silver-sprite"), outside ? "Silver (next climb)" : "Silver", silver],
     [true, "training", pointsIcon(), "Training Points", trainingPoints(save).left],
     [true, "inspiration", uiSprite("inspiration"), "Inspiration", save.tower.inspiration],
@@ -35,6 +36,7 @@ export function currencyRows(game: Game): CurrencyRow[] {
     [save.profile.earned.cells > 0, "cells", cellIcon(), "Cells", save.cells],
     [game.tournament.unlocked, "tickets", ticketIcon(), "Tournament Tickets", save.tournament.tickets],
     [save.equipment.unlocked, "equip-tickets", equipTicketIcon(), "Equipment Tickets", save.equipment.tickets],
+    [save.champion.ticketsClaimed > 0, "one-piece", onePieceIcon(), "One Piece Tickets", save.champion.tickets],
     ...EQUIP_MATERIAL_IDS.map((m): [boolean, string, string, string, number] =>
       [save.equipment.unlocked, `material-${m}`, materialIcon(m), EQUIP_MATERIALS[m].name, save.equipment.materials[m]]),
   ];

@@ -2709,6 +2709,15 @@ button.training-now:has(> .train-pointer) { position: relative; overflow: visibl
 .pull-box-all { border-color: #e8b84a; }
 .gem-buy .was { color: #a99; font-size: .85em; text-decoration: line-through; }
 .pull-box { padding: 8px 10px; border: 1px solid #6b5a35; border-radius: 5px; background: #16202c; }
+/* One Piece Tickets held, under the pulls, and the choice of Unique they redeem. */
+.one-piece-box { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding: 8px 10px; border: 1px solid #e1bb78; border-radius: 5px; background: #2b2718; color: #ffe1a1; font-size: 12px; }
+.one-piece-box > .one-piece-icon { width: 26px; height: 26px; }
+.one-piece-box > span { flex: 1; }
+.one-piece-dialog h2 { display: flex; align-items: center; gap: 8px; }
+.one-piece-list { display: flex; flex-direction: column; gap: 4px; max-height: 60vh; overflow-y: auto; margin: 0; padding: 0; list-style: none; }
+.one-piece-list button { display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px; text-align: left; }
+.one-piece-list button span { display: flex; flex-direction: column; }
+.one-piece-list small { font-size: 11px; color: #99a8bd; }
 .pull-pool { margin: 4px 0; padding: 0; list-style: none; text-align: left; font-size: 11px; line-height: 1.5; }
 .pull-pool li { display: flex; align-items: center; gap: 6px; margin: 3px 0; }
 .pull-off-draw { opacity: 0.45; }
@@ -3077,6 +3086,12 @@ div.training-points .buy-quantity-pick { float: none; margin-left: auto; }
 .training-boost.active { border-color: #5fb4d8; background: #0f2230; }
 .training-boost.active .boost-rate { color: #8fe6ff; }
 .training-boost.active .boost-time { color: #bfefff; }
+/* A Champion's Daily Training Points: Claim, or the countdown to the next, in a row of their own. */
+.training-daily { display: flex; justify-content: center; margin: 4px 0 6px; }
+.daily-points { white-space: nowrap; position: relative; min-height: 30px; padding: 0 9px; display: inline-flex; align-items: center; gap: 4px; border: 1px solid #8ff0a4; border-radius: 8px; background: #1c3a24; color: #e9ffe9; font-size: 12px; }
+.daily-points:disabled { border-color: #4b6b52; background: #18241c; color: #a9c4ae; opacity: 1; }
+.daily-points .points-icon { width: 14px; height: 14px; }
+.daily-points.notify::after { content: ""; position: absolute; top: -4px; right: -4px; width: 9px; height: 9px; border-radius: 50%; background: #ff5a4a; }
 .boost-claim { min-height: 30px; padding: 0 9px; display: inline-flex; align-items: center; gap: 5px; border: 1px solid #d8b572; border-radius: 8px; background: #2b2718; color: #ffe1a1; font-size: 12px; }
 .boost-claim .ad-icon { width: 18px; height: 18px; }
 .boost-claim:disabled { opacity: 0.45; }
@@ -4435,6 +4450,37 @@ button.game-select-button { display: inline-flex; align-items: center; justify-c
 .shop-reward .vip-icon { width: 24px; height: 24px; }
 .shop-reward:has(.vip-icon) b { font-size: 12px; color: #e1bb78; }
 .shop-thanks { margin: 4px 0 0; padding: 14px 12px; text-align: center; color: #eee0b7; border: 1px solid color-mix(in srgb, #e1bb78 45%, transparent); border-radius: 8px; }
+/* Champion Status: a green banner between two stars at the Shop's top, the thanks, the VIP Points earned and the Club's button. */
+.champion-status { display: flex; flex-direction: column; align-items: center; gap: 6px; margin: 4px 0 14px; text-align: center; }
+.champion-banner { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; padding: 10px 12px; border: 2px solid #8ff0a4; border-radius: 8px; background: linear-gradient(180deg, #2f8a45, #1c5a2c); box-shadow: 0 0 14px rgba(110, 230, 140, 0.35); }
+.champion-banner b { font-size: 20px; letter-spacing: 1px; color: #f4ffe9; text-shadow: 0 1px 0 #0e3518; }
+.champion-banner .star-icon { width: 26px; height: 26px; }
+.champion-thanks { margin: 0; font-size: 13px; color: #c9f5cf; }
+.champion-vip { margin: 0; font-size: 13px; color: #eee0b7; }
+.champion-vip b { color: #e1bb78; }
+.champion-club-button { position: relative; display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 6px 14px; border: 1px solid #d8b572; border-radius: 8px; background: #2b2718; color: #ffe1a1; font-size: 13px; }
+.champion-club-button.notify::after { content: ""; position: absolute; top: -4px; right: -4px; width: 10px; height: 10px; border-radius: 50%; background: #ff5a4a; box-shadow: 0 0 0 2px #121923; }
+.star-icon, .one-piece-icon { width: 1.1em; height: 1.1em; vertical-align: -0.2em; }
+/* The Champion's Club: every tier, those reached in white with a check, the rest in grey. */
+.champion-club { display: flex; flex-direction: column; gap: 6px; max-height: 80vh; min-height: 0; text-align: left; }
+.champion-club > :is(small, h2, .club-now, .hint) { text-align: center; }
+.champion-club .dialog-x, .one-piece-dialog .dialog-x { align-self: flex-end; float: right; width: 32px; height: 32px; min-height: 0; margin: -18px -18px 0 0; padding: 0; border-radius: 50%; font-size: 15px; line-height: 1; }
+.champion-club h2, .one-piece-dialog h2 { margin-top: 0; }
+.champion-club h2 { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.champion-club h2 .star-icon { width: 22px; height: 22px; }
+.club-now { margin: 0; text-align: center; color: #eee0b7; }
+.club-scroll { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; min-height: 0; padding-right: 4px; }
+.club-tier { padding: 6px 8px; border: 1px solid #36404f; border-radius: 6px; color: #7d8794; }
+.club-tier.reached { border-color: color-mix(in srgb, #e1bb78 55%, #36404f); color: #fff; }
+.club-tier h3 { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 0 0 4px; font-size: 14px; color: inherit; }
+.club-tier:not(.reached) :is(.star-icon, .vip-icon, .one-piece-icon) { filter: grayscale(1) brightness(0.7); }
+.club-points { margin-left: auto; font-size: 11px; font-weight: normal; color: #99a8bd; }
+.club-tier ul { margin: 0; padding: 0; list-style: none; }
+.club-tier li { display: flex; align-items: flex-start; gap: 6px; padding: 2px 0 2px 20px; font-size: 12px; line-height: 1.45; color: #7d8794; }
+.club-tier li.reached { padding-left: 0; color: #fff; }
+.club-tier li small { color: inherit; opacity: 0.75; }
+.club-tier .check-icon { flex: none; width: 14px; height: 14px; }
+.club-claim { margin-top: 6px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid #8ff0a4; border-radius: 8px; background: #1c3a24; color: #e9ffe9; }
 .shop-reward b { font-size: 16px; color: #f3e2bd; }
 dialog .shop-rewards { justify-content: center; margin: 4px 0 10px; }
 .shop-expires { font-size: 10px; color: #ff9a6a; }

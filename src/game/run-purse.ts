@@ -1,3 +1,4 @@
+import { extraStellarFloor } from "../shop/champion.ts";
 import { researched } from "../progression/archives.ts";
 import { ENEMY_GOLD, FAST_GOLD, PICKUP_GOLD, RANGED_GOLD, SHIELDED_GOLD, ARMORED_GOLD, silverForKill } from "../economy/kill-pay.ts";
 import { trainedAmount } from "../progression/training.ts";
@@ -141,7 +142,7 @@ export class RunPurse {
 
   /** The run's environment chances, Aurum Bloom's and the relics' added. */
   private get environments() {
-    return floorChances(this.run, this.bloom, relicAmount(this.save, "stellarFloor"));
+    return floorChances(this.run, this.bloom, extraStellarFloor(this.save));
   }
 
   /** The factor on Gold and Silver found on equivalent floor `floor` (from 1)

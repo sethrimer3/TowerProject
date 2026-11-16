@@ -1,4 +1,5 @@
 import { LakeWorld, FISHERMAN_DIALOGUE, onDock } from "./lakeside.ts";
+import { CHAMPION_XP, championValue, extraStellarFloor, isChampion } from "./shop/champion.ts";
 import { entrance, floorFor } from "./delve/labyrinth.ts";
 import { chooseStep } from "./automation.ts";
 import { cost } from "./progression/upgrades.ts";
@@ -1310,9 +1311,10 @@ export class Game {
     if (dashed && !run.combo && this.save.upgrades.dashCombo && this.besideEnemy) run.combo = { next: 1, idle: 1 };
   }
   /** Tiles the hand's first step toward a new target may dash across: none
-   * without the Dash skill, and one more a Dash research level. */
+   * without the Dash skill, and one more a Dash research level; worn
+   * Equipment's and Champion Status's count with or without it. */
   get dashTiles() {
-    return (this.save.upgrades.dash ? researched(this.save.archives, "dashTiles") : 0) + this.worn.dashTiles;
+    return (this.save.upgrades.dash ? researched(this.save.archives, "dashTiles") : 0) + this.worn.dashTiles + championValue(this.save, "dash");
   }
   /** How many of a Dash's dashed steps regain HP by Regen: none without the
    * Dash Regen skill, and one more a Dash Regen research level. */
@@ -1323,7 +1325,7 @@ export class Game {
    * `dashTiles`, End Rush's research on STAIRS (toward the stairs, or the
    * Delve's climb), and its Dash badge's value. They add up. */
   dashFor(id: CardId) {
-    const end = id === "stairs" ? (this.save.upgrades.endRush ? researched(this.save.archives, "endRushTiles") : 0) + this.worn.endRushTiles : 0;
+    const end = id === "stairs" ? (this.save.upgrades.endRush ? researched(this.save.archives, "endRushTiles") : 0) + this.worn.endRushTiles + championValue(this.save, "endRush") : 0;
     const badge = badgeOn(this.run.badges, id, "dash");
     return this.dashTiles + end + (badge ? badgeValue("dash", badge.level) : 0);
   }
@@ -1549,13 +1551,13 @@ export class Game {
     const p = this.run.player, purse = this.purse, floor = this.run.outside ? 0 : this.floorOf(p.x, p.y);
     const bloom = this.arcana.owned.includes("aurumBloom") || !!this.arcana.aurumBloom();
     const golden = this.save.upgrades.goldenFloors || bloom ? (floor ? purse.golden(floor) : 1) : undefined;
-    const stellar = bloom || relicAmount(this.save, "stellarFloor") > 0 ? (floor ? purse.stellar(floor) : 1) : undefined;
+    const stellar = bloom || extraStellarFloor(this.save) > 0 ? (floor ? purse.stellar(floor) : 1) : undefined;
     const jackpot = jackpotFactor(this.worn, this.run.gear);
     return { save: this.save, mode: this.mode, tier: this.tier, now: this.clock(), shrine: this.shrine.open ? this.boons?.gold ?? 1 : undefined, golden, stellar, ...(jackpot === undefined ? {} : { jackpot }) };
   }
-  /** The run's environment chances as they stand: what it fixed going inside, Aurum Bloom's while it holds it on, and the relics' Stellar Floor chance. */
+  /** The run's environment chances as they stand: what it fixed going inside, Aurum Bloom's while it holds it on, and the relics' and Champion Status's Stellar Floor chance. */
   get environments() {
-    return floorChances(this.run, this.arcana.aurumBloom(), relicAmount(this.save, "stellarFloor"));
+    return floorChances(this.run, this.arcana.aurumBloom(), extraStellarFloor(this.save));
   }
   /** Whether the tile at (x, y) stands on a Golden Floor, as the board draws it. */
   goldenAt(x: number, y: number) {
@@ -2027,9 +2029,10 @@ export class Game {
     // What was bought in the Shop, and its record, outlast the progress, as
     // does Mail, which is the server's (and so what was claimed from it),
     // and the Event Boosters bought.
-    // VIP Points, paid by purchases, stay too, and the perks bought are given again.
-    const { entitlements, shop, mail, events, vip } = this.save;
-    this.save = { ...defaults(), entitlements, shop, mail, vip };
+    // VIP Points, paid by purchases, stay too, with Champion Status's claims,
+    // and the perks bought are given again.
+    const { entitlements, shop, mail, events, vip, champion } = this.save;
+    this.save = { ...defaults(), entitlements, shop, mail, vip, champion };
     this.save.events.boosted = events.boosted;
     settlePerks(this.save);
     if (permanentBoost(this.save)) this.save.trainingBoostUntil = BOOST_FOREVER;
@@ -2190,8 +2193,9 @@ export class Game {
   gainXp(enemy: Enemy, floor: number, scale = 1) {
     // Worn Equipment's XP Gain and the card trees' (ENEMY's, and the enemy cards' covering it, added up), each its own factor.
     const bonus = this.treeBonus, xp = tierXp(this.tier, xpForKill(enemy.strength, floor)), gain = this.worn.xpGain, tree = snap(bonus.killXp + foeStat(bonus, enemy, "KillXp"));
-    // Relics' XP is its own factor too.
-    const relic = relicAmount(this.save, "xp"), raisedXp = gain || tree || relic ? Math.round((xp * (100 + gain) * (100 + tree) * (100 + relic)) / 1_000_000) : xp;
+    // Relics' XP is its own factor too, and so is Champion Status's.
+    const relic = relicAmount(this.save, "xp"), champion = isChampion(this.save) ? CHAMPION_XP : 0;
+    const raisedXp = gain || tree || relic || champion ? Math.round((xp * (100 + gain) * (100 + tree) * (100 + relic) * (100 + champion)) / 100_000_000) : xp;
     this.addXp(scale === 1 ? raisedXp : Math.round(raisedXp * scale));
   }
   /** Adds `xp` to the hero's and the run's, raising the level-up burst
@@ -2226,7 +2230,7 @@ export class Game {
     // A Tower climb's Gold and real time (less the time offline) count
     // toward the Recent Gold per Hour.
     const notes = this.run.notes;
-    if (this.mode === "tower" && !this.run.outside && notes) recordClimb(this.save.offline, gold, this.clock() - notes.startedAt - this.save.offline.climbAway);
+    if (this.mode === "tower" && !this.run.outside && notes) recordClimb(this.save.offline, gold, this.clock() - notes.startedAt - this.save.offline.climbAway, notes.floors ?? 0);
     // A new floor's "A new chamber opens." teaches only the first Tower run.
     if (this.mode === "tower") this.save.tutorials.chamber = true;
     this.forestSeeds.clear();
@@ -3202,6 +3206,8 @@ export class Game {
       // climbed past by Skip too.
       for (let f = highest; f < this.run.height; f++) this.regainCharges(p);
       this.missions.record("floors", this.run.height - highest);
+      // The climb's new floors, for Offline Gems' Recent Floors per Minute.
+      if (this.run.notes) this.run.notes.floors = (this.run.notes.floors ?? 0) + this.run.height - highest;
       this.run.maxHeight = this.run.height;
       const reached = this.run.height + 1;
       silver = purse.floorSilver(reached);
@@ -3474,6 +3480,7 @@ export class Game {
     const grant = this.save.offline.grant;
     this.save.offline.grant = null;
     if (grant && grant.gold > 0) CURRENCIES.gold.credit(this.save, grant.gold);
+    if (grant && grant.gems > 0) CURRENCIES.gems.credit(this.save, grant.gems);
     return grant?.gold ?? 0;
   }
   private enemyTitle(enemy: Enemy) { return enemyTitle(enemy, this.save.settings.legacyEnemies); }

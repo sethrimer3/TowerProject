@@ -14,6 +14,10 @@ import { adIcon, clamp, clockIcon, el, gemCount, gemIcon, goldIcon, pointsIcon, 
 import { TRAINING_RESET_GEMS } from "../economy/gems.ts";
 import { ArchivesPanel, COUNTDOWN_MIN_MS, formatCountdown, formatDuration, rushEfficiencyHtml, toNextSecond } from "./archives-page.ts";
 import { priceAmount } from "./hud.ts";
+import { DAILY_TRAINING_POINTS, claimDaily, dailyReady, isChampion, nextDailyAt } from "../shop/champion.ts";
+import { estimatedServerTime } from "../shop/clock.ts";
+import { stream } from "../random.ts";
+import { revealReward } from "./reward-reveal.ts";
 
 type TrainingRow = (typeof TRAINING)[number];
 type ResearchTab = "training" | "archives";
@@ -142,6 +146,7 @@ export class ResearchPage {
       this.render();
     });
     document.querySelector<HTMLButtonElement>("#boost-claim")?.addEventListener("click", () => this.watchBoost());
+    this.bindDaily();
     this.onEach("data-cancel", (id) => this.withRefund(() => training.cancel(id)));
     this.onEach("data-finish", (id) => {
       const game = this.ctx.game;
@@ -319,8 +324,52 @@ export class ResearchPage {
       ${hired
         ? `<div class="training-points training-slots"><span class="training-trainers">Trainers: <b id="training-slots">${save.trainingJobs.length} / ${slots}</b> ${this.trainerButton()}${this.speedHtml()}</span><span class="training-end">${quantity}${bank}${held}</span></div>`
         : `<div class="training-points">${held}${bank}${quantity}</div>`}
+      ${isChampion(save) ? `<div class="training-daily">${this.dailyHtml()}</div>` : ""}
       ${this.trainingLessonHtml()}<div class="training-scroll">${inTraining.length ? `<div class="training-table training-busy" role="list" aria-label="Stats in training">${inTraining.map(row).join("")}</div>` : ""}
       <div class="training-table" role="list" aria-label="Stat training">${rows}</div></div></section>`;
+  }
+
+  /** The Shop's estimated server time, which the Daily Training Points turn on. */
+  private get serverNow() {
+    const game = this.ctx.game;
+    return estimatedServerTime(game.save.shop.clock, game.clock());
+  }
+
+  /** A Champion's Daily Training Points button: Claim with the points it
+   * pays while it can be claimed, else the countdown to the next (00:00
+   * GMT) and the points. Nothing for a player who isn't a Champion. */
+  private dailyHtml() {
+    const save = this.ctx.game.save;
+    if (!isChampion(save)) return "";
+    const now = this.serverNow, ready = dailyReady(save, now), amount = `${pointsIcon()}<b>${DAILY_TRAINING_POINTS}</b>`;
+    const label = ready ? `Claim ${DAILY_TRAINING_POINTS} daily Training Points` : `Next daily Training Points in ${formatCountdown(nextDailyAt(now) - now)}`;
+    return `<button id="daily-points" class="daily-points${ready ? " notify" : ""}" ${ready ? "" : "disabled"} aria-label="${label}" title="${label}">${ready ? `Claim · ${amount}` : `<span id="daily-points-left">${formatCountdown(nextDailyAt(now) - now)}</span> · ${amount}`}</button>`;
+  }
+
+  /** Claims the Daily Training Points, celebrating them (and a multiplier rolled). */
+  private bindDaily() {
+    document.querySelector<HTMLButtonElement>("#daily-points")?.addEventListener("click", () => {
+      const game = this.ctx.game, paid = claimDaily(game.save, this.serverNow, stream("champion"));
+      if (!paid) return this.render();
+      this.ctx.save();
+      this.ctx.update();
+      this.render();
+      revealReward({ icon: pointsIcon(), amount: `+${paid.points}`, kicker: "DAILY TRAINING POINTS", name: "Training Points", text: paid.times > 1 ? `×${paid.times} bonus!` : undefined, permanent: false }, game.save.settings.reduceMotion);
+    });
+  }
+
+  /** Keeps the Daily Training Points' button current: its countdown, or the
+   * whole button once the day turns. */
+  private tickDaily() {
+    const button = document.getElementById("daily-points");
+    if (!button) return;
+    const ready = dailyReady(this.ctx.game.save, this.serverNow);
+    if (ready !== !button.hasAttribute("disabled")) {
+      button.outerHTML = this.dailyHtml();
+      return this.bindDaily();
+    }
+    const left = document.getElementById("daily-points-left"), now = this.serverNow;
+    if (left) left.textContent = formatCountdown(nextDailyAt(now) - now);
   }
 
   /** The training lesson's note (`Game.trainingLesson`), over the rows:
@@ -459,7 +508,7 @@ export class ResearchPage {
   }
 
   /** The Shop's permanent training speed, glowing on the trainers' row:
-   * Ad-Disable's permanent ×2 boost times the Coin Packs' rates (×2 and
+   * Ad-Disable's permanent ×2 boost times the Gold bundles' rates (×2 and
    * ×3), up to ×12 with all three; nothing without any. */
   private speedHtml() {
     const save = this.ctx.game.save, speed = (permanentBoost(save) ? BOOST_RATE : 1) * trainingRate(save);
@@ -506,6 +555,7 @@ export class ResearchPage {
     const boost = document.getElementById("training-boost");
     if (boost) boost.outerHTML = this.boostHtml();
     document.querySelector<HTMLButtonElement>("#boost-claim")?.addEventListener("click", () => this.watchBoost());
+    this.tickDaily();
   }
 
   /** Moves the timers of the ranks in training on, with the Gems that

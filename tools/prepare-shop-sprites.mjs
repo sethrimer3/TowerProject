@@ -1,12 +1,13 @@
 // node --experimental-transform-types tools/prepare-shop-sprites.mjs
 // The Shop's own sprites, drawn here pixel by pixel in the shared palette:
-// the VIP Points crown and the Premium Offers' relics. Run after
+// the VIP Points crown, Champion Status's star and One Piece Ticket, and the
+// Premium Offers' and Champion's Bundle's relics. Run after
 // tools/prepare-relic-sprites.mjs (which rewrites the relic atlas without
 // them), then npm run sprites:atlas.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { encodePng } from './ui-atlas-png.mjs';
 import { RELICS } from '../src/economy/relics.ts';
-import { VIP_SPRITE } from '../src/sprites/kit.ts';
+import { CHAMPION_STAR_SPRITE, ONE_PIECE_SPRITE, VIP_SPRITE } from '../src/sprites/kit.ts';
 
 const words = readFileSync('assets/ui-sprites/palette.ppm', 'utf8').replace(/#[^\n]*/g, '').trim().split(/\s+/).slice(4).map(Number);
 const PALETTE = Array.from({ length: words.length / 3 }, (_, i) => words.slice(i * 3, i * 3 + 3));
@@ -126,6 +127,81 @@ const SPRITES = {
       '..........Yy',
       '...........Y',
       '............', '............',
+    ],
+  },
+  // A crimson cape hung from a golden clasp, trimmed in gold: the Champion's Bundle's.
+  'shop.coins3': {
+    keys: { o: 8, r: 15, R: 16, p: 17, y: 12, Y: 13, d: 14 },
+    rows: [
+      '............', '............',
+      '.........ooo',
+      '.......ooyYY',
+      '......oyyyyY',
+      '.....orRRoyy',
+      '....orRRRRoy',
+      '....orRRRRRo',
+      '...orRRRRRRR',
+      '...orRRpRRRR',
+      '...orRRpRRRR',
+      '..orRRRpRRRR',
+      '..orRRRpRRRR',
+      '..orRRpRRRRR',
+      '..orRRpRRRRd',
+      '.orRRRpRRRRd',
+      '.orRRpRRRRRd',
+      '.orRRpRRRRdd',
+      '.orRRpRRRRdd',
+      '.oyYRRRRRRdd',
+      '.oyyyyyyyyyy',
+      '..oooooooooo',
+      '............', '............',
+    ],
+  },
+  // A golden star: Champion Status's banner and the Champion's Club's tiers.
+  [CHAMPION_STAR_SPRITE]: {
+    keys: { o: 10, y: 12, Y: 13, b: 11 },
+    rows: [
+      '............', '............',
+      '...........o',
+      '..........oY',
+      '..........oY',
+      '.........oYY',
+      '.........oyY',
+      '........oyyY',
+      '.ooooooooyyy',
+      '.oYYYYyyyyyy',
+      '..obyyyyyyyy',
+      '...obyyyyyyy',
+      '....obyyyyyy',
+      '.....obyyyyy',
+      '.....obyyyyy',
+      '....obyyyyyy',
+      '....obyyyyyy',
+      '...obyyyybbb',
+      '...obyybbooo',
+      '..obybboo...',
+      '..oboo......',
+      '..oo........',
+      '............', '............',
+    ],
+  },
+  // A golden ticket bearing a crimson star: a One Piece Ticket.
+  [ONE_PIECE_SPRITE]: {
+    keys: { o: 10, y: 12, Y: 13, b: 11, r: 16 },
+    rows: [
+      '............', '............', '............', '............', '............', '............',
+      '.ooooooooooo',
+      '.oYYYYYYYYYY',
+      '.oYyyyyyyyyy',
+      '..oyyyyyyyyr',
+      '...oyyyyyyrr',
+      '...oyyyyyrrr',
+      '...oyyyyyyrr',
+      '..oyyyyyyyry',
+      '.oyyyyyyyyyy',
+      '.obbbbbbbbbb',
+      '.ooooooooooo',
+      '............', '............', '............', '............', '............', '............', '............',
     ],
   },
 };

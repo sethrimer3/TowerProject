@@ -91,7 +91,9 @@ test("the offline save decodes defensively", () => {
   assert.deepEqual(d, { seenAt: 0, climbs: [{ gold: 2, ms: 9 }], climbAway: 7, grant: null });
   const zero = { awayMs: 1, capMs: 1, rgph: 1, multiplier: 0, gold: 0 };
   assert.equal(decodeOffline({ grant: zero }).grant, null, "a grant paying nothing isn't owed");
-  assert.deepEqual(decodeOffline({ grant: { ...zero, multiplier: 5, gold: 3 } }).grant, { ...zero, multiplier: 5, gold: 3 });
+  assert.deepEqual(decodeOffline({ grant: { ...zero, multiplier: 5, gold: 3 } }).grant, { ...zero, multiplier: 5, gold: 3, gems: 0 }, "one saved before Offline Gems pays none");
+  assert.deepEqual(decodeOffline({ grant: { ...zero, gems: 4 } }).grant, { ...zero, gems: 4 }, "Offline Gems alone are owed");
+  assert.deepEqual(decodeOffline({ climbs: [{ gold: 2, ms: 9, floors: 3 }, { gold: 2, ms: 9, floors: -1 }] }).climbs, [{ gold: 2, ms: 9, floors: 3 }, { gold: 2, ms: 9 }]);
 });
 
 test("the Stats table shows Recent Gold per Hour, shortened, after the Gold earned", () => {

@@ -19,7 +19,8 @@ import {
 } from "../equipment/slots.ts";
 import type { AppContext } from "./app.ts";
 import { askForGems, helpButton, showHelp } from "./dialogs.ts";
-import { el, equipTicketIcon, gemIcon, riseFrom, uiSprite } from "./dom.ts";
+import { el, equipTicketIcon, gemIcon, onePieceIcon, riseFrom, uiSprite } from "./dom.ts";
+import { onePieceChoices, redeemTicket } from "../shop/champion.ts";
 import { currencyAmount, devAmount, priceAmount } from "./hud.ts";
 import { ACTION_ICONS, categoryIcon, itemIcon, materialIcon } from "./equipment-icons.ts";
 import { playSlagMerge } from "./slag-merge.ts";
@@ -412,7 +413,38 @@ export class EquipmentPanel {
         <p class="hint">Common to Rare bring a ${CATEGORIES[c].name} Standard piece, Epic and Legendary a Unique. Rates: ${rates} · ${pity}</p>`;
     return `<div class="pull-cats">${cats}</div>
       <div class="pull-box${all ? " pull-box-all" : ""}">${box}
-      <div class="pull-buttons">${button(1)}${button(10)}<button class="pull-rates" id="eq-rates" aria-label="Draw rates">Rates</button></div><p class="hint">${gemIcon()} ${devAmount(this.game, gems)}${tickets} held</p></div>`;
+      <div class="pull-buttons">${button(1)}${button(10)}<button class="pull-rates" id="eq-rates" aria-label="Draw rates">Rates</button></div><p class="hint">${gemIcon()} ${devAmount(this.game, gems)}${tickets} held</p></div>${this.onePieceHtml()}`;
+  }
+
+  /** One Piece Tickets held (Champion Status's): each redeems a free
+   * five-Star Unique of any open category. */
+  private onePieceHtml() {
+    const held = this.game.save.champion.tickets;
+    if (!held) return "";
+    return `<div class="one-piece-box">${onePieceIcon()}<span><b>${held}</b> One Piece Ticket${held === 1 ? "" : "s"}: a free five-Star Unique each</span><button id="eq-one-piece" class="eq-go">Redeem</button></div>`;
+  }
+
+  /** The One Piece Ticket's choice: every Unique of the open categories,
+   * one pressed to take its five-Star copy. */
+  private showOnePiece() {
+    const { modal } = this.ctx, save = this.game.save;
+    const list = onePieceChoices(save).map((d) => `<li><button data-one-piece="${d.id}">${itemIcon(d.id)}<span><strong>${d.name}</strong><small>${CATEGORIES[d.category].name} · ${d.identity}</small></span></button></li>`).join("");
+    modal.innerHTML = `<div class="one-piece-dialog"><button id="eq-close" class="dialog-x" aria-label="Close" title="Close">${controlIcon("close")}</button>
+      <small>ONE PIECE TICKET</small><h2>${onePieceIcon()} Choose a five-Star Unique</h2><p class="hint">${save.champion.tickets} held. The piece comes at Ancestral with five Stars, and leaves future Gem pulls.</p>
+      <ul class="one-piece-list">${list}</ul></div>`;
+    if (!modal.open) modal.showModal();
+    el("eq-close").onclick = () => modal.close();
+    modal.querySelectorAll<HTMLElement>("[data-one-piece]").forEach((b) => (b.onclick = () => {
+      const result = redeemTicket(save, b.dataset.onePiece!);
+      if (result === "room") {
+        modal.innerHTML = `<h2>No room</h2><p>The inventory holds ${EQUIPMENT_CAPACITY} pieces. Dismantle one to make room.</p><div class="dialog-actions"><button id="eq-close">Close</button></div>`;
+        el("eq-close").onclick = () => modal.close();
+        return;
+      }
+      if (typeof result === "string") return modal.close();
+      this.changed();
+      this.showResult("Five-Star Unique!", [result]);
+    }));
   }
 
   /** Relics' Epic chance more, which moves from Common. */
@@ -551,6 +583,7 @@ export class EquipmentPanel {
     }
     const on = (id: string, fn: () => void) => { const b = document.querySelector<HTMLButtonElement>(`#gear #${id}`); if (b) b.onclick = fn; };
     on("eq-asm-cancel", () => { this.target = null; this.copies = []; this.rerender(); });
+    on("eq-one-piece", () => this.showOnePiece());
     on("eq-asm-go", () => this.doAssemble());
     on("eq-auto-asm", () => this.showAutoAssemble());
     on("eq-rates", () => this.showRates());

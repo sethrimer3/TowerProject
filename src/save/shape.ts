@@ -1,4 +1,5 @@
 /** The shape of the save: each mode's slice (`ModeSave`) and everything kept between runs (`Save`). save/save.ts loads and decodes it. */
+import type { ChampionSave } from "../shop/champion.ts";
 import type { ReviewSave } from "../review-prompt.ts";
 import type { TrainingJob, TrainingPaid } from "../progression/training-jobs.ts";
 import type { TierRecord } from "../tiers.ts";
@@ -100,6 +101,9 @@ export type Save = {
    * for its price (shop/offers.ts `Price`), kept by Erase All; nothing
    * spends them yet. */
   vip: number;
+  /** Champion Status's own state (shop/champion.ts): the Daily Training
+   * Points' last claim and the One Piece Tickets; kept by Erase All. */
+  champion: ChampionSave;
   /** Cells: dropped by Greater Bosses, kept between runs with their
    * fractions (a badge's scale can change a drop), spent on the Archives'
    * Speed Ups (progression/speed-ups.ts). */

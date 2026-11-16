@@ -4153,6 +4153,21 @@
       "file": "relic-shop-stellar.png",
       "width": 24,
       "height": 24
+    },
+    "relic-shop-coins3": {
+      "file": "relic-shop-coins3.png",
+      "width": 24,
+      "height": 24
+    },
+    "champion-star": {
+      "file": "champion-star.png",
+      "width": 24,
+      "height": 24
+    },
+    "one-piece": {
+      "file": "one-piece.png",
+      "width": 24,
+      "height": 24
     }
   }
 }

@@ -2,7 +2,9 @@ import { controlIcon } from "./control-icon.ts";
 import { whole } from "../whole.ts";
 import { CURRENCIES, type CurrencyId } from "../shop/currency.ts";
 import { estimatedServerTime } from "../shop/clock.ts";
-import { CATEGORIES, OFFERS, offer, premiumOffer, requirementText, unmet, type CategoryId, type OfferId, type Price, type ShopOffer } from "../shop/offers.ts";
+import { CATEGORIES, OFFERS, offer, premiumOffers, requirementText, unmet, type CategoryId, type OfferId, type Price, type ShopOffer } from "../shop/offers.ts";
+import { CHAMPION_PREMIUM_SHOWN, isChampion } from "../shop/champion.ts";
+import { championBanner, showChampionClub } from "./champion-club.ts";
 import { RELICS } from "../economy/relics.ts";
 import { ENTITLEMENTS } from "../shop/entitlements.ts";
 import { discountOn, priceOf } from "../shop/discounts.ts";
@@ -19,10 +21,10 @@ export const CONFIRM_GEMS = 200;
 const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon(), arcanite: () => arcaniteIcon(), gold: goldIcon, medals: () => medalIcon(), vip: () => vipIcon() };
 
 /** What `o` grants, each a large icon over its amount: a perk's Gold
- * multiplier on the coin, its relic, then the currencies, and the VIP
- * Points its real-money price pays (`price`, a discount's while one runs).
- * What a card shows in place of writing them out. */
-function rewards(o: ShopOffer, price: Price = o.price) {
+ * multiplier on the coin, its relic, then the currencies, and, for a
+ * Champion (`vip`), the VIP Points its real-money price pays (`price`, a
+ * discount's while one runs). What a card shows in place of writing them out. */
+function rewards(o: ShopOffer, price: Price = o.price, vip = false) {
   const tile = (icon: string, amount: string, label: string) => `<span class="shop-reward" aria-label="${label}">${icon}<b>${amount}</b></span>`;
   const perk = o.item?.kind === "entitlement" ? ENTITLEMENTS[o.item.id] : undefined, factor = perk?.goldFactor ?? 1;
   const relic = perk?.relic ? RELICS[perk.relic] : undefined;
@@ -30,7 +32,7 @@ function rewards(o: ShopOffer, price: Price = o.price) {
     ...(factor > 1 ? [tile(goldIcon(), `×${factor}`, `×${factor} Gold forever`)] : []),
     ...(relic ? [tile(relicIcon(relic), "", relic.name)] : []),
     ...itemCurrencies(o.item).map(([c, n]) => tile(CURRENCY_ICONS[c](), n.toLocaleString("en-US"), `${n.toLocaleString("en-US")} ${CURRENCIES[c].name}`)),
-    ...(price.kind === "money" ? [tile(vipIcon(), `+${price.vip}`, `${price.vip} VIP Points`)] : []),
+    ...(vip && price.kind === "money" ? [tile(vipIcon(), `+${price.vip}`, `${price.vip} VIP Points`)] : []),
   ];
   return tiles.length ? `<span class="shop-rewards">${tiles.join("")}</span>` : "";
 }
@@ -38,6 +40,7 @@ function rewards(o: ShopOffer, price: Price = o.price) {
 /** What the player is told when an offer can't be bought. */
 const REFUSALS: Record<Refusal, string> = {
   locked: "Not unlocked yet.",
+  after: "Available once Permanent Ad-Disable and the Special Gold Bundle are purchased.",
   notStarted: "Not on sale yet.",
   expired: "This offer has expired.",
   storeLink: "Available in the store.",
@@ -106,6 +109,7 @@ export class ShopPage {
     el("shop").innerHTML =
       `<button class="back" id="shop-back">${controlIcon("back")} Back</button><div class="page-title"><small>SUPPLIES FOR THE ASCENT</small><h2>Shop</h2></div>` +
       `<p class="shop-message" id="shop-message" aria-live="polite">${this.message}</p>` +
+      championBanner(save) +
       section("limited", of("limited")) +
       this.premium() +
       section("special", of("special").filter((o) => !owned(o))) +
@@ -115,11 +119,12 @@ export class ShopPage {
     this.bind();
   }
 
-  /** The Premium Offers: the next not yet bought, or thanks once all are. */
+  /** The Premium Offers: the next not yet bought (the next two for a
+   * Champion), or thanks once all are. */
   private premium() {
-    const o = premiumOffer(this.ctx.game.save);
+    const save = this.ctx.game.save, shown = premiumOffers(save, isChampion(save) ? CHAMPION_PREMIUM_SHOWN : 1);
     return `<section class="shop-section shop-premium"><h3>${CATEGORIES.premium.name}</h3>` +
-      (o ? `<div class="shop-grid">${this.card(o)}</div>` : `<p class="shop-thanks">Thanks for your support! More offers to come in the future.</p>`) + `</section>`;
+      (shown.length ? `<div class="shop-grid">${shown.map((o) => this.card(o)).join("")}</div>` : `<p class="shop-thanks">Thanks for your support! More offers to come in the future.</p>`) + `</section>`;
   }
 
   /** What `o` costs now (a discount's price while one runs), with the
@@ -181,7 +186,7 @@ export class ShopPage {
   private card(o: ShopOffer) {
     const r = RARITIES[o.rarity], a = this.action(o), ends = o.endTime !== undefined && o.endTime > this.now;
     return `<article class="shop-card${o.category === "limited" ? " shop-banner" : ""}" style="--rarity: ${r.color}">
-      <button class="shop-card-face" data-detail="${o.id}" aria-label="${o.name}: details"><small class="shop-rarity">${r.displayName}</small><b class="shop-name">${o.name}</b>${o.badge ? `<span class="shop-badge">${o.badge}</span>` : ""}${rewards(o, priceOf(this.ctx.game.save, o, this.now))}${o.effects.length ? `<span class="shop-effects">${o.effects.join(" · ")}</span>` : ""}${this.discount(o)}${ends ? `<small class="shop-expires">Expires in <span data-countdown="${o.id}">${countdown(o.endTime! - this.now)}</span></small>` : ""}</button>
+      <button class="shop-card-face" data-detail="${o.id}" aria-label="${o.name}: details"><small class="shop-rarity">${r.displayName}</small><b class="shop-name">${o.name}</b>${o.badge ? `<span class="shop-badge">${o.badge}</span>` : ""}${rewards(o, priceOf(this.ctx.game.save, o, this.now), isChampion(this.ctx.game.save))}${o.effects.length ? `<span class="shop-effects">${o.effects.join(" · ")}</span>` : ""}${this.discount(o)}${ends ? `<small class="shop-expires">Expires in <span data-countdown="${o.id}">${countdown(o.endTime! - this.now)}</span></small>` : ""}</button>
       <button class="shop-buy${this.waiting(o) ? " notify" : ""}" data-buy="${o.id}" ${a.disabled ? "disabled" : ""}>${a.label}</button>${a.why ? `<small class="shop-why">${a.why}</small>` : ""}</article>`;
   }
 
@@ -197,6 +202,12 @@ export class ShopPage {
     el("shop-back").onclick = () => this.ctx.navigate(this.from || this.ctx.game.mode);
     document.querySelectorAll<HTMLButtonElement>("[data-detail]").forEach((b) => (b.onclick = () => this.showDetails(offer(b.dataset.detail!)!)));
     document.querySelectorAll<HTMLButtonElement>("[data-buy]").forEach((b) => (b.onclick = () => this.choose(offer(b.dataset.buy!)!)));
+    const club = document.getElementById("champion-club");
+    if (club) club.onclick = () => showChampionClub(this.ctx.modal, this.ctx.game.save, () => {
+      this.ctx.save();
+      this.ctx.update();
+      this.render();
+    });
   }
 
   /** Once a second while the page shows: the countdowns, or the whole page
@@ -225,7 +236,7 @@ export class ShopPage {
       lines.push(`After: ${whole(c.balance(save) - o.price.amount).toLocaleString("en-US")} ${c.name}`);
     }
     if (o.purchaseLimit !== null) lines.push(`Purchased ${timesBought(save, o, this.now)}/${o.purchaseLimit}${o.period === 1 ? " today" : o.period ? `, one every ${o.period} days` : ""}`);
-    modal.innerHTML = `<small style="color: ${r.color}">${r.displayName.toUpperCase()}</small><h2>${o.name}</h2><p class="shop-guaranteed"><b>Guaranteed</b></p>${rewards(o, priceOf(save, o, this.now))}${o.effects.length ? `<p class="shop-guaranteed">${o.effects.join("<br>")}</p>` : ""}<p>${lines.join("<br>")}</p>${a.why ? `<p class="shop-why">${a.why}</p>` : ""}<div class="dialog-actions"><button id="cancel">Cancel</button><button id="confirm" ${a.disabled ? "disabled" : ""}>${a.label}</button></div>`;
+    modal.innerHTML = `<small style="color: ${r.color}">${r.displayName.toUpperCase()}</small><h2>${o.name}</h2><p class="shop-guaranteed"><b>Guaranteed</b></p>${rewards(o, priceOf(save, o, this.now), isChampion(save))}${o.effects.length ? `<p class="shop-guaranteed">${o.effects.join("<br>")}</p>` : ""}<p>${lines.join("<br>")}</p>${a.why ? `<p class="shop-why">${a.why}</p>` : ""}<div class="dialog-actions"><button id="cancel">Cancel</button><button id="confirm" ${a.disabled ? "disabled" : ""}>${a.label}</button></div>`;
     modal.showModal();
     el("cancel").onclick = () => modal.close();
     el("confirm").onclick = () => {

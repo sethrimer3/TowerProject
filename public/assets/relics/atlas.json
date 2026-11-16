@@ -1422,6 +1422,17 @@
       "y": 198,
       "width": 24,
       "height": 24
+    },
+    "shop.coins3": {
+      "id": "relic-shop-coins3",
+      "name": "Founder's Cape",
+      "rarity": "legendary",
+      "shop": true,
+      "file": "../style/relic-shop-coins3.png",
+      "x": 86,
+      "y": 198,
+      "width": 24,
+      "height": 24
     }
   }
 }

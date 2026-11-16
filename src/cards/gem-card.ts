@@ -20,15 +20,20 @@ export const gemCardBonus = (save: GemCardSave): TreeBonus => treeBonus(holdsGem
 /** The shortest the ad button's cooldown gets, however many Gem Bank Speed levels. */
 const MIN_COOLDOWN_MS = 60 * 1000;
 
-/** The ad button as the GEM card has it: the rewards its bank holds
- * (`cap`: one, and one more a Gem Bank level), the time it takes to bank
- * each (`cooldown`: Gem Bank Speed's seconds off), and the Gems each pays
- * (`gems`: More Gems' added). */
-export function adTerms(bonus: TreeBonus) {
+/** What Champion Status adds to the ad button (shop/champion.ts
+ * `championAd`): rewards banked, seconds off, Gems a reward. */
+export type AdExtra = { cap: number; seconds: number; gems: number };
+const NO_EXTRA: AdExtra = { cap: 0, seconds: 0, gems: 0 };
+
+/** The ad button as the GEM card has it, with `extra` (Champion Status's)
+ * added: the rewards its bank holds (`cap`: one, and one more a Gem Bank
+ * level), the time it takes to bank each (`cooldown`: Gem Bank Speed's
+ * seconds off), and the Gems each pays (`gems`: More Gems' added). */
+export function adTerms(bonus: TreeBonus, extra: AdExtra = NO_EXTRA) {
   return {
-    cap: 1 + bonus.gemBank,
-    cooldown: Math.max(MIN_COOLDOWN_MS, AD_COOLDOWN_MS - bonus.gemBankSpeed * 1000),
-    gems: AD_GEMS + bonus.adGems,
+    cap: 1 + bonus.gemBank + extra.cap,
+    cooldown: Math.max(MIN_COOLDOWN_MS, AD_COOLDOWN_MS - (bonus.gemBankSpeed + extra.seconds) * 1000),
+    gems: AD_GEMS + bonus.adGems + extra.gems,
   };
 }
 export type AdTerms = ReturnType<typeof adTerms>;

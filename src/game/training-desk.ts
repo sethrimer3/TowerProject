@@ -299,7 +299,7 @@ export class TrainingDesk {
 
   /** After a Shop purchase that went at `before`: Ad-Disable's ×2 boost
    * runs for good from now, and each rank in training is due when its
-   * training left is done at the new pace (the Coin Packs' ×2 and ×3). */
+   * training left is done at the new pace (the Gold bundles' ×2 and ×3). */
   repace(before: { until: number; rate: number }) {
     if (permanentBoost(this.save)) this.save.trainingBoostUntil = BOOST_FOREVER;
     this.retime(before, this.host.clock());

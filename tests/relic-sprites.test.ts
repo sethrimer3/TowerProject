@@ -8,7 +8,7 @@ import { decodePng } from "../tools/ui-atlas-png.mjs";
 
 test("every live relic has one distinct named sprite, including previews and tower rewards", () => {
   assert.deepEqual(Object.keys(RELIC_ART).sort(), Object.keys(RELICS).sort());
-  assert.equal(Object.keys(RELIC_ART).length, 129);
+  assert.equal(Object.keys(RELIC_ART).length, 130);
   const ids = new Set<string>();
   for (const [id, def] of Object.entries(RELICS)) {
     const art = RELIC_ART[id as keyof typeof RELIC_ART];
@@ -19,7 +19,7 @@ test("every live relic has one distinct named sprite, including previews and tow
     if (def.rarity === "legendary") assert.ok(!relicIcon(def).includes("relic-legendary"), "do not recolor a real legendary artifact");
     ids.add(art.id);
   }
-  assert.equal(ids.size, 129);
+  assert.equal(ids.size, 130);
   for (const def of Object.values(PREVIEW_RELICS)) assert.ok(relicSpriteId(def), def.name);
 });
 
@@ -30,7 +30,7 @@ test("generic navigation and future relics retain their rarity fallback", () => 
   assert.equal(relicSpriteId({name:"Future Relic"}), undefined);
 });
 
-test("129 unique individual PNGs use the game palette, binary alpha and exact padded atlas regions", () => {
+test("130 unique individual PNGs use the game palette, binary alpha and exact padded atlas regions", () => {
   const root = new URL("../public/assets/", import.meta.url);
   const manifest = JSON.parse(readFileSync(new URL("relics/atlas.json", root), "utf8"));
   const atlas = decodePng(readFileSync(new URL("relics/atlas.png", root)));
@@ -56,5 +56,5 @@ test("129 unique individual PNGs use the game palette, binary alpha and exact pa
       if(x<region.x||y<region.y||x>=region.x+24||y>=region.y+24)assert.equal(atlas.pixels[(y*atlas.width+x)*4+3],0,id);
     }
   }
-  assert.equal(images.size,129,"every relic has different pixels");
+  assert.equal(images.size,130,"every relic has different pixels");
 });

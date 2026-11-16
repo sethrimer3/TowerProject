@@ -37,6 +37,7 @@ With Settings → **Sprites** on, Common, Uncommon and Rare have matching pixel-
 Names, rarity letters and levels remain readable text; Sprites defaults to off and non-default UI themes supply their own look.
 Each starting category has three Standard pieces, from Equipment Chests, the Craft view or Gem pulls, and three Uniques, from Gem pulls only.
 A Gem pull (20 Gems, or 200 for ten, in one category; or 10% less, 18 and 180, for a piece of any unlocked category) is 60% Common, 29% Uncommon and 8% Rare, each a Standard piece, and 2.5% Epic and 0.5% Legendary, each a Unique; the 120th pull in a row without an Epic or better is an Epic Unique, each category and pulls of all types counting their own.
+A **One Piece Ticket** (from the Champion's Club's Tier 14 on) shows in a box under the pull buttons; Redeem lists every Unique of your open categories, and the one you choose comes at Ancestral with five Stars, left out of future Gem pulls.
 Opening Equipment gives you 10 **Equipment Tickets**: each pays for one pull in place of its Gems, and pulls use your tickets first, then Gems for the rest (the buttons show both).
 One of your first 10 ticket pulls is sure to bring an Epic Unique.
 The first time you open Equipment, a welcome explains tickets, the rates and pity.

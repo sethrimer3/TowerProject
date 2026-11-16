@@ -37,7 +37,7 @@ export const CATEGORIES: Record<CategoryId, Category> = {
   limited: { name: "Limited Offers" },
   // Shown one at a time, in order: the next once one is bought.
   premium: { name: "Premium Offers" },
-  special: { name: "One-Time Offers", note: "All coin bonuses are multiplicative and apply forever." },
+  special: { name: "One-Time Offers", note: "All Gold bonuses are multiplicative and apply forever." },
   gems: { name: "Gems" },
   // Sold from the Goals and Events screens, not the Shop page.
   passes: { name: "Premium Passes" },
@@ -62,6 +62,8 @@ export type ShopOffer = {
   startTime?: number;
   endTime?: number;
   requires?: Requirement[];
+  /** Offers that must be bought first: until then its button waits. */
+  after?: OfferId[];
   /** What it does, guaranteed, in a few words each, beyond the currencies
    * its item grants and its Gold multiplier (the page shows those as icons). Randomized items will
    * list their possible effects apart from these. */
@@ -111,14 +113,20 @@ export const OFFERS: readonly ShopOffer[] = [
     effects: ["No ads", "×2 training speed forever"], tags: ["oneTime"],
   },
   {
-    id: "coins2", name: "Special Coin Pack", category: "special", item: { kind: "entitlement", id: "coins2", amounts: { gems: 150 } }, quantity: 1,
+    id: "coins2", name: "Special Gold Bundle", category: "special", item: { kind: "entitlement", id: "coins2", amounts: { gems: 150 } }, quantity: 1,
     price: money("coins_x2", 9.95), rarity: "epic", purchaseLimit: 1,
     effects: ["×2 training speed forever"], tags: ["oneTime"],
   },
   {
-    id: "coins3", name: "Premium Coin Pack", category: "special", item: { kind: "entitlement", id: "coins3", amounts: { gems: 750 } }, quantity: 1,
-    price: money("coins_x3", 29.95), rarity: "legendary", purchaseLimit: 1,
-    effects: ["×3 training speed forever"], tags: ["oneTime"],
+    id: "coins3", name: "Champion's Bundle", category: "special", item: { kind: "entitlement", id: "coins3", amounts: { gems: 750 } }, quantity: 1,
+    price: money("coins_x3", 29.95), rarity: "legendary", purchaseLimit: 1, after: ["adFree", "coins2"],
+    effects: [
+      "×3 training speed forever", "Champion Status and the Champion's Club", "VIP Points raise permanent bonuses",
+      "+5% Offline Gold rate and Offline Gems", "×2 Offline time max", "+25% XP gain",
+      "Unique legendary relic: Founder's Cape, +5% ATK and +5% DEF", "−20s Gem button cooldown",
+      "Daily Training Points", "See the next two Premium Offers",
+    ],
+    tags: ["oneTime"],
   },
   {
     id: "dailyGems", name: "Daily Free Gems", category: "gems", item: { kind: "currency", currency: "gems", amount: 25 }, quantity: 1,
@@ -144,10 +152,15 @@ export const OFFERS: readonly ShopOffer[] = [
 
 export const offer = (id: string) => OFFERS.find((o) => o.id === id);
 
-/** The Premium Offer the Shop shows now: the first of them not yet
- * bought, or none once all are. */
-export const premiumOffer = (save: Pick<Save, "shop">) =>
-  OFFERS.find((o) => o.category === "premium" && !save.shop.counts[o.id]?.n);
+/** Whether offer `id` has ever been bought. */
+export const bought = (save: Pick<Save, "shop">, id: OfferId) => !!save.shop.counts[id]?.n;
+
+/** The Premium Offers the Shop shows now: the first not yet bought, or
+ * the first `shown` (two for a Champion), none once all are. */
+export const premiumOffers = (save: Pick<Save, "shop">, shown = 1) =>
+  OFFERS.filter((o) => o.category === "premium" && !bought(save, o.id)).slice(0, shown);
+/** The first Premium Offer not yet bought, if any. */
+export const premiumOffer = (save: Pick<Save, "shop">) => premiumOffers(save)[0];
 
 /** Whether `save` meets `r`. */
 export const requirementMet = (save: Save, r: Requirement) => save[r.mode].tiersOpen >= r.tier;

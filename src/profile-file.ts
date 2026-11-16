@@ -16,7 +16,7 @@ export const PROFILE_SECTIONS = {
   upgrades: ["upgrades", "relics", "shrines"],
   training: ["bonusTrainingPoints", "training", "trainingPaid", "trainerRanks", "trainingJobs", "trainingAuto", "runAutoTrain", "runAutoTrainGroups", "trainingCredit", "trainingBank", "trainingBoostUntil", "trainers"],
   research: ["archives"],
-  premium: ["entitlements", "shop", "vip"],
+  premium: ["entitlements", "shop", "vip", "champion"],
   gear: ["provisions", "equipment", "arcana"],
   towers: ["tower", "delve"],
   goals: ["goals", "trialAccess"],

@@ -278,6 +278,22 @@ export function addItem(e: EquipmentSave, def: string, rarity: EquipRarity): Equ
   return item;
 }
 
+/** Adds a new level-0 five-Star Ancestral copy of Unique `def` (a One
+ * Piece Ticket's), or null when the inventory is full or `def` is no
+ * Unique. Like the first five-Star copy merged, it leaves `def` out of
+ * future Gem pulls. */
+export function addFiveStar(e: EquipmentSave, def: string): EquipItem | null {
+  if (itemDef(def)?.class !== "unique") return null;
+  const item = addItem(e, def, "ancestral");
+  if (!item) return null;
+  item.stars = STARS.most;
+  if (!e.maxed.includes(def)) {
+    e.maxed.push(def);
+    if (!e.drawOff.includes(def)) e.drawOff.push(def);
+  }
+  return item;
+}
+
 /** Why a level-up was refused. */
 export type LevelRefusal = "missing" | "maxed" | "gold" | "material";
 /** Raises `id` by up to `levels`, paying Gold from `purse` and its material
