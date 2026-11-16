@@ -5,6 +5,7 @@ import assert from "node:assert/strict";
 import { ARCANA, ARCANUM_IDS, ARCANUM_PRICES, arcanaOpen, arcanumBoost, decodeArcana, decodeArcanaRun, drawOptions, LENT_LEVELS, redrawOptions, rerollPrice, tickCooldowns, valuesAt, type ArcanumId } from "../src/arcana/arcana.ts";
 import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save/save.ts";
+import { ARCANUM_RESPEC_GEMS } from "../src/economy/gems.ts";
 import { boon, rollOffer, BOON_IDS } from "../src/shrines.ts";
 import { random } from "../src/random.ts";
 import { volleyTurn, landsAt, leavesAt, volleyOver, type VolleyTurn } from "../src/volley.ts";
@@ -130,9 +131,39 @@ test("upgrading pays each level's cost, up to the top", () => {
   assert.equal(g.arcana.upgrade("ricochetShot", 0), "short");
 });
 
+test("Arcana Respec returns all the Arcanite invested in one arcanum for 300 Gems, once an event, between runs", () => {
+  const g = game(10_000), day = 24 * 60 * 60 * 1000;
+  let now = Date.UTC(2027, 0, 4, 12);
+  g.clock = () => now;
+  g.newRun({ outside: true });
+  g.save.arcana.owned.ricochetShot = [0, 0, 0];
+  g.save.arcana.owned.thunderbolt = [0, 0, 0];
+  for (let i = 0; i < 4; i++) assert.equal(g.arcana.upgrade("ricochetShot", 1), "done");
+  assert.equal(g.arcana.upgrade("ricochetShot", 0), "done");
+  const spent = 10_000 - g.save.arcanite;
+  assert.equal(g.arcana.invested("ricochetShot"), spent);
+  assert.equal(g.arcana.respecRefusal("ricochetShot"), "locked", "not before Arcana Respec");
+  g.save.upgrades.arcanaRespec = 1;
+  assert.equal(g.arcana.respecRefusal("ricochetShot"), "short");
+  g.save.gems = ARCANUM_RESPEC_GEMS;
+  assert.equal(ARCANUM_RESPEC_GEMS, 300);
+  assert.equal(g.arcana.respecRefusal("thunderbolt"), "none", "nothing invested");
+  g.newRun({ outside: false });
+  assert.equal(g.arcana.respec("ricochetShot"), "inside");
+  g.newRun({ outside: true });
+  assert.equal(g.arcana.respec("ricochetShot"), null);
+  assert.deepEqual([g.save.arcanite, g.save.gems, g.save.arcana.owned.ricochetShot], [10_000, 0, [0, 0, 0]], "every Arcanite back, the Gems paid, still owned");
+  for (let i = 0; i < 2; i++) assert.equal(g.arcana.upgrade("ricochetShot", 2), "done");
+  g.save.gems = ARCANUM_RESPEC_GEMS;
+  assert.equal(g.arcana.respecRefusal("ricochetShot"), "used", "one an event");
+  assert.equal(decodeArcana(JSON.parse(JSON.stringify(g.save.arcana))).respecEvent, g.save.arcana.respecEvent, "kept in the save");
+  now += 14 * day;
+  assert.equal(g.arcana.respecRefusal("ricochetShot"), null, "the next event allows another");
+});
+
 test("the saved arcana decode defensively", () => {
-  assert.deepEqual(decodeArcana({ owned: { ricochetShot: [99, 0, 0], gone: [0, 0, 0] }, offer: ["gone", "ricochetShot"], rng: -1, rolls: "x" }), { owned: {}, offer: ["ricochetShot"], rng: null, rolls: 0 });
-  assert.deepEqual(decodeArcana({ owned: { ricochetShot: [1, 2, 3] }, offer: ["ricochetShot"], rng: 7, rolls: 2 }), { owned: { ricochetShot: [1, 2, 3] }, offer: [], rng: 7, rolls: 2 });
+  assert.deepEqual(decodeArcana({ owned: { ricochetShot: [99, 0, 0], gone: [0, 0, 0] }, offer: ["gone", "ricochetShot"], rng: -1, rolls: "x" }), { owned: {}, offer: ["ricochetShot"], rng: null, rolls: 0, respecEvent: null });
+  assert.deepEqual(decodeArcana({ owned: { ricochetShot: [1, 2, 3] }, offer: ["ricochetShot"], rng: 7, rolls: 2, respecEvent: 9 }), { owned: { ricochetShot: [1, 2, 3] }, offer: [], rng: 7, rolls: 2, respecEvent: 9 });
   assert.deepEqual(decodeArcanaRun({ toggles: 41, off: ["ricochetShot", "gone"], timers: { ricochetShot: 0 } }), { toggles: 0, off: ["ricochetShot"], timers: {} });
 });
 

@@ -17,6 +17,10 @@ The button is gone once you own them all.
 Each arcanum you own is a row with three attributes to upgrade, each button showing its value and the next level's price, its border faded while you can't afford it, and gold, reading *Max*, at its highest.
 Pressing a row anywhere else shows what the arcanum does, each attribute now and at its next level, and any enhancements unlocked.
 
+Once the Breakthrough skill **Arcana Respec** (3 Breakthrough, right of Training Respec) is owned, **Respec Arcanum** stands under Select Arcanum.
+For 300 Gems it returns all the Arcanite invested in one arcanum you choose, its attributes going back to their first levels; the arcanum stays yours and its price is not returned.
+It works once each event (the fortnightly event's schedule, whether or not Events are open yet) and only between runs; short of Gems, it offers the Shop.
+
 ## In a run
 
 Every arcanum you hold works at once in every Tower and Delve run, by its own trigger.

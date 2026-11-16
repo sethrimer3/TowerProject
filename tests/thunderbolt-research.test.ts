@@ -22,8 +22,8 @@ test("the Breakthrough skill Thunderbolt Research opens both projects, left of L
   const skill = UPGRADES.find((u) => u.id === "thunderboltResearch")!;
   assert.deepEqual([skill.base, skill.max, skill.currency], [5, 1, "breakthrough"]);
   const nodes = TREES.find((t) => t.id === "breakthrough")!.nodes, at = (id: string) => nodes.find((n) => n.id === id)!;
-  assert.deepEqual([at("thunderboltResearch").x, at("thunderboltResearch").y, at("thunderboltResearch").requires], [30, 213, ["extraTrainer"]]);
-  assert.equal(at("lifespringResearch").y, 213);
+  assert.deepEqual([at("thunderboltResearch").x, at("thunderboltResearch").y, at("thunderboltResearch").requires], [30, 237, ["extraTrainer"]]);
+  assert.equal(at("lifespringResearch").y, 237);
   for (const id of ["thunderboltAmplify", "thunderboltExpansion"] as const) {
     assert.ok(RESEARCH[id].requires.some((r) => "upgrade" in r && r.upgrade === "thunderboltResearch"), id);
     assert.equal(RESEARCH[id].categories[0], "arcana", id);

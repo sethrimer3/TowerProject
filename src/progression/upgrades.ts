@@ -147,6 +147,22 @@ export const UPGRADES = [
     currency: "breakthrough",
   },
   {
+    id: "trainingRespec",
+    name: "Training Respec",
+    description: "Open Training's Gem reset: take back a stat's ranks for Gems, returning their points or their Gold and time",
+    base: 2,
+    max: 1,
+    currency: "breakthrough",
+  },
+  {
+    id: "arcanaRespec",
+    name: "Arcana Respec",
+    description: "Add Respec to the Arcana tab: return all the Arcanite invested in one arcanum for Gems, once each event",
+    base: 3,
+    max: 1,
+    currency: "breakthrough",
+  },
+  {
     id: "keyMastery",
     name: "Key Mastery",
     description: "Reveal key efficiency skills in the Inspiration tree",

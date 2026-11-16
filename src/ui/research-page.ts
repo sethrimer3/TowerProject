@@ -418,9 +418,12 @@ export class ResearchPage {
     return `<button class="training-box training-cost training-gold" data-train-gold="${t.id}" ${batch.affordable && !full ? "" : "disabled"} aria-label="Pay ${gold} Gold to a trainer to train ${t.name} ${ranks}, taking ${takes}" title="${full ? "Every trainer is busy" : `${batch.count === 1 ? "" : `${ranks}: `}Takes ${takes}`}">${maxCount(q, batch.count)}${goldIcon()}<span>${priceAmount(gold, 10_000)}</span></button>`;
   }
 
-  /** A row's Gem reset: closed inside a run, where a hero is only ever
-   * trained up (`TrainingDesk.canReset`), and with no ranks to reset. */
+  /** A row's Gem reset: absent, its column kept empty, until the Training
+   * Respec skill (`TrainingDesk.resetUnlocked`); closed inside a run, where
+   * a hero is only ever trained up (`TrainingDesk.canReset`), and with no
+   * ranks to reset. */
   private resetButton(t: TrainingRow, inTraining: boolean) {
+    if (!this.ctx.game.training.resetUnlocked) return `<span aria-hidden="true"></span>`;
     const game = this.ctx.game, ranked = game.save.training[t.id] > 0 || inTraining, open = ranked && game.training.canReset;
     const title = !game.training.canReset ? "Stats reset only between climbs" : ranked ? `Reset ${t.name} for ${TRAINING_RESET_GEMS} Gems` : `${t.name} has no ranks to reset`;
     return `<button class="training-reset" data-reset="${t.id}" ${open ? "" : "disabled"} aria-label="Reset ${t.name}" title="${title}">${uiSprite("undo")}</button>`;

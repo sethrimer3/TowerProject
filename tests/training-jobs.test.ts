@@ -1,3 +1,4 @@
+import { TRAINING_RESET_GEMS } from "../src/economy/gems.ts";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
@@ -13,6 +14,7 @@ const HOUR = 3_600_000;
 const game = (level = 10) => {
   const g = new Game(defaults());
   g.save.upgrades.trainers = 1;
+  g.save.upgrades.trainingRespec = 1;
   g.newRun({ outside: true });
   g.save.xp = xpForLevel(level);
   g.save.gold = 10_000;
@@ -88,7 +90,7 @@ test("points and trainers keep separate schedules: points never make a trainer d
   assert.ok(g.training.train("attack"));
   assert.equal(trainingStep(g.save, "attack").gold, 41, "points left the trainer's schedule alone");
   assert.deepEqual(decode(JSON.stringify(g.save)).trainerRanks, g.save.trainerRanks, "saved");
-  g.save.gems = 2;
+  g.save.gems = TRAINING_RESET_GEMS;
   assert.ok(g.training.reset("attack", "gold"));
   assert.equal(g.save.trainerRanks.attack, 0, "a reset starts the trainer's schedule over");
   assert.equal(g.save.training.attack, 6, "the ranks bought with points stay");
@@ -300,7 +302,7 @@ test("stopping a rank gives its Gold back and its time spent as credit, which th
 
 test("a Gem reset returns either the points or the Gold and all the stat's training time to the time bank", () => {
   const { g, wait } = game();
-  g.save.gems = 4;
+  g.save.gems = 2 * TRAINING_RESET_GEMS;
   assert.ok(g.training.train("hp"));
   assert.ok(g.training.trainWithGold("hp")); // a trainer's first rank: 15 s
   wait(15);
@@ -323,7 +325,7 @@ test("a Gem reset returns either the points or the Gold and all the stat's train
   assert.ok(g.training.reset("hp", "points"));
   assert.equal(g.save.training.hp, 0);
   assert.equal(trainingPoints(g.save).left, points + 1, "the point back, to spend on any stat");
-  assert.equal(g.save.gems, 0, "each reset two Gems");
+  assert.equal(g.save.gems, 0, "each reset its price");
   assert.equal(g.save.trainingBank, 15_000 + 40_000, "the time bank untouched");
 });
 
@@ -415,7 +417,7 @@ test("auto-continue chains ranks done while away, and is saved", () => {
 
 test("the time bank serves any stat, after that stat's own time credit", () => {
   const { g, wait } = game();
-  g.save.gems = 2;
+  g.save.gems = TRAINING_RESET_GEMS;
   g.save.trainerRanks.attack = 4; // a 15-minute rank
   g.save.trainingCredit.attack = 5 * 60_000;
   g.save.trainingCredit.hp = 60 * 60_000;

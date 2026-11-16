@@ -117,7 +117,7 @@ const SKILL_ITEM_SPRITES: Partial<Record<UpgradeId, keyof typeof ITEM_KIT>> = {
   elixirProvision: "potion_flat", whetstoneProvision: "upgrade_attack", aegisProvision: "upgrade_defense",
 };
 const SKILL_UI_SPRITES: Partial<Record<UpgradeId, UiSprite>> = {
-  phoenixSpark: "revive", undos: "undo", esotericTraining: "arrow-up", archives: "log", questForKnowledge: "log",
+  phoenixSpark: "revive", undos: "undo", trainingRespec: "undo", arcanaRespec: "undo", esotericTraining: "arrow-up", archives: "log", questForKnowledge: "log",
   breakthrough: "breakthrough", moveSpeed: "automove", dash: "automove", instantCombat: "attack", trainers: "arrow-up", buyQuantity: "arrow-up",
   pathToWealth: "gold", moreWealth: "gold", goldenFloors: "gold", offlineGold: "gold", physician: "health", keyMastery: "log", cardMastery: "log", beastMastery: "attack", doorMastery: "log",
   revive: "revive", life: "health", overheal: "health", spareChange: "gold", loot: "gold", floorSkipReward: "gold", mug: "gold", legacy: "tower", quality: "tower",

@@ -267,9 +267,10 @@ export const RUN_TOGGLES = 40;
 /** The arcana bought, each attribute's level; the choice waiting, kept until
  * one is bought or it is rerolled (empty: none drawn yet); and the choices'
  * own stream, saved with the profile (`rng`, seeded once, and the `rolls` it
- * has given). */
-export type ArcanaSave = { owned: Partial<Record<ArcanumId, AttributeLevels>>; offer: ArcanumId[]; rng: number | null; rolls: number };
-export const defaultArcana = (): ArcanaSave => ({ owned: {}, offer: [], rng: null, rolls: 0 });
+ * has given); and the event (`eventAt`'s number) an arcanum was last
+ * respecced in, since Arcana Respec allows one an event. */
+export type ArcanaSave = { owned: Partial<Record<ArcanumId, AttributeLevels>>; offer: ArcanumId[]; rng: number | null; rolls: number; respecEvent: number | null };
+export const defaultArcana = (): ArcanaSave => ({ owned: {}, offer: [], rng: null, rolls: 0, respecEvent: null });
 
 /** What a run keeps of its arcana beside it: the
  * toggles spent, those switched off, the turns each cooldown has left, and
@@ -349,6 +350,11 @@ export const augmentedValues = (id: ArcanumId, values: AttributeValues) => AUGME
 export const GOLDEN_AUGMENT = 1.5;
 /** What Necrotic Frost's augment boon multiplies a field's radius by. */
 export const FROST_AUGMENT = 1.5;
+
+/** The Arcanite spent on `levels` of `id`'s attributes: every level's cost above the first, free one. */
+export function investedIn(id: ArcanumId, levels: AttributeLevels) {
+  return arcanum(id).attributes.reduce((sum, a, i) => sum + a.steps.slice(1, levels[i]! + 1).reduce((s, step) => s + step[1], 0), 0);
+}
 
 /** What the attribute's next level costs and holds; null at its highest. */
 export function nextStep(id: ArcanumId, attribute: number, level: number) {
@@ -439,6 +445,7 @@ export function decodeArcana(raw: unknown): ArcanaSave {
   d.offer = knownList(raw.offer).filter((id) => !d.owned[id]).slice(0, OFFER_SIZE);
   if (wholeIn(raw.rng, 0, 4294967295)) d.rng = raw.rng as number;
   if (wholeIn(raw.rolls, 0, Number.MAX_SAFE_INTEGER)) d.rolls = raw.rolls as number;
+  if (wholeIn(raw.respecEvent, 0, Number.MAX_SAFE_INTEGER)) d.respecEvent = raw.respecEvent as number;
   return d;
 }
 

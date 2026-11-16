@@ -834,7 +834,7 @@ A card in the deck the player hasn't met on the Deck page yet (pressed for its d
 _Avoid_: unseen card (a card the Deck page hasn't shown is what the Deck tab's dot counts, and it clears on opening the page)
 
 **Card tree**:
-A card's tree of nodes its card points buy, a level a point: tracks from the card itself, each node open once the node before it holds enough levels, its bonuses counting while the run's hand holds the card. Each node has a card rarity; card buys open its levels. A **respec** gives all of a card's points back for Gems.
+A card's tree of nodes its card points buy, a level a point: tracks from the card itself, each node open once the node before it holds enough levels, its bonuses counting while the run's hand holds the card. Each node has a card rarity; card buys open its levels. A **respec** gives all of a card's points back for Gems; an arcanum's respec (Arcana Respec) gives back all the Arcanite invested in it.
 _Avoid_: card skill tree, talent tree, reward tree
 
 **Card badge**:

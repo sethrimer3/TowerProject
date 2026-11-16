@@ -3,8 +3,9 @@ import { arcanum, enhancementsOf, levelsOf, nextStep, valuesAt, type ArcanumId, 
 import { augmentOf, boon } from "../shrines.ts";
 import type { HeldArcanum } from "../game/arcana-desk.ts";
 import type { AppContext } from "./app.ts";
-import { askForArcanite, closesOnBackdrop, confirmAction, helpButton, showHelp } from "./dialogs.ts";
-import { arcaniteIcon, el } from "./dom.ts";
+import { askForArcanite, askForGems, closesOnBackdrop, confirmAction, helpButton, showHelp } from "./dialogs.ts";
+import { arcaniteIcon, el, gemIcon } from "./dom.ts";
+import { ARCANUM_RESPEC_GEMS } from "../economy/gems.ts";
 import { priceAmount } from "./hud.ts";
 import { shortAmount } from "../whole.ts";
 import { RESEARCH, RESEARCH_TARGETS, researched } from "../progression/archives.ts";
@@ -70,7 +71,19 @@ export class ArcanaPanel {
   html() {
     const desk = this.desk, cost = desk.price;
     const select = cost === null ? "" : `<button id="arcana-select" class="arcana-select${desk.affords(cost) ? "" : " short"}" aria-label="Select Arcanum, ${cost} Arcanite">Select Arcanum ${price(cost)}</button>`;
-    return `<div class="arcana-head"><h3>Arcana</h3>${helpButton("About Arcana", "arcana-help")}</div>${select}${desk.owned.map((id) => this.rowHtml(id)).join("")}`;
+    return `<div class="arcana-head"><h3>Arcana</h3>${helpButton("About Arcana", "arcana-help")}</div>${select}${this.respecHtml()}${desk.owned.map((id) => this.rowHtml(id)).join("")}`;
+  }
+
+  /** Respec, once Arcana Respec is owned and an arcanum bought: its Gem
+   * price red while short; closed inside a run and once this event's
+   * respec is spent. */
+  private respecHtml() {
+    const { ctx, desk } = this, game = ctx.game;
+    if (!desk.respecUnlocked || !desk.owned.length) return "";
+    const inside = !game.run.outside, used = desk.respecUsed, short = !game.free && game.save.gems < ARCANUM_RESPEC_GEMS;
+    const title = inside ? "Respec in the forest" : used ? "One respec each event: this event's is spent" : "Return all the Arcanite invested in one arcanum";
+    const cost = game.free ? "free" : `${gemIcon()} <b>${ARCANUM_RESPEC_GEMS}</b>`;
+    return `<button id="arcana-respec" class="arcana-select${short ? " short" : ""}" ${inside || used ? "disabled" : ""} title="${title}" aria-label="${game.free ? "Respec an arcanum, free" : `Respec an arcanum for ${ARCANUM_RESPEC_GEMS} Gems`}">Respec Arcanum · ${cost}</button>`;
   }
 
   private rowHtml(id: ArcanumId) {
@@ -87,6 +100,8 @@ export class ArcanaPanel {
     el("arcana-help").onclick = () => showHelp(ctx, "GEAR", "Arcana", `<p>Arcana are mighty spells bought with Arcanite and kept for good. Each has three attributes to upgrade.</p><p>Each new arcanum is chosen from up to three drawn at random from those you don't own, each as likely as any other. The choice stays until you buy one or reroll it, and the next arcanum costs more the more you own.</p><p>Every arcanum you hold works at once in every run. Inside a run the Arcana tab switches each on and off, up to 40 times a run.</p><p class="hint">Arcanite comes from tournaments and the Shop.</p>`);
     const select = document.getElementById("arcana-select");
     if (select) select.onclick = () => (desk.affords(desk.price!) ? this.showChoice() : askForArcanite(ctx));
+    const respec = document.getElementById("arcana-respec");
+    if (respec) respec.onclick = () => (ctx.game.free || ctx.game.save.gems >= ARCANUM_RESPEC_GEMS ? this.showRespec() : askForGems(ctx));
     gear.querySelectorAll<HTMLButtonElement>("[data-arcana-up]").forEach((b) => (b.onclick = () => {
       const [id, attribute] = b.dataset.arcanaUp!.split(":") as [ArcanumId, string], answer = desk.upgrade(id, Number(attribute));
       if (answer === "short") askForArcanite(ctx);
@@ -114,6 +129,35 @@ export class ArcanaPanel {
     }));
     const button = document.getElementById("arcana-reroll");
     if (button) button.onclick = () => (desk.affords(reroll) ? this.askReroll() : askForArcanite(ctx));
+  }
+
+  /** The arcana owned, to choose the one to respec: each with the Arcanite
+   * it returns, closed with none invested. */
+  private showRespec() {
+    const { ctx, desk } = this, modal = ctx.modal;
+    modal.innerHTML = `<small>ARCANA</small><h2>Respec an Arcanum</h2><p>Its attributes go back to their first levels and all the Arcanite invested in it returns. One respec each event.</p><div class="arcana-options">${desk.owned.map((id) => {
+      const back = desk.invested(id);
+      return `<button class="arcana-option" data-arcana-respec="${id}" ${back ? "" : "disabled"}>${ARCANUM_ICONS[id]}<span><b>${arcanum(id).name}</b><small>${back ? `Returns ${price(back)}` : "Nothing invested"}</small></span></button>`;
+    }).join("")}</div>`;
+    if (!modal.open) modal.showModal();
+    closesOnBackdrop(modal);
+    modal.querySelectorAll<HTMLButtonElement>("[data-arcana-respec]").forEach((b) => (b.onclick = () => this.askRespec(b.dataset.arcanaRespec as ArcanumId)));
+  }
+
+  /** Respec `id`, on confirmation. */
+  private askRespec(id: ArcanumId) {
+    const { ctx, desk } = this, free = ctx.game.free, back = desk.invested(id);
+    confirmAction(ctx, {
+      title: `Respec ${arcanum(id).name}?`,
+      body: `Its attributes go back to their first levels, and ${arcaniteIcon()} <b>${priceAmount(back)}</b> Arcanite returns. This is the event's one respec.`,
+      label: `Respec · ${free ? "free" : `${gemIcon()} <b>${ARCANUM_RESPEC_GEMS}</b>`}`,
+      cancel: "Cancel",
+      aria: free ? "Respec, free" : `Respec for ${ARCANUM_RESPEC_GEMS} Gems`,
+    }, () => {
+      const refusal = desk.respec(id);
+      if (refusal === "short") return askForGems(ctx);
+      if (!refusal) this.changed();
+    });
   }
 
   /** Reroll, on confirmation: a new choice in place of this one. */

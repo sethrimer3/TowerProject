@@ -359,9 +359,15 @@ export class TrainingDesk {
     this.host.missionDone("train", job.ranks);
   }
 
-  /** Whether a Gem reset is open: only from the forest. */
+  /** Whether the Gem reset exists at all: once the Breakthrough skill
+   * Training Respec is owned, or in Dev mode. */
+  get resetUnlocked() {
+    return !!this.save.upgrades.trainingRespec || this.save.settings.devMode;
+  }
+
+  /** Whether a Gem reset is open: once unlocked, and only from the forest. */
   get canReset() {
-    return !!this.host.run.outside;
+    return this.resetUnlocked && !!this.host.run.outside;
   }
 
   /** The ranks of `id` each way of a Gem reset takes back: those bought

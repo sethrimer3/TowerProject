@@ -1,6 +1,6 @@
 import { relicAmount, relicCut, relicFactor } from "../economy/relic-effects.ts";
 import {
-  arcanum, arcanumBoost, arcanumPrice, augmentedValues, chargeBolts, chargeZap, drawOptions, FROST_AUGMENT, GOLDEN_AUGMENT, LENT_LEVELS, levelsOf, nextDraw, nextStep, OFFER_SIZE, ownedArcana, redrawOptions, rerollOpen, rerollPrice, RUN_TOGGLES, settleBolts, settleZap, tickCooldowns, unownedArcana, valuesAt,
+  arcanum, arcanumBoost, arcanumPrice, augmentedValues, chargeBolts, chargeZap, drawOptions, FROST_AUGMENT, GOLDEN_AUGMENT, investedIn, LENT_LEVELS, levelsOf, nextDraw, nextStep, OFFER_SIZE, ownedArcana, redrawOptions, rerollOpen, rerollPrice, RUN_TOGGLES, settleBolts, settleZap, tickCooldowns, unownedArcana, valuesAt,
   type ArcanumId, type AttributeLevels, type AttributeValues,
 } from "../arcana/arcana.ts";
 import { clearLifespring, lifespringEffects, springAmplify, stepLifespring } from "../arcana/lifespring.ts";
@@ -21,7 +21,10 @@ import type { TowerRun } from "../runs.ts";
 import { CURRENCIES } from "../shop/currency.ts";
 import { augmentOf } from "../shrines.ts";
 import { snap } from "../exact.ts";
-import type { DeskHost } from "./desk.ts";
+import { ARCANUM_RESPEC_GEMS } from "../economy/gems.ts";
+import { eventAt } from "../events/catalog.ts";
+import { estimatedServerTime } from "../shop/clock.ts";
+import { affordsGems, type DeskHost } from "./desk.ts";
 
 /** What the Arcana desk needs from the game beyond any desk's: the mode, and
  * the hero's crits, which Arcanum Damage averages. */
@@ -37,6 +40,8 @@ export interface ArcanaHost extends DeskHost {
 export type HeldArcanum = { id: ArcanumId; levels: AttributeLevels; lent: boolean };
 /** What a purchase answers: done, or short of Arcanite, or refused. */
 export type ArcanaAnswer = "done" | "short" | "refused";
+/** Why a respec was refused (`ArcanaDesk.respecRefusal`). */
+export type RespecRefusal = "locked" | "inside" | "used" | "none" | "short";
 
 /** Arcana's commands (arcana/arcana.ts): buying and upgrading them on the Gear
  * page, and which a run holds, toggles and sets off. */
@@ -106,6 +111,47 @@ export class ArcanaDesk {
     if (!this.pays(next.cost)) return "short";
     levels[attribute]!++;
     return "done";
+  }
+
+  /** Whether Respec shows: once the Breakthrough skill Arcana Respec is owned, or in Dev mode. */
+  get respecUnlocked() {
+    return !!this.save.upgrades.arcanaRespec || this.save.settings.devMode;
+  }
+  /** The running event's number, on the Shop's estimated server time. */
+  private get event() {
+    return eventAt(estimatedServerTime(this.save.shop.clock, this.host.clock()));
+  }
+  /** Whether this event's respec is spent. */
+  get respecUsed() {
+    return this.arcana.respecEvent === this.event;
+  }
+  /** The Arcanite a respec of `id` returns. */
+  invested(id: ArcanumId) {
+    const levels = this.arcana.owned[id];
+    return levels ? investedIn(id, levels) : 0;
+  }
+  /** Why `id` can't be respecced now, or null when it can: `locked` before
+   * Arcana Respec, `inside` a run (a run's arcana are only ever raised),
+   * `used` once this event's respec is spent, `none` with nothing invested,
+   * `short` of `ARCANUM_RESPEC_GEMS`. */
+  respecRefusal(id: ArcanumId): RespecRefusal | null {
+    if (!this.respecUnlocked) return "locked";
+    if (!this.host.run.outside) return "inside";
+    if (this.respecUsed) return "used";
+    if (!this.invested(id)) return "none";
+    return affordsGems(this.host, ARCANUM_RESPEC_GEMS) ? null : "short";
+  }
+  /** Respecs `id` for `ARCANUM_RESPEC_GEMS` (none with Dev free purchases):
+   * its attributes go back to their first levels and every Arcanite spent
+   * on them comes back. The arcanum stays owned, and the event's respec is spent. */
+  respec(id: ArcanumId): RespecRefusal | null {
+    const refusal = this.respecRefusal(id);
+    if (refusal) return refusal;
+    if (!this.host.free) this.save.gems -= ARCANUM_RESPEC_GEMS;
+    this.save.arcanite += this.invested(id);
+    this.arcana.owned[id] = [0, 0, 0];
+    this.arcana.respecEvent = this.event;
+    return null;
   }
 
   // --- The run ---

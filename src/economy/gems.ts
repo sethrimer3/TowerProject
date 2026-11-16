@@ -16,8 +16,10 @@ export const GEM_MISSED_FLOORS = 3;
  * claim before it is back (before the GEM card's Gem Bank Speed). */
 export const AD_GEMS = 6;
 export const AD_COOLDOWN_MS = 10 * 60 * 1000;
-/** What resetting one Training stat costs. */
-export const TRAINING_RESET_GEMS = 2;
+/** What resetting one Training stat costs (once the Training Respec skill opens it). */
+export const TRAINING_RESET_GEMS = 5;
+/** What respeccing one arcanum costs (once the Arcana Respec skill opens it). */
+export const ARCANUM_RESPEC_GEMS = 300;
 
 /** A Gem's kind: a plain one, a Golden Gem (the GEM card's Golden Gem
  * turns one golden) or a Stellar Gem (its Stellar Gem Chance turns a

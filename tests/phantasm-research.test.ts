@@ -48,9 +48,9 @@ test("the Breakthrough skill Phantasm Research opens all three projects, down an
   const skill = UPGRADES.find((u) => u.id === "phantasmResearch")!;
   assert.deepEqual([skill.base, skill.max, skill.currency], [5, 1, "breakthrough"]);
   const nodes = TREES.find((t) => t.id === "breakthrough")!.nodes, at = (id: string) => nodes.find((n) => n.id === id)!;
-  assert.deepEqual([at("phantasmResearch").x, at("phantasmResearch").y, at("phantasmResearch").requires], [30, 237, ["lifespringResearch"]]);
-  assert.deepEqual([at("lifespringResearch").x, at("lifespringResearch").y], [50, 213]);
-  assert.equal(nodes.filter((n) => n.x === 30 && n.y === 237).length, 1, "nothing else stands there");
+  assert.deepEqual([at("phantasmResearch").x, at("phantasmResearch").y, at("phantasmResearch").requires], [30, 261, ["lifespringResearch"]]);
+  assert.deepEqual([at("lifespringResearch").x, at("lifespringResearch").y], [50, 237]);
+  assert.equal(nodes.filter((n) => n.x === 30 && n.y === 261).length, 1, "nothing else stands there");
   for (const id of ["phantasmBlast", "phantasmSpin", "phantasmStun"] as const) {
     assert.ok(RESEARCH[id].requires.some((r) => "upgrade" in r && r.upgrade === "phantasmResearch"), id);
     assert.equal(RESEARCH[id].categories[0], "arcana", id);

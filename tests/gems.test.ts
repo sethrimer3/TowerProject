@@ -189,8 +189,9 @@ test("the ad's Gems: six, then ten minutes before the next", () => {
   assert.equal(AD_COOLDOWN_MS, 10 * MINUTE);
 });
 
-test("resetting a Training stat's point ranks costs two Gems and returns every point spent on them, only between runs", () => {
+test("resetting a Training stat's point ranks costs five Gems once Training Respec is owned and returns every point spent on them, only between runs", () => {
   const g = arena((g) => { g.save.xp = xpForLevel(10); });
+  assert.equal(TRAINING_RESET_GEMS, 5);
   const left = trainingPoints(g.save).left;
   for (let i = 0; i < 3; i++) assert.ok(trainNow(g, "attack"));
   assert.ok(trainNow(g, "hp"));
@@ -200,6 +201,9 @@ test("resetting a Training stat's point ranks costs two Gems and returns every p
   assert.equal(g.training.reset("attack", "points"), false, "no reset inside a run");
   assert.equal(g.save.gems, TRAINING_RESET_GEMS, "nothing paid");
   g.finish("again");
+  assert.ok(g.run.outside && !g.training.resetUnlocked && !g.training.canReset, "no reset before Training Respec");
+  assert.equal(g.training.reset("attack", "points"), false);
+  g.save.upgrades.trainingRespec = 1;
   assert.ok(g.run.outside && g.training.canReset);
   const attack = g.run.player.attack;
   g.save.gems = 0;

@@ -25,9 +25,9 @@ test("the Breakthrough skill Ricochet Shock Research opens all three projects, l
   const skill = UPGRADES.find((u) => u.id === "ricochetShockResearch")!;
   assert.deepEqual([skill.base, skill.max, skill.currency], [5, 1, "breakthrough"]);
   const nodes = TREES.find((t) => t.id === "breakthrough")!.nodes, at = (id: string) => nodes.find((n) => n.id === id)!;
-  assert.deepEqual([at("ricochetShockResearch").x, at("ricochetShockResearch").y, at("ricochetShockResearch").requires], [30, 189, ["extraTrainer"]]);
-  assert.deepEqual([at("doorMastery").x, at("doorMastery").y, at("doorMastery").requires], [50, 163, ["keyMastery"]]);
-  assert.deepEqual([at("keyMastery").x, at("keyMastery").y], [70, 163]);
+  assert.deepEqual([at("ricochetShockResearch").x, at("ricochetShockResearch").y, at("ricochetShockResearch").requires], [30, 213, ["extraTrainer"]]);
+  assert.deepEqual([at("doorMastery").x, at("doorMastery").y, at("doorMastery").requires], [50, 189, ["keyMastery"]]);
+  assert.deepEqual([at("keyMastery").x, at("keyMastery").y], [70, 189]);
   for (const id of ["ricochetShock", "shockChance", "shockMultiplier"] as const) {
     assert.ok(RESEARCH[id].requires.some((r) => "upgrade" in r && r.upgrade === "ricochetShockResearch"), id);
     assert.equal(RESEARCH[id].categories[0], "arcana", id);

@@ -28,8 +28,8 @@ test("the Breakthrough skill Necrotic Frost Research (5) opens all four projects
   const skill = UPGRADES.find((u) => u.id === "necroticFrostResearch")!;
   assert.deepEqual([skill.base, skill.max, skill.currency], [5, 1, "breakthrough"]);
   const nodes = TREES.find((t) => t.id === "breakthrough")!.nodes, at = (id: string) => nodes.find((n) => n.id === id)!;
-  assert.deepEqual([at("extraTrainer").x, at("extraTrainer").y], [50, 189]);
-  assert.deepEqual([at("necroticFrostResearch").x, at("necroticFrostResearch").y, at("necroticFrostResearch").requires], [70, 213, ["extraTrainer"]]);
+  assert.deepEqual([at("extraTrainer").x, at("extraTrainer").y], [50, 213]);
+  assert.deepEqual([at("necroticFrostResearch").x, at("necroticFrostResearch").y, at("necroticFrostResearch").requires], [70, 237, ["extraTrainer"]]);
   assert.deepEqual([at("manualHand").x, at("manualHand").y, at("manualHand").requires], [at("cardMastery").x + 20, at("cardMastery").y, ["cardMastery"]]);
   for (const [x, y] of [[70, 213], [90, 189]]) assert.equal(nodes.filter((n) => n.x === x && n.y === y).length, 1, `nothing else at ${x},${y}`);
   for (const id of ["frostRadius", "necroFreeze", "necroFreezeChance", "necroFreezeTurns"] as const) {
