@@ -27,8 +27,8 @@ export type Board = {
   markBolt?(x: number, y: number): void;
   /** Stuns the enemy at (x, y) for `turns` (`stunMark` in enemies/ranged.ts), a stun already on it starting over. */
   markStun?(x: number, y: number, turns: number): void;
-  /** Sets what Necrotic Frost has on the enemy at (x, y) (`necroMark` in enemies/ranged.ts). */
-  markNecro?(x: number, y: number, necro: Record<string, number>): void;
+  /** Sets what Necrotic Frost has on the enemy at (x, y), and the fields it stands in (`necroMark` in enemies/ranged.ts). */
+  markNecro?(x: number, y: number, necro: Record<string, number>, frosted?: readonly number[]): void;
   /** The vortex standing, which the board's enemy tiles are read through
    * (`stunnedTile` in arcana/voidwell.ts); `Game` sets it on every board it uses. */
   vortex?: () => VortexZone | undefined;

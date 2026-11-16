@@ -43,6 +43,7 @@ function researchedText(id: ArcanumId, values: AttributeValues, save: Save) {
 const ARCANUM_RESEARCH: Partial<Record<ArcanumId, readonly (keyof typeof RESEARCH & keyof typeof RESEARCH_TARGETS)[]>> = {
   thunderbolt: ["thunderboltAmplify", "thunderboltExpansion"],
   phantasm: ["phantasmBlast", "phantasmSpin", "phantasmStun"],
+  necroticFrost: ["frostRadius", "necroFreeze", "necroFreezeChance", "necroFreezeTurns"],
   lifespring: ["lifespringHealth", "lifespringGold", "lifespringAmplify", "lifespringCells"],
   aurumBloom: ["aurumBloomBonus", "aurumBloomChance"],
   voidwell: ["voidwellDamage", "voidwellGold", "extraVoidwell"],

@@ -294,7 +294,7 @@ const TOWER_EIGHT: Record<number, CheckpointSet> = {
   30: { reward: breakthrough(5), premium: arcanite(10) },
   40: { reward: gems(50), premium: gems(60) },
   50: { reward: gold(50_000_000), premium: gold(75_000_000) },
-  60: { reward: gems(55), premium: gems(70) },
+  60: { reward: breakthrough(5), premium: gems(70) },
   70: { reward: gold(100_000_000), premium: gold(150_000_000) },
   80: { reward: arcanite(15), premium: arcanite(15) },
   90: { reward: gems(60), premium: gems(80) },

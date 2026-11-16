@@ -237,7 +237,7 @@ test("Golden Floors (3 Breakthrough) under More Wealth, then Esoteric Training (
   assert.deepEqual(["goldenFloors", "esotericTraining", "aetherShield", "phoenixSpark", "undos"].map((id) => [at(id).x, at(id).y, at(id).requires]), [[18, 111, ["moreWealth"]], [10, 137, ["goldenFloors"]], [10, 163, ["esotericTraining"]], [10, 189, ["aetherShield"]], [10, 213, ["phoenixSpark"]]], "Golden Floors under More Wealth, Esoteric Training down and left of it, Aether Shield, Phoenix Spark and Echoes of time straight under that");
   assert.equal(cost("esotericTraining", 0), 2, "Esoteric Training costs 2 Breakthrough");
   assert.deepEqual([at("cardMastery").x, at("cardMastery").y], [at("keyMastery").x, at("keyMastery").y + 26], "Card Mastery directly below Key Mastery");
-  assert.deepEqual([at("manualHand").x, at("manualHand").y, at("manualHand").requires], [at("cardMastery").x, 213, ["cardMastery"]], "Manual Hand below and after Card Mastery, on Lifespring Research's row");
+  assert.deepEqual([at("manualHand").x, at("manualHand").y, at("manualHand").requires], [at("cardMastery").x + 20, at("cardMastery").y, ["cardMastery"]], "Manual Hand right of and after Card Mastery");
   assert.equal(cost("goldenFloors", 0), 3, "Golden Floors costs 3 Breakthrough");
   assert.deepEqual([at("offlineGold").x, at("offlineGold").y, at("offlineGold").requires, cost("offlineGold", 0)], [30, 137, ["goldenFloors"], 2], "Offline Gold (2) splits off down and right of Golden Floors, beside Esoteric Training");
   assert.deepEqual([at("gemCard").x, at("gemCard").y, at("gemCard").requires, cost("gemCard", 0)], [30, 163, ["offlineGold"], 2], "Gem Card (2) under Offline Gold");

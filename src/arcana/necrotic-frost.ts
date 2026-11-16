@@ -26,11 +26,26 @@ export type FrostRun = { timer?: number; casts?: number; fields?: FrostField[] }
  * the turns its effect has ticked, which is what that field's next tick has grown past. */
 export type Necro = Record<string, number>;
 
-/** What it gives, for research to raise: a field's radius and how far its center lies
+/** What it gives, with what research adds: a field's radius and how far its center lies
  * from the hero's, in hundredths of a tile, and the percent an enemy in one field is
  * slowed by (`slow`) and in two or more (`overlap`). */
 export type FrostEffects = { radius: number; offset: number; slow: number; overlap: number };
-export const frostEffects = (_save: unknown): FrostEffects => ({ radius: FROST_RADIUS * 100, offset: 100, slow: 25, overlap: 50 });
+/** Necrotic Freeze, once researched: the chance an enemy entering a field is stunned, in
+ * tenths of a percent, and the turns it is stunned for (half that, rounded down, on a Greater Boss). */
+export type FrostFreeze = { chance: number; turns: number };
+/** Its effects from what the Archives have researched: Frost Radius (`radius`, the
+ * field's radius in tenths of a tile, 3 tiles untrained). */
+export const frostEffects = (research: { radius?: number } | null = {}): FrostEffects => ({ radius: (research?.radius ?? FROST_RADIUS * 10) * 10, offset: 100, slow: 25, overlap: 50 });
+
+/** Necrotic Freeze on an enemy as the turn ends: each field `touching` it that wasn't
+ * when it was last looked at (`inside`) is an entry, rolled for once (`roll`, below one
+ * of its chance); an enemy that stays in a field isn't rolled for again until it leaves
+ * and comes back. Returns whether an entry stunned it. */
+export function freezes(inside: readonly number[] | undefined, touching: readonly number[], { chance }: Pick<FrostFreeze, "chance">, roll: (field: number) => number) {
+  let stunned = false;
+  for (const id of touching) if (!inside?.includes(id) && roll(id) * 1000 < chance) stunned = true;
+  return stunned;
+}
 
 /** The fields as they lie from the hero, in tiles, rows rising up the board. */
 export type FrostArea = FrostEffects & { fields: { id: number; x: number; y: number }[] };
@@ -92,3 +107,6 @@ export const validFrost = (v: unknown): v is FrostRun =>
   isRecord(v) && whole(v.timer) && whole(v.casts) && (v.fields === undefined || (Array.isArray(v.fields) && v.fields.length > 0 && v.fields.length <= 1000 && v.fields.every(validField)));
 /** What a saved tile or foe has on it: a whole number of ticks per field, at least one field. */
 export const validNecro = (v: unknown): v is Necro => isRecord(v) && Object.keys(v).length > 0 && Object.entries(v).every(([id, n]) => wholeIn(Number(id), 1, 1e12) && wholeIn(n, 1, 1e12));
+/** The fields a saved tile or foe stood in when Necrotic Freeze last looked: one or more field ids, each once. */
+export const validFrosted = (v: unknown): v is number[] =>
+  Array.isArray(v) && v.length > 0 && v.length <= 1000 && v.every((id) => wholeIn(id, 1, 1e12)) && new Set(v).size === v.length;

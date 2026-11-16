@@ -179,7 +179,7 @@ export const TREES: SkillTree[] = [
     // Physician; Badges stand right of Enemy Level Skips, after it, and Key Mastery
     // under Badges. Beast Mastery splits off right of Key Mastery, under Dash Badge,
     // Card Mastery straight under it, with Manual Hand, the second hand,
-    // under Card Mastery. Card, Beast and Door Mastery reveal the
+    // right of Card Mastery. Card, Beast and Door Mastery reveal the
     // Inspiration tree's three paths under Torch.
     { id: "overheal", icon: "♥", x: 50, y: 85, requires: ["physician"] },
     { id: "life", icon: "✚", x: 50, y: 111, requires: ["overheal"] },
@@ -190,19 +190,20 @@ export const TREES: SkillTree[] = [
     { id: "keyMastery", icon: "⚿", x: 70, y: 163, requires: ["cardBadges"] },
     { id: "beastMastery", icon: "☠", x: 90, y: 163, requires: ["keyMastery"] },
     { id: "cardMastery", icon: "▤", x: 70, y: 189, requires: ["keyMastery"] },
-    { id: "manualHand", icon: "⇄", x: 70, y: 213, requires: ["cardMastery"] },
+    { id: "manualHand", icon: "⇄", x: 90, y: 189, requires: ["cardMastery"] },
     // Extra Trainer down and left of Key Mastery, with Door Mastery to its
     // left after it, which reveals the Inspiration tree's door path under
     // Torch. Then the Arcana's research below Extra Trainer: Lifespring
-    // Research, with Thunderbolt Research left of it (also after Extra
-    // Trainer), Phantasm Research down and left of it, Overseer Zap down and
-    // right of it and Overseer Gold Bonus right of that, then Aurum Bloom
-    // Research, with Voidwell Research down and right of it and Extra
-    // Voidwell right of that.
+    // Research, with Thunderbolt Research left of it and Necrotic Frost
+    // Research right of it (both also after Extra Trainer), Phantasm
+    // Research down and left of it, Overseer Zap down and right of it and
+    // Overseer Gold Bonus right of that, then Aurum Bloom Research, with
+    // Voidwell Research down and right of it and Extra Voidwell right of that.
     { id: "extraTrainer", icon: "⚔", x: 50, y: 189, requires: ["keyMastery"] },
     { id: "doorMastery", icon: "⚿", x: 30, y: 189, requires: ["extraTrainer"] },
     { id: "lifespringResearch", icon: "✚", x: 50, y: 213, requires: ["extraTrainer"] },
     { id: "thunderboltResearch", icon: "↯", x: 30, y: 213, requires: ["extraTrainer"] },
+    { id: "necroticFrostResearch", icon: "❄", x: 70, y: 213, requires: ["extraTrainer"] },
     { id: "phantasmResearch", icon: "☁", x: 30, y: 237, requires: ["lifespringResearch"] },
     { id: "overseerZapResearch", icon: "↯", x: 70, y: 237, requires: ["lifespringResearch"] },
     { id: "overseerGoldResearch", icon: "¤", x: 90, y: 237, requires: ["overseerZapResearch"] },

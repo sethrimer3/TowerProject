@@ -326,13 +326,16 @@ export class ArcanaDesk {
     if (rule) stepPhantasm((this.host.run.phantasm ??= {}), rule);
   }
   /** Necrotic Frost, if it is held and on: what a step of its decay multiplies the
-   * hero's ATK by, its Duration and cooldown, and its field with what raises it. */
+   * hero's ATK by, its Duration and cooldown, its field with what raises it (Frost
+   * Radius, then its augment boon), and Necrotic Freeze (`freeze`) once researched, all
+   * read from the Archives as it strikes, never copied into the run. */
   frostRule() {
     const held = this.held.find((h) => h.id === "necroticFrost" && this.isOn(h.id));
     if (!held) return undefined;
-    const [multiplier, base, turns] = this.valuesOf(held), effects = frostEffects(this.save);
+    const archives = this.save.archives, [multiplier, base, turns] = this.valuesOf(held), effects = frostEffects({ radius: researched(archives, "frostRadius") });
     const duration = Math.round(base * relicFactor(this.save, "frostDuration"));
-    return { boost: this.boost(multiplier), duration, turns, effects: this.augmented(held.id) ? { ...effects, radius: effects.radius * FROST_AUGMENT } : effects };
+    const freeze = researched(archives, "necroFreeze") ? { freeze: { chance: researched(archives, "necroFreezeChance"), turns: researched(archives, "necroFreezeTurns") } } : {};
+    return { boost: this.boost(multiplier), duration, turns, effects: this.augmented(held.id) ? { ...effects, radius: effects.radius * FROST_AUGMENT } : effects, ...freeze };
   }
   /** Necrotic Frost's turn: the fields' turns and its cooldown, if it is held and on. */
   frostTurn() {

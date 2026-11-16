@@ -211,6 +211,15 @@ export const RESEARCH_TARGETS = {
   /** The turns a Phantasm ghost's strike stuns what it hits (`phantasmEffects`;
    * half that, rounded down, on a Greater Boss): none untrained. */
   phantasmStun: { name: "Stun", base: 0, shown: (n: number) => (n ? `${n} ${n === 1 ? "turn" : "turns"}` : "None") },
+  /** A Necrotic Frost field's radius (`frostEffects`), in tenths of a tile: 3 untrained. */
+  frostRadius: { name: "Field Radius", base: 30, shown: (n: number) => `${n / 10} tiles` },
+  /** Whether an enemy entering a Necrotic Frost field may be stunned (`frostEffects`' `freeze`). */
+  necroFreeze: { name: "Necrotic Freeze", base: 0, shown: opened },
+  /** The chance an enemy entering a Necrotic Frost field is stunned, in tenths of a
+   * percent: 5% once Necrotic Freeze is researched. */
+  necroFreezeChance: { name: "Freeze Chance", base: 50, shown: (n: number) => `${n / 10}%` },
+  /** The turns Necrotic Freeze stuns an enemy for (half that, rounded down, on a Greater Boss): 1 untrained. */
+  necroFreezeTurns: { name: "Freeze Time", base: 1, shown: (n: number) => `${n} ${n === 1 ? "turn" : "turns"}` },
   /** Turns between Overseer Zap's strikes (game/arcana-desk.ts), 20 less
    * one a level; no strike before the first level. */
   overseerZapTurns: { name: "Zap Cooldown", base: 20, shown: (n: number) => `${n} turns` },
@@ -398,6 +407,27 @@ const PHANTASM_SPIN_TIMES: readonly (readonly number[])[] = [[0, 20, 0], ...THUN
 /** Phantasm Stun research: a turn more of stun a level, for 3 levels. */
 const PHANTASM_STUN_GOLD = [50_000_000, 250_000_000, 1_250_000_000];
 const PHANTASM_STUN_TIMES: readonly [days: number, hours: number, minutes: number][] = [[3, 19, 5], [7, 5, 25], [13, 21, 19]];
+/** Necrotic Frost's Frost Radius research: half a tile more a level, for 7 levels, from 3 tiles to 6.5. */
+const FROST_RADIUS_GOLD = [2_450_000, 79_470_000, 701_120_000, 3_040_000_000, 9_150_000_000, 22_170_000_000, 44_290_000_000];
+const FROST_RADIUS_TIMES: readonly [days: number, hours: number, minutes: number][] = [
+  [3, 6, 54], [7, 12, 58], [16, 22, 30], [43, 12, 9], [87, 16, 40], [121, 7, 16], [167, 10, 41],
+];
+/** Necrotic Freeze Chance research: 2.5% more a level, for 30 levels, from 5% to 80%. */
+const FREEZE_CHANCE_GOLD = [
+  250_000, 285_000, 496_980, 1_450_000, 4_230_000, 10_500_000, 22_580_000, 43_470_000, 76_880_000, 127_310_000,
+  200_030_000, 301_120_000, 437_550_000, 617_110_000, 848_510_000, 1_140_000_000, 1_510_000_000, 1_950_000_000, 2_500_000_000, 3_150_000_000,
+  3_930_000_000, 4_850_000_000, 5_920_000_000, 7_170_000_000, 8_610_000_000, 10_260_000_000, 12_150_000_000, 14_290_000_000, 16_700_000_000, 19_420_000_000,
+];
+const FREEZE_CHANCE_TIMES: readonly [days: number, hours: number, minutes: number][] = [
+  [0, 19, 59], [0, 23, 21], [1, 2, 53], [1, 6, 54], [1, 11, 49], [1, 18, 6], [2, 2, 17], [2, 12, 58], [3, 2, 49], [3, 20, 31],
+  [4, 18, 49], [5, 22, 30], [7, 8, 23], [9, 1, 21], [11, 2, 18], [13, 12, 9], [16, 7, 54], [19, 14, 32], [23, 9, 6], [27, 16, 40],
+  [32, 14, 19], [38, 3, 12], [44, 8, 27], [51, 7, 16], [59, 0, 50], [67, 14, 25], [77, 1, 17], [87, 10, 41], [98, 19, 58], [111, 6, 28],
+];
+/** Necrotic Freeze Time research: a turn more of stun a level, for 9 levels, from 1 turn to 10. */
+const FREEZE_TURNS_GOLD = [896_980, 15_500_000, 267_310_000, 937_550_000, 2_640_000_000, 9_150_000_000, 14_920_000_000, 25_260_000_000, 61_420_000_000];
+const FREEZE_TURNS_TIMES: readonly [days: number, hours: number, minutes: number][] = [
+  [2, 2, 53], [3, 18, 6], [12, 20, 31], [18, 8, 23], [33, 12, 9], [67, 16, 40], [104, 8, 27], [157, 14, 25], [211, 6, 28],
+];
 /** A schedule whose first level adds `first` and every later one `value`. */
 const scheduledFrom = (target: ResearchTarget, first: number, value: number, gold: readonly number[], times: readonly (readonly number[])[]) =>
   scheduled(target, value, gold, times).map((level, i) => (i ? level : { ...level, effect: { ...level.effect, value: first } }));
@@ -1185,6 +1215,34 @@ export const RESEARCH = {
     categories: ["arcana", "offense"],
     requires: [{ upgrade: "archives" }, { upgrade: "phantasmResearch" }],
     levels: scheduled("phantasmStun", 1, PHANTASM_STUN_GOLD, PHANTASM_STUN_TIMES),
+  },
+  frostRadius: {
+    name: "Frost Radius",
+    description: "Necrotic Frost's fields reach further.",
+    categories: ["arcana", "offense"],
+    requires: [{ upgrade: "archives" }, { upgrade: "necroticFrostResearch" }],
+    levels: scheduled("frostRadius", 5, FROST_RADIUS_GOLD, FROST_RADIUS_TIMES),
+  },
+  necroFreeze: {
+    name: "Necrotic Freeze",
+    description: "An enemy entering a Necrotic Frost field may be stunned: 5% for 1 turn, once each time it enters a field.",
+    categories: ["arcana", "offense"],
+    requires: [{ upgrade: "archives" }, { upgrade: "necroticFrostResearch" }],
+    levels: [levelOf("necroFreeze", 1, 700_000, 19 * 60 + 59)],
+  },
+  necroFreezeChance: {
+    name: "Necrotic Freeze Chance",
+    description: "Enemies entering a Necrotic Frost field are stunned more often.",
+    categories: ["arcana", "offense"],
+    requires: [{ upgrade: "archives" }, { upgrade: "necroticFrostResearch" }, { research: "necroFreeze", level: 1 }],
+    levels: scheduled("necroFreezeChance", 25, FREEZE_CHANCE_GOLD, FREEZE_CHANCE_TIMES),
+  },
+  necroFreezeTurns: {
+    name: "Necrotic Freeze Time",
+    description: "Enemies Necrotic Freeze stuns stay stunned longer.",
+    categories: ["arcana", "offense"],
+    requires: [{ upgrade: "archives" }, { upgrade: "necroticFrostResearch" }, { research: "necroFreeze", level: 1 }],
+    levels: scheduled("necroFreezeTurns", 1, FREEZE_TURNS_GOLD, FREEZE_TURNS_TIMES),
   },
   overseerZap: {
     name: "Overseer Zap",

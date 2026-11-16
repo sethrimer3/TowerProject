@@ -126,12 +126,14 @@ export type DoorRule =
  * Flying enemy hovering over this open floor tile (enemies/flying.ts), which the
  * hero walks under; its wound is the tile's `wound`. `bolted`: the Thunderbolt
  * bolts that have hit the enemy here, which Thunderbolt Amplifier reads. `stun`:
- * the turns left of a Phantasm ghost's stun on the enemy here. */
+ * the turns left of a stun on the enemy here (Phantasm Stun, Necrotic Freeze). `frosted`:
+ * the Necrotic Frost fields the enemy here stood in as the last turn ended, which
+ * Necrotic Freeze reads to tell an entry from a stay. */
 /** The colour a potion is drawn in: a regular potion red, like the HP bar
  * it fills, and a percent potion (whose tile is marked `color: "red"`, the
  * mark generation and saves keep) blue, like the Overheal bar. */
 export const potionShade = (t: Pick<Tile, "color">): "red" | "blue" => (t.color === "red" ? "blue" : "red");
-export type Tile = { kind: Kind; amount?: number; color?: KeyColor; door?: DoorRule; enemy?: Enemy; flyer?: Enemy; tier?: ChestTier; wound?: number; broken?: number; sprung?: number; necro?: Record<string, number>; amber?: number; bolted?: number; stun?: number; chest?: Exclude<ChestKind, "plain"> };
+export type Tile = { kind: Kind; amount?: number; color?: KeyColor; door?: DoorRule; enemy?: Enemy; flyer?: Enemy; tier?: ChestTier; wound?: number; broken?: number; sprung?: number; necro?: Record<string, number>; amber?: number; bolted?: number; stun?: number; frosted?: number[]; chest?: Exclude<ChestKind, "plain"> };
 /** Whether `enemy` is held where it stands this turn, by Voidwell's vortex or a Phantasm stun: it doesn't move or shoot. */
 export const isStunned = (enemy: Pick<Enemy, "stunned" | "stun">) => !!enemy.stunned || !!enemy.stun;
 export type Point = { x: number; y: number };

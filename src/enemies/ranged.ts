@@ -108,8 +108,14 @@ export function stunWorn(raw: Tile): Tile {
   return stun && stun > 1 ? { ...rest, stun: stun - 1 } : rest;
 }
 
-/** `raw` with what Necrotic Frost has on its enemy now. It moves with the tile, as a wound does. */
-export const necroMark = (raw: Tile, necro: Record<string, number>): Tile => ({ ...raw, necro });
+/** `raw` with what Necrotic Frost has on its enemy now, and the fields it stands in
+ * (`frosted`, Necrotic Freeze; none given leaves them as they were, none in drops them).
+ * Both move with the tile, as a wound does. */
+export function necroMark(raw: Tile, necro: Record<string, number>, frosted?: readonly number[]): Tile {
+  if (!frosted) return { ...raw, necro };
+  const { frosted: _, ...rest } = raw;
+  return frosted.length ? { ...rest, necro, frosted: [...frosted] } : { ...rest, necro };
+}
 
 /** The ticks a turn is played in: every shot of a turn fires on one of
  * them, 1 to `TURN_TICKS`, the last at the turn's end. */

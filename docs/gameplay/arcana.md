@@ -354,6 +354,43 @@ Switching it off loses the fields and its cooldown; decay already on enemies wai
 | Duration | 30 turns | 100 turns | 15 |
 | Cooldown | 125 turns | 50 turns | 16 |
 
+### Necrotic Frost research
+
+The Breakthrough skill **Necrotic Frost Research** (5 Breakthrough, down and right of Extra Trainer, after it) opens four projects in the Archives' **Arcana** section, each counting for good, mid-run too.
+**Frost Radius** (7 levels) widens every field: half a tile more a level, from 3 tiles to 6.5 at the 7th; Necrotic Frost's augment boon multiplies the widened radius.
+**Necrotic Freeze** (1 level) gives each enemy entering a field a 5% chance to be stunned for 1 turn.
+Each entry is rolled once: an enemy that stays in a field isn't rolled for again, but one that leaves it and comes back, or enters another field, is, and a new field formed over an enemy counts as entering it.
+A stunned enemy doesn't move or shoot, its cooldowns stand still, and a fight skips as many of its strikes as it has turns of stun left, as Phantasm's stun does; a Greater Boss is stunned half as long, rounded down (not at all for 1 turn), and a longer stun already on an enemy stands.
+The stun is rolled as the turn ends, so it lasts through the whole of the next turn.
+Once Necrotic Freeze is done, **Necrotic Freeze Chance** (30 levels) raises the chance by 2.5% a level, from 7.5% to 80%, and **Necrotic Freeze Time** (9 levels) the stun by a turn a level, from 2 turns to 10.
+
+| Level | Frost Radius | Gold | Time |
+|---|---|---|---|
+| 1 | 3.5 tiles | 2,450,000 | 3d 6h 54m |
+| 2 | 4 tiles | 79,470,000 | 7d 12h 58m |
+| 3 | 4.5 tiles | 701,120,000 | 16d 22h 30m |
+| 4 | 5 tiles | 3,040,000,000 | 43d 12h 9m |
+| 5 | 5.5 tiles | 9,150,000,000 | 87d 16h 40m |
+| 6 | 6 tiles | 22,170,000,000 | 121d 7h 16m |
+| 7 | 6.5 tiles | 44,290,000,000 | 167d 10h 41m |
+
+Necrotic Freeze costs 700,000 Gold and 0d 19h 59m.
+
+| Level | Freeze Chance | Gold | Time | Freeze Time | Gold | Time |
+|---|---|---|---|---|---|---|
+| 1 | 7.5% | 250,000 | 0d 19h 59m | 2 turns | 896,980 | 2d 2h 53m |
+| 2 | 10% | 285,000 | 0d 23h 21m | 3 turns | 15,500,000 | 3d 18h 6m |
+| 3 | 12.5% | 496,980 | 1d 2h 53m | 4 turns | 267,310,000 | 12d 20h 31m |
+| 4 | 15% | 1,450,000 | 1d 6h 54m | 5 turns | 937,550,000 | 18d 8h 23m |
+| 5 | 17.5% | 4,230,000 | 1d 11h 49m | 6 turns | 2,640,000,000 | 33d 12h 9m |
+| 6 | 20% | 10,500,000 | 1d 18h 6m | 7 turns | 9,150,000,000 | 67d 16h 40m |
+| 7 | 22.5% | 22,580,000 | 2d 2h 17m | 8 turns | 14,920,000,000 | 104d 8h 27m |
+| 8 | 25% | 43,470,000 | 2d 12h 58m | 9 turns | 25,260,000,000 | 157d 14h 25m |
+| 9 | 27.5% | 76,880,000 | 3d 2h 49m | 10 turns | 61,420,000,000 | 211d 6h 28m |
+| 10 | 30% | 127,310,000 | 3d 20h 31m | | | |
+| 20 | 55% | 3,150,000,000 | 27d 16h 40m | | | |
+| 30 | 80% | 19,420,000,000 | 111d 6h 28m | | | |
+
 ## Voidwell
 
 *Every x turns, a vortex of y tiles' radius opens as far from you as your shot range, at a random angle, for z turns. Enemies in it are stunned: they don't move or shoot, Fast enemies don't strike first, and Flying enemies come down to be fought. Bosses are immune, and Shielded enemies' bubbles still hold.*
@@ -423,7 +460,7 @@ It can defeat the boss and win the trial, and its damage counts toward Damage th
 At 75% a cooldown falls by 0.25 a turn, so a beam due in 10 turns takes 40, and any part of a turn left over counts toward the next.
 A boss's Regen isn't on a cooldown, so it isn't slowed, and an Obelisk's turn limit still counts every turn.
 **Phantasm** works as above on what stands in the arena, its ghosts striking as each turn ends, wherever you stand then, along the arc they turned; its research counts there too (see [Phantasm research](#phantasm-research)).
-**Necrotic Frost** works as above on what stands in the arena, and an incorporeal boss's decay waits until it can be struck again.
+**Necrotic Frost** works as above on what stands in the arena, its research included (Necrotic Freeze stunning the boss half as long, as a Greater Boss), and an incorporeal boss's decay waits until it can be struck again.
 **Voidwell** opens on the arena's floor (with its twin, once Extra Voidwell is researched), and what stands in it takes no steps, while a Blaster Turret's bolts don't count down at all; it still answers your hits. The boss is immune.
 Voidwell Damage strikes everything in a vortex but the boss itself: its minions and parts, the Keymaster's mimics and light slimes, a share of their total HP rounded up, at least 1. Voidwell Gold Bonus raises the Gold coins the Magic Tower pops when what you hit stands in a vortex.
 Toggles and cooldowns are the attempt's own, leave your run outside alone, and survive a reload.

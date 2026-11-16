@@ -714,9 +714,16 @@ _Avoid_: ghost AOE, ghost splash
 **Phantasm Rotation Speed**:
 Research that turns Phantasm's ring faster; a ghost strikes whatever it sweeps over between one turn and the next.
 
-**Stun** (Phantasm):
-What Phantasm Stun research leaves on an enemy a ghost's strike hits: for its turns left it doesn't move or shoot, its cooldowns stand still, and a fight skips that many of its strikes; in a trial a stunned boss's schedule stands still too. Voidwell's vortex also stuns, but only while the enemy stands in it.
-_Avoid_: daze, freeze
+**Stun** (Phantasm, Necrotic Freeze):
+What Phantasm Stun research leaves on an enemy a ghost's strike hits, and Necrotic Freeze on one entering a Necrotic Frost field: for its turns left it doesn't move or shoot, its cooldowns stand still, and a fight skips that many of its strikes; in a trial a stunned boss's schedule stands still too. Voidwell's vortex also stuns, but only while the enemy stands in it.
+_Avoid_: daze, freeze (Necrotic Freeze names the research, not what it leaves)
+
+**Frost Radius**:
+Research that widens every Necrotic Frost field.
+
+**Necrotic Freeze**:
+Research that gives an enemy entering a Necrotic Frost field a chance to be stunned, rolled once each entry: staying in a field is no new entry, while leaving and coming back, entering another field, or a new field forming over it is. Necrotic Freeze Chance and Necrotic Freeze Time raise its chance and its stun's turns.
+_Avoid_: frost stun, chill
 
 **Necrotic Frost**:
 An arcanum on a cooldown: a field round the hero, its center off the hero's at an angle rolled for it, moving with the hero for a number of turns. Fields stack. It slows what stands in it and leaves its effect on what it touches.

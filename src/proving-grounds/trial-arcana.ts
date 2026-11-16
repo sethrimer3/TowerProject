@@ -1,7 +1,7 @@
 import { boltTargets, chargeBolts, chargeZap, decodeArcanaRun, settleBolts, settleZap, tickCooldowns, ZAP_SALT } from "../arcana/arcana.ts";
 import { inBeams } from "../arcana/overseer.ts";
 import { fieldHit, springAmplify, stepLifespring, validLifespring } from "../arcana/lifespring.ts";
-import { decayed, fieldsOn, frostArea, stepFrost, validFrost, validNecro, type Necro } from "../arcana/necrotic-frost.ts";
+import { decayed, fieldsOn, freezes, frostArea, stepFrost, validFrost, validFrosted, validNecro, type Necro } from "../arcana/necrotic-frost.ts";
 import { ghostDirection, ghostOffset, inBlast, loseGhost, stepPhantasm, stunFor, touchesTile, validPhantasm } from "../arcana/phantasm.ts";
 import { stepDilation, validDilation } from "../arcana/time-dilation.ts";
 import { inVortex, placeVortices, stepVoidwell, validVoidwell, voidwellRoll } from "../arcana/voidwell.ts";
@@ -20,6 +20,8 @@ import { heroAttackOn, trialVortex, type TrialArcana, type TrialSpells, type Tri
 // no counter. A boss gone incorporeal can't be struck.
 
 const TRIAL_RICOCHET_SALT = 0x71c0d;
+/** Salts the seed for Necrotic Freeze's rolls. */
+const FREEZE_SALT = 0xf7e2e;
 
 /** What an arcanum can strike: its tile, its HP, total HP (`full`) and DEF, what a hit
  * does to it, the saved thing it is (`foe`), which may move off the tile as a turn goes
@@ -161,11 +163,14 @@ function phantasmTurn(s: TrialState, a: NonNullable<TrialState["arcana"]>, rule:
 
 /** Necrotic Frost's part of a turn: the fields' turns and its cooldown, then its decay
  * on all it has touched, wherever they stand now, through DEF. A boss gone incorporeal
- * can't be struck, so its decay waits; what is on a foe that has fallen is dropped. */
+ * can't be struck, so its decay waits; what is on a foe that has fallen is dropped.
+ * With Necrotic Freeze, each field a foe left standing has entered since the last turn
+ * may stun it (the boss half as long, as a Greater Boss), each roll a `tileRandom` of the
+ * seed, the step, the field and the foe's tile. */
 function frostTurn(s: TrialState, a: NonNullable<TrialState["arcana"]>, rule: NonNullable<TrialSpells["necroticFrost"]>, strikes: TrialStrike[]) {
   const frost = (a.frost ??= {}), hero = s.player;
   stepFrost(frost, rule, s.seed);
-  const area = frostArea(frost.fields ?? [], rule.effects), kept: Record<string, Necro> = a.necro?.boss ? { boss: a.necro.boss } : {};
+  const area = frostArea(frost.fields ?? [], rule.effects), kept: Record<string, Necro> = a.necro?.boss ? { boss: a.necro.boss } : {}, inside: Record<string, number[]> = {};
   for (const t of targets(s)) {
     if (s.status !== "active") break;
     const touching = fieldsOn(area, t.x - hero.x, t.y - hero.y), on = a.necro?.[t.key];
@@ -174,7 +179,17 @@ function frostTurn(s: TrialState, a: NonNullable<TrialState["arcana"]>, rule: No
     kept[t.key] = necro;
     t.take(damage);
     strikes.push({ kind: "necro", from: { x: t.x, y: t.y }, to: { x: t.x, y: t.y }, damage, tick: TURN_TICKS });
+    if (!rule.freeze || !touching.length) continue;
+    inside[t.key] = touching;
+    if (s.status !== "active" || !targets(s).some((o) => o.key === t.key)) continue;
+    const roll = (field: number) => tileRandom(t.x, t.y, (s.seed ^ FREEZE_SALT ^ Math.imul(s.steps, 0x85ebca6b) ^ Math.imul(field, 0xc2b2ae35)) | 0);
+    const turns = freezes(a.frostIn?.[t.key], touching, rule.freeze, roll) ? stunFor(rule.freeze.turns, t.key === "boss" ? "greaterBoss" : undefined) : 0;
+    if (turns > (a.stuns?.[t.key] ?? 0)) (a.stuns ??= {})[t.key] = turns;
   }
+  // The boss gone incorporeal keeps its place in the fields, as it keeps its decay.
+  if (rule.freeze && a.frostIn?.boss && !inside.boss && !targets(s).some((t) => t.key === "boss")) inside.boss = a.frostIn.boss;
+  if (Object.keys(inside).length) a.frostIn = inside;
+  else delete a.frostIn;
   const left = new Set(targets(s).map((t) => t.key));
   for (const key of Object.keys(kept)) if (key !== "boss" && !left.has(key)) delete kept[key];
   if (Object.keys(kept).length) a.necro = kept;
@@ -286,6 +301,13 @@ function decodeStuns(raw: unknown) {
   return kept.length ? { stuns: Object.fromEntries(kept) as Record<string, number> } : {};
 }
 
+/** The fields each saved foe stood in as the last turn ended (Necrotic Freeze), if any. */
+function decodeFrostIn(raw: unknown) {
+  if (!isRecord(raw)) return {};
+  const kept = Object.entries(raw).filter(([, v]) => validFrosted(v)).slice(0, MOST_TALLIES);
+  return kept.length ? { frostIn: Object.fromEntries(kept) as Record<string, number[]> } : {};
+}
+
 /** The most foes whose Necro an attempt keeps. */
 const MOST_NECRO = 1000;
 /** What the saved foes have on them, if anything. */
@@ -302,6 +324,6 @@ export function decodeTrialArcana(raw: unknown): TrialArcana | undefined {
     ...(validLifespring(raw.lifespring) && Object.keys(raw.lifespring).length ? { lifespring: raw.lifespring } : {}), ...(wholeIn(raw.springWaves, 1, 1e9) ? { springWaves: raw.springWaves as number } : {}),
     ...(validDilation(raw.dilation) && Object.keys(raw.dilation).length ? { dilation: raw.dilation } : {}), ...decodeTallies(raw.tallies), ...decodeLag(raw.lag),
     ...(validPhantasm(raw.phantasm) && Object.keys(raw.phantasm).length ? { phantasm: raw.phantasm } : {}),
-    ...(validFrost(raw.frost) && Object.keys(raw.frost).length ? { frost: raw.frost } : {}), ...decodeNecro(raw.necro), ...decodeBolted(raw.bolted), ...decodeStuns(raw.stuns),
+    ...(validFrost(raw.frost) && Object.keys(raw.frost).length ? { frost: raw.frost } : {}), ...decodeNecro(raw.necro), ...decodeFrostIn(raw.frostIn), ...decodeBolted(raw.bolted), ...decodeStuns(raw.stuns),
     ...(validVoidwell(raw.voidwell) && Object.keys(raw.voidwell).length ? { voidwell: raw.voidwell } : {}) };
 }

@@ -42,7 +42,7 @@ import { validLifespring } from "../arcana/lifespring.ts";
 import { AMBER_MOST, validGearRun } from "../equipment/powers.ts";
 import { validDilation } from "../arcana/time-dilation.ts";
 import { validPhantasm } from "../arcana/phantasm.ts";
-import { validFrost, validNecro } from "../arcana/necrotic-frost.ts";
+import { validFrost, validFrosted, validNecro } from "../arcana/necrotic-frost.ts";
 import { validVoidwell } from "../arcana/voidwell.ts";
 import { totalCardLevels, treeNode, decodeCardTrees, pointsSpent } from "../cards/trees.ts";
 export function defaults(): Save {
@@ -131,10 +131,10 @@ const validEnemy = (e: any) =>
 const validSpawned = (e: any) => validEnemy(e) && (e.spawn !== undefined || e.strength === "greaterBoss");
 /** What the hero's arrows have taken off an enemy's DEF (Armor Break), if anything. */
 const validBroken = (v: any) => v.broken === undefined || (finite(v.broken) && v.broken > 0);
-/** What Lifespring, Necrotic Frost, Thunderbolt and Phantasm have marked an enemy's tile with, if anything. */
-const validMarks = (v: any) => (v.sprung === undefined || wholeIn(v.sprung, 0, 1e9)) && (v.necro === undefined || validNecro(v.necro)) && (v.amber === undefined || (finite(v.amber) && v.amber > 0 && v.amber <= AMBER_MOST)) && (v.bolted === undefined || wholeIn(v.bolted, 1, 1e9)) && (v.stun === undefined || wholeIn(v.stun, 1, 1e3));
+/** What Lifespring, Necrotic Frost, Thunderbolt, Phantasm and Necrotic Freeze have marked an enemy's tile with, if anything. */
+const validMarks = (v: any) => (v.sprung === undefined || wholeIn(v.sprung, 0, 1e9)) && (v.necro === undefined || validNecro(v.necro)) && (v.amber === undefined || (finite(v.amber) && v.amber > 0 && v.amber <= AMBER_MOST)) && (v.bolted === undefined || wholeIn(v.bolted, 1, 1e9)) && (v.stun === undefined || wholeIn(v.stun, 1, 1e3)) && (v.frosted === undefined || validFrosted(v.frosted));
 /** Whether a tile holds none of what the hero's arrows and the arcana leave on an enemy. */
-const unmarked = (v: any) => v.wound === undefined && v.broken === undefined && v.sprung === undefined && v.necro === undefined && v.amber === undefined && v.bolted === undefined && v.stun === undefined;
+const unmarked = (v: any) => v.wound === undefined && v.broken === undefined && v.sprung === undefined && v.necro === undefined && v.amber === undefined && v.bolted === undefined && v.stun === undefined && v.frosted === undefined;
 /** An enemy the hero's arrows have wounded or broken (enemies/ranged.ts): the
  * generated or spawned enemy, kept with its wound and what they broke. */
 const validWounded = (v: any) => (v.wound === undefined || (finite(v.wound) && v.wound > 0)) && validBroken(v) && validMarks(v) && validEnemy(v.enemy);

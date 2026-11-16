@@ -414,8 +414,8 @@ export class Game {
   /** The Notices: which tabs and buttons wear a dot, and what the player
    * has been shown. */
   readonly notices = new NoticeDesk(this);
-  /** `rng` is the game's randomness: new run seeds, enemy drops and
-   * treasure loot all draw from it (the `game` stream unless given), so a
+  /** `rng` is the game's randomness: new run seeds, enemy drops,
+   * treasure loot and Necrotic Freeze's rolls all draw from it (the `game` stream unless given), so a
    * seeded stream replays a game and no visual effect can shift it. */
   constructor(public save: Save, private rng: () => number = stream("game")) {
     // A Delve run left inside (the page reloaded mid-run) opens where it
@@ -2670,7 +2670,7 @@ export class Game {
   private decayNecro(beams: Beams | undefined) {
     const rule = this.arcana.frostRule();
     if (!rule) return [];
-    const out = necroDecay({ board: this.world, wrap: this.wrap, hero: this.run.player, changes: this.run.changes, ...(beams ? { beams } : {}) }, rule.boost, this.frostArea);
+    const out = necroDecay({ board: this.world, wrap: this.wrap, hero: this.run.player, changes: this.run.changes, ...(beams ? { beams } : {}) }, rule.boost, this.frostArea, rule.freeze && { ...rule.freeze, roll: this.rng });
     for (const { enemy, at: tile } of out.kills) this.message = [`Necrotic Frost · ${this.enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, tile, 1, false, 0)].join(" · ");
     return out.shots;
   }

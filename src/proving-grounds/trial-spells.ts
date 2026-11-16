@@ -1,7 +1,7 @@
 import type { ArcanaRun } from "../arcana/arcana.ts";
 import type { LifespringRun, LifespringStep } from "../arcana/lifespring.ts";
 import { beamFactor, type Beams } from "../arcana/overseer.ts";
-import { frostArea, frostSlowAt, type FrostEffects, type FrostRun, type Necro } from "../arcana/necrotic-frost.ts";
+import { frostArea, frostSlowAt, type FrostEffects, type FrostFreeze, type FrostRun, type Necro } from "../arcana/necrotic-frost.ts";
 import type { PhantasmRun } from "../arcana/phantasm.ts";
 import { slowedAct, togetherSlow, type DilationRun } from "../arcana/time-dilation.ts";
 import { inVortex, type VoidwellRun, type VortexZone } from "../arcana/voidwell.ts";
@@ -25,7 +25,8 @@ export type TrialSpells = {
   /** `slow`: the percent its field slows what is in it by; `reach`: the field's, in hundredths of a tile. */
   timeDilation?: { duration: number; slow: number; turns: number; reach: number };
   phantasm?: { boost: number; quantity: number; turns: number; blast: number; spin: number; drain?: number; stun?: number };
-  necroticFrost?: { boost: number; duration: number; turns: number; effects: FrostEffects };
+  /** `freeze`: Necrotic Freeze, once researched. */
+  necroticFrost?: { boost: number; duration: number; turns: number; effects: FrostEffects; freeze?: FrostFreeze };
   /** `radius`: its vortex's, in tiles; `reach`: how far from the hero it opens, in hundredths of a tile;
    * `twin`, Extra Voidwell; `damage`, Voidwell Damage, in hundredths of a percent of total HP a turn;
    * `gold`, Voidwell Gold Bonus, in tenths (10: none). */
@@ -41,9 +42,9 @@ export type TrialStrike = { kind: "ricochet" | "thunderbolt" | "lifespring" | "p
  * (`springWaves`), and Time Dilation's: its field and cooldown (`dilation`), each
  * foe's tally on what it does (`tallies`), and how far its field has held back the
  * clocks of the boss's effects and its Blaster Turret's, in hundredths of a turn
- * (`lag`), Phantasm's (`phantasm`) and Necrotic Frost's: its cooldown and fields (`frost`), and what is on each foe (`necro`), and Voidwell's cooldown and vortex (`voidwell`), the Thunderbolt bolts that have hit each foe (`bolted`, Thunderbolt Amplifier), and each foe's turns of Phantasm stun left (`stuns`, Phantasm Stun), all saved with it; `spells`, what strikes this turn, `struck`, what
+ * (`lag`), Phantasm's (`phantasm`) and Necrotic Frost's: its cooldown and fields (`frost`), what is on each foe (`necro`) and the fields each stood in as the last turn ended (`frostIn`, Necrotic Freeze), and Voidwell's cooldown and vortex (`voidwell`), the Thunderbolt bolts that have hit each foe (`bolted`, Thunderbolt Amplifier), and each foe's turns of stun left (`stuns`, Phantasm Stun and Necrotic Freeze), all saved with it; `spells`, what strikes this turn, `struck`, what
  * the hero's step strikes, `strikes` and `springStep`, what Lifespring did last turn, aren't saved. */
-export type TrialArcana = { run: ArcanaRun; beamTurns: number; lifespring?: LifespringRun; springWaves?: number; dilation?: DilationRun; tallies?: Record<string, number>; lag?: Partial<Record<BossClock, number>>; phantasm?: PhantasmRun; frost?: FrostRun; necro?: Record<string, Necro>; voidwell?: VoidwellRun; bolted?: Record<string, number>; stuns?: Record<string, number>; spells?: TrialSpells; struck?: Spot & { foe: object }; strikes?: TrialStrike[]; springStep?: LifespringStep };
+export type TrialArcana = { run: ArcanaRun; beamTurns: number; lifespring?: LifespringRun; springWaves?: number; dilation?: DilationRun; tallies?: Record<string, number>; lag?: Partial<Record<BossClock, number>>; phantasm?: PhantasmRun; frost?: FrostRun; necro?: Record<string, Necro>; frostIn?: Record<string, number[]>; voidwell?: VoidwellRun; bolted?: Record<string, number>; stuns?: Record<string, number>; spells?: TrialSpells; struck?: Spot & { foe: object }; strikes?: TrialStrike[]; springStep?: LifespringStep };
 
 /** The clocks Time Dilation can hold back: the boss's own effects, and its Blaster Turret's. */
 export type BossClock = "boss" | "turret";

@@ -148,7 +148,7 @@ const SKILL_DETAIL_SPRITES: Partial<Record<UpgradeId, string>> = {
   enemyLevelSkips: "badge-skip", enemyHpLevelSkips: "boon-enemy-hp-regen", enemyCombatLevelSkips: "boon-enemy-attack",
   avengingAngel: "combat-wing",
   lifespringResearch: "arcana-lifespring", aurumBloomResearch: "arcana-aurum-bloom",
-  thunderboltResearch: "arcana-thunderbolt", phantasmResearch: "arcana-phantasm",
+  thunderboltResearch: "arcana-thunderbolt", phantasmResearch: "arcana-phantasm", necroticFrostResearch: "arcana-necrotic-frost",
   overseerZapResearch: "arcana-overseer", overseerGoldResearch: "arcana-overseer",
   voidwellResearch: "arcana-voidwell", extraVoidwellResearch: "arcana-voidwell",
 };

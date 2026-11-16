@@ -24,7 +24,7 @@ import { beamFactor, inBeams, type Beams } from "./arcana/overseer.ts";
 import { boltTargets, ZAP_SALT } from "./arcana/arcana.ts";
 import { fieldHit } from "./arcana/lifespring.ts";
 import { slowedCharge, slowedTickGain, togetherSlow } from "./arcana/time-dilation.ts";
-import { decayed, fieldsOn, frostSlowAt, type FrostArea } from "./arcana/necrotic-frost.ts";
+import { decayed, fieldsOn, freezes, frostSlowAt, type FrostArea, type FrostFreeze } from "./arcana/necrotic-frost.ts";
 import { inVortex, type VortexZone } from "./arcana/voidwell.ts";
 import { GHOST_RADIUS, ghostDirection, ghostOffset, ghostsOut, inBlast, loseGhost, outerDirection, OUTER_RADIUS, RING_RADIUS, stunFor, touchesTile, type GhostStrike, type PhantasmRun } from "./arcana/phantasm.ts";
 import { tileRandom } from "./random.ts";
@@ -574,8 +574,11 @@ export function lifespringContact({ board, wrap, hero }: { board: Pick<Board, "t
  * stands now. Each step is `boost` of the hero's ATK against it, its Arcanum Damage, and
  * Overseer's beams multiply them as the hero and they stand, all through DEF (a Shielded
  * enemy's bubble still cutting it), with no Lifesteal and no Armor Break. An enemy takes
- * one shot however many effects are on it. Edits the board's enemies; returns the shots and the kills. */
-export function necroDecay({ board, wrap, hero, beams, changes }: Pick<VolleyTurn, "wrap" | "hero" | "beams"> & { board: Pick<Board, "tile" | "clear" | "wound" | "markNecro">; changes: Readonly<Record<string, Tile>> }, boost: number, area: FrostArea | undefined) {
+ * one shot however many effects are on it. With Necrotic Freeze (`freeze`), each field an
+ * enemy left standing has entered since the last turn ended may stun it (`freezes`, drawing
+ * `roll` once an entry), a longer stun on it kept, and the fields it stands in are kept on
+ * its tile (`frosted`) to tell the next turn's entries. Edits the board's enemies; returns the shots and the kills. */
+export function necroDecay({ board, wrap, hero, beams, changes }: Pick<VolleyTurn, "wrap" | "hero" | "beams"> & { board: Pick<Board, "tile" | "clear" | "wound" | "markNecro" | "markStun">; changes: Readonly<Record<string, Tile>> }, boost: number, area: FrostArea | undefined, freeze?: FrostFreeze & { roll: () => number }) {
   const shots: Shot[] = [], kills: VolleyKill[] = [], found = new Map<string, { x: number; y: number }>();
   if (area?.fields.length) for (const { x, y } of enemiesWithin(board, hero, area.radius + area.offset + 1, wrap)) found.set(point(x, y), { x, y });
   for (const k of Object.keys(changes)) {
@@ -594,7 +597,9 @@ export function necroDecay({ board, wrap, hero, beams, changes }: Pick<VolleyTur
     if (damage > 0) shots.push(landed);
     if (left > 0) {
       if (damage > 0) board.wound?.(x, y, damage);
-      board.markNecro?.(x, y, necro);
+      board.markNecro?.(x, y, necro, freeze && touching);
+      const turns = freeze && freezes(tile.frosted, touching, freeze, freeze.roll) ? stunFor(freeze.turns, enemy.strength) : 0;
+      if (turns > (tile.stun ?? 0)) board.markStun?.(x, y, turns);
     } else {
       board.clear(x, y);
       landed.fell = enemy;

@@ -362,9 +362,9 @@ export class World implements Board {
     const k = point(x, y), raw = this.changes[k] ?? this.chunks.get(Math.floor(y / CHUNK))?.get(k);
     if (raw?.kind === "enemy" || raw?.flyer) this.changes[k] = springMark(raw, waves, broke);
   }
-  markNecro(x: number, y: number, necro: Record<string, number>) {
+  markNecro(x: number, y: number, necro: Record<string, number>, frosted?: readonly number[]) {
     const k = point(x, y), raw = this.changes[k] ?? this.chunks.get(Math.floor(y / CHUNK))?.get(k);
-    if (raw?.kind === "enemy" || raw?.flyer) this.changes[k] = necroMark(raw, necro);
+    if (raw?.kind === "enemy" || raw?.flyer) this.changes[k] = necroMark(raw, necro, frosted);
   }
   private torchAreas = new Map<number, Torch[]>();
   /** The torch list and lit tiles last worked out: the list until the areas
