@@ -158,7 +158,7 @@ export const TREES: SkillTree[] = [
     // down from it: Esoteric Training down and left, with Aether Shield
     // (what reveals the Inspiration tree's Shield path), Phoenix Spark and
     // Echoes of Time (its charges) straight under it, and Offline Gold down
-    // and right, with Gem Card under it, above Door Mastery.
+    // and right, with Gem Card under it, above Ricochet Shock Research.
     { id: "moreWealth", icon: "¤", x: 18, y: 85, requires: ["pathToWealth"] },
     { id: "goldenFloors", icon: "¤", x: 18, y: 111, requires: ["moreWealth"] },
     { id: "offlineGold", icon: "¤", x: 30, y: 137, requires: ["goldenFloors"] },
@@ -191,16 +191,18 @@ export const TREES: SkillTree[] = [
     { id: "beastMastery", icon: "☠", x: 90, y: 163, requires: ["keyMastery"] },
     { id: "cardMastery", icon: "▤", x: 70, y: 189, requires: ["keyMastery"] },
     { id: "manualHand", icon: "⇄", x: 90, y: 189, requires: ["cardMastery"] },
-    // Extra Trainer down and left of Key Mastery, with Door Mastery to its
-    // left after it, which reveals the Inspiration tree's door path under
-    // Torch. Then the Arcana's research below Extra Trainer: Lifespring
-    // Research, with Thunderbolt Research left of it and Necrotic Frost
-    // Research right of it (both also after Extra Trainer), Phantasm
-    // Research down and left of it, Overseer Zap down and right of it and
-    // Overseer Gold Bonus right of that, then Aurum Bloom Research, with
-    // Voidwell Research down and right of it and Extra Voidwell right of that.
+    // Door Mastery left of Key Mastery, after it, which reveals the
+    // Inspiration tree's door path under Torch. Extra Trainer down and left
+    // of Key Mastery, with Ricochet Shock Research to its left after it.
+    // Then the Arcana's research below Extra Trainer: Lifespring Research,
+    // with Thunderbolt Research left of it and Necrotic Frost Research right
+    // of it (both also after Extra Trainer), Phantasm Research down and left
+    // of it, Overseer Zap down and right of it and Overseer Gold Bonus right
+    // of that, then Aurum Bloom Research, with Voidwell Research down and
+    // right of it and Extra Voidwell right of that.
+    { id: "doorMastery", icon: "⚿", x: 50, y: 163, requires: ["keyMastery"] },
     { id: "extraTrainer", icon: "⚔", x: 50, y: 189, requires: ["keyMastery"] },
-    { id: "doorMastery", icon: "⚿", x: 30, y: 189, requires: ["extraTrainer"] },
+    { id: "ricochetShockResearch", icon: "↯", x: 30, y: 189, requires: ["extraTrainer"] },
     { id: "lifespringResearch", icon: "✚", x: 50, y: 213, requires: ["extraTrainer"] },
     { id: "thunderboltResearch", icon: "↯", x: 30, y: 213, requires: ["extraTrainer"] },
     { id: "necroticFrostResearch", icon: "❄", x: 70, y: 213, requires: ["extraTrainer"] },

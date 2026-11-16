@@ -64,7 +64,7 @@ function fightMimic(s:TrialState,mimic:Mimic) {
     k.keys--;k.mimics=k.mimics.filter(m=>m.id!==mimic.id);
     return "One key unlocks the mimic — defeated with no damage.";
   }
-  mimic.hp=Math.max(0,mimic.hp-Math.max(1,heroAttackOn(s,mimic)));
+  mimic.hp=Math.max(0,mimic.hp-Math.max(1,heroAttackOn(s,mimic,`mimic:${mimic.id}`)));
   if(mimic.hp===0){k.mimics=k.mimics.filter(m=>m.id!==mimic.id);return "You defeat the mimic in combat.";}
   if(!foeActs(s,mimic,`mimic:${mimic.id}`))return `The tough mimic has ${mimic.hp} HP left, too slow to bite.`;
   const damage=mimicDamage(s);s.player.hp=Math.max(0,s.player.hp-damage);
@@ -137,7 +137,7 @@ export function keymasterStep(s:TrialState,x:number,y:number) {
   } else if(same({x,y},s.elemental) && !s.elemental.incorporeal) {
     // He answers from where he stood, before he teleports.
     const answers=foeActs(s,s.elemental,"boss");
-    move=false;hitKeymaster(s,Math.max(1,heroAttackOn(s,s.elemental)),s.steps+1);
+    move=false;hitKeymaster(s,Math.max(1,heroAttackOn(s,s.elemental,"boss")),s.steps+1);
     if(s.bossHp===0){win(s);return {changed:true,message:"Trial complete — the Keymaster is defeated.",fired:false};}
     const damage=answers?Math.max(1,Math.ceil(s.player.maxHp*.04)-Math.floor(s.player.defense*.1)):0;
     s.player.hp=Math.max(0,s.player.hp-damage);

@@ -9,7 +9,7 @@ import { tierCells, tierTile } from "../tiers.ts";
 import { foeTile, type FoeRule } from "../shrines.ts";
 import { fastCells } from "../enemies/fast.ts";
 import { boundsOf, stunnedTile, type VortexZone } from "../arcana/voidwell.ts";
-import { boltMark, necroMark, stunMark, rangedCells, springMark, wounded, woundMore } from "../enemies/ranged.ts";
+import { boltMark, necroMark, shockMark, stunMark, rangedCells, springMark, wounded, woundMore } from "../enemies/ranged.ts";
 import { skippedTile, type LevelSkips } from "../enemies/level-skips.ts";
 import { armoredCells } from "../enemies/armored.ts";
 import { flyingCells } from "../enemies/flying.ts";
@@ -259,6 +259,10 @@ export class RoomWorld implements Board {
   markBolt(x: number, y: number) {
     const k = point(x, y), raw = this.changes[k] ?? this.cells.get(k);
     if (raw?.kind === "enemy" || raw?.flyer) this.changes[k] = boltMark(raw);
+  }
+  markShock(x: number, y: number) {
+    const k = point(x, y), raw = this.changes[k] ?? this.cells.get(k);
+    if (raw?.kind === "enemy" || raw?.flyer) this.changes[k] = shockMark(raw);
   }
   markSpring(x: number, y: number, waves: number, broke = 0) {
     const k = point(x, y), raw = this.changes[k] ?? this.cells.get(k);

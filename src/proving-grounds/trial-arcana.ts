@@ -22,6 +22,8 @@ import { heroAttackOn, trialVortex, type TrialArcana, type TrialSpells, type Tri
 const TRIAL_RICOCHET_SALT = 0x71c0d;
 /** Salts the seed for Necrotic Freeze's rolls. */
 const FREEZE_SALT = 0xf7e2e;
+/** Ricochet Shock's roll for a ricochet's strike to shock its foe. */
+const TRIAL_SHOCK_SALT = 0x5ac0d;
 
 /** What an arcanum can strike: its tile, its HP, total HP (`full`) and DEF, what a hit
  * does to it, the saved thing it is (`foe`), which may move off the tile as a turn goes
@@ -79,7 +81,7 @@ export function noteStrike(s: TrialState, x: number, y: number) {
 
 /** An arcanum's hit on `t`: its share of ATK, Overseer's beams and all, less its DEF. At least 1, as the hero's own hits. */
 function strike(s: TrialState, t: Target, boost: number, kind: TrialStrike["kind"], from: Spot, tick: number, strikes: TrialStrike[], splash = false) {
-  const damage = Math.max(1, Math.round(heroAttackOn(s, t) * boost - t.defense));
+  const damage = Math.max(1, Math.round(heroAttackOn(s, t, t.key) * boost - t.defense));
   t.take(damage);
   strikes.push({ kind, from, to: { x: t.x, y: t.y }, damage, tick, ...(splash ? { splash: true as const } : {}) });
 }
@@ -175,7 +177,7 @@ function frostTurn(s: TrialState, a: NonNullable<TrialState["arcana"]>, rule: No
     if (s.status !== "active") break;
     const touching = fieldsOn(area, t.x - hero.x, t.y - hero.y), on = a.necro?.[t.key];
     if (!touching.length && !on) continue;
-    const { necro, units } = decayed(on, touching), damage = Math.max(1, Math.round(heroAttackOn(s, t) * rule.boost * units));
+    const { necro, units } = decayed(on, touching), damage = Math.max(1, Math.round(heroAttackOn(s, t, t.key) * rule.boost * units));
     kept[t.key] = necro;
     t.take(damage);
     strikes.push({ kind: "necro", from: { x: t.x, y: t.y }, to: { x: t.x, y: t.y }, damage, tick: TURN_TICKS });
@@ -237,7 +239,15 @@ export function trialArcanaTurn<O extends { message: string }>(s: TrialState, ou
   if (ricochet && struck && tileRandom(struck.x, struck.y, (s.seed ^ TRIAL_RICOCHET_SALT ^ Math.imul(s.steps, 0x85ebca6b)) | 0) * 100 < ricochet.chance) {
     const d2 = (t: Spot) => (t.x - struck.x) * (t.x - struck.x) + (t.y - struck.y) * (t.y - struck.y);
     const near = targets(s).filter((t) => t.foe !== struck.foe).sort((p, q) => d2(p) - d2(q) || p.y - q.y || p.x - q.x).slice(0, ricochet.rebounds);
-    for (const t of near) if (s.status === "active") strike(s, t, ricochet.boost, "ricochet", { x: struck.x, y: struck.y }, 0, strikes);
+    for (const t of near) {
+      if (s.status !== "active") break;
+      strike(s, t, ricochet.boost, "ricochet", { x: struck.x, y: struck.y }, 0, strikes);
+      // Ricochet Shock: by its own roll, a foe still standing is shocked from its next hit on.
+      const shocked = (a.shocked ??= []);
+      if (ricochet.shock && !shocked.includes(t.key) && targets(s).some((o) => o.foe === t.foe)
+        && tileRandom(t.x, t.y, (s.seed ^ TRIAL_SHOCK_SALT ^ Math.imul(s.steps, 0x85ebca6b)) | 0) * 10_000 < ricochet.shock) shocked.push(t.key);
+      if (!shocked.length) delete a.shocked;
+    }
   }
   const fired = tickCooldowns(thunderbolt ? [{ id: "thunderbolt", turns: thunderbolt.turns }] : [], a.run.timers).length > 0;
   if (thunderbolt && s.status === "active") {
@@ -308,6 +318,13 @@ function decodeFrostIn(raw: unknown) {
   return kept.length ? { frostIn: Object.fromEntries(kept) as Record<string, number[]> } : {};
 }
 
+/** The foes Ricochet Shock has shocked, if any. */
+function decodeShocked(raw: unknown) {
+  if (!Array.isArray(raw)) return {};
+  const kept = [...new Set(raw.filter((k): k is string => typeof k === "string" && k.length <= 64))].slice(0, MOST_NECRO);
+  return kept.length ? { shocked: kept } : {};
+}
+
 /** The most foes whose Necro an attempt keeps. */
 const MOST_NECRO = 1000;
 /** What the saved foes have on them, if anything. */
@@ -324,6 +341,6 @@ export function decodeTrialArcana(raw: unknown): TrialArcana | undefined {
     ...(validLifespring(raw.lifespring) && Object.keys(raw.lifespring).length ? { lifespring: raw.lifespring } : {}), ...(wholeIn(raw.springWaves, 1, 1e9) ? { springWaves: raw.springWaves as number } : {}),
     ...(validDilation(raw.dilation) && Object.keys(raw.dilation).length ? { dilation: raw.dilation } : {}), ...decodeTallies(raw.tallies), ...decodeLag(raw.lag),
     ...(validPhantasm(raw.phantasm) && Object.keys(raw.phantasm).length ? { phantasm: raw.phantasm } : {}),
-    ...(validFrost(raw.frost) && Object.keys(raw.frost).length ? { frost: raw.frost } : {}), ...decodeNecro(raw.necro), ...decodeFrostIn(raw.frostIn), ...decodeBolted(raw.bolted), ...decodeStuns(raw.stuns),
+    ...(validFrost(raw.frost) && Object.keys(raw.frost).length ? { frost: raw.frost } : {}), ...decodeNecro(raw.necro), ...decodeFrostIn(raw.frostIn), ...decodeBolted(raw.bolted), ...decodeStuns(raw.stuns), ...decodeShocked(raw.shocked),
     ...(validVoidwell(raw.voidwell) && Object.keys(raw.voidwell).length ? { voidwell: raw.voidwell } : {}) };
 }

@@ -158,7 +158,7 @@ export function trialStep(s: TrialState, dx: number, dy: number, source: TrialIn
 function elementalStep(s: TrialState, x: number, y: number): { changed: boolean; message: string; fired: boolean } {
   let message = "";
   if (x === s.elemental.x && y === s.elemental.y && !s.elemental.incorporeal) {
-    const strike = Math.max(1, heroAttackOn(s, s.elemental));
+    const strike = Math.max(1, heroAttackOn(s, s.elemental, "boss"));
     s.bossHp = Math.max(0, s.bossHp - strike);
     if (s.bossHp === 0) {
       s.status = "won"; s.playing = false; s.slimes = [];

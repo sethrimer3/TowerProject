@@ -74,8 +74,8 @@ export const shoots = (enemy: Enemy) => !!(enemy.ranged || enemy.flying) && !isS
  * its full HP kept as `fullHp`, and what they have broken of its DEF
  * (Armor Break) as `broken`. */
 export const wounded = (t: Tile): Tile => {
-  if (!t.wound && !t.broken && t.sprung === undefined && !t.necro && !t.amber && !t.bolted && !t.stun) return t;
-  const less = (e: Enemy) => ({ ...e, ...(t.wound ? { hp: snap(Math.max(0, e.hp - t.wound)), fullHp: e.fullHp ?? e.hp } : {}), ...(t.broken ? { broken: t.broken } : {}), ...(t.sprung === undefined ? {} : { sprung: t.sprung }), ...(t.necro ? { necro: t.necro } : {}), ...(t.amber ? { amber: t.amber } : {}), ...(t.bolted ? { bolted: t.bolted } : {}), ...(t.stun ? { stun: t.stun } : {}) });
+  if (!t.wound && !t.broken && t.sprung === undefined && !t.necro && !t.amber && !t.bolted && !t.stun && !t.shocked) return t;
+  const less = (e: Enemy) => ({ ...e, ...(t.wound ? { hp: snap(Math.max(0, e.hp - t.wound)), fullHp: e.fullHp ?? e.hp } : {}), ...(t.broken ? { broken: t.broken } : {}), ...(t.sprung === undefined ? {} : { sprung: t.sprung }), ...(t.necro ? { necro: t.necro } : {}), ...(t.amber ? { amber: t.amber } : {}), ...(t.bolted ? { bolted: t.bolted } : {}), ...(t.stun ? { stun: t.stun } : {}), ...(t.shocked ? { shocked: true as const } : {}) });
   return t.enemy ? { ...t, enemy: less(t.enemy) } : t.flyer ? { ...t, flyer: less(t.flyer) } : t;
 };
 /** `raw` (a tile as generated) with `damage` more wound (an arrow that only
@@ -107,6 +107,9 @@ export function stunWorn(raw: Tile): Tile {
   const { stun, ...rest } = raw;
   return stun && stun > 1 ? { ...rest, stun: stun - 1 } : rest;
 }
+
+/** `raw` once Ricochet Shock has shocked its enemy. */
+export const shockMark = (raw: Tile): Tile => ({ ...raw, shocked: true });
 
 /** `raw` with what Necrotic Frost has on its enemy now, and the fields it stands in
  * (`frosted`, Necrotic Freeze; none given leaves them as they were, none in drops them).

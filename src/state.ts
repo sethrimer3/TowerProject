@@ -51,7 +51,7 @@ import { isStunned } from "./entities.ts";
 import { World, LAYOUT_VERSION } from "./delve/world.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import { chestKindAt, litTorches, type Board } from "./board.ts";
-import { COMBO_LIMIT, COMBO_PERCENT, COMBO_TURNS, critAgainst, critMultiplier, guaranteedCrits, healUpTo, instakill, landsSuperCrit, squaredUp, strikesFirst, type CritRule, type Wings } from "./combat.ts";
+import { COMBO_LIMIT, COMBO_PERCENT, COMBO_TURNS, critAgainst, critMultiplier, guaranteedCrits, healUpTo, instakill, landsSuperCrit, shockedAttack, squaredUp, strikesFirst, type CritRule, type Wings } from "./combat.ts";
 import { smites, type Smitten } from "./angel.ts";
 import { HEART_DOOR_HP, hpCeiling, isLethal, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardStat } from "./step-effects.ts";
 import { ENTRANCE_Y, ENTRANCE_ZOOM_MS, OUTSIDE_START_Y, OutsideWorld } from "./outside.ts";
@@ -1153,15 +1153,31 @@ export class Game {
     const p = this.run.player, combo = this.run.combo;
     return combo ? { ...p, comboAttack: snap((Math.min(combo.next, COMBO_LIMIT) * COMBO_PERCENT * (100 + this.worn.comboAttack)) / 100) } : p;
   }
+  /** The hero as it strikes (arrows, Bombs and the arcana): with Ricochet Shock
+   * researched, a copy carrying Shock Multiplier (`Player.shock`), which
+   * `attackAgainst` reads on a shocked enemy. Previews and planners take the
+   * plain hero, the worst case. */
+  get striker(): Player {
+    const shock = this.arcana.shock;
+    return shock ? { ...this.run.player, shock: shock.factor } : this.run.player;
+  }
+  /** The enemies of the floor the hero stands on that Ricochet Shock has
+   * shocked, for the board to mark. */
+  get shockedTiles(): { x: number; y: number }[] {
+    if (this.run.outside) return [];
+    const p = this.run.player;
+    return (this.world.floorEnemies?.(p.x, p.y) ?? []).filter(({ x, y }) => foeOn(this.world.tile(x, y))?.shocked);
+  }
   /** The hero as it takes the fight at `to`, the step's tile: with Overseer's
-   * beams as the turn begins on that tile, a copy carrying their ATK as well. */
+   * beams as the turn begins on that tile, a copy carrying their ATK as well,
+   * and Shock Multiplier's once Ricochet Shock is researched. */
   fighterAt(to: { x: number; y: number }): Player {
-    const factor = this.beamFactorAt(to), slow = this.slowdownAt(to), worn = this.worn;
+    const factor = this.beamFactorAt(to), slow = this.slowdownAt(to), worn = this.worn, shock = this.arcana.shock?.factor;
     // The Uniques' powers: Hoarder Greaves' and Challenger's Defiance's ATK, Mirror Vault's Retribution, Amber Prison's percent.
     const gear = this.gearAttackAt(to.x, to.y), mirror = powerOf(worn, "mirrorVault", "factor"), amber = powerOf(worn, "amberPrison", "perHit");
-    if (factor === 1 && !slow && gear === 1 && !mirror && !amber) return this.fighter;
+    if (factor === 1 && !slow && gear === 1 && !mirror && !amber && !shock) return this.fighter;
     const hero = this.fighter;
-    return { ...hero, ...(gear === 1 ? {} : { attack: snap(hero.attack * gear) }), ...(factor === 1 ? {} : { beamAttack: factor }), ...(slow ? { slowdown: slow } : {}),
+    return { ...hero, ...(gear === 1 ? {} : { attack: snap(hero.attack * gear) }), ...(factor === 1 ? {} : { beamAttack: factor }), ...(slow ? { slowdown: slow } : {}), ...(shock ? { shock } : {}),
       ...(mirror ? { retribution: this.run.gear?.retribution ?? 0 } : {}), ...(amber ? { amber } : {}) };
   }
   /** What the worn Uniques multiply ATK by against the enemy at (x, y):
@@ -1233,7 +1249,7 @@ export class Game {
       const key = `${enemy.home ?? `${x},${y}`}${enemy.spawn === undefined ? "" : `:${enemy.spawn}`}`;
       if (rushed.includes(key) || !inShotRange(shortWay(x - p.x, this.wrap), y - p.y, reach)) continue;
       rushed.push(key);
-      const out = ghostRush({ board: this.world, wrap: this.wrap, hero: p, ...(beams ? { beams } : {}) }, { x, y }, ghosts, this.arcana.ghostBoost());
+      const out = ghostRush({ board: this.world, wrap: this.wrap, hero: this.striker, ...(beams ? { beams } : {}) }, { x, y }, ghosts, this.arcana.ghostBoost());
       shots.push(...out.shots);
       for (const { enemy: fell, at } of out.kills) this.message = [`Lich King's Crown · ${enemyTitle(fell)} defeated`, ...this.finds.kill(fell, at, 1, false, 0)].join(" · ");
     }
@@ -1899,7 +1915,7 @@ export class Game {
   /** What the Bomb just thrown at `enemy` on (x, y) deals: its rolls are a
    * fixed number per run, tile and Bomb, so a replay lands the same. */
   private bombStrike(x: number, y: number, enemy: Enemy) {
-    const { player, seed, bombsUsed } = this.run, crit = critAgainst(this.crit, player, enemy), attack = snap(player.attack * this.beamFactorAt({ x, y }));
+    const { player, seed, bombsUsed } = this.run, crit = critAgainst(this.crit, player, enemy), attack = snap(shockedAttack(this.striker, enemy, player.attack) * this.beamFactorAt({ x, y }));
     if (!crit) return { damage: attack, applications: 0, superCrit: false };
     const rolls = (seed ^ BOMB_SALT ^ Math.imul(bombsUsed ?? 0, 0x85ebca6b)) | 0;
     const sure = guaranteedCrits(crit.chance), rest = snap(crit.chance - 100 * sure);
@@ -2342,7 +2358,7 @@ export class Game {
    * steps onto its tile: pays what it fells and keeps its shots for the turn's end. */
   private springRicochet(at: { x: number; y: number }) {
     const beams = this.arcana.beams;
-    const out = fightRicochet({ board: this.world, wrap: this.wrap, hero: this.run.player, seed: this.run.seed, ricochet: this.arcana.ricochet(), ...(beams ? { beams } : {}) }, at, this.mode === "tower" ? this.run.height + 1 : 0);
+    const out = fightRicochet({ board: this.world, wrap: this.wrap, hero: this.striker, seed: this.run.seed, ricochet: this.arcana.ricochet(), ...(beams ? { beams } : {}) }, at, this.mode === "tower" ? this.run.height + 1 : 0);
     this.sprung.push(...out.shots);
     for (const { enemy, at: fell, instakill, crits } of out.kills)
       this.message = [`Ricochet · ${this.enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, fell, 1, instakill, crits)].join(" · ");
@@ -2542,7 +2558,7 @@ export class Game {
     // What the hero's step brought into range meets the field before any arrow.
     const met = this.lifespringContact(from, 1);
     const v = this.run.volleys ?? { turn: 0 }, retribution = { pool: this.run.gear?.retribution ?? 0 };
-    const out = volleyTurn({ board: this.world, wrap: this.wrap, floorOf: (x, y) => this.floorOf(x, y), hero: p, from, seed: this.run.seed,
+    const out = volleyTurn({ board: this.world, wrap: this.wrap, floorOf: (x, y) => this.floorOf(x, y), hero: this.striker, from, seed: this.run.seed,
       volleys: { ...v, turn: v.turn + 1 }, sparks: this.wingsReady ? 0 : this.sparksLeft, archer, ranks: { ...this.trainingNow, archives: this.save.archives }, cardCrit: this.cardCrit, handShot: this.handShot, ricochet: this.arcana.ricochet(), ...(beams ? { beams } : {}), ...(dilation ? { dilation } : {}), ...(frost ? { frost } : {}), ...this.volleyPowers(retribution) });
     this.run.volleys = out.volleys;
     // Mirror Vault: what the arrows spent of Retribution goes, the shots' damage comes in, multiplied.
@@ -2670,7 +2686,7 @@ export class Game {
   private decayNecro(beams: Beams | undefined) {
     const rule = this.arcana.frostRule();
     if (!rule) return [];
-    const out = necroDecay({ board: this.world, wrap: this.wrap, hero: this.run.player, changes: this.run.changes, ...(beams ? { beams } : {}) }, rule.boost, this.frostArea, rule.freeze && { ...rule.freeze, roll: this.rng });
+    const out = necroDecay({ board: this.world, wrap: this.wrap, hero: this.striker, changes: this.run.changes, ...(beams ? { beams } : {}) }, rule.boost, this.frostArea, rule.freeze && { ...rule.freeze, roll: this.rng });
     for (const { enemy, at: tile } of out.kills) this.message = [`Necrotic Frost · ${this.enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, tile, 1, false, 0)].join(" · ");
     return out.shots;
   }
@@ -2703,7 +2719,7 @@ export class Game {
   private strikeGhosts(beams: Beams | undefined, at: number, ms: number, from: { x: number; y: number } | undefined, first?: number) {
     const rule = this.arcana.phantasmRule(), s = this.run.phantasm;
     if (!rule || !(s?.ghosts?.length || s?.outer?.length)) return [];
-    const out = ghostStrikes({ board: this.world, wrap: this.wrap, hero: this.run.player, ...(from ? { from } : {}), ...(beams ? { beams } : {}) }, rule, s, first);
+    const out = ghostStrikes({ board: this.world, wrap: this.wrap, hero: this.striker, ...(from ? { from } : {}), ...(beams ? { beams } : {}) }, rule, s, first);
     for (const { enemy, at: tile } of out.kills) this.message = [`Phantasm · ${this.enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, tile, 1, false, 0)].join(" · ");
     if (out.struck.length) this.ghostFx = [...this.ghostFx.slice(-11), ...out.struck.map((g) => ({ ...g, at: at + (ms * g.tick) / TURN_TICKS }))];
     return out.shots;
@@ -2714,7 +2730,7 @@ export class Game {
   private strikeZap(beams: Beams | undefined, from: { x: number; y: number } | undefined) {
     const rule = this.arcana.chargeZap();
     if (!rule) return [];
-    const out = overseerZap({ board: this.world, wrap: this.wrap, hero: this.run.player, ...(from ? { from } : {}), seed: this.run.seed, ...(beams ? { beams } : {}) }, rule);
+    const out = overseerZap({ board: this.world, wrap: this.wrap, hero: this.striker, ...(from ? { from } : {}), seed: this.run.seed, ...(beams ? { beams } : {}) }, rule);
     this.arcana.settleZap(out.shots.length > 0);
     for (const { enemy, at, instakill, crits } of out.kills)
       this.message = [`Overseer Zap · ${this.enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, at, 1, instakill, crits)].join(" · ");
@@ -2723,7 +2739,7 @@ export class Game {
   private strikeBolts(fired: readonly ArcanumId[], beams: Beams | undefined, from: { x: number; y: number } | undefined) {
     const rule = this.arcana.chargeBolts(fired);
     if (!rule) return [];
-    const out = thunderbolts({ board: this.world, wrap: this.wrap, hero: this.run.player, ...(from ? { from } : {}), seed: this.run.seed, ...(beams ? { beams } : {}) }, rule);
+    const out = thunderbolts({ board: this.world, wrap: this.wrap, hero: this.striker, ...(from ? { from } : {}), seed: this.run.seed, ...(beams ? { beams } : {}) }, rule);
     this.arcana.settleBolts(out.left);
     for (const { enemy, at, instakill, crits } of out.kills)
       this.message = [`Thunderbolt · ${this.enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, at, 1, instakill, crits)].join(" · ");

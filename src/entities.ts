@@ -79,6 +79,10 @@ export type Enemy = {
    * doesn't move or shoot, its cooldowns stand still, and a fight skips that many of
    * its strikes; set by the board as it reads the tile's `stun`, never saved. */
   stun?: number;
+  /** Ricochet Shock (arcana/arcana.ts) has shocked it: the hero's ATK on it is
+   * multiplied by Shock Multiplier (`Player.shock`); set by the board as it reads
+   * the tile's `shocked`, never saved. */
+  shocked?: true;
   /** It stands in Voidwell's vortex (arcana/voidwell.ts): it doesn't move or shoot, and
    * a Fast one doesn't strike first; set by the board as it reads the tile, never saved. */
   stunned?: true;
@@ -128,12 +132,13 @@ export type DoorRule =
  * bolts that have hit the enemy here, which Thunderbolt Amplifier reads. `stun`:
  * the turns left of a stun on the enemy here (Phantasm Stun, Necrotic Freeze). `frosted`:
  * the Necrotic Frost fields the enemy here stood in as the last turn ended, which
- * Necrotic Freeze reads to tell an entry from a stay. */
+ * Necrotic Freeze reads to tell an entry from a stay.
+ * `shocked`: Ricochet Shock has shocked the enemy here. */
 /** The colour a potion is drawn in: a regular potion red, like the HP bar
  * it fills, and a percent potion (whose tile is marked `color: "red"`, the
  * mark generation and saves keep) blue, like the Overheal bar. */
 export const potionShade = (t: Pick<Tile, "color">): "red" | "blue" => (t.color === "red" ? "blue" : "red");
-export type Tile = { kind: Kind; amount?: number; color?: KeyColor; door?: DoorRule; enemy?: Enemy; flyer?: Enemy; tier?: ChestTier; wound?: number; broken?: number; sprung?: number; necro?: Record<string, number>; amber?: number; bolted?: number; stun?: number; frosted?: number[]; chest?: Exclude<ChestKind, "plain"> };
+export type Tile = { kind: Kind; amount?: number; color?: KeyColor; door?: DoorRule; enemy?: Enemy; flyer?: Enemy; tier?: ChestTier; wound?: number; broken?: number; sprung?: number; necro?: Record<string, number>; amber?: number; bolted?: number; shocked?: true; stun?: number; frosted?: number[]; chest?: Exclude<ChestKind, "plain"> };
 /** Whether `enemy` is held where it stands this turn, by Voidwell's vortex or a Phantasm stun: it doesn't move or shoot. */
 export const isStunned = (enemy: Pick<Enemy, "stunned" | "stun">) => !!enemy.stunned || !!enemy.stun;
 export type Point = { x: number; y: number };
@@ -200,6 +205,11 @@ export type Player = {
    * its enemy stands in one. Like `comboAttack`, only the copy of the hero a
    * fight is taken with carries it (`Game.fighterAt`). */
   beamAttack?: number;
+  /** What Shock Multiplier multiplies the hero's ATK by on a shocked enemy
+   * (`attackAgainst`), once Ricochet Shock is researched. Only the copies of the
+   * hero that strike carry it (`Game.striker`, `Game.fighterAt`), so previews and
+   * planners count the plain hero, the worst case. */
+  shock?: number;
   /** The percent Time Dilation's and Necrotic Frost's fields slow the enemy of the fight being taken
    * by (`slowedAct` skipping its strikes). Like `beamAttack`, only the copy of the
    * hero a fight is taken with carries it (`Game.fighterAt`). */

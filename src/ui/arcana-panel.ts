@@ -41,6 +41,7 @@ function researchedText(id: ArcanumId, values: AttributeValues, save: Save) {
 
 /** The Archives' projects that raise what an arcanum gives. */
 const ARCANUM_RESEARCH: Partial<Record<ArcanumId, readonly (keyof typeof RESEARCH & keyof typeof RESEARCH_TARGETS)[]>> = {
+  ricochetShot: ["ricochetShock", "shockChance", "shockMultiplier"],
   thunderbolt: ["thunderboltAmplify", "thunderboltExpansion"],
   phantasm: ["phantasmBlast", "phantasmSpin", "phantasmStun"],
   necroticFrost: ["frostRadius", "necroFreeze", "necroFreezeChance", "necroFreezeTurns"],

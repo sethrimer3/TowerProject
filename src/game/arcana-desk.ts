@@ -199,7 +199,18 @@ export class ArcanaDesk {
     const held = this.held.find((h) => h.id === "ricochetShot" && this.isOn(h.id));
     if (!held) return undefined;
     const [multiplier, rebounds, chance] = this.valuesOf(held), self = powerOf(wornEffects(this.save, this.host.mode), "psionicTempest", "chance");
-    return { boost: this.boost(multiplier), rebounds: rebounds + relicAmount(this.save, "ricochet"), chance, ...(self ? { self } : {}) };
+    const shock = this.shock;
+    return { boost: this.boost(multiplier), rebounds: rebounds + relicAmount(this.save, "ricochet"), chance, ...(self ? { self } : {}), ...(shock ? { shock: shock.chance } : {}) };
+  }
+  /** Ricochet Shock, once researched (read as used, so a level done mid-run
+   * counts at once): the chance a Ricochet Shot strike shocks its enemy, in
+   * hundredths of a percent (Shock Chance), and what the hero's ATK is then
+   * multiplied by on it (Shock Multiplier). A shocked enemy stays shocked
+   * whether or not Ricochet Shot is still held or on. */
+  get shock(): { chance: number; factor: number } | undefined {
+    const archives = this.save.archives;
+    if (!researched(archives, "ricochetShock")) return undefined;
+    return { chance: researched(archives, "shockChance"), factor: researched(archives, "shockMultiplier") / 100 };
   }
   /** What Aurum Bloom gives the floors' environments, if it is held and on. */
   aurumBloom(): FloorBloom | undefined {

@@ -86,6 +86,26 @@ A ricochet flashes a white line from the enemy struck to each of the closest oth
 | Rebounds | 1 | 5 | 5 |
 | Chance | 5.0% | 27.5% | 16 |
 
+### Ricochet Shot research
+
+The Breakthrough skill **Ricochet Shock Research** (5 Breakthrough, left of Extra Trainer, after it) opens three projects in the Archives' **Arcana** section, each counting for good, mid-run too.
+**Ricochet Shock** (1 level, 950,000 Gold and 0d 23h 53m) lets each ricochet's strike shock the enemy it hits, by a chance of its own: 2.50% to start, with a ×1.10 Shock Multiplier.
+A shocked enemy wears a yellow lightning bolt in its top-left corner, and every hit on it after the one that shocked it is that much harder: your fights, arrows and Bombs, and every arcanum that strikes with your ATK (Ricochet Shot, Thunderbolt, Overseer Zap, Phantasm, Necrotic Frost, the Lich King's Crown's ghosts).
+It stays shocked for the rest of the run, wherever it moves, even if Ricochet Shot is later switched off.
+Lifespring's field, Voidwell's damage, Thorns and boss Takedowns don't strike with your ATK, so a shock doesn't change them.
+The fight preview and Damage Visual leave the shock out, so they show the worst case.
+Once it is done, **Shock Chance** (30 levels) raises the chance by 0.5% a level, to 17.50%, and **Shock Multiplier** (14 levels) raises the multiplier by ×0.04 a level, to ×1.66; their levels share the same Gold and times.
+
+| Level | Shock Chance | Shock Multiplier | Gold | Time |
+|---|---|---|---|---|
+| 1 | 3.00% | ×1.14 | 250,000 | 0d 20h 0m |
+| 2 | 3.50% | ×1.18 | 560,000 | 1d 4h 21m |
+| 5 | 5.00% | ×1.30 | 7,750,000 | 2d 7h 49m |
+| 10 | 7.50% | ×1.50 | 276,620,000 | 5d 17h 31m |
+| 14 | 9.50% | ×1.66 | 1,520,000,000 | 11d 18h 21m |
+| 20 | 12.50% | | 8,840,000,000 | 31d 15h 40m |
+| 30 | 17.50% | | 63,130,000,000 | 117d 7h 28m |
+
 ## Aurum Bloom
 
 *Adds x% chance each floor is a Golden Floor and raises its bonus to y× (Golden Floors and its research add to that), and z% chance each floor is a Stellar Floor, which multiplies its Gold and Silver by 10×.*
@@ -453,7 +473,7 @@ An arcanum's hit only wounds: it never makes a boss teleport, drop keys or pop c
 It can defeat the boss and win the trial, and its damage counts toward Damage this run.
 **Thunderbolt** works as above, once a turn on a lone boss, its research included: the Amplifier counts each foe's hits, and the Expansion strikes the foes round the target.
 **Overseer Zap** works as above, striking what stands in a beam as the turn begins.
-**Ricochet Shot** springs from your own hits there, since a trial has no arrows: each hit rolls its chance, and a ricochet strikes the closest others.
+**Ricochet Shot** springs from your own hits there, since a trial has no arrows: each hit rolls its chance, and a ricochet strikes the closest others; with Ricochet Shock researched, each strike may shock its foe, and your hits and the arcana's on a shocked foe are multiplied as above.
 **Overseer** multiplies your hits on what stands in a beam, as the turn begins.
 **Lifespring** works as above on what stands in the arena, each wave counting for all of it, even what arrives later; a trial pays no kills, so its Health, Gold and Cell Bonuses do nothing there, and neither does DEF Reduction.
 **Time Dilation** works as above on everything in the field: its tally for a counter or bite goes on from one of your hits to the next, a scheduled step or hop is skipped the same way, and a boss's or part's effects count down slower while it stands in the field.

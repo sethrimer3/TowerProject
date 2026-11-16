@@ -316,7 +316,7 @@ const TOWER_EIGHT: Record<number, CheckpointSet> = {
 const TOWER_NINE: Record<number, CheckpointSet> = {
   10: { reward: gold(100_000_000), premium: gold(200_000_000) },
   20: { reward: gems(50), premium: gems(60) },
-  30: { reward: arcanite(10), premium: arcanite(10) },
+  30: { reward: breakthrough(5), premium: arcanite(10) },
   40: { reward: gems(55), premium: gems(65) },
   50: { reward: gold(150_000_000), premium: gold(300_000_000) },
   60: { reward: gems(60), premium: gems(75) },

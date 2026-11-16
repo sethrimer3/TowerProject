@@ -41,12 +41,17 @@ export const instakill = (r: CombatPrediction) => r.turns === 1 && !r.thornKill 
  * or Greater Boss by the percent its equipment gives (`bossAttack`), then
  * by the hand's cards' percents added into one factor: the enemy cards
  * covering it (`foeAttack`) and `cards` more (an arrow's Shot ATK). Each
- * kind of source sums its own bonuses; the kinds multiply. */
+ * kind of source sums its own bonuses; the kinds multiply. Shock Multiplier
+ * multiplies all of it on a shocked enemy. */
 export function attackAgainst(player: Player, enemy: Enemy, cards = 0) {
   const boss = isBoss(enemy) ? (player.bossAttack ?? 0) : 0, card = foeAttack(player.foeAttack, enemy) + cards;
   const geared = boss ? snap((player.attack * (100 + boss)) / 100) : player.attack;
-  return card ? snap((geared * (100 + card)) / 100) : geared;
+  const carded = card ? snap((geared * (100 + card)) / 100) : geared;
+  return shockedAttack(player, enemy, carded);
 }
+/** `attack` on `enemy`, multiplied by Shock Multiplier when Ricochet Shock has
+ * shocked it and the hero strikes with its factor (`Player.shock`), a kind of its own. */
+export const shockedAttack = (player: Player, enemy: Enemy, attack: number) => (player.shock && enemy.shocked ? snap(attack * player.shock) : attack);
 export const isBoss = (enemy: Enemy) => enemy.strength === "boss" || enemy.strength === "greaterBoss";
 /** The percents a fight's opening takes off a boss (ATK UP's Takedown and
  * DEF UP's Tangle) or a Greater Boss (TORCH's Greater Takedown and Greater

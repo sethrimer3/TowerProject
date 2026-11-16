@@ -268,6 +268,7 @@ export class Renderer {
     this.drawSkipMarks(f);
     this.drawBadgeMarks(f);
     this.drawDoomMarks(f);
+    this.drawShockMarks(f);
     this.drawChargeMarks(f);
     this.drawBlockedMark(f);
     // A Gem shines above the darkness, so it can be seen and tapped.
@@ -671,6 +672,30 @@ export class Renderer {
         c.fillStyle = color;
         c.fillText(glyph, x, y);
       }
+    c.restore();
+  }
+  /** Ricochet Shock's mark (docs/agents/arcana.md): a yellow lightning bolt,
+   * outlined in black, in the top-left corner of each shocked enemy, the corner
+   * the enemies' own marks and the other marks leave free, in every theme. */
+  private drawShockMarks(f: FrameContext) {
+    const shocked = this.game.shockedTiles;
+    if (!shocked.length) return;
+    const c = f.c, s = f.s, h = s * 0.13;
+    // The bolt's outline, in units of `h` round its center: a jagged stroke from top right to bottom left.
+    const BOLT = [[0.35, -1], [-0.55, 0.1], [0, 0.1], [-0.35, 1], [0.55, -0.15], [0, -0.15]] as const;
+    c.save();
+    c.lineJoin = "miter";
+    for (const { x: wx, y: wy } of shocked) {
+      const x = (wx - f.left) * s + s * 0.2, y = (f.n - 1 - (wy - f.bottom)) * s + s * 0.2;
+      c.beginPath();
+      BOLT.forEach(([dx, dy], i) => (i ? c.lineTo(x + dx * h, y + dy * h) : c.moveTo(x + dx * h, y + dy * h)));
+      c.closePath();
+      c.strokeStyle = "#000";
+      c.lineWidth = Math.max(2, s * 0.07);
+      c.stroke();
+      c.fillStyle = "#ffe14a";
+      c.fill();
+    }
     c.restore();
   }
   /** Soul Reaper's mark (equipment/powers.ts): a red X, outlined in black, in

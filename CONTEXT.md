@@ -663,6 +663,10 @@ An arcanum on a cooldown: its bolts fall from the board's upper edge on random e
 Research that has each Thunderbolt bolt hit on an enemy multiply the damage of later bolts on that same enemy, its factor a hit added up over every earlier hit.
 _Avoid_: bolt stacks, thunder charge
 
+**Ricochet Shock**:
+Research that lets each Ricochet Shot strike **shock** the enemy it hits, by Shock Chance; every later hit from the hero's ATK on a shocked enemy is multiplied by Shock Multiplier, for the rest of the run.
+_Avoid_: stun, static, paralyze
+
 **Thunderbolt Expansion**:
 Research that has each Thunderbolt bolt also strike the enemies within its radius of the target, with the same damage; that **splash** shows the strike on each, with no bolt of its own.
 _Avoid_: bolt AOE, chain lightning

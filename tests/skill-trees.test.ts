@@ -271,7 +271,7 @@ test("Golden Floors (3 Breakthrough) under More Wealth, then Esoteric Training (
   assert.ok(skillHidden("cardWoodenDoor", upgrades));
   upgrades.doorMastery = 1;
   for (const id of ["cardWoodenDoor", "cardYellowDoor", "heartDoorResilience", "cardHeartDoor"] as const) assert.ok(!skillHidden(id, upgrades), `${id} revealed by Door Mastery`);
-  assert.deepEqual([at("doorMastery").x, at("doorMastery").y, at("doorMastery").requires], [30, 189, ["extraTrainer"]], "Door Mastery left of Extra Trainer, after it");
+  assert.deepEqual([at("doorMastery").x, at("doorMastery").y, at("doorMastery").requires], [50, 163, ["keyMastery"]], "Door Mastery left of Key Mastery, after it");
   assert.deepEqual([UPGRADES.find((u) => u.id === "doorMastery")!.currency, cost("doorMastery", 0)], ["breakthrough", cost("keyMastery", 0) + 1], "Door Mastery costs one more than Key Mastery");
 });
 test("Extra Trainer stands under Key Mastery, Lifespring Research below it, costs 5 Breakthrough and adds a training slot", () => {
@@ -403,7 +403,8 @@ test("Life (2 Breakthrough), between Overheal and Key Mastery, reveals Revive, t
   const breakthrough = TREES.find((t) => t.id === "breakthrough")!, inspiration = TREES[0];
   const at = (tree: typeof inspiration, id: string) => tree.nodes.find((n) => n.id === id)!;
   assert.deepEqual([UPGRADES.find((u) => u.id === "life")!.currency, cost("life", 0)], ["breakthrough", 2]);
-  assert.ok(["cardMastery", "doorMastery", "ignore", "target", "manualHand", "limitBreak10"].every((id) => at(breakthrough, id).y > at(breakthrough, "keyMastery").y), "everything under Key Mastery a row lower");
+  assert.ok(["cardMastery", "ignore", "target", "manualHand", "limitBreak10"].every((id) => at(breakthrough, id).y > at(breakthrough, "keyMastery").y), "everything under Key Mastery a row lower");
+  assert.equal(at(breakthrough, "doorMastery").y, at(breakthrough, "keyMastery").y, "Door Mastery beside Key Mastery");
   assert.ok(breakthrough.nodes.every((n) => n.y < treeHeight(breakthrough)), "every node on the map");
   assert.deepEqual(["revive", "angelWings", "avengingAngel"].map((id) => [at(inspiration, id).x, at(inspiration, id).y, at(inspiration, id).requires, at(inspiration, id).reveal]),
     [[90, 268, ["parry"], "life"], [90, 286, ["revive"], undefined], [90, 304, ["angelWings"], undefined]]);

@@ -41,6 +41,8 @@ const RICOCHET_SALT = 0x71c0c;
 const FIGHT_RICOCHET_SALT = 0x71c0d;
 /** Psionic Tempest's roll for a ricochet to strike its first target too. */
 const TEMPEST_SALT = 0x71c0e;
+/** Ricochet Shock's roll for a ricochet's strike to shock its enemy. */
+const SHOCK_SALT = 0x5ac0c;
 
 /** One shot of a turn's volley, as the board shows it: a Ranged enemy's
  * at the hero, or the Archer's arrow at an enemy, flying `from` → `to`
@@ -91,7 +93,7 @@ export const volleyOver = (volley: Volley, now: number) => volley.shots.every((s
  * arrows (`range`) and Charged Shot (`charge`, and the enemy cards' by
  * card against theirs, `foeCharge`); none when absent. */
 export type VolleyTurn = {
-  board: Pick<Board, "tile" | "clear" | "wound" | "floorEnemies">;
+  board: Pick<Board, "tile" | "clear" | "wound" | "floorEnemies" | "markShock">;
   wrap: number;
   floorOf: (x: number, y: number) => number;
   hero: Player;
@@ -103,8 +105,10 @@ export type VolleyTurn = {
   cardCrit?: { chance: number; factor: number };
   handShot?: { attack: number; speed: number; boss?: number; range?: number; charge?: number; foeCharge?: ByFoe };
   /** Ricochet Shot, held and on (game/arcana-desk.ts): what its strikes multiply
-   * the hero's ATK by, the enemies each reaches, and the percent chance. */
-  ricochet?: { boost: number; rebounds: number; chance: number; self?: number };
+   * the hero's ATK by, the enemies each reaches, and the percent chance;
+   * with Ricochet Shock researched, the chance each strike shocks its enemy
+   * (`shock`, hundredths of a percent). */
+  ricochet?: { boost: number; rebounds: number; chance: number; self?: number; shock?: number };
   /** The worn Uniques' powers on the turn's arrows (equipment/powers.ts): whether
    * Soul Reaper has marked the enemy at (x, y) for death (an arrow destroys it),
    * what ATK is multiplied by against the enemy at (x, y) (Hoarder Greaves,
@@ -394,11 +398,24 @@ function inPlace(board: VolleyTurn["board"], e: InReach): InReach | undefined {
  * shot and tile, so a replay agrees. Overseer's beams multiply a strike
  * on an enemy in them (`beam`). */
 function ricochet({ board, seed, volleys, wrap, ricochet: rule }: VolleyTurn, p: Player, { x, y }: InReach, tick: number, shot: number, shots: Shot[], kills: VolleyKill[], beam: (x: number, y: number, tick: number) => number) {
-  if (!rule || tileRandom(x, y, (seed ^ RICOCHET_SALT ^ Math.imul(volleys.turn, 0x85ebca6b) ^ Math.imul(shot, 0xc2b2ae35)) | 0) * 100 >= rule.chance) return;
+  const salt = (seed ^ Math.imul(volleys.turn, 0x85ebca6b) ^ Math.imul(shot, 0xc2b2ae35)) | 0;
+  if (!rule || tileRandom(x, y, (salt ^ RICOCHET_SALT) | 0) * 100 >= rule.chance) return;
   // Psionic Tempest: by its own roll, the enemy the arrow struck takes a strike too, if it stands.
-  if (rule.self && tileRandom(x, y, (seed ^ TEMPEST_SALT ^ Math.imul(volleys.turn, 0x85ebca6b) ^ Math.imul(shot, 0xc2b2ae35)) | 0) * 100 < rule.self)
+  if (rule.self && tileRandom(x, y, (salt ^ TEMPEST_SALT) | 0) * 100 < rule.self) {
     arcaneStrike(board, p, { x, y }, snap(rule.boost * beam(x, y, tick)), { from: { x, y }, tick, ricochet: true }, shots, kills);
-  rebound(board, wrap, p, { x, y }, rule, tick, beam, shots, kills);
+    shock(board, { x, y }, rule, salt);
+  }
+  rebound(board, wrap, p, { x, y }, rule, tick, beam, shots, kills, salt);
+}
+
+/** Ricochet Shock: a ricochet's strike on the enemy at `to`, if it still
+ * stands, shocks it by its own roll (`rule.shock`, hundredths of a percent),
+ * fixed per run, turn, shot and tile like the ricochet's (`salt`). It counts
+ * from the next hit on, and stays with the enemy for the rest of the run. */
+function shock(board: VolleyTurn["board"], to: { x: number; y: number }, rule: NonNullable<VolleyTurn["ricochet"]>, salt: number) {
+  if (!rule.shock) return;
+  const enemy = foeOn(board.tile(to.x, to.y));
+  if (enemy && !enemy.shocked && tileRandom(to.x, to.y, (salt ^ SHOCK_SALT) | 0) * 10_000 < rule.shock) board.markShock?.(to.x, to.y);
 }
 
 /** Ricochet Shot off a fight the hero won at `at`, once however many strikes it
@@ -407,19 +424,24 @@ function ricochet({ board, seed, volleys, wrap, ricochet: rule }: VolleyTurn, p:
  * on the tile it left). Edits the board's enemies; returns the shots and kills. */
 export function fightRicochet({ board, wrap, hero, seed, beams, ricochet: rule }: Pick<VolleyTurn, "board" | "wrap" | "hero" | "seed" | "beams" | "ricochet">, at: { x: number; y: number }, floor: number) {
   const shots: Shot[] = [], kills: VolleyKill[] = [];
-  if (rule && tileRandom(at.x, at.y, (seed ^ FIGHT_RICOCHET_SALT ^ Math.imul(floor, 0x9e3779b1)) | 0) * 100 < rule.chance)
-    rebound(board, wrap, hero, at, rule, 1, (x, y) => beamFactor(beams, 0, shortWay(x - hero.x, wrap), y - hero.y), shots, kills);
+  const salt = (seed ^ FIGHT_RICOCHET_SALT ^ Math.imul(floor, 0x9e3779b1)) | 0;
+  if (rule && tileRandom(at.x, at.y, salt) * 100 < rule.chance)
+    rebound(board, wrap, hero, at, rule, 1, (x, y) => beamFactor(beams, 0, shortWay(x - hero.x, wrap), y - hero.y), shots, kills, salt);
   return { shots, kills };
 }
 
-/** A ricochet off the enemy struck at (x, y): the `rebounds` closest others take a strike. */
-function rebound(board: VolleyTurn["board"], wrap: number, p: Player, { x, y }: { x: number; y: number }, rule: NonNullable<VolleyTurn["ricochet"]>, tick: number, beam: (x: number, y: number, tick: number) => number, shots: Shot[], kills: VolleyKill[]) {
+/** A ricochet off the enemy struck at (x, y): the `rebounds` closest others
+ * take a strike, each of which may shock its enemy (`shock`, by `salt`). */
+function rebound(board: VolleyTurn["board"], wrap: number, p: Player, { x, y }: { x: number; y: number }, rule: NonNullable<VolleyTurn["ricochet"]>, tick: number, beam: (x: number, y: number, tick: number) => number, shots: Shot[], kills: VolleyKill[], salt: number) {
   const d2 = (o: { x: number; y: number }) => {
     const dx = shortWay(o.x - x, wrap), dy = o.y - y;
     return dx * dx + dy * dy;
   };
   const targets = (board.floorEnemies?.(x, y) ?? []).filter((o) => o.x !== x || o.y !== y).sort((a, b) => d2(a) - d2(b) || a.y - b.y || a.x - b.x).slice(0, rule.rebounds);
-  for (const to of targets) arcaneStrike(board, p, to, snap(rule.boost * beam(to.x, to.y, tick)), { from: { x, y }, tick, ricochet: true }, shots, kills);
+  for (const to of targets) {
+    arcaneStrike(board, p, to, snap(rule.boost * beam(to.x, to.y, tick)), { from: { x, y }, tick, ricochet: true }, shots, kills);
+    shock(board, to, rule, salt);
+  }
 }
 
 /** An arcanum's strike on the enemy at `to`, if one stands there: Arcanum Damage

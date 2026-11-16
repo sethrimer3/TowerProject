@@ -149,6 +149,7 @@ const SKILL_DETAIL_SPRITES: Partial<Record<UpgradeId, string>> = {
   avengingAngel: "combat-wing",
   lifespringResearch: "arcana-lifespring", aurumBloomResearch: "arcana-aurum-bloom",
   thunderboltResearch: "arcana-thunderbolt", phantasmResearch: "arcana-phantasm", necroticFrostResearch: "arcana-necrotic-frost",
+  ricochetShockResearch: "arcana-ricochet-shot",
   overseerZapResearch: "arcana-overseer", overseerGoldResearch: "arcana-overseer",
   voidwellResearch: "arcana-voidwell", extraVoidwellResearch: "arcana-voidwell",
 };

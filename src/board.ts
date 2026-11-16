@@ -25,6 +25,8 @@ export type Board = {
   markSpring?(x: number, y: number, waves: number, broke?: number): void;
   /** Counts a Thunderbolt bolt's hit on the enemy at (x, y) (`boltMark` in enemies/ranged.ts). */
   markBolt?(x: number, y: number): void;
+  /** Marks the enemy at (x, y) as Ricochet Shock shocked it (`shockMark` in enemies/ranged.ts). */
+  markShock?(x: number, y: number): void;
   /** Stuns the enemy at (x, y) for `turns` (`stunMark` in enemies/ranged.ts), a stun already on it starting over. */
   markStun?(x: number, y: number, turns: number): void;
   /** Sets what Necrotic Frost has on the enemy at (x, y), and the fields it stands in (`necroMark` in enemies/ranged.ts). */

@@ -15,7 +15,10 @@ import type { TrialState } from "./trial.ts";
 
 /** The arcana held and on, as the desk gives them. */
 export type TrialSpells = {
-  ricochet?: { boost: number; rebounds: number; chance: number };
+  /** `shock`: Ricochet Shock's chance a strike shocks its foe, in hundredths of a percent. */
+  ricochet?: { boost: number; rebounds: number; chance: number; shock?: number };
+  /** Shock Multiplier, once Ricochet Shock is researched: what the hero's ATK is multiplied by on a shocked foe. */
+  shock?: number;
   /** `amplify`: Thunderbolt Amplifier's factor a hit, in tenths; `radius`: Thunderbolt Expansion's, in tenths of a tile. */
   thunderbolt?: { boost: number; bolts: number; turns: number; amplify?: number; radius?: number };
   /** Overseer Zap, once researched while Overseer is held and on: its cooldown, and its strike's share of ATK before the beams. */
@@ -42,9 +45,9 @@ export type TrialStrike = { kind: "ricochet" | "thunderbolt" | "lifespring" | "p
  * (`springWaves`), and Time Dilation's: its field and cooldown (`dilation`), each
  * foe's tally on what it does (`tallies`), and how far its field has held back the
  * clocks of the boss's effects and its Blaster Turret's, in hundredths of a turn
- * (`lag`), Phantasm's (`phantasm`) and Necrotic Frost's: its cooldown and fields (`frost`), what is on each foe (`necro`) and the fields each stood in as the last turn ended (`frostIn`, Necrotic Freeze), and Voidwell's cooldown and vortex (`voidwell`), the Thunderbolt bolts that have hit each foe (`bolted`, Thunderbolt Amplifier), and each foe's turns of stun left (`stuns`, Phantasm Stun and Necrotic Freeze), all saved with it; `spells`, what strikes this turn, `struck`, what
+ * (`lag`), Phantasm's (`phantasm`) and Necrotic Frost's: its cooldown and fields (`frost`), what is on each foe (`necro`) and the fields each stood in as the last turn ended (`frostIn`, Necrotic Freeze), and Voidwell's cooldown and vortex (`voidwell`), the Thunderbolt bolts that have hit each foe (`bolted`, Thunderbolt Amplifier), and each foe's turns of stun left (`stuns`, Phantasm Stun and Necrotic Freeze), and the foes Ricochet Shock has shocked (`shocked`, by key), all saved with it; `spells`, what strikes this turn, `struck`, what
  * the hero's step strikes, `strikes` and `springStep`, what Lifespring did last turn, aren't saved. */
-export type TrialArcana = { run: ArcanaRun; beamTurns: number; lifespring?: LifespringRun; springWaves?: number; dilation?: DilationRun; tallies?: Record<string, number>; lag?: Partial<Record<BossClock, number>>; phantasm?: PhantasmRun; frost?: FrostRun; necro?: Record<string, Necro>; frostIn?: Record<string, number[]>; voidwell?: VoidwellRun; bolted?: Record<string, number>; stuns?: Record<string, number>; spells?: TrialSpells; struck?: Spot & { foe: object }; strikes?: TrialStrike[]; springStep?: LifespringStep };
+export type TrialArcana = { run: ArcanaRun; beamTurns: number; lifespring?: LifespringRun; springWaves?: number; dilation?: DilationRun; tallies?: Record<string, number>; lag?: Partial<Record<BossClock, number>>; phantasm?: PhantasmRun; frost?: FrostRun; necro?: Record<string, Necro>; frostIn?: Record<string, number[]>; voidwell?: VoidwellRun; bolted?: Record<string, number>; stuns?: Record<string, number>; shocked?: string[]; spells?: TrialSpells; struck?: Spot & { foe: object }; strikes?: TrialStrike[]; springStep?: LifespringStep };
 
 /** The clocks Time Dilation can hold back: the boss's own effects, and its Blaster Turret's. */
 export type BossClock = "boss" | "turret";
@@ -109,8 +112,10 @@ export function bossTurn(s: TrialState, at: Spot, clock: BossClock = "boss") {
 /** The turns until an effect every `interval` turns falls due, as it counts them. */
 export const bossDueIn = (s: TrialState, interval: number) => snap(interval - (bossClock(s) / 100) % interval);
 
-/** The hero's ATK on a hit at `at`: Overseer's beams as the turn begins multiply it. */
-export function heroAttackOn(s: TrialState, at: Spot) {
-  const a = s.arcana, beams = a?.spells?.beams;
-  return beams ? s.player.attack * beamFactor({ ...beams, turns: a.beamTurns }, 0, at.x - s.player.x, at.y - s.player.y) : s.player.attack;
+/** The hero's ATK on a hit at `at`: Overseer's beams as the turn begins multiply
+ * it, and Shock Multiplier when Ricochet Shock has shocked the foe (named by `key`). */
+export function heroAttackOn(s: TrialState, at: Spot, key?: string) {
+  const a = s.arcana, beams = a?.spells?.beams, shock = a?.spells?.shock && key && a.shocked?.includes(key) ? a.spells.shock : 1;
+  const attack = beams ? s.player.attack * beamFactor({ ...beams, turns: a.beamTurns }, 0, at.x - s.player.x, at.y - s.player.y) : s.player.attack;
+  return shock === 1 ? attack : attack * shock;
 }

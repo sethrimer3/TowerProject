@@ -220,6 +220,14 @@ export const RESEARCH_TARGETS = {
   necroFreezeChance: { name: "Freeze Chance", base: 50, shown: (n: number) => `${n / 10}%` },
   /** The turns Necrotic Freeze stuns an enemy for (half that, rounded down, on a Greater Boss): 1 untrained. */
   necroFreezeTurns: { name: "Freeze Time", base: 1, shown: (n: number) => `${n} ${n === 1 ? "turn" : "turns"}` },
+  /** Whether Ricochet Shot's strikes may shock the enemies they hit (ArcanaDesk.shock). */
+  ricochetShock: { name: "Ricochet Shock", base: 0, shown: (n: number) => (n ? "Unlocked" : "Locked") },
+  /** The chance a Ricochet Shot strike shocks its enemy, once Ricochet Shock is
+   * researched, in hundredths of a percent: 2.50% before Shock Chance's first level. */
+  shockChance: { name: "Shock Chance", base: 250, shown: (n: number) => `${(n / 100).toFixed(2)}%` },
+  /** What the hero's ATK is multiplied by on a shocked enemy, in hundredths: ×1.10
+   * before Shock Multiplier's first level. */
+  shockMultiplier: { name: "Shock Multiplier", base: 110, shown: (n: number) => `×${(n / 100).toFixed(2)}` },
   /** Turns between Overseer Zap's strikes (game/arcana-desk.ts), 20 less
    * one a level; no strike before the first level. */
   overseerZapTurns: { name: "Zap Cooldown", base: 20, shown: (n: number) => `${n} turns` },
@@ -428,6 +436,22 @@ const FREEZE_TURNS_GOLD = [896_980, 15_500_000, 267_310_000, 937_550_000, 2_640_
 const FREEZE_TURNS_TIMES: readonly [days: number, hours: number, minutes: number][] = [
   [2, 2, 53], [3, 18, 6], [12, 20, 31], [18, 8, 23], [33, 12, 9], [67, 16, 40], [104, 8, 27], [157, 14, 25], [211, 6, 28],
 ];
+/** Shock Chance research: 0.5% more chance for a Ricochet Shot strike to shock
+ * its enemy a level, for 30 levels, from 2.50% to 17.50%; Shock Multiplier's 14
+ * levels (×0.04 more a level, from ×1.10 to ×1.66) take the first 14 of the same
+ * Gold and times: each level's Gold, and its time as days, hours and minutes. */
+const SHOCK_GOLD = [
+  250_000, 560_000, 1_100_000, 2_800_000, 7_750_000, 19_540_000, 43_580_000, 87_410_000, 160_910_000, 276_620_000,
+  449_930_000, 699_340_000, 1_050_000_000, 1_520_000_000, 2_140_000_000, 2_950_000_000, 3_980_000_000, 5_270_000_000, 6_880_000_000, 8_840_000_000,
+  11_220_000_000, 14_080_000_000, 17_480_000_000, 21_490_000_000, 26_190_000_000, 31_660_000_000, 37_990_000_000, 45_280_000_000, 53_620_000_000, 63_130_000_000,
+];
+const SHOCK_TIMES: readonly [days: number, hours: number, minutes: number][] = [
+  [0, 20, 0], [1, 4, 21], [1, 12, 53], [1, 21, 54], [2, 7, 49], [2, 19, 6], [3, 8, 17], [3, 23, 58], [4, 18, 49], [5, 17, 31],
+  [6, 20, 49], [8, 5, 30], [9, 20, 23], [11, 18, 21], [14, 0, 18], [16, 15, 9], [19, 15, 54], [23, 3, 32], [27, 3, 6], [31, 15, 40],
+  [36, 18, 19], [42, 12, 12], [48, 22, 27], [56, 2, 16], [64, 0, 50], [72, 19, 25], [82, 11, 17], [93, 1, 41], [104, 15, 58], [117, 7, 28],
+];
+/** The Shock Multiplier's levels: the first 14 of Shock Chance's. */
+const SHOCK_MULTIPLIER_LEVELS = 14;
 /** A schedule whose first level adds `first` and every later one `value`. */
 const scheduledFrom = (target: ResearchTarget, first: number, value: number, gold: readonly number[], times: readonly (readonly number[])[]) =>
   scheduled(target, value, gold, times).map((level, i) => (i ? level : { ...level, effect: { ...level.effect, value: first } }));
@@ -1243,6 +1267,28 @@ export const RESEARCH = {
     categories: ["arcana", "offense"],
     requires: [{ upgrade: "archives" }, { upgrade: "necroticFrostResearch" }, { research: "necroFreeze", level: 1 }],
     levels: scheduled("necroFreezeTurns", 1, FREEZE_TURNS_GOLD, FREEZE_TURNS_TIMES),
+  },
+  ricochetShock: {
+    name: "Ricochet Shock",
+    description: "Ricochet Shot may shock the enemies it hits, so they take more damage from every hit after.",
+    categories: ["arcana", "offense"],
+    requires: [{ upgrade: "archives" }, { upgrade: "ricochetShockResearch" }],
+    // 950,000 Gold and 0d 23h 53m.
+    levels: [levelOf("ricochetShock", 1, 950_000, 23 * 60 + 53)],
+  },
+  shockChance: {
+    name: "Shock Chance",
+    description: "Raises the chance Ricochet Shot shocks the enemies it hits.",
+    categories: ["arcana", "offense"],
+    requires: [{ upgrade: "archives" }, { upgrade: "ricochetShockResearch" }, { research: "ricochetShock", level: 1 }],
+    levels: scheduled("shockChance", 50, SHOCK_GOLD, SHOCK_TIMES),
+  },
+  shockMultiplier: {
+    name: "Shock Multiplier",
+    description: "Raises what shocked enemies' damage taken is multiplied by.",
+    categories: ["arcana", "offense"],
+    requires: [{ upgrade: "archives" }, { upgrade: "ricochetShockResearch" }, { research: "ricochetShock", level: 1 }],
+    levels: scheduled("shockMultiplier", 4, SHOCK_GOLD.slice(0, SHOCK_MULTIPLIER_LEVELS), SHOCK_TIMES.slice(0, SHOCK_MULTIPLIER_LEVELS)),
   },
   overseerZap: {
     name: "Overseer Zap",
