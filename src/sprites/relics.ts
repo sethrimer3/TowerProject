@@ -647,7 +647,7 @@ export const RELIC_ART = {
   },
   "shop.coins3": {
     "id": "relic-shop-coins3",
-    "name": "Founder's Cape",
+    "name": "Champion's Cape",
     "rarity": "legendary"
   }
 } as const;

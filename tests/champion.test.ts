@@ -84,10 +84,10 @@ test("a Champion sees the next two Premium Offers", () => {
   assert.deepEqual(premiumOffers(g.save, 2).map((o) => o.id), ["stellar"]);
 });
 
-test("the Founder's Cape raises ATK and DEF by 5%, and Champion XP is its own +25% factor", () => {
+test("the Champion's Cape raises ATK and DEF by 5%, and Champion XP is its own +25% factor", () => {
   const g = champion();
   assert.ok(g.save.relics.includes("shop.coins3"));
-  assert.equal(RELICS["shop.coins3"]!.name, "Founder's Cape");
+  assert.equal(RELICS["shop.coins3"]!.name, "Champion's Cape");
   assert.equal(RELICS["shop.coins3"]!.rarity, "legendary");
   const plain = new Game(defaults());
   plain.newRun();
@@ -148,6 +148,9 @@ test("Daily Training Points: once each GMT day, rolling ×5, then ×3, then ×2"
   assert.equal(championValue(g.save, "dailyDouble"), 72);
   assert.equal(championValue(g.save, "dailyTriple"), 48);
   assert.equal(championValue(g.save, "dailyFive"), 10);
+  // The base is 1 point, so ×2, ×3 and ×5 pay 2, 3 and 5.
+  assert.equal(DAILY_TRAINING_POINTS, 1);
+  assert.deepEqual(claimDaily(g.save, NOON + 2 * DAY_MS, () => 0), { points: 5, times: 5 });
 });
 
 test("One Piece Tickets: one a tier from 14, claimed in the Club, each a free five-Star Unique", () => {
@@ -243,4 +246,11 @@ test("Dash, End Rush and the Stellar Floor chance count the Club's tiers without
   assert.equal(g.dashTiles, g.worn.dashTiles + 1);
   assert.equal(g.dashFor("stairs") - g.dashTiles, g.worn.endRushTiles + 3);
   assert.equal(g.environments.stellarFloor, 4);
+  // With the research, the Club's tiles add to its levels'.
+  g.save.upgrades.dash = 1;
+  g.save.upgrades.endRush = 1;
+  g.save.archives.levels.dash = 3;
+  g.save.archives.levels.endRush = 2;
+  assert.equal(g.dashTiles, g.worn.dashTiles + 3 + 1);
+  assert.equal(g.dashFor("stairs") - g.dashTiles, g.worn.endRushTiles + 2 + 3);
 });

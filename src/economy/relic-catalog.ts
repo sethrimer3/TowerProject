@@ -184,7 +184,7 @@ export const SHOP_RELICS: Readonly<Record<string, { name: string; bonuses: reado
   researcher: { name: "Archivist Badge", bonuses: [{ kind: "special", effect: "researchSpeed", amount: 5 }] },
   trainer: { name: "Training Accolade", bonuses: [{ kind: "special", effect: "trainerSpeed", amount: 5 }, { kind: "special", effect: "xp", amount: 10 }] },
   stellar: { name: "Astral Ribbon", bonuses: [{ kind: "special", effect: "stellarFloor", amount: 1 }, { kind: "special", effect: "stellarGem", amount: 1 }] },
-  coins3: { name: "Founder's Cape", bonuses: [{ kind: "boost", stat: "attack", percent: 5 }, { kind: "boost", stat: "defense", percent: 5 }] },
+  coins3: { name: "Champion's Cape", bonuses: [{ kind: "boost", stat: "attack", percent: 5 }, { kind: "boost", stat: "defense", percent: 5 }] },
 };
 
 export const TOWER_RELICS: Readonly<Record<number, { epic: RelicEntry; legendary: RelicEntry }>> = {

@@ -62,9 +62,9 @@ Owning the Champion's Bundle makes the player a **Champion** (`shop/champion.ts`
 
 - ×2 the most offline time Offline Gold pays (and Offline Gems), and Offline Gold even without the Offline Gold skill;
 - +25% XP from kills, a factor of its own;
-- the unique legendary relic **Founder's Cape**: +5% ATK and +5% DEF (`shop.coins3`);
+- the unique legendary relic **Champion's Cape**: +5% ATK and +5% DEF (`shop.coins3`);
 - −20 s off the ad Gem button's cooldown;
-- **Daily Training Points**: 3 Training Points to claim on the Training page once each Shop day (00:00 GMT); the button shows *Claim* and the points, then the countdown to the next and the points; the Club's tiers may multiply a claim;
+- **Daily Training Points**: 1 Training Point to claim on the Training page once each Shop day (00:00 GMT); the button shows *Claim* and the points, then the countdown to the next and the points; the Club's tiers may multiply a claim;
 - the next two Premium Offers shown instead of one;
 - the Champion's Club, whose tiers raise permanent bonuses as VIP Points are earned.
 
@@ -74,7 +74,7 @@ Owning the Champion's Bundle makes the player a **Champion** (`shop/champion.ts`
 |---|---|---|
 | Base | the bundle | +5% Offline Gold rate (+2%, 95%); Offline Gems 5% (+2%, 50%) |
 | 1 | 960 | 12% chance of ×2 Daily Training Points (+6%, 78%) |
-| 2 | 1,440 | −10 s Gem button cooldown (−5 s, −60 s) |
+| 2 | 1,440 | −10 s Gem button cooldown (−5 s, −60 s), on top of the bundle's −20 s (−80 s in all) |
 | 3 | 2,080 | +5% Gold (+3%) |
 | 4 | 2,880 | +10% Silver (+5%) |
 | 5 | 3,920 | +5% Golden Gem chance (+3%, 30%) |
@@ -82,7 +82,7 @@ Owning the Champion's Bundle makes the player a **Champion** (`shop/champion.ts`
 | 7 | 7,440 | 16% chance of ×3 Daily Training Points (+8%, 64%) |
 | 8 | 9,920 | +2 Gems from the Gem button (+1, 7) |
 | 9 | 12,480 | +1% Stellar Floor chance (+1%, 8%) |
-| 10 | 16,000 | +1 Dash tile, +1 End Rush tile (+1 End Rush) |
+| 10 | 16,000 | +1 Dash tile, +1 End Rush tile (+1 End Rush), added to the research's, with or without it |
 | 11 | 21,600 | 10% chance of ×5 Daily Training Points (+2%, 20%) |
 | 12 | 28,800 | +0.5% Gem chance a floor (+0.25%, 2%) |
 | 13 | 37,200 | 0.25% chance a Gem button reward pays 100 Gems (+0.25%, 2%) |

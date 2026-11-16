@@ -29,8 +29,8 @@ export function championBanner(save: Pick<Save, "entitlements" | "vip" | "champi
 
 /** What the bundle itself gives, each always the Champion's. */
 const PERKS = [
-  `×${CHAMPION_OFFLINE_TIME} Offline time max`, `+${CHAMPION_XP}% XP gain`, "Founder's Cape: +5% ATK and +5% DEF",
-  `−${CHAMPION_GEM_COOLDOWN}s Gem button cooldown`, `Daily Training Points (${DAILY_TRAINING_POINTS} a day, on the Training page)`,
+  `×${CHAMPION_OFFLINE_TIME} Offline time max`, `+${CHAMPION_XP}% XP gain`, "Champion's Cape: +5% ATK and +5% DEF",
+  `−${CHAMPION_GEM_COOLDOWN}s Gem button cooldown (Tier 2's adds to it)`, `Daily Training Points (${DAILY_TRAINING_POINTS} a day, on the Training page)`,
   `See the next ${CHAMPION_PREMIUM_SHOWN} Premium Offers`, "VIP Points raise permanent bonuses",
 ];
 

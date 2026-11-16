@@ -28,7 +28,8 @@ export const CHAMPION_XP = 25;
 /** Seconds off the ad Gem button's cooldown. */
 export const CHAMPION_GEM_COOLDOWN = 20;
 /** Training Points the Daily Training Points pay before their multiplier. */
-export const DAILY_TRAINING_POINTS = 3;
+export const DAILY_TRAINING_POINTS = 1;
+
 /** Premium Offers shown at once to a Champion (one otherwise). */
 export const CHAMPION_PREMIUM_SHOWN = 2;
 /** Gems an ad Gem reward pays when the Champion's jackpot hits. */
@@ -79,8 +80,8 @@ export const CHAMPION_BONUSES: Readonly<Record<ChampionBonusId, ChampionBonus>> 
   dailyTriple: { tier: 7, base: 16, step: 8, cap: 64, unit: "%", text: (v) => `${pct(v)} chance of ×3 Daily Training Points` },
   adGems: { tier: 8, base: 2, step: 1, cap: 7, unit: "", text: (v) => `+${v} Gems from the Gem button` },
   stellarFloor: { tier: 9, base: 1, step: 1, cap: 8, unit: "%", text: (v) => `+${pct(v)} Stellar Floor chance` },
-  dash: { tier: 10, base: 1, step: 0, unit: "", text: (v) => `+${v} Dash tile${v === 1 ? "" : "s"}` },
-  endRush: { tier: 10, base: 1, step: 1, unit: "", text: (v) => `+${v} End Rush tile${v === 1 ? "" : "s"}` },
+  dash: { tier: 10, base: 1, step: 0, unit: "", text: (v) => `+${v} Dash tile${v === 1 ? "" : "s"}, with or without its research` },
+  endRush: { tier: 10, base: 1, step: 1, unit: "", text: (v) => `+${v} End Rush tile${v === 1 ? "" : "s"}, with or without its research` },
   dailyFive: { tier: 11, base: 10, step: 2, cap: 20, unit: "%", text: (v) => `${pct(v)} chance of ×5 Daily Training Points` },
   gemChance: { tier: 12, base: 0.5, step: 0.25, cap: 2, unit: "%", text: (v) => `+${pct(v)} Gem chance a floor` },
   adJackpot: { tier: 13, base: 0.25, step: 0.25, cap: 2, unit: "%", text: (v) => `${pct(v)} chance a Gem button reward pays ${AD_JACKPOT_GEMS} Gems` },
