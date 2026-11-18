@@ -1,6 +1,6 @@
-import "./style.css";
-import "./ui-sprites.css";
-import "./loading.css";
+import "./styles/style.css";
+import "./styles/ui-sprites.css";
+import "./styles/loading.css";
 import "./sprites/ui-atlas.css";
 import { finishInterfaceLoading, preloadSprites } from "./sprites/preload.ts";
 import { uiAtlasEnabled } from "./sprites/ui-atlas.ts";

@@ -1,6 +1,6 @@
 @font-face {
   font-family: "Tower Pixel";
-  src: url("../assets/fonts/TowerPixel/TowerPixel-Regular.woff2") format("woff2");
+  src: url("../../assets/fonts/TowerPixel/TowerPixel-Regular.woff2") format("woff2");
   font-style: normal;
   font-weight: 400 900;
   font-display: swap;
@@ -11,18 +11,18 @@
    quiet so it can stretch behind live labels without distorting artwork.
    Keep kit-specific frame metrics here; shared layout belongs to style.css. */
 html.ui-sprites {
-  --ui-button: url("../public/assets/ui/frames/button.png");
-  --ui-hover: url("../public/assets/ui/frames/button-hover.png");
-  --ui-pressed: url("../public/assets/ui/frames/button-pressed.png");
-  --ui-selected: url("../public/assets/ui/frames/button-selected.png");
-  --ui-disabled: url("../public/assets/ui/frames/button-disabled.png");
-  --ui-danger: url("../public/assets/ui/frames/button-danger.png");
-  --ui-panel: url("../public/assets/ui/frames/panel.png");
-  --ui-dialog: url("../public/assets/ui/frames/dialog.png");
-  --ui-field: url("../public/assets/ui/frames/field.png");
-  --ui-slider-thumb: url("../public/assets/style/ui-slider-thumb.png");
-  --ui-slider-thumb-active: url("../public/assets/style/ui-slider-thumb-active.png");
-  --ui-slider-track: url("../public/assets/style/ui-slider-track.png");
+  --ui-button: url("../../public/assets/ui/frames/button.png");
+  --ui-hover: url("../../public/assets/ui/frames/button-hover.png");
+  --ui-pressed: url("../../public/assets/ui/frames/button-pressed.png");
+  --ui-selected: url("../../public/assets/ui/frames/button-selected.png");
+  --ui-disabled: url("../../public/assets/ui/frames/button-disabled.png");
+  --ui-danger: url("../../public/assets/ui/frames/button-danger.png");
+  --ui-panel: url("../../public/assets/ui/frames/panel.png");
+  --ui-dialog: url("../../public/assets/ui/frames/dialog.png");
+  --ui-field: url("../../public/assets/ui/frames/field.png");
+  --ui-slider-thumb: url("../../public/assets/style/ui-slider-thumb.png");
+  --ui-slider-thumb-active: url("../../public/assets/style/ui-slider-thumb-active.png");
+  --ui-slider-track: url("../../public/assets/style/ui-slider-track.png");
   --ui-face: var(--ui-button);
   --gold: #e1bb78;
   --muted: #8b9a9d;
@@ -36,7 +36,7 @@ html.ui-sprites :not(:where(svg, svg *, .badge-glyph, .badge-glyph *)):not(#_) {
 }
 
 html.ui-sprites body:not(#_) {
-  background: #10151c url("../public/assets/ui/frames/surface.png") repeat;
+  background: #10151c url("../../public/assets/ui/frames/surface.png") repeat;
   background-size: 96px 48px;
 }
 html.ui-sprites .shell:not(#_) {
@@ -259,7 +259,7 @@ html.ui-sprites .keys { flex-wrap: wrap; }
 }
 html.ui-sprites :is(.deck-slot, .node-icon):not(#_) {
   border: 2px solid transparent;
-  border-image: url("../public/assets/ui/frames/slot.png") 6 fill / 12px / 0 stretch;
+  border-image: url("../../public/assets/ui/frames/slot.png") 6 fill / 12px / 0 stretch;
   border-radius: 0;
   background: transparent;
   image-rendering: pixelated;
@@ -287,13 +287,13 @@ html.ui-sprites input[type="checkbox"]:not(#_) {
   margin: 0;
   border: 0;
   border-radius: 0;
-  background: url("../public/assets/ui/frames/field.png") center / 24px 24px no-repeat;
+  background: url("../../public/assets/ui/frames/field.png") center / 24px 24px no-repeat;
   box-shadow: none;
   image-rendering: pixelated;
   cursor: pointer;
 }
 html.ui-sprites input[type="checkbox"]:checked:not(#_) {
-  background-image: url("../public/assets/ui/frames/button-selected.png");
+  background-image: url("../../public/assets/ui/frames/button-selected.png");
 }
 html.ui-sprites input[type="checkbox"]:checked::after {
   content: "";
@@ -310,26 +310,26 @@ html.ui-sprites :is(.xp-track, .health-track, .weekly-bar, .mission-bar,
   .research-bar, .refine-bar):not(#_) {
   background: #10151c;
   border-color: transparent;
-  border-image: url("../public/assets/ui/frames/track.png") 6 fill / 4px / 0 stretch;
+  border-image: url("../../public/assets/ui/frames/track.png") 6 fill / 4px / 0 stretch;
   border-radius: 0;
   box-shadow: none;
   image-rendering: pixelated;
 }
 html.ui-sprites :is(.xp-track i, .weekly-bar i, .mission-bar i,
   .research-bar i, .refine-bar span, .event-bar i):not(#_) {
-  background: url("../public/assets/ui/frames/fill-green.png") left top / 32px 100% repeat-x;
+  background: url("../../public/assets/ui/frames/fill-green.png") left top / 32px 100% repeat-x;
   border-radius: 0;
   box-shadow: none;
   image-rendering: pixelated;
 }
 html.ui-sprites .xp-track i:not(#_) {
-  background-image: url("../public/assets/ui/frames/fill-blue.png");
+  background-image: url("../../public/assets/ui/frames/fill-blue.png");
 }
 html.ui-sprites #health:not(#_) {
-  background: url("../public/assets/ui/frames/fill-red.png") left top / 32px 100% repeat-x;
+  background: url("../../public/assets/ui/frames/fill-red.png") left top / 32px 100% repeat-x;
 }
 html.ui-sprites #health-gain:not(#_) {
-  background: url("../public/assets/ui/frames/fill-blue.png") left top / 32px 100% repeat-x;
+  background: url("../../public/assets/ui/frames/fill-blue.png") left top / 32px 100% repeat-x;
 }
 /* The pending-damage segment retains its distinct purple semantics. */
 html.ui-sprites #health-loss:not(#_) { background: #80608e; }
@@ -337,7 +337,7 @@ html.ui-sprites #health-loss:not(#_) { background: #80608e; }
 html.ui-sprites .page-title:not(#_) {
   background: transparent;
   border: 2px solid transparent;
-  border-image: url("../public/assets/ui/frames/banner.png") 6 fill / 12px / 0 stretch;
+  border-image: url("../../public/assets/ui/frames/banner.png") 6 fill / 12px / 0 stretch;
   image-rendering: pixelated;
   padding-block: 14px;
   color: #10151c;
@@ -382,7 +382,7 @@ html.ui-sprites :is(#deck .ug-node.root, .ct-card) .sprite-card-label:not(#_) { 
 .badge-condition { display: none; }
 .badge-mark > .badge-glyph, .hand-badge-level > .badge-glyph { font-size: inherit; }
 html.ui-sprites :is(.badge-token, .badge-mark, .hand-badge-level) {
-  --badge-frame: url("../public/assets/style/badge-frame-common.png");
+  --badge-frame: url("../../public/assets/style/badge-frame-common.png");
   border-image: var(--badge-frame) 6 fill / 6px / 0 stretch;
   border-radius: 0;
   background: none;
@@ -390,10 +390,10 @@ html.ui-sprites :is(.badge-token, .badge-mark, .hand-badge-level) {
   image-rendering: pixelated;
 }
 html.ui-sprites :is(.badge-token, .badge-mark, .hand-badge-level).rarity-rare {
-  --badge-frame: url("../public/assets/style/badge-frame-rare.png");
+  --badge-frame: url("../../public/assets/style/badge-frame-rare.png");
 }
 html.ui-sprites :is(.badge-token, .badge-mark, .hand-badge-level).rarity-epic {
-  --badge-frame: url("../public/assets/style/badge-frame-epic.png");
+  --badge-frame: url("../../public/assets/style/badge-frame-epic.png");
 }
 html.ui-sprites .badge-token > .badge-glyph { width: 24px; height: 24px; text-shadow: none; }
 html.ui-sprites .badge-token.big { border-image-width: 12px; }
@@ -434,7 +434,7 @@ html.ui-sprites .silver-sprite.sprite-ready { filter: none; }
 html.ui-sprites :is(.goal-mark, .goal-badge, .relic-lock).sprite-ready { filter: none; }
 html.ui-sprites .goal-marks > .inactive .goal-mark.sprite-ready { opacity: 0.45; }
 html.ui-sprites.medieval dialog::before {
-  background: url("../public/assets/style/ui-seal.png") center / contain no-repeat;
+  background: url("../../public/assets/style/ui-seal.png") center / contain no-repeat;
   width: 48px;
   height: 48px;
   transform: translateX(-50%);
@@ -442,7 +442,7 @@ html.ui-sprites.medieval dialog::before {
   image-rendering: pixelated;
 }
 html.ui-sprites .forest-sign:not(#_) {
-  border-image: url("../public/assets/style/ui-sign.png") 6 fill / 12px / 0 stretch;
+  border-image: url("../../public/assets/style/ui-sign.png") 6 fill / 12px / 0 stretch;
   border-radius: 0;
   background: none;
   box-shadow: none;
@@ -453,7 +453,7 @@ html.ui-sprites #deck-hand .deck-link-toggle::before {
   width: 16px;
   height: 16px;
   border: 0;
-  background: url("../public/assets/style/ui-link.png") center / contain no-repeat;
+  background: url("../../public/assets/style/ui-link.png") center / contain no-repeat;
   transform: translate(-50%, -50%);
   image-rendering: pixelated;
   box-shadow: none;
@@ -480,7 +480,7 @@ html.ui-sprites .skill-node.locked .node-icon:not(#_) { border-image-source: var
 html.ui-sprites .skill-node.chosen .node-icon:not(#_) { outline: 2px solid #e1bb78; outline-offset: 2px; }
 html.ui-sprites :is(.training-group, .page-title h2, .tree-heading h3)::before,
 html.ui-sprites :is(.training-group, .page-title h2, .tree-heading h3)::after {
-  background: url("../public/assets/style/ui-link.png") right center / auto 12px no-repeat;
+  background: url("../../public/assets/style/ui-link.png") right center / auto 12px no-repeat;
   image-rendering: pixelated;
 }
 /* Notes and stat tables also sit on slate when the PNG dialog is active. */
@@ -540,7 +540,7 @@ html.ui-sprites .stats .shrine-diamond:not(#_) {
   top: -5px;
   left: -4px;
   border: 0;
-  background: url("../public/assets/style/shrine-count.png") center / contain no-repeat;
+  background: url("../../public/assets/style/shrine-count.png") center / contain no-repeat;
   transform: none;
   box-shadow: none;
   image-rendering: pixelated;
@@ -548,15 +548,15 @@ html.ui-sprites .stats .shrine-diamond:not(#_) {
 }
 html.ui-sprites .stats .shrine-diamond.lit:not(#_) { opacity: 1; }
 html.ui-sprites .stats .shrine-diamond b:not(#_) { transform: none; color: #eee0b7; }
-html.ui-sprites #shrine-fill:not(#_) { background: url("../public/assets/style/shrine-fill.png") left top / 32px 100% repeat-x; box-shadow: none; }
-html.ui-sprites #shield-fill:not(#_) { background: url("../public/assets/ui/frames/fill-blue.png") left top / 32px 100% repeat-x; }
-html.ui-sprites #overheal-fill:not(#_) { background: url("../public/assets/ui/frames/fill-blue.png") left top / 32px 100% repeat-x; }
+html.ui-sprites #shrine-fill:not(#_) { background: url("../../public/assets/style/shrine-fill.png") left top / 32px 100% repeat-x; box-shadow: none; }
+html.ui-sprites #shield-fill:not(#_) { background: url("../../public/assets/ui/frames/fill-blue.png") left top / 32px 100% repeat-x; }
+html.ui-sprites #overheal-fill:not(#_) { background: url("../../public/assets/ui/frames/fill-blue.png") left top / 32px 100% repeat-x; }
 
 /* Equipment keeps its live rarity letters and levels over reusable frames. */
 .sprite-icon.eq-tile-worn, .sprite-icon.eq-tile-unique { position: absolute; }
 .eq-salvage-icon { display: none; }
 html.ui-sprites :is(.eq-tile, .equip-icon-frame):not(#_) {
-  --equipment-frame: url("../public/assets/style/ui-equip-frame-common.png");
+  --equipment-frame: url("../../public/assets/style/ui-equip-frame-common.png");
   border: 1px solid transparent;
   border-image: var(--equipment-frame) 6 fill / 6px / 0 stretch;
   border-radius: 0;
@@ -564,11 +564,11 @@ html.ui-sprites :is(.eq-tile, .equip-icon-frame):not(#_) {
   box-shadow: none;
   image-rendering: pixelated;
 }
-html.ui-sprites :is(.eq-tile, .equip-icon-frame).rar-uncommon:not(#_) { --equipment-frame: url("../public/assets/style/ui-equip-frame-uncommon.png"); }
-html.ui-sprites :is(.eq-tile, .equip-icon-frame).rar-rare:not(#_) { --equipment-frame: url("../public/assets/style/ui-equip-frame-rare.png"); }
+html.ui-sprites :is(.eq-tile, .equip-icon-frame).rar-uncommon:not(#_) { --equipment-frame: url("../../public/assets/style/ui-equip-frame-uncommon.png"); }
+html.ui-sprites :is(.eq-tile, .equip-icon-frame).rar-rare:not(#_) { --equipment-frame: url("../../public/assets/style/ui-equip-frame-rare.png"); }
 /* TODO: Epic and above borrow the Rare frame until their own PNGs are drawn; the --rar colour tells them apart. */
-html.ui-sprites :is(.eq-tile, .equip-icon-frame):is(.rar-epic, .rar-legendary, .rar-mythic, .rar-ancestral):not(#_) { --equipment-frame: url("../public/assets/style/ui-equip-frame-rare.png"); }
-html.ui-sprites .eq-tile.eq-ghost:not(#_) { --equipment-frame: url("../public/assets/style/ui-equip-frame-empty.png"); background: #10151c; }
+html.ui-sprites :is(.eq-tile, .equip-icon-frame):is(.rar-epic, .rar-legendary, .rar-mythic, .rar-ancestral):not(#_) { --equipment-frame: url("../../public/assets/style/ui-equip-frame-rare.png"); }
+html.ui-sprites .eq-tile.eq-ghost:not(#_) { --equipment-frame: url("../../public/assets/style/ui-equip-frame-empty.png"); background: #10151c; }
 html.ui-sprites .eq-tile.selected:not(#_) { outline: none; }
 html.ui-sprites .eq-tile.selected:focus-visible:not(#_) { outline: 2px solid #e1bb78; outline-offset: 3px; }
 html.ui-sprites .eq-tile.selected::after {
@@ -576,7 +576,7 @@ html.ui-sprites .eq-tile.selected::after {
   position: absolute;
   inset: -3px;
   border: 1px solid transparent;
-  border-image: url("../public/assets/style/ui-equip-frame-selection.png") 6 / 6px / 0 stretch;
+  border-image: url("../../public/assets/style/ui-equip-frame-selection.png") 6 / 6px / 0 stretch;
   pointer-events: none;
 }
 html.ui-sprites :is(.eq-tile-mark, .eq-tile-level, .eq-tile-worn, .eq-tile-unique):not(#_) { text-shadow: none; }
@@ -591,7 +591,7 @@ html.ui-sprites .eq-check:not(#_) {
   height: 24px;
   border: 0;
   border-radius: 0;
-  background: url("../public/assets/ui/frames/field.png") center / 24px 24px no-repeat;
+  background: url("../../public/assets/ui/frames/field.png") center / 24px 24px no-repeat;
   image-rendering: pixelated;
   flex-shrink: 0;
 }
@@ -652,8 +652,8 @@ html.ui-sprites :is(.gold-bonus-box, .enemy-odds-box):not(#_) {
 html.ui-sprites :is(.gold-bonus-box, .enemy-odds-box) :is(h2, th):not(#_) { color: #e1bb78; }
 html.ui-sprites :is(.gold-bonus-box, .enemy-odds-box) :is(td, li, p):not(#_) { color: #b8c2bb; }
 html.ui-sprites .gold-bonus-box li.inactive:not(#_) { color: #8b9a9d; }
-html.ui-sprites :is(#health-gain, #overheal-gain):not(#_) { background: url("../public/assets/style/ui-fill-gain.png") left top / 32px 100% repeat-x; }
-html.ui-sprites :is(#health-loss, #overheal-loss):not(#_) { background: url("../public/assets/style/shrine-fill.png") left top / 32px 100% repeat-x; image-rendering: pixelated; }
+html.ui-sprites :is(#health-gain, #overheal-gain):not(#_) { background: url("../../public/assets/style/ui-fill-gain.png") left top / 32px 100% repeat-x; }
+html.ui-sprites :is(#health-loss, #overheal-loss):not(#_) { background: url("../../public/assets/style/shrine-fill.png") left top / 32px 100% repeat-x; image-rendering: pixelated; }
 
 /* The native input retains its value, keyboard behavior and accessible label. */
 html.ui-sprites input[type="range"]:not(#_) {

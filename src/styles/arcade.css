@@ -8,14 +8,14 @@
    theme is off. Loaded after style.css and the other themes. */
 @font-face {
   font-family: "Press Start 2P";
-  src: url("../assets/fonts/PressStart2P/PressStart2P-Regular.woff2") format("woff2");
+  src: url("../../assets/fonts/PressStart2P/PressStart2P-Regular.woff2") format("woff2");
   font-weight: 400 900;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: VT323;
-  src: url("../assets/fonts/VT323/VT323-Regular.ttf") format("truetype");
+  src: url("../../assets/fonts/VT323/VT323-Regular.ttf") format("truetype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;

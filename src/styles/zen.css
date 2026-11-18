@@ -8,14 +8,14 @@
    after style.css and the other themes. */
 @font-face {
   font-family: "Cormorant Garamond";
-  src: url("../assets/fonts/CormorantGaramond/CormorantGaramond-Medium.woff2") format("woff2");
+  src: url("../../assets/fonts/CormorantGaramond/CormorantGaramond-Medium.woff2") format("woff2");
   font-weight: 400 600;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "Cormorant Garamond";
-  src: url("../assets/fonts/CormorantGaramond/CormorantGaramond-Bold.woff2") format("woff2");
+  src: url("../../assets/fonts/CormorantGaramond/CormorantGaramond-Bold.woff2") format("woff2");
   font-weight: 700 900;
   font-style: normal;
   font-display: swap;
@@ -62,12 +62,12 @@ html:is(.yang, .yin) *:not(.badge-glyph, .badge-mark) {
 /* The paper, and a faint ensō brushed in its corner. */
 html.yang body {
   background:
-    url("../public/assets/style/theme-zen-circle.png") right -60px bottom -40px / 340px no-repeat fixed,
+    url("../../public/assets/style/theme-zen-circle.png") right -60px bottom -40px / 340px no-repeat fixed,
     var(--z-paper);
 }
 html.yin body {
   background:
-    url("../public/assets/style/theme-zen-circle.png") right -60px bottom -40px / 340px no-repeat fixed,
+    url("../../public/assets/style/theme-zen-circle.png") right -60px bottom -40px / 340px no-repeat fixed,
     var(--z-paper);
 }
 /* The page's own colours give way everywhere: ink on paper, no glows, no

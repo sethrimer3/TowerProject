@@ -24,7 +24,7 @@ Do not use SVG replacements, gradients, glow, blur or fine texture in this kit.
 
 The runtime components live in `public/assets/ui/frames/`, with sizes and slice widths in `manifest.json`.
 There are six button states, panel and dialog frames, an inset field, a progress track, three colored progress fills, a tiling surface, a title banner and a card slot.
-`src/ui-sprites.css` applies these components only under `html.ui-sprites`; buttons, dialogs, settings controls, HUD bars and page panels retain their existing interactions.
+`src/styles/ui-sprites.css` applies these components only under `html.ui-sprites`; buttons, dialogs, settings controls, HUD bars and page panels retain their existing interactions.
 The shared extension lives in `public/assets/style/`, with its native dimensions in `manifest.json`.
 It includes currencies, pickups, controls, four hero directions, every named enemy, forest structures, Equipment, materials and card faces.
 Card names remain live text over the PNG backgrounds.

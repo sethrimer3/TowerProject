@@ -12,7 +12,7 @@
    theme is off. Loaded after style.css and the other themes. */
 @font-face {
   font-family: "Patrick Hand";
-  src: url("../assets/fonts/PatrickHand/PatrickHand-Regular.woff2") format("woff2");
+  src: url("../../assets/fonts/PatrickHand/PatrickHand-Regular.woff2") format("woff2");
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
@@ -25,29 +25,29 @@ html.murk {
   --m-red: #ff6878;
   --m-green: #8fcf7a;
   /* a panel: dark slate paper in a freehand chalky box. */
-  --m-panel: url("../public/assets/style/theme-murk-panel.png");
+  --m-panel: url("../../public/assets/style/theme-murk-panel.png");
   /* a dialog: the same box, its line thicker. */
-  --m-dialog: url("../public/assets/style/theme-murk-selected.png");
+  --m-dialog: url("../../public/assets/style/theme-murk-selected.png");
   /* a button: poured dusky violet, its fill landing a little off the line. */
-  --m-button: url("../public/assets/style/theme-murk-normal.png");
+  --m-button: url("../../public/assets/style/theme-murk-normal.png");
   /* a button pressed: a paler violet, the fill on the line. */
-  --m-press: url("../public/assets/style/theme-murk-pressed.png");
+  --m-press: url("../../public/assets/style/theme-murk-pressed.png");
   /* what is chosen: poured moss green. */
-  --m-chosen: url("../public/assets/style/theme-murk-selected.png");
+  --m-chosen: url("../../public/assets/style/theme-murk-selected.png");
   /* a button that can't be pressed: near black in a dim line. */
-  --m-off: url("../public/assets/style/theme-murk-disabled.png");
+  --m-off: url("../../public/assets/style/theme-murk-disabled.png");
   /* what is dangerous: poured blood red. */
-  --m-danger: url("../public/assets/style/theme-murk-danger.png");
+  --m-danger: url("../../public/assets/style/theme-murk-danger.png");
   /* a field or well: darker, a thinner line, the fill on it. */
-  --m-field: url("../public/assets/style/theme-murk-field.png");
+  --m-field: url("../../public/assets/style/theme-murk-field.png");
   /* a note: a faded mustard sticky note. */
-  --m-tip: url("../public/assets/style/theme-murk-panel.png");
+  --m-tip: url("../../public/assets/style/theme-murk-panel.png");
   /* a page title's banner: wine. */
-  --m-banner: url("../public/assets/style/theme-murk-selected.png");
+  --m-banner: url("../../public/assets/style/theme-murk-selected.png");
   /* The night, with a dim star or a bat now and then. */
-  --m-specks: url("../public/assets/style/theme-orbit-stars.png");
+  --m-specks: url("../../public/assets/style/theme-orbit-stars.png");
   /* A scribbled crescent moon with a glum face, hung on a page title. */
-  --m-moon: url("../public/assets/style/theme-murk-normal.png");
+  --m-moon: url("../../public/assets/style/theme-murk-normal.png");
   --gold: #e0b84a;
   --muted: var(--m-dim);
   --line: var(--m-line);

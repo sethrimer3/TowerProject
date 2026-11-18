@@ -11,14 +11,14 @@
    theme is off. Loaded after style.css and the other themes. */
 @font-face {
   font-family: "Comic Neue";
-  src: url("../assets/fonts/ComicNeue/ComicNeue-Regular.woff2") format("woff2");
+  src: url("../../assets/fonts/ComicNeue/ComicNeue-Regular.woff2") format("woff2");
   font-weight: 100 500;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "Comic Neue";
-  src: url("../assets/fonts/ComicNeue/ComicNeue-Bold.woff2") format("woff2");
+  src: url("../../assets/fonts/ComicNeue/ComicNeue-Bold.woff2") format("woff2");
   font-weight: 600 900;
   font-style: normal;
   font-display: swap;
@@ -31,25 +31,25 @@ html.doodle {
   --d-green: #008000;
   --d-yellow: #ffff00;
   /* a panel: white paper in a freehand black box. */
-  --d-panel: url("../public/assets/style/theme-doodle-panel.png");
+  --d-panel: url("../../public/assets/style/theme-doodle-panel.png");
   /* a dialog: the same box, its line thicker. */
-  --d-dialog: url("../public/assets/style/theme-doodle-selected.png");
+  --d-dialog: url("../../public/assets/style/theme-doodle-selected.png");
   /* a button: poured pale cyan, its fill landing a little off the line. */
-  --d-button: url("../public/assets/style/theme-doodle-normal.png");
+  --d-button: url("../../public/assets/style/theme-doodle-normal.png");
   /* a button pressed: deeper cyan, the fill on the line. */
-  --d-press: url("../public/assets/style/theme-doodle-pressed.png");
+  --d-press: url("../../public/assets/style/theme-doodle-pressed.png");
   /* what is chosen: poured pale green. */
-  --d-chosen: url("../public/assets/style/theme-doodle-selected.png");
+  --d-chosen: url("../../public/assets/style/theme-doodle-selected.png");
   /* a button that can't be pressed: grey in a grey line. */
-  --d-off: url("../public/assets/style/theme-doodle-disabled.png");
+  --d-off: url("../../public/assets/style/theme-doodle-disabled.png");
   /* what is dangerous: poured pink-red. */
-  --d-danger: url("../public/assets/style/theme-doodle-danger.png");
+  --d-danger: url("../../public/assets/style/theme-doodle-danger.png");
   /* a field or well: a thinner line, the fill on it. */
-  --d-field: url("../public/assets/style/theme-doodle-field.png");
+  --d-field: url("../../public/assets/style/theme-doodle-field.png");
   /* a note: pale yellow, as a sticky note. */
-  --d-tip: url("../public/assets/style/theme-doodle-panel.png");
+  --d-tip: url("../../public/assets/style/theme-doodle-panel.png");
   /* a page title's banner: bright yellow. */
-  --d-banner: url("../public/assets/style/theme-doodle-selected.png");
+  --d-banner: url("../../public/assets/style/theme-doodle-selected.png");
   /* The paper, with a light grey speck of the spray can now and then. */
   --d-specks: none;
   --gold: #b07800;

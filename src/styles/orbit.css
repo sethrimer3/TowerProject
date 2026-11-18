@@ -8,28 +8,28 @@
    theme is off. Loaded after style.css and the other themes. */
 @font-face {
   font-family: Orbitron;
-  src: url("../assets/fonts/Orbitron/Orbitron-Medium.woff2") format("woff2");
+  src: url("../../assets/fonts/Orbitron/Orbitron-Medium.woff2") format("woff2");
   font-weight: 400 600;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: Orbitron;
-  src: url("../assets/fonts/Orbitron/Orbitron-Bold.woff2") format("woff2");
+  src: url("../../assets/fonts/Orbitron/Orbitron-Bold.woff2") format("woff2");
   font-weight: 700 900;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "Exo 2";
-  src: url("../assets/fonts/Exo2/Exo2-Regular.woff2") format("woff2");
+  src: url("../../assets/fonts/Exo2/Exo2-Regular.woff2") format("woff2");
   font-weight: 300 500;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "Exo 2";
-  src: url("../assets/fonts/Exo2/Exo2-SemiBold.woff2") format("woff2");
+  src: url("../../assets/fonts/Exo2/Exo2-SemiBold.woff2") format("woff2");
   font-weight: 600 900;
   font-style: normal;
   font-display: swap;
@@ -54,7 +54,7 @@ html.orbit {
   /* Deep space: a field of stars (`public/assets/style/theme-orbit-stars.png`), a faint
      violet and teal nebula, then black. */
   --o-stars:
-    url("../public/assets/style/theme-orbit-stars.png") 0 0 / 360px 360px,
+    url("../../public/assets/style/theme-orbit-stars.png") 0 0 / 360px 360px,
     radial-gradient(ellipse at 85% 12%, #5a3a9a40, transparent 45%),
     radial-gradient(ellipse at 10% 90%, #1a6a8a33, transparent 50%),
     var(--o-space);

@@ -5,7 +5,7 @@
    theme is off. Loaded after style.css and the other themes. */
 @font-face {
   font-family: VT323;
-  src: url("../assets/fonts/VT323/VT323-Regular.ttf") format("truetype");
+  src: url("../../assets/fonts/VT323/VT323-Regular.ttf") format("truetype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -34,7 +34,7 @@ html.ember *:not(.badge-glyph, .badge-mark) {
 html.ember body {
   background:
     radial-gradient(ellipse at 50% 40%, transparent 40%, #000000b0 100%),
-    url("../public/assets/style/theme-ember-runes.png"),
+    url("../../public/assets/style/theme-ember-runes.png"),
     #160406;
   text-shadow: 0 0 3px #ffb34799, 0 0 9px #ffb34744;
 }

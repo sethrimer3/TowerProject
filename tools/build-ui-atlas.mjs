@@ -25,11 +25,11 @@ const revision=createHash('sha256').update(png).digest('hex').slice(0,16);
 const regions=Object.fromEntries([...entries].sort((a,b)=>a.path.localeCompare(b.path)).map(({path,...r})=>[path,r]));
 const vars={};const overrides=postcss.root();
 const prefix=s=>s.replace(/^html(?=[\s.#:[>]|$)/,'html.experimental-atlas').replace(/^:root/,'html.experimental-atlas');
-for(const name of readdirSync('src').filter(n=>n.endsWith('.css'))){const root=postcss.parse(readFileSync(`src/${name}`,'utf8'));
+for(const name of readdirSync('src/styles').filter(n=>n.endsWith('.css'))){const root=postcss.parse(readFileSync(`src/styles/${name}`,'utf8'));
  root.walkRules(rule=>{
   const declarations=[];
   for(const d of rule.nodes??[]){if(d.type!=='decl')continue;let changed=false;
-   const value=d.value.replace(/url\(["']?([^"')]+)["']?\)/g,(whole,url)=>{const path=url.replace(/^\.\.\/public\//,'');if(!regions[path])return whole;changed=true;vars[path]??=`--atlas-${Object.keys(vars).length}`;return `var(${vars[path]}, none)`});
+   const value=d.value.replace(/url\(["']?([^"')]+)["']?\)/g,(whole,url)=>{const path=url.replace(/^(\.\.\/)+public\//,'');if(!regions[path])return whole;changed=true;vars[path]??=`--atlas-${Object.keys(vars).length}`;return `var(${vars[path]}, none)`});
    if(changed)declarations.push(d.clone({value}));
   }
   if(!declarations.length)return;

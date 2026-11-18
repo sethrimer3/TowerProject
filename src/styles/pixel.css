@@ -11,7 +11,7 @@
    theme is off. Loaded after style.css and the other themes. */
 @font-face {
   font-family: Tiny5;
-  src: url("../assets/fonts/Tiny5/Tiny5-Regular.woff2") format("woff2");
+  src: url("../../assets/fonts/Tiny5/Tiny5-Regular.woff2") format("woff2");
   /* One weight for all, so bold text never smears into a fake bold. */
   font-weight: 100 900;
   font-style: normal;
@@ -19,14 +19,14 @@
 }
 @font-face {
   font-family: Silkscreen;
-  src: url("../assets/fonts/Silkscreen/Silkscreen-Regular.woff2") format("woff2");
+  src: url("../../assets/fonts/Silkscreen/Silkscreen-Regular.woff2") format("woff2");
   font-weight: 100 500;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: Silkscreen;
-  src: url("../assets/fonts/Silkscreen/Silkscreen-Bold.woff2") format("woff2");
+  src: url("../../assets/fonts/Silkscreen/Silkscreen-Bold.woff2") format("woff2");
   font-weight: 600 900;
   font-style: normal;
   font-display: swap;
@@ -43,27 +43,27 @@ html.pixel {
   --p-blue: #6fb6ff;
   --p-title: Silkscreen, Tiny5, monospace;
   /* a panel: indigo, lit along its top and left. */
-  --p-panel: url("../public/assets/style/theme-pixel-panel.png");
+  --p-panel: url("../../public/assets/style/theme-pixel-panel.png");
   /* a dialog: the panel framed in gold. */
-  --p-dialog: url("../public/assets/style/theme-pixel-selected.png");
+  --p-dialog: url("../../public/assets/style/theme-pixel-selected.png");
   /* a button: blue, raised. */
-  --p-button: url("../public/assets/style/theme-pixel-normal.png");
+  --p-button: url("../../public/assets/style/theme-pixel-normal.png");
   /* a button pressed in: its bevel turned over. */
-  --p-press: url("../public/assets/style/theme-pixel-pressed.png");
+  --p-press: url("../../public/assets/style/theme-pixel-pressed.png");
   /* what is chosen: gold, raised. */
-  --p-gold: url("../public/assets/style/theme-pixel-selected.png");
+  --p-gold: url("../../public/assets/style/theme-pixel-selected.png");
   /* a button that can't be pressed: dull. */
-  --p-off: url("../public/assets/style/theme-pixel-disabled.png");
+  --p-off: url("../../public/assets/style/theme-pixel-disabled.png");
   /* what is dangerous: red, raised. */
-  --p-danger: url("../public/assets/style/theme-pixel-danger.png");
+  --p-danger: url("../../public/assets/style/theme-pixel-danger.png");
   /* a field or well: dark, pressed in. */
-  --p-field: url("../public/assets/style/theme-pixel-field.png");
+  --p-field: url("../../public/assets/style/theme-pixel-field.png");
   /* a note: parchment. */
-  --p-tip: url("../public/assets/ui/frames/banner.png");
+  --p-tip: url("../../public/assets/ui/frames/banner.png");
   /* a page title's banner: wine. */
-  --p-banner: url("../public/assets/style/theme-pixel-selected.png");
+  --p-banner: url("../../public/assets/style/theme-pixel-selected.png");
   /* The night behind it all: a few pixel stars, one gold twinkle. */
-  --p-stars: url("../public/assets/style/theme-orbit-stars.png");
+  --p-stars: url("../../public/assets/style/theme-orbit-stars.png");
   --gold: var(--p-gold);
   --muted: var(--p-dim);
   --line: var(--p-ink);
