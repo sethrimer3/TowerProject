@@ -1,0 +1,5 @@
+# Store and check out text as LF on every platform, overriding core.autocrlf.
+* text=auto eol=lf
+
+# Mixed line endings as shipped by the font; keep it byte-for-byte.
+assets/fonts/W95FA/OFL.txt -text
