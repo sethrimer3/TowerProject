@@ -91,3 +91,6 @@ The optional `experimentalAtlas` setting defaults to false on old saves; changin
 Obelisk `savedBoss.maxHp` optionally anchors the HP scale across attempts, including part HP, preserving knockouts when hero ATK changes.
 Older records without it use the next attempt’s scale, then write it on settlement.
 The ocean voyage is transient; reload returns to the saved dock location or resumes an existing attempt.
+
+`legacyBorders` defaults false and retains the previous shared PNG border artwork and metrics when enabled in Visual Settings.
+It is applied immediately by `applyUiTheme`, persists across reload/profile import, and resets to the continuous borders with other settings.

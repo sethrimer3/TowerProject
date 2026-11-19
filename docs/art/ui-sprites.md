@@ -25,6 +25,10 @@ Keep typography and values as live DOM or Canvas text; never bake labels into an
 The native grid is enforced during export with nearest-neighbor sampling, binary alpha, palette remapping and no dithering.
 Do not use SVG replacements, gradients, glow, blur or fine texture in this kit.
 
+**LEGACY BORDERS** in Visual Settings selects the unchanged original PNGs in `public/assets/ui/frames/legacy/`, with their previous six-pixel slice and display metrics.
+The viewport also receives the legacy panel frame when selected.
+The exporter saves the original components in that directory before applying continuous-rail normalization; both sets are packed in the UI atlas.
+
 The runtime components live in `public/assets/ui/frames/`, with sizes and slice widths in `manifest.json`.
 There are six button states, panel and dialog frames, an inset field, a progress track, three colored progress fills, a tiling surface, a title banner and a card slot.
 `src/styles/ui-sprites.css` applies these components only under `html.ui-sprites`; buttons, dialogs, settings controls, HUD bars and page panels retain their existing interactions.

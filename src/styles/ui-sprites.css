@@ -6,11 +6,29 @@
   font-display: swap;
 }
 
-/* Actual PNG components, opt-in independently of UI/game themes.
+/* Actual PNG components, selected independently by UI/game themes.
+   Paired legacy/current rules preserve the previous cascade with zero-specificity gates.
    Native frames are 48 × 24; reserve the displayed edge in each control. The center is
    quiet so it can stretch behind live labels without distorting artwork.
    Keep kit-specific frame metrics here; shared layout belongs to style.css. */
-html.ui-sprites {
+html.ui-sprites:where(.legacy-borders) {
+  --ui-button: url("../../public/assets/ui/frames/legacy/button.png");
+  --ui-hover: url("../../public/assets/ui/frames/legacy/button-hover.png");
+  --ui-pressed: url("../../public/assets/ui/frames/legacy/button-pressed.png");
+  --ui-selected: url("../../public/assets/ui/frames/legacy/button-selected.png");
+  --ui-disabled: url("../../public/assets/ui/frames/legacy/button-disabled.png");
+  --ui-danger: url("../../public/assets/ui/frames/legacy/button-danger.png");
+  --ui-panel: url("../../public/assets/ui/frames/legacy/panel.png");
+  --ui-dialog: url("../../public/assets/ui/frames/legacy/dialog.png");
+  --ui-field: url("../../public/assets/ui/frames/legacy/field.png");
+  --ui-slider-thumb: url("../../public/assets/style/ui-slider-thumb.png");
+  --ui-slider-thumb-active: url("../../public/assets/style/ui-slider-thumb-active.png");
+  --ui-slider-track: url("../../public/assets/style/ui-slider-track.png");
+  --ui-face: var(--ui-button);
+  --gold: #e1bb78;
+  --muted: #8b9a9d;
+}
+html.ui-sprites:where(:not(.legacy-borders)) {
   --ui-button: url("../../public/assets/ui/frames/button.png");
   --ui-hover: url("../../public/assets/ui/frames/button-hover.png");
   --ui-pressed: url("../../public/assets/ui/frames/button-pressed.png");
@@ -35,7 +53,13 @@ html.ui-sprites :not(:where(svg, svg *, .badge-glyph, .badge-glyph *)):not(#_) {
   font-family: "Tower Pixel", monospace;
 }
 
-html.ui-sprites body:not(#_) {
+
+html.ui-sprites:where(.legacy-borders) body:not(#_) {
+  background: #10151c url("../../public/assets/ui/frames/legacy/surface.png") repeat;
+  background-size: 96px 48px;
+}
+
+html.ui-sprites:where(:not(.legacy-borders)) body:not(#_) {
   background: #10151c url("../../public/assets/ui/frames/surface.png") repeat;
   background-size: 96px 48px;
 }
@@ -45,7 +69,25 @@ html.ui-sprites .shell:not(#_) {
   box-shadow: none;
 }
 
-html.ui-sprites :is(.stats, .card, .upgrade, .shop, .theme-card, .weekly,
+
+html.ui-sprites:where(.legacy-borders) :is(.stats, .card, .upgrade, .shop, .theme-card, .weekly,
+  .mission, .event-boost, .archivist, .research, .pull-box, .eq-loadout,
+  .equip-materials, .training-boost,
+  .tournament-standing, .tournament-tickets, .badge-box, .deck-reserve,
+  .card-reveal, .badge-reveal, .skill-tree, .goals-stage,
+  .training-box, label.setting, .inspect-box, .run-menu-frame, .inspection):not(#_) {
+  border-color: transparent;
+  border-style: solid;
+  border-image: var(--ui-panel) 6 fill / 12px / 0 stretch;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  image-rendering: pixelated;
+  color: #eee0b7;
+  text-shadow: none;
+}
+
+html.ui-sprites:where(:not(.legacy-borders)) :is(.stats, .card, .upgrade, .shop, .theme-card, .weekly,
   .mission, .event-boost, .archivist, .research, .pull-box, .eq-loadout,
   .equip-materials, .training-boost,
   .tournament-standing, .tournament-tickets, .badge-box, .deck-reserve,
@@ -72,12 +114,27 @@ html.ui-sprites label.setting:not(#_) {
   margin-block: 4px;
 }
 html.ui-sprites .inspection:empty:not(#_) { border-image: none; }
-html.ui-sprites .inspection:not(:empty):not(#_) {
+html.ui-sprites:where(.legacy-borders) .inspection:not(:empty):not(#_) {
+  border-image-width: 6px;
+  padding: 8px 10px;
+}
+html.ui-sprites:where(:not(.legacy-borders)) .inspection:not(:empty):not(#_) {
   border-image-width: 3px;
   padding: 8px 10px;
 }
 
-html.ui-sprites :is(dialog, .theme-card.worn):not(#_) {
+
+html.ui-sprites:where(.legacy-borders) :is(dialog, .theme-card.worn):not(#_) {
+  border-color: transparent;
+  border-image: var(--ui-dialog) 6 fill / 12px / 0 stretch;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  image-rendering: pixelated;
+  color: #eee0b7;
+}
+
+html.ui-sprites:where(:not(.legacy-borders)) :is(dialog, .theme-card.worn):not(#_) {
   border-color: transparent;
   border-width: 3px;
   border-style: solid;
@@ -93,7 +150,20 @@ html.ui-sprites dialog :is(h2, h3):not(#_) { color: #e1bb78; text-shadow: none; 
 html.ui-sprites :is(.hint, .item-meta, .item-identity, .level-cost):not(#_) { color: #8b9a9d; }
 
 /* Keep picture buttons (cards, map markers and skill nodes) intact, and small icon buttons bare: a frame on them looks busy. */
-html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-tile, .deck-add, .deck-card, .deck-entry-art,
+html.ui-sprites:where(.legacy-borders) button:not(:where(.hand-card, .skill-node, .badge-token, .eq-tile, .deck-add, .deck-card, .deck-entry-art,
+  .card-reveal-card, .forest-sign, .forest-building, .mission-bar, .mission-reroll, .weekly-box, .deck-hand-toggle, .deck-switch, .hand-kinds button, #shrine-bar, #forest-sign, .ug-node, .ct-row-main,
+  #currencies-open, #auto-speed .speed-arrow, .event-relic, .ads-prize, .ads-watch, .review-prompt)):not(#_) {
+  border-color: transparent;
+  border-image: var(--ui-face) 6 fill / 12px / 0 stretch;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #eee0b7;
+  text-shadow: none;
+  image-rendering: pixelated;
+  transition: none;
+}
+html.ui-sprites:where(:not(.legacy-borders)) button:not(:where(.hand-card, .skill-node, .badge-token, .eq-tile, .deck-add, .deck-card, .deck-entry-art,
   .card-reveal-card, .forest-sign, .forest-building, .mission-bar, .mission-reroll, .weekly-box, .deck-hand-toggle, .deck-switch, .hand-kinds button, #shrine-bar, #forest-sign, .ug-node, .ct-row-main,
   #currencies-open, #auto-speed .speed-arrow, .event-relic, .ads-prize, .ads-watch, .review-prompt)):not(#_) {
   border-color: transparent;
@@ -108,7 +178,17 @@ html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-til
   image-rendering: pixelated;
   transition: none;
 }
-html.ui-sprites button:not(:where(.hand-card, .skill-node, .badge-token, .eq-tile, .deck-add, .deck-card, .deck-entry-art,
+html.ui-sprites:where(.legacy-borders) button:not(:where(.hand-card, .skill-node, .badge-token, .eq-tile, .deck-add, .deck-card, .deck-entry-art,
+  .card-reveal-card, .forest-sign, .forest-building, .mission-bar, .mission-reroll, .weekly-box, .badge-pick, .deck-link-toggle, .deck-hand-toggle, .deck-switch, .hand-kinds button,
+  #shrine-bar, #forest-sign, .ug-node, .ct-row-main, #currencies-open, #auto-speed .speed-arrow, .event-relic, .ads-prize, .ads-watch, .review-prompt)):not(#_) {
+  border-width: 6px;
+  border-style: solid;
+  border-image-width: 6px;
+  padding: 4px 6px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+html.ui-sprites:where(:not(.legacy-borders)) button:not(:where(.hand-card, .skill-node, .badge-token, .eq-tile, .deck-add, .deck-card, .deck-entry-art,
   .card-reveal-card, .forest-sign, .forest-building, .mission-bar, .mission-reroll, .weekly-box, .badge-pick, .deck-link-toggle, .deck-hand-toggle, .deck-switch, .hand-kinds button,
   #shrine-bar, #forest-sign, .ug-node, .ct-row-main, #currencies-open, #auto-speed .speed-arrow, .event-relic, .ads-prize, .ads-watch, .review-prompt)):not(#_) {
   border-width: 3px;
@@ -128,7 +208,13 @@ html.ui-sprites button:active:not(:disabled):not(#_) {
   translate: none;
   scale: none;
 }
-html.ui-sprites button:disabled:not(#_) {
+html.ui-sprites:where(.legacy-borders) button:disabled:not(#_) {
+  --ui-face: var(--ui-disabled);
+  color: #8b9a9d;
+  filter: none;
+  opacity: 0.65;
+}
+html.ui-sprites:where(:not(.legacy-borders)) button:disabled:not(#_) {
   --ui-face: var(--ui-disabled);
   color: #8b9a9d;
   filter: none;
@@ -185,7 +271,19 @@ html.ui-sprites :is(button, select, input):focus-visible:not(#_) {
   outline-offset: 3px;
 }
 
-html.ui-sprites :is(select, input[type="text"], input[type="search"],
+
+html.ui-sprites:where(.legacy-borders) :is(select, input[type="text"], input[type="search"],
+  input[type="number"], .portrait-top, .hp-readout, .training-held):not(#_) {
+  border-color: transparent;
+  border-image: var(--ui-field) 6 fill / 10px / 0 stretch;
+  border-radius: 0;
+  background: transparent;
+  color: #eee0b7;
+  box-shadow: none;
+  image-rendering: pixelated;
+}
+
+html.ui-sprites:where(:not(.legacy-borders)) :is(select, input[type="text"], input[type="search"],
   input[type="number"], .portrait-top, .hp-readout, .training-held):not(#_) {
   border-color: transparent;
   border-width: 3px;
@@ -198,7 +296,15 @@ html.ui-sprites :is(select, input[type="text"], input[type="search"],
   image-rendering: pixelated;
 }
 html.ui-sprites select option { background: #1b2430; color: #eee0b7; }
-html.ui-sprites :is(select, input[type="text"], input[type="search"], input[type="number"]):not(#_) {
+html.ui-sprites:where(.legacy-borders) :is(select, input[type="text"], input[type="search"], input[type="number"]):not(#_) {
+  border-width: 6px;
+  border-style: solid;
+  border-image-width: 6px;
+  padding: 4px 6px;
+  min-width: 0;
+  max-width: 100%;
+}
+html.ui-sprites:where(:not(.legacy-borders)) :is(select, input[type="text"], input[type="search"], input[type="number"]):not(#_) {
   border-width: 3px;
   border-style: solid;
   border-image-width: 3px;
@@ -206,10 +312,12 @@ html.ui-sprites :is(select, input[type="text"], input[type="search"], input[type
   min-width: 0;
   max-width: 100%;
 }
-html.ui-sprites .hp-readout:not(#_) { border-image-width: 3px; }
+html.ui-sprites:where(.legacy-borders) .hp-readout:not(#_) { border-image-width: 4px; }
+html.ui-sprites:where(:not(.legacy-borders)) .hp-readout:not(#_) { border-image-width: 3px; }
 /* The HUD reserves its frame so neither the rail's
    own background nor the actions column covers an edge. */
-html.ui-sprites #stats.stats:not(#_) { border-image-width: 3px; padding: 5px; }
+html.ui-sprites:where(.legacy-borders) #stats.stats:not(#_) { border-image-width: 6px; padding: 5px; }
+html.ui-sprites:where(:not(.legacy-borders)) #stats.stats:not(#_) { border-image-width: 3px; padding: 5px; }
 /* The actions column's framed labels need more room than the bare look's;
    the rail and the height column give it up. */
 html.ui-sprites #stats.stats:not(#_) { grid-template-columns: 90px minmax(150px, 1fr) 84px 72px; }
@@ -234,7 +342,12 @@ html.ui-sprites .training-box.next:not(#_) { color: #b8f0b4; }
 html.ui-sprites .portrait-top canvas { max-width: 100%; height: auto; }
 html.ui-sprites .xp-row { min-width: 0; margin-inline: 0; }
 html.ui-sprites .xp-row #level { flex-shrink: 0; }
-html.ui-sprites .stats .hp-readout:not(#_) {
+html.ui-sprites:where(.legacy-borders) .stats .hp-readout:not(#_) {
+  border: 4px solid transparent;
+  border-image-width: 4px;
+  padding: 1px 3px;
+}
+html.ui-sprites:where(:not(.legacy-borders)) .stats .hp-readout:not(#_) {
   border: 3px solid transparent;
   border-image-width: 3px;
   padding: 1px 3px;
@@ -264,7 +377,14 @@ html.ui-sprites .keys { flex-wrap: wrap; }
   html.ui-sprites .hud-controls .gem-ad small:not(#_) { font-size: 8px; white-space: nowrap; }
   html.ui-sprites .vitals { padding-inline: 4px; }
 }
-html.ui-sprites :is(.deck-slot, .node-icon):not(#_) {
+html.ui-sprites:where(.legacy-borders) :is(.deck-slot, .node-icon):not(#_) {
+  border: 2px solid transparent;
+  border-image: url("../../public/assets/ui/frames/legacy/slot.png") 6 fill / 12px / 0 stretch;
+  border-radius: 0;
+  background: transparent;
+  image-rendering: pixelated;
+}
+html.ui-sprites:where(:not(.legacy-borders)) :is(.deck-slot, .node-icon):not(#_) {
   border: 3px solid transparent;
   border-image: url("../../public/assets/ui/frames/slot.png") 3 fill / 3px / 0 stretch;
   border-radius: 0;
@@ -286,7 +406,20 @@ html.ui-sprites .deck-slot:has(> .deck-card):not(#_) {
   border-image: none;
   background: none;
 }
-html.ui-sprites input[type="checkbox"]:not(#_) {
+html.ui-sprites:where(.legacy-borders) input[type="checkbox"]:not(#_) {
+  appearance: none;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: url("../../public/assets/ui/frames/legacy/field.png") center / 24px 24px no-repeat;
+  box-shadow: none;
+  image-rendering: pixelated;
+  cursor: pointer;
+}
+html.ui-sprites:where(:not(.legacy-borders)) input[type="checkbox"]:not(#_) {
   appearance: none;
   flex-shrink: 0;
   width: 24px;
@@ -299,7 +432,10 @@ html.ui-sprites input[type="checkbox"]:not(#_) {
   image-rendering: pixelated;
   cursor: pointer;
 }
-html.ui-sprites input[type="checkbox"]:checked:not(#_) {
+html.ui-sprites:where(.legacy-borders) input[type="checkbox"]:checked:not(#_) {
+  background-image: url("../../public/assets/ui/frames/legacy/button-selected.png");
+}
+html.ui-sprites:where(:not(.legacy-borders)) input[type="checkbox"]:checked:not(#_) {
   background-image: url("../../public/assets/ui/frames/button-selected.png");
 }
 html.ui-sprites input[type="checkbox"]:checked::after {
@@ -313,7 +449,18 @@ html.ui-sprites input[type="checkbox"]:checked::after {
 }
 html.ui-sprites input[type="range"]:not(#_) { accent-color: #e1bb78; }
 
-html.ui-sprites :is(.xp-track, .health-track, .weekly-bar, .mission-bar,
+
+html.ui-sprites:where(.legacy-borders) :is(.xp-track, .health-track, .weekly-bar, .mission-bar,
+  .research-bar, .refine-bar):not(#_) {
+  background: #10151c;
+  border-color: transparent;
+  border-image: url("../../public/assets/ui/frames/legacy/track.png") 6 fill / 4px / 0 stretch;
+  border-radius: 0;
+  box-shadow: none;
+  image-rendering: pixelated;
+}
+
+html.ui-sprites:where(:not(.legacy-borders)) :is(.xp-track, .health-track, .weekly-bar, .mission-bar,
   .research-bar, .refine-bar):not(#_) {
   background: #10151c;
   border-color: transparent;
@@ -322,26 +469,53 @@ html.ui-sprites :is(.xp-track, .health-track, .weekly-bar, .mission-bar,
   box-shadow: none;
   image-rendering: pixelated;
 }
-html.ui-sprites :is(.xp-track i, .weekly-bar i, .mission-bar i,
+html.ui-sprites:where(.legacy-borders) :is(.xp-track i, .weekly-bar i, .mission-bar i,
+  .research-bar i, .refine-bar span, .event-bar i):not(#_) {
+  background: url("../../public/assets/ui/frames/legacy/fill-green.png") left top / 32px 100% repeat-x;
+  border-radius: 0;
+  box-shadow: none;
+  image-rendering: pixelated;
+}
+html.ui-sprites:where(:not(.legacy-borders)) :is(.xp-track i, .weekly-bar i, .mission-bar i,
   .research-bar i, .refine-bar span, .event-bar i):not(#_) {
   background: url("../../public/assets/ui/frames/fill-green.png") left top / 32px 100% repeat-x;
   border-radius: 0;
   box-shadow: none;
   image-rendering: pixelated;
 }
-html.ui-sprites .xp-track i:not(#_) {
+html.ui-sprites:where(.legacy-borders) .xp-track i:not(#_) {
+  background-image: url("../../public/assets/ui/frames/legacy/fill-blue.png");
+}
+html.ui-sprites:where(:not(.legacy-borders)) .xp-track i:not(#_) {
   background-image: url("../../public/assets/ui/frames/fill-blue.png");
 }
-html.ui-sprites #health:not(#_) {
+html.ui-sprites:where(.legacy-borders) #health:not(#_) {
+  background: url("../../public/assets/ui/frames/legacy/fill-red.png") left top / 32px 100% repeat-x;
+}
+html.ui-sprites:where(:not(.legacy-borders)) #health:not(#_) {
   background: url("../../public/assets/ui/frames/fill-red.png") left top / 32px 100% repeat-x;
 }
-html.ui-sprites #health-gain:not(#_) {
+html.ui-sprites:where(.legacy-borders) #health-gain:not(#_) {
+  background: url("../../public/assets/ui/frames/legacy/fill-blue.png") left top / 32px 100% repeat-x;
+}
+html.ui-sprites:where(:not(.legacy-borders)) #health-gain:not(#_) {
   background: url("../../public/assets/ui/frames/fill-blue.png") left top / 32px 100% repeat-x;
 }
 /* The pending-damage segment retains its distinct purple semantics. */
 html.ui-sprites #health-loss:not(#_) { background: #80608e; }
 
-html.ui-sprites .page-title:not(#_) {
+
+html.ui-sprites:where(.legacy-borders) .page-title:not(#_) {
+  background: transparent;
+  border: 2px solid transparent;
+  border-image: url("../../public/assets/ui/frames/legacy/banner.png") 6 fill / 12px / 0 stretch;
+  image-rendering: pixelated;
+  padding-block: 14px;
+  color: #10151c;
+  text-align: center;
+}
+
+html.ui-sprites:where(:not(.legacy-borders)) .page-title:not(#_) {
   background: transparent;
   border: 3px solid transparent;
   border-image: url("../../public/assets/ui/frames/banner.png") 3 fill / 3px / 0 stretch;
@@ -474,7 +648,15 @@ html.ui-sprites :is(.stat-icon, .key-icon) { width: 1em; height: 1em; }
 
 /* Node state frames and their backdrop share the same quiet PNG materials. */
 html.ui-sprites .tree-viewport:not(#_) { background: #10151c; }
-html.ui-sprites .skill-node .node-icon:not(#_) {
+html.ui-sprites:where(.legacy-borders) .skill-node .node-icon:not(#_) {
+  border: 1px solid transparent;
+  border-image: var(--ui-field) 6 fill / 6px / 0 stretch;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  image-rendering: pixelated;
+}
+html.ui-sprites:where(:not(.legacy-borders)) .skill-node .node-icon:not(#_) {
   border: 3px solid transparent;
   border-image: var(--ui-field) 3 fill / 3px / 0 stretch;
   border-radius: 0;
@@ -510,7 +692,16 @@ html.ui-sprites :is(.boon-icon, .shrine-control-icon).sprite-ready {
   vertical-align: middle;
 }
 html.ui-sprites .boon-choice:has(> .boon-icon.sprite-ready) { grid-template-columns: 32px minmax(0, 1fr); align-items: center; gap: 10px; }
-html.ui-sprites :is(.boon-choice, .boon-ban, .boon-rank):not(#_) {
+html.ui-sprites:where(.legacy-borders) :is(.boon-choice, .boon-ban, .boon-rank):not(#_) {
+  border: 1px solid transparent;
+  border-image: var(--ui-button) 6 fill / 8px / 0 stretch;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  image-rendering: pixelated;
+  padding: 10px 12px;
+}
+html.ui-sprites:where(:not(.legacy-borders)) :is(.boon-choice, .boon-ban, .boon-rank):not(#_) {
   border: 3px solid transparent;
   border-image: var(--ui-button) 3 fill / 3px / 0 stretch;
   border-radius: 0;
@@ -532,7 +723,8 @@ html.ui-sprites :is(.boon-choice, .boon-ban, .boon-rank).augment:not(#_):not(#__
 html.ui-sprites :is(.boon-ban, .boon-rank).banned:not(#_) { border-image-source: var(--ui-danger); }
 html.ui-sprites .boon-rank.ranked:not(#_) { border-image-source: var(--ui-selected); }
 html.ui-sprites .boon-rank.augment.ranked:not(#_):not(#__) { border-image-source: none; border-color: #4fae70; background: #173a24; }
-html.ui-sprites :is(.boon-ban, .boon-rank).augment.banned:not(#_):not(#__) { border: 3px solid transparent; border-image: var(--ui-danger) 3 fill / 3px / 0 stretch; background: none; color: inherit; }
+html.ui-sprites:where(.legacy-borders) :is(.boon-ban, .boon-rank).augment.banned:not(#_):not(#__) { border: 1px solid transparent; border-image: var(--ui-danger) 6 fill / 8px / 0 stretch; background: none; color: inherit; }
+html.ui-sprites:where(:not(.legacy-borders)) :is(.boon-ban, .boon-rank).augment.banned:not(#_):not(#__) { border: 3px solid transparent; border-image: var(--ui-danger) 3 fill / 3px / 0 stretch; background: none; color: inherit; }
 html.ui-sprites .boon-choice-text :is(small, b) { display: block; }
 html.ui-sprites .boon-ban-name { flex: 1; min-width: 0; }
 html.ui-sprites .boon-rank .rank-grip { flex-shrink: 0; }
@@ -556,8 +748,10 @@ html.ui-sprites .stats .shrine-diamond:not(#_) {
 html.ui-sprites .stats .shrine-diamond.lit:not(#_) { opacity: 1; }
 html.ui-sprites .stats .shrine-diamond b:not(#_) { transform: none; color: #eee0b7; }
 html.ui-sprites #shrine-fill:not(#_) { background: url("../../public/assets/style/shrine-fill.png") left top / 32px 100% repeat-x; box-shadow: none; }
-html.ui-sprites #shield-fill:not(#_) { background: url("../../public/assets/ui/frames/fill-blue.png") left top / 32px 100% repeat-x; }
-html.ui-sprites #overheal-fill:not(#_) { background: url("../../public/assets/ui/frames/fill-blue.png") left top / 32px 100% repeat-x; }
+html.ui-sprites:where(.legacy-borders) #shield-fill:not(#_) { background: url("../../public/assets/ui/frames/legacy/fill-blue.png") left top / 32px 100% repeat-x; }
+html.ui-sprites:where(:not(.legacy-borders)) #shield-fill:not(#_) { background: url("../../public/assets/ui/frames/fill-blue.png") left top / 32px 100% repeat-x; }
+html.ui-sprites:where(.legacy-borders) #overheal-fill:not(#_) { background: url("../../public/assets/ui/frames/legacy/fill-blue.png") left top / 32px 100% repeat-x; }
+html.ui-sprites:where(:not(.legacy-borders)) #overheal-fill:not(#_) { background: url("../../public/assets/ui/frames/fill-blue.png") left top / 32px 100% repeat-x; }
 
 /* Equipment keeps its live rarity letters and levels over reusable frames. */
 .sprite-icon.eq-tile-worn, .sprite-icon.eq-tile-unique { position: absolute; }
@@ -595,7 +789,16 @@ html.ui-sprites .eq-tile-unique.sprite-ready { top: 2px; left: 2px; }
 html.ui-sprites .eq-tile-lock + .eq-tile-unique.sprite-ready { left: auto; right: 15px; }
 html.ui-sprites .eq-tile .eq-tile-icon { width: 24px; height: 24px; }
 html.ui-sprites .equip-icon-frame .equip-icon { width: 24px; height: 24px; }
-html.ui-sprites .eq-check:not(#_) {
+html.ui-sprites:where(.legacy-borders) .eq-check:not(#_) {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 0;
+  background: url("../../public/assets/ui/frames/legacy/field.png") center / 24px 24px no-repeat;
+  image-rendering: pixelated;
+  flex-shrink: 0;
+}
+html.ui-sprites:where(:not(.legacy-borders)) .eq-check:not(#_) {
   width: 24px;
   height: 24px;
   border: 0;
@@ -606,7 +809,15 @@ html.ui-sprites .eq-check:not(#_) {
 }
 html.ui-sprites .eq-check-icon { width: 12px; height: 12px; }
 html.ui-sprites .eq-salvage-icon.sprite-ready { display: inline-block; width: 12px; height: 12px; flex-shrink: 0; }
-html.ui-sprites :is(.eq-slots, .eq-inputs, .eq-assemble, .equip-selection, .eq-salvage):not(#_) {
+html.ui-sprites:where(.legacy-borders) :is(.eq-slots, .eq-inputs, .eq-assemble, .equip-selection, .eq-salvage):not(#_) {
+  border: 1px solid transparent;
+  border-image: var(--ui-panel) 6 fill / 6px / 0 stretch;
+  border-radius: 0;
+  background: #10151c;
+  box-shadow: none;
+  image-rendering: pixelated;
+}
+html.ui-sprites:where(:not(.legacy-borders)) :is(.eq-slots, .eq-inputs, .eq-assemble, .equip-selection, .eq-salvage):not(#_) {
   border: 3px solid transparent;
   border-image: var(--ui-panel) 3 fill / 3px / 0 stretch;
   border-radius: 0;
@@ -623,7 +834,14 @@ html.ui-sprites .rar-legendary { --rar: #e1bb78; }
 html.ui-sprites .rar-mythic { --rar: #d98579; }
 html.ui-sprites .rar-ancestral { --rar: #8fdccf; }
 html.ui-sprites .eq-ghost .eq-tile-icon.sprite-ready { filter: none; }
-html.ui-sprites .eq-totals li:not(#_) {
+html.ui-sprites:where(.legacy-borders) .eq-totals li:not(#_) {
+  border: 1px solid transparent;
+  border-image: var(--ui-field) 6 fill / 3px / 0 stretch;
+  border-radius: 0;
+  background: #1b2430;
+  color: #b8c2bb;
+}
+html.ui-sprites:where(:not(.legacy-borders)) .eq-totals li:not(#_) {
   border: 3px solid transparent;
   border-image: var(--ui-field) 3 fill / 3px / 0 stretch;
   border-radius: 0;
@@ -649,7 +867,16 @@ html.ui-sprites .ui-control-icon.review-star.sprite-ready { width: 28px; height:
 html.ui-sprites .reward-reveal .card-reveal-text :is(p, span):not(#_) { color: #b8c2bb; text-shadow: none; }
 html.ui-sprites .reward-reveal .card-reveal-text b:not(#_) { color: #eee0b7; text-shadow: none; }
 html.ui-sprites .reward-reveal .card-reveal-text small:not(#_) { color: #e1bb78; text-shadow: none; }
-html.ui-sprites :is(.gold-bonus-box, .enemy-odds-box):not(#_) {
+html.ui-sprites:where(.legacy-borders) :is(.gold-bonus-box, .enemy-odds-box):not(#_) {
+  border: 1px solid transparent;
+  border-image: var(--ui-dialog) 6 fill / 12px / 0 stretch;
+  border-radius: 0;
+  background: #1b2430;
+  box-shadow: none;
+  image-rendering: pixelated;
+  color: #eee0b7;
+}
+html.ui-sprites:where(:not(.legacy-borders)) :is(.gold-bonus-box, .enemy-odds-box):not(#_) {
   border: 3px solid transparent;
   border-image: var(--ui-dialog) 3 fill / 3px / 0 stretch;
   border-radius: 0;
@@ -755,7 +982,15 @@ html:is(.doodle, .desktop, .yang, .shiro, .system) .arcana-attr :is(b, .arcana-a
 .theme-preview.atlas-region { height: auto; }
 
 /* Match the viewport to the HUD and reserve trim outside the canvas. */
-html.ui-sprites #board-frame.board:not(#_) {
+html.ui-sprites:where(.legacy-borders) #board-frame.board:not(#_) {
+  border: 6px solid transparent;
+  border-image: var(--ui-panel) 6 fill / 6px / 0 stretch;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+  image-rendering: pixelated;
+}
+html.ui-sprites:where(:not(.legacy-borders)) #board-frame.board:not(#_) {
   border: 3px solid transparent;
   border-image: var(--ui-panel) 3 fill / 3px / 0 stretch;
   border-radius: 0;
@@ -764,7 +999,7 @@ html.ui-sprites #board-frame.board:not(#_) {
   image-rendering: pixelated;
 }
 /* Tiny progress tracks need a one-pixel edge to preserve the readable fill. */
-html.ui-sprites :is(.xp-track, .health-track, .weekly-bar, .mission-bar, .research-bar, .refine-bar):not(#_) {
+html.ui-sprites:where(:not(.legacy-borders)) :is(.xp-track, .health-track, .weekly-bar, .mission-bar, .research-bar, .refine-bar):not(#_) {
   border: 1px solid transparent;
   border-image-width: 1px;
 }

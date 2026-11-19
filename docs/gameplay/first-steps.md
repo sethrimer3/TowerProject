@@ -28,6 +28,8 @@ Each of these two towers keeps its own single floor-and-wall tileset throughout 
 Choose another owned UI or Game theme in Settings to change its appearance.
 The default Medieval and Classic interface looks use the sprites; other UI themes override them.
 Their HUD, buttons, panels and game viewport share continuous, evenly sized pixel borders.
+Enable **LEGACY BORDERS** in Visual Settings to use the previous ornate borders; your choice saves immediately.
+The game viewport keeps a matching frame with either choice.
 Other Game themes override world sprites independently, and returning to Classic restores them.
 small navigation and close marks, slider tracks and handles, reward stars, and the Gold-bonus and enemy-odds popup frames share the pixel-art look.
 Sliders still work with pointer or keyboard input and show their values as live text.

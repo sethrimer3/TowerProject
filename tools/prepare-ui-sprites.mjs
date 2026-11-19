@@ -1,7 +1,7 @@
 // Extract engine-ready components from the selected image-generation atlas.
 // ImageMagick is an authoring dependency only; the game loads plain PNGs.
 import { spawn } from "node:child_process";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 
@@ -50,6 +50,11 @@ for (const [index, name] of names.entries()) {
 }
 writeFileSync(join(out, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
 console.log(`Prepared ${names.length} PNG UI components in ${out}`);
+
+// Preserve the original atlas export for the saved LEGACY BORDERS choice.
+mkdirSync(join(out, "legacy"), { recursive: true });
+for (const name of names) copyFileSync(join(out, `${name}.png`), join(out, "legacy", `${name}.png`));
+copyFileSync(join(out, "manifest.json"), join(out, "legacy", "manifest.json"));
 
 // Apply the revised frame reference and its shared native rail contract.
 await import("./normalize-ui-frames.mjs");

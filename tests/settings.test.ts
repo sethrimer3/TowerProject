@@ -66,3 +66,12 @@ test("a save with a dev section setting on opens with Dev Mode on, which grants 
   assert.equal(decoded({ freePurchases: true }).devTools, true);
   assert.equal(decoded({ devTools: true }).devMode, false);
 });
+
+test("legacy borders are opt-in and survive saving without changing other visual preferences", () => {
+  assert.equal(decoded({}).legacyBorders, false);
+  const s = defaults();
+  s.settings.legacyBorders = true;
+  s.settings.spriteAnimations = true;
+  s.settings.squareDoors = true;
+  assert.deepEqual(decode(JSON.stringify(s)).settings, s.settings);
+});

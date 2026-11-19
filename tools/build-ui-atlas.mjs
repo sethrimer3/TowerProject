@@ -9,7 +9,7 @@ for(const [id,a] of Object.entries(style)){
  if(/^(forest-|dungeon-|ambient-|lake-|blacksmith-|hero-|square-door-|env-|water-|moss-|vine-|flower-|glowing-|torch-animation|terrain|tower-[123]-|tower-floor)/.test(id)||a.width>96||a.height>96)continue;
  entries.push({path:`assets/style/${a.file}`,width:a.width,height:a.height});
 }
-for(const name of readdirSync('public/assets/ui/frames').filter(n=>n.endsWith('.png'))){const b=readFileSync(`public/assets/ui/frames/${name}`);entries.push({path:`assets/ui/frames/${name}`,width:b.readUInt32BE(16),height:b.readUInt32BE(20)});}
+for(const folder of ['', 'legacy/'])for(const name of readdirSync(`public/assets/ui/frames/${folder}`).filter(n=>n.endsWith('.png'))){const path=`assets/ui/frames/${folder}${name}`,b=readFileSync(`public/${path}`);entries.push({path,width:b.readUInt32BE(16),height:b.readUInt32BE(20)});}
 entries.sort((a,b)=>b.height-a.height||b.width-a.width||a.path.localeCompare(b.path));
 const width=1024,padding=2;let x=padding,y=padding,rowHeight=0;
 for(const e of entries){if(x+e.width+padding>width){x=padding;y+=rowHeight+padding*2;rowHeight=0;}e.x=x;e.y=y;x+=e.width+padding*2;rowHeight=Math.max(rowHeight,e.height);}

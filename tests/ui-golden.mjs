@@ -1153,6 +1153,8 @@ try {
     await click(".arcana-switch");
     await shot("arcana.toggled");
     await click(".arcana-card .drill-name");
+    // The toggle count expires after 900ms; capture the settled info view.
+    await page.locator(".arcana-toggles-left").waitFor({ state: "detached" });
     await shot("arcana.cardInfo");
     await load("arcanaBoon");
     await click("#shrine-bar");

@@ -90,6 +90,7 @@ export function applyUiTheme(save: Pick<Save, "themes" | "settings">) {
   root.toggle(DOODLE_CLASS, look === "doodle");
   root.toggle(MURK_CLASS, look === "murk");
   root.toggle("reduce-motion", save.settings.reduceMotion);
+  root.toggle("legacy-borders", save.settings.legacyBorders);
   root.toggle("ui-sprites", usesUiSprites(save));
   root.toggle("game-sprites", usesGameSprites(save));
   if (usesUiSprites(save) || usesGameSprites(save)) void loadSpriteFont();

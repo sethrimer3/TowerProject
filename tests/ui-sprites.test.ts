@@ -21,6 +21,9 @@ test("UI sprites follow the selected theme and are restored by reset", () => {
     applyUiTheme(save);
     assert.ok(classes.has("medieval"));
     assert.ok(classes.has("ui-sprites"));
+    save.settings.legacyBorders = true;
+    applyUiTheme(save);
+    assert.ok(classes.has("legacy-borders"));
     save.settings.reduceMotion = true;
     applyUiTheme(save);
     assert.ok(classes.has("ui-sprites"));
@@ -34,6 +37,7 @@ test("UI sprites follow the selected theme and are restored by reset", () => {
     applyUiTheme(save);
     applyUiTheme(defaults());
     assert.ok(classes.has("ui-sprites"), "reset restores the default pixel art");
+    assert.ok(!classes.has("legacy-borders"), "reset restores continuous borders");
   } finally {
     if (previous) Object.defineProperty(globalThis, "document", previous);
     else Reflect.deleteProperty(globalThis, "document");
@@ -48,5 +52,17 @@ test("the deployed UI kit contains real PNGs at the declared native sizes", () =
     assert.equal(png.subarray(0, 8).toString("hex"), "89504e470d0a1a0a", asset.file);
     assert.equal(png.readUInt32BE(16), asset.width, asset.file);
     assert.equal(png.readUInt32BE(20), asset.height, asset.file);
+  }
+});
+
+test("the legacy border inventory keeps the original native sizes and six-pixel slices", () => {
+  const root = new URL("../public/assets/ui/frames/legacy/", import.meta.url);
+  const manifest = JSON.parse(readFileSync(new URL("manifest.json", root), "utf8"));
+  assert.equal(Object.keys(manifest.assets).length, 16);
+  for (const asset of Object.values(manifest.assets) as { file: string; width: number; height: number; slice: number }[]) {
+    const png = readFileSync(new URL(asset.file, root));
+    assert.equal(png.readUInt32BE(16), asset.width, asset.file);
+    assert.equal(png.readUInt32BE(20), asset.height, asset.file);
+    if (asset.slice) assert.equal(asset.slice, 6, asset.file);
   }
 });

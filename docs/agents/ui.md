@@ -218,3 +218,10 @@ Epic, Legendary, Mythic and Ancestral equipment each select an authored native n
 Classic and Medieval shared PNG frames use three-pixel source slices and reserve a three-pixel displayed border, including `#board-frame`; tiny progress tracks use one displayed pixel.
 `tools/normalize-ui-frames.mjs` applies continuous native rails after `prepare-ui-sprites.mjs`; separate badge, equipment and slider slices remain independent.
 `tests/ui-borders.test.ts` checks rail continuity, corner thickness and palette; the sprite layout browser suite checks the actual HUD/board metrics and content fit.
+
+Visual Settings offers the always-visible **LEGACY BORDERS** switch, default off, saved and applied immediately without reloading.
+`applyUiTheme` mirrors it in `html.legacy-borders`; paired zero-specificity gates in `ui-sprites.css` select original six-pixel slices or continuous three-pixel slices without disturbing the original cascade.
+Both styles frame the game viewport; alternate UI themes retain their own borders.
+Historical frame PNGs live under `public/assets/ui/frames/legacy/`, are preserved by `prepare-ui-sprites.mjs` before normalization, and are included in the UI atlas and bootstrap inventory.
+`node tests/legacy-borders.mjs` checks actual decoded border pixels, sizing, live toggles, reload persistence, reset and theme isolation with both atlas settings on phone and desktop.
+The `arcana.cardInfo` UI snapshot waits for the temporary toggle count to expire before capturing, keeping slow and fast machines consistent.
