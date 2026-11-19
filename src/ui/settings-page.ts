@@ -14,6 +14,7 @@ import { goalUnlocked } from "../goals.ts";
 import { arcanaOpen } from "../arcana/arcana.ts";
 import { researched } from "../progression/archives.ts";
 import { showStats } from "./stats-dialog.ts";
+import { showDevlog } from "./devlog-dialog.ts";
 import { showHelp } from "./dialogs.ts";
 import { exportProfile, importProfile } from "../profile-file.ts";
 
@@ -168,7 +169,7 @@ export function renderSettingsPage(ctx: AppContext, overlay: BoardOverlay) {
     return;
   }
   el("settings").innerHTML =
-    `<button class="back" id="settings-back">${controlIcon("back")} Back</button><div class="page-title"><h2>Settings</h2></div><button class="wide" id="stats-open">Stats</button>` +
+    `<button class="back" id="settings-back">${controlIcon("back")} Back</button><div class="page-title"><h2>Settings</h2></div><button class="wide" id="stats-open">Stats</button><button class="wide" id="devlog-open">DEVLOG</button>` +
     `<h3 class="settings-visual-title">Visual Settings</h3>` + themeButtons(game) +
     `<button class="setting menu-open" id="tileset-lab-open">Tileset Lab<b>${controlIcon("forward")}</b></button>` +
     `<button class="setting menu-open" id="arcana-lab-open">Arcana Effects Lab<b>${controlIcon("forward")}</b></button>` +
@@ -229,6 +230,7 @@ function bindSettings(ctx: AppContext, overlay: BoardOverlay) {
   const { game } = ctx;
   el("settings-back").onclick = () => ctx.navigate(game.mode);
   el("stats-open").onclick = () => showStats(ctx);
+  el("devlog-open").onclick = () => showDevlog(ctx);
   el("tileset-lab-open").onclick = () => {menu="tilesets";ctx.renderPage();};
   el("arcana-lab-open").onclick = () => {menu="arcanaEffects";ctx.renderPage();};
   document.querySelectorAll<HTMLButtonElement>(".theme-open").forEach((b) => {

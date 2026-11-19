@@ -118,6 +118,10 @@ Read the area's doc before changing code there or answering questions about it; 
 - The player-facing rules live in `docs/gameplay/`, one topic a page, indexed by the README's Gameplay reference; the README itself stays slim (`tests/readme-index.test.ts` caps its size and requires every page in the index).
   A change to what the player sees or does updates that topic's page in the same change; a new topic gets its own page and a row in the index.
   `CLAUDE.md` only imports this file; don't add content there.
+- Every change adds a line to the DEVLOG (`DEVLOG` in `src/devlog.ts`), the list of changes the Settings page's DEVLOG button opens.
+  Add it at the top of the list, dated the day the change ships (`YYYY-MM-DD`), as one short sentence of at most 120 characters in the player's words (what changed for them, not which module moved), with no `<`, `>` or `&`.
+  A change spread over several commits adds one line; a refactor, test or docs change the player can't see adds a short line too (*Faster floor generation.*, *Tidier code behind the Shop.*).
+  `tests/devlog.test.ts` checks the order, the dates and the length.
 - Write one sentence per line (a paragraph's lines render joined), and start a new line for each new fact, so diffs and merges stay local; don't re-join lines into long paragraphs.
 - `CONTEXT.md` is the domain glossary (terms only, no implementation). Use its words in code, comments and docs, and add a term there when a change names a new domain concept.
 

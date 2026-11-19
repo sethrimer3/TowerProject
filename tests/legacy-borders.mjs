@@ -62,6 +62,10 @@ try {
     assert.equal(await toggle.isChecked(), false);
     await toggle.check();
     await checkFrame(true);
+    await page.locator('#devlog-open').click();
+    assert.ok((await page.locator('.devlog-dialog').innerText()).includes('Choose LEGACY BORDERS in Visual Settings'));
+    await page.locator('#devlog-close').click();
+    assert.equal(await toggle.isChecked(), true);
     assert.equal(await page.locator('#stats-open').evaluate(e => getComputedStyle(e).borderTopWidth), '6px', 'old ordinary button sizing returns immediately');
     assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('towerdelve.v1')).settings.legacyBorders), true);
     await page.locator('#settings-back').click();
