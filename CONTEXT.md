@@ -1088,3 +1088,5 @@ _Avoid_: known tiles, visit map
 - **Magic Tower**: the third Proving Grounds boss, a high-HP arcane spire with per-turn regeneration that pops out Gold and Silver coins when struck and resolves one combat round per turn with no turn limit.
 - **Obelisk**: the fourth Proving Grounds boss, a massive-HP monolith fought under a per-run turn limit (raised by Archives research) that fires periodic shots and Arcane Pulses and saves inflicted damage across trial runs.
 - **Boss part**: one of three auxiliary structures (`Blaster Turret`, `Regen Conduit`, `Ward Crystal`) in the `1b` and `2b` multi-part boss sub-variants; knocking a part out permanently disables its activity and removes it from the floor without regeneration.
+- **Landscape layout**: the board beside the HUD, filling the screen's height, worn while the screen is wide enough and the setting allows it; the portrait layout stacks the HUD over the board.
+- **Handedness**: which side the controls gather on, under the thumb; Left mirrors the layout.

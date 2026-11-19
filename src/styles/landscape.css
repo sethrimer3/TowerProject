@@ -1,9 +1,10 @@
-/* PROTOTYPE: the landscape layout (html.layout-landscape) and its mirror
-   for the left hand (html.left-handed), from src/ui/layout.ts.
-   Right-handed, the board stands at the left and the controls gather at
-   the right, under the right thumb: the HUD beside the board, and at the
-   far edge the tabs as an upright rail (in the forest), or inside a run the
-   hand and the training bar under the HUD. Left-handed mirrors the columns. */
+/* The landscape layout (html.layout-landscape) and its mirror for the left
+   hand (html.left-handed), from src/ui/layout.ts: worn while the window is
+   wide enough and the Landscape setting is on.
+   Right-handed, the board stands at the left and the controls gather at the
+   right, under the right thumb: the HUD beside the board, and at the far
+   edge the tabs as an upright rail (in the forest), or inside a run the hand
+   and the training bar under the HUD. Left-handed mirrors the columns. */
 html.layout-landscape .shell {
   --gap: 10px;
   --rail: 62px;
@@ -12,11 +13,10 @@ html.layout-landscape .shell {
      column at least --side-min. */
   --board-size: min(calc(100dvh - 2 * var(--gap)), calc(100vw - var(--side-min) - var(--rail) - 4 * var(--gap)));
   width: 100%;
-  max-width: 1400px;
+  max-width: none;
   height: 100dvh;
   min-height: 0;
-  padding: var(--gap) var(--gap) max(var(--gap), env(safe-area-inset-bottom));
-  padding-inline: max(var(--gap), env(safe-area-inset-left)) max(var(--gap), env(safe-area-inset-right));
+  padding: var(--gap) max(var(--gap), env(safe-area-inset-right)) max(var(--gap), env(safe-area-inset-bottom)) max(var(--gap), env(safe-area-inset-left));
   display: grid;
   column-gap: var(--gap);
   row-gap: 8px;
@@ -26,6 +26,11 @@ html.layout-landscape .shell {
     "board stats rail"
     "board side  rail"
     "board train rail";
+}
+/* On a big screen the shell keeps to the middle, the board no taller than
+   the portrait layout's cap. */
+@media (min-width: 1500px) {
+  html.layout-landscape .shell { max-width: 1400px; }
 }
 html.layout-landscape.left-handed .shell {
   grid-template-columns: var(--rail) minmax(0, 1fr) var(--board-size);
@@ -77,15 +82,19 @@ html.layout-landscape .shell:has(> #board:not(.active)):has(> nav.in-run) {
 html.layout-landscape .shell > #currencies { grid-area: cur; margin: 0; }
 html.layout-landscape .shell > #stats { grid-area: stats; margin: 0; align-self: start; }
 html.layout-landscape .shell > #board { grid-area: board; }
-html.layout-landscape .shell > .page:not(#board) { grid-area: page; margin: 0; padding-right: 6px; }
+html.layout-landscape .shell > .page:not(#board) { grid-area: page; min-height: 0; margin: 0; }
 html.layout-landscape .shell > nav { grid-area: rail; margin: 0; }
 html.layout-landscape .shell > #training-bar { grid-area: train; padding-bottom: 0; }
 html.layout-landscape #board.active { display: grid; height: 100%; }
 html.layout-landscape .board-cell { align-items: center; }
+/* The shell's padding already keeps the page's scrollbar clear of the edge. */
+html.layout-landscape .page:not(#board) { margin-right: 0; padding-right: 4px; }
 
-/* The tabs as an upright rail: one solid column of icons. */
+/* The tabs as an upright rail: one solid column of icons, centred when they
+   don't fill the height. */
 html.layout-landscape nav:not(.in-run) {
   flex-direction: column;
+  justify-content: center;
   align-self: stretch;
   padding: 0;
   background: none;
@@ -100,24 +109,12 @@ html.layout-landscape nav:not(.in-run) button {
 html.layout-landscape nav:not(.in-run) button + button { margin-left: 0; margin-top: -1px; }
 html.layout-landscape nav:not(.in-run) > button:first-of-type { border-radius: 8px 8px 0 0; }
 html.layout-landscape nav:not(.in-run) > button:last-of-type { border-radius: 0 0 8px 8px; }
-/* The rail centres its tabs when they don't fill the height. */
-html.layout-landscape nav:not(.in-run) { justify-content: center; }
 html.layout-landscape nav.in-run { padding-bottom: 0; }
 
-/* Left-handed: the HUD's columns mirror too, so the menu, Shop and play
-   button stand at the left edge, under the left thumb (portrait as well). */
-html.left-handed .stats { direction: rtl; }
-html.left-handed .stats > * { direction: ltr; }
-html.left-handed .hud-controls { border-right: 0; border-left: 1px solid var(--line); }
-
-/* The HUD's column is phone-narrow whatever the window's width, so it takes
-   the phone's columns (the full build moves the HUD's width breakpoints to
-   container queries on its own column). */
-html.layout-landscape.ui-sprites #stats.stats:not(#_) { grid-template-columns: 84px minmax(0, 1fr) 62px 66px; }
-html.layout-landscape:not(.ui-sprites) .stats { grid-template-columns: 74px minmax(0, 1fr) 70px 60px; }
-/* The spare height between the HUD and the hand holds the status line and
-   the tile inspect box, which in portrait lie over the board's foot. */
-html.layout-landscape #side-info {
+/* The spare height between the HUD and the hand holds the board's foot
+   lines, which in portrait lie over the board: the run's inspection over
+   the status line, at the column's foot. */
+html.layout-landscape .side-info {
   grid-area: side;
   display: flex;
   flex-direction: column;
@@ -126,13 +123,84 @@ html.layout-landscape #side-info {
   min-height: 0;
   overflow: hidden;
 }
-html.layout-landscape #side-info > .status { margin: 0; }
-html.layout-landscape .shell:has(> #board:not(.active)) > #side-info { display: none; }
-html.layout-landscape #side-info > .status {
+html.layout-landscape .shell:has(> #board:not(.active)) > .side-info { display: none; }
+html.layout-landscape .side-info > .status {
+  min-height: 32px;
+  margin: 0;
   padding: 6px 9px;
   border: 1px solid #303946aa;
   border-radius: 3px;
   background: #0b1018d9;
 }
-html.layout-landscape #side-info > .status.see-through { opacity: 1; }
-html.layout-landscape .run-inventory { padding-inline: 6px; }
+html.layout-landscape .side-info > .status.see-through { opacity: 1; }
+html.layout-landscape .side-info > .inspection { min-height: 0; margin: 0; padding: 6px 9px; }
+html.layout-landscape .side-info > .inspection:empty { display: none; }
+html:not(.layout-landscape) .side-info { display: none; }
+
+/* Left-handed: the HUD's columns mirror too, so the menu, Shop and play
+   button stand at the left edge, under the left thumb (portrait as well). */
+html.left-handed .stats { direction: rtl; }
+html.left-handed .stats > * { direction: ltr; }
+html.left-handed .hud-controls { border-right: 0; border-left: 1px solid var(--line); }
+html.left-handed .actions { border-left: 0; border-right: 1px solid var(--line); }
+
+/* The HUD's column is narrower than a phone's portrait HUD (layout.ts sets
+   .hud-narrow under 470px), so it takes the phone's sizes, as the
+   (max-width: 480px) rules give them in portrait. */
+html.hud-narrow .stats { grid-template-columns: 76px minmax(0, 1fr) 64px 58px; min-height: 82px; }
+html.hud-narrow.ui-sprites #stats.stats:not(#_) { grid-template-columns: 76px minmax(0, 1fr) 62px 66px; }
+html.hud-narrow .hud-controls { padding: 6px 5px; }
+html.hud-narrow .hud-controls .gem-ad small { white-space: nowrap; letter-spacing: 0; }
+html.hud-narrow .purse { font-size: 15px; }
+html.hud-narrow .purse > span { gap: 3px; }
+html.hud-narrow .purse.rates { --purse-icon: 15px; --purse-gap: 3px; }
+html.hud-narrow :is(.purse .ui-sprite, .purse .gem-icon, .purse .arcanite-icon) { width: 15px; height: 15px; }
+html.hud-narrow .vitals { padding: 8px 7px 0; }
+html.hud-narrow .player-stats { grid-template-columns: 56px minmax(0, 1fr); }
+html.hud-narrow .portrait-top { margin: 6px 0 7px 6px; }
+html.hud-narrow .run-inventory { padding: 10px 5px 8px; }
+html.hud-narrow .run-consumables { gap: 7px 5px; }
+html.hud-narrow .portrait-top canvas { width: 36px; height: 36px; }
+html.hud-narrow .portrait-top small { font-size: 5px; }
+html.hud-narrow.ui-sprites .portrait-top small { font-size: 6px; }
+html.hud-narrow .height { padding: 10px 4px; }
+html.hud-narrow .height strong { font-size: 28px; }
+html.hud-narrow .keys { gap: 7px; font-size: 11px; flex-wrap: wrap; }
+html.hud-narrow .keys b { margin-left: 4px; }
+html.hud-narrow .combat-stats { grid-template-columns: auto minmax(3px, 10px) auto minmax(3px, 10px) auto; letter-spacing: 0; }
+html.hud-narrow .actions { padding: 3px 2px; }
+html.hud-narrow .mini-action { height: 32px; padding: 1px; }
+html.hud-narrow .mini-action .mini-icon { font-size: 11px; }
+html.hud-narrow .mini-action small { font-size: 5.5px; letter-spacing: 0; white-space: nowrap; }
+html.hud-narrow .run-menu-end small { font-size: 7px; }
+html.hud-narrow .auto-speed { font-size: 7px; }
+html.hud-narrow .vitals.has-shield .hp-readouts { flex-direction: column; gap: 2px; }
+html.hud-narrow .hp-readouts > .hp-readout:not(#_) { flex: none; }
+
+/* Left-handed, the menu opens rightward from the hamburger at the HUD's
+   left edge, its cells filling left to right. */
+html.left-handed .run-menu-frame { right: auto; left: -3px; }
+html.left-handed .run-menu-items { right: auto; left: calc(100% + 4px); direction: ltr; }
+
+/* On the upright rail the lessons' hands point at a tab from the board's
+   side: from its left, or left-handed from its right. */
+html.layout-landscape nav:not(.in-run) .forest-pointer {
+  top: 50%;
+  bottom: auto;
+  left: auto;
+  right: calc(100% + 2px);
+  margin: -13px 0 0;
+  transform: rotate(90deg);
+  animation: forest-point-right 1s ease-in-out infinite;
+}
+html.layout-landscape.left-handed nav:not(.in-run) .forest-pointer {
+  right: auto;
+  left: calc(100% + 2px);
+  transform: rotate(-90deg);
+  animation: forest-point-left 1s ease-in-out infinite;
+}
+html.layout-landscape nav:not(.in-run) .forest-pointer.still { animation: none; }
+@keyframes forest-point-left {
+  0%, 100% { transform: rotate(-90deg) translateY(6px); }
+  50% { transform: rotate(-90deg) translateY(0); }
+}

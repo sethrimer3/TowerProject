@@ -13,6 +13,7 @@ export const DEVLOG_TEXT_MAX = 120;
 /** Every change, newest first: the Settings page's DEVLOG button lists them.
  * Each change adds its own line at the top (AGENTS.md). */
 export const DEVLOG: readonly DevlogEntry[] = [
+  { date: "2026-11-19", text: "Landscape layout on wide screens and turned phones, and a Handedness setting that mirrors it for the left hand." },
   { date: "2026-11-19", text: "Choose LEGACY BORDERS in Visual Settings to bring back the previous border artwork." },
   { date: "2026-11-19", text: "DEVLOG: a list of changes, opened from Settings." },
   { date: "2026-11-19", text: "Pixel UI borders unified, and the game view gets a frame." },

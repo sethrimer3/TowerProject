@@ -164,6 +164,13 @@ export const SETTINGS = {
    * pixels (render/pixel-scale.ts), at the screen's own density, showing a
    * little more or less than the usual view round the same middle. */
   pixelPerfect: { kind: "toggle", default: false, page: { id: "pixel-perfect", label: "Pixel-perfect scaling" } },
+  /** Switch to the landscape layout whenever the window is wide enough (a
+   * phone turned on its side, a wide desktop window), and back as it narrows
+   * (`ui/layout.ts`); off keeps the portrait layout whatever the shape. */
+  autoLandscape: { kind: "toggle", default: true, page: { id: "auto-landscape", label: "Landscape layout on wide screens" } },
+  /** The hand the controls gather under: Left mirrors the layout, so the
+   * HUD's buttons, and in landscape the tabs and hand, stand at the left. */
+  hand: { kind: "choice", default: "right", choices: [["right", "Right"], ["left", "Left"]], page: { id: "handedness", label: "Handedness" } },
 } as const satisfies Record<string, Setting>;
 
 export type SettingKey = keyof typeof SETTINGS;
