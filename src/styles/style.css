@@ -5412,7 +5412,20 @@ html .stats .portrait-top .shrine-next:not(#_) {
 .currencies-table th, .currencies-table td { padding: 7px 4px; }
 .currencies-icon { display: inline-grid; place-items: center; width: 22px; height: 22px; margin-right: 8px; vertical-align: middle; }
 .currencies-icon > * { max-width: 22px; max-height: 22px; width: 22px; height: 22px; }
-#stats-open { margin-bottom: 8px; }
+#stats-open, #devlog-open { margin-bottom: 8px; }
+/* The Settings page's DEVLOG dialog: every change, newest first, its table
+   scrolling under the heading and the X, as the currencies dialog's does.
+   It wears the Stats table's look (.stats-table), each theme's included:
+   each day on the left over its lines, which wrap, on the right. */
+#modal[open]:has(> .devlog-dialog) { display: flex; flex-direction: column; overflow: hidden; }
+.devlog-dialog { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+.devlog-dialog .dialog-x { align-self: flex-end; width: 32px; height: 32px; min-height: 0; margin: -18px -18px 0 0; padding: 0; border-radius: 50%; font-size: 15px; line-height: 1; }
+.devlog-dialog h2 { margin-top: 0; }
+.devlog-scroll { min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
+.devlog-table { margin-top: 0; }
+.devlog-table th { width: 1%; padding-right: 10px; vertical-align: top; white-space: nowrap; }
+.devlog-table th small { display: block; font-size: 10px; opacity: 0.7; }
+.devlog-table td { text-align: left; white-space: normal; line-height: 1.35; }
 /* The Offline Gold dialog: the time away, then Recent Gold per Hour times
  * the time paid for and the multiplier, making the Gold granted. */
 .offline-gold { text-align: center; }

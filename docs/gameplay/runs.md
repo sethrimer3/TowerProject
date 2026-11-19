@@ -53,6 +53,7 @@ They count what the run holds (steps, keys, doors, pickups and Silver) and what 
 Nor does it take back a provision used (an elixir, a Vanguard Banner, an Aegis charm): the use stays spent, the heal stays, and a boost keeps counting down its turns.
 The run's end dialog has a Run Notes button at the end of its totals, which opens them over it.
 The Settings page's Stats dialog has the same copy button.
+The Settings page's **DEVLOG** button, under Stats, lists every change to the game, newest first, one short line each beside its day.
 Among its lifetime tallies, **Floors climbed** counts every Tower floor the hero climbs to, by its stairs or passed by Skip on STAIRS, in every run (a floor climbed again in a later run counts again).
 Its tallies are rounded down, and shortened from a million (1.23M).
 
