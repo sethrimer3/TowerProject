@@ -1,4 +1,5 @@
 import { ARCANA_LAB_CENTER as C, ARCANA_LAB_RADIUS as R, ARCANA_LAB_TARGET as TARGET, ARCANA_LAB_SPLASH as SPLASH, ARCANA_LAB_TWINS, arcanaBurstAge, type ArcanaExampleId } from "../../arcana-lab.ts";
+import { paintShockStatus, paintDilationGuard } from "../../sprites/spell-art.ts";
 
 // Opaque shared-palette pixels, integer geometry, no gradients or smoothing.
 const P = { dark: "#10151c", slate: "#1b2430", blueDark: "#16303d", blue: "#315363", cyan: "#54879a", ice: "#88c5db",
@@ -55,11 +56,15 @@ function vortex(c: CanvasRenderingContext2D, R: number, time: number) {
     }
 }
 
-/** Experimental drawing only; production effects continue using their existing painters. */
+/** Comparison drawing; the Shock and protection entries share their live native painters. */
 export function paintPixelArcana(c: CanvasRenderingContext2D, id: ArcanaExampleId, time: number) {
   const tick = Math.floor(time / 100), now = tick * 100, spin = now / 9000 * TAU, age = arcanaBurstAge(time);
   c.save(); c.imageSmoothingEnabled = false;
-  if (id === "extraVoidwell") {
+  if (id === "ricochetShock") {
+    c.translate(TARGET.x - 12, TARGET.y - 12); paintShockStatus(c, time, true);
+  } else if (id === "dilationGuard") {
+    c.translate(C - 12, C - 12); paintDilationGuard(c, time, true);
+  } else if (id === "extraVoidwell") {
     for (const p of ARCANA_LAB_TWINS) {
       c.save(); c.translate(p.x - C, p.y - C); vortex(c, 42, time); c.restore();
     }

@@ -1,5 +1,6 @@
 import { tileTransform, type FrameContext } from "../render-frame.ts";
 import { SPARK_MS } from "../../combat.ts";
+import { paintSpellFrame } from "../../sprites/spell-art.ts";
 import { crossbones, skull } from "./struck-down.ts";
 
 export { SPARK_MS };
@@ -16,6 +17,12 @@ export function drawPhoenixSpark(f: FrameContext, age: number) {
   if (age < 0 || age >= SPARK_MS) return;
   const c = f.c, still = f.look.reduceMotion;
   const appear = Math.min(1, age / 150), alpha = appear * Math.min(1, (SPARK_MS - age) / 300);
+  if (f.look.styledSprites) {
+    c.save(); c.setTransform(tileTransform(f, f.playerX, f.playerY)); c.globalAlpha = alpha;
+    const frame = still || !f.look.spriteAnimations ? 2 : Math.min(5, Math.floor(age / SPARK_MS * 6));
+    paintSpellFrame(c, "ambient-phoenix-spark", frame, 0, -22);
+    c.restore(); return;
+  }
   // The circle draws itself shut over its first 250 ms.
   const closed = still ? 1 : Math.min(1, age / 250);
   c.save();

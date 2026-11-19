@@ -1,6 +1,6 @@
 {
   "image": "assets/atlases/world.png",
-  "revision": "aae643b845fde077",
+  "revision": "7333ec466d0cb056",
   "width": 2048,
   "height": 4096,
   "padding": 2,
@@ -11,40 +11,64 @@
       "x": 386,
       "y": 3882
     },
+    "assets/style/ambient-dilation-guard.png": {
+      "width": 144,
+      "height": 24,
+      "x": 534,
+      "y": 3882
+    },
     "assets/style/ambient-hero-down.png": {
       "width": 96,
       "height": 24,
-      "x": 782,
+      "x": 1374,
       "y": 3882
     },
     "assets/style/ambient-hero-left.png": {
       "width": 96,
       "height": 24,
-      "x": 882,
+      "x": 1474,
       "y": 3882
     },
     "assets/style/ambient-hero-right.png": {
       "width": 96,
       "height": 24,
-      "x": 982,
+      "x": 1574,
       "y": 3882
     },
     "assets/style/ambient-hero-up.png": {
       "width": 96,
       "height": 24,
-      "x": 1082,
+      "x": 1674,
       "y": 3882
     },
     "assets/style/ambient-key-shine.png": {
       "width": 120,
       "height": 24,
-      "x": 534,
+      "x": 1126,
+      "y": 3882
+    },
+    "assets/style/ambient-phoenix-spark.png": {
+      "width": 144,
+      "height": 24,
+      "x": 682,
       "y": 3882
     },
     "assets/style/ambient-potion-bubbles.png": {
       "width": 120,
       "height": 24,
-      "x": 658,
+      "x": 1250,
+      "y": 3882
+    },
+    "assets/style/ambient-ricochet-shock.png": {
+      "width": 144,
+      "height": 24,
+      "x": 830,
+      "y": 3882
+    },
+    "assets/style/ambient-stellar-twinkles.png": {
+      "width": 144,
+      "height": 24,
+      "x": 978,
       "y": 3882
     },
     "assets/style/blacksmith-base.png": {
@@ -56,19 +80,19 @@
     "assets/style/blacksmith-fire.png": {
       "width": 24,
       "height": 6,
-      "x": 347,
+      "x": 935,
       "y": 3934
     },
     "assets/style/blacksmith-sign.png": {
       "width": 13,
       "height": 15,
-      "x": 86,
+      "x": 674,
       "y": 3934
     },
     "assets/style/blacksmith-smoke.png": {
       "width": 64,
       "height": 12,
-      "x": 103,
+      "x": 691,
       "y": 3934
     },
     "assets/style/combat-shield-144.png": {
@@ -542,104 +566,104 @@
     "assets/style/env-flower-cyan.png": {
       "width": 8,
       "height": 8,
-      "x": 275,
+      "x": 863,
       "y": 3934
     },
     "assets/style/env-flower-gold.png": {
       "width": 8,
       "height": 8,
-      "x": 287,
+      "x": 875,
       "y": 3934
     },
     "assets/style/env-flower-rose.png": {
       "width": 8,
       "height": 8,
-      "x": 299,
+      "x": 887,
       "y": 3934
     },
     "assets/style/env-flower-violet.png": {
       "width": 8,
       "height": 8,
-      "x": 311,
+      "x": 899,
       "y": 3934
     },
     "assets/style/env-glowcap-cluster.png": {
       "width": 12,
       "height": 12,
-      "x": 211,
+      "x": 799,
       "y": 3934
     },
     "assets/style/env-glowcap-pair.png": {
       "width": 12,
       "height": 12,
-      "x": 227,
+      "x": 815,
       "y": 3934
     },
     "assets/style/env-glowcap-small.png": {
       "width": 12,
       "height": 12,
-      "x": 243,
+      "x": 831,
       "y": 3934
     },
     "assets/style/env-moss-green.png": {
       "width": 24,
       "height": 24,
-      "x": 1282,
+      "x": 1874,
       "y": 3882
     },
     "assets/style/env-moss-teal.png": {
       "width": 24,
       "height": 24,
-      "x": 1310,
+      "x": 1902,
       "y": 3882
     },
     "assets/style/env-moss-wall.png": {
       "width": 24,
       "height": 24,
-      "x": 1338,
+      "x": 1930,
       "y": 3882
     },
     "assets/style/env-vine-leaves.png": {
       "width": 8,
       "height": 8,
-      "x": 323,
+      "x": 911,
       "y": 3934
     },
     "assets/style/env-vine-tip.png": {
       "width": 8,
       "height": 8,
-      "x": 335,
+      "x": 923,
       "y": 3934
     },
     "assets/style/env-water-bank.png": {
       "width": 24,
       "height": 24,
-      "x": 1366,
+      "x": 1958,
       "y": 3882
     },
     "assets/style/env-water-deep.png": {
       "width": 24,
       "height": 24,
-      "x": 1394,
+      "x": 1986,
       "y": 3882
     },
     "assets/style/env-water-mid.png": {
       "width": 24,
       "height": 24,
-      "x": 1422,
+      "x": 2014,
       "y": 3882
     },
     "assets/style/env-water-shore.png": {
       "width": 24,
       "height": 24,
-      "x": 1450,
-      "y": 3882
+      "x": 2,
+      "y": 3934
     },
     "assets/style/forest-berries.png": {
       "width": 24,
       "height": 24,
-      "x": 1478,
-      "y": 3882
+      "x": 30,
+      "y": 3934
     },
     "assets/style/forest-birch.png": {
       "width": 72,
@@ -650,8 +674,8 @@
     "assets/style/forest-boulder.png": {
       "width": 24,
       "height": 24,
-      "x": 1506,
-      "y": 3882
+      "x": 58,
+      "y": 3934
     },
     "assets/style/forest-elder.png": {
       "width": 96,
@@ -662,38 +686,38 @@
     "assets/style/forest-fern.png": {
       "width": 24,
       "height": 24,
-      "x": 1534,
-      "y": 3882
+      "x": 86,
+      "y": 3934
     },
     "assets/style/forest-flowers.png": {
       "width": 24,
       "height": 24,
-      "x": 1562,
-      "y": 3882
+      "x": 114,
+      "y": 3934
     },
     "assets/style/forest-grass.png": {
       "width": 24,
       "height": 24,
-      "x": 1590,
-      "y": 3882
+      "x": 142,
+      "y": 3934
     },
     "assets/style/forest-litter.png": {
       "width": 24,
       "height": 24,
-      "x": 1618,
-      "y": 3882
+      "x": 170,
+      "y": 3934
     },
     "assets/style/forest-log.png": {
       "width": 36,
       "height": 12,
-      "x": 171,
+      "x": 759,
       "y": 3934
     },
     "assets/style/forest-mossy-boulder.png": {
       "width": 24,
       "height": 24,
-      "x": 1646,
-      "y": 3882
+      "x": 198,
+      "y": 3934
     },
     "assets/style/forest-mountain-base.png": {
       "width": 360,
@@ -704,7 +728,7 @@
     "assets/style/forest-mushrooms.png": {
       "width": 12,
       "height": 12,
-      "x": 259,
+      "x": 847,
       "y": 3934
     },
     "assets/style/forest-oak.png": {
@@ -722,14 +746,14 @@
     "assets/style/forest-path.png": {
       "width": 24,
       "height": 24,
-      "x": 1674,
-      "y": 3882
+      "x": 226,
+      "y": 3934
     },
     "assets/style/forest-pebbles.png": {
       "width": 24,
       "height": 24,
-      "x": 1702,
-      "y": 3882
+      "x": 254,
+      "y": 3934
     },
     "assets/style/forest-pine.png": {
       "width": 48,
@@ -746,14 +770,14 @@
     "assets/style/forest-shrub.png": {
       "width": 24,
       "height": 24,
-      "x": 1730,
-      "y": 3882
+      "x": 282,
+      "y": 3934
     },
     "assets/style/forest-stump.png": {
       "width": 24,
       "height": 24,
-      "x": 1758,
-      "y": 3882
+      "x": 310,
+      "y": 3934
     },
     "assets/style/forest-tower-base.png": {
       "width": 216,
@@ -770,32 +794,32 @@
     "assets/style/hero-down.png": {
       "width": 24,
       "height": 24,
-      "x": 1786,
-      "y": 3882
+      "x": 338,
+      "y": 3934
     },
     "assets/style/hero-left.png": {
       "width": 24,
       "height": 24,
-      "x": 1814,
-      "y": 3882
+      "x": 366,
+      "y": 3934
     },
     "assets/style/hero-right.png": {
       "width": 24,
       "height": 24,
-      "x": 1842,
-      "y": 3882
+      "x": 394,
+      "y": 3934
     },
     "assets/style/hero-up.png": {
       "width": 24,
       "height": 24,
-      "x": 1870,
-      "y": 3882
+      "x": 422,
+      "y": 3934
     },
     "assets/style/lake-dock.png": {
       "width": 24,
       "height": 24,
-      "x": 1898,
-      "y": 3882
+      "x": 450,
+      "y": 3934
     },
     "assets/style/lake-fisherman.png": {
       "width": 48,
@@ -812,8 +836,8 @@
     "assets/style/lake-shore.png": {
       "width": 24,
       "height": 24,
-      "x": 1926,
-      "y": 3882
+      "x": 478,
+      "y": 3934
     },
     "assets/style/lake-water.png": {
       "width": 96,
@@ -824,43 +848,43 @@
     "assets/style/square-door-blue.png": {
       "width": 24,
       "height": 24,
-      "x": 1954,
-      "y": 3882
+      "x": 506,
+      "y": 3934
     },
     "assets/style/square-door-heart.png": {
       "width": 24,
       "height": 24,
-      "x": 1982,
-      "y": 3882
+      "x": 534,
+      "y": 3934
     },
     "assets/style/square-door-red.png": {
       "width": 24,
       "height": 24,
-      "x": 2010,
-      "y": 3882
+      "x": 562,
+      "y": 3934
     },
     "assets/style/square-door-steel.png": {
       "width": 24,
       "height": 24,
-      "x": 2,
+      "x": 590,
       "y": 3934
     },
     "assets/style/square-door-wood.png": {
       "width": 24,
       "height": 24,
-      "x": 30,
+      "x": 618,
       "y": 3934
     },
     "assets/style/square-door-yellow.png": {
       "width": 24,
       "height": 24,
-      "x": 58,
+      "x": 646,
       "y": 3934
     },
     "assets/style/torch-animation.png": {
       "width": 96,
       "height": 24,
-      "x": 1182,
+      "x": 1774,
       "y": 3882
     },
     "assets/themes/game-arcade.png": {

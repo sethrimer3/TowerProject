@@ -232,3 +232,11 @@ It keeps upper-left hard-step bevels and sparse wear clusters and never interpol
 Both floor exporters run this step before saving the floor panel or legacy floor frames in a wall atlas.
 Inspect at least a 3×3 repeated field at native size and nearest-neighbor enlargement before approving a floor; an isolated swatch cannot reveal this defect.
 Walls, corner footprints and the black core retain their existing artwork.
+
+## Spell, Gem and rarity additions
+
+`assets/game-sprites/new-spell-items.png` retains the authored source for Golden/Stellar Gems, Phoenix Spark, two Respec subjects, shock/protection badges and four rarity frames.
+Export with `node tools/prepare-new-spell-sprites.mjs`, then `npm run sprites:atlas`; all deployed assets use binary alpha and the shared palette.
+The four `ambient-*` strips have six 24-pixel frames each; the permanent icons and equipment frames are 24 × 24.
+Epic uses purple angular corners, Legendary brass double corners, Mythic wine-red pointed corners and Ancestral blue-green carved corners.
+Each frame keeps a flat slate center and complete borders for the existing six-pixel nine-slice contract.

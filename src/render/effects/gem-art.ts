@@ -1,3 +1,4 @@
+import { paintSpellFrame, spellFrame } from "../../sprites/spell-art.ts";
 import { drawKit } from "../../sprites/kit.ts";
 import { tileTransform, type FrameContext } from "../render-frame.ts";
 import type { GemKind } from "../../economy/gems.ts";
@@ -6,8 +7,7 @@ import type { GemKind } from "../../economy/gems.ts";
 export const GEM_SPARKLE_MS = 800;
 
 /** A Gem kind's colours: its glow (an "r, g, b"), pavilion, crown, facet
- * lines and outline. The golden and stellar ones are stub art, drawn in
- * place of sprites until those are made. */
+ * lines and outline. Alternate Game themes retain these procedural colours; Classic uses native sprites. */
 type GemPalette = { glow: string; pavilion: string; crown: string; facets: string; outline: string };
 const PALETTES: Record<GemKind, GemPalette> = {
   plain: { glow: "120, 225, 255", pavilion: "#2fa9e0", crown: "#8fe6ff", facets: "rgba(225, 250, 255, 0.85)", outline: "#0d3a5c" },
@@ -77,7 +77,7 @@ export function paintGem(c: CanvasRenderingContext2D, time: number, still: boole
 /** A Gem of `kind` in 24x24 tile space: a plain one the kit's Gem sprite
  * where sprites are styled (`styled`), the rest painted. */
 export function drawGemArt(c: CanvasRenderingContext2D, kind: GemKind, time: number, still: boolean, styled: boolean) {
-  if (!(kind === "plain" && styled && drawKit(c, "gem"))) paintGem(c, time, still, kind);
+  if (!(styled && drawKit(c, kind === "plain" ? "gem" : `gem-${kind}`))) paintGem(c, time, still, kind);
 }
 
 /** A four-pointed white star at (x, y), `r` from its centre to its points. */
@@ -104,7 +104,7 @@ const TWINKLES = [[3, 4, 0], [21, 6, 0.3], [19, 20, 0.55], [4, 18, 0.8], [12, 1,
 const TWINKLE_MS = 1600;
 
 /** A Stellar Gem's twinkles: small stars round it, each swelling and
- * fading on a cycle of its own (stub art, until twinkle sprites are made);
+ * fading on a cycle of its own;
  * held half-lit with motion reduced. */
 function drawTwinkles(c: CanvasRenderingContext2D, time: number, still: boolean) {
   for (const [x, y, phase] of TWINKLES) {
@@ -121,8 +121,11 @@ export function drawGem(f: FrameContext, x: number, y: number, kind: GemKind = "
   c.save();
   c.setTransform(tileTransform(f, x, y));
   if (!still) c.translate(0, Math.sin(f.now / 400) * 0.8);
+  if (kind === "stellar") {
+    if (f.look.styledSprites) paintSpellFrame(c, "ambient-stellar-twinkles", spellFrame(f.now, !still && !!f.look.spriteAnimations));
+    else drawTwinkles(c, f.now, still);
+  }
   drawGemArt(c, kind, f.now, still, !!f.look.styledSprites);
-  if (kind === "stellar") drawTwinkles(c, f.now, still);
   c.restore();
 }
 
@@ -134,6 +137,11 @@ export function drawGemSparkle(f: FrameContext, x: number, y: number, age: numbe
   const glow = PALETTES[kind].glow, tint = kind === "plain" ? "200, 245, 255" : glow;
   c.save();
   c.setTransform(tileTransform(f, x, y));
+  if (f.look.styledSprites) {
+    c.globalAlpha = Math.min(1, (GEM_SPARKLE_MS - age) / 200);
+    paintSpellFrame(c, "ambient-stellar-twinkles", f.look.reduceMotion ? 2 : Math.min(5, Math.floor(t * 6)), -12, -12, 48);
+    c.restore(); return;
+  }
   c.globalCompositeOperation = "lighter";
   const flash = c.createRadialGradient(12, 12, 0, 12, 12, 6 + 12 * out);
   flash.addColorStop(0, `rgba(${tint}, ${0.8 * (1 - t)})`);

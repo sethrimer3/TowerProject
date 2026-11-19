@@ -52,6 +52,9 @@ export const goldIcon = () => uiSprite("gold", "ui-sprite gold-icon");
 /** A cut cyan gem, the Gems currency's icon (drawn like the board's). */
 export const gemIcon = (className = "gem-icon") =>
   kitIcon("gem", "", className);
+export const phoenixSparkIcon = (className = "charge-icon") => kitIcon("phoenix-spark", "", className);
+export const goldenGemIcon = (className = "gem-icon") => kitIcon("gem-golden", "", className);
+export const stellarGemIcon = (className = "gem-icon") => kitIcon("gem-stellar", "", className);
 /** Arcanite: a tall green crystal, worn wherever Shards are shown. */
 export const arcaniteIcon = (className = "arcanite-icon") =>
   kitIcon("shard", "", className);
@@ -126,7 +129,7 @@ const SKILL_ITEM_SPRITES: Partial<Record<UpgradeId, keyof typeof ITEM_KIT>> = {
   elixirProvision: "potion_flat", whetstoneProvision: "upgrade_attack", aegisProvision: "upgrade_defense",
 };
 const SKILL_UI_SPRITES: Partial<Record<UpgradeId, UiSprite>> = {
-  phoenixSpark: "revive", undos: "undo", trainingRespec: "undo", arcanaRespec: "undo", esotericTraining: "arrow-up", archives: "log", questForKnowledge: "log",
+  undos: "undo", esotericTraining: "arrow-up", archives: "log", questForKnowledge: "log",
   breakthrough: "breakthrough", moveSpeed: "automove", dash: "automove", instantCombat: "attack", trainers: "arrow-up", buyQuantity: "arrow-up",
   pathToWealth: "gold", moreWealth: "gold", goldenFloors: "gold", offlineGold: "gold", physician: "health", keyMastery: "log", cardMastery: "log", beastMastery: "attack", doorMastery: "log",
   revive: "revive", life: "health", overheal: "health", spareChange: "gold", loot: "gold", floorSkipReward: "gold", mug: "gold", legacy: "tower", quality: "tower",
@@ -145,6 +148,7 @@ const SKILL_CARDS: Partial<Record<UpgradeId, CardId>> = { cardDoorKey: "door", c
   cardRedKey: "redKey", redSiphon: "redSiphon", cardTorch: "torch", cardWoodenDoor: "woodenDoor", heartDoorResilience: "heartDoor",
   angelWings: "angelWings" };
 const SKILL_DETAIL_SPRITES: Partial<Record<UpgradeId, string>> = {
+  phoenixSpark: "phoenix-spark", trainingRespec: "respec-training", arcanaRespec: "respec-arcana",
   autoTrain: "ui-auto-train-on", shroud: "ui-ward", critical: "goal-damage-prediction", critPrediction: "goal-damage-prediction", superCritical: "badge-star",
   thorns: "sword", lifesteal: "boon-lifesteal", parry: "goal-parry", regen: "boon-regen", regenResearch: "boon-regen",
   autoClimb: "play", fasterTrainers: "hourglass", freeTraining: "boon-free-up", buildout: "deck", manualHand: "card-exchange",

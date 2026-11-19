@@ -1,3 +1,4 @@
+import { paintShockStatus, paintDilationGuard } from "../sprites/spell-art.ts";
 import { boardFont } from "../sprites/font.ts";
 import { LakeWorld } from "../lakeside.ts";
 import { drawLakeGround, drawLakeObjects } from "./lakeside.ts";
@@ -269,6 +270,10 @@ export class Renderer {
     this.drawBadgeMarks(f);
     this.drawDoomMarks(f);
     this.drawShockMarks(f);
+    if (!this.game.run.outside && f.look.styledSprites && this.game.dilationGuard > 0) {
+      f.c.save(); toTileSpace(f.c, f, f.playerX, f.playerY);
+      paintDilationGuard(f.c, f.now, !!f.look.spriteAnimations && !f.look.reduceMotion); f.c.restore();
+    }
     this.drawChargeMarks(f);
     this.drawBlockedMark(f);
     // A Gem shines above the darkness, so it can be seen and tapped.
@@ -681,6 +686,13 @@ export class Renderer {
     const shocked = this.game.shockedTiles;
     if (!shocked.length) return;
     const c = f.c, s = f.s, h = s * 0.13;
+    if (f.look.styledSprites) {
+      for (const p of shocked) {
+        c.save(); toTileSpace(c, f, p.x, p.y);
+        paintShockStatus(c, f.now, !!f.look.spriteAnimations && !f.look.reduceMotion); c.restore();
+      }
+      return;
+    }
     // The bolt's outline, in units of `h` round its center: a jagged stroke from top right to bottom left.
     const BOLT = [[0.35, -1], [-0.55, 0.1], [0, 0.1], [-0.35, 1], [0.55, -0.15], [0, -0.15]] as const;
     c.save();

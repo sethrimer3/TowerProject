@@ -2,6 +2,8 @@ import { ARCANA, type ArcanumId } from "./arcana/arcana.ts";
 
 /** Presentation fixtures only: no run, unlock, settings or saved animation state. */
 export const ARCANA_RESEARCH_EXAMPLES = [
+  { id: "ricochetShock", name: "Ricochet Shock", change: "The current yellow mark becomes a native lightning badge with a brief pixel crackle. The proposal is now used by Classic gameplay." },
+  { id: "dilationGuard", name: "Time Dilation Damage Reduction", change: "Current protection has no separate marker. A native hourglass shield shows when the researched field protects the hero; Classic now uses this feedback." },
   { id: "phantasmStun", name: "Phantasm Stun", change: "Current ghosts have no stun marker. Orbiting violet stars propose a visible stunned state." },
   { id: "necroFreeze", name: "Necrotic Freeze", change: "The current frost field has no freeze marker. Ice shards and a cracking shell identify the frozen target." },
   { id: "voidwellDamage", name: "Voidwell Damage", change: "Current damage uses numbers without a dedicated animation. Inward violet pulses propose a visible damage tick." },

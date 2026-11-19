@@ -1,5 +1,5 @@
 import { kitIcon, pngIcon } from "../sprites/kit.ts";
-import { bombIcon, CART_ICON, ENTER_ICON, eventIcon, relicIcon, shrineIcon, gemIcon, goldIcon, arcaniteIcon, itemSprite, mailIcon, medalIcon, missionIcon, NAV_TABS, RESEARCH_ICON, trophyIcon, uiSprite } from "./dom.ts";
+import { bombIcon, CART_ICON, ENTER_ICON, eventIcon, relicIcon, shrineIcon, gemIcon, goldIcon, arcaniteIcon, itemSprite, mailIcon, medalIcon, missionIcon, NAV_TABS, RESEARCH_ICON, trophyIcon, uiSprite, phoenixSparkIcon } from "./dom.ts";
 import { AD_GEMS } from "../economy/gems.ts";
 import { GOLD_BOOST_FACTOR } from "../economy/gold-boost.ts";
 import type { UsedProvision } from "../economy/provisions.ts";
@@ -58,7 +58,7 @@ const CHARGE_BUTTONS = `<button type="button" id="ignore-stat" class="focus-stat
   `<button type="button" id="target-stat" class="focus-stat charge-stat" hidden title="Target: press, then tap a tile to send the hero there">${kitIcon("target", "", "charge-icon")}<b id="target-left">0</b></button>` +
   `<button type="button" id="bomb-stat" class="focus-stat charge-stat" hidden title="Bomb: press, then tap an enemy to deal it your ATK">${bombIcon("charge-icon")}<b id="bomb-left">0</b></button>` +
   PROVISION_BUTTONS_HTML +
-  `<span id="spark-stat" class="focus-stat spark-stat" role="img" hidden title="Phoenix Spark: shrugs off a hit that would defeat you, after every revival has failed">${uiSprite("revive", "charge-icon")}<b id="spark-left">0</b></span>`;
+  `<span id="spark-stat" class="focus-stat spark-stat" role="img" hidden title="Phoenix Spark: shrugs off a hit that would defeat you, after every revival has failed">${phoenixSparkIcon()}<b id="spark-left">0</b></span>`;
 /** Cinematic mode's own buttons (`cinematic.ts`), all else hidden: the gear
  * a tap shows, which leaves it for Settings, and with its option on the
  * ad's Gems while they can be claimed. */

@@ -4168,6 +4168,96 @@
       "file": "one-piece.png",
       "width": 24,
       "height": 24
+    },
+    "gem-golden": {
+      "file": "gem-golden.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "gem-stellar": {
+      "file": "gem-stellar.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "respec-training": {
+      "file": "respec-training.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "respec-arcana": {
+      "file": "respec-arcana.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "status-shock": {
+      "file": "status-shock.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "status-dilation-guard": {
+      "file": "status-dilation-guard.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "ambient-phoenix-spark": {
+      "file": "ambient-phoenix-spark.png",
+      "width": 144,
+      "height": 24,
+      "tile": true
+    },
+    "ambient-stellar-twinkles": {
+      "file": "ambient-stellar-twinkles.png",
+      "width": 144,
+      "height": 24,
+      "tile": true
+    },
+    "ambient-ricochet-shock": {
+      "file": "ambient-ricochet-shock.png",
+      "width": 144,
+      "height": 24,
+      "tile": true
+    },
+    "ambient-dilation-guard": {
+      "file": "ambient-dilation-guard.png",
+      "width": 144,
+      "height": 24,
+      "tile": true
+    },
+    "ui-equip-frame-epic": {
+      "file": "ui-equip-frame-epic.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "ui-equip-frame-legendary": {
+      "file": "ui-equip-frame-legendary.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "ui-equip-frame-mythic": {
+      "file": "ui-equip-frame-mythic.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "ui-equip-frame-ancestral": {
+      "file": "ui-equip-frame-ancestral.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "phoenix-spark": {
+      "file": "phoenix-spark.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
     }
   }
 }

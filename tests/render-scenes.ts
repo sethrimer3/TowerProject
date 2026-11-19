@@ -565,6 +565,31 @@ function playLakeside(_name: string, seed: number, canvas: HTMLCanvasElement, gr
 const NEW_TOWER_SCENES: Record<string, () => BoardScene> = Object.fromEntries(
   ["Four", "Five", "Six", "Seven", "Eight", "Nine"].map((word,i)=>[`spriteTower${word}`,()=>towerTierSpriteScene(i+4)]),
 );
+
+/** Native item/effect coverage appended so historical scene seeds never move. */
+function playNewSpellArt(_name: string, seed: number, canvas: HTMLCanvasElement, grab: Grab) {
+  seeded(seed, () => {
+    const { g } = dungeonSpriteScene("tower", { brightness: 75, spriteAnimations: true, reduceMotion: false, weatherSound: false });
+    quiet(g); g.gains = []; g.areaBursts = [];
+    g.save.arcana.owned.timeDilation = [0, 0, 0];
+    g.save.archives.levels.dilationGuard = 1;
+    g.run.timeDilation = { timer: 100, left: 3 };
+    const p = g.run.player, foe = g.world.floorEnemies?.(p.x, p.y)[0];
+    if (foe) g.world.markShock?.(foe.x, foe.y);
+    const spots: Point[] = [];
+    for (let y = p.y - 3; y <= p.y + 3; y++) for (let x = p.x - 3; x <= p.x + 3; x++) {
+      if ((x !== p.x || y !== p.y) && g.world.tile(x, y).kind === "floor") spots.push({ x, y });
+    }
+    g.save.gemDrop.extra = spots.slice(0, 2).map((pos, i) => ({ ...pos, mode: "tower", seed: g.run.seed, floor: g.run.height, kind: i ? "stellar" : "golden" }));
+    const renderer = new Renderer(canvas, g);
+    for (let now = 1000; now <= 1400; now += 50) renderer.draw(now);
+    g.fights.sparkedAt.push(1500);
+    renderer.draw(1700); grab("activation");
+    renderer.draw(2050); grab("later");
+    g.save.settings.reduceMotion = true; renderer.draw(2100); grab("reducedMotion");
+    g.run.timeDilation.left = 0; renderer.draw(2600); grab("expired");
+  });
+}
 /** Every scene retains its seed, including gaps left by retired scenes. */
 export const JOBS: Job[] = [
   ...Object.keys(BOARD_SCENES).map((name) => ({ name, canvas: "board" as const, run: playBoard })),
@@ -577,6 +602,7 @@ export const JOBS: Job[] = [
   { name: "lakeside", canvas: "board" as const, run: playLakeside },
   ...Object.keys(STELLAR_BOARD_SCENES).map((name) => ({ name, canvas: "board" as const, run: playBoard })),
   ...Object.keys(NEW_TOWER_SCENES).map((name) => ({ name, canvas: "board" as const, run: playBoard })),
+  { name: "nativeSpellArt", canvas: "board" as const, run: playNewSpellArt },
 ].map(({ name, canvas, run }, i) => {
   // Keep the fourth seed reserved for the retired sprite-opt-out scene.
   const seed = i + 1 + (i >= 3 ? 1 : 0) + (i >= Object.keys(BOARD_SCENES).length ? 5 : 0);

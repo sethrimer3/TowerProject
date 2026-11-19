@@ -226,5 +226,9 @@
  "spriteTowerNine.moving": "1342946fa95bb801",
  "spriteTowerNine.after": "c19dc2ecb6fb63fc",
  "spriteTowerNine.ripples": "7cc0a9f6f99d1b17",
- "spriteTowerNine.later": "98d2b1f1d647ecbc"
+ "spriteTowerNine.later": "98d2b1f1d647ecbc",
+ "nativeSpellArt.activation": "bf81ca30964115f2",
+ "nativeSpellArt.later": "015f73b7226678a3",
+ "nativeSpellArt.reducedMotion": "c150d9b4b447bf33",
+ "nativeSpellArt.expired": "c2604bfdaee07de8"
 }

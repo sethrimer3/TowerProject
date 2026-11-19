@@ -433,3 +433,16 @@ The Tileset Lab passes an explicit `DungeonTileset` floor/wall pair to `drawDung
 The override is never selected by `towerTileset`, so experimental material IDs cannot affect real Tower or Delve runs.
 Native wall-cache keys include both override image IDs, preserving exact appearance when moving between experiments and back to a current tower reference.
 The showcase reuses the connected-wall, corner, depth-band and actor painters over a fixed room; it uses no gameplay RNG or animation loop after the art is ready.
+
+## New spell and item sprites
+
+`tools/prepare-new-spell-sprites.mjs` exports the retained `assets/game-sprites/new-spell-items.png` into native 24-pixel subjects, six-frame effect strips and four flat-slate-center equipment frames.
+The exporter thresholds alpha, uses nearest-neighbor sampling and remaps to the shared 27-color palette, preserving every frame's registration.
+`sprites/spell-art.ts` provides deterministic presentation clocks, native strip drawing, the permanent shock badge with optional crackle, and Time Dilation's protection badge.
+Classic uses distinct Golden/Stellar Gem subjects on the board and in reward popups, native Stellar twinkles and pickup sparkles, and a Phoenix Spark strip with the original lifespan and fade.
+Native Phoenix and protection/shock ambient motion respect Animations and Reduce motion; finite Gem pickup feedback preserves its existing timing and freezes with Reduce motion.
+Other Game themes keep their own procedural effects.
+The protection badge appears only while researched Damage Reduction is active, above the hero; it never appears in trials, where this research does not apply.
+Trial enemies use the same native shock badge keyed by the existing saved shock state; no combat or saved data changes.
+`tests/new-spell-art.test.ts` validates palette, binary alpha, strip uniqueness and intact frame borders; `node tests/new-spell-art.mjs` checks actual renderer gates, field expiry, motion settings, item subjects and both atlas modes on phone/desktop.
+The appended `nativeSpellArt` render scene captures activation, later frames, reduced motion and expiry without changing prior scene seeds.

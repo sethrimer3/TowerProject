@@ -21,6 +21,7 @@ export const WORLD_SPRITES = [
   "archer", "crate", "barrel", "shrine", "door-wood", "door-steel",
 ] as const;
 export const CONTROL_SPRITES = ["undo", "redo", "play", "pause", "arrow-up", "arrow-down", "arrow-left", "arrow-right", "ad-screen", "settings-cog", "close", "check", "target", "focus", "ignore", "bomb"] as const;
+export const SPELL_ICON_SPRITES = ["phoenix-spark", "gem-golden", "gem-stellar", "respec-training", "respec-arcana", "status-shock", "status-dilation-guard"] as const;
 export const DETAIL_SPRITES = [
   "hammer", "merge", "lock", "pointer", "relic-rare", "relic-epic", "cart", "deck",
   "fern", "mushrooms", "tuft", "sprout", "crate-broken", "barrel-broken", "pebbles", "web",
@@ -35,7 +36,7 @@ export const CHAMPION_STAR_SPRITE = "champion-star";
 /** A golden ticket bearing a crimson star: One Piece Tickets (tools/prepare-shop-sprites.mjs). */
 export const ONE_PIECE_SPRITE = "one-piece";
 export const CURRENCY_ICON_SPRITES = [INSPIRATION_SPRITE,BREAKTHROUGH_SPRITE,VIP_SPRITE,CHAMPION_STAR_SPRITE,ONE_PIECE_SPRITE] as const;
-export type KitSprite = typeof ICON_SPRITES[number] | typeof WORLD_SPRITES[number] | typeof CONTROL_SPRITES[number] | typeof DETAIL_SPRITES[number] | typeof CURRENCY_ICON_SPRITES[number];
+export type KitSprite = typeof ICON_SPRITES[number] | typeof WORLD_SPRITES[number] | typeof CONTROL_SPRITES[number] | typeof DETAIL_SPRITES[number] | typeof CURRENCY_ICON_SPRITES[number] | typeof SPELL_ICON_SPRITES[number];
 export const kitUrl = (id: string) => `${BASE}assets/style/${id}.png`;
 /** Native PNG controls have one art source across UI themes. */
 export function pngIcon(id: string, className: string, alt = "") {

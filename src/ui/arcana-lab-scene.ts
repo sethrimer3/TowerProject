@@ -23,7 +23,15 @@ const underActors = (id: ArcanaExampleId) => id === "voidwell" || id === "necrot
 export function paintCurrentArcana(c: CanvasRenderingContext2D, id: ArcanaExampleId, time: number) {
   const age = arcanaBurstAge(time);
   c.save();
-  if (id === "extraVoidwell") for (const p of ARCANA_LAB_TWINS) paintVortex(c, p.x, p.y, 42, 1, time, false);
+  if (id === "ricochetShock") {
+    // Retain the pre-pass procedural mark for this comparison.
+    c.translate(TARGET.x - 12 + 24 * .2, TARGET.y - 12 + 24 * .2);
+    c.fillStyle = "#ffe14a"; c.strokeStyle = "#000"; c.lineWidth = 2; c.lineJoin = "miter";
+    const bolt = [[.35, -1], [-.55, .1], [0, .1], [-.35, 1], [.55, -.15], [0, -.15]];
+    c.beginPath();
+    bolt.forEach(([x, y], i) => i ? c.lineTo(x * 24 * .13, y * 24 * .13) : c.moveTo(x * 24 * .13, y * 24 * .13));
+    c.closePath(); c.stroke(); c.fill();
+  } else if (id === "extraVoidwell") for (const p of ARCANA_LAB_TWINS) paintVortex(c, p.x, p.y, 42, 1, time, false);
   else if (id === "phantasmStun") paintCurrentArcana(c, "phantasm", time);
   else if (id === "overseerZap" || id === "thunderboltExpansion") {
     paintCurrentArcana(c, "thunderbolt", time);
@@ -92,6 +100,7 @@ export class ArcanaLabScene {
       // Research variants retain their existing floor field beneath the actors.
       if (id === "voidwellDamage") paint(c, "voidwell", time);
       if (id === "necroFreeze") paint(c, "necroticFrost", time);
+      if (id === "dilationGuard") paint(c, "timeDilation", time);
       if (underActors(id)) paint(c, id, time);
       c.drawImage(this.actors, 0, 0);
       if (id === "thunderboltExpansion") {

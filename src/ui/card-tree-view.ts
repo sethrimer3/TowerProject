@@ -9,7 +9,7 @@ import type { KeyColor } from "../entities.ts";
 import { CARD_RARITY_NAMES, type CardRarity } from "../cards/rarity.ts";
 import { rarityFrameHtml, rarityStarsHtml } from "./card-level-marks.ts";
 import { snap } from "../exact.ts";
-import { cardArt, cellIcon, gemIcon, itemSprite, uiSprite, type UiSprite } from "./dom.ts";
+import { cardArt, cellIcon, gemIcon, goldenGemIcon, stellarGemIcon, itemSprite, uiSprite, type UiSprite } from "./dom.ts";
 import type { GraphNode } from "./upgrade-graph.ts";
 
 /** The id of a tree's root node: the card itself. */
@@ -381,7 +381,7 @@ const STAT_ICONS: Record<TreeStat, () => string> = {
   chestSilver: silver, chestCells: () => cellIcon(), treasureFloor: () => itemSprite("chest_treasure"), rarityUp: () => itemSprite("chest_gold"),
   chestDouble: () => itemSprite("chest_treasure_open"), chestTriple: () => itemSprite("chest_treasure_open"),
   shotAttack: ui("attack"), bossShotAttack: ui("attack"), shotSpeed: ui("arrow-right"), shotRange: ui("arrow-right"), chargeShot: ui("attack"),
-  gemBank: () => gemIcon("ui-sprite"), gemBankSpeed: ui("arrow-up"), adGems: () => gemIcon("ui-sprite"), goldenGem: () => gemIcon("ui-sprite golden-gem-sprite"), stellarGem: () => gemIcon("ui-sprite stellar-gem-sprite"),
+  gemBank: () => gemIcon("ui-sprite"), gemBankSpeed: ui("arrow-up"), adGems: () => gemIcon("ui-sprite"), goldenGem: () => goldenGemIcon("ui-sprite"), stellarGem: () => stellarGemIcon("ui-sprite"),
   chestGem: () => itemSprite("chest_treasure"), gemChance: () => gemIcon("ui-sprite"), bossGem: ui("attack"), gemXp: ui("inspiration"),
 };
 

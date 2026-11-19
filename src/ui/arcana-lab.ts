@@ -12,15 +12,15 @@ export function renderArcanaLab(root: HTMLElement, reduceMotion: boolean, back: 
   root.innerHTML = `<button class="back" id="arcana-lab-back">${controlIcon("back")} Visual Settings</button>
     <div class="page-title"><small>DEVELOPMENT SHOWCASE</small><h2>Arcana Effects Lab</h2></div>
     <div class="arcana-lab"><div class="arcana-lab-heading" aria-live="polite" aria-atomic="true"><small id="arcana-example-id"></small><h3 id="arcana-example-name"></h3><p id="arcana-example-change"></p></div>
-    <div class="arcana-comparison"><figure><figcaption><b>Before</b><span>Current effect</span></figcaption><canvas id="arcana-before" width="528" height="528" role="img"></canvas></figure>
-    <figure><figcaption><b>After</b><span>Pixel-art proposal</span></figcaption><canvas id="arcana-after" width="528" height="528" role="img"></canvas></figure></div>
+    <div class="arcana-comparison"><figure><figcaption><b>Before</b><span id="arcana-before-label">Current effect</span></figcaption><canvas id="arcana-before" width="528" height="528" role="img"></canvas></figure>
+    <figure><figcaption><b>After</b><span id="arcana-after-label">Pixel-art proposal</span></figcaption><canvas id="arcana-after" width="528" height="528" role="img"></canvas></figure></div>
     <p id="arcana-loading" role="status" hidden>Loading artwork…</p>
     <div class="tileset-navigation" role="group" aria-label="Arcana effect slides"><button id="arcana-prev" aria-label="Previous Arcana effect">${controlIcon("back")}</button><span id="arcana-counter"></span><button id="arcana-next" aria-label="Next Arcana effect">${controlIcon("forward")}</button></div>
     <div class="arcana-playback"><button id="arcana-play"></button><button id="arcana-restart">Restart</button><output id="arcana-time" for="arcana-scrub"></output></div>
     <label class="arcana-scrub-label" for="arcana-scrub">Animation timeline</label><input id="arcana-scrub" type="range" min="0" max="${ARCANA_LAB_DURATION}" step="50" value="${ARCANA_LAB_STILL}">
     <button id="arcana-copy" class="wide">Copy example name</button>
     <p class="hint">Same room, targets and timing on both sides. Short impact flashes play at one-third speed. Pause or drag the timeline to inspect a frame. Use ← / → to browse.</p>
-    <p class="hint">These proposals are previews only. Share the example name through Discord or text.</p></div>`;
+    <p class="hint">Examples run in an isolated room. Share the example name through Discord or text.</p></div>`;
   const find = <T extends HTMLElement = HTMLElement>(id: string) => root.querySelector<T>(`#${id}`)!;
   const panel = find("arcana-before"), before = panel as HTMLCanvasElement, after = find<HTMLCanvasElement>("arcana-after");
   const scrub = find<HTMLInputElement>("arcana-scrub"), play = find<HTMLButtonElement>("arcana-play");
@@ -59,6 +59,9 @@ export function renderArcanaLab(root: HTMLElement, reduceMotion: boolean, back: 
     time = arcanaExampleStill(ex.id); last = 0; painted = -1;
     find("arcana-example-id").textContent = `ARC-${ex.id} · EXPERIMENTAL`;
     find("arcana-example-name").textContent = ex.name; find("arcana-example-change").textContent = ex.change;
+    const adopted = ex.id === "ricochetShock" || ex.id === "dilationGuard";
+    find("arcana-before-label").textContent = adopted ? "Previous effect" : "Current effect";
+    find("arcana-after-label").textContent = adopted ? "New effect" : "Pixel-art proposal";
     find("arcana-counter").textContent = `${selected + 1} / ${ARCANA_EXAMPLES.length}`;
     for (const [canvas, label] of [[before, "Before: current effect"], [after, "After: pixel-art proposal"]] as const) {
       canvas.dataset.example = ex.id; canvas.setAttribute("aria-label", `${ex.name}. ${label}. Same example room.`);

@@ -194,7 +194,7 @@ Copy example name copies its stable ID and name for feedback through Discord or 
 ## Arcana Effects Lab
 
 Visual Settings also offers Arcana Effects Lab to every player, without requiring Arcana unlocks or Dev Mode.
-`src/arcana-lab.ts` lists nine base comparisons and six research comparisons with stable `ARC-<exampleId>` names and a shared presentation clock.
+`src/arcana-lab.ts` lists nine base comparisons and eight research comparisons with stable `ARC-<exampleId>` names and a shared presentation clock.
 `ui/arcana-lab-scene.ts` caches one native room and its actors, calls the existing production painters for Before, and draws experimental After effects from `render/effects/arcana-pixel-preview.ts` at the same time and coordinates.
 The proposals use opaque shared-palette pixels on the 24-pixel tile grid; production renderers and gameplay rules do not select them.
 Aurum Bloom has no dedicated current animation, and its slide explicitly identifies the proposed gold-petal burst as new.
@@ -209,3 +209,8 @@ The preview constructs no Game and never changes saves, purchases, unlocks, them
 The Arcana Effects Lab research slides cover Phantasm Stun, Necrotic Freeze, Voidwell Damage, Extra Voidwell, Overseer Zap and Thunderbolt Expansion.
 Each keeps the current field or reused impact in Before and shows proposed status markers, damage pulses, twin pixel vortices, targeting marks or splash rings in After.
 Research previews use the same pause, replay, scrub and copy controls and never enable research or alter combat.
+
+Ricochet Shock and Time Dilation Damage Reduction add two research slides, for seventeen examples total.
+These two After effects are used in Classic gameplay; their Before views retain the previous mark or lack of protection feedback, and the captions distinguish them from the fifteen experimental proposals.
+Respec actions use distinct sword/reset and book/reset sprites, Phoenix Spark has a matching HUD/skill subject, and Gem tree nodes use distinct Golden/Stellar subjects without CSS recoloring.
+Epic, Legendary, Mythic and Ancestral equipment each select an authored native nine-slice border instead of the Rare frame.

@@ -566,8 +566,10 @@ html.ui-sprites :is(.eq-tile, .equip-icon-frame):not(#_) {
 }
 html.ui-sprites :is(.eq-tile, .equip-icon-frame).rar-uncommon:not(#_) { --equipment-frame: url("../../public/assets/style/ui-equip-frame-uncommon.png"); }
 html.ui-sprites :is(.eq-tile, .equip-icon-frame).rar-rare:not(#_) { --equipment-frame: url("../../public/assets/style/ui-equip-frame-rare.png"); }
-/* TODO: Epic and above borrow the Rare frame until their own PNGs are drawn; the --rar colour tells them apart. */
-html.ui-sprites :is(.eq-tile, .equip-icon-frame):is(.rar-epic, .rar-legendary, .rar-mythic, .rar-ancestral):not(#_) { --equipment-frame: url("../../public/assets/style/ui-equip-frame-rare.png"); }
+html.ui-sprites :is(.eq-tile, .equip-icon-frame).rar-epic:not(#_) { --equipment-frame: url("../../public/assets/style/ui-equip-frame-epic.png"); }
+html.ui-sprites :is(.eq-tile, .equip-icon-frame).rar-legendary:not(#_) { --equipment-frame: url("../../public/assets/style/ui-equip-frame-legendary.png"); }
+html.ui-sprites :is(.eq-tile, .equip-icon-frame).rar-mythic:not(#_) { --equipment-frame: url("../../public/assets/style/ui-equip-frame-mythic.png"); }
+html.ui-sprites :is(.eq-tile, .equip-icon-frame).rar-ancestral:not(#_) { --equipment-frame: url("../../public/assets/style/ui-equip-frame-ancestral.png"); }
 html.ui-sprites .eq-tile.eq-ghost:not(#_) { --equipment-frame: url("../../public/assets/style/ui-equip-frame-empty.png"); background: #10151c; }
 html.ui-sprites .eq-tile.selected:not(#_) { outline: none; }
 html.ui-sprites .eq-tile.selected:focus-visible:not(#_) { outline: 2px solid #e1bb78; outline-offset: 3px; }

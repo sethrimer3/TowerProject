@@ -36,9 +36,12 @@ try {
     await expect(page.locator("#arcana-loading")).toBeHidden();
     await expect(page.locator('nav[aria-label="Main navigation"]')).toBeHidden();
     const first = await after.getAttribute("data-example"), pixels = new Map();
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < 17; i++) {
       const id = await after.getAttribute("data-example");
       if (i >= 9) await expect(after).toHaveAttribute("data-time", "450");
+      const adopted = ["ricochetShock", "dilationGuard"].includes(id);
+      await expect(page.locator("#arcana-before-label")).toHaveText(adopted ? "Previous effect" : "Current effect");
+      await expect(page.locator("#arcana-after-label")).toHaveText(adopted ? "New effect" : "Pixel-art proposal");
       assert.equal(await before.getAttribute("data-example"), id);
       assert.equal(await before.getAttribute("data-time"), await after.getAttribute("data-time"));
       const pair = await page.evaluate(() => ["arcana-before", "arcana-after"].map(id => document.getElementById(id).toDataURL()));
@@ -46,7 +49,7 @@ try {
       if (id === "voidwell" || id === "thunderbolt" || i >= 9) await page.locator(".arcana-comparison").screenshot({ path: `test-results/arcana-lab/${id}-${width}.png` });
       await page.locator("#arcana-next").click();
     }
-    assert.equal(pixels.size, 15); await expect(after).toHaveAttribute("data-example", first);
+    assert.equal(pixels.size, 17); await expect(after).toHaveAttribute("data-example", first);
     assert.equal(await after.evaluate(c => c.toDataURL()), pixels.get(first)[1], "returning to a slide restores the same frame");
     await page.locator("#arcana-next").focus(); await page.keyboard.press("Home"); await expect(after).toHaveAttribute("data-example", "voidwell");
     await page.keyboard.press("ArrowLeft"); await expect(after).toHaveAttribute("data-example", "thunderboltExpansion");
@@ -82,6 +85,6 @@ try {
     await page.locator("#arcana-lab-open").click(); await expect(page.locator("#arcana-play")).toHaveText("Play");
     await page.locator("#arcana-lab-back").click(); await page.locator("#settings-back").click();
     await expect(page.locator("#world")).toBeVisible(); assert.deepEqual(await read(), save); assert.deepEqual(errors, []);
-    await page.close(); console.log(`Arcana comparison: all fifteen effects, synchronized playback, scrub/keyboard, copy, motion preferences and run isolation pass at ${width}px.`);
+    await page.close(); console.log(`Arcana comparison: all seventeen effects, synchronized playback, scrub/keyboard, copy, motion preferences and run isolation pass at ${width}px.`);
   }
 } finally { await browser.close(); await server.close(); }

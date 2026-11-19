@@ -187,27 +187,33 @@ html.experimental-atlas.ui-sprites :is(.eq-tile, .equip-icon-frame).rar-uncommon
 }
 html.experimental-atlas.ui-sprites :is(.eq-tile, .equip-icon-frame).rar-rare:not(#_) { --equipment-frame: var(--atlas-65, none)
 }
-html.experimental-atlas.ui-sprites :is(.eq-tile, .equip-icon-frame):is(.rar-epic, .rar-legendary, .rar-mythic, .rar-ancestral):not(#_) { --equipment-frame: var(--atlas-65, none)
+html.experimental-atlas.ui-sprites :is(.eq-tile, .equip-icon-frame).rar-epic:not(#_) { --equipment-frame: var(--atlas-66, none)
 }
-html.experimental-atlas.ui-sprites .eq-tile.eq-ghost:not(#_) { --equipment-frame: var(--atlas-66, none)
+html.experimental-atlas.ui-sprites :is(.eq-tile, .equip-icon-frame).rar-legendary:not(#_) { --equipment-frame: var(--atlas-67, none)
+}
+html.experimental-atlas.ui-sprites :is(.eq-tile, .equip-icon-frame).rar-mythic:not(#_) { --equipment-frame: var(--atlas-68, none)
+}
+html.experimental-atlas.ui-sprites :is(.eq-tile, .equip-icon-frame).rar-ancestral:not(#_) { --equipment-frame: var(--atlas-69, none)
+}
+html.experimental-atlas.ui-sprites .eq-tile.eq-ghost:not(#_) { --equipment-frame: var(--atlas-70, none)
 }
 html.experimental-atlas.ui-sprites .eq-tile.selected::after {
-  border-image: var(--atlas-67, none) 6 / 6px / 0 stretch
+  border-image: var(--atlas-71, none) 6 / 6px / 0 stretch
 }
 html.experimental-atlas.ui-sprites .eq-check:not(#_) {
   background: var(--atlas-45, none) center / 24px 24px no-repeat
 }
-html.experimental-atlas.ui-sprites :is(#health-gain, #overheal-gain):not(#_) { background: var(--atlas-68, none) left top / 32px 100% repeat-x
+html.experimental-atlas.ui-sprites :is(#health-gain, #overheal-gain):not(#_) { background: var(--atlas-72, none) left top / 32px 100% repeat-x
 }
 html.experimental-atlas.ui-sprites :is(#health-loss, #overheal-loss):not(#_) { background: var(--atlas-62, none) left top / 32px 100% repeat-x
 }
 html.experimental-atlas.yang body {
   background:
-    var(--atlas-69, none) right -60px bottom -40px / 340px no-repeat fixed,
+    var(--atlas-73, none) right -60px bottom -40px / 340px no-repeat fixed,
     var(--z-paper)
 }
 html.experimental-atlas.yin body {
   background:
-    var(--atlas-69, none) right -60px bottom -40px / 340px no-repeat fixed,
+    var(--atlas-73, none) right -60px bottom -40px / 340px no-repeat fixed,
     var(--z-paper)
 }

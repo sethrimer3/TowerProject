@@ -138,7 +138,7 @@ There are no in-game votes; Back or Escape returns to Visual Settings.
 
 ### Compare Arcana effects
 
-Open **Settings → Visual Settings → Arcana Effects Lab** to compare the current effects with pixel-art proposals for all nine Arcana, plus six research effect examples.
+Open **Settings → Visual Settings → Arcana Effects Lab** to compare the current effects with pixel-art proposals for all nine Arcana, plus eight research effect examples.
 Before and After show the same room and animation time, beside each other on desktop and stacked on phones.
 Use the arrows to browse, Pause to hold the animation, the timeline to inspect a frame, and Restart to replay from the beginning.
 Short impact flashes play at one-third speed on both sides to make them easier to compare.
@@ -150,3 +150,9 @@ Copy example name gives you a stable ID and name to share through Discord or tex
 The Arcana Effects Lab research slides cover Phantasm Stun, Necrotic Freeze, Voidwell Damage, Extra Voidwell, Overseer Zap and Thunderbolt Expansion.
 Each keeps the current field or reused impact in Before and shows proposed status markers, damage pulses, twin pixel vortices, targeting marks or splash rings in After.
 Research previews use the same pause, replay, scrub and copy controls and never enable research or alter combat.
+
+Ricochet Shock and Time Dilation Damage Reduction also have comparison slides, bringing the lab to seventeen examples.
+Their new lightning and hourglass-shield feedback is used in Classic; the remaining proposals stay experimental.
+With Classic artwork, Golden and Stellar Gems have distinct sprites, Stellar Gems twinkle, and Phoenix Spark shows a small phoenix animation.
+Reduce motion freezes these effects; the Animations setting also controls the Phoenix, shock and protection motion.
+Epic through Ancestral equipment has distinct rarity borders, and the two Respec skills have separate icons.

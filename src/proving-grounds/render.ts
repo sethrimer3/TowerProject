@@ -4,6 +4,7 @@ import { drawCrates } from "../render/decor/decor-sprites.ts";
 import { POSITION_HALOS_ENABLED } from "../render/lighting.ts";
 import { drawKit } from "../sprites/kit.ts";
 import { HeroIdleAnimation } from "../sprites/animations.ts";
+import { paintShockStatus } from "../sprites/spell-art.ts";
 import type { Tile } from "../entities.ts";
 import { ARENA_CRATES, ARENA_POTIONS, ARENA_TORCHES, beamCount, beamDirections, rayCells, trialFloor, key, nextBeamAxis, propDestroyed, type TrialState } from "./trial.ts";
 
@@ -325,6 +326,17 @@ export class TrialRenderer {
         c.fillStyle="#ffeaa8";
         for(const [dx,dy] of beamDirections(nextBeamAxis(s),beamCount(s.level))) for(let i=1;i<=3;i++) tile(s.elemental.x+dx*i,s.elemental.y+dy*i,()=>c.fillRect(11,11,2,2));
       }
+    }
+    if (s.room === "arena" && s.arcana?.shocked?.length) {
+      const shocked = new Set(s.arcana.shocked), v = s.bossVariant;
+      const foes = [
+        ...(!s.elemental.incorporeal && s.bossHp > 0 ? [{ ...s.elemental, key: "boss" }] : []),
+        ...s.slimes.map(p => ({ ...p, key: `slime:${p.id}` })),
+        ...(s.keymaster?.mimics ?? []).map(p => ({ ...p, key: `mimic:${p.id}` })),
+        ...(v ? activeBossParts(v).map(p => ({ ...p, key: `part:${p.id}` })) : []),
+        ...(v?.minions ?? []).map(p => ({ ...p, key: `minion:${p.id}` })),
+      ];
+      for (const p of foes) if (shocked.has(p.key)) tile(p.x, p.y, () => paintShockStatus(c, now, !!options.spriteAnimations && !reduceMotion));
     }
     if(options.destination && s.status==="active") {
       c.save();c.strokeStyle="#f3dc9c";c.lineWidth=1;
