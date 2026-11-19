@@ -50,3 +50,6 @@ for (const [index, name] of names.entries()) {
 }
 writeFileSync(join(out, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n");
 console.log(`Prepared ${names.length} PNG UI components in ${out}`);
+
+// Apply the revised frame reference and its shared native rail contract.
+await import("./normalize-ui-frames.mjs");

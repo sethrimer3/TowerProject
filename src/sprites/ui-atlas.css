@@ -121,7 +121,7 @@ html.experimental-atlas.ui-sprites body:not(#_) {
   background: #10151c var(--atlas-49, none) repeat
 }
 html.experimental-atlas.ui-sprites :is(.deck-slot, .node-icon):not(#_) {
-  border-image: var(--atlas-50, none) 6 fill / 12px / 0 stretch
+  border-image: var(--atlas-50, none) 3 fill / 3px / 0 stretch
 }
 html.experimental-atlas.ui-sprites input[type="checkbox"]:not(#_) {
   background: var(--atlas-45, none) center / 24px 24px no-repeat
@@ -131,7 +131,7 @@ html.experimental-atlas.ui-sprites input[type="checkbox"]:checked:not(#_) {
 }
 html.experimental-atlas.ui-sprites :is(.xp-track, .health-track, .weekly-bar, .mission-bar,
   .research-bar, .refine-bar):not(#_) {
-  border-image: var(--atlas-51, none) 6 fill / 4px / 0 stretch
+  border-image: var(--atlas-51, none) 3 fill / 3px / 0 stretch
 }
 html.experimental-atlas.ui-sprites :is(.xp-track i, .weekly-bar i, .mission-bar i,
   .research-bar i, .refine-bar span, .event-bar i):not(#_) {
@@ -147,7 +147,7 @@ html.experimental-atlas.ui-sprites #health-gain:not(#_) {
   background: var(--atlas-53, none) left top / 32px 100% repeat-x
 }
 html.experimental-atlas.ui-sprites .page-title:not(#_) {
-  border-image: var(--atlas-35, none) 6 fill / 12px / 0 stretch
+  border-image: var(--atlas-35, none) 3 fill / 3px / 0 stretch
 }
 html.experimental-atlas.ui-sprites :is(.badge-token, .badge-mark, .hand-badge-level) {
   --badge-frame: var(--atlas-55, none)

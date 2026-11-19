@@ -14,6 +14,7 @@ export const DEVLOG_TEXT_MAX = 120;
  * Each change adds its own line at the top (AGENTS.md). */
 export const DEVLOG: readonly DevlogEntry[] = [
   { date: "2026-11-19", text: "DEVLOG: a list of changes, opened from Settings." },
+  { date: "2026-11-19", text: "Pixel UI borders unified, and the game view gets a frame." },
   { date: "2026-11-19", text: "Native pixel art for spell feedback, Gem variants and rarity frames." },
   { date: "2026-11-16", text: "Champion's Bundle, Champion Status and the Champion's Club." },
   { date: "2026-11-16", text: "VIP Points and the Shop's Premium Offers." },
