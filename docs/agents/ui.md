@@ -214,3 +214,7 @@ Ricochet Shock and Time Dilation Damage Reduction add two research slides, for s
 These two After effects are used in Classic gameplay; their Before views retain the previous mark or lack of protection feedback, and the captions distinguish them from the fifteen experimental proposals.
 Respec actions use distinct sword/reset and book/reset sprites, Phoenix Spark has a matching HUD/skill subject, and Gem tree nodes use distinct Golden/Stellar subjects without CSS recoloring.
 Epic, Legendary, Mythic and Ancestral equipment each select an authored native nine-slice border instead of the Rare frame.
+
+Classic and Medieval shared PNG frames use three-pixel source slices and reserve a three-pixel displayed border, including `#board-frame`; tiny progress tracks use one displayed pixel.
+`tools/normalize-ui-frames.mjs` applies continuous native rails after `prepare-ui-sprites.mjs`; separate badge, equipment and slider slices remain independent.
+`tests/ui-borders.test.ts` checks rail continuity, corner thickness and palette; the sprite layout browser suite checks the actual HUD/board metrics and content fit.

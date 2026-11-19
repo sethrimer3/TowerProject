@@ -20,13 +20,13 @@ try {
   });
   await page.goto(server.resolvedUrls.local[0]); await page.locator("#hp").waitFor();
   const seed = async (settings = {}, large = false, outside = false, packed = false) => {
-    await page.evaluate(async ({ settings, large, outside, packed }) => {
+    await page.evaluate(async ({ settings, large, outside, packed, processAtlas }) => {
       const { defaults } = await import("/src/save/save.ts"); const { Game } = await import("/src/state.ts");
       const { THEME_IDS } = await import("/src/theme-collection.ts");
       const s = defaults(); Object.keys(s.tutorials).forEach(k => s.tutorials[k] = true);
       s.upgrades.combatStance = 1;
       s.themes = [...THEME_IDS]; s.equipment.unlocked = true;
-      Object.assign(s.settings, { reduceMotion: true, transition: "instant", devMode: true, weatherSound: false }, settings);
+      Object.assign(s.settings, { reduceMotion: true, transition: "instant", devMode: true, weatherSound: false, experimentalAtlas: processAtlas }, settings);
       const g = new Game(s); g.newRun({ seed: 7, outside });
       if (!outside) { g.advanceTowerRoom(); g.advanceTowerRoom(); }
       if (large) {
@@ -46,7 +46,7 @@ try {
         g.run.shrine = { picked: [], rolls: 0, offer: ["attack", "goldMaxHp"] };
       }
       sessionStorage.setItem("__fontFixture", JSON.stringify(g.save));
-    }, { settings, large, outside, packed });
+    }, { settings, large, outside, packed, processAtlas: process.env.UI_ATLAS !== "0" });
     await page.reload(); await page.locator("#hp").waitFor(); await page.evaluate(() => document.fonts.ready);
   };
   const ready = async () => {
@@ -87,8 +87,20 @@ try {
   for (const width of [320, 360, 390, 768, 1100]) {
     await page.setViewportSize({ width, height: 844 }); await ready();
     await fit(controls);
+    const frames = await page.locator('#stats, #board-frame, #auto, #run-menu-toggle, .portrait-top').evaluateAll(es => es.map(e => {
+      const s = getComputedStyle(e);
+      return { id: e.id || e.className, slice: s.borderImageSlice, width: s.borderImageWidth, reserved: s.borderTopWidth, source: s.borderImageSource };
+    }));
+    for (const frame of frames) {
+      assert.equal(frame.slice, '3 fill', frame.id);
+      assert.equal(frame.width, '3px', frame.id);
+      assert.equal(frame.reserved, '3px', frame.id);
+      assert.ok(frame.source.startsWith('url('), frame.id);
+    }
+    await page.locator('#board-frame').screenshot({ path: `test-results/sprite-layout/board-${width}.png` });
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${width}px page fits`);
     await page.locator("#stats").screenshot({ path: `test-results/sprite-layout/hud-${width}.png` });
+    if (width === 390) await page.screenshot({ path: "test-results/sprite-layout/game-390.png", fullPage: true });
     await openMenu(page); await fit("#run-menu button");
     await page.locator("#run-menu-toggle").click();
   }
