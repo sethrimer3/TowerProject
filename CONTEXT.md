@@ -32,6 +32,10 @@ _Avoid_: tower log, reward log
 The player's lifetime record, shown in the Settings page's Stats: when the profile was made, each currency ever earned (spending never lowers it), the Tower floors climbed, the Training levels gained, the research levels completed, and the Gold spent on each (less what came back). Erasing all progress starts a new one.
 _Avoid_: account, statistics save
 
+**DEVLOG**:
+The list of every change to the game, newest first, one short line each beside the day it shipped, opened from the Settings page.
+_Avoid_: changelog, patch notes, release notes
+
 **Profile file**:
 A text file of everything the player keeps between runs (no run in progress), in named sections, which the Settings page's Dev Mode section exports and imports to replace the whole profile.
 _Avoid_: backup, save file (the stored save also holds the runs)
