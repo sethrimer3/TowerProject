@@ -230,5 +230,5 @@ The immediate Silver award on a hit remains, in addition to collectible Silver.
 `tests/boss-variants.test.ts` checks one-round minions, Gold spending balance and persistence across character upgrades.
 `node tests/trial-voyage.mjs` checks level gating, timing, live motion, repeat boarding, attempt entry and return at phone and desktop widths.
 
-Leaving a lost attempt whose player has zero HP plays the shared infinity death-loop transition before returning to the dock.
-A victory, voluntary exit or turn limit with HP remaining does not play it; the existing damage settlement and daily trial allowance are preserved.
+Leaving an active attempt early, or a lost attempt whose player has zero HP, plays the shared infinity transition with a fade to black and back before returning to the dock.
+A victory or turn limit with HP remaining does not play it; the existing damage settlement and daily trial allowance are preserved.

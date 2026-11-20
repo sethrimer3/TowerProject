@@ -466,6 +466,7 @@ try {
   async function leaveRun() {
     await menuClick("#end-run");
     await click("#confirm");
+    await page.waitForFunction(() => !document.querySelector("#modal").open && !document.querySelector("nav").classList.contains("in-run"));
   }
   async function closeModal() {
     await page.evaluate(() => document.querySelector("#modal").open && document.querySelector("#modal").close());
@@ -793,7 +794,7 @@ try {
     await load("fallenBare");
     await shot("fallen.bare");
     await click("#defeat-accept");
-    await page.locator("#modal.death-loop").waitFor({ state: "hidden" });
+    await page.waitForFunction(() => !document.querySelector("#modal").open && !document.querySelector("nav").classList.contains("in-run"));
     await shot("fallen.accepted");
   });
 

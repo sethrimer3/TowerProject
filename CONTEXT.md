@@ -1090,4 +1090,4 @@ _Avoid_: known tiles, visit map
 - **Boss part**: one of three auxiliary structures (`Blaster Turret`, `Regen Conduit`, `Ward Crystal`) in the `1b` and `2b` multi-part boss sub-variants; knocking a part out permanently disables its activity and removes it from the floor without regeneration.
 - **Landscape layout**: the board beside the HUD, filling the screen's height, worn while the screen is wide enough and the setting allows it; the portrait layout stacks the HUD over the board.
 - **Handedness**: which side the controls gather on, under the thumb; Left mirrors the layout.
-- **Death loop**: the pale infinity symbol that draws on black between accepting defeat and the delver's return.
+- **Death loop**: the pale infinity symbol that draws on black when the delver returns after defeat or ends a run early.

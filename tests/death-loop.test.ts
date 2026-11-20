@@ -5,25 +5,33 @@ import { deathLoopFrame, DEATH_LOOP } from '../src/ui/death-loop.ts';
 import { decodePng } from '../tools/ui-atlas-png.mjs';
 
 test('death loop draws once, holds the complete symbol, then reveals the world', () => {
-  assert.equal(deathLoopFrame(0).phase, 'black');
+  assert.equal(deathLoopFrame(0).phase, 'fade-in');
+  assert.equal(deathLoopFrame(0).opacity, 0);
+  assert.equal(deathLoopFrame(DEATH_LOOP.fadeIn / 2).opacity, 0.5);
+  assert.equal(deathLoopFrame(DEATH_LOOP.fadeIn / 2).frame, 0);
+  assert.equal(deathLoopFrame(DEATH_LOOP.fadeIn).phase, 'black');
+  assert.equal(deathLoopFrame(DEATH_LOOP.fadeIn).opacity, 1);
   assert.equal(deathLoopFrame(0).frame, 0);
   assert.equal(deathLoopFrame(1000).phase, 'drawing');
   assert.ok(deathLoopFrame(1000).frame > 0 && deathLoopFrame(1000).frame < 47);
-  assert.equal(deathLoopFrame(2000).frame, 47);
-  assert.equal(deathLoopFrame(2000).reveal, false);
-  const reveal = DEATH_LOOP.lead + DEATH_LOOP.draw + DEATH_LOOP.hold;
+  assert.equal(deathLoopFrame(DEATH_LOOP.fadeIn + 2000).frame, 47);
+  assert.equal(deathLoopFrame(DEATH_LOOP.fadeIn + 2000).reveal, false);
+  const reveal = DEATH_LOOP.fadeIn + DEATH_LOOP.lead + DEATH_LOOP.draw + DEATH_LOOP.hold;
   assert.deepEqual([deathLoopFrame(reveal).reveal, deathLoopFrame(reveal).opacity], [true, 1]);
   assert.equal(deathLoopFrame(reveal + DEATH_LOOP.fade / 2).opacity, 0.5);
   assert.deepEqual([deathLoopFrame(reveal + DEATH_LOOP.fade).done, deathLoopFrame(reveal + DEATH_LOOP.fade).opacity], [true, 0]);
 });
 
 test('reduced motion uses a brief still infinity sign', () => {
-  for (const time of [0, 100, 239]) {
+  assert.equal(deathLoopFrame(0, true).opacity, 0);
+  assert.equal(deathLoopFrame(40, true).opacity, 0.5);
+  assert.equal(deathLoopFrame(40, true).frame, 0);
+  for (const time of [80, 100, 319]) {
     assert.equal(deathLoopFrame(time, true).frame, 47);
     assert.equal(deathLoopFrame(time, true).reveal, false);
   }
-  assert.equal(deathLoopFrame(240, true).reveal, true);
-  assert.equal(deathLoopFrame(400, true).done, true);
+  assert.equal(deathLoopFrame(320, true).reveal, true);
+  assert.equal(deathLoopFrame(480, true).done, true);
 });
 
 test('the native drawing sheet starts empty and ends in a pale complete infinity', () => {

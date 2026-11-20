@@ -178,5 +178,5 @@ The switches are saved outside the run (both empty in `defaults()`), set with `T
 Rewards picked up (pickups, treasure, enemy drops, an opened treasure chest) and what a door takes (each key, drawn with a minus sign, or a Heart Door's heart with the HP it drained: a Heart Door always opens and leaves the hero 1 HP, `HEART_DOOR_HP` in `step-effects.ts`) are queued as `Gain`s (`game.gains`: a tile's contents, a material, the heart or a Gold or Silver coin to draw (Silver's baked once from the Gold coin, drained of colour, as the purse shows it), or text), which the renderer takes each frame; other feedback (floors) is still the rising text over the board (`game.effect`).
 `tests/fight-playback.test.ts` covers the schedule, an encounter against the same fight settled at once, death mid-fight, gains, and the popups.
 
-Accepting a defeat or choosing Retry plays `ui/death-loop.ts` before committing the selected action; its shared modal blocks gameplay until the infinity trace and return fade end.
-Revive, Angel Wings, Phoenix Spark and voluntary End Run do not trigger it because they do not accept a fallen run.
+Accepting defeat, confirming End Run or choosing Retry plays `ui/death-loop.ts` before committing the selected action; its shared modal blocks gameplay until the infinity trace and return fade end.
+Revive, Angel Wings and Phoenix Spark do not trigger it because they continue the current run; cancelling End Run also leaves the run unchanged.
