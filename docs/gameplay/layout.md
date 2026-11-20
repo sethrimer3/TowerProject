@@ -7,9 +7,9 @@ The game lays itself out for the shape of the screen.
 On a phone held upright, or a narrow window, the HUD sits over the board and the tabs (or, inside a climb, the hand) run along the bottom.
 Turn the phone on its side, or make a desktop window wide enough, and the game switches to the landscape layout at once, and back again as the screen narrows.
 In landscape the board fills the screen's height on one side, with the HUD beside it.
-In the forest the tabs stand in an upright column at the far edge; inside a climb the hand sits at the bottom of the HUD's column.
+In the forest the tabs stand upright at the far edge of the HUD's column, between the HUD and the status line; inside a climb the hand sits at the bottom of the HUD's column.
 The status line and the hints that lie over the board's foot in portrait move into the HUD's column, so they never cover the board.
-Pages such as Upgrades and the Shop take the board's and the HUD's place, beside the tabs.
+Pages such as Upgrades and the Shop take the board's and the HUD's place, the tabs a column of their own beside them, at the same edge as in the forest.
 
 **Landscape layout on wide screens**, under Settings, is on to begin with; turned off, the game keeps the portrait layout whatever the screen's shape.
 

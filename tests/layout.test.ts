@@ -36,7 +36,7 @@ test("every landscape grid has its left-handed mirror", () => {
     const body = css.slice(at, css.indexOf("}", at));
     return [...body.matchAll(/"([^"]+)"/g)].map((m) => m[1].trim().split(/\s+/));
   };
-  for (const state of ["", ":has(> nav.in-run)", ":has(> #board:not(.active))"]) {
+  for (const state of ["", ":has(> nav:not(.in-run)):has(> #board.active)", ":has(> nav.in-run)", ":has(> #board:not(.active))"]) {
     const right = areas(`html.layout-landscape .shell${state}`), left = areas(`html.layout-landscape.left-handed .shell${state}`);
     assert.deepEqual(left, right.map((row) => [...row].reverse()), `mirror of ${state || "the forest"}`);
   }

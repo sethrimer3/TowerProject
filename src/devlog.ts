@@ -13,6 +13,7 @@ export const DEVLOG_TEXT_MAX = 120;
 /** Every change, newest first: the Settings page's DEVLOG button lists them.
  * Each change adds its own line at the top (AGENTS.md). */
 export const DEVLOG: readonly DevlogEntry[] = [
+  { date: "2026-11-20", text: "Landscape: in the forest the tabs tuck in under the HUD instead of standing in a column of their own." },
   { date: "2026-11-20", text: "Battery saver: a Back button leaves it; Settings now only opens the Settings page." },
   { date: "2026-11-20", text: "Battery saver: a Gem button beside Play and Settings, and the hand's row no longer hides the card at work's underline." },
   { date: "2026-11-20", text: "In cinematic mode, the corner button is now Back: it leaves cinematic mode instead of opening Settings." },

@@ -39,6 +39,32 @@ html.layout-landscape.left-handed .shell {
     "rail side  board"
     "rail train board";
 }
+/* In the forest with the board showing, the rail tucks in under the HUD's
+   right end, the HUD over it and the foot lines under it, rather than
+   standing alone in a column of its own; it keeps the far edge a page's rail
+   stands at, so opening a page never moves it outward. The side column's
+   lines become grid items of their own for it, each the column's full width;
+   the gaps are margins, so an empty line leaves no gap behind. */
+html.layout-landscape .shell:has(> nav:not(.in-run)):has(> #board.active) {
+  row-gap: 0;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    "board stats  stats"
+    "board .      rail"
+    "board insp   insp"
+    "board status status";
+}
+html.layout-landscape.left-handed .shell:has(> nav:not(.in-run)):has(> #board.active) {
+  grid-template-areas:
+    "stats  stats board"
+    "rail   .     board"
+    "insp   insp  board"
+    "status status board";
+}
+html.layout-landscape .shell:has(> nav:not(.in-run)):has(> #board.active) > nav { margin: 8px 0; }
+html.layout-landscape .shell:has(> nav:not(.in-run)):has(> #board.active) > .side-info { display: contents; }
+html.layout-landscape .shell:has(> nav:not(.in-run)):has(> #board.active) > .side-info > .status { grid-area: status; margin-top: 6px; }
+html.layout-landscape .shell:has(> nav:not(.in-run)):has(> #board.active) > .side-info > .inspection { grid-area: insp; }
 /* Inside a run there are no tabs: the hand takes the rail's place under the HUD. */
 html.layout-landscape .shell:has(> nav.in-run) {
   grid-template-columns: var(--board-size) minmax(0, 1fr);
