@@ -39,6 +39,9 @@ export type BoardLook = {
    * Classic art (always outside: the forest keeps its art), so what rises
    * off it wears that art too. */
   themed: ThemedBoard | null;
+  /** Battery saver is on: the board is drawn in white pixel art on black
+   * (`themed` is its board, outside too). */
+  battery?: boolean;
   /** Whether the tile at (x, y) stands on a Golden Floor (`Game.goldenAt`);
    * none while the run can't have one. */
   golden?: (x: number, y: number) => boolean;

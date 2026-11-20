@@ -1,0 +1,90 @@
+/* Battery saver: the page in white on pure black, so an OLED screen lights
+   as little as it can. It is worn over Kuro's flat panels (bare.css: the
+   root has both `kuro` and `battery-saver`), turns Kuro's near-blacks to
+   black and its colours to white, stops every animation, transition and
+   glow, and shows pictures in grey. The hand's cards wear white pixel icons
+   of their own (battery-board.ts). Loaded after the themes.
+   Every selector is scoped under `html.battery-saver`. */
+html.battery-saver {
+  --b-page: #000;
+  --b-block: #000;
+  --b-press: #1e1e1e;
+  --b-ink: #fff;
+  --b-soft: #9a9a9a;
+  --b-red: #fff;
+  --b-green: #fff;
+  --shrine-fill: #fff;
+  color-scheme: dark;
+  background: #000;
+}
+html.battery-saver body { background: #000; }
+/* No motion and no glow anywhere. */
+html.battery-saver *,
+html.battery-saver *::before,
+html.battery-saver *::after {
+  animation: none !important;
+  transition: none !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+/* Panels and buttons: black with a thin grey line, so they still read as
+   blocks without lighting their whole area. */
+html.battery-saver :is(.stats, .card, .upgrade, .shop, .theme-card, .mission, .research, .setting, dialog, button):not(#_):not(.hand-card, .skill-node, nav button) {
+  border: 1px solid #3a3a3a;
+}
+html.battery-saver button.selected:not(#_),
+html.battery-saver button[aria-pressed="true"]:not(#_) {
+  border-color: #fff;
+}
+/* Pictures in grey (the board and the hand's own icons are already). */
+html.battery-saver :is(img, .sprite-icon, svg, canvas):not(#world, .battery-card, .battery-card *) {
+  filter: grayscale(1) !important;
+}
+/* The board's chunky pixels stay hard as the browser fits its canvas. */
+html.battery-saver #world { image-rendering: pixelated; }
+/* Keys: the HUD names them by their shapes on the board, colour gone. */
+html.battery-saver .keys :is(.yellow, .blue, .red):not(#_) { color: #fff; }
+
+/* The hand: each card a black face with a thin white line, its white pixel
+   icon and its name under it. */
+html.battery-saver .hand-card:not(#_) {
+  border: 1px solid #5c5c5c;
+  border-radius: 0;
+  background: #000;
+}
+html.battery-saver .hand-card.active:not(#_),
+html.battery-saver .hand-card.focused:not(#_) {
+  border-color: #fff;
+  outline: 1px solid #fff;
+}
+html.battery-saver .battery-card:not(#_) {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+}
+html.battery-saver .battery-card img:not(#_) {
+  width: 62%;
+  aspect-ratio: 1;
+  margin-bottom: 18%;
+  image-rendering: pixelated;
+}
+html.battery-saver .battery-card + .sprite-card-label:not(#_) {
+  display: block !important;
+  position: absolute;
+  bottom: 6%;
+  inset-inline: 4%;
+  color: #fff;
+  font-family: "Tower Pixel", monospace;
+  font-size: 8px;
+  line-height: 1.15;
+  text-align: center;
+  pointer-events: none;
+}
+html.battery-saver .hand-card.unable .battery-card img:not(#_) { opacity: 0.35; }
+/* What is new: a white dot, not a red one. */
+html.battery-saver .notify::after { background: #fff !important; color: #000 !important; }
+/* Bars: white fills, a gain grey and a loss dim, on a dark track. */
+html.battery-saver :is(.health-track, .xp-track, .shield-track, .overheal-track) :is(i, span):not(#_) { background: #fff !important; }
+html.battery-saver :is(#health-gain, #overheal-gain, #shield-over):not(#_) { background: #9a9a9a !important; }
+html.battery-saver :is(#health-loss, #overheal-loss, #shield-regrow):not(#_) { background: #5c5c5c !important; }

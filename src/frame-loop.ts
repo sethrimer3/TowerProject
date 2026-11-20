@@ -48,8 +48,12 @@ function guard(part: () => void) {
 const ROUTE_STEP_MS = 130;
 /** The walk in through the forest's entrance takes a turn per this many ms. */
 const WALK_IN_TURN_MS = 260;
-/** Battery saver: while nothing moves, draw at most every this many ms. */
-const IDLE_FRAME_MS = 30;
+/** Battery saver: a frame at most every this many ms while anything on the
+ * board moves or a step is due (about 15 a second)... */
+const BATTERY_BUSY_MS = 66;
+/** ...and every this many ms while all is still. A press or a change to the
+ * game asks for the next frame at once. */
+const BATTERY_IDLE_MS = 400;
 const AUTOSAVE_MS = 10000;
 const ARCHIVES_TICK_MS = 1000;
 
@@ -61,12 +65,43 @@ export class FrameLoop {
   private lastRoute = 0;
   private lastSave = 0;
   private lastArchives = 0;
-  private lastBoardDraw = -Infinity;
+  /** Battery saver's wait for the next frame, while one is pending. */
+  private waiting: ReturnType<typeof setTimeout> | null = null;
 
   constructor(private host: FrameLoopHost) {}
 
   start() {
     requestAnimationFrame(this.frame);
+    if (typeof window !== "undefined") for (const type of ["pointerdown", "pointerup", "keydown", "wheel"]) window.addEventListener(type, () => this.wake(), { passive: true });
+  }
+
+  /** Battery saver: draws the next frame now rather than after its wait,
+   * as the player presses something or the game changes. */
+  wake() {
+    if (this.waiting === null) return;
+    clearTimeout(this.waiting);
+    this.waiting = null;
+    requestAnimationFrame(this.frame);
+  }
+
+  /** Asks for the next frame: at the screen's own rate, or with Battery
+   * saver on, after a wait (shorter while the board moves). */
+  private next() {
+    const wait = this.batteryWait();
+    if (!wait) return void requestAnimationFrame(this.frame);
+    this.waiting = setTimeout(() => {
+      this.waiting = null;
+      requestAnimationFrame(this.frame);
+    }, wait);
+  }
+
+  /** How long Battery saver waits before the next frame, or 0 while it is off. */
+  private batteryWait() {
+    const { game, renderer } = this.host;
+    if (!game.save.settings.batterySaver) return 0;
+    const now = performance.now();
+    const busy = !renderer.isIdle(now) || game.route.length > 0 || (game.auto && !game.paused) || !!game.fights.encounter || !!game.walkIn || !!game.forestArrival;
+    return busy ? BATTERY_BUSY_MS : BATTERY_IDLE_MS;
   }
 
   /** Restarts Automove's step timer, e.g. when the page becomes visible
@@ -80,7 +115,12 @@ export class FrameLoop {
    * others, or the loop itself: research and training still complete, and
    * the game still saves. */
   private frame = (time: number) => {
-    requestAnimationFrame(this.frame);
+    try {
+      this.next();
+    } catch (e) {
+      console.error(e);
+      requestAnimationFrame(this.frame);
+    }
     const { host } = this, tab = host.tab();
     if (!document.hidden) {
       if (tab === "upgrades") guard(() => host.upgradesFrame(time));
@@ -106,10 +146,7 @@ export class FrameLoop {
   private boardFrame(time: number) {
     if(this.host.boardFrame?.(time))return;
     const game = this.host.game;
-    if (!this.batterySaverSkips(time)) {
-      this.host.renderer.draw(time);
-      this.lastBoardDraw = time;
-    }
+    this.host.renderer.draw(time);
     if (game.fights.encounter) this.playFight(time);
     if (game.forestArrival) {
       if (this.canAct() && game.forestArrivalFrame(time)) this.host.update();
@@ -143,12 +180,6 @@ export class FrameLoop {
     if (time < fight.start + fight.bout.duration) return this.host.vitals();
     this.host.game.fights.finish();
     this.host.update();
-  }
-
-  /** Battery saver: while nothing on the board moves, skip every other frame. */
-  private batterySaverSkips(time: number) {
-    const { game, renderer } = this.host;
-    return game.save.settings.batterySaver && time - this.lastBoardDraw < IDLE_FRAME_MS && renderer.isIdle(time);
   }
 
   /** A step may run: the interval since the last one has passed and the game is live. */

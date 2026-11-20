@@ -70,6 +70,8 @@ const AFTER: Partial<Record<PageKey, (ctx: AppContext, overlay: BoardOverlay, s:
   reduceMotion: (ctx) => applyUiTheme(ctx.game.save),
   autoLandscape: (ctx) => { applyUiTheme(ctx.game.save); ctx.save(); ctx.update(); },
   hand: (ctx) => { applyUiTheme(ctx.game.save); ctx.save(); ctx.update(); },
+  // Battery saver dresses the page in black and white, and its board and hand redraw.
+  batterySaver: (ctx) => { applyUiTheme(ctx.game.save); ctx.save(); ctx.update(); },
   // The board silences the weather itself once sound is off.
   weatherSound: (ctx) => ctx.update(),
   infoDisplay: (ctx, overlay, s) => {

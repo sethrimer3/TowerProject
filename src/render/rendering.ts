@@ -29,6 +29,7 @@ import { paintHero, paintTile, paintTorch, type BoardLook } from "./tile-painter
 import type { AtmosphereConfig } from "./lighting-pass.ts";
 import { DungeonLight, type LitBoard } from "./dungeon-light.ts";
 import { drawThemedBoard, themedBoardOf } from "./boards/themed-boards.ts";
+import { BATTERY_BOARD, BATTERY_FOREST, BATTERY_GRID, drawBatteryRoute, monochrome } from "./boards/battery-board.ts";
 import { RoutePath } from "./route-path.ts";
 import { BoardPopups, goldCoin, lunges } from "./board-popups.ts";
 import { DamagePredictions, drawDamageLabels } from "./effects/damage-labels.ts";
@@ -191,6 +192,7 @@ export class Renderer {
   }
   draw(now: number) {
     const f = this.beginFrame(now);
+    if (f.look.battery) return this.drawBattery(f);
     const themed = f.look.themed;
     if (themed) drawThemedBoard(f, themed, this.enemyLunge, () => this.drawRoute(f), this.game.run.player, this.game.mode === "delve" ? this.game.world.width : 0, () => this.drawFloorFields(f));
     else {
@@ -239,6 +241,20 @@ export class Renderer {
     c.restore();
   }
   private zoomCanvas: HTMLCanvasElement | undefined;
+  /** Battery saver's frame: the board in white pixel art on black (forest
+   * and dungeon alike, render/boards/battery-board.ts), then the feedback
+   * that tells what is happening, turned grey. No light, decor, weather,
+   * glows or entrance zoom. */
+  private drawBattery(f: FrameContext) {
+    const g = this.game, wrap = g.mode === "delve" ? g.world.width : 0;
+    this.weather.blow(false);
+    const board = f.look.outside && !(g.world instanceof LakeWorld) ? BATTERY_FOREST : BATTERY_BOARD;
+    drawThemedBoard(f, board, this.enemyLunge, () => drawBatteryRoute(f, g.shownPath.length ? g.shownPath : this.previewRoute ?? [], g.run.player), g.run.player, wrap, () => this.drawFloorFields(f));
+    this.echoes.draw(f, (c, facing) => BATTERY_BOARD.hero(c, facing));
+    if (!f.look.outside) drawShieldBubble(f, { up: g.fights.shownShield(f.now) > 0, brokeAt: g.fights.shieldBrokeAt, formedAt: g.shieldFormedAt });
+    this.drawOverlays(f, true);
+    monochrome(f);
+  }
   /** Voidwell's vortex and Time Dilation's and Necrotic Frost's fields on the floor, while any stands. */
   private drawFloorFields(f: FrameContext) {
     if (this.game.run.outside) return;
@@ -246,8 +262,10 @@ export class Renderer {
     drawDilationField(f, this.game.dilation);
     drawFrostFields(f, this.game.frostArea);
   }
-  /** Gameplay feedback drawn over every board. */
-  private drawOverlays(f: FrameContext) {
+  /** Gameplay feedback drawn over every board (Battery saver leaves out
+   * the lights on the stairs and hero, the boss's flash and the chests'
+   * stars, which its own sprites show). */
+  private drawOverlays(f: FrameContext, battery = false) {
     // Overseer's beams lighten the board above the darkness, under everything marked on it.
     const beams = this.game.arcana.beams;
     if (beams) drawOverseerBeams(f, beams, this.game.turnClock);
@@ -258,14 +276,14 @@ export class Renderer {
     // A Shielded enemy's bubble shows above the darkness, under the labels.
     if (!this.game.run.outside) drawShields(f, this.game.world.shields?.() ?? [], this.game.mode === "delve" ? this.game.world.width : 0);
     // Supply and Equipment Chests show their kind, opened or not.
-    if (!this.game.run.outside) drawChestMarks(f);
+    if (!this.game.run.outside && !battery) drawChestMarks(f);
     // The way up and the hero's own tile are lit, the hero pulsing while it waits for a press.
-    if (!this.game.run.outside) {
+    if (!this.game.run.outside && !battery) {
       if (this.game.mode === "tower") drawStairsLights(f);
       drawHeroLight(f, this.game.awaitsPress);
     }
     this.drawDamageLabels(f);
-    if (!this.game.run.outside) this.bossFlash.draw(f, this.game.run.seed, this.game.run.height, f.look.reduceMotion);
+    if (!this.game.run.outside && !battery) this.bossFlash.draw(f, this.game.run.seed, this.game.run.height, f.look.reduceMotion);
     this.drawSkipMarks(f);
     this.drawBadgeMarks(f);
     this.drawDoomMarks(f);
@@ -351,14 +369,17 @@ export class Renderer {
   private beginFrame(now: number): FrameContext {
     const g = this.game, n = this.density;
     this.snapOnNewBoard(n, now);
-    const pixelPerfect = g.save.settings.pixelPerfect, box = this.canvas.getBoundingClientRect();
+    const battery = g.save.settings.batterySaver, pixelPerfect = g.save.settings.pixelPerfect && !battery, box = this.canvas.getBoundingClientRect();
     // Pixel-perfect scaling draws a whole number of canvas pixels an art
     // pixel (from the screen's own density, up to 4), for the browser to
     // fit to the board's box, and keeps the camera and hero on whole art
     // pixels.
     const screen = Math.min(devicePixelRatio || 1, pixelPerfect ? 4 : 2),
-      width = pixelPerfect && box.width ? n * ART_PX * artPixelScale(box.width * screen, n) : Math.round(box.width * screen),
-      dpr = pixelPerfect && box.width ? width / box.width : screen;
+      // Battery saver draws whole canvas pixels a pixel of its art at about
+      // one canvas pixel a CSS pixel, a quarter of a phone's usual count.
+      width = battery && box.width ? n * BATTERY_GRID * Math.max(1, Math.round(box.width / (n * BATTERY_GRID)))
+        : pixelPerfect && box.width ? n * ART_PX * artPixelScale(box.width * screen, n) : Math.round(box.width * screen),
+      dpr = (pixelPerfect || battery) && box.width ? width / box.width : screen;
     if (this.canvas.width !== width) {
       this.canvas.width = width;
       this.canvas.height = this.canvas.width;
@@ -371,17 +392,17 @@ export class Renderer {
     this.inFlight.update(g.volley, now, g.mode === "delve" ? g.world.width : 0);
     this.popups.update({ run: g.run, gains: g.gains, fight: g.fights.shown, lastHeal: g.lastHeal, volley: g.volley, save: g.save }, now);
     this.sounds.update({ fight: g.fights.shown, volley: g.volley, struckDown: g.fights.struckDown, bombed: g.bombed }, now);
-    const lunge = lunges(g.fights.encounter, now, g.save.settings.reduceMotion);
+    const lunge = lunges(g.fights.encounter, now, g.save.settings.reduceMotion || battery);
     this.enemyLunge = { ...(g.fights.encounter?.to ?? { x: 0, y: 0 }), ...lunge.enemy };
     const c = this.ctx, s = this.size, outside = !!g.run.outside, settings = g.save.settings;
-    c.fillStyle = "#0b1017";
+    c.fillStyle = battery ? "#000" : "#0b1017";
     c.fillRect(0, 0, box.width, box.width);
     const look = this.look(), p = g.run.player;
     const idle = look.styledSprites && look.spriteAnimations && !look.reduceMotion && !g.route.length && !g.fights.encounter && p.hp > 0
       && Math.abs(this.playerX - p.x) < .01 && Math.abs(this.playerY - p.y) < .01;
     const idleKey = `${g.run.seed}:${g.run.height}:${g.run.tier}:${outside}:${p.x},${p.y}:${g.facing.dx},${g.facing.dy}`;
     const heroIdleFrame = this.heroIdle.frame(now, !!idle, idleKey);
-    const snap = (v: number) => (pixelPerfect ? onArtGrid(v) : v);
+    const snap = (v: number) => (battery ? Math.round(v * BATTERY_GRID) / BATTERY_GRID : pixelPerfect ? onArtGrid(v) : v);
     const f: FrameContext = {
       c, now, dt, dpr, width: box.width, n, s, left: snap(this.left), bottom: snap(this.bottom),
       playerX: snap(this.playerX + lunge.hero.dx), playerY: snap(this.playerY + lunge.hero.dy), heroFacing: g.facing,
@@ -443,7 +464,7 @@ export class Renderer {
    * camera trails where the hero is drawn (render/camera.ts); elsewhere it eases to
    * its fixed spot. */
   private follow(n: number, dt: number, now: number) {
-    const settings = this.game.save.settings, snaps = settings.reduceMotion || settings.transition === "instant";
+    const settings = this.game.save.settings, snaps = settings.reduceMotion || settings.batterySaver || settings.transition === "instant";
     const fast = settings.transition === "fast", blend = snaps ? 1 : 1 - Math.exp(-dt * (fast ? 32 : 14));
     this.walkHero(blend, snaps, now);
     if (this.followsHero) {
@@ -811,9 +832,10 @@ export class Renderer {
     c.shadowBlur = 0;
   }
 
-  /** How the Game theme worn draws the dungeon, or null for Classic. */
+  /** How the dungeon is drawn: Battery saver's board while it is on, else
+   * the Game theme worn's, or null for Classic. */
   private get themed() {
-    return themedBoardOf(gameLook(this.game.save));
+    return this.game.save.settings.batterySaver ? BATTERY_BOARD : themedBoardOf(gameLook(this.game.save));
   }
   /** Decor waits for versions of its own in each Game theme, so a Game theme
    * other than Classic turns it off. */
@@ -825,7 +847,7 @@ export class Renderer {
     return { view: f, now: f.now, tileAt: this.tileAt, reduceMotion: f.look.reduceMotion, styledSprites: f.look.styledSprites };
   }
   private look(): BoardLook {
-    const g = this.game;
+    const g = this.game, battery = g.save.settings.batterySaver;
     return {
       mode: g.mode, tier: g.run.tier ?? 1, height: g.run.height, seed: g.run.seed, outside: !!g.run.outside, entranceX: MODES[g.mode].entranceX,
       roads: g.run.outside ? roadsOf(g.world) : undefined,
@@ -834,8 +856,9 @@ export class Renderer {
       spriteAnimations: usesGameSprites(g.save) && g.save.settings.spriteAnimations,
       legacyEnemies: g.save.settings.legacyEnemies,
       squareDoors: usesGameSprites(g.save) && g.save.settings.squareDoors,
-      themed: g.run.outside ? null : this.themed,
-      golden: g.environments.goldenFloor && !g.run.outside ? (x, y) => g.goldenAt(x, y) : undefined,
+      themed: battery ? BATTERY_BOARD : g.run.outside ? null : this.themed,
+      battery,
+      golden: g.environments.goldenFloor && !g.run.outside && !battery ? (x, y) => g.goldenAt(x, y) : undefined,
     };
   }
   /** Paints one tile in tile space (see paintTile); false while its ground

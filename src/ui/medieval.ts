@@ -70,10 +70,16 @@ export const DOODLE_CLASS = "doodle";
  * root. */
 export const MURK_CLASS = "murk";
 
+/** Battery saver's page: Kuro's flat white on black made pure black, with
+ * no animation, glow or colour (`battery.css` dresses this class on the root). */
+export const BATTERY_CLASS = "battery-saver";
+
 /** Dresses the page in the UI theme worn (`uiLook`: Classic wears none of
- * their classes) and mirrors Reduce motion. */
+ * their classes), or Battery saver's black and white over Kuro's plain
+ * panels while it is on, and mirrors Reduce motion. */
 export function applyUiTheme(save: Pick<Save, "themes" | "settings">) {
-  const root = document.documentElement.classList, look = uiLook(save);
+  const battery = save.settings.batterySaver;
+  const root = document.documentElement.classList, look = battery ? "kuro" : uiLook(save);
   root.toggle(MEDIEVAL_CLASS, look === "medieval");
   root.toggle(NEON_CLASS, look === "neon");
   root.toggle(TERMINAL_CLASS, look === "terminal");
@@ -90,11 +96,12 @@ export function applyUiTheme(save: Pick<Save, "themes" | "settings">) {
   root.toggle(PIXEL_CLASS, look === "pixel");
   root.toggle(DOODLE_CLASS, look === "doodle");
   root.toggle(MURK_CLASS, look === "murk");
-  root.toggle("reduce-motion", save.settings.reduceMotion);
+  root.toggle(BATTERY_CLASS, battery);
+  root.toggle("reduce-motion", save.settings.reduceMotion || battery);
   root.toggle("legacy-borders", save.settings.legacyBorders);
-  root.toggle("ui-sprites", usesUiSprites(save));
-  root.toggle("game-sprites", usesGameSprites(save));
-  if (usesUiSprites(save) || usesGameSprites(save)) void loadSpriteFont();
+  root.toggle("ui-sprites", !battery && usesUiSprites(save));
+  root.toggle("game-sprites", !battery && usesGameSprites(save));
+  if (battery || usesUiSprites(save) || usesGameSprites(save)) void loadSpriteFont();
   applyLayout(save);
 }
 

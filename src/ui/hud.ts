@@ -11,6 +11,7 @@ import { arcanaOpen } from "../arcana/arcana.ts";
 import { outsideWeather } from "../outside.ts";
 import { tierNumeral, tierRewardText } from "../tiers.ts";
 import { MODES, milestones } from "../modes.ts";
+import { batteryCardIconUrl } from "../render/boards/battery-board.ts";
 import { capitalized, cardArt, CURRENCY_SPRITES, displayedProgress, el, POINTER_SVG, text, ticketIcon, uiSprite } from "./dom.ts";
 import { notesResearched } from "./run-notes-dialog.ts";
 import { CARDS, IN_PLACE, cardBonusText, isSiphon, type CardId } from "../cards/cards.ts";
@@ -467,18 +468,25 @@ function handBadgeHtml(game: Game, id: CardId) {
   if (!badges.length) return "";
   return `<span class="hand-badges" aria-hidden="true">${badges.map((b) => `<span class="hand-badge-level rarity-${badgeDef(b.id).rarity}" style="${badgeStyle(b.id)}">${badgeGlyph(b.id)}</span>`).join("")}</span>`;
 }
+/** Battery saver's face for a hand card: its white pixel icon (battery-board.ts)
+ * and its name, or "" where it has none. */
+function batteryCardArt(id: CardId) {
+  const url = batteryCardIconUrl(id);
+  return url ? `<span class="sprite-icon card-art battery-card" aria-hidden="true"><img src="${url}" alt=""></span><small class="sprite-card-label">${CARDS[id].name}</small>` : "";
+}
 /** The active hand in the row under the board (or the Manual hand, its
  * slots from `first`), the card that made the latest step glowing (paused
  * too); End Run lights up while no card can act. */
 function renderHand(game: Game, hand: readonly CardId[] = game.hand, first = 0) {
   const row = el("hand");
   const levels = hand.map((id) => cardLevelHtml(game.save, id));
-  const key = `${first}|${hand.join()}|${game.run.outside ? "" : JSON.stringify(game.run.badges ?? {})}|${levels.join()}`;
+  const battery = game.save.settings.batterySaver;
+  const key = `${first}|${hand.join()}|${game.run.outside ? "" : JSON.stringify(game.run.badges ?? {})}|${levels.join()}|${battery}`;
   if (key !== shownHand) {
     shownHand = key;
     // Room for five cards; a bigger hand scrolls sideways.
     row.style.setProperty("--slots", String(Math.max(5, hand.length)));
-    row.innerHTML = hand.map((id, i) => `<div class="hand-card" role="listitem" data-card="${id}" data-hand-slot="${first + i}">${cardArt(id, CARDS[id].name)}${levels[i]}${handBadgeHtml(game, id)}</div>`).join("");
+    row.innerHTML = hand.map((id, i) => `<div class="hand-card" role="listitem" data-card="${id}" data-hand-slot="${first + i}">${(battery && batteryCardArt(id)) || cardArt(id, CARDS[id].name)}${levels[i]}${handBadgeHtml(game, id)}</div>`).join("");
     renderHandMore();
   }
   // Paused, the card that made the latest step still glows.

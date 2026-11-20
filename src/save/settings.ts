@@ -21,9 +21,12 @@ export const SETTINGS = {
   /** Hide the procedural environment dressing: moss, vines, plants, crates,
    * pools, and the forest's wind-blown grass. */
   decorOff: { kind: "toggle", default: false, page: { id: "decor", label: "Environment decor", invert: true } },
-  /** Draw the board at 30 frames a second, instead of 60, whenever nothing
-   * on it is moving. */
-  batterySaver: { kind: "toggle", default: false, page: { id: "battery-saver", label: "Battery saver (30 fps while idle)" } },
+  /** Battery saver: the board drawn in simple white pixel art on pure black
+   * (render/boards/battery-board.ts), the page in black and white without
+   * animation or glow (battery.css), the hand's cards as white pixel icons,
+   * and far fewer frames: about 15 a second while the board moves, 2 or 3
+   * while it is still. Overrides the UI and Game themes while on. */
+  batterySaver: { kind: "toggle", default: false, page: { id: "battery-saver", label: "Battery saver (black and white, fewer frames)" } },
   transition: {
     kind: "choice", default: "smooth", choices: [["smooth", "Smooth"], ["fast", "Fast"], ["instant", "Off (instant)"]],
     page: { id: "transition", label: "Movement transition" },

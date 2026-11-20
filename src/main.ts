@@ -21,6 +21,7 @@ import "./styles/ui-sprites.css";
 import "./sprites/ui-atlas.css";
 import "./styles/death-loop.css";
 import "./styles/landscape.css";
+import "./styles/battery.css";
 import { drawKit, onSpritesLoaded } from "./sprites/kit.ts";
 import { onSpriteFontLoaded } from "./sprites/font.ts";
 import { gameLook } from "./theme-collection.ts";
@@ -31,6 +32,7 @@ import { Game } from "./state.ts";
 import { Renderer } from "./render/rendering.ts";
 import { bindInput } from "./input.ts";
 import { FrameLoop } from "./frame-loop.ts";
+import { BATTERY_BOARD } from "./render/boards/battery-board.ts";
 import { installDebugHooks } from "./debug-hooks.ts";
 import { isBoard, type AppContext, type Tab } from "./ui/app.ts";
 import { el, gemIcon, goldIcon, ticketIcon } from "./ui/dom.ts";
@@ -102,12 +104,15 @@ game.fights.playsFights = true;
 // The hero walks in through the forest's entrance before the run begins.
 game.animatesEntrance = true;
 const renderer = new Renderer(document.querySelector("#world")!, game);
+/** Asks the frame loop for its next frame now (Battery saver waits between
+ * frames otherwise); set once the loop starts. */
+let wakeFrames = () => {};
 onSpriteFontLoaded(() => renderVitals(shownGame()));
 window.addEventListener("resize", () => renderVitals(shownGame()));
 function renderPortrait() {
   const portraitCtx = (document.querySelector("#portrait-sprite") as HTMLCanvasElement).getContext("2d")!;
   portraitCtx.clearRect(0, 0, 24, 24);
-  const themed = themedBoardOf(gameLook(game.save));
+  const themed = game.save.settings.batterySaver ? BATTERY_BOARD : themedBoardOf(gameLook(game.save));
   if (themed) {
     portraitCtx.save();
     themed.hero(portraitCtx, game.facing);
@@ -197,6 +202,7 @@ function save(seen = !document.hidden) {
 }
 /** Refreshes the HUD from game state, saves, and asks a fallen hero's player what next. */
 function update() {
+  wakeFrames();
   provingGrounds.check();
   const shown=shownGame();
   renderPortrait();
@@ -682,6 +688,7 @@ const loop = new FrameLoop({
   },
   save,
 });
+wakeFrames = () => loop.wake();
 // Hidden or shown again, the app was open until (or from) now.
 document.addEventListener("visibilitychange", () => {
   loop.resetAutoTimer();
