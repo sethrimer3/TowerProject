@@ -3,10 +3,11 @@ import { batteryIconUrl, type BatteryIcon } from "../render/boards/battery-board
 
 /** Battery saver's stats: in place of the HUD (hidden while Battery saver is
  * on), a short centred row of HP, ATK, DEF, the keys held and the floor, each
- * a small white pixel icon and its value, with the few buttons a run needs
- * (play or pause and Settings inside, Enter in the forest, and the ad's
- * Gems while they can be claimed), which press the HUD's own, and a red
- * warning sign while no card can act, which presses
+ * a small white pixel icon and its value, with Back first, which turns
+ * Battery saver off (`onBatteryExit`; Settings never leaves it), then the
+ * few buttons a run needs (play or pause and Settings inside, Enter in the
+ * forest, and the ad's Gems while they can be claimed), which press the
+ * HUD's own, and a red warning sign while no card can act, which presses
  * End Climb. It reads the values the HUD has just written, so the two never
  * disagree. Made only while Battery saver is on, and removed with it. */
 
@@ -23,6 +24,13 @@ const shown = (id: string) => {
   return !!box && !box.hidden;
 };
 const stat = (name: BatteryIcon, value: string, label: string) => `<span class="battery-stat" title="${label}">${icon(name)}<b>${value}</b></span>`;
+/** What Back does: set by main.ts, which turns Battery saver off. */
+let exit = () => {};
+/** Sets what Battery saver's Back button does. */
+export function onBatteryExit(fn: () => void) {
+  exit = fn;
+}
+const back = () => `<button type="button" class="battery-press battery-back" data-exit aria-label="Back: leave Battery saver" title="Back: leave Battery saver">${icon("back")}</button>`;
 const press = (target: string, name: BatteryIcon, label: string, extra = "", after = "") => `<button type="button" class="battery-press${extra}" data-press="${target}" aria-label="${label}" title="${label}">${icon(name)}${after}</button>`;
 
 export function renderBatteryHud(game: Game) {
@@ -39,7 +47,9 @@ export function renderBatteryHud(game: Game) {
     hud.className = "battery-hud";
     hud.setAttribute("aria-label", "Stats");
     hud.addEventListener("click", (e) => {
-      const id = (e.target as HTMLElement).closest<HTMLElement>("[data-press]")?.dataset.press;
+      const target = e.target as HTMLElement;
+      if (target.closest("[data-exit]")) return exit();
+      const id = target.closest<HTMLElement>("[data-press]")?.dataset.press;
       if (id) document.getElementById(id)?.click();
     });
     board.before(hud);
@@ -50,8 +60,8 @@ export function renderBatteryHud(game: Game) {
   if (!outside) stats.push(stat("stairs", textOf("height"), "Floor"));
   const playing = game.auto && !game.paused;
   const presses = outside
-    ? [press("enter-run", "enter", "Enter"), press("auto-settings", "cog", "Settings")]
-    : [press("auto", playing ? "pause" : "play", playing ? "Pause" : "Play"), press("auto-settings", "cog", "Settings")];
+    ? [back(), press("enter-run", "enter", "Enter"), press("auto-settings", "cog", "Settings")]
+    : [back(), press("auto", playing ? "pause" : "play", playing ? "Pause" : "Play"), press("auto-settings", "cog", "Settings")];
   // No card can act: the HUD's End Climb shows, and a red warning sign
   // stands first in the row and presses it.
   const end = document.getElementById("stuck-end-run");

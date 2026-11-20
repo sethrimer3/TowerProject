@@ -33,7 +33,7 @@ import { Renderer } from "./render/rendering.ts";
 import { bindInput } from "./input.ts";
 import { FrameLoop } from "./frame-loop.ts";
 import { BATTERY_BOARD } from "./render/boards/battery-board.ts";
-import { renderBatteryHud } from "./ui/battery-hud.ts";
+import { onBatteryExit, renderBatteryHud } from "./ui/battery-hud.ts";
 import { installDebugHooks } from "./debug-hooks.ts";
 import { isBoard, type AppContext, type Tab } from "./ui/app.ts";
 import { el, gemIcon, goldIcon, ticketIcon } from "./ui/dom.ts";
@@ -478,6 +478,12 @@ el("run-menu-toggle").onclick = () => toggleRunMenu(game.save.settings.reduceMot
 modal.addEventListener("cancel", (e) => {
   // The defeat dialog waits for an answer.
   if (game.fallen) e.preventDefault();
+});
+// Battery saver's Back: turns it off, the page and board back to the themes chosen.
+onBatteryExit(() => {
+  game.save.settings.batterySaver = false;
+  applyUiTheme(game.save);
+  update();
 });
 el("auto-settings").onclick = () => {
   closeRunMenu();

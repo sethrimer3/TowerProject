@@ -33,9 +33,10 @@ The page around the board is white on black, without animations, glows or colour
 The board draws about fifteen frames a second while something on it moves and two or three while all is still, instead of the screen's full rate; the hero steps from tile to tile rather than gliding, and the weather and decor are off.
 Battery saver wears its own look over the UI and Game themes chosen, which come back as it is turned off.
 It also gathers the page into one small centred column: the room shrinks into a white square in the middle of the screen, in portrait and landscape alike.
-The top bar is gone; above the square a short centred row shows HP, ATK, DEF, the keys held and the floor, each a small white icon and its number, with Play or Pause and Settings beside them (Enter and Settings in the forest), and the Gem button, with its Gems, while they can be claimed.
+The top bar is gone; above the square a short centred row shows HP, ATK, DEF, the keys held and the floor, each a small white icon and its number, with Back, then Play or Pause and Settings beside them (Back, Enter and Settings in the forest), and the Gem button, with its Gems, while they can be claimed.
 The hand sits just under the square, its cards smaller and their levels smaller still, and the card at work is underlined; the hand's row is as tall as an open Training group's, so the buttons below stay put.
 There is no text under the board.
+Back turns Battery saver off and brings the normal page back; Settings only opens the Settings page, where Battery saver can also be turned off.
 While no card can act, a red warning sign stands first in the row of buttons; pressing it ends the climb, as End Climb does.
 **Battery saver white**, just under the Battery saver setting while it is on, dims every white on the screen, from full down to 5%, where white is barely lighter than the black.
 A tap anywhere brings the white up to full quickly; it stays full while the taps keep coming, and a few seconds after the last one fades back to the brightness chosen.
