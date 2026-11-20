@@ -226,6 +226,11 @@ html:is(.shiro, .kuro) nav button.selected:not(#_),
 html:is(.shiro, .kuro) .training-bar button.selected:not(#_) {
   background: var(--b-block);
 }
+/* On that block, ink again, not the chosen button's page-coloured text. */
+html:is(.shiro, .kuro) :is(nav, .training-bar) button:is(.selected, [aria-pressed="true"]):not(#_),
+html:is(.shiro, .kuro) :is(nav, .training-bar) button:is(.selected, [aria-pressed="true"]):not(#_) *:not(svg, svg *, img, canvas) {
+  color: var(--b-ink);
+}
 html:is(.shiro, .kuro) .hand-card.active:not(#_) {
   box-shadow: 0 0 0 2px var(--b-ink);
 }
