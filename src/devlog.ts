@@ -13,6 +13,7 @@ export const DEVLOG_TEXT_MAX = 120;
 /** Every change, newest first: the Settings page's DEVLOG button lists them.
  * Each change adds its own line at the top (AGENTS.md). */
 export const DEVLOG: readonly DevlogEntry[] = [
+  { date: "2026-11-20", text: "The small labels on the run buttons, the speed readout and the Claim button are larger and easier to read." },
   { date: "2026-11-20", text: "The small lines under the Research and skill-tree tabs are larger and easier to read." },
   { date: "2026-11-20", text: "Dev: Access to Everything shows every tower, theme, page, skill and boss; Unlimited currency now unlocks nothing." },
   { date: "2026-11-20", text: "Battery saver, Shiro and Kuro: the chosen skill's name shows again, its picture ringed instead of filled white." },

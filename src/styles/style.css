@@ -764,7 +764,8 @@ h1 span {
 }
 .portrait-actions .gem-ad { width: 100%; min-height: 25px; font-size: 13px; padding: 1px 2px; text-transform: uppercase; }
 .gem-ad .gem-icon { width: 16px; height: 16px; }
-.gem-ad small { font-size: 7px; line-height: 1; letter-spacing: .45px; }
+/* Its line stays 7px high, so the larger text doesn't push the purse. */
+.gem-ad small { font-size: 8px; line-height: 7px; letter-spacing: .45px; }
 .gem-ad.waiting { visibility: hidden; }
 /* With the GEM card's Gem Bank: a blue fill rising across the button as
    its bank fills (--fill, 0 to 1), and a gold outline once it is full. */
@@ -944,7 +945,7 @@ html.reduce-motion .review-prompt { animation: none; }
   font-size: 13px;
 }
 .mini-action small {
-  font-size: 7px;
+  font-size: 9px;
   letter-spacing: 0.5px;
   white-space: normal;
   text-align: center;
@@ -2211,14 +2212,14 @@ dialog p {
     font-size: 11px;
   }
   .mini-action small {
-    font-size: 5.5px;
+    font-size: 8px;
     letter-spacing: 0;
   }
   .run-menu-end small {
-    font-size: 7px;
+    font-size: 8px;
   }
   .auto-speed {
-    font-size: 7px;
+    font-size: 8px;
   }
   nav button {
     font-size: 9px;

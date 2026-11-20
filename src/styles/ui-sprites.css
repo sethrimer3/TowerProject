@@ -253,11 +253,12 @@ html.ui-sprites .hud-controls .gem-ad:not(#_) {
   padding: 2px;
 }
 html.ui-sprites .gem-ad-amount:not(#_) { font-size: 12px; gap: 3px; }
-html.ui-sprites .gem-ad small:not(#_) { font-size: 10px; letter-spacing: 0; }
+html.ui-sprites .gem-ad small:not(#_) { font-size: 10px; line-height: 1; letter-spacing: 0; }
 html.ui-sprites :is(.run-consumables button, .training-reset):not(#_) { padding: 0; }
 html.ui-sprites :is(.deck-remove, .badge-detach, .deck-check, .tree-help, .research-about):not(#_) { padding: 0; }
 html.ui-sprites .mini-action { height: auto; min-height: 36px; }
 html.ui-sprites .mini-action small { font-size: 7px; letter-spacing: 0; }
+html.ui-sprites .run-menu-end small { font-size: 9px; }
 html.ui-sprites .run-menu-items { grid-auto-columns: max(48px, var(--cell)); }
 /* The open menu's hamburger shows the kit's X (other looks morph the bars). */
 .mini-icon > .menu-close-icon { display: none; }
@@ -356,6 +357,7 @@ html.ui-sprites .hp-readout .heart { flex-shrink: 0; margin-right: 0; }
 html.ui-sprites .keys { flex-wrap: wrap; }
 @media (max-width: 480px) {
   html.ui-sprites .portrait-top small { font-size: 6px; }
+  html.ui-sprites .run-menu-end small { font-size: 8px; }
   /* A row's name takes a line of its own, and its values and buttons share
      the line under it, the values narrowing for a phone's width (a trainer's
      row moves its speedup up to its name's line). */

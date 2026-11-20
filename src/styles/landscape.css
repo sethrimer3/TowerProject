@@ -197,9 +197,9 @@ html.hud-narrow .combat-stats { grid-template-columns: auto minmax(3px, 10px) au
 html.hud-narrow .actions { padding: 3px 2px; }
 html.hud-narrow .mini-action { height: 32px; padding: 1px; }
 html.hud-narrow .mini-action .mini-icon { font-size: 11px; }
-html.hud-narrow .mini-action small { font-size: 5.5px; letter-spacing: 0; white-space: nowrap; }
-html.hud-narrow .run-menu-end small { font-size: 7px; }
-html.hud-narrow .auto-speed { font-size: 7px; }
+html.hud-narrow .mini-action small { font-size: 8px; letter-spacing: 0; white-space: nowrap; }
+html.hud-narrow .run-menu-end small { font-size: 8px; }
+html.hud-narrow .auto-speed { font-size: 8px; }
 html.hud-narrow .vitals.has-shield .hp-readouts { flex-direction: column; gap: 2px; }
 html.hud-narrow .hp-readouts > .hp-readout:not(#_) { flex: none; }
 
