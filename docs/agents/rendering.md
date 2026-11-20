@@ -220,6 +220,8 @@ The canvas is sized to a whole number of canvas pixels a sprite pixel at about o
 `batteryCardIconUrl` draws each card's hand icon (`CARD_ICONS`, one per card, all different) into a 12-pixel data URL, which `renderHand` (`ui/hud.ts`) shows in place of the card's PNG.
 The Battery Saver Game theme (`gameTheme` `battery`, `THEMED_BOARDS.battery`) draws through the same `drawBattery` at the normal frame rate and size: `Renderer.draw` takes it when the Game theme is `battery` inside a run, so the route shows as dots.
 `batteryWhite` (5 to 100) dims the board's white while Battery saver is on, with `dimWhite`, one `multiply` fill of that grey after `monochrome`.
+The grey is `batteryLight` (`src/battery-light.ts`): the chosen white, lit to full by a press (`batteryPress`, from `FrameLoop`'s capturing `pointerdown`) over `LIGHT_UP_MS`, held `LIGHT_HOLD_MS` after the last press, then faded back over `LIGHT_FADE_MS`.
+`FrameLoop` writes the same level to the root's `--battery-white` each frame it changes (`pageWhite`) and counts the climb and the fade as busy (`batteryLightMoving`); `tests/battery-light.test.ts` covers the curve.
 `BATTERY_ICONS` are the 7-pixel stat and button icons of Battery saver's stats row (`batteryIconUrl`).
 `tests/battery-board.test.ts` checks the sprites' sizes and colours, that keys, doors, strengths and cards each look different, and the ground's outlines.
 `node tools/transition-bench.mjs` times the board transitions (a Tower climb, the Delve walked up through new chunks and areas, going in from the forest) in Edge with the CPU slowed 4× (`THROTTLE`): the step's logic, the first frame after it and the frames catching up after that; `PROFILE=1` lists where each scenario's time went, `ONLY=tower` runs one.

@@ -24,7 +24,9 @@ export const BATTERY_BLACK = "#000000";
 export const BATTERY_GRID = 12;
 /** Tile-space units a pixel. */
 const CELL = 24 / BATTERY_GRID;
-const COLORS: Record<string, string> = { "#": BATTERY_INK, "+": BATTERY_DIM, o: BATTERY_BLACK };
+/** Battery saver's one colour: the red of its warning sign. */
+export const BATTERY_ALERT = "#ff3b3b";
+const COLORS: Record<string, string> = { "#": BATTERY_INK, "+": BATTERY_DIM, o: BATTERY_BLACK, r: BATTERY_ALERT };
 
 type Art = { rows: Sprite; baked?: CanvasImageSource | null };
 const art = (...rows: string[]): Art => ({ rows });
@@ -739,6 +741,7 @@ export const BATTERY_ICONS = {
   enter: art("..###..", ".#...#.", "#.....#", "#..#..#", "#..#..#", "#..#..#", "#######"),
   yellow: art("..###..", ".#...#.", ".#...#.", "..###..", "...#...", "...##..", "...##.."),
   blue: art(".#####.", ".#...#.", ".#...#.", ".#####.", "...#...", "...##..", "...##.."),
+  caution: art("...r...", "..rrr..", "..r.r..", ".rr.rr.", ".rrrrr.", "rrr.rrr", "rrrrrrr"),
   red: art("...#...", "..#.#..", ".#...#.", "..#.#..", "...#...", "...##..", "...##.."),
 } as const;
 export type BatteryIcon = keyof typeof BATTERY_ICONS;

@@ -1,3 +1,4 @@
+import { batteryLight } from "../battery-light.ts";
 import { soundEnabledBy, play } from "../sound.ts";
 import { applyLayout } from "./layout.ts";
 import { flourishesEnabledBy, sparks } from "./flourish.ts";
@@ -104,7 +105,8 @@ export function applyUiTheme(save: Pick<Save, "themes" | "settings">) {
   root.toggle(BATTERY_LOOK_CLASS, chosen === "battery");
   root.toggle(BATTERY_CLASS, battery);
   // Battery saver's white, from full down to barely lighter than black.
-  document.documentElement.style?.setProperty("--battery-white", String(battery ? save.settings.batteryWhite / 100 : 1));
+  // (The frame loop then follows the light a press gives, battery-light.ts.)
+  document.documentElement.style?.setProperty("--battery-white", String(battery ? batteryLight(save.settings.batteryWhite / 100, performance.now()) : 1));
   root.toggle("reduce-motion", save.settings.reduceMotion || battery);
   root.toggle("legacy-borders", save.settings.legacyBorders);
   root.toggle("ui-sprites", !battery && usesUiSprites(save));

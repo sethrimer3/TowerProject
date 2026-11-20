@@ -29,6 +29,7 @@ import { paintHero, paintTile, paintTorch, type BoardLook } from "./tile-painter
 import type { AtmosphereConfig } from "./lighting-pass.ts";
 import { DungeonLight, type LitBoard } from "./dungeon-light.ts";
 import { drawThemedBoard, themedBoardOf } from "./boards/themed-boards.ts";
+import { batteryLight } from "../battery-light.ts";
 import { BATTERY_BOARD, BATTERY_FOREST, BATTERY_GRID, dimWhite, drawBatteryRoute, monochrome } from "./boards/battery-board.ts";
 import { RoutePath } from "./route-path.ts";
 import { BoardPopups, goldCoin, lunges } from "./board-popups.ts";
@@ -257,8 +258,8 @@ export class Renderer {
     monochrome(f);
     // Battery saver's white at the brightness chosen: everything scaled
     // toward black by one fill.
-    const white = f.look.battery ? g.save.settings.batteryWhite : 100;
-    if (white < 100) dimWhite(f, white / 100);
+    const white = f.look.battery ? batteryLight(g.save.settings.batteryWhite / 100, performance.now()) : 1;
+    if (white < 1) dimWhite(f, white);
   }
   /** Voidwell's vortex and Time Dilation's and Necrotic Frost's fields on the floor, while any stands. */
   private drawFloorFields(f: FrameContext) {

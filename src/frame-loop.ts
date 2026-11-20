@@ -1,6 +1,7 @@
 import type { Game } from "./state.ts";
 import type { Renderer } from "./render/rendering.ts";
 import { isBoard, type Tab } from "./ui/app.ts";
+import { batteryLight, batteryLightMoving, batteryPress } from "./battery-light.ts";
 
 export type FrameLoopHost = {
   game: Game;
@@ -72,7 +73,12 @@ export class FrameLoop {
 
   start() {
     requestAnimationFrame(this.frame);
-    if (typeof window !== "undefined") for (const type of ["pointerdown", "pointerup", "keydown", "wheel"]) window.addEventListener(type, () => this.wake(), { passive: true });
+    if (typeof window === "undefined") return;
+    // Battery saver: a press anywhere lights the white up to full.
+    window.addEventListener("pointerdown", () => {
+      if (this.host.game.save.settings.batterySaver) batteryPress(this.chosenWhite(), performance.now());
+    }, { capture: true, passive: true });
+    for (const type of ["pointerdown", "pointerup", "keydown", "wheel"]) window.addEventListener(type, () => this.wake(), { passive: true });
   }
 
   /** Battery saver: draws the next frame now rather than after its wait,
@@ -95,12 +101,28 @@ export class FrameLoop {
     }, wait);
   }
 
+  /** Battery saver's white chosen, 0 to 1. */
+  private chosenWhite() {
+    return this.host.game.save.settings.batteryWhite / 100;
+  }
+
+  /** Battery saver: the page's white follows the light a press gives,
+   * written only as it changes. */
+  private lastWhite = "";
+  private pageWhite(now: number) {
+    if (!this.host.game.save.settings.batterySaver) return void (this.lastWhite = "");
+    const white = batteryLight(this.chosenWhite(), now).toFixed(3);
+    if (white === this.lastWhite) return;
+    this.lastWhite = white;
+    document.documentElement.style.setProperty("--battery-white", white);
+  }
+
   /** How long Battery saver waits before the next frame, or 0 while it is off. */
   private batteryWait() {
     const { game, renderer } = this.host;
     if (!game.save.settings.batterySaver) return 0;
     const now = performance.now();
-    const busy = !renderer.isIdle(now) || game.route.length > 0 || (game.auto && !game.paused) || !!game.fights.encounter || !!game.walkIn || !!game.forestArrival;
+    const busy = batteryLightMoving(this.chosenWhite(), now) || !renderer.isIdle(now) || game.route.length > 0 || (game.auto && !game.paused) || !!game.fights.encounter || !!game.walkIn || !!game.forestArrival;
     return busy ? BATTERY_BUSY_MS : BATTERY_IDLE_MS;
   }
 
@@ -122,6 +144,7 @@ export class FrameLoop {
       requestAnimationFrame(this.frame);
     }
     const { host } = this, tab = host.tab();
+    guard(() => this.pageWhite(performance.now()));
     if (!document.hidden) {
       if (tab === "upgrades") guard(() => host.upgradesFrame(time));
       if (tab === "research") guard(() => host.researchFrame(time));

@@ -129,6 +129,6 @@ test("dimming the white is one multiply fill over the board, at the chosen grey"
 test("every stats-row icon has its picture", () => {
   for (const [name, icon] of Object.entries(BATTERY_ICONS)) {
     assert.equal(icon.rows.length, 7, name);
-    for (const row of icon.rows) assert.match(row, /^[.#]{7}$/, name);
+    for (const row of icon.rows) assert.match(row, /^[.#r]{7}$/, name);
   }
 });

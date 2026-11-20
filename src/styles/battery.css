@@ -161,6 +161,9 @@ html.battery-saver .battery-press:not(#_) {
   border-radius: 0;
   background: #000;
 }
+/* No card can act: a red warning sign, not dimmed, that presses End Climb. */
+html.battery-saver .battery-press.battery-alert:not(#_) { border-color: #ff3b3b; }
+.battery-hud .battery-alert img { filter: none; }
 /* The board: smaller, centred, the room in a white square. */
 html.battery-saver #board.active:not(#_) {
   flex: 0 0 auto;
@@ -182,14 +185,8 @@ html.battery-saver #board-frame:not(#_) {
   background: #000;
   box-sizing: content-box;
 }
-html.battery-saver #board.active > .status:not(#_) {
-  position: static;
-  justify-content: center;
-  margin-top: 6px;
-  background: transparent;
-  color: var(--bat-soft);
-  font-size: 11px;
-}
+/* No text under the board: the status line and the tile's details. */
+html.battery-saver #board.active > :is(.status, .inspection):not(#_) { display: none !important; }
 /* The hand: just under the board, its cards 60% of their size and their
    levels 70%, the card at work underlined rather than framed. */
 html.battery-saver nav:not(#_) {
@@ -202,7 +199,11 @@ html.battery-saver nav:not(#_) {
   border: 0;
 }
 html.battery-saver .hand:not(#_) {
-  grid-template-columns: repeat(var(--slots, 6), 32px);
+  /* Only the cards held, centred under the board. */
+  grid-template-columns: none;
+  grid-auto-flow: column;
+  grid-auto-columns: 32px;
+  justify-content: center;
   gap: 5px;
   min-height: 0;
   padding: 6px 8px 8px;
