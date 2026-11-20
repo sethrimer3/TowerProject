@@ -1,8 +1,9 @@
 // Cinematic mode in the browser: two real fingers pinching the board in hide
 // every control, and pinching out, three taps, Escape, Ctrl and the wheel or
-// the gear bring them back.
+// the Back button bring them back.
 import { chromium } from "@playwright/test";
 import { fixClock } from "./fixed-clock.mjs";
+import { openMenu } from "./run-menu.mjs";
 
 const browser = await chromium.launch({ headless: true, channel: process.env.PLAYWRIGHT_CHANNEL || "msedge" });
 const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, hasTouch: true });
@@ -18,6 +19,7 @@ await page.addInitScript(() => {
 });
 await fixClock(page);
 await page.goto(process.env.TEST_URL || "http://127.0.0.1:5173/");
+await page.locator("#boot-loading").waitFor({ state: "hidden", timeout: 120000 });
 // A new game's first run, its climb lesson passed, with Cinematic mode on.
 await page.evaluate(() => {
   const save = JSON.parse(localStorage.getItem("towerdelve.v1"));
@@ -26,6 +28,7 @@ await page.evaluate(() => {
   sessionStorage.setItem("__cinematicFixture", JSON.stringify(save));
 });
 await page.reload();
+await page.locator("#boot-loading").waitFor({ state: "hidden", timeout: 120000 });
 
 const cdp = await context.newCDPSession(page);
 const canvas = await page.locator("#world").boundingBox();
@@ -55,7 +58,7 @@ await expect(false, "pinched out");
 
 await pinch(200, 60);
 await page.mouse.click(cx, cy);
-if (!(await page.locator("#cinematic-gear").isVisible())) throw Error("A tap should show the gear");
+if (!(await page.locator("#cinematic-back").isVisible())) throw Error("A tap should show the Back button");
 await page.mouse.click(cx, cy);
 await page.mouse.click(cx, cy);
 await expect(false, "three taps");
@@ -74,9 +77,10 @@ await expect(false, "Ctrl and the wheel up");
 
 await pinch(200, 60);
 await page.mouse.click(cx, cy);
-await page.locator("#cinematic-gear").click();
-if (await cinematic()) throw Error("The gear should leave cinematic mode");
-if (!(await page.locator("#settings-back").isVisible())) throw Error("The gear should open Settings");
+await page.locator("#cinematic-back").click();
+if (await cinematic()) throw Error("Back should leave cinematic mode");
+if (await page.locator("#settings-back").isVisible()) throw Error("Back should stay on the board, not open Settings");
+await openMenu(page); await page.locator("#auto-settings").click();
 if (!(await page.locator("#cinematic-idle").isVisible())) throw Error("The idle option should show while Cinematic mode is on");
 await page.locator("#cinematic").uncheck();
 if (await page.locator("#cinematic-idle").isVisible()) throw Error("The idle option should hide with Cinematic mode off");
@@ -85,5 +89,5 @@ await pinch(200, 60);
 await expect(false, "pinched with the setting off");
 
 if (errors.length) throw Error("Page errors: " + errors.join("; "));
-console.log(JSON.stringify({ errors, checks: ["pinch in", "board fills", "pinch out", "tap shows gear", "three taps", "Escape", "ctrl wheel", "gear to Settings", "setting off"] }));
+console.log(JSON.stringify({ errors, checks: ["pinch in", "board fills", "pinch out", "tap shows Back", "three taps", "Escape", "ctrl wheel", "Back leaves", "setting off"] }));
 await browser.close();

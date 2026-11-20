@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { Cinematic, CINEMATIC_IDLE_MS, EXIT_TAP_MS, GEAR_MS, PinchTracker, type CinematicLook } from "../src/ui/cinematic.ts";
+import { Cinematic, CINEMATIC_IDLE_MS, EXIT_TAP_MS, BACK_MS, PinchTracker, type CinematicLook } from "../src/ui/cinematic.ts";
 
 /** A Cinematic on a fake clock, with the setting on and the board allowing it. */
 function setup(settings: Partial<{ cinematic: boolean; cinematicIdle: boolean; cinematicGems: boolean }> = {}) {
@@ -19,7 +19,7 @@ test("a pinch in enters cinematic mode, and a pinch out leaves it", () => {
   const { state, cinematic } = setup();
   cinematic.pinch("in");
   assert.equal(cinematic.active, true);
-  assert.deepEqual(state.look, { active: true, dimmed: false, gear: false, gems: false }, "a pinch never dims the board");
+  assert.deepEqual(state.look, { active: true, dimmed: false, back: false, gems: false }, "a pinch never dims the board");
   cinematic.pinch("out");
   assert.equal(cinematic.active, false);
   assert.equal(state.look!.active, false);
@@ -85,14 +85,14 @@ test("it leaves once the board no longer allows it or the setting goes off", () 
   assert.equal(cinematic.active, false);
 });
 
-test("a tap shows the gear for a while; three quick taps leave", () => {
+test("a tap shows the Back button for a while; three quick taps leave", () => {
   const { state, cinematic } = setup();
   cinematic.pinch("in");
   assert.equal(cinematic.tap(), false);
-  assert.equal(state.look!.gear, true);
-  state.now += GEAR_MS;
+  assert.equal(state.look!.back, true);
+  state.now += BACK_MS;
   cinematic.tick();
-  assert.equal(state.look!.gear, false, "the gear hides again");
+  assert.equal(state.look!.back, false, "the Back button hides again");
   // Taps too far apart start over.
   cinematic.tap();
   state.now += EXIT_TAP_MS + 1;

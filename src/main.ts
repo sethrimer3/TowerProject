@@ -179,7 +179,7 @@ const cinematic = new Cinematic({
     }
     root.classList.toggle("cinematic", look.active);
     root.classList.toggle("cinematic-dimmed", look.dimmed);
-    el("cinematic-gear").hidden = !look.gear;
+    el("cinematic-back").hidden = !look.back;
     renderCinematicGems();
   },
 });
@@ -437,8 +437,8 @@ for (const id of ["gem-ad", "cinematic-gems"])
       return true;
     });
   };
-// Cinematic mode's gear: back to the whole page, on Settings.
-el("cinematic-gear").onclick = () => navigate("settings");
+// Cinematic mode's Back button: back to the whole page.
+el("cinematic-back").onclick = () => cinematic.exit();
 // Any input lights a dimmed board and restarts cinematic mode's idle clock;
 // in cinematic mode a tap off the board (on the dark around it) counts
 // toward leaving, as one on it does, and Escape leaves.
@@ -617,7 +617,7 @@ function archivesTick() {
     update();
     if (isBoard(tab)) tournamentEntry.showClosed();
   }
-  // Cinematic mode's idle clock, and the gear a tap showed.
+  // Cinematic mode's idle clock, and the Back button a tap showed.
   cinematic.tick();
   // A tournament opening (or ending, or the Tournament unlocked) asks the
   // server again, for the free Ticket and the results.

@@ -5501,20 +5501,16 @@ html.cinematic #board-frame {
 html.cinematic-dimmed #board-frame {
   filter: brightness(0.45);
 }
-.cinematic-gear,
+.cinematic-back,
 .cinematic-gems {
   position: fixed;
   z-index: 20;
   top: calc(12px + env(safe-area-inset-top));
 }
-.cinematic-gear {
+.cinematic-back {
   right: calc(12px + env(safe-area-inset-right));
-  width: 40px;
-  height: 40px;
-  padding: 6px;
-  opacity: 0.6;
+  opacity: 0.75;
 }
-.cinematic-gear .ui-sprite { width: 100%; height: 100%; }
 .cinematic-gems {
   left: calc(12px + env(safe-area-inset-left));
   min-width: 56px;

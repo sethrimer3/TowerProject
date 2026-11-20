@@ -2,7 +2,7 @@
  * the board alone. Entered by pinching the board in (fingers drawn
  * together), or after `CINEMATIC_IDLE_MS` without input while the hand
  * plays (dimmed, against screen burn-in); left by pinching out, a quick run
- * of taps, Escape, the gear a single tap shows, or anything that takes the
+ * of taps, Escape, the Back button a single tap shows, or anything that takes the
  * board away (a page, a dialog, the run's end). Never saved: a reload shows
  * the whole UI. */
 
@@ -15,10 +15,10 @@ export const PINCH_OUT = 1.4;
 /** This many taps, each within `EXIT_TAP_MS` of the one before, leave it. */
 export const EXIT_TAPS = 3;
 export const EXIT_TAP_MS = 600;
-/** How long the gear a single tap shows stays. */
-export const GEAR_MS = 3000;
+/** How long the Back button a single tap shows stays. */
+export const BACK_MS = 3000;
 
-export type CinematicLook = { active: boolean; dimmed: boolean; gear: boolean; gems: boolean };
+export type CinematicLook = { active: boolean; dimmed: boolean; back: boolean; gems: boolean };
 
 export type CinematicHost = {
   /** The player's settings for it. */
@@ -40,7 +40,7 @@ export class Cinematic {
   /** Entered by idling: the board dims until the next input. */
   dimmed = false;
   private lastInput: number;
-  private gearUntil = 0;
+  private backUntil = 0;
   /** When the taps of the current run of quick taps landed. */
   private taps: number[] = [];
 
@@ -53,7 +53,7 @@ export class Cinematic {
     if (this.active || !this.host.settings().cinematic || !this.host.allowed()) return false;
     this.active = true;
     this.dimmed = reason === "idle";
-    this.gearUntil = 0;
+    this.backUntil = 0;
     this.taps = [];
     this.show();
     return true;
@@ -63,7 +63,7 @@ export class Cinematic {
     if (!this.active) return;
     this.active = false;
     this.dimmed = false;
-    this.gearUntil = 0;
+    this.backUntil = 0;
     this.taps = [];
     this.show();
   }
@@ -78,7 +78,7 @@ export class Cinematic {
   }
 
   /** A tap on the screen while it shows (not one that collected a Gem):
-   * the first shows the gear, a quick run of them leaves. Returns whether
+   * the first shows the Back button, a quick run of them leaves. Returns whether
    * it left. */
   tap() {
     if (!this.active) return false;
@@ -89,7 +89,7 @@ export class Cinematic {
       this.exit();
       return true;
     }
-    this.gearUntil = now + GEAR_MS;
+    this.backUntil = now + BACK_MS;
     this.show();
     return false;
   }
@@ -101,14 +101,14 @@ export class Cinematic {
   }
 
   /** Once a second: leaves once the board no longer allows it (or the
-   * setting is off), hides the gear once its time is up, and enters after
+   * setting is off), hides the Back button once its time is up, and enters after
    * the idle time with the idle option on, while the hand plays. */
   tick() {
     const now = this.host.now(), settings = this.host.settings();
     if (this.active) {
       if (!settings.cinematic || !this.host.allowed()) return this.exit();
-      if (this.gearUntil && now >= this.gearUntil) {
-        this.gearUntil = 0;
+      if (this.backUntil && now >= this.backUntil) {
+        this.backUntil = 0;
         this.show();
       }
       return;
@@ -116,13 +116,13 @@ export class Cinematic {
     if (settings.cinematicIdle && this.host.playing() && now - this.lastInput >= CINEMATIC_IDLE_MS) this.enter("idle");
   }
 
-  get gearShown() {
-    return this.active && this.gearUntil > 0;
+  get backShown() {
+    return this.active && this.backUntil > 0;
   }
 
   /** Shows the look again, as when the Gems setting changed. */
   show() {
-    this.host.show({ active: this.active, dimmed: this.dimmed, gear: this.gearShown, gems: this.active && this.host.settings().cinematicGems });
+    this.host.show({ active: this.active, dimmed: this.dimmed, back: this.backShown, gems: this.active && this.host.settings().cinematicGems });
   }
 }
 
