@@ -2484,7 +2484,7 @@ nav {
 .tree-tabs span, .tree-tabs small { display: block; }
 .tree-tabs span { font-size: 18px; margin-bottom: 2px; }
 .tree-tabs span img { width: 24px; height: 24px; }
-.tree-tabs small { font-size: 6px; letter-spacing: .5px; margin-top: 3px; color: #9ba8b7; }
+.tree-tabs small { font-size: 8px; letter-spacing: .4px; margin-top: 3px; color: #9ba8b7; }
 .tree-tabs [aria-pressed="true"] { border-color: #d8b572; background: #343021; color: #ffe1a1; }
 .skill-tree { --tree-color: #e5bf75; display: flex; flex: 1; min-height: 0; flex-direction: column; border: 1px solid #63543a; background: radial-gradient(ellipse at 50% 36%, #74552326, transparent 65%), #0a1016; padding: 8px; border-radius: 9px; }
 .skill-tree.breakthrough { --tree-color: #82c9b3; border-color: #355e55; background: radial-gradient(ellipse at 50% 36%, #2b92782a, transparent 65%), #090f15; }
@@ -2957,7 +2957,7 @@ nav button > span :is(img, svg) { display: block; width: 42px; height: 42px; max
 #upgrades > .skill-tree-tabs .skill-tree-tab-icon :is(.sprite-icon, img) { width: 24px; height: 24px; }
 #upgrades > .skill-tree-tabs .skill-tree-tab-label { display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0; font-size: 9px; letter-spacing: .4px; line-height: 1.25; }
 #upgrades > .skill-tree-tabs .skill-tree-tab-name { margin: 0; font-size: inherit; white-space: nowrap; }
-#upgrades > .skill-tree-tabs small { margin: 0; font-size: 7px; white-space: nowrap; }
+#upgrades > .skill-tree-tabs small { margin: 0; font-size: 8px; white-space: nowrap; }
 .node-icon img { width: 38px; height: 38px; }
 .skill-node.locked .node-icon img { filter: grayscale(1); opacity: .48; }
 /* A card not yet unlocked is dimmed, not see-through, so no line or backdrop shows through it. */
