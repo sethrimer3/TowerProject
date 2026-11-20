@@ -27,6 +27,9 @@ export const SETTINGS = {
    * and far fewer frames: about 15 a second while the board moves, 2 or 3
    * while it is still. Overrides the UI and Game themes while on. */
   batterySaver: { kind: "toggle", default: false, page: { id: "battery-saver", label: "Battery saver (black and white, fewer frames)" } },
+  /** How bright Battery saver's white is, in percent: down to 5, barely
+   * lighter than the black (shown on the page only while it is on). */
+  batteryWhite: { kind: "range", default: 100, min: 5, max: 100, step: 5, page: { id: "battery-white", label: "Battery saver white", aria: "Battery saver white brightness" } },
   transition: {
     kind: "choice", default: "smooth", choices: [["smooth", "Smooth"], ["fast", "Fast"], ["instant", "Off (instant)"]],
     page: { id: "transition", label: "Movement transition" },
@@ -61,9 +64,11 @@ export const SETTINGS = {
    * with a mouse in a simple paint program: wobbly black outlines and flat
    * bright fills on white paper) or Murk (Doodle after dark: the same
    * wobbly outlines with muted fills on dusky paper under a scribbled moon)
+   * or Battery Saver (Battery saver's first look: white on pure black, no
+   * animation or glow, the hand's cards as white pixel icons)
    * once owned. Chosen on the Settings page's UI Themes menu, not a row of its
    * own; a new hero starts in Medieval. */
-  uiTheme: { kind: "choice", default: "classic", choices: [["classic", "Classic"], ["medieval", "Medieval"], ["neon", "Neon"], ["terminal", "Terminal"], ["desktop", "Desktop"], ["glyph", "Glyph"], ["ember", "Ember"], ["yang", "Yang"], ["yin", "Yin"], ["shiro", "Shiro"], ["kuro", "Kuro"], ["arcade", "Arcade"], ["system", "System"], ["orbit", "Orbit"], ["pixel", "Pixel"], ["doodle", "Doodle"], ["murk", "Murk"]] },
+  uiTheme: { kind: "choice", default: "classic", choices: [["classic", "Classic"], ["medieval", "Medieval"], ["neon", "Neon"], ["terminal", "Terminal"], ["desktop", "Desktop"], ["glyph", "Glyph"], ["ember", "Ember"], ["yang", "Yang"], ["yin", "Yin"], ["shiro", "Shiro"], ["kuro", "Kuro"], ["arcade", "Arcade"], ["system", "System"], ["orbit", "Orbit"], ["pixel", "Pixel"], ["doodle", "Doodle"], ["murk", "Murk"], ["battery", "Battery Saver"]] },
   /** The Game theme the dungeon is drawn in: Classic, or Neon, Terminal
    * (a green-phosphor text dungeon), Desktop (an old desktop computer's
    * mine-sweeping field), Glyph (a many-coloured neon ASCII dungeon on
@@ -78,8 +83,9 @@ export const SETTINGS = {
    * creatures), Doodle (a dungeon drawn with a mouse in a simple paint
    * program, its hero a stick figure) or Murk (Doodle's dungeon after dark:
    * ghosts, bats, cobwebs and candles, its hero a glum stick figure in a
-   * scarf) once owned. Chosen on the Game Themes menu. */
-  gameTheme: { kind: "choice", default: "classic", choices: [["classic", "Classic"], ["neon", "Neon"], ["terminal", "Terminal"], ["desktop", "Desktop"], ["glyph", "Glyph"], ["ember", "Ember"], ["yang", "Yang"], ["yin", "Yin"], ["shiro", "Shiro"], ["kuro", "Kuro"], ["arcade", "Arcade"], ["system", "System"], ["kroz", "Kroz"], ["orbit", "Orbit"], ["pixel", "Pixel"], ["doodle", "Doodle"], ["murk", "Murk"]] },
+   * scarf) or Battery Saver (Battery saver's first board: simple white
+   * pixel art on pure black) once owned. Chosen on the Game Themes menu. */
+  gameTheme: { kind: "choice", default: "classic", choices: [["classic", "Classic"], ["neon", "Neon"], ["terminal", "Terminal"], ["desktop", "Desktop"], ["glyph", "Glyph"], ["ember", "Ember"], ["yang", "Yang"], ["yin", "Yin"], ["shiro", "Shiro"], ["kuro", "Kuro"], ["arcade", "Arcade"], ["system", "System"], ["kroz", "Kroz"], ["orbit", "Orbit"], ["pixel", "Pixel"], ["doodle", "Doodle"], ["murk", "Murk"], ["battery", "Battery Saver"]] },
   /** Dev Mode: shows the Settings page's dev section (Dev mode, free
    * purchases, the profile file's export and import). Unlocks and grants
    * nothing itself. */

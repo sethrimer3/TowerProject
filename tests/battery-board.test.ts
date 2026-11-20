@@ -1,10 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { BATTERY_ART, BATTERY_BLACK, BATTERY_BOARD, BATTERY_DIM, BATTERY_FOREST, BATTERY_GRID, BATTERY_INK, drawBatteryCardIcon, hasBatteryCardIcon } from "../src/render/boards/battery-board.ts";
+import { BATTERY_ART, BATTERY_BLACK, BATTERY_ICONS, dimWhite, BATTERY_BOARD, BATTERY_DIM, BATTERY_FOREST, BATTERY_GRID, BATTERY_INK, drawBatteryCardIcon, hasBatteryCardIcon } from "../src/render/boards/battery-board.ts";
 import { CARD_IDS } from "../src/cards/cards.ts";
 import type { EnemyStrength, Tile } from "../src/entities.ts";
 import type { FrameContext } from "../src/render/render-frame.ts";
 import { defaults } from "../src/save/save.ts";
+import { decodeSettings } from "../src/save/settings.ts";
 
 /** A 2D context that records its fills: the colour and rectangle of each. */
 function recorder() {
@@ -110,5 +111,24 @@ test("the ground outlines walls only where they meet open ground", () => {
     const dots = r.fills.filter((fill) => fill.startsWith(BATTERY_DIM));
     assert.equal(dots.length, 2, "a dot on each open tile");
     assert.ok(lit.length > 0, "the walls round them show");
+  }
+});
+
+test("battery saver's white goes from 5% to full, full by default", () => {
+  const white = defaults().settings.batteryWhite;
+  assert.equal(white, 100);
+  assert.equal(decodeSettings({ batteryWhite: 1 }).batteryWhite, 5);
+});
+
+test("dimming the white is one multiply fill over the board, at the chosen grey", () => {
+  const r = recorder();
+  dimWhite({ c: r.ctx, width: 96 } as unknown as FrameContext, 0.05);
+  assert.deepEqual(r.fills, ["rgb(13, 13, 13):0.00,0.00,96.00,96.00"]);
+});
+
+test("every stats-row icon has its picture", () => {
+  for (const [name, icon] of Object.entries(BATTERY_ICONS)) {
+    assert.equal(icon.rows.length, 7, name);
+    for (const row of icon.rows) assert.match(row, /^[.#]{7}$/, name);
   }
 });

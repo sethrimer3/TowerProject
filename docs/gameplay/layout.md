@@ -32,3 +32,9 @@ The hand's cards wear white pixel icons of their own, each matching what it goes
 The page around the board is white on black, without animations, glows or colours, and its pictures are grey.
 The board draws about fifteen frames a second while something on it moves and two or three while all is still, instead of the screen's full rate; the hero steps from tile to tile rather than gliding, and the weather and decor are off.
 Battery saver wears its own look over the UI and Game themes chosen, which come back as it is turned off.
+It also gathers the page into one small centred column: the room shrinks into a white square in the middle of the screen, in portrait and landscape alike.
+The top bar is gone; above the square a short centred row shows HP, ATK, DEF, the keys held and the floor, each a small white icon and its number, with Play or Pause and Settings beside them (Enter and Settings in the forest).
+The hand sits just under the square, its cards smaller and their levels smaller still, and the card at work is underlined.
+**Battery saver white**, just under the Battery saver setting while it is on, dims every white on the screen, from full down to 5%, where white is barely lighter than the black.
+
+The **Battery Saver** UI theme and Game theme, sold in the Event Store like the other themes, wear battery saver's black and white look (its board, its card icons and its white-on-black page) at the normal size and frame rate, with the usual top bar.

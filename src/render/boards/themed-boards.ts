@@ -17,6 +17,7 @@ import { ORBIT_BOARD } from "./orbit-board.ts";
 import { PIXEL_BOARD } from "./pixel-board.ts";
 import { DOODLE_BOARD } from "./doodle-board.ts";
 import { MURK_BOARD } from "./murk-board.ts";
+import { BATTERY_BOARD } from "./battery-board.ts";
 
 /** The Game theme looks that draw the board their own way. */
 export type ThemedLook = Exclude<GameLook, "classic">;
@@ -32,6 +33,7 @@ const BOARDS: Readonly<Record<ThemedLook, ThemedBoard>> = {
   pixel: PIXEL_BOARD,
   doodle: DOODLE_BOARD,
   murk: MURK_BOARD,
+  battery: BATTERY_BOARD,
 };
 /** A board's light open ground in gold, lifted a little. */
 const GOLD_FLOOR: GoldenLook = { on: "floor", color: "#f0b429", blend: "color", alpha: 0.9, lift: "rgba(255, 214, 92, 0.18)" };
@@ -58,6 +60,7 @@ const GOLDEN_LOOKS: Readonly<Record<ThemedLook, GoldenLook>> = {
   pixel: GOLD_FLOOR_DARK,
   doodle: GOLD_WALL_LIGHT,
   murk: GOLD_FLOOR_DARK,
+  battery: GOLD_WALL_LINES,
 };
 export const THEMED_BOARDS: Readonly<Record<ThemedLook, ThemedBoard>> = Object.fromEntries(
   (Object.keys(BOARDS) as ThemedLook[]).map((look) => [look, { ...BOARDS[look], golden: GOLDEN_LOOKS[look] }]),

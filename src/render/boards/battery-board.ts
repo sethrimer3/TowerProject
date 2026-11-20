@@ -726,3 +726,50 @@ export function batteryCardIconUrl(id: string) {
   cardUrls.set(id, url);
   return url;
 }
+
+/** Battery saver's stats and buttons, 7 x 7. */
+export const BATTERY_ICONS = {
+  heart: art(".##.##.", "#######", "#######", "#######", ".#####.", "..###..", "...#..."),
+  sword: art(".....##", "....###", "...###.", "#.###..", ".###...", ".##....", "#..#..."),
+  shield: art("#######", "#..#..#", "#..#..#", "#######", ".#.#.#.", "..###..", "...#..."),
+  stairs: art("....###", "....#..", "..###..", "..#....", "###....", "#......", "#######"),
+  play: art(".#.....", ".##....", ".###...", ".####..", ".###...", ".##....", ".#....."),
+  pause: art(".##.##.", ".##.##.", ".##.##.", ".##.##.", ".##.##.", ".##.##.", ".##.##."),
+  cog: art("..#.#..", ".#####.", "##...##", ".#...#.", "##...##", ".#####.", "..#.#.."),
+  enter: art("..###..", ".#...#.", "#.....#", "#..#..#", "#..#..#", "#..#..#", "#######"),
+  yellow: art("..###..", ".#...#.", ".#...#.", "..###..", "...#...", "...##..", "...##.."),
+  blue: art(".#####.", ".#...#.", ".#...#.", ".#####.", "...#...", "...##..", "...##.."),
+  red: art("...#...", "..#.#..", ".#...#.", "..#.#..", "...#...", "...##..", "...##.."),
+} as const;
+export type BatteryIcon = keyof typeof BATTERY_ICONS;
+
+const iconUrls = new Map<string, string>();
+/** A Battery saver stat or button icon as an image URL (7 x 7 white
+ * pixels), or "" where none can be drawn. */
+export function batteryIconUrl(name: BatteryIcon) {
+  let url = iconUrls.get(name);
+  if (url !== undefined) return url;
+  url = "";
+  try {
+    if (typeof document !== "undefined") {
+      const a = BATTERY_ICONS[name];
+      if (a.baked === undefined) a.baked = bake(a);
+      if (a.baked) url = (a.baked as HTMLCanvasElement).toDataURL();
+    }
+  } catch {
+    url = "";
+  }
+  iconUrls.set(name, url);
+  return url;
+}
+
+/** Scales everything drawn on the board toward black, white becoming grey
+ * `level` (0 to 1) of the way up: Battery saver's white brightness. */
+export function dimWhite(f: FrameContext, level: number) {
+  const c = f.c, v = Math.round(Math.max(0, Math.min(1, level)) * 255);
+  c.save();
+  c.globalCompositeOperation = "multiply";
+  c.fillStyle = `rgb(${v}, ${v}, ${v})`;
+  c.fillRect(0, 0, f.width, f.width);
+  c.restore();
+}

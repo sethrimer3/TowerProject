@@ -33,6 +33,7 @@ import { Renderer } from "./render/rendering.ts";
 import { bindInput } from "./input.ts";
 import { FrameLoop } from "./frame-loop.ts";
 import { BATTERY_BOARD } from "./render/boards/battery-board.ts";
+import { renderBatteryHud } from "./ui/battery-hud.ts";
 import { installDebugHooks } from "./debug-hooks.ts";
 import { isBoard, type AppContext, type Tab } from "./ui/app.ts";
 import { el, gemIcon, goldIcon, ticketIcon } from "./ui/dom.ts";
@@ -237,6 +238,7 @@ function update() {
   runEnd.check();
   // The run's end, a fall or a lesson takes cinematic mode away at once.
   if (cinematic.active) cinematic.tick();
+  renderBatteryHud(shownGame());
 }
 /** The board follows the game's mode: walking down the forest path
  * swaps it (`Game.swapForest`) without a tab press. */
@@ -677,7 +679,10 @@ const loop = new FrameLoop({
   researchFrame: (time) => research.frame(time),
   archivesTick,
   update,
-  vitals: () => renderVitals(shownGame()),
+  vitals: () => {
+    renderVitals(shownGame());
+    renderBatteryHud(shownGame());
+  },
   purse: (time) => purseFrame(shownGame(), time, !modal.open),
   highlight: () => {
     if(provingGrounds.active)return;

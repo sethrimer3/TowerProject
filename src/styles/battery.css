@@ -1,27 +1,37 @@
-/* Battery saver: the page in white on pure black, so an OLED screen lights
-   as little as it can. It is worn over Kuro's flat panels (bare.css: the
-   root has both `kuro` and `battery-saver`), turns Kuro's near-blacks to
-   black and its colours to white, stops every animation, transition and
-   glow, and shows pictures in grey. The hand's cards wear white pixel icons
-   of their own (battery-board.ts). Loaded after the themes.
-   Every selector is scoped under `html.battery-saver`. */
-html.battery-saver {
+/* The Battery Saver UI theme (`html.battery`, worn with `kuro`): the page in
+   white on pure black, so an OLED screen lights as little as it can. Over
+   Kuro's flat panels (bare.css) it turns Kuro's near-blacks to black and its
+   colours to white, stops every animation, transition and glow, and shows
+   pictures in grey. The hand's cards wear white pixel icons of their own
+   (battery-board.ts).
+   Battery saver itself (`html.battery-saver`, the setting, worn with both)
+   adds its compact centred column below: no HUD but a short row of stats,
+   the board smaller in a white square, the hand small just under it, and
+   its white dimmed by `--battery-white` (0.05 to 1, set by applyUiTheme).
+   Loaded after the themes. */
+html.battery {
+  --bat-ink: #fff;
+  --bat-soft: #9a9a9a;
+  --bat-dim: #5c5c5c;
+  --bat-line: #3a3a3a;
+  --bat-press: #1e1e1e;
+  --bat-light: 1;
   --b-page: #000;
   --b-block: #000;
-  --b-press: #1e1e1e;
-  --b-ink: #fff;
-  --b-soft: #9a9a9a;
-  --b-red: #fff;
-  --b-green: #fff;
-  --shrine-fill: #fff;
+  --b-press: var(--bat-press);
+  --b-ink: var(--bat-ink);
+  --b-soft: var(--bat-soft);
+  --b-red: var(--bat-ink);
+  --b-green: var(--bat-ink);
+  --shrine-fill: var(--bat-ink);
   color-scheme: dark;
   background: #000;
 }
-html.battery-saver body { background: #000; }
+html.battery body { background: #000; }
 /* No motion and no glow anywhere. */
-html.battery-saver *,
-html.battery-saver *::before,
-html.battery-saver *::after {
+html.battery *,
+html.battery *::before,
+html.battery *::after {
   animation: none !important;
   transition: none !important;
   text-shadow: none !important;
@@ -29,62 +39,196 @@ html.battery-saver *::after {
 }
 /* Panels and buttons: black with a thin grey line, so they still read as
    blocks without lighting their whole area. */
-html.battery-saver :is(.stats, .card, .upgrade, .shop, .theme-card, .mission, .research, .setting, dialog, button):not(#_):not(.hand-card, .skill-node, nav button) {
-  border: 1px solid #3a3a3a;
+html.battery :is(.stats, .card, .upgrade, .shop, .theme-card, .mission, .research, .setting, dialog, button):not(#_):not(.hand-card, .skill-node, nav button, .battery-press) {
+  border: 1px solid var(--bat-line);
 }
-html.battery-saver button.selected:not(#_),
-html.battery-saver button[aria-pressed="true"]:not(#_) {
-  border-color: #fff;
+html.battery button.selected:not(#_),
+html.battery button[aria-pressed="true"]:not(#_) {
+  border-color: var(--bat-ink);
 }
 /* Pictures in grey (the board and the hand's own icons are already). */
-html.battery-saver :is(img, .sprite-icon, svg, canvas):not(#world, .battery-card, .battery-card *) {
-  filter: grayscale(1) !important;
+html.battery :is(img, .sprite-icon, svg, canvas):not(#world, .battery-card, .battery-card *, .battery-hud *) {
+  filter: grayscale(1) brightness(var(--bat-light)) !important;
 }
 /* The board's chunky pixels stay hard as the browser fits its canvas. */
-html.battery-saver #world { image-rendering: pixelated; }
+html.battery #world { image-rendering: pixelated; }
 /* Keys: the HUD names them by their shapes on the board, colour gone. */
-html.battery-saver .keys :is(.yellow, .blue, .red):not(#_) { color: #fff; }
+html.battery .keys :is(.yellow, .blue, .red):not(#_) { color: var(--bat-ink); }
 
-/* The hand: each card a black face with a thin white line, its white pixel
-   icon and its name under it. */
-html.battery-saver .hand-card:not(#_) {
-  border: 1px solid #5c5c5c;
+/* The hand: each card a black face with a thin line, its white pixel icon
+   and its name under it. */
+html.battery .hand-card:not(#_) {
+  border: 1px solid var(--bat-dim);
   border-radius: 0;
   background: #000;
 }
-html.battery-saver .hand-card.active:not(#_),
-html.battery-saver .hand-card.focused:not(#_) {
-  border-color: #fff;
-  outline: 1px solid #fff;
+html.battery .hand-card.active:not(#_),
+html.battery .hand-card.focused:not(#_) {
+  border-color: var(--bat-ink);
+  outline: 1px solid var(--bat-ink);
 }
-html.battery-saver .battery-card:not(#_) {
+html.battery .battery-card:not(#_) {
   display: grid;
   place-items: center;
   width: 100%;
   height: 100%;
 }
-html.battery-saver .battery-card img:not(#_) {
+html.battery .battery-card img:not(#_) {
   width: 62%;
   aspect-ratio: 1;
   margin-bottom: 18%;
   image-rendering: pixelated;
+  filter: brightness(var(--bat-light));
 }
-html.battery-saver .battery-card + .sprite-card-label:not(#_) {
+html.battery .battery-card + .sprite-card-label:not(#_) {
   display: block !important;
   position: absolute;
   bottom: 6%;
   inset-inline: 4%;
-  color: #fff;
+  color: var(--bat-ink);
   font-family: "Tower Pixel", monospace;
   font-size: 8px;
   line-height: 1.15;
   text-align: center;
   pointer-events: none;
 }
-html.battery-saver .hand-card.unable .battery-card img:not(#_) { opacity: 0.35; }
+html.battery .hand-card.unable .battery-card img:not(#_) { opacity: 0.35; }
 /* What is new: a white dot, not a red one. */
-html.battery-saver .notify::after { background: #fff !important; color: #000 !important; }
+html.battery .notify::after { background: var(--bat-ink) !important; color: #000 !important; }
 /* Bars: white fills, a gain grey and a loss dim, on a dark track. */
-html.battery-saver :is(.health-track, .xp-track, .shield-track, .overheal-track) :is(i, span):not(#_) { background: #fff !important; }
-html.battery-saver :is(#health-gain, #overheal-gain, #shield-over):not(#_) { background: #9a9a9a !important; }
-html.battery-saver :is(#health-loss, #overheal-loss, #shield-regrow):not(#_) { background: #5c5c5c !important; }
+html.battery :is(.health-track, .xp-track, .shield-track, .overheal-track) :is(i, span):not(#_) { background: var(--bat-ink) !important; }
+html.battery :is(#health-gain, #overheal-gain, #shield-over):not(#_) { background: var(--bat-soft) !important; }
+html.battery :is(#health-loss, #overheal-loss, #shield-regrow):not(#_) { background: var(--bat-dim) !important; }
+
+/* ---- Battery saver: the compact centred column. ---- */
+html.battery-saver {
+  --bw: var(--battery-white, 1);
+  --bat-light: var(--bw);
+  --bat-ink: rgb(calc(255 * var(--bw)) calc(255 * var(--bw)) calc(255 * var(--bw)));
+  --bat-soft: rgb(calc(154 * var(--bw)) calc(154 * var(--bw)) calc(154 * var(--bw)));
+  --bat-dim: rgb(calc(92 * var(--bw)) calc(92 * var(--bw)) calc(92 * var(--bw)));
+  --bat-line: rgb(calc(58 * var(--bw)) calc(58 * var(--bw)) calc(58 * var(--bw)));
+  --bat-press: rgb(calc(30 * var(--bw)) calc(30 * var(--bw)) calc(30 * var(--bw)));
+  /* The board's side: smaller than the screen allows, room left for the
+     stats above and the hand below. */
+  --bat-board: min(74vw, calc(100dvh - 200px), 440px);
+}
+/* No HUD: the stats row stands in for it. */
+html.battery-saver .stats:not(#_) { display: none !important; }
+html.battery-saver .shell:not(#_) {
+  justify-content: center;
+  min-height: 0;
+  padding-block: 8px max(8px, env(safe-area-inset-bottom));
+  border: 0;
+  background: #000;
+}
+html.battery-saver .shell:has(> #board.active):not(#_) { justify-content: center; }
+html.battery-saver .shell:not(:has(> #board.active)) > #battery-hud { display: none; }
+.battery-hud {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 0 auto 10px;
+  color: var(--bat-ink);
+  font-family: "Tower Pixel", monospace;
+  font-size: 13px;
+}
+.battery-stats,
+.battery-presses {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 14px;
+}
+.battery-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.battery-stat b { font-weight: 400; }
+html.battery .battery-hud :is(b, span, button):not(#_) { font-family: "Tower Pixel", monospace; }
+.battery-hud img {
+  width: 14px;
+  height: 14px;
+  image-rendering: pixelated;
+  filter: brightness(var(--bat-light));
+}
+html.battery-saver .battery-press:not(#_) {
+  min-height: 0;
+  padding: 5px 10px;
+  border: 1px solid var(--bat-dim);
+  border-radius: 0;
+  background: #000;
+}
+/* The board: smaller, centred, the room in a white square. */
+html.battery-saver #board.active:not(#_) {
+  flex: 0 0 auto;
+  display: block;
+  overflow: visible;
+}
+html.battery-saver .board-cell:not(#_) {
+  display: flex;
+  justify-content: center;
+  height: auto;
+  container-type: normal;
+}
+html.battery-saver #board-frame:not(#_) {
+  width: var(--bat-board);
+  height: var(--bat-board);
+  padding: 5px;
+  border: 1px solid var(--bat-ink);
+  border-radius: 0;
+  background: #000;
+  box-sizing: content-box;
+}
+html.battery-saver #board.active > .status:not(#_) {
+  position: static;
+  justify-content: center;
+  margin-top: 6px;
+  background: transparent;
+  color: var(--bat-soft);
+  font-size: 11px;
+}
+/* The hand: just under the board, its cards 60% of their size and their
+   levels 70%, the card at work underlined rather than framed. */
+html.battery-saver nav:not(#_) {
+  position: relative;
+  align-self: center;
+  width: var(--bat-board);
+  margin-top: 8px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+html.battery-saver .hand:not(#_) {
+  grid-template-columns: repeat(var(--slots, 6), 32px);
+  gap: 5px;
+  min-height: 0;
+  padding: 6px 8px 8px;
+}
+html.battery-saver .battery-card + .sprite-card-label:not(#_) { font-size: 5px; }
+html.battery-saver .card-level:not(#_) {
+  min-width: 9px;
+  height: 9px;
+  padding: 0 1px;
+  font-size: 6.3px;
+  border-radius: 0;
+  border-color: var(--bat-dim);
+  color: var(--bat-ink);
+  background: #000;
+}
+html.battery-saver .hand-card.active:not(#_),
+html.battery-saver .hand-card.focused:not(#_) {
+  border-color: var(--bat-dim);
+  outline: 0;
+}
+html.battery-saver .hand-card.active::after {
+  content: "";
+  position: absolute;
+  left: 15%;
+  right: 15%;
+  bottom: -5px;
+  height: 2px;
+  background: var(--bat-ink);
+}

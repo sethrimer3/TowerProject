@@ -12,6 +12,7 @@ import { outsideWeather } from "../outside.ts";
 import { tierNumeral, tierRewardText } from "../tiers.ts";
 import { MODES, milestones } from "../modes.ts";
 import { batteryCardIconUrl } from "../render/boards/battery-board.ts";
+import { uiLook } from "../theme-collection.ts";
 import { capitalized, cardArt, CURRENCY_SPRITES, displayedProgress, el, POINTER_SVG, text, ticketIcon, uiSprite } from "./dom.ts";
 import { notesResearched } from "./run-notes-dialog.ts";
 import { CARDS, IN_PLACE, cardBonusText, isSiphon, type CardId } from "../cards/cards.ts";
@@ -480,7 +481,8 @@ function batteryCardArt(id: CardId) {
 function renderHand(game: Game, hand: readonly CardId[] = game.hand, first = 0) {
   const row = el("hand");
   const levels = hand.map((id) => cardLevelHtml(game.save, id));
-  const battery = game.save.settings.batterySaver;
+  // Battery saver and the Battery Saver UI theme show white pixel icons.
+  const battery = game.save.settings.batterySaver || uiLook(game.save) === "battery";
   const key = `${first}|${hand.join()}|${game.run.outside ? "" : JSON.stringify(game.run.badges ?? {})}|${levels.join()}|${battery}`;
   if (key !== shownHand) {
     shownHand = key;

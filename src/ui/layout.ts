@@ -14,7 +14,7 @@ export const WIDE_QUERY = "(min-aspect-ratio: 4/3) and (min-width: 640px) and (m
 /** The HUD column under this width takes the phone's HUD sizes. */
 const NARROW_HUD = 470;
 
-let settings: Pick<Save["settings"], "autoLandscape" | "hand"> | null = null;
+let settings: Pick<Save["settings"], "autoLandscape" | "hand" | "batterySaver"> | null = null;
 let wide: MediaQueryList | null = null;
 let hudWatch: ResizeObserver | null = null;
 
@@ -39,7 +39,8 @@ export function applyLayout(save: Pick<Save, "settings">) {
 function relayout() {
   if (!settings || !wide) return;
   const root = document.documentElement.classList;
-  const landscape = landscapeWorn(settings.autoLandscape, wide.matches);
+  // Battery saver keeps its own centred column whatever the window's shape.
+  const landscape = landscapeWorn(settings.autoLandscape, wide.matches) && !settings.batterySaver;
   const changed = root.contains(LANDSCAPE_CLASS) !== landscape || root.contains(LEFT_HANDED_CLASS) !== (settings.hand === "left");
   root.toggle(LANDSCAPE_CLASS, landscape);
   root.toggle(LEFT_HANDED_CLASS, settings.hand === "left");

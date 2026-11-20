@@ -29,7 +29,7 @@ import { paintHero, paintTile, paintTorch, type BoardLook } from "./tile-painter
 import type { AtmosphereConfig } from "./lighting-pass.ts";
 import { DungeonLight, type LitBoard } from "./dungeon-light.ts";
 import { drawThemedBoard, themedBoardOf } from "./boards/themed-boards.ts";
-import { BATTERY_BOARD, BATTERY_FOREST, BATTERY_GRID, drawBatteryRoute, monochrome } from "./boards/battery-board.ts";
+import { BATTERY_BOARD, BATTERY_FOREST, BATTERY_GRID, dimWhite, drawBatteryRoute, monochrome } from "./boards/battery-board.ts";
 import { RoutePath } from "./route-path.ts";
 import { BoardPopups, goldCoin, lunges } from "./board-popups.ts";
 import { DamagePredictions, drawDamageLabels } from "./effects/damage-labels.ts";
@@ -192,7 +192,8 @@ export class Renderer {
   }
   draw(now: number) {
     const f = this.beginFrame(now);
-    if (f.look.battery) return this.drawBattery(f);
+    // Battery saver, or the Battery Saver Game theme inside a run.
+    if (f.look.battery || (!f.look.outside && gameLook(this.game.save) === "battery")) return this.drawBattery(f);
     const themed = f.look.themed;
     if (themed) drawThemedBoard(f, themed, this.enemyLunge, () => this.drawRoute(f), this.game.run.player, this.game.mode === "delve" ? this.game.world.width : 0, () => this.drawFloorFields(f));
     else {
@@ -254,6 +255,10 @@ export class Renderer {
     if (!f.look.outside) drawShieldBubble(f, { up: g.fights.shownShield(f.now) > 0, brokeAt: g.fights.shieldBrokeAt, formedAt: g.shieldFormedAt });
     this.drawOverlays(f, true);
     monochrome(f);
+    // Battery saver's white at the brightness chosen: everything scaled
+    // toward black by one fill.
+    const white = f.look.battery ? g.save.settings.batteryWhite : 100;
+    if (white < 100) dimWhite(f, white / 100);
   }
   /** Voidwell's vortex and Time Dilation's and Necrotic Frost's fields on the floor, while any stands. */
   private drawFloorFields(f: FrameContext) {

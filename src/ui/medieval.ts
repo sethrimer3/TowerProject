@@ -70,8 +70,12 @@ export const DOODLE_CLASS = "doodle";
  * root. */
 export const MURK_CLASS = "murk";
 
-/** Battery saver's page: Kuro's flat white on black made pure black, with
- * no animation, glow or colour (`battery.css` dresses this class on the root). */
+/** The Battery Saver UI theme, and Battery saver's page: Kuro's flat white
+ * on black made pure black, with no animation, glow or colour (`battery.css`
+ * dresses this class on the root, worn with `kuro`). */
+export const BATTERY_LOOK_CLASS = "battery";
+/** Battery saver itself (the setting): its compact centred layout, its own
+ * stats and the white's brightness, over `battery` (`battery.css`). */
 export const BATTERY_CLASS = "battery-saver";
 
 /** Dresses the page in the UI theme worn (`uiLook`: Classic wears none of
@@ -79,7 +83,8 @@ export const BATTERY_CLASS = "battery-saver";
  * panels while it is on, and mirrors Reduce motion. */
 export function applyUiTheme(save: Pick<Save, "themes" | "settings">) {
   const battery = save.settings.batterySaver;
-  const root = document.documentElement.classList, look = battery ? "kuro" : uiLook(save);
+  const root = document.documentElement.classList;
+  const chosen = battery ? "battery" : uiLook(save), look = chosen === "battery" ? "kuro" : chosen;
   root.toggle(MEDIEVAL_CLASS, look === "medieval");
   root.toggle(NEON_CLASS, look === "neon");
   root.toggle(TERMINAL_CLASS, look === "terminal");
@@ -96,7 +101,10 @@ export function applyUiTheme(save: Pick<Save, "themes" | "settings">) {
   root.toggle(PIXEL_CLASS, look === "pixel");
   root.toggle(DOODLE_CLASS, look === "doodle");
   root.toggle(MURK_CLASS, look === "murk");
+  root.toggle(BATTERY_LOOK_CLASS, chosen === "battery");
   root.toggle(BATTERY_CLASS, battery);
+  // Battery saver's white, from full down to barely lighter than black.
+  document.documentElement.style?.setProperty("--battery-white", String(battery ? save.settings.batteryWhite / 100 : 1));
   root.toggle("reduce-motion", save.settings.reduceMotion || battery);
   root.toggle("legacy-borders", save.settings.legacyBorders);
   root.toggle("ui-sprites", !battery && usesUiSprites(save));

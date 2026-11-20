@@ -61,10 +61,10 @@ test("the Desktop UI theme is worn once owned", () => {
   assert.equal(decodeSettings({ uiTheme: "desktop" }).uiTheme, "desktop", "the choice is saved");
 });
 
-test("the Glyph, Ember, Yang, Yin, Shiro, Kuro, Arcade, System, Orbit, Pixel, Doodle and Murk UI themes are worn once owned", () => {
+test("the Glyph, Ember, Yang, Yin, Shiro, Kuro, Arcade, System, Orbit, Pixel, Doodle, Murk and Battery Saver UI themes are worn once owned", () => {
   const save = defaults();
   const g = new Game(save);
-  for (const [look, id] of [["glyph", "glyphUi"], ["ember", "emberUi"], ["yang", "yangUi"], ["yin", "yinUi"], ["shiro", "shiroUi"], ["kuro", "kuroUi"], ["arcade", "arcadeUi"], ["system", "systemUi"], ["orbit", "orbitUi"], ["pixel", "pixelUi"], ["doodle", "doodleUi"], ["murk", "murkUi"]] as const) {
+  for (const [look, id] of [["glyph", "glyphUi"], ["ember", "emberUi"], ["yang", "yangUi"], ["yin", "yinUi"], ["shiro", "shiroUi"], ["kuro", "kuroUi"], ["arcade", "arcadeUi"], ["system", "systemUi"], ["orbit", "orbitUi"], ["pixel", "pixelUi"], ["doodle", "doodleUi"], ["murk", "murkUi"], ["battery", "batteryUi"]] as const) {
     assert.equal(g.themes.wear("ui", look), false, `${look} not owned yet`);
     save.themes.push(id);
     assert.ok(g.themes.wear("ui", look));
@@ -73,10 +73,10 @@ test("the Glyph, Ember, Yang, Yin, Shiro, Kuro, Arcade, System, Orbit, Pixel, Do
   }
 });
 
-test("the Terminal, Desktop, Glyph, Ember, Yang, Yin, Shiro, Kuro, Arcade, System, Kroz, Orbit, Pixel, Doodle and Murk Game themes are worn once owned", () => {
+test("the Terminal, Desktop, Glyph, Ember, Yang, Yin, Shiro, Kuro, Arcade, System, Kroz, Orbit, Pixel, Doodle, Murk and Battery Saver Game themes are worn once owned", () => {
   const save = defaults();
   const g = new Game(save);
-  for (const [look, id] of [["terminal", "terminalGame"], ["desktop", "desktopGame"], ["glyph", "glyphGame"], ["ember", "emberGame"], ["yang", "yangGame"], ["yin", "yinGame"], ["shiro", "shiroGame"], ["kuro", "kuroGame"], ["arcade", "arcadeGame"], ["system", "systemGame"], ["kroz", "krozGame"], ["orbit", "orbitGame"], ["pixel", "pixelGame"], ["doodle", "doodleGame"], ["murk", "murkGame"]] as const) {
+  for (const [look, id] of [["terminal", "terminalGame"], ["desktop", "desktopGame"], ["glyph", "glyphGame"], ["ember", "emberGame"], ["yang", "yangGame"], ["yin", "yinGame"], ["shiro", "shiroGame"], ["kuro", "kuroGame"], ["arcade", "arcadeGame"], ["system", "systemGame"], ["kroz", "krozGame"], ["orbit", "orbitGame"], ["pixel", "pixelGame"], ["doodle", "doodleGame"], ["murk", "murkGame"], ["battery", "batteryGame"]] as const) {
     assert.equal(g.themes.wear("game", look), false, `${look} not owned yet`);
     save.themes.push(id);
     assert.ok(g.themes.wear("game", look));

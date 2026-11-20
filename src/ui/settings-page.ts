@@ -21,7 +21,7 @@ import { exportProfile, importProfile } from "../profile-file.ts";
 /** The settings on the page, in order; each control comes from its row in
  * SETTINGS. */
 const PAGE = [
-  "experimentalAtlas", "legacyBorders", "legacyEnemies", "spriteAnimations", "squareDoors", "transition", "fightAnimation", "brightness", "decorOff", "pixelPerfect", "autoLandscape", "hand", "batterySaver", "reduceMotion", "weatherSound",
+  "experimentalAtlas", "legacyBorders", "legacyEnemies", "spriteAnimations", "squareDoors", "transition", "fightAnimation", "brightness", "decorOff", "pixelPerfect", "autoLandscape", "hand", "batterySaver", "batteryWhite", "reduceMotion", "weatherSound",
   "infoDisplay", "cinematic", "cinematicIdle", "cinematicGems", "gemBankChime",
 ] as const satisfies readonly SettingKey[];
 /** The dev section's settings, shown under Dev Mode while it is on. */
@@ -57,6 +57,7 @@ const SHOWN: Partial<Record<PageKey, (save: Save) => boolean>> = {
   voidwellDamage: (save) => researched(save.archives, "voidwellDamage") > 0,
   showPath: (save) => !!save.upgrades.autoClimb,
   cinematicIdle: (save) => save.settings.cinematic,
+  batteryWhite: (save) => save.settings.batterySaver,
   cinematicGems: (save) => save.settings.cinematic,
   // Once the GEM card's Gem Bank holds a level.
   gemBankChime: (save) => !!save.cardTrees.gem?.gemBank,
@@ -71,7 +72,9 @@ const AFTER: Partial<Record<PageKey, (ctx: AppContext, overlay: BoardOverlay, s:
   autoLandscape: (ctx) => { applyUiTheme(ctx.game.save); ctx.save(); ctx.update(); },
   hand: (ctx) => { applyUiTheme(ctx.game.save); ctx.save(); ctx.update(); },
   // Battery saver dresses the page in black and white, and its board and hand redraw.
-  batterySaver: (ctx) => { applyUiTheme(ctx.game.save); ctx.save(); ctx.update(); },
+  // (and its white's slider shows only while it is on).
+  batterySaver: (ctx) => { applyUiTheme(ctx.game.save); ctx.save(); ctx.update(); ctx.renderPage(); },
+  batteryWhite: (ctx) => { applyUiTheme(ctx.game.save); ctx.save(); ctx.update(); },
   // The board silences the weather itself once sound is off.
   weatherSound: (ctx) => ctx.update(),
   infoDisplay: (ctx, overlay, s) => {

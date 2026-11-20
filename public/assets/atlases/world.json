@@ -1,105 +1,105 @@
 {
   "image": "assets/atlases/world.png",
-  "revision": "7333ec466d0cb056",
+  "revision": "18295aa2402fbff0",
   "width": 2048,
-  "height": 4096,
+  "height": 8192,
   "padding": 2,
   "regions": {
     "assets/style/ambient-death-skull.png": {
       "width": 144,
       "height": 24,
-      "x": 386,
-      "y": 3882
+      "x": 1366,
+      "y": 4026
     },
     "assets/style/ambient-dilation-guard.png": {
       "width": 144,
       "height": 24,
-      "x": 534,
-      "y": 3882
+      "x": 1514,
+      "y": 4026
     },
     "assets/style/ambient-hero-down.png": {
       "width": 96,
       "height": 24,
-      "x": 1374,
-      "y": 3882
+      "x": 398,
+      "y": 4078
     },
     "assets/style/ambient-hero-left.png": {
       "width": 96,
       "height": 24,
-      "x": 1474,
-      "y": 3882
+      "x": 498,
+      "y": 4078
     },
     "assets/style/ambient-hero-right.png": {
       "width": 96,
       "height": 24,
-      "x": 1574,
-      "y": 3882
+      "x": 598,
+      "y": 4078
     },
     "assets/style/ambient-hero-up.png": {
       "width": 96,
       "height": 24,
-      "x": 1674,
-      "y": 3882
+      "x": 698,
+      "y": 4078
     },
     "assets/style/ambient-key-shine.png": {
       "width": 120,
       "height": 24,
-      "x": 1126,
-      "y": 3882
+      "x": 150,
+      "y": 4078
     },
     "assets/style/ambient-phoenix-spark.png": {
       "width": 144,
       "height": 24,
-      "x": 682,
-      "y": 3882
+      "x": 1662,
+      "y": 4026
     },
     "assets/style/ambient-potion-bubbles.png": {
       "width": 120,
       "height": 24,
-      "x": 1250,
-      "y": 3882
+      "x": 274,
+      "y": 4078
     },
     "assets/style/ambient-ricochet-shock.png": {
       "width": 144,
       "height": 24,
-      "x": 830,
-      "y": 3882
+      "x": 1810,
+      "y": 4026
     },
     "assets/style/ambient-stellar-twinkles.png": {
       "width": 144,
       "height": 24,
-      "x": 978,
-      "y": 3882
+      "x": 2,
+      "y": 4078
     },
     "assets/style/blacksmith-base.png": {
       "width": 48,
       "height": 48,
-      "x": 198,
-      "y": 3882
+      "x": 1178,
+      "y": 4026
     },
     "assets/style/blacksmith-fire.png": {
       "width": 24,
       "height": 6,
-      "x": 935,
-      "y": 3934
+      "x": 1999,
+      "y": 4078
     },
     "assets/style/blacksmith-sign.png": {
       "width": 13,
       "height": 15,
-      "x": 674,
-      "y": 3934
+      "x": 1738,
+      "y": 4078
     },
     "assets/style/blacksmith-smoke.png": {
       "width": 64,
       "height": 12,
-      "x": 691,
-      "y": 3934
+      "x": 1755,
+      "y": 4078
     },
     "assets/style/combat-shield-144.png": {
       "width": 144,
       "height": 144,
-      "x": 1898,
-      "y": 3274
+      "x": 686,
+      "y": 3578
     },
     "assets/style/dungeon-blends.png": {
       "width": 96,
@@ -110,128 +110,128 @@
     "assets/style/dungeon-details-earth.png": {
       "width": 192,
       "height": 48,
-      "x": 2,
-      "y": 3830
+      "x": 1022,
+      "y": 3974
     },
     "assets/style/dungeon-details-masonry-0.png": {
       "width": 336,
       "height": 48,
-      "x": 682,
-      "y": 3678
+      "x": 1482,
+      "y": 3822
     },
     "assets/style/dungeon-details-masonry-1.png": {
       "width": 336,
       "height": 48,
-      "x": 1022,
-      "y": 3678
+      "x": 2,
+      "y": 3922
     },
     "assets/style/dungeon-details-masonry-2.png": {
       "width": 336,
       "height": 48,
-      "x": 1362,
-      "y": 3678
+      "x": 342,
+      "y": 3922
     },
     "assets/style/dungeon-details-masonry-3.png": {
       "width": 336,
       "height": 48,
-      "x": 1702,
-      "y": 3678
+      "x": 682,
+      "y": 3922
     },
     "assets/style/dungeon-details-masonry-4.png": {
       "width": 336,
       "height": 48,
-      "x": 2,
-      "y": 3778
+      "x": 1022,
+      "y": 3922
     },
     "assets/style/dungeon-details-masonry-5.png": {
       "width": 336,
       "height": 48,
-      "x": 342,
-      "y": 3778
+      "x": 1362,
+      "y": 3922
     },
     "assets/style/dungeon-details-masonry-6.png": {
       "width": 336,
       "height": 48,
-      "x": 682,
-      "y": 3778
+      "x": 1702,
+      "y": 3922
     },
     "assets/style/dungeon-details-masonry-7.png": {
       "width": 336,
       "height": 48,
-      "x": 1022,
-      "y": 3778
+      "x": 2,
+      "y": 3974
     },
     "assets/style/dungeon-details-masonry-8.png": {
       "width": 336,
       "height": 48,
-      "x": 1362,
-      "y": 3778
+      "x": 342,
+      "y": 3974
     },
     "assets/style/dungeon-details-masonry-9.png": {
       "width": 336,
       "height": 48,
-      "x": 1702,
-      "y": 3778
+      "x": 682,
+      "y": 3974
     },
     "assets/style/dungeon-details-stone-0.png": {
       "width": 192,
       "height": 48,
-      "x": 198,
-      "y": 3830
+      "x": 1218,
+      "y": 3974
     },
     "assets/style/dungeon-details-stone-1.png": {
       "width": 192,
       "height": 48,
-      "x": 394,
-      "y": 3830
+      "x": 1414,
+      "y": 3974
     },
     "assets/style/dungeon-details-stone-2.png": {
       "width": 192,
       "height": 48,
-      "x": 590,
-      "y": 3830
+      "x": 1610,
+      "y": 3974
     },
     "assets/style/dungeon-details-stone-3.png": {
       "width": 192,
       "height": 48,
-      "x": 786,
-      "y": 3830
+      "x": 1806,
+      "y": 3974
     },
     "assets/style/dungeon-details-stone-4.png": {
       "width": 192,
       "height": 48,
-      "x": 982,
-      "y": 3830
+      "x": 2,
+      "y": 4026
     },
     "assets/style/dungeon-details-stone-5.png": {
       "width": 192,
       "height": 48,
-      "x": 1178,
-      "y": 3830
+      "x": 198,
+      "y": 4026
     },
     "assets/style/dungeon-details-stone-6.png": {
       "width": 192,
       "height": 48,
-      "x": 1374,
-      "y": 3830
+      "x": 394,
+      "y": 4026
     },
     "assets/style/dungeon-details-stone-7.png": {
       "width": 192,
       "height": 48,
-      "x": 1570,
-      "y": 3830
+      "x": 590,
+      "y": 4026
     },
     "assets/style/dungeon-details-stone-8.png": {
       "width": 192,
       "height": 48,
-      "x": 1766,
-      "y": 3830
+      "x": 786,
+      "y": 4026
     },
     "assets/style/dungeon-details-stone-9.png": {
       "width": 192,
       "height": 48,
-      "x": 2,
-      "y": 3882
+      "x": 982,
+      "y": 4026
     },
     "assets/style/dungeon-earth.png": {
       "width": 96,
@@ -242,79 +242,79 @@
     "assets/style/dungeon-edges.png": {
       "width": 96,
       "height": 216,
-      "x": 1798,
-      "y": 3274
+      "x": 586,
+      "y": 3578
     },
     "assets/style/dungeon-floor-masonry-0.png": {
       "width": 96,
       "height": 96,
-      "x": 2,
+      "x": 834,
       "y": 3578
     },
     "assets/style/dungeon-floor-masonry-1.png": {
       "width": 96,
       "height": 96,
-      "x": 102,
+      "x": 934,
       "y": 3578
     },
     "assets/style/dungeon-floor-masonry-2.png": {
       "width": 96,
       "height": 96,
-      "x": 202,
+      "x": 1034,
       "y": 3578
     },
     "assets/style/dungeon-floor-masonry-3.png": {
       "width": 96,
       "height": 96,
-      "x": 302,
+      "x": 1134,
       "y": 3578
     },
     "assets/style/dungeon-floor-masonry-4.png": {
       "width": 96,
       "height": 96,
-      "x": 402,
+      "x": 1234,
       "y": 3578
     },
     "assets/style/dungeon-floor-masonry-5.png": {
       "width": 96,
       "height": 96,
-      "x": 502,
+      "x": 1334,
       "y": 3578
     },
     "assets/style/dungeon-floor-masonry-6.png": {
       "width": 96,
       "height": 96,
-      "x": 602,
+      "x": 1434,
       "y": 3578
     },
     "assets/style/dungeon-floor-masonry-7.png": {
       "width": 96,
       "height": 96,
-      "x": 702,
+      "x": 1534,
       "y": 3578
     },
     "assets/style/dungeon-floor-masonry-8.png": {
       "width": 96,
       "height": 96,
-      "x": 802,
+      "x": 1634,
       "y": 3578
     },
     "assets/style/dungeon-floor-masonry-9.png": {
       "width": 96,
       "height": 96,
-      "x": 902,
+      "x": 1734,
       "y": 3578
     },
     "assets/style/dungeon-infill.png": {
       "width": 96,
       "height": 96,
-      "x": 1002,
+      "x": 1834,
       "y": 3578
     },
     "assets/style/dungeon-lab-iron-floor.png": {
       "width": 96,
       "height": 96,
-      "x": 1102,
+      "x": 1934,
       "y": 3578
     },
     "assets/style/dungeon-lab-iron-walls.png": {
@@ -326,8 +326,8 @@
     "assets/style/dungeon-lab-reliquary-floor.png": {
       "width": 96,
       "height": 96,
-      "x": 1202,
-      "y": 3578
+      "x": 2,
+      "y": 3822
     },
     "assets/style/dungeon-lab-reliquary-walls.png": {
       "width": 96,
@@ -338,8 +338,8 @@
     "assets/style/dungeon-lab-tideglass-floor.png": {
       "width": 96,
       "height": 96,
-      "x": 1302,
-      "y": 3578
+      "x": 102,
+      "y": 3822
     },
     "assets/style/dungeon-lab-tideglass-walls.png": {
       "width": 96,
@@ -470,8 +470,8 @@
     "assets/style/dungeon-tower-2-floor.png": {
       "width": 96,
       "height": 96,
-      "x": 1402,
-      "y": 3578
+      "x": 202,
+      "y": 3822
     },
     "assets/style/dungeon-tower-2-walls.png": {
       "width": 96,
@@ -482,8 +482,8 @@
     "assets/style/dungeon-tower-3-floor.png": {
       "width": 96,
       "height": 96,
-      "x": 1502,
-      "y": 3578
+      "x": 302,
+      "y": 3822
     },
     "assets/style/dungeon-tower-3-walls.png": {
       "width": 96,
@@ -494,8 +494,8 @@
     "assets/style/dungeon-tower-4-floor.png": {
       "width": 96,
       "height": 96,
-      "x": 1602,
-      "y": 3578
+      "x": 402,
+      "y": 3822
     },
     "assets/style/dungeon-tower-4-walls.png": {
       "width": 96,
@@ -506,8 +506,8 @@
     "assets/style/dungeon-tower-5-floor.png": {
       "width": 96,
       "height": 96,
-      "x": 1702,
-      "y": 3578
+      "x": 502,
+      "y": 3822
     },
     "assets/style/dungeon-tower-5-walls.png": {
       "width": 96,
@@ -518,8 +518,8 @@
     "assets/style/dungeon-tower-6-floor.png": {
       "width": 96,
       "height": 96,
-      "x": 1802,
-      "y": 3578
+      "x": 602,
+      "y": 3822
     },
     "assets/style/dungeon-tower-6-walls.png": {
       "width": 96,
@@ -530,8 +530,8 @@
     "assets/style/dungeon-tower-7-floor.png": {
       "width": 96,
       "height": 96,
-      "x": 1902,
-      "y": 3578
+      "x": 702,
+      "y": 3822
     },
     "assets/style/dungeon-tower-7-walls.png": {
       "width": 96,
@@ -542,8 +542,8 @@
     "assets/style/dungeon-tower-8-floor.png": {
       "width": 96,
       "height": 96,
-      "x": 2,
-      "y": 3678
+      "x": 802,
+      "y": 3822
     },
     "assets/style/dungeon-tower-8-walls.png": {
       "width": 96,
@@ -554,8 +554,8 @@
     "assets/style/dungeon-tower-9-floor.png": {
       "width": 96,
       "height": 96,
-      "x": 102,
-      "y": 3678
+      "x": 902,
+      "y": 3822
     },
     "assets/style/dungeon-tower-9-walls.png": {
       "width": 96,
@@ -566,326 +566,326 @@
     "assets/style/env-flower-cyan.png": {
       "width": 8,
       "height": 8,
-      "x": 863,
-      "y": 3934
+      "x": 1927,
+      "y": 4078
     },
     "assets/style/env-flower-gold.png": {
       "width": 8,
       "height": 8,
-      "x": 875,
-      "y": 3934
+      "x": 1939,
+      "y": 4078
     },
     "assets/style/env-flower-rose.png": {
       "width": 8,
       "height": 8,
-      "x": 887,
-      "y": 3934
+      "x": 1951,
+      "y": 4078
     },
     "assets/style/env-flower-violet.png": {
       "width": 8,
       "height": 8,
-      "x": 899,
-      "y": 3934
+      "x": 1963,
+      "y": 4078
     },
     "assets/style/env-glowcap-cluster.png": {
       "width": 12,
       "height": 12,
-      "x": 799,
-      "y": 3934
+      "x": 1863,
+      "y": 4078
     },
     "assets/style/env-glowcap-pair.png": {
       "width": 12,
       "height": 12,
-      "x": 815,
-      "y": 3934
+      "x": 1879,
+      "y": 4078
     },
     "assets/style/env-glowcap-small.png": {
       "width": 12,
       "height": 12,
-      "x": 831,
-      "y": 3934
+      "x": 1895,
+      "y": 4078
     },
     "assets/style/env-moss-green.png": {
       "width": 24,
       "height": 24,
-      "x": 1874,
-      "y": 3882
+      "x": 898,
+      "y": 4078
     },
     "assets/style/env-moss-teal.png": {
       "width": 24,
       "height": 24,
-      "x": 1902,
-      "y": 3882
+      "x": 926,
+      "y": 4078
     },
     "assets/style/env-moss-wall.png": {
       "width": 24,
       "height": 24,
-      "x": 1930,
-      "y": 3882
+      "x": 954,
+      "y": 4078
     },
     "assets/style/env-vine-leaves.png": {
       "width": 8,
       "height": 8,
-      "x": 911,
-      "y": 3934
+      "x": 1975,
+      "y": 4078
     },
     "assets/style/env-vine-tip.png": {
       "width": 8,
       "height": 8,
-      "x": 923,
-      "y": 3934
+      "x": 1987,
+      "y": 4078
     },
     "assets/style/env-water-bank.png": {
       "width": 24,
       "height": 24,
-      "x": 1958,
-      "y": 3882
+      "x": 982,
+      "y": 4078
     },
     "assets/style/env-water-deep.png": {
       "width": 24,
       "height": 24,
-      "x": 1986,
-      "y": 3882
+      "x": 1010,
+      "y": 4078
     },
     "assets/style/env-water-mid.png": {
       "width": 24,
       "height": 24,
-      "x": 2014,
-      "y": 3882
+      "x": 1038,
+      "y": 4078
     },
     "assets/style/env-water-shore.png": {
       "width": 24,
       "height": 24,
-      "x": 2,
-      "y": 3934
+      "x": 1066,
+      "y": 4078
     },
     "assets/style/forest-berries.png": {
       "width": 24,
       "height": 24,
-      "x": 30,
-      "y": 3934
+      "x": 1094,
+      "y": 4078
     },
     "assets/style/forest-birch.png": {
       "width": 72,
       "height": 72,
-      "x": 478,
-      "y": 3678
+      "x": 1278,
+      "y": 3822
     },
     "assets/style/forest-boulder.png": {
       "width": 24,
       "height": 24,
-      "x": 58,
-      "y": 3934
+      "x": 1122,
+      "y": 4078
     },
     "assets/style/forest-elder.png": {
       "width": 96,
       "height": 72,
-      "x": 378,
-      "y": 3678
+      "x": 1178,
+      "y": 3822
     },
     "assets/style/forest-fern.png": {
       "width": 24,
       "height": 24,
-      "x": 86,
-      "y": 3934
+      "x": 1150,
+      "y": 4078
     },
     "assets/style/forest-flowers.png": {
       "width": 24,
       "height": 24,
-      "x": 114,
-      "y": 3934
+      "x": 1178,
+      "y": 4078
     },
     "assets/style/forest-grass.png": {
       "width": 24,
       "height": 24,
-      "x": 142,
-      "y": 3934
+      "x": 1206,
+      "y": 4078
     },
     "assets/style/forest-litter.png": {
       "width": 24,
       "height": 24,
-      "x": 170,
-      "y": 3934
+      "x": 1234,
+      "y": 4078
     },
     "assets/style/forest-log.png": {
       "width": 36,
       "height": 12,
-      "x": 759,
-      "y": 3934
+      "x": 1823,
+      "y": 4078
     },
     "assets/style/forest-mossy-boulder.png": {
       "width": 24,
       "height": 24,
-      "x": 198,
-      "y": 3934
+      "x": 1262,
+      "y": 4078
     },
     "assets/style/forest-mountain-base.png": {
       "width": 360,
       "height": 240,
-      "x": 1214,
-      "y": 3274
+      "x": 2,
+      "y": 3578
     },
     "assets/style/forest-mushrooms.png": {
       "width": 12,
       "height": 12,
-      "x": 847,
-      "y": 3934
+      "x": 1911,
+      "y": 4078
     },
     "assets/style/forest-oak.png": {
       "width": 72,
       "height": 72,
-      "x": 554,
-      "y": 3678
+      "x": 1354,
+      "y": 3822
     },
     "assets/style/forest-old-pine.png": {
       "width": 72,
       "height": 96,
-      "x": 302,
-      "y": 3678
+      "x": 1102,
+      "y": 3822
     },
     "assets/style/forest-path.png": {
       "width": 24,
       "height": 24,
-      "x": 226,
-      "y": 3934
+      "x": 1290,
+      "y": 4078
     },
     "assets/style/forest-pebbles.png": {
       "width": 24,
       "height": 24,
-      "x": 254,
-      "y": 3934
+      "x": 1318,
+      "y": 4078
     },
     "assets/style/forest-pine.png": {
       "width": 48,
       "height": 72,
-      "x": 630,
-      "y": 3678
+      "x": 1430,
+      "y": 3822
     },
     "assets/style/forest-sapling.png": {
       "width": 24,
       "height": 36,
-      "x": 302,
-      "y": 3882
+      "x": 1282,
+      "y": 4026
     },
     "assets/style/forest-shrub.png": {
       "width": 24,
       "height": 24,
-      "x": 282,
-      "y": 3934
+      "x": 1346,
+      "y": 4078
     },
     "assets/style/forest-stump.png": {
       "width": 24,
       "height": 24,
-      "x": 310,
-      "y": 3934
+      "x": 1374,
+      "y": 4078
     },
     "assets/style/forest-tower-base.png": {
       "width": 216,
       "height": 216,
-      "x": 1578,
-      "y": 3274
+      "x": 366,
+      "y": 3578
     },
     "assets/style/forest-young-pine.png": {
       "width": 24,
       "height": 36,
-      "x": 330,
-      "y": 3882
+      "x": 1310,
+      "y": 4026
     },
     "assets/style/hero-down.png": {
       "width": 24,
       "height": 24,
-      "x": 338,
-      "y": 3934
+      "x": 1402,
+      "y": 4078
     },
     "assets/style/hero-left.png": {
       "width": 24,
       "height": 24,
-      "x": 366,
-      "y": 3934
+      "x": 1430,
+      "y": 4078
     },
     "assets/style/hero-right.png": {
       "width": 24,
       "height": 24,
-      "x": 394,
-      "y": 3934
+      "x": 1458,
+      "y": 4078
     },
     "assets/style/hero-up.png": {
       "width": 24,
       "height": 24,
-      "x": 422,
-      "y": 3934
+      "x": 1486,
+      "y": 4078
     },
     "assets/style/lake-dock.png": {
       "width": 24,
       "height": 24,
-      "x": 450,
-      "y": 3934
+      "x": 1514,
+      "y": 4078
     },
     "assets/style/lake-fisherman.png": {
       "width": 48,
       "height": 40,
-      "x": 250,
-      "y": 3882
+      "x": 1230,
+      "y": 4026
     },
     "assets/style/lake-reeds.png": {
       "width": 24,
       "height": 36,
-      "x": 358,
-      "y": 3882
+      "x": 1338,
+      "y": 4026
     },
     "assets/style/lake-shore.png": {
       "width": 24,
       "height": 24,
-      "x": 478,
-      "y": 3934
+      "x": 1542,
+      "y": 4078
     },
     "assets/style/lake-water.png": {
       "width": 96,
       "height": 96,
-      "x": 202,
-      "y": 3678
+      "x": 1002,
+      "y": 3822
     },
     "assets/style/square-door-blue.png": {
       "width": 24,
       "height": 24,
-      "x": 506,
-      "y": 3934
+      "x": 1570,
+      "y": 4078
     },
     "assets/style/square-door-heart.png": {
       "width": 24,
       "height": 24,
-      "x": 534,
-      "y": 3934
+      "x": 1598,
+      "y": 4078
     },
     "assets/style/square-door-red.png": {
       "width": 24,
       "height": 24,
-      "x": 562,
-      "y": 3934
+      "x": 1626,
+      "y": 4078
     },
     "assets/style/square-door-steel.png": {
       "width": 24,
       "height": 24,
-      "x": 590,
-      "y": 3934
+      "x": 1654,
+      "y": 4078
     },
     "assets/style/square-door-wood.png": {
       "width": 24,
       "height": 24,
-      "x": 618,
-      "y": 3934
+      "x": 1682,
+      "y": 4078
     },
     "assets/style/square-door-yellow.png": {
       "width": 24,
       "height": 24,
-      "x": 646,
-      "y": 3934
+      "x": 1710,
+      "y": 4078
     },
     "assets/style/torch-animation.png": {
       "width": 96,
       "height": 24,
-      "x": 1774,
-      "y": 3882
+      "x": 798,
+      "y": 4078
     },
     "assets/themes/game-arcade.png": {
       "width": 400,
@@ -893,202 +893,214 @@
       "x": 1302,
       "y": 726
     },
-    "assets/themes/game-classic.png": {
+    "assets/themes/game-battery.png": {
       "width": 400,
       "height": 300,
       "x": 2,
+      "y": 1450
+    },
+    "assets/themes/game-classic.png": {
+      "width": 400,
+      "height": 300,
+      "x": 406,
       "y": 1450
     },
     "assets/themes/game-desktop.png": {
       "width": 400,
       "height": 300,
-      "x": 406,
+      "x": 810,
       "y": 1450
     },
     "assets/themes/game-doodle.png": {
       "width": 400,
       "height": 300,
-      "x": 810,
+      "x": 1214,
       "y": 1450
     },
     "assets/themes/game-ember.png": {
       "width": 400,
       "height": 300,
-      "x": 1214,
+      "x": 1618,
       "y": 1450
     },
     "assets/themes/game-glyph.png": {
       "width": 400,
       "height": 300,
-      "x": 1618,
-      "y": 1450
+      "x": 2,
+      "y": 1754
     },
     "assets/themes/game-kroz.png": {
       "width": 400,
       "height": 300,
-      "x": 2,
+      "x": 406,
       "y": 1754
     },
     "assets/themes/game-kuro.png": {
       "width": 400,
       "height": 300,
-      "x": 406,
+      "x": 810,
       "y": 1754
     },
     "assets/themes/game-murk.png": {
       "width": 400,
       "height": 300,
-      "x": 810,
+      "x": 1214,
       "y": 1754
     },
     "assets/themes/game-neon.png": {
       "width": 400,
       "height": 300,
-      "x": 1214,
+      "x": 1618,
       "y": 1754
     },
     "assets/themes/game-orbit.png": {
       "width": 400,
       "height": 300,
-      "x": 1618,
-      "y": 1754
+      "x": 2,
+      "y": 2058
     },
     "assets/themes/game-pixel.png": {
       "width": 400,
       "height": 300,
-      "x": 2,
+      "x": 406,
       "y": 2058
     },
     "assets/themes/game-shiro.png": {
       "width": 400,
       "height": 300,
-      "x": 406,
+      "x": 810,
       "y": 2058
     },
     "assets/themes/game-system.png": {
       "width": 400,
       "height": 300,
-      "x": 810,
+      "x": 1214,
       "y": 2058
     },
     "assets/themes/game-terminal.png": {
       "width": 400,
       "height": 300,
-      "x": 1214,
+      "x": 1618,
       "y": 2058
     },
     "assets/themes/game-yang.png": {
       "width": 400,
       "height": 300,
-      "x": 1618,
-      "y": 2058
+      "x": 2,
+      "y": 2362
     },
     "assets/themes/game-yin.png": {
       "width": 400,
       "height": 300,
-      "x": 2,
+      "x": 406,
       "y": 2362
     },
     "assets/themes/ui-arcade.png": {
       "width": 400,
       "height": 300,
-      "x": 406,
+      "x": 810,
+      "y": 2362
+    },
+    "assets/themes/ui-battery.png": {
+      "width": 400,
+      "height": 300,
+      "x": 1214,
       "y": 2362
     },
     "assets/themes/ui-classic.png": {
       "width": 400,
       "height": 300,
-      "x": 810,
+      "x": 1618,
       "y": 2362
     },
     "assets/themes/ui-desktop.png": {
       "width": 400,
       "height": 300,
-      "x": 1214,
-      "y": 2362
+      "x": 2,
+      "y": 2666
     },
     "assets/themes/ui-doodle.png": {
       "width": 400,
       "height": 300,
-      "x": 1618,
-      "y": 2362
+      "x": 406,
+      "y": 2666
     },
     "assets/themes/ui-ember.png": {
       "width": 400,
       "height": 300,
-      "x": 2,
+      "x": 810,
       "y": 2666
     },
     "assets/themes/ui-glyph.png": {
       "width": 400,
       "height": 300,
-      "x": 406,
+      "x": 1214,
       "y": 2666
     },
     "assets/themes/ui-kuro.png": {
       "width": 400,
       "height": 300,
-      "x": 810,
+      "x": 1618,
       "y": 2666
     },
     "assets/themes/ui-medieval.png": {
       "width": 400,
       "height": 300,
-      "x": 1214,
-      "y": 2666
+      "x": 2,
+      "y": 2970
     },
     "assets/themes/ui-murk.png": {
       "width": 400,
       "height": 300,
-      "x": 1618,
-      "y": 2666
+      "x": 406,
+      "y": 2970
     },
     "assets/themes/ui-neon.png": {
       "width": 400,
       "height": 300,
-      "x": 2,
+      "x": 810,
       "y": 2970
     },
     "assets/themes/ui-orbit.png": {
       "width": 400,
       "height": 300,
-      "x": 406,
+      "x": 1214,
       "y": 2970
     },
     "assets/themes/ui-pixel.png": {
       "width": 400,
       "height": 300,
-      "x": 810,
+      "x": 1618,
       "y": 2970
     },
     "assets/themes/ui-shiro.png": {
       "width": 400,
       "height": 300,
-      "x": 1214,
-      "y": 2970
-    },
-    "assets/themes/ui-system.png": {
-      "width": 400,
-      "height": 300,
-      "x": 1618,
-      "y": 2970
-    },
-    "assets/themes/ui-terminal.png": {
-      "width": 400,
-      "height": 300,
       "x": 2,
       "y": 3274
     },
-    "assets/themes/ui-yang.png": {
+    "assets/themes/ui-system.png": {
       "width": 400,
       "height": 300,
       "x": 406,
       "y": 3274
     },
-    "assets/themes/ui-yin.png": {
+    "assets/themes/ui-terminal.png": {
       "width": 400,
       "height": 300,
       "x": 810,
+      "y": 3274
+    },
+    "assets/themes/ui-yang.png": {
+      "width": 400,
+      "height": 300,
+      "x": 1214,
+      "y": 3274
+    },
+    "assets/themes/ui-yin.png": {
+      "width": 400,
+      "height": 300,
+      "x": 1618,
       "y": 3274
     }
   },
