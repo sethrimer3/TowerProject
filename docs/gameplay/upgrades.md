@@ -9,6 +9,6 @@ The Inspiration tree below Breakthrough (the Archives and all under them) is hid
 **Super Critical** (30 Inspiration, under Bombs) opens **SCrit %** and **SCrit x** training: a critical hit may become a Super Critical hit, its critical multiplier multiplied again by SCrit x.
 **Armor Break** (50 Inspiration, under Super Critical) opens **Armor Break** training: each of your hits wears down the enemy's DEF, even below 0, where your hits deal extra damage (see fights.md).
 
-The Upgrades page shows a tab only once what unlocks it is owned: Inspiration from the start, then Training, Breakthrough (with the Breakthrough skill), the Archives, and Legacy, Wisdom and Renown (Dev mode only for now).
+The Upgrades page shows a tab only once what unlocks it is owned: Inspiration from the start, then Training, Breakthrough (with the Breakthrough skill), the Archives, and Legacy, Wisdom and Renown (Access to Everything only for now).
 The Inspiration and Breakthrough tabs read the points held under their names (over 9,999 shortened), as the Research page's Training tab reads its points, so the row of tabs shows even while Inspiration is the only one.
-What opens Wayfinding, the Delve Automove skills, is still to be decided, so for now only Dev mode shows it; Dev mode shows them all.
+What opens Wayfinding, the Delve Automove skills, is still to be decided, so for now only Access to Everything shows it; it shows them all, hidden skills too.

@@ -108,9 +108,9 @@ Only Keymaster pixel frames change for the lit Tower II room and new geometry; s
 
 All remaining Node tests run through `npm test`; there are no separate city-defense or pointer suites.
 The board render scenes retain historical seed gaps so removing dormant scenes does not change the Tower/Delve/trial fixtures.
-The mode-tab browser flow checks the removed page stays absent even with Legacy owned and in Dev mode, while old-save tests verify discarded city data cannot affect retained progress.
+The mode-tab browser flow checks the removed page stays absent even with Legacy owned and in Dev mode with Access to Everything, while old-save tests verify discarded city data cannot affect retained progress.
 
-`node tests/upgrade-tabs.mjs` checks that only Inspiration and Breakthrough appear, including in Dev mode and old saves with Legacy unlocked, with single-line text, unclipped icons/points, both selections and usable map space at phone/tablet/desktop and short landscape sizes.
+`node tests/upgrade-tabs.mjs` checks that only Inspiration and Breakthrough appear, including in Dev mode with Access to Everything and old saves with Legacy unlocked, with single-line text, unclipped icons/points, both selections and usable map space at phone/tablet/desktop and short landscape sizes.
 It also checks normal balances and Classic, Medieval, Desktop and Terminal UI themes, with review images in `test-results/upgrade-tabs/`.
 
 After `vite build --mode snapshot` (also built by `npm run test:ui`), `node tests/equipment-recipes.mjs` serves that built game and checks the five-slot plus on narrow phones, four resource balances, actual crafting and equipping, locked acquisition pools, a preserved Cape's position/paired recipe, and decoded native shield sprites.

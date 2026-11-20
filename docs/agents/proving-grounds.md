@@ -14,6 +14,7 @@ Selecting Trial 1 — Light Elemental or Trial 2 — Keymaster opens a picker fo
 `progression.ts` selects the highest cleared difficulty plus one (up to 10,000), shared by all three controls for that boss.
 `access.ts` owns the shared two-key daily allowance (`day`, the UTC day index, and `spent`); `trialKeys` refills on a strictly later day, and `spendTrialKey` guards both entry and retry before replacing an attempt.
 Unused keys do not bank; reload/resume does not charge, and Dev mode bypasses spending without changing the ordinary allowance.
+With Access to Everything (`src/access.ts`) an attempt below hero level 10 or with no key left is a **preview** (`TrialState.preview`, `ProvingGroundsDialog.preview`): it spends no key, and `settleTrialVictory` and `saveTrialDamage` record nothing for it, so every boss can be seen without changing trial progress.
 The controller's once-a-second `tick` refreshes an open list or finished encounter across midnight, so disabled entries/retries become available without a reload.
 The three control options share one encounter and progression: `save.provingGrounds` stores the current attempt, while ordinary Tower and Delve runs, equipment, currencies and supplies remain untouched.
 The player's current max HP, ATK and DEF are copied into the attempt, which starts at full HP; other normal-run combat systems do not apply, except the Arcana: every arcanum owned but Aurum Bloom works in a trial (arcana.md's **In a trial**).

@@ -98,8 +98,11 @@ The **Toggles** button opens a menu of what the board shows during a run, each t
 Below them, the **Arcana** group, closed until you open it, holds the arcana's own toggles ([Arcana](arcana.md)).
 Materials, Cells, Gems and Free Training's levels always show.
 The **Dev Mode** toggle near the bottom shows the testing tools under it while it is on, and turning it off turns them off; it grants nothing itself.
-Its first, **Unlimited currency**, is the Dev mode these pages speak of: unlimited currency, every floor section and mode unlocked.
+Its first, **Unlimited currency**, is the Dev mode these pages speak of: it fills the purse and shows it as ∞, and lets the hero walk by hand inside a run, but unlocks nothing.
 **Free purchases** is a lighter tool for testing: it unlocks nothing, but every purchase (skills, Training, provisions, research and archivists) goes through whatever you have and costs nothing, and research completes the moment it starts.
+**Access to Everything** lets you see everything without changing your progress, only while it is on: every tower, Warp to any Goals checkpoint, every UI and Game theme, every page and tab, every skill tree with its hidden skills, locked Archives research, every Settings row and every Proving Grounds boss.
+It owns and unlocks nothing: a climb in a tower not yet opened, or warped to a checkpoint not earned, is a preview that raises no record, pays no floor milestone and masters no area, and a Proving Grounds attempt you couldn't otherwise make (below level 10, or with no key) spends no key and records nothing.
+Turning it off takes the forest back to your highest tower and the themes you don't own back to Classic.
 Under them, **Export profile** downloads a text file (JSON, in sections: profile, settings, currencies, deck, upgrades, training, research, premium, gear, towers, goals, online) of everything kept between runs, headed by its save version; a run in progress and a Proving Grounds attempt aren't in it.
 **Import profile** loads such a file over the whole profile, after a confirm: both current runs end, and anything the file leaves out starts afresh.
 In the forest **Enter**, an arrow going into an arch, stands under Goals beside the tower's number: one press walks the hero to the entrance, and the run begins as the hero steps onto it.

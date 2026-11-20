@@ -3,16 +3,16 @@ import { CHAMPION_XP, championValue, extraStellarFloor, isChampion } from "./sho
 import { entrance, floorFor } from "./delve/labyrinth.ts";
 import { chooseStep } from "./automation.ts";
 import { cost } from "./progression/upgrades.ts";
-import { CARDS, cardText, dealCard, deckCards, explainStuck, handSlots, handBonus, keptLinks, planHand, planTarget, shootsWith, stillOpen, wingedWith, type CardId, type CardPlan, type HandBonus, type StuckReport } from "./cards/cards.ts";
+import { CARDS, cardText, deckCards, explainStuck, handBonus, keptLinks, planHand, planTarget, shootsWith, stillOpen, wingedWith, type CardId, type CardPlan, type HandBonus, type StuckReport } from "./cards/cards.ts";
 import { addCardXp, PASSIVE_CARDS } from "./cards/levels.ts";
 import { KEY_COLORS, cardMaxLevel, compounded, doorStat, foeCardStat, foeStat, foeStats, keyStat, freeUpChances, freeUpFactors, hasPointsToSpend, pointsLeft, runCardTrees, runFoeCut, treeBonus, treeFactor, treeOverheal, type FoeTreeCard, type TreeBonus } from "./cards/trees.ts";
 import { aggroTurn } from "./enemies/flying.ts";
 import { arrowRange, foeOn, stunWorn, TURN_TICKS, within as inShotRange } from "./enemies/ranged.ts";
-import { BADGE_IDS, MAX_COPIES, badgeOn, badgeValue, runBadges } from "./cards/badges.ts";
+import { badgeOn, badgeValue, runBadges } from "./cards/badges.ts";
 import { BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
 import { settlePerks } from "./shop/perks.ts";
 import { noteGoldBoost } from "./economy/gold-boost.ts";
-import { canWarp, claimGoal, goalUnlocked, goalsWaiting } from "./goals.ts";
+import { canWarp, claimGoal, goalUnlocked, goalsWaiting, warpEarned } from "./goals.ts";
 import { fieldReach, togetherSlow } from "./arcana/time-dilation.ts";
 import { frostArea, frostSlowAt } from "./arcana/necrotic-frost.ts";
 import { inVortex, placeVortices, stepVoidwell, voidwellRoll, type VortexZone } from "./arcana/voidwell.ts";
@@ -64,6 +64,7 @@ import { callsGreaterBoss, greaterBoss, greaterBossSpot } from "./tower/greater-
 import { strengthOdds, traitOdds, type OddsSource } from "./enemies/odds.ts";
 import { STEPS_PER_FLOOR } from "./enemies/curves.ts";
 import { switchTier, tierNumeral, tierRewardText, tierXp } from "./tiers.ts";
+import { seesAll, tiersReachable } from "./access.ts";
 import type { GoldContext } from "./economy/gold-multipliers.ts";
 import { shiftHero } from "./progression/hero-stats.ts";
 import { enemyTitle } from "./enemies/scaling.ts";
@@ -440,9 +441,10 @@ export class Game {
   get sparksLeft() {
     return Math.max(0, this.sparks - (this.run.sparksUsed ?? 0));
   }
-  /** Grants unlimited currency, the first 250 floors, and every game mode.
-   * Reversible: turning Dev Mode back off leaves the grants in place, since
-   * there is no meaningful "undo" for progress the player has already seen. */
+  /** Unlimited currency: fills the purse (Gold, Gems, Inspiration,
+   * Breakthrough and Equipment's materials), and the HUD shows it as ∞
+   * while it is on. Unlocks nothing (Access to Everything opens what is
+   * locked, `setAccessAll`); turning it off leaves the purse as it is. */
   setDevMode(on: boolean) {
     this.save.settings.devMode = on;
     if (!on) return;
@@ -450,23 +452,26 @@ export class Game {
     this.save.gems = 999_999_999;
     this.save.tower.inspiration = 999_999_999;
     this.save.breakthrough = 999_999_999;
-    this.save.upgrades.breakthrough = 1;
-    this.save.upgrades.legacy = 1;
-    // The Deck page with its Badges box, and every badge at the top level.
-    for (const id of ["cardDoorKey", "cardEnemy", "autoClimb", "combatStance", "buildout", "cardBadges"] as const) this.save.upgrades[id] = Math.max(1, this.save.upgrades[id]);
-    for (const card of ["door", "key", "monster"] as const) this.save.hand = dealCard(this.save.hand, card, handSlots(this.save));
-    for (const id of BADGE_IDS) this.save.badges.owned[id] = { copies: MAX_COPIES, pick: this.save.badges.owned[id]?.pick ?? 0 };
-    // Equipment, with materials to spare.
-    this.save.equipment.unlocked = true;
     for (const id of EQUIP_MATERIAL_IDS) this.save.equipment.materials[id] = 999_999_999;
+  }
+  /** Access to Everything (`src/access.ts`): every tower, floor, theme and
+   * locked page to see while it is on, granting nothing. The forest is
+   * rebuilt for its roads and buildings, and turning it off takes the
+   * Tower's forest (the one with tier arrows) back to the highest tower
+   * opened, if it stood beyond, and drops the empty records the towers
+   * looked at left behind (a preview records none). */
+  setAccessAll(on: boolean) {
+    this.save.settings.accessAll = on;
+    if (!on) {
+      const tower = this.save.tower;
+      if (this.mode === "tower" && this.run.outside && tower.tier > tower.tiersOpen) {
+        this.forestArrival = null;
+        this.selectTier(tower.tiersOpen);
+      }
+      for (const slice of [this.save.tower, this.save.delve])
+        for (const key of Object.keys(slice.tierRecords)) if (Number(key) > slice.tiersOpen) delete slice.tierRecords[key];
+    }
     if (this.run.outside) this.world = this.buildWorld();
-    const maxSection = 25;
-    this.save.tower.reached = Math.max(this.save.tower.reached, maxSection * TOWER_SECTION);
-    this.save.tower.best = Math.max(this.save.tower.best, this.save.tower.reached);
-    this.save.delve.reached = Math.max(this.save.delve.reached, maxSection * TOWER_SECTION);
-    this.save.delve.best = Math.max(this.save.delve.best, this.save.delve.reached);
-    // Events open with Dev mode: the running Event's first missions come at once.
-    this.events.refresh();
   }
   /** Makes `next` the active mode. A mode with no run yet starts one inside
    * (a new game's first), or in its forest when `outside`. The player
@@ -720,9 +725,9 @@ export class Game {
    * open, and its roads lead off toward the tiers on either side once
    * those are (as the tier arrows do). */
   private forestWorld(seed: number) {
-    const { tier, tiersOpen } = this.slice;
+    const { tier } = this.slice, all = seesAll(this.save);
     if (this.atLake) return new LakeWorld(seed);
-    return new OutsideWorld(seed, this.mode, this.save.equipment.unlocked, goalUnlocked(this.save, "tournament"), this.mode === "tower" || tier > 1, tier < tiersOpen);
+    return new OutsideWorld(seed, this.mode, this.save.equipment.unlocked || all, goalUnlocked(this.save, "tournament") || all, this.mode === "tower" || tier > 1, tier < tiersReachable(this.save, this.mode));
   }
   /** Map edits saved under an older layout can't be applied to the new one:
    * they are dropped, and progress, stats and inventory are kept. */
@@ -2163,11 +2168,14 @@ export class Game {
   }
   /** Warp: from the forest, begins a new Tower run in `tower` at once on
    * the floor after the checkpoint at `floor` (the first of the next ten),
-   * once Warp is owned and that checkpoint reached. */
+   * once Warp is owned and that checkpoint reached, or anywhere with Access
+   * to Everything, as a preview run (`RunCore.preview`). */
   warp(tower: number, floor: number) {
     if (!this.canWarpTo(tower, floor)) return false;
+    const earned = warpEarned(this.save, tower, floor);
     if (tower !== this.slice.tier) this.selectTier(tower);
     this.newRun({ outside: true, height: floor });
+    if (!earned) this.run.preview = true;
     this.enterFromOutside();
     this.message = `Warped to floor ${floor + 1}`;
     return true;
@@ -2863,7 +2871,7 @@ export class Game {
    * of the lake, or an adjacent opened tower. */
   canTravelForest(direction: -1 | 1) {
     return this.mode === "tower" && !!this.run.outside && !this.busy &&
-      (this.atLake ? direction === 1 : direction === -1 || this.slice.tier < this.slice.tiersOpen);
+      (this.atLake ? direction === 1 : direction === -1 || this.slice.tier < tiersReachable(this.save, this.mode));
   }
   /** Arrows and walking onto a side edge share the arrival animation.
    * Prefer the same row, falling back to connected grass near the crossing. */
@@ -2910,10 +2918,11 @@ export class Game {
     this.forestArrival = null;
     return true;
   }
-  /** Whether the forest may switch to `tier`: opened, and not the one selected. */
+  /** Whether the forest may switch to `tier`: opened (or any, with Access
+   * to Everything), and not the one selected. */
   private canSelectTier(tier: number) {
     const slice = this.slice;
-    return !!this.run.outside && !this.forestArrival && tier !== slice.tier && tier >= 1 && tier <= slice.tiersOpen;
+    return !!this.run.outside && !this.forestArrival && tier !== slice.tier && tier >= 1 && tier <= tiersReachable(this.save, this.mode);
   }
   /** The forests' seeds, by mode and tier, kept while the player looks
    * between them: the weather comes from the seed, so each stays as it was
@@ -2922,6 +2931,8 @@ export class Game {
   private forestKey = (tier: number) => `${this.mode}:${tier}`;
   private enterFromOutside() {
     this.forestSeeds.clear();
+    // A tier not opened is entered only with Access to Everything: a preview run.
+    if ((this.run.tier ?? 1) > this.slice.tiersOpen) this.run.preview = true;
     syncShield(this.save, this.run, this.mode);
     const p = this.run.player;
     this.run.outside = false;
@@ -3247,8 +3258,10 @@ export class Game {
   private get climb() {
     return new TowerClimb(this.towerRun);
   }
+  /** Raises the mode's records to the floor reached, paying its milestones;
+   * nothing in the forest or on a preview run (`RunCore.preview`). */
   recordProgress() {
-    if (this.run.outside) return 0;
+    if (this.run.outside || this.run.preview) return 0;
     const slice = this.slice;
     const reached = Math.max(slice.reached, this.run.height);
     const earned = milestones(this.rules, slice.reached, reached);
@@ -3358,9 +3371,9 @@ export class Game {
     return handBonus(this.run.outside ? [] : this.held);
   }
   /** Whether a run's Training can be bought with Silver inside it: On the
-   * Job owned, or every page shown in Dev mode. */
+   * Job owned, or with Access to Everything. */
   get trainsOnTheJob() {
-    return !!this.save.upgrades.onTheJob || this.save.settings.devMode;
+    return !!this.save.upgrades.onTheJob || seesAll(this.save);
   }
   /** Buys ranks of Training `id` for this run with its Silver, one or as
    * many as Buy Quantity `quantity` takes (`runTrainingBulk`): they count

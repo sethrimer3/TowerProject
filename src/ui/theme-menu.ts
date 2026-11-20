@@ -2,9 +2,9 @@ import { atlasIcon } from "../sprites/ui-atlas.ts";
 import { controlIcon } from "./control-icon.ts";
 import { CLASSIC_NAME, THEME_GOLD_PER_MILLE, THEMES, collectionGoldFactor, gameLook, ownsTheme, perMilleText, themesOf, uiLook, type ThemeId, type ThemeKind } from "../theme-collection.ts";
 import { factorText } from "../economy/gold-multipliers.ts";
-import type { Toast } from "./research-toast.ts";
 import type { PageGame } from "./app.ts";
 import { UI_ASSET_BASE, el, goldIcon } from "./dom.ts";
+import { seesAll } from "../access.ts";
 
 /** Each kind's menu heading and the line over its heading. */
 const HEADINGS: Record<ThemeKind, { title: string; kicker: string }> = {
@@ -22,12 +22,6 @@ export function wornName(save: PageGame["save"], kind: ThemeKind) {
 /** A theme's Gold as the player sees it: "+1%" and the Gold icon. */
 export const themeGoldHtml = (id: ThemeId) => `${perMilleText(THEME_GOLD_PER_MILLE[THEMES[id].kind])}${goldIcon()}`;
 
-/** A theme granted (Dev mode gives them all), announced as research is. */
-export const themeToast = (id: ThemeId): Toast => ({
-  title: "Theme Unlocked!",
-  text: `${THEMES[id].name} ${themeMenuTitle(THEMES[id].kind).replace(/s$/, "")} · ${perMilleText(THEME_GOLD_PER_MILLE[THEMES[id].kind])} Gold`,
-});
-
 const preview = (kind: ThemeKind, look: string) => `${UI_ASSET_BASE}assets/themes/${kind}-${look}.png`;
 /** A look's preview picture. */
 export const themePreview = (kind: ThemeKind, look: string, name: string) =>
@@ -43,11 +37,11 @@ function card(game: PageGame, kind: ThemeKind, look: string, name: string, id: T
 
 /** A kind's theme menu, drawn into `root`: Back, the Gold the themes
  * owned pay, a card per choice the player has (Classic, then each theme
- * owned), and where more come from. Pressing Equip wears its look;
+ * owned, or every theme with Access to Everything), and where more come from. Pressing Equip wears its look;
  * `changed` applies and saves it. */
 export function renderThemeMenu(root: HTMLElement, game: PageGame, kind: ThemeKind, back: () => void, changed: () => void) {
   const owned = game.save.themes.length;
-  const choices = [card(game, kind, "classic", CLASSIC_NAME, null), ...themesOf(kind).filter((id) => ownsTheme(game.save, id)).map((id) => card(game, kind, THEMES[id].look, THEMES[id].name, id))];
+  const choices = [card(game, kind, "classic", CLASSIC_NAME, null), ...themesOf(kind).filter((id) => ownsTheme(game.save, id) || seesAll(game.save)).map((id) => card(game, kind, THEMES[id].look, THEMES[id].name, id))];
   root.innerHTML =
     `<button class="back" id="themes-back">${controlIcon("back")} Settings</button><div class="page-title"><small>${HEADINGS[kind].kicker}</small><h2>${HEADINGS[kind].title}</h2></div>` +
     `<p class="hint theme-gold">Every UI theme owned adds ${perMilleText(THEME_GOLD_PER_MILLE.ui)}${goldIcon()} for good, every Game theme ${perMilleText(THEME_GOLD_PER_MILLE.game)}${goldIcon()}. Owned: <b>${owned}</b> · ${goldIcon()}<b>${factorText(collectionGoldFactor(game.save))}</b></p>` +

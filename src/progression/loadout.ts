@@ -23,6 +23,7 @@ import { RESEARCH, researched } from "./archives.ts";
 import { ranksInTraining, trainingGold } from "./training-jobs.ts";
 import { goalUnlocked, type GoalUnlock } from "../goals.ts";
 import type { CardId } from "../cards/cards.ts";
+import { seesAll } from "../access.ts";
 
 /** Whether `row` can be seen and trained: its upgrade owned, or the Goals
  * checkpoint that unlocks it claimed (Attack Range, Attack Speed). */
@@ -230,10 +231,10 @@ export function trainingPoints(save: Pick<Save, "xp" | "trainingPaid"> & Partial
 
 /** Whether the Research tab (Training and the Archives) shows: once the
  * hero has levelled up or has training points from elsewhere, once Trainers
- * or the Archives is owned, or in Dev mode. Before then nothing there can
+ * or the Archives is owned, or with Access to Everything. Before then nothing there can
  * be done. */
 export const researchOpen = (save: Pick<Save, "xp" | "upgrades" | "settings"> & Partial<Pick<Save, "bonusTrainingPoints">>) =>
-  levelForXp(save.xp) > 0 || (save.bonusTrainingPoints ?? 0) > 0 || save.upgrades.trainers > 0 || save.upgrades.archives > 0 || save.settings.devMode;
+  levelForXp(save.xp) > 0 || (save.bonusTrainingPoints ?? 0) > 0 || save.upgrades.trainers > 0 || save.upgrades.archives > 0 || seesAll(save);
 
 /** Whether training points can be spent now: some row that shows can
  * take a rank they pay for (the Upgrades and Training tabs' dot). */

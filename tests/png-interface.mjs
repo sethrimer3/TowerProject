@@ -19,7 +19,7 @@ try {
     const {defaults}=await import('/src/save/save.ts'),{Game}=await import('/src/state.ts'),{ARCANA}=await import('/src/arcana/arcana.ts');
     const s=defaults();Object.keys(s.tutorials).forEach(k=>s.tutorials[k]=true);
     Object.assign(s.upgrades,{archives:1,combatStance:1,buildout:1,equipment:1});
-    Object.assign(s.settings,{devMode:true,reduceMotion:true,transition:'instant',weatherSound:false,uiTheme});
+    Object.assign(s.settings,{devMode:true,accessAll:true,reduceMotion:true,transition:'instant',weatherSound:false,uiTheme});
     if(!['medieval','classic'].includes(uiTheme))s.themes.push(`${uiTheme}Ui`);
     s.arcanite=10000;s.profile.earned.arcanite=10000;
     for(const id of Object.keys(ARCANA))s.arcana.owned[id]=[0,0,0];

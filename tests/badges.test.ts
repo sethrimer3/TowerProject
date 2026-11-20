@@ -724,13 +724,6 @@ test("Floor Skip Reward pays its percent of the Gold the floor skipped held, onc
   assert.fail("no seed skips");
 });
 
-test("Dev mode owns the Badges box and every badge at the top level", () => {
-  const g = new Game(playedSave());
-  g.setDevMode(true);
-  assert.ok(g.save.upgrades.combatStance && g.save.upgrades.buildout && g.save.upgrades.cardBadges);
-  assert.ok(BADGE_IDS.every((id) => g.save.badges.owned[id]?.copies === MAX_COPIES));
-});
-
 test("the XP and Gold combo a badge pays rise off the board only while their Toggles are on", () => {
   const shown = (on: boolean) => {
     const g = floor(["@.A.K"]);

@@ -17,6 +17,7 @@ import { showStats } from "./stats-dialog.ts";
 import { showDevlog } from "./devlog-dialog.ts";
 import { showHelp } from "./dialogs.ts";
 import { exportProfile, importProfile } from "../profile-file.ts";
+import { seesAll } from "../access.ts";
 
 /** The settings on the page, in order; each control comes from its row in
  * SETTINGS. */
@@ -25,7 +26,7 @@ const PAGE = [
   "infoDisplay", "cinematic", "cinematicIdle", "cinematicGems", "gemBankChime",
 ] as const satisfies readonly SettingKey[];
 /** The dev section's settings, shown under Dev Mode while it is on. */
-const DEV = ["devMode", "freePurchases"] as const satisfies readonly SettingKey[];
+const DEV = ["devMode", "freePurchases", "accessAll"] as const satisfies readonly SettingKey[];
 /** The settings on the Toggles menu, in order: the values the board shows
  * in a run. */
 const TOGGLES = [
@@ -62,7 +63,11 @@ const SHOWN: Partial<Record<PageKey, (save: Save) => boolean>> = {
   // Once the GEM card's Gem Bank holds a level.
   gemBankChime: (save) => !!save.cardTrees.gem?.gemBank,
 };
-const shownOf = (keys: readonly PageKey[], save: Save) => keys.filter((key) => SHOWN[key]?.(save) ?? true);
+/** Those shown only while another setting is on: Access to Everything
+ * leaves them to it, opening only those an unlock holds back. */
+const UNDER_SETTING: ReadonlySet<PageKey> = new Set(["cinematicIdle", "cinematicGems", "batteryWhite"]);
+const shownOf = (keys: readonly PageKey[], save: Save) =>
+  keys.filter((key) => (seesAll(save) && !UNDER_SETTING.has(key)) || (SHOWN[key]?.(save) ?? true));
 
 /** What a change does once written, beyond saving. */
 const AFTER: Partial<Record<PageKey, (ctx: AppContext, overlay: BoardOverlay, s: Settings) => void>> = {
@@ -93,14 +98,25 @@ const AFTER: Partial<Record<PageKey, (ctx: AppContext, overlay: BoardOverlay, s:
     if (!s.devTools) {
       ctx.game.setDevMode(false);
       s.freePurchases = false;
+      ctx.game.setAccessAll(false);
+      applyUiTheme(ctx.game.save);
     }
     ctx.save();
     ctx.update();
     ctx.renderPage();
   },
-  // Turning it on also grants everything it unlocks.
+  // Turning it on fills the purse.
   devMode: (ctx, _, s) => {
     ctx.game.setDevMode(s.devMode);
+    ctx.save();
+    ctx.update();
+    ctx.renderPage();
+  },
+  // Opens (or closes again) everything to see; a theme worn only through it
+  // comes off with it.
+  accessAll: (ctx, _, s) => {
+    ctx.game.setAccessAll(s.accessAll);
+    applyUiTheme(ctx.game.save);
     ctx.save();
     ctx.update();
     ctx.renderPage();

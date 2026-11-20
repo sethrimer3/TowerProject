@@ -11,7 +11,8 @@ export const rewardClaimed = (save:Pick<Save,"trialAccess">,id:TrialId,level:num
 /** Every control mode settles into the same trial record. The reward and
  * its receipt are saved together, so reloads or repeated wins cannot pay twice. */
 export function settleTrialVictory(save:Save,state:TrialState) {
-  if(state.status!=="won" || state.bossHp!==0)return {changed:false,points:0};
+  // A preview attempt (Access to Everything) records no clear and pays nothing.
+  if(state.status!=="won" || state.bossHp!==0 || state.preview)return {changed:false,points:0};
   const record=save.trialAccess.progress[state.trialId]??={cleared:0,claimed:[]};
   if(record.savedBoss?.level===state.level)delete record.savedBoss;
   const old=record.cleared;record.cleared=Math.max(record.cleared,state.level);
@@ -25,7 +26,7 @@ export function settleTrialVictory(save:Save,state:TrialState) {
 /** Saves the damage inflicted on the Obelisk (and any parts) when a run ends
  * before defeating the boss, so the next trial run resumes from that HP. */
 export function saveTrialDamage(save:Pick<Save,"trialAccess">,state:TrialState) {
-  if(state.trialId!=="obelisk" || state.bossHp<=0)return false;
+  if(state.trialId!=="obelisk" || state.bossHp<=0 || state.preview)return false;
   const damage=Math.max(0,Math.round(state.bossMaxHp-state.bossHp));
   const previous=save.trialAccess.progress[state.trialId]?.savedBoss;
   const partDamage: Record<string, number> = previous?.level===state.level ? {...previous.partDamage} : {};

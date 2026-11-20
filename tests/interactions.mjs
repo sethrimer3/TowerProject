@@ -30,6 +30,7 @@ async function fixture(edit, arg = null) {
     const s = JSON.parse(localStorage.getItem("towerdelve.v1"));
     // Inside a run only Dev mode walks by hand, and it starts the hand paused.
     s.settings.devMode = true;
+    s.settings.accessAll = true;
     new Function("s", "arg", body)(s, arg);
     sessionStorage.setItem("__fixture", JSON.stringify(s));
   }, [`(${edit})(s, arg)`, arg]);

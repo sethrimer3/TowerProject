@@ -10,6 +10,7 @@ import { batchWork, claimBoost, doneAt, finishGems, jobInvested, nextTrainerGems
 import { affordsGems, type DeskHost } from "./desk.ts";
 import { changeLoadout } from "./hero-sync.ts";
 import { tally } from "../save/profile.ts";
+import { seesAll } from "../access.ts";
 
 const rowOf = (id: TrainingId) => TRAINING.find((t) => t.id === id)!;
 /** The fixed quantities, largest first: a batch continues at the largest one its ranks reach. */
@@ -35,9 +36,9 @@ export class TrainingDesk {
     return this.host.save;
   }
 
-  /** Whether trainers work: the Trainers skill is owned, or Dev mode. */
+  /** Whether trainers work: the Trainers skill is owned, or with Access to Everything. */
   get hired() {
-    return !!this.save.upgrades.trainers || this.save.settings.devMode;
+    return !!this.save.upgrades.trainers || seesAll(this.save);
   }
 
   /** Whether one more rank of `id` can be trained at all: its row shows,
@@ -360,9 +361,9 @@ export class TrainingDesk {
   }
 
   /** Whether the Gem reset exists at all: once the Breakthrough skill
-   * Training Respec is owned, or in Dev mode. */
+   * Training Respec is owned, or with Access to Everything. */
   get resetUnlocked() {
-    return !!this.save.upgrades.trainingRespec || this.save.settings.devMode;
+    return !!this.save.upgrades.trainingRespec || seesAll(this.save);
   }
 
   /** Whether a Gem reset is open: once unlocked, and only from the forest. */
@@ -414,9 +415,9 @@ export class TrainingDesk {
     });
   }
   /** The Buy Quantity choices open: x1 once the Buy Quantity skill is owned
-   * (or in Dev mode), and one more per level of its research; none before. */
+   * (or with Access to Everything), and one more per level of its research; none before. */
   get buyQuantities(): readonly BuyQuantity[] {
-    return this.save.upgrades.buyQuantity || this.save.settings.devMode ? openQuantities(researched(this.save.archives, "buyQuantity")) : [];
+    return this.save.upgrades.buyQuantity || seesAll(this.save) ? openQuantities(researched(this.save.archives, "buyQuantity")) : [];
   }
   /** How many ranks a press buys on `scope`'s screen (the Training tab,
    * or the run's training bar, each its own saved choice): the quantity

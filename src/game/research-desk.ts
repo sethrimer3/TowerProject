@@ -4,6 +4,7 @@ import { finishGems } from "../progression/training-jobs.ts";
 import { queueNextSpeedUp, speedUpCells, startSpeedUp, type SpeedUpFactor, type SpeedUpHours } from "../progression/speed-ups.ts";
 import { changeLoadout } from "./hero-sync.ts";
 import { affordsGems, type DeskHost } from "./desk.ts";
+import { seesAll } from "../access.ts";
 
 /** The Archives' commands: research run by archivists on the wall clock.
  * Every level completed reaches a run still in the forest at once. */
@@ -18,10 +19,10 @@ export class ResearchDesk {
     return this.host.save;
   }
 
-  /** Whether the Archives' commands are open: the skill owned, or every
-   * page shown in Dev mode. */
+  /** Whether the Archives' commands are open: the skill owned, or with
+   * Access to Everything. */
   private get open() {
-    return !!this.save.upgrades.archives || this.save.settings.devMode;
+    return !!this.save.upgrades.archives || seesAll(this.save);
   }
 
   /** Whether an archivist stands idle while some research is open to it. */

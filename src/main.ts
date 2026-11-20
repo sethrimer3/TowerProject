@@ -82,7 +82,6 @@ import { RelicsPage } from "./ui/relics-page.ts";
 import { ShrinesPage } from "./ui/shrines-page.ts";
 import { showShrine } from "./ui/shrine-dialog.ts";
 import { uiLook } from "./theme-collection.ts";
-import { themeToast } from "./ui/theme-menu.ts";
 import { showOfflineGold } from "./ui/offline-gold-dialog.ts";
 import { dropGold } from "./ui/gold-drop.ts";
 
@@ -227,10 +226,7 @@ function update() {
   runTraining.render();
   if(!provingGrounds.active)renderBoardLesson(game, isBoard(tab), update, tab === "upgrades");
   provingGrounds.decorate();
-  const themes = game.themes.claim();
-  // A theme Dev mode grants while its look was chosen shows at once.
-  if (themes.length) applyUiTheme(game.save);
-  const finished = [...game.research.done.splice(0).map(researchToast), ...game.training.done.splice(0).map(trainingToast), ...themes.map(themeToast)];
+  const finished = [...game.research.done.splice(0).map(researchToast), ...game.training.done.splice(0).map(trainingToast)];
   if (finished.length) play("trained");
   researchToasts.add(finished);
   save();

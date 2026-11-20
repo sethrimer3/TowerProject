@@ -18,6 +18,7 @@ import { RUSH_EFFICIENCY_TENTHS, rushEfficiencyText } from "../progression/train
 import { SPEED_UP_FACTORS, SPEED_UP_HOURS, jobAt, type SpeedUpFactor, type SpeedUpHours } from "../progression/speed-ups.ts";
 import { askForGems, helpButton, showHelp } from "./dialogs.ts";
 import { startArchivesAmbient } from "./archives-ambient.ts";
+import { seesAll } from "../access.ts";
 
 /** `ms` as the largest two units: "2d 4h", "7h 41m", "12m 5s", "3s". */
 export function formatDuration(ms: number) {
@@ -429,7 +430,7 @@ export class ArchivesPanel {
     const save = this.ctx.game.save, def = research(id), state = status(save, id), words = this.search.trim().toLowerCase();
     // A busy archivist's own research shows among the choices.
     const own = state === "active" && this.picking !== null && activeSlot(save.archives, id) === this.picking;
-    return (state === "available" || own || (state === "completed" && !this.hideCompleted) || (state === "locked" && save.settings.devMode)) &&
+    return (state === "available" || own || (state === "completed" && !this.hideCompleted) || (state === "locked" && seesAll(save))) &&
       (this.category === "all" || def.categories.includes(this.category)) &&
       (!words || `${def.name} ${describe(save.archives, id)}`.toLowerCase().includes(words));
   }

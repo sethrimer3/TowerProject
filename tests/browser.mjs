@@ -20,6 +20,7 @@ await page.evaluate(() => {
   save.upgrades.breakthrough = 1;
   // Inside a run only Dev mode walks by hand, and it starts the hand paused.
   save.settings.devMode = true;
+  save.settings.accessAll = true;
   sessionStorage.setItem("__treeFixture", JSON.stringify(save));
 });
 await page.reload();

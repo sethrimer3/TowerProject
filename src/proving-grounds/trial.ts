@@ -53,6 +53,10 @@ export type TrialState = {
   destroyed: Record<string, number>;
   /** The arcana the attempt holds (trial-spells.ts); none without any. */
   arcana?: TrialArcana;
+  /** An attempt only Access to Everything let the player begin (below hero
+   * level 10, or with no trial key left): it spent no key, and its win or
+   * damage records nothing (progression.ts). Absent for every other. */
+  preview?: true;
 };
 export const trialDamageThisRun = (s: TrialState): number =>
   s.bossVariant ? s.bossVariant.damageThisRun : Math.max(0, s.bossMaxHp - s.bossHp);
@@ -309,7 +313,7 @@ export function decodeTrial(raw: unknown): TrialState | undefined {
   if(keymaster && (beam || slimes.length || Object.keys(scorches).length || Object.keys(destroyed).length || keymaster.mimics.some(m=>same(m,elemental))))return;
   if(bossVariant && (beam || slimes.length || Object.keys(scorches).length || Object.keys(destroyed).length))return;
   const arcana=decodeTrialArcana(raw.arcana);
-  const decoded:TrialState = { version:2,trialId:trialId as TrialId,...(arcana?{arcana}:{}),...(keymaster?{keymaster}:{}),...(bossVariant?{bossVariant}:{}),level,...(displayHand?{displayHand}:{}),...(purchases?{purchases}:{}),elemental,beam,mode:raw.mode,hand:[...raw.hand],playing:raw.playing,seed:raw.seed,
+  const decoded:TrialState = { version:2,trialId:trialId as TrialId,...(raw.preview===true?{preview:true as const}:{}),...(arcana?{arcana}:{}),...(keymaster?{keymaster}:{}),...(bossVariant?{bossVariant}:{}),level,...(displayHand?{displayHand}:{}),...(purchases?{purchases}:{}),elemental,beam,mode:raw.mode,hand:[...raw.hand],playing:raw.playing,seed:raw.seed,
     room: raw.room, status: raw.status, player: { x:p.x,y:p.y,hp:p.hp,maxHp:p.maxHp,attack:p.attack,defense:p.defense },
     bossHp:raw.bossHp,bossMaxHp:raw.bossMaxHp,steps:raw.steps,slimes,consumed:[...new Set<string>(consumed)],scorches,destroyed };
   if(legacyKeymaster)migrateKeymasterLayout(decoded);

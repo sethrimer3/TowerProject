@@ -230,6 +230,7 @@ const RUN_FIELD_CHECKS = {
   training: validRunTraining,
   cardUses: (v: unknown) => isRecord(v) && Object.entries(v).every(([id, n]) => IN_PLACE.has(id as CardId) && wholeIn(n, 1, 1e6)),
   tier: (v: unknown) => wholeIn(v, 2, TIERS),
+  preview: (v: unknown) => v === true,
   forestArea: (v: unknown, r: any) => v === "lake" && r.outside === true && (r.tier ?? 1) === 1,
   // HEAL's tree raises the trained chance, up to every potion.
   percentPotions: (v: unknown) => wholeIn(v, 1, 10_000),
@@ -448,28 +449,30 @@ function decodeReached(s: any, d: Save) {
 }
 /** Each mode's tiers: the highest opened (the Tower's, which the Delve's
  * caves follow), the one selected (its records are the slice's), and the
- * others' records. */
+ * others' records. With Access to Everything on, any tier may be the one
+ * selected, and keeps its records, as the player may visit every one. */
 function decodeTiers(s: any, d: Save) {
   const open = Math.max(1, count(s?.tower?.tiersOpen, 1, TIERS));
+  const reachable = d.settings.accessAll ? TIERS : open;
   for (const mode of ["tower", "delve"] as const) {
     const raw = s?.[mode], slice = d[mode];
     slice.tiersOpen = open;
-    slice.tier = Math.max(1, Math.min(slice.tiersOpen, count(raw?.tier, 1)));
-    if (isRecord(raw?.tierRecords)) decodeTierRecords(raw.tierRecords, slice);
+    slice.tier = Math.max(1, Math.min(reachable, count(raw?.tier, 1)));
+    if (isRecord(raw?.tierRecords)) decodeTierRecords(raw.tierRecords, slice, reachable);
   }
 }
-type TieredSlice = Pick<ModeSave, "tier" | "tiersOpen" | "tierRecords">;
-/** The records of each tier opened but not selected. */
-function decodeTierRecords(raw: Record<string, any>, slice: TieredSlice) {
+type TieredSlice = Pick<ModeSave, "tier" | "tierRecords">;
+/** The records of each tier reachable but not selected. */
+function decodeTierRecords(raw: Record<string, any>, slice: TieredSlice, reachable: number) {
   for (const [key, r] of Object.entries(raw)) {
-    if (!isOtherTier(key, slice) || !isRecord(r)) continue;
+    if (!isOtherTier(key, slice, reachable) || !isRecord(r)) continue;
     const reached = count(r.reached, 0);
     slice.tierRecords[key] = { best: Math.max(reached, count(r.best, 0)), reached };
   }
 }
-/** Whether `key` names an opened tier other than the one selected. */
-const isOtherTier = (key: string, slice: TieredSlice) =>
-  /^[1-9]$/.test(key) && Number(key) <= slice.tiersOpen && Number(key) !== slice.tier;
+/** Whether `key` names a reachable tier other than the one selected. */
+const isOtherTier = (key: string, slice: TieredSlice, reachable: number) =>
+  /^[1-9]$/.test(key) && Number(key) <= reachable && Number(key) !== slice.tier;
 type VersionStep = (s: any, d: Save) => void;
 /** What each save version carries beyond upgrades and settings. A Map, so
  * lookups match versions strictly (no "3" or prototype keys). */

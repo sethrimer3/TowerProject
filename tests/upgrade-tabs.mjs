@@ -32,7 +32,7 @@ try {
   });
   async function open(theme,dev=true) {
     await page.evaluate(({fixture,theme,dev})=> {
-      fixture.settings.uiTheme=theme;fixture.settings.devMode=dev;
+      fixture.settings.uiTheme=theme;fixture.settings.devMode=dev;fixture.settings.accessAll=dev;
       fixture.tower.inspiration=123456789;fixture.breakthrough=987654321;
       sessionStorage.setItem("upgradeTabsFixture",JSON.stringify(fixture));
     },{fixture,theme,dev});

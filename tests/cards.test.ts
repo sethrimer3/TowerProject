@@ -246,7 +246,9 @@ test("the Stairs card mentions the Delve only once the Tournament is unlocked", 
   g.save.upgrades.breakthrough = 1;
   assert.equal(g.cardText("stairs"), "Move toward the stairs up.", "Breakthrough alone doesn't");
   g.save.settings.devMode = true;
-  assert.equal(g.cardText("stairs"), CARDS.stairs.text);
+  assert.equal(g.cardText("stairs"), "Move toward the stairs up.", "unlimited currency opens nothing");
+  g.save.settings.accessAll = true;
+  assert.equal(g.cardText("stairs"), CARDS.stairs.text, "Access to Everything opens the Tournament");
 });
 
 test("a reward in a nook beside a corridor guard is taken only by a card that wants it", () => {

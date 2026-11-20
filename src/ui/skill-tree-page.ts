@@ -13,6 +13,7 @@ import { bindPanZoom, type View } from "./pan-zoom.ts";
 import { currencyHelp } from "./currency-help.ts";
 import { heldAmount } from "./currencies-dialog.ts";
 import { PROVISIONS_NOTE } from "./board-lesson.ts";
+import { seesAll } from "../access.ts";
 
 type Tree = (typeof TREES)[number];
 
@@ -75,12 +76,12 @@ export class SkillTreePage {
     if ((this.tree === "inspiration" || this.tree === "breakthrough") && this.ctx.game.notices.shown(this.tree)) this.ctx.update();
   }
 
-  /** Only Inspiration and Breakthrough are offered, including in Dev mode.
-   * Breakthrough keeps its normal unlock requirement. */
+  /** Only Inspiration and Breakthrough are offered: each once open, or
+   * with Access to Everything. */
   private shown(tab: TreeId) {
     if (tab !== "inspiration" && tab !== "breakthrough") return false;
     const save = this.ctx.game.save;
-    return save.settings.devMode || treeOpen(TREES.find(t => t.id === tab)!, save.upgrades);
+    return seesAll(save) || treeOpen(TREES.find(t => t.id === tab)!, save.upgrades);
   }
 
   /** The tab buttons, one a tree: Inspiration's and Breakthrough's reading the
@@ -146,10 +147,11 @@ export class SkillTreePage {
     return `<p class="tree-lock">Unlock ${UPGRADES.find(u => u.id === tree.gate)!.name} in the ${tree.id === "breakthrough" ? "Inspiration" : "Breakthrough"} tree.</p>`;
   }
 
-  /** `nodes` less those hidden (`skillHidden`), which aren't drawn at all. */
+  /** `nodes` less those hidden (`skillHidden`), which aren't drawn at all
+   * (all of them with Access to Everything). */
   private visible(nodes: ReturnType<typeof mapNodes>) {
     const upgrades = this.ctx.game.save.upgrades;
-    return nodes.filter(n => !skillHidden(n.id, upgrades));
+    return seesAll(this.ctx.game.save) ? nodes : nodes.filter(n => !skillHidden(n.id, upgrades));
   }
 
   /** The lines from each skill to those it requires, lit once owned; a

@@ -18,6 +18,7 @@ import { DAILY_TRAINING_POINTS, claimDaily, dailyReady, isChampion, nextDailyAt 
 import { estimatedServerTime } from "../shop/clock.ts";
 import { stream } from "../random.ts";
 import { revealReward } from "./reward-reveal.ts";
+import { seesAll } from "../access.ts";
 
 type TrainingRow = (typeof TRAINING)[number];
 type ResearchTab = "training" | "archives";
@@ -70,10 +71,10 @@ export class ResearchPage {
       + `<p>Pay the archivist Gold to research permanent upgrades. Gems rush research and hire additional archivists to do more research at once.</p><small>Tap to dismiss</small></button>`;
   }
 
-  /** Whether the Archives' tab shows: once that skill is owned, or in Dev mode. */
+  /** Whether the Archives' tab shows: once that skill is owned, or with Access to Everything. */
   private get archivesOpen() {
     const save = this.ctx.game.save;
-    return save.settings.devMode || save.upgrades.archives > 0;
+    return seesAll(save) || save.upgrades.archives > 0;
   }
 
   /** The tab buttons, Training's wearing a dot while training points can be

@@ -5,6 +5,7 @@ import type { AppContext } from "./app.ts";
 import { helpButton, showHelp } from "./dialogs.ts";
 import { el, relicIcon } from "./dom.ts";
 import { relicButton } from "./relic-pop.ts";
+import { seesAll } from "../access.ts";
 
 /** The Relics screen (docs/EVENTS.md): every relic the player has won over
  * their career, small, in a grid for each rarity. Pressing one, or a mouse
@@ -29,7 +30,7 @@ export class RelicsPage {
   private relics(): [string, RelicDef][] {
     const save = this.ctx.game.save;
     const owned = save.relics.filter((id) => RELICS[id]).map((id): [string, RelicDef] => [id, RELICS[id]!]);
-    return save.settings.devMode ? [...owned, ...Object.entries(PREVIEW_RELICS)] : owned;
+    return seesAll(save) ? [...owned, ...Object.entries(PREVIEW_RELICS)] : owned;
   }
 
   render() {

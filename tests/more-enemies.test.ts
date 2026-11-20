@@ -179,9 +179,3 @@ test("a run with the badge on MONSTER climbs floors holding more enemies, kept t
   assert.equal(count(reloaded.world), count(g.world));
   assert.deepEqual(new RoomWorld(g.run.seed, 0, {}, 0, 1, extraEnemies(g.run.badges)).cells, (g.world as RoomWorld).cells);
 });
-
-test("Dev mode owns More Enemies at the top level", () => {
-  const g = new Game(playedSave());
-  g.setDevMode(true);
-  assert.equal(g.save.badges.owned.moreEnemies?.copies, MAX_COPIES);
-});

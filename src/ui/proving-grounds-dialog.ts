@@ -20,6 +20,7 @@ import {el} from "./dom.ts";
 import {setEndRunLabel} from "./run-menu.ts";
 import {usesGameSprites} from "../sprites/style.ts";
 import {shortAmount,whole,wholeHp} from "../whole.ts";
+import { seesAll } from "../access.ts";
 
 const MODES=[
   ["manual","Without cards","Click a tile to walk to it. Cards stay disabled."],
@@ -98,7 +99,7 @@ export class ProvingGroundsDialog {
     if(this.base.fishermanRequested) {
       this.base.fishermanRequested=false;
       this.base.auto=false;this.base.cancelRoute();
-      if(levelForXp(this.base.save.xp)<10) {
+      if(levelForXp(this.base.save.xp)<10 && !seesAll(this.base.save)) {
         showFisherman({modal:this.modal});
         this.modal.addEventListener("close",()=>{this.base.returnFromTrials();this.save();this.changed();},{once:true});
       } else {
@@ -153,20 +154,27 @@ export class ProvingGroundsDialog {
     el("trial-list-back").onclick=()=>this.openMenu();
   }
   private refreshAccess() {
-    const day=this.base.save.trialAccess.day,keys=trialKeys(this.base.save,this.base.clock());
+    const day=this.base.save.trialAccess.day,keys=trialKeys(this.base.save,this.base.clock()),preview=this.preview(keys);
     el("trial-key-balance").textContent=keys===Infinity?"Trial keys: Unlimited (Developer mode)":`Trial keys: ${keys} / 2`;
     this.modal.querySelectorAll<HTMLButtonElement>("[data-trial-attempt]").forEach(button=> {
-      button.disabled=keys===0 || nextDifficulty(this.base.save,button.dataset.trialAttempt as TrialId)===null;
-      button.querySelector("span")!.textContent=keys===Infinity?"Attempt · Free":"Attempt · 1 trial key";
+      button.disabled=(keys===0 && !preview) || nextDifficulty(this.base.save,button.dataset.trialAttempt as TrialId)===null;
+      button.querySelector("span")!.textContent=keys===Infinity?"Attempt · Free":preview?"Preview · records nothing":"Attempt · 1 trial key";
     });
     if(day!==this.base.save.trialAccess.day)this.save();
   }
+  /** Whether an attempt now would be a preview: one only Access to
+   * Everything allows (below hero level 10, or no trial key left), which
+   * spends no key and records nothing. */
+  private preview(keys=trialKeys(this.base.save,this.base.clock())) {
+    return seesAll(this.base.save) && (levelForXp(this.base.save.xp)<10 || keys<=0);
+  }
   private begin(id:TrialId,mode:TrialMode) {
-    const level=nextDifficulty(this.base.save,id);
-    if(levelForXp(this.base.save.xp)<10 || level===null || !spendTrialKey(this.base.save,this.base.clock()))return false;
+    const level=nextDifficulty(this.base.save,id),preview=this.preview();
+    if(level===null || (!preview && (levelForXp(this.base.save.xp)<10 || !spendTrialKey(this.base.save,this.base.clock()))))return false;
     const progress=this.base.save.trialAccess.progress[id];
     const turnLimit=researched(this.base.save.archives,"trialTurns");
     this.base.save.provingGrounds=startTrial(this.base.run.player,mode,this.base.hand,this.base.run.seed,level,id,{multiPart:!!progress?.multiPart,turnLimit,savedBoss:progress?.savedBoss});
+    if(preview)this.base.save.provingGrounds.preview=true;
     this.firedAt=0;this.award=0;this.message="Climb the staircase to enter the trial.";this.save();return true;
   }
   private openTrial() {

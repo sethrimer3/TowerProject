@@ -66,7 +66,7 @@ The bar never resets until it is full, so prizes left on it wait as long as need
 Themes are bought only in the Store of limited-time [Events](../EVENTS.md#the-store), each event featuring one UI theme (250 Medals) and one Game theme (450 Medals); Classic is every hero's from the start.
 Each theme owned adds to all Gold banked for good, worn or not: a UI theme +1%, a Game theme +2%, in the *Event Collection* line with the bonus tracks' +0.8% each.
 Settings' UI Themes and Game Themes menus show Classic and the themes owned, to wear.
-Dev mode owns every theme.
+With Access to Everything on, both menus list every theme to wear, owning none: a theme worn that way comes off when it is turned off.
 
 ## Offline Gold
 

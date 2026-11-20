@@ -25,6 +25,7 @@ import { ARCANUM_RESPEC_GEMS } from "../economy/gems.ts";
 import { eventAt } from "../events/catalog.ts";
 import { estimatedServerTime } from "../shop/clock.ts";
 import { affordsGems, type DeskHost } from "./desk.ts";
+import { seesAll } from "../access.ts";
 
 /** What the Arcana desk needs from the game beyond any desk's: the mode, and
  * the hero's crits, which Arcanum Damage averages. */
@@ -113,9 +114,9 @@ export class ArcanaDesk {
     return "done";
   }
 
-  /** Whether Respec shows: once the Breakthrough skill Arcana Respec is owned, or in Dev mode. */
+  /** Whether Respec shows: once the Breakthrough skill Arcana Respec is owned, or with Access to Everything. */
   get respecUnlocked() {
-    return !!this.save.upgrades.arcanaRespec || this.save.settings.devMode;
+    return !!this.save.upgrades.arcanaRespec || seesAll(this.save);
   }
   /** The running event's number, on the Shop's estimated server time. */
   private get event() {

@@ -161,7 +161,7 @@ The Events screen has two tabs: **Missions** (the relic track, the booster and t
 - **Relics button** (`#relics-button`) in the forest's menu, once Events are open or a relic is owned, opens the **Relics screen** (`ui/relics-page.ts`): a section for each rarity (Rare, Epic, Legendary), each with a grid of the relics of that rarity won, small (*None yet.* while it has none).
   Pressing one, or a mouse resting on it, raises it to the middle of the screen at full size with golden rays and sparkles, only its name and bonus written under it (`ui/relic-pop.ts`, shared with the Events screen's track and the Goals page).
   The **?** beside the title says that every relic's bonus stacks and that relics come from progress in the towers' Goals and in limited-time Events, over a table of the relics owned's bonuses totalled by stat, with how many relics give each (`relicTotals`).
-  Dev mode adds New Year's and Tower I's relics as placeholders, so the screen can be seen before any relic is won.
+  Access to Everything adds New Year's and Tower I's relics as placeholders, so the screen can be seen before any relic is won.
 
 ### The forest's menu
 

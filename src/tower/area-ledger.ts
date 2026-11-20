@@ -57,9 +57,11 @@ export class AreaLedger {
   /** Called once the run has climbed onto `board`, its new floor: when that
    * is an area's first floor, judges the area below, pays what it earned,
    * sets each reward's chest in front of the hero, and starts the new area
-   * undamaged. Returns the rewards newly earned. */
+   * undamaged. Returns the rewards newly earned: none on a preview run
+   * (`RunCore.preview`), which records no progress. */
   enter(run: TowerRun, board: RoomWorld): AreaReward[] {
     if (run.height === 0 || run.height % TOWER_SECTION !== 0) return [];
+    if (run.preview) return [];
     const earned = this.judge(run);
     run.damaged = false;
     delete run.enemiesLeft;

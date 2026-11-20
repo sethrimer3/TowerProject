@@ -1,17 +1,13 @@
-import { canWear, grantAllThemes, type GameLook, type ThemeId, type ThemeKind, type UiLook } from "../theme-collection.ts";
+import { canWear, type GameLook, type ThemeKind, type UiLook } from "../theme-collection.ts";
 import type { DeskHost } from "./desk.ts";
 
-/** The Themes page's commands: themes claimed in Dev mode, and worn (they
- * are bought in events' Stores, game/event-desk.ts). */
+/** The Themes page's command: wearing a theme (they are bought in events'
+ * Stores, game/event-desk.ts). */
 export class ThemeDesk {
   constructor(private readonly host: DeskHost) {}
 
-  /** In Dev mode, gives every theme not owned yet and returns them, for
-   * the player to hear about; otherwise none. */
-  claim(): ThemeId[] {
-    return this.host.save.settings.devMode ? grantAllThemes(this.host.save) : [];
-  }
-  /** Equips an owned theme's look, or Classic; false while it isn't owned. */
+  /** Equips an owned theme's look (any, with Access to Everything), or
+   * Classic; false while it can't be worn. */
   wear(kind: ThemeKind, look: string) {
     const save = this.host.save;
     if (!canWear(save, kind, look)) return false;

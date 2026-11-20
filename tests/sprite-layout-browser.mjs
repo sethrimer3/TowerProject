@@ -26,7 +26,7 @@ try {
       const s = defaults(); Object.keys(s.tutorials).forEach(k => s.tutorials[k] = true);
       s.upgrades.combatStance = 1;
       s.themes = [...THEME_IDS]; s.equipment.unlocked = true;
-      Object.assign(s.settings, { reduceMotion: true, transition: "instant", devMode: true, weatherSound: false, experimentalAtlas: processAtlas }, settings);
+      Object.assign(s.settings, { reduceMotion: true, transition: "instant", devMode: true, accessAll: true, weatherSound: false, experimentalAtlas: processAtlas }, settings);
       const g = new Game(s); g.newRun({ seed: 7, outside });
       if (!outside) { g.advanceTowerRoom(); g.advanceTowerRoom(); }
       if (large) {
@@ -35,6 +35,7 @@ try {
       if (packed) {
         const { xpForLevel } = await import("/src/progression/xp.ts");
         s.settings.devMode = false;
+        s.settings.accessAll = false;
         s.gems = 264; s.gold = 6688; g.run.silver = 1434;
         s.tower.tiersOpen = 2;
         Object.assign(s.upgrades, { archives: 1, ignore: 1, target: 1, undos: 1, shroud: 1 });

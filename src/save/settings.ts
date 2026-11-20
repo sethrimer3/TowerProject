@@ -90,8 +90,11 @@ export const SETTINGS = {
    * purchases, the profile file's export and import). Unlocks and grants
    * nothing itself. */
   devTools: { kind: "toggle", default: false, page: { id: "dev-tools", label: "Dev Mode" } },
-  /** Unlimited currency, every floor section and game mode unlocked. */
-  devMode: { kind: "toggle", default: false, page: { id: "dev-mode", label: "Unlimited currency (all floors &amp; modes unlocked)" } },
+  /** Dev: unlimited currency (the purse filled, shown as ∞), with the dev
+   * cheats (walking by hand inside a run, the store and Finish now skipped,
+   * unlimited trial keys). Unlocks nothing: Access to Everything opens what
+   * is locked. */
+  devMode: { kind: "toggle", default: false, page: { id: "dev-mode", label: "Unlimited currency" } },
   /** Play each fight out strike by strike, damage rising off whoever was
    * struck, instead of settling it at once and showing it in summary. Only
    * Instant Combat shows it, so fights play out until then
@@ -100,6 +103,11 @@ export const SETTINGS = {
   /** Dev: every purchase is allowed and costs nothing, and research
    * completes the moment it starts. Unlocks and grants nothing itself. */
   freePurchases: { kind: "toggle", default: false, page: { id: "free-purchases", label: "Free purchases (instant research)" } },
+  /** Dev: Access to Everything (`src/access.ts`): every tower, Warp to any
+   * floor, every UI and Game theme, every page and skill tree with its
+   * hidden skills, locked Archives projects and every Settings row, to look
+   * at, only while it is on. Grants and saves nothing. */
+  accessAll: { kind: "toggle", default: false, page: { id: "access-all", label: "Access to Everything (while on; unlocks nothing)" } },
   /** How many Training ranks one press buys (`progression/buy-quantity.ts`): chosen
    * on the Training tab or the run's training bar once Buy Quantity is
    * owned, not on the Settings page. */
@@ -212,6 +220,6 @@ export function decodeSettings(raw: any): Settings {
   const s = raw ?? {}, out = defaultSettings() as Record<SettingKey, unknown>;
   for (const k of KEYS) out[k] = settingValue(SETTINGS[k], s[k]) ?? out[k];
   // The dev section's settings are on only under Dev Mode.
-  if (out.devMode || out.freePurchases) out.devTools = true;
+  if (out.devMode || out.freePurchases || out.accessAll) out.devTools = true;
   return out as Settings;
 }

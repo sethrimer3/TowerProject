@@ -60,7 +60,7 @@ test("a trainer's Gold: 20 a point, times the rank's number, times 1 + ranks / t
   assert.equal(trainingStep(g.save, "attack").gold, 20, "ATK costs 1 point a rank");
 });
 
-test("training points work from the start; trainers need the Trainers skill, or Dev mode", () => {
+test("training points work from the start; trainers need the Trainers skill, or Access to Everything", () => {
   const { g } = game();
   g.save.upgrades.trainers = 0;
   assert.ok(g.training.train("hp"), "points need no skill");
@@ -68,8 +68,11 @@ test("training points work from the start; trainers need the Trainers skill, or 
   g.save.gems = 1000;
   assert.equal(g.training.buyTrainer(), false);
   g.save.settings.devMode = true;
-  assert.ok(g.training.trainWithGold("attack"));
+  assert.equal(g.training.trainWithGold("attack"), false, "unlimited currency hires none");
   g.save.settings.devMode = false;
+  g.save.settings.accessAll = true;
+  assert.ok(g.training.trainWithGold("attack"));
+  g.save.settings.accessAll = false;
   g.save.upgrades.trainers = 1;
   assert.ok(g.training.buyTrainer());
   assert.ok(g.training.trainWithGold("hp"));

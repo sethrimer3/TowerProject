@@ -117,6 +117,11 @@ export type RunCore = {
   /** Which numbered tower (or delve) the run climbs, from 2 up (tiers.ts);
    * absent for the first. */
   tier?: number;
+  /** A run only Access to Everything let the player begin (src/access.ts):
+   * in a tier not opened, or warped to a checkpoint not earned. It raises
+   * no record and pays no milestone (`Game.recordProgress`), so the
+   * profile's progress stays as it was; absent for every other run. */
+  preview?: true;
   /** The turns Overseer's beams have turned this run (arcana/overseer.ts),
    * absent before the first. */
   beamTurns?: number;

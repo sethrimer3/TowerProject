@@ -113,6 +113,7 @@ for (const width of [390, 320]) {
 await page.evaluate(()=> {
   const save=JSON.parse(localStorage.getItem("towerdelve.v1"));
   save.settings.devMode=true;
+  save.settings.accessAll=true;
   save.defend={seed:99,bestWave:100};save.materials={ironBar:80};
   sessionStorage.setItem("__testFixture",JSON.stringify(save));
 });

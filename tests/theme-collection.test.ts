@@ -4,7 +4,7 @@ import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save/save.ts";
 import { decodeSettings } from "../src/save/settings.ts";
 import { goldMultipliers, goldMultiplierTotal } from "../src/economy/gold-multipliers.ts";
-import { THEME_GOLD_PER_MILLE, THEME_IDS, TRACK_GOLD_PER_MILLE, collectionGoldFactor, gameLook, grantTheme, themesOf, uiLook } from "../src/theme-collection.ts";
+import { THEME_GOLD_PER_MILLE, THEME_IDS, THEMES, TRACK_GOLD_PER_MILLE, collectionGoldFactor, gameLook, grantTheme, themesOf, uiLook } from "../src/theme-collection.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 
 test("a new hero owns no theme and wears Classic, page and board", () => {
@@ -21,7 +21,8 @@ test("every theme but Classic is a UI or Game theme, earned only in an event's S
   save.tower.reached = 1000;
   save.delve.reached = 1000;
   const g = new Game(save);
-  assert.deepEqual(g.themes.claim(), [], "climbing earns none");
+  g.recordProgress();
+  assert.deepEqual(save.themes, [], "climbing earns none");
   assert.equal("buy" in g.themes, false, "the Themes page sells none");
   grantTheme(save, "systemGame");
   grantTheme(save, "neonUi");
@@ -29,15 +30,18 @@ test("every theme but Classic is a UI or Game theme, earned only in an event's S
   assert.deepEqual(save.themes, ["neonUi", "systemGame"], "each once, in catalog order");
 });
 
-test("Dev mode owns every theme", () => {
+test("Access to Everything wears any theme while on, owning none", () => {
   const save = defaults();
   const g = new Game(save);
   g.setDevMode(true);
-  const fresh = g.themes.claim();
-  assert.deepEqual(fresh, THEME_IDS, "each announced once");
-  assert.deepEqual(save.themes, THEME_IDS);
-  assert.deepEqual(g.themes.claim(), []);
-  assert.equal(new Game(defaults()).themes.claim().length, 0, "none without Dev mode");
+  assert.equal(g.themes.wear("ui", "shiro"), false, "unlimited currency owns no theme");
+  g.setAccessAll(true);
+  for (const id of THEME_IDS) assert.ok(g.themes.wear(THEMES[id].kind, THEMES[id].look), id);
+  assert.equal(uiLook(save), "battery", "the last UI theme worn");
+  assert.deepEqual(save.themes, [], "nothing is owned");
+  g.setAccessAll(false);
+  assert.equal(uiLook(save), "classic", "the look comes off with it");
+  assert.equal(gameLook(save), "classic");
 });
 
 test("the Terminal UI theme is worn once owned", () => {

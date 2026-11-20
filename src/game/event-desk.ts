@@ -15,6 +15,7 @@ import { postStubMail } from "../mail/server.ts";
 import type { DeskHost } from "./desk.ts";
 import { earn } from "../save/profile.ts";
 import { buyStoreItem, featuredThemes, storePrice, type StoreItem } from "../events/store.ts";
+import { seesAll } from "../access.ts";
 
 /** mulberry32's step: each draw moves the state on by this much. */
 const STEP = 0x6d2b79f5;
@@ -32,9 +33,15 @@ export class EventDesk {
     return this.host.save.events;
   }
 
-  /** Whether Events are open: Tower I's floor 70 Goal claimed, or Dev mode. */
+  /** Whether Events are open to the player: Tower I's floor 70 Goal claimed. */
+  get earned() {
+    return goalUnlocked(this.host.save, "events");
+  }
+  /** Whether Events show: once earned, or with Access to Everything, which
+   * shows the running event's missions but counts nothing toward them and
+   * sells nothing (`earned`). */
   get unlocked() {
-    return goalUnlocked(this.host.save, "events") || this.host.save.settings.devMode;
+    return this.earned || seesAll(this.host.save);
   }
 
   /** The server time now, estimated from the last confirmed. */
@@ -104,7 +111,7 @@ export class EventDesk {
    * Medals held fall short. */
   buy(item: StoreItem) {
     this.refresh();
-    return this.unlocked && buyStoreItem(this.host.save, item);
+    return this.earned && buyStoreItem(this.host.save, item);
   }
 
   /** The Events page has shown every mission. */
@@ -158,7 +165,7 @@ Your Medals weren't claimed in time, so here they are.`,
     const e = this.e, now = this.now, today = gmtDay(now);
     const due = releasedBy(e.id!, now);
     if (e.missions.length < due) changed = this.release(due) || changed;
-    if (e.loginDay !== today) {
+    if (e.loginDay !== today && this.earned) {
       e.loginDay = today;
       this.record("login");
       changed = true;
@@ -228,7 +235,7 @@ Your Medals weren't claimed in time, so here they are.`,
   /** The running event's incomplete mission of `type`, once Events are
    * open and the event is current. */
   private current(type: EventMissionType) {
-    if (!this.unlocked) return undefined;
+    if (!this.earned) return undefined;
     if (this.roll()) this.release(releasedBy(this.e.id!, this.now));
     return this.e.missions.find((m) => m.type === type && !isComplete(m));
   }
@@ -254,14 +261,14 @@ Your Medals weren't claimed in time, so here they are.`,
   /** A fight cost the hero HP: the floor it stands on breaks the run's
    * floors without damage. */
   hurt(mode: Mode, seed: number) {
-    if (this.unlocked) this.streaks(mode, seed).hurt = true;
+    if (this.earned) this.streaks(mode, seed).hurt = true;
   }
 
   /** A floor climbed for the first time in the run: the floor left adds to
    * the floors without damage unless a fight cost HP on it, and one paying
    * the most Interest (`maxInterest`) to the floors of max Interest. */
   climbed(mode: Mode, seed: number, maxInterest: boolean) {
-    if (!this.unlocked) return;
+    if (!this.earned) return;
     const s = this.streaks(mode, seed);
     s.floors = s.hurt ? 0 : s.floors + 1;
     s.hurt = false;

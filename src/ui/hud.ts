@@ -34,6 +34,7 @@ import { adsOff } from "../shop/entitlements.ts";
 import { renderRunMenu } from "./run-menu.ts";
 import { factorText, goldMultipliers, goldMultiplierTotal } from "../economy/gold-multipliers.ts";
 import { MISSION_CAPACITY } from "../missions/catalog.ts";
+import { seesAll, tiersReachable } from "../access.ts";
 
 /** The stats cluster, action buttons and status line around the board. */
 
@@ -229,12 +230,13 @@ function renderRunButtons(game: Game) {
 
 /** The tab bar: which tabs are open yet, and the dots on those with news. */
 function renderTabs(game: Game) {
-  renderLockedTab("deck", !!game.save.upgrades.combatStance, "Deck", "Unlock Combat Stance in the Inspiration tree");
+  const all = seesAll(game.save);
+  renderLockedTab("deck", !!game.save.upgrades.combatStance || all, "Deck", "Unlock Combat Stance in the Inspiration tree");
   for (const tab of ["deck", "upgrades", "research"] as const)
     document.querySelector(`[data-tab="${tab}"]`)?.classList.toggle("notify", game.notices.waiting(tab));
   renderDeckCount(game);
-  renderLockedTab("research", researchOpen(game.save), "Research", "Gain a level or unlock Trainers in the Inspiration tree");
-  renderLockedTab("gear", provisionsOpen(game.save) || game.save.equipment.unlocked || arcanaOpen(game.save), "Gear", "Unlock a provision in the Inspiration tree");
+  renderLockedTab("research", researchOpen(game.save) || all, "Research", "Gain a level or unlock Trainers in the Inspiration tree");
+  renderLockedTab("gear", provisionsOpen(game.save) || game.save.equipment.unlocked || arcanaOpen(game.save) || all, "Gear", "Unlock a provision in the Inspiration tree");
   document.querySelector(`[data-tab="gear"]`)?.classList.toggle("notify", game.notices.waiting("gear"));
   renderShopDot(game);
 }
@@ -356,7 +358,7 @@ function tierLine(game: Game) {
     return `${caveLabel(league)} · ${tierRewardText(LEAGUE_INFO[league].cave)}`.toUpperCase();
   }
   const slice = game.save[game.mode];
-  if (slice.tiersOpen < 2) return null;
+  if (tiersReachable(game.save, game.mode) < 2) return null;
   return `${MODES[game.mode].words.tierName.toUpperCase()} ${tierNumeral(slice.tier)} · ${tierRewardText(slice.tier).toUpperCase()}`;
 }
 
@@ -368,7 +370,7 @@ function renderTierArrows(game: Game) {
     const button = el(id) as HTMLButtonElement;
     button.hidden = !shown;
     const direction = id === "tier-prev" ? -1 : 1;
-    button.disabled = shown ? !game.canTravelForest(direction) : !!game.forestArrival || to < 1 || to > slice.tiersOpen;
+    button.disabled = shown ? !game.canTravelForest(direction) : !!game.forestArrival || to < 1 || to > tiersReachable(game.save, game.mode);
     button.title = button.disabled ? "" : game.atLake ? "Tower I" : to === 0 ? "Lakeside" : `${name} ${tierNumeral(to)} · ${tierRewardText(to)}`;
     button.setAttribute("aria-label", direction === -1 ? (shown && to === 0 ? "Go to Lakeside" : "Previous tower") : (game.atLake ? "Return to Tower I" : "Next tower"));
   }
@@ -377,7 +379,7 @@ function renderTierArrows(game: Game) {
 /** What the board's heading shows: redrawn when it changes. */
 const headingKey = (game: Game) => {
   const slice = game.save[game.mode];
-  return `${game.mode}:${!!game.run.outside}:${slice.tier}:${slice.tiersOpen}${game.mode === "delve" ? `:${game.delveLeague}` : ""}${game.forestArrival ? ":arriving" : ""}${game.atLake ? ":lake" : ""}`;
+  return `${game.mode}:${!!game.run.outside}:${slice.tier}:${tiersReachable(game.save, game.mode)}${game.mode === "delve" ? `:${game.delveLeague}` : ""}${game.forestArrival ? ":arriving" : ""}${game.atLake ? ":lake" : ""}`;
 };
 
 /** The button's icon inside a run, by what pressing it does: text glyphs

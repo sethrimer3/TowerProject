@@ -1077,6 +1077,8 @@ _Avoid_: known tiles, visit map
 - **Trial level (difficulty)**: a Proving Grounds trial's difficulty, automatically the next after its highest completed difficulty, shared across control modes.
 - **Trial Points**: a currency awarded once per trial difficulty, in an amount equal to that difficulty.
 - **Trial key**: one entry or retry in any Proving Grounds trial; two are available each UTC day, unlimited in Dev mode.
+- **Access to Everything**: the Dev setting that lets the player see every tower, floor, theme, page, skill and boss while it is on, unlocking and saving nothing.
+- **Preview run**: a run (or Proving Grounds attempt) only Access to Everything let the player begin; it records no progress.
 - **Light Elemental**: the Proving Grounds foe, which fires rotating light beams and creates light slimes more often at higher trial levels.
 - **Light Slime**: a glowing creature released by the Light Elemental that hops to a random nearby tile every three player steps.
 

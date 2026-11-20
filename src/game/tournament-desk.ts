@@ -10,6 +10,7 @@ import type { Standing, TournamentInfo } from "../tournament/server.ts";
 import { addGemTicket, gemTicketPrice, grantFreeTicket, nextTicket, spendTicket, takeAdTicket } from "../tournament/tickets.ts";
 import { affordsGems, type DeskHost } from "./desk.ts";
 import { earn } from "../save/profile.ts";
+import { seesAll } from "../access.ts";
 
 /** The Tournament's commands (the game's `tournament`): taking in what the
  * server reports, Tickets, standings and claiming prizes. The server's
@@ -27,9 +28,10 @@ export class TournamentDesk {
   }
 
   /** Whether the Tournament is open to the player: Tower I floor 60's
-   * Goal claimed, or Dev mode. */
+   * Goal claimed, or with Access to Everything (which grants no free
+   * Ticket: `observe`). */
   get unlocked() {
-    return goalUnlocked(this.host.save, "tournament") || this.host.save.settings.devMode;
+    return goalUnlocked(this.host.save, "tournament") || seesAll(this.host.save);
   }
 
   /** The server time now, estimated from the last confirmed (display only). */
@@ -45,7 +47,7 @@ export class TournamentDesk {
     confirmServerTime(this.host.save.shop.clock, serverNow, this.host.clock());
     this.info = info;
     this.t.league = info.league;
-    const granted = this.unlocked && phaseOf(info, serverNow, info.finalizedAt) === "open" && grantFreeTicket(this.t, info.id);
+    const granted = goalUnlocked(this.host.save, "tournament") && phaseOf(info, serverNow, info.finalizedAt) === "open" && grantFreeTicket(this.t, info.id);
     if (granted) earn(this.host.save, "tickets", 1);
     return granted;
   }

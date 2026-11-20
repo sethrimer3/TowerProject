@@ -174,6 +174,7 @@ try {
       devStatus: inside((s) => {
         rich(s);
         s.settings.devMode = true;
+        s.settings.accessAll = true;
         s.settings.infoDisplay = "status";
       }, 25),
       // Built last, so the fixtures above keep their run seeds.
@@ -747,11 +748,13 @@ try {
     await click("#settings-back");
     await shot(`${prefix}.popup`);
     await menuClick("#auto-settings");
-    // Dev Mode shows the dev section, where Dev mode itself is turned on.
+    // Dev Mode shows the dev section, where unlimited currency and Access
+    // to Everything are turned on.
     await page.locator("#dev-tools").setChecked(true);
     await page.locator("#dev-mode").setChecked(true);
+    await page.locator("#access-all").setChecked(true);
     await shot(`${prefix}.settings.dev`);
-    // Dev mode owns every theme; one is worn from its menu.
+    // Access to Everything lists every theme; one is worn from its menu.
     await click("#game-themes");
     await shot(`${prefix}.themes.game.owned`);
     await click('.theme-wear[data-look="neon"]');

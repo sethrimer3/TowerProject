@@ -5,6 +5,7 @@ import { TIERS } from "./tiers.ts";
 import { earn } from "./save/profile.ts";
 import { towerRelicId } from "./economy/relics.ts";
 import { openEquipment } from "./equipment/inventory.ts";
+import { seesAll } from "./access.ts";
 
 // Goals: each tower's checkpoints, one every ten floors, each with a reward
 // the player claims once the checkpoint's floor is completed (the floor
@@ -486,11 +487,17 @@ export const warpUnlocked = (save: Save) => goalUnlocked(save, "warp");
 export const unmasteredBelow = (save: Save, tower: number, floor: number) =>
   CHECKPOINTS[tower]?.find((c) => c.floor <= floor && !areaMastered(save, tower, c.floor))?.floor ?? null;
 
-/** Whether a run can warp past `floor` in `tower`: Warp owned and the area
- * ending at that checkpoint mastered, with every one below it in the tower's
- * Goals, so a warp point is active only once each under it is unlocked. */
-export const canWarp = (save: Save, tower: number, floor: number) =>
+/** Whether the player has earned a warp past `floor` in `tower`: Warp
+ * owned and the area ending at that checkpoint mastered, with every one
+ * below it in the tower's Goals, so a warp point is active only once each
+ * under it is unlocked. */
+export const warpEarned = (save: Save, tower: number, floor: number) =>
   warpUnlocked(save) && tower <= save.tower.tiersOpen && !!checkpoint(tower, floor) && unmasteredBelow(save, tower, floor) === null;
+/** Whether a run can warp past `floor` in `tower`: once earned, or to any
+ * checkpoint in any tower with Access to Everything (a preview run, that
+ * raises no record: `Game.warp`). */
+export const canWarp = (save: Save, tower: number, floor: number) =>
+  warpEarned(save, tower, floor) || (seesAll(save) && !!checkpoint(tower, floor));
 
 /** The premium rewards a pass opens, each currency's total. */
 export function passTotals(pass: Pass): Partial<Record<CurrencyId, number>> {

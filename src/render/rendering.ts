@@ -68,6 +68,7 @@ import { usesGameSprites } from "../sprites/style.ts";
 import { spriteRevision } from "../sprites/kit.ts";
 import { HeroIdleAnimation, pickupAnimationFrame } from "../sprites/animations.ts";
 import { FAST_GLIDE_SECONDS, FollowCamera, GLIDE_SECONDS, pointsAhead, type CameraView } from "./camera.ts";
+import { tiersReachable } from "../access.ts";
 
 export { ATMOSPHERE_CONFIG, type AtmosphereConfig } from "./lighting-pass.ts";
 
@@ -573,7 +574,7 @@ export class Renderer {
     c.scale(f.s / 24, f.s / 24);
     // The Delve's cave is always its league's, the one its run plays.
     const delve = g.mode === "delve", tier = delve ? LEAGUE_INFO[g.delveLeague].cave : g.save.tower.tier;
-    const tiers = delve || g.save.tower.tiersOpen > 1;
+    const tiers = delve || tiersReachable(g.save, "tower") > 1;
     drawEntrance(c, g.mode, MODES[g.mode].entranceX, tiers ? tierNumeral(tier) : "",
       tiers ? { text: factorText(TIER_BONUS_TENTHS[tier - 1]! / 10), coin: goldCoin() } : undefined, f.look.styledSprites);
     if (g.world instanceof OutsideWorld && g.world.blacksmith) drawBlacksmith(c, g.world.entranceX, f.look.styledSprites,

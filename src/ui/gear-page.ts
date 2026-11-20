@@ -10,6 +10,7 @@ import { priceAmount } from "./hud.ts";
 import { EquipmentPanel } from "./equipment-panel.ts";
 import { ArcanaPanel } from "./arcana-panel.ts";
 import { arcanaOpen } from "../arcana/arcana.ts";
+import { seesAll } from "../access.ts";
 
 /** Each provision's picture. */
 const PROVISION_SPRITES = { heal: "potion_flat", guard: "upgrade_defense", edge: "upgrade_attack", yellowKey: "key_yellow" } as const satisfies Record<Exclude<GoldItemId, "bomb">, string>;
@@ -30,10 +31,10 @@ export class GearPage {
     this.arcana = new ArcanaPanel(ctx, () => this.changed());
   }
 
-  /** Which tabs can be opened now. */
+  /** Which tabs can be opened now (all, with Access to Everything). */
   private open(tab: GearTab) {
     const save = this.ctx.game.save;
-    return tab === "equipment" ? save.equipment.unlocked : tab === "arcana" ? arcanaOpen(save) : provisionsOpen(save);
+    return seesAll(save) || (tab === "equipment" ? save.equipment.unlocked : tab === "arcana" ? arcanaOpen(save) : provisionsOpen(save));
   }
 
   /** Opens on the Equipment screen (the forest's Blacksmith, or Equipment

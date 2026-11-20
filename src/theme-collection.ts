@@ -1,5 +1,6 @@
 import type { Save } from "./save/shape.ts";
 import { snap } from "./exact.ts";
+import { seesAll } from "./access.ts";
 
 // Themes the player collects (CONTEXT.md: UI theme, Game theme). A UI theme
 // dresses the page around the board; a Game theme redraws the board itself
@@ -91,11 +92,13 @@ export const ownsTheme = (save: Pick<Save, "themes">, id: ThemeId) => save.theme
 /** The owned theme behind a kind's look, or null for Classic. */
 const themeFor = (kind: ThemeKind, look: string) => THEME_IDS.find((id) => THEMES[id].kind === kind && THEMES[id].look === look) ?? null;
 
-/** Whether the save may wear `look`: Classic always, a theme once owned. */
-export function canWear(save: Pick<Save, "themes">, kind: ThemeKind, look: string) {
+/** Whether the save may wear `look`: Classic always, a theme once owned,
+ * or any theme with Access to Everything (owned or not, so the look goes
+ * back to Classic once it is off). */
+export function canWear(save: Pick<Save, "themes" | "settings">, kind: ThemeKind, look: string) {
   if (look === "classic") return true;
   const id = themeFor(kind, look);
-  return !!id && ownsTheme(save, id);
+  return !!id && (ownsTheme(save, id) || seesAll(save));
 }
 
 /** The look worn: the chosen one while it is owned, else Classic (a save
@@ -111,13 +114,6 @@ export function grantTheme(save: Pick<Save, "themes">, id: ThemeId) {
   if (!ownsTheme(save, id)) save.themes = THEME_IDS.filter((t) => ownsTheme(save, t) || t === id);
 }
 
-/** Gives the save every theme it doesn't own yet (Dev mode); returns them,
- * in catalog order, for the player to hear about. */
-export function grantAllThemes(save: Pick<Save, "themes">): ThemeId[] {
-  const fresh = THEME_IDS.filter((id) => !ownsTheme(save, id));
-  save.themes = [...THEME_IDS];
-  return fresh;
-}
 
 /** The saved themes: known ids, each once, in catalog order. */
 export function decodeThemes(raw: unknown): ThemeId[] {

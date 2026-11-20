@@ -14,6 +14,7 @@ import { RELICS } from "../economy/relics.ts";
 import { showRelic } from "./relic-pop.ts";
 import { flyToPurse } from "./flourish.ts";
 import { goalRewardShown, offerShown, revealReward } from "./reward-reveal.ts";
+import { tiersReachable } from "../access.ts";
 
 // The Goals screen: each tower drawn as a stone column rising from the
 // ground, a line up its middle lit to the highest floor completed, and a
@@ -183,7 +184,7 @@ export class GoalsPage {
   }
 
   private get towers() {
-    return this.ctx.game.save.tower.tiersOpen;
+    return tiersReachable(this.ctx.game.save, "tower");
   }
 
   render() {
