@@ -793,6 +793,7 @@ try {
     await load("fallenBare");
     await shot("fallen.bare");
     await click("#defeat-accept");
+    await page.locator("#modal.death-loop").waitFor({ state: "hidden" });
     await shot("fallen.accepted");
   });
 

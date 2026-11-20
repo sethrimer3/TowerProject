@@ -1,6 +1,6 @@
 {
   "image": "assets/atlases/ui.png",
-  "revision": "1d91e8ce83660856",
+  "revision": "5610cc7efd35536c",
   "width": 1024,
   "height": 1024,
   "padding": 2,
@@ -910,6 +910,12 @@
       "height": 24,
       "x": 870,
       "y": 334
+    },
+    "assets/style/death-infinity.png": {
+      "width": 768,
+      "height": 240,
+      "x": 2,
+      "y": 742
     },
     "assets/style/deck.png": {
       "width": 24,

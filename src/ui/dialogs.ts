@@ -1,3 +1,4 @@
+import { playDeathLoop } from "./death-loop.ts";
 import { keyCount, whole, wholeChange, wholeHp } from "../whole.ts";
 import { GOLD_BOOST_FACTOR } from "../economy/gold-boost.ts";
 import { MODES } from "../modes.ts";
@@ -129,23 +130,17 @@ type RunEndCause = "fallen" | "stuck" | "chosen";
 
 /** The run's end dialog, one for every way a run ends: it says what brought
  * it up, shows the same totals of what the run obtained, and asks what next.
- * A fallen hero must answer it (return to the entrance, or retry), after which the forest fades in from
- * black; otherwise the player ends the run or keeps going. Once Note
+ * A fallen hero must answer it (return to the entrance, or retry), after which an infinity loop draws on black before the next world fades in; otherwise the player ends the run or keeps going. Once Note
  * Taking is researched, a button at the end of its totals opens the run's
  * notes over it. */
 export class RunEndDialog {
-  private fadeOverlay = document.createElement("div");
-
   constructor(
     private ctx: AppContext,
     /** Sends a tournament run's score as the dialog opens. */
     private tournament: TournamentClient | null = null,
     /** The run's notes, which the summary's Run Notes button opens. */
     private notes: RunNotesDialog | null = null,
-  ) {
-    this.fadeOverlay.className = "fade-overlay";
-    document.body.appendChild(this.fadeOverlay);
-  }
+  ) {}
 
   /** The wait for the skull over a fallen hero to be over. */
   private waiting: ReturnType<typeof setTimeout> | null = null;
@@ -164,12 +159,6 @@ export class RunEndDialog {
   ask() {
     const game = this.ctx.game;
     this.show(game.fallen ? "fallen" : game.handStuck && !game.run.outside ? "stuck" : "chosen");
-  }
-
-  private fadeInFromBlack() {
-    const overlay = this.fadeOverlay;
-    overlay.classList.add("active");
-    requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.remove("active")));
   }
 
   /** The run's totals, the same whatever ended it: where it stands, the
@@ -260,10 +249,11 @@ export class RunEndDialog {
       const retry = document.querySelector<HTMLButtonElement>("#defeat-retry");
       if (retry) retry.onclick = () => ((retrying = true), modal.close());
       modal.addEventListener("close", () => {
-        if (retrying) {
-          if (game.retry("Fallen in combat")) this.fadeInFromBlack();
-        } else if (game.acceptDefeat()) this.fadeInFromBlack();
-        ctx.navigate(game.mode);
+        playDeathLoop(modal, game.save.settings.reduceMotion, () => {
+          if (retrying) game.retry("Fallen in combat");
+          else game.acceptDefeat();
+          ctx.navigate(game.mode);
+        });
       }, { once: true });
       return;
     }

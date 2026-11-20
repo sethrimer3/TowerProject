@@ -234,3 +234,9 @@ In landscape the board's foot lines, `#status-row` and `#inspect`, move to `.sid
 A change of layout dispatches a `resize`, so the board's canvas, the hand's arrows and the combat stats measure again.
 The UI golden runs at 390 × 844, so it stays in portrait; browser suites at desktop sizes wider than 4:3 (1280 × 800) now meet the landscape layout.
 
+
+`ui/death-loop.ts` replaces the former defeat return fade with a full-screen black shared modal and a pale 48-frame native infinity trace.
+After the fallen-run summary closes, it draws for 1.7 seconds, holds briefly, commits return/retry once under black, then fades out; the shared modal keeps input and autoplay blocked throughout.
+Tap, Enter, Space or Escape skips safely through that same return; Reduce motion shows the finished symbol briefly instead.
+The old modal content, classes, styles and accessibility attributes are restored afterward, and reloading during the trace retains the saved fallen run without paying it twice.
+`node tests/death-loop.mjs` checks real return/retry, trial knockout, timing, modal cleanup, reduced motion, skip, palette and viewport coverage in both atlas modes.

@@ -35,3 +35,6 @@ Profile import or progress reset reloads if it changes the active atlas preferen
 `tests/ui-atlas.test.ts` verifies exact source pixels, transparent gutters, non-overlap, retained originals and setting persistence.
 `node tests/ui-atlas.mjs` exercises the real checkbox/reload, checks that both atlases load without original image requests before and after navigation, compares an icon and terrain/animation sheets against original browser pixels, verifies reverting to original images and exercises second-atlas failure recovery.
 After `npm run build`, `node --experimental-transform-types tests/ui-atlas-production.mjs` verifies atlas loading under the production `/TowerProject/` path.
+
+The large `death-infinity` animation sheet belongs to the UI atlas despite exceeding icon dimensions, keeping a short interface animation from expanding the terrain atlas.
+It is packed after ordinary sprites so adding this interlude preserves their existing atlas coordinates and exact sampled pixels.

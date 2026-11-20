@@ -5,12 +5,14 @@ import {createHash} from 'node:crypto';
 const output='public/assets/atlases';mkdirSync(output,{recursive:true});
 const style=JSON.parse(readFileSync('public/assets/style/manifest.json')).assets;
 const entries=[];
+// The death interlude is UI artwork even though its animation sheet exceeds icon size.
 for(const [id,a] of Object.entries(style)){
- if(/^(forest-|dungeon-|ambient-|lake-|blacksmith-|hero-|square-door-|env-|water-|moss-|vine-|flower-|glowing-|torch-animation|terrain|tower-[123]-|tower-floor)/.test(id)||a.width>96||a.height>96)continue;
+ if(/^(forest-|dungeon-|ambient-|lake-|blacksmith-|hero-|square-door-|env-|water-|moss-|vine-|flower-|glowing-|torch-animation|terrain|tower-[123]-|tower-floor)/.test(id)||(id!=="death-infinity"&&(a.width>96||a.height>96)))continue;
  entries.push({path:`assets/style/${a.file}`,width:a.width,height:a.height});
 }
 for(const folder of ['', 'legacy/'])for(const name of readdirSync(`public/assets/ui/frames/${folder}`).filter(n=>n.endsWith('.png'))){const path=`assets/ui/frames/${folder}${name}`,b=readFileSync(`public/${path}`);entries.push({path,width:b.readUInt32BE(16),height:b.readUInt32BE(20)});}
-entries.sort((a,b)=>b.height-a.height||b.width-a.width||a.path.localeCompare(b.path));
+// Append the large interlude after ordinary sprites, preserving their existing texel positions.
+entries.sort((a,b)=>Number(a.path==="assets/style/death-infinity.png")-Number(b.path==="assets/style/death-infinity.png")||b.height-a.height||b.width-a.width||a.path.localeCompare(b.path));
 const width=1024,padding=2;let x=padding,y=padding,rowHeight=0;
 for(const e of entries){if(x+e.width+padding>width){x=padding;y+=rowHeight+padding*2;rowHeight=0;}e.x=x;e.y=y;x+=e.width+padding*2;rowHeight=Math.max(rowHeight,e.height);}
 const height=2**Math.ceil(Math.log2(y+rowHeight+padding));

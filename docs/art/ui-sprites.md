@@ -247,3 +247,10 @@ Export with `node tools/prepare-new-spell-sprites.mjs`, then `npm run sprites:at
 The four `ambient-*` strips have six 24-pixel frames each; the permanent icons and equipment frames are 24 × 24.
 Epic uses purple angular corners, Legendary brass double corners, Mythic wine-red pointed corners and Ancestral blue-green carved corners.
 Each frame keeps a flat slate center and complete borders for the existing six-pixel nine-slice contract.
+
+## Death infinity
+
+`assets/game-sprites/death-infinity.png` retains the generated ivory infinity reference.
+`node tools/prepare-death-infinity.mjs` normalizes it onto a 96 × 40 native grid and exports a 48-frame, 8 × 6 drawing sheet in `public/assets/style/death-infinity.png`.
+Its source pixels reveal along one continuous loop, with tiny hard-edged traveling glints, binary alpha and the shared ivory palette color; runtime uses integer 2×, 3× or 4× display sizes over pure black.
+The complete frame and shortened timing serve Reduce motion, independent of the optional ambient Animations setting.

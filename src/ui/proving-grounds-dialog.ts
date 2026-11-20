@@ -1,3 +1,4 @@
+import { playDeathLoop } from "./death-loop.ts";
 import { TrialVoyage } from "./trial-voyage.ts";
 import { levelForXp } from "../progression/xp.ts";
 import { showFisherman } from "./fisherman-dialog.ts";
@@ -123,7 +124,7 @@ export class ProvingGroundsDialog {
         return `<button id="trial-${id}" class="trial-choice"><b>Trial ${trial.number} — ${trial.name}</b><small>${level===null?"All difficulties cleared":`Next: Difficulty ${level} · Multiplier ×${trial.multiplier(level).toFixed(1)}`}</small><span>${clearedDifficulty(this.base.save,id)} difficulties cleared</span></button>`;
       }).join("")}<button id="trial-menu-leave">Return to the docks</button>`);
     for(const id of TRIAL_IDS)el(`trial-${id}`).onclick=()=>this.openDetails(id);
-    el("trial-menu-leave").onclick=()=>{if(this.active)this.leave();this.modal.close();};
+    el("trial-menu-leave").onclick=()=>{if(this.active)this.modal.addEventListener("close",()=>this.leave(),{once:true});this.modal.close();};
   }
   private openDetails(id:TrialId) {
     const trial=TRIALS[id],level=nextDifficulty(this.base.save,id);
@@ -287,7 +288,13 @@ export class ProvingGroundsDialog {
     });
     Object.assign(this.canvas.dataset,{trialMode:s.mode,trialLevel:String(s.level),trialRoom:s.room,trialSteps:String(s.steps),trialPhase:s.elemental.incorporeal?"incorporeal":"corporeal"});
   }
-  leave(){if(!this.active)return;if(this.session?.state)saveTrialDamage(this.base.save,this.session.state);delete this.base.save.provingGrounds;this.detach();this.base.returnFromTrials();this.save();this.changed();}
+  leave(){
+    if(!this.active)return;
+    const knockedOut=this.session!.state.status==="lost" && this.session!.state.player.hp<=0;
+    const leave=()=>{if(!this.active)return;if(this.session?.state)saveTrialDamage(this.base.save,this.session.state);delete this.base.save.provingGrounds;this.detach();this.base.returnFromTrials();this.save();this.changed();};
+    if(knockedOut)playDeathLoop(this.modal,this.base.save.settings.reduceMotion,leave);
+    else leave();
+  }
   private detach() {
     this.session=null;this.renderer=null;this.navigation.clear();document.documentElement.classList.remove("trial-running","trial-manual");el("trial-overlay")?.remove();el("board").querySelector("#trial-boss-meter")?.remove();
     for(const key of ["trialMode","trialLevel","trialRoom","trialSteps","trialPhase","trialViewLeft","trialViewBottom","trialViewRoom","trialHeroX","trialHeroY","trialCameraMoving"])delete this.canvas.dataset[key];

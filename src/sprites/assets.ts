@@ -167,6 +167,7 @@ export const SPRITE_ASSETS = [
   "assets/style/crate-broken.png",
   "assets/style/crate.png",
   "assets/style/crystal.png",
+  "assets/style/death-infinity.png",
   "assets/style/deck.png",
   "assets/style/delve-enemy-attackHeavy-boss-aggroed.png",
   "assets/style/delve-enemy-attackHeavy-boss-armored.png",

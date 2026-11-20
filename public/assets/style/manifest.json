@@ -4258,6 +4258,12 @@
       "width": 24,
       "height": 24,
       "tile": true
+    },
+    "death-infinity": {
+      "file": "death-infinity.png",
+      "width": 768,
+      "height": 240,
+      "tile": true
     }
   }
 }

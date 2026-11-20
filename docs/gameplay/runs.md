@@ -26,6 +26,9 @@ Every way a run ends goes through one dialog, which says what brought it up and 
 Pressing **End Climb** (End Run in the Delve) asks whether to end the climb (or, when no card in the hand can act, says so first), with **End Climb** and **Keep climbing** (End Run and Keep delving in the Delve).
 When the hero falls in a fight, the run waits at 0 HP with the hand paused, a skull and crossbones burns in a red glow over the hero's head for two and a half seconds, and then the dialog, headed **Fallen in combat**, names the monster.
 It must be answered: **Return to entrance** ends the run, pays what it still owes, and returns to the forest for the next run.
+After the summary, a pale pixel infinity sign draws itself on black before the world returns, as if the delver has begun the loop again.
+This also accompanies Retry after death and leaving a trial after a knockout.
+Tap, Enter, Space or Escape skips it; Reduce motion shows a brief still symbol.
 Headed **Regroup and try again**, the dialog says the Tower (or Delve) will shift to a new layout for the next run and invites the player to look over and spend what this one earned.
 The dialog comes back after a refresh until it is answered.
 Rewards are credited as they are earned and never rolled back.
