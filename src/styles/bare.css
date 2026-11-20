@@ -168,7 +168,8 @@ html:is(.shiro, .kuro) dialog::backdrop {
 }
 
 /* Buttons: a flat block, a shade deeper when pressed, filled with ink when
-   chosen. */
+   chosen (a skill node, drawn as a picture with its name below, keeps its
+   bare face and ink). */
 html:is(.shiro, .kuro) button:not(#_) {
   background: var(--b-block);
 }
@@ -178,14 +179,14 @@ html:is(.shiro, .kuro) :is(.stats, .card, .upgrade, .shop, .theme-card, .mission
 html:is(.shiro, .kuro) button:active:not(#_) {
   background: var(--b-press);
 }
-html:is(.shiro, .kuro) button.selected:not(#_),
-html:is(.shiro, .kuro) button[aria-pressed="true"]:not(#_) {
+html:is(.shiro, .kuro) button.selected:not(#_, .skill-node),
+html:is(.shiro, .kuro) button[aria-pressed="true"]:not(#_, .skill-node) {
   background: var(--b-ink);
 }
-html:is(.shiro, .kuro) button.selected:not(#_) *:not(svg, svg *, img, canvas),
-html:is(.shiro, .kuro) button.selected:not(#_),
-html:is(.shiro, .kuro) button[aria-pressed="true"]:not(#_),
-html:is(.shiro, .kuro) button[aria-pressed="true"]:not(#_) *:not(svg, svg *, img, canvas) {
+html:is(.shiro, .kuro) button.selected:not(#_, .skill-node) *:not(svg, svg *, img, canvas),
+html:is(.shiro, .kuro) button.selected:not(#_, .skill-node),
+html:is(.shiro, .kuro) button[aria-pressed="true"]:not(#_, .skill-node),
+html:is(.shiro, .kuro) button[aria-pressed="true"]:not(#_, .skill-node) *:not(svg, svg *, img, canvas) {
   color: var(--b-page);
 }
 html:is(.shiro, .kuro) button:focus-visible:not(#_),
@@ -203,6 +204,10 @@ html:is(.shiro, .kuro) button:disabled *:not(#_) {
 html:is(.shiro, .kuro) .skill-node:not(#_),
 html:is(.shiro, .kuro) .hand-card:not(#_) {
   background: transparent;
+}
+/* The chosen skill node: its picture ringed in ink. */
+html:is(.shiro, .kuro) .skill-node.chosen .node-icon:not(#_) {
+  outline-color: var(--b-ink);
 }
 html:is(.shiro, .kuro) input[type="checkbox"]:not(#_),
 html:is(.shiro, .kuro) input[type="radio"]:not(#_),

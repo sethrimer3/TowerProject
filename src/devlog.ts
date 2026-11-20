@@ -13,6 +13,7 @@ export const DEVLOG_TEXT_MAX = 120;
 /** Every change, newest first: the Settings page's DEVLOG button lists them.
  * Each change adds its own line at the top (AGENTS.md). */
 export const DEVLOG: readonly DevlogEntry[] = [
+  { date: "2026-11-20", text: "Battery saver, Shiro and Kuro: the chosen skill's name shows again, its picture ringed instead of filled white." },
   { date: "2026-11-20", text: "Battery saver, Shiro and Kuro: the chosen run tab's name (Hand, Auto, a Training group) shows again." },
   { date: "2026-11-20", text: "Landscape: in the forest the tabs tuck in under the HUD instead of standing in a column of their own." },
   { date: "2026-11-20", text: "Battery saver: a Back button leaves it; Settings now only opens the Settings page." },
