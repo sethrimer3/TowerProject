@@ -13,6 +13,7 @@ export const DEVLOG_TEXT_MAX = 120;
 /** Every change, newest first: the Settings page's DEVLOG button lists them.
  * Each change adds its own line at the top (AGENTS.md). */
 export const DEVLOG: readonly DevlogEntry[] = [
+  { date: "2026-11-20", text: "Battery saver: a Gem button beside Play and Settings, and the hand's row no longer hides the card at work's underline." },
   { date: "2026-11-20", text: "In cinematic mode, the corner button is now Back: it leaves cinematic mode instead of opening Settings." },
   { date: "2026-11-20", text: "Battery saver: a tap lights the white to full, no text under the board, and a red warning when no card can act." },
   { date: "2026-11-20", text: "Battery saver: a smaller board in a white square, small cards below, a simple stats row and a white brightness slider." },

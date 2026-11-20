@@ -161,6 +161,15 @@ html.battery-saver .battery-press:not(#_) {
   border-radius: 0;
   background: #000;
 }
+/* The ad's Gems: the Gem icon and how many. */
+html.battery-saver .battery-press.battery-gems:not(#_) {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--bat-ink);
+  font-size: 13px;
+}
+.battery-gems b { font-weight: 400; }
 /* No card can act: a red warning sign, not dimmed, that presses End Climb. */
 html.battery-saver .battery-press.battery-alert:not(#_) { border-color: #ff3b3b; }
 .battery-hud .battery-alert img { filter: none; }
@@ -198,6 +207,14 @@ html.battery-saver nav:not(#_) {
   background: transparent;
   border: 0;
 }
+/* The hand's row as tall as an open Training group's (`--bat-row`), so
+   switching between them leaves the bar below in place, and the hand kept
+   inside it (no bleeding margin), so the bar never covers the underline. */
+html.battery-saver nav.in-run:not(#_) {
+  --bat-row: 72px;
+  align-items: center;
+  min-height: var(--bat-row);
+}
 html.battery-saver .hand:not(#_) {
   /* Only the cards held, centred under the board. */
   grid-template-columns: none;
@@ -205,8 +222,10 @@ html.battery-saver .hand:not(#_) {
   grid-auto-columns: 32px;
   justify-content: center;
   gap: 5px;
-  min-height: 0;
-  padding: 6px 8px 8px;
+  width: 100%;
+  min-height: var(--bat-row, 0);
+  margin: 0;
+  padding: 6px 8px 10px;
 }
 html.battery-saver .battery-card + .sprite-card-label:not(#_) { font-size: 5px; }
 html.battery-saver .card-level:not(#_) {
