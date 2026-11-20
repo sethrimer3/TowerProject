@@ -290,9 +290,10 @@ export class ProvingGroundsDialog {
   }
   leave(){
     if(!this.active)return;
-    const knockedOut=this.session!.state.status==="lost" && this.session!.state.player.hp<=0;
+    const state=this.session!.state;
+    const showLoop=state.status==="active" || (state.status==="lost" && state.player.hp<=0);
     const leave=()=>{if(!this.active)return;if(this.session?.state)saveTrialDamage(this.base.save,this.session.state);delete this.base.save.provingGrounds;this.detach();this.base.returnFromTrials();this.save();this.changed();};
-    if(knockedOut)playDeathLoop(this.modal,this.base.save.settings.reduceMotion,leave);
+    if(showLoop)playDeathLoop(this.modal,this.base.save.settings.reduceMotion,leave);
     else leave();
   }
   private detach() {

@@ -265,16 +265,18 @@ export class RunEndDialog {
     modal.showModal();
     this.bindNotes();
     el("cancel").onclick = () => modal.close();
-    el("confirm").onclick = () => {
+    const finish = (retrying: boolean) => {
+      modal.addEventListener("close", () => {
+        playDeathLoop(modal, game.save.settings.reduceMotion, () => {
+          if (retrying) game.retry(`${capitalized(words.run)} ended`);
+          else game.finish(`${capitalized(words.run)} ended`);
+          ctx.navigate(game.mode);
+        });
+      }, { once: true });
       modal.close();
-      game.finish(`${capitalized(words.run)} ended`);
-      ctx.navigate(game.mode);
     };
+    el("confirm").onclick = () => finish(false);
     const retry = document.querySelector<HTMLButtonElement>("#retry");
-    if (retry) retry.onclick = () => {
-      modal.close();
-      game.retry(`${capitalized(words.run)} ended`);
-      ctx.navigate(game.mode);
-    };
+    if (retry) retry.onclick = () => finish(true);
   }
 }

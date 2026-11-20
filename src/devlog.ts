@@ -14,6 +14,7 @@ export const DEVLOG_TEXT_MAX = 120;
  * Each change adds its own line at the top (AGENTS.md). */
 export const DEVLOG: readonly DevlogEntry[] = [
   { date: "2026-11-20", text: "Battery saver now turns the game black and white, with simple pixel art and far fewer frames." },
+  { date: "2026-11-20", text: "The infinity loop fades in and out, and plays when you end a run early too." },
   { date: "2026-11-20", text: "After defeat, a pale infinity loop draws on black before the delver returns." },
   { date: "2026-11-20", text: "Landscape layout on wide screens and turned phones, and a Handedness setting that mirrors it for the left hand." },
   { date: "2026-11-19", text: "Choose LEGACY BORDERS in Visual Settings to bring back the previous border artwork." },

@@ -1,19 +1,20 @@
 import { kitImage } from '../sprites/kit.ts';
 
-export const DEATH_LOOP = { width: 96, height: 40, columns: 8, frames: 48, lead: 180, draw: 1700, hold: 360, fade: 500 } as const;
+export const DEATH_LOOP = { width: 96, height: 40, columns: 8, frames: 48, fadeIn: 450, lead: 180, draw: 1700, hold: 360, fade: 500 } as const;
 
 /** One continuous trace, a brief completed loop, then the world underneath. */
 export function deathLoopFrame(elapsed: number, reduced = false) {
-  const start = reduced ? 0 : DEATH_LOOP.lead;
+  const fadeIn = reduced ? 80 : DEATH_LOOP.fadeIn;
+  const start = fadeIn + (reduced ? 0 : DEATH_LOOP.lead);
   const drawn = reduced ? 0 : DEATH_LOOP.draw;
   const revealAt = start + drawn + (reduced ? 240 : DEATH_LOOP.hold);
   const fade = reduced ? 160 : DEATH_LOOP.fade;
   const progress = reduced ? 1 : Math.max(0, Math.min(1, (elapsed - start) / drawn));
   return {
-    frame: Math.floor(progress * (DEATH_LOOP.frames - 1)),
-    phase: elapsed < start ? 'black' : elapsed < start + drawn ? 'drawing' : elapsed < revealAt ? 'hold' : 'reveal',
+    frame: elapsed < start ? 0 : Math.floor(progress * (DEATH_LOOP.frames - 1)),
+    phase: elapsed < fadeIn ? 'fade-in' : elapsed < start ? 'black' : elapsed < start + drawn ? 'drawing' : elapsed < revealAt ? 'hold' : 'reveal',
     reveal: elapsed >= revealAt,
-    opacity: Math.max(0, 1 - Math.max(0, elapsed - revealAt) / fade),
+    opacity: elapsed < fadeIn ? Math.max(0, elapsed / fadeIn) : Math.max(0, 1 - Math.max(0, elapsed - revealAt) / fade),
     done: elapsed >= revealAt + fade,
   };
 }
@@ -29,6 +30,7 @@ export function playDeathLoop(modal: HTMLDialogElement, reduced: boolean, return
   const attributes = ['class', 'style', 'aria-label', 'aria-labelledby'].map(name => [name, modal.getAttribute(name)] as const);
   const previousFocus = document.activeElement as HTMLElement | null;
   modal.classList.add('death-loop');
+  modal.style.opacity = '0';
   modal.setAttribute('aria-label', 'The loop begins again');
   modal.removeAttribute('aria-labelledby');
   modal.innerHTML = `<canvas class="death-loop-symbol" width="96" height="40" role="img" aria-label="A pale infinity symbol draws itself. The loop begins again."></canvas>`;
@@ -44,7 +46,7 @@ export function playDeathLoop(modal: HTMLDialogElement, reduced: boolean, return
       modal.removeEventListener('cancel', skip);
       modal.removeEventListener('pointerdown', skip);
       modal.removeEventListener('keydown', key);
-      modal.removeEventListener('close', finish);
+      modal.removeEventListener('close', onClose);
       if (modal.open) modal.close();
       modal.innerHTML = content;
       for (const [name, value] of attributes) if (value === null) modal.removeAttribute(name); else modal.setAttribute(name, value);
@@ -53,12 +55,14 @@ export function playDeathLoop(modal: HTMLDialogElement, reduced: boolean, return
       if (previousFocus?.isConnected && previousFocus.getClientRects().length) previousFocus.focus({ preventScroll: true });
     }
   };
+  // A queued close from the preceding summary can arrive after this modal reopens.
+  function onClose() { if (!modal.open) finish(); }
   function skip(event: Event) { event.preventDefault(); event.stopPropagation(); finish(); }
   function key(event: KeyboardEvent) { if (event.key === 'Enter' || event.key === ' ') skip(event); }
   modal.addEventListener('cancel', skip);
   modal.addEventListener('pointerdown', skip);
   modal.addEventListener('keydown', key);
-  modal.addEventListener('close', finish);
+  modal.addEventListener('close', onClose);
   modal.showModal();
   const draw = (now: number) => {
     if (closed) return;
