@@ -21,7 +21,7 @@ import { exportProfile, importProfile } from "../profile-file.ts";
 /** The settings on the page, in order; each control comes from its row in
  * SETTINGS. */
 const PAGE = [
-  "experimentalAtlas", "legacyBorders", "legacyEnemies", "spriteAnimations", "squareDoors", "transition", "fightAnimation", "brightness", "decorOff", "pixelPerfect", "batterySaver", "reduceMotion", "weatherSound",
+  "experimentalAtlas", "legacyBorders", "legacyEnemies", "spriteAnimations", "squareDoors", "transition", "fightAnimation", "brightness", "decorOff", "pixelPerfect", "autoLandscape", "hand", "batterySaver", "reduceMotion", "weatherSound",
   "infoDisplay", "cinematic", "cinematicIdle", "cinematicGems", "gemBankChime",
 ] as const satisfies readonly SettingKey[];
 /** The dev section's settings, shown under Dev Mode while it is on. */
@@ -68,6 +68,8 @@ const AFTER: Partial<Record<PageKey, (ctx: AppContext, overlay: BoardOverlay, s:
   experimentalAtlas: (ctx) => { ctx.save(); location.reload(); },
   legacyBorders: (ctx) => { applyUiTheme(ctx.game.save); ctx.save(); ctx.update(); },
   reduceMotion: (ctx) => applyUiTheme(ctx.game.save),
+  autoLandscape: (ctx) => { applyUiTheme(ctx.game.save); ctx.save(); ctx.update(); },
+  hand: (ctx) => { applyUiTheme(ctx.game.save); ctx.save(); ctx.update(); },
   // The board silences the weather itself once sound is off.
   weatherSound: (ctx) => ctx.update(),
   infoDisplay: (ctx, overlay, s) => {

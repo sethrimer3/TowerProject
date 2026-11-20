@@ -1,4 +1,5 @@
 import { soundEnabledBy, play } from "../sound.ts";
+import { applyLayout } from "./layout.ts";
 import { flourishesEnabledBy, sparks } from "./flourish.ts";
 import type { Save } from "../save/shape.ts";
 import { uiLook } from "../theme-collection.ts";
@@ -94,6 +95,7 @@ export function applyUiTheme(save: Pick<Save, "themes" | "settings">) {
   root.toggle("ui-sprites", usesUiSprites(save));
   root.toggle("game-sprites", usesGameSprites(save));
   if (usesUiSprites(save) || usesGameSprites(save)) void loadSpriteFont();
+  applyLayout(save);
 }
 
 /** Sounds, sparks and the button knock exist only while the Medieval UI

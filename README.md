@@ -46,6 +46,7 @@ The player-facing rules, in full, one topic a page:
 | [Training](docs/gameplay/training.md) | Silver, training for the run, XP and levels, the Training tab and trainers |
 | [Proving Grounds](docs/gameplay/proving-grounds.md) | Three control modes, the Light Elemental, Keymaster, keys and mimics |
 | [Runs](docs/gameplay/runs.md) | Movement settings, Phoenix Spark, how a run ends, Run Notes, rewards, the in-run controls, Dash |
+| [Layout](docs/gameplay/layout.md) | Portrait and landscape, switching on wide screens, Handedness |
 | [Cinematic mode](docs/gameplay/cinematic-mode.md) | The board alone: entering and leaving it, idle dimming, Gems in it |
 | [Currencies and the Shop](docs/gameplay/currencies-and-shop.md) | Gems and Gem finds, the ad boosts, Offline Gold, the Shop |
 | [Towers, Areas and Goals](docs/gameplay/towers-areas-goals.md) | Higher towers, mastered and cleared areas, Goals and Warp |
