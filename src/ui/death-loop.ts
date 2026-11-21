@@ -19,6 +19,14 @@ export function deathLoopFrame(elapsed: number, reduced = false) {
   };
 }
 
+/** Draws frame `frame` of the infinity trace on a 96×40 canvas. */
+export function drawLoopFrame(ctx: CanvasRenderingContext2D, frame: number) {
+  ctx.clearRect(0, 0, DEATH_LOOP.width, DEATH_LOOP.height);
+  ctx.imageSmoothingEnabled = false;
+  const image = kitImage('death-infinity');
+  if (image) ctx.drawImage(image, frame % DEATH_LOOP.columns * DEATH_LOOP.width, Math.floor(frame / DEATH_LOOP.columns) * DEATH_LOOP.height, DEATH_LOOP.width, DEATH_LOOP.height, 0, 0, DEATH_LOOP.width, DEATH_LOOP.height);
+}
+
 const playing = new WeakSet<HTMLDialogElement>();
 
 /** Use the shared modal so gameplay, keyboard input and automation wait too.
@@ -69,12 +77,7 @@ export function playDeathLoop(modal: HTMLDialogElement, reduced: boolean, return
     const state = deathLoopFrame(now - begin, reduced);
     modal.dataset.deathLoopPhase = state.phase;
     canvas.dataset.frame = String(state.frame);
-    if (ctx) {
-      ctx.clearRect(0, 0, DEATH_LOOP.width, DEATH_LOOP.height);
-      ctx.imageSmoothingEnabled = false;
-      const image = kitImage('death-infinity');
-      if (image) ctx.drawImage(image, state.frame % DEATH_LOOP.columns * DEATH_LOOP.width, Math.floor(state.frame / DEATH_LOOP.columns) * DEATH_LOOP.height, DEATH_LOOP.width, DEATH_LOOP.height, 0, 0, DEATH_LOOP.width, DEATH_LOOP.height);
-    }
+    if (ctx) drawLoopFrame(ctx, state.frame);
     if (state.reveal) reveal();
     modal.style.opacity = String(state.opacity);
     if (state.done || !ctx) finish();

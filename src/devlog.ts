@@ -13,6 +13,8 @@ export const DEVLOG_TEXT_MAX = 120;
 /** Every change, newest first: the Settings page's DEVLOG button lists them.
  * Each change adds its own line at the top (AGENTS.md). */
 export const DEVLOG: readonly DevlogEntry[] = [
+  { date: "2026-11-21", text: "Event relics show only when pressed; an Event Boost relic says if the booster unlocks it and the Medals still to earn." },
+  { date: "2026-11-21", text: "Back in the forest after your first climb, a short story tells of the Chronos Anchor and the loop through time." },
   { date: "2026-11-21", text: "Battery saver turns to landscape and shows Gold, Silver and Gems; a run's Training no longer passes its max." },
   { date: "2026-11-21", text: "Short of Gems, the dialog says how many more you need; Rubies list before Arcanite; a shorter run summary." },
   { date: "2026-11-21", text: "Cards gain powers as they level and ascend with Rubies from bosses; card trees, card buys and 5 enemy cards are gone." },

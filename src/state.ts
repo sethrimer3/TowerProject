@@ -130,7 +130,7 @@ import type { Coin, Dash, Drop, Facing, Gain, GainArt, GainStrike, Heal, ShownCl
  * which seed (rolled from the game's randomness when left out). */
 export type RunStart = { outside?: boolean; seed?: number; height?: number };
 /** A lesson shown on the board (`Game.boardLesson`). */
-export type BoardLesson = "climb" | "keys" | "autoClimbHint" | "autoClimb" | "stuck" | "enemy" | "upgrades" | "enter" | "trainingPoints" | "delve" | "provisions" | "research" | "goals" | "arcana";
+export type BoardLesson = "story" | "climb" | "keys" | "autoClimbHint" | "autoClimb" | "stuck" | "enemy" | "upgrades" | "enter" | "trainingPoints" | "delve" | "provisions" | "research" | "goals" | "arcana";
 /** The first skills the lessons lead to on the Inspiration tree, in order. */
 export type IntroSkill = "cardDoorKey" | "cardEnemy";
 export type RouteEffects = {
@@ -546,7 +546,10 @@ export class Game {
    * climb ends; and `autoClimb`, the first run
    * inside once Auto-Climb is owned, saying the hero heads for the first
    * card's target with an open path and a pressed card goes first, until
-   * its note is tapped or a card pressed. In the Tower's forest: `upgrades`,
+   * its note is tapped or a card pressed. In the Tower's forest: `story`,
+   * once the first climb has pressed STAIRS and until Door & Key is owned,
+   * the world's premise told in notes tapped through, before every other
+   * lesson there; `upgrades`,
    * to the Upgrades tab while the next first skill (`introSkill`) can be
    * bought; `enter`, to Enter, once Door & Key is owned until Enter is
    * pressed or a run goes inside from the forest (and again once Enemy is bought after its
@@ -571,6 +574,8 @@ export class Game {
       if (owned.cardEnemy && !owned.autoClimb && !t.autoClimbHint && this.run.height >= AUTO_CLIMB_HINT_HEIGHT) return "autoClimbHint";
       return owned.autoClimb && !t.autoClimb ? "autoClimb" : null;
     }
+    // Told before the first skill is bought: a player past that has begun without it.
+    if (tower && t.climb && !t.story && !owned.cardDoorKey) return "story";
     if (tower && this.introSkill) return "upgrades";
     if (tower && ((!t.enter && owned.cardDoorKey) || (t.enemy && owned.cardEnemy))) return "enter";
     if (tower && !t.goals && goalsWaiting(this.save)) return "goals";
@@ -648,11 +653,11 @@ export class Game {
     this.save.tutorials.training = true;
     return true;
   }
-  /** Dismisses the `enter`, `autoClimbHint` and `autoClimb` lessons (the
-   * others wait on what they ask for). */
+  /** Dismisses the `story` (its last note tapped), `enter`, `autoClimbHint`
+   * and `autoClimb` lessons (the others wait on what they ask for). */
   dismissLesson() {
     const lesson = this.boardLesson;
-    if (lesson === "autoClimb" || lesson === "autoClimbHint") {
+    if (lesson === "story" || lesson === "autoClimb" || lesson === "autoClimbHint") {
       this.save.tutorials[lesson] = true;
       return true;
     }

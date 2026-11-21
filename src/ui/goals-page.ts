@@ -328,7 +328,7 @@ export class GoalsPage {
     const explain = () => {
       if (reward.kind === "unlock") this.unlockTutorial(reward.unlock);
       if (reward.kind === "tower") this.towerOpened(reward.tower);
-      if (reward.kind === "relic") showRelic(RELICS[reward.relic]!, { reduceMotion: game.save.settings.reduceMotion });
+      if (reward.kind === "relic") showRelic(RELICS[reward.relic]!, { reduceMotion: game.save.settings.reduceMotion, obtained: true });
     };
     if (premium) explain();
     else flyToPurse(from, [{ html: `${uiSprite("breakthrough")}<b>+${GOAL_BREAKTHROUGH}</b>`, to: null, landed: explain }]);

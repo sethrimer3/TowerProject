@@ -154,7 +154,7 @@ export class EventsPage {
       const name = def?.name ?? `${m.premium ? "Premium " : ""}${RARITY_NAMES[m.rarity]} Relic`;
       const label = `${name} at ${m.medals.toLocaleString("en-US")} Medals${reached ? " (won)" : locked ? " (Event Booster)" : ""}`;
       // A relic of the theme's set shows its name and bonus when pressed.
-      const [tag, attrs] = def ? ["button", ` data-relic="${m.relic}"`] : ["span", ` role="img" title="${label}"`];
+      const [tag, attrs] = def ? ["button", ` data-relic="${m.relic}" data-milestone="${milestones.indexOf(m)}"`] : ["span", ` role="img" title="${label}"`];
       return `<${tag} class="event-relic ${m.rarity}${reached ? " reached" : ""}${locked ? " locked" : ""}" style="--at:${(100 * m.medals) / top}%" aria-label="${label}"${attrs}>` +
         `<span class="event-relic-art">${relicIcon(def ?? m.rarity)}${reached ? checkIcon() : locked ? LOCK : ""}</span><small>${m.medals.toLocaleString("en-US")}</small></${tag}>`;
     };
@@ -163,6 +163,18 @@ export class EventsPage {
     const count = `<span class="event-bar-count"><b>${medals.toLocaleString("en-US")}</b>${medalIcon()}${events.boosted ? " ×2" : ""}</span>`;
     return `<section class="weekly event-track" aria-label="Relics"><div class="weekly-head"><b>Relics</b></div>` +
       `<div class="event-track-body">${row(false)}<div class="weekly-bar event-bar" role="progressbar" aria-label="Medals" aria-valuemin="0" aria-valuemax="${top}" aria-valuenow="${Math.min(medals, top)}"><i style="width:${Math.min(100, (100 * medals) / top)}%"></i>${count}</div>${row(true)}</div></section>`;
+  }
+
+  /** The line under a pressed Event Boost relic's bonus: in red, that the
+   * booster unlocks it, until bought, then in green that it has; and, until
+   * the relic is won, the Medals still to earn for it. */
+  private boostNote(m: RelicMilestone) {
+    const events = this.ctx.game.events, left = m.medals - events.medals;
+    const status = events.boosted
+      ? `<p class="relic-boost-note unlocked">Event boost relic unlocked</p>`
+      : `<p class="relic-boost-note locked">Get event boost to unlock.</p>`;
+    const reached = milestoneReached(this.ctx.game.save.events, m);
+    return status + (reached || left <= 0 ? "" : `<p class="relic-medals-left">${medalIcon()} <b>${left.toLocaleString("en-US")}</b> more Medals to claim it.</p>`);
   }
 
   /** The Event Booster's offer, or that it is active. */
@@ -259,7 +271,12 @@ export class EventsPage {
       this.tab = b.dataset.eventTab as EventsTab;
       this.render();
     }));
-    el("events").querySelectorAll<HTMLButtonElement>("[data-relic]").forEach((b) => relicButton(b, RELICS[b.dataset.relic!]!, ctx.game.save.settings.reduceMotion));
+    // Pressed only, never on a resting mouse; an Event Boost relic's says whether the booster opens it.
+    const milestones = ctx.game.events.info.milestones;
+    el("events").querySelectorAll<HTMLButtonElement>("[data-relic]").forEach((b) => {
+      const m = milestones[Number(b.dataset.milestone)]!;
+      relicButton(b, RELICS[b.dataset.relic!]!, ctx.game.save.settings.reduceMotion, { hover: false, note: m.premium ? () => this.boostNote(m) : undefined });
+    });
     el("events").querySelectorAll<HTMLButtonElement>("[data-store]").forEach((b) => (b.onclick = () => this.buyStore(b.dataset.store!)));
     document.getElementById("event-boost-buy")?.addEventListener("click", () => void this.buyBoost());
     el("events").querySelectorAll<HTMLButtonElement>("[data-claim]").forEach((b) => (b.onclick = () => this.claim(Number(b.dataset.claim))));

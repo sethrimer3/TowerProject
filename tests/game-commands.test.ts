@@ -443,6 +443,9 @@ test("a first stuck run's lesson waits on End Run; the forest's then lead to Doo
   g.finish("Ascent ended");
   assert.ok(g.run.outside);
   assert.equal(g.introSkill, "cardDoorKey");
+  assert.equal(g.boardLesson, "story", "the story comes first, back in the forest");
+  assert.ok(g.dismissLesson(), "its last note tapped ends it");
+  assert.ok(decode(JSON.stringify(g.save)).tutorials.story);
   assert.equal(g.boardLesson, "upgrades");
   assert.ok(g.skills.buy("cardDoorKey"));
   assert.deepEqual([g.introSkill, g.introBought, g.boardLesson], [null, "cardDoorKey", "enter"]);

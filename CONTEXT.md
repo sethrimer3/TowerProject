@@ -1093,3 +1093,5 @@ _Avoid_: known tiles, visit map
 - **Landscape layout**: the board beside the HUD, filling the screen's height, worn while the screen is wide enough and the setting allows it; the portrait layout stacks the HUD over the board.
 - **Handedness**: which side the controls gather on, under the thumb; Left mirrors the layout.
 - **Death loop**: the pale infinity symbol that draws on black when the delver returns after defeat or ends a run early.
+- **Chronos Anchor**: the divine relic the weakest delver found, which sends their soul back in time; why each climb ends and begins again, and why upgrades and knowledge carry over.
+- **Story**: the forest's first lesson after the first climb, telling the world's premise in notes tapped through.

@@ -1113,6 +1113,9 @@ html.reduce-motion .review-prompt { animation: none; }
 .board-tip p { margin: 6px 0 0; font-size: 12px; line-height: 1.6; color: #c3cedd; }
 .board-tip small { display: block; margin-top: 6px; font-size: 10px; letter-spacing: 1px; color: #8d9db1; }
 .board-tip.dismissable { min-height: 0; font-family: inherit; cursor: pointer; pointer-events: auto; }
+/* The story's notes (board-lesson.ts): the time loop's infinity trace drawing in their header. */
+.board-tip .story-loop { display: block; width: 192px; max-width: 100%; height: auto; aspect-ratio: 96 / 40; margin: 0 auto 4px; border-radius: 6px; background: #05080d; image-rendering: pixelated; }
+.board-tip .story-text { margin: 0; font-size: 13px; color: #efd496; }
 #auto, #enter-run { position: relative; }
 /* In the forest the tier the entrance leads to rises to the top of its
    column, and Goals and Enter, under it, share the space left. */
@@ -5254,6 +5257,11 @@ html.reduce-motion button.mission-bar.event-claim { animation: none; }
 .relic-pop-sparkles i { position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px; border-radius: 50%; background: #fff6cf; box-shadow: 0 0 8px 2px #ffd76a; opacity: 0; animation: relic-sparkle 1.6s calc(var(--i) * 0.2s) ease-out infinite; transform: rotate(calc(var(--i) * 45deg)); }
 .relic-pop .card-reveal-text { animation: card-text-in 0.3s 0.15s ease-out backwards; }
 .relic-pop .card-reveal-text b { color: #fbf0d4; }
+/* A pressed Event Boost relic's line (events-page.ts): red until the booster is bought, then green. */
+.relic-pop .relic-boost-note { margin-top: 10px; font-weight: bold; }
+.relic-pop .relic-boost-note.locked { color: #ff6b6b; }
+.relic-pop .relic-boost-note.unlocked { color: #6ee07a; }
+.relic-pop .relic-medals-left { margin-top: 4px; }
 .relic-pop.still .relic-pop-rays, .relic-pop.still .relic-pop-icon, .relic-pop.still .relic-pop-sparkles i, .relic-pop.still .card-reveal-text { animation: none; }
 @keyframes relic-pop-in { from { transform: scale(0.2) rotate(-12deg); opacity: 0; } }
 @keyframes relic-sparkle {

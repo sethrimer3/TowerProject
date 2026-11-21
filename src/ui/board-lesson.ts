@@ -1,5 +1,6 @@
 import type { BoardLesson, Game } from "../state.ts";
 import { el, POINTER_SVG } from "./dom.ts";
+import { DEATH_LOOP, drawLoopFrame } from "./death-loop.ts";
 
 // The lessons on the board (`game.boardLesson`): a note over the top of the
 // board. Inside a run the tutorials' pointing hand shows the card to press
@@ -10,14 +11,57 @@ import { el, POINTER_SVG } from "./dom.ts";
 // Delve or, once a first provision is open, the Gear tab, and the Goals
 // button while a Goal waits. On floor 4 before Auto-Climb is owned,
 // `autoClimbHint` holds the hero and says ending the climb unlocks it.
-// Only `enter`, `autoClimbHint` and `autoClimb` are dismissed by tapping their notes; the others wait
+// Back in the forest after the first climb, `story` tells the world's
+// premise (`STORY`) a note at a time, each tap drawing more of the time
+// loop's infinity trace in its header, before any other forest lesson.
+// Only `story`, `enter`, `autoClimbHint` and `autoClimb` are dismissed by tapping their notes; the others wait
 // on what they ask for (`cards` on the Deck page, which takes the lesson on).
 // Each hand sits inside what it points at.
 
 /** The provisions lesson's note, on the board and the Upgrades page alike. */
 export const PROVISIONS_NOTE = { title: "Provisions unlocked.", text: "Press the Gear tab to buy provisions with Gold: limited-use items every climb carries, pressed beside the board when you need them." };
 
-const NOTES: Record<BoardLesson, { greeting?: string; title: string; text?: string }> = {
+/** The `story` lesson's notes, tapped through one after the other. */
+export const STORY = [
+  "The weakest delver has discovered the divine Chronos Anchor and can move their soul backwards in time!",
+  "Make the most of each tower climb to gain inspiration and resources.",
+  "Use your gains to upgrade your abilities for future climbs.",
+  "Unlock permanent powers and knowledge that stay with you across time in the world.",
+];
+/** How long each story note's share of the infinity trace takes to draw (ms). */
+const STORY_TRACE_MS = 700;
+/** The story note showing, kept while the board is left and come back to. */
+let storyPage = 0;
+/** The last frame of the infinity trace drawn by story note `page`: the
+ * trace grows with each note, closing on the last. */
+const storyFrame = (page: number) => Math.round(((page + 1) / STORY.length) * (DEATH_LOOP.frames - 1));
+
+/** The story note's header, its text and its count. */
+function storyHtml(page: number) {
+  const last = page === STORY.length - 1;
+  return `<canvas class="story-loop" width="${DEATH_LOOP.width}" height="${DEATH_LOOP.height}" aria-hidden="true"></canvas>` +
+    `<p class="story-text">${STORY[page]}</p><small>${last ? "Tap to begin" : "Tap to continue"} · ${page + 1}/${STORY.length}</small>`;
+}
+
+/** Draws the trace in `note`'s header from the end of the note before's
+ * share to the end of note `page`'s (at once with Reduce Motion). */
+function traceStory(note: HTMLElement, page: number, reduceMotion: boolean) {
+  const ctx = note.querySelector<HTMLCanvasElement>(".story-loop")?.getContext("2d");
+  if (!ctx) return;
+  const from = page ? storyFrame(page - 1) : 0, to = storyFrame(page);
+  let begin = performance.now();
+  const draw = (now: number) => {
+    if (!note.isConnected || note.dataset.page !== String(page)) return;
+    // The trace waits under a dialog (the death loop's black after the first climb).
+    if (document.querySelector("dialog[open]")) begin = now;
+    const t = reduceMotion ? 1 : Math.max(0, Math.min(1, (now - begin) / STORY_TRACE_MS));
+    drawLoopFrame(ctx, Math.round(from + (to - from) * t));
+    if (t < 1) requestAnimationFrame(draw);
+  };
+  draw(begin);
+}
+
+const NOTES: Record<Exclude<BoardLesson, "story">, { greeting?: string; title: string; text?: string }> = {
   climb: { greeting: "Welcome, adventurer!", title: "Press the Stairs card to climb.", text: "Each card in your hand sends the hero toward what it names. Climb the Tower to gain Inspiration, XP and resources." },
   keys: { title: "Press Key and Door to collect keys and open doors.", text: "Key heads for the closest key, and Door for a door your keys open, or a Wooden Door your HP can break down." },
   autoClimbHint: { title: "You can end the climb now to unlock Auto-Climb.", text: "End the climb from the menu, then spend its Inspiration on Auto-Climb on the Inspiration tree: the hand then plays by itself." },
@@ -42,7 +86,7 @@ function targets(lesson: BoardLesson | "back"): HTMLElement[] {
   const card = (id: string) => document.querySelector<HTMLElement>(`#hand .hand-card[data-card="${id}"]`);
   const tab = (id: string) => document.querySelector<HTMLElement>(`nav [data-tab="${id}"]`);
   const found = {
-    climb: [card("stairs")], keys: [card("key"), card("door")], autoClimbHint: [], autoClimb: [], stuck: [], enemy: [],
+    story: [], climb: [card("stairs")], keys: [card("key"), card("door")], autoClimbHint: [], autoClimb: [], stuck: [], enemy: [],
     upgrades: [tab("upgrades")], enter: [el("enter-run")], research: [tab("research")], trainingPoints: [tab("research")], cards: [tab("deck")], goals: [el("section-pick")], delve: [el("forest-sign")], provisions: [tab("gear")], arcana: [tab("gear")], back: [tab("board")],
   }[lesson] as (HTMLElement | null)[];
   return found.filter((t): t is HTMLElement => !!t);
@@ -72,7 +116,22 @@ export function renderBoardLesson(game: Game, onBoard: boolean, dismissed: () =>
     target.insertAdjacentHTML("beforeend", `<span class="forest-pointer ${shown}${game.save.settings.reduceMotion ? " still" : ""}" data-lesson="${shown}">${POINTER_SVG}</span>`);
   }
   if (!lesson) return;
-  if (!note) {
+  if (!note && lesson === "story") {
+    const reduceMotion = game.save.settings.reduceMotion;
+    frame.insertAdjacentHTML("beforeend", `<button type="button" class="board-tip dismissable story-tip" data-lesson="story" data-page="${storyPage}" aria-live="polite">${storyHtml(storyPage)}</button>`);
+    const story = frame.querySelector<HTMLElement>(".board-tip")!;
+    traceStory(story, storyPage, reduceMotion);
+    story.onclick = () => {
+      if (storyPage < STORY.length - 1) {
+        story.dataset.page = String(++storyPage);
+        story.innerHTML = storyHtml(storyPage);
+        return traceStory(story, storyPage, reduceMotion);
+      }
+      if (game.dismissLesson()) dismissed();
+    };
+    return;
+  }
+  if (!note && lesson !== "story") {
     const { greeting, title, text } = NOTES[lesson], body = `${greeting ? `<b>${greeting}</b>` : ""}<b>${title}</b>${text ? `<p>${text}</p>` : ""}`;
     frame.insertAdjacentHTML("beforeend", lesson !== "enter" && lesson !== "autoClimb" && lesson !== "autoClimbHint"
       ? `<div class="board-tip" role="status" data-lesson="${lesson}">${body}</div>`

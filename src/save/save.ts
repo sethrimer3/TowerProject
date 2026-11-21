@@ -95,7 +95,7 @@ export function defaults(): Save {
     manualHand: [],
     manualSlots: 0,
     badges: defaultBadges(),
-    tutorials: { arcana: false, deck: false, removeCard: false, addCard: false, upgrades: false, gear: false, onTheJob: false, speed: false, climb: false, keys: false, autoClimb: false, stuck: false, enemy: false, enter: false, training: false, delve: false, chamber: false, research: false, archives: false, goals: false, autoClimbHint: false },
+    tutorials: { story: false, arcana: false, deck: false, removeCard: false, addCard: false, upgrades: false, gear: false, onTheJob: false, speed: false, climb: false, keys: false, autoClimb: false, stuck: false, enemy: false, enter: false, training: false, delve: false, chamber: false, research: false, archives: false, goals: false, autoClimbHint: false },
     treeNotices: { inspiration: false, breakthrough: false },
     seen: { level: 0, training: 0, archives: 0, cards: [...BASE_HAND], cardLevels: 0, met: [...BASE_HAND] },
     archives: defaultArchives(),
@@ -553,12 +553,11 @@ export function decode(raw: string | null): Save {
     d.cardXp = decodeCardXp(s.cardXp);
     d.cardAscension = decodeCardAscension(s.cardAscension);
     d.badges = decodeBadges(s.badges, d.upgrades, researched(d.archives, "badgeSlots"), d.goals);
-    for (const k of ["arcana", "deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob", "speed", "climb", "keys", "autoClimb", "stuck", "enemy", "enter", "training", "delve", "chamber", "research", "archives", "goals", "autoClimbHint"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
+    for (const k of ["story", "arcana", "deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob", "speed", "climb", "keys", "autoClimb", "stuck", "enemy", "enter", "training", "delve", "chamber", "research", "archives", "goals", "autoClimbHint"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
     // A player who has already researched in the Archives needs no lesson on them.
     if (d.archives.history.length || d.archives.slots.some((slot) => slot.job)) d.tutorials.research = d.tutorials.archives = true;
     // Nor one who has already claimed a Goal its lesson.
-    if (Object.values(d.goals.claimed).some((floors) => floors.length)) d.tutorials.goals = true;
-    for (const k of ["inspiration", "breakthrough"] as const) d.treeNotices[k] = s.treeNotices?.[k] === true;
+    if (Object.values(d.goals.claimed).some((floors) => floors.length)) d.tutorials.goals = true;    for (const k of ["inspiration", "breakthrough"] as const) d.treeNotices[k] = s.treeNotices?.[k] === true;
     // TODO: remove once saves from before the rename are gone.
     d.treeNotices.breakthrough ||= s.treeNotices?.courage === true;
     d.seen = decodeSeen(s.seen, d);
