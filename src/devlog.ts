@@ -13,6 +13,7 @@ export const DEVLOG_TEXT_MAX = 120;
 /** Every change, newest first: the Settings page's DEVLOG button lists them.
  * Each change adds its own line at the top (AGENTS.md). */
 export const DEVLOG: readonly DevlogEntry[] = [
+  { date: "2026-11-21", text: "Levelling up in a run gives Gold x3 for 10 minutes; the enemy stats box adds a DMG column with Damage Prediction." },
   { date: "2026-11-21", text: "New Codex in the menu: a guide to cards, badges, skills, training, arcana, equipment, enemies and more." },
   { date: "2026-11-21", text: "Cards stop at level 10 until five new Card Ascension skills in the Breakthrough tree open each rarity." },
   { date: "2026-11-21", text: "Nothing else can be pressed until the forest story is read through; Relics page relics show only when pressed." },

@@ -6,6 +6,7 @@ import type { Save } from "../save/shape.ts";
 import { wornEffects } from "../equipment/effects.ts";
 import { snap } from "../exact.ts";
 import { GOLD_BOOST_FACTOR, goldBoostFactor } from "./gold-boost.ts";
+import { LEVEL_BOOST_FACTOR } from "./level-boost.ts";
 import { ENTITLEMENT_IDS, ENTITLEMENTS, owns, type EntitlementId } from "../shop/entitlements.ts";
 import { TIER_BONUS_TENTHS } from "../tiers.ts";
 import { adGoldFactor } from "../ads/series.ts";
@@ -15,7 +16,7 @@ import { relicAmount, relicFactor } from "./relic-effects.ts";
 /** One Gold multiplier: a factor on every Gold banked, its name as the
  * player sees it, and its factor, or null while it isn't applied (the
  * player sees "Inactive"). `id` names it for the code. */
-export type GoldMultiplier = { id: "tower" | "ads" | "adPrize" | EntitlementId | "champion" | "collection" | "relics" | "gear" | "jackpot" | "boons" | "golden" | "stellar"; name: string; factor: number | null };
+export type GoldMultiplier = { id: "tower" | "ads" | "adPrize" | "levelUp" | EntitlementId | "champion" | "collection" | "relics" | "gear" | "jackpot" | "boons" | "golden" | "stellar"; name: string; factor: number | null };
 
 /** What the Gold multipliers read: the save, the mode whose hero's
  * equipment counts, the tier, the wall clock (ms, for the Gold ad's boost),
@@ -32,6 +33,8 @@ export type GoldContext = {
   shrine?: number;
   golden?: number;
   stellar?: number;
+  /** When the run's Level-up Boost ends (wall clock ms); none, or past, shows no line. */
+  levelBoostUntil?: number;
   /** Jackpot Spurs' factor on the Gold found (equipment/powers.ts), while worn; none shows no line. */
   jackpot?: number;
 };
@@ -39,12 +42,12 @@ export type GoldContext = {
 /** Every Gold multiplier, in the order the All Gold Bonuses box lists
  * them: the tower's, the ads' one line (the Gold ad's boost while it runs,
  * else Ad-Disable), the ad series' Gold prize while it runs (its own
- * factor, kept when a permanent offer is bought), each Gold bundle (the Shop's `goldFactor`s), the Event
+ * factor, kept when a permanent offer is bought), the run's Level-up Boost while it lasts, each Gold bundle (the Shop's `goldFactor`s), the Event
  * Collection (the themes and bonus tracks owned), the relics' Gold Bonus (their percents
  * added), the mode's equipment's Gold found, the run's
  * Gold boons, a Golden Floor's multiplier and a Stellar Floor's. Paying (`goldBanked`) and the box read this one list, so
  * what is shown is what is banked. */
-export function goldMultipliers({ save, mode, tier, now, shrine, golden, stellar, jackpot }: GoldContext): GoldMultiplier[] {
+export function goldMultipliers({ save, mode, tier, now, shrine, golden, stellar, jackpot, levelBoostUntil }: GoldContext): GoldMultiplier[] {
   const packs = ENTITLEMENT_IDS.filter((id) => id !== "adFree" && ENTITLEMENTS[id].goldFactor !== 1)
     .map((id): GoldMultiplier => ({ id, name: ENTITLEMENTS[id].name, factor: owns(save, id) ? ENTITLEMENTS[id].goldFactor : null }));
   // The ad's boost and Ad-Disable are one ×1.5 slot, temporary or for good:
@@ -53,6 +56,8 @@ export function goldMultipliers({ save, mode, tier, now, shrine, golden, stellar
     : { id: "ads", name: "Disable ads", factor: owns(save, "adFree") ? ENTITLEMENTS.adFree.goldFactor : null };
   const prize = adGoldFactor(save.ads.gold, now);
   const adPrize: GoldMultiplier[] = prize > 1 ? [{ id: "adPrize", name: "Ad Reward", factor: prize }] : [];
+  // A level reached inside the run, listed only while its boost lasts.
+  const levelUp: GoldMultiplier[] = levelBoostUntil !== undefined && now < levelBoostUntil ? [{ id: "levelUp", name: "Level-up Boost", factor: LEVEL_BOOST_FACTOR }] : [];
   // Champion Status's Club tier, listed only for a Champion.
   const club = championValue(save, "gold");
   const champion: GoldMultiplier[] = isChampion(save) ? [{ id: "champion", name: "Champion's Club", factor: club ? (100 + club) / 100 : null }] : [];
@@ -68,7 +73,7 @@ export function goldMultipliers({ save, mode, tier, now, shrine, golden, stellar
     ...(golden === undefined ? [] : [{ id: "golden" as const, name: "Golden Floor", factor: golden === 1 ? null : golden }]),
     ...(stellar === undefined ? [] : [{ id: "stellar" as const, name: "Stellar Floor", factor: stellar === 1 ? null : stellar }]),
   ];
-  return [{ id: "tower", name: "Tower Multiplier", factor: TIER_BONUS_TENTHS[tier - 1]! / 10 }, ads, ...adPrize, ...packs, ...champion, collection, relics, gear, ...spurs, ...boons, ...floor];
+  return [{ id: "tower", name: "Tower Multiplier", factor: TIER_BONUS_TENTHS[tier - 1]! / 10 }, ads, ...adPrize, ...levelUp, ...packs, ...champion, collection, relics, gear, ...spurs, ...boons, ...floor];
 }
 
 /** The multipliers applied, multiplied together (unrounded: `factorText`

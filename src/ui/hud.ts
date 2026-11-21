@@ -30,6 +30,7 @@ import { heldAmount } from "./currencies-dialog.ts";
 import { caveLabel, LEAGUE_INFO } from "../tournament/leagues.ts";
 import { shortCountdown } from "../tournament/schedule.ts";
 import { GOLD_BOOST_FACTOR, GOLD_BOOST_MS } from "../economy/gold-boost.ts";
+import { LEVEL_BOOST_FACTOR, levelBoostLeft, levelBoostTime } from "../economy/level-boost.ts";
 import { adsOff } from "../shop/entitlements.ts";
 import { renderRunMenu } from "./run-menu.ts";
 import { factorText, goldMultipliers, goldMultiplierTotal } from "../economy/gold-multipliers.ts";
@@ -854,6 +855,7 @@ function renderRunEarned(game: Game) {
  * ad's, with the boost time stored. Goals shows only in the forest. */
 export function renderAdButton(game: Game) {
   const inside = !game.run.outside, button = el("gem-ad") as HTMLButtonElement;
+  renderLevelBoost(game);
   el("section-pick").hidden = inside;
   button.classList.toggle("waiting", !game.gemFinder.adReady);
   button.disabled = !game.gemFinder.adReady;
@@ -891,6 +893,26 @@ function renderGemBank(game: Game) {
     /* the chime goes here */
   }
   bankWasFull = full;
+}
+
+/** Whether the Level-up Boost showed when last drawn, so the Gold bonus
+ * under the floor is worked out again the second it ends. */
+let levelBoostShown = false;
+/** Inside a run while its Level-up Boost lasts: centred over the hero's
+ * portrait, the Gold icon, its ×3 and the time left, counting down each
+ * second (main's tick). */
+function renderLevelBoost(game: Game) {
+  const left = game.run.outside ? 0 : levelBoostLeft(game.run, game.clock()), box = el("level-boost");
+  box.hidden = left <= 0;
+  if (left > 0) {
+    const time = levelBoostTime(left);
+    text("level-boost-time", time);
+    const label = `Level-up Boost: Gold ×${LEVEL_BOOST_FACTOR}, ${time} left`;
+    box.title = label;
+    box.setAttribute("aria-label", label);
+  }
+  if (levelBoostShown !== left > 0) renderGoldBonus(game);
+  levelBoostShown = left > 0;
 }
 
 /** Boost time left, short enough for the narrow button: 18m, 1h40m. */

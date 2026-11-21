@@ -12,6 +12,7 @@ import { badgeOn, badgeValue, runBadges } from "./cards/badges.ts";
 import { BOOST_FOREVER, permanentBoost } from "./shop/entitlements.ts";
 import { settlePerks } from "./shop/perks.ts";
 import { noteGoldBoost } from "./economy/gold-boost.ts";
+import { startLevelBoost } from "./economy/level-boost.ts";
 import { canWarp, claimGoal, goalUnlocked, goalsWaiting, warpEarned } from "./goals.ts";
 import { fieldReach, togetherSlow } from "./arcana/time-dilation.ts";
 import { frostArea, frostSlowAt } from "./arcana/necrotic-frost.ts";
@@ -1559,7 +1560,7 @@ export class Game {
     const golden = this.save.upgrades.goldenFloors || bloom ? (floor ? purse.golden(floor) : 1) : undefined;
     const stellar = bloom || extraStellarFloor(this.save) > 0 ? (floor ? purse.stellar(floor) : 1) : undefined;
     const jackpot = jackpotFactor(this.worn, this.run.gear);
-    return { save: this.save, mode: this.mode, tier: this.tier, now: this.clock(), shrine: this.shrine.open ? this.boons?.gold ?? 1 : undefined, golden, stellar, ...(jackpot === undefined ? {} : { jackpot }) };
+    return { save: this.save, mode: this.mode, tier: this.tier, now: this.clock(), shrine: this.shrine.open ? this.boons?.gold ?? 1 : undefined, golden, stellar, ...(jackpot === undefined ? {} : { jackpot }), ...(this.run.levelBoostUntil === undefined ? {} : { levelBoostUntil: this.run.levelBoostUntil }) };
   }
   /** The run's environment chances as they stand: what it fixed going inside, Aurum Bloom's while it holds it on, and the relics' and Champion Status's Stellar Floor chance. */
   get environments() {
@@ -2208,7 +2209,8 @@ export class Game {
     this.addXp(scale === 1 ? raisedXp : Math.round(raisedXp * scale));
   }
   /** Adds `xp` to the hero's and the run's, raising the level-up burst
-   * when it reaches a new level. */
+   * when it reaches a new level, and inside a run starting its Level-up
+   * Boost's time over (Gold ×3 for 10 minutes). */
   addXp(xp: number) {
     const level = levelForXp(this.save.xp);
     this.save.xp += xp;
@@ -2217,6 +2219,7 @@ export class Game {
     if (reached > level) {
       this.levelUpAt = performance.now();
       this.levelUpPoints = TRAINING_PER_LEVEL * (reached - level);
+      if (!this.run.outside) startLevelBoost(this.run, this.clock());
     }
   }
   /** Card `id` gains `xp` toward its levels, each level it reaches queued

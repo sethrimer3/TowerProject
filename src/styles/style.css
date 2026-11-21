@@ -255,6 +255,38 @@ h1 span {
   pointer-events: none;
 }
 .wings-ready[hidden] { display: none; }
+/* The Level-up Boost, while it lasts: the Gold icon, ×3 and its countdown,
+   centred over the portrait on a dark plate so it reads over the hero. */
+.level-boost {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  justify-items: center;
+  column-gap: 2px;
+  padding: 2px 4px;
+  background: #0b0f16d9;
+  border: 1px solid #ffd23f;
+  border-radius: 3px;
+  box-shadow: 0 0 4px #ffd23f88;
+  color: #ffe08a;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.level-boost[hidden] { display: none; }
+.level-boost img, .level-boost svg, .level-boost .ui-sprite { width: 10px; height: 10px; }
+.level-boost b { font-size: 9px; }
+.portrait-top .level-boost small {
+  grid-column: 1 / -1;
+  font-size: 8px;
+  letter-spacing: .5px;
+  color: #fff;
+}
 .wings-ready img {
   width: 14px;
   height: auto;

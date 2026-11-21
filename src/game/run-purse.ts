@@ -141,7 +141,7 @@ export class RunPurse {
    * for Gold found where the floor pays `floor`. */
   private goldContext(floor = PLAIN_FLOOR): GoldContext {
     const jackpot = jackpotFactor(this.worn, this.run.gear);
-    return { save: this.save, mode: this.mode, tier: this.tier, now: this.now, shrine: this.boons?.gold, ...floor, ...(jackpot === undefined ? {} : { jackpot }) };
+    return { save: this.save, mode: this.mode, tier: this.tier, now: this.now, shrine: this.boons?.gold, ...floor, ...(jackpot === undefined ? {} : { jackpot }), ...(this.run.levelBoostUntil === undefined ? {} : { levelBoostUntil: this.run.levelBoostUntil }) };
   }
 
   /** The run's environment chances, Aurum Bloom's and the relics' added. */

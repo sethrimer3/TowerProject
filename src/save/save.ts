@@ -217,6 +217,7 @@ const RUN_FIELD_CHECKS = {
   manual: (v: any, r: any) => validManual(v) && v.length > 0 && v.every((id: CardId) => !r.hand?.includes(id)),
   silver: (v: unknown) => finite(v),
   xp: (v: unknown) => wholeIn(v, 0, 1e9),
+  levelBoostUntil: (v: unknown) => finite(v, 1e15) && v > 0,
   ignoreUsed: (v: unknown) => wholeIn(v, 0, 99),
   targetUsed: (v: unknown) => wholeIn(v, 0, 99),
   bombsUsed: (v: unknown) => wholeIn(v, 0, 999),

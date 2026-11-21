@@ -46,6 +46,9 @@ export type RunCore = {
   links?: CardLink[];
   /** Silver held: earned from enemies and spent inside this run only. */
   silver?: number;
+  /** When the Level-up Boost ends (wall clock ms; economy/level-boost.ts):
+   * a level reached inside the run multiplies its Gold until then. */
+  levelBoostUntil?: number;
   /** XP earned from kills this run, for the run's end dialog. */
   xp?: number;
   /** The run's notes (run-notes.ts): its start, steps, keys, doors,

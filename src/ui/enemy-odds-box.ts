@@ -8,6 +8,13 @@ import { goldIcon, itemSprite, uiSprite } from "./dom.ts";
 import { RANK_CHEVRONS } from "../render/rank-chevrons.ts";
 import { COMBAT_MARKS, shieldSprite } from "../sprites/combat.ts";
 import { pngIcon } from "../sprites/kit.ts";
+import { goalUnlocked } from "../goals.ts";
+import { DamagePredictions, damageLabel } from "../render/effects/damage-labels.ts";
+
+/** The box's own predictions, kept by enemy stats while the hero's combat
+ * stats stay the same (`DamagePredictions`), so each strength's fight is
+ * worked out once, not each turn the box is redrawn. */
+const predictions = new DamagePredictions();
 
 const STRENGTH_NAMES: Record<EnemyStrength, string> = { weak: "Weak", normal: "Base", strong: "Strong", elite: "Elite", boss: "Boss", greaterBoss: "Greater Boss" };
 const TRAIT_NAMES: Record<Trait, string> = { fast: "Fast", ranged: "Ranged", shielded: "Shielded", flying: "Flying", armored: "Armored", aggroed: "Aggroed" };
@@ -42,8 +49,21 @@ const chance = (percent: number) => `${Number(percent.toFixed(2))}%`;
 /** A speed, or a dash where the trait has none. */
 const speed = (n: number | undefined) => (n === undefined ? "—" : enemyStat(n));
 
-const strengthRow = (r: StrengthOdds) =>
-  `<tr><th scope="row">${strengthName(r.strength)}</th><td>${chance(r.chance)}</td><td>${shortStat(r.hp)}</td><td>${shortStat(r.attack)}</td><td>${shortStat(r.defense)}</td><td>${shortStat(r.gold)}</td></tr>`;
+/** A Damage Prediction cell as the board's label would read on that enemy. */
+type Predicted = { text: string; color: string };
+const strengthRow = (r: StrengthOdds, damage?: Predicted) =>
+  `<tr><th scope="row">${strengthName(r.strength)}</th><td>${chance(r.chance)}</td><td>${shortStat(r.hp)}</td><td>${shortStat(r.attack)}</td><td>${shortStat(r.defense)}</td><td>${shortStat(r.gold)}</td>${damage ? `<td class="odds-damage" style="color:${damage.color}">${damage.text}</td>` : ""}</tr>`;
+
+/** Once Damage Prediction is claimed, what a fight with each strength's
+ * enemy would cost, as Damage Visual's tile labels show it (critical
+ * strikes counted with Critical Prediction, coloured by share of HP with
+ * Relative Damage Color); else null. */
+function predicted(game: Game, rows: StrengthOdds[]): Predicted[] | null {
+  if (!goalUnlocked(game.save, "damagePrediction")) return null;
+  const player = game.run.player, crit = game.save.upgrades.critPrediction ? game.crit : undefined;
+  const relative = goalUnlocked(game.save, "relativeDamageColor");
+  return rows.map((r) => damageLabel(predictions.cost(player, r.enemy, crit), player.hp, relative));
+}
 const traitRow = (r: TraitOdds) =>
   `<tr><th scope="row">${traitName(r.trait)}</th><td>${chance(r.chance)}</td><td>${speed(r.attackSpeed)}</td><td>${speed(r.moveSpeed)}</td></tr>`;
 /** An environment's row: its name, its chance, and a mark when the floor has it. */
@@ -51,14 +71,17 @@ const environmentRow = (e: Game["floorEnvironments"][number]) =>
   `<tr class="odds-env-${e.id}${e.here ? " here" : ""}"><th scope="row">${e.name}</th><td>${chance(e.chance)}</td><td>${e.here ? `<span class="odds-here" aria-label="This floor">●</span>` : ""}</td></tr>`;
 
 /** What the box shows for the floor now, and the key it is redrawn by: a
- * new floor, or a Greater Boss appearing on it. Below the enemies, the
+ * new floor, a Greater Boss appearing on it, or a Damage Prediction changing. Below the enemies, the
  * floor environments the run can roll, once any can. */
 function content(game: Game) {
   const odds = game.enemyOdds;
   if (!odds) return null;
   const environments = game.floorEnvironments;
-  const key = `${game.mode}|${game.tier}|${odds.floor}|${odds.strengths.length}|${environments.map((e) => `${e.id}${e.here ? "+" : ""}`).join(",")}`;
-  const strengths = `<table class="enemy-odds-table"><thead><tr><th scope="col">Strength</th><th scope="col">Chance</th>${statHeads()}</tr></thead><tbody>${odds.strengths.map(strengthRow).join("")}</tbody></table>`;
+  const damage = predicted(game, odds.strengths);
+  // A prediction that changes (the hero's stats did) redraws the box too.
+  const key = `${game.mode}|${game.tier}|${odds.floor}|${odds.strengths.length}|${environments.map((e) => `${e.id}${e.here ? "+" : ""}`).join(",")}${damage ? `|${damage.map((d) => `${d.text}${d.color}`).join(",")}` : ""}`;
+  const damageHead = damage ? `<th scope="col" title="Damage Prediction" aria-label="Damage Prediction">DMG</th>` : "";
+  const strengths = `<table class="enemy-odds-table"><thead><tr><th scope="col">Strength</th><th scope="col">Chance</th>${statHeads()}${damageHead}</tr></thead><tbody>${odds.strengths.map((r, i) => strengthRow(r, damage?.[i])).join("")}</tbody></table>`;
   const traits = odds.traits.length
     ? `<table class="enemy-odds-table"><thead><tr><th scope="col">Attribute</th><th scope="col">Chance</th><th scope="col">Attack Speed</th><th scope="col">Move Speed</th></tr></thead><tbody>${odds.traits.map(traitRow).join("")}</tbody></table>`
     : "";

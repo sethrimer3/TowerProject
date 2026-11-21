@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save/save.ts";
 import { ENEMY_GOLD } from "../src/economy/kill-pay.ts";
-import { xpForKill } from "../src/progression/xp.ts";
+import { xpForKill, xpForLevel } from "../src/progression/xp.ts";
 import { MODES } from "../src/modes.ts";
 import { snap } from "../src/exact.ts";
 import { TIERS, TIER_BONUS_TENTHS, TIER_STEP_FACTORS, tierXp, tierBonusText, tierGold, tierNumeral, tierShard, tierStats, tierTile } from "../src/tiers.ts";
@@ -14,12 +14,15 @@ import type { RoomWorld } from "../src/tower/room-world.ts";
 const enemy = (strength: Enemy["strength"]): Enemy => ({ name: "Test", hp: 10, attack: 5, defense: 2, tier: 1, strength });
 
 /** A Tower run inside in `tier` on an open 5×5 floor, a strong hero at (0, 0) and `foe` beside it. */
+const START_XP = xpForLevel(5);
 function arena(tier: number, foe: Enemy, height = 3) {
   const save = defaults();
   // No theme's Gold, so these figures are the mechanic's alone (theme-collection.test.ts covers it).
   save.themes = [];
   save.tower.tiersOpen = tier;
   save.tower.tier = tier;
+  // Well into a level, so a kill's XP starts no Level-up Boost (level-boost.test.ts).
+  save.xp = START_XP;
   const g = new Game(save);
   g.run.height = height;
   const w = g.world as RoomWorld;
@@ -96,7 +99,7 @@ test("kills in a higher tier pay its Gold bonus and its stat factor in XP, and t
   assert.equal(one.save.gold, ENEMY_GOLD.strong);
   assert.equal(three.save.gold, tierGold(3, ENEMY_GOLD.strong));
   assert.equal(three.save.gold, 6.2, "Gold keeps its fraction");
-  assert.equal(three.save.xp, tierXp(3, xpForKill("strong", 3)));
+  assert.equal(three.save.xp - START_XP, tierXp(3, xpForKill("strong", 3)));
   assert.equal(three.silver, one.silver);
   assert.equal(three.run.tier, 3);
   assert.equal(one.run.tier, undefined, "the first tier's runs carry no tier");

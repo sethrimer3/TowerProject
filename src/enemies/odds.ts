@@ -16,7 +16,7 @@ import { snap } from "../exact.ts";
  * its share of the floor's enemies; a boss's, whether the floor is one a
  * boss guards; a Greater Boss's, 100 once it has appeared), and a
  * balanced enemy of it as the board makes it, with the Gold its kill pays. */
-export type StrengthOdds = { strength: EnemyStrength; chance: number; hp: number; attack: number; defense: number; gold: number };
+export type StrengthOdds = { strength: EnemyStrength; chance: number; hp: number; attack: number; defense: number; gold: number; enemy: Enemy };
 export type Trait = "fast" | "ranged" | "shielded" | "flying" | "armored" | "aggroed";
 /** A trait's row: its chance in percent (an enemy's, but Shielded's, which
  * is the floor's chance of holding one), and the shots (Ranged, Flying) or
@@ -39,7 +39,7 @@ export type OddsSource = {
 export function strengthOdds(s: OddsSource): StrengthOdds[] {
   const row = (strength: EnemyStrength, chance: number): StrengthOdds => {
     const e = s.enemy(strength);
-    return { strength, chance, hp: e.hp, attack: e.attack, defense: e.defense, gold: s.gold(e) };
+    return { strength, chance, hp: e.hp, attack: e.attack, defense: e.defense, gold: s.gold(e), enemy: e };
   };
   const ranked = RANKED_STRENGTHS.map((k) => ({ k, chance: enemyShare(k, s.floor, s.tier) })).filter((r) => r.chance > 0);
   return [

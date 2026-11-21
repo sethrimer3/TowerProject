@@ -5,6 +5,7 @@ import { Game } from "../src/state.ts";
 import { defaults } from "../src/save/save.ts";
 import type { Enemy, EnemyStrength } from "../src/entities.ts";
 import type { TowerRun } from "../src/runs.ts";
+import { DamagePredictions } from "../src/render/effects/damage-labels.ts";
 
 const source = (tier: number, floor: number, greaterBoss = false): OddsSource => ({
   tier, floor, greaterBoss,
@@ -49,4 +50,20 @@ test("the game reads the floor the hero stands on, its enemies as the board make
   assert.deepEqual(g.enemyOdds!.strengths.at(-1)!.strength, "greaterBoss");
   g.newRun({ outside: true });
   assert.equal(g.enemyOdds, null, "none in the forest");
+});
+
+test("each strength's Damage Prediction is worked out once, again only when the hero's stats change", () => {
+  const g = new Game(defaults());
+  g.newRun({ seed: 5 });
+  const predictions = new DamagePredictions(), rows = () => g.enemyOdds!.strengths;
+  const costs = () => rows().map((r) => predictions.cost(g.run.player, r.enemy).damage);
+  const first = costs();
+  assert.equal(predictions.computed, rows().length, "one per kind of enemy");
+  for (let turn = 0; turn < 5; turn++) assert.deepEqual(costs(), first);
+  assert.equal(predictions.computed, rows().length, "redrawing the box reuses them");
+  g.run.player.attack += 1;
+  costs();
+  assert.equal(predictions.computed, 2 * rows().length, "worked out again for the new ATK");
+  // Each matches what the board's label on that enemy reads.
+  assert.deepEqual(first, rows().map((r) => new DamagePredictions().cost({ ...g.run.player, attack: g.run.player.attack - 1 }, r.enemy).damage));
 });

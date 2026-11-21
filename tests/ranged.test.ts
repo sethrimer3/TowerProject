@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { xpForLevel } from "../src/progression/xp.ts";
 import { Game } from "../src/state.ts";
 import { defaults } from "../src/save/save.ts";
 import { ENEMY_GOLD, RANGED_GOLD } from "../src/economy/kill-pay.ts";
@@ -117,6 +118,8 @@ test("Ranged enemies say so before their strength and name, after Fast", () => {
  * `foes` placed by tile. */
 function arena(foes: Record<string, Enemy>, over: Partial<Player> = {}) {
   const save = defaults();
+  // Well into a level, so a kill's XP starts no Level-up Boost (level-boost.test.ts).
+  save.xp = xpForLevel(5);
   const g = new Game(save);
   g.save.themes = [];
   g.run.tier = 3;

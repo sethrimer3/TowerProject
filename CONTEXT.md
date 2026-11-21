@@ -446,8 +446,12 @@ _Avoid_: super boss, secret boss
 A monster that appears on a floor during a run rather than being made with it, like the Greater Boss. It pays its own rewards even on a tile where a monster already fell.
 _Avoid_: summon, added enemy
 
+**Level-up Boost**:
+Gold ×3 for 10 minutes of real time from each level the hero reaches inside a run, a further level starting the time over; it ends with the run.
+_Avoid_: level bonus, XP boost
+
 **Gold multiplier**:
-A factor on every Gold banked: the tower's, the Gold ad's boost or Ad-Disable (one slot), the Ad Reward while it runs, each coin pack, the Event Collection, the Gold Bonus relics, the equipment's Gold found and the run's Gold boons. The player sees them together as *All Gold Bonuses*; Gold Bonus training is none of them, since it raises only a kill's, a chest's, an item's and a floor's Gold.
+A factor on every Gold banked: the tower's, the Gold ad's boost or Ad-Disable (one slot), the Ad Reward while it runs, the Level-up Boost while it lasts, each coin pack, the Event Collection, the Gold Bonus relics, the equipment's Gold found and the run's Gold boons. The player sees them together as *All Gold Bonuses*; Gold Bonus training is none of them, since it raises only a kill's, a chest's, an item's and a floor's Gold.
 _Avoid_: Gold bonus (the Training row)
 
 **Silver**:
