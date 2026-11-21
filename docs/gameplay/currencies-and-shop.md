@@ -79,7 +79,7 @@ With Access to Everything on, both menus list every theme to wear, owning none: 
 Each Tower climb, as it ends, keeps the Gold it found and the real time it took (less any time the app was closed during it); Delve runs don't count.
 The last ten give the **Recent Gold per Hour**: their Gold over their time, so a long climb weighs more than a short one.
 The Settings page's Stats dialog shows it after the Gold earned, shortened (*12.3K*).
-**Offline Gold** (2 Breakthrough, down and right of Golden Floors, beside Esoteric Training, with Gem Card under it) pays Gold for the time the app was closed.
+**Offline Gold** (2 Breakthrough, straight under Golden Floors, beside Esoteric Training, with Gem Card under it) pays Gold for the time the app was closed.
 Starting the app again after a minute or more away (less is no time away) opens the *Offline Gold* dialog, pausing a climb in progress: the time away and the most that pays (*03h:10m offline (of 02h:00m max)*), and the sum, *Recent 12.3K × 02h:00m × 10.0% = 2.46K*.
 Time away that pays nothing (no Recent Gold per Hour yet) opens no dialog.
 A Champion is paid Offline Gold even without the skill, for twice the time, at the Champion's Club's rate added, and **Offline Gems** besides, listed in the same dialog.

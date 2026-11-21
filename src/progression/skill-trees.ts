@@ -143,7 +143,11 @@ export const TREES: SkillTree[] = [
     { id: "moveSpeed", icon: "»", x: 50, y: 34, requires: ["questForKnowledge"] },
     { id: "instantCombat", icon: "↯", x: 18, y: 34, requires: ["moveSpeed"] },
     { id: "extraKey", icon: "⚿", x: 82, y: 34, requires: ["moveSpeed"] },
-    { id: "pathToWealth", icon: "¤", x: 18, y: 58, requires: ["moveSpeed"] },
+    // Card Ascension - Uncommon left of Path to Wealth, with Rare under it,
+    // after it; Epic, Legendary and Mythic follow further down.
+    { id: "ascendUncommon", icon: "⇧", x: 10, y: 58, requires: ["moveSpeed"] },
+    { id: "ascendRare", icon: "⇧", x: 10, y: 85, requires: ["ascendUncommon"] },
+    { id: "pathToWealth", icon: "¤", x: 30, y: 58, requires: ["moveSpeed"] },
     { id: "physician", icon: "✚", x: 50, y: 58, requires: ["moveSpeed"] },
     { id: "dash", icon: "⇶", x: 82, y: 58, requires: ["moveSpeed"] },
     // Dash's own skills down the right edge: End Rush, Dash Regen, then Dash
@@ -155,20 +159,21 @@ export const TREES: SkillTree[] = [
     // Golden Floors under More Wealth (under Path to Wealth), then two ways
     // down from it: Esoteric Training down and left, with Aether Shield
     // (what reveals the Inspiration tree's Shield path), Phoenix Spark and
-    // Echoes of Time (its charges) straight under it, and Offline Gold down
-    // and right, with Gem Card under it, above Ricochet Shock Research.
-    { id: "moreWealth", icon: "¤", x: 18, y: 85, requires: ["pathToWealth"] },
-    { id: "goldenFloors", icon: "¤", x: 18, y: 111, requires: ["moreWealth"] },
+    // Echoes of Time (its charges) straight under it, and Offline Gold
+    // straight down, with Gem Card under it, above Ricochet Shock Research.
+    { id: "moreWealth", icon: "¤", x: 30, y: 85, requires: ["pathToWealth"] },
+    { id: "goldenFloors", icon: "¤", x: 30, y: 111, requires: ["moreWealth"] },
     { id: "offlineGold", icon: "¤", x: 30, y: 137, requires: ["goldenFloors"] },
     { id: "gemCard", icon: "◆", x: 30, y: 163, requires: ["offlineGold"] },
     { id: "esotericTraining", icon: "⇑", x: 10, y: 137, requires: ["goldenFloors"] },
     { id: "aetherShield", icon: "◯", x: 10, y: 163, requires: ["esotericTraining"] },
     { id: "phoenixSpark", icon: "✦", x: 10, y: 189, requires: ["aetherShield"] },
     { id: "undos", icon: "↺", x: 10, y: 213, requires: ["phoenixSpark"] },
-    // The run's charges under Echoes of Time, two rows clear of it (clear of
-    // Phantasm Research): Ignore, with
+    // Card Ascension - Legendary under Echoes of Time, then the run's charges
+    // under it, clear of Phantasm Research: Ignore, with
     // Target to its right, each with the skill that regains it below.
-    { id: "ignore", icon: "⊘", x: 10, y: 285, requires: ["undos"] },
+    { id: "ascendLegendary", icon: "⇧", x: 10, y: 249, requires: ["undos"] },
+    { id: "ignore", icon: "⊘", x: 10, y: 285, requires: ["ascendLegendary"] },
     { id: "target", icon: "⌖", x: 30, y: 285, requires: ["ignore"] },
     { id: "ignoreMore", icon: "⊘", x: 10, y: 309, requires: ["ignore"] },
     { id: "targetMore", icon: "⌖", x: 30, y: 309, requires: ["target"] },
@@ -187,6 +192,8 @@ export const TREES: SkillTree[] = [
     { id: "autoTrain", icon: "⇧", x: 70, y: 111, requires: ["life"] },
     { id: "enemyLevelSkips", icon: "↷", x: 50, y: 137, requires: ["life"] },
     { id: "cardBadges", icon: "◪", x: 70, y: 137, requires: ["enemyLevelSkips"] },
+    // Card Ascension - Epic under Enemy Level Skips, after it.
+    { id: "ascendEpic", icon: "⇧", x: 50, y: 163, requires: ["enemyLevelSkips"] },
     { id: "trainingRespec", icon: "↺", x: 70, y: 163, requires: ["cardBadges"] },
     { id: "arcanaRespec", icon: "✧", x: 90, y: 163, requires: ["trainingRespec"] },
     { id: "keyMastery", icon: "⚿", x: 70, y: 189, requires: ["trainingRespec"] },
@@ -227,6 +234,8 @@ export const TREES: SkillTree[] = [
     { id: "limitBreak2", icon: "⇑", x: 50, y: 333, requires: ["limitBreak1"] },
     { id: "shieldLimitBreak", icon: "⇑", x: 70, y: 333, requires: ["limitBreak2"], reveal: "aetherShield" },
     { id: "limitBreak3", icon: "⇑", x: 50, y: 357, requires: ["limitBreak2"] },
+    // Card Ascension - Mythic right of Limit Break 3, after it.
+    { id: "ascendMythic", icon: "⇧", x: 70, y: 357, requires: ["limitBreak3"] },
     { id: "limitBreak4", icon: "⇑", x: 50, y: 381, requires: ["limitBreak3"] },
     { id: "limitBreak5", icon: "⇑", x: 50, y: 405, requires: ["limitBreak4"] },
     { id: "limitBreak6", icon: "⇑", x: 50, y: 429, requires: ["limitBreak5"] },

@@ -48,8 +48,10 @@ test("a card stops at the last level of its rarity, ready to ascend once it hold
   assert.deepEqual([levelIn(s, "door").level, cardMaxLevel(s.cardAscension, "door"), readyToAscend(s, "door")], [10, 10, false], "at 10, short of 11's XP");
   s.cardXp.door = xpTo(12) + 5;
   assert.deepEqual([levelIn(s, "door").level, readyToAscend(s, "door")], [10, true], "the XP keeps gathering past the cap");
-  assert.deepEqual(nextAscension(s, "door"), { rarity: "uncommon", rubies: 10 });
+  assert.deepEqual(nextAscension(s, "door"), { rarity: "uncommon", rubies: 10, skill: "ascendUncommon" });
   const g = new Game(s);
+  assert.deepEqual(g.cards.ascend("door"), { refused: "locked" }, "not before Card Ascension - Uncommon");
+  g.save.upgrades.ascendUncommon = 1;
   assert.deepEqual(g.cards.ascend("door"), { refused: "short" });
   g.save.rubies = 25;
   assert.deepEqual(g.cards.ascend("door"), { rarity: "uncommon" });
@@ -68,6 +70,7 @@ test("Dev mode's free purchases ascend for nothing", () => {
   const s = defaults();
   s.cardXp.key = xpTo(11);
   s.settings.freePurchases = true;
+  s.upgrades.ascendUncommon = 1;
   const g = new Game(s);
   assert.deepEqual(g.cards.ascend("key"), { rarity: "uncommon" });
   assert.equal(g.save.rubies, 0);
@@ -180,10 +183,25 @@ test("the ad prize that gave card draws gives 10 Rubies", async () => {
   assert.ok(AD_PRIZES.some((p) => p.kind === "rubies" && p.amount === 10));
 });
 
-test("a card's ascensions count toward the Deck tab's dot only while it can pay", () => {
+test("a card's ascensions count toward the Deck tab's dot only while it can pay, with its Card Ascension skill owned", () => {
   const g = new Game(playedSave());
   g.save.cardXp.door = xpTo(11);
   const seen = g.notices.deckCount();
   g.save.rubies = 10;
+  assert.equal(g.notices.deckCount(), seen, "not before Card Ascension - Uncommon");
+  g.save.upgrades.ascendUncommon = 1;
   assert.equal(g.notices.deckCount(), seen + 1);
+});
+
+test("each rarity's ascension waits on its own Card Ascension skill", () => {
+  const g = new Game(defaults());
+  g.save.rubies = 1_000_000;
+  const skills = ["ascendUncommon", "ascendRare", "ascendEpic", "ascendLegendary", "ascendMythic"] as const;
+  for (const [i, skill] of skills.entries()) {
+    g.save.cardXp.door = xpTo(10 * (i + 1) + 1);
+    assert.deepEqual(g.cards.ascend("door"), { refused: "locked" }, skill);
+    g.save.upgrades[skill] = 1;
+    assert.equal("rarity" in g.cards.ascend("door"), true, skill);
+  }
+  assert.equal(g.save.cardAscension.door, 5);
 });

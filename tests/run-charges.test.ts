@@ -24,7 +24,7 @@ function arena(size: number, ...owned: ("ignore" | "target")[]) {
   return g;
 }
 
-test("the four charge skills cost 3 Breakthrough (Ignore, Target) or 4 (Ignore More, Target More) and sit below Echoes of time", () => {
+test("the four charge skills cost 3 Breakthrough (Ignore, Target) or 4 (Ignore More, Target More) and sit below Card Ascension - Legendary, under Echoes of time", () => {
   const save = defaults();
   for (const [id, price] of [["ignore", 3], ["ignoreMore", 4], ["target", 3], ["targetMore", 4]] as const) {
     assert.equal(cost(id, 0), price, id);
@@ -33,6 +33,8 @@ test("the four charge skills cost 3 Breakthrough (Ignore, Target) or 4 (Ignore M
   Object.assign(save.upgrades, { trainers: 1, breakthrough: 1, moveSpeed: 1, pathToWealth: 1, moreWealth: 1, goldenFloors: 1, esotericTraining: 1, aetherShield: 1, phoenixSpark: 1 });
   assert.equal(skillAvailable("ignore", save.upgrades), false, "Ignore follows Echoes of time");
   save.upgrades.undos = 1;
+  assert.equal(skillAvailable("ignore", save.upgrades), false, "Ignore follows Card Ascension - Legendary");
+  save.upgrades.ascendLegendary = 1;
   assert.ok(skillAvailable("ignore", save.upgrades));
   assert.equal(skillAvailable("ignoreMore", save.upgrades), false);
   assert.equal(skillAvailable("target", save.upgrades), false, "Target follows Ignore");

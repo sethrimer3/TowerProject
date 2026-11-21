@@ -1,6 +1,7 @@
 import { CARD_IDS, type CardId } from "./cards.ts";
 import { count, isRecord, wholeIn } from "../save/decode.ts";
 import { ASCEND_RUBIES, CARD_RARITIES, LEVELS_PER_RARITY, rarityAt, type CardRarity } from "./rarity.ts";
+import type { UpgradeId } from "../progression/upgrades.ts";
 
 /** The XP each card level costs, from level 1 to 60: five levels at each
  * step of the schedule to level 20, then each level's step 250 XP more
@@ -62,13 +63,19 @@ export const totalCardLevels = (save: CardLevelSave) => cardLevelTotal(save.card
 /** `card`'s rarity in the save: its level's. */
 export const rarityIn = (save: CardLevelSave, card: CardId): CardRarity => rarityAt(levelIn(save, card).level);
 
-/** The rarity `card` ascends to next and the Rubies it costs, while it
- * has one left (none at mythic). */
-export function nextAscension(save: CardLevelSave, card: CardId): { rarity: CardRarity; rubies: number } | null {
+/** The Breakthrough skill that lets cards ascend to each rarity past
+ * common: until it is owned, cards stop at the rarity before (a new game's
+ * at level 10). */
+export const ASCENSION_SKILLS: Readonly<Partial<Record<CardRarity, UpgradeId>>> = {
+  uncommon: "ascendUncommon", rare: "ascendRare", epic: "ascendEpic", legendary: "ascendLegendary", mythic: "ascendMythic",
+};
+/** The rarity `card` ascends to next, the Rubies it costs and the skill
+ * that lets it (`ASCENSION_SKILLS`), while it has one left (none at mythic). */
+export function nextAscension(save: CardLevelSave, card: CardId): { rarity: CardRarity; rubies: number; skill: UpgradeId } | null {
   const done = save.cardAscension[card] ?? 0;
   if (done >= MAX_ASCENSION) return null;
   const rarity = CARD_RARITIES[done + 2]!;
-  return { rarity, rubies: ASCEND_RUBIES[rarity]! };
+  return { rarity, rubies: ASCEND_RUBIES[rarity]!, skill: ASCENSION_SKILLS[rarity]! };
 }
 /** Whether `card` waits to ascend: at its max level, short of 60, with
  * the XP for the next level already gathered. */

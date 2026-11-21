@@ -1,6 +1,6 @@
 /** The Deck page's card ascensions: a card held at the last level of its
  * rarity, with the XP for the next already gathered, ascends to the next
- * rarity, paid in Rubies (cards/levels.ts), which raises its max level ten
+ * rarity once that rarity's Card Ascension skill is owned, paid in Rubies (cards/levels.ts), which raises its max level ten
  * and opens its next power (cards/powers.ts). */
 import type { CardId } from "../cards/cards.ts";
 import { ascendCard, nextAscension, readyToAscend } from "../cards/levels.ts";
@@ -17,9 +17,10 @@ export interface CardDeskHost {
 }
 
 /** Why a card can't ascend now: it isn't waiting to (`notReady`: short of
- * its max level or of the XP for the next, or mythic already), or the
- * Rubies held fall short (`short`). */
-export type AscendRefusal = "notReady" | "short";
+ * its max level or of the XP for the next, or mythic already), the next
+ * rarity's Card Ascension skill isn't owned (`locked`), or the Rubies held
+ * fall short (`short`). */
+export type AscendRefusal = "notReady" | "locked" | "short";
 
 export class CardDesk {
   constructor(private readonly host: CardDeskHost) {}
@@ -34,10 +35,18 @@ export class CardDesk {
     return readyToAscend(this.host.save, card);
   }
 
+  /** Whether the skill that lets `card` ascend to its next rarity is owned
+   * (false at mythic). */
+  unlocked(card: CardId) {
+    const next = this.next(card);
+    return !!next && this.host.save.upgrades[next.skill] > 0;
+  }
+
   /** Why `card` can't ascend now, or null when it can. */
   refusal(card: CardId): AscendRefusal | null {
     const next = this.next(card);
     if (!next || !this.ready(card)) return "notReady";
+    if (!this.unlocked(card)) return "locked";
     return this.host.free || this.host.save.rubies >= next.rubies ? null : "short";
   }
 

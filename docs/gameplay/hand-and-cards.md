@@ -128,7 +128,7 @@ A card can level up during a run: if the card is in view in the hand, a golden g
 A card out of view (in a hand scrolled sideways) shows as a ghost at 75% transparency over the board's top left, a golden glow behind it, with the same icon, the ghost fading once the icon is gone.
 Several level-ups play one after another, and wait while a page covers the board.
 
-Back in the forest after a card levels up, the Deck tab carries a red dot with a number: the cards new to the deck and the cards ready to ascend with the Rubies to pay for it.
+Back in the forest after a card levels up, the Deck tab carries a red dot with a number: the cards new to the deck and the cards ready to ascend, with the Card Ascension skill and the Rubies to pay for it.
 Opening the Deck takes the dot away until the next level-up or new card.
 On the Deck page a card ready to ascend wears a gold arrow rising beside its level, and a card new to the deck wears **NEW** in gold at its top right until you meet it: press it for its details, move it, put it in the hand or give it a badge.
 The starting hand's cards never wear NEW.
@@ -137,6 +137,8 @@ The starting hand's cards never wear NEW.
 
 A card stops levelling at the last level of its rarity (10, 20, 30, 40 and 50): it keeps gathering XP, and once it holds the XP for the next level it is **Ready to ascend**.
 Its pop-up on the Deck page then offers **Ascend**, priced in Rubies, under *Ascend to unlock the next 10 levels with a new power.*
+Each rarity's ascension first needs its Breakthrough skill, so a new game's cards stop at level 10: **Card Ascension - Uncommon** (2 Breakthrough, left of Path to Wealth, after Movement Speed), **- Rare** (3, under Uncommon, after it), **- Epic** (4, under Enemy Level Skips, after it), **- Legendary** (6, under Echoes of time, after it, with Ignore now after it) and **- Mythic** (10, right of Limit Break 3, after it).
+Until the skill is owned, the pop-up says which one to unlock instead of offering Ascend, and the card wears no rising arrow.
 Ascending to Uncommon costs 10 Rubies, to Rare 100, to Epic 1,000, to Legendary 10,000 and to Mythic 100,000.
 The button's outline greys while the Rubies held fall short, and it does nothing then.
 Ascending raises the card to its next rarity and level at once, and any XP it gathered past that carries on up the new rarity's levels.
@@ -227,8 +229,8 @@ A press plans the card whatever a gate badge on it says.
 
 ## Ignore and Target
 
-Below Echoes of time, under Phoenix Spark in the Breakthrough tree, four skills (Ignore and Target 3 Breakthrough each, Ignore More and Target More 4) give the run more of a say.
-**Ignore** (below Echoes of time, after it) adds a button beside the potions, a red ⊘ with the uses left: press it, then tap a tile, and no card's path (nor Target's) steps on that tile for the rest of the floor, marked with a red ⊘.
+Below Card Ascension - Legendary, under Echoes of time in the Breakthrough tree, four skills (Ignore and Target 3 Breakthrough each, Ignore More and Target More 4) give the run more of a say.
+**Ignore** (below Card Ascension - Legendary, after it) adds a button beside the potions, a red ⊘ with the uses left: press it, then tap a tile, and no card's path (nor Target's) steps on that tile for the rest of the floor, marked with a red ⊘.
 A run gets 1 use, and **Ignore Count** research adds one a level, up to 10.
 A wall, the hero's own tile or one already ignored costs nothing, and pressing the button again puts it away.
 **Ignore More** (below Ignore) regains a spent Ignore use every 100 new floors a run climbs (new equivalent floors in the Delve); the count waits while Ignore is full, and its Archives research, **Ignore More**, takes a floor off the wait a level, down to every 10 floors.

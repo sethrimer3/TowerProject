@@ -163,6 +163,7 @@ const SKILL_DETAIL_SPRITES: Partial<Record<UpgradeId, string>> = {
   renownCrown: "ui-crown",
   enemyLevelSkips: "badge-skip", enemyHpLevelSkips: "boon-enemy-hp-regen", enemyCombatLevelSkips: "boon-enemy-attack",
   avengingAngel: "combat-wing",
+  ascendUncommon: "ui-card-points", ascendRare: "ui-card-points", ascendEpic: "ui-card-points", ascendLegendary: "ui-card-points", ascendMythic: "ui-card-points",
   lifespringResearch: "arcana-lifespring", aurumBloomResearch: "arcana-aurum-bloom",
   thunderboltResearch: "arcana-thunderbolt", phantasmResearch: "arcana-phantasm", necroticFrostResearch: "arcana-necrotic-frost",
   ricochetShockResearch: "arcana-ricochet-shot", timeDilationResearch: "arcana-time-dilation", arcanaResearch: "arcana-overseer",

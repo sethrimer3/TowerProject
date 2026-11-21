@@ -9,12 +9,13 @@ A skill you can't yet afford, once pressed, says how many more Inspiration point
 
 ## Below the Archives
 
-Greater Heal and the skills under it stay hidden until the Breakthrough skill **Physician** (1 Breakthrough, below Movement Speed) is bought, and Pocket Money and the skills under it until **Path to Wealth** (1 Breakthrough, left of Physician).
+Greater Heal and the skills under it stay hidden until the Breakthrough skill **Physician** (1 Breakthrough, below Movement Speed) is bought, and Pocket Money and the skills under it until **Path to Wealth** (1 Breakthrough, left of Physician, with More Wealth and Golden Floors straight under it, above Offline Gold).
+The five **Card Ascension** skills let cards ascend to each rarity (see [Ascending](hand-and-cards.md#ascending)).
 Below Free Training, **Interest**, with **Max Interest** and **Mug** either side under it (10 Inspiration each), and Chest and Floor Skip Reward under them, wait besides on **More Wealth** (1 Breakthrough, under Path to Wealth).
 **Golden Floors** (3 Breakthrough, under More Wealth) opens the [Golden Floor](environments.md#golden-floor) research.
 **Esoteric Training** (2 Breakthrough, down and left of Golden Floors) raises how far ATK, DEF, Max HP, Regen and Shroud train from 500 levels to 1,000 (see [Training](training.md)).
 Under it stand **Aether Shield** (see [Aether Shield](aether-shield.md)), then **Phoenix Spark** and **Echoes of time** (see [Phoenix Spark](runs.md#phoenix-spark)).
-**Offline Gold** (2 Breakthrough, down and right of Golden Floors, after it) pays Gold for time away and opens its research (see [Offline Gold](currencies-and-shop.md#offline-gold)).
+**Offline Gold** (2 Breakthrough, straight under Golden Floors, after it) pays Gold for time away and opens its research (see [Offline Gold](currencies-and-shop.md#offline-gold)).
 **Thorns** stands below Buy Quantity, then **Arcana Research** (20 Inspiration), which reveals the Arcana's research in the Breakthrough tree, with **Limit Break** (20 Inspiration) to its right, which reveals the Breakthrough tree's Limit Breaks, and **Torch** (20 Inspiration) below them, a row below Floor Skip Reward.
 **Training Respec** (2 Breakthrough, under Badges in the Breakthrough tree) opens the Gem reset of Training stats (see [Training](training.md)), and **Arcana Respec** (3 Breakthrough, right of it, after it) adds Respec to the Arcana tab (see [Arcana](arcana.md)).
 Torch leads two ways, each hidden until a Mastery under **Key Mastery** (1 Breakthrough, under Training Respec) in the Breakthrough tree is bought: down the middle Wooden Door and the door cards (**Door Mastery**, 2 Breakthrough, left of Key Mastery, after it), down to the left Find Gold Key and Key Efficiency (revealed by Key Mastery itself), then GK Siphon, BK Siphon, the key trades and the key badges (**Card Mastery**, straight under Key Mastery), and **Beast Mastery** reveals Boss Enemy and Non-Boss Enemy under Enemy Combat Level Skips, those two Masteries 1 Breakthrough each, split off Key Mastery (Beast Mastery beside it, under Dash Badge).

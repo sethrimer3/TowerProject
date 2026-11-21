@@ -11,7 +11,8 @@ import { RARITIES } from "../shop/rarity.ts";
 import { revealDraws } from "./badge-reveal.ts";
 import { revealAscension } from "./card-ascend-reveal.ts";
 import { cardPowersHtml } from "./card-power-view.ts";
-import { levelIn, readyToAscend } from "../cards/levels.ts";
+import { levelIn } from "../cards/levels.ts";
+import { UPGRADES } from "../progression/upgrades.ts";
 import { CARD_RARITY_NAMES } from "../cards/rarity.ts";
 import { DeckCardPopover } from "./deck-card-popover.ts";
 import { DeckMotion, cardOrigin, type CardOrigin } from "./deck-motion.ts";
@@ -154,7 +155,7 @@ export class DeckPage {
       "<p>Your hand's cards move you through a climb: it tries them left to right, and the first that can act moves you.</p>"
       + "<p>A card gains XP each time it acts (Archer and Angel Wings each floor) and levels up as it gathers enough. Each level raises its <b>base power</b>, and every card's level shows its rarity: Base at 0, then Common, Uncommon, Rare, Epic, Legendary and Mythic, ten levels each.</p>"
       + "<p>Each rarity opens a new <b>power</b>, which grows with each of that rarity's ten levels. Powers count while the card is in either hand, from the moment it levels up, even in the middle of a climb.</p>"
-      + `<p>At level 10, 20, 30, 40 and 50 a card stops levelling: it keeps gathering XP, and once it has the XP for the next level it is <b>Ready to ascend</b>. Ascending costs ${rubyIcon()} Rubies, dropped by bosses and Greater Bosses, and raises the card to its next rarity, opening ten more levels and a new power.</p>`);
+      + `<p>At level 10, 20, 30, 40 and 50 a card stops levelling: it keeps gathering XP, and once it has the XP for the next level it is <b>Ready to ascend</b>. Ascending costs ${rubyIcon()} Rubies, dropped by bosses and Greater Bosses, and raises the card to its next rarity, opening ten more levels and a new power. Each rarity's ascension first needs its <b>Card Ascension</b> skill from the Breakthrough tree.</p>`);
   }
 
   /** Ascends card `id` for its Rubies, then celebrates its new rarity. */
@@ -378,12 +379,12 @@ export class DeckPage {
 
   /** What card `id` wears over its art: its XP toward its next level on the
    * rule above its name, its rarity's frame and level, a rising arrow at its
-   * top left while it is ready to ascend, and NEW in gold
-   * at its top right until the player meets it here. */
+   * top left while it is ready to ascend and its Card Ascension skill is
+   * owned, and NEW in gold at its top right until the player meets it here. */
   private marksHtml(id: CardId) {
-    const { save, notices } = this.ctx.game, still = save.settings.reduceMotion ? " still" : "";
+    const { save, notices, cards } = this.ctx.game, still = save.settings.reduceMotion ? " still" : "";
     return cardXpBarHtml(save, id) + cardLevelHtml(save, id)
-      + (readyToAscend(save, id) ? `<span class="card-points-mark${still}" aria-hidden="true">${ASCEND_ARROW}</span>` : "")
+      + (cards.ready(id) && cards.unlocked(id) ?`<span class="card-points-mark${still}" aria-hidden="true">${ASCEND_ARROW}</span>` : "")
       + (notices.isNew(id) ? `<span class="card-new" aria-hidden="true">NEW</span>` : "");
   }
 
@@ -794,11 +795,13 @@ export class DeckPage {
 
   /** While card `id` waits to ascend, its Ascend button priced in Rubies,
    * its outline greyed while the Rubies held fall short, with what
-   * ascending does; nothing otherwise. */
+   * ascending does, or, until the skill that lets it ascend is owned, where
+   * to find that skill; nothing otherwise. */
   private ascendHtml(id: CardId) {
     const { game } = this.ctx, next = game.cards.next(id);
     if (!next || !game.cards.ready(id)) return "";
     const short = game.cards.refusal(id) === "short", name = CARD_RARITY_NAMES[next.rarity];
+    if (!game.cards.unlocked(id)) return `<p class="deck-ascend-note">Unlock <b>${UPGRADES.find((u) => u.id === next.skill)!.name}</b> in the Breakthrough tree to ascend this card.</p>`;
     return `<p class="deck-ascend-note">Ascend to unlock the next 10 levels with a new power.</p>`
       + `<button type="button" class="deck-ascend${short ? " short" : ""}" data-ascend="${id}"${short ? ` aria-disabled="true"` : ""} title="${short ? `Ascending to ${name} takes ${next.rubies.toLocaleString("en-US")} Rubies` : `Ascend to ${name}`}" aria-label="Ascend to ${name} for ${next.rubies.toLocaleString("en-US")} Rubies">Ascend · ${rubyIcon()} <b>${next.rubies.toLocaleString("en-US")}</b></button>`;
   }

@@ -641,6 +641,13 @@ export const UPGRADES = [
   { id: "limitBreak8", name: "Limit Break 8", description: "Raise the most training levels of ATK, DEF, Max HP, Regen and Shroud by 500", base: 5, max: 1, currency: "breakthrough" },
   { id: "limitBreak9", name: "Limit Break 9", description: "Raise the most training levels of ATK, DEF, Max HP and Regen by 500", base: 5, max: 1, currency: "breakthrough" },
   { id: "limitBreak10", name: "Limit Break 10", description: "Raise the most training levels of ATK, DEF, Max HP and Regen by 500", base: 5, max: 1, currency: "breakthrough" },
+  // Card Ascension: each lets cards ascend to its rarity (ASCENSION_SKILLS
+  // in cards/levels.ts), so a new game's cards stop at level 10.
+  { id: "ascendUncommon", name: "Card Ascension - Uncommon", description: "Let cards ascend to Uncommon, opening levels 11 to 20", base: 2, max: 1, currency: "breakthrough" },
+  { id: "ascendRare", name: "Card Ascension - Rare", description: "Let cards ascend to Rare, opening levels 21 to 30", base: 3, max: 1, currency: "breakthrough" },
+  { id: "ascendEpic", name: "Card Ascension - Epic", description: "Let cards ascend to Epic, opening levels 31 to 40", base: 4, max: 1, currency: "breakthrough" },
+  { id: "ascendLegendary", name: "Card Ascension - Legendary", description: "Let cards ascend to Legendary, opening levels 41 to 50", base: 6, max: 1, currency: "breakthrough" },
+  { id: "ascendMythic", name: "Card Ascension - Mythic", description: "Let cards ascend to Mythic, opening levels 51 to 60", base: 10, max: 1, currency: "breakthrough" },
   { id: "cardWoodenDoor", name: "Wooden Door", description: "Add the WOODEN DOOR card to your deck", card: "woodenDoor", base: 20, max: 1, currency: "inspiration" },
   {
     id: "phoenixSpark",
