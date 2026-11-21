@@ -5228,8 +5228,8 @@ html.reduce-motion button.mission-bar.event-claim { animation: none; }
 .store-theme .theme-preview { max-width: 140px; }
 .theme-more { margin-top: 10px; }
 /* The Relics screen (relics-page.ts): a grid of the relics owned for each
-   rarity, and one raised to full size with rays and sparkles when pressed
-   or hovered (relic-pop.ts). */
+   rarity, and one raised to full size when pressed (rays and sparkles only
+   when just won) (relic-pop.ts). */
 #relics .page-title { margin: 18px 44px 14px; text-align: center; }
 .relic-rarity { margin-bottom: 14px; }
 .relic-rarity h3 { margin: 0 0 6px; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
@@ -5249,7 +5249,6 @@ html.reduce-motion button.mission-bar.event-claim { animation: none; }
 .relic-cell.epic { border-color: #7a4dbf; }
 .relic-cell.legendary { border-color: #b88a2e; }
 .relic-pop { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; padding: 16px; background: #04070bd9; overflow: hidden; cursor: pointer; }
-.relic-pop.hover { pointer-events: none; }
 .relic-pop-stage { position: relative; display: grid; place-items: center; }
 .relic-pop-rays { position: absolute; left: 50%; top: 50%; width: 560px; height: 560px; border-radius: 50%; background: radial-gradient(circle, #ffe7a6aa 0 12%, #e9b84a55 22%, transparent 48%), repeating-conic-gradient(from 0deg, #ffd76a 0deg 5deg, transparent 5deg 15deg); -webkit-mask-image: radial-gradient(circle, #000 18%, transparent 68%); mask-image: radial-gradient(circle, #000 18%, transparent 68%); opacity: 0.8; pointer-events: none; transform: translate(-50%, -50%); animation: card-rays-in 0.4s ease-out backwards, card-rays-turn 16s linear infinite; }
 .relic-pop-icon { position: relative; width: 160px; height: 160px; filter: drop-shadow(0 0 18px #ffd76a99); animation: relic-pop-in 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.3) backwards; }

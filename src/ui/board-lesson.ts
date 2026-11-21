@@ -96,8 +96,31 @@ function targets(lesson: BoardLesson | "back"): HTMLElement[] {
  * and removes them otherwise; on the Upgrades page (`onUpgrades`), once a
  * first skill is bought, a hand points at the Tower tab, back to the
  * entrance, and once a first provision is open, at the Gear tab (the page
- * writes the note). `dismissed` runs after a tap on a note that dismisses. */
+ * writes the note). `dismissed` runs after a tap on a note that dismisses.
+ * While the story's note shows, nothing else in the shell can be pressed. */
 export function renderBoardLesson(game: Game, onBoard: boolean, dismissed: () => void, onUpgrades = false) {
+  drawLesson(game, onBoard, dismissed, onUpgrades);
+  holdAround(document.querySelector<HTMLElement>("#board-frame > .story-tip"));
+}
+
+/** What `holdAround` made inert, given back when the hold ends or moves. */
+let held: HTMLElement[] = [];
+/** Makes everything in the shell inert but `keep` and what holds it: each
+ * sibling of `keep` and of each of its ancestors up to `.shell`, so only
+ * `keep` takes presses and keys (the dialogs, outside the shell, still
+ * do); null ends the hold. */
+function holdAround(keep: HTMLElement | null) {
+  for (const part of held) part.inert = false;
+  held = [];
+  for (let node: HTMLElement | null = keep; node?.parentElement && !node.classList.contains("shell"); node = node.parentElement)
+    for (const sibling of node.parentElement.children)
+      if (sibling !== node && sibling instanceof HTMLElement && !sibling.inert) {
+        sibling.inert = true;
+        held.push(sibling);
+      }
+}
+
+function drawLesson(game: Game, onBoard: boolean, dismissed: () => void, onUpgrades: boolean) {
   const lesson = onBoard ? game.boardLesson : null, frame = el("board-frame");
   let note = frame.querySelector<HTMLElement>(".board-tip");
   if (note && note.dataset.lesson !== lesson) {
@@ -120,6 +143,8 @@ export function renderBoardLesson(game: Game, onBoard: boolean, dismissed: () =>
     const reduceMotion = game.save.settings.reduceMotion;
     frame.insertAdjacentHTML("beforeend", `<button type="button" class="board-tip dismissable story-tip" data-lesson="story" data-page="${storyPage}" aria-live="polite">${storyHtml(storyPage)}</button>`);
     const story = frame.querySelector<HTMLElement>(".board-tip")!;
+    // The only thing left to press: Enter and Space go on from the keyboard too.
+    story.focus({ preventScroll: true });
     traceStory(story, storyPage, reduceMotion);
     story.onclick = () => {
       if (storyPage < STORY.length - 1) {

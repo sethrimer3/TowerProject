@@ -271,11 +271,11 @@ export class EventsPage {
       this.tab = b.dataset.eventTab as EventsTab;
       this.render();
     }));
-    // Pressed only, never on a resting mouse; an Event Boost relic's says whether the booster opens it.
+    // An Event Boost relic's pop-up says whether the booster opens it.
     const milestones = ctx.game.events.info.milestones;
     el("events").querySelectorAll<HTMLButtonElement>("[data-relic]").forEach((b) => {
       const m = milestones[Number(b.dataset.milestone)]!;
-      relicButton(b, RELICS[b.dataset.relic!]!, ctx.game.save.settings.reduceMotion, { hover: false, note: m.premium ? () => this.boostNote(m) : undefined });
+      relicButton(b, RELICS[b.dataset.relic!]!, ctx.game.save.settings.reduceMotion, m.premium ? () => this.boostNote(m) : undefined);
     });
     el("events").querySelectorAll<HTMLButtonElement>("[data-store]").forEach((b) => (b.onclick = () => this.buyStore(b.dataset.store!)));
     document.getElementById("event-boost-buy")?.addEventListener("click", () => void this.buyBoost());

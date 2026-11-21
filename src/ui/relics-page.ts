@@ -8,8 +8,8 @@ import { relicButton } from "./relic-pop.ts";
 import { seesAll } from "../access.ts";
 
 /** The Relics screen (docs/EVENTS.md): every relic the player has won over
- * their career, small, in a grid for each rarity. Pressing one, or a mouse
- * resting on it, raises it to the middle of the screen (`showRelic`). Its
+ * their career, small, in a grid for each rarity. Pressing one raises it
+ * to the middle of the screen (`showRelic`). Its
  * ? tells where relics come from and totals their bonuses. Opened by the
  * Relics button in the forest's menu; its X returns to whichever page
  * opened it. In Dev mode placeholder relics join the grids, so they and

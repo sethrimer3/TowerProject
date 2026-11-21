@@ -775,7 +775,11 @@ try {
     await shot("fresh.settings");
     await click("#settings-back");
     await leaveRun();
+    // Back in the forest the story's notes hold everything else until the last is tapped.
     await shot("fresh.forest");
+    for (let i = 0; i < 3; i++) await click(".story-tip");
+    await shot("fresh.storyLast");
+    await click(".story-tip");
     await tab("upgrades");
     await shot("fresh.upgrades");
     // A skill short of its price says how much more it needs.

@@ -3,7 +3,7 @@
   "fresh.stairsPressed": "ddbb7bc5221430f7",
   "fresh.handToggled": "e101d95cf62bba48",
   "fresh.settings": "2aff6de70b37e9e2",
-  "fresh.forest": "6455afbf97a9f0ba",
+  "fresh.forest": "3226771947fd57aa",
   "fresh.upgrades": "f28922f2f03839f3",
   "fresh.tree.short": "fc0ea8ae50419de1",
   "fresh.entered": "c2e60a48398a8df9",
@@ -269,5 +269,6 @@
   "lakeside.arrival": "bd86ebdbd3233c85",
   "lakeside.fisherman": "339c79be01187a8b",
   "lakeside.farewell": "edfc8716e6be1e5d",
-  "lakeside.returned": "daddc57b167dedd4"
+  "lakeside.returned": "daddc57b167dedd4",
+  "fresh.storyLast": "4e80f82ae25aa8c8"
 }

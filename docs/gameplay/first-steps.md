@@ -75,7 +75,7 @@ Floor 1's stairs always stand open, so Stairs climbs it, paying the run's first 
 The first time no card can take the hero further, a note says the Inspiration the run earned unlocks new abilities and to press **End Climb**, which pulses slowly until it is pressed.
 Back in the forest the story comes first, in four notes over the board, each tap showing the next while the time loop's infinity symbol draws further across their header, closing on the last:
 *The weakest delver has discovered the divine Chronos Anchor and can move their soul backwards in time!*, *Make the most of each tower climb to gain inspiration and resources.*, *Use your gains to upgrade your abilities for future climbs.* and *Unlock permanent powers and knowledge that stay with you across time in the world.*
-Buying Door & Key before tapping through them skips the rest.
+Until the last note is tapped, nothing else on the screen can be pressed.
 In the forest a note then says to spend the Inspiration, a hand pointing at the **Upgrades** tab, while **Door & Key** can be bought.
 On the Inspiration tree a note asks you to unlock Door & Key, a hand pointing at it; once it is bought, the note says Door and Key have joined your hand, that in a run they collect keys and open doors, that each door costs 1 key, that with no key some HP can break down a Wooden Door, that the tower's other items become accessible later as you unlock their cards, and to press the Tower button to go back, a hand pointing at it.
 Back in the forest a note says *Click Enter to start climbing the tower.*, a hand pointing at **Enter**; pressing Enter dismisses it, as tapping the note or entering does.
