@@ -4,6 +4,8 @@ import { Game } from "../src/state.ts";
 import { defaults } from "../src/save/save.ts";
 import { tileInfo, tileInfoLine } from "../src/ui/tile-info.ts";
 import { MODES } from "../src/modes.ts";
+import { unlockAt } from "../src/goals.ts";
+import { whole } from "../src/whole.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 
 /** A Tower floor holding just the given tiles in its bottom row. */
@@ -24,6 +26,22 @@ test("a pickup's box shows its icon and what it gives, not the stat before and a
   assert.match(potion, /potion-red[^>]*>(?:<[^>]+>)* \+35 HP/, "the full heal, not what max HP leaves room for");
   assert.doesNotMatch(potion, /→/);
   assert.match(shard.body, /sword[^>]*>(?:<[^>]+>)* \+\d+(\.\d+)? ATK/);
+});
+
+test("a chest's box shows its Gold while the board labels it", () => {
+  const { g } = board([[1, { kind: "treasure" }]]);
+  delete (g.run as { outside?: unknown }).outside;
+  g.save.settings.itemLabels = false;
+  assert.doesNotMatch(tileInfo(g, 1, 0).body, /alt="Gold"/, "no label on the board, none in the box");
+  const at = unlockAt("damageVisual");
+  g.save.goals.claimed[at.tower] = [at.floor];
+  assert.doesNotMatch(tileInfo(g, 1, 0).body, /alt="Gold"/, "the setting is off");
+  g.save.settings.itemLabels = true;
+  const gold = g.chestGold(1, 0);
+  assert.ok(gold > 0);
+  assert.match(tileInfo(g, 1, 0).body, new RegExp(`alt="Gold"[^>]*>(?:<[^>]+>)* \\+${whole(gold).toLocaleString("en-US")} Gold`), "rounded down, as the board's label");
+  g.save.tower.lootedTiles[MODES.tower.lootKey(g.run as never, 1, 0)] = true;
+  assert.doesNotMatch(tileInfo(g, 1, 0).body, /alt="Gold"/, "a chest already paid shows none");
 });
 
 test("a floor tile holding a lit torch is named Torch", () => {

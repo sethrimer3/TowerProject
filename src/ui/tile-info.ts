@@ -18,7 +18,7 @@ import { goldIcon, itemSprite, uiSprite } from "./dom.ts";
 
 /** What the inspect panel says about one board tile. */
 export type TileInfo = { color: string; title: string; body: string };
-type Board = Pick<Game, "world" | "run" | "mode" | "stepRules" | "save" | "enemyGold"> & { fights?: Pick<Game["fights"], "brokenAt"> };
+type Board = Pick<Game, "world" | "run" | "mode" | "stepRules" | "save" | "enemyGold" | "chestGold"> & { fights?: Pick<Game["fights"], "brokenAt"> };
 type Describe = (t: Tile, p: Player, g: Board, at: { x: number; y: number }) => Omit<TileInfo, "color">;
 
 const KIND_COLORS: Partial<Record<Kind, string>> = {
@@ -87,6 +87,15 @@ function critPrediction(c: CritForecast) {
  * the stat before and after, which Regen and the rest soon outdate. */
 const gain = (t: Tile, amount: string, label = "") =>
   `<span class="tile-gain">${itemSprite(itemSpriteId(t)!, "stat-sprite")} +${amount}${label}</span>`;
+
+/** The Gold a chest holds, as the Gold icon and "+N Gold". */
+const goldGain = (gold: number) =>
+  `<span class="tile-gain">${goldIcon().replace('alt=""', 'alt="Gold"')} +${whole(gold).toLocaleString("en-US")} Gold</span>`;
+
+/** Whether the board labels chests with their Gold (Renderer.drawDamageLabels'
+ * item labels), so their boxes may say it too. */
+const chestGoldShown = (g: Board) =>
+  !g.run.outside && g.save.settings.itemLabels && goalUnlocked(g.save, "damageVisual");
 
 const hits = (n: number) => (n === 1 ? "Instakill" : `${n.toLocaleString("en-US")} hits to defeat`);
 
@@ -227,9 +236,13 @@ const DESCRIBE: Partial<Record<Kind, Describe>> = {
   floor: (_t, _p, g) => ({ title: "Floor", body: MODES[g.mode].words.floor }),
   attack: (t, p, g) => ({ title: "Attack Shard", body: `<span>Raises ATK for this ${MODES[g.mode].words.run}</span><br>${gain(t, shardGain(t, p, g, "attack"), " ATK")}` }),
   defense: (t, p, g) => ({ title: "Defense Shard", body: `<span>Raises DEF for this ${MODES[g.mode].words.run}</span><br>${gain(t, shardGain(t, p, g, "defense"), " DEF")}` }),
-  treasure: (t) => t.chest === "supply" ? { title: "Supply Chest", body: "Contains Gold and upgrade materials." }
-    : t.chest === "equipment" ? { title: "Equipment Chest", body: "Contains Gold and a piece of equipment." }
-    : { title: "Treasure", body: "Contains Gold." },
+  treasure: (t, _p, g, at) => {
+    const { title, says } = t.chest === "supply" ? { title: "Supply Chest", says: "Contains Gold and upgrade materials." }
+      : t.chest === "equipment" ? { title: "Equipment Chest", says: "Contains Gold and a piece of equipment." }
+      : { title: "Treasure", says: "Contains Gold." };
+    const gold = chestGoldShown(g) ? g.chestGold(at.x, at.y) : 0;
+    return { title, body: gold ? `<span>${says}</span><br>${goldGain(gold)}` : says };
+  },
   reward: (t, _p, g) => chestReward(t.tier) === "mastered"
     ? { title: "Mastery Chest", body: "The area below was climbed without taking damage: the next checkpoint can be warped to." }
     : { title: "Clearing Chest", body: `Every enemy in the area below was defeated: +${clearedInspiration(g.run.height)} Inspiration, already yours.` },

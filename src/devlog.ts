@@ -13,6 +13,7 @@ export const DEVLOG_TEXT_MAX = 120;
 /** Every change, newest first: the Settings page's DEVLOG button lists them.
  * Each change adds its own line at the top (AGENTS.md). */
 export const DEVLOG: readonly DevlogEntry[] = [
+  { date: "2026-11-20", text: "Tapping a treasure chest shows the Gold it holds, when the board shows its Gold amount." },
   { date: "2026-11-20", text: "Battery saver: damage numbers read as pixel digits; a wide hand scrolls to its first card. Dev: see every Training row." },
   { date: "2026-11-20", text: "The small labels on the run buttons, the speed readout and the Claim button are larger and easier to read." },
   { date: "2026-11-20", text: "The small lines under the Research and skill-tree tabs are larger and easier to read." },
