@@ -30,7 +30,7 @@ import type { AtmosphereConfig } from "./lighting-pass.ts";
 import { DungeonLight, type LitBoard } from "./dungeon-light.ts";
 import { drawThemedBoard, themedBoardOf } from "./boards/themed-boards.ts";
 import { batteryLight } from "../battery-light.ts";
-import { BATTERY_BOARD, BATTERY_FOREST, BATTERY_GRID, dimWhite, drawBatteryRoute, monochrome } from "./boards/battery-board.ts";
+import { BATTERY_BOARD, BATTERY_FOREST, BATTERY_GRID, batteryLabel, dimWhite, drawBatteryRoute, monochrome } from "./boards/battery-board.ts";
 import { RoutePath } from "./route-path.ts";
 import { BoardPopups, goldCoin, lunges } from "./board-popups.ts";
 import { DamagePredictions, drawDamageLabels } from "./effects/damage-labels.ts";
@@ -289,7 +289,7 @@ export class Renderer {
       if (this.game.mode === "tower") drawStairsLights(f);
       drawHeroLight(f, this.game.awaitsPress);
     }
-    this.drawDamageLabels(f);
+    this.drawDamageLabels(f, battery);
     if (!this.game.run.outside && !battery) this.bossFlash.draw(f, this.game.run.seed, this.game.run.height, f.look.reduceMotion);
     this.drawSkipMarks(f);
     this.drawBadgeMarks(f);
@@ -653,13 +653,13 @@ export class Renderer {
    * enemy being fought wears none while its fight plays out, but the latest
    * fight once over hides nothing: an enemy may appear where it ended (a
    * Greater Boss on a kill's tile by the stairs). */
-  private drawDamageLabels(f: FrameContext) {
+  private drawDamageLabels(f: FrameContext, battery: boolean) {
     const g = this.game;
     const { damageVisual: enemies, itemLabels } = g.save.settings;
     if (g.run.outside || (!enemies && !itemLabels) || !goalUnlocked(g.save, "damageVisual")) return;
     const crit = g.save.upgrades.critPrediction ? g.crit : undefined;
     const items = itemLabels ? { rules: g.stepRules, chestGold: (x: number, y: number) => g.chestGold(x, y) } : undefined;
-    drawDamageLabels(f, this.predictions, g.run.player, g.fights.encounter, goalUnlocked(g.save, "relativeDamageColor"), crit, items, enemies);
+    drawDamageLabels(f, this.predictions, g.run.player, g.fights.encounter, goalUnlocked(g.save, "relativeDamageColor"), crit, items, enemies, battery ? batteryLabel : undefined);
   }
   /** A fading red cross where a step was refused. */
   /** Skip Open Nodes' marks: a violet X on each door or monster it passed

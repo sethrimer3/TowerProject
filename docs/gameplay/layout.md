@@ -28,6 +28,7 @@ Enemies grow, and gain horns, spikes, a skull or a crown, with their strength, a
 With colour gone, keys and the locks they open share a shape: gold keys have a round bow, blue a square one and red a diamond, and each door shows the shape of every key it takes; a Steel Door shows rivets, a Wooden Door planks and a Heart Door a heart.
 A percent potion's liquid is a checker; a Supply Chest wears one star and an Equipment Chest two; a lit torch is a small flame in its tile's corner, a spent one grey.
 Damage numbers, rising rewards, marks and the other feedback still show, in grey.
+Damage Visual's numbers on enemies and items are drawn in small pixel digits on a black box at the tile's lower left, so they read at this size: a fight that would defeat you shows black digits on a white box, and a certain Instakill's 0 is grey.
 The hand's cards wear white pixel icons of their own, each matching what it goes for.
 The page around the board is white on black, without animations, glows or colours, and its pictures are grey.
 The board draws about fifteen frames a second while something on it moves and two or three while all is still, instead of the screen's full rate; the hero steps from tile to tile rather than gliding, and the weather and decor are off.
@@ -35,6 +36,7 @@ Battery saver wears its own look over the UI and Game themes chosen, which come 
 It also gathers the page into one small centred column: the room shrinks into a white square in the middle of the screen, in portrait and landscape alike.
 The top bar is gone; above the square a short centred row shows HP, ATK, DEF, the keys held and the floor, each a small white icon and its number, with Back, then Play or Pause and Settings beside them (Back, Enter and Settings in the forest), and the Gem button, with its Gems, while they can be claimed.
 The hand sits just under the square, its cards smaller and their levels smaller still, and the card at work is underlined; the hand's row is as tall as an open Training group's, so the buttons below stay put.
+A hand too wide for the column scrolls sideways from its first card.
 There is no text under the board.
 Back turns Battery saver off and brings the normal page back; Settings only opens the Settings page, where Battery saver can also be turned off.
 While no card can act, a red warning sign stands first in the row of buttons; pressing it ends the climb, as End Climb does.

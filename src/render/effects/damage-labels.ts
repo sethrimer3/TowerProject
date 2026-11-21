@@ -94,6 +94,8 @@ const hex = (rgb: readonly number[]) => `#${rgb.map((v) => Math.round(v).toStrin
 /** The blue of HP the hero gains, kept for healing alone: the damage
  * colours never use it. */
 export const HEAL_COLOR = "#4da6ff";
+/** The gray of a certain Instakill's 0. */
+const INSTAKILL_COLOR = "#9aa3b2";
 
 /** A label's text and colour: red when the fight is lethal (∞ when the
  * hero can't hurt the enemy), a blue +N when Lifesteal heals the hero more
@@ -104,7 +106,7 @@ export function damageLabel(cost: Cost, hp: number, relative = false) {
   if (!Number.isFinite(cost.damage)) return { text: "∞", color: "#ff5a5a" };
   const shown = wholeChange(cost.damage);
   if (shown < 0) return { text: `+${compactAmount(-shown)}`, color: HEAL_COLOR };
-  const color = hp <= cost.damage ? "#ff5a5a" : cost.turns === 1 && !cost.thornKill && !cost.fast ? "#9aa3b2"
+  const color = hp <= cost.damage ? "#ff5a5a" : cost.turns === 1 && !cost.thornKill && !cost.fast ? INSTAKILL_COLOR
     : shown === 0 ? "#ffffff" : relative ? relativeColor(cost.damage / hp) : "#ffe08a";
   return { text: compactAmount(shown), color };
 }
@@ -134,10 +136,14 @@ export function itemLabel(t: Tile, x: number, y: number, player: Player, items: 
   return null;
 }
 
+/** Draws a label in a board's own pixel letters instead of a font, told
+ * apart by tone since the board has no colour (Battery saver's). */
+export type PixelLabel = (f: FrameContext, x: number, y: number, text: string, tone: "ink" | "dim" | "lethal") => void;
+
 /** Draws, unless `enemies` is false, each enemy's label in view and each
  * Wooden Door's while the hero holds no key, and with `items` each item's,
- * over the darkness so it always reads. */
-export function drawDamageLabels(f: FrameContext, predictions: DamagePredictions, player: Player, fight: Fighting, relative = false, crit?: CritRule, items?: ItemValues, enemies = true) {
+ * over the darkness so it always reads; with `pixels`, in its letters. */
+export function drawDamageLabels(f: FrameContext, predictions: DamagePredictions, player: Player, fight: Fighting, relative = false, crit?: CritRule, items?: ItemValues, enemies = true, pixels?: PixelLabel) {
   const c = f.c, s = f.s, pad = s * 0.06;
   c.save();
   c.font = boardFont(f.look.styledSprites, Math.max(8, Math.round(s * 0.3)), "bold", "Cinzel, serif");
@@ -151,7 +157,12 @@ export function drawDamageLabels(f: FrameContext, predictions: DamagePredictions
     const item = items && itemLabel(t, x, y, player, items);
     const wood = enemies && t.kind === "door" && t.door?.type === "wood" && !holdsKey(player) ? t.door.durability : null;
     if (!item && wood === null && (!enemies || t.kind !== "enemy" || !t.enemy || (fight && fight.to.x === x && fight.to.y === y))) return;
-    const { text, color } = item ?? damageLabel(wood !== null ? breakCost(wood) : predictions.cost(player, t.enemy!, crit), player.hp, relative);
+    const cost = item ? null : wood !== null ? breakCost(wood) : predictions.cost(player, t.enemy!, crit);
+    const { text, color } = item ?? damageLabel(cost!, player.hp, relative);
+    if (pixels) {
+      pixels(f, x, y, text, cost && player.hp <= cost.damage ? "lethal" : color === INSTAKILL_COLOR ? "dim" : "ink");
+      return;
+    }
     const left = (x - f.left) * s + pad, bottom = (f.n - (y - f.bottom)) * s - pad;
     c.strokeText(text, left, bottom);
     c.fillStyle = color;

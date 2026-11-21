@@ -6,6 +6,8 @@ import { Game } from "../src/state.ts";
 import { canWarp, floorsCompleted } from "../src/goals.ts";
 import { TIERS } from "../src/tiers.ts";
 import { tiersReachable } from "../src/access.ts";
+import { trainingOpen, trainingShown } from "../src/progression/loadout.ts";
+import { TRAINING } from "../src/progression/training.ts";
 import { AreaLedger } from "../src/tower/area-ledger.ts";
 import { startTrial } from "../src/proving-grounds/trial.ts";
 import { saveTrialDamage, settleTrialVictory } from "../src/proving-grounds/progression.ts";
@@ -122,4 +124,15 @@ test("a preview trial records no clear, points or damage", () => {
   obelisk.bossHp = obelisk.bossMaxHp - 5;
   assert.equal(saveTrialDamage(g.save, obelisk), false);
   assert.deepEqual(g.save.trialAccess, defaults().trialAccess);
+});
+
+test("every Training row shows while it is on, but a locked one can't be trained", () => {
+  const g = forest(), crit = TRAINING.find((t) => t.id === "critChance")!;
+  g.save.bonusTrainingPoints = 50;
+  assert.equal(trainingShown(crit, g.save), false, "Critical Chance waits for its skill");
+  g.setAccessAll(true);
+  assert.ok(TRAINING.every((t) => trainingShown(t, g.save)), "every row shows");
+  assert.equal(trainingOpen(crit, g.save), false);
+  assert.equal(g.training.train("critChance"), false, "no point buys a rank");
+  assert.equal(g.save.training.critChance, 0);
 });

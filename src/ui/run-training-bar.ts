@@ -5,6 +5,7 @@ import { TRAINING, TRAINING_GROUPS, type TrainingId } from "../progression/train
 import { autoTrains, runTrainingBulk, runTrainingOffer, runTrainingValue } from "../progression/run-training.ts";
 import { bindBuyQuantity, buyQuantityHtml, runCount } from "./buy-quantity-select.ts";
 import { trainingText, runTrainingOpen } from "../progression/loadout.ts";
+import { seesAll } from "../access.ts";
 import { arcaniteIcon, DECK_ICON, el, itemSprite, POINTER_SVG, uiSprite } from "./dom.ts";
 import { arcanum, RUN_TOGGLES, type ArcanumId } from "../arcana/arcana.ts";
 import type { HeldArcanum } from "../game/arcana-desk.ts";
@@ -391,9 +392,11 @@ export class RunTrainingBar {
   }
 
   /** The rows of `group` the hero can train in this run (the shot rows
-   * only while the hand holds ARCHER). */
+   * only while the hand holds ARCHER); with Access to Everything, all of
+   * them, those it can't train shown locked. */
   private rows(group: Group): TrainingId[] {
-    return TRAINING.filter((t) => t.group === group && this.available(t.id) && runTrainingOpen(t, this.game.save, this.game.held)).map((t) => t.id);
+    const all = seesAll(this.game.save);
+    return TRAINING.filter((t) => t.group === group && this.available(t.id) && (all || runTrainingOpen(t, this.game.save, this.game.held))).map((t) => t.id);
   }
 
   /** One card's value and price (for the ranks the Buy Quantity buys, past
@@ -403,23 +406,24 @@ export class RunTrainingBar {
     const game = this.game, card = document.querySelector<HTMLElement>(`[data-drill="${id}"]`)!;
     const offer = runTrainingOffer(game.save, game.run, id), { value, unit } = runTrainingValue(game.save, game.run, id, game.mode);
     const q = game.training.buyQuantityFor("run"), bulk = runTrainingBulk(game.save, game.run, id, q, game.free ? Infinity : game.silver);
-    const short = !offer.maxed && !bulk.affordable;
+    const short = offer.open && !offer.maxed && !bulk.affordable;
     card.classList.toggle("short", short);
     card.classList.toggle("maxed", offer.maxed);
+    card.classList.toggle("locked", !offer.open);
     // Auto-Train's arrow on a row it buys each floor (its switch and its group's on).
     const mark = card.querySelector<HTMLElement>(".auto-mark");
     if (mark) mark.hidden = !autoTrains(game.save, id);
     // Range, Speed, ATK / m and Targets without their units, which their tooltips give, so the value fits the card.
     card.querySelector(".drill-value")!.textContent = trainingText(value, unit, true);
     const buy = card.querySelector<HTMLButtonElement>(".drill-buy")!;
-    const label = offer.maxed ? "Max" : `${runCount(q, bulk.count)}${silverIcon()}<b>${priceAmount(bulk.cost, 10_000)}</b>`;
+    const label = !offer.open ? "Locked" : offer.maxed ? "Max" : `${runCount(q, bulk.count)}${silverIcon()}<b>${priceAmount(bulk.cost, 10_000)}</b>`;
     if (buy.dataset.label !== label) {
       buy.dataset.label = label;
       buy.innerHTML = label;
     }
     // Short of Silver it still answers a press, with red sparks.
-    buy.disabled = offer.maxed;
-    buy.setAttribute("aria-label", offer.maxed ? `${offer.row.name} is at its highest level` : `Train ${offer.row.name} for this ${MODES[this.game.mode].words.run}, ${bulk.count === 1 ? "one rank" : `${bulk.count} ranks`}, for ${bulk.cost} Silver`);
+    buy.disabled = offer.maxed || !offer.open;
+    buy.setAttribute("aria-label", !offer.open ? `${offer.row.name} is locked` : offer.maxed ? `${offer.row.name} is at its highest level` : `Train ${offer.row.name} for this ${MODES[this.game.mode].words.run}, ${bulk.count === 1 ? "one rank" : `${bulk.count} ranks`}, for ${bulk.cost} Silver`);
   }
 
   /** Shows `card`'s details; `pressed`, they stay until pressed away. */

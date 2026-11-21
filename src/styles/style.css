@@ -2983,6 +2983,8 @@ nav button > span :is(img, svg) { display: block; width: 42px; height: 42px; max
 .training-row { display: grid; grid-template-columns: minmax(52px, 1fr) minmax(38px, auto) 12px minmax(38px, auto) minmax(56px, auto) minmax(38px, auto) 28px; align-items: center; gap: 5px; }
 /* A row at its most shows no values: its label takes their columns. */
 .training-row.maxed .training-label { grid-column: 1 / 5; }
+/* A row shown only by Access to Everything, which it cannot train. */
+.training-row.locked { opacity: .6; }
 /* The Training tab's specks sit behind the rows. */
 .training-particles { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; border-radius: inherit; }
 .training > :not(.training-particles) { position: relative; }
@@ -4234,6 +4236,8 @@ nav.in-run.drilling .run-drills {
 .drill-card.short { border-color: #2c3440; }
 .run-drills .drill-card.short .drill-buy { opacity: 1; border-color: #333b47; background: #121821; color: #e8dfcf; }
 .run-drills .drill-card.short .drill-buy:not(#_):not(#__) { border-color: #00000099; --ui-face: var(--ui-disabled); }
+/* A card shown only by Access to Everything, which it cannot train. */
+.drill-card.locked { opacity: .6; }
 .drill-card.maxed { border-color: #d9a632; background: linear-gradient(#3a2c10, #1f1808); box-shadow: inset 0 0 6px #ffd34d40; }
 .drill-card.maxed .drill-name { color: #ffd34d; }
 .drill-card.maxed .drill-value { color: #ffe9a8; }

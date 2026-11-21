@@ -216,11 +216,12 @@ html.battery-saver nav.in-run:not(#_) {
   min-height: var(--bat-row);
 }
 html.battery-saver .hand:not(#_) {
-  /* Only the cards held, centred under the board. */
+  /* Only the cards held, centred under the board while they fit; a hand
+     wider than that starts at the left, so its first card isn't cut off. */
   grid-template-columns: none;
   grid-auto-flow: column;
   grid-auto-columns: 32px;
-  justify-content: center;
+  justify-content: safe center;
   gap: 5px;
   width: 100%;
   min-height: var(--bat-row, 0);

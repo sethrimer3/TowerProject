@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { BATTERY_ART, BATTERY_BLACK, BATTERY_ICONS, dimWhite, BATTERY_BOARD, BATTERY_DIM, BATTERY_FOREST, BATTERY_GRID, BATTERY_INK, drawBatteryCardIcon, hasBatteryCardIcon } from "../src/render/boards/battery-board.ts";
+import { BATTERY_ART, BATTERY_BLACK, BATTERY_ICONS, dimWhite, BATTERY_BOARD, BATTERY_DIM, BATTERY_FOREST, BATTERY_GRID, BATTERY_INK, batteryLabel, drawBatteryCardIcon, hasBatteryCardIcon } from "../src/render/boards/battery-board.ts";
 import { CARD_IDS } from "../src/cards/cards.ts";
 import type { EnemyStrength, Tile } from "../src/entities.ts";
 import type { FrameContext } from "../src/render/render-frame.ts";
@@ -131,4 +131,22 @@ test("every stats-row icon has its picture", () => {
     assert.equal(icon.rows.length, 7, name);
     for (const row of icon.rows) assert.match(row, /^[.#r]{7}$/, name);
   }
+});
+
+test("a tile's label is pixel digits on a box at its lower left, lethal ones inverted", () => {
+  const frame = (ctx: CanvasRenderingContext2D) => ({ c: ctx, s: 24, left: 0, bottom: 0, n: 1, dpr: 1, width: 24 }) as unknown as FrameContext;
+  const label = (text: string, tone: "ink" | "dim" | "lethal") => {
+    const r = recorder();
+    batteryLabel(frame(r.ctx), 0, 0, text, tone);
+    return r.fills;
+  };
+  const plain = label("35", "ink");
+  // The box: 3 + 1 + 3 pixels of digits and a pixel round them, 7 high, flush with the tile's lower left.
+  assert.equal(plain[0], `${BATTERY_BLACK}:0.00,10.00,18.00,14.00`);
+  assert.ok(plain.slice(1).every((f) => f.startsWith(BATTERY_INK)), "white digits");
+  assert.equal(plain.length - 1, 10 + 11, "a 3 of ten pixels and a 5 of eleven");
+  const lethal = label("35", "lethal");
+  assert.ok(lethal[0].startsWith(BATTERY_INK) && lethal.slice(1).every((f) => f.startsWith(BATTERY_BLACK)), "black on white");
+  assert.ok(label("0", "dim").slice(1).every((f) => f.startsWith(BATTERY_DIM)));
+  for (const text of ["1.2K", "+7", "∞", "12M", "3e45", "9Q"]) assert.ok(label(text, "ink").length > 1, text);
 });

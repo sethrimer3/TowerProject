@@ -3,7 +3,7 @@ import { askForGems, helpButton, showHelp } from "./dialogs.ts";
 import { play } from "../sound.ts";
 import { permanentBoost, trainingRate } from "../shop/entitlements.ts";
 import { TRAINING, TRAINING_GROUPS, TRAINING_PER_LEVEL, trainingCap, trainingDef, type TrainingId } from "../progression/training.ts";
-import { trainingBulk, trainingPoints, trainingRowsFull, trainingStep, trainingText, trainingOpen } from "../progression/loadout.ts";
+import { trainingBulk, trainingPoints, trainingRowsFull, trainingStep, trainingText, trainingOpen, trainingShown } from "../progression/loadout.ts";
 import { shortAmount, whole } from "../whole.ts";
 import type { BuyQuantity } from "../progression/buy-quantity.ts";
 import { bindBuyQuantity, buyQuantityHtml, maxCount } from "./buy-quantity-select.ts";
@@ -310,9 +310,10 @@ export class ResearchPage {
     // order they started, until its training ends.
     const training = (t: TrainingRow) => !!trainingJob(save.trainingJobs, t.id);
     const inTraining = save.trainingJobs.map(j => TRAINING.find(t => t.id === j.id)!).filter(t => trainingOpen(t, save));
-    // Each group's other rows, leaving out any whose upgrade isn't owned yet.
+    // Each group's other rows, leaving out any whose upgrade isn't owned yet
+    // (shown, locked, with Access to Everything).
     const rows = (Object.entries(TRAINING_GROUPS) as [keyof typeof TRAINING_GROUPS, string][]).map(([group, name]) => {
-      const open = TRAINING.filter(t => t.group === group && trainingOpen(t, save) && !training(t));
+      const open = TRAINING.filter(t => t.group === group && trainingShown(t, save) && !training(t));
       return open.length ? `<h4 class="training-group">${name}</h4>${open.map(row).join("")}` : "";
     }).join("");
     const bank = save.trainingBank > 0
@@ -400,7 +401,10 @@ export class ResearchPage {
       ? `${shortAmount(v)}${unit === "count" ? "" : unit}`
       : trainingText(v, unit, unit === "tiles" || unit === "shots");
     const job = trainingJob(save.trainingJobs, t.id);
-    const notes = step.maxed || !hired || job ? "" : this.timeNote(t.id, q);
+    // A row shown only by Access to Everything can't be trained: Locked,
+    // where its time to the next rank would be, and its prices closed.
+    const locked = !trainingOpen(t, save);
+    const notes = locked ? `<span class="training-locked">Locked</span>` : step.maxed || !hired || job ? "" : this.timeNote(t.id, q);
     // A row at its most has nothing more to show or buy: its label spans the
     // values' columns, Max stands where the trainer's price does (the points'
     // place without trainers), and the reset keeps the right edge.
@@ -410,7 +414,7 @@ export class ResearchPage {
     }
     const nowButton = step.maxed
       ? ""
-      : `<button class="training-box training-cost training-now" data-train="${t.id}" ${bulk.affordable ? "" : "disabled"} aria-label="Spend ${bulk.cost} training ${bulk.cost === 1 ? "point" : "points"} to train ${t.name} ${count === 1 ? "one rank" : `${count} ranks`} now" title="Train now">${maxCount(q, count)}${pointsIcon()}<span>${bulk.cost}</span>${this.trainPointer(bulk.affordable)}</button>`;
+      : `<button class="training-box training-cost training-now" data-train="${t.id}" ${bulk.affordable && !locked ? "" : "disabled"} aria-label="Spend ${bulk.cost} training ${bulk.cost === 1 ? "point" : "points"} to train ${t.name} ${count === 1 ? "one rank" : `${count} ranks`} now" title="Train now">${maxCount(q, count)}${pointsIcon()}<span>${bulk.cost}</span>${this.trainPointer(bulk.affordable && !locked)}</button>`;
     const values = `<span class="training-box">${shown(now)}</span><span class="training-arrow" aria-hidden="true">→</span><span class="training-box next">${shown(next)}</span>`;
     if (job) {
       const speedup = job.speed > 1
@@ -418,7 +422,7 @@ export class ResearchPage {
         : `<span aria-hidden="true"></span>`;
       return `<div class="training-row active" role="listitem" data-training-row="${t.id}"${job.speed > 1 ? ` data-speed="${job.speed}"` : ""}><span class="training-label training-head">${this.autoBox(t)}${this.nameHtml(t)} - ${this.levelText(t.id, true)}</span>${speedup}${values}${this.trainerHtml(t, step)}${nowButton || `<span aria-hidden="true"></span>`}${this.finishButton(t.id, t.name)}</div>`;
     }
-    return `<div class="training-row" role="listitem" data-training-row="${t.id}"><span class="training-label">${this.nameHtml(t)} - ${this.levelText(t.id, false)}${notes ? `<small>${notes}</small>` : ""}</span>${values}${hired ? this.trainerHtml(t, step) : ""}${nowButton}${this.resetButton(t, false)}</div>`;
+    return `<div class="training-row${locked ? " locked" : ""}" role="listitem" data-training-row="${t.id}"><span class="training-label">${this.nameHtml(t)} - ${this.levelText(t.id, false)}${notes ? `<small>${notes}</small>` : ""}</span>${values}${hired ? this.trainerHtml(t, step, locked) : ""}${nowButton}${this.resetButton(t, false)}</div>`;
   }
 
   /** While the training lesson waits, the tutorials' hand points down at
@@ -459,13 +463,13 @@ export class ResearchPage {
   /** A rank a trainer is training shows its countdown (tap to stop it and
    * get the Gold back; its Gem finish stands at the row's end), else the
    * trainer's price, shortened from 10,000 Gold (12.3K). */
-  private trainerHtml(t: TrainingRow, step: ReturnType<typeof trainingStep>) {
+  private trainerHtml(t: TrainingRow, step: ReturnType<typeof trainingStep>, locked = false) {
     const game = this.ctx.game, save = game.save;
     if (trainingJob(save.trainingJobs, t.id))
       return `<span class="training-job"><button class="training-box training-timer" data-cancel="${t.id}" aria-label="Training ${t.name}: tap to stop and get the Gold back" title="Tap to stop and get the Gold back"><span data-training-timer="${t.id}">${formatCountdown(game.training.left(t.id))}</span></button></span>`;
     const q = game.training.buyQuantity, batch = game.training.batch(t.id, q), full = save.trainingJobs.length >= trainingSlots(save), gold = whole(batch.gold);
     const takes = formatDuration(game.training.toNextRank(t.id, q)), ranks = batch.count === 1 ? `to ${trainingText(step.next, step.unit)}` : `${batch.count} ranks`;
-    return `<button class="training-box training-cost training-gold" data-train-gold="${t.id}" ${batch.affordable && !full ? "" : "disabled"} aria-label="Pay ${gold} Gold to a trainer to train ${t.name} ${ranks}, taking ${takes}" title="${full ? "Every trainer is busy" : `${batch.count === 1 ? "" : `${ranks}: `}Takes ${takes}`}">${maxCount(q, batch.count)}${goldIcon()}<span>${priceAmount(gold, 10_000)}</span></button>`;
+    return `<button class="training-box training-cost training-gold" data-train-gold="${t.id}" ${batch.affordable && !full && !locked ? "" : "disabled"} aria-label="Pay ${gold} Gold to a trainer to train ${t.name} ${ranks}, taking ${takes}" title="${locked ? `${t.name} is locked` : full ? "Every trainer is busy" : `${batch.count === 1 ? "" : `${ranks}: `}Takes ${takes}`}">${maxCount(q, batch.count)}${goldIcon()}<span>${priceAmount(gold, 10_000)}</span></button>`;
   }
 
   /** A row's Gem reset: absent, its column kept empty, until the Training

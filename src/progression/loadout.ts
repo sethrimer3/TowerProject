@@ -30,6 +30,10 @@ import { seesAll } from "../access.ts";
 export const trainingOpen = (row: TrainingRow, save: Pick<Save, "upgrades" | "goals">) =>
   ("requires" in row ? save.upgrades[row.requires] > 0 : true) && ("goal" in row ? goalUnlocked(save, row.goal) : true);
 
+/** Whether `row` shows on the Training page: open, or any row with Access
+ * to Everything on, which lets it be seen but not trained. */
+export const trainingShown = (row: TrainingRow, save: Pick<Save, "upgrades" | "goals" | "settings">) => trainingOpen(row, save) || seesAll(save);
+
 /** The Goals whose Training rows only the Archer's arrows read. */
 const SHOT_GOALS: ReadonlySet<GoalUnlock> = new Set(["attackRange", "attackSpeed", "attackPerTile", "multishot", "rapidFire"]);
 /** Whether `row` is one only the Archer's arrows read (Attack Range,

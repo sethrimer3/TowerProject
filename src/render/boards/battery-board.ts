@@ -640,6 +640,67 @@ export function drawBatteryRoute(f: FrameContext, route: readonly { x: number; y
   }
 }
 
+/** The pixel letters of a tile's label: digits, and what `compactAmount`
+ * and a damage label add to them (+, ., ∞, the amount units, e, -), five
+ * pixels high, since at twelve pixels a tile no font reads. */
+const LABEL_GLYPHS: Record<string, Sprite> = {
+  "0": ["###", "#.#", "#.#", "#.#", "###"],
+  "1": [".#.", "##.", ".#.", ".#.", "###"],
+  "2": ["###", "..#", "###", "#..", "###"],
+  "3": ["###", "..#", ".##", "..#", "###"],
+  "4": ["#.#", "#.#", "###", "..#", "..#"],
+  "5": ["###", "#..", "###", "..#", "###"],
+  "6": ["###", "#..", "###", "#.#", "###"],
+  "7": ["###", "..#", "..#", ".#.", ".#."],
+  "8": ["###", "#.#", "###", "#.#", "###"],
+  "9": ["###", "#.#", "###", "..#", "###"],
+  "+": ["...", ".#.", "###", ".#.", "..."],
+  "-": ["...", "...", "###", "...", "..."],
+  ".": [".", ".", ".", ".", "#"],
+  "∞": [".....", ".#.#.", "#.#.#", ".#.#.", "....."],
+  K: ["#.#", "#.#", "##.", "#.#", "#.#"],
+  M: ["#...#", "##.##", "#.#.#", "#...#", "#...#"],
+  B: ["##.", "#.#", "##.", "#.#", "##."],
+  T: ["###", ".#.", ".#.", ".#.", ".#."],
+  q: ["...", "###", "#.#", "###", "..#"],
+  Q: [".#.", "#.#", "#.#", "##.", ".##"],
+  s: ["...", ".##", "#..", "..#", "##."],
+  S: [".##", "#..", ".#.", "..#", "##."],
+  O: [".#.", "#.#", "#.#", "#.#", ".#."],
+  N: ["#..#", "##.#", "#.##", "#..#", "#..#"],
+  D: ["##.", "#.#", "#.#", "#.#", "##."],
+  e: ["...", ".#.", "###", "#..", ".##"],
+};
+/** How a label reads: white, dim (a certain Instakill), or black on white
+ * (a fight that would fell the hero), as colour can't tell them apart. */
+export type LabelTone = "ink" | "dim" | "lethal";
+
+/** A tile's label in pixel letters at its lower-left corner, on a box a
+ * pixel wider all round, so it reads over the sprite beneath it and apart
+ * from a wall's line beside it: black, or white for a lethal fight. A label
+ * too long for the tile runs on past its right edge. */
+export function batteryLabel(f: FrameContext, x: number, y: number, text: string, tone: LabelTone) {
+  const glyphs = [...text].map((ch) => LABEL_GLYPHS[ch]).filter((g): g is Sprite => !!g);
+  if (!glyphs.length) return;
+  const width = glyphs.reduce((w, g) => w + g[0].length + 1, -1);
+  const lethal = tone === "lethal";
+  const c = f.c;
+  c.save();
+  toTileSpace(c, f, x, y);
+  c.fillStyle = lethal ? BATTERY_INK : BATTERY_BLACK;
+  c.fillRect(0, (BATTERY_GRID - 7) * CELL, (width + 2) * CELL, 7 * CELL);
+  c.fillStyle = lethal ? BATTERY_BLACK : tone === "dim" ? BATTERY_DIM : BATTERY_INK;
+  const top = BATTERY_GRID - 6;
+  let left = 1;
+  for (const g of glyphs) {
+    g.forEach((row, py) => {
+      for (let px = 0; px < row.length; px++) if (row[px] === "#") c.fillRect((left + px) * CELL, (top + py) * CELL, CELL, CELL);
+    });
+    left += g[0].length + 1;
+  }
+  c.restore();
+}
+
 /** Turns everything drawn on the board so far grey, so feedback drawn in
  * colour (damage numbers, marks, rising rewards) keeps to black and white. */
 export function monochrome(f: FrameContext) {
