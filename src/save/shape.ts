@@ -95,6 +95,9 @@ export type Save = {
   rubies: number;
   /** The Arcana bought, and the choice waiting (arcana/arcana.ts). */
   arcana: ArcanaSave;
+  /** What the Codex remembers the player has come across: arcana seen and
+   * Uniques owned (codex/discovery.ts). */
+  codex: import("../codex/discovery.ts").CodexSave;
   /** Medals: a limited currency, kept between runs, paid by the weekly
    * mission rewards (missions/catalog.ts) and Events' missions
    * (events/catalog.ts), spent in events' Stores (events/store.ts). */

@@ -68,6 +68,11 @@ export class SkillTreePage {
     this.tooltipVisible = true;
   }
 
+  /** Opens on `tree`, no skill singled out (the Codex's links). */
+  showTree(tree: TreeId) {
+    this.tree = tree;
+  }
+
   render() {
     if (!this.shown(this.tree)) this.tree = "inspiration";
     // The tab row shows even for Inspiration alone, since its tab reads the points held.

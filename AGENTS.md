@@ -104,6 +104,7 @@ Read the area's doc before changing code there or answering questions about it; 
 - `shrines.md`: Shrines and boons (`src/shrines.ts`): the schedule, offers, boon math, where effects apply, their research and UI.
 - `arcana.md`: Arcana (`src/arcana/`, `game/arcana-desk.ts`): the catalog and triggers, buying, Arcanum Damage, Ricochet Shot, Aurum Bloom, Overseer, Thunderbolt, Lifespring, Time Dilation, Phantasm, Necrotic Frost, Voidwell, the run's toggles, the Shrine boons, their UI and how they work in a trial.
 - `environments.md`: Floor Environments (`src/environments.ts`): Treasure, Golden and Stellar Floors, their rolls, their Gold and Silver, drawing and the enemy stats box's table.
+- `codex.md`: the Codex (`src/codex/`, `ui/codex-page.ts`): its categories as data, briefs, discovery (`save.codex`), links and its tests.
 - `goldens.md`: which goldens a change moves, the browser goldens, recording them.
 - `testing.md`: browser test setup.
 

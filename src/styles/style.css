@@ -5248,6 +5248,55 @@ html.reduce-motion button.mission-bar.event-claim { animation: none; }
 .relic-cell.rare { border-color: #3d6fb3; }
 .relic-cell.epic { border-color: #7a4dbf; }
 .relic-cell.legendary { border-color: #b88a2e; }
+/* The Codex (codex-page.ts): a wrapping row of category tabs (??? while not
+   yet open), the category's summary and links, then collapsible sections of
+   entries, each an icon, a name and a brief, expanding to its details. */
+.page#codex { position: relative; }
+#codex .page-title { margin: 18px 44px 12px; text-align: center; }
+.codex-tabs { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 6px; margin-bottom: 12px; }
+.codex-tab { display: flex; align-items: center; gap: 6px; min-height: 36px; padding: 4px 6px; font-size: 10px; text-align: left; word-break: normal; overflow-wrap: normal; hyphens: none; }
+.codex-tab[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); }
+.codex-tab.locked { opacity: 0.55; }
+.codex-tab-icon { display: inline-flex; flex: none; width: 20px; height: 20px; align-items: center; justify-content: center; }
+.codex-tab-icon > *, .codex-icon > :not(.badge-token) { max-width: 100%; max-height: 100%; }
+.codex-body h3 { margin: 0 0 4px; color: var(--gold); }
+.codex-summary { margin: 0 0 10px; font-size: 13px; line-height: 1.4; }
+.codex-links { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.codex-section { margin-bottom: 10px; border: 1px solid var(--line); border-radius: 8px; background: #121820; }
+.codex-section > summary { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; cursor: pointer; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; }
+.codex-section > summary small { color: var(--muted); }
+.codex-section > .hint, .codex-section > p.hint { margin: 0 10px 10px; }
+.codex-entries { list-style: none; margin: 0; padding: 0 6px 6px; }
+.codex-entry { padding: 6px 4px; border-top: 1px solid var(--line); }
+.codex-entry.ready { box-shadow: inset 3px 0 0 #e05a6a; }
+.codex-entry > details > summary { list-style: none; cursor: pointer; }
+.codex-entry > details > summary::-webkit-details-marker { display: none; }
+.codex-entry > details > summary { position: relative; padding-right: 18px; }
+.codex-entry > details > summary::after { content: "+"; position: absolute; top: 0; right: 2px; color: var(--muted); }
+.codex-entry > details[open] > summary::after { content: "2"; }
+.codex-row { display: flex; gap: 8px; align-items: flex-start; }
+.codex-icon { display: inline-flex; flex: none; width: 24px; height: 24px; align-items: center; justify-content: center; }
+.codex-icon .badge-token { flex: none; transform: scale(0.55); }
+.codex-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.codex-name { color: #e6e9ef; font-size: 13px; }
+.codex-brief { font-size: 12px; line-height: 1.4; color: #b5bcc8; }
+.codex-hidden .codex-name, .codex-hidden th { color: var(--muted); }
+.codex-details { margin: 6px 0 0 32px; font-size: 12px; }
+.codex-facts { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; margin: 0 0 4px; }
+.codex-facts dt { color: var(--muted); }
+.codex-facts dd { margin: 0; }
+.codex-line { margin: 4px 0; line-height: 1.4; }
+.codex-link { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 6px 0 0 32px; }
+.codex-links .codex-link { margin: 0; }
+.codex-go { min-height: 30px; padding: 4px 10px; font-size: 12px; }
+.codex-table { width: calc(100% - 12px); margin: 0 6px 8px; }
+.codex-table th { white-space: nowrap; text-align: left; }
+.codex-table th .odds-marks { margin-right: 4px; }
+.codex-table td { white-space: normal; text-align: left; font-size: 12px; }
+/* The offer a Codex link led to, lit a moment on the Shop page. */
+.shop-card.shop-focus { animation: shop-focus 2.4s ease-out; }
+@keyframes shop-focus { 0%, 40% { box-shadow: 0 0 0 3px var(--gold); } 100% { box-shadow: 0 0 0 0 transparent; } }
+@media (prefers-reduced-motion: reduce) { .shop-card.shop-focus { animation: none; box-shadow: 0 0 0 3px var(--gold); } }
 .relic-pop { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; padding: 16px; background: #04070bd9; overflow: hidden; cursor: pointer; }
 .relic-pop-stage { position: relative; display: grid; place-items: center; }
 .relic-pop-rays { position: absolute; left: 50%; top: 50%; width: 560px; height: 560px; border-radius: 50%; background: radial-gradient(circle, #ffe7a6aa 0 12%, #e9b84a55 22%, transparent 48%), repeating-conic-gradient(from 0deg, #ffd76a 0deg 5deg, transparent 5deg 15deg); -webkit-mask-image: radial-gradient(circle, #000 18%, transparent 68%); mask-image: radial-gradient(circle, #000 18%, transparent 68%); opacity: 0.8; pointer-events: none; transform: translate(-50%, -50%); animation: card-rays-in 0.4s ease-out backwards, card-rays-turn 16s linear infinite; }

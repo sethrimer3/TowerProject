@@ -33,6 +33,7 @@ import { decodeShrines, defaultShrines, validShrineRun } from "../shrines.ts";
 import { decodeThemes, defaultThemes } from "../theme-collection.ts";
 import { isTournamentRun } from "../tournament/run.ts";
 import { decodeBadges, defaultBadges, validRunBadges } from "../cards/badges.ts";
+import { decodeCodex, defaultCodex } from "../codex/discovery.ts";
 import { backfillProfile, decodeProfile, defaultProfile } from "./profile.ts";
 import { decodeOffline, defaultOffline } from "../offline-gold.ts";
 import { decodeFinds, defaultFinds, validNotes } from "../run-notes.ts";
@@ -58,6 +59,7 @@ export function defaults(): Save {
     arcaniteCarry: 0,
     rubies: 0,
     arcana: defaultArcana(),
+    codex: defaultCodex(),
     medals: 0,
     vip: 0,
     champion: defaultChampion(),
@@ -530,6 +532,7 @@ export function decode(raw: string | null): Save {
     d.review = decodeReview(s.review);
     d.shrines = decodeShrines(s.shrines);
     d.arcana = decodeArcana(s.arcana);
+    d.codex = decodeCodex(s.codex);
     d.themes = decodeThemes(s.themes);
     d.music = decodeMusic(s.music);
     const trial = decodeTrial(s.provingGrounds);

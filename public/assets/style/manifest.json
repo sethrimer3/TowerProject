@@ -4244,6 +4244,16 @@
       "file": "ruby.png",
       "width": 24,
       "height": 24
+    },
+    "ui-codex": {
+      "file": "ui-codex.png",
+      "width": 24,
+      "height": 24
+    },
+    "ui-codex-help": {
+      "file": "ui-codex-help.png",
+      "width": 24,
+      "height": 24
     }
   }
 }

@@ -781,6 +781,8 @@ export const SPRITE_ASSETS = [
   "assets/style/ui-chevron-down.png",
   "assets/style/ui-chevron-left.png",
   "assets/style/ui-chevron-right.png",
+  "assets/style/ui-codex-help.png",
+  "assets/style/ui-codex.png",
   "assets/style/ui-control-back.png",
   "assets/style/ui-control-check.png",
   "assets/style/ui-control-close.png",

@@ -21,6 +21,13 @@ function strengthName(strength: EnemyStrength) {
   const { count, down } = RANK_CHEVRONS[strength];
   return named(pngIcon(down ? COMBAT_MARKS.rankDown : COMBAT_MARKS.rankUp, "odds-mark").repeat(count), STRENGTH_NAMES[strength], "odds-ranks");
 }
+/** A strength's rank chevrons alone, as the board's enemies wear them (the Codex's). */
+export function strengthMarks(strength: EnemyStrength) {
+  const { count, down } = RANK_CHEVRONS[strength];
+  return `<span class="odds-marks odds-ranks">${pngIcon(down ? COMBAT_MARKS.rankDown : COMBAT_MARKS.rankUp, "odds-mark").repeat(count)}</span>`;
+}
+/** An attribute's mark alone (the Codex's); Aggroed wears none. */
+export const traitMarks = (trait: Trait) => `<span class="odds-marks odds-traits">${TRAIT_MARKS[trait] ? pngIcon(TRAIT_MARKS[trait], `odds-mark odds-${trait}`) : ""}</span>`;
 const traitName = (trait: Trait) => named(TRAIT_MARKS[trait] ? pngIcon(TRAIT_MARKS[trait], `odds-mark odds-${trait}`) : "", TRAIT_NAMES[trait], "odds-traits");
 
 /** A stat's column head: its icon, as the enemy's panel shows it, named for screen readers. */

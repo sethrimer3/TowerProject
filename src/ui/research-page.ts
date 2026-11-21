@@ -48,6 +48,11 @@ export class ResearchPage {
     this.archives = new ArchivesPanel(ctx, () => this.render());
   }
 
+  /** Makes the page open on tab `tab` (the Codex's links). */
+  show(tab: ResearchTab) {
+    this.tab = tab;
+  }
+
   render() {
     if (!this.archivesOpen) this.tab = "training";
     this.nextCountdown = 0;

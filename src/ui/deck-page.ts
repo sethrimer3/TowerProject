@@ -238,6 +238,17 @@ export class DeckPage {
     this.bindHand();
     this.bindDeck();
     this.bindBadges();
+    const focused = this.focused;
+    this.focused = null;
+    if (focused && !this.waitsOnPlayer) this.showDetails(focused, this.hand.includes(focused));
+  }
+
+  /** The card the next render opens the details of (the Codex's Ascend link). */
+  private focused: CardId | null = null;
+  /** Makes the page open on card `id`'s details, in whichever hand holds it. */
+  focus(id: CardId) {
+    this.focused = id;
+    if (this.ctx.game.save.manualHand.includes(id)) this.kind = "manual";
   }
 
   /** Whether the hand shows its Card Groups links: the Goal claimed, no

@@ -1094,4 +1094,5 @@ _Avoid_: known tiles, visit map
 - **Handedness**: which side the controls gather on, under the thumb; Left mirrors the layout.
 - **Death loop**: the pale infinity symbol that draws on black when the delver returns after defeat or ends a run early.
 - **Chronos Anchor**: the divine relic the weakest delver found, which sends their soul back in time; why each climb ends and begins again, and why upgrades and knowledge carry over.
+- **Codex**: the in-game reference, opened from the menu, a category a tab; what the player hasn't reached shows as ???.
 - **Story**: the forest's first lesson after the first climb, telling the world's premise in notes tapped through.

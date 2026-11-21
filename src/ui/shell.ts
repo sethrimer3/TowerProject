@@ -9,12 +9,13 @@ import type { UsedProvision } from "../economy/provisions.ts";
  * (in the forest) Arcanite and Medals, then Gold, then the run's Silver. */
 const PURSE = `<div class="purse" aria-label="Currencies"><span class="gem-stat" title="Gems: kept between climbs">${gemIcon()} <b id="gems"></b></span><span class="arcanite-stat" title="Arcanite: kept between climbs">${arcaniteIcon()} <b id="arcanite"></b></span><span class="medal-stat" title="Medals: kept between climbs" hidden>${medalIcon()} <b id="medals"></b></span><span class="gold-stat" title="Gold: kept between climbs">${goldIcon()} <b id="gold"></b></span><span class="silver-stat" title="Silver: found in a climb, spent only inside it">${kitIcon("silver", "¤", "silver-icon")} <b id="run-silver"></b></span><span id="combo-stat" class="combo-stat" title="Dash Combo: +20% ATK per Combo, up to +1000% at Combo 50, in fights chained within two turns" hidden>${uiSprite("attack")} <b id="combo"></b></span></div>`;
 /** The actions column's hamburger and the menu it opens (run-menu.ts),
- * its buttons in cell order: Settings, Research, the Tournament's, Missions,
+ * its buttons in cell order: Settings, the Codex, Research, the Tournament's, Missions,
  * Events', Relics, Shrine Boons, Mail and End Run, those that don't apply hidden (the
  * Tournament's and Events' stand in the column in the forest); and inside
  * a run the Shop under the hamburger. */
 const ACTIONS_MENU = `<div id="run-menu" class="run-menu"><div class="run-menu-frame" aria-hidden="true"></div><div id="run-menu-items" class="run-menu-items" inert>` +
   `<button id="auto-settings" class="mini-action" aria-label="Settings" title="Settings"><span class="mini-icon">${uiSprite("settings")}</span><small>SETTINGS</small></button>` +
+  `<button id="codex-button" class="mini-action codex-button" aria-label="Codex" title="Codex: the game's reference"><span class="mini-icon">${pngIcon("ui-codex", "codex-icon")}</span><small>CODEX</small></button>` +
   `<button id="run-research" class="mini-action" aria-label="Upgrades" title="Upgrades: Training and the Archives"><span class="mini-icon"></span><small>UPGRADES</small></button>` +
   `<button id="tournament-button" class="mini-action tournament-button" aria-label="Tournament" title="Tournament" hidden><span class="mini-icon">${trophyIcon()}</span><small id="tournament-state"></small></button>` +
   `<button id="missions-button" class="mini-action missions-button" aria-label="Missions" title="Missions"><span class="mini-icon">${missionIcon()}</span><small id="missions-count">0/8</small></button>` +
@@ -70,7 +71,7 @@ const CINEMATIC = `<button id="cinematic-back" class="back cinematic-back" aria-
  * pages, navigation and the shared dialog, with sprite icons in place of
  * the text glyphs. */
 export function buildShell(app: HTMLElement) {
-  app.innerHTML = `<main class="shell">${CURRENCIES}${STATS}${BOARD}<section id="deck" class="page"></section><section id="gear" class="page"></section><section id="upgrades" class="page"></section><section id="research" class="page"></section><section id="settings" class="page"></section><section id="shop" class="page"></section><section id="goals" class="page"></section><section id="tournament" class="page"></section><section id="missions" class="page"></section><section id="events" class="page"></section><section id="relics" class="page"></section><section id="shrines" class="page"></section>${NAV}${TRAINING_BAR}${CINEMATIC}</main><dialog id="modal"></dialog>`;
+  app.innerHTML = `<main class="shell">${CURRENCIES}${STATS}${BOARD}<section id="deck" class="page"></section><section id="gear" class="page"></section><section id="upgrades" class="page"></section><section id="research" class="page"></section><section id="settings" class="page"></section><section id="shop" class="page"></section><section id="goals" class="page"></section><section id="tournament" class="page"></section><section id="missions" class="page"></section><section id="events" class="page"></section><section id="relics" class="page"></section><section id="codex" class="page"></section><section id="shrines" class="page"></section>${NAV}${TRAINING_BAR}${CINEMATIC}</main><dialog id="modal"></dialog>`;
   arrangeHud();
   replaceGlyphs();
 }

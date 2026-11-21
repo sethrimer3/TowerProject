@@ -95,6 +95,15 @@ export class ShopPage {
     this.message = "";
     this.render();
   }
+  /** The offer the next render scrolls to (the Codex's link to it), and
+   * the one lit, until when (renders meanwhile keep it lit). */
+  private focused: string | null = null;
+  private lit: { id: string; until: number } | null = null;
+  /** Makes the next opening scroll to offer `id`, lit for a moment. */
+  focusOffer(id: string) {
+    this.focused = id;
+    this.lit = { id, until: Date.now() + 2400 };
+  }
 
   render() {
     const save = this.ctx.game.save;
@@ -117,6 +126,11 @@ export class ShopPage {
       (ownedOffers.length ? `<section class="shop-section shop-owned"><h3>Owned</h3><div class="shop-grid">${ownedOffers.map((o) => this.card(o)).join("")}</div></section>` : "") +
       this.history();
     this.bind();
+    const card = (id: string) => el("shop").querySelector<HTMLElement>(`[data-detail="${id}"]`)?.closest<HTMLElement>(".shop-card");
+    if (this.lit && Date.now() < this.lit.until) card(this.lit.id)?.classList.add("shop-focus");
+    else this.lit = null;
+    if (this.focused) card(this.focused)?.scrollIntoView({ block: "center" });
+    this.focused = null;
   }
 
   /** The Premium Offers: the next not yet bought (the next two for a

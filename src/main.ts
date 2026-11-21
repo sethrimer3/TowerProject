@@ -79,6 +79,9 @@ import { MailDialog } from "./ui/mail-dialog.ts";
 import { MissionsPage } from "./ui/missions-page.ts";
 import { EventsPage } from "./ui/events-page.ts";
 import { RelicsPage } from "./ui/relics-page.ts";
+import { CodexPage } from "./ui/codex-page.ts";
+import type { CodexTarget } from "./codex/codex.ts";
+import { noteDiscoveries } from "./codex/discovery.ts";
 import { ShrinesPage } from "./ui/shrines-page.ts";
 import { showShrine } from "./ui/shrine-dialog.ts";
 import { uiLook } from "./theme-collection.ts";
@@ -162,6 +165,22 @@ const missions = new MissionsPage(ctx);
 const events = new EventsPage(ctx);
 const relics = new RelicsPage(ctx);
 const shrines = new ShrinesPage(ctx);
+const codex = new CodexPage(ctx, () => game.arcana.held.map((h) => h.id), followCodex);
+/** Follows a Codex link to the page it names, opened on what it points at. */
+function followCodex(to: CodexTarget) {
+  if (to.page === "deck" && to.card) deck.focus(to.card);
+  if (to.page === "upgrades") {
+    if (to.skill) skillTree.focus(to.tree, to.skill);
+    else skillTree.showTree(to.tree);
+  }
+  if (to.page === "research") research.show(to.tab);
+  if (to.page === "gear") {
+    if (to.screen === "equipment") gear.openEquipment();
+    else gear.openArcana();
+  }
+  if (to.page === "shop" && to.offer) shop.focusOffer(to.offer);
+  navigate(to.page);
+}
 // Cinematic mode: inside a run, the board alone. Its look is classes on the
 // root, so it reaches what sits on the body too (the research toasts).
 const cinematic = new Cinematic({
@@ -228,6 +247,8 @@ function update() {
   const finished = [...game.research.done.splice(0).map(researchToast), ...game.training.done.splice(0).map(trainingToast)];
   if (finished.length) play("trained");
   researchToasts.add(finished);
+  // The Codex remembers the arcana and Uniques the player has come across.
+  if (!provingGrounds.active) noteDiscoveries(game.save.codex, game.save, game.arcana.held.map((h) => h.id));
   save();
   tournamentEntry.check();
   runEnd.check();
@@ -256,6 +277,7 @@ function renderPage() {
   if (tab === "events") events.render();
   if (tab === "relics") relics.render();
   if (tab === "shrines") shrines.render();
+  if (tab === "codex") codex.render();
 }
 /** Locked tabs point at the upgrade that unlocks them instead. */
 function unlockTarget(id: string): string {
@@ -325,6 +347,7 @@ function navigate(requested: string) {
   else if (id === "events" && from !== "events") events.open(from);
   else if (id === "relics" && from !== "relics") relics.open(from);
   else if (id === "shrines" && from !== "shrines") shrines.open(from);
+  else if (id === "codex" && from !== "codex") codex.open(from);
   else renderPage();
   update();
 }
@@ -483,6 +506,11 @@ onBatteryExit(() => {
 el("auto-settings").onclick = () => {
   closeRunMenu();
   navigate("settings");
+};
+// The Codex, in the menu inside a climb and in the forest.
+el("codex-button").onclick = () => {
+  closeRunMenu();
+  navigate("codex");
 };
 // Inside a run, the Shop under the hamburger opens the Shop, whose Back returns to the run.
 el("run-shop").onclick = () => {

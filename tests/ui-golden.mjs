@@ -1220,6 +1220,23 @@ try {
     await shot("lakeside.returned");
   });
 
+  // The Codex, opened from the menu: General, a card expanded with its level
+  // and powers, the Enemies tab's fights and tables, and Training's how-to.
+  await section("codex", async () => {
+    await load("rich");
+    await menuClick("#codex-button");
+    await shot("codex.general");
+    await click('[data-codex-tab="cards"]');
+    await click('#codex details[data-codex-entry] > summary');
+    await shot("codex.cards");
+    await click('[data-codex-tab="enemies"]');
+    await shot("codex.enemies");
+    await click('[data-codex-tab="training"]');
+    await shot("codex.training");
+    await click("#codex-close");
+    await shot("codex.closed");
+  });
+
   // --- Compare ---
   const hashes = Object.fromEntries(Object.entries(filter.pick(shots)).map(([k, html]) => [k, createHash("sha256").update(html).digest("hex").slice(0, 16)]));
   mkdirSync(OUT_DIR, { recursive: true });
