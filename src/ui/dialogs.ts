@@ -51,9 +51,11 @@ export function showHelp(ctx: AppContext, eyebrow: string, title: string, body: 
   el("tree-help-ok").onclick = () => modal.close();
 }
 
-/** Offers the Shop when a Gem purchase finds too few Gems held. */
-export function askForGems(ctx: AppContext) {
-  confirmAction(ctx, { title: "Not enough Gems", body: "Not enough gems. Go to the store?", label: "Go to Shop", cancel: "Cancel" }, () => ctx.navigate("shop"));
+/** Offers the Shop when a Gem purchase costing `price` finds too few Gems
+ * held, saying how many more it needs. */
+export function askForGems(ctx: AppContext, price: number) {
+  const more = Math.max(1, Math.ceil(price - ctx.game.save.gems));
+  confirmAction(ctx, { title: "Not enough Gems", body: `<b>${more}</b> more ${more === 1 ? "Gem" : "Gems"} needed.`, label: "Go to Shop", cancel: "Cancel" }, () => ctx.navigate("shop"));
 }
 
 /** Offers the Shop when an Arcana purchase finds too little Arcanite held. */
@@ -231,7 +233,7 @@ export class RunEndDialog {
     const ctx = this.ctx, { game, modal } = ctx;
     const words = MODES[game.mode].words, slice = game.save[game.mode];
     const where = `${words.progress} ${displayedProgress(game.run.height, !!game.run.outside)}`;
-    const kept = "Milestone rewards and the Gold found are already saved.";
+    const kept = "Milestone rewards and Gold found are saved.";
     const stats = this.stats();
     if (cause === "fallen") {
       const by = slice.fall?.by;

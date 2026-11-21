@@ -19,7 +19,7 @@ Pressing a row anywhere else shows what the arcanum does, each attribute now and
 
 Once the Breakthrough skill **Arcana Respec** (3 Breakthrough, right of Training Respec) is owned, **Respec Arcanum** stands under Select Arcanum.
 For 300 Gems it returns all the Arcanite invested in one arcanum you choose, its attributes going back to their first levels; the arcanum stays yours and its price is not returned.
-It works once each event (the fortnightly event's schedule, whether or not Events are open yet) and only between runs; short of Gems, it offers the Shop.
+It works once each event (the fortnightly event's schedule, whether or not Events are open yet) and only between runs; short of Gems, it says how many more are needed and offers the Shop.
 
 ## In a run
 

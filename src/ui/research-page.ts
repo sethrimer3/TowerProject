@@ -151,11 +151,11 @@ export class ResearchPage {
     this.onEach("data-cancel", (id) => this.withRefund(() => training.cancel(id)));
     this.onEach("data-finish", (id) => {
       const game = this.ctx.game;
-      if (game.save.gems < training.finishGems(id)) return askForGems(this.ctx);
+      if (game.save.gems < training.finishGems(id)) return askForGems(this.ctx, training.finishGems(id));
       this.saveAfter(training.finish(id));
     });
     document.querySelector<HTMLButtonElement>("#buy-trainer")?.addEventListener("click", () => {
-      if (this.trainerShort()) return askForGems(this.ctx);
+      if (this.trainerShort()) return askForGems(this.ctx, nextTrainerGems(this.ctx.game.save) ?? 0);
       this.saveAfter(training.buyTrainer());
     });
     this.onEach("data-reset", (id) => this.confirmReset(id));
@@ -261,7 +261,7 @@ export class ResearchPage {
    * way shows only once trainers are hired or have trained some. */
   private confirmReset(id: TrainingId) {
     const { game, modal } = this.ctx, row = TRAINING.find(t => t.id === id)!, ranks = game.training.resettable(id);
-    if (game.save.gems < TRAINING_RESET_GEMS && !game.free) return askForGems(this.ctx);
+    if (game.save.gems < TRAINING_RESET_GEMS && !game.free) return askForGems(this.ctx, TRAINING_RESET_GEMS);
     const count = (n: number, kind: string) => `${n} ${kind} ${n === 1 ? "rank" : "ranks"}`, back = this.resetReturns(id);
     // Without trainers, and none of their ranks, only the points way shows.
     const goldOpen = ranks.gold > 0 || ranks.inTraining, gold = game.training.hired || goldOpen;

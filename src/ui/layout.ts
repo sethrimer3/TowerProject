@@ -7,6 +7,9 @@ export const LEFT_HANDED_CLASS = "left-handed";
 /** Landscape's HUD column is narrower than a phone's portrait HUD wants:
  * the HUD takes the phone's sizes (`landscape.css`). */
 export const HUD_NARROW_CLASS = "hud-narrow";
+/** Battery saver's own landscape on a wide window, dressed by `battery.css`:
+ * its board at the side, its stats, hand and training beside it. */
+export const BATTERY_LANDSCAPE_CLASS = "battery-landscape";
 
 /** A window wide enough for the board and the HUD side by side: a phone on
  * its side, a tablet held wide, or a wide desktop window. */
@@ -39,10 +42,12 @@ export function applyLayout(save: Pick<Save, "settings">) {
 function relayout() {
   if (!settings || !wide) return;
   const root = document.documentElement.classList;
-  // Battery saver keeps its own centred column whatever the window's shape.
-  const landscape = landscapeWorn(settings.autoLandscape, wide.matches) && !settings.batterySaver;
-  const changed = root.contains(LANDSCAPE_CLASS) !== landscape || root.contains(LEFT_HANDED_CLASS) !== (settings.hand === "left");
+  // Battery saver wears its own landscape, not the HUD's.
+  const turned = landscapeWorn(settings.autoLandscape, wide.matches);
+  const landscape = turned && !settings.batterySaver, battery = turned && settings.batterySaver;
+  const changed = root.contains(LANDSCAPE_CLASS) !== landscape || root.contains(BATTERY_LANDSCAPE_CLASS) !== battery || root.contains(LEFT_HANDED_CLASS) !== (settings.hand === "left");
   root.toggle(LANDSCAPE_CLASS, landscape);
+  root.toggle(BATTERY_LANDSCAPE_CLASS, battery);
   root.toggle(LEFT_HANDED_CLASS, settings.hand === "left");
   placeSideInfo(landscape);
   watchHud(landscape);

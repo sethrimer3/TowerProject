@@ -151,7 +151,7 @@ export class ArchivesPanel {
     document.querySelectorAll<HTMLButtonElement>("[data-finish]").forEach((b) => (b.onclick = () => act(game.research.finishNow(Number(b.dataset.finish)).length > 0)));
     document.querySelectorAll<HTMLButtonElement>("[data-rush]").forEach((b) => (b.onclick = () => {
       const slot = Number(b.dataset.rush);
-      if (this.rushShort(slot)) return askForGems(this.ctx);
+      if (this.rushShort(slot)) return askForGems(this.ctx, game.research.rushGems(slot));
       act(game.research.rush(slot).length > 0);
     }));
     document.querySelectorAll<HTMLButtonElement>("[data-speed-up]").forEach((b) => (b.onclick = () => this.showSpeedUp(Number(b.dataset.speedUp))));
@@ -359,7 +359,7 @@ export class ArchivesPanel {
   private hire(act: (done: boolean) => void) {
     const game = this.ctx.game, price = nextArchivistPrice(game.save.archives, premiumArchivists(game.save));
     if (price === undefined) return;
-    if (this.hireShort()) return askForGems(this.ctx);
+    if (this.hireShort()) return askForGems(this.ctx, price);
     this.ctx.confirm(
       { title: "Hire an archivist?", body: `Spend ${gemIcon()} <b>${price}</b> on one more archivist: one more research runs at once.`, label: `Hire · ${gemIcon()} <b>${price}</b>`, cancel: "Cancel" },
       () => act(game.research.hire()),

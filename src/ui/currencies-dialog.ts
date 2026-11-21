@@ -16,7 +16,7 @@ export const heldAmount = (game: Pick<Game, "save">, n: number) => game.save.set
 export type CurrencyRow = { id: string; icon: string; name: string; value: string; exact: string };
 
 /** Every currency the player holds, in the dialog's order: Gold, Gems,
- * Arcanite, Rubies (once one is had), Medals, VIP Points (for a Champion), the run's Silver, Training Points, Inspiration
+ * Rubies (once one is had), Arcanite, Medals, VIP Points (for a Champion), the run's Silver, Training Points, Inspiration
  * and Breakthrough, then Cells, Tournament, Equipment and One Piece Tickets (once one is had) and each Equipment material. Each shows
  * once the system behind it is open (all of them in Dev mode), so the list
  * never names what the player hasn't reached. */
@@ -26,8 +26,8 @@ export function currencyRows(game: Game): CurrencyRow[] {
   const rows: [boolean, string, string, string, number][] = [
     [true, "gold", goldIcon(), "Gold", save.gold],
     [true, "gems", gemIcon(), "Gems", save.gems],
-    [true, "arcanite", arcaniteIcon(), "Arcanite", save.arcanite],
     [save.profile.earned.rubies > 0, "rubies", rubyIcon(), "Rubies", save.rubies],
+    [true, "arcanite", arcaniteIcon(), "Arcanite", save.arcanite],
     [true, "medals", medalIcon(), "Medals", save.medals],
     [isChampion(save), "vip", vipIcon(), "VIP Points", save.vip],
     [!outside || silver > 0, "silver", uiSprite("gold", "ui-sprite silver-sprite"), outside ? "Silver (next climb)" : "Silver", silver],

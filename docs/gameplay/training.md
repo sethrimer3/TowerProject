@@ -25,6 +25,7 @@ In a run its first rank costs 150 Silver, and later ranks rise faster than the S
 Silver / Floor counts Silver Bonus (with the equipment's Silver found), since that multiplies it; a global Gold multiplier (the tower's, the Shop's packs, the ad's boost, themes, Gold found, the Gold boons) counts in no row, only in the HUD's Gold bonus total, and shows in the Gold each kill or item actually pays.
 Pressing the button pays the Silver and raises it at once by what the Training tab shows (equipment's percent and research counted), for the rest of this run only (more max HP comes with the HP to fill it, as it does when a trainer finishes a Max HP rank mid-run); while the Silver isn't there the button's border darkens and its face fades, its price still clear, and the card stays readable.
 A card at its most turns gold, its button reading *Max*.
+A row's level in a run, the hero's own and the Silver levels together, never passes its most: training a row at its most with training points still raises the hero's own level, and the run gives up as many of the Silver levels it bought (with no Silver back), so the run's level stays at the most.
 Pressing a card, or hovering over it, shows its description and its level of the most it can reach; pressing the card again hides it.
 The cards are exactly as tall as the hand's, so nothing else on the screen moves as they swap.
 Pressing Hand brings the hand back.

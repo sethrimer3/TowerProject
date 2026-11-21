@@ -176,3 +176,24 @@ test("training bought while a fight plays out counts in it from the next strike"
   assert.deepEqual([g.run.player.maxHp, g.run.player.attack], [maxHp, attack], "the stats bought are kept once it counts");
   assert.equal(g.run.kills, 1);
 });
+
+test("ranks bought with points at a row's cap take the run's Silver ranks past it off, no Silver back", () => {
+  const row = TRAINING.find((t) => t.id === "attack")!;
+  const g = arena(1000, (g) => {
+    g.save.xp = xpForLevel(300);
+    g.save.training.attack = row.max - 2;
+  });
+  assert.ok(g.trainInRun("attack") && g.trainInRun("attack"));
+  assert.equal(runTrainingOffer(g.save, g.run, "attack").level, row.max, "at its cap");
+  const attack = g.run.player.attack, silver = g.silver;
+  assert.ok(g.training.train("attack"));
+  assert.equal(g.save.training.attack, row.max - 1, "the hero's own rank rises");
+  assert.equal(g.run.training?.attack, 1, "one Silver rank comes off");
+  assert.equal(runTrainingOffer(g.save, g.run, "attack").level, row.max, "the run stays at the cap, not past it");
+  assert.equal(g.silver, silver, "no Silver back");
+  assert.equal(g.run.player.attack, attack, "the hero keeps the cap's ATK");
+  assert.ok(g.training.train("attack"));
+  assert.equal(g.run.training?.attack, undefined, "the last Silver rank comes off");
+  assert.equal(runTrainingOffer(g.save, g.run, "attack").level, row.max);
+  assert.equal(g.run.player.attack, attack);
+});

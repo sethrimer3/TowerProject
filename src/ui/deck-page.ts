@@ -724,7 +724,7 @@ export class DeckPage {
    * shows what was drawn. */
   private draw(count: DrawCount) {
     const { game } = this.ctx;
-    if (!game.free && game.save.gems < DRAW_GEMS[count]) return askForGems(this.ctx);
+    if (!game.free && game.save.gems < DRAW_GEMS[count]) return askForGems(this.ctx, DRAW_GEMS[count]);
     const draws = game.badges.draw(count);
     if (!draws) return;
     this.ctx.save();
@@ -832,7 +832,7 @@ export class DeckPage {
   private buySlot() {
     const { game } = this.ctx, kind = this.kind, price = game.deck.slotGems(kind);
     if (price === null) return;
-    if (!game.free && game.save.gems < price) return askForGems(this.ctx);
+    if (!game.free && game.save.gems < price) return askForGems(this.ctx, price);
     const manual = kind === "manual", slots = this.slots + 1;
     this.ctx.confirm(
       {

@@ -101,7 +101,7 @@ export class ArcanaPanel {
     const select = document.getElementById("arcana-select");
     if (select) select.onclick = () => (desk.affords(desk.price!) ? this.showChoice() : askForArcanite(ctx));
     const respec = document.getElementById("arcana-respec");
-    if (respec) respec.onclick = () => (ctx.game.free || ctx.game.save.gems >= ARCANUM_RESPEC_GEMS ? this.showRespec() : askForGems(ctx));
+    if (respec) respec.onclick = () => (ctx.game.free || ctx.game.save.gems >= ARCANUM_RESPEC_GEMS ? this.showRespec() : askForGems(ctx, ARCANUM_RESPEC_GEMS));
     gear.querySelectorAll<HTMLButtonElement>("[data-arcana-up]").forEach((b) => (b.onclick = () => {
       const [id, attribute] = b.dataset.arcanaUp!.split(":") as [ArcanumId, string], answer = desk.upgrade(id, Number(attribute));
       if (answer === "short") askForArcanite(ctx);
@@ -155,7 +155,7 @@ export class ArcanaPanel {
       aria: free ? "Respec, free" : `Respec for ${ARCANUM_RESPEC_GEMS} Gems`,
     }, () => {
       const refusal = desk.respec(id);
-      if (refusal === "short") return askForGems(ctx);
+      if (refusal === "short") return askForGems(ctx, ARCANUM_RESPEC_GEMS);
       if (!refusal) this.changed();
     });
   }

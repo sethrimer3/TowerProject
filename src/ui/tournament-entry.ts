@@ -69,7 +69,7 @@ export class TournamentEntry {
     const get = document.getElementById("ticket-get");
     if (!get) return;
     get.onclick = () => {
-      if (next === "gems" && short) return askForGems(this.ctx);
+      if (next === "gems" && short) return askForGems(this.ctx, price);
       const take = (got: boolean) => {
         this.ctx.update();
         if (got) void this.begin();

@@ -485,7 +485,7 @@ export class EquipmentPanel {
   /** `count` Gem pulls in the chosen category, then every result at once. */
   private pull(count: PullCount) {
     const result = this.game.equipment.pull(this.pullCategory, count);
-    if (result === "gems") return askForGems(this.ctx);
+    if (result === "gems") return askForGems(this.ctx, this.game.equipment.pullPrice(count, this.pullCategory).gems);
     const { modal } = this.ctx;
     if (result === "excluded") {
       const c = this.pullCategory, what = c === "all" ? "every type" : CATEGORIES[c].plural;

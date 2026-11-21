@@ -129,7 +129,7 @@ Read the area's doc before changing code there or answering questions about it; 
   Only two exceptions multiply within their kind, on purpose: the Gold bundles (each its own Gold and training factor, as the Shop says) and Shrine boons of different types (a trade-off's benefit and cost multiply each other and the standard boons' totals).
   Anything else that should compound says so where it is defined.
 - Gem purchases (anything paid in Gems: hand slots, trainers, archivists, finishing training, resets) always look active and prominent, never `disabled` or greyed out for lack of Gems.
-  A button short of Gems gets the `short` class, which turns only its price red, and a press while short opens `askForGems` (`ui/dialogs.ts`), offering the Shop (on the Shop page itself, a Gem-priced offer short of Gems points to the Gem packs instead).
+  A button short of Gems gets the `short` class, which turns only its price red, and a press while short opens `askForGems(ctx, price)` (`ui/dialogs.ts`), which says how many more Gems the price needs and offers the Shop (on the Shop page itself, a Gem-priced offer short of Gems points to the Gem packs instead).
   Only a purchase that can't happen at all (sold out, all hired, locked) may look unavailable.
   Arcanite purchases follow the same rule with `askForArcanite`, except that an arcanum's upgrade button fades its border while short (docs/agents/arcana.md).
 - A confirmation that spends a currency shows the price on its button as the currency's icon and the amount (`· ${gemIcon()} <b>2</b>`, likewise `goldIcon()` and the rest), not the currency's name in text; the button's `aria-label` names the currency, for screen readers.

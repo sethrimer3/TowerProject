@@ -33,8 +33,9 @@ The hand's cards wear white pixel icons of their own, each matching what it goes
 The page around the board is white on black, without animations, glows or colours, and its pictures are grey.
 The board draws about fifteen frames a second while something on it moves and two or three while all is still, instead of the screen's full rate; the hero steps from tile to tile rather than gliding, and the weather and decor are off.
 Battery saver wears its own look over the UI and Game themes chosen, which come back as it is turned off.
-It also gathers the page into one small centred column: the room shrinks into a white square in the middle of the screen, in portrait and landscape alike.
-The top bar is gone; above the square a short centred row shows HP, ATK, DEF, the keys held and the floor, each a small white icon and its number, with Back, then Play or Pause and Settings beside them (Back, Enter and Settings in the forest), and the Gem button, with its Gems, while they can be claimed.
+It also gathers the page into one small centred column: the room shrinks into a white square in the middle of the screen.
+Turned on its side (with Landscape layout on wide screens on), the square stands at the left as tall as the screen allows, and the row of stats, the hand and the Training bar gather in a column beside it (at the left for the left hand).
+The top bar is gone; above the square a short centred row shows HP, ATK, DEF, the keys held, the floor, then the Gold, Silver and Gems held, each a small white icon and its number, with Back, then Play or Pause and Settings beside them (Back, Enter and Settings in the forest), and the Gem button, with its Gems, while they can be claimed.
 The hand sits just under the square, its cards smaller and their levels smaller still, and the card at work is underlined; the hand's row is as tall as an open Training group's, so the buttons below stay put.
 A hand too wide for the column scrolls sideways from its first card.
 There is no text under the board.

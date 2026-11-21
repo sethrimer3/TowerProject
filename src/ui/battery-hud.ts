@@ -3,7 +3,8 @@ import { batteryIconUrl, type BatteryIcon } from "../render/boards/battery-board
 
 /** Battery saver's stats: in place of the HUD (hidden while Battery saver is
  * on), a short centred row of HP, ATK, DEF, the keys held and the floor, each
- * a small white pixel icon and its value, with Back first, which turns
+ * a small white pixel icon and its value, then the Gold, Silver (while the
+ * HUD shows it) and Gems held, with Back first, which turns
  * Battery saver off (`onBatteryExit`; Settings never leaves it), then the
  * few buttons a run needs (play or pause and Settings inside, Enter in the
  * forest, and the ad's Gems while they can be claimed), which press the
@@ -58,6 +59,11 @@ export function renderBatteryHud(game: Game) {
   const stats = [stat("heart", textOf("hp"), "HP"), stat("sword", textOf("attack"), "ATK"), stat("shield", textOf("defense"), "DEF")];
   for (const key of ["yellow", "blue", "red"] as const) if (shown(key)) stats.push(stat(key, textOf(key), `${key === "yellow" ? "Gold" : key === "blue" ? "Blue" : "Red"} keys`));
   if (!outside) stats.push(stat("stairs", textOf("height"), "Floor"));
+  // The currencies wrap to a line of their own together, never one alone.
+  const purse = [stat("gold", textOf("gold"), "Gold")];
+  if (shown("run-silver")) purse.push(stat("silver", textOf("run-silver"), "Silver"));
+  purse.push(stat("gem", textOf("gems"), "Gems"));
+  stats.push(`<span class="battery-purse">${purse.join("")}</span>`);
   const playing = game.auto && !game.paused;
   const presses = outside
     ? [back(), press("enter-run", "enter", "Enter"), press("auto-settings", "cog", "Settings")]

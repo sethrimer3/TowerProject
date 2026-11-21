@@ -165,7 +165,7 @@ export class MissionsPage {
   private reroll(id: number) {
     const ctx = this.ctx, game = ctx.game, mission = game.missions.list.find((m) => m.id === id);
     if (!mission || !game.missions.canReroll(id)) return;
-    if (!game.free && game.save.gems < MISSION_REROLL_GEMS) return askForGems(ctx);
+    if (!game.free && game.save.gems < MISSION_REROLL_GEMS) return askForGems(ctx, MISSION_REROLL_GEMS);
     const price = `${gemIcon()} <b>${MISSION_REROLL_GEMS}</b>`;
     ctx.confirm(
       {

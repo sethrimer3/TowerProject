@@ -141,6 +141,12 @@ html.battery-saver .shell:not(:has(> #board.active)) > #battery-hud { display: n
   justify-content: center;
   gap: 6px 14px;
 }
+.battery-stats { column-gap: 10px; }
+/* The currencies, which wrap together. */
+.battery-purse {
+  display: inline-flex;
+  gap: 10px;
+}
 .battery-stat {
   display: inline-flex;
   align-items: center;
@@ -253,3 +259,31 @@ html.battery-saver .hand-card.active::after {
   height: 2px;
   background: var(--bat-ink);
 }
+
+/* ---- Battery saver on a wide window (html.battery-landscape, layout.ts):
+   the board at the left, as tall as the window allows, and the stats, hand
+   and training bar in a column beside it; left-handed mirrors it. ---- */
+html.battery-landscape .shell:has(> #board.active):not(#_) {
+  /* The frame adds 12px to the board's side; the column wants 260px. */
+  --bat-board: min(calc(100dvh - 40px), calc(100vw - 330px), 720px);
+  display: grid;
+  grid-template-columns: auto minmax(0, 280px);
+  grid-template-rows: minmax(0, 1fr) auto auto auto minmax(0, 1fr);
+  grid-template-areas: "board ." "board hud" "board nav" "board train" "board .";
+  justify-content: center;
+  align-content: center;
+  column-gap: 20px;
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  padding-inline: max(8px, env(safe-area-inset-left)) max(8px, env(safe-area-inset-right));
+  box-sizing: border-box;
+}
+html.battery-landscape.left-handed .shell:has(> #board.active):not(#_) {
+  grid-template-columns: minmax(0, 280px) auto;
+  grid-template-areas: ". board" "hud board" "nav board" "train board" ". board";
+}
+html.battery-landscape .shell:has(> #board.active) > #battery-hud { grid-area: hud; margin: 0 0 10px; }
+html.battery-landscape .shell:has(> #board.active) > #board { grid-area: board; align-self: center; }
+html.battery-landscape .shell:has(> #board.active) > nav:not(#_) { grid-area: nav; width: 100%; margin-top: 0; }
+html.battery-landscape .shell:has(> #board.active) > #training-bar { grid-area: train; }
