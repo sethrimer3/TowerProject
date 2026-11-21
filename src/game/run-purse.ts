@@ -24,7 +24,11 @@ import { runBoons } from "../shrines.ts";
 import { earn } from "../save/profile.ts";
 import { notesOf, tallyIn } from "../run-notes.ts";
 import { foeGold } from "../cards/foe-cards.ts";
-import { foeStat, treeBonus, treeFactor } from "../cards/trees.ts";
+import { foeStat, powerBonus, powerFactor } from "../cards/powers.ts";
+import { tileRandom } from "../random.ts";
+
+/** The salt a boss's extra Ruby rolls with (BOSS ENEMY's Boss Rubies). */
+const BOSS_RUBY_SALT = 0x2b7e9;
 import { floorChances, hasEnvironment, STELLAR_FACTOR, type FloorBloom } from "../environments.ts";
 
 /** The tiles whose Pickup Gold a skipped floor counts, beside its lit torches. */
@@ -85,10 +89,10 @@ export class RunPurse {
     return this.run.tier ?? 1;
   }
 
-  /** What the card trees of the run's hand give (`treeBonus`): none in
-   * the forest. */
+  /** What the powers of the run's hand give (`powerBonus`): none in the
+   * forest. */
   private get tree() {
-    return treeBonus(this.run.outside ? undefined : this.run.cardTrees);
+    return powerBonus(this.run.outside ? undefined : this.run.handLevels);
   }
 
   /** What the run's boons change (a Tower run's only), or null. */
@@ -222,7 +226,7 @@ export class RunPurse {
   /** Silver found's multiplier times the card trees' Silver Bonus: what
    * every Silver the run finds, Interest too, is multiplied by. */
   private get silverFactor() {
-    return silverFound(this.save, this.mode, this.trainingNow.training.silverBonus, this.boons?.silverFound) * treeFactor(this.tree, "silverBonus");
+    return silverFound(this.save, this.mode, this.trainingNow.training.silverBonus, this.boons?.silverFound) * powerFactor(this.tree, "silverBonus");
   }
 
   /** `silver` found on the tile at (x, y). */
@@ -249,14 +253,14 @@ export class RunPurse {
   killSilver(enemy: Enemy, floor: number, scale = 1, at?: { x: number; y: number }) {
     // ENEMY's tree raises it, its own factor beside the boons'.
     const tree = this.tree, found = snap(silverForKill(enemy.strength, floor) + foeStat(tree, enemy, "Silver"));
-    const base = snap(found * (this.boons?.killSilver ?? 1) * treeFactor(tree, "foeSilver"));
+    const base = snap(found * (this.boons?.killSilver ?? 1) * powerFactor(tree, "foeSilver"));
     return this.silver(scale === 1 ? base : snap(base * scale), at ? this.payAt(at.x, at.y) : PLAIN_FLOOR);
   }
 
   /** Gold Bonus training's and research's multiplier, times the card
    * trees' Gold Bonus, in hundredths of a percent (×1 is 10,000). */
   private get goldBonus() {
-    return trainedAmount(this.trainingNow, "goldBonus") * researched(this.save.archives, "goldBonus") * treeFactor(this.tree, "goldBonus");
+    return trainedAmount(this.trainingNow, "goldBonus") * researched(this.save.archives, "goldBonus") * powerFactor(this.tree, "goldBonus");
   }
 
   /** `base` raised by Gold Bonus. */
@@ -293,8 +297,8 @@ export class RunPurse {
    * and an Equipment Chest's piece by their Equipment Drop chance, once
    * Equipment is open. `spotlight` is Overseer Gold Bonus's factor for a
    * kill in Overseer's beams (`Game.spotlightGold`), its Gold alone. */
-  enemyLoot(enemy: Enemy, x: number, y: number, scale = 1, instakill = false, spring?: { gold: number; cells: number }, spotlight = 1): { gold: number; cells: number; equipment: EquipmentLoot[] } {
-    if (!this.loot(this.killKey(enemy, x, y))) return { gold: 0, cells: 0, equipment: [] };
+  enemyLoot(enemy: Enemy, x: number, y: number, scale = 1, instakill = false, spring?: { gold: number; cells: number }, spotlight = 1): { gold: number; cells: number; rubies: number; equipment: EquipmentLoot[] } {
+    if (!this.loot(this.killKey(enemy, x, y))) return { gold: 0, cells: 0, rubies: 0, equipment: [] };
     // Effective or Dampen on the card that took the fight scales it; `gold`
     // then adds the tier's bonus and the other Gold multipliers.
     const base = this.withCombo(this.killGold(enemy, instakill)), raised = snap(base * scale * (spring?.gold ?? 1) * spotlight);
@@ -302,7 +306,31 @@ export class RunPurse {
     const cells = enemy.strength === "greaterBoss" ? this.cells(scale, more) : more ? this.bankCells(snap(more * scale)) : 0;
     // Lifespring's Cell Bonus: more of the Cells an enemy it touched drops, if it drops any.
     const extra = cells && spring?.cells ? this.bankCells(snap(cells * spring.cells)) : 0;
-    return { gold, cells: snap(cells + extra), equipment: this.killDrops(enemy, instakill) };
+    return { gold, cells: snap(cells + extra), rubies: this.bossRubies(enemy, x, y), equipment: this.killDrops(enemy, instakill) };
+  }
+
+  /** The Rubies a kill of `enemy` at (x, y) banks: a boss's or Greater
+   * Boss's, the tier's number (1 in Tower I, 9 in Tower IX), and BOSS
+   * ENEMY's Boss Rubies more, a fraction of one a chance by the tile's
+   * fixed number, so a replay finds the same; none for any other enemy. */
+  private bossRubies(enemy: Enemy, x: number, y: number) {
+    if (enemy.strength !== "boss" && enemy.strength !== "greaterBoss") return 0;
+    const more = this.tree.bossRubies, whole = Math.floor(more), part = snap(more - whole);
+    const lucky = part > 0 && tileRandom(x, y, (this.run.seed ^ BOSS_RUBY_SALT) | 0) < part ? 1 : 0;
+    return this.bankRubies(this.tier + whole + lucky);
+  }
+
+  /** The Rubies a floor of the tier pays, as a boss does: STAIRS' Ruby Chance's. */
+  get floorRubies() {
+    return this.tier;
+  }
+
+  /** Banks `rubies` Rubies in the save, counted toward the profile's earnings. */
+  bankRubies(rubies: number) {
+    if (rubies <= 0) return 0;
+    this.save.rubies += rubies;
+    earn(this.save, "rubies", rubies);
+    return rubies;
   }
 
   /** What a kill of `enemy` drops: a boss's or Greater Boss's own chances
@@ -430,7 +458,7 @@ export class RunPurse {
   floorGold(key: string, reached: number) {
     const base = trainedAmount(this.trainingNow, "floorGold");
     if (!base || !this.loot(key)) return 0;
-    return this.gold(this.bonused(snap(this.researched(base, "floorGold") * treeFactor(this.tree, "floorGold"))), this.floorPay(reached));
+    return this.gold(this.bonused(snap(this.researched(base, "floorGold") * powerFactor(this.tree, "floorGold"))), this.floorPay(reached));
   }
 
   /** Floor Skip Reward: when Skip climbs past the floor the run stands on
@@ -500,7 +528,7 @@ export class RunPurse {
    * (from 1) it climbed to. Returns what it paid. */
   floorSilver(reached: number) {
     const base = trainedAmount(this.trainingNow, "floorSilver");
-    return base ? this.silver(snap(this.researched(base, "floorSilver") * (this.boons?.floorSilver ?? 1) * treeFactor(this.tree, "floorSilver")), this.floorPay(reached)) : 0;
+    return base ? this.silver(snap(this.researched(base, "floorSilver") * (this.boons?.floorSilver ?? 1) * powerFactor(this.tree, "floorSilver")), this.floorPay(reached)) : 0;
   }
 
   /** Interest: for a floor climbed for the first time in the run, after

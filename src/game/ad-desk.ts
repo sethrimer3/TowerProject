@@ -1,23 +1,20 @@
 import { addAdGold, adGoldNow, claimPrize, recordWatch, refreshAds, type AdPrize } from "../ads/series.ts";
-import { CARD_BUY_GEMS, type CardBuy } from "../cards/buys.ts";
 import { earn } from "../save/profile.ts";
 import { estimatedServerTime } from "../shop/clock.ts";
 import { adsOff } from "../shop/entitlements.ts";
-import type { CardBuyDesk } from "./card-buy-desk.ts";
 import type { DeskHost } from "./desk.ts";
 
 const HOUR_MS = 3_600_000;
 
-/** A prize claimed: the prize, and for card buys, those made and the Gems
- * paid for any the deck had no room for (20 each, a card buy's price). */
-export type AdPrizeClaimed = { prize: AdPrize; buys: CardBuy[]; gems: number };
+/** A prize claimed: the prize, and the Gems it gave. */
+export type AdPrizeClaimed = { prize: AdPrize; gems: number };
 
 /** The ad series' commands (ads/series.ts): counting each ad watched
  * toward the bar's prizes, and claiming them. The bar's week turns on
  * the Shop's estimated server time; the Gold boost runs on the wall clock,
  * as the Gold ad's does. */
 export class AdDesk {
-  constructor(private readonly host: DeskHost, private readonly cardBuys: CardBuyDesk) {}
+  constructor(private readonly host: DeskHost) {}
 
   /** The Shop's server time as estimated now. */
   get now() {
@@ -50,7 +47,7 @@ export class AdDesk {
   claim(i: number): AdPrizeClaimed | null {
     const save = this.host.save, prize = claimPrize(this.series, i, this.now);
     if (!prize) return null;
-    let buys: CardBuy[] = [], gems = 0;
+    let gems = 0;
     switch (prize.kind) {
       case "gold":
         save.ads.gold = addAdGold(save.ads.gold, prize.factor, prize.hours * HOUR_MS, this.host.clock());
@@ -59,9 +56,10 @@ export class AdDesk {
       case "gems":
         gems = prize.amount;
         break;
-      case "cards":
-        buys = this.cardBuys.give(prize.count);
-        gems = (prize.count - buys.length) * CARD_BUY_GEMS[1];
+      case "rubies":
+        save.rubies += prize.amount;
+        earn(save, "rubies", prize.amount);
+        this.host.message = `+${prize.amount} Rubies`;
         break;
       case "discount":
         save.ads.discountUntil = Math.max(save.ads.discountUntil, this.now) + prize.hours * HOUR_MS;
@@ -73,6 +71,6 @@ export class AdDesk {
       earn(save, "gems", gems);
       this.host.message = `+${gems} Gems`;
     }
-    return { prize, buys, gems };
+    return { prize, gems };
   }
 }

@@ -5,18 +5,13 @@ import { snap } from "../exact.ts";
  * ones it gives its bonus against while the run's hand holds it (cards/cards.ts
  * moves the hero toward the same strengths). */
 export const FOE_CARDS = {
-  weakEnemy: (e: Enemy) => e.strength === "weak",
-  baseEnemy: (e: Enemy) => e.strength === "normal",
-  strongEnemy: (e: Enemy) => e.strength === "strong",
-  eliteEnemy: (e: Enemy) => e.strength === "elite",
   bossEnemy: (e: Enemy) => e.strength === "boss" || e.strength === "greaterBoss",
   nonBossEnemy: (e: Enemy) => e.strength !== "boss" && e.strength !== "greaterBoss",
-  fastEnemy: (e: Enemy) => !!e.fast,
   flyingEnemy: (e: Enemy) => !!e.flying,
 } as const satisfies Record<Exclude<FoeKey, TreeFoe>, (e: Enemy) => boolean>;
 export type FoeCard = keyof typeof FOE_CARDS;
 export const isFoeCard = (id: string): id is FoeCard => Object.hasOwn(FOE_CARDS, id);
-/** The cards whose trees (cards/trees.ts) raise the hero against some
+/** The cards whose trees (cards/powers.ts) raise the hero against some
  * enemies, and the enemies each covers: ENEMY and ARCHER every one, TORCH
  * the Greater Boss. They give nothing of `FOE_CARDS`' own bonus. */
 export const TREE_FOES = {

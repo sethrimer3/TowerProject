@@ -42,7 +42,7 @@ test("More Enemies is a rare floor badge of 30% to 90%", () => {
 });
 
 test("it sits only on a monster card, and a swap that would put it elsewhere takes it off", () => {
-  assert.deepEqual(BADGES.moreEnemies.cards, ["monster", "weakEnemy", "baseEnemy", "strongEnemy", "eliteEnemy", "bossEnemy", "nonBossEnemy"]);
+  assert.deepEqual(BADGES.moreEnemies.cards, ["monster", "bossEnemy", "nonBossEnemy"]);
   assert.equal(fitsCard("moreEnemies", "door"), false);
   assert.ok(fitsCard("moreEnemies", "bossEnemy"));
   assert.ok(fitsCard("hp", "door"), "other badges sit anywhere");
@@ -53,9 +53,9 @@ test("it sits only on a monster card, and a swap that would put it elsewhere tak
   assert.ok(attachBadge(m, "hp", "door"));
   assert.ok(attachBadge(m, "hp", "monster"));
   assert.deepEqual(m.cards, { monster: ["hp"] }, "More Enemies can't swap onto DOOR, so it comes off");
-  assert.ok(attachBadge(m, "moreEnemies", "weakEnemy"));
+  assert.ok(attachBadge(m, "moreEnemies", "nonBossEnemy"));
   assert.ok(attachBadge(m, "moreEnemies", "monster"));
-  assert.deepEqual(m.cards, { monster: ["moreEnemies"], weakEnemy: ["hp"] }, "between monster cards it swaps");
+  assert.deepEqual(m.cards, { monster: ["moreEnemies"], nonBossEnemy: ["hp"] }, "between monster cards it swaps");
   const saved = decodeBadges({ owned: m.owned, cards: { door: ["moreEnemies"], monster: ["hp"] } }, playedSave().upgrades);
   assert.deepEqual(saved.cards, { monster: ["hp"] }, "a save with it on DOOR drops it");
   assert.equal(validRunBadges({ door: [{ id: "moreEnemies", level: 1, pick: 0 }] }), false);

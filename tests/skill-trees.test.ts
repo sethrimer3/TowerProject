@@ -96,7 +96,8 @@ test("Shroud follows Trainers and Larger Hand, ahead of Critical; Greater Heal, 
   assert.deepEqual(["keyLessBadges", "keyAtLeastBadges"].map((id) => at(id).requires), [["redSiphon"], ["keyLessBadges"]]);
   assert.deepEqual(["cardWoodenDoor", "cardYellowDoor", "heartDoorResilience", "cardHeartDoor"].map((id) => [at(id).x, at(id).y, at(id).requires, at(id).reveal]),
     [[50, 412, ["cardTorch"], "doorMastery"], [50, 466, ["cardWoodenDoor"], undefined], [50, 484, ["cardYellowDoor"], undefined], [50, 502, ["heartDoorResilience"], undefined]], "the door path down the middle, two rows under Torch, revealed by Door Mastery");
-  assert.deepEqual([at("cardWeakEnemy").x, at("cardWeakEnemy").y, at("cardWeakEnemy").requires, at("cardWeakEnemy").reveal], [70, 412, ["cardTorch"], "beastMastery"], "Weak Enemy off Torch, revealed by Beast Mastery");
+  assert.deepEqual(["cardBossEnemy", "cardNonBossEnemy"].map((id) => [at(id).x, at(id).y, at(id).requires, at(id).reveal]),
+    [[10, 412, ["enemyCombatLevelSkips"], "beastMastery"], [10, 430, ["cardBossEnemy"], undefined]], "Boss Enemy under Enemy Combat Level Skips, revealed by Beast Mastery, Non-Boss Enemy under it");
 });
 test("the hand's skills run Buildout, Trainers, Larger Hand, Shroud, Critical to Breakthrough, then the Archives, Gold Key down and right of Buy Quantity with Blue Key under it, ATK Up off Trainers then DEF Up left of it with their provisions under them, On the Job off Trainers with Regen below it and Heal and the elixir under that, and Buildout, Trainers and On the Job cost 1 (Critical 2)", () => {
   const at = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;

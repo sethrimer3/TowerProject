@@ -18,13 +18,6 @@ const NODES: [UpgradeId, number, UpgradeId, CardId | null][] = [
   ["cardYellowDoor", 5, "cardWoodenDoor", "yellowDoor"],
   ["heartDoorResilience", 20, "cardYellowDoor", null],
   ["cardHeartDoor", 10, "heartDoorResilience", "heartDoor"],
-  ["cardWeakEnemy", 20, "cardTorch", "weakEnemy"],
-  ["cardBaseEnemy", 20, "cardWeakEnemy", "baseEnemy"],
-  ["cardStrongEnemy", 20, "cardBaseEnemy", "strongEnemy"],
-  ["cardFastEnemy", 20, "cardBaseEnemy", "fastEnemy"],
-  ["cardEliteEnemy", 20, "cardWeakEnemy", "eliteEnemy"],
-  ["cardBossEnemy", 20, "cardEliteEnemy", "bossEnemy"],
-  ["cardNonBossEnemy", 40, "cardBossEnemy", "nonBossEnemy"],
   ["cardChest", 20, "interest", "chest"],
   ["blueSiphon", 20, "keySiphon", "blueSiphon"],
   ["keyToHp", 20, "blueSiphon", "keyToHp"],
@@ -35,12 +28,16 @@ const NODES: [UpgradeId, number, UpgradeId, CardId | null][] = [
   ["cardRedKey", 20, "cardBlueKey", "redKey"],
   ["redSiphon", 20, "blueSiphon", "redSiphon"],
   ["floorSkipReward", 20, "cardChest", null],
+  ["enemyHpLevelSkips", 50, "floorSkipReward", null],
+  ["enemyCombatLevelSkips", 50, "enemyHpLevelSkips", null],
+  ["cardBossEnemy", 20, "enemyCombatLevelSkips", "bossEnemy"],
+  ["cardNonBossEnemy", 40, "cardBossEnemy", "nonBossEnemy"],
 ];
 
 test("each card node costs its price, waits for the node above it and adds its card to the deck", () => {
   const g = new Game(playedSave());
   g.save.tower.inspiration = 10_000;
-  g.save.upgrades.questForKnowledge = g.save.upgrades.pathToWealth = g.save.upgrades.physician = g.save.upgrades.keyMastery = g.save.upgrades.moreWealth = g.save.upgrades.cardMastery = g.save.upgrades.beastMastery = g.save.upgrades.doorMastery = 1; // the Archives and the tree under them revealed
+  g.save.upgrades.questForKnowledge = g.save.upgrades.pathToWealth = g.save.upgrades.physician = g.save.upgrades.keyMastery = g.save.upgrades.moreWealth = g.save.upgrades.cardMastery = g.save.upgrades.beastMastery = g.save.upgrades.enemyLevelSkips = g.save.upgrades.doorMastery = 1; // the Archives and the tree under them revealed
   g.save.upgrades.pocketMoney = g.save.upgrades.spareChange = g.save.upgrades.wishingWell = g.save.upgrades.freeTraining = g.save.upgrades.interest = 1; // the wealth path down to Interest, above Chest
   g.save.breakthrough = 100;
   for (const id of ["combatStance", "buildout", "trainers", "largerHand", "shroud", "critical", "breakthrough", "archives", "lifesteal", "buyQuantity", "cardYellowKey", "cardBlueKey", "thorns", "arcanaResearch", "cardTorch", "findYellowKey", "keyEfficiency", "keySiphon"] as const) assert.ok(g.skills.buy(id));
@@ -68,9 +65,10 @@ test("a card node can't be bought before the one above it", () => {
   assert.equal(g.skills.buy("cardHeartDoor"), false);
   assert.ok(g.skills.buy("heartDoorResilience"));
   assert.ok(g.skills.buy("cardHeartDoor"));
-  assert.equal(g.skills.buy("cardWeakEnemy"), false, "Weak Enemy hangs off Torch, hidden until Beast Mastery");
-  g.save.upgrades.cardTorch = g.save.upgrades.beastMastery = 1;
-  assert.ok(g.skills.buy("cardWeakEnemy"), "Weak Enemy hangs straight off Torch");
+  g.save.upgrades.enemyCombatLevelSkips = 1;
+  assert.equal(g.skills.buy("cardBossEnemy"), false, "Boss Enemy hangs off Enemy Combat Level Skips, hidden until Beast Mastery");
+  g.save.upgrades.beastMastery = g.save.upgrades.enemyLevelSkips = g.save.upgrades.moreWealth = g.save.upgrades.enemyHpLevelSkips = 1;
+  assert.ok(g.skills.buy("cardBossEnemy"), "Boss Enemy hangs straight off Enemy Combat Level Skips");
 });
 
 const enemy = (strength: EnemyStrength): Tile => ({ kind: "enemy", enemy: { name: "rat", hp: 1, attack: 0, defense: 0, tier: 0, strength } });
@@ -97,12 +95,8 @@ function target(g: Game, card: CardId) {
   return last ? [last.x, last.y] : null;
 }
 
-test("each enemy card heads for its own strength, the boss card for a Greater Boss too", () => {
+test("the boss card heads for a boss or a Greater Boss, never another enemy", () => {
   const g = floor({ 5: enemy("weak"), 4: enemy("normal"), 8: enemy("strong"), 3: enemy("elite"), 10: enemy("greaterBoss") });
-  assert.deepEqual(target(g, "weakEnemy"), [5, 1]);
-  assert.deepEqual(target(g, "baseEnemy"), [4, 1]);
-  assert.deepEqual(target(g, "strongEnemy"), [8, 1]);
-  assert.deepEqual(target(g, "eliteEnemy"), [3, 1]);
   assert.deepEqual(target(g, "bossEnemy"), [10, 1]);
   const boss = floor({ 9: enemy("boss"), 11: enemy("greaterBoss") });
   assert.deepEqual(target(boss, "bossEnemy"), [9, 1], "the closest");
@@ -114,18 +108,9 @@ test("the non-boss card heads for the closest enemy of any strength but a boss o
   assert.equal(target(floor({ 4: enemy("boss"), 9: enemy("greaterBoss") }), "nonBossEnemy"), null);
 });
 
-test("FAST ENEMY heads for the closest Fast enemy, of any strength but never a boss", () => {
-  const fast = (strength: EnemyStrength): Tile => ({ kind: "enemy", enemy: { ...enemy(strength).enemy!, fast: true } });
-  assert.deepEqual(target(floor({ 5: enemy("weak"), 4: enemy("normal"), 9: fast("strong") }), "fastEnemy"), [9, 1]);
-  for (const strength of ["weak", "normal", "strong", "elite"] as const) assert.deepEqual(target(floor({ 7: fast(strength) }), "fastEnemy"), [7, 1], strength);
-  assert.equal(target(floor({ 5: enemy("weak"), 8: enemy("elite") }), "fastEnemy"), null, "no Fast enemy, no target");
-  const golem: Tile = { kind: "enemy", enemy: { name: "golem", hp: 9, attack: 0, defense: 999, tier: 0, strength: "weak", fast: true } };
-  assert.deepEqual(target(floor({ 5: golem, 9: fast("weak") }), "fastEnemy"), [9, 1], "not one it can't hurt");
-});
-
 test("an enemy card passes over one it can't hurt", () => {
   const g = floor({ 5: { kind: "enemy", enemy: { name: "golem", hp: 9, attack: 0, defense: 999, tier: 0, strength: "weak" } }, 9: enemy("weak") });
-  assert.deepEqual(target(g, "weakEnemy"), [9, 1]);
+  assert.deepEqual(target(g, "nonBossEnemy"), [9, 1]);
 });
 
 test("GOLD DOOR heads for a single gold door, while a gold key is held", () => {

@@ -58,6 +58,7 @@ The run's end dialog has a Run Notes button at the end of its totals, which open
 The Settings page's Stats dialog has the same copy button.
 The Settings page's **DEVLOG** button, under Stats, lists every change to the game, newest first, one short line each beside its day.
 Among its lifetime tallies, **Floors climbed** counts every Tower floor the hero climbs to, by its stairs or passed by Skip on STAIRS, in every run (a floor climbed again in a later run counts again).
+After it, **Recent Floors per Hour** gives the new floors of the latest climbs (the ones the Recent Gold per Hour reads) over their real time, to a tenth; **Rubies earned** counts every Ruby found.
 Its tallies are rounded down, and shortened from a million (1.23M).
 
 ## Rewards and purchases

@@ -1,6 +1,6 @@
 import { ITEM_KIT } from "../sprites/items.ts";
 import { relicSpriteId } from "../sprites/relics.ts";
-import { BREAKTHROUGH_SPRITE, CHAMPION_STAR_SPRITE, INSPIRATION_SPRITE, ONE_PIECE_SPRITE, VIP_SPRITE, kitIcon, pngIcon } from "../sprites/kit.ts";
+import { BREAKTHROUGH_SPRITE, CHAMPION_STAR_SPRITE, INSPIRATION_SPRITE, ONE_PIECE_SPRITE, RUBY_SPRITE, VIP_SPRITE, kitIcon, pngIcon } from "../sprites/kit.ts";
 import { CARDS } from "../cards/cards.ts";
 import type { CardId } from "../cards/cards.ts";
 import { LIMIT_BREAKS } from "../progression/training.ts";
@@ -65,6 +65,9 @@ export const cellIcon = (className = "cell-icon") =>
 export const medalIcon = (className = "medal-icon") =>
   kitIcon("medal", "", className);
 /** A brass crown: VIP Points. */
+/** A Ruby: a faceted red gem, the currency cards ascend with. */
+export const rubyIcon = (className = "ruby-icon") =>
+  kitIcon(RUBY_SPRITE, "", className);
 export const vipIcon = (className = "vip-icon") =>
   kitIcon(VIP_SPRITE, "", className);
 /** A golden star: Champion Status and its Club's tiers. */
@@ -143,8 +146,8 @@ const SKILL_UI_SPRITES: Partial<Record<UpgradeId, UiSprite>> = {
 const SKILL_SILVER = new Set<UpgradeId>(["wealthy", "wishingWell", "onTheJob", "pocketMoney", "interest", "maxInterest"]);
 /** Skills about the hand show a card face. */
 const SKILL_CARDS: Partial<Record<UpgradeId, CardId>> = { cardDoorKey: "door", cardEnemy: "monster", combatStance: "stairs", cardHeal: "heal", cardAtkUp: "atkUp", cardDefUp: "defUp", cardYellowKey: "yellowKey", cardBlueKey: "blueKey", keySiphon: "keySiphon",
-  cardYellowDoor: "yellowDoor", cardHeartDoor: "heartDoor", cardWeakEnemy: "weakEnemy", cardBaseEnemy: "baseEnemy", cardStrongEnemy: "strongEnemy",
-  cardEliteEnemy: "eliteEnemy", cardBossEnemy: "bossEnemy", cardNonBossEnemy: "nonBossEnemy", cardFastEnemy: "fastEnemy", cardChest: "chest", blueSiphon: "blueSiphon", blueTrader: "blueTrader", keyToHp: "keyToHp", smeltBlue: "smeltBlue", redTrader: "redTrader", smeltRed: "smeltRed",
+  cardYellowDoor: "yellowDoor", cardHeartDoor: "heartDoor",
+  cardBossEnemy: "bossEnemy", cardNonBossEnemy: "nonBossEnemy", cardChest: "chest", blueSiphon: "blueSiphon", blueTrader: "blueTrader", keyToHp: "keyToHp", smeltBlue: "smeltBlue", redTrader: "redTrader", smeltRed: "smeltRed",
   cardRedKey: "redKey", redSiphon: "redSiphon", cardTorch: "torch", cardWoodenDoor: "woodenDoor", heartDoorResilience: "heartDoor",
   angelWings: "angelWings" };
 const SKILL_DETAIL_SPRITES: Partial<Record<UpgradeId, string>> = {

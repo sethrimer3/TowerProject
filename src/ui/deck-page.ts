@@ -1,20 +1,22 @@
 import { pngIcon } from "../sprites/kit.ts";
 import { kitIcon } from "../sprites/kit.ts";
-import { askForGems, showHelp } from "./dialogs.ts";
+import { askForGems, helpButton, showHelp } from "./dialogs.ts";
 import { CARDS, cardBonusLines, deckCards, linkedToNext, moveCard, placeCard, type CardId, type HandKind } from "../cards/cards.ts";
 import type { AppContext } from "./app.ts";
-import { cardArt, el, escapeHtml, gemIcon, POINTER_SVG } from "./dom.ts";
+import { cardArt, el, escapeHtml, gemIcon, POINTER_SVG, rubyIcon } from "./dom.ts";
+import { heldAmount } from "./currencies-dialog.ts";
 import { DRAW_GEMS, type DrawCount } from "../game/badge-desk.ts";
 import { cardWith, fitsCard, BADGE_IDS, BADGES, badgeLevel, badgeValue, type BadgeId } from "../cards/badges.ts";
 import { RARITIES } from "../shop/rarity.ts";
 import { revealDraws } from "./badge-reveal.ts";
-import { revealBuys } from "./card-buy-reveal.ts";
-import { CARD_BUY_GEMS, type CardBuyCount } from "../cards/buys.ts";
+import { revealAscension } from "./card-ascend-reveal.ts";
+import { cardPowersHtml } from "./card-power-view.ts";
+import { levelIn, readyToAscend } from "../cards/levels.ts";
+import { CARD_RARITY_NAMES } from "../cards/rarity.ts";
 import { DeckCardPopover } from "./deck-card-popover.ts";
 import { DeckMotion, cardOrigin, type CardOrigin } from "./deck-motion.ts";
 import { play } from "../sound.ts";
-import { CardTreePanel } from "./card-tree-panel.ts";
-import { CARD_TREES, hasPointsToSpend } from "../cards/trees.ts";
+
 import { cardLevelHtml, cardLevelLines, cardXpBarHtml } from "./card-level-marks.ts";
 import { badgeLevelsHtml, cardBadgeHtml, badgeText, progressText, tokenHtml } from "./badge-token.ts";
 
@@ -44,8 +46,8 @@ const SWITCH_SVG = pngIcon("ui-hand-swap", "deck-control-icon");
 /** The two hands' names on the Deck page. */
 const HAND_NAMES: Record<HandKind, string> = { auto: "Auto hand", manual: "Manual hand" };
 
-/** The rising arrow on a card with card points to spend. */
-const POINTS_ARROW_SVG = pngIcon("ui-card-points", "points-arrow-icon");
+/** The rising arrow on a card ready to ascend. */
+const ASCEND_ARROW = pngIcon("ui-card-points", "points-arrow-icon");
 
 /** The chevron beside the Hand heading: pointing up while the hand shows (to collapse it), down while it is collapsed. */
 const CHEVRON_SVG = pngIcon("ui-chevron-down", "hand-chevron-icon");
@@ -87,9 +89,8 @@ function near(box: DOMRect, x: number, y: number) {
 
 /** Which Deck tutorial step waits on the player: `order`, dragging STAIRS
  * (Combat Stance); `remove`, taking a card out of the hand with its X (Buildout);
- * `points`, spending a card point on a card's tree (`Game.cardPointsLesson`);
  * and `add`, the note on adding cards from the deck (Buildout). */
-type Lesson = "order" | "remove" | "points" | "add" | null;
+type Lesson = "order" | "remove" | "add" | null;
 
 /** The Deck page: the hand's slots along the top (with Larger Hand, the
  * next one to buy with Gems after them; with Manual Hand, a slider over
@@ -107,7 +108,6 @@ export class DeckPage {
   private deckDrag: DeckDrag | null = null;
   private badgeDrag: BadgeDrag | null = null;
   private showing = false;
-  private tree: CardTreePanel | null = null;
   /** Whether the hand is collapsed under its heading, making room for the
    * deck and badges; until the page is left. */
   private handCollapsed = false;
@@ -121,13 +121,7 @@ export class DeckPage {
     const { tutorials, upgrades } = this.ctx.game.save;
     if (!tutorials.deck) return "order";
     if (upgrades.buildout && !tutorials.removeCard) return "remove";
-    if (this.pointsTarget) return "points";
     return upgrades.buildout && !tutorials.addCard ? "add" : null;
-  }
-
-  /** The card the card points lesson points at, while it waits. */
-  private get pointsTarget() {
-    return this.ctx.game.cardPointsLesson;
   }
 
   /** Whether a Deck tutorial is waiting on the player's action, which keeps
@@ -139,7 +133,7 @@ export class DeckPage {
   /** Whether the lesson shown waits on the player's action. */
   private get waitsOnPlayer() {
     const lesson = this.lesson;
-    return lesson === "order" || lesson === "remove" || lesson === "points";
+    return lesson === "order" || lesson === "remove";
   }
 
   /** Called whenever the tab changes, so `teaching` knows the page is open. */
@@ -151,31 +145,26 @@ export class DeckPage {
     this.cancelDrag();
     this.handCollapsed = false;
     this.kind = "auto";
-    // Leaving the page puts a card's tree away: the Deck shows again next time.
-    this.tree?.close(true);
-    this.tree = null;
   }
 
-  /** Opens `id`'s upgrade tree in place of the page, until its Back: for
-   * the card the card points lesson points at, its last step, which keeps
-   * the tree open until a point is spent there. */
-  private openTree(id: CardId) {
-    this.popover.close();
-    this.motion.clear();
-    this.tree?.close(true);
-    const teach = this.lesson === "points" && id === this.pointsTarget ? () => this.taughtPoints() : undefined;
-    this.tree = new CardTreePanel(this.ctx, id, el("deck"), () => {
-      this.tree = null;
-      if (this.showing) this.render();
-    }, teach);
+  /** The ? left of the hand's heading: how cards, their levels and powers,
+   * and ascending work. */
+  private showCardHelp() {
+    showHelp(this.ctx, "DECK", "Cards",
+      "<p>Your hand's cards move you through a climb: it tries them left to right, and the first that can act moves you.</p>"
+      + "<p>A card gains XP each time it acts (Archer and Angel Wings each floor) and levels up as it gathers enough. Each level raises its <b>base power</b>, and every card's level shows its rarity: Base at 0, then Common, Uncommon, Rare, Epic, Legendary and Mythic, ten levels each.</p>"
+      + "<p>Each rarity opens a new <b>power</b>, which grows with each of that rarity's ten levels. Powers count while the card is in either hand, from the moment it levels up, even in the middle of a climb.</p>"
+      + `<p>At level 10, 20, 30, 40 and 50 a card stops levelling: it keeps gathering XP, and once it has the XP for the next level it is <b>Ready to ascend</b>. Ascending costs ${rubyIcon()} Rubies, dropped by bosses and Greater Bosses, and raises the card to its next rarity, opening ten more levels and a new power.</p>`);
   }
 
-  /** The first card point spent: the card points lesson is done. */
-  private taughtPoints() {
-    this.ctx.game.save.tutorials.cardPoints = true;
+  /** Ascends card `id` for its Rubies, then celebrates its new rarity. */
+  private ascend(id: CardId) {
+    const { game } = this.ctx, got = game.cards.ascend(id);
+    if ("refused" in got) return;
     this.ctx.save();
     this.ctx.update();
-    this.praise("CARD LEVELS", "Well spent!", "Keep levelling up your cards to unlock more bonuses on their upgrade trees. Soon you will be able to spend Gems to unlock stronger rare and special card powers, and Gems can respec a card, returning all its points to spend again.");
+    this.render();
+    revealAscension(id, got.rarity, game.save.settings.reduceMotion);
   }
 
   /** Records that the player met card `id` here, taking its NEW away. */
@@ -217,14 +206,12 @@ export class DeckPage {
   }
 
   render() {
-    // A card's tree stands in for the page while it is open.
-    if (this.tree) return;
     this.popover.close();
     this.motion.clear();
     const save = this.ctx.game.save;
     // A lesson may select a card already held in the Manual hand. It must
     // show that hand because held cards no longer repeat in the reserve.
-    if (!this.showsKinds) this.kind = (this.lesson === "points" && this.pointsTarget && this.ctx.game.deck.handOf(this.pointsTarget)) || "auto";
+    if (!this.showsKinds) this.kind = "auto";
     // With nothing to take out of the hand, the remove step has nothing to teach.
     if (this.lesson === "remove" && !this.removeTarget) {
       save.tutorials.removeCard = true;
@@ -235,15 +222,13 @@ export class DeckPage {
       ? `<div class="deck-tip" role="status"><b>Order your hand</b><p>Inside a climb your hand tries its cards from left to right, and the first that can act moves you. Drag STAIRS to another slot to change the order.</p></div>`
       : lesson === "remove"
         ? `<div class="deck-tip" role="status"><b>Choose your cards</b><p>You can take cards out of your hand, and your climbs will stop heading for their targets. Press the X on ${CARDS[this.removeTarget!].name.toUpperCase()} to return it to your deck.</p></div>`
-        : lesson === "points"
-          ? `<div class="deck-tip" role="status"><b>Spend card points</b><p>Tap ${CARDS[this.pointsTarget!].name.toUpperCase()} for details, then tap it again to open its upgrade tree and spend card points to unlock bonuses.</p></div>`
-          : "";
+        : "";
     // A lesson waiting on the player needs the hand in view.
     const collapsed = this.handCollapsed && !this.waitsOnPlayer;
     const toggle = this.waitsOnPlayer ? "" : `<button type="button" class="deck-hand-toggle" id="deck-hand-toggle" aria-expanded="${!collapsed}" aria-controls="deck-hand" title="${collapsed ? "Show" : "Hide"} the hand" aria-label="${collapsed ? "Show" : "Hide"} the hand">${CHEVRON_SVG}</button>`;
     el("deck").innerHTML = `<div class="deck-page${this.showsBadges ? " with-badges" : ""}">
       <section class="deck-hand-area${collapsed ? " collapsed" : ""}" aria-labelledby="deck-hand-label">
-        <div class="deck-hand-head"><h3 id="deck-hand-label" class="deck-label">Hand</h3>${this.kindsHtml()}${toggle}</div>
+        <div class="deck-hand-head">${helpButton("How cards work", "deck-help")}<h3 id="deck-hand-label" class="deck-label">Hand</h3>${this.kindsHtml()}${toggle}</div>
         <div class="deck-hand${this.showsLinks ? " with-links" : ""}" id="deck-hand" role="list" aria-label="${this.kind === "manual" ? "Manual hand, its cards acting only when pressed" : "Hand, in the order its cards are tried"}">${this.slotsHtml(this.hand)}</div>
         ${tip}
       </section>
@@ -271,24 +256,14 @@ export class DeckPage {
    * in its own column. */
   private columnsHtml() {
     const save = this.ctx.game.save, lesson = this.lesson;
-    const deck = `<div class="deck-stack">${this.cardBuysHtml()}${save.upgrades.buildout && lesson !== "remove" ? this.deckHtml(lesson === "add") : this.lockedDeckHtml(!!save.upgrades.buildout)}</div>`;
+    const deck = `<div class="deck-stack">${this.rubiesHtml()}${save.upgrades.buildout && lesson !== "remove" ? this.deckHtml(lesson === "add") : this.lockedDeckHtml(!!save.upgrades.buildout)}</div>`;
     return this.showsBadges ? `<div class="deck-columns">${deck}${this.badgesHtml()}</div>` : deck;
   }
 
-  /** The card buy buttons over the Deck section (none while a lesson
-   * waits on the player). */
-  private cardBuysHtml() {
-    if (this.waitsOnPlayer) return "";
-    return `<div class="card-buys" role="group" aria-label="Buy cards">${this.cardBuyButton(1)}${this.cardBuyButton(10)}</div>`;
-  }
-
-  /** The button that buys `count` cards: red-priced when short of Gems,
-   * and unavailable only once the deck's trees have too few levels left
-   * to open. */
-  private cardBuyButton(count: CardBuyCount) {
-    const { game } = this.ctx, price = CARD_BUY_GEMS[count], refusal = game.cardBuys.refusal(count);
-    const title = refusal === "full" ? (game.cardBuys.left ? `Only ${game.cardBuys.left} upgrade${game.cardBuys.left === 1 ? "" : "s"} left on your deck's cards` : "Every card in your deck is fully upgraded") : `Buy ${count === 1 ? "a card" : "10 cards"} for ${price} Gems: each raises a deck card's max level and opens an upgrade on its tree`;
-    return `<button type="button" class="badge-draw card-buy${refusal === "short" ? " short" : ""}" data-buy-cards="${count}" ${refusal === "full" ? "disabled" : ""} title="${title}" aria-label="Buy ${count === 1 ? "a card" : "10 cards"} for ${price} Gems">Buy ×${count}<span>${gemIcon()}<b>${price}</b></span></button>`;
+  /** The Rubies held, over the Deck section: what cards ascend with. */
+  private rubiesHtml() {
+    const rubies = this.ctx.game.save.rubies;
+    return `<p class="deck-rubies" title="Rubies: ${rubies.toLocaleString("en-US")}, spent ascending cards">${rubyIcon()}<b>${heldAmount(this.ctx.game, rubies)}</b><small>Rubies</small></p>`;
   }
 
   /** The draw buttons over the Badges box, which lists each badge
@@ -323,16 +298,13 @@ export class DeckPage {
   /** Only cards in neither hand remain in the available-card grid. */
   private deckHtml(note: boolean) {
     const { deck } = this.ctx.game, full = deck.full(this.kind), yours = this.kind === "manual" ? "your Manual hand" : "your hand";
-    // The card points lesson leaves only the card it points at to press.
-    const target = this.lesson === "points" ? this.pointsTarget : null;
     const cards = deckCards(this.ctx.game.save.upgrades, this.ctx.game.save.goals).filter(id => !deck.handOf(id)).map((id) => {
-      const name = CARDS[id].name, fixed = target && id !== target ? " disabled" : "", held = deck.handOf(id);
-      const pointer = id === target && !held ? this.pointer("at-card") : "";
+      const name = CARDS[id].name, fixed = "", pointer = "";
       return `<div class="deck-entry" data-deck-card="${id}" role="listitem"${this.badgeTarget(id)}<button type="button" class="deck-add${full ? " full" : ""}" data-add="${id}" aria-label="${name}: tap for details, swipe up or press Arrow Up to add to ${yours}${full ? `; ${yours} is full` : ""}"${fixed}>${cardArt(id, name)}${this.marksHtml(id)}</button>${pointer}</div>`;
     }).join("");
     return `<section class="deck-reserve open" aria-labelledby="deck-label">
         <h3 id="deck-label" class="deck-label">Deck</h3>
-        ${note ? `<button type="button" class="deck-tip deck-note" id="deck-add-note"><b>Add cards from your deck</b><p>Tap a card for details, then tap it again for its upgrade tree. Swipe up to move it into your hand; swipe down on a hand card to return it. Cards move between these two places.</p><small>Press to dismiss</small></button>` : ""}
+        ${note ? `<button type="button" class="deck-tip deck-note" id="deck-add-note"><b>Add cards from your deck</b><p>Tap a card for its details and powers. Swipe up to move it into your hand; swipe down on a hand card to return it. Cards move between these two places.</p><small>Press to dismiss</small></button>` : ""}
         <div class="deck-grid" role="list" aria-label="Your deck">${cards}</div>
       </section>`;
   }
@@ -387,10 +359,10 @@ export class DeckPage {
    * lesson's pointing hand. */
   private cardSlotHtml(id: CardId, i: number, count: number, held: boolean, links = "") {
     const lesson = this.lesson, card = CARDS[id];
-    const fixed = lesson === "remove" || (lesson === "order" && id !== "stairs") || (lesson === "points" && id !== this.pointsTarget);
+    const fixed = lesson === "remove" || (lesson === "order" && id !== "stairs");
     const pointed = lesson === "remove" && id === this.removeTarget;
     const x = this.removable(id) ? `<button type="button" class="deck-remove${pointed ? " shown" : ""}" data-remove="${id}" title="Return ${card.name} to the deck" aria-label="Return ${card.name} to the deck">${X_SVG}</button>` + this.switchHtml(id) : "";
-    const lessonPointer = (lesson === "order" && id === "stairs") || (lesson === "points" && id === this.pointsTarget) ? this.pointer("at-card") : pointed ? this.pointer("at-x") : "";
+    const lessonPointer = lesson === "order" && id === "stairs" ? this.pointer("at-card") : pointed ? this.pointer("at-x") : "";
     return `<div class="deck-slot${held ? " held" : ""}" data-deck-card="${id}" role="listitem"${this.badgeTarget(id)}<button type="button" class="deck-card" data-slot="${i}" ${fixed ? "disabled" : ""} aria-label="${card.name}, slot ${i + 1} of ${count}. Tap for details. Drag, or press the left and right arrow keys, to move it.${id !== "stairs" ? " Swipe down or press Arrow Down to return it to the deck." : ""}">${cardArt(id, card.name)}${this.marksHtml(id)}</button>${x}${lessonPointer}${links}</div>`;
   }
 
@@ -406,12 +378,12 @@ export class DeckPage {
 
   /** What card `id` wears over its art: its XP toward its next level on the
    * rule above its name, its rarity's frame and level, a rising arrow at its
-   * top left while it has card points to spend on its tree, and NEW in gold
+   * top left while it is ready to ascend, and NEW in gold
    * at its top right until the player meets it here. */
   private marksHtml(id: CardId) {
     const { save, notices } = this.ctx.game, still = save.settings.reduceMotion ? " still" : "";
     return cardXpBarHtml(save, id) + cardLevelHtml(save, id)
-      + (hasPointsToSpend(save, id) ? `<span class="card-points-mark${still}" aria-hidden="true">${POINTS_ARROW_SVG}</span>` : "")
+      + (readyToAscend(save, id) ? `<span class="card-points-mark${still}" aria-hidden="true">${ASCEND_ARROW}</span>` : "")
       + (notices.isNew(id) ? `<span class="card-new" aria-hidden="true">NEW</span>` : "");
   }
 
@@ -430,7 +402,7 @@ export class DeckPage {
   private removable(id: CardId) {
     const lesson = this.lesson;
     if (!this.ctx.game.save.upgrades.buildout || id === "stairs") return false;
-    if (lesson === "order" || lesson === "points") return false;
+    if (lesson === "order") return false;
     return lesson !== "remove" || id === this.removeTarget;
   }
 
@@ -500,8 +472,7 @@ export class DeckPage {
    * or, held over the deck, the hand without it. */
   private dragHandCard(e: PointerEvent) {
     const d = this.drag;
-    // The card points lesson's card is pressed, never moved.
-    if (!d || !travelled(d, e) || this.lesson === "points") return;
+    if (!d || !travelled(d, e)) return;
     if (!d.lifted) this.lift(d);
     follow(d.ghost!, e);
     const to = this.overDeck(d, e.clientX, e.clientY) ? TO_DECK : this.slotAt(e.clientX, e.clientY);
@@ -527,7 +498,8 @@ export class DeckPage {
   }
 
   private bindDeck() {
-    document.querySelectorAll<HTMLButtonElement>("[data-buy-cards]").forEach((b) => (b.onclick = () => this.buyCards(Number(b.dataset.buyCards) as CardBuyCount)));
+    const help = document.getElementById("deck-help");
+    if (help) help.onclick = () => this.showCardHelp();
     // From the keyboard (a pointer's press shows it on release).
     document.querySelectorAll<HTMLButtonElement>("[data-add]").forEach((b) => (b.onclick = (e) => {
       if (e.detail === 0) this.showDeckCard(b.dataset.add as CardId);
@@ -621,7 +593,7 @@ export class DeckPage {
     };
     grid.onkeydown = (e) => {
       const card = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-add]");
-      if (!card || card.disabled || e.key !== "ArrowUp" || this.lesson === "points") return;
+      if (!card || card.disabled || e.key !== "ArrowUp") return;
       e.preventDefault();
       this.addToHand(card.dataset.add as CardId);
     };
@@ -640,7 +612,7 @@ export class DeckPage {
    * hand, which previews the slot it would drop on. */
   private dragDeckCard(grid: HTMLElement, e: PointerEvent) {
     const d = this.deckDrag;
-    if (!d || !travelled(d, e) || this.lesson === "points") return;
+    if (!d || !travelled(d, e)) return;
     if (!d.lifted) {
       this.popover.close();
       d.lifted = true;
@@ -747,19 +719,6 @@ export class DeckPage {
     if (card) document.querySelectorAll(`[data-badge-card="${card}"]`).forEach((t) => t.classList.add("badge-target"));
   }
 
-  /** Buys cards for their Gems (asking for Gems when short), then shows
-   * what each bought. */
-  private buyCards(count: CardBuyCount) {
-    const { game } = this.ctx, buys = game.cardBuys.buy(count);
-    if (buys === "short") return askForGems(this.ctx);
-    if (buys === "full") return;
-    this.ctx.save();
-    this.ctx.update();
-    this.render();
-    // The same purchase once more, from the last screen (which asks for Gems when short).
-    const again = game.cardBuys.left >= count ? { count, gems: CARD_BUY_GEMS[count], affordable: () => game.free || game.save.gems >= CARD_BUY_GEMS[count], buy: () => this.buyCards(count) } : undefined;
-    revealBuys(buys, game.save.settings.reduceMotion, again);
-  }
 
   /** Draws badges for their Gems (asking for Gems when short), then
    * shows what was drawn. */
@@ -816,20 +775,32 @@ export class DeckPage {
   private showHandCard(id: CardId) { this.showDetails(id, true); }
   private showDeckCard(id: CardId) { this.showDetails(id, false); }
 
-  /** A first tap explains the card above its real sprite; tapping that
-   * same card again opens its tree, without a separate action button. */
+  /** A tap explains the card above its real sprite: its level and rarity,
+   * what it does, its powers a row each, and while it waits to ascend, the
+   * Ascend button with its price. */
   private showDetails(id: CardId, held: boolean) {
-    if (this.lesson === "points" && id !== this.pointsTarget) return;
-    if (this.popover.showing(id) && CARD_TREES[id]) return this.openTree(id);
     if (this.meet(id)) this.render();
     const anchor = el("deck").querySelector<HTMLElement>(`[data-deck-card="${id}"] ${held ? ".deck-card" : ".deck-add"}`);
     if (!anchor) return;
-    const { game } = this.ctx, { save } = game, points = game.cardTrees.pointsLeft(id);
+    const { game } = this.ctx, { save } = game;
     const bonuses = cardBonusLines(id).map(l => `<i class="bonus-${l.tone}">${l.text}</i>`).join("");
-    const tree = CARD_TREES[id] ? `<p class="deck-tree-hint"><span>Tap the card again to open upgrade tree</span><span class="deck-points-available"><b>${points}</b> point${points === 1 ? "" : "s"} available</span></p>` : "";
+    const tree = cardPowersHtml(id, levelIn(save, id).level) + this.ascendHtml(id);
     const gesture = held ? (id === "stairs" ? "STAIRS always stays in your hand." : save.upgrades.buildout ? "Swipe down to return to deck." : "Unlock Buildout to return cards to the deck.") : "Swipe up to add to hand.";
     const full = !held && game.deck.full(this.kind) ? `<small class="deck-full-note" role="status">Your hand is full. Drag onto a card to swap.</small>` : "";
     this.popover.show(id, anchor, `<b class="deck-popover-name">${CARDS[id].name}</b>${cardLevelLines(save, id)}<p>${game.cardText(id)}</p>${bonuses ? `<p class="card-bonus">${bonuses}</p>` : ""}${tree}<small class="deck-swipe-hint">${gesture}</small>${full}`, CARDS[id].name);
+    const ascend = document.querySelector<HTMLButtonElement>("#deck-card-popover [data-ascend]");
+    if (ascend) ascend.onclick = () => this.ascend(id);
+  }
+
+  /** While card `id` waits to ascend, its Ascend button priced in Rubies,
+   * its outline greyed while the Rubies held fall short, with what
+   * ascending does; nothing otherwise. */
+  private ascendHtml(id: CardId) {
+    const { game } = this.ctx, next = game.cards.next(id);
+    if (!next || !game.cards.ready(id)) return "";
+    const short = game.cards.refusal(id) === "short", name = CARD_RARITY_NAMES[next.rarity];
+    return `<p class="deck-ascend-note">Ascend to unlock the next 10 levels with a new power.</p>`
+      + `<button type="button" class="deck-ascend${short ? " short" : ""}" data-ascend="${id}"${short ? ` aria-disabled="true"` : ""} title="${short ? `Ascending to ${name} takes ${next.rubies.toLocaleString("en-US")} Rubies` : `Ascend to ${name}`}" aria-label="Ascend to ${name} for ${next.rubies.toLocaleString("en-US")} Rubies">Ascend · ${rubyIcon()} <b>${next.rubies.toLocaleString("en-US")}</b></button>`;
   }
 
   /** A swipe appends to the next empty slot; a full hand never swaps a card. */

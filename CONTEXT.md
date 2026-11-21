@@ -212,7 +212,7 @@ _Avoid_: power budget, enemy table, zone stats
 
 **Normal enemy**:
 The enemy a floor's or depth's enemy curve makes when it is neither weak, strong, elite nor a boss, and balanced, with every change the run makes to its enemies (the tower's or cave's factor, a tournament's raise, the Shrine boons). The HUD shows it under the floor; a Wooden Door's durability is measured against its ATK before the run's changes.
-_Avoid_: average enemy, typical enemy (Base Enemy is a card, heading for any enemy of normal strength)
+_Avoid_: average enemy, typical enemy
 
 **Enemy strength**:
 How hard the floor asked an enemy to be: weak, normal, strong or elite. Each strength multiplies its floor's enemy curve: strong enemies are the floor's own made tougher, elite ones come from the next zone (the Tower's curve ten floors on). The board shows it round the enemy (a dark red rim for normal, the same with one chevron pointing down for weak, bright red with one chevron for strong, bright red inside a gold rim with two chevrons for elite) and the inspect title and fight messages name weak, strong and elite (and a boss or Greater Boss) before the enemy's name.
@@ -636,7 +636,7 @@ The hand's first step toward a new target carrying on along the path across empt
 _Avoid_: rush (the Archives' Gem button that completes research at once), sprint, leap
 
 **Dash attack**:
-A fight the hero steps into from the tile a Dash stopped on, the turn after it. ENEMY's Surprise Attack (and an enemy card's tree's, against its enemies) may double the ATK of its first strike, and takes a Fast enemy's first strike away.
+A fight the hero steps into from the tile a Dash stopped on, the turn after it. ENEMY's Surprise Attack (and an enemy card's power's, against its enemies) may double the ATK of its first strike, and takes a Fast enemy's first strike away.
 
 **Power Strike**:
 ATK Up's legendary upgrade: an ATK shard taken may charge the hero's next fight, every strike of it dealing twice its ATK.
@@ -839,39 +839,39 @@ A limited use a run carries, one for each Bomb provision owned: thrown at an ene
 _Avoid_: grenade, explosive
 
 **Card level**:
-How far a card has grown, from 0 up to its max level, by the card XP it gathers over every run; each level costs more than the one before and gives a card point. Shown on the card's top left from level 1. XP gathered at the max level waits for the levels a card buy opens.
+How far a card has grown, from 0 to 60, by the card XP it gathers over every run; each level costs more than the one before. Shown on the card's top left from level 1. XP gathered at the max level waits for the levels ascending opens.
 _Avoid_: card rank, card tier
 
 **Max level**:
-The highest level a card can reach now: every level its card tree holds, 10 at first, raised by one with each card buy that goes to it (up to 25, or 60 for STAIRS and HEAL).
+The highest level a card can reach before it must ascend again: the last of its card rarity's ten (10 for common, 20 for uncommon, … 60 for mythic).
 _Avoid_: level cap (in player-facing text), card limit
 
-**Card buy**:
-A card bought with Gems on the Deck page, one or ten at a time: each draws a card rarity and goes to a random card of the deck with room, opening one level of that rarity on its card tree and raising its max level by one. Its draws continue one random sequence the profile is given when it is made.
-_Avoid_: card draw (badges are drawn), card pack, booster
-
 **Card rarity**:
-How rare an upgrade on a card tree is, and the card buy that opens it: common, uncommon, rare, epic or legendary. A card wears the rarest rarity opened on its tree, in its frame and stars. Not a card badge's rarity.
+What a card's level makes it: base at 0, then common (1 to 10), uncommon, rare, epic, legendary and mythic (51 to 60), ten levels each. A card wears its rarity's frame and stars. Not a card badge's rarity.
 _Avoid_: card tier, card grade
 
-**Sealed upgrade**:
-An upgrade of a card tree no card buy of its rarity has opened yet; it takes no points until one does.
-_Avoid_: locked upgrade (locked means waiting on the upgrade before it)
+**Ascension**:
+Raising a card to its next card rarity, paid once in Rubies, when it stands at its max level holding the XP for the next: it opens ten more levels and the rarity's card power. A card waiting for it is *ready to ascend*; one at level 60 is *MAX*.
+_Avoid_: card upgrade, promotion, evolution
+
+**Card power**:
+A bonus a card gains as it levels, with nothing to spend: its base power rises with every level, and each card rarity from common to mythic holds one more, rising once with each of that rarity's ten levels. A card's powers count while either hand holds it, from the moment it levels up.
+_Avoid_: card upgrade, card perk, card skill
+
+**Ruby**:
+A currency kept between runs, dropped by each boss and Greater Boss (the tier's number of them) and spent on ascensions.
+_Avoid_: red gem, crystal
 
 **Card XP**:
 What raises a card's level: one each time the card activates in a run, or, for a card that never activates (Archer), one for each floor completed for the first time in the run while the hand holds it.
 
-**Card point**:
-What each card level gives the card, to spend on its own card tree. Not the character's training points.
-_Avoid_: training point, ability point, upgrade point
 
 **New card**:
 A card in the deck the player hasn't met on the Deck page yet (pressed for its details, moved, put in the hand or given a badge); it wears NEW there until then.
 _Avoid_: unseen card (a card the Deck page hasn't shown is what the Deck tab's dot counts, and it clears on opening the page)
 
-**Card tree**:
-A card's tree of nodes its card points buy, a level a point: tracks from the card itself, each node open once the node before it holds enough levels, its bonuses counting while the run's hand holds the card. Each node has a card rarity; card buys open its levels. A **respec** gives all of a card's points back for Gems; an arcanum's respec (Arcana Respec) gives back all the Arcanite invested in it.
-_Avoid_: card skill tree, talent tree, reward tree
+**Respec**:
+An arcanum's respec (Arcana Respec) gives back all the Arcanite invested in it.
 
 **Card badge**:
 A token bought with Gems (drawn by rarity: common, rare or epic) and attached to one card, changing what the card does when it activates: paying something (HP, Silver, Gold, XP), gating it (it acts only while a condition holds), changing its target (Stairward, Skip Open Nodes, Charge, Deprioritize), scaling its target's effect (Effective, Dampen), making it vanish (Skip), or adding enemies to the floors (More Enemies, only on a monster card). A card holds one in each of its badge slots, and a badge sits on one card at a time. More copies of a badge raise its level, up to 7.

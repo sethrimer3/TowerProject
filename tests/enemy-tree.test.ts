@@ -1,8 +1,10 @@
+import { givePowers, type GivenPowers } from "./powers-helper.ts";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { MAX_CARD_XP } from "../src/cards/levels.ts";
-import { CARD_TREES, type CardTreeLevels } from "../src/cards/trees.ts";
+import type { PowerStat } from "../src/cards/powers.ts";
+import { holdPowers } from "./powers-helper.ts";
 import { bout, heroHpAfter, predict } from "../src/combat.ts";
 import { critRule } from "../src/progression/loadout.ts";
 import { weakened, NO_FOES } from "../src/shrines.ts";
@@ -15,12 +17,10 @@ import { playedSave } from "./first-skills.ts";
 const hero: Player = { x: 0, y: 0, hp: 100, maxHp: 100, attack: 10, defense: 0, keys: { yellow: 0, blue: 0, red: 0 } };
 const foe = (hp: number, attack = 1): Enemy => ({ name: "rat", hp, attack, defense: 0, tier: 0, strength: "normal" });
 
-/** A Tower run on seed 7 whose hand holds ENEMY with `levels` on its tree. */
-function enemyRun(levels: Record<string, number>) {
+/** A Tower run on seed 7 whose hand holds ENEMY raising `stats`. */
+function enemyRun(stats: Partial<Record<PowerStat, number>>) {
   const s = playedSave();
-  s.cardXp.monster = MAX_CARD_XP;
-  s.cardBuys.opened = { monster: Object.fromEntries(CARD_TREES.monster!.map((n) => [n.id, n.max - n.levels])) };
-  s.cardTrees = { monster: levels };
+  holdPowers(s, "monster", stats);
   s.hand = [...s.hand.filter((c) => c !== "monster"), "monster"];
   const g = new Game(s);
   g.newRun({ seed: 7 });
@@ -35,7 +35,7 @@ test("ENEMY's Crit Chance and Crit Factor raise Crit % and Crit x by their perce
   assert.deepEqual(critRule(s), { chance: 20, factor: 2 });
   assert.deepEqual(critRule(s, { chance: 5, factor: 10 }), { chance: 21, factor: 2.2, cards: { chance: 5, factor: 10 } }, "the card percents ride along, for an enemy card's to add to");
   assert.equal(critRule(playedSave(), { chance: 5, factor: 10 }), undefined, "no crits without Crit %");
-  const g = enemyRun({ attack: 4, critChance: 5, critFactor: 5 });
+  const g = enemyRun({ foeAttack: 8, critChance: 5, critFactor: 10 });
   Object.assign(g.save.upgrades, { critical: 1 });
   Object.assign(g.save.training, { critChance: 20, critFactor: 8 });
   assert.deepEqual(g.crit, { chance: 21, factor: 2.2, cards: { chance: 5, factor: 10 } });
@@ -43,14 +43,16 @@ test("ENEMY's Crit Chance and Crit Factor raise Crit % and Crit x by their perce
 });
 
 test("ENEMY's Kill XP and Spoils raise every kill's XP and Silver", () => {
-  const plain = enemyRun({}), raised = enemyRun({ attack: 4, critChance: 1, critFactor: 1, killXp: 5, gold: 3, silver: 5 });
+  // Each run reads ENEMY's powers as they stand, so each is measured before the next is made.
   const xp = (g: Game) => {
     const before = g.save.xp;
     g.gainXp(foe(10), 20);
     return g.save.xp - before;
   };
-  assert.equal(xp(raised), Math.round(xp(plain) * 1.1));
-  assert.equal(raised.purse.killSilver(foe(10), 20), Math.round(plain.purse.killSilver(foe(10), 20) * 1.05 * 1e6) / 1e6);
+  const plain = enemyRun({}), plainXp = xp(plain), plainSilver = plain.purse.killSilver(foe(10), 20);
+  const raised = enemyRun({ foeAttack: 8, critChance: 1, critFactor: 2, killXp: 10, foeGold: 3, foeSilver: 5 });
+  assert.equal(xp(raised), Math.round(plainXp * 1.1));
+  assert.equal(raised.purse.killSilver(foe(10), 20), Math.round(plainSilver * 1.05 * 1e6) / 1e6);
 });
 
 test("ENEMY's Weaken cuts every enemy's ATK on the board, in the Tower and the Delve, beside the boons", () => {
@@ -58,7 +60,7 @@ test("ENEMY's Weaken cuts every enemy's ATK on the board, in the Tower and the D
   assert.equal(cut.attack, 0.95);
   assert.equal(weakened(undefined, 0), undefined);
   assert.equal(weakened({ ...NO_FOES, attack: 0.5 }, 10)!.attack, 0.45, "its own factor on the boons'");
-  const plain = enemyRun({}), weak = enemyRun({ defense: 3, shroud: 1, weaken: 5 });
+  const plain = enemyRun({}), weak = enemyRun({ foeDefense: 6, shroud: 2, foeAttackCut: 5 });
   const w = plain.world as RoomWorld, enemies = [...w.cells].filter(([, t]) => t.kind === "enemy").map(([k]) => k.split(",").map(Number) as [number, number]);
   assert.ok(enemies.length > 0);
   for (const [x, y] of enemies) assert.equal(weak.world.tile(x, y).enemy!.attack, Math.round(plain.world.tile(x, y).enemy!.attack * 0.95 * 1e6) / 1e6);
@@ -89,7 +91,7 @@ test("ENEMY's Lifesteal Overheal lets Lifesteal heal above max HP, up to its cei
   assert.equal(predict(over, foe(50)).hpAfter, 125);
   assert.equal(predict(thief, foe(50)).hpAfter, 100);
   assert.ok(raised.strikes.every((s) => s.by === "enemy" || (s.heroHp ?? 0) <= 125));
-  const g = enemyRun({ defense: 3, shroud: 1, weaken: 1, stealOverheal: 3 });
+  const g = enemyRun({ foeDefense: 6, shroud: 2, foeAttackCut: 1, stealOverheal: 15 });
   assert.equal(g.run.player.stealOverheal, 15);
 });
 
@@ -104,7 +106,7 @@ test("ENEMY's Surprise Attack doubles the first strike's ATK of a fight right af
   assert.deepEqual(rings, ["20:#ffd34d", "10:"], "its number rises in a Charged Shot's gold outline");
   /** A corridor: the hero at its west end, a rat of 20 HP on x = 5 that
    * ENEMY targets (Fast when `fast`), Dash owned with `trees` on the run. */
-  const corridor = (trees: CardTreeLevels, fast = false) => {
+  const corridor = (trees: GivenPowers, fast = false) => {
     const g = new Game(playedSave());
     g.save.upgrades.dash = 1;
     g.save.archives.levels.dash = 10;
@@ -115,10 +117,10 @@ test("ENEMY's Surprise Attack doubles the first strike's ATK of a fight right af
     w.torches = [];
     Object.assign(g.run.player, { x: 0, y: 0, attack: 12 });
     g.run.hand = ["monster"];
-    g.run.cardTrees = trees;
+    g.run.handLevels = givePowers(trees);
     return g;
   };
-  const g = corridor({ monster: { surpriseAttack: 100 } });
+  const g = corridor({ monster: { surpriseAttack: 500 } });
   g.autoTurn();
   assert.deepEqual([g.run.player.x, g.run.player.y], [4, 0], "the dash stops before the rat");
   g.autoTurn();
@@ -131,7 +133,7 @@ test("ENEMY's Surprise Attack doubles the first strike's ATK of a fight right af
   assert.doesNotMatch(plain.message, /Surprise/);
   assert.ok(plain.run.player.hp < plain.run.player.maxHp, "two strikes, and one back");
   // A Fast rat loses its first strike to a Surprise Attack.
-  const quick = corridor({ monster: { surpriseAttack: 100 } }, true);
+  const quick = corridor({ monster: { surpriseAttack: 500 } }, true);
   quick.autoTurn();
   quick.autoTurn();
   assert.match(quick.message, /^Surprise Attack · /);
@@ -141,7 +143,7 @@ test("ENEMY's Surprise Attack doubles the first strike's ATK of a fight right af
   quickPlain.autoTurn();
   assert.ok(quickPlain.run.player.hp < plain.run.player.hp, "without it the Fast rat strikes first, then back");
   // A fight not right after a dash is no surprise.
-  const walked = corridor({ monster: { surpriseAttack: 100 } });
+  const walked = corridor({ monster: { surpriseAttack: 500 } });
   Object.assign(walked.run.player, { x: 4 });
   assert.ok(walked.move(1, 0));
   assert.doesNotMatch(walked.message, /Surprise/);

@@ -1,19 +1,15 @@
-/** A card's tree as the player meets it: its nodes for the living graph
- * (`cardTreeGraph`, drawn by `upgrade-graph.ts`), what each node does in
- * words (`nodeName`, `statText`), and the card of the node picked in it
- * (`cardTreeCardHtml`). The tree itself comes from `cards/trees.ts`. */
+/** A card's powers as the player meets them: each power's row on the Deck
+ * page (`cardPowersHtml`), what a level of it adds (`powerStepHtml`, as an
+ * ascension names its new power), and each stat's words, units and icon.
+ * The powers themselves come from `cards/powers.ts`. */
 import { CARDS, type CardId } from "../cards/cards.ts";
-import { CARD_TREES, cardLook, nodeCap, nodeLevel, nodeOpen, opensAt, treeNode, type CardOpened, type CardTreeLevels, type CardTreeNode, type ColorKeyPart, type ColorKeyStat, type DoorLockPart, type DoorLockStat, type FoeCardStat, type FoePart, type FoeTreeCard, type SmeltPart, type SmeltStat, type TradeColor, type TradePart, type TradeStat, type TreeStat } from "../cards/trees.ts";
+import { powerAmounts, powerLevel, powersOf, type CardPower, type ColorKeyPart, type ColorKeyStat, type DoorLockPart, type DoorLockStat, type FoeCardStat, type FoePart, type FoeTreeCard, type SmeltPart, type SmeltStat, type TradeColor, type TradePart, type TradeStat, type PowerStat } from "../cards/powers.ts";
 import { KEY_NAMES, type DoorKind } from "../doors.ts";
 import type { KeyColor } from "../entities.ts";
-import { CARD_RARITY_NAMES, type CardRarity } from "../cards/rarity.ts";
-import { rarityFrameHtml, rarityStarsHtml } from "./card-level-marks.ts";
+import { CARD_RARITY_NAMES } from "../cards/rarity.ts";
 import { snap } from "../exact.ts";
-import { cardArt, cellIcon, gemIcon, goldenGemIcon, stellarGemIcon, itemSprite, uiSprite, type UiSprite } from "./dom.ts";
-import type { GraphNode } from "./upgrade-graph.ts";
+import { cellIcon, gemIcon, goldenGemIcon, rubyIcon, stellarGemIcon, itemSprite, uiSprite, type UiSprite } from "./dom.ts";
 
-/** The id of a tree's root node: the card itself. */
-export const ROOT = "card";
 
 /** One entry for each key colour's own stats (`ColorKeyStat`), `each`
  * giving a colour's, by part, from the colour and its capitalized word. */
@@ -63,14 +59,8 @@ function byDoorLock<T>(each: (kind: DoorKind, words: (typeof DOOR_WORDS)[DoorKin
 /** How each enemy card's enemies are named in its stats' words: one with
  * its article (`a`), one without (`one`), and many. */
 const FOE_WORDS: Record<FoeTreeCard, { a: string; one: string; many: string }> = {
-  weakEnemy: { a: "a weak enemy", one: "weak enemy", many: "weak enemies" },
-  baseEnemy: { a: "a base enemy", one: "base enemy", many: "base enemies" },
-  strongEnemy: { a: "a strong enemy", one: "strong enemy", many: "strong enemies" },
-  eliteEnemy: { a: "an elite enemy", one: "elite enemy", many: "elite enemies" },
   bossEnemy: { a: "a boss or Greater Boss", one: "boss or Greater Boss", many: "bosses and Greater Bosses" },
   nonBossEnemy: { a: "a non-boss enemy", one: "non-boss enemy", many: "non-boss enemies" },
-  fastEnemy: { a: "a Fast enemy", one: "Fast enemy", many: "Fast enemies" },
-  flyingEnemy: { a: "a Flying enemy", one: "Flying enemy", many: "Flying enemies" },
   archer: { a: "an enemy", one: "enemy", many: "enemies" },
 };
 /** One entry for each enemy card's own stats (`FoeCardStat`), `each`
@@ -80,45 +70,9 @@ function byFoeCard<T>(each: (words: (typeof FOE_WORDS)[FoeTreeCard]) => Record<F
     Object.entries(each(FOE_WORDS[card])).map(([part, value]) => [`${card}${part}`, value]))) as Record<FoeCardStat, T>;
 }
 
-/** What each stat is called, as a node's name. */
-const STAT_NAMES: Record<TreeStat, string> = {
-  floorGold: "Spare Change", floorSilver: "Wishing Well", goldBonus: "Gold Bonus", silverBonus: "Silver Bonus",
-  freeOffense: "Free Offense", freeDefense: "Free Defense", freeUtility: "Free Utility", freeOffenseChance: "Free Offense", freeDefenseChance: "Free Defense", freeUtilityChance: "Free Utility",
-  floorHeal: "Floor Heal", overhealMax: "Overheal Max", stairSkip: "Stair Skip", percentPotions: "Percent Potions", potionHeal: "Potion Heal", potionMaxHp: "Potion Vigor",
-  potionSilver: "Potion Silver", regen: "Regen", shroud: "Shroud", parry: "Parry", reviveChance: "Revive",
-  doorCost: "Door Cost", doorGold: "Door Gold", doorSilver: "Door Silver", doorHeal: "Door Heal",
-  skeletonKey: "Skeleton Key", lockPick: "Lock Pick", secretKnock: "Secret Knock", doorChest: "Door Chest",
-  ...byDoorLock((kind, { word }) => ({ Gold: `${word} Door Gold`, Silver: `${word} Door Silver`, Chest: `${word} Door Chest`, Knock: { yellow: "Gold Knock", heart: "Heart Knock", wood: "Wooden Lock Pick" }[kind] })),
-  yellowLockHeal: "Gold Door Heal", yellowTransmute: "Gold Door Transmute", woodTransmute: "Wooden Door Transmute",
-  heartLockCost: "Heart Door Cost", heartLockPick: "Heart Lock Pick", heartShroud: "Shroud Growth", woodKeyCost: "Wooden Key Cost", woodDurability: "Durability", druidKey: "Druidic Talent", keyChest: "Key Chest", keyFind: "Key Find", keyGold: "Key Gold",
-  keyHeal: "Key Heal", keyOverheal: "Key Overheal", keySilver: "Key Silver", plainDoorCost: "Plain Doors", heartDoorCost: "Heart Doors", doubleKey: "Locksmith", masterKey: "Master Key",
-  ...byKeyColor((_, word) => ({ KeyHeal: `${word} Key Heal`, KeyOverheal: `${word} Key Overheal`, KeyGold: `${word} Key Gold`, KeyFind: `${word} Key Find`, KeySilver: `${word} Key Silver`,
-    KeyChest: `${word} Key Chest`, DoorCost: `${word} Key Cost`, DoubleKey: `Locksmith ${word}`, MasterKey: `Master ${word} Key`, FloorKey: `Extra ${word} Key` })),
-  ...byTrade((_, word) => ({ TradeCost: "Efficiency", TradeFreeUtility: "Free Utility", Forge: `${word} Forge`, Smelter: `Master ${word} Smelter` })),
-  ...bySmelt((_, word, free) => ({ SmeltGold: "Smelt Gold", SmeltHeal: "Smelt Heal", SmeltSilver: "Smelt Silver", SmeltFree: free.name, SmeltCost: "Efficiency", SmeltMaster: `Master ${word} Smelter` })),
-  keySmelter: "Key Smelter",
-  ...byFoeCard(() => ({ Gold: "Bounty", InstakillGold: "Instakill Bounty", Silver: "Spoils", Attack: "Attack", Defense: "Defense", Shroud: "Shroud", CritChance: "Crit Chance", CritFactor: "Crit Factor",
-    KillXp: "Kill XP", SpawnRate: "Spawn Rate", Material: "Salvage", InstakillMaterial: "Instakill Salvage", Equipment: "Equipment Drop", InstakillMaxHp: "Instakill Vigor",
-    StealOverheal: "Lifesteal Overheal", SurpriseAttack: "Surprise Attack", Cells: "Cells", Takedown: "Takedown", Tangle: "Tangle", FirstStrike: "First Strike", ChargeShot: "Charge Shot" })),
-  maxHp: "Max HP",
-  foeAttack: "Attack", foeDefense: "Defense", foeGold: "Bounty", foeSilver: "Spoils", moreEnemies: "Spawn Rate",
-  critChance: "Crit Chance", critFactor: "Crit Factor", killXp: "Kill XP", surpriseAttack: "Surprise Attack", foeAttackCut: "Weaken", stealOverheal: "Lifesteal Overheal",
-  attackShard: "Sharper Shards", defenseShard: "Sturdier Shards", attackShardGold: "Shard Gold", defenseShardGold: "Shard Gold",
-  attackShardSilver: "Shard Silver", defenseShardSilver: "Shard Silver", powerStrike: "Power Strike",
-  takedown: "Takedown", tangle: "Tangle", greaterTakedown: "Greater Takedown", greaterTangle: "Greater Tangle",
-  bossAttack: "Boss Attack", bossDefense: "Boss Defense", bossShroud: "Boss Shroud", bossGold: "Boss Bounty", bossCells: "Boss Cells",
-  chestGold: "Chest Gold", chestSilver: "Chest Silver", chestCells: "Chest Cells", supplyChance: "Supply Chests", equipmentChance: "Equipment Chests",
-  treasureFloor: "Treasure Floor", rarityUp: "Rarity Up", chestDouble: "Double", chestTriple: "Triple",
-  shotAttack: "Shot ATK", bossShotAttack: "Boss Shot", shotSpeed: "Shot Speed", shotRange: "Range", chargeShot: "Charge Shot",
-  gemBank: "Gem Bank", gemBankSpeed: "Gem Bank Speed", adGems: "More Gems", goldenGem: "Golden Gem", stellarGem: "Stellar Gem Chance",
-  chestGem: "Gems in Chests", gemChance: "Gem Chance", bossGem: "Boss Gem Drop", gemXp: "Gem XP",
-};
-
-/** Names of nodes raising more than one stat, short enough to sit under them. */
-const NODE_NAMES: Record<string, string> = { "yellowDoor.lockPick": "Gold Lock Pick", "eliteEnemy.freeUpgrade": "Free Upgrade", "nonBossEnemy.freeUpgrade": "Free Upgrade" };
 
 /** What `n` of each stat does, a line. */
-const STAT_TEXT: Record<TreeStat, (n: string) => string> = {
+const STAT_TEXT: Record<PowerStat, (n: string) => string> = {
   floorGold: (n) => `+${n}% Spare Change Gold on each floor`,
   floorSilver: (n) => `+${n}% Wishing Well Silver on each floor`,
   goldBonus: (n) => `+${n}% Gold Bonus`,
@@ -280,6 +234,12 @@ const STAT_TEXT: Record<TreeStat, (n: string) => string> = {
   gemChance: (n) => `${n}% chance of a Gem of its own on each new floor, in a side room where there is one; missed, it is gone`,
   bossGem: (n) => `${n}% chance a boss or Greater Boss drops a Gem`,
   gemXp: (n) => `+${n}% card XP from each Gem collected`,
+  floorRuby: (n) => `${n}% chance each new floor pays the Rubies a boss of its tower drops`,
+  bossRubies: (n) => `+${n} Rubies from each boss and Greater Boss (a fraction is the chance of one more)`,
+  levelSkipBoost: (n) => `+${n}% Enemy HP and Combat Level Skip chance, each up to 80%`,
+  torchGold: (n) => `+${n} Gold from each torch put out`,
+  torchSilver: (n) => `+${n} Silver from each torch put out`,
+  yellowToWood: (n) => `${n}% chance each Gold Door is a Wooden Door instead, still paying a Gold Door's Gold (from the next climb)`,
 };
 
 /** How a stat's amount reads: a bonus added (`+%`, or `+` for a count),
@@ -288,7 +248,7 @@ type Unit = "+%" | "−%" | "%" | "+";
 /** What each stat raises, in a few words, and how its amount reads: the
  * one line a node's details give it (how and when it works is behind the
  * details' ? button, in `STAT_TEXT`'s words). */
-const STAT_LINES: Record<TreeStat, [string, Unit]> = {
+const STAT_LINES: Record<PowerStat, [string, Unit]> = {
   floorGold: ["Spare Change", "+%"], floorSilver: ["Wishing Well", "+%"], goldBonus: ["Gold Bonus", "+%"], silverBonus: ["Silver Bonus", "+%"],
   freeOffense: ["Free Offense Upgrade chance", "+%"], freeDefense: ["Free Defense Upgrade chance", "+%"], freeUtility: ["Free Utility Upgrade chance", "+%"],
   freeOffenseChance: ["Free Offense Upgrade chance", "+%"], freeDefenseChance: ["Free Defense Upgrade chance", "+%"], freeUtilityChance: ["Free Utility Upgrade chance", "+%"],
@@ -339,12 +299,14 @@ const STAT_LINES: Record<TreeStat, [string, Unit]> = {
   shotAttack: ["Shot ATK", "+%"], bossShotAttack: ["Shot ATK vs bosses", "+%"], shotSpeed: ["Attack Speed", "+%"], shotRange: ["Attack Range", "+%"], chargeShot: ["Charged Shot", "+%"],
   gemBank: ["Gem rewards banked", "+"], gemBankSpeed: ["Seconds off the Gem cooldown", "+"], adGems: ["Gems a reward", "+"], goldenGem: ["Golden Gem chance", "%"], stellarGem: ["Stellar Gem chance", "%"],
   chestGem: ["Gem in a chest chance", "%"], gemChance: ["Gem a floor chance", "%"], bossGem: ["Boss Gem chance", "%"], gemXp: ["Card XP a Gem", "+%"],
+  floorRuby: ["Ruby chance a floor", "%"], bossRubies: ["Rubies a boss", "+"], levelSkipBoost: ["Enemy Level Skip chance", "+%"],
+  torchGold: ["Gold a torch", "+"], torchSilver: ["Silver a torch", "+"], yellowToWood: ["Gold Door to Wooden Door chance", "%"],
 };
 
 /** Each stat's icon on its node. */
 const ui = (name: UiSprite) => () => uiSprite(name);
 const silver = () => uiSprite("gold", "ui-sprite silver-sprite");
-const STAT_ICONS: Record<TreeStat, () => string> = {
+const STAT_ICONS: Record<PowerStat, () => string> = {
   floorGold: ui("gold"), floorSilver: silver, goldBonus: ui("gold"), silverBonus: silver,
   freeOffense: ui("attack"), freeDefense: ui("defense"), freeUtility: ui("arrow-up"), freeOffenseChance: ui("attack"), freeDefenseChance: ui("defense"), freeUtilityChance: ui("arrow-up"),
   potionSilver: silver, regen: ui("health"), shroud: ui("log"), parry: ui("defense"), reviveChance: ui("revive"),
@@ -383,195 +345,40 @@ const STAT_ICONS: Record<TreeStat, () => string> = {
   shotAttack: ui("attack"), bossShotAttack: ui("attack"), shotSpeed: ui("arrow-right"), shotRange: ui("arrow-right"), chargeShot: ui("attack"),
   gemBank: () => gemIcon("ui-sprite"), gemBankSpeed: ui("arrow-up"), adGems: () => gemIcon("ui-sprite"), goldenGem: () => goldenGemIcon("ui-sprite"), stellarGem: () => stellarGemIcon("ui-sprite"),
   chestGem: () => itemSprite("chest_treasure"), gemChance: () => gemIcon("ui-sprite"), bossGem: ui("attack"), gemXp: ui("inspiration"),
+  floorRuby: () => rubyIcon("ui-sprite"), bossRubies: () => rubyIcon("ui-sprite"), levelSkipBoost: ui("arrow-up"),
+  torchGold: ui("gold"), torchSilver: silver, yellowToWood: () => itemSprite("key_yellow"),
 };
 
-const ROMAN = ["", "", " II", " III", " IV", " V"];
-/** A number as a node shows it: whole, or to two places at most. */
+/** A number as a power shows it: whole, or to two places at most. */
 const amount = (n: number) => snap(n).toLocaleString("en-US", { maximumFractionDigits: 2 });
-
-/** The stats node `node` raises, first first. */
-const statsOf = (node: CardTreeNode) => Object.entries(node.stats) as [TreeStat, number][];
-
-/** Node `node`'s name: its first stat's, a numeral after it for a later
- * node raising the same stat on its tree. */
-export function nodeName(card: CardId, node: CardTreeNode) {
-  const stats = statsOf(node);
-  const base = NODE_NAMES[`${card}.${node.id}`] ?? (stats.length > 1 ? stats.map(([s]) => STAT_NAMES[s]).join(" & ") : STAT_NAMES[stats[0][0]]);
-  const same = (CARD_TREES[card] ?? []).filter((n) => statsOf(n)[0]?.[0] === stats[0][0]);
-  return `${base}${same.length > 1 ? ROMAN[same.indexOf(node) + 1] ?? "" : ""}`;
-}
-
-/** What `level` levels of `node` give, a line a stat. */
-export function statText(node: CardTreeNode, level: number) {
-  return statsOf(node).map(([stat, each]) => STAT_TEXT[stat](amount(each * level)));
-}
-
 /** Amount `n` as unit `unit` reads it (0 unsigned). */
 const shownIn = (unit: Unit, n: number) => `${n && unit[0] !== "%" ? unit[0] : ""}${amount(n)}${unit.endsWith("%") ? "%" : ""}`;
 
-/** What `level` levels of `node` give and, below its `cap`, the next
- * level: a line a stat, its few words then the amount now → next. */
-export function statChange(node: CardTreeNode, level: number, cap: number) {
-  return statsOf(node).map(([stat, each]) => {
-    const [words, unit] = STAT_LINES[stat];
-    const next = level < cap ? `<span class="training-arrow" aria-hidden="true">→</span><span class="training-box next">${shownIn(unit, each * (level + 1))}</span>` : "";
-    return `<p class="ct-change"><span class="ct-target">${words}:</span><span class="training-box">${shownIn(unit, each * level)}</span>${next}</p>`;
+/** What `power` gives at `levels`, a stat a part: its few words and amount ("Silver Bonus +3%"). */
+export const powerValueText = (power: CardPower, levels: number) =>
+  powerAmounts(power, levels).map(([stat, n]) => `${STAT_LINES[stat][0]} ${shownIn(STAT_LINES[stat][1], n)}`).join(", ");
+
+/** What one level of `power` adds, a stat a part, with each stat's icon:
+ * "+0.1 (Silver) / level", as an ascension names its new power. */
+export const powerStepHtml = (power: CardPower) =>
+  (Object.entries(power.stats) as [PowerStat, number][]).map(([stat, each]) =>
+    `<span class="cp-step">${shownIn(STAT_LINES[stat][1], each)} ${STAT_ICONS[stat]()} <small>${STAT_LINES[stat][0]}</small> / level</span>`).join("");
+
+/** What every level of `power` does, in full words, a stat a line. */
+export const powerText = (power: CardPower, levels: number) => powerAmounts(power, levels).map(([stat, n]) => STAT_TEXT[stat](amount(n)));
+
+/** A card's powers at `level`, a row each: its icon, name and rarity, and
+ * what it gives now. A power the card hasn't reached yet stays in its row,
+ * dimmed, naming the rarity that opens it (the base power, level 1). */
+export function cardPowersHtml(card: CardId, level: number) {
+  const powers = powersOf(card);
+  if (!powers.length) return `<p class="card-powers-none">No powers yet: this card still levels and ascends.</p>`;
+  const rows = powers.map((power) => {
+    const n = powerLevel(power, level), open = n > 0, first = Object.keys(power.stats)[0] as PowerStat;
+    const value = open ? powerValueText(power, n) : power.rarity === "base" ? "Opens at level 1" : `Opens at ${CARD_RARITY_NAMES[power.rarity]}`;
+    const title = open ? powerText(power, n).join("; ") : `${CARD_RARITY_NAMES[power.rarity]} power: ${powerText(power, 1).join("; ")} a level`;
+    return `<li class="card-power r-${power.rarity}${open ? "" : " locked"}" title="${title}"><span class="card-power-icon" aria-hidden="true">${STAT_ICONS[first]()}</span>`
+      + `<span class="card-power-name">${power.name}</span><span class="card-power-value">${value}</span></li>`;
   }).join("");
-}
-
-/** What a card's tree reads: the levels spent on it, and those card buys
- * opened on it. */
-export type TreeLevels = { levels: CardTreeLevels; opened: CardOpened };
-
-/** A node's state in the graph: holding every level opened on it
- * (`owned`), taking points now (`next`), or waiting on the node before it
- * or on a card buy of its rarity to open it (`locked`). */
-export function nodeState({ levels, opened }: TreeLevels, card: CardId, node: CardTreeNode): GraphNode["state"] {
-  const cap = nodeCap(opened, card, node);
-  if (cap && nodeLevel(levels, card, node.id) >= cap) return "owned";
-  return nodeOpen(levels, opened, card, node) ? "next" : "locked";
-}
-
-/** A node's state in words, for screen readers and the list. */
-const STATE_WORDS: Record<GraphNode["state"], string> = { owned: "full", next: "available", locked: "locked" };
-const article = (rarity: CardRarity) => (rarity === "uncommon" || rarity === "epic" ? "an" : "a");
-/** A sealed node, in words: what it is stays hidden until a card buy opens it. */
-const SEALED_WORDS = "Sealed upgrade: a card buy opens it";
-/** A sealed node's face: a ? and nothing else, so what it is stays hidden. */
-const SEALED_FACE = `<span class="ct-sealed-mark" aria-hidden="true">?</span>`;
-
-/** Node `node`'s look for its rarity: its rarity, and whether card buys
- * raised it past the levels it started with (a common node then wears
- * green and a hollow star). */
-const lookOf = (opened: CardOpened, card: CardId, node: CardTreeNode) => ({ rarity: node.rarity, upgraded: node.levels > 0 && nodeCap(opened, card, node) > node.levels });
-/** Whether no card buy has opened node `node` yet: it shows nothing of what it is. */
-const sealed = (tree: TreeLevels, card: CardId, node: CardTreeNode) => !nodeCap(tree.opened, card, node);
-
-/** What a node is, its rarity, level and state, and what it gives now, in
- * one line for a screen reader (`why`: why it can't take a point, if so);
- * a sealed node says only that it is sealed. */
-export function nodeLabel(card: CardId, tree: TreeLevels, node: CardTreeNode, why: string | null = null) {
-  if (sealed(tree, card, node)) return `${SEALED_WORDS}.`;
-  const level = nodeLevel(tree.levels, card, node.id), cap = nodeCap(tree.opened, card, node), state = nodeState(tree, card, node);
-  const now = level ? statText(node, level).join(", ") : "nothing yet";
-  return `${nodeName(card, node)}, ${CARD_RARITY_NAMES[node.rarity].toLowerCase()}: level ${level} of ${cap}, ${STATE_WORDS[state]}. Gives ${now}.${why && state !== "owned" ? ` ${why}` : ""}`;
-}
-
-/** A node's icon: its first stat's, and on a legendary node, three copies
- * of it in shifted hues drifting on cycles of their own over a black
- * ground, flashing behind them when they line up. */
-function nodeIcon(node: CardTreeNode) {
-  const icon = STAT_ICONS[statsOf(node)[0][0]]();
-  if (node.rarity !== "legendary") return `<span class="ct-icon">${icon}</span>`;
-  return `<span class="ct-icon ct-holo"><span class="ct-holo-flash" aria-hidden="true"></span>${[1, 2, 3].map((i) => `<span class="ct-holo-${i}" aria-hidden="true">${icon}</span>`).join("")}</span>`;
-}
-
-/** Card `card`'s tree as the graph draws it: the card at the root in its
- * rarity's frame, every track growing up from it, each node in its
- * rarity's frame with its stars, its stat's icon over a fill of its
- * levels, its count in the corner and its name under it (empty for a card
- * without a tree). A sealed node is an empty frame with a ?: no icon,
- * rarity, count or name until a card buy opens it. `why` says why a node can't take a
- * point, for its label. */
-export function cardTreeGraph(card: CardId, tree: TreeLevels, why: (id: string) => string | null = () => null): GraphNode[] {
-  const nodes = CARD_TREES[card];
-  if (!nodes) return [];
-  const look = cardLook(tree.opened, card);
-  const root: GraphNode = {
-    id: ROOT, state: "owned", face: cardArt(card, CARDS[card].name) + rarityFrameHtml(look.rarity, look.upgraded) + rarityStarsHtml(look.rarity, look.upgraded),
-    cls: `root r-${look.rarity}`, label: `${CARDS[card].name}, ${CARD_RARITY_NAMES[look.rarity].toLowerCase()}: the card, root of its tree`,
-  };
-  return [root, ...nodes.map((node): GraphNode => {
-    if (sealed(tree, card, node)) return { id: node.id, parent: node.after ?? ROOT, state: "locked", face: SEALED_FACE, cls: "sealed", label: nodeLabel(card, tree, node) };
-    const level = nodeLevel(tree.levels, card, node.id), cap = nodeCap(tree.opened, card, node), state = nodeState(tree, card, node), { rarity, upgraded } = lookOf(tree.opened, card, node);
-    return {
-      id: node.id, parent: node.after ?? ROOT, state,
-      face: nodeIcon(node) + rarityStarsHtml(rarity, upgraded)
-        + `<span class="ct-fill" aria-hidden="true"><i style="width:${(level / cap) * 100}%"></i></span><b aria-hidden="true">${level}/${cap}</b>`,
-      tag: nodeName(card, node),
-      cls: `r-${rarity}${upgraded ? " up" : ""}`,
-      label: nodeLabel(card, tree, node, why(node.id)),
-    };
-  })];
-}
-
-/** How a card's tree works, behind the tree's ? button. */
-export function cardTreeHelpHtml(card: CardId, left: number) {
-  const n = CARD_TREES[card]?.length ?? 0;
-  return `<p>${CARDS[card].name} has <b>${left}</b> point${left === 1 ? "" : "s"} to spend on ${n} upgrades.</p>`
-    + `<p>Each card level earns a point. Upgrades open from the card upward, each once the one below it holds enough levels, and count while the card is in the climb's hand. Choose one to see what it does.</p>`
-    + `<p>Buying cards on the Deck page raises a card's max level and the levels its upgrades hold, and opens its sealed upgrades: uncommon, rare, epic and legendary, each opened by a card buy of its rarity.</p>`;
-}
-
-/** The details for node `id` of `card`'s tree, kept to what buying a
- * level does: a head with its icon, its name, one line of its rarity,
- * state and level, and at its right the button that buys a level with a
- * card point (or Full) beside the ? button opening the rest
- * (`cardTreeNodeHelpHtml`); then why it can't (`refusal`, in words; with
- * no points left, Buy just greys), and what it gives now → with the next
- * level. Nothing for the root (how the tree works is behind the tree's ?
- * button) or a sealed node. */
-export function cardTreeCardHtml(card: CardId, tree: TreeLevels, id: string, left: number, refusal: string | null): string {
-  const node = treeNode(card, id);
-  if (id === ROOT || !node || sealed(tree, card, node)) return "";
-  const level = nodeLevel(tree.levels, card, id), cap = nodeCap(tree.opened, card, node), state = nodeState(tree, card, node), { rarity, upgraded } = lookOf(tree.opened, card, node);
-  const parent = node.after ? treeNode(card, node.after) : undefined;
-  const opens = parent && state === "locked" ? `<p class="ug-locked">Opens once ${nodeName(card, parent)} holds ${opensAt(parent)} level${opensAt(parent) === 1 ? "" : "s"}.</p>` : "";
-  const blocked = !!refusal || !left;
-  const action = state === "owned"
-    ? `<b class="ug-owned">Full</b>`
-    : `<button type="button" class="ug-buy" data-ct-raise${blocked ? " disabled" : ""} aria-label="Buy a level with a card point" title="${blocked ? "" : "Or choose the upgrade again"}">Buy${blocked ? "" : ` <small>${left} left</small>`}</button>`;
-  const info = `<button type="button" class="ct-help" data-ct-info aria-label="More about ${nodeName(card, node)}" title="More about this upgrade">?</button>`;
-  return `<div class="ug-card-head"><span class="ct-detail-icon r-${rarity}">${nodeIcon(node)}</span>`
-    + `<div><b>${nodeName(card, node)}</b><small class="ct-meta"><span class="ct-rarity r-${rarity}">${rarityStarsHtml(rarity, upgraded)}${CARD_RARITY_NAMES[rarity]}</span> · <span class="ct-state ${state}">${capital(STATE_WORDS[state])} · Level ${level} / ${cap}</span></small></div>`
-    + `<span class="ug-card-action">${action}${info}</span></div>`
-    // A locked node's own line already says what opens it.
-    + (refusal && state !== "owned" && !opens ? `<p class="ug-locked">${refusal}</p>` : "")
-    + opens
-    + statChange(node, level, cap);
-}
-
-/** The rest of node `id` of `card`'s tree, behind its details' ? button:
- * `note` first (that the card has no points left, when so), what each
- * level gives in full, and the levels it holds of its most, with the card
- * buy that opens one more. */
-export function cardTreeNodeHelpHtml(card: CardId, tree: TreeLevels, id: string, note: string | null) {
-  const node = treeNode(card, id);
-  if (id === ROOT || !node || sealed(tree, card, node)) return "";
-  const cap = nodeCap(tree.opened, card, node), { rarity } = lookOf(tree.opened, card, node);
-  return (note ? `<p class="ug-locked">${note}</p>` : "")
-    + `<p>Each level: ${statText(node, 1).join("; ")}.</p>`
-    + `<p>Holds ${cap} of up to ${node.max} levels${cap < node.max ? `: ${article(rarity)} ${CARD_RARITY_NAMES[rarity].toLowerCase()} card buy opens one more` : ""}.</p>`;
-}
-
-const capital = (w: string) => w[0].toUpperCase() + w.slice(1);
-
-/** The tree as a list, for reading at a glance: each upgrade a row in tree
- * order (one after another indented under it) with its icon, name,
- * rarity, state, levels, what it gives now and next, and its Buy button
- * (a sealed one only says it is sealed); `why` says why an upgrade can't
- * take a point (null when it can). */
-export function cardTreeListHtml(card: CardId, tree: TreeLevels, picked: string, why: (id: string) => string | null): string {
-  const nodes = CARD_TREES[card] ?? [];
-  const depth = (node: CardTreeNode): number => (node.after ? 1 + depth(treeNode(card, node.after)!) : 0);
-  const rows = nodes.map((node) => {
-    const at = `style="--depth:${depth(node)}"`;
-    if (sealed(tree, card, node))
-      return `<li class="ct-row locked sealed${node.id === picked ? " picked" : ""}" ${at}><button type="button" class="ct-row-main" data-ct-pick="${node.id}" aria-label="${nodeLabel(card, tree, node)}">`
-        + `<span class="ct-detail-icon">${SEALED_FACE}</span><span class="ct-row-text"><b>Sealed upgrade</b><small>A card buy opens it</small></span></button></li>`;
-    const level = nodeLevel(tree.levels, card, node.id), cap = nodeCap(tree.opened, card, node), state = nodeState(tree, card, node), refusal = why(node.id);
-    const { rarity, upgraded } = lookOf(tree.opened, card, node);
-    const next = level < cap ? statText(node, level + 1).join("; ") : "";
-    const action = state === "owned"
-      ? `<span class="ug-owned">Full</span>`
-      : `<button type="button" class="ug-buy" data-ct-raise="${node.id}"${refusal ? " disabled" : ""} aria-label="Buy a level of ${nodeName(card, node)} with a card point">Buy</button>`;
-    return `<li class="ct-row ${state} r-${rarity}${node.id === picked ? " picked" : ""}" ${at}>`
-      + `<button type="button" class="ct-row-main" data-ct-pick="${node.id}" aria-label="${nodeLabel(card, tree, node, refusal)}">`
-      + `<span class="ct-detail-icon r-${rarity}">${nodeIcon(node)}</span>`
-      + `<span class="ct-row-text"><b>${nodeName(card, node)}</b><small class="ct-state ${state}">${rarityStarsHtml(rarity, upgraded)}${CARD_RARITY_NAMES[rarity]} · ${capital(STATE_WORDS[state])} · ${level}/${cap}</small>`
-      + `<small>${level ? statText(node, level).join("; ") : "Nothing yet"}${next ? ` <span class="ct-next">→ ${next}</span>` : ""}</small>`
-      + (refusal && state !== "owned" ? `<small class="ug-locked">${refusal}</small>` : "")
-      + `</span></button>${action}</li>`;
-  });
-  return `<ul class="ct-list" aria-label="Upgrades">${rows.join("")}</ul>`;
+  return `<ul class="card-powers" aria-label="${CARDS[card].name}'s powers">${rows}</ul>`;
 }

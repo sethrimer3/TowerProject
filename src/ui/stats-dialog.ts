@@ -4,7 +4,7 @@ import type { AppContext } from "./app.ts";
 import { el } from "./dom.ts";
 import { currencyAmount } from "./hud.ts";
 import { copyButton, copyText } from "./run-notes-dialog.ts";
-import { recentGoldPerHour, type OfflineSave } from "../offline-gold.ts";
+import { recentFloorsPerMinute, recentGoldPerHour, type OfflineSave } from "../offline-gold.ts";
 import { shortAmount } from "../whole.ts";
 
 /** Each currency's line in the table, in the order shown. */
@@ -13,6 +13,7 @@ const EARNED: [LifetimeCurrency, string][] = [
   ["silver", "Silver earned"],
   ["gems", "Gems earned"],
   ["arcanite", "Arcanite earned"],
+  ["rubies", "Rubies earned"],
   ["cells", "Cells earned"],
   ["medals", "Medals earned"],
   ["inspiration", "Inspiration earned"],
@@ -25,7 +26,8 @@ const amount = (n: number) => currencyAmount(Math.floor(n));
 const created = (at: number) => (at ? new Date(at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : "Unknown");
 
 /** The Stats table's rows, label then value; with `offline`, the Recent
- * Gold per Hour after the Gold earned, shortened (12.3K). */
+ * Gold per Hour after the Gold earned, shortened (12.3K), and the Recent
+ * Floors per Hour after the floors climbed, to a tenth. */
 export function statsRows(p: Profile, offline?: OfflineSave): [string, string][] {
   const rgph: [string, string][] = offline ? [["Recent Gold per Hour", shortAmount(Math.floor(recentGoldPerHour(offline)), 1000)]] : [];
   return [
@@ -33,6 +35,7 @@ export function statsRows(p: Profile, offline?: OfflineSave): [string, string][]
     ...EARNED.flatMap(([c, label]): [string, string][] => [[label, amount(p.earned[c])], ...(c === "gold" ? rgph : [])]),
     ...(p.earned.trialPoints>0?[["Trial Points earned",amount(p.earned.trialPoints)] as [string,string]]:[]),
     ["Floors climbed", amount(p.floorsClimbed)],
+    ...(offline ? [["Recent Floors per Hour", (Math.floor(recentFloorsPerMinute(offline) * 600) / 10).toLocaleString("en-US", { maximumFractionDigits: 1 })] as [string, string]] : []),
     ["Training levels gained", amount(p.trainingLevels)],
     ["Research levels completed", amount(p.researchLevels)],
     ["Gold spent on Training", amount(p.trainingGold)],

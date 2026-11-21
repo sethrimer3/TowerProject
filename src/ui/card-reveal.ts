@@ -1,7 +1,7 @@
 import { CARDS, cardBonusLines, type CardId } from "../cards/cards.ts";
 import { cardArt } from "./dom.ts";
 import { cardLevelHtml, cardLevelLines, cardXpBarHtml } from "./card-level-marks.ts";
-import type { TreeSave } from "../cards/trees.ts";
+import type { CardLevelSave } from "../cards/levels.ts";
 
 /** What a card's reveal says over and under it: the line above its name,
  * the hint at the foot, and the card button's label. */
@@ -51,4 +51,4 @@ export function revealCard(id: CardId, text: string, reduceMotion: boolean) {
 }
 
 /** What a card's optional level marks read. */
-type CardLevels = Pick<TreeSave, "cardXp" | "cardBuys">;
+type CardLevels = CardLevelSave;

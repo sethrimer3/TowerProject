@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { decode } from "../src/save/save.ts";
-import { addCardXp, BASE_MAX_LEVEL, CARD_LEVEL_XP, cardLevel, cardPoints, decodeCardXp, MAX_CARD_LEVEL, MAX_CARD_XP } from "../src/cards/levels.ts";
+import { addCardXp, CARD_LEVEL_XP, cardLevel, decodeCardXp, MAX_CARD_LEVEL, MAX_CARD_XP } from "../src/cards/levels.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import type { CardId } from "../src/cards/cards.ts";
 import type { Save } from "../src/save/shape.ts";
@@ -13,7 +13,6 @@ const xpTo = (n: number) => CARD_LEVEL_XP.slice(0, n).reduce((a, b) => a + b, 0)
 
 test("the schedule: 60 levels, half the first 25's XP, each later level's step 250 more", () => {
   assert.equal(MAX_CARD_LEVEL, 60);
-  assert.equal(BASE_MAX_LEVEL, 10);
   assert.deepEqual(CARD_LEVEL_XP.slice(0, 5), [100, 200, 300, 400, 500]);
   assert.deepEqual(CARD_LEVEL_XP.slice(20, 25), [6250, 7250, 8500, 10000, 11750]);
   assert.deepEqual(CARD_LEVEL_XP.slice(25, 28), [13750, 16000, 18500]);
@@ -32,8 +31,6 @@ test("a card's level, its XP into the next and what that costs, under its max le
   assert.deepEqual(cardLevel(MAX_CARD_XP * 2), { level: 60, into: 0, needed: 0, capped: true });
   assert.deepEqual(cardLevel(xpTo(12) + 5, 10), { level: 10, into: xpTo(12) + 5 - xpTo(10), needed: 1800, capped: true }, "the XP past the cap keeps counting");
   assert.deepEqual(cardLevel(xpTo(12) + 5, 11).level, 11, "and turns into levels as the cap rises");
-  assert.equal(cardPoints(350), 2, "a point a level");
-  assert.equal(cardPoints(xpTo(30), 10), 10, "no more than the cap's");
 });
 
 test("XP added reports each level crossed under the cap, and keeps counting past it to level 60's", () => {

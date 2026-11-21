@@ -37,8 +37,8 @@ import { backfillProfile, decodeProfile, defaultProfile } from "./profile.ts";
 import { decodeOffline, defaultOffline } from "../offline-gold.ts";
 import { decodeFinds, defaultFinds, validNotes } from "../run-notes.ts";
 import { isFoeKey } from "../cards/foe-cards.ts";
-import { decodeCardXp } from "../cards/levels.ts";
-import { decodeCardBuys, defaultCardBuys } from "../cards/buys.ts";
+import { MAX_CARD_LEVEL, decodeCardAscension, decodeCardXp, totalCardLevels } from "../cards/levels.ts";
+
 import { decodeArcana, decodeArcanaRun, defaultArcana, defaultArcanaRun } from "../arcana/arcana.ts";
 import { validLifespring } from "../arcana/lifespring.ts";
 import { AMBER_MOST, validGearRun } from "../equipment/powers.ts";
@@ -46,7 +46,7 @@ import { validDilation } from "../arcana/time-dilation.ts";
 import { validPhantasm } from "../arcana/phantasm.ts";
 import { validFrost, validFrosted, validNecro } from "../arcana/necrotic-frost.ts";
 import { validVoidwell } from "../arcana/voidwell.ts";
-import { totalCardLevels, treeNode, decodeCardTrees, pointsSpent } from "../cards/trees.ts";
+
 export function defaults(): Save {
   return {
     version: 4,
@@ -56,6 +56,7 @@ export function defaults(): Save {
     gems: 0,
     arcanite: 0,
     arcaniteCarry: 0,
+    rubies: 0,
     arcana: defaultArcana(),
     medals: 0,
     vip: 0,
@@ -89,13 +90,12 @@ export function defaults(): Save {
     hand: [...BASE_HAND],
     cardLinks: [],
     cardXp: {},
-    cardTrees: {},
-    cardBuys: defaultCardBuys(),
+    cardAscension: {},
     handSlots: 0,
     manualHand: [],
     manualSlots: 0,
     badges: defaultBadges(),
-    tutorials: { arcana: false, deck: false, removeCard: false, addCard: false, upgrades: false, gear: false, onTheJob: false, speed: false, climb: false, keys: false, autoClimb: false, stuck: false, enemy: false, enter: false, training: false, delve: false, chamber: false, cardPoints: false, research: false, archives: false, goals: false, autoClimbHint: false },
+    tutorials: { arcana: false, deck: false, removeCard: false, addCard: false, upgrades: false, gear: false, onTheJob: false, speed: false, climb: false, keys: false, autoClimb: false, stuck: false, enemy: false, enter: false, training: false, delve: false, chamber: false, research: false, archives: false, goals: false, autoClimbHint: false },
     treeNotices: { inspiration: false, breakthrough: false },
     seen: { level: 0, training: 0, archives: 0, cards: [...BASE_HAND], cardLevels: 0, met: [...BASE_HAND] },
     archives: defaultArchives(),
@@ -238,13 +238,12 @@ const RUN_FIELD_CHECKS = {
   treasureFloor: (v: unknown) => finite(v) && v > 0 && v <= 100,
   goldenFloor: (v: unknown) => finite(v) && v > 0 && v <= 100,
   doorOdds: (v: any) => isRecord(v) && "skeleton" in v && "lockPick" in v
-    && Object.entries(v).every(([k, n]) => ["skeleton", "lockPick", "transmute", "wood", "heartPick"].includes(k) && finite(n) && n >= 0 && n <= 100)
+    && Object.entries(v).every(([k, n]) => ["skeleton", "lockPick", "transmute", "wood", "heartPick", "toWood"].includes(k) && finite(n) && n >= 0 && n <= 100)
     && Object.values(v).some((n) => (n as number) > 0),
   // The hands are checked first: every card holding a badge must be in one.
   badges: (v: unknown, r: any) => validRunBadges(v) && Object.keys(v as object).every((card) => holds(r, card)),
-  // The hands are checked first: every card with a tree copied must be in one.
-  cardTrees: (v: unknown, r: any) => isRecord(v) && Object.entries(v).every(([card, nodes]) => holds(r, card) && isRecord(nodes) &&
-    Object.entries(nodes).every(([id, n]) => { const node = treeNode(card as CardId, id); return !!node && wholeIn(n, 1, node.max); })),
+  // The hands are checked first: every card with a level copied must be in one.
+  handLevels: (v: unknown, r: any) => isRecord(v) && Object.entries(v).every(([card, n]) => holds(r, card) && wholeIn(n, 1, MAX_CARD_LEVEL)),
   // The hand is checked first: each link joins cards side by side in it.
   links: (v: unknown, r: any) => Array.isArray(v) && v.length > 0 && keptLinks(r.hand ?? [], links(v)).length === v.length,
   badgeFloors: (v: unknown) => isRecord(v) && Object.entries(v).every(([k, n]) => (k === "stairward" || k === "skipOpen") && wholeIn(n, 0, 1e6)),
@@ -367,7 +366,7 @@ function decodeUpgrades(raw: any, d: Save) {
   d.upgrades.moreWealth ||= Math.min(1, d.upgrades.interest + d.upgrades.maxInterest + d.upgrades.mug);
   d.upgrades.cardMastery ||= Math.min(1, d.upgrades.blueSiphon + d.upgrades.keyToHp + d.upgrades.keySiphon + d.upgrades.keyLessBadges + d.upgrades.keyAtLeastBadges);
   d.upgrades.doorMastery ||= Math.min(1, d.upgrades.cardWoodenDoor + d.upgrades.cardYellowDoor + d.upgrades.heartDoorResilience + d.upgrades.cardHeartDoor);
-  d.upgrades.beastMastery ||= Math.min(1, d.upgrades.cardWeakEnemy);
+
 }
 function decodeProgress(s: any, d: Save) {
   d.gold = fraction(s.gold, d.gold);
@@ -375,6 +374,7 @@ function decodeProgress(s: any, d: Save) {
   // TODO: drop `ascensionShards` in a later save version (renamed Arcanite).
   d.arcanite = count(s.arcanite ?? s.ascensionShards, d.arcanite);
   d.arcaniteCarry = typeof s.arcaniteCarry === "number" && s.arcaniteCarry >= 0 && s.arcaniteCarry < 1 ? s.arcaniteCarry : 0;
+  d.rubies = count(s.rubies, d.rubies);
   d.medals = count(s.medals, d.medals);
   d.vip = count(s.vip, d.vip);
   d.champion = decodeChampion(s.champion);
@@ -551,13 +551,10 @@ export function decode(raw: string | null): Save {
       d.manualHand = decodeManual(s.manualHand, deckCards(d.upgrades, d.goals).filter((id) => !d.hand.includes(id)), manualSlots(d));
     }
     d.cardXp = decodeCardXp(s.cardXp);
-    d.cardBuys = decodeCardBuys(s.cardBuys);
-    d.cardTrees = decodeCardTrees(s.cardTrees, d.cardXp, d.cardBuys.opened);
+    d.cardAscension = decodeCardAscension(s.cardAscension);
     d.badges = decodeBadges(s.badges, d.upgrades, researched(d.archives, "badgeSlots"), d.goals);
-    for (const k of ["arcana", "deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob", "speed", "climb", "keys", "autoClimb", "stuck", "enemy", "enter", "training", "delve", "chamber", "cardPoints", "research", "archives", "goals", "autoClimbHint"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
-    // A player who has already spent a card point needs no lesson on it.
-    if (CARD_IDS.some((id) => pointsSpent(d.cardTrees, id) > 0)) d.tutorials.cardPoints = true;
-    // Nor does one who has already researched in the Archives need their lesson.
+    for (const k of ["arcana", "deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob", "speed", "climb", "keys", "autoClimb", "stuck", "enemy", "enter", "training", "delve", "chamber", "research", "archives", "goals", "autoClimbHint"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
+    // A player who has already researched in the Archives needs no lesson on them.
     if (d.archives.history.length || d.archives.slots.some((slot) => slot.job)) d.tutorials.research = d.tutorials.archives = true;
     // Nor one who has already claimed a Goal its lesson.
     if (Object.values(d.goals.claimed).some((floors) => floors.length)) d.tutorials.goals = true;

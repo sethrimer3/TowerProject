@@ -1563,10 +1563,12 @@ nav.drilling .hand-more { display: none; }
   border-radius: inherit;
   pointer-events: none;
 }
-.rarity-frame.up { box-shadow: inset 0 0 0 2px #5fd068, inset 0 0 6px #5fd06866; }
-.rarity-frame.r-uncommon { --shine: #f4f8ffc0; box-shadow: inset 0 0 0 2px #d8e0ec, inset 0 0 8px #d8e0ec66; }
-.rarity-frame.r-rare { --shine: #fff3c4d0; box-shadow: inset 0 0 0 2px #f2c95a, inset 0 0 8px #ffc94a77; }
-.rarity-frame.r-uncommon::after, .rarity-frame.r-rare::after {
+.rarity-frame.r-base { box-shadow: inset 0 0 0 2px #8a9296, inset 0 0 5px #8a929644; }
+.rarity-frame.r-common { box-shadow: inset 0 0 0 2px #9a6a3c, inset 0 0 6px #9a6a3c66; }
+.rarity-frame.r-uncommon { box-shadow: inset 0 0 0 2px #5fd068, inset 0 0 6px #5fd06866; }
+.rarity-frame.r-rare { --shine: #f4f8ffc0; box-shadow: inset 0 0 0 2px #d8e0ec, inset 0 0 8px #d8e0ec66; }
+.rarity-frame.r-epic { --shine: #fff3c4d0; box-shadow: inset 0 0 0 2px #f2c95a, inset 0 0 8px #ffc94a77; }
+.rarity-frame.r-rare::after, .rarity-frame.r-epic::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -1574,8 +1576,8 @@ nav.drilling .hand-more { display: none; }
   mix-blend-mode: screen;
   animation: rarity-shine 4.5s ease-in-out infinite;
 }
-.rarity-frame.r-rare::after { animation-delay: -1.5s; }
-.rarity-frame.r-epic::before, .ug-node.r-epic::after, .cb-stage.r-epic .cb-glow::before {
+.rarity-frame.r-epic::after { animation-delay: -1.5s; }
+.rarity-frame.r-legendary::before, .ug-node.r-legendary::after, .cb-stage.r-legendary .cb-glow::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -1588,8 +1590,8 @@ nav.drilling .hand-more { display: none; }
   animation: rarity-rainbow 3s linear infinite;
   pointer-events: none;
 }
-.rarity-frame.r-epic { box-shadow: 0 0 6px #d24dff66; }
-.rarity-frame.r-legendary {
+.rarity-frame.r-legendary { box-shadow: 0 0 6px #d24dff66; }
+.rarity-frame.r-mythic {
   box-shadow: inset 0 0 0 2px #fff, inset 0 0 10px #ffffffaa;
   background: linear-gradient(125deg, #ff6bd622, #6bd6ff33 30%, #fff9 45%, #b46bff33 60%, #6bffb822) 0 0 / 300% 300%;
   mix-blend-mode: screen;
@@ -1602,21 +1604,24 @@ nav.drilling .hand-more { display: none; }
 @keyframes rarity-rainbow { to { background-position: 300% 0; } }
 @keyframes rarity-foil { to { background-position: 100% 100%; } }
 html.reduce-motion .rarity-frame, html.reduce-motion .rarity-frame::before, html.reduce-motion .rarity-frame::after { animation: none; }
-html.reduce-motion .rarity-frame.r-uncommon::after, html.reduce-motion .rarity-frame.r-rare::after { opacity: 0; }
+html.reduce-motion .rarity-frame.r-rare::after, html.reduce-motion .rarity-frame.r-epic::after { opacity: 0; }
 @media (prefers-reduced-motion: reduce) {
   .rarity-frame, .rarity-frame::before, .rarity-frame::after { animation: none; }
-  .rarity-frame.r-uncommon::after, .rarity-frame.r-rare::after { opacity: 0; }
+  .rarity-frame.r-rare::after, .rarity-frame.r-epic::after { opacity: 0; }
 }
 /* The stars a rarity wears: a hollow green one for a raised common, gold
    ones from uncommon to epic, a purple one for legendary. */
 .rarity-stars { display: inline-block; margin-right: 4px; color: #ffd34a; letter-spacing: -1px; text-shadow: 0 0 4px #000, 0 0 2px #000; }
-.rarity-stars.r-common { color: #6fdc6f; }
-.rarity-stars.r-legendary { color: #c77dff; text-shadow: 0 0 5px #9b4dff, 0 0 2px #000; }
+.rarity-stars.r-uncommon { color: #6fdc6f; }
+.rarity-stars.r-mythic { color: #c77dff; text-shadow: 0 0 5px #9b4dff, 0 0 2px #000; }
 .card-reveal-text .card-rarity-line { margin: -2px 0 2px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #b9c9bd; }
-.card-rarity-line.r-uncommon { color: #dfe6ef; }
-.card-rarity-line.r-rare { color: #ffd76a; }
-.card-rarity-line.r-epic { color: #ff9ee6; }
-.card-rarity-line.r-legendary { color: #e5c4ff; }
+.card-rarity-line.r-base { color: #aab3b8; }
+.card-rarity-line.r-common { color: #d2a679; }
+.card-rarity-line.r-uncommon { color: #8fe08f; }
+.card-rarity-line.r-rare { color: #dfe6ef; }
+.card-rarity-line.r-epic { color: #ffd76a; }
+.card-rarity-line.r-legendary { color: #ff9ee6; }
+.card-rarity-line.r-mythic { color: #e5c4ff; }
 .card-reveal-text .card-level-line { margin: -2px 0 2px; font-size: 12px; color: #ffe39a; }
 .card-reveal-text .card-level-line b { display: inline; margin: 0; font-size: 12px; font-weight: 700; color: #ffe39a; }
 .card-reveal-text .card-points-line { margin-bottom: 6px; font-size: 11px; color: #8fa596; }
@@ -3332,8 +3337,6 @@ nav button.notify[data-count]::after {
 .deck-card-popover p { margin: 6px 0; }
 .deck-card-popover .card-rarity-line { font-size: 11px; }
 .deck-card-popover .card-level-line { font-size: 10px; }
-.deck-card-popover .deck-tree-hint { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; margin: 10px 0 3px; color: #efd498; }
-.deck-points-available { white-space: nowrap; color: #8cdbc7; font-size: 10px; }
 .deck-swipe-hint { display: block; color: #a7b8c5; font-size: 10px; }
 .deck-full-note { display: block; color: #f1aa9d; margin-top: 4px; }
 .deck-hand.dragging .deck-pointer { display: none; }
@@ -5549,10 +5552,9 @@ html body dialog.proving-grounds-dialog h2,
 html body dialog.proving-grounds-dialog p,
 html body dialog.proving-grounds-dialog > small { color: inherit; letter-spacing: normal; }
 html body dialog.proving-grounds-dialog h2 { font-size: 1.05rem; margin: 0 0 8px; }
-/* --- Cards bought (ui/card-buy-reveal.ts) --- */
-/* The Deck section and the card buy buttons over it, in one column. */
+/* --- A card ascended (ui/card-ascend-reveal.ts) --- */
+/* The Deck section and the Rubies held over it, in one column. */
 .deck-stack { display: flex; flex-direction: column; gap: 8px; flex: 1; min-height: 0; }
-.card-buys { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .card-buy-reveal.dark { background: #000000fc; }
 .cb-stage { position: relative; display: grid; place-items: center; }
 .cb-stage.big { width: 220px; height: 220px; }
@@ -5564,12 +5566,13 @@ html body dialog.proving-grounds-dialog h2 { font-size: 1.05rem; margin: 0 0 8px
 /* The glow round the card's edge in its rarity's colour. */
 .cb-glow { position: absolute; z-index: 1; width: 120px; aspect-ratio: 3 / 4; border-radius: 6px; --glow: #5fd068; box-shadow: 0 0 14px 4px var(--glow), 0 0 32px 8px color-mix(in srgb, var(--glow) 45%, transparent); }
 .cb-stage.small .cb-glow { width: 48px; border-radius: 3px; box-shadow: 0 0 6px 2px var(--glow); }
-.cb-stage.r-uncommon .cb-glow { --glow: #dfe6ef; }
-.cb-stage.r-rare .cb-glow { --glow: #f2c95a; }
-.cb-stage.r-legendary .cb-glow { --glow: #f4e9ff; }
+.cb-stage.r-rare .cb-glow { --glow: #dfe6ef; }
+.cb-stage.r-common .cb-glow { --glow: #b07a45; }
+.cb-stage.r-epic .cb-glow { --glow: #f2c95a; }
+.cb-stage.r-mythic .cb-glow { --glow: #f4e9ff; }
 /* Epic: rainbow hues turning round the edge. */
-.cb-stage.r-epic .cb-glow { --glow: #d24dff; animation: cb-hue 2.4s linear infinite; }
-.cb-stage.r-epic .cb-glow::before { inset: -4px; padding: 4px; border-radius: 9px; }
+.cb-stage.r-legendary .cb-glow { --glow: #d24dff; animation: cb-hue 2.4s linear infinite; }
+.cb-stage.r-legendary .cb-glow::before { inset: -4px; padding: 4px; border-radius: 9px; }
 @keyframes cb-hue { to { filter: hue-rotate(360deg); } }
 /* Rare and epic: rays shooting out from behind the card. */
 .cb-rays {
@@ -5582,7 +5585,7 @@ html body dialog.proving-grounds-dialog h2 { font-size: 1.05rem; margin: 0 0 8px
   transform: translate(-50%, -50%);
   animation: card-rays-in 0.6s 0.3s ease-out backwards, card-rays-turn 14s linear infinite;
 }
-.cb-stage.r-epic .cb-rays { background: repeating-conic-gradient(from 0deg, #ff4d6dcc 0deg 4deg, transparent 4deg 10deg, #fff35ccc 10deg 14deg, transparent 14deg 20deg, #4dd8ffcc 20deg 24deg, transparent 24deg 30deg, #d24dffcc 30deg 34deg, transparent 34deg 40deg); }
+.cb-stage.r-legendary .cb-rays { background: repeating-conic-gradient(from 0deg, #ff4d6dcc 0deg 4deg, transparent 4deg 10deg, #fff35ccc 10deg 14deg, transparent 14deg 20deg, #4dd8ffcc 20deg 24deg, transparent 24deg 30deg, #d24dffcc 30deg 34deg, transparent 34deg 40deg); }
 /* Legendary: stars shooting out from behind the card into the dark. */
 .cb-stars { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; }
 .cb-stars i {
@@ -5596,11 +5599,11 @@ html body dialog.proving-grounds-dialog h2 { font-size: 1.05rem; margin: 0 0 8px
   100% { opacity: 0; transform: rotate(var(--a)) translateY(-170px) scale(1.1); }
 }
 .cb-rarity { letter-spacing: 3px; }
-.cb-rarity.r-common { color: #6fdc6f; }
-.cb-rarity.r-uncommon { color: #dfe6ef; }
-.cb-rarity.r-rare { color: #ffd76a; }
-.cb-rarity.r-epic { color: #ff9ee6; }
-.cb-rarity.r-legendary { color: #e5c4ff; }
+.cb-rarity.r-uncommon { color: #6fdc6f; }
+.cb-rarity.r-rare { color: #dfe6ef; }
+.cb-rarity.r-epic { color: #ffd76a; }
+.cb-rarity.r-legendary { color: #ff9ee6; }
+.cb-rarity.r-mythic { color: #e5c4ff; }
 .badge-reveal-text .cb-level b { display: inline; margin: 0; font-size: inherit; color: #ffe39a; }
 .cb-sum { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .card-buy-reveal.still .cb-card, .card-buy-reveal.still .cb-glow, .card-buy-reveal.still .cb-rays { animation: none; }
@@ -5745,3 +5748,45 @@ html:has(#settings.active .tileset-lab) #training-bar { display: none !important
 html:has(#settings.active .arcana-lab) .shell > nav,
 html:has(#settings.active .arcana-lab) #training-bar { display: none !important; }
 @media (max-width: 700px) { .arcana-comparison { grid-template-columns: 1fr; } }
+
+/* --- Card powers and ascending (ui/card-power-view.ts, ui/card-ascend-reveal.ts) --- */
+/* "Ready to ascend" or "MAX" after a card's level and XP. */
+.card-level-flag { color: #6fdc6f; font-weight: 700; white-space: nowrap; }
+/* A card's powers in its Deck pop-up, a row each: icon, name, value. */
+.card-powers { list-style: none; margin: 6px 0; padding: 0; display: grid; gap: 3px; }
+.card-power { display: grid; grid-template-columns: 16px auto 1fr; align-items: center; gap: 6px; font-size: 12px; line-height: 1.25; }
+.card-power-icon { display: grid; place-items: center; width: 16px; height: 16px; }
+.card-power-icon > * { width: 16px; height: 16px; }
+.card-power-name { font-weight: 700; }
+.card-power-value { text-align: right; color: #ffe39a; }
+.card-power.r-base .card-power-name { color: #cfd6da; }
+.card-power.r-common .card-power-name { color: #d2a679; }
+.card-power.r-uncommon .card-power-name { color: #8fe08f; }
+.card-power.r-rare .card-power-name { color: #dfe6ef; }
+.card-power.r-epic .card-power-name { color: #ffd76a; }
+.card-power.r-legendary .card-power-name { color: #ff9ee6; }
+.card-power.r-mythic .card-power-name { color: #e5c4ff; }
+/* A power the card hasn't reached: dimmed, naming the rarity that opens it. */
+.card-power.locked { opacity: 0.5; }
+.card-power.locked .card-power-value { color: inherit; font-style: italic; }
+.card-powers-none { margin: 6px 0; font-size: 12px; opacity: 0.75; }
+/* The Ascend button, its outline greyed while the Rubies fall short. */
+.deck-ascend-note { margin: 6px 0 4px; font-size: 12px; }
+.deck-ascend { display: inline-flex; align-items: center; gap: 4px; margin-bottom: 4px; border: 2px solid #ff6f7d; }
+.deck-ascend.short { border-color: #6c7378; }
+.deck-ascend.short b { color: #ff6f6f; }
+/* The Rubies held, over the Deck section. */
+.deck-rubies { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 14px; }
+.deck-rubies small { opacity: 0.75; }
+.ruby-icon { width: 1em; height: 1em; vertical-align: -0.15em; }
+.deck-rubies .ruby-icon { width: 20px; height: 20px; }
+.deck-ascend .ruby-icon, .ca-power .ruby-icon { width: 16px; height: 16px; }
+.reward-reveal-prize .ruby-icon { width: 72px; height: 72px; }
+/* The ? left of the hand's heading. */
+.deck-hand-head .tree-help { flex: none; }
+/* "Card ascended!" and the new power, under the card. */
+.badge-reveal-text .ca-title { font-size: 20px; color: #ffe39a; }
+.ca-power { margin: 6px 0 0; }
+.ca-power-label { color: #6fdc6f; font-weight: 700; }
+.cp-step { display: inline-flex; align-items: center; gap: 3px; margin-left: 4px; white-space: nowrap; }
+.cp-step .ui-sprite, .cp-step img { width: 16px; height: 16px; }

@@ -1,5 +1,6 @@
 import { CARD_IDS, type CardId } from "./cards.ts";
-import { count, isRecord } from "../save/decode.ts";
+import { count, isRecord, wholeIn } from "../save/decode.ts";
+import { ASCEND_RUBIES, CARD_RARITIES, LEVELS_PER_RARITY, rarityAt, type CardRarity } from "./rarity.ts";
 
 /** The XP each card level costs, from level 1 to 60: five levels at each
  * step of the schedule to level 20, then each level's step 250 XP more
@@ -15,23 +16,20 @@ export const CARD_LEVEL_XP: readonly number[] = (() => {
   for (let step = xp[24] - xp[23]; xp.length < 60;) xp.push(xp[xp.length - 1] + (step += 250));
   return xp;
 })();
-/** The highest level any card can reach: a legendary card's whole tree
- * opened by card buys. */
+/** The highest level any card can reach: a mythic card's last. */
 export const MAX_CARD_LEVEL = CARD_LEVEL_XP.length;
-/** The level a card can reach before any card buy raises it. */
-export const BASE_MAX_LEVEL = 10;
 /** The XP that reaches level 60: a card gains no more past it. */
 export const MAX_CARD_XP = CARD_LEVEL_XP.reduce((a, b) => a + b, 0);
-/** Card points each level gives. */
-export const POINTS_PER_CARD_LEVEL = 1;
+/** The most times a card ascends: uncommon, rare, epic, legendary, mythic. */
+export const MAX_ASCENSION = CARD_RARITIES.length - 2;
 
 /** The cards that never activate: each gains its XP from the floors
  * completed while the run's hand holds it, one a floor (a floor Skip climbs
  * past too). */
 export const PASSIVE_CARDS: ReadonlySet<CardId> = new Set<CardId>(["archer", "angelWings"]);
 
-/** Where a card with `xp` stands under its max level `cap` (cards/trees.ts'
- * `cardMaxLevel`): its level, no higher than the cap; the XP gathered
+/** Where a card with `xp` stands under its max level `cap`
+ * (`cardMaxLevel`): its level, no higher than the cap; the XP gathered
  * toward the next (`into`, which past the cap keeps gathering, so a cap
  * raised later turns it into levels at once) and what that level costs
  * (`needed`, 0 at level 60); and whether the cap holds it back (`capped`). */
@@ -47,9 +45,55 @@ export type CardLevel = ReturnType<typeof cardLevel>;
 export const cardLevelTotal = (cardXp: Partial<Record<CardId, number>>, capOf: (id: CardId) => number) =>
   CARD_IDS.reduce((sum, id) => sum + cardLevel(cardXp[id] ?? 0, capOf(id)).level, 0);
 
-/** A card's points under its max level `cap`: one a level, spent on its
- * tree (cards/trees.ts, `pointsLeft` counting those not yet spent). */
-export const cardPoints = (xp: number, cap = MAX_CARD_LEVEL) => cardLevel(xp, cap).level * POINTS_PER_CARD_LEVEL;
+/** How many times each card has ascended: 1 once it ascends to uncommon,
+ * up to `MAX_ASCENSION` at mythic; a card that never has left out. */
+export type CardAscensions = Partial<Record<CardId, number>>;
+/** What a card's level reads from the save: its XP and its ascensions. */
+export type CardLevelSave = { cardXp: Partial<Record<CardId, number>>; cardAscension: CardAscensions };
+
+/** The highest level `card` reaches before it must ascend again: the last
+ * of its rarity's ten (10 for common, 20 once ascended to uncommon, … 60). */
+export const cardMaxLevel = (ascension: CardAscensions, card: CardId) => Math.min(MAX_CARD_LEVEL, (1 + (ascension[card] ?? 0)) * LEVELS_PER_RARITY);
+/** `card`'s level and progress in the save, under its max level. */
+export const levelIn = (save: CardLevelSave, card: CardId) => cardLevel(save.cardXp[card] ?? 0, cardMaxLevel(save.cardAscension, card));
+/** Every card's level summed, each under its max level: it rises with
+ * each level-up and ascension. */
+export const totalCardLevels = (save: CardLevelSave) => cardLevelTotal(save.cardXp, (id) => cardMaxLevel(save.cardAscension, id));
+/** `card`'s rarity in the save: its level's. */
+export const rarityIn = (save: CardLevelSave, card: CardId): CardRarity => rarityAt(levelIn(save, card).level);
+
+/** The rarity `card` ascends to next and the Rubies it costs, while it
+ * has one left (none at mythic). */
+export function nextAscension(save: CardLevelSave, card: CardId): { rarity: CardRarity; rubies: number } | null {
+  const done = save.cardAscension[card] ?? 0;
+  if (done >= MAX_ASCENSION) return null;
+  const rarity = CARD_RARITIES[done + 2]!;
+  return { rarity, rubies: ASCEND_RUBIES[rarity]! };
+}
+/** Whether `card` waits to ascend: at its max level, short of 60, with
+ * the XP for the next level already gathered. */
+export function readyToAscend(save: CardLevelSave, card: CardId) {
+  const { level, into, needed, capped } = levelIn(save, card);
+  return capped && level < MAX_CARD_LEVEL && into >= needed;
+}
+/** Ascends `card`, raising its max level ten: the levels it reaches at once,
+ * lowest first (none when it isn't ready). Paying is the caller's. */
+export function ascendCard(save: CardLevelSave, card: CardId): number[] {
+  if (!readyToAscend(save, card)) return [];
+  const from = levelIn(save, card).level;
+  save.cardAscension[card] = (save.cardAscension[card] ?? 0) + 1;
+  const to = levelIn(save, card).level, levels: number[] = [];
+  for (let l = from + 1; l <= to; l++) levels.push(l);
+  return levels;
+}
+/** A saved `cardAscension`: known cards only, each a whole number of
+ * ascensions from 1 to `MAX_ASCENSION`. */
+export function decodeCardAscension(raw: unknown): CardAscensions {
+  const out: CardAscensions = {};
+  if (!isRecord(raw)) return out;
+  for (const id of CARD_IDS) if (wholeIn(raw[id], 1, MAX_ASCENSION)) out[id] = raw[id] as number;
+  return out;
+}
 
 /** A saved `cardXp`: known cards only, each a whole XP (more
  * than the cap comes down to it), and none left out. */

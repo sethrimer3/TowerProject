@@ -55,6 +55,9 @@ export type GemDrop = {
   /** The ad button's rewards banked as of `adReadyAt`'s last settling: at
    * most one without the GEM card's Gem Bank (`adBank` settles the rest). */
   adBanked: number;
+  /** Whether the bank's next refill holds one reward more: the GEM card's
+   * half Gem Bank reward, rolled as each claim empties the bank. */
+  adBonusSlot?: true;
   /** The part of a Gem found but not yet whole (a badge scaling a Gem), in
    * [0, 1): it rides onto the next Gem found, and is never shown. */
   fraction: number;
@@ -73,6 +76,7 @@ export function decodeGemDrop(raw: any): GemDrop {
   d.readyAt = time(raw.readyAt);
   d.adReadyAt = time(raw.adReadyAt);
   if (wholeIn(raw.adBanked, 0, 1000)) d.adBanked = raw.adBanked;
+  if (raw.adBonusSlot === true) d.adBonusSlot = true;
   if (finite(raw.fraction, 1) && raw.fraction < 1) d.fraction = snap(raw.fraction);
   if (wholeIn(raw.wait, 0, GEM_MISSED_FLOORS)) d.wait = raw.wait;
   d.out = gemOut(raw.out);

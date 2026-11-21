@@ -39,7 +39,7 @@ test("a first provision opened dots the Gear tab until shown, and Equipment open
 
 test("a first provision opened shows the provisions lesson in the forest, its hand on the Gear tab, until the Gear tab is pressed", () => {
   const g = forest();
-  Object.assign(g.save.tutorials, { enter: true, delve: true, cardPoints: true });
+  Object.assign(g.save.tutorials, { enter: true, delve: true });
   assert.equal(g.provisionsLesson, false, "none open");
   g.save.upgrades.elixirProvision = 1;
   assert.ok(g.provisionsLesson);

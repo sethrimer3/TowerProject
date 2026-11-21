@@ -837,26 +837,6 @@
       "width": 48,
       "height": 64
     },
-    "card-weakEnemy": {
-      "file": "card-weakEnemy.png",
-      "width": 48,
-      "height": 64
-    },
-    "card-baseEnemy": {
-      "file": "card-baseEnemy.png",
-      "width": 48,
-      "height": 64
-    },
-    "card-strongEnemy": {
-      "file": "card-strongEnemy.png",
-      "width": 48,
-      "height": 64
-    },
-    "card-eliteEnemy": {
-      "file": "card-eliteEnemy.png",
-      "width": 48,
-      "height": 64
-    },
     "card-bossEnemy": {
       "file": "card-bossEnemy.png",
       "width": 48,
@@ -864,11 +844,6 @@
     },
     "card-nonBossEnemy": {
       "file": "card-nonBossEnemy.png",
-      "width": 48,
-      "height": 64
-    },
-    "card-fastEnemy": {
-      "file": "card-fastEnemy.png",
       "width": 48,
       "height": 64
     },
@@ -4264,6 +4239,11 @@
       "width": 768,
       "height": 240,
       "tile": true
+    },
+    "ruby": {
+      "file": "ruby.png",
+      "width": 24,
+      "height": 24
     }
   }
 }

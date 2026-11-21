@@ -2,7 +2,7 @@ import { levelForXp } from "../progression/xp.ts";
 import type { SkillDesk } from "./skill-desk.ts";
 import type { NoticeTree } from "../save/shape.ts";
 import { deckCards, type CardId } from "../cards/cards.ts";
-import { hasPointsToSpend, totalCardLevels } from "../cards/trees.ts";
+import { nextAscension, readyToAscend, totalCardLevels } from "../cards/levels.ts";
 import { equipmentWaiting } from "../equipment/inventory.ts";
 import { goalsWaiting } from "../goals.ts";
 import { provisionsOpen, trainingWaiting } from "../progression/loadout.ts";
@@ -129,11 +129,12 @@ export class NoticeDesk {
   }
 
   /** The number the Deck tab's dot shows while it shows: the deck's cards
-   * the Deck page hasn't shown since they were earned, and the cards with
-   * card points left to spend on their trees. */
+   * the Deck page hasn't shown since they were earned, and the cards ready
+   * to ascend with the Rubies held to pay for it. */
   deckCount(): number {
     const save = this.save, cards = deckCards(save.upgrades, save.goals);
-    return cards.filter((id) => !save.seen.cards.includes(id)).length + cards.filter((id) => hasPointsToSpend(save, id)).length;
+    const ascends = (id: CardId) => readyToAscend(save, id) && save.rubies >= (nextAscension(save, id)?.rubies ?? Infinity);
+    return cards.filter((id) => !save.seen.cards.includes(id)).length + cards.filter(ascends).length;
   }
 
   /** Whether card `id` wears NEW on the Deck page: in the deck, and not yet

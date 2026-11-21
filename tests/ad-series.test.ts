@@ -114,8 +114,9 @@ test("the game's ad desk counts ads and pays each prize", () => {
   assert.equal(save.gems, gems + 30);
   g.ads.claim(0);
   assert.equal(g.ads.gold?.factor, 2);
-  const cards = g.ads.claim(6)!;
-  assert.equal(cards.buys.length + cards.gems / 20, 3, "three card buys, Gems for any the deck has no room for");
+  const rubies = save.rubies;
+  assert.deepEqual(g.ads.claim(6), { prize: { kind: "rubies", amount: 10 }, gems: 0 });
+  assert.equal(save.rubies, rubies + 10, "ten Rubies");
   g.ads.claim(7);
   assert.equal(save.ads.discountUntil, WED + 24 * HOUR);
   // Ad-Disable bought: no more ads, but the Gold prize keeps running.

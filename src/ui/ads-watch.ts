@@ -4,8 +4,7 @@ import { estimatedServerTime } from "../shop/clock.ts";
 import { owns } from "../shop/entitlements.ts";
 import { offer } from "../shop/offers.ts";
 import type { AppContext } from "./app.ts";
-import { revealBuys } from "./card-buy-reveal.ts";
-import { adIcon, checkIcon, DECK_ICON, el, gemIcon, goldIcon } from "./dom.ts";
+import { adIcon, checkIcon, el, gemIcon, goldIcon, rubyIcon } from "./dom.ts";
 import { revealReward, type RewardShown } from "./reward-reveal.ts";
 import type { ShopPage } from "./shop-page.ts";
 
@@ -39,7 +38,7 @@ function prizeFace(p: AdPrize) {
   switch (p.kind) {
     case "gold": return `${goldIcon()}<b>×${p.factor}</b><small>${p.hours}h</small>`;
     case "gems": return `${gemIcon()}<b>${p.amount}</b>`;
-    case "cards": return `${DECK_ICON}<b>×${p.count}</b><small>Cards</small>`;
+    case "rubies": return `${rubyIcon()}<b>${p.amount}</b>`;
     case "discount": return `${adIcon()}<b>${p.percent}%</b><small>${p.hours}h off</small>`;
   }
 }
@@ -49,7 +48,7 @@ function prizeName(p: AdPrize) {
   switch (p.kind) {
     case "gold": return `Gold ×${p.factor} for ${p.hours === 1 ? "1 hour" : `${p.hours} hours`}`;
     case "gems": return `${p.amount} Gems`;
-    case "cards": return `${p.count} card draws`;
+    case "rubies": return `${p.amount} Rubies`;
     case "discount": return `${p.percent}% off Permanent Ad-Disable for ${p.hours} hours`;
   }
 }
@@ -196,8 +195,7 @@ export class AdsWatch {
     this.ctx.update();
     this.ctx.modal.close();
     const back = () => this.open(), still = this.game.save.settings.reduceMotion;
-    if (got.buys.length) return revealBuys(got.buys, still, undefined, got.gems ? () => revealReward(gemsShown(got.gems), still, back) : back);
-    revealReward(got.prize.kind === "cards" ? gemsShown(got.gems) : prizeShown(got.prize), still, back);
+    revealReward(prizeShown(got.prize), still, back);
   }
 
   /** Buys Permanent Ad-Disable as the Shop does; the dialog comes back once
@@ -231,7 +229,7 @@ function prizeShown(p: AdPrize): RewardShown {
   switch (p.kind) {
     case "gold": return { icon: goldIcon(), amount: `×${p.factor}`, kicker: "AD REWARD", name: prizeName(p), text: "Every Gold banked, on top of every other bonus", permanent: false };
     case "gems": return gemsShown(p.amount);
-    case "cards": return { icon: DECK_ICON, amount: `×${p.count}`, kicker: "AD REWARD", name: prizeName(p), permanent: false };
+    case "rubies": return { icon: rubyIcon(), amount: `+${p.amount}`, kicker: "AD REWARD", name: "Rubies", text: "Spent ascending cards on the Deck page", permanent: false };
     case "discount": return { icon: adIcon(), amount: `${p.percent}%`, kicker: "AD REWARD", name: "Permanent Ad-Disable", text: `${p.percent}% off in the Shop for ${p.hours} hours`, permanent: false };
   }
 }

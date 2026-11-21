@@ -28,7 +28,6 @@ const NOTES: Record<BoardLesson, { greeting?: string; title: string; text?: stri
   enter: { title: "Click Enter to start climbing the tower." },
   research: { title: "Research unlocked.", text: "Press the Research tab to open the Research menu." },
   trainingPoints: { title: "Training points to spend.", text: "After levelling up, you can spend points to increase your stats. Press the Research tab to train." },
-  cards: { title: "Your cards gain levels as you use them.", text: "Each level grants a card point. Open your Deck to spend it." },
   delve: { title: "A tournament is open: follow the path down to the Delve and enter its cave." },
   goals: { title: "Tower Goals are ready to claim.", text: "Every ten floors climbed pays a Goal reward. Press Goals to claim yours." },
   provisions: PROVISIONS_NOTE,

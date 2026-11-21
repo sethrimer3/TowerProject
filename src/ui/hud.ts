@@ -972,7 +972,7 @@ function renderForestSign(game: Game) {
 }
 
 /** The number on the Deck tab's dot, while it shows: the new cards and
- * those with card points to spend (none, a plain dot, for a lesson alone). */
+ * those ready to ascend with the Rubies to pay (none, a plain dot, for a lesson alone). */
 function renderDeckCount(game: Game) {
   const tab = document.querySelector<HTMLButtonElement>(`[data-tab="deck"]`);
   if (!tab) return;

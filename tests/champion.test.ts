@@ -13,7 +13,7 @@ import {
 import { relicAmount } from "../src/economy/relic-effects.ts";
 import { RELICS } from "../src/economy/relics.ts";
 import { adTerms } from "../src/cards/gem-card.ts";
-import { treeBonus } from "../src/cards/trees.ts";
+import { powerBonus } from "../src/cards/powers.ts";
 import { AD_COOLDOWN_MS, AD_GEMS } from "../src/economy/gems.ts";
 import { goldMultipliers, silverFound } from "../src/economy/gold-multipliers.ts";
 import { arrive, offlineGrant, recordClimb } from "../src/offline-gold.ts";
@@ -104,7 +104,7 @@ test("the Champion's Cape raises ATK and DEF by 5%, and Champion XP is its own +
 });
 
 test("the ad Gem button: −20 s from the bundle, and the tiers' cooldown, bank, Gems and jackpot", () => {
-  const none = treeBonus(undefined);
+  const none = powerBonus(undefined);
   assert.deepEqual(adTerms(none, championAd(new Game(defaults()).save)), adTerms(none));
   const base = champion();
   assert.equal(adTerms(none, championAd(base.save)).cooldown, AD_COOLDOWN_MS - 20_000);

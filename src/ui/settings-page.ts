@@ -18,6 +18,8 @@ import { showDevlog } from "./devlog-dialog.ts";
 import { showHelp } from "./dialogs.ts";
 import { exportProfile, importProfile } from "../profile-file.ts";
 import { seesAll } from "../access.ts";
+import { levelIn } from "../cards/levels.ts";
+import { firstLevelOf } from "../cards/rarity.ts";
 
 /** The settings on the page, in order; each control comes from its row in
  * SETTINGS. */
@@ -61,7 +63,7 @@ const SHOWN: Partial<Record<PageKey, (save: Save) => boolean>> = {
   batteryWhite: (save) => save.settings.batterySaver,
   cinematicGems: (save) => save.settings.cinematic,
   // Once the GEM card's Gem Bank holds a level.
-  gemBankChime: (save) => !!save.cardTrees.gem?.gemBank,
+  gemBankChime: (save) => levelIn(save, "gem").level >= firstLevelOf("epic"),
 };
 /** Those shown only while another setting is on: Access to Everything
  * leaves them to it, opening only those an unlock holds back. */

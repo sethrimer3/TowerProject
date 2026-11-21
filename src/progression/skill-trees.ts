@@ -97,6 +97,9 @@ export const TREES: SkillTree[] = [
     { id: "floorSkipReward", icon: "↷", x: 10, y: 358, requires: ["cardChest"] },
     { id: "enemyHpLevelSkips", icon: "↷", x: 10, y: 376, requires: ["floorSkipReward"], reveal: "enemyLevelSkips" },
     { id: "enemyCombatLevelSkips", icon: "↷", x: 10, y: 394, requires: ["enemyHpLevelSkips"] },
+    // Under Enemy Combat Level Skips (Beast Mastery): Boss Enemy, then Non-Boss Enemy.
+    { id: "cardBossEnemy", icon: "☠", x: 10, y: 412, requires: ["enemyCombatLevelSkips"], reveal: "beastMastery" },
+    { id: "cardNonBossEnemy", icon: "☠", x: 10, y: 430, requires: ["cardBossEnemy"] },
     { id: "greaterHeal", icon: "✚", x: 80, y: 214, requires: ["archives"], reveal: "physician" },
     { id: "recovery", icon: "✦", x: 70, y: 232, requires: ["greaterHeal"] },
     { id: "findPotion", icon: "⚗", x: 70, y: 250, requires: ["recovery"] },
@@ -114,16 +117,6 @@ export const TREES: SkillTree[] = [
     { id: "cardYellowDoor", icon: "⚿", x: 50, y: 466, requires: ["cardWoodenDoor"] },
     { id: "heartDoorResilience", icon: "♥", x: 50, y: 484, requires: ["cardYellowDoor"] },
     { id: "cardHeartDoor", icon: "♥", x: 50, y: 502, requires: ["heartDoorResilience"] },
-    // To the right (Beast Mastery): Weak Enemy, with Elite, then Boss, then
-    // Non-Boss to its right and down; Base under it, with Fast under Base and
-    // Strong down and right of it.
-    { id: "cardWeakEnemy", icon: "☠", x: 70, y: 412, requires: ["cardTorch"], reveal: "beastMastery" },
-    { id: "cardEliteEnemy", icon: "☠", x: 90, y: 412, requires: ["cardWeakEnemy"] },
-    { id: "cardBossEnemy", icon: "☠", x: 90, y: 430, requires: ["cardEliteEnemy"] },
-    { id: "cardNonBossEnemy", icon: "☠", x: 90, y: 448, requires: ["cardBossEnemy"] },
-    { id: "cardBaseEnemy", icon: "☠", x: 70, y: 448, requires: ["cardWeakEnemy"] },
-    { id: "cardFastEnemy", icon: "☠", x: 70, y: 466, requires: ["cardBaseEnemy"] },
-    { id: "cardStrongEnemy", icon: "☠", x: 90, y: 466, requires: ["cardBaseEnemy"] },
     // Down to the left: Find Gold Key and Key Efficiency (Key Mastery), then
     // (Card Mastery) GK Siphon, BK Siphon, with Smelt Gold Key, then GK -> BK, Smelt Blue
     // Key, BK -> RK and Smelt Red Key, down its left, and RK Siphon,

@@ -3,7 +3,7 @@ import { snap } from "../exact.ts";
 import type { Loadout } from "./loadout.ts";
 import { boonFactor } from "../shrines.ts";
 import { badgeFactor } from "../cards/badges.ts";
-import { treeHeroFactor } from "../cards/trees.ts";
+import { powerHeroFactor } from "../cards/powers.ts";
 import { lifespringFactor } from "../arcana/lifespring.ts";
 
 /** The stats the loadout carries into a run's hero, which a change to the
@@ -25,7 +25,7 @@ export function loadoutShift(before: Loadout, after: Loadout): StatShift {
 
 /** What the run's boons, Max HP badge boosts and Lifespring's Health Bonus
  * multiply hero stat `stat` by now. */
-export const heroFactor = (run: Run, stat: HeroStat) => boonFactor(run, stat) * badgeFactor(run, stat) * treeHeroFactor(run, stat) * lifespringFactor(run, stat);
+export const heroFactor = (run: Run, stat: HeroStat) => boonFactor(run, stat) * badgeFactor(run, stat) * powerHeroFactor(run, stat) * lifespringFactor(run, stat);
 
 /** Moves `run`'s hero, and the loadout it keeps, by `shift`, each stat
  * times what the run's boons and Max HP badge boosts multiply it by (as

@@ -1,8 +1,9 @@
+import { givePowers, type GivenPowers } from "./powers-helper.ts";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults } from "../src/save/save.ts";
-import { freeUpChances, treeBonus, type CardTreeLevels } from "../src/cards/trees.ts";
+import { freeUpChances, powerBonus } from "../src/cards/powers.ts";
 import { doorDiscount } from "../src/doors.ts";
 import { resolveStep, BASE_RULES, type StepEffect } from "../src/step-effects.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
@@ -25,11 +26,11 @@ function lay(g: Game, ...tiles: Tile[]) {
 }
 /** A Tower run on seed 7 whose hand's trees are `trees`, the hero at (0, 0)
  * with `tiles` beside it from (1, 0) on. */
-function beside(trees: CardTreeLevels, tiles: Tile[] = [key], player: Partial<Player> = {}) {
+function beside(trees: GivenPowers, tiles: Tile[] = [key], player: Partial<Player> = {}) {
   const s = defaults();
   const g = new Game(s);
   g.newRun({ seed: 7 });
-  g.run.cardTrees = trees;
+  g.run.handLevels = givePowers(trees);
   lay(g, ...tiles);
   Object.assign(g.run.player, { x: 0, y: 0, hp: 50, maxHp: 100, keys: { yellow: 0, blue: 0, red: 0 } }, player);
   return g;
@@ -56,9 +57,9 @@ test("KEY's Key Heal heals a share of max HP with each key, up to max HP; Key Ov
 });
 
 test("KEY's Key Gold raises a key's Gold 2% a level, and Key Silver finds Silver with each key", () => {
-  assert.equal(treeBonus({ key: { keyGold: 5 } }).keyGold, 10);
+  assert.equal(powerBonus(givePowers({ key: { keyGold: 10 } })).keyGold, 10);
   const silverFrom = (levels: number) => {
-    const g = beside(levels ? { key: { keyGold: 5, keySilver: levels } } : {});
+    const g = beside(levels ? { key: { keyGold: 10, keySilver: (levels) * 0.1 } } : {});
     const before = g.silver;
     g.move(1, 0);
     return g.silver - before;
@@ -68,8 +69,8 @@ test("KEY's Key Gold raises a key's Gold 2% a level, and Key Silver finds Silver
 });
 
 test("KEY's Free Utility gives a Free Utility chance, trained or not, adding to DOOR's", () => {
-  assert.deepEqual(freeUpChances(treeBonus({ key: { freeUtility: 2 } })), { utility: 100 });
-  assert.deepEqual(freeUpChances(treeBonus({ key: { freeUtility: 2 }, door: { freeUtility: 2 } })), { utility: 200 });
+  assert.deepEqual(freeUpChances(powerBonus(givePowers({ key: { freeUtilityChance: 1 } }))), { utility: 100 });
+  assert.deepEqual(freeUpChances(powerBonus(givePowers({ key: { freeUtilityChance: 1 }, door: { freeUtilityChance: 1 } }))), { utility: 200 });
 });
 
 test("KEY's door costs: Wooden and Steel Doors' keys and HP, Heart Doors' keys and drain", () => {
@@ -92,7 +93,7 @@ test("KEY's door costs: Wooden and Steel Doors' keys and HP, Heart Doors' keys a
 });
 
 test("KEY's Locksmith makes a key two, by the key's own roll", () => {
-  const g = beside({ key: { locksmith: 500 } });
+  const g = beside({ key: { doubleKey: 500 } });
   assert.ok(g.move(1, 0));
   assert.equal(g.run.player.keys.yellow, 2);
   assert.match(g.gains[0].text, /\+2 gold key/);
@@ -100,15 +101,15 @@ test("KEY's Locksmith makes a key two, by the key's own roll", () => {
   assert.ok(plain.move(1, 0));
   assert.equal(plain.run.player.keys.yellow, 1);
   // The same key rolls the same.
-  const some = beside({ key: { locksmith: 50 } }), first = (some.move(1, 0), some.run.player.keys.yellow);
-  const again = beside({ key: { locksmith: 50 } });
+  const some = beside({ key: { doubleKey: 50 } }), first = (some.move(1, 0), some.run.player.keys.yellow);
+  const again = beside({ key: { doubleKey: 50 } });
   assert.ok(again.move(1, 0));
   assert.equal(again.run.player.keys.yellow, first);
 });
 
 test("KEY's Master Key opens every door on a Tower floor as its key is picked up, each paying as a door opened for nothing", () => {
   const wood: Tile = { kind: "door", door: { type: "wood", durability: 20 } };
-  const g = beside({ key: { masterKey: 500 }, door: { doorHeal: 4, doorSilver: 5 } }, [key, keyed(["red"]), wood]);
+  const g = beside({ key: { masterKey: 100 }, door: { doorHeal: 2, doorSilver: 0.5 } }, [key, keyed(["red"]), wood]);
   (g.world as RoomWorld).cells.set("0,1", keyed(["yellow", "blue"], true));
   const gold = g.save.gold;
   assert.ok(g.move(1, 0));
@@ -142,7 +143,7 @@ test("KEY's Master Key opens the doors of a Delve area on the key's equivalent f
 });
 
 test("KEY's Key Chest leaves an opened treasure chest where a key lay, paid, by the key's own roll", () => {
-  const g = beside({ key: { keyChest: 500 } }), treasures = g.run.treasures;
+  const g = beside({ key: { keyChest: 100 } }), treasures = g.run.treasures;
   assert.ok(g.move(1, 0));
   assert.equal(g.world.tile(1, 0).kind, "openedChest");
   assert.equal(g.run.treasures, treasures + 1);
@@ -151,8 +152,8 @@ test("KEY's Key Chest leaves an opened treasure chest where a key lay, paid, by 
   assert.ok(plain.move(1, 0));
   assert.equal(plain.world.tile(1, 0).kind, "floor");
   // The same key rolls the same.
-  const some = beside({ key: { keyChest: 250 } }), first = (some.move(1, 0), some.world.tile(1, 0).kind);
-  const again = beside({ key: { keyChest: 250 } });
+  const some = beside({ key: { keyChest: 50 } }), first = (some.move(1, 0), some.world.tile(1, 0).kind);
+  const again = beside({ key: { keyChest: 50 } });
   assert.ok(again.move(1, 0));
   assert.equal(again.world.tile(1, 0).kind, first);
 });

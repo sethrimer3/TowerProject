@@ -35,7 +35,9 @@ export const VIP_SPRITE = "vip";
 export const CHAMPION_STAR_SPRITE = "champion-star";
 /** A golden ticket bearing a crimson star: One Piece Tickets (tools/prepare-shop-sprites.mjs). */
 export const ONE_PIECE_SPRITE = "one-piece";
-export const CURRENCY_ICON_SPRITES = [INSPIRATION_SPRITE,BREAKTHROUGH_SPRITE,VIP_SPRITE,CHAMPION_STAR_SPRITE,ONE_PIECE_SPRITE] as const;
+/** A faceted ruby: Rubies, the currency cards ascend with (tools/prepare-shop-sprites.mjs). */
+export const RUBY_SPRITE = "ruby";
+export const CURRENCY_ICON_SPRITES = [INSPIRATION_SPRITE,BREAKTHROUGH_SPRITE,VIP_SPRITE,CHAMPION_STAR_SPRITE,ONE_PIECE_SPRITE,RUBY_SPRITE] as const;
 export type KitSprite = typeof ICON_SPRITES[number] | typeof WORLD_SPRITES[number] | typeof CONTROL_SPRITES[number] | typeof DETAIL_SPRITES[number] | typeof CURRENCY_ICON_SPRITES[number] | typeof SPELL_ICON_SPRITES[number];
 export const kitUrl = (id: string) => `${BASE}assets/style/${id}.png`;
 /** Native PNG controls have one art source across UI themes. */

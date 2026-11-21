@@ -1,5 +1,7 @@
 /** A living upgrade tree (from Tower Defense's building trees, where it
- * began): nodes on branches that hold their shape loosely.
+ * began): nodes on branches that hold their shape loosely. Parked: the card
+ * trees that used it are gone, and nothing draws it now; it is kept, with
+ * `branch-art.ts`, for a later feature.
  * Each node sits on a spring to its place (the root at the bottom; the
  * branches carry on upward, while `side` choices sit beside their parent
  * and below), joined to its parent by another, and nodes

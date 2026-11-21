@@ -1,5 +1,5 @@
 import { controlIcon } from "./control-icon.ts";
-import { cellIcon, el, equipTicketIcon, gemIcon, goldIcon, medalIcon, onePieceIcon, pointsIcon, arcaniteIcon, ticketIcon, uiSprite, vipIcon } from "./dom.ts";
+import { cellIcon, el, equipTicketIcon, gemIcon, goldIcon, medalIcon, onePieceIcon, pointsIcon, arcaniteIcon, rubyIcon, ticketIcon, uiSprite, vipIcon } from "./dom.ts";
 import { isChampion } from "../shop/champion.ts";
 import { materialIcon } from "./equipment-icons.ts";
 import { EQUIP_MATERIALS, EQUIP_MATERIAL_IDS } from "../equipment/catalog.ts";
@@ -16,7 +16,7 @@ export const heldAmount = (game: Pick<Game, "save">, n: number) => game.save.set
 export type CurrencyRow = { id: string; icon: string; name: string; value: string; exact: string };
 
 /** Every currency the player holds, in the dialog's order: Gold, Gems,
- * Arcanite, Medals, VIP Points (for a Champion), the run's Silver, Training Points, Inspiration
+ * Arcanite, Rubies (once one is had), Medals, VIP Points (for a Champion), the run's Silver, Training Points, Inspiration
  * and Breakthrough, then Cells, Tournament, Equipment and One Piece Tickets (once one is had) and each Equipment material. Each shows
  * once the system behind it is open (all of them in Dev mode), so the list
  * never names what the player hasn't reached. */
@@ -27,6 +27,7 @@ export function currencyRows(game: Game): CurrencyRow[] {
     [true, "gold", goldIcon(), "Gold", save.gold],
     [true, "gems", gemIcon(), "Gems", save.gems],
     [true, "arcanite", arcaniteIcon(), "Arcanite", save.arcanite],
+    [save.profile.earned.rubies > 0, "rubies", rubyIcon(), "Rubies", save.rubies],
     [true, "medals", medalIcon(), "Medals", save.medals],
     [isChampion(save), "vip", vipIcon(), "VIP Points", save.vip],
     [!outside || silver > 0, "silver", uiSprite("gold", "ui-sprite silver-sprite"), outside ? "Silver (next climb)" : "Silver", silver],

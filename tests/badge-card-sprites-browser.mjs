@@ -116,20 +116,7 @@ try {
   await page.reload();
   await page.locator('[data-tab="deck"]').click();
   await ready("#deck");
-  // Match the reported card-points lesson: disabled cards still have one
-  // full-size face, and the pointed card still opens its upgrade tree.
   const normalSave = await page.evaluate(() => localStorage.getItem("towerdelve.v1"));
-  await page.evaluate(raw => {
-    const s = JSON.parse(raw); s.tutorials.cardPoints = false; s.cardXp.key = 200;
-    sessionStorage.setItem("__badgeSpriteFixture", JSON.stringify(s));
-  }, normalSave);
-  await page.reload(); await page.locator('[data-tab="deck"]').click(); await ready("#deck");
-  assert.ok(await page.locator(".deck-card:disabled").count() > 0, "lesson cards remain disabled");
-  await singleCardFrame();
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.screenshot({ path: "test-results/badge-card-sprites/deck-lesson-390.png", fullPage: true, animations: "disabled" });
-  await page.locator('.deck-card:not(:disabled)').click();
-  assert.ok(await page.locator(".card-tree").isVisible(), "lesson card opens its tree");
   await page.evaluate(raw => sessionStorage.setItem("__badgeSpriteFixture", raw), normalSave);
   await page.reload(); await page.locator('[data-tab="deck"]').click(); await ready("#deck");
   await page.locator('.badge-pick[data-badge="hp"] .badge-glyph').evaluate(e => {

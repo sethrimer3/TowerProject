@@ -21,13 +21,13 @@ import { playedSave } from "./first-skills.ts";
 
 test("only GOLD, BLUE and RED KEY, GOLD, HEART and WOODEN DOOR, CHEST, the enemy cards but ENEMY and ARCHER carry a bonus, and KEY none", () => {
   assert.deepEqual(CARD_IDS.filter((id) => cardBonus(id)), [
-    "yellowKey", "blueKey", "yellowDoor", "heartDoor", "weakEnemy", "baseEnemy", "strongEnemy", "eliteEnemy", "bossEnemy", "nonBossEnemy", "fastEnemy", "chest", "redKey", "woodenDoor", "flyingEnemy", "archer",
+    "yellowKey", "blueKey", "yellowDoor", "heartDoor", "bossEnemy", "nonBossEnemy", "chest", "redKey", "woodenDoor", "flyingEnemy", "archer",
   ]);
   assert.deepEqual(cardBonus("yellowDoor"), { door: { kind: "yellow", percent: 5 } });
   assert.deepEqual(cardBonus("heartDoor"), { door: { kind: "heart", percent: 5 } });
   assert.deepEqual(cardBonus("woodenDoor"), { door: { kind: "wood", percent: 5 } });
   assert.equal(cardBonus("monster"), undefined, "ENEMY gives none");
-  assert.deepEqual(cardBonus("weakEnemy"), { foe: { attack: 5, gold: 5 } });
+  assert.deepEqual(cardBonus("bossEnemy"), { foe: { attack: 5, gold: 5 } });
   assert.deepEqual(cardBonus("yellowKey"), { key: { color: "yellow", percent: 5, gold: 1 } });
   assert.deepEqual(cardBonus("blueKey"), { key: { color: "blue", percent: 5, gold: 2 } });
   assert.deepEqual(cardBonus("redKey"), { key: { color: "red", percent: 5, gold: 3 } });
@@ -57,7 +57,7 @@ test("a hand's bonuses add up by key colour, with the chest's chances", () => {
   });
   assert.deepEqual(handBonus(["stairs", "key"]), { keys: {}, chest: { supply: 0, equipment: 0 }, shot: { attack: 0, speed: 0, boss: 0 }, foe: {}, doors: {} });
   assert.deepEqual(handBonus(["yellowDoor", "heartDoor", "woodenDoor", "door"]).doors, { yellow: 5, heart: 5, wood: 5 });
-  assert.deepEqual(handBonus(["weakEnemy", "fastEnemy"]).foe, { weakEnemy: { attack: 5, gold: 5 }, fastEnemy: { attack: 5, gold: 5 } });
+  assert.deepEqual(handBonus(["bossEnemy", "nonBossEnemy"]).foe, { bossEnemy: { attack: 5, gold: 5 }, nonBossEnemy: { attack: 5, gold: 5 } });
 });
 
 const TILES: Record<string, Tile> = {
@@ -251,21 +251,21 @@ const foe = (strength: Enemy["strength"], extra: Partial<Enemy> = {}): Enemy => 
 
 test("an enemy card held strikes the enemies it covers with 5% more ATK, the cards' percents adding into one factor", () => {
   const hero: Player = { x: 0, y: 0, hp: 100, maxHp: 100, attack: 100, defense: 0, keys: { yellow: 0, blue: 0, red: 0 } };
-  const armed = { ...hero, foeAttack: { weakEnemy: 5, nonBossEnemy: 5 } };
-  assert.equal(attackAgainst(armed, foe("weak")), 110, "WEAK ENEMY and NON-BOSS ENEMY both cover a weak enemy");
+  const armed = { ...hero, foeAttack: { flyingEnemy: 5, nonBossEnemy: 5 } };
+  assert.equal(attackAgainst(armed, foe("weak", { flying: true })), 110, "FLYING ENEMY and NON-BOSS ENEMY both cover a Flying weak enemy");
   assert.equal(attackAgainst(armed, foe("strong")), 105);
   assert.equal(attackAgainst(armed, foe("boss")), 100);
   assert.equal(attackAgainst({ ...hero, bossAttack: 10, foeAttack: { bossEnemy: 5 } }, foe("greaterBoss")), 115.5, "multiplying the equipment's boss ATK");
   assert.equal(attackAgainst({ ...hero, foeAttack: { flyingEnemy: 5 } }, foe("normal", { flying: true }), 5), 110, "an arrow's Shot ATK adds to the cards' factor");
-  assert.equal(attackAgainst({ ...hero, foeAttack: { fastEnemy: 5 } }, foe("normal", { fast: true })), 105);
+
   assert.equal(attackAgainst({ ...hero, foeAttack: { flyingEnemy: 5 } }, foe("normal", { flying: true })), 105);
 });
 
 test("a run going inside gives its hero the ATK of its hand's enemy cards", () => {
   const g = new Game(playedSave());
-  g.save.hand = ["stairs", "weakEnemy", "monster"];
+  g.save.hand = ["stairs", "nonBossEnemy", "monster"];
   g.newRun({ seed: 3 });
-  assert.deepEqual(g.run.player.foeAttack, { weakEnemy: 5 });
+  assert.deepEqual(g.run.player.foeAttack, { nonBossEnemy: 5 });
   g.save.hand = ["stairs", "monster"];
   g.newRun({ seed: 3 });
   assert.equal(g.run.player.foeAttack, undefined, "ENEMY gives none");
@@ -273,16 +273,16 @@ test("a run going inside gives its hero the ATK of its hand's enemy cards", () =
 });
 
 test("an enemy card held makes each enemy it covers drop 5% more Gold, multiplying the other bonuses, and two cards' percents add", () => {
-  assert.equal(foeGold(["weakEnemy"], foe("weak")), 1.05);
-  assert.equal(foeGold(["weakEnemy", "nonBossEnemy", "monster"], foe("weak")), 1.1);
-  assert.equal(foeGold(["weakEnemy"], foe("strong")), 1);
+  assert.equal(foeGold(["nonBossEnemy"], foe("weak")), 1.05);
+  assert.equal(foeGold(["flyingEnemy", "nonBossEnemy", "monster"], foe("weak", { flying: true })), 1.1);
+  assert.equal(foeGold(["bossEnemy"], foe("strong")), 1);
   const g = new Game(playedSave());
   g.newRun({ seed: 7 });
   const purse = () => new RunPurse(g.save, g.mode, g.run, () => 0.5);
   g.run.hand = ["stairs"];
-  const plain = purse().killGoldPreview(foe("elite"), 3, 3);
-  g.run.hand = ["stairs", "eliteEnemy", "nonBossEnemy"];
-  assert.equal(purse().killGoldPreview(foe("elite"), 3, 3), snap(plain * 1.1));
+  const plain = purse().killGoldPreview(foe("elite", { flying: true }), 3, 3);
+  g.run.hand = ["stairs", "flyingEnemy", "nonBossEnemy"];
+  assert.equal(purse().killGoldPreview(foe("elite", { flying: true }), 3, 3), snap(plain * 1.1));
   assert.equal(purse().killGoldPreview(foe("weak"), 3, 3) > 0, true);
 });
 

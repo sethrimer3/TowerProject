@@ -9,8 +9,7 @@ import type { ShrinesSave } from "../shrines.ts";
 import type { ArcanaRun, ArcanaSave } from "../arcana/arcana.ts";
 import type { CardId, CardLink } from "../cards/cards.ts";
 import type { BadgesSave } from "../cards/badges.ts";
-import type { CardBuysSave } from "../cards/buys.ts";
-import type { CardTreeLevels } from "../cards/trees.ts";
+import type { CardAscensions } from "../cards/levels.ts";
 import type { GoldItemId } from "../economy/provisions.ts";
 import type { TrainingGroup, TrainingId } from "../progression/training.ts";
 import type { UpgradeId } from "../progression/upgrades.ts";
@@ -91,6 +90,9 @@ export type Save = {
   /** The part of an Arcanite relics' Arcanite earned has added toward the
    * next (economy/relic-effects.ts `relicArcanite`), from 0 to below 1. */
   arcaniteCarry: number;
+  /** Rubies: kept between runs, dropped by bosses and Greater Bosses, and
+   * spent ascending cards (cards/levels.ts). */
+  rubies: number;
   /** The Arcana bought, and the choice waiting (arcana/arcana.ts). */
   arcana: ArcanaSave;
   /** Medals: a limited currency, kept between runs, paid by the weekly
@@ -172,12 +174,9 @@ export type Save = {
   /** Each card's XP toward its levels (cards/levels.ts), gained in runs;
    * a card with none is left out. */
   cardXp: Partial<Record<CardId, number>>;
-  /** The card points spent on each card's tree, by node (cards/trees.ts);
-   * a card with none is left out. Spent and respecced in the forest only. */
-  cardTrees: CardTreeLevels;
-  /** The levels card buys opened on each card's tree, and where their
-   * stream stands (cards/buys.ts). */
-  cardBuys: CardBuysSave;
+  /** How many times each card has ascended, raising its max level ten
+   * each time (cards/levels.ts); a card that never has is left out. */
+  cardAscension: CardAscensions;
   /** Hand slots bought with Gems (after Larger Hand's). */
   handSlots: number;
   /** The Manual hand (Manual Hand): cards the next run holds, as the hand
@@ -204,14 +203,12 @@ export type Save = {
    * again once Door & Key is owned, dismissed (or a run entered), `delve`, opening the Delve
    * once a tournament opens it, `chamber`, the first Tower run
    * ended, after which a new floor's "A new chamber opens." no longer
-   * rises over the board, `cardPoints`, spending the first card point
-   * on an upgrade tree, led there from the forest's Deck tab, and once the
-   * Archives skill is owned, `research`, opening the Research page, led there
+   * rises over the board, and once the Archives skill is owned, `research`, opening the Research page, led there
    * from the Tower's forest, then `archives`, its note on the Archives tab
    * dismissed; `goals`, opening the Goals page, led there from the Tower's
    * forest once a reward waits; and `autoClimbHint`, the note on floor 4
    * before Auto-Climb is owned, dismissed (or the climb ended). */
-  tutorials: { arcana: boolean; deck: boolean; removeCard: boolean; addCard: boolean; upgrades: boolean; gear: boolean; onTheJob: boolean; speed: boolean; climb: boolean; keys: boolean; autoClimb: boolean; stuck: boolean; enemy: boolean; enter: boolean; training: boolean; delve: boolean; chamber: boolean; cardPoints: boolean; research: boolean; archives: boolean; goals: boolean; autoClimbHint: boolean };
+  tutorials: { arcana: boolean; deck: boolean; removeCard: boolean; addCard: boolean; upgrades: boolean; gear: boolean; onTheJob: boolean; speed: boolean; climb: boolean; keys: boolean; autoClimb: boolean; stuck: boolean; enemy: boolean; enter: boolean; training: boolean; delve: boolean; chamber: boolean; research: boolean; archives: boolean; goals: boolean; autoClimbHint: boolean };
   /** Per tree: its currency earned since the tree was last shown (a Tower
    * run's Inspiration, ended; a Goal's Breakthrough point, claimed), so its
    * tab (and the Upgrades tab) wear a dot in the forest while a skill there

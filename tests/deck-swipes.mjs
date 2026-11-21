@@ -88,10 +88,11 @@ try {
   const arrow = await pop.evaluate(n => Number.parseFloat(n.style.getPropertyValue("--arrow-x")));
   assert.ok(Math.abs(popup.x + arrow - anchor.x - anchor.width / 2) < 1, "arrow points at the selected card");
   await page.screenshot({ path: "test-results/deck-swipes/popover-390.png" });
+  // The details list the card's powers, a row each; a second tap leaves them up.
+  await expect(pop.locator(".card-power")).toHaveCount(7);
   await page.locator('[data-add="heal"]').tap();
-  await expect(page.locator(".card-tree")).toBeVisible();
-  await expect(pop).toHaveCount(0);
-  await page.locator("[data-ct-close]").tap();
+  await expect(pop).toBeVisible();
+  await page.keyboard.press("Escape");
   // Full hand: no replacement, a horizontal refusal and the low error notes.
   await swipe('[data-add="heal"]', -36);
   assert.deepEqual(await hand(), ["stairs", "door", "key", "monster"]);
@@ -169,18 +170,6 @@ try {
   await page.reload({ waitUntil: "domcontentloaded" }); await ready();
   await page.locator('[data-tab="deck"]').tap();
   assert.deepEqual(await hand(), ["stairs", "heal"], "swipe transfers persist across reload");
-  // An old save's first card-points lesson can select a Manual card.
-  // That card must be shown, despite never repeating in the reserve.
-  await page.setViewportSize({ width: 390, height: 844 });
-  await load({ hand: ["stairs", "door"], manualHand: ["heal"], tutorials: { ...fixture.tutorials, enemy: false, cardPoints: false }, cardXp: { ...fixture.cardXp, heal: 2200 } });
-  assert.deepEqual(await hand(), ["heal"], "the tutorial reveals its target's hand");
-  await page.locator('#deck-hand [data-deck-card="heal"] .deck-card').tap();
-  await expect(pop).toContainText("Tap the card again");
-  await page.locator('#deck-hand [data-deck-card="heal"] .deck-card').tap();
-  await expect(page.locator(".card-tree")).toBeVisible();
-  await expect(page.locator("[data-ct-close]")).toBeDisabled();
-  await page.locator("[data-ct-raise]:has(.ct-lesson-pointer)").tap();
-  await expect(page.locator("#modal")).toContainText("Well spent!");
   assert.deepEqual(errors, []);
   await context.close();
   console.log("Deck swipes: anchored details, second tap trees, real touch transfers, flights/gap motion, full-hand sound/shake, cancellation, keyboard, both hands and reduced motion passed.");

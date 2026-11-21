@@ -287,10 +287,6 @@ export const MORE_ENEMIES_PERCENTS = [30, 40, 50, 60, 70, 80, 90] as const;
  * MONSTER every strength, each from its own count. */
 export const MORE_ENEMIES_CARDS = {
   monster: EXTRA_ORDER,
-  weakEnemy: ["weak"],
-  baseEnemy: ["normal"],
-  strongEnemy: ["strong"],
-  eliteEnemy: ["elite"],
   bossEnemy: ["boss"],
   nonBossEnemy: ["weak", "normal", "strong", "elite"],
 } as const satisfies Partial<Record<CardId, readonly ExtraStrength[]>>;

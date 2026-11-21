@@ -146,10 +146,11 @@ export function doorDescription(tile: Tile) {
   return rule.heart ? `${keys}, and drains your HP to 1.` : `${keys}.`;
 }
 /** The Gold a door opened pays before Gold Bonus: a keyed door its colours'
- * `KEY_GOLD` summed, `HEART_DOOR_GOLD` more when it also drains HP, any
- * other `PICKUP_GOLD`. */
+ * `KEY_GOLD` summed, `HEART_DOOR_GOLD` more when it also drains HP, a
+ * Wooden Door made from a Gold Door that door's, any other `PICKUP_GOLD`. */
 export function doorGold(tile: Tile) {
   const rule = doorRule(tile);
+  if (rule.type === "wood" && rule.gold) return rule.gold;
   if (rule.type !== "keys" || rule.mode !== "all") return PICKUP_GOLD;
   return rule.keys.reduce((sum, key) => sum + KEY_GOLD[key], rule.heart ? HEART_DOOR_GOLD : 0);
 }
@@ -192,14 +193,16 @@ export function area1DoorRule(room: number): DoorRule {
   return rules[Math.max(0, room) % rules.length];
 }
 
-const SKELETON_SALT = 0x5c3e7, LOCK_PICK_SALT = 0x10c45, TRANSMUTE_SALT = 0x7a2e5, WOOD_TRANSMUTE_SALT = 0x3d0e1, HEART_PICK_SALT = 0x4ea27;
+const SKELETON_SALT = 0x5c3e7, LOCK_PICK_SALT = 0x10c45, TRANSMUTE_SALT = 0x7a2e5, WOOD_TRANSMUTE_SALT = 0x3d0e1, HEART_PICK_SALT = 0x4ea27, TO_WOOD_SALT = 0x60d7a;
 /** The generated tile `t` at (x, y) on a board generated from `seed`, as a
  * run with `odds` sees it: a Heart Door taking no keys whose tile's fixed
  * number falls under the Wooden Door Transmute chance is a Wooden Door of
  * `durability()` HP; a door taking keys and draining HP under the Heart
  * Lock Pick chance loses its drain, and is remade as below; a Wooden or Steel Door whose tile's fixed number
  * falls under the Gold Door Transmute chance is a Gold Door, keeping any
- * Heart Door's drain; a colour door (keyed, every colour needed)
+ * Heart Door's drain; a Gold Door (a gold key alone) under the Transmute
+ * Gold to Wood chance is a Wooden Door of `durability()` HP that still pays
+ * the Gold Door's Gold; a colour door (keyed, every colour needed)
  * whose tile's fixed number falls under the Skeleton Key chance is a
  * Wooden Door of `durability()` HP, the step's own; else one of two or
  * three colours under the Lock Pick chance loses its rarest colour (red,
@@ -214,6 +217,8 @@ export function withDoorOdds(t: Tile, x: number, y: number, seed: number, odds: 
   if (odds.transmute && (rule?.type === "wood" || (rule?.type === "keys" && rule.mode === "any")) && tileRandom(x, y, seed ^ TRANSMUTE_SALT) * 100 < odds.transmute)
     return { kind: "door", color: "yellow", door: { type: "keys", keys: ["yellow"], mode: "all", ...(rule.type === "keys" && rule.heart ? { heart: true } : {}) } };
   if (rule?.type !== "keys" || rule.mode !== "all") return t;
+  if (rule.keys.length === 1 && rule.keys[0] === "yellow" && rolls(TO_WOOD_SALT, odds.toWood))
+    return { kind: "door", door: { type: "wood", durability: durability(), gold: doorGold(t) } };
   if (odds.skeleton && tileRandom(x, y, seed ^ SKELETON_SALT) * 100 < odds.skeleton) return { kind: "door", door: { type: "wood", durability: durability() } };
   if (rule.keys.length < 2 || !odds.lockPick || tileRandom(x, y, seed ^ LOCK_PICK_SALT) * 100 >= odds.lockPick) return t;
   const rarest = [...KEY_ORDER].reverse().find((key) => rule.keys.includes(key))!, keys = rule.keys.filter((key) => key !== rarest);

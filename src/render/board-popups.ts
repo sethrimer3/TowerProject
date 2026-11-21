@@ -497,7 +497,7 @@ function struckAt(fight: ShownFight, s: Strike, won: boolean) {
 /** Art drawn without an image: a tile's contents, the Gem, Equipment's
  * pixel icons, or on a themed board the Heart Door's heart. */
 const paintsItself = (art: GainArt, themed: boolean) =>
-  "tile" in art || "gem" in art || "cell" in art || "equipMaterial" in art || "equipPiece" in art || (themed && "heart" in art);
+  "tile" in art || "gem" in art || "cell" in art || "ruby" in art || "equipMaterial" in art || "equipPiece" in art || (themed && "heart" in art);
 
 /** The image a gain's art draws from, or null where it has none or it is
  * still loading. */
@@ -523,6 +523,12 @@ function paintArt(c: CanvasRenderingContext2D, f: FrameContext, p: Popup & { gai
     mark(c, p.gain.text.split(" ")[0], { x: 10, y: 12 }, { color: CELL_COLOR, size: 10, align: "right", styled: f.look.styledSprites });
     return;
   }
+  if ("ruby" in art) {
+    // The amount, then the Ruby: "+2 ◆" in place of "+2 Rubies".
+    if (!(f.look.styledSprites && drawKit(c, "ruby", 11, 3, 18))) paintRuby(c);
+    mark(c, p.gain.text.split(" ")[0], { x: 10, y: 12 }, { color: RUBY_COLOR, size: 10, align: "right", styled: f.look.styledSprites });
+    return;
+  }
   if ("equipMaterial" in art) {
     if (!(f.look.styledSprites && drawKit(c, `equip-${art.equipMaterial}`))) paintPixels(c, materialPixels(art.equipMaterial));
     if (art.quantity > 1) mark(c, `×${art.quantity}`, { x: 18, y: 21 }, { color: REWARD_COLOR, size: 8, align: "left", styled: f.look.styledSprites });
@@ -545,6 +551,27 @@ function paintArt(c: CanvasRenderingContext2D, f: FrameContext, p: Popup & { gai
     if (art.raised) plus(c, 17, 17);
     else check(c, 13, 13);
   }
+}
+
+/** A Ruby's red, its amount's colour. */
+const RUBY_COLOR = "#ff6f7d";
+/** A Ruby: a cut red gem, its crown lighter, filling the same 18 px square as a coin. */
+function paintRuby(c: CanvasRenderingContext2D) {
+  const face = (points: [number, number][], fill: string) => {
+    c.beginPath();
+    points.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y)));
+    c.closePath();
+    c.fillStyle = fill;
+    c.fill();
+  };
+  face([[11.5, 9], [15, 5], [25, 5], [28.5, 9], [20, 20]], "#a6544e");
+  face([[11.5, 9], [15, 5], [25, 5], [28.5, 9]], "#d68a86");
+  face([[20, 9], [28.5, 9], [20, 20]], "#693239");
+  c.lineWidth = 1;
+  c.strokeStyle = "#381f27";
+  c.beginPath();
+  c.moveTo(11.5, 9); c.lineTo(15, 5); c.lineTo(25, 5); c.lineTo(28.5, 9); c.lineTo(20, 20); c.closePath();
+  c.stroke();
 }
 
 /** A Cell's yellow triangle, filling the same 18 px square as a coin. */

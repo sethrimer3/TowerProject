@@ -1,9 +1,10 @@
+import { givePowers, type GivenPowers } from "./powers-helper.ts";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { decode } from "../src/save/save.ts";
 import { MAX_CARD_XP } from "../src/cards/levels.ts";
-import { freeUpChances, treeBonus, type CardTreeLevels } from "../src/cards/trees.ts";
+import { freeUpChances, powerBonus } from "../src/cards/powers.ts";
 import { doorDiscount, withDoorOdds } from "../src/doors.ts";
 import { resolveStep, BASE_RULES, HEART_DOOR_HP, type StepEffect } from "../src/step-effects.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
@@ -18,11 +19,11 @@ const hero: Player = { x: 0, y: 0, hp: 50, maxHp: 100, attack: 10, defense: 0, s
 const lay = (g: Game, door: Tile) => ((g.world as RoomWorld).cells = new Map([["0,0", { kind: "floor" }], ["1,0", door], ["2,0", { kind: "floor" }]]));
 /** A Tower run on seed 7 whose hand's trees are `trees`, the hero at (0, 0)
  * with `door` beside it at (1, 0). */
-function beside(door: Tile, trees: CardTreeLevels, player: Partial<Player> = {}) {
+function beside(door: Tile, trees: GivenPowers, player: Partial<Player> = {}) {
   const s = playedSave();
   const g = new Game(s);
   g.newRun({ seed: 7 });
-  g.run.cardTrees = trees;
+  g.run.handLevels = givePowers(trees);
   lay(g, door);
   Object.assign(g.run.player, { x: 0, y: 0, hp: 50, maxHp: 100, keys: { yellow: 2, blue: 2, red: 2 } }, player);
   return g;
@@ -45,7 +46,7 @@ test("DOOR's Door Heal heals a share of max HP on each door, after a Heart Door'
   assert.deepEqual([heal(keyed(["yellow"]), 98).player.hp, heal(keyed(["yellow"]), 98).healed], [100, 2], "up to max HP");
   assert.equal(heal(keyed(["yellow"]), 100).healed, 0);
   assert.equal((resolveStep(hero, keyed(["yellow"])) as StepEffect).healed, 0, "none without the node");
-  const g = beside({ kind: "door", door: { type: "fullHp" } }, { door: { doorHeal: 10 } });
+  const g = beside({ kind: "door", door: { type: "fullHp" } }, { door: { doorHeal: 5 } });
   assert.ok(g.move(1, 0));
   assert.equal(g.run.player.hp, HEART_DOOR_HP + 5);
 });
@@ -82,7 +83,7 @@ test("DOOR's Secret Knock opens a door the hero can open for nothing: no keys, n
 });
 
 test("DOOR's Door Chest leaves an opened treasure chest where the door stood, its loot paid once", () => {
-  const g = beside(keyed(["yellow"]), { door: { doorChest: 500 } });
+  const g = beside(keyed(["yellow"]), { door: { doorChest: 100 } });
   const gold = g.save.gold;
   assert.ok(g.move(1, 0));
   assert.equal(g.world.tile(1, 0).kind, "openedChest");
@@ -121,20 +122,24 @@ test("DOOR's Skeleton Key makes colour doors Wooden Doors, and Lock Pick takes t
 
 test("a run fixes DOOR's door odds as it goes inside and saves them; its floors' doors are remade", () => {
   const s = playedSave();
+  // Rare at level 30: its Skeleton Key power holds all ten levels, Lock Pick (epic) none.
   s.cardXp.door = MAX_CARD_XP;
-  s.cardTrees = { door: { doorCost: 5, doorHeal: 1, skeletonKey: 1 } };
-  s.cardBuys.opened = { door: { doorHeal: 1, skeletonKey: 1 } };
+  s.cardAscension.door = 2;
   const g = new Game(s);
   g.newRun({ seed: 3 });
-  assert.deepEqual(g.run.doorOdds, { skeleton: 1, lockPick: 0 });
-  assert.deepEqual(decode(JSON.stringify(g.save)).tower.run!.doorOdds, { skeleton: 1, lockPick: 0 });
-  g.save.cardTrees = {};
+  assert.deepEqual(g.run.doorOdds, { skeleton: 10, lockPick: 0 });
+  assert.deepEqual(decode(JSON.stringify(g.save)).tower.run!.doorOdds, { skeleton: 10, lockPick: 0 });
+  // A level gained inside never changes the floors: the odds stay as the run went in.
+  g.save.cardAscension.door = 3;
+  g.cardLevelled("door", [31]);
+  assert.deepEqual(g.run.doorOdds, { skeleton: 10, lockPick: 0 });
+  g.save.cardXp.door = 0;
   g.newRun({ seed: 3 });
   assert.equal(g.run.doorOdds, undefined);
 });
 
 test("DOOR's Free Utility gives a Free Utility chance, trained or not", () => {
-  assert.deepEqual(freeUpChances(treeBonus({ door: { freeUtility: 4 } })), { utility: 200 });
-  assert.deepEqual(freeUpChances(treeBonus({ door: { freeUtility: 2 }, heal: { freeDefense: 2 } })), { defense: 100, utility: 100 });
-  assert.equal(freeUpChances(treeBonus({})), undefined);
+  assert.deepEqual(freeUpChances(powerBonus(givePowers({ door: { freeUtilityChance: 2 } }))), { utility: 200 });
+  assert.deepEqual(freeUpChances(powerBonus(givePowers({ door: { freeUtilityChance: 1 }, heal: { freeDefenseChance: 1 } }))), { defense: 100, utility: 100 });
+  assert.equal(freeUpChances(powerBonus(givePowers({}))), undefined);
 });

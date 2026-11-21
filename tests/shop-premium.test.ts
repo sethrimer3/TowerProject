@@ -128,12 +128,12 @@ test("the relics' Stellar Gem chance adds its points to a Golden Gem's Stellar G
   g.newRun();
   buy(g, "stellar");
   const finder = g.gemFinder as unknown as { kindOf(from: string, x: number, y: number): string };
-  const host = (g.gemFinder as unknown as { host: { treeBonus: Record<string, number> } }).host;
+  const host = (g.gemFinder as unknown as { host: { powerBonus: Record<string, number> } }).host;
   // No Golden Gem chance: every Gem stays plain, the relic notwithstanding.
   const kinds = new Set(Array.from({ length: 200 }, (_, i) => finder.kindOf("chance", i % 15, Math.floor(i / 15))));
   assert.deepEqual([...kinds], ["plain"]);
   // Every Gem golden and no Stellar Gem Chance of the tree's: the relic's 1 point alone turns some stellar.
-  Object.defineProperty(host, "treeBonus", { value: { ...host.treeBonus, goldenGem: 100, stellarGem: 0 }, configurable: true });
+  Object.defineProperty(host, "powerBonus", { value: { ...host.powerBonus, goldenGem: 100, stellarGem: 0 }, configurable: true });
   const rolled = Array.from({ length: 2000 }, (_, i) => finder.kindOf("chance", i % 40, Math.floor(i / 40)));
   const stellar = rolled.filter((k) => k === "stellar").length;
   assert.ok(stellar > 0 && stellar < 60, `about 1% stellar: ${stellar}`);

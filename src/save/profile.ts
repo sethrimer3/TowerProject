@@ -2,11 +2,9 @@ import { TRAINING } from "../progression/training.ts";
 import { fraction, isRecord, time } from "./decode.ts";
 import type { Save } from "./shape.ts";
 import { snap } from "../exact.ts";
-import { seedCardBuys } from "../cards/buys.ts";
-import { stream } from "../random.ts";
 
 /** The currencies whose lifetime earnings the player profile tallies. */
-export const LIFETIME_CURRENCIES = ["gold", "silver", "gems", "arcanite", "cells", "medals", "inspiration", "breakthrough", "tickets", "trialPoints"] as const;
+export const LIFETIME_CURRENCIES = ["gold", "silver", "gems", "arcanite", "rubies", "cells", "medals", "inspiration", "breakthrough", "tickets", "trialPoints"] as const;
 export type LifetimeCurrency = (typeof LIFETIME_CURRENCIES)[number];
 
 /** The lifetime tallies the Settings page's Stats dialog shows: kept as
@@ -62,12 +60,9 @@ export function tally(o: Holder, k: ProfileCount, amount: number) {
   if (o.profile && amount) o.profile[k] = Math.max(0, snap(o.profile[k] + amount));
 }
 
-/** Stamps the profile's creation at `now`, unless it has one, and seeds
- * its card buys' stream, unless it is seeded. */
+/** Stamps the profile's creation at `now`, unless it has one. */
 export function stampProfile(save: Save, now: number) {
   if (!save.profile.createdAt) save.profile.createdAt = now;
-  // The profile's own card buys stream, seeded once and never again.
-  seedCardBuys(save.cardBuys, stream("cardBuys"));
 }
 
 export function decodeProfile(raw: unknown): Profile {
@@ -91,6 +86,7 @@ export function backfillProfile(save: Save) {
   at("gold", save.gold);
   at("gems", save.gems);
   at("arcanite", save.arcanite);
+  at("rubies", save.rubies);
   at("cells", save.cells);
   at("medals", save.medals);
   at("inspiration", save.tower.inspiration);

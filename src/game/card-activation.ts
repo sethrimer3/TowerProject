@@ -9,7 +9,7 @@ import type { Mode, KeyColor } from "../entities.ts";
 import { snap } from "../exact.ts";
 import { healUpTo } from "../combat.ts";
 import { boostMaxHp, shiftHero } from "../progression/hero-stats.ts";
-import { smeltStat, tradeStat, treeBonus } from "../cards/trees.ts";
+import { smeltStat, tradeStat, powerBonus } from "../cards/powers.ts";
 import { rankShift } from "../progression/loadout.ts";
 import { noteKey } from "../run-notes.ts";
 import type { HandRules } from "../cards/hand-rules.ts";
@@ -73,7 +73,7 @@ export class CardActivation {
     if (id !== "gem") this.host.gainCardXp(id, 1);
     // HEAL's tree: each potion it reaches boosts max HP for the run, as the
     // Max HP badge does.
-    const boost = id === "heal" ? treeBonus(run.cardTrees).potionMaxHp : 0;
+    const boost = id === "heal" ? powerBonus(run.handLevels).potionMaxHp : 0;
     const badges = badgesOn(run.badges, id);
     if (!badges.length && !boost) return;
     if (boost) this.treeMaxHp(boost);
@@ -140,7 +140,7 @@ export class CardActivation {
    * rolls a fixed number per run seed, colour and use, so a replay rolls a
    * smelt the same, and its Gold is paid once per use (`smeltGold`). */
   private smelt(card: SmeltCard, scale: number) {
-    const host = this.host, rules = host.handRules, run = host.run, p = run.player, tree = treeBonus(run.cardTrees);
+    const host = this.host, rules = host.handRules, run = host.run, p = run.player, tree = powerBonus(run.handLevels);
     const color = SMELTS[card].color, keys = rules.smeltCost(card), use = rules.cardUses(card);
     const roll = (salt: number) => drawAt((run.seed ^ SMELT_SALT[color] ^ salt) >>> 0, use);
     const rolls = (salt: number, chance: number) => !!chance && roll(salt) * 100 < chance;
@@ -166,7 +166,7 @@ export class CardActivation {
    * chance, a free Utility level. Each rolls a fixed number per run seed
    * and use, so a replay rolls a trade the same. */
   private trade(card: TraderCard, scale: number) {
-    const host = this.host, run = host.run, p = run.player, tree = treeBonus(run.cardTrees);
+    const host = this.host, run = host.run, p = run.player, tree = powerBonus(run.handLevels);
     const { from, to } = TRADERS[card], keys = host.handRules.tradeCost(card), use = host.handRules.cardUses(card);
     const roll = (salt: number) => drawAt((run.seed ^ salt) >>> 0, use);
     const rolls = (salt: number, chance: number) => !!chance && roll(salt) * 100 < chance;

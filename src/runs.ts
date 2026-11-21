@@ -2,7 +2,7 @@
 import type { ShrineRun } from "./shrines.ts";
 import type { CardId, CardLink } from "./cards/cards.ts";
 import type { RunBadges } from "./cards/badges.ts";
-import type { CardTreeLevels } from "./cards/trees.ts";
+import type { CardLevels } from "./cards/powers.ts";
 import type { PROVISION_BOOSTS, UsedProvision } from "./economy/provisions.ts";
 import type { TrainingId } from "./progression/training.ts";
 import type { LevelSkips } from "./enemies/level-skips.ts";
@@ -146,10 +146,12 @@ export type RunCore = {
   /** The card badges on the hand's cards as the run went inside
    * (cards/badges.ts), each card's top slot first, fixed for the run. */
   badges?: RunBadges;
-  /** The card points spent on the trees of the hand's cards as the run went
-   * inside (cards/trees.ts, `runCardTrees`), fixed for the run, so its floors
-   * (More Enemies' extras) and bonuses never change under it. */
-  cardTrees?: CardTreeLevels;
+  /** The levels of the hand's cards (cards/levels.ts), copied as the run
+   * went inside and raised as a held card levels up, so their powers
+   * (cards/powers.ts) count from the moment they rise; a card at level 0
+   * is left out. What shapes the floors is fixed as the run goes inside
+   * instead (`doorOdds`, `treasureFloor`, `percentPotions`). */
+  handLevels?: CardLevels;
   /** The floor each cooling-down badge (Stairward, Skip Open Nodes) last
    * worked on: it works again on that floor, or once enough floors pass. */
   badgeFloors?: Partial<Record<"stairward" | "skipOpen", number>>;

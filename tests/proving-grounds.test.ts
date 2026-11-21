@@ -165,7 +165,7 @@ test("card targeting honors hand priority, enemy categories, and pauses when no 
   let plan=trialPlan(s)!;assert.equal(s.hand[plan.card],"heal");
   s.hand=["bossEnemy","heal"];plan=trialPlan(s)!;assert.equal(s.hand[plan.card],"bossEnemy");
   s.slimes=[{id:1,x:11,y:10,from:{x:11,y:10},jumped:3}];
-  s.hand=["weakEnemy","bossEnemy"];plan=trialPlan(s)!;assert.equal(s.hand[plan.card],"weakEnemy");
+  s.hand=["nonBossEnemy","bossEnemy"];plan=trialPlan(s)!;assert.equal(s.hand[plan.card],"nonBossEnemy");
   s.hand=["yellowKey"];const steps=s.steps;
   assert.match(autoplayTrial(s).message,/No card can act/);assert.equal(s.playing,false);assert.equal(s.steps,steps);
 });

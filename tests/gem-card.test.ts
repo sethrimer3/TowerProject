@@ -1,3 +1,4 @@
+import { givePowers, type GivenPowers } from "./powers-helper.ts";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
@@ -7,27 +8,28 @@ import type { Board } from "../src/board.ts";
 import type { Tile } from "../src/entities.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
 import { CARDS, deckCards, planHand } from "../src/cards/cards.ts";
-import { CARD_TREES, treeBonus } from "../src/cards/trees.ts";
+import { powerBonus, type PowerStat } from "../src/cards/powers.ts";
 import { adTerms, gemCardBonus } from "../src/cards/gem-card.ts";
-import { nodeName } from "../src/ui/card-tree-view.ts";
+import { CARD_LEVEL_XP, MAX_CARD_XP } from "../src/cards/levels.ts";
 import { AD_COOLDOWN_MS, AD_GEMS, GEM_VALUE, adBank, claimAdBank, defaultGemDrop, rollGemKind, sideSpot, wholeGems } from "../src/economy/gems.ts";
 
 const MINUTE = 60 * 1000;
-/** Every node of GEM's tree at its most levels. */
-const maxed = () => Object.fromEntries(CARD_TREES.gem!.map((n) => [n.id, n.max]));
+/** The XP that reaches level `n`. */
+const xpTo = (n: number) => CARD_LEVEL_XP.slice(0, n).reduce((a, b) => a + b, 0);
+/** GEM at level `level` in `save`, ascended as far as it needs. */
+function gemAt(save: ReturnType<typeof defaults>, level: number) {
+  save.cardXp.gem = level >= 60 ? MAX_CARD_XP : xpTo(level);
+  save.cardAscension.gem = Math.max(0, Math.ceil(level / 10) - 1);
+}
 
-test("GEM's tree: three commons holding its first ten levels between them, then ten levels of each rarity", () => {
-  const nodes = CARD_TREES.gem!;
-  const levels = (rarity: string) => nodes.filter((n) => n.rarity === rarity).reduce((a, n) => a + n.max, 0);
-  assert.deepEqual(["common", "uncommon", "rare", "epic", "legendary"].map(levels), [20, 10, 10, 10, 10]);
-  assert.deepEqual(nodes.filter((n) => !n.after).map((n) => n.id), ["gemBank", "gemChance", "gemXp"], "three tracks, the common Gem XP on its own");
-  assert.deepEqual(nodes.filter((n) => n.levels).map((n) => [n.id, n.levels, n.max]), [["gemBank", 1, 1], ["gemChance", 4, 9], ["gemXp", 5, 10]]);
-  assert.deepEqual(nodes.filter((n) => n.stats.gemXp).map((n) => [n.id, n.rarity, nodeName("gem", n)]), [["gemXp", "common", "Gem XP"], ["gemXp2", "uncommon", "Gem XP II"]]);
-  // At its most: a bank of five more, 12 Bank Speed levels (3 minutes), 3 Gems more a reward.
-  const bonus = treeBonus({ gem: maxed() });
-  assert.deepEqual([bonus.gemBank, bonus.gemBankSpeed, bonus.adGems, bonus.goldenGem, bonus.stellarGem, bonus.chestGem, bonus.gemChance, bonus.bossGem, bonus.gemXp],
-    [5, 180, 3, 3, 3, 5, 4.25, 4, 1400]);
-  assert.deepEqual(adTerms(bonus), { cap: 6, cooldown: 7 * MINUTE, gems: 9 });
+test("GEM's powers at level 60: 3 minutes off the cooldown and five more rewards banked", () => {
+  const bonus = powerBonus({ gem: 60 });
+  assert.deepEqual([bonus.gemBankSpeed, bonus.gemXp, bonus.gemChance, bonus.goldenGem, bonus.gemBank, bonus.chestGem, bonus.stellarGem], [180, 1100, 3, 10, 5, 5, 20]);
+  assert.deepEqual(adTerms(bonus), { cap: 6, part: 0, cooldown: 7 * MINUTE, gems: AD_GEMS });
+  // Half a reward a level: at level 31, a whole one only on a refill whose roll came up.
+  assert.deepEqual([adTerms(powerBonus({ gem: 31 })).cap, adTerms(powerBonus({ gem: 31 })).part], [1, 0.5]);
+  assert.equal(adTerms(powerBonus({ gem: 31 }), undefined, true).cap, 2);
+  assert.equal(adTerms(powerBonus({ gem: 32 }), undefined, true).cap, 2, "a whole reward, no fraction to roll");
 });
 
 test("Gem Card (2 Breakthrough) adds the GEM card to the deck, and its upgrades count only while either hand holds it", () => {
@@ -36,8 +38,8 @@ test("Gem Card (2 Breakthrough) adds the GEM card to the deck, and its upgrades 
   save.upgrades.gemCard = 1;
   assert.ok(deckCards(save.upgrades).includes("gem"));
   assert.equal(CARDS.gem.name, "Gem");
-  save.cardTrees.gem = { gemBank: 1 };
-  assert.deepEqual(adTerms(gemCardBonus(save)), { cap: 1, cooldown: AD_COOLDOWN_MS, gems: AD_GEMS }, "in the deck but no hand");
+  gemAt(save, 32);
+  assert.deepEqual(adTerms(gemCardBonus(save)), { cap: 1, part: 0, cooldown: AD_COOLDOWN_MS, gems: AD_GEMS }, "in the deck but no hand");
   save.manualHand = ["gem"];
   assert.equal(adTerms(gemCardBonus(save)).cap, 2, "the Manual hand counts");
   save.manualHand = [];
@@ -70,18 +72,35 @@ test("the Gem button's bank tallies on between claims, stops while full, and fil
   assert.equal(adBank(plain, 5 + 100 * cd, 1, cd).banked, 1);
 });
 
-test("the Gem button pays every banked reward, More Gems on each", () => {
+test("the Gem button pays every banked reward", () => {
   const g = new Game(defaults());
   let now = 5_000_000;
   g.clock = () => now;
   g.save.hand = ["stairs", "gem"];
-  g.save.cardTrees.gem = maxed();
+  gemAt(g.save, 60);
   assert.ok(g.gemFinder.claimAd());
-  assert.equal(g.save.gems, 9, "6 Gems and 3 more");
+  assert.equal(g.save.gems, AD_GEMS);
   now += 7 * MINUTE * 10;
-  assert.deepEqual([g.gemFinder.adBank.banked, g.gemFinder.adBank.gems, g.gemFinder.adBank.full], [6, 54, true]);
+  assert.deepEqual([g.gemFinder.adBank.banked, g.gemFinder.adBank.gems, g.gemFinder.adBank.full], [6, 6 * AD_GEMS, true]);
   assert.ok(g.gemFinder.claimAd());
-  assert.equal(g.save.gems, 63);
+  assert.equal(g.save.gems, 7 * AD_GEMS);
+});
+
+test("GEM's half reward: each claim rolls whether the next refill banks one more, about half the time", () => {
+  const g = new Game(defaults());
+  let now = 5_000_000;
+  g.clock = () => now;
+  g.save.hand = ["stairs", "gem"];
+  gemAt(g.save, 31);
+  let more = 0;
+  for (let i = 0; i < 400; i++) {
+    assert.ok(g.gemFinder.claimAd());
+    const cap = g.gemFinder.adTerms.cap;
+    assert.equal(cap, g.save.gemDrop.adBonusSlot ? 2 : 1);
+    if (cap === 2) more++;
+    now += 60 * MINUTE;
+  }
+  assert.ok(more > 150 && more < 250, `about half of 400: ${more}`);
 });
 
 test("a Gem's kind rolls golden, then stellar, each from its own sequence; fractions of a Gem carry", () => {
@@ -121,8 +140,8 @@ test("Gem Chance's Gem lies in a side room where there is one: furthest off the 
   assert.deepEqual(sideSpot(b, { x: 1, y: 4 }, { minY: 0, maxY: Infinity }, random(3), [{ x: 4, y: 0 }]), { x: 3, y: 0 });
 });
 
-/** A 5 × 5 open floor with the stairs in its far corner, the hero at its first corner, holding GEM. */
-function arena(cardTrees: Record<string, number>) {
+/** A 5 × 5 open floor with the stairs in its far corner, the hero at its first corner, holding GEM raising `stats`. */
+function arena(stats: Partial<Record<PowerStat, number>>) {
   const g = new Game(defaults());
   g.save.upgrades.gemCard = 1;
   const w = g.world as RoomWorld;
@@ -132,13 +151,13 @@ function arena(cardTrees: Record<string, number>) {
   g.run.player.x = 0;
   g.run.player.y = 0;
   g.run.hand = ["gem", "stairs"];
-  g.run.cardTrees = { gem: cardTrees };
+  g.run.handLevels = givePowers({ gem: stats });
   g.clock = () => 1_000_000;
   return g;
 }
 
 test("Gem Chance lays a Gem of its own on a new floor beside the cooldown's; GEM heads for them and gains XP from each", () => {
-  const g = arena({ gemChance2: 100, gemXp: 4 });
+  const g = arena({ gemChance: 100, gemXp: 400 });
   assert.ok(g.move(1, 0));
   const gems = g.gemFinder.gems;
   assert.equal(gems.length, 2, "the cooldown's and Gem Chance's");
@@ -154,7 +173,7 @@ test("Gem Chance lays a Gem of its own on a new floor beside the cooldown's; GEM
 });
 
 test("Gem Chance's Gem missed is gone for good; GEM gains no XP from activating, only from Gems", () => {
-  const g = arena({ gemChance2: 100 });
+  const g = arena({ gemChance: 100 });
   g.move(1, 0);
   assert.equal(g.save.gemDrop.extra.length, 1);
   g.finish("Ended");
@@ -164,8 +183,8 @@ test("Gem Chance's Gem missed is gone for good; GEM gains no XP from activating,
 });
 
 test("a boss may drop a Gem on its tile, and a chest hold one, each rolled once however often undo replays it", () => {
-  const g = arena({ gemChance2: 0 });
-  g.run.cardTrees = { gem: { bossGem: 100, chestGems: 100, goldenGem: 100 } };
+  const g = arena({});
+  g.run.handLevels = givePowers({ gem: { bossGem: 100, chestGem: 100, goldenGem: 100 } });
   g.move(1, 0);
   const before = g.save.gemDrop.extra.length;
   const boss = { strength: "boss" } as never;

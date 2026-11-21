@@ -16,7 +16,7 @@ export const ADS_PER_PRIZE = 5;
 export type AdPrize =
   | { kind: "gold"; factor: number; hours: number }
   | { kind: "gems"; amount: number }
-  | { kind: "cards"; count: number }
+  | { kind: "rubies"; amount: number }
   | { kind: "discount"; percent: number; hours: number };
 
 /** The prizes in order, one every `ADS_PER_PRIZE` ads. */
@@ -27,7 +27,7 @@ export const AD_PRIZES: readonly AdPrize[] = [
   { kind: "gems", amount: 40 },
   { kind: "gold", factor: 3, hours: 2 },
   { kind: "gems", amount: 50 },
-  { kind: "cards", count: 3 },
+  { kind: "rubies", amount: 10 },
   { kind: "discount", percent: 50, hours: 24 },
 ];
 

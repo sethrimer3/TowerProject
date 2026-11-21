@@ -1,13 +1,13 @@
 // node --experimental-transform-types tools/prepare-shop-sprites.mjs
 // The Shop's own sprites, drawn here pixel by pixel in the shared palette:
-// the VIP Points crown, Champion Status's star and One Piece Ticket, and the
+// the VIP Points crown, Champion Status's star and One Piece Ticket, the Ruby, and the
 // Premium Offers' and Champion's Bundle's relics. Run after
 // tools/prepare-relic-sprites.mjs (which rewrites the relic atlas without
 // them), then npm run sprites:atlas.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { encodePng } from './ui-atlas-png.mjs';
 import { RELICS } from '../src/economy/relics.ts';
-import { CHAMPION_STAR_SPRITE, ONE_PIECE_SPRITE, VIP_SPRITE } from '../src/sprites/kit.ts';
+import { CHAMPION_STAR_SPRITE, ONE_PIECE_SPRITE, RUBY_SPRITE, VIP_SPRITE } from '../src/sprites/kit.ts';
 
 const words = readFileSync('assets/ui-sprites/palette.ppm', 'utf8').replace(/#[^\n]*/g, '').trim().split(/\s+/).slice(4).map(Number);
 const PALETTE = Array.from({ length: words.length / 3 }, (_, i) => words.slice(i * 3, i * 3 + 3));
@@ -183,6 +183,30 @@ const SPRITES = {
       '..oboo......',
       '..oo........',
       '............', '............',
+    ],
+  },
+  // A faceted ruby, pale highlights on its crown: Rubies, which ascend cards.
+  [RUBY_SPRITE]: {
+    keys: { o: 0, w: 13, p: 17, r: 16, R: 15, d: 14 },
+    rows: [
+      '............', '............', '............', '............',
+      '.....ooooooo',
+      '....opwprrrr',
+      '...opwprrrRR',
+      '..oppprrrRRR',
+      '.ooooooooooo',
+      '.orrrrrrRRRR',
+      '..orrrrrRRRR',
+      '...orrrrRRRd',
+      '....orrrRRdd',
+      '.....orrRRdd',
+      '......orRRdd',
+      '.......orRdd',
+      '........oRdd',
+      '.........odd',
+      '..........od',
+      '...........o',
+      '............', '............', '............', '............',
     ],
   },
   // A golden ticket bearing a crimson star: a One Piece Ticket.

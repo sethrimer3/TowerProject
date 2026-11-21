@@ -26,10 +26,16 @@ A tapped Gem flies to the Gems in your purse, which count it as it lands.
 A Gem left on a floor the hero leaves, or in a run that ends, is gone, and another appears 3 new floors later, again and again until one is collected (that count carries into the next run).
 The [Gem card](hand-and-cards.md#the-gem-card) adds more Gems while either hand holds it: Golden and Stellar Gems, Gems of its own on new floors, from bosses and in chests.
 
+## Rubies
+
+**Rubies** are kept between runs and spent [ascending cards](hand-and-cards.md#ascending).
+Each boss and Greater Boss drops as many as its tower's number when felled (1 in Tower I, 9 in Tower IX; in the Delve, its cave's), each kill once, rising off its tile; Boss Enemy's Boss Rubies and Stairs' Ruby Chance add more.
+They show in the currencies dialog once you have had one, and over the Deck section of the Deck page.
+
 ## Ad rewards
 
 Under the currencies, in the forest and inside a run, in the Tower and the Delve alike, a Gem button offers **6 Gems**, marked Claim (for watching an ad, once ads are hooked up; for now pressing it pays them, in a burst of blue glints); it hides once claimed and comes back 10 minutes later.
-With the Gem card's **Gem Bank**, the button keeps banking a reward each cooldown while it goes unclaimed, until its bank is full, and shows them all together (*12* for two rewards of 6); a claim takes every reward banked, and never resets the time already tallied toward the next (with a 10-minute cooldown, a claim 5 minutes after the button appears brings it back 5 minutes later).
+With the Gem card's **Gem rewards banked** power (half a reward a level: a whole one always, a half one on a refill whose roll comes up, rolled at each claim), the button keeps banking a reward each cooldown while it goes unclaimed, until its bank is full, and shows them all together (*12* for two rewards of 6); a claim takes every reward banked, and never resets the time already tallied toward the next (with a 10-minute cooldown, a claim 5 minutes after the button appears brings it back 5 minutes later).
 While it banks, a blue fill rises across the button, from empty as it appears to full as the bank fills, and once full its outline turns gold.
 Settings then offers **Notification chime when the Gem bank is full**, on by default (silent for now: the game has no sound effects yet).
 Inside a run a **×1.5 Gold** ad button stands beside it: each claim (again, no ad plays yet) stores 20 minutes of real time in which all Gold found is multiplied by 1.5, claimable again and again up to two hours stored (the button closes while it holds more than an hour and fifty minutes); while it lasts the button glows and shows the time left, and with none stored it reads *Inactive*.
@@ -50,7 +56,7 @@ At its top a bar of prizes scrolls sideways, an ad's play mark at its left end, 
 | 20 | 40 Gems |
 | 25 | Gold ×3 for 2 hours |
 | 30 | 50 Gems |
-| 35 | 3 card draws (each as a card bought on the Deck page; 20 Gems for any the deck has no room for) |
+| 35 | 10 Rubies |
 | 40 | Permanent Ad-Disable 50% off in the Shop for 24 hours |
 
 Under the bar, a shining box shows what the pressed button offers (*6* and a Gem, or every reward the Gem Bank holds), with a golden **Watch** button: it closes the dialog, plays the ad (none plays yet: it pays at once) and pays the offer.

@@ -1,7 +1,7 @@
 import { BADGES, badgeOn, badgesOn, badgeValue, type RunBadge } from "./badges.ts";
 import type { Board } from "../board.ts";
 import type { DoorDiscounts } from "../doors.ts";
-import { SIPHONS, SMELTS, TRADERS, isSiphon, isSmelt, isTrader, linkedToNext, walkAll, type CardId, type CardRules, type HandAt, type SiphonCard, type SmeltCard, type TraderCard } from "./cards.ts";
+import { CARD_IDS, SIPHONS, SMELTS, TRADERS, isSiphon, isSmelt, isTrader, linkedToNext, walkAll, type CardId, type CardRules, type HandAt, type SiphonCard, type SmeltCard, type TraderCard } from "./cards.ts";
 import type { Mode } from "../entities.ts";
 import type { Run } from "../runs.ts";
 import type { Save } from "../save/shape.ts";
@@ -9,7 +9,7 @@ import { snap } from "../exact.ts";
 import { point } from "../entities.ts";
 import { MODES, type ModeProfile } from "../modes.ts";
 import { drawAt } from "../random.ts";
-import { smeltStat, tradeStat, treeBonus } from "./trees.ts";
+import { levelsOf, smeltStat, tradeStat, powerBonus } from "./powers.ts";
 import { boughtInRun } from "../progression/run-training.ts";
 
 /** Mixed into the run seed to start Skip's stream of rolls. */
@@ -144,7 +144,7 @@ export class HandRules implements HandAt {
   /** STAIRS' tree's Stair Skip chance, in percent: its stairs climb two
    * floors as Skip on STAIRS does. */
   private get stairSkip() {
-    return treeBonus(this.run.cardTrees).stairSkip;
+    return powerBonus(this.run.handLevels).stairSkip;
   }
   /** Whether Skip on card `card` (or, on STAIRS, its tree's Stair Skip)
    * rolls for its target at (x, y): never for a boss, the Delve's STAIRS
@@ -285,11 +285,11 @@ export class HandRules implements HandAt {
   cardUses(card: CardId) {
     return this.run.cardUses?.[card] ?? 0;
   }
-  /** What the card trees give the hand's cards that act in place: by the
-   * run's copy of the trees inside it and by the save's in the forest (what
-   * the next run goes in with). */
+  /** What the cards' powers give the hand's cards that act in place: by
+   * the run's copy of their levels inside it and by the save's in the forest
+   * (what the next run goes in with). */
   private get inPlaceTree() {
-    return treeBonus(this.run.outside ? this.host.save.cardTrees : this.run.cardTrees);
+    return powerBonus(this.run.outside ? levelsOf(this.host.save, CARD_IDS) : this.run.handLevels);
   }
   /** The keys trader `card` takes a trade: its 3, less its tree's Efficiency. */
   tradeCost(card: TraderCard) {

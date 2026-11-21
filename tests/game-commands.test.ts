@@ -207,8 +207,6 @@ test("erasing everything leaves a fresh save with a new run outside the Tower", 
   fresh.tower.run = g.run;
   assert.ok(g.save.profile.createdAt > 0, "the new profile is stamped");
   fresh.profile.createdAt = g.save.profile.createdAt;
-  assert.equal(typeof g.save.cardBuys.rng, "number", "the new profile's card buys are seeded");
-  fresh.cardBuys.rng = g.save.cardBuys.rng;
   assert.deepEqual(g.save, fresh);
 });
 

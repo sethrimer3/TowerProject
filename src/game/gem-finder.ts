@@ -16,7 +16,7 @@ import type { GainArt } from "../shown.ts";
 import type { DeskHost } from "./desk.ts";
 import { earn } from "../save/profile.ts";
 import type { CardId } from "../cards/cards.ts";
-import { treeFactor, type TreeBonus } from "../cards/trees.ts";
+import { powerFactor, type PowerBonus } from "../cards/powers.ts";
 import { adTerms, gemCardBonus } from "../cards/gem-card.ts";
 import { wholeChange } from "../whole.ts";
 import { AD_JACKPOT_GEMS, championAd, championValue } from "../shop/champion.ts";
@@ -31,7 +31,7 @@ export interface GemHost extends DeskHost {
   /** Inside a run the hero is still standing in. */
   readonly playing: boolean;
   /** What the run's hand's card trees give: the GEM card's chances. */
-  readonly treeBonus: TreeBonus;
+  readonly powerBonus: PowerBonus;
   /** The cards of the run's hand and Manual hand. */
   readonly held: readonly CardId[];
   gain(x: number, y: number, text: string, art: GainArt | null): void;
@@ -126,7 +126,7 @@ export class GemFinder {
    * its own, in a side room where there is one; missed, it is gone. */
   private layChanceGem() {
     // Champion Status adds its Gem chance, with or without the GEM card.
-    const chance = snap(this.host.treeBonus.gemChance + championValue(this.host.save, "gemChance")), { run, save } = this.host, at = this.at;
+    const chance = snap(this.host.powerBonus.gemChance + championValue(this.host.save, "gemChance")), { run, save } = this.host, at = this.at;
     if (!chance || random(run.seed ^ CHANCE_SALT ^ floorPart(at.floor))() * 100 >= chance) return;
     const spot = sideSpot(this.host.world, run.player, this.rows, random(run.seed ^ CHANCE_SPOT_SALT ^ floorPart(at.floor)), this.gems);
     if (spot) save.gemDrop.extra.push(ofKind({ ...at, ...spot }, this.kindOf("chance", spot.x, spot.y)));
@@ -135,7 +135,7 @@ export class GemFinder {
   /** A Gem's kind as it appears at (x, y) from `from`: Golden Gem's chance
    * of golden, then Stellar Gem Chance's of stellar, each its own roll. */
   private kindOf(from: GemFrom, x: number, y: number): GemKind {
-    const { run } = this.host, bonus = this.host.treeBonus, salt = FROM_SALT[from] ^ floorPart(this.floor) ^ tilePart(x, y);
+    const { run } = this.host, bonus = this.host.powerBonus, salt = FROM_SALT[from] ^ floorPart(this.floor) ^ tilePart(x, y);
     // The relics' Stellar Gem chance adds its points to Stellar Gem Chance, for Golden Gems.
     const stellar = snap(bonus.stellarGem + relicAmount(this.host.save, "stellarGem"));
     // Champion Status's Golden Gem chance adds to the GEM card's.
@@ -155,7 +155,7 @@ export class GemFinder {
   /** Boss Gem Drop: a boss or Greater Boss killed at `at` (its loot key
    * `killKey`) may drop a Gem on its tile, once a boss. */
   bossDrop(enemy: Enemy, at: { x: number; y: number }, killKey: string) {
-    const chance = this.host.treeBonus.bossGem, { run, save } = this.host;
+    const chance = this.host.powerBonus.bossGem, { run, save } = this.host;
     if (!chance || (enemy.strength !== "boss" && enemy.strength !== "greaterBoss") || !this.host.playing) return;
     // A loot key ends in one suffix at most: a spawned enemy's runs on into it.
     if (!this.firstRoll(`${killKey}${/:s\d+$/.test(killKey) ? "" : ":"}gem`)) return;
@@ -168,7 +168,7 @@ export class GemFinder {
   /** Gems in Chests: the treasure chest at (x, y) may hold a Gem, once a
    * chest, taken as it opens. */
   chestDrop(x: number, y: number) {
-    const chance = this.host.treeBonus.chestGem, { run, mode } = this.host;
+    const chance = this.host.powerBonus.chestGem, { run, mode } = this.host;
     if (!chance || !this.host.playing || !this.firstRoll(`${MODES[mode].lootKey(run as never, x, y)}:gemchest`)) return;
     if (random(run.seed ^ CHEST_SALT ^ floorPart(this.floor) ^ tilePart(x, y))() * 100 >= chance) return;
     this.pay(this.kindOf("chest", x, y), x, y, 1);
@@ -194,7 +194,7 @@ export class GemFinder {
     save[this.host.mode].runFinds.gems += gems;
     this.host.eventDone("floatingGems", 1);
     // GEM gains its XP from each Gem collected, Gem XP raising it.
-    if (this.host.held.includes("gem")) this.host.gainCardXp("gem", Math.round(value * treeFactor(this.host.treeBonus, "gemXp")));
+    if (this.host.held.includes("gem")) this.host.gainCardXp("gem", Math.round(value * powerFactor(this.host.powerBonus, "gemXp")));
     this.sparkle = { x, y, at: performance.now(), kind };
     this.host.gain(x, y, gemText(gems, kind), { gem: true, ...(kind === "plain" ? {} : { kind }) });
     return gems;
@@ -212,7 +212,7 @@ export class GemFinder {
 
   /** The ad button's terms now, by the GEM card in either hand and Champion Status. */
   get adTerms() {
-    return adTerms(gemCardBonus(this.host.save), championAd(this.host.save));
+    return adTerms(gemCardBonus(this.host.save), championAd(this.host.save), this.host.save.gemDrop.adBonusSlot);
   }
 
   /** The ad button's bank now (`adBank`), the Gems a claim pays, and
@@ -235,6 +235,9 @@ export class GemFinder {
     const terms = this.adTerms, save = this.host.save;
     const banked = claimAdBank(save.gemDrop, this.host.clock(), terms.cap, terms.cooldown);
     if (!banked) return false;
+    // GEM's half Gem Bank reward: whether the refill now starting holds one more.
+    if (terms.part > 0 && stream("gemBank")() < terms.part) save.gemDrop.adBonusSlot = true;
+    else delete save.gemDrop.adBonusSlot;
     // Champion Status's jackpot: each reward may pay AD_JACKPOT_GEMS instead.
     const jackpot = championAd(save).jackpot, rng = stream("champion");
     let gems = 0;

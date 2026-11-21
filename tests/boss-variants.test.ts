@@ -201,7 +201,7 @@ describe("Boss Fights / Trials adjustments (Magic Tower & Obelisk)", () => {
   });
 
   it("Multi-part bosses (1b / 2b): parts have distinct effects, perform single-round combat, and stop activity & cannot regenerate once knocked out", () => {
-    const s = startTrial({ maxHp: 2000, attack: 40, defense: 10 }, "manual", ["eliteEnemy", "bossEnemy"], 5555, 1, "magic-tower", { multiPart: true });
+    const s = startTrial({ maxHp: 2000, attack: 40, defense: 10 }, "manual", ["nonBossEnemy", "bossEnemy"], 5555, 1, "magic-tower", { multiPart: true });
     enterArena(s);
     const bv = s.bossVariant!;
     assert.equal(bv.multiPart, true);
@@ -254,7 +254,7 @@ describe("Boss Fights / Trials adjustments (Magic Tower & Obelisk)", () => {
   });
 
   it("resolves single-round combat against boss minions and round-trips state through decodeTrial", () => {
-    const s = startTrial({ maxHp: 800, attack: 15, defense: 8 }, "hybrid", ["weakEnemy", "bossEnemy"], 31415, 2, "magic-tower", { multiPart: true });
+    const s = startTrial({ maxHp: 800, attack: 15, defense: 8 }, "hybrid", ["nonBossEnemy", "bossEnemy"], 31415, 2, "magic-tower", { multiPart: true });
     enterArena(s);
     // Entering arena spawns 2 initial minions
     assert.ok(s.bossVariant!.minions.length >= 2);
@@ -295,7 +295,7 @@ describe("Boss Fights / Trials adjustments (Magic Tower & Obelisk)", () => {
 
 
 it("a minion struck by the hero cannot engage a second time that turn", () => {
-  const s=startTrial({maxHp:800,attack:15,defense:8},"hybrid",["weakEnemy"],31415,2,"magic-tower");
+  const s=startTrial({maxHp:800,attack:15,defense:8},"hybrid",["nonBossEnemy"],31415,2,"magic-tower");
   enterArena(s);
   const v=s.bossVariant!,m=v.minions[0];v.minions=[m];
   s.player.x=m.x;s.player.y=m.y-1;

@@ -1,6 +1,6 @@
 import { doorName, doorRule, drainsHp, keyWord, pickupGold } from "../doors.ts";
 import type { HandBonus } from "../cards/cards.ts";
-import { compounded, doorStat, foeStat, keyStat, type TreeBonus } from "../cards/trees.ts";
+import { compounded, doorStat, foeStat, keyStat, type PowerBonus } from "../cards/powers.ts";
 import type { ChestKind, Enemy, Mode, Tile, KeyColor } from "../entities.ts";
 import { RARITY_TIERS } from "../equipment/balance.ts";
 import { EQUIP_MATERIALS, itemDef } from "../equipment/catalog.ts";
@@ -31,7 +31,7 @@ export interface FindsHost extends DeskHost {
   readonly handBonus: HandBonus;
   /** What the card trees of the run's hand give: a key's, door's or
    * shard's Gold. */
-  readonly treeBonus: TreeBonus;
+  readonly powerBonus: PowerBonus;
   /** What Lifespring raises the kill of an enemy it touched by, paying its Health Bonus. */
   readonly arcana: { lifespringKill(enemy: Enemy): { gold: number; cells: number } | undefined };
   /** What Overseer Gold Bonus multiplies the Gold of a kill at `at` by: 1 outside Overseer's beams. */
@@ -58,6 +58,9 @@ const BOSS_POTION: Tile = { kind: "potion", color: "red" };
  * it is never paid twice), rises off the board as gains, counts toward the
  * missions, the Event and the run's notes, and is named on the status line.
  * The game decides when (a fight won, an arrow's kill, a step landed). */
+/** A gain's words for `n` Rubies found. */
+export const rubiesText = (n: number) => `+${n} ${n === 1 ? "Ruby" : "Rubies"}`;
+
 export class Finds {
   constructor(private readonly host: FindsHost) {}
 
@@ -76,7 +79,7 @@ export class Finds {
     this.host.gainXp(enemy, floor, scale);
     // Silver belongs to the run, so it isn't gated like Gold.
     const silver = purse.killSilver(enemy, floor, scale, at);
-    const { gold, cells, equipment } = purse.enemyLoot(enemy, at.x, at.y, scale, instakill, this.host.arcana.lifespringKill(enemy), snap(this.host.spotlightGold(at) * this.host.voidwellGold(at)));
+    const { gold, cells, rubies, equipment } = purse.enemyLoot(enemy, at.x, at.y, scale, instakill, this.host.arcana.lifespringKill(enemy), snap(this.host.spotlightGold(at) * this.host.voidwellGold(at)));
     const cellsFound = cells ? [cellsText(cells)] : [], found = equipment.flatMap(equipmentGains), healed = this.bossPotion(enemy);
     for (const piece of equipment) {
       if (piece.item || piece.salvaged) this.host.events.record("equipment", 1, key);
@@ -87,12 +90,13 @@ export class Finds {
       ...(gold ? [{ text: `+${wholeChange(gold)} Gold`, art: { coin: "gold" as const } }] : []),
       { text: `+${wholeChange(silver)} Silver`, art: { coin: "silver" } },
       ...cellsFound.map((text) => ({ text, art: { cell: true as const } })),
+      ...(rubies ? [{ text: rubiesText(rubies), art: { ruby: true as const } }] : []),
       ...found,
       ...(healed ? [{ text: `+${wholeChange(healed)} HP`, art: { tile: { ...BOSS_POTION } } }] : []),
     ], gold ? 1 : 0);
     if (healed) this.host.recordHeal(healed, at);
     // A weak enemy card's Instakill Vigor boosts max HP for the run, as HEAL's Potion Vigor does.
-    const vigor = instakill ? foeStat(this.host.treeBonus, enemy, "InstakillMaxHp") : 0;
+    const vigor = instakill ? foeStat(this.host.powerBonus, enemy, "InstakillMaxHp") : 0;
     if (vigor) {
       boostMaxHp(run, vigor);
       this.host.gain(at.x, at.y, `+${vigor}% max HP`, { heart: true, raised: true });
@@ -128,7 +132,7 @@ export class Finds {
       this.host.gain(x, y, text, { tile: { ...t } });
       // A key card held pays its Gold on top of the key's own, and KEY's
       // tree raises it; ATK UP's and DEF UP's trees raise a shard's.
-      const tree = this.host.treeBonus;
+      const tree = this.host.powerBonus;
       if (t.kind === "key") this.pickupGold(t, { x, y }, this.host.handBonus.keys[t.color!]?.gold, compounded(tree.keyGold, keyStat(tree, t.color!, "KeyGold")));
       else this.pickupGold(t, { x, y }, 0, t.kind === "attack" ? tree.attackShardGold : t.kind === "defense" ? tree.defenseShardGold : 0);
       if (t.kind === "potion") this.host.recordHeal(outcome.healed);
@@ -179,7 +183,7 @@ export class Finds {
     host.gemFinder.chestDrop(x, y);
     host.events.record("chests", 1, this.missionKey({ x, y }));
     // CHEST's tree finds Silver with each chest, as HEAL's does with each potion.
-    const silverFound = host.treeBonus.chestSilver, silver = silverFound ? host.purse.silverAt(snap(silverFound * roll.multiplier), x, y) : 0;
+    const silverFound = host.powerBonus.chestSilver, silver = silverFound ? host.purse.silverAt(snap(silverFound * roll.multiplier), x, y) : 0;
     const loot = host.purse.treasure(x, y, kind, roll);
     if (!loot) {
       if (silver) host.gain(x, y, `+${wholeChange(silver)} Silver`, { coin: "silver" });
@@ -214,7 +218,7 @@ export class Finds {
       host.recordHeal(outcome.healed);
     }
     // DOOR's tree raises a door's Gold, and finds Silver with it; the door cards' add to both for their doors.
-    const tree = host.treeBonus;
+    const tree = host.powerBonus;
     this.pickupGold(t, at, 0, doorStat(tree, t, "Gold"));
     const doorSilver = doorStat(tree, t, "Silver");
     if (doorSilver) {

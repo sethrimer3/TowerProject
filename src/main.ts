@@ -213,12 +213,11 @@ function update() {
   // Inside a run the tabs give way to an empty row, kept for the hand.
   document.querySelector("nav")!.classList.toggle("in-run", !shown.run.outside);
   // The Deck tutorials keep the player on its page until they reorder the
-  // hand, and the card points lesson leads them there and keeps them there
-  // until a point is spent: in the forest only the Deck tab can be pressed.
+  // hand: in the forest only the Deck tab can be pressed.
   // The Archives lesson does the same with the Research tab and page.
   const only = provingGrounds.active ? null : lessonTab();
   document.querySelectorAll<HTMLButtonElement>("[data-tab]").forEach((b) => (b.disabled = !!only && b.dataset.tab !== only));
-  const forestHeld = !provingGrounds.active && isBoard(tab) && (game.boardLesson === "cards" || game.boardLesson === "research");
+  const forestHeld = !provingGrounds.active && isBoard(tab) && game.boardLesson === "research";
   document.querySelectorAll<HTMLElement>(".shell > :not(nav)").forEach((part) => (part.inert = forestHeld));
   renderHud(shown, renderer, overlay, {hand:provingGrounds.displayHand, manual: runTraining.manualOpen});
   if (runNotes.open) runNotes.refresh();
@@ -274,7 +273,7 @@ const LOCKED_TABS = new Map<string, { skill: UpgradeId; tree: TreeId }>([
 const CURRENCY_PAGES: string[] = ["upgrades", "research", "deck", "gear", "missions", "events", "shop"];
 /** Whether a lesson keeps the player on the Deck page, or leads them to it. */
 function deckLesson() {
-  return deck.teaching || game.boardLesson === "cards";
+  return deck.teaching;
 }
 /** The one tab a lesson leaves to press, if any: the Deck's lessons' Deck
  * tab, and the Archives lesson's Research tab, from the forest until its note

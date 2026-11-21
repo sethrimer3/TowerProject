@@ -113,7 +113,7 @@ export type ChestOdds = { supply: number; equipment: number };
  * Door taking no keys a Wooden Door (`wood`, Wooden Door Transmute), and
  * each door taking keys and draining HP without its drain (`heartPick`,
  * Heart Lock Pick); each of the last three none when absent. */
-export type DoorOdds = { skeleton: number; lockPick: number; transmute?: number; wood?: number; heartPick?: number };
+export type DoorOdds = { skeleton: number; lockPick: number; transmute?: number; wood?: number; heartPick?: number; toWood?: number };
 /** Declarative lock rules. `color` remains on Tile for legacy single-key
  * doors and keys; new doors use this rule so every gameplay system shares
  * the same requirements and consumption behavior. */
@@ -122,8 +122,10 @@ export type DoorRule =
   | { type: "keys"; keys: KeyColor[]; mode: "all" | "any"; heart?: true }
   | { type: "fullHp" }
   /** A Wooden Door: any one key opens it; a hero with none breaks it down
-   * for `durability` HP, which DEF doesn't reduce (doors.ts). */
-  | { type: "wood"; durability: number };
+   * for `durability` HP, which DEF doesn't reduce (doors.ts). `gold`: the
+   * Gold it pays, where a Gold Door was made one (WOODEN DOOR's Transmute
+   * Gold to Wood), instead of a Wooden Door's own. */
+  | { type: "wood"; durability: number; gold?: number };
 /** `wound`: the HP the hero's arrows have taken off the enemy standing
  * here (enemies/ranged.ts); the board reads its HP that much lower. `broken`:
  * the percent of that enemy's DEF they have taken off it (Armor Break). `flyer`: the
@@ -155,7 +157,7 @@ export type Torch = {
 };
 /** A percent the hero carries against some enemies, by the card (or card
  * tree) covering them (cards/foe-cards.ts's `FoeKey`). */
-export type ByFoe = Partial<Record<"weakEnemy" | "baseEnemy" | "strongEnemy" | "eliteEnemy" | "bossEnemy" | "nonBossEnemy" | "fastEnemy" | "flyingEnemy" | "monster" | "torch" | "archer", number>>;
+export type ByFoe = Partial<Record<"bossEnemy" | "nonBossEnemy" | "flyingEnemy" | "monster" | "torch" | "archer", number>>;
 export type Player = {
   x: number;
   y: number;

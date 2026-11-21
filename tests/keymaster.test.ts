@@ -10,7 +10,7 @@ import {Game} from "../src/state.ts";
 import {TrialSession} from "../src/proving-grounds/session.ts";
 
 function arena(mode:TrialMode="manual",level=1,seed=12) {
-  const s=startTrial({maxHp:1000,attack:10,defense:0},mode,["key","door","strongEnemy","bossEnemy","stairs"],seed,level,"keymaster");
+  const s=startTrial({maxHp:1000,attack:10,defense:0},mode,["key","door","nonBossEnemy","bossEnemy","stairs"],seed,level,"keymaster");
   for(let i=0;i<4;i++)trialStep(s,0,1,mode==="cards"?"cards":"manual");
   assert.equal(s.room,"arena");return s;
 }

@@ -1,9 +1,10 @@
+import { givePowers, holdPowers, type GivenPowers } from "./powers-helper.ts";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { defaults } from "../src/save/save.ts";
 import { MAX_CARD_XP } from "../src/cards/levels.ts";
-import { CARD_TREES, freeUpChances, nodeOpen, treeBonus, type CardTreeLevels } from "../src/cards/trees.ts";
+import { freeUpChances, powerBonus, type PowerStat } from "../src/cards/powers.ts";
 import { bout, OPENING_HOLD_MS, OPENING_SHRINK_MS, predict, squaredUp } from "../src/combat.ts";
 import { enemyBar } from "../src/render/board-popups.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
@@ -16,12 +17,10 @@ import type { Enemy, Player, Tile } from "../src/entities.ts";
 const hero: Player = { x: 0, y: 0, hp: 100, maxHp: 100, attack: 10, defense: 0, keys: { yellow: 0, blue: 0, red: 0 } };
 const foe = (hp: number, strength: Enemy["strength"] = "normal", attack = 4): Enemy => ({ name: "rat", hp, attack, defense: 0, tier: 0, strength });
 
-/** A Tower run on seed 7 with `card` in its hand, `levels` on its tree. */
-function treeRun(card: CardId, levels: Record<string, number>) {
+/** A Tower run on seed 7 with `card` in its hand, raising `stats`. */
+function treeRun(card: CardId, stats: Partial<Record<PowerStat, number>>) {
   const s = defaults();
-  s.cardXp[card] = MAX_CARD_XP;
-  s.cardBuys.opened = { [card]: Object.fromEntries(CARD_TREES[card]!.map((n) => [n.id, n.max - n.levels])) };
-  s.cardTrees = { [card]: levels };
+  holdPowers(s, card, stats);
   s.hand = [...s.hand.filter((c) => c !== card), card];
   const g = new Game(s);
   g.newRun({ seed: 7 });
@@ -29,7 +28,7 @@ function treeRun(card: CardId, levels: Record<string, number>) {
 }
 /** A corridor along y = 0: the hero at x = 0 and `tiles` from x = 1 on,
  * the run's trees `trees`. */
-function corridor(tiles: Tile[], trees: CardTreeLevels) {
+function corridor(tiles: Tile[], trees: GivenPowers) {
   const g = new Game(defaults());
   g.newRun({ seed: 7 });
   const w = g.world as RoomWorld;
@@ -37,47 +36,27 @@ function corridor(tiles: Tile[], trees: CardTreeLevels) {
   for (let x = 0; x < 8; x++) w.cells.set(`${x},0`, tiles[x - 1] ?? { kind: "floor" });
   w.torches = [];
   Object.assign(g.run.player, { x: 0, y: 0 });
-  g.run.cardTrees = trees;
+  g.run.handLevels = givePowers(trees);
   return g;
 }
 
-test("ATK UP, DEF UP, TORCH and CHEST trees: their tracks through every rarity", () => {
-  const shape = (card: CardId) => CARD_TREES[card]!.map((n) => `${n.id}:${n.rarity}:${n.levels}/${n.max}${n.after ? `<${n.after}` : ""}`);
-  assert.deepEqual(shape("atkUp"), ["shard:common:5/10", "sharper:uncommon:0/5<shard", "critChance:rare:0/5<sharper", "freeOffense:epic:0/5<critChance", "powerStrike:legendary:0/5<freeOffense",
-    "gold:common:5/10", "shardSilver:uncommon:0/5<gold", "silverBoost:rare:0/5<shardSilver", "goldBonus:epic:0/5<silverBoost", "takedown:legendary:0/5<goldBonus"]);
-  assert.deepEqual(shape("defUp"), ["shard:common:5/10", "sturdier:uncommon:0/5<shard", "regen:rare:0/5<sturdier", "freeDefense:epic:0/5<regen", "parry:legendary:0/5<freeDefense",
-    "gold:common:5/10", "shardSilver:uncommon:0/5<gold", "silverBoost:rare:0/5<shardSilver", "goldBonus:epic:0/5<silverBoost", "tangle:legendary:0/5<goldBonus"]);
-  assert.deepEqual(shape("torch"), ["attack:common:5/10", "bossDefense:uncommon:0/10<attack", "bossShroud:rare:0/5<bossDefense", "greaterTangle:epic:0/5<bossShroud", "revive:legendary:0/5<greaterTangle",
-    "gold:common:5/5", "cellDrop:uncommon:0/5<gold", "cellHaul:rare:0/5<cellDrop", "greaterTakedown:epic:0/5<cellHaul", "chestCells:legendary:0/5<greaterTakedown"]);
-  assert.deepEqual(shape("chest"), ["gold:common:10/10", "goldUp:uncommon:0/5<gold", "silver:rare:0/5<goldUp", "treasureFloor:epic:0/5<silver", "rarityUp:legendary:0/5<treasureFloor",
-    "supplyChance:uncommon:0/10<gold", "equipmentChance:rare:0/10<supplyChance", "double:epic:0/5<equipmentChance", "triple:legendary:0/5<double"]);
-  // TORCH's Boss Defense waits for 5 levels before Boss Shroud opens, and CHEST's Chest Gold 5 of its 10 before either fork.
-  const opened = (card: CardId) => ({ [card]: Object.fromEntries(CARD_TREES[card]!.map((n) => [n.id, n.max - n.levels])) });
-  const node = (card: CardId, id: string) => CARD_TREES[card]!.find((n) => n.id === id)!;
-  assert.equal(nodeOpen({ torch: { attack: 5, bossDefense: 4 } }, opened("torch"), "torch", node("torch", "bossShroud")), false);
-  assert.equal(nodeOpen({ torch: { attack: 5, bossDefense: 5 } }, opened("torch"), "torch", node("torch", "bossShroud")), true);
-  assert.equal(nodeOpen({ chest: { gold: 4 } }, opened("chest"), "chest", node("chest", "supplyChance")), false);
-  for (const id of ["goldUp", "supplyChance"]) assert.equal(nodeOpen({ chest: { gold: 5 } }, opened("chest"), "chest", node("chest", id)), true, id);
-});
-
 test("ATK UP's and DEF UP's shards: Gold by percent, Silver with each, Free Offense and Defense chances added to training's", () => {
-  const take = (trees: CardTreeLevels, kind: "attack" | "defense") => {
+  const take = (trees: GivenPowers, kind: "attack" | "defense") => {
     const g = corridor([{ kind }], trees), gold = g.save.gold, silver = g.run.silver ?? 0;
     assert.ok(g.move(1, 0));
     return { gold: g.save.gold - gold, silver: (g.run.silver ?? 0) - silver };
   };
-  const plain = take({}, "attack"), raised = take({ atkUp: { gold: 10, shardSilver: 5 } }, "attack");
+  const plain = take({}, "attack"), raised = take({ atkUp: { attackShardGold: 100, attackShardSilver: 0.5 } }, "attack");
   assert.ok(plain.gold > 0);
   assert.equal(raised.gold, Math.round(plain.gold * 2 * 1e6) / 1e6, "+100% at 10 levels");
   assert.equal(raised.silver, 0.5);
-  assert.equal(take({ defUp: { gold: 5, shardSilver: 2 } }, "defense").silver, 0.2);
-  assert.deepEqual(freeUpChances(treeBonus({ atkUp: { freeOffense: 3 }, defUp: { freeDefense: 2 }, heal: { freeDefense: 2 } })), { offense: 300, defense: 300 });
+  assert.equal(take({ defUp: { defenseShardGold: 50, defenseShardSilver: 0.2 } }, "defense").silver, 0.2);
+  assert.deepEqual(freeUpChances(powerBonus(givePowers({ atkUp: { freeOffenseChance: 3 }, defUp: { freeDefenseChance: 2 }, heal: { freeDefenseChance: 1 } }))), { offense: 300, defense: 300 });
 });
 
 test("TORCH's Revive adds its percent to Revive's chance, trained or not", () => {
-  const plain = treeRun("torch", { attack: 5 }), raised = treeRun("torch", { attack: 5, bossDefense: 5, bossShroud: 1, greaterTangle: 1, revive: 3 });
-  assert.equal(plain.reviveChance, 0);
-  assert.equal(raised.reviveChance, 300, "3%, in hundredths of a percent");
+  assert.equal(treeRun("torch", { bossAttack: 5 }).reviveChance, 0);
+  assert.equal(treeRun("torch", { bossAttack: 5, bossDefense: 5, bossShroud: 2, greaterTangle: 3, reviveChance: 3 }).reviveChance, 300, "3%, in hundredths of a percent");
 });
 
 test("ATK UP's Power Strike: an ATK shard may charge the next fight with twice the hero's ATK, every strike in the gold ring", () => {
@@ -121,7 +100,7 @@ test("Takedown and Tangle cut a boss as a fight with it begins, their Greater ki
   assert.equal(enemyBar(shown, fight.opening!.at - 1), null, "no bar before it");
   assert.equal(enemyBar(shown, fight.opening!.at + 1000)!.hp <= 70, true);
   // A run with the trees carries the cuts on the hero.
-  const g = treeRun("atkUp", { shard: 5, gold: 5, shardSilver: 1, silverBoost: 1, goldBonus: 1, takedown: 2 });
+  const g = treeRun("atkUp", { attackShard: 10, attackShardGold: 50, attackShardSilver: 0.1, silverBonus: 1, goldBonus: 2, takedown: 10 });
   assert.deepEqual(g.run.player.takedown, { boss: 10 }, "5% a level");
   assert.equal(g.run.player.tangle, undefined);
 });
@@ -130,8 +109,8 @@ test("CHEST's Double and Triple multiply a chest's Gold and finds, TORCH's Chest
   const g = new Game(defaults());
   g.newRun({ seed: 7 });
   g.save.equipment.unlocked = true;
-  const purse = (trees: CardTreeLevels = {}) => {
-    g.run.cardTrees = trees;
+  const purse = (trees: GivenPowers = {}) => {
+    g.run.handLevels = givePowers(trees);
     return new RunPurse(g.save, g.mode, g.run, () => 0.5, 0, () => 0);
   };
   const plain = purse().treasure(3, 3)!.gold;
@@ -146,7 +125,7 @@ test("CHEST's Double and Triple multiply a chest's Gold and finds, TORCH's Chest
   assert.equal(purse().treasure(3, 9, "equipment")!.equipment!.item!.rarity, "common", "a low roll picks Common");
   assert.equal(purse({ chest: { rarityUp: 100 } }).treasure(3, 10, "equipment")!.equipment!.item!.rarity, "uncommon", "a rarity higher");
   // In a run, the chest's tile rolls them, and the board flashes the multiplier.
-  const run = corridor([{ kind: "treasure" }], { chest: { double: 100, triple: 100, silver: 2 }, torch: { chestCells: 100 } });
+  const run = corridor([{ kind: "treasure" }], { chest: { chestDouble: 300, chestTriple: 200, chestSilver: 2 }, torch: { chestCells: 100 } });
   assert.deepEqual(run.chestRoll(1, 0), { multiplier: 6, cells: true });
   assert.ok(run.move(1, 0));
   assert.ok(run.gains.some((gain) => gain.text === "×6" && gain.art && "multiplier" in gain.art));
@@ -176,5 +155,5 @@ test("CHEST's Treasure Floor makes a floor's shards and potions treasure chests,
   assert.ok(shards > 0);
   assert.equal(turned, shards);
   // A run takes its chance from CHEST's tree as it goes inside.
-  assert.equal(treeRun("chest", { gold: 5, goldUp: 5, silver: 5, treasureFloor: 3 }).run.treasureFloor, 1.5);
+  assert.equal(treeRun("chest", { chestGold: 25, chestSilver: 5, treasureFloor: 1.5 }).run.treasureFloor, 1.5);
 });

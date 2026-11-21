@@ -11,8 +11,8 @@ export const PROFILE_FORMAT = "tower-delve-profile";
 export const PROFILE_SECTIONS = {
   profile: ["profile", "offline", "tutorials", "seen", "treeNotices", "review"],
   settings: ["settings", "themes", "music"],
-  currencies: ["gold", "gems", "breakthrough", "arcanite", "arcaniteCarry", "medals", "cells", "xp", "goldBoostUntil", "ads", "gemDrop"],
-  deck: ["hand", "cardLinks", "handSlots", "manualHand", "manualSlots", "cardXp", "cardTrees", "cardBuys", "badges"],
+  currencies: ["gold", "gems", "breakthrough", "arcanite", "arcaniteCarry", "rubies", "medals", "cells", "xp", "goldBoostUntil", "ads", "gemDrop"],
+  deck: ["hand", "cardLinks", "handSlots", "manualHand", "manualSlots", "cardXp", "cardAscension", "badges"],
   upgrades: ["upgrades", "relics", "shrines"],
   training: ["bonusTrainingPoints", "training", "trainingPaid", "trainerRanks", "trainingJobs", "trainingAuto", "runAutoTrain", "runAutoTrainGroups", "trainingCredit", "trainingBank", "trainingBoostUntil", "trainers"],
   research: ["archives"],

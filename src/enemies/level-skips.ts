@@ -31,6 +31,15 @@ export const LEVEL_SKIP_PLAIN_FROM = 1_000;
  * but both replay from the run seed. */
 const SALT: Record<LevelSkipKind, number> = { hp: 0x51c1b9, combat: 0xc0b47a };
 /** The seed of `kind`'s stream in a run of seed `runSeed`. */
+/** The most STAIRS' Enemy Skip raises a Level Skip chance to: 80%, in hundredths of a percent. */
+export const LEVEL_SKIP_BOOST_CAP = 8_000;
+/** Level Skip chance `chance` (hundredths of a percent) raised by `boost`
+ * percent, up to `LEVEL_SKIP_BOOST_CAP`: a chance already past the cap
+ * stays as it is. Whole hundredths, so every engine rolls the same. */
+export function boostedSkip(chance: number, boost: number) {
+  if (!boost || chance >= LEVEL_SKIP_BOOST_CAP) return chance;
+  return Math.min(LEVEL_SKIP_BOOST_CAP, Math.floor((chance * (100 + boost)) / 100));
+}
 export const levelSkipSeed = (runSeed: number, kind: LevelSkipKind) => (runSeed ^ SALT[kind]) >>> 0;
 
 /** One floor new to `run`, at a chance of `chance` hundredths of a percent:

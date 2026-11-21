@@ -4,8 +4,8 @@ import { entrance, floorFor } from "./delve/labyrinth.ts";
 import { chooseStep } from "./automation.ts";
 import { cost } from "./progression/upgrades.ts";
 import { CARDS, cardText, deckCards, explainStuck, handBonus, keptLinks, planHand, planTarget, shootsWith, stillOpen, wingedWith, type CardId, type CardPlan, type HandBonus, type StuckReport } from "./cards/cards.ts";
-import { addCardXp, PASSIVE_CARDS } from "./cards/levels.ts";
-import { KEY_COLORS, cardMaxLevel, compounded, doorStat, foeCardStat, foeStat, foeStats, keyStat, freeUpChances, freeUpFactors, hasPointsToSpend, pointsLeft, runCardTrees, runFoeCut, treeBonus, treeFactor, treeOverheal, type FoeTreeCard, type TreeBonus } from "./cards/trees.ts";
+import { addCardXp, cardMaxLevel, levelIn, PASSIVE_CARDS } from "./cards/levels.ts";
+import { KEY_COLORS, compounded, doorStat, foeCardStat, foeStat, foeStats, keyStat, freeUpChances, freeUpFactors, levelsOf, runFoeCut, powerBonus, powerFactor, powerOverheal, type FoeTreeCard, type PowerBonus } from "./cards/powers.ts";
 import { aggroTurn } from "./enemies/flying.ts";
 import { arrowRange, foeOn, stunWorn, TURN_TICKS, within as inShotRange } from "./enemies/ranged.ts";
 import { badgeOn, badgeValue, runBadges } from "./cards/badges.ts";
@@ -89,8 +89,7 @@ import { DeckEditor } from "./game/deck-editor.ts";
 import { GearDesk } from "./game/gear-desk.ts";
 import { GemFinder } from "./game/gem-finder.ts";
 import { BadgeDesk } from "./game/badge-desk.ts";
-import { CardTreeDesk } from "./game/card-tree-desk.ts";
-import { CardBuyDesk } from "./game/card-buy-desk.ts";
+import { CardDesk } from "./game/card-desk.ts";
 import { AdDesk } from "./game/ad-desk.ts";
 import { HandRules } from "./cards/hand-rules.ts";
 import { RunPurse, type EquipmentLoot } from "./game/run-purse.ts";
@@ -106,7 +105,7 @@ import type { Beams } from "./arcana/overseer.ts";
 import { beamFactor, inBeams } from "./arcana/overseer.ts";
 import { NoticeDesk } from "./game/notice-desk.ts";
 import { boonFactor, runBoons, weakened } from "./shrines.ts";
-import { LEVEL_SKIP_KINDS, LEVEL_SKIP_ROWS, rollLevelSkip } from "./enemies/level-skips.ts";
+import { LEVEL_SKIP_KINDS, LEVEL_SKIP_ROWS, boostedSkip, rollLevelSkip } from "./enemies/level-skips.ts";
 import { startRegrow, syncShield, tickRegrow } from "./hero-shield.ts";
 import type { MissionType } from "./missions/catalog.ts";
 import type { EventMissionType } from "./events/catalog.ts";
@@ -124,14 +123,14 @@ import { EQUIP_MATERIALS, EQUIP_MATERIAL_IDS, itemDef, type EquipMaterialId } fr
 import { readyForestRuns, startingHero } from "./game/hero-sync.ts";
 import { warpLootSilver } from "./economy/warp-loot.ts";
 import { CardActivation } from "./game/card-activation.ts";
-import { Finds } from "./game/finds.ts";
+import { Finds, rubiesText } from "./game/finds.ts";
 import { FightPlayback } from "./game/fight-playback.ts";
 import type { Coin, Dash, Drop, Facing, Gain, GainArt, GainStrike, Heal, ShownClock, ShownTurn } from "./shown.ts";
 /** How a new run starts: out in the forest or at the entrance, and from
  * which seed (rolled from the game's randomness when left out). */
 export type RunStart = { outside?: boolean; seed?: number; height?: number };
 /** A lesson shown on the board (`Game.boardLesson`). */
-export type BoardLesson = "climb" | "keys" | "autoClimbHint" | "autoClimb" | "stuck" | "enemy" | "upgrades" | "enter" | "trainingPoints" | "cards" | "delve" | "provisions" | "research" | "goals" | "arcana";
+export type BoardLesson = "climb" | "keys" | "autoClimbHint" | "autoClimb" | "stuck" | "enemy" | "upgrades" | "enter" | "trainingPoints" | "delve" | "provisions" | "research" | "goals" | "arcana";
 /** The first skills the lessons lead to on the Inspiration tree, in order. */
 export type IntroSkill = "cardDoorKey" | "cardEnemy";
 export type RouteEffects = {
@@ -186,6 +185,8 @@ const REAPER_SALT = 0x50a1e;
 const BOMB_SALT = 0xb0b1c, BOMB_SUPER_SALT = 0xb0b5c;
 /** Salt the run seed for the traders' and smelts' Floor Key rolls on each new floor. */
 const FLOOR_KEY_SALT: Record<KeyColor, number> = { yellow: 0x9f10e, blue: 0xb1f10, red: 0x4ef10 };
+/** The salt STAIRS' Ruby Chance rolls each new floor with. */
+const FLOOR_RUBY_SALT = 0x7b1e5;
 /** A step resolved and about to be taken: the tile stepped onto, what it
  * does, where it is, and for a fight the hero's critical strikes in it as
  * played (`crits`), the Phoenix Spark charges it spent (`sparked`) and whether it
@@ -394,10 +395,9 @@ export class Game {
   /** The Deck page's card badges: drawing them with Gems and attaching
    * them to cards. */
   readonly badges = new BadgeDesk(this);
-  readonly cardTrees = new CardTreeDesk(this);
-  /** The Deck page's card buys: Gems for levels opened on the deck's trees. */
-  readonly cardBuys = new CardBuyDesk(this);
-  readonly ads = new AdDesk(this, this.cardBuys);
+  /** The Deck page's card ascensions, paid in Rubies. */
+  readonly cards = new CardDesk(this);
+  readonly ads = new AdDesk(this);
   /** What the hand's cards may do now: their badges' rules and marks,
    * Ignore's tiles and the cards that act in place; where the hand plans
    * from. */
@@ -555,8 +555,7 @@ export class Game {
    * tab, until the Research page is opened (`archivesLesson` then waits on
    * its note there); then, in either forest, `trainingPoints`, the first time training
    * points can be spent, which leads to the Research tab until the
-   * Training tab's note is dismissed (`trainingLesson`); then `cards`, which leads to the Deck to
-   * spend the first card point (`cardPointsLesson`); then, in the Tower's
+   * Training tab's note is dismissed (`trainingLesson`); then, in the Tower's
    * forest while a tournament opens the Delve, `delve`, until the Delve is
    * opened; and in either forest, `provisions` (`provisionsLesson`), then
    * `arcana` (`arcanaLesson`), which waits for every other lesson. */
@@ -577,7 +576,6 @@ export class Game {
     if (tower && !t.goals && goalsWaiting(this.save)) return "goals";
     if (tower && owned.archives && !t.research && !t.archives) return "research";
     if (!t.training && trainingWaiting(this.save)) return "trainingPoints";
-    if (this.cardPointsLesson) return "cards";
     if (tower && this.delveOpen && !t.delve) return "delve";
     if (this.provisionsLesson) return "provisions";
     return this.arcanaLesson ? "arcana" : null;
@@ -625,19 +623,6 @@ export class Game {
    * pauses the route walked until its note is dismissed. */
   get lessonHolds() {
     return this.boardLesson === "autoClimbHint";
-  }
-  /** The card the card points lesson points at, while it waits: in the
-   * forest after a run once a card has a point to spend on its tree, the
-   * Deck open (Combat Stance) and its own lessons on the hand done. Of the
-   * cards the Deck page shows (the hand's, and with Buildout the deck's),
-   * the one with the most points left, the hand's first. */
-  get cardPointsLesson(): CardId | null {
-    const save = this.save, t = save.tutorials;
-    if (t.cardPoints || !this.run.outside || !save.upgrades.combatStance || !t.deck || (save.upgrades.buildout && !t.removeCard)) return null;
-    const shown = save.upgrades.buildout ? [...new Set([...save.hand, ...deckCards(save.upgrades, save.goals)])] : save.hand;
-    let best: CardId | null = null;
-    for (const id of shown) if (hasPointsToSpend(save, id) && (!best || pointsLeft(save, id) > pointsLeft(save, best))) best = id;
-    return best;
   }
   /** Whether the Archives lesson waits on the Research page: the page opened
    * since the Archives skill was bought (`research`, the board lesson that
@@ -1443,26 +1428,28 @@ export class Game {
     const held = this.held;
     const badges = this.save.upgrades.cardBadges ? runBadges(this.save.badges, held, this.badges.slots) : {};
     if (Object.keys(badges).length) this.run.badges = badges;
-    const trees = runCardTrees(this.save.cardTrees, held);
-    if (Object.keys(trees).length) this.run.cardTrees = trees;
-    else delete this.run.cardTrees;
-    const tree = treeBonus(this.run.cardTrees);
+    const levels = levelsOf(this.save, held);
+    if (Object.keys(levels).length) this.run.handLevels = levels;
+    else delete this.run.handLevels;
+    const tree = powerBonus(this.run.handLevels);
     const pocket = this.startingSilver, loot = this.warpLoot(pocket);
     if (pocket || loot) this.run.silver = snap(pocket + loot);
     this.warpLooted = loot >= 1 ? { silver: loot, at: performance.now() } : null;
     // HEAL's tree raises the chance, up to every potion; whole hundredths
     // of a percent, so the floors come out the same in every engine.
-    const chance = Math.min(10_000, Math.floor(trainedAmount(this.save, "findPotion") * treeFactor(tree, "percentPotions")));
+    const chance = Math.min(10_000, Math.floor(trainedAmount(this.save, "findPotion") * powerFactor(tree, "percentPotions")));
     if (chance) this.run.percentPotions = chance;
     else delete this.run.percentPotions;
     const odds = this.chestOddsFor(held, tree);
     if (odds) this.run.chestOdds = odds;
     else delete this.run.chestOdds;
     // DOOR's Skeleton Key and Lock Pick, GOLD DOOR's Transmute, HEART and WOODEN DOOR's
-    // Wooden Door Transmute and HEART DOOR's Heart Lock Pick remake the run's doors as each floor is generated.
-    if (tree.skeletonKey || tree.lockPick || tree.yellowTransmute || tree.woodTransmute || tree.heartLockPick)
+    // Wooden Door Transmute, HEART DOOR's Heart Lock Pick and WOODEN DOOR's Transmute Gold to Wood
+    // remake the run's doors as each floor is generated: fixed for the run, so a card levelling inside never changes them.
+    if (tree.skeletonKey || tree.lockPick || tree.yellowTransmute || tree.woodTransmute || tree.heartLockPick || tree.yellowToWood)
       this.run.doorOdds = { skeleton: Math.min(100, tree.skeletonKey), lockPick: Math.min(100, tree.lockPick), ...(tree.yellowTransmute ? { transmute: Math.min(100, tree.yellowTransmute) } : {}),
-        ...(tree.woodTransmute ? { wood: Math.min(100, tree.woodTransmute) } : {}), ...(tree.heartLockPick ? { heartPick: Math.min(100, tree.heartLockPick) } : {}) };
+        ...(tree.woodTransmute ? { wood: Math.min(100, tree.woodTransmute) } : {}), ...(tree.heartLockPick ? { heartPick: Math.min(100, tree.heartLockPick) } : {}),
+        ...(tree.yellowToWood ? { toWood: Math.min(100, tree.yellowToWood) } : {}) };
     else delete this.run.doorOdds;
     // CHEST's Treasure Floor (and relics) makes a floor's shards and potions chests as it is generated.
     const treasure = snap(tree.treasureFloor + relicAmount(this.save, "treasureFloor"));
@@ -1472,12 +1459,31 @@ export class Game {
     const golden = this.save.upgrades.goldenFloors ? Math.min(100, snap(researched(this.save.archives, "goldenFloorChance") / 10 + relicAmount(this.save, "goldenFloor"))) : 0;
     if (golden) this.run.goldenFloor = golden;
     else delete this.run.goldenFloor;
+    this.applyHandPowers(tree);
+    const p = this.run.player;
+    // A Power Strike charged on an earlier run doesn't carry over.
+    delete p.powerStrike;
+    // GOLD KEY's Max HP raises the hero's for the run, as the Max HP badge's does (`heroFactor`).
+    const maxHp = powerFactor(tree, "maxHp");
+    if (maxHp !== 1) {
+      p.maxHp = snap(p.maxHp * maxHp);
+      p.hp = snap(p.hp * maxHp);
+      if (this.run.loadout) this.run.loadout.maxHp = snap(this.run.loadout.maxHp * maxHp);
+    }
+    for (const k of ["ignoreUsed", "targetUsed", "regain", "ignored", "targeted", "focused"] as const) delete this.run[k];
+  }
+  /** Sets what the hand's powers (`tree`) give the hero by enemy: its ATK,
+   * DEF, shroud, crits and Lifesteal Overheal against the enemies each enemy
+   * card covers, HEAL's and DEF UP's parry, and the boss cuts (Takedown,
+   * Tangle), with the relics' that sit beside them. As the run goes inside,
+   * and again as a held card levels up, so a power counts at once. */
+  private applyHandPowers(tree: PowerBonus) {
     // The hero strikes the enemies each enemy card covers harder (its tree
     // harder still), and with the enemy cards', ENEMY's and TORCH's trees
     // holds more DEF and shroud against theirs, HEAL's more shroud against
     // every enemy and a parry of its own; the enemy cards' trees raise its
     // crits and Lifesteal's ceiling against theirs (combat.ts reads them).
-    const p = this.run.player, foes: NonNullable<Player["foeAttack"]> = Object.fromEntries(Object.entries(handBonus(held).foe).map(([id, b]) => [id, b.attack]));
+    const held = this.held, p = this.run.player, foes: NonNullable<Player["foeAttack"]> = Object.fromEntries(Object.entries(handBonus(held).foe).map(([id, b]) => [id, b.attack]));
     for (const [card, n] of Object.entries(foeStats(tree, "Attack")) as [FoeTreeCard, number][]) foes[card] = snap((foes[card] ?? 0) + n);
     if (tree.foeAttack) foes.monster = tree.foeAttack;
     if (tree.bossAttack) foes.torch = tree.bossAttack;
@@ -1510,31 +1516,21 @@ export class Game {
       if (Object.keys(v).length) p[k] = v;
       else delete p[k];
     }
-    // A Power Strike charged on an earlier run doesn't carry over.
-    delete p.powerStrike;
-    // GOLD KEY's Max HP raises the hero's for the run, as the Max HP badge's does (`heroFactor`).
-    const maxHp = treeFactor(tree, "maxHp");
-    if (maxHp !== 1) {
-      p.maxHp = snap(p.maxHp * maxHp);
-      p.hp = snap(p.hp * maxHp);
-      if (this.run.loadout) this.run.loadout.maxHp = snap(this.run.loadout.maxHp * maxHp);
-    }
-    for (const k of ["ignoreUsed", "targetUsed", "regain", "ignored", "targeted", "focused"] as const) delete this.run[k];
   }
   /** A run's chances of Supply and Equipment Chests with `hand`: the
    * hand's (the CHEST card's, and the points its tree adds, `tree`), raised
    * by the worn Supply and Equipment Chest chance; none before Equipment
    * opens or without a card that gives one. */
-  private chestOddsFor(hand: readonly CardId[], tree: TreeBonus): ChestOdds | undefined {
+  private chestOddsFor(hand: readonly CardId[], tree: PowerBonus): ChestOdds | undefined {
     const { chest } = handBonus(hand);
     if (!this.save.equipment.unlocked || !(chest.supply + chest.equipment)) return undefined;
     const find = wornEffects(this.save, this.mode).chestFind;
     return { supply: raised(snap(chest.supply + tree.supplyChance), find), equipment: raised(snap(chest.equipment + tree.equipmentChance), find) };
   }
-  /** What the card trees of the run's hand give (`treeBonus`): none in the
+  /** What the card trees of the run's hand give (`powerBonus`): none in the
    * forest. */
-  get treeBonus(): TreeBonus {
-    return treeBonus(this.run.outside ? undefined : this.run.cardTrees);
+  get powerBonus(): PowerBonus {
+    return powerBonus(this.run.outside ? undefined : this.run.handLevels);
   }
   /** The fastest speed the run's arrows reach: 3 steps a second, and one
    * more a Movement Speed research level. */
@@ -1654,9 +1650,9 @@ export class Game {
    * preview, inspect box and planner resolves with. */
   get stepRules(): StepRules {
     // Regen research raises the HP each step regains by its percent, and HEAL's tree by its own.
-    const tree = this.treeBonus;
+    const tree = this.powerBonus;
     const regen = this.run.outside || !this.run.player.regen ? 0
-      : snap((this.run.player.regen * researched(this.save.archives, "regenPercent") * treeFactor(tree, "regen")) / 100);
+      : snap((this.run.player.regen * researched(this.save.archives, "regenPercent") * powerFactor(tree, "regen")) / 100);
     const worn = this.worn, potionHeal = raised(researched(this.save.archives, "potionHeal"), worn.potionHeal);
     const crit = this.crit, keys = this.handBonus.keys;
     // KEY's tree adds to every colour's percent, the key cards' adding to their own; each colour's own tree multiplies its keys'.
@@ -1673,8 +1669,8 @@ export class Game {
       heartToll: snap(researched(this.save.archives, "heartToll") * relicCut(this.save, "heartDoor")), ...(relicAmount(this.save, "woodenDoor") ? { woodToll: snap(100 * relicCut(this.save, "woodenDoor")) } : {}), keyCost: this.keyCost, ...keyFind, ...(this.doorOff ? { doorOff: this.doorOff } : {}),
       ...(tree.doorHeal ? { doorHeal: tree.doorHeal } : {}), ...(tree.yellowLockHeal ? { yellowLockHeal: tree.yellowLockHeal } : {}), ...(tree.keyHeal ? { keyHeal: tree.keyHeal } : {}), ...(tree.keyOverheal ? { keyOverheal: tree.keyOverheal } : {}),
       ...Object.fromEntries(KEY_ORDER.flatMap((color) => (["KeyHeal", "KeyOverheal"] as const).flatMap((part) => (keyStat(tree, color, part) ? [[`${color}${part}`, keyStat(tree, color, part)]] : [])))),
-      shardAttack: researched(this.save.archives, "shardAttackPercent") * boonFactor(this.run, "attack") * treeFactor(tree, "attackShard"),
-      shardDefense: researched(this.save.archives, "shardDefensePercent") * treeFactor(tree, "defenseShard"),
+      shardAttack: researched(this.save.archives, "shardAttackPercent") * boonFactor(this.run, "attack") * powerFactor(tree, "attackShard"),
+      shardDefense: researched(this.save.archives, "shardDefensePercent") * powerFactor(tree, "defenseShard"),
       ...(tree.potionHeal ? { potionCard: tree.potionHeal } : {}),
       ...(worn.victoryHeal ? { victoryHeal: worn.victoryHeal } : {}), ...(crit ? { crit } : {}) };
   }
@@ -1684,7 +1680,7 @@ export class Game {
    * trees' Overheal Max added, skill or not. */
   get overheal() {
     // Relics raise the ceiling by their percent of max HP.
-    return snap(treeOverheal(trainedAmount(this.trainingNow, "overheal"), this.treeBonus) + relicAmount(this.save, "overheal") * 10);
+    return snap(powerOverheal(trainedAmount(this.trainingNow, "overheal"), this.powerBonus) + relicAmount(this.save, "overheal") * 10);
   }
   /** The most HP the hero may hold now: max HP, raised by Overheal. */
   get hpCeiling() {
@@ -1693,7 +1689,7 @@ export class Game {
   /** Revive's chance now (its training, the run's Silver ranks counting),
    * in hundredths of a percent, TORCH's tree's percent added. */
   get reviveChance() {
-    return snap(trainedAmount(this.trainingNow, "revive") + this.treeBonus.reviveChance * 100);
+    return snap(trainedAmount(this.trainingNow, "revive") + this.powerBonus.reviveChance * 100);
   }
   /** Whether Angel Wings' charge is ready: inside a run, a hand holds the
    * ANGEL WINGS card, and the run hasn't spent it. */
@@ -1713,7 +1709,7 @@ export class Game {
   }
   /** ENEMY's tree's percents on Crit % and Crit x, for fights and arrows. */
   private get cardCrit() {
-    const tree = this.treeBonus;
+    const tree = this.powerBonus;
     return { chance: tree.critChance, factor: tree.critFactor };
   }
   /** How much of a key each key a door takes costs, in tenths of a percent
@@ -1725,7 +1721,7 @@ export class Game {
    * hand holds and the DOOR, KEY, HEART DOOR and WOODEN DOOR trees: what
    * steps pay and the door cards plan by; undefined with none. */
   get doorOff() {
-    const doors: DoorDiscounts = { ...this.handBonus.doors }, tree = this.treeBonus;
+    const doors: DoorDiscounts = { ...this.handBonus.doors }, tree = this.powerBonus;
     if (tree.heartLockCost) doors.heart = snap((doors.heart ?? 0) + tree.heartLockCost);
     if (tree.woodKeyCost) doors.woodKeys = tree.woodKeyCost;
     if (tree.woodDurability) doors.woodToll = tree.woodDurability;
@@ -2200,7 +2196,7 @@ export class Game {
    * it toward the run's total too. */
   gainXp(enemy: Enemy, floor: number, scale = 1) {
     // Worn Equipment's XP Gain and the card trees' (ENEMY's, and the enemy cards' covering it, added up), each its own factor.
-    const bonus = this.treeBonus, xp = tierXp(this.tier, xpForKill(enemy.strength, floor)), gain = this.worn.xpGain, tree = snap(bonus.killXp + foeStat(bonus, enemy, "KillXp"));
+    const bonus = this.powerBonus, xp = tierXp(this.tier, xpForKill(enemy.strength, floor)), gain = this.worn.xpGain, tree = snap(bonus.killXp + foeStat(bonus, enemy, "KillXp"));
     // Relics' XP is its own factor too, and so is Champion Status's.
     const relic = relicAmount(this.save, "xp"), champion = isChampion(this.save) ? CHAMPION_XP : 0;
     const raisedXp = gain || tree || relic || champion ? Math.round((xp * (100 + gain) * (100 + tree) * (100 + relic) * (100 + champion)) / 100_000_000) : xp;
@@ -2222,7 +2218,19 @@ export class Game {
    * for the hand's animation. */
   gainCardXp(id: CardId, xp: number) {
     const more = relicAmount(this.save, "cardXp"), gained = more ? Math.round((xp * (100 + more)) / 100) : xp;
-    for (const level of addCardXp(this.save.cardXp, id, gained, cardMaxLevel(this.save.cardBuys.opened, id))) this.cardLevelUps.push({ card: id, level });
+    const levels = addCardXp(this.save.cardXp, id, gained, cardMaxLevel(this.save.cardAscension, id));
+    if (levels.length) this.cardLevelled(id, levels);
+  }
+  /** Card `id` reached `levels` (lowest first, by XP or by ascending): each
+   * queued for the hand's animation, and while a run holds the card inside,
+   * its new level copied to the run and the hero's powers by enemy set
+   * again, so its powers count from now. What shapes the floors stays as
+   * the run went in. */
+  cardLevelled(id: CardId, levels: number[]) {
+    for (const level of levels) this.cardLevelUps.push({ card: id, level });
+    if (!levels.length || this.run.outside || !this.held.includes(id)) return;
+    (this.run.handLevels ??= {})[id] = levelIn(this.save, id).level;
+    this.applyHandPowers(powerBonus(this.run.handLevels));
   }
   /** `floors` new floors completed: each card of the hand that never
    * activates (`PASSIVE_CARDS`), or of the Manual hand, gains one XP a floor. */
@@ -2295,7 +2303,7 @@ export class Game {
     const t = this.world.tile(dest.x, dest.y);
     // FAST ENEMY's First Strike: a Fast enemy may lose its first strike, by
     // the enemy tile's roll, so the hero strikes first (`met` fights it so).
-    const firstStrike = t.kind === "enemy" && strikesFirst(t.enemy!) && this.tileRolls(dest.x, dest.y, FIRST_STRIKE_SALT, foeStat(this.treeBonus, t.enemy!, "FirstStrike"));
+    const firstStrike = t.kind === "enemy" && strikesFirst(t.enemy!) && this.tileRolls(dest.x, dest.y, FIRST_STRIKE_SALT, foeStat(this.powerBonus, t.enemy!, "FirstStrike"));
     let met: Tile = firstStrike ? { ...t, enemy: (({ fast: _, ...caught }) => caught)(t.enemy!) } : t;
     // The step is resolved once, before anything is taken, so a wall, lock,
     // impervious enemy, or (automation's) declined lethal fight never
@@ -2325,7 +2333,7 @@ export class Game {
     const dashed = this.dashedTo;
     this.dashedTo = null;
     const surprise = t.kind === "enemy" && !!dashed && dashed.x === p.x && dashed.y === p.y
-      && this.tileRolls(dest.x, dest.y, SURPRISE_SALT, snap(this.treeBonus.surpriseAttack + foeStat(this.treeBonus, t.enemy!, "SurpriseAttack")));
+      && this.tileRolls(dest.x, dest.y, SURPRISE_SALT, snap(this.powerBonus.surpriseAttack + foeStat(this.powerBonus, t.enemy!, "SurpriseAttack")));
     if (surprise) step.surprise = true;
     if (firstStrike) step.firstStrike = true;
     return t.kind === "enemy" ? this.fights.fight(step, met.enemy!, surprise) : this.take(step);
@@ -2454,7 +2462,7 @@ export class Game {
       }
       return;
     }
-    if (torch) this.finds.pickupGold(null, { x, y }, 0, relicAmount(this.save, "torchGold"));
+    if (torch) this.putOutTorch(x, y);
     if (t.kind === "reward") {
       this.run.changes[`${x},${y}`] = { kind: "openedChest", tier: t.tier };
       this.openAreaChest(t.tier);
@@ -2784,7 +2792,7 @@ export class Game {
    * the card trees' added, and the trees' Range and Charge Shot, the enemy
    * cards' Charge Shot by card. */
   private get handShot(): NonNullable<VolleyTurn["handShot"]> {
-    const shot = this.handBonus.shot, tree = this.treeBonus, foeCharge = foeStats(tree, "ChargeShot");
+    const shot = this.handBonus.shot, tree = this.powerBonus, foeCharge = foeStats(tree, "ChargeShot");
     return { attack: snap(shot.attack + tree.shotAttack), speed: snap(shot.speed + tree.shotSpeed), boss: snap(shot.boss + tree.bossShotAttack),
       ...(tree.shotRange ? { range: tree.shotRange } : {}), ...(tree.chargeShot ? { charge: tree.chargeShot } : {}), ...(Object.keys(foeCharge).length ? { foeCharge } : {}) };
   }
@@ -2970,14 +2978,14 @@ export class Game {
    * the hero's next fight, by its tile's fixed number. */
   private chargePowerStrike(x: number, y: number) {
     const p = this.run.player;
-    if (p.powerStrike || !this.tileRolls(x, y, POWER_STRIKE_SALT, this.treeBonus.powerStrike)) return;
+    if (p.powerStrike || !this.tileRolls(x, y, POWER_STRIKE_SALT, this.powerBonus.powerStrike)) return;
     p.powerStrike = true;
     this.message = `${this.message ? `${this.message} · ` : ""}Power Strike charged`;
   }
   /** A treasure chest's own rolls at (x, y), by its tile's fixed numbers:
    * CHEST's Double and Triple (both: six times over), and TORCH's Chest Cells. */
   chestRoll(x: number, y: number) {
-    const tree = this.treeBonus;
+    const tree = this.powerBonus;
     const multiplier = (this.tileRolls(x, y, CHEST_DOUBLE_SALT, snap(tree.chestDouble + relicAmount(this.save, "chestDouble"))) ? 2 : 1)
       * (this.tileRolls(x, y, CHEST_TRIPLE_SALT, snap(tree.chestTriple + relicAmount(this.save, "chestTriple"))) ? 3 : 1);
     return { multiplier, cells: this.tileRolls(x, y, CHEST_CELLS_SALT, tree.chestCells) };
@@ -2989,7 +2997,7 @@ export class Game {
    * Wooden Door; and, for a drain paid (not on a door opened for nothing,
    * `free`), HEART DOOR's Shroud Growth more shroud for the run. */
   private doorOpened(x: number, y: number, t: Tile, free: boolean) {
-    const tree = this.treeBonus, p = this.run.player, rule = doorRule(t);
+    const tree = this.powerBonus, p = this.run.player, rule = doorRule(t);
     this.leaveChest(x, y, DOOR_CHEST_SALT, DOOR_CHEST_KIND_SALT, doorStat(tree, t, "Chest"));
     if (rule.type === "wood" && this.tileRolls(x, y, DRUID_KEY_SALT, tree.druidKey)) {
       p.keys.yellow = snap(p.keys.yellow + 1);
@@ -3002,7 +3010,7 @@ export class Game {
    * treasure chest where it lay, as Door Chest leaves one, by its `color`'s
    * own tree's chance too, added to it. */
   private keyChest(x: number, y: number, color: KeyColor) {
-    const tree = this.treeBonus;
+    const tree = this.powerBonus;
     this.leaveChest(x, y, KEY_CHEST_SALT, KEY_CHEST_KIND_SALT, snap(tree.keyChest + keyStat(tree, color, "KeyChest")));
   }
   /** An opened treasure chest left at (x, y) when its tile rolls under
@@ -3023,7 +3031,7 @@ export class Game {
    * their doors) opens a door for nothing, KEY's Locksmith makes a key two,
    * and a relic's chance makes a potion heal twice. */
   private luckyStep(t: Tile, x: number, y: number): Partial<StepRules> | null {
-    const tree = this.treeBonus;
+    const tree = this.powerBonus;
     if (t.kind === "door" && this.tileRolls(x, y, SECRET_KNOCK_SALT, doorStat(tree, t, "Knock"))) return { freeDoor: true };
     // The key's colour's own Locksmith adds to KEY's, one roll.
     if (t.kind === "key" && this.tileRolls(x, y, DOUBLE_KEY_SALT, snap(tree.doubleKey + keyStat(tree, t.color!, "DoubleKey")))) return { doubleKey: true };
@@ -3035,7 +3043,7 @@ export class Game {
    * opened does: its Gold, DOOR's Door Silver and Door Heal, and its Door
    * Chest and Druidic Talent rolls. */
   private masterKey(x: number, y: number, color: KeyColor) {
-    const tree = this.treeBonus, every = this.tileRolls(x, y, MASTER_KEY_SALT, tree.masterKey);
+    const tree = this.powerBonus, every = this.tileRolls(x, y, MASTER_KEY_SALT, tree.masterKey);
     // The key's colour's own Master Key (Master Gold Key…), its own roll, opens the doors with a lock of its colour.
     const mine = !every && this.tileRolls(x, y, COLOR_MASTER_KEY_SALT[color], keyStat(tree, color, "MasterKey"));
     if (!every && !mine) return;
@@ -3099,6 +3107,7 @@ export class Game {
       this.events.climbed(this.mode, this.run.seed, interest > 0 && interest >= purse.maxInterest(f + 1));
       this.findYellowKey(f, at);
       this.findFloorKeys(f, at);
+      this.findFloorRubies(f, at);
       this.provisionKeys(f);
       this.regainCharges(at);
       this.floorHeal();
@@ -3109,17 +3118,19 @@ export class Game {
     this.finds.coins(at, gold, silver, false);
   }
   /** Enemy Level Skips for `floors` floors new to the run, one after another,
-   * each kind at the chance its row gives now, the worn substats' points added. */
+   * each kind at the chance its row gives now, the worn substats' points
+   * added, then raised by STAIRS' Enemy Skip percent, up to
+   * `LEVEL_SKIP_BOOST_CAP` (a chance already past it stays). */
   private rollLevelSkips(floors: number) {
-    const worn = this.worn, gear = { hp: worn.hpSkipChance, combat: worn.combatSkipChance };
+    const worn = this.worn, gear = { hp: worn.hpSkipChance, combat: worn.combatSkipChance }, boost = this.powerBonus.levelSkipBoost;
     for (let f = 0; f < floors; f++)
-      for (const kind of LEVEL_SKIP_KINDS) rollLevelSkip(this.run, kind, snap(trainedAmount(this.trainingNow, LEVEL_SKIP_ROWS[kind]) + gear[kind] * 100));
+      for (const kind of LEVEL_SKIP_KINDS) rollLevelSkip(this.run, kind, boostedSkip(snap(trainedAmount(this.trainingNow, LEVEL_SKIP_ROWS[kind]) + gear[kind] * 100), boost));
   }
   /** What each Free Upgrade group's chance gains, in hundredths of a percent:
    * the card trees' and the worn substats' (each group's own, and Windfall's
    * for all three), added up; undefined with none. */
   private get freeChances() {
-    const trees = freeUpChances(this.treeBonus) ?? {}, worn = this.worn;
+    const trees = freeUpChances(this.powerBonus) ?? {}, worn = this.worn;
     const gear = { offense: worn.freeOffenseChance, defense: worn.freeDefenseChance, utility: worn.freeUtilityChance };
     const chances = Object.fromEntries((["offense", "defense", "utility"] as const).flatMap((group) => {
       const n = snap((trees[group] ?? 0) + (gear[group] + worn.freeUpChance) * 100);
@@ -3136,7 +3147,7 @@ export class Game {
     for (let f = 0; f < floors; f++) {
       // Jackpot Spurs counts the rolls won on the floor the climb comes to.
       const won = { rolls: 0 };
-      for (const id of rollFreeTraining(this.save, this.run, this.boons?.freeUp ?? 0, freeUpFactors(this.treeBonus), this.freeChances, won)) {
+      for (const id of rollFreeTraining(this.save, this.run, this.boons?.freeUp ?? 0, freeUpFactors(this.powerBonus), this.freeChances, won)) {
         this.giveFreeLevel(id);
         given.push(id);
       }
@@ -3177,13 +3188,31 @@ export class Game {
     noteKey(this.run, "yellow", 1);
     this.gain(at.x, at.y, "+1 gold key", { tile: { kind: "key", color: "yellow" } });
   }
+  /** A torch put out at (x, y): its Pickup Gold, with TORCH's Torch Loot
+   * Gold added before the bonuses and the relics' percent, and Torch Loot's
+   * Silver. */
+  private putOutTorch(x: number, y: number) {
+    const bonus = this.powerBonus;
+    this.finds.pickupGold(null, { x, y }, bonus.torchGold, relicAmount(this.save, "torchGold"));
+    const silver = bonus.torchSilver ? this.purse.silverAt(bonus.torchSilver, x, y) : 0;
+    if (silver) this.gain(x, y, `+${wholeChange(silver)} Silver`, { coin: "silver" }, { row: 2, with: true });
+  }
+  /** STAIRS' Ruby Chance: on floor `floor` climbed for the first time in
+   * the run, the tier's Rubies under its chance, a fixed number per run
+   * seed and floor, as Floor Key's. */
+  private findFloorRubies(floor: number, at: { x: number; y: number }) {
+    const chance = this.powerBonus.floorRuby;
+    if (!chance || tileRandom(-2, floor, (this.run.seed ^ FLOOR_RUBY_SALT) | 0) * 100 >= chance) return;
+    const rubies = this.purse.bankRubies(this.purse.floorRubies);
+    this.gain(at.x, at.y, rubiesText(rubies), { ruby: true });
+  }
   /** The traders' and smelts' Floor Key (Extra Gold, Blue and Red Key): on
    * floor `floor` climbed for the first time in the run, a key of each
    * colour under its chance, a fixed number per run seed, floor and colour,
    * as Find Gold Key's. */
   private findFloorKeys(floor: number, at: { x: number; y: number }) {
     for (const color of KEY_COLORS) {
-      const chance = keyStat(this.treeBonus, color, "FloorKey");
+      const chance = keyStat(this.powerBonus, color, "FloorKey");
       if (!chance || tileRandom(-1, floor, (this.run.seed ^ FLOOR_KEY_SALT[color]) | 0) * 100 >= chance) continue;
       const keys = this.run.player.keys;
       keys[color] = snap(keys[color] + 1);
@@ -3229,6 +3258,7 @@ export class Game {
       this.events.best("floor", this.run.height + 1);
       this.findYellowKey(this.run.height, p);
       this.findFloorKeys(this.run.height, p);
+      this.findFloorRubies(this.run.height, p);
       this.provisionKeys(this.run.height);
       this.floorHeal();
       this.rollLevelSkips(this.run.height - highest);
@@ -3295,7 +3325,7 @@ export class Game {
       this.recordHeal(n);
     };
     heal(this.worn.floorHeal, p.maxHp);
-    heal(this.treeBonus.floorHeal, this.hpCeiling);
+    heal(this.powerBonus.floorHeal, this.hpCeiling);
   }
   /** How the current mode differs from the other. */
   private get rules(): ModeProfile {

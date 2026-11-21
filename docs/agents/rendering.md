@@ -5,7 +5,7 @@
 Actual legendary artwork keeps its material colors rather than receiving the generic pendant's recoloring filter.
 `node --experimental-transform-types tools/prepare-relic-sprites.mjs` exports individual palette-matched 24 × 24 PNGs, validates the retained cell order against current relic IDs/names, updates the style manifest and generates the review atlas, named regions and standalone gallery in `public/assets/relics/`.
 Retained sources and their authored catalog are in `assets/game-sprites/relic-sources/`; `npm run sprites:atlas` packs the exports into the runtime atlas.
-The Shop's three relics (`shop.*`) and the VIP Points crown (`vip.png`, `VIP_SPRITE`) are drawn pixel by pixel in the shared palette by `tools/prepare-shop-sprites.mjs`, which adds the relics to the review atlas and regenerates `sprites/relics.ts`; run it after `prepare-relic-sprites.mjs`, which leaves them out.
+The Shop's three relics (`shop.*`) the VIP Points crown (`vip.png`, `VIP_SPRITE`) and the Ruby (`ruby.png`, `RUBY_SPRITE`, `rubyIcon`; a gain's `{ ruby: true }` art, `paintRuby` without the kit) are drawn pixel by pixel in the shared palette by `tools/prepare-shop-sprites.mjs`, which adds the relics to the review atlas and regenerates `sprites/relics.ts`; run it after `prepare-relic-sprites.mjs`, which leaves them out.
 `tests/relic-sprites.test.ts` checks full catalog coverage, fallbacks, unique pixels, palette, alpha, padding and lossless regions; `node tests/relic-sprites.mjs` checks collection and popup art for each rarity in both image-loading modes without changing ownership.
 
 `enemies/roster.ts` defines the default bestiary: 126 named creatures, six strengths × seven appearances (ordinary and six traits) × three stat profiles.
