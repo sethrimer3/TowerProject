@@ -304,6 +304,10 @@ export class HandRules implements HandAt {
   smeltPercent(card: SmeltCard) {
     return snap(SMELTS[card].percent + smeltStat(this.inPlaceTree, SMELTS[card].color, "SmeltHeal"));
   }
+  /** Smelt `card`'s Gold before Gold Bonus: its 2, 4 or 8, and its tree's Smelt Gold. */
+  smeltGold(card: SmeltCard) {
+    return snap(SMELTS[card].gold + smeltStat(this.inPlaceTree, SMELTS[card].color, "SmeltGold"));
+  }
   /** Smelt `card`'s heal: its percent (`smeltPercent`) of max HP. */
   smeltHeal(card: SmeltCard) {
     return snap((this.run.player.maxHp * this.smeltPercent(card)) / 100);

@@ -133,8 +133,8 @@ export class CardActivation {
     else if (isSmelt(card)) this.smelt(card, scale);
     (run.cardUses ??= {})[card] = host.handRules.cardUses(card) + 1;
   }
-  /** A smelt's turn: its key (`smeltCost`) traded for its heal, and its
-   * tree's Gold and Silver; the Gold twice over under Key Smelter's chance
+  /** A smelt's turn: its key (`smeltCost`) traded for its heal, its Gold
+   * (`smeltGold`: its own and its tree's) and its tree's Silver; the Gold twice over under Key Smelter's chance
    * and three times under its Master Smelter's (six when both hit), and
    * under its Smelt Free chance a free level of each group it gives. Each
    * rolls a fixed number per run seed, colour and use, so a replay rolls a
@@ -151,7 +151,7 @@ export class CardActivation {
     host.recordHeal(healed);
     const doubled = rolls(KEY_SMELTER_SALT, tree.keySmelter), tripled = rolls(MASTER_SMELTER_SALT, smeltStat(tree, color, "SmeltMaster"));
     const profile: ModeProfile = MODES[host.mode], key = `smelt:${profile.lootKey(run, p.x, p.y)}:${card}${use}`;
-    const gold = host.purse.smeltGold(key, snap(smeltStat(tree, color, "SmeltGold") * scale), (doubled ? 2 : 1) * (tripled ? 3 : 1));
+    const gold = host.purse.smeltGold(key, snap(rules.smeltGold(card) * scale), (doubled ? 2 : 1) * (tripled ? 3 : 1));
     const base = snap(smeltStat(tree, color, "SmeltSilver") * scale), silver = base ? host.purse.silverHere(base) : 0;
     host.finds.coins(p, gold, silver, false);
     const hits = [doubled && "Key Smelter", tripled && `Master ${KEY_NAMES[color]} Smelter`].filter(Boolean);

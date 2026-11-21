@@ -1,7 +1,7 @@
 import { snap } from "./exact.ts";
 import { tileRandom } from "./random.ts";
 import { COLORS } from "./config.ts";
-import { KEY_GOLD, PICKUP_GOLD } from "./economy/kill-pay.ts";
+import { HEART_DOOR_GOLD, KEY_GOLD, PICKUP_GOLD } from "./economy/kill-pay.ts";
 import type { DoorOdds, DoorRule, Player, Tile, KeyColor } from "./entities.ts";
 import { wholeChange } from "./whole.ts";
 
@@ -146,10 +146,12 @@ export function doorDescription(tile: Tile) {
   return rule.heart ? `${keys}, and drains your HP to 1.` : `${keys}.`;
 }
 /** The Gold a door opened pays before Gold Bonus: a keyed door its colours'
- * `KEY_GOLD` summed, any other `PICKUP_GOLD`. */
+ * `KEY_GOLD` summed, `HEART_DOOR_GOLD` more when it also drains HP, any
+ * other `PICKUP_GOLD`. */
 export function doorGold(tile: Tile) {
   const rule = doorRule(tile);
-  return rule.type === "keys" && rule.mode === "all" ? rule.keys.reduce((sum, key) => sum + KEY_GOLD[key], 0) : PICKUP_GOLD;
+  if (rule.type !== "keys" || rule.mode !== "all") return PICKUP_GOLD;
+  return rule.keys.reduce((sum, key) => sum + KEY_GOLD[key], rule.heart ? HEART_DOOR_GOLD : 0);
 }
 /** The Gold an item taken off the floor (`tile`, a torch when null) pays
  * before Gold Bonus: a key or door by its colours, anything else

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { area1DoorRule, doorCost, doorId, doorName } from "../src/doors.ts";
+import { area1DoorRule, doorCost, doorGold, doorId, doorName } from "../src/doors.ts";
 import { resolveStep } from "../src/step-effects.ts";
 import { tierTile } from "../src/tiers.ts";
 import type { Player, Tile } from "../src/entities.ts";
@@ -17,6 +17,13 @@ test("area-one door sequence covers every sprite/rule identity", () => {
   assert.equal(doorId({ kind: "door", door: { type: "wood", durability: 20 } }), "wood");
   assert.equal(doorId({ kind: "door", door: { type: "keys", keys: ["blue", "yellow"], mode: "all", heart: true } }), "abh");
   assert.equal(doorName({ kind: "door", door: { type: "keys", keys: ["blue"], mode: "all", heart: true } }), "Blue Heart Door");
+});
+
+test("a door's Gold: its keys' colours added up, 1 more for a keyed Heart Door, 1 for any other", () => {
+  assert.deepEqual(Array.from({ length: 9 }, (_, room) => doorGold(door(room))), [1, 2, 3, 3, 4, 5, 6, 1, 1]);
+  assert.equal(doorGold({ kind: "door", door: { type: "keys", keys: ["blue"], mode: "all", heart: true } }), 3, "Blue Heart Door");
+  assert.equal(doorGold({ kind: "door", door: { type: "keys", keys: ["yellow", "blue", "red"], mode: "all", heart: true } }), 7, "Triune Heart Door");
+  assert.equal(doorGold({ kind: "door", door: { type: "wood", durability: 20 } }), 1, "Wooden Door");
 });
 
 test("single and combination locks require and consume their exact key sets", () => {

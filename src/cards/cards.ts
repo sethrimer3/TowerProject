@@ -71,11 +71,11 @@ export const CARDS = {
   fastEnemy: { name: "Fast Enemy", text: "Move toward the closest Fast enemy.", bonus: FOE },
   chest: { name: "Chest", text: "Move toward the closest closed treasure chest.", bonus: { chest: { supply: 1.5, equipment: 0.5 } } },
   blueSiphon: { name: "BK Siphon", text: "Trade DEF training levels for a blue key. The first use takes 1 level and each use after takes 1 more (2, then 3…)." },
-  keyToHp: { name: "Smelt GK", text: "Trade a gold key for 10% of your max HP, healing up to full. Avoids partial refills." },
+  keyToHp: { name: "Smelt GK", text: "Trade a gold key for 10% of your max HP and 2 Gold, healing up to full. Avoids partial refills." },
   blueTrader: { name: "GK -> BK", text: "Trade 3 gold keys for a blue key." },
-  smeltBlue: { name: "Smelt BK", text: "Trade a blue key for 30% of your max HP, healing up to full. Avoids partial refills." },
+  smeltBlue: { name: "Smelt BK", text: "Trade a blue key for 30% of your max HP and 4 Gold, healing up to full. Avoids partial refills." },
   redTrader: { name: "BK -> RK", text: "Trade 3 blue keys for a red key." },
-  smeltRed: { name: "Smelt RK", text: "Trade a red key for 90% of your max HP, healing up to full. Avoids partial refills." },
+  smeltRed: { name: "Smelt RK", text: "Trade a red key for 90% of your max HP and 8 Gold, healing up to full. Avoids partial refills." },
   redKey: { name: "Red Key", text: "Move toward the closest red key.", bonus: { key: { color: "red", percent: 5, gold: 3 } } },
   redSiphon: { name: "RK Siphon", text: "Trade ATK training levels for a red key. The first use takes 1 level and each use after takes 1 more (2, then 3…)." },
   torch: { name: "Torch", text: "Move toward the closest lit torch, putting it out." },
@@ -104,26 +104,26 @@ export const TRADERS = {
 } as const satisfies Partial<Record<CardId, { from: KeyColor; keys: number; to: KeyColor }>>;
 export type TraderCard = keyof typeof TRADERS;
 export const isTrader = (id: CardId): id is TraderCard => id in TRADERS;
-/** The smelts: the key each trades, and the percent of max HP it heals
- * for it (up to the Overheal ceiling). */
+/** The smelts: the key each trades, the percent of max HP it heals for it
+ * (up to the Overheal ceiling), and the Gold it pays before Gold Bonus. */
 export const SMELTS = {
-  keyToHp: { color: "yellow", percent: 10 },
-  smeltBlue: { color: "blue", percent: 30 },
-  smeltRed: { color: "red", percent: 90 },
-} as const satisfies Partial<Record<CardId, { color: KeyColor; percent: number }>>;
+  keyToHp: { color: "yellow", percent: 10, gold: 2 },
+  smeltBlue: { color: "blue", percent: 30, gold: 4 },
+  smeltRed: { color: "red", percent: 90, gold: 8 },
+} as const satisfies Partial<Record<CardId, { color: KeyColor; percent: number; gold: number }>>;
 export type SmeltCard = keyof typeof SMELTS;
 export const isSmelt = (id: CardId): id is SmeltCard => id in SMELTS;
 /** What the cards that act in place take and give as their trees have it
  * now (`HandRules`'s): the keys a trade takes, and the key a smelt takes
  * and the percent of max HP it heals. */
-export type InPlaceTerms = { tradeCost(card: TraderCard): number; smeltCost(card: SmeltCard): number; smeltPercent(card: SmeltCard): number };
+export type InPlaceTerms = { tradeCost(card: TraderCard): number; smeltCost(card: SmeltCard): number; smeltPercent(card: SmeltCard): number; smeltGold(card: SmeltCard): number };
 /** The terms without any tree. */
-const PLAIN_TERMS: InPlaceTerms = { tradeCost: (card) => TRADERS[card].keys, smeltCost: () => 1, smeltPercent: (card) => SMELTS[card].percent };
+const PLAIN_TERMS: InPlaceTerms = { tradeCost: (card) => TRADERS[card].keys, smeltCost: () => 1, smeltPercent: (card) => SMELTS[card].percent, smeltGold: (card) => SMELTS[card].gold };
 /** What card `id` does, as the player is told: STAIRS says how it climbs
  * in the Delve only once the Tournament, which plays it, is unlocked
  * (`delveKnown`), a trader the keys a
  * trade takes (its 3, or fewer with its tree's Efficiency), and a smelt
- * the key it takes and the HP it heals (`terms`). */
+ * the key it takes, the HP it heals and the Gold it pays (`terms`). */
 export function cardText(id: CardId, delveKnown: boolean, terms: InPlaceTerms = PLAIN_TERMS): string {
   if (id === "stairs" && !delveKnown) return "Move toward the stairs up.";
   if (isTrader(id)) {
@@ -132,7 +132,7 @@ export function cardText(id: CardId, delveKnown: boolean, terms: InPlaceTerms = 
   }
   if (!isSmelt(id)) return CARDS[id].text;
   const color = SMELTS[id].color, cost = snap(terms.smeltCost(id)), key = cost === 1 ? `a ${KEY_WORDS[color]} key` : `${cost} of a ${KEY_WORDS[color]} key`;
-  return `Trade ${key} for ${snap(terms.smeltPercent(id))}% of your max HP, without moving, healing past max HP up to your Overheal ceiling. Skipped ${cost === 1 ? "without" : "with less than"} ${key}, or while the whole heal wouldn't fit under that ceiling.`;
+  return `Trade ${key} for ${snap(terms.smeltPercent(id))}% of your max HP and ${snap(terms.smeltGold(id))} Gold, without moving, healing past max HP up to your Overheal ceiling. Skipped ${cost === 1 ? "without" : "with less than"} ${key}, or while the whole heal wouldn't fit under that ceiling.`;
 }
 /** A key colour as a card's text names it. */
 const KEY_WORDS: Record<KeyColor, string> = { yellow: "gold", blue: "blue", red: "red" };

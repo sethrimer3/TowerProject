@@ -303,7 +303,7 @@ A reward just picked up (an item's stats, keys, Gold, materials, a treasure ches
 _Avoid_: popup, loot text
 
 **Pickup Gold**:
-The Gold every item a run takes off the floor pays (a potion, a shard, a key, a torch put out, a treasure chest or door opened, but no area reward chest): 1, but a key 1, 2 or 3 by its colour and a keyed door its colours added up; Gold Bonus multiplies it as it does a kill's Gold and a treasure chest's.
+The Gold every item a run takes off the floor pays (a potion, a shard, a key, a torch put out, a treasure chest or door opened, but no area reward chest): 1, but a key 1, 2 or 3 by its colour and a keyed door its colours added up (1 more if it also drains HP); Gold Bonus multiplies it as it does a kill's Gold and a treasure chest's.
 _Avoid_: item Gold, floor Gold (that is Gold / Floor)
 
 ### The character

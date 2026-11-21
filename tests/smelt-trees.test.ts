@@ -71,7 +71,13 @@ test("a smelt pays its tree's Gold and Silver, its Gold once a use", () => {
   assert.ok((g.run.silver ?? 0) > silver, "Silver found");
   g.activation.actInPlace("keyToHp");
   assert.ok(g.save.gold - gold > paid, "the next smelt pays its own");
-  assert.equal(smeltGold("keyToHp", {}), 0, "no Smelt Gold, no Gold");
+});
+
+test("each smelt pays its own Gold, 2, 4 or 8, and its tree's Smelt Gold adds to it", () => {
+  assert.deepEqual([smeltGold("keyToHp", {}), smeltGold("smeltBlue", {}), smeltGold("smeltRed", {})], [2, 4, 8]);
+  assert.equal(smeltGold("keyToHp", { keyToHp: { gold: 5 } }), 3, "five levels of +0.2");
+  const g = smelting({ smeltRed: { gold: 5 } }, { yellow: 0, blue: 0, red: 0 });
+  assert.deepEqual([g.handRules.smeltGold("keyToHp"), g.handRules.smeltGold("smeltRed")], [2, 11]);
 });
 
 test("Key Smelter doubles a smelt's Gold, its Master Smelter triples it, and both six times over", () => {
@@ -130,9 +136,9 @@ test("Extra Gold Key gives a gold key on each floor new to the run", () => {
   assert.equal(g.run.player.keys.blue, 0);
 });
 
-test("a smelt's text names the key it takes and the HP it heals", () => {
+test("a smelt's text names the key it takes, the HP it heals and the Gold it pays", () => {
   const g = smelting({}, { yellow: 0, blue: 0, red: 0 });
-  assert.equal(g.cardText("keyToHp"), "Trade a gold key for 10% of your max HP, without moving, healing past max HP up to your Overheal ceiling. Skipped without a gold key, or while the whole heal wouldn't fit under that ceiling.");
-  g.run.cardTrees = { smeltRed: { efficiency: 10, heal: 1 } };
-  assert.equal(g.cardText("smeltRed"), "Trade 0.9 of a red key for 108% of your max HP, without moving, healing past max HP up to your Overheal ceiling. Skipped with less than 0.9 of a red key, or while the whole heal wouldn't fit under that ceiling.");
+  assert.equal(g.cardText("keyToHp"), "Trade a gold key for 10% of your max HP and 2 Gold, without moving, healing past max HP up to your Overheal ceiling. Skipped without a gold key, or while the whole heal wouldn't fit under that ceiling.");
+  g.run.cardTrees = { smeltRed: { efficiency: 10, heal: 1, gold: 5 } };
+  assert.equal(g.cardText("smeltRed"), "Trade 0.9 of a red key for 108% of your max HP and 11 Gold, without moving, healing past max HP up to your Overheal ceiling. Skipped with less than 0.9 of a red key, or while the whole heal wouldn't fit under that ceiling.");
 });

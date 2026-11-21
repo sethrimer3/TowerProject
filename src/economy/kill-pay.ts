@@ -21,6 +21,9 @@ export const PICKUP_GOLD = 1;
 /** Gold a key of each colour pays when picked up, and a keyed door opened
  * the sum of its colours' (a Triune Door 6). */
 export const KEY_GOLD: Record<KeyColor, number> = { yellow: 1, blue: 2, red: 3 };
+/** The Gold a keyed door that also drains HP (a Blue Heart Door) pays over
+ * its keys' `KEY_GOLD`. */
+export const HEART_DOOR_GOLD = 1;
 /** Silver, the currency spent inside a run, that a beaten enemy pays per
  * base amount, by its strength. */
 export const SILVER_MULTIPLIER: Record<EnemyStrength, number> = { weak: 1, normal: 2, strong: 3, elite: 4, boss: 5, greaterBoss: 10 };
