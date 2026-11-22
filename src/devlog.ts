@@ -13,6 +13,7 @@ export const DEVLOG_TEXT_MAX = 120;
 /** Every change, newest first: the Settings page's DEVLOG button lists them.
  * Each change adds its own line at the top (AGENTS.md). */
 export const DEVLOG: readonly DevlogEntry[] = [
+  { date: "2026-11-22", text: "Card powers no longer mention Steel Doors, which no floor has." },
   { date: "2026-11-22", text: "The Deck shows card powers only up to the next rarity; the Codex pictures coloured doors, without Steel Doors." },
   { date: "2026-11-22", text: "The infinity loop bursts into pixels that flow into the returning hero as the world fades back in." },
   { date: "2026-11-22", text: "Your first trainer now costs 50 Gems, with a gift to pay for it, and hiring one reveals Arcana." },

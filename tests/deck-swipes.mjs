@@ -44,6 +44,8 @@ try {
     Object.assign(s.upgrades, { combatStance: 1, buildout: 1, cardDoorKey: 1, cardEnemy: 1, cardHeal: 1, cardAtkUp: 1, cardDefUp: 1, cardYellowKey: 1, manualHand: 1 });
     s.hand = ["stairs", "door", "key", "monster"];
     s.cardXp.heal = 600;
+    // Medieval's sounds play only while it is worn, and only an owned theme is.
+    s.themes = ["medievalUi"];
     Object.assign(s.settings, { uiTheme: "medieval", reduceMotion: false, transition: "instant", weatherSound: false });
     const g = new Game(s); g.newRun({ outside: true, seed: 7 }); return g.save;
   });
@@ -82,7 +84,10 @@ try {
   await expect(pop).not.toContainText("IN YOUR DECK");
   await expect(page.locator(".card-reveal.details, [data-card-action]")).toHaveCount(0);
   const anchor = await page.locator('[data-add="heal"]').boundingBox(), popup = await pop.boundingBox();
-  assert.ok(popup.y + popup.height < anchor.y, "deck details sit above the card");
+  // Above the card when it fits there, else below: never over it, its arrow on the card's side.
+  const below = await pop.evaluate(n => n.classList.contains("below"));
+  assert.ok(below ? popup.y > anchor.y + anchor.height : popup.y + popup.height < anchor.y, "deck details sit beside the card, not over it");
+  assert.equal(below, anchor.y - 20 < popup.height, "below only when there is no room above");
   const arrow = await pop.evaluate(n => Number.parseFloat(n.style.getPropertyValue("--arrow-x")));
   assert.ok(Math.abs(popup.x + arrow - anchor.x - anchor.width / 2) < 1, "arrow points at the selected card");
   await page.screenshot({ path: "test-results/deck-swipes/popover-390.png" });
@@ -170,7 +175,7 @@ try {
   assert.deepEqual(await hand(), ["stairs", "heal"], "swipe transfers persist across reload");
   assert.deepEqual(errors, []);
   await context.close();
-  console.log("Deck swipes: anchored details, second tap trees, real touch transfers, flights/gap motion, full-hand sound/shake, cancellation, keyboard, both hands and reduced motion passed.");
+  console.log("Deck swipes: anchored details, second tap, real touch transfers, flights/gap motion, full-hand sound/shake, cancellation, keyboard, both hands and reduced motion passed.");
 } finally {
   await browser.close(); await server.close();
 }
