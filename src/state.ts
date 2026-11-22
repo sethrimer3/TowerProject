@@ -100,6 +100,8 @@ import { MailDesk } from "./game/mail-desk.ts";
 import { MissionDesk } from "./game/mission-desk.ts";
 import { EventDesk } from "./game/event-desk.ts";
 import { FamiliarDesk } from "./game/familiar-desk.ts";
+import { endFamiliarsTurn, stepFamiliars, type Burst, type Room } from "./familiars/rules.ts";
+import { ROOM_MIDDLE } from "./familiars/paths.ts";
 import { ShrineDesk } from "./game/shrine-desk.ts";
 import { ArcanaDesk } from "./game/arcana-desk.ts";
 import { arcanaOpen, defaultArcanaRun, type ArcanumId } from "./arcana/arcana.ts";
@@ -313,6 +315,9 @@ export class Game {
   /** Where the hero stood, and on which floor, as the turn being taken
    * began: its shots fly along the step from there. */
   private turnFrom: { x: number; y: number; height: number } | null = null;
+  /** Where the hero began the turn now ending, which the familiars' room
+   * goes by until the turn is over. */
+  private endingFrom: { x: number; y: number } | null = null;
   /** The last potion that healed, picked up or crafted: the HP it healed
    * from and to, where the hero stood, and a number that grows with each, so
    * the HP bar can fill up to it and the board raise the HP healed. */
@@ -2560,6 +2565,15 @@ export class Game {
    * is an Archer; a turn that climbs to another floor leaves its shooters
    * behind. */
   private endTurn() {
+    const from = this.turnFrom, counts = !!from && !this.run.outside && !this.fallen;
+    this.endingFrom = from;
+    this.playTurn();
+    // However the turn ended, the familiars move on last, so all of it read them where they began it.
+    if (counts) this.endFamiliars();
+    this.endingFrom = null;
+  }
+  /** A turn's end, all but the familiars moving on. */
+  private playTurn() {
     const from = this.turnFrom, sprung = this.sprung;
     this.turnFrom = null;
     this.sprung = [];
@@ -2582,6 +2596,7 @@ export class Game {
     this.arcana.phantasmTurn();
     this.arcana.frostTurn();
     this.voidwellTurn();
+    this.familiarsTurn();
     const dilation = this.dilation, frost = this.frostArea;
     // Thunderbolt and Overseer Zap strike first, so what they fell shoots no more this turn, then the ghosts along the hero's step.
     const struck = [...(sameFloor ? sprung : []), ...this.strikeBolts(fired, beams, sameFloor ? from : undefined), ...this.strikeZap(beams, sameFloor ? from : undefined), ...this.strikeGhosts(beams, at, ms, sameFloor ? from : undefined)];
@@ -2648,6 +2663,22 @@ export class Game {
     this.showVolley(this.lifespringContact(), at, ms, true);
     this.showVolley(this.decayNecro(beams), at, ms, true);
     this.showVolley(this.voidwellStrike(), at, ms, true);
+  }
+  /** The room the familiars move round (docs/agents/familiars.md): a Tower
+   * floor's, or in the Delve one of its size round the hero, as the turn began. */
+  get familiarRoom(): Room {
+    const at = this.mode === "tower" ? ROOM_MIDDLE : this.endingFrom ?? this.turnFrom ?? this.run.player;
+    return { middle: { x: at.x, y: at.y }, wrap: this.wrap, seed: this.run.seed };
+  }
+  /** The familiars' turn before anything strikes: their cooldowns, and what they set off where they began it. */
+  private familiarsTurn(): Burst[] {
+    const working = this.familiars.working;
+    return working ? stepFamiliars((this.run.familiars ??= {}), working, this.familiarRoom) : [];
+  }
+  /** The familiars' turn over: each moves on, its effect a turn shorter. */
+  private endFamiliars() {
+    const working = this.familiars.working;
+    if (working && this.run.familiars) endFamiliarsTurn(this.run.familiars, working);
   }
   /** Lifespring's turn, before anything strikes (arcana.md): its cooldown, and an
    * Effect Wave hitting every enemy of the floor at once, or its field forming. */

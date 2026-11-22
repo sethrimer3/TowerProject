@@ -1,4 +1,5 @@
-import { FAMILIARS, HATCH_MEDALS, familiarValues, statValue, upgradeMedals, type FamiliarId, type FamiliarLevels, type StatKey } from "../familiars/catalog.ts";
+import { FAMILIARS, FAMILIAR_IDS, HATCH_MEDALS, familiarValues, statValue, upgradeMedals, type FamiliarId, type FamiliarLevels, type StatKey } from "../familiars/catalog.ts";
+import { endEffect, type FamiliarValues } from "../familiars/rules.ts";
 import { researched, type ResearchTarget } from "../progression/archives.ts";
 import type { DeskHost } from "./desk.ts";
 import type { EventDesk } from "./event-desk.ts";
@@ -79,13 +80,25 @@ export class FamiliarDesk {
     return true;
   }
 
-  /** Switches a hatched familiar on or off, in or out of a run; false for an egg. */
+  /** Switches a hatched familiar on or off, in or out of a run; false for an
+   * egg. Off ends its effect in both modes' runs; its cooldown and path hold
+   * still, so switching neither skips nor restarts a wait. */
   toggle(id: FamiliarId) {
     const owned = this.saved[id];
     if (!owned) return false;
     if (owned.off) delete owned.off;
-    else owned.off = true;
+    else {
+      owned.off = true;
+      for (const mode of ["tower", "delve"] as const) endEffect(this.host.save[mode].run?.familiars?.[id]);
+    }
     return true;
+  }
+  /** The values of those hatched and switched on; null with none, so a save
+   * without familiars does nothing new. */
+  get working(): FamiliarValues | null {
+    let working: Partial<Record<FamiliarId, Record<string, number>>> | null = null;
+    for (const id of FAMILIAR_IDS) if (this.isOn(id)) (working ??= {})[id] = this.values(id);
+    return working as FamiliarValues | null;
   }
 
   /** The turns research takes off `id`'s Cooldown. */

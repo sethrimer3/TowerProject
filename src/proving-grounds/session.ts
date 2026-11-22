@@ -18,6 +18,8 @@ export class TrialSession {
     delete save.provingGrounds;
     // Every arcanum but Aurum Bloom works here: it raises floors a trial doesn't have.
     delete save.arcana.owned.aurumBloom;
+    // Familiars stay out of trials, which have their own combat.
+    save.familiars={};
     save.arcana.offer=[];
     if(ownedArcana(save.arcana).length)state.arcana ??= {run:defaultArcanaRun(),beamTurns:0};
     save.tower.runArcana=state.arcana?.run??defaultArcanaRun();
