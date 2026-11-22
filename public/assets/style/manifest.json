@@ -4254,6 +4254,166 @@
       "file": "ui-codex-help.png",
       "width": 24,
       "height": 24
+    },
+    "familiar-dragon": {
+      "file": "familiar-dragon.png",
+      "width": 72,
+      "height": 24
+    },
+    "familiar-dragon-icon": {
+      "file": "familiar-dragon-icon.png",
+      "width": 24,
+      "height": 24
+    },
+    "familiar-egg-dragon": {
+      "file": "familiar-egg-dragon.png",
+      "width": 24,
+      "height": 24
+    },
+    "familiar-egg-dragon-left": {
+      "file": "familiar-egg-dragon-left.png",
+      "width": 24,
+      "height": 24
+    },
+    "familiar-egg-dragon-right": {
+      "file": "familiar-egg-dragon-right.png",
+      "width": 24,
+      "height": 24
+    },
+    "familiar-slime": {
+      "file": "familiar-slime.png",
+      "width": 72,
+      "height": 24
+    },
+    "familiar-slime-icon": {
+      "file": "familiar-slime-icon.png",
+      "width": 24,
+      "height": 24
+    },
+    "familiar-egg-slime": {
+      "file": "familiar-egg-slime.png",
+      "width": 24,
+      "height": 24
+    },
+    "familiar-egg-slime-left": {
+      "file": "familiar-egg-slime-left.png",
+      "width": 24,
+      "height": 24
+    },
+    "familiar-egg-slime-right": {
+      "file": "familiar-egg-slime-right.png",
+      "width": 24,
+      "height": 24
+    },
+    "familiar-wolf": {
+      "file": "familiar-wolf.png",
+      "width": 72,
+      "height": 24
+    },
+    "familiar-wolf-icon": {
+      "file": "familiar-wolf-icon.png",
+      "width": 24,
+      "height": 24
+    },
+    "familiar-egg-wolf": {
+      "file": "familiar-egg-wolf.png",
+      "width": 24,
+      "height": 24
+    },
+    "familiar-egg-wolf-left": {
+      "file": "familiar-egg-wolf-left.png",
+      "width": 24,
+      "height": 24
+    },
+    "familiar-egg-wolf-right": {
+      "file": "familiar-egg-wolf-right.png",
+      "width": 24,
+      "height": 24
+    },
+    "familiar-falcon": {
+      "file": "familiar-falcon.png",
+      "width": 72,
+      "height": 24
+    },
+    "familiar-falcon-icon": {
+      "file": "familiar-falcon-icon.png",
+      "width": 24,
+      "height": 24
+    },
+    "familiar-egg-falcon": {
+      "file": "familiar-egg-falcon.png",
+      "width": 24,
+      "height": 24
+    },
+    "familiar-egg-falcon-left": {
+      "file": "familiar-egg-falcon-left.png",
+      "width": 24,
+      "height": 24
+    },
+    "familiar-egg-falcon-right": {
+      "file": "familiar-egg-falcon-right.png",
+      "width": 24,
+      "height": 24
+    },
+    "familiar-wisp": {
+      "file": "familiar-wisp.png",
+      "width": 72,
+      "height": 24
+    },
+    "familiar-wisp-icon": {
+      "file": "familiar-wisp-icon.png",
+      "width": 24,
+      "height": 24
+    },
+    "familiar-egg-wisp": {
+      "file": "familiar-egg-wisp.png",
+      "width": 24,
+      "height": 24
+    },
+    "familiar-egg-wisp-left": {
+      "file": "familiar-egg-wisp-left.png",
+      "width": 24,
+      "height": 24
+    },
+    "familiar-egg-wisp-right": {
+      "file": "familiar-egg-wisp-right.png",
+      "width": 24,
+      "height": 24
+    },
+    "familiar-flame": {
+      "file": "familiar-flame.png",
+      "width": 36,
+      "height": 12
+    },
+    "familiar-bolt": {
+      "file": "familiar-bolt.png",
+      "width": 8,
+      "height": 10
+    },
+    "familiar-sparkle": {
+      "file": "familiar-sparkle.png",
+      "width": 9,
+      "height": 9
+    },
+    "familiar-sword": {
+      "file": "familiar-sword.png",
+      "width": 9,
+      "height": 10
+    },
+    "familiar-mote": {
+      "file": "familiar-mote.png",
+      "width": 5,
+      "height": 5
+    },
+    "familiar-burn": {
+      "file": "familiar-burn.png",
+      "width": 8,
+      "height": 8
+    },
+    "familiar-stun": {
+      "file": "familiar-stun.png",
+      "width": 11,
+      "height": 8
     }
   }
 }
