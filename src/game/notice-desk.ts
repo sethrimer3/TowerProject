@@ -62,7 +62,7 @@ export class NoticeDesk {
       case "upgrades": return this.firstInspiration || this.tree("inspiration") || this.tree("breakthrough");
       case "gear": return this.firstGear || equipmentWaiting(save) || this.firstArcana;
       // The Archives lesson's dot waits until the Research page is opened.
-      case "research": return trainingWaiting(save) || (!!save.upgrades.archives && !save.tutorials.research && !save.tutorials.archives);
+      case "research": return trainingWaiting(save) || (!!save.upgrades.trainers && !save.tutorials.trainerGift) || (!!save.upgrades.archives && !save.tutorials.research && !save.tutorials.archives);
       case "deck": {
         // A new Deck lesson waits behind the tab until it is done, as does a
         // card not yet shown or a card level gained since the page last showed.
@@ -172,7 +172,7 @@ export class NoticeDesk {
     return !this.save.tutorials.gear && provisionsOpen(this.save);
   }
 
-  /** Arcanite has been held and the Arcana tab hasn't shown since. */
+  /** Arcana has opened and its tab hasn't shown since. */
   private get firstArcana() {
     return !this.save.tutorials.arcana && arcanaOpen(this.save);
   }

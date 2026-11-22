@@ -93,6 +93,7 @@ try {
       s.seen.cards = [...s.hand];
       s.seen.met = [...s.hand];
       s.tutorials.keys = s.tutorials.autoClimb = s.tutorials.training = s.tutorials.research = s.tutorials.archives = true;
+      s.tutorials.trainerGift = s.tutorials.trainers = true;
       return s;
     };
     const make = (edit) => {
@@ -130,6 +131,8 @@ try {
       s.tower.inspiration = 21;
       s.gold = 480;
       s.gems = 260;
+      s.trainers = 1;
+      s.tutorials.arcana = true;
       s.xp = 900;
       s.tower.reached = 41;
       s.tower.best = 41;
@@ -753,6 +756,9 @@ try {
     await page.locator("#dev-tools").setChecked(true);
     await page.locator("#dev-mode").setChecked(true);
     await page.locator("#access-all").setChecked(true);
+    // The app's once-a-second tick then releases the event's missions, dotting
+    // Events: wait for it, or the shots race the tick.
+    await page.locator("#events-button.notify").waitFor({ state: "attached" });
     await shot(`${prefix}.settings.dev`);
     // Access to Everything lists every theme; one is worn from its menu.
     await click("#game-themes");

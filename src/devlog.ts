@@ -13,6 +13,8 @@ export const DEVLOG_TEXT_MAX = 120;
 /** Every change, newest first: the Settings page's DEVLOG button lists them.
  * Each change adds its own line at the top (AGENTS.md). */
 export const DEVLOG: readonly DevlogEntry[] = [
+  { date: "2026-11-22", text: "Your first trainer now costs 50 Gems, with a gift to pay for it, and hiring one reveals Arcana." },
+  { date: "2026-11-22", text: "A clearer Codex with doors, inline stats and fewer spoilers; Access to Everything shows every provision." },
   { date: "2026-11-22", text: "Battery saver hides the board status text in every layout; the red caution sign remains." },
   { date: "2026-11-22", text: "Familiars: hatch five young beasts with Event Medals and grow them to fight beside you." },
   { date: "2026-11-22", text: "Fixed a climb sometimes lost on reload after a hit that did no damage or a stun that wore off." },

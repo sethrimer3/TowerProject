@@ -58,7 +58,7 @@ import { GearPage } from "./ui/gear-page.ts";
 import { DeckPage } from "./ui/deck-page.ts";
 import { RunTrainingBar } from "./ui/run-training-bar.ts";
 import { showHeldArcanum } from "./ui/arcana-panel.ts";
-import { renderBoardLesson } from "./ui/board-lesson.ts";
+import { holdTabs, renderBoardLesson } from "./ui/board-lesson.ts";
 import { renderSettingsPage } from "./ui/settings-page.ts";
 import { ShopPage } from "./ui/shop-page.ts";
 import { play } from "./sound.ts";
@@ -233,11 +233,11 @@ function update() {
   document.querySelector("nav")!.classList.toggle("in-run", !shown.run.outside);
   // The Deck tutorials keep the player on its page until they reorder the
   // hand: in the forest only the Deck tab can be pressed.
-  // The Archives lesson does the same with the Research tab and page.
+  // The Archives lesson does the same with the Research tab and page, as
+  // does the trainers lesson while the first trainer waits to be hired.
   const only = provingGrounds.active ? null : lessonTab();
   document.querySelectorAll<HTMLButtonElement>("[data-tab]").forEach((b) => (b.disabled = !!only && b.dataset.tab !== only));
-  const forestHeld = !provingGrounds.active && isBoard(tab) && game.boardLesson === "research";
-  document.querySelectorAll<HTMLElement>(".shell > :not(nav)").forEach((part) => (part.inert = forestHeld));
+  holdTabs(!provingGrounds.active && isBoard(tab) && (game.boardLesson === "research" || game.boardLesson === "hire"));
   renderHud(shown, renderer, overlay, {hand:provingGrounds.displayHand, manual: runTraining.manualOpen});
   if (runNotes.open) runNotes.refresh();
   refreshEnemyOddsBox(game);
@@ -297,10 +297,12 @@ const CURRENCY_PAGES: string[] = ["upgrades", "research", "deck", "gear", "missi
 function deckLesson() {
   return deck.teaching;
 }
-/** The one tab a lesson leaves to press, if any: the Deck's lessons' Deck
- * tab, and the Archives lesson's Research tab, from the forest until its note
- * on the Research page is dismissed (inside a run, Back still leaves it). */
+/** The one tab a lesson leaves to press, if any: the trainers lesson's
+ * Research tab while the first trainer waits to be hired, the Deck's lessons'
+ * Deck tab, and the Archives lesson's Research tab, from the forest until its
+ * note on the Research page is dismissed (inside a run, Back still leaves it). */
 function lessonTab() {
+  if (game.run.outside && game.training.mustHire) return "research";
   if (deckLesson()) return "deck";
   return game.boardLesson === "research" || (game.archivesLesson && game.run.outside) ? "research" : null;
 }
@@ -331,6 +333,8 @@ function navigate(requested: string) {
   if (id === "gear" && from !== "gear" && game.notices.waiting("equipment")) gear.openEquipment();
   // And the Arcana lesson leads to its tab.
   else if (id === "gear" && from !== "gear" && game.arcanaLesson) gear.openArcana();
+  // The trainers lesson waits on the Research page's Training tab.
+  if (id === "research" && from !== "research" && (game.training.lesson === "gift" || game.training.mustHire)) research.show("training");
   renderer.weather.silence();
   if (isBoard(id)) {
     game.switchMode(id);

@@ -100,7 +100,7 @@ export function defaults(): Save {
     manualHand: [],
     manualSlots: 0,
     badges: defaultBadges(),
-    tutorials: { story: false, arcana: false, deck: false, removeCard: false, addCard: false, upgrades: false, gear: false, onTheJob: false, speed: false, climb: false, keys: false, autoClimb: false, stuck: false, enemy: false, enter: false, training: false, delve: false, chamber: false, research: false, archives: false, goals: false, autoClimbHint: false },
+    tutorials: { story: false, arcana: false, deck: false, removeCard: false, addCard: false, upgrades: false, gear: false, onTheJob: false, speed: false, climb: false, keys: false, autoClimb: false, stuck: false, enemy: false, enter: false, training: false, delve: false, chamber: false, research: false, archives: false, goals: false, autoClimbHint: false, trainerGift: false, trainers: false },
     treeNotices: { inspiration: false, breakthrough: false },
     seen: { level: 0, training: 0, archives: 0, cards: [...BASE_HAND], cardLevels: 0, met: [...BASE_HAND] },
     archives: defaultArchives(),
@@ -395,6 +395,17 @@ function decodeProgress(s: any, d: Save) {
   applyMode(d.delve, decodeMode(s.delve, decodeDelveRun));
   d.delve.memory = decodeMemory(s.delve?.memory);
 }
+// TODO: drop `beforeTrainerGift` and its uses in a later save version (the
+// first trainer used to come free with the skill and wasn't counted).
+/** Whether the save is from before the first trainer was hired for Gems,
+ * with trainers already at work. */
+const beforeTrainerGift = (s: any, d: Save) =>
+  typeof s.tutorials?.trainerGift !== "boolean" && (d.upgrades.trainers > 0 || s.trainers > 0);
+/** The trainers hired, such a save's free first one counted among them. */
+function savedTrainers(s: any, d: Save) {
+  const old = beforeTrainerGift(s, d) ? 1 : 0;
+  return old + count(s.trainers, 0, TRAINER_GEMS.length - old);
+}
 /** The hero's Training: ranks, what they were paid with, the ranks trainers
  * finished (their own schedule), the trainers and
  * their jobs, each stat's time credit, the time bank and the boost. */
@@ -402,7 +413,7 @@ function decodeTraining(s: any, d: Save) {
   for (const t of TRAINING) d.training[t.id] = count(s.training?.[t.id], d.training[t.id], trainingCeiling(t));
   for (const t of TRAINING) d.trainingPaid[t.id] = decodePaid(s.trainingPaid?.[t.id], t.cost * d.training[t.id]);
   for (const t of TRAINING) d.trainerRanks[t.id] = count(s.trainerRanks?.[t.id], 0, d.training[t.id]);
-  d.trainers = count(s.trainers, d.trainers, TRAINER_GEMS.length);
+  d.trainers = savedTrainers(s, d);
   d.trainingJobs = decodeTrainingJobs(s.trainingJobs, trainingSlots(d));
   d.trainingAuto = TRAINING.filter((t) => Array.isArray(s.trainingAuto) && s.trainingAuto.includes(t.id)).map((t) => t.id);
   d.runAutoTrain = TRAINING.filter((t) => Array.isArray(s.runAutoTrain) && s.runAutoTrain.includes(t.id)).map((t) => t.id);
@@ -559,7 +570,9 @@ export function decode(raw: string | null): Save {
     d.cardXp = decodeCardXp(s.cardXp);
     d.cardAscension = decodeCardAscension(s.cardAscension);
     d.badges = decodeBadges(s.badges, d.upgrades, researched(d.archives, "badgeSlots"), d.goals);
-    for (const k of ["story", "arcana", "deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob", "speed", "climb", "keys", "autoClimb", "stuck", "enemy", "enter", "training", "delve", "chamber", "research", "archives", "goals", "autoClimbHint"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
+    for (const k of ["story", "arcana", "deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob", "speed", "climb", "keys", "autoClimb", "stuck", "enemy", "enter", "training", "delve", "chamber", "research", "archives", "goals", "autoClimbHint", "trainerGift", "trainers"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
+    // A player who already has a trainer from before the gift needs no lesson on hiring one.
+    if (beforeTrainerGift(s, d)) d.tutorials.trainerGift = d.tutorials.trainers = true;
     // A player who has already researched in the Archives needs no lesson on them.
     if (d.archives.history.length || d.archives.slots.some((slot) => slot.job)) d.tutorials.research = d.tutorials.archives = true;
     // Nor one who has already claimed a Goal its lesson.

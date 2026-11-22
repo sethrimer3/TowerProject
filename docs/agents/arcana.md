@@ -32,7 +32,7 @@ Each preview repeats after `ARCANUM_PREVIEW_LOOPS` (`arcana-lab.ts`), a whole nu
 **Respec** (`ArcanaDesk.respec`, once the Breakthrough skill Arcana Respec is owned, `respecUnlocked`, or with Access to Everything) sets one owned arcanum's attributes back to `[0, 0, 0]` for `ARCANUM_RESPEC_GEMS` (300, in `economy/gems.ts`) and returns `investedIn`, every level's Arcanite above the free first, straight to `save.arcanite` (not counted as earned); the arcanum stays owned and its purchase price stays spent.
 One a timed event: `save.arcana.respecEvent` keeps `eventAt`'s number on the Shop's estimated server time, whether or not Events are open; `respecRefusal` answers `locked`, `inside` (a run's arcana are only ever raised), `used`, `none` (nothing invested) or `short`.
 The Arcana tab's **Respec Arcanum** button (`#arcana-respec`) stands under Select Arcanum while any arcanum is owned, disabled inside a run or once the event's respec is spent, its Gem price red while short (`askForGems`); it opens a choice of the arcana owned, each with what it returns, then a confirm.
-With Dev free purchases nothing is paid, and the Arcana tab shows whatever Arcanite has been held (`arcanaOpen`), so a choice and every upgrade can be pressed from a fresh save.
+With Dev free purchases nothing is paid, and the Arcana tab shows from the start (`arcanaOpen`), so a choice and every upgrade can be pressed from a fresh save.
 
 **Arcanum Damage** (`arcanumBoost`): Multiplier × Equipment × Hero ATK × (1 + Critical Factor × Critical Chance) × (1 + Super Crit Mult × Super Crit Chance × Critical Chance).
 It is this average, never rolled, and is what a damaging arcanum's card shows.
@@ -225,7 +225,7 @@ What it leaves alone: a stunned enemy still replies in a fight, the Shielded bub
 Voidwell's information gains a Research box (`ARCANUM_RESEARCH` in `ui/arcana-panel.ts`). `tests/voidwell-research.test.ts` covers them.
 **Drawing** (`render/effects/voidwell.ts`): `drawVortex`, `paintVortex`, through the same `underContents` hook as Time Dilation's, first of them: a see-through dark blue radial disc with a rim, and `ARMS` spiral arms turning once in `TURN_MS` (9 s); reduced motion stills them. `drawFlyers` adds a themed board's wing to an enemy that is `flying` on the ground; Classic's baked enemies wear it already.
 
-**Toggles.** `ricochetAnimation` and `thunderboltAnimation` (Settings' Toggles menu, in its Arcana group, `ARCANA_TOGGLES`, once `arcanaOpen`), `lifespringDamage`, `phantasmDamage` and `necroDamage` (once it is owned or lent), and `voidwellDamage` (once Voidwell Damage has a level), only hide: `Game.showVolley` leaves those shots out of the volley it shows, so no line or bolt, number or sound, and `TrialRenderer` skips them by its `hidden` option. They strike all the same.
+**Toggles.** `ricochetAnimation` and `thunderboltAnimation` (Settings' Toggles menu, in its Arcana group, `ARCANA_TOGGLES`, once `arcanaReached`), `lifespringDamage`, `phantasmDamage` and `necroDamage` (once it is owned or lent), and `voidwellDamage` (once Voidwell Damage has a level), only hide: `Game.showVolley` leaves those shots out of the volley it shows, so no line or bolt, number or sound, and `TrialRenderer` skips them by its `hidden` option. They strike all the same.
 `phantasmAlpha` (a slider, 0 to 1, default 0.5, shown with `phantasmDamage`) is how solid the ghosts and their bursts are drawn; at 0 they don't draw at all.
 
 **In a trial.**
@@ -269,7 +269,9 @@ Three change what no attribute holds, each given by its rule only with the boon:
   So a ghost of either ring strikes alike, and `loseGhost` leaves the other ring alone.
 
 **UI.**
-The Gear page's Arcana tab (`GearPage`, `ArcanaPanel`) shows once `arcanaOpen`: Arcanite held or ever earned, or an arcanum owned; the Gear tab opens with it.
+The Gear page's Arcana tab (`GearPage`, `ArcanaPanel`) shows once `arcanaOpen`: the first trainer hired (`save.trainers`), or `arcanaReached` (Arcanite held or ever earned, or an arcanum owned); the Gear tab opens with it.
+What would name a spell before the player has met Arcanite (the spells' Settings rows) asks `arcanaReached`, not `arcanaOpen`.
+Below the first arcanum's price held, the tab says how Arcanite is earned (`.arcana-intro`).
 `notices.waiting("arcana")` puts a dot on the Gear tab and the Arcana tab, and the last of the forest's lessons, `arcana`, points at the Gear tab, until `notices.shown("arcana")` (`save.tutorials.arcana`), set when the tab first shows; `navigate` opens the page on the tab while the lesson waits.
 Short of Arcanite, the Select button keeps its full look with a red price, and it and every other price offer the Shop (`askForArcanite`); an upgrade button short of Arcanite fades only its border.
 `closesOnBackdrop` (`ui/dialogs.ts`) closes the choice and information dialogs on a press outside.

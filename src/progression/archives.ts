@@ -8,7 +8,7 @@ import type { Save } from "../save/shape.ts";
 import type { Profile } from "../save/profile.ts";
 import { goalUnlocked, type GoalUnlock } from "../goals.ts";
 import { finite as finiteIn, isRecord, wholeIn } from "../save/decode.ts";
-import { intPow } from "../exact.ts";
+import { intPow, snap } from "../exact.ts";
 import { BUY_QUANTITIES, quantityLabel } from "./buy-quantity.ts";
 import { smittenText } from "../angel.ts";
 import { tally } from "../save/profile.ts";
@@ -1696,6 +1696,23 @@ export function researched(a: ArchivesSave, target: ResearchTarget, base: number
     }
   }
   return set ?? (base + add) * multiply;
+}
+/** The one number of a shown research value, and the words round it. */
+const SHOWN_AMOUNT = /^([^\da-z]*)(\d+(?:\.\d+)?)(\D*)$/i;
+/** A shown value's units that take an s. */
+const COUNTED_UNIT = /^( turn| tile)s?$/;
+/** What `id`'s completed levels add to what it raises, as the Codex shows
+ * it: "+6%", "−3", "+0.20×", or the value reached where that is no plain
+ * amount ("Unlocked", "x25"). */
+export function researchBoost(a: ArchivesSave, id: ResearchId) {
+  const target: ResearchTarget = research(id).levels[0]!.effect.target, { shown } = RESEARCH_TARGETS[target];
+  const without = { ...a, levels: { ...a.levels, [id]: 0 } }, reached = shown(researched(a, target));
+  const from = SHOWN_AMOUNT.exec(shown(researched(without, target))), to = SHOWN_AMOUNT.exec(reached);
+  const unit = (m: RegExpExecArray) => COUNTED_UNIT.exec(m[3]!)?.[1] ?? m[3]!;
+  if (!from || !to || unit(from) !== unit(to)) return reached;
+  const signed = ([, before, amount]: RegExpExecArray) => (/[-−]/.test(before!) ? -1 : 1) * Number(amount);
+  const more = snap(signed(to) - signed(from)), places = Math.max(...[from, to].map((m) => m[2]!.split(".")[1]?.length ?? 0));
+  return `${more < 0 ? "−" : "+"}${Math.abs(more).toFixed(places)}${to[1]!.includes("×") ? "×" : ""}${unit(to)}${COUNTED_UNIT.test(to[3]!) && Math.abs(more) !== 1 ? "s" : ""}`;
 }
 /** The Archives as they would be with `id`'s next level completed, to show
  * what it changes. */

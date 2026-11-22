@@ -8,7 +8,7 @@ import { shortAmount, whole } from "../whole.ts";
 import type { BuyQuantity } from "../progression/buy-quantity.ts";
 import { bindBuyQuantity, buyQuantityHtml, maxCount } from "./buy-quantity-select.ts";
 import { TrainingParticles } from "../render/effects/training-particles.ts";
-import { BOOST_CLAIM_MARGIN_MS, BOOST_MAX_MS, BOOST_RATE, boostLeft, claimBoost, nextTrainerGems, ranksInTraining, trainingJob, trainingSlots, workLeft, type TrainingJob } from "../progression/training-jobs.ts";
+import { TRAINER_GIFT, BOOST_CLAIM_MARGIN_MS, BOOST_MAX_MS, BOOST_RATE, boostLeft, claimBoost, nextTrainerGems, ranksInTraining, trainingJob, trainingSlots, workLeft, type TrainingJob } from "../progression/training-jobs.ts";
 import type { AppContext } from "./app.ts";
 import { adIcon, clamp, clockIcon, el, gemCount, gemIcon, goldIcon, pointsIcon, POINTER_SVG, redoIcon, riseFrom, uiSprite } from "./dom.ts";
 import { TRAINING_RESET_GEMS } from "../economy/gems.ts";
@@ -19,6 +19,7 @@ import { estimatedServerTime } from "../shop/clock.ts";
 import { stream } from "../random.ts";
 import { revealReward } from "./reward-reveal.ts";
 import { seesAll } from "../access.ts";
+import { holdLesson } from "./board-lesson.ts";
 
 type TrainingRow = (typeof TRAINING)[number];
 type ResearchTab = "training" | "archives";
@@ -54,7 +55,7 @@ export class ResearchPage {
   }
 
   render() {
-    if (!this.archivesOpen) this.tab = "training";
+    if (!this.archivesOpen || this.ctx.game.training.mustHire) this.tab = "training";
     this.nextCountdown = 0;
     const back = this.ctx.game.run.outside ? "" : `<button class="back" id="research-back">${controlIcon("back")} Back</button>`;
     const head = `${back}${this.tabsHtml()}${this.lessonHtml()}`;
@@ -66,6 +67,9 @@ export class ResearchPage {
       this.ctx.update();
       this.render();
     });
+    // The page is new, so what the trainers lesson holds is held again.
+    holdLesson();
+    el("research").querySelector<HTMLElement>("button[data-lesson-hold], [data-lesson-hold] button")?.focus();
   }
 
   /** The Archives lesson's note (`Game.archivesLesson`), under the tabs:
@@ -123,6 +127,17 @@ export class ResearchPage {
     this.bindTabs();
     this.bindTraining();
     el("research-help").onclick = () => this.showTrainingHelp();
+    el("trainer-gift-claim")?.addEventListener("click", () => {
+      if (!this.ctx.game.training.claimGift()) return;
+      play("coin");
+      this.ctx.update();
+      this.render();
+    });
+    el("trainers-praise")?.addEventListener("click", () => {
+      if (!this.ctx.game.training.finishLesson()) return;
+      this.ctx.update();
+      this.render();
+    });
     el("training-lesson")?.addEventListener("click", () => {
       if (!this.ctx.game.finishTrainingLesson()) return;
       this.ctx.update();
@@ -252,7 +267,7 @@ export class ResearchPage {
     const body = p(`Each level the hero gains earns ${TRAINING_PER_LEVEL} Training Points. Spend them to train a stat a rank at once.`) +
       p("A rank is worth more as the hero levels up, ranks already bought included.") +
       (hired
-        ? p("Or pay Gold to a trainer: the rank takes the time under the stat's name, and trainers work while you play or are away. Each trainer trains one stat at a time; Gems hire more.") +
+        ? p("Or pay Gold to a trainer: the rank takes the time under the stat's name, and trainers work while you play or are away. Gems hire trainers, and each trains one stat at a time.") +
           p(`Watching an ad makes training go ×${BOOST_RATE} as fast for an hour, up to four hours stored. Tick a stat in training to have its trainer start the next rank as soon as one is done.`) +
           p("Stopping a trainer gives the Gold back and keeps the time spent as credit toward that stat's next rank.")
         : "");
@@ -324,10 +339,10 @@ export class ResearchPage {
     const bank = save.trainingBank > 0
       ? `<span class="training-bank" title="Time bank: taken off any stat's next ranks trainers train, after its own time credit">${clockIcon()} <b id="training-bank">${formatDuration(save.trainingBank)}</b></span>`
       : "";
-    // The points held, at the right end of the trainers' row once there are trainers.
+    // The points held, at the right end of the trainers' row once the Trainers skill is owned.
     const held = `<span class="training-held" title="Training points"><span class="points-held">${pointsIcon()}<b id="training-points">${points.left}</b></span><small>Training Points</small></span>`;
     return `<section class="training"><canvas class="training-particles" aria-hidden="true"></canvas><header class="tree-heading">${rushEfficiencyHtml(trainingRowsFull(save), "finishing a rank in training")}<h3>Training${helpButton("How Training works", "research-help")}</h3></header>
-      ${hired ? this.boostHtml() : ""}
+      ${this.trainersLessonHtml()}${hired ? this.boostHtml() : ""}
       ${hired
         ? `<div class="training-points training-slots"><span class="training-trainers">Trainers: <b id="training-slots">${save.trainingJobs.length} / ${slots}</b> ${this.trainerButton()}${this.speedHtml()}</span><span class="training-end">${quantity}${bank}${held}</span></div>`
         : `<div class="training-points">${held}${bank}${quantity}</div>`}
@@ -379,10 +394,33 @@ export class ResearchPage {
     if (left) left.textContent = formatCountdown(nextDailyAt(now) - now);
   }
 
+  /** The trainers lesson's note (`TrainingDesk.lesson`), over the trainers'
+   * row: the gift with its Claim, the only thing to press until pressed;
+   * then the way to the first trainer's button, likewise; then the praise,
+   * which a press dismisses. */
+  private trainersLessonHtml() {
+    const training = this.ctx.game.training, lesson = training.lesson, { gems, gold } = TRAINER_GIFT;
+    if (lesson === "gift")
+      return `<div class="tree-lesson trainers-lesson" data-lesson-hold><p>Here's ${gems} ${gemIcon()} and ${gold} ${goldIcon()} to get you started.</p>`
+        + `<button type="button" id="trainer-gift-claim" class="trainer-gift-claim" aria-label="Claim ${gems} Gems and ${gold} Gold">Claim ${gems} ${gemIcon()} + ${gold} ${goldIcon()}</button></div>`;
+    if (lesson === "hire" && training.mustHire)
+      return `<div class="tree-lesson trainers-lesson" role="status"><b>Hire your first trainer.</b><p>Press the + button to hire a trainer for ${nextTrainerGems(this.ctx.game.save)} ${gemIcon()}.</p></div>`;
+    if (lesson !== "praise") return "";
+    return `<button type="button" class="tree-lesson trainers-lesson trainers-praise" id="trainers-praise"><b>Well done! You hired a trainer for your hero.</b>`
+      + `<p>The more they train, the stronger they get, and the higher they can climb the tower.</p>`
+      + `<p>Start training now, and hire more trainers as soon as you can to speed up your progress.</p><small>Tap to dismiss</small></button>`;
+  }
+
+  /** Whether the training points' lesson shows: while it waits and the
+   * trainers lesson doesn't. */
+  private get teachesPoints() {
+    return this.ctx.game.trainingLesson && !this.ctx.game.training.lesson;
+  }
+
   /** The training lesson's note (`Game.trainingLesson`), over the rows:
    * pressing it dismisses it and ends the lesson. */
   private trainingLessonHtml() {
-    if (!this.ctx.game.trainingLesson) return "";
+    if (!this.teachesPoints) return "";
     return `<button type="button" class="tree-lesson training-lesson" id="training-lesson"><b>Spend training points to upgrade your stats.</b><small>Tap to dismiss</small></button>`;
   }
 
@@ -433,7 +471,7 @@ export class ResearchPage {
   /** While the training lesson waits, the tutorials' hand points down at
    * each points button that can be pressed. */
   private trainPointer(affordable: boolean) {
-    if (!affordable || !this.ctx.game.trainingLesson) return "";
+    if (!affordable || !this.teachesPoints) return "";
     return `<span class="train-pointer${this.ctx.game.save.settings.reduceMotion ? " still" : ""}" aria-hidden="true">${POINTER_SVG}</span>`;
   }
 
@@ -472,9 +510,9 @@ export class ResearchPage {
     const game = this.ctx.game, save = game.save;
     if (trainingJob(save.trainingJobs, t.id))
       return `<span class="training-job"><button class="training-box training-timer" data-cancel="${t.id}" aria-label="Training ${t.name}: tap to stop and get the Gold back" title="Tap to stop and get the Gold back"><span data-training-timer="${t.id}">${formatCountdown(game.training.left(t.id))}</span></button></span>`;
-    const q = game.training.buyQuantity, batch = game.training.batch(t.id, q), full = save.trainingJobs.length >= trainingSlots(save), gold = whole(batch.gold);
+    const q = game.training.buyQuantity, batch = game.training.batch(t.id, q), slots = trainingSlots(save), full = !game.free && save.trainingJobs.length >= slots, gold = whole(batch.gold);
     const takes = formatDuration(game.training.toNextRank(t.id, q)), ranks = batch.count === 1 ? `to ${trainingText(step.next, step.unit)}` : `${batch.count} ranks`;
-    return `<button class="training-box training-cost training-gold" data-train-gold="${t.id}" ${batch.affordable && !full && !locked ? "" : "disabled"} aria-label="Pay ${gold} Gold to a trainer to train ${t.name} ${ranks}, taking ${takes}" title="${locked ? `${t.name} is locked` : full ? "Every trainer is busy" : `${batch.count === 1 ? "" : `${ranks}: `}Takes ${takes}`}">${maxCount(q, batch.count)}${goldIcon()}<span>${priceAmount(gold, 10_000)}</span></button>`;
+    return `<button class="training-box training-cost training-gold" data-train-gold="${t.id}" ${batch.affordable && !full && !locked ? "" : "disabled"} aria-label="Pay ${gold} Gold to a trainer to train ${t.name} ${ranks}, taking ${takes}" title="${locked ? `${t.name} is locked` : full ? (slots ? "Every trainer is busy" : "Hire a trainer first") : `${batch.count === 1 ? "" : `${ranks}: `}Takes ${takes}`}">${maxCount(q, batch.count)}${goldIcon()}<span>${priceAmount(gold, 10_000)}</span></button>`;
   }
 
   /** A row's Gem reset: absent, its column kept empty, until the Training
@@ -544,8 +582,12 @@ export class ResearchPage {
   private trainerButton() {
     const game = this.ctx.game, price = nextTrainerGems(game.save);
     if (price === null) return "";
-    const short = this.trainerShort();
-    return `<button id="buy-trainer" class="buy-trainer${short ? " short" : ""}" aria-label="Buy a trainer for ${price} Gems: one more stat trains at once" title="${short ? `Needs ${price} Gems` : "One more stat trains at once"}">+ ${gemIcon()} ${price}</button>`;
+    const short = this.trainerShort(), first = !game.save.trainers, held = game.training.mustHire;
+    const gain = first ? "Trains a stat for Gold" : "One more stat trains at once";
+    const label = first ? `Hire your first trainer for ${price} Gems` : `Buy a trainer for ${price} Gems: one more stat trains at once`;
+    // While the trainers lesson waits on it, the tutorials' hand points up at it.
+    const pointer = held ? `<span class="hire-pointer${game.save.settings.reduceMotion ? " still" : ""}" aria-hidden="true">${POINTER_SVG}</span>` : "";
+    return `<button id="buy-trainer" class="buy-trainer${short ? " short" : ""}"${held ? " data-lesson-hold" : ""} aria-label="${label}" title="${short ? `Needs ${price} Gems` : gain}">+ ${gemIcon()} ${price}${pointer}</button>`;
   }
 
   /** Once a second while the page shows: the Archives' countdowns, or the
@@ -566,6 +608,8 @@ export class ResearchPage {
     if (boost) boost.outerHTML = this.boostHtml();
     document.querySelector<HTMLButtonElement>("#boost-claim")?.addEventListener("click", () => this.watchBoost());
     this.tickDaily();
+    // The boost's and the daily points' buttons may be new: hold them too.
+    holdLesson();
   }
 
   /** Moves the timers of the ranks in training on, with the Gems that

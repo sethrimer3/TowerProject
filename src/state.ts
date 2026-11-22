@@ -138,7 +138,7 @@ import type { Coin, Dash, Drop, Facing, Gain, GainArt, GainStrike, Heal, ShownCl
  * which seed (rolled from the game's randomness when left out). */
 export type RunStart = { outside?: boolean; seed?: number; height?: number };
 /** A lesson shown on the board (`Game.boardLesson`). */
-export type BoardLesson = "story" | "climb" | "keys" | "autoClimbHint" | "autoClimb" | "stuck" | "enemy" | "upgrades" | "enter" | "trainingPoints" | "delve" | "provisions" | "research" | "goals" | "arcana";
+export type BoardLesson = "story" | "climb" | "keys" | "autoClimbHint" | "autoClimb" | "stuck" | "enemy" | "upgrades" | "enter" | "trainingPoints" | "delve" | "provisions" | "research" | "trainers" | "hire" | "goals" | "arcana";
 /** The first skills the lessons lead to on the Inspiration tree, in order. */
 export type IntroSkill = "cardDoorKey" | "cardEnemy";
 export type RouteEffects = {
@@ -574,7 +574,10 @@ export class Game {
    * lesson); `goals`, to the Goals button while a Goal waits to be claimed,
    * until the Goals page is opened; `research`, once the Archives skill is owned, to the Research
    * tab, until the Research page is opened (`archivesLesson` then waits on
-   * its note there); then, in either forest, `trainingPoints`, the first time training
+   * its note there); in either forest, before all but the story, `hire`, while the
+   * trainers lesson leaves only the first trainer to hire (`TrainingDesk.mustHire`),
+   * and after the Archives', `trainers`, while its gift waits on the Research page;
+   * then, in either forest, `trainingPoints`, the first time training
    * points can be spent, which leads to the Research tab until the
    * Training tab's note is dismissed (`trainingLesson`); then, in the Tower's
    * forest while a tournament opens the Delve, `delve`, until the Delve is
@@ -594,17 +597,19 @@ export class Game {
     }
     // Told before the first skill is bought: a player past that has begun without it.
     if (tower && t.climb && !t.story && !owned.cardDoorKey) return "story";
+    if (this.training.mustHire) return "hire";
     if (tower && this.introSkill) return "upgrades";
     if (tower && ((!t.enter && owned.cardDoorKey) || (t.enemy && owned.cardEnemy))) return "enter";
     if (tower && !t.goals && goalsWaiting(this.save)) return "goals";
     if (tower && owned.archives && !t.research && !t.archives) return "research";
+    if (this.training.lesson === "gift") return "trainers";
     if (!t.training && trainingWaiting(this.save)) return "trainingPoints";
     if (tower && this.delveOpen && !t.delve) return "delve";
     if (this.provisionsLesson) return "provisions";
     return this.arcanaLesson ? "arcana" : null;
   }
-  /** Whether the Arcana lesson waits: in the forest, once Arcanite has been
-   * held, a hand on the Gear tab until the Arcana tab shows (which sets
+  /** Whether the Arcana lesson waits: in the forest, once Arcana has
+   * opened, a hand on the Gear tab until the Arcana tab shows (which sets
    * `save.tutorials.arcana`, `notices.shown("arcana")`). */
   get arcanaLesson() {
     return !!this.run.outside && !this.save.tutorials.arcana && arcanaOpen(this.save);

@@ -531,7 +531,8 @@ html.ui-sprites .page-title :is(h2, small):not(#_) { color: #10151c; text-shadow
 /* PNG subjects stay visible independently of the selected frame theme. */
 .sprite-icon { position: relative; display: inline-block; vertical-align: middle; }
 .sprite-native { display: block; width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
-.tutorial-pointer-art { width: 100%; }
+/* An atlas region has no size of its own, so a hand given only a width takes its square here. */
+.tutorial-pointer-art { width: 100%; aspect-ratio: 1; }
 .sprite-card-label { display: none !important; }
 .sprite-ready > .sprite-replacement:not(#_) {
   display: block !important;

@@ -4,7 +4,10 @@ import { defaults, decode } from "../src/save/save.ts";
 import { codexCategories, costToReach, enemiesKnown, GENERAL_TOPICS, type CodexSource } from "../src/codex/codex.ts";
 import { decodeCodex, defaultCodex, noteDiscoveries } from "../src/codex/discovery.ts";
 import { CARD_BRIEFS, ARCANUM_BRIEFS, FAMILIAR_BRIEFS, STRENGTH_BRIEFS, TRAIT_BRIEFS } from "../src/codex/briefs.ts";
-import { cost } from "../src/progression/upgrades.ts";
+import { readdirSync, readFileSync } from "node:fs";
+import { cost, UPGRADES } from "../src/progression/upgrades.ts";
+import { researchBoost, type ResearchId } from "../src/progression/archives.ts";
+import { rarityRank } from "../src/cards/rarity.ts";
 import { TREES } from "../src/progression/skill-trees.ts";
 
 const source = (over: Partial<CodexSource> = {}): CodexSource => ({ save: defaults(), inside: false, tournament: false, events: false, held: [], ...over });
@@ -121,6 +124,75 @@ test("the Codex remembers arcana offered or lent, and Uniques owned, after they 
   const arcana = codexCategories(source({ save })).find((c) => c.id === "arcana")!.sections[0]!.entries;
   assert.equal(arcana.find((e) => e.id === "voidwell")!.hidden, undefined);
   assert.equal(arcana.find((e) => e.id === "overseer")!.hidden, true);
+});
+
+const entry = (src: CodexSource, category: string, id: string) => entries(src).find((e) => e.category === category && e.id === id)!;
+
+test("currencies, Training and research show their one stat after the name, with nothing to expand", () => {
+  const save = defaults();
+  save.gold = 1234.9;
+  save.training.hp = 3;
+  save.archives.levels.potionHp = 2;
+  const src = source({ save });
+  assert.equal(entry(src, "currencies", "gold").status, "(Have 1,234)", "never rounded up");
+  assert.equal(entry(src, "currencies", "silver").status, undefined, "Silver is a climb's alone");
+  assert.equal(entry({ ...src, inside: true, silver: 56 }, "currencies", "silver").status, "(Have 56)");
+  assert.match(entry(src, "training", "hp").status!, /^Rank 3 \(\+\d+\)$/);
+  assert.equal(entry(src, "training", "attack").status, "Rank 0");
+  assert.equal(entry(src, "archives", "potionHp").status, "Rank 2 (+40%)");
+  assert.equal(entry(src, "inspiration", "cardDoorKey").status, "(Cost 1 Inspiration)");
+  for (const e of entries(src))
+    if (["currencies", "inspiration", "breakthrough", "archives", "training"].includes(e.category)) assert.equal(e.facts, undefined, `${e.category}/${e.id}`);
+});
+
+test("research boosts read as what the levels add, or what they open", () => {
+  const boost = (id: ResearchId, level: number) => {
+    const save = defaults();
+    save.archives.levels[id] = level;
+    return researchBoost(save.archives, id);
+  };
+  assert.equal(boost("researchCostDiscount", 3), "−0.9%");
+  assert.equal(boost("overseerZap", 1), "−1 turn");
+  assert.equal(boost("goldenFloorMultiplier", 3), "+0.3×");
+  assert.equal(boost("buyQuantity", 1), "x5");
+  assert.equal(boost("noteTaking", 1), "Open");
+});
+
+test("the Inspiration and Breakthrough trees' skills have no ranks to show", () => {
+  for (const node of TREES.filter((t) => t.id === "inspiration" || t.id === "breakthrough").flatMap((t) => t.nodes))
+    assert.equal(UPGRADES.find((u) => u.id === node.id)!.max, 1, node.id);
+});
+
+test("an owned card shows powers only up to the next rarity", () => {
+  const save = defaults(), src = source({ save });
+  const upTo = () => entry(src, "cards", "stairs").card!.upTo;
+  assert.equal(upTo(), rarityRank("common"));
+  save.cardXp.stairs = 1e9;
+  assert.equal(upTo(), rarityRank("uncommon"));
+});
+
+test("Tower Elements pictures the doors, ends with Heart Doors and keeps the Greater Boss for the Torch card", () => {
+  const save = defaults(), src = source({ save });
+  const list = () => codexCategories(src).find((c) => c.id === "elements")!.sections[0]!.entries;
+  assert.equal(list().at(-1)!.id, "heartDoor");
+  assert.deepEqual(entry(src, "elements", "goldKey").beside, { kind: "door", id: "yellow" });
+  assert.equal(entry(src, "elements", "steelDoor").name, "Steel Doors");
+  assert.equal(entry(src, "elements", "multiDoor").hidden, true, "not before red keys are known");
+  assert.doesNotMatch(entry(src, "elements", "torch").brief, /Greater Boss/);
+  save.upgrades.cardTorch = 1;
+  assert.match(entry(src, "elements", "torch").brief, /Greater Boss/);
+  save.tower.best = 101;
+  assert.equal(entry(src, "elements", "multiDoor").brief, "Some doors require multiple key types to open.");
+});
+
+test("How to progress lists its tips", () => {
+  assert.equal(entry(source(), "general", "progress").tips!.length, 6);
+});
+
+test("the stylesheets hold no control characters, as an escape read as octal leaves", () => {
+  const dir = new URL("../src/styles/", import.meta.url);
+  for (const file of readdirSync(dir).filter((name) => name.endsWith(".css")))
+    assert.doesNotMatch(readFileSync(new URL(file, dir), "utf8"), /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]/, file);
 });
 
 test("the Codex's save decodes defensively and round-trips", () => {

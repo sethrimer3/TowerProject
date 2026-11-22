@@ -292,10 +292,15 @@ export const arcanumPrice = (a: Owned) => ARCANUM_PRICES[Math.min(ownedArcana(a)
 export const rerollPrice = (a: Owned) => Math.ceil(arcanumPrice(a) / 5);
 /** Whether a reroll could change anything: otherwise every option left already shows. */
 export const rerollOpen = (a: Owned) => unownedArcana(a).length > OFFER_SIZE;
-/** The Arcana tab shows once Arcanite has been held, whatever is left of it,
- * and with Dev free purchases, which need none. */
-export const arcanaOpen = (save: { arcanite: number; arcana: ArcanaSave; profile: { earned: { arcanite: number } }; settings: { freePurchases: boolean } }) =>
+type ArcanaHolder = { arcanite: number; arcana: ArcanaSave; profile: { earned: { arcanite: number } }; settings: { freePurchases: boolean } };
+/** Whether the player has had any Arcanite, whatever is left of it (or
+ * needs none, with Dev free purchases): what shows the spells' own
+ * Settings rows, which would name them too soon otherwise. */
+export const arcanaReached = (save: ArcanaHolder) =>
   save.settings.freePurchases || save.arcanite > 0 || save.profile.earned.arcanite > 0 || ownedArcana(save.arcana).length > 0;
+/** The Arcana tab shows once the first trainer is hired, or Arcanite has
+ * been held before that. */
+export const arcanaOpen = (save: ArcanaHolder & { trainers: number }) => save.trainers > 0 || arcanaReached(save);
 
 /** Up to `count` of `pool` drawn without repeats, each as likely as any other. */
 export function drawOptions<T>(pool: readonly T[], count: number, draw: () => number): T[] {

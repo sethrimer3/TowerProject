@@ -87,7 +87,7 @@ The two zones line up with the prize levels: promotion is levels 1–3 (3% + 4% 
 
 Gold's and Platinum's Arcanite meet the rule exactly at level 4, the most it allows with their level 3; levels 2 and 5–9 don't enter the rule, so they are raised as far toward their neighbours as reads well. Every column also only rises toward level 1. `tests/tournament.test.ts` checks both properties over the table, so a retune can't break them.
 
-**Consequence of the given endpoints:** Gold's bottom (20 ◆ 50 💎) is close to Silver's bottom (12 ◆ 40 💎), so Silver's levels 4–10 are squeezed between 40 and 50 Gems, and Silver's prizes jump from 50 to 100 Gems at the promotion zone. The same is true, less sharply, of Copper's Shards. Raising Gold's bottom would spread Silver's middle levels out.
+**Consequence of the given endpoints:** Gold's bottom (20 ◆ 50 💎) is close to Silver's bottom (12 ◆ 40 💎), so Silver's levels 4–10 are squeezed between 40 and 50 Gems, and Silver's prizes jump from 50 to 100 Gems at the promotion zone. The same is true, less sharply, of Copper's Arcanite. Raising Gold's bottom would spread Silver's middle levels out.
 
 ## Tickets
 

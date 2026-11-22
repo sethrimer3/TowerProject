@@ -21,10 +21,12 @@ const TRAINING_START_SECONDS = [15, 60, 300, 600];
 export const TRAINING_STEP_SECONDS = 600;
 /** The most one rank can take, so a stat trained very far never overflows. */
 const TRAINING_LONGEST_SECONDS = 365 * 86400;
-/** How many stats the hero can train at once, to start with. */
-export const TRAINING_SLOTS = 1;
-/** What each trainer bought with Gems costs, in order: each adds a slot. */
-export const TRAINER_GEMS = [100, 250, 450, 700, 1000, 1400] as const;
+/** What each trainer costs in Gems, in order, the first one too: each
+ * trains one stat at a time. */
+export const TRAINER_GEMS = [50, 100, 250, 450, 700, 1000, 1400] as const;
+/** What the trainers lesson gives, once: the first trainer's Gems and the
+ * Gold to start training with. */
+export const TRAINER_GIFT = { gems: TRAINER_GEMS[0], gold: 100 } as const;
 /** Gems that finish a rank in training at once: one per ten minutes left,
  * and one more for any part of ten minutes. */
 export const FINISH_GEM_SECONDS = 600;
@@ -109,10 +111,10 @@ export function batchWork(ms: number, speed: number, credit: number, bank: numbe
  * done at its own pace, the speedup not counted as extra time. */
 export const jobInvested = (job: TrainingJob, left: number) => Math.round(job.used + Math.max(0, (job.ms - job.used) / job.speed - left));
 
-/** How many stats can be in training at once: the first slot, one for
- * each trainer bought, and one for the Extra Trainer skill. */
+/** How many stats can be in training at once: one for each trainer hired
+ * (none at first), one for the Extra Trainer skill and those the Shop adds. */
 export const trainingSlots = (save: { trainers: number; upgrades: { extraTrainer: number }; entitlements?: EntitlementId[] }) =>
-  TRAINING_SLOTS + save.trainers + save.upgrades.extraTrainer + (save.entitlements ? premiumTrainers({ entitlements: save.entitlements }) : 0);
+  save.trainers + save.upgrades.extraTrainer + (save.entitlements ? premiumTrainers({ entitlements: save.entitlements }) : 0);
 /** The Gems the next trainer costs, or null once every one is bought. */
 export const nextTrainerGems = (save: { trainers: number }) => TRAINER_GEMS[save.trainers] ?? null;
 /** What each item maxed takes off its tab's Gem rushes, in tenths of a

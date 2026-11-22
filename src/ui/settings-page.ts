@@ -11,7 +11,7 @@ import type { AppContext, PageGame } from "./app.ts";
 import type { BoardOverlay } from "./board-overlay.ts";
 import { el } from "./dom.ts";
 import { goalUnlocked } from "../goals.ts";
-import { arcanaOpen } from "../arcana/arcana.ts";
+import { arcanaReached } from "../arcana/arcana.ts";
 import { researched } from "../progression/archives.ts";
 import { showStats } from "./stats-dialog.ts";
 import { showDevlog } from "./devlog-dialog.ts";
@@ -50,8 +50,8 @@ const SHOWN: Partial<Record<PageKey, (save: Save) => boolean>> = {
   fightAnimation: (save) => !!save.upgrades.instantCombat,
   damageVisual: (save) => goalUnlocked(save, "damageVisual"),
   itemLabels: (save) => goalUnlocked(save, "damageVisual"),
-  ricochetAnimation: arcanaOpen,
-  thunderboltAnimation: arcanaOpen,
+  ricochetAnimation: arcanaReached,
+  thunderboltAnimation: arcanaReached,
   // Once it is unlocked: bought, or lent to the climb by a Shrine.
   lifespringDamage: (save) => !!save.arcana.owned.lifespring || !!save.tower.run?.shrine?.arcana?.includes("lifespring"),
   phantasmDamage: phantasmUnlocked,

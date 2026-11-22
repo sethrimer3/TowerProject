@@ -6,8 +6,9 @@ import { batchSpeedup, bulkBuy, openQuantities, type BuyQuantity } from "../prog
 import { researched } from "../progression/archives.ts";
 import { trainingBulk, trainingDiscount, trainingFull, trainingMaxed, trainingRowsFull, trainingSpeed, trainingOpen } from "../progression/loadout.ts";
 import { BOOST_FOREVER, permanentBoost, trainingRate } from "../shop/entitlements.ts";
-import { batchWork, claimBoost, doneAt, finishGems, jobInvested, nextTrainerGems, ranksInTraining, trainerBatch, trainingGold, trainingJob, trainingSeconds, workLeft, trainingSlots, type TrainingJob } from "../progression/training-jobs.ts";
+import { TRAINER_GIFT, batchWork, claimBoost, doneAt, finishGems, jobInvested, nextTrainerGems, ranksInTraining, trainerBatch, trainingGold, trainingJob, trainingSeconds, workLeft, trainingSlots, type TrainingJob } from "../progression/training-jobs.ts";
 import { affordsGems, type DeskHost } from "./desk.ts";
+import { CURRENCIES } from "../shop/currency.ts";
 import { changeLoadout } from "./hero-sync.ts";
 import { tally } from "../save/profile.ts";
 import { seesAll } from "../access.ts";
@@ -17,6 +18,9 @@ const rowOf = (id: TrainingId) => TRAINING.find((t) => t.id === id)!;
 const BATCH_QUANTITIES = [100, 25, 10, 5, 1] as const;
 /** The screens that keep their own Buy Quantity, and the setting each saves it in. */
 export type QuantityScope = "training" | "run";
+/** Where the trainers lesson stands: its gift to claim, the first trainer
+ * to hire, then the praise for hiring it. */
+export type TrainersLesson = "gift" | "hire" | "praise";
 const QUANTITY_SETTINGS = { training: "buyQuantity", run: "runBuyQuantity" } as const;
 
 /** The Training tab's commands: ranks bought with training points, or
@@ -34,6 +38,37 @@ export class TrainingDesk {
 
   private get save() {
     return this.host.save;
+  }
+
+  /** The trainers lesson's step, from the Trainers skill bought until its
+   * praise is dismissed; null otherwise. */
+  get lesson(): TrainersLesson | null {
+    const save = this.save, t = save.tutorials;
+    if (!save.upgrades.trainers || t.trainers) return null;
+    if (!t.trainerGift) return "gift";
+    return save.trainers ? "praise" : "hire";
+  }
+
+  /** Whether the lesson leaves only the first trainer's button to press:
+   * while it waits to be hired and can be paid for (so it never traps). */
+  get mustHire() {
+    return this.lesson === "hire" && this.affords(nextTrainerGems(this.save));
+  }
+
+  /** Claims the trainers lesson's Gems and Gold, once. */
+  claimGift() {
+    if (this.lesson !== "gift") return false;
+    this.save.tutorials.trainerGift = true;
+    CURRENCIES.gems.credit(this.save, TRAINER_GIFT.gems);
+    CURRENCIES.gold.credit(this.save, TRAINER_GIFT.gold);
+    return true;
+  }
+
+  /** Dismisses the lesson's praise, ending it. */
+  finishLesson() {
+    if (this.lesson !== "praise") return false;
+    this.save.tutorials.trainers = true;
+    return true;
   }
 
   /** Whether trainers work: the Trainers skill is owned, or with Access to Everything. */

@@ -285,6 +285,16 @@ export const trainingText = (value: number, unit: string, bare = false) =>
     : unit === "perMeter" ? `×${(1 + value).toFixed(3)}${bare ? "" : "/m"}` : unit === "count" ? String(value)
     : unit === "turns" ? `${value.toFixed(2)}${bare ? "" : " turns"}` : unit === "wholeTurns" ? `${value}${bare ? "" : " turns"}` : unit === "chance" ? `${value.toFixed(2)}%` : `${value}${unit}`;
 
+/** What the hero's own ranks of `id` add to its value, as the Codex shows
+ * it: "+45", "+0.20×", or "−3.00 turns" for a row whose ranks take off. */
+export function trainedBoost(save: Save, id: TrainingId) {
+  const view: TrainingView = { mode: "tower" }, none = { ...save, training: { ...save.training, [id]: 0 } };
+  const { value, unit } = rowValue(save, id, 0, view), more = snap(value - rowValue(none, id, 0, view).value), size = Math.abs(more);
+  // A multiplier's gain is added to it, so it never reads as a factor itself.
+  const text = unit === "×" ? `${size.toFixed(2)}×` : unit === "perMeter" ? `${size.toFixed(3)}/m` : trainingText(size, unit);
+  return `${more < 0 ? "−" : "+"}${text}`;
+}
+
 /** How much faster trainers train than at first (Faster Trainers research:
  * 0.02 a level); a rank takes its time / (1 + this). */
 export const trainingSpeed = (save: Pick<Save, "archives"> & RelicHolder) => {

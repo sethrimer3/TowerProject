@@ -11,6 +11,7 @@ const atk = TRAINING.find((t) => t.id === "attack")!;
 const game = () => {
   const g = new Game(defaults());
   g.save.upgrades.trainers = 1;
+  g.save.trainers = 1;
   g.newRun({ outside: true });
   g.save.xp = xpForLevel(10);
   g.save.gold = 1e9;

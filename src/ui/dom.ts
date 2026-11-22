@@ -55,7 +55,7 @@ export const gemIcon = (className = "gem-icon") =>
 export const phoenixSparkIcon = (className = "charge-icon") => kitIcon("phoenix-spark", "", className);
 export const goldenGemIcon = (className = "gem-icon") => kitIcon("gem-golden", "", className);
 export const stellarGemIcon = (className = "gem-icon") => kitIcon("gem-stellar", "", className);
-/** Arcanite: a tall green crystal, worn wherever Shards are shown. */
+/** Arcanite: a tall green crystal, worn wherever it is shown. */
 export const arcaniteIcon = (className = "arcanite-icon") =>
   kitIcon("shard", "", className);
 /** A Cell: a yellow triangle, the Archives' Speed Ups' currency. */

@@ -9,6 +9,7 @@ Each card's XP (`save.cardXp`, `decodeCardXp` in `cards/levels.ts`: known cards,
 Each card's ascensions (`save.cardAscension`, `decodeCardAscension` in `cards/levels.ts`: known cards, each a whole 1 to 5) and the Rubies held (`save.rubies`) decode beside its XP; a run's copy of its hand's levels (`run.handLevels`) is dropped unless each card is in its hand at a whole level from 1 to 60. Saves from before card powers lose their trees and card buys, unconverted.
 Each mode's run has its own decoder (`decodeTowerRun`, `decodeDelveRun`), which checks the player's column against that mode's board width and drops the other mode's fields.
 Unsupported versions reset safely.
+A save without `tutorials.trainerGift` that has the Trainers skill counts its once-free first trainer into `trainers` and skips the trainers lesson (`beforeTrainerGift`, to drop in a later save version).
 Old saves needn't convert while the game is a prototype, but a simple rename gets a conversion so a player keeps what they bought: a small function run in `decode()` on the raw save before it decodes, carrying a `TODO` to remove it in a future save version, rather than a migration.
 An enemy in `run.changes` may carry no wound or mark (`validWounded`): a hit of no damage writes it as it was, and a stun or linger wears off to it, so never require a mark or a spawn number there; `tests/marks-reload.test.ts` covers it.
 `save.familiars` and `run.familiars` decode in `src/familiars/save.ts`, the tile marks `burn` and `linger` by `validFamiliarMarks` (familiars.md).

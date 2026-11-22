@@ -1,9 +1,11 @@
 # Arcana
 
 **Arcana** are mighty spells bought with **Arcanite** (from tournaments, Goals, weekly mission rewards and the Shop's limited packs) and kept for good.
-Once you have had any Arcanite, the Gear tab shows an **Arcana** tab, with a dot on both, and the next time you stand in the forest with no other note showing, one says *Spend Arcanite to obtain and upgrade Arcana - mighty spells that unlock new powers.*
+Once you have hired your first trainer, or had any Arcanite, the Gear tab shows an **Arcana** tab, with a dot on both, and the next time you stand in the forest with no other note showing, one says *Spend Arcanite to obtain and upgrade Arcana - mighty spells that unlock new powers.*
 
 Each arcanum has a distinct pixel-art icon shared across interface themes.
+
+While you hold fewer than 5 Arcanite, the tab says *Complete weekly missions and enter the Tournament to earn arcanite. Use it here to unlock powerful magic spells called Arcana.*, the Arcanite icon after the word.
 
 ## Buying and upgrading
 

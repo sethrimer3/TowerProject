@@ -281,9 +281,9 @@ test("Extra Trainer stands under Key Mastery, Lifespring Research below it, cost
   assert.deepEqual([at("lifespringResearch").x, at("lifespringResearch").y, at("lifespringResearch").requires], [50, 237, ["extraTrainer"]], "Lifespring Research below it, after it");
   assert.deepEqual([UPGRADES.find((u) => u.id === "extraTrainer")!.currency, cost("extraTrainer", 0)], ["breakthrough", 5]);
   const save = defaults();
-  assert.equal(trainingSlots(save), 1);
+  assert.equal(trainingSlots(save), 0);
   save.upgrades.extraTrainer = 1;
-  assert.equal(trainingSlots(save), 2);
+  assert.equal(trainingSlots(save), 1);
   assert.equal(nextTrainerGems(save), TRAINER_GEMS[0], "the Gem trainers' prices don't move");
 });
 test("Faster Trainers sits right of Critical, off it, costs 2 and opens its research", () => {

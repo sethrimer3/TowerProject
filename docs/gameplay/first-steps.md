@@ -90,6 +90,12 @@ On the Research page a hand then points at its **Archives** tab, over a note: pa
 Until that note is tapped, which ends the lesson, the other tabs can't be pressed.
 The first time training points can be spent, in the forest a note says that after levelling up you can spend points to increase your stats, a hand pointing at the **Research** tab.
 On its Training tab a note says *Spend training points to upgrade your stats.*, with a hand on each training-points button you can press, until you tap the note, which ends the lesson.
+Once **Trainers** is bought, the forest says to press the **Research** tab to hire your first trainer, a hand pointing at it and a red dot on it.
+On its Training tab a note says *Here's 50 Gems and 100 Gold to get you started.* (the currencies as their icons), with a **Claim** button that pays them, the only thing to press there until it is pressed.
+A hand then points at the button that hires a trainer for 50 Gems, and nothing else can be pressed until it is; after a reload the forest holds you to the Research tab until then.
+A note then praises you for hiring a trainer for your hero: the more they train, the stronger they get and the higher they can climb, so start training and hire more trainers as soon as you can.
+Tapping it ends the lesson (the training points' note waits until then).
+Hiring that trainer also reveals [Arcana](arcana.md) on the Gear tab.
 When a Tower Goal is ready to claim, the Tower's forest says Tower Goals are ready to claim, every ten floors climbed paying a Goal reward, a hand pointing at the **Goals** button, until you open the Goals page.
 While a tournament is open, the forest's next note says to follow the path down to the Delve and enter its cave, the hand pointing at the sign at the foot of the forest path, until the Delve is opened.
 

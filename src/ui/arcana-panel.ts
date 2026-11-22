@@ -1,5 +1,5 @@
 import { pngIcon } from "../sprites/kit.ts";
-import { arcanum, enhancementsOf, levelsOf, nextStep, valuesAt, type ArcanumId, type AttributeValues } from "../arcana/arcana.ts";
+import { ARCANUM_PRICES, arcanum, enhancementsOf, levelsOf, nextStep, valuesAt, type ArcanumId, type AttributeValues } from "../arcana/arcana.ts";
 import { augmentOf, boon } from "../shrines.ts";
 import type { HeldArcanum } from "../game/arcana-desk.ts";
 import type { AppContext } from "./app.ts";
@@ -72,7 +72,11 @@ export class ArcanaPanel {
   html() {
     const desk = this.desk, cost = desk.price;
     const select = cost === null ? "" : `<button id="arcana-select" class="arcana-select${desk.affords(cost) ? "" : " short"}" aria-label="Select Arcanum, ${cost} Arcanite">Select Arcanum ${price(cost)}</button>`;
-    return `<div class="arcana-head"><h3>Arcana</h3>${helpButton("About Arcana", "arcana-help")}</div>${select}${this.respecHtml()}${desk.owned.map((id) => this.rowHtml(id)).join("")}`;
+    // Until the first arcanum's price is held, how Arcanite is earned.
+    const earning = this.ctx.game.save.arcanite < ARCANUM_PRICES[0]
+      ? `<p class="arcana-intro">Complete weekly missions and enter the Tournament to earn arcanite ${arcaniteIcon()}. Use it here to unlock powerful magic spells called Arcana.</p>`
+      : "";
+    return `<div class="arcana-head"><h3>Arcana</h3>${helpButton("About Arcana", "arcana-help")}</div>${earning}${select}${this.respecHtml()}${desk.owned.map((id) => this.rowHtml(id)).join("")}`;
   }
 
   /** Respec, once Arcana Respec is owned and an arcanum bought: its Gem
@@ -98,7 +102,7 @@ export class ArcanaPanel {
 
   bind() {
     const { ctx, desk } = this, gear = el("gear");
-    el("arcana-help").onclick = () => showHelp(ctx, "GEAR", "Arcana", `<p>Arcana are mighty spells bought with Arcanite and kept for good. Each has three attributes to upgrade.</p><p>Each new arcanum is chosen from up to three drawn at random from those you don't own, each as likely as any other. The choice stays until you buy one or reroll it, and the next arcanum costs more the more you own.</p><p>Every arcanum you hold works at once in every run. Inside a run the Arcana tab switches each on and off, up to 40 times a run.</p><p class="hint">Arcanite comes from tournaments and the Shop.</p>`);
+    el("arcana-help").onclick = () => showHelp(ctx, "GEAR", "Arcana", `<p>Arcana are mighty spells bought with Arcanite and kept for good. Each has three attributes to upgrade.</p><p>Each new arcanum is chosen from up to three drawn at random from those you don't own, each as likely as any other. The choice stays until you buy one or reroll it, and the next arcanum costs more the more you own.</p><p>Every arcanum you hold works at once in every run. Inside a run the Arcana tab switches each on and off, up to 40 times a run.</p><p class="hint">Arcanite comes from weekly missions, tournaments, Goals, Event stores and the Shop.</p>`);
     const select = document.getElementById("arcana-select");
     if (select) select.onclick = () => (desk.affords(desk.price!) ? this.showChoice() : askForArcanite(ctx));
     const respec = document.getElementById("arcana-respec");

@@ -10,9 +10,14 @@ The Codex is the player's reference to the game: a page of categories, each a ta
 It resolves each `CodexIcon` to the game's existing PNG helpers (`iconHtml`).
 
 **Rules.**
+An entry whose only detail is one stat or rank carries it as `status`, drawn after its name, and never `facts`, which make it expand.
+A rank's boost is `trainedBoost` (loadout.ts) for Training and `researchBoost` (archives.ts) for research, which reads the target's own `shown` and falls back to the value reached where that is no plain amount.
+A card entry's `card.upTo` is the rank of the rarity after its own: `cardPowersHtml` draws no power above it, while the Deck page draws them all.
+A door is a `door` icon (`CodexDoor`), a canvas `paintDoors` fills through the board's own `paintContents`, following Square doors; `beside` puts one next to a key.
 What the player hasn't reached shows as ??? with no name, brief, facts or link; Access to Everything (`seesAll`) opens every category and reveals every entry, saving nothing.
 An enemy strength or attribute counts as discovered once a tower that can roll it is open (`enemiesKnown` samples `enemyShare` and `traitOdds` over each open tower's floors); a Greater Boss once one has paid Cells, so its secret keeps.
-Tower elements' blue, red and Heart doors show once a tower's record passes the floor they first appear on (docs/gameplay/floors.md).
+Tower elements' blue, red and Heart doors show once a tower's record passes the floor they first appear on (docs/gameplay/floors.md), and Multi Doors with red, since it pictures a Triune Door.
+The torch's line about the Greater Boss waits for the `cardTorch` skill.
 A locked skill's cost to reach (`costToReach`) sums its next rank's price and that of every skill above it not yet owned, since a node needs all it requires.
 Links name a `CodexTarget`; `main.ts`'s `followCodex` opens the page on what it points at (`DeckPage.focus` opens a card's details, `SkillTreePage.focus`/`showTree`, `ResearchPage.show`, `GearPage.openEquipment`/`openArcana`, `ShopPage.focusOffer` scrolls to and lights an offer).
 A link to a page only the forest opens (Deck, Upgrades, Gear, Goals, Relics, Shrine Boons) is disabled inside a climb, with a note.

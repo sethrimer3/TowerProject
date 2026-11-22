@@ -136,6 +136,7 @@ test("one-time packs are bought once, kept by an erase, grant their Gems and mul
 test("Ad-Disable runs the trainers' ×2 boost for good, ranks already training included", () => {
   const g = new Game(defaults());
   g.save.upgrades.trainers = 1;
+  g.save.trainers = 1;
   g.newRun({ outside: true });
   g.save.xp = xpForLevel(10);
   g.save.gold = 10_000;
@@ -160,6 +161,7 @@ test("Ad-Disable runs the trainers' ×2 boost for good, ranks already training i
 test("the Gold bundles make training ×2 and ×3 as fast, stacking with Ad-Disable's boost to ×12", () => {
   const g = new Game(defaults());
   g.save.upgrades.trainers = 1;
+  g.save.trainers = 1;
   g.newRun({ outside: true });
   g.save.xp = xpForLevel(10);
   g.save.gold = 10_000;

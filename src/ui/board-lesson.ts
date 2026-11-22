@@ -1,6 +1,7 @@
 import type { BoardLesson, Game } from "../state.ts";
 import { el, POINTER_SVG } from "./dom.ts";
 import { DEATH_LOOP, drawLoopFrame } from "./death-loop.ts";
+import { TRAINER_GEMS } from "../progression/training-jobs.ts";
 
 // The lessons on the board (`game.boardLesson`): a note over the top of the
 // board. Inside a run the tutorials' pointing hand shows the card to press
@@ -72,6 +73,8 @@ const NOTES: Record<Exclude<BoardLesson, "story">, { greeting?: string; title: s
   enter: { title: "Click Enter to start climbing the tower." },
   research: { title: "Research unlocked.", text: "Press the Research tab to open the Research menu." },
   trainingPoints: { title: "Training points to spend.", text: "After levelling up, you can spend points to increase your stats. Press the Research tab to train." },
+  trainers: { title: "Trainers unlocked.", text: "Press the Research tab to hire your first trainer." },
+  hire: { title: "Hire your first trainer.", text: `Press the Research tab to hire a trainer for ${TRAINER_GEMS[0]} Gems.` },
   delve: { title: "A tournament is open: follow the path down to the Delve and enter its cave." },
   goals: { title: "Tower Goals are ready to claim.", text: "Every ten floors climbed pays a Goal reward. Press Goals to claim yours." },
   provisions: PROVISIONS_NOTE,
@@ -87,7 +90,7 @@ function targets(lesson: BoardLesson | "back"): HTMLElement[] {
   const tab = (id: string) => document.querySelector<HTMLElement>(`nav [data-tab="${id}"]`);
   const found = {
     story: [], climb: [card("stairs")], keys: [card("key"), card("door")], autoClimbHint: [], autoClimb: [], stuck: [], enemy: [],
-    upgrades: [tab("upgrades")], enter: [el("enter-run")], research: [tab("research")], trainingPoints: [tab("research")], cards: [tab("deck")], goals: [el("section-pick")], delve: [el("forest-sign")], provisions: [tab("gear")], arcana: [tab("gear")], back: [tab("board")],
+    upgrades: [tab("upgrades")], enter: [el("enter-run")], research: [tab("research")], trainers: [tab("research")], hire: [tab("research")], trainingPoints: [tab("research")], cards: [tab("deck")], goals: [el("section-pick")], delve: [el("forest-sign")], provisions: [tab("gear")], arcana: [tab("gear")], back: [tab("board")],
   }[lesson] as (HTMLElement | null)[];
   return found.filter((t): t is HTMLElement => !!t);
 }
@@ -97,10 +100,27 @@ function targets(lesson: BoardLesson | "back"): HTMLElement[] {
  * first skill is bought, a hand points at the Tower tab, back to the
  * entrance, and once a first provision is open, at the Gear tab (the page
  * writes the note). `dismissed` runs after a tap on a note that dismisses.
- * While the story's note shows, nothing else in the shell can be pressed. */
+ * Whatever holds the player is held to afterwards (`holdLesson`). */
 export function renderBoardLesson(game: Game, onBoard: boolean, dismissed: () => void, onUpgrades = false) {
   drawLesson(game, onBoard, dismissed, onUpgrades);
-  holdAround(document.querySelector<HTMLElement>("#board-frame > .story-tip"));
+  holdLesson();
+}
+
+/** Leaves only what the waiting lesson asks for to press: the story's
+ * note, what the open page marks `data-lesson-hold` (the trainers lesson's
+ * Claim, then the first trainer's button), or the tabs while a forest
+ * lesson leads to one (`holdTabs`). A page that redraws what is held calls
+ * it again, since new elements aren't held yet. */
+export function holdLesson() {
+  holdAround(document.querySelector<HTMLElement>("#board-frame > .story-tip")
+    ?? document.querySelector<HTMLElement>(".page.active [data-lesson-hold]")
+    ?? (tabsHeld ? document.querySelector<HTMLElement>(".shell > nav") : null));
+}
+/** Whether a forest lesson leaves only the tab bar to press. */
+let tabsHeld = false;
+export function holdTabs(on: boolean) {
+  tabsHeld = on;
+  holdLesson();
 }
 
 /** What `holdAround` made inert, given back when the hold ends or moves. */

@@ -6,7 +6,7 @@ import { CARDS, type CardId } from "../cards/cards.ts";
 import { powerAmounts, powerLevel, powersOf, type CardPower, type ColorKeyPart, type ColorKeyStat, type DoorLockPart, type DoorLockStat, type FoeCardStat, type FoePart, type FoeTreeCard, type SmeltPart, type SmeltStat, type TradeColor, type TradePart, type TradeStat, type PowerStat } from "../cards/powers.ts";
 import { KEY_NAMES, type DoorKind } from "../doors.ts";
 import type { KeyColor } from "../entities.ts";
-import { CARD_RARITY_NAMES } from "../cards/rarity.ts";
+import { CARD_RARITY_NAMES, rarityRank } from "../cards/rarity.ts";
 import { snap } from "../exact.ts";
 import { cellIcon, gemIcon, goldenGemIcon, rubyIcon, stellarGemIcon, itemSprite, uiSprite, type UiSprite } from "./dom.ts";
 
@@ -370,8 +370,8 @@ export const powerText = (power: CardPower, levels: number) => powerAmounts(powe
 /** A card's powers at `level`, a row each: its icon, name and rarity, and
  * what it gives now. A power the card hasn't reached yet stays in its row,
  * dimmed, naming the rarity that opens it (the base power, level 1). */
-export function cardPowersHtml(card: CardId, level: number) {
-  const powers = powersOf(card);
+export function cardPowersHtml(card: CardId, level: number, upTo = Infinity) {
+  const powers = powersOf(card).filter((power) => rarityRank(power.rarity) <= upTo);
   if (!powers.length) return `<p class="card-powers-none">No powers yet: this card still levels and ascends.</p>`;
   const rows = powers.map((power) => {
     const n = powerLevel(power, level), open = n > 0, first = Object.keys(power.stats)[0] as PowerStat;

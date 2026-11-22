@@ -1,5 +1,5 @@
 import type { AppContext } from "./app.ts";
-import { codexCategories, type CodexCategory, type CodexCategoryId, type CodexEntry, type CodexIcon, type CodexLink, type CodexSection, type CodexTarget } from "../codex/codex.ts";
+import { codexCategories, type CodexCategory, type CodexDoor, type CodexCategoryId, type CodexEntry, type CodexIcon, type CodexLink, type CodexSection, type CodexTarget } from "../codex/codex.ts";
 import { noteDiscoveries } from "../codex/discovery.ts";
 import { controlIcon } from "./control-icon.ts";
 import { arcaniteIcon, cellIcon, clockIcon, redoIcon, el, equipTicketIcon, escapeHtml, gemIcon, goldenGemIcon, goldIcon, itemSprite, medalIcon, pointsIcon, rubyIcon, skillSprite, stellarGemIcon, ticketIcon, uiSprite, vipIcon, type UiSprite } from "./dom.ts";
@@ -19,6 +19,9 @@ import type { CategoryId, EquipMaterialId } from "../equipment/catalog.ts";
 import type { EnemyStrength } from "../entities.ts";
 import type { Trait } from "../enemies/odds.ts";
 import type { BoonId } from "../shrines.ts";
+import type { Tile } from "../entities.ts";
+import { KEY_ORDER } from "../doors.ts";
+import { paintContents } from "../render/tile-painters.ts";
 
 /** Each currency's icon, by the Codex's currency id. */
 const CURRENCY_ICONS: Record<string, () => string> = {
@@ -32,11 +35,37 @@ const ENVIRONMENT_ICONS: Record<string, () => string> = {
   treasure: () => itemSprite("chest_treasure"), golden: () => goldenGemIcon("ui-sprite"), stellar: () => stellarGemIcon("ui-sprite"),
 };
 
+/** Each pictured door's tile. */
+const DOOR_TILES: Record<CodexDoor, Tile> = {
+  yellow: { kind: "door", color: "yellow", door: { type: "keys", keys: ["yellow"], mode: "all" } },
+  blue: { kind: "door", color: "blue", door: { type: "keys", keys: ["blue"], mode: "all" } },
+  red: { kind: "door", color: "red", door: { type: "keys", keys: ["red"], mode: "all" } },
+  wood: { kind: "door", door: { type: "wood", durability: 0 } },
+  steel: { kind: "door", door: { type: "keys", keys: KEY_ORDER, mode: "any" } },
+  triune: { kind: "door", door: { type: "keys", keys: KEY_ORDER, mode: "all" } },
+  heart: { kind: "door", door: { type: "fullHp" } },
+};
+/** A door canvas's pixels a tile pixel, so the small key marks on it stay
+ * legible, and its side: a tile, and a pixel round it for its outline. */
+const DOOR_SCALE = 4, DOOR_SIDE = 26 * DOOR_SCALE;
+/** Paints each door canvas in `page` as the board's kit draws that door,
+ * square with the Square doors setting. */
+function paintDoors(page: HTMLElement, squareDoors: boolean) {
+  page.querySelectorAll<HTMLCanvasElement>("canvas[data-codex-door]").forEach((canvas) => {
+    const c = canvas.getContext("2d");
+    if (!c) return;
+    c.scale(DOOR_SCALE, DOOR_SCALE);
+    c.translate(1, 1);
+    paintContents(c, DOOR_TILES[canvas.dataset.codexDoor as CodexDoor], { x: 0, y: 0, time: 0, reduceMotion: true, squareDoors });
+  });
+}
+
 /** An entry's icon, as the page draws it. */
 function iconHtml(icon: CodexIcon): string {
   if (!icon) return "";
   const id = icon.id;
   switch (icon.kind) {
+    case "door": return `<canvas class="codex-door" data-codex-door="${id}" width="${DOOR_SIDE}" height="${DOOR_SIDE}" aria-hidden="true"></canvas>`;
     case "kit": return kitIcon(id, "", "codex-kit");
     case "ui": return uiSprite(id as UiSprite);
     case "item": return itemSprite(id as ItemSpriteId);
@@ -82,11 +111,11 @@ export class CodexPage {
   private categories(): CodexCategory[] {
     const game = this.ctx.game, held = this.held();
     if (noteDiscoveries(game.save.codex, game.save, held)) this.ctx.save();
-    return codexCategories({ save: game.save, inside: !game.run.outside, tournament: game.tournament.unlocked, events: game.events.unlocked, held });
+    return codexCategories({ save: game.save, inside: !game.run.outside, tournament: game.tournament.unlocked, events: game.events.unlocked, held, silver: game.run.silver ?? 0 });
   }
 
   render() {
-    const categories = this.categories();
+    const game = this.ctx.game, categories = this.categories();
     let current = categories.find((c) => c.id === this.category && c.open);
     if (!current) {
       current = categories[0]!;
@@ -103,6 +132,7 @@ export class CodexPage {
       (current.links.length ? `<div class="codex-links">${current.links.map((l, i) => this.linkHtml(l, `c${i}`)).join("")}</div>` : "") +
       current.sections.map((s) => this.sectionHtml(current, s)).join("") + `</article>`;
     this.bind(current);
+    paintDoors(el("codex"), game.save.settings.squareDoors);
   }
 
   private sectionHtml(category: CodexCategory, s: CodexSection) {
@@ -111,20 +141,23 @@ export class CodexPage {
       ? `<p class="hint">${s.hint ?? "None yet."}</p>`
       : s.table
         ? `<table class="enemy-odds-table codex-table"><tbody>${s.entries.map((e) => `<tr${e.hidden ? ` class="codex-hidden"` : ""}><th scope="row">${iconHtml(e.icon)}${escapeHtml(e.name)}</th><td>${e.brief}</td></tr>`).join("")}</tbody></table>${s.hint ? `<p class="hint">${s.hint}</p>` : ""}`
-        : `${s.hint && category.id === "equipment" ? `<p class="hint">${s.hint}</p>` : ""}<ul class="codex-entries">${s.entries.map((e) => this.entryHtml(category, e)).join("")}</ul>`;
+        : `${s.hint && category.id === "equipment" ? `<p class="hint">${s.hint}</p>` : ""}<ul class="codex-entries${s.entries.some((e) => e.beside) ? " paired" : ""}">${s.entries.map((e) => this.entryHtml(category, e)).join("")}</ul>`;
     const count = s.entries.filter((e) => !e.hidden).length;
-    return `<details class="codex-section" data-codex-section="${key}"${open ? " open" : ""}><summary><span>${s.title}</span><small>${count}/${s.entries.length}</small></summary>${body}</details>`;
+    return `<details class="codex-section" data-codex-section="${key}"${open ? " open" : ""}><summary><span>${s.title}</span><small>${count}/${s.entries.length}</small>${pngIcon("ui-chevron-down", "codex-chevron")}</summary>${body}</details>`;
   }
 
   private entryHtml(category: CodexCategory, e: CodexEntry) {
     if (e.hidden) return `<li class="codex-entry codex-hidden"><span class="codex-icon">${e.icon ? iconHtml(e.icon) : controlIcon("lock")}</span><span class="codex-name">???</span></li>`;
-    const head = `<span class="codex-icon">${iconHtml(e.icon)}</span><span class="codex-text"><b class="codex-name">${escapeHtml(e.name)}</b><span class="codex-brief">${e.brief}</span></span>`;
+    const status = e.status ? ` <span class="codex-status">${e.status}</span>` : "";
+    const head = `<span class="codex-icon">${iconHtml(e.icon)}${e.beside ? iconHtml(e.beside) : ""}</span><span class="codex-text"><b class="codex-name">${escapeHtml(e.name)}${status}</b><span class="codex-brief">${e.brief}</span></span>`;
+    const more = (e.tips?.length ? `<ul class="codex-tips">${e.tips.map((t) => `<li>${t}</li>`).join("")}</ul>` : "")
+      + (e.closing ? `<p class="codex-closing">${e.closing}</p>` : "");
     const details = (e.facts?.length ? `<dl class="codex-facts">${e.facts.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>` : "")
       + (e.lines ?? []).map((l) => `<p class="codex-line">${l}</p>`).join("")
-      + (e.card ? cardPowersHtml(e.card.id, e.card.level) : "");
+      + (e.card ? cardPowersHtml(e.card.id, e.card.level, e.card.upTo) : "");
     const link = e.link ? this.linkHtml(e.link, `${category.id}/${e.id}`) : "";
     const ready = e.ready ? " ready" : "";
-    if (!details) return `<li class="codex-entry${ready}"><div class="codex-row">${head}</div>${link}</li>`;
+    if (!details) return `<li class="codex-entry${ready}"><div class="codex-row">${head}</div>${more}${link}</li>`;
     const key = `${category.id}/${e.id}`;
     return `<li class="codex-entry${ready}"><details data-codex-entry="${key}"${this.expanded.has(key) ? " open" : ""}><summary class="codex-row">${head}</summary><div class="codex-details">${details}</div></details>${link}</li>`;
   }

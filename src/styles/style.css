@@ -1200,13 +1200,17 @@ html.reduce-motion .review-prompt { animation: none; }
 /* The card points lesson's hand points down at the Deck tab from above,
    the Inspiration lesson's at the Upgrades tab, on the Upgrades page,
    once a first skill is bought, at the Tower tab, the Archives and training
-   lessons' at the Research tab, and the provisions lesson's at the Gear tab. */
+   lessons' and the trainers lesson's at the Research tab, and the provisions
+   and Arcana lessons' at the Gear tab. */
 .forest-pointer.cards,
 .forest-pointer.research,
 .forest-pointer.trainingPoints,
+.forest-pointer.trainers,
+.forest-pointer.hire,
 .forest-pointer.upgrades,
 .forest-pointer.back,
-.forest-pointer.provisions {
+.forest-pointer.provisions,
+.forest-pointer.arcana {
   bottom: calc(100% + 2px);
   left: 50%;
   margin-left: -13px;
@@ -2568,6 +2572,19 @@ button.training-now:has(> .train-pointer) { position: relative; overflow: visibl
 .train-pointer :is(svg, .sprite-icon, img) { display: block; width: 100%; height: auto; margin: 0; }
 .train-pointer.still { animation: none; }
 @media (prefers-reduced-motion: reduce) { .train-pointer { animation: none; } }
+/* The trainers lesson over the trainers' row: its gift, the way to the
+   first trainer, then its praise, which a press dismisses; and the hand
+   pointing up at that trainer's button from below, over what is held. */
+.trainers-lesson { position: relative; z-index: 2; }
+.trainers-lesson :is(.gem-icon, .gold-icon) { display: inline-block; width: 15px; height: 15px; vertical-align: -3px; }
+.trainers-lesson .trainer-gift-claim { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-height: 36px; margin-top: 8px; padding: 4px 14px; color: var(--gold); }
+.trainers-praise { display: block; width: 100%; flex: none; height: auto; font-family: inherit; cursor: pointer; }
+.trainers-praise small { display: block; margin-top: 4px; font-size: 10px; letter-spacing: 1px; color: #8d9db1; }
+button.buy-trainer:has(> .hire-pointer) { position: relative; overflow: visible; z-index: 4; }
+.buy-trainer > .hire-pointer { position: absolute; top: calc(100% + 1px); left: 50%; width: 26px; margin-left: -13px; z-index: 3; pointer-events: none; filter: drop-shadow(0 2px 2px #000c); animation: forest-point-up 1s ease-in-out infinite; }
+.buy-trainer > .hire-pointer :is(svg, .sprite-icon, img) { display: block; width: 100%; height: auto; margin: 0; }
+.buy-trainer > .hire-pointer.still, html.reduce-motion .buy-trainer > .hire-pointer { animation: none; }
+@media (prefers-reduced-motion: reduce) { .buy-trainer > .hire-pointer { animation: none; } }
 .tree-tabs [data-research-tab="archives"] { position: relative; }
 .tree-tabs button:has(> .research-pointer) { overflow: visible; }
 .tree-tabs .research-pointer { position: absolute; margin-bottom: 0; font-size: 0; top: calc(100% + 2px); left: 50%; width: 26px; margin-left: -13px; z-index: 3; pointer-events: none; filter: drop-shadow(0 2px 2px #000c); animation: forest-point-up 1s ease-in-out infinite; }
@@ -5295,8 +5312,14 @@ html.reduce-motion button.mission-bar.event-claim { animation: none; }
 .codex-summary { margin: 0 0 10px; font-size: 13px; line-height: 1.4; }
 .codex-links { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
 .codex-section { margin-bottom: 10px; border: 1px solid var(--line); border-radius: 8px; background: #121820; }
-.codex-section > summary { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; cursor: pointer; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; }
+.codex-section > summary { display: flex; align-items: center; gap: 8px; list-style: none; padding: 8px 10px; cursor: pointer; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; }
+.codex-section > summary::-webkit-details-marker { display: none; }
+.codex-section > summary > span:first-child { flex: 1; }
 .codex-section > summary small { color: var(--muted); }
+/* A section's chevron: down while collapsed, up while open. */
+.codex-section > summary > .codex-chevron { flex: none; width: 16px; height: 16px; }
+.codex-section > summary > .codex-chevron > * { display: block; width: 100%; height: 100%; }
+.codex-section[open] > summary > .codex-chevron { transform: rotate(180deg); }
 .codex-section > .hint, .codex-section > p.hint { margin: 0 10px 10px; }
 .codex-entries { list-style: none; margin: 0; padding: 0 6px 6px; }
 .codex-entry { padding: 6px 4px; border-top: 1px solid var(--line); }
@@ -5305,12 +5328,20 @@ html.reduce-motion button.mission-bar.event-claim { animation: none; }
 .codex-entry > details > summary::-webkit-details-marker { display: none; }
 .codex-entry > details > summary { position: relative; padding-right: 18px; }
 .codex-entry > details > summary::after { content: "+"; position: absolute; top: 0; right: 2px; color: var(--muted); }
-.codex-entry > details[open] > summary::after { content: "2"; }
+.codex-entry > details[open] > summary::after { content: "\2212"; }
 .codex-row { display: flex; gap: 8px; align-items: flex-start; }
 .codex-icon { display: inline-flex; flex: none; width: 24px; height: 24px; align-items: center; justify-content: center; }
 .codex-icon .badge-token { flex: none; transform: scale(0.55); }
+/* Keys beside their doors: every entry's text lines up past the pair. */
+.codex-entries.paired .codex-icon { width: 80px; height: auto; min-height: 24px; gap: 4px; }
+.codex-entries.paired .codex-icon > :not(.codex-door) { width: 24px; height: 24px; }
+.codex-icon > canvas.codex-door { flex: none; width: 52px; height: 52px; max-width: none; max-height: none; image-rendering: pixelated; }
 .codex-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .codex-name { color: #e6e9ef; font-size: 13px; }
+.codex-status { color: var(--muted); font-weight: normal; }
+.codex-tips { margin: 4px 0 0 32px; padding-left: 16px; list-style: disc; font-size: 12px; line-height: 1.4; color: #b5bcc8; }
+.codex-tips li { margin-bottom: 4px; }
+.codex-closing { margin: 6px 0 0 32px; font-size: 12px; line-height: 1.4; color: #b5bcc8; }
 .codex-brief { font-size: 12px; line-height: 1.4; color: #b5bcc8; }
 .codex-hidden .codex-name, .codex-hidden th { color: var(--muted); }
 .codex-details { margin: 6px 0 0 32px; font-size: 12px; }
@@ -5743,6 +5774,8 @@ html.trial-running :is(#focus-stat, #ignore-stat, #target-stat, #bomb-stat, #hea
    ids beat the themes' and the sprite kit's blanket button rules. */
 .arcana-head { display: flex; align-items: center; gap: 4px; margin: 4px 0 8px; }
 .arcana-head h3 { margin: 0; }
+.arcana-intro { margin: 0 0 10px; font-size: 13px; line-height: 1.6; color: #c3cedd; }
+.arcana-intro .arcanite-icon { display: inline-block; width: 15px; height: 15px; vertical-align: -3px; }
 .arcana-head .tree-help.tree-help:not(#_):not(#__) { margin-left: 4px; border: 0; border-image: none; background: none; box-shadow: none; }
 .arcana-select { display: flex; justify-content: center; align-items: center; gap: 8px; width: 100%; min-height: 44px; margin: 0 0 10px; }
 .arcana-select .price, .arcana-attr-cost .price, #arcana-reroll .price { display: inline-flex; align-items: center; gap: 3px; }

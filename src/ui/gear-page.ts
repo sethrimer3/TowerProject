@@ -1,6 +1,7 @@
 import { GOLD_SHOP, type GoldItemId } from "../economy/provisions.ts";
 import { provisionOpen, provisionPrice, provisionsOpen, provisionText } from "../progression/loadout.ts";
 import { whole } from "../whole.ts";
+import { UPGRADES } from "../progression/upgrades.ts";
 import { unlockAt } from "../goals.ts";
 import { tierNumeral } from "../tiers.ts";
 import type { AppContext } from "./app.ts";
@@ -18,7 +19,9 @@ type GearTab = "provisions" | "equipment" | "arcana";
 const TAB_NAMES: Record<GearTab, string> = { provisions: "Provisions", equipment: "Equipment", arcana: "Arcana" };
 
 /** The Gear page: provisions (once one is open, by its skill), Equipment (opened by
- * Tower II's floor 60 Goal) and Arcana (once Arcanite has been held). */
+ * Tower II's floor 60 Goal) and Arcana (once a trainer is hired or Arcanite
+ * has been held). Access to Everything shows all three, every provision
+ * too, those not unlocked unable to be bought. */
 export class GearPage {
   private tab: GearTab = "provisions";
   /** The provision just bought, whose icon glows and count bounces on the next render. */
@@ -56,7 +59,7 @@ export class GearPage {
     if (this.tab === "equipment" && this.ctx.game.notices.shown("equipment")) queueMicrotask(() => { this.ctx.save(); this.equipment.showWelcome(); });
     if (this.tab === "arcana" && this.ctx.game.notices.shown("arcana")) queueMicrotask(this.ctx.update);
     const body = this.tab === "equipment" ? this.equipment.html() : this.tab === "arcana" ? this.arcana.html() : this.provisionsHtml();
-    const tabs = (["provisions", "equipment", "arcana"] as const).filter((t) => t === "provisions" ? provisionsOpen(save) : t === "equipment" || arcanaOpen(save));
+    const tabs = (["provisions", "equipment", "arcana"] as const).filter((t) => t === "equipment" || this.open(t));
     const lockHint = (t: GearTab) => t === "equipment" ? `Claim Tower ${tierNumeral(unlockAt("equipment").tower)}'s floor ${unlockAt("equipment").floor} Goal to open Equipment` : "Locked";
     el("gear").innerHTML = `<div class="tree-tabs page-tabs gear-tabs" role="group" aria-label="Gear tabs">
       ${tabs.map((t) => `<button data-geartab="${t}" aria-pressed="${this.tab === t}"${t === "arcana" && this.ctx.game.notices.waiting("arcana") ? ` class="notify"` : ""} ${this.open(t) ? "" : `disabled title="${lockHint(t)}"`}>${TAB_NAMES[t]}</button>`).join("")}
@@ -112,12 +115,15 @@ export class GearPage {
     const provisionSprite = (id: GoldItemId) => (id === "bomb" ? bombIcon("ui-sprite") : itemSprite(PROVISION_SPRITES[id]));
     const bought = this.bought;
     this.bought = null;
-    const open = GOLD_SHOP.filter((item) => provisionOpen(game.save, item.id));
+    const open = GOLD_SHOP.filter((item) => provisionOpen(game.save, item.id) || seesAll(game.save));
     return `<div class="provision-head">${helpButton("About provisions", "gear-help")}<p class="hint">Each one owned is one use in every climb.</p></div>${open.map((item) => {
       const owned = game.save.provisions[item.id], price = provisionPrice(game.save, item.id), just = item.id === bought ? " bought" : "";
       // The count owned, in a circle at the icon's foot.
       const count = owned ? `<b class="owned-count${just}" title="${whole(owned)} owned" aria-label="${whole(owned)} owned">${whole(owned)}</b>` : "";
-      return `<article class="card provision"><div class="item-icon${just}">${provisionSprite(item.id)}${count}</div><div class="provision-text"><h3>${item.name}</h3><p>${provisionText(item.id, game.save.archives)}</p></div><button data-gold="${item.id}" ${price > game.save.gold && !game.free ? "disabled" : ""}>Buy · ${uiSprite("gold", "stat-sprite")} ${priceAmount(price)}</button></article>`;
+      const buy = provisionOpen(game.save, item.id)
+        ? `<button data-gold="${item.id}" ${price > game.save.gold && !game.free ? "disabled" : ""}>Buy · ${uiSprite("gold", "stat-sprite")} ${priceAmount(price)}</button>`
+        : `<button disabled title="Unlock ${UPGRADES.find((u) => u.id === item.requires)!.name} on the Upgrades page">Locked</button>`;
+      return `<article class="card provision"><div class="item-icon${just}">${provisionSprite(item.id)}${count}</div><div class="provision-text"><h3>${item.name}</h3><p>${provisionText(item.id, game.save.archives)}</p></div>${buy}</article>`;
     }).join("")}`;
   }
 }

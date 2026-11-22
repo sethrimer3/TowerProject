@@ -73,7 +73,7 @@ Gold is the daily mission's Gold for the highest tower open, times the multiplie
 | 30 | ×15 | 35 | 30 | 15 | 1 |
 | 35 | ×20 | 50 | 35 | 20 | 1 |
 
-**Medals** (`save.medals`) are a new limited currency, kept between runs; Events' missions pay them too (docs/EVENTS.md); nothing spends them yet.
+**Medals** (`save.medals`) are a new limited currency, kept between runs; Events' missions pay them too (docs/EVENTS.md); Event stores and familiars spend them.
 They show in the forest's purse once held (where it has room), and on the currencies bar, in light purple.
 Each weekly reward's **Training Point** adds to those the hero's levels earn (`save.bonusTrainingPoints`).
 

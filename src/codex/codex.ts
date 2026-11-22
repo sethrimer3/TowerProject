@@ -10,11 +10,12 @@ import type { Save } from "../save/shape.ts";
 import { seesAll } from "../access.ts";
 import { CARDS, CARD_IDS, deckCards, type CardId } from "../cards/cards.ts";
 import { levelIn, nextAscension, readyToAscend } from "../cards/levels.ts";
-import { CARD_RARITY_NAMES, rarityAt } from "../cards/rarity.ts";
+import { CARD_RARITY_NAMES, rarityAt, rarityRank } from "../cards/rarity.ts";
 import { BADGES, BADGE_IDS, badgeDef, badgeValue, levelProgress, ownedLevel, type BadgeId } from "../cards/badges.ts";
 import { TREES, skillAvailable, skillHidden, treeOpen, type TreeId } from "../progression/skill-trees.ts";
 import { UPGRADES, cost, type UpgradeId } from "../progression/upgrades.ts";
-import { upgradeText, researchOpen, trainingShown } from "../progression/loadout.ts";
+import { upgradeText, researchOpen, trainedBoost, trainingPoints, trainingShown } from "../progression/loadout.ts";
+import { whole } from "../whole.ts";
 import { TRAINING, TRAINING_GROUPS, type TrainingGroup } from "../progression/training.ts";
 import { ARCANA, ARCANUM_IDS, arcanaOpen, levelsOf, valuesAt, type ArcanumId } from "../arcana/arcana.ts";
 import { CATEGORIES, CATEGORY_IDS, EQUIP_MATERIALS, EQUIP_MATERIAL_IDS, STARTER_CATEGORIES, uniquesOf, type CategoryId } from "../equipment/catalog.ts";
@@ -27,16 +28,19 @@ import { levelForXp } from "../progression/xp.ts";
 import { TRIALS, TRIAL_IDS } from "../proving-grounds/catalog.ts";
 import { BOONS, BOON_IDS, boonLabel, shrinesOpen, type BoonDef } from "../shrines.ts";
 import { ENVIRONMENTS, ENVIRONMENT_IDS, type EnvironmentId } from "../environments.ts";
-import { RESEARCH, RESEARCH_IDS, describe, maxLevel, researchLevel, researched, status } from "../progression/archives.ts";
+import { RESEARCH, RESEARCH_IDS, describe, researchBoost, researchLevel, researched, status } from "../progression/archives.ts";
 import { firstLevelOf } from "../cards/rarity.ts";
 import { FAMILIARS, FAMILIAR_IDS, statAt, statValue } from "../familiars/catalog.ts";
 import { isChampion } from "../shop/champion.ts";
 import { ARCANUM_BRIEFS, CARD_BRIEFS, FAMILIAR_BRIEFS, PROFILE_BRIEFS, STRENGTH_BRIEFS, TRAIT_BRIEFS } from "./briefs.ts";
 import type { EnemyStrength } from "../entities.ts";
 
+/** The doors the Codex pictures, each as the board draws it. */
+export type CodexDoor = "yellow" | "blue" | "red" | "wood" | "steel" | "triune" | "heart";
 /** What an entry's icon is, for the page to draw: a kind and its id. */
 export type CodexIcon =
   | { kind: "kit" | "ui" | "item" | "currency" | "mark" | "card" | "badge" | "skill" | "arcanum" | "equip" | "equipCategory" | "material" | "strength" | "trait" | "training" | "boon" | "research" | "trial" | "environment" | "familiar"; id: string }
+  | { kind: "door"; id: CodexDoor }
   | null;
 /** Where a link leads: a page, and what to open on it. */
 export type CodexTarget =
@@ -52,7 +56,10 @@ export type CodexLink = { label: string; to: CodexTarget; open: boolean; note?: 
 /** One entry: its icon, name and brief; `hidden` draws it as ???. `facts`
  * are its details as label and value rows, `lines` free lines, shown
  * when the entry is expanded (`expand`); `card` asks the page for that
- * card's powers at its level too. */
+ * card's powers at its level too, up to rarity rank `upTo`. A single stat
+ * or rank is `status`, after the name, with nothing to expand. `beside`
+ * is a second icon, `tips` a list under the brief and `closing` the line
+ * after it. */
 export type CodexEntry = {
   id: string;
   icon: CodexIcon;
@@ -61,7 +68,11 @@ export type CodexEntry = {
   hidden?: boolean;
   facts?: readonly (readonly [string, string])[];
   lines?: readonly string[];
-  card?: { id: CardId; level: number };
+  card?: { id: CardId; level: number; upTo: number };
+  status?: string;
+  beside?: CodexIcon;
+  tips?: readonly string[];
+  closing?: string;
   link?: CodexLink;
   /** Called out (a card ready to ascend). */
   ready?: boolean;
@@ -82,6 +93,8 @@ export type CodexSource = {
   tournament: boolean;
   events: boolean;
   held: readonly ArcanumId[];
+  /** The Silver the climb under way holds. */
+  silver?: number;
 };
 
 const HIDDEN = "???";
@@ -109,7 +122,7 @@ const towerReached = (save: Save, floor: (tier: number) => number) => {
 // —— General ——————————————————————————————————————————————————————————
 
 /** A General topic: shown once `open`, ??? before. */
-type Topic = { id: string; icon: CodexIcon; name: string; text: string; open: (src: CodexSource) => boolean; link?: (src: CodexSource) => CodexLink };
+type Topic = { id: string; icon: CodexIcon; name: string; text: string; tips?: readonly string[]; closing?: string; open: (src: CodexSource) => boolean; link?: (src: CodexSource) => CodexLink };
 const always = () => true;
 /** The game's broad ideas, in the order the Codex tells them. Add each new
  * major game experience here. */
@@ -151,13 +164,22 @@ export const GENERAL_TOPICS: readonly Topic[] = [
     text: "Enjoy free gems daily at your convenience.",
     link: () => anywhereLink("Free Gems", { page: "shop", offer: "dailyGems" }) },
   { id: "progress", icon: { kind: "kit", id: "ui-codex-help" }, name: "How to progress", open: always,
-    text: "Stuck? Here are some general tips: Keep upgrading your hero to reach higher floors. There are multiple ways to do this that you might not have unlocked yet, such as Training, Research, Card and Equipment upgrades, and powerful Arcana. The higher you climb, the more resources you gain. Do more tower runs to gain gold, gems, and XP for permanent progression. Try to reach the next tower goal for a new ability or bonus. Think of how to rearrange your deck to become more powerful in a run or avoid obstacles that are thwarting your progress. Powerful shop offers are also available to speed your progress if you choose to take this route. We want to make the best game possible for you to enjoy, and we appreciate your support and feedback!" },
+    text: "Stuck? Here are some general tips:",
+    tips: [
+      "Keep upgrading your hero to reach higher floors. There are multiple ways to do this that you might not have unlocked yet, such as Training, Research, Card and Equipment upgrades, and powerful Arcana.",
+      "The higher you climb, the more resources you gain.",
+      "Do more tower runs to gain gold, gems, and XP for permanent progression.",
+      "Try to reach the next tower goal for a new ability or bonus.",
+      "Think of how to rearrange your deck to become more powerful in a run or avoid obstacles that are thwarting your progress.",
+      "Powerful shop offers are also available to speed your progress if you choose to take this route.",
+    ],
+    closing: "We want to make the best game possible for you to enjoy, and we appreciate your support and feedback!" },
 ];
 
 function general(src: CodexSource): CodexCategory {
   const entries = GENERAL_TOPICS.map((t): CodexEntry => {
     const open = t.open(src) || seesAll(src.save);
-    return open ? { id: t.id, icon: t.icon, name: t.name, brief: t.text, ...(t.link ? { link: t.link(src) } : {}) } : hidden(t.id);
+    return open ? { id: t.id, icon: t.icon, name: t.name, brief: t.text, tips: t.tips, closing: t.closing, ...(t.link ? { link: t.link(src) } : {}) } : hidden(t.id);
   });
   return { id: "general", name: "General", icon: { kind: "ui", id: "tower" }, open: true, links: [],
     summary: "The big ideas of the game, and where to find them.", sections: [{ id: "topics", title: "Topics", entries }] };
@@ -166,14 +188,14 @@ function general(src: CodexSource): CodexCategory {
 // —— Currencies ———————————————————————————————————————————————————————
 
 function currencies(src: CodexSource): CodexCategory {
-  const s = src.save, held = (v: number) => [["Held", n(v)]] as const;
-  const row = (open: boolean, id: string, name: string, brief: string, v: number): CodexEntry =>
-    shownIf(src, open, { id, icon: { kind: "currency", id }, name, brief, facts: held(v) });
+  const s = src.save, have = (v: number) => `(Have ${n(whole(v))})`;
+  const row = (open: boolean, id: string, name: string, brief: string, v?: number): CodexEntry =>
+    shownIf(src, open, { id, icon: { kind: "currency", id }, name, brief, ...(v === undefined ? {} : { status: have(v) }) });
   const entries = [
     row(true, "gold", "Gold", "Earned everywhere. Pays for training, research and upgrades.", s.gold),
     row(true, "gems", "Gems", "Premium currency. Used to purchase equipment and rush upgrades.", s.gems),
-    row(true, "silver", "Silver", "Found in a climb and spent only inside it, on climb training.", 0),
-    row(true, "training", "Training Points", "Earned as your hero levels up. Buy Training ranks.", 0),
+    row(true, "silver", "Silver", "Found in a climb and spent only inside it, on climb training.", src.inside ? src.silver : undefined),
+    row(true, "training", "Training Points", "Earned as your hero levels up. Buy Training ranks.", trainingPoints(s).left),
     row(true, "inspiration", "Inspiration", "Earned by beating your best climb. Unlocks Inspiration skills.", s.tower.inspiration),
     row(s.upgrades.breakthrough > 0, "breakthrough", "Breakthrough", "One for each Goal reward claimed. Unlocks Breakthrough skills.", s.breakthrough),
     row(s.profile.earned.rubies > 0 || s.upgrades.breakthrough > 0, "rubies", "Rubies", "Dropped by bosses. Ascend your cards to higher rarities.", s.rubies),
@@ -184,10 +206,8 @@ function currencies(src: CodexSource): CodexCategory {
     row(s.equipment.unlocked, "equip-tickets", "Equipment Tickets", "Each pays for one equipment pull.", s.equipment.tickets),
     row(isChampion(s), "vip", "VIP Points", "Earned with every Shop purchase.", s.vip),
     ...EQUIP_MATERIAL_IDS.map((m) => shownIf(src, s.equipment.unlocked,
-      { id: `material-${m}`, icon: { kind: "material", id: m }, name: EQUIP_MATERIALS[m].name, brief: EQUIP_MATERIALS[m].description, facts: held(s.equipment.materials[m]) })),
+      { id: `material-${m}`, icon: { kind: "material", id: m }, name: EQUIP_MATERIALS[m].name, brief: EQUIP_MATERIALS[m].description, status: have(s.equipment.materials[m]) })),
   ];
-  // Silver and Training Points are held elsewhere: their rows show no amount.
-  for (const e of entries) if (e.id === "silver" || e.id === "training") delete (e as { facts?: unknown }).facts;
   return { id: "currencies", name: "Currencies", icon: { kind: "currency", id: "gold" }, open: true, links: [],
     summary: "What you earn, and what each currency is for.", sections: [{ id: "held", title: "Currencies", entries }] };
 }
@@ -199,20 +219,27 @@ const BLUE_FROM = (tier: number) => 51 - 5 * (tier - 1), RED_FROM = (tier: numbe
 
 function elements(src: CodexSource): CodexCategory {
   const s = src.save, blue = towerReached(s, BLUE_FROM), red = towerReached(s, RED_FROM), heart = towerReached(s, HEART_FROM);
-  const e = (known: boolean, id: string, icon: CodexIcon, name: string, brief: string) => shownIf(src, known, { id, icon, name, brief });
+  const e = (known: boolean, id: string, icon: CodexIcon, name: string, brief: string, beside?: CodexIcon) =>
+    shownIf(src, known, { id, icon, name, brief, ...(beside ? { beside } : {}) });
+  const door = (id: CodexDoor): CodexIcon => ({ kind: "door", id });
+  // The Greater Boss stays a secret until the Torch card can put every torch out.
+  const torches = s.upgrades.cardTorch > 0 || seesAll(s) ? "Light the floor. Put them all out to call a Greater Boss." : "Light the floor.";
   const entries = [
     e(true, "stairs", { kind: "kit", id: "stairs" }, "Stairs", "The way up. Climb them to finish the floor."),
-    e(true, "goldKey", { kind: "item", id: "key_yellow" }, "Gold Keys and Doors", "Each Gold Key opens one Gold Door."),
-    e(blue, "blueKey", { kind: "item", id: "key_blue" }, "Blue Keys and Doors", "Each Blue Key opens one Blue Door."),
-    e(red, "redKey", { kind: "item", id: "key_red" }, "Red Keys and Doors", "Each Red Key opens one Red Door."),
-    e(true, "woodenDoor", { kind: "kit", id: "door-wood" }, "Wooden Doors", "Take any one key, or break them down for some HP."),
-    e(heart, "heartDoor", { kind: "kit", id: "heart" }, "Heart Doors", "Need no key, but drain your HP to 1."),
+    e(true, "goldKey", { kind: "item", id: "key_yellow" }, "Gold Keys and Doors", "Each Gold Key opens one Gold Door.", door("yellow")),
+    e(blue, "blueKey", { kind: "item", id: "key_blue" }, "Blue Keys and Doors", "Each Blue Key opens one Blue Door.", door("blue")),
+    e(red, "redKey", { kind: "item", id: "key_red" }, "Red Keys and Doors", "Each Red Key opens one Red Door.", door("red")),
+    e(true, "woodenDoor", door("wood"), "Wooden Doors", "Take any one key, or break them down by spending some HP."),
+    e(true, "steelDoor", door("steel"), "Steel Doors", "Take any one key, and can't be broken down."),
+    // Pictured as a Triune Door, so shown once red keys are known.
+    e(red, "multiDoor", door("triune"), "Multi Doors", "Some doors require multiple key types to open."),
     e(true, "potion", { kind: "item", id: "potion_flat" }, "Health Potions", "Restore HP. Some heal a share of your max HP."),
     e(true, "attack", { kind: "item", id: "upgrade_attack" }, "ATK Shards", "Raise your ATK for the rest of the climb."),
     e(true, "defense", { kind: "item", id: "upgrade_defense" }, "DEF Shards", "Raise your DEF for the rest of the climb."),
     e(true, "chest", { kind: "item", id: "chest_treasure" }, "Treasure Chests", "Hold Gold, and sometimes supplies or equipment."),
-    e(true, "torch", { kind: "kit", id: "torch" }, "Torches", "Light the floor. Put them all out to call a Greater Boss."),
-    e(true, "gem", { kind: "currency", id: "gems" }, "Gems", "Sometimes lie on a floor. Collect them to keep them."),
+    e(true, "torch", { kind: "kit", id: "torch" }, "Torches", torches),
+    e(true, "gem", { kind: "currency", id: "gems" }, "Gems", "Sometimes they appear on the floor. Tap to collect them quickly, before the hero moves on."),
+    e(heart, "heartDoor", door("heart"), "Heart Doors", "Need no key, but drain your HP to 1."),
   ];
   return { id: "elements", name: "Tower Elements", icon: { kind: "kit", id: "stairs" }, open: true, links: [],
     summary: "What you'll find on the floors of the Tower.", sections: [{ id: "elements", title: "On the floors", entries }] };
@@ -230,7 +257,7 @@ function cards(src: CodexSource): CodexCategory {
     ];
     if (lvl.needed && !lvl.capped) facts.push(["XP to next level", n(lvl.needed - lvl.into)]);
     if (lvl.capped && lvl.needed && !ready) facts.push(["Level cap", "Ascend to level further"]);
-    const entry: CodexEntry = { id, icon: { kind: "card", id }, name: CARDS[id].name, brief: CARD_BRIEFS[id], facts, card: { id, level: lvl.level } };
+    const entry: CodexEntry = { id, icon: { kind: "card", id }, name: CARDS[id].name, brief: CARD_BRIEFS[id], facts, card: { id, level: lvl.level, upTo: rarityRank(rarityAt(lvl.level)) + 1 } };
     if (ready && next) {
       entry.ready = true;
       entry.link = forestLink(src, `Ascend to ${CARD_RARITY_NAMES[next.rarity]}`, { page: "deck", card: id }, { rubies: next.rubies });
@@ -299,17 +326,17 @@ export function costToReach(id: UpgradeId, levels: Record<UpgradeId, number>) {
 function skillTree(src: CodexSource, treeId: "inspiration" | "breakthrough"): CodexCategory {
   const s = src.save, tree = TREES.find((t) => t.id === treeId)!, levels = s.upgrades, all = seesAll(s);
   const currency = tree.currency === "inspiration" ? "Inspiration" : "Breakthrough";
-  const entry = (id: UpgradeId, facts: [string, string][]): CodexEntry =>
-    ({ id, icon: { kind: "skill", id }, name: UPGRADES.find((u) => u.id === id)!.name, brief: `${upgradeText(id)}.`, facts,
+  const entry = (id: UpgradeId, status?: string): CodexEntry =>
+    ({ id, icon: { kind: "skill", id }, name: UPGRADES.find((u) => u.id === id)!.name, brief: `${upgradeText(id)}.`, ...(status ? { status } : {}),
       link: forestLink(src, "Show in tree", { page: "upgrades", tree: treeId, skill: id }) });
   const owned: CodexEntry[] = [], open: CodexEntry[] = [], locked: CodexEntry[] = [], unseen: CodexEntry[] = [];
   for (const node of tree.nodes) {
-    const u = UPGRADES.find((x) => x.id === node.id)!, level = levels[node.id], max = u.max;
-    const ranks: [string, string][] = max > 1 ? [["Ranks", `${level} / ${max}`]] : [];
-    if (level > 0) owned.push(entry(node.id, level < max ? [...ranks, ["Next rank", `${n(cost(node.id, level))} ${currency}`]] : ranks));
-    else if (skillHidden(node.id, levels)) unseen.push(all ? entry(node.id, [["Cost to reach", `${n(costToReach(node.id, levels))} ${currency}`]]) : hidden(node.id));
-    else if (skillAvailable(node.id, levels)) open.push(entry(node.id, [...ranks, ["Cost", `${n(cost(node.id, level))} ${currency}`]]));
-    else locked.push(entry(node.id, [["Cost to reach", `${n(costToReach(node.id, levels))} ${currency}`]]));
+    const level = levels[node.id], reach = () => `(Cost to reach ${n(costToReach(node.id, levels))} ${currency})`;
+    // Both trees' skills are bought once each, so none has a rank to show.
+    if (level > 0) owned.push(entry(node.id));
+    else if (skillHidden(node.id, levels)) unseen.push(all ? entry(node.id, reach()) : hidden(node.id));
+    else if (skillAvailable(node.id, levels)) open.push(entry(node.id, `(Cost ${n(cost(node.id, level))} ${currency})`));
+    else locked.push(entry(node.id, reach()));
   }
   const name = tree.name;
   return {
@@ -336,7 +363,7 @@ const TRAINING_GROUP_ICONS: Record<TrainingGroup, CodexIcon> = { offense: { kind
  * auto-continue, stopping, and the free points. */
 const TRAINING_HOW: CodexEntry[] = [
   { id: "points", icon: { kind: "currency", id: "training" }, name: "Free training", brief: "Training points from levelling up and weekly mission rewards buy ranks instantly, for free. Spend them first!" },
-  { id: "gold", icon: { kind: "currency", id: "gold" }, name: "Train with Gold", brief: "Once you have Trainers, pay Gold to train a stat over time. Every rank finished is yours for good." },
+  { id: "gold", icon: { kind: "currency", id: "gold" }, name: "Train with Gold", brief: "Once you have Trainers, hire one with Gems, then pay Gold to train a stat over time. Every rank finished is yours for good." },
   { id: "batch", icon: { kind: "mark", id: "clock" }, name: "Train more at once", brief: "Training several ranks together goes faster than one at a time." },
   { id: "rush", icon: { kind: "currency", id: "gems" }, name: "Rush with Gems", brief: "Press the Gem button beside a countdown to finish training at once." },
   { id: "repeat", icon: { kind: "mark", id: "repeat" }, name: "Auto-continue", brief: "Tick the box with this icon to start the next rank as soon as one finishes, while you have the Gold." },
@@ -352,12 +379,15 @@ const ARCHIVES_HOW: CodexEntry[] = [
   { id: "cells", icon: { kind: "currency", id: "cells" }, name: "Speed Ups", brief: "Spend Cells, dropped by Greater Bosses, to make research go faster." },
 ];
 
+/** An entry's rank, with what it adds once there is one. */
+const rankText = (rank: number, boost: () => string) => (rank ? `Rank ${n(rank)} (${boost()})` : "Rank 0");
+
 function training(src: CodexSource): CodexCategory {
   const s = src.save;
   const sections = (Object.keys(TRAINING_GROUPS) as TrainingGroup[]).map((group): CodexSection => ({
     id: group, title: TRAINING_GROUPS[group],
     entries: TRAINING.filter((row) => row.group === group && trainingShown(row, s)).map((row) =>
-      ({ id: row.id, icon: TRAINING_GROUP_ICONS[group], name: row.name, brief: row.description, facts: [["Ranks", n(s.training[row.id])]] })),
+      ({ id: row.id, icon: TRAINING_GROUP_ICONS[group], name: row.name, brief: row.description, status: rankText(s.training[row.id], () => trainedBoost(s, row.id)) })),
     hint: "None open yet.",
   }));
   return {
@@ -481,7 +511,7 @@ function enemies(src: CodexSource): CodexCategory {
   const trials = TRIAL_IDS.map((id) => {
     const progress = s.trialAccess.progress[id];
     return progress || (trialOpen && id === TRIAL_IDS[0]) || all
-      ? { id, icon: { kind: "trial", id } as CodexIcon, name: TRIALS[id].name, brief: `Proving Grounds trial ${TRIALS[id].number}.`, facts: [["Highest difficulty beaten", n(progress?.cleared ?? 0)]] as const }
+      ? { id, icon: { kind: "trial", id } as CodexIcon, name: TRIALS[id].name, brief: `Proving Grounds trial ${TRIALS[id].number}.`, status: `(Highest difficulty beaten ${n(progress?.cleared ?? 0)})` }
       : hidden(id);
   });
   return {
@@ -575,8 +605,8 @@ function environments(src: CodexSource): CodexCategory {
 function archives(src: CodexSource): CodexCategory {
   const s = src.save, all = seesAll(s), done: CodexEntry[] = [], open: CodexEntry[] = [], locked: CodexEntry[] = [];
   for (const id of RESEARCH_IDS) {
-    const level = researchLevel(s.archives, id), max = maxLevel(id, s), state = status(s, id);
-    const entry: CodexEntry = { id, icon: { kind: "research", id }, name: RESEARCH[id].name, brief: describe(s.archives, id), facts: [["Level", `${level} / ${max}`]] };
+    const level = researchLevel(s.archives, id), state = status(s, id);
+    const entry: CodexEntry = { id, icon: { kind: "research", id }, name: RESEARCH[id].name, brief: describe(s.archives, id), status: rankText(level, () => researchBoost(s.archives, id)) };
     if (level > 0) done.push(entry);
     else if (state === "locked") locked.push(all ? entry : hidden(id));
     else open.push(entry);
