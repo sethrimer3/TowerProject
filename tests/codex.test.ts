@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { defaults, decode } from "../src/save/save.ts";
 import { codexCategories, costToReach, enemiesKnown, GENERAL_TOPICS, type CodexSource } from "../src/codex/codex.ts";
 import { decodeCodex, defaultCodex, noteDiscoveries } from "../src/codex/discovery.ts";
-import { CARD_BRIEFS, ARCANUM_BRIEFS, STRENGTH_BRIEFS, TRAIT_BRIEFS } from "../src/codex/briefs.ts";
+import { CARD_BRIEFS, ARCANUM_BRIEFS, FAMILIAR_BRIEFS, STRENGTH_BRIEFS, TRAIT_BRIEFS } from "../src/codex/briefs.ts";
 import { cost } from "../src/progression/upgrades.ts";
 import { TREES } from "../src/progression/skill-trees.ts";
 
@@ -34,8 +34,21 @@ test("a hidden entry tells nothing about what it hides", () => {
 });
 
 test("briefs stay brief", () => {
-  for (const [id, brief] of Object.entries({ ...CARD_BRIEFS, ...ARCANUM_BRIEFS, ...STRENGTH_BRIEFS, ...TRAIT_BRIEFS }))
+  for (const [id, brief] of Object.entries({ ...CARD_BRIEFS, ...ARCANUM_BRIEFS, ...FAMILIAR_BRIEFS, ...STRENGTH_BRIEFS, ...TRAIT_BRIEFS }))
     assert.ok(brief.length <= 70, `${id}: ${brief.length} characters`);
+});
+
+test("Familiars show as ??? until Events open, then each with its levels once hatched", () => {
+  const category = (src: CodexSource) => codexCategories(src).find((c) => c.id === "familiars")!;
+  const shut = category(source());
+  assert.equal(shut.open, false);
+  assert.ok(shut.sections[0]!.entries.length === 5 && shut.sections[0]!.entries.every((e) => e.hidden));
+  const src = source({ events: true });
+  src.save.familiars.dragon = { levels: [1, 0, 0, 0] };
+  const [dragon, slime] = category(src).sections[0]!.entries;
+  assert.deepEqual(dragon!.facts![0], ["Damage (level 1)", "×14.5"]);
+  assert.equal(slime!.facts, undefined);
+  assert.ok(slime!.lines!.includes("Not hatched yet."));
 });
 
 test("General has a topic for every major experience, each its own id", () => {

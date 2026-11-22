@@ -29,13 +29,14 @@ import { BOONS, BOON_IDS, boonLabel, shrinesOpen, type BoonDef } from "../shrine
 import { ENVIRONMENTS, ENVIRONMENT_IDS, type EnvironmentId } from "../environments.ts";
 import { RESEARCH, RESEARCH_IDS, describe, maxLevel, researchLevel, researched, status } from "../progression/archives.ts";
 import { firstLevelOf } from "../cards/rarity.ts";
+import { FAMILIARS, FAMILIAR_IDS, statAt, statValue } from "../familiars/catalog.ts";
 import { isChampion } from "../shop/champion.ts";
-import { ARCANUM_BRIEFS, CARD_BRIEFS, PROFILE_BRIEFS, STRENGTH_BRIEFS, TRAIT_BRIEFS } from "./briefs.ts";
+import { ARCANUM_BRIEFS, CARD_BRIEFS, FAMILIAR_BRIEFS, PROFILE_BRIEFS, STRENGTH_BRIEFS, TRAIT_BRIEFS } from "./briefs.ts";
 import type { EnemyStrength } from "../entities.ts";
 
 /** What an entry's icon is, for the page to draw: a kind and its id. */
 export type CodexIcon =
-  | { kind: "kit" | "ui" | "item" | "currency" | "mark" | "card" | "badge" | "skill" | "arcanum" | "equip" | "equipCategory" | "material" | "strength" | "trait" | "training" | "boon" | "research" | "trial" | "environment"; id: string }
+  | { kind: "kit" | "ui" | "item" | "currency" | "mark" | "card" | "badge" | "skill" | "arcanum" | "equip" | "equipCategory" | "material" | "strength" | "trait" | "training" | "boon" | "research" | "trial" | "environment" | "familiar"; id: string }
   | null;
 /** Where a link leads: a page, and what to open on it. */
 export type CodexTarget =
@@ -70,7 +71,7 @@ export type CodexEntry = {
 export type CodexSection = { id: string; title: string; entries: CodexEntry[]; hint?: string; collapsed?: boolean; table?: boolean };
 export type CodexCategoryId =
   | "general" | "currencies" | "elements" | "cards" | "badges" | "inspiration" | "breakthrough" | "training"
-  | "arcana" | "equipment" | "enemies" | "combat" | "shrines" | "environments" | "archives";
+  | "arcana" | "familiars" | "equipment" | "enemies" | "combat" | "shrines" | "environments" | "archives";
 export type CodexCategory = { id: CodexCategoryId; name: string; icon: CodexIcon; open: boolean; summary: string; links: CodexLink[]; sections: CodexSection[] };
 
 /** What the Codex reads: the save, whether a climb is under way (forest-only
@@ -390,6 +391,25 @@ function arcana(src: CodexSource): CodexCategory {
   };
 }
 
+// —— Familiars ————————————————————————————————————————————————————————
+
+function familiars(src: CodexSource): CodexCategory {
+  const s = src.save, open = src.events || Object.keys(s.familiars).length > 0 || seesAll(s);
+  const entries = FAMILIAR_IDS.map((id): CodexEntry => {
+    if (!open) return hidden(id);
+    const { name, summary } = FAMILIARS[id], owned = s.familiars[id];
+    const entry: CodexEntry = { id, icon: { kind: "familiar", id }, name, brief: FAMILIAR_BRIEFS[id], lines: owned ? [summary] : [summary, "Not hatched yet."] };
+    if (owned) entry.facts = owned.levels.map((level, slot) => [`${statAt(id, slot).name} (level ${level})`, statAt(id, slot).shown(statValue(id, slot, level))] as const);
+    return entry;
+  });
+  return {
+    id: "familiars", name: "Familiars", icon: { kind: "familiar", id: "dragon" }, open,
+    summary: "Young beasts hatched from eggs for Medals. They follow you into every climb and act by themselves. Spend more Medals to help them grow.",
+    links: src.events ? [anywhereLink("Familiars", { page: "events" })] : [],
+    sections: [{ id: "familiars", title: "Familiars", entries }],
+  };
+}
+
 // —— Equipment ————————————————————————————————————————————————————————
 
 function equipment(src: CodexSource): CodexCategory {
@@ -578,6 +598,6 @@ function archives(src: CodexSource): CodexCategory {
 export function codexCategories(src: CodexSource): CodexCategory[] {
   return [
     general(src), currencies(src), elements(src), cards(src), badges(src), skillTree(src, "inspiration"), skillTree(src, "breakthrough"),
-    training(src), arcana(src), equipment(src), enemies(src), combat(src), shrines(src), environments(src), archives(src),
+    training(src), arcana(src), familiars(src), equipment(src), enemies(src), combat(src), shrines(src), environments(src), archives(src),
   ];
 }

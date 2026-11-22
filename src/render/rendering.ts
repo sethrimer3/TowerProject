@@ -44,6 +44,7 @@ import { drawLifespring } from "./effects/lifespring.ts";
 import { drawDilationField } from "./effects/time-dilation.ts";
 import { drawPhantasms } from "./effects/phantasm.ts";
 import { drawFrostFields } from "./effects/necrotic-frost.ts";
+import { FamiliarLayer, drawEnemyStates } from "./effects/familiars.ts";
 import { drawVortex } from "./effects/voidwell.ts";
 import { drawOverseerBeams } from "./effects/overseer-beams.ts";
 import { drawSmite, SMITE_MS } from "./effects/smite.ts";
@@ -112,6 +113,7 @@ export class Renderer {
   private routePath = new RoutePath();
   private predictions = new DamagePredictions();
   private bossFlash = new BossFlash();
+  private familiars = new FamiliarLayer();
   /** Damage numbers and rewards rising off their tiles. */
   popups = new BoardPopups();
   /** Blows, arrows, falls and Bombs heard as they land. */
@@ -262,12 +264,13 @@ export class Renderer {
     const white = f.look.battery ? batteryLight(g.save.settings.batteryWhite / 100, performance.now()) : 1;
     if (white < 1) dimWhite(f, white);
   }
-  /** Voidwell's vortex and Time Dilation's and Necrotic Frost's fields on the floor, while any stands. */
+  /** Voidwell's vortex, Time Dilation's and Necrotic Frost's fields and the familiars' areas on the floor, while any stands. */
   private drawFloorFields(f: FrameContext) {
     if (this.game.run.outside) return;
     drawVortex(f, this.game.vortex);
     drawDilationField(f, this.game.dilation);
     drawFrostFields(f, this.game.frostArea);
+    this.familiars.drawAreas(f, this.game.familiarView);
   }
   /** Gameplay feedback drawn over every board (Battery saver leaves out
    * the lights on the stairs and hero, the boss's flash and the chests'
@@ -295,6 +298,7 @@ export class Renderer {
     this.drawBadgeMarks(f);
     this.drawDoomMarks(f);
     this.drawShockMarks(f);
+    if (!this.game.run.outside) drawEnemyStates(f, battery);
     if (!this.game.run.outside && f.look.styledSprites && this.game.dilationGuard > 0) {
       f.c.save(); toTileSpace(f.c, f, f.playerX, f.playerY);
       paintDilationGuard(f.c, f.now, !!f.look.spriteAnimations && !f.look.reduceMotion); f.c.restore();
@@ -307,6 +311,8 @@ export class Renderer {
     if (sparkle) drawGemSparkle(f, sparkle.x, sparkle.y, f.now - sparkle.at, sparkle.kind);
     // A Stellar Floor's stars pass over all that stands on it, under what rises off it.
     if (!this.game.run.outside && this.game.environments.stellarFloor) drawStellarStars(f, (x, y) => this.game.stellarAt(x, y));
+    // Familiars pass over the floor, the hero and all that stands on it, under what rises off it.
+    this.familiars.drawAbove(f, this.game.familiarView, battery);
     drawVolley(f, this.inFlight.volleys, this.game.mode === "delve" ? this.game.world.width : 0);
     this.popups.draw(f);
     this.drawEffectText(f);
@@ -915,6 +921,7 @@ export class Renderer {
       (!g.summoned || now - g.summoned.at >= POOF_MS) && g.smitten.every((s) => now - s.at >= SMITE_MS) && (!g.vanished || now - g.vanished.at >= POOF_MS) && (!g.bombed || now - g.bombed.at >= EXPLOSION_MS) &&
       (!sparkle || now - sparkle.at >= GEM_SPARKLE_MS) && (!g.volley || volleyOver(g.volley, now)) && this.inFlight.over(now) &&
       (!POSITION_HALOS_ENABLED || g.save.settings.reduceMotion || !this.boosts.length) &&
+      this.familiars.over(now, g.familiarView, g.save.settings.reduceMotion) &&
       now - g.fights.shieldBrokeAt >= SHIELD_POP_MS && now - g.shieldFormedAt >= SHIELD_FORM_MS;
   }
   /** Active torches roughly within the camera viewport, padded so a torch

@@ -2,6 +2,7 @@ import type { CardId } from "../cards/cards.ts";
 import type { ArcanumId } from "../arcana/arcana.ts";
 import type { EnemyProfile, EnemyStrength } from "../entities.ts";
 import type { Trait } from "../enemies/odds.ts";
+import type { FamiliarId } from "../familiars/catalog.ts";
 
 /** The Codex's one-line briefs: what a thing is or is for, in the player's
  * words, never its numbers in full (the pages that sell or use it say
@@ -51,6 +52,14 @@ export const ARCANUM_BRIEFS: Record<ArcanumId, string> = {
   phantasm: "Phantasms circle you and burst on enemies they touch.",
   necroticFrost: "A frost field makes enemies decay, more each turn.",
   voidwell: "A vortex stuns the enemies in it, and grounds Flying ones.",
+};
+
+export const FAMILIAR_BRIEFS: Record<FamiliarId, string> = {
+  dragon: "Sets enemies round it burning, and weakens them.",
+  slime: "Stuns the enemies round it, then slows them.",
+  wolf: "Dashes out to tag enemies, which then take more damage.",
+  falcon: "Multiplies the Gold of kills beneath it.",
+  wisp: "Boosts the other familiars near it.",
 };
 
 export const STRENGTH_BRIEFS: Record<EnemyStrength, string> = {

@@ -5879,3 +5879,69 @@ html:has(#settings.active .arcana-lab) #training-bar { display: none !important;
 .ca-power-label { color: #6fdc6f; font-weight: 700; }
 .cp-step { display: inline-flex; align-items: center; gap: 3px; margin-left: 4px; white-space: nowrap; }
 .cp-step .ui-sprite, .cp-step img { width: 16px; height: 16px; }
+
+/* --- Familiars (familiars-panel.ts, hatch-reveal.ts) --- */
+/* The ids in :not() beat the themes' and the sprite kit's blanket button rules. */
+.familiar-list { display: grid; gap: 8px; margin: 0 0 14px; padding: 0; list-style: none; }
+.familiar-row { min-width: 0; padding: 6px; border: 1px solid #d9a63266; border-radius: 8px; }
+/* Opaque in every theme, so a theme's backdrop never runs behind a name or a price. */
+.familiar-row.familiar-row:not(#_):not(#__) { background: #14100a; }
+.familiar-head { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.familiar-about.familiar-about:not(#_):not(#__) { display: flex; flex: 1 1 auto; align-items: center; justify-content: flex-start; gap: 8px; min-width: 0; min-height: 40px; margin: 0; padding: 0 2px; border: 0; border-image: none; background: none; box-shadow: none; color: inherit; text-align: left; }
+.familiar-about b { min-width: 0; font-size: 14px; color: #ffe9a8; }
+.familiar-about .familiar-icon { flex: none; width: 40px; height: 40px; }
+.familiar-row.off .familiar-icon { opacity: 0.45; }
+.familiar-switch.familiar-switch:not(#_):not(#__) { display: block; position: relative; flex: none; width: 36px; height: 18px; min-width: 0; min-height: 0; margin: 0 4px 0 0; padding: 0; border: 1px solid #5b6474; border-image: none; border-radius: 9px; background: #1b2028; box-shadow: none; }
+/* A thumb-sized press round the small switch. */
+.familiar-switch::after { content: ""; position: absolute; inset: -12px -5px; }
+.familiar-switch i { position: absolute; top: 1px; left: 1px; width: 14px; height: 14px; border-radius: 50%; background: #aab3c0; transition: left 0.12s; }
+.familiar-switch[aria-checked="true"].familiar-switch:not(#_):not(#__) { border-color: #8dffb8; background: #1f5b3a; }
+.familiar-switch[aria-checked="true"] i { left: 19px; background: #eafff2; }
+.familiar-hatch.familiar-hatch:not(#_):not(#__) { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; min-height: 42px; margin: 0; }
+.familiar-hatch .familiar-egg { width: 28px; height: 28px; }
+.familiar-hatch .medal-icon { width: 16px; height: 16px; }
+.familiar-hatch.unaffordable.familiar-hatch:not(#_):not(#__) b { color: #ff8a7a; }
+.familiar-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+.familiar-stat.familiar-stat:not(#_):not(#__) { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 2px; min-width: 0; min-height: 0; margin: 0; padding: 4px 2px; border: 2px solid #c9b27a; border-image: none; border-radius: 6px; background: #1b1710; box-shadow: none; color: #f3ead2; text-align: center; box-sizing: border-box; }
+.familiar-stat .familiar-stat-name { display: flex; align-items: center; min-height: 24px; font-size: 10px; line-height: 12px; color: #efd496; }
+.familiar-stat b { font-size: 12px; line-height: 14px; }
+.familiar-stat hr { align-self: stretch; margin: auto 0 1px; border: 0; border-top: 1px solid #5b6474; }
+.familiar-stat-cost { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; }
+.familiar-stat-cost .medal-icon { width: 13px; height: 13px; }
+.familiar-stat.unaffordable.familiar-stat:not(#_):not(#__) { border-color: #5b6068; }
+.familiar-stat.maxed.familiar-stat:not(#_):not(#__) { border-color: #ffd34d; box-shadow: inset 0 0 6px #ffd34d40; }
+.familiar-stat.maxed .familiar-stat-cost { color: #ffd34d; }
+@media (max-width: 359px) { .familiar-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.familiar-dialog { text-align: center; }
+.familiar-dialog .familiar-portrait { display: inline-block; width: 96px; height: 96px; }
+.familiar-table td { white-space: normal; }
+.familiar-table .familiar-next { color: #8fe08a; }
+.familiar-table .familiar-max { color: #ffd34d; }
+.familiar-short .medal-icon { width: 14px; height: 14px; vertical-align: -2px; }
+#confirm .medal-icon { width: 14px; height: 14px; vertical-align: -2px; }
+
+/* The hatch: up for 0.8 s, a wobble for 2, the crack for 0.6, then 0.6 up to the light. */
+.hatch-reveal { position: fixed; inset: 0; z-index: 70; overflow: hidden; background: #04070b; cursor: pointer; outline: none; }
+.hatch-stage { position: absolute; left: 50%; top: 50%; width: 192px; height: 192px; margin: -96px 0 0 -96px; }
+.hatch-stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+.hatch-rays { position: absolute; left: 50%; top: 50%; width: 560px; height: 560px; margin: -344px 0 0 -280px; border-radius: 50%; background: radial-gradient(circle, #ffe7a6aa 0 12%, #e9b84a55 22%, transparent 48%), repeating-conic-gradient(from 0deg, #ffd76a 0deg 5deg, transparent 5deg 15deg); -webkit-mask-image: radial-gradient(circle, #000 18%, transparent 68%); mask-image: radial-gradient(circle, #000 18%, transparent 68%); opacity: 0.8; animation: hatch-fade 0.4s 4s ease-out backwards, hatch-turn 16s 4s linear infinite; }
+.hatch-beast { transform: translateY(-64px); animation: hatch-uncover 0.6s 2.8s ease-out backwards, hatch-ascend 0.6s 3.4s ease-out forwards; }
+.hatch-egg { position: absolute; inset: 0; transform-origin: 50% 88%; animation: hatch-rise 0.8s ease-out backwards, hatch-wobble 0.5s 0.8s ease-in-out 4; }
+.hatch-shell.whole { opacity: 0; animation: hatch-whole 2.8s step-end; }
+.hatch-shell.left, .hatch-shell.right { opacity: 0; }
+.hatch-shell.left { animation: hatch-left 0.6s 2.8s ease-out; }
+.hatch-shell.right { animation: hatch-right 0.6s 2.8s ease-out; }
+.hatch-name { position: absolute; left: 0; right: 0; top: calc(50% - 250px); margin: 0; padding: 0 16px; font-size: 32px; line-height: 40px; text-align: center; color: #ffe9a8; animation: hatch-fade 0.4s 4s ease-out backwards; }
+@media (max-height: 520px) { .hatch-name { top: 8px; } }
+.hatch-reveal.still :is(.hatch-rays, .hatch-beast, .hatch-egg, .hatch-shell, .hatch-name) { animation: none; }
+.hatch-reveal.still .hatch-egg { display: none; }
+@keyframes hatch-fade { from { opacity: 0; } }
+@keyframes hatch-turn { to { transform: rotate(360deg); } }
+@keyframes hatch-rise { from { transform: translateY(70vh); } }
+@keyframes hatch-wobble { 25% { transform: rotate(-11deg); } 75% { transform: rotate(11deg); } }
+@keyframes hatch-whole { from { opacity: 1; } to { opacity: 0; } }
+/* Small enough to hide behind the egg, until it cracks. */
+@keyframes hatch-uncover { 0% { opacity: 0; transform: translateY(0) scale(0.62); } 8% { opacity: 1; } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes hatch-ascend { from { transform: translateY(0); } to { transform: translateY(-64px); } }
+@keyframes hatch-left { 0% { opacity: 1; transform: none; } 70% { opacity: 1; } 100% { opacity: 0; transform: translateX(-130px) rotate(-22deg); } }
+@keyframes hatch-right { 0% { opacity: 1; transform: none; } 70% { opacity: 1; } 100% { opacity: 0; transform: translateX(130px) rotate(22deg); } }

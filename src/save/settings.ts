@@ -149,6 +149,8 @@ export const SETTINGS = {
   /** Show the decay Necrotic Frost deals on the Necro enemies (it deals it all the same). */
   necroDamage: { kind: "toggle", default: true, page: { id: "necro-damage", label: "Necrotic Frost damage on enemies" } },
   voidwellDamage: { kind: "toggle", default: true, page: { id: "voidwell-damage", label: "Voidwell damage on enemies" } },
+  /** Show the damage the Fire Dragon's strike and burn deal (they deal it all the same). */
+  dragonDamage: { kind: "toggle", default: true, page: { id: "dragon-damage", label: "Fire Dragon damage on enemies" } },
   /** How solid Phantasm's ghosts are drawn, 0 (not at all; they strike all the same) to 1. */
   phantasmAlpha: { kind: "range", default: 0.5, min: 0, max: 1, step: 0.05, page: { id: "phantasm-alpha", label: "Phantasm alpha", aria: "Phantasm alpha" } },
   /** The XP a badge pays, and the Gold combo's "×N Gold" as it grows

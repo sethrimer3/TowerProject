@@ -54,6 +54,7 @@ function iconHtml(icon: CodexIcon): string {
     case "training": return id === "utility" ? uiSprite("gold") : itemSprite(id === "offense" ? "upgrade_attack" : "upgrade_defense");
     case "boon": return boonIcon(id as BoonId);
     case "research": return uiSprite("log");
+    case "familiar": return pngIcon(`familiar-${id}-icon`, "codex-kit");
     case "trial": return kitIcon(TRIAL_ART[id] ?? "trophy", "", "codex-kit");
     case "environment": return ENVIRONMENT_ICONS[id]?.() ?? "";
   }

@@ -40,7 +40,8 @@ const TOGGLES = [
 const ARCANA_TOGGLES = [
   "ricochetAnimation", "thunderboltAnimation", "lifespringDamage", "phantasmDamage", "phantasmAlpha", "necroDamage", "voidwellDamage",
 ] as const satisfies readonly SettingKey[];
-type PageKey = (typeof PAGE)[number] | (typeof TOGGLES)[number] | (typeof ARCANA_TOGGLES)[number] | (typeof DEV)[number] | "devTools";
+const FAMILIAR_TOGGLES = ["dragonDamage"] as const satisfies readonly SettingKey[];
+type PageKey = (typeof PAGE)[number] | (typeof TOGGLES)[number] | (typeof ARCANA_TOGGLES)[number] | (typeof FAMILIAR_TOGGLES)[number] | (typeof DEV)[number] | "devTools";
 
 const phantasmUnlocked = (save: Save) => !!save.arcana.owned.phantasm || !!save.tower.run?.shrine?.arcana?.includes("phantasm");
 /** Settings that stay off the page until the upgrade (or the setting)
@@ -58,6 +59,7 @@ const SHOWN: Partial<Record<PageKey, (save: Save) => boolean>> = {
   necroDamage: (save) => !!save.arcana.owned.necroticFrost || !!save.tower.run?.shrine?.arcana?.includes("necroticFrost"),
   // Once Voidwell Damage has a level: only then does Voidwell strike.
   voidwellDamage: (save) => researched(save.archives, "voidwellDamage") > 0,
+  dragonDamage: (save) => !!save.familiars.dragon,
   showPath: (save) => !!save.upgrades.autoClimb,
   cinematicIdle: (save) => save.settings.cinematic,
   batteryWhite: (save) => save.settings.batterySaver,
@@ -148,6 +150,8 @@ function control(key: PageKey, game: PageGame): string {
 let menu: ThemeKind | "toggles" | "tilesets" | "arcanaEffects" | null = null;
 /** Whether the Toggles menu's Arcana group is open, kept while the page redraws. */
 let arcanaTogglesOpen = false;
+/** Whether its Familiars group is, likewise. */
+let familiarTogglesOpen = false;
 
 /** The buttons that open each kind's theme menu, naming the look worn. */
 const themeButtons = (game: PageGame) =>
@@ -167,18 +171,21 @@ export function renderSettingsPage(ctx: AppContext, overlay: BoardOverlay) {
     return;
   }
   if (menu === "toggles") {
-    const keys = shownOf(TOGGLES, game.save), arcana = shownOf(ARCANA_TOGGLES, game.save);
+    const keys = shownOf(TOGGLES, game.save), arcana = shownOf(ARCANA_TOGGLES, game.save), familiars = shownOf(FAMILIAR_TOGGLES, game.save);
     el("settings").innerHTML =
       `<button class="back" id="toggles-back">${controlIcon("back")} Settings</button><div class="page-title"><small>WHAT THE BOARD SHOWS IN A RUN</small><h2>Toggles</h2></div>` +
       keys.map((key) => control(key, game)).join("") +
-      (arcana.length ? `<details class="toggle-group" id="arcana-toggles"${arcanaTogglesOpen ? " open" : ""}><summary>Arcana</summary>${arcana.map((key) => control(key, game)).join("")}</details>` : "");
+      (arcana.length ? `<details class="toggle-group" id="arcana-toggles"${arcanaTogglesOpen ? " open" : ""}><summary>Arcana</summary>${arcana.map((key) => control(key, game)).join("")}</details>` : "") +
+      (familiars.length ? `<details class="toggle-group" id="familiar-toggles"${familiarTogglesOpen ? " open" : ""}><summary>Familiars</summary>${familiars.map((key) => control(key, game)).join("")}</details>` : "");
     const group = document.getElementById("arcana-toggles") as HTMLDetailsElement | null;
     if (group) group.ontoggle = () => { arcanaTogglesOpen = group.open; };
+    const familiarGroup = document.getElementById("familiar-toggles") as HTMLDetailsElement | null;
+    if (familiarGroup) familiarGroup.ontoggle = () => { familiarTogglesOpen = familiarGroup.open; };
     el("toggles-back").onclick = () => {
       menu = null;
       ctx.renderPage();
     };
-    bindControls(ctx, overlay, [...keys, ...arcana]);
+    bindControls(ctx, overlay, [...keys, ...arcana, ...familiars]);
     return;
   }
   if (menu) {

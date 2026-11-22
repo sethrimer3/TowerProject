@@ -1005,3 +1005,11 @@ html.ui-sprites:where(:not(.legacy-borders)) :is(.xp-track, .health-track, .week
   border: 1px solid transparent;
   border-image-width: 1px;
 }
+
+/* Familiars' stat boxes and rows on the paper themes, as Arcana's are. */
+html:is(.doodle, .shiro, .system) #events .familiar-row.familiar-row:not(#_):not(#__) { background: #fff; }
+html.desktop #events .familiar-row.familiar-row:not(#_):not(#__) { background: #c0c0c0; }
+html.yang #events .familiar-row.familiar-row:not(#_):not(#__) { background: #f9f7f2; }
+html:is(.doodle, .desktop, .yang, .shiro, .system) .familiar-hatch.unaffordable.familiar-hatch:not(#_):not(#__) b { color: #b3261e; }
+html:is(.doodle, .desktop, .yang, .shiro, .system) .familiar-stat.familiar-stat:not(#_):not(#__) { background: transparent; color: inherit; }
+html:is(.doodle, .desktop, .yang, .shiro, .system) :is(.familiar-about b, .familiar-stat b, .familiar-stat-name, .familiar-stat-cost) { color: inherit; }

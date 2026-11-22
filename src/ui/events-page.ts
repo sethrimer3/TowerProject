@@ -20,10 +20,12 @@ import { themeGoldHtml, themeMenuTitle, themePreview } from "./theme-menu.ts";
 import { bonusText } from "../economy/relic-effects.ts";
 import { RARITY_NAMES, RELICS } from "../economy/relics.ts";
 import { relicButton } from "./relic-pop.ts";
+import { FamiliarsPanel } from "./familiars-panel.ts";
 
-/** The Events screen's tabs: the event's missions and relics, and its Store. */
-type EventsTab = "missions" | "store";
-const TAB_NAMES: Record<EventsTab, string> = { missions: "Missions", store: "Store" };
+/** The Events screen's tabs: the event's missions and relics, its Store, and Familiars. */
+const TAB_NAMES = { missions: "Missions", store: "Store", familiars: "Familiars" } as const;
+type EventsTab = keyof typeof TAB_NAMES;
+const TABS = Object.keys(TAB_NAMES) as EventsTab[];
 /** A Store item as its button's `data-store` holds it. */
 const itemKey = (item: StoreItem) => `${item.kind}:${item.id}`;
 const itemOf = (key: string): StoreItem => {
@@ -59,7 +61,11 @@ export class EventsPage {
   private busy = false;
   private tab: EventsTab = "missions";
 
-  constructor(private ctx: AppContext, private server: ShopServer = stubServer) {}
+  private familiars: FamiliarsPanel;
+
+  constructor(private ctx: AppContext, private server: ShopServer = stubServer) {
+    this.familiars = new FamiliarsPanel(ctx, () => this.render(), (messageId, bought) => void this.buyBoost(messageId, bought));
+  }
 
   /** Opens the screen afresh, from page `from`. */
   open(from: string) {
@@ -80,7 +86,7 @@ export class EventsPage {
 
   private state() {
     const e = this.ctx.game.save.events;
-    return JSON.stringify([e.id, e.missions, e.moved, this.ctx.game.events.boosted, this.tab]);
+    return JSON.stringify([e.id, e.missions, e.moved, this.ctx.game.events.boosted, this.tab, this.tab === "familiars" && this.familiars.state()]);
   }
 
   /** Every second while the screen shows: the countdowns, or the whole
@@ -111,8 +117,8 @@ export class EventsPage {
       `<button class="missions-close" id="events-close" aria-label="Close" title="Close">${controlIcon("close")}</button>` +
       `<header class="event-banner"><span class="event-banner-art" aria-hidden="true">${eventIcon("event-icon event-banner-icon")}</span>` +
       `<div class="page-title"><small>EVENT</small><h2>${info.name}</h2></div><div class="event-banner-foot"><p class="event-ends" id="event-ends">${this.endsText()}</p>${this.heldHtml()}</div></header>` +
-      `<div class="tree-tabs page-tabs event-tabs" role="group" aria-label="Event tabs">${(["missions", "store"] as const).map((t) => `<button data-event-tab="${t}" aria-pressed="${this.tab === t}">${TAB_NAMES[t]}</button>`).join("")}</div>` +
-      (this.tab === "store" ? this.storeHtml() :
+      `<div class="tree-tabs page-tabs event-tabs" role="group" aria-label="Event tabs">${TABS.map((t) => `<button data-event-tab="${t}" aria-pressed="${this.tab === t}">${TAB_NAMES[t]}</button>`).join("")}</div>` +
+      (this.tab === "store" ? this.storeHtml() : this.tab === "familiars" ? this.familiars.html() :
         this.track(info.milestones) +
         this.boost() +
         `<p class="missions-next" id="event-next">${this.nextText()}</p>` +
@@ -279,6 +285,7 @@ export class EventsPage {
     });
     el("events").querySelectorAll<HTMLButtonElement>("[data-store]").forEach((b) => (b.onclick = () => this.buyStore(b.dataset.store!)));
     document.getElementById("event-boost-buy")?.addEventListener("click", () => void this.buyBoost());
+    this.familiars.bind();
     el("events").querySelectorAll<HTMLButtonElement>("[data-claim]").forEach((b) => (b.onclick = () => this.claim(Number(b.dataset.claim))));
   }
 
@@ -324,17 +331,19 @@ export class EventsPage {
     }, MOVE_AFTER_MS);
   }
 
-  /** Buys the Event Booster through the store; Dev mode (or free purchases) skips it. */
-  private async buyBoost() {
+  /** Buys the Event Booster through the store; Dev mode (or free purchases)
+   * skips it. A refusal is said in `messageId`; `bought` runs once it is bought. */
+  private async buyBoost(messageId = "event-boost-message", bought?: () => void) {
     if (this.busy) return;
     this.busy = true;
     const game = this.ctx.game, dev = game.save.settings.devMode || game.free, o = offer("eventBoost")!;
     try {
       const paid = dev || (o.price.kind === "money" && (await this.server.purchase(o.price.sku)));
-      const message = () => document.getElementById("event-boost-message");
+      const message = () => document.getElementById(messageId);
       if (!paid) return void (message() && (message()!.textContent = "The store isn't open yet."));
       const now = (await this.server.time()) ?? game.clock();
       if (game.shop.buy("eventBoost", now, true)) return void (message() && (message()!.textContent = "Already active."));
+      bought?.();
       this.ctx.update();
       this.render();
       const shown = offerShown(o);

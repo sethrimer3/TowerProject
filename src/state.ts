@@ -103,7 +103,9 @@ import { FamiliarDesk } from "./game/familiar-desk.ts";
 import { endFamiliarsTurn, falconArea, inArea, stepFamiliars, wolfArea, type Burst, type Room } from "./familiars/rules.ts";
 import { lingerWorn, type FamiliarSight } from "./familiars/marks.ts";
 import { burnTicks, dragonStrike, slimeStrike } from "./familiars/strikes.ts";
+import type { FamiliarView } from "./render/effects/familiars.ts";
 import { ROOM_MIDDLE } from "./familiars/paths.ts";
+import { FAMILIAR_IDS } from "./familiars/catalog.ts";
 import { ShrineDesk } from "./game/shrine-desk.ts";
 import { ArcanaDesk } from "./game/arcana-desk.ts";
 import { arcanaOpen, arcanumBoost, defaultArcanaRun, type ArcanumId } from "./arcana/arcana.ts";
@@ -713,6 +715,7 @@ export class Game {
     this.ghostFx = [];
     this.turnShown = null;
     this.turnClock = null;
+    this.familiarFx = null;
     this.dropHandPlan();
     this.blocked = { x: 0, y: 0, until: 0 };
   }
@@ -2739,6 +2742,18 @@ export class Game {
     const area = falconArea(run, { falcon, wisp: this.familiars.stats("wisp") }, this.familiarRoom);
     return area && inArea(area, at.x, at.y) ? area.factor : 1;
   }
+  /** What the board draws of familiars: those hatched and on, in a run; asked
+   * each frame, so it reads no research. */
+  get familiarView(): FamiliarView | undefined {
+    if (this.run.outside) return undefined;
+    let values: Record<string, object> | null = null;
+    for (const id of FAMILIAR_IDS) {
+      const stats = this.familiars.stats(id);
+      if (stats) (values ??= {})[id] = stats;
+    }
+    if (!values) return undefined;
+    return { run: this.run.familiars ?? {}, values: values as FamiliarView["values"], room: this.familiarRoom, fx: this.familiarFx, clock: this.turnClock };
+  }
   /** The familiars' turn over: each moves on, its effect a turn shorter. */
   private endFamiliars() {
     const working = this.familiars.working;
@@ -2922,8 +2937,8 @@ export class Game {
    * shown from `at` for `ms` as it fired; those the Toggles hide don't show.
    * `more`: they join what this turn already shows. */
   private showVolley(all: Shot[], at: number, ms: number, more = false) {
-    const { ricochetAnimation, thunderboltAnimation, lifespringDamage, phantasmDamage, necroDamage, voidwellDamage } = this.save.settings;
-    const shots = all.filter((s) => (!s.ricochet || ricochetAnimation) && (!s.thunderbolt || thunderboltAnimation) && (!s.lifespring || lifespringDamage) && (!s.phantasm || phantasmDamage) && (!s.necro || necroDamage) && (!s.voidwell || voidwellDamage));
+    const { ricochetAnimation, thunderboltAnimation, lifespringDamage, phantasmDamage, necroDamage, voidwellDamage, dragonDamage } = this.save.settings;
+    const shots = all.filter((s) => (!s.ricochet || ricochetAnimation) && (!s.thunderbolt || thunderboltAnimation) && (!s.lifespring || lifespringDamage) && (!s.phantasm || phantasmDamage) && (!s.necro || necroDamage) && (!s.voidwell || voidwellDamage) && (!s.familiar || dragonDamage));
     if (!shots.length) return;
     this.volley = { at, ms, shots: more && this.volley?.at === at ? [...this.volley.shots, ...shots] : shots };
     const broke = shots.find((s) => s.shieldBroke);

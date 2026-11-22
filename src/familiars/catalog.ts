@@ -7,8 +7,8 @@ export const FAMILIAR_IDS = ["dragon", "slime", "wolf", "falcon", "wisp"] as con
 export type FamiliarId = (typeof FAMILIAR_IDS)[number];
 
 /** A stat: its value unraised, what each level adds, its levels, and how the
- * player reads a value. */
-export type FamiliarStat = { name: string; base: number; step: number; levels: number; shown(value: number): string };
+ * player reads a value (`boxed`, shorter, in its box where that is too long). */
+export type FamiliarStat = { name: string; base: number; step: number; levels: number; shown(value: number): string; boxed?(value: number): string };
 
 const plain = (n: number) => `${n}`;
 const turns = (n: number) => `${n} ${n === 1 ? "turn" : "turns"}`;
@@ -46,7 +46,7 @@ export const FAMILIARS = {
     stats: {
       duration: { name: "Duration", base: 5, step: 1, levels: 10, shown: turns },
       cooldown: cooldown(120),
-      linger: { name: "Linger", base: 20, step: 3, levels: 20, shown: (n: number) => `${n}% for ${turns(LINGER_TURNS)}` },
+      linger: { name: "Linger", base: 20, step: 3, levels: 20, shown: (n: number) => `${n}% for ${turns(LINGER_TURNS)}`, boxed: percent },
       range: { name: "Range", base: 200, step: 30, levels: 15, shown: tiles },
     },
   },

@@ -166,6 +166,12 @@ const stunnedLine = (e: Enemy) =>
   (e.stunned ? "<br><small>Stunned: in the vortex it can't move, shoot or strike first, and a Flying enemy can be fought</small>" : "")
   + (e.stun ? `<br><small>Stunned ${e.stun === 1 ? "1 turn" : `${e.stun} turns`}: it can't move or shoot, and a fight skips its first ${e.stun === 1 ? "strike" : `${e.stun} strikes`}</small>` : "");
 
+/** What familiars have left on an enemy (familiars/marks.ts). */
+const familiarLines = (e: Enemy) =>
+  (e.burned ? "<br><small>Burned: the Fire Dragon's flames strike it every turn, and its ATK is cut</small>" : "")
+  + (e.linger ? `<br><small>Lingering: once no stun holds it, it acts ${e.linger}% slower</small>` : "")
+  + (e.tagged ? `<br><small>Tagged: your damage on it is ×${Math.round(e.tagged * 1000) / 1000} in the Hunting Wolf's range</small>` : "");
+
 /** A Flying enemy's panel (enemies/flying.ts): its HP, its ATK with what each of
  * its shots does to the hero, its DEF with what one of the hero's arrows
  * takes off it before ATK / m and critical hits, and the Gold killing it
@@ -179,7 +185,7 @@ function flyerInfo(e: Enemy, p: Player, gold: number) {
     gold ? stat(goldIcon(), "Gold", `<span class="hit-gold">${enemyStat(gold)}</span>`) : "",
   );
   const aggro = e.aggro ? "<br><small>Aggroed: it closes in on you as fast as it shoots</small>" : "";
-  return `${line}${brokenLine(e, p)}<br><small>Flying: it shoots you from the air; only your arrows reach it, and you walk under it freely</small>${aggro}${necroLine(e)}`;
+  return `${line}${brokenLine(e, p)}<br><small>Flying: it shoots you from the air; only your arrows reach it, and you walk under it freely</small>${aggro}${necroLine(e)}${familiarLines(e)}`;
 }
 
 /** What a Shielded enemy's bubble does to an enemy standing in it (enemies/shielded.ts). */
@@ -195,7 +201,7 @@ const DESCRIBE: Partial<Record<Kind, Describe>> = {
     const next = broken === undefined ? r : predict(p, { ...e, broken });
     return {
       title: enemyTitle(e, g.save.settings.legacyEnemies),
-      body: enemyStats(e, p, next, gold, broken) + brokenLine(e, p, broken) + guardLine(e) + stunnedLine(e) + necroLine(e) + prediction(r, p, g, c) + forecast(p, e, r.impervious ? 0 : r.turns, g, !!crit),
+      body: enemyStats(e, p, next, gold, broken) + brokenLine(e, p, broken) + guardLine(e) + stunnedLine(e) + necroLine(e) + familiarLines(e) + prediction(r, p, g, c) + forecast(p, e, r.impervious ? 0 : r.turns, g, !!crit),
     };
   },
   wall: () => ({ title: "Wall", body: "Impassable obstacle." }),
