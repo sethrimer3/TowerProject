@@ -8,6 +8,10 @@ import { readdirSync, readFileSync } from "node:fs";
 import { cost, UPGRADES } from "../src/progression/upgrades.ts";
 import { researchBoost, type ResearchId } from "../src/progression/archives.ts";
 import { rarityRank } from "../src/cards/rarity.ts";
+import { CARD_IDS } from "../src/cards/cards.ts";
+import { powersOf } from "../src/cards/powers.ts";
+import { levelIn, powersShownTo } from "../src/cards/levels.ts";
+import { cardPowersHtml } from "../src/ui/card-power-view.ts";
 import { TREES } from "../src/progression/skill-trees.ts";
 
 const source = (over: Partial<CodexSource> = {}): CodexSource => ({ save: defaults(), inside: false, tournament: false, events: false, held: [], ...over });
@@ -163,12 +167,33 @@ test("the Inspiration and Breakthrough trees' skills have no ranks to show", () 
     assert.equal(UPGRADES.find((u) => u.id === node.id)!.max, 1, node.id);
 });
 
-test("an owned card shows powers only up to the next rarity", () => {
+test("an owned card shows powers only up to the next rarity, or every one with Access to Everything", () => {
   const save = defaults(), src = source({ save });
   const upTo = () => entry(src, "cards", "stairs").card!.upTo;
   assert.equal(upTo(), rarityRank("common"));
   save.cardXp.stairs = 1e9;
   assert.equal(upTo(), rarityRank("uncommon"));
+  save.cardAscension.stairs = 1;
+  assert.equal(upTo(), rarityRank("rare"), "ascending reveals the next");
+  save.settings.accessAll = true;
+  assert.equal(upTo(), rarityRank("mythic"));
+});
+
+test("the powers list, the Deck's and the Codex's, draws none above the next rarity without Access to Everything", () => {
+  for (const id of CARD_IDS) for (const ascended of [0, 1, 3, 5]) for (const accessAll of [false, true]) {
+    const save = defaults();
+    save.settings.accessAll = accessAll;
+    if (ascended) {
+      save.cardXp[id] = 1e9;
+      save.cardAscension[id] = ascended;
+    }
+    const powers = powersOf(id), most = powersShownTo(save, id);
+    const shown = cardPowersHtml(id, levelIn(save, id).level, most).split('<li class="card-power ').length - 1;
+    // A new card's next rarity is Common, rank 1; each ascension's is one past the rarity reached.
+    const next = ascended ? ascended + 2 : 1;
+    const expected = accessAll ? powers.length : powers.filter((power) => rarityRank(power.rarity) <= next).length;
+    assert.equal(shown, expected, `${id}, ascended ${ascended}, access ${accessAll}`);
+  }
 });
 
 test("Tower Elements pictures the doors, ends with Heart Doors and keeps the Greater Boss for the Torch card", () => {
@@ -176,7 +201,7 @@ test("Tower Elements pictures the doors, ends with Heart Doors and keeps the Gre
   const list = () => codexCategories(src).find((c) => c.id === "elements")!.sections[0]!.entries;
   assert.equal(list().at(-1)!.id, "heartDoor");
   assert.deepEqual(entry(src, "elements", "goldKey").beside, { kind: "door", id: "yellow" });
-  assert.equal(entry(src, "elements", "steelDoor").name, "Steel Doors");
+  assert.ok(!list().some((e) => e.id === "steelDoor"), "generation places no Steel Doors");
   assert.equal(entry(src, "elements", "multiDoor").hidden, true, "not before red keys are known");
   assert.doesNotMatch(entry(src, "elements", "torch").brief, /Greater Boss/);
   save.upgrades.cardTorch = 1;

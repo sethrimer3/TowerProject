@@ -1,7 +1,8 @@
 import { CARD_IDS, type CardId } from "./cards.ts";
 import { count, isRecord, wholeIn } from "../save/decode.ts";
-import { ASCEND_RUBIES, CARD_RARITIES, LEVELS_PER_RARITY, rarityAt, type CardRarity } from "./rarity.ts";
+import { ASCEND_RUBIES, CARD_RARITIES, LEVELS_PER_RARITY, rarityAt, rarityRank, type CardRarity } from "./rarity.ts";
 import type { UpgradeId } from "../progression/upgrades.ts";
+import { seesAll } from "../access.ts";
 
 /** The XP each card level costs, from level 1 to 60: five levels at each
  * step of the schedule to level 20, then each level's step 250 XP more
@@ -62,6 +63,12 @@ export const levelIn = (save: CardLevelSave, card: CardId) => cardLevel(save.car
 export const totalCardLevels = (save: CardLevelSave) => cardLevelTotal(save.cardXp, (id) => cardMaxLevel(save.cardAscension, id));
 /** `card`'s rarity in the save: its level's. */
 export const rarityIn = (save: CardLevelSave, card: CardId): CardRarity => rarityAt(levelIn(save, card).level);
+
+/** The highest rarity rank whose powers the player is shown of `card` (its
+ * Deck pop-up and the Codex): the rarity after its own, so those above stay
+ * a surprise, or every one with Access to Everything. */
+export const powersShownTo = (save: CardLevelSave & Parameters<typeof seesAll>[0], card: CardId) =>
+  seesAll(save) ? rarityRank("mythic") : rarityRank(rarityIn(save, card)) + 1;
 
 /** The Breakthrough skill that lets cards ascend to each rarity past
  * common: until it is owned, cards stop at the rarity before (a new game's

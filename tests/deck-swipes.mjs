@@ -78,8 +78,6 @@ try {
   // The real card stays available underneath a nonmodal, card-pointing popup.
   await page.locator('[data-add="heal"]').tap();
   const pop = page.locator("#deck-card-popover");
-  await expect(pop).toContainText("Tap the card again to open upgrade tree");
-  await expect(pop).toContainText("3 points available");
   await expect(pop).toContainText("Swipe up to add to hand.");
   await expect(pop).not.toContainText("IN YOUR DECK");
   await expect(page.locator(".card-reveal.details, [data-card-action]")).toHaveCount(0);
@@ -88,8 +86,8 @@ try {
   const arrow = await pop.evaluate(n => Number.parseFloat(n.style.getPropertyValue("--arrow-x")));
   assert.ok(Math.abs(popup.x + arrow - anchor.x - anchor.width / 2) < 1, "arrow points at the selected card");
   await page.screenshot({ path: "test-results/deck-swipes/popover-390.png" });
-  // The details list the card's powers, a row each; a second tap leaves them up.
-  await expect(pop.locator(".card-power")).toHaveCount(7);
+  // The details list the card's powers up to the next rarity's, a row each; a second tap leaves them up.
+  await expect(pop.locator(".card-power")).toHaveCount(3);
   await page.locator('[data-add="heal"]').tap();
   await expect(pop).toBeVisible();
   await page.keyboard.press("Escape");

@@ -21,7 +21,7 @@ import type { Trait } from "../enemies/odds.ts";
 import type { BoonId } from "../shrines.ts";
 import type { Tile } from "../entities.ts";
 import { KEY_ORDER } from "../doors.ts";
-import { paintContents } from "../render/tile-painters.ts";
+import { drawSquareDoor } from "../sprites/options.ts";
 
 /** Each currency's icon, by the Codex's currency id. */
 const CURRENCY_ICONS: Record<string, () => string> = {
@@ -41,22 +41,21 @@ const DOOR_TILES: Record<CodexDoor, Tile> = {
   blue: { kind: "door", color: "blue", door: { type: "keys", keys: ["blue"], mode: "all" } },
   red: { kind: "door", color: "red", door: { type: "keys", keys: ["red"], mode: "all" } },
   wood: { kind: "door", door: { type: "wood", durability: 0 } },
-  steel: { kind: "door", door: { type: "keys", keys: KEY_ORDER, mode: "any" } },
   triune: { kind: "door", door: { type: "keys", keys: KEY_ORDER, mode: "all" } },
   heart: { kind: "door", door: { type: "fullHp" } },
 };
 /** A door canvas's pixels a tile pixel, so the small key marks on it stay
  * legible, and its side: a tile, and a pixel round it for its outline. */
 const DOOR_SCALE = 4, DOOR_SIDE = 26 * DOOR_SCALE;
-/** Paints each door canvas in `page` as the board's kit draws that door,
- * square with the Square doors setting. */
-function paintDoors(page: HTMLElement, squareDoors: boolean) {
+/** Paints each door canvas in `page` as its square tile, whatever the
+ * Square doors setting: those are coloured, so each key's door tells apart. */
+function paintDoors(page: HTMLElement) {
   page.querySelectorAll<HTMLCanvasElement>("canvas[data-codex-door]").forEach((canvas) => {
     const c = canvas.getContext("2d");
     if (!c) return;
     c.scale(DOOR_SCALE, DOOR_SCALE);
     c.translate(1, 1);
-    paintContents(c, DOOR_TILES[canvas.dataset.codexDoor as CodexDoor], { x: 0, y: 0, time: 0, reduceMotion: true, squareDoors });
+    drawSquareDoor(c, DOOR_TILES[canvas.dataset.codexDoor as CodexDoor]);
   });
 }
 
@@ -115,7 +114,7 @@ export class CodexPage {
   }
 
   render() {
-    const game = this.ctx.game, categories = this.categories();
+    const categories = this.categories();
     let current = categories.find((c) => c.id === this.category && c.open);
     if (!current) {
       current = categories[0]!;
@@ -132,7 +131,7 @@ export class CodexPage {
       (current.links.length ? `<div class="codex-links">${current.links.map((l, i) => this.linkHtml(l, `c${i}`)).join("")}</div>` : "") +
       current.sections.map((s) => this.sectionHtml(current, s)).join("") + `</article>`;
     this.bind(current);
-    paintDoors(el("codex"), game.save.settings.squareDoors);
+    paintDoors(el("codex"));
   }
 
   private sectionHtml(category: CodexCategory, s: CodexSection) {

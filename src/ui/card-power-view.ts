@@ -370,7 +370,7 @@ export const powerText = (power: CardPower, levels: number) => powerAmounts(powe
 /** A card's powers at `level`, a row each: its icon, name and rarity, and
  * what it gives now. A power the card hasn't reached yet stays in its row,
  * dimmed, naming the rarity that opens it (the base power, level 1). */
-export function cardPowersHtml(card: CardId, level: number, upTo = Infinity) {
+export function cardPowersHtml(card: CardId, level: number, upTo: number) {
   const powers = powersOf(card).filter((power) => rarityRank(power.rarity) <= upTo);
   if (!powers.length) return `<p class="card-powers-none">No powers yet: this card still levels and ascends.</p>`;
   const rows = powers.map((power) => {

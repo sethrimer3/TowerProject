@@ -11,7 +11,7 @@ import { RARITIES } from "../shop/rarity.ts";
 import { revealDraws } from "./badge-reveal.ts";
 import { revealAscension } from "./card-ascend-reveal.ts";
 import { cardPowersHtml } from "./card-power-view.ts";
-import { levelIn } from "../cards/levels.ts";
+import { levelIn, powersShownTo } from "../cards/levels.ts";
 import { UPGRADES } from "../progression/upgrades.ts";
 import { CARD_RARITY_NAMES } from "../cards/rarity.ts";
 import { DeckCardPopover } from "./deck-card-popover.ts";
@@ -788,15 +788,16 @@ export class DeckPage {
   private showDeckCard(id: CardId) { this.showDetails(id, false); }
 
   /** A tap explains the card above its real sprite: its level and rarity,
-   * what it does, its powers a row each, and while it waits to ascend, the
-   * Ascend button with its price. */
+   * what it does, its powers a row each up to the next rarity's
+   * (`powersShownTo`), and while it waits to ascend, the Ascend button with
+   * its price. */
   private showDetails(id: CardId, held: boolean) {
     if (this.meet(id)) this.render();
     const anchor = el("deck").querySelector<HTMLElement>(`[data-deck-card="${id}"] ${held ? ".deck-card" : ".deck-add"}`);
     if (!anchor) return;
     const { game } = this.ctx, { save } = game;
     const bonuses = cardBonusLines(id).map(l => `<i class="bonus-${l.tone}">${l.text}</i>`).join("");
-    const tree = cardPowersHtml(id, levelIn(save, id).level) + this.ascendHtml(id);
+    const tree = cardPowersHtml(id, levelIn(save, id).level, powersShownTo(save, id)) + this.ascendHtml(id);
     const gesture = held ? (id === "stairs" ? "STAIRS always stays in your hand." : save.upgrades.buildout ? "Swipe down to return to deck." : "Unlock Buildout to return cards to the deck.") : "Swipe up to add to hand.";
     const full = !held && game.deck.full(this.kind) ? `<small class="deck-full-note" role="status">Your hand is full. Drag onto a card to swap.</small>` : "";
     this.popover.show(id, anchor, `<b class="deck-popover-name">${CARDS[id].name}</b>${cardLevelLines(save, id)}<p>${game.cardText(id)}</p>${bonuses ? `<p class="card-bonus">${bonuses}</p>` : ""}${tree}<small class="deck-swipe-hint">${gesture}</small>${full}`, CARDS[id].name);

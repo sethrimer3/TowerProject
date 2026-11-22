@@ -9,8 +9,8 @@
 import type { Save } from "../save/shape.ts";
 import { seesAll } from "../access.ts";
 import { CARDS, CARD_IDS, deckCards, type CardId } from "../cards/cards.ts";
-import { levelIn, nextAscension, readyToAscend } from "../cards/levels.ts";
-import { CARD_RARITY_NAMES, rarityAt, rarityRank } from "../cards/rarity.ts";
+import { levelIn, nextAscension, powersShownTo, readyToAscend } from "../cards/levels.ts";
+import { CARD_RARITY_NAMES, rarityAt } from "../cards/rarity.ts";
 import { BADGES, BADGE_IDS, badgeDef, badgeValue, levelProgress, ownedLevel, type BadgeId } from "../cards/badges.ts";
 import { TREES, skillAvailable, skillHidden, treeOpen, type TreeId } from "../progression/skill-trees.ts";
 import { UPGRADES, cost, type UpgradeId } from "../progression/upgrades.ts";
@@ -35,8 +35,8 @@ import { isChampion } from "../shop/champion.ts";
 import { ARCANUM_BRIEFS, CARD_BRIEFS, FAMILIAR_BRIEFS, PROFILE_BRIEFS, STRENGTH_BRIEFS, TRAIT_BRIEFS } from "./briefs.ts";
 import type { EnemyStrength } from "../entities.ts";
 
-/** The doors the Codex pictures, each as the board draws it. */
-export type CodexDoor = "yellow" | "blue" | "red" | "wood" | "steel" | "triune" | "heart";
+/** The doors the Codex pictures, each as its coloured tile. */
+export type CodexDoor = "yellow" | "blue" | "red" | "wood" | "triune" | "heart";
 /** What an entry's icon is, for the page to draw: a kind and its id. */
 export type CodexIcon =
   | { kind: "kit" | "ui" | "item" | "currency" | "mark" | "card" | "badge" | "skill" | "arcanum" | "equip" | "equipCategory" | "material" | "strength" | "trait" | "training" | "boon" | "research" | "trial" | "environment" | "familiar"; id: string }
@@ -230,7 +230,6 @@ function elements(src: CodexSource): CodexCategory {
     e(blue, "blueKey", { kind: "item", id: "key_blue" }, "Blue Keys and Doors", "Each Blue Key opens one Blue Door.", door("blue")),
     e(red, "redKey", { kind: "item", id: "key_red" }, "Red Keys and Doors", "Each Red Key opens one Red Door.", door("red")),
     e(true, "woodenDoor", door("wood"), "Wooden Doors", "Take any one key, or break them down by spending some HP."),
-    e(true, "steelDoor", door("steel"), "Steel Doors", "Take any one key, and can't be broken down."),
     // Pictured as a Triune Door, so shown once red keys are known.
     e(red, "multiDoor", door("triune"), "Multi Doors", "Some doors require multiple key types to open."),
     e(true, "potion", { kind: "item", id: "potion_flat" }, "Health Potions", "Restore HP. Some heal a share of your max HP."),
@@ -257,7 +256,7 @@ function cards(src: CodexSource): CodexCategory {
     ];
     if (lvl.needed && !lvl.capped) facts.push(["XP to next level", n(lvl.needed - lvl.into)]);
     if (lvl.capped && lvl.needed && !ready) facts.push(["Level cap", "Ascend to level further"]);
-    const entry: CodexEntry = { id, icon: { kind: "card", id }, name: CARDS[id].name, brief: CARD_BRIEFS[id], facts, card: { id, level: lvl.level, upTo: rarityRank(rarityAt(lvl.level)) + 1 } };
+    const entry: CodexEntry = { id, icon: { kind: "card", id }, name: CARDS[id].name, brief: CARD_BRIEFS[id], facts, card: { id, level: lvl.level, upTo: powersShownTo(s, id) } };
     if (ready && next) {
       entry.ready = true;
       entry.link = forestLink(src, `Ascend to ${CARD_RARITY_NAMES[next.rarity]}`, { page: "deck", card: id }, { rubies: next.rubies });

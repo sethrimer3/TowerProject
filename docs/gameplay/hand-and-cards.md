@@ -156,6 +156,7 @@ The **?** left of the **Hand** heading on the Deck page explains how cards, thei
 A card's powers rise by themselves as it levels: there is nothing to spend.
 Its **base power** rises with every level it reaches, 1 to 60; each rarity from Common to Mythic opens one more power, which rises once with each of that rarity's ten levels (the Common power at levels 1 to 10, the Uncommon one at 11 to 20, and so on), then stays.
 A card's pop-up on the Deck page lists its powers, one a row, with what each gives now; a power not yet reached is dimmed and names the rarity that opens it.
+It lists them only up to the next rarity's, so higher ones stay a surprise; with the Dev setting Access to Everything on it lists every rarity's.
 A card's powers count while either hand holds it, whichever card leads the hero, and from the moment it levels up, even in the middle of a climb.
 Powers that shape a floor as it is made (Skeleton Key, Lock Pick, the Transmutes, Heart Lock Pick and Treasure Floor) are fixed as a climb goes inside, so a card levelling inside changes them from the next climb.
 Each power adds into one factor with every other card's bonus to the same thing (two cards' +10% Gold Bonus make ×1.2), and that factor multiplies the other kinds of bonus.
