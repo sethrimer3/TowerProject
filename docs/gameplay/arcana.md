@@ -10,6 +10,8 @@ Each arcanum has a distinct pixel-art icon shared across interface themes.
 **Select Arcanum** shows what the next one costs: 5, 50, 150, 300, 800, 1,250, 1,750, 2,400 then 3,000 Arcanite, by how many you own.
 Short of Arcanite, it offers the Shop instead.
 Otherwise it shows up to three of the Arcana you don't own, each as likely as any other, to buy one.
+Pressing one asks before buying: it shows the arcanum's effect playing in a small room, what it does, and each attribute's first value and next.
+**Back** returns to the choice; **Buy** pays its price.
 Pressing outside the choice closes it without buying, and it stays the same until you buy one or reroll it.
 **Reroll**, for 20% of the price, draws a new set once you confirm; it shows only while more Arcana remain than the choice can show.
 The button is gone once you own them all.

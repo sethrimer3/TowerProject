@@ -10,6 +10,7 @@ import { priceAmount } from "./hud.ts";
 import { shortAmount } from "../whole.ts";
 import { RESEARCH, RESEARCH_TARGETS, researched } from "../progression/archives.ts";
 import type { Save } from "../save/shape.ts";
+import { ArcanaLabScene } from "./arcana-lab-scene.ts";
 
 /** Each arcanum's picture. */
 export const ARCANUM_ICONS: Record<ArcanumId, string> = {
@@ -121,14 +122,27 @@ export class ArcanaPanel {
       ? `<div class="dialog-actions"><button id="arcana-reroll" class="${desk.affords(reroll) ? "" : "short"}" aria-label="Reroll, ${reroll} Arcanite">Reroll ${price(reroll)}</button></div>` : ""}`;
     if (!modal.open) modal.showModal();
     closesOnBackdrop(modal);
-    modal.querySelectorAll<HTMLButtonElement>("[data-arcana-buy]").forEach((b) => (b.onclick = () => {
-      const answer = desk.buy(b.dataset.arcanaBuy as ArcanumId);
+    modal.querySelectorAll<HTMLButtonElement>("[data-arcana-buy]").forEach((b) => (b.onclick = () => this.askBuy(b.dataset.arcanaBuy as ArcanumId)));
+    const button = document.getElementById("arcana-reroll");
+    if (button) button.onclick = () => (desk.affords(reroll) ? this.askReroll() : askForArcanite(ctx));
+  }
+
+  /** Buy `id`, on confirmation: its effect playing on a loop, what it does,
+   * and each attribute's first value and next; Back returns to the choice. */
+  private askBuy(id: ArcanumId) {
+    const { ctx, desk } = this, modal = ctx.modal, cost = desk.price ?? 0, free = ctx.game.free, def = arcanum(id);
+    const label = free ? "Buy · free" : `Buy · ${arcaniteIcon()} <b>${priceAmount(cost)}</b>`;
+    modal.innerHTML = `<small>ARCANA</small><div class="arcana-info"><h2>${def.name}</h2><canvas id="arcana-preview" class="arcana-preview" width="528" height="528" role="img" aria-label="${def.name} in play"></canvas><p>${def.summary(valuesAt(id, [0, 0, 0]))}</p>${attributeTable(id, [0, 0, 0], "First")}</div><div class="dialog-actions"><button id="arcana-buy-back">Back</button><button id="arcana-buy-confirm" class="${free || desk.affords(cost) ? "" : "short"}" aria-label="${free ? "Buy, free" : `Buy for ${cost} Arcanite`}">${label}</button></div>`;
+    if (!modal.open) modal.showModal();
+    closesOnBackdrop(modal);
+    playPreview(modal.querySelector<HTMLCanvasElement>("#arcana-preview")!, id, ctx.game.save.settings.reduceMotion);
+    el("arcana-buy-back").onclick = () => this.showChoice();
+    el("arcana-buy-confirm").onclick = () => {
+      const answer = desk.buy(id);
       if (answer === "short") return askForArcanite(ctx);
       modal.close();
       if (answer === "done") this.changed();
-    }));
-    const button = document.getElementById("arcana-reroll");
-    if (button) button.onclick = () => (desk.affords(reroll) ? this.askReroll() : askForArcanite(ctx));
+    };
   }
 
   /** The arcana owned, to choose the one to respec: each with the Arcanite
@@ -172,14 +186,39 @@ export class ArcanaPanel {
   }
 }
 
+/** A purchase preview's one scene, its room cached across dialogs. */
+let previewScene: ArcanaLabScene | undefined;
+
+/** Plays `id`'s effect on `canvas` until the canvas leaves the page, at 12
+ * frames a second like the lab; with reduced motion (the setting or the
+ * system's) it shows one still frame. */
+function playPreview(canvas: HTMLCanvasElement, id: ArcanumId, reduceMotion: boolean) {
+  const scene = (previewScene ??= new ArcanaLabScene());
+  const still = reduceMotion || matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let start = 0, painted = -1;
+  const tick = (now: number) => {
+    if (!canvas.isConnected) return;
+    start ||= now;
+    const time = still ? 450 : now - start, bucket = Math.floor(time / (1000 / 12));
+    let ready = true;
+    if (bucket !== painted) { ready = scene.preview(canvas, id, time); if (ready) painted = bucket; }
+    if (!still || !ready) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+/** Each attribute's value at `levels` (headed `now`) and at its next level. */
+const attributeTable = (id: ArcanumId, levels: readonly number[], now: string) =>
+  `<table class="arcana-table"><thead><tr><th>Attribute</th><th>${now}</th><th>Next</th></tr></thead><tbody>${arcanum(id).attributes.map((a, i) => {
+    const next = nextStep(id, i, levels[i]!);
+    return `<tr><td>${a.name}</td><td>${a.shown(a.steps[levels[i]!]![0])}</td><td>${next ? a.shown(next.value) : "Max"}</td></tr>`;
+  }).join("")}</tbody></table>`;
+
 /** A bought arcanum's information, from its row: what it does, each attribute
  * now and at its next level, and what research has added to it. */
 function showArcanum(ctx: AppContext, id: ArcanumId) {
   const levels = levelsOf(ctx.game.save.arcana, id), modal = ctx.modal;
-  modal.innerHTML = `<div class="arcana-info">${aboutHtml(id, valuesAt(id, levels), ctx.game.save)}<table class="arcana-table"><thead><tr><th>Attribute</th><th>Now</th><th>Next</th></tr></thead><tbody>${arcanum(id).attributes.map((a, i) => {
-    const next = nextStep(id, i, levels[i]!);
-    return `<tr><td>${a.name}</td><td>${a.shown(a.steps[levels[i]!]![0])}</td><td>${next ? a.shown(next.value) : "Max"}</td></tr>`;
-  }).join("")}</tbody></table>${arcanumResearch(id, ctx.game.save)}${boxedTable("Enhancements", enhancementsOf(id, ctx.game.save))}</div>`;
+  modal.innerHTML = `<div class="arcana-info">${aboutHtml(id, valuesAt(id, levels), ctx.game.save)}${attributeTable(id, levels, "Now")}${arcanumResearch(id, ctx.game.save)}${boxedTable("Enhancements", enhancementsOf(id, ctx.game.save))}</div>`;
   modal.showModal();
   closesOnBackdrop(modal);
 }

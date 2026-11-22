@@ -246,8 +246,8 @@
   "arcana.empty": "7317f9b34e0d4a59",
   "arcana.help": "e81abe52a54e3fff",
   "arcana.choice": "9a1a7f6c3f4ecabe",
-  "arcana.bought": "848480e8b24e7c67",
-  "arcana.upgraded": "58708aec5f959f5b",
+  "arcana.bought": "5b00aa2df9a6ccb3",
+  "arcana.upgraded": "b638c08dd5a8e833",
   "arcana.info": "9befa3bf6c282820",
   "arcana.maxed": "e2b05a55f0228b67",
   "arcana.cards": "c674be831071008b",
@@ -275,5 +275,6 @@
   "codex.cards": "bd7b2f965a75ffd8",
   "codex.enemies": "2473f0edf2a69b99",
   "codex.training": "1484dbfaef09025d",
-  "codex.closed": "11b41bc2fbe65238"
+  "codex.closed": "11b41bc2fbe65238",
+  "arcana.confirm": "140d17cc1aa1b034"
 }

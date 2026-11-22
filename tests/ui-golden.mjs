@@ -1148,6 +1148,8 @@ try {
     await click("#arcana-select");
     await shot("arcana.choice");
     await click('[data-arcana-buy="ricochetShot"]');
+    await shot("arcana.confirm");
+    await click("#arcana-buy-confirm");
     await shot("arcana.bought");
     await click('[data-arcana-up="ricochetShot:0"]');
     await shot("arcana.upgraded");

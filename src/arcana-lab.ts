@@ -37,3 +37,13 @@ export const ARCANA_LAB_SPLASH = { x: 204, y: 156 };
 export const ARCANA_LAB_TWINS = [{ x: 72, y: 132 }, { x: 192, y: 132 }] as const;
 /** Slowed equally on both sides so short impact flashes are easy to inspect. */
 export const arcanaBurstAge = (time: number) => (time % 2400) / 3;
+
+/** How long each arcanum's purchase preview runs before it repeats: a whole
+ * number of every period its painters move by, so the seam doesn't show.
+ * Bursts repeat every 2.4 s (`arcanaBurstAge`), frost bubbles every 1.5 s,
+ * the vortex's arms every 9 s, the beams every 12 s, and Lifespring's three
+ * rings (0.09, 0.13 and 0.17 turns a second) all come round together at 100 s. */
+export const ARCANUM_PREVIEW_LOOPS: Record<ArcanumId, number> = {
+  thunderbolt: 2400, ricochetShot: 2400, aurumBloom: 2400, timeDilation: 2400,
+  necroticFrost: 1500, voidwell: 9000, overseer: 12000, phantasm: 12000, lifespring: 100000,
+};

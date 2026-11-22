@@ -5769,6 +5769,7 @@ html.trial-running :is(#focus-stat, #ignore-stat, #target-stat, #bomb-stat, #hea
 .arcana-info { display: grid; gap: 8px; padding: 10px; border: 2px solid #8d7b4c; border-radius: 12px; }
 .arcana-info h2, .arcana-info p { margin: 0; text-align: center; }
 .arcana-info-icon { display: grid; place-items: center; }
+.arcana-preview { display: block; justify-self: center; width: min(176px, 100%); aspect-ratio: 1; border: 2px solid #8d7b4c; border-radius: 8px; background: #0c1016; }
 .arcana-table { width: 100%; border-collapse: collapse; font-size: 12px; }
 .arcana-table th, .arcana-table td { padding: 3px 6px; text-align: right; border-bottom: 1px solid #ffffff1c; }
 .arcana-table th:first-child, .arcana-table td:first-child { text-align: left; }

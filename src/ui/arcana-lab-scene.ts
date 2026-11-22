@@ -1,4 +1,5 @@
-import { ARCANA_LAB_CENTER as C, ARCANA_LAB_RADIUS as R, ARCANA_LAB_SIZE as SIZE, ARCANA_LAB_TARGET as TARGET, ARCANA_LAB_SPLASH as SPLASH, ARCANA_LAB_TWINS, arcanaBurstAge, type ArcanaExampleId } from "../arcana-lab.ts";
+import { ARCANA_LAB_CENTER as C, ARCANA_LAB_RADIUS as R, ARCANA_LAB_SIZE as SIZE, ARCANA_LAB_TARGET as TARGET, ARCANA_LAB_SPLASH as SPLASH, ARCANA_LAB_TWINS, ARCANUM_PREVIEW_LOOPS, arcanaBurstAge, type ArcanaExampleId } from "../arcana-lab.ts";
+import type { ArcanumId } from "../arcana/arcana.ts";
 import type { Tile } from "../entities.ts";
 import { drawDungeonGround, dungeonDiagonals } from "../sprites/dungeon.ts";
 import { kitImage } from "../sprites/kit.ts";
@@ -19,8 +20,20 @@ const SEED = 1103, N = SIZE / 24;
 const floor = (x: number, y: number): Tile => ({ kind: x <= 0 || y <= 0 || x >= N - 1 || y >= N - 1 ? "wall" : "floor" });
 const underActors = (id: ArcanaExampleId) => id === "voidwell" || id === "necroticFrost" || id === "timeDilation" || id === "extraVoidwell";
 
-/** The before view uses the real current effect painters at the shared fixture coordinates. */
-export function paintCurrentArcana(c: CanvasRenderingContext2D, id: ArcanaExampleId, time: number) {
+type Painter = (c: CanvasRenderingContext2D, id: ArcanaExampleId, time: number, loop?: number) => void;
+
+/** A ghost's bob as `ghostBob` gives it, unless `loop` is given: then its
+ * period is rounded so a whole number of bobs fits the loop, and the seam
+ * doesn't jump. */
+const bob = (time: number, slot: number, loop?: number) => {
+  if (!loop) return ghostBob(time, slot);
+  const bobs = Math.max(1, Math.round(loop / (320 * Math.PI * 2)));
+  return Math.sin((time / loop) * bobs * Math.PI * 2 + slot * 1.7);
+};
+
+/** The before view uses the real current effect painters at the shared fixture
+ * coordinates; given a `loop`, everything it draws repeats after it. */
+export function paintCurrentArcana(c: CanvasRenderingContext2D, id: ArcanaExampleId, time: number, loop?: number) {
   const age = arcanaBurstAge(time);
   c.save();
   if (id === "ricochetShock") {
@@ -47,7 +60,7 @@ export function paintCurrentArcana(c: CanvasRenderingContext2D, id: ArcanaExampl
     for (let i = 0; i < 3; i++) {
       const a = time / 12000 * Math.PI * 2 + i / 3 * Math.PI * 2;
       c.save(); c.translate(C + Math.cos(a) * 48 - 12, C + Math.sin(a) * 48 - 12);
-      paintGhost(c, ghostBob(time, i)); c.restore();
+      paintGhost(c, bob(time, i, loop)); c.restore();
     }
   } else if (id === "thunderbolt" && age < 330) {
     paintThunderbolt(c, TARGET.x, TARGET.y, age / 90, 8, 6, 1, 24);
@@ -90,30 +103,41 @@ export class ArcanaLabScene {
     this.loaded = ready;
     return ready;
   }
+  /** One canvas of the room at `scale`, with `paint`'s effect for `id` at `time`. */
+  private paintRoom(canvas: HTMLCanvasElement, scale: number, id: ArcanaExampleId, time: number, paint: Painter, loop?: number) {
+    if (canvas.width !== SIZE * scale || canvas.height !== SIZE * scale) canvas.width = canvas.height = SIZE * scale;
+    const c = canvas.getContext("2d")!;
+    c.setTransform(scale, 0, 0, scale, 0, 0); c.imageSmoothingEnabled = false;
+    c.drawImage(this.ground, 0, 0);
+    // Research variants retain their existing floor field beneath the actors.
+    if (id === "voidwellDamage") paint(c, "voidwell", time);
+    if (id === "necroFreeze") paint(c, "necroticFrost", time);
+    if (id === "dilationGuard") paint(c, "timeDilation", time);
+    if (underActors(id)) paint(c, id, time, loop);
+    c.drawImage(this.actors, 0, 0);
+    if (id === "thunderboltExpansion") {
+      c.save(); c.translate(SPLASH.x - 12, SPLASH.y - 12);
+      paintContents(c, { kind: "enemy", enemy: { name: "Skeleton", hp: 20, attack: 5, defense: 1, tier: 0, strength: "normal" } }, { x: 8, y: 4, time: 0, styledSprites: true, reduceMotion: true }); c.restore();
+    }
+    if (id === "overseerZap") {
+      const aim = Math.atan2(TARGET.x - C, C - TARGET.y) * 180 / Math.PI;
+      if (paint === paintCurrentArcana) paintOverseerBeams(c, C, C, SIZE * 2, { count: 3, width: 24 }, aim);
+      else paintPixelArcana(c, "overseer", aim / 360 * 12000);
+    }
+    if (!underActors(id)) paint(c, id, time, loop);
+  }
   draw(before: HTMLCanvasElement, after: HTMLCanvasElement, id: ArcanaExampleId, time: number) {
     const ready = this.prepare();
-    for (const [canvas, paint] of [[before, paintCurrentArcana], [after, paintPixelArcana]] as const) {
-      if (canvas.width !== SIZE * 2 || canvas.height !== SIZE * 2) canvas.width = canvas.height = SIZE * 2;
-      const c = canvas.getContext("2d")!;
-      c.setTransform(2, 0, 0, 2, 0, 0); c.imageSmoothingEnabled = false;
-      c.drawImage(this.ground, 0, 0);
-      // Research variants retain their existing floor field beneath the actors.
-      if (id === "voidwellDamage") paint(c, "voidwell", time);
-      if (id === "necroFreeze") paint(c, "necroticFrost", time);
-      if (id === "dilationGuard") paint(c, "timeDilation", time);
-      if (underActors(id)) paint(c, id, time);
-      c.drawImage(this.actors, 0, 0);
-      if (id === "thunderboltExpansion") {
-        c.save(); c.translate(SPLASH.x - 12, SPLASH.y - 12);
-        paintContents(c, { kind: "enemy", enemy: { name: "Skeleton", hp: 20, attack: 5, defense: 1, tier: 0, strength: "normal" } }, { x: 8, y: 4, time: 0, styledSprites: true, reduceMotion: true }); c.restore();
-      }
-      if (id === "overseerZap") {
-        const aim = Math.atan2(TARGET.x - C, C - TARGET.y) * 180 / Math.PI;
-        if (paint === paintCurrentArcana) paintOverseerBeams(c, C, C, SIZE * 2, { count: 3, width: 24 }, aim);
-        else paintPixelArcana(c, "overseer", aim / 360 * 12000);
-      }
-      if (!underActors(id)) paint(c, id, time);
-    }
+    this.paintRoom(before, 2, id, time, paintCurrentArcana);
+    this.paintRoom(after, 2, id, time, paintPixelArcana);
+    return ready;
+  }
+  /** An arcanum's purchase preview: the effect the game draws, in the same
+   * room, at `time` within its loop (`ARCANUM_PREVIEW_LOOPS`). Aurum Bloom has
+   * no effect of its own on the board, so it shows the lab's gold-petal burst. */
+  preview(canvas: HTMLCanvasElement, id: ArcanumId, time: number) {
+    const ready = this.prepare(), loop = ARCANUM_PREVIEW_LOOPS[id];
+    this.paintRoom(canvas, 2, id, ((time % loop) + loop) % loop, id === "aurumBloom" ? paintPixelArcana : paintCurrentArcana, loop);
     return ready;
   }
 }

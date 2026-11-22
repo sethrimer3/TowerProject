@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { ARCANA } from "../src/arcana/arcana.ts";
-import { ARCANA_EXAMPLES, ARCANA_RESEARCH_EXAMPLES, arcanaExampleIndex, arcanaExampleStill, ARCANA_LAB_STILL, arcanaBurstAge } from "../src/arcana-lab.ts";
+import { ARCANA_EXAMPLES, ARCANA_RESEARCH_EXAMPLES, arcanaExampleIndex, arcanaExampleStill, ARCANA_LAB_STILL, ARCANUM_PREVIEW_LOOPS, arcanaBurstAge } from "../src/arcana-lab.ts";
 import { paintPixelArcana } from "../src/render/effects/arcana-pixel-preview.ts";
 
 function pixels(id: typeof ARCANA_EXAMPLES[number]["id"], time: number) {
@@ -55,4 +55,14 @@ test("research previews add visible feedback and animate independently", () => {
   }
   assert.notDeepEqual(pixels("thunderboltExpansion", 450), pixels("thunderbolt", 450));
   assert.notDeepEqual(pixels("overseerZap", 450), pixels("thunderbolt", 450));
+});
+
+test("every arcanum's purchase preview loops on a whole number of its painters' periods", () => {
+  const whole = (n: number) => Math.abs(n - Math.round(n)) < 1e-9;
+  for (const id of Object.keys(ARCANA) as (keyof typeof ARCANA)[]) assert.ok(ARCANUM_PREVIEW_LOOPS[id] > 0, id);
+  for (const id of ["thunderbolt", "ricochetShot", "aurumBloom"] as const) assert.ok(whole(ARCANUM_PREVIEW_LOOPS[id] / 2400), id);
+  assert.ok(whole(ARCANUM_PREVIEW_LOOPS.necroticFrost / 1500));
+  assert.ok(whole(ARCANUM_PREVIEW_LOOPS.voidwell / 9000));
+  for (const id of ["overseer", "phantasm"] as const) assert.ok(whole(ARCANUM_PREVIEW_LOOPS[id] / 12000), id);
+  for (const spin of [0.09, 0.13, 0.17]) assert.ok(whole((spin * ARCANUM_PREVIEW_LOOPS.lifespring) / 1000), `${spin}`);
 });

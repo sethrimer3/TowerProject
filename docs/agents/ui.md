@@ -210,6 +210,7 @@ The saved Reduce motion setting or the operating system preference starts the sc
 Previous/next and arrow keys wrap, Home/End select endpoints, slider arrow keys scrub, and Back or Escape returns to Visual Settings.
 Playback suspends while the document is hidden and releases its animation frame and listeners when the screen is replaced or closed.
 The preview constructs no Game and never changes saves, purchases, unlocks, themes or the paused run; Copy example name supports external feedback without collecting votes.
+The same scene draws an arcanum's purchase preview (`ArcanaLabScene.preview`, one canvas; see arcana.md's **Buying**).
 `node tests/arcana-lab.mjs` checks all comparisons, synchronized playback, deterministic scrubbing, keyboard/clipboard controls, motion preferences and run isolation at phone and desktop widths.
 
 The Arcana Effects Lab research slides cover Phantasm Stun, Necrotic Freeze, Voidwell Damage, Extra Voidwell, Overseer Zap and Thunderbolt Expansion.
